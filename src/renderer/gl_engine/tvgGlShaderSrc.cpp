@@ -131,7 +131,7 @@ vec4 gradient(float t)                                                          
         {                                                                                               \n
             float stopi = gradientStop(i);                                                              \n
             float stopi1 = gradientStop(i + 1);                                                         \n
-            if (t > stopi && t <stopi1)                                                                 \n
+            if (t >= stopi && t <= stopi1)                                                              \n
             {                                                                                           \n
                 col = (uGradientInfo.stopColors[i] * (1. - gradientStep(stopi, stopi1, t)));            \n
                 col += (uGradientInfo.stopColors[i + 1] * gradientStep(stopi, stopi1, t));              \n
