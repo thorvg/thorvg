@@ -956,7 +956,7 @@ public:
      *
      * @param[in] width The width of the stroke. The default value is 0.
      *
-     * @retval Result::Success when succeed, Result::FailedAllocation otherwise.
+     * @retval Result::Success when succeed.
      */
     Result strokeWidth(float width) noexcept;
 
@@ -968,7 +968,7 @@ public:
      * @param[in] b The blue color channel value in the range [0 ~ 255]. The default value is 0.
      * @param[in] a The alpha channel value in the range [0 ~ 255], where 0 is completely transparent and 255 is opaque. The default value is 0.
      *
-     * @retval Result::Success when succeed, Result::FailedAllocation otherwise.
+     * @retval Result::Success when succeed.
      */
     Result strokeFill(uint8_t r, uint8_t g, uint8_t b, uint8_t a = 255) noexcept;
 
@@ -978,8 +978,7 @@ public:
      * @param[in] f The gradient fill.
      *
      * @retval Result::Success When succeed.
-     * @retval Result::FailedAllocation An internal error with a memory allocation for an object to be filled.
-     * @retval Result::MemoryCorruption In case a @c nullptr is passed as the argument.
+     * @retval Result::MemoryCorruption In case a @c nullptr is passed as the argument or an error with accessing it.
      */
     Result strokeFill(std::unique_ptr<Fill> f) noexcept;
 
@@ -1006,7 +1005,7 @@ public:
      *
      * @param[in] cap The cap style value. The default value is @c StrokeCap::Square.
      *
-     * @retval Result::Success when succeed, Result::FailedAllocation otherwise.
+     * @retval Result::Success when succeed.
      */
     Result strokeCap(StrokeCap cap) noexcept;
 
@@ -1017,7 +1016,7 @@ public:
      *
      * @param[in] join The join style value. The default value is @c StrokeJoin::Bevel.
      *
-     * @retval Result::Success when succeed, Result::FailedAllocation otherwise.
+     * @retval Result::Success when succeed.
      */
     Result strokeJoin(StrokeJoin join) noexcept;
 
@@ -1026,7 +1025,7 @@ public:
      *
      * @param[in] miterlimit The miterlimit imposes a limit on the extent of the stroke join, when the @c StrokeJoin::Miter join style is set. The default value is 4.
      *
-     * @retval Result::Success when succeed, Result::NonSupport unsupported value, Result::FailedAllocation otherwise.
+     * @retval Result::Success when succeed or Result::NonSupport for @p miterlimit values less than zero.
      * 
      * @since 0.11
      */
@@ -1092,7 +1091,7 @@ public:
      *
      * @param[in] strokeFirst If @c true the stroke is rendered before the fill, otherwise the stroke is rendered as the second one (the default option).
      *
-     * @retval Result::Success when succeed, Result::FailedAllocation otherwise.
+     * @retval Result::Success when succeed.
      *
      * @since 0.10
      */

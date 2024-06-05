@@ -207,13 +207,11 @@ struct Shape::Impl
         flag |= RenderUpdateFlag::Path;
     }
 
-    bool strokeWidth(float width)
+    void strokeWidth(float width)
     {
         if (!rs.stroke) rs.stroke = new RenderStroke();
         rs.stroke->width = width;
         flag |= RenderUpdateFlag::Stroke;
-
-        return true;
     }
 
     void strokeTrim(float begin, float end, bool simultaneous)
@@ -262,34 +260,28 @@ struct Shape::Impl
         }
     }
 
-    bool strokeCap(StrokeCap cap)
+    void strokeCap(StrokeCap cap)
     {
         if (!rs.stroke) rs.stroke = new RenderStroke();
         rs.stroke->cap = cap;
         flag |= RenderUpdateFlag::Stroke;
-
-        return true;
     }
 
-    bool strokeJoin(StrokeJoin join)
+    void strokeJoin(StrokeJoin join)
     {
         if (!rs.stroke) rs.stroke = new RenderStroke();
         rs.stroke->join = join;
         flag |= RenderUpdateFlag::Stroke;
-
-        return true;
     }
 
-    bool strokeMiterlimit(float miterlimit)
+    void strokeMiterlimit(float miterlimit)
     {
         if (!rs.stroke) rs.stroke = new RenderStroke();
         rs.stroke->miterlimit = miterlimit;
         flag |= RenderUpdateFlag::Stroke;
-
-        return true;
     }
 
-    bool strokeFill(uint8_t r, uint8_t g, uint8_t b, uint8_t a)
+    void strokeFill(uint8_t r, uint8_t g, uint8_t b, uint8_t a)
     {
         if (!rs.stroke) rs.stroke = new RenderStroke();
         if (rs.stroke->fill) {
@@ -304,8 +296,6 @@ struct Shape::Impl
         rs.stroke->color[3] = a;
 
         flag |= RenderUpdateFlag::Stroke;
-
-        return true;
     }
 
     Result strokeFill(unique_ptr<Fill> f)
@@ -364,13 +354,11 @@ struct Shape::Impl
         return rs.stroke->strokeFirst;
     }
 
-    bool strokeFirst(bool strokeFirst)
+    void strokeFirst(bool strokeFirst)
     {
         if (!rs.stroke) rs.stroke = new RenderStroke();
         rs.stroke->strokeFirst = strokeFirst;
         flag |= RenderUpdateFlag::Stroke;
-
-        return true;
     }
 
     void update(RenderUpdateFlag flag)
