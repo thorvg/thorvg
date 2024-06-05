@@ -108,7 +108,7 @@ bool GlRenderer::sync()
     GL_CHECK(glCullFace(GL_FRONT_AND_BACK));
     GL_CHECK(glFrontFace(GL_CCW));
     GL_CHECK(glEnable(GL_DEPTH_TEST));
-    GL_CHECK(glDepthFunc(GL_LESS));
+    GL_CHECK(glDepthFunc(GL_GREATER));
 
     auto task = mRenderPassStack.front().endRenderPass<GlBlitTask>(mPrograms[RT_Blit].get(), mTargetFboId);
 
@@ -233,9 +233,12 @@ bool GlRenderer::renderImage(void* data)
 
     if ((sdata->updateFlag & RenderUpdateFlag::Image) == 0) return false;
 
+    int32_t drawDepth = currentPass()->nextDrawDepth();
+
     if (!sdata->clips.empty()) drawClip(sdata->clips);
 
     auto task = new GlRenderTask(mPrograms[RT_Image].get());
+    task->setDrawDepth(drawDepth);
 
     if (!sdata->geometry->draw(task, mGpuBuffer.get(), RenderUpdateFlag::Image)) return false;
 
@@ -273,8 +276,6 @@ bool GlRenderer::renderImage(void* data)
 
     currentPass()->addRenderTask(task);
 
-    if (!sdata->clips.empty()) currentPass()->addRenderTask(new GlClipClearTask);
-
     return true;
 }
 
@@ -286,15 +287,32 @@ bool GlRenderer::renderShape(RenderData data)
 
     if (sdata->updateFlag == RenderUpdateFlag::None) return false;
 
-    if (!sdata->clips.empty()) drawClip(sdata->clips);
-
     uint8_t r = 0, g = 0, b = 0, a = 0;
+    int32_t drawDepth1 = 0, drawDepth2 = 0, drawDepth3 = 0;
+
     size_t flags = static_cast<size_t>(sdata->updateFlag);
+
+    if (flags == 0) return false;
+
+    if ((flags & (RenderUpdateFlag::Gradient | RenderUpdateFlag::Transform)) && sdata->rshape->fill) drawDepth1 = currentPass()->nextDrawDepth();
+    if(flags & (RenderUpdateFlag::Color | RenderUpdateFlag::Transform))
+    {
+        sdata->rshape->fillColor(&r, &g, &b, &a);
+        if (a > 0) drawDepth2 = currentPass()->nextDrawDepth();
+    }
+
+    if (flags & (RenderUpdateFlag::Stroke | RenderUpdateFlag::GradientStroke | RenderUpdateFlag::Transform))
+    {
+        sdata->rshape->strokeColor(&r, &g, &b, &a);
+        if (sdata->rshape->strokeFill() || a > 0) drawDepth3 = currentPass()->nextDrawDepth();
+    }
+
+    if (!sdata->clips.empty()) drawClip(sdata->clips);
 
     if (flags & (RenderUpdateFlag::Gradient | RenderUpdateFlag::Transform))
     {
         auto gradient = sdata->rshape->fill;
-        if (gradient) drawPrimitive(*sdata, gradient, RenderUpdateFlag::Gradient);
+        if (gradient) drawPrimitive(*sdata, gradient, RenderUpdateFlag::Gradient, drawDepth1);
     }
 
     if(flags & (RenderUpdateFlag::Color | RenderUpdateFlag::Transform))
@@ -302,7 +320,7 @@ bool GlRenderer::renderShape(RenderData data)
         sdata->rshape->fillColor(&r, &g, &b, &a);
         if (a > 0)
         {
-            drawPrimitive(*sdata, r, g, b, a, RenderUpdateFlag::Color);
+            drawPrimitive(*sdata, r, g, b, a, RenderUpdateFlag::Color, drawDepth2);
         }
     }
 
@@ -310,16 +328,14 @@ bool GlRenderer::renderShape(RenderData data)
     {
         auto gradient =  sdata->rshape->strokeFill();
         if (gradient) {
-            drawPrimitive(*sdata, gradient, RenderUpdateFlag::GradientStroke);
+            drawPrimitive(*sdata, gradient, RenderUpdateFlag::GradientStroke, drawDepth3);
         } else {
             if (sdata->rshape->strokeColor(&r, &g, &b, &a) && a > 0)
             {
-                drawPrimitive(*sdata, r, g, b, a, RenderUpdateFlag::Stroke);
+                drawPrimitive(*sdata, r, g, b, a, RenderUpdateFlag::Stroke, drawDepth3);
             }
         }
     }
-
-    if (!sdata->clips.empty()) currentPass()->addRenderTask(new GlClipClearTask);
 
     return true;
 }
@@ -550,16 +566,20 @@ void GlRenderer::initShaders()
 }
 
 
-void GlRenderer::drawPrimitive(GlShape& sdata, uint8_t r, uint8_t g, uint8_t b, uint8_t a, RenderUpdateFlag flag)
+void GlRenderer::drawPrimitive(GlShape& sdata, uint8_t r, uint8_t g, uint8_t b, uint8_t a, RenderUpdateFlag flag, int32_t depth)
 {
     auto task = new GlRenderTask(mPrograms[RT_Color].get());
+    task->setDrawDepth(depth);
 
     if (!sdata.geometry->draw(task, mGpuBuffer.get(), flag)) return;
 
     GlRenderTask* stencilTask = nullptr;
 
     GlStencilMode stencilMode = sdata.geometry->getStencilMode(flag);
-    if (stencilMode != GlStencilMode::None) stencilTask = new GlRenderTask(mPrograms[RT_Stencil].get(), task);
+    if (stencilMode != GlStencilMode::None) {
+        stencilTask = new GlRenderTask(mPrograms[RT_Stencil].get(), task);
+        stencilTask->setDrawDepth(depth);
+    }
 
     a = MULTIPLY(a, sdata.opacity);
 
@@ -611,7 +631,7 @@ void GlRenderer::drawPrimitive(GlShape& sdata, uint8_t r, uint8_t g, uint8_t b, 
 }
 
 
-void GlRenderer::drawPrimitive(GlShape& sdata, const Fill* fill, RenderUpdateFlag flag)
+void GlRenderer::drawPrimitive(GlShape& sdata, const Fill* fill, RenderUpdateFlag flag, int32_t depth)
 {
     const Fill::ColorStop* stops = nullptr;
     auto stopCnt = min(fill->colorStops(&stops),
@@ -628,11 +648,16 @@ void GlRenderer::drawPrimitive(GlShape& sdata, const Fill* fill, RenderUpdateFla
         return;
     }
 
+    task->setDrawDepth(depth);
+
     if (!sdata.geometry->draw(task, mGpuBuffer.get(), flag)) return;
 
     GlRenderTask* stencilTask = nullptr;
     GlStencilMode stencilMode = sdata.geometry->getStencilMode(flag);
-    if (stencilMode != GlStencilMode::None) stencilTask = new GlRenderTask(mPrograms[RT_Stencil].get(), task);
+    if (stencilMode != GlStencilMode::None) {
+        stencilTask = new GlRenderTask(mPrograms[RT_Stencil].get(), task);
+        stencilTask->setDrawDepth(depth);
+    }
 
     // matrix buffer
     {
@@ -810,10 +835,19 @@ void GlRenderer::drawClip(Array<RenderData>& clips)
     auto identityIndexOffset = mGpuBuffer->push(indentityIndex.data, 6 * sizeof(uint32_t));
     auto mat4Offset = mGpuBuffer->push(mat4, 16 * sizeof(float), true);
 
+    Array<int32_t> clipDepths(clips.count);
+    clipDepths.count = clips.count;
+
+    for (int32_t i = clips.count - 1; i >= 0; i--) {
+        clipDepths[i] = currentPass()->nextDrawDepth();
+    }
+
     for (uint32_t i = 0; i < clips.count; ++i) {
         auto sdata = static_cast<GlShape*>(clips[i]);
 
         auto clipTask = new GlRenderTask(mPrograms[RT_Stencil].get());
+
+        clipTask->setDrawDepth(clipDepths[i]);
 
         sdata->geometry->draw(clipTask, mGpuBuffer.get(), RenderUpdateFlag::Path);
 
@@ -832,6 +866,8 @@ void GlRenderer::drawClip(Array<RenderData>& clips)
         });
 
         auto maskTask = new GlRenderTask(mPrograms[RT_Stencil].get());
+
+        maskTask->setDrawDepth(clipDepths[i]);
 
         maskTask->addVertexLayout(GlVertexLayout{0, 2, 2 * sizeof(float), identityVertexOffset});
         maskTask->addBindResource(GlBindingResource{
@@ -967,7 +1003,13 @@ void GlRenderer::endRenderPass(Compositor* cmp)
         }
 
         auto prev_task = mask_pass.endRenderPass<GlComposeTask>(nullptr, currentPass()->getFboId());
-
+        prev_task->setDrawDepth(currentPass()->nextDrawDepth());
+        prev_task->setViewport(RenderRegion{
+            gl_cmp->bbox.x,
+            static_cast<int32_t>((surface.h - gl_cmp->bbox.y - gl_cmp->bbox.h)),
+            gl_cmp->bbox.w,
+            gl_cmp->bbox.h,
+        });
         currentPass()->addRenderTask(prev_task);
 
         auto compose_task = self_pass.endRenderPass<GlDrawBlitTask>(program, currentPass()->getFboId());
@@ -984,7 +1026,7 @@ void GlRenderer::endRenderPass(Compositor* cmp)
             compose_task->addBindResource(GlBindingResource{1, mask_pass.getTextureId(), loc});
         }
 
-
+        compose_task->setDrawDepth(currentPass()->nextDrawDepth());
         currentPass()->addRenderTask(compose_task);
     } else {
 
@@ -995,6 +1037,7 @@ void GlRenderer::endRenderPass(Compositor* cmp)
             mPrograms[RT_Image].get(), currentPass()->getFboId());
 
         prepareCmpTask(task, gl_cmp->bbox);
+        task->setDrawDepth(currentPass()->nextDrawDepth());
 
         // matrix buffer
         {

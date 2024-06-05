@@ -86,8 +86,11 @@ public:
     void addBindResource(const GlBindingResource& binding);
     void setDrawRange(uint32_t offset, uint32_t count);
     void setViewport(const RenderRegion& viewport);
+    void setDrawDepth(int32_t depth) { mDrawDepth = static_cast<float>(depth); }
+    virtual void normalizeDrawDepth(int32_t maxDepth) { mDrawDepth /= static_cast<float>(maxDepth);  }
 
     GlProgram* getProgram() { return mProgram; }
+    const RenderRegion& getViewport() const { return mViewport; }
 private:
     GlProgram* mProgram;
     RenderRegion mViewport = {};
@@ -95,6 +98,7 @@ private:
     uint32_t mIndexCount = {};
     Array<GlVertexLayout> mVertexLayout = {};
     Array<GlBindingResource> mBindingResources = {};
+    float mDrawDepth = 0.f;
 };
 
 class GlStencilCoverTask : public GlRenderTask
@@ -105,6 +109,7 @@ public:
 
     void run() override;
 
+    void normalizeDrawDepth(int32_t maxDepth) override;
 private:
     GlRenderTask* mStencilTask;
     GlRenderTask* mCoverTask;
@@ -168,19 +173,10 @@ public:
 
     void run() override;
 
+    void normalizeDrawDepth(int32_t maxDepth) override;
 private:
     GlRenderTask* mClipTask;
     GlRenderTask* mMaskTask;
 };
-
-class GlClipClearTask : public GlRenderTask
-{
-public:
-    GlClipClearTask(): GlRenderTask(nullptr) {}
-    ~GlClipClearTask() override = default;
-
-    void run() override;
-};
-
 
 #endif /* _TVG_GL_RENDER_TASK_H_ */

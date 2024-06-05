@@ -41,6 +41,12 @@ void GlRenderTask::run()
     // bind shader
     mProgram->load();
 
+    int32_t dLoc = mProgram->getUniformLocation("uDepth");
+    if (dLoc >= 0) {
+        // fixme: prevent compiler warning: macro expands to multiple statements [-Wmultistatement-macros]
+        GL_CHECK(glUniform1f(dLoc, mDrawDepth));
+    }
+
     // setup scissor rect
     GL_CHECK(glScissor(mViewport.x, mViewport.y, mViewport.w, mViewport.h));
 
@@ -141,6 +147,12 @@ void GlStencilCoverTask::run()
     GL_CHECK(glDisable(GL_STENCIL_TEST));
 }
 
+void GlStencilCoverTask::normalizeDrawDepth(int32_t maxDepth)
+{
+    mCoverTask->normalizeDrawDepth(maxDepth);
+    mStencilTask->normalizeDrawDepth(maxDepth);
+}
+
 GlComposeTask::GlComposeTask(GlProgram* program, GLuint target, GlRenderTarget* fbo, Array<GlRenderTask*>&& tasks)
  :GlRenderTask(program) ,mTargetFbo(target), mFbo(fbo), mTasks()
 {
@@ -162,10 +174,14 @@ void GlComposeTask::run()
     GL_CHECK(glBindFramebuffer(GL_FRAMEBUFFER, getSelfFbo()));
     GL_CHECK(glViewport(0, 0, mFbo->getWidth(), mFbo->getHeight()));
 
+    const auto& vp = getViewport();
+
+    GL_CHECK(glScissor(vp.x, vp.y, vp.w, vp.h));
+
     // clear this fbo
     GL_CHECK(glClearColor(0, 0, 0, 0));
     GL_CHECK(glClearStencil(0));
-    GL_CHECK(glClearDepthf(1.0));
+    GL_CHECK(glClearDepthf(0.0));
     GL_CHECK(glDepthMask(1));
 
     GL_CHECK(glClear(GL_COLOR_BUFFER_BIT | GL_STENCIL_BUFFER_BIT | GL_DEPTH_BUFFER_BIT));
@@ -191,7 +207,14 @@ void GlComposeTask::onResolve() {
     GL_CHECK(glBindFramebuffer(GL_READ_FRAMEBUFFER, getSelfFbo()));
     GL_CHECK(glBindFramebuffer(GL_DRAW_FRAMEBUFFER, getResolveFboId()));
 
-    GL_CHECK(glBlitFramebuffer(0, 0, mFbo->getWidth(), mFbo->getHeight(), 0, 0, mFbo->getWidth(), mFbo->getHeight(), GL_COLOR_BUFFER_BIT, GL_NEAREST));
+    const auto& vp = getViewport();
+
+    auto x1 = vp.x;
+    auto y1 = vp.y;
+    auto x2 = x1 + vp.w;
+    auto y2 = y1 + vp.h;
+
+    GL_CHECK(glBlitFramebuffer(x1, y1, x2, y2, x1, y1, x2, y2, GL_COLOR_BUFFER_BIT, GL_NEAREST));
 }
 
 GlBlitTask::GlBlitTask(GlProgram* program, GLuint target, GlRenderTarget* fbo, Array<GlRenderTask*>&& tasks)
@@ -237,7 +260,6 @@ GlClipTask::GlClipTask(GlRenderTask* clip, GlRenderTask* mask)
 void GlClipTask::run()
 {
     GL_CHECK(glEnable(GL_STENCIL_TEST));
-    GL_CHECK(glDepthFunc(GL_ALWAYS));
     GL_CHECK(glColorMask(0, 0, 0, 0));
     // draw clip path as normal stencil mask
     GL_CHECK(glStencilFuncSeparate(GL_FRONT, GL_ALWAYS, 0x1, 0xFF));
@@ -258,15 +280,11 @@ void GlClipTask::run()
 
     GL_CHECK(glColorMask(1, 1, 1, 1));
     GL_CHECK(glDepthMask(0));
-    GL_CHECK(glDepthFunc(GL_LESS));
     GL_CHECK(glDisable(GL_STENCIL_TEST));
 }
 
-void GlClipClearTask::run()
+void GlClipTask::normalizeDrawDepth(int32_t maxDepth)
 {
-    GL_CHECK(glDisable(GL_SCISSOR_TEST));
-    GL_CHECK(glDepthMask(1));
-    GL_CHECK(glClear(GL_DEPTH_BUFFER_BIT));
-    GL_CHECK(glDepthMask(0));
-    GL_CHECK(glEnable(GL_SCISSOR_TEST));
+    mClipTask->normalizeDrawDepth(maxDepth);
+    mMaskTask->normalizeDrawDepth(maxDepth);
 }

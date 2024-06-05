@@ -85,8 +85,8 @@ private:
     ~GlRenderer();
 
     void initShaders();
-    void drawPrimitive(GlShape& sdata, uint8_t r, uint8_t g, uint8_t b, uint8_t a, RenderUpdateFlag flag);
-    void drawPrimitive(GlShape& sdata, const Fill* fill, RenderUpdateFlag flag);
+    void drawPrimitive(GlShape& sdata, uint8_t r, uint8_t g, uint8_t b, uint8_t a, RenderUpdateFlag flag, int32_t depth);
+    void drawPrimitive(GlShape& sdata, const Fill* fill, RenderUpdateFlag flag, int32_t depth);
     void drawClip(Array<RenderData>& clips);
 
     GlRenderPass* currentPass();
