@@ -447,7 +447,6 @@ TVG_API Tvg_Result tvg_shape_get_stroke_join(const Tvg_Paint* paint, Tvg_Stroke_
 
 TVG_API Tvg_Result tvg_shape_set_stroke_miterlimit(Tvg_Paint* paint, float ml)
 {
-    if (ml < 0.0f) return TVG_RESULT_NOT_SUPPORTED;
     if (!paint) return TVG_RESULT_INVALID_ARGUMENT;
     return (Tvg_Result) reinterpret_cast<Shape*>(paint)->strokeMiterlimit(ml);
 }
