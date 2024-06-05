@@ -362,6 +362,7 @@ Result Shape::strokeJoin(StrokeJoin join) noexcept
     return Result::Success;
 }
 
+
 Result Shape::strokeMiterlimit(float miterlimit) noexcept
 {
     // https://www.w3.org/TR/SVG2/painting.html#LineJoin
@@ -385,9 +386,23 @@ StrokeJoin Shape::strokeJoin() const noexcept
     return pImpl->rs.strokeJoin();
 }
 
+
 float Shape::strokeMiterlimit() const noexcept
 {
     return pImpl->rs.strokeMiterlimit();
+}
+
+
+Result Shape::strokeTrim(float begin, float end, bool simultaneous) noexcept
+{
+    pImpl->strokeTrim(begin, end, simultaneous);
+    return Result::Success;
+}
+
+
+bool Shape::strokeTrim(float* begin, float* end) const noexcept
+{
+    return pImpl->strokeTrim(begin, end);
 }
 
 

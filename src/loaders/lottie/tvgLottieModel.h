@@ -571,6 +571,15 @@ struct LottieLayer : LottieGroup
     Type type = Null;
     bool autoOrient = false;
     bool matteSrc = false;
+
+    LottieLayer* layerByIdx(int16_t idx)
+    {
+        for (auto child = children.begin(); child < children.end(); ++child) {
+            auto layer = static_cast<LottieLayer*>(*child);
+            if (layer->idx == idx) return layer;
+        }
+        return nullptr;
+    }
 };
 
 
