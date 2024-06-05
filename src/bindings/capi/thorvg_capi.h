@@ -1305,7 +1305,6 @@ TVG_API Tvg_Result tvg_shape_get_path_commands(const Tvg_Paint* paint, const Tvg
 * \return Tvg_Result enumeration.
 * \retval TVG_RESULT_SUCCESS Succeed.
 * \retval TVG_RESULT_INVALID_ARGUMENT An invalid Tvg_Paint pointer.
-* \retval TVG_RESULT_FAILED_ALLOCATION An internal error with a memory allocation.
 */
 TVG_API Tvg_Result tvg_shape_set_stroke_width(Tvg_Paint* paint, float width);
 
@@ -1335,7 +1334,6 @@ TVG_API Tvg_Result tvg_shape_get_stroke_width(const Tvg_Paint* paint, float* wid
 * \return Tvg_Result enumeration.
 * \retval TVG_RESULT_SUCCESS Succeed.
 * \retval TVG_RESULT_INVALID_ARGUMENT An invalid Tvg_Paint pointer.
-* \retval TVG_RESULT_FAILED_ALLOCATION An internal error with a memory allocation.
 *
 * \note Either a solid color or a gradient fill is applied, depending on what was set as last.
 */
@@ -1368,8 +1366,7 @@ TVG_API Tvg_Result tvg_shape_get_stroke_color(const Tvg_Paint* paint, uint8_t* r
 * \return Tvg_Result enumeration.
 * \retval TVG_RESULT_SUCCESS Succeed.
 * \retval TVG_RESULT_INVALID_ARGUMENT An invalid Tvg_Paint pointer.
-* \retval TVG_RESULT_FAILED_ALLOCATION An internal error with a memory allocation.
-* \retval TVG_RESULT_MEMORY_CORRUPTION An invalid Tvg_Gradient pointer.
+* \retval TVG_RESULT_MEMORY_CORRUPTION An invalid Tvg_Gradient pointer or an error with accessing it.
 *
 * \note Either a solid color or a gradient fill is applied, depending on what was set as last.
 */
@@ -1385,8 +1382,7 @@ TVG_API Tvg_Result tvg_shape_set_stroke_linear_gradient(Tvg_Paint* paint, Tvg_Gr
 * \return Tvg_Result enumeration.
 * \retval TVG_RESULT_SUCCESS Succeed.
 * \retval TVG_RESULT_INVALID_ARGUMENT An invalid Tvg_Paint pointer.
-* \retval TVG_RESULT_FAILED_ALLOCATION An internal error with a memory allocation.
-* \retval TVG_RESULT_MEMORY_CORRUPTION An invalid Tvg_Gradient pointer.
+* \retval TVG_RESULT_MEMORY_CORRUPTION An invalid Tvg_Gradient pointer or an error with accessing it.
 *
 * \note Either a solid color or a gradient fill is applied, depending on what was set as last.
 */
@@ -1459,7 +1455,6 @@ TVG_API Tvg_Result tvg_shape_get_stroke_dash(const Tvg_Paint* paint, const float
 * \return Tvg_Result enumeration.
 * \retval TVG_RESULT_SUCCESS Succeed.
 * \retval TVG_RESULT_INVALID_ARGUMENT An invalid Tvg_Paint pointer.
-* \retval TVG_RESULT_FAILED_ALLOCATION An internal error with a memory allocation.
 */
 TVG_API Tvg_Result tvg_shape_set_stroke_cap(Tvg_Paint* paint, Tvg_Stroke_Cap cap);
 
@@ -1486,7 +1481,6 @@ TVG_API Tvg_Result tvg_shape_get_stroke_cap(const Tvg_Paint* paint, Tvg_Stroke_C
 * \return Tvg_Result enumeration.
 * \retval TVG_RESULT_SUCCESS Succeed.
 * \retval TVG_RESULT_INVALID_ARGUMENT An invalid Tvg_Paint pointer.
-* \retval TVG_RESULT_FAILED_ALLOCATION An internal error with a memory allocation.
 */
 TVG_API Tvg_Result tvg_shape_set_stroke_join(Tvg_Paint* paint, Tvg_Stroke_Join join);
 
@@ -1513,8 +1507,7 @@ TVG_API Tvg_Result tvg_shape_get_stroke_join(const Tvg_Paint* paint, Tvg_Stroke_
 * \return Tvg_Result enumeration.
 * \retval TVG_RESULT_SUCCESS Succeed.
 * \retval TVG_RESULT_INVALID_ARGUMENT An invalid Tvg_Paint pointer.
-* \retval TVG_RESULT_NOT_SUPPORTED Unsupported value.
-* \retval TVG_RESULT_FAILED_ALLOCATION An internal error with a memory allocation.
+* \retval TVG_RESULT_NOT_SUPPORTED Unsupported @p miterlimit values (less than zero).
 *
 * \since 0.11
 */
@@ -1639,7 +1632,6 @@ TVG_API Tvg_Result tvg_shape_get_fill_rule(const Tvg_Paint* paint, Tvg_Fill_Rule
 * \return Tvg_Result enumeration.
 * \retval TVG_RESULT_SUCCESS Succeed.
 * \retval TVG_RESULT_INVALID_ARGUMENT An invalid Tvg_Paint pointer.
-* \retval TVG_RESULT_FAILED_ALLOCATION An internal error with a memory allocation.
 *
 * \since 0.10
 */
