@@ -34,14 +34,6 @@ struct AASpans
    int32_t yEnd;
 };
 
-static inline void _swap(float& a, float& b, float& tmp)
-{
-    tmp = a;
-    a = b;
-    b = tmp;
-}
-
-
 //Careful! Shared resource, No support threading
 static float dudx, dvdx;
 static float dxdya, dxdyb, dudya, dvdya;
@@ -650,28 +642,27 @@ static void _rasterPolygonImage(SwSurface* surface, const SwImage* image, const 
 
     float off_y;
     float dxdy[3] = {0.0f, 0.0f, 0.0f};
-    float tmp;
 
     auto upper = false;
 
     //Sort the vertices in ascending Y order
     if (y[0] > y[1]) {
-        _swap(x[0], x[1], tmp);
-        _swap(y[0], y[1], tmp);
-        _swap(u[0], u[1], tmp);
-        _swap(v[0], v[1], tmp);
+        std::swap(x[0], x[1]);
+        std::swap(y[0], y[1]);
+        std::swap(u[0], u[1]);
+        std::swap(v[0], v[1]);
     }
     if (y[0] > y[2])  {
-        _swap(x[0], x[2], tmp);
-        _swap(y[0], y[2], tmp);
-        _swap(u[0], u[2], tmp);
-        _swap(v[0], v[2], tmp);
+        std::swap(x[0], x[2]);
+        std::swap(y[0], y[2]);
+        std::swap(u[0], u[2]);
+        std::swap(v[0], v[2]);
     }
     if (y[1] > y[2]) {
-        _swap(x[1], x[2], tmp);
-        _swap(y[1], y[2], tmp);
-        _swap(u[1], u[2], tmp);
-        _swap(v[1], v[2], tmp);
+        std::swap(x[1], x[2]);
+        std::swap(y[1], y[2]);
+        std::swap(u[1], u[2]);
+        std::swap(v[1], v[2]);
     }
 
     //Y indexes
