@@ -205,7 +205,7 @@ TEST_CASE("Stroking", "[tvgShape]")
     REQUIRE(begin == Approx(0.0).margin(0.000001));
     REQUIRE(end == Approx(1.0).margin(0.000001));
 
-    REQUIRE(shape->strokeTrim(0.3, 0.88, false) == Result::Success);
+    REQUIRE(shape->strokeTrim(0.3f, 0.88f, false) == Result::Success);
     REQUIRE(shape->strokeTrim(&begin, &end) == false);
     REQUIRE(begin == Approx(0.3).margin(0.000001));
     REQUIRE(end == Approx(0.88).margin(0.000001));
