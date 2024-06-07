@@ -287,14 +287,16 @@ const Fill* Shape::fill() const noexcept
 
 Result Shape::order(bool strokeFirst) noexcept
 {
-    pImpl->strokeFirst(strokeFirst);
+    if (!pImpl->strokeFirst(strokeFirst)) return Result::FailedAllocation;
+
     return Result::Success;
 }
 
 
 Result Shape::strokeWidth(float width) noexcept
 {
-    pImpl->strokeWidth(width);
+    if (!pImpl->strokeWidth(width)) return Result::FailedAllocation;
+
     return Result::Success;
 }
 
@@ -307,7 +309,8 @@ float Shape::strokeWidth() const noexcept
 
 Result Shape::strokeFill(uint8_t r, uint8_t g, uint8_t b, uint8_t a) noexcept
 {
-    pImpl->strokeFill(r, g, b, a);
+    if (!pImpl->strokeFill(r, g, b, a)) return Result::FailedAllocation;
+
     return Result::Success;
 }
 
@@ -346,14 +349,16 @@ uint32_t Shape::strokeDash(const float** dashPattern, float* offset) const noexc
 
 Result Shape::strokeCap(StrokeCap cap) noexcept
 {
-    pImpl->strokeCap(cap);
+    if (!pImpl->strokeCap(cap)) return Result::FailedAllocation;
+
     return Result::Success;
 }
 
 
 Result Shape::strokeJoin(StrokeJoin join) noexcept
 {
-    pImpl->strokeJoin(join);
+    if (!pImpl->strokeJoin(join)) return Result::FailedAllocation;
+
     return Result::Success;
 }
 
@@ -364,7 +369,8 @@ Result Shape::strokeMiterlimit(float miterlimit) noexcept
     // - A negative value for stroke-miterlimit must be treated as an illegal value.
     if (miterlimit < 0.0f) return Result::NonSupport;
     // TODO Find out a reasonable max value.
-    pImpl->strokeMiterlimit(miterlimit);
+    if (!pImpl->strokeMiterlimit(miterlimit)) return Result::FailedAllocation;
+
     return Result::Success;
 }
 
