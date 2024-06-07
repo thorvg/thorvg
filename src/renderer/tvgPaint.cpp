@@ -85,17 +85,8 @@ static Result _compFastTrack(Paint* cmpTarget, const RenderTransform* pTransform
         }
 
         //sorting
-        if (v1.x > v2.x) {
-            auto tmp = v2.x;
-            v2.x = v1.x;
-            v1.x = tmp;
-        }
-
-        if (v1.y > v2.y) {
-            auto tmp = v2.y;
-            v2.y = v1.y;
-            v1.y = tmp;
-        }
+        if (v1.x > v2.x) std::swap(v1.x, v2.x);
+        if (v1.y > v2.y) std::swap(v1.y, v2.y);
 
         viewport.x = static_cast<int32_t>(v1.x);
         viewport.y = static_cast<int32_t>(v1.y);
