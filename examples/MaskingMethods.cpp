@@ -386,6 +386,8 @@ void tvgDrawCmds(tvg::Canvas* canvas)
         image4->composite(std::move(mask4), tvg::CompositeMethod::InvAlphaMask);
         canvas->push(std::move(image4));
     }
+
+    free(data);
 }
 
 
