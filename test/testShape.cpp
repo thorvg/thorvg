@@ -201,7 +201,7 @@ TEST_CASE("Stroking", "[tvgShape]")
     REQUIRE(shape->strokeMiterlimit() == 0.00001f);
     REQUIRE(shape->strokeMiterlimit(1000.0f) == Result::Success);
     REQUIRE(shape->strokeMiterlimit() == 1000.0f);
-    REQUIRE(shape->strokeMiterlimit(-0.001f) == Result::InvalidArguments);
+    REQUIRE(shape->strokeMiterlimit(-0.001f) == Result::NonSupport);
 
     //Stroke Trim
     float begin, end;

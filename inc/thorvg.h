@@ -80,7 +80,7 @@ enum class Result
     InsufficientCondition, ///< The value returned in case the request cannot be processed - e.g. asking for properties of an object, which does not exist.
     FailedAllocation,      ///< The value returned in case of unsuccessful memory allocation.
     MemoryCorruption,      ///< The value returned in the event of bad memory handling - e.g. failing in pointer releasing or casting
-    NonSupport,            ///< The value returned in case of choosing unsupported engine features(options).
+    NonSupport,            ///< The value returned in case of choosing unsupported options.
     Unknown                ///< The value returned in all other cases.
 };
 
@@ -1025,7 +1025,7 @@ public:
      *
      * @param[in] miterlimit The miterlimit imposes a limit on the extent of the stroke join, when the @c StrokeJoin::Miter join style is set. The default value is 4.
      *
-     * @retval Result::Success when succeed or Result::InvalidArgument for @p miterlimit values less than zero.
+     * @retval Result::Success when succeed or Result::NonSupport for @p miterlimit values less than zero.
      * 
      * @since 0.11
      */
