@@ -966,7 +966,10 @@ SwRleData* rleRender(SwRleData* rle, const SwOutline* outline, const SwBBox& ren
 
             if (cellMod > 0) cellStart += sizeof(Cell) - cellMod;
 
-            auto cellsMax = reinterpret_cast<Cell*>((char*)rw.buffer + rw.bufferSize);
+            auto cellEnd = rw.bufferSize;
+            cellEnd -= cellEnd % sizeof(Cell);
+
+            auto cellsMax = reinterpret_cast<Cell*>((char*)rw.buffer + cellEnd);
             rw.cells = reinterpret_cast<Cell*>((char*)rw.buffer + cellStart);
 
             if (rw.cells >= cellsMax) goto reduce_bands;
