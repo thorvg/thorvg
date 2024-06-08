@@ -12,6 +12,7 @@ test_file = [
    'capiScene.cpp',
    'capiShape.cpp',
    'capiSwCanvas.cpp',
+   'capiText.cpp'
 ]
 
 tests = executable('capiUnitTests',
