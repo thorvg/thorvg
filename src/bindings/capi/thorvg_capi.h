@@ -179,7 +179,8 @@ typedef enum {
     TVG_IDENTIFIER_SCENE,       ///< A scene type paint.
     TVG_IDENTIFIER_PICTURE,     ///< A picture type paint.
     TVG_IDENTIFIER_LINEAR_GRAD, ///< A linear gradient type.
-    TVG_IDENTIFIER_RADIAL_GRAD  ///< A radial gradient type.
+    TVG_IDENTIFIER_RADIAL_GRAD, ///< A radial gradient type.
+    TVG_IDENTIFIER_TEXT         ///< A text type paint.
 } Tvg_Identifier;
 
 
@@ -2188,6 +2189,201 @@ TVG_API Tvg_Result tvg_scene_push(Tvg_Paint* scene, Tvg_Paint* paint);
 TVG_API Tvg_Result tvg_scene_clear(Tvg_Paint* scene, bool free);
 
 /** \} */   // end defgroup ThorVGCapi_Scene
+
+
+
+/**
+* \defgroup ThorVGCapi_Text Text
+* \brief A class to represent text objects in a graphical context, allowing for rendering and manipulation of unicode text.
+*
+* \note Experimental API
+*
+* \{
+*/
+
+/************************************************************************/
+/* Text API                                                            */
+/************************************************************************/
+/*!
+* \brief Creates a new text object.
+*
+* \return A new text object.
+*
+* \note Experimental API
+*/
+TVG_API Tvg_Paint* tvg_text_new(void);
+
+
+/**
+* \brief Sets the font properties for the text.
+*
+* This function allows you to define the font characteristics used for text rendering.
+* It sets the font name, size and optionally the style.
+*
+* \param[in] paint A Tvg_Paint pointer to the text object.
+* \param[in] name The name of the font. This should correspond to a font available in the canvas.
+* \param[in] size The size of the font in points.
+* \param[in] style The style of the font. If empty, the default style is used. Currently only 'italic' style is supported.
+*
+* \return Tvg_Result enumeration.
+* \retval TVG_RESULT_SUCCESS Succeed.
+* \retval TVG_RESULT_INVALID_ARGUMENT A \c nullptr passed as the \p paint argument.
+* \retval TVG_RESULT_INSUFFICIENT_CONDITION  The specified \p name cannot be found.
+*
+* \note Experimental API
+*/
+TVG_API Tvg_Result tvg_text_set_font(Tvg_Paint* paint, const char* name, float size, const char* style);
+
+
+/**
+* \brief Assigns the given unicode text to be rendered.
+*
+* This function sets the unicode text that will be displayed by the rendering system.
+* The text is set according to the specified UTF encoding method, which defaults to UTF-8.
+*
+* \param[in] paint A Tvg_Paint pointer to the text object.
+* \param[in] text The multi-byte text encoded with utf8 string to be rendered.
+*
+* \return Tvg_Result enumeration.
+* \retval TVG_RESULT_SUCCESS Succeed.
+* \retval TVG_RESULT_INVALID_ARGUMENT A \c nullptr passed as the \p paint argument.
+*
+* \note Experimental API
+*/
+TVG_API Tvg_Result tvg_text_set_text(Tvg_Paint* paint, const char* text);
+
+
+/**
+* \brief Sets the text solid color.
+*
+* \param[in] paint A Tvg_Paint pointer to the text object.
+* \param[in] r The red color channel value in the range [0 ~ 255]. The default value is 0.
+* \param[in] g The green color channel value in the range [0 ~ 255]. The default value is 0.
+* \param[in] b The blue color channel value in the range [0 ~ 255]. The default value is 0.
+*
+* \return Tvg_Result enumeration.
+* \retval TVG_RESULT_SUCCESS Succeed.
+* \retval TVG_RESULT_INVALID_ARGUMENT A \c nullptr passed as the \p paint argument.
+* \retval TVG_RESULT_INSUFFICIENT_CONDITION The font has not been set up prior to this operation.
+*
+* \note Either a solid color or a gradient fill is applied, depending on what was set as last.
+* \note Experimental API
+*
+* \see tvg_text_set_font()
+*/
+TVG_API Tvg_Result tvg_text_set_fill_color(Tvg_Paint* paint, uint8_t r, uint8_t g, uint8_t b);
+
+
+/**
+* \brief Sets the linear gradient fill for the text.
+*
+* \param[in] paint A Tvg_Paint pointer to the text object.
+* \param[in] grad The linear gradient fill
+*
+* \return Tvg_Result enumeration.
+* \retval TVG_RESULT_SUCCESS Succeed.
+* \retval TVG_RESULT_INVALID_ARGUMENT A \c nullptr passed as the \p paint argument.
+* \retval TVG_RESULT_MEMORY_CORRUPTION An invalid Tvg_Gradient pointer.
+* \retval TVG_RESULT_INSUFFICIENT_CONDITION The font has not been set up prior to this operation.
+*
+* \note Either a solid color or a gradient fill is applied, depending on what was set as last.
+* \note Experimental API
+*
+* \see tvg_text_set_font()
+*/
+TVG_API Tvg_Result tvg_text_set_linear_gradient(Tvg_Paint* paint, Tvg_Gradient* gradient);
+
+
+/**
+* \brief Sets the radial gradient fill for the text.
+*
+* \param[in] paint A Tvg_Paint pointer to the text object.
+* \param[in] grad The radial gradient fill
+*
+* \return Tvg_Result enumeration.
+* \retval TVG_RESULT_SUCCESS Succeed.
+* \retval TVG_RESULT_INVALID_ARGUMENT A \c nullptr passed as the \p paint argument.
+* \retval TVG_RESULT_MEMORY_CORRUPTION An invalid Tvg_Gradient pointer.
+* \retval TVG_RESULT_INSUFFICIENT_CONDITION The font has not been set up prior to this operation.
+*
+* \note Either a solid color or a gradient fill is applied, depending on what was set as last.
+* \note Experimental API
+*
+* \see tvg_text_set_font()
+*/
+TVG_API Tvg_Result tvg_text_set_radial_gradient(Tvg_Paint* paint, Tvg_Gradient* gradient);
+
+
+/**
+* \brief Loads a scalable font data from a file.
+*
+* ThorVG efficiently caches the loaded data using the specified \p path as a key.
+* This means that loading the same file again will not result in duplicate operations;
+* instead, ThorVG will reuse the previously loaded font data.
+*
+* \param[in] path The path to the font file.
+*
+* \return Tvg_Result enumeration.
+* \retval TVG_RESULT_SUCCESS Succeed.
+* \retval TVG_RESULT_INVALID_ARGUMENT An invalid \p path passed as an argument.
+* \retval TVG_RESULT_NOT_SUPPORTED When trying to load a file with an unknown extension.
+* \retval TVG_RESULT_UNKNOWN An error occurs at a later stage.
+*
+* \note Experimental API
+*
+* \see tvg_font_unload()
+*/
+TVG_API Tvg_Result tvg_font_load(const char* path);
+
+
+/**
+* \brief Loads a scalable font data from a memory block of a given size.
+*
+* ThorVG efficiently caches the loaded font data using the specified \p name as a key.
+* This means that loading the same fonts again will not result in duplicate operations.
+* Instead, ThorVG will reuse the previously loaded font data.
+*
+* \param[in] name The name under which the font will be stored and accessible (e.x. in a \p tvg_text_set_font API).
+* \param[in] data A pointer to a memory location where the content of the font data is stored.
+* \param[in] size The size in bytes of the memory occupied by the @p data.
+* \param[in] mimetype Mimetype or extension of font data. In case a \c NULL or an empty "" value is provided the loader will be determined automatically.
+* \param[in] copy If @c true the data are copied into the engine local buffer, otherwise they are not (default).
+*
+* \return Tvg_Result enumeration.
+* \retval TVG_RESULT_SUCCESS Succeed.
+* \retval TVG_RESULT_INVALID_ARGUMENT If no name is provided or if \p size is zero while \p data points to a valid memory location.
+* \retval TVG_RESULT_NOT_SUPPORTED When trying to load a file with an unknown extension.
+* \retval TVG_RESULT_INSUFFICIENT_CONDITION When trying to unload the font data that has not been previously loaded.
+* \retval TVG_RESULT_UNKNOWN An error occurs at a later stage.
+*
+* \warning: It's the user responsibility to release the \p data memory.
+*
+* \note To unload the font data loaded using this API, pass the proper \p name and \c nullptr as \p data.
+* \note Experimental API
+*/
+TVG_API Tvg_Result tvg_font_load_data(const char* name, const char* data, uint32_t size, const char *mimetype, bool copy);
+
+
+/**
+* \brief Unloads the specified scalable font data that was previously loaded.
+*
+* This function is used to release resources associated with a font file that has been loaded into memory.
+*
+* \param[in] path The path to the loaded font file.
+*
+* \return Tvg_Result enumeration.
+* \retval TVG_RESULT_SUCCESS Succeed.
+* \retval TVG_RESULT_INSUFFICIENT_CONDITION The loader is not initialized.
+*
+* \note If the font data is currently in use, it will not be immediately unloaded.
+* \note Experimental API
+*
+* \see tvg_font_load()
+*/
+TVG_API Tvg_Result tvg_font_unload(const char* path);
+
+
+/** \} */   // end defgroup ThorVGCapi_Text
 
 
 /**
