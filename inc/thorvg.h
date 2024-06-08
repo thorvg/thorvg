@@ -1208,7 +1208,7 @@ public:
      * @param[out] begin The starting point of the segment to display along the path.
      * @param[out] end Specifies the end of the segment to display along the path.
      *
-     * @retval @c true if trimming is applied simultaneously to all paths of the shape, @c false otherwise.
+     * @return @c true if trimming is applied simultaneously to all paths of the shape, @c false otherwise.
      *
      * @note Experimental API
      */
@@ -1322,7 +1322,6 @@ public:
      * when the @p copy has @c false. This means that loading the same data again will not result in duplicate operations
      * for the sharable @p data. Instead, ThorVG will reuse the previously loaded picture data.
      *
-     * @param[in] paint A Tvg_Paint pointer to the picture object.
      * @param[in] data A pointer to a memory location where the content of the picture raw data is stored.
      * @param[in] w The width of the image @p data in pixels.
      * @param[in] h The height of the image @p data in pixels.
