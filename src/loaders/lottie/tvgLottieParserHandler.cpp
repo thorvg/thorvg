@@ -86,10 +86,14 @@ bool LookaheadParserHandler::nextArrayValue()
 
 int LookaheadParserHandler::getInt()
 {
-    if (state != kHasNumber || !val.IsInt()) {
+    if (state != kHasNumber) {
         Error();
         return 0;
     }
+
+    // attempt to parse as float as a backup
+    if (!val.IsInt() && val.IsNumber()) return (int)getFloat();
+
     auto result = val.GetInt();
     parseNext();
     return result;
