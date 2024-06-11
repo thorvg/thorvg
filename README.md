@@ -302,6 +302,8 @@ Let's suppose the progress variable determines the position of the animation, ra
   <img width="600" height="auto" src="https://github.com/thorvg/thorvg/blob/main/res/example_lottie.gif">
 </p>
 
+Please check out the [ThorVG Test App](https://thorvg-perf-test.vercel.app/) to see the performance of various Lottie animations powered by ThorVG.
+
 [Back to contents](#contents)
 <br />
 <br />
