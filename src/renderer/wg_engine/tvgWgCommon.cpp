@@ -27,17 +27,14 @@
 // context
 //*****************************************************************************
 
-void WgContext::initialize(void* disp_inst, void* wind_serf, uint32_t w, uint32_t h)
+void WgContext::initialize(WGPUInstance instance, WGPUSurface surface)
 {
-    // create instance
-    WGPUInstanceDescriptor instanceDesc{};
-    instanceDesc.nextInChain = nullptr;
-    instance = wgpuCreateInstance(&instanceDesc);
     assert(instance);
-
-    // cretae netive surface
-    surface = createSurface(instance, disp_inst, wind_serf);
     assert(surface);
+    
+    // store global instance and surface
+    this->instance = instance;
+    this->surface = surface;
 
     // request adapter options
     WGPURequestAdapterOptions requestAdapterOptions{};
@@ -89,20 +86,6 @@ void WgContext::initialize(void* disp_inst, void* wind_serf, uint32_t w, uint32_
     };
     // set device error handling
     wgpuDeviceSetUncapturedErrorCallback(device, onDeviceError, nullptr);
-
-    // configure surface
-    WGPUSurfaceConfiguration surfaceConfiguration{};
-    surfaceConfiguration.nextInChain = nullptr;
-    surfaceConfiguration.device = device;
-    surfaceConfiguration.format = WGPUTextureFormat_BGRA8Unorm;
-    surfaceConfiguration.usage = WGPUTextureUsage_CopyDst;
-    surfaceConfiguration.viewFormatCount = 0;
-    surfaceConfiguration.viewFormats = nullptr;
-    surfaceConfiguration.alphaMode = WGPUCompositeAlphaMode_Auto;
-    surfaceConfiguration.width = w;
-    surfaceConfiguration.height = h;
-    surfaceConfiguration.presentMode = WGPUPresentMode_Mailbox;
-    wgpuSurfaceConfigure(surface, &surfaceConfiguration);
 
     queue = wgpuDeviceGetQueue(device);
     assert(queue);
@@ -348,28 +331,6 @@ void WgContext::releaseIndexBuffer(WGPUBuffer& buffer)
     releaseBuffer(buffer);
 }
 
-
-WGPUSurface WgContext::createSurface(WGPUInstance instance, void* disp_inst, void* wind_serf)
-{
-    #if defined(_WIN32)
-    WGPUSurfaceDescriptorFromWindowsHWND surfaceDescNative{};
-    surfaceDescNative.chain.next = nullptr;
-    surfaceDescNative.chain.sType = WGPUSType_SurfaceDescriptorFromWindowsHWND;
-    surfaceDescNative.hinstance = disp_inst;
-    surfaceDescNative.hwnd = wind_serf;
-    #elif defined(__GNUC__)
-    WGPUSurfaceDescriptorFromXlibWindow surfaceDescNative;
-    surfaceDescNative.chain.next = NULL;
-    surfaceDescNative.chain.sType = WGPUSType_SurfaceDescriptorFromXlibWindow;
-    surfaceDescNative.display = disp_inst;
-    surfaceDescNative.window = (uint64_t)wind_serf;
-    #endif
-    WGPUSurfaceDescriptor surfaceDesc{};
-    surfaceDesc.nextInChain = (const WGPUChainedStruct*)&surfaceDescNative;
-    surfaceDesc.label = "The surface";
-    return wgpuInstanceCreateSurface(instance, &surfaceDesc);
-}
-
 //*****************************************************************************
 // bind group
 //*****************************************************************************
@@ -468,7 +429,7 @@ WGPUBindGroupLayoutEntry WgBindGroup::makeBindGroupLayoutEntryTexture(uint32_t b
 }
 
 
-WGPUBindGroupLayoutEntry WgBindGroup::makeBindGroupLayoutEntryStorageTexture(uint32_t binding, WGPUStorageTextureAccess access)
+WGPUBindGroupLayoutEntry WgBindGroup::makeBindGroupLayoutEntryStorage(uint32_t binding, WGPUStorageTextureAccess access, WGPUTextureFormat format)
 {
     WGPUBindGroupLayoutEntry bindGroupLayoutEntry{};
     bindGroupLayoutEntry.nextInChain = nullptr;
@@ -476,7 +437,7 @@ WGPUBindGroupLayoutEntry WgBindGroup::makeBindGroupLayoutEntryStorageTexture(uin
     bindGroupLayoutEntry.visibility = WGPUShaderStage_Fragment | WGPUShaderStage_Compute;
     bindGroupLayoutEntry.storageTexture.nextInChain = nullptr;
     bindGroupLayoutEntry.storageTexture.access = access;
-    bindGroupLayoutEntry.storageTexture.format = WGPUTextureFormat_BGRA8Unorm;
+    bindGroupLayoutEntry.storageTexture.format = format;
     bindGroupLayoutEntry.storageTexture.viewDimension = WGPUTextureViewDimension_2D;
     return bindGroupLayoutEntry;
 }
@@ -677,7 +638,7 @@ WGPUColorTargetState WgRenderPipeline::makeColorTargetState(const WGPUBlendState
 {
     WGPUColorTargetState colorTargetState{};
     colorTargetState.nextInChain = nullptr;
-    colorTargetState.format = WGPUTextureFormat_BGRA8Unorm;
+    colorTargetState.format = WGPUTextureFormat_RGBA8Unorm;
     colorTargetState.blend = blendState;
     colorTargetState.writeMask = writeMask;
     return colorTargetState;

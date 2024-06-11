@@ -52,17 +52,18 @@ WgCanvas::~WgCanvas()
     delete pImpl;
 }
 
-Result WgCanvas::target(void *disp_inst, void *wind_serf, uint32_t w, uint32_t h) noexcept
+Result WgCanvas::target(void* instance, void* surface, uint32_t w, uint32_t h) noexcept
 {
 #ifdef THORVG_WG_RASTER_SUPPORT
-    if (!wind_serf) return Result::InvalidArguments;
+    if (!instance) return Result::InvalidArguments;
+    if (!surface) return Result::InvalidArguments;
     if ((w == 0) || (h == 0)) return Result::InvalidArguments;
 
     //We know renderer type, avoid dynamic_cast for performance.
     auto renderer = static_cast<WgRenderer*>(Canvas::pImpl->renderer);
     if (!renderer) return Result::MemoryCorruption;
 
-    if (!renderer->target(disp_inst, wind_serf, w, h)) return Result::Unknown;
+    if (!renderer->target((WGPUInstance)instance, (WGPUSurface)surface, w, h)) return Result::Unknown;
     Canvas::pImpl->vport = {0, 0, (int32_t)w, (int32_t)h};
     renderer->viewport(Canvas::pImpl->vport);
 

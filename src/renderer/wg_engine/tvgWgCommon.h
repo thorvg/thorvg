@@ -59,7 +59,7 @@ struct WgContext {
 
     WgPipelines* pipelines{}; // external handle (do not release)
     
-    void initialize(void* disp_inst, void* wind_serf, uint32_t w, uint32_t h);
+    void initialize(WGPUInstance instance, WGPUSurface surface);
     void release();
 
     void executeCommandEncoder(WGPUCommandEncoder commandEncoder);
@@ -80,8 +80,6 @@ struct WgContext {
     void allocateIndexBufferFan(uint64_t size);
     void releaseVertexBuffer(WGPUBuffer& buffer);
     void releaseIndexBuffer(WGPUBuffer& buffer);
-
-    static WGPUSurface createSurface(WGPUInstance instance, void* disp_inst, void* wind_serf);
 };
 
 struct WgBindGroup
@@ -98,7 +96,7 @@ struct WgBindGroup
     static WGPUBindGroupLayoutEntry makeBindGroupLayoutEntryBuffer(uint32_t binding);
     static WGPUBindGroupLayoutEntry makeBindGroupLayoutEntrySampler(uint32_t binding);
     static WGPUBindGroupLayoutEntry makeBindGroupLayoutEntryTexture(uint32_t binding);
-    static WGPUBindGroupLayoutEntry makeBindGroupLayoutEntryStorageTexture(uint32_t binding, WGPUStorageTextureAccess access);
+    static WGPUBindGroupLayoutEntry makeBindGroupLayoutEntryStorage(uint32_t binding, WGPUStorageTextureAccess access, WGPUTextureFormat format);
 
     static WGPUBuffer createBuffer(WGPUDevice device, WGPUQueue queue, const void *data, size_t size);
     static WGPUBindGroup createBindGroup(WGPUDevice device, WGPUBindGroupLayout layout, const WGPUBindGroupEntry* bindGroupEntries, uint32_t count);

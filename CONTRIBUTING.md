@@ -73,15 +73,15 @@ Here's a sample commit message for clarity:
 
   Note: If the source paint lacks path information, clipping may not produce the desired effect.
 
-  @API Additions:
+  API Additions:
   enum CompositeMethod {None = 0, ClipPath};
   Result Paint::composite(std::unique_ptr<Paint> target, CompositeMethod method) const noexcept;
 
-  @Examples: Introduced ClipPath
+  Examples: Introduced ClipPath
 
-  @References: [Provide any relevant links, such as screenshots.]
+  References: [Provide any relevant links, such as screenshots.]
 
-  @Issues: [Link to the issue]
+  Issues: [Link to the issue]
 
 ## Pull Request
 

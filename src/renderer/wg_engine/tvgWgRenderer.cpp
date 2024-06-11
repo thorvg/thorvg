@@ -305,18 +305,33 @@ bool WgRenderer::target(uint32_t* buffer, uint32_t stride, uint32_t w, uint32_t 
 
 
 // target for native window handle
-bool WgRenderer::target(void *disp_inst, void *wind_serf, uint32_t w, uint32_t h)
+bool WgRenderer::target(WGPUInstance instance, WGPUSurface surface, uint32_t w, uint32_t h)
 {
     // store target surface properties
     mTargetSurface.stride = w;
     mTargetSurface.w = w > 0 ? w : 1;
     mTargetSurface.h = h > 0 ? h : 1;
     
-    mContext.initialize(disp_inst, wind_serf, w, h);
+    mContext.initialize(instance, surface);
+
+    // configure surface
+    WGPUSurfaceConfiguration surfaceConfiguration{};
+    surfaceConfiguration.nextInChain = nullptr;
+    surfaceConfiguration.device = mContext.device;
+    surfaceConfiguration.format = WGPUTextureFormat_BGRA8Unorm;
+    surfaceConfiguration.usage = WGPUTextureUsage_CopyDst;
+    surfaceConfiguration.viewFormatCount = 0;
+    surfaceConfiguration.viewFormats = nullptr;
+    surfaceConfiguration.alphaMode = WGPUCompositeAlphaMode_Auto;
+    surfaceConfiguration.width = w;
+    surfaceConfiguration.height = h;
+    surfaceConfiguration.presentMode = WGPUPresentMode_Immediate;
+    wgpuSurfaceConfigure(mContext.surface, &surfaceConfiguration);
+
     initialize();
     mRenderTarget.initialize(mContext, w, h, WG_SSAA_SAMPLES);
     mRenderStorageRoot.initialize(mContext, w, h, WG_SSAA_SAMPLES);
-    mRenderStorageScreen.initialize(mContext, w, h);
+    mRenderStorageScreen.initialize(mContext, w, h, 1, WGPUTextureFormat_BGRA8Unorm);
 
     return true;
 }

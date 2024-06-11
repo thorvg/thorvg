@@ -52,7 +52,7 @@ public:
     bool sync() override;
 
     bool target(uint32_t* buffer, uint32_t stride, uint32_t w, uint32_t h);
-    bool target(void* disp_inst, void* wind_serf, uint32_t w, uint32_t h); // cross-olatform solution
+    bool target(WGPUInstance instance, WGPUSurface surface, uint32_t w, uint32_t h);
 
     Compositor* target(const RenderRegion& region, ColorSpace cs) override;
     bool beginComposite(Compositor* cmp, CompositeMethod method, uint8_t opacity) override;
