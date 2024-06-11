@@ -112,6 +112,7 @@ protected:
     WGPUPipelineLayout mPipelineLayout{};
     WGPUShaderModule mShaderModule{};
 public:
+    virtual ~WgPipeline() {}
     virtual void initialize(WGPUDevice device) = 0;
     virtual void release();
 
