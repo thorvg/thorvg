@@ -74,13 +74,14 @@ RenderData WgRenderer::prepare(const RenderShape& rshape, RenderData data, const
     auto renderDataShape = (WgRenderDataShape*)data;
     if (!renderDataShape)
         renderDataShape = mRenderDataShapePool.allocate(mContext);
-    
+
     // update geometry
-    if (flags & (RenderUpdateFlag::Path | RenderUpdateFlag::Stroke))
+    if ((!data) || (flags & (RenderUpdateFlag::Path | RenderUpdateFlag::Stroke))) {
         renderDataShape->updateMeshes(mContext, rshape);
+    }
 
      // update paint settings
-    if (flags & (RenderUpdateFlag::Transform | RenderUpdateFlag::Blend)) {
+    if ((!data) || (flags & (RenderUpdateFlag::Transform | RenderUpdateFlag::Blend))) {
         WgShaderTypeMat4x4f modelMat(transform);
         WgShaderTypeBlendSettings blendSettings(mTargetSurface.cs, opacity);
         renderDataShape->bindGroupPaint.initialize(mContext.device, mContext.queue, modelMat, blendSettings);
