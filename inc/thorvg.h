@@ -1838,7 +1838,10 @@ public:
     ~WgCanvas();
 
     /**
-     * @brief Sets the target window for the rasterization.
+     * @brief Sets the drawing target for the rasterization.
+     *
+     * @param[in] instance WGPUInstance, context for all other wgpu objects.
+     * @param[in] surace WGPUSurface, handle to a presentable surface.
      *
      * @warning Please do not use it, this API is not official one. It could be modified in the next version.
      *
