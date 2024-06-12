@@ -55,7 +55,7 @@ void WgPipelineFillShapeWinding::initialize(WGPUDevice device)
     auto pipelineLabel = "The render pipeline fill shape winding";
 
     // allocate all pipeline handles
-    allocate(device, WgPipelineBlendType::Src,
+    allocate(device, WgPipelineBlendType::Add, WGPUColorWriteMask_None,
              vertexBufferLayouts, ARRAY_ELEMENTS_COUNT(vertexBufferLayouts),
              bindGroupLayouts, ARRAY_ELEMENTS_COUNT(bindGroupLayouts),
              stencilFuncionFront, stencilOperationFront, stencilFuncionBack, stencilOperationBack,
@@ -89,7 +89,7 @@ void WgPipelineFillShapeEvenOdd::initialize(WGPUDevice device)
     auto pipelineLabel = "The render pipeline fill shape Even Odd";
 
     // allocate all pipeline handles
-    allocate(device, WgPipelineBlendType::Src,
+    allocate(device, WgPipelineBlendType::Add, WGPUColorWriteMask_None,
              vertexBufferLayouts, ARRAY_ELEMENTS_COUNT(vertexBufferLayouts),
              bindGroupLayouts, ARRAY_ELEMENTS_COUNT(bindGroupLayouts),
              stencilFuncionFront, stencilOperationFront, stencilFuncionBack, stencilOperationBack,
@@ -121,7 +121,7 @@ void WgPipelineFillStroke::initialize(WGPUDevice device)
     auto pipelineLabel = "The render pipeline fill stroke";
 
     // allocate all pipeline handles
-    allocate(device, WgPipelineBlendType::Src,
+    allocate(device, WgPipelineBlendType::Add, WGPUColorWriteMask_None,
              vertexBufferLayouts, ARRAY_ELEMENTS_COUNT(vertexBufferLayouts),
              bindGroupLayouts, ARRAY_ELEMENTS_COUNT(bindGroupLayouts),
              stencilFuncion, stencilOperation, stencilFuncion, stencilOperation,
@@ -154,7 +154,7 @@ void WgPipelineSolid::initialize(WGPUDevice device, WgPipelineBlendType blendTyp
     auto pipelineLabel = "The render pipeline solid color";
 
     // allocate all pipeline handles
-    allocate(device, blendType,
+    allocate(device, blendType, WGPUColorWriteMask_All,
              vertexBufferLayouts, ARRAY_ELEMENTS_COUNT(vertexBufferLayouts),
              bindGroupLayouts, ARRAY_ELEMENTS_COUNT(bindGroupLayouts),
              stencilFuncion, stencilOperation, stencilFuncion, stencilOperation,
@@ -187,7 +187,7 @@ void WgPipelineLinear::initialize(WGPUDevice device, WgPipelineBlendType blendTy
     auto pipelineLabel = "The render pipeline linear gradient";
 
     // allocate all pipeline handles
-    allocate(device, blendType,
+    allocate(device, blendType, WGPUColorWriteMask_All,
              vertexBufferLayouts, ARRAY_ELEMENTS_COUNT(vertexBufferLayouts),
              bindGroupLayouts, ARRAY_ELEMENTS_COUNT(bindGroupLayouts),
              stencilFuncion, stencilOperation, stencilFuncion, stencilOperation,
@@ -220,7 +220,7 @@ void WgPipelineRadial::initialize(WGPUDevice device, WgPipelineBlendType blendTy
     auto pipelineLabel = "The render pipeline radial gradient";
 
     // allocate all pipeline handles
-    allocate(device, blendType,
+    allocate(device, blendType, WGPUColorWriteMask_All,
              vertexBufferLayouts, ARRAY_ELEMENTS_COUNT(vertexBufferLayouts),
              bindGroupLayouts, ARRAY_ELEMENTS_COUNT(bindGroupLayouts),
              stencilFuncion, stencilOperation, stencilFuncion, stencilOperation,
@@ -255,7 +255,7 @@ void WgPipelineImage::initialize(WGPUDevice device, WgPipelineBlendType blendTyp
     auto pipelineLabel = "The render pipeline image";
 
     // allocate all pipeline handles
-    allocate(device, blendType,
+    allocate(device, blendType, WGPUColorWriteMask_All,
              vertexBufferLayouts, ARRAY_ELEMENTS_COUNT(vertexBufferLayouts),
              bindGroupLayouts, ARRAY_ELEMENTS_COUNT(bindGroupLayouts),
              stencilFuncion, stencilOperation, stencilFuncion, stencilOperation,

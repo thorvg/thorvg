@@ -80,7 +80,7 @@ enum class Result
     InsufficientCondition, ///< The value returned in case the request cannot be processed - e.g. asking for properties of an object, which does not exist.
     FailedAllocation,      ///< The value returned in case of unsuccessful memory allocation.
     MemoryCorruption,      ///< The value returned in the event of bad memory handling - e.g. failing in pointer releasing or casting
-    NonSupport,            ///< The value returned in case of choosing unsupported options.
+    NonSupport,            ///< The value returned in case of choosing unsupported engine features(options).
     Unknown                ///< The value returned in all other cases.
 };
 
@@ -956,7 +956,7 @@ public:
      *
      * @param[in] width The width of the stroke. The default value is 0.
      *
-     * @retval Result::Success when succeed, Result::FailedAllocation otherwise.
+     * @retval Result::Success when succeed.
      */
     Result strokeWidth(float width) noexcept;
 
@@ -968,7 +968,7 @@ public:
      * @param[in] b The blue color channel value in the range [0 ~ 255]. The default value is 0.
      * @param[in] a The alpha channel value in the range [0 ~ 255], where 0 is completely transparent and 255 is opaque. The default value is 0.
      *
-     * @retval Result::Success when succeed, Result::FailedAllocation otherwise.
+     * @retval Result::Success when succeed.
      */
     Result strokeFill(uint8_t r, uint8_t g, uint8_t b, uint8_t a = 255) noexcept;
 
@@ -978,8 +978,7 @@ public:
      * @param[in] f The gradient fill.
      *
      * @retval Result::Success When succeed.
-     * @retval Result::FailedAllocation An internal error with a memory allocation for an object to be filled.
-     * @retval Result::MemoryCorruption In case a @c nullptr is passed as the argument.
+     * @retval Result::MemoryCorruption In case a @c nullptr is passed as the argument or an error with accessing it.
      */
     Result strokeFill(std::unique_ptr<Fill> f) noexcept;
 
@@ -1006,7 +1005,7 @@ public:
      *
      * @param[in] cap The cap style value. The default value is @c StrokeCap::Square.
      *
-     * @retval Result::Success when succeed, Result::FailedAllocation otherwise.
+     * @retval Result::Success when succeed.
      */
     Result strokeCap(StrokeCap cap) noexcept;
 
@@ -1017,21 +1016,36 @@ public:
      *
      * @param[in] join The join style value. The default value is @c StrokeJoin::Bevel.
      *
-     * @retval Result::Success when succeed, Result::FailedAllocation otherwise.
+     * @retval Result::Success when succeed.
      */
     Result strokeJoin(StrokeJoin join) noexcept;
-
 
     /**
      * @brief Sets the stroke miterlimit.
      *
      * @param[in] miterlimit The miterlimit imposes a limit on the extent of the stroke join, when the @c StrokeJoin::Miter join style is set. The default value is 4.
      *
-     * @retval Result::Success when succeed, Result::NonSupport unsupported value, Result::FailedAllocation otherwise.
+     * @retval Result::Success when succeed or Result::InvalidArgument for @p miterlimit values less than zero.
      * 
      * @since 0.11
      */
     Result strokeMiterlimit(float miterlimit) noexcept;
+
+    /**
+     * @brief Sets the trim of the stroke along the defined path segment, allowing control over which part of the stroke is visible.
+     *
+     * The values of the arguments @p begin, @p end, and @p offset are in the range of 0.0 to 1.0, representing the beginning of the path and the end, respectively.
+     *
+     * @param[in] begin Specifies the start of the segment to display along the path.
+     * @param[in] end Specifies the end of the segment to display along the path.
+     * @param[in] simultaneous Determines how to trim multiple paths within a single shape. If set to @c true (default), trimming is applied simultaneously to all paths;
+     * Otherwise, all paths are treated as a single entity with a combined length equal to the sum of their individual lengths and are trimmed as such.
+     *
+     * @retval Result::Success when succeed.
+     *
+     * @note Experimental API
+     */
+    Result strokeTrim(float begin, float end, bool simultaneous = true) noexcept;
 
     /**
      * @brief Sets the solid color for all of the figures from the path.
@@ -1072,18 +1086,16 @@ public:
      */
     Result fill(FillRule r) noexcept;
 
-
     /**
      * @brief Sets the rendering order of the stroke and the fill.
      *
      * @param[in] strokeFirst If @c true the stroke is rendered before the fill, otherwise the stroke is rendered as the second one (the default option).
      *
-     * @retval Result::Success when succeed, Result::FailedAllocation otherwise.
+     * @retval Result::Success when succeed.
      *
      * @since 0.10
      */
     Result order(bool strokeFirst) noexcept;
-
 
     /**
      * @brief Gets the commands data of the path.
@@ -1189,6 +1201,18 @@ public:
      * @since 0.11
      */
     float strokeMiterlimit() const noexcept;
+
+    /**
+     * @brief Gets the trim of the stroke along the defined path segment.
+     *
+     * @param[out] begin The starting point of the segment to display along the path.
+     * @param[out] end Specifies the end of the segment to display along the path.
+     *
+     * @return @c true if trimming is applied simultaneously to all paths of the shape, @c false otherwise.
+     *
+     * @note Experimental API
+     */
+    bool strokeTrim(float* begin, float* end) const noexcept;
 
     /**
      * @brief Creates a new Shape object.
@@ -1298,7 +1322,6 @@ public:
      * when the @p copy has @c false. This means that loading the same data again will not result in duplicate operations
      * for the sharable @p data. Instead, ThorVG will reuse the previously loaded picture data.
      *
-     * @param[in] paint A Tvg_Paint pointer to the picture object.
      * @param[in] data A pointer to a memory location where the content of the picture raw data is stored.
      * @param[in] w The width of the image @p data in pixels.
      * @param[in] h The height of the image @p data in pixels.
@@ -1529,7 +1552,7 @@ public:
     Result fill(std::unique_ptr<Fill> f) noexcept;
 
     /**
-     * @brief Loads a scalable font data(ttf) from a file.
+     * @brief Loads a scalable font data (ttf) from a file.
      *
      * ThorVG efficiently caches the loaded data using the specified @p path as a key.
      * This means that loading the same file again will not result in duplicate operations;
@@ -1547,6 +1570,34 @@ public:
      * @see Text::unload(const std::string& path)
      */
     static Result load(const std::string& path) noexcept;
+
+    /**
+     * @brief Loads a scalable font data (ttf) from a memory block of a given size.
+     *
+     * ThorVG efficiently caches the loaded font data using the specified @p name as a key.
+     * This means that loading the same fonts again will not result in duplicate operations.
+     * Instead, ThorVG will reuse the previously loaded font data.
+     *
+     * @param[in] name The name under which the font will be stored and accessible (e.x. in a @p font() API).
+     * @param[in] data A pointer to a memory location where the content of the font data is stored.
+     * @param[in] size The size in bytes of the memory occupied by the @p data.
+     * @param[in] mimeType Mimetype or extension of font data. In case an empty string is provided the loader will be determined automatically.
+     * @param[in] copy If @c true the data are copied into the engine local buffer, otherwise they are not (default).
+     *
+     * @retval Result::Success When succeed.
+     * @retval Result::InvalidArguments If no name is provided or if @p size is zero while @p data points to a valid memory location.
+     * @retval Result::NonSupport When trying to load a file with an unsupported extension.
+     * @retval Result::Unknown If an error occurs at a later stage.
+     *
+     * @warning: It's the user responsibility to release the @p data memory.
+     *
+     * @note To unload the font data loaded using this API, pass the proper @p name and @c nullptr as @p data.
+     * @note If you are unsure about the MIME type, you can provide an empty value like @c "", and thorvg will attempt to figure it out.
+     * @note Experimental API
+     *
+     * @see Text::font(const char* name, float size, const char* style)
+     */
+    static Result load(const char* name, const char* data, uint32_t size, const std::string& mimeType = "ttf", bool copy = false) noexcept;
 
     /**
      * @brief Unloads the specified scalable font data (TTF) that was previously loaded.

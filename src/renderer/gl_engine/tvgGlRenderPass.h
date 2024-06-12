@@ -27,8 +27,8 @@
 #include <vector>
 
 #include "tvgGlCommon.h"
+#include "tvgGlRenderTask.h"
 
-class GlRenderTask;
 class GlProgram;
 
 class GlRenderTarget
@@ -72,11 +72,20 @@ public:
 
     template <class T>
     T* endRenderPass(GlProgram* program, GLuint targetFbo) {
+        int32_t maxDepth = mDrawDepth + 1;
+
+        for (uint32_t i = 0; i < mTasks.count; i++) {
+            mTasks[i]->normalizeDrawDepth(maxDepth);
+        }
+
         return new T(program, targetFbo, mFbo, std::move(mTasks));
     }
+
+    int nextDrawDepth() { return ++mDrawDepth; }
 private:
     GlRenderTarget* mFbo;
     Array<GlRenderTask*> mTasks = {};
+    int32_t mDrawDepth = 0;
 };
 
 

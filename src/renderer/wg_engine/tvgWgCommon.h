@@ -112,6 +112,7 @@ protected:
     WGPUPipelineLayout mPipelineLayout{};
     WGPUShaderModule mShaderModule{};
 public:
+    virtual ~WgPipeline() {}
     virtual void initialize(WGPUDevice device) = 0;
     virtual void release();
 
@@ -125,7 +126,7 @@ struct WgRenderPipeline: public WgPipeline
 {
 protected:
     WGPURenderPipeline mRenderPipeline{};
-    void allocate(WGPUDevice device, WgPipelineBlendType blendType,
+    void allocate(WGPUDevice device, WgPipelineBlendType blendType, WGPUColorWriteMask writeMask,
                   WGPUVertexBufferLayout vertexBufferLayouts[], uint32_t attribsCount,
                   WGPUBindGroupLayout bindGroupLayouts[], uint32_t bindGroupsCount,
                   WGPUCompareFunction compareFront, WGPUStencilOperation operationFront,
@@ -136,7 +137,7 @@ public:
     void set(WGPURenderPassEncoder renderPassEncoder);
 
     static WGPUBlendState makeBlendState(WgPipelineBlendType blendType);
-    static WGPUColorTargetState makeColorTargetState(const WGPUBlendState* blendState);
+    static WGPUColorTargetState makeColorTargetState(const WGPUBlendState* blendState, const WGPUColorWriteMask writeMask);
     static WGPUVertexBufferLayout makeVertexBufferLayout(const WGPUVertexAttribute* vertexAttributes, uint32_t count, uint64_t stride);
     static WGPUVertexState makeVertexState(WGPUShaderModule shaderModule, const WGPUVertexBufferLayout* buffers, uint32_t count);
     static WGPUPrimitiveState makePrimitiveState();
@@ -144,7 +145,7 @@ public:
     static WGPUMultisampleState makeMultisampleState();
     static WGPUFragmentState makeFragmentState(WGPUShaderModule shaderModule, WGPUColorTargetState* targets, uint32_t size);
 
-    static WGPURenderPipeline createRenderPipeline(WGPUDevice device, WgPipelineBlendType blendType,
+    static WGPURenderPipeline createRenderPipeline(WGPUDevice device, WgPipelineBlendType blendType, WGPUColorWriteMask writeMask,
                                                    WGPUVertexBufferLayout vertexBufferLayouts[], uint32_t attribsCount,
                                                    WGPUCompareFunction compareFront, WGPUStencilOperation operationFront,
                                                    WGPUCompareFunction compareBack, WGPUStencilOperation operationBack,

@@ -98,7 +98,7 @@ struct RenderContext
 
 static void _updateChildren(LottieGroup* parent, float frameNo, Inlist<RenderContext>& contexts, LottieExpressions* exps);
 static void _updateLayer(LottieLayer* root, LottieLayer* layer, float frameNo, LottieExpressions* exps);
-static bool _buildComposition(LottieComposition* comp, LottieGroup* parent);
+static bool _buildComposition(LottieComposition* comp, LottieLayer* parent);
 static Shape* _draw(LottieGroup* parent, RenderContext* ctx);
 
 static void _rotateX(Matrix* m, float degree)
@@ -916,7 +916,7 @@ static void _updateTrimpath(TVG_UNUSED LottieGroup* parent, LottieObject** child
         end = (length * end) + pbegin;
     }
 
-    P(ctx->propagator)->strokeTrim(begin, end, trimpath->type == LottieTrimpath::Type::Individual ? true : false);
+    P(ctx->propagator)->strokeTrim(begin, end, trimpath->type == LottieTrimpath::Type::Simultaneous);
 }
 
 
@@ -1099,6 +1099,7 @@ static void _updateText(LottieLayer* layer, float frameNo)
             cursor.y = ++line * (doc.height / scale);
         }
         //find the glyph
+        bool found = false;
         for (auto g = text->font->chars.begin(); g < text->font->chars.end(); ++g) {
             auto glyph = *g;
             //draw matched glyphs
@@ -1128,9 +1129,13 @@ static void _updateText(LottieLayer* layer, float frameNo)
 
                 //advance the cursor position horizontally
                 cursor.x += glyph->width + spacing + doc.tracking;
+
+                found = true;
                 break;
             }
         }
+
+        if (!found) ++p;
     }
 }
 
@@ -1271,7 +1276,7 @@ static void _buildReference(LottieComposition* comp, LottieLayer* layer)
 }
 
 
-static void _bulidHierarchy(LottieGroup* parent, LottieLayer* child)
+static void _buildHierarchy(LottieGroup* parent, LottieLayer* child)
 {
     if (child->pidx == -1) return;
 
@@ -1306,7 +1311,7 @@ static void _attachFont(LottieComposition* comp, LottieLayer* parent)
         for (uint32_t i = 0; i < comp->fonts.count; ++i) {
             auto font = comp->fonts[i];
             auto len2 = strlen(font->name);
-            if (!strncmp(font->name, doc.name, len < len2 ? len : len2)) {
+            if (len == len2 && !strcmp(font->name, doc.name)) {
                 text->font = font;
                 break;
             }
@@ -1315,7 +1320,7 @@ static void _attachFont(LottieComposition* comp, LottieLayer* parent)
 }
 
 
-static bool _buildComposition(LottieComposition* comp, LottieGroup* parent)
+static bool _buildComposition(LottieComposition* comp, LottieLayer* parent)
 {
     if (parent->children.count == 0) return false;
     if (parent->buildDone) return true;
@@ -1334,20 +1339,16 @@ static bool _buildComposition(LottieComposition* comp, LottieGroup* parent)
                     child->matteTarget = static_cast<LottieLayer*>(*(c - 1));
                 }
             //matte layer is specified by an index.
-            } else {
-                if (auto matte = comp->layerByIdx(child->mid)) {
-                    child->matteTarget = matte;
-                }
-            }
+            } else child->matteTarget = parent->layerByIdx(child->mid);
         }
 
         if (child->matteTarget) {
             //parenting
-            _bulidHierarchy(parent, child->matteTarget);
+            _buildHierarchy(parent, child->matteTarget);
             //precomp referencing
             if (child->matteTarget->rid) _buildReference(comp, child->matteTarget);
         }
-        _bulidHierarchy(parent, child);
+        _buildHierarchy(parent, child);
 
         //attach the necessary font data
         if (child->type == LottieLayer::Text) _attachFont(comp, child);

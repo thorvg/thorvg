@@ -57,6 +57,7 @@ source_file = [
     'Stroke.cpp',
     'StrokeLine.cpp',
     'StrokeMiterlimit.cpp',
+    'StrokeTrim.cpp',
     'Svg.cpp',
     'Texmap.cpp',
     'Text.cpp',

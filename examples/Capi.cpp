@@ -154,6 +154,11 @@ void testCapi()
     tvg_shape_append_arc(scene_shape1, 175.0f, 600.0f, 150.0f, -45.0f, 90.0f, 1);
     tvg_shape_append_arc(scene_shape1, 175.0f, 600.0f, 150.0f, 225.0f, -90.0f, 1);
     tvg_shape_set_fill_color(scene_shape1, 0, 0, 255, 150);
+    tvg_shape_set_stroke_color(scene_shape1, 255, 255, 255, 155);
+    tvg_shape_set_stroke_width(scene_shape1, 10.0f);
+    tvg_shape_set_stroke_cap(scene_shape1, Tvg_Stroke_Cap::TVG_STROKE_CAP_ROUND);
+    tvg_shape_set_stroke_join(scene_shape1, Tvg_Stroke_Join::TVG_STROKE_JOIN_ROUND);
+    tvg_shape_set_stroke_trim(scene_shape1, 0.25f, 0.75f, true);
 
     //Set an arc with a dashed stroke
     Tvg_Paint* scene_shape2 = tvg_paint_duplicate(scene_shape1);
@@ -319,7 +324,8 @@ int main(int argc, char **argv)
     elm_transit_effect_add(transit, transitCb, view, nullptr);
 
     elm_run();
-
+    elm_transit_del(transit);
+    
     tvg_canvas_destroy(canvas);
     free(buffer);
     tvg_animation_del(animation);
