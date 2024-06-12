@@ -81,7 +81,7 @@ private:
    Array<WgRenderStorage*> mList;
    Array<WgRenderStorage*> mPool;
 public:
-   WgRenderStorage* allocate(WgContext& context, uint32_t w, uint32_t h);
+   WgRenderStorage* allocate(WgContext& context, uint32_t w, uint32_t h, uint32_t samples = 1);
    void free(WgContext& context, WgRenderStorage* renderTarget);
    void release(WgContext& context);
 };

@@ -323,7 +323,7 @@ void WgRenderStorage::endComputePass(WGPUComputePassEncoder computePassEncoder)
 // render storage pool
 //*****************************************************************************
 
-WgRenderStorage* WgRenderStoragePool::allocate(WgContext& context, uint32_t w, uint32_t h)
+WgRenderStorage* WgRenderStoragePool::allocate(WgContext& context, uint32_t w, uint32_t h, uint32_t samples)
 {
    WgRenderStorage* renderStorage{};
    if (mPool.count > 0) {
@@ -331,7 +331,7 @@ WgRenderStorage* WgRenderStoragePool::allocate(WgContext& context, uint32_t w, u
       mPool.pop();
    } else {
       renderStorage = new WgRenderStorage;
-      renderStorage->initialize(context, w, h);
+      renderStorage->initialize(context, w, h, samples);
       mList.push(renderStorage);
    }
    return renderStorage;
