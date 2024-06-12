@@ -270,7 +270,7 @@ void WgPipelineClear::initialize(WGPUDevice device)
 {
     // bind groups and layouts
     WGPUBindGroupLayout bindGroupLayouts[] = {
-        WgBindGroupTextureStorage::getLayout(device)
+        WgBindGroupTextureStorageRgba::getLayout(device)
     };
 
     // sheder source and labels
@@ -289,8 +289,8 @@ void WgPipelineBlend::initialize(WGPUDevice device)
 {
     // bind groups and layouts
     WGPUBindGroupLayout bindGroupLayouts[] = {
-        WgBindGroupTextureStorage::getLayout(device),
-        WgBindGroupTextureStorage::getLayout(device),
+        WgBindGroupTextureStorageRgba::getLayout(device),
+        WgBindGroupTextureStorageRgba::getLayout(device),
         WgBindGroupBlendMethod::getLayout(device)
     };
 
@@ -310,8 +310,8 @@ void WgPipelineCompose::initialize(WGPUDevice device)
 {
     // bind groups and layouts
     WGPUBindGroupLayout bindGroupLayouts[] = {
-        WgBindGroupTextureStorage::getLayout(device),
-        WgBindGroupTextureStorage::getLayout(device),
+        WgBindGroupTextureStorageRgba::getLayout(device),
+        WgBindGroupTextureStorageRgba::getLayout(device),
         WgBindGroupCompositeMethod::getLayout(device),
         WgBindGroupOpacity::getLayout(device)
     };
@@ -354,8 +354,8 @@ void WgPipelineAntiAliasing::initialize(WGPUDevice device)
 {
     // bind groups and layouts
     WGPUBindGroupLayout bindGroupLayouts[] = {
-        WgBindGroupTextureStorage::getLayout(device),
-        WgBindGroupTextureStorage::getLayout(device)
+        WgBindGroupTextureStorageRgba::getLayout(device),
+        WgBindGroupTextureStorageBgra::getLayout(device)
     };
 
     // sheder source and labels
@@ -400,7 +400,8 @@ void WgPipelines::release()
 {
     WgBindGroupTexComposeBlend::layout = nullptr;
     WgBindGroupTextureSampled::releaseLayout();
-    WgBindGroupTextureStorage::releaseLayout();
+    WgBindGroupTextureStorageBgra::releaseLayout();
+    WgBindGroupTextureStorageRgba::releaseLayout();
     WgBindGroupTexture::releaseLayout();
     WgBindGroupOpacity::releaseLayout();
     WgBindGroupPicture::releaseLayout();

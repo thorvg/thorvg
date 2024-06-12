@@ -36,13 +36,14 @@ public:
     WGPUTexture texStencil{};
     WGPUTextureView texViewColor{};
     WGPUTextureView texViewStencil{};
-    WgBindGroupTextureStorage bindGroupTexStorage;
+    WgBindGroupTextureStorageRgba bindGroupTexStorageRgba;
+    WgBindGroupTextureStorageBgra bindGroupTexStorageBgra;
     uint32_t width{};
     uint32_t height{};
     uint32_t workgroupsCountX{};
     uint32_t workgroupsCountY{};
 public:
-    void initialize(WgContext& context, uint32_t w, uint32_t h, uint32_t samples = 1);
+    void initialize(WgContext& context, uint32_t w, uint32_t h, uint32_t samples = 1, WGPUTextureFormat format = WGPUTextureFormat_RGBA8Unorm);
     void release(WgContext& context);
 
     void beginRenderPass(WGPUCommandEncoder commandEncoder, bool clear);
