@@ -52,7 +52,7 @@ public:
     bool sync() override;
 
     bool target(uint32_t* buffer, uint32_t stride, uint32_t w, uint32_t h);
-    bool target(void* window, uint32_t w, uint32_t h); // temporary solution
+    bool target(WGPUInstance instance, WGPUSurface surface, uint32_t w, uint32_t h);
 
     Compositor* target(const RenderRegion& region, ColorSpace cs) override;
     bool beginComposite(Compositor* cmp, CompositeMethod method, uint8_t opacity) override;
@@ -78,7 +78,6 @@ private:
     Array<WgRenderStorage*> mRenderStorageStack;
 
     // native window handles
-    WGPUSurface mSurface{};
     WgContext mContext;
     WgPipelines mPipelines;
     Surface mTargetSurface;

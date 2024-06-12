@@ -119,7 +119,19 @@ struct WgBindGroupTexture : public WgBindGroup
 };
 
 // @group(0 or 1)
-struct WgBindGroupTextureStorage : public WgBindGroup
+struct WgBindGroupTextureStorageRgba : public WgBindGroup
+{
+    static WGPUBindGroupLayout layout;
+    static WGPUBindGroupLayout getLayout(WGPUDevice device);
+    static void releaseLayout();
+
+    void initialize(WGPUDevice device, WGPUQueue queue,
+                    WGPUTextureView uTexture);
+    void release();
+};
+
+// @group(0 or 1)
+struct WgBindGroupTextureStorageBgra : public WgBindGroup
 {
     static WGPUBindGroupLayout layout;
     static WGPUBindGroupLayout getLayout(WGPUDevice device);

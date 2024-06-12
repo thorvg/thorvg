@@ -27,18 +27,19 @@
 // context
 //*****************************************************************************
 
-void WgContext::initialize()
+void WgContext::initialize(WGPUInstance instance, WGPUSurface surface)
 {
-    // create instance
-    WGPUInstanceDescriptor instanceDesc{};
-    instanceDesc.nextInChain = nullptr;
-    instance = wgpuCreateInstance(&instanceDesc);
     assert(instance);
+    assert(surface);
+    
+    // store global instance and surface
+    this->instance = instance;
+    this->surface = surface;
 
     // request adapter options
     WGPURequestAdapterOptions requestAdapterOptions{};
     requestAdapterOptions.nextInChain = nullptr;
-    requestAdapterOptions.compatibleSurface = nullptr;
+    requestAdapterOptions.compatibleSurface = surface;
     requestAdapterOptions.powerPreference = WGPUPowerPreference_HighPerformance;
     requestAdapterOptions.forceFallbackAdapter = false;
     // on adapter request ended function
@@ -113,6 +114,11 @@ void WgContext::release()
         wgpuAdapterRelease(adapter);
         adapter = nullptr;
     }
+    if (surface) {
+        wgpuSurfaceUnconfigure(surface);
+        wgpuSurfaceRelease(surface);
+        surface = nullptr;
+    }
     if (instance) {
         wgpuInstanceRelease(instance);
         instance = nullptr;
@@ -170,7 +176,6 @@ WGPUTexture WgContext::createTexture2d(WGPUTextureUsageFlags usage, WGPUTextureF
 
 WGPUTexture WgContext::createTexture2dMS(WGPUTextureUsageFlags usage, WGPUTextureFormat format, uint32_t width, uint32_t height, uint32_t sc, char const * label)
 {
-
     WGPUTextureDescriptor textureDesc{};
     textureDesc.nextInChain = nullptr;
     textureDesc.label = label;
@@ -326,7 +331,6 @@ void WgContext::releaseIndexBuffer(WGPUBuffer& buffer)
     releaseBuffer(buffer);
 }
 
-
 //*****************************************************************************
 // bind group
 //*****************************************************************************
@@ -425,7 +429,7 @@ WGPUBindGroupLayoutEntry WgBindGroup::makeBindGroupLayoutEntryTexture(uint32_t b
 }
 
 
-WGPUBindGroupLayoutEntry WgBindGroup::makeBindGroupLayoutEntryStorageTexture(uint32_t binding, WGPUStorageTextureAccess access)
+WGPUBindGroupLayoutEntry WgBindGroup::makeBindGroupLayoutEntryStorage(uint32_t binding, WGPUStorageTextureAccess access, WGPUTextureFormat format)
 {
     WGPUBindGroupLayoutEntry bindGroupLayoutEntry{};
     bindGroupLayoutEntry.nextInChain = nullptr;
@@ -433,7 +437,7 @@ WGPUBindGroupLayoutEntry WgBindGroup::makeBindGroupLayoutEntryStorageTexture(uin
     bindGroupLayoutEntry.visibility = WGPUShaderStage_Fragment | WGPUShaderStage_Compute;
     bindGroupLayoutEntry.storageTexture.nextInChain = nullptr;
     bindGroupLayoutEntry.storageTexture.access = access;
-    bindGroupLayoutEntry.storageTexture.format = WGPUTextureFormat_BGRA8Unorm;
+    bindGroupLayoutEntry.storageTexture.format = format;
     bindGroupLayoutEntry.storageTexture.viewDimension = WGPUTextureViewDimension_2D;
     return bindGroupLayoutEntry;
 }
@@ -634,7 +638,7 @@ WGPUColorTargetState WgRenderPipeline::makeColorTargetState(const WGPUBlendState
 {
     WGPUColorTargetState colorTargetState{};
     colorTargetState.nextInChain = nullptr;
-    colorTargetState.format = WGPUTextureFormat_BGRA8Unorm;
+    colorTargetState.format = WGPUTextureFormat_RGBA8Unorm;
     colorTargetState.blend = blendState;
     colorTargetState.writeMask = writeMask;
     return colorTargetState;
