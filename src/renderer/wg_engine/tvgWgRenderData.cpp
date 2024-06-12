@@ -388,7 +388,9 @@ WgRenderDataShape* WgRenderDataShapePool::allocate(WgContext& context)
 void WgRenderDataShapePool::free(WgContext& context, WgRenderDataShape* dataShape)
 {
     dataShape->meshGroupShapes.release(context);
+    dataShape->meshGroupShapesBBox.release(context);
     dataShape->meshGroupStrokes.release(context);
+    dataShape->meshGroupStrokesBBox.release(context);
     mPool.push(dataShape);
 }
 
