@@ -300,7 +300,7 @@ bool WgRenderer::target(uint32_t* buffer, uint32_t stride, uint32_t w, uint32_t 
     mTargetSurface.w = w;
     mTargetSurface.h = h;
 
-    mRenderTarget.initialize(mContext, w * WG_SSAA_SAMPLES, h * WG_SSAA_SAMPLES);
+    mRenderTarget.initialize(mContext, w, h, WG_SSAA_SAMPLES);
     return true;
 }
 
@@ -354,7 +354,7 @@ bool WgRenderer::beginComposite(TVG_UNUSED Compositor* cmp, TVG_UNUSED Composite
     // end current render pass
     mRenderStorageStack.last()->endRenderPass();
     // allocate new render storage and push it to top of render tree
-    WgRenderStorage* renderStorage = mRenderStoragePool.allocate(mContext, mTargetSurface.w * WG_SSAA_SAMPLES, mTargetSurface.h * WG_SSAA_SAMPLES);
+    WgRenderStorage* renderStorage = mRenderStoragePool.allocate(mContext, mTargetSurface.w, mTargetSurface.h, WG_SSAA_SAMPLES);
     mRenderStorageStack.push(renderStorage);
     // begin last render pass
     mRenderStorageStack.last()->beginRenderPass(mCommandEncoder, true);
