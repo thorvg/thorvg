@@ -321,16 +321,19 @@ void WgRenderDataShape::updateMeshes(WgContext& context, const WgPolyline* polyl
         updateBBox(pmin, pmax);
     }
     // generate strokes geometry
-    if ((polyline->pts.count >= 1) && rstroke) {
+    if ((polyline->pts.count >= 1) && rstroke && (rstroke->width > 0.0f)) {
         static WgGeometryData geometryData; geometryData.clear();
         static WgPolyline trimmed;
         // trim -> split -> stroke
-        if ((rstroke->dashPattern) && ((rstroke->trim.begin != 0.0f) || (rstroke->trim.end != 1.0f))) {
-            polyline->trim(&trimmed, rstroke->trim.begin, rstroke->trim.end);
+        float trimBegin = rstroke->trim.begin < rstroke->trim.end ? rstroke->trim.begin : rstroke->trim.end;
+        float trimEnd   = rstroke->trim.begin < rstroke->trim.end ? rstroke->trim.end : rstroke->trim.begin;
+        if (trimBegin == trimEnd) return;
+        if ((rstroke->dashPattern) && ((trimBegin != 0.0f) || (trimEnd != 1.0f))) {
+            polyline->trim(&trimmed, trimBegin, trimEnd);
             geometryData.appendStrokeDashed(&trimmed, rstroke);
         } else // trim -> stroke
-        if ((rstroke->trim.begin != 0.0f) || (rstroke->trim.end != 1.0f)) {
-            polyline->trim(&trimmed, rstroke->trim.begin, rstroke->trim.end);
+        if ((trimBegin != 0.0f) || (trimEnd != 1.0f)) {
+            polyline->trim(&trimmed, trimBegin, trimEnd);
             geometryData.appendStroke(&trimmed, rstroke);
         } else // split -> stroke
         if (rstroke->dashPattern) {
@@ -339,10 +342,12 @@ void WgRenderDataShape::updateMeshes(WgContext& context, const WgPolyline* polyl
             geometryData.appendStroke(polyline, rstroke);
         }
         // append render meshes and bboxes
-        WgPoint pmin{}, pmax{};
-        geometryData.positions.getBBox(pmin, pmax);
-        meshGroupStrokes.append(context, &geometryData);
-        meshGroupStrokesBBox.append(context, pmin, pmax);
+        if(geometryData.positions.pts.count >= 3) {
+            WgPoint pmin{}, pmax{};
+            geometryData.positions.getBBox(pmin, pmax);
+            meshGroupStrokes.append(context, &geometryData);
+            meshGroupStrokesBBox.append(context, pmin, pmax);
+        }
     }
 }
 
