@@ -310,11 +310,9 @@ void WgGeometryData::appendStrokeDashed(const WgPolyline* polyline, const Render
     assert(polyline);
     static WgPolyline dashed;
     dashed.clear();
-    // append single point polyline
-    if (polyline->pts.count == 1)
-        appendStroke(polyline, stroke);
+    // ignore singpe points polyline
     // append multy points dashed polyline
-    else if (polyline->pts.count >= 2) {
+    if (polyline->pts.count >= 2) {
         auto& pts = polyline->pts;
         auto& dist = polyline->dist;
        	// starting state
@@ -357,22 +355,7 @@ void WgGeometryData::appendStroke(const WgPolyline* polyline, const RenderStroke
     assert(stroke);
     assert(polyline);
     float wdt = stroke->width / 2;
-    // single point sub-path
-    if (polyline->pts.count == 1) {
-        if (stroke->cap == StrokeCap::Round) {
-            appendCircle(polyline->pts[0], wdt);
-        } else if (stroke->cap == StrokeCap::Butt) {
-            // for zero length sub-paths no stroke is rendered
-        } else if (stroke->cap == StrokeCap::Square) {
-            appendRect(
-                polyline->pts[0] + WgPoint(+wdt, +wdt),
-                polyline->pts[0] + WgPoint(+wdt, -wdt),
-                polyline->pts[0] + WgPoint(-wdt, +wdt),
-                polyline->pts[0] + WgPoint(-wdt, -wdt)
-            );
-        }
-    } else
-    
+
     // single line sub-path
     if (polyline->pts.count == 2) {
         WgPoint v0 = polyline->pts[0];
@@ -474,7 +457,7 @@ void WgGeometryData::appendStroke(const WgPolyline* polyline, const RenderStroke
                     } else if (stroke->join == StrokeJoin::Miter) {
                         WgPoint nrm = (nrm0 + nrm1).normal();
                         float cosine = nrm.dot(nrm0);
-                        if ((cosine != 0.0f) && (abs(cosine) != 1.0f) && (abs(wdt / cosine) <= stroke->miterlimit * 2)) {
+                        if ((cosine != 0.0f) && (abs(cosine) < 1.0f) && (abs(wdt / cosine) <= stroke->miterlimit * 2)) {
                             appendRect(v1 + nrm * (wdt / cosine), v1 + offset0, v1 + offset1, v1);
                             appendRect(v1 - nrm * (wdt / cosine), v1 - offset0, v1 - offset1, v1);
                         } else {
