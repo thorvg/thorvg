@@ -19,8 +19,7 @@ source_file = [
     'tvgWgShaderTypes.cpp'
 ]
 
-#TODO: force the requirement, when the official wegpu package is distributed.
-wgpu_dep = meson.get_compiler('cpp').find_library('wgpu_native', required: false)
+wgpu_dep = dependency('wgpu_native')
 
 engine_dep += [declare_dependency(
     dependencies        : wgpu_dep,
