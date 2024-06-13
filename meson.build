@@ -138,6 +138,7 @@ headers = [include_directories('inc'), include_directories('.')]
 
 subdir('inc')
 subdir('src')
+subdir('tools')
 
 if get_option('examples') == true
     subdir('examples')
