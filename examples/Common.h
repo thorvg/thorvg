@@ -36,7 +36,7 @@ static uint32_t* buffer = nullptr;
 /* Common Infrastructure Code                                           */
 /************************************************************************/
 
-void tvgSwTest(uint32_t* buffer);
+void initSwView(uint32_t* buffer);
 void drawSwView(void* data, Eo* obj);
 
 void win_del(void *data, Evas_Object *o, void *ev)
@@ -70,15 +70,13 @@ static Eo* createSwView(uint32_t w = WIDTH, uint32_t h = HEIGHT)
     evas_object_geometry_set(win, 0, 0, WIDTH, HEIGHT);
     evas_object_show(win);
 
-    tvgSwTest(buffer);
+    initSwView(buffer);
 
     return view;
 }
 
-#ifndef NO_GL_EXAMPLE
-
-void initGLview(Evas_Object *obj);
-void drawGLview(Evas_Object *obj);
+void initGlView(Evas_Object *obj);
+void drawGlView(Evas_Object *obj);
 
 static Eo* createGlView(uint32_t w = WIDTH, uint32_t h = HEIGHT)
 {
@@ -97,8 +95,8 @@ static Eo* createGlView(uint32_t w = WIDTH, uint32_t h = HEIGHT)
     elm_glview_mode_set(view, ELM_GLVIEW_ALPHA);
     elm_glview_resize_policy_set(view, ELM_GLVIEW_RESIZE_POLICY_RECREATE);
     elm_glview_render_policy_set(view, ELM_GLVIEW_RENDER_POLICY_ON_DEMAND);
-    elm_glview_init_func_set(view, initGLview);
-    elm_glview_render_func_set(view, drawGLview);
+    elm_glview_init_func_set(view, initGlView);
+    elm_glview_render_func_set(view, drawGlView);
     evas_object_show(view);
 
     elm_win_resize_object_add(win, view);
@@ -107,6 +105,4 @@ static Eo* createGlView(uint32_t w = WIDTH, uint32_t h = HEIGHT)
 
     return view;
 }
-
-#endif //NO_GL_EXAMPLE
 
