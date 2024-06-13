@@ -77,7 +77,7 @@ static bool _rasterMaskedPolygonImageSegment(SwSurface* surface, const SwImage* 
     int32_t sh = image->h;
     int32_t x1, x2, x, y, ar, ab, iru, irv, px, ay;
     int32_t vv = 0, uu = 0;
-    int32_t minx = INT32_MAX, maxx = INT32_MIN;
+    int32_t minx = INT32_MAX, maxx = 0;
     float dx, u, v, iptr;
     SwSpan* span = nullptr;         //used only when rle based.
 
@@ -105,7 +105,7 @@ static bool _rasterMaskedPolygonImageSegment(SwSurface* surface, const SwImage* 
 
         if (!region) {
             minx = INT32_MAX;
-            maxx = INT32_MIN;
+            maxx = 0;
             //one single row, could be consisted of multiple spans.
             while (span->y == y && spanIdx < image->rle->size) {
                 if (minx > span->x) minx = span->x;
@@ -270,7 +270,7 @@ static void _rasterBlendingPolygonImageSegment(SwSurface* surface, const SwImage
     int32_t dw = surface->stride;
     int32_t x1, x2, x, y, ar, ab, iru, irv, px, ay;
     int32_t vv = 0, uu = 0;
-    int32_t minx = INT32_MAX, maxx = INT32_MIN;
+    int32_t minx = INT32_MAX, maxx = 0;
     float dx, u, v, iptr;
     uint32_t* buf;
     SwSpan* span = nullptr;         //used only when rle based.
@@ -299,7 +299,7 @@ static void _rasterBlendingPolygonImageSegment(SwSurface* surface, const SwImage
 
         if (!region) {
             minx = INT32_MAX;
-            maxx = INT32_MIN;
+            maxx = 0;
             //one single row, could be consisted of multiple spans.
             while (span->y == y && spanIdx < image->rle->size) {
                 if (minx > span->x) minx = span->x;
@@ -447,7 +447,7 @@ static void _rasterPolygonImageSegment(SwSurface* surface, const SwImage* image,
     int32_t dw = surface->stride;
     int32_t x1, x2, x, y, ar, ab, iru, irv, px, ay;
     int32_t vv = 0, uu = 0;
-    int32_t minx = INT32_MAX, maxx = INT32_MIN;
+    int32_t minx = INT32_MAX, maxx = 0;
     float dx, u, v, iptr;
     uint32_t* buf;
     SwSpan* span = nullptr;         //used only when rle based.
@@ -481,7 +481,7 @@ static void _rasterPolygonImageSegment(SwSurface* surface, const SwImage* image,
 
         if (!region) {
             minx = INT32_MAX;
-            maxx = INT32_MIN;
+            maxx = 0;
             //one single row, could be consisted of multiple spans.
             while (span->y == y && spanIdx < image->rle->size) {
                 if (minx > span->x) minx = span->x;
@@ -828,7 +828,7 @@ static AASpans* _AASpans(float ymin, float ymax, const SwImage* image, const SwB
 
     for (int32_t i = 0; i < height; i++) {
         aaSpans->lines[i].x[0] = INT32_MAX;
-        aaSpans->lines[i].x[1] = INT32_MIN;
+        aaSpans->lines[i].x[1] = 0;
         aaSpans->lines[i].length[0] = 0;
         aaSpans->lines[i].length[1] = 0;
     }
