@@ -76,7 +76,7 @@ void tvgUpdateCmds(tvg::Canvas* canvas, float progress)
 
 static unique_ptr<tvg::SwCanvas> swCanvas;
 
-void tvgSwTest(uint32_t* buffer)
+void initSwView(uint32_t* buffer)
 {
     //Create a Canvas
     swCanvas = tvg::SwCanvas::gen();
@@ -126,7 +126,7 @@ void drawSwView(void* data, Eo* obj)
 
 static unique_ptr<tvg::GlCanvas> glCanvas;
 
-void initGLview(Evas_Object *obj)
+void initGlView(Evas_Object *obj)
 {
     //Create a Canvas
     glCanvas = tvg::GlCanvas::gen();
@@ -145,7 +145,7 @@ void initGLview(Evas_Object *obj)
     tvgDrawCmds(glCanvas.get());
 }
 
-void drawGLview(Evas_Object *obj)
+void drawGlView(Evas_Object *obj)
 {
     auto gl = elm_glview_gl_api_get(obj);
     gl->glClearColor(0.0f, 0.0f, 0.0f, 1.0f);

@@ -129,7 +129,7 @@ void tvgDrawCmds(tvg::Canvas* canvas)
 
 static unique_ptr<tvg::SwCanvas> swCanvas;
 
-void tvgSwTest(uint32_t* buffer)
+void initSwView(uint32_t* buffer)
 {
     //Create a Canvas
     swCanvas = tvg::SwCanvas::gen();
@@ -192,7 +192,7 @@ Eina_Bool animatorSwCb(void *data)
 
 static unique_ptr<tvg::GlCanvas> glCanvas;
 
-void initGLview(Evas_Object *obj)
+void initGlView(Evas_Object *obj)
 {
     //Create a Canvas
     glCanvas = tvg::GlCanvas::gen();
@@ -209,7 +209,7 @@ void initGLview(Evas_Object *obj)
     canvas = glCanvas.get();
 }
 
-void drawGLview(Evas_Object *obj)
+void drawGlView(Evas_Object *obj)
 {
     auto before = ecore_time_get();
 
