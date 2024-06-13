@@ -71,6 +71,3 @@ pkg_mod.generate(
     filebase     : 'thorvg',
     description  : 'A Thor library for rendering vector graphics'
 )
-
-subdir('tools')
-
