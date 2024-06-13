@@ -151,7 +151,7 @@ void gl_del(void* data, Evas* evas, Eo* obj, void* ev)
     delete(objData);
 }
 
-void initGLview(Evas_Object *obj)
+void initGlView(Evas_Object *obj)
 {
     auto objData = reinterpret_cast<ObjData*>(evas_object_data_get(obj, "objdata"));
     objData->idx = counter;
@@ -176,7 +176,7 @@ void initGLview(Evas_Object *obj)
 }
 
 
-void drawGLview(Evas_Object *obj)
+void drawGlView(Evas_Object *obj)
 {
     auto gl = elm_glview_gl_api_get(obj);
     gl->glClearColor(0.0f, 0.0f, 0.0f, 1.0f);
@@ -203,8 +203,8 @@ void tvgGlTest(const char* name, const char* path, void* data)
     elm_glview_mode_set(view, ELM_GLVIEW_ALPHA);
     elm_glview_resize_policy_set(view, ELM_GLVIEW_RESIZE_POLICY_RECREATE);
     elm_glview_render_policy_set(view, ELM_GLVIEW_RENDER_POLICY_ON_DEMAND);
-    elm_glview_init_func_set(view, initGLview);
-    elm_glview_render_func_set(view, drawGLview);
+    elm_glview_init_func_set(view, initGlView);
+    elm_glview_render_func_set(view, drawGlView);
     evas_object_data_set(view, "objdata", reinterpret_cast<void*>(objData));
     evas_object_event_callback_add(view, EVAS_CALLBACK_DEL, gl_del, objData);
     evas_object_resize(view, SIZE, SIZE);
