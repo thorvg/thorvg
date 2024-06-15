@@ -1637,6 +1637,7 @@ public:
      * @retval Result::InvalidArguments If no name is provided or if @p size is zero while @p data points to a valid memory location.
      * @retval Result::NonSupport When trying to load a file with an unsupported extension.
      * @retval Result::Unknown If an error occurs at a later stage.
+     * @retval Result::InsufficientCondition If attempting to unload the font data that has not been previously loaded.
      *
      * @warning: It's the user responsibility to release the @p data memory.
      *
