@@ -20,6 +20,8 @@
  * SOFTWARE.
  */
 
+#include <fstream>
+#include <cstring>
 #include <thorvg.h>
 #include "config.h"
 #include "catch.hpp"
@@ -40,7 +42,7 @@ TEST_CASE("Text Creation", "[tvgText]")
     REQUIRE(text->identifier() != Picture::identifier());
 }
 
-TEST_CASE("Load TTF Data", "[tvgText]")
+TEST_CASE("Load TTF Data from a file", "[tvgText]")
 {
     Initializer::init(0);
 
@@ -55,6 +57,45 @@ TEST_CASE("Load TTF Data", "[tvgText]")
     REQUIRE(Text::load("") == tvg::Result::InvalidArguments);
     REQUIRE(Text::load(TEST_DIR"/NanumGothicCoding.ttf") == tvg::Result::Success);
 
+    Initializer::term();
+}
+
+TEST_CASE("Load TTF Data from a memory", "[tvgText]")
+{
+    Initializer::init(0);
+
+    ifstream file(TEST_DIR"/Arial.ttf", ios::binary);
+    REQUIRE(file.is_open());
+    file.seekg(0, std::ios::end);
+    auto size = file.tellg();
+    file.seekg(0, std::ios::beg);
+    auto data = (char*)malloc(size);
+    REQUIRE(data);
+    file.read(data, size);
+    file.close();
+
+    auto text = Text::gen();
+    REQUIRE(text);
+
+    static const char* svg = "<svg height=\"1000\" viewBox=\"0 0 600 600\" ></svg>";
+
+    //load
+    REQUIRE(Text::load(nullptr, data, size) == Result::InvalidArguments);
+    REQUIRE(Text::load("Arial", data, 0) == Result::InvalidArguments);
+    REQUIRE(Text::load("Arial", data, 0) == Result::InvalidArguments);
+    REQUIRE(Text::load("ArialSvg", svg, strlen(svg), "unknown") == Result::NonSupport);
+    REQUIRE(Text::load("ArialUnknown", data, size, "unknown") == Result::Success);
+    REQUIRE(Text::load("ArialTtf", data, size, "ttf") == Result::Success);
+    REQUIRE(Text::load("Arial", data, size, "") == Result::Success);
+
+    //unload
+    REQUIRE(Text::load("invalid", nullptr, 0) == Result::InsufficientCondition);
+    REQUIRE(Text::load("ArialSvg", nullptr, 0) == Result::InsufficientCondition);
+    REQUIRE(Text::load("ArialUnknown", nullptr, 0) == Result::Success);
+    REQUIRE(Text::load("ArialTtf", nullptr, 0) == Result::Success);
+    REQUIRE(Text::load("Arial", nullptr, 111) == Result::Success);
+
+    free(data);
     Initializer::term();
 }
 
