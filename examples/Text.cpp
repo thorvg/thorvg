@@ -58,12 +58,12 @@ void tvgDrawCmds(tvg::Canvas* canvas)
     auto size = file.tellg();
     file.seekg(0, std::ios::beg);
     auto data = (char*)malloc(size);
-    if (!data) return;
-    file.read(data, size);
-    file.close();
-    if (tvg::Text::load("SentyCloud", data, size, "ttf", true) != tvg::Result::Success) {
-        cout << "Error while loading TTF from memory. Did you enable TTF Loader?" << endl;
+    if (data && file.read(data, size)) {
+        if (tvg::Text::load("SentyCloud", data, size, "ttf", true) != tvg::Result::Success) {
+            cout << "Error while loading TTF from memory. Did you enable TTF Loader?" << endl;
+        }
     }
+    file.close();
     free(data);
 
     auto text = tvg::Text::gen();
