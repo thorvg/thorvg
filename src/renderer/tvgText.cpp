@@ -78,7 +78,7 @@ Result Text::load(const char* name, const char* data, uint32_t size, const strin
     //unload font
     if (!data) {
         if (LoaderMgr::retrieve(name)) return Result::Success;
-        return Result::InvalidArguments;
+        return Result::InsufficientCondition;
     }
 
     if (!LoaderMgr::loader(name, data, size, mimeType, copy)) return Result::NonSupport;
