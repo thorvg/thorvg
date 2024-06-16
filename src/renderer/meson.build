@@ -44,7 +44,8 @@ source_file = [
    'tvgShape.cpp',
    'tvgSwCanvas.cpp',
    'tvgTaskScheduler.cpp',
-   'tvgText.cpp'
+   'tvgText.cpp',
+   'tvgWgCanvas.cpp'
 ]
 
 common_dep = declare_dependency(
