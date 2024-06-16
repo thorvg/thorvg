@@ -473,14 +473,14 @@ fn cs_main( @builtin(global_invocation_id) id: vec3u) {
 
     var color: vec3f = colorSrc.xyz;
     var alpha: f32   = colorMsk.a;
-    let luma: vec3f  = vec3f(0.299, 0.587, 0.114);
+    let luma: f32    = dot(colorMsk.xyz, vec3f(0.299, 0.587, 0.114));
     switch composeMethod {
         /* None           */ case 0u: { color = colorSrc.xyz; }
         /* ClipPath       */ case 1u: { if (colorMsk.a == 0) { alpha = 0.0; }; }
-        /* AlphaMask      */ case 2u: { color = mix(colorMsk.xyz, colorSrc.xyz, colorSrc.a * colorMsk.b); }
-        /* InvAlphaMask   */ case 3u: { color = mix(colorSrc.xyz, colorMsk.xyz, colorSrc.a * colorMsk.b); alpha = 1.0 - colorMsk.b; }
-        /* LumaMask       */ case 4u: { color = colorSrc.xyz * dot(colorMsk.xyz, luma); }
-        /* InvLumaMask    */ case 5u: { color = colorSrc.xyz * (1.0 - dot(colorMsk.xyz, luma)); alpha = 1.0 - colorMsk.b; }
+        /* AlphaMask      */ case 2u: { color = colorSrc.xyz; alpha = colorSrc.a * colorMsk.a; }
+        /* InvAlphaMask   */ case 3u: { color = colorSrc.xyz; alpha = colorSrc.a * (1.0 - colorMsk.a); }
+        /* LumaMask       */ case 4u: { color = colorSrc.xyz; alpha = colorSrc.a * luma; }
+        /* InvLumaMask    */ case 5u: { color = colorSrc.xyz; alpha = colorSrc.a * (1.0 - luma); }
         /* AddMask        */ case 6u: { color = colorSrc.xyz * colorSrc.a + colorMsk.xyz * (1.0 - colorSrc.a); }
         /* SubtractMask   */ case 7u: { color = colorSrc.xyz * colorSrc.a - colorMsk.xyz * (1.0 - colorSrc.a); }
         /* IntersectMask  */ case 8u: { color = colorSrc.xyz * min(colorSrc.a, colorMsk.a); }
@@ -490,7 +490,7 @@ fn cs_main( @builtin(global_invocation_id) id: vec3u) {
 
     let S: vec3f = color.xyz;
     let D: vec3f = colorDst.xyz;
-    let Sa: f32  = alpha * opacity;
+    let Sa: f32  = alpha;
     let Da: f32  = colorDst.a;
     let One: vec3f = vec3(1.0);
     switch blendMethod {
