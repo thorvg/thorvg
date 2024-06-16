@@ -47,10 +47,12 @@ WgCanvas::WgCanvas() : Canvas(nullptr), pImpl(nullptr)
 {
 }
 
+
 WgCanvas::~WgCanvas()
 {
     delete pImpl;
 }
+
 
 Result WgCanvas::target(void* instance, void* surface, uint32_t w, uint32_t h) noexcept
 {
@@ -74,6 +76,7 @@ Result WgCanvas::target(void* instance, void* surface, uint32_t w, uint32_t h) n
 #endif
     return Result::NonSupport;
 }
+
 
 unique_ptr<WgCanvas> WgCanvas::gen() noexcept
 {

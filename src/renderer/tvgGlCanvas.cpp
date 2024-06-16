@@ -45,13 +45,12 @@ struct GlCanvas::Impl
 /************************************************************************/
 
 #ifdef THORVG_GL_RASTER_SUPPORT
-GlCanvas::GlCanvas() : Canvas(GlRenderer::gen()), pImpl(new Impl)
+GlCanvas::GlCanvas() : Canvas(GlRenderer::gen()), pImpl(nullptr)
 #else
-GlCanvas::GlCanvas() : Canvas(nullptr), pImpl(new Impl)
+GlCanvas::GlCanvas() : Canvas(nullptr), pImpl(nullptr)
 #endif
 {
 }
-
 
 
 GlCanvas::~GlCanvas()

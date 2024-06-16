@@ -46,9 +46,9 @@ struct SwCanvas::Impl
 /************************************************************************/
 
 #ifdef THORVG_SW_RASTER_SUPPORT
-SwCanvas::SwCanvas() : Canvas(SwRenderer::gen()), pImpl(new Impl)
+SwCanvas::SwCanvas() : Canvas(SwRenderer::gen()), pImpl(nullptr)
 #else
-SwCanvas::SwCanvas() : Canvas(nullptr), pImpl(new Impl)
+SwCanvas::SwCanvas() : Canvas(nullptr), pImpl(nullptr)
 #endif
 {
 }
