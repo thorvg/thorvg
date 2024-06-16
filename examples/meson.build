@@ -16,6 +16,7 @@ source_file = [
     'DirectUpdate.cpp',
     'Duplicate.cpp',
     'FillRule.cpp',
+    'FillSpread.cpp',
     'GifSaver.cpp',
     'GradientMasking.cpp',
     'GradientStroke.cpp',
