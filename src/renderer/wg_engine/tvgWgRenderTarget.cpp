@@ -111,6 +111,7 @@ void WgRenderStorage::drawShape(WgContext& context, WgRenderDataShape* renderDat
     assert(renderData);
     assert(mRenderPassEncoder);
     assert(renderData->meshGroupShapes.meshes.count == renderData->meshGroupShapesBBox.meshes.count);
+    if (renderData->renderSettingsShape.skip) return;
     // draw shape geometry
     wgpuRenderPassEncoderSetStencilReference(mRenderPassEncoder, 0);
     // setup fill rule
@@ -139,6 +140,7 @@ void WgRenderStorage::drawStroke(WgContext& context, WgRenderDataShape* renderDa
     assert(renderData);
     assert(mRenderPassEncoder);
     assert(renderData->meshGroupStrokes.meshes.count == renderData->meshGroupStrokesBBox.meshes.count);
+    if (renderData->renderSettingsStroke.skip) return;
     // draw stroke geometry
     uint8_t blend = (uint8_t)blendType;
     // draw strokes to stencil (first pass)

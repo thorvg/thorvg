@@ -236,10 +236,12 @@ void WgRenderSettings::update(WgContext& context, const Fill* fill, const uint8_
             bindGroupRadial.initialize(context.device, context.queue, radialGradient);
             fillType = WgRenderSettingsType::Radial;
         }
+        skip = false;
     } else if ((flags & (RenderUpdateFlag::Color)) && !fill) {
         WgShaderTypeSolidColor solidColor(color);
         bindGroupSolid.initialize(context.device, context.queue, solidColor);
         fillType = WgRenderSettingsType::Solid;
+        skip = (color[3] == 0);
     }
 };
 
