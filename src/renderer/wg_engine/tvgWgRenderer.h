@@ -51,7 +51,6 @@ public:
     bool clear() override;
     bool sync() override;
 
-    bool target(uint32_t* buffer, uint32_t stride, uint32_t w, uint32_t h);
     bool target(WGPUInstance instance, WGPUSurface surface, uint32_t w, uint32_t h);
 
     Compositor* target(const RenderRegion& region, ColorSpace cs) override;
