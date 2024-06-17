@@ -293,18 +293,6 @@ bool WgRenderer::sync()
 }
 
 
-bool WgRenderer::target(uint32_t* buffer, uint32_t stride, uint32_t w, uint32_t h)
-{
-    // store target surface properties
-    mTargetSurface.stride = stride;
-    mTargetSurface.w = w;
-    mTargetSurface.h = h;
-
-    mRenderTarget.initialize(mContext, w, h, WG_SSAA_SAMPLES);
-    return true;
-}
-
-
 // target for native window handle
 bool WgRenderer::target(WGPUInstance instance, WGPUSurface surface, uint32_t w, uint32_t h)
 {
