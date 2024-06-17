@@ -77,6 +77,7 @@ struct WgRenderSettings
     WgBindGroupLinearGradient bindGroupLinear{};
     WgBindGroupRadialGradient bindGroupRadial{};
     WgRenderSettingsType fillType{};
+    bool skip{};
 
     void update(WgContext& context, const Fill* fill, const uint8_t* color, const RenderUpdateFlag flags);
     void release(WgContext& context);
@@ -85,6 +86,7 @@ struct WgRenderSettings
 struct WgRenderDataPaint
 {
     WgBindGroupPaint bindGroupPaint{};
+    float opacity{};
 
     virtual ~WgRenderDataPaint() {};
     virtual void release(WgContext& context);

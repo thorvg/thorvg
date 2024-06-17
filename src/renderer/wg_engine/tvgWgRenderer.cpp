@@ -89,6 +89,7 @@ RenderData WgRenderer::prepare(const RenderShape& rshape, RenderData data, const
     }
 
     // setup fill settings
+    renderDataShape->opacity = opacity;
     renderDataShape->renderSettingsShape.update(mContext, rshape.fill, rshape.color, flags);
     if (rshape.stroke)
         renderDataShape->renderSettingsStroke.update(mContext, rshape.stroke->fill, rshape.stroke->color, flags);
@@ -111,6 +112,7 @@ RenderData WgRenderer::prepare(Surface* surface, const RenderMesh* mesh, RenderD
         renderDataPicture = new WgRenderDataPicture();
 
     // update paint settings
+    renderDataPicture->opacity = opacity;
     if (flags & (RenderUpdateFlag::Transform | RenderUpdateFlag::Blend)) {
         WgShaderTypeMat4x4f modelMat(transform);
         WgShaderTypeBlendSettings blendSettings(surface->cs, opacity);
@@ -150,6 +152,7 @@ bool WgRenderer::preRender()
 bool WgRenderer::renderShape(RenderData data)
 {
     // get current render storage
+    if (((WgRenderDataShape*)data)->opacity == 0) return 0;
     WgPipelineBlendType blendType = WgPipelines::blendMethodToBlendType(mBlendMethod);
     WgRenderStorage* renderStorage = mRenderStorageStack.last();
     assert(renderStorage);
