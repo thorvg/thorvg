@@ -37,7 +37,7 @@
 
 Text::Text() : pImpl(new Impl)
 {
-    Paint::pImpl->id = TVG_CLASS_ID_TEXT;
+    Paint::pImpl->type = TVG_CLASS_TYPE_TEXT;
 }
 
 
@@ -120,5 +120,11 @@ unique_ptr<Text> Text::gen() noexcept
 
 uint32_t Text::identifier() noexcept
 {
-    return TVG_CLASS_ID_TEXT;
+    return type();
+}
+
+
+uint32_t Text::type() noexcept
+{
+    return TVG_CLASS_TYPE_TEXT;
 }

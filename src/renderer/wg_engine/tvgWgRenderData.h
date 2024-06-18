@@ -90,7 +90,7 @@ struct WgRenderDataPaint
 
     virtual ~WgRenderDataPaint() {};
     virtual void release(WgContext& context);
-    virtual uint32_t identifier() { return TVG_CLASS_ID_UNDEFINED; };
+    virtual uint32_t type() { return TVG_CLASS_TYPE_UNDEFINED; };
 };
 
 struct WgRenderDataShape: public WgRenderDataPaint
@@ -112,7 +112,7 @@ struct WgRenderDataShape: public WgRenderDataPaint
     void updateMeshes(WgContext& context, const WgPolyline* polyline, const RenderStroke* rstroke);
     void releaseMeshes(WgContext& context);
     void release(WgContext& context) override;
-    uint32_t identifier() override { return TVG_CLASS_ID_SHAPE; };
+    uint32_t type() override { return TVG_CLASS_TYPE_SHAPE; };
 };
 
 class WgRenderDataShapePool {
@@ -133,5 +133,5 @@ struct WgRenderDataPicture: public WgRenderDataPaint
 
     void update(WgContext& context);
     void release(WgContext& context) override;
-    uint32_t identifier() override { return TVG_CLASS_ID_PICTURE; };
+    uint32_t type() override { return TVG_CLASS_TYPE_PICTURE; };
 };

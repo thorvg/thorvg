@@ -424,8 +424,15 @@ public:
      * This method can be called for checking the current concrete instance type.
      *
      * @return The type id of the Paint instance.
+     *
+     * @since 0.14
      */
-    uint32_t identifier() const noexcept;
+    uint32_t type() const noexcept;
+
+    /**
+     * @see Paint::type()
+     */
+    TVG_DEPRECATED uint32_t identifier() const noexcept;
 
     _TVG_DECLARE_PRIVATE(Paint);
 };
@@ -529,8 +536,15 @@ public:
      * This method can be called for checking the current concrete instance type.
      *
      * @return The type id of the Fill instance.
+     *
+     * @since 0.14
      */
-    uint32_t identifier() const noexcept;
+    uint32_t type() const noexcept;
+
+    /**
+     * @see Fill::type()
+     */
+    TVG_DEPRECATED uint32_t identifier() const noexcept;
 
     _TVG_DECLARE_PRIVATE(Fill);
 };
@@ -722,8 +736,15 @@ public:
      * This method can be referred for identifying the LinearGradient class type.
      *
      * @return The type id of the LinearGradient class.
+     *
+     * @since 0.14
      */
-    static uint32_t identifier() noexcept;
+    static uint32_t type() noexcept;
+
+    /**
+     * @see LinearGradient::type()
+     */
+    TVG_DEPRECATED static uint32_t identifier() noexcept;
 
     _TVG_DECLARE_PRIVATE(LinearGradient);
 };
@@ -779,8 +800,15 @@ public:
      * This method can be referred for identifying the RadialGradient class type.
      *
      * @return The type id of the RadialGradient class.
+     *
+     * @since 0.14
      */
-    static uint32_t identifier() noexcept;
+    static uint32_t type() noexcept;
+
+    /**
+     * @see RadialGradient::type()
+     */
+    TVG_DEPRECATED static uint32_t identifier() noexcept;
 
     _TVG_DECLARE_PRIVATE(RadialGradient);
 };
@@ -1227,8 +1255,15 @@ public:
      * This method can be referred for identifying the Shape class type.
      *
      * @return The type id of the Shape class.
+     *
+     * @since 0.14
      */
-    static uint32_t identifier() noexcept;
+    static uint32_t type() noexcept;
+
+    /**
+     * @see Shape::type()
+     */
+    TVG_DEPRECATED static uint32_t identifier() noexcept;
 
     _TVG_DECLARE_PRIVATE(Shape);
 };
@@ -1386,8 +1421,15 @@ public:
      * This method can be referred for identifying the Picture class type.
      *
      * @return The type id of the Picture class.
+     *
+     * @since 0.14
      */
-    static uint32_t identifier() noexcept;
+    static uint32_t type() noexcept;
+
+    /**
+     * @see Picture::type()
+     */
+    TVG_DEPRECATED static uint32_t identifier() noexcept;
 
     _TVG_DECLARE_ACCESSOR(Animation);
     _TVG_DECLARE_PRIVATE(Picture);
@@ -1467,8 +1509,15 @@ public:
      * This method can be referred for identifying the Scene class type.
      *
      * @return The type id of the Scene class.
+     *
+     * @since 0.14
      */
-    static uint32_t identifier() noexcept;
+    static uint32_t type() noexcept;
+
+    /**
+     * @see Scene::type()
+     */
+    TVG_DEPRECATED static uint32_t identifier() noexcept;
 
     _TVG_DECLARE_PRIVATE(Scene);
 };
@@ -1632,8 +1681,15 @@ public:
      * This method can be referred for identifying the Text class type.
      *
      * @return The type id of the Text class.
+     *
+     * @since 0.14
      */
-    static uint32_t identifier() noexcept;
+    static uint32_t type() noexcept;
+
+    /**
+     * @see Text::type()
+     */
+    TVG_DEPRECATED static uint32_t identifier() noexcept;
 
     _TVG_DECLARE_PRIVATE(Text);
 };

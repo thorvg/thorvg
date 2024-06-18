@@ -37,9 +37,9 @@ TEST_CASE("Lottie Slot", "[capiLottie]")
     Tvg_Paint* picture = tvg_animation_get_picture(animation);
     REQUIRE(picture);
 
-    Tvg_Identifier id = TVG_IDENTIFIER_UNDEF;
-    REQUIRE(tvg_paint_get_identifier(picture, &id) == TVG_RESULT_SUCCESS);
-    REQUIRE(id == TVG_IDENTIFIER_PICTURE);
+    Tvg_Type type = TVG_TYPE_UNDEF;
+    REQUIRE(tvg_paint_get_type(picture, &type) == TVG_RESULT_SUCCESS);
+    REQUIRE(type == TVG_TYPE_PICTURE);
 
     const char* slotJson = R"({"gradient_fill":{"p":{"a":0,"k":[0,0.1,0.1,0.2,1,1,0.1,0.2,0.1,1]}}})";
 
@@ -79,9 +79,9 @@ TEST_CASE("Lottie Slot 2", "[capiLottie]")
     Tvg_Paint* picture = tvg_animation_get_picture(animation);
     REQUIRE(picture);
 
-    Tvg_Identifier id = TVG_IDENTIFIER_UNDEF;
-    REQUIRE(tvg_paint_get_identifier(picture, &id) == TVG_RESULT_SUCCESS);
-    REQUIRE(id == TVG_IDENTIFIER_PICTURE);
+    Tvg_Type type = TVG_TYPE_UNDEF;
+    REQUIRE(tvg_paint_get_type(picture, &type) == TVG_RESULT_SUCCESS);
+    REQUIRE(type == TVG_TYPE_PICTURE);
 
     const char* slotJson = R"({"lottie-icon-outline":{"p":{"a":0,"k":[1,1,0]}},"lottie-icon-solid":{"p":{"a":0,"k":[0,0,1]}}})";
 
@@ -112,9 +112,9 @@ TEST_CASE("Lottie Marker", "[capiLottie]")
     Tvg_Paint* picture = tvg_animation_get_picture(animation);
     REQUIRE(picture);
 
-    Tvg_Identifier id = TVG_IDENTIFIER_UNDEF;
-    REQUIRE(tvg_paint_get_identifier(picture, &id) == TVG_RESULT_SUCCESS);
-    REQUIRE(id == TVG_IDENTIFIER_PICTURE);
+    Tvg_Type type = TVG_TYPE_UNDEF;
+    REQUIRE(tvg_paint_get_type(picture, &type) == TVG_RESULT_SUCCESS);
+    REQUIRE(type == TVG_TYPE_PICTURE);
 
     //Set marker before loaded
     REQUIRE(tvg_lottie_animation_set_marker(animation, "sectionC") == TVG_RESULT_INSUFFICIENT_CONDITION);

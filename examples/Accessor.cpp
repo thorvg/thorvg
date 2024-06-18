@@ -42,7 +42,7 @@ void tvgDrawCmds(tvg::Canvas* canvas)
     //This function will be called for every paint nodes of the picture tree.
     auto f = [](const tvg::Paint* paint) -> bool
     {
-        if (paint->identifier() == tvg::Shape::identifier()) {
+        if (paint->type() == tvg::Shape::type()) {
             auto shape = (tvg::Shape*) paint;
             //override color?
             uint8_t r, g, b;

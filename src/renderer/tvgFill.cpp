@@ -157,13 +157,19 @@ Fill* Fill::duplicate() const noexcept
 
 uint32_t Fill::identifier() const noexcept
 {
+    return type();
+}
+
+
+uint32_t Fill::type() const noexcept
+{
     return pImpl->id;
 }
 
 
 RadialGradient::RadialGradient():pImpl(new Impl())
 {
-    Fill::pImpl->id = TVG_CLASS_ID_RADIAL;
+    Fill::pImpl->id = TVG_CLASS_TYPE_RADIAL;
     Fill::pImpl->method(new FillDup<RadialGradient::Impl>(pImpl));
 }
 
@@ -198,13 +204,19 @@ unique_ptr<RadialGradient> RadialGradient::gen() noexcept
 
 uint32_t RadialGradient::identifier() noexcept
 {
-    return TVG_CLASS_ID_RADIAL;
+    return type();
+}
+
+
+uint32_t RadialGradient::type() noexcept
+{
+    return TVG_CLASS_TYPE_RADIAL;
 }
 
 
 LinearGradient::LinearGradient():pImpl(new Impl())
 {
-    Fill::pImpl->id = TVG_CLASS_ID_LINEAR;
+    Fill::pImpl->id = TVG_CLASS_TYPE_LINEAR;
     Fill::pImpl->method(new FillDup<LinearGradient::Impl>(pImpl));
 }
 
@@ -245,6 +257,11 @@ unique_ptr<LinearGradient> LinearGradient::gen() noexcept
 
 uint32_t LinearGradient::identifier() noexcept
 {
-    return TVG_CLASS_ID_LINEAR;
+    return type();
 }
 
+
+uint32_t LinearGradient::type() noexcept
+{
+    return TVG_CLASS_TYPE_LINEAR;
+}

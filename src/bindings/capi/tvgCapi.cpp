@@ -246,11 +246,17 @@ TVG_API Tvg_Result tvg_paint_get_blend_method(const Tvg_Paint* paint, Tvg_Blend_
 }
 
 
+TVG_API Tvg_Result tvg_paint_get_type(const Tvg_Paint* paint, Tvg_Type* type)
+{
+    if (!paint || !type) return TVG_RESULT_INVALID_ARGUMENT;
+    *type = static_cast<Tvg_Type>(reinterpret_cast<const Paint*>(paint)->type());
+    return TVG_RESULT_SUCCESS;
+}
+
+
 TVG_API Tvg_Result tvg_paint_get_identifier(const Tvg_Paint* paint, Tvg_Identifier* identifier)
 {
-    if (!paint || !identifier) return TVG_RESULT_INVALID_ARGUMENT;
-    *identifier = static_cast<Tvg_Identifier>(reinterpret_cast<const Paint*>(paint)->identifier());
-    return TVG_RESULT_SUCCESS;
+    return tvg_paint_get_type(paint, (Tvg_Type*) identifier);
 }
 
 /************************************************************************/
@@ -674,11 +680,17 @@ TVG_API Tvg_Result tvg_gradient_get_transform(const Tvg_Gradient* grad, Tvg_Matr
 }
 
 
+TVG_API Tvg_Result tvg_gradient_get_type(const Tvg_Gradient* grad, Tvg_Type* type)
+{
+    if (!grad || !type) return TVG_RESULT_INVALID_ARGUMENT;
+    *type = static_cast<Tvg_Type>(reinterpret_cast<const Fill*>(grad)->type());
+    return TVG_RESULT_SUCCESS;
+}
+
+
 TVG_API Tvg_Result tvg_gradient_get_identifier(const Tvg_Gradient* grad, Tvg_Identifier* identifier)
 {
-    if (!grad || !identifier) return TVG_RESULT_INVALID_ARGUMENT;
-    *identifier = static_cast<Tvg_Identifier>(reinterpret_cast<const Fill*>(grad)->identifier());
-    return TVG_RESULT_SUCCESS;
+    return tvg_gradient_get_type(grad, (Tvg_Type*) identifier);
 }
 
 /************************************************************************/

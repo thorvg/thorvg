@@ -96,7 +96,7 @@ struct Scene::Impl
         //If scene has several children or only scene, it may require composition.
         //OPTIMIZE: the bitmap type of the picture would not need the composition.
         //OPTIMIZE: a single paint of a scene would not need the composition.
-        if (paints.size() == 1 && paints.front()->identifier() == TVG_CLASS_ID_SHAPE) return false;
+        if (paints.size() == 1 && paints.front()->type() == TVG_CLASS_TYPE_SHAPE) return false;
 
         return true;
     }

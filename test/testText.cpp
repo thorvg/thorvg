@@ -36,10 +36,10 @@ TEST_CASE("Text Creation", "[tvgText]")
     auto text = Text::gen();
     REQUIRE(text);
 
-    REQUIRE(text->identifier() == Text::identifier());
-    REQUIRE(text->identifier() != Shape::identifier());
-    REQUIRE(text->identifier() != Scene::identifier());
-    REQUIRE(text->identifier() != Picture::identifier());
+    REQUIRE(text->type() == Text::type());
+    REQUIRE(text->type() != Shape::type());
+    REQUIRE(text->type() != Scene::type());
+    REQUIRE(text->type() != Picture::type());
 }
 
 TEST_CASE("Load TTF Data from a file", "[tvgText]")

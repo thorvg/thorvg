@@ -147,7 +147,7 @@ Result Picture::Impl::load(ImageLoader* loader)
 
 Picture::Picture() : pImpl(new Impl(this))
 {
-    Paint::pImpl->id = TVG_CLASS_ID_PICTURE;
+    Paint::pImpl->type = TVG_CLASS_TYPE_PICTURE;
 }
 
 
@@ -165,7 +165,13 @@ unique_ptr<Picture> Picture::gen() noexcept
 
 uint32_t Picture::identifier() noexcept
 {
-    return TVG_CLASS_ID_PICTURE;
+    return type();
+}
+
+
+uint32_t Picture::type() noexcept
+{
+    return TVG_CLASS_TYPE_PICTURE;
 }
 
 
