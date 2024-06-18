@@ -20,202 +20,83 @@
  * SOFTWARE.
  */
 
-#include "Common.h"
+#include "Example.h"
 
 /************************************************************************/
-/* Drawing Commands                                                     */
+/* ThorVG Drawing Contents                                              */
 /************************************************************************/
 
-static tvg::Shape *pMaskShape = nullptr;
-static tvg::Shape *pMask = nullptr;
-static bool updated = false;
-
-
-void tvgDrawCmds(tvg::Canvas* canvas)
+struct UserExample : tvgexam::Example
 {
-    if (!canvas) return;
+    tvg::Shape *pMaskShape = nullptr;
+    tvg::Shape *pMask = nullptr;
 
-    // background
-    auto bg = tvg::Shape::gen();
-    bg->appendRect(0, 0, WIDTH, HEIGHT);
-    bg->fill(255, 255, 255);
-    canvas->push(std::move(bg));
+    bool content(tvg::Canvas* canvas, uint32_t w, uint32_t h) override
+    {
+        if (!canvas) return false;
 
-    // image
-    auto picture1 = tvg::Picture::gen();
-    picture1->load(EXAMPLE_DIR"/svg/cartman.svg");
-    picture1->size(400, 400);
-    canvas->push(std::move(picture1));
+        // background
+        auto bg = tvg::Shape::gen();
+        bg->appendRect(0, 0, w, h);
+        bg->fill(255, 255, 255);
+        canvas->push(std::move(bg));
 
-    auto picture2 = tvg::Picture::gen();
-    picture2->load(EXAMPLE_DIR"/svg/logo.svg");
-    picture2->size(400, 400);
+        //image
+        auto picture1 = tvg::Picture::gen();
+        if (!tvgexam::verify(picture1->load(EXAMPLE_DIR"/svg/cartman.svg"))) return false;
+        picture1->size(400, 400);
+        canvas->push(std::move(picture1));
 
-    //mask
-    auto maskShape = tvg::Shape::gen();
-    pMaskShape = maskShape.get();
-    maskShape->appendCircle(180, 180, 75, 75);
-    maskShape->fill(125, 125, 125);
-    maskShape->strokeFill(25, 25, 25);
-    maskShape->strokeJoin(tvg::StrokeJoin::Round);
-    maskShape->strokeWidth(10);
-    canvas->push(std::move(maskShape));
+        auto picture2 = tvg::Picture::gen();
+        picture2->load(EXAMPLE_DIR"/svg/logo.svg");
+        picture2->size(400, 400);
 
-    auto mask = tvg::Shape::gen();
-    pMask = mask.get();
-    mask->appendCircle(180, 180, 75, 75);
-    mask->fill(255, 255, 255);         //AlphaMask RGB channels are unused.
+        //mask
+        auto maskShape = tvg::Shape::gen();
+        pMaskShape = maskShape.get();
+        maskShape->appendCircle(180, 180, 75, 75);
+        maskShape->fill(125, 125, 125);
+        maskShape->strokeFill(25, 25, 25);
+        maskShape->strokeJoin(tvg::StrokeJoin::Round);
+        maskShape->strokeWidth(10);
+        canvas->push(std::move(maskShape));
 
-    picture2->composite(std::move(mask), tvg::CompositeMethod::AlphaMask);
-    if (canvas->push(std::move(picture2)) != tvg::Result::Success) return;
+        auto mask = tvg::Shape::gen();
+        pMask = mask.get();
+        mask->appendCircle(180, 180, 75, 75);
+        mask->fill(255, 255, 255);         //AlphaMask RGB channels are unused.
 
-    updated = true;
-}
+        picture2->composite(std::move(mask), tvg::CompositeMethod::AlphaMask);
+        canvas->push(std::move(picture2));
 
-
-/************************************************************************/
-/* Sw Engine Test Code                                                  */
-/************************************************************************/
-
-static unique_ptr<tvg::SwCanvas> swCanvas;
-
-void initSwView(uint32_t* buffer)
-{
-    //Create a Canvas
-    swCanvas = tvg::SwCanvas::gen();
-    swCanvas->target(buffer, WIDTH, WIDTH, HEIGHT, tvg::SwCanvas::ARGB8888);
-
-    /* Push the shape into the Canvas drawing list
-       When this shape is into the canvas list, the shape could update & prepare
-       internal data asynchronously for coming rendering.
-       Canvas keeps this shape node unless user call canvas->clear() */
-    tvgDrawCmds(swCanvas.get());
-}
-
-void drawSwView(void* data, Eo* obj)
-{
-    if (swCanvas->draw() == tvg::Result::Success) {
-        swCanvas->sync();
-        updated = false;
+        return true;
     }
-}
 
-void tvgUpdateCmds(tvg::Canvas* canvas, float progress)
-{
-    if (!canvas) return;
+    bool update(tvg::Canvas* canvas, uint32_t elapsed) override
+    {
+        if (!canvas) return false;
 
-    /* Update shape directly.
-       You can update only necessary properties of this shape,
-       while retaining other properties. */
+        /* Update shape directly.
+           You can update only necessary properties of this shape,
+           while retaining other properties. */
+        auto progress = tvgexam::progress(elapsed, 3.0f, true);  //play time 3 sec.
 
-    // Translate mask object with its stroke & update
-    pMaskShape->translate(0 , progress * 300 - 100);
-    pMask->translate(0 , progress * 300 - 100);
+        // Translate mask object with its stroke & update
+        pMaskShape->translate(0 , progress * 300 - 100);
+        pMask->translate(0 , progress * 300 - 100);
 
-    canvas->update();
-    updated = true;
-}
+        canvas->update();
 
-void transitSwCb(Elm_Transit_Effect *effect, Elm_Transit* transit, double progress)
-{
-    tvgUpdateCmds(swCanvas.get(), progress);
-
-    Eo* img = (Eo*) effect;
-    evas_object_image_data_update_add(img, 0, 0, WIDTH, HEIGHT);
-    evas_object_image_pixels_dirty_set(img, EINA_TRUE);
-}
-
-/************************************************************************/
-/* GL Engine Test Code                                                  */
-/************************************************************************/
-
-static unique_ptr<tvg::GlCanvas> glCanvas;
-
-void initGlView(Evas_Object *obj)
-{
-    //Create a Canvas
-    glCanvas = tvg::GlCanvas::gen();
-
-    //Get the drawing target id
-    int32_t targetId;
-    auto gl = elm_glview_gl_api_get(obj);
-    gl->glGetIntegerv(GL_FRAMEBUFFER_BINDING, &targetId);
-
-    glCanvas->target(targetId, WIDTH, HEIGHT);
-
-    /* Push the shape into the Canvas drawing list
-       When this shape is into the canvas list, the shape could update & prepare
-       internal data asynchronously for coming rendering.
-       Canvas keeps this shape node unless user call canvas->clear() */
-    tvgDrawCmds(glCanvas.get());
-}
-
-void drawGlView(Evas_Object *obj)
-{
-    auto gl = elm_glview_gl_api_get(obj);
-    gl->glClearColor(0.0f, 0.0f, 0.0f, 1.0f);
-    gl->glClear(GL_COLOR_BUFFER_BIT);
-
-    if (glCanvas->draw() == tvg::Result::Success) {
-        glCanvas->sync();
-        updated = false;
+        return true;
     }
-}
+};
 
-void transitGlCb(Elm_Transit_Effect *effect, Elm_Transit* transit, double progress)
-{
-    tvgUpdateCmds(glCanvas.get(), progress);
-
-    elm_glview_changed_set((Evas_Object*)effect);
-}
 
 /************************************************************************/
-/* Main Code                                                            */
+/* Entry Point                                                          */
 /************************************************************************/
 
 int main(int argc, char **argv)
 {
-    auto tvgEngine = tvg::CanvasEngine::Sw;
-
-    if (argc > 1) {
-        if (!strcmp(argv[1], "gl")) tvgEngine = tvg::CanvasEngine::Gl;
-    }
-
-    //Threads Count
-    auto threads = std::thread::hardware_concurrency();
-    if (threads > 0) --threads;    //Allow the designated main thread capacity
-
-    //Initialize ThorVG Engine
-    if (tvg::Initializer::init(threads) == tvg::Result::Success) {
-
-        elm_init(argc, argv);
-
-        Elm_Transit *transit = elm_transit_add();
-
-        if (tvgEngine == tvg::CanvasEngine::Sw) {
-            auto view = createSwView();
-            elm_transit_effect_add(transit, transitSwCb, view, nullptr);
-        } else {
-            auto view = createGlView();
-            elm_transit_effect_add(transit, transitGlCb, view, nullptr);
-        }
-
-        elm_transit_duration_set(transit, 5);
-        elm_transit_repeat_times_set(transit, -1);
-        elm_transit_auto_reverse_set(transit, EINA_TRUE);
-        elm_transit_go(transit);
-
-        elm_run();
-
-        elm_transit_del(transit);
-
-        elm_shutdown();
-
-        //Terminate ThorVG Engine
-        tvg::Initializer::term();
-
-    } else {
-        cout << "engine is not supported" << endl;
-    }
-    return 0;
+    return tvgexam::main(new UserExample, argc, argv);
 }
