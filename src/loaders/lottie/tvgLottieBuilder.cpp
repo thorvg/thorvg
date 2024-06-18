@@ -437,7 +437,7 @@ static void _repeat(LottieGroup* parent, unique_ptr<Shape> path, RenderContext* 
                 parent->scene->push(cast(*shape));
                 propagators.push(*shape);
             }
-        } else {
+        } else if (!shapes.empty()) {
             for (auto shape = shapes.end() - 1; shape >= shapes.begin(); --shape) {
                 parent->scene->push(cast(*shape));
                 propagators.push(*shape);
