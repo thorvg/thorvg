@@ -401,7 +401,7 @@ fn cs_main( @builtin(global_invocation_id) id: vec3u) {
         /* Add        */ case 1u:  { color = (S + D); }
         /* Screen     */ case 2u:  { color = (S + D) - (S * D); }
         /* Multiply   */ case 3u:  { color = (S * D); }
-        /* Overlay    */ case 4u:  { color = S * D; }
+        /* Overlay    */ case 4u:  { color = (Sa * Da) - 2 * (Da - S) * (Sa - D); }
         /* Difference */ case 5u:  { color = abs(S - D); }
         /* Exclusion  */ case 6u:  { color = S + D - (2 * S * D); }
         /* SrcOver    */ case 7u:  { color = S; }
@@ -469,6 +469,7 @@ fn cs_main( @builtin(global_invocation_id) id: vec3u) {
 
     let colorSrc = textureLoad(imageSrc, id.xy);
     let colorMsk = textureLoad(imageMsk, id.xy);
+    if ((length(colorSrc) == 0.0) || (length(colorMsk) == 0.0)) { return; };
     let colorDst = textureLoad(imageDst, id.xy);
 
     var color: vec3f = colorSrc.xyz;
@@ -498,7 +499,7 @@ fn cs_main( @builtin(global_invocation_id) id: vec3u) {
         /* Add        */ case 1u:  { color = (S + D); }
         /* Screen     */ case 2u:  { color = (S + D) - (S * D); }
         /* Multiply   */ case 3u:  { color = (S * D); }
-        /* Overlay    */ case 4u:  { color = S * D; }
+        /* Overlay    */ case 4u:  { color = (Sa * Da) - 2 * (Da - S) * (Sa - D); }
         /* Difference */ case 5u:  { color = abs(S - D); }
         /* Exclusion  */ case 6u:  { color = S + D - (2 * S * D); }
         /* SrcOver    */ case 7u:  { color = S; }
