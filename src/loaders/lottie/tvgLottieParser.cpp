@@ -828,7 +828,7 @@ LottieRepeater* LottieParser::parseRepeater()
         if (parseCommon(repeater, key)) continue;
         else if (KEY_AS("c")) parseProperty<LottieProperty::Type::Float>(repeater->copies);
         else if (KEY_AS("o")) parseProperty<LottieProperty::Type::Float>(repeater->offset);
-        else if (KEY_AS("m")) repeater->inorder = getInt();
+        else if (KEY_AS("m")) repeater->inorder = getInt() == 2;
         else if (KEY_AS("tr"))
         {
             enterObject();
