@@ -331,7 +331,7 @@ bool WgRenderer::target(WGPUInstance instance, WGPUSurface surface, uint32_t w, 
 
 Compositor* WgRenderer::target(TVG_UNUSED const RenderRegion& region, TVG_UNUSED ColorSpace cs)
 {
-    mCompositorStack.push(new Compositor);
+    mCompositorStack.push(new WgCompositor);
     return mCompositorStack.last();
 }
 
@@ -339,8 +339,10 @@ Compositor* WgRenderer::target(TVG_UNUSED const RenderRegion& region, TVG_UNUSED
 bool WgRenderer::beginComposite(TVG_UNUSED Compositor* cmp, TVG_UNUSED CompositeMethod method, TVG_UNUSED uint8_t opacity)
 {
     // save current composition settings
-    cmp->method = method;
-    cmp->opacity = opacity;
+    WgCompositor *comp = (WgCompositor*)cmp;
+    comp->method = method;
+    comp->opacity = opacity;
+    comp->blendMethod = mBlendMethod;
 
     // end current render pass
     mRenderStorageStack.last()->endRenderPass();
@@ -355,7 +357,8 @@ bool WgRenderer::beginComposite(TVG_UNUSED Compositor* cmp, TVG_UNUSED Composite
 
 bool WgRenderer::endComposite(TVG_UNUSED Compositor* cmp)
 {
-    if (cmp->method == CompositeMethod::None) {
+    WgCompositor *comp = (WgCompositor*)cmp;
+    if (comp->method == CompositeMethod::None) {
         // end current render pass
         mRenderStorageStack.last()->endRenderPass();
         // get two last render targets
@@ -363,7 +366,7 @@ bool WgRenderer::endComposite(TVG_UNUSED Compositor* cmp)
         mRenderStorageStack.pop();
     
         // blent scene to current render storage
-        WgBindGroupBlendMethod* blendMethod = mBlendMethodPool.allocate(mContext, mBlendMethod);
+        WgBindGroupBlendMethod* blendMethod = mBlendMethodPool.allocate(mContext, comp->blendMethod);
         mRenderStorageStack.last()->blend(mCommandEncoder, renderStorageSrc, blendMethod);
 
         // back render targets to the pool
@@ -382,9 +385,9 @@ bool WgRenderer::endComposite(TVG_UNUSED Compositor* cmp)
         WgRenderStorage* renderStorageDst = mRenderStorageStack.last();
 
         // get compose, blend and opacity settings
-        WgBindGroupCompositeMethod* composeMethod = mCompositeMethodPool.allocate(mContext, cmp->method);
+        WgBindGroupCompositeMethod* composeMethod = mCompositeMethodPool.allocate(mContext, comp->method);
         WgBindGroupBlendMethod* blendMethod = mBlendMethodPool.allocate(mContext, mBlendMethod);
-        WgBindGroupOpacity* opacity = mOpacityPool.allocate(mContext, cmp->opacity);
+        WgBindGroupOpacity* opacity = mOpacityPool.allocate(mContext, comp->opacity);
 
         // compose and blend
         // dest = blend(dest, compose(src, msk, composeMethod), blendMethod, opacity)

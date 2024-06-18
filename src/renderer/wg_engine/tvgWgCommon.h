@@ -31,6 +31,10 @@
 #define WG_VERTEX_BUFFER_MIN_SIZE 2048
 #define WG_INDEX_BUFFER_MIN_SIZE 2048
 
+struct WgCompositor: public Compositor {
+    BlendMethod blendMethod;
+};
+
 enum class WgPipelineBlendType {
     Src = 0, // S
     Normal,  // (Sa * S) + (255 - Sa) * D
