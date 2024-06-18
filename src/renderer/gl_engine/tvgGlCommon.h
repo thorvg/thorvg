@@ -39,17 +39,6 @@
           } \
         } while(0)
 
-#define EGL_CHECK(x) \
-    x; \
-    do { \
-        EGLint eglError = eglGetError(); \
-        if(eglError != EGL_SUCCESS) { \
-            TVGERR("GL_ENGINE", "eglGetError() = %i (0x%.8x)", eglError, eglError); \
-            assert(0); \
-        } \
-    } while(0)
-
-
 enum class GlStencilMode {
     None,
     FillWinding,

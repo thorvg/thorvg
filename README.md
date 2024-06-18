@@ -494,7 +494,7 @@ meson setup builddir -Dbindings="capi"
 ## Dependencies
 ThorVG offers versatile support for image loading, accommodating both static and external loaders. This flexibility ensures that, even in environments without external libraries, users can still leverage static loaders as a reliable alternative. At its foundation, the ThorVG core library is engineered to function autonomously, free from external dependencies. However, it is important to note that ThorVG also encompasses a range of optional feature extensions, each with its specific set of dependencies. The dependencies associated with these selective features are outlined as follows:
 
-* GL engine: [EGL](https://www.khronos.org/egl), [GLESv2/GLESv3](https://www.khronos.org/opengles/)
+* GL engine: [GLESv2/GLESv3](https://www.khronos.org/opengles/)
 * WG engine: [webgpu-native](https://github.com/gfx-rs/wgpu-native)
 * External PNG support: [libpng](https://github.com/glennrp/libpng)
 * External JPG support: [turbojpeg](https://github.com/libjpeg-turbo/libjpeg-turbo)
