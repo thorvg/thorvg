@@ -20,155 +20,56 @@
  * SOFTWARE.
  */
 
-#include <fstream>
-#include "Common.h"
+#include "Example.h"
 
 /************************************************************************/
-/* Drawing Commands                                                     */
+/* ThorVG Drawing Contents                                              */
 /************************************************************************/
 
-void tvgDrawCmds(tvg::Canvas* canvas)
+struct UserExample : tvgexam::Example
 {
-    if (!canvas) return;
+    bool content(tvg::Canvas* canvas, uint32_t w, uint32_t h) override
+    {
+        if (!canvas) return false;
 
-    //Background
-    auto bg = tvg::Shape::gen();
-    bg->appendRect(0, 0, WIDTH, HEIGHT);    //x, y, w, h
-    bg->fill(255, 255, 255);                //r, g, b
-    canvas->push(std::move(bg));
+        //Background
+        auto bg = tvg::Shape::gen();
+        bg->appendRect(0, 0, w, h);    //x, y, w, h
+        bg->fill(255, 255, 255);       //r, g, b
+        canvas->push(std::move(bg));
 
-    char buf[PATH_MAX];
-    snprintf(buf, sizeof(buf), EXAMPLE_DIR"/svg/logo.svg");
+        char buf[PATH_MAX];
+        snprintf(buf, sizeof(buf), EXAMPLE_DIR"/svg/logo.svg");
 
-    auto picture = tvg::Picture::gen();
-    tvg::Result ret = picture->load(buf);
-    if (ret == tvg::Result::InvalidArguments) {
-        cout << "Path is invalid." << endl;
-        return;
-    } else if (ret == tvg::Result::Unknown) {
-        cout << "Unknown error occurs." << endl;
-        return;
+        auto picture = tvg::Picture::gen();
+        if (!tvgexam::verify(picture->load(buf))) return false;
+
+        float scale;
+        float shiftX = 0.0f, shiftY = 0.0f;
+        float w2, h2;
+        picture->size(&w2, &h2);
+        if (w2 > h2) {
+            scale = w / w2;
+            shiftY = (h - h2 * scale) * 0.5f;
+        } else {
+            scale = h / h2;
+            shiftX = (w - w2 * scale) * 0.5f;
+        }
+        picture->translate(shiftX, shiftY);
+        picture->scale(scale);
+
+        canvas->push(std::move(picture));
+
+        return true;
     }
-
-    float scale;
-    float shiftX = 0.0f, shiftY = 0.0f;
-    float w, h;
-    picture->size(&w, &h);
-    if (w > h) {
-        scale = WIDTH / w;
-        shiftY = (HEIGHT - h * scale) * 0.5f;
-    } else {
-        scale = HEIGHT / h;
-        shiftX = (WIDTH - w * scale) * 0.5f;
-    }
-    picture->translate(shiftX, shiftY);
-    picture->scale(scale);
-
-    if (canvas->push(std::move(picture)) != tvg::Result::Success) return;
-    cout << "SVG: " << buf << endl;
-}
+};
 
 
 /************************************************************************/
-/* Sw Engine Test Code                                                  */
-/************************************************************************/
-
-static unique_ptr<tvg::SwCanvas> swCanvas;
-
-void initSwView(uint32_t* buffer)
-{
-    //Create a Canvas
-    swCanvas = tvg::SwCanvas::gen();
-    swCanvas->target(buffer, WIDTH, WIDTH, HEIGHT, tvg::SwCanvas::ARGB8888);
-
-    /* Push the shape into the Canvas drawing list
-       When this shape is into the canvas list, the shape could update & prepare
-       internal data asynchronously for coming rendering.
-       Canvas keeps this shape node unless user call canvas->clear() */
-    tvgDrawCmds(swCanvas.get());
-}
-
-void drawSwView(void* data, Eo* obj)
-{
-    if (swCanvas->draw() == tvg::Result::Success) {
-        swCanvas->sync();
-    }
-}
-
-
-/************************************************************************/
-/* GL Engine Test Code                                                  */
-/************************************************************************/
-
-static unique_ptr<tvg::GlCanvas> glCanvas;
-
-void initGlView(Evas_Object *obj)
-{
-    //Create a Canvas
-    glCanvas = tvg::GlCanvas::gen();
-
-    //Get the drawing target id
-    int32_t targetId;
-    auto gl = elm_glview_gl_api_get(obj);
-    gl->glGetIntegerv(GL_FRAMEBUFFER_BINDING, &targetId);
-
-    glCanvas->target(targetId, WIDTH, HEIGHT);
-
-    /* Push the shape into the Canvas drawing list
-       When this shape is into the canvas list, the shape could update & prepare
-       internal data asynchronously for coming rendering.
-       Canvas keeps this shape node unless user call canvas->clear() */
-    tvgDrawCmds(glCanvas.get());
-}
-
-void drawGlView(Evas_Object *obj)
-{
-    auto gl = elm_glview_gl_api_get(obj);
-    gl->glClearColor(0.0f, 0.0f, 0.0f, 1.0f);
-    gl->glClear(GL_COLOR_BUFFER_BIT);
-
-    if (glCanvas->draw() == tvg::Result::Success) {
-        glCanvas->sync();
-    }
-}
-
-
-/************************************************************************/
-/* Main Code                                                            */
+/* Entry Point                                                          */
 /************************************************************************/
 
 int main(int argc, char **argv)
 {
-    auto tvgEngine = tvg::CanvasEngine::Sw;
-
-    if (argc > 1) {
-        if (!strcmp(argv[1], "gl")) tvgEngine = tvg::CanvasEngine::Gl;
-    }
-
-    //Threads Count
-    auto threads = std::thread::hardware_concurrency();
-    if (threads > 0) --threads;    //Allow the designated main thread capacity
-
-    //Initialize ThorVG Engine
-    if (tvg::Initializer::init(threads) == tvg::Result::Success) {
-
-        elm_init(argc, argv);
-
-        if (tvgEngine == tvg::CanvasEngine::Sw) {
-            createSwView();
-        } else {
-            createGlView();
-        }
-
-        elm_run();
-        elm_shutdown();
-
-        //Terminate ThorVG Engine
-        tvg::Initializer::term();
-
-
-    } else {
-        cout << "engine is not supported" << endl;
-    }
-    return 0;
+    return tvgexam::main(new UserExample, argc, argv);
 }

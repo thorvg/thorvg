@@ -20,241 +20,151 @@
  * SOFTWARE.
  */
 
-#include "Common.h"
-#include <fstream>
+#include "Example.h"
 
 /************************************************************************/
-/* Drawing Commands                                                     */
+/* ThorVG Drawing Contents                                              */
 /************************************************************************/
 
-void tvgDrawCmds(tvg::Canvas* canvas)
+struct UserExample : tvgexam::Example
 {
-    if (!canvas) return;
-
-    //Duplicate Shapes
+    bool content(tvg::Canvas* canvas, uint32_t w, uint32_t h) override
     {
-        //Original Shape
-        auto shape1 = tvg::Shape::gen();
-        shape1->appendRect(10, 10, 200, 200);
-        shape1->appendRect(220, 10, 100, 100);
+        if (!canvas) return false;
 
-        shape1->strokeWidth(3);
-        shape1->strokeFill(0, 255, 0);
+        //Duplicate Shapes
+        {
+            //Original Shape
+            auto shape1 = tvg::Shape::gen();
+            shape1->appendRect(10, 10, 200, 200);
+            shape1->appendRect(220, 10, 100, 100);
 
-        float dashPattern[2] = {4, 4};
-        shape1->strokeDash(dashPattern, 2);
-        shape1->fill(255, 0, 0);
+            shape1->strokeWidth(3);
+            shape1->strokeFill(0, 255, 0);
 
-        //Duplicate Shape, Switch fill method
-        auto shape2 = tvg::cast<tvg::Shape>(shape1->duplicate());
-        shape2->translate(0, 220);
+            float dashPattern[2] = {4, 4};
+            shape1->strokeDash(dashPattern, 2);
+            shape1->fill(255, 0, 0);
 
-        auto fill = tvg::LinearGradient::gen();
-        fill->linear(10, 10, 440, 200);
+            //Duplicate Shape, Switch fill method
+            auto shape2 = tvg::cast<tvg::Shape>(shape1->duplicate());
+            shape2->translate(0, 220);
 
-        tvg::Fill::ColorStop colorStops[2];
-        colorStops[0] = {0, 0, 0, 0, 255};
-        colorStops[1] = {1, 255, 255, 255, 255};
-        fill->colorStops(colorStops, 2);
+            auto fill = tvg::LinearGradient::gen();
+            fill->linear(10, 10, 440, 200);
 
-        shape2->fill(std::move(fill));
+            tvg::Fill::ColorStop colorStops[2];
+            colorStops[0] = {0, 0, 0, 0, 255};
+            colorStops[1] = {1, 255, 255, 255, 255};
+            fill->colorStops(colorStops, 2);
 
-        //Duplicate Shape 2
-        auto shape3 = tvg::cast<tvg::Shape>(shape2->duplicate());
-        shape3->translate(0, 440);
+            shape2->fill(std::move(fill));
 
-        canvas->push(std::move(shape1));
-        canvas->push(std::move(shape2));
-        canvas->push(std::move(shape3));
+            //Duplicate Shape 2
+            auto shape3 = tvg::cast<tvg::Shape>(shape2->duplicate());
+            shape3->translate(0, 440);
+
+            canvas->push(std::move(shape1));
+            canvas->push(std::move(shape2));
+            canvas->push(std::move(shape3));
+        }
+
+        //Duplicate Scene
+        {
+            //Create a Scene1
+            auto scene1 = tvg::Scene::gen();
+
+            auto shape1 = tvg::Shape::gen();
+            shape1->appendRect(0, 0, 400, 400, 50, 50);
+            shape1->fill(0, 255, 0);
+            scene1->push(std::move(shape1));
+
+            auto shape2 = tvg::Shape::gen();
+            shape2->appendCircle(400, 400, 200, 200);
+            shape2->fill(255, 255, 0);
+            scene1->push(std::move(shape2));
+
+            auto shape3 = tvg::Shape::gen();
+            shape3->appendCircle(600, 600, 150, 100);
+            shape3->fill(0, 255, 255);
+            scene1->push(std::move(shape3));
+
+            scene1->scale(0.25);
+            scene1->translate(400, 0);
+
+            //Duplicate Scene1
+            auto scene2 = tvg::cast<tvg::Scene>(scene1->duplicate());
+            scene2->translate(600, 0);
+
+            canvas->push(std::move(scene1));
+            canvas->push(std::move(scene2));
+        }
+
+        //Duplicate Picture - svg
+        {
+            auto picture1 = tvg::Picture::gen();
+            if (!tvgexam::verify(picture1->load(EXAMPLE_DIR"/svg/tiger.svg"))) return false;
+            picture1->translate(350, 200);
+            picture1->scale(0.25);
+
+            auto picture2 = tvg::cast<tvg::Picture>(picture1->duplicate());
+            picture2->translate(550, 250);
+
+            canvas->push(std::move(picture1));
+            canvas->push(std::move(picture2));
+        }
+
+        //Duplicate Picture - raw
+        {
+            string path(EXAMPLE_DIR"/image/rawimage_200x300.raw");
+            ifstream file(path, ios::binary);
+            if (!file.is_open()) return false;
+            uint32_t* data = (uint32_t*)malloc(sizeof(uint32_t) * 200 * 300);
+            file.read(reinterpret_cast<char*>(data), sizeof(uint32_t) * 200 * 300);
+            file.close();
+
+            auto picture1 = tvg::Picture::gen();
+            if (!tvgexam::verify(picture1->load(data, 200, 300, true, true))) return false;
+            picture1->scale(0.8);
+            picture1->translate(400, 450);
+
+            auto picture2 = tvg::cast<tvg::Picture>(picture1->duplicate());
+            picture2->translate(600, 550);
+            picture2->scale(0.7);
+            picture2->rotate(8);
+
+            canvas->push(std::move(picture1));
+            canvas->push(std::move(picture2));
+
+            free(data);
+        }
+
+        //Duplicate Text
+        {
+            auto text = tvg::Text::gen();
+            if (!tvgexam::verify(text->load(EXAMPLE_DIR"/font/Arial.ttf"))) return false;
+            text->font("Arial", 50);
+            text->translate(0, 650);
+            text->text("ThorVG Text");
+            text->fill(100, 100, 255);
+
+            auto text2 = tvg::cast<tvg::Text>(text->duplicate());
+            text2->translate(0, 700);
+
+            canvas->push(std::move(text));
+            canvas->push(std::move(text2));
+        }
+
+        return true;
     }
-
-    //Duplicate Scene
-    {
-        //Create a Scene1
-        auto scene1 = tvg::Scene::gen();
-
-        auto shape1 = tvg::Shape::gen();
-        shape1->appendRect(0, 0, 400, 400, 50, 50);
-        shape1->fill(0, 255, 0);
-        scene1->push(std::move(shape1));
-
-        auto shape2 = tvg::Shape::gen();
-        shape2->appendCircle(400, 400, 200, 200);
-        shape2->fill(255, 255, 0);
-        scene1->push(std::move(shape2));
-
-        auto shape3 = tvg::Shape::gen();
-        shape3->appendCircle(600, 600, 150, 100);
-        shape3->fill(0, 255, 255);
-        scene1->push(std::move(shape3));
-
-        scene1->scale(0.25);
-        scene1->translate(400, 0);
-
-        //Duplicate Scene1
-        auto scene2 = tvg::cast<tvg::Scene>(scene1->duplicate());
-        scene2->translate(600, 0);
-
-        canvas->push(std::move(scene1));
-        canvas->push(std::move(scene2));
-    }
-
-    //Duplicate Picture - svg
-    {
-        auto picture1 = tvg::Picture::gen();
-        picture1->load(EXAMPLE_DIR"/svg/tiger.svg");
-        picture1->translate(350, 200);
-        picture1->scale(0.25);
-
-        auto picture2 = tvg::cast<tvg::Picture>(picture1->duplicate());
-        picture2->translate(550, 250);
-
-        canvas->push(std::move(picture1));
-        canvas->push(std::move(picture2));
-    }
-
-    //Duplicate Picture - raw
-    {
-        string path(EXAMPLE_DIR"/image/rawimage_200x300.raw");
-        ifstream file(path, ios::binary);
-        if (!file.is_open()) return ;
-        uint32_t* data = (uint32_t*)malloc(sizeof(uint32_t) * 200 * 300);
-        file.read(reinterpret_cast<char*>(data), sizeof(uint32_t) * 200 * 300);
-        file.close();
-
-        auto picture1 = tvg::Picture::gen();
-        if (picture1->load(data, 200, 300, true, true) != tvg::Result::Success) return;
-        picture1->scale(0.8);
-        picture1->translate(400, 450);
-
-        auto picture2 = tvg::cast<tvg::Picture>(picture1->duplicate());
-        picture2->translate(600, 550);
-        picture2->scale(0.7);
-        picture2->rotate(8);
-
-        canvas->push(std::move(picture1));
-        canvas->push(std::move(picture2));
-
-        free(data);
-    }
-
-    //Duplicate Text
-    {
-        auto text = tvg::Text::gen();
-        text->load(EXAMPLE_DIR"/font/Arial.ttf");
-        text->font("Arial", 50);
-        text->translate(0, 650);
-        text->text("ThorVG Text");
-        text->fill(100, 100, 255);
-
-        auto text2 = tvg::cast<tvg::Text>(text->duplicate());
-        text2->translate(0, 700);
-
-        canvas->push(std::move(text));
-        canvas->push(std::move(text2));
-    }
-}
+};
 
 
 /************************************************************************/
-/* Sw Engine Test Code                                                  */
-/************************************************************************/
-
-static unique_ptr<tvg::SwCanvas> swCanvas;
-
-void initSwView(uint32_t* buffer)
-{
-    //Create a Canvas
-    swCanvas = tvg::SwCanvas::gen();
-    swCanvas->target(buffer, WIDTH, WIDTH, HEIGHT, tvg::SwCanvas::ARGB8888);
-
-    /* Push the shape into the Canvas drawing list
-       When this shape is into the canvas list, the shape could update & prepare
-       internal data asynchronously for coming rendering.
-       Canvas keeps this shape node unless user call canvas->clear() */
-    tvgDrawCmds(swCanvas.get());
-}
-
-void drawSwView(void* data, Eo* obj)
-{
-    if (swCanvas->draw() == tvg::Result::Success) {
-        swCanvas->sync();
-    }
-}
-
-
-/************************************************************************/
-/* GL Engine Test Code                                                  */
-/************************************************************************/
-
-static unique_ptr<tvg::GlCanvas> glCanvas;
-
-void initGlView(Evas_Object *obj)
-{
-    //Create a Canvas
-    glCanvas = tvg::GlCanvas::gen();
-
-    //Get the drawing target id
-    int32_t targetId;
-    auto gl = elm_glview_gl_api_get(obj);
-    gl->glGetIntegerv(GL_FRAMEBUFFER_BINDING, &targetId);
-
-    glCanvas->target(targetId, WIDTH, HEIGHT);
-
-    /* Push the shape into the Canvas drawing list
-       When this shape is into the canvas list, the shape could update & prepare
-       internal data asynchronously for coming rendering.
-       Canvas keeps this shape node unless user call canvas->clear() */
-    tvgDrawCmds(glCanvas.get());
-}
-
-void drawGlView(Evas_Object *obj)
-{
-    auto gl = elm_glview_gl_api_get(obj);
-    gl->glClearColor(0.0f, 0.0f, 0.0f, 1.0f);
-    gl->glClear(GL_COLOR_BUFFER_BIT);
-
-    if (glCanvas->draw() == tvg::Result::Success) {
-        glCanvas->sync();
-    }
-}
-
-
-/************************************************************************/
-/* Main Code                                                            */
+/* Entry Point                                                          */
 /************************************************************************/
 
 int main(int argc, char **argv)
 {
-    auto tvgEngine = tvg::CanvasEngine::Sw;
-
-    if (argc > 1) {
-        if (!strcmp(argv[1], "gl")) tvgEngine = tvg::CanvasEngine::Gl;
-    }
-
-    //Threads Count
-    auto threads = std::thread::hardware_concurrency();
-    if (threads > 0) --threads;    //Allow the designated main thread capacity
-
-    //Initialize ThorVG Engine
-    if (tvg::Initializer::init(threads) == tvg::Result::Success) {
-
-        elm_init(argc, argv);
-
-        if (tvgEngine == tvg::CanvasEngine::Sw) {
-            createSwView();
-        } else {
-            createGlView();
-        }
-
-        elm_run();
-        elm_shutdown();
-
-        //Terminate ThorVG Engine
-        tvg::Initializer::term();
-
-    } else {
-        cout << "engine is not supported" << endl;
-    }
-    return 0;
+    return tvgexam::main(new UserExample, argc, argv);
 }
