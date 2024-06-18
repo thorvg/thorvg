@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2021 - 2024 the ThorVG project. All rights reserved.
+ * Copyright (c) 2020 - 2024 the ThorVG project. All rights reserved.
 
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to deal
@@ -20,177 +20,96 @@
  * SOFTWARE.
  */
 
-#include <vector>
-#include "Common.h"
+#include "Example.h"
 
 /************************************************************************/
-/* Drawing Commands                                                     */
+/* ThorVG Drawing Contents                                              */
 /************************************************************************/
 
-#define NUM_PER_ROW 7
-#define NUM_PER_COL 7
-#define SIZE (WIDTH/NUM_PER_ROW)
+#define NUM_PER_ROW 8
+#define NUM_PER_COL 8
 
-static int counter = 0;
-
-static std::vector<unique_ptr<tvg::Picture>> pictures;
-
-void tvgDirCallback(const char* name, const char* path, void* data)
+struct UserExample : tvgexam::Example
 {
-    if (counter >= NUM_PER_ROW * NUM_PER_COL) return;
+    std::vector<unique_ptr<tvg::Picture>> pictures;
+    uint32_t w, h;
+    uint32_t size;
 
-    //ignore if not tvgs.
-    const char *ext = name + strlen(name) - 3;
-    if (strcmp(ext, "tvg")) return;
+    int counter = 0;
 
-    auto picture = tvg::Picture::gen();
+    void populate(const char* path) override
+    {
+        if (counter >= NUM_PER_ROW * NUM_PER_COL) return;
 
-    char buf[PATH_MAX];
-    snprintf(buf, sizeof(buf), "/%s/%s", path, name);
+        //ignore if not tvg.
+        const char *ext = path + strlen(path) - 3;
+        if (strcmp(ext, "tvg")) return;
 
-    if (picture->load(buf) != tvg::Result::Success) return;
+        auto picture = tvg::Picture::gen();
 
-    picture->size(SIZE, SIZE);
-    picture->translate((counter % NUM_PER_ROW) * SIZE, (counter / NUM_PER_ROW) * (HEIGHT / NUM_PER_COL));
+        if (!tvgexam::verify(picture->load(path))) return;
 
-    pictures.push_back(std::move(picture));
+        //image scaling preserving its aspect ratio
+        float scale;
+        float shiftX = 0.0f, shiftY = 0.0f;
+        float w, h;
+        picture->size(&w, &h);
 
-    cout << "TVG: " << buf << endl;
+        if (w > h) {
+            scale = size / w;
+            shiftY = (size - h * scale) * 0.5f;
+        } else {
+            scale = size / h;
+            shiftX = (size - w * scale) * 0.5f;
+        }
 
-    counter++;
-}
+        picture->scale(scale);
+        picture->translate((counter % NUM_PER_ROW) * size + shiftX, (counter / NUM_PER_ROW) * (this->h / NUM_PER_COL) + shiftY);
 
-void tvgDrawCmds(tvg::Canvas* canvas)
-{
-    if (!canvas) return;
+        pictures.push_back(std::move(picture));
 
-    //Background
-    auto shape = tvg::Shape::gen();
-    shape->appendRect(0, 0, WIDTH, HEIGHT);          //x, y, w, h
-    shape->fill(255, 255, 255);                      //r, g, b
+        cout << "TVG: " << path << endl;
 
-    if (canvas->push(std::move(shape)) != tvg::Result::Success) return;
-
-    eina_file_dir_list(EXAMPLE_DIR"/tvg", EINA_TRUE, tvgDirCallback, canvas);
-
-    /* This showcase shows you asynchrounous loading of tvg.
-       For this, pushing pictures at a certian sync time.
-       This means it earns the time to finish loading tvg resources,
-       otherwise you can push pictures immediately. */
-    for (auto& paint : pictures) {
-        canvas->push(std::move(paint));
+        counter++;
     }
 
-    pictures.clear();
-}
+    bool content(tvg::Canvas* canvas, uint32_t w, uint32_t h) override
+    {
+        if (!canvas) return false;
 
+        //Background
+        auto shape = tvg::Shape::gen();
+        shape->appendRect(0, 0, w, h);
+        shape->fill(255, 255, 255);
 
-/************************************************************************/
-/* Sw Engine Test Code                                                  */
-/************************************************************************/
+        canvas->push(std::move(shape));
 
-static unique_ptr<tvg::SwCanvas> swCanvas;
+        this->w = w;
+        this->h = h;
+        this->size = w / NUM_PER_ROW;
 
-void initSwView(uint32_t* buffer)
-{
-    //Create a Canvas
-    swCanvas = tvg::SwCanvas::gen();
-    swCanvas->target(buffer, WIDTH, WIDTH, HEIGHT, tvg::SwCanvas::ARGB8888);
+        this->scandir(EXAMPLE_DIR"/tvg");
 
-    /* Push the shape into the Canvas drawing list
-       When this shape is into the canvas list, the shape could update & prepare
-       internal data asynchronously for coming rendering.
-       Canvas keeps this shape node unless user call canvas->clear() */
-    tvgDrawCmds(swCanvas.get());
-}
+        /* This showcase demonstrates the asynchronous loading of tvg.
+           For this, pictures are pushed at a certain sync time.
+           This allows time for the tvg resources to finish loading;
+           otherwise, you can push pictures immediately. */
+        for (auto& paint : pictures) {
+            canvas->push(std::move(paint));
+        }
 
-void drawSwView(void* data, Eo* obj)
-{
-    if (swCanvas->draw() == tvg::Result::Success) {
-        swCanvas->sync();
+        pictures.clear();
+
+        return true;
     }
-}
+};
 
 
 /************************************************************************/
-/* GL Engine Test Code                                                  */
-/************************************************************************/
-
-static unique_ptr<tvg::GlCanvas> glCanvas;
-
-void initGlView(Evas_Object *obj)
-{
-    //Create a Canvas
-    glCanvas = tvg::GlCanvas::gen();
-
-    //Get the drawing target id
-    int32_t targetId;
-    auto gl = elm_glview_gl_api_get(obj);
-    gl->glGetIntegerv(GL_FRAMEBUFFER_BINDING, &targetId);
-
-    glCanvas->target(targetId, WIDTH, HEIGHT);
-
-    /* Push the shape into the Canvas drawing list
-       When this shape is into the canvas list, the shape could update & prepare
-       internal data asynchronously for coming rendering.
-       Canvas keeps this shape node unless user call canvas->clear() */
-    tvgDrawCmds(glCanvas.get());
-}
-
-void drawGlView(Evas_Object *obj)
-{
-    auto gl = elm_glview_gl_api_get(obj);
-    gl->glClearColor(0.0f, 0.0f, 0.0f, 1.0f);
-    gl->glClear(GL_COLOR_BUFFER_BIT);
-
-    if (glCanvas->draw() == tvg::Result::Success) {
-        glCanvas->sync();
-    }
-}
-
-
-/************************************************************************/
-/* Main Code                                                            */
+/* Entry Point                                                          */
 /************************************************************************/
 
 int main(int argc, char **argv)
 {
-    tvg::CanvasEngine tvgEngine = tvg::CanvasEngine::Sw;
-
-    if (argc > 1) {
-        if (!strcmp(argv[1], "gl")) tvgEngine = tvg::CanvasEngine::Gl;
-    }
-
-    //Initialize ThorVG Engine
-    if (tvgEngine == tvg::CanvasEngine::Sw) {
-        cout << "tvg engine: software" << endl;
-    } else {
-        cout << "tvg engine: opengl" << endl;
-    }
-
-    //Threads Count
-    auto threads = std::thread::hardware_concurrency();
-    if (threads > 0) --threads;    //Allow the designated main thread capacity
-
-    //Initialize ThorVG Engine
-    if (tvg::Initializer::init(tvgEngine, threads) == tvg::Result::Success) {
-
-        elm_init(argc, argv);
-
-        if (tvgEngine == tvg::CanvasEngine::Sw) {
-            createSwView(1024, 1024);
-        } else {
-            createGlView(1024, 1024);
-        }
-
-        elm_run();
-        elm_shutdown();
-
-        //Terminate ThorVG Engine
-        tvg::Initializer::term(tvgEngine);
-
-    } else {
-        cout << "engine is not supported" << endl;
-    }
-    return 0;
+    return tvgexam::main(new UserExample, argc, argv, 1280, 1280);
 }

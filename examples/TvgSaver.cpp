@@ -20,37 +20,18 @@
  * SOFTWARE.
  */
 
-#include <iostream>
-#include <fstream>
-#include <thread>
-#include <string.h>
-#include <thorvg.h>
+#include "Example.h"
 
 using namespace std;
 
 /************************************************************************/
-/* Drawing Commands                                                     */
+/* ThorVG Saving Contents                                               */
 /************************************************************************/
-
-void tvgDrawStar(tvg::Shape* star)
-{
-    star->moveTo(199, 34);
-    star->lineTo(253, 143);
-    star->lineTo(374, 160);
-    star->lineTo(287, 244);
-    star->lineTo(307, 365);
-    star->lineTo(199, 309);
-    star->lineTo(97, 365);
-    star->lineTo(112, 245);
-    star->lineTo(26, 161);
-    star->lineTo(146, 143);
-    star->close();
-}
 
 unique_ptr<tvg::Paint> tvgTexmap(uint32_t * data, int width, int heigth)
 {
     auto texmap = tvg::Picture::gen();
-    if (texmap->load(data, width, heigth, true) != tvg::Result::Success) return nullptr;
+    if (!tvgexam::verify(texmap->load(data, width, heigth, true))) return nullptr;
     texmap->translate(100, 100);
 
     //Composing Meshes
@@ -71,7 +52,7 @@ unique_ptr<tvg::Paint> tvgTexmap(uint32_t * data, int width, int heigth)
     triangles[3].vertex[1] = {{450, 450}, {1, 1}};
     triangles[3].vertex[2] = {{350, 450}, {0.5, 1}};
 
-    if (texmap->mesh(triangles, 4) != tvg::Result::Success) return nullptr;
+    texmap->mesh(triangles, 4);
 
     return texmap;
 }
@@ -79,7 +60,7 @@ unique_ptr<tvg::Paint> tvgTexmap(uint32_t * data, int width, int heigth)
 unique_ptr<tvg::Paint> tvgClippedImage(uint32_t * data, int width, int heigth)
 {
     auto image = tvg::Picture::gen();
-    if (image->load(data, width, heigth, true) != tvg::Result::Success) return nullptr;
+    if (!tvgexam::verify(image->load(data, width, heigth, true))) return nullptr;
     image->translate(400, 0);
     image->scale(2);
 
@@ -94,13 +75,26 @@ unique_ptr<tvg::Paint> tvgClippedImage(uint32_t * data, int width, int heigth)
 unique_ptr<tvg::Paint> tvgMaskedSvg()
 {
     auto svg = tvg::Picture::gen();
-    if (svg->load(EXAMPLE_DIR"/svg/tiger.svg") != tvg::Result::Success) return nullptr;
+    if (!tvgexam::verify(svg->load(EXAMPLE_DIR"/svg/tiger.svg"))) return nullptr;
     svg->opacity(200);
     svg->scale(0.3);
     svg->translate(50, 450);
 
     auto svgMask = tvg::Shape::gen();
-    tvgDrawStar(svgMask.get());
+
+    //star
+    svgMask->moveTo(199, 34);
+    svgMask->lineTo(253, 143);
+    svgMask->lineTo(374, 160);
+    svgMask->lineTo(287, 244);
+    svgMask->lineTo(307, 365);
+    svgMask->lineTo(199, 309);
+    svgMask->lineTo(97, 365);
+    svgMask->lineTo(112, 245);
+    svgMask->lineTo(26, 161);
+    svgMask->lineTo(146, 143);
+    svgMask->close();
+
     svgMask->fill(0, 0, 0);
     svgMask->translate(30, 440);
     svgMask->opacity(200);
@@ -196,17 +190,16 @@ void exportTvg()
     ifstream file(EXAMPLE_DIR"/image/rawimage_200x300.raw", ios::binary);
     if (!file.is_open()) return;
     uint32_t *data = (uint32_t*) malloc(sizeof(uint32_t) * width * height);
-    if (!data) return;
     file.read(reinterpret_cast<char*>(data), sizeof(uint32_t) * width * height);
     file.close();
 
     //texmap image
     auto texmap = tvgTexmap(data, width, height);
-    if (scene->push(std::move(texmap)) != tvg::Result::Success) return;
+    scene->push(std::move(texmap));
 
     //clipped image
     auto image = tvgClippedImage(data, width, height);
-    if (scene->push(std::move(image)) != tvg::Result::Success) return;
+    scene->push(std::move(image));
 
     free(data);
 
@@ -226,22 +219,22 @@ void exportTvg()
 
     //gradient shape + dashed stroke
     auto shape1 = tvgGradientShape(colorStops1, 3);
-    if (scene->push(std::move(shape1)) != tvg::Result::Success) return;
+    scene->push(std::move(shape1));
 
     //nested paints
     auto scene2 = tvgNestedPaints(colorStops2, 2);
-    if (scene->push(std::move(scene2)) != tvg::Result::Success) return;
+    scene->push(std::move(scene2));
 
     //masked svg file
     auto svg = tvgMaskedSvg();
-    if (scene->push(std::move(svg)) != tvg::Result::Success) return;
+    scene->push(std::move(svg));
 
     //solid top circle and gradient bottom circle
     auto circ1 = tvgCircle1(colorStops3, 2);
-    if (scene->push(std::move(circ1)) != tvg::Result::Success) return;
+    scene->push(std::move(circ1));
 
     auto circ2 = tvgCircle2(colorStops3, 2);
-    if (scene->push(std::move(circ2)) != tvg::Result::Success) return;
+    scene->push(std::move(circ2));
 
     //inv mask applied to the main scene
     auto mask = tvg::Shape::gen();
@@ -251,47 +244,23 @@ void exportTvg()
 
     //save the tvg file
     auto saver = tvg::Saver::gen();
-    if (saver->save(std::move(scene), EXAMPLE_DIR"/tvg/test.tvg") == tvg::Result::Success) {
-        saver->sync();
-        cout << "Successfully exported to test.tvg, Please check the result using PictureTvg!" << endl;
-        return;
-    }
-    cout << "Problem with saving the test.tvg file. Did you enable TVG Saver?" << endl;
+    if (!tvgexam::verify(saver->save(std::move(scene), EXAMPLE_DIR"/tvg/test.tvg"))) return;
+    saver->sync();
+    cout << "Successfully exported to test.tvg, Please check the result using PictureTvg!" << endl;
 }
 
 
 /************************************************************************/
-/* Main Code                                                            */
+/* Entry Point                                                          */
 /************************************************************************/
 
 int main(int argc, char **argv)
 {
-    tvg::CanvasEngine tvgEngine = tvg::CanvasEngine::Sw;
-
-    if (argc > 1) {
-        if (!strcmp(argv[1], "gl")) tvgEngine = tvg::CanvasEngine::Gl;
-    }
-
-    //Initialize ThorVG Engine
-    if (tvgEngine == tvg::CanvasEngine::Sw) {
-        cout << "tvg engine: software" << endl;
-    } else {
-        cout << "tvg engine: opengl" << endl;
-    }
-
-    //Threads Count
-    auto threads = std::thread::hardware_concurrency();
-
-    //Initialize ThorVG Engine
-    if (tvg::Initializer::init(tvgEngine, threads) == tvg::Result::Success) {
+    if (tvgexam::verify(tvg::Initializer::init(tvg::CanvasEngine::Sw, 0))) {
 
         exportTvg();
 
-        //Terminate ThorVG Engine
-        tvg::Initializer::term(tvgEngine);
-
-    } else {
-        cout << "engine is not supported" << endl;
+        tvg::Initializer::term(tvg::CanvasEngine::Sw);
     }
     return 0;
 }

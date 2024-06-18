@@ -20,209 +20,112 @@
  * SOFTWARE.
  */
 
-#include "Common.h"
-#include <fstream>
+#include "Example.h"
 
 /************************************************************************/
-/* Drawing Commands                                                     */
+/* ThorVG Drawing Contents                                              */
 /************************************************************************/
 
-void tvgDrawCmds(tvg::Canvas* canvas)
+struct UserExample : tvgexam::Example
 {
-    if (!canvas) return;
+    bool content(tvg::Canvas* canvas, uint32_t w, uint32_t h) override
+    {
+        if (!canvas) return false;
 
-    //Solid Rectangle
-    auto shape = tvg::Shape::gen();
-    shape->appendRect(0, 0, 400, 400);
-    shape->fill(255, 0, 0);
+        //Solid Rectangle
+        auto shape = tvg::Shape::gen();
+        shape->appendRect(0, 0, 400, 400);
+        shape->fill(255, 0, 0);
 
-    //Mask
-    auto mask = tvg::Shape::gen();
-    mask->appendCircle(200, 200, 125, 125);
-    mask->fill(255, 100, 255);
+        //Mask
+        auto mask = tvg::Shape::gen();
+        mask->appendCircle(200, 200, 125, 125);
+        mask->fill(255, 100, 255);
 
-    //Nested Mask
-    auto nMask = tvg::Shape::gen();
-    nMask->appendCircle(220, 220, 125, 125);
-    nMask->fill(255, 200, 255);
+        //Nested Mask
+        auto nMask = tvg::Shape::gen();
+        nMask->appendCircle(220, 220, 125, 125);
+        nMask->fill(255, 200, 255);
 
-    mask->composite(std::move(nMask), tvg::CompositeMethod::LumaMask);
-    shape->composite(std::move(mask), tvg::CompositeMethod::LumaMask);
-    canvas->push(std::move(shape));
+        mask->composite(std::move(nMask), tvg::CompositeMethod::LumaMask);
+        shape->composite(std::move(mask), tvg::CompositeMethod::LumaMask);
+        canvas->push(std::move(shape));
 
-    //SVG
-    auto svg = tvg::Picture::gen();
-    if (svg->load(EXAMPLE_DIR"/svg/cartman.svg") != tvg::Result::Success) return;
-    svg->opacity(100);
-    svg->scale(3);
-    svg->translate(50, 400);
+        //SVG
+        auto svg = tvg::Picture::gen();
+        if (!tvgexam::verify(svg->load(EXAMPLE_DIR"/svg/cartman.svg"))) return false;
+        svg->opacity(100);
+        svg->scale(3);
+        svg->translate(50, 400);
 
-    //Mask2
-    auto mask2 = tvg::Shape::gen();
-    mask2->appendCircle(150, 500, 75, 75);
-    mask2->appendRect(150, 500, 200, 200, 30, 30);
-    mask2->fill(255, 255, 255);
-    svg->composite(std::move(mask2), tvg::CompositeMethod::LumaMask);
-    if (canvas->push(std::move(svg)) != tvg::Result::Success) return;
+        //Mask2
+        auto mask2 = tvg::Shape::gen();
+        mask2->appendCircle(150, 500, 75, 75);
+        mask2->appendRect(150, 500, 200, 200, 30, 30);
+        mask2->fill(255, 255, 255);
+        svg->composite(std::move(mask2), tvg::CompositeMethod::LumaMask);
+        canvas->push(std::move(svg));
 
-    //Star
-    auto star = tvg::Shape::gen();
-    star->fill(80, 80, 80);
-    star->moveTo(599, 34);
-    star->lineTo(653, 143);
-    star->lineTo(774, 160);
-    star->lineTo(687, 244);
-    star->lineTo(707, 365);
-    star->lineTo(599, 309);
-    star->lineTo(497, 365);
-    star->lineTo(512, 245);
-    star->lineTo(426, 161);
-    star->lineTo(546, 143);
-    star->close();
-    star->stroke(10);
-    star->stroke(255, 255, 255);
+        //Star
+        auto star = tvg::Shape::gen();
+        star->fill(80, 80, 80);
+        star->moveTo(599, 34);
+        star->lineTo(653, 143);
+        star->lineTo(774, 160);
+        star->lineTo(687, 244);
+        star->lineTo(707, 365);
+        star->lineTo(599, 309);
+        star->lineTo(497, 365);
+        star->lineTo(512, 245);
+        star->lineTo(426, 161);
+        star->lineTo(546, 143);
+        star->close();
+        star->stroke(10);
+        star->stroke(255, 255, 255);
 
-    //Mask3
-    auto mask3 = tvg::Shape::gen();
-    mask3->appendCircle(600, 200, 125, 125);
-    mask3->fill(0, 255, 255);
-    star->composite(std::move(mask3), tvg::CompositeMethod::LumaMask);
-    if (canvas->push(std::move(star)) != tvg::Result::Success) return;
+        //Mask3
+        auto mask3 = tvg::Shape::gen();
+        mask3->appendCircle(600, 200, 125, 125);
+        mask3->fill(0, 255, 255);
+        star->composite(std::move(mask3), tvg::CompositeMethod::LumaMask);
+        canvas->push(std::move(star));
 
-    //Image
-    ifstream file(EXAMPLE_DIR"/image/rawimage_200x300.raw", ios::binary);
-    if (!file.is_open()) return;
-    auto data = (uint32_t*) malloc(sizeof(uint32_t) * (200 * 300));
-    file.read(reinterpret_cast<char *>(data), sizeof (uint32_t) * 200 * 300);
-    file.close();
+        //Image
+        ifstream file(EXAMPLE_DIR"/image/rawimage_200x300.raw", ios::binary);
+        if (!file.is_open()) return false;
+        auto data = (uint32_t*) malloc(sizeof(uint32_t) * (200 * 300));
+        file.read(reinterpret_cast<char *>(data), sizeof (uint32_t) * 200 * 300);
+        file.close();
 
-    auto image = tvg::Picture::gen();
-    if (image->load(data, 200, 300, true) != tvg::Result::Success) return;
-    image->translate(500, 400);
+        auto image = tvg::Picture::gen();
+        if (!tvgexam::verify(image->load(data, 200, 300, true))) return false;
+        image->translate(500, 400);
 
-    //Mask4
-    auto mask4 = tvg::Scene::gen();
-    auto mask4_rect = tvg::Shape::gen();
-    mask4_rect->appendRect(500, 400, 200, 300);
-    mask4_rect->fill(255, 255, 255);
-    auto mask4_circle = tvg::Shape::gen();
-    mask4_circle->appendCircle(600, 550, 125, 125);
-    mask4_circle->fill(128, 0, 128);
-    if (mask4->push(std::move(mask4_rect)) != tvg::Result::Success) return;
-    if (mask4->push(std::move(mask4_circle)) != tvg::Result::Success) return;
-    image->composite(std::move(mask4), tvg::CompositeMethod::LumaMask);
-    if (canvas->push(std::move(image)) != tvg::Result::Success) return;
+        //Mask4
+        auto mask4 = tvg::Scene::gen();
+        auto mask4_rect = tvg::Shape::gen();
+        mask4_rect->appendRect(500, 400, 200, 300);
+        mask4_rect->fill(255, 255, 255);
+        auto mask4_circle = tvg::Shape::gen();
+        mask4_circle->appendCircle(600, 550, 125, 125);
+        mask4_circle->fill(128, 0, 128);
+        mask4->push(std::move(mask4_rect));
+        mask4->push(std::move(mask4_circle));
+        image->composite(std::move(mask4), tvg::CompositeMethod::LumaMask);
+        canvas->push(std::move(image));
 
-    free(data);
-}
+        free(data);
 
-
-/************************************************************************/
-/* Sw Engine Test Code                                                  */
-/************************************************************************/
-
-static unique_ptr<tvg::SwCanvas> swCanvas;
-
-void initSwView(uint32_t* buffer)
-{
-    //Create a Canvas
-    swCanvas = tvg::SwCanvas::gen();
-    swCanvas->target(buffer, WIDTH, WIDTH, HEIGHT, tvg::SwCanvas::ARGB8888);
-
-    /* Push the shape into the Canvas drawing list
-       When this shape is into the canvas list, the shape could update & prepare
-       internal data asynchronously for coming rendering.
-       Canvas keeps this shape node unless user call canvas->clear() */
-    tvgDrawCmds(swCanvas.get());
-}
-
-void drawSwView(void* data, Eo* obj)
-{
-    if (swCanvas->draw() == tvg::Result::Success) {
-        swCanvas->sync();
+        return true;
     }
-}
+};
 
 
 /************************************************************************/
-/* GL Engine Test Code                                                  */
-/************************************************************************/
-
-static unique_ptr<tvg::GlCanvas> glCanvas;
-
-void initGlView(Evas_Object *obj)
-{
-    //Create a Canvas
-    glCanvas = tvg::GlCanvas::gen();
-
-    //Get the drawing target id
-    int32_t targetId;
-    auto gl = elm_glview_gl_api_get(obj);
-    gl->glGetIntegerv(GL_FRAMEBUFFER_BINDING, &targetId);
-
-    glCanvas->target(targetId, WIDTH, HEIGHT);
-
-    /* Push the shape into the Canvas drawing list
-       When this shape is into the canvas list, the shape could update & prepare
-       internal data asynchronously for coming rendering.
-       Canvas keeps this shape node unless user call canvas->clear() */
-    tvgDrawCmds(glCanvas.get());
-}
-
-void drawGlView(Evas_Object *obj)
-{
-    auto gl = elm_glview_gl_api_get(obj);
-    gl->glClearColor(0.0f, 0.0f, 0.0f, 1.0f);
-    gl->glClear(GL_COLOR_BUFFER_BIT);
-
-    if (glCanvas->draw() == tvg::Result::Success) {
-        glCanvas->sync();
-    }
-}
-
-
-/************************************************************************/
-/* Main Code                                                            */
+/* Entry Point                                                          */
 /************************************************************************/
 
 int main(int argc, char **argv)
 {
-    tvg::CanvasEngine tvgEngine = tvg::CanvasEngine::Sw;
-
-    if (argc > 1) {
-        if (!strcmp(argv[1], "gl")) tvgEngine = tvg::CanvasEngine::Gl;
-    }
-
-    //Initialize ThorVG Engine
-    if (tvgEngine == tvg::CanvasEngine::Sw) {
-        cout << "tvg engine: software" << endl;
-    } else {
-        cout << "tvg engine: opengl" << endl;
-    }
-
-    //Threads Count
-    auto threads = std::thread::hardware_concurrency();
-    if (threads > 0) --threads;    //Allow the designated main thread capacity
-
-    //Initialize ThorVG Engine
-    if (tvg::Initializer::init(tvgEngine, threads) == tvg::Result::Success) {
-
-        elm_init(argc, argv);
-
-        if (tvgEngine == tvg::CanvasEngine::Sw) {
-            createSwView();
-        } else {
-            createGlView();
-        }
-
-        elm_run();
-        elm_shutdown();
-
-        //Terminate ThorVG Engine
-        tvg::Initializer::term(tvgEngine);
-
-    } else {
-        cout << "engine is not supported" << endl;
-    }
-    return 0;
+    return tvgexam::main(new UserExample, argc, argv);
 }

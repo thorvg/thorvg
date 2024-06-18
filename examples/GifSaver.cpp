@@ -20,49 +20,42 @@
  * SOFTWARE.
  */
 
-#include <iostream>
-#include <thread>
-#include <thorvg.h>
+#include "Example.h"
 
 using namespace std;
+
+/************************************************************************/
+/* ThorVG Saving Contents                                               */
+/************************************************************************/
+
 
 void exportGif()
 {
     auto animation = tvg::Animation::gen();
     auto picture = animation->picture();
-    if (picture->load(EXAMPLE_DIR"/lottie/walker.json") != tvg::Result::Success) {
-        cout << "Lottie is not supported. Did you enable Lottie Loader?" << endl;
-        return;
-    }
+    if (!tvgexam::verify(picture->load(EXAMPLE_DIR"/lottie/walker.json"))) return;
 
     picture->size(800, 800);
 
     auto saver = tvg::Saver::gen();
-    if (saver->save(std::move(animation), "./test.gif") != tvg::Result::Success) {
-        cout << "Problem with saving the json file. Did you enable Gif Saver?" << endl;
-        return;
-    }
+    if (!tvgexam::verify(saver->save(std::move(animation), "./test.gif"))) return;
     saver->sync();
+
     cout << "Successfully exported to test.gif." << endl;
 }
 
 
 /************************************************************************/
-/* Main Code                                                            */
+/* Entry Point                                                          */
 /************************************************************************/
 
 int main(int argc, char **argv)
 {
-    //Initialize ThorVG Engine
-    if (tvg::Initializer::init(tvg::CanvasEngine::Sw, 0) == tvg::Result::Success) {
+    if (tvgexam::verify(tvg::Initializer::init(tvg::CanvasEngine::Sw, 0))) {
 
         exportGif();
 
-        //Terminate ThorVG Engine
         tvg::Initializer::term(tvg::CanvasEngine::Sw);
-
-    } else {
-        cout << "engine is not supported" << endl;
     }
     return 0;
 }

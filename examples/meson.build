@@ -2,7 +2,16 @@ if (lib_type == 'static')
     compiler_flags += ['-DTVG_STATIC']
 endif
 
-examples_dep = dependency('elementary', required : true)
+examples_dep = [dependency('sdl2')]
+
+if (get_option('engines').contains('wg_beta'))
+    examples_dep += dependency('wgpu_native')
+    if host_machine.system() == 'darwin'
+        add_languages('objcpp')
+        examples_dep += declare_dependency(link_args: ['-lobjc', '-framework', 'Cocoa', '-framework', 'CoreVideo', '-framework', 'IOKit', '-framework', 'QuartzCore'])
+        compiler_flags += ['-x', 'objective-c++']
+    endif
+endif
 
 source_file = [
     'Accessor.cpp',
@@ -30,7 +39,6 @@ source_file = [
     'LumaMasking.cpp',
     'Masking.cpp',
     'MaskingMethods.cpp',
-    'MultiCanvas.cpp',
     'MultiShapes.cpp',
     'Opacity.cpp',
     'PathCopy.cpp',
