@@ -100,7 +100,7 @@ TEST_CASE("Save scene into tvg", "[tvgSavers]")
 #endif
 
 
-#ifdef THORVG_GIF_SAVER_SUPPORT
+#if defined(THORVG_GIF_SAVER_SUPPORT) && defined(THORVG_LOTTIE_LOADER_SUPPORT)
 
 TEST_CASE("Save a lottie into gif", "[tvgSavers]")
 {
