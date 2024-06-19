@@ -499,7 +499,7 @@ ThorVG offers versatile support for image loading, accommodating both static and
 * External PNG support: [libpng](https://github.com/glennrp/libpng)
 * External JPG support: [turbojpeg](https://github.com/libjpeg-turbo/libjpeg-turbo)
 * External WebP support: [libwebp](https://developers.google.com/speed/webp/download)
-* Examples: [EFL](https://www.enlightenment.org/about-efl.md)
+* Examples: [SDL2](https://www.libsdl.org/)
 
 [Back to contents](#contents)
 <br />
