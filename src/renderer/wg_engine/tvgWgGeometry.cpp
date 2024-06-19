@@ -87,13 +87,14 @@ void WgPolyline::appendPoint(WgPoint pt)
 }
 
 
-void WgPolyline::appendCubic(WgPoint p1, WgPoint p2, WgPoint p3)
+void WgPolyline::appendCubic(WgPoint p1, WgPoint p2, WgPoint p3, size_t nsegs)
 {
     WgPoint p0 = pts.count > 0 ? pts.last() : WgPoint(0.0f, 0.0f);
-    size_t segs = ((uint32_t)(p0.dist(p3) / 8.0f));
-    segs = segs == 0 ? 1 : segs;
-    for (size_t i = 1; i <= segs; i++) {
-        float t = i / (float)segs;
+    nsegs = nsegs == 0 ? 1 : nsegs;
+    float dt = 1.0f / (float)nsegs;
+    float t = 0.0f;
+    for (size_t i = 1; i <= nsegs; i++) {
+        t += dt;
         // get cubic spline interpolation coefficients
         float t0 = 1.0f * (1.0f - t) * (1.0f - t) * (1.0f - t);
         float t1 = 3.0f * (1.0f - t) * (1.0f - t) * t;
