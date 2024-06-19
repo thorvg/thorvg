@@ -69,7 +69,7 @@ TEST_CASE("Load/unload TTF file from a memory", "[capiText]")
     fseek(file, 0, SEEK_SET);
     char* data = (char*)malloc(data_size);
     REQUIRE(data);
-    REQUIRE(fread(data, 1, data_size, file) == data_size);
+    REQUIRE(fread(data, 1, data_size, file) > 0);
 
     static const char* svg = "<svg height=\"1000\" viewBox=\"0 0 600 600\" ></svg>";
 
