@@ -77,7 +77,7 @@ RenderData WgRenderer::prepare(const RenderShape& rshape, RenderData data, const
 
     // update geometry
     if ((!data) || (flags & (RenderUpdateFlag::Path | RenderUpdateFlag::Stroke))) {
-        renderDataShape->updateMeshes(mContext, rshape);
+        renderDataShape->updateMeshes(mContext, rshape, transform);
     }
 
      // update paint settings
