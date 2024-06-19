@@ -36,7 +36,7 @@ TEST_CASE("Create and delete a Saver", "[capiSaver]")
 
 #ifdef THORVG_TVG_SAVER_SUPPORT
 
-TEST_CASE("Save a paint into a file", "[capiSaver]")
+TEST_CASE("Save a paint into tvg", "[capiSaver]")
 {
     Tvg_Saver* saver = tvg_saver_new();
     REQUIRE(saver);
@@ -101,10 +101,55 @@ TEST_CASE("Synchronize a Saver", "[capiSaver]")
     REQUIRE(tvg_saver_del(saver) == TVG_RESULT_SUCCESS);
 }
 
+TEST_CASE("Save scene into tvg", "[capiSaver]")
+{
+    Tvg_Paint* picture = tvg_picture_new();
+    REQUIRE(picture);
+
+    Tvg_Saver* saver = tvg_saver_new();
+    REQUIRE(saver);
+
+    FILE* file = fopen(TEST_DIR"/rawimage_200x300.raw", "r");
+    REQUIRE(file);
+    uint32_t* data = (uint32_t*)malloc(sizeof(uint32_t) * (200*300));
+
+    if (data && fread(data, sizeof(uint32_t), 200 * 300, file) > 0) {
+        REQUIRE(tvg_picture_load_raw(picture, data, 200, 300, true) == TVG_RESULT_SUCCESS);
+        REQUIRE(tvg_saver_save(saver, picture, TEST_DIR"/test.tvg", true) == TVG_RESULT_SUCCESS);
+        REQUIRE(tvg_saver_sync(saver) == TVG_RESULT_SUCCESS);
+    }
+
+    REQUIRE(tvg_saver_del(saver) == TVG_RESULT_SUCCESS);
+
+    fclose(file);
+    free(data);
+}
+
+#ifdef THORVG_SVG_LOADER_SUPPORT
+
+TEST_CASE("Save svg into tvg", "[capiSaver]")
+{
+    Tvg_Paint* picture = tvg_picture_new();
+    REQUIRE(picture);
+    REQUIRE(tvg_picture_load(picture, TEST_DIR"/logo.svg") == TVG_RESULT_SUCCESS);
+    REQUIRE(tvg_picture_set_size(picture, 222, 333) == TVG_RESULT_SUCCESS);
+    REQUIRE(tvg_paint_translate(picture, 123.45, 54.321) == TVG_RESULT_SUCCESS);
+
+    Tvg_Saver* saver = tvg_saver_new();
+    REQUIRE(saver);
+
+    REQUIRE(tvg_saver_save(saver, picture, TEST_DIR"/test.tvg", true) == TVG_RESULT_SUCCESS);
+    REQUIRE(tvg_saver_sync(saver) == TVG_RESULT_SUCCESS);
+
+    REQUIRE(tvg_saver_del(saver) == TVG_RESULT_SUCCESS);
+}
+
+#endif
+
 #endif
 
 
-#ifdef THORVG_GIF_SAVER_SUPPORT
+#if defined(THORVG_GIF_SAVER_SUPPORT) && defined(THORVG_LOTTIE_LOADER_SUPPORT)
 
 TEST_CASE("Save a lottie into gif", "[capiSavers]")
 {
