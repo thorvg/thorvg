@@ -565,7 +565,6 @@ TVG_API Tvg_Result tvg_canvas_destroy(Tvg_Canvas* canvas);
 *
 * Only the paints pushed into the canvas will be drawing targets.
 * They are retained by the canvas until you call tvg_canvas_clear().
-* If you know the number of the pushed objects in advance, please call tvg_canvas_reserve().
 *
 * \return Tvg_Result return values:
 * \retval TVG_RESULT_SUCCESS Succeed.
