@@ -99,16 +99,14 @@ void JERRY_ATTR_NORETURN jerry_unreachable (const char *file, const char *functi
     }                   \
   } while (0)
 
-#ifdef __GNUC__
-#define JERRY_UNREACHABLE() __builtin_unreachable ()
-#endif /* __GNUC__ */
-
-#ifdef _MSC_VER
-#define JERRY_UNREACHABLE() _assume (0)
-#endif /* _MSC_VER */
-
-#ifndef JERRY_UNREACHABLE
-#define JERRY_UNREACHABLE()
+#if defined(__GNUC__) || defined(__clang__)
+  #define JERRY_UNREACHABLE() __builtin_unreachable ()
+#elif defined(_MSC_VER)
+  #define JERRY_UNREACHABLE() _assume (0)
+#else
+  #ifndef JERRY_UNREACHABLE
+    #define JERRY_UNREACHABLE()
+  #endif
 #endif /* !JERRY_UNREACHABLE */
 
 #endif /* !JERRY_NDEBUG */
