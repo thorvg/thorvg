@@ -51,9 +51,11 @@ public:
     WgPoint negative() const { return {-x, -y}; }
     inline void negate() { x = -x; y = -y; }
     inline float length() const { return sqrt(x*x + y*y); }
+    inline float length2() const { return x*x + y*y; }
     inline float dot(const WgPoint& p) const { return x * p.x + y * p.y; }
     inline float dist(const WgPoint& p) const { return sqrt(dist2(p)); }
     inline float dist2(const WgPoint& p) const { return ((p.x - x)*(p.x - x) + (p.y - y)*(p.y - y)); }
+    inline bool equal(const WgPoint& p) const { return mathEqual(x, p.x) && mathEqual(y, p.y); }
     inline void normalize() { float rlen = 1.0f / length(); x *= rlen; y *= rlen; }
     inline WgPoint normal() const { float rlen = 1.0f / length(); return { x * rlen, y * rlen }; }
     inline WgPoint lerp(const WgPoint& p, float t) const { return { x + (p.x - x) * t, y + (p.y - y) * t }; };
@@ -117,6 +119,8 @@ struct WgGeometryData
     void appendBlitBox();
     void appendMesh(const RenderMesh* rmesh);
     void appendStrokeDashed(const WgPolyline* polyline, const RenderStroke *stroke);
+    void appendStrokeJoin(const WgPoint& v0, const WgPoint& v1, const WgPoint& v2,
+                          StrokeJoin join, float halfWidth, float miterLimit);
     void appendStroke(const WgPolyline* polyline, const RenderStroke *stroke);
 };
 
