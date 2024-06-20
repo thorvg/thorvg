@@ -154,7 +154,7 @@ void WgPolyline::close()
 
 bool WgPolyline::isClosed() const
 {
-    return (pts.count >= 2) && (pts[0].dist2(pts.last()) == 0.0f);
+    return (pts.count >= 2) && (mathZero(pts[0].dist2(pts.last())));
 }
 
 
@@ -351,11 +351,41 @@ void WgGeometryData::appendStrokeDashed(const WgPolyline* polyline, const Render
 }
 
 
+void WgGeometryData::appendStrokeJoin(const WgPoint& v0, const WgPoint& v1, const WgPoint& v2, StrokeJoin join, float halfWidth, float miterLimit)
+{
+    WgPoint dir0 = (v1 - v0).normal();
+    WgPoint dir1 = (v2 - v1).normal();
+    WgPoint nrm0 { +dir0.y, -dir0.x };
+    WgPoint nrm1 { +dir1.y, -dir1.x };
+    WgPoint offset0 = nrm0 * halfWidth;
+    WgPoint offset1 = nrm1 * halfWidth;
+    if (join == StrokeJoin::Round) {
+        appendCircle(v1, halfWidth);
+    } else if (join == StrokeJoin::Bevel) {
+        appendRect(v1 - offset0, v1 + offset0, v1 - offset1, v1 + offset1);
+    } else if (join == StrokeJoin::Miter) {
+        WgPoint nrm = (nrm0 + nrm1);
+        if (!mathZero(dir0.x * dir1.y -  dir0.y * dir1.x)) {
+            nrm.normalize();
+            float cosine = nrm.dot(nrm0);
+            float angle = std::acos(dir0.dot(dir1.negative()));
+            float miterRatio = 1.0f / (std::sin(angle) * 0.5);
+            if (miterRatio <= miterLimit) {
+                appendRect(v1 + nrm * (halfWidth / cosine), v1 + offset0, v1 + offset1, v1);
+                appendRect(v1 - nrm * (halfWidth / cosine), v1 - offset0, v1 - offset1, v1);
+            } else {
+                appendRect(v1 - offset0, v1 + offset0, v1 - offset1, v1 + offset1);
+            }
+        }
+    }
+}
+
+
 void WgGeometryData::appendStroke(const WgPolyline* polyline, const RenderStroke *stroke)
 {
     assert(stroke);
     assert(polyline);
-    float wdt = stroke->width / 2;
+    float wdt = stroke->width * 0.5f;
 
     // single line sub-path
     if (polyline->pts.count == 2) {
@@ -375,37 +405,12 @@ void WgGeometryData::appendStroke(const WgPolyline* polyline, const RenderStroke
                 v1 - nrm0 * wdt + dir0 * wdt, v1 + nrm0 * wdt + dir0 * wdt
             );
         }
-    } else
-
-    // multi-lined sub-path
-    if (polyline->pts.count > 2) {
+    } else if (polyline->pts.count > 2) {  // multi-lined sub-path
         if (polyline->isClosed()) {
-            if (stroke->join == StrokeJoin::Round) {
-                appendCircle(polyline->pts[0], wdt);
-            } else {
-                float dist0 = polyline->dist.last();
-                float dist1 = polyline->dist[1];
-                WgPoint v0 = polyline->pts[polyline->pts.count - 2];
-                WgPoint v1 = polyline->pts[0];
-                WgPoint v2 = polyline->pts[1];
-                WgPoint dir0 = (v1 - v0) / dist0;
-                WgPoint dir1 = (v2 - v1) / dist1;
-                WgPoint nrm0 { +dir0.y, -dir0.x };
-                WgPoint nrm1 { +dir1.y, -dir1.x };
-                WgPoint offset0 = nrm0 * wdt;
-                WgPoint offset1 = nrm1 * wdt;
-                if (stroke->join == StrokeJoin::Bevel) {
-                    appendRect(v1 - offset0, v1 + offset0, v1 - offset1, v1 + offset1);
-                } else if (stroke->join == StrokeJoin::Miter) {
-                    WgPoint nrm = (nrm0 + nrm1).normal();
-                    float cosine = nrm.dot(nrm0);
-                    if ((cosine != 0.0f) && (abs(cosine) != 1.0f) && (abs(wdt / cosine) <= stroke->miterlimit * 2)) {
-                        appendRect(v1 + nrm * (wdt / cosine), v1 + offset0, v1 + offset1, v1 - nrm * (wdt / cosine));
-                    } else {
-                        appendRect(v1 - offset0, v1 + offset0, v1 - offset1, v1 + offset1);
-                    }
-                }
-            }
+            WgPoint v0 = polyline->pts[polyline->pts.count - 2];
+            WgPoint v1 = polyline->pts[0];
+            WgPoint v2 = polyline->pts[1];
+            appendStrokeJoin(v0, v1, v2, stroke->join, wdt, stroke->miterlimit);
         } else {
             // append first cap
             WgPoint v0 = polyline->pts[0];
@@ -445,27 +450,8 @@ void WgGeometryData::appendStroke(const WgPolyline* polyline, const RenderStroke
             appendRect(v1 - offset1, v1 + offset1, v2 - offset1, v2 + offset1);
 
             if (i > 0) {
-                if (stroke->join == StrokeJoin::Round) {
-                    appendCircle(v1, wdt);
-                } else {
-                    float dist0 = polyline->dist[i + 0];
-                    WgPoint v0 = polyline->pts[i - 1];
-                    WgPoint dir0 = (v1 - v0) / dist0;
-                    WgPoint nrm0 { +dir0.y, -dir0.x };
-                    WgPoint offset0 = nrm0 * wdt;
-                    if (stroke->join == StrokeJoin::Bevel) {
-                        appendRect(v1 - offset0, v1 + offset0, v1 - offset1, v1 + offset1);
-                    } else if (stroke->join == StrokeJoin::Miter) {
-                        WgPoint nrm = (nrm0 + nrm1).normal();
-                        float cosine = nrm.dot(nrm0);
-                        if ((cosine != 0.0f) && (abs(cosine) < 1.0f) && (abs(wdt / cosine) <= stroke->miterlimit * 2)) {
-                            appendRect(v1 + nrm * (wdt / cosine), v1 + offset0, v1 + offset1, v1);
-                            appendRect(v1 - nrm * (wdt / cosine), v1 - offset0, v1 - offset1, v1);
-                        } else {
-                            appendRect(v1 - offset0, v1 + offset0, v1 - offset1, v1 + offset1);
-                        }
-                    }
-                }
+                WgPoint v0 = polyline->pts[i - 1];
+                appendStrokeJoin(v0, v1, v2, stroke->join, wdt, stroke->miterlimit);
             }
         }
     }
