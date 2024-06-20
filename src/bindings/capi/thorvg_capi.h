@@ -565,7 +565,6 @@ TVG_API Tvg_Result tvg_canvas_destroy(Tvg_Canvas* canvas);
 *
 * Only the paints pushed into the canvas will be drawing targets.
 * They are retained by the canvas until you call tvg_canvas_clear().
-* If you know the number of the pushed objects in advance, please call tvg_canvas_reserve().
 *
 * \return Tvg_Result return values:
 * \retval TVG_RESULT_SUCCESS Succeed.
@@ -613,7 +612,7 @@ TVG_DEPRECATED TVG_API Tvg_Result tvg_canvas_reserve(Tvg_Canvas* canvas, uint32_
 
 /*!
 * \brief Sets the total number of the paints pushed into the canvas to be zero.
-* Tvg_Paint objects stored in the canvas are released if @p free is set to @c true, otherwise the memory is not deallocated and
+* Tvg_Paint objects stored in the canvas are released if @p paints is set to @c true, otherwise the memory is not deallocated and
 * all paints should be released manually in order to avoid memory leaks.
 *
 * \param[in] canvas The Tvg_Canvas object to be cleared.

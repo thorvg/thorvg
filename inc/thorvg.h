@@ -586,10 +586,10 @@ public:
      * @brief Clear the internal canvas resources that used for the drawing.
      *
      * This API sets the total number of paints pushed into the canvas to zero.
-     * Depending on the value of the @p free argument, the paints are either freed or retained.
-     * So if you need to update paint properties while maintaining the existing scene structure, you can set @p free = false.
+     * Depending on the value of the @p paints argument, the paints are either freed or retained.
+     * So if you need to update paint properties while maintaining the existing scene structure, you can set @p paints = false.
      *
-     * @param[in] paints If @c true, The memory occupied by paints is deallocated; otherwise, the paints will be retained on the canvas.
+     * @param[in] paints If @c true, the memory occupied by paints is deallocated; otherwise, the paints will be retained on the canvas.
      * @param[in] buffer If @c true, the canvas target buffer is cleared with a zero value.
      *
      * @retval Result::Success when succeed, Result::InsufficientCondition otherwise.
