@@ -924,6 +924,9 @@ static void _calcAAEdge(AASpans *aaSpans, int32_t eidx)
 
     //Calculates AA Edges
     for (y++; y < yEnd; y++) {
+
+        if (lines[y].x[0] == INT32_MAX) continue;
+
         //Ready tx
         if (eidx == 0) {
             tx[0] = pEdge.x;
