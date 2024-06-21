@@ -19,15 +19,23 @@ if get_option('threads') == true
 endif
 
 #Engines
-if get_option('engines').contains('sw') == true
+all_engines = get_option('engines').contains('all')
+
+sw_engine = false
+if all_engines or get_option('engines').contains('sw')
+    sw_engine = true
     config_h.set10('THORVG_SW_RASTER_SUPPORT', true)
 endif
 
-if get_option('engines').contains('gl_beta') == true
+gl_engine = false
+if all_engines or get_option('engines').contains('gl')
+    gl_engine = true
     config_h.set10('THORVG_GL_RASTER_SUPPORT', true)
 endif
 
-if get_option('engines').contains('wg_beta') == true
+wg_engine = false
+if get_option('engines').contains('wg_beta')
+    wg_engine = true
     config_h.set10('THORVG_WG_RASTER_SUPPORT', true)
 endif
 
@@ -157,7 +165,7 @@ Summary:
     Multi-Tasking:              @3@
     SIMD Instruction:           @4@
     Raster Engine (SW):         @5@
-    Raster Engine (GL_BETA):    @6@
+    Raster Engine (GL):         @6@
     Raster Engine (WG_BETA):    @7@
     Loader (TVG):               @8@
     Loader (SVG):               @9@
@@ -184,9 +192,9 @@ Summary:
         get_option('prefix'),
         get_option('threads'),
         simd_type,
-        get_option('engines').contains('sw'),
-        get_option('engines').contains('gl_beta'),
-        get_option('engines').contains('wg_beta'),
+        sw_engine,
+        gl_engine,
+        wg_engine,
         tvg_loader,
         svg_loader,
         ttf_loader,
