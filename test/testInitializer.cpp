@@ -51,5 +51,5 @@ TEST_CASE("Negative termination", "[tvgInitializer]")
 
 TEST_CASE("Invalid engine", "[tvgInitializer]")
 {
-    REQUIRE(Initializer::init(CanvasEngine(0), 0) == Result::InvalidArguments);
+    REQUIRE(Initializer::init(CanvasEngine(64), 0) == Result::NonSupport);
 }
