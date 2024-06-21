@@ -1,14 +1,14 @@
 engine_dep = []
 
-if get_option('engines').contains('sw') == true
+if sw_engine
     subdir('sw_engine')
 endif
 
-if get_option('engines').contains('gl_beta') == true
+if gl_engine
     subdir('gl_engine')
 endif
 
-if get_option('engines').contains('wg_beta') == true
+if wg_engine
     subdir('wg_engine')
 endif
 
