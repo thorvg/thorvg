@@ -365,17 +365,17 @@ ThorVG has been integrated into the [Tizen](https://www.tizen.org) platform as t
 <br />
 <br />
 ## Examples
-here are plenty of sample code in `thorvg/src/examples` to help you in understanding the ThorVG APIs.
+There are plenty of sample code in `thorvg/examples` to help you in understanding the ThorVG APIs.
 
 To execute these examples, you can build them with the following meson build option:
 ```
 meson setup builddir -Dexamples=true
 ```
-Note that these examples require the EFL dev package for launching. If you're using Linux-based OS, you can easily install this package from your OS distribution server. For Ubuntu, you can install it with this command.
+Note that these examples require the SDL dev package for launching. If you're using Linux-based OS, you can easily install this package from your OS distribution server. For Ubuntu, you can install it with this command.
 ```
-apt-get install libefl-all-dev
+apt-get install libsdl2-dev
 ```
-Alternatively, you can download the package [here](https://download.enlightenment.org/rel/win/efl/) for Windows. For more information, please visit the official [EFL page](https://enlightenment.org/).
+Alternatively, you can read the official guidance [here](https://wiki.libsdl.org/SDL2/Installation) for other platforms. Fore more information, please visit the official [SDL](https://www.libsdl.org/) site.
 
 [Back to contents](#contents)
 <br />
