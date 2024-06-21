@@ -268,7 +268,7 @@ struct SwWindow : Window
 
     SwWindow(Example* example, uint32_t width, uint32_t height) : Window(tvg::CanvasEngine::Sw, example, width, height)
     {
-        window = SDL_CreateWindow("ThorVG Example (Software)", SDL_WINDOWPOS_UNDEFINED, SDL_WINDOWPOS_UNDEFINED, width, height, SDL_WINDOW_HIDDEN);
+        window = SDL_CreateWindow("ThorVG Example (Software)", SDL_WINDOWPOS_UNDEFINED, SDL_WINDOWPOS_UNDEFINED, width, height, SDL_WINDOW_HIDDEN | SDL_WINDOW_RESIZABLE);
     }
 
     bool ready() override
@@ -317,7 +317,7 @@ struct GlWindow : Window
 
     GlWindow(Example* example, uint32_t width, uint32_t height) : Window(tvg::CanvasEngine::Gl, example, width, height)
     {
-        window = SDL_CreateWindow("ThorVG Example (OpenGL)", SDL_WINDOWPOS_UNDEFINED, SDL_WINDOWPOS_UNDEFINED, width, height, SDL_WINDOW_OPENGL | SDL_WINDOW_HIDDEN);
+        window = SDL_CreateWindow("ThorVG Example (OpenGL)", SDL_WINDOWPOS_UNDEFINED, SDL_WINDOWPOS_UNDEFINED, width, height, SDL_WINDOW_OPENGL | SDL_WINDOW_HIDDEN | SDL_WINDOW_RESIZABLE);
         context = SDL_GL_CreateContext(window);
     }
 
