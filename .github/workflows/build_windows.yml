@@ -21,7 +21,7 @@ jobs:
 
     - name: Build
       run: |
-        meson setup --backend=ninja build -Dlog=true -Dloaders="all" -Dsavers="all" -Dbindings="capi" -Dtools="all"
+        meson setup build -Dlog=true -Dloaders=all -Dsavers=all -Dbindings=capi -Dtools=all
         where link
         ninja -C build install
 
@@ -30,7 +30,7 @@ jobs:
         name: result_windows
         path: build/src/thorvg*
 
-  static_loaders:
+  compact_test:
     runs-on: windows-latest
     steps:
     - uses: actions/checkout@v4
@@ -42,7 +42,7 @@ jobs:
 
     - name: Build
       run: |
-        meson setup --backend=ninja build -Dlog=true -Dloaders="all" -Dsavers="all" -Dbindings="capi" -Dtools="all" -Dstatic=true
+        meson setup build -Dlog=true -Dloaders=all -Dsavers=all -Dstatic=true -Dthreads=false
         where link
         ninja -C build install
 
@@ -63,7 +63,7 @@ jobs:
 
     - name: Build
       run: |
-        meson setup --backend=ninja build -Dloaders="all" -Dsavers="all" -Dbindings="capi" -Dtests=true --errorlogs
+        meson setup build -Dloaders=all -Dsavers=all -Dbindings=capi -Dtests=true --errorlogs
         where link
         ninja -C build install test
 
