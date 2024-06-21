@@ -19,18 +19,14 @@ jobs:
     - name: Install Packages
       run: |
         sudo apt-get update
-        sudo apt-get install ninja-build gcc-multilib g++-multilib libunwind-dev
-        sudo apt-get install libsdl2-dev
-        sudo apt-get install python3-pip
-        sudo apt-get install libturbojpeg0-dev libpng-dev libwebp-dev
-        sudo pip3 install meson
+        sudo apt-get install meson ninja-build libturbojpeg0-dev libpng-dev libwebp-dev libgles-dev libsdl2-dev
 
     - name: Build
       run: |
-        meson setup build -Dlog=true -Dexamples=true -Dloaders="all" -Dsavers="all" -Dbindings="capi" -Dtools="all"
+        meson setup build -Dlog=true -Dengines=all -Dexamples=true -Dloaders=all -Dsavers=all -Dbindings=capi -Dtools=all
         sudo ninja -C build install
 
-  static_loaders:
+  compact_test:
     runs-on: ubuntu-latest
     steps:
     - uses: actions/checkout@v4
@@ -40,13 +36,11 @@ jobs:
     - name: Install Packages
       run: |
         sudo apt-get update
-        sudo apt-get install ninja-build gcc-multilib g++-multilib
-        sudo apt-get install python3-pip
-        sudo pip3 install meson
+        sudo apt-get install meson ninja-build libgles-dev
 
     - name: Build
       run: |
-        meson setup build -Dlog=true -Dloaders="all" -Dsavers="all" -Dbindings="capi" -Dtools="all" -Dstatic=true
+        meson setup build -Dlog=true -Dengines=all -Dloaders=all -Dsavers=all -Dstatic=true -Dthreads=false
         sudo ninja -C build install
 
   unit_test:
@@ -59,16 +53,11 @@ jobs:
     - name: Install Packages
       run: |
         sudo apt-get update
-        sudo apt-get install ninja-build gcc-multilib g++-multilib libgtest-dev cmake cmake-data libasan5 valgrind
-        sudo apt-get install curl jq
-        sudo apt-get install software-properties-common
-        sudo apt-get install python3-pip
-        sudo apt-get install libturbojpeg0-dev libpng-dev libwebp-dev
-        sudo pip3 install meson
+        sudo apt-get install meson ninja-build libgtest-dev libasan5 valgrind curl jq software-properties-common libturbojpeg0-dev libpng-dev libwebp-dev libgles-dev
 
     - name: Build
       run: |
-        meson setup build -Dloaders="all" -Dsavers="all" -Dbindings="capi" -Dtests=true --errorlogs
+        meson setup build -Dloaders="all" -Dengines=all -Dsavers="all" -Dbindings="capi" -Dtests=true --errorlogs
         sudo ninja -C build install test
 
     - uses: actions/upload-artifact@v4

@@ -30,10 +30,10 @@ jobs:
 
     - name: Build
       run: |
-        meson setup build -Dlog=true -Dexamples=true -Dloaders="all" -Dsavers="all" -Dbindings="capi" -Dtools="all"
+        meson setup build -Dlog=true -Dexamples=true -Dloaders=all -Dsavers=all -Dbindings=capi -Dtools=all
         ninja -C build install
 
-  static_loaders:
+  compact_test:
     runs-on: macos-latest
     steps:
     - uses: actions/checkout@v4
@@ -53,7 +53,7 @@ jobs:
 
     - name: Build
       run: |
-        meson setup build -Dlog=true -Dloaders="all" -Dsavers="all" -Dbindings="capi" -Dtools="all" -Dstatic=true
+        meson setup build -Dlog=true -Dloaders=all -Dsavers=all -Dstatic=true -Dthreads=false
         ninja -C build install
 
   unit_test:
@@ -76,7 +76,7 @@ jobs:
 
     - name: Build
       run: |
-        meson setup build -Dloaders="all" -Dsavers="all" -Dbindings="capi" -Dtests=true --errorlogs
+        meson setup build -Dloaders=all -Dsavers=all -Dbindings=capi -Dtests=true --errorlogs
         ninja -C build install test
 
     - uses: actions/upload-artifact@v4
