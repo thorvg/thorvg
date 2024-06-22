@@ -191,9 +191,11 @@ void GlComposeTask::run()
         mTasks[i]->run();
     }
 
+#if defined(THORVG_GL_TARGET_GLES)
+    // only OpenGLES has tiled base framebuffer and discard function
     GLenum attachments[2] = {GL_STENCIL_ATTACHMENT, GL_DEPTH_ATTACHMENT };
     GL_CHECK(glInvalidateFramebuffer(GL_FRAMEBUFFER, 2, attachments));
-
+#endif
     // reset scissor box
     GL_CHECK(glScissor(0, 0, mFbo->getWidth(), mFbo->getHeight()));
     onResolve();
