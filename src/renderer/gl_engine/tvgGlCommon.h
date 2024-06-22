@@ -24,7 +24,15 @@
 #define _TVG_GL_COMMON_H_
 
 #include <assert.h>
-#include <GLES3/gl3.h>
+#if defined (THORVG_GL_TARGET_GLES)
+    #include <GLES3/gl3.h>
+#elif defined (THORVG_GL_TARGET_GL)
+    #if defined(__APPLE__) || defined(__MACH__)
+        #include <OpenGL/gl3.h>
+    #else
+        #include <GL/gl3.h>
+    #endif
+#endif
 #include "tvgCommon.h"
 #include "tvgRender.h"
 
