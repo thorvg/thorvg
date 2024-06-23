@@ -2,6 +2,10 @@ if (lib_type == 'static')
     compiler_flags += ['-DTVG_STATIC']
 endif
 
+if target_opengles
+    compiler_flags += '-DTHORVG_GL_TARGET_GLES=1'
+endif
+
 examples_dep = [dependency('sdl2')]
 
 if (get_option('engines').contains('wg_beta'))
