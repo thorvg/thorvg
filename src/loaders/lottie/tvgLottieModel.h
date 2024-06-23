@@ -148,6 +148,42 @@ struct LottieGlyph
 };
 
 
+struct LottieTextStyle
+{
+    LottieColor fillColor = RGB24{255, 255, 255};
+    LottieOpacity fillOpacity = 255;
+    LottieColor strokeColor = RGB24{255, 255, 255};
+    LottieFloat strokeWidth = 0;
+    LottieOpacity strokeOpacity = 255;
+    LottieOpacity opacity = 255;
+    LottiePosition position = Point{0, 0};
+    LottiePoint scale = Point{100, 100};
+    LottieFloat rotation = 0.0f;
+};
+
+
+struct LottieTextRange
+{
+    enum Based : uint8_t { Chars = 1, CharsExcludingSpaces, Words, Lines };
+    enum Shape : uint8_t { Square = 1, RampUp, RampDown, Triangle, Round, Smooth };
+    enum Unit : uint8_t { Percent = 1, Index = 2 };
+
+    uint8_t expressible = 0; // 0: off, 1: on
+    LottieFloat maxEase = 0.0f;
+    LottieFloat minEase = 0.0f;
+    LottieFloat maxAmount = 0.0f;
+    Based based = Chars;
+    uint8_t randomize = 0; // 0: off, 1: on
+    Shape shape = Square;
+    LottieFloat offset = 0.0f;
+    Unit rangeUnit = Percent;
+    LottieFloat smoothness = 0.0f;
+    LottieFloat start = 0.0f;
+    LottieFloat end = 0.0f;
+    LottieTextStyle style;
+};
+
+
 struct LottieFont
 {
     enum Origin : uint8_t { Local = 0, CssURL, ScriptURL, FontURL, Embedded };
@@ -196,6 +232,12 @@ struct LottieText : LottieObject
     LottieTextDoc doc;
     LottieFont* font;
     LottieFloat spacing = 0.0f;  //letter spacing
+    Array<LottieTextRange*> ranges;
+
+    ~LottieText()
+    {
+        for (auto r = ranges.begin(); r < ranges.end(); ++r) delete(*r);
+    }
 };
 
 
