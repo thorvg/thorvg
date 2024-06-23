@@ -144,6 +144,9 @@ configure_file(
 
 headers = [include_directories('inc'), include_directories('.')]
 
+#OpenGL profile: OpenGLES(true) or OpenGL(false), confirmed by gl_engine
+target_opengles = false
+
 subdir('inc')
 subdir('src')
 subdir('tools')
