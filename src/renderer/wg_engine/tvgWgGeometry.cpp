@@ -57,6 +57,7 @@ WgPolyline::WgPolyline()
     constexpr uint32_t nPoints = 360;
     pts.reserve(nPoints);
     dist.reserve(nPoints);
+    closed = false;
 }
 
 
@@ -149,12 +150,7 @@ void WgPolyline::trim(WgPolyline* polyline, float trimBegin, float trimEnd) cons
 void WgPolyline::close()
 {
     if (pts.count > 0) appendPoint(pts[0]);
-}
-
-
-bool WgPolyline::isClosed() const
-{
-    return (pts.count >= 2) && (mathZero(pts[0].dist2(pts.last())));
+    closed = true;
 }
 
 
@@ -166,6 +162,7 @@ void WgPolyline::clear()
     // clear points and distances
     pts.clear();
     dist.clear();
+    closed = false;
 }
 
 
@@ -406,7 +403,7 @@ void WgGeometryData::appendStroke(const WgPolyline* polyline, const RenderStroke
             );
         }
     } else if (polyline->pts.count > 2) {  // multi-lined sub-path
-        if (polyline->isClosed()) {
+        if (polyline->closed) {
             WgPoint v0 = polyline->pts[polyline->pts.count - 2];
             WgPoint v1 = polyline->pts[0];
             WgPoint v2 = polyline->pts[1];
