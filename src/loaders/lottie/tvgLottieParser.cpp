@@ -72,6 +72,14 @@ CompositeMethod LottieParser::getMaskMethod(bool inversed)
         case 's': return CompositeMethod::SubtractMask;
         case 'i': return CompositeMethod::IntersectMask;
         case 'f': return CompositeMethod::DifferenceMask;
+        case 'l': {
+            TVGLOG("LOTTIE", "Mask Lighten is not supported");
+            return CompositeMethod::None;
+        }
+        case 'd': {
+            TVGLOG("LOTTIE", "Mask Darken is not supported");
+            return CompositeMethod::None;
+        }
         default: return CompositeMethod::None;
     }
 }
