@@ -84,6 +84,7 @@ struct WgPolyline
     uint32_t imaxy{};
     // total polyline length
     float len{};
+    bool closed{};
 
     WgPolyline();
 
@@ -95,7 +96,6 @@ struct WgPolyline
     void close();
     void clear();
 
-    bool isClosed() const;
     void getBBox(WgPoint& pmin, WgPoint& pmax) const;
 };
 
