@@ -1146,32 +1146,40 @@ static void _updateMaskings(LottieLayer* layer, float frameNo, LottieExpressions
 
     //maskings
     Shape* pmask = nullptr;
-    auto pmethod = CompositeMethod::AlphaMask;
+    auto pmethod = CompositeMethod::None;
 
     for (auto m = layer->masks.begin(); m < layer->masks.end(); ++m) {
         auto mask = static_cast<LottieMask*>(*m);
+        auto method = mask->method;
+
+        //FIXME: None method mask should be appended to the root layer?
+        if (method == CompositeMethod::None) {
+            pmethod = method;
+            continue;
+        }
+
+        //Masking shape
         auto shape = Shape::gen().release();
         shape->fill(255, 255, 255, mask->opacity(frameNo));
         shape->transform(layer->cache.matrix);
         if (mask->pathset(frameNo, P(shape)->rs.path.cmds, P(shape)->rs.path.pts, nullptr, 0.0f, exps)) {
             P(shape)->update(RenderUpdateFlag::Path);
         }
-        auto method = mask->method;
+
+        //Append the chain-masking composition
         if (pmask) {
-            //false of false is true. invert.
-            if (method == CompositeMethod::SubtractMask && pmethod == method) {
-                method = CompositeMethod::AddMask;
-            } else if (pmethod == CompositeMethod::DifferenceMask && pmethod == method) {
-                method = CompositeMethod::IntersectMask;
+            //false of false is true. invert?
+            if (pmethod == method) {
+                if (method == CompositeMethod::SubtractMask) method = CompositeMethod::AddMask;
+                else if (method == CompositeMethod::DifferenceMask) method = CompositeMethod::IntersectMask;
             }
             pmask->composite(cast<Shape>(shape), method);
+        //Apply the masking
         } else {
-            if (method == CompositeMethod::SubtractMask) method = CompositeMethod::InvAlphaMask;
-            else if (method == CompositeMethod::AddMask) method = CompositeMethod::AlphaMask;
-            else if (method == CompositeMethod::IntersectMask) method = CompositeMethod::AlphaMask;
-            else if (method == CompositeMethod::DifferenceMask) method = CompositeMethod::AlphaMask;   //does this correct?
+            method = (method == CompositeMethod::SubtractMask) ? CompositeMethod::InvAlphaMask : CompositeMethod::AlphaMask;
             layer->scene->composite(cast<Shape>(shape), method);
         }
+
         pmethod = mask->method;
         pmask = shape;
     }
