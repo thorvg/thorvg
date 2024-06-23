@@ -147,7 +147,7 @@ struct SwShapeTask : SwTask
             }
         }
         //Fill
-        if (flags & (RenderUpdateFlag::Gradient | RenderUpdateFlag::Transform | RenderUpdateFlag::Color)) {
+        if (flags & (RenderUpdateFlag::Path |RenderUpdateFlag::Gradient | RenderUpdateFlag::Transform | RenderUpdateFlag::Color)) {
             if (visibleFill || clipper) {
                 if (!shapeGenRle(&shape, rshape, antialiasing(strokeWidth))) goto err;
             }
@@ -160,7 +160,7 @@ struct SwShapeTask : SwTask
             }
         }
         //Stroke
-        if (flags & (RenderUpdateFlag::Stroke | RenderUpdateFlag::Transform)) {
+        if (flags & (RenderUpdateFlag::Path | RenderUpdateFlag::Stroke | RenderUpdateFlag::Transform)) {
             if (strokeWidth > 0.0f) {
                 shapeResetStroke(&shape, rshape, transform);
                 if (!shapeGenStrokeRle(&shape, rshape, transform, clipRegion, bbox, mpool, tid)) goto err;
