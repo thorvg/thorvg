@@ -452,6 +452,7 @@ TVG_API Tvg_Canvas* tvg_swcanvas_create(void);
 * \retval TVG_RESULT_SUCCESS Succeed.
 * \retval TVG_RESULT_MEMORY_CORRUPTION Casting in the internal function implementation failed.
 * \retval TVG_RESULT_INVALID_ARGUMENTS An invalid canvas or buffer pointer passed or one of the @p stride, @p w or @p h being zero.
+* \retval TVG_RESULT_INSUFFICIENT_CONDITION if the canvas is performing rendering. Please ensure the canvas is synced.
 * \retval TVG_RESULT_NOT_SUPPORTED The software engine is not supported.
 *
 * \warning Do not access @p buffer during tvg_canvas_draw() - tvg_canvas_sync(). It should not be accessed while the engine is writing on it.

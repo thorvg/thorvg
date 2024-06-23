@@ -131,6 +131,9 @@ TEST_CASE("Canvas update, clear and reuse", "[capiSwCanvas]")
     //negative
     REQUIRE(tvg_canvas_clear(canvas, false, true) == TVG_RESULT_INSUFFICIENT_CONDITION);
 
+    //make it sure sync before changing the target
+    REQUIRE(tvg_canvas_sync(canvas) == TVG_RESULT_SUCCESS);
+
     uint32_t buffer[25];
     REQUIRE(tvg_swcanvas_set_target(canvas, buffer, 5, 5, 5, TVG_COLORSPACE_ARGB8888) == TVG_RESULT_SUCCESS);
     REQUIRE(tvg_canvas_clear(canvas, false, true) == TVG_RESULT_SUCCESS);
