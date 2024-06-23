@@ -21,42 +21,36 @@ source_file = [
    'tvgGlTessellator.h',
 ]
 
-#find a gl library with fallbacks
-gles_dep = meson.get_compiler('cpp').find_library('GLESv3', required: false)
-
-if not gles_dep.found()
-  gles_dep = dependency('GLESv3', required: false)
-endif
-
-if not gles_dep.found()
-  gles_dep = meson.get_compiler('cpp').find_library('GLESv2', required: false)
-endif
-
-if not gles_dep.found()
-  gles_dep = dependency('GLESv2', required: false)
-endif
-
-link_opengl = false
-
-if not gles_dep.found()
-  gles_dep = dependency('GL')
-  link_opengl = true
-endif
-
-if not gles_dep.found()
-  gles_dep = meson.get_compiler('cpp').find_library('GL')
-  link_opengl = true
-endif
-
-if link_opengl
-    gl_target_define = '-DTHORVG_GL_TARGET_GL=1'
+if host_machine.system() == 'darwin'
+    gl_dep = declare_dependency(link_args: ['-framework', 'OpenGL'])
 else
-    gl_target_define = '-DTHORVG_GL_TARGET_GLES=1'
+    #find a opengl library with fallbacks
+    gl_dep = dependency('GL', required: false)
+
+    if not gl_dep.found()
+        gl_dep = meson.get_compiler('cpp').find_library('GL', required: false)
+    endif
+
+    if not gl_dep.found()
+        gl_dep = dependency('GLESv3', required: false)
+        target_opengles = true
+    endif
+
+    if not gl_dep.found()
+        gl_dep = meson.get_compiler('cpp').find_library('GLESv3')
+        target_opengles = true
+    endif
+endif
+
+if target_opengles
+    gl_target_profile = '-DTHORVG_GL_TARGET_GLES=1'
+else
+    gl_target_profile = '-DTHORVG_GL_TARGET_GL=1'
 endif
 
 engine_dep += [declare_dependency(
-    compile_args        : gl_target_define,
-    dependencies        : gles_dep,
+    compile_args        : gl_target_profile,
+    dependencies        : gl_dep,
     include_directories : include_directories('.'),
     sources             : source_file,
 )]

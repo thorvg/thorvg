@@ -485,7 +485,7 @@ int GlRenderer::init(uint32_t threads)
 {
     if ((initEngineCnt++) > 0) return true;
 
-    //TODO:
+    //TODO: runtime linking?
 
     return true;
 }
@@ -511,12 +511,24 @@ int GlRenderer::term()
 
 GlRenderer* GlRenderer::gen()
 {
+    //TODO: GL minimum version check, should be replaced with the runtime linking in GlRenderer::init()
+    GLint vMajor, vMinor;
+    glGetIntegerv(GL_MAJOR_VERSION, &vMajor);
+    glGetIntegerv(GL_MINOR_VERSION, &vMinor);
+    if (vMajor < TVG_REQUIRE_GL_MAJOR_VER || (vMajor ==  TVG_REQUIRE_GL_MAJOR_VER && vMinor <  TVG_REQUIRE_GL_MINOR_VER)) {
+        TVGERR("GL_ENGINE", "OpenGL/ES version is not statisfied. Current: v%d.%d, Required: v%d.%d", vMajor, vMinor, TVG_REQUIRE_GL_MAJOR_VER, TVG_REQUIRE_GL_MINOR_VER);
+        return nullptr;
+    }
+    TVGLOG("GL_ENGINE", "OpenGL/ES version = v%d.%d", vMajor, vMinor);
+
     return new GlRenderer();
 }
+
 
 GlRenderer::GlRenderer() :mGpuBuffer(new GlStageBuffer), mPrograms(), mComposePool()
 {
 }
+
 
 GlRenderer::~GlRenderer()
 {

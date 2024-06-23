@@ -76,7 +76,7 @@ uint32_t GlShader::complileShader(uint32_t type, char* shaderSrc)
     // but in general All Desktop GPU should use OpenGL version ( #version 330 core )
 #if defined (THORVG_GL_TARGET_GLES)
     shaderPack[0] ="#version 300 es\n";
-#elif defined (THORVG_GL_TARGET_GL)
+#else
     shaderPack[0] ="#version 330 core\n";
 #endif
     shaderPack[1] = "precision highp float;\n precision mediump int;\n";

@@ -26,12 +26,17 @@
 #include <assert.h>
 #if defined (THORVG_GL_TARGET_GLES)
     #include <GLES3/gl3.h>
-#elif defined (THORVG_GL_TARGET_GL)
+    #define TVG_REQUIRE_GL_MAJOR_VER 3
+    #define TVG_REQUIRE_GL_MINOR_VER 0
+#else
     #if defined(__APPLE__) || defined(__MACH__)
         #include <OpenGL/gl3.h>
     #else
-        #include <GL/gl3.h>
+        #define GL_GLEXT_PROTOTYPES 1
+        #include <GL/gl.h>
     #endif
+    #define TVG_REQUIRE_GL_MAJOR_VER 3
+    #define TVG_REQUIRE_GL_MINOR_VER 3
 #endif
 #include "tvgCommon.h"
 #include "tvgRender.h"
