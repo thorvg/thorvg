@@ -57,9 +57,9 @@ WgCanvas::~WgCanvas()
 Result WgCanvas::target(void* instance, void* surface, uint32_t w, uint32_t h) noexcept
 {
 #ifdef THORVG_WG_RASTER_SUPPORT
-    if (!instance) return Result::InvalidArguments;
-    if (!surface) return Result::InvalidArguments;
-    if ((w == 0) || (h == 0)) return Result::InvalidArguments;
+    if (Canvas::pImpl->status != Status::Synced) return Result::InsufficientCondition;
+
+    if (!instance || !surface || (w == 0) || (h == 0)) return Result::InvalidArguments;
 
     //We know renderer type, avoid dynamic_cast for performance.
     auto renderer = static_cast<WgRenderer*>(Canvas::pImpl->renderer);

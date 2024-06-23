@@ -1734,11 +1734,13 @@ public:
      * @retval Result::Success When succeed.
      * @retval Result::MemoryCorruption When casting in the internal function implementation failed.
      * @retval Result::InvalidArguments In case no valid pointer is provided or the width, or the height or the stride is zero.
+     * @retval Result::InsufficientCondition if the canvas is performing rendering. Please ensure the canvas is synced.
      * @retval Result::NonSupport In case the software engine is not supported.
      *
      * @warning Do not access @p buffer during Canvas::push() - Canvas::sync(). It should not be accessed while the engine is writing on it.
      *
      * @see Canvas::viewport()
+     * @see Canvas::sync()
     */
     Result target(uint32_t* buffer, uint32_t stride, uint32_t w, uint32_t h, Colorspace cs) noexcept;
 
@@ -1801,10 +1803,13 @@ public:
      * @param[in] w The width (in pixels) of the raster image.
      * @param[in] h The height (in pixels) of the raster image.
      *
-     * @warning This API is experimental and not officially supported. It may be modified or removed in future versions.
-     * @warning Drawing on the main surface is currently not permitted. If the identifier (@p id) is set to @c 0, the operation will be aborted.
+     * @retval Result::Success When succeed.
+     * @retval Result::MemoryCorruption When casting in the internal function implementation failed.
+     * @retval Result::InsufficientCondition if the canvas is performing rendering. Please ensure the canvas is synced.
+     * @retval Result::NonSupport In case the gl engine is not supported.
      *
      * @see Canvas::viewport()
+     * @see Canvas::sync()
      *
      * @note Currently, this only allows the GL_RGBA8 color space format.
      * @note Experimental API
@@ -1844,10 +1849,13 @@ public:
      * @param[in] instance WGPUInstance, context for all other wgpu objects.
      * @param[in] surace WGPUSurface, handle to a presentable surface.
      *
-     * @warning Please do not use it, this API is not official one. It could be modified in the next version.
+     * @retval Result::InsufficientCondition if the canvas is performing rendering. Please ensure the canvas is synced.
+     * @retval Result::NonSupport In case the wg engine is not supported.
      *
      * @note Experimental API
+     *
      * @see Canvas::viewport()
+     * @see Canvas::sync()
      */
     Result target(void* instance, void* surface, uint32_t w, uint32_t h) noexcept;
 

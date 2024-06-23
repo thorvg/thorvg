@@ -62,6 +62,8 @@ GlCanvas::~GlCanvas()
 Result GlCanvas::target(int32_t id, uint32_t w, uint32_t h) noexcept
 {
 #ifdef THORVG_GL_RASTER_SUPPORT
+    if (Canvas::pImpl->status != Status::Synced) return Result::InsufficientCondition;
+
     //We know renderer type, avoid dynamic_cast for performance.
     auto renderer = static_cast<GlRenderer*>(Canvas::pImpl->renderer);
     if (!renderer) return Result::MemoryCorruption;

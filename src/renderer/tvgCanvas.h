@@ -26,10 +26,10 @@
 #include "tvgPaint.h"
 
 
+enum Status : uint8_t {Synced = 0, Updating, Drawing};
+
 struct Canvas::Impl
 {
-    enum Status : uint8_t {Synced = 0, Updating, Drawing};
-
     list<Paint*> paints;
     RenderMethod* renderer;
     RenderRegion vport = {0, 0, INT32_MAX, INT32_MAX};

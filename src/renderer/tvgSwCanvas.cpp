@@ -82,6 +82,8 @@ Result SwCanvas::mempool(MempoolPolicy policy) noexcept
 Result SwCanvas::target(uint32_t* buffer, uint32_t stride, uint32_t w, uint32_t h, Colorspace cs) noexcept
 {
 #ifdef THORVG_SW_RASTER_SUPPORT
+    if (Canvas::pImpl->status != Status::Synced) return Result::InsufficientCondition;
+
     //We know renderer type, avoid dynamic_cast for performance.
     auto renderer = static_cast<SwRenderer*>(Canvas::pImpl->renderer);
     if (!renderer) return Result::MemoryCorruption;
