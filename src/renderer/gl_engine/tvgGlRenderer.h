@@ -98,7 +98,6 @@ private:
     Surface surface;
     GLint mTargetFboId = 0;
     RenderRegion mViewport;
-    RenderRegion mTargetViewport;
     //TODO: remove all unique_ptr / replace the vector with tvg::Array
     unique_ptr<GlStageBuffer> mGpuBuffer;
     vector<std::unique_ptr<GlProgram>> mPrograms;
