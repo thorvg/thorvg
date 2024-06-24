@@ -227,6 +227,7 @@ struct Window
             }
 
             if (needResize) {
+                if (tickCnt == 0) draw();
                 resize();
                 needResize = false;
             }
