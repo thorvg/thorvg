@@ -169,7 +169,7 @@ class GlClipTask : public GlRenderTask
 {
 public:
     GlClipTask(GlRenderTask* clip, GlRenderTask* mask);
-    ~GlClipTask() override = default;
+    ~GlClipTask() override;
 
     void run() override;
 

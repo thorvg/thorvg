@@ -567,7 +567,10 @@ void GlRenderer::drawPrimitive(GlShape& sdata, uint8_t r, uint8_t g, uint8_t b, 
     auto task = new GlRenderTask(mPrograms[RT_Color].get());
     task->setDrawDepth(depth);
 
-    if (!sdata.geometry->draw(task, mGpuBuffer.get(), flag)) return;
+    if (!sdata.geometry->draw(task, mGpuBuffer.get(), flag)) {
+        delete task;
+        return;
+    }
 
     GlRenderTask* stencilTask = nullptr;
 
