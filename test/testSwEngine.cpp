@@ -512,13 +512,15 @@ TEST_CASE("Filling Draw", "[tvgSwEngine]")
     REQUIRE(radialFill);
 
     Fill::ColorStop cs[4] = {
-        {0.0f, 0, 0, 0, 0},
+        {0.1f, 0, 0, 0, 0},
         {0.2f, 50, 25, 50, 25},
         {0.5f, 100, 100, 100, 125},
-        {1.0f, 255, 255, 255, 255}
+        {0.9f, 255, 255, 255, 255}
     };
     REQUIRE(linearFill->colorStops(cs, 4) == Result::Success);
     REQUIRE(radialFill->colorStops(cs, 4) == Result::Success);
+    REQUIRE(linearFill->spread(FillSpread::Repeat) == Result::Success);
+    REQUIRE(radialFill->spread(FillSpread::Pad) == Result::Success);
     REQUIRE(linearFill->linear(0.0f, 0.0f, 100.0f, 120.0f) == Result::Success);
     REQUIRE(radialFill->radial(50.0f, 50.0f, 50.0f) == Result::Success);
 
@@ -1052,7 +1054,7 @@ TEST_CASE("RLE Filling LumaMask", "[tvgSwEngine]")
     REQUIRE(canvas);
 
     uint32_t buffer[100*100];
-    REQUIRE(canvas->target(buffer, 100, 100, 100, SwCanvas::Colorspace::ABGR8888) == Result::Success);
+    REQUIRE(canvas->target(buffer, 100, 100, 100, SwCanvas::Colorspace::ARGB8888) == Result::Success);
 
     //Fill
     auto linearFill = LinearGradient::gen();
@@ -1111,7 +1113,7 @@ TEST_CASE("RLE Filling InvLumaMask", "[tvgSwEngine]")
     REQUIRE(canvas);
 
     uint32_t buffer[100*100];
-    REQUIRE(canvas->target(buffer, 100, 100, 100, SwCanvas::Colorspace::ABGR8888) == Result::Success);
+    REQUIRE(canvas->target(buffer, 100, 100, 100, SwCanvas::Colorspace::ARGB8888) == Result::Success);
 
     //Fill
     auto linearFill = LinearGradient::gen();
