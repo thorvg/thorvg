@@ -228,6 +228,21 @@ TEST_CASE("Animation Lottie9", "[tvgAnimation]")
     REQUIRE(Initializer::term(CanvasEngine::Sw) == Result::Success);
 }
 
+TEST_CASE("Animation Lottie10", "[tvgAnimation]")
+{
+    REQUIRE(Initializer::init(CanvasEngine::Sw, 0) == Result::Success);
+
+    auto animation = Animation::gen();
+    REQUIRE(animation);
+
+    auto picture = animation->picture();
+    REQUIRE(picture->identifier() == Picture::identifier());
+    
+    REQUIRE(picture->load(TEST_DIR"/test10.json") == Result::Success);
+
+    REQUIRE(Initializer::term(CanvasEngine::Sw) == Result::Success);
+}
+
 TEST_CASE("Animation Segment", "[tvgAnimation]")
 {
     REQUIRE(Initializer::init(tvg::CanvasEngine::Sw, 0) == Result::Success);

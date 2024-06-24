@@ -85,7 +85,7 @@ TEST_CASE("Load TTF Data from a memory", "[tvgText]")
     REQUIRE(Text::load("Arial", data, 0) == Result::InvalidArguments);
     REQUIRE(Text::load("ArialSvg", svg, strlen(svg), "unknown") == Result::NonSupport);
     REQUIRE(Text::load("ArialUnknown", data, size, "unknown") == Result::Success);
-    REQUIRE(Text::load("ArialTtf", data, size, "ttf") == Result::Success);
+    REQUIRE(Text::load("ArialTtf", data, size, "ttf", true) == Result::Success);
     REQUIRE(Text::load("Arial", data, size, "") == Result::Success);
 
     //unload
@@ -129,10 +129,10 @@ TEST_CASE("Text Basic", "[tvgText]")
     REQUIRE(Text::load(TEST_DIR"/Arial.ttf") == tvg::Result::Success);
     REQUIRE(text->font("Arial", 80) == tvg::Result::Success);
 
-    REQUIRE(text->text("THORVG Text") == tvg::Result::Success);
-    REQUIRE(text->text("ABCDEFGHIJIKLMOPQRSTUVWXYZ") == tvg::Result::Success);
-    REQUIRE(text->text("") == tvg::Result::Success);
     REQUIRE(text->text(nullptr) == tvg::Result::Success);
+    REQUIRE(text->text("") == tvg::Result::Success);
+    REQUIRE(text->text("ABCDEFGHIJIKLMOPQRSTUVWXYZ") == tvg::Result::Success);
+    REQUIRE(text->text("THORVG Text") == tvg::Result::Success);
 
     REQUIRE(text->fill(255, 255, 255) == tvg::Result::Success);
 
