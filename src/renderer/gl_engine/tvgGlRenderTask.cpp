@@ -263,6 +263,12 @@ void GlDrawBlitTask::run()
 GlClipTask::GlClipTask(GlRenderTask* clip, GlRenderTask* mask)
  :GlRenderTask(nullptr), mClipTask(clip), mMaskTask(mask) {}
 
+GlClipTask::~GlClipTask()
+{
+    delete mClipTask;
+    delete mMaskTask;
+}
+
 void GlClipTask::run()
 {
     GL_CHECK(glEnable(GL_STENCIL_TEST));
