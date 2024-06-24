@@ -1847,7 +1847,9 @@ public:
      * @brief Sets the drawing target for the rasterization.
      *
      * @param[in] instance WGPUInstance, context for all other wgpu objects.
-     * @param[in] surace WGPUSurface, handle to a presentable surface.
+     * @param[in] surface WGPUSurface, handle to a presentable surface.
+     * @param[in] w The width of the surface.
+     * @param[in] h The height of the surface.
      *
      * @retval Result::InsufficientCondition if the canvas is performing rendering. Please ensure the canvas is synced.
      * @retval Result::NonSupport In case the wg engine is not supported.
