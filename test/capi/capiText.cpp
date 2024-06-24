@@ -73,15 +73,15 @@ TEST_CASE("Load/unload TTF file from a memory", "[capiText]")
 
     static const char* svg = "<svg height=\"1000\" viewBox=\"0 0 600 600\" ></svg>";
 
-//    //load
+    //load
     REQUIRE(tvg_font_load_data("Err", data, 0, "ttf", false) == TVG_RESULT_INVALID_ARGUMENT);
     REQUIRE(tvg_font_load_data(NULL, data, data_size, "ttf", false) == TVG_RESULT_INVALID_ARGUMENT);
     REQUIRE(tvg_font_load_data("Svg", svg, strlen(svg), "svg", false) == TVG_RESULT_NOT_SUPPORTED);
     REQUIRE(tvg_font_load_data("Arial1", data, data_size, "err", false) == TVG_RESULT_SUCCESS);
-    REQUIRE(tvg_font_load_data("Arial2", data, data_size, "ttf", false) == TVG_RESULT_SUCCESS);
+    REQUIRE(tvg_font_load_data("Arial2", data, data_size, "ttf", true) == TVG_RESULT_SUCCESS);
     REQUIRE(tvg_font_load_data("Arial3", data, data_size, NULL, false) == TVG_RESULT_SUCCESS);
 
-//    //unload
+    //unload
     REQUIRE(tvg_font_load_data("Err", NULL, data_size, "ttf", false) == TVG_RESULT_INSUFFICIENT_CONDITION);
     REQUIRE(tvg_font_load_data(NULL, NULL, data_size, "ttf", false) == TVG_RESULT_INVALID_ARGUMENT);
     REQUIRE(tvg_font_load_data("Arial1", NULL, 0, "ttf", false) == TVG_RESULT_SUCCESS);
@@ -119,6 +119,7 @@ TEST_CASE("Set text", "[capiText]")
     REQUIRE(tvg_text_set_text(NULL, "some random text") == TVG_RESULT_INVALID_ARGUMENT);
     REQUIRE(tvg_text_set_text(text, "") == TVG_RESULT_SUCCESS);
     REQUIRE(tvg_text_set_text(text, NULL) == TVG_RESULT_SUCCESS);
+    REQUIRE(tvg_text_set_text(text, "THORVG Text") == TVG_RESULT_SUCCESS);
 
     REQUIRE(tvg_paint_del(text) == TVG_RESULT_SUCCESS);
 }
