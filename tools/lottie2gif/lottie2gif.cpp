@@ -48,7 +48,8 @@ private:
    uint32_t fps = 30;
    uint32_t width = 600;
    uint32_t height = 600;
-   unique_ptr<Shape> bg = nullptr; //transparent
+   uint8_t r, g, b;        //background color
+   bool background = false;
 
    void helpMsg()
    {
@@ -82,7 +83,9 @@ private:
       auto saver = Saver::gen();
 
       //set a background color
-      if (bg) {
+      if (background) {
+         auto bg = Shape::gen();
+         bg->fill(r, g, b);
          bg->appendRect(0, 0, width * scale, height * scale);
          saver->background(std::move(bg));
       }
@@ -231,12 +234,10 @@ public:
                   return 1;
                }
                auto bgColor = (uint32_t) strtol(p_arg, NULL, 16);
-               auto r = (uint8_t)((bgColor & 0xff0000) >> 16);
-               auto g = (uint8_t)((bgColor & 0x00ff00) >> 8);
-               auto b = (uint8_t)((bgColor & 0x0000ff));
-               bg = tvg::Shape::gen();
-               bg->fill(r, g, b, 255);
-
+               r = (uint8_t)((bgColor & 0xff0000) >> 16);
+               g = (uint8_t)((bgColor & 0x00ff00) >> 8);
+               b = (uint8_t)((bgColor & 0x0000ff));
+               background = true;
             } else {
                cout << "Warning: Unknown flag (" << p << ")." << endl;
             }
