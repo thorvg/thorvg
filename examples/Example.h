@@ -296,9 +296,6 @@ struct SwWindow : Window
 
         //Set the canvas target and draw on it.
         verify(canvas->target((uint32_t*)surface->pixels, surface->w, surface->pitch / 4, surface->h, tvg::SwCanvas::ARGB8888));
-
-        //Clear the canvas target buffer
-        verify(canvas->clear(false));
     }
 
     void refresh() override
@@ -357,9 +354,6 @@ struct GlWindow : Window
     {
         //Set the canvas target and draw on it.
         verify(canvas->target(0, width, height));
-
-        //Clear the canvas target buffer
-        verify(canvas->clear(false));
     }
 
     void refresh() override
@@ -455,9 +449,6 @@ struct WgWindow : Window
     {
         //Set the canvas target and draw on it.
         verify(canvas->target(instance, surface, width, height));
-
-        //Clear the canvas target buffer
-        verify(canvas->clear(false));
     }
 };
 
