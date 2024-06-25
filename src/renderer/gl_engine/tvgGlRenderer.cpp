@@ -214,7 +214,7 @@ bool GlRenderer::renderImage(void* data)
 
     if (!sdata) return false;
 
-    if ((sdata->updateFlag & RenderUpdateFlag::Image) == 0) return false;
+    if ((sdata->updateFlag & RenderUpdateFlag::Image) == 0) return true;
 
     int32_t drawDepth = currentPass()->nextDrawDepth();
 
@@ -223,7 +223,7 @@ bool GlRenderer::renderImage(void* data)
     auto task = new GlRenderTask(mPrograms[RT_Image].get());
     task->setDrawDepth(drawDepth);
 
-    if (!sdata->geometry->draw(task, mGpuBuffer.get(), RenderUpdateFlag::Image)) return false;
+    if (!sdata->geometry->draw(task, mGpuBuffer.get(), RenderUpdateFlag::Image)) return true;
 
     // matrix buffer
     {
@@ -268,7 +268,7 @@ bool GlRenderer::renderShape(RenderData data)
     auto sdata = static_cast<GlShape*>(data);
     if (!sdata) return false;
 
-    if (sdata->updateFlag == RenderUpdateFlag::None) return false;
+    if (sdata->updateFlag == RenderUpdateFlag::None) return true;
 
     uint8_t r = 0, g = 0, b = 0, a = 0;
     int32_t drawDepth1 = 0, drawDepth2 = 0, drawDepth3 = 0;
