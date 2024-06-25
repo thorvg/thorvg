@@ -28,33 +28,9 @@
 
 #include "tvgGlCommon.h"
 #include "tvgGlRenderTask.h"
+#include "tvgGlRenderTarget.h"
 
 class GlProgram;
-
-class GlRenderTarget
-{
-public:
-    GlRenderTarget(uint32_t width, uint32_t height);
-    ~GlRenderTarget();
-
-    void init(GLint resolveId);
-
-    GLuint getFboId() { return mFbo; }
-    GLuint getResolveFboId() { return mResolveFbo; }
-    GLuint getColorTexture() { return mColorTex; }
-
-    uint32_t getWidth() const { return mWidth; }
-    uint32_t getHeight() const { return mHeight; }
-
-private:
-    uint32_t mWidth = 0;
-    uint32_t mHeight = 0;
-    GLuint mFbo = 0;
-    GLuint mColorBuffer = 0;
-    GLuint mDepthStencilBuffer = 0;
-    GLuint mResolveFbo = 0;
-    GLuint mColorTex = 0;
-};
 
 class GlRenderPass
 {
@@ -64,11 +40,21 @@ public:
 
     ~GlRenderPass();
 
+    bool isEmpty() const { return mFbo == nullptr; }
+
     void addRenderTask(GlRenderTask* task);
 
     GLuint getFboId() { return mFbo->getFboId(); }
 
     GLuint getTextureId() { return mFbo->getColorTexture(); }
+
+    const RenderRegion& getViewport() const { return mFbo->getViewport(); }
+
+    uint32_t getFboWidth() const { return mFbo->getWidth(); }
+
+    uint32_t getFboHeight() const { return mFbo->getHeight(); }
+
+    void getMatrix(float dst[16], const Matrix& matrix) const;
 
     template <class T>
     T* endRenderPass(GlProgram* program, GLuint targetFbo) {
@@ -78,7 +64,13 @@ public:
             mTasks[i]->normalizeDrawDepth(maxDepth);
         }
 
-        return new T(program, targetFbo, mFbo, std::move(mTasks));
+        auto task = new T(program, targetFbo, mFbo, std::move(mTasks));
+
+        const auto& vp = mFbo->getViewport();
+
+        task->setRenderSize(static_cast<uint32_t>(vp.w), static_cast<uint32_t>(vp.h));
+
+        return task;
     }
 
     int nextDrawDepth() { return ++mDrawDepth; }
