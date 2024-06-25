@@ -209,6 +209,7 @@ void WgImageData::update(WgContext& context, Surface* surface)
     writeSize.height = surface->h;
     writeSize.depthOrArrayLayers = 1;
     wgpuQueueWriteTexture(context.queue, &imageCopyTexture, surface->data, 4 * surface->w * surface->h, &textureDataLayout, &writeSize);
+    wgpuQueueSubmit(context.queue, 0, nullptr);
 };
 
 
