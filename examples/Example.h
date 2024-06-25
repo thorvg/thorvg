@@ -190,6 +190,17 @@ struct Window
         return false;
     }
 
+    bool ready()
+    {
+        if (!example->content(Window::canvas, width, height)) return false;
+
+        //initiate the first rendering before window pop-up.
+        if (!verify(canvas->draw())) return false;
+        if (!verify(canvas->sync())) return false;
+
+        return true;
+    }
+
     void show()
     {
         SDL_ShowWindow(window);
@@ -252,7 +263,6 @@ struct Window
         }
     }
 
-    virtual bool ready() { return false; }
     virtual void resize() {}
     virtual void refresh() {}
 };
@@ -271,22 +281,17 @@ struct SwWindow : Window
     SwWindow(Example* example, uint32_t width, uint32_t height) : Window(tvg::CanvasEngine::Sw, example, width, height)
     {
         window = SDL_CreateWindow("ThorVG Example (Software)", SDL_WINDOWPOS_UNDEFINED, SDL_WINDOWPOS_UNDEFINED, width, height, SDL_WINDOW_HIDDEN | SDL_WINDOW_RESIZABLE);
-    }
 
-    bool ready() override
-    {
         //Create a Canvas
         canvas = tvg::SwCanvas::gen();
         if (!canvas) {
             cout << "SwCanvas is not supported. Did you enable the SwEngine?" << endl;
-            return false;
+            return;
         }
 
         Window::canvas = canvas.get();
 
         resize();
-
-        return example->content(Window::canvas, width, height);
     }
 
     void resize() override
@@ -327,27 +332,22 @@ struct GlWindow : Window
 #endif
         window = SDL_CreateWindow("ThorVG Example (OpenGL/ES)", SDL_WINDOWPOS_UNDEFINED, SDL_WINDOWPOS_UNDEFINED, width, height, SDL_WINDOW_OPENGL | SDL_WINDOW_HIDDEN | SDL_WINDOW_RESIZABLE);
         context = SDL_GL_CreateContext(window);
-    }
 
-    virtual ~GlWindow()
-    {
-        SDL_GL_DeleteContext(context);
-    }
-
-    bool ready() override
-    {
         //Create a Canvas
         canvas = tvg::GlCanvas::gen();
         if (!canvas) {
             cout << "GlCanvas is not supported. Did you enable the GlEngine?" << endl;
-            return false;
+            return;
         }
 
         Window::canvas = canvas.get();
 
         resize();
+    }
 
-        return example->content(Window::canvas, width, height);
+    virtual ~GlWindow()
+    {
+        SDL_GL_DeleteContext(context);
     }
 
     void resize() override
@@ -421,28 +421,23 @@ struct WgWindow : Window
         surfaceDesc.nextInChain = (const WGPUChainedStruct*)&surfaceNativeDesc;
         surfaceDesc.label = "The surface";
         surface = wgpuInstanceCreateSurface(instance, &surfaceDesc);
+
+        //Create a Canvas
+        canvas = tvg::WgCanvas::gen();
+        if (!canvas) {
+            cout << "WgCanvas is not supported. Did you enable the WgEngine?" << endl;
+            return;
+        }
+
+        Window::canvas = canvas.get();
+
+        resize();
     }
 
     virtual ~WgWindow()
     {
         //wgpuSurfaceRelease(surface);
         wgpuInstanceRelease(instance);
-    }
-
-    bool ready() override
-    {
-        //Create a Canvas
-        canvas = tvg::WgCanvas::gen();
-        if (!canvas) {
-            cout << "WgCanvas is not supported. Did you enable the WgEngine?" << endl;
-            return false;
-        }
-
-        Window::canvas = canvas.get();
-
-        resize();
-
-        return example->content(Window::canvas, width, height);
     }
 
     void resize() override
