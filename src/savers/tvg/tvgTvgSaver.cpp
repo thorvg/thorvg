@@ -456,7 +456,7 @@ TvgBinCounter TvgSaver::serializeStroke(const Shape* shape, const Matrix* pTrans
 
     //order
     if (auto flag = static_cast<TvgBinFlag>(P(shape)->strokeFirst()))
-        writeTagProperty(TVG_TAG_SHAPE_STROKE_ORDER, SIZE(TvgBinFlag), &flag);
+        cnt += writeTagProperty(TVG_TAG_SHAPE_STROKE_ORDER, SIZE(TvgBinFlag), &flag);
 
     //fill
     if (auto fill = shape->strokeFill()) {
