@@ -126,6 +126,8 @@ public:
 
     void run() override;
 
+    void setRenderSize(uint32_t width, uint32_t height) { mRenderWidth = width; mRenderHeight = height; }
+
 protected:
     GLuint getTargetFbo() { return mTargetFbo; }
 
@@ -138,6 +140,8 @@ private:
     GLuint mTargetFbo;
     GlRenderTarget* mFbo;
     Array<GlRenderTask*> mTasks;
+    uint32_t mRenderWidth = 0;
+    uint32_t mRenderHeight = 0;
 };
 
 class GlBlitTask : public GlComposeTask
@@ -160,9 +164,18 @@ class GlDrawBlitTask : public GlComposeTask
 {
 public:
     GlDrawBlitTask(GlProgram*, GLuint target, GlRenderTarget* fbo, Array<GlRenderTask*>&& tasks);
-    ~GlDrawBlitTask() override = default;
+    ~GlDrawBlitTask() override;
+
+    void setPrevTask(GlRenderTask* task) { mPrevTask = task; }
+
+    void setParentSize(uint32_t width, uint32_t height) { mParentWidth = width; mParentHeight = height; }
 
     void run() override;
+
+private:
+    GlRenderTask* mPrevTask = nullptr;
+    uint32_t mParentWidth = 0;
+    uint32_t mParentHeight = 0;
 };
 
 class GlClipTask : public GlRenderTask

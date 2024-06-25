@@ -103,6 +103,13 @@ void GlRenderTask::setDrawRange(uint32_t offset, uint32_t count)
 void GlRenderTask::setViewport(const RenderRegion &viewport)
 {
     mViewport = viewport;
+    if (mViewport.w < 0) {
+        mViewport.w = 0;
+    }
+
+    if (mViewport.h < 0) {
+        mViewport.h = 0;
+    }
 }
 
 GlStencilCoverTask::GlStencilCoverTask(GlRenderTask* stencil, GlRenderTask* cover, GlStencilMode mode)
@@ -172,11 +179,9 @@ GlComposeTask::~GlComposeTask()
 void GlComposeTask::run()
 {
     GL_CHECK(glBindFramebuffer(GL_FRAMEBUFFER, getSelfFbo()));
-    GL_CHECK(glViewport(0, 0, mFbo->getWidth(), mFbo->getHeight()));
+    GL_CHECK(glViewport(0, 0, mRenderWidth, mRenderHeight));
 
-    const auto& vp = getViewport();
-
-    GL_CHECK(glScissor(vp.x, vp.y, vp.w, vp.h));
+    GL_CHECK(glScissor(0, 0, mRenderWidth, mRenderHeight));
 
     // clear this fbo
     GL_CHECK(glClearColor(0, 0, 0, 0));
@@ -209,14 +214,8 @@ void GlComposeTask::onResolve() {
     GL_CHECK(glBindFramebuffer(GL_READ_FRAMEBUFFER, getSelfFbo()));
     GL_CHECK(glBindFramebuffer(GL_DRAW_FRAMEBUFFER, getResolveFboId()));
 
-    const auto& vp = getViewport();
 
-    auto x1 = vp.x;
-    auto y1 = vp.y;
-    auto x2 = x1 + vp.w;
-    auto y2 = y1 + vp.h;
-
-    GL_CHECK(glBlitFramebuffer(x1, y1, x2, y2, x1, y1, x2, y2, GL_COLOR_BUFFER_BIT, GL_NEAREST));
+    GL_CHECK(glBlitFramebuffer(0, 0, mRenderWidth, mRenderHeight, 0, 0, mRenderWidth, mRenderHeight, GL_COLOR_BUFFER_BIT, GL_NEAREST));
 }
 
 GlBlitTask::GlBlitTask(GlProgram* program, GLuint target, GlRenderTarget* fbo, Array<GlRenderTask*>&& tasks)
@@ -247,12 +246,21 @@ GlDrawBlitTask::GlDrawBlitTask(GlProgram* program, GLuint target, GlRenderTarget
 {
 }
 
+GlDrawBlitTask::~GlDrawBlitTask()
+{
+    if (mPrevTask) delete mPrevTask;
+}
+
 void GlDrawBlitTask::run()
 {
+    if (mPrevTask) mPrevTask->run();
+
     GlComposeTask::run();
 
     GL_CHECK(glBindFramebuffer(GL_FRAMEBUFFER, getTargetFbo()));
 
+    GL_CHECK(glViewport(0, 0, mParentWidth, mParentHeight));
+    GL_CHECK(glScissor(0, 0, mParentWidth, mParentWidth));
     GlRenderTask::run();
 }
 

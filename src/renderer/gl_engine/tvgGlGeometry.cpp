@@ -211,29 +211,17 @@ bool GlGeometry::draw(GlRenderTask* task, GlStageBuffer* gpuBuffer, RenderUpdate
         task->addVertexLayout(GlVertexLayout{0, 2, 2 * sizeof(float), vertexOffset});
     }
     task->setDrawRange(indexOffset, indexBuffer->count);
-    task->setViewport(viewport);
     return true;
 }
 
 
-void GlGeometry::updateTransform(const RenderTransform* transform, float w, float h)
+void GlGeometry::updateTransform(const RenderTransform* transform)
 {
-    float modelMatrix[16];
     if (transform) {
-        GET_MATRIX44(transform->m, modelMatrix);
         mMatrix = transform->m;
     } else {
-        memset(modelMatrix, 0, 16 * sizeof(float));
-        modelMatrix[0] = 1.f;
-        modelMatrix[5] = 1.f;
-        modelMatrix[10] = 1.f;
-        modelMatrix[15] = 1.f;
-
         mMatrix = Matrix{1, 0, 0, 0, 1, 0, 0, 0, 1};
     }
-
-    MVP_MATRIX();
-    MULTIPLY_MATRIX(mvp, modelMatrix, mTransform)
 }
 
 void GlGeometry::setViewport(const RenderRegion& viewport)
@@ -241,9 +229,14 @@ void GlGeometry::setViewport(const RenderRegion& viewport)
     this->viewport = viewport;
 }
 
-float* GlGeometry::getTransforMatrix()
+const RenderRegion& GlGeometry::getViewport()
 {
-    return mTransform;
+    return viewport;
+}
+
+const Matrix& GlGeometry::getTransformMatrix()
+{
+    return mMatrix;
 }
 
 GlStencilMode GlGeometry::getStencilMode(RenderUpdateFlag flag)
