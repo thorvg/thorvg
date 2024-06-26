@@ -43,9 +43,9 @@ var group__ThorVG =
       [ "draw", "classtvg_1_1Canvas.html#aabf9e5a14da3b4bfd5883c2b4459abd0", null ],
       [ "paints", "classtvg_1_1Canvas.html#ace6c268f853a4c144076de89b7bbbe75", null ],
       [ "push", "classtvg_1_1Canvas.html#a82c5ec1c1ba93cf7671642400074201e", null ],
-      [ "reserve", "classtvg_1_1Canvas.html#a1db0cc15b62127da865b37981402b411", null ],
       [ "sync", "classtvg_1_1Canvas.html#adbca600af79f9a0b8e8366e3be7450e9", null ],
-      [ "update", "classtvg_1_1Canvas.html#a89ac8a85a8c22723af9fb07c098472b3", null ]
+      [ "update", "classtvg_1_1Canvas.html#a89ac8a85a8c22723af9fb07c098472b3", null ],
+      [ "viewport", "classtvg_1_1Canvas.html#a2172bfc1790cee5dedd9cda7a2caf64e", null ]
     ] ],
     [ "LinearGradient", "classtvg_1_1LinearGradient.html", [
       [ "linear", "classtvg_1_1LinearGradient.html#a5c77e9f6e855a595945f45a6b19ee983", null ],
@@ -87,6 +87,8 @@ var group__ThorVG =
       [ "strokeJoin", "classtvg_1_1Shape.html#aac0235df4172e9c079689e5291c7ad5a", null ],
       [ "strokeMiterlimit", "classtvg_1_1Shape.html#a84ec91023314c914e900cade78a9095d", null ],
       [ "strokeMiterlimit", "classtvg_1_1Shape.html#ad8fb8f42c07ac68ef83383b05203ff6f", null ],
+      [ "strokeTrim", "classtvg_1_1Shape.html#a5e0762495957f05713a60540984fdae4", null ],
+      [ "strokeTrim", "classtvg_1_1Shape.html#ac69db0796d8e184334add6b0b94b1898", null ],
       [ "strokeWidth", "classtvg_1_1Shape.html#a1536ec32e91c29dd8300b0d4354773f9", null ]
     ] ],
     [ "Picture", "classtvg_1_1Picture.html", [
@@ -102,8 +104,7 @@ var group__ThorVG =
     [ "Scene", "classtvg_1_1Scene.html", [
       [ "clear", "classtvg_1_1Scene.html#ac020ea777be697067c6f5c8b18f6a4ed", null ],
       [ "paints", "classtvg_1_1Scene.html#ace6c268f853a4c144076de89b7bbbe75", null ],
-      [ "push", "classtvg_1_1Scene.html#a19240cd5b53571da718fabef8afb7103", null ],
-      [ "reserve", "classtvg_1_1Scene.html#a7b0edd52cb97da03615fe9af3ee768a9", null ]
+      [ "push", "classtvg_1_1Scene.html#a19240cd5b53571da718fabef8afb7103", null ]
     ] ],
     [ "Text", "classtvg_1_1Text.html", [
       [ "fill", "classtvg_1_1Text.html#ad0cb7b2ec8d18d7c6d366cc84741682c", null ],
@@ -130,7 +131,7 @@ var group__ThorVG =
       [ "target", "classtvg_1_1GlCanvas.html#a182ae193566dbc09fc2ec5a369ad38ad", null ]
     ] ],
     [ "WgCanvas", "classtvg_1_1WgCanvas.html", [
-      [ "target", "classtvg_1_1WgCanvas.html#a9b5dc178ae416c6279877c87ca0e6330", null ]
+      [ "target", "classtvg_1_1WgCanvas.html#a8374462d6f583b287a3664bee0d22c9a", null ]
     ] ],
     [ "Initializer", "classtvg_1_1Initializer.html", null ],
     [ "Animation", "classtvg_1_1Animation.html", [
@@ -138,6 +139,8 @@ var group__ThorVG =
       [ "duration", "classtvg_1_1Animation.html#a90ab38b7a2cb72d6b9de4492ff3e6679", null ],
       [ "frame", "classtvg_1_1Animation.html#a974f03b024a8beed5c8bfe32b56ac2c9", null ],
       [ "picture", "classtvg_1_1Animation.html#a004ba625c58005c931b244fb2515624f", null ],
+      [ "segment", "classtvg_1_1Animation.html#aa972943b6a0d53d9868dcf70915ec0cb", null ],
+      [ "segment", "classtvg_1_1Animation.html#aa05e5a4df917f934ba9b6233d39b4051", null ],
       [ "totalFrame", "classtvg_1_1Animation.html#a624e4fdeebf70f286188685e769125f3", null ]
     ] ],
     [ "Saver", "classtvg_1_1Saver.html", [

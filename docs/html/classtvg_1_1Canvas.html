@@ -27,7 +27,7 @@
   <td id="projectlogo"><img alt="Logo" src="small_logo.png"/></td>
   <td id="projectalign" style="padding-left: 0.5em;">
    <div id="projectname">ThorVG
-   &#160;<span id="projectnumber">v0.13</span>
+   &#160;<span id="projectnumber">v0.14</span>
    </div>
   </td>
  </tr>
@@ -107,9 +107,6 @@ Inheritance diagram for Canvas:</div>
 <table class="memberdecls">
 <tr class="heading"><td colspan="2"><h2 class="groupheader"><a name="pub-methods"></a>
 Public Member Functions</h2></td></tr>
-<tr class="memitem:a1db0cc15b62127da865b37981402b411"><td class="memItemLeft" align="right" valign="top">TVG_DEPRECATED <a class="el" href="group__ThorVG.html#ga28287671eaf7406afd604bd055ba4066">Result</a>&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classtvg_1_1Canvas.html#a1db0cc15b62127da865b37981402b411">reserve</a> (uint32_t n) noexcept</td></tr>
-<tr class="memdesc:a1db0cc15b62127da865b37981402b411"><td class="mdescLeft">&#160;</td><td class="mdescRight">Sets the size of the container, where all the paints pushed into the <a class="el" href="classtvg_1_1Canvas.html" title="An abstract class for drawing graphical elements.">Canvas</a> are stored.  <a href="classtvg_1_1Canvas.html#a1db0cc15b62127da865b37981402b411">More...</a><br /></td></tr>
-<tr class="separator:a1db0cc15b62127da865b37981402b411"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:ace6c268f853a4c144076de89b7bbbe75"><td class="memItemLeft" align="right" valign="top">std::list&lt; <a class="el" href="classtvg_1_1Paint.html">Paint</a> * &gt; &amp;&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classtvg_1_1Canvas.html#ace6c268f853a4c144076de89b7bbbe75">paints</a> () noexcept</td></tr>
 <tr class="memdesc:ace6c268f853a4c144076de89b7bbbe75"><td class="mdescLeft">&#160;</td><td class="mdescRight">Returns the list of the paints that currently held by the <a class="el" href="classtvg_1_1Canvas.html" title="An abstract class for drawing graphical elements.">Canvas</a>.  <a href="classtvg_1_1Canvas.html#ace6c268f853a4c144076de89b7bbbe75">More...</a><br /></td></tr>
 <tr class="separator:ace6c268f853a4c144076de89b7bbbe75"><td class="memSeparator" colspan="2">&#160;</td></tr>
@@ -125,6 +122,9 @@ Public Member Functions</h2></td></tr>
 <tr class="memitem:aabf9e5a14da3b4bfd5883c2b4459abd0"><td class="memItemLeft" align="right" valign="top">virtual <a class="el" href="group__ThorVG.html#ga28287671eaf7406afd604bd055ba4066">Result</a>&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classtvg_1_1Canvas.html#aabf9e5a14da3b4bfd5883c2b4459abd0">draw</a> () noexcept</td></tr>
 <tr class="memdesc:aabf9e5a14da3b4bfd5883c2b4459abd0"><td class="mdescLeft">&#160;</td><td class="mdescRight">Requests the canvas to draw the <a class="el" href="classtvg_1_1Paint.html" title="An abstract class for managing graphical elements.">Paint</a> objects.  <a href="classtvg_1_1Canvas.html#aabf9e5a14da3b4bfd5883c2b4459abd0">More...</a><br /></td></tr>
 <tr class="separator:aabf9e5a14da3b4bfd5883c2b4459abd0"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a2172bfc1790cee5dedd9cda7a2caf64e"><td class="memItemLeft" align="right" valign="top">virtual <a class="el" href="group__ThorVG.html#ga28287671eaf7406afd604bd055ba4066">Result</a>&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classtvg_1_1Canvas.html#a2172bfc1790cee5dedd9cda7a2caf64e">viewport</a> (int32_t x, int32_t y, int32_t w, int32_t h) noexcept</td></tr>
+<tr class="memdesc:a2172bfc1790cee5dedd9cda7a2caf64e"><td class="mdescLeft">&#160;</td><td class="mdescRight">Sets the drawing region in the canvas.  <a href="classtvg_1_1Canvas.html#a2172bfc1790cee5dedd9cda7a2caf64e">More...</a><br /></td></tr>
+<tr class="separator:a2172bfc1790cee5dedd9cda7a2caf64e"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:adbca600af79f9a0b8e8366e3be7450e9"><td class="memItemLeft" align="right" valign="top">virtual <a class="el" href="group__ThorVG.html#ga28287671eaf7406afd604bd055ba4066">Result</a>&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classtvg_1_1Canvas.html#adbca600af79f9a0b8e8366e3be7450e9">sync</a> () noexcept</td></tr>
 <tr class="memdesc:adbca600af79f9a0b8e8366e3be7450e9"><td class="mdescLeft">&#160;</td><td class="mdescRight">Guarantees that drawing task is finished.  <a href="classtvg_1_1Canvas.html#adbca600af79f9a0b8e8366e3be7450e9">More...</a><br /></td></tr>
 <tr class="separator:adbca600af79f9a0b8e8366e3be7450e9"><td class="memSeparator" colspan="2">&#160;</td></tr>
@@ -167,12 +167,6 @@ Public Member Functions</h2></td></tr>
   </table>
   </dd>
 </dl>
-<dl class="retval"><dt>Return values</dt><dd>
-  <table class="retval">
-    <tr><td class="paramname"><a class="el" href="group__ThorVG.html#gga28287671eaf7406afd604bd055ba4066a505a83f220c02df2f85c3810cd9ceb38" title="The value returned in case of a correct request execution.">Result::Success</a></td><td>when succeed, <a class="el" href="group__ThorVG.html#gga28287671eaf7406afd604bd055ba4066a119732ff568bf103d744e930ae2404f1" title="The value returned in case the request cannot be processed - e.g. asking for properties of an object,...">Result::InsufficientCondition</a> otherwise.</td></tr>
-  </table>
-  </dd>
-</dl>
 <dl class="section see"><dt>See also</dt><dd><a class="el" href="classtvg_1_1Canvas.html#a82c5ec1c1ba93cf7671642400074201e" title="Passes drawing elements to the Canvas using Paint objects.">Canvas::push()</a> </dd>
 <dd>
 <a class="el" href="classtvg_1_1Canvas.html#ace6c268f853a4c144076de89b7bbbe75" title="Returns the list of the paints that currently held by the Canvas.">Canvas::paints()</a> </dd></dl>
@@ -203,12 +197,6 @@ Public Member Functions</h2></td></tr>
 </div><div class="memdoc">
 
 <p>Requests the canvas to draw the <a class="el" href="classtvg_1_1Paint.html" title="An abstract class for managing graphical elements.">Paint</a> objects. </p>
-<dl class="retval"><dt>Return values</dt><dd>
-  <table class="retval">
-    <tr><td class="paramname"><a class="el" href="group__ThorVG.html#gga28287671eaf7406afd604bd055ba4066a505a83f220c02df2f85c3810cd9ceb38" title="The value returned in case of a correct request execution.">Result::Success</a></td><td>when succeed, <a class="el" href="group__ThorVG.html#gga28287671eaf7406afd604bd055ba4066a119732ff568bf103d744e930ae2404f1" title="The value returned in case the request cannot be processed - e.g. asking for properties of an object,...">Result::InsufficientCondition</a> otherwise.</td></tr>
-  </table>
-  </dd>
-</dl>
 <dl class="section note"><dt>Note</dt><dd>Drawing can be asynchronous if the assigned thread number is greater than zero. To guarantee the drawing is done, call <a class="el" href="classtvg_1_1Canvas.html#adbca600af79f9a0b8e8366e3be7450e9" title="Guarantees that drawing task is finished.">sync()</a> afterwards. </dd></dl>
 <dl class="section see"><dt>See also</dt><dd><a class="el" href="classtvg_1_1Canvas.html#adbca600af79f9a0b8e8366e3be7450e9" title="Guarantees that drawing task is finished.">Canvas::sync()</a> </dd></dl>
 
@@ -279,9 +267,7 @@ Public Member Functions</h2></td></tr>
 </dl>
 <dl class="retval"><dt>Return values</dt><dd>
   <table class="retval">
-    <tr><td class="paramname"><a class="el" href="group__ThorVG.html#gga28287671eaf7406afd604bd055ba4066a505a83f220c02df2f85c3810cd9ceb38" title="The value returned in case of a correct request execution.">Result::Success</a></td><td>When succeed. </td></tr>
-    <tr><td class="paramname"><a class="el" href="group__ThorVG.html#gga28287671eaf7406afd604bd055ba4066ae8c0c653fcac575c31470f0f800991c6" title="The value returned in the event of bad memory handling - e.g. failing in pointer releasing or casting...">Result::MemoryCorruption</a></td><td>In case a <code>nullptr</code> is passed as the argument. </td></tr>
-    <tr><td class="paramname"><a class="el" href="group__ThorVG.html#gga28287671eaf7406afd604bd055ba4066a119732ff568bf103d744e930ae2404f1" title="The value returned in case the request cannot be processed - e.g. asking for properties of an object,...">Result::InsufficientCondition</a></td><td>An internal error.</td></tr>
+    <tr><td class="paramname"><a class="el" href="group__ThorVG.html#gga28287671eaf7406afd604bd055ba4066ae8c0c653fcac575c31470f0f800991c6" title="The value returned in the event of bad memory handling - e.g. failing in pointer releasing or casting...">Result::MemoryCorruption</a></td><td>In case a <code>nullptr</code> is passed as the argument.</td></tr>
   </table>
   </dd>
 </dl>
@@ -289,42 +275,6 @@ Public Member Functions</h2></td></tr>
 <dl class="section see"><dt>See also</dt><dd><a class="el" href="classtvg_1_1Canvas.html#ace6c268f853a4c144076de89b7bbbe75" title="Returns the list of the paints that currently held by the Canvas.">Canvas::paints()</a> </dd>
 <dd>
 <a class="el" href="classtvg_1_1Canvas.html#a99cdb01cd893f4199b521b754d21aefd" title="Clear the internal canvas resources that used for the drawing.">Canvas::clear()</a> </dd></dl>
-
-</div>
-</div>
-<a id="a1db0cc15b62127da865b37981402b411"></a>
-<h2 class="memtitle"><span class="permalink"><a href="#a1db0cc15b62127da865b37981402b411">&#9670;&nbsp;</a></span>reserve()</h2>
-
-<div class="memitem">
-<div class="memproto">
-<table class="mlabels">
-  <tr>
-  <td class="mlabels-left">
-      <table class="memname">
-        <tr>
-          <td class="memname">TVG_DEPRECATED <a class="el" href="group__ThorVG.html#ga28287671eaf7406afd604bd055ba4066">Result</a> reserve </td>
-          <td>(</td>
-          <td class="paramtype">uint32_t&#160;</td>
-          <td class="paramname"><em>n</em></td><td>)</td>
-          <td></td>
-        </tr>
-      </table>
-  </td>
-  <td class="mlabels-right">
-<span class="mlabels"><span class="mlabel">noexcept</span></span>  </td>
-  </tr>
-</table>
-</div><div class="memdoc">
-
-<p>Sets the size of the container, where all the paints pushed into the <a class="el" href="classtvg_1_1Canvas.html" title="An abstract class for drawing graphical elements.">Canvas</a> are stored. </p>
-<p>If the number of objects pushed into the <a class="el" href="classtvg_1_1Canvas.html" title="An abstract class for drawing graphical elements.">Canvas</a> is known in advance, calling the function prevents multiple memory reallocation, thus improving the performance.</p>
-<dl class="params"><dt>Parameters</dt><dd>
-  <table class="params">
-    <tr><td class="paramdir">[in]</td><td class="paramname">n</td><td>The number of objects for which the memory is to be reserved.</td></tr>
-  </table>
-  </dd>
-</dl>
-<dl class="section return"><dt>Returns</dt><dd><a class="el" href="group__ThorVG.html#gga28287671eaf7406afd604bd055ba4066a505a83f220c02df2f85c3810cd9ceb38" title="The value returned in case of a correct request execution.">Result::Success</a> when succeed. </dd></dl>
 
 </div>
 </div>
@@ -353,12 +303,6 @@ Public Member Functions</h2></td></tr>
 
 <p>Guarantees that drawing task is finished. </p>
 <p>The <a class="el" href="classtvg_1_1Canvas.html" title="An abstract class for drawing graphical elements.">Canvas</a> rendering can be performed asynchronously. To make sure that rendering is finished, the <a class="el" href="classtvg_1_1Canvas.html#adbca600af79f9a0b8e8366e3be7450e9" title="Guarantees that drawing task is finished.">sync()</a> must be called after the <a class="el" href="classtvg_1_1Canvas.html#aabf9e5a14da3b4bfd5883c2b4459abd0" title="Requests the canvas to draw the Paint objects.">draw()</a> regardless of threading.</p>
-<dl class="retval"><dt>Return values</dt><dd>
-  <table class="retval">
-    <tr><td class="paramname"><a class="el" href="group__ThorVG.html#gga28287671eaf7406afd604bd055ba4066a505a83f220c02df2f85c3810cd9ceb38" title="The value returned in case of a correct request execution.">Result::Success</a></td><td>when succeed, <a class="el" href="group__ThorVG.html#gga28287671eaf7406afd604bd055ba4066a119732ff568bf103d744e930ae2404f1" title="The value returned in case the request cannot be processed - e.g. asking for properties of an object,...">Result::InsufficientCondition</a> otherwise. </td></tr>
-  </table>
-  </dd>
-</dl>
 <dl class="section see"><dt>See also</dt><dd><a class="el" href="classtvg_1_1Canvas.html#aabf9e5a14da3b4bfd5883c2b4459abd0" title="Requests the canvas to draw the Paint objects.">Canvas::draw()</a> </dd></dl>
 
 </div>
@@ -395,13 +339,76 @@ Public Member Functions</h2></td></tr>
   </table>
   </dd>
 </dl>
-<dl class="retval"><dt>Return values</dt><dd>
-  <table class="retval">
-    <tr><td class="paramname"><a class="el" href="group__ThorVG.html#gga28287671eaf7406afd604bd055ba4066a505a83f220c02df2f85c3810cd9ceb38" title="The value returned in case of a correct request execution.">Result::Success</a></td><td>when succeed, <a class="el" href="group__ThorVG.html#gga28287671eaf7406afd604bd055ba4066a119732ff568bf103d744e930ae2404f1" title="The value returned in case the request cannot be processed - e.g. asking for properties of an object,...">Result::InsufficientCondition</a> otherwise.</td></tr>
+<dl class="section note"><dt>Note</dt><dd>The Update behavior can be asynchronous if the assigned thread number is greater than zero. </dd></dl>
+
+</div>
+</div>
+<a id="a2172bfc1790cee5dedd9cda7a2caf64e"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#a2172bfc1790cee5dedd9cda7a2caf64e">&#9670;&nbsp;</a></span>viewport()</h2>
+
+<div class="memitem">
+<div class="memproto">
+<table class="mlabels">
+  <tr>
+  <td class="mlabels-left">
+      <table class="memname">
+        <tr>
+          <td class="memname">virtual <a class="el" href="group__ThorVG.html#ga28287671eaf7406afd604bd055ba4066">Result</a> viewport </td>
+          <td>(</td>
+          <td class="paramtype">int32_t&#160;</td>
+          <td class="paramname"><em>x</em>, </td>
+        </tr>
+        <tr>
+          <td class="paramkey"></td>
+          <td></td>
+          <td class="paramtype">int32_t&#160;</td>
+          <td class="paramname"><em>y</em>, </td>
+        </tr>
+        <tr>
+          <td class="paramkey"></td>
+          <td></td>
+          <td class="paramtype">int32_t&#160;</td>
+          <td class="paramname"><em>w</em>, </td>
+        </tr>
+        <tr>
+          <td class="paramkey"></td>
+          <td></td>
+          <td class="paramtype">int32_t&#160;</td>
+          <td class="paramname"><em>h</em>&#160;</td>
+        </tr>
+        <tr>
+          <td></td>
+          <td>)</td>
+          <td></td><td></td>
+        </tr>
+      </table>
+  </td>
+  <td class="mlabels-right">
+<span class="mlabels"><span class="mlabel">virtual</span><span class="mlabel">noexcept</span></span>  </td>
+  </tr>
+</table>
+</div><div class="memdoc">
+
+<p>Sets the drawing region in the canvas. </p>
+<p>This function defines the rectangular area of the canvas that will be used for drawing operations. The specified viewport is used to clip the rendering output to the boundaries of the rectangle.</p>
+<dl class="params"><dt>Parameters</dt><dd>
+  <table class="params">
+    <tr><td class="paramdir">[in]</td><td class="paramname">x</td><td>The x-coordinate of the upper-left corner of the rectangle. </td></tr>
+    <tr><td class="paramdir">[in]</td><td class="paramname">y</td><td>The y-coordinate of the upper-left corner of the rectangle. </td></tr>
+    <tr><td class="paramdir">[in]</td><td class="paramname">w</td><td>The width of the rectangle. </td></tr>
+    <tr><td class="paramdir">[in]</td><td class="paramname">h</td><td>The height of the rectangle.</td></tr>
   </table>
   </dd>
 </dl>
-<dl class="section note"><dt>Note</dt><dd>The Update behavior can be asynchronous if the assigned thread number is greater than zero. </dd></dl>
+<dl class="section see"><dt>See also</dt><dd><a class="el" href="classtvg_1_1SwCanvas.html#a2d4c80a0ba45465b073ee0c279e8c8dc" title="Sets the drawing target for the rasterization.">SwCanvas::target()</a> </dd>
+<dd>
+<a class="el" href="classtvg_1_1GlCanvas.html#a182ae193566dbc09fc2ec5a369ad38ad" title="Sets the drawing target for rasterization.">GlCanvas::target()</a> </dd>
+<dd>
+<a class="el" href="classtvg_1_1WgCanvas.html#a8374462d6f583b287a3664bee0d22c9a" title="Sets the drawing target for the rasterization.">WgCanvas::target()</a></dd></dl>
+<dl class="section warning"><dt>Warning</dt><dd>It's not allowed to change the viewport during <a class="el" href="classtvg_1_1Canvas.html#a82c5ec1c1ba93cf7671642400074201e" title="Passes drawing elements to the Canvas using Paint objects.">Canvas::push()</a> - <a class="el" href="classtvg_1_1Canvas.html#adbca600af79f9a0b8e8366e3be7450e9" title="Guarantees that drawing task is finished.">Canvas::sync()</a> or <a class="el" href="classtvg_1_1Canvas.html#a89ac8a85a8c22723af9fb07c098472b3" title="Request the canvas to update the paint objects.">Canvas::update()</a> - <a class="el" href="classtvg_1_1Canvas.html#adbca600af79f9a0b8e8366e3be7450e9" title="Guarantees that drawing task is finished.">Canvas::sync()</a>.</dd></dl>
+<dl class="section note"><dt>Note</dt><dd>When resetting the target, the viewport will also be reset to the target size. </dd>
+<dd>
+Experimental API </dd></dl>
 
 </div>
 </div>
