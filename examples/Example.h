@@ -27,8 +27,8 @@
 #include <iostream>
 #include <thread>
 #include <thorvg.h>
-#include <SDL.h>
-#include <SDL_syswm.h>
+#include <SDL2/SDL.h>
+#include <SDL2/SDL_syswm.h>
 #ifdef _WIN32
     #include <windows.h>
     #ifndef PATH_MAX
