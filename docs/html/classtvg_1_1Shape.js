@@ -31,5 +31,7 @@ var classtvg_1_1Shape =
     [ "strokeJoin", "classtvg_1_1Shape.html#aac0235df4172e9c079689e5291c7ad5a", null ],
     [ "strokeMiterlimit", "classtvg_1_1Shape.html#a84ec91023314c914e900cade78a9095d", null ],
     [ "strokeMiterlimit", "classtvg_1_1Shape.html#ad8fb8f42c07ac68ef83383b05203ff6f", null ],
+    [ "strokeTrim", "classtvg_1_1Shape.html#a5e0762495957f05713a60540984fdae4", null ],
+    [ "strokeTrim", "classtvg_1_1Shape.html#ac69db0796d8e184334add6b0b94b1898", null ],
     [ "strokeWidth", "classtvg_1_1Shape.html#a1536ec32e91c29dd8300b0d4354773f9", null ]
 ];

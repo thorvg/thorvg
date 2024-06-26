@@ -27,7 +27,7 @@
   <td id="projectlogo"><img alt="Logo" src="small_logo.png"/></td>
   <td id="projectalign" style="padding-left: 0.5em;">
    <div id="projectname">ThorVG
-   &#160;<span id="projectnumber">v0.13</span>
+   &#160;<span id="projectnumber">v0.14</span>
    </div>
   </td>
  </tr>
@@ -103,16 +103,22 @@ Inheritance diagram for WgCanvas:</div>
 <area shape="rect" href="classtvg_1_1Canvas.html" title="An abstract class for drawing graphical elements." alt="" coords="15,5,86,32"/>
 </map>
 <center><span class="legend">[<a target="top" href="graph_legend.html">legend</a>]</span></center></div>
+<div class="dynheader">
+Collaboration diagram for WgCanvas:</div>
+<div class="dyncontent">
+<div class="center"><img src="classtvg_1_1WgCanvas__coll__graph.png" border="0" usemap="#aWgCanvas_coll__map" alt="Collaboration graph"/></div>
+<map name="aWgCanvas_coll__map" id="aWgCanvas_coll__map">
+<area shape="rect" title="A class for the rendering graphic elements with a WebGPU raster engine." alt="" coords="5,80,96,107"/>
+<area shape="rect" href="classtvg_1_1Canvas.html" title="An abstract class for drawing graphical elements." alt="" coords="15,5,86,32"/>
+</map>
+<center><span class="legend">[<a target="top" href="graph_legend.html">legend</a>]</span></center></div>
 <table class="memberdecls">
 <tr class="heading"><td colspan="2"><h2 class="groupheader"><a name="pub-methods"></a>
 Public Member Functions</h2></td></tr>
-<tr class="memitem:a9b5dc178ae416c6279877c87ca0e6330"><td class="memItemLeft" align="right" valign="top"><a class="el" href="group__ThorVG.html#ga28287671eaf7406afd604bd055ba4066">Result</a>&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classtvg_1_1WgCanvas.html#a9b5dc178ae416c6279877c87ca0e6330">target</a> (void *window, uint32_t w, uint32_t h) noexcept</td></tr>
-<tr class="memdesc:a9b5dc178ae416c6279877c87ca0e6330"><td class="mdescLeft">&#160;</td><td class="mdescRight">Sets the target window for the rasterization.  <a href="classtvg_1_1WgCanvas.html#a9b5dc178ae416c6279877c87ca0e6330">More...</a><br /></td></tr>
-<tr class="separator:a9b5dc178ae416c6279877c87ca0e6330"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a8374462d6f583b287a3664bee0d22c9a"><td class="memItemLeft" align="right" valign="top"><a class="el" href="group__ThorVG.html#ga28287671eaf7406afd604bd055ba4066">Result</a>&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classtvg_1_1WgCanvas.html#a8374462d6f583b287a3664bee0d22c9a">target</a> (void *instance, void *surface, uint32_t w, uint32_t h) noexcept</td></tr>
+<tr class="memdesc:a8374462d6f583b287a3664bee0d22c9a"><td class="mdescLeft">&#160;</td><td class="mdescRight">Sets the drawing target for the rasterization.  <a href="classtvg_1_1WgCanvas.html#a8374462d6f583b287a3664bee0d22c9a">More...</a><br /></td></tr>
+<tr class="separator:a8374462d6f583b287a3664bee0d22c9a"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="inherit_header pub_methods_classtvg_1_1Canvas"><td colspan="2" onclick="javascript:toggleInherit('pub_methods_classtvg_1_1Canvas')"><img src="closed.png" alt="-"/>&#160;Public Member Functions inherited from <a class="el" href="classtvg_1_1Canvas.html">Canvas</a></td></tr>
-<tr class="memitem:a1db0cc15b62127da865b37981402b411 inherit pub_methods_classtvg_1_1Canvas"><td class="memItemLeft" align="right" valign="top">TVG_DEPRECATED <a class="el" href="group__ThorVG.html#ga28287671eaf7406afd604bd055ba4066">Result</a>&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classtvg_1_1Canvas.html#a1db0cc15b62127da865b37981402b411">reserve</a> (uint32_t n) noexcept</td></tr>
-<tr class="memdesc:a1db0cc15b62127da865b37981402b411 inherit pub_methods_classtvg_1_1Canvas"><td class="mdescLeft">&#160;</td><td class="mdescRight">Sets the size of the container, where all the paints pushed into the <a class="el" href="classtvg_1_1Canvas.html" title="An abstract class for drawing graphical elements.">Canvas</a> are stored.  <a href="classtvg_1_1Canvas.html#a1db0cc15b62127da865b37981402b411">More...</a><br /></td></tr>
-<tr class="separator:a1db0cc15b62127da865b37981402b411 inherit pub_methods_classtvg_1_1Canvas"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:ace6c268f853a4c144076de89b7bbbe75 inherit pub_methods_classtvg_1_1Canvas"><td class="memItemLeft" align="right" valign="top">std::list&lt; <a class="el" href="classtvg_1_1Paint.html">Paint</a> * &gt; &amp;&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classtvg_1_1Canvas.html#ace6c268f853a4c144076de89b7bbbe75">paints</a> () noexcept</td></tr>
 <tr class="memdesc:ace6c268f853a4c144076de89b7bbbe75 inherit pub_methods_classtvg_1_1Canvas"><td class="mdescLeft">&#160;</td><td class="mdescRight">Returns the list of the paints that currently held by the <a class="el" href="classtvg_1_1Canvas.html" title="An abstract class for drawing graphical elements.">Canvas</a>.  <a href="classtvg_1_1Canvas.html#ace6c268f853a4c144076de89b7bbbe75">More...</a><br /></td></tr>
 <tr class="separator:ace6c268f853a4c144076de89b7bbbe75 inherit pub_methods_classtvg_1_1Canvas"><td class="memSeparator" colspan="2">&#160;</td></tr>
@@ -128,6 +134,9 @@ Public Member Functions</h2></td></tr>
 <tr class="memitem:aabf9e5a14da3b4bfd5883c2b4459abd0 inherit pub_methods_classtvg_1_1Canvas"><td class="memItemLeft" align="right" valign="top">virtual <a class="el" href="group__ThorVG.html#ga28287671eaf7406afd604bd055ba4066">Result</a>&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classtvg_1_1Canvas.html#aabf9e5a14da3b4bfd5883c2b4459abd0">draw</a> () noexcept</td></tr>
 <tr class="memdesc:aabf9e5a14da3b4bfd5883c2b4459abd0 inherit pub_methods_classtvg_1_1Canvas"><td class="mdescLeft">&#160;</td><td class="mdescRight">Requests the canvas to draw the <a class="el" href="classtvg_1_1Paint.html" title="An abstract class for managing graphical elements.">Paint</a> objects.  <a href="classtvg_1_1Canvas.html#aabf9e5a14da3b4bfd5883c2b4459abd0">More...</a><br /></td></tr>
 <tr class="separator:aabf9e5a14da3b4bfd5883c2b4459abd0 inherit pub_methods_classtvg_1_1Canvas"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a2172bfc1790cee5dedd9cda7a2caf64e inherit pub_methods_classtvg_1_1Canvas"><td class="memItemLeft" align="right" valign="top">virtual <a class="el" href="group__ThorVG.html#ga28287671eaf7406afd604bd055ba4066">Result</a>&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classtvg_1_1Canvas.html#a2172bfc1790cee5dedd9cda7a2caf64e">viewport</a> (int32_t x, int32_t y, int32_t w, int32_t h) noexcept</td></tr>
+<tr class="memdesc:a2172bfc1790cee5dedd9cda7a2caf64e inherit pub_methods_classtvg_1_1Canvas"><td class="mdescLeft">&#160;</td><td class="mdescRight">Sets the drawing region in the canvas.  <a href="classtvg_1_1Canvas.html#a2172bfc1790cee5dedd9cda7a2caf64e">More...</a><br /></td></tr>
+<tr class="separator:a2172bfc1790cee5dedd9cda7a2caf64e inherit pub_methods_classtvg_1_1Canvas"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:adbca600af79f9a0b8e8366e3be7450e9 inherit pub_methods_classtvg_1_1Canvas"><td class="memItemLeft" align="right" valign="top">virtual <a class="el" href="group__ThorVG.html#ga28287671eaf7406afd604bd055ba4066">Result</a>&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classtvg_1_1Canvas.html#adbca600af79f9a0b8e8366e3be7450e9">sync</a> () noexcept</td></tr>
 <tr class="memdesc:adbca600af79f9a0b8e8366e3be7450e9 inherit pub_methods_classtvg_1_1Canvas"><td class="mdescLeft">&#160;</td><td class="mdescRight">Guarantees that drawing task is finished.  <a href="classtvg_1_1Canvas.html#adbca600af79f9a0b8e8366e3be7450e9">More...</a><br /></td></tr>
 <tr class="separator:adbca600af79f9a0b8e8366e3be7450e9 inherit pub_methods_classtvg_1_1Canvas"><td class="memSeparator" colspan="2">&#160;</td></tr>
@@ -172,8 +181,8 @@ Static Public Member Functions</h2></td></tr>
 
 </div>
 </div>
-<a id="a9b5dc178ae416c6279877c87ca0e6330"></a>
-<h2 class="memtitle"><span class="permalink"><a href="#a9b5dc178ae416c6279877c87ca0e6330">&#9670;&nbsp;</a></span>target()</h2>
+<a id="a8374462d6f583b287a3664bee0d22c9a"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#a8374462d6f583b287a3664bee0d22c9a">&#9670;&nbsp;</a></span>target()</h2>
 
 <div class="memitem">
 <div class="memproto">
@@ -185,7 +194,13 @@ Static Public Member Functions</h2></td></tr>
           <td class="memname"><a class="el" href="group__ThorVG.html#ga28287671eaf7406afd604bd055ba4066">Result</a> target </td>
           <td>(</td>
           <td class="paramtype">void *&#160;</td>
-          <td class="paramname"><em>window</em>, </td>
+          <td class="paramname"><em>instance</em>, </td>
+        </tr>
+        <tr>
+          <td class="paramkey"></td>
+          <td></td>
+          <td class="paramtype">void *&#160;</td>
+          <td class="paramname"><em>surface</em>, </td>
         </tr>
         <tr>
           <td class="paramkey"></td>
@@ -212,9 +227,27 @@ Static Public Member Functions</h2></td></tr>
 </table>
 </div><div class="memdoc">
 
-<p>Sets the target window for the rasterization. </p>
-<dl class="section warning"><dt>Warning</dt><dd>Please do not use it, this API is not official one. It could be modified in the next version.</dd></dl>
-<dl class="section note"><dt>Note</dt><dd>Experimental API </dd></dl>
+<p>Sets the drawing target for the rasterization. </p>
+<dl class="params"><dt>Parameters</dt><dd>
+  <table class="params">
+    <tr><td class="paramdir">[in]</td><td class="paramname">instance</td><td>WGPUInstance, context for all other wgpu objects. </td></tr>
+    <tr><td class="paramdir">[in]</td><td class="paramname">surface</td><td>WGPUSurface, handle to a presentable surface. </td></tr>
+    <tr><td class="paramdir">[in]</td><td class="paramname">w</td><td>The width of the surface. </td></tr>
+    <tr><td class="paramdir">[in]</td><td class="paramname">h</td><td>The height of the surface.</td></tr>
+  </table>
+  </dd>
+</dl>
+<dl class="retval"><dt>Return values</dt><dd>
+  <table class="retval">
+    <tr><td class="paramname"><a class="el" href="group__ThorVG.html#gga28287671eaf7406afd604bd055ba4066a119732ff568bf103d744e930ae2404f1" title="The value returned in case the request cannot be processed - e.g. asking for properties of an object,...">Result::InsufficientCondition</a></td><td>if the canvas is performing rendering. Please ensure the canvas is synced. </td></tr>
+    <tr><td class="paramname"><a class="el" href="group__ThorVG.html#gga28287671eaf7406afd604bd055ba4066aa0cfd518e4385f31d38720579321ed29" title="The value returned in case of choosing unsupported engine features(options).">Result::NonSupport</a></td><td>In case the wg engine is not supported.</td></tr>
+  </table>
+  </dd>
+</dl>
+<dl class="section note"><dt>Note</dt><dd>Experimental API</dd></dl>
+<dl class="section see"><dt>See also</dt><dd><a class="el" href="classtvg_1_1Canvas.html#a2172bfc1790cee5dedd9cda7a2caf64e" title="Sets the drawing region in the canvas.">Canvas::viewport()</a> </dd>
+<dd>
+<a class="el" href="classtvg_1_1Canvas.html#adbca600af79f9a0b8e8366e3be7450e9" title="Guarantees that drawing task is finished.">Canvas::sync()</a> </dd></dl>
 
 </div>
 </div>

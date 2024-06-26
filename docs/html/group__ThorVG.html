@@ -27,7 +27,7 @@
   <td id="projectlogo"><img alt="Logo" src="small_logo.png"/></td>
   <td id="projectalign" style="padding-left: 0.5em;">
    <div id="projectname">ThorVG
-   &#160;<span id="projectnumber">v0.13</span>
+   &#160;<span id="projectnumber">v0.14</span>
    </div>
   </td>
  </tr>
@@ -388,6 +388,7 @@ Functions</h2></td></tr>
 <dl class="section since"><dt>Since</dt><dd>0.9 </dd></dl>
 </td></tr>
 <tr><td class="fieldname"><a id="ggaabdf94ada64e69d06deabc5aa6576f87a28f3dcc7d8cad65deff7d3a83031ef5a"></a>InvLumaMask&#160;</td><td class="fielddoc"><p>Alpha Masking using the grayscale (0.2125R + 0.7154G + 0.0721*B) of the complement to the compositing target's pixels. </p>
+<dl class="section since"><dt>Since</dt><dd>0.11 </dd></dl>
 </td></tr>
 <tr><td class="fieldname"><a id="ggaabdf94ada64e69d06deabc5aa6576f87a8e1e296c3f01c21b1a3db79f0ce4fe9a"></a>AddMask&#160;</td><td class="fielddoc"><p>Combines the target and source objects pixels using target alpha. (T * TA) + (S * (255 - TA)) (Experimental API) </p>
 </td></tr>
@@ -519,6 +520,7 @@ Functions</h2></td></tr>
 </div><div class="memdoc">
 
 <p>Enumeration specifying the result from the APIs. </p>
+<p>All ThorVG APIs could potentially return one of the values in the list. Please note that some APIs may additionally specify the reasons that trigger their return values. </p>
 <table class="fieldtable">
 <tr><th colspan="2">Enumerator</th></tr><tr><td class="fieldname"><a id="gga28287671eaf7406afd604bd055ba4066a505a83f220c02df2f85c3810cd9ceb38"></a>Success&#160;</td><td class="fielddoc"><p>The value returned in case of a correct request execution. </p>
 </td></tr>
@@ -530,7 +532,7 @@ Functions</h2></td></tr>
 </td></tr>
 <tr><td class="fieldname"><a id="gga28287671eaf7406afd604bd055ba4066ae8c0c653fcac575c31470f0f800991c6"></a>MemoryCorruption&#160;</td><td class="fielddoc"><p>The value returned in the event of bad memory handling - e.g. failing in pointer releasing or casting. </p>
 </td></tr>
-<tr><td class="fieldname"><a id="gga28287671eaf7406afd604bd055ba4066aa0cfd518e4385f31d38720579321ed29"></a>NonSupport&#160;</td><td class="fielddoc"><p>The value returned in case of choosing unsupported options. </p>
+<tr><td class="fieldname"><a id="gga28287671eaf7406afd604bd055ba4066aa0cfd518e4385f31d38720579321ed29"></a>NonSupport&#160;</td><td class="fielddoc"><p>The value returned in case of choosing unsupported engine features(options). </p>
 </td></tr>
 <tr><td class="fieldname"><a id="gga28287671eaf7406afd604bd055ba4066a88183b946cc5f0e8c96b2e66e1c74a7e"></a>Unknown&#160;</td><td class="fielddoc"><p>The value returned in all other cases. </p>
 </td></tr>

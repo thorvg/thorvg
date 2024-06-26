@@ -27,7 +27,7 @@
   <td id="projectlogo"><img alt="Logo" src="small_logo.png"/></td>
   <td id="projectalign" style="padding-left: 0.5em;">
    <div id="projectname">ThorVG
-   &#160;<span id="projectnumber">v0.13</span>
+   &#160;<span id="projectnumber">v0.14</span>
    </div>
   </td>
  </tr>
@@ -94,15 +94,6 @@ $(document).ready(function(){initNavTree('classtvg_1_1Animation.html',''); initR
 
 <p>The <a class="el" href="classtvg_1_1Animation.html" title="The Animation class enables manipulation of animatable images.">Animation</a> class enables manipulation of animatable images.  
  <a href="classtvg_1_1Animation.html#details">More...</a></p>
-<div class="dynheader">
-Inheritance diagram for Animation:</div>
-<div class="dyncontent">
-<div class="center"><img src="classtvg_1_1Animation__inherit__graph.png" border="0" usemap="#aAnimation_inherit__map" alt="Inheritance graph"/></div>
-<map name="aAnimation_inherit__map" id="aAnimation_inherit__map">
-<area shape="rect" title="The Animation class enables manipulation of animatable images." alt="" coords="24,5,113,32"/>
-<area shape="rect" href="classtvg_1_1LottieAnimation.html" title="The LottieAnimation class enables control of advanced Lottie features." alt="" coords="5,80,132,107"/>
-</map>
-<center><span class="legend">[<a target="top" href="graph_legend.html">legend</a>]</span></center></div>
 <table class="memberdecls">
 <tr class="heading"><td colspan="2"><h2 class="groupheader"><a name="pub-methods"></a>
 Public Member Functions</h2></td></tr>
@@ -121,6 +112,12 @@ Public Member Functions</h2></td></tr>
 <tr class="memitem:a90ab38b7a2cb72d6b9de4492ff3e6679"><td class="memItemLeft" align="right" valign="top">float&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classtvg_1_1Animation.html#a90ab38b7a2cb72d6b9de4492ff3e6679">duration</a> () const noexcept</td></tr>
 <tr class="memdesc:a90ab38b7a2cb72d6b9de4492ff3e6679"><td class="mdescLeft">&#160;</td><td class="mdescRight">Retrieves the duration of the animation in seconds.  <a href="classtvg_1_1Animation.html#a90ab38b7a2cb72d6b9de4492ff3e6679">More...</a><br /></td></tr>
 <tr class="separator:a90ab38b7a2cb72d6b9de4492ff3e6679"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:aa05e5a4df917f934ba9b6233d39b4051"><td class="memItemLeft" align="right" valign="top"><a class="el" href="group__ThorVG.html#ga28287671eaf7406afd604bd055ba4066">Result</a>&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classtvg_1_1Animation.html#aa05e5a4df917f934ba9b6233d39b4051">segment</a> (float begin, float end) noexcept</td></tr>
+<tr class="memdesc:aa05e5a4df917f934ba9b6233d39b4051"><td class="mdescLeft">&#160;</td><td class="mdescRight">Specifies the playback segment of the animation.  <a href="classtvg_1_1Animation.html#aa05e5a4df917f934ba9b6233d39b4051">More...</a><br /></td></tr>
+<tr class="separator:aa05e5a4df917f934ba9b6233d39b4051"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:aa972943b6a0d53d9868dcf70915ec0cb"><td class="memItemLeft" align="right" valign="top"><a class="el" href="group__ThorVG.html#ga28287671eaf7406afd604bd055ba4066">Result</a>&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classtvg_1_1Animation.html#aa972943b6a0d53d9868dcf70915ec0cb">segment</a> (float *begin, float *end=nullptr) noexcept</td></tr>
+<tr class="memdesc:aa972943b6a0d53d9868dcf70915ec0cb"><td class="mdescLeft">&#160;</td><td class="mdescRight">Gets the current segment.  <a href="classtvg_1_1Animation.html#aa972943b6a0d53d9868dcf70915ec0cb">More...</a><br /></td></tr>
+<tr class="separator:aa972943b6a0d53d9868dcf70915ec0cb"><td class="memSeparator" colspan="2">&#160;</td></tr>
 </table><table class="memberdecls">
 <tr class="heading"><td colspan="2"><h2 class="groupheader"><a name="pub-static-methods"></a>
 Static Public Member Functions</h2></td></tr>
@@ -130,7 +127,8 @@ Static Public Member Functions</h2></td></tr>
 </table>
 <a name="details" id="details"></a><h2 class="groupheader">Detailed Description</h2>
 <div class="textblock"><p>The <a class="el" href="classtvg_1_1Animation.html" title="The Animation class enables manipulation of animatable images.">Animation</a> class enables manipulation of animatable images. </p>
-<p>This class supports the display and control of animation frames. </p>
+<p>This class supports the display and control of animation frames.</p>
+<dl class="section since"><dt>Since</dt><dd>0.13 </dd></dl>
 </div><h2 class="groupheader">Member Function Documentation</h2>
 <a id="a45585afc7e6dbab9fb2d5295b67c45ee"></a>
 <h2 class="memtitle"><span class="permalink"><a href="#a45585afc7e6dbab9fb2d5295b67c45ee">&#9670;&nbsp;</a></span>curFrame()</h2>
@@ -226,12 +224,12 @@ Static Public Member Functions</h2></td></tr>
 </dl>
 <dl class="retval"><dt>Return values</dt><dd>
   <table class="retval">
-    <tr><td class="paramname"><a class="el" href="group__ThorVG.html#gga28287671eaf7406afd604bd055ba4066a505a83f220c02df2f85c3810cd9ceb38" title="The value returned in case of a correct request execution.">Result::Success</a></td><td>Successfully set the frame. </td></tr>
     <tr><td class="paramname"><a class="el" href="group__ThorVG.html#gga28287671eaf7406afd604bd055ba4066a119732ff568bf103d744e930ae2404f1" title="The value returned in case the request cannot be processed - e.g. asking for properties of an object,...">Result::InsufficientCondition</a></td><td>if the given <code>no</code> is the same as the current frame value. </td></tr>
-    <tr><td class="paramname"><a class="el" href="group__ThorVG.html#gga28287671eaf7406afd604bd055ba4066aa0cfd518e4385f31d38720579321ed29" title="The value returned in case of choosing unsupported options.">Result::NonSupport</a></td><td>The current <a class="el" href="classtvg_1_1Picture.html" title="A class representing an image read in one of the supported formats: raw, svg, png,...">Picture</a> data does not support animations.</td></tr>
+    <tr><td class="paramname"><a class="el" href="group__ThorVG.html#gga28287671eaf7406afd604bd055ba4066aa0cfd518e4385f31d38720579321ed29" title="The value returned in case of choosing unsupported engine features(options).">Result::NonSupport</a></td><td>The current <a class="el" href="classtvg_1_1Picture.html" title="A class representing an image read in one of the supported formats: raw, svg, png,...">Picture</a> data does not support animations.</td></tr>
   </table>
   </dd>
 </dl>
+<dl class="section note"><dt>Note</dt><dd>For efficiency, ThorVG ignores updates to the new frame value if the difference from the current frame value is less than 0.001. In such cases, it returns <code><a class="el" href="group__ThorVG.html#gga28287671eaf7406afd604bd055ba4066a119732ff568bf103d744e930ae2404f1" title="The value returned in case the request cannot be processed - e.g. asking for properties of an object,...">Result::InsufficientCondition</a></code>. Values less than 0.001 may be disregarded and may not be accurately retained by the <a class="el" href="classtvg_1_1Animation.html" title="The Animation class enables manipulation of animatable images.">Animation</a>.</dd></dl>
 <dl class="section see"><dt>See also</dt><dd><a class="el" href="classtvg_1_1Animation.html#a624e4fdeebf70f286188685e769125f3" title="Retrieves the total number of frames in the animation.">totalFrame()</a> </dd></dl>
 
 </div>
@@ -291,6 +289,117 @@ Static Public Member Functions</h2></td></tr>
 <p>This function provides access to the picture instance that can be used to load animation formats, such as Lottie(json). After setting up the picture, it can be pushed to the designated canvas, enabling control over animation frames with this <a class="el" href="classtvg_1_1Animation.html" title="The Animation class enables manipulation of animatable images.">Animation</a> instance.</p>
 <dl class="section return"><dt>Returns</dt><dd>A picture instance that is tied to this animation.</dd></dl>
 <dl class="section warning"><dt>Warning</dt><dd>The picture instance is owned by <a class="el" href="classtvg_1_1Animation.html" title="The Animation class enables manipulation of animatable images.">Animation</a>. It should not be deleted manually. </dd></dl>
+
+</div>
+</div>
+<a id="aa972943b6a0d53d9868dcf70915ec0cb"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#aa972943b6a0d53d9868dcf70915ec0cb">&#9670;&nbsp;</a></span>segment() <span class="overload">[1/2]</span></h2>
+
+<div class="memitem">
+<div class="memproto">
+<table class="mlabels">
+  <tr>
+  <td class="mlabels-left">
+      <table class="memname">
+        <tr>
+          <td class="memname"><a class="el" href="group__ThorVG.html#ga28287671eaf7406afd604bd055ba4066">Result</a> segment </td>
+          <td>(</td>
+          <td class="paramtype">float *&#160;</td>
+          <td class="paramname"><em>begin</em>, </td>
+        </tr>
+        <tr>
+          <td class="paramkey"></td>
+          <td></td>
+          <td class="paramtype">float *&#160;</td>
+          <td class="paramname"><em>end</em> = <code>nullptr</code>&#160;</td>
+        </tr>
+        <tr>
+          <td></td>
+          <td>)</td>
+          <td></td><td></td>
+        </tr>
+      </table>
+  </td>
+  <td class="mlabels-right">
+<span class="mlabels"><span class="mlabel">noexcept</span></span>  </td>
+  </tr>
+</table>
+</div><div class="memdoc">
+
+<p>Gets the current segment. </p>
+<dl class="params"><dt>Parameters</dt><dd>
+  <table class="params">
+    <tr><td class="paramdir">[out]</td><td class="paramname">begin</td><td>segment start. </td></tr>
+    <tr><td class="paramdir">[out]</td><td class="paramname">end</td><td>segment end.</td></tr>
+  </table>
+  </dd>
+</dl>
+<dl class="retval"><dt>Return values</dt><dd>
+  <table class="retval">
+    <tr><td class="paramname"><a class="el" href="group__ThorVG.html#gga28287671eaf7406afd604bd055ba4066a119732ff568bf103d744e930ae2404f1" title="The value returned in case the request cannot be processed - e.g. asking for properties of an object,...">Result::InsufficientCondition</a></td><td>In case the animation is not loaded. </td></tr>
+    <tr><td class="paramname"><a class="el" href="group__ThorVG.html#gga28287671eaf7406afd604bd055ba4066aa0cfd518e4385f31d38720579321ed29" title="The value returned in case of choosing unsupported engine features(options).">Result::NonSupport</a></td><td>When it's not animatable.</td></tr>
+  </table>
+  </dd>
+</dl>
+<dl class="section note"><dt>Note</dt><dd>Experimental API </dd></dl>
+
+</div>
+</div>
+<a id="aa05e5a4df917f934ba9b6233d39b4051"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#aa05e5a4df917f934ba9b6233d39b4051">&#9670;&nbsp;</a></span>segment() <span class="overload">[2/2]</span></h2>
+
+<div class="memitem">
+<div class="memproto">
+<table class="mlabels">
+  <tr>
+  <td class="mlabels-left">
+      <table class="memname">
+        <tr>
+          <td class="memname"><a class="el" href="group__ThorVG.html#ga28287671eaf7406afd604bd055ba4066">Result</a> segment </td>
+          <td>(</td>
+          <td class="paramtype">float&#160;</td>
+          <td class="paramname"><em>begin</em>, </td>
+        </tr>
+        <tr>
+          <td class="paramkey"></td>
+          <td></td>
+          <td class="paramtype">float&#160;</td>
+          <td class="paramname"><em>end</em>&#160;</td>
+        </tr>
+        <tr>
+          <td></td>
+          <td>)</td>
+          <td></td><td></td>
+        </tr>
+      </table>
+  </td>
+  <td class="mlabels-right">
+<span class="mlabels"><span class="mlabel">noexcept</span></span>  </td>
+  </tr>
+</table>
+</div><div class="memdoc">
+
+<p>Specifies the playback segment of the animation. </p>
+<p>The set segment is designated as the play area of the animation. This is useful for playing a specific segment within the entire animation. After setting, the number of animation frames and the playback time are calculated by mapping the playback segment as the entire range.</p>
+<dl class="params"><dt>Parameters</dt><dd>
+  <table class="params">
+    <tr><td class="paramdir">[in]</td><td class="paramname">begin</td><td>segment start. </td></tr>
+    <tr><td class="paramdir">[in]</td><td class="paramname">end</td><td>segment end.</td></tr>
+  </table>
+  </dd>
+</dl>
+<dl class="retval"><dt>Return values</dt><dd>
+  <table class="retval">
+    <tr><td class="paramname"><a class="el" href="group__ThorVG.html#gga28287671eaf7406afd604bd055ba4066a119732ff568bf103d744e930ae2404f1" title="The value returned in case the request cannot be processed - e.g. asking for properties of an object,...">Result::InsufficientCondition</a></td><td>In case the animation is not loaded. </td></tr>
+    <tr><td class="paramname"><a class="el" href="group__ThorVG.html#gga28287671eaf7406afd604bd055ba4066aa0cfd518e4385f31d38720579321ed29" title="The value returned in case of choosing unsupported engine features(options).">Result::NonSupport</a></td><td>When it's not animatable.</td></tr>
+  </table>
+  </dd>
+</dl>
+<dl class="section note"><dt>Note</dt><dd>Range from 0.0~1.0 </dd>
+<dd>
+If a marker has been specified, its range will be disregarded. </dd></dl>
+<dl class="section see"><dt>See also</dt><dd>LottieAnimation::segment(const char* marker) </dd></dl>
+<dl class="section note"><dt>Note</dt><dd>Experimental API </dd></dl>
 
 </div>
 </div>

@@ -20,7 +20,6 @@ var annotated_dup =
       [ "Initializer", "classtvg_1_1Initializer.html", null ],
       [ "Animation", "classtvg_1_1Animation.html", "classtvg_1_1Animation" ],
       [ "Saver", "classtvg_1_1Saver.html", "classtvg_1_1Saver" ],
-      [ "Accessor", "classtvg_1_1Accessor.html", "classtvg_1_1Accessor" ],
-      [ "LottieAnimation", "classtvg_1_1LottieAnimation.html", "classtvg_1_1LottieAnimation" ]
+      [ "Accessor", "classtvg_1_1Accessor.html", "classtvg_1_1Accessor" ]
     ] ]
 ];

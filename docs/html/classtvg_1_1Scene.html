@@ -27,7 +27,7 @@
   <td id="projectlogo"><img alt="Logo" src="small_logo.png"/></td>
   <td id="projectalign" style="padding-left: 0.5em;">
    <div id="projectname">ThorVG
-   &#160;<span id="projectnumber">v0.13</span>
+   &#160;<span id="projectnumber">v0.14</span>
    </div>
   </td>
  </tr>
@@ -103,15 +103,21 @@ Inheritance diagram for Scene:</div>
 <area shape="rect" href="classtvg_1_1Paint.html" title="An abstract class for managing graphical elements." alt="" coords="9,5,63,32"/>
 </map>
 <center><span class="legend">[<a target="top" href="graph_legend.html">legend</a>]</span></center></div>
+<div class="dynheader">
+Collaboration diagram for Scene:</div>
+<div class="dyncontent">
+<div class="center"><img src="classtvg_1_1Scene__coll__graph.png" border="0" usemap="#aScene_coll__map" alt="Collaboration graph"/></div>
+<map name="aScene_coll__map" id="aScene_coll__map">
+<area shape="rect" title="A class to composite children paints." alt="" coords="5,80,67,107"/>
+<area shape="rect" href="classtvg_1_1Paint.html" title="An abstract class for managing graphical elements." alt="" coords="9,5,63,32"/>
+</map>
+<center><span class="legend">[<a target="top" href="graph_legend.html">legend</a>]</span></center></div>
 <table class="memberdecls">
 <tr class="heading"><td colspan="2"><h2 class="groupheader"><a name="pub-methods"></a>
 Public Member Functions</h2></td></tr>
 <tr class="memitem:a19240cd5b53571da718fabef8afb7103"><td class="memItemLeft" align="right" valign="top"><a class="el" href="group__ThorVG.html#ga28287671eaf7406afd604bd055ba4066">Result</a>&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classtvg_1_1Scene.html#a19240cd5b53571da718fabef8afb7103">push</a> (std::unique_ptr&lt; <a class="el" href="classtvg_1_1Paint.html">Paint</a> &gt; paint) noexcept</td></tr>
 <tr class="memdesc:a19240cd5b53571da718fabef8afb7103"><td class="mdescLeft">&#160;</td><td class="mdescRight">Passes drawing elements to the <a class="el" href="classtvg_1_1Scene.html" title="A class to composite children paints.">Scene</a> using <a class="el" href="classtvg_1_1Paint.html" title="An abstract class for managing graphical elements.">Paint</a> objects.  <a href="classtvg_1_1Scene.html#a19240cd5b53571da718fabef8afb7103">More...</a><br /></td></tr>
 <tr class="separator:a19240cd5b53571da718fabef8afb7103"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:a7b0edd52cb97da03615fe9af3ee768a9"><td class="memItemLeft" align="right" valign="top">TVG_DEPRECATED <a class="el" href="group__ThorVG.html#ga28287671eaf7406afd604bd055ba4066">Result</a>&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classtvg_1_1Scene.html#a7b0edd52cb97da03615fe9af3ee768a9">reserve</a> (uint32_t size) noexcept</td></tr>
-<tr class="memdesc:a7b0edd52cb97da03615fe9af3ee768a9"><td class="mdescLeft">&#160;</td><td class="mdescRight">Sets the size of the container, where all the paints pushed into the <a class="el" href="classtvg_1_1Scene.html" title="A class to composite children paints.">Scene</a> are stored.  <a href="classtvg_1_1Scene.html#a7b0edd52cb97da03615fe9af3ee768a9">More...</a><br /></td></tr>
-<tr class="separator:a7b0edd52cb97da03615fe9af3ee768a9"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:ace6c268f853a4c144076de89b7bbbe75"><td class="memItemLeft" align="right" valign="top">std::list&lt; <a class="el" href="classtvg_1_1Paint.html">Paint</a> * &gt; &amp;&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classtvg_1_1Scene.html#ace6c268f853a4c144076de89b7bbbe75">paints</a> () noexcept</td></tr>
 <tr class="memdesc:ace6c268f853a4c144076de89b7bbbe75"><td class="mdescLeft">&#160;</td><td class="mdescRight">Returns the list of the paints that currently held by the <a class="el" href="classtvg_1_1Scene.html" title="A class to composite children paints.">Scene</a>.  <a href="classtvg_1_1Scene.html#ace6c268f853a4c144076de89b7bbbe75">More...</a><br /></td></tr>
 <tr class="separator:ace6c268f853a4c144076de89b7bbbe75"><td class="memSeparator" colspan="2">&#160;</td></tr>
@@ -144,7 +150,6 @@ Public Member Functions</h2></td></tr>
 <tr class="memdesc:a7e1214a5dc2f3c19ddeedc5371c4e488 inherit pub_methods_classtvg_1_1Paint"><td class="mdescLeft">&#160;</td><td class="mdescRight">Sets the blending method for the paint object.  <a href="classtvg_1_1Paint.html#a7e1214a5dc2f3c19ddeedc5371c4e488">More...</a><br /></td></tr>
 <tr class="separator:a7e1214a5dc2f3c19ddeedc5371c4e488 inherit pub_methods_classtvg_1_1Paint"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:aed5a6ad8edd827a378111b590ed7755d inherit pub_methods_classtvg_1_1Paint"><td class="memItemLeft" align="right" valign="top">TVG_DEPRECATED <a class="el" href="group__ThorVG.html#ga28287671eaf7406afd604bd055ba4066">Result</a>&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classtvg_1_1Paint.html#aed5a6ad8edd827a378111b590ed7755d">bounds</a> (float *x, float *y, float *w, float *h) const noexcept</td></tr>
-<tr class="memdesc:aed5a6ad8edd827a378111b590ed7755d inherit pub_methods_classtvg_1_1Paint"><td class="mdescLeft">&#160;</td><td class="mdescRight">Gets the bounding box of the paint object before any transformation.  <a href="classtvg_1_1Paint.html#aed5a6ad8edd827a378111b590ed7755d">More...</a><br /></td></tr>
 <tr class="separator:aed5a6ad8edd827a378111b590ed7755d inherit pub_methods_classtvg_1_1Paint"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a1b51b7344eac48d285c073bc488197d3 inherit pub_methods_classtvg_1_1Paint"><td class="memItemLeft" align="right" valign="top"><a class="el" href="group__ThorVG.html#ga28287671eaf7406afd604bd055ba4066">Result</a>&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classtvg_1_1Paint.html#a1b51b7344eac48d285c073bc488197d3">bounds</a> (float *x, float *y, float *w, float *h, bool transformed) const noexcept</td></tr>
 <tr class="memdesc:a1b51b7344eac48d285c073bc488197d3 inherit pub_methods_classtvg_1_1Paint"><td class="mdescLeft">&#160;</td><td class="mdescRight">Gets the axis-aligned bounding box of the paint object.  <a href="classtvg_1_1Paint.html#a1b51b7344eac48d285c073bc488197d3">More...</a><br /></td></tr>
@@ -207,12 +212,6 @@ Static Public Member Functions</h2></td></tr>
 <dl class="params"><dt>Parameters</dt><dd>
   <table class="params">
     <tr><td class="paramdir">[in]</td><td class="paramname">free</td><td>If <code>true</code>, the memory occupied by paints is deallocated, otherwise it is not.</td></tr>
-  </table>
-  </dd>
-</dl>
-<dl class="retval"><dt>Return values</dt><dd>
-  <table class="retval">
-    <tr><td class="paramname"><a class="el" href="group__ThorVG.html#gga28287671eaf7406afd604bd055ba4066a505a83f220c02df2f85c3810cd9ceb38" title="The value returned in case of a correct request execution.">Result::Success</a></td><td>when succeed</td></tr>
   </table>
   </dd>
 </dl>
@@ -345,52 +344,10 @@ Static Public Member Functions</h2></td></tr>
   </table>
   </dd>
 </dl>
-<dl class="retval"><dt>Return values</dt><dd>
-  <table class="retval">
-    <tr><td class="paramname"><a class="el" href="group__ThorVG.html#gga28287671eaf7406afd604bd055ba4066a505a83f220c02df2f85c3810cd9ceb38" title="The value returned in case of a correct request execution.">Result::Success</a></td><td>when succeed, <a class="el" href="group__ThorVG.html#gga28287671eaf7406afd604bd055ba4066ae8c0c653fcac575c31470f0f800991c6" title="The value returned in the event of bad memory handling - e.g. failing in pointer releasing or casting...">Result::MemoryCorruption</a> otherwise.</td></tr>
-  </table>
-  </dd>
-</dl>
 <dl class="section note"><dt>Note</dt><dd>The rendering order of the paints is the same as the order as they were pushed. Consider sorting the paints before pushing them if you intend to use layering. </dd></dl>
 <dl class="section see"><dt>See also</dt><dd><a class="el" href="classtvg_1_1Scene.html#ace6c268f853a4c144076de89b7bbbe75" title="Returns the list of the paints that currently held by the Scene.">Scene::paints()</a> </dd>
 <dd>
 <a class="el" href="classtvg_1_1Scene.html#ac020ea777be697067c6f5c8b18f6a4ed" title="Sets the total number of the paints pushed into the scene to be zero. Depending on the value of the f...">Scene::clear()</a> </dd></dl>
-
-</div>
-</div>
-<a id="a7b0edd52cb97da03615fe9af3ee768a9"></a>
-<h2 class="memtitle"><span class="permalink"><a href="#a7b0edd52cb97da03615fe9af3ee768a9">&#9670;&nbsp;</a></span>reserve()</h2>
-
-<div class="memitem">
-<div class="memproto">
-<table class="mlabels">
-  <tr>
-  <td class="mlabels-left">
-      <table class="memname">
-        <tr>
-          <td class="memname">TVG_DEPRECATED <a class="el" href="group__ThorVG.html#ga28287671eaf7406afd604bd055ba4066">Result</a> reserve </td>
-          <td>(</td>
-          <td class="paramtype">uint32_t&#160;</td>
-          <td class="paramname"><em>size</em></td><td>)</td>
-          <td></td>
-        </tr>
-      </table>
-  </td>
-  <td class="mlabels-right">
-<span class="mlabels"><span class="mlabel">noexcept</span></span>  </td>
-  </tr>
-</table>
-</div><div class="memdoc">
-
-<p>Sets the size of the container, where all the paints pushed into the <a class="el" href="classtvg_1_1Scene.html" title="A class to composite children paints.">Scene</a> are stored. </p>
-<p>If the number of objects pushed into the scene is known in advance, calling the function prevents multiple memory reallocation, thus improving the performance.</p>
-<dl class="params"><dt>Parameters</dt><dd>
-  <table class="params">
-    <tr><td class="paramdir">[in]</td><td class="paramname">size</td><td>The number of objects for which the memory is to be reserved.</td></tr>
-  </table>
-  </dd>
-</dl>
-<dl class="section return"><dt>Returns</dt><dd><a class="el" href="group__ThorVG.html#gga28287671eaf7406afd604bd055ba4066a505a83f220c02df2f85c3810cd9ceb38" title="The value returned in case of a correct request execution.">Result::Success</a> when succeed, <a class="el" href="group__ThorVG.html#gga28287671eaf7406afd604bd055ba4066abc2b4181e818f2e9b52b2bc54dd55907" title="The value returned in case of unsuccessful memory allocation.">Result::FailedAllocation</a> otherwise. </dd></dl>
 
 </div>
 </div>
