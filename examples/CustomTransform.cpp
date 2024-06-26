@@ -30,10 +30,10 @@ struct UserExample : tvgexam::Example
 {
     bool content(tvg::Canvas* canvas, uint32_t w, uint32_t h) override
     {
-        return update(canvas, 0);
+        return update(canvas, 0, false);
     }
 
-    bool update(tvg::Canvas* canvas, uint32_t elapsed) override
+    bool update(tvg::Canvas* canvas, uint32_t elapsed, bool force) override
     {
         if (!canvas) return false;
 

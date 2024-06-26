@@ -72,7 +72,7 @@ struct UserExample : tvgexam::Example
         return true;
     }
 
-    bool update(tvg::Canvas* canvas, uint32_t elapsed) override
+    bool update(tvg::Canvas* canvas, uint32_t elapsed, bool force) override
     {
         if (!canvas) return false;
 
@@ -84,9 +84,16 @@ struct UserExample : tvgexam::Example
             list.pop_front();
             list.push_back(paint);
             last = elapsed;
+            canvas->update();
+            return true;
         }
 
-        return true;
+        if (force) {
+            canvas->update();
+            return true;
+        }
+
+        return false;
     }
 };
 

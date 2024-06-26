@@ -64,7 +64,14 @@ bool verify(tvg::Result result);
 struct Example
 {
     virtual bool content(tvg::Canvas* canvas, uint32_t w, uint32_t h) = 0;
-    virtual bool update(tvg::Canvas* canvas, uint32_t elapsed) { return false; }
+    virtual bool update(tvg::Canvas* canvas, uint32_t elapsed, bool force)
+    {
+        if (force) {
+            canvas->update();
+            return true;
+        }
+        return false;
+    }
     virtual void populate(const char* path) {}
     virtual ~Example() {}
 
@@ -237,16 +244,10 @@ struct Window
                 }
             }
 
-            if (needResize) {
-                resize();
-                needResize = false;
-            }
+            if (needResize) resize();
 
-            if (tickCnt > 0) {
-                if (example->update(canvas, elapsed)) {
-                    needDraw = true;
-                }
-            }
+            needDraw = example->update(canvas, elapsed, needResize);
+            needResize = false;
 
             if (needDraw) {
                 if (draw()) refresh();

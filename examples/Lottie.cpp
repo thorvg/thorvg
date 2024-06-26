@@ -75,7 +75,7 @@ struct UserExample : tvgexam::Example
         counter++;
     }
 
-    bool update(tvg::Canvas* canvas, uint32_t elapsed) override
+    bool update(tvg::Canvas* canvas, uint32_t elapsed, bool force) override
     {
         if (!canvas) return false;
 

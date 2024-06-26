@@ -54,7 +54,7 @@ struct UserExample : tvgexam::Example
         picture->translate((counter % NUM_PER_ROW) * size + shiftX, (counter / NUM_PER_ROW) * (this->h / NUM_PER_COL) + shiftY);
     }
 
-    bool update(tvg::Canvas* canvas, uint32_t elapsed) override
+    bool update(tvg::Canvas* canvas, uint32_t elapsed, bool force) override
     {
         if (!canvas) return false;
 
