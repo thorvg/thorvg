@@ -114,7 +114,6 @@ struct Canvas::Impl
 
     Result draw()
     {
-        if (refresh) update(nullptr, false);
         if (status == Status::Drawing || paints.empty() || !renderer->preRender()) return Result::InsufficientCondition;
 
         bool rendered = false;
