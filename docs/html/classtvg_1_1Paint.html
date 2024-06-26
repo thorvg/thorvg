@@ -27,7 +27,7 @@
   <td id="projectlogo"><img alt="Logo" src="small_logo.png"/></td>
   <td id="projectalign" style="padding-left: 0.5em;">
    <div id="projectname">ThorVG
-   &#160;<span id="projectnumber">v0.13</span>
+   &#160;<span id="projectnumber">v0.14</span>
    </div>
   </td>
  </tr>
@@ -133,7 +133,6 @@ Public Member Functions</h2></td></tr>
 <tr class="memdesc:a7e1214a5dc2f3c19ddeedc5371c4e488"><td class="mdescLeft">&#160;</td><td class="mdescRight">Sets the blending method for the paint object.  <a href="classtvg_1_1Paint.html#a7e1214a5dc2f3c19ddeedc5371c4e488">More...</a><br /></td></tr>
 <tr class="separator:a7e1214a5dc2f3c19ddeedc5371c4e488"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:aed5a6ad8edd827a378111b590ed7755d"><td class="memItemLeft" align="right" valign="top">TVG_DEPRECATED <a class="el" href="group__ThorVG.html#ga28287671eaf7406afd604bd055ba4066">Result</a>&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classtvg_1_1Paint.html#aed5a6ad8edd827a378111b590ed7755d">bounds</a> (float *x, float *y, float *w, float *h) const noexcept</td></tr>
-<tr class="memdesc:aed5a6ad8edd827a378111b590ed7755d"><td class="mdescLeft">&#160;</td><td class="mdescRight">Gets the bounding box of the paint object before any transformation.  <a href="classtvg_1_1Paint.html#aed5a6ad8edd827a378111b590ed7755d">More...</a><br /></td></tr>
 <tr class="separator:aed5a6ad8edd827a378111b590ed7755d"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a1b51b7344eac48d285c073bc488197d3"><td class="memItemLeft" align="right" valign="top"><a class="el" href="group__ThorVG.html#ga28287671eaf7406afd604bd055ba4066">Result</a>&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classtvg_1_1Paint.html#a1b51b7344eac48d285c073bc488197d3">bounds</a> (float *x, float *y, float *w, float *h, bool transformed) const noexcept</td></tr>
 <tr class="memdesc:a1b51b7344eac48d285c073bc488197d3"><td class="mdescLeft">&#160;</td><td class="mdescRight">Gets the axis-aligned bounding box of the paint object.  <a href="classtvg_1_1Paint.html#a1b51b7344eac48d285c073bc488197d3">More...</a><br /></td></tr>
@@ -219,12 +218,6 @@ Public Member Functions</h2></td></tr>
   </table>
   </dd>
 </dl>
-<dl class="retval"><dt>Return values</dt><dd>
-  <table class="retval">
-    <tr><td class="paramname"><a class="el" href="group__ThorVG.html#gga28287671eaf7406afd604bd055ba4066a505a83f220c02df2f85c3810cd9ceb38" title="The value returned in case of a correct request execution.">Result::Success</a></td><td>when the blending method is successfully set.</td></tr>
-  </table>
-  </dd>
-</dl>
 <dl class="section note"><dt>Note</dt><dd>Experimental API </dd></dl>
 
 </div>
@@ -274,20 +267,6 @@ Public Member Functions</h2></td></tr>
   </tr>
 </table>
 </div><div class="memdoc">
-
-<p>Gets the bounding box of the paint object before any transformation. </p>
-<dl class="params"><dt>Parameters</dt><dd>
-  <table class="params">
-    <tr><td class="paramdir">[out]</td><td class="paramname">x</td><td>The x coordinate of the upper left corner of the object. </td></tr>
-    <tr><td class="paramdir">[out]</td><td class="paramname">y</td><td>The y coordinate of the upper left corner of the object. </td></tr>
-    <tr><td class="paramdir">[out]</td><td class="paramname">w</td><td>The width of the object. </td></tr>
-    <tr><td class="paramdir">[out]</td><td class="paramname">h</td><td>The height of the object.</td></tr>
-  </table>
-  </dd>
-</dl>
-<dl class="section return"><dt>Returns</dt><dd><a class="el" href="group__ThorVG.html#gga28287671eaf7406afd604bd055ba4066a505a83f220c02df2f85c3810cd9ceb38" title="The value returned in case of a correct request execution.">Result::Success</a> when succeed, <a class="el" href="group__ThorVG.html#gga28287671eaf7406afd604bd055ba4066a119732ff568bf103d744e930ae2404f1" title="The value returned in case the request cannot be processed - e.g. asking for properties of an object,...">Result::InsufficientCondition</a> otherwise.</dd></dl>
-<dl class="section note"><dt>Note</dt><dd>The bounding box doesn't indicate the final rendered region. It's the smallest rectangle that encloses the object. </dd></dl>
-<dl class="section see"><dt>See also</dt><dd>Paint::bounds(float* x, float* y, float* w, float* h, bool transformed); </dd></dl>
 
 </div>
 </div>
@@ -352,12 +331,6 @@ Public Member Functions</h2></td></tr>
     <tr><td class="paramdir">[out]</td><td class="paramname">w</td><td>The width of the object. </td></tr>
     <tr><td class="paramdir">[out]</td><td class="paramname">h</td><td>The height of the object. </td></tr>
     <tr><td class="paramdir">[in]</td><td class="paramname">transformed</td><td>If <code>true</code>, the paint's transformations are taken into account, otherwise they aren't.</td></tr>
-  </table>
-  </dd>
-</dl>
-<dl class="retval"><dt>Return values</dt><dd>
-  <table class="retval">
-    <tr><td class="paramname"><a class="el" href="group__ThorVG.html#gga28287671eaf7406afd604bd055ba4066a505a83f220c02df2f85c3810cd9ceb38" title="The value returned in case of a correct request execution.">Result::Success</a></td><td>when succeed, <a class="el" href="group__ThorVG.html#gga28287671eaf7406afd604bd055ba4066a119732ff568bf103d744e930ae2404f1" title="The value returned in case the request cannot be processed - e.g. asking for properties of an object,...">Result::InsufficientCondition</a> otherwise.</td></tr>
   </table>
   </dd>
 </dl>
@@ -439,13 +412,7 @@ Public Member Functions</h2></td></tr>
 <dl class="params"><dt>Parameters</dt><dd>
   <table class="params">
     <tr><td class="paramdir">[in]</td><td class="paramname">target</td><td>The paint of the target object. </td></tr>
-    <tr><td class="paramdir">[in]</td><td class="paramname">method</td><td>The method used to composite the source object with the target.</td></tr>
-  </table>
-  </dd>
-</dl>
-<dl class="retval"><dt>Return values</dt><dd>
-  <table class="retval">
-    <tr><td class="paramname"><a class="el" href="group__ThorVG.html#gga28287671eaf7406afd604bd055ba4066a505a83f220c02df2f85c3810cd9ceb38" title="The value returned in case of a correct request execution.">Result::Success</a></td><td>when succeed, <a class="el" href="group__ThorVG.html#gga28287671eaf7406afd604bd055ba4066ae73a2e92f1c87086c838b442552a4775" title="The value returned in the event of a problem with the arguments given to the API - e....">Result::InvalidArguments</a> otherwise. </td></tr>
+    <tr><td class="paramdir">[in]</td><td class="paramname">method</td><td>The method used to composite the source object with the target. </td></tr>
   </table>
   </dd>
 </dl>
@@ -569,12 +536,6 @@ Public Member Functions</h2></td></tr>
   </table>
   </dd>
 </dl>
-<dl class="retval"><dt>Return values</dt><dd>
-  <table class="retval">
-    <tr><td class="paramname"><a class="el" href="group__ThorVG.html#gga28287671eaf7406afd604bd055ba4066a505a83f220c02df2f85c3810cd9ceb38" title="The value returned in case of a correct request execution.">Result::Success</a></td><td>when succeed.</td></tr>
-  </table>
-  </dd>
-</dl>
 <dl class="section note"><dt>Note</dt><dd>Setting the opacity with this API may require multiple render pass for composition. It is recommended to avoid changing the opacity if possible. </dd>
 <dd>
 ClipPath won't use the opacity value. (see: enum class <a class="el" href="group__ThorVG.html#ggaabdf94ada64e69d06deabc5aa6576f87a60575a18ece363c72551a982450efd52" title="The intersection of the source and the target is determined and only the resulting pixels from the so...">CompositeMethod::ClipPath</a>) </dd></dl>
@@ -609,13 +570,7 @@ ClipPath won't use the opacity value. (see: enum class <a class="el" href="group
 <p>The angle in measured clockwise from the horizontal axis. The rotational axis passes through the point on the object with zero coordinates.</p>
 <dl class="params"><dt>Parameters</dt><dd>
   <table class="params">
-    <tr><td class="paramdir">[in]</td><td class="paramname">degree</td><td>The value of the angle in degrees.</td></tr>
-  </table>
-  </dd>
-</dl>
-<dl class="retval"><dt>Return values</dt><dd>
-  <table class="retval">
-    <tr><td class="paramname"><a class="el" href="group__ThorVG.html#gga28287671eaf7406afd604bd055ba4066a505a83f220c02df2f85c3810cd9ceb38" title="The value returned in case of a correct request execution.">Result::Success</a></td><td>when succeed, <a class="el" href="group__ThorVG.html#gga28287671eaf7406afd604bd055ba4066abc2b4181e818f2e9b52b2bc54dd55907" title="The value returned in case of unsuccessful memory allocation.">Result::FailedAllocation</a> otherwise. </td></tr>
+    <tr><td class="paramdir">[in]</td><td class="paramname">degree</td><td>The value of the angle in degrees. </td></tr>
   </table>
   </dd>
 </dl>
@@ -649,13 +604,7 @@ ClipPath won't use the opacity value. (see: enum class <a class="el" href="group
 <p>Sets the scale value of the object. </p>
 <dl class="params"><dt>Parameters</dt><dd>
   <table class="params">
-    <tr><td class="paramdir">[in]</td><td class="paramname">factor</td><td>The value of the scaling factor. The default value is 1.</td></tr>
-  </table>
-  </dd>
-</dl>
-<dl class="retval"><dt>Return values</dt><dd>
-  <table class="retval">
-    <tr><td class="paramname"><a class="el" href="group__ThorVG.html#gga28287671eaf7406afd604bd055ba4066a505a83f220c02df2f85c3810cd9ceb38" title="The value returned in case of a correct request execution.">Result::Success</a></td><td>when succeed, <a class="el" href="group__ThorVG.html#gga28287671eaf7406afd604bd055ba4066abc2b4181e818f2e9b52b2bc54dd55907" title="The value returned in case of unsuccessful memory allocation.">Result::FailedAllocation</a> otherwise. </td></tr>
+    <tr><td class="paramdir">[in]</td><td class="paramname">factor</td><td>The value of the scaling factor. The default value is 1. </td></tr>
   </table>
   </dd>
 </dl>
@@ -720,13 +669,7 @@ ClipPath won't use the opacity value. (see: enum class <a class="el" href="group
 <p>The augmented matrix of the transformation is expected to be given.</p>
 <dl class="params"><dt>Parameters</dt><dd>
   <table class="params">
-    <tr><td class="paramdir">[in]</td><td class="paramname">m</td><td>The 3x3 augmented matrix.</td></tr>
-  </table>
-  </dd>
-</dl>
-<dl class="retval"><dt>Return values</dt><dd>
-  <table class="retval">
-    <tr><td class="paramname"><a class="el" href="group__ThorVG.html#gga28287671eaf7406afd604bd055ba4066a505a83f220c02df2f85c3810cd9ceb38" title="The value returned in case of a correct request execution.">Result::Success</a></td><td>when succeed, <a class="el" href="group__ThorVG.html#gga28287671eaf7406afd604bd055ba4066abc2b4181e818f2e9b52b2bc54dd55907" title="The value returned in case of unsuccessful memory allocation.">Result::FailedAllocation</a> otherwise. </td></tr>
+    <tr><td class="paramdir">[in]</td><td class="paramname">m</td><td>The 3x3 augmented matrix. </td></tr>
   </table>
   </dd>
 </dl>
@@ -772,13 +715,7 @@ ClipPath won't use the opacity value. (see: enum class <a class="el" href="group
 <dl class="params"><dt>Parameters</dt><dd>
   <table class="params">
     <tr><td class="paramdir">[in]</td><td class="paramname">x</td><td>The value of the horizontal shift. </td></tr>
-    <tr><td class="paramdir">[in]</td><td class="paramname">y</td><td>The value of the vertical shift.</td></tr>
-  </table>
-  </dd>
-</dl>
-<dl class="retval"><dt>Return values</dt><dd>
-  <table class="retval">
-    <tr><td class="paramname"><a class="el" href="group__ThorVG.html#gga28287671eaf7406afd604bd055ba4066a505a83f220c02df2f85c3810cd9ceb38" title="The value returned in case of a correct request execution.">Result::Success</a></td><td>when succeed, <a class="el" href="group__ThorVG.html#gga28287671eaf7406afd604bd055ba4066abc2b4181e818f2e9b52b2bc54dd55907" title="The value returned in case of unsuccessful memory allocation.">Result::FailedAllocation</a> otherwise. </td></tr>
+    <tr><td class="paramdir">[in]</td><td class="paramname">y</td><td>The value of the vertical shift. </td></tr>
   </table>
   </dd>
 </dl>

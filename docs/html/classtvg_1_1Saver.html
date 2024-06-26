@@ -27,7 +27,7 @@
   <td id="projectlogo"><img alt="Logo" src="small_logo.png"/></td>
   <td id="projectalign" style="padding-left: 0.5em;">
    <div id="projectname">ThorVG
-   &#160;<span id="projectnumber">v0.13</span>
+   &#160;<span id="projectnumber">v0.14</span>
    </div>
   </td>
  </tr>
@@ -247,10 +247,8 @@ Static Public Member Functions</h2></td></tr>
 </dl>
 <dl class="retval"><dt>Return values</dt><dd>
   <table class="retval">
-    <tr><td class="paramname"><a class="el" href="group__ThorVG.html#gga28287671eaf7406afd604bd055ba4066a505a83f220c02df2f85c3810cd9ceb38" title="The value returned in case of a correct request execution.">Result::Success</a></td><td>if the export succeeds. </td></tr>
     <tr><td class="paramname"><a class="el" href="group__ThorVG.html#gga28287671eaf7406afd604bd055ba4066a119732ff568bf103d744e930ae2404f1" title="The value returned in case the request cannot be processed - e.g. asking for properties of an object,...">Result::InsufficientCondition</a></td><td>if there are ongoing resource-saving operations. </td></tr>
-    <tr><td class="paramname"><a class="el" href="group__ThorVG.html#gga28287671eaf7406afd604bd055ba4066aa0cfd518e4385f31d38720579321ed29" title="The value returned in case of choosing unsupported options.">Result::NonSupport</a></td><td>if an attempt is made to save the file with an unknown extension or in an unsupported format. </td></tr>
-    <tr><td class="paramname"><a class="el" href="group__ThorVG.html#gga28287671eaf7406afd604bd055ba4066ae8c0c653fcac575c31470f0f800991c6" title="The value returned in the event of bad memory handling - e.g. failing in pointer releasing or casting...">Result::MemoryCorruption</a></td><td>in case of an internal error. </td></tr>
+    <tr><td class="paramname"><a class="el" href="group__ThorVG.html#gga28287671eaf7406afd604bd055ba4066aa0cfd518e4385f31d38720579321ed29" title="The value returned in case of choosing unsupported engine features(options).">Result::NonSupport</a></td><td>if an attempt is made to save the file with an unknown extension or in an unsupported format. </td></tr>
     <tr><td class="paramname"><a class="el" href="group__ThorVG.html#gga28287671eaf7406afd604bd055ba4066a88183b946cc5f0e8c96b2e66e1c74a7e" title="The value returned in all other cases.">Result::Unknown</a></td><td>if attempting to save an empty paint.</td></tr>
   </table>
   </dd>
@@ -315,10 +313,8 @@ Saving can be asynchronous if the assigned thread number is greater than zero. T
 </dl>
 <dl class="retval"><dt>Return values</dt><dd>
   <table class="retval">
-    <tr><td class="paramname"><a class="el" href="group__ThorVG.html#gga28287671eaf7406afd604bd055ba4066a505a83f220c02df2f85c3810cd9ceb38" title="The value returned in case of a correct request execution.">Result::Success</a></td><td>When succeed. </td></tr>
     <tr><td class="paramname"><a class="el" href="group__ThorVG.html#gga28287671eaf7406afd604bd055ba4066a119732ff568bf103d744e930ae2404f1" title="The value returned in case the request cannot be processed - e.g. asking for properties of an object,...">Result::InsufficientCondition</a></td><td>If currently saving other resources. </td></tr>
-    <tr><td class="paramname"><a class="el" href="group__ThorVG.html#gga28287671eaf7406afd604bd055ba4066aa0cfd518e4385f31d38720579321ed29" title="The value returned in case of choosing unsupported options.">Result::NonSupport</a></td><td>When trying to save a file with an unknown extension or in an unsupported format. </td></tr>
-    <tr><td class="paramname"><a class="el" href="group__ThorVG.html#gga28287671eaf7406afd604bd055ba4066ae8c0c653fcac575c31470f0f800991c6" title="The value returned in the event of bad memory handling - e.g. failing in pointer releasing or casting...">Result::MemoryCorruption</a></td><td>An internal error. </td></tr>
+    <tr><td class="paramname"><a class="el" href="group__ThorVG.html#gga28287671eaf7406afd604bd055ba4066aa0cfd518e4385f31d38720579321ed29" title="The value returned in case of choosing unsupported engine features(options).">Result::NonSupport</a></td><td>When trying to save a file with an unknown extension or in an unsupported format. </td></tr>
     <tr><td class="paramname"><a class="el" href="group__ThorVG.html#gga28287671eaf7406afd604bd055ba4066a88183b946cc5f0e8c96b2e66e1c74a7e" title="The value returned in all other cases.">Result::Unknown</a></td><td>In case an empty paint is to be saved.</td></tr>
   </table>
   </dd>
@@ -354,13 +350,6 @@ Saving can be asynchronous if the assigned thread number is greater than zero. T
 
 <p>Guarantees that the saving task is finished. </p>
 <p>The behavior of the <a class="el" href="classtvg_1_1Saver.html" title="A class for exporting a paint object into a specified file, from which to recover the paint data late...">Saver</a> works on a sync/async basis, depending on the threading setting of the <a class="el" href="classtvg_1_1Initializer.html" title="A class that enables initialization and termination of the TVG engines.">Initializer</a>. Thus, if you wish to have a benefit of it, you must call <a class="el" href="classtvg_1_1Saver.html#a2fdf9b2208358ea10f912b1877733778" title="Guarantees that the saving task is finished.">sync()</a> after the <a class="el" href="classtvg_1_1Saver.html#acda492a458f3ddc2da01df672ecd85bd" title="Exports the given paint data to the given path.">save()</a> in the proper delayed time. Otherwise, you can call <a class="el" href="classtvg_1_1Saver.html#a2fdf9b2208358ea10f912b1877733778" title="Guarantees that the saving task is finished.">sync()</a> immediately.</p>
-<dl class="retval"><dt>Return values</dt><dd>
-  <table class="retval">
-    <tr><td class="paramname"><a class="el" href="group__ThorVG.html#gga28287671eaf7406afd604bd055ba4066a505a83f220c02df2f85c3810cd9ceb38" title="The value returned in case of a correct request execution.">Result::Success</a></td><td>when succeed. </td></tr>
-    <tr><td class="paramname"><a class="el" href="group__ThorVG.html#gga28287671eaf7406afd604bd055ba4066a119732ff568bf103d744e930ae2404f1" title="The value returned in case the request cannot be processed - e.g. asking for properties of an object,...">Result::InsufficientCondition</a></td><td>otherwise.</td></tr>
-  </table>
-  </dd>
-</dl>
 <dl class="section note"><dt>Note</dt><dd>The asynchronous tasking is dependent on the <a class="el" href="classtvg_1_1Saver.html" title="A class for exporting a paint object into a specified file, from which to recover the paint data late...">Saver</a> module implementation. </dd></dl>
 <dl class="section see"><dt>See also</dt><dd><a class="el" href="classtvg_1_1Saver.html#acda492a458f3ddc2da01df672ecd85bd" title="Exports the given paint data to the given path.">Saver::save()</a></dd></dl>
 <dl class="section since"><dt>Since</dt><dd>0.5 </dd></dl>

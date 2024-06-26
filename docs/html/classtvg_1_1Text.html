@@ -27,7 +27,7 @@
   <td id="projectlogo"><img alt="Logo" src="small_logo.png"/></td>
   <td id="projectalign" style="padding-left: 0.5em;">
    <div id="projectname">ThorVG
-   &#160;<span id="projectnumber">v0.13</span>
+   &#160;<span id="projectnumber">v0.14</span>
    </div>
   </td>
  </tr>
@@ -103,6 +103,15 @@ Inheritance diagram for Text:</div>
 <area shape="rect" href="classtvg_1_1Paint.html" title="An abstract class for managing graphical elements." alt="" coords="5,5,60,32"/>
 </map>
 <center><span class="legend">[<a target="top" href="graph_legend.html">legend</a>]</span></center></div>
+<div class="dynheader">
+Collaboration diagram for Text:</div>
+<div class="dyncontent">
+<div class="center"><img src="classtvg_1_1Text__coll__graph.png" border="0" usemap="#aText_coll__map" alt="Collaboration graph"/></div>
+<map name="aText_coll__map" id="aText_coll__map">
+<area shape="rect" title="A class to represent text objects in a graphical context, allowing for rendering and manipulation of ..." alt="" coords="8,80,57,107"/>
+<area shape="rect" href="classtvg_1_1Paint.html" title="An abstract class for managing graphical elements." alt="" coords="5,5,60,32"/>
+</map>
+<center><span class="legend">[<a target="top" href="graph_legend.html">legend</a>]</span></center></div>
 <table class="memberdecls">
 <tr class="heading"><td colspan="2"><h2 class="groupheader"><a name="pub-methods"></a>
 Public Member Functions</h2></td></tr>
@@ -144,7 +153,6 @@ Public Member Functions</h2></td></tr>
 <tr class="memdesc:a7e1214a5dc2f3c19ddeedc5371c4e488 inherit pub_methods_classtvg_1_1Paint"><td class="mdescLeft">&#160;</td><td class="mdescRight">Sets the blending method for the paint object.  <a href="classtvg_1_1Paint.html#a7e1214a5dc2f3c19ddeedc5371c4e488">More...</a><br /></td></tr>
 <tr class="separator:a7e1214a5dc2f3c19ddeedc5371c4e488 inherit pub_methods_classtvg_1_1Paint"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:aed5a6ad8edd827a378111b590ed7755d inherit pub_methods_classtvg_1_1Paint"><td class="memItemLeft" align="right" valign="top">TVG_DEPRECATED <a class="el" href="group__ThorVG.html#ga28287671eaf7406afd604bd055ba4066">Result</a>&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classtvg_1_1Paint.html#aed5a6ad8edd827a378111b590ed7755d">bounds</a> (float *x, float *y, float *w, float *h) const noexcept</td></tr>
-<tr class="memdesc:aed5a6ad8edd827a378111b590ed7755d inherit pub_methods_classtvg_1_1Paint"><td class="mdescLeft">&#160;</td><td class="mdescRight">Gets the bounding box of the paint object before any transformation.  <a href="classtvg_1_1Paint.html#aed5a6ad8edd827a378111b590ed7755d">More...</a><br /></td></tr>
 <tr class="separator:aed5a6ad8edd827a378111b590ed7755d inherit pub_methods_classtvg_1_1Paint"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a1b51b7344eac48d285c073bc488197d3 inherit pub_methods_classtvg_1_1Paint"><td class="memItemLeft" align="right" valign="top"><a class="el" href="group__ThorVG.html#ga28287671eaf7406afd604bd055ba4066">Result</a>&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classtvg_1_1Paint.html#a1b51b7344eac48d285c073bc488197d3">bounds</a> (float *x, float *y, float *w, float *h, bool transformed) const noexcept</td></tr>
 <tr class="memdesc:a1b51b7344eac48d285c073bc488197d3 inherit pub_methods_classtvg_1_1Paint"><td class="mdescLeft">&#160;</td><td class="mdescRight">Gets the axis-aligned bounding box of the paint object.  <a href="classtvg_1_1Paint.html#a1b51b7344eac48d285c073bc488197d3">More...</a><br /></td></tr>
@@ -168,8 +176,11 @@ Public Member Functions</h2></td></tr>
 <tr class="heading"><td colspan="2"><h2 class="groupheader"><a name="pub-static-methods"></a>
 Static Public Member Functions</h2></td></tr>
 <tr class="memitem:a2e6612c3e7ff222151d2228b97dac1d5"><td class="memItemLeft" align="right" valign="top">static <a class="el" href="group__ThorVG.html#ga28287671eaf7406afd604bd055ba4066">Result</a>&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classtvg_1_1Text.html#a2e6612c3e7ff222151d2228b97dac1d5">load</a> (const std::string &amp;path) noexcept</td></tr>
-<tr class="memdesc:a2e6612c3e7ff222151d2228b97dac1d5"><td class="mdescLeft">&#160;</td><td class="mdescRight">Loads a scalable font data(ttf) from a file.  <a href="classtvg_1_1Text.html#a2e6612c3e7ff222151d2228b97dac1d5">More...</a><br /></td></tr>
+<tr class="memdesc:a2e6612c3e7ff222151d2228b97dac1d5"><td class="mdescLeft">&#160;</td><td class="mdescRight">Loads a scalable font data (ttf) from a file.  <a href="classtvg_1_1Text.html#a2e6612c3e7ff222151d2228b97dac1d5">More...</a><br /></td></tr>
 <tr class="separator:a2e6612c3e7ff222151d2228b97dac1d5"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a0de92209468d6b9b09ad00e9bc4b194c"><td class="memItemLeft" align="right" valign="top">static <a class="el" href="group__ThorVG.html#ga28287671eaf7406afd604bd055ba4066">Result</a>&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classtvg_1_1Text.html#a0de92209468d6b9b09ad00e9bc4b194c">load</a> (const char *name, const char *data, uint32_t size, const std::string &amp;mimeType=&quot;ttf&quot;, bool copy=false) noexcept</td></tr>
+<tr class="memdesc:a0de92209468d6b9b09ad00e9bc4b194c"><td class="mdescLeft">&#160;</td><td class="mdescRight">Loads a scalable font data (ttf) from a memory block of a given size.  <a href="classtvg_1_1Text.html#a0de92209468d6b9b09ad00e9bc4b194c">More...</a><br /></td></tr>
+<tr class="separator:a0de92209468d6b9b09ad00e9bc4b194c"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a2c3cf96821e59b74399c4c076d66fcc8"><td class="memItemLeft" align="right" valign="top">static <a class="el" href="group__ThorVG.html#ga28287671eaf7406afd604bd055ba4066">Result</a>&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classtvg_1_1Text.html#a2c3cf96821e59b74399c4c076d66fcc8">unload</a> (const std::string &amp;path) noexcept</td></tr>
 <tr class="memdesc:a2c3cf96821e59b74399c4c076d66fcc8"><td class="mdescLeft">&#160;</td><td class="mdescRight">Unloads the specified scalable font data (TTF) that was previously loaded.  <a href="classtvg_1_1Text.html#a2c3cf96821e59b74399c4c076d66fcc8">More...</a><br /></td></tr>
 <tr class="separator:a2c3cf96821e59b74399c4c076d66fcc8"><td class="memSeparator" colspan="2">&#160;</td></tr>
@@ -218,7 +229,6 @@ Static Public Member Functions</h2></td></tr>
 </dl>
 <dl class="retval"><dt>Return values</dt><dd>
   <table class="retval">
-    <tr><td class="paramname"><a class="el" href="group__ThorVG.html#gga28287671eaf7406afd604bd055ba4066a505a83f220c02df2f85c3810cd9ceb38" title="The value returned in case of a correct request execution.">Result::Success</a></td><td>when succeed, <a class="el" href="group__ThorVG.html#gga28287671eaf7406afd604bd055ba4066ae8c0c653fcac575c31470f0f800991c6" title="The value returned in the event of bad memory handling - e.g. failing in pointer releasing or casting...">Result::MemoryCorruption</a> otherwise. </td></tr>
     <tr><td class="paramname"><a class="el" href="group__ThorVG.html#gga28287671eaf7406afd604bd055ba4066a119732ff568bf103d744e930ae2404f1" title="The value returned in case the request cannot be processed - e.g. asking for properties of an object,...">Result::InsufficientCondition</a></td><td>when the font has not been set up prior to this operation.</td></tr>
   </table>
   </dd>
@@ -281,7 +291,6 @@ Experimental API</dd></dl>
 </dl>
 <dl class="retval"><dt>Return values</dt><dd>
   <table class="retval">
-    <tr><td class="paramname"><a class="el" href="group__ThorVG.html#gga28287671eaf7406afd604bd055ba4066a505a83f220c02df2f85c3810cd9ceb38" title="The value returned in case of a correct request execution.">Result::Success</a></td><td>when succeed. </td></tr>
     <tr><td class="paramname"><a class="el" href="group__ThorVG.html#gga28287671eaf7406afd604bd055ba4066a119732ff568bf103d744e930ae2404f1" title="The value returned in case the request cannot be processed - e.g. asking for properties of an object,...">Result::InsufficientCondition</a></td><td>when the font has not been set up prior to this operation.</td></tr>
   </table>
   </dd>
@@ -343,7 +352,6 @@ Experimental API</dd></dl>
 </dl>
 <dl class="retval"><dt>Return values</dt><dd>
   <table class="retval">
-    <tr><td class="paramname"><a class="el" href="group__ThorVG.html#gga28287671eaf7406afd604bd055ba4066a505a83f220c02df2f85c3810cd9ceb38" title="The value returned in case of a correct request execution.">Result::Success</a></td><td>when the font properties are set successfully. </td></tr>
     <tr><td class="paramname"><a class="el" href="group__ThorVG.html#gga28287671eaf7406afd604bd055ba4066a119732ff568bf103d744e930ae2404f1" title="The value returned in case the request cannot be processed - e.g. asking for properties of an object,...">Result::InsufficientCondition</a></td><td>when the specified <code>name</code> cannot be found.</td></tr>
   </table>
   </dd>
@@ -410,8 +418,90 @@ Experimental API</dd></dl>
 
 </div>
 </div>
+<a id="a0de92209468d6b9b09ad00e9bc4b194c"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#a0de92209468d6b9b09ad00e9bc4b194c">&#9670;&nbsp;</a></span>load() <span class="overload">[1/2]</span></h2>
+
+<div class="memitem">
+<div class="memproto">
+<table class="mlabels">
+  <tr>
+  <td class="mlabels-left">
+      <table class="memname">
+        <tr>
+          <td class="memname">static <a class="el" href="group__ThorVG.html#ga28287671eaf7406afd604bd055ba4066">Result</a> load </td>
+          <td>(</td>
+          <td class="paramtype">const char *&#160;</td>
+          <td class="paramname"><em>name</em>, </td>
+        </tr>
+        <tr>
+          <td class="paramkey"></td>
+          <td></td>
+          <td class="paramtype">const char *&#160;</td>
+          <td class="paramname"><em>data</em>, </td>
+        </tr>
+        <tr>
+          <td class="paramkey"></td>
+          <td></td>
+          <td class="paramtype">uint32_t&#160;</td>
+          <td class="paramname"><em>size</em>, </td>
+        </tr>
+        <tr>
+          <td class="paramkey"></td>
+          <td></td>
+          <td class="paramtype">const std::string &amp;&#160;</td>
+          <td class="paramname"><em>mimeType</em> = <code>&quot;ttf&quot;</code>, </td>
+        </tr>
+        <tr>
+          <td class="paramkey"></td>
+          <td></td>
+          <td class="paramtype">bool&#160;</td>
+          <td class="paramname"><em>copy</em> = <code>false</code>&#160;</td>
+        </tr>
+        <tr>
+          <td></td>
+          <td>)</td>
+          <td></td><td></td>
+        </tr>
+      </table>
+  </td>
+  <td class="mlabels-right">
+<span class="mlabels"><span class="mlabel">static</span><span class="mlabel">noexcept</span></span>  </td>
+  </tr>
+</table>
+</div><div class="memdoc">
+
+<p>Loads a scalable font data (ttf) from a memory block of a given size. </p>
+<p>ThorVG efficiently caches the loaded font data using the specified <code>name</code> as a key. This means that loading the same fonts again will not result in duplicate operations. Instead, ThorVG will reuse the previously loaded font data.</p>
+<dl class="params"><dt>Parameters</dt><dd>
+  <table class="params">
+    <tr><td class="paramdir">[in]</td><td class="paramname">name</td><td>The name under which the font will be stored and accessible (e.x. in a <code><a class="el" href="classtvg_1_1Text.html#ae75b2b7eaa5757cfaa6620df127c0416" title="Sets the font properties for the text.">font()</a></code> API). </td></tr>
+    <tr><td class="paramdir">[in]</td><td class="paramname">data</td><td>A pointer to a memory location where the content of the font data is stored. </td></tr>
+    <tr><td class="paramdir">[in]</td><td class="paramname">size</td><td>The size in bytes of the memory occupied by the <code>data</code>. </td></tr>
+    <tr><td class="paramdir">[in]</td><td class="paramname">mimeType</td><td>Mimetype or extension of font data. In case an empty string is provided the loader will be determined automatically. </td></tr>
+    <tr><td class="paramdir">[in]</td><td class="paramname">copy</td><td>If <code>true</code> the data are copied into the engine local buffer, otherwise they are not (default).</td></tr>
+  </table>
+  </dd>
+</dl>
+<dl class="retval"><dt>Return values</dt><dd>
+  <table class="retval">
+    <tr><td class="paramname"><a class="el" href="group__ThorVG.html#gga28287671eaf7406afd604bd055ba4066ae73a2e92f1c87086c838b442552a4775" title="The value returned in the event of a problem with the arguments given to the API - e....">Result::InvalidArguments</a></td><td>If no name is provided or if <code>size</code> is zero while <code>data</code> points to a valid memory location. </td></tr>
+    <tr><td class="paramname"><a class="el" href="group__ThorVG.html#gga28287671eaf7406afd604bd055ba4066aa0cfd518e4385f31d38720579321ed29" title="The value returned in case of choosing unsupported engine features(options).">Result::NonSupport</a></td><td>When trying to load a file with an unsupported extension. </td></tr>
+    <tr><td class="paramname"><a class="el" href="group__ThorVG.html#gga28287671eaf7406afd604bd055ba4066a119732ff568bf103d744e930ae2404f1" title="The value returned in case the request cannot be processed - e.g. asking for properties of an object,...">Result::InsufficientCondition</a></td><td>If attempting to unload the font data that has not been previously loaded.</td></tr>
+  </table>
+  </dd>
+</dl>
+<dl class="section warning"><dt>Warning</dt><dd>: It's the user responsibility to release the <code>data</code> memory.</dd></dl>
+<dl class="section note"><dt>Note</dt><dd>To unload the font data loaded using this API, pass the proper <code>name</code> and <code>nullptr</code> as <code>data</code>. </dd>
+<dd>
+If you are unsure about the MIME type, you can provide an empty value like <code>""</code>, and thorvg will attempt to figure it out. </dd>
+<dd>
+Experimental API</dd></dl>
+<dl class="section see"><dt>See also</dt><dd><a class="el" href="classtvg_1_1Text.html#ae75b2b7eaa5757cfaa6620df127c0416" title="Sets the font properties for the text.">Text::font(const char* name, float size, const char* style)</a> </dd></dl>
+
+</div>
+</div>
 <a id="a2e6612c3e7ff222151d2228b97dac1d5"></a>
-<h2 class="memtitle"><span class="permalink"><a href="#a2e6612c3e7ff222151d2228b97dac1d5">&#9670;&nbsp;</a></span>load()</h2>
+<h2 class="memtitle"><span class="permalink"><a href="#a2e6612c3e7ff222151d2228b97dac1d5">&#9670;&nbsp;</a></span>load() <span class="overload">[2/2]</span></h2>
 
 <div class="memitem">
 <div class="memproto">
@@ -434,7 +524,7 @@ Experimental API</dd></dl>
 </table>
 </div><div class="memdoc">
 
-<p>Loads a scalable font data(ttf) from a file. </p>
+<p>Loads a scalable font data (ttf) from a file. </p>
 <p>ThorVG efficiently caches the loaded data using the specified <code>path</code> as a key. This means that loading the same file again will not result in duplicate operations; instead, ThorVG will reuse the previously loaded font data.</p>
 <dl class="params"><dt>Parameters</dt><dd>
   <table class="params">
@@ -444,10 +534,8 @@ Experimental API</dd></dl>
 </dl>
 <dl class="retval"><dt>Return values</dt><dd>
   <table class="retval">
-    <tr><td class="paramname"><a class="el" href="group__ThorVG.html#gga28287671eaf7406afd604bd055ba4066a505a83f220c02df2f85c3810cd9ceb38" title="The value returned in case of a correct request execution.">Result::Success</a></td><td>When succeed. </td></tr>
     <tr><td class="paramname"><a class="el" href="group__ThorVG.html#gga28287671eaf7406afd604bd055ba4066ae73a2e92f1c87086c838b442552a4775" title="The value returned in the event of a problem with the arguments given to the API - e....">Result::InvalidArguments</a></td><td>In case the <code>path</code> is invalid. </td></tr>
-    <tr><td class="paramname"><a class="el" href="group__ThorVG.html#gga28287671eaf7406afd604bd055ba4066aa0cfd518e4385f31d38720579321ed29" title="The value returned in case of choosing unsupported options.">Result::NonSupport</a></td><td>When trying to load a file with an unknown extension. </td></tr>
-    <tr><td class="paramname"><a class="el" href="group__ThorVG.html#gga28287671eaf7406afd604bd055ba4066a88183b946cc5f0e8c96b2e66e1c74a7e" title="The value returned in all other cases.">Result::Unknown</a></td><td>If an error occurs at a later stage.</td></tr>
+    <tr><td class="paramname"><a class="el" href="group__ThorVG.html#gga28287671eaf7406afd604bd055ba4066aa0cfd518e4385f31d38720579321ed29" title="The value returned in case of choosing unsupported engine features(options).">Result::NonSupport</a></td><td>When trying to load a file with an unknown extension.</td></tr>
   </table>
   </dd>
 </dl>
@@ -485,12 +573,6 @@ Experimental API</dd></dl>
 <dl class="params"><dt>Parameters</dt><dd>
   <table class="params">
     <tr><td class="paramdir">[in]</td><td class="paramname">text</td><td>The multi-byte text encoded with utf8 string to be rendered.</td></tr>
-  </table>
-  </dd>
-</dl>
-<dl class="retval"><dt>Return values</dt><dd>
-  <table class="retval">
-    <tr><td class="paramname"><a class="el" href="group__ThorVG.html#gga28287671eaf7406afd604bd055ba4066a505a83f220c02df2f85c3810cd9ceb38" title="The value returned in case of a correct request execution.">Result::Success</a></td><td>when succeed.</td></tr>
   </table>
   </dd>
 </dl>
@@ -532,7 +614,6 @@ Experimental API</dd></dl>
 </dl>
 <dl class="retval"><dt>Return values</dt><dd>
   <table class="retval">
-    <tr><td class="paramname"><a class="el" href="group__ThorVG.html#gga28287671eaf7406afd604bd055ba4066a505a83f220c02df2f85c3810cd9ceb38" title="The value returned in case of a correct request execution.">Result::Success</a></td><td>Successfully unloads the font data. </td></tr>
     <tr><td class="paramname"><a class="el" href="group__ThorVG.html#gga28287671eaf7406afd604bd055ba4066a119732ff568bf103d744e930ae2404f1" title="The value returned in case the request cannot be processed - e.g. asking for properties of an object,...">Result::InsufficientCondition</a></td><td>Fails if the loader is not initialized.</td></tr>
   </table>
   </dd>
@@ -540,7 +621,7 @@ Experimental API</dd></dl>
 <dl class="section note"><dt>Note</dt><dd>If the font data is currently in use, it will not be immediately unloaded. </dd>
 <dd>
 Experimental API</dd></dl>
-<dl class="section see"><dt>See also</dt><dd><a class="el" href="classtvg_1_1Text.html#a2e6612c3e7ff222151d2228b97dac1d5" title="Loads a scalable font data(ttf) from a file.">Text::load(const std::string&amp; path)</a> </dd></dl>
+<dl class="section see"><dt>See also</dt><dd><a class="el" href="classtvg_1_1Text.html#a2e6612c3e7ff222151d2228b97dac1d5" title="Loads a scalable font data (ttf) from a file.">Text::load(const std::string&amp; path)</a> </dd></dl>
 
 </div>
 </div>
