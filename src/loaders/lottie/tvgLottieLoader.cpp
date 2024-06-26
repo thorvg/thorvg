@@ -273,7 +273,7 @@ Paint* LottieLoader::paint()
 
 bool LottieLoader::override(const char* slot)
 {
-    if (!comp) done();
+    done();
 
     if (!comp || comp->slots.count == 0) return false;
 
@@ -365,7 +365,7 @@ float LottieLoader::duration()
 
 void LottieLoader::sync()
 {
-    this->done();
+    done();
 
     if (rebuild) run(0);
 }
@@ -373,15 +373,15 @@ void LottieLoader::sync()
 
 uint32_t LottieLoader::markersCnt()
 {
-    if (!comp) done();
-    if (!comp) return 0;
-    return comp->markers.count;
+    done();
+    return comp ? comp->markers.count : 0;
 }
 
 
 const char* LottieLoader::markers(uint32_t index)
 {
-    if (!comp) done();
+    done();
+
     if (!comp || index >= comp->markers.count) return nullptr;
     auto marker = comp->markers.begin() + index;
     return (*marker)->name;
@@ -390,9 +390,10 @@ const char* LottieLoader::markers(uint32_t index)
 
 bool LottieLoader::segment(const char* marker, float& begin, float& end)
 {
-    if (!comp) done();
+    done();
+
     if (!comp) return false;
-    
+
     for (auto m = comp->markers.begin(); m < comp->markers.end(); ++m) {
         if (!strcmp(marker, (*m)->name)) {
             begin = (*m)->time / frameCnt;
