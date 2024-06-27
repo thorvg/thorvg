@@ -246,7 +246,7 @@ ecma_object_check_constructor (ecma_object_t *obj_p) /**< ecma object */
   {
     if (ecma_builtin_function_is_routine (obj_p))
     {
-      return ECMA_ERR_BULTIN_ROUTINES_HAVE_NO_CONSTRUCTOR;
+      return ECMA_ERR_BUILTIN_ROUTINES_HAVE_NO_CONSTRUCTOR;
     }
 
     JERRY_ASSERT (((ecma_extended_object_t *) obj_p)->u.built_in.id != ECMA_BUILTIN_ID_HANDLER);
