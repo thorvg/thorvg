@@ -1399,7 +1399,7 @@ typedef struct
 #define ECMA_COLLECTION_INITIAL_CAPACITY 4
 
 /**
- * Ecma-collenction grow factor when the collection underlying buffer need to be reallocated
+ * Ecma-collection grow factor when the collection underlying buffer need to be reallocated
  */
 #define ECMA_COLLECTION_GROW_FACTOR (ECMA_COLLECTION_INITIAL_CAPACITY * 2)
 
