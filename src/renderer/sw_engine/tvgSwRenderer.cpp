@@ -713,9 +713,6 @@ void* SwRenderer::prepareCommon(SwTask* task, const RenderTransform* transform, 
     if (!surface) return task;
     if (flags == RenderUpdateFlag::None) return task;
 
-    //Finish previous task if it has duplicated request.
-    task->done();
-
     //TODO: Failed threading them. It would be better if it's possible.
     //See: https://github.com/thorvg/thorvg/issues/1409
     //Guarantee composition targets get ready.
@@ -764,8 +761,11 @@ RenderData SwRenderer::prepare(Surface* surface, const RenderMesh* mesh, RenderD
     //prepare task
     auto task = static_cast<SwImageTask*>(data);
     if (!task) task = new SwImageTask;
+    else task->done();
+
     task->source = surface;
     task->mesh = mesh;
+
     return prepareCommon(task, transform, clips, opacity, flags);
 }
 
@@ -775,6 +775,8 @@ RenderData SwRenderer::prepare(const Array<RenderData>& scene, RenderData data, 
     //prepare task
     auto task = static_cast<SwSceneTask*>(data);
     if (!task) task = new SwSceneTask;
+    else task->done();
+
     task->scene = scene;
 
     //TODO: Failed threading them. It would be better if it's possible.
@@ -783,6 +785,7 @@ RenderData SwRenderer::prepare(const Array<RenderData>& scene, RenderData data, 
     for (auto task = scene.begin(); task < scene.end(); ++task) {
         static_cast<SwTask*>(*task)->done();
     }
+
     return prepareCommon(task, transform, clips, opacity, flags);
 }
 
@@ -791,10 +794,10 @@ RenderData SwRenderer::prepare(const RenderShape& rshape, RenderData data, const
 {
     //prepare task
     auto task = static_cast<SwShapeTask*>(data);
-    if (!task) {
-        task = new SwShapeTask;
-        task->rshape = &rshape;
-    }
+    if (!task) task = new SwShapeTask;
+    else task->done();
+
+    task->rshape = &rshape;
     task->clipper = clipper;
 
     return prepareCommon(task, transform, clips, opacity, flags);
