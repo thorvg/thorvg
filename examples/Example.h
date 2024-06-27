@@ -147,24 +147,6 @@ struct Window
     bool needDraw = true;
     bool print = false;
 
-    Window(tvg::CanvasEngine engine, Example* example, uint32_t width, uint32_t height)
-    {
-        //Initialize ThorVG Engine (4: threads count, engine: raster method)
-        if (!verify(tvg::Initializer::init(4, engine))) {
-            cout << "Failed to init ThorVG engine!" << endl;
-            return;
-        }
-
-        //Initialize the SDL
-        SDL_Init(SDL_INIT_VIDEO);
-
-        //Init member variables
-        this->width = width;
-        this->height = height;
-        this->example = example;
-        this->instance = this;
-    }
-
     virtual ~Window()
     {
         delete(example);
@@ -263,6 +245,29 @@ struct Window
 
     virtual void resize() {}
     virtual void refresh() {}
+
+protected:
+    Window() = default;
+
+    bool init(tvg::CanvasEngine engine, Example* example, uint32_t width, uint32_t height)
+    {
+        //Initialize ThorVG Engine (4: threads count, engine: raster method)
+        if (!verify(tvg::Initializer::init(4, engine))) {
+            cout << "Failed to init ThorVG engine!" << endl;
+            return false;
+        }
+
+        //Initialize the SDL
+        SDL_Init(SDL_INIT_VIDEO);
+
+        //Init member variables
+        this->width = width;
+        this->height = height;
+        this->example = example;
+        this->instance = this;
+
+        return true;
+    }
 };
 
 Window* Window::instance = nullptr;
@@ -276,20 +281,13 @@ struct SwWindow : Window
 {
     unique_ptr<tvg::SwCanvas> canvas = nullptr;
 
-    SwWindow(Example* example, uint32_t width, uint32_t height) : Window(tvg::CanvasEngine::Sw, example, width, height)
+    static std::unique_ptr<SwWindow> create(Example* example, uint32_t width, uint32_t height)
     {
-        window = SDL_CreateWindow("ThorVG Example (Software)", SDL_WINDOWPOS_UNDEFINED, SDL_WINDOWPOS_UNDEFINED, width, height, SDL_WINDOW_HIDDEN | SDL_WINDOW_RESIZABLE);
+        std::unique_ptr<SwWindow> swWindow(new SwWindow());
 
-        //Create a Canvas
-        canvas = tvg::SwCanvas::gen();
-        if (!canvas) {
-            cout << "SwCanvas is not supported. Did you enable the SwEngine?" << endl;
-            return;
-        }
+        if (!swWindow->init(example, width, height)) return nullptr;
+        return swWindow;
 
-        Window::canvas = canvas.get();
-
-        resize();
     }
 
     void resize() override
@@ -305,6 +303,28 @@ struct SwWindow : Window
     {
         SDL_UpdateWindowSurface(window);
     }
+
+private:
+    SwWindow() = default;
+
+    bool init(Example* example, uint32_t width, uint32_t height)
+    {
+        if (!Window::init(tvg::CanvasEngine::Sw, example, width, height)) return false;
+
+        window = SDL_CreateWindow("ThorVG Example (Software)", SDL_WINDOWPOS_UNDEFINED, SDL_WINDOWPOS_UNDEFINED, width, height, SDL_WINDOW_HIDDEN | SDL_WINDOW_RESIZABLE);
+
+        //Create a Canvas
+        canvas = tvg::SwCanvas::gen();
+        if (!canvas) {
+            cout << "SwCanvas is not supported. Did you enable the SwEngine?" << endl;
+            return false;
+        }
+
+        Window::canvas = canvas.get();
+
+        resize();
+        return true;
+    }
 };
 
 /************************************************************************/
@@ -317,30 +337,13 @@ struct GlWindow : Window
 
     unique_ptr<tvg::GlCanvas> canvas = nullptr;
 
-    GlWindow(Example* example, uint32_t width, uint32_t height) : Window(tvg::CanvasEngine::Gl, example, width, height)
+    static std::unique_ptr<GlWindow> create(Example* example, uint32_t width, uint32_t height)
     {
-#ifdef THORVG_GL_TARGET_GLES
-        SDL_GL_SetAttribute(SDL_GL_CONTEXT_PROFILE_MASK, SDL_GL_CONTEXT_PROFILE_ES);
-        SDL_GL_SetAttribute(SDL_GL_CONTEXT_MAJOR_VERSION, 3);
-        SDL_GL_SetAttribute(SDL_GL_CONTEXT_MINOR_VERSION, 0);
-#else
-        SDL_GL_SetAttribute(SDL_GL_CONTEXT_PROFILE_MASK, SDL_GL_CONTEXT_PROFILE_CORE);
-        SDL_GL_SetAttribute(SDL_GL_CONTEXT_MAJOR_VERSION, 3);
-        SDL_GL_SetAttribute(SDL_GL_CONTEXT_MINOR_VERSION, 3);
-#endif
-        window = SDL_CreateWindow("ThorVG Example (OpenGL/ES)", SDL_WINDOWPOS_UNDEFINED, SDL_WINDOWPOS_UNDEFINED, width, height, SDL_WINDOW_OPENGL | SDL_WINDOW_HIDDEN | SDL_WINDOW_RESIZABLE);
-        context = SDL_GL_CreateContext(window);
+        std::unique_ptr<GlWindow> glWindow(new GlWindow());
 
-        //Create a Canvas
-        canvas = tvg::GlCanvas::gen();
-        if (!canvas) {
-            cout << "GlCanvas is not supported. Did you enable the GlEngine?" << endl;
-            return;
-        }
+        if (!glWindow->init(example, width, height)) return nullptr;
+        return glWindow;
 
-        Window::canvas = canvas.get();
-
-        resize();
     }
 
     virtual ~GlWindow()
@@ -358,6 +361,40 @@ struct GlWindow : Window
     {
         SDL_GL_SwapWindow(window);
     }
+
+private:
+    GlWindow() = default;
+
+    bool init(Example* example, uint32_t width, uint32_t height)
+    {
+        if (!Window::init(tvg::CanvasEngine::Gl, example, width, height)) return false;
+
+#ifdef THORVG_GL_TARGET_GLES
+        SDL_GL_SetAttribute(SDL_GL_CONTEXT_PROFILE_MASK, SDL_GL_CONTEXT_PROFILE_ES);
+        SDL_GL_SetAttribute(SDL_GL_CONTEXT_MAJOR_VERSION, 3);
+        SDL_GL_SetAttribute(SDL_GL_CONTEXT_MINOR_VERSION, 0);
+#else
+        SDL_GL_SetAttribute(SDL_GL_CONTEXT_PROFILE_MASK, SDL_GL_CONTEXT_PROFILE_CORE);
+        SDL_GL_SetAttribute(SDL_GL_CONTEXT_MAJOR_VERSION, 3);
+        SDL_GL_SetAttribute(SDL_GL_CONTEXT_MINOR_VERSION, 3);
+#endif
+
+        window = SDL_CreateWindow("ThorVG Example (OpenGL/ES)", SDL_WINDOWPOS_UNDEFINED, SDL_WINDOWPOS_UNDEFINED, width, height, SDL_WINDOW_OPENGL | SDL_WINDOW_HIDDEN | SDL_WINDOW_RESIZABLE);
+        context = SDL_GL_CreateContext(window);
+
+        //Create a Canvas
+        canvas = tvg::GlCanvas::gen();
+        if (!canvas) {
+            cout << "GlCanvas is not supported. Did you enable the GlEngine?" << endl;
+            return false;
+        }
+
+        Window::canvas = canvas.get();
+
+        resize();
+
+        return true;
+    }
 };
 
 /************************************************************************/
@@ -373,9 +410,35 @@ struct WgWindow : Window
     WGPUInstance instance;
     WGPUSurface surface;
 
-    WgWindow(Example* example, uint32_t width, uint32_t height) : Window(tvg::CanvasEngine::Wg, example, width, height)
+    static std::unique_ptr<WgWindow> create(Example* example, uint32_t width, uint32_t height)
     {
-        window = SDL_CreateWindow("ThorVG Example (WebGPU)", SDL_WINDOWPOS_UNDEFINED, SDL_WINDOWPOS_UNDEFINED, width, height, SDL_WINDOW_HIDDEN);
+        std::unique_ptr<WgWindow> wgWindow(new WgWindow());
+
+        if (!wgWindow->init(example, width, height)) return nullptr;
+        return wgWindow;
+
+    }
+
+    virtual ~WgWindow()
+    {
+        //wgpuSurfaceRelease(surface);
+        wgpuInstanceRelease(instance);
+    }
+
+    void resize() override
+    {
+        //Set the canvas target and draw on it.
+        verify(canvas->target(instance, surface, width, height));
+    }
+
+private:
+    WgWindow() = default;
+
+    bool init(Example* example, uint32_t width, uint32_t height)
+    {
+        if (!Window::init(tvg::CanvasEngine::Wg, example, width, height)) return false;
+
+                window = SDL_CreateWindow("ThorVG Example (WebGPU)", SDL_WINDOWPOS_UNDEFINED, SDL_WINDOWPOS_UNDEFINED, width, height, SDL_WINDOW_HIDDEN);
 
         //Here we create our WebGPU surface from the window!
         SDL_SysWMinfo windowWMInfo;
@@ -424,33 +487,24 @@ struct WgWindow : Window
         canvas = tvg::WgCanvas::gen();
         if (!canvas) {
             cout << "WgCanvas is not supported. Did you enable the WgEngine?" << endl;
-            return;
+            return false;
         }
 
         Window::canvas = canvas.get();
 
         resize();
+        return true;
     }
 
-    virtual ~WgWindow()
-    {
-        //wgpuSurfaceRelease(surface);
-        wgpuInstanceRelease(instance);
-    }
-
-    void resize() override
-    {
-        //Set the canvas target and draw on it.
-        verify(canvas->target(instance, surface, width, height));
-    }
 };
 
 #else
 struct WgWindow : Window
 {
-    WgWindow(Example* example, uint32_t width, uint32_t height) : Window(tvg::CanvasEngine::Wg, example, width, height)
+    static std::unique_ptr<WgWindow> create(Example* example, uint32_t width, uint32_t height)
     {
         cout << "webgpu driver is not detected!" << endl;
+        return nullptr;
     }
 };
 
@@ -513,13 +567,15 @@ int main(Example* example, int argc, char **argv, uint32_t width = 800, uint32_t
     unique_ptr<Window> window;
 
     if (engine == tvg::CanvasEngine::Sw) {
-        window = unique_ptr<Window>(new SwWindow(example, width, height));
+        window = SwWindow::create(example, width, height);
     } else if (engine == tvg::CanvasEngine::Gl) {
-        window = unique_ptr<Window>(new GlWindow(example, width, height));
+        window = GlWindow::create(example, width, height);
     } else if (engine == tvg::CanvasEngine::Wg) {
-        window = unique_ptr<Window>(new WgWindow(example, width, height));
+        window = WgWindow::create(example, width, height);
     }
 
+    if (!window) return 1;
+    
     window->print = print;
 
     if (window->ready()) {
