@@ -220,7 +220,7 @@ ecma_op_new_array_object_from_buffer (const ecma_value_t *args_p, /**< array ele
 } /* ecma_op_new_array_object_from_buffer */
 
 /**
- * Allocate a new fast acces mode array object from the given collection
+ * Allocate a new fast access mode array object from the given collection
  *
  * Note: The given collection will be unavailable after and it's underlying buffer is reused
  *

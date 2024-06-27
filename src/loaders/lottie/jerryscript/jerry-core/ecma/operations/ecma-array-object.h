@@ -53,7 +53,7 @@
 #define ECMA_FAST_ARRAY_HOLE_SHIFT 8
 
 /**
- * This number represents 1 array hole in underlying buffer of a fast acces mode array
+ * This number represents 1 array hole in underlying buffer of a fast access mode array
  */
 #define ECMA_FAST_ARRAY_HOLE_ONE (1 << ECMA_FAST_ARRAY_HOLE_SHIFT)
 
