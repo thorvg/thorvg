@@ -1831,7 +1831,7 @@ void jpeg_decoder::process_restart()
     int i;
     int c = 0;
 
-    // Align to a byte boundry
+    // Align to a byte boundary
     // FIXME: Is this really necessary? get_bits_no_markers() never reads in markers!
     //get_bits_no_markers(m_bits_left & 7);
 
