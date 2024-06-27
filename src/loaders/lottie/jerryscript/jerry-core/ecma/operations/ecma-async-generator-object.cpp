@@ -123,7 +123,7 @@ ecma_async_yield_call (ecma_value_t function, /**< function (takes reference) */
 } /* ecma_async_yield_call */
 
 /**
- * Perform an exception throw and call the approprite handler
+ * Perform an exception throw and call the appropriate handler
  *
  * @return ecma value
  *         Returned value must be freed with ecma_free_value.
