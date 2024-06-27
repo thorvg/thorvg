@@ -491,7 +491,7 @@ typedef struct parser_saved_context_t
   uint16_t scope_stack_top; /**< preserved top of scope stack */
   uint16_t scope_stack_reg_top; /**< preserved top register of scope stack */
   uint16_t scope_stack_global_end; /**< end of global declarations of a function */
-  ecma_value_t tagged_template_literal_cp; /**< compessed pointer to the tagged template literal collection */
+  ecma_value_t tagged_template_literal_cp; /**< compressed pointer to the tagged template literal collection */
 #ifndef JERRY_NDEBUG
   uint16_t context_stack_depth; /**< current context stack depth */
 #endif /* !JERRY_NDEBUG */
@@ -578,7 +578,7 @@ typedef struct
   uint16_t scope_stack_top; /**< current top of scope stack */
   uint16_t scope_stack_reg_top; /**< current top register of scope stack */
   uint16_t scope_stack_global_end; /**< end of global declarations of a function */
-  ecma_value_t tagged_template_literal_cp; /**< compessed pointer to the tagged template literal collection */
+  ecma_value_t tagged_template_literal_cp; /**< compressed pointer to the tagged template literal collection */
   parser_private_context_t *private_context_p; /**< private context */
   uint8_t stack_top_uint8; /**< top byte stored on the stack */
 

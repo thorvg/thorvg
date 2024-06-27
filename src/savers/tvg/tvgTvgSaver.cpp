@@ -165,7 +165,7 @@ bool TvgSaver::saveEncoding(const std::string& path)
     memcpy(uncompressed, &uncompressedSize, TVG_HEADER_UNCOMPRESSED_SIZE);
     uncompressed += TVG_HEADER_UNCOMPRESSED_SIZE;
 
-    //Comprssed Size
+    //Compressed Size
     memcpy(uncompressed, &compressedSize, TVG_HEADER_COMPRESSED_SIZE);
     uncompressed += TVG_HEADER_COMPRESSED_SIZE;
 
