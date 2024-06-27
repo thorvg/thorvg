@@ -125,7 +125,7 @@ ecma_date_parse_date_chars (const lit_utf8_byte_t **str_p, /**< pointer to the c
 } /* ecma_date_parse_date_chars */
 
 /**
- * Helper function to try to parse a special chracter (+,-,T,Z,:,.) in a date string
+ * Helper function to try to parse a special character (+,-,T,Z,:,.) in a date string
  *
  * @return true if the first character is same as the expected, false otherwise
  */
