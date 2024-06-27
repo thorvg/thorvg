@@ -2300,7 +2300,7 @@ parser_parse_import_statement (parser_context_t *context_p) /**< parser context 
         parser_raise_error (context_p, PARSER_ERR_DUPLICATED_IMPORT_BINDING);
       }
 
-      ecma_string_t *import_name_p = ecma_get_magic_string (LIT_MAGIC_STRING_ASTERIX_CHAR);
+      ecma_string_t *import_name_p = ecma_get_magic_string (LIT_MAGIC_STRING_ASTERISK_CHAR);
 
       parser_module_add_names_to_node (context_p, import_name_p, local_name_p);
       ecma_deref_ecma_string (local_name_p);
@@ -2439,7 +2439,7 @@ parser_parse_export_statement (parser_context_t *context_p) /**< context */
           parser_raise_error (context_p, PARSER_ERR_DUPLICATED_EXPORT_IDENTIFIER);
         }
 
-        ecma_string_t *local_name_p = ecma_get_magic_string (LIT_MAGIC_STRING_ASTERIX_CHAR);
+        ecma_string_t *local_name_p = ecma_get_magic_string (LIT_MAGIC_STRING_ASTERISK_CHAR);
         parser_module_add_names_to_node (context_p, export_name_p, local_name_p);
         ecma_deref_ecma_string (export_name_p);
 
