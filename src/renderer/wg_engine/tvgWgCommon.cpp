@@ -57,7 +57,7 @@ void WgContext::initialize(WGPUInstance instance, WGPUSurface surface)
     wgpuAdapterGetProperties(adapter, &adapterProperties);
     wgpuAdapterGetLimits(adapter, &supportedLimits);
 
-    // reguest device
+    // request device
     WGPUDeviceDescriptor deviceDesc{};
     deviceDesc.nextInChain = nullptr;
     deviceDesc.label = "The device";
