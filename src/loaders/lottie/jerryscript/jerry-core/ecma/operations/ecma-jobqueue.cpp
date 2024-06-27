@@ -29,7 +29,7 @@
 /**
  * Mask for job queue type.
  */
-#define ECMA_JOB_QUEURE_TYPE_MASK ((uintptr_t) 0x07)
+#define ECMA_JOB_QUEUE_TYPE_MASK ((uintptr_t) 0x07)
 
 /** \addtogroup ecma ECMA
  * @{
@@ -97,7 +97,7 @@ ecma_job_queue_init (void)
 static inline ecma_job_queue_item_type_t
 ecma_job_queue_get_type (ecma_job_queue_item_t *job_p) /**< the job */
 {
-  return (ecma_job_queue_item_type_t) (job_p->next_and_type & ECMA_JOB_QUEURE_TYPE_MASK);
+  return (ecma_job_queue_item_type_t) (job_p->next_and_type & ECMA_JOB_QUEUE_TYPE_MASK);
 } /* ecma_job_queue_get_type */
 
 /**
@@ -108,7 +108,7 @@ ecma_job_queue_get_type (ecma_job_queue_item_t *job_p) /**< the job */
 static inline ecma_job_queue_item_t *
 ecma_job_queue_get_next (ecma_job_queue_item_t *job_p) /**< the job */
 {
-  return (ecma_job_queue_item_t *) (job_p->next_and_type & ~ECMA_JOB_QUEURE_TYPE_MASK);
+  return (ecma_job_queue_item_t *) (job_p->next_and_type & ~ECMA_JOB_QUEUE_TYPE_MASK);
 } /* ecma_job_queue_get_next */
 
 /**
@@ -392,7 +392,7 @@ ecma_process_promise_resolve_thenable_job (ecma_job_promise_resolve_thenable_t *
 static void
 ecma_enqueue_job (ecma_job_queue_item_t *job_p) /**< the job */
 {
-  JERRY_ASSERT (job_p->next_and_type <= ECMA_JOB_QUEURE_TYPE_MASK);
+  JERRY_ASSERT (job_p->next_and_type <= ECMA_JOB_QUEUE_TYPE_MASK);
 
   if (JERRY_CONTEXT (job_queue_head_p) == NULL)
   {
@@ -401,7 +401,7 @@ ecma_enqueue_job (ecma_job_queue_item_t *job_p) /**< the job */
   }
   else
   {
-    JERRY_ASSERT ((JERRY_CONTEXT (job_queue_tail_p)->next_and_type & ~ECMA_JOB_QUEURE_TYPE_MASK) == 0);
+    JERRY_ASSERT ((JERRY_CONTEXT (job_queue_tail_p)->next_and_type & ~ECMA_JOB_QUEUE_TYPE_MASK) == 0);
 
     JERRY_CONTEXT (job_queue_tail_p)->next_and_type |= (uintptr_t) job_p;
     JERRY_CONTEXT (job_queue_tail_p) = job_p;
