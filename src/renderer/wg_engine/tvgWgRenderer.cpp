@@ -291,7 +291,6 @@ bool WgRenderer::sync()
     mContext.executeCommandEncoder(commandEncoder);
     wgpuCommandEncoderRelease(commandEncoder);
     
-    wgpuSurfacePresent(mContext.surface);
     return true;
 }
 
