@@ -272,8 +272,8 @@ typedef enum
 
   VM_OC_PUSH_SPREAD_ELEMENT, /**< push spread element */
   VM_OC_PUSH_REST_OBJECT, /**< push rest object */
-  VM_OC_ITERATOR_CONTEXT_CREATE, /**< create iterator conext */
-  VM_OC_ITERATOR_CONTEXT_END, /**< finalize iterator cotnext */
+  VM_OC_ITERATOR_CONTEXT_CREATE, /**< create iterator context */
+  VM_OC_ITERATOR_CONTEXT_END, /**< finalize iterator context */
   VM_OC_ITERATOR_STEP, /**< IteratorStep abstract operation */
   VM_OC_OBJ_INIT_CONTEXT_CREATE, /**< create object initializer context */
   VM_OC_OBJ_INIT_CONTEXT_END, /**< finalize object initializer context */
