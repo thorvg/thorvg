@@ -920,10 +920,10 @@ ecma_builtin_array_prototype_object_sort_compare_helper (ecma_value_t lhs, /**< 
 {
   JERRY_UNUSED (array_buffer_p);
   /*
-   * ECMA-262 v5, 15.4.4.11 NOTE1: Because non-existent property values always
+   * ECMA-262 v5, 15.4.4.11 NOTE1: Because nonexistent property values always
    * compare greater than undefined property values, and undefined always
    * compares greater than any other value, undefined property values always
-   * sort to the end of the result, followed by non-existent property values.
+   * sort to the end of the result, followed by nonexistent property values.
    */
   bool lhs_is_undef = ecma_is_value_undefined (lhs);
   bool rhs_is_undef = ecma_is_value_undefined (rhs);

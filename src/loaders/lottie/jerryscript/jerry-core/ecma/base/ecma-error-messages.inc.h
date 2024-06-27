@@ -733,7 +733,7 @@ ECMA_ERROR_DEF (ECMA_ERR_CALL_SUPER_CONSTRUCTOR_DERIVED_CLASS_BEFORE_THIS,
                 "Must call super constructor in derived class before accessing 'this' or returning from it")
 #if JERRY_BUILTIN_PROXY
 ECMA_ERROR_DEF (ECMA_ERR_TRAP_TRUISH_DEFINING_NON_EXISTENT_PROPERTY,
-                "Trap returned truish for defining non-configurable property which is non-existent in the target")
+                "Trap returned truish for defining non-configurable property which is nonexistent in the target")
 ECMA_ERROR_DEF (
   ECMA_ERR_TRAP_TRUISH_ADD_PROPERTY_INCOMPATIBLE_OTHER_PROP,
   "Trap returned truish for adding property that is incompatible with the existing property in the target")
