@@ -402,7 +402,7 @@
 /**
  * The JERRY_ATTR_GLOBAL_HEAP allows adding extra attributes for the Jerry global heap.
  *
- * Example on how to move the global heap into it's own section:
+ * Example on how to move the global heap into its own section:
  *   #define JERRY_ATTR_GLOBAL_HEAP __attribute__((section(".text.globalheap")))
  */
 #ifndef JERRY_ATTR_GLOBAL_HEAP
