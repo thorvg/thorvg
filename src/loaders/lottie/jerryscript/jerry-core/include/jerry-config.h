@@ -229,7 +229,7 @@
  * Enable/Disable the JavaScript parser.
  *
  * Allowed values:
- *  0: Disable the JavaScript parser and all related functionallity.
+ *  0: Disable the JavaScript parser and all related functionality.
  *  1: Enable the JavaScript parser.
  *
  * Default value: 1
