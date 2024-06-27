@@ -2019,7 +2019,7 @@ ecma_typedarray_create (ecma_object_t *constructor_p, /**< constructor function 
 ecma_value_t
 ecma_typedarray_species_create (ecma_value_t this_arg, /**< this argument */
                                 ecma_value_t *arguments_list_p, /**< the arg list passed to typedarray construct */
-                                uint32_t arguments_list_len) /**< length of the the arg list */
+                                uint32_t arguments_list_len) /**< length of the arg list */
 {
   ecma_object_t *typedarray_p = ecma_get_object_from_value (this_arg);
   ecma_typedarray_info_t info = ecma_typedarray_get_info (typedarray_p);

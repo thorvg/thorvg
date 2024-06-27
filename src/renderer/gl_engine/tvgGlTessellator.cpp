@@ -979,7 +979,7 @@ void Tessellator::tessellate(const Array<const RenderShape *> &shapes)
 void Tessellator::visitShape(const PathCommand *cmds, uint32_t cmd_count, const Point *pts, uint32_t pts_count)
 {
     // all points at least need to be visit once
-    // so the points count is at least is the same as the count in shape
+    // so the points count is at least the same as the count in shape
     resGlPoints->reserve(pts_count * 2);
     // triangle fans, the indices count is at least triangles number * 3
     resIndices->reserve((pts_count - 2) * 3);
