@@ -112,18 +112,18 @@ ecma_op_async_from_sync_iterator_prototype_continuation (ecma_value_t result, /*
   }
 
   /* 8 - 9. */
-  ecma_object_t *on_fullfilled = ecma_op_create_native_handler (ECMA_NATIVE_HANDLER_ASYNC_FROM_SYNC_ITERATOR_UNWRAP,
+  ecma_object_t *on_fulfilled = ecma_op_create_native_handler (ECMA_NATIVE_HANDLER_ASYNC_FROM_SYNC_ITERATOR_UNWRAP,
                                                                 sizeof (ecma_extended_object_t));
-  ((ecma_extended_object_t *) on_fullfilled)->u.built_in.u2.routine_flags = (uint8_t) done_flag;
+  ((ecma_extended_object_t *) on_fulfilled)->u.built_in.u2.routine_flags = (uint8_t) done_flag;
 
   /* 10. */
   ecma_value_t then_result = ecma_promise_perform_then (value_wrapper,
-                                                        ecma_make_object_value (on_fullfilled),
+                                                        ecma_make_object_value (on_fulfilled),
                                                         ECMA_VALUE_UNDEFINED,
                                                         capability_obj_p);
 
   JERRY_ASSERT (!ECMA_IS_VALUE_ERROR (then_result));
-  ecma_deref_object (on_fullfilled);
+  ecma_deref_object (on_fulfilled);
   ecma_free_value (value_wrapper);
 
   /* 11. */
