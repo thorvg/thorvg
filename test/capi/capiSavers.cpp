@@ -133,7 +133,7 @@ TEST_CASE("Save svg into tvg", "[capiSaver]")
     REQUIRE(picture);
     REQUIRE(tvg_picture_load(picture, TEST_DIR"/logo.svg") == TVG_RESULT_SUCCESS);
     REQUIRE(tvg_picture_set_size(picture, 222, 333) == TVG_RESULT_SUCCESS);
-    REQUIRE(tvg_paint_translate(picture, 123.45, 54.321) == TVG_RESULT_SUCCESS);
+    REQUIRE(tvg_paint_translate(picture, 123.45f, 54.321f) == TVG_RESULT_SUCCESS);
 
     Tvg_Saver* saver = tvg_saver_new();
     REQUIRE(saver);
