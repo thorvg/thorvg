@@ -1226,14 +1226,14 @@ ecma_free_property_descriptor (ecma_property_descriptor_t *prop_desc_p) /**< pro
 } /* ecma_free_property_descriptor */
 
 /**
- * Increase ref count of an extended primitve value.
+ * Increase ref count of an extended primitive value.
  */
 void
-ecma_ref_extended_primitive (ecma_extended_primitive_t *primitve_p) /**< extended primitve value */
+ecma_ref_extended_primitive (ecma_extended_primitive_t *primitive_p) /**< extended primitive value */
 {
-  if (JERRY_LIKELY (primitve_p->refs_and_type < ECMA_EXTENDED_PRIMITIVE_MAX_REF))
+  if (JERRY_LIKELY (primitive_p->refs_and_type < ECMA_EXTENDED_PRIMITIVE_MAX_REF))
   {
-    primitve_p->refs_and_type += ECMA_EXTENDED_PRIMITIVE_REF_ONE;
+    primitive_p->refs_and_type += ECMA_EXTENDED_PRIMITIVE_REF_ONE;
   }
   else
   {
