@@ -229,7 +229,7 @@ ecma_op_new_array_object_from_buffer (const ecma_value_t *args_p, /**< array ele
 ecma_value_t
 ecma_op_new_array_object_from_collection (ecma_collection_t *collection_p, /**< collection to create array from */
                                           bool unref_objects) /**< true - if the collection potentially
-                                                                          containts objects
+                                                                          contains objects
                                                                    false - otherwise */
 {
   const uint32_t item_count = collection_p->item_count;
