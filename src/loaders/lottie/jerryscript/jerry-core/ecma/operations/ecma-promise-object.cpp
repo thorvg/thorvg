@@ -552,12 +552,12 @@ ecma_promise_all_or_all_settled_handler_cb (ecma_object_t *function_obj_p, /**< 
   else
   {
     lit_magic_string_id_t status_property_val = LIT_MAGIC_STRING_REJECTED;
-    lit_magic_string_id_t data_propery_name = LIT_MAGIC_STRING_REASON;
+    lit_magic_string_id_t data_property_name = LIT_MAGIC_STRING_REASON;
 
     if (promise_type == ECMA_PROMISE_ALLSETTLED_RESOLVE)
     {
       status_property_val = LIT_MAGIC_STRING_FULFILLED;
-      data_propery_name = LIT_MAGIC_STRING_VALUE;
+      data_property_name = LIT_MAGIC_STRING_VALUE;
     }
 
     ecma_object_t *obj_p =
@@ -571,7 +571,7 @@ ecma_promise_all_or_all_settled_handler_cb (ecma_object_t *function_obj_p, /**< 
     prop_value_p->value = ecma_make_magic_string_value (status_property_val);
 
     prop_value_p = ecma_create_named_data_property (obj_p,
-                                                    ecma_get_magic_string (data_propery_name),
+                                                    ecma_get_magic_string (data_property_name),
                                                     ECMA_PROPERTY_CONFIGURABLE_ENUMERABLE_WRITABLE,
                                                     NULL);
     prop_value_p->value = ecma_copy_value_if_not_object (arg);

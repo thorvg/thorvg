@@ -359,7 +359,7 @@ typedef enum
 {
   ECMA_ENUMERABLE_PROPERTY_KEYS, /**< List only property names */
   ECMA_ENUMERABLE_PROPERTY_VALUES, /**< List only property values */
-  ECMA_ENUMERABLE_PROPERTY_ENTRIES, /**< List both propery names and values */
+  ECMA_ENUMERABLE_PROPERTY_ENTRIES, /**< List both property names and values */
 
   ECMA_ENUMERABLE_PROPERTY__COUNT /**< Number of enumerable property listing types */
 } ecma_enumerable_property_names_options_t;
