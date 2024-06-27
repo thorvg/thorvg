@@ -264,7 +264,7 @@ typedef enum
   VM_OC_RUN_STATIC_FIELD_INIT, /**< run the static class field initializer function */
   VM_OC_SET_NEXT_COMPUTED_FIELD, /**< set the next computed field of a class */
   VM_OC_PUSH_SUPER_CONSTRUCTOR, /**< getSuperConstructor operation */
-  VM_OC_RESOLVE_LEXICAL_THIS, /**< resolve this_binding from from the lexical environment */
+  VM_OC_RESOLVE_LEXICAL_THIS, /**< resolve this_binding from the lexical environment */
   VM_OC_SUPER_REFERENCE, /**< push super reference */
   VM_OC_SET_HOME_OBJECT, /**< set the [[HomeObject]] environment in an object literal */
   VM_OC_OBJECT_LITERAL_HOME_ENV, /**< create/destroy [[HomeObject]] environment of an object literal */
