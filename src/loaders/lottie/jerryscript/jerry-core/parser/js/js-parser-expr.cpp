@@ -3262,7 +3262,7 @@ parser_process_binary_opcodes (parser_context_t *context_p, /**< context */
     /* For left-to-right operators (all binary operators except assignment
      * and logical operators), the byte code is flushed if the precedence
      * of the next operator is less or equal than the current operator. For
-     * assignment and logical operators, we add 1 to the min precendence to
+     * assignment and logical operators, we add 1 to the min precedence to
      * force right-to-left evaluation order. */
 
     if (!LEXER_IS_BINARY_OP_TOKEN (token)
