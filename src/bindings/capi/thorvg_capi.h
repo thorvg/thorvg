@@ -823,7 +823,7 @@ TVG_API Tvg_Result tvg_paint_rotate(Tvg_Paint* paint, float degree);
 /*!
 * \brief Moves the given Tvg_Paint in a two-dimensional space.
 *
-* The origin of the coordinate system is in the upper left corner of the canvas.
+* The origin of the coordinate system is in the upper-left corner of the canvas.
 * The horizontal and vertical axes point to the right and down, respectively.
 *
 * \param[in] paint The Tvg_Paint object to be shifted.
@@ -906,8 +906,8 @@ TVG_API Tvg_Paint* tvg_paint_duplicate(Tvg_Paint* paint);
 * \brief Gets the axis-aligned bounding box of the Tvg_Paint object.
 *
 * \param[in] paint The Tvg_Paint object of which to get the bounds.
-* \param[out] x The x coordinate of the upper left corner of the object.
-* \param[out] y The y coordinate of the upper left corner of the object.
+* \param[out] x The x coordinate of the upper-left corner of the object.
+* \param[out] y The y coordinate of the upper-left corner of the object.
 * \param[out] w The width of the object.
 * \param[out] h The height of the object.
 * \param[in] transformed If @c true, the transformation of the paint is taken into account, otherwise it isn't.
@@ -1114,7 +1114,7 @@ TVG_API Tvg_Result tvg_shape_close(Tvg_Paint* paint);
 * The rectangle with rounded corners can be achieved by setting non-zero values to @p rx and @p ry arguments.
 * The @p rx and @p ry values specify the radii of the ellipse defining the rounding of the corners.
 *
-* The position of the rectangle is specified by the coordinates of its upper left corner -  @p x and @p y arguments.
+* The position of the rectangle is specified by the coordinates of its upper-left corner -  @p x and @p y arguments.
 *
 * The rectangle is treated as a new sub-path - it is not connected with the previous sub-path.
 *
@@ -1122,8 +1122,8 @@ TVG_API Tvg_Result tvg_shape_close(Tvg_Paint* paint);
 * than @p w/2 the current point is set to (@p x + @p w/2, @p y)
 *
 * \param[in] paint A Tvg_Paint pointer to the shape object.
-* \param[in] x The horizontal coordinate of the upper left corner of the rectangle.
-* \param[in] y The vertical coordinate of the upper left corner of the rectangle.
+* \param[in] x The horizontal coordinate of the upper-left corner of the rectangle.
+* \param[in] y The vertical coordinate of the upper-left corner of the rectangle.
 * \param[in] w The width of the rectangle.
 * \param[in] h The height of the rectangle.
 * \param[in] rx The x-axis radius of the ellipse defining the rounded corners of the rectangle.

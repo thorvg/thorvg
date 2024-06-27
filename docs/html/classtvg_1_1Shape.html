@@ -535,13 +535,13 @@ Static Public Member Functions</h2></td></tr>
 
 <p>Appends a rectangle to the path. </p>
 <p>The rectangle with rounded corners can be achieved by setting non-zero values to <code>rx</code> and <code>ry</code> arguments. The <code>rx</code> and <code>ry</code> values specify the radii of the ellipse defining the rounding of the corners.</p>
-<p>The position of the rectangle is specified by the coordinates of its upper left corner - <code>x</code> and <code>y</code> arguments.</p>
+<p>The position of the rectangle is specified by the coordinates of its upper-left corner - <code>x</code> and <code>y</code> arguments.</p>
 <p>The rectangle is treated as a new sub-path - it is not connected with the previous sub-path.</p>
 <p>The value of the current point is set to (<code>x</code> + <code>rx</code>, <code>y</code>) - in case <code>rx</code> is greater than <code>w/2</code> the current point is set to (<code>x</code> + <code>w/2</code>, <code>y</code>)</p>
 <dl class="params"><dt>Parameters</dt><dd>
   <table class="params">
-    <tr><td class="paramdir">[in]</td><td class="paramname">x</td><td>The horizontal coordinate of the upper left corner of the rectangle. </td></tr>
-    <tr><td class="paramdir">[in]</td><td class="paramname">y</td><td>The vertical coordinate of the upper left corner of the rectangle. </td></tr>
+    <tr><td class="paramdir">[in]</td><td class="paramname">x</td><td>The horizontal coordinate of the upper-left corner of the rectangle. </td></tr>
+    <tr><td class="paramdir">[in]</td><td class="paramname">y</td><td>The vertical coordinate of the upper-left corner of the rectangle. </td></tr>
     <tr><td class="paramdir">[in]</td><td class="paramname">w</td><td>The width of the rectangle. </td></tr>
     <tr><td class="paramdir">[in]</td><td class="paramname">h</td><td>The height of the rectangle. </td></tr>
     <tr><td class="paramdir">[in]</td><td class="paramname">rx</td><td>The x-axis radius of the ellipse defining the rounded corners of the rectangle. </td></tr>
