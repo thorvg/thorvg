@@ -144,7 +144,7 @@ struct Window
     Example* example = nullptr;
 
     bool needResize = false;
-    bool needDraw = true;
+    bool needDraw = false;
     bool print = false;
 
     Window(tvg::CanvasEngine engine, Example* example, uint32_t width, uint32_t height)
@@ -204,6 +204,7 @@ struct Window
     void show()
     {
         SDL_ShowWindow(window);
+        refresh();
 
         //Mainloop
         SDL_Event event;
