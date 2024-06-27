@@ -360,7 +360,7 @@ public:
      *
      * In case @p transform is @c true, all object's transformations are applied first, and then the bounding box is established. Otherwise, the bounding box is determined before any transformations.
      *
-     * @param[out] x The x coordinate of the upper-left corner of the object.
+     * @param[out] x The x-coordinate of the upper-left corner of the object.
      * @param[out] y The y coordinate of the upper-left corner of the object.
      * @param[out] w The width of the object.
      * @param[out] h The height of the object.

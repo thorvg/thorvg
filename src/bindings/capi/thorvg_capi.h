@@ -906,7 +906,7 @@ TVG_API Tvg_Paint* tvg_paint_duplicate(Tvg_Paint* paint);
 * \brief Gets the axis-aligned bounding box of the Tvg_Paint object.
 *
 * \param[in] paint The Tvg_Paint object of which to get the bounds.
-* \param[out] x The x coordinate of the upper-left corner of the object.
+* \param[out] x The x-coordinate of the upper-left corner of the object.
 * \param[out] y The y coordinate of the upper-left corner of the object.
 * \param[out] w The width of the object.
 * \param[out] h The height of the object.
