@@ -592,7 +592,7 @@ ecma_promise_all_or_all_settled_handler_cb (ecma_object_t *function_obj_p, /**< 
   if (ecma_promise_remaining_inc_or_dec (executor_p->remaining_elements, false) == 0)
   {
     ecma_value_t capability = executor_p->capability;
-    ecma_promise_capabality_t *capability_p = (ecma_promise_capabality_t *) ecma_get_object_from_value (capability);
+    ecma_promise_capability_t *capability_p = (ecma_promise_capability_t *) ecma_get_object_from_value (capability);
     if (promise_type == ECMA_PROMISE_ANY_REJECT)
     {
       ecma_value_t error_val = ecma_new_aggregate_error (executor_p->values, ECMA_VALUE_UNDEFINED);
@@ -633,7 +633,7 @@ ecma_op_get_capabilities_executor_cb (ecma_object_t *function_obj_p, /**< functi
   /* 2-3. */
   ecma_object_t *capability_obj_p = ecma_get_object_from_value (executor_p->capability);
   JERRY_ASSERT (ecma_object_class_is (capability_obj_p, ECMA_OBJECT_CLASS_PROMISE_CAPABILITY));
-  ecma_promise_capabality_t *capability_p = (ecma_promise_capabality_t *) capability_obj_p;
+  ecma_promise_capability_t *capability_p = (ecma_promise_capability_t *) capability_obj_p;
 
   /* 4. */
   if (!ecma_is_value_undefined (capability_p->resolve))
@@ -679,10 +679,10 @@ ecma_promise_new_capability (ecma_value_t constructor, /**< constructor function
 
   /* 3. */
   ecma_object_t *capability_obj_p = ecma_create_object (ecma_builtin_get (ECMA_BUILTIN_ID_OBJECT_PROTOTYPE),
-                                                        sizeof (ecma_promise_capabality_t),
+                                                        sizeof (ecma_promise_capability_t),
                                                         ECMA_OBJECT_TYPE_CLASS);
 
-  ecma_promise_capabality_t *capability_p = (ecma_promise_capabality_t *) capability_obj_p;
+  ecma_promise_capability_t *capability_p = (ecma_promise_capability_t *) capability_obj_p;
   capability_p->header.u.cls.type = ECMA_OBJECT_CLASS_PROMISE_CAPABILITY;
   capability_p->header.u.cls.u3.promise = ECMA_VALUE_UNDEFINED;
   capability_p->resolve = ECMA_VALUE_UNDEFINED;
@@ -787,7 +787,7 @@ ecma_promise_reject_or_resolve (ecma_value_t this_arg, /**< "this" argument */
     return ECMA_VALUE_ERROR;
   }
 
-  ecma_promise_capabality_t *capability_p = (ecma_promise_capabality_t *) capability_obj_p;
+  ecma_promise_capability_t *capability_p = (ecma_promise_capability_t *) capability_obj_p;
 
   ecma_value_t func = is_resolve ? capability_p->resolve : capability_p->reject;
 
@@ -1133,7 +1133,7 @@ ecma_op_if_abrupt_reject_promise (ecma_value_t *value_p, /**< [in - out] complet
 
   ecma_value_t reason = jcontext_take_exception ();
 
-  ecma_promise_capabality_t *capability_p = (ecma_promise_capabality_t *) capability_obj_p;
+  ecma_promise_capability_t *capability_p = (ecma_promise_capability_t *) capability_obj_p;
   ecma_value_t call_ret =
     ecma_op_function_call (ecma_get_object_from_value (capability_p->reject), ECMA_VALUE_UNDEFINED, &reason, 1);
   ecma_free_value (reason);
@@ -1167,7 +1167,7 @@ ecma_promise_perform_then (ecma_value_t promise, /**< the promise which call 'th
 {
   JERRY_ASSERT (ecma_object_class_is (result_capability_obj_p, ECMA_OBJECT_CLASS_PROMISE_CAPABILITY));
 
-  ecma_promise_capabality_t *capability_p = (ecma_promise_capabality_t *) result_capability_obj_p;
+  ecma_promise_capability_t *capability_p = (ecma_promise_capability_t *) result_capability_obj_p;
 
   /* 3. boolean true indicates "indentity" */
   if (!ecma_op_is_callable (on_fulfilled))

@@ -189,7 +189,7 @@ ecma_builtin_async_from_sync_iterator_prototype_do (ecma_async_from_sync_iterato
     return method;
   }
 
-  ecma_promise_capabality_t *capability_p = (ecma_promise_capabality_t *) capability_obj_p;
+  ecma_promise_capability_t *capability_p = (ecma_promise_capability_t *) capability_obj_p;
 
   ecma_value_t call_arg;
   uint32_t arg_size;

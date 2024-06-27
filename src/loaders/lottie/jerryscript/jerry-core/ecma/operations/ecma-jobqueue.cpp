@@ -185,8 +185,8 @@ ecma_process_promise_reaction_job (ecma_job_promise_reaction_t *job_p) /**< the 
   /* 2. */
   JERRY_ASSERT (
     ecma_object_class_is (ecma_get_object_from_value (job_p->capability), ECMA_OBJECT_CLASS_PROMISE_CAPABILITY));
-  ecma_promise_capabality_t *capability_p;
-  capability_p = (ecma_promise_capabality_t *) ecma_get_object_from_value (job_p->capability);
+  ecma_promise_capability_t *capability_p;
+  capability_p = (ecma_promise_capability_t *) ecma_get_object_from_value (job_p->capability);
 
   /* 3. */
   ecma_value_t handler = job_p->handler;

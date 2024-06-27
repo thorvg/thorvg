@@ -1972,7 +1972,7 @@ typedef struct
   ecma_extended_object_t header; /**< object header, and [[Promise]] internal slot */
   ecma_value_t resolve; /**< [[Resolve]] internal slot */
   ecma_value_t reject; /**< [[Reject]] internal slot */
-} ecma_promise_capabality_t;
+} ecma_promise_capability_t;
 
 /**
  * Definition of GetCapabilitiesExecutor Functions
