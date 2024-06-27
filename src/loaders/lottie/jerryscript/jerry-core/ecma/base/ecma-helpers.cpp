@@ -1556,7 +1556,7 @@ ecma_bytecode_deref (ecma_compiled_code_t *bytecode_p) /**< byte code pointer */
 } /* ecma_bytecode_deref */
 
 /**
- * Gets the script data asigned to a script / module / function
+ * Gets the script data assigned to a script / module / function
  *
  * @return script data - if available, JMEM_CP_NULL - otherwise
  */
