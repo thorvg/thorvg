@@ -639,7 +639,7 @@ lit_utf8_string_calc_hash (const lit_utf8_byte_t *utf8_buf_p, /**< characters bu
  * Return code unit at the specified position in string
  *
  * NOTE:
- *   code_unit_offset should be less then string's length
+ *   code_unit_offset should be less than string's length
  *
  * @return code unit value
  */
