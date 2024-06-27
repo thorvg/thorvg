@@ -836,7 +836,7 @@ ecma_builtin_typedarray_prototype_set (ecma_value_t this_arg, /**< this argument
  * See also:
  *          ECMA-262 v5.1, 15.4.4.2
  *
- * @return NULL - if the converison fails
+ * @return NULL - if the conversion fails
  *         ecma_string_t * - otherwise
  */
 static ecma_string_t *
