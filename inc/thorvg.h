@@ -539,7 +539,7 @@ public:
      *
      * This function provides the list of paint nodes, allowing users a direct opportunity to modify the scene tree.
      *
-     * @warning  Please avoid accessing the paints during Canvas update/draw. You can access them after calling sync().
+     * @warning Please avoid accessing the paints during Canvas update/draw. You can access them after calling sync().
      * @see Canvas::sync()
      *
      * @note Experimental API
@@ -1212,7 +1212,7 @@ public:
      * @retval Result::InvalidArguments In case no data are provided or the @p size is zero or less.
      * @retval Result::NonSupport When trying to load a file with an unknown extension.
      *
-     * @warning: It's the user responsibility to release the @p data memory.
+     * @warning It's the user responsibility to release the @p data memory.
      *
      * @note If you are unsure about the MIME type, you can provide an empty value like @c "", and thorvg will attempt to figure it out.
      * @since 0.5
@@ -1348,7 +1348,7 @@ public:
      *
      * This function provides the list of paint nodes, allowing users a direct opportunity to modify the scene tree.
      *
-     * @warning  Please avoid accessing the paints during Scene update/draw. You can access them after calling Canvas::sync().
+     * @warning Please avoid accessing the paints during Scene update/draw. You can access them after calling Canvas::sync().
      * @see Canvas::sync()
      * @see Scene::push()
      * @see Scene::clear()
@@ -1496,7 +1496,7 @@ public:
      * @retval Result::NonSupport When trying to load a file with an unsupported extension.
      * @retval Result::InsufficientCondition If attempting to unload the font data that has not been previously loaded.
      *
-     * @warning: It's the user responsibility to release the @p data memory.
+     * @warning It's the user responsibility to release the @p data memory.
      *
      * @note To unload the font data loaded using this API, pass the proper @p name and @c nullptr as @p data.
      * @note If you are unsure about the MIME type, you can provide an empty value like @c "", and thorvg will attempt to figure it out.
@@ -1636,8 +1636,6 @@ public:
  * @class GlCanvas
  *
  * @brief A class for the rendering graphic elements with a GL raster engine.
- *
- * @warning Please do not use it. This class is not fully supported yet.
  *
  * @since 0.14
  */
