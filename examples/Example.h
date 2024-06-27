@@ -190,7 +190,9 @@ struct Window
 
     bool ready()
     {
-        if (!example->content(Window::canvas, width, height)) return false;
+        if (!canvas) return false;
+
+        if (!example->content(canvas, width, height)) return false;
 
         //initiate the first rendering before window pop-up.
         if (!verify(canvas->draw())) return false;
