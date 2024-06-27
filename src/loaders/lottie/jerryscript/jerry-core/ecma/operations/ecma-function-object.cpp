@@ -1276,7 +1276,7 @@ ecma_op_function_call_native (ecma_object_t *func_obj_p, /**< Function object */
  * @return target function of the bound function
  */
 JERRY_ATTR_NOINLINE static ecma_object_t *
-ecma_op_bound_function_get_argument_list (ecma_object_t *func_obj_p, /**< bound bunction object */
+ecma_op_bound_function_get_argument_list (ecma_object_t *func_obj_p, /**< bound function object */
                                           ecma_collection_t *list_p) /**< list of arguments */
 {
   JERRY_ASSERT (ecma_get_object_type (func_obj_p) == ECMA_OBJECT_TYPE_BOUND_FUNCTION);

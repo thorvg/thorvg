@@ -1180,7 +1180,7 @@ opfunc_create_implicit_class_constructor (uint8_t opcode, /**< current cbc opcod
 } /* opfunc_create_implicit_class_constructor */
 
 /**
- * Set the [[HomeObject]] attribute of the given functon object
+ * Set the [[HomeObject]] attribute of the given function object
  *
  * @return void
  */
