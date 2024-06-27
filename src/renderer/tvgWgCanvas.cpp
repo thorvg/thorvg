@@ -57,7 +57,9 @@ WgCanvas::~WgCanvas()
 Result WgCanvas::target(void* instance, void* surface, uint32_t w, uint32_t h) noexcept
 {
 #ifdef THORVG_WG_RASTER_SUPPORT
-    if (Canvas::pImpl->status != Status::Synced) return Result::InsufficientCondition;
+    if (Canvas::pImpl->status != Status::Damanged && Canvas::pImpl->status != Status::Synced) {
+        return Result::InsufficientCondition;
+    }
 
     if (!instance || !surface || (w == 0) || (h == 0)) return Result::InvalidArguments;
 
@@ -70,7 +72,7 @@ Result WgCanvas::target(void* instance, void* surface, uint32_t w, uint32_t h) n
     renderer->viewport(Canvas::pImpl->vport);
 
     //Paints must be updated again with this new target.
-    Canvas::pImpl->needRefresh();
+    Canvas::pImpl->status = Status::Damanged;
 
     return Result::Success;
 #endif

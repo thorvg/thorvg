@@ -62,7 +62,9 @@ GlCanvas::~GlCanvas()
 Result GlCanvas::target(int32_t id, uint32_t w, uint32_t h) noexcept
 {
 #ifdef THORVG_GL_RASTER_SUPPORT
-    if (Canvas::pImpl->status != Status::Synced) return Result::InsufficientCondition;
+    if (Canvas::pImpl->status != Status::Damanged && Canvas::pImpl->status != Status::Synced) {
+        return Result::InsufficientCondition;
+    }
 
     //We know renderer type, avoid dynamic_cast for performance.
     auto renderer = static_cast<GlRenderer*>(Canvas::pImpl->renderer);
@@ -73,7 +75,7 @@ Result GlCanvas::target(int32_t id, uint32_t w, uint32_t h) noexcept
     renderer->viewport(Canvas::pImpl->vport);
 
     //Paints must be updated again with this new target.
-    Canvas::pImpl->needRefresh();
+    Canvas::pImpl->status = Status::Damanged;
 
     return Result::Success;
 #endif
