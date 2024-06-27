@@ -379,7 +379,7 @@ typedef struct
 
   /**
    * Callback responsible for finalizing a context item, or NULL. This is called as part of jerry_cleanup (),
-   * right *after* the VM has been cleaned up and destroyed and jerry_... APIs cannot be called any more. At this point,
+   * right *after* the VM has been cleaned up and destroyed and jerry_... APIs cannot be called anymore. At this point,
    * all values in the VM have been cleaned up. This is a good place to clean up native state that can only be cleaned
    * up at the very end when there are no more VM values around that may need to access that state.
    *
