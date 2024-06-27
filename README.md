@@ -7,7 +7,7 @@
 <br>
 [![Build Ubuntu](https://github.com/thorvg/thorvg/actions/workflows/build_ubuntu.yml/badge.svg?branch=main&event=push)](https://github.com/thorvg/thorvg/actions/workflows/build_ubuntu.yml)
 [![Build Windows](https://github.com/thorvg/thorvg/actions/workflows/build_windows.yml/badge.svg?branch=main&event=push)](https://github.com/thorvg/thorvg/actions/workflows/build_windows.yml)
-[![Build MacOS](https://github.com/thorvg/thorvg/actions/workflows/build_macos.yml/badge.svg?branch=main&event=push)](https://github.com/thorvg/thorvg/actions/workflows/build_macos.yml)
+[![Build macOS](https://github.com/thorvg/thorvg/actions/workflows/build_macos.yml/badge.svg?branch=main&event=push)](https://github.com/thorvg/thorvg/actions/workflows/build_macos.yml)
 [![Build iOS](https://github.com/thorvg/thorvg/actions/workflows/build_ios.yml/badge.svg?branch=main&event=push)](https://github.com/thorvg/thorvg/actions/workflows/build_ios.yml)
 [![Build Android](https://github.com/thorvg/thorvg/actions/workflows/build_android.yml/badge.svg?branch=main&event=push)](https://github.com/thorvg/thorvg/actions/workflows/build_android.yml)
 

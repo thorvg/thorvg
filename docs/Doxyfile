@@ -589,7 +589,7 @@ INTERNAL_DOCS          = NO
 # output files written for symbols that only differ in casing, such as for two
 # classes, one named CLASS and the other named Class, and to also support
 # references to files without having to specify the exact matching casing. On
-# Windows (including Cygwin) and MacOS, users should typically set this option
+# Windows (including Cygwin) and macOS, users should typically set this option
 # to NO, whereas on Linux or other Unix flavors it should typically be set to
 # YES.
 # The default value is: system dependent.
