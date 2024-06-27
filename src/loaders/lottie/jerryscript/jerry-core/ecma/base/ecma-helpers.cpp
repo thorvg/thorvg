@@ -453,7 +453,7 @@ ecma_create_property (ecma_object_t *object_p, /**< the object */
   /* Otherwise we create a new property pair and use its second value. */
   ecma_property_pair_t *first_property_pair_p = ecma_alloc_property_pair ();
 
-  /* Need to query property_list_head_p again and recheck the existennce
+  /* Need to query property_list_head_p again and recheck the existence
    * of property hasmap, because ecma_alloc_property_pair may delete them. */
   property_list_head_p = &object_p->u1.property_list_cp;
 #if JERRY_PROPERTY_HASHMAP

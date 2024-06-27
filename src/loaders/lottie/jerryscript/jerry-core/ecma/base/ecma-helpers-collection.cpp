@@ -260,7 +260,7 @@ ecma_collection_check_duplicated_entries (ecma_collection_t *collection_p) /**< 
 } /* ecma_collection_check_duplicated_entries */
 
 /**
- * Check the string value existance in the collection.
+ * Check the string value existence in the collection.
  *
  * Used by:
  *         - ecma_builtin_json_stringify step 4.b.ii.5
