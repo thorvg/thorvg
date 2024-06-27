@@ -192,7 +192,9 @@ struct Window
 
     bool ready()
     {
-        if (!example->content(Window::canvas, width, height)) return false;
+        if (!canvas) return false;
+
+        if (!example->content(canvas, width, height)) return false;
 
         //initiate the first rendering before window pop-up.
         if (!verify(canvas->draw())) return false;
@@ -301,6 +303,8 @@ struct SwWindow : Window
 
         //Set the canvas target and draw on it.
         verify(canvas->target((uint32_t*)surface->pixels, surface->w, surface->pitch / 4, surface->h, tvg::SwCanvas::ARGB8888));
+
+        canvas->clear(false);
     }
 
     void refresh() override
