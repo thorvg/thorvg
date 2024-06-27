@@ -231,7 +231,7 @@ ecma_dataview_swap_order (bool system_is_little_endian, /**< true - if the syste
 } /* ecma_dataview_swap_order */
 
 /**
- * GetViewValue and SetViewValue abstact operation
+ * GetViewValue and SetViewValue abstract operation
  *
  * See also:
  *          ECMA-262 v11, 24.3.1.1

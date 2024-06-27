@@ -876,7 +876,7 @@ opfunc_async_create_and_await (vm_frame_ctx_t *frame_ctx_p, /**< frame context *
 } /* opfunc_async_create_and_await */
 
 /**
- * PrivateMethodOrAccessorAdd abstact operation.
+ * PrivateMethodOrAccessorAdd abstract operation.
  *
  * See also: ECMAScript v12, 7.3.29.
  *
@@ -1270,7 +1270,7 @@ opfunc_find_private_key (ecma_object_t *class_object_p, /**< class environment *
 } /* opfunc_find_private_key */
 
 /**
- * PrivateElementFind abstact operation
+ * PrivateElementFind abstract operation
  *
  * See also: ECMAScript v12, 7.3.27
  *
@@ -1350,7 +1350,7 @@ opfunc_private_in (ecma_value_t base, /**< base */
 } /* opfunc_private_in */
 
 /**
- * PrivateFieldAdd abstact operation
+ * PrivateFieldAdd abstract operation
  *
  * See also: ECMAScript v12, 7.3.28
  *
@@ -1382,7 +1382,7 @@ opfunc_private_field_add (ecma_value_t base, /**< base object */
 } /* opfunc_private_field_add */
 
 /**
- * PrivateSet abstact operation
+ * PrivateSet abstract operation
  *
  * See also: ECMAScript v12, 7.3.31
  *
@@ -1449,7 +1449,7 @@ opfunc_private_set (ecma_value_t base, /**< this object */
 } /* opfunc_private_set */
 
 /**
- * PrivateGet abstact operation
+ * PrivateGet abstract operation
  *
  * See also: ECMAScript v12, 7.3.30
  *
