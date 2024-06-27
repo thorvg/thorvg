@@ -1136,10 +1136,10 @@ ecma_op_array_object_define_own_property (ecma_object_t *object_p, /**< the arra
   prop_desc = *property_desc_p;
   prop_desc.flags &= (uint16_t) ~JERRY_PROP_SHOULD_THROW;
 
-  ecma_value_t completition = ecma_op_general_object_define_own_property (object_p, property_name_p, &prop_desc);
-  JERRY_ASSERT (ecma_is_value_boolean (completition));
+  ecma_value_t completion = ecma_op_general_object_define_own_property (object_p, property_name_p, &prop_desc);
+  JERRY_ASSERT (ecma_is_value_boolean (completion));
 
-  if (ecma_is_value_false (completition))
+  if (ecma_is_value_false (completion))
   {
     return ecma_raise_property_redefinition (property_name_p, property_desc_p->flags);
   }
