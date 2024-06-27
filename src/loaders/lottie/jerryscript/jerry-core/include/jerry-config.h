@@ -392,7 +392,7 @@
  * For the moment it is mainly meant for the following targets:
  *      - ESP8266
  *
- * Example configuration for moving (some) constatns into a given section:
+ * Example configuration for moving (some) constants into a given section:
  *  # define JERRY_ATTR_CONST_DATA __attribute__((section(".rodata.const")))
  */
 #ifndef JERRY_ATTR_CONST_DATA
