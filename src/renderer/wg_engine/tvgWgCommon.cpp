@@ -52,7 +52,7 @@ void WgContext::initialize(WGPUInstance instance, WGPUSurface surface)
     wgpuInstanceRequestAdapter(instance, &requestAdapterOptions, onAdapterRequestEnded, &adapter);
     assert(adapter);
 
-    // adapter enumerate fueatures
+    // adapter enumerate features
     size_t featuresCount = wgpuAdapterEnumerateFeatures(adapter, featureNames);
     wgpuAdapterGetProperties(adapter, &adapterProperties);
     wgpuAdapterGetLimits(adapter, &supportedLimits);
