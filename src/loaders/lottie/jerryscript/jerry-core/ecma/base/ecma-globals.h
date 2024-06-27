@@ -1740,7 +1740,7 @@ typedef struct
 
 /**
  * The lowest state of the ecma_prop_hashmap_alloc_state counter.
- * If ecma_prop_hashmap_alloc_state other other than this value, it is
+ * If ecma_prop_hashmap_alloc_state other than this value, it is
  * disabled.
  */
 #define ECMA_PROP_HASHMAP_ALLOC_ON 0
