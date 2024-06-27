@@ -1003,7 +1003,7 @@ void Tessellator::visitShape(const PathCommand *cmds, uint32_t cmd_count, const 
                 pts++;
             } break;
             case PathCommand::CubicTo: {
-                // bezier curve needs to calcluate how many segment to split
+                // bezier curve needs to calculate how many segment to split
                 // for now just break curve into 16 segments for convenient
 
                 auto  last = outlines.last();
