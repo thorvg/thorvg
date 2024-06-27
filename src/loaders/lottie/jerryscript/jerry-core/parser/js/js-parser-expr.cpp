@@ -3097,11 +3097,11 @@ parser_process_binary_assignment_token (parser_context_t *context_p, /**< contex
     }
   }
 
-  bool group_expr_assingment = false;
+  bool group_expr_assignment = false;
 
   if (JERRY_UNLIKELY (context_p->stack_top_uint8 == LEXER_ASSIGN_GROUP_EXPR))
   {
-    group_expr_assingment = true;
+    group_expr_assignment = true;
     parser_stack_pop_uint8 (context_p);
   }
 
@@ -3122,7 +3122,7 @@ parser_process_binary_assignment_token (parser_context_t *context_p, /**< contex
     return;
   }
 
-  if (!group_expr_assingment)
+  if (!group_expr_assignment)
   {
     uint16_t function_literal_index = parser_check_anonymous_function_declaration (context_p);
 
