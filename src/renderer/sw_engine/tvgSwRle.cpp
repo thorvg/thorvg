@@ -350,7 +350,7 @@ static void _horizLine(RleWorker& rw, SwCoord x, SwCoord y, SwCoord area, SwCoor
         x = SHRT_MAX;
     }
     if (y >= SHRT_MAX) {
-        TVGERR("SW_ENGINE", "Y Coordinate overflow!");
+        TVGERR("SW_ENGINE", "Y-coordinate overflow!");
         y = SHRT_MAX;
     }
 
@@ -769,7 +769,7 @@ static SwSpan* _intersectSpansRegion(const SwRleData *clip, const SwRleData *tar
     auto clipEnd = clip->spans + clip->size;
 
     while (spans < end && clipSpans < clipEnd) {
-        //align y coordinates.
+        //align y-coordinates.
         if (clipSpans->y > spans->y) {
             ++spans;
             continue;
@@ -779,7 +779,7 @@ static SwSpan* _intersectSpansRegion(const SwRleData *clip, const SwRleData *tar
             continue;
         }
 
-        //Try clipping with all clip spans which have a same y coordinate.
+        //Try clipping with all clip spans which have a same y-coordinate.
         auto temp = clipSpans;
         while(temp < clipEnd && outSpansCnt > 0 && temp->y == clipSpans->y) {
             auto sx1 = spans->x;
