@@ -163,7 +163,7 @@ ecma_get_native_pointer_value (ecma_object_t *obj_p, /**< object to get property
 {
   if (ecma_op_object_is_fast_array (obj_p))
   {
-    /* Fast access mode array can not have native pointer properties */
+    /* Fast access mode array cannot have native pointer properties */
     return NULL;
   }
 
@@ -235,7 +235,7 @@ ecma_delete_native_pointer_property (ecma_object_t *obj_p, /**< object to delete
 {
   if (ecma_op_object_is_fast_array (obj_p))
   {
-    /* Fast access mode array can not have native pointer properties */
+    /* Fast access mode array cannot have native pointer properties */
     return false;
   }
 

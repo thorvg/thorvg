@@ -80,7 +80,7 @@ typedef struct _Tvg_Canvas Tvg_Canvas;
 /**
 * \brief A structure representing a graphical element.
 *
-* \warning The TvgPaint objects can not be shared between Canvases.
+* \warning The TvgPaint objects cannot be shared between Canvases.
 */
 typedef struct _Tvg_Paint Tvg_Paint;
 
