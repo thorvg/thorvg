@@ -2186,7 +2186,7 @@ ecma_string_hash (const ecma_string_t *string_p) /**< ecma-string to calculate h
 /**
  * Create a substring from an ecma string
  *
- * @return a newly consturcted ecma string with its value initialized to a copy of a substring of the first argument
+ * @return a newly constructed ecma string with its value initialized to a copy of a substring of the first argument
  */
 ecma_string_t *
 ecma_string_substr (const ecma_string_t *string_p, /**< pointer to an ecma string */
