@@ -738,6 +738,6 @@ ECMA_ERROR_DEF (
   ECMA_ERR_TRAP_TRUISH_ADD_PROPERTY_INCOMPATIBLE_OTHER_PROP,
   "Trap returned truish for adding property that is incompatible with the existing property in the target")
 #endif /* JERRY_BUILTIN_PROXY */
-ECMA_ERROR_DEF (ECMA_ERR_CANNOT_ACCESS_CALLER_CALLE_ARGUMENTS,
+ECMA_ERROR_DEF (ECMA_ERR_CANNOT_ACCESS_CALLER_CALLEE_ARGUMENTS,
                 "'caller', 'callee', and 'arguments' properties may not be accessed on strict mode functions or the "
                 "arguments objects for calls to them")
