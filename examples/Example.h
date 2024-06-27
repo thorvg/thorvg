@@ -89,12 +89,7 @@ struct Example
         }
         do {
             if (*fd.cFileName == '.' || *fd.cFileName == '$') continue;
-            if (fd.dwFileAttributes & FILE_ATTRIBUTE_DIRECTORY) {
-                auto subpath = string(path);
-                subpath += '\\';
-                subpath += fd.cFileName;
-                scandir(subpath.c_str());
-            } else {
+            if (!(fd.dwFileAttributes & FILE_ATTRIBUTE_DIRECTORY)) {
                 auto fullpath = string(path);
                 fullpath += '\\';
                 fullpath += fd.cFileName;
@@ -113,12 +108,7 @@ struct Example
         struct dirent* entry;
         while ((entry = readdir(dir)) != NULL) {
             if (*entry->d_name == '.' || *entry->d_name == '$') continue;
-            if (entry->d_type == DT_DIR) {
-                auto subpath = string(path);
-                subpath += '/';
-                subpath += entry->d_name;
-                scandir(subpath.c_str());
-            } else {
+            if (entry->d_type != DT_DIR) {
                 auto fullpath = string(path);
                 fullpath += '/';
                 fullpath += entry->d_name;
