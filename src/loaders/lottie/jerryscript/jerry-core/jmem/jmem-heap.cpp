@@ -587,7 +587,7 @@ jmem_heap_realloc_block (void *ptr, /**< memory region to reallocate */
   }
   /*
    * Check if block can be extended at the front.
-   * This is less optimal because we need to copy the data, but still better than allocting a new block.
+   * This is less optimal because we need to copy the data, but still better than allocating a new block.
    */
   else if (jmem_heap_get_region_end (prev_p) == block_p)
   {
