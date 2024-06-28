@@ -74,7 +74,7 @@ LIT_SEARCH_CHAR_IN_ARRAY_FN (lit_search_codepoint_in_array, lit_code_point_t, ui
 
 /**
  * Binary search algorithm that searches a character in the given intervals.
- * Intervals specifed by two arrays. The first one contains the starting points
+ * Intervals specified by two arrays. The first one contains the starting points
  * of the intervals, the second one contains the length of them.
  *
  * @return true - if the the character is included (inclusively) in one of the intervals in the given array
