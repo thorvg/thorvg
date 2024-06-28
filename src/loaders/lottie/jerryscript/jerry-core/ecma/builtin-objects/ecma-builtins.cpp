@@ -134,7 +134,7 @@ enum
  * All the builtin object must be extensible except the ThrowTypeError object.
  */
 JERRY_STATIC_ASSERT (ECMA_BUILTIN_EXTENSIBLE_CHECK == true,
-                     ecma_builtin_must_be_extensible_except_the_builtin_thorw_type_error_object);
+                     ecma_builtin_must_be_extensible_except_the_builtin_throw_type_error_object);
 #endif /* !JERRY_NDEBUG */
 
 /**
