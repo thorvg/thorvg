@@ -778,7 +778,7 @@ parser_post_processing (parser_context_t *context_p) /**< context */
       if (last_opcode == (cbc_opcode_t) (CBC_JUMP_FORWARD + PARSER_MAX_BRANCH_LENGTH - 1) && prefix_zero
           && page_p->bytes[offset] == PARSER_MAX_BRANCH_LENGTH + 1)
       {
-        /* Uncoditional jumps which jump right after the instruction
+        /* Unconditional jumps which jump right after the instruction
          * are effectively NOPs. These jumps are removed from the
          * stream. The 1 byte long CBC_JUMP_FORWARD form marks these
          * instructions, since this form is constructed during post
