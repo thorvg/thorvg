@@ -1045,7 +1045,7 @@ ecma_op_array_object_set_length (ecma_object_t *object_p, /**< the array object 
 
 /**
  * Property descriptor bitset for fast array data properties.
- * If the property desciptor fields contains all the flags below
+ * If the property descriptor fields contains all the flags below
  * attempt to stay fast access array during [[DefineOwnProperty]] operation.
  */
 #define ECMA_FAST_ARRAY_DATA_PROP_FLAGS                                                               \
