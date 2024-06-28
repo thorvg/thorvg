@@ -196,7 +196,7 @@ typedef enum
   LEXER_PROPERTY_GETTER, /**< property getter function */
   LEXER_PROPERTY_SETTER, /**< property setter function */
   LEXER_COMMA_SEP_LIST, /**< comma separated bracketed expression list */
-  LEXER_ASSIGN_GROUP_EXPR, /**< indetifier for the assignment is located in a group expression */
+  LEXER_ASSIGN_GROUP_EXPR, /**< identifier for the assignment is located in a group expression */
   LEXER_ASSIGN_CONST, /**< a const binding is reassigned */
   LEXER_INVALID_PATTERN, /**< special value for invalid destructuring pattern */
   LEXER_PRIVATE_PRIMARY_EXPR, /**< private field in primary expression position */

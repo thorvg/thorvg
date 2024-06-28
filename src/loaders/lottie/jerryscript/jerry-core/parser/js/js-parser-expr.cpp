@@ -4015,7 +4015,7 @@ parser_process_group_expression (parser_context_t *context_p, /**< context */
   lexer_next_token (context_p);
 
   /* Lookahead for anonymous function declaration after '=' token when the assignment base is LHS expression
-     with a single indentifier in it. e.g.: (a) = function () {} */
+     with a single identifier in it. e.g.: (a) = function () {} */
   if (JERRY_UNLIKELY (context_p->token.type == LEXER_ASSIGN
                       && PARSER_IS_PUSH_LITERALS_WITH_THIS (context_p->last_cbc_opcode)
                       && context_p->last_cbc.literal_type == LEXER_IDENT_LITERAL
