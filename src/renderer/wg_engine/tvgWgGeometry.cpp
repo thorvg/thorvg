@@ -321,7 +321,7 @@ void WgGeometryData::appendStrokeDashed(const WgPolyline* polyline, const Render
             // append current polyline point
             if (dashIndex % 2 == 0)
                 dashed.appendPoint(pts[i]);
-            // move inside polyline sergemnt
+            // move inside polyline segment
             while(currentLength < dist[i+1]) {
                 // get current point
                 float t = currentLength / dist[i+1];
