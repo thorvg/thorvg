@@ -601,7 +601,7 @@ struct LottieSlot
     ~LottieSlot()
     {
         free(sid);
-        if (!overriden) return;
+        if (!overridden) return;
         for (auto pair = pairs.begin(); pair < pairs.end(); ++pair) {
             delete(pair->prop);
         }
@@ -610,7 +610,7 @@ struct LottieSlot
     char* sid;
     Array<Pair> pairs;
     LottieProperty::Type type;
-    bool overriden = false;
+    bool overridden = false;
 };
 
 

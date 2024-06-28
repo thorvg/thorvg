@@ -37,7 +37,7 @@
 
 void LottieSlot::reset()
 {
-    if (!overriden) return;
+    if (!overridden) return;
 
     for (auto pair = pairs.begin(); pair < pairs.end(); ++pair) {
         switch (type) {
@@ -64,7 +64,7 @@ void LottieSlot::reset()
         delete(pair->prop);
         pair->prop = nullptr;
     }
-    overriden = false;
+    overridden = false;
 }
 
 
@@ -75,7 +75,7 @@ void LottieSlot::assign(LottieObject* target)
         //backup the original properties before overwriting
         switch (type) {
             case LottieProperty::Type::ColorStop: {
-                if (!overriden) {
+                if (!overridden) {
                     pair->prop = new LottieColorStop;
                     *static_cast<LottieColorStop*>(pair->prop) = static_cast<LottieGradient*>(pair->obj)->colorStops;
                 }
@@ -84,7 +84,7 @@ void LottieSlot::assign(LottieObject* target)
                 break;
             }
             case LottieProperty::Type::Color: {
-                if (!overriden) {
+                if (!overridden) {
                     pair->prop = new LottieColor;
                     *static_cast<LottieColor*>(pair->prop) = static_cast<LottieSolid*>(pair->obj)->color;
                 }
@@ -93,7 +93,7 @@ void LottieSlot::assign(LottieObject* target)
                 break;
             }
             case LottieProperty::Type::TextDoc: {
-                if (!overriden) {
+                if (!overridden) {
                     pair->prop = new LottieTextDoc;
                     *static_cast<LottieTextDoc*>(pair->prop) = static_cast<LottieText*>(pair->obj)->doc;
                 }
@@ -104,7 +104,7 @@ void LottieSlot::assign(LottieObject* target)
             default: break;
         }
     }
-    overriden = true;
+    overridden = true;
 }
 
 
