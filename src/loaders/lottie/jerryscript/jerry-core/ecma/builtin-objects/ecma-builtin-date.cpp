@@ -256,7 +256,7 @@ ecma_date_construct_helper (const ecma_value_t *args, /**< arguments passed to t
     ECMA_NUMBER_ZERO, /* hours */
     ECMA_NUMBER_ZERO, /* minutes */
     ECMA_NUMBER_ZERO, /* seconds */
-    ECMA_NUMBER_ZERO /* miliseconds */
+    ECMA_NUMBER_ZERO /* milliseconds */
   };
 
   args_len = JERRY_MIN (args_len, sizeof (date_nums) / sizeof (date_nums[0]));
