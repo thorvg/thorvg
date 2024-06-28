@@ -248,7 +248,7 @@ ecma_validate_proxy_object (ecma_value_t handler, /**< proxy handler */
   return ecma_op_get_method_by_magic_id (handler, magic_id);
 } /* ecma_validate_proxy_object */
 
-/* Interal operations */
+/* Internal operations */
 
 /**
  * The Proxy object [[GetPrototypeOf]] internal routine
