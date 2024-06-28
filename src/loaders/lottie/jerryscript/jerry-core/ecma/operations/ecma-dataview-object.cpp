@@ -184,16 +184,16 @@ ecma_op_dataview_get_object (ecma_value_t this_arg) /**< this argument */
 } /* ecma_op_dataview_get_object */
 
 /**
- * Helper union to specify the system's endiannes
+ * Helper union to specify the system's endianness
  */
 typedef union
 {
   uint32_t number; /**< for write numeric data */
   char data[sizeof (uint32_t)]; /**< for read numeric data */
-} ecma_dataview_endiannes_check_t;
+} ecma_dataview_endianness_check_t;
 
 /**
- * Helper function to check the current system endiannes
+ * Helper function to check the current system endianness
  *
  * @return true - if the current system has little endian byteorder
  *         false - otherwise
@@ -201,15 +201,15 @@ typedef union
 static bool
 ecma_dataview_check_little_endian (void)
 {
-  ecma_dataview_endiannes_check_t checker;
+  ecma_dataview_endianness_check_t checker;
   checker.number = 0x01;
 
   return checker.data[0] == 0x01;
 } /* ecma_dataview_check_little_endian */
 
 /**
- * Helper function for swap bytes if the system's endiannes
- * does not match with the requested endiannes.
+ * Helper function for swap bytes if the system's endianness
+ * does not match with the requested endianness.
  */
 static void
 ecma_dataview_swap_order (bool system_is_little_endian, /**< true - if the system has little endian byteorder
