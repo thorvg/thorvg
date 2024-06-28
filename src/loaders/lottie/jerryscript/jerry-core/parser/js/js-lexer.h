@@ -199,7 +199,7 @@ typedef enum
   LEXER_ASSIGN_GROUP_EXPR, /**< indetifier for the assignment is located in a group expression */
   LEXER_ASSIGN_CONST, /**< a const binding is reassigned */
   LEXER_INVALID_PATTERN, /**< special value for invalid destructuring pattern */
-  LEXER_PRIVATE_PRIMARY_EXPR, /**< private field in primary expession position */
+  LEXER_PRIVATE_PRIMARY_EXPR, /**< private field in primary expression position */
   LEXER_ASSIGN_REFERENCE, /**< special value for reference assignment */
 
   /* Keywords which are not keyword tokens. */
