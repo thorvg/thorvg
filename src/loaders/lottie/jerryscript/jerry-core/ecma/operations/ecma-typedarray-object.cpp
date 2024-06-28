@@ -967,7 +967,7 @@ ecma_typedarray_create_object_with_typedarray (ecma_object_t *typedarray_p, /**<
 static ecma_value_t
 ecma_op_typedarray_from_helper (ecma_value_t this_val, /**< this_arg for the above from function */
                                 ecma_value_t current_value, /**< given value to set */
-                                uint32_t index, /**< currrent index */
+                                uint32_t index, /**< current index */
                                 ecma_object_t *func_object_p, /**< map function object */
                                 uint8_t *buffer_p, /**< target buffer */
                                 ecma_typedarray_setter_fn_t setter_cb) /**< setter callback function */
