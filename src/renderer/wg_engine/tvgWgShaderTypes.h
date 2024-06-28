@@ -42,7 +42,7 @@ struct WgShaderTypeMat4x4f
     void update(size_t w, size_t h);
 };
 
-// struct BlendSettigs {
+// struct BlendSettings {
 //     format  : u32, // ColorSpace
 //     dummy0  : f32,
 //     dummy1  : f32,
