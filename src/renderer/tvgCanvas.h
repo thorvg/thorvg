@@ -42,7 +42,7 @@ struct Canvas::Impl
 
     ~Impl()
     {
-        //make it sure any deffered jobs
+        //make it sure any deferred jobs
         renderer->sync();
 
         clearPaints();
