@@ -2976,7 +2976,7 @@ vm_loop (vm_frame_ctx_t *frame_ctx_p) /**< frame context */
 
             if (JERRY_LIKELY (int_increase != 0))
             {
-              /* Postfix operators require the unmodifed number value. */
+              /* Postfix operators require the unmodified number value. */
               if (opcode_flags & VM_OC_POST_INCR_DECR_OPERATOR_FLAG)
               {
                 POST_INCREASE_DECREASE_PUT_RESULT (result);
@@ -3015,7 +3015,7 @@ vm_loop (vm_frame_ctx_t *frame_ctx_p) /**< frame context */
                 operation_type = ECMA_BIGINT_UNARY_DECREASE;
               }
 
-              /* Postfix operators require the unmodifed number value. */
+              /* Postfix operators require the unmodified number value. */
               if (opcode_flags & VM_OC_POST_INCR_DECR_OPERATOR_FLAG)
               {
                 POST_INCREASE_DECREASE_PUT_RESULT (result);
@@ -3048,7 +3048,7 @@ vm_loop (vm_frame_ctx_t *frame_ctx_p) /**< frame context */
             increase = ECMA_NUMBER_MINUS_ONE;
           }
 
-          /* Postfix operators require the unmodifed number value. */
+          /* Postfix operators require the unmodified number value. */
           if (opcode_flags & VM_OC_POST_INCR_DECR_OPERATOR_FLAG)
           {
             POST_INCREASE_DECREASE_PUT_RESULT (result);
