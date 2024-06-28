@@ -1849,9 +1849,9 @@ ecma_builtin_typedarray_prototype_includes (ecma_typedarray_info_t *info_p, /**<
 {
 #if JERRY_BUILTIN_BIGINT
   bool is_bigint = ECMA_TYPEDARRAY_IS_BIGINT_TYPE (info_p->id);
-#else /* !JERRRY_BUILTIN_BIGINT */
+#else /* !JERRY_BUILTIN_BIGINT */
   bool is_bigint = false;
-#endif /* JERRRY_BUILTIN_BIGINT */
+#endif /* JERRY_BUILTIN_BIGINT */
 
   if (ecma_arraybuffer_is_detached (info_p->array_buffer_p))
   {
