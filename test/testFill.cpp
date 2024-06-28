@@ -173,7 +173,7 @@ TEST_CASE("Radial Filling", "[tvgFill]")
     REQUIRE(radius == 0.0f);
 }
 
-TEST_CASE("Linear Filling Dupliction", "[tvgFill]")
+TEST_CASE("Linear Filling Duplication", "[tvgFill]")
 {
     auto fill = LinearGradient::gen();
     REQUIRE(fill);
@@ -228,7 +228,7 @@ TEST_CASE("Linear Filling Dupliction", "[tvgFill]")
     REQUIRE(mDup.e33 == Approx(m.e33).margin(0.000001));
 }
 
-TEST_CASE("Radial Filling Dupliction", "[tvgFill]")
+TEST_CASE("Radial Filling Duplication", "[tvgFill]")
 {
     auto fill = RadialGradient::gen();
     REQUIRE(fill);

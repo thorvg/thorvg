@@ -174,7 +174,7 @@ TEST_CASE("Paint Bounds", "[capiPaint]")
     REQUIRE(tvg_paint_del(paint) == TVG_RESULT_SUCCESS);
 }
 
-TEST_CASE("Paint Dupliction", "[capiPaint]")
+TEST_CASE("Paint Duplication", "[capiPaint]")
 {
     Tvg_Paint* paint = tvg_shape_new();
     REQUIRE(paint);
