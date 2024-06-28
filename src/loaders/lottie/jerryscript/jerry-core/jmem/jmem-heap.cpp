@@ -357,7 +357,7 @@ jmem_heap_alloc_block_null_on_error (const size_t size) /**< required memory siz
 
 #if !JERRY_SYSTEM_ALLOCATOR
 /**
- * Finds the block in the free block list which preceeds the argument block
+ * Finds the block in the free block list which precedes the argument block
  *
  * @return pointer to the preceeding block
  */
