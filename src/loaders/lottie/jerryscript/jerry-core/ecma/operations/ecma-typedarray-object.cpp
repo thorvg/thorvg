@@ -1599,7 +1599,7 @@ ecma_typedarray_get_offset (ecma_object_t *typedarray_p) /**< the pointer to the
 /**
  * Utility function: return the pointer of the data buffer referenced by the typedarray info
  *
- * @return pointer to the data buffer if successfull,
+ * @return pointer to the data buffer if successful,
  *         NULL otherwise
  */
 uint8_t *
