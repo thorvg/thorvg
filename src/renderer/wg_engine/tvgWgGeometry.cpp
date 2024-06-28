@@ -308,7 +308,7 @@ void WgGeometryData::appendStrokeDashed(const WgPolyline* polyline, const Render
     assert(polyline);
     static WgPolyline dashed;
     dashed.clear();
-    // ignore singpe points polyline
+    // ignore single points polyline
     // append multiple points dashed polyline
     if (polyline->pts.count >= 2) {
         auto& pts = polyline->pts;
