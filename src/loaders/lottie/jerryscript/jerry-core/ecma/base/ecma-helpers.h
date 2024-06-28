@@ -93,7 +93,7 @@ typedef enum
   ECMA_STRING_FLAG_IS_ASCII = (1 << 0), /**< The string contains only ASCII characters. */
   ECMA_STRING_FLAG_REHASH_NEEDED = (1 << 1), /**< The hash of the string must be recalculated.
                                               *   For more details see ecma_append_chars_to_string */
-  ECMA_STRING_FLAG_IS_UINT32 = (1 << 2), /**< The string repesents an UINT32 number */
+  ECMA_STRING_FLAG_IS_UINT32 = (1 << 2), /**< The string represents an UINT32 number */
   ECMA_STRING_FLAG_MUST_BE_FREED = (1 << 3), /**< The returned buffer must be freed */
 } ecma_string_flag_t;
 

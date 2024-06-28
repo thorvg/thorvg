@@ -2121,7 +2121,7 @@ typedef struct
 #endif /* JERRY_BUILTIN_PROXY */
 
 /**
- * Type to repesent the maximum property index
+ * Type to represent the maximum property index
  *
  * For ES6+ the maximum valid property index is 2**53 - 1
  */
