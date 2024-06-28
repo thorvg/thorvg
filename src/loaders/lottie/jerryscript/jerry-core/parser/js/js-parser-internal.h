@@ -515,11 +515,11 @@ typedef struct
   /** Union for rarely used members. */
   union
   {
-    void *allocated_buffer_p; /**< dinamically allocated buffer
+    void *allocated_buffer_p; /**< dynamically allocated buffer
                                *   which needs to be freed on error */
     scanner_context_t *scanner_context_p; /**< scanner context for the pre-scanner */
   } u;
-  uint32_t allocated_buffer_size; /**< size of the dinamically allocated buffer */
+  uint32_t allocated_buffer_size; /**< size of the dynamically allocated buffer */
 
   /* Parser members. */
   uint32_t status_flags; /**< status flags */
