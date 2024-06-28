@@ -1169,7 +1169,7 @@ ecma_promise_perform_then (ecma_value_t promise, /**< the promise which call 'th
 
   ecma_promise_capability_t *capability_p = (ecma_promise_capability_t *) result_capability_obj_p;
 
-  /* 3. boolean true indicates "indentity" */
+  /* 3. boolean true indicates "identity" */
   if (!ecma_op_is_callable (on_fulfilled))
   {
     on_fulfilled = ECMA_VALUE_TRUE;
