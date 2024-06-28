@@ -582,7 +582,7 @@ ecma_op_get_environment_record (ecma_object_t *lex_env_p) /**< lexical environme
  *
  * See also: ECMA-262 v6, 8.1.1.3
  *
- * @return true - if the status is "initialzed"
+ * @return true - if the status is "initialized"
  *         false - otherwise
  */
 bool
