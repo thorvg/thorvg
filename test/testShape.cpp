@@ -89,7 +89,7 @@ TEST_CASE("Appending Shapes", "[tvgShape]")
     REQUIRE(shape->appendArc(-99999999.0f, 99999999.0f, -99999999.0f, 99999999.0f, 400, true) == Result::Success);
 }
 
-TEST_CASE("Appending Pathes", "[tvgShape]")
+TEST_CASE("Appending Paths", "[tvgShape]")
 {
     auto shape = Shape::gen();
     REQUIRE(shape);
