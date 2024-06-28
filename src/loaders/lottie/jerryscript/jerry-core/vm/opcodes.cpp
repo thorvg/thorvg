@@ -1217,7 +1217,7 @@ opfunc_make_private_key (ecma_value_t descriptor) /**< descriptor */
  * Find a private property in the private elements internal property given the key
  *
  * @return pointer to the private property - if it is found,
- *         NULL - othervise
+ *         NULL - otherwise
  */
 static ecma_property_t *
 opfunc_find_private_key (ecma_object_t *class_object_p, /**< class environment */
