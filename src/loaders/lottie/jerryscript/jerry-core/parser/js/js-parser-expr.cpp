@@ -3253,7 +3253,7 @@ parser_process_binary_lvalue_token (parser_context_t *context_p, /**< context */
  */
 static void
 parser_process_binary_opcodes (parser_context_t *context_p, /**< context */
-                               uint8_t min_prec_treshold) /**< minimal precedence of tokens */
+                               uint8_t min_prec_threshhold) /**< minimal precedence of tokens */
 {
   while (true)
   {
@@ -3266,7 +3266,7 @@ parser_process_binary_opcodes (parser_context_t *context_p, /**< context */
      * force right-to-left evaluation order. */
 
     if (!LEXER_IS_BINARY_OP_TOKEN (token)
-        || parser_binary_precedence_table[token - LEXER_FIRST_BINARY_OP] < min_prec_treshold)
+        || parser_binary_precedence_table[token - LEXER_FIRST_BINARY_OP] < min_prec_threshhold)
     {
       return;
     }
@@ -4095,7 +4095,7 @@ process_unary_expression:
 
       if (JERRY_LIKELY (grouping_level != PARSE_EXPR_LEFT_HAND_SIDE))
       {
-        uint8_t min_prec_treshold = 0;
+        uint8_t min_prec_threshhold = 0;
 
         if (LEXER_IS_BINARY_OP_TOKEN (context_p->token.type))
         {
@@ -4104,19 +4104,19 @@ process_unary_expression:
             parser_check_invalid_logical_op (context_p, LEXER_LOGICAL_OR, LEXER_LOGICAL_AND);
           }
 
-          min_prec_treshold = parser_binary_precedence_table[context_p->token.type - LEXER_FIRST_BINARY_OP];
+          min_prec_threshhold = parser_binary_precedence_table[context_p->token.type - LEXER_FIRST_BINARY_OP];
 
           /* Check for BINARY_LVALUE tokens + LEXER_LOGICAL_OR + LEXER_LOGICAL_AND + LEXER_EXPONENTIATION */
-          if ((min_prec_treshold == PARSER_RIGHT_TO_LEFT_ORDER_EXPONENTIATION)
-              || (min_prec_treshold <= PARSER_RIGHT_TO_LEFT_ORDER_MAX_PRECEDENCE
-                  && min_prec_treshold != PARSER_RIGHT_TO_LEFT_ORDER_TERNARY_PRECEDENCE))
+          if ((min_prec_threshhold == PARSER_RIGHT_TO_LEFT_ORDER_EXPONENTIATION)
+              || (min_prec_threshhold <= PARSER_RIGHT_TO_LEFT_ORDER_MAX_PRECEDENCE
+                  && min_prec_threshhold != PARSER_RIGHT_TO_LEFT_ORDER_TERNARY_PRECEDENCE))
           {
             /* Right-to-left evaluation order. */
-            min_prec_treshold++;
+            min_prec_threshhold++;
           }
         }
 
-        parser_process_binary_opcodes (context_p, min_prec_treshold);
+        parser_process_binary_opcodes (context_p, min_prec_threshhold);
       }
       if (context_p->token.type == LEXER_RIGHT_PAREN
           && (context_p->stack_top_uint8 == LEXER_LEFT_PAREN || context_p->stack_top_uint8 == LEXER_COMMA_SEP_LIST))
