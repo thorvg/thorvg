@@ -46,12 +46,12 @@ JERRY_STATIC_ASSERT ((PARSER_RESTORE_STATUS_FLAGS (ECMA_PARSE_FUNCTION_CONTEXT) 
                      ecma_parse_function_context_must_not_be_transformed);
 
 /**
- * Compute real literal indicies.
+ * Compute real literal indices.
  *
  * @return length of the prefix opcodes
  */
 static void
-parser_compute_indicies (parser_context_t *context_p, /**< context */
+parser_compute_indices (parser_context_t *context_p, /**< context */
                          uint16_t *ident_end, /**< end of the identifier group */
                          uint16_t *const_literal_end) /**< end of the const literal group */
 {
@@ -194,7 +194,7 @@ parser_compute_indicies (parser_context_t *context_p, /**< context */
 
   *ident_end = ident_index;
   *const_literal_end = const_literal_index;
-} /* parser_compute_indicies */
+} /* parser_compute_indices */
 
 /**
  * Initialize literal pool.
@@ -608,7 +608,7 @@ parser_post_processing (parser_context_t *context_p) /**< context */
 
   JERRY_ASSERT (context_p->literal_count <= PARSER_MAXIMUM_NUMBER_OF_LITERALS);
 
-  parser_compute_indicies (context_p, &ident_end, &const_literal_end);
+  parser_compute_indices (context_p, &ident_end, &const_literal_end);
 
   if (context_p->literal_count <= CBC_MAXIMUM_SMALL_VALUE)
   {
