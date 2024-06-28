@@ -646,7 +646,7 @@ lit_utf8_string_calc_hash (const lit_utf8_byte_t *utf8_buf_p, /**< characters bu
 ecma_char_t
 lit_utf8_string_code_unit_at (const lit_utf8_byte_t *utf8_buf_p, /**< utf-8 string */
                               lit_utf8_size_t utf8_buf_size, /**< string size in bytes */
-                              lit_utf8_size_t code_unit_offset) /**< ofset of a code_unit */
+                              lit_utf8_size_t code_unit_offset) /**< offset of a code_unit */
 {
   lit_utf8_byte_t *current_p = (lit_utf8_byte_t *) utf8_buf_p;
   ecma_char_t code_unit;
