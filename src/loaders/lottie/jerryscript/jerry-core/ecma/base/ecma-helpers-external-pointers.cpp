@@ -226,7 +226,7 @@ ecma_get_native_pointer_value (ecma_object_t *obj_p, /**< object to get property
  *      If the specified object has no matching native pointer for the given native type info
  *      the function has no effect.
  *
- * @return true - if the native pointer has been deleted succesfully
+ * @return true - if the native pointer has been deleted successfully
  *         false - otherwise
  */
 bool
