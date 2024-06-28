@@ -1653,7 +1653,7 @@ parser_parse_switch_statement_start (parser_context_t *context_p) /**< context *
   scanner_get_location (&start_location, context_p);
 
   /* The reason of using an iterator is error management. If an error
-   * occures, parser_free_jumps() free all data. However, the branches
+   * occur, parser_free_jumps() free all data. However, the branches
    * created by parser_emit_cbc_forward_branch_item() would not be freed.
    * To free these branches, the current switch data is always stored
    * on the stack. If any change happens, this data is updated. Updates
