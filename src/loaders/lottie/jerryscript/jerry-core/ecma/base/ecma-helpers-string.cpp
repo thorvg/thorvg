@@ -186,7 +186,7 @@ ecma_string_get_chars_fast (const ecma_string_t *string_p, /**< ecma-string */
  * @return pointer to ecma-string descriptor
  */
 static ecma_string_t *
-ecma_new_ecma_string_from_magic_string_ex_id (lit_magic_string_ex_id_t id) /**< identifier of externl magic string */
+ecma_new_ecma_string_from_magic_string_ex_id (lit_magic_string_ex_id_t id) /**< identifier of external magic string */
 {
   JERRY_ASSERT (id < lit_get_magic_string_ex_count ());
 
