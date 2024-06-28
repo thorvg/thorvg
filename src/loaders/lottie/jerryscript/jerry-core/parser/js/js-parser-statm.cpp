@@ -1450,7 +1450,7 @@ parser_parse_for_statement_start (parser_context_t *context_p) /**< context */
       scanner_release_next (context_p, sizeof (scanner_for_info_t));
     }
 
-    /* The prescanner couldn't find the second semicolon or the closing paranthesis. */
+    /* The prescanner couldn't find the second semicolon or the closing parentheses. */
     lexer_next_token (context_p);
     parser_parse_expression (context_p, PARSE_EXPR);
 
