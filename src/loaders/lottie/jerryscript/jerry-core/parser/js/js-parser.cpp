@@ -2963,7 +2963,7 @@ parser_parse_class_fields (parser_context_t *context_p) /**< context */
  * Check whether the last emitted cbc opcode was an anonymous function declaration
  *
  * @return PARSER_NOT_FUNCTION_LITERAL - if the last opcode is not a function literal
- *         PARSER_NAMED_FUNCTION - if the last opcode is not a named function declataion
+ *         PARSER_NAMED_FUNCTION - if the last opcode is not a named function declaration
  *         PARSER_ANONYMOUS_CLASS - if the last opcode is an anonymous class declaration
  *         literal index of the anonymous function literal - otherwise
  */
