@@ -554,7 +554,7 @@ TvgBinCounter TvgSaver::serializeShape(const Shape* shape, const Matrix* pTransf
         cnt = writeTagProperty(TVG_TAG_SHAPE_FILLRULE, SIZE(TvgBinFlag), &flag);
     }
 
-    //the pre-transformation can't be applied in the case when the stroke is dashed or irregulary scaled
+    //the pre-transformation can't be applied in the case when the stroke is dashed or irregularly scaled
     bool preTransform = true;
 
     //stroke
