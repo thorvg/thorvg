@@ -1717,7 +1717,7 @@ void Stroker::doStroke(const PathCommand *cmds, uint32_t cmd_count, const Point 
 }
 
 void Stroker::doDashStroke(const PathCommand *cmds, uint32_t cmd_count, const Point *pts, uint32_t pts_count,
-                           uint32_t dast_count, const float *dash_pattern)
+                           uint32_t dash_count, const float *dash_pattern)
 {
     Array<PathCommand> dash_cmds{};
     Array<Point>       dash_pts{};
@@ -1725,7 +1725,7 @@ void Stroker::doDashStroke(const PathCommand *cmds, uint32_t cmd_count, const Po
     dash_cmds.reserve(20 * cmd_count);
     dash_pts.reserve(20 * pts_count);
 
-    DashStroke dash(&dash_cmds, &dash_pts, dast_count, dash_pattern);
+    DashStroke dash(&dash_cmds, &dash_pts, dash_count, dash_pattern);
 
     dash.doStroke(cmds, cmd_count, pts, pts_count);
 
