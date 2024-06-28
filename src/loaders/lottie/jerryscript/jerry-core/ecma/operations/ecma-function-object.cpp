@@ -2105,7 +2105,7 @@ ecma_op_function_list_lazy_property_names (ecma_object_t *object_p, /**< functio
 
   if (!ECMA_GET_FIRST_BIT_FROM_POINTER_TAG (ext_func_p->u.function.scope_cp))
   {
-    /* Unintialized 'length' property is non-enumerable (ECMA-262 v6, 19.2.4.1) */
+    /* Uninitialized 'length' property is non-enumerable (ECMA-262 v6, 19.2.4.1) */
     ecma_collection_push_back (prop_names_p, ecma_make_magic_string_value (LIT_MAGIC_STRING_LENGTH));
     prop_counter_p->string_named_props++;
   }
@@ -2113,7 +2113,7 @@ ecma_op_function_list_lazy_property_names (ecma_object_t *object_p, /**< functio
   if (CBC_FUNCTION_GET_TYPE (bytecode_data_p->status_flags) != CBC_FUNCTION_CONSTRUCTOR
       && !ECMA_GET_SECOND_BIT_FROM_POINTER_TAG (ext_func_p->u.function.scope_cp))
   {
-    /* Unintialized 'name' property is non-enumerable (ECMA-262 v6, 19.2.4.2) */
+    /* Uninitialized 'name' property is non-enumerable (ECMA-262 v6, 19.2.4.2) */
     ecma_collection_push_back (prop_names_p, ecma_make_magic_string_value (LIT_MAGIC_STRING_NAME));
     prop_counter_p->string_named_props++;
   }
@@ -2184,7 +2184,7 @@ ecma_op_bound_function_list_lazy_property_names (ecma_object_t *object_p, /**< b
     return;
   }
 
-  /* Unintialized 'length' property is non-enumerable (ECMA-262 v6, 19.2.4.1) */
+  /* Uninitialized 'length' property is non-enumerable (ECMA-262 v6, 19.2.4.1) */
   ecma_bound_function_t *bound_func_p = (ecma_bound_function_t *) object_p;
   if (!ECMA_GET_FIRST_BIT_FROM_POINTER_TAG (bound_func_p->header.u.bound_function.target_function))
   {

@@ -238,7 +238,7 @@ typedef enum
   VM_OC_CHECK_VAR, /**< check redeclared vars in the global scope */
   VM_OC_CHECK_LET, /**< check redeclared lets in the global scope */
   VM_OC_ASSIGN_LET_CONST, /**< assign values to let/const declarations */
-  VM_OC_INIT_BINDING, /**< create and intialize a binding */
+  VM_OC_INIT_BINDING, /**< create and initialize a binding */
   VM_OC_THROW_CONST_ERROR, /**< throw invalid assignment to const variable error */
   VM_OC_COPY_TO_GLOBAL, /**< copy value to global lex env */
   VM_OC_COPY_FROM_ARG, /**< copy value from arg lex env */

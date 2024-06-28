@@ -1299,13 +1299,13 @@ ecma_builtin_routine_list_lazy_property_names (ecma_object_t *object_p, /**< a b
 
   if (!(ext_func_p->u.built_in.u2.routine_flags & ECMA_BUILTIN_ROUTINE_LENGTH_INITIALIZED))
   {
-    /* Unintialized 'length' property is non-enumerable (ECMA-262 v6, 19.2.4.1) */
+    /* Uninitialized 'length' property is non-enumerable (ECMA-262 v6, 19.2.4.1) */
     ecma_collection_push_back (prop_names_p, ecma_make_magic_string_value (LIT_MAGIC_STRING_LENGTH));
     prop_counter_p->string_named_props++;
   }
   if (!(ext_func_p->u.built_in.u2.routine_flags & ECMA_BUILTIN_ROUTINE_NAME_INITIALIZED))
   {
-    /* Unintialized 'name' property is non-enumerable (ECMA-262 v6, 19.2.4.2) */
+    /* Uninitialized 'name' property is non-enumerable (ECMA-262 v6, 19.2.4.2) */
     ecma_collection_push_back (prop_names_p, ecma_make_magic_string_value (LIT_MAGIC_STRING_NAME));
     prop_counter_p->string_named_props++;
   }
