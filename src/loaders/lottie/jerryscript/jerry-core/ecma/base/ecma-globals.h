@@ -914,7 +914,7 @@ typedef struct
   union
   {
     jmem_cpointer_t property_list_cp; /**< compressed pointer to object's
-                                       *   or declerative lexical environments's property list */
+                                       *   or declarative lexical environments's property list */
     jmem_cpointer_t bound_object_cp; /**< compressed pointer to lexical environments's the bound object */
     jmem_cpointer_t home_object_cp; /**< compressed pointer to lexical environments's the home object */
   } u1;
