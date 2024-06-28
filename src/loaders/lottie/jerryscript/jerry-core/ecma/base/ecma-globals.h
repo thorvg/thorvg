@@ -2041,7 +2041,7 @@ typedef enum
 #if (JERRY_STACK_LIMIT != 0)
 /**
  * Check the current stack usage. If the limit is reached a RangeError is raised.
- * The macro argument specifies the return value which is usally ECMA_VALUE_ERROR or NULL.
+ * The macro argument specifies the return value which is usually ECMA_VALUE_ERROR or NULL.
  */
 #define ECMA_CHECK_STACK_USAGE_RETURN(RETURN_VALUE)               \
   do                                                              \
