@@ -2123,7 +2123,7 @@ scanner_is_context_needed (parser_context_t *context_p, /**< context */
       {
         /* The return value is true, if the variable is stored in the lexical environment
          * or all registers have already been used for function arguments. This can be
-         * inprecise in the latter case, but this is a very rare corner case. A more
+         * imprecise in the latter case, but this is a very rare corner case. A more
          * sophisticated check would require to decode the literal. */
         if ((data & SCANNER_STREAM_NO_REG) || scope_stack_reg_top >= PARSER_MAXIMUM_NUMBER_OF_REGISTERS)
         {
