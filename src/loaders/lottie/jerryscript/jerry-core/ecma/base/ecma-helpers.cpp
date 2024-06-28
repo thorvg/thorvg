@@ -454,7 +454,7 @@ ecma_create_property (ecma_object_t *object_p, /**< the object */
   ecma_property_pair_t *first_property_pair_p = ecma_alloc_property_pair ();
 
   /* Need to query property_list_head_p again and recheck the existence
-   * of property hasmap, because ecma_alloc_property_pair may delete them. */
+   * of property hashmap, because ecma_alloc_property_pair may delete them. */
   property_list_head_p = &object_p->u1.property_list_cp;
 #if JERRY_PROPERTY_HASHMAP
   bool has_hashmap = false;
@@ -726,7 +726,7 @@ ecma_find_named_property (ecma_object_t *obj_p, /**< object to find property in 
   }
 
 #if JERRY_PROPERTY_HASHMAP
-  if (steps >= (ECMA_PROPERTY_HASMAP_MINIMUM_SIZE / 2))
+  if (steps >= (ECMA_PROPERTY_HASHMAP_MINIMUM_SIZE / 2))
   {
     ecma_property_hashmap_create (obj_p);
   }

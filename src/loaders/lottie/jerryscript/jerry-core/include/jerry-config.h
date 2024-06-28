@@ -257,7 +257,7 @@
  * Enable/Disable ECMA property hashmap.
  *
  * Allowed values:
- *  0: Disable property hasmap.
+ *  0: Disable property hashmap.
  *  1: Enable property hashmap.
  *
  * Default value: 1
