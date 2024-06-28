@@ -1093,7 +1093,7 @@ void Tessellator::mergeVertices()
         }
 
         if (v->point == v->prev->point) {
-            // merve v into v->prev
+            // merge v into v->prev
             while (auto e = v->edge_above.head) {
                 e->setBottom(v->prev);
             }
