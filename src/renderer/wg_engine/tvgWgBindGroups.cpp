@@ -31,7 +31,7 @@ WGPUBindGroupLayout WgBindGroupSolidColor::layout = nullptr;
 WGPUBindGroupLayout WgBindGroupLinearGradient::layout = nullptr;
 WGPUBindGroupLayout WgBindGroupRadialGradient::layout = nullptr;
 WGPUBindGroupLayout WgBindGroupPicture::layout = nullptr;
-// composition and blending properties gropus
+// composition and blending properties groups
 WGPUBindGroupLayout WgBindGroupTexture::layout = nullptr;
 WGPUBindGroupLayout WgBindGroupTextureStorageRgba::layout = nullptr;
 WGPUBindGroupLayout WgBindGroupTextureStorageBgra::layout = nullptr;
