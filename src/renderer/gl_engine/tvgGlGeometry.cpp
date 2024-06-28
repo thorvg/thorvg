@@ -241,7 +241,7 @@ void GlGeometry::setViewport(const RenderRegion& viewport)
     this->viewport = viewport;
 }
 
-float* GlGeometry::getTransforMatrix()
+float* GlGeometry::getTransformMatrix()
 {
     return mTransform;
 }

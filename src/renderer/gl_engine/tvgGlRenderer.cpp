@@ -227,7 +227,7 @@ bool GlRenderer::renderImage(void* data)
 
     // matrix buffer
     {
-        auto matrix = sdata->geometry->getTransforMatrix();
+        auto matrix = sdata->geometry->getTransformMatrix();
         uint32_t loc = task->getProgram()->getUniformBlockIndex("Matrix");
 
         task->addBindResource(GlBindingResource{
@@ -583,7 +583,7 @@ void GlRenderer::drawPrimitive(GlShape& sdata, uint8_t r, uint8_t g, uint8_t b, 
 
     // matrix buffer
     {
-        auto matrix = sdata.geometry->getTransforMatrix();
+        auto matrix = sdata.geometry->getTransformMatrix();
         uint32_t loc = task->getProgram()->getUniformBlockIndex("Matrix");
 
         uint32_t viewOffset = mGpuBuffer->push(matrix, 16 * sizeof(float), true);
@@ -659,7 +659,7 @@ void GlRenderer::drawPrimitive(GlShape& sdata, const Fill* fill, RenderUpdateFla
 
     // matrix buffer
     {
-        auto matrix = sdata.geometry->getTransforMatrix();
+        auto matrix = sdata.geometry->getTransformMatrix();
 
         auto gradientTransform = fill->transform();
         float invMat4[16];
@@ -849,7 +849,7 @@ void GlRenderer::drawClip(Array<RenderData>& clips)
 
         sdata->geometry->draw(clipTask, mGpuBuffer.get(), RenderUpdateFlag::Path);
 
-        auto matrix = sdata->geometry->getTransforMatrix();
+        auto matrix = sdata->geometry->getTransformMatrix();
 
         uint32_t loc = clipTask->getProgram()->getUniformBlockIndex("Matrix");
 

@@ -194,7 +194,7 @@ public:
     bool draw(GlRenderTask* task, GlStageBuffer* gpuBuffer, RenderUpdateFlag flag);
     void updateTransform(const RenderTransform* transform, float w, float h);
     void setViewport(const RenderRegion& viewport);
-    float* getTransforMatrix();
+    float* getTransformMatrix();
     GlStencilMode getStencilMode(RenderUpdateFlag flag);
     RenderRegion getBounds() const;
 
