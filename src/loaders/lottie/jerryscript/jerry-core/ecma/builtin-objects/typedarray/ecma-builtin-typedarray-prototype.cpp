@@ -886,7 +886,7 @@ ecma_op_typedarray_get_separator_string (ecma_value_t separator) /**< possible s
 
 /**
  * The TypedArray.prototype object's 'join' routine based on
- * the Array.porottype object's 'join'
+ * the Array.prototype object's 'join'
  *
  * See also:
  *          ECMA-262 v5, 15.4.4.5

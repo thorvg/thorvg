@@ -80,7 +80,7 @@ JERRY_STATIC_ASSERT (((int) ECMA_OBJECT_TYPE_BUILT_IN_ARRAY == ((int) ECMA_OBJEC
  * @return pointer to the object's descriptor
  */
 ecma_object_t *
-ecma_create_object (ecma_object_t *prototype_object_p, /**< pointer to prototybe of the object (or NULL) */
+ecma_create_object (ecma_object_t *prototype_object_p, /**< pointer to prototype of the object (or NULL) */
                     size_t ext_object_size, /**< size of extended objects */
                     ecma_object_type_t type) /**< object type */
 {
