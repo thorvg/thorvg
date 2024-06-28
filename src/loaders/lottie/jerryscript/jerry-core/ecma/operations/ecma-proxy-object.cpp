@@ -1132,7 +1132,7 @@ ecma_proxy_object_has (ecma_object_t *obj_p, /**< proxy object */
  * Note: Returned value is always a simple value so freeing it is unnecessary.
  *
  * @return ECMA_VALUE_ERROR - if the operation fails
- *         value of the given nameddata property or the result of the getter function call - otherwise
+ *         value of the given named data property or the result of the getter function call - otherwise
  */
 ecma_value_t
 ecma_proxy_object_get (ecma_object_t *obj_p, /**< proxy object */
