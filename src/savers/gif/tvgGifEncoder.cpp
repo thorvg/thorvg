@@ -326,7 +326,7 @@ void _palettizePixel(const uint8_t* nextFrame, uint8_t* outFrame, GifPalette* pP
 }
 
 
-// Picks palette colors for the image using simple thresholding, no dithering
+// Picks palette colors for the image using simple threshholding, no dithering
 static void _thresholdImage(GifWriter* writer, const uint8_t* lastFrame, const uint8_t* nextFrame,  uint32_t width, uint32_t height, bool transparent)
 {
     auto outFrame = writer->oldImage;
