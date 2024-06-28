@@ -27,10 +27,10 @@ if [[ "$GITHUB_EVENT_NAME" == "pull_request" ]]; then
         OUTPUT+=$'\n```\n'
         OUTPUT+="$PAYLOAD_MEMCHECK"
         OUTPUT+=$'\n```\n' 
+
+        PAYLOAD=$(echo '{}' | jq --arg body "$OUTPUT" '.body = $body')
+
+        curl -s -S -H "Authorization: token $GITHUB_TOKEN" --header "Content-Type: application/vnd.github.VERSION.text+json" --data "$PAYLOAD" "$COMMENTS_URL"
     fi
-
-    PAYLOAD=$(echo '{}' | jq --arg body "$OUTPUT" '.body = $body')
-
-    curl -s -S -H "Authorization: token $GITHUB_TOKEN" --header "Content-Type: application/vnd.github.VERSION.text+json" --data "$PAYLOAD" "$COMMENTS_URL"
 fi
 
