@@ -294,7 +294,7 @@ typedef enum
   VM_OC_STRING_CONCAT, /**< string concatenation */
   VM_OC_GET_TEMPLATE_OBJECT, /**< GetTemplateObject operation */
   VM_OC_PUSH_NEW_TARGET, /**< push new.target onto the stack */
-  VM_OC_REQUIRE_OBJECT_COERCIBLE, /**< RequireObjectCoercible opretaion */
+  VM_OC_REQUIRE_OBJECT_COERCIBLE, /**< RequireObjectCoercible operation */
   VM_OC_ASSIGN_SUPER, /**< assign super reference */
   VM_OC_SET__PROTO__, /**< set prototype when __proto__: form is used */
   VM_OC_PUSH_STATIC_FIELD_FUNC, /**< push static field initializer function */
