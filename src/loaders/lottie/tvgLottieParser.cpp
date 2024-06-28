@@ -240,7 +240,7 @@ void LottieParser::getValue(PathSet& path)
     Array<Point> outPts;
     Array<PathCommand> outCmds;
 
-    //Resuse the buffers
+    //Reuse the buffers
     outPts.data = path.pts;
     outPts.reserved = path.ptsCnt;
     outCmds.data = path.cmds;
