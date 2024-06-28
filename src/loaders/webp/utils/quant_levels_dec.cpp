@@ -190,7 +190,7 @@ static void CountLevels(const uint8_t* const data, int size,
     if (v > p->max_) p->max_ = v;
     used_levels[v] = 1;
   }
-  // Compute the mininum distance between two non-zero levels.
+  // Compute the minimum distance between two non-zero levels.
   p->min_level_dist_ = p->max_ - p->min_;
   last_level = -1;
   for (i = 0; i < 256; ++i) {
