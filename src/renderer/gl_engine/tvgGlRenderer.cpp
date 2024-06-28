@@ -505,7 +505,7 @@ GlRenderer* GlRenderer::gen()
     glGetIntegerv(GL_MAJOR_VERSION, &vMajor);
     glGetIntegerv(GL_MINOR_VERSION, &vMinor);
     if (vMajor < TVG_REQUIRE_GL_MAJOR_VER || (vMajor ==  TVG_REQUIRE_GL_MAJOR_VER && vMinor <  TVG_REQUIRE_GL_MINOR_VER)) {
-        TVGERR("GL_ENGINE", "OpenGL/ES version is not statisfied. Current: v%d.%d, Required: v%d.%d", vMajor, vMinor, TVG_REQUIRE_GL_MAJOR_VER, TVG_REQUIRE_GL_MINOR_VER);
+        TVGERR("GL_ENGINE", "OpenGL/ES version is not satisfied. Current: v%d.%d, Required: v%d.%d", vMajor, vMinor, TVG_REQUIRE_GL_MAJOR_VER, TVG_REQUIRE_GL_MINOR_VER);
         return nullptr;
     }
     TVGLOG("GL_ENGINE", "OpenGL/ES version = v%d.%d", vMajor, vMinor);
