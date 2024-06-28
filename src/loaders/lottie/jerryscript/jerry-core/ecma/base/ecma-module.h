@@ -111,7 +111,7 @@ typedef struct ecma_module_resolve_stack
   struct ecma_module_resolve_stack *next_p; /**< next in linked list */
   ecma_module_t *module_p; /**< module request */
   ecma_string_t *export_name_p; /**< export identifier name */
-  bool resolving; /**< flag storing wether the current frame started resolving */
+  bool resolving; /**< flag storing whether the current frame started resolving */
 } ecma_module_resolve_stack_t;
 
 ecma_value_t ecma_module_initialize (ecma_module_t *module_p);

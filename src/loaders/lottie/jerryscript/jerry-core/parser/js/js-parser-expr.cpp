@@ -1818,7 +1818,7 @@ parser_parse_tagged_template_literal (parser_context_t *context_p) /**< context 
 } /* parser_parse_tagged_template_literal */
 
 /**
- * Checks wheteher the current expression can be an assignment expression.
+ * Checks whether the current expression can be an assignment expression.
  *
  * @return true if the current expression can be an assignment expression, false otherwise
  */
