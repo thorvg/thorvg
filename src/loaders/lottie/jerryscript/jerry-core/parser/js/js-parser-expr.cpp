@@ -383,7 +383,7 @@ typedef enum
 {
   PARSER_CLASS_LITERAL_NO_OPTS = 0, /**< no options are provided */
   PARSER_CLASS_LITERAL_CTOR_PRESENT = (1 << 0), /**< class constructor is present */
-  PARSER_CLASS_LITERAL_HERTIAGE_PRESENT = (1 << 1), /**< class heritage is present */
+  PARSER_CLASS_LITERAL_HERITAGE_PRESENT = (1 << 1), /**< class heritage is present */
 } parser_class_literal_opts_t;
 
 /**
@@ -452,7 +452,7 @@ parser_parse_class_body (parser_context_t *context_p, /**< context */
     ctor_literal_p = lexer_construct_unused_literal (context_p);
     parser_emit_cbc_literal (context_p, CBC_PUSH_LITERAL, (uint16_t) (context_p->literal_count++));
   }
-  else if (opts & PARSER_CLASS_LITERAL_HERTIAGE_PRESENT)
+  else if (opts & PARSER_CLASS_LITERAL_HERITAGE_PRESENT)
   {
     parser_emit_cbc_ext (context_p, CBC_EXT_PUSH_IMPLICIT_CONSTRUCTOR_HERITAGE);
   }
@@ -547,7 +547,7 @@ parser_parse_class_body (parser_context_t *context_p, /**< context */
       uint32_t constructor_status_flags =
         (PARSER_FUNCTION_CLOSURE | PARSER_ALLOW_SUPER | PARSER_CLASS_CONSTRUCTOR | PARSER_LEXICAL_ENV_NEEDED);
 
-      if (opts & PARSER_CLASS_LITERAL_HERTIAGE_PRESENT)
+      if (opts & PARSER_CLASS_LITERAL_HERITAGE_PRESENT)
       {
         constructor_status_flags |= PARSER_ALLOW_SUPER_CALL;
       }
@@ -1091,7 +1091,7 @@ parser_parse_class (parser_context_t *context_p, /**< context */
   {
     lexer_next_token (context_p);
     parser_parse_expression (context_p, PARSE_EXPR | PARSE_EXPR_LEFT_HAND_SIDE);
-    opts = (parser_class_literal_opts_t) ((int) opts | (int) PARSER_CLASS_LITERAL_HERTIAGE_PRESENT);
+    opts = (parser_class_literal_opts_t) ((int) opts | (int) PARSER_CLASS_LITERAL_HERITAGE_PRESENT);
   }
   else
   {
