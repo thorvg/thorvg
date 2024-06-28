@@ -68,7 +68,7 @@ typedef enum
 typedef enum
 {
   PARSER_STATM_NO_OPTS = 0, /**< no options */
-  PARSER_STATM_SINGLE_STATM = (1 << 0), /**< statment can form single statement context */
+  PARSER_STATM_SINGLE_STATM = (1 << 0), /**< statement can form single statement context */
   PARSER_STATM_HAS_BLOCK = (1 << 1), /**< statement always has a code block */
   PARSER_STATM_BREAK_TARGET = (1 << 2), /**< break target statement */
   PARSER_STATM_CONTINUE_TARGET = (1 << 3), /**< continue target statement */
