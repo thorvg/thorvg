@@ -43,7 +43,7 @@
 #define RE_VALUE_1BYTE_MAX 0xFE
 
 /**
- * Marker that signals that the actual value is enocded in the following 4 bytes in the bytecode.
+ * Marker that signals that the actual value is encoded in the following 4 bytes in the bytecode.
  */
 #define RE_VALUE_4BYTE_MARKER 0xFF
 
