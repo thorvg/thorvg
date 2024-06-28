@@ -2572,7 +2572,7 @@ TVG_API Tvg_Result tvg_lottie_animation_set_marker(Tvg_Animation* animation, con
 * \brief Gets the marker count of the animation.
 *
 * \param[in] animation The Tvg_Animation pointer to the Lottie animation object.
-* \param[out] cnt The count value of the merkers.
+* \param[out] cnt The count value of the markers.
 *
 * \return Tvg_Result enumeration.
 * \retval TVG_RESULT_INVALID_ARGUMENT In case a @c nullptr is passed as the argument.
