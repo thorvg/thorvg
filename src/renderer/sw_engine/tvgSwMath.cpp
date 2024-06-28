@@ -265,19 +265,19 @@ SwPoint mathTransform(const Point* to, const Matrix* transform)
 }
 
 
-bool mathClipBBox(const SwBBox& clipper, SwBBox& clipee)
+bool mathClipBBox(const SwBBox& clipper, SwBBox& clippee)
 {
-    clipee.max.x = (clipee.max.x < clipper.max.x) ? clipee.max.x : clipper.max.x;
-    clipee.max.y = (clipee.max.y < clipper.max.y) ? clipee.max.y : clipper.max.y;
-    clipee.min.x = (clipee.min.x > clipper.min.x) ? clipee.min.x : clipper.min.x;
-    clipee.min.y = (clipee.min.y > clipper.min.y) ? clipee.min.y : clipper.min.y;
+    clippee.max.x = (clippee.max.x < clipper.max.x) ? clippee.max.x : clipper.max.x;
+    clippee.max.y = (clippee.max.y < clipper.max.y) ? clippee.max.y : clipper.max.y;
+    clippee.min.x = (clippee.min.x > clipper.min.x) ? clippee.min.x : clipper.min.x;
+    clippee.min.y = (clippee.min.y > clipper.min.y) ? clippee.min.y : clipper.min.y;
 
     //Check valid region
-    if (clipee.max.x - clipee.min.x < 1 && clipee.max.y - clipee.min.y < 1) return false;
+    if (clippee.max.x - clippee.min.x < 1 && clippee.max.y - clippee.min.y < 1) return false;
 
     //Check boundary
-    if (clipee.min.x >= clipper.max.x || clipee.min.y >= clipper.max.y ||
-        clipee.max.x <= clipper.min.x || clipee.max.y <= clipper.min.y) return false;
+    if (clippee.min.x >= clipper.max.x || clippee.min.y >= clipper.max.y ||
+        clippee.max.x <= clipper.min.x || clippee.max.y <= clipper.min.y) return false;
 
     return true;
 }
