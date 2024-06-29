@@ -108,14 +108,14 @@ public:
         return *this;
     }
 
-    bool operator== (const GlPoint& rhs)
+    bool operator== (const GlPoint& rhs) const
     {
         if (&rhs == this) return true;
         if (rhs.x == this->x && rhs.y == this->y) return true;
         return false;
     }
 
-    bool operator!= (const GlPoint& rhs)
+    bool operator!= (const GlPoint& rhs) const
     {
         if (&rhs == this) return true;
         if (rhs.x != this->x || rhs.y != this->y) return true;
