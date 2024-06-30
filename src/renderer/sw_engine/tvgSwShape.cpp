@@ -533,7 +533,7 @@ bool shapeGenStrokeRle(SwShape* shape, const RenderShape* rshape, const Matrix& 
         goto clear;
     }
 
-    shape->strokeRle = rleRender(shape->strokeRle, strokeOutline, renderRegion, true);
+    shape->strokeRle = rleRender(shape->strokeRle, strokeOutline, renderRegion, rshape->stroke->antiAlias != ShapeRendering::CrispEdges);
 
 clear:
     if (dashStroking) mpoolRetDashOutline(mpool, tid);
