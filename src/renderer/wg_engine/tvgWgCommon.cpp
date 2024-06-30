@@ -604,7 +604,7 @@ WGPUBlendState WgRenderPipeline::makeBlendState(WgPipelineBlendType blendType)
     } else // normal
     if (blendType == WgPipelineBlendType::Normal) {
         blendState.color.operation = WGPUBlendOperation_Add;
-        blendState.color.srcFactor = WGPUBlendFactor_SrcAlpha;
+        blendState.color.srcFactor = WGPUBlendFactor_One;
         blendState.color.dstFactor = WGPUBlendFactor_OneMinusSrcAlpha;
     } else // add
     if (blendType == WgPipelineBlendType::Add) {
@@ -627,9 +627,7 @@ WGPUBlendState WgRenderPipeline::makeBlendState(WgPipelineBlendType blendType)
         blendState.color.srcFactor = WGPUBlendFactor_One;
         blendState.color.dstFactor = WGPUBlendFactor_One;
     }
-    blendState.alpha.operation = WGPUBlendOperation_Add;
-    blendState.alpha.srcFactor = WGPUBlendFactor_SrcAlpha;
-    blendState.alpha.dstFactor = WGPUBlendFactor_Zero;
+    blendState.alpha = blendState.color;
     return blendState;
 }
 

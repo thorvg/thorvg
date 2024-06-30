@@ -101,7 +101,8 @@ fn fs_main(in: VertexOutput) -> @location(0) vec4f {
     // get color
     color = uSolidColor;
 
-    return vec4f(color.rgb, color.a * uBlendSettigs.opacity);
+    let alpha: f32 = color.a * uBlendSettigs.opacity;
+    return vec4f(color.rgb*alpha, alpha);
 }
 )";
 
@@ -203,7 +204,8 @@ fn fs_main(in: VertexOutput) -> @location(0) vec4f {
         }
     }
 
-    return vec4f(color.rgb, color.a * uBlendSettigs.opacity);
+    let alpha: f32 = color.a * uBlendSettigs.opacity;
+    return vec4f(color.rgb*alpha, alpha);
 }
 )";
 
@@ -299,7 +301,8 @@ fn fs_main(in: VertexOutput) -> @location(0) vec4f {
         }
     }
 
-    return vec4f(color.rgb, color.a * uBlendSettigs.opacity);
+    let alpha: f32 = color.a * uBlendSettigs.opacity;
+    return vec4f(color.rgb*alpha, alpha);
 }
 )";
 
@@ -351,11 +354,11 @@ fn fs_main(in: VertexOutput) -> @location(0) vec4f {
     if (format == 1u) { /* FMT_ARGB8888 */
         result = color.bgra;
     } else if (format == 2u) { /* FMT_ABGR8888S */
-        result = vec4(color.rgb * color.a, color.a);
+        result = color.rgba;
     } else if (format == 3u) { /* FMT_ARGB8888S */
-        result = vec4(color.bgr * color.a, color.a);
+        result = color.bgra;
     }
-    return vec4f(result.rgb, result.a * uBlendSettigs.opacity);
+    return result * uBlendSettigs.opacity;
 };
 )";
 
@@ -379,25 +382,26 @@ const char* cShaderSource_PipelineComputeBlend = R"(
 @group(0) @binding(0) var imageSrc : texture_storage_2d<rgba8unorm, read_write>;
 @group(1) @binding(0) var imageDst : texture_storage_2d<rgba8unorm, read_write>;
 @group(2) @binding(0) var<uniform> blendMethod : u32;
+@group(3) @binding(0) var<uniform> opacity : f32;
 
 @compute @workgroup_size(8, 8)
 fn cs_main( @builtin(global_invocation_id) id: vec3u) {
     let texSize = textureDimensions(imageSrc);
     if ((id.x >= texSize.x) || (id.y >= texSize.y)) { return; };
 
-    let srcColor = textureLoad(imageSrc, id.xy);
-    if (srcColor.a == 0.0) { return; };
-    let dstColor = textureLoad(imageDst, id.xy);
+    let colorSrc = textureLoad(imageSrc, id.xy);
+    let colorDst = textureLoad(imageDst, id.xy);
 
-    let Sa: f32  = srcColor.a;
-    let Da: f32  = dstColor.a;
-    let S: vec3f = srcColor.xyz;
-    let D: vec3f = dstColor.xyz;
-    let One: vec3f = vec3(1.0);
+    let So: f32  = opacity;
+    let Sa: f32  = colorSrc.a;
+    let Da: f32  = colorDst.a;
+    let S: vec4f = colorSrc;
+    let D: vec4f = colorDst;
+    let One: vec4f = vec4(1.0);
 
-    var color: vec3f = vec3f(0.0, 0.0, 0.0);
+    var color: vec4f = vec4f(0.0, 0.0, 0.0, 0.0);
     switch blendMethod {
-        /* Normal     */ case 0u:  { color = (Sa * S) + (1.0 - Sa) * D; }
+        /* Normal     */ case 0u:  { color = (S * So) + (1.0 - Sa * So) * D; }
         /* Add        */ case 1u:  { color = (S + D); }
         /* Screen     */ case 2u:  { color = (S + D) - (S * D); }
         /* Multiply   */ case 3u:  { color = (S * D); }
@@ -411,10 +415,10 @@ fn cs_main( @builtin(global_invocation_id) id: vec3u) {
         /* ColorBurn  */ case 11u: { color = One - (One - D) / S; }
         /* HardLight  */ case 12u: { color = (Sa * Da) - 2.0 * (Da - S) * (Sa - D); }
         /* SoftLight  */ case 13u: { color = (One - 2 * S) * (D * D) + (2 * S * D); }
-        default:  { color = (Sa * S) + (1.0 - Sa) * D; }
+        default:  { color = (S * So) + (1.0 - Sa * So) * D; }
     }
 
-    textureStore(imageDst, id.xy, vec4f(color, Sa));
+    textureStore(imageDst, id.xy, color);
 }
 )";
 
@@ -472,30 +476,33 @@ fn cs_main( @builtin(global_invocation_id) id: vec3u) {
     if ((length(colorSrc) == 0.0) || (length(colorMsk) == 0.0)) { return; };
     let colorDst = textureLoad(imageDst, id.xy);
 
-    var color: vec3f = colorSrc.xyz;
+    var result: vec3f = colorSrc.xyz;
     var alpha: f32   = colorMsk.a;
     let luma: f32    = dot(colorMsk.xyz, vec3f(0.299, 0.587, 0.114));
     switch composeMethod {
-        /* None           */ case 0u: { color = colorSrc.xyz; }
+        /* None           */ case 0u: { result = colorSrc.xyz; }
         /* ClipPath       */ case 1u: { if (colorMsk.a == 0) { alpha = 0.0; }; }
-        /* AlphaMask      */ case 2u: { color = colorSrc.xyz; alpha = colorSrc.a * colorMsk.a; }
-        /* InvAlphaMask   */ case 3u: { color = colorSrc.xyz; alpha = colorSrc.a * (1.0 - colorMsk.a); }
-        /* LumaMask       */ case 4u: { color = colorSrc.xyz; alpha = colorSrc.a * luma; }
-        /* InvLumaMask    */ case 5u: { color = colorSrc.xyz; alpha = colorSrc.a * (1.0 - luma); }
-        /* AddMask        */ case 6u: { color = colorSrc.xyz * colorSrc.a + colorMsk.xyz * (1.0 - colorSrc.a); }
-        /* SubtractMask   */ case 7u: { color = colorSrc.xyz * colorSrc.a - colorMsk.xyz * (1.0 - colorSrc.a); }
-        /* IntersectMask  */ case 8u: { color = colorSrc.xyz * min(colorSrc.a, colorMsk.a); }
-        /* DifferenceMask */ case 9u: { color = abs(colorMsk.xyz - colorSrc.xyz * (1.0 - colorMsk.a)); }
-        default: { color = colorSrc.xyz; }
+        /* AlphaMask      */ case 2u: { result = colorSrc.xyz; alpha = colorSrc.a * colorMsk.a; }
+        /* InvAlphaMask   */ case 3u: { result = colorSrc.xyz; alpha = colorSrc.a * (1.0 - colorMsk.a); }
+        /* LumaMask       */ case 4u: { result = colorSrc.xyz; alpha = colorSrc.a * luma; }
+        /* InvLumaMask    */ case 5u: { result = colorSrc.xyz; alpha = colorSrc.a * (1.0 - luma); }
+        /* AddMask        */ case 6u: { result = colorSrc.xyz * colorSrc.a + colorMsk.xyz * (1.0 - colorSrc.a); }
+        /* SubtractMask   */ case 7u: { result = colorSrc.xyz * colorSrc.a - colorMsk.xyz * (1.0 - colorSrc.a); }
+        /* IntersectMask  */ case 8u: { result = colorSrc.xyz * min(colorSrc.a, colorMsk.a); }
+        /* DifferenceMask */ case 9u: { result = abs(colorMsk.xyz - colorSrc.xyz * (1.0 - colorMsk.a)); }
+        default: { result = colorSrc.xyz; }
     }
 
-    let S: vec3f = color.xyz;
-    let D: vec3f = colorDst.xyz;
+    let So: f32  = opacity;
     let Sa: f32  = alpha;
     let Da: f32  = colorDst.a;
-    let One: vec3f = vec3(1.0);
+    let S: vec4f = vec4(result, alpha);
+    let D: vec4f = colorDst;
+    let One: vec4f = vec4(1.0);
+
+    var color: vec4f = vec4f(0.0, 0.0, 0.0, 0.0);
     switch blendMethod {
-        /* Normal     */ case 0u:  { color = (Sa * S) + (1.0 - Sa) * D; }
+        /* Normal     */ case 0u:  { color = (S * So) + (1.0 - Sa * So) * D; }
         /* Add        */ case 1u:  { color = (S + D); }
         /* Screen     */ case 2u:  { color = (S + D) - (S * D); }
         /* Multiply   */ case 3u:  { color = (S * D); }
@@ -509,10 +516,10 @@ fn cs_main( @builtin(global_invocation_id) id: vec3u) {
         /* ColorBurn  */ case 11u: { color = One - (One - D) / S; }
         /* HardLight  */ case 12u: { color = (Sa * Da) - 2.0 * (Da - S) * (Sa - D); }
         /* SoftLight  */ case 13u: { color = (One - 2 * S) * (D * D) + (2 * S * D); }
-        default:  { color = (Sa * S) + (1.0 - Sa) * D; }
+        default:  { color = (S * So) + (1.0 - Sa * So) * D; }
     }
 
-    textureStore(imageDst, id.xy, vec4f(color, Sa));
+    textureStore(imageDst, id.xy, color);
 }
 )";
 
