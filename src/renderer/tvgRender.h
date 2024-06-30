@@ -103,6 +103,7 @@ struct RenderStroke
     float miterlimit = 4.0f;
     StrokeCap cap = StrokeCap::Square;
     StrokeJoin join = StrokeJoin::Bevel;
+    ShapeRendering antiAlias = ShapeRendering::AntiAliased;
     bool strokeFirst = false;
 
     struct {
