@@ -1072,6 +1072,8 @@ static void _updateText(LottieLayer* layer, float frameNo)
     int line = 0;
 
     //text string
+    int idx = 0;
+    auto totalChars = strlen(p);
     while (true) {
         //TODO: remove nested scenes.
         //end of text, new line of the cursor position
@@ -1123,9 +1125,53 @@ static void _updateText(LottieLayer* layer, float frameNo)
                     shape->strokeFill(doc.stroke.color.rgb[0], doc.stroke.color.rgb[1], doc.stroke.color.rgb[2]);
                 }
 
+                //text range process
+                for (auto s = text->ranges.begin(); s < text->ranges.end(); ++s) {
+                    float divisor = (*s)->rangeUnit == LottieTextRange::Unit::Percent ? (100.0f / totalChars) : 1;
+                    auto offset = (*s)->offset(frameNo) / divisor;
+                    auto start = round((*s)->start(frameNo) / divisor) + offset;
+                    auto end = round((*s)->end(frameNo) / divisor) + offset;
+
+                    if (start > end) {
+                        auto tmp = start;
+                        start = end;
+                        end = tmp;
+                    }
+
+                    if (idx < start || idx >= end) continue;
+                    auto matrix = shape->transform();
+
+                    auto opacity = (*s)->style.opacity(frameNo);
+                    shape->opacity(opacity);
+
+                    auto color = (*s)->style.fillColor(frameNo);
+                    auto fillOpacity = (*s)->style.fillOpacity(frameNo);
+                    shape->fill(color.rgb[0], color.rgb[1], color.rgb[2], fillOpacity);
+
+                    mathRotate(&matrix, (*s)->style.rotation(frameNo));
+
+                    auto glyphScale = (*s)->style.scale(frameNo);
+                    mathScale(&matrix, glyphScale.x * 0.01f, glyphScale.y * 0.01f);
+
+                    auto position = (*s)->style.position(frameNo);
+                    mathTranslate(&matrix, position.x, position.y);
+
+                    shape->transform(matrix);
+
+                    if (doc.stroke.render) {
+                        auto strokeWidth = (*s)->style.strokeWidth(frameNo);
+                        auto strokeColor = (*s)->style.strokeColor(frameNo);
+                        auto strokeOpacity = (*s)->style.strokeOpacity(frameNo);
+
+                        shape->strokeWidth(strokeWidth / scale);
+                        shape->strokeFill(strokeColor.rgb[0], strokeColor.rgb[1], strokeColor.rgb[2], strokeOpacity);
+                    }
+                }
+
                 scene->push(std::move(shape));
 
                 p += glyph->len;
+                idx += glyph->len;
 
                 //advance the cursor position horizontally
                 cursor.x += glyph->width + spacing + doc.tracking;
@@ -1135,7 +1181,10 @@ static void _updateText(LottieLayer* layer, float frameNo)
             }
         }
 
-        if (!found) ++p;
+        if (!found) {
+            ++p;
+            ++idx;
+        }
     }
 }
 
