@@ -72,7 +72,7 @@ ecma_bigint_create_from_digit (ecma_bigint_digit_t digit, /* single digit */
  *         Returned value must be freed with ecma_free_value.
  */
 ecma_value_t
-ecma_bigint_parse_string (const lit_utf8_byte_t *string_p, /**< string represenation of the BigInt */
+ecma_bigint_parse_string (const lit_utf8_byte_t *string_p, /**< string representation of the BigInt */
                           lit_utf8_size_t size, /**< string size */
                           uint32_t options) /**< ecma_bigint_parse_string_options_t option bits */
 {

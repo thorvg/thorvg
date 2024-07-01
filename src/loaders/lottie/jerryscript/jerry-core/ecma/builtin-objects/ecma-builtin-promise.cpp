@@ -84,7 +84,7 @@ ecma_builtin_promise_perform_race (ecma_value_t iterator, /**< the iterator for 
   JERRY_ASSERT (ecma_object_class_is (capability_obj_p, ECMA_OBJECT_CLASS_PROMISE_CAPABILITY));
   JERRY_ASSERT (ecma_is_constructor (ctor));
 
-  ecma_promise_capabality_t *capability_p = (ecma_promise_capabality_t *) capability_obj_p;
+  ecma_promise_capability_t *capability_p = (ecma_promise_capability_t *) capability_obj_p;
 
   ecma_value_t resolve = ecma_op_object_get_by_magic_id (ecma_get_object_from_value (ctor), LIT_MAGIC_STRING_RESOLVE);
 
@@ -182,7 +182,7 @@ ecma_builtin_promise_perform (ecma_value_t iterator, /**< iteratorRecord */
   JERRY_ASSERT (ecma_object_class_is (capability_obj_p, ECMA_OBJECT_CLASS_PROMISE_CAPABILITY));
   JERRY_ASSERT (ecma_is_constructor (ctor));
 
-  ecma_promise_capabality_t *capability_p = (ecma_promise_capabality_t *) capability_obj_p;
+  ecma_promise_capability_t *capability_p = (ecma_promise_capability_t *) capability_obj_p;
 
   ecma_value_t resolve = ecma_op_object_get_by_magic_id (ecma_get_object_from_value (ctor), LIT_MAGIC_STRING_RESOLVE);
 

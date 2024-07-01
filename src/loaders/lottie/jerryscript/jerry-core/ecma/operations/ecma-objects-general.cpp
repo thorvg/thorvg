@@ -194,7 +194,7 @@ static const lit_magic_string_id_t to_primitive_non_string_hint_method_names[2] 
 };
 
 /**
- * Hints for the ecma general object's toPrimitve operation
+ * Hints for the ecma general object's toPrimitive operation
  */
 static const lit_magic_string_id_t hints[3] = {
   LIT_MAGIC_STRING_DEFAULT, /**< "default" hint */

@@ -187,7 +187,7 @@ ecma_op_has_binding (ecma_object_t *lex_env_p, /**< lexical environment */
  * See also: ECMA-262 v5, 10.2.1
  *
  * @return ECMA_PROPERTY_POINTER_ERROR - if the operation raises error
- *         pointer to the created property - if the binding was created into a declerative environment
+ *         pointer to the created property - if the binding was created into a declarative environment
  *         NULL - otherwise
  */
 ecma_property_t *
@@ -582,7 +582,7 @@ ecma_op_get_environment_record (ecma_object_t *lex_env_p) /**< lexical environme
  *
  * See also: ECMA-262 v6, 8.1.1.3
  *
- * @return true - if the status is "initialzed"
+ * @return true - if the status is "initialized"
  *         false - otherwise
  */
 bool

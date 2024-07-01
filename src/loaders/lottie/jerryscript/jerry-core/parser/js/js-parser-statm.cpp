@@ -68,7 +68,7 @@ typedef enum
 typedef enum
 {
   PARSER_STATM_NO_OPTS = 0, /**< no options */
-  PARSER_STATM_SINGLE_STATM = (1 << 0), /**< statment can form single statement context */
+  PARSER_STATM_SINGLE_STATM = (1 << 0), /**< statement can form single statement context */
   PARSER_STATM_HAS_BLOCK = (1 << 1), /**< statement always has a code block */
   PARSER_STATM_BREAK_TARGET = (1 << 2), /**< break target statement */
   PARSER_STATM_CONTINUE_TARGET = (1 << 3), /**< continue target statement */
@@ -1450,7 +1450,7 @@ parser_parse_for_statement_start (parser_context_t *context_p) /**< context */
       scanner_release_next (context_p, sizeof (scanner_for_info_t));
     }
 
-    /* The prescanner couldn't find the second semicolon or the closing paranthesis. */
+    /* The prescanner couldn't find the second semicolon or the closing parentheses. */
     lexer_next_token (context_p);
     parser_parse_expression (context_p, PARSE_EXPR);
 
@@ -1653,7 +1653,7 @@ parser_parse_switch_statement_start (parser_context_t *context_p) /**< context *
   scanner_get_location (&start_location, context_p);
 
   /* The reason of using an iterator is error management. If an error
-   * occures, parser_free_jumps() free all data. However, the branches
+   * occur, parser_free_jumps() free all data. However, the branches
    * created by parser_emit_cbc_forward_branch_item() would not be freed.
    * To free these branches, the current switch data is always stored
    * on the stack. If any change happens, this data is updated. Updates
@@ -2300,7 +2300,7 @@ parser_parse_import_statement (parser_context_t *context_p) /**< parser context 
         parser_raise_error (context_p, PARSER_ERR_DUPLICATED_IMPORT_BINDING);
       }
 
-      ecma_string_t *import_name_p = ecma_get_magic_string (LIT_MAGIC_STRING_ASTERIX_CHAR);
+      ecma_string_t *import_name_p = ecma_get_magic_string (LIT_MAGIC_STRING_ASTERISK_CHAR);
 
       parser_module_add_names_to_node (context_p, import_name_p, local_name_p);
       ecma_deref_ecma_string (local_name_p);
@@ -2439,7 +2439,7 @@ parser_parse_export_statement (parser_context_t *context_p) /**< context */
           parser_raise_error (context_p, PARSER_ERR_DUPLICATED_EXPORT_IDENTIFIER);
         }
 
-        ecma_string_t *local_name_p = ecma_get_magic_string (LIT_MAGIC_STRING_ASTERIX_CHAR);
+        ecma_string_t *local_name_p = ecma_get_magic_string (LIT_MAGIC_STRING_ASTERISK_CHAR);
         parser_module_add_names_to_node (context_p, export_name_p, local_name_p);
         ecma_deref_ecma_string (export_name_p);
 

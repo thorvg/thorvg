@@ -36,7 +36,7 @@ ecma_proxy_revoke_cb (ecma_object_t *function_obj_p, const ecma_value_t args_p[]
 
 ecma_value_t ecma_proxy_object_find (ecma_object_t *obj_p, ecma_string_t *prop_name_p);
 
-/* Interal operations */
+/* Internal operations */
 
 ecma_value_t ecma_proxy_object_get_prototype_of (ecma_object_t *obj_p);
 

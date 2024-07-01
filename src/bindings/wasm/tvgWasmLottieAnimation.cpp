@@ -306,7 +306,7 @@ public:
         return true;
     }
 
-    // TODO: Advanced APIs wrt Interactivty & theme methods...
+    // TODO: Advanced APIs wrt Interactivity & theme methods...
 
 private:
     explicit TvgLottieAnimation()

@@ -249,7 +249,7 @@ struct Vertex
 
 
 /**
- * @brief A data structure representing a triange in a texture mesh
+ * @brief A data structure representing a triangle in a texture mesh
  *
  * @param vertex The three vertices that make up the polygon
  *
@@ -295,7 +295,7 @@ public:
     /**
      * @brief Sets the values by which the object is moved in a two-dimensional space.
      *
-     * The origin of the coordinate system is in the upper left corner of the canvas.
+     * The origin of the coordinate system is in the upper-left corner of the canvas.
      * The horizontal and vertical axes point to the right and down, respectively.
      *
      * @param[in] x The value of the horizontal shift.
@@ -360,8 +360,8 @@ public:
      *
      * In case @p transform is @c true, all object's transformations are applied first, and then the bounding box is established. Otherwise, the bounding box is determined before any transformations.
      *
-     * @param[out] x The x coordinate of the upper left corner of the object.
-     * @param[out] y The y coordinate of the upper left corner of the object.
+     * @param[out] x The x-coordinate of the upper-left corner of the object.
+     * @param[out] y The y-coordinate of the upper-left corner of the object.
      * @param[out] w The width of the object.
      * @param[out] h The height of the object.
      * @param[in] transformed If @c true, the paint's transformations are taken into account, otherwise they aren't.
@@ -832,15 +832,15 @@ public:
      * The rectangle with rounded corners can be achieved by setting non-zero values to @p rx and @p ry arguments.
      * The @p rx and @p ry values specify the radii of the ellipse defining the rounding of the corners.
      *
-     * The position of the rectangle is specified by the coordinates of its upper left corner - @p x and @p y arguments.
+     * The position of the rectangle is specified by the coordinates of its upper-left corner - @p x and @p y arguments.
      *
      * The rectangle is treated as a new sub-path - it is not connected with the previous sub-path.
      *
      * The value of the current point is set to (@p x + @p rx, @p y) - in case @p rx is greater
      * than @p w/2 the current point is set to (@p x + @p w/2, @p y)
      *
-     * @param[in] x The horizontal coordinate of the upper left corner of the rectangle.
-     * @param[in] y The vertical coordinate of the upper left corner of the rectangle.
+     * @param[in] x The horizontal coordinate of the upper-left corner of the rectangle.
+     * @param[in] y The vertical coordinate of the upper-left corner of the rectangle.
      * @param[in] w The width of the rectangle.
      * @param[in] h The height of the rectangle.
      * @param[in] rx The x-axis radius of the ellipse defining the rounded corners of the rectangle.
@@ -1901,7 +1901,7 @@ public:
  * It's useful when you need to save the composed scene or image from a paint object and recreate it later.
  *
  * The file format is decided by the extension name(i.e. "*.tvg") while the supported formats depend on the TVG packaging environment.
- * If it doesn't support the file format, the save() method returns the @c Result::NonSuppport result.
+ * If it doesn't support the file format, the save() method returns the @c Result::NonSupport result.
  *
  * Once you export a paint to the file successfully, you can recreate it using the Picture class.
  *

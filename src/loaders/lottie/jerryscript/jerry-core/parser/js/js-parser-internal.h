@@ -491,7 +491,7 @@ typedef struct parser_saved_context_t
   uint16_t scope_stack_top; /**< preserved top of scope stack */
   uint16_t scope_stack_reg_top; /**< preserved top register of scope stack */
   uint16_t scope_stack_global_end; /**< end of global declarations of a function */
-  ecma_value_t tagged_template_literal_cp; /**< compessed pointer to the tagged template literal collection */
+  ecma_value_t tagged_template_literal_cp; /**< compressed pointer to the tagged template literal collection */
 #ifndef JERRY_NDEBUG
   uint16_t context_stack_depth; /**< current context stack depth */
 #endif /* !JERRY_NDEBUG */
@@ -515,11 +515,11 @@ typedef struct
   /** Union for rarely used members. */
   union
   {
-    void *allocated_buffer_p; /**< dinamically allocated buffer
+    void *allocated_buffer_p; /**< dynamically allocated buffer
                                *   which needs to be freed on error */
     scanner_context_t *scanner_context_p; /**< scanner context for the pre-scanner */
   } u;
-  uint32_t allocated_buffer_size; /**< size of the dinamically allocated buffer */
+  uint32_t allocated_buffer_size; /**< size of the dynamically allocated buffer */
 
   /* Parser members. */
   uint32_t status_flags; /**< status flags */
@@ -578,7 +578,7 @@ typedef struct
   uint16_t scope_stack_top; /**< current top of scope stack */
   uint16_t scope_stack_reg_top; /**< current top register of scope stack */
   uint16_t scope_stack_global_end; /**< end of global declarations of a function */
-  ecma_value_t tagged_template_literal_cp; /**< compessed pointer to the tagged template literal collection */
+  ecma_value_t tagged_template_literal_cp; /**< compressed pointer to the tagged template literal collection */
   parser_private_context_t *private_context_p; /**< private context */
   uint8_t stack_top_uint8; /**< top byte stored on the stack */
 
