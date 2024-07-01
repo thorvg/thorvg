@@ -427,3 +427,14 @@ FillRule Shape::fillRule() const noexcept
 {
     return pImpl->rs.rule;
 }
+
+Result Shape::shapeRendering(ShapeRendering rs) noexcept
+{
+    pImpl->rs.stroke->antiAlias = rs;
+    return Result::Success;
+}
+
+ShapeRendering Shape::shapeRendering() const noexcept
+{
+    return pImpl->rs.stroke->antiAlias;
+}
