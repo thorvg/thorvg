@@ -242,9 +242,9 @@ static void _copy(PathSet* pathset, Array<PathCommand>& outCmds)
 static void _roundCorner(Array<PathCommand>& cmds, Array<Point>& pts, const Point& prev, const Point& curr, const Point& next, float roundness)
 {
     auto lenPrev = mathLength(prev - curr);
-    auto rPrev = lenPrev > 0.0f ? 0.5f * mathMin(lenPrev * 0.5f, roundness) / lenPrev : 0.0f;
+    auto rPrev = lenPrev > 0.0f ? 0.5f * std::min(lenPrev * 0.5f, roundness) / lenPrev : 0.0f;
     auto lenNext = mathLength(next - curr);
-    auto rNext = lenNext > 0.0f ? 0.5f * mathMin(lenNext * 0.5f, roundness) / lenNext : 0.0f;
+    auto rNext = lenNext > 0.0f ? 0.5f * std::min(lenNext * 0.5f, roundness) / lenNext : 0.0f;
 
     auto dPrev = rPrev * (curr - prev);
     auto dNext = rNext * (curr - next);
