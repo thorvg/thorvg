@@ -292,7 +292,7 @@ typedef struct
  * All data allocated by the parser is
  * stored in parser_data_pages in the memory.
  */
-#if defined(_WIN32)
+#if defined(_MSC_VER )
 #pragma warning(push)
 #pragma warning(disable:4200)
 #endif
@@ -301,7 +301,7 @@ typedef struct parser_mem_page_t
   struct parser_mem_page_t *next_p; /**< next page */
   uint8_t bytes[]; /**< memory bytes, C99 flexible array member */
 } parser_mem_page_t;
-#if defined(_WIN32)
+#if defined(_MSC_VER)
 #pragma warning(pop)
 #endif
 
