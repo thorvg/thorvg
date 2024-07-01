@@ -895,7 +895,7 @@ void GlRenderer::prepareBlitTask(GlBlitTask* task)
 
     {
         uint32_t loc = task->getProgram()->getUniformLocation("uSrcTexture");
-        task->addBindResource(GlBindingResource{0, task->getColorTextore(), loc});
+        task->addBindResource(GlBindingResource{0, task->getColorTexture(), loc});
     }
 }
 
