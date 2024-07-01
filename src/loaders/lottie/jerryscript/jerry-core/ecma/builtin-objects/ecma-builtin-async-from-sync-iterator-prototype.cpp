@@ -46,7 +46,7 @@
  */
 enum
 {
-  ECMA_ASYNC_FROM_SYNC_ITERATOR_PROTOTYPE_ROUTINE_START = 0, /**< buitlin routine start id */
+  ECMA_ASYNC_FROM_SYNC_ITERATOR_PROTOTYPE_ROUTINE_START = 0, /**< builtin routine start id */
   ECMA_ASYNC_FROM_SYNC_ITERATOR_PROTOTYPE_ROUTINE_NEXT, /**< 'next' routine v11, 25.1.4.2.1  */
   ECMA_ASYNC_FROM_SYNC_ITERATOR_PROTOTYPE_ROUTINE_RETURN, /**< 'return' routine v11, 25.1.4.2.2  */
   ECMA_ASYNC_FROM_SYNC_ITERATOR_PROTOTYPE_ROUTINE_THROW /**< 'throw' routine v11, 25.1.4.2.3  */
@@ -112,18 +112,18 @@ ecma_op_async_from_sync_iterator_prototype_continuation (ecma_value_t result, /*
   }
 
   /* 8 - 9. */
-  ecma_object_t *on_fullfilled = ecma_op_create_native_handler (ECMA_NATIVE_HANDLER_ASYNC_FROM_SYNC_ITERATOR_UNWRAP,
+  ecma_object_t *on_fulfilled = ecma_op_create_native_handler (ECMA_NATIVE_HANDLER_ASYNC_FROM_SYNC_ITERATOR_UNWRAP,
                                                                 sizeof (ecma_extended_object_t));
-  ((ecma_extended_object_t *) on_fullfilled)->u.built_in.u2.routine_flags = (uint8_t) done_flag;
+  ((ecma_extended_object_t *) on_fulfilled)->u.built_in.u2.routine_flags = (uint8_t) done_flag;
 
   /* 10. */
   ecma_value_t then_result = ecma_promise_perform_then (value_wrapper,
-                                                        ecma_make_object_value (on_fullfilled),
+                                                        ecma_make_object_value (on_fulfilled),
                                                         ECMA_VALUE_UNDEFINED,
                                                         capability_obj_p);
 
   JERRY_ASSERT (!ECMA_IS_VALUE_ERROR (then_result));
-  ecma_deref_object (on_fullfilled);
+  ecma_deref_object (on_fulfilled);
   ecma_free_value (value_wrapper);
 
   /* 11. */
@@ -189,7 +189,7 @@ ecma_builtin_async_from_sync_iterator_prototype_do (ecma_async_from_sync_iterato
     return method;
   }
 
-  ecma_promise_capabality_t *capability_p = (ecma_promise_capabality_t *) capability_obj_p;
+  ecma_promise_capability_t *capability_p = (ecma_promise_capability_t *) capability_obj_p;
 
   ecma_value_t call_arg;
   uint32_t arg_size;

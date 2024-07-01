@@ -326,15 +326,15 @@ static ecma_value_t
 ecma_typedarray_set_int16_element (lit_utf8_byte_t *dst_p, /**< the location in the internal arraybuffer */
                                    ecma_value_t value) /**< the number value to set */
 {
-  ecma_number_t resut_num;
-  ecma_value_t to_num = ecma_op_to_numeric (value, &resut_num, ECMA_TO_NUMERIC_NO_OPTS);
+  ecma_number_t result_num;
+  ecma_value_t to_num = ecma_op_to_numeric (value, &result_num, ECMA_TO_NUMERIC_NO_OPTS);
 
   if (ECMA_IS_VALUE_ERROR (to_num))
   {
     return to_num;
   }
 
-  int16_t num = (int16_t) ecma_typedarray_setter_number_to_uint32 (resut_num);
+  int16_t num = (int16_t) ecma_typedarray_setter_number_to_uint32 (result_num);
   ECMA_TYPEDARRAY_SET_ELEMENT (dst_p, num, int16_t);
   return ECMA_VALUE_TRUE;
 } /* ecma_typedarray_set_int16_element */
@@ -349,15 +349,15 @@ static ecma_value_t
 ecma_typedarray_set_uint16_element (lit_utf8_byte_t *dst_p, /**< the location in the internal arraybuffer */
                                     ecma_value_t value) /**< the number value to set */
 {
-  ecma_number_t resut_num;
-  ecma_value_t to_num = ecma_op_to_numeric (value, &resut_num, ECMA_TO_NUMERIC_NO_OPTS);
+  ecma_number_t result_num;
+  ecma_value_t to_num = ecma_op_to_numeric (value, &result_num, ECMA_TO_NUMERIC_NO_OPTS);
 
   if (ECMA_IS_VALUE_ERROR (to_num))
   {
     return to_num;
   }
 
-  uint16_t num = (uint16_t) ecma_typedarray_setter_number_to_uint32 (resut_num);
+  uint16_t num = (uint16_t) ecma_typedarray_setter_number_to_uint32 (result_num);
   ECMA_TYPEDARRAY_SET_ELEMENT (dst_p, num, uint16_t);
   return ECMA_VALUE_TRUE;
 } /* ecma_typedarray_set_uint16_element */
@@ -372,15 +372,15 @@ static ecma_value_t
 ecma_typedarray_set_int32_element (lit_utf8_byte_t *dst_p, /**< the location in the internal arraybuffer */
                                    ecma_value_t value) /**< the number value to set */
 {
-  ecma_number_t resut_num;
-  ecma_value_t to_num = ecma_op_to_numeric (value, &resut_num, ECMA_TO_NUMERIC_NO_OPTS);
+  ecma_number_t result_num;
+  ecma_value_t to_num = ecma_op_to_numeric (value, &result_num, ECMA_TO_NUMERIC_NO_OPTS);
 
   if (ECMA_IS_VALUE_ERROR (to_num))
   {
     return to_num;
   }
 
-  int32_t num = (int32_t) ecma_typedarray_setter_number_to_uint32 (resut_num);
+  int32_t num = (int32_t) ecma_typedarray_setter_number_to_uint32 (result_num);
   ECMA_TYPEDARRAY_SET_ELEMENT (dst_p, num, int32_t);
   return ECMA_VALUE_TRUE;
 } /* ecma_typedarray_set_int32_element */
@@ -395,15 +395,15 @@ static ecma_value_t
 ecma_typedarray_set_uint32_element (lit_utf8_byte_t *dst_p, /**< the location in the internal arraybuffer */
                                     ecma_value_t value) /**< the number value to set */
 {
-  ecma_number_t resut_num;
-  ecma_value_t to_num = ecma_op_to_numeric (value, &resut_num, ECMA_TO_NUMERIC_NO_OPTS);
+  ecma_number_t result_num;
+  ecma_value_t to_num = ecma_op_to_numeric (value, &result_num, ECMA_TO_NUMERIC_NO_OPTS);
 
   if (ECMA_IS_VALUE_ERROR (to_num))
   {
     return to_num;
   }
 
-  uint32_t num = (uint32_t) ecma_typedarray_setter_number_to_uint32 (resut_num);
+  uint32_t num = (uint32_t) ecma_typedarray_setter_number_to_uint32 (result_num);
   ECMA_TYPEDARRAY_SET_ELEMENT (dst_p, num, uint32_t);
   return ECMA_VALUE_TRUE;
 } /* ecma_typedarray_set_uint32_element */
@@ -967,7 +967,7 @@ ecma_typedarray_create_object_with_typedarray (ecma_object_t *typedarray_p, /**<
 static ecma_value_t
 ecma_op_typedarray_from_helper (ecma_value_t this_val, /**< this_arg for the above from function */
                                 ecma_value_t current_value, /**< given value to set */
-                                uint32_t index, /**< currrent index */
+                                uint32_t index, /**< current index */
                                 ecma_object_t *func_object_p, /**< map function object */
                                 uint8_t *buffer_p, /**< target buffer */
                                 ecma_typedarray_setter_fn_t setter_cb) /**< setter callback function */
@@ -1599,7 +1599,7 @@ ecma_typedarray_get_offset (ecma_object_t *typedarray_p) /**< the pointer to the
 /**
  * Utility function: return the pointer of the data buffer referenced by the typedarray info
  *
- * @return pointer to the data buffer if successfull,
+ * @return pointer to the data buffer if successful,
  *         NULL otherwise
  */
 uint8_t *
@@ -2019,7 +2019,7 @@ ecma_typedarray_create (ecma_object_t *constructor_p, /**< constructor function 
 ecma_value_t
 ecma_typedarray_species_create (ecma_value_t this_arg, /**< this argument */
                                 ecma_value_t *arguments_list_p, /**< the arg list passed to typedarray construct */
-                                uint32_t arguments_list_len) /**< length of the the arg list */
+                                uint32_t arguments_list_len) /**< length of the arg list */
 {
   ecma_object_t *typedarray_p = ecma_get_object_from_value (this_arg);
   ecma_typedarray_info_t info = ecma_typedarray_get_info (typedarray_p);

@@ -248,7 +248,7 @@ ecma_validate_proxy_object (ecma_value_t handler, /**< proxy handler */
   return ecma_op_get_method_by_magic_id (handler, magic_id);
 } /* ecma_validate_proxy_object */
 
-/* Interal operations */
+/* Internal operations */
 
 /**
  * The Proxy object [[GetPrototypeOf]] internal routine
@@ -1132,7 +1132,7 @@ ecma_proxy_object_has (ecma_object_t *obj_p, /**< proxy object */
  * Note: Returned value is always a simple value so freeing it is unnecessary.
  *
  * @return ECMA_VALUE_ERROR - if the operation fails
- *         value of the given nameddata property or the result of the getter function call - otherwise
+ *         value of the given named data property or the result of the getter function call - otherwise
  */
 ecma_value_t
 ecma_proxy_object_get (ecma_object_t *obj_p, /**< proxy object */
@@ -1231,7 +1231,7 @@ ecma_proxy_object_get (ecma_object_t *obj_p, /**< proxy object */
  * Note: Returned value is always a simple value so freeing it is unnecessary.
  *
  * @return ECMA_VALUE_ERROR - if the operation fails
- *         ECMA_VALUE_{TRUE/FALSE} - depends on whether the propety can be set to the given object
+ *         ECMA_VALUE_{TRUE/FALSE} - depends on whether the property can be set to the given object
  */
 ecma_value_t
 ecma_proxy_object_set (ecma_object_t *obj_p, /**< proxy object */
@@ -1352,7 +1352,7 @@ ecma_proxy_object_set (ecma_object_t *obj_p, /**< proxy object */
  * Note: Returned value is always a simple value so freeing it is unnecessary.
  *
  * @return ECMA_VALUE_ERROR - if the operation fails
- *         ECMA_VALUE_{TRUE/FALSE} - depends on whether the propety can be deleted
+ *         ECMA_VALUE_{TRUE/FALSE} - depends on whether the property can be deleted
  */
 ecma_value_t
 ecma_proxy_object_delete_property (ecma_object_t *obj_p, /**< proxy object */

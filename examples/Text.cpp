@@ -40,7 +40,7 @@ struct UserExample : tvgexam::Example
 
         //Load a necessary font data.
         //The loaded font will be released when the Initializer::term() is called.
-        //Otherwise, you can immedately unload the font data.
+        //Otherwise, you can immediately unload the font data.
         //Please check Text::unload() APIs.
         if (!tvgexam::verify(tvg::Text::load(EXAMPLE_DIR"/font/Arial.ttf"))) return false;
         if (!tvgexam::verify(tvg::Text::load(EXAMPLE_DIR"/font/NanumGothicCoding.ttf"))) return false;

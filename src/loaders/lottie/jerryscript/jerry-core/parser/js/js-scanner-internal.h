@@ -182,7 +182,7 @@ typedef enum
  */
 
 /**
- * Literal is a local declration (let, const, catch variable, etc.)
+ * Literal is a local declaration (let, const, catch variable, etc.)
  */
 #define SCANNER_LITERAL_IS_LOCAL (SCANNER_LITERAL_IS_LET | SCANNER_LITERAL_IS_CONST)
 

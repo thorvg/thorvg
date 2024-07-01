@@ -167,7 +167,7 @@ bool TvgSaver::saveEncoding(const std::string& path)
     memcpy(uncompressed, &uncompressedSize, TVG_HEADER_UNCOMPRESSED_SIZE);
     uncompressed += TVG_HEADER_UNCOMPRESSED_SIZE;
 
-    //Comprssed Size
+    //Compressed Size
     memcpy(uncompressed, &compressedSize, TVG_HEADER_COMPRESSED_SIZE);
     uncompressed += TVG_HEADER_COMPRESSED_SIZE;
 
@@ -556,7 +556,7 @@ TvgBinCounter TvgSaver::serializeShape(const Shape* shape, const Matrix* pTransf
         cnt = writeTagProperty(TVG_TAG_SHAPE_FILLRULE, SIZE(TvgBinFlag), &flag);
     }
 
-    //the pre-transformation can't be applied in the case when the stroke is dashed or irregulary scaled
+    //the pre-transformation can't be applied in the case when the stroke is dashed or irregularly scaled
     bool preTransform = true;
 
     //stroke

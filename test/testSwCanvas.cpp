@@ -284,7 +284,7 @@ TEST_CASE("Synchronized Drawing", "[tvgSwCanvas]")
     REQUIRE(Initializer::term(CanvasEngine::Sw) == Result::Success);
 }
 
-TEST_CASE("Asynchronized Drawing", "[tvgSwCanvas]")
+TEST_CASE("Asynchronous Drawing", "[tvgSwCanvas]")
 {
     //Use multi-threading
     REQUIRE(Initializer::init(CanvasEngine::Sw, 2) == Result::Success);

@@ -1012,7 +1012,7 @@ ecma_gc_mark (ecma_object_t *object_p) /**< object to mark from */
           }
           case ECMA_OBJECT_CLASS_PROMISE_CAPABILITY:
           {
-            ecma_promise_capabality_t *capability_p = (ecma_promise_capabality_t *) object_p;
+            ecma_promise_capability_t *capability_p = (ecma_promise_capability_t *) object_p;
 
             if (ecma_is_value_object (capability_p->header.u.cls.u3.promise))
             {
@@ -1893,7 +1893,7 @@ ecma_gc_free_object (ecma_object_t *object_p) /**< object to free */
         }
         case ECMA_OBJECT_CLASS_PROMISE_CAPABILITY:
         {
-          ext_object_size = sizeof (ecma_promise_capabality_t);
+          ext_object_size = sizeof (ecma_promise_capability_t);
           break;
         }
         case ECMA_OBJECT_CLASS_ASYNC_FROM_SYNC_ITERATOR:

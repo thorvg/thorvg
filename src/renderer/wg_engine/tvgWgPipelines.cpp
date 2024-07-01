@@ -44,9 +44,9 @@ void WgPipelineFillShapeWinding::initialize(WGPUDevice device)
     };
 
     // stencil function
-    WGPUCompareFunction stencilFuncionFront = WGPUCompareFunction_Always;
+    WGPUCompareFunction stencilFunctionFront = WGPUCompareFunction_Always;
     WGPUStencilOperation stencilOperationFront = WGPUStencilOperation_IncrementWrap;
-    WGPUCompareFunction stencilFuncionBack = WGPUCompareFunction_Always;
+    WGPUCompareFunction stencilFunctionBack = WGPUCompareFunction_Always;
     WGPUStencilOperation stencilOperationBack = WGPUStencilOperation_DecrementWrap;
 
     // sheder source and labels
@@ -58,7 +58,7 @@ void WgPipelineFillShapeWinding::initialize(WGPUDevice device)
     allocate(device, WgPipelineBlendType::Add, WGPUColorWriteMask_None,
              vertexBufferLayouts, ARRAY_ELEMENTS_COUNT(vertexBufferLayouts),
              bindGroupLayouts, ARRAY_ELEMENTS_COUNT(bindGroupLayouts),
-             stencilFuncionFront, stencilOperationFront, stencilFuncionBack, stencilOperationBack,
+             stencilFunctionFront, stencilOperationFront, stencilFunctionBack, stencilOperationBack,
              shaderSource, shaderLabel, pipelineLabel);
 }
 
@@ -78,9 +78,9 @@ void WgPipelineFillShapeEvenOdd::initialize(WGPUDevice device)
     };
 
     // stencil function
-    WGPUCompareFunction stencilFuncionFront = WGPUCompareFunction_Always;
+    WGPUCompareFunction stencilFunctionFront = WGPUCompareFunction_Always;
     WGPUStencilOperation stencilOperationFront = WGPUStencilOperation_Invert;
-    WGPUCompareFunction stencilFuncionBack = WGPUCompareFunction_Always;
+    WGPUCompareFunction stencilFunctionBack = WGPUCompareFunction_Always;
     WGPUStencilOperation stencilOperationBack = WGPUStencilOperation_Invert;
 
     // sheder source and labels
@@ -92,7 +92,7 @@ void WgPipelineFillShapeEvenOdd::initialize(WGPUDevice device)
     allocate(device, WgPipelineBlendType::Add, WGPUColorWriteMask_None,
              vertexBufferLayouts, ARRAY_ELEMENTS_COUNT(vertexBufferLayouts),
              bindGroupLayouts, ARRAY_ELEMENTS_COUNT(bindGroupLayouts),
-             stencilFuncionFront, stencilOperationFront, stencilFuncionBack, stencilOperationBack,
+             stencilFunctionFront, stencilOperationFront, stencilFunctionBack, stencilOperationBack,
              shaderSource, shaderLabel, pipelineLabel);
 }
 
@@ -112,7 +112,7 @@ void WgPipelineFillStroke::initialize(WGPUDevice device)
     };
 
     // stencil function
-    WGPUCompareFunction stencilFuncion = WGPUCompareFunction_Always;
+    WGPUCompareFunction stencilFunction = WGPUCompareFunction_Always;
     WGPUStencilOperation stencilOperation = WGPUStencilOperation_Replace;
 
     // sheder source and labels
@@ -124,7 +124,7 @@ void WgPipelineFillStroke::initialize(WGPUDevice device)
     allocate(device, WgPipelineBlendType::Add, WGPUColorWriteMask_None,
              vertexBufferLayouts, ARRAY_ELEMENTS_COUNT(vertexBufferLayouts),
              bindGroupLayouts, ARRAY_ELEMENTS_COUNT(bindGroupLayouts),
-             stencilFuncion, stencilOperation, stencilFuncion, stencilOperation,
+             stencilFunction, stencilOperation, stencilFunction, stencilOperation,
              shaderSource, shaderLabel, pipelineLabel);
 }
 
@@ -145,7 +145,7 @@ void WgPipelineSolid::initialize(WGPUDevice device, WgPipelineBlendType blendTyp
     };
 
     // stencil function
-    WGPUCompareFunction stencilFuncion = WGPUCompareFunction_NotEqual;
+    WGPUCompareFunction stencilFunction = WGPUCompareFunction_NotEqual;
     WGPUStencilOperation stencilOperation = WGPUStencilOperation_Zero;
 
     // sheder source and labels
@@ -157,7 +157,7 @@ void WgPipelineSolid::initialize(WGPUDevice device, WgPipelineBlendType blendTyp
     allocate(device, blendType, WGPUColorWriteMask_All,
              vertexBufferLayouts, ARRAY_ELEMENTS_COUNT(vertexBufferLayouts),
              bindGroupLayouts, ARRAY_ELEMENTS_COUNT(bindGroupLayouts),
-             stencilFuncion, stencilOperation, stencilFuncion, stencilOperation,
+             stencilFunction, stencilOperation, stencilFunction, stencilOperation,
              shaderSource, shaderLabel, pipelineLabel);
 }
 
@@ -178,7 +178,7 @@ void WgPipelineLinear::initialize(WGPUDevice device, WgPipelineBlendType blendTy
     };
 
     // stencil function
-    WGPUCompareFunction stencilFuncion = WGPUCompareFunction_NotEqual;
+    WGPUCompareFunction stencilFunction = WGPUCompareFunction_NotEqual;
     WGPUStencilOperation stencilOperation = WGPUStencilOperation_Zero;
 
     // sheder source and labels
@@ -190,7 +190,7 @@ void WgPipelineLinear::initialize(WGPUDevice device, WgPipelineBlendType blendTy
     allocate(device, blendType, WGPUColorWriteMask_All,
              vertexBufferLayouts, ARRAY_ELEMENTS_COUNT(vertexBufferLayouts),
              bindGroupLayouts, ARRAY_ELEMENTS_COUNT(bindGroupLayouts),
-             stencilFuncion, stencilOperation, stencilFuncion, stencilOperation,
+             stencilFunction, stencilOperation, stencilFunction, stencilOperation,
              shaderSource, shaderLabel, pipelineLabel);
 }
 
@@ -211,7 +211,7 @@ void WgPipelineRadial::initialize(WGPUDevice device, WgPipelineBlendType blendTy
     };
 
     // stencil function
-    WGPUCompareFunction stencilFuncion = WGPUCompareFunction_NotEqual;
+    WGPUCompareFunction stencilFunction = WGPUCompareFunction_NotEqual;
     WGPUStencilOperation stencilOperation = WGPUStencilOperation_Zero;
 
     // sheder source and labels
@@ -223,7 +223,7 @@ void WgPipelineRadial::initialize(WGPUDevice device, WgPipelineBlendType blendTy
     allocate(device, blendType, WGPUColorWriteMask_All,
              vertexBufferLayouts, ARRAY_ELEMENTS_COUNT(vertexBufferLayouts),
              bindGroupLayouts, ARRAY_ELEMENTS_COUNT(bindGroupLayouts),
-             stencilFuncion, stencilOperation, stencilFuncion, stencilOperation,
+             stencilFunction, stencilOperation, stencilFunction, stencilOperation,
              shaderSource, shaderLabel, pipelineLabel);
 }
 
@@ -246,7 +246,7 @@ void WgPipelineImage::initialize(WGPUDevice device, WgPipelineBlendType blendTyp
     };
 
     // stencil function
-    WGPUCompareFunction stencilFuncion = WGPUCompareFunction_Always;
+    WGPUCompareFunction stencilFunction = WGPUCompareFunction_Always;
     WGPUStencilOperation stencilOperation = WGPUStencilOperation_Zero;
 
     // sheder source and labels
@@ -258,7 +258,7 @@ void WgPipelineImage::initialize(WGPUDevice device, WgPipelineBlendType blendTyp
     allocate(device, blendType, WGPUColorWriteMask_All,
              vertexBufferLayouts, ARRAY_ELEMENTS_COUNT(vertexBufferLayouts),
              bindGroupLayouts, ARRAY_ELEMENTS_COUNT(bindGroupLayouts),
-             stencilFuncion, stencilOperation, stencilFuncion, stencilOperation,
+             stencilFunction, stencilOperation, stencilFunction, stencilOperation,
              shaderSource, shaderLabel, pipelineLabel);
 }
 

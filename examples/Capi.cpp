@@ -116,7 +116,7 @@ void contents()
     //Set a gradient fill
     tvg_shape_set_radial_gradient(shape3, grad2);
 
-    //Prepaer a radial gradient for the stroke
+    //Prepare a radial gradient for the stroke
     uint32_t cnt;
     const Tvg_Color_Stop* color_stops2_get;
     tvg_gradient_get_color_stops(grad2, &color_stops2_get, &cnt);

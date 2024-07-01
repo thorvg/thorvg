@@ -64,8 +64,8 @@ struct RenderContext
     Matrix* transform = nullptr;
     float roundness = 0.0f;
     bool fragmenting = false;  //render context has been fragmented by filling
-    bool reqFragment = false;  //requirment to fragment the render context
-    bool ownPropagator = true; //this rendering context shares the propergator
+    bool reqFragment = false;  //requirement to fragment the render context
+    bool ownPropagator = true; //this rendering context shares the propagator
 
     RenderContext()
     {

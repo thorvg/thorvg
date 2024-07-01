@@ -359,7 +359,7 @@ typedef enum
 {
   ECMA_ENUMERABLE_PROPERTY_KEYS, /**< List only property names */
   ECMA_ENUMERABLE_PROPERTY_VALUES, /**< List only property values */
-  ECMA_ENUMERABLE_PROPERTY_ENTRIES, /**< List both propery names and values */
+  ECMA_ENUMERABLE_PROPERTY_ENTRIES, /**< List both property names and values */
 
   ECMA_ENUMERABLE_PROPERTY__COUNT /**< Number of enumerable property listing types */
 } ecma_enumerable_property_names_options_t;
@@ -914,7 +914,7 @@ typedef struct
   union
   {
     jmem_cpointer_t property_list_cp; /**< compressed pointer to object's
-                                       *   or declerative lexical environments's property list */
+                                       *   or declarative lexical environments's property list */
     jmem_cpointer_t bound_object_cp; /**< compressed pointer to lexical environments's the bound object */
     jmem_cpointer_t home_object_cp; /**< compressed pointer to lexical environments's the home object */
   } u1;
@@ -1399,7 +1399,7 @@ typedef struct
 #define ECMA_COLLECTION_INITIAL_CAPACITY 4
 
 /**
- * Ecma-collenction grow factor when the collection underlying buffer need to be reallocated
+ * Ecma-collection grow factor when the collection underlying buffer need to be reallocated
  */
 #define ECMA_COLLECTION_GROW_FACTOR (ECMA_COLLECTION_INITIAL_CAPACITY * 2)
 
@@ -1740,7 +1740,7 @@ typedef struct
 
 /**
  * The lowest state of the ecma_prop_hashmap_alloc_state counter.
- * If ecma_prop_hashmap_alloc_state other other than this value, it is
+ * If ecma_prop_hashmap_alloc_state other than this value, it is
  * disabled.
  */
 #define ECMA_PROP_HASHMAP_ALLOC_ON 0
@@ -1972,7 +1972,7 @@ typedef struct
   ecma_extended_object_t header; /**< object header, and [[Promise]] internal slot */
   ecma_value_t resolve; /**< [[Resolve]] internal slot */
   ecma_value_t reject; /**< [[Reject]] internal slot */
-} ecma_promise_capabality_t;
+} ecma_promise_capability_t;
 
 /**
  * Definition of GetCapabilitiesExecutor Functions
@@ -2041,7 +2041,7 @@ typedef enum
 #if (JERRY_STACK_LIMIT != 0)
 /**
  * Check the current stack usage. If the limit is reached a RangeError is raised.
- * The macro argument specifies the return value which is usally ECMA_VALUE_ERROR or NULL.
+ * The macro argument specifies the return value which is usually ECMA_VALUE_ERROR or NULL.
  */
 #define ECMA_CHECK_STACK_USAGE_RETURN(RETURN_VALUE)               \
   do                                                              \
@@ -2121,7 +2121,7 @@ typedef struct
 #endif /* JERRY_BUILTIN_PROXY */
 
 /**
- * Type to repesent the maximum property index
+ * Type to represent the maximum property index
  *
  * For ES6+ the maximum valid property index is 2**53 - 1
  */

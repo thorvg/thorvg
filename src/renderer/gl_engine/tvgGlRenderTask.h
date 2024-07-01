@@ -148,7 +148,7 @@ public:
 
     void run() override;
 
-    GLuint getColorTextore() const { return mColorTex; }
+    GLuint getColorTexture() const { return mColorTex; }
 
     void setTargetViewport(const RenderRegion& vp) { mTargetViewport = vp; }
 private:

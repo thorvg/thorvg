@@ -130,7 +130,7 @@ PARSER_ERROR_DEF (PARSER_ERR_DUPLICATED_IMPORT_BINDING, "Duplicated imported bin
 #endif /* JERRY_MODULE_SYSTEM */
 #if JERRY_PARSER
 PARSER_ERROR_DEF (PARSER_ERR_WHILE_EXPECTED, "While expected for do-while loop")
-PARSER_ERROR_DEF (PARSER_ERR_DELETE_PRIVATE_FIELD, "Private fields can not be deleted")
+PARSER_ERROR_DEF (PARSER_ERR_DELETE_PRIVATE_FIELD, "Private fields cannot be deleted")
 PARSER_ERROR_DEF (PARSER_ERR_INVALID_LHS_FOR_LOOP, "Invalid left-hand-side in for-loop")
 PARSER_ERROR_DEF (PARSER_ERR_LEFT_HAND_SIDE_EXP_EXPECTED, "Left-hand-side expression expected")
 PARSER_ERROR_DEF (PARSER_ERR_LITERAL_LIMIT_REACHED, "Maximum number of literals reached")
