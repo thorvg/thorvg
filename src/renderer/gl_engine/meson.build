@@ -23,6 +23,16 @@ source_file = [
 
 if host_machine.system() == 'darwin'
     gl_dep = declare_dependency(link_args: ['-framework', 'OpenGL'])
+elif host_machine.system() == 'windows'
+    gl_dep = cc.find_library(
+        'GLESv2',
+        has_headers: 'GLES3/gl3.h'
+    )
+    if gl_dep.found()
+        target_opengles = true
+    else
+        error('GLES 3.0 library not found. Please make sure Angle library is installed, or disable OpenGL support.')
+    endif
 else
     #find a opengl library with fallbacks
     gl_dep = dependency('GL', required: false)
