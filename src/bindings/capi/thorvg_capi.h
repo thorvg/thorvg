@@ -720,6 +720,7 @@ TVG_API Tvg_Result tvg_canvas_draw(Tvg_Canvas* canvas);
 *
 * \return Tvg_Result enumeration.
 * \retval TVG_RESULT_INVALID_ARGUMENT An invalid Tvg_Canvas pointer.
+* \retval TVG_RESULT_INSUFFICIENT_CONDITION @p canvas is either already in sync condition or in a damaged condition (a draw is required before syncing).
 *
 * \see tvg_canvas_draw()
 */
