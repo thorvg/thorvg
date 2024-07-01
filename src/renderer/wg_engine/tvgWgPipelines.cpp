@@ -291,7 +291,8 @@ void WgPipelineBlend::initialize(WGPUDevice device)
     WGPUBindGroupLayout bindGroupLayouts[] = {
         WgBindGroupTextureStorageRgba::getLayout(device),
         WgBindGroupTextureStorageRgba::getLayout(device),
-        WgBindGroupBlendMethod::getLayout(device)
+        WgBindGroupBlendMethod::getLayout(device),
+        WgBindGroupOpacity::getLayout(device)
     };
 
     // sheder source and labels

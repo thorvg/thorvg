@@ -132,12 +132,13 @@ struct WgPipelineClear: public WgComputePipeline
 struct WgPipelineBlend: public WgComputePipeline
 {
     void initialize(WGPUDevice device) override;
-    void use(WGPUComputePassEncoder encoder, WgBindGroupTextureStorageRgba& groupTexSrc, WgBindGroupTextureStorageRgba& groupTexDst, WgBindGroupBlendMethod& blendMethod)
+    void use(WGPUComputePassEncoder encoder, WgBindGroupTextureStorageRgba& groupTexSrc, WgBindGroupTextureStorageRgba& groupTexDst, WgBindGroupBlendMethod& blendMethod, WgBindGroupOpacity& groupOpacity)
     {
         set(encoder);
         groupTexSrc.set(encoder, 0);
         groupTexDst.set(encoder, 1);
         blendMethod.set(encoder, 2);
+        groupOpacity.set(encoder, 3);
     }
 };
 

@@ -168,7 +168,8 @@ bool WgRenderer::renderShape(RenderData data)
         mRenderTarget.endRenderPass();
         // blend shape with current render storage
         WgBindGroupBlendMethod* blendMethod = mBlendMethodPool.allocate(mContext, mBlendMethod);
-        renderStorage->blend(mCommandEncoder, &mRenderTarget, blendMethod);
+        WgBindGroupOpacity* opacity = mOpacityPool.allocate(mContext, 255);
+        renderStorage->blend(mCommandEncoder, &mRenderTarget, blendMethod, opacity);
         // restore current render pass
         renderStorage->beginRenderPass(mCommandEncoder, false);
     }
@@ -194,7 +195,8 @@ bool WgRenderer::renderImage(RenderData data)
         mRenderTarget.endRenderPass();
         // blend shape with current render storage
         WgBindGroupBlendMethod* blendMethod = mBlendMethodPool.allocate(mContext, mBlendMethod);
-        renderStorage->blend(mCommandEncoder, &mRenderTarget, blendMethod);
+        WgBindGroupOpacity* opacity = mOpacityPool.allocate(mContext, 255);
+        renderStorage->blend(mCommandEncoder, &mRenderTarget, blendMethod, opacity);
         // restore current render pass
         renderStorage->beginRenderPass(mCommandEncoder, false);
     }
@@ -290,7 +292,7 @@ bool WgRenderer::sync()
 
     mContext.executeCommandEncoder(commandEncoder);
     wgpuCommandEncoderRelease(commandEncoder);
-    
+
     wgpuSurfacePresent(mContext.surface);
     return true;
 }
@@ -367,7 +369,8 @@ bool WgRenderer::endComposite(TVG_UNUSED Compositor* cmp)
     
         // blent scene to current render storage
         WgBindGroupBlendMethod* blendMethod = mBlendMethodPool.allocate(mContext, comp->blendMethod);
-        mRenderStorageStack.last()->blend(mCommandEncoder, renderStorageSrc, blendMethod);
+        WgBindGroupOpacity* opacity = mOpacityPool.allocate(mContext, comp->opacity);
+        mRenderStorageStack.last()->blend(mCommandEncoder, renderStorageSrc, blendMethod, opacity);
 
         // back render targets to the pool
         mRenderStoragePool.free(mContext, renderStorageSrc);
