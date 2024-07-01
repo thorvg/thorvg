@@ -601,7 +601,7 @@ static void _applyRoundedCorner(Shape* star, Shape* merging, float outerRoundnes
     auto ptsCnt = star->pathCoords(&pts);
 
     auto len = mathLength(pts[1] - pts[2]);
-    auto r = len > 0.0f ? ROUNDED_POLYSTAR_MAGIC_NUMBER * mathMin(len * 0.5f, roundness) / len : 0.0f;
+    auto r = len > 0.0f ? ROUNDED_POLYSTAR_MAGIC_NUMBER * std::min(len * 0.5f, roundness) / len : 0.0f;
 
     if (hasRoundness) {
         P(merging)->rs.path.cmds.grow((uint32_t)(1.5 * cmdCnt));
