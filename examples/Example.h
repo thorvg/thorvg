@@ -436,6 +436,11 @@ struct WgWindow : Window
         //Set the canvas target and draw on it.
         verify(canvas->target(instance, surface, width, height));
     }
+
+    void refresh() override 
+    {
+        wgpuSurfacePresent(surface);
+    }
 };
 
 #else
