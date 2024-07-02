@@ -110,12 +110,11 @@ void LottieSlot::assign(LottieObject* target)
 
 LottieImage::~LottieImage()
 {
-    free(b64Data);
-    free(mimeType);
-
     if (picture && PP(picture)->unref() == 0) {
         delete(picture);
     }
+    free(b64Data);
+    free(mimeType);
 }
 
 
