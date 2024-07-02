@@ -454,10 +454,10 @@ struct LottieImage : LottieObject
         char* b64Data = nullptr;
         char* path;
     };
+    Picture* picture = nullptr;   //tvg render data
     char* mimeType = nullptr;
     uint32_t size = 0;
-
-    Picture* picture = nullptr;   //tvg render data
+    uint16_t refCnt = 0;   //refernce count
 
     ~LottieImage();
 
