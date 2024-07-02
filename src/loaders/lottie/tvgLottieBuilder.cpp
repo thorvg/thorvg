@@ -1145,7 +1145,12 @@ static void _updateMaskings(LottieLayer* layer, float frameNo, LottieExpressions
     if (pMask->pathset(frameNo, P(pShape)->rs.path.cmds, P(pShape)->rs.path.pts, nullptr, 0.0f, exps)) {
         P(pShape)->update(RenderUpdateFlag::Path);
     }
-    layer->scene->composite(tvg::cast(pShape), (pMethod == CompositeMethod::SubtractMask) ? CompositeMethod::InvAlphaMask : CompositeMethod::AlphaMask);
+
+    if (pMethod == CompositeMethod::SubtractMask || pMethod == CompositeMethod::InvAlphaMask) {
+        layer->scene->composite(tvg::cast(pShape), CompositeMethod::InvAlphaMask);
+    } else {
+        layer->scene->composite(tvg::cast(pShape), CompositeMethod::AlphaMask);
+    }
 
     //Apply the subsquent masks
     for (auto m = layer->masks.begin() + 1; m < layer->masks.end(); ++m) {
