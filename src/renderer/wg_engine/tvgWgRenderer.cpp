@@ -63,7 +63,7 @@ void WgRenderer::release()
     mOpacityPool.release(mContext);
     mRenderStorageRoot.release(mContext);
     mRenderStorageScreen.release(mContext);
-    mRenderTarget.release(mContext);
+    mRenderStorageInterm.release(mContext);
     mPipelines.release();
 }
 
@@ -152,23 +152,29 @@ bool WgRenderer::preRender()
 bool WgRenderer::renderShape(RenderData data)
 {
     // get current render storage
-    if (((WgRenderDataShape*)data)->opacity == 0) return 0;
+    WgRenderDataShape *dataShape = (WgRenderDataShape*)data;
+    if (dataShape->opacity == 0) return 0;
     WgPipelineBlendType blendType = WgPipelines::blendMethodToBlendType(mBlendMethod);
     WgRenderStorage* renderStorage = mRenderStorageStack.last();
     assert(renderStorage);
     // use hardware blend
     if (WgPipelines::isBlendMethodSupportsHW(mBlendMethod))
-        renderStorage->renderShape(mContext, (WgRenderDataShape *)data, blendType);
-    else { // use custom blend
+        renderStorage->renderShape(mContext, dataShape, blendType);
+    // use custom blend
+    else {
         // terminate current render pass
         renderStorage->endRenderPass();
         // render image to render target
-        mRenderTarget.beginRenderPass(mCommandEncoder, true);
-        mRenderTarget.renderShape(mContext, (WgRenderDataShape *)data, blendType);
-        mRenderTarget.endRenderPass();
+        mRenderStorageInterm.beginRenderPass(mCommandEncoder, true);
+        mRenderStorageInterm.renderShape(mContext, dataShape, blendType);
+        mRenderStorageInterm.endRenderPass();
         // blend shape with current render storage
         WgBindGroupBlendMethod* blendMethod = mBlendMethodPool.allocate(mContext, mBlendMethod);
-        renderStorage->blend(mCommandEncoder, &mRenderTarget, blendMethod);
+        WgBindGroupOpacity* opacity = mOpacityPool.allocate(mContext, 255);
+        WgPipelineBlend* pipeline = &mContext.pipelines->computeBlendSolid;
+        if (dataShape->renderSettingsShape.fillType != WgRenderSettingsType::Solid)
+            pipeline = &mContext.pipelines->computeBlendGradient;
+        renderStorage->blend(mCommandEncoder, &mRenderStorageInterm, pipeline, blendMethod, opacity);
         // restore current render pass
         renderStorage->beginRenderPass(mCommandEncoder, false);
     }
@@ -185,16 +191,19 @@ bool WgRenderer::renderImage(RenderData data)
     // use hardware blend
     if (WgPipelines::isBlendMethodSupportsHW(mBlendMethod))
         renderStorage->renderPicture(mContext, (WgRenderDataPicture *)data, blendType);
-    else { // use custom blend
+    // use custom blend
+    else {
         // terminate current render pass
         renderStorage->endRenderPass();
         // render image to render target
-        mRenderTarget.beginRenderPass(mCommandEncoder, true);
-        mRenderTarget.renderPicture(mContext, (WgRenderDataPicture *)data, blendType);
-        mRenderTarget.endRenderPass();
+        mRenderStorageInterm.beginRenderPass(mCommandEncoder, true);
+        mRenderStorageInterm.renderPicture(mContext, (WgRenderDataPicture *)data, blendType);
+        mRenderStorageInterm.endRenderPass();
         // blend shape with current render storage
         WgBindGroupBlendMethod* blendMethod = mBlendMethodPool.allocate(mContext, mBlendMethod);
-        renderStorage->blend(mCommandEncoder, &mRenderTarget, blendMethod);
+        WgBindGroupOpacity* opacity = mOpacityPool.allocate(mContext, 255);
+        WgPipelineBlend* pipeline = &mContext.pipelines->computeBlendImage;
+        renderStorage->blend(mCommandEncoder, &mRenderStorageInterm, pipeline, blendMethod, opacity);
         // restore current render pass
         renderStorage->beginRenderPass(mCommandEncoder, false);
     }
@@ -290,8 +299,7 @@ bool WgRenderer::sync()
 
     mContext.executeCommandEncoder(commandEncoder);
     wgpuCommandEncoderRelease(commandEncoder);
-    
-    wgpuSurfacePresent(mContext.surface);
+
     return true;
 }
 
@@ -321,10 +329,9 @@ bool WgRenderer::target(WGPUInstance instance, WGPUSurface surface, uint32_t w, 
     wgpuSurfaceConfigure(mContext.surface, &surfaceConfiguration);
 
     initialize();
-    mRenderTarget.initialize(mContext, w, h, WG_SSAA_SAMPLES);
+    mRenderStorageInterm.initialize(mContext, w, h, WG_SSAA_SAMPLES);
     mRenderStorageRoot.initialize(mContext, w, h, WG_SSAA_SAMPLES);
     mRenderStorageScreen.initialize(mContext, w, h, 1, WGPUTextureFormat_BGRA8Unorm);
-
     return true;
 }
 
@@ -364,10 +371,11 @@ bool WgRenderer::endComposite(TVG_UNUSED Compositor* cmp)
         // get two last render targets
         WgRenderStorage* renderStorageSrc = mRenderStorageStack.last();
         mRenderStorageStack.pop();
-    
+
         // blent scene to current render storage
         WgBindGroupBlendMethod* blendMethod = mBlendMethodPool.allocate(mContext, comp->blendMethod);
-        mRenderStorageStack.last()->blend(mCommandEncoder, renderStorageSrc, blendMethod);
+        WgBindGroupOpacity* opacity = mOpacityPool.allocate(mContext, comp->opacity);
+        mRenderStorageStack.last()->blend(mCommandEncoder, renderStorageSrc, &mContext.pipelines->computeBlendImage, blendMethod, opacity);
 
         // back render targets to the pool
         mRenderStoragePool.free(mContext, renderStorageSrc);

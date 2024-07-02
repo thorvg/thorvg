@@ -52,12 +52,12 @@ void WgContext::initialize(WGPUInstance instance, WGPUSurface surface)
     wgpuInstanceRequestAdapter(instance, &requestAdapterOptions, onAdapterRequestEnded, &adapter);
     assert(adapter);
 
-    // adapter enumerate features
+    // adapter enumerate fueatures
     size_t featuresCount = wgpuAdapterEnumerateFeatures(adapter, featureNames);
     wgpuAdapterGetProperties(adapter, &adapterProperties);
     wgpuAdapterGetLimits(adapter, &supportedLimits);
 
-    // request device
+    // reguest device
     WGPUDeviceDescriptor deviceDesc{};
     deviceDesc.nextInChain = nullptr;
     deviceDesc.label = "The device";
@@ -596,40 +596,23 @@ void WgRenderPipeline::set(WGPURenderPassEncoder renderPassEncoder)
 WGPUBlendState WgRenderPipeline::makeBlendState(WgPipelineBlendType blendType)
 {
     WGPUBlendState blendState{};
-    // src
-    if (blendType == WgPipelineBlendType::Src) {
+    // srcover
+    if (blendType == WgPipelineBlendType::SrcOver) {
         blendState.color.operation = WGPUBlendOperation_Add;
         blendState.color.srcFactor = WGPUBlendFactor_One;
         blendState.color.dstFactor = WGPUBlendFactor_Zero;
-    } else // normal
-    if (blendType == WgPipelineBlendType::Normal) {
+    // normal
+    } else if (blendType == WgPipelineBlendType::Normal) {
         blendState.color.operation = WGPUBlendOperation_Add;
-        blendState.color.srcFactor = WGPUBlendFactor_SrcAlpha;
+        blendState.color.srcFactor = WGPUBlendFactor_One;
         blendState.color.dstFactor = WGPUBlendFactor_OneMinusSrcAlpha;
-    } else // add
-    if (blendType == WgPipelineBlendType::Add) {
+    // custom
+    } else if (blendType == WgPipelineBlendType::Custom) {
         blendState.color.operation = WGPUBlendOperation_Add;
         blendState.color.srcFactor = WGPUBlendFactor_One;
-        blendState.color.dstFactor = WGPUBlendFactor_One;
-    } else // mult
-    if (blendType == WgPipelineBlendType::Mult) {
-        blendState.color.operation = WGPUBlendOperation_Add;
-        blendState.color.srcFactor = WGPUBlendFactor_Dst;
         blendState.color.dstFactor = WGPUBlendFactor_Zero;
-    } else // min
-    if (blendType == WgPipelineBlendType::Min) {
-        blendState.color.operation = WGPUBlendOperation_Min;
-        blendState.color.srcFactor = WGPUBlendFactor_One;
-        blendState.color.dstFactor = WGPUBlendFactor_One;
-    } else // max
-    if (blendType == WgPipelineBlendType::Max) {
-        blendState.color.operation = WGPUBlendOperation_Max;
-        blendState.color.srcFactor = WGPUBlendFactor_One;
-        blendState.color.dstFactor = WGPUBlendFactor_One;
     }
-    blendState.alpha.operation = WGPUBlendOperation_Add;
-    blendState.alpha.srcFactor = WGPUBlendFactor_SrcAlpha;
-    blendState.alpha.dstFactor = WGPUBlendFactor_Zero;
+    blendState.alpha = blendState.color;
     return blendState;
 }
 

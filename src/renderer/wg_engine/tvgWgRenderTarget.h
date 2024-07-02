@@ -53,7 +53,7 @@ public:
     void renderPicture(WgContext& context, WgRenderDataPicture* renderData, WgPipelineBlendType blendType);
 
     void clear(WGPUCommandEncoder commandEncoder);
-    void blend(WGPUCommandEncoder commandEncoder, WgRenderStorage* targetSrc, WgBindGroupBlendMethod* blendMethod);
+    void blend(WGPUCommandEncoder commandEncoder, WgRenderStorage* targetSrc, WgPipelineBlend* pipeline, WgBindGroupBlendMethod* blendMethod, WgBindGroupOpacity* opacity);
     void compose(WGPUCommandEncoder commandEncoder, WgRenderStorage* targetMsk, WgBindGroupCompositeMethod* composeMethod, WgBindGroupOpacity* opacity);
     void composeBlend(
         WgContext& context,

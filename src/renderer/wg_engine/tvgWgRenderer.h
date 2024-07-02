@@ -63,13 +63,19 @@ public:
 private:
     // render handles
     WGPUCommandEncoder mCommandEncoder{};
-    WgRenderStorage mRenderTarget;
+    // intermidiate buffer to render
+    WgRenderStorage mRenderStorageInterm;
+    // root render storage
     WgRenderStorage mRenderStorageRoot;
+    // storage with data after antializing
     WgRenderStorage mRenderStorageScreen;
+    // pool to hold render tree storages
     WgRenderStoragePool mRenderStoragePool;
+    // opacity, blend methods and composite methods pool
     WgBindGroupOpacityPool mOpacityPool;
     WgBindGroupBlendMethodPool mBlendMethodPool;
     WgBindGroupCompositeMethodPool mCompositeMethodPool;
+    // render data shpes pool
     WgRenderDataShapePool mRenderDataShapePool;
 
     // render tree stacks
@@ -80,6 +86,7 @@ private:
     WgContext mContext;
     WgPipelines mPipelines;
     Surface mTargetSurface;
+    // current blend method
     BlendMethod mBlendMethod{};
 };
 

@@ -643,11 +643,11 @@ WgBindGroupBlendMethod* WgBindGroupBlendMethodPool::allocate(WgContext& context,
 void WgBindGroupCompositeMethodPool::initialize(WgContext& context)
 {
     release(context);
-    for (uint8_t composeMethods = (uint8_t)CompositeMethod::None;
-         composeMethods <= (uint8_t)CompositeMethod::DifferenceMask;
-         composeMethods++) {
-        mPool[composeMethods] = new WgBindGroupCompositeMethod;
-        mPool[composeMethods]->initialize(context.device, context.queue, (CompositeMethod)composeMethods);
+    for (uint8_t composeMethdos = (uint8_t)CompositeMethod::None;
+         composeMethdos <= (uint8_t)CompositeMethod::DifferenceMask;
+         composeMethdos++) {
+        mPool[composeMethdos] = new WgBindGroupCompositeMethod;
+        mPool[composeMethdos]->initialize(context.device, context.queue, (CompositeMethod)composeMethdos);
     }
 }
 

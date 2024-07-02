@@ -36,12 +36,9 @@ struct WgCompositor: public Compositor {
 };
 
 enum class WgPipelineBlendType {
-    Src = 0, // S
-    Normal,  // (Sa * S) + (255 - Sa) * D
-    Add,     // (S + D)
-    Mult,    // (S * D)
-    Min,     // min(S, D)
-    Max      // max(S, D)
+    SrcOver = 0,
+    Normal,
+    Custom
 };
 
 struct WgPipelines;

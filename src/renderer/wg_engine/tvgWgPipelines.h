@@ -103,7 +103,7 @@ struct WgPipelineRadial: public WgRenderPipeline
 
 struct WgPipelineImage: public WgRenderPipeline
 {
-    void initialize(WGPUDevice device) override {}
+    void initialize(WGPUDevice device) override { assert(false); };
     void initialize(WGPUDevice device, WgPipelineBlendType blendType);
     void use(WGPURenderPassEncoder encoder, WgBindGroupCanvas& groupCanvas, WgBindGroupPaint& groupPaint, WgBindGroupPicture& groupPicture)
     {
@@ -131,13 +131,15 @@ struct WgPipelineClear: public WgComputePipeline
 
 struct WgPipelineBlend: public WgComputePipeline
 {
-    void initialize(WGPUDevice device) override;
-    void use(WGPUComputePassEncoder encoder, WgBindGroupTextureStorageRgba& groupTexSrc, WgBindGroupTextureStorageRgba& groupTexDst, WgBindGroupBlendMethod& blendMethod)
+    void initialize(WGPUDevice device) override { assert(false); };
+    void initialize(WGPUDevice device, const char *shaderSource);
+    void use(WGPUComputePassEncoder encoder, WgBindGroupTextureStorageRgba& groupTexSrc, WgBindGroupTextureStorageRgba& groupTexDst, WgBindGroupBlendMethod& blendMethod, WgBindGroupOpacity& groupOpacity)
     {
         set(encoder);
         groupTexSrc.set(encoder, 0);
         groupTexDst.set(encoder, 1);
         blendMethod.set(encoder, 2);
+        groupOpacity.set(encoder, 3);
     }
 };
 
@@ -192,13 +194,15 @@ struct WgPipelines
     WgPipelineFillShapeEvenOdd fillShapeEvenOdd;
     WgPipelineFillStroke fillStroke;
     // fill pipelines
-    WgPipelineSolid solid[6];
-    WgPipelineLinear linear[6];
-    WgPipelineRadial radial[6];
-    WgPipelineImage image[6];
+    WgPipelineSolid solid[3];
+    WgPipelineLinear linear[3];
+    WgPipelineRadial radial[3];
+    WgPipelineImage image[3];
     // compute pipelines
     WgPipelineClear computeClear;
-    WgPipelineBlend computeBlend;
+    WgPipelineBlend computeBlendSolid;
+    WgPipelineBlend computeBlendGradient;
+    WgPipelineBlend computeBlendImage;
     WgPipelineCompose computeCompose;
     WgPipelineComposeBlend computeComposeBlend;
     WgPipelineAntiAliasing computeAntiAliasing;
