@@ -1028,32 +1028,23 @@ static void _updateSolid(LottieLayer* layer)
 static void _updateImage(LottieGroup* layer)
 {
     auto image = static_cast<LottieImage*>(layer->children.first());
-    auto picture = image->picture;
 
-    if (!picture) {
-        picture = Picture::gen().release();
+    if (!image->picture) {
+        image->picture = Picture::gen().release();
 
         //force to load a picture on the same thread
         TaskScheduler::async(false);
 
-        if (image->size > 0) {
-            if (picture->load((const char*)image->b64Data, image->size, image->mimeType) != Result::Success) {
-                delete(picture);
-                return;
-            }
-        } else {
-            if (picture->load(image->path) != Result::Success) {
-                delete(picture);
-                return;
-            }
-        }
+        if (image->size > 0) image->picture->load((const char*)image->b64Data, image->size, image->mimeType);
+        else image->picture->load(image->path);
 
         TaskScheduler::async(true);
 
-        image->picture = picture;
-        PP(picture)->ref();
+        PP(image->picture)->ref();
     }
-    layer->scene->push(cast<Picture>(picture));
+
+    if (image->refCnt == 1) layer->scene->push(tvg::cast(image->picture));
+    else layer->scene->push(tvg::cast(image->picture->duplicate()));
 }
 
 
@@ -1190,7 +1181,7 @@ static bool _updateMatte(LottieLayer* root, LottieLayer* layer, float frameNo, L
 
     if (target->scene) {
         layer->scene->composite(cast(target->scene), layer->matteType);
-    } else  if (layer->matteType == CompositeMethod::AlphaMask || layer->matteType == CompositeMethod::LumaMask) {
+    } else if (layer->matteType == CompositeMethod::AlphaMask || layer->matteType == CompositeMethod::LumaMask) {
         //matte target is not exist. alpha blending definitely bring an invisible result
         delete(layer->scene);
         layer->scene = nullptr;
@@ -1272,6 +1263,7 @@ static void _buildReference(LottieComposition* comp, LottieLayer* layer)
                 layer->reqFragment = assetLayer->reqFragment;
             }
         } else if (layer->type == LottieLayer::Image) {
+            ++static_cast<LottieImage*>(*asset)->refCnt;
             layer->children.push(*asset);
         }
         break;
