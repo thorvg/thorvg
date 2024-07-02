@@ -1144,44 +1144,39 @@ static void _updateMaskings(LottieLayer* layer, float frameNo, LottieExpressions
 {
     if (layer->masks.count == 0) return;
 
-    //maskings
-    Shape* pmask = nullptr;
-    auto pmethod = CompositeMethod::None;
+    //Apply the base mask
+    auto pMask = static_cast<LottieMask*>(layer->masks[0]);
+    auto pMethod = pMask->method;
 
-    for (auto m = layer->masks.begin(); m < layer->masks.end(); ++m) {
+    auto pShape = Shape::gen().release();
+    pShape->fill(255, 255, 255, pMask->opacity(frameNo));
+    pShape->transform(layer->cache.matrix);
+    if (pMask->pathset(frameNo, P(pShape)->rs.path.cmds, P(pShape)->rs.path.pts, nullptr, 0.0f, exps)) {
+        P(pShape)->update(RenderUpdateFlag::Path);
+    }
+    layer->scene->composite(tvg::cast(pShape), (pMethod == CompositeMethod::SubtractMask) ? CompositeMethod::InvAlphaMask : CompositeMethod::AlphaMask);
+
+    //Apply the subsquent masks
+    for (auto m = layer->masks.begin() + 1; m < layer->masks.end(); ++m) {
         auto mask = static_cast<LottieMask*>(*m);
         auto method = mask->method;
+        if (method == CompositeMethod::None) continue;
 
-        //FIXME: None method mask should be appended to the root layer?
-        if (method == CompositeMethod::None) {
-            pmethod = method;
-            continue;
-        }
-
-        //Masking shape
-        auto shape = Shape::gen().release();
-        shape->fill(255, 255, 255, mask->opacity(frameNo));
-        shape->transform(layer->cache.matrix);
-        if (mask->pathset(frameNo, P(shape)->rs.path.cmds, P(shape)->rs.path.pts, nullptr, 0.0f, exps)) {
-            P(shape)->update(RenderUpdateFlag::Path);
-        }
-
-        //Append the chain-masking composition
-        if (pmask) {
-            //false of false is true. invert?
-            if (pmethod == method) {
-                if (method == CompositeMethod::SubtractMask) method = CompositeMethod::AddMask;
-                else if (method == CompositeMethod::DifferenceMask) method = CompositeMethod::IntersectMask;
-            }
-            pmask->composite(cast<Shape>(shape), method);
-        //Apply the masking
+        //Append the mask shape
+        if (pMethod == method && (method == CompositeMethod::SubtractMask || method == CompositeMethod::DifferenceMask)) {
+            mask->pathset(frameNo, P(pShape)->rs.path.cmds, P(pShape)->rs.path.pts, nullptr, 0.0f, exps);
+        //Chain composition
         } else {
-            method = (method == CompositeMethod::SubtractMask) ? CompositeMethod::InvAlphaMask : CompositeMethod::AlphaMask;
-            layer->scene->composite(cast<Shape>(shape), method);
+            auto shape = Shape::gen().release();
+            shape->fill(255, 255, 255, mask->opacity(frameNo));
+            shape->transform(layer->cache.matrix);
+            if (mask->pathset(frameNo, P(shape)->rs.path.cmds, P(shape)->rs.path.pts, nullptr, 0.0f, exps)) {
+                P(shape)->update(RenderUpdateFlag::Path);
+            }
+            pShape->composite(tvg::cast(shape), method);
+            pShape = shape;
+            pMethod = method;
         }
-
-        pmethod = mask->method;
-        pmask = shape;
     }
 }
 
