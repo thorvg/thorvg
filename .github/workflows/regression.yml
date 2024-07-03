@@ -6,6 +6,9 @@ on:
     branches:
       - main
 
+permissions:
+  contents: read
+
 jobs:
   test:
     runs-on: ubuntu-latest
@@ -155,6 +158,14 @@ jobs:
         run: |
           export PATH=$PATH:~/.local/bin/
           python3 "${GITHUB_WORKSPACE}/.github/workflows/regression_check.py"
+
+          if [[ -f "fail_ci.txt" ]]; then
+            (
+              echo '```'
+              cat "fail_ci.txt"
+              echo '```'
+            ) >> "$GITHUB_STEP_SUMMARY"
+          fi
 
       - name: Find Comment
         uses: peter-evans/find-comment@v3

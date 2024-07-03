@@ -52,12 +52,12 @@ void WgContext::initialize(WGPUInstance instance, WGPUSurface surface)
     wgpuInstanceRequestAdapter(instance, &requestAdapterOptions, onAdapterRequestEnded, &adapter);
     assert(adapter);
 
-    // adapter enumerate fueatures
+    // adapter enumerate features
     size_t featuresCount = wgpuAdapterEnumerateFeatures(adapter, featureNames);
     wgpuAdapterGetProperties(adapter, &adapterProperties);
     wgpuAdapterGetLimits(adapter, &supportedLimits);
 
-    // reguest device
+    // request device
     WGPUDeviceDescriptor deviceDesc{};
     deviceDesc.nextInChain = nullptr;
     deviceDesc.label = "The device";
