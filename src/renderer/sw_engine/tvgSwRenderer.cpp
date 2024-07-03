@@ -20,6 +20,7 @@
  * SOFTWARE.
  */
 
+#include <algorithm>
 #include "tvgMath.h"
 #include "tvgSwCommon.h"
 #include "tvgTaskScheduler.h"

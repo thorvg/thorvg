@@ -23,6 +23,7 @@
 #ifndef _TVG_LOTTIE_PROPERTY_H_
 #define _TVG_LOTTIE_PROPERTY_H_
 
+#include <algorithm>
 #include "tvgCommon.h"
 #include "tvgArray.h"
 #include "tvgMath.h"
