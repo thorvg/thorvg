@@ -24,6 +24,7 @@
 #ifndef _TVG_WG_RENDER_DATA_H_
 #define _TVG_WG_RENDER_DATA_H_
 
+#include <algorithm>
 #include "tvgWgRenderData.h"
 
 //***********************************************************************
