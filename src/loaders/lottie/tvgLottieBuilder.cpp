@@ -21,6 +21,7 @@
  */
 
 #include <cstring>
+#include <algorithm>
 
 #include "tvgCommon.h"
 #include "tvgMath.h"
