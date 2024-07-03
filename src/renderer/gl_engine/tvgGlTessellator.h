@@ -148,7 +148,7 @@ private:
     Array<float>* mResGlPoints;
     Array<uint32_t>* mResIndices;
     Matrix mMatrix;
-    float mStrokeWidth = 1.f;
+    float mStrokeWidth = MIN_GL_STROKE_WIDTH;
     float mMiterLimit = 4.f;
     StrokeCap mStrokeCap = StrokeCap::Square;
     StrokeJoin mStrokeJoin = StrokeJoin::Bevel;

@@ -643,6 +643,14 @@ void GlRenderer::drawPrimitive(GlShape& sdata, uint8_t r, uint8_t g, uint8_t b, 
 
     a = MULTIPLY(a, sdata.opacity);
 
+    if (flag & RenderUpdateFlag::Stroke) {
+        float strokeWidth = sdata.rshape->strokeWidth();
+        if (strokeWidth < MIN_GL_STROKE_WIDTH) {
+            float alpha = strokeWidth / MIN_GL_STROKE_WIDTH;
+            a = MULTIPLY(a, static_cast<uint8_t>(alpha * 255));
+        }
+    }
+
     // matrix buffer
     {
         const auto& matrix = sdata.geometry->getTransformMatrix();
@@ -800,6 +808,15 @@ void GlRenderer::drawPrimitive(GlShape& sdata, const Fill* fill, RenderUpdateFla
         });
     }
 
+    float alpha = 1.0f;
+
+    if (flag & RenderUpdateFlag::GradientStroke) {
+        float strokeWidth = sdata.rshape->strokeWidth();
+        if (strokeWidth < MIN_GL_STROKE_WIDTH) {
+            alpha = strokeWidth / MIN_GL_STROKE_WIDTH;
+        }
+    }
+
     // gradient block
     {
         GlBindingResource gradientBinding{};
@@ -820,7 +837,7 @@ void GlRenderer::drawPrimitive(GlShape& sdata, const Fill* fill, RenderUpdateFla
                 gradientBlock.stopColors[i * 4 + 0] = stops[i].r / 255.f;
                 gradientBlock.stopColors[i * 4 + 1] = stops[i].g / 255.f;
                 gradientBlock.stopColors[i * 4 + 2] = stops[i].b / 255.f;
-                gradientBlock.stopColors[i * 4 + 3] = stops[i].a / 255.f;
+                gradientBlock.stopColors[i * 4 + 3] = stops[i].a / 255.f * alpha;
                 nStops++;
             }
             gradientBlock.nStops[0] = nStops * 1.f;
@@ -856,7 +873,7 @@ void GlRenderer::drawPrimitive(GlShape& sdata, const Fill* fill, RenderUpdateFla
                 gradientBlock.stopColors[i * 4 + 0] = stops[i].r / 255.f;
                 gradientBlock.stopColors[i * 4 + 1] = stops[i].g / 255.f;
                 gradientBlock.stopColors[i * 4 + 2] = stops[i].b / 255.f;
-                gradientBlock.stopColors[i * 4 + 3] = stops[i].a / 255.f;
+                gradientBlock.stopColors[i * 4 + 3] = stops[i].a / 255.f * alpha;
                 nStops++;
             }
             gradientBlock.nStops[0] = nStops * 1.f;
