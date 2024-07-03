@@ -346,7 +346,7 @@ ecma_module_resolve_import (ecma_module_resolve_result_t *resolve_result_p, /**<
       {
         ecma_module_t *imported_module_p = ecma_module_get_from_object (import_node_p->u.path_or_module);
 
-        if (ecma_compare_ecma_string_to_magic_id (import_names_p->imex_name_p, LIT_MAGIC_STRING_ASTERIX_CHAR))
+        if (ecma_compare_ecma_string_to_magic_id (import_names_p->imex_name_p, LIT_MAGIC_STRING_ASTERISK_CHAR))
         {
           /* Namespace import. */
           ecma_value_t ns = ecma_make_object_value (imported_module_p->namespace_object_p);
@@ -471,7 +471,7 @@ ecma_module_resolve_export (ecma_module_t *const module_p, /**< base module */
           {
             ecma_module_t *target_module_p = ecma_module_get_from_object (*indirect_export_p->u.module_object_p);
 
-            if (ecma_compare_ecma_string_to_magic_id (export_names_p->local_name_p, LIT_MAGIC_STRING_ASTERIX_CHAR))
+            if (ecma_compare_ecma_string_to_magic_id (export_names_p->local_name_p, LIT_MAGIC_STRING_ASTERISK_CHAR))
             {
               /* Namespace export. */
               ecma_value_t ns = ecma_make_object_value (target_module_p->namespace_object_p);
@@ -721,7 +721,7 @@ ecma_module_create_namespace_object (ecma_module_t *module_p) /**< module */
   JERRY_ASSERT (!(module_p->header.u.cls.u2.module_flags & ECMA_MODULE_HAS_NAMESPACE));
 
   ecma_module_resolve_set_t *resolve_set_p;
-  resolve_set_p = ecma_module_resolve_set_create (module_p, ecma_get_magic_string (LIT_MAGIC_STRING_ASTERIX_CHAR));
+  resolve_set_p = ecma_module_resolve_set_create (module_p, ecma_get_magic_string (LIT_MAGIC_STRING_ASTERISK_CHAR));
 
   /* The properties collection stores name / result item pairs. Name is always
    * a string, and result can be a property reference or namespace object. */
@@ -841,7 +841,7 @@ ecma_module_create_namespace_object (ecma_module_t *module_p) /**< module */
       /* Circular imports are ignored */
       ecma_module_resolve_set_append (resolve_set_p,
                                       ecma_module_get_from_object (*star_export_p->u.module_object_p),
-                                      ecma_get_magic_string (LIT_MAGIC_STRING_ASTERIX_CHAR));
+                                      ecma_get_magic_string (LIT_MAGIC_STRING_ASTERISK_CHAR));
 
       star_export_p = star_export_p->next_p;
     }
@@ -965,7 +965,7 @@ ecma_module_connect_imports (ecma_module_t *module_p)
 
     while (import_names_p != NULL)
     {
-      if (ecma_compare_ecma_string_to_magic_id (import_names_p->imex_name_p, LIT_MAGIC_STRING_ASTERIX_CHAR))
+      if (ecma_compare_ecma_string_to_magic_id (import_names_p->imex_name_p, LIT_MAGIC_STRING_ASTERISK_CHAR))
       {
         /* Namespace import. */
         ecma_property_value_t *value_p;

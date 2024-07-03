@@ -357,7 +357,7 @@ jmem_heap_alloc_block_null_on_error (const size_t size) /**< required memory siz
 
 #if !JERRY_SYSTEM_ALLOCATOR
 /**
- * Finds the block in the free block list which preceeds the argument block
+ * Finds the block in the free block list which precedes the argument block
  *
  * @return pointer to the preceeding block
  */
@@ -587,7 +587,7 @@ jmem_heap_realloc_block (void *ptr, /**< memory region to reallocate */
   }
   /*
    * Check if block can be extended at the front.
-   * This is less optimal because we need to copy the data, but still better than allocting a new block.
+   * This is less optimal because we need to copy the data, but still better than allocating a new block.
    */
   else if (jmem_heap_get_region_end (prev_p) == block_p)
   {
@@ -609,7 +609,7 @@ jmem_heap_realloc_block (void *ptr, /**< memory region to reallocate */
 
       ret_block_p = (uint8_t *) block_p - required_size;
 
-      /* Mark the the new block as undefined so that we are able to write to it. */
+      /* Mark the new block as undefined so that we are able to write to it. */
       JMEM_VALGRIND_UNDEFINED_SPACE (ret_block_p, old_size);
       /* The blocks are likely to overlap, so mark the old block as defined memory again. */
       JMEM_VALGRIND_DEFINED_SPACE (block_p, old_size);

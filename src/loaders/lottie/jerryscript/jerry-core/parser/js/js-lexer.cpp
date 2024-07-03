@@ -1829,7 +1829,7 @@ lexer_consume_next_character (parser_context_t *context_p) /**< context */
  * Checks whether the next character can be the start of a post primary expression
  *
  * Note:
- *     the result is not precise, but this inprecise result
+ *     the result is not precise, but this imprecise result
  *     has no side effects for negating number literals
  *
  * @return true if the next character can be the start of a post primary expression

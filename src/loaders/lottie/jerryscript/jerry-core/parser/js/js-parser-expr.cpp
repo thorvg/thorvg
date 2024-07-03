@@ -383,7 +383,7 @@ typedef enum
 {
   PARSER_CLASS_LITERAL_NO_OPTS = 0, /**< no options are provided */
   PARSER_CLASS_LITERAL_CTOR_PRESENT = (1 << 0), /**< class constructor is present */
-  PARSER_CLASS_LITERAL_HERTIAGE_PRESENT = (1 << 1), /**< class heritage is present */
+  PARSER_CLASS_LITERAL_HERITAGE_PRESENT = (1 << 1), /**< class heritage is present */
 } parser_class_literal_opts_t;
 
 /**
@@ -452,7 +452,7 @@ parser_parse_class_body (parser_context_t *context_p, /**< context */
     ctor_literal_p = lexer_construct_unused_literal (context_p);
     parser_emit_cbc_literal (context_p, CBC_PUSH_LITERAL, (uint16_t) (context_p->literal_count++));
   }
-  else if (opts & PARSER_CLASS_LITERAL_HERTIAGE_PRESENT)
+  else if (opts & PARSER_CLASS_LITERAL_HERITAGE_PRESENT)
   {
     parser_emit_cbc_ext (context_p, CBC_EXT_PUSH_IMPLICIT_CONSTRUCTOR_HERITAGE);
   }
@@ -547,7 +547,7 @@ parser_parse_class_body (parser_context_t *context_p, /**< context */
       uint32_t constructor_status_flags =
         (PARSER_FUNCTION_CLOSURE | PARSER_ALLOW_SUPER | PARSER_CLASS_CONSTRUCTOR | PARSER_LEXICAL_ENV_NEEDED);
 
-      if (opts & PARSER_CLASS_LITERAL_HERTIAGE_PRESENT)
+      if (opts & PARSER_CLASS_LITERAL_HERITAGE_PRESENT)
       {
         constructor_status_flags |= PARSER_ALLOW_SUPER_CALL;
       }
@@ -1091,7 +1091,7 @@ parser_parse_class (parser_context_t *context_p, /**< context */
   {
     lexer_next_token (context_p);
     parser_parse_expression (context_p, PARSE_EXPR | PARSE_EXPR_LEFT_HAND_SIDE);
-    opts = (parser_class_literal_opts_t) ((int) opts | (int) PARSER_CLASS_LITERAL_HERTIAGE_PRESENT);
+    opts = (parser_class_literal_opts_t) ((int) opts | (int) PARSER_CLASS_LITERAL_HERITAGE_PRESENT);
   }
   else
   {
@@ -1818,7 +1818,7 @@ parser_parse_tagged_template_literal (parser_context_t *context_p) /**< context 
 } /* parser_parse_tagged_template_literal */
 
 /**
- * Checks wheteher the current expression can be an assignment expression.
+ * Checks whether the current expression can be an assignment expression.
  *
  * @return true if the current expression can be an assignment expression, false otherwise
  */
@@ -3097,11 +3097,11 @@ parser_process_binary_assignment_token (parser_context_t *context_p, /**< contex
     }
   }
 
-  bool group_expr_assingment = false;
+  bool group_expr_assignment = false;
 
   if (JERRY_UNLIKELY (context_p->stack_top_uint8 == LEXER_ASSIGN_GROUP_EXPR))
   {
-    group_expr_assingment = true;
+    group_expr_assignment = true;
     parser_stack_pop_uint8 (context_p);
   }
 
@@ -3122,7 +3122,7 @@ parser_process_binary_assignment_token (parser_context_t *context_p, /**< contex
     return;
   }
 
-  if (!group_expr_assingment)
+  if (!group_expr_assignment)
   {
     uint16_t function_literal_index = parser_check_anonymous_function_declaration (context_p);
 
@@ -3253,7 +3253,7 @@ parser_process_binary_lvalue_token (parser_context_t *context_p, /**< context */
  */
 static void
 parser_process_binary_opcodes (parser_context_t *context_p, /**< context */
-                               uint8_t min_prec_treshold) /**< minimal precedence of tokens */
+                               uint8_t min_prec_threshhold) /**< minimal precedence of tokens */
 {
   while (true)
   {
@@ -3262,11 +3262,11 @@ parser_process_binary_opcodes (parser_context_t *context_p, /**< context */
     /* For left-to-right operators (all binary operators except assignment
      * and logical operators), the byte code is flushed if the precedence
      * of the next operator is less or equal than the current operator. For
-     * assignment and logical operators, we add 1 to the min precendence to
+     * assignment and logical operators, we add 1 to the min precedence to
      * force right-to-left evaluation order. */
 
     if (!LEXER_IS_BINARY_OP_TOKEN (token)
-        || parser_binary_precedence_table[token - LEXER_FIRST_BINARY_OP] < min_prec_treshold)
+        || parser_binary_precedence_table[token - LEXER_FIRST_BINARY_OP] < min_prec_threshhold)
     {
       return;
     }
@@ -4015,7 +4015,7 @@ parser_process_group_expression (parser_context_t *context_p, /**< context */
   lexer_next_token (context_p);
 
   /* Lookahead for anonymous function declaration after '=' token when the assignment base is LHS expression
-     with a single indentifier in it. e.g.: (a) = function () {} */
+     with a single identifier in it. e.g.: (a) = function () {} */
   if (JERRY_UNLIKELY (context_p->token.type == LEXER_ASSIGN
                       && PARSER_IS_PUSH_LITERALS_WITH_THIS (context_p->last_cbc_opcode)
                       && context_p->last_cbc.literal_type == LEXER_IDENT_LITERAL
@@ -4095,7 +4095,7 @@ process_unary_expression:
 
       if (JERRY_LIKELY (grouping_level != PARSE_EXPR_LEFT_HAND_SIDE))
       {
-        uint8_t min_prec_treshold = 0;
+        uint8_t min_prec_threshhold = 0;
 
         if (LEXER_IS_BINARY_OP_TOKEN (context_p->token.type))
         {
@@ -4104,19 +4104,19 @@ process_unary_expression:
             parser_check_invalid_logical_op (context_p, LEXER_LOGICAL_OR, LEXER_LOGICAL_AND);
           }
 
-          min_prec_treshold = parser_binary_precedence_table[context_p->token.type - LEXER_FIRST_BINARY_OP];
+          min_prec_threshhold = parser_binary_precedence_table[context_p->token.type - LEXER_FIRST_BINARY_OP];
 
           /* Check for BINARY_LVALUE tokens + LEXER_LOGICAL_OR + LEXER_LOGICAL_AND + LEXER_EXPONENTIATION */
-          if ((min_prec_treshold == PARSER_RIGHT_TO_LEFT_ORDER_EXPONENTIATION)
-              || (min_prec_treshold <= PARSER_RIGHT_TO_LEFT_ORDER_MAX_PRECEDENCE
-                  && min_prec_treshold != PARSER_RIGHT_TO_LEFT_ORDER_TERNARY_PRECEDENCE))
+          if ((min_prec_threshhold == PARSER_RIGHT_TO_LEFT_ORDER_EXPONENTIATION)
+              || (min_prec_threshhold <= PARSER_RIGHT_TO_LEFT_ORDER_MAX_PRECEDENCE
+                  && min_prec_threshhold != PARSER_RIGHT_TO_LEFT_ORDER_TERNARY_PRECEDENCE))
           {
             /* Right-to-left evaluation order. */
-            min_prec_treshold++;
+            min_prec_threshhold++;
           }
         }
 
-        parser_process_binary_opcodes (context_p, min_prec_treshold);
+        parser_process_binary_opcodes (context_p, min_prec_threshhold);
       }
       if (context_p->token.type == LEXER_RIGHT_PAREN
           && (context_p->stack_top_uint8 == LEXER_LEFT_PAREN || context_p->stack_top_uint8 == LEXER_COMMA_SEP_LIST))

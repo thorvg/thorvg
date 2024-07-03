@@ -979,7 +979,7 @@ void Tessellator::tessellate(const Array<const RenderShape *> &shapes)
 void Tessellator::visitShape(const PathCommand *cmds, uint32_t cmd_count, const Point *pts, uint32_t pts_count)
 {
     // all points at least need to be visit once
-    // so the points cound is at least is the same as the count in shape
+    // so the points count is at least the same as the count in shape
     resGlPoints->reserve(pts_count * 2);
     // triangle fans, the indices count is at least triangles number * 3
     resIndices->reserve((pts_count - 2) * 3);
@@ -1003,7 +1003,7 @@ void Tessellator::visitShape(const PathCommand *cmds, uint32_t cmd_count, const 
                 pts++;
             } break;
             case PathCommand::CubicTo: {
-                // bezier curve needs to calcluate how many segment to split
+                // bezier curve needs to calculate how many segment to split
                 // for now just break curve into 16 segments for convenient
 
                 auto  last = outlines.last();
@@ -1093,7 +1093,7 @@ void Tessellator::mergeVertices()
         }
 
         if (v->point == v->prev->point) {
-            // merve v into v->prev
+            // merge v into v->prev
             while (auto e = v->edge_above.head) {
                 e->setBottom(v->prev);
             }
@@ -1717,7 +1717,7 @@ void Stroker::doStroke(const PathCommand *cmds, uint32_t cmd_count, const Point 
 }
 
 void Stroker::doDashStroke(const PathCommand *cmds, uint32_t cmd_count, const Point *pts, uint32_t pts_count,
-                           uint32_t dast_count, const float *dash_pattern)
+                           uint32_t dash_count, const float *dash_pattern)
 {
     Array<PathCommand> dash_cmds{};
     Array<Point>       dash_pts{};
@@ -1725,7 +1725,7 @@ void Stroker::doDashStroke(const PathCommand *cmds, uint32_t cmd_count, const Po
     dash_cmds.reserve(20 * cmd_count);
     dash_pts.reserve(20 * pts_count);
 
-    DashStroke dash(&dash_cmds, &dash_pts, dast_count, dash_pattern);
+    DashStroke dash(&dash_cmds, &dash_pts, dash_count, dash_pattern);
 
     dash.doStroke(cmds, cmd_count, pts, pts_count);
 

@@ -86,7 +86,7 @@ bool LookaheadParserHandler::nextArrayValue()
 
 int LookaheadParserHandler::getInt()
 {
-    if (state != kHasNumber || !val.IsInt()) {
+    if (state != kHasNumber) {
         Error();
         return 0;
     }
@@ -203,7 +203,7 @@ const char* LookaheadParserHandler::nextObjectKey()
         return result;
     }
 
-    /* SPECIAL CASE: The parser works with a prdefined rule that it will be only
+    /* SPECIAL CASE: The parser works with a predefined rule that it will be only
        while (nextObjectKey()) for each object but in case of our nested group
        object we can call multiple time nextObjectKey() while exiting the object
        so ignore those and don't put parser in the error state. */

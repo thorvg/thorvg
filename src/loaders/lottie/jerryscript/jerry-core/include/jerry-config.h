@@ -229,7 +229,7 @@
  * Enable/Disable the JavaScript parser.
  *
  * Allowed values:
- *  0: Disable the JavaScript parser and all related functionallity.
+ *  0: Disable the JavaScript parser and all related functionality.
  *  1: Enable the JavaScript parser.
  *
  * Default value: 1
@@ -257,7 +257,7 @@
  * Enable/Disable ECMA property hashmap.
  *
  * Allowed values:
- *  0: Disable property hasmap.
+ *  0: Disable property hashmap.
  *  1: Enable property hashmap.
  *
  * Default value: 1
@@ -392,7 +392,7 @@
  * For the moment it is mainly meant for the following targets:
  *      - ESP8266
  *
- * Example configuration for moving (some) constatns into a given section:
+ * Example configuration for moving (some) constants into a given section:
  *  # define JERRY_ATTR_CONST_DATA __attribute__((section(".rodata.const")))
  */
 #ifndef JERRY_ATTR_CONST_DATA
@@ -402,7 +402,7 @@
 /**
  * The JERRY_ATTR_GLOBAL_HEAP allows adding extra attributes for the Jerry global heap.
  *
- * Example on how to move the global heap into it's own section:
+ * Example on how to move the global heap into its own section:
  *   #define JERRY_ATTR_GLOBAL_HEAP __attribute__((section(".text.globalheap")))
  */
 #ifndef JERRY_ATTR_GLOBAL_HEAP

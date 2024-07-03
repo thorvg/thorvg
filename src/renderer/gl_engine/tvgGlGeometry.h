@@ -108,14 +108,14 @@ public:
         return *this;
     }
 
-    bool operator== (const GlPoint& rhs)
+    bool operator== (const GlPoint& rhs) const
     {
         if (&rhs == this) return true;
         if (rhs.x == this->x && rhs.y == this->y) return true;
         return false;
     }
 
-    bool operator!= (const GlPoint& rhs)
+    bool operator!= (const GlPoint& rhs) const
     {
         if (&rhs == this) return true;
         if (rhs.x != this->x || rhs.y != this->y) return true;
@@ -194,7 +194,7 @@ public:
     bool draw(GlRenderTask* task, GlStageBuffer* gpuBuffer, RenderUpdateFlag flag);
     void updateTransform(const RenderTransform* transform, float w, float h);
     void setViewport(const RenderRegion& viewport);
-    float* getTransforMatrix();
+    float* getTransformMatrix();
     GlStencilMode getStencilMode(RenderUpdateFlag flag);
     RenderRegion getBounds() const;
 

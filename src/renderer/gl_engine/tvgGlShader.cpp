@@ -54,12 +54,12 @@ uint32_t GlShader::getFragmentShader()
 
 void GlShader::createShader(const char* vertSrc, const char* fragSrc)
 {
-    mVtShader = complileShader(GL_VERTEX_SHADER, const_cast<char*>(vertSrc));
-    mFrShader = complileShader(GL_FRAGMENT_SHADER, const_cast<char*>(fragSrc));
+    mVtShader = compileShader(GL_VERTEX_SHADER, const_cast<char*>(vertSrc));
+    mFrShader = compileShader(GL_FRAGMENT_SHADER, const_cast<char*>(fragSrc));
 }
 
 
-uint32_t GlShader::complileShader(uint32_t type, char* shaderSrc)
+uint32_t GlShader::compileShader(uint32_t type, char* shaderSrc)
 {
     GLuint shader;
     GLint compiled;

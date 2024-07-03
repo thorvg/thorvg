@@ -174,7 +174,7 @@ ecma_builtin_typedarray_dispatch_call (const ecma_value_t *arguments_list_p, /**
 {
   JERRY_ASSERT (arguments_list_len == 0 || arguments_list_p != NULL);
 
-  return ecma_raise_type_error (ECMA_ERR_TYPEDARRAY_INTRINSTIC_DIRECTLY_CALLED);
+  return ecma_raise_type_error (ECMA_ERR_TYPEDARRAY_INTRINSIC_DIRECTLY_CALLED);
 } /* ecma_builtin_typedarray_dispatch_call */
 
 /**
@@ -191,7 +191,7 @@ ecma_builtin_typedarray_dispatch_construct (const ecma_value_t *arguments_list_p
 {
   JERRY_ASSERT (arguments_list_len == 0 || arguments_list_p != NULL);
 
-  return ecma_raise_type_error (ECMA_ERR_TYPEDARRAY_INTRINSTIC_CALLED_BY_NEW_EXPRESSION);
+  return ecma_raise_type_error (ECMA_ERR_TYPEDARRAY_INTRINSIC_CALLED_BY_NEW_EXPRESSION);
 } /* ecma_builtin_typedarray_dispatch_construct */
 
 /**

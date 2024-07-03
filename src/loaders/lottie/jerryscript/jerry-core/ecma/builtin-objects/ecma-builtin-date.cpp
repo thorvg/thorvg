@@ -125,7 +125,7 @@ ecma_date_parse_date_chars (const lit_utf8_byte_t **str_p, /**< pointer to the c
 } /* ecma_date_parse_date_chars */
 
 /**
- * Helper function to try to parse a special chracter (+,-,T,Z,:,.) in a date string
+ * Helper function to try to parse a special character (+,-,T,Z,:,.) in a date string
  *
  * @return true if the first character is same as the expected, false otherwise
  */
@@ -256,7 +256,7 @@ ecma_date_construct_helper (const ecma_value_t *args, /**< arguments passed to t
     ECMA_NUMBER_ZERO, /* hours */
     ECMA_NUMBER_ZERO, /* minutes */
     ECMA_NUMBER_ZERO, /* seconds */
-    ECMA_NUMBER_ZERO /* miliseconds */
+    ECMA_NUMBER_ZERO /* milliseconds */
   };
 
   args_len = JERRY_MIN (args_len, sizeof (date_nums) / sizeof (date_nums[0]));

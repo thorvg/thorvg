@@ -66,8 +66,8 @@ struct VertexInput {
     @location(0) position: vec2f
 };
 
-// BlendSettigs
-struct BlendSettigs {
+// BlendSettings
+struct BlendSettings {
     format  : u32, // ColorSpace
     dummy0  : f32,
     dummy1  : f32,
@@ -82,7 +82,7 @@ struct VertexOutput {
 // uniforms
 @group(0) @binding(0) var<uniform> uViewMat      : mat4x4f;
 @group(1) @binding(0) var<uniform> uModelMat     : mat4x4f;
-@group(1) @binding(1) var<uniform> uBlendSettigs : BlendSettigs;
+@group(1) @binding(1) var<uniform> uBlendSettings : BlendSettings;
 @group(2) @binding(0) var<uniform> uSolidColor   : vec4f;
 
 @vertex
@@ -101,7 +101,7 @@ fn fs_main(in: VertexOutput) -> @location(0) vec4f {
     // get color
     color = uSolidColor;
 
-    let alpha: f32 = color.a * uBlendSettigs.opacity;
+    let alpha: f32 = color.a * uBlendSettings.opacity;
     return vec4f(color.rgb*alpha, alpha);
 }
 )";
@@ -116,8 +116,8 @@ struct VertexInput {
     @location(0) position: vec2f
 };
 
-// BlendSettigs
-struct BlendSettigs {
+// BlendSettings
+struct BlendSettings {
     format  : u32, // ColorSpace
     dummy0  : f32,
     dummy1  : f32,
@@ -147,7 +147,7 @@ struct VertexOutput {
 // uniforms
 @group(0) @binding(0) var<uniform> uViewMat        : mat4x4f;
 @group(1) @binding(0) var<uniform> uModelMat       : mat4x4f;
-@group(1) @binding(1) var<uniform> uBlendSettigs   : BlendSettigs;
+@group(1) @binding(1) var<uniform> uBlendSettings   : BlendSettings;
 @group(2) @binding(0) var<uniform> uLinearGradient : LinearGradient;
 
 @vertex
@@ -204,7 +204,7 @@ fn fs_main(in: VertexOutput) -> @location(0) vec4f {
         }
     }
 
-    let alpha: f32 = color.a * uBlendSettigs.opacity;
+    let alpha: f32 = color.a * uBlendSettings.opacity;
     return vec4f(color.rgb*alpha, alpha);
 }
 )";
@@ -219,8 +219,8 @@ struct VertexInput {
     @location(0) position: vec2f
 };
 
-// BlendSettigs
-struct BlendSettigs {
+// BlendSettings
+struct BlendSettings {
     format  : u32, // ColorSpace
     dummy0  : f32,
     dummy1  : f32,
@@ -250,7 +250,7 @@ struct VertexOutput {
 // uniforms
 @group(0) @binding(0) var<uniform> uViewMat        : mat4x4f;
 @group(1) @binding(0) var<uniform> uModelMat       : mat4x4f;
-@group(1) @binding(1) var<uniform> uBlendSettigs   : BlendSettigs;
+@group(1) @binding(1) var<uniform> uBlendSettings   : BlendSettings;
 @group(2) @binding(0) var<uniform> uRadialGradient : RadialGradient;
 
 @vertex
@@ -301,7 +301,7 @@ fn fs_main(in: VertexOutput) -> @location(0) vec4f {
         }
     }
 
-    let alpha: f32 = color.a * uBlendSettigs.opacity;
+    let alpha: f32 = color.a * uBlendSettings.opacity;
     return vec4f(color.rgb*alpha, alpha);
 }
 )";
@@ -317,8 +317,8 @@ struct VertexInput {
     @location(1) texCoord: vec2f
 };
 
-// BlendSettigs
-struct BlendSettigs {
+// BlendSettings
+struct BlendSettings {
     format  : u32, // ColorSpace
     dummy0  : f32,
     dummy1  : f32,
@@ -333,7 +333,7 @@ struct VertexOutput {
 
 @group(0) @binding(0) var<uniform> uViewMat      : mat4x4f;
 @group(1) @binding(0) var<uniform> uModelMat     : mat4x4f;
-@group(1) @binding(1) var<uniform> uBlendSettigs : BlendSettigs;
+@group(1) @binding(1) var<uniform> uBlendSettings : BlendSettings;
 @group(2) @binding(0) var uSampler               : sampler;
 @group(2) @binding(1) var uTextureView           : texture_2d<f32>;
 
@@ -350,7 +350,7 @@ fn vs_main(in: VertexInput) -> VertexOutput {
 fn fs_main(in: VertexOutput) -> @location(0) vec4f {
     var color: vec4f = textureSample(uTextureView, uSampler, in.texCoord.xy);
     var result: vec4f = color;
-    var format: u32 = uBlendSettigs.format;
+    var format: u32 = uBlendSettings.format;
     if (format == 1u) { /* FMT_ARGB8888 */
         result = color.bgra;
     } else if (format == 2u) { /* FMT_ABGR8888S */
@@ -358,7 +358,7 @@ fn fs_main(in: VertexOutput) -> @location(0) vec4f {
     } else if (format == 3u) { /* FMT_ARGB8888S */
         result = color.bgra;
     }
-    return result * uBlendSettigs.opacity;
+    return result * uBlendSettings.opacity;
 };
 )";
 

@@ -412,7 +412,7 @@ ecma_date_make_time (ecma_number_t hour, /**< hour value */
  *  See also:
  *          ECMA-262 v11, 20.4.1.12
  *
- * @return elpased number of days since Unix Epoch
+ * @return elapsed number of days since Unix Epoch
  */
 ecma_number_t
 ecma_date_make_day (ecma_number_t year, /**< year value */
@@ -453,7 +453,7 @@ ecma_date_make_day (ecma_number_t year, /**< year value */
  *  See also:
  *          ECMA-262 v11, 20.4.1.13
  *
- * @return elpased number of milliceconds since Unix Epoch
+ * @return elapsed number of milliseconds since Unix Epoch
  */
 ecma_number_t
 ecma_date_make_date (ecma_number_t day, /**< day value */
@@ -473,7 +473,7 @@ ecma_date_make_date (ecma_number_t day, /**< day value */
  *  See also:
  *          ECMA-262 v11, 20.4.1.14
  *
- * @return elpased number of milliceconds since Unix Epoch
+ * @return elapsed number of milliseconds since Unix Epoch
  */
 ecma_number_t
 ecma_date_time_clip (ecma_number_t time) /**< time value */

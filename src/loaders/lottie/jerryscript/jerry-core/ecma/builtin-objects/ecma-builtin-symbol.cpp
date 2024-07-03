@@ -167,7 +167,7 @@ ecma_builtin_symbol_for_helper (ecma_value_t value_to_find) /**< symbol or ecma-
     return ECMA_VALUE_UNDEFINED;
   }
 
-  /* There was no matching, sp a new symbol should be added the the global symbol list. The symbol creation requires
+  /* There was no matching, sp a new symbol should be added the global symbol list. The symbol creation requires
      an extra reference to the descriptor string, but this reference has already been added. */
   ecma_string_t *new_symbol_p = ecma_new_symbol_from_descriptor_string (value_to_find);
 

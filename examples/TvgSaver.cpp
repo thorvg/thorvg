@@ -28,10 +28,10 @@ using namespace std;
 /* ThorVG Saving Contents                                               */
 /************************************************************************/
 
-unique_ptr<tvg::Paint> tvgTexmap(uint32_t * data, int width, int heigth)
+unique_ptr<tvg::Paint> tvgTexmap(uint32_t * data, int width, int height)
 {
     auto texmap = tvg::Picture::gen();
-    if (!tvgexam::verify(texmap->load(data, width, heigth, true, true))) return nullptr;
+    if (!tvgexam::verify(texmap->load(data, width, height, true, true))) return nullptr;
     texmap->translate(100, 100);
 
     //Composing Meshes
@@ -57,10 +57,10 @@ unique_ptr<tvg::Paint> tvgTexmap(uint32_t * data, int width, int heigth)
     return texmap;
 }
 
-unique_ptr<tvg::Paint> tvgClippedImage(uint32_t * data, int width, int heigth)
+unique_ptr<tvg::Paint> tvgClippedImage(uint32_t * data, int width, int height)
 {
     auto image = tvg::Picture::gen();
-    if (!tvgexam::verify(image->load(data, width, heigth, true, true))) return nullptr;
+    if (!tvgexam::verify(image->load(data, width, height, true, true))) return nullptr;
     image->translate(400, 0);
     image->scale(2);
 

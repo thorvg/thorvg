@@ -186,7 +186,7 @@ static uint32_t* _codepoints(const char* text, size_t n)
             return nullptr;
         }
     }
-    utf32[i] = 0;   //end of the unicdoe
+    utf32[i] = 0;   //end of the unicode
     return utf32;
 }
 

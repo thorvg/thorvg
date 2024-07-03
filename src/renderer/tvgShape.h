@@ -99,7 +99,7 @@ struct Shape::Impl
     {     
         if ((needComp = needComposition(opacity))) {
             /* Overriding opacity value. If this scene is half-translucent,
-               It must do intermeidate composition with that opacity value. */ 
+               It must do intermediate composition with that opacity value. */ 
             this->opacity = opacity;
             opacity = 255;
         }
@@ -296,6 +296,7 @@ struct Shape::Impl
         if (!rs.stroke) rs.stroke = new RenderStroke();
         if (rs.stroke->fill && rs.stroke->fill != p) delete(rs.stroke->fill);
         rs.stroke->fill = p;
+        rs.stroke->color[3] = 0;
 
         flag |= RenderUpdateFlag::Stroke;
         flag |= RenderUpdateFlag::GradientStroke;

@@ -53,7 +53,7 @@
 #define ECMA_FAST_ARRAY_HOLE_SHIFT 8
 
 /**
- * This number represents 1 array hole in underlying buffer of a fast acces mode array
+ * This number represents 1 array hole in underlying buffer of a fast access mode array
  */
 #define ECMA_FAST_ARRAY_HOLE_ONE (1 << ECMA_FAST_ARRAY_HOLE_SHIFT)
 
@@ -76,7 +76,7 @@ bool ecma_op_array_is_fast_array (ecma_extended_object_t *array_p);
 
 uint32_t ecma_fast_array_get_hole_count (ecma_object_t *obj_p);
 
-ecma_value_t *ecma_fast_array_extend (ecma_object_t *object_p, uint32_t new_lengt);
+ecma_value_t *ecma_fast_array_extend (ecma_object_t *object_p, uint32_t new_length);
 
 bool ecma_fast_array_set_property (ecma_object_t *object_p, uint32_t index, ecma_value_t value);
 

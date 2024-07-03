@@ -34,9 +34,6 @@
 #define FLOAT_EPSILON 1.0e-06f  //1.192092896e-07f
 #define PATH_KAPPA 0.552284f
 
-#define mathMin(x, y) (((x) < (y)) ? (x) : (y))
-#define mathMax(x, y) (((x) > (y)) ? (x) : (y))
-
 
 /************************************************************************/
 /* General functions                                                    */
