@@ -27,6 +27,7 @@
 #include "tvgGlCommon.h"
 #include "tvgMath.h"
 
+#define MIN_GL_STROKE_WIDTH 0.5f
 
 #define MVP_MATRIX(w, h) \
     float mvp[4*4] = { \
