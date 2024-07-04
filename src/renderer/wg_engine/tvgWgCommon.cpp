@@ -596,36 +596,21 @@ void WgRenderPipeline::set(WGPURenderPassEncoder renderPassEncoder)
 WGPUBlendState WgRenderPipeline::makeBlendState(WgPipelineBlendType blendType)
 {
     WGPUBlendState blendState{};
-    // src
-    if (blendType == WgPipelineBlendType::Src) {
+    // srcover
+    if (blendType == WgPipelineBlendType::SrcOver) {
         blendState.color.operation = WGPUBlendOperation_Add;
         blendState.color.srcFactor = WGPUBlendFactor_One;
         blendState.color.dstFactor = WGPUBlendFactor_Zero;
-    } else // normal
-    if (blendType == WgPipelineBlendType::Normal) {
+    // normal
+    } else if (blendType == WgPipelineBlendType::Normal) {
         blendState.color.operation = WGPUBlendOperation_Add;
         blendState.color.srcFactor = WGPUBlendFactor_One;
         blendState.color.dstFactor = WGPUBlendFactor_OneMinusSrcAlpha;
-    } else // add
-    if (blendType == WgPipelineBlendType::Add) {
+    // custom
+    } else if (blendType == WgPipelineBlendType::Custom) {
         blendState.color.operation = WGPUBlendOperation_Add;
         blendState.color.srcFactor = WGPUBlendFactor_One;
-        blendState.color.dstFactor = WGPUBlendFactor_One;
-    } else // mult
-    if (blendType == WgPipelineBlendType::Mult) {
-        blendState.color.operation = WGPUBlendOperation_Add;
-        blendState.color.srcFactor = WGPUBlendFactor_Dst;
         blendState.color.dstFactor = WGPUBlendFactor_Zero;
-    } else // min
-    if (blendType == WgPipelineBlendType::Min) {
-        blendState.color.operation = WGPUBlendOperation_Min;
-        blendState.color.srcFactor = WGPUBlendFactor_One;
-        blendState.color.dstFactor = WGPUBlendFactor_One;
-    } else // max
-    if (blendType == WgPipelineBlendType::Max) {
-        blendState.color.operation = WGPUBlendOperation_Max;
-        blendState.color.srcFactor = WGPUBlendFactor_One;
-        blendState.color.dstFactor = WGPUBlendFactor_One;
     }
     blendState.alpha = blendState.color;
     return blendState;

@@ -23,11 +23,13 @@
 #include "tvgWgShaderSrc.h"
 #include <string>
 
+#define WG_SHADER_SOURCE(...) #__VA_ARGS__
+
 //************************************************************************
 // shader pipeline fill
 //************************************************************************
 
-const char* cShaderSource_PipelineFill = R"(
+const char* cShaderSource_PipelineFill = WG_SHADER_SOURCE(
 // vertex input
 struct VertexInput {
     @location(0) position: vec2f
@@ -54,13 +56,13 @@ fn vs_main(in: VertexInput) -> VertexOutput {
 fn fs_main(in: VertexOutput) -> void {
     // nothing to draw, just stencil value
 }
-)";
+);
 
 //************************************************************************
 // shader pipeline solid
 //************************************************************************
 
-const char* cShaderSource_PipelineSolid = R"(
+const char* cShaderSource_PipelineSolid = WG_SHADER_SOURCE(
 // vertex input
 struct VertexInput {
     @location(0) position: vec2f
@@ -80,10 +82,10 @@ struct VertexOutput {
 };
 
 // uniforms
-@group(0) @binding(0) var<uniform> uViewMat      : mat4x4f;
-@group(1) @binding(0) var<uniform> uModelMat     : mat4x4f;
+@group(0) @binding(0) var<uniform> uViewMat       : mat4x4f;
+@group(1) @binding(0) var<uniform> uModelMat      : mat4x4f;
 @group(1) @binding(1) var<uniform> uBlendSettings : BlendSettings;
-@group(2) @binding(0) var<uniform> uSolidColor   : vec4f;
+@group(2) @binding(0) var<uniform> uSolidColor    : vec4f;
 
 @vertex
 fn vs_main(in: VertexInput) -> VertexOutput {
@@ -102,15 +104,15 @@ fn fs_main(in: VertexOutput) -> @location(0) vec4f {
     color = uSolidColor;
 
     let alpha: f32 = color.a * uBlendSettings.opacity;
-    return vec4f(color.rgb*alpha, alpha);
+    return vec4f(color.rgb * alpha, alpha);
 }
-)";
+);
 
 //************************************************************************
 // shader pipeline linear
 //************************************************************************
 
-const char* cShaderSource_PipelineLinear = R"(
+const char* cShaderSource_PipelineLinear = WG_SHADER_SOURCE(
 // vertex input
 struct VertexInput {
     @location(0) position: vec2f
@@ -171,7 +173,7 @@ fn fs_main(in: VertexOutput) -> @location(0) vec4f {
     let ba: vec2f = ed - st;
 
     // get interpolation factor
-    var t: f32 = abs(dot(pos - st, ba) / dot(ba, ba));
+    var t: f32 = dot(pos - st, ba) / dot(ba, ba);
 
     // fill spread
     switch uLinearGradient.spread {
@@ -205,15 +207,15 @@ fn fs_main(in: VertexOutput) -> @location(0) vec4f {
     }
 
     let alpha: f32 = color.a * uBlendSettings.opacity;
-    return vec4f(color.rgb*alpha, alpha);
+    return vec4f(color.rgb * alpha, alpha);
 }
-)";
+);
 
 //************************************************************************
 // shader pipeline radial
 //************************************************************************
 
-const char* cShaderSource_PipelineRadial = R"(
+const char* cShaderSource_PipelineRadial = WG_SHADER_SOURCE(
 // vertex input
 struct VertexInput {
     @location(0) position: vec2f
@@ -250,7 +252,7 @@ struct VertexOutput {
 // uniforms
 @group(0) @binding(0) var<uniform> uViewMat        : mat4x4f;
 @group(1) @binding(0) var<uniform> uModelMat       : mat4x4f;
-@group(1) @binding(1) var<uniform> uBlendSettings   : BlendSettings;
+@group(1) @binding(1) var<uniform> uBlendSettings  : BlendSettings;
 @group(2) @binding(0) var<uniform> uRadialGradient : RadialGradient;
 
 @vertex
@@ -302,15 +304,15 @@ fn fs_main(in: VertexOutput) -> @location(0) vec4f {
     }
 
     let alpha: f32 = color.a * uBlendSettings.opacity;
-    return vec4f(color.rgb*alpha, alpha);
+    return vec4f(color.rgb * alpha, alpha);
 }
-)";
+);
 
 //************************************************************************
 // cShaderSource_PipelineImage
 //************************************************************************
 
-const char* cShaderSource_PipelineImage = R"(
+const char* cShaderSource_PipelineImage = WG_SHADER_SOURCE(
 // vertex input
 struct VertexInput {
     @location(0) position: vec2f,
@@ -331,11 +333,11 @@ struct VertexOutput {
     @location(0) texCoord: vec2f
 };
 
-@group(0) @binding(0) var<uniform> uViewMat      : mat4x4f;
-@group(1) @binding(0) var<uniform> uModelMat     : mat4x4f;
+@group(0) @binding(0) var<uniform> uViewMat       : mat4x4f;
+@group(1) @binding(0) var<uniform> uModelMat      : mat4x4f;
 @group(1) @binding(1) var<uniform> uBlendSettings : BlendSettings;
-@group(2) @binding(0) var uSampler               : sampler;
-@group(2) @binding(1) var uTextureView           : texture_2d<f32>;
+@group(2) @binding(0) var uSampler                : sampler;
+@group(2) @binding(1) var uTextureView            : texture_2d<f32>;
 
 @vertex
 fn vs_main(in: VertexInput) -> VertexOutput {
@@ -360,25 +362,13 @@ fn fs_main(in: VertexOutput) -> @location(0) vec4f {
     }
     return result * uBlendSettings.opacity;
 };
-)";
+);
 
 //************************************************************************
 // cShaderSource_PipelineComputeBlend
 //************************************************************************
 
-// pipeline shader modules clear
-const char* cShaderSource_PipelineComputeClear = R"(
-@group(0) @binding(0) var imageDst : texture_storage_2d<rgba8unorm, read_write>;
-
-@compute @workgroup_size(8, 8)
-fn cs_main( @builtin(global_invocation_id) id: vec3u) {
-    textureStore(imageDst, id.xy, vec4f(0.0, 0.0, 0.0, 0.0));
-}
-)";
-
-
-// pipeline shader modules blend
-const char* cShaderSource_PipelineComputeBlend = R"(
+const std::string strBlendShaderHeader = WG_SHADER_SOURCE(
 @group(0) @binding(0) var imageSrc : texture_storage_2d<rgba8unorm, read_write>;
 @group(1) @binding(0) var imageDst : texture_storage_2d<rgba8unorm, read_write>;
 @group(2) @binding(0) var<uniform> blendMethod : u32;
@@ -389,41 +379,123 @@ fn cs_main( @builtin(global_invocation_id) id: vec3u) {
     let texSize = textureDimensions(imageSrc);
     if ((id.x >= texSize.x) || (id.y >= texSize.y)) { return; };
 
-    let colorSrc = textureLoad(imageSrc, id.xy);
+    let colorSrc= textureLoad(imageSrc, id.xy);
+    if (colorSrc.a == 0.0) { return; }
     let colorDst = textureLoad(imageDst, id.xy);
 
-    let So: f32  = opacity;
-    let Sa: f32  = colorSrc.a;
-    let Da: f32  = colorDst.a;
-    let S: vec4f = colorSrc;
-    let D: vec4f = colorDst;
-    let One: vec4f = vec4(1.0);
+    var One: vec3f = vec3(1.0);
+    var So: f32    = opacity;
+    var Sc: vec3f  = colorSrc.rgb;
+    var Sa: f32    = colorSrc.a;
+    var Dc: vec3f  = colorDst.rgb;
+    var Da: f32    = colorDst.a;
+    var Rc: vec3f  = colorDst.rgb;
+    var Ra: f32    = 1.0;
+);
 
-    var color: vec4f = vec4f(0.0, 0.0, 0.0, 0.0);
+const std::string strBlendShaderPreConditionsGradient = WG_SHADER_SOURCE(
+    Sc = Sc + Dc.rgb * (1.0 - Sa);
+    Sa = Sa + Da     * (1.0 - Sa);
+);
+
+const std::string strBlendShaderPreConditionsImage = WG_SHADER_SOURCE(
+    Sc = Sc * So;
+    Sa = Sa * So;
+);
+
+const std::string strBlendShaderBlendMethod = WG_SHADER_SOURCE(
     switch blendMethod {
-        /* Normal     */ case 0u:  { color = (S * So) + (1.0 - Sa * So) * D; }
-        /* Add        */ case 1u:  { color = (S + D); }
-        /* Screen     */ case 2u:  { color = (S + D) - (S * D); }
-        /* Multiply   */ case 3u:  { color = (S * D); }
-        /* Overlay    */ case 4u:  { color = (Sa * Da) - 2 * (Da - S) * (Sa - D); }
-        /* Difference */ case 5u:  { color = abs(S - D); }
-        /* Exclusion  */ case 6u:  { color = S + D - (2 * S * D); }
-        /* SrcOver    */ case 7u:  { color = S; }
-        /* Darken     */ case 8u:  { color = min(S, D); }
-        /* Lighten    */ case 9u:  { color = max(S, D); }
-        /* ColorDodge */ case 10u: { color = D / (One - S); }
-        /* ColorBurn  */ case 11u: { color = One - (One - D) / S; }
-        /* HardLight  */ case 12u: { color = (Sa * Da) - 2.0 * (Da - S) * (Sa - D); }
-        /* SoftLight  */ case 13u: { color = (One - 2 * S) * (D * D) + (2 * S * D); }
-        default:  { color = (S * So) + (1.0 - Sa * So) * D; }
+        /* Normal     */ case 0u:  {
+            Rc = Sc + Dc * (1.0 - Sa);
+            Ra = Sa + Da * (1.0 - Sa);
+        }
+        /* Add        */ case 1u:  { Rc = Sc + Dc; }
+        /* Screen     */ case 2u:  { Rc = Sc + Dc - Sc * Dc; }
+        /* Multiply   */ case 3u:  { Rc = Sc * Dc; }
+        /* Overlay    */ case 4u:  { 
+            Rc.r = select(1.0 - min(1.0, 2 * (1 - Sc.r) * (1 - Dc.r)), min(1.0, 2 * Sc.r * Dc.r), (Dc.r < 0.5));
+            Rc.g = select(1.0 - min(1.0, 2 * (1 - Sc.g) * (1 - Dc.g)), min(1.0, 2 * Sc.g * Dc.g), (Dc.g < 0.5));
+            Rc.b = select(1.0 - min(1.0, 2 * (1 - Sc.b) * (1 - Dc.b)), min(1.0, 2 * Sc.b * Dc.b), (Dc.b < 0.5));
+        }
+        /* Difference */ case 5u:  { Rc = abs(Dc - Sc); }
+        /* Exclusion  */ case 6u:  { Rc = min(One, Sc + Dc - min(One, 2 * Sc * Dc)); }
+        /* SrcOver    */ case 7u:  { Rc = Sc; Ra = Sa; }
+        /* Darken     */ case 8u:  { Rc = min(Sc, Dc); }
+        /* Lighten    */ case 9u:  { Rc = max(Sc, Dc); }
+        /* ColorDodge */ case 10u: {
+            Rc.r = select(Dc.r, (Dc.r * 255.0 / (255.0 - Sc.r * 255.0))/255.0, (1.0 - Sc.r > 0.0));
+            Rc.g = select(Dc.g, (Dc.g * 255.0 / (255.0 - Sc.g * 255.0))/255.0, (1.0 - Sc.g > 0.0));
+            Rc.b = select(Dc.b, (Dc.b * 255.0 / (255.0 - Sc.b * 255.0))/255.0, (1.0 - Sc.b > 0.0));
+        }
+        /* ColorBurn  */ case 11u: {
+            Rc.r = select(1.0 - Dc.r, (255.0 - (255.0 - Dc.r * 255.0) / (Sc.r * 255.0)) / 255.0, (Sc.r > 0.0));
+            Rc.g = select(1.0 - Dc.g, (255.0 - (255.0 - Dc.g * 255.0) / (Sc.g * 255.0)) / 255.0, (Sc.g > 0.0));
+            Rc.b = select(1.0 - Dc.b, (255.0 - (255.0 - Dc.b * 255.0) / (Sc.b * 255.0)) / 255.0, (Sc.b > 0.0));
+        }
+        /* HardLight  */ case 12u: {
+            Rc.r = select(1.0 - min(1.0, 2 * (1 - Sc.r) * (1 - Dc.r)), min(1.0, 2 * Sc.r * Dc.r), (Sc.r < 0.5));
+            Rc.g = select(1.0 - min(1.0, 2 * (1 - Sc.g) * (1 - Dc.g)), min(1.0, 2 * Sc.g * Dc.g), (Sc.g < 0.5));
+            Rc.b = select(1.0 - min(1.0, 2 * (1 - Sc.b) * (1 - Dc.b)), min(1.0, 2 * Sc.b * Dc.b), (Sc.b < 0.5));
+        }
+        /* SoftLight  */ case 13u: { Rc = min(One, (One - 2 * Sc) * Dc * Dc + 2.0 * Sc * Dc); }
+        default:  { 
+            Rc = Sc + Dc * (1.0 - Sa);
+            Ra = Sa + Da * (1.0 - Sa);
+        }
     }
+);
 
-    textureStore(imageDst, id.xy, color);
+const std::string strBlendShaderPostConditionsGradient = WG_SHADER_SOURCE(
+    // nothing
+);
+
+const std::string strBlendShaderPostConditionsImage = WG_SHADER_SOURCE(
+    Rc = select(mix(Dc, Rc, Sa), Rc, blendMethod == 0);
+    Ra = select(mix(Da, Ra, Sa), Ra, blendMethod == 0);
+);
+
+const std::string strBlendShaderFooter = WG_SHADER_SOURCE(
+    textureStore(imageDst, id.xy, vec4(Rc, Ra));
 }
-)";
+);
+
+// pipeline shader modules blend solid
+const std::string strComputeBlendSolid =
+    strBlendShaderHeader + 
+    strBlendShaderBlendMethod + 
+    strBlendShaderFooter;
+const char* cShaderSource_PipelineComputeBlendSolid = strComputeBlendSolid.c_str();
+
+// pipeline shader modules blend gradient
+const std::string strComputeBlendGradient =
+    strBlendShaderHeader + 
+    strBlendShaderPreConditionsGradient + 
+    strBlendShaderBlendMethod + 
+    strBlendShaderPostConditionsGradient + 
+    strBlendShaderFooter;
+const char* cShaderSource_PipelineComputeBlendGradient = strComputeBlendGradient.c_str();
+
+// pipeline shader modules blend image
+const std::string strComputeBlendImage =
+    strBlendShaderHeader + 
+    strBlendShaderPreConditionsImage + 
+    strBlendShaderBlendMethod + 
+    strBlendShaderPostConditionsImage + 
+    strBlendShaderFooter;
+const char* cShaderSource_PipelineComputeBlendImage = strComputeBlendImage.c_str();
+
+// pipeline shader modules clear
+const char* cShaderSource_PipelineComputeClear = WG_SHADER_SOURCE(
+@group(0) @binding(0) var imageDst : texture_storage_2d<rgba8unorm, read_write>;
+
+@compute @workgroup_size(8, 8)
+fn cs_main( @builtin(global_invocation_id) id: vec3u) {
+    textureStore(imageDst, id.xy, vec4f(0.0, 0.0, 0.0, 0.0));
+}
+);
 
 // pipeline shader modules compose
-const char* cShaderSource_PipelineComputeCompose = R"(
+const char* cShaderSource_PipelineComputeCompose = WG_SHADER_SOURCE(
 @group(0) @binding(0) var imageSrc : texture_storage_2d<rgba8unorm, read_write>;
 @group(1) @binding(0) var imageMsk : texture_storage_2d<rgba8unorm, read_write>;
 @group(2) @binding(0) var<uniform> composeMethod : u32;
@@ -455,10 +527,10 @@ fn cs_main( @builtin(global_invocation_id) id: vec3u) {
 
     textureStore(imageSrc, id.xy, vec4f(color, alpha * opacity));
 }
-)";
+);
 
 // pipeline shader modules compose blend
-const char* cShaderSource_PipelineComputeComposeBlend = R"(
+const char* cShaderSource_PipelineComputeComposeBlend = WG_SHADER_SOURCE(
 @group(0) @binding(0) var imageSrc : texture_storage_2d<rgba8unorm, read>;
 @group(0) @binding(1) var imageMsk : texture_storage_2d<rgba8unorm, read>;
 @group(0) @binding(2) var imageDst : texture_storage_2d<rgba8unorm, read_write>;
@@ -521,10 +593,10 @@ fn cs_main( @builtin(global_invocation_id) id: vec3u) {
 
     textureStore(imageDst, id.xy, color);
 }
-)";
+);
 
 // pipeline shader modules anti-aliasing
-const char* cShaderSource_PipelineComputeAntiAlias = R"(
+const char* cShaderSource_PipelineComputeAntiAlias = WG_SHADER_SOURCE(
 @group(0) @binding(0) var imageSrc : texture_storage_2d<rgba8unorm, read_write>;
 @group(1) @binding(0) var imageDst : texture_storage_2d<bgra8unorm, write>;
 
@@ -544,4 +616,4 @@ fn cs_main( @builtin(global_invocation_id) id: vec3u) {
 
     textureStore(imageDst, id.xy, color / f32(samples * samples));
 }
-)";
+);
