@@ -78,7 +78,7 @@ struct Shape::Impl
         auto method = shape->composite(&target);
         if (!target || method == CompositeMethod::ClipPath) return false;
         if (target->pImpl->opacity == 255 || target->pImpl->opacity == 0) {
-            if (target->identifier() == TVG_CLASS_ID_SHAPE) {
+            if (target->type() == TVG_CLASS_TYPE_SHAPE) {
                 auto shape = static_cast<const Shape*>(target);
                 if (!shape->fill()) {
                     uint8_t r, g, b, a;

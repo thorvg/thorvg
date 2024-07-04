@@ -28,7 +28,7 @@
 
 Scene::Scene() : pImpl(new Impl(this))
 {
-    Paint::pImpl->id = TVG_CLASS_ID_SCENE;
+    Paint::pImpl->type = TVG_CLASS_TYPE_SCENE;
 }
 
 
@@ -46,7 +46,13 @@ unique_ptr<Scene> Scene::gen() noexcept
 
 uint32_t Scene::identifier() noexcept
 {
-    return TVG_CLASS_ID_SCENE;
+    return type();
+}
+
+
+uint32_t Scene::type() noexcept
+{
+    return TVG_CLASS_TYPE_SCENE;
 }
 
 

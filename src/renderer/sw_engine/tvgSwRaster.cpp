@@ -1906,11 +1906,11 @@ bool rasterGradientShape(SwSurface* surface, SwShape* shape, unsigned id)
     if (!shape->fill) return false;
 
     if (shape->fastTrack) {
-        if (id == TVG_CLASS_ID_LINEAR) return _rasterLinearGradientRect(surface, shape->bbox, shape->fill);
-        else if (id == TVG_CLASS_ID_RADIAL)return _rasterRadialGradientRect(surface, shape->bbox, shape->fill);
+        if (id == TVG_CLASS_TYPE_LINEAR) return _rasterLinearGradientRect(surface, shape->bbox, shape->fill);
+        else if (id == TVG_CLASS_TYPE_RADIAL)return _rasterRadialGradientRect(surface, shape->bbox, shape->fill);
     } else {
-        if (id == TVG_CLASS_ID_LINEAR) return _rasterLinearGradientRle(surface, shape->rle, shape->fill);
-        else if (id == TVG_CLASS_ID_RADIAL) return _rasterRadialGradientRle(surface, shape->rle, shape->fill);
+        if (id == TVG_CLASS_TYPE_LINEAR) return _rasterLinearGradientRle(surface, shape->rle, shape->fill);
+        else if (id == TVG_CLASS_TYPE_RADIAL) return _rasterRadialGradientRle(surface, shape->rle, shape->fill);
     }
     return false;
 }
@@ -1920,8 +1920,8 @@ bool rasterGradientStroke(SwSurface* surface, SwShape* shape, unsigned id)
 {
     if (!shape->stroke || !shape->stroke->fill || !shape->strokeRle) return false;
 
-    if (id == TVG_CLASS_ID_LINEAR) return _rasterLinearGradientRle(surface, shape->strokeRle, shape->stroke->fill);
-    else if (id == TVG_CLASS_ID_RADIAL) return _rasterRadialGradientRle(surface, shape->strokeRle, shape->stroke->fill);
+    if (id == TVG_CLASS_TYPE_LINEAR) return _rasterLinearGradientRle(surface, shape->strokeRle, shape->stroke->fill);
+    else if (id == TVG_CLASS_TYPE_RADIAL) return _rasterRadialGradientRle(surface, shape->strokeRle, shape->stroke->fill);
 
     return false;
 }

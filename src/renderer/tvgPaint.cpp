@@ -32,11 +32,11 @@
 /************************************************************************/
 
 #define PAINT_METHOD(ret, METHOD) \
-    switch (id) { \
-        case TVG_CLASS_ID_SHAPE: ret = P((Shape*)paint)->METHOD; break; \
-        case TVG_CLASS_ID_SCENE: ret = P((Scene*)paint)->METHOD; break; \
-        case TVG_CLASS_ID_PICTURE: ret = P((Picture*)paint)->METHOD; break; \
-        case TVG_CLASS_ID_TEXT: ret = P((Text*)paint)->METHOD; break; \
+    switch (type) { \
+        case TVG_CLASS_TYPE_SHAPE: ret = P((Shape*)paint)->METHOD; break; \
+        case TVG_CLASS_TYPE_SCENE: ret = P((Scene*)paint)->METHOD; break; \
+        case TVG_CLASS_TYPE_PICTURE: ret = P((Picture*)paint)->METHOD; break; \
+        case TVG_CLASS_TYPE_TEXT: ret = P((Text*)paint)->METHOD; break; \
         default: ret = {}; \
     }
 
@@ -282,7 +282,7 @@ RenderData Paint::Impl::update(RenderMethod* renderer, const RenderTransform* pT
         /* If the transformation has no rotational factors and the ClipPath/Alpha(InvAlpha)Masking involves a simple rectangle,
            we can optimize by using the viewport instead of the regular ClipPath/AlphaMasking sequence for improved performance. */
         auto tryFastTrack = false;
-        if (target->identifier() == TVG_CLASS_ID_SHAPE) {
+        if (target->type() == TVG_CLASS_TYPE_SHAPE) {
             if (method == CompositeMethod::ClipPath) tryFastTrack = true;
             else {
                 auto shape = static_cast<Shape*>(target);
@@ -476,7 +476,13 @@ uint8_t Paint::opacity() const noexcept
 
 uint32_t Paint::identifier() const noexcept
 {
-    return pImpl->id;
+    return type();
+}
+
+
+uint32_t Paint::type() const noexcept
+{
+    return pImpl->type;
 }
 
 

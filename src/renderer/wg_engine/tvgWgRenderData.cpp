@@ -229,11 +229,11 @@ void WgRenderSettings::update(WgContext& context, const Fill* fill, const uint8_
     // setup fill properties
     if ((flags & (RenderUpdateFlag::Gradient)) && fill) {
         // setup linear fill properties
-        if (fill->identifier() == TVG_CLASS_ID_LINEAR) {
+        if (fill->type() == TVG_CLASS_TYPE_LINEAR) {
             WgShaderTypeLinearGradient linearGradient((LinearGradient*)fill);
             bindGroupLinear.initialize(context.device, context.queue, linearGradient);
             fillType = WgRenderSettingsType::Linear;
-        } else if (fill->identifier() == TVG_CLASS_ID_RADIAL) {
+        } else if (fill->type() == TVG_CLASS_TYPE_RADIAL) {
             WgShaderTypeRadialGradient radialGradient((RadialGradient*)fill);
             bindGroupRadial.initialize(context.device, context.queue, radialGradient);
             fillType = WgRenderSettingsType::Radial;

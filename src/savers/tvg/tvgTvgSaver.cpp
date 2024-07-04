@@ -402,7 +402,7 @@ TvgBinCounter TvgSaver::serializeFill(const Fill* fill, TvgBinTag tag, const Mat
     TvgBinCounter cnt = 0;
 
     //radial fill
-    if (fill->identifier() == TVG_CLASS_ID_RADIAL) {
+    if (fill->type() == TVG_CLASS_TYPE_RADIAL) {
         const RadialGradient* radial = static_cast<const RadialGradient*>(fill);
         float args[3];
         radial->radial(args, args + 1, args + 2);
@@ -683,10 +683,10 @@ TvgBinCounter TvgSaver::serializeChildren(Iterator* it, const Matrix* pTransform
     children.push(it->next());
 
     while (auto child = it->next()) {
-        if (child->identifier() == TVG_CLASS_ID_SHAPE) {
+        if (child->type() == TVG_CLASS_TYPE_SHAPE) {
             //only dosable if the previous child is a shape.
             auto target = children.last();
-            if (target->identifier() == TVG_CLASS_ID_SHAPE) {
+            if (target->type() == TVG_CLASS_TYPE_SHAPE) {
                 if (_merge((Shape*)child, (Shape*)target)) {
                     continue;
                 }
@@ -715,10 +715,10 @@ TvgBinCounter TvgSaver::serialize(const Paint* paint, const Matrix* pTransform, 
     auto transform = const_cast<Paint*>(paint)->transform();
     if (pTransform) transform = *pTransform * transform;
 
-    switch (paint->identifier()) {
-        case TVG_CLASS_ID_SHAPE: return serializeShape(static_cast<const Shape*>(paint), pTransform, &transform);
-        case TVG_CLASS_ID_SCENE: return serializeScene(static_cast<const Scene*>(paint), pTransform, &transform);
-        case TVG_CLASS_ID_PICTURE: return serializePicture(static_cast<const Picture*>(paint), pTransform, &transform);
+    switch (paint->type()) {
+        case TVG_CLASS_TYPE_SHAPE: return serializeShape(static_cast<const Shape*>(paint), pTransform, &transform);
+        case TVG_CLASS_TYPE_SCENE: return serializeScene(static_cast<const Scene*>(paint), pTransform, &transform);
+        case TVG_CLASS_TYPE_PICTURE: return serializePicture(static_cast<const Picture*>(paint), pTransform, &transform);
     }
 
     return 0;
@@ -733,16 +733,16 @@ void TvgSaver::run(unsigned tid)
     Matrix transform = {1, 0, 0, 0, 1, 0, 0, 0, 1};
 
     if (paint->opacity() > 0) {
-        switch (paint->identifier()) {
-            case TVG_CLASS_ID_SHAPE: {
+        switch (paint->type()) {
+            case TVG_CLASS_TYPE_SHAPE: {
                 serializeShape(static_cast<const Shape*>(paint), nullptr, &transform);
                 break;
             }
-            case TVG_CLASS_ID_SCENE: {
+            case TVG_CLASS_TYPE_SCENE: {
                 serializeScene(static_cast<const Scene*>(paint), nullptr, &transform);
                 break;
             }
-            case TVG_CLASS_ID_PICTURE: {
+            case TVG_CLASS_TYPE_PICTURE: {
                 serializePicture(static_cast<const Picture*>(paint), nullptr, &transform);
                 break;
             }

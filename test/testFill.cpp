@@ -33,14 +33,14 @@ TEST_CASE("Filling Creation", "[tvgFill]")
     auto linear = LinearGradient::gen();
     REQUIRE(linear);
 
-    REQUIRE(linear->identifier() == LinearGradient::identifier());
-    REQUIRE(linear->identifier() != RadialGradient::identifier());
+    REQUIRE(linear->type() == LinearGradient::type());
+    REQUIRE(linear->type() != RadialGradient::type());
 
     auto radial = RadialGradient::gen();
     REQUIRE(radial);
 
-    REQUIRE(radial->identifier() == RadialGradient::identifier());
-    REQUIRE(radial->identifier() != LinearGradient::identifier());
+    REQUIRE(radial->type() == RadialGradient::type());
+    REQUIRE(radial->type() != LinearGradient::type());
 }
 
 TEST_CASE("Common Filling", "[tvgFill]")

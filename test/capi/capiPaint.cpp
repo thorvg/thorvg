@@ -216,14 +216,14 @@ TEST_CASE("Paint Identifier", "[capiPaint]")
     Tvg_Paint* paint_copy = tvg_paint_duplicate(paint);
     REQUIRE(paint_copy);
 
-    Tvg_Identifier id = TVG_IDENTIFIER_UNDEF;
-    Tvg_Identifier id_copy = TVG_IDENTIFIER_UNDEF;
+    Tvg_Type type = TVG_TYPE_UNDEF;
+    Tvg_Type type2 = TVG_TYPE_UNDEF;
 
-    REQUIRE(tvg_paint_get_identifier(nullptr, &id) == TVG_RESULT_INVALID_ARGUMENT);
-    REQUIRE(tvg_paint_get_identifier(paint, nullptr) == TVG_RESULT_INVALID_ARGUMENT);
-    REQUIRE(tvg_paint_get_identifier(paint, &id) == TVG_RESULT_SUCCESS);
-    REQUIRE(tvg_paint_get_identifier(paint_copy, &id_copy) == TVG_RESULT_SUCCESS);
-    REQUIRE(id_copy == id);
+    REQUIRE(tvg_paint_get_type(nullptr, &type) == TVG_RESULT_INVALID_ARGUMENT);
+    REQUIRE(tvg_paint_get_type(paint, nullptr) == TVG_RESULT_INVALID_ARGUMENT);
+    REQUIRE(tvg_paint_get_type(paint, &type) == TVG_RESULT_SUCCESS);
+    REQUIRE(tvg_paint_get_type(paint_copy, &type2) == TVG_RESULT_SUCCESS);
+    REQUIRE(type2 == type);
 
     REQUIRE(tvg_paint_del(paint_copy) == TVG_RESULT_SUCCESS);
     REQUIRE(tvg_paint_del(paint) == TVG_RESULT_SUCCESS);

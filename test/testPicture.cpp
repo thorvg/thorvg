@@ -35,9 +35,9 @@ TEST_CASE("Picture Creation", "[tvgPicture]")
     auto picture = Picture::gen();
     REQUIRE(picture);
 
-    REQUIRE(picture->identifier() == Picture::identifier());
-    REQUIRE(picture->identifier() != Shape::identifier());
-    REQUIRE(picture->identifier() != Scene::identifier());
+    REQUIRE(picture->type() == Picture::type());
+    REQUIRE(picture->type() != Shape::type());
+    REQUIRE(picture->type() != Scene::type());
 }
 
 TEST_CASE("Load RAW Data", "[tvgPicture]")

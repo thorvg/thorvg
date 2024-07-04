@@ -54,7 +54,7 @@ namespace tvg
         BlendMethod blendMethod = BlendMethod::Normal;   //uint8_t
         uint8_t renderFlag = RenderUpdateFlag::None;
         uint8_t ctxFlag = ContextFlag::Invalid;
-        uint8_t id;
+        uint8_t type;
         uint8_t opacity = 255;
         uint8_t refCnt = 0;                              //reference count
 
