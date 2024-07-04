@@ -2048,17 +2048,20 @@ class TVG_API Accessor final
 public:
     ~Accessor();
 
+    TVG_DEPRECATED std::unique_ptr<Picture> set(std::unique_ptr<Picture> picture, std::function<bool(const Paint* paint)> func) noexcept;
+
     /**
      * @brief Set the access function for traversing the Picture scene tree nodes.
      *
      * @param[in] picture The picture node to traverse the internal scene-tree.
      * @param[in] func The callback function calling for every paint nodes of the Picture.
-     *
-     * @return Return the given @p picture instance.
+     * @param[in] data Data passed to the @p func as its argument.
      *
      * @note The bitmap based picture might not have the scene-tree.
+     *
+     * @note Experimental API
      */
-    std::unique_ptr<Picture> set(std::unique_ptr<Picture> picture, std::function<bool(const Paint* paint)> func) noexcept;
+    Result set(const Picture* picture, std::function<bool(const Paint* paint, void* data)> func, void* data) noexcept;
 
     /**
      * @brief Creates a new Accessor object.
