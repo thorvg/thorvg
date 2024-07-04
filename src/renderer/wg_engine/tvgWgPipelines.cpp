@@ -55,7 +55,7 @@ void WgPipelineFillShapeWinding::initialize(WGPUDevice device)
     auto pipelineLabel = "The render pipeline fill shape winding";
 
     // allocate all pipeline handles
-    allocate(device, WgPipelineBlendType::Add, WGPUColorWriteMask_None,
+    allocate(device, WgPipelineBlendType::SrcOver, WGPUColorWriteMask_None,
              vertexBufferLayouts, ARRAY_ELEMENTS_COUNT(vertexBufferLayouts),
              bindGroupLayouts, ARRAY_ELEMENTS_COUNT(bindGroupLayouts),
              stencilFunctionFront, stencilOperationFront, stencilFunctionBack, stencilOperationBack,
@@ -89,7 +89,7 @@ void WgPipelineFillShapeEvenOdd::initialize(WGPUDevice device)
     auto pipelineLabel = "The render pipeline fill shape Even Odd";
 
     // allocate all pipeline handles
-    allocate(device, WgPipelineBlendType::Add, WGPUColorWriteMask_None,
+    allocate(device, WgPipelineBlendType::SrcOver, WGPUColorWriteMask_None,
              vertexBufferLayouts, ARRAY_ELEMENTS_COUNT(vertexBufferLayouts),
              bindGroupLayouts, ARRAY_ELEMENTS_COUNT(bindGroupLayouts),
              stencilFunctionFront, stencilOperationFront, stencilFunctionBack, stencilOperationBack,
@@ -121,7 +121,7 @@ void WgPipelineFillStroke::initialize(WGPUDevice device)
     auto pipelineLabel = "The render pipeline fill stroke";
 
     // allocate all pipeline handles
-    allocate(device, WgPipelineBlendType::Add, WGPUColorWriteMask_None,
+    allocate(device, WgPipelineBlendType::SrcOver, WGPUColorWriteMask_None,
              vertexBufferLayouts, ARRAY_ELEMENTS_COUNT(vertexBufferLayouts),
              bindGroupLayouts, ARRAY_ELEMENTS_COUNT(bindGroupLayouts),
              stencilFunction, stencilOperation, stencilFunction, stencilOperation,
@@ -285,7 +285,7 @@ void WgPipelineClear::initialize(WGPUDevice device)
 }
 
 
-void WgPipelineBlend::initialize(WGPUDevice device)
+void WgPipelineBlend::initialize(WGPUDevice device, const char *shaderSource)
 {
     // bind groups and layouts
     WGPUBindGroupLayout bindGroupLayouts[] = {
@@ -296,7 +296,6 @@ void WgPipelineBlend::initialize(WGPUDevice device)
     };
 
     // sheder source and labels
-    auto shaderSource = cShaderSource_PipelineComputeBlend;
     auto shaderLabel = "The compute shader blend";
     auto pipelineLabel = "The compute pipeline blend";
 
@@ -380,7 +379,7 @@ void WgPipelines::initialize(WgContext& context)
     fillShapeWinding.initialize(context.device);
     fillShapeEvenOdd.initialize(context.device);
     fillStroke.initialize(context.device);
-    for (uint8_t type = (uint8_t)WgPipelineBlendType::Src; type <= (uint8_t)WgPipelineBlendType::Max; type++) {
+    for (uint8_t type = (uint8_t)WgPipelineBlendType::SrcOver; type <= (uint8_t)WgPipelineBlendType::Custom; type++) {
         solid[type].initialize(context.device, (WgPipelineBlendType)type);
         linear[type].initialize(context.device, (WgPipelineBlendType)type);
         radial[type].initialize(context.device, (WgPipelineBlendType)type);
@@ -388,7 +387,9 @@ void WgPipelines::initialize(WgContext& context)
     }
     // compute pipelines
     computeClear.initialize(context.device);
-    computeBlend.initialize(context.device);
+    computeBlendSolid.initialize(context.device, cShaderSource_PipelineComputeBlendSolid);
+    computeBlendGradient.initialize(context.device, cShaderSource_PipelineComputeBlendGradient);
+    computeBlendImage.initialize(context.device, cShaderSource_PipelineComputeBlendImage);
     computeCompose.initialize(context.device);
     computeComposeBlend.initialize(context.device);
     computeAntiAliasing.initialize(context.device);
@@ -415,10 +416,12 @@ void WgPipelines::release()
     computeAntiAliasing.release();
     computeComposeBlend.release();
     computeCompose.release();
-    computeBlend.release();
+    computeBlendImage.release();
+    computeBlendGradient.release();
+    computeBlendSolid.release();
     computeClear.release();
     // fill pipelines
-    for (uint8_t type = (uint8_t)WgPipelineBlendType::Src; type <= (uint8_t)WgPipelineBlendType::Max; type++) {
+    for (uint8_t type = (uint8_t)WgPipelineBlendType::SrcOver; type <= (uint8_t)WgPipelineBlendType::Custom; type++) {
         image[type].release();
         radial[type].release();
         linear[type].release();
@@ -435,10 +438,6 @@ bool WgPipelines::isBlendMethodSupportsHW(BlendMethod blendMethod)
     switch (blendMethod) {
         case BlendMethod::SrcOver:
         case BlendMethod::Normal:
-        case BlendMethod::Add:
-        case BlendMethod::Multiply:
-        case BlendMethod::Darken:
-        case BlendMethod::Lighten:
             return true;
         default: return false;
     };
@@ -448,12 +447,8 @@ bool WgPipelines::isBlendMethodSupportsHW(BlendMethod blendMethod)
 WgPipelineBlendType WgPipelines::blendMethodToBlendType(BlendMethod blendMethod)
 {
     switch (blendMethod) {
-        case BlendMethod::SrcOver: return WgPipelineBlendType::Src;
+        case BlendMethod::SrcOver: return WgPipelineBlendType::SrcOver;
         case BlendMethod::Normal: return WgPipelineBlendType::Normal;
-        case BlendMethod::Add: return WgPipelineBlendType::Add;
-        case BlendMethod::Multiply: return WgPipelineBlendType::Mult;
-        case BlendMethod::Darken: return WgPipelineBlendType::Min;
-        case BlendMethod::Lighten: return WgPipelineBlendType::Max;
-        default: return WgPipelineBlendType::Src;
+        default: return WgPipelineBlendType::Custom;
     };
 }
