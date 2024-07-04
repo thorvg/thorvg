@@ -96,6 +96,8 @@ private:
     void prepareCmpTask(GlRenderTask* task, const RenderRegion& vp, uint32_t cmpWidth, uint32_t cmpHeight);
     void endRenderPass(Compositor* cmp);
 
+    void clearDisposes();
+
     Surface surface;
     GLint mTargetFboId = 0;
     RenderRegion mViewport;
@@ -106,6 +108,12 @@ private:
     Array<GlRenderTargetPool*> mComposePool = {};
     vector<GlRenderPass> mRenderPassStack = {};
     vector<unique_ptr<GlCompositor>> mComposeStack = {};
+
+    //Disposed resources. They should be released on synced call.
+    struct {
+        Array<GLuint> textures = {};
+        Key key;
+    } mDisposed;
 
     bool mClearBuffer = true;
 };

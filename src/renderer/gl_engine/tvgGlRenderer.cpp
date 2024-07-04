@@ -42,6 +42,15 @@ static void _termEngine()
     //TODO: Clean up global resources
 }
 
+
+void GlRenderer::clearDisposes()
+{
+    if (mDisposed.textures.count > 0) {
+        glDeleteTextures(mDisposed.textures.count, mDisposed.textures.data);
+        mDisposed.textures.clear();
+    }
+}
+
 /************************************************************************/
 /* External Class Implementation                                        */
 /************************************************************************/
@@ -50,6 +59,8 @@ static void _termEngine()
 
 bool GlRenderer::clear()
 {
+    clearDisposes();
+
     mClearBuffer = true;
     return true;
 }
@@ -111,6 +122,8 @@ bool GlRenderer::sync()
     GL_CHECK(glDisable(GL_SCISSOR_TEST));
 
     mRenderPassStack.clear();
+
+    clearDisposes();
 
     delete task;
 
@@ -384,7 +397,11 @@ void GlRenderer::dispose(RenderData data)
     auto sdata = static_cast<GlShape*>(data);
     if (!sdata) return;
 
-    if (sdata->texId) glDeleteTextures(1, &sdata->texId);
+    //dispose the non thread-safety resources on clearDisposes() call
+    if (sdata->texId) {
+        ScopedLock lock(mDisposed.key);
+        mDisposed.textures.push(sdata->texId);
+    }
 
     delete sdata;
 }
