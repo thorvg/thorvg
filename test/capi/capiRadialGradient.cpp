@@ -29,10 +29,10 @@ TEST_CASE("Basic Create", "[capiRadialGradient]")
     Tvg_Gradient *gradient = tvg_radial_gradient_new();
     REQUIRE(gradient);
 
-    Tvg_Identifier id = TVG_IDENTIFIER_UNDEF;
-    REQUIRE(tvg_gradient_get_identifier(gradient, &id) == TVG_RESULT_SUCCESS);
-    REQUIRE(id == TVG_IDENTIFIER_RADIAL_GRAD);
-    REQUIRE(id != TVG_IDENTIFIER_LINEAR_GRAD);
+    Tvg_Type type = TVG_TYPE_UNDEF;
+    REQUIRE(tvg_gradient_get_type(gradient, &type) == TVG_RESULT_SUCCESS);
+    REQUIRE(type == TVG_TYPE_RADIAL_GRAD);
+    REQUIRE(type != TVG_TYPE_LINEAR_GRAD);
 
     REQUIRE(tvg_gradient_del(gradient) == TVG_RESULT_SUCCESS);
 }

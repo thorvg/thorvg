@@ -66,7 +66,7 @@ static void _calculateCoefficients(const SwFill* fill, uint32_t x, uint32_t y, f
 static uint32_t _estimateAAMargin(const Fill* fdata)
 {
     constexpr float marginScalingFactor = 800.0f;
-    if (fdata->identifier() == TVG_CLASS_ID_RADIAL) {
+    if (fdata->type() == Type::RadialGradient) {
         auto radius = P(static_cast<const RadialGradient*>(fdata))->r;
         return mathZero(radius) ? 0 : static_cast<uint32_t>(marginScalingFactor / radius);
     }
@@ -826,9 +826,9 @@ bool fillGenColorTable(SwFill* fill, const Fill* fdata, const Matrix* transform,
         if (!_updateColorTable(fill, fdata, surface, opacity)) return false;
     }
 
-    if (fdata->identifier() == TVG_CLASS_ID_LINEAR) {
+    if (fdata->type() == Type::LinearGradient) {
         return _prepareLinear(fill, static_cast<const LinearGradient*>(fdata), transform);
-    } else if (fdata->identifier() == TVG_CLASS_ID_RADIAL) {
+    } else if (fdata->type() == Type::RadialGradient) {
         return _prepareRadial(fill, static_cast<const RadialGradient*>(fdata), transform);
     }
 

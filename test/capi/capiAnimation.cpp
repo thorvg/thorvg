@@ -34,9 +34,9 @@ TEST_CASE("Animation Basic", "[capiAnimation]")
     Tvg_Paint* picture = tvg_animation_get_picture(animation);
     REQUIRE(picture);
 
-    Tvg_Identifier id = TVG_IDENTIFIER_UNDEF;
-    REQUIRE(tvg_paint_get_identifier(picture, &id) == TVG_RESULT_SUCCESS);
-    REQUIRE(id == TVG_IDENTIFIER_PICTURE);
+    Tvg_Type type = TVG_TYPE_UNDEF;
+    REQUIRE(tvg_paint_get_type(picture, &type) == TVG_RESULT_SUCCESS);
+    REQUIRE(type == TVG_TYPE_PICTURE);
 
     //Negative cases
     REQUIRE(tvg_animation_set_frame(animation, 0) == TVG_RESULT_INSUFFICIENT_CONDITION);
@@ -72,9 +72,9 @@ TEST_CASE("Animation Lottie", "[capiAnimation]")
     Tvg_Paint* picture = tvg_animation_get_picture(animation);
     REQUIRE(picture);
 
-    Tvg_Identifier id = TVG_IDENTIFIER_UNDEF;
-    REQUIRE(tvg_paint_get_identifier(picture, &id) == TVG_RESULT_SUCCESS);
-    REQUIRE(id == TVG_IDENTIFIER_PICTURE);
+    Tvg_Type type = TVG_TYPE_UNDEF;
+    REQUIRE(tvg_paint_get_type(picture, &type) == TVG_RESULT_SUCCESS);
+    REQUIRE(type == TVG_TYPE_PICTURE);
 
     REQUIRE(tvg_picture_load(picture, TEST_DIR"/invalid.json") == TVG_RESULT_INVALID_ARGUMENT);
     REQUIRE(tvg_picture_load(picture, TEST_DIR"/test.json") == TVG_RESULT_SUCCESS);
@@ -107,9 +107,9 @@ TEST_CASE("Animation Segment", "[capiAnimation]")
     Tvg_Paint* picture = tvg_animation_get_picture(animation);
     REQUIRE(picture);
 
-    Tvg_Identifier id = TVG_IDENTIFIER_UNDEF;
-    REQUIRE(tvg_paint_get_identifier(picture, &id) == TVG_RESULT_SUCCESS);
-    REQUIRE(id == TVG_IDENTIFIER_PICTURE);
+    Tvg_Type type = TVG_TYPE_UNDEF;
+    REQUIRE(tvg_paint_get_type(picture, &type) == TVG_RESULT_SUCCESS);
+    REQUIRE(type == TVG_TYPE_PICTURE);
 
     float begin, end;
 
