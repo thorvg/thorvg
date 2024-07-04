@@ -82,7 +82,7 @@ ecma_builtin_bigint_prototype_object_value_of (ecma_value_t this_arg) /**< this 
     }
   }
 
-  return ecma_raise_type_error (ECMA_ERR_BIGINT_VALUE_EXCPECTED);
+  return ecma_raise_type_error (ECMA_ERR_BIGINT_VALUE_EXPECTED);
 } /* ecma_builtin_bigint_prototype_object_value_of */
 
 /**

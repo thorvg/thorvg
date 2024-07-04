@@ -93,7 +93,7 @@ typedef enum
   ECMA_STRING_FLAG_IS_ASCII = (1 << 0), /**< The string contains only ASCII characters. */
   ECMA_STRING_FLAG_REHASH_NEEDED = (1 << 1), /**< The hash of the string must be recalculated.
                                               *   For more details see ecma_append_chars_to_string */
-  ECMA_STRING_FLAG_IS_UINT32 = (1 << 2), /**< The string repesents an UINT32 number */
+  ECMA_STRING_FLAG_IS_UINT32 = (1 << 2), /**< The string represents an UINT32 number */
   ECMA_STRING_FLAG_MUST_BE_FREED = (1 << 3), /**< The returned buffer must be freed */
 } ecma_string_flag_t;
 
@@ -245,7 +245,7 @@ ecma_value_t JERRY_ATTR_PURE ecma_make_symbol_value (const ecma_string_t *ecma_s
 ecma_value_t JERRY_ATTR_PURE ecma_make_prop_name_value (const ecma_string_t *ecma_prop_name_p);
 ecma_value_t JERRY_ATTR_PURE ecma_make_magic_string_value (lit_magic_string_id_t id);
 ecma_value_t JERRY_ATTR_PURE ecma_make_object_value (const ecma_object_t *object_p);
-ecma_value_t JERRY_ATTR_PURE ecma_make_extended_primitive_value (const ecma_extended_primitive_t *primitve_p,
+ecma_value_t JERRY_ATTR_PURE ecma_make_extended_primitive_value (const ecma_extended_primitive_t *primitive_p,
                                                                  uint32_t type);
 ecma_integer_value_t JERRY_ATTR_CONST ecma_get_integer_from_value (ecma_value_t value);
 ecma_number_t JERRY_ATTR_PURE ecma_get_float_from_value (ecma_value_t value);
@@ -468,7 +468,7 @@ void ecma_set_property_lcached (ecma_property_t *property_p, bool is_lcached);
 ecma_property_descriptor_t ecma_make_empty_property_descriptor (void);
 void ecma_free_property_descriptor (ecma_property_descriptor_t *prop_desc_p);
 
-void ecma_ref_extended_primitive (ecma_extended_primitive_t *primitve_p);
+void ecma_ref_extended_primitive (ecma_extended_primitive_t *primitive_p);
 void ecma_deref_exception (ecma_extended_primitive_t *exception_p);
 #if JERRY_BUILTIN_BIGINT
 void ecma_deref_bigint (ecma_extended_primitive_t *bigint_p);

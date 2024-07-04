@@ -173,15 +173,15 @@ void WgRenderStorage::clear(WGPUCommandEncoder commandEncoder)
 }
 
 
-void WgRenderStorage::blend(WGPUCommandEncoder commandEncoder, WgRenderStorage* targetSrc, WgBindGroupBlendMethod* blendMethod)
-{
+void WgRenderStorage::blend(WGPUCommandEncoder commandEncoder, WgRenderStorage* targetSrc, WgPipelineBlend* pipeline, WgBindGroupBlendMethod* blendMethod, WgBindGroupOpacity* opacity) {
     assert(commandEncoder);
     assert(targetSrc);
+    assert(pipeline);
     WGPUComputePassEncoder computePassEncoder = beginComputePass(commandEncoder);
-    mPipelines->computeBlend.use(computePassEncoder, targetSrc->bindGroupTexStorageRgba, bindGroupTexStorageRgba, *blendMethod);
+    pipeline->use(computePassEncoder, targetSrc->bindGroupTexStorageRgba, bindGroupTexStorageRgba, *blendMethod, *opacity);
     dispatchWorkgroups(computePassEncoder);
     endComputePass(computePassEncoder);
-};
+}
 
 
 void WgRenderStorage::compose(WGPUCommandEncoder commandEncoder, WgRenderStorage* targetMsk, WgBindGroupCompositeMethod* composeMethod, WgBindGroupOpacity* opacity)

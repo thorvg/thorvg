@@ -102,13 +102,13 @@ ecma_property_hashmap_create (ecma_object_t *object_p) /**< object */
     prop_iter_cp = prop_iter_p->next_property_cp;
   }
 
-  if (named_property_count < (ECMA_PROPERTY_HASMAP_MINIMUM_SIZE / 2))
+  if (named_property_count < (ECMA_PROPERTY_HASHMAP_MINIMUM_SIZE / 2))
   {
     return;
   }
 
   /* The max_property_count must be power of 2. */
-  uint32_t max_property_count = ECMA_PROPERTY_HASMAP_MINIMUM_SIZE;
+  uint32_t max_property_count = ECMA_PROPERTY_HASHMAP_MINIMUM_SIZE;
 
   /* At least 1/3 items must be NULL. */
   while (max_property_count < (named_property_count + (named_property_count >> 1)))
@@ -162,7 +162,7 @@ ecma_property_hashmap_create (ecma_object_t *object_p) /**< object */
       entry_index &= mask;
 #ifndef JERRY_NDEBUG
       /* Because max_property_count (power of 2) and step (a prime
-       * number) are relative primes, all entries of the hasmap are
+       * number) are relative primes, all entries of the hashmap are
        * visited exactly once before the start entry index is reached
        * again. Furthermore because at least one NULL is present in
        * the hashmap, the while loop must be terminated before the

@@ -474,7 +474,7 @@ ecma_regexp_step_back (ecma_regexp_ctx_t *re_ctx_p, /**< regexp context */
 } /* ecma_regexp_step_back */
 
 /**
- * Check if the current poisition is on a word boundary.
+ * Check if the current position is on a word boundary.
  *
  * @return true, if on a word boundary
  *         false - otherwise

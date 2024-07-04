@@ -21,6 +21,7 @@
  */
 
 #include <cstring>
+#include <algorithm>
 
 #include "tvgCommon.h"
 #include "tvgMath.h"
@@ -64,8 +65,8 @@ struct RenderContext
     Matrix* transform = nullptr;
     float roundness = 0.0f;
     bool fragmenting = false;  //render context has been fragmented by filling
-    bool reqFragment = false;  //requirment to fragment the render context
-    bool ownPropagator = true; //this rendering context shares the propergator
+    bool reqFragment = false;  //requirement to fragment the render context
+    bool ownPropagator = true; //this rendering context shares the propagator
 
     RenderContext()
     {
@@ -601,7 +602,7 @@ static void _applyRoundedCorner(Shape* star, Shape* merging, float outerRoundnes
     auto ptsCnt = star->pathCoords(&pts);
 
     auto len = mathLength(pts[1] - pts[2]);
-    auto r = len > 0.0f ? ROUNDED_POLYSTAR_MAGIC_NUMBER * mathMin(len * 0.5f, roundness) / len : 0.0f;
+    auto r = len > 0.0f ? ROUNDED_POLYSTAR_MAGIC_NUMBER * std::min(len * 0.5f, roundness) / len : 0.0f;
 
     if (hasRoundness) {
         P(merging)->rs.path.cmds.grow((uint32_t)(1.5 * cmdCnt));
@@ -1028,32 +1029,23 @@ static void _updateSolid(LottieLayer* layer)
 static void _updateImage(LottieGroup* layer)
 {
     auto image = static_cast<LottieImage*>(layer->children.first());
-    auto picture = image->picture;
 
-    if (!picture) {
-        picture = Picture::gen().release();
+    if (!image->picture) {
+        image->picture = Picture::gen().release();
 
         //force to load a picture on the same thread
         TaskScheduler::async(false);
 
-        if (image->size > 0) {
-            if (picture->load((const char*)image->b64Data, image->size, image->mimeType) != Result::Success) {
-                delete(picture);
-                return;
-            }
-        } else {
-            if (picture->load(image->path) != Result::Success) {
-                delete(picture);
-                return;
-            }
-        }
+        if (image->size > 0) image->picture->load((const char*)image->b64Data, image->size, image->mimeType);
+        else image->picture->load(image->path);
 
         TaskScheduler::async(true);
 
-        image->picture = picture;
-        PP(picture)->ref();
+        PP(image->picture)->ref();
     }
-    layer->scene->push(cast<Picture>(picture));
+
+    if (image->refCnt == 1) layer->scene->push(tvg::cast(image->picture));
+    else layer->scene->push(tvg::cast(image->picture->duplicate()));
 }
 
 
@@ -1144,44 +1136,44 @@ static void _updateMaskings(LottieLayer* layer, float frameNo, LottieExpressions
 {
     if (layer->masks.count == 0) return;
 
-    //maskings
-    Shape* pmask = nullptr;
-    auto pmethod = CompositeMethod::None;
+    //Apply the base mask
+    auto pMask = static_cast<LottieMask*>(layer->masks[0]);
+    auto pMethod = pMask->method;
 
-    for (auto m = layer->masks.begin(); m < layer->masks.end(); ++m) {
+    auto pShape = Shape::gen().release();
+    pShape->fill(255, 255, 255, pMask->opacity(frameNo));
+    pShape->transform(layer->cache.matrix);
+    if (pMask->pathset(frameNo, P(pShape)->rs.path.cmds, P(pShape)->rs.path.pts, nullptr, 0.0f, exps)) {
+        P(pShape)->update(RenderUpdateFlag::Path);
+    }
+
+    if (pMethod == CompositeMethod::SubtractMask || pMethod == CompositeMethod::InvAlphaMask) {
+        layer->scene->composite(tvg::cast(pShape), CompositeMethod::InvAlphaMask);
+    } else {
+        layer->scene->composite(tvg::cast(pShape), CompositeMethod::AlphaMask);
+    }
+
+    //Apply the subsquent masks
+    for (auto m = layer->masks.begin() + 1; m < layer->masks.end(); ++m) {
         auto mask = static_cast<LottieMask*>(*m);
         auto method = mask->method;
+        if (method == CompositeMethod::None) continue;
 
-        //FIXME: None method mask should be appended to the root layer?
-        if (method == CompositeMethod::None) {
-            pmethod = method;
-            continue;
-        }
-
-        //Masking shape
-        auto shape = Shape::gen().release();
-        shape->fill(255, 255, 255, mask->opacity(frameNo));
-        shape->transform(layer->cache.matrix);
-        if (mask->pathset(frameNo, P(shape)->rs.path.cmds, P(shape)->rs.path.pts, nullptr, 0.0f, exps)) {
-            P(shape)->update(RenderUpdateFlag::Path);
-        }
-
-        //Append the chain-masking composition
-        if (pmask) {
-            //false of false is true. invert?
-            if (pmethod == method) {
-                if (method == CompositeMethod::SubtractMask) method = CompositeMethod::AddMask;
-                else if (method == CompositeMethod::DifferenceMask) method = CompositeMethod::IntersectMask;
-            }
-            pmask->composite(cast<Shape>(shape), method);
-        //Apply the masking
+        //Append the mask shape
+        if (pMethod == method && (method == CompositeMethod::SubtractMask || method == CompositeMethod::DifferenceMask)) {
+            mask->pathset(frameNo, P(pShape)->rs.path.cmds, P(pShape)->rs.path.pts, nullptr, 0.0f, exps);
+        //Chain composition
         } else {
-            method = (method == CompositeMethod::SubtractMask) ? CompositeMethod::InvAlphaMask : CompositeMethod::AlphaMask;
-            layer->scene->composite(cast<Shape>(shape), method);
+            auto shape = Shape::gen().release();
+            shape->fill(255, 255, 255, mask->opacity(frameNo));
+            shape->transform(layer->cache.matrix);
+            if (mask->pathset(frameNo, P(shape)->rs.path.cmds, P(shape)->rs.path.pts, nullptr, 0.0f, exps)) {
+                P(shape)->update(RenderUpdateFlag::Path);
+            }
+            pShape->composite(tvg::cast(shape), method);
+            pShape = shape;
+            pMethod = method;
         }
-
-        pmethod = mask->method;
-        pmask = shape;
     }
 }
 
@@ -1195,7 +1187,7 @@ static bool _updateMatte(LottieLayer* root, LottieLayer* layer, float frameNo, L
 
     if (target->scene) {
         layer->scene->composite(cast(target->scene), layer->matteType);
-    } else  if (layer->matteType == CompositeMethod::AlphaMask || layer->matteType == CompositeMethod::LumaMask) {
+    } else if (layer->matteType == CompositeMethod::AlphaMask || layer->matteType == CompositeMethod::LumaMask) {
         //matte target is not exist. alpha blending definitely bring an invisible result
         delete(layer->scene);
         layer->scene = nullptr;
@@ -1277,6 +1269,7 @@ static void _buildReference(LottieComposition* comp, LottieLayer* layer)
                 layer->reqFragment = assetLayer->reqFragment;
             }
         } else if (layer->type == LottieLayer::Image) {
+            ++static_cast<LottieImage*>(*asset)->refCnt;
             layer->children.push(*asset);
         }
         break;

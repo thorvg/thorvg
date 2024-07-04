@@ -23,6 +23,7 @@
 #ifndef _TVG_SW_COMMON_H_
 #define _TVG_SW_COMMON_H_
 
+#include <algorithm>
 #include "tvgCommon.h"
 #include "tvgRender.h"
 
@@ -491,7 +492,7 @@ bool mathSmallCubic(const SwPoint* base, SwFixed& angleIn, SwFixed& angleMid, Sw
 SwFixed mathMean(SwFixed angle1, SwFixed angle2);
 SwPoint mathTransform(const Point* to, const Matrix* transform);
 bool mathUpdateOutlineBBox(const SwOutline* outline, const SwBBox& clipRegion, SwBBox& renderRegion, bool fastTrack);
-bool mathClipBBox(const SwBBox& clipper, SwBBox& clipee);
+bool mathClipBBox(const SwBBox& clipper, SwBBox& clippee);
 
 void shapeReset(SwShape* shape);
 bool shapePrepare(SwShape* shape, const RenderShape* rshape, const Matrix* transform, const SwBBox& clipRegion, SwBBox& renderRegion, SwMpool* mpool, unsigned tid, bool hasComposite);

@@ -650,7 +650,7 @@ ecma_op_container_has (ecma_extended_object_t *map_object_p, /**< map object */
  * @return ecma value
  */
 static ecma_value_t
-ecma_op_container_set_noramlize_zero (ecma_value_t this_arg) /*< this arg */
+ecma_op_container_set_normalize_zero (ecma_value_t this_arg) /*< this arg */
 {
   if (ecma_is_value_number (this_arg))
   {
@@ -663,7 +663,7 @@ ecma_op_container_set_noramlize_zero (ecma_value_t this_arg) /*< this arg */
   }
 
   return this_arg;
-} /* ecma_op_container_set_noramlize_zero */
+} /* ecma_op_container_set_normalize_zero */
 
 /**
  * The generic Map prototype object's 'set' and Set prototype object's 'add' routine
@@ -688,7 +688,7 @@ ecma_op_container_set (ecma_extended_object_t *map_object_p, /**< map object */
 
   if (entry_p == NULL)
   {
-    ecma_op_internal_buffer_append (container_p, ecma_op_container_set_noramlize_zero (key_arg), value_arg, lit_id);
+    ecma_op_internal_buffer_append (container_p, ecma_op_container_set_normalize_zero (key_arg), value_arg, lit_id);
 
     if ((map_object_p->u.cls.u1.container_flags & ECMA_CONTAINER_FLAGS_WEAK) != 0)
     {
@@ -698,7 +698,7 @@ ecma_op_container_set (ecma_extended_object_t *map_object_p, /**< map object */
   }
   else
   {
-    ecma_op_internal_buffer_update (entry_p, ecma_op_container_set_noramlize_zero (value_arg), lit_id);
+    ecma_op_internal_buffer_update (entry_p, ecma_op_container_set_normalize_zero (value_arg), lit_id);
   }
 
   ecma_ref_object ((ecma_object_t *) map_object_p);

@@ -20,6 +20,7 @@
  * SOFTWARE.
  */
 
+#include <algorithm>
 #include "tvgMath.h"
 #include "tvgSwCommon.h"
 #include "tvgTaskScheduler.h"
@@ -86,7 +87,7 @@ struct SwShapeTask : SwTask
        Additionally, the stroke style should not be dashed. */
     bool antialiasing(float strokeWidth)
     {
-        return strokeWidth < 2.0f || rshape->stroke->dashCnt > 0 || rshape->stroke->strokeFirst || rshape->strokeTrim();
+        return strokeWidth < 2.0f || rshape->stroke->dashCnt > 0 || rshape->stroke->strokeFirst || rshape->strokeTrim() || rshape->stroke->color[3] < 255;;
     }
 
     float validStrokeWidth()
@@ -228,7 +229,7 @@ struct SwSceneTask : SwTask
 
     void run(unsigned tid) override
     {
-        //TODO: Skip the run if the scene hans't changed.
+        //TODO: Skip the run if the scene hasn't changed.
         if (!sceneRle) sceneRle = static_cast<SwRleData*>(calloc(1, sizeof(SwRleData)));
         else rleReset(sceneRle);
 
@@ -740,10 +741,10 @@ void* SwRenderer::prepareCommon(SwTask* task, const RenderTransform* transform, 
     task->surface = surface;
     task->mpool = mpool;
     task->flags = flags;
-    task->bbox.min.x = mathMax(static_cast<SwCoord>(0), static_cast<SwCoord>(vport.x));
-    task->bbox.min.y = mathMax(static_cast<SwCoord>(0), static_cast<SwCoord>(vport.y));
-    task->bbox.max.x = mathMin(static_cast<SwCoord>(surface->w), static_cast<SwCoord>(vport.x + vport.w));
-    task->bbox.max.y = mathMin(static_cast<SwCoord>(surface->h), static_cast<SwCoord>(vport.y + vport.h));
+    task->bbox.min.x = std::max(static_cast<SwCoord>(0), static_cast<SwCoord>(vport.x));
+    task->bbox.min.y = std::max(static_cast<SwCoord>(0), static_cast<SwCoord>(vport.y));
+    task->bbox.max.x = std::min(static_cast<SwCoord>(surface->w), static_cast<SwCoord>(vport.x + vport.w));
+    task->bbox.max.y = std::min(static_cast<SwCoord>(surface->h), static_cast<SwCoord>(vport.y + vport.h));
 
     if (!task->pushed) {
         task->pushed = true;

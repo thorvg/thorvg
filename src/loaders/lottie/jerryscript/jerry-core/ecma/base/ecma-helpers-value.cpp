@@ -694,16 +694,16 @@ ecma_make_object_value (const ecma_object_t *object_p) /**< object to reference 
  * @return ecma-value representation of the Error reference
  */
 ecma_value_t JERRY_ATTR_PURE
-ecma_make_extended_primitive_value (const ecma_extended_primitive_t *primitve_p, /**< extended primitve value */
-                                    uint32_t type) /**< ecma type of extended primitve value */
+ecma_make_extended_primitive_value (const ecma_extended_primitive_t *primitive_p, /**< extended primitive value */
+                                    uint32_t type) /**< ecma type of extended primitive value */
 {
-  JERRY_ASSERT (primitve_p != NULL);
+  JERRY_ASSERT (primitive_p != NULL);
 #if JERRY_BUILTIN_BIGINT
-  JERRY_ASSERT (primitve_p != ECMA_BIGINT_POINTER_TO_ZERO);
+  JERRY_ASSERT (primitive_p != ECMA_BIGINT_POINTER_TO_ZERO);
 #endif /* JERRY_BUILTIN_BIGINT */
   JERRY_ASSERT (type == ECMA_TYPE_BIGINT || type == ECMA_TYPE_ERROR);
 
-  return ecma_pointer_to_ecma_value (primitve_p) | type;
+  return ecma_pointer_to_ecma_value (primitive_p) | type;
 } /* ecma_make_extended_primitive_value */
 
 /**

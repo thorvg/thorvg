@@ -238,7 +238,7 @@ typedef enum
   VM_OC_CHECK_VAR, /**< check redeclared vars in the global scope */
   VM_OC_CHECK_LET, /**< check redeclared lets in the global scope */
   VM_OC_ASSIGN_LET_CONST, /**< assign values to let/const declarations */
-  VM_OC_INIT_BINDING, /**< create and intialize a binding */
+  VM_OC_INIT_BINDING, /**< create and initialize a binding */
   VM_OC_THROW_CONST_ERROR, /**< throw invalid assignment to const variable error */
   VM_OC_COPY_TO_GLOBAL, /**< copy value to global lex env */
   VM_OC_COPY_FROM_ARG, /**< copy value from arg lex env */
@@ -264,7 +264,7 @@ typedef enum
   VM_OC_RUN_STATIC_FIELD_INIT, /**< run the static class field initializer function */
   VM_OC_SET_NEXT_COMPUTED_FIELD, /**< set the next computed field of a class */
   VM_OC_PUSH_SUPER_CONSTRUCTOR, /**< getSuperConstructor operation */
-  VM_OC_RESOLVE_LEXICAL_THIS, /**< resolve this_binding from from the lexical environment */
+  VM_OC_RESOLVE_LEXICAL_THIS, /**< resolve this_binding from the lexical environment */
   VM_OC_SUPER_REFERENCE, /**< push super reference */
   VM_OC_SET_HOME_OBJECT, /**< set the [[HomeObject]] environment in an object literal */
   VM_OC_OBJECT_LITERAL_HOME_ENV, /**< create/destroy [[HomeObject]] environment of an object literal */
@@ -272,8 +272,8 @@ typedef enum
 
   VM_OC_PUSH_SPREAD_ELEMENT, /**< push spread element */
   VM_OC_PUSH_REST_OBJECT, /**< push rest object */
-  VM_OC_ITERATOR_CONTEXT_CREATE, /**< create iterator conext */
-  VM_OC_ITERATOR_CONTEXT_END, /**< finalize iterator cotnext */
+  VM_OC_ITERATOR_CONTEXT_CREATE, /**< create iterator context */
+  VM_OC_ITERATOR_CONTEXT_END, /**< finalize iterator context */
   VM_OC_ITERATOR_STEP, /**< IteratorStep abstract operation */
   VM_OC_OBJ_INIT_CONTEXT_CREATE, /**< create object initializer context */
   VM_OC_OBJ_INIT_CONTEXT_END, /**< finalize object initializer context */
@@ -294,7 +294,7 @@ typedef enum
   VM_OC_STRING_CONCAT, /**< string concatenation */
   VM_OC_GET_TEMPLATE_OBJECT, /**< GetTemplateObject operation */
   VM_OC_PUSH_NEW_TARGET, /**< push new.target onto the stack */
-  VM_OC_REQUIRE_OBJECT_COERCIBLE, /**< RequireObjectCoercible opretaion */
+  VM_OC_REQUIRE_OBJECT_COERCIBLE, /**< RequireObjectCoercible operation */
   VM_OC_ASSIGN_SUPER, /**< assign super reference */
   VM_OC_SET__PROTO__, /**< set prototype when __proto__: form is used */
   VM_OC_PUSH_STATIC_FIELD_FUNC, /**< push static field initializer function */

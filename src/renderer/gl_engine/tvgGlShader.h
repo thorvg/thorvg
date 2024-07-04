@@ -36,7 +36,7 @@ public:
 
 private:
     void    createShader(const char* vertSrc, const char* fragSrc);
-    uint32_t complileShader(uint32_t type, char* shaderSrc);
+    uint32_t compileShader(uint32_t type, char* shaderSrc);
 
     uint32_t mVtShader;
     uint32_t mFrShader;

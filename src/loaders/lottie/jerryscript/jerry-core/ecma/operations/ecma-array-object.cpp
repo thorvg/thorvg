@@ -220,7 +220,7 @@ ecma_op_new_array_object_from_buffer (const ecma_value_t *args_p, /**< array ele
 } /* ecma_op_new_array_object_from_buffer */
 
 /**
- * Allocate a new fast acces mode array object from the given collection
+ * Allocate a new fast access mode array object from the given collection
  *
  * Note: The given collection will be unavailable after and it's underlying buffer is reused
  *
@@ -229,7 +229,7 @@ ecma_op_new_array_object_from_buffer (const ecma_value_t *args_p, /**< array ele
 ecma_value_t
 ecma_op_new_array_object_from_collection (ecma_collection_t *collection_p, /**< collection to create array from */
                                           bool unref_objects) /**< true - if the collection potentially
-                                                                          containts objects
+                                                                          contains objects
                                                                    false - otherwise */
 {
   const uint32_t item_count = collection_p->item_count;
@@ -1045,7 +1045,7 @@ ecma_op_array_object_set_length (ecma_object_t *object_p, /**< the array object 
 
 /**
  * Property descriptor bitset for fast array data properties.
- * If the property desciptor fields contains all the flags below
+ * If the property descriptor fields contains all the flags below
  * attempt to stay fast access array during [[DefineOwnProperty]] operation.
  */
 #define ECMA_FAST_ARRAY_DATA_PROP_FLAGS                                                               \
@@ -1136,10 +1136,10 @@ ecma_op_array_object_define_own_property (ecma_object_t *object_p, /**< the arra
   prop_desc = *property_desc_p;
   prop_desc.flags &= (uint16_t) ~JERRY_PROP_SHOULD_THROW;
 
-  ecma_value_t completition = ecma_op_general_object_define_own_property (object_p, property_name_p, &prop_desc);
-  JERRY_ASSERT (ecma_is_value_boolean (completition));
+  ecma_value_t completion = ecma_op_general_object_define_own_property (object_p, property_name_p, &prop_desc);
+  JERRY_ASSERT (ecma_is_value_boolean (completion));
 
-  if (ecma_is_value_false (completition))
+  if (ecma_is_value_false (completion))
   {
     return ecma_raise_property_redefinition (property_name_p, property_desc_p->flags);
   }

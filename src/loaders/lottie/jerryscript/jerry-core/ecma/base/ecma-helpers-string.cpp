@@ -186,7 +186,7 @@ ecma_string_get_chars_fast (const ecma_string_t *string_p, /**< ecma-string */
  * @return pointer to ecma-string descriptor
  */
 static ecma_string_t *
-ecma_new_ecma_string_from_magic_string_ex_id (lit_magic_string_ex_id_t id) /**< identifier of externl magic string */
+ecma_new_ecma_string_from_magic_string_ex_id (lit_magic_string_ex_id_t id) /**< identifier of external magic string */
 {
   JERRY_ASSERT (id < lit_get_magic_string_ex_count ());
 
@@ -1605,7 +1605,7 @@ ecma_compare_ecma_strings_longpath (const ecma_string_t *string1_p, /**< ecma-st
                                     const ecma_string_t *string2_p) /**< ecma-string */
 {
   const lit_utf8_byte_t *utf8_string1_p, *utf8_string2_p;
-  lit_utf8_size_t string1_size_and_length[2], string2_size_and_length[2];
+  lit_utf8_size_t string1_size_and_length[2] = { 0, 0 }, string2_size_and_length[2] = { 0, 0 };
 
   utf8_string1_p = ecma_compare_get_string_chars (string1_p, string1_size_and_length);
   utf8_string2_p = ecma_compare_get_string_chars (string2_p, string2_size_and_length);
@@ -2186,7 +2186,7 @@ ecma_string_hash (const ecma_string_t *string_p) /**< ecma-string to calculate h
 /**
  * Create a substring from an ecma string
  *
- * @return a newly consturcted ecma string with its value initialized to a copy of a substring of the first argument
+ * @return a newly constructed ecma string with its value initialized to a copy of a substring of the first argument
  */
 ecma_string_t *
 ecma_string_substr (const ecma_string_t *string_p, /**< pointer to an ecma string */

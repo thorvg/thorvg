@@ -459,7 +459,7 @@ bool TtfReader::convert(Shape* shape, TtfGlyphMetrics& gmetrics, const Point& of
     auto pts = (Point*)alloca(ptsCnt * sizeof(Point));
     if (!this->points(outline, flags, pts, ptsCnt, offset + kerning)) return false;
 
-    //generate tvg pathes.
+    //generate tvg paths.
     auto& pathCmds = P(shape)->rs.path.cmds;
     auto& pathPts = P(shape)->rs.path.pts;
     pathCmds.reserve(ptsCnt);

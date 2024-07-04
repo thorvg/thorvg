@@ -69,7 +69,7 @@ ECMA_ERROR_DEF (ECMA_ERR_STACK_LIMIT_EXCEEDED, "Stack limit exceeded")
 ECMA_ERROR_DEF (ECMA_ERR_TARGET_IS_NOT_OBJECT, "Target is not Object")
 #endif /* JERRY_BUILTIN_WEAKREF */
 #if JERRY_BUILTIN_BIGINT
-ECMA_ERROR_DEF (ECMA_ERR_BIGINT_VALUE_EXCPECTED, "BigInt value expected")
+ECMA_ERROR_DEF (ECMA_ERR_BIGINT_VALUE_EXPECTED, "BigInt value expected")
 #endif /* JERRY_BUILTIN_BIGINT */
 ECMA_ERROR_DEF (ECMA_ERR_BINDING_CANNOT_SET, "Binding cannot be set")
 #if JERRY_BUILTIN_STRING
@@ -416,7 +416,7 @@ ECMA_ERROR_DEF (ECMA_ERR_ARGUMENT_THIS_NOT_REG_EXP, "Argument 'this' is not a va
 #if JERRY_BUILTIN_TYPEDARRAY
 ECMA_ERROR_DEF (ECMA_ERR_ARRAY_BUFFER_DETACHED, "ArrayBuffer has already been detached")
 #endif /* JERRY_BUILTIN_TYPEDARRAY */
-ECMA_ERROR_DEF (ECMA_ERR_BULTIN_ROUTINES_HAVE_NO_CONSTRUCTOR, "Built-in routines have no constructor")
+ECMA_ERROR_DEF (ECMA_ERR_BUILTIN_ROUTINES_HAVE_NO_CONSTRUCTOR, "Built-in routines have no constructor")
 #if JERRY_BUILTIN_TYPEDARRAY
 ECMA_ERROR_DEF (ECMA_ERR_CONSTRUCTOR_INT16_ARRAY_REQUIRES_NEW, "Constructor Int16Array requires 'new'")
 ECMA_ERROR_DEF (ECMA_ERR_CONSTRUCTOR_INT32_ARRAY_REQUIRES_NEW, "Constructor Int32Array requires 'new'")
@@ -583,7 +583,7 @@ ECMA_ERROR_DEF (ECMA_ERR_ONLY_INTEGER_NUMBERS_CAN_BE_CONVERTED_TO_BIGINT,
                 "Only integer numbers can be converted to BigInt")
 #endif /* JERRY_BUILTIN_BIGINT */
 #if JERRY_BUILTIN_TYPEDARRAY
-ECMA_ERROR_DEF (ECMA_ERR_TYPEDARRAY_INTRINSTIC_DIRECTLY_CALLED, "TypedArray intrinstic cannot be directly called")
+ECMA_ERROR_DEF (ECMA_ERR_TYPEDARRAY_INTRINSIC_DIRECTLY_CALLED, "TypedArray intrinsic cannot be directly called")
 #endif /* JERRY_BUILTIN_TYPEDARRAY */
 #if JERRY_BUILTIN_BIGINT
 ECMA_ERROR_DEF (ECMA_ERR_UNSIGNED_RIGHT_SHIFT_IS_NOT_ALLOWED_FOR_BIGINTS,
@@ -687,8 +687,8 @@ ECMA_ERROR_DEF (ECMA_ERR_TRAP_RESULT_NOT_REFLECT_TARGET_INEXTENSIBILITY,
                 "Trap result does not reflect inextensibility of Proxy target")
 #endif /* JERRY_BUILTIN_PROXY */
 #if JERRY_BUILTIN_TYPEDARRAY
-ECMA_ERROR_DEF (ECMA_ERR_TYPEDARRAY_INTRINSTIC_CALLED_BY_NEW_EXPRESSION,
-                "TypedArray intrinstic cannot be called by a 'new' expression")
+ECMA_ERROR_DEF (ECMA_ERR_TYPEDARRAY_INTRINSIC_CALLED_BY_NEW_EXPRESSION,
+                "TypedArray intrinsic cannot be called by a 'new' expression")
 #endif /* JERRY_BUILTIN_TYPEDARRAY */
 #if JERRY_BUILTIN_BIGINT && JERRY_BUILTIN_TYPEDARRAY
 ECMA_ERROR_DEF (ECMA_ERR_CONTENTTYPE_RETURNED_TYPEDARRAY_NOT_MATCH_SOURCE,
@@ -733,11 +733,11 @@ ECMA_ERROR_DEF (ECMA_ERR_CALL_SUPER_CONSTRUCTOR_DERIVED_CLASS_BEFORE_THIS,
                 "Must call super constructor in derived class before accessing 'this' or returning from it")
 #if JERRY_BUILTIN_PROXY
 ECMA_ERROR_DEF (ECMA_ERR_TRAP_TRUISH_DEFINING_NON_EXISTENT_PROPERTY,
-                "Trap returned truish for defining non-configurable property which is non-existent in the target")
+                "Trap returned truish for defining non-configurable property which is nonexistent in the target")
 ECMA_ERROR_DEF (
   ECMA_ERR_TRAP_TRUISH_ADD_PROPERTY_INCOMPATIBLE_OTHER_PROP,
   "Trap returned truish for adding property that is incompatible with the existing property in the target")
 #endif /* JERRY_BUILTIN_PROXY */
-ECMA_ERROR_DEF (ECMA_ERR_CANNOT_ACCESS_CALLER_CALLE_ARGUMENTS,
+ECMA_ERROR_DEF (ECMA_ERR_CANNOT_ACCESS_CALLER_CALLEE_ARGUMENTS,
                 "'caller', 'callee', and 'arguments' properties may not be accessed on strict mode functions or the "
                 "arguments objects for calls to them")

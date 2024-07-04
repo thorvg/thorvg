@@ -31,7 +31,7 @@ WGPUBindGroupLayout WgBindGroupSolidColor::layout = nullptr;
 WGPUBindGroupLayout WgBindGroupLinearGradient::layout = nullptr;
 WGPUBindGroupLayout WgBindGroupRadialGradient::layout = nullptr;
 WGPUBindGroupLayout WgBindGroupPicture::layout = nullptr;
-// composition and blending properties gropus
+// composition and blending properties groups
 WGPUBindGroupLayout WgBindGroupTexture::layout = nullptr;
 WGPUBindGroupLayout WgBindGroupTextureStorageRgba::layout = nullptr;
 WGPUBindGroupLayout WgBindGroupTextureStorageBgra::layout = nullptr;
@@ -643,11 +643,11 @@ WgBindGroupBlendMethod* WgBindGroupBlendMethodPool::allocate(WgContext& context,
 void WgBindGroupCompositeMethodPool::initialize(WgContext& context)
 {
     release(context);
-    for (uint8_t composeMethos = (uint8_t)CompositeMethod::None;
-         composeMethos <= (uint8_t)CompositeMethod::DifferenceMask;
-         composeMethos++) {
-        mPool[composeMethos] = new WgBindGroupCompositeMethod;
-        mPool[composeMethos]->initialize(context.device, context.queue, (CompositeMethod)composeMethos);
+    for (uint8_t composeMethods = (uint8_t)CompositeMethod::None;
+         composeMethods <= (uint8_t)CompositeMethod::DifferenceMask;
+         composeMethods++) {
+        mPool[composeMethods] = new WgBindGroupCompositeMethod;
+        mPool[composeMethods]->initialize(context.device, context.queue, (CompositeMethod)composeMethods);
     }
 }
 

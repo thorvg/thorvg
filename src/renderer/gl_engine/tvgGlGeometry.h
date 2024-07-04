@@ -27,8 +27,9 @@
 #include "tvgGlCommon.h"
 #include "tvgMath.h"
 
+#define MIN_GL_STROKE_WIDTH 0.5f
 
-#define MVP_MATRIX() \
+#define MVP_MATRIX(w, h) \
     float mvp[4*4] = { \
         2.f / w, 0.0, 0.0f, 0.0f, \
         0.0, -2.f / h, 0.0f, 0.0f, \
@@ -108,14 +109,14 @@ public:
         return *this;
     }
 
-    bool operator== (const GlPoint& rhs)
+    bool operator== (const GlPoint& rhs) const
     {
         if (&rhs == this) return true;
         if (rhs.x == this->x && rhs.y == this->y) return true;
         return false;
     }
 
-    bool operator!= (const GlPoint& rhs)
+    bool operator!= (const GlPoint& rhs) const
     {
         if (&rhs == this) return true;
         if (rhs.x != this->x || rhs.y != this->y) return true;
@@ -192,9 +193,10 @@ public:
     bool tesselate(const Surface* image, const RenderMesh* mesh, RenderUpdateFlag flag);
     void disableVertex(uint32_t location);
     bool draw(GlRenderTask* task, GlStageBuffer* gpuBuffer, RenderUpdateFlag flag);
-    void updateTransform(const RenderTransform* transform, float w, float h);
+    void updateTransform(const RenderTransform* transform);
     void setViewport(const RenderRegion& viewport);
-    float* getTransforMatrix();
+    const RenderRegion& getViewport();
+    const Matrix& getTransformMatrix();
     GlStencilMode getStencilMode(RenderUpdateFlag flag);
     RenderRegion getBounds() const;
 
@@ -204,7 +206,6 @@ private:
     Array<float> strokeVertex = {};
     Array<uint32_t> fillIndex = {};
     Array<uint32_t> strokeIndex = {};
-    float mTransform[16];
     Matrix mMatrix = {};
 
     FillRule mFillRule = FillRule::Winding;

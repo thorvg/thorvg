@@ -169,7 +169,7 @@ void jerry_port_print_buffer (const jerry_char_t *buffer_p, jerry_size_t buffer_
  * The implementation should allocate storage necessary for the string. The result string should include the ending line
  * terminator character(s) and should be zero terminated.
  *
- * An implementation may return NULL to signal that the end of input is reached, or an error occured.
+ * An implementation may return NULL to signal that the end of input is reached, or an error occurred.
  *
  * When a non-NULL value is returned, the caller will pass the returned value to `jerry_port_line_free` when the line is
  * no longer needed. This can be used to finalize dynamically allocated buffers if necessary.

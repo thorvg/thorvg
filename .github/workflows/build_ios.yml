@@ -8,6 +8,9 @@ on:
     branches:
       - main
 
+permissions:
+  contents: read
+
 jobs:
   build_x86_64:
     runs-on: macos-latest
@@ -16,7 +19,7 @@ jobs:
       with:
         submodules: true
 
-    - name: Unbreak Python in Github Actions
+    - name: Unbreak Python in GitHub Actions
       run: |
         find /usr/local/bin -lname '*/Library/Frameworks/Python.framework/*' -delete
         sudo rm -rf /Library/Frameworks/Python.framework/
@@ -45,7 +48,7 @@ jobs:
       with:
         submodules: true
 
-    - name: Unbreak Python in Github Actions
+    - name: Unbreak Python in GitHub Actions
       run: |
         find /usr/local/bin -lname '*/Library/Frameworks/Python.framework/*' -delete
         sudo rm -rf /Library/Frameworks/Python.framework/

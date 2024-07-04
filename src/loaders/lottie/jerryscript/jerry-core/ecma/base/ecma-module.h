@@ -57,7 +57,7 @@ typedef struct ecma_module
   /* Note: state is stored in header.u.class_prop.extra_info */
   ecma_extended_object_t header; /**< header part */
   /* TODO(dbatyai): These could be compressed pointers */
-  ecma_object_t *scope_p; /**< lexical lenvironment of the module */
+  ecma_object_t *scope_p; /**< lexical environment of the module */
   ecma_object_t *namespace_object_p; /**< namespace object of the module */
   struct ecma_module_node *imports_p; /**< import requests of the module */
   ecma_module_names_t *local_exports_p; /**< local exports of the module */
@@ -111,7 +111,7 @@ typedef struct ecma_module_resolve_stack
   struct ecma_module_resolve_stack *next_p; /**< next in linked list */
   ecma_module_t *module_p; /**< module request */
   ecma_string_t *export_name_p; /**< export identifier name */
-  bool resolving; /**< flag storing wether the current frame started resolving */
+  bool resolving; /**< flag storing whether the current frame started resolving */
 } ecma_module_resolve_stack_t;
 
 ecma_value_t ecma_module_initialize (ecma_module_t *module_p);

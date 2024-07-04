@@ -101,7 +101,7 @@ re_insert_byte (re_compiler_ctx_t *re_ctx_p, /**< RegExp bytecode context */
 } /* re_insert_byte */
 
 /**
- * Get a single byte and icnrease bytecode position.
+ * Get a single byte and increase bytecode position.
  */
 uint8_t
 re_get_byte (const uint8_t **bc_p) /**< pointer to bytecode start */

@@ -774,7 +774,7 @@
 #define CBC_SMALL_LITERAL_ENCODING_DELTA 0xfe01
 
 /**
- * Literal indicies belong to one of the following groups:
+ * Literal indices belong to one of the following groups:
  *
  * 0 <= index < argument_end                    : arguments
  * argument_end <= index < register_end         : registers

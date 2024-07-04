@@ -80,7 +80,7 @@ JERRY_STATIC_ASSERT (((int) ECMA_OBJECT_TYPE_BUILT_IN_ARRAY == ((int) ECMA_OBJEC
  * @return pointer to the object's descriptor
  */
 ecma_object_t *
-ecma_create_object (ecma_object_t *prototype_object_p, /**< pointer to prototybe of the object (or NULL) */
+ecma_create_object (ecma_object_t *prototype_object_p, /**< pointer to prototype of the object (or NULL) */
                     size_t ext_object_size, /**< size of extended objects */
                     ecma_object_type_t type) /**< object type */
 {
@@ -453,8 +453,8 @@ ecma_create_property (ecma_object_t *object_p, /**< the object */
   /* Otherwise we create a new property pair and use its second value. */
   ecma_property_pair_t *first_property_pair_p = ecma_alloc_property_pair ();
 
-  /* Need to query property_list_head_p again and recheck the existennce
-   * of property hasmap, because ecma_alloc_property_pair may delete them. */
+  /* Need to query property_list_head_p again and recheck the existence
+   * of property hashmap, because ecma_alloc_property_pair may delete them. */
   property_list_head_p = &object_p->u1.property_list_cp;
 #if JERRY_PROPERTY_HASHMAP
   bool has_hashmap = false;
@@ -726,7 +726,7 @@ ecma_find_named_property (ecma_object_t *obj_p, /**< object to find property in 
   }
 
 #if JERRY_PROPERTY_HASHMAP
-  if (steps >= (ECMA_PROPERTY_HASMAP_MINIMUM_SIZE / 2))
+  if (steps >= (ECMA_PROPERTY_HASHMAP_MINIMUM_SIZE / 2))
   {
     ecma_property_hashmap_create (obj_p);
   }
@@ -1226,14 +1226,14 @@ ecma_free_property_descriptor (ecma_property_descriptor_t *prop_desc_p) /**< pro
 } /* ecma_free_property_descriptor */
 
 /**
- * Increase ref count of an extended primitve value.
+ * Increase ref count of an extended primitive value.
  */
 void
-ecma_ref_extended_primitive (ecma_extended_primitive_t *primitve_p) /**< extended primitve value */
+ecma_ref_extended_primitive (ecma_extended_primitive_t *primitive_p) /**< extended primitive value */
 {
-  if (JERRY_LIKELY (primitve_p->refs_and_type < ECMA_EXTENDED_PRIMITIVE_MAX_REF))
+  if (JERRY_LIKELY (primitive_p->refs_and_type < ECMA_EXTENDED_PRIMITIVE_MAX_REF))
   {
-    primitve_p->refs_and_type += ECMA_EXTENDED_PRIMITIVE_REF_ONE;
+    primitive_p->refs_and_type += ECMA_EXTENDED_PRIMITIVE_REF_ONE;
   }
   else
   {
@@ -1556,7 +1556,7 @@ ecma_bytecode_deref (ecma_compiled_code_t *bytecode_p) /**< byte code pointer */
 } /* ecma_bytecode_deref */
 
 /**
- * Gets the script data asigned to a script / module / function
+ * Gets the script data assigned to a script / module / function
  *
  * @return script data - if available, JMEM_CP_NULL - otherwise
  */

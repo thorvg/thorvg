@@ -14,7 +14,7 @@
  */
 
 /*
- * Promose built-in description
+ * Promise built-in description
  */
 
 #include "ecma-builtin-helpers-macro-defines.inc.h"

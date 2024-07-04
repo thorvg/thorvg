@@ -44,9 +44,9 @@ void WgPipelineFillShapeWinding::initialize(WGPUDevice device)
     };
 
     // stencil function
-    WGPUCompareFunction stencilFuncionFront = WGPUCompareFunction_Always;
+    WGPUCompareFunction stencilFunctionFront = WGPUCompareFunction_Always;
     WGPUStencilOperation stencilOperationFront = WGPUStencilOperation_IncrementWrap;
-    WGPUCompareFunction stencilFuncionBack = WGPUCompareFunction_Always;
+    WGPUCompareFunction stencilFunctionBack = WGPUCompareFunction_Always;
     WGPUStencilOperation stencilOperationBack = WGPUStencilOperation_DecrementWrap;
 
     // sheder source and labels
@@ -55,10 +55,10 @@ void WgPipelineFillShapeWinding::initialize(WGPUDevice device)
     auto pipelineLabel = "The render pipeline fill shape winding";
 
     // allocate all pipeline handles
-    allocate(device, WgPipelineBlendType::Add, WGPUColorWriteMask_None,
+    allocate(device, WgPipelineBlendType::SrcOver, WGPUColorWriteMask_None,
              vertexBufferLayouts, ARRAY_ELEMENTS_COUNT(vertexBufferLayouts),
              bindGroupLayouts, ARRAY_ELEMENTS_COUNT(bindGroupLayouts),
-             stencilFuncionFront, stencilOperationFront, stencilFuncionBack, stencilOperationBack,
+             stencilFunctionFront, stencilOperationFront, stencilFunctionBack, stencilOperationBack,
              shaderSource, shaderLabel, pipelineLabel);
 }
 
@@ -78,9 +78,9 @@ void WgPipelineFillShapeEvenOdd::initialize(WGPUDevice device)
     };
 
     // stencil function
-    WGPUCompareFunction stencilFuncionFront = WGPUCompareFunction_Always;
+    WGPUCompareFunction stencilFunctionFront = WGPUCompareFunction_Always;
     WGPUStencilOperation stencilOperationFront = WGPUStencilOperation_Invert;
-    WGPUCompareFunction stencilFuncionBack = WGPUCompareFunction_Always;
+    WGPUCompareFunction stencilFunctionBack = WGPUCompareFunction_Always;
     WGPUStencilOperation stencilOperationBack = WGPUStencilOperation_Invert;
 
     // sheder source and labels
@@ -89,10 +89,10 @@ void WgPipelineFillShapeEvenOdd::initialize(WGPUDevice device)
     auto pipelineLabel = "The render pipeline fill shape Even Odd";
 
     // allocate all pipeline handles
-    allocate(device, WgPipelineBlendType::Add, WGPUColorWriteMask_None,
+    allocate(device, WgPipelineBlendType::SrcOver, WGPUColorWriteMask_None,
              vertexBufferLayouts, ARRAY_ELEMENTS_COUNT(vertexBufferLayouts),
              bindGroupLayouts, ARRAY_ELEMENTS_COUNT(bindGroupLayouts),
-             stencilFuncionFront, stencilOperationFront, stencilFuncionBack, stencilOperationBack,
+             stencilFunctionFront, stencilOperationFront, stencilFunctionBack, stencilOperationBack,
              shaderSource, shaderLabel, pipelineLabel);
 }
 
@@ -112,7 +112,7 @@ void WgPipelineFillStroke::initialize(WGPUDevice device)
     };
 
     // stencil function
-    WGPUCompareFunction stencilFuncion = WGPUCompareFunction_Always;
+    WGPUCompareFunction stencilFunction = WGPUCompareFunction_Always;
     WGPUStencilOperation stencilOperation = WGPUStencilOperation_Replace;
 
     // sheder source and labels
@@ -121,10 +121,10 @@ void WgPipelineFillStroke::initialize(WGPUDevice device)
     auto pipelineLabel = "The render pipeline fill stroke";
 
     // allocate all pipeline handles
-    allocate(device, WgPipelineBlendType::Add, WGPUColorWriteMask_None,
+    allocate(device, WgPipelineBlendType::SrcOver, WGPUColorWriteMask_None,
              vertexBufferLayouts, ARRAY_ELEMENTS_COUNT(vertexBufferLayouts),
              bindGroupLayouts, ARRAY_ELEMENTS_COUNT(bindGroupLayouts),
-             stencilFuncion, stencilOperation, stencilFuncion, stencilOperation,
+             stencilFunction, stencilOperation, stencilFunction, stencilOperation,
              shaderSource, shaderLabel, pipelineLabel);
 }
 
@@ -145,7 +145,7 @@ void WgPipelineSolid::initialize(WGPUDevice device, WgPipelineBlendType blendTyp
     };
 
     // stencil function
-    WGPUCompareFunction stencilFuncion = WGPUCompareFunction_NotEqual;
+    WGPUCompareFunction stencilFunction = WGPUCompareFunction_NotEqual;
     WGPUStencilOperation stencilOperation = WGPUStencilOperation_Zero;
 
     // sheder source and labels
@@ -157,7 +157,7 @@ void WgPipelineSolid::initialize(WGPUDevice device, WgPipelineBlendType blendTyp
     allocate(device, blendType, WGPUColorWriteMask_All,
              vertexBufferLayouts, ARRAY_ELEMENTS_COUNT(vertexBufferLayouts),
              bindGroupLayouts, ARRAY_ELEMENTS_COUNT(bindGroupLayouts),
-             stencilFuncion, stencilOperation, stencilFuncion, stencilOperation,
+             stencilFunction, stencilOperation, stencilFunction, stencilOperation,
              shaderSource, shaderLabel, pipelineLabel);
 }
 
@@ -178,7 +178,7 @@ void WgPipelineLinear::initialize(WGPUDevice device, WgPipelineBlendType blendTy
     };
 
     // stencil function
-    WGPUCompareFunction stencilFuncion = WGPUCompareFunction_NotEqual;
+    WGPUCompareFunction stencilFunction = WGPUCompareFunction_NotEqual;
     WGPUStencilOperation stencilOperation = WGPUStencilOperation_Zero;
 
     // sheder source and labels
@@ -190,7 +190,7 @@ void WgPipelineLinear::initialize(WGPUDevice device, WgPipelineBlendType blendTy
     allocate(device, blendType, WGPUColorWriteMask_All,
              vertexBufferLayouts, ARRAY_ELEMENTS_COUNT(vertexBufferLayouts),
              bindGroupLayouts, ARRAY_ELEMENTS_COUNT(bindGroupLayouts),
-             stencilFuncion, stencilOperation, stencilFuncion, stencilOperation,
+             stencilFunction, stencilOperation, stencilFunction, stencilOperation,
              shaderSource, shaderLabel, pipelineLabel);
 }
 
@@ -211,7 +211,7 @@ void WgPipelineRadial::initialize(WGPUDevice device, WgPipelineBlendType blendTy
     };
 
     // stencil function
-    WGPUCompareFunction stencilFuncion = WGPUCompareFunction_NotEqual;
+    WGPUCompareFunction stencilFunction = WGPUCompareFunction_NotEqual;
     WGPUStencilOperation stencilOperation = WGPUStencilOperation_Zero;
 
     // sheder source and labels
@@ -223,7 +223,7 @@ void WgPipelineRadial::initialize(WGPUDevice device, WgPipelineBlendType blendTy
     allocate(device, blendType, WGPUColorWriteMask_All,
              vertexBufferLayouts, ARRAY_ELEMENTS_COUNT(vertexBufferLayouts),
              bindGroupLayouts, ARRAY_ELEMENTS_COUNT(bindGroupLayouts),
-             stencilFuncion, stencilOperation, stencilFuncion, stencilOperation,
+             stencilFunction, stencilOperation, stencilFunction, stencilOperation,
              shaderSource, shaderLabel, pipelineLabel);
 }
 
@@ -246,7 +246,7 @@ void WgPipelineImage::initialize(WGPUDevice device, WgPipelineBlendType blendTyp
     };
 
     // stencil function
-    WGPUCompareFunction stencilFuncion = WGPUCompareFunction_Always;
+    WGPUCompareFunction stencilFunction = WGPUCompareFunction_Always;
     WGPUStencilOperation stencilOperation = WGPUStencilOperation_Zero;
 
     // sheder source and labels
@@ -258,7 +258,7 @@ void WgPipelineImage::initialize(WGPUDevice device, WgPipelineBlendType blendTyp
     allocate(device, blendType, WGPUColorWriteMask_All,
              vertexBufferLayouts, ARRAY_ELEMENTS_COUNT(vertexBufferLayouts),
              bindGroupLayouts, ARRAY_ELEMENTS_COUNT(bindGroupLayouts),
-             stencilFuncion, stencilOperation, stencilFuncion, stencilOperation,
+             stencilFunction, stencilOperation, stencilFunction, stencilOperation,
              shaderSource, shaderLabel, pipelineLabel);
 }
 
@@ -285,17 +285,17 @@ void WgPipelineClear::initialize(WGPUDevice device)
 }
 
 
-void WgPipelineBlend::initialize(WGPUDevice device)
+void WgPipelineBlend::initialize(WGPUDevice device, const char *shaderSource)
 {
     // bind groups and layouts
     WGPUBindGroupLayout bindGroupLayouts[] = {
         WgBindGroupTextureStorageRgba::getLayout(device),
         WgBindGroupTextureStorageRgba::getLayout(device),
-        WgBindGroupBlendMethod::getLayout(device)
+        WgBindGroupBlendMethod::getLayout(device),
+        WgBindGroupOpacity::getLayout(device)
     };
 
     // sheder source and labels
-    auto shaderSource = cShaderSource_PipelineComputeBlend;
     auto shaderLabel = "The compute shader blend";
     auto pipelineLabel = "The compute pipeline blend";
 
@@ -379,7 +379,7 @@ void WgPipelines::initialize(WgContext& context)
     fillShapeWinding.initialize(context.device);
     fillShapeEvenOdd.initialize(context.device);
     fillStroke.initialize(context.device);
-    for (uint8_t type = (uint8_t)WgPipelineBlendType::Src; type <= (uint8_t)WgPipelineBlendType::Max; type++) {
+    for (uint8_t type = (uint8_t)WgPipelineBlendType::SrcOver; type <= (uint8_t)WgPipelineBlendType::Custom; type++) {
         solid[type].initialize(context.device, (WgPipelineBlendType)type);
         linear[type].initialize(context.device, (WgPipelineBlendType)type);
         radial[type].initialize(context.device, (WgPipelineBlendType)type);
@@ -387,7 +387,9 @@ void WgPipelines::initialize(WgContext& context)
     }
     // compute pipelines
     computeClear.initialize(context.device);
-    computeBlend.initialize(context.device);
+    computeBlendSolid.initialize(context.device, cShaderSource_PipelineComputeBlendSolid);
+    computeBlendGradient.initialize(context.device, cShaderSource_PipelineComputeBlendGradient);
+    computeBlendImage.initialize(context.device, cShaderSource_PipelineComputeBlendImage);
     computeCompose.initialize(context.device);
     computeComposeBlend.initialize(context.device);
     computeAntiAliasing.initialize(context.device);
@@ -414,10 +416,12 @@ void WgPipelines::release()
     computeAntiAliasing.release();
     computeComposeBlend.release();
     computeCompose.release();
-    computeBlend.release();
+    computeBlendImage.release();
+    computeBlendGradient.release();
+    computeBlendSolid.release();
     computeClear.release();
     // fill pipelines
-    for (uint8_t type = (uint8_t)WgPipelineBlendType::Src; type <= (uint8_t)WgPipelineBlendType::Max; type++) {
+    for (uint8_t type = (uint8_t)WgPipelineBlendType::SrcOver; type <= (uint8_t)WgPipelineBlendType::Custom; type++) {
         image[type].release();
         radial[type].release();
         linear[type].release();
@@ -434,10 +438,6 @@ bool WgPipelines::isBlendMethodSupportsHW(BlendMethod blendMethod)
     switch (blendMethod) {
         case BlendMethod::SrcOver:
         case BlendMethod::Normal:
-        case BlendMethod::Add:
-        case BlendMethod::Multiply:
-        case BlendMethod::Darken:
-        case BlendMethod::Lighten:
             return true;
         default: return false;
     };
@@ -447,12 +447,8 @@ bool WgPipelines::isBlendMethodSupportsHW(BlendMethod blendMethod)
 WgPipelineBlendType WgPipelines::blendMethodToBlendType(BlendMethod blendMethod)
 {
     switch (blendMethod) {
-        case BlendMethod::SrcOver: return WgPipelineBlendType::Src;
+        case BlendMethod::SrcOver: return WgPipelineBlendType::SrcOver;
         case BlendMethod::Normal: return WgPipelineBlendType::Normal;
-        case BlendMethod::Add: return WgPipelineBlendType::Add;
-        case BlendMethod::Multiply: return WgPipelineBlendType::Mult;
-        case BlendMethod::Darken: return WgPipelineBlendType::Min;
-        case BlendMethod::Lighten: return WgPipelineBlendType::Max;
-        default: return WgPipelineBlendType::Src;
+        default: return WgPipelineBlendType::Custom;
     };
 }

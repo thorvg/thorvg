@@ -74,10 +74,10 @@ LIT_SEARCH_CHAR_IN_ARRAY_FN (lit_search_codepoint_in_array, lit_code_point_t, ui
 
 /**
  * Binary search algorithm that searches a character in the given intervals.
- * Intervals specifed by two arrays. The first one contains the starting points
+ * Intervals specified by two arrays. The first one contains the starting points
  * of the intervals, the second one contains the length of them.
  *
- * @return true - if the the character is included (inclusively) in one of the intervals in the given array
+ * @return true - if the character is included (inclusively) in one of the intervals in the given array
  *         false - otherwise
  */
 #define LIT_SEARCH_CHAR_IN_INTERVAL_ARRAY_FN(function_name, char_type, array_type, interval_type)  \
@@ -559,7 +559,7 @@ lit_char_is_word_char (lit_code_point_t c) /**< code point */
 /**
  * Check if the specified character is in one of those tables which contain bidirectional conversions.
  *
- * @return codepoint of the converted character if it is found the the tables
+ * @return codepoint of the converted character if it is found the tables
  *         LIT_INVALID_CP - otherwise.
  */
 static lit_code_point_t

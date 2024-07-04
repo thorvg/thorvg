@@ -80,7 +80,7 @@ typedef struct
 /* The Promise reaction is a compressed structure, where each item can
  * be a sequence of up to three ecma object values as seen below:
  *
- * [ Capability ][ Optional fullfilled callback ][ Optional rejected callback ]
+ * [ Capability ][ Optional fulfilled callback ][ Optional rejected callback ]
  * [ Async function callback ]
  *
  * The first member is an object, which lower bits specify the type of the reaction:
@@ -88,7 +88,7 @@ typedef struct
  *     The first two objects specify the resolve/reject functions of the promise
  *     returned by the `then` operation which can be used to chain event handlers.
  *
- *     bit 0: has a fullfilled callback
+ *     bit 0: has a fulfilled callback
  *     bit 1: has a rejected callback
  *
  *   bit 2 is set: async function callback

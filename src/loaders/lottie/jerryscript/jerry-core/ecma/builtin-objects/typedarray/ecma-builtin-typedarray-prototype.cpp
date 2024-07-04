@@ -836,7 +836,7 @@ ecma_builtin_typedarray_prototype_set (ecma_value_t this_arg, /**< this argument
  * See also:
  *          ECMA-262 v5.1, 15.4.4.2
  *
- * @return NULL - if the converison fails
+ * @return NULL - if the conversion fails
  *         ecma_string_t * - otherwise
  */
 static ecma_string_t *
@@ -885,8 +885,8 @@ ecma_op_typedarray_get_separator_string (ecma_value_t separator) /**< possible s
 } /* ecma_op_typedarray_get_separator_string */
 
 /**
- * The TypedArray.prototype object's 'join' routine basen on
- * the Array.porottype object's 'join'
+ * The TypedArray.prototype object's 'join' routine based on
+ * the Array.prototype object's 'join'
  *
  * See also:
  *          ECMA-262 v5, 15.4.4.5
@@ -1849,9 +1849,9 @@ ecma_builtin_typedarray_prototype_includes (ecma_typedarray_info_t *info_p, /**<
 {
 #if JERRY_BUILTIN_BIGINT
   bool is_bigint = ECMA_TYPEDARRAY_IS_BIGINT_TYPE (info_p->id);
-#else /* !JERRRY_BUILTIN_BIGINT */
+#else /* !JERRY_BUILTIN_BIGINT */
   bool is_bigint = false;
-#endif /* JERRRY_BUILTIN_BIGINT */
+#endif /* JERRY_BUILTIN_BIGINT */
 
   if (ecma_arraybuffer_is_detached (info_p->array_buffer_p))
   {

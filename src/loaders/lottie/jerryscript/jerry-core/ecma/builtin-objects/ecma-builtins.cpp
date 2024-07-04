@@ -134,7 +134,7 @@ enum
  * All the builtin object must be extensible except the ThrowTypeError object.
  */
 JERRY_STATIC_ASSERT (ECMA_BUILTIN_EXTENSIBLE_CHECK == true,
-                     ecma_builtin_must_be_extensible_except_the_builtin_thorw_type_error_object);
+                     ecma_builtin_must_be_extensible_except_the_builtin_throw_type_error_object);
 #endif /* !JERRY_NDEBUG */
 
 /**
@@ -1299,13 +1299,13 @@ ecma_builtin_routine_list_lazy_property_names (ecma_object_t *object_p, /**< a b
 
   if (!(ext_func_p->u.built_in.u2.routine_flags & ECMA_BUILTIN_ROUTINE_LENGTH_INITIALIZED))
   {
-    /* Unintialized 'length' property is non-enumerable (ECMA-262 v6, 19.2.4.1) */
+    /* Uninitialized 'length' property is non-enumerable (ECMA-262 v6, 19.2.4.1) */
     ecma_collection_push_back (prop_names_p, ecma_make_magic_string_value (LIT_MAGIC_STRING_LENGTH));
     prop_counter_p->string_named_props++;
   }
   if (!(ext_func_p->u.built_in.u2.routine_flags & ECMA_BUILTIN_ROUTINE_NAME_INITIALIZED))
   {
-    /* Unintialized 'name' property is non-enumerable (ECMA-262 v6, 19.2.4.2) */
+    /* Uninitialized 'name' property is non-enumerable (ECMA-262 v6, 19.2.4.2) */
     ecma_collection_push_back (prop_names_p, ecma_make_magic_string_value (LIT_MAGIC_STRING_NAME));
     prop_counter_p->string_named_props++;
   }
@@ -1508,7 +1508,7 @@ ecma_builtin_dispatch_construct (ecma_object_t *obj_p, /**< built-in object */
 
   if (ecma_builtin_function_is_routine (obj_p))
   {
-    return ecma_raise_type_error (ECMA_ERR_BULTIN_ROUTINES_HAVE_NO_CONSTRUCTOR);
+    return ecma_raise_type_error (ECMA_ERR_BUILTIN_ROUTINES_HAVE_NO_CONSTRUCTOR);
   }
 
   ecma_extended_object_t *ext_obj_p = (ecma_extended_object_t *) obj_p;

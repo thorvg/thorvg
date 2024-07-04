@@ -42,7 +42,7 @@ struct WgShaderTypeMat4x4f
     void update(size_t w, size_t h);
 };
 
-// struct BlendSettigs {
+// struct BlendSettings {
 //     format  : u32, // ColorSpace
 //     dummy0  : f32,
 //     dummy1  : f32,
@@ -87,8 +87,8 @@ struct WgShaderTypeLinearGradient
 {
     uint32_t nStops{};
     uint32_t spread{};
-    uint32_t dummy0{}; // allign with WGSL struct
-    uint32_t dummy1{}; // allign with WGSL struct
+    uint32_t dummy0{}; // align with WGSL struct
+    uint32_t dummy1{}; // align with WGSL struct
     float startPos[2]{};
     float endPos[2]{};
     float stopPoints[MAX_LINEAR_GRADIENT_STOPS]{};
@@ -114,8 +114,8 @@ struct WgShaderTypeRadialGradient
 {
     uint32_t nStops{};
     uint32_t spread{};
-    uint32_t dummy0{}; // allign with WGSL struct
-    uint32_t dummy1{}; // allign with WGSL struct
+    uint32_t dummy0{}; // align with WGSL struct
+    uint32_t dummy1{}; // align with WGSL struct
     float centerPos[2]{};
     float radius[2]{};
     float stopPoints[MAX_RADIAL_GRADIENT_STOPS]{};

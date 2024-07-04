@@ -454,7 +454,7 @@ ecma_op_iterator_value (ecma_value_t iter_result) /**< iterator value */
  *
  * See also: ECMA-262 v6, 7.4.6
  *
- * @return ECMA_VALUE_EMPTY - if "return" is succesfully invoked,
+ * @return ECMA_VALUE_EMPTY - if "return" is successfully invoked,
  *                            and the operation is called with normal completion
  *         ECMA_VALUE_ERROR - otherwise
  */

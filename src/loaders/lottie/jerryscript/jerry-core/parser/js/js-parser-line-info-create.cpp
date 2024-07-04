@@ -418,7 +418,7 @@ parser_line_info_generate (parser_context_t *context_p) /**< context */
       }
 
       /* Skip those line/column pairs which byte code was discarded during post processing
-       * or does not change line/column (this is possible when multiple skips occures). */
+       * or does not change line/column (this is possible when multiple skips occur). */
       if (iterator_byte_code_offset == iterator_last_byte_code_offset
           || (iterator_line == iterator_prev_line && iterator_column == iterator_prev_column))
       {
