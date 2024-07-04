@@ -34,7 +34,6 @@
 
 Shape :: Shape() : pImpl(new Impl(this))
 {
-    Paint::pImpl->id = TVG_CLASS_ID_SHAPE;
 }
 
 
@@ -52,7 +51,13 @@ unique_ptr<Shape> Shape::gen() noexcept
 
 uint32_t Shape::identifier() noexcept
 {
-    return TVG_CLASS_ID_SHAPE;
+    return (uint32_t) Type::Shape;
+}
+
+
+Type Shape::type() const noexcept
+{
+    return Type::Shape;
 }
 
 

@@ -171,11 +171,8 @@ typedef enum {
 
 
 /**
- * \brief Enumeration indicating the ThorVG class type.
- *
- * \ingroup ThorVGCapi_Paint
- *
- * \since 0.9
+ * \see Tvg_Type
+ * \deprecated
  */
 typedef enum {
     TVG_IDENTIFIER_UNDEF = 0,   ///< Undefined type.
@@ -186,6 +183,29 @@ typedef enum {
     TVG_IDENTIFIER_RADIAL_GRAD, ///< A radial gradient type.
     TVG_IDENTIFIER_TEXT         ///< A text type paint.
 } Tvg_Identifier;
+
+
+/**
+ * \brief Enumeration indicating the ThorVG object type value.
+ *
+ * ThorVG's drawing objects can return object type values, allowing you to identify the specific type of each object.
+ *
+ * \ingroup ThorVGCapi_Paint
+ *
+ * \see tvg_paint_get_type()
+ * \see tvg_gradient_get_type()
+ *
+ * \note Experimental API
+ */
+typedef enum {
+    TVG_TYPE_UNDEF = 0,        ///< Undefined type.
+    TVG_TYPE_SHAPE,            ///< A shape type paint.
+    TVG_TYPE_SCENE,            ///< A scene type paint.
+    TVG_TYPE_PICTURE,          ///< A picture type paint.
+    TVG_TYPE_TEXT,             ///< A text type paint.
+    TVG_TYPE_LINEAR_GRAD = 10, ///< A linear gradient type.
+    TVG_TYPE_RADIAL_GRAD       ///< A radial gradient type.
+} Tvg_Type;
 
 
 /**
@@ -947,17 +967,23 @@ TVG_API Tvg_Result tvg_paint_get_composite_method(const Tvg_Paint* paint, const 
 
 
 /**
-* \brief Gets the unique id value of the paint instance indicating the instance type.
+* \brief Gets the unique value of the paint instance indicating the instance type.
 *
-* \param[in] paint The Tvg_Paint object of which to get the identifier value.
-* \param[out] identifier The unique identifier of the paint instance type.
+* \param[in] paint The Tvg_Paint object of which to get the type value.
+* \param[out] type The unique type of the paint instance type.
 *
 * \return Tvg_Result enumeration.
 * \retval TVG_RESULT_INVALID_ARGUMENT In case a @c nullptr is passed as the argument.
 *
-* \since 0.9
+* \note Experimental API
 */
-TVG_API Tvg_Result tvg_paint_get_identifier(const Tvg_Paint* paint, Tvg_Identifier* identifier);
+TVG_API Tvg_Result tvg_paint_get_type(const Tvg_Paint* paint, Tvg_Type* type);
+
+
+/**
+* \see tvg_paint_get_type()
+*/
+TVG_DEPRECATED TVG_API Tvg_Result tvg_paint_get_identifier(const Tvg_Paint* paint, Tvg_Identifier* identifier);
 
 
 /**
@@ -967,7 +993,7 @@ TVG_API Tvg_Result tvg_paint_get_identifier(const Tvg_Paint* paint, Tvg_Identifi
  * its process involves the combination of colors or images from the source paint object with the destination (the lower layer image) using blending operations.
  * The blending operation is determined by the chosen @p BlendMethod, which specifies how the colors or images are combined.
  *
- * \param[in] paint The Tvg_Paint object of which to get the identifier value.
+ * \param[in] paint The Tvg_Paint object of which to set the blend method.
  * \param[in] method The blending method to be set.
  *
  * \return Tvg_Result enumeration.
@@ -985,7 +1011,7 @@ TVG_API Tvg_Result tvg_paint_set_blend_method(const Tvg_Paint* paint, Tvg_Blend_
  * its process involves the combination of colors or images from the source paint object with the destination (the lower layer image) using blending operations.
  * The blending operation is determined by the chosen @p BlendMethod, which specifies how the colors or images are combined.
  *
- * \param[in] paint The Tvg_Paint object of which to get the identifier value.
+ * \param[in] paint The Tvg_Paint object of which to get the blend method.
  * \param[out] method The blending method of the paint.
  *
  * \return Tvg_Result enumeration.
@@ -1855,17 +1881,23 @@ TVG_API Tvg_Result tvg_gradient_set_transform(Tvg_Gradient* grad, const Tvg_Matr
 TVG_API Tvg_Result tvg_gradient_get_transform(const Tvg_Gradient* grad, Tvg_Matrix* m);
 
 /**
-* \brief Gets the unique id value of the gradient instance indicating the instance type.
+* \brief Gets the unique value of the gradient instance indicating the instance type.
 *
-* \param[in] grad The Tvg_Gradient object of which to get the identifier value.
-* \param[out] identifier The unique identifier of the gradient instance type.
+* \param[in] grad The Tvg_Gradient object of which to get the type value.
+* \param[out] type The unique type of the gradient instance type.
 *
 * \return Tvg_Result enumeration.
 * \retval TVG_RESULT_INVALID_ARGUMENT In case a @c nullptr is passed as the argument.
 *
-* \since 0.9
+* \note Experimental API
 */
-TVG_API Tvg_Result tvg_gradient_get_identifier(const Tvg_Gradient* grad, Tvg_Identifier* identifier);
+TVG_API Tvg_Result tvg_gradient_get_type(const Tvg_Gradient* grad, Tvg_Type* type);
+
+
+/**
+* \see tvg_gradient_get_type()
+*/
+TVG_DEPRECATED TVG_API Tvg_Result tvg_gradient_get_identifier(const Tvg_Gradient* grad, Tvg_Identifier* identifier);
 
 
 /*!

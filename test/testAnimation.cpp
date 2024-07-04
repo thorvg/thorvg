@@ -36,7 +36,7 @@ TEST_CASE("Animation Basic", "[tvgAnimation]")
     REQUIRE(animation);
 
     auto picture = animation->picture();
-    REQUIRE(picture->identifier() == Picture::identifier());
+    REQUIRE(picture->type() == Type::Picture);
 
     //Negative cases
     REQUIRE(animation->frame(0.0f) == Result::InsufficientCondition);
@@ -55,7 +55,6 @@ TEST_CASE("Animation Frames Counting", "[tvgAnimation]")
     REQUIRE(animation);
 
     auto picture = animation->picture();
-    REQUIRE(picture->identifier() == Picture::identifier());
 
     REQUIRE(picture->load(TEST_DIR"/test.json") == Result::Success);
 
@@ -93,7 +92,6 @@ TEST_CASE("Animation Lottie", "[tvgAnimation]")
     REQUIRE(animation);
 
     auto picture = animation->picture();
-    REQUIRE(picture->identifier() == Picture::identifier());
 
     REQUIRE(picture->load(TEST_DIR"/invalid.json") == Result::InvalidArguments);
     REQUIRE(picture->load(TEST_DIR"/test.json") == Result::Success);
@@ -114,7 +112,6 @@ TEST_CASE("Animation Lottie2", "[tvgAnimation]")
     REQUIRE(animation);
 
     auto picture = animation->picture();
-    REQUIRE(picture->identifier() == Picture::identifier());
 
     REQUIRE(picture->load(TEST_DIR"/test2.json") == Result::Success);
 
@@ -131,7 +128,6 @@ TEST_CASE("Animation Lottie3", "[tvgAnimation]")
     REQUIRE(animation);
 
     auto picture = animation->picture();
-    REQUIRE(picture->identifier() == Picture::identifier());
 
     REQUIRE(picture->load(TEST_DIR"/test3.json") == Result::Success);
     
@@ -146,7 +142,6 @@ TEST_CASE("Animation Lottie4", "[tvgAnimation]")
     REQUIRE(animation);
 
     auto picture = animation->picture();
-    REQUIRE(picture->identifier() == Picture::identifier());
 
     REQUIRE(picture->load(TEST_DIR"/test4.json") == Result::Success);
 
@@ -161,7 +156,6 @@ TEST_CASE("Animation Lottie5", "[tvgAnimation]")
     REQUIRE(animation);
 
     auto picture = animation->picture();
-    REQUIRE(picture->identifier() == Picture::identifier());
 
     REQUIRE(picture->load(TEST_DIR"/test5.json") == Result::Success);
     
@@ -176,7 +170,6 @@ TEST_CASE("Animation Lottie6", "[tvgAnimation]")
     REQUIRE(animation);
 
     auto picture = animation->picture();
-    REQUIRE(picture->identifier() == Picture::identifier());
 
     REQUIRE(picture->load(TEST_DIR"/test6.json") == Result::Success);
 
@@ -191,7 +184,6 @@ TEST_CASE("Animation Lottie7", "[tvgAnimation]")
     REQUIRE(animation);
 
     auto picture = animation->picture();
-    REQUIRE(picture->identifier() == Picture::identifier());
 
     REQUIRE(picture->load(TEST_DIR"/test7.json") == Result::Success);
 
@@ -206,7 +198,6 @@ TEST_CASE("Animation Lottie8", "[tvgAnimation]")
     REQUIRE(animation);
 
     auto picture = animation->picture();
-    REQUIRE(picture->identifier() == Picture::identifier());
 
     REQUIRE(picture->load(TEST_DIR"/test8.json") == Result::Success);
 
@@ -221,7 +212,6 @@ TEST_CASE("Animation Lottie9", "[tvgAnimation]")
     REQUIRE(animation);
 
     auto picture = animation->picture();
-    REQUIRE(picture->identifier() == Picture::identifier());
 
     REQUIRE(picture->load(TEST_DIR"/test9.json") == Result::Success);
 
@@ -236,7 +226,6 @@ TEST_CASE("Animation Lottie10", "[tvgAnimation]")
     REQUIRE(animation);
 
     auto picture = animation->picture();
-    REQUIRE(picture->identifier() == Picture::identifier());
     
     REQUIRE(picture->load(TEST_DIR"/test10.json") == Result::Success);
 
@@ -251,7 +240,6 @@ TEST_CASE("Animation Segment", "[tvgAnimation]")
     REQUIRE(animation);
 
     auto picture = animation->picture();
-    REQUIRE(picture->identifier() == Picture::identifier());
 
     float begin, end;
 

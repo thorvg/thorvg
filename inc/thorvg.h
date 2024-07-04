@@ -209,6 +209,28 @@ enum class CanvasEngine
 
 
 /**
+ * @brief Enumeration specifying the ThorVG class type value.
+ *
+ * ThorVG's drawing objects can return class type values, allowing you to identify the specific class of each object.
+ *
+ * @see Paint::type()
+ * @see Fill::type()
+ *
+ * @note Experimental API
+ */
+enum class Type : uint8_t
+{
+    Undefined = 0,         ///< Unkown class
+    Shape,                 ///< Shape class
+    Scene,                 ///< Scene class
+    Picture,               ///< Picture class
+    Text,                  ///< Text class
+    LinearGradient = 10,   ///< LinearGradient class
+    RadialGradient         ///< RadialGradient class
+};
+
+
+/**
  * @brief A data structure representing a point in two-dimensional space.
  */
 struct Point
@@ -411,13 +433,20 @@ public:
     BlendMethod blend() const noexcept;
 
     /**
-     * @brief Return the unique id value of the paint instance.
+     * @brief Returns the ID value of this class.
      *
-     * This method can be called for checking the current concrete instance type.
+     * This method can be used to check the current concrete instance type.
      *
-     * @return The type id of the Paint instance.
+     * @return The class type ID of the Paint instance.
+     *
+     * @since Experimental API
      */
-    uint32_t identifier() const noexcept;
+    virtual Type type() const noexcept = 0;
+
+    /**
+     * @see Paint::type()
+     */
+    TVG_DEPRECATED uint32_t identifier() const noexcept;
 
     _TVG_DECLARE_PRIVATE(Paint);
 };
@@ -510,13 +539,20 @@ public:
     Fill* duplicate() const noexcept;
 
     /**
-     * @brief Return the unique id value of the Fill instance.
+     * @brief Returns the ID value of this class.
      *
-     * This method can be called for checking the current concrete instance type.
+     * This method can be used to check the current concrete instance type.
      *
-     * @return The type id of the Fill instance.
+     * @return The class type ID of the Fill instance.
+     *
+     * @since Experimental API
      */
-    uint32_t identifier() const noexcept;
+    virtual Type type() const noexcept = 0;
+
+    /**
+     * @see Fill::type()
+     */
+    TVG_DEPRECATED uint32_t identifier() const noexcept;
 
     _TVG_DECLARE_PRIVATE(Fill);
 };
@@ -692,13 +728,20 @@ public:
     static std::unique_ptr<LinearGradient> gen() noexcept;
 
     /**
-     * @brief Return the unique id value of this class.
+     * @brief Returns the ID value of this class.
      *
-     * This method can be referred for identifying the LinearGradient class type.
+     * This method can be used to check the current concrete instance type.
      *
-     * @return The type id of the LinearGradient class.
+     * @return The class type ID of the LinearGradient instance.
+     *
+     * @since Experimental API
      */
-    static uint32_t identifier() noexcept;
+    Type type() const noexcept override;
+
+    /**
+     * @see LinearGradient::type()
+     */
+    TVG_DEPRECATED static uint32_t identifier() noexcept;
 
     _TVG_DECLARE_PRIVATE(LinearGradient);
 };
@@ -748,13 +791,20 @@ public:
     static std::unique_ptr<RadialGradient> gen() noexcept;
 
     /**
-     * @brief Return the unique id value of this class.
+     * @brief Returns the ID value of this class.
      *
-     * This method can be referred for identifying the RadialGradient class type.
+     * This method can be used to check the current concrete instance type.
      *
-     * @return The type id of the RadialGradient class.
+     * @return The class type ID of the LinearGradient instance.
+     *
+     * @since Experimental API
      */
-    static uint32_t identifier() noexcept;
+    Type type() const noexcept override;
+
+    /**
+     * @see RadialGradient::type()
+     */
+    TVG_DEPRECATED static uint32_t identifier() noexcept;
 
     _TVG_DECLARE_PRIVATE(RadialGradient);
 };
@@ -1155,13 +1205,20 @@ public:
     static std::unique_ptr<Shape> gen() noexcept;
 
     /**
-     * @brief Return the unique id value of this class.
+     * @brief Returns the ID value of this class.
      *
-     * This method can be referred for identifying the Shape class type.
+     * This method can be used to check the current concrete instance type.
      *
-     * @return The type id of the Shape class.
+     * @return The class type ID of the Shape instance.
+     *
+     * @since Experimental API
      */
-    static uint32_t identifier() noexcept;
+    Type type() const noexcept override;
+
+    /**
+     * @see Shape::type()
+     */
+    TVG_DEPRECATED static uint32_t identifier() noexcept;
 
     _TVG_DECLARE_PRIVATE(Shape);
 };
@@ -1306,13 +1363,20 @@ public:
     static std::unique_ptr<Picture> gen() noexcept;
 
     /**
-     * @brief Return the unique id value of this class.
+     * @brief Returns the ID value of this class.
      *
-     * This method can be referred for identifying the Picture class type.
+     * This method can be used to check the current concrete instance type.
      *
-     * @return The type id of the Picture class.
+     * @return The class type ID of the Picture instance.
+     *
+     * @since Experimental API
      */
-    static uint32_t identifier() noexcept;
+    Type type() const noexcept override;
+
+    /**
+     * @see Picture::type()
+     */
+    TVG_DEPRECATED static uint32_t identifier() noexcept;
 
     _TVG_DECLARE_ACCESSOR(Animation);
     _TVG_DECLARE_PRIVATE(Picture);
@@ -1385,13 +1449,20 @@ public:
     static std::unique_ptr<Scene> gen() noexcept;
 
     /**
-     * @brief Return the unique id value of this class.
+     * @brief Returns the ID value of this class.
      *
-     * This method can be referred for identifying the Scene class type.
+     * This method can be used to check the current concrete instance type.
      *
-     * @return The type id of the Scene class.
+     * @return The class type ID of the Scene instance.
+     *
+     * @since Experimental API
      */
-    static uint32_t identifier() noexcept;
+    Type type() const noexcept override;
+
+    /**
+     * @see Scene::type()
+     */
+    TVG_DEPRECATED static uint32_t identifier() noexcept;
 
     _TVG_DECLARE_PRIVATE(Scene);
 };
@@ -1540,13 +1611,15 @@ public:
     static std::unique_ptr<Text> gen() noexcept;
 
     /**
-     * @brief Return the unique id value of this class.
+     * @brief Returns the ID value of this class.
      *
-     * This method can be referred for identifying the Text class type.
+     * This method can be used to check the current concrete instance type.
      *
-     * @return The type id of the Text class.
+     * @return The class type ID of the Text instance.
+     *
+     * @since Experimental API
      */
-    static uint32_t identifier() noexcept;
+    Type type() const noexcept override;
 
     _TVG_DECLARE_PRIVATE(Text);
 };

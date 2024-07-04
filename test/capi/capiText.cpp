@@ -33,12 +33,9 @@ TEST_CASE("Create text", "[capiText]")
     Tvg_Paint* text = tvg_text_new();
     REQUIRE(text);
 
-    Tvg_Identifier id = TVG_IDENTIFIER_UNDEF;
-    REQUIRE(tvg_paint_get_identifier(text, &id) == TVG_RESULT_SUCCESS);
-    REQUIRE(id == TVG_IDENTIFIER_TEXT);
-    REQUIRE(id != TVG_IDENTIFIER_SHAPE);
-    REQUIRE(id != TVG_IDENTIFIER_SCENE);
-    REQUIRE(id != TVG_IDENTIFIER_PICTURE);
+    Tvg_Type type = TVG_TYPE_UNDEF;
+    REQUIRE(tvg_paint_get_type(text, &type) == TVG_RESULT_SUCCESS);
+    REQUIRE(type == TVG_TYPE_TEXT);
 
     REQUIRE(tvg_paint_del(text) == TVG_RESULT_SUCCESS);
 }

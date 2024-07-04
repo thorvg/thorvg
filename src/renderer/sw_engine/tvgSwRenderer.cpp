@@ -336,7 +336,7 @@ static void _renderFill(SwShapeTask* task, SwSurface* surface, uint8_t opacity)
 {
     uint8_t r, g, b, a;
     if (auto fill = task->rshape->fill) {
-        rasterGradientShape(surface, &task->shape, fill->identifier());
+        rasterGradientShape(surface, &task->shape, fill->type());
     } else {
         task->rshape->fillColor(&r, &g, &b, &a);
         a = MULTIPLY(opacity, a);
@@ -348,7 +348,7 @@ static void _renderStroke(SwShapeTask* task, SwSurface* surface, uint8_t opacity
 {
     uint8_t r, g, b, a;
     if (auto strokeFill = task->rshape->strokeFill()) {
-        rasterGradientStroke(surface, &task->shape, strokeFill->identifier());
+        rasterGradientStroke(surface, &task->shape, strokeFill->type());
     } else {
         if (task->rshape->strokeColor(&r, &g, &b, &a)) {
             a = MULTIPLY(opacity, a);

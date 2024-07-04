@@ -215,9 +215,9 @@ void GlRenderer::drawPrimitive(GlShape& sdata, const Fill* fill, RenderUpdateFla
 
     GlRenderTask* task = nullptr;
 
-    if (fill->identifier() == TVG_CLASS_ID_LINEAR) {
+    if (fill->type() == Type::LinearGradient) {
         task = new GlRenderTask(mPrograms[RT_LinGradient].get());
-    } else if (fill->identifier() == TVG_CLASS_ID_RADIAL) {
+    } else if (fill->type() == Type::RadialGradient) {
         task = new GlRenderTask(mPrograms[RT_RadGradient].get());
     } else {
         return;
@@ -318,7 +318,7 @@ void GlRenderer::drawPrimitive(GlShape& sdata, const Fill* fill, RenderUpdateFla
         GlBindingResource gradientBinding{};
         uint32_t loc = task->getProgram()->getUniformBlockIndex("GradientInfo");
 
-        if (fill->identifier() == TVG_CLASS_ID_LINEAR) {
+        if (fill->type() == Type::LinearGradient) {
             auto linearFill = static_cast<const LinearGradient*>(fill);
 
             GlLinearGradientBlock gradientBlock;
