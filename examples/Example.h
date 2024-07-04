@@ -62,8 +62,11 @@ bool verify(tvg::Result result, string failMsg = "");
 
 struct Example
 {
+    uint32_t elapsed = 0.0f;
+
     virtual bool content(tvg::Canvas* canvas, uint32_t w, uint32_t h) = 0;
     virtual bool update(tvg::Canvas* canvas, uint32_t elapsed) { return false; }
+    virtual bool clicked(tvg::Canvas* canvas, int32_t x, int32_t y) { return false; }
     virtual void populate(const char* path) {}
     virtual ~Example() {}
 
@@ -196,7 +199,7 @@ struct Window
         auto running = true;
 
         auto ptime = SDL_GetTicks();
-        auto elapsed = 0;
+        example->elapsed = 0;
         uint32_t tickCnt = 0;
 
         while (running) {
@@ -211,6 +214,12 @@ struct Window
                     case SDL_KEYUP: {
                         if (event.key.keysym.sym == SDLK_ESCAPE) {
                             running = false;
+                        }
+                        break;
+                    }
+                    case SDL_MOUSEBUTTONDOWN: {
+                        if (example->clicked(canvas, event.button.x, event.button.y)) {
+                            needDraw = true;
                         }
                         break;
                     }
@@ -231,7 +240,7 @@ struct Window
             }
 
             if (tickCnt > 0) {
-                if (example->update(canvas, elapsed)) {
+                if (example->update(canvas, example->elapsed)) {
                     needDraw = true;
                 }
             }
@@ -242,9 +251,9 @@ struct Window
             }
 
             auto ctime = SDL_GetTicks();
-            elapsed += (ctime - ptime);
+            example->elapsed += (ctime - ptime);
             tickCnt++;
-            if (print) printf("[%5d]: elapsed time = %dms (%dms)\n", tickCnt, (ctime - ptime), (elapsed / tickCnt));
+            if (print) printf("[%5d]: elapsed time = %dms (%dms)\n", tickCnt, (ctime - ptime), (example->elapsed / tickCnt));
             ptime = ctime;
         }
     }
@@ -457,6 +466,7 @@ struct WgWindow : Window
 float progress(uint32_t elapsed, float durationInSec, bool rewind = false)
 {
     auto duration = uint32_t(durationInSec * 1000.0f); //sec -> millisec.
+    if (duration == 0.0f) return 0.0f;
     auto forward = ((elapsed / duration) % 2 == 0) ? true : false;
     auto clamped = elapsed % duration;
     auto progress = ((float)clamped / (float)duration);
