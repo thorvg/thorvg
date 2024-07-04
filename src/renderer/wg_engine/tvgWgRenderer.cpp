@@ -225,7 +225,7 @@ void WgRenderer::dispose(RenderData data)
 {
     auto renderData = (WgRenderDataPaint*)data;
     if (renderData) {
-        if (renderData->identifier() == TVG_CLASS_ID_SHAPE)
+        if (renderData->type() == Type::Shape)
             mRenderDataShapePool.free(mContext, (WgRenderDataShape*)renderData);
         else
             renderData->release(mContext);

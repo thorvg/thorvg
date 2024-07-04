@@ -42,7 +42,7 @@ TEST_CASE("Lottie Slot", "[tvgLottie]")
     REQUIRE(animation);
 
     auto picture = animation->picture();
-    REQUIRE(picture->identifier() == Picture::identifier());
+    REQUIRE(picture->type() == Type::Picture);
 
     const char* slotJson = R"({"gradient_fill":{"p":{"a":0,"k":[0,0.1,0.1,0.2,1,1,0.1,0.2,0.1,1]}}})";
 
@@ -78,7 +78,6 @@ TEST_CASE("Lottie Slot 2", "[tvgLottie]")
     REQUIRE(animation);
 
     auto picture = animation->picture();
-    REQUIRE(picture->identifier() == Picture::identifier());
 
     const char* slotJson = R"({"lottie-icon-outline":{"p":{"a":0,"k":[1,1,0]}},"lottie-icon-solid":{"p":{"a":0,"k":[0,0,1]}}})";
 
@@ -105,7 +104,6 @@ TEST_CASE("Lottie Marker", "[tvgLottie]")
     REQUIRE(animation);
 
     auto picture = animation->picture();
-    REQUIRE(picture->identifier() == Picture::identifier());
 
     //Set marker name before loaded
     REQUIRE(animation->segment("sectionC") == Result::InsufficientCondition);

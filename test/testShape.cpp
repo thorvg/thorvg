@@ -31,9 +31,7 @@ TEST_CASE("Shape Creation", "[tvgShape]")
     auto shape = Shape::gen();
     REQUIRE(shape);
 
-    REQUIRE(shape->identifier() == Shape::identifier());
-    REQUIRE(shape->identifier() != Picture::identifier());
-    REQUIRE(shape->identifier() != Scene::identifier());
+    REQUIRE(shape->type() == Type::Shape);
 }
 
 TEST_CASE("Appending Commands", "[tvgShape]")

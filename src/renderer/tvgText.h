@@ -128,7 +128,7 @@ struct Text::Impl
         if (P(paint)->flag & RenderUpdateFlag::Gradient) {
             auto fill = P(paint)->rs.fill;
             auto scale = 1.0f / loader->scale;
-            if (fill->identifier() == TVG_CLASS_ID_LINEAR) {
+            if (fill->type() == Type::LinearGradient) {
                 P(static_cast<LinearGradient*>(fill))->x1 *= scale;
                 P(static_cast<LinearGradient*>(fill))->y1 *= scale;
                 P(static_cast<LinearGradient*>(fill))->x2 *= scale;

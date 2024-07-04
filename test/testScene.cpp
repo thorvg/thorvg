@@ -31,9 +31,7 @@ TEST_CASE("Scene Creation", "[tvgScene]")
     auto scene = Scene::gen();
     REQUIRE(scene);
 
-    REQUIRE(scene->identifier() == Scene::identifier());
-    REQUIRE(scene->identifier() != Shape::identifier());
-    REQUIRE(scene->identifier() != Picture::identifier());
+    REQUIRE(scene->type() == Type::Scene);
 }
 
 TEST_CASE("Pushing Paints Into Scene", "[tvgScene]")

@@ -61,7 +61,7 @@ TEST_CASE("Set", "[tvgAccessor]")
     //Case 2
     auto f = [](const tvg::Paint* paint) -> bool
     {
-        if (paint->identifier() == tvg::Shape::identifier()) {
+        if (paint->type() == Type::Shape) {
             auto shape = (tvg::Shape*) paint;
             uint8_t r, g, b;
             shape->fillColor(&r, &g, &b);
