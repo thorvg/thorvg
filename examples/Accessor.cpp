@@ -42,7 +42,7 @@ struct UserExample : tvgexam::Example
 
         //The callback function from lambda expression.
         //This function will be called for every paint nodes of the picture tree.
-        auto f = [](const tvg::Paint* paint) -> bool
+        auto f = [](const tvg::Paint* paint, void* data) -> bool
         {
             if (paint->type() == tvg::Type::Shape) {
                 auto shape = (tvg::Shape*) paint;
@@ -58,7 +58,7 @@ struct UserExample : tvgexam::Example
             return true;
         };
 
-        picture = accessor->set(std::move(picture), f);
+        if (!tvgexam::verify(accessor->set(picture.get(), f, nullptr))) return false;
 
         canvas->push(std::move(picture));
 

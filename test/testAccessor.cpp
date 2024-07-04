@@ -55,11 +55,10 @@ TEST_CASE("Set", "[tvgAccessor]")
     REQUIRE(accessor);
 
     //Case 1
-    picture = accessor->set(std::move(picture), nullptr);
-    REQUIRE(picture);
+    REQUIRE(accessor->set(picture.get(), nullptr, nullptr) == Result::InvalidArguments);
 
     //Case 2
-    auto f = [](const tvg::Paint* paint) -> bool
+    auto f = [](const tvg::Paint* paint, void* data) -> bool
     {
         if (paint->type() == Type::Shape) {
             auto shape = (tvg::Shape*) paint;
@@ -71,8 +70,7 @@ TEST_CASE("Set", "[tvgAccessor]")
         return true;
     };
 
-    picture = accessor->set(std::move(picture), f);
-    REQUIRE(picture);
+    REQUIRE(accessor->set(picture.get(), f, nullptr) == Result::Success);
 
     REQUIRE(Initializer::term() == Result::Success);
 }
