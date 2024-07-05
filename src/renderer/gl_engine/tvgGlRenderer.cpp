@@ -951,7 +951,10 @@ bool GlRenderer::renderImage(void* data)
     auto task = new GlRenderTask(mPrograms[RT_Image].get());
     task->setDrawDepth(drawDepth);
 
-    if (!sdata->geometry->draw(task, mGpuBuffer.get(), RenderUpdateFlag::Image)) return true;
+    if (!sdata->geometry->draw(task, mGpuBuffer.get(), RenderUpdateFlag::Image)) {
+        delete task;
+        return true;
+    }
 
     // matrix buffer
     {
