@@ -50,6 +50,7 @@ void WgRenderer::initialize()
 
 void WgRenderer::release()
 {
+    clearDisposes();
     WgGeometryData::gMath->release();
     delete WgGeometryData::gMath;
     mRenderDataShapePool.release(mContext);
@@ -221,15 +222,25 @@ bool WgRenderer::postRender()
 }
 
 
-void WgRenderer::dispose(RenderData data)
-{
+void WgRenderer::dispose(RenderData data) {
     auto renderData = (WgRenderDataPaint*)data;
     if (renderData) {
+        ScopedLock lock(mDisposed.key);
+        mDisposed.renderDatas.push(data);
+    }
+}
+
+
+void WgRenderer::clearDisposes()
+{
+    for (uint32_t i = 0; i < mDisposed.renderDatas.count; i++) {
+        auto renderData = (WgRenderDataPaint*)mDisposed.renderDatas[i];
         if (renderData->type() == Type::Shape)
             mRenderDataShapePool.free(mContext, (WgRenderDataShape*)renderData);
         else
             renderData->release(mContext);
     }
+    mDisposed.renderDatas.clear();
 }
 
 
@@ -277,6 +288,7 @@ bool WgRenderer::clear()
 
 bool WgRenderer::sync()
 {
+    clearDisposes();
     WGPUSurfaceTexture backBuffer{};
     wgpuSurfaceGetCurrentTexture(mContext.surface, &backBuffer);
     
