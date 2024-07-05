@@ -118,8 +118,9 @@ float gradientWrap(float d)                                                     
     }                                                                                                   \n
 }                                                                                                       \n
                                                                                                         \n
-vec4 gradient(float t)                                                                                  \n
+vec4 gradient(float t, float d, float l)                                                                \n
 {                                                                                                       \n
+    float dist = d * 2.0 / l;                                                                               \n
     vec4 col = vec4(0.0);                                                                               \n
     int i = 0;                                                                                          \n
     int count = int(uGradientInfo.nStops[0]);                                                           \n
@@ -130,6 +131,12 @@ vec4 gradient(float t)                                                          
     else if (t >= gradientStop(count - 1))                                                              \n
     {                                                                                                   \n
         col = uGradientInfo.stopColors[count - 1];                                                      \n
+        if (int(uGradientInfo.nStops[2]) == 2 && (1.0 - t) < dist) {                                    \n
+            float dd = (1.0 - t) / dist;                                                                \n
+            float alpha =  dd; \n
+            col *= alpha; \n
+            col += uGradientInfo.stopColors[0] * (1. - alpha);\n
+        }                                                                                               \n
     }                                                                                                   \n
     else                                                                                                \n
     {                                                                                                   \n
@@ -141,6 +148,21 @@ vec4 gradient(float t)                                                          
             {                                                                                           \n
                 col = (uGradientInfo.stopColors[i] * (1. - gradientStep(stopi, stopi1, t)));            \n
                 col += (uGradientInfo.stopColors[i + 1] * gradientStep(stopi, stopi1, t));              \n
+                if (int(uGradientInfo.nStops[2]) == 2 && abs(d) > dist) {                               \n
+                    if (i == 0 && (t - stopi) < dist) {                                                 \n
+                        float dd = (t - stopi) / dist;                                                  \n
+                        float alpha = dd;                                                               \n
+                        col *= alpha;                                                                   \n
+                        vec4 nc = uGradientInfo.stopColors[0] * (1.0 - (t - stopi));                    \n
+                        nc += uGradientInfo.stopColors[count - 1] * (t - stopi);                        \n
+                        col += nc * (1.0 - alpha);                                                      \n
+                    } else if (i == count - 2 && (1.0 - t) < dist) {                                    \n
+                        float dd = (1.0 - t) / dist;                                                    \n
+                        float alpha =  dd;                                                              \n
+                        col *= alpha;                                                                   \n
+                        col += (uGradientInfo.stopColors[0]) * (1.0 - alpha);                           \n
+                    }                                                                                   \n
+                }                                                                                       \n
                 break;                                                                                  \n
             }                                                                                           \n
         }                                                                                               \n
@@ -176,11 +198,11 @@ void main()                                                                     
                                                                                                         \n
     vec2 ba = ed - st;                                                                                  \n
                                                                                                         \n
-    float t = abs(dot(pos - st, ba) / dot(ba, ba));                                                     \n
+    float d = abs(dot(pos - st, ba) / dot(ba, ba));                                                     \n
                                                                                                         \n
-    t = gradientWrap(t);                                                                                \n
+    float t = gradientWrap(d);                                                                          \n
                                                                                                         \n
-    vec4 color = gradient(t);                                                                           \n
+    vec4 color = gradient(t, d, length(pos - st));                                                      \n
                                                                                                         \n
     FragColor =  vec4(color.rgb * color.a, color.a);                                                    \n
 });
@@ -203,11 +225,11 @@ void main()                                                                     
                                                                                                         \n
     float ba = uGradientInfo.radius.x;                                                                  \n
     float d = distance(uGradientInfo.centerPos, pos);                                                   \n
-    d = (d / ba);                                                                                       \n
+    float t = (d / ba);                                                                                 \n
                                                                                                         \n
-    float t = gradientWrap(d);                                                                          \n
+    t = gradientWrap(t);                                                                                \n
                                                                                                         \n
-    vec4 color = gradient(t);                                                                           \n
+    vec4 color = gradient(t, (d / ba), d);                                                              \n
                                                                                                         \n
     FragColor =  vec4(color.rgb * color.a, color.a);                                                    \n
 });
