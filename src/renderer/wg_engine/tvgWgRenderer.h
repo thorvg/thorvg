@@ -88,6 +88,13 @@ private:
     Surface mTargetSurface;
     // current blend method
     BlendMethod mBlendMethod{};
+
+    // disposed resources, they should be released on synced call.
+    struct {
+        Array<RenderData> renderDatas{};
+        Key key;
+    } mDisposed;
+    void clearDisposes();
 };
 
 #endif /* _TVG_WG_RENDERER_H_ */
