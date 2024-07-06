@@ -430,6 +430,15 @@ public:
      */
     uint32_t identifier() const noexcept;
 
+    /**
+     * @brief Unique ID of this instance.
+     *
+     * This is reserved to specify an paint instance in a scene.
+     *
+     * @since Experimental API
+     */
+    uint32_t id = 0;
+
     _TVG_DECLARE_PRIVATE(Paint);
 };
 
