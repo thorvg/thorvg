@@ -1270,6 +1270,7 @@ static void _updateLayer(LottieComposition* comp, Scene* scene, LottieLayer* lay
 
     //Prepare render data
     layer->scene = Scene::gen().release();
+    layer->scene->id = layer->id;
 
     //ignore opacity when Null layer?
     if (layer->type != LottieLayer::Null) layer->scene->opacity(layer->cache.opacity);

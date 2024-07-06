@@ -455,6 +455,15 @@ public:
     virtual Type type() const noexcept = 0;
 
     /**
+     * @brief Unique ID of this instance.
+     *
+     * This is reserved to specify an paint instance in a scene.
+     *
+     * @since Experimental API
+     */
+    uint32_t id = 0;
+
+    /**
      * @see Paint::type()
      */
     TVG_DEPRECATED uint32_t identifier() const noexcept;
