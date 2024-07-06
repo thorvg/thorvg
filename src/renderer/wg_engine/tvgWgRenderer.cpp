@@ -24,6 +24,10 @@
 
 #define WG_SSAA_SAMPLES (2)
 
+/************************************************************************/
+/* Internal Class Implementation                                        */
+/************************************************************************/
+
 WgRenderer::WgRenderer()
 {
 }
@@ -68,6 +72,25 @@ void WgRenderer::release()
     mPipelines.release();
 }
 
+
+void WgRenderer::clearDisposes()
+{
+    if (mDisposed.renderDatas.count == 0) return;
+
+    for (auto p = mDisposed.renderDatas.begin(); p < mDisposed.renderDatas.end(); p++) {
+        auto renderData = (WgRenderDataPaint*)(*p);
+        if (renderData->type() == Type::Shape) {
+            mRenderDataShapePool.free(mContext, (WgRenderDataShape*)renderData);
+        } else {
+            renderData->release(mContext);
+        }
+    }
+    mDisposed.renderDatas.clear();
+}
+
+/************************************************************************/
+/* External Class Implementation                                        */
+/************************************************************************/
 
 RenderData WgRenderer::prepare(const RenderShape& rshape, RenderData data, const RenderTransform* transform, Array<RenderData>& clips, uint8_t opacity, RenderUpdateFlag flags, bool clipper)
 {
@@ -228,19 +251,6 @@ void WgRenderer::dispose(RenderData data) {
         ScopedLock lock(mDisposed.key);
         mDisposed.renderDatas.push(data);
     }
-}
-
-
-void WgRenderer::clearDisposes()
-{
-    for (uint32_t i = 0; i < mDisposed.renderDatas.count; i++) {
-        auto renderData = (WgRenderDataPaint*)mDisposed.renderDatas[i];
-        if (renderData->type() == Type::Shape)
-            mRenderDataShapePool.free(mContext, (WgRenderDataShape*)renderData);
-        else
-            renderData->release(mContext);
-    }
-    mDisposed.renderDatas.clear();
 }
 
 

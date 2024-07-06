@@ -27,11 +27,6 @@
 
 class WgRenderer : public RenderMethod
 {
-private:
-    WgRenderer();
-    ~WgRenderer();
-    void initialize();
-    void release();
 public:
     RenderData prepare(const RenderShape& rshape, RenderData data, const RenderTransform* transform, Array<RenderData>& clips, uint8_t opacity, RenderUpdateFlag flags, bool clipper) override;
     RenderData prepare(const Array<RenderData>& scene, RenderData data, const RenderTransform* transform, Array<RenderData>& clips, uint8_t opacity, RenderUpdateFlag flags) override;
@@ -60,41 +55,39 @@ public:
     static WgRenderer* gen();
     static bool init(uint32_t threads);
     static bool term();
+
 private:
-    // render handles
-    WGPUCommandEncoder mCommandEncoder{};
-    // intermidiate buffer to render
-    WgRenderStorage mRenderStorageInterm;
-    // root render storage
-    WgRenderStorage mRenderStorageRoot;
-    // storage with data after antializing
-    WgRenderStorage mRenderStorageScreen;
-    // pool to hold render tree storages
-    WgRenderStoragePool mRenderStoragePool;
-    // opacity, blend methods and composite methods pool
-    WgBindGroupOpacityPool mOpacityPool;
+    WgRenderer();
+    ~WgRenderer();
+    void initialize();
+    void release();
+    void clearDisposes();
+
+    WGPUCommandEncoder mCommandEncoder{};    // render handles
+    WgRenderStorage mRenderStorageInterm;    // intermidiate buffer to render
+    WgRenderStorage mRenderStorageRoot;    // root render storage
+    WgRenderStorage mRenderStorageScreen;    // storage with data after antializing
+    WgRenderStoragePool mRenderStoragePool;    // pool to hold render tree storages
+    WgBindGroupOpacityPool mOpacityPool;    // opacity, blend methods and composite methods pool
     WgBindGroupBlendMethodPool mBlendMethodPool;
     WgBindGroupCompositeMethodPool mCompositeMethodPool;
-    // render data shpes pool
-    WgRenderDataShapePool mRenderDataShapePool;
+    WgRenderDataShapePool mRenderDataShapePool;    // render data shpes pool
 
     // render tree stacks
     Array<Compositor*> mCompositorStack;
     Array<WgRenderStorage*> mRenderStorageStack;
 
-    // native window handles
     WgContext mContext;
     WgPipelines mPipelines;
     Surface mTargetSurface;
-    // current blend method
-    BlendMethod mBlendMethod{};
+
+    BlendMethod mBlendMethod{};    // current blend method
 
     // disposed resources, they should be released on synced call.
     struct {
         Array<RenderData> renderDatas{};
         Key key;
     } mDisposed;
-    void clearDisposes();
 };
 
 #endif /* _TVG_WG_RENDERER_H_ */
