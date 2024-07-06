@@ -38,10 +38,12 @@ public:
     float frameNo = 0.0f;               //current frame number
     float frameCnt = 0.0f;
     float frameDuration = 0.0f;
+    float frameRate = 0.0f;
 
     LottieBuilder* builder;
     LottieComposition* comp = nullptr;
 
+    Key key;
     char* dirName = nullptr;            //base resource directory
     bool copy = false;                  //"content" is owned by this loader
     bool overridden = false;             //overridden properties with slots
@@ -70,6 +72,7 @@ public:
     bool segment(const char* marker, float& begin, float& end);
 
 private:
+    bool ready();
     bool header();
     void clear();
     float startFrame();

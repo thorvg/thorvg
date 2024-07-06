@@ -39,7 +39,10 @@ void LottieLoader::run(unsigned tid)
     } else {
         LottieParser parser(content, dirName);
         if (!parser.parse()) return;
-        comp = parser.comp;
+        {
+            ScopedLock lock(key);
+            comp = parser.comp;
+        }
         builder->build(comp);
     }
     rebuild = false;
@@ -58,7 +61,7 @@ LottieLoader::LottieLoader() : FrameModule(FileType::Lottie), builder(new Lottie
 
 LottieLoader::~LottieLoader()
 {
-    this->done();
+    done();
 
     if (copy) free((char*)content);
     free(dirName);
@@ -79,16 +82,17 @@ bool LottieLoader::header()
             h = static_cast<float>(comp->h);
             frameDuration = comp->duration();
             frameCnt = comp->frameCnt();
+            frameRate = comp->frameRate;
             return true;
         } else {
             return false;
         }
+        LoadModule::read();
     }
 
     //Quickly validate the given Lottie file without parsing in order to get the animation info.
     auto startFrame = 0.0f;
     auto endFrame = 0.0f;
-    auto frameRate = 0.0f;
     uint32_t depth = 0;
 
     auto p = content;
@@ -249,7 +253,7 @@ bool LottieLoader::read()
     if (!content || size == 0) return false;
 
     //the loading has been already completed
-    if (comp || !LoadModule::read()) return true;
+    if (!LoadModule::read()) return true;
 
     TaskScheduler::request(this);
 
@@ -269,9 +273,7 @@ Paint* LottieLoader::paint()
 
 bool LottieLoader::override(const char* slot)
 {
-    done();
-
-    if (!comp || comp->slots.count == 0) return false;
+    if (!ready() || comp->slots.count == 0) return false;
 
     auto success = true;
 
@@ -351,11 +353,7 @@ float LottieLoader::curFrame()
 float LottieLoader::duration()
 {
     if (segmentBegin == 0.0f && segmentEnd == 1.0f) return frameDuration;
-
-    if (!comp) done();
-    if (!comp) return 0.0f;
-
-    return frameCnt * (segmentEnd - segmentBegin) / comp->frameRate;
+    return frameCnt * (segmentEnd - segmentBegin) / frameRate;
 }
 
 
@@ -369,16 +367,13 @@ void LottieLoader::sync()
 
 uint32_t LottieLoader::markersCnt()
 {
-    done();
-    return comp ? comp->markers.count : 0;
+    return ready() ? comp->markers.count : 0;
 }
 
 
 const char* LottieLoader::markers(uint32_t index)
 {
-    done();
-
-    if (!comp || index >= comp->markers.count) return nullptr;
+    if (!ready() || index >= comp->markers.count) return nullptr;
     auto marker = comp->markers.begin() + index;
     return (*marker)->name;
 }
@@ -386,9 +381,7 @@ const char* LottieLoader::markers(uint32_t index)
 
 bool LottieLoader::segment(const char* marker, float& begin, float& end)
 {
-    done();
-
-    if (!comp) return false;
+    if (!ready() || comp->markers.count == 0) return false;
 
     for (auto m = comp->markers.begin(); m < comp->markers.end(); ++m) {
         if (!strcmp(marker, (*m)->name)) {
@@ -397,5 +390,17 @@ bool LottieLoader::segment(const char* marker, float& begin, float& end)
             return true;
         }
     }
+    return false;
+}
+
+
+bool LottieLoader::ready()
+{
+    {
+        ScopedLock lock(key);
+        if (comp) return true;
+    }
+    done();
+    if (comp) return true;
     return false;
 }
