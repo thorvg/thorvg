@@ -43,13 +43,18 @@ void RenderTransform::update()
 {
     if (overriding) return;
 
-    mathIdentity(&m);
+    m.e11 = 1.0f;
+    m.e12 = 0.0f;
+
+    m.e21 = 0.0f;
+    m.e22 = 1.0f;
+
+    m.e31 = 0.0f;
+    m.e32 = 0.0f;
+    m.e33 = 1.0f;
 
     mathScale(&m, scale, scale);
-
     mathRotate(&m, degree);
-
-    mathTranslate(&m, x, y);
 }
 
 
