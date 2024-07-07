@@ -341,51 +341,41 @@ bool GlRenderer::renderShape(RenderData data)
     if (bbox.w <= 0 || bbox.h <= 0) return true;
 
     uint8_t r = 0, g = 0, b = 0, a = 0;
-    int32_t drawDepth1 = 0, drawDepth2 = 0, drawDepth3 = 0;
+    int32_t drawDepth1 = 0, drawDepth2 = 0;
 
     size_t flags = static_cast<size_t>(sdata->updateFlag);
 
     if (flags == 0) return false;
 
-    if ((flags & (RenderUpdateFlag::Gradient | RenderUpdateFlag::Transform)) && sdata->rshape->fill) drawDepth1 = currentPass()->nextDrawDepth();
-    if(flags & (RenderUpdateFlag::Color | RenderUpdateFlag::Transform))
-    {
-        sdata->rshape->fillColor(&r, &g, &b, &a);
-        if (a > 0) drawDepth2 = currentPass()->nextDrawDepth();
-    }
+    if (flags & (RenderUpdateFlag::Gradient | RenderUpdateFlag::Color)) drawDepth1 = currentPass()->nextDrawDepth();
 
-    if (flags & (RenderUpdateFlag::Stroke | RenderUpdateFlag::GradientStroke | RenderUpdateFlag::Transform))
-    {
-        sdata->rshape->strokeColor(&r, &g, &b, &a);
-        if (sdata->rshape->strokeFill() || a > 0) drawDepth3 = currentPass()->nextDrawDepth();
-    }
+    if (flags & (RenderUpdateFlag::Stroke | RenderUpdateFlag::GradientStroke)) drawDepth2 = currentPass()->nextDrawDepth();
+
 
     if (!sdata->clips.empty()) drawClip(sdata->clips);
 
-    if (flags & (RenderUpdateFlag::Gradient | RenderUpdateFlag::Transform))
+    if (flags & (RenderUpdateFlag::Color | RenderUpdateFlag::Gradient))
     {
         auto gradient = sdata->rshape->fill;
         if (gradient) drawPrimitive(*sdata, gradient, RenderUpdateFlag::Gradient, drawDepth1);
-    }
-
-    if(flags & (RenderUpdateFlag::Color | RenderUpdateFlag::Transform))
-    {
-        sdata->rshape->fillColor(&r, &g, &b, &a);
-        if (a > 0)
-        {
-            drawPrimitive(*sdata, r, g, b, a, RenderUpdateFlag::Color, drawDepth2);
+        else {
+            sdata->rshape->fillColor(&r, &g, &b, &a);
+            if (a > 0)
+            {
+                drawPrimitive(*sdata, r, g, b, a, RenderUpdateFlag::Color, drawDepth1);
+            }
         }
     }
 
-    if (flags & (RenderUpdateFlag::Stroke | RenderUpdateFlag::GradientStroke | RenderUpdateFlag::Transform))
+    if (flags & (RenderUpdateFlag::Stroke | RenderUpdateFlag::GradientStroke))
     {
         auto gradient =  sdata->rshape->strokeFill();
         if (gradient) {
-            drawPrimitive(*sdata, gradient, RenderUpdateFlag::GradientStroke, drawDepth3);
+            drawPrimitive(*sdata, gradient, RenderUpdateFlag::GradientStroke, drawDepth2);
         } else {
             if (sdata->rshape->strokeColor(&r, &g, &b, &a) && a > 0)
             {
-                drawPrimitive(*sdata, r, g, b, a, RenderUpdateFlag::Stroke, drawDepth3);
+                drawPrimitive(*sdata, r, g, b, a, RenderUpdateFlag::Stroke, drawDepth2);
             }
         }
     }
