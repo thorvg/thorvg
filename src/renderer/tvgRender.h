@@ -110,9 +110,7 @@ struct RenderRegion
 
 struct RenderTransform
 {
-    Matrix m;             //3x3 Matrix Elements
-    float x = 0.0f;
-    float y = 0.0f;
+    Matrix m;
     float degree = 0.0f;  //rotation degree
     float scale = 1.0f;   //scale factor
     bool overriding = false;  //user transform?
@@ -120,7 +118,11 @@ struct RenderTransform
     void update();
     void override(const Matrix& m);
 
-    RenderTransform() {}
+    RenderTransform()
+    {
+        m.e13 = m.e23 = 0.0f;
+    }
+
     RenderTransform(const RenderTransform* lhs, const RenderTransform* rhs);
 };
 

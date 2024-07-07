@@ -822,6 +822,9 @@ TVG_API Tvg_Result tvg_paint_del(Tvg_Paint* paint);
 *
 * \return Tvg_Result enumeration.
 * \retval TVG_RESULT_INVALID_ARGUMENT An invalid Tvg_Paint pointer.
+* \retval TVG_RESULT_INSUFFICIENT_CONDITION in case a custom transform is applied.
+*
+* \see tvg_paint_set_transform()
 */
 TVG_API Tvg_Result tvg_paint_scale(Tvg_Paint* paint, float factor);
 
@@ -837,6 +840,9 @@ TVG_API Tvg_Result tvg_paint_scale(Tvg_Paint* paint, float factor);
 *
 * \return Tvg_Result enumeration.
 * \retval TVG_RESULT_INVALID_ARGUMENT An invalid Tvg_Paint pointer.
+* \retval TVG_RESULT_INSUFFICIENT_CONDITION in case a custom transform is applied.
+*
+* \see tvg_paint_set_transform()
 */
 TVG_API Tvg_Result tvg_paint_rotate(Tvg_Paint* paint, float degree);
 
@@ -853,6 +859,9 @@ TVG_API Tvg_Result tvg_paint_rotate(Tvg_Paint* paint, float degree);
 *
 * \return Tvg_Result enumeration.
 * \retval TVG_RESULT_INVALID_ARGUMENT An invalid Tvg_Paint pointer.
+* \retval TVG_RESULT_INSUFFICIENT_CONDITION in case a custom transform is applied.
+*
+* \see tvg_paint_set_transform()
 */
 TVG_API Tvg_Result tvg_paint_translate(Tvg_Paint* paint, float x, float y);
 
