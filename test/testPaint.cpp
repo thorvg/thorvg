@@ -59,11 +59,12 @@ TEST_CASE("Custom Transformation", "[tvgPaint]")
     REQUIRE(m2.e32 == Approx(m3.e32).margin(0.000001));
     REQUIRE(m2.e33 == Approx(m3.e33).margin(0.000001));
 
-    //Verify Transform is not modified
-    REQUIRE(shape->translate(155.0f, -155.0f) == Result::Success);
-    REQUIRE(shape->scale(4.7f) == Result::Success);
-    REQUIRE(shape->rotate(45.0f) == Result::Success);
+    //It's not allowed if the custom transform is applied.
+    REQUIRE(shape->translate(155.0f, -155.0f) == Result::InsufficientCondition);
+    REQUIRE(shape->scale(4.7f) == Result::InsufficientCondition);
+    REQUIRE(shape->rotate(45.0f) == Result::InsufficientCondition);
 
+    //Verify Transform is not modified
     auto m4 = shape->transform();
     REQUIRE(m2.e11 == Approx(m4.e11).margin(0.000001));
     REQUIRE(m2.e12 == Approx(m4.e12).margin(0.000001));
