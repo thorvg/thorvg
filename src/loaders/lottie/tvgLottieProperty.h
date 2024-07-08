@@ -154,12 +154,16 @@ struct LottieVectorFrame
 
     float angle(LottieVectorFrame* next, float frameNo)
     {
-        if (!hasTangent) return 0;
+        if (!hasTangent) {
+            Point dp = next->value - value;
+            return mathRad2Deg(atan2(dp.y, dp.x));
+        }
+
         auto t = (frameNo - no) / (next->no - no);
         if (interpolator) t = interpolator->progress(t);
         Bezier bz = {value, value + outTangent, next->value + inTangent, next->value};
         t = bezAtApprox(bz, t * length, length);
-        return -bezAngleAt(bz, t);
+        return bezAngleAt(bz, t >= 1.0f ? 0.99f : (t <= 0.0f ? 0.01f : t));
     }
 
     void prepare(LottieVectorFrame* next)
@@ -812,9 +816,13 @@ struct LottiePosition : LottieProperty
 
     float angle(float frameNo)
     {
-        if (!frames) return 0;
-        if (frames->count == 1 || frameNo <= frames->first().no) return 0;
-        if (frameNo >= frames->last().no) return 0;
+        if (!frames || frames->count == 1) return 0;
+
+        if (frameNo <= frames->first().no) return frames->first().angle(frames->data + 1, frames->first().no);
+        if (frameNo >= frames->last().no) {
+            auto frame = frames->data + frames->count - 2;
+            return frame->angle(frame + 1, frames->last().no);
+        }
 
         auto frame = frames->data + _bsearch(frames, frameNo);
         return frame->angle(frame + 1, frameNo);
