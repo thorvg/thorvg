@@ -58,7 +58,7 @@ struct RenderContext
 {
     INLIST_ITEM(RenderContext);
 
-    Shape* propagator = nullptr;
+    Shape* propagator = nullptr;  //for propagating the shape properties excluding paths
     Shape* merging = nullptr;  //merging shapes if possible (if shapes have same properties)
     LottieObject** begin = nullptr; //iteration entry point
     Array<RenderRepeater> repeaters;
@@ -100,7 +100,7 @@ struct RenderContext
 static void _updateChildren(LottieGroup* parent, float frameNo, Inlist<RenderContext>& contexts, LottieExpressions* exps);
 static void _updateLayer(LottieLayer* root, LottieLayer* layer, float frameNo, LottieExpressions* exps);
 static bool _buildComposition(LottieComposition* comp, LottieLayer* parent);
-static Shape* _draw(LottieGroup* parent, RenderContext* ctx);
+static bool _draw(LottieGroup* parent, RenderContext* ctx);
 
 static void _rotateX(Matrix* m, float degree)
 {
@@ -377,15 +377,15 @@ static void _updateGradientFill(TVG_UNUSED LottieGroup* parent, LottieObject** c
 }
 
 
-static Shape* _draw(LottieGroup* parent, RenderContext* ctx)
+static bool _draw(LottieGroup* parent, RenderContext* ctx)
 {
-    if (ctx->merging) return ctx->merging;
+    if (ctx->merging) return false;
 
     auto shape = cast<Shape>(ctx->propagator->duplicate());
     ctx->merging = shape.get();
     parent->scene->push(std::move(shape));
 
-    return ctx->merging;
+    return true;
 }
 
 
@@ -522,8 +522,8 @@ static void _updateRect(LottieGroup* parent, LottieObject** child, float frameNo
         _appendRect(path.get(), position.x - size.x * 0.5f, position.y - size.y * 0.5f, size.x, size.y, roundness, ctx->transform);
         _repeat(parent, std::move(path), ctx);
     } else {
-        auto merging = _draw(parent, ctx);
-        _appendRect(merging, position.x - size.x * 0.5f, position.y - size.y * 0.5f, size.x, size.y, roundness, ctx->transform);
+        _draw(parent, ctx);
+        _appendRect(ctx->merging, position.x - size.x * 0.5f, position.y - size.y * 0.5f, size.x, size.y, roundness, ctx->transform);
     }
 }
 
@@ -570,8 +570,8 @@ static void _updateEllipse(LottieGroup* parent, LottieObject** child, float fram
         _appendCircle(path.get(), position.x, position.y, size.x * 0.5f, size.y * 0.5f, ctx->transform);
         _repeat(parent, std::move(path), ctx);
     } else {
-        auto merging = _draw(parent, ctx);
-        _appendCircle(merging, position.x, position.y, size.x * 0.5f, size.y * 0.5f, ctx->transform);
+        _draw(parent, ctx);
+        _appendCircle(ctx->merging, position.x, position.y, size.x * 0.5f, size.y * 0.5f, ctx->transform);
     }
 }
 
@@ -585,9 +585,9 @@ static void _updatePath(LottieGroup* parent, LottieObject** child, float frameNo
         path->pathset(frameNo, P(p)->rs.path.cmds, P(p)->rs.path.pts, ctx->transform, ctx->roundness, exps);
         _repeat(parent, std::move(p), ctx);
     } else {
-        auto merging = _draw(parent, ctx);
-        if (path->pathset(frameNo, P(merging)->rs.path.cmds, P(merging)->rs.path.pts, ctx->transform, ctx->roundness, exps)) {
-            P(merging)->update(RenderUpdateFlag::Path);
+        _draw(parent, ctx);
+        if (path->pathset(frameNo, P(ctx->merging)->rs.path.cmds, P(ctx->merging)->rs.path.pts, ctx->transform, ctx->roundness, exps)) {
+            P(ctx->merging)->update(RenderUpdateFlag::Path);
         }
     }
 }
@@ -863,10 +863,10 @@ static void _updatePolystar(LottieGroup* parent, LottieObject** child, float fra
         else _updatePolygon(parent, star, identity  ? nullptr : &matrix, frameNo, p.get(), exps);
         _repeat(parent, std::move(p), ctx);
     } else {
-        auto merging = _draw(parent, ctx);
-        if (star->type == LottiePolyStar::Star) _updateStar(parent, star, identity ? nullptr : &matrix, ctx->roundness, frameNo, merging, exps);
-        else _updatePolygon(parent, star, identity  ? nullptr : &matrix, frameNo, merging, exps);
-        P(merging)->update(RenderUpdateFlag::Path);
+        _draw(parent, ctx);
+        if (star->type == LottiePolyStar::Star) _updateStar(parent, star, identity ? nullptr : &matrix, ctx->roundness, frameNo, ctx->merging, exps);
+        else _updatePolygon(parent, star, identity  ? nullptr : &matrix, frameNo, ctx->merging, exps);
+        P(ctx->merging)->update(RenderUpdateFlag::Path);
     }
 }
 

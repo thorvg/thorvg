@@ -263,44 +263,44 @@ static void _roundCorner(Array<PathCommand>& cmds, Array<Point>& pts, const Poin
 }
 
 
-static bool _modifier(Point* inputPts, uint32_t inputPtsCnt, PathCommand* inputCmds, uint32_t inputCmdsCnt, Array<PathCommand>& cmds, Array<Point>& pts, Matrix* transform, float roundness)
+static bool _modifier(Point* inPts, uint32_t inPtsCnt, PathCommand* inCmds, uint32_t inCmdsCnt, Array<PathCommand>& cmds, Array<Point>& pts, Matrix* transform, float roundness)
 {
-    cmds.reserve(inputCmdsCnt * 2);
-    pts.reserve((uint16_t)(inputPtsCnt * 1.5));
+    cmds.reserve(inCmdsCnt * 2);
+    pts.reserve((uint16_t)(inPtsCnt * 1.5));
     auto ptsCnt = pts.count;
 
     auto startIndex = 0;
-    for (uint32_t iCmds = 0, iPts = 0; iCmds < inputCmdsCnt; ++iCmds) {
-        switch (inputCmds[iCmds]) {
+    for (uint32_t iCmds = 0, iPts = 0; iCmds < inCmdsCnt; ++iCmds) {
+        switch (inCmds[iCmds]) {
             case PathCommand::MoveTo: {
                 startIndex = pts.count;
                 cmds.push(PathCommand::MoveTo);
-                pts.push(inputPts[iPts++]);
+                pts.push(inPts[iPts++]);
                 break;
             }
             case PathCommand::CubicTo: {
-                auto& prev = inputPts[iPts - 1];
-                auto& curr = inputPts[iPts + 2];
-                if (iCmds < inputCmdsCnt - 1 &&
-                    mathZero(inputPts[iPts - 1] - inputPts[iPts]) &&
-                    mathZero(inputPts[iPts + 1] - inputPts[iPts + 2])) {
-                    if (inputCmds[iCmds + 1] == PathCommand::CubicTo &&
-                        mathZero(inputPts[iPts + 2] - inputPts[iPts + 3]) &&
-                        mathZero(inputPts[iPts + 4] - inputPts[iPts + 5])) {
-                        _roundCorner(cmds, pts, prev, curr, inputPts[iPts + 5], roundness);
+                auto& prev = inPts[iPts - 1];
+                auto& curr = inPts[iPts + 2];
+                if (iCmds < inCmdsCnt - 1 &&
+                    mathZero(inPts[iPts - 1] - inPts[iPts]) &&
+                    mathZero(inPts[iPts + 1] - inPts[iPts + 2])) {
+                    if (inCmds[iCmds + 1] == PathCommand::CubicTo &&
+                        mathZero(inPts[iPts + 2] - inPts[iPts + 3]) &&
+                        mathZero(inPts[iPts + 4] - inPts[iPts + 5])) {
+                        _roundCorner(cmds, pts, prev, curr, inPts[iPts + 5], roundness);
                         iPts += 3;
                         break;
-                    } else if (inputCmds[iCmds + 1] == PathCommand::Close) {
-                        _roundCorner(cmds, pts, prev, curr, inputPts[2], roundness);
+                    } else if (inCmds[iCmds + 1] == PathCommand::Close) {
+                        _roundCorner(cmds, pts, prev, curr, inPts[2], roundness);
                         pts[startIndex] = pts.last();
                         iPts += 3;
                         break;
                     }
                 }
                 cmds.push(PathCommand::CubicTo);
-                pts.push(inputPts[iPts++]);
-                pts.push(inputPts[iPts++]);
-                pts.push(inputPts[iPts++]);
+                pts.push(inPts[iPts++]);
+                pts.push(inPts[iPts++]);
+                pts.push(inPts[iPts++]);
                 break;
             }
             case PathCommand::Close: {
