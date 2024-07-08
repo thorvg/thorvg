@@ -28,7 +28,10 @@
 
 struct UserExample : tvgexam::Example
 {
-    tvg::Shape* pShape = nullptr;
+    tvg::Shape* solid = nullptr;
+    tvg::Shape* gradient = nullptr;
+
+    uint32_t w, h;
 
     bool content(tvg::Canvas* canvas, uint32_t w, uint32_t h) override
     {
@@ -43,21 +46,52 @@ struct UserExample : tvgexam::Example
 
         canvas->push(std::move(bg));
 
-        //Shape
-        auto shape = tvg::Shape::gen();
+        //Solid Shape
+        {
+            auto shape = tvg::Shape::gen();
 
-        /* Acquire shape pointer to access it again.
-        instead, you should consider not to interrupt this pointer life-cycle. */
-        pShape = shape.get();
+            /* Acquire shape pointer to access it again.
+            instead, you should consider not to interrupt this pointer life-cycle. */
+            solid = shape.get();
 
-        shape->appendRect(-100, -100, 200, 200);
+            shape->appendRect(-100, -100, 200, 200);
 
-        //fill property will be retained
-        shape->fill(127, 255, 255);
-        shape->stroke(0, 0, 255);
-        shape->stroke(1);
+            //fill property will be retained
+            shape->fill(127, 255, 255);
+            shape->stroke(0, 0, 255);
+            shape->stroke(1);
 
-        canvas->push(std::move(shape));
+            canvas->push(std::move(shape));
+        }
+
+        //Gradient Shape
+        {
+            auto shape = tvg::Shape::gen();
+
+            /* Acquire shape pointer to access it again.
+            instead, you should consider not to interrupt this pointer life-cycle. */
+            gradient = shape.get();
+
+            shape->appendRect(w - 200, 0, 200, 200);
+
+            //LinearGradient
+            auto fill = tvg::LinearGradient::gen();
+            fill->linear(w - 200, 0, w - 200 + 285, 300);
+
+            //Gradient Color Stops
+            tvg::Fill::ColorStop colorStops[3];
+            colorStops[0] = {0, 255, 0, 0, 127};
+            colorStops[1] = {0.5, 255, 255, 0, 127};
+            colorStops[2] = {1, 255, 255, 255, 127};
+
+            fill->colorStops(colorStops, 3);
+            shape->fill(std::move(fill));
+
+            canvas->push(std::move(shape));
+        }
+
+        this->w = w;
+        this->h = h;
 
         return true;
     }
@@ -72,14 +106,17 @@ struct UserExample : tvgexam::Example
         auto progress = tvgexam::progress(elapsed, 2.0f, true);  //play time 2 sec.
 
         //Reset Shape
-        if (tvgexam::verify(pShape->reset())) {
-            pShape->appendRect(-100 + (800 * progress), -100 + (800 * progress), 200, 200, (100 * progress), (100 * progress));
-            pShape->fill(127, 255, 255);
-            pShape->stroke(0, 0, 255);
-            pShape->stroke(30 * progress);
+        if (tvgexam::verify(solid->reset())) {
+            //Solid Shape
+            solid->appendRect(-100 + (w * progress), -100 + (h * progress), 200, 200, (100 * progress), (100 * progress));
+            solid->fill(127, 255, 255);
+            solid->stroke(0, 0, 255);
+            solid->stroke(30 * progress);
 
-            //Update shape for drawing (this may work asynchronously)
-            canvas->update(pShape);
+            //Gradient Shape
+            gradient->translate(-(w * progress), (h * progress));
+
+            canvas->update();
 
             return true;
         }
