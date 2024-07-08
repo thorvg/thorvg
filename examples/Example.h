@@ -59,7 +59,7 @@ using namespace std;
 namespace tvgexam
 {
 
-bool verify(tvg::Result result);
+bool verify(tvg::Result result, string failMsg = "");
 
 struct Example
 {
@@ -141,10 +141,7 @@ struct Window
     Window(tvg::CanvasEngine engine, Example* example, uint32_t width, uint32_t height)
     {
         //Initialize ThorVG Engine (4: threads count, engine: raster method)
-        if (!verify(tvg::Initializer::init(engine, 4))) {
-            cout << "Failed to init ThorVG engine!" << endl;
-            return;
-        }
+        if (!verify(tvg::Initializer::init(engine, 4), "Failed to init ThorVG engine!")) return;
 
         //Initialize the SDL
         SDL_Init(SDL_INIT_VIDEO);
@@ -470,31 +467,31 @@ float progress(uint32_t elapsed, float durationInSec, bool rewind = false)
 }
 
 
-bool verify(tvg::Result result)
+bool verify(tvg::Result result, string failMsg)
 {
     switch (result) {
         case tvg::Result::FailedAllocation: {
-            cout << "FailedAllocation!" << endl;
+            cout << "FailedAllocation! " << failMsg << endl;
             return false;
         }
         case tvg::Result::InsufficientCondition: {
-            cout << "InsufficientCondition!" << endl;
+            cout << "InsufficientCondition! " << failMsg << endl;
             return false;
         }
         case tvg::Result::InvalidArguments: {
-            cout << "InvalidArguments!" << endl;
+            cout << "InvalidArguments! " << failMsg << endl;
             return false;
         }
         case tvg::Result::MemoryCorruption: {
-            cout << "MemoryCorruption!" << endl;
+            cout << "MemoryCorruption! " << failMsg << endl;
             return false;
         }
         case tvg::Result::NonSupport: {
-            cout << "NonSupport!" << endl;
+            cout << "NonSupport! " << failMsg << endl;
             return false;
         }
         case tvg::Result::Unknown: {
-            cout << "Unknown!" << endl;
+            cout << "Unknown! " << failMsg << endl;
             return false;
         }
         default: break;

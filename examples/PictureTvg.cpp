@@ -34,7 +34,9 @@ struct UserExample : tvgexam::Example
 
         //load the tvg file
         auto picture = tvg::Picture::gen();
-        if (!tvgexam::verify(picture->load(EXAMPLE_DIR"/tvg/test.tvg"))) return false;
+        if (!tvgexam::verify(picture->load(EXAMPLE_DIR"/tvg/test.tvg"), "You might need to run \"TvgSaver\" example first to generate the \"test.tvg\".")) {
+            return false;
+        }
 
         float w2, h2;
         picture->size(&w2, &h2);
