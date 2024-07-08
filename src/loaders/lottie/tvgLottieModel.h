@@ -458,6 +458,8 @@ struct LottieImage : LottieObject
     char* mimeType = nullptr;
     uint32_t size = 0;
     uint16_t refCnt = 0;   //refernce count
+    float width = 0.0f;
+    float height = 0.0f;
 
     ~LottieImage();
 
