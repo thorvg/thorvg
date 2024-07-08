@@ -899,7 +899,7 @@ void LottieParser::parseObject(Array<LottieObject*>& parent)
 }
 
 
-LottieImage* LottieParser::parseImage(const char* data, const char* subPath, bool embedded)
+LottieImage* LottieParser::parseImage(const char* data, const char* subPath, bool embedded, float width, float height)
 {
     //Used for Image Asset
     auto image = new LottieImage;
@@ -922,6 +922,8 @@ LottieImage* LottieParser::parseImage(const char* data, const char* subPath, boo
         snprintf(image->path, len, "%s/%s%s", dirName, subPath, data);
     }
 
+    image->width = width;
+    image->height = height;
     image->prepare();
 
     return image;
@@ -938,6 +940,8 @@ LottieObject* LottieParser::parseAsset()
     //Used for Image Asset
     const char* data = nullptr;
     const char* subPath = nullptr;
+    float width = 0.0f;
+    float height = 0.0f;
     auto embedded = false;
 
     while (auto key = nextObjectKey()) {
@@ -952,10 +956,12 @@ LottieObject* LottieParser::parseAsset()
         else if (KEY_AS("layers")) obj = parseLayers();
         else if (KEY_AS("u")) subPath = getString();
         else if (KEY_AS("p")) data = getString();
+        else if (KEY_AS("w")) width = getFloat();
+        else if (KEY_AS("h")) height = getFloat();
         else if (KEY_AS("e")) embedded = getInt();
         else skip(key);
     }
-    if (data) obj = parseImage(data, subPath, embedded);
+    if (data) obj = parseImage(data, subPath, embedded, width, height);
     if (obj) obj->id = id;
     return obj;
 }

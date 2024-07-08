@@ -1042,6 +1042,7 @@ static void _updateImage(LottieGroup* layer)
         TaskScheduler::async(true);
 
         PP(image->picture)->ref();
+        image->picture->size(image->width, image->height);
     }
 
     if (image->refCnt == 1) layer->scene->push(tvg::cast(image->picture));
