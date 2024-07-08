@@ -45,7 +45,6 @@ extern const char* cShaderSource_PipelineComputeClear;
 extern const char* cShaderSource_PipelineComputeBlendSolid;
 extern const char* cShaderSource_PipelineComputeBlendGradient;
 extern const char* cShaderSource_PipelineComputeBlendImage;
-extern const char* cShaderSource_PipelineComputeCompose;
 extern const char* cShaderSource_PipelineComputeComposeBlend;
 extern const char* cShaderSource_PipelineComputeAntiAlias;
 

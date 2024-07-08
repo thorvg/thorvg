@@ -494,41 +494,6 @@ fn cs_main( @builtin(global_invocation_id) id: vec3u) {
 }
 );
 
-// pipeline shader modules compose
-const char* cShaderSource_PipelineComputeCompose = WG_SHADER_SOURCE(
-@group(0) @binding(0) var imageSrc : texture_storage_2d<rgba8unorm, read_write>;
-@group(1) @binding(0) var imageMsk : texture_storage_2d<rgba8unorm, read_write>;
-@group(2) @binding(0) var<uniform> composeMethod : u32;
-@group(3) @binding(0) var<uniform> opacity : f32;
-
-@compute @workgroup_size(8, 8)
-fn cs_main( @builtin(global_invocation_id) id: vec3u) {
-    let texSize = textureDimensions(imageSrc);
-    if ((id.x >= texSize.x) || (id.y >= texSize.y)) { return; };
-
-    let colorSrc = textureLoad(imageSrc, id.xy);
-    let colorMsk = textureLoad(imageMsk, id.xy);
-
-    var color: vec3f = colorSrc.xyz;
-    var alpha: f32   = colorMsk.a;
-    switch composeMethod {
-        /* None           */ case 0u: { color = colorSrc.xyz; }
-        /* ClipPath       */ case 1u: { if (colorMsk.a == 0) { alpha = 0.0; }; }
-        /* AlphaMask      */ case 2u: { color = mix(colorMsk.xyz, colorSrc.xyz, colorSrc.a * colorMsk.b); }
-        /* InvAlphaMask   */ case 3u: { color = mix(colorSrc.xyz, colorMsk.xyz, colorSrc.a * colorMsk.b); alpha = 1.0 - colorMsk.b; }
-        /* LumaMask       */ case 4u: { color = colorSrc.xyz * (0.299 * colorMsk.r + 0.587 * colorMsk.g + 0.114 * colorMsk.b);  }
-        /* InvLumaMask    */ case 5u: { color = colorSrc.xyz * (1.0 - (0.299 * colorMsk.r + 0.587 * colorMsk.g + 0.114 * colorMsk.b)); alpha = 1.0 - colorMsk.b; }
-        /* AddMask        */ case 6u: { color = colorSrc.xyz * colorSrc.a + colorMsk.xyz * (1.0 - colorSrc.a); }
-        /* SubtractMask   */ case 7u: { color = colorSrc.xyz * colorSrc.a - colorMsk.xyz * (1.0 - colorSrc.a); }
-        /* IntersectMask  */ case 8u: { color = colorSrc.xyz * min(colorSrc.a, colorMsk.a); }
-        /* DifferenceMask */ case 9u: { color = abs(colorSrc.xyz - colorMsk.xyz * (1.0 - colorMsk.a)); }
-        default: { color = colorSrc.xyz; }
-    }
-
-    textureStore(imageSrc, id.xy, vec4f(color, alpha * opacity));
-}
-);
-
 // pipeline shader modules compose blend
 const char* cShaderSource_PipelineComputeComposeBlend = WG_SHADER_SOURCE(
 @group(0) @binding(0) var imageSrc : texture_storage_2d<rgba8unorm, read>;
@@ -545,53 +510,46 @@ fn cs_main( @builtin(global_invocation_id) id: vec3u) {
 
     let colorSrc = textureLoad(imageSrc, id.xy);
     let colorMsk = textureLoad(imageMsk, id.xy);
-    if ((length(colorSrc) == 0.0) || (length(colorMsk) == 0.0)) { return; };
     let colorDst = textureLoad(imageDst, id.xy);
 
-    var result: vec3f = colorSrc.xyz;
-    var alpha: f32   = colorMsk.a;
-    let luma: f32    = dot(colorMsk.xyz, vec3f(0.299, 0.587, 0.114));
-    switch composeMethod {
-        /* None           */ case 0u: { result = colorSrc.xyz; }
-        /* ClipPath       */ case 1u: { if (colorMsk.a == 0) { alpha = 0.0; }; }
-        /* AlphaMask      */ case 2u: { result = colorSrc.xyz; alpha = colorSrc.a * colorMsk.a; }
-        /* InvAlphaMask   */ case 3u: { result = colorSrc.xyz; alpha = colorSrc.a * (1.0 - colorMsk.a); }
-        /* LumaMask       */ case 4u: { result = colorSrc.xyz; alpha = colorSrc.a * luma; }
-        /* InvLumaMask    */ case 5u: { result = colorSrc.xyz; alpha = colorSrc.a * (1.0 - luma); }
-        /* AddMask        */ case 6u: { result = colorSrc.xyz * colorSrc.a + colorMsk.xyz * (1.0 - colorSrc.a); }
-        /* SubtractMask   */ case 7u: { result = colorSrc.xyz * colorSrc.a - colorMsk.xyz * (1.0 - colorSrc.a); }
-        /* IntersectMask  */ case 8u: { result = colorSrc.xyz * min(colorSrc.a, colorMsk.a); }
-        /* DifferenceMask */ case 9u: { result = abs(colorMsk.xyz - colorSrc.xyz * (1.0 - colorMsk.a)); }
-        default: { result = colorSrc.xyz; }
+    var One: vec3f  = vec3(1.0);
+    let luma: f32   = dot(colorMsk.xyz, vec3f(0.2125, 0.7154, 0.0721));
+    var So  : f32   = opacity;
+    var Mc  : vec3f = colorMsk.rgb;
+    var Ma  : f32   = colorMsk.a;
+    var MSc : vec3f = colorSrc.rgb;
+    var MSa : f32   = colorSrc.a;
+    var Sc  : vec3f = colorSrc.rgb;
+    var Sa  : f32   = colorSrc.a;
+    var Dc  : vec3f = colorDst.rgb;
+    var Da  : f32   = colorDst.a;
+    var Rc  : vec3f = colorDst.rgb;
+    var Ra  : f32   = 1.0;
+
+    if (composeMethod <= /* InvLumaMask */5u) {
+        switch composeMethod {
+            /* AlphaMask      */ case 2u: { Sc = MSc * Ma;         Sa = MSa * Ma; }
+            /* InvAlphaMask   */ case 3u: { Sc = MSc * (1.0 - Ma); Sa = MSa * (1.0 - Ma); }
+            /* LumaMask       */ case 4u: { Sc = MSc * luma;       Sa = MSa * luma; }
+            /* InvLumaMask    */ case 5u: { Sc = MSc * (1.0-luma); Sa = MSa * (1.0-luma); }
+            default: { Sc = MSc; Sa = MSa; }
+        }
+        Rc = Sc + Dc * (1.0 - Sa);
+        Ra = Sa + Da * (1.0 - Sa);
+    } else {
+        Sc = Dc;
+        switch composeMethod {
+            /* AddMask        */ case 6u: { Sa = MSa + Ma * (1.0 - MSa); }
+            /* SubtractMask   */ case 7u: { Sa = MSa * (1.0 - Ma); }
+            /* IntersectMask  */ case 8u: { Sa = MSa * Ma; }
+            /* DifferenceMask */ case 9u: { Sa = MSa * (1.0 - Ma) + Ma * (1.0 - MSa); }
+            default: { Rc = Sc; Ra = Sa; }
+        }
+        Rc = Sc;
+        Ra = Sa;
     }
 
-    let So: f32  = opacity;
-    let Sa: f32  = alpha;
-    let Da: f32  = colorDst.a;
-    let S: vec4f = vec4(result, alpha);
-    let D: vec4f = colorDst;
-    let One: vec4f = vec4(1.0);
-
-    var color: vec4f = vec4f(0.0, 0.0, 0.0, 0.0);
-    switch blendMethod {
-        /* Normal     */ case 0u:  { color = (S * So) + (1.0 - Sa * So) * D; }
-        /* Add        */ case 1u:  { color = (S + D); }
-        /* Screen     */ case 2u:  { color = (S + D) - (S * D); }
-        /* Multiply   */ case 3u:  { color = (S * D); }
-        /* Overlay    */ case 4u:  { color = (Sa * Da) - 2 * (Da - S) * (Sa - D); }
-        /* Difference */ case 5u:  { color = abs(S - D); }
-        /* Exclusion  */ case 6u:  { color = S + D - (2 * S * D); }
-        /* SrcOver    */ case 7u:  { color = S; }
-        /* Darken     */ case 8u:  { color = min(S, D); }
-        /* Lighten    */ case 9u:  { color = max(S, D); }
-        /* ColorDodge */ case 10u: { color = D / (One - S); }
-        /* ColorBurn  */ case 11u: { color = One - (One - D) / S; }
-        /* HardLight  */ case 12u: { color = (Sa * Da) - 2.0 * (Da - S) * (Sa - D); }
-        /* SoftLight  */ case 13u: { color = (One - 2 * S) * (D * D) + (2 * S * D); }
-        default:  { color = (S * So) + (1.0 - Sa * So) * D; }
-    }
-
-    textureStore(imageDst, id.xy, color);
+    textureStore(imageDst, id.xy, vec4f(Rc, Ra));
 }
 );
 
