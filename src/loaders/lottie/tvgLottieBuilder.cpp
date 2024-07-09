@@ -724,10 +724,10 @@ static void _updateStar(LottieGroup* parent, LottiePolyStar* star, Matrix* trans
         y = radius * sinf(angle);
 
         if (hasRoundness) {
-            auto cp1Theta = (atan2f(previousY, previousX) - MATH_PI2 * direction);
+            auto cp1Theta = (mathAtan2(previousY, previousX) - MATH_PI2 * direction);
             auto cp1Dx = cosf(cp1Theta);
             auto cp1Dy = sinf(cp1Theta);
-            auto cp2Theta = (atan2f(y, x) - MATH_PI2 * direction);
+            auto cp2Theta = (mathAtan2(y, x) - MATH_PI2 * direction);
             auto cp2Dx = cosf(cp2Theta);
             auto cp2Dy = sinf(cp2Theta);
 
@@ -810,10 +810,10 @@ static void _updatePolygon(LottieGroup* parent, LottiePolyStar* star, Matrix* tr
         y = (radius * sinf(angle));
 
         if (hasRoundness) {
-            auto cp1Theta = atan2f(previousY, previousX) - MATH_PI2 * direction;
+            auto cp1Theta = mathAtan2(previousY, previousX) - MATH_PI2 * direction;
             auto cp1Dx = cosf(cp1Theta);
             auto cp1Dy = sinf(cp1Theta);
-            auto cp2Theta = atan2f(y, x) - MATH_PI2 * direction;
+            auto cp2Theta = mathAtan2(y, x) - MATH_PI2 * direction;
             auto cp2Dx = cosf(cp2Theta);
             auto cp2Dy = sinf(cp2Theta);
 
