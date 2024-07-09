@@ -27,7 +27,6 @@
 #include "tvgCommon.h"
 #include "tvgArray.h"
 #include "tvgMath.h"
-#include "tvgLines.h"
 #include "tvgLottieInterpolator.h"
 #include "tvgLottieExpressions.h"
 
@@ -145,8 +144,7 @@ struct LottieVectorFrame
 
         if (hasTangent) {
             Bezier bz = {value, value + outTangent, next->value + inTangent, next->value};
-            t = bezAtApprox(bz, t * length, length);
-            return bezPointAt(bz, t);
+            return bz.at(bz.atApprox(t * length, length));
         } else {
             return lerp(value, next->value, t);
         }
@@ -162,14 +160,14 @@ struct LottieVectorFrame
         auto t = (frameNo - no) / (next->no - no);
         if (interpolator) t = interpolator->progress(t);
         Bezier bz = {value, value + outTangent, next->value + inTangent, next->value};
-        t = bezAtApprox(bz, t * length, length);
-        return bezAngleAt(bz, t >= 1.0f ? 0.99f : (t <= 0.0f ? 0.01f : t));
+        t = bz.atApprox(t * length, length);
+        return bz.angle(t >= 1.0f ? 0.99f : (t <= 0.0f ? 0.01f : t));
     }
 
     void prepare(LottieVectorFrame* next)
     {
         Bezier bz = {value, value + outTangent, next->value + inTangent, next->value};
-        length = bezLengthApprox(bz);
+        length = bz.lengthApprox();
     }
 };
 
