@@ -20,6 +20,7 @@
  * SOFTWARE.
  */
 
+#include "tvgMath.h"
 #include "tvgPaint.h"
 #include "tvgFill.h"
 #include "tvgLottieModel.h"
@@ -249,7 +250,7 @@ Fill* LottieGradient::fill(float frameNo, LottieExpressions* exps)
             P(static_cast<RadialGradient*>(fill))->radial(s.x, s.y, r, s.x, s.y, 0.0f);
         } else {
             if (mathEqual(progress, 1.0f)) progress = 0.99f;
-            auto startAngle = mathRad2Deg(atan2(e.y - s.y, e.x - s.x));
+            auto startAngle = mathRad2Deg(mathAtan2(e.y - s.y, e.x - s.x));
             auto angle = mathDeg2Rad((startAngle + this->angle(frameNo, exps)));
             auto fx = s.x + cos(angle) * progress * r;
             auto fy = s.y + sin(angle) * progress * r;
