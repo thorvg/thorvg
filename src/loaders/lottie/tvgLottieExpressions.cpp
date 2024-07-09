@@ -358,7 +358,7 @@ static jerry_value_t _interp(float t, const jerry_value_t args[], int argsCnt)
         Point ret;
         if (t <= tMin) ret = pt1;
         else if (t >= tMax) ret = pt2;
-        else ret = mathLerp(pt1, pt2, t);
+        else ret = lerp(pt1, pt2, t);
 
         jerry_value_free(val1);
         jerry_value_free(val2);
@@ -381,7 +381,7 @@ static jerry_value_t _interp(float t, const jerry_value_t args[], int argsCnt)
     if (t <= tMin) jerry_number(val1);
     auto val2 = (float) jerry_value_as_number(args[idx + 2]);
     if (t >= tMax) jerry_number(val2);
-    return jerry_number(mathLerp(val1, val2, t));
+    return jerry_number(lerp(val1, val2, t));
 }
 
 
@@ -519,13 +519,13 @@ static jerry_value_t _random(const jerry_call_info_t* info, const jerry_value_t 
 
 static jerry_value_t _deg2rad(const jerry_call_info_t* info, const jerry_value_t args[], const jerry_length_t argsCnt)
 {
-    return jerry_number(mathDeg2Rad((float)jerry_value_as_number(args[0])));
+    return jerry_number(deg2rad((float)jerry_value_as_number(args[0])));
 }
 
 
 static jerry_value_t _rad2deg(const jerry_call_info_t* info, const jerry_value_t args[], const jerry_length_t argsCnt)
 {
-    return jerry_number(mathRad2Deg((float)jerry_value_as_number(args[0])));
+    return jerry_number(rad2deg((float)jerry_value_as_number(args[0])));
 }
 
 

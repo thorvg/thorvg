@@ -781,7 +781,7 @@ static int32_t _bezierCurveCount(const Bezier &curve)
 
 static Bezier _bezFromArc(const GlPoint& start, const GlPoint& end, float radius) {
     // Calculate the angle between the start and end points
-    float angle = mathAtan2(end.y - start.y, end.x - start.x);
+    float angle = tvg::atan2(end.y - start.y, end.x - start.x);
 
     // Calculate the control points of the cubic bezier curve
     float c = radius * 0.552284749831;  // c = radius * (4/3) * tan(pi/8)

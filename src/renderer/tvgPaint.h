@@ -84,7 +84,7 @@ namespace tvg
         bool transform(const Matrix& m)
         {
             if (!rTransform) {
-                if (mathIdentity(&m)) return true;
+                if (identity(&m)) return true;
                 rTransform = new RenderTransform();
             }
             rTransform->override(m);

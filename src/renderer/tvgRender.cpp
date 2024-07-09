@@ -67,8 +67,8 @@ void RenderTransform::update()
     m.e32 = 0.0f;
     m.e33 = 1.0f;
 
-    mathScale(&m, scale, scale);
-    mathRotate(&m, degree);
+    tvg::scale(&m, scale, scale);
+    rotate(&m, degree);
 }
 
 
@@ -77,7 +77,7 @@ RenderTransform::RenderTransform(const RenderTransform* lhs, const RenderTransfo
     if (lhs && rhs) m = lhs->m * rhs->m;
     else if (lhs) m = lhs->m;
     else if (rhs) m = rhs->m;
-    else mathIdentity(&m);
+    else identity(&m);
 }
 
 
