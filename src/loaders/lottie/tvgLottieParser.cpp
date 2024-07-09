@@ -1088,8 +1088,7 @@ void LottieParser::parseTimeRemap(LottieLayer* layer)
 
 uint8_t LottieParser::getDirection()
 {
-    auto v = getInt();
-    if (v == 3) return false;
+    if (getInt() == 3) return false;
     return true;
 }
 
