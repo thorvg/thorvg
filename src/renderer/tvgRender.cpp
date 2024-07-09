@@ -32,6 +32,20 @@
 /* External Class Implementation                                        */
 /************************************************************************/
 
+uint32_t RenderMethod::ref()
+{
+    ScopedLock lock(key);
+    return (++refCnt);
+}
+
+
+uint32_t RenderMethod::unref()
+{
+    ScopedLock lock(key);
+    return (--refCnt);
+}
+
+
 void RenderTransform::override(const Matrix& m)
 {
     this->m = m;

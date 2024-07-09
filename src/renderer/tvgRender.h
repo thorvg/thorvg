@@ -248,17 +248,8 @@ private:
     Key key;
 
 public:
-    uint32_t ref()
-    {
-        ScopedLock lock(key);
-        return (++refCnt);
-    }
-
-    uint32_t unref()
-    {
-        ScopedLock lock(key);
-        return (--refCnt);
-    }
+    uint32_t ref();
+    uint32_t unref();
 
     virtual ~RenderMethod() {}
     virtual RenderData prepare(const RenderShape& rshape, RenderData data, const RenderTransform* transform, Array<RenderData>& clips, uint8_t opacity, RenderUpdateFlag flags, bool clipper) = 0;
