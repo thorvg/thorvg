@@ -103,7 +103,8 @@ static bool _buildComposition(LottieComposition* comp, LottieLayer* parent);
 static bool _draw(LottieGroup* parent, RenderContext* ctx);
 
 
-static void _rotationXYZ(Matrix* m, float degreeX, float degreeY, float degreeZ) {
+static void _rotationXYZ(Matrix* m, float degreeX, float degreeY, float degreeZ, Matrix& rotation3D)
+{
     if (degreeX == 0.0f && degreeY == 0.0f && degreeZ == 0.0f) return;
 
     auto radianX = mathDeg2Rad(degreeX);
@@ -117,6 +118,18 @@ static void _rotationXYZ(Matrix* m, float degreeX, float degreeY, float degreeZ)
     m->e12 = -cy * sz;
     m->e21 = sx * sy * cz + cx * sz;
     m->e22 = -sx * sy * sz + cx * cz;
+
+    rotation3D.e11 = m->e11;
+    rotation3D.e12 = m->e12;
+    rotation3D.e13 = sy;
+
+    rotation3D.e21 = m->e21;
+    rotation3D.e22 = m->e22;
+    rotation3D.e23 = -sx * cy;
+
+    rotation3D.e31 = -cx * sy * cz + sx * sz;
+    rotation3D.e32 = cx * sy * sz + sx * cz;
+    rotation3D.e33 = cx * sy;
 }
 
 
@@ -185,7 +198,7 @@ static bool _updateTransform(LottieTransform* transform, float frameNo, bool aut
 
     auto angle = 0.0f;
     if (autoOrient) angle = transform->position.angle(frameNo);
-    if (transform->rotationEx) _rotationXYZ(&matrix, transform->rotationEx->x(frameNo, exps), transform->rotationEx->y(frameNo, exps), transform->rotation(frameNo, exps) + angle);
+    if (transform->rotationEx) _rotationXYZ(&matrix, transform->rotationEx->x(frameNo, exps), transform->rotationEx->y(frameNo, exps), transform->rotation(frameNo, exps) + angle, transform->rotationEx->rotation3D);
     else _rotationZ(&matrix, transform->rotation(frameNo, exps) + angle);
 
 
@@ -228,10 +241,28 @@ static void _updateTransform(LottieLayer* layer, float frameNo, LottieExpression
 
     if (parent) {
         if (!mathIdentity((const Matrix*) &parent->cache.matrix)) {
-            if (mathIdentity((const Matrix*) &matrix)) layer->cache.matrix = parent->cache.matrix;
-            else layer->cache.matrix = parent->cache.matrix * matrix;
+            if (mathIdentity((const Matrix*) &matrix)) {
+                layer->cache.matrix = parent->cache.matrix;
+                if (transform->rotationEx ) layer->cache.rotation3D = parent->cache.rotation3D * transform->rotationEx->rotation3D;
+                else layer->cache.rotation3D = parent->cache.rotation3D;
+            }
+            else {
+                layer->cache.matrix = parent->cache.matrix * matrix;
+
+                if (transform->rotationEx && !mathIdentity((const Matrix*)&parent->cache.rotation3D)) {
+                    auto m1 = parent->cache.rotation3D;
+                    auto m2 = transform->rotationEx->rotation3D;
+
+                    layer->cache.matrix.e11 += m1.e13 * m2.e31;
+                    layer->cache.matrix.e21 += m1.e23 * m2.e31;
+                    layer->cache.matrix.e12 += m1.e13 * m2.e32;
+                    layer->cache.matrix.e22 += m1.e23 * m2.e32;
+                }
+                layer->cache.rotation3D = parent->cache.rotation3D;
+                if (transform->rotationEx) layer->cache.rotation3D *= transform->rotationEx->rotation3D;
+            }
         }
-    }
+    } else if (transform->rotationEx) layer->cache.rotation3D = transform->rotationEx->rotation3D;
     layer->cache.frameNo = frameNo;
 }
 

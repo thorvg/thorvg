@@ -313,6 +313,7 @@ struct LottieTransform : LottieObject
     {
         LottieFloat x = 0.0f;
         LottieFloat y = 0.0f;
+        Matrix rotation3D;
     };
 
     ~LottieTransform()
@@ -565,6 +566,7 @@ struct LottieLayer : LottieGroup
     struct {
         float frameNo = -1.0f;
         Matrix matrix;
+        Matrix rotation3D;
         uint8_t opacity;
     } cache;
 
