@@ -213,7 +213,7 @@ struct Shape::Impl
             rs.stroke = new RenderStroke();
         }
 
-        if (mathEqual(rs.stroke->trim.begin, begin) && mathEqual(rs.stroke->trim.end, end) &&
+        if (tvg::equal(rs.stroke->trim.begin, begin) && tvg::equal(rs.stroke->trim.end, end) &&
             rs.stroke->trim.simultaneous == simultaneous) return;
 
         auto loop = true;

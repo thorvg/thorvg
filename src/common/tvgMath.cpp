@@ -22,14 +22,15 @@
 
 #include "tvgMath.h"
 
+namespace tvg {
 
-bool mathInverse(const Matrix* m, Matrix* out)
+bool inverse(const Matrix* m, Matrix* out)
 {
     auto det = m->e11 * (m->e22 * m->e33 - m->e32 * m->e23) -
                m->e12 * (m->e21 * m->e33 - m->e23 * m->e31) +
                m->e13 * (m->e21 * m->e32 - m->e22 * m->e31);
 
-    if (mathZero(det)) return false;
+    if (tvg::zero(det)) return false;
 
     auto invDet = 1 / det;
 
@@ -47,7 +48,7 @@ bool mathInverse(const Matrix* m, Matrix* out)
 }
 
 
-bool mathIdentity(const Matrix* m)
+bool identity(const Matrix* m)
 {
     if (m->e11 != 1.0f || m->e12 != 0.0f || m->e13 != 0.0f ||
         m->e21 != 0.0f || m->e22 != 1.0f || m->e23 != 0.0f ||
@@ -58,7 +59,7 @@ bool mathIdentity(const Matrix* m)
 }
 
 
-void mathRotate(Matrix* m, float degree)
+void rotate(Matrix* m, float degree)
 {
     if (degree == 0.0f) return;
 
@@ -95,9 +96,9 @@ Matrix operator*(const Matrix& lhs, const Matrix& rhs)
 
 bool operator==(const Matrix& lhs, const Matrix& rhs)
 {
-    if (!mathEqual(lhs.e11, rhs.e11) || !mathEqual(lhs.e12, rhs.e12) || !mathEqual(lhs.e13, rhs.e13) ||
-        !mathEqual(lhs.e21, rhs.e21) || !mathEqual(lhs.e22, rhs.e22) || !mathEqual(lhs.e23, rhs.e23) ||
-        !mathEqual(lhs.e31, rhs.e31) || !mathEqual(lhs.e32, rhs.e32) || !mathEqual(lhs.e33, rhs.e33)) {
+    if (!tvg::equal(lhs.e11, rhs.e11) || !tvg::equal(lhs.e12, rhs.e12) || !tvg::equal(lhs.e13, rhs.e13) ||
+        !tvg::equal(lhs.e21, rhs.e21) || !tvg::equal(lhs.e22, rhs.e22) || !tvg::equal(lhs.e23, rhs.e23) ||
+        !tvg::equal(lhs.e31, rhs.e31) || !tvg::equal(lhs.e32, rhs.e32) || !tvg::equal(lhs.e33, rhs.e33)) {
        return false;
     }
     return true;
@@ -118,4 +119,6 @@ Point operator*(const Point& pt, const Matrix& m)
     auto tx = pt.x * m.e11 + pt.y * m.e12 + m.e13;
     auto ty = pt.x * m.e21 + pt.y * m.e22 + m.e23;
     return {tx, ty};
+}
+
 }

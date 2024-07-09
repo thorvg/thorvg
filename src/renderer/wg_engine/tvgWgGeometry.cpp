@@ -362,7 +362,7 @@ void WgGeometryData::appendStrokeJoin(const WgPoint& v0, const WgPoint& v1, cons
         appendRect(v1 - offset0, v1 + offset0, v1 - offset1, v1 + offset1);
     } else if (join == StrokeJoin::Miter) {
         WgPoint nrm = (nrm0 + nrm1);
-        if (!mathZero(dir0.x * dir1.y -  dir0.y * dir1.x)) {
+        if (!tvg::zero(dir0.x * dir1.y -  dir0.y * dir1.x)) {
             nrm.normalize();
             float cosine = nrm.dot(nrm0);
             float angle = std::acos(dir0.dot(dir1.negative()));

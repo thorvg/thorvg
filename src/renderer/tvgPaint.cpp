@@ -92,8 +92,8 @@ static Result _compFastTrack(RenderMethod* renderer, Paint* cmpTarget, const Ren
     //No rotation and no skewing, still can try out clipping the rect region.
     auto tryClip = false;
 
-    if (pTransform && (!mathRightAngle(&pTransform->m) || mathSkewed(&pTransform->m))) tryClip = true;
-    if (rTransform && (!mathRightAngle(&rTransform->m) || mathSkewed(&rTransform->m))) tryClip = true;
+    if (pTransform && (!rightAngle(&pTransform->m) || skewed(&pTransform->m))) tryClip = true;
+    if (rTransform && (!rightAngle(&rTransform->m) || skewed(&rTransform->m))) tryClip = true;
 
     if (tryClip) return _clipRect(renderer, pts, pTransform, rTransform, before);
 
@@ -103,8 +103,8 @@ static Result _compFastTrack(RenderMethod* renderer, Paint* cmpTarget, const Ren
     auto pt3 = pts + 2;
     auto pt4 = pts + 3;
 
-    if ((mathEqual(pt1->x, pt2->x) && mathEqual(pt2->y, pt3->y) && mathEqual(pt3->x, pt4->x) && mathEqual(pt1->y, pt4->y)) ||
-        (mathEqual(pt2->x, pt3->x) && mathEqual(pt1->y, pt2->y) && mathEqual(pt1->x, pt4->x) && mathEqual(pt3->y, pt4->y))) {
+    if ((tvg::equal(pt1->x, pt2->x) && tvg::equal(pt2->y, pt3->y) && tvg::equal(pt3->x, pt4->x) && tvg::equal(pt1->y, pt4->y)) ||
+        (tvg::equal(pt2->x, pt3->x) && tvg::equal(pt1->y, pt2->y) && tvg::equal(pt1->x, pt4->x) && tvg::equal(pt3->y, pt4->y))) {
 
         RenderRegion after;
 
@@ -182,9 +182,9 @@ bool Paint::Impl::rotate(float degree)
 {
     if (rTransform) {
         if (rTransform->overriding) return false;
-        if (mathEqual(degree, rTransform->degree)) return true;
+        if (tvg::equal(degree, rTransform->degree)) return true;
     } else {
-        if (mathZero(degree)) return true;
+        if (tvg::zero(degree)) return true;
         rTransform = new RenderTransform();
     }
     rTransform->degree = degree;
@@ -198,9 +198,9 @@ bool Paint::Impl::scale(float factor)
 {
     if (rTransform) {
         if (rTransform->overriding) return false;
-        if (mathEqual(factor, rTransform->scale)) return true;
+        if (tvg::equal(factor, rTransform->scale)) return true;
     } else {
-        if (mathEqual(factor, 1.0f)) return true;
+        if (tvg::equal(factor, 1.0f)) return true;
         rTransform = new RenderTransform();
     }
     rTransform->scale = factor;
@@ -214,9 +214,9 @@ bool Paint::Impl::translate(float x, float y)
 {
     if (rTransform) {
         if (rTransform->overriding) return false;
-        if (mathEqual(x, rTransform->m.e13) && mathEqual(y, rTransform->m.e23)) return true;
+        if (tvg::equal(x, rTransform->m.e13) && tvg::equal(y, rTransform->m.e23)) return true;
     } else {
-        if (mathZero(x) && mathZero(y)) return true;
+        if (tvg::zero(x) && tvg::zero(y)) return true;
         rTransform = new RenderTransform();
     }
     rTransform->m.e13 = x;

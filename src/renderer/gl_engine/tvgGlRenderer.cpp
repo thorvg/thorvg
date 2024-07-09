@@ -253,9 +253,9 @@ void GlRenderer::drawPrimitive(GlShape& sdata, const Fill* fill, RenderUpdateFla
 
         auto gradientTransform = fill->transform();
         float invMat4[16];
-        if (!mathIdentity(const_cast<const Matrix*>(&gradientTransform))) {
+        if (!identity(const_cast<const Matrix*>(&gradientTransform))) {
             Matrix inv{};
-            mathInverse(&gradientTransform  , &inv);
+            inverse(&gradientTransform  , &inv);
 
             GET_MATRIX44(inv, invMat4);
         } else {

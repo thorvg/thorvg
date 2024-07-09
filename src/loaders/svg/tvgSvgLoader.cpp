@@ -588,15 +588,15 @@ static bool _hslToRgb(float hue, float saturation, float brightness, uint8_t* re
     float _red = 0, _green = 0, _blue = 0;
     uint32_t i = 0;
 
-    if (mathZero(saturation))  _red = _green = _blue = brightness;
+    if (tvg::zero(saturation))  _red = _green = _blue = brightness;
     else {
-        if (mathEqual(hue, 360.0)) hue = 0.0f;
+        if (tvg::equal(hue, 360.0)) hue = 0.0f;
         hue /= 60.0f;
 
         v = (brightness <= 0.5f) ? (brightness * (1.0f + saturation)) : (brightness + saturation - (brightness * saturation));
         p = brightness + brightness - v;
 
-        if (!mathZero(v)) sv = (v - p) / v;
+        if (!tvg::zero(v)) sv = (v - p) / v;
         else sv = 0;
 
         i = static_cast<uint8_t>(hue);
@@ -853,8 +853,8 @@ static Matrix* _parseTransformationMatrix(const char* value)
             //Transform to signed.
             points[0] = fmodf(points[0], 360.0f);
             if (points[0] < 0) points[0] += 360.0f;
-            auto c = cosf(mathDeg2Rad(points[0]));
-            auto s = sinf(mathDeg2Rad(points[0]));
+            auto c = cosf(deg2rad(points[0]));
+            auto s = sinf(deg2rad(points[0]));
             if (ptCount == 1) {
                 Matrix tmp = { c, -s, 0, s, c, 0, 0, 0, 1 };
                 *matrix *= tmp;
@@ -877,12 +877,12 @@ static Matrix* _parseTransformationMatrix(const char* value)
             *matrix *= tmp;
         } else if (state == MatrixState::SkewX) {
             if (ptCount != 1) goto error;
-            auto deg = tanf(mathDeg2Rad(points[0]));
+            auto deg = tanf(deg2rad(points[0]));
             Matrix tmp = { 1, deg, 0, 0, 1, 0, 0, 0, 1 };
             *matrix *= tmp;
         } else if (state == MatrixState::SkewY) {
             if (ptCount != 1) goto error;
-            auto deg = tanf(mathDeg2Rad(points[0]));
+            auto deg = tanf(deg2rad(points[0]));
             Matrix tmp = { 1, 0, 0, deg, 1, 0, 0, 0, 1 };
             *matrix *= tmp;
         }

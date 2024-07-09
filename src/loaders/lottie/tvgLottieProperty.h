@@ -117,7 +117,7 @@ struct LottieScalarFrame
             if (t < 1.0f) return value;
             else return next->value;
         }
-        return mathLerp(value, next->value, t);
+        return lerp(value, next->value, t);
     }
 };
 
@@ -148,7 +148,7 @@ struct LottieVectorFrame
             t = bezAtApprox(bz, t * length, length);
             return bezPointAt(bz, t);
         } else {
-            return mathLerp(value, next->value, t);
+            return lerp(value, next->value, t);
         }
     }
 
@@ -156,7 +156,7 @@ struct LottieVectorFrame
     {
         if (!hasTangent) {
             Point dp = next->value - value;
-            return mathRad2Deg(atan2(dp.y, dp.x));
+            return rad2deg(atan2(dp.y, dp.x));
         }
 
         auto t = (frameNo - no) / (next->no - no);
@@ -246,9 +246,9 @@ static void _copy(PathSet* pathset, Array<PathCommand>& outCmds)
 
 static void _roundCorner(Array<PathCommand>& cmds, Array<Point>& pts, const Point& prev, const Point& curr, const Point& next, float roundness)
 {
-    auto lenPrev = mathLength(prev - curr);
+    auto lenPrev = length(prev - curr);
     auto rPrev = lenPrev > 0.0f ? 0.5f * std::min(lenPrev * 0.5f, roundness) / lenPrev : 0.0f;
-    auto lenNext = mathLength(next - curr);
+    auto lenNext = length(next - curr);
     auto rNext = lenNext > 0.0f ? 0.5f * std::min(lenNext * 0.5f, roundness) / lenNext : 0.0f;
 
     auto dPrev = rPrev * (curr - prev);
@@ -282,11 +282,11 @@ static bool _modifier(Point* inPts, uint32_t inPtsCnt, PathCommand* inCmds, uint
                 auto& prev = inPts[iPts - 1];
                 auto& curr = inPts[iPts + 2];
                 if (iCmds < inCmdsCnt - 1 &&
-                    mathZero(inPts[iPts - 1] - inPts[iPts]) &&
-                    mathZero(inPts[iPts + 1] - inPts[iPts + 2])) {
+                    tvg::zero(inPts[iPts - 1] - inPts[iPts]) &&
+                    tvg::zero(inPts[iPts + 1] - inPts[iPts + 2])) {
                     if (inCmds[iCmds + 1] == PathCommand::CubicTo &&
-                        mathZero(inPts[iPts + 2] - inPts[iPts + 3]) &&
-                        mathZero(inPts[iPts + 4] - inPts[iPts + 5])) {
+                        tvg::zero(inPts[iPts + 2] - inPts[iPts + 3]) &&
+                        tvg::zero(inPts[iPts + 4] - inPts[iPts + 5])) {
                         _roundCorner(cmds, pts, prev, curr, inPts[iPts + 5], roundness);
                         iPts += 3;
                         break;
@@ -443,7 +443,7 @@ struct LottieGenericProperty : LottieProperty
         if (frameNo >= frames->last().no) return frames->last().value;
 
         auto frame = frames->data + _bsearch(frames, frameNo);
-        if (mathEqual(frame->no, frameNo)) return frame->value;
+        if (tvg::equal(frame->no, frameNo)) return frame->value;
         return frame->interpolate(frame + 1, frameNo);
     }
 
@@ -548,7 +548,7 @@ struct LottiePathSet : LottieProperty
         else if (frameNo >= frames->last().no) path = &frames->last().value;
         else {
             frame = frames->data + _bsearch(frames, frameNo);
-            if (mathEqual(frame->no, frameNo)) path = &frame->value;
+            if (tvg::equal(frame->no, frameNo)) path = &frame->value;
             else if (frame->value.ptsCnt != (frame + 1)->value.ptsCnt) {
                 path = &frame->value;
                 TVGLOG("LOTTIE", "Different numbers of points in consecutive frames - interpolation omitted.");
@@ -574,7 +574,7 @@ struct LottiePathSet : LottieProperty
             auto interpPts = (Point*)malloc(frame->value.ptsCnt * sizeof(Point));
             auto p = interpPts;
             for (auto i = 0; i < frame->value.ptsCnt; ++i, ++s, ++e, ++p) {
-                *p = mathLerp(*s, *e, t);
+                *p = lerp(*s, *e, t);
                 if (transform) *p *= *transform;
             }
             _modifier(interpPts, frame->value.ptsCnt, frame->value.cmds, frame->value.cmdsCnt, cmds, pts, nullptr, roundness);
@@ -582,7 +582,7 @@ struct LottiePathSet : LottieProperty
             return true;
         } else {
             for (auto i = 0; i < frame->value.ptsCnt; ++i, ++s, ++e) {
-                auto pt = mathLerp(*s, *e, t);
+                auto pt = lerp(*s, *e, t);
                 if (transform) pt *= *transform;
                 pts.push(pt);
             }
@@ -689,7 +689,7 @@ struct LottieColorStop : LottieProperty
         if (frameNo >= frames->last().no) return fill->colorStops(frames->last().value.data, count);
 
         auto frame = frames->data + _bsearch(frames, frameNo);
-        if (mathEqual(frame->no, frameNo)) return fill->colorStops(frame->value.data, count);
+        if (tvg::equal(frame->no, frameNo)) return fill->colorStops(frame->value.data, count);
 
         //interpolate
         auto t = (frameNo - frame->no) / ((frame + 1)->no - frame->no);
@@ -706,11 +706,11 @@ struct LottieColorStop : LottieProperty
         Array<Fill::ColorStop> result;
 
         for (auto i = 0; i < count; ++i, ++s, ++e) {
-            auto offset = mathLerp(s->offset, e->offset, t);
-            auto r = mathLerp(s->r, e->r, t);
-            auto g = mathLerp(s->g, e->g, t);
-            auto b = mathLerp(s->b, e->b, t);
-            auto a = mathLerp(s->a, e->a, t);
+            auto offset = lerp(s->offset, e->offset, t);
+            auto r = lerp(s->r, e->r, t);
+            auto g = lerp(s->g, e->g, t);
+            auto b = lerp(s->b, e->b, t);
+            auto a = lerp(s->a, e->a, t);
             result.push({offset, r, g, b, a});
         }
         return fill->colorStops(result.data, count);
@@ -800,7 +800,7 @@ struct LottiePosition : LottieProperty
         if (frameNo >= frames->last().no) return frames->last().value;
 
         auto frame = frames->data + _bsearch(frames, frameNo);
-        if (mathEqual(frame->no, frameNo)) return frame->value;
+        if (tvg::equal(frame->no, frameNo)) return frame->value;
         return frame->interpolate(frame + 1, frameNo);
     }
 

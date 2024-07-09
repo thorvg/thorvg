@@ -58,8 +58,8 @@ void GlRenderPass::getMatrix(float *dst, const Matrix &matrix) const
     const auto& vp = getViewport();
 
     Matrix postMatrix{};
-    mathIdentity(&postMatrix);
-    mathTranslate(&postMatrix, -vp.x, -vp.y);
+    identity(&postMatrix);
+    translate(&postMatrix, -vp.x, -vp.y);
 
     auto m = postMatrix * matrix;
 

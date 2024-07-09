@@ -125,12 +125,12 @@ void LottieTrimpath::segment(float frameNo, float& start, float& end, LottieExpr
     auto o = fmodf(this->offset(frameNo, exps), 360.0f) / 360.0f;  //0 ~ 1
 
     auto diff = fabs(start - end);
-    if (mathZero(diff)) {
+    if (tvg::zero(diff)) {
         start = 0.0f;
         end = 0.0f;
         return;
     }
-    if (mathEqual(diff, 1.0f) || mathEqual(diff, 2.0f)) {
+    if (tvg::equal(diff, 1.0f) || tvg::equal(diff, 2.0f)) {
         start = 0.0f;
         end = 1.0f;
         return;
@@ -173,7 +173,7 @@ uint32_t LottieGradient::populate(ColorStop& color)
             //generate alpha value
             if (output.count > 0) {
                 auto p = ((*color.input)[cidx] - output.last().offset) / ((*color.input)[aidx] - output.last().offset);
-                cs.a = mathLerp<uint8_t>(output.last().a, lroundf((*color.input)[aidx + 1] * 255.0f), p);
+                cs.a = lerp<uint8_t>(output.last().a, lroundf((*color.input)[aidx + 1] * 255.0f), p);
             } else cs.a = 255;
             cidx += 4;
         } else {
@@ -182,9 +182,9 @@ uint32_t LottieGradient::populate(ColorStop& color)
             //generate color value
             if (output.count > 0) {
                 auto p = ((*color.input)[aidx] - output.last().offset) / ((*color.input)[cidx] - output.last().offset);
-                cs.r = mathLerp<uint8_t>(output.last().r, lroundf((*color.input)[cidx + 1] * 255.0f), p);
-                cs.g = mathLerp<uint8_t>(output.last().g, lroundf((*color.input)[cidx + 2] * 255.0f), p);
-                cs.b = mathLerp<uint8_t>(output.last().b, lroundf((*color.input)[cidx + 3] * 255.0f), p);
+                cs.r = lerp<uint8_t>(output.last().r, lroundf((*color.input)[cidx + 1] * 255.0f), p);
+                cs.g = lerp<uint8_t>(output.last().g, lroundf((*color.input)[cidx + 2] * 255.0f), p);
+                cs.b = lerp<uint8_t>(output.last().b, lroundf((*color.input)[cidx + 3] * 255.0f), p);
             } else cs.r = cs.g = cs.b = 255;
             aidx += 2;
         }
@@ -245,12 +245,12 @@ Fill* LottieGradient::fill(float frameNo, LottieExpressions* exps)
         auto r = (w > h) ? (w + 0.375f * h) : (h + 0.375f * w);
         auto progress = this->height(frameNo, exps) * 0.01f;
 
-        if (mathZero(progress)) {
+        if (tvg::zero(progress)) {
             P(static_cast<RadialGradient*>(fill))->radial(s.x, s.y, r, s.x, s.y, 0.0f);
         } else {
-            if (mathEqual(progress, 1.0f)) progress = 0.99f;
-            auto startAngle = mathRad2Deg(atan2(e.y - s.y, e.x - s.x));
-            auto angle = mathDeg2Rad((startAngle + this->angle(frameNo, exps)));
+            if (tvg::equal(progress, 1.0f)) progress = 0.99f;
+            auto startAngle = rad2deg(atan2(e.y - s.y, e.x - s.x));
+            auto angle = deg2rad((startAngle + this->angle(frameNo, exps)));
             auto fx = s.x + cos(angle) * progress * r;
             auto fy = s.y + sin(angle) * progress * r;
             // Lottie doesn't have any focal radius concept

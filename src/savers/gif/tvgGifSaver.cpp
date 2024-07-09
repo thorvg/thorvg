@@ -49,7 +49,7 @@ void GifSaver::run(unsigned tid)
 
     //use the default fps
     if (fps > 60.0f) fps = 60.0f;   // just in case
-    else if (mathZero(fps) || fps < 0.0f) {
+    else if (tvg::zero(fps) || fps < 0.0f) {
         fps = (animation->totalFrame() / animation->duration());
     }
 
