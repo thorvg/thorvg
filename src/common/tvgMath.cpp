@@ -103,6 +103,7 @@ namespace tvg {
 //https://en.wikipedia.org/wiki/Remez_algorithm
 float atan2(float y, float x)
 {
+    if (y == 0.0f && x == 0.0f) return 0.0f;
     auto a = std::min(fabsf(x), fabsf(y)) / std::max(fabsf(x), fabsf(y));
     auto s = a * a;
     auto r = ((-0.0464964749f * s + 0.15931422f) * s - 0.327622764f) * s * a + a;
