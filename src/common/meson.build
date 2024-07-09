@@ -2,12 +2,10 @@ source_file = [
    'tvgArray.h',
    'tvgCompressor.h',
    'tvgInlist.h',
-   'tvgLines.h',
    'tvgLock.h',
    'tvgMath.h',
    'tvgStr.h',
    'tvgCompressor.cpp',
-   'tvgLines.cpp',
    'tvgMath.cpp',
    'tvgStr.cpp'
 ]

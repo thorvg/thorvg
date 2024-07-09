@@ -22,7 +22,6 @@
 
 #include "tvgSwCommon.h"
 #include "tvgMath.h"
-#include "tvgLines.h"
 
 /************************************************************************/
 /* Internal Class Implementation                                        */
@@ -102,7 +101,7 @@ static bool _outlineClose(SwOutline& outline)
 static void _dashLineTo(SwDashStroke& dash, const Point* to, const Matrix* transform)
 {
     Line cur = {dash.ptCur, *to};
-    auto len = lineLength(cur.pt1, cur.pt2);
+    auto len = cur.length();
 
     if (tvg::zero(len)) {
         _outlineMoveTo(*dash.outline, &dash.ptCur, transform);
@@ -122,7 +121,7 @@ static void _dashLineTo(SwDashStroke& dash, const Point* to, const Matrix* trans
             Line left, right;
             if (dash.curLen > 0) {
                 len -= dash.curLen;
-                lineSplitAt(cur, dash.curLen, left, right);
+                cur.split(dash.curLen, left, right);
                 if (!dash.curOpGap) {
                     if (dash.move || dash.pattern[dash.curIdx] - dash.curLen < FLOAT_EPSILON) {
                         _outlineMoveTo(*dash.outline, &left.pt1, transform);
@@ -163,7 +162,7 @@ static void _dashLineTo(SwDashStroke& dash, const Point* to, const Matrix* trans
 static void _dashCubicTo(SwDashStroke& dash, const Point* ctrl1, const Point* ctrl2, const Point* to, const Matrix* transform)
 {
     Bezier cur = {dash.ptCur, *ctrl1, *ctrl2, *to};
-    auto len = bezLength(cur);
+    auto len = cur.length();
 
     //draw the current line fully
     if (tvg::zero(len)) {
@@ -183,7 +182,7 @@ static void _dashCubicTo(SwDashStroke& dash, const Point* ctrl1, const Point* ct
             Bezier left, right;
             if (dash.curLen > 0) {
                 len -= dash.curLen;
-                bezSplitAt(cur, dash.curLen, left, right);
+                cur.split(dash.curLen, left, right);
                 if (!dash.curOpGap) {
                     if (dash.move || dash.pattern[dash.curIdx] - dash.curLen < FLOAT_EPSILON) {
                         _outlineMoveTo(*dash.outline, &left.start, transform);
@@ -313,7 +312,7 @@ static float _outlineLength(const RenderShape* rshape, uint32_t shiftPts, uint32
                 break;
             }
             case PathCommand::CubicTo: {
-                len += bezLength({*(pts - 1), *pts, *(pts + 1), *(pts + 2)});
+                len += Bezier{*(pts - 1), *pts, *(pts + 1), *(pts + 2)}.length();
                 pts += 3;
                 break;
             }
