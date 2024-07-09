@@ -236,6 +236,44 @@ static inline void log(const Point& pt)
     TVGLOG("COMMON", "Point: [%f %f]", pt.x, pt.y);
 }
 
+
+/************************************************************************/
+/* Line functions                                                       */
+/************************************************************************/
+
+struct Line
+{
+    Point pt1;
+    Point pt2;
+
+    void split(float at, Line& left, Line& right) const;
+    float length() const;
+};
+
+
+/************************************************************************/
+/* Bezier functions                                                     */
+/************************************************************************/
+
+struct Bezier
+{
+    Point start;
+    Point ctrl1;
+    Point ctrl2;
+    Point end;
+
+    void split(float at, Bezier& left);
+    void split(Bezier& left, Bezier& right) const;
+    void split(float at, Bezier& left, Bezier& right) const;
+    float length() const;
+    float lengthApprox() const;
+    float at(float at, float length) const;
+    float atApprox(float at, float length) const;
+    Point at(float t) const;
+    float angle(float t) const;
+};
+
+
 /************************************************************************/
 /* Interpolation functions                                              */
 /************************************************************************/
