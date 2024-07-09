@@ -841,8 +841,8 @@ static bool _scaledRleImage(SwSurface* surface, const SwImage* image, const Matr
     Matrix itransform;
 
     if (transform) {
-        if (!mathInverse(transform, &itransform)) return false;
-    } else mathIdentity(&itransform);
+        if (!inverse(transform, &itransform)) return false;
+    } else identity(&itransform);
 
     if (_compositing(surface)) {
         if (_matting(surface)) return _rasterScaledMattedRleImage(surface, image, &itransform, region, opacity);
@@ -1201,8 +1201,8 @@ static bool _scaledImage(SwSurface* surface, const SwImage* image, const Matrix*
     Matrix itransform;
 
     if (transform) {
-        if (!mathInverse(transform, &itransform)) return false;
-    } else mathIdentity(&itransform);
+        if (!inverse(transform, &itransform)) return false;
+    } else identity(&itransform);
 
     if (_compositing(surface)) {
         if (_matting(surface)) return _rasterScaledMattedImage(surface, image, &itransform, region, opacity);

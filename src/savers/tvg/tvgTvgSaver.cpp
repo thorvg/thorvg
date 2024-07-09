@@ -303,7 +303,7 @@ TvgBinCounter TvgSaver::writeTagProperty(TvgBinTag tag, TvgBinCounter cnt, const
 
 TvgBinCounter TvgSaver::writeTransform(const Matrix* transform, TvgBinTag tag)
 {
-    if (!mathIdentity(transform)) return writeTagProperty(tag, SIZE(Matrix), transform);
+    if (!identity(transform)) return writeTagProperty(tag, SIZE(Matrix), transform);
     return 0;
 }
 
@@ -408,7 +408,7 @@ TvgBinCounter TvgSaver::serializeFill(const Fill* fill, TvgBinTag tag, const Mat
         radial->radial(args, args + 1, args + 2);
         cnt += writeTagProperty(TVG_TAG_FILL_RADIAL_GRADIENT, SIZE(args), args);
         //focal
-        if (!mathZero(P(radial)->fx)|| !mathZero(P(radial)->fy) || P(radial)->fr > 0.0f) {
+        if (!tvg::zero(P(radial)->fx)|| !tvg::zero(P(radial)->fy) || P(radial)->fr > 0.0f) {
             args[0] = P(radial)->fx;
             args[1] = P(radial)->fy;
             args[2] = P(radial)->fr;
@@ -489,7 +489,7 @@ TvgBinCounter TvgSaver::serializeStroke(const Shape* shape, const Matrix* pTrans
     }
 
     //dash offset
-    if (!mathZero(offset)) {
+    if (!tvg::zero(offset)) {
         cnt += writeTagProperty(TVG_TAG_SHAPE_STROKE_DASH_OFFSET, SIZE(offset), &offset);
     }
 
@@ -524,9 +524,9 @@ TvgBinCounter TvgSaver::serializePath(const Shape* shape, const Matrix* transfor
 
     //transform?
     if (preTransform) {
-        if (!mathEqual(transform->e11, 1.0f) || !mathZero(transform->e12) || !mathZero(transform->e13) ||
-            !mathZero(transform->e21) || !mathEqual(transform->e22, 1.0f) || !mathZero(transform->e23) ||
-            !mathZero(transform->e31) || !mathZero(transform->e32) || !mathEqual(transform->e33, 1.0f)) {
+        if (!tvg::equal(transform->e11, 1.0f) || !tvg::zero(transform->e12) || !tvg::zero(transform->e13) ||
+            !tvg::zero(transform->e21) || !tvg::equal(transform->e22, 1.0f) || !tvg::zero(transform->e23) ||
+            !tvg::zero(transform->e31) || !tvg::zero(transform->e32) || !tvg::equal(transform->e33, 1.0f)) {
             auto p = const_cast<Point*>(pts);
             for (uint32_t i = 0; i < ptsCnt; ++i) {
                 *p *= *transform;
@@ -563,7 +563,7 @@ TvgBinCounter TvgSaver::serializeShape(const Shape* shape, const Matrix* pTransf
         shape->strokeFill(color, color + 1, color + 2, color + 3);
         auto fill = shape->strokeFill();
         if (fill || color[3] > 0) {
-            if (!mathEqual(cTransform->e11, cTransform->e22) || (mathZero(cTransform->e11) && !mathEqual(cTransform->e12, cTransform->e21)) || shape->strokeDash(nullptr) > 0) preTransform = false;
+            if (!tvg::equal(cTransform->e11, cTransform->e22) || (tvg::zero(cTransform->e11) && !tvg::equal(cTransform->e12, cTransform->e21)) || shape->strokeDash(nullptr) > 0) preTransform = false;
             cnt += serializeStroke(shape, cTransform, preTransform);
         }
     }

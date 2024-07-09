@@ -55,7 +55,7 @@ public:
     inline float dot(const WgPoint& p) const { return x * p.x + y * p.y; }
     inline float dist(const WgPoint& p) const { return sqrt(dist2(p)); }
     inline float dist2(const WgPoint& p) const { return ((p.x - x)*(p.x - x) + (p.y - y)*(p.y - y)); }
-    inline bool equal(const WgPoint& p) const { return mathEqual(x, p.x) && mathEqual(y, p.y); }
+    inline bool equal(const WgPoint& p) const { return tvg::equal(x, p.x) && tvg::equal(y, p.y); }
     inline void normalize() { float rlen = 1.0f / length(); x *= rlen; y *= rlen; }
     inline WgPoint normal() const { float rlen = 1.0f / length(); return { x * rlen, y * rlen }; }
     inline WgPoint lerp(const WgPoint& p, float t) const { return { x + (p.x - x) * t, y + (p.y - y) * t }; };

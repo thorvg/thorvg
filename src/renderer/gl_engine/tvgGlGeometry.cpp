@@ -253,7 +253,7 @@ GlStencilMode GlGeometry::getStencilMode(RenderUpdateFlag flag)
 
 RenderRegion GlGeometry::getBounds() const
 {
-    if (mathIdentity(&mMatrix)) {
+    if (identity(&mMatrix)) {
         return mBounds;
     } else {
         Point lt{static_cast<float>(mBounds.x), static_cast<float>(mBounds.y)};

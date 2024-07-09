@@ -104,7 +104,7 @@ static void _dashLineTo(SwDashStroke& dash, const Point* to, const Matrix* trans
     Line cur = {dash.ptCur, *to};
     auto len = lineLength(cur.pt1, cur.pt2);
 
-    if (mathZero(len)) {
+    if (tvg::zero(len)) {
         _outlineMoveTo(*dash.outline, &dash.ptCur, transform);
     //draw the current line fully
     } else if (len <= dash.curLen) {
@@ -166,7 +166,7 @@ static void _dashCubicTo(SwDashStroke& dash, const Point* ctrl1, const Point* ct
     auto len = bezLength(cur);
 
     //draw the current line fully
-    if (mathZero(len)) {
+    if (tvg::zero(len)) {
         _outlineMoveTo(*dash.outline, &dash.ptCur, transform);
     } else if (len <= dash.curLen) {
         dash.curLen -= len;
@@ -284,7 +284,7 @@ static float _outlineLength(const RenderShape* rshape, uint32_t shiftPts, uint32
     if (cmdCnt <= 0 || ptsCnt <= 0) return 0.0f;
 
     const Point* close = nullptr;
-    auto length = 0.0f;
+    auto len = 0.0f;
 
     //must begin with moveTo
     if (cmds[0] == PathCommand::MoveTo) {
@@ -297,30 +297,30 @@ static float _outlineLength(const RenderShape* rshape, uint32_t shiftPts, uint32
     while (cmdCnt-- > 0) {
         switch (*cmds) {
             case PathCommand::Close: {
-                length += mathLength(pts - 1, close);
-                if (subpath) return length;
+                len += length(pts - 1, close);
+                if (subpath) return len;
                 break;
             }
             case PathCommand::MoveTo: {
-                if (subpath) return length;
+                if (subpath) return len;
                 close = pts;
                 ++pts;
                 break;
             }
             case PathCommand::LineTo: {
-                length += mathLength(pts - 1, pts);
+                len += length(pts - 1, pts);
                 ++pts;
                 break;
             }
             case PathCommand::CubicTo: {
-                length += bezLength({*(pts - 1), *pts, *(pts + 1), *(pts + 2)});
+                len += bezLength({*(pts - 1), *pts, *(pts + 1), *(pts + 2)});
                 pts += 3;
                 break;
             }
         }
         ++cmds;
     }
-    return length;
+    return len;
 }
 
 
@@ -353,7 +353,7 @@ static SwOutline* _genDashOutline(const RenderShape* rshape, const Matrix* trans
     //offset
     auto patternLength = 0.0f;
     uint32_t offIdx = 0;
-    if (!mathZero(offset)) {
+    if (!tvg::zero(offset)) {
         for (size_t i = 0; i < dash.cnt; ++i) patternLength += dash.pattern[i];
         bool isOdd = dash.cnt % 2;
         if (isOdd) patternLength *= 2;

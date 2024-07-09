@@ -105,7 +105,7 @@ static bool _draw(LottieGroup* parent, RenderContext* ctx);
 static void _rotateX(Matrix* m, float degree)
 {
     if (degree == 0.0f) return;
-    auto radian = mathDeg2Rad(degree);
+    auto radian = deg2rad(degree);
     m->e22 *= cosf(radian);
 }
 
@@ -113,7 +113,7 @@ static void _rotateX(Matrix* m, float degree)
 static void _rotateY(Matrix* m, float degree)
 {
     if (degree == 0.0f) return;
-    auto radian = mathDeg2Rad(degree);
+    auto radian = deg2rad(degree);
     m->e11 *= cosf(radian);
 }
 
@@ -121,7 +121,7 @@ static void _rotateY(Matrix* m, float degree)
 static void _rotationZ(Matrix* m, float degree)
 {
     if (degree == 0.0f) return;
-    auto radian = mathDeg2Rad(degree);
+    auto radian = deg2rad(degree);
     m->e11 = cosf(radian);
     m->e12 = -sinf(radian);
     m->e21 = sinf(radian);
@@ -131,25 +131,25 @@ static void _rotationZ(Matrix* m, float degree)
 
 static void _skew(Matrix* m, float angleDeg, float axisDeg)
 {
-    auto angle = -mathDeg2Rad(angleDeg);
+    auto angle = -deg2rad(angleDeg);
     float tanVal = tanf(angle);
 
     axisDeg = fmod(axisDeg, 180.0f);
     if (fabsf(axisDeg) < 0.01f || fabsf(axisDeg - 180.0f) < 0.01f || fabsf(axisDeg + 180.0f) < 0.01f) {
-        float cosVal = cosf(mathDeg2Rad(axisDeg));
+        float cosVal = cosf(deg2rad(axisDeg));
         auto B = cosVal * cosVal * tanVal;
         m->e12 += B * m->e11;
         m->e22 += B * m->e21;
         return;
     } else if (fabsf(axisDeg - 90.0f) < 0.01f || fabsf(axisDeg + 90.0f) < 0.01f) {
-        float sinVal = -sinf(mathDeg2Rad(axisDeg));
+        float sinVal = -sinf(deg2rad(axisDeg));
         auto C = sinVal * sinVal * tanVal;
         m->e11 -= C * m->e12;
         m->e21 -= C * m->e22;
         return;
     }
 
-    auto axis = -mathDeg2Rad(axisDeg);
+    auto axis = -deg2rad(axisDeg);
     float cosVal = cosf(axis);
     float sinVal = sinf(axis);
     auto A = sinVal * cosVal * tanVal;
@@ -167,7 +167,7 @@ static void _skew(Matrix* m, float angleDeg, float axisDeg)
 
 static bool _updateTransform(LottieTransform* transform, float frameNo, bool autoOrient, Matrix& matrix, uint8_t& opacity, LottieExpressions* exps)
 {
-    mathIdentity(&matrix);
+    identity(&matrix);
 
     if (!transform) {
         opacity = 255;
@@ -175,10 +175,10 @@ static bool _updateTransform(LottieTransform* transform, float frameNo, bool aut
     }
 
     if (transform->coords) {
-        mathTranslate(&matrix, transform->coords->x(frameNo), transform->coords->y(frameNo));
+        translate(&matrix, transform->coords->x(frameNo), transform->coords->y(frameNo));
     } else {
         auto position = transform->position(frameNo, exps);
-        mathTranslate(&matrix, position.x, position.y);
+        translate(&matrix, position.x, position.y);
     }
 
     auto angle = 0.0f;
@@ -200,11 +200,11 @@ static bool _updateTransform(LottieTransform* transform, float frameNo, bool aut
     }
 
     auto scale = transform->scale(frameNo, exps);
-    mathScaleR(&matrix, scale.x * 0.01f, scale.y * 0.01f);
+    scaleR(&matrix, scale.x * 0.01f, scale.y * 0.01f);
 
     //Lottie specific anchor transform.
     auto anchor = transform->anchor(frameNo, exps);
-    mathTranslateR(&matrix, -anchor.x, -anchor.y);
+    translateR(&matrix, -anchor.x, -anchor.y);
 
     //invisible just in case.
     if (scale.x == 0.0f || scale.y == 0.0f) opacity = 0;
@@ -216,7 +216,7 @@ static bool _updateTransform(LottieTransform* transform, float frameNo, bool aut
 
 static void _updateTransform(LottieLayer* layer, float frameNo, LottieExpressions* exps)
 {
-    if (!layer || mathEqual(layer->cache.frameNo, frameNo)) return;
+    if (!layer || tvg::equal(layer->cache.frameNo, frameNo)) return;
 
     auto transform = layer->transform;
     auto parent = layer->parent;
@@ -228,8 +228,8 @@ static void _updateTransform(LottieLayer* layer, float frameNo, LottieExpression
     _updateTransform(transform, frameNo, layer->autoOrient, matrix, layer->cache.opacity, exps);
 
     if (parent) {
-        if (!mathIdentity((const Matrix*) &parent->cache.matrix)) {
-            if (mathIdentity((const Matrix*) &matrix)) layer->cache.matrix = parent->cache.matrix;
+        if (!identity((const Matrix*) &parent->cache.matrix)) {
+            if (identity((const Matrix*) &matrix)) layer->cache.matrix = parent->cache.matrix;
             else layer->cache.matrix = parent->cache.matrix * matrix;
         }
     }
@@ -406,22 +406,22 @@ static void _repeat(LottieGroup* parent, unique_ptr<Shape> path, RenderContext* 
                 auto shape = static_cast<Shape*>((*propagator)->duplicate());
                 P(shape)->rs.path = P(path.get())->rs.path;
 
-                auto opacity = repeater->interpOpacity ? mathLerp<uint8_t>(repeater->startOpacity, repeater->endOpacity, static_cast<float>(i + 1) / repeater->cnt) : repeater->startOpacity;
+                auto opacity = repeater->interpOpacity ? lerp<uint8_t>(repeater->startOpacity, repeater->endOpacity, static_cast<float>(i + 1) / repeater->cnt) : repeater->startOpacity;
                 shape->opacity(opacity);
 
                 Matrix m;
-                mathIdentity(&m);
-                mathTranslate(&m, repeater->position.x * multiplier + repeater->anchor.x, repeater->position.y * multiplier + repeater->anchor.y);
-                mathScale(&m, powf(repeater->scale.x * 0.01f, multiplier), powf(repeater->scale.y * 0.01f, multiplier));
-                mathRotate(&m, repeater->rotation * multiplier);
-                mathTranslateR(&m, -repeater->anchor.x, -repeater->anchor.y);
+                identity(&m);
+                translate(&m, repeater->position.x * multiplier + repeater->anchor.x, repeater->position.y * multiplier + repeater->anchor.y);
+                scale(&m, powf(repeater->scale.x * 0.01f, multiplier), powf(repeater->scale.y * 0.01f, multiplier));
+                rotate(&m, repeater->rotation * multiplier);
+                translateR(&m, -repeater->anchor.x, -repeater->anchor.y);
                 m = repeater->transform * m;
 
                 auto pm = PP(shape)->transform();
                 if (pm) {
-                    Matrix inverse;
-                    mathInverse(&repeater->transform, &inverse);
-                    *pm = inverse * *pm;
+                    Matrix m;
+                    inverse(&repeater->transform, &m);
+                    *pm = m * *pm;
                 }
 
                 shape->transform(pm ? m * *pm : m);
@@ -452,7 +452,7 @@ static void _repeat(LottieGroup* parent, unique_ptr<Shape> path, RenderContext* 
 static void _appendRect(Shape* shape, float x, float y, float w, float h, float r, Matrix* transform)
 {
     //sharp rect
-    if (mathZero(r)) {
+    if (tvg::zero(r)) {
         PathCommand commands[] = {
             PathCommand::MoveTo, PathCommand::LineTo, PathCommand::LineTo,
             PathCommand::LineTo, PathCommand::Close
@@ -601,14 +601,14 @@ static void _applyRoundedCorner(Shape* star, Shape* merging, float outerRoundnes
     const Point *pts = nullptr;
     auto ptsCnt = star->pathCoords(&pts);
 
-    auto len = mathLength(pts[1] - pts[2]);
+    auto len = length(pts[1] - pts[2]);
     auto r = len > 0.0f ? ROUNDED_POLYSTAR_MAGIC_NUMBER * std::min(len * 0.5f, roundness) / len : 0.0f;
 
     if (hasRoundness) {
         P(merging)->rs.path.cmds.grow((uint32_t)(1.5 * cmdCnt));
         P(merging)->rs.path.pts.grow((uint32_t)(4.5 * cmdCnt));
 
-        int start = 3 * mathZero(outerRoundness);
+        int start = 3 * tvg::zero(outerRoundness);
         merging->moveTo(pts[start].x, pts[start].y);
 
         for (uint32_t i = 1 + start; i < ptsCnt; i += 6) {
@@ -666,7 +666,7 @@ static void _updateStar(LottieGroup* parent, LottiePolyStar* star, Matrix* trans
     auto innerRoundness = star->innerRoundness(frameNo, exps) * 0.01f;
     auto outerRoundness = star->outerRoundness(frameNo, exps) * 0.01f;
 
-    auto angle = mathDeg2Rad(-90.0f);
+    auto angle = deg2rad(-90.0f);
     auto partialPointRadius = 0.0f;
     auto anglePerPoint = (2.0f * MATH_PI / ptsCnt);
     auto halfAnglePerPoint = anglePerPoint * 0.5f;
@@ -675,17 +675,17 @@ static void _updateStar(LottieGroup* parent, LottiePolyStar* star, Matrix* trans
     auto numPoints = size_t(ceilf(ptsCnt) * 2);
     auto direction = (star->direction == 0) ? 1.0f : -1.0f;
     auto hasRoundness = false;
-    bool roundedCorner = (roundness > ROUNDNESS_EPSILON) && (mathZero(innerRoundness) || mathZero(outerRoundness));
+    bool roundedCorner = (roundness > ROUNDNESS_EPSILON) && (tvg::zero(innerRoundness) || tvg::zero(outerRoundness));
     //TODO: we can use PathCommand / PathCoord directly.
     auto shape = roundedCorner ? Shape::gen().release() : merging;
 
     float x, y;
 
-    if (!mathZero(partialPointAmount)) {
+    if (!tvg::zero(partialPointAmount)) {
         angle += halfAnglePerPoint * (1.0f - partialPointAmount) * direction;
     }
 
-    if (!mathZero(partialPointAmount)) {
+    if (!tvg::zero(partialPointAmount)) {
         partialPointRadius = innerRadius + partialPointAmount * (outerRadius - innerRadius);
         x = partialPointRadius * cosf(angle);
         y = partialPointRadius * sinf(angle);
@@ -696,7 +696,7 @@ static void _updateStar(LottieGroup* parent, LottiePolyStar* star, Matrix* trans
         angle += halfAnglePerPoint * direction;
     }
 
-    if (mathZero(innerRoundness) && mathZero(outerRoundness)) {
+    if (tvg::zero(innerRoundness) && tvg::zero(outerRoundness)) {
         P(shape)->rs.path.pts.reserve(numPoints + 2);
         P(shape)->rs.path.cmds.reserve(numPoints + 3);
     } else {
@@ -712,10 +712,10 @@ static void _updateStar(LottieGroup* parent, LottiePolyStar* star, Matrix* trans
     for (size_t i = 0; i < numPoints; i++) {
         auto radius = longSegment ? outerRadius : innerRadius;
         auto dTheta = halfAnglePerPoint;
-        if (!mathZero(partialPointRadius) && i == numPoints - 2) {
+        if (!tvg::zero(partialPointRadius) && i == numPoints - 2) {
             dTheta = anglePerPoint * partialPointAmount * 0.5f;
         }
-        if (!mathZero(partialPointRadius) && i == numPoints - 1) {
+        if (!tvg::zero(partialPointRadius) && i == numPoints - 1) {
             radius = partialPointRadius;
         }
         auto previousX = x;
@@ -724,10 +724,10 @@ static void _updateStar(LottieGroup* parent, LottiePolyStar* star, Matrix* trans
         y = radius * sinf(angle);
 
         if (hasRoundness) {
-            auto cp1Theta = (mathAtan2(previousY, previousX) - MATH_PI2 * direction);
+            auto cp1Theta = (tvg::atan2(previousY, previousX) - MATH_PI2 * direction);
             auto cp1Dx = cosf(cp1Theta);
             auto cp1Dy = sinf(cp1Theta);
-            auto cp2Theta = (mathAtan2(y, x) - MATH_PI2 * direction);
+            auto cp2Theta = (tvg::atan2(y, x) - MATH_PI2 * direction);
             auto cp2Dx = cosf(cp2Theta);
             auto cp2Dy = sinf(cp2Theta);
 
@@ -741,7 +741,7 @@ static void _updateStar(LottieGroup* parent, LottiePolyStar* star, Matrix* trans
             auto cp2x = cp2Radius * cp2Roundness * POLYSTAR_MAGIC_NUMBER * cp2Dx / ptsCnt;
             auto cp2y = cp2Radius * cp2Roundness * POLYSTAR_MAGIC_NUMBER * cp2Dy / ptsCnt;
 
-            if (!mathZero(partialPointAmount) && ((i == 0) || (i == numPoints - 1))) {
+            if (!tvg::zero(partialPointAmount) && ((i == 0) || (i == numPoints - 1))) {
                 cp1x *= partialPointAmount;
                 cp1y *= partialPointAmount;
                 cp2x *= partialPointAmount;
@@ -781,7 +781,7 @@ static void _updatePolygon(LottieGroup* parent, LottiePolyStar* star, Matrix* tr
     auto radius = star->outerRadius(frameNo, exps);
     auto roundness = star->outerRoundness(frameNo, exps) * 0.01f;
 
-    auto angle = mathDeg2Rad(-90.0f);
+    auto angle = deg2rad(-90.0f);
     auto anglePerPoint = 2.0f * MATH_PI / float(ptsCnt);
     auto direction = (star->direction == 0) ? 1.0f : -1.0f;
     auto hasRoundness = false;
@@ -790,7 +790,7 @@ static void _updatePolygon(LottieGroup* parent, LottiePolyStar* star, Matrix* tr
 
     angle += anglePerPoint * direction;
 
-    if (mathZero(roundness)) {
+    if (tvg::zero(roundness)) {
         P(merging)->rs.path.pts.reserve(ptsCnt + 2);
         P(merging)->rs.path.cmds.reserve(ptsCnt + 3);
     } else {
@@ -810,10 +810,10 @@ static void _updatePolygon(LottieGroup* parent, LottiePolyStar* star, Matrix* tr
         y = (radius * sinf(angle));
 
         if (hasRoundness) {
-            auto cp1Theta = mathAtan2(previousY, previousX) - MATH_PI2 * direction;
+            auto cp1Theta = tvg::atan2(previousY, previousX) - MATH_PI2 * direction;
             auto cp1Dx = cosf(cp1Theta);
             auto cp1Dy = sinf(cp1Theta);
-            auto cp2Theta = mathAtan2(y, x) - MATH_PI2 * direction;
+            auto cp2Theta = tvg::atan2(y, x) - MATH_PI2 * direction;
             auto cp2Dx = cosf(cp2Theta);
             auto cp2Dy = sinf(cp2Theta);
 
@@ -848,14 +848,14 @@ static void _updatePolystar(LottieGroup* parent, LottieObject** child, float fra
 
     //Optimize: Can we skip the individual coords transform?
     Matrix matrix;
-    mathIdentity(&matrix);
+    identity(&matrix);
     auto position = star->position(frameNo, exps);
-    mathTranslate(&matrix, position.x, position.y);
-    mathRotate(&matrix, star->rotation(frameNo, exps));
+    translate(&matrix, position.x, position.y);
+    rotate(&matrix, star->rotation(frameNo, exps));
 
     if (ctx->transform) matrix = *ctx->transform * matrix;
 
-    auto identity = mathIdentity((const Matrix*)&matrix);
+    auto identity = tvg::identity((const Matrix*)&matrix);
 
     if (!ctx->repeaters.empty()) {
         auto p = Shape::gen();
@@ -886,7 +886,7 @@ static void _updateRepeater(TVG_UNUSED LottieGroup* parent, LottieObject** child
     RenderRepeater r;
     r.cnt = static_cast<int>(repeater->copies(frameNo, exps));
     if (auto tr = PP(ctx->propagator)->transform()) r.transform = *tr;
-    else mathIdentity(&r.transform);
+    else identity(&r.transform);
     r.offset = repeater->offset(frameNo, exps);
     r.position = repeater->position(frameNo, exps);
     r.anchor = repeater->anchor(frameNo, exps);
