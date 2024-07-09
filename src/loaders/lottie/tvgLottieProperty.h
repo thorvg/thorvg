@@ -156,7 +156,7 @@ struct LottieVectorFrame
     {
         if (!hasTangent) {
             Point dp = next->value - value;
-            return mathRad2Deg(atan2(dp.y, dp.x));
+            return mathRad2Deg(mathAtan2(dp.y, dp.x));
         }
 
         auto t = (frameNo - no) / (next->no - no);
