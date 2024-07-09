@@ -383,7 +383,8 @@ static bool _rasterMattedRect(SwSurface* surface, const SwBBox& region, uint8_t 
             auto dst = &buffer[y * surface->stride];
             auto cmp = &cbuffer[y * surface->compositor->image.stride * csize];
             for (uint32_t x = 0; x < w; ++x, ++dst, cmp += csize) {
-                *dst = INTERPOLATE(color, *dst, alpha(cmp));
+                auto tmp = ALPHA_BLEND(color, alpha(cmp));
+                *dst = tmp + ALPHA_BLEND(*dst, IA(tmp));
             }
         }
     //8bits grayscale
