@@ -162,8 +162,8 @@ Result Shape::appendArc(float cx, float cy, float radius, float startAngle, floa
     if (sweep >= 360.0f || sweep <= -360.0f) return appendCircle(cx, cy, radius, radius);
 
     const float arcPrecision = 1e-5f;
-    startAngle = mathDeg2Rad(startAngle);
-    sweep = mathDeg2Rad(sweep);
+    startAngle = deg2rad(startAngle);
+    sweep = deg2rad(sweep);
 
     auto nCurves = static_cast<int>(fabsf(sweep / MATH_PI2));
     if (fabsf(sweep / MATH_PI2) - nCurves > arcPrecision) ++nCurves;

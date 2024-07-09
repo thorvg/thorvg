@@ -179,7 +179,7 @@ SwFixed mathTan(SwFixed angle)
 SwFixed mathAtan(const SwPoint& pt)
 {
     if (pt.zero()) return 0;
-    return SwFixed(mathAtan2(TO_FLOAT(pt.y), TO_FLOAT(pt.x)) * (180.0f / MATH_PI) * 65536.0f);
+    return SwFixed(tvg::atan2(TO_FLOAT(pt.y), TO_FLOAT(pt.x)) * (180.0f / MATH_PI) * 65536.0f);
 }
 
 

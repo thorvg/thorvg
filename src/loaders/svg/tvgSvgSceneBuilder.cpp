@@ -215,7 +215,7 @@ static bool _appendClipUseNode(SvgLoaderData& loaderData, SvgNode* node, Shape* 
     }
     if (child->transform) finalTransform = *child->transform * finalTransform;
 
-    return _appendClipShape(loaderData, child, shape, vBox, svgPath, mathIdentity((const Matrix*)(&finalTransform)) ? nullptr : &finalTransform);
+    return _appendClipShape(loaderData, child, shape, vBox, svgPath, identity((const Matrix*)(&finalTransform)) ? nullptr : &finalTransform);
 }
 
 
@@ -736,10 +736,10 @@ static unique_ptr<Scene> _useBuildHelper(SvgLoaderData& loaderData, const SvgNod
         auto vh = (symbol.hasViewBox ? symbol.vh : height);
 
         Matrix mViewBox = {1, 0, 0, 0, 1, 0, 0, 0, 1};
-        if ((!mathEqual(width, vw) || !mathEqual(height, vh)) && vw > 0 && vh > 0) {
+        if ((!tvg::equal(width, vw) || !tvg::equal(height, vh)) && vw > 0 && vh > 0) {
             Box box = {symbol.vx, symbol.vy, vw, vh};
             mViewBox = _calculateAspectRatioMatrix(symbol.align, symbol.meetOrSlice, width, height, box);
-        } else if (!mathZero(symbol.vx) || !mathZero(symbol.vy)) {
+        } else if (!tvg::zero(symbol.vx) || !tvg::zero(symbol.vy)) {
             mViewBox = {1, 0, -symbol.vx, 0, 1, -symbol.vy, 0, 0, 1};
         }
 
@@ -821,7 +821,7 @@ static unique_ptr<Text> _textBuildHelper(SvgLoaderData& loaderData, const SvgNod
 
     Matrix textTransform = {1, 0, 0, 0, 1, 0, 0, 0, 1};
     if (node->transform) textTransform = *node->transform;
-    mathTranslateR(&textTransform, node->node.text.x, node->node.text.y - textNode->fontSize);
+    translateR(&textTransform, node->node.text.x, node->node.text.y - textNode->fontSize);
     text->transform(textTransform);
 
     //TODO: handle def values of font and size as used in a system?
@@ -926,10 +926,10 @@ Scene* svgSceneBuild(SvgLoaderData& loaderData, Box vBox, float w, float h, Aspe
 
     if (!(viewFlag & SvgViewFlag::Viewbox)) _updateInvalidViewSize(docNode.get(), vBox, w, h, viewFlag);
 
-    if (!mathEqual(w, vBox.w) || !mathEqual(h, vBox.h)) {
+    if (!tvg::equal(w, vBox.w) || !tvg::equal(h, vBox.h)) {
         Matrix m = _calculateAspectRatioMatrix(align, meetOrSlice, w, h, vBox);
         docNode->transform(m);
-    } else if (!mathZero(vBox.x) || !mathZero(vBox.y)) {
+    } else if (!tvg::zero(vBox.x) || !tvg::zero(vBox.y)) {
         docNode->translate(-vBox.x, -vBox.y);
     }
 
