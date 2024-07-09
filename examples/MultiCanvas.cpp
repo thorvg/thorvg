@@ -144,10 +144,11 @@ void runGl()
 
 void runWg()
 {
-#ifdef THORVG_WG_RASTER_SUPPORT
 #if 1
     cout << "Not Support WebGPU" << endl;
-#else //TODO with Drawing Target?
+#else
+#ifdef THORVG_WG_RASTER_SUPPORT
+    //TODO with Drawing Target?
     auto window = SDL_CreateWindow("ThorVG Example (WebGPU)", SDL_WINDOWPOS_UNDEFINED, SDL_WINDOWPOS_UNDEFINED, WIDTH, HEIGHT, SDL_WINDOW_HIDDEN);
 
     //Here we create our WebGPU surface from the window!
@@ -211,6 +212,8 @@ void runWg()
 
     wgpuInstanceRelease(instance);
     SDL_DestroyWindow(window);
+#else
+    cout << "webgpu driver is not detected!" << endl;
 #endif
 #endif
 }
