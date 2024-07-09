@@ -238,7 +238,7 @@ float bezAngleAt(const Bezier& bz, float t)
     pt.x *= 3;
     pt.y *= 3;
 
-    return mathRad2Deg(atan2(pt.y, pt.x));
+    return mathRad2Deg(mathAtan2(pt.y, pt.x));
 }
 
 
