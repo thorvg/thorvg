@@ -478,7 +478,7 @@ static bool _rasterRect(SwSurface* surface, const SwBBox& region, uint8_t r, uin
 /* Rle                                                                  */
 /************************************************************************/
 
-static bool _rasterCompositeMaskedRle(SwSurface* surface, SwRleData* rle, SwMask maskOp, uint8_t r, uint8_t g, uint8_t b, uint8_t a)
+static bool _rasterCompositeMaskedRle(SwSurface* surface, SwRle* rle, SwMask maskOp, uint8_t r, uint8_t g, uint8_t b, uint8_t a)
 {
     auto span = rle->spans;
     auto cbuffer = surface->compositor->image.buf8;
@@ -498,7 +498,7 @@ static bool _rasterCompositeMaskedRle(SwSurface* surface, SwRleData* rle, SwMask
 }
 
 
-static bool _rasterDirectMaskedRle(SwSurface* surface, SwRleData* rle, SwMask maskOp, uint8_t r, uint8_t g, uint8_t b, uint8_t a)
+static bool _rasterDirectMaskedRle(SwSurface* surface, SwRle* rle, SwMask maskOp, uint8_t r, uint8_t g, uint8_t b, uint8_t a)
 {
     auto span = rle->spans;
     auto cbuffer = surface->compositor->image.buf8;
@@ -519,7 +519,7 @@ static bool _rasterDirectMaskedRle(SwSurface* surface, SwRleData* rle, SwMask ma
 }
 
 
-static bool _rasterMaskedRle(SwSurface* surface, SwRleData* rle, uint8_t r, uint8_t g, uint8_t b, uint8_t a)
+static bool _rasterMaskedRle(SwSurface* surface, SwRle* rle, uint8_t r, uint8_t g, uint8_t b, uint8_t a)
 {
     TVGLOG("SW_ENGINE", "Masked(%d) Rle", (int)surface->compositor->method);
 
@@ -533,7 +533,7 @@ static bool _rasterMaskedRle(SwSurface* surface, SwRleData* rle, uint8_t r, uint
 }
 
 
-static bool _rasterMattedRle(SwSurface* surface, SwRleData* rle, uint8_t r, uint8_t g, uint8_t b, uint8_t a)
+static bool _rasterMattedRle(SwSurface* surface, SwRle* rle, uint8_t r, uint8_t g, uint8_t b, uint8_t a)
 {
     TVGLOG("SW_ENGINE", "Matted(%d) Rle", (int)surface->compositor->method);
 
@@ -576,7 +576,7 @@ static bool _rasterMattedRle(SwSurface* surface, SwRleData* rle, uint8_t r, uint
 }
 
 
-static bool _rasterBlendingRle(SwSurface* surface, const SwRleData* rle, uint8_t r, uint8_t g, uint8_t b, uint8_t a)
+static bool _rasterBlendingRle(SwSurface* surface, const SwRle* rle, uint8_t r, uint8_t g, uint8_t b, uint8_t a)
 {
     if (surface->channelSize != sizeof(uint32_t)) return false;
 
@@ -601,7 +601,7 @@ static bool _rasterBlendingRle(SwSurface* surface, const SwRleData* rle, uint8_t
 }
 
 
-static bool _rasterTranslucentRle(SwSurface* surface, const SwRleData* rle, uint8_t r, uint8_t g, uint8_t b, uint8_t a)
+static bool _rasterTranslucentRle(SwSurface* surface, const SwRle* rle, uint8_t r, uint8_t g, uint8_t b, uint8_t a)
 {
 #if defined(THORVG_AVX_VECTOR_SUPPORT)
     return avxRasterTranslucentRle(surface, rle, r, g, b, a);
@@ -613,7 +613,7 @@ static bool _rasterTranslucentRle(SwSurface* surface, const SwRleData* rle, uint
 }
 
 
-static bool _rasterSolidRle(SwSurface* surface, const SwRleData* rle, uint8_t r, uint8_t g, uint8_t b)
+static bool _rasterSolidRle(SwSurface* surface, const SwRle* rle, uint8_t r, uint8_t g, uint8_t b)
 {
     auto span = rle->spans;
 
@@ -650,7 +650,7 @@ static bool _rasterSolidRle(SwSurface* surface, const SwRleData* rle, uint8_t r,
 }
 
 
-static bool _rasterRle(SwSurface* surface, SwRleData* rle, uint8_t r, uint8_t g, uint8_t b, uint8_t a)
+static bool _rasterRle(SwSurface* surface, SwRle* rle, uint8_t r, uint8_t g, uint8_t b, uint8_t a)
 {
     if (!rle) return false;
 
@@ -1609,7 +1609,7 @@ static bool _rasterRadialGradientRect(SwSurface* surface, const SwBBox& region, 
 /************************************************************************/
 
 template<typename fillMethod>
-static bool _rasterCompositeGradientMaskedRle(SwSurface* surface, const SwRleData* rle, const SwFill* fill, SwMask maskOp)
+static bool _rasterCompositeGradientMaskedRle(SwSurface* surface, const SwRle* rle, const SwFill* fill, SwMask maskOp)
 {
     auto span = rle->spans;
     auto cstride = surface->compositor->image.stride;
@@ -1624,7 +1624,7 @@ static bool _rasterCompositeGradientMaskedRle(SwSurface* surface, const SwRleDat
 
 
 template<typename fillMethod>
-static bool _rasterDirectGradientMaskedRle(SwSurface* surface, const SwRleData* rle, const SwFill* fill, SwMask maskOp)
+static bool _rasterDirectGradientMaskedRle(SwSurface* surface, const SwRle* rle, const SwFill* fill, SwMask maskOp)
 {
     auto span = rle->spans;
     auto cstride = surface->compositor->image.stride;
@@ -1641,7 +1641,7 @@ static bool _rasterDirectGradientMaskedRle(SwSurface* surface, const SwRleData* 
 
 
 template<typename fillMethod>
-static bool _rasterGradientMaskedRle(SwSurface* surface, const SwRleData* rle, const SwFill* fill)
+static bool _rasterGradientMaskedRle(SwSurface* surface, const SwRle* rle, const SwFill* fill)
 {
     auto method = surface->compositor->method;
 
@@ -1656,7 +1656,7 @@ static bool _rasterGradientMaskedRle(SwSurface* surface, const SwRleData* rle, c
 
 
 template<typename fillMethod>
-static bool _rasterGradientMattedRle(SwSurface* surface, const SwRleData* rle, const SwFill* fill)
+static bool _rasterGradientMattedRle(SwSurface* surface, const SwRle* rle, const SwFill* fill)
 {
     TVGLOG("SW_ENGINE", "Matted(%d) Rle Linear Gradient", (int)surface->compositor->method);
 
@@ -1675,7 +1675,7 @@ static bool _rasterGradientMattedRle(SwSurface* surface, const SwRleData* rle, c
 
 
 template<typename fillMethod>
-static bool _rasterBlendingGradientRle(SwSurface* surface, const SwRleData* rle, const SwFill* fill)
+static bool _rasterBlendingGradientRle(SwSurface* surface, const SwRle* rle, const SwFill* fill)
 {
     auto span = rle->spans;
 
@@ -1688,7 +1688,7 @@ static bool _rasterBlendingGradientRle(SwSurface* surface, const SwRleData* rle,
 
 
 template<typename fillMethod>
-static bool _rasterTranslucentGradientRle(SwSurface* surface, const SwRleData* rle, const SwFill* fill)
+static bool _rasterTranslucentGradientRle(SwSurface* surface, const SwRle* rle, const SwFill* fill)
 {
     auto span = rle->spans;
 
@@ -1711,7 +1711,7 @@ static bool _rasterTranslucentGradientRle(SwSurface* surface, const SwRleData* r
 
 
 template<typename fillMethod>
-static bool _rasterSolidGradientRle(SwSurface* surface, const SwRleData* rle, const SwFill* fill)
+static bool _rasterSolidGradientRle(SwSurface* surface, const SwRle* rle, const SwFill* fill)
 {
     auto span = rle->spans;
 
@@ -1735,7 +1735,7 @@ static bool _rasterSolidGradientRle(SwSurface* surface, const SwRleData* rle, co
 }
 
 
-static bool _rasterLinearGradientRle(SwSurface* surface, const SwRleData* rle, const SwFill* fill)
+static bool _rasterLinearGradientRle(SwSurface* surface, const SwRle* rle, const SwFill* fill)
 {
     if (!rle) return false;
 
@@ -1752,7 +1752,7 @@ static bool _rasterLinearGradientRle(SwSurface* surface, const SwRleData* rle, c
 }
 
 
-static bool _rasterRadialGradientRle(SwSurface* surface, const SwRleData* rle, const SwFill* fill)
+static bool _rasterRadialGradientRle(SwSurface* surface, const SwRle* rle, const SwFill* fill)
 {
     if (!rle) return false;
 

@@ -217,7 +217,7 @@ struct Cell
 
 struct RleWorker
 {
-    SwRleData* rle;
+    SwRle* rle;
 
     SwPoint cellPos;
     SwPoint cellMin;
@@ -731,7 +731,7 @@ static int _genRle(RleWorker& rw)
 }
 
 
-static SwSpan* _intersectSpansRegion(const SwRleData *clip, const SwRleData *target, SwSpan *outSpans, uint32_t outSpansCnt)
+static SwSpan* _intersectSpansRegion(const SwRle *clip, const SwRle *target, SwSpan *outSpans, uint32_t outSpansCnt)
 {
     auto out = outSpans;
     auto spans = target->spans;
@@ -783,7 +783,7 @@ static SwSpan* _intersectSpansRegion(const SwRleData *clip, const SwRleData *tar
 }
 
 
-static SwSpan* _intersectSpansRect(const SwBBox *bbox, const SwRleData *targetRle, SwSpan *outSpans, uint32_t outSpansCnt)
+static SwSpan* _intersectSpansRect(const SwBBox *bbox, const SwRle *targetRle, SwSpan *outSpans, uint32_t outSpansCnt)
 {
     auto out = outSpans;
     auto spans = targetRle->spans;
@@ -822,7 +822,7 @@ static SwSpan* _intersectSpansRect(const SwBBox *bbox, const SwRleData *targetRl
 }
 
 
-static SwSpan* _mergeSpansRegion(const SwRleData *clip1, const SwRleData *clip2, SwSpan *outSpans)
+static SwSpan* _mergeSpansRegion(const SwRle *clip1, const SwRle *clip2, SwSpan *outSpans)
 {
     auto out = outSpans;
     auto spans1 = clip1->spans;
@@ -862,7 +862,7 @@ static SwSpan* _mergeSpansRegion(const SwRleData *clip1, const SwRleData *clip2,
 }
 
 
-void _replaceClipSpan(SwRleData *rle, SwSpan* clippedSpans, uint32_t size)
+void _replaceClipSpan(SwRle *rle, SwSpan* clippedSpans, uint32_t size)
 {
     free(rle->spans);
     rle->spans = clippedSpans;
@@ -874,7 +874,7 @@ void _replaceClipSpan(SwRleData *rle, SwSpan* clippedSpans, uint32_t size)
 /* External Class Implementation                                        */
 /************************************************************************/
 
-SwRleData* rleRender(SwRleData* rle, const SwOutline* outline, const SwBBox& renderRegion, bool antiAlias)
+SwRle* rleRender(SwRle* rle, const SwOutline* outline, const SwBBox& renderRegion, bool antiAlias)
 {
     constexpr auto RENDER_POOL_SIZE = 16384L;
     constexpr auto BAND_SIZE = 40;
@@ -902,7 +902,7 @@ SwRleData* rleRender(SwRleData* rle, const SwOutline* outline, const SwBBox& ren
     rw.bandShoot = 0;
     rw.antiAlias = antiAlias;
 
-    if (!rle) rw.rle = reinterpret_cast<SwRleData*>(calloc(1, sizeof(SwRleData)));
+    if (!rle) rw.rle = reinterpret_cast<SwRle*>(calloc(1, sizeof(SwRle)));
     else rw.rle = rle;
 
     //Generate RLE
@@ -993,12 +993,12 @@ error:
 }
 
 
-SwRleData* rleRender(const SwBBox* bbox)
+SwRle* rleRender(const SwBBox* bbox)
 {
     auto width = static_cast<uint16_t>(bbox->max.x - bbox->min.x);
     auto height = static_cast<uint16_t>(bbox->max.y - bbox->min.y);
 
-    auto rle = static_cast<SwRleData*>(malloc(sizeof(SwRleData)));
+    auto rle = static_cast<SwRle*>(malloc(sizeof(SwRle)));
     rle->spans = static_cast<SwSpan*>(malloc(sizeof(SwSpan) * height));
     rle->size = height;
     rle->alloc = height;
@@ -1015,14 +1015,14 @@ SwRleData* rleRender(const SwBBox* bbox)
 }
 
 
-void rleReset(SwRleData* rle)
+void rleReset(SwRle* rle)
 {
     if (!rle) return;
     rle->size = 0;
 }
 
 
-void rleFree(SwRleData* rle)
+void rleFree(SwRle* rle)
 {
     if (!rle) return;
     if (rle->spans) free(rle->spans);
@@ -1030,7 +1030,7 @@ void rleFree(SwRleData* rle)
 }
 
 
-void rleMerge(SwRleData* rle, SwRleData* clip1, SwRleData* clip2)
+void rleMerge(SwRle* rle, SwRle* clip1, SwRle* clip2)
 {
     if (!rle || (!clip1 && !clip2)) return;
     if (clip1 && clip1->size == 0 && clip2 && clip2->size == 0) return;
@@ -1069,7 +1069,7 @@ void rleMerge(SwRleData* rle, SwRleData* clip1, SwRleData* clip2)
 }
 
 
-void rleClipPath(SwRleData *rle, const SwRleData *clip)
+void rleClipPath(SwRle *rle, const SwRle *clip)
 {
     if (rle->size == 0 || clip->size == 0) return;
     auto spanCnt = rle->size > clip->size ? rle->size : clip->size;
@@ -1082,7 +1082,7 @@ void rleClipPath(SwRleData *rle, const SwRleData *clip)
 }
 
 
-void rleClipRect(SwRleData *rle, const SwBBox* clip)
+void rleClipRect(SwRle *rle, const SwBBox* clip)
 {
     if (rle->size == 0) return;
     auto spans = static_cast<SwSpan*>(malloc(sizeof(SwSpan) * (rle->size)));
