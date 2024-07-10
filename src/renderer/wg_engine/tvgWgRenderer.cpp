@@ -113,6 +113,7 @@ RenderData WgRenderer::prepare(const RenderShape& rshape, RenderData data, const
     }
 
     // setup fill settings
+    renderDataShape->viewport = mViewport;
     renderDataShape->opacity = opacity;
     renderDataShape->renderSettingsShape.update(mContext, rshape.fill, rshape.color, flags);
     if (rshape.stroke)
@@ -136,6 +137,7 @@ RenderData WgRenderer::prepare(Surface* surface, const RenderMesh* mesh, RenderD
         renderDataPicture = new WgRenderDataPicture();
 
     // update paint settings
+    renderDataPicture->viewport = mViewport;
     renderDataPicture->opacity = opacity;
     if (flags & (RenderUpdateFlag::Transform | RenderUpdateFlag::Blend)) {
         WgShaderTypeMat4x4f modelMat(transform);
@@ -261,17 +263,18 @@ RenderRegion WgRenderer::region(TVG_UNUSED RenderData data)
 
 
 RenderRegion WgRenderer::viewport() {
-    return { 0, 0, INT32_MAX, INT32_MAX };
+    return mViewport;
 }
 
 
-bool WgRenderer::viewport(TVG_UNUSED const RenderRegion& vp)
+bool WgRenderer::viewport(const RenderRegion& vp)
 {
+    mViewport = vp;
     return true;
 }
 
 
-bool WgRenderer::blend(TVG_UNUSED BlendMethod method)
+bool WgRenderer::blend(BlendMethod method)
 {
     mBlendMethod = method;
     return false;

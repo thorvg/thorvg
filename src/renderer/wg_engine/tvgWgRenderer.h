@@ -80,6 +80,7 @@ private:
     WgContext mContext;
     WgPipelines mPipelines;
     Surface mTargetSurface;
+    RenderRegion mViewport{};
 
     BlendMethod mBlendMethod{};    // current blend method
 
