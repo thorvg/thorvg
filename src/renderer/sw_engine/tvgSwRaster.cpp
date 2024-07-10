@@ -675,7 +675,7 @@ static bool _rasterRle(SwSurface* surface, SwRleData* rle, uint8_t r, uint8_t g,
     auto sy = (y) * itransform->e22 + itransform->e23 - 0.49f; \
     if (sy <= -0.5f || (uint32_t)(sy + 0.5f) >= image->h) continue; \
     if (scaleMethod == _interpDownScaler) { \
-        auto my = (int32_t)round(sy); \
+        auto my = (int32_t)nearbyint(sy); \
         miny = my - (int32_t)sampleSize; \
         if (miny < 0) miny = 0; \
         maxy = my + (int32_t)sampleSize; \

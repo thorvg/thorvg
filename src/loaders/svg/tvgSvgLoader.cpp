@@ -647,9 +647,9 @@ static bool _hslToRgb(float hue, float saturation, float brightness, uint8_t* re
         }
     }
 
-    *red = static_cast<uint8_t>(ceil(_red * 255.0f));
-    *green = static_cast<uint8_t>(ceil(_green * 255.0f));
-    *blue = static_cast<uint8_t>(ceil(_blue * 255.0f));
+    *red = (uint8_t)nearbyint(_red * 255.0f);
+    *green = (uint8_t)nearbyint(_green * 255.0f);
+    *blue = (uint8_t)nearbyint(_blue * 255.0f);
 
     return true;
 }
