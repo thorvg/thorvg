@@ -30,6 +30,7 @@
  {
     release(context);
     // store target storage size
+    this->samples = samples;
     width = w * samples;
     height = h * samples;
     workgroupsCountX = (width  + WG_COMPUTE_WORKGROUP_SIZE_X - 1) / WG_COMPUTE_WORKGROUP_SIZE_X; // workgroup size x == 8
@@ -100,6 +101,8 @@ void WgRenderStorage::renderPicture(WgContext& context, WgRenderDataPicture* ren
     assert(renderData);
     assert(mRenderPassEncoder);
     uint8_t blend = (uint8_t)blendType;
+    auto& vp = renderData->viewport;
+    wgpuRenderPassEncoderSetScissorRect(mRenderPassEncoder, vp.x * samples, vp.y * samples, vp.w * samples, vp.h * samples);
     wgpuRenderPassEncoderSetStencilReference(mRenderPassEncoder, 0);
     mPipelines->image[blend].use(mRenderPassEncoder, mBindGroupCanvas, renderData->bindGroupPaint, renderData->bindGroupPicture);
     renderData->meshData.drawImage(context, mRenderPassEncoder);
@@ -112,7 +115,8 @@ void WgRenderStorage::drawShape(WgContext& context, WgRenderDataShape* renderDat
     assert(mRenderPassEncoder);
     assert(renderData->meshGroupShapes.meshes.count == renderData->meshGroupShapesBBox.meshes.count);
     if (renderData->renderSettingsShape.skip) return;
-    // draw shape geometry
+    auto& vp = renderData->viewport;
+    wgpuRenderPassEncoderSetScissorRect(mRenderPassEncoder, vp.x * samples, vp.y * samples, vp.w * samples, vp.h * samples);
     wgpuRenderPassEncoderSetStencilReference(mRenderPassEncoder, 0);
     // setup fill rule
     if (renderData->fillRule == FillRule::Winding)
@@ -141,6 +145,8 @@ void WgRenderStorage::drawStroke(WgContext& context, WgRenderDataShape* renderDa
     assert(mRenderPassEncoder);
     assert(renderData->meshGroupStrokes.meshes.count == renderData->meshGroupStrokesBBox.meshes.count);
     if (renderData->renderSettingsStroke.skip) return;
+    auto& vp = renderData->viewport;
+    wgpuRenderPassEncoderSetScissorRect(mRenderPassEncoder, vp.x * samples, vp.y * samples, vp.w * samples, vp.h * samples);
     // draw stroke geometry
     uint8_t blend = (uint8_t)blendType;
     // draw strokes to stencil (first pass)
