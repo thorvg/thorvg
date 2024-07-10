@@ -594,6 +594,8 @@ struct LottieLayer : LottieGroup
     RGB24 color;  //used by Solid layer
     LottieLayer* matteTarget = nullptr;
 
+    tvg::Shape* clipper = nullptr;
+
     float timeStretch = 1.0f;
     float w = 0.0f, h = 0.0f;
     float inFrame = 0.0f;

@@ -1000,18 +1000,21 @@ static void _updatePrecomp(LottieLayer* precomp, float frameNo, LottieExpression
         if (!child->matteSrc) _updateLayer(precomp, child, frameNo, exps);
     }
 
-    //clip the layer viewport
-    if (precomp->w > 0 && precomp->h > 0) {
-        auto clipper = Shape::gen().release();
-        clipper->appendRect(0, 0, static_cast<float>(precomp->w), static_cast<float>(precomp->h));
-        clipper->transform(precomp->cache.matrix);
-
-        //TODO: remove the intermediate scene....
-        auto cscene = Scene::gen();
-        cscene->composite(cast(clipper), CompositeMethod::ClipPath);
+    //TODO: remove the intermediate scene....
+    if (precomp->scene->composite(nullptr) != tvg::CompositeMethod::None) {
+        auto cscene = Scene::gen().release();
         cscene->push(cast(precomp->scene));
-        precomp->scene = cscene.release();
+        precomp->scene = cscene;
     }
+
+    //clip the layer viewport
+    if (!precomp->clipper) {
+        precomp->clipper = Shape::gen().release();
+        precomp->clipper->appendRect(0, 0, static_cast<float>(precomp->w), static_cast<float>(precomp->h));
+        PP(precomp->clipper)->ref();
+    }
+    precomp->clipper->transform(precomp->cache.matrix);
+    precomp->scene->composite(cast(precomp->clipper), CompositeMethod::ClipPath);
 }
 
 
