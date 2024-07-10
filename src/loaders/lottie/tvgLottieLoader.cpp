@@ -320,7 +320,7 @@ bool LottieLoader::frame(float no)
 
     //This ensures that the target frame number is reached.
     frameNo *= 10000.0f;
-    frameNo = roundf(frameNo);
+    frameNo = nearbyintf(frameNo);
     frameNo *= 0.0001f;
 
     //Skip update if frame diff is too small.
