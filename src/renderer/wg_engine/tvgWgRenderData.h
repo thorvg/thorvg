@@ -86,6 +86,7 @@ struct WgRenderSettings
 struct WgRenderDataPaint
 {
     WgBindGroupPaint bindGroupPaint{};
+    RenderRegion viewport{};
     float opacity{};
 
     virtual ~WgRenderDataPaint() {};
