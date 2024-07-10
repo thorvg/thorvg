@@ -331,6 +331,8 @@ LottieLayer::~LottieLayer()
         delete(*m);
     }
 
+    if (clipper && PP(clipper)->unref() == 0) delete(clipper);
+
     delete(transform);
     free(name);
 }
