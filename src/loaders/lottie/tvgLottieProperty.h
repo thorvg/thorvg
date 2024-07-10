@@ -95,7 +95,7 @@ static inline RGB24 operator+(const RGB24& lhs, const RGB24& rhs)
 
 static inline RGB24 operator*(const RGB24& lhs, float rhs)
 {
-    return {(int32_t)lroundf(lhs.rgb[0] * rhs), (int32_t)lroundf(lhs.rgb[1] * rhs), (int32_t)lroundf(lhs.rgb[2] * rhs)};
+    return {(int32_t)nearbyint(lhs.rgb[0] * rhs), (int32_t)nearbyint(lhs.rgb[1] * rhs), (int32_t)nearbyint(lhs.rgb[2] * rhs)};
 }
 
 
