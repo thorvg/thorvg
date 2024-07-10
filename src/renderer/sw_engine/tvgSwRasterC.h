@@ -60,7 +60,7 @@ static void inline cRasterPixels(PIXEL_T* dst, PIXEL_T val, uint32_t offset, int
 }
 
 
-static bool inline cRasterTranslucentRle(SwSurface* surface, const SwRleData* rle, uint8_t r, uint8_t g, uint8_t b, uint8_t a)
+static bool inline cRasterTranslucentRle(SwSurface* surface, const SwRle* rle, uint8_t r, uint8_t g, uint8_t b, uint8_t a)
 {
     auto span = rle->spans;
 

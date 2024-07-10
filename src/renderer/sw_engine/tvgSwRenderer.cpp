@@ -65,8 +65,8 @@ struct SwTask : Task
     }
 
     virtual void dispose() = 0;
-    virtual bool clip(SwRleData* target) = 0;
-    virtual SwRleData* rle() = 0;
+    virtual bool clip(SwRle* target) = 0;
+    virtual SwRle* rle() = 0;
 
     virtual ~SwTask()
     {
@@ -105,7 +105,7 @@ struct SwShapeTask : SwTask
     }
 
 
-    bool clip(SwRleData* target) override
+    bool clip(SwRle* target) override
     {
         if (shape.fastTrack) rleClipRect(target, &bbox);
         else if (shape.rle) rleClipPath(target, shape.rle);
@@ -114,7 +114,7 @@ struct SwShapeTask : SwTask
         return true;
     }
 
-    SwRleData* rle() override
+    SwRle* rle() override
     {
         if (!shape.rle && shape.fastTrack) {
             shape.rle = rleRender(&shape.bbox);
@@ -206,9 +206,9 @@ struct SwShapeTask : SwTask
 struct SwSceneTask : SwTask
 {
     Array<RenderData> scene;    //list of paints render data (SwTask)
-    SwRleData* sceneRle = nullptr;
+    SwRle* sceneRle = nullptr;
 
-    bool clip(SwRleData* target) override
+    bool clip(SwRle* target) override
     {
         //Only one shape
         if (scene.count == 1) {
@@ -222,7 +222,7 @@ struct SwSceneTask : SwTask
         return true;
     }
 
-    SwRleData* rle() override
+    SwRle* rle() override
     {
         return sceneRle;
     }
@@ -230,7 +230,7 @@ struct SwSceneTask : SwTask
     void run(unsigned tid) override
     {
         //TODO: Skip the run if the scene hasn't changed.
-        if (!sceneRle) sceneRle = static_cast<SwRleData*>(calloc(1, sizeof(SwRleData)));
+        if (!sceneRle) sceneRle = static_cast<SwRle*>(calloc(1, sizeof(SwRle)));
         else rleReset(sceneRle);
 
         //Merge shapes if it has more than one shapes
@@ -262,13 +262,13 @@ struct SwImageTask : SwTask
     Surface* source;                            //Image source
     const RenderMesh* mesh = nullptr;           //Should be valid ptr in action
 
-    bool clip(SwRleData* target) override
+    bool clip(SwRle* target) override
     {
         TVGERR("SW_ENGINE", "Image is used as ClipPath?");
         return true;
     }
 
-    SwRleData* rle() override
+    SwRle* rle() override
     {
         TVGERR("SW_ENGINE", "Image is used as Scene ClipPath?");
         return nullptr;
