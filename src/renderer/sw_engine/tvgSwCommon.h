@@ -113,7 +113,7 @@ struct SwSpan
     uint8_t coverage;
 };
 
-struct SwRleData
+struct SwRle
 {
     SwSpan *spans;
     uint32_t alloc;
@@ -211,8 +211,8 @@ struct SwShape
     SwOutline*   outline = nullptr;
     SwStroke*    stroke = nullptr;
     SwFill*      fill = nullptr;
-    SwRleData*   rle = nullptr;
-    SwRleData*   strokeRle = nullptr;
+    SwRle*   rle = nullptr;
+    SwRle*   strokeRle = nullptr;
     SwBBox       bbox;           //Keep it boundary without stroke region. Using for optimal filling.
 
     bool         fastTrack = false;   //Fast Track: axis-aligned rectangle without any clips?
@@ -221,7 +221,7 @@ struct SwShape
 struct SwImage
 {
     SwOutline*   outline = nullptr;
-    SwRleData*   rle = nullptr;
+    SwRle*   rle = nullptr;
     union {
         pixel_t*  data;      //system based data pointer
         uint32_t* buf32;     //for explicit 32bits channels
@@ -542,13 +542,13 @@ void fillRadial(const SwFill* fill, uint32_t* dst, uint32_t y, uint32_t x, uint3
 void fillRadial(const SwFill* fill, uint32_t* dst, uint32_t y, uint32_t x, uint32_t len, SwBlender op, SwBlender op2, uint8_t a);                          //blending + BlendingMethod(op2) ver.
 void fillRadial(const SwFill* fill, uint32_t* dst, uint32_t y, uint32_t x, uint32_t len, uint8_t* cmp, SwAlpha alpha, uint8_t csize, uint8_t opacity);     //matting ver.
 
-SwRleData* rleRender(SwRleData* rle, const SwOutline* outline, const SwBBox& renderRegion, bool antiAlias);
-SwRleData* rleRender(const SwBBox* bbox);
-void rleFree(SwRleData* rle);
-void rleReset(SwRleData* rle);
-void rleMerge(SwRleData* rle, SwRleData* clip1, SwRleData* clip2);
-void rleClipPath(SwRleData* rle, const SwRleData* clip);
-void rleClipRect(SwRleData* rle, const SwBBox* clip);
+SwRle* rleRender(SwRle* rle, const SwOutline* outline, const SwBBox& renderRegion, bool antiAlias);
+SwRle* rleRender(const SwBBox* bbox);
+void rleFree(SwRle* rle);
+void rleReset(SwRle* rle);
+void rleMerge(SwRle* rle, SwRle* clip1, SwRle* clip2);
+void rleClipPath(SwRle* rle, const SwRle* clip);
+void rleClipRect(SwRle* rle, const SwBBox* clip);
 
 SwMpool* mpoolInit(uint32_t threads);
 bool mpoolTerm(SwMpool* mpool);
