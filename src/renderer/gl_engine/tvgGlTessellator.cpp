@@ -455,8 +455,8 @@ bool Edge::intersect(Edge *other, GlPoint *point)
 
     double scale = 1.0 / denom;
 
-    point->x = std::round(static_cast<float>(top->point.x - s_number * le_b * scale));
-    point->y = std::round(static_cast<float>(top->point.y + s_number * le_a * scale));
+    point->x = nearbyintf(static_cast<float>(top->point.x - s_number * le_b * scale));
+    point->y = nearbyintf(static_cast<float>(top->point.y + s_number * le_a * scale));
 
     if (std::isinf(point->x) || std::isinf(point->y)) {
         return false;
