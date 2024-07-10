@@ -1120,15 +1120,46 @@ void LottieParser::parseTextRange(LottieText* text)
     enterArray();
     while (nextArrayValue()) {
         enterObject();
+
+        auto selector = new LottieTextRange;
+
         while (auto key = nextObjectKey()) {
-            if (KEY_AS("a")) {  //text style
+            if (KEY_AS("s")) { // text range selector
                 enterObject();
                 while (auto key = nextObjectKey()) {
-                    if (KEY_AS("t")) parseProperty<LottieProperty::Type::Float>(text->spacing);
+                    if (KEY_AS("t")) selector->expressible = (bool) getInt();
+                    else if (KEY_AS("xe")) parseProperty<LottieProperty::Type::Float>(selector->maxEase);
+                    else if (KEY_AS("ne")) parseProperty<LottieProperty::Type::Float>(selector->minEase);
+                    else if (KEY_AS("a")) parseProperty<LottieProperty::Type::Float>(selector->maxAmount);
+                    else if (KEY_AS("b")) selector->based = (LottieTextRange::Based) getInt();
+                    else if (KEY_AS("rn")) selector->randomize = (bool) getInt();
+                    else if (KEY_AS("sh")) selector->shape = (LottieTextRange::Shape) getInt();
+                    else if (KEY_AS("o")) parseProperty<LottieProperty::Type::Float>(selector->offset);
+                    else if (KEY_AS("r")) selector->rangeUnit = (LottieTextRange::Unit) getInt();
+                    else if (KEY_AS("sm")) parseProperty<LottieProperty::Type::Float>(selector->smoothness);
+                    else if (KEY_AS("s")) parseProperty<LottieProperty::Type::Float>(selector->start);
+                    else if (KEY_AS("e")) parseProperty<LottieProperty::Type::Float>(selector->end);
+                    else skip(key);
+                }
+            } else if (KEY_AS("a")) { // text style
+                enterObject();
+                while (auto key = nextObjectKey()) {
+                    if (KEY_AS("t")) parseProperty<LottieProperty::Type::Float>(selector->style.letterSpacing);
+                    else if (KEY_AS("fc")) parseProperty<LottieProperty::Type::Color>(selector->style.fillColor);
+                    else if (KEY_AS("fo")) parseProperty<LottieProperty::Type::Color>(selector->style.fillOpacity);
+                    else if (KEY_AS("sw")) parseProperty<LottieProperty::Type::Float>(selector->style.strokeWidth);
+                    else if (KEY_AS("sc")) parseProperty<LottieProperty::Type::Color>(selector->style.strokeColor);
+                    else if (KEY_AS("so")) parseProperty<LottieProperty::Type::Opacity>(selector->style.strokeOpacity);
+                    else if (KEY_AS("o")) parseProperty<LottieProperty::Type::Opacity>(selector->style.opacity);
+                    else if (KEY_AS("p")) parseProperty<LottieProperty::Type::Position>(selector->style.position);
+                    else if (KEY_AS("s")) parseProperty<LottieProperty::Type::Position>(selector->style.scale);
+                    else if (KEY_AS("r")) parseProperty<LottieProperty::Type::Float>(selector->style.rotation);
                     else skip(key);
                 }
             } else skip(key);
         }
+
+        text->ranges.push(selector);
     }
 }
 
