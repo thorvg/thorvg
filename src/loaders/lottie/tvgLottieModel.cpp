@@ -331,13 +331,16 @@ LottieLayer::~LottieLayer()
         delete(*m);
     }
 
+    //Remove tvg render paints
+    if (solidFill && PP(solidFill)->unref() == 0) delete(solidFill);
     if (clipper && PP(clipper)->unref() == 0) delete(clipper);
 
     delete(transform);
     free(name);
 }
 
-void LottieLayer::prepare()
+
+void LottieLayer::prepare(RGB24* color)
 {
     /* if layer is hidden, only useful data is its transform matrix.
        so force it to be a Null Layer and release all resource. */
@@ -347,6 +350,15 @@ void LottieLayer::prepare()
         children.reset();
         return;
     }
+
+    //prepare solid fill in advance if it is a layer type.
+    if (color && type == LottieLayer::Solid) {
+        solidFill = Shape::gen().release();
+        solidFill->appendRect(0, 0, static_cast<float>(w), static_cast<float>(h));
+        solidFill->fill(color->rgb[0], color->rgb[1], color->rgb[2]);
+        PP(solidFill)->ref();
+    }
+
     LottieGroup::prepare(LottieObject::Layer);
 }
 

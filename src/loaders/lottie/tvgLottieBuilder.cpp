@@ -1020,10 +1020,8 @@ static void _updatePrecomp(LottieLayer* precomp, float frameNo, LottieExpression
 
 static void _updateSolid(LottieLayer* layer)
 {
-    auto shape = Shape::gen();
-    shape->appendRect(0, 0, static_cast<float>(layer->w), static_cast<float>(layer->h));
-    shape->fill(layer->color.rgb[0], layer->color.rgb[1], layer->color.rgb[2], layer->cache.opacity);
-    layer->scene->push(std::move(shape));
+    layer->solidFill->opacity(layer->cache.opacity);
+    layer->scene->push(cast(layer->solidFill));
 }
 
 
