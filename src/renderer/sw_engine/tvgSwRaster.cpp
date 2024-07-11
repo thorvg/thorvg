@@ -1389,29 +1389,45 @@ static bool _rasterDirectBlendingImage(SwSurface* surface, const SwImage* image,
 
 static bool _rasterDirectImage(SwSurface* surface, const SwImage* image, const SwBBox& region, uint8_t opacity)
 {
-    if (surface->channelSize == sizeof(uint8_t)) {
-        TVGERR("SW_ENGINE", "Not supported grayscale image!");
-        return false;
-    }
-
-    auto dbuffer = &surface->buf32[region.min.y * surface->stride + region.min.x];
     auto sbuffer = image->buf32 + (region.min.y + image->oy) * image->stride + (region.min.x + image->ox);
 
-    for (auto y = region.min.y; y < region.max.y; ++y) {
-        auto dst = dbuffer;
-        auto src = sbuffer;
-        if (opacity == 255) {
-            for (auto x = region.min.x; x < region.max.x; x++, dst++, src++) {
-                *dst = *src + ALPHA_BLEND(*dst, IA(*src));
+    //32bits channels
+    if (surface->channelSize == sizeof(uint32_t)) {
+        auto dbuffer = &surface->buf32[region.min.y * surface->stride + region.min.x];
+
+        for (auto y = region.min.y; y < region.max.y; ++y) {
+            auto dst = dbuffer;
+            auto src = sbuffer;
+            if (opacity == 255) {
+                for (auto x = region.min.x; x < region.max.x; x++, dst++, src++) {
+                    *dst = *src + ALPHA_BLEND(*dst, IA(*src));
+                }
+            } else {
+                for (auto x = region.min.x; x < region.max.x; ++x, ++dst, ++src) {
+                    auto tmp = ALPHA_BLEND(*src, opacity);
+                    *dst = tmp + ALPHA_BLEND(*dst, IA(tmp));
+                }
             }
-        } else {
-            for (auto x = region.min.x; x < region.max.x; ++x, ++dst, ++src) {
-                auto tmp = ALPHA_BLEND(*src, opacity);
-                *dst = tmp + ALPHA_BLEND(*dst, IA(tmp));
+            dbuffer += surface->stride;
+            sbuffer += image->stride;
+        }
+    //8bits grayscale
+    } else if (surface->channelSize == sizeof(uint8_t)) {
+        auto dbuffer = &surface->buf8[region.min.y * surface->stride + region.min.x];
+
+        for (auto y = region.min.y; y < region.max.y; ++y, dbuffer += surface->stride, sbuffer += image->stride) {
+            auto dst = dbuffer;
+            auto src = sbuffer;
+            if (opacity == 255) {
+                for (auto x = region.min.x; x < region.max.x; ++x, ++dst, ++src) {
+                    *dst = *src + MULTIPLY(*dst, ~*src);
+                }
+            } else {
+                for (auto x = region.min.x; x < region.max.x; ++x, ++dst, ++src) {
+                    *dst = INTERPOLATE8(*src, *dst, opacity);
+                }
             }
         }
-        dbuffer += surface->stride;
-        sbuffer += image->stride;
     }
     return true;
 }
