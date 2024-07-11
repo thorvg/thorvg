@@ -543,7 +543,7 @@ LottieRect* LottieParser::parseRect()
         else if (KEY_AS("s")) parseProperty<LottieProperty::Type::Point>(rect->size);
         else if (KEY_AS("p")) parseProperty<LottieProperty::Type::Position>(rect->position);
         else if (KEY_AS("r")) parseProperty<LottieProperty::Type::Float>(rect->radius);
-        else if (KEY_AS("d")) rect->direction = getDirection();
+        else if (KEY_AS("d")) rect->clockwise = getDirection();
         else skip(key);
     }
     rect->prepare();
@@ -561,7 +561,7 @@ LottieEllipse* LottieParser::parseEllipse()
         if (parseCommon(ellipse, key)) continue;
         else if (KEY_AS("p")) parseProperty<LottieProperty::Type::Position>(ellipse->position);
         else if (KEY_AS("s")) parseProperty<LottieProperty::Type::Point>(ellipse->size);
-        else if (KEY_AS("d")) ellipse->direction = getDirection();
+        else if (KEY_AS("d")) ellipse->clockwise = getDirection();
         else skip(key);
     }
     ellipse->prepare();
@@ -698,7 +698,7 @@ LottiePath* LottieParser::parsePath()
     while (auto key = nextObjectKey()) {
         if (parseCommon(path, key)) continue;
         else if (KEY_AS("ks")) getPathSet(path->pathset);
-        else if (KEY_AS("d")) path->direction = getDirection();
+        else if (KEY_AS("d")) path->clockwise = getDirection();
         else skip(key);
     }
     path->prepare();
@@ -722,7 +722,7 @@ LottiePolyStar* LottieParser::parsePolyStar()
         else if (KEY_AS("os")) parseProperty<LottieProperty::Type::Float>(star->outerRoundness);
         else if (KEY_AS("r")) parseProperty<LottieProperty::Type::Float>(star->rotation);
         else if (KEY_AS("sy")) star->type = (LottiePolyStar::Type) getInt();
-        else if (KEY_AS("d")) star->direction = getDirection();
+        else if (KEY_AS("d")) star->clockwise = getDirection();
         else skip(key);
     }
     star->prepare();
@@ -1089,11 +1089,10 @@ void LottieParser::parseTimeRemap(LottieLayer* layer)
 uint8_t LottieParser::getDirection()
 {
     auto v = getInt();
-    if (v == 1) return 0;
-    if (v == 2) return 3;
-    if (v == 3) return 2;
-    return 0;
+    if (v == 3) return false;
+    return true;
 }
+
 
 void LottieParser::parseShapes(Array<LottieObject*>& parent)
 {

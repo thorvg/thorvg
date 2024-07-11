@@ -268,7 +268,7 @@ struct LottieTrimpath : LottieObject
 struct LottieShape : LottieObject
 {
     virtual ~LottieShape() {}
-    uint8_t direction = 0;   //0: clockwise, 2: counter-clockwise, 3: xor(?)
+    bool clockwise = true;   //clockwise or counter-clockwise
 
     bool mergeable() override
     {

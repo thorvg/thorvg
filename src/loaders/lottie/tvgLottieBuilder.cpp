@@ -447,7 +447,7 @@ static void _repeat(LottieGroup* parent, unique_ptr<Shape> path, RenderContext* 
 }
 
 
-static void _appendRect(Shape* shape, float x, float y, float w, float h, float r, float direction, Matrix* transform)
+static void _appendRect(Shape* shape, float x, float y, float w, float h, float r, Matrix* transform, bool clockwise)
 {
     //sharp rect
     if (mathZero(r)) {
@@ -457,7 +457,7 @@ static void _appendRect(Shape* shape, float x, float y, float w, float h, float 
         };
 
         Point points[4];
-        if (direction == 0) {
+        if (clockwise) {
             points[0] = {x + w, y};
             points[1] = {x + w, y + h};
             points[2] = {x, y + h};
@@ -488,7 +488,7 @@ static void _appendRect(Shape* shape, float x, float y, float w, float h, float 
 
         constexpr int ptsCnt = 17;
         Point points[ptsCnt];
-        if (direction == 0) {
+        if (clockwise) {
             commands[0] = PathCommand::MoveTo; commands[1] = PathCommand::LineTo; commands[2] = PathCommand::CubicTo;
             commands[3] = PathCommand::LineTo; commands[4] = PathCommand::CubicTo;commands[5] = PathCommand::LineTo;
             commands[6] = PathCommand::CubicTo; commands[7] = PathCommand::LineTo; commands[8] = PathCommand::CubicTo;
@@ -505,7 +505,7 @@ static void _appendRect(Shape* shape, float x, float y, float w, float h, float 
             points[14] = {x + w - rx + hrx, y}; points[15] = {x + w, y + ry - hry}; points[16] = {x + w, y + ry}; //cubicTo
         } else {
             commands[0] = PathCommand::MoveTo; commands[1] = PathCommand::CubicTo; commands[2] = PathCommand::LineTo;
-            commands[3] = PathCommand::CubicTo; commands[4] = PathCommand::LineTo;commands[5] = PathCommand::CubicTo;
+            commands[3] = PathCommand::CubicTo; commands[4] = PathCommand::LineTo; commands[5] = PathCommand::CubicTo;
             commands[6] = PathCommand::LineTo; commands[7] = PathCommand::CubicTo; commands[8] = PathCommand::LineTo;
             commands[9] = PathCommand::Close;
 
@@ -544,11 +544,11 @@ static void _updateRect(LottieGroup* parent, LottieObject** child, float frameNo
 
     if (!ctx->repeaters.empty()) {
         auto path = Shape::gen();
-        _appendRect(path.get(), position.x - size.x * 0.5f, position.y - size.y * 0.5f, size.x, size.y, roundness, rect->direction, ctx->transform);
+        _appendRect(path.get(), position.x - size.x * 0.5f, position.y - size.y * 0.5f, size.x, size.y, roundness, ctx->transform, rect->clockwise);
         _repeat(parent, std::move(path), ctx);
     } else {
         _draw(parent, ctx);
-        _appendRect(ctx->merging, position.x - size.x * 0.5f, position.y - size.y * 0.5f, size.x, size.y, roundness, rect->direction, ctx->transform);
+        _appendRect(ctx->merging, position.x - size.x * 0.5f, position.y - size.y * 0.5f, size.x, size.y, roundness, ctx->transform, rect->clockwise);
     }
 }
 
@@ -698,7 +698,7 @@ static void _updateStar(LottieGroup* parent, LottiePolyStar* star, Matrix* trans
     auto partialPointAmount = ptsCnt - floorf(ptsCnt);
     auto longSegment = false;
     auto numPoints = size_t(ceilf(ptsCnt) * 2);
-    auto direction = (star->direction == 0) ? 1.0f : -1.0f;
+    auto direction = star->clockwise ? 1.0f : -1.0f;
     auto hasRoundness = false;
     bool roundedCorner = (roundness > ROUNDNESS_EPSILON) && (mathZero(innerRoundness) || mathZero(outerRoundness));
     //TODO: we can use PathCommand / PathCoord directly.
@@ -808,7 +808,7 @@ static void _updatePolygon(LottieGroup* parent, LottiePolyStar* star, Matrix* tr
 
     auto angle = mathDeg2Rad(-90.0f);
     auto anglePerPoint = 2.0f * MATH_PI / float(ptsCnt);
-    auto direction = (star->direction == 0) ? 1.0f : -1.0f;
+    auto direction = star->clockwise ? 1.0f : -1.0f;
     auto hasRoundness = false;
     auto x = radius * cosf(angle);
     auto y = radius * sinf(angle);
