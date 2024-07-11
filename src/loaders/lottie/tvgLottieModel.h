@@ -540,7 +540,7 @@ struct LottieLayer : LottieGroup
 
     bool mergeable() override { return false; }
 
-    void prepare();
+    void prepare(RGB24* color = nullptr);
     float remap(float frameNo, LottieExpressions* exp);
 
     char* name = nullptr;
@@ -549,9 +549,9 @@ struct LottieLayer : LottieGroup
     LottieComposition* comp = nullptr;
     LottieTransform* transform = nullptr;
     Array<LottieMask*> masks;
-    RGB24 color;  //used by Solid layer
     LottieLayer* matteTarget = nullptr;
 
+    tvg::Shape* solidFill = nullptr;
     tvg::Shape* clipper = nullptr;
 
     float timeStretch = 1.0f;
