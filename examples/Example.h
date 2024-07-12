@@ -25,7 +25,6 @@
 #include <vector>
 #include <fstream>
 #include <iostream>
-#include <thread>
 #include <thorvg.h>
 #include <SDL2/SDL.h>
 #include <SDL2/SDL_syswm.h>
@@ -138,10 +137,10 @@ struct Window
     bool needDraw = false;
     bool print = false;
 
-    Window(tvg::CanvasEngine engine, Example* example, uint32_t width, uint32_t height)
+    Window(tvg::CanvasEngine engine, Example* example, uint32_t width, uint32_t height, uint32_t threadsCnt)
     {
-        //Initialize ThorVG Engine (4: threads count, engine: raster method)
-        if (!verify(tvg::Initializer::init(engine, 4), "Failed to init ThorVG engine!")) return;
+        //Initialize ThorVG Engine (engine: raster method)
+        if (!verify(tvg::Initializer::init(engine, threadsCnt), "Failed to init ThorVG engine!")) return;
 
         //Initialize the SDL
         SDL_Init(SDL_INIT_VIDEO);
@@ -268,7 +267,7 @@ struct SwWindow : Window
 {
     unique_ptr<tvg::SwCanvas> canvas = nullptr;
 
-    SwWindow(Example* example, uint32_t width, uint32_t height) : Window(tvg::CanvasEngine::Sw, example, width, height)
+    SwWindow(Example* example, uint32_t width, uint32_t height, uint32_t threadsCnt) : Window(tvg::CanvasEngine::Sw, example, width, height, threadsCnt)
     {
         window = SDL_CreateWindow("ThorVG Example (Software)", SDL_WINDOWPOS_UNDEFINED, SDL_WINDOWPOS_UNDEFINED, width, height, SDL_WINDOW_HIDDEN | SDL_WINDOW_RESIZABLE);
 
@@ -311,7 +310,7 @@ struct GlWindow : Window
 
     unique_ptr<tvg::GlCanvas> canvas = nullptr;
 
-    GlWindow(Example* example, uint32_t width, uint32_t height) : Window(tvg::CanvasEngine::Gl, example, width, height)
+    GlWindow(Example* example, uint32_t width, uint32_t height, uint32_t threadsCnt) : Window(tvg::CanvasEngine::Gl, example, width, height, threadsCnt)
     {
 #ifdef THORVG_GL_TARGET_GLES
         SDL_GL_SetAttribute(SDL_GL_CONTEXT_PROFILE_MASK, SDL_GL_CONTEXT_PROFILE_ES);
@@ -367,7 +366,7 @@ struct WgWindow : Window
     WGPUInstance instance;
     WGPUSurface surface;
 
-    WgWindow(Example* example, uint32_t width, uint32_t height) : Window(tvg::CanvasEngine::Wg, example, width, height)
+    WgWindow(Example* example, uint32_t width, uint32_t height, uint32_t threadsCnt) : Window(tvg::CanvasEngine::Wg, example, width, height, threadsCnt)
     {
         window = SDL_CreateWindow("ThorVG Example (WebGPU)", SDL_WINDOWPOS_UNDEFINED, SDL_WINDOWPOS_UNDEFINED, width, height, SDL_WINDOW_HIDDEN);
 
@@ -447,7 +446,7 @@ struct WgWindow : Window
 #else
 struct WgWindow : Window
 {
-    WgWindow(Example* example, uint32_t width, uint32_t height) : Window(tvg::CanvasEngine::Wg, example, width, height)
+    WgWindow(Example* example, uint32_t width, uint32_t height, uint32_t threadsCnt) : Window(tvg::CanvasEngine::Wg, example, width, height, threadsCnt)
     {
         cout << "webgpu driver is not detected!" << endl;
     }
@@ -500,7 +499,7 @@ bool verify(tvg::Result result, string failMsg)
 }
 
 
-int main(Example* example, int argc, char **argv, uint32_t width = 800, uint32_t height = 800, bool print = false)
+int main(Example* example, int argc, char **argv, uint32_t width = 800, uint32_t height = 800, uint32_t threadsCnt = 4, bool print = false)
 {
     auto engine = tvg::CanvasEngine::Sw;
 
@@ -512,11 +511,11 @@ int main(Example* example, int argc, char **argv, uint32_t width = 800, uint32_t
     unique_ptr<Window> window;
 
     if (engine == tvg::CanvasEngine::Sw) {
-        window = unique_ptr<Window>(new SwWindow(example, width, height));
+        window = unique_ptr<Window>(new SwWindow(example, width, height, threadsCnt));
     } else if (engine == tvg::CanvasEngine::Gl) {
-        window = unique_ptr<Window>(new GlWindow(example, width, height));
+        window = unique_ptr<Window>(new GlWindow(example, width, height, threadsCnt));
     } else if (engine == tvg::CanvasEngine::Wg) {
-        window = unique_ptr<Window>(new WgWindow(example, width, height));
+        window = unique_ptr<Window>(new WgWindow(example, width, height, threadsCnt));
     }
 
     window->print = print;
