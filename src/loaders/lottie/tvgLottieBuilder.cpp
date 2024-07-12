@@ -1039,9 +1039,9 @@ static void _updatePrecomp(LottieLayer* precomp, float frameNo, LottieExpression
         precomp->clipper = Shape::gen().release();
         precomp->clipper->appendRect(0, 0, static_cast<float>(precomp->w), static_cast<float>(precomp->h));
         PP(precomp->clipper)->ref();
+        precomp->scene->composite(cast(precomp->clipper), CompositeMethod::ClipPath);
     }
     precomp->clipper->transform(precomp->cache.matrix);
-    precomp->scene->composite(cast(precomp->clipper), CompositeMethod::ClipPath);
 }
 
 
