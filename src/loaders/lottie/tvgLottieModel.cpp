@@ -23,6 +23,7 @@
 #include "tvgMath.h"
 #include "tvgPaint.h"
 #include "tvgFill.h"
+#include "tvgTaskScheduler.h"
 #include "tvgLottieModel.h"
 
 
@@ -111,11 +112,29 @@ void LottieSlot::assign(LottieObject* target)
 
 LottieImage::~LottieImage()
 {
-    if (picture && PP(picture)->unref() == 0) {
-        delete(picture);
-    }
     free(b64Data);
     free(mimeType);
+}
+
+
+void LottieImage::prepare()
+{
+    LottieObject::type = LottieObject::Image;
+
+    auto picture = Picture::gen().release();
+
+    //force to load a picture on the same thread
+    TaskScheduler::async(false);
+
+    if (size > 0) picture->load((const char*)b64Data, size, mimeType);
+    else picture->load(path);
+
+    TaskScheduler::async(true);
+
+    picture->size(width, height);
+    PP(picture)->ref();
+
+    pooler.push(picture);
 }
 
 
@@ -331,10 +350,6 @@ LottieLayer::~LottieLayer()
         delete(*m);
     }
 
-    //Remove tvg render paints
-    if (solidFill && PP(solidFill)->unref() == 0) delete(solidFill);
-    if (clipper && PP(clipper)->unref() == 0) delete(clipper);
-
     delete(transform);
     free(name);
 }
@@ -351,12 +366,19 @@ void LottieLayer::prepare(RGB24* color)
         return;
     }
 
+    //prepare the viewport clipper
+    if (type == LottieLayer::Precomp) {
+        auto clipper = Shape::gen().release();
+        clipper->appendRect(0.0f, 0.0f, w, h);
+        PP(clipper)->ref();
+        pooler.push(clipper);
     //prepare solid fill in advance if it is a layer type.
-    if (color && type == LottieLayer::Solid) {
-        solidFill = Shape::gen().release();
+    } else if (color && type == LottieLayer::Solid) {
+        auto solidFill = Shape::gen().release();
         solidFill->appendRect(0, 0, static_cast<float>(w), static_cast<float>(h));
         solidFill->fill(color->rgb[0], color->rgb[1], color->rgb[2]);
         PP(solidFill)->ref();
+        pooler.push(solidFill);
     }
 
     LottieGroup::prepare(LottieObject::Layer);
