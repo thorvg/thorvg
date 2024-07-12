@@ -81,6 +81,9 @@ if lottie_loader
   source_file += 'LottieExtension.cpp'
 endif
 
+if lottie_expressions
+  source_file += 'LottieExpressions.cpp'
+endif
 
 foreach current_file : source_file
     name = current_file.split('.')[0]
