@@ -594,7 +594,6 @@ struct LottieLayer : LottieGroup
     LottieLayer* matteTarget = nullptr;
 
     tvg::Shape* solidFill = nullptr;
-    tvg::Shape* clipper = nullptr;
 
     float timeStretch = 1.0f;
     float w = 0.0f, h = 0.0f;
