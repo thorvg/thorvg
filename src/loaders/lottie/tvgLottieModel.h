@@ -28,6 +28,7 @@
 #include "tvgCommon.h"
 #include "tvgRender.h"
 #include "tvgLottieProperty.h"
+#include "tvgLottieRenderPooler.h"
 
 
 struct LottieComposition;
@@ -490,25 +491,19 @@ struct LottieGradientStroke : LottieGradient, LottieStroke
 };
 
 
-struct LottieImage : LottieObject
+struct LottieImage : LottieObject, LottieRenderPooler<tvg::Picture>
 {
     union {
         char* b64Data = nullptr;
         char* path;
     };
-    Picture* picture = nullptr;   //tvg render data
     char* mimeType = nullptr;
     uint32_t size = 0;
-    uint16_t refCnt = 0;   //refernce count
     float width = 0.0f;
     float height = 0.0f;
 
     ~LottieImage();
-
-    void prepare()
-    {
-        LottieObject::type = LottieObject::Image;
-    }
+    void prepare();
 };
 
 
@@ -567,7 +562,7 @@ struct LottieGroup : LottieObject
 };
 
 
-struct LottieLayer : LottieGroup
+struct LottieLayer : LottieGroup, LottieRenderPooler<tvg::Shape>
 {
     enum Type : uint8_t {Precomp = 0, Solid, Image, Null, Shape, Text};
 
@@ -592,9 +587,6 @@ struct LottieLayer : LottieGroup
     LottieTransform* transform = nullptr;
     Array<LottieMask*> masks;
     LottieLayer* matteTarget = nullptr;
-
-    tvg::Shape* solidFill = nullptr;
-    tvg::Shape* clipper = nullptr;
 
     float timeStretch = 1.0f;
     float w = 0.0f, h = 0.0f;
