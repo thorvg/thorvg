@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2023 - 2024 the ThorVG project. All rights reserved.
+ * Copyright (c) 2024 the ThorVG project. All rights reserved.
 
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to deal
@@ -26,8 +26,8 @@
 /* ThorVG Drawing Contents                                              */
 /************************************************************************/
 
-#define NUM_PER_ROW 10
-#define NUM_PER_COL 10
+#define NUM_PER_ROW 3
+#define NUM_PER_COL 3
 
 struct UserExample : tvgexam::Example
 {
@@ -104,7 +104,7 @@ struct UserExample : tvgexam::Example
         this->h = h;
         this->size = w / NUM_PER_ROW;
 
-        this->scandir(EXAMPLE_DIR"/lottie");
+        this->scandir(EXAMPLE_DIR"/lottie/expressions");
 
         //Run animation loop
         for (auto& animation : animations) {
@@ -122,5 +122,5 @@ struct UserExample : tvgexam::Example
 
 int main(int argc, char **argv)
 {
-    return tvgexam::main(new UserExample, argc, argv, 1280, 1280, 4, true);
+    return tvgexam::main(new UserExample, argc, argv, 800, 800, 0, true);
 }
