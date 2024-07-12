@@ -28,7 +28,6 @@
 #include "tvgPaint.h"
 #include "tvgShape.h"
 #include "tvgInlist.h"
-#include "tvgTaskScheduler.h"
 #include "tvgLottieModel.h"
 #include "tvgLottieBuilder.h"
 #include "tvgLottieExpressions.h"
@@ -1043,44 +1042,24 @@ static void _updatePrecomp(LottieLayer* precomp, float frameNo, LottieExpression
     }
 
     //clip the layer viewport
-    if (!precomp->clipper) {
-        precomp->clipper = Shape::gen().release();
-        precomp->clipper->appendRect(0.0f, 0.0f, precomp->w, precomp->h);
-        PP(precomp->clipper)->ref();
-    }
-    precomp->clipper->transform(precomp->cache.matrix);
-    precomp->scene->composite(cast(precomp->clipper), CompositeMethod::ClipPath);
+    auto clipper = precomp->pooling();
+    clipper->transform(precomp->cache.matrix);
+    precomp->scene->composite(cast(clipper), CompositeMethod::ClipPath);
 }
 
 
 static void _updateSolid(LottieLayer* layer)
 {
-    layer->solidFill->opacity(layer->cache.opacity);
-    layer->scene->push(cast(layer->solidFill));
+    auto solidFill = layer->pooling();
+    solidFill->opacity(layer->cache.opacity);
+    layer->scene->push(cast(solidFill));
 }
 
 
 static void _updateImage(LottieGroup* layer)
 {
     auto image = static_cast<LottieImage*>(layer->children.first());
-
-    if (!image->picture) {
-        image->picture = Picture::gen().release();
-
-        //force to load a picture on the same thread
-        TaskScheduler::async(false);
-
-        if (image->size > 0) image->picture->load((const char*)image->b64Data, image->size, image->mimeType, false);
-        else image->picture->load(image->path);
-
-        TaskScheduler::async(true);
-
-        PP(image->picture)->ref();
-        image->picture->size(image->width, image->height);
-    }
-
-    if (image->refCnt == 1) layer->scene->push(tvg::cast(image->picture));
-    else layer->scene->push(tvg::cast(image->picture->duplicate()));
+    layer->scene->push(tvg::cast(image->pooling()));
 }
 
 
@@ -1344,7 +1323,6 @@ static void _buildReference(LottieComposition* comp, LottieLayer* layer)
                 layer->reqFragment = assetLayer->reqFragment;
             }
         } else if (layer->type == LottieLayer::Image) {
-            ++static_cast<LottieImage*>(*asset)->refCnt;
             layer->children.push(*asset);
         }
         break;
