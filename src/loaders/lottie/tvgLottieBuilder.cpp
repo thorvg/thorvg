@@ -1028,7 +1028,7 @@ static void _updatePrecomp(LottieLayer* precomp, float frameNo, LottieExpression
     }
 
     //TODO: remove the intermediate scene....
-    if (precomp->scene->composite(nullptr) != tvg::CompositeMethod::None) {
+    if (precomp->scene->composite(nullptr) != CompositeMethod::None) {
         auto cscene = Scene::gen().release();
         cscene->push(cast(precomp->scene));
         precomp->scene = cscene;
@@ -1037,7 +1037,7 @@ static void _updatePrecomp(LottieLayer* precomp, float frameNo, LottieExpression
     //clip the layer viewport
     if (!precomp->clipper) {
         precomp->clipper = Shape::gen().release();
-        precomp->clipper->appendRect(0, 0, static_cast<float>(precomp->w), static_cast<float>(precomp->h));
+        precomp->clipper->appendRect(0.0f, 0.0f, precomp->w, precomp->h);
         PP(precomp->clipper)->ref();
         precomp->scene->composite(cast(precomp->clipper), CompositeMethod::ClipPath);
     }
