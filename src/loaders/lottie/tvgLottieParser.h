@@ -51,7 +51,6 @@ private:
     StrokeJoin getStrokeJoin();
     CompositeMethod getMaskMethod(bool inversed);
     LottieInterpolator* getInterpolator(const char* key, Point& in, Point& out);
-    uint8_t getDirection();
 
     void getInterpolatorPoint(Point& pt);
     void getPathSet(LottiePathSet& path);
@@ -94,6 +93,7 @@ private:
     LottieFont* parseFont();
     LottieMarker* parseMarker();
 
+    bool parseDirection(LottieShape* shape, const char* key);
     bool parseCommon(LottieObject* obj, const char* key);
     void parseObject(Array<LottieObject*>& parent);
     void parseShapes(Array<LottieObject*>& parent);

@@ -532,6 +532,18 @@ bool LottieParser::parseCommon(LottieObject* obj, const char* key)
 }
 
 
+bool LottieParser::parseDirection(LottieShape* shape, const char* key)
+{
+    if (KEY_AS("d")) {
+        if (getInt() == 3) {
+            shape->clockwise = false;       //default is true
+        }
+        return true;
+    }
+    return false;
+}
+
+
 LottieRect* LottieParser::parseRect()
 {
     auto rect = new LottieRect;
@@ -543,7 +555,7 @@ LottieRect* LottieParser::parseRect()
         else if (KEY_AS("s")) parseProperty<LottieProperty::Type::Point>(rect->size);
         else if (KEY_AS("p")) parseProperty<LottieProperty::Type::Position>(rect->position);
         else if (KEY_AS("r")) parseProperty<LottieProperty::Type::Float>(rect->radius);
-        else if (KEY_AS("d")) rect->clockwise = getDirection();
+        else if (parseDirection(rect, key)) continue;
         else skip(key);
     }
     rect->prepare();
@@ -561,7 +573,7 @@ LottieEllipse* LottieParser::parseEllipse()
         if (parseCommon(ellipse, key)) continue;
         else if (KEY_AS("p")) parseProperty<LottieProperty::Type::Position>(ellipse->position);
         else if (KEY_AS("s")) parseProperty<LottieProperty::Type::Point>(ellipse->size);
-        else if (KEY_AS("d")) ellipse->clockwise = getDirection();
+        else if (parseDirection(ellipse, key)) continue;
         else skip(key);
     }
     ellipse->prepare();
@@ -698,7 +710,7 @@ LottiePath* LottieParser::parsePath()
     while (auto key = nextObjectKey()) {
         if (parseCommon(path, key)) continue;
         else if (KEY_AS("ks")) getPathSet(path->pathset);
-        else if (KEY_AS("d")) path->clockwise = getDirection();
+        else if (parseDirection(path, key)) continue;
         else skip(key);
     }
     path->prepare();
@@ -722,7 +734,7 @@ LottiePolyStar* LottieParser::parsePolyStar()
         else if (KEY_AS("os")) parseProperty<LottieProperty::Type::Float>(star->outerRoundness);
         else if (KEY_AS("r")) parseProperty<LottieProperty::Type::Float>(star->rotation);
         else if (KEY_AS("sy")) star->type = (LottiePolyStar::Type) getInt();
-        else if (KEY_AS("d")) star->clockwise = getDirection();
+        else if (parseDirection(star, key)) continue;
         else skip(key);
     }
     star->prepare();
@@ -1083,13 +1095,6 @@ LottieObject* LottieParser::parseGroup()
 void LottieParser::parseTimeRemap(LottieLayer* layer)
 {
     parseProperty<LottieProperty::Type::Float>(layer->timeRemap);
-}
-
-
-uint8_t LottieParser::getDirection()
-{
-    if (getInt() == 3) return false;
-    return true;
 }
 
 
