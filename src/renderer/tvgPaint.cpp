@@ -158,16 +158,22 @@ Iterator* Paint::Impl::iterator()
 }
 
 
-Paint* Paint::Impl::duplicate()
+Paint* Paint::Impl::duplicate(Paint* ret)
 {
-    Paint* ret;
-    PAINT_METHOD(ret, duplicate());
+    if (ret) ret->composite(nullptr, CompositeMethod::None);
+
+    PAINT_METHOD(ret, duplicate(ret));
 
     //duplicate Transform
     if (rTransform) {
-        ret->pImpl->rTransform = new RenderTransform();
+        if (!ret->pImpl->rTransform) {
+            ret->pImpl->rTransform = new RenderTransform();
+        }
         *ret->pImpl->rTransform = *rTransform;
         ret->pImpl->renderFlag |= RenderUpdateFlag::Transform;
+    } else {
+        delete(ret->pImpl->rTransform);
+        ret->pImpl->rTransform = nullptr;
     }
 
     ret->pImpl->opacity = opacity;

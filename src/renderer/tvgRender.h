@@ -145,6 +145,31 @@ struct RenderStroke
         bool simultaneous = true;
     } trim;
 
+    void operator=(const RenderStroke& rhs)
+    {
+        width = rhs.width;
+
+        memcpy(color, rhs.color, sizeof(color));
+
+        delete(fill);
+        if (rhs.fill) fill = rhs.fill->duplicate();
+        else fill = nullptr;
+
+        free(dashPattern);
+        if (rhs.dashCnt > 0) {
+            dashPattern = static_cast<float*>(malloc(sizeof(float) * rhs.dashCnt));
+            memcpy(dashPattern, rhs.dashPattern, sizeof(float) * rhs.dashCnt);
+        } else {
+            dashPattern = nullptr;
+        }
+        dashCnt = rhs.dashCnt;
+        miterlimit = rhs.miterlimit;
+        cap = rhs.cap;
+        join = rhs.join;
+        strokeFirst = rhs.strokeFirst;
+        trim = rhs.trim;
+    }
+
     ~RenderStroke()
     {
         free(dashPattern);
