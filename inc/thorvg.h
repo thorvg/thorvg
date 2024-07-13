@@ -1846,6 +1846,19 @@ public:
      */
     static Result term(CanvasEngine engine = tvg::CanvasEngine::All) noexcept;
 
+    /**
+     * @brief Retrieves the version of the TVG engine.
+     *
+     * @param[out] major A major version number.
+     * @param[out] minor A minor version number.
+     * @param[out] micro A micro version number.
+     *
+     * @return The version of the engine in the format major.minor.micro, or a @p nullptr in case of an internal error.
+     *
+     * @note Experimental API
+     */
+    static const char* version(uint32_t* major, uint32_t* minor, uint32_t* micro) noexcept;
+
     _TVG_DISABLE_CTOR(Initializer);
 };
 
