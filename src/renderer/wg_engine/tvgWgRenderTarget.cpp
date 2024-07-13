@@ -85,7 +85,6 @@ void WgRenderStorage::renderShape(WgContext& context, WgRenderDataShape* renderD
 {
     assert(renderData);
     assert(mRenderPassEncoder);
-    // draw strokes
     if (renderData->strokeFirst) {
         drawStroke(context, renderData, blendType);
         drawShape(context, renderData, blendType);
@@ -102,12 +101,21 @@ void WgRenderStorage::renderPicture(WgContext& context, WgRenderDataPicture* ren
     assert(mRenderPassEncoder);
     uint8_t blend = (uint8_t)blendType;
     auto& vp = renderData->viewport;
+    if ((vp.w <= 0) || (vp.h <= 0)) return;
     wgpuRenderPassEncoderSetScissorRect(mRenderPassEncoder, vp.x * samples, vp.y * samples, vp.w * samples, vp.h * samples);
     wgpuRenderPassEncoderSetStencilReference(mRenderPassEncoder, 0);
     mPipelines->image[blend].use(mRenderPassEncoder, mBindGroupCanvas, renderData->bindGroupPaint, renderData->bindGroupPicture);
     renderData->meshData.drawImage(context, mRenderPassEncoder);
 }
 
+void WgRenderStorage::renderClipPath(WgContext& context, WgRenderDataPaint* renderData) {
+    assert(renderData);
+    assert(mRenderPassEncoder);
+    if (renderData->type() == Type::Shape)
+        drawShapeClipPath(context, (WgRenderDataShape*)renderData);
+    else if (renderData->type() == Type::Picture)
+        drawPictureClipPath(context, (WgRenderDataPicture*)renderData);
+}
 
 void WgRenderStorage::drawShape(WgContext& context, WgRenderDataShape* renderData, WgPipelineBlendType blendType)
 {
@@ -115,10 +123,12 @@ void WgRenderStorage::drawShape(WgContext& context, WgRenderDataShape* renderDat
     assert(mRenderPassEncoder);
     assert(renderData->meshGroupShapes.meshes.count == renderData->meshGroupShapesBBox.meshes.count);
     if (renderData->renderSettingsShape.skip) return;
+    // apply viewport
     auto& vp = renderData->viewport;
+    if ((vp.w <= 0) || (vp.h <= 0)) return;
     wgpuRenderPassEncoderSetScissorRect(mRenderPassEncoder, vp.x * samples, vp.y * samples, vp.w * samples, vp.h * samples);
-    wgpuRenderPassEncoderSetStencilReference(mRenderPassEncoder, 0);
     // setup fill rule
+    wgpuRenderPassEncoderSetStencilReference(mRenderPassEncoder, 0);
     if (renderData->fillRule == FillRule::Winding)
         mPipelines->fillShapeWinding.use(mRenderPassEncoder, mBindGroupCanvas, renderData->bindGroupPaint);
     else
@@ -145,7 +155,9 @@ void WgRenderStorage::drawStroke(WgContext& context, WgRenderDataShape* renderDa
     assert(mRenderPassEncoder);
     assert(renderData->meshGroupStrokes.meshes.count == renderData->meshGroupStrokesBBox.meshes.count);
     if (renderData->renderSettingsStroke.skip) return;
+    // apply viewport
     auto& vp = renderData->viewport;
+    if ((vp.w <= 0) || (vp.h <= 0)) return;
     wgpuRenderPassEncoderSetScissorRect(mRenderPassEncoder, vp.x * samples, vp.y * samples, vp.w * samples, vp.h * samples);
     // draw stroke geometry
     uint8_t blend = (uint8_t)blendType;
@@ -169,6 +181,35 @@ void WgRenderStorage::drawStroke(WgContext& context, WgRenderDataShape* renderDa
 }
 
 
+void WgRenderStorage::drawShapeClipPath(WgContext& context, WgRenderDataShape* renderData) {
+    assert(renderData);
+    assert(renderData->type() == Type::Shape);
+    assert(renderData->meshGroupShapes.meshes.count == renderData->meshGroupShapesBBox.meshes.count);
+    // draw shape geometry
+    wgpuRenderPassEncoderSetStencilReference(mRenderPassEncoder, 0);
+    // setup fill rule
+    if (renderData->fillRule == FillRule::Winding)
+        mPipelines->fillShapeWinding.use(mRenderPassEncoder, mBindGroupCanvas, renderData->bindGroupPaint);
+    else
+        mPipelines->fillShapeEvenOdd.use(mRenderPassEncoder, mBindGroupCanvas, renderData->bindGroupPaint);
+    // draw to stencil (first pass)
+    for (uint32_t i = 0; i < renderData->meshGroupShapes.meshes.count; i++)
+        renderData->meshGroupShapes.meshes[i]->drawFan(context, mRenderPassEncoder);
+    // fill shape geometry (second pass)
+    mPipelines->clipMask.use(mRenderPassEncoder, mBindGroupCanvas, renderData->bindGroupPaint);
+    renderData->meshDataBBox.drawFan(context, mRenderPassEncoder);
+}
+
+void WgRenderStorage::drawPictureClipPath(WgContext& context, WgRenderDataPicture* renderData) {
+    assert(renderData);
+    assert(renderData->type() == Type::Picture);
+    assert(mRenderPassEncoder);
+    wgpuRenderPassEncoderSetStencilReference(mRenderPassEncoder, 0);
+    mPipelines->clipMask.use(mRenderPassEncoder, mBindGroupCanvas, renderData->bindGroupPaint);
+    renderData->meshData.drawImage(context, mRenderPassEncoder);
+}
+
+
 void WgRenderStorage::clear(WGPUCommandEncoder commandEncoder)
 {
     assert(commandEncoder);
@@ -179,7 +220,14 @@ void WgRenderStorage::clear(WGPUCommandEncoder commandEncoder)
 }
 
 
-void WgRenderStorage::blend(WGPUCommandEncoder commandEncoder, WgRenderStorage* targetSrc, WgPipelineBlend* pipeline, WgBindGroupBlendMethod* blendMethod, WgBindGroupOpacity* opacity) {
+void WgRenderStorage::blend(
+    WgContext& context,
+    WGPUCommandEncoder commandEncoder,
+    WgPipelineBlend* pipeline,
+    WgRenderStorage* targetSrc,
+    WgBindGroupBlendMethod* blendMethod,
+    WgBindGroupOpacity* opacity)
+{
     assert(commandEncoder);
     assert(targetSrc);
     assert(pipeline);
@@ -190,7 +238,46 @@ void WgRenderStorage::blend(WGPUCommandEncoder commandEncoder, WgRenderStorage* 
 }
 
 
-void WgRenderStorage::composeBlend(
+void WgRenderStorage::blendMask(
+    WgContext& context,
+    WGPUCommandEncoder commandEncoder,
+    WgPipelineBlendMask* pipeline,
+    WgRenderStorage* texMsk,
+    WgRenderStorage* texSrc,
+    WgBindGroupBlendMethod* blendMethod,
+    WgBindGroupOpacity* opacity)
+{
+    assert(commandEncoder);
+    assert(texSrc);
+    assert(texMsk);
+    WgBindGroupTexComposeBlend composeBlend;
+    composeBlend.initialize(context.device, context.queue, texSrc->texViewColor, texMsk->texViewColor, texViewColor);
+    WGPUComputePassEncoder computePassEncoder = beginComputePass(commandEncoder);
+    pipeline->use(computePassEncoder, composeBlend, *blendMethod, *opacity);
+    dispatchWorkgroups(computePassEncoder);
+    endComputePass(computePassEncoder);
+    composeBlend.release();
+};
+
+
+void WgRenderStorage::maskCompose(
+        WgContext& context,
+        WGPUCommandEncoder commandEncoder,
+        WgRenderStorage* texMsk0)
+{
+    assert(commandEncoder);
+    assert(texMsk0);
+    WgBindGroupTexMaskCompose maskCompose;
+    maskCompose.initialize(context.device, context.queue, texMsk0->texViewColor, texViewColor);
+    WGPUComputePassEncoder computePassEncoder = beginComputePass(commandEncoder);
+    mPipelines->computeMaskCompose.use(computePassEncoder, maskCompose);
+    dispatchWorkgroups(computePassEncoder);
+    endComputePass(computePassEncoder);
+    maskCompose.release();
+}
+
+
+void WgRenderStorage::compose(
     WgContext& context,
     WGPUCommandEncoder commandEncoder,
     WgRenderStorage* texSrc,
@@ -205,7 +292,7 @@ void WgRenderStorage::composeBlend(
     WgBindGroupTexComposeBlend composeBlend;
     composeBlend.initialize(context.device, context.queue, texSrc->texViewColor, texMsk->texViewColor, texViewColor);
     WGPUComputePassEncoder computePassEncoder = beginComputePass(commandEncoder);
-    mPipelines->computeComposeBlend.use(computePassEncoder, composeBlend, *composeMethod, *blendMethod, *opacity);
+    mPipelines->computeCompose.use(computePassEncoder, composeBlend, *composeMethod, *blendMethod, *opacity);
     dispatchWorkgroups(computePassEncoder);
     endComputePass(computePassEncoder);
     composeBlend.release();

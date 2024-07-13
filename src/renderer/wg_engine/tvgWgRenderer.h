@@ -62,12 +62,14 @@ private:
     void initialize();
     void release();
     void clearDisposes();
+    void renderClipPath(Array<WgRenderDataPaint*>& clips);
 
-    WGPUCommandEncoder mCommandEncoder{};    // render handles
-    WgRenderStorage mRenderStorageInterm;    // intermidiate buffer to render
-    WgRenderStorage mRenderStorageRoot;    // root render storage
-    WgRenderStorage mRenderStorageScreen;    // storage with data after antializing
-    WgRenderStoragePool mRenderStoragePool;    // pool to hold render tree storages
+    WGPUCommandEncoder mCommandEncoder{};
+    WgRenderStorage mRenderStorageInterm; // intermidiate buffer to render
+    WgRenderStorage mRenderStorageMask;   // buffer to render mask 
+    WgRenderStorage mRenderStorageRoot;   // root render storage
+    WgRenderStorage mRenderStorageScreen; // storage with data after antializing
+    WgRenderStoragePool mRenderStoragePool; // pool to hold render tree storages
     WgBindGroupOpacityPool mOpacityPool;    // opacity, blend methods and composite methods pool
     WgBindGroupBlendMethodPool mBlendMethodPool;
     WgBindGroupCompositeMethodPool mCompositeMethodPool;

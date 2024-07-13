@@ -262,7 +262,16 @@ void WgRenderSettings::release(WgContext& context)
 void WgRenderDataPaint::release(WgContext& context)
 {
     bindGroupPaint.release();
+    clips.clear();
 };
+
+
+void WgRenderDataPaint::updateClips(tvg::Array<tvg::RenderData> &clips) {
+    this->clips.clear();
+    for (uint32_t i = 0; i < clips.count; i++)
+        if (clips[i])
+            this->clips.push((WgRenderDataPaint*)clips[i]);
+}
 
 //***********************************************************************
 // WgRenderDataShape
@@ -371,6 +380,7 @@ void WgRenderDataShape::releaseMeshes(WgContext &context)
     meshGroupShapes.release(context);
     pMin = {FLT_MAX, FLT_MAX};
     pMax = {0.0f, 0.0f};
+    clips.clear();
 }
 
 
@@ -407,6 +417,7 @@ void WgRenderDataShapePool::free(WgContext& context, WgRenderDataShape* dataShap
     dataShape->meshGroupShapesBBox.release(context);
     dataShape->meshGroupStrokes.release(context);
     dataShape->meshGroupStrokesBBox.release(context);
+    dataShape->clips.clear();
     mPool.push(dataShape);
 }
 
