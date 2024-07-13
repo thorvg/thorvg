@@ -267,6 +267,7 @@ struct SwWindow : Window
 
     SwWindow(Example* example, uint32_t width, uint32_t height, uint32_t threadsCnt) : Window(tvg::CanvasEngine::Sw, example, width, height, threadsCnt)
     {
+        if (!instance) return;
         window = SDL_CreateWindow("ThorVG Example (Software)", SDL_WINDOWPOS_UNDEFINED, SDL_WINDOWPOS_UNDEFINED, width, height, SDL_WINDOW_HIDDEN | SDL_WINDOW_RESIZABLE);
 
         //Create a Canvas
