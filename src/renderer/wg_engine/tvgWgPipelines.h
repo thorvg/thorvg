@@ -62,6 +62,17 @@ struct WgPipelineFillStroke: public WgRenderPipeline
     }
 };
 
+struct WgPipelineClipMask: public WgRenderPipeline
+{
+    void initialize(WGPUDevice device) override;
+    void use(WGPURenderPassEncoder encoder, WgBindGroupCanvas& groupCanvas,WgBindGroupPaint& groupPaint)
+    {
+        set(encoder);
+        groupCanvas.set(encoder, 0);
+        groupPaint.set(encoder, 1);
+    }
+};
+
 struct WgPipelineSolid: public WgRenderPipeline
 {
     void initialize(WGPUDevice device) override {}
@@ -144,7 +155,32 @@ struct WgPipelineBlend: public WgComputePipeline
 };
 
 
-struct WgPipelineComposeBlend: public WgComputePipeline
+struct WgPipelineBlendMask: public WgComputePipeline
+{
+    void initialize(WGPUDevice device) override { assert(false); };
+    void initialize(WGPUDevice device, const char *shaderSource);
+    void use(WGPUComputePassEncoder encoder, WgBindGroupTexComposeBlend& groupTexs, WgBindGroupBlendMethod& blendMethod, WgBindGroupOpacity& groupOpacity)
+    {
+        set(encoder);
+        groupTexs.set(encoder, 0);
+        blendMethod.set(encoder, 1);
+        groupOpacity.set(encoder, 2);
+    }
+};
+
+
+struct WgPipelineMaskCompose: public WgComputePipeline
+{
+    void initialize(WGPUDevice device) override;
+    void use(WGPUComputePassEncoder encoder, WgBindGroupTexMaskCompose& groupTexs)
+    {
+        set(encoder);
+        groupTexs.set(encoder, 0);
+    }
+};
+
+
+struct WgPipelineCompose: public WgComputePipeline
 {
     void initialize(WGPUDevice device) override;
     void use(WGPUComputePassEncoder encoder, WgBindGroupTexComposeBlend& groupTexs, WgBindGroupCompositeMethod& groupComposeMethod, WgBindGroupBlendMethod& groupBlendMethod, WgBindGroupOpacity& groupOpacity)
@@ -180,6 +216,7 @@ struct WgPipelines
     WgPipelineFillShapeEvenOdd fillShapeEvenOdd;
     WgPipelineFillStroke fillStroke;
     // fill pipelines
+    WgPipelineClipMask clipMask;
     WgPipelineSolid solid[3];
     WgPipelineLinear linear[3];
     WgPipelineRadial radial[3];
@@ -189,7 +226,11 @@ struct WgPipelines
     WgPipelineBlend computeBlendSolid;
     WgPipelineBlend computeBlendGradient;
     WgPipelineBlend computeBlendImage;
-    WgPipelineComposeBlend computeComposeBlend;
+    WgPipelineBlendMask computeBlendSolidMask;
+    WgPipelineBlendMask computeBlendGradientMask;
+    WgPipelineBlendMask computeBlendImageMask;
+    WgPipelineMaskCompose computeMaskCompose;
+    WgPipelineCompose computeCompose;
     WgPipelineAntiAliasing computeAntiAliasing;
 
     void initialize(WgContext& context);

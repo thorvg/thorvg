@@ -53,8 +53,8 @@ fn vs_main(in: VertexInput) -> VertexOutput {
 }
 
 @fragment
-fn fs_main(in: VertexOutput) -> void {
-    // nothing to draw, just stencil value
+fn fs_main(in: VertexOutput) -> @location(0) vec4f {
+    return vec4f(0.0, 0.0, 0.0, 1.0);
 }
 );
 
@@ -393,6 +393,34 @@ fn cs_main( @builtin(global_invocation_id) id: vec3u) {
     var Ra: f32    = 1.0;
 );
 
+const std::string strBlendMaskShaderHeader = WG_SHADER_SOURCE(
+@group(0) @binding(0) var imageSrc : texture_storage_2d<rgba8unorm, read>;
+@group(0) @binding(1) var imageMsk : texture_storage_2d<rgba8unorm, read>;
+@group(0) @binding(2) var imageDst : texture_storage_2d<rgba8unorm, read_write>;
+@group(1) @binding(0) var<uniform> blendMethod : u32;
+@group(2) @binding(0) var<uniform> opacity : f32;
+
+@compute @workgroup_size(8, 8)
+fn cs_main( @builtin(global_invocation_id) id: vec3u) {
+    let texSize = textureDimensions(imageSrc);
+    if ((id.x >= texSize.x) || (id.y >= texSize.y)) { return; };
+
+    let colorMsk = textureLoad(imageMsk, id.xy);
+    if (colorMsk.a == 0.0) { return; }
+    let colorSrc = textureLoad(imageSrc, id.xy);
+    if (colorSrc.a == 0.0) { return; }
+    let colorDst = textureLoad(imageDst, id.xy);
+
+    var One: vec3f = vec3(1.0);
+    var So: f32    = opacity;
+    var Sc: vec3f  = colorSrc.rgb;
+    var Sa: f32    = colorSrc.a;
+    var Dc: vec3f  = colorDst.rgb;
+    var Da: f32    = colorDst.a;
+    var Rc: vec3f  = colorDst.rgb;
+    var Ra: f32    = 1.0;
+);
+
 const std::string strBlendShaderPreConditionsGradient = WG_SHADER_SOURCE(
     Sc = Sc + Dc.rgb * (1.0 - Sa);
     Sa = Sa + Da     * (1.0 - Sa);
@@ -484,6 +512,31 @@ const std::string strComputeBlendImage =
     strBlendShaderFooter;
 const char* cShaderSource_PipelineComputeBlendImage = strComputeBlendImage.c_str();
 
+// pipeline shader modules blend solid mask
+const std::string strComputeBlendSolidMask =
+    strBlendMaskShaderHeader + 
+    strBlendShaderBlendMethod + 
+    strBlendShaderFooter;
+const char* cShaderSource_PipelineComputeBlendSolidMask = strComputeBlendSolidMask.c_str();
+
+// pipeline shader modules blend gradient mask
+const std::string strComputeBlendGradientMask =
+    strBlendMaskShaderHeader + 
+    strBlendShaderPreConditionsGradient + 
+    strBlendShaderBlendMethod + 
+    strBlendShaderPostConditionsGradient + 
+    strBlendShaderFooter;
+const char* cShaderSource_PipelineComputeBlendGradientMask = strComputeBlendGradientMask.c_str();
+
+// pipeline shader modules blend image mask
+const std::string strComputeBlendImageMask =
+    strBlendMaskShaderHeader + 
+    strBlendShaderPreConditionsImage + 
+    strBlendShaderBlendMethod + 
+    strBlendShaderPostConditionsImage + 
+    strBlendShaderFooter;
+const char* cShaderSource_PipelineComputeBlendImageMask = strComputeBlendImageMask.c_str();
+
 // pipeline shader modules clear
 const char* cShaderSource_PipelineComputeClear = WG_SHADER_SOURCE(
 @group(0) @binding(0) var imageDst : texture_storage_2d<rgba8unorm, read_write>;
@@ -494,8 +547,21 @@ fn cs_main( @builtin(global_invocation_id) id: vec3u) {
 }
 );
 
-// pipeline shader modules compose blend
-const char* cShaderSource_PipelineComputeComposeBlend = WG_SHADER_SOURCE(
+// pipeline shader modules compose
+const char* cShaderSource_PipelineComputeMaskCompose = WG_SHADER_SOURCE(
+@group(0) @binding(0) var imageMsk0 : texture_storage_2d<rgba8unorm, read>;
+@group(0) @binding(1) var imageMsk1 : texture_storage_2d<rgba8unorm, read_write>;
+
+@compute @workgroup_size(8, 8)
+fn cs_main( @builtin(global_invocation_id) id: vec3u) {
+    let colorMsk0 = textureLoad(imageMsk0, id.xy);
+    let colorMsk1 = textureLoad(imageMsk1, id.xy);
+    textureStore(imageMsk1, id.xy, colorMsk0 * colorMsk1);
+}
+);
+
+// pipeline shader modules compose
+const char* cShaderSource_PipelineComputeCompose = WG_SHADER_SOURCE(
 @group(0) @binding(0) var imageSrc : texture_storage_2d<rgba8unorm, read>;
 @group(0) @binding(1) var imageMsk : texture_storage_2d<rgba8unorm, read>;
 @group(0) @binding(2) var imageDst : texture_storage_2d<rgba8unorm, read_write>;

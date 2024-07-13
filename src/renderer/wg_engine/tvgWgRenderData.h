@@ -88,10 +88,13 @@ struct WgRenderDataPaint
     WgBindGroupPaint bindGroupPaint{};
     RenderRegion viewport{};
     float opacity{};
+    Array<WgRenderDataPaint*> clips;
 
     virtual ~WgRenderDataPaint() {};
     virtual void release(WgContext& context);
     virtual Type type() { return Type::Undefined; };
+
+    void updateClips(tvg::Array<tvg::RenderData> &clips);
 };
 
 struct WgRenderDataShape: public WgRenderDataPaint

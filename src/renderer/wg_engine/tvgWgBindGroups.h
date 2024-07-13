@@ -170,6 +170,20 @@ struct WgBindGroupTexComposeBlend : public WgBindGroup
 };
 
 
+// @group(0)
+struct WgBindGroupTexMaskCompose : public WgBindGroup
+{
+    static WGPUBindGroupLayout layout;
+    static WGPUBindGroupLayout getLayout(WGPUDevice device);
+    static void releaseLayout();
+
+    void initialize(WGPUDevice device, WGPUQueue queue,
+                    WGPUTextureView uTexMsk0,
+                    WGPUTextureView uTexMsk1);
+    void release();
+};
+
+
 // @group(1 or 2)
 struct WgBindGroupOpacity : public WgBindGroup
 {
