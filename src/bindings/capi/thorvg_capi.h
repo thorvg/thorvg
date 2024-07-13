@@ -376,6 +376,21 @@ TVG_API Tvg_Result tvg_engine_init(Tvg_Engine engine_method, unsigned threads);
 TVG_API Tvg_Result tvg_engine_term(Tvg_Engine engine_method);
 
 
+/**
+* \brief Retrieves the version of the TVG engine.
+*
+* \param[out] major A major version number.
+* \param[out] minor A minor version number.
+* \param[out] micro A micro version number.
+* \param[out] version The version of the engine in the format major.minor.micro, or a @p nullptr in case of an internal error.
+*
+* \return Tvg_Result enumeration.
+* \retval TVG_RESULT_SUCCESS.
+*
+* \note Experimental API
+*/
+TVG_API Tvg_Result tvg_engine_version(uint32_t* major, uint32_t* minor, uint32_t* micro, const char** version);
+
 /** \} */   // end defgroup ThorVGCapi_Initializer
 
 

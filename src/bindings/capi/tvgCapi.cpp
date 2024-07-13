@@ -52,6 +52,12 @@ TVG_API Tvg_Result tvg_engine_term(Tvg_Engine engine_method)
 }
 
 
+TVG_API Tvg_Result tvg_engine_version(uint32_t* major, uint32_t* minor, uint32_t* micro, const char** version)
+{
+    if (version) *version = Initializer::version(major, minor, micro);
+    return TVG_RESULT_SUCCESS;
+}
+
 /************************************************************************/
 /* Canvas API                                                           */
 /************************************************************************/
