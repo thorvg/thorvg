@@ -152,12 +152,14 @@ struct Text::Impl
         return true;
     }
 
-    Paint* duplicate()
+    Paint* duplicate(Paint* ret)
     {
+        if (ret) TVGERR("RENDERER", "TODO: duplicate()");
+
         load();
 
-        auto ret = Text::gen().release();
-        auto dup = ret->pImpl;
+        auto text = Text::gen().release();
+        auto dup = text->pImpl;
         if (paint) dup->paint = static_cast<Shape*>(paint->duplicate());
 
         if (loader) {
@@ -169,7 +171,7 @@ struct Text::Impl
         dup->italic = italic;
         dup->fontSize = fontSize;
 
-        return ret;
+        return text;
     }
 
     Iterator* iterator()
