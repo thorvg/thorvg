@@ -37,6 +37,16 @@
 /* External Class Implementation                                        */
 /************************************************************************/
 
+void LottieShape::prepare(LottieObject::Type type)
+{
+    LottieObject::type = type;
+
+    auto shape = tvg::Shape::gen().release();
+    PP(shape)->ref();
+    pooler.push(shape);
+}
+
+
 void LottieSlot::reset()
 {
     if (!overriden) return;

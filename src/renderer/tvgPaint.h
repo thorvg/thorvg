@@ -138,7 +138,7 @@ namespace tvg
         bool bounds(float* x, float* y, float* w, float* h, bool transformed, bool stroking);
         RenderData update(RenderMethod* renderer, const RenderTransform* pTransform, Array<RenderData>& clips, uint8_t opacity, RenderUpdateFlag pFlag, bool clipper = false);
         bool render(RenderMethod* renderer);
-        Paint* duplicate();
+        Paint* duplicate(Paint* ret = nullptr);
     };
 }
 

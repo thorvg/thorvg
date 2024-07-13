@@ -34,6 +34,7 @@ struct Shape::Impl
     RenderData rd = nullptr;            //engine data
     Shape* shape;
     uint8_t flag = RenderUpdateFlag::None;
+
     uint8_t opacity;                    //for composition
     bool needComp = false;              //composite or not
 
@@ -359,47 +360,40 @@ struct Shape::Impl
         this->flag |= flag;
     }
 
-    Paint* duplicate()
+    Paint* duplicate(Paint* ret)
     {
-        auto ret = Shape::gen().release();
-        auto dup = ret->pImpl;
+        auto shape = static_cast<Shape*>(ret);
+        if (shape) shape->reset();
+        else shape = Shape::gen().release();
 
+        auto dup = shape->pImpl;
+        delete(dup->rs.fill);
+
+        //Default Properties
+        dup->flag = RenderUpdateFlag::All;
         dup->rs.rule = rs.rule;
 
         //Color
         memcpy(dup->rs.color, rs.color, sizeof(rs.color));
-        dup->flag = RenderUpdateFlag::Color;
 
         //Path
-        if (rs.path.cmds.count > 0 && rs.path.pts.count > 0) {
-            dup->rs.path.cmds = rs.path.cmds;
-            dup->rs.path.pts = rs.path.pts;
-            dup->flag |= RenderUpdateFlag::Path;
-        }
+        dup->rs.path.cmds.push(rs.path.cmds);
+        dup->rs.path.pts.push(rs.path.pts);
 
         //Stroke
         if (rs.stroke) {
-            dup->rs.stroke = new RenderStroke();
+            if (!dup->rs.stroke) dup->rs.stroke = new RenderStroke;
             *dup->rs.stroke = *rs.stroke;
-            memcpy(dup->rs.stroke->color, rs.stroke->color, sizeof(rs.stroke->color));
-            if (rs.stroke->dashCnt > 0) {
-                dup->rs.stroke->dashPattern = static_cast<float*>(malloc(sizeof(float) * rs.stroke->dashCnt));
-                memcpy(dup->rs.stroke->dashPattern, rs.stroke->dashPattern, sizeof(float) * rs.stroke->dashCnt);
-            }
-            if (rs.stroke->fill) {
-                dup->rs.stroke->fill = rs.stroke->fill->duplicate();
-                dup->flag |= RenderUpdateFlag::GradientStroke;
-            }
-            dup->flag |= RenderUpdateFlag::Stroke;
+        } else {
+            delete(dup->rs.stroke);
+            dup->rs.stroke = nullptr;
         }
 
         //Fill
-        if (rs.fill) {
-            dup->rs.fill = rs.fill->duplicate();
-            dup->flag |= RenderUpdateFlag::Gradient;
-        }
+        if (rs.fill) dup->rs.fill = rs.fill->duplicate();
+        else dup->rs.fill = nullptr;
 
-        return ret;
+        return shape;
     }
 
     Iterator* iterator()

@@ -99,7 +99,7 @@ struct RenderContext
 static void _updateChildren(LottieGroup* parent, float frameNo, Inlist<RenderContext>& contexts, LottieExpressions* exps);
 static void _updateLayer(LottieLayer* root, LottieLayer* layer, float frameNo, LottieExpressions* exps);
 static bool _buildComposition(LottieComposition* comp, LottieLayer* parent);
-static bool _draw(LottieGroup* parent, RenderContext* ctx);
+static bool _draw(LottieGroup* parent, LottieShape* shape, RenderContext* ctx);
 
 
 static void _rotationXYZ(Matrix* m, float degreeX, float degreeY, float degreeZ)
@@ -275,7 +275,7 @@ static void _updateGroup(LottieGroup* parent, LottieObject** child, float frameN
     group->reqFragment |= ctx->reqFragment;
 
     //generate a merging shape to consolidate partial shapes into a single entity
-    if (group->mergeable()) _draw(parent, ctx);
+    if (group->mergeable()) _draw(parent, nullptr, ctx);
 
     Inlist<RenderContext> contexts;
     contexts.back(new RenderContext(*ctx, group->mergeable()));
@@ -374,20 +374,24 @@ static void _updateGradientFill(TVG_UNUSED LottieGroup* parent, LottieObject** c
 }
 
 
-static bool _draw(LottieGroup* parent, RenderContext* ctx)
+static bool _draw(LottieGroup* parent, LottieShape* shape, RenderContext* ctx)
 {
     if (ctx->merging) return false;
 
-    auto shape = cast<Shape>(ctx->propagator->duplicate());
-    ctx->merging = shape.get();
-    parent->scene->push(std::move(shape));
+    if (shape) {
+        ctx->merging = shape->pooling();
+        PP(ctx->propagator)->duplicate(ctx->merging);
+    } else {
+        ctx->merging = static_cast<Shape*>(ctx->propagator->duplicate());
+    }
+
+    parent->scene->push(cast(ctx->merging));
 
     return true;
 }
 
 
-//OPTIMIZE: path?
-static void _repeat(LottieGroup* parent, unique_ptr<Shape> path, RenderContext* ctx)
+static void _repeat(LottieGroup* parent, Shape* path, RenderContext* ctx)
 {
     Array<Shape*> propagators;
     propagators.push(ctx->propagator);
@@ -401,7 +405,7 @@ static void _repeat(LottieGroup* parent, unique_ptr<Shape> path, RenderContext* 
 
             for (auto propagator = propagators.begin(); propagator < propagators.end(); ++propagator) {
                 auto shape = static_cast<Shape*>((*propagator)->duplicate());
-                P(shape)->rs.path = P(path.get())->rs.path;
+                P(shape)->rs.path = P(path)->rs.path;
 
                 auto opacity = repeater->interpOpacity ? mathLerp<uint8_t>(repeater->startOpacity, repeater->endOpacity, static_cast<float>(i + 1) / repeater->cnt) : repeater->startOpacity;
                 shape->opacity(opacity);
@@ -542,11 +546,12 @@ static void _updateRect(LottieGroup* parent, LottieObject** child, float frameNo
     }
 
     if (!ctx->repeaters.empty()) {
-        auto path = Shape::gen();
-        _appendRect(path.get(), position.x - size.x * 0.5f, position.y - size.y * 0.5f, size.x, size.y, roundness, ctx->transform, rect->clockwise);
-        _repeat(parent, std::move(path), ctx);
+        auto shape = rect->pooling();
+        shape->reset();
+        _appendRect(shape, position.x - size.x * 0.5f, position.y - size.y * 0.5f, size.x, size.y, roundness, ctx->transform, rect->clockwise);
+        _repeat(parent, shape, ctx);
     } else {
-        _draw(parent, ctx);
+        _draw(parent, rect, ctx);
         _appendRect(ctx->merging, position.x - size.x * 0.5f, position.y - size.y * 0.5f, size.x, size.y, roundness, ctx->transform, rect->clockwise);
     }
 }
@@ -598,11 +603,12 @@ static void _updateEllipse(LottieGroup* parent, LottieObject** child, float fram
     auto size = ellipse->size(frameNo, exps);
 
     if (!ctx->repeaters.empty()) {
-        auto path = Shape::gen();
-        _appendCircle(path.get(), position.x, position.y, size.x * 0.5f, size.y * 0.5f, ctx->transform, ellipse->clockwise);
-        _repeat(parent, std::move(path), ctx);
+        auto shape = ellipse->pooling();
+        shape->reset();
+        _appendCircle(shape, position.x, position.y, size.x * 0.5f, size.y * 0.5f, ctx->transform, ellipse->clockwise);
+        _repeat(parent, shape, ctx);
     } else {
-        _draw(parent, ctx);
+        _draw(parent, ellipse, ctx);
         _appendCircle(ctx->merging, position.x, position.y, size.x * 0.5f, size.y * 0.5f, ctx->transform, ellipse->clockwise);
     }
 }
@@ -613,11 +619,12 @@ static void _updatePath(LottieGroup* parent, LottieObject** child, float frameNo
     auto path = static_cast<LottiePath*>(*child);
 
     if (!ctx->repeaters.empty()) {
-        auto p = Shape::gen();
-        path->pathset(frameNo, P(p)->rs.path.cmds, P(p)->rs.path.pts, ctx->transform, ctx->roundness, exps);
-        _repeat(parent, std::move(p), ctx);
+        auto shape = path->pooling();
+        shape->reset();
+        path->pathset(frameNo, P(shape)->rs.path.cmds, P(shape)->rs.path.pts, ctx->transform, ctx->roundness, exps);
+        _repeat(parent, shape, ctx);
     } else {
-        _draw(parent, ctx);
+        _draw(parent, path, ctx);
         if (path->pathset(frameNo, P(ctx->merging)->rs.path.cmds, P(ctx->merging)->rs.path.pts, ctx->transform, ctx->roundness, exps)) {
             P(ctx->merging)->update(RenderUpdateFlag::Path);
         }
@@ -708,8 +715,14 @@ static void _updateStar(LottieGroup* parent, LottiePolyStar* star, Matrix* trans
     auto direction = star->clockwise ? 1.0f : -1.0f;
     auto hasRoundness = false;
     bool roundedCorner = (roundness > ROUNDNESS_EPSILON) && (mathZero(innerRoundness) || mathZero(outerRoundness));
-    //TODO: we can use PathCommand / PathCoord directly.
-    auto shape = roundedCorner ? Shape::gen().release() : merging;
+
+    Shape* shape;
+    if (roundedCorner) {
+        shape = star->pooling();
+        shape->reset();
+    } else {
+        shape = merging;
+    }
 
     float x, y;
 
@@ -798,10 +811,7 @@ static void _updateStar(LottieGroup* parent, LottiePolyStar* star, Matrix* trans
     }
     shape->close();
 
-    if (roundedCorner) {
-        _applyRoundedCorner(shape, merging, outerRoundness, roundness, hasRoundness);
-        delete(shape);
-    }
+    if (roundedCorner) _applyRoundedCorner(shape, merging, outerRoundness, roundness, hasRoundness);
 }
 
 
@@ -876,7 +886,7 @@ static void _updatePolygon(LottieGroup* parent, LottiePolyStar* star, Matrix* tr
 
 static void _updatePolystar(LottieGroup* parent, LottieObject** child, float frameNo, TVG_UNUSED Inlist<RenderContext>& contexts, RenderContext* ctx, LottieExpressions* exps)
 {
-    auto star= static_cast<LottiePolyStar*>(*child);
+    auto star = static_cast<LottiePolyStar*>(*child);
 
     //Optimize: Can we skip the individual coords transform?
     Matrix matrix;
@@ -890,12 +900,13 @@ static void _updatePolystar(LottieGroup* parent, LottieObject** child, float fra
     auto identity = mathIdentity((const Matrix*)&matrix);
 
     if (!ctx->repeaters.empty()) {
-        auto p = Shape::gen();
-        if (star->type == LottiePolyStar::Star) _updateStar(parent, star, identity ? nullptr : &matrix, ctx->roundness, frameNo, p.get(), exps);
-        else _updatePolygon(parent, star, identity  ? nullptr : &matrix, frameNo, p.get(), exps);
-        _repeat(parent, std::move(p), ctx);
+        auto shape = star->pooling();
+        shape->reset();
+        if (star->type == LottiePolyStar::Star) _updateStar(parent, star, identity ? nullptr : &matrix, ctx->roundness, frameNo, shape, exps);
+        else _updatePolygon(parent, star, identity  ? nullptr : &matrix, frameNo, shape, exps);
+        _repeat(parent, shape, ctx);
     } else {
-        _draw(parent, ctx);
+        _draw(parent, star, ctx);
         if (star->type == LottiePolyStar::Star) _updateStar(parent, star, identity ? nullptr : &matrix, ctx->roundness, frameNo, ctx->merging, exps);
         else _updatePolygon(parent, star, identity  ? nullptr : &matrix, frameNo, ctx->merging, exps);
         P(ctx->merging)->update(RenderUpdateFlag::Path);

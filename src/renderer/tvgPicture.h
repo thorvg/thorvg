@@ -189,19 +189,21 @@ struct Picture::Impl
         }
     }
 
-    Paint* duplicate()
+    Paint* duplicate(Paint* ret)
     {
+        if (ret) TVGERR("RENDERER", "TODO: duplicate()");
+
         load();
 
-        auto ret = Picture::gen().release();
-        auto dup = ret->pImpl;
+        auto picture = Picture::gen().release();
+        auto dup = picture->pImpl;
 
         if (paint) dup->paint = paint->duplicate();
 
         if (loader) {
             dup->loader = loader;
             ++dup->loader->sharing;
-            PP(ret)->renderFlag |= RenderUpdateFlag::Image;
+            PP(picture)->renderFlag |= RenderUpdateFlag::Image;
         }
 
         dup->surface = surface;
@@ -215,7 +217,7 @@ struct Picture::Impl
             memcpy(dup->rm.triangles, rm.triangles, sizeof(Polygon) * rm.triangleCnt);
         }
 
-        return ret;
+        return picture;
     }
 
     Iterator* iterator()

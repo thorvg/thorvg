@@ -266,15 +266,18 @@ struct LottieTrimpath : LottieObject
 };
 
 
-struct LottieShape : LottieObject
+struct LottieShape : LottieObject, LottieRenderPooler<tvg::Shape>
 {
-    virtual ~LottieShape() {}
     bool clockwise = true;   //clockwise or counter-clockwise
+
+    virtual ~LottieShape() {}
 
     bool mergeable() override
     {
         return true;
     }
+
+    void prepare(LottieObject::Type type);
 };
 
 
@@ -292,7 +295,7 @@ struct LottiePath : LottieShape
 {
     void prepare()
     {
-        LottieObject::type = LottieObject::Path;
+        LottieShape::prepare(LottieObject::Path);
     }
 
     LottiePathSet pathset;
@@ -303,7 +306,7 @@ struct LottieRect : LottieShape
 {
     void prepare()
     {
-        LottieObject::type = LottieObject::Rect;
+        LottieShape::prepare(LottieObject::Rect);
     }
 
     LottiePosition position = Point{0.0f, 0.0f};
@@ -318,7 +321,7 @@ struct LottiePolyStar : LottieShape
 
     void prepare()
     {
-        LottieObject::type = LottieObject::Polystar;
+        LottieShape::prepare(LottieObject::Polystar);
     }
 
     LottiePosition position = Point{0.0f, 0.0f};
@@ -336,7 +339,7 @@ struct LottieEllipse : LottieShape
 {
     void prepare()
     {
-        LottieObject::type = LottieObject::Ellipse;
+        LottieShape::prepare(LottieObject::Ellipse);
     }
 
     LottiePosition position = Point{0.0f, 0.0f};
@@ -552,7 +555,7 @@ struct LottieGroup : LottieObject
         return nullptr;
     }
 
-    Scene* scene = nullptr;               //tvg render data
+    Scene* scene = nullptr;
     Array<LottieObject*> children;
 
     bool reqFragment = false;   //requirment to fragment the render context

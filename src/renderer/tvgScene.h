@@ -198,10 +198,12 @@ struct Scene::Impl
         return true;
     }
 
-    Paint* duplicate()
+    Paint* duplicate(Paint* ret)
     {
-        auto ret = Scene::gen().release();
-        auto dup = ret->pImpl;
+        if (ret) TVGERR("RENDERER", "TODO: duplicate()");
+
+        auto scene = Scene::gen().release();
+        auto dup = scene->pImpl;
 
         for (auto paint : paints) {
             auto cdup = paint->duplicate();
@@ -209,7 +211,7 @@ struct Scene::Impl
             dup->paints.push_back(cdup);
         }
 
-        return ret;
+        return scene;
     }
 
     void clear(bool free)
