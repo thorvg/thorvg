@@ -52,10 +52,29 @@ public:
 
     void renderShape(WgContext& context, WgRenderDataShape* renderData, WgPipelineBlendType blendType);
     void renderPicture(WgContext& context, WgRenderDataPicture* renderData, WgPipelineBlendType blendType);
+    void renderClipPath(WgContext& context, WgRenderDataPaint* renderData);
 
     void clear(WGPUCommandEncoder commandEncoder);
-    void blend(WGPUCommandEncoder commandEncoder, WgRenderStorage* targetSrc, WgPipelineBlend* pipeline, WgBindGroupBlendMethod* blendMethod, WgBindGroupOpacity* opacity);
-    void composeBlend(
+    void blend(
+        WgContext& context,
+        WGPUCommandEncoder commandEncoder,
+        WgPipelineBlend* pipeline,
+        WgRenderStorage* targetSrc,
+        WgBindGroupBlendMethod* blendMethod,
+        WgBindGroupOpacity* opacity);
+    void blendMask(
+        WgContext& context,
+        WGPUCommandEncoder commandEncoder,
+        WgPipelineBlendMask* pipeline,
+        WgRenderStorage* texMsk,
+        WgRenderStorage* texSrc,
+        WgBindGroupBlendMethod* blendMethod,
+        WgBindGroupOpacity* opacity);
+    void maskCompose(
+        WgContext& context,
+        WGPUCommandEncoder commandEncoder,
+        WgRenderStorage* texMsk0);
+    void compose(
         WgContext& context,
         WGPUCommandEncoder commandEncoder,
         WgRenderStorage* texMsk,
@@ -67,6 +86,9 @@ public:
 private:
     void drawShape(WgContext& context, WgRenderDataShape* renderData, WgPipelineBlendType blendType);
     void drawStroke(WgContext& context, WgRenderDataShape* renderData, WgPipelineBlendType blendType);
+
+    void drawShapeClipPath(WgContext& context, WgRenderDataShape* renderData);
+    void drawPictureClipPath(WgContext& context, WgRenderDataPicture* renderData);
 
     void dispatchWorkgroups(WGPUComputePassEncoder computePassEncoder);
 

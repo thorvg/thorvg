@@ -36,11 +36,15 @@ WGPUBindGroupLayout WgBindGroupTexture::layout = nullptr;
 WGPUBindGroupLayout WgBindGroupTextureStorageRgba::layout = nullptr;
 WGPUBindGroupLayout WgBindGroupTextureStorageBgra::layout = nullptr;
 WGPUBindGroupLayout WgBindGroupTextureSampled::layout = nullptr;
+WGPUBindGroupLayout WgBindGroupTexMaskCompose::layout = nullptr;
 WGPUBindGroupLayout WgBindGroupTexComposeBlend::layout = nullptr;
 WGPUBindGroupLayout WgBindGroupOpacity::layout = nullptr;
 WGPUBindGroupLayout WgBindGroupBlendMethod::layout = nullptr;
 WGPUBindGroupLayout WgBindGroupCompositeMethod::layout = nullptr;
 
+///////////////////////////////////////////////////////////////////////////////
+// WgBindGroupCanvas
+///////////////////////////////////////////////////////////////////////////////
 
 WGPUBindGroupLayout WgBindGroupCanvas::getLayout(WGPUDevice device)
 {
@@ -78,6 +82,9 @@ void WgBindGroupCanvas::release()
     releaseBuffer(uBufferViewMat);
 }
 
+///////////////////////////////////////////////////////////////////////////////
+// WgBindGroupPaint
+///////////////////////////////////////////////////////////////////////////////
 
 WGPUBindGroupLayout WgBindGroupPaint::getLayout(WGPUDevice device)
 {
@@ -123,6 +130,9 @@ void WgBindGroupPaint::release()
     releaseBuffer(uBufferModelMat);
 }
 
+///////////////////////////////////////////////////////////////////////////////
+// WgBindGroupSolidColor
+///////////////////////////////////////////////////////////////////////////////
 
 WGPUBindGroupLayout WgBindGroupSolidColor::getLayout(WGPUDevice device)
 {
@@ -163,6 +173,9 @@ void WgBindGroupSolidColor::release()
     releaseBuffer(uBufferSolidColor);
 }
 
+///////////////////////////////////////////////////////////////////////////////
+// WgBindGroupLinearGradient
+///////////////////////////////////////////////////////////////////////////////
 
 WGPUBindGroupLayout WgBindGroupLinearGradient::getLayout(WGPUDevice device)
 {
@@ -203,6 +216,9 @@ void WgBindGroupLinearGradient::release()
     releaseBuffer(uBufferLinearGradient);
 }
 
+///////////////////////////////////////////////////////////////////////////////
+// WgBindGroupRadialGradient
+///////////////////////////////////////////////////////////////////////////////
 
 WGPUBindGroupLayout WgBindGroupRadialGradient::getLayout(WGPUDevice device)
 {
@@ -243,6 +259,9 @@ void WgBindGroupRadialGradient::release()
     releaseBindGroup(mBindGroup);
 }
 
+///////////////////////////////////////////////////////////////////////////////
+// WgBindGroupPicture
+///////////////////////////////////////////////////////////////////////////////
 
 WGPUBindGroupLayout WgBindGroupPicture::getLayout(WGPUDevice device)
 {
@@ -280,6 +299,9 @@ void WgBindGroupPicture::release()
     releaseBindGroup(mBindGroup);
 }
 
+///////////////////////////////////////////////////////////////////////////////
+// WgBindGroupTexture
+///////////////////////////////////////////////////////////////////////////////
 
 WGPUBindGroupLayout WgBindGroupTexture::getLayout(WGPUDevice device)
 {
@@ -315,6 +337,9 @@ void WgBindGroupTexture::release()
     releaseBindGroup(mBindGroup);
 }
 
+///////////////////////////////////////////////////////////////////////////////
+// WgBindGroupTextureStorageRgba
+///////////////////////////////////////////////////////////////////////////////
 
 WGPUBindGroupLayout WgBindGroupTextureStorageRgba::getLayout(WGPUDevice device)
 {
@@ -350,6 +375,9 @@ void WgBindGroupTextureStorageRgba::release()
     releaseBindGroup(mBindGroup);
 }
 
+///////////////////////////////////////////////////////////////////////////////
+// WgBindGroupTextureStorageBgra
+///////////////////////////////////////////////////////////////////////////////
 
 WGPUBindGroupLayout WgBindGroupTextureStorageBgra::getLayout(WGPUDevice device)
 {
@@ -385,6 +413,9 @@ void WgBindGroupTextureStorageBgra::release()
     releaseBindGroup(mBindGroup);
 }
 
+///////////////////////////////////////////////////////////////////////////////
+// WgBindGroupTextureSampled
+///////////////////////////////////////////////////////////////////////////////
 
 WGPUBindGroupLayout WgBindGroupTextureSampled::getLayout(WGPUDevice device)
 {
@@ -422,6 +453,9 @@ void WgBindGroupTextureSampled::release()
     releaseBindGroup(mBindGroup);
 }
 
+///////////////////////////////////////////////////////////////////////////////
+// WgBindGroupTexComposeBlend
+///////////////////////////////////////////////////////////////////////////////
 
 WGPUBindGroupLayout WgBindGroupTexComposeBlend::getLayout(WGPUDevice device)
 {
@@ -461,7 +495,49 @@ void WgBindGroupTexComposeBlend::release()
     releaseBindGroup(mBindGroup);
 }
 
+///////////////////////////////////////////////////////////////////////////////
+// WgBindGroupTexMaskCompose
+///////////////////////////////////////////////////////////////////////////////
 
+WGPUBindGroupLayout WgBindGroupTexMaskCompose::getLayout(WGPUDevice device)
+{
+    if (layout) return layout;
+    const WGPUBindGroupLayoutEntry bindGroupLayoutEntries[] {
+        makeBindGroupLayoutEntryStorage(0, WGPUStorageTextureAccess_ReadOnly, WGPUTextureFormat_RGBA8Unorm),
+        makeBindGroupLayoutEntryStorage(1, WGPUStorageTextureAccess_ReadWrite, WGPUTextureFormat_RGBA8Unorm)
+    };
+    layout = createBindGroupLayout(device, bindGroupLayoutEntries, 2);
+    assert(layout);
+    return layout;
+}
+
+
+void WgBindGroupTexMaskCompose::releaseLayout()
+{
+    releaseBindGroupLayout(layout);
+}
+
+
+void WgBindGroupTexMaskCompose::initialize(WGPUDevice device, WGPUQueue queue, WGPUTextureView uTexMsk0, WGPUTextureView uTexMsk1)
+{
+    release();
+    const WGPUBindGroupEntry bindGroupEntries[] {
+        makeBindGroupEntryTextureView(0, uTexMsk0),
+        makeBindGroupEntryTextureView(1, uTexMsk1),
+    };
+    mBindGroup = createBindGroup(device, getLayout(device), bindGroupEntries, 2);
+    assert(mBindGroup);
+}
+
+
+void WgBindGroupTexMaskCompose::release()
+{
+    releaseBindGroup(mBindGroup);
+}
+
+///////////////////////////////////////////////////////////////////////////////
+// WgBindGroupOpacity
+///////////////////////////////////////////////////////////////////////////////
 
 WGPUBindGroupLayout WgBindGroupOpacity::getLayout(WGPUDevice device)
 {
@@ -500,6 +576,9 @@ void WgBindGroupOpacity::release()
     releaseBindGroup(mBindGroup);
 }
 
+///////////////////////////////////////////////////////////////////////////////
+// WgBindGroupBlendMethod
+///////////////////////////////////////////////////////////////////////////////
 
 WGPUBindGroupLayout WgBindGroupBlendMethod::getLayout(WGPUDevice device)
 {
@@ -538,6 +617,9 @@ void WgBindGroupBlendMethod::release()
     releaseBindGroup(mBindGroup);
 }
 
+///////////////////////////////////////////////////////////////////////////////
+// WgBindGroupCompositeMethod
+///////////////////////////////////////////////////////////////////////////////
 
 WGPUBindGroupLayout WgBindGroupCompositeMethod::getLayout(WGPUDevice device)
 {
