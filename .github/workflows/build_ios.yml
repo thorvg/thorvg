@@ -41,7 +41,7 @@ jobs:
         name: result_x86_64
         path: build/src/libthorvg*
 
-  build_aarch64:
+  build_arm64:
     runs-on: macos-latest
     steps:
     - uses: actions/checkout@v4
@@ -62,10 +62,10 @@ jobs:
 
     - name: Build
       run: |
-        meson setup build -Dlog=true -Dloaders=all -Dsavers=all -Dbindings=capi -Dstatic=true --cross-file ./cross/ios_aarch64.txt
+        meson setup build -Dlog=true -Dloaders=all -Dsavers=all -Dbindings=capi -Dstatic=true --cross-file ./cross/ios_arm64.txt
         ninja -C build install
 
     - uses: actions/upload-artifact@v4
       with:
-        name: result_aarch64
+        name: result_arm64
         path: build/src/libthorvg*
