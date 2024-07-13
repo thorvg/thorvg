@@ -23,6 +23,7 @@
 #include <thorvg.h>
 #include "config.h"
 #include "catch.hpp"
+#include <cstring>
 
 using namespace tvg;
 
@@ -42,6 +43,16 @@ TEST_CASE("Multiple initialization", "[tvgInitializer]")
     REQUIRE(Initializer::init(CanvasEngine::Sw, 0) == Result::Success);
     REQUIRE(Initializer::term(CanvasEngine::Sw) == Result::Success);
     REQUIRE(Initializer::term(CanvasEngine::Sw) == Result::Success);
+}
+
+TEST_CASE("Version", "[tvgInitializer]")
+{
+    REQUIRE(strcmp(Initializer::version(nullptr, nullptr, nullptr), THORVG_VERSION_STRING) == 0);
+    uint32_t major, minor, micro;
+    REQUIRE(strcmp(Initializer::version(&major, &minor, &micro), THORVG_VERSION_STRING) == 0);
+    char curVersion[10];
+    snprintf(curVersion, sizeof(curVersion), "%d.%d.%d", major, minor, micro);
+    REQUIRE(strcmp(curVersion, THORVG_VERSION_STRING) == 0);
 }
 
 TEST_CASE("Negative termination", "[tvgInitializer]")

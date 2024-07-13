@@ -23,9 +23,22 @@
 #include <thorvg_capi.h>
 #include "config.h"
 #include "../catch.hpp"
+#include <cstring>
 
 TEST_CASE("Basic capi initialization", "[capiInitializer]")
 {
     REQUIRE(tvg_engine_init(TVG_ENGINE_SW, 0) == TVG_RESULT_SUCCESS);
     REQUIRE(tvg_engine_term(TVG_ENGINE_SW) == TVG_RESULT_SUCCESS);
+}
+
+TEST_CASE("Version", "[tvgInitializer]")
+{
+    REQUIRE(tvg_engine_version(NULL, NULL, NULL, NULL) == TVG_RESULT_SUCCESS);
+    uint32_t major, minor, micro;
+    const char* curVersion;
+    tvg_engine_version(&major, &minor, &micro, &curVersion);
+    REQUIRE(strcmp(curVersion, THORVG_VERSION_STRING) == 0);
+    char curVersion2[10];
+    snprintf(curVersion2, sizeof(curVersion2), "%d.%d.%d", major, minor, micro);
+    REQUIRE(strcmp(curVersion2, THORVG_VERSION_STRING) == 0);
 }
