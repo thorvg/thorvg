@@ -122,8 +122,6 @@ struct Example
 
 struct Window
 {
-    static Window* instance;
-
     SDL_Window* window = nullptr;
 
     tvg::CanvasEngine engine;
@@ -135,6 +133,7 @@ struct Window
 
     bool needResize = false;
     bool needDraw = false;
+    bool initialized = false;
     bool print = false;
 
     Window(tvg::CanvasEngine engine, Example* example, uint32_t width, uint32_t height, uint32_t threadsCnt)
@@ -149,8 +148,7 @@ struct Window
         this->width = width;
         this->height = height;
         this->example = example;
-        this->engine = engine;
-        this->instance = this;
+        this->initialized = true;
     }
 
     virtual ~Window()
@@ -256,8 +254,6 @@ struct Window
     virtual void refresh() {}
 };
 
-Window* Window::instance = nullptr;
-
 
 /************************************************************************/
 /* SwCanvas Window Code                                                 */
@@ -269,6 +265,8 @@ struct SwWindow : Window
 
     SwWindow(Example* example, uint32_t width, uint32_t height, uint32_t threadsCnt) : Window(tvg::CanvasEngine::Sw, example, width, height, threadsCnt)
     {
+        if (!initialized) return;
+
         window = SDL_CreateWindow("ThorVG Example (Software)", SDL_WINDOWPOS_UNDEFINED, SDL_WINDOWPOS_UNDEFINED, width, height, SDL_WINDOW_HIDDEN | SDL_WINDOW_RESIZABLE);
 
         //Create a Canvas
@@ -312,6 +310,8 @@ struct GlWindow : Window
 
     GlWindow(Example* example, uint32_t width, uint32_t height, uint32_t threadsCnt) : Window(tvg::CanvasEngine::Gl, example, width, height, threadsCnt)
     {
+        if (!initialized) return;
+
 #ifdef THORVG_GL_TARGET_GLES
         SDL_GL_SetAttribute(SDL_GL_CONTEXT_PROFILE_MASK, SDL_GL_CONTEXT_PROFILE_ES);
         SDL_GL_SetAttribute(SDL_GL_CONTEXT_MAJOR_VERSION, 3);
@@ -368,6 +368,8 @@ struct WgWindow : Window
 
     WgWindow(Example* example, uint32_t width, uint32_t height, uint32_t threadsCnt) : Window(tvg::CanvasEngine::Wg, example, width, height, threadsCnt)
     {
+        if (!initialized) return;
+
         window = SDL_CreateWindow("ThorVG Example (WebGPU)", SDL_WINDOWPOS_UNDEFINED, SDL_WINDOWPOS_UNDEFINED, width, height, SDL_WINDOW_HIDDEN);
 
         //Here we create our WebGPU surface from the window!
