@@ -218,7 +218,7 @@ struct LottieMarker
     }
 };
 
-struct LottieText : LottieObject
+struct LottieText : LottieObject, LottieRenderPooler<tvg::Shape>
 {
     void prepare()
     {
