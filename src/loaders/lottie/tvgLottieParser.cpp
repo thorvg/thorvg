@@ -187,7 +187,7 @@ void LottieParser::getValue(TextDocument& doc)
 {
     enterObject();
     while (auto key = nextObjectKey()) {
-        if (KEY_AS("s")) doc.size = getFloat();
+        if (KEY_AS("s")) doc.size = getFloat() * 0.01f;
         else if (KEY_AS("f")) doc.name = getStringCopy();
         else if (KEY_AS("t")) doc.text = getStringCopy();
         else if (KEY_AS("j")) doc.justify = getInt();

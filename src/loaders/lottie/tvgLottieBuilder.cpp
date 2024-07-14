@@ -1082,7 +1082,7 @@ static void _updateText(LottieLayer* layer, float frameNo)
 
     if (!p || !text->font) return;
 
-    auto scale = doc.size * 0.01f;
+    auto scale = doc.size;
     Point cursor = {0.0f, 0.0f};
     auto scene = Scene::gen();
     int line = 0;
@@ -1122,8 +1122,8 @@ static void _updateText(LottieLayer* layer, float frameNo)
             auto glyph = *g;
             //draw matched glyphs
             if (!strncmp(glyph->code, p, glyph->len)) {
-                //TODO: caching?
-                auto shape = Shape::gen();
+                auto shape = text->pooling();
+                shape->reset();
                 for (auto g = glyph->children.begin(); g < glyph->children.end(); ++g) {
                     auto group = static_cast<LottieGroup*>(*g);
                     for (auto p = group->children.begin(); p < group->children.end(); ++p) {
@@ -1145,8 +1145,8 @@ static void _updateText(LottieLayer* layer, float frameNo)
                 for (auto s = text->ranges.begin(); s < text->ranges.end(); ++s) {
                     float divisor = (*s)->rangeUnit == LottieTextRange::Unit::Percent ? (100.0f / totalChars) : 1;
                     auto offset = (*s)->offset(frameNo) / divisor;
-                    auto start = round((*s)->start(frameNo) / divisor) + offset;
-                    auto end = round((*s)->end(frameNo) / divisor) + offset;
+                    auto start = nearbyintf((*s)->start(frameNo) / divisor) + offset;
+                    auto end = nearbyintf((*s)->end(frameNo) / divisor) + offset;
 
                     if (start > end) std::swap(start, end);
 
@@ -1176,7 +1176,7 @@ static void _updateText(LottieLayer* layer, float frameNo)
                     cursor.x += (*s)->style.letterSpacing(frameNo);
                 }
 
-                scene->push(std::move(shape));
+                scene->push(cast(shape));
 
                 p += glyph->len;
                 idx += glyph->len;
