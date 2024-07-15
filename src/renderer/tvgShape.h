@@ -396,6 +396,21 @@ struct Shape::Impl
         return shape;
     }
 
+    void reset()
+    {
+        rs.path.cmds.clear();
+        rs.path.pts.clear();
+
+        rs.color[3] = 0;
+        rs.rule = FillRule::Winding;
+
+        delete(rs.stroke);
+        rs.stroke = nullptr;
+
+        delete(rs.fill);
+        rs.fill = nullptr;
+    }
+
     Iterator* iterator()
     {
         return nullptr;
