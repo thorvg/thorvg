@@ -125,8 +125,8 @@ struct Text::Impl
         if (!load()) return nullptr;
 
         //transform the gradient coordinates based on the final scaled font.
-        if (P(paint)->flag & RenderUpdateFlag::Gradient) {
-            auto fill = P(paint)->rs.fill;
+        auto fill = P(paint)->rs.fill;
+        if (fill && P(paint)->flag & RenderUpdateFlag::Gradient) {
             auto scale = 1.0f / loader->scale;
             if (fill->identifier() == TVG_CLASS_ID_LINEAR) {
                 P(static_cast<LinearGradient*>(fill))->x1 *= scale;
