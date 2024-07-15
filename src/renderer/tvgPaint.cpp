@@ -351,6 +351,26 @@ bool Paint::Impl::bounds(float* x, float* y, float* w, float* h, bool transforme
 }
 
 
+void Paint::Impl::reset()
+{
+    if (compData) {
+        if (P(compData->target)->unref() == 0) delete(compData->target);
+        free(compData);
+        compData = nullptr;
+    }
+    tvg::identity(&tr.m);
+    tr.degree = 0.0f;
+    tr.scale = 1.0f;
+    tr.overriding = false;
+
+    blendMethod = BlendMethod::Normal;
+    renderFlag = RenderUpdateFlag::None;
+    ctxFlag = ContextFlag::Invalid;
+    opacity = 255;
+    paint->id = 0;
+}
+
+
 /************************************************************************/
 /* External Class Implementation                                        */
 /************************************************************************/
