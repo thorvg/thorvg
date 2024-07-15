@@ -50,13 +50,12 @@ namespace tvg
         Paint* paint = nullptr;
         Composite* compData = nullptr;
         RenderMethod* renderer = nullptr;
-        BlendMethod blendMethod = BlendMethod::Normal;   //uint8_t
         struct {
             Matrix m;                 //input matrix
             Matrix cm;                //multipled parents matrix
-            float degree = 0.0f;      //rotation degree
-            float scale = 1.0f;       //scale factor
-            bool overriding = false;  //user transform?
+            float degree;             //rotation degree
+            float scale;              //scale factor
+            bool overriding;          //user transform?
 
             void update()
             {
@@ -72,15 +71,16 @@ namespace tvg
                 mathRotate(&m, degree);
             }
         } tr;
-        uint8_t renderFlag = RenderUpdateFlag::None;
-        uint8_t ctxFlag = ContextFlag::Invalid;
-        uint8_t id;
-        uint8_t opacity = 255;
+        BlendMethod blendMethod;
+        uint8_t renderFlag;
+        uint8_t ctxFlag;
+        uint8_t opacity;
         uint8_t refCnt = 0;                              //reference count
+        uint8_t id;         //TODO: deprecated, remove it
 
         Impl(Paint* pnt) : paint(pnt)
         {
-            mathIdentity(&tr.m);
+            reset();
         }
 
         ~Impl()
@@ -157,6 +157,7 @@ namespace tvg
         RenderData update(RenderMethod* renderer, const Matrix& pm, Array<RenderData>& clips, uint8_t opacity, RenderUpdateFlag pFlag, bool clipper = false);
         bool render(RenderMethod* renderer);
         Paint* duplicate(Paint* ret = nullptr);
+        void reset();
     };
 }
 
