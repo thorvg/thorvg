@@ -200,7 +200,7 @@ fn fs_main(in: VertexOutput) -> @location(0) vec4f {
     for (var i = 0i; i < last; i++) {
         let strt = uLinearGradient.stopPoints[i/4][i%4];
         let stop = uLinearGradient.stopPoints[(i+1)/4][(i+1)%4];
-        if ((t > strt) && (t < stop)) {
+        if ((t >= strt) && (t < stop)) {
             let step: f32 = (t - strt) / (stop - strt);
             color = mix(uLinearGradient.stopColors[i], uLinearGradient.stopColors[i+1], step);
         }
@@ -297,7 +297,7 @@ fn fs_main(in: VertexOutput) -> @location(0) vec4f {
     for (var i = 0i; i < last; i++) {
         let strt = uRadialGradient.stopPoints[i/4][i%4];
         let stop = uRadialGradient.stopPoints[(i+1)/4][(i+1)%4];
-        if ((t > strt) && (t < stop)) {
+        if ((t >= strt) && (t < stop)) {
             let step: f32 = (t - strt) / (stop - strt);
             color = mix(uRadialGradient.stopColors[i], uRadialGradient.stopColors[i+1], step);
         }
