@@ -297,8 +297,8 @@ static inline uint32_t JOIN(uint8_t c0, uint8_t c1, uint8_t c2, uint8_t c3)
 
 static inline uint32_t ALPHA_BLEND(uint32_t c, uint32_t a)
 {
-    return (((((c >> 8) & 0x00ff00ff) * a + 0x00ff00ff) & 0xff00ff00) +
-            ((((c & 0x00ff00ff) * a + 0x00ff00ff) >> 8) & 0x00ff00ff));
+    ++a;
+    return (((((c >> 8) & 0x00ff00ff) * a) & 0xff00ff00) + ((((c & 0x00ff00ff) * a) >> 8) & 0x00ff00ff));
 }
 
 static inline uint32_t INTERPOLATE(uint32_t s, uint32_t d, uint8_t a)
