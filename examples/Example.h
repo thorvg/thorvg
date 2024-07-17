@@ -348,7 +348,8 @@ struct GlWindow : Window
         //Free in the reverse order of their creation.
         delete(canvas);
         canvas = nullptr;
-
+        // terminate engine before SDL context destruction
+        tvg::Initializer::term(tvg::CanvasEngine::Gl);
         SDL_GL_DeleteContext(context);
     }
 
