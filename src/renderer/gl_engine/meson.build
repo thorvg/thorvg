@@ -1,4 +1,6 @@
 source_file = [
+   'tvgGl.cpp',
+   'tvgGl.h',
    'tvgGlCommon.h',
    'tvgGlGeometry.h',
    'tvgGlGpuBuffer.h',
@@ -51,9 +53,10 @@ else
     gl_target_profile = '-DTHORVG_GL_TARGET_GL=1'
 endif
 
+add_languages('c', required: true)
+
 engine_dep += [declare_dependency(
     compile_args        : gl_target_profile,
-    dependencies        : gl_dep,
     include_directories : include_directories('.'),
     sources             : source_file,
 )]
