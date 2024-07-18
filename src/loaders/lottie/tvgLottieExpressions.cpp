@@ -38,6 +38,7 @@ struct ExpContent
     float frameNo;
 };
 
+static jerry_value_t _content(const jerry_call_info_t* info, const jerry_value_t args[], const jerry_length_t argsCnt);
 
 //reserved expressions specifiers
 static const char* EXP_NAME = "name";
@@ -127,6 +128,73 @@ static void _buildTransform(jerry_value_t context, LottieTransform* transform)
     jerry_value_free(opacity);
 
     jerry_value_free(obj);
+}
+
+
+static jerry_value_t _buildGroup(LottieGroup* group, ExpContent* data)
+{
+    auto obj = jerry_function_external(_content);
+
+    //attach a transform
+    for (auto c = group->children.begin(); c < group->children.end(); ++c) {
+        if ((*c)->type == LottieObject::Type::Transform) {
+            _buildTransform(obj, static_cast<LottieTransform*>(*c));
+            break;
+        }
+    }
+    auto data2 = (ExpContent*)malloc(sizeof(ExpContent));
+    data2->obj = group;
+    data2->frameNo = data->frameNo;
+    jerry_object_set_native_ptr(obj, &freeCb, data2);
+    jerry_object_set_sz(obj, EXP_CONTENT, obj);
+    return obj;
+}
+
+
+static jerry_value_t _buildPolystar(LottiePolyStar* polystar, ExpContent* data)
+{
+    auto obj = jerry_object();
+    auto position = jerry_object();
+    jerry_object_set_native_ptr(position, nullptr, &polystar->position);
+    jerry_object_set_sz(obj, "position", position);
+    jerry_value_free(position);
+    auto innerRadius = jerry_number(polystar->innerRadius(data->frameNo));
+    jerry_object_set_sz(obj, "innerRadius", innerRadius);
+    jerry_value_free(innerRadius);
+    auto outerRadius = jerry_number(polystar->outerRadius(data->frameNo));
+    jerry_object_set_sz(obj, "outerRadius", outerRadius);
+    jerry_value_free(outerRadius);
+    auto innerRoundness = jerry_number(polystar->innerRoundness(data->frameNo));
+    jerry_object_set_sz(obj, "innerRoundness", innerRoundness);
+    jerry_value_free(innerRoundness);
+    auto outerRoundness = jerry_number(polystar->outerRoundness(data->frameNo));
+    jerry_object_set_sz(obj, "outerRoundness", outerRoundness);
+    jerry_value_free(outerRoundness);
+    auto rotation = jerry_number(polystar->rotation(data->frameNo));
+    jerry_object_set_sz(obj, "rotation", rotation);
+    jerry_value_free(rotation);
+    auto ptsCnt = jerry_number(polystar->ptsCnt(data->frameNo));
+    jerry_object_set_sz(obj, "points", ptsCnt);
+    jerry_value_free(ptsCnt);
+
+    return obj;
+}
+
+
+static jerry_value_t _buildTrimpath(LottieTrimpath* trimpath, ExpContent* data)
+{
+    jerry_value_t obj = jerry_object();
+    auto start = jerry_number(trimpath->start(data->frameNo));
+    jerry_object_set_sz(obj, "start", start);
+    jerry_value_free(start);
+    auto end = jerry_number(trimpath->end(data->frameNo));
+    jerry_object_set_sz(obj, "end", end);
+    jerry_value_free(end);
+    auto offset = jerry_number(trimpath->offset(data->frameNo));
+    jerry_object_set_sz(obj, "offset", end);
+    jerry_value_free(offset);
+
+    return obj;
 }
 
 
@@ -554,44 +622,15 @@ static jerry_value_t _content(const jerry_call_info_t* info, const jerry_value_t
 
     //find the a path property(sh) in the group layer?
     switch (target->type) {
-        case LottieObject::Group: {
-            auto group = static_cast<LottieGroup*>(target);
-            auto obj = jerry_function_external(_content);
-
-            //attach a transform
-            for (auto c = group->children.begin(); c < group->children.end(); ++c) {
-                if ((*c)->type == LottieObject::Type::Transform) {
-                    _buildTransform(obj, static_cast<LottieTransform*>(*c));
-                    break;
-                }
-            }
-            auto data2 = (ExpContent*)malloc(sizeof(ExpContent));
-            data2->obj = group;
-            data2->frameNo = data->frameNo;
-            jerry_object_set_native_ptr(obj, &freeCb, data2);
-            jerry_object_set_sz(obj, EXP_CONTENT, obj);
-            return obj;
-        }
+        case LottieObject::Group: return _buildGroup(static_cast<LottieGroup*>(target), data);
         case LottieObject::Path: {
             jerry_value_t obj = jerry_object();
             jerry_object_set_native_ptr(obj, nullptr, &static_cast<LottiePath*>(target)->pathset);
             jerry_object_set_sz(obj, "path", obj);
             return obj;
         }
-        case LottieObject::Trimpath: {
-            auto trimpath = static_cast<LottieTrimpath*>(target);
-            jerry_value_t obj = jerry_object();
-            auto start = jerry_number(trimpath->start(data->frameNo));
-            jerry_object_set_sz(obj, "start", start);
-            jerry_value_free(start);
-            auto end = jerry_number(trimpath->end(data->frameNo));
-            jerry_object_set_sz(obj, "end", end);
-            jerry_value_free(end);
-            auto offset = jerry_number(trimpath->offset(data->frameNo));
-            jerry_object_set_sz(obj, "offset", end);
-            jerry_value_free(offset);
-            return obj;
-        }
+        case LottieObject::Polystar: return _buildPolystar(static_cast<LottiePolyStar*>(target), data);
+        case LottieObject::Trimpath: return _buildTrimpath(static_cast<LottieTrimpath*>(target), data);
         default: break;
     }
     return jerry_undefined();
