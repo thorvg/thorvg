@@ -333,6 +333,7 @@ LottieLayer::~LottieLayer()
 
     //Remove tvg render paints
     if (solidFill && PP(solidFill)->unref() == 0) delete(solidFill);
+    if (clipper && PP(clipper)->unref() == 0) delete(clipper);
 
     delete(transform);
     free(name);
