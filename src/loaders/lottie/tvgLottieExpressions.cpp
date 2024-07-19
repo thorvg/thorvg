@@ -1149,11 +1149,19 @@ static void _buildMath(jerry_value_t context)
 }
 
 
+void LottieExpressions::buildLayer(LottieLayer* layer)
+{
+    auto index = jerry_number(layer->idx);
+    jerry_object_set_sz(global, EXP_INDEX, index);
+    jerry_value_free(index);
+}
+
+
 void LottieExpressions::buildComp(LottieComposition* comp)
 {
     jerry_object_set_native_ptr(this->comp, nullptr, comp);
-    jerry_object_set_native_ptr(thisComp, nullptr, comp);
-    jerry_object_set_native_ptr(layer, nullptr, comp);
+    jerry_object_set_native_ptr(this->thisComp, nullptr, comp);
+    jerry_object_set_native_ptr(this->layer, nullptr, comp);
 
     //marker
     //marker.key(index)
@@ -1242,6 +1250,7 @@ jerry_value_t LottieExpressions::buildGlobal()
 jerry_value_t LottieExpressions::evaluate(float frameNo, LottieExpression* exp)
 {
     buildComp(exp->comp);
+    buildLayer(exp->layer);
 
     //update global context values
     jerry_object_set_native_ptr(thisLayer, nullptr, exp->layer);
