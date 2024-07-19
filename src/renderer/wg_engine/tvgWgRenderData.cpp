@@ -329,25 +329,17 @@ void WgRenderDataShape::updateMeshes(WgContext &context, const RenderShape &rsha
     }
     // proceed strokes
     if (rshape.stroke) {
+        float trimBegin = rshape.stroke->trim.begin;
+        float trimEnd   = rshape.stroke->trim.end;
         if (rshape.stroke->trim.simultaneous) {
-            float trimBegin = std::min(rshape.stroke->trim.begin, rshape.stroke->trim.end);
-            float trimEnd   = std::max(rshape.stroke->trim.begin, rshape.stroke->trim.end);
-            for (uint32_t i = 0; i < polylines.count; i++) {
+            for (uint32_t i = 0; i < polylines.count; i++)
                 updateStrokes(context, polylines[i], rshape.stroke, trimBegin, trimEnd);
-            }
         } else {
-            float tp1 = totalLen * std::min(rshape.stroke->trim.begin, rshape.stroke->trim.end); // trim point begin
-            float tp2 = totalLen * std::max(rshape.stroke->trim.begin, rshape.stroke->trim.end); // trim point end
-            float pc = 0; // point current
-            for (uint32_t i = 0; i < polylines.count; i++) {
-                float pl = polylines[i]->len; // current polyline length
-                float trimBegin = ((pc < tp1) && (pc + pl > tp1)) ? (tp1 - pc) / pl : 0.0f;
-                float trimEnd   = ((pc < tp2) && (pc + pl > tp2)) ? (tp2 - pc) / pl : 1.0f;
-                if ((pc + pl >= tp1) && (pc <= tp2))
-                    updateStrokes(context, polylines[i], rshape.stroke, trimBegin, trimEnd);
-                pc += pl;
-                // break if reached the tail
-                if (pc > tp2) break;
+            if (trimBegin <= trimEnd) {
+                updateStrokesList(context, polylines, rshape.stroke, totalLen, trimBegin, trimEnd);
+            } else {
+                updateStrokesList(context, polylines, rshape.stroke, totalLen, 0.0f, trimEnd);
+                updateStrokesList(context, polylines, rshape.stroke, totalLen, trimBegin, 1.0f);
             }
         }
     }
@@ -372,6 +364,23 @@ void WgRenderDataShape::updateShapes(WgContext& context, const WgPolyline* polyl
     }
 }
 
+void WgRenderDataShape::updateStrokesList(WgContext& context, Array<WgPolyline*> polylines, const RenderStroke* rstroke, float totalLen, float trimBegin, float trimEnd)
+{
+    float tp1 = totalLen * trimBegin; // trim point begin
+    float tp2 = totalLen * trimEnd; // trim point end
+    float pc = 0; // point current
+    for (uint32_t i = 0; i < polylines.count; i++) {
+        float pl = polylines[i]->len; // current polyline length
+        float trimBegin = ((pc <= tp1) && (pc + pl > tp1)) ? (tp1 - pc) / pl : 0.0f;
+        float trimEnd   = ((pc <= tp2) && (pc + pl > tp2)) ? (tp2 - pc) / pl : 1.0f;
+        if ((pc + pl >= tp1) && (pc <= tp2))
+            updateStrokes(context, polylines[i], rstroke, trimBegin, trimEnd);
+        pc += pl;
+        // break if reached the tail
+        if (pc > tp2) break;
+    }
+}
+
 
 void WgRenderDataShape::updateStrokes(WgContext& context, const WgPolyline* polyline, const RenderStroke* rstroke, float trimBegin, float trimEnd)
 {
@@ -383,11 +392,23 @@ void WgRenderDataShape::updateStrokes(WgContext& context, const WgPolyline* poly
         // trim -> split -> stroke
         if (trimBegin == trimEnd) return;
         if ((rstroke->dashPattern) && ((trimBegin != 0.0f) || (trimEnd != 1.0f))) {
-            polyline->trim(&trimmed, trimBegin, trimEnd);
+            trimmed.clear();
+            if (trimBegin < trimEnd)
+                polyline->trim(&trimmed, trimBegin, trimEnd);
+            else {
+                polyline->trim(&trimmed, trimBegin, 1.0f);
+                polyline->trim(&trimmed, 0.0f, trimEnd);
+            }
             geometryData.appendStrokeDashed(&trimmed, rstroke);
         } else // trim -> stroke
         if ((trimBegin != 0.0f) || (trimEnd != 1.0f)) {
-            polyline->trim(&trimmed, trimBegin, trimEnd);
+            trimmed.clear();
+            if (trimBegin < trimEnd)
+                polyline->trim(&trimmed, trimBegin, trimEnd);
+            else {
+                polyline->trim(&trimmed, trimBegin, 1.0f);
+                polyline->trim(&trimmed, 0.0f, trimEnd);
+            }
             geometryData.appendStroke(&trimmed, rstroke);
         } else // split -> stroke
         if (rstroke->dashPattern) {
