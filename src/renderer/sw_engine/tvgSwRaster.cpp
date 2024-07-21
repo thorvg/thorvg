@@ -1590,8 +1590,6 @@ static bool _rasterSolidGradientRect(SwSurface* surface, const SwBBox& region, c
 
 static bool _rasterLinearGradientRect(SwSurface* surface, const SwBBox& region, const SwFill* fill)
 {
-    if (fill->linear.len < FLOAT_EPSILON) return false;
-
     if (_compositing(surface)) {
         if (_matting(surface)) return _rasterGradientMattedRect<FillLinear>(surface, region, fill);
         else return _rasterGradientMaskedRect<FillLinear>(surface, region, fill);

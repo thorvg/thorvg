@@ -212,12 +212,12 @@ bool _prepareLinear(SwFill* fill, const LinearGradient* linear, const Matrix* tr
 
     fill->linear.dx = x2 - x1;
     fill->linear.dy = y2 - y1;
-    fill->linear.len = fill->linear.dx * fill->linear.dx + fill->linear.dy * fill->linear.dy;
+    auto len = fill->linear.dx * fill->linear.dx + fill->linear.dy * fill->linear.dy;
 
-    if (fill->linear.len < FLOAT_EPSILON) return true;
+    if (len < FLOAT_EPSILON) return true;
 
-    fill->linear.dx /= fill->linear.len;
-    fill->linear.dy /= fill->linear.len;
+    fill->linear.dx /= len;
+    fill->linear.dy /= len;
     fill->linear.offset = -fill->linear.dx * x1 - fill->linear.dy * y1;
 
     auto gradTransform = linear->transform();
@@ -239,8 +239,6 @@ bool _prepareLinear(SwFill* fill, const LinearGradient* linear, const Matrix* tr
         auto dx = fill->linear.dx;
         fill->linear.dx = dx * invTransform.e11 + fill->linear.dy * invTransform.e21;
         fill->linear.dy = dx * invTransform.e12 + fill->linear.dy * invTransform.e22;
-
-        fill->linear.len = fill->linear.dx * fill->linear.dx + fill->linear.dy * fill->linear.dy;
     }
 
     return true;
