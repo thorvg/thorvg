@@ -235,6 +235,8 @@ bool Paint::Impl::translate(float x, float y)
 
 bool Paint::Impl::render(RenderMethod* renderer)
 {
+    if (opacity == 0) return true;
+
     Compositor* cmp = nullptr;
 
     /* Note: only ClipPath is processed in update() step.
