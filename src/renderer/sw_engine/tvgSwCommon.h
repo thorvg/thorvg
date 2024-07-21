@@ -134,7 +134,6 @@ struct SwFill
 {
     struct SwLinear {
         float dx, dy;
-        float len;
         float offset;
     };
 
