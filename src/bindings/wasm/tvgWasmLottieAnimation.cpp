@@ -179,6 +179,8 @@ public:
         if (!canvas || !animation) return;
         if (this->width == width && this->height == height) return;
 
+        canvas->sync();
+
         this->width = width;
         this->height = height;
 
