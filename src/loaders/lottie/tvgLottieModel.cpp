@@ -37,16 +37,6 @@
 /* External Class Implementation                                        */
 /************************************************************************/
 
-void LottieShape::prepare(LottieObject::Type type)
-{
-    LottieObject::type = type;
-
-    auto shape = tvg::Shape::gen().release();
-    PP(shape)->ref();
-    pooler.push(shape);
-}
-
-
 void LottieSlot::reset()
 {
     if (!overridden) return;
@@ -296,6 +286,16 @@ Fill* LottieGradient::fill(float frameNo, LottieExpressions* exps)
 }
 
 
+LottieGroup::LottieGroup()
+{
+    reqFragment = false;
+    buildDone = false;
+    trimpath = false;
+    visible = false;
+    allowMerge = true;
+}
+
+
 void LottieGroup::prepare(LottieObject::Type type)
 {
     LottieObject::type = type;
@@ -313,6 +313,24 @@ void LottieGroup::prepare(LottieObject::Type type)
         /* Figure out if this group is a simple path drawing.
            In that case, the rendering context can be sharable with the parent's. */
         if (allowMerge && (child->type == LottieObject::Group || !child->mergeable())) allowMerge = false;
+
+        //Figure out this group has visible contents
+        switch (child->type) {
+            case LottieObject::Group: {
+                visible |= static_cast<LottieGroup*>(child)->visible;
+                break;
+            }
+            case LottieObject::Rect:
+            case LottieObject::Ellipse:
+            case LottieObject::Path:
+            case LottieObject::Polystar:
+            case LottieObject::Image:
+            case LottieObject::Text: {
+                visible = true;
+                break;
+            }
+            default: break;
+        }
 
         if (reqFragment) continue;
 
