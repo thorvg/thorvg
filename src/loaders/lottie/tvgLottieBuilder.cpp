@@ -1070,7 +1070,7 @@ static void _updateSolid(LottieLayer* layer)
 static void _updateImage(LottieGroup* layer)
 {
     auto image = static_cast<LottieImage*>(layer->children.first());
-    layer->scene->push(tvg::cast(image->pooling()));
+    layer->scene->push(tvg::cast(image->pooling(true)));
 }
 
 
