@@ -645,11 +645,11 @@ static jerry_value_t _layer(const jerry_call_info_t* info, const jerry_value_t a
     //layer index
     if (jerry_value_is_number(args[0])) {
         auto idx = (uint16_t)jerry_value_as_int32(args[0]);
-        layer = comp->layerByIdx(idx);
+        layer = comp->root->layerByIdx(idx);
         jerry_value_free(idx);
     //layer name
     } else {
-        layer = comp->layerById(_idByName(args[0]));
+        layer = comp->root->layerById(_idByName(args[0]));
     }
 
     if (!layer) return jerry_undefined();
@@ -1043,7 +1043,7 @@ static void _buildProperty(float frameNo, jerry_value_t context, LottieExpressio
 static jerry_value_t _comp(const jerry_call_info_t* info, const jerry_value_t args[], const jerry_length_t argsCnt)
 {
     auto comp = static_cast<LottieComposition*>(jerry_object_get_native_ptr(info->function, nullptr));
-    auto layer = comp->asset(_idByName(args[0]));
+    auto layer = comp->root->layerById(_idByName(args[0]));
 
     if (!layer) return jerry_undefined();
 
