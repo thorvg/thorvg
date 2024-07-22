@@ -74,7 +74,7 @@ private:
     LottieObject* parseObject();
     LottieObject* parseAsset();
     LottieImage* parseImage(const char* data, const char* subPath, bool embedded, float width, float height);
-    LottieLayer* parseLayer();
+    LottieLayer* parseLayer(LottieLayer* precomp);
     LottieObject* parseGroup();
     LottieRect* parseRect();
     LottieEllipse* parseEllipse();
@@ -86,7 +86,7 @@ private:
     LottiePolyStar* parsePolyStar();
     LottieRoundedCorner* parseRoundedCorner();
     LottieGradientFill* parseGradientFill();
-    LottieLayer* parseLayers();
+    LottieLayer* parseLayers(LottieLayer* root);
     LottieMask* parseMask();
     LottieTrimpath* parseTrimpath();
     LottieRepeater* parseRepeater();

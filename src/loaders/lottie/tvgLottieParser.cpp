@@ -965,7 +965,7 @@ LottieObject* LottieParser::parseAsset()
                 id = _int2str(getInt());
             }
         }
-        else if (KEY_AS("layers")) obj = parseLayers();
+        else if (KEY_AS("layers")) obj = parseLayers(comp->root);
         else if (KEY_AS("u")) subPath = getString();
         else if (KEY_AS("p")) data = getString();
         else if (KEY_AS("w")) width = getFloat();
@@ -1236,11 +1236,11 @@ void LottieParser::parseMasks(LottieLayer* layer)
 }
 
 
-LottieLayer* LottieParser::parseLayer()
+LottieLayer* LottieParser::parseLayer(LottieLayer* precomp)
 {
     auto layer = new LottieLayer;
 
-    layer->comp = comp;
+    layer->comp = precomp;
     context.layer = layer;
 
     auto ddd = false;
@@ -1295,20 +1295,20 @@ LottieLayer* LottieParser::parseLayer()
 }
 
 
-LottieLayer* LottieParser::parseLayers()
+LottieLayer* LottieParser::parseLayers(LottieLayer* root)
 {
-    auto root = new LottieLayer;
+    auto precomp = new LottieLayer;
 
-    root->type = LottieLayer::Precomp;
-    root->comp = comp;
+    precomp->type = LottieLayer::Precomp;
+    precomp->comp = root;
 
     enterArray();
     while (nextArrayValue()) {
-        root->children.push(parseLayer());
+        precomp->children.push(parseLayer(precomp));
     }
 
-    root->prepare();
-    return root;
+    precomp->prepare();
+    return precomp;
 }
 
 
@@ -1396,16 +1396,19 @@ bool LottieParser::parse()
 
     Array<LottieGlyph*> glyphs;
 
+    auto startFrame = 0.0f;
+    auto endFrame = 0.0f;
+
     while (auto key = nextObjectKey()) {
         if (KEY_AS("v")) comp->version = getStringCopy();
         else if (KEY_AS("fr")) comp->frameRate = getFloat();
-        else if (KEY_AS("ip")) comp->startFrame = getFloat();
-        else if (KEY_AS("op")) comp->endFrame = getFloat();
+        else if (KEY_AS("ip")) startFrame = getFloat();
+        else if (KEY_AS("op")) endFrame = getFloat();
         else if (KEY_AS("w")) comp->w = getFloat();
         else if (KEY_AS("h")) comp->h = getFloat();
         else if (KEY_AS("nm")) comp->name = getStringCopy();
         else if (KEY_AS("assets")) parseAssets();
-        else if (KEY_AS("layers")) comp->root = parseLayers();
+        else if (KEY_AS("layers")) comp->root = parseLayers(comp->root);
         else if (KEY_AS("fonts")) parseFonts();
         else if (KEY_AS("chars")) parseChars(glyphs);
         else if (KEY_AS("markers")) parseMarkers();
@@ -1417,8 +1420,8 @@ bool LottieParser::parse()
         return false;
     }
 
-    comp->root->inFrame = comp->startFrame;
-    comp->root->outFrame = comp->endFrame;
+    comp->root->inFrame = startFrame;
+    comp->root->outFrame = endFrame;
 
     postProcess(glyphs);
 
