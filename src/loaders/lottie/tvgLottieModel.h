@@ -277,7 +277,10 @@ struct LottieShape : LottieObject, LottieRenderPooler<tvg::Shape>
         return true;
     }
 
-    void prepare(LottieObject::Type type);
+    void prepare(LottieObject::Type type)
+    {
+        LottieObject::type = type;
+    }
 };
 
 
@@ -533,6 +536,8 @@ struct LottieRepeater : LottieObject
 
 struct LottieGroup : LottieObject
 {
+    LottieGroup();
+
     virtual ~LottieGroup()
     {
         for (auto p = children.begin(); p < children.end(); ++p) delete(*p);
@@ -558,10 +563,11 @@ struct LottieGroup : LottieObject
     Scene* scene = nullptr;
     Array<LottieObject*> children;
 
-    bool reqFragment = false;   //requirement to fragment the render context
-    bool buildDone = false;     //completed in building the composition.
-    bool allowMerge = true;     //if this group is consisted of simple (transformed) shapes.
-    bool trimpath = false;      //this group has a trimpath.
+    bool reqFragment : 1;   //requirement to fragment the render context
+    bool buildDone : 1;     //completed in building the composition.
+    bool trimpath : 1;      //this group has a trimpath.
+    bool visible : 1;       //this group has visible contents.
+    bool allowMerge : 1;    //if this group is consisted of simple (transformed) shapes.
 };
 
 
