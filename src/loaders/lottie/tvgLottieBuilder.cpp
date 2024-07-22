@@ -268,7 +268,7 @@ static void _updateGroup(LottieGroup* parent, LottieObject** child, float frameN
 {
     auto group = static_cast<LottieGroup*>(*child);
 
-    if (group->children.empty()) return;
+    if (!group->visible) return;
 
     //Prepare render data
     group->scene = parent->scene;
@@ -1028,6 +1028,7 @@ static void _updateChildren(LottieGroup* parent, float frameNo, Inlist<RenderCon
                 }
                 default: break;
             }
+            if (ctx->propagator->opacity() == 0) break;
         }
         delete(ctx);
     }
@@ -1053,7 +1054,7 @@ static void _updatePrecomp(LottieLayer* precomp, float frameNo, LottieExpression
     }
 
     //clip the layer viewport
-    auto clipper = precomp->pooling();
+    auto clipper = precomp->pooling(true);
     clipper->transform(precomp->cache.matrix);
     precomp->scene->composite(cast(clipper), CompositeMethod::ClipPath);
 }
@@ -1061,7 +1062,7 @@ static void _updatePrecomp(LottieLayer* precomp, float frameNo, LottieExpression
 
 static void _updateSolid(LottieLayer* layer)
 {
-    auto solidFill = layer->pooling();
+    auto solidFill = layer->pooling(true);
     solidFill->opacity(layer->cache.opacity);
     layer->scene->push(cast(solidFill));
 }
