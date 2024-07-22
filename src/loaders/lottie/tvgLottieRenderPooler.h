@@ -40,7 +40,7 @@ struct LottieRenderPooler
         }
     }
 
-    T* pooling()
+    T* pooling(bool copy = false)
     {
         //return available one.
         for (auto p = pooler.begin(); p < pooler.end(); ++p) {
@@ -48,7 +48,7 @@ struct LottieRenderPooler
         }
 
         //no empty, generate a new one.
-        auto p = static_cast<T*>(pooler[0]->duplicate());
+        auto p = copy ? static_cast<T*>(pooler[0]->duplicate()) : T::gen().release();
         PP(p)->ref();
         pooler.push(p);
         return p;
