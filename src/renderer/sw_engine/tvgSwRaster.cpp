@@ -1607,6 +1607,8 @@ static bool _rasterLinearGradientRect(SwSurface* surface, const SwBBox& region, 
 
 static bool _rasterRadialGradientRect(SwSurface* surface, const SwBBox& region, const SwFill* fill)
 {
+    if (fill->invalid) return false;
+
     if (_compositing(surface)) {
         if (_matting(surface)) return _rasterGradientMattedRect<FillRadial>(surface, region, fill);
         else return _rasterGradientMaskedRect<FillRadial>(surface, region, fill);

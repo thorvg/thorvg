@@ -256,7 +256,12 @@ bool _prepareRadial(SwFill* fill, const RadialGradient* radial, const Matrix* tr
     auto fy = P(radial)->fy;
     auto fr = P(radial)->fr;
 
-    if (r < FLOAT_EPSILON) return true;
+    fill->invalid = false;
+
+    if (r < FLOAT_EPSILON) {
+        fill->invalid = true;
+        return true;
+    }
 
     fill->radial.dr = r - fr;
     fill->radial.dx = cx - fx;

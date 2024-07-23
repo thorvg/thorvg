@@ -155,6 +155,7 @@ struct SwFill
     FillSpread spread;
 
     bool translucent;
+    bool invalid;
 };
 
 struct SwStrokeBorder
