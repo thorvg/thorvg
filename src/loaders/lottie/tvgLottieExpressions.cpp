@@ -34,6 +34,7 @@
 
 struct ExpContent
 {
+    LottieExpression* exp;
     LottieObject* obj;
     float frameNo;
 };
@@ -55,6 +56,16 @@ static const char* EXP_INDEX = "index";
 static const char* EXP_EFFECT= "effect";
 
 static LottieExpressions* exps = nullptr;   //singleton instance engine
+
+
+static ExpContent* _expcontent(LottieExpression* exp, float frameNo, LottieObject* obj)
+{
+    auto data = (ExpContent*)malloc(sizeof(ExpContent));
+    data->exp = exp;
+    data->frameNo = frameNo;
+    data->obj = obj;
+    return data;
+}
 
 
 static void contentFree(void *native_p, struct jerry_object_native_info_t *info_p)
@@ -95,35 +106,57 @@ static jerry_value_t _toComp(const jerry_call_info_t* info, const jerry_value_t 
 }
 
 
-static void _buildTransform(jerry_value_t context, LottieTransform* transform)
+static void _buildTransform(jerry_value_t context, float frameNo, LottieTransform* transform)
 {
     if (!transform) return;
 
     auto obj = jerry_object();
     jerry_object_set_sz(context, "transform", obj);
 
-    auto anchorPoint = jerry_object();
-    jerry_object_set_native_ptr(anchorPoint, nullptr, &transform->anchor);
-    jerry_object_set_sz(obj, "anchorPoint", anchorPoint);
-    jerry_value_free(anchorPoint);
+    {
+        auto anchorPoint = jerry_object();
+        auto value = transform->anchor(frameNo);
+        auto val1 = jerry_number(value.x);
+        auto val2 = jerry_number(value.y);
+        jerry_object_set_index(anchorPoint, 0, val1);
+        jerry_object_set_index(anchorPoint, 1, val2);
+        jerry_object_set_sz(obj, "anchorPoint", anchorPoint);
+        jerry_value_free(val1);
+        jerry_value_free(val2);
+        jerry_value_free(anchorPoint);
+    }
 
-    auto position = jerry_object();
-    jerry_object_set_native_ptr(position, nullptr, &transform->position);
-    jerry_object_set_sz(obj, "position", position);
-    jerry_value_free(position);
+    {
+        auto position = jerry_object();
+        auto value = transform->position(frameNo);
+        auto val1 = jerry_number(value.x);
+        auto val2 = jerry_number(value.y);
+        jerry_object_set_index(position, 0, val1);
+        jerry_object_set_index(position, 1, val2);
+        jerry_object_set_sz(obj, "position", position);
+        jerry_value_free(val1);
+        jerry_value_free(val2);
+        jerry_value_free(position);
+    }
 
-    auto scale = jerry_object();
-    jerry_object_set_native_ptr(scale, nullptr, &transform->scale);
-    jerry_object_set_sz(obj, "scale", scale);
-    jerry_value_free(scale);
+    {
+        auto scale = jerry_object();
+        auto value = transform->scale(frameNo);
+        auto val1 = jerry_number(value.x);
+        auto val2 = jerry_number(value.y);
+        jerry_object_set_index(scale, 0, val1);
+        jerry_object_set_index(scale, 1, val2);
+        jerry_object_set_sz(obj, "scale", scale);
+        jerry_value_free(val1);
+        jerry_value_free(val2);
+        jerry_value_free(scale);
+    }
 
-    auto rotation = jerry_object();
-    jerry_object_set_native_ptr(rotation, nullptr, &transform->rotation);
+    auto rotation = jerry_number(transform->rotation(frameNo));
     jerry_object_set_sz(obj, "rotation", rotation);
     jerry_value_free(rotation);
 
-    auto opacity = jerry_object();
-    jerry_object_set_native_ptr(opacity, nullptr, &transform->opacity);
+    auto opacity = jerry_number(transform->opacity(frameNo));
     jerry_object_set_sz(obj, "opacity", opacity);
     jerry_value_free(opacity);
 
@@ -131,49 +164,46 @@ static void _buildTransform(jerry_value_t context, LottieTransform* transform)
 }
 
 
-static jerry_value_t _buildGroup(LottieGroup* group, ExpContent* data)
+static jerry_value_t _buildGroup(LottieGroup* group, float frameNo)
 {
     auto obj = jerry_function_external(_content);
 
     //attach a transform
     for (auto c = group->children.begin(); c < group->children.end(); ++c) {
         if ((*c)->type == LottieObject::Type::Transform) {
-            _buildTransform(obj, static_cast<LottieTransform*>(*c));
+            _buildTransform(obj, frameNo, static_cast<LottieTransform*>(*c));
             break;
         }
     }
-    auto data2 = (ExpContent*)malloc(sizeof(ExpContent));
-    data2->obj = group;
-    data2->frameNo = data->frameNo;
-    jerry_object_set_native_ptr(obj, &freeCb, data2);
+    jerry_object_set_native_ptr(obj, &freeCb, _expcontent(nullptr, frameNo, group));
     jerry_object_set_sz(obj, EXP_CONTENT, obj);
     return obj;
 }
 
 
-static jerry_value_t _buildPolystar(LottiePolyStar* polystar, ExpContent* data)
+static jerry_value_t _buildPolystar(LottiePolyStar* polystar, float frameNo)
 {
     auto obj = jerry_object();
     auto position = jerry_object();
     jerry_object_set_native_ptr(position, nullptr, &polystar->position);
     jerry_object_set_sz(obj, "position", position);
     jerry_value_free(position);
-    auto innerRadius = jerry_number(polystar->innerRadius(data->frameNo));
+    auto innerRadius = jerry_number(polystar->innerRadius(frameNo));
     jerry_object_set_sz(obj, "innerRadius", innerRadius);
     jerry_value_free(innerRadius);
-    auto outerRadius = jerry_number(polystar->outerRadius(data->frameNo));
+    auto outerRadius = jerry_number(polystar->outerRadius(frameNo));
     jerry_object_set_sz(obj, "outerRadius", outerRadius);
     jerry_value_free(outerRadius);
-    auto innerRoundness = jerry_number(polystar->innerRoundness(data->frameNo));
+    auto innerRoundness = jerry_number(polystar->innerRoundness(frameNo));
     jerry_object_set_sz(obj, "innerRoundness", innerRoundness);
     jerry_value_free(innerRoundness);
-    auto outerRoundness = jerry_number(polystar->outerRoundness(data->frameNo));
+    auto outerRoundness = jerry_number(polystar->outerRoundness(frameNo));
     jerry_object_set_sz(obj, "outerRoundness", outerRoundness);
     jerry_value_free(outerRoundness);
-    auto rotation = jerry_number(polystar->rotation(data->frameNo));
+    auto rotation = jerry_number(polystar->rotation(frameNo));
     jerry_object_set_sz(obj, "rotation", rotation);
     jerry_value_free(rotation);
-    auto ptsCnt = jerry_number(polystar->ptsCnt(data->frameNo));
+    auto ptsCnt = jerry_number(polystar->ptsCnt(frameNo));
     jerry_object_set_sz(obj, "points", ptsCnt);
     jerry_value_free(ptsCnt);
 
@@ -181,16 +211,16 @@ static jerry_value_t _buildPolystar(LottiePolyStar* polystar, ExpContent* data)
 }
 
 
-static jerry_value_t _buildTrimpath(LottieTrimpath* trimpath, ExpContent* data)
+static jerry_value_t _buildTrimpath(LottieTrimpath* trimpath, float frameNo)
 {
     jerry_value_t obj = jerry_object();
-    auto start = jerry_number(trimpath->start(data->frameNo));
+    auto start = jerry_number(trimpath->start(frameNo));
     jerry_object_set_sz(obj, "start", start);
     jerry_value_free(start);
-    auto end = jerry_number(trimpath->end(data->frameNo));
+    auto end = jerry_number(trimpath->end(frameNo));
     jerry_object_set_sz(obj, "end", end);
     jerry_value_free(end);
-    auto offset = jerry_number(trimpath->offset(data->frameNo));
+    auto offset = jerry_number(trimpath->offset(frameNo));
     jerry_object_set_sz(obj, "offset", end);
     jerry_value_free(offset);
 
@@ -198,7 +228,7 @@ static jerry_value_t _buildTrimpath(LottieTrimpath* trimpath, ExpContent* data)
 }
 
 
-static void _buildLayer(jerry_value_t context, LottieLayer* layer, LottieComposition* comp)
+static void _buildLayer(jerry_value_t context, float frameNo, LottieLayer* layer, LottieLayer* comp, LottieExpression* exp)
 {
     auto width = jerry_number(layer->w);
     jerry_object_set_sz(context, EXP_WIDTH, width);
@@ -229,7 +259,8 @@ static void _buildLayer(jerry_value_t context, LottieLayer* layer, LottieComposi
     jerry_object_set_sz(context, "outPoint", outPoint);
     jerry_value_free(outPoint);
 
-    auto startTime = jerry_number(comp->timeAtFrame(layer->startFrame));
+    //TODO: Confirm exp->layer->comp->timeAtFrame() ?
+    auto startTime = jerry_number(exp->comp->timeAtFrame(layer->startFrame));
     jerry_object_set_sz(context, "startTime", startTime);
     jerry_value_free(startTime);
 
@@ -253,7 +284,7 @@ static void _buildLayer(jerry_value_t context, LottieLayer* layer, LottieComposi
 
     //sampleImage(point, radius = [.5, .5], postEffect=true, t=time)
 
-    _buildTransform(context, layer->transform);
+    _buildTransform(context, frameNo, layer->transform);
 
     //audioLevels, #the value of the Audio Levels property of the layer in decibels
 
@@ -275,6 +306,12 @@ static void _buildLayer(jerry_value_t context, LottieLayer* layer, LottieComposi
     jerry_object_set_sz(context, "toComp", toComp);
     jerry_object_set_native_ptr(toComp, nullptr, comp);
     jerry_value_free(toComp);
+
+    //content("name"), #look for the named property from a layer
+    auto content = jerry_function_external(_content);
+    jerry_object_set_sz(context, EXP_CONTENT, content);
+    jerry_object_set_native_ptr(content, &freeCb, _expcontent(exp, frameNo, layer));
+    jerry_value_free(content);
 }
 
 
@@ -408,25 +445,26 @@ static jerry_value_t _interp(float t, const jerry_value_t args[], int argsCnt)
     auto tMax = 1.0f;
     int idx = 0;
 
-    if (argsCnt > 3) {
-        tMin = jerry_value_as_number(args[1]);
-        tMax = jerry_value_as_number(args[2]);
-        idx += 2;
-    }
+    tMin = jerry_value_as_number(args[1]);
+    tMax = jerry_value_as_number(args[2]);
+    idx += 2;
+
+    t = (t - tMin) / (tMax - tMin);
+    if (t < 0) t = 0.0f;
+    else if (t > 1) t = 1.0f;
 
     //2d
     if (jerry_value_is_object(args[idx + 1]) && jerry_value_is_object(args[idx + 2])) {
-        auto val1 = jerry_object_get_index(args[0], 0);
-        auto val2 = jerry_object_get_index(args[0], 1);
-        auto val3 = jerry_object_get_index(args[1], 0);
-        auto val4 = jerry_object_get_index(args[1], 1);
+        auto val1 = jerry_object_get_index(args[idx + 1], 0);
+        auto val2 = jerry_object_get_index(args[idx + 1], 1);
+        auto val3 = jerry_object_get_index(args[idx + 2], 0);
+        auto val4 = jerry_object_get_index(args[idx + 2], 1);
 
         Point pt1 = {(float)jerry_value_as_number(val1),  (float)jerry_value_as_number(val2)};
         Point pt2 = {(float)jerry_value_as_number(val3),  (float)jerry_value_as_number(val4)};
         Point ret;
-        if (t <= tMin) ret = pt1;
-        else if (t >= tMax) ret = pt2;
-        else ret = mathLerp(pt1, pt2, t);
+
+        ret = mathLerp(pt1, pt2, t);
 
         jerry_value_free(val1);
         jerry_value_free(val2);
@@ -446,9 +484,8 @@ static jerry_value_t _interp(float t, const jerry_value_t args[], int argsCnt)
 
     //1d
     auto val1 = (float) jerry_value_as_number(args[idx + 1]);
-    if (t <= tMin) jerry_number(val1);
     auto val2 = (float) jerry_value_as_number(args[idx + 2]);
-    if (t >= tMax) jerry_number(val2);
+
     return jerry_number(mathLerp(val1, val2, t));
 }
 
@@ -622,15 +659,15 @@ static jerry_value_t _content(const jerry_call_info_t* info, const jerry_value_t
 
     //find the a path property(sh) in the group layer?
     switch (target->type) {
-        case LottieObject::Group: return _buildGroup(static_cast<LottieGroup*>(target), data);
+        case LottieObject::Group: return _buildGroup(static_cast<LottieGroup*>(target), data->frameNo);
         case LottieObject::Path: {
             jerry_value_t obj = jerry_object();
             jerry_object_set_native_ptr(obj, nullptr, &static_cast<LottiePath*>(target)->pathset);
             jerry_object_set_sz(obj, "path", obj);
             return obj;
         }
-        case LottieObject::Polystar: return _buildPolystar(static_cast<LottiePolyStar*>(target), data);
-        case LottieObject::Trimpath: return _buildTrimpath(static_cast<LottieTrimpath*>(target), data);
+        case LottieObject::Polystar: return _buildPolystar(static_cast<LottiePolyStar*>(target), data->frameNo);
+        case LottieObject::Trimpath: return _buildTrimpath(static_cast<LottieTrimpath*>(target), data->frameNo);
         default: break;
     }
     return jerry_undefined();
@@ -639,24 +676,25 @@ static jerry_value_t _content(const jerry_call_info_t* info, const jerry_value_t
 
 static jerry_value_t _layer(const jerry_call_info_t* info, const jerry_value_t args[], const jerry_length_t argsCnt)
 {
-    auto comp = static_cast<LottieComposition*>(jerry_object_get_native_ptr(info->function, nullptr));
+    auto data = static_cast<ExpContent*>(jerry_object_get_native_ptr(info->function, &freeCb));
+    auto comp = static_cast<LottieLayer*>(data->obj);
     LottieLayer* layer;
 
     //layer index
     if (jerry_value_is_number(args[0])) {
         auto idx = (uint16_t)jerry_value_as_int32(args[0]);
-        layer = comp->root->layerByIdx(idx);
+        layer = comp->layerByIdx(idx);
         jerry_value_free(idx);
     //layer name
     } else {
-        layer = comp->root->layerById(_idByName(args[0]));
+        layer = comp->layerById(_idByName(args[0]));
     }
 
     if (!layer) return jerry_undefined();
 
     auto obj = jerry_object();
     jerry_object_set_native_ptr(obj, nullptr, layer);
-    _buildLayer(obj, layer, comp);
+    _buildLayer(obj, data->frameNo, layer, comp, data->exp);
 
     return obj;
 }
@@ -779,8 +817,8 @@ static bool _loopOutCommon(LottieExpression* exp, const jerry_value_t args[], co
         free(name);
     }
 
-    if (exp->loop.mode != LottieExpression::LoopMode::OutCycle) {
-        TVGERR("hermet", "Not supported loopOut type = %d", exp->loop.mode);
+    if (exp->loop.mode != LottieExpression::LoopMode::OutCycle && exp->loop.mode != LottieExpression::LoopMode::OutPingPong) {
+        TVGERR("LOTTIE", "Not supported loopOut type = %d", exp->loop.mode);
         return false;
     }
 
@@ -831,8 +869,8 @@ static bool _loopInCommon(LottieExpression* exp, const jerry_value_t args[], con
         free(name);
     }
 
-    if (exp->loop.mode != LottieExpression::LoopMode::InCycle) {
-        TVGERR("hermet", "Not supported loopOut type = %d", exp->loop.mode);
+    if (exp->loop.mode != LottieExpression::LoopMode::InCycle && exp->loop.mode != LottieExpression::LoopMode::InPingPong) {
+        TVGERR("LOTTIE", "Not supported loopIn type = %d", exp->loop.mode);
         return false;
     }
 
@@ -846,7 +884,7 @@ static jerry_value_t _loopIn(const jerry_call_info_t* info, const jerry_value_t 
     if (!_loopInCommon(exp, args, argsCnt)) return jerry_undefined();
 
     if (argsCnt > 1) {
-        exp->loop.in = exp->comp->frameAtTime((float)jerry_value_as_int32(args[1]));
+        exp->loop.key = exp->comp->frameAtTime((float)jerry_value_as_int32(args[1]));
     }
 
     auto obj = jerry_object();
@@ -1029,27 +1067,24 @@ static void _buildProperty(float frameNo, jerry_value_t context, LottieExpressio
     //name
 
     //content("name"), #look for the named property from a layer
-    auto data = (ExpContent*)malloc(sizeof(ExpContent));
-    data->obj = exp->layer;
-    data->frameNo = frameNo;
-
     auto content = jerry_function_external(_content);
     jerry_object_set_sz(context, EXP_CONTENT, content);
-    jerry_object_set_native_ptr(content, &freeCb, data);
+    jerry_object_set_native_ptr(content, &freeCb, _expcontent(exp, frameNo, exp->layer));
     jerry_value_free(content);
 }
 
 
 static jerry_value_t _comp(const jerry_call_info_t* info, const jerry_value_t args[], const jerry_length_t argsCnt)
 {
-    auto comp = static_cast<LottieComposition*>(jerry_object_get_native_ptr(info->function, nullptr));
-    auto layer = comp->root->layerById(_idByName(args[0]));
+    auto data = static_cast<ExpContent*>(jerry_object_get_native_ptr(info->function, nullptr));
+    auto comp = static_cast<LottieLayer*>(data->obj);
+    auto layer = comp->layerById(_idByName(args[0]));
 
     if (!layer) return jerry_undefined();
 
     auto obj = jerry_object();
     jerry_object_set_native_ptr(obj, nullptr, layer);
-    _buildLayer(obj, layer, comp);
+    _buildLayer(obj, data->frameNo, layer, comp, data->exp);
 
     return obj;
 }
@@ -1149,29 +1184,40 @@ static void _buildMath(jerry_value_t context)
 }
 
 
-void LottieExpressions::buildLayer(LottieLayer* layer)
+void LottieExpressions::buildGlobal(LottieExpression* exp)
 {
-    auto index = jerry_number(layer->idx);
+    auto index = jerry_number(exp->layer->idx);
     jerry_object_set_sz(global, EXP_INDEX, index);
     jerry_value_free(index);
 }
 
 
-void LottieExpressions::buildComp(LottieComposition* comp)
+void LottieExpressions::buildComp(jerry_value_t context, float frameNo, LottieLayer* comp, LottieExpression* exp)
 {
-    jerry_object_set_native_ptr(this->comp, nullptr, comp);
-    jerry_object_set_native_ptr(this->thisComp, nullptr, comp);
-    jerry_object_set_native_ptr(this->layer, nullptr, comp);
+    jerry_object_set_native_ptr(context, &freeCb, _expcontent(exp, frameNo, comp));
+
+    //layer(index) / layer(name) / layer(otherLayer, reIndex)
+    auto layer = jerry_function_external(_layer);
+    jerry_object_set_sz(context, "layer", layer);
+
+    jerry_object_set_native_ptr(layer, &freeCb, _expcontent(exp, frameNo, comp));
+    jerry_value_free(layer);
+
+    auto numLayers = jerry_number(comp->children.count);
+    jerry_object_set_sz(context, "numLayers", numLayers);
+    jerry_value_free(numLayers);
+}
+
+
+void LottieExpressions::buildComp(LottieComposition* comp, float frameNo, LottieExpression* exp)
+{
+    buildComp(this->comp, frameNo, comp->root, exp);
 
     //marker
     //marker.key(index)
     //marker.key(name)
     //marker.nearestKey(t)
     //marker.numKeys
-
-    auto numLayers = jerry_number(comp->root->children.count);
-    jerry_object_set_sz(thisComp, "numLayers", numLayers);
-    jerry_value_free(numLayers);
 
     //activeCamera
 
@@ -1218,10 +1264,6 @@ jerry_value_t LottieExpressions::buildGlobal()
     thisComp = jerry_object();
     jerry_object_set_sz(global, "thisComp", thisComp);
 
-    //layer(index) / layer(name) / layer(otherLayer, reIndex)
-    layer = jerry_function_external(_layer);
-    jerry_object_set_sz(thisComp, "layer", layer);
-
     thisLayer = jerry_object();
     jerry_object_set_sz(global, "thisLayer", thisLayer);
 
@@ -1249,18 +1291,23 @@ jerry_value_t LottieExpressions::buildGlobal()
 
 jerry_value_t LottieExpressions::evaluate(float frameNo, LottieExpression* exp)
 {
-    buildComp(exp->comp);
-    buildLayer(exp->layer);
+    buildGlobal(exp);
+
+    //main composition
+    buildComp(exp->comp, frameNo, exp);
+
+    //this composition
+    buildComp(thisComp, frameNo, exp->layer->comp, exp);
 
     //update global context values
     jerry_object_set_native_ptr(thisLayer, nullptr, exp->layer);
-    _buildLayer(thisLayer, exp->layer, exp->comp);
+    _buildLayer(thisLayer, frameNo, exp->layer, exp->comp->root, exp);
 
     jerry_object_set_native_ptr(thisProperty, nullptr, exp->property);
     _buildProperty(frameNo, global, exp);
 
     if (exp->type == LottieProperty::Type::PathSet) _buildPath(thisProperty, exp);
-    if (exp->object->type == LottieObject::Transform) _buildTransform(global, static_cast<LottieTransform*>(exp->object));
+    if (exp->object->type == LottieObject::Transform) _buildTransform(global, frameNo, static_cast<LottieTransform*>(exp->object));
 
     //evaluate the code
     auto eval = jerry_eval((jerry_char_t *) exp->code, strlen(exp->code), JERRY_PARSE_NO_OPTS);
@@ -1284,7 +1331,6 @@ LottieExpressions::~LottieExpressions()
 {
     jerry_value_free(thisProperty);
     jerry_value_free(thisLayer);
-    jerry_value_free(layer);
     jerry_value_free(thisComp);
     jerry_value_free(comp);
     jerry_value_free(global);

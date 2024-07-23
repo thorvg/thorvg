@@ -362,16 +362,28 @@ float _frameNo(T* frames, int32_t key)
 template<typename T>
 float _loop(T* frames, float frameNo, LottieExpression* exp)
 {
-    if (frameNo >= exp->loop.in || frameNo < frames->first().no ||frameNo < frames->last().no) return frameNo;
+    if (frameNo >= exp->loop.in || frameNo < frames->first().no || frameNo < frames->last().no) return frameNo;
+
+    frameNo -= frames->first().no;
 
     switch (exp->loop.mode) {
         case LottieExpression::LoopMode::InCycle: {
-            frameNo -= frames->first().no;
             return fmodf(frameNo, frames->last().no - frames->first().no) + (*frames)[exp->loop.key].no;
         }
+        case LottieExpression::LoopMode::InPingPong: {
+            auto range = frames->last().no - (*frames)[exp->loop.key].no;
+            auto forward = (static_cast<int>(frameNo / range) % 2) == 0 ? true : false;
+            frameNo = fmodf(frameNo, range);
+            return (forward ? frameNo : (range - frameNo)) + (*frames)[exp->loop.key].no;
+        }
         case LottieExpression::LoopMode::OutCycle: {
-            frameNo -= frames->first().no;
             return fmodf(frameNo, (*frames)[frames->count - 1 - exp->loop.key].no - frames->first().no) + frames->first().no;
+        }
+        case LottieExpression::LoopMode::OutPingPong: {
+            auto range = (*frames)[frames->count - 1 - exp->loop.key].no - frames->first().no;
+            auto forward = (static_cast<int>(frameNo / range) % 2) == 0 ? true : false;
+            frameNo = fmodf(frameNo, range);
+            return (forward ? frameNo : (range - frameNo)) + frames->first().no;
         }
         default: break;
     }
