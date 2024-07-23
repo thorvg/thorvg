@@ -142,6 +142,7 @@ void LottieTrimpath::segment(float frameNo, float& start, float& end, LottieExpr
 {
     start = this->start(frameNo, exps) * 0.01f;
     end = this->end(frameNo, exps) * 0.01f;
+
     auto o = fmodf(this->offset(frameNo, exps), 360.0f) / 360.0f;  //0 ~ 1
 
     auto diff = fabs(start - end);
