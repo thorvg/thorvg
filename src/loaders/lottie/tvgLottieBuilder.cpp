@@ -342,7 +342,7 @@ static void _updateGradientStroke(TVG_UNUSED LottieGroup* parent, LottieObject**
 }
 
 
-static void _updateSolidFill(TVG_UNUSED LottieGroup* parent, LottieObject** child, float frameNo, TVG_UNUSED Inlist<RenderContext>& contexts, RenderContext* ctx, LottieExpressions* exps)
+static void _updateSolidFill(TVG_UNUSED LottieGroup* parent, LottieObject** child, float frameNo, Inlist<RenderContext>& contexts, RenderContext* ctx, LottieExpressions* exps)
 {
     if (_fragmented(child, contexts, ctx)) return;
 
@@ -357,7 +357,7 @@ static void _updateSolidFill(TVG_UNUSED LottieGroup* parent, LottieObject** chil
 }
 
 
-static void _updateGradientFill(TVG_UNUSED LottieGroup* parent, LottieObject** child, float frameNo, TVG_UNUSED Inlist<RenderContext>& contexts, RenderContext* ctx, LottieExpressions* exps)
+static void _updateGradientFill(TVG_UNUSED LottieGroup* parent, LottieObject** child, float frameNo, Inlist<RenderContext>& contexts, RenderContext* ctx, LottieExpressions* exps)
 {
     if (_fragmented(child, contexts, ctx)) return;
 
@@ -1056,7 +1056,7 @@ static void _updatePrecomp(LottieComposition* comp, LottieLayer* precomp, float 
     }
 
     //clip the layer viewport
-    auto clipper = precomp->pooling(true);
+    auto clipper = precomp->statical.pooling(true);
     clipper->transform(precomp->cache.matrix);
     precomp->scene->composite(cast(clipper), CompositeMethod::ClipPath);
 }
@@ -1064,7 +1064,7 @@ static void _updatePrecomp(LottieComposition* comp, LottieLayer* precomp, float 
 
 static void _updateSolid(LottieLayer* layer)
 {
-    auto solidFill = layer->pooling(true);
+    auto solidFill = layer->statical.pooling(true);
     solidFill->opacity(layer->cache.opacity);
     layer->scene->push(cast(solidFill));
 }
@@ -1215,12 +1215,11 @@ static void _updateMaskings(LottieLayer* layer, float frameNo, LottieExpressions
     auto pMask = static_cast<LottieMask*>(layer->masks[0]);
     auto pMethod = pMask->method;
 
-    auto pShape = Shape::gen().release();
+    auto pShape = layer->pooling();
+    pShape->reset();
     pShape->fill(255, 255, 255, pMask->opacity(frameNo));
     pShape->transform(layer->cache.matrix);
-    if (pMask->pathset(frameNo, P(pShape)->rs.path.cmds, P(pShape)->rs.path.pts, nullptr, 0.0f, exps)) {
-        P(pShape)->update(RenderUpdateFlag::Path);
-    }
+    pMask->pathset(frameNo, P(pShape)->rs.path.cmds, P(pShape)->rs.path.pts, nullptr, 0.0f, exps);
 
     if (pMethod == CompositeMethod::SubtractMask || pMethod == CompositeMethod::InvAlphaMask) {
         layer->scene->composite(tvg::cast(pShape), CompositeMethod::InvAlphaMask);
@@ -1239,12 +1238,11 @@ static void _updateMaskings(LottieLayer* layer, float frameNo, LottieExpressions
             mask->pathset(frameNo, P(pShape)->rs.path.cmds, P(pShape)->rs.path.pts, nullptr, 0.0f, exps);
         //Chain composition
         } else {
-            auto shape = Shape::gen().release();
+            auto shape = layer->pooling();
+            shape->reset();
             shape->fill(255, 255, 255, mask->opacity(frameNo));
             shape->transform(layer->cache.matrix);
-            if (mask->pathset(frameNo, P(shape)->rs.path.cmds, P(shape)->rs.path.pts, nullptr, 0.0f, exps)) {
-                P(shape)->update(RenderUpdateFlag::Path);
-            }
+            mask->pathset(frameNo, P(shape)->rs.path.cmds, P(shape)->rs.path.pts, nullptr, 0.0f, exps);
             pShape->composite(tvg::cast(shape), method);
             pShape = shape;
             pMethod = method;
