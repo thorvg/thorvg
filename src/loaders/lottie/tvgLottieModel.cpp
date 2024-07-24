@@ -400,14 +400,14 @@ void LottieLayer::prepare(RGB24* color)
         auto clipper = Shape::gen().release();
         clipper->appendRect(0.0f, 0.0f, w, h);
         PP(clipper)->ref();
-        pooler.push(clipper);
+        statical.pooler.push(clipper);
     //prepare solid fill in advance if it is a layer type.
     } else if (color && type == LottieLayer::Solid) {
         auto solidFill = Shape::gen().release();
         solidFill->appendRect(0, 0, static_cast<float>(w), static_cast<float>(h));
         solidFill->fill(color->rgb[0], color->rgb[1], color->rgb[2]);
         PP(solidFill)->ref();
-        pooler.push(solidFill);
+        statical.pooler.push(solidFill);
     }
 
     LottieGroup::prepare(LottieObject::Layer);
