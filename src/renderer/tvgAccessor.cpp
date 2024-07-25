@@ -21,6 +21,7 @@
  */
 
 #include "tvgIteratorAccessor.h"
+#include "tvgCompressor.h"
 
 /************************************************************************/
 /* Internal Class Implementation                                        */
@@ -78,6 +79,12 @@ Result Accessor::set(const Picture* picture, function<bool(const Paint* paint, v
         delete(it);
     }
     return Result::Success;
+}
+
+
+uint32_t Accessor::id(const char* name) noexcept
+{
+    return djb2Encode(name);
 }
 
 
