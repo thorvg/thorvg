@@ -27,6 +27,7 @@
 
 struct LottieExpression;
 struct LottieComposition;
+struct LottieLayer;
 struct RGB24;
 
 #ifdef THORVG_LOTTIE_EXPRESSIONS_SUPPORT
@@ -42,10 +43,10 @@ public:
     {
         auto bm_rt = evaluate(frameNo, exp);
 
-        if (auto prop = static_cast<Property*>(jerry_object_get_native_ptr(bm_rt, nullptr))) {
-            out = (*prop)(frameNo);
-        } else if (jerry_value_is_number(bm_rt)) {
+        if (jerry_value_is_number(bm_rt)) {
             out = (NumType) jerry_value_as_number(bm_rt);
+        } else if (auto prop = static_cast<Property*>(jerry_object_get_native_ptr(bm_rt, nullptr))) {
+            out = (*prop)(frameNo);
         } else {
             TVGERR("LOTTIE", "Failed dispatching a Value!");
             return false;
@@ -135,12 +136,14 @@ private:
 
     jerry_value_t evaluate(float frameNo, LottieExpression* exp);
     jerry_value_t buildGlobal();
-    void buildComp(LottieComposition* comp);
+
+    void buildComp(LottieComposition* comp, float frameNo, LottieExpression* exp);
+    void buildComp(jerry_value_t context, float frameNo, LottieLayer* comp, LottieExpression* exp);
+    void buildGlobal(LottieExpression* exp);
 
     //global object, attributes, methods
     jerry_value_t global;
     jerry_value_t comp;
-    jerry_value_t layer;
     jerry_value_t thisComp;
     jerry_value_t thisLayer;
     jerry_value_t thisProperty;

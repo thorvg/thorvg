@@ -158,7 +158,7 @@ static bool avxRasterTranslucentRect(SwSurface* surface, const SwBBox& region, u
 }
 
 
-static bool avxRasterTranslucentRle(SwSurface* surface, const SwRleData* rle, uint8_t r, uint8_t g, uint8_t b, uint8_t a)
+static bool avxRasterTranslucentRle(SwSurface* surface, const SwRle* rle, uint8_t r, uint8_t g, uint8_t b, uint8_t a)
 {
     auto span = rle->spans;
 

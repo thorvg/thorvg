@@ -218,7 +218,7 @@ struct LottieMarker
     }
 };
 
-struct LottieText : LottieObject
+struct LottieText : LottieObject, LottieRenderPooler<tvg::Shape>
 {
     void prepare()
     {
@@ -277,7 +277,10 @@ struct LottieShape : LottieObject, LottieRenderPooler<tvg::Shape>
         return true;
     }
 
-    void prepare(LottieObject::Type type);
+    void prepare(LottieObject::Type type)
+    {
+        LottieObject::type = type;
+    }
 };
 
 
@@ -533,6 +536,8 @@ struct LottieRepeater : LottieObject
 
 struct LottieGroup : LottieObject
 {
+    LottieGroup();
+
     virtual ~LottieGroup()
     {
         for (auto p = children.begin(); p < children.end(); ++p) delete(*p);
@@ -558,10 +563,11 @@ struct LottieGroup : LottieObject
     Scene* scene = nullptr;
     Array<LottieObject*> children;
 
-    bool reqFragment = false;   //requirement to fragment the render context
-    bool buildDone = false;     //completed in building the composition.
-    bool allowMerge = true;     //if this group is consisted of simple (transformed) shapes.
-    bool trimpath = false;      //this group has a trimpath.
+    bool reqFragment : 1;   //requirement to fragment the render context
+    bool buildDone : 1;     //completed in building the composition.
+    bool trimpath : 1;      //this group has a trimpath.
+    bool visible : 1;       //this group has visible contents.
+    bool allowMerge : 1;    //if this group is consisted of simple (transformed) shapes.
 };
 
 
@@ -581,12 +587,12 @@ struct LottieLayer : LottieGroup, LottieRenderPooler<tvg::Shape>
     bool mergeable() override { return false; }
 
     void prepare(RGB24* color = nullptr);
-    float remap(float frameNo, LottieExpressions* exp);
+    float remap(LottieComposition* comp, float frameNo, LottieExpressions* exp);
 
     char* name = nullptr;
     LottieLayer* parent = nullptr;
     LottieFloat timeRemap = 0.0f;
-    LottieComposition* comp = nullptr;
+    LottieLayer* comp = nullptr;  //Precompositor, current layer is belonges.
     LottieTransform* transform = nullptr;
     Array<LottieMask*> masks;
     LottieLayer* matteTarget = nullptr;
@@ -613,9 +619,20 @@ struct LottieLayer : LottieGroup, LottieRenderPooler<tvg::Shape>
     bool autoOrient = false;
     bool matteSrc = false;
 
+    LottieLayer* layerById(unsigned long id)
+    {
+        for (auto child = children.begin(); child < children.end(); ++child) {
+            if ((*child)->type != LottieObject::Type::Layer) continue;
+            auto layer = static_cast<LottieLayer*>(*child);
+            if (layer->id == id) return layer;
+        }
+        return nullptr;
+    }
+
     LottieLayer* layerByIdx(int16_t idx)
     {
         for (auto child = children.begin(); child < children.end(); ++child) {
+            if ((*child)->type != LottieObject::Type::Layer) continue;
             auto layer = static_cast<LottieLayer*>(*child);
             if (layer->idx == idx) return layer;
         }
@@ -673,30 +690,12 @@ struct LottieComposition
 
     float timeAtFrame(float frameNo)
     {
-        return (frameNo - startFrame) / frameRate;
+        return (frameNo - root->inFrame) / frameRate;
     }
 
     float frameCnt() const
     {
-        return endFrame - startFrame;
-    }
-
-    LottieLayer* layerById(unsigned long id)
-    {
-        for (auto child = root->children.begin(); child < root->children.end(); ++child) {
-            auto layer = static_cast<LottieLayer*>(*child);
-            if (layer->id == id) return layer;
-        }
-        return nullptr;
-    }
-
-    LottieLayer* layerByIdx(int16_t idx)
-    {
-        for (auto child = root->children.begin(); child < root->children.end(); ++child) {
-            auto layer = static_cast<LottieLayer*>(*child);
-            if (layer->idx == idx) return layer;
-        }
-        return nullptr;
+        return root->outFrame - root->inFrame;
     }
 
     LottieLayer* asset(unsigned long id)
@@ -712,7 +711,6 @@ struct LottieComposition
     char* version = nullptr;
     char* name = nullptr;
     float w, h;
-    float startFrame, endFrame;
     float frameRate;
     Array<LottieObject*> assets;
     Array<LottieInterpolator*> interpolators;

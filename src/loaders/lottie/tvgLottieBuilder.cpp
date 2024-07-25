@@ -97,7 +97,7 @@ struct RenderContext
 
 
 static void _updateChildren(LottieGroup* parent, float frameNo, Inlist<RenderContext>& contexts, LottieExpressions* exps);
-static void _updateLayer(LottieLayer* root, LottieLayer* layer, float frameNo, LottieExpressions* exps);
+static void _updateLayer(LottieComposition* comp, Scene* scene, LottieLayer* layer, float frameNo, LottieExpressions* exps);
 static bool _buildComposition(LottieComposition* comp, LottieLayer* parent);
 static bool _draw(LottieGroup* parent, LottieShape* shape, RenderContext* ctx);
 
@@ -268,7 +268,7 @@ static void _updateGroup(LottieGroup* parent, LottieObject** child, float frameN
 {
     auto group = static_cast<LottieGroup*>(*child);
 
-    if (group->children.empty()) return;
+    if (!group->visible) return;
 
     //Prepare render data
     group->scene = parent->scene;
@@ -1028,21 +1028,22 @@ static void _updateChildren(LottieGroup* parent, float frameNo, Inlist<RenderCon
                 }
                 default: break;
             }
+            if (ctx->propagator->opacity() == 0) break;
         }
         delete(ctx);
     }
 }
 
 
-static void _updatePrecomp(LottieLayer* precomp, float frameNo, LottieExpressions* exps)
+static void _updatePrecomp(LottieComposition* comp, LottieLayer* precomp, float frameNo, LottieExpressions* exps)
 {
     if (precomp->children.empty()) return;
 
-    frameNo = precomp->remap(frameNo, exps);
+    frameNo = precomp->remap(comp, frameNo, exps);
 
     for (auto c = precomp->children.end() - 1; c >= precomp->children.begin(); --c) {
         auto child = static_cast<LottieLayer*>(*c);
-        if (!child->matteSrc) _updateLayer(precomp, child, frameNo, exps);
+        if (!child->matteSrc) _updateLayer(comp, precomp->scene, child, frameNo, exps);
     }
 
     //TODO: remove the intermediate scene....
@@ -1053,7 +1054,7 @@ static void _updatePrecomp(LottieLayer* precomp, float frameNo, LottieExpression
     }
 
     //clip the layer viewport
-    auto clipper = precomp->pooling();
+    auto clipper = precomp->pooling(true);
     clipper->transform(precomp->cache.matrix);
     precomp->scene->composite(cast(clipper), CompositeMethod::ClipPath);
 }
@@ -1061,7 +1062,7 @@ static void _updatePrecomp(LottieLayer* precomp, float frameNo, LottieExpression
 
 static void _updateSolid(LottieLayer* layer)
 {
-    auto solidFill = layer->pooling();
+    auto solidFill = layer->pooling(true);
     solidFill->opacity(layer->cache.opacity);
     layer->scene->push(cast(solidFill));
 }
@@ -1070,7 +1071,7 @@ static void _updateSolid(LottieLayer* layer)
 static void _updateImage(LottieGroup* layer)
 {
     auto image = static_cast<LottieImage*>(layer->children.first());
-    layer->scene->push(tvg::cast(image->pooling()));
+    layer->scene->push(tvg::cast(image->pooling(true)));
 }
 
 
@@ -1082,7 +1083,7 @@ static void _updateText(LottieLayer* layer, float frameNo)
 
     if (!p || !text->font) return;
 
-    auto scale = doc.size * 0.01f;
+    auto scale = doc.size;
     Point cursor = {0.0f, 0.0f};
     auto scene = Scene::gen();
     int line = 0;
@@ -1122,8 +1123,8 @@ static void _updateText(LottieLayer* layer, float frameNo)
             auto glyph = *g;
             //draw matched glyphs
             if (!strncmp(glyph->code, p, glyph->len)) {
-                //TODO: caching?
-                auto shape = Shape::gen();
+                auto shape = text->pooling();
+                shape->reset();
                 for (auto g = glyph->children.begin(); g < glyph->children.end(); ++g) {
                     auto group = static_cast<LottieGroup*>(*g);
                     for (auto p = group->children.begin(); p < group->children.end(); ++p) {
@@ -1145,8 +1146,8 @@ static void _updateText(LottieLayer* layer, float frameNo)
                 for (auto s = text->ranges.begin(); s < text->ranges.end(); ++s) {
                     float divisor = (*s)->rangeUnit == LottieTextRange::Unit::Percent ? (100.0f / totalChars) : 1;
                     auto offset = (*s)->offset(frameNo) / divisor;
-                    auto start = round((*s)->start(frameNo) / divisor) + offset;
-                    auto end = round((*s)->end(frameNo) / divisor) + offset;
+                    auto start = nearbyintf((*s)->start(frameNo) / divisor) + offset;
+                    auto end = nearbyintf((*s)->end(frameNo) / divisor) + offset;
 
                     if (start > end) std::swap(start, end);
 
@@ -1176,7 +1177,7 @@ static void _updateText(LottieLayer* layer, float frameNo)
                     cursor.x += (*s)->style.letterSpacing(frameNo);
                 }
 
-                scene->push(std::move(shape));
+                scene->push(cast(shape));
 
                 p += glyph->len;
                 idx += glyph->len;
@@ -1243,12 +1244,12 @@ static void _updateMaskings(LottieLayer* layer, float frameNo, LottieExpressions
 }
 
 
-static bool _updateMatte(LottieLayer* root, LottieLayer* layer, float frameNo, LottieExpressions* exps)
+static bool _updateMatte(LottieComposition* comp, float frameNo, Scene* scene, LottieLayer* layer, LottieExpressions* exps)
 {
     auto target = layer->matteTarget;
     if (!target) return true;
 
-    _updateLayer(root, target, frameNo, exps);
+    _updateLayer(comp, scene, target, frameNo, exps);
 
     if (target->scene) {
         layer->scene->composite(cast(target->scene), layer->matteType);
@@ -1262,7 +1263,7 @@ static bool _updateMatte(LottieLayer* root, LottieLayer* layer, float frameNo, L
 }
 
 
-static void _updateLayer(LottieLayer* root, LottieLayer* layer, float frameNo, LottieExpressions* exps)
+static void _updateLayer(LottieComposition* comp, Scene* scene, LottieLayer* layer, float frameNo, LottieExpressions* exps)
 {
     layer->scene = nullptr;
 
@@ -1284,13 +1285,13 @@ static void _updateLayer(LottieLayer* root, LottieLayer* layer, float frameNo, L
 
     if (layer->matteTarget && layer->masks.count > 0) TVGERR("LOTTIE", "FIXME: Matte + Masking??");
 
-    if (!_updateMatte(root, layer, frameNo, exps)) return;
+    if (!_updateMatte(comp, frameNo, scene, layer, exps)) return;
 
     _updateMaskings(layer, frameNo, exps);
 
     switch (layer->type) {
         case LottieLayer::Precomp: {
-            _updatePrecomp(layer, frameNo, exps);
+            _updatePrecomp(comp, layer, frameNo, exps);
             break;
         }
         case LottieLayer::Solid: {
@@ -1319,7 +1320,7 @@ static void _updateLayer(LottieLayer* root, LottieLayer* layer, float frameNo, L
     layer->scene->blend(layer->blendMethod);
 
     //the given matte source was composited by the target earlier.
-    if (!layer->matteSrc) root->scene->push(cast(layer->scene));
+    if (!layer->matteSrc) scene->push(cast(layer->scene));
 }
 
 
@@ -1430,9 +1431,9 @@ bool LottieBuilder::update(LottieComposition* comp, float frameNo)
 {
     if (comp->root->children.empty()) return false;
 
-    frameNo += comp->startFrame;
-    if (frameNo < comp->startFrame) frameNo = comp->startFrame;
-    if (frameNo >= comp->endFrame) frameNo = (comp->endFrame - 1);
+    frameNo += comp->root->inFrame;
+    if (frameNo <comp->root->inFrame) frameNo = comp->root->inFrame;
+    if (frameNo >= comp->root->outFrame) frameNo = (comp->root->outFrame - 1);
 
     //update children layers
     auto root = comp->root;
@@ -1442,7 +1443,7 @@ bool LottieBuilder::update(LottieComposition* comp, float frameNo)
 
     for (auto child = root->children.end() - 1; child >= root->children.begin(); --child) {
         auto layer = static_cast<LottieLayer*>(*child);
-        if (!layer->matteSrc) _updateLayer(root, layer, frameNo, exps);
+        if (!layer->matteSrc) _updateLayer(comp, root->scene, layer, frameNo, exps);
     }
 
     return true;
@@ -1454,7 +1455,6 @@ void LottieBuilder::build(LottieComposition* comp)
     if (!comp) return;
 
     comp->root->scene = Scene::gen().release();
-    if (!comp->root->scene) return;
 
     _buildComposition(comp, comp->root);
 
@@ -1462,6 +1462,6 @@ void LottieBuilder::build(LottieComposition* comp)
 
     //viewport clip
     auto clip = Shape::gen();
-    clip->appendRect(0, 0, static_cast<float>(comp->w), static_cast<float>(comp->h));
+    clip->appendRect(0, 0, comp->w, comp->h);
     comp->root->scene->composite(std::move(clip), CompositeMethod::ClipPath);
 }
