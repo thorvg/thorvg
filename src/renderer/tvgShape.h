@@ -217,23 +217,6 @@ struct Shape::Impl
         if (mathEqual(rs.stroke->trim.begin, begin) && mathEqual(rs.stroke->trim.end, end) &&
             rs.stroke->trim.simultaneous == simultaneous) return;
 
-        auto loop = true;
-
-        if (begin > 1.0f && end > 1.0f) loop = false;
-        if (begin < 0.0f && end < 0.0f) loop = false;
-        if (begin >= 0.0f && begin <= 1.0f && end >= 0.0f  && end <= 1.0f) loop = false;
-
-        if (begin > 1.0f) begin -= 1.0f;
-        if (begin < 0.0f) begin += 1.0f;
-        if (end > 1.0f) end -= 1.0f;
-        if (end < 0.0f) end += 1.0f;
-
-        if ((loop && begin < end) || (!loop && begin > end)) {
-            auto tmp = begin;
-            begin = end;
-            end = tmp;
-        }
-
         rs.stroke->trim.begin = begin;
         rs.stroke->trim.end = end;
         rs.stroke->trim.simultaneous = simultaneous;
