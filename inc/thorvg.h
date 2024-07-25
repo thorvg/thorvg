@@ -1963,7 +1963,7 @@ public:
      * @retval Result::InsufficientCondition In case the animation is not loaded.
      * @retval Result::NonSupport When it's not animatable.
      *
-     * @note Range from 0.0~1.0
+     * @note Animation allows a range from 0.0 to 1.0. @p end should not be higher than @p begin.
      * @note If a marker has been specified, its range will be disregarded.
      * @see LottieAnimation::segment(const char* marker)
      * @note Experimental API
