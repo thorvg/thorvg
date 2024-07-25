@@ -2138,6 +2138,22 @@ public:
     Result set(const Picture* picture, std::function<bool(const Paint* paint, void* data)> func, void* data) noexcept;
 
     /**
+     * @brief Generate a unique ID (hash key) from a given name.
+     *
+     * This function computes a unique identifier value based on the provided string.
+     * You can use this to assign a unique ID to the Paint object.
+     *
+     * @param[in] name The input string to generate the unique identifier from.
+     *
+     * @return The generated unique identifier value.
+     *
+     * @see Paint::id
+     *
+     * @note Experimental API
+     */
+    static uint32_t id(const char* name) noexcept;
+
+    /**
      * @brief Creates a new Accessor object.
      *
      * @return A new Accessor object.
