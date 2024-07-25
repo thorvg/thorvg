@@ -2538,6 +2538,36 @@ TVG_API Tvg_Result tvg_animation_del(Tvg_Animation* animation);
 
 
 /**
+* \defgroup ThorVGCapi_Accesssor Accessor
+* \brief A module for manipulation of the scene tree
+*
+* This module helps to control the scene tree.
+* \{
+*/
+
+/************************************************************************/
+/* Accessor API                                                         */
+/************************************************************************/
+
+/*!
+* \brief Generate a unique ID (hash key) from a given name.
+*
+* This function computes a unique identifier value based on the provided string.
+* You can use this to assign a unique ID to the Paint object.
+*
+* \param[in] name The input string to generate the unique identifier from.
+*
+* \return The generated unique identifier value.
+*
+* \note Experimental API
+*/
+TVG_API uint32_t tvg_accessor_generate_id(const char* name);
+
+
+/** \} */   // end defgroup ThorVGCapi_Accessor
+
+
+/**
 * \defgroup ThorVGCapi_LottieAnimation LottieAnimation
 * \brief A module for manipulation of lottie extension features.
 *
