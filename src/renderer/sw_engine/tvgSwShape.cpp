@@ -244,10 +244,10 @@ static void _dashMoveTo(SwDashStroke& dash, uint32_t offIdx, float offset, const
 }
 
 
-static void _trimPattern(SwDashStroke* dash, const RenderShape* rshape, float length)
+static void _trimPattern(SwDashStroke* dash, const RenderShape* rshape, float length, float trimBegin, float trimEnd)
 {
-    auto begin = length * rshape->stroke->trim.begin;
-    auto end = length * rshape->stroke->trim.end;
+    auto begin = length * trimBegin;
+    auto end = length * trimEnd;
 
     //default
     if (end > begin) {
@@ -340,6 +340,8 @@ static SwOutline* _genDashOutline(const RenderShape* rshape, const Matrix& trans
     auto offset = 0.0f;
     dash.cnt = rshape->strokeDash((const float**)&dash.pattern, &offset);
     auto simultaneous = rshape->stroke->trim.simultaneous;
+    float trimBegin = 0.0f, trimEnd = 1.0f;
+    if (trimmed) rshape->stroke->strokeTrim(trimBegin, trimEnd);
 
     if (dash.cnt == 0) {
         if (trimmed) dash.pattern = (float*)malloc(sizeof(float) * 4);
@@ -371,7 +373,7 @@ static SwOutline* _genDashOutline(const RenderShape* rshape, const Matrix& trans
 
     //must begin with moveTo
     if (cmds[0] == PathCommand::MoveTo) {
-        if (trimmed) _trimPattern(&dash, rshape, _outlineLength(rshape, 0, 0, simultaneous));
+        if (trimmed) _trimPattern(&dash, rshape, _outlineLength(rshape, 0, 0, simultaneous), trimBegin, trimEnd);
         _dashMoveTo(dash, offIdx, offset, pts);
         cmds++;
         pts++;
@@ -386,7 +388,7 @@ static SwOutline* _genDashOutline(const RenderShape* rshape, const Matrix& trans
             case PathCommand::MoveTo: {
                 if (trimmed) {
                     if (simultaneous) {
-                        _trimPattern(&dash, rshape, _outlineLength(rshape, pts - startPts, cmds - startCmds, true));
+                        _trimPattern(&dash, rshape, _outlineLength(rshape, pts - startPts, cmds - startCmds, true), trimBegin, trimEnd);
                         _dashMoveTo(dash, offIdx, offset, pts);
                     } else _dashMoveTo(dash, pts);
                 } else _dashMoveTo(dash, offIdx, offset, pts);
