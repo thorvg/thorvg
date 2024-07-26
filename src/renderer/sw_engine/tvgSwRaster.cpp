@@ -842,7 +842,7 @@ static bool _scaledRleImage(SwSurface* surface, const SwImage* image, const Matr
     Matrix itransform;
 
     if (transform) {
-        if (!inverse(transform, &itransform)) return false;
+        if (!inverse(transform, &itransform)) return true;
     } else identity(&itransform);
 
     if (_compositing(surface)) {
@@ -1202,7 +1202,7 @@ static bool _scaledImage(SwSurface* surface, const SwImage* image, const Matrix*
     Matrix itransform;
 
     if (transform) {
-        if (!inverse(transform, &itransform)) return false;
+        if (!inverse(transform, &itransform)) return true;
     } else identity(&itransform);
 
     if (_compositing(surface)) {
