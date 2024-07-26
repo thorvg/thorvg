@@ -1092,7 +1092,7 @@ static bool _rasterTexmapPolygon(SwSurface* surface, const SwImage* image, const
     }
 
     //Exceptions: No dedicated drawing area?
-    if ((!image->rle && !region) || (image->rle && image->rle->size == 0)) return false;
+    if ((!image->rle && !region) || (image->rle && image->rle->size == 0)) return true;
 
    /* Prepare vertices.
       shift XY coordinates to match the sub-pixeling technique. */
