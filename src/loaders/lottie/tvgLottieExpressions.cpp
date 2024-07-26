@@ -881,9 +881,7 @@ static jerry_value_t _loopIn(const jerry_call_info_t* info, const jerry_value_t 
 
     if (!_loopInCommon(exp, args, argsCnt)) return jerry_undefined();
 
-    if (argsCnt > 1) {
-        exp->loop.key = exp->comp->frameAtTime((float)jerry_value_as_int32(args[1]));
-    }
+    if (argsCnt > 1) exp->loop.key = jerry_value_as_int32(args[1]);
 
     auto obj = jerry_object();
     jerry_object_set_native_ptr(obj, nullptr, exp->property);
@@ -1192,7 +1190,10 @@ void LottieExpressions::buildGlobal(LottieExpression* exp)
 
 void LottieExpressions::buildComp(jerry_value_t context, float frameNo, LottieLayer* comp, LottieExpression* exp)
 {
-    jerry_object_set_native_ptr(context, &freeCb, _expcontent(exp, frameNo, comp));
+    auto data = static_cast<ExpContent*>(jerry_object_get_native_ptr(context, &freeCb));
+    data->exp = exp;
+    data->frameNo = frameNo;
+    data->obj = comp;
 
     //layer(index) / layer(name) / layer(otherLayer, reIndex)
     auto layer = jerry_function_external(_layer);
@@ -1255,11 +1256,13 @@ jerry_value_t LottieExpressions::buildGlobal()
 
     //comp(name)
     comp = jerry_function_external(_comp);
+    jerry_object_set_native_ptr(comp, &freeCb, _expcontent(nullptr, 0.0f, nullptr));
     jerry_object_set_sz(global, "comp", comp);
 
     //footage(name)
 
     thisComp = jerry_object();
+    jerry_object_set_native_ptr(thisComp, &freeCb, _expcontent(nullptr, 0.0f, nullptr));
     jerry_object_set_sz(global, "thisComp", thisComp);
 
     thisLayer = jerry_object();
