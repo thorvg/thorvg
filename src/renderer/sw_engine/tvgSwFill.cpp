@@ -58,7 +58,7 @@ static void _calculateCoefficients(const SwFill* fill, uint32_t x, uint32_t y, f
     auto deltaDeltaRr = 2.0f * (radial->a11 * radial->a11 + radial->a21 * radial->a21) * radial->invA;
 
     det = b * b + (rr - radial->fr * radial->fr) * radial->invA;
-    deltaDet = 2.0f * b * deltaB + deltaB * deltaB + deltaRr + deltaDeltaRr;
+    deltaDet = 2.0f * b * deltaB + deltaB * deltaB + deltaRr + deltaDeltaRr * 0.5f;
     deltaDeltaDet = 2.0f * deltaB * deltaB + deltaDeltaRr;
 }
 
