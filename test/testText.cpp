@@ -138,7 +138,7 @@ TEST_CASE("Text Basic", "[tvgText]")
     Initializer::term();
 }
 
-TEST_CASE("Text with composite glyfs", "[tvgText]")
+TEST_CASE("Text with composite glyphs", "[tvgText]")
 {
     Initializer::init(0);
 
