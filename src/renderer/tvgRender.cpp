@@ -72,15 +72,6 @@ void RenderTransform::update()
 }
 
 
-RenderTransform::RenderTransform(const RenderTransform* lhs, const RenderTransform* rhs)
-{
-    if (lhs && rhs) m = lhs->m * rhs->m;
-    else if (lhs) m = lhs->m;
-    else if (rhs) m = rhs->m;
-    else mathIdentity(&m);
-}
-
-
 void RenderRegion::intersect(const RenderRegion& rhs)
 {
     auto x1 = x + w;

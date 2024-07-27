@@ -37,6 +37,17 @@ float mathAtan2(float y, float x)
 }
 
 
+Matrix mathMultiply(const Matrix* lhs, const Matrix* rhs)
+{
+    Matrix out;
+    if (lhs && rhs) out = *lhs * *rhs;
+    else if (lhs) out = *lhs;
+    else if (rhs) out = *rhs;
+    else mathIdentity(&out);
+    return out;
+}
+
+
 bool mathInverse(const Matrix* m, Matrix* out)
 {
     auto det = m->e11 * (m->e22 * m->e33 - m->e32 * m->e23) -

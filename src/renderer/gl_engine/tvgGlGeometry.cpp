@@ -215,13 +215,10 @@ bool GlGeometry::draw(GlRenderTask* task, GlStageBuffer* gpuBuffer, RenderUpdate
 }
 
 
-void GlGeometry::updateTransform(const RenderTransform* transform)
+void GlGeometry::updateTransform(const Matrix* m)
 {
-    if (transform) {
-        mMatrix = transform->m;
-    } else {
-        mMatrix = Matrix{1, 0, 0, 0, 1, 0, 0, 0, 1};
-    }
+    if (m) mMatrix = *m;
+    else mathIdentity(&mMatrix);
 }
 
 void GlGeometry::setViewport(const RenderRegion& viewport)
