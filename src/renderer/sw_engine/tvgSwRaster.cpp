@@ -1912,10 +1912,16 @@ void rasterPremultiply(Surface* surface)
 }
 
 
-bool rasterGradientShape(SwSurface* surface, SwShape* shape, unsigned id)
+bool rasterGradientShape(SwSurface* surface, SwShape* shape, const Fill* fdata, uint8_t opacity)
 {
     if (!shape->fill) return false;
 
+    if (auto color = fillFetchSolid(shape->fill, fdata)) {
+        auto a = MULTIPLY(color->a, opacity);
+        return a > 0 ? rasterShape(surface, shape, color->r, color->g, color->b, a) : true;
+    }
+
+    auto id = fdata->identifier();
     if (shape->fastTrack) {
         if (id == TVG_CLASS_ID_LINEAR) return _rasterLinearGradientRect(surface, shape->bbox, shape->fill);
         else if (id == TVG_CLASS_ID_RADIAL)return _rasterRadialGradientRect(surface, shape->bbox, shape->fill);
@@ -1927,10 +1933,16 @@ bool rasterGradientShape(SwSurface* surface, SwShape* shape, unsigned id)
 }
 
 
-bool rasterGradientStroke(SwSurface* surface, SwShape* shape, unsigned id)
+bool rasterGradientStroke(SwSurface* surface, SwShape* shape, const Fill* fdata, uint8_t opacity)
 {
     if (!shape->stroke || !shape->stroke->fill || !shape->strokeRle) return false;
 
+    if (auto color = fillFetchSolid(shape->stroke->fill, fdata)) {
+        auto a = MULTIPLY(color->a, opacity);
+        return a > 0 ? rasterStroke(surface, shape, color->r, color->g, color->b, a) : true;
+    }
+
+    auto id = fdata->identifier();
     if (id == TVG_CLASS_ID_LINEAR) return _rasterLinearGradientRle(surface, shape->strokeRle, shape->stroke->fill);
     else if (id == TVG_CLASS_ID_RADIAL) return _rasterRadialGradientRle(surface, shape->strokeRle, shape->stroke->fill);
 

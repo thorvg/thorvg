@@ -1745,7 +1745,8 @@ TVG_API Tvg_Gradient* tvg_radial_gradient_new(void);
 * \return Tvg_Result enumeration.
 * \retval TVG_RESULT_INVALID_ARGUMENT An invalid Tvg_Gradient pointer.
 *
-* \note In case the first and the second points are equal, an object filled with such a gradient fill is not rendered.
+* \note In case the first and the second points are equal, an object is filled with a single color using the last color specified in the tvg_gradient_set_color_stops().
+* \see tvg_gradient_set_color_stops()
 */
 TVG_API Tvg_Result tvg_linear_gradient_set(Tvg_Gradient* grad, float x1, float y1, float x2, float y2);
 
@@ -1781,6 +1782,9 @@ TVG_API Tvg_Result tvg_linear_gradient_get(Tvg_Gradient* grad, float* x1, float*
 *
 * \return Tvg_Result enumeration.
 * \retval TVG_RESULT_INVALID_ARGUMENT An invalid Tvg_Gradient pointer or the @p radius value less than zero.
+*
+* \note In case the @p radius is zero, an object is filled with a single color using the last color specified in the specified in the tvg_gradient_set_color_stops().
+* \see tvg_gradient_set_color_stops()
 */
 TVG_API Tvg_Result tvg_radial_gradient_set(Tvg_Gradient* grad, float cx, float cy, float radius);
 

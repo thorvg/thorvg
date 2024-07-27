@@ -675,7 +675,8 @@ public:
      * @param[in] x2 The horizontal coordinate of the second point used to determine the gradient bounds.
      * @param[in] y2 The vertical coordinate of the second point used to determine the gradient bounds.
      *
-     * @note In case the first and the second points are equal, an object filled with such a gradient fill is not rendered.
+     * @note In case the first and the second points are equal, an object is filled with a single color using the last color specified in the colorStops().
+     * @see Fill::colorStops()
      */
     Result linear(float x1, float y1, float x2, float y2) noexcept;
 
@@ -734,6 +735,8 @@ public:
      * @param[in] radius The radius of the bounding circle.
      *
      * @retval Result::InvalidArguments in case the @p radius value is zero or less.
+     *
+     * @note In case the @p radius is zero, an object is filled with a single color using the last color specified in the colorStops().
      */
     Result radial(float cx, float cy, float radius) noexcept;
 
