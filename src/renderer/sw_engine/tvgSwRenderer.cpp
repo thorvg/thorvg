@@ -709,7 +709,7 @@ void SwRenderer::dispose(RenderData data)
 }
 
 
-void* SwRenderer::prepareCommon(SwTask* task, const RenderTransform* transform, const Array<RenderData>& clips, uint8_t opacity, RenderUpdateFlag flags)
+void* SwRenderer::prepareCommon(SwTask* task, const Matrix* transform, const Array<RenderData>& clips, uint8_t opacity, RenderUpdateFlag flags)
 {
     if (!surface) return task;
     if (flags == RenderUpdateFlag::None) return task;
@@ -725,7 +725,7 @@ void* SwRenderer::prepareCommon(SwTask* task, const RenderTransform* transform, 
 
     if (transform) {
         if (!task->transform) task->transform = static_cast<Matrix*>(malloc(sizeof(Matrix)));
-        *task->transform = transform->m;
+        *task->transform = *transform;
     } else {
         if (task->transform) free(task->transform);
         task->transform = nullptr;
@@ -757,7 +757,7 @@ void* SwRenderer::prepareCommon(SwTask* task, const RenderTransform* transform, 
 }
 
 
-RenderData SwRenderer::prepare(Surface* surface, const RenderMesh* mesh, RenderData data, const RenderTransform* transform, Array<RenderData>& clips, uint8_t opacity, RenderUpdateFlag flags)
+RenderData SwRenderer::prepare(Surface* surface, const RenderMesh* mesh, RenderData data, const Matrix* transform, Array<RenderData>& clips, uint8_t opacity, RenderUpdateFlag flags)
 {
     //prepare task
     auto task = static_cast<SwImageTask*>(data);
@@ -771,7 +771,7 @@ RenderData SwRenderer::prepare(Surface* surface, const RenderMesh* mesh, RenderD
 }
 
 
-RenderData SwRenderer::prepare(const Array<RenderData>& scene, RenderData data, const RenderTransform* transform, Array<RenderData>& clips, uint8_t opacity, RenderUpdateFlag flags)
+RenderData SwRenderer::prepare(const Array<RenderData>& scene, RenderData data, const Matrix* transform, Array<RenderData>& clips, uint8_t opacity, RenderUpdateFlag flags)
 {
     //prepare task
     auto task = static_cast<SwSceneTask*>(data);
@@ -791,7 +791,7 @@ RenderData SwRenderer::prepare(const Array<RenderData>& scene, RenderData data, 
 }
 
 
-RenderData SwRenderer::prepare(const RenderShape& rshape, RenderData data, const RenderTransform* transform, Array<RenderData>& clips, uint8_t opacity, RenderUpdateFlag flags, bool clipper)
+RenderData SwRenderer::prepare(const RenderShape& rshape, RenderData data, const Matrix* transform, Array<RenderData>& clips, uint8_t opacity, RenderUpdateFlag flags, bool clipper)
 {
     //prepare task
     auto task = static_cast<SwShapeTask*>(data);
