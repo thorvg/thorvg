@@ -68,7 +68,7 @@ struct Picture::Impl
     bool resizing = false;
     bool needComp = false;            //need composition
 
-    RenderTransform resizeTransform(const RenderTransform* pTransform);
+    Matrix resizeTransform(const Matrix* m);
     bool needComposition(uint8_t opacity);
     bool render(RenderMethod* renderer);
     bool size(float w, float h);
@@ -90,21 +90,21 @@ struct Picture::Impl
         delete(paint);
     }
 
-    RenderData update(RenderMethod* renderer, const RenderTransform* pTransform, Array<RenderData>& clips, uint8_t opacity, RenderUpdateFlag pFlag, bool clipper)
+    RenderData update(RenderMethod* renderer, const Matrix* transform, Array<RenderData>& clips, uint8_t opacity, RenderUpdateFlag pFlag, bool clipper)
     {
         auto flag = static_cast<RenderUpdateFlag>(pFlag | load());
 
         if (surface) {
             if (flag == RenderUpdateFlag::None) return rd;
-            auto transform = resizeTransform(pTransform);
-            rd = renderer->prepare(surface, &rm, rd, &transform, clips, opacity, flag);
+            auto om = resizeTransform(transform);
+            rd = renderer->prepare(surface, &rm, rd, &om, clips, opacity, flag);
         } else if (paint) {
             if (resizing) {
                 loader->resize(paint, w, h);
                 resizing = false;
             }
             needComp = needComposition(opacity) ? true : false;
-            rd = paint->pImpl->update(renderer, pTransform, clips, opacity, flag, clipper);
+            rd = paint->pImpl->update(renderer, transform, clips, opacity, flag, clipper);
         }
         return rd;
     }

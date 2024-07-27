@@ -41,7 +41,7 @@
     }
 
 
-static Result _clipRect(RenderMethod* renderer, const Point* pts, const RenderTransform* pTransform, RenderTransform* rTransform, RenderRegion& before)
+static Result _clipRect(RenderMethod* renderer, const Point* pts, const Matrix* pm, const Matrix* rm, RenderRegion& before)
 {
     //sorting
     Point tmp[4];
@@ -50,8 +50,8 @@ static Result _clipRect(RenderMethod* renderer, const Point* pts, const RenderTr
 
     for (int i = 0; i < 4; ++i) {
         tmp[i] = pts[i];
-        if (rTransform) tmp[i] *= rTransform->m;
-        if (pTransform) tmp[i] *= pTransform->m;
+        if (rm) tmp[i] *= *rm;
+        if (pm) tmp[i] *= *pm;
         if (tmp[i].x < min.x) min.x = tmp[i].x;
         if (tmp[i].x > max.x) max.x = tmp[i].x;
         if (tmp[i].y < min.y) min.y = tmp[i].y;
@@ -73,7 +73,7 @@ static Result _clipRect(RenderMethod* renderer, const Point* pts, const RenderTr
 }
 
 
-static Result _compFastTrack(RenderMethod* renderer, Paint* cmpTarget, const RenderTransform* pTransform, RenderTransform* rTransform, RenderRegion& before)
+static Result _compFastTrack(RenderMethod* renderer, Paint* cmpTarget, const Matrix* pm, RenderRegion& before)
 {
     /* Access Shape class by Paint is bad... but it's ok still it's an internal usage. */
     auto shape = static_cast<Shape*>(cmpTarget);
@@ -84,18 +84,22 @@ static Result _compFastTrack(RenderMethod* renderer, Paint* cmpTarget, const Ren
 
     //nothing to clip
     if (ptsCnt == 0) return Result::InvalidArguments;
-
     if (ptsCnt != 4) return Result::InsufficientCondition;
 
-    if (rTransform && (cmpTarget->pImpl->renderFlag & RenderUpdateFlag::Transform)) rTransform->update();
+    Matrix* rm = nullptr;
+
+    if (P(cmpTarget)->rTransform && (P(cmpTarget)->renderFlag & RenderUpdateFlag::Transform)) {
+        P(cmpTarget)->rTransform->update();
+        rm = &P(cmpTarget)->rTransform->m;
+    }
 
     //No rotation and no skewing, still can try out clipping the rect region.
     auto tryClip = false;
 
-    if (pTransform && (!rightAngle(&pTransform->m) || skewed(&pTransform->m))) tryClip = true;
-    if (rTransform && (!rightAngle(&rTransform->m) || skewed(&rTransform->m))) tryClip = true;
+    if (pm && (!rightAngle(pm) || skewed(pm))) tryClip = true;
+    if (rm && (!rightAngle(rm) || skewed(rm))) tryClip = true;
 
-    if (tryClip) return _clipRect(renderer, pts, pTransform, rTransform, before);
+    if (tryClip) return _clipRect(renderer, pts, pm, rm, before);
 
     //Perpendicular Rectangle?
     auto pt1 = pts + 0;
@@ -111,14 +115,14 @@ static Result _compFastTrack(RenderMethod* renderer, Paint* cmpTarget, const Ren
         auto v1 = *pt1;
         auto v2 = *pt3;
 
-        if (rTransform) {
-            v1 *= rTransform->m;
-            v2 *= rTransform->m;
+        if (rm) {
+            v1 *= *rm;
+            v2 *= *rm;
         }
 
-        if (pTransform) {
-            v1 *= pTransform->m;
-            v2 *= pTransform->m;
+        if (pm) {
+            v1 *= *pm;
+            v2 *= *pm;
         }
 
         //sorting
@@ -266,7 +270,7 @@ bool Paint::Impl::render(RenderMethod* renderer)
 }
 
 
-RenderData Paint::Impl::update(RenderMethod* renderer, const RenderTransform* pTransform, Array<RenderData>& clips, uint8_t opacity, RenderUpdateFlag pFlag, bool clipper)
+RenderData Paint::Impl::update(RenderMethod* renderer, const Matrix* pm, Array<RenderData>& clips, uint8_t opacity, RenderUpdateFlag pFlag, bool clipper)
 {
     if (this->renderer != renderer) {
         if (this->renderer) TVGERR("RENDERER", "paint's renderer has been changed!");
@@ -285,7 +289,7 @@ RenderData Paint::Impl::update(RenderMethod* renderer, const RenderTransform* pT
     if (compData) {
         auto target = compData->target;
         auto method = compData->method;
-        target->pImpl->ctxFlag &= ~ContextFlag::FastTrack;   //reset
+        P(target)->ctxFlag &= ~ContextFlag::FastTrack;   //reset
 
         /* If the transformation has no rotational factors and the ClipPath/Alpha(InvAlpha)Masking involves a simple rectangle,
            we can optimize by using the viewport instead of the regular ClipPath/AlphaMasking sequence for improved performance. */
@@ -304,14 +308,14 @@ RenderData Paint::Impl::update(RenderMethod* renderer, const RenderTransform* pT
             }
             if (tryFastTrack) {
                 viewport = renderer->viewport();
-                if ((compFastTrack = _compFastTrack(renderer, target, pTransform, target->pImpl->rTransform, viewport)) == Result::Success) {
-                    target->pImpl->ctxFlag |= ContextFlag::FastTrack;
+                if ((compFastTrack = _compFastTrack(renderer, target, pm, viewport)) == Result::Success) {
+                    P(target)->ctxFlag |= ContextFlag::FastTrack;
                 }
             }
         }
         if (compFastTrack == Result::InsufficientCondition) {
             childClipper = compData->method == CompositeMethod::ClipPath ? true : false;
-            trd = target->pImpl->update(renderer, pTransform, clips, 255, pFlag, childClipper);
+            trd = P(target)->update(renderer, pm, clips, 255, pFlag, childClipper);
             if (childClipper) clips.push(trd);
         }
     }
@@ -322,8 +326,8 @@ RenderData Paint::Impl::update(RenderMethod* renderer, const RenderTransform* pT
     opacity = MULTIPLY(opacity, this->opacity);
 
     RenderData rd = nullptr;
-    RenderTransform outTransform(pTransform, rTransform);
-    PAINT_METHOD(rd, update(renderer, &outTransform, clips, opacity, newFlag, clipper));
+    Matrix om = multiply(pm, rTransform ? &rTransform->m : nullptr);
+    PAINT_METHOD(rd, update(renderer, &om, clips, opacity, newFlag, clipper));
 
     /* 3. Composition Post Processing */
     if (compFastTrack == Result::Success) renderer->viewport(viewport);

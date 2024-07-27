@@ -32,7 +32,7 @@ WgShaderTypeMat4x4f::WgShaderTypeMat4x4f()
 }
 
 
-WgShaderTypeMat4x4f::WgShaderTypeMat4x4f(const RenderTransform* transform)
+WgShaderTypeMat4x4f::WgShaderTypeMat4x4f(const Matrix* transform)
 {
     update(transform);
 }
@@ -53,26 +53,26 @@ WgShaderTypeMat4x4f::WgShaderTypeMat4x4f(size_t w, size_t h)
 }
 
 
-void WgShaderTypeMat4x4f::update(const RenderTransform* transform)
+void WgShaderTypeMat4x4f::update(const Matrix* transform)
 {
     identity();
     if (transform) {
-        mat[0]  = transform->m.e11;
-        mat[1]  = transform->m.e21;
+        mat[0]  = transform->e11;
+        mat[1]  = transform->e21;
         mat[2]  = 0.0f;
-        mat[3]  = transform->m.e31;
-        mat[4]  = transform->m.e12;
-        mat[5]  = transform->m.e22;
+        mat[3]  = transform->e31;
+        mat[4]  = transform->e12;
+        mat[5]  = transform->e22;
         mat[6]  = 0.0f;
-        mat[7]  = transform->m.e32;
+        mat[7]  = transform->e32;
         mat[8]  = 0.0f;
         mat[9]  = 0.0f;
         mat[10] = 1.0f;
         mat[11] = 0.0f;
-        mat[12] = transform->m.e13;
-        mat[13] = transform->m.e23;
+        mat[12] = transform->e13;
+        mat[13] = transform->e23;
         mat[14] = 0.0f;
-        mat[15] = transform->m.e33;
+        mat[15] = transform->e33;
     };
 }
 

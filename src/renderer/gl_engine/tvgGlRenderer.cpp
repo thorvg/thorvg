@@ -1099,7 +1099,7 @@ static GLuint _genTexture(Surface* image)
 }
 
 
-RenderData GlRenderer::prepare(Surface* image, const RenderMesh* mesh, RenderData data, const RenderTransform* transform, Array<RenderData>& clips, uint8_t opacity, RenderUpdateFlag flags)
+RenderData GlRenderer::prepare(Surface* image, const RenderMesh* mesh, RenderData data, const Matrix* transform, Array<RenderData>& clips, uint8_t opacity, RenderUpdateFlag flags)
 {
     if (flags == RenderUpdateFlag::None) return data;
 
@@ -1130,14 +1130,14 @@ RenderData GlRenderer::prepare(Surface* image, const RenderMesh* mesh, RenderDat
 }
 
 
-RenderData GlRenderer::prepare(TVG_UNUSED const Array<RenderData>& scene, TVG_UNUSED RenderData data, TVG_UNUSED const RenderTransform* transform, TVG_UNUSED Array<RenderData>& clips, TVG_UNUSED uint8_t opacity, TVG_UNUSED RenderUpdateFlag flags)
+RenderData GlRenderer::prepare(TVG_UNUSED const Array<RenderData>& scene, TVG_UNUSED RenderData data, TVG_UNUSED const Matrix* transform, TVG_UNUSED Array<RenderData>& clips, TVG_UNUSED uint8_t opacity, TVG_UNUSED RenderUpdateFlag flags)
 {
     //TODO:
     return nullptr;
 }
 
 
-RenderData GlRenderer::prepare(const RenderShape& rshape, RenderData data, const RenderTransform* transform, Array<RenderData>& clips, uint8_t opacity, RenderUpdateFlag flags, bool clipper)
+RenderData GlRenderer::prepare(const RenderShape& rshape, RenderData data, const Matrix* transform, Array<RenderData>& clips, uint8_t opacity, RenderUpdateFlag flags, bool clipper)
 {
     // If prepare for clip, only path is meaningful.
     if (clipper) flags = RenderUpdateFlag::Path;

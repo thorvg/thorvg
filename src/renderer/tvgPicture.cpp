@@ -104,18 +104,17 @@ RenderRegion Picture::Impl::bounds(RenderMethod* renderer)
 }
 
 
-RenderTransform Picture::Impl::resizeTransform(const RenderTransform* pTransform)
+Matrix Picture::Impl::resizeTransform(const Matrix* pm)
 {
     //Overriding Transformation by the desired image size
     auto sx = w / loader->w;
     auto sy = h / loader->h;
     auto scale = sx < sy ? sx : sy;
 
-    RenderTransform tmp;
-    tmp.m = {scale, 0, 0, 0, scale, 0, 0, 0, 1};
+    auto tmp = Matrix{scale, 0, 0, 0, scale, 0, 0, 0, 1};
 
-    if (!pTransform) return tmp;
-    else return RenderTransform(pTransform, &tmp);
+    if (!pm) return tmp;
+    return *pm * tmp;
 }
 
 
