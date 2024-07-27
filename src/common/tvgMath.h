@@ -75,6 +75,7 @@ static inline bool equal(float a, float b)
 void rotate(Matrix* m, float degree);
 bool inverse(const Matrix* m, Matrix* out);
 bool identity(const Matrix* m);
+Matrix multiply(const Matrix* lhs, const Matrix* rhs);
 Matrix operator*(const Matrix& lhs, const Matrix& rhs);
 bool operator==(const Matrix& lhs, const Matrix& rhs);
 

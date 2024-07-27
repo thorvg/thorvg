@@ -114,6 +114,17 @@ float atan2(float y, float x)
 }
 
 
+Matrix multiply(const Matrix* lhs, const Matrix* rhs)
+{
+    Matrix out;
+    if (lhs && rhs) out = *lhs * *rhs;
+    else if (lhs) out = *lhs;
+    else if (rhs) out = *rhs;
+    else identity(&out);
+    return out;
+}
+
+
 bool inverse(const Matrix* m, Matrix* out)
 {
     auto det = m->e11 * (m->e22 * m->e33 - m->e32 * m->e23) -
