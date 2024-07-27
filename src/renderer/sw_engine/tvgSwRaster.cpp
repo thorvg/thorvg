@@ -1912,10 +1912,16 @@ void rasterPremultiply(Surface* surface)
 }
 
 
-bool rasterGradientShape(SwSurface* surface, SwShape* shape, Type type)
+bool rasterGradientShape(SwSurface* surface, SwShape* shape, const Fill* fdata, uint8_t opacity)
 {
     if (!shape->fill) return false;
 
+    if (auto color = fillFetchSolid(shape->fill, fdata)) {
+        auto a = MULTIPLY(color->a, opacity);
+        return a > 0 ? rasterShape(surface, shape, color->r, color->g, color->b, a) : true;
+    }
+
+    auto type = fdata->type();
     if (shape->fastTrack) {
         if (type == Type::LinearGradient) return _rasterLinearGradientRect(surface, shape->bbox, shape->fill);
         else if (type == Type::RadialGradient)return _rasterRadialGradientRect(surface, shape->bbox, shape->fill);
@@ -1927,10 +1933,16 @@ bool rasterGradientShape(SwSurface* surface, SwShape* shape, Type type)
 }
 
 
-bool rasterGradientStroke(SwSurface* surface, SwShape* shape, Type type)
+bool rasterGradientStroke(SwSurface* surface, SwShape* shape, const Fill* fdata, uint8_t opacity)
 {
     if (!shape->stroke || !shape->stroke->fill || !shape->strokeRle) return false;
 
+    if (auto color = fillFetchSolid(shape->stroke->fill, fdata)) {
+        auto a = MULTIPLY(color->a, opacity);
+        return a > 0 ? rasterStroke(surface, shape, color->r, color->g, color->b, a) : true;
+    }
+
+    auto type = fdata->type();
     if (type == Type::LinearGradient) return _rasterLinearGradientRle(surface, shape->strokeRle, shape->stroke->fill);
     else if (type == Type::RadialGradient) return _rasterRadialGradientRle(surface, shape->strokeRle, shape->stroke->fill);
 
