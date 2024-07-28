@@ -66,6 +66,7 @@ private:
 
     WGPUCommandEncoder mCommandEncoder{};
     WgRenderStorage mRenderStorageInterm; // intermidiate buffer to render
+    WgRenderStorage mRenderStorageCopy;   // copy of destination target (blend and compostition)
     WgRenderStorage mRenderStorageMask;   // buffer to render mask 
     WgRenderStorage mRenderStorageRoot;   // root render storage
     WgRenderStorage mRenderStorageScreen; // storage with data after antializing

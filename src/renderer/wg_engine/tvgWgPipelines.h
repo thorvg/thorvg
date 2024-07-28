@@ -129,13 +129,14 @@ struct WgPipelineImage: public WgRenderPipeline
 // compute pipelines
 //*****************************************************************************
 
-struct WgPipelineClear: public WgComputePipeline
+struct WgPipelineCopy: public WgComputePipeline
 {
     void initialize(WGPUDevice device) override;
-    void use(WGPUComputePassEncoder encoder, WgBindGroupTextureStorageRgba& groupTexDst)
+    void use(WGPUComputePassEncoder encoder, WgBindGroupTextureStorageRgbaRO& groupTexSrc, WgBindGroupTextureStorageRgbaWO& groupTexDst)
     {
         set(encoder);
-        groupTexDst.set(encoder, 0);
+        groupTexSrc.set(encoder, 0);
+        groupTexDst.set(encoder, 1);
     }
 };
 
@@ -144,13 +145,12 @@ struct WgPipelineBlend: public WgComputePipeline
 {
     void initialize(WGPUDevice device) override { assert(false); };
     void initialize(WGPUDevice device, const char *shaderSource);
-    void use(WGPUComputePassEncoder encoder, WgBindGroupTextureStorageRgba& groupTexSrc, WgBindGroupTextureStorageRgba& groupTexDst, WgBindGroupBlendMethod& blendMethod, WgBindGroupOpacity& groupOpacity)
+    void use(WGPUComputePassEncoder encoder, WgBindGroupTexBlend& groupTexBlend, WgBindGroupBlendMethod& blendMethod, WgBindGroupOpacity& groupOpacity)
     {
         set(encoder);
-        groupTexSrc.set(encoder, 0);
-        groupTexDst.set(encoder, 1);
-        blendMethod.set(encoder, 2);
-        groupOpacity.set(encoder, 3);
+        groupTexBlend.set(encoder, 0);
+        blendMethod.set(encoder, 1);
+        groupOpacity.set(encoder, 2);
     }
 };
 
@@ -159,10 +159,10 @@ struct WgPipelineBlendMask: public WgComputePipeline
 {
     void initialize(WGPUDevice device) override { assert(false); };
     void initialize(WGPUDevice device, const char *shaderSource);
-    void use(WGPUComputePassEncoder encoder, WgBindGroupTexComposeBlend& groupTexs, WgBindGroupBlendMethod& blendMethod, WgBindGroupOpacity& groupOpacity)
+    void use(WGPUComputePassEncoder encoder, WgBindGroupTexBlendMask& groupTexBlendMask, WgBindGroupBlendMethod& blendMethod, WgBindGroupOpacity& groupOpacity)
     {
         set(encoder);
-        groupTexs.set(encoder, 0);
+        groupTexBlendMask.set(encoder, 0);
         blendMethod.set(encoder, 1);
         groupOpacity.set(encoder, 2);
     }
@@ -172,10 +172,10 @@ struct WgPipelineBlendMask: public WgComputePipeline
 struct WgPipelineMaskCompose: public WgComputePipeline
 {
     void initialize(WGPUDevice device) override;
-    void use(WGPUComputePassEncoder encoder, WgBindGroupTexMaskCompose& groupTexs)
+    void use(WGPUComputePassEncoder encoder, WgBindGroupTexMaskCompose& groupTexMaskCompose)
     {
         set(encoder);
-        groupTexs.set(encoder, 0);
+        groupTexMaskCompose.set(encoder, 0);
     }
 };
 
@@ -183,10 +183,10 @@ struct WgPipelineMaskCompose: public WgComputePipeline
 struct WgPipelineCompose: public WgComputePipeline
 {
     void initialize(WGPUDevice device) override;
-    void use(WGPUComputePassEncoder encoder, WgBindGroupTexComposeBlend& groupTexs, WgBindGroupCompositeMethod& groupComposeMethod, WgBindGroupBlendMethod& groupBlendMethod, WgBindGroupOpacity& groupOpacity)
+    void use(WGPUComputePassEncoder encoder, WgBindGroupTexCompose& groupTexCompose, WgBindGroupCompositeMethod& groupComposeMethod, WgBindGroupBlendMethod& groupBlendMethod, WgBindGroupOpacity& groupOpacity)
     {
         set(encoder);
-        groupTexs.set(encoder, 0);
+        groupTexCompose.set(encoder, 0);
         groupComposeMethod.set(encoder, 1);
         groupBlendMethod.set(encoder, 2);
         groupOpacity.set(encoder, 3);
@@ -197,7 +197,7 @@ struct WgPipelineCompose: public WgComputePipeline
 struct WgPipelineAntiAliasing: public WgComputePipeline
 {
     void initialize(WGPUDevice device) override;
-    void use(WGPUComputePassEncoder encoder, WgBindGroupTextureStorageRgba& groupTexSrc, WgBindGroupTextureStorageBgra& groupTexDst)
+    void use(WGPUComputePassEncoder encoder, WgBindGroupTextureStorageRgbaRO& groupTexSrc, WgBindGroupTextureStorageBgraWO& groupTexDst)
     {
         set(encoder);
         groupTexSrc.set(encoder, 0);
@@ -222,7 +222,7 @@ struct WgPipelines
     WgPipelineRadial radial[3];
     WgPipelineImage image[3];
     // compute pipelines
-    WgPipelineClear computeClear;
+    WgPipelineCopy computeCopy;
     WgPipelineBlend computeBlendSolid;
     WgPipelineBlend computeBlendGradient;
     WgPipelineBlend computeBlendImage;

@@ -42,6 +42,7 @@ extern const char* cShaderSource_PipelineImage;
 
 // pipeline shader modules clear, compose and blend
 extern const char* cShaderSource_PipelineComputeClear;
+extern const char* cShaderSource_PipelineComputeCopy;
 extern const char* cShaderSource_PipelineComputeBlendSolid;
 extern const char* cShaderSource_PipelineComputeBlendGradient;
 extern const char* cShaderSource_PipelineComputeBlendImage;

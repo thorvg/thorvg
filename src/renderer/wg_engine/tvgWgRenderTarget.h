@@ -36,8 +36,9 @@ public:
     WGPUTexture texStencil{};
     WGPUTextureView texViewColor{};
     WGPUTextureView texViewStencil{};
-    WgBindGroupTextureStorageRgba bindGroupTexStorageRgba;
-    WgBindGroupTextureStorageBgra bindGroupTexStorageBgra;
+    WgBindGroupTextureStorageRgbaRO bindGroupTexStorageRgbaRO;
+    WgBindGroupTextureStorageRgbaWO bindGroupTexStorageRgbaWO;
+    WgBindGroupTextureStorageBgraWO bindGroupTexStorageBgraWO;
     uint32_t samples{};
     uint32_t width{};
     uint32_t height{};
@@ -54,12 +55,12 @@ public:
     void renderPicture(WgContext& context, WgRenderDataPicture* renderData, WgPipelineBlendType blendType);
     void renderClipPath(WgContext& context, WgRenderDataPaint* renderData);
 
-    void clear(WGPUCommandEncoder commandEncoder);
     void blend(
         WgContext& context,
         WGPUCommandEncoder commandEncoder,
         WgPipelineBlend* pipeline,
         WgRenderStorage* targetSrc,
+        WgRenderStorage* targetDst,
         WgBindGroupBlendMethod* blendMethod,
         WgBindGroupOpacity* opacity);
     void blendMask(
@@ -68,21 +69,25 @@ public:
         WgPipelineBlendMask* pipeline,
         WgRenderStorage* texMsk,
         WgRenderStorage* texSrc,
+        WgRenderStorage* texDst,
         WgBindGroupBlendMethod* blendMethod,
         WgBindGroupOpacity* opacity);
     void maskCompose(
         WgContext& context,
         WGPUCommandEncoder commandEncoder,
-        WgRenderStorage* texMsk0);
+        WgRenderStorage* texMsk0,
+        WgRenderStorage* texMsk1);
     void compose(
         WgContext& context,
         WGPUCommandEncoder commandEncoder,
         WgRenderStorage* texMsk,
         WgRenderStorage* texSrc,
+        WgRenderStorage* texDst,
         WgBindGroupCompositeMethod* composeMethod,
         WgBindGroupBlendMethod* blendMethod,
         WgBindGroupOpacity* opacity);
     void antialias(WGPUCommandEncoder commandEncoder, WgRenderStorage* targetSrc);
+    void copy(WGPUCommandEncoder commandEncoder, WgRenderStorage* targetSrc);
 private:
     void drawShape(WgContext& context, WgRenderDataShape* renderData, WgPipelineBlendType blendType);
     void drawStroke(WgContext& context, WgRenderDataShape* renderData, WgPipelineBlendType blendType);

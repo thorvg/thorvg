@@ -298,17 +298,18 @@ void WgPipelineImage::initialize(WGPUDevice device, WgPipelineBlendType blendTyp
 // compute pipelines
 //************************************************************************
 
-void WgPipelineClear::initialize(WGPUDevice device)
+void WgPipelineCopy::initialize(WGPUDevice device)
 {
     // bind groups and layouts
     WGPUBindGroupLayout bindGroupLayouts[] = {
-        WgBindGroupTextureStorageRgba::getLayout(device)
+        WgBindGroupTextureStorageRgbaRO::getLayout(device),
+        WgBindGroupTextureStorageRgbaWO::getLayout(device)
     };
 
     // shader source and labels
-    auto shaderSource = cShaderSource_PipelineComputeClear;
-    auto shaderLabel = "The compute shader clear";
-    auto pipelineLabel = "The compute pipeline clear";
+    auto shaderSource = cShaderSource_PipelineComputeCopy;
+    auto shaderLabel = "The compute shader copy";
+    auto pipelineLabel = "The compute pipeline copy";
 
     // allocate all pipeline handles
     allocate(device,
@@ -321,8 +322,7 @@ void WgPipelineBlend::initialize(WGPUDevice device, const char *shaderSource)
 {
     // bind groups and layouts
     WGPUBindGroupLayout bindGroupLayouts[] = {
-        WgBindGroupTextureStorageRgba::getLayout(device),
-        WgBindGroupTextureStorageRgba::getLayout(device),
+        WgBindGroupTexBlend::getLayout(device),
         WgBindGroupBlendMethod::getLayout(device),
         WgBindGroupOpacity::getLayout(device)
     };
@@ -342,7 +342,7 @@ void WgPipelineBlendMask::initialize(WGPUDevice device, const char *shaderSource
 {
     // bind groups and layouts
     WGPUBindGroupLayout bindGroupLayouts[] = {
-        WgBindGroupTexComposeBlend::getLayout(device),
+        WgBindGroupTexBlendMask::getLayout(device),
         WgBindGroupBlendMethod::getLayout(device),
         WgBindGroupOpacity::getLayout(device)
     };
@@ -381,7 +381,7 @@ void WgPipelineCompose::initialize(WGPUDevice device)
 {
     // bind groups and layouts
     WGPUBindGroupLayout bindGroupLayouts[] = {
-        WgBindGroupTexComposeBlend::getLayout(device),
+        WgBindGroupTexCompose::getLayout(device),
         WgBindGroupCompositeMethod::getLayout(device),
         WgBindGroupBlendMethod::getLayout(device),
         WgBindGroupOpacity::getLayout(device)
@@ -403,8 +403,8 @@ void WgPipelineAntiAliasing::initialize(WGPUDevice device)
 {
     // bind groups and layouts
     WGPUBindGroupLayout bindGroupLayouts[] = {
-        WgBindGroupTextureStorageRgba::getLayout(device),
-        WgBindGroupTextureStorageBgra::getLayout(device)
+        WgBindGroupTextureStorageRgbaRO::getLayout(device),
+        WgBindGroupTextureStorageBgraWO::getLayout(device)
     };
 
     // shader source and labels
@@ -436,7 +436,7 @@ void WgPipelines::initialize(WgContext& context)
         image[type].initialize(context.device, (WgPipelineBlendType)type);
     }
     // compute pipelines
-    computeClear.initialize(context.device);
+    computeCopy.initialize(context.device);
     computeBlendSolid.initialize(context.device, cShaderSource_PipelineComputeBlendSolid);
     computeBlendGradient.initialize(context.device, cShaderSource_PipelineComputeBlendGradient);
     computeBlendImage.initialize(context.device, cShaderSource_PipelineComputeBlendImage);
@@ -453,11 +453,14 @@ void WgPipelines::initialize(WgContext& context)
 
 void WgPipelines::release()
 {
+    WgBindGroupTexCompose::releaseLayout();
     WgBindGroupTexMaskCompose::releaseLayout();
-    WgBindGroupTexComposeBlend::releaseLayout();
-    WgBindGroupTextureSampled::releaseLayout();
-    WgBindGroupTextureStorageBgra::releaseLayout();
-    WgBindGroupTextureStorageRgba::releaseLayout();
+    WgBindGroupTexBlendMask::releaseLayout();
+    WgBindGroupTexBlend::releaseLayout();
+    WgBindGroupTextureStorageBgraRO::releaseLayout();
+    WgBindGroupTextureStorageBgraWO::releaseLayout();
+    WgBindGroupTextureStorageRgbaRO::releaseLayout();
+    WgBindGroupTextureStorageRgbaWO::releaseLayout();
     WgBindGroupTexture::releaseLayout();
     WgBindGroupOpacity::releaseLayout();
     WgBindGroupPicture::releaseLayout();
@@ -469,14 +472,13 @@ void WgPipelines::release()
     // compute pipelines
     computeAntiAliasing.release();
     computeCompose.release();
-    computeMaskCompose.release();
     computeBlendImageMask.release();
     computeBlendGradientMask.release();
     computeBlendSolidMask.release();
     computeBlendImage.release();
     computeBlendGradient.release();
     computeBlendSolid.release();
-    computeClear.release();
+    computeCopy.release();
     // fill pipelines
     for (uint8_t type = (uint8_t)WgPipelineBlendType::SrcOver; type <= (uint8_t)WgPipelineBlendType::Custom; type++) {
         image[type].release();

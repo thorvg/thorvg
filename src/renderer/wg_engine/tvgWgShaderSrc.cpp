@@ -369,10 +369,11 @@ fn fs_main(in: VertexOutput) -> @location(0) vec4f {
 //************************************************************************
 
 const std::string strBlendShaderHeader = WG_SHADER_SOURCE(
-@group(0) @binding(0) var imageSrc : texture_storage_2d<rgba8unorm, read_write>;
-@group(1) @binding(0) var imageDst : texture_storage_2d<rgba8unorm, read_write>;
-@group(2) @binding(0) var<uniform> blendMethod : u32;
-@group(3) @binding(0) var<uniform> opacity : f32;
+@group(0) @binding(0) var imageSrc : texture_storage_2d<rgba8unorm, read>;
+@group(0) @binding(1) var imageDst : texture_storage_2d<rgba8unorm, read>;
+@group(0) @binding(2) var imageTrg : texture_storage_2d<rgba8unorm, write>;
+@group(1) @binding(0) var<uniform> blendMethod : u32;
+@group(2) @binding(0) var<uniform> opacity : f32;
 
 @compute @workgroup_size(8, 8)
 fn cs_main( @builtin(global_invocation_id) id: vec3u) {
@@ -396,7 +397,8 @@ fn cs_main( @builtin(global_invocation_id) id: vec3u) {
 const std::string strBlendMaskShaderHeader = WG_SHADER_SOURCE(
 @group(0) @binding(0) var imageSrc : texture_storage_2d<rgba8unorm, read>;
 @group(0) @binding(1) var imageMsk : texture_storage_2d<rgba8unorm, read>;
-@group(0) @binding(2) var imageDst : texture_storage_2d<rgba8unorm, read_write>;
+@group(0) @binding(2) var imageDst : texture_storage_2d<rgba8unorm, read>;
+@group(0) @binding(3) var imageTrg : texture_storage_2d<rgba8unorm, write>;
 @group(1) @binding(0) var<uniform> blendMethod : u32;
 @group(2) @binding(0) var<uniform> opacity : f32;
 
@@ -483,7 +485,7 @@ const std::string strBlendShaderPostConditionsImage = WG_SHADER_SOURCE(
 );
 
 const std::string strBlendShaderFooter = WG_SHADER_SOURCE(
-    textureStore(imageDst, id.xy, vec4(Rc, Ra));
+    textureStore(imageTrg, id.xy, vec4(Rc, Ra));
 }
 );
 
@@ -539,7 +541,7 @@ const char* cShaderSource_PipelineComputeBlendImageMask = strComputeBlendImageMa
 
 // pipeline shader modules clear
 const char* cShaderSource_PipelineComputeClear = WG_SHADER_SOURCE(
-@group(0) @binding(0) var imageDst : texture_storage_2d<rgba8unorm, read_write>;
+@group(0) @binding(0) var imageDst : texture_storage_2d<rgba8unorm, write>;
 
 @compute @workgroup_size(8, 8)
 fn cs_main( @builtin(global_invocation_id) id: vec3u) {
@@ -547,16 +549,30 @@ fn cs_main( @builtin(global_invocation_id) id: vec3u) {
 }
 );
 
+
+// pipeline shader modules copy
+const char* cShaderSource_PipelineComputeCopy = WG_SHADER_SOURCE(
+@group(0) @binding(0) var imageSrc : texture_storage_2d<rgba8unorm, read>;
+@group(1) @binding(0) var imageDst : texture_storage_2d<rgba8unorm, write>;
+
+@compute @workgroup_size(8, 8)
+fn cs_main( @builtin(global_invocation_id) id: vec3u) {
+    textureStore(imageDst, id.xy, textureLoad(imageSrc, id.xy));
+}
+);
+
+
 // pipeline shader modules compose
 const char* cShaderSource_PipelineComputeMaskCompose = WG_SHADER_SOURCE(
 @group(0) @binding(0) var imageMsk0 : texture_storage_2d<rgba8unorm, read>;
-@group(0) @binding(1) var imageMsk1 : texture_storage_2d<rgba8unorm, read_write>;
+@group(0) @binding(1) var imageMsk1 : texture_storage_2d<rgba8unorm, read>;
+@group(0) @binding(2) var imageTrg  : texture_storage_2d<rgba8unorm, write>;
 
 @compute @workgroup_size(8, 8)
 fn cs_main( @builtin(global_invocation_id) id: vec3u) {
     let colorMsk0 = textureLoad(imageMsk0, id.xy);
     let colorMsk1 = textureLoad(imageMsk1, id.xy);
-    textureStore(imageMsk1, id.xy, colorMsk0 * colorMsk1);
+    textureStore(imageTrg, id.xy, colorMsk0 * colorMsk1);
 }
 );
 
@@ -564,7 +580,8 @@ fn cs_main( @builtin(global_invocation_id) id: vec3u) {
 const char* cShaderSource_PipelineComputeCompose = WG_SHADER_SOURCE(
 @group(0) @binding(0) var imageSrc : texture_storage_2d<rgba8unorm, read>;
 @group(0) @binding(1) var imageMsk : texture_storage_2d<rgba8unorm, read>;
-@group(0) @binding(2) var imageDst : texture_storage_2d<rgba8unorm, read_write>;
+@group(0) @binding(2) var imageDst : texture_storage_2d<rgba8unorm, read>;
+@group(0) @binding(3) var imageTrg : texture_storage_2d<rgba8unorm, write>;
 @group(1) @binding(0) var<uniform> composeMethod : u32;
 @group(2) @binding(0) var<uniform> blendMethod : u32;
 @group(3) @binding(0) var<uniform> opacity : f32;
@@ -615,13 +632,13 @@ fn cs_main( @builtin(global_invocation_id) id: vec3u) {
         Ra = Sa;
     }
 
-    textureStore(imageDst, id.xy, vec4f(Rc, Ra));
+    textureStore(imageTrg, id.xy, vec4f(Rc, Ra));
 }
 );
 
 // pipeline shader modules anti-aliasing
 const char* cShaderSource_PipelineComputeAntiAlias = WG_SHADER_SOURCE(
-@group(0) @binding(0) var imageSrc : texture_storage_2d<rgba8unorm, read_write>;
+@group(0) @binding(0) var imageSrc : texture_storage_2d<rgba8unorm, read>;
 @group(1) @binding(0) var imageDst : texture_storage_2d<bgra8unorm, write>;
 
 @compute @workgroup_size(8, 8)
