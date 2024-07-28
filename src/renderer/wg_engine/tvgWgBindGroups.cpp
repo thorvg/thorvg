@@ -33,11 +33,15 @@ WGPUBindGroupLayout WgBindGroupRadialGradient::layout = nullptr;
 WGPUBindGroupLayout WgBindGroupPicture::layout = nullptr;
 // composition and blending properties groups
 WGPUBindGroupLayout WgBindGroupTexture::layout = nullptr;
-WGPUBindGroupLayout WgBindGroupTextureStorageRgba::layout = nullptr;
-WGPUBindGroupLayout WgBindGroupTextureStorageBgra::layout = nullptr;
+WGPUBindGroupLayout WgBindGroupTextureStorageRgbaRO::layout = nullptr;
+WGPUBindGroupLayout WgBindGroupTextureStorageRgbaWO::layout = nullptr;
+WGPUBindGroupLayout WgBindGroupTextureStorageBgraRO::layout = nullptr;
+WGPUBindGroupLayout WgBindGroupTextureStorageBgraWO::layout = nullptr;
 WGPUBindGroupLayout WgBindGroupTextureSampled::layout = nullptr;
+WGPUBindGroupLayout WgBindGroupTexBlend::layout = nullptr;
+WGPUBindGroupLayout WgBindGroupTexBlendMask::layout = nullptr;
 WGPUBindGroupLayout WgBindGroupTexMaskCompose::layout = nullptr;
-WGPUBindGroupLayout WgBindGroupTexComposeBlend::layout = nullptr;
+WGPUBindGroupLayout WgBindGroupTexCompose::layout = nullptr;
 WGPUBindGroupLayout WgBindGroupOpacity::layout = nullptr;
 WGPUBindGroupLayout WgBindGroupBlendMethod::layout = nullptr;
 WGPUBindGroupLayout WgBindGroupCompositeMethod::layout = nullptr;
@@ -338,14 +342,14 @@ void WgBindGroupTexture::release()
 }
 
 ///////////////////////////////////////////////////////////////////////////////
-// WgBindGroupTextureStorageRgba
+// WgBindGroupTextureStorageRgbaRO
 ///////////////////////////////////////////////////////////////////////////////
 
-WGPUBindGroupLayout WgBindGroupTextureStorageRgba::getLayout(WGPUDevice device)
+WGPUBindGroupLayout WgBindGroupTextureStorageRgbaRO::getLayout(WGPUDevice device)
 {
     if (layout) return layout;
     const WGPUBindGroupLayoutEntry bindGroupLayoutEntries[] {
-        makeBindGroupLayoutEntryStorage(0, WGPUStorageTextureAccess_ReadWrite, WGPUTextureFormat_RGBA8Unorm)
+        makeBindGroupLayoutEntryStorage(0, WGPUStorageTextureAccess_ReadOnly, WGPUTextureFormat_RGBA8Unorm)
     };
     layout = createBindGroupLayout(device, bindGroupLayoutEntries, 1);
     assert(layout);
@@ -353,13 +357,13 @@ WGPUBindGroupLayout WgBindGroupTextureStorageRgba::getLayout(WGPUDevice device)
 }
 
 
-void WgBindGroupTextureStorageRgba::releaseLayout()
+void WgBindGroupTextureStorageRgbaRO::releaseLayout()
 {
     releaseBindGroupLayout(layout);
 }
 
 
-void WgBindGroupTextureStorageRgba::initialize(WGPUDevice device, WGPUQueue queue, WGPUTextureView uTexture)
+void WgBindGroupTextureStorageRgbaRO::initialize(WGPUDevice device, WGPUQueue queue, WGPUTextureView uTexture)
 {
     release();
     const WGPUBindGroupEntry bindGroupEntries[] {
@@ -370,16 +374,91 @@ void WgBindGroupTextureStorageRgba::initialize(WGPUDevice device, WGPUQueue queu
 }
 
 
-void WgBindGroupTextureStorageRgba::release()
+void WgBindGroupTextureStorageRgbaRO::release()
 {
     releaseBindGroup(mBindGroup);
 }
 
 ///////////////////////////////////////////////////////////////////////////////
-// WgBindGroupTextureStorageBgra
+// WgBindGroupTextureStorageRgbaRO
 ///////////////////////////////////////////////////////////////////////////////
 
-WGPUBindGroupLayout WgBindGroupTextureStorageBgra::getLayout(WGPUDevice device)
+WGPUBindGroupLayout WgBindGroupTextureStorageRgbaWO::getLayout(WGPUDevice device)
+{
+    if (layout) return layout;
+    const WGPUBindGroupLayoutEntry bindGroupLayoutEntries[] {
+        makeBindGroupLayoutEntryStorage(0, WGPUStorageTextureAccess_WriteOnly, WGPUTextureFormat_RGBA8Unorm)
+    };
+    layout = createBindGroupLayout(device, bindGroupLayoutEntries, 1);
+    assert(layout);
+    return layout;
+}
+
+
+void WgBindGroupTextureStorageRgbaWO::releaseLayout()
+{
+    releaseBindGroupLayout(layout);
+}
+
+
+void WgBindGroupTextureStorageRgbaWO::initialize(WGPUDevice device, WGPUQueue queue, WGPUTextureView uTexture)
+{
+    release();
+    const WGPUBindGroupEntry bindGroupEntries[] {
+        makeBindGroupEntryTextureView(0, uTexture)
+    };
+    mBindGroup = createBindGroup(device, getLayout(device), bindGroupEntries, 1);
+    assert(mBindGroup);
+}
+
+void WgBindGroupTextureStorageRgbaWO::release()
+{
+    releaseBindGroup(mBindGroup);
+}
+
+///////////////////////////////////////////////////////////////////////////////
+// WgBindGroupTextureStorageBgraRO
+///////////////////////////////////////////////////////////////////////////////
+
+WGPUBindGroupLayout WgBindGroupTextureStorageBgraRO::getLayout(WGPUDevice device)
+{
+    if (layout) return layout;
+    const WGPUBindGroupLayoutEntry bindGroupLayoutEntries[] {
+        makeBindGroupLayoutEntryStorage(0, WGPUStorageTextureAccess_ReadOnly, WGPUTextureFormat_BGRA8Unorm)
+    };
+    layout = createBindGroupLayout(device, bindGroupLayoutEntries, 1);
+    assert(layout);
+    return layout;
+}
+
+
+void WgBindGroupTextureStorageBgraRO::releaseLayout()
+{
+    releaseBindGroupLayout(layout);
+}
+
+
+void WgBindGroupTextureStorageBgraRO::initialize(WGPUDevice device, WGPUQueue queue, WGPUTextureView uTexture)
+{
+    release();
+    const WGPUBindGroupEntry bindGroupEntries[] {
+        makeBindGroupEntryTextureView(0, uTexture)
+    };
+    mBindGroup = createBindGroup(device, getLayout(device), bindGroupEntries, 1);
+    assert(mBindGroup);
+}
+
+
+void WgBindGroupTextureStorageBgraRO::release()
+{
+    releaseBindGroup(mBindGroup);
+}
+
+///////////////////////////////////////////////////////////////////////////////
+// WgBindGroupTextureStorageBgraWO
+///////////////////////////////////////////////////////////////////////////////
+
+WGPUBindGroupLayout WgBindGroupTextureStorageBgraWO::getLayout(WGPUDevice device)
 {
     if (layout) return layout;
     const WGPUBindGroupLayoutEntry bindGroupLayoutEntries[] {
@@ -391,13 +470,13 @@ WGPUBindGroupLayout WgBindGroupTextureStorageBgra::getLayout(WGPUDevice device)
 }
 
 
-void WgBindGroupTextureStorageBgra::releaseLayout()
+void WgBindGroupTextureStorageBgraWO::releaseLayout()
 {
     releaseBindGroupLayout(layout);
 }
 
 
-void WgBindGroupTextureStorageBgra::initialize(WGPUDevice device, WGPUQueue queue, WGPUTextureView uTexture)
+void WgBindGroupTextureStorageBgraWO::initialize(WGPUDevice device, WGPUQueue queue, WGPUTextureView uTexture)
 {
     release();
     const WGPUBindGroupEntry bindGroupEntries[] {
@@ -408,7 +487,7 @@ void WgBindGroupTextureStorageBgra::initialize(WGPUDevice device, WGPUQueue queu
 }
 
 
-void WgBindGroupTextureStorageBgra::release()
+void WgBindGroupTextureStorageBgraWO::release()
 {
     releaseBindGroup(mBindGroup);
 }
@@ -454,16 +533,16 @@ void WgBindGroupTextureSampled::release()
 }
 
 ///////////////////////////////////////////////////////////////////////////////
-// WgBindGroupTexComposeBlend
+// WgBindGroupTexBlend
 ///////////////////////////////////////////////////////////////////////////////
 
-WGPUBindGroupLayout WgBindGroupTexComposeBlend::getLayout(WGPUDevice device)
+WGPUBindGroupLayout WgBindGroupTexBlend::getLayout(WGPUDevice device)
 {
     if (layout) return layout;
     const WGPUBindGroupLayoutEntry bindGroupLayoutEntries[] {
         makeBindGroupLayoutEntryStorage(0, WGPUStorageTextureAccess_ReadOnly, WGPUTextureFormat_RGBA8Unorm),
         makeBindGroupLayoutEntryStorage(1, WGPUStorageTextureAccess_ReadOnly, WGPUTextureFormat_RGBA8Unorm),
-        makeBindGroupLayoutEntryStorage(2, WGPUStorageTextureAccess_ReadWrite, WGPUTextureFormat_RGBA8Unorm)
+        makeBindGroupLayoutEntryStorage(2, WGPUStorageTextureAccess_WriteOnly, WGPUTextureFormat_RGBA8Unorm)
     };
     layout = createBindGroupLayout(device, bindGroupLayoutEntries, 3);
     assert(layout);
@@ -471,13 +550,13 @@ WGPUBindGroupLayout WgBindGroupTexComposeBlend::getLayout(WGPUDevice device)
 }
 
 
-void WgBindGroupTexComposeBlend::releaseLayout()
+void WgBindGroupTexBlend::releaseLayout()
 {
     releaseBindGroupLayout(layout);
 }
 
 
-void WgBindGroupTexComposeBlend::initialize(WGPUDevice device, WGPUQueue queue, WGPUTextureView uTexSrc, WGPUTextureView uTexMsk, WGPUTextureView uTexDst)
+void WgBindGroupTexBlend::initialize(WGPUDevice device, WGPUQueue queue, WGPUTextureView uTexSrc, WGPUTextureView uTexMsk, WGPUTextureView uTexDst)
 {
     release();
     const WGPUBindGroupEntry bindGroupEntries[] {
@@ -490,7 +569,51 @@ void WgBindGroupTexComposeBlend::initialize(WGPUDevice device, WGPUQueue queue, 
 }
 
 
-void WgBindGroupTexComposeBlend::release()
+void WgBindGroupTexBlend::release()
+{
+    releaseBindGroup(mBindGroup);
+}
+
+///////////////////////////////////////////////////////////////////////////////
+// WgBindGroupTexBlendMask
+///////////////////////////////////////////////////////////////////////////////
+
+WGPUBindGroupLayout WgBindGroupTexBlendMask::getLayout(WGPUDevice device)
+{
+    if (layout) return layout;
+    const WGPUBindGroupLayoutEntry bindGroupLayoutEntries[] {
+        makeBindGroupLayoutEntryStorage(0, WGPUStorageTextureAccess_ReadOnly, WGPUTextureFormat_RGBA8Unorm),
+        makeBindGroupLayoutEntryStorage(1, WGPUStorageTextureAccess_ReadOnly, WGPUTextureFormat_RGBA8Unorm),
+        makeBindGroupLayoutEntryStorage(2, WGPUStorageTextureAccess_ReadOnly, WGPUTextureFormat_RGBA8Unorm),
+        makeBindGroupLayoutEntryStorage(3, WGPUStorageTextureAccess_WriteOnly, WGPUTextureFormat_RGBA8Unorm)
+    };
+    layout = createBindGroupLayout(device, bindGroupLayoutEntries, 4);
+    assert(layout);
+    return layout;
+}
+
+
+void WgBindGroupTexBlendMask::releaseLayout()
+{
+    releaseBindGroupLayout(layout);
+}
+
+
+void WgBindGroupTexBlendMask::initialize(WGPUDevice device, WGPUQueue queue, WGPUTextureView uTexSrc, WGPUTextureView uTexMsk, WGPUTextureView uTexDst, WGPUTextureView uTexTrg)
+{
+    release();
+    const WGPUBindGroupEntry bindGroupEntries[] {
+        makeBindGroupEntryTextureView(0, uTexSrc),
+        makeBindGroupEntryTextureView(1, uTexMsk),
+        makeBindGroupEntryTextureView(2, uTexDst),
+        makeBindGroupEntryTextureView(3, uTexTrg)
+    };
+    mBindGroup = createBindGroup(device, getLayout(device), bindGroupEntries, 4);
+    assert(mBindGroup);
+}
+
+
+void WgBindGroupTexBlendMask::release()
 {
     releaseBindGroup(mBindGroup);
 }
@@ -504,9 +627,10 @@ WGPUBindGroupLayout WgBindGroupTexMaskCompose::getLayout(WGPUDevice device)
     if (layout) return layout;
     const WGPUBindGroupLayoutEntry bindGroupLayoutEntries[] {
         makeBindGroupLayoutEntryStorage(0, WGPUStorageTextureAccess_ReadOnly, WGPUTextureFormat_RGBA8Unorm),
-        makeBindGroupLayoutEntryStorage(1, WGPUStorageTextureAccess_ReadWrite, WGPUTextureFormat_RGBA8Unorm)
+        makeBindGroupLayoutEntryStorage(1, WGPUStorageTextureAccess_ReadOnly, WGPUTextureFormat_RGBA8Unorm),
+        makeBindGroupLayoutEntryStorage(2, WGPUStorageTextureAccess_WriteOnly, WGPUTextureFormat_RGBA8Unorm)
     };
-    layout = createBindGroupLayout(device, bindGroupLayoutEntries, 2);
+    layout = createBindGroupLayout(device, bindGroupLayoutEntries, 3);
     assert(layout);
     return layout;
 }
@@ -518,19 +642,64 @@ void WgBindGroupTexMaskCompose::releaseLayout()
 }
 
 
-void WgBindGroupTexMaskCompose::initialize(WGPUDevice device, WGPUQueue queue, WGPUTextureView uTexMsk0, WGPUTextureView uTexMsk1)
+void WgBindGroupTexMaskCompose::initialize(WGPUDevice device, WGPUQueue queue, WGPUTextureView uTexMsk0, WGPUTextureView uTexMsk1, WGPUTextureView uTexTrg)
 {
     release();
     const WGPUBindGroupEntry bindGroupEntries[] {
         makeBindGroupEntryTextureView(0, uTexMsk0),
         makeBindGroupEntryTextureView(1, uTexMsk1),
+        makeBindGroupEntryTextureView(2, uTexTrg)
     };
-    mBindGroup = createBindGroup(device, getLayout(device), bindGroupEntries, 2);
+    mBindGroup = createBindGroup(device, getLayout(device), bindGroupEntries, 3);
     assert(mBindGroup);
 }
 
 
 void WgBindGroupTexMaskCompose::release()
+{
+    releaseBindGroup(mBindGroup);
+}
+
+///////////////////////////////////////////////////////////////////////////////
+// WgBindGroupTexCompose
+///////////////////////////////////////////////////////////////////////////////
+
+WGPUBindGroupLayout WgBindGroupTexCompose::getLayout(WGPUDevice device)
+{
+    if (layout) return layout;
+    const WGPUBindGroupLayoutEntry bindGroupLayoutEntries[] {
+        makeBindGroupLayoutEntryStorage(0, WGPUStorageTextureAccess_ReadOnly, WGPUTextureFormat_RGBA8Unorm),
+        makeBindGroupLayoutEntryStorage(1, WGPUStorageTextureAccess_ReadOnly, WGPUTextureFormat_RGBA8Unorm),
+        makeBindGroupLayoutEntryStorage(2, WGPUStorageTextureAccess_ReadOnly, WGPUTextureFormat_RGBA8Unorm),
+        makeBindGroupLayoutEntryStorage(3, WGPUStorageTextureAccess_WriteOnly, WGPUTextureFormat_RGBA8Unorm)
+    };
+    layout = createBindGroupLayout(device, bindGroupLayoutEntries, 4);
+    assert(layout);
+    return layout;
+}
+
+
+void WgBindGroupTexCompose::releaseLayout()
+{
+    releaseBindGroupLayout(layout);
+}
+
+
+void WgBindGroupTexCompose::initialize(WGPUDevice device, WGPUQueue queue, WGPUTextureView uTexSrc, WGPUTextureView uTexMsk, WGPUTextureView uTexDst, WGPUTextureView uTexTrg)
+{
+    release();
+    const WGPUBindGroupEntry bindGroupEntries[] {
+        makeBindGroupEntryTextureView(0, uTexSrc),
+        makeBindGroupEntryTextureView(1, uTexMsk),
+        makeBindGroupEntryTextureView(2, uTexDst),
+        makeBindGroupEntryTextureView(3, uTexTrg)
+    };
+    mBindGroup = createBindGroup(device, getLayout(device), bindGroupEntries, 4);
+    assert(mBindGroup);
+}
+
+
+void WgBindGroupTexCompose::release()
 {
     releaseBindGroup(mBindGroup);
 }

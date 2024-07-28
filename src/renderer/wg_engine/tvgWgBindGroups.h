@@ -119,7 +119,7 @@ struct WgBindGroupTexture : public WgBindGroup
 };
 
 // @group(0 or 1)
-struct WgBindGroupTextureStorageRgba : public WgBindGroup
+struct WgBindGroupTextureStorageRgbaWO : public WgBindGroup
 {
     static WGPUBindGroupLayout layout;
     static WGPUBindGroupLayout getLayout(WGPUDevice device);
@@ -131,7 +131,7 @@ struct WgBindGroupTextureStorageRgba : public WgBindGroup
 };
 
 // @group(0 or 1)
-struct WgBindGroupTextureStorageBgra : public WgBindGroup
+struct WgBindGroupTextureStorageRgbaRO : public WgBindGroup
 {
     static WGPUBindGroupLayout layout;
     static WGPUBindGroupLayout getLayout(WGPUDevice device);
@@ -141,6 +141,37 @@ struct WgBindGroupTextureStorageBgra : public WgBindGroup
                     WGPUTextureView uTexture);
     void release();
 };
+
+
+// @group(0 or 1)
+struct WgBindGroupTextureStorageBgraRO : public WgBindGroup
+{
+    static WGPUBindGroupLayout layout;
+    static WGPUBindGroupLayout getLayout(WGPUDevice device);
+    static WGPUBindGroupLayout getLayoutRO(WGPUDevice device);
+    static WGPUBindGroupLayout getLayoutWO(WGPUDevice device);
+    static void releaseLayout();
+
+    void initialize(WGPUDevice device, WGPUQueue queue,
+                    WGPUTextureView uTexture);
+    void release();
+};
+
+
+// @group(0 or 1)
+struct WgBindGroupTextureStorageBgraWO : public WgBindGroup
+{
+    static WGPUBindGroupLayout layout;
+    static WGPUBindGroupLayout getLayout(WGPUDevice device);
+    static WGPUBindGroupLayout getLayoutRO(WGPUDevice device);
+    static WGPUBindGroupLayout getLayoutWO(WGPUDevice device);
+    static void releaseLayout();
+
+    void initialize(WGPUDevice device, WGPUQueue queue,
+                    WGPUTextureView uTexture);
+    void release();
+};
+
 
 // @group(0 or 1)
 struct WgBindGroupTextureSampled : public WgBindGroup
@@ -156,7 +187,22 @@ struct WgBindGroupTextureSampled : public WgBindGroup
 };
 
 // @group(0)
-struct WgBindGroupTexComposeBlend : public WgBindGroup
+struct WgBindGroupTexBlend : public WgBindGroup
+{
+    static WGPUBindGroupLayout layout;
+    static WGPUBindGroupLayout getLayout(WGPUDevice device);
+    static void releaseLayout();
+
+    void initialize(WGPUDevice device, WGPUQueue queue,
+                    WGPUTextureView uTexSrc,
+                    WGPUTextureView uTexDst,
+                    WGPUTextureView uTexTrg);
+    void release();
+};
+
+
+// @group(0)
+struct WgBindGroupTexBlendMask : public WgBindGroup
 {
     static WGPUBindGroupLayout layout;
     static WGPUBindGroupLayout getLayout(WGPUDevice device);
@@ -165,7 +211,8 @@ struct WgBindGroupTexComposeBlend : public WgBindGroup
     void initialize(WGPUDevice device, WGPUQueue queue,
                     WGPUTextureView uTexSrc,
                     WGPUTextureView uTexMsk,
-                    WGPUTextureView uTexDst);
+                    WGPUTextureView uTexDst,
+                    WGPUTextureView uTexTrg);
     void release();
 };
 
@@ -179,7 +226,24 @@ struct WgBindGroupTexMaskCompose : public WgBindGroup
 
     void initialize(WGPUDevice device, WGPUQueue queue,
                     WGPUTextureView uTexMsk0,
-                    WGPUTextureView uTexMsk1);
+                    WGPUTextureView uTexMsk1,
+                    WGPUTextureView uTexTrg);
+    void release();
+};
+
+
+// @group(0)
+struct WgBindGroupTexCompose : public WgBindGroup
+{
+    static WGPUBindGroupLayout layout;
+    static WGPUBindGroupLayout getLayout(WGPUDevice device);
+    static void releaseLayout();
+
+    void initialize(WGPUDevice device, WGPUQueue queue,
+                    WGPUTextureView uTexSrc,
+                    WGPUTextureView uTexMsk,
+                    WGPUTextureView uTexDst,
+                    WGPUTextureView uTexTrg);
     void release();
 };
 

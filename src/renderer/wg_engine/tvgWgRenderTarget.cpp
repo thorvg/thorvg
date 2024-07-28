@@ -54,10 +54,12 @@
     assert(texViewColor);
     assert(texViewStencil);
     // initialize bind group for blitting
-    if (format == WGPUTextureFormat_RGBA8Unorm)
-        bindGroupTexStorageRgba.initialize(context.device, context.queue, texViewColor);
+    if (format == WGPUTextureFormat_RGBA8Unorm) {
+        bindGroupTexStorageRgbaRO.initialize(context.device, context.queue, texViewColor);
+        bindGroupTexStorageRgbaWO.initialize(context.device, context.queue, texViewColor);
+    }
     if (format == WGPUTextureFormat_BGRA8Unorm)
-        bindGroupTexStorageBgra.initialize(context.device, context.queue, texViewColor);
+        bindGroupTexStorageBgraWO.initialize(context.device, context.queue, texViewColor);
     // initialize window binding groups
     WgShaderTypeMat4x4f viewMat(w, h);
     mBindGroupCanvas.initialize(context.device, context.queue, viewMat);
@@ -69,7 +71,9 @@ void WgRenderStorage::release(WgContext& context)
 {
     mRenderPassEncoder = nullptr;
     mBindGroupCanvas.release();
-    bindGroupTexStorageRgba.release();
+    bindGroupTexStorageBgraWO.release();
+    bindGroupTexStorageRgbaWO.release();
+    bindGroupTexStorageRgbaRO.release();
     context.releaseTextureView(texViewStencil);
     context.releaseTextureView(texViewColor);
     context.releaseTexture(texStencil);
@@ -210,29 +214,24 @@ void WgRenderStorage::drawPictureClipPath(WgContext& context, WgRenderDataPictur
 }
 
 
-void WgRenderStorage::clear(WGPUCommandEncoder commandEncoder)
-{
-    assert(commandEncoder);
-    WGPUComputePassEncoder computePassEncoder = beginComputePass(commandEncoder);
-    mPipelines->computeClear.use(computePassEncoder, bindGroupTexStorageRgba);
-    dispatchWorkgroups(computePassEncoder);
-    endComputePass(computePassEncoder);
-}
-
 
 void WgRenderStorage::blend(
     WgContext& context,
     WGPUCommandEncoder commandEncoder,
     WgPipelineBlend* pipeline,
-    WgRenderStorage* targetSrc,
+    WgRenderStorage* texSrc,
+    WgRenderStorage* texDst,
     WgBindGroupBlendMethod* blendMethod,
     WgBindGroupOpacity* opacity)
 {
     assert(commandEncoder);
-    assert(targetSrc);
+    assert(texSrc);
+    assert(texDst);
     assert(pipeline);
+    WgBindGroupTexBlend texBlend;
+    texBlend.initialize(context.device, context.queue, texSrc->texViewColor, texDst->texViewColor, texViewColor);
     WGPUComputePassEncoder computePassEncoder = beginComputePass(commandEncoder);
-    pipeline->use(computePassEncoder, targetSrc->bindGroupTexStorageRgba, bindGroupTexStorageRgba, *blendMethod, *opacity);
+    pipeline->use(computePassEncoder, texBlend, *blendMethod, *opacity);
     dispatchWorkgroups(computePassEncoder);
     endComputePass(computePassEncoder);
 }
@@ -244,31 +243,33 @@ void WgRenderStorage::blendMask(
     WgPipelineBlendMask* pipeline,
     WgRenderStorage* texMsk,
     WgRenderStorage* texSrc,
+    WgRenderStorage* texDst,
     WgBindGroupBlendMethod* blendMethod,
     WgBindGroupOpacity* opacity)
 {
     assert(commandEncoder);
     assert(texSrc);
     assert(texMsk);
-    WgBindGroupTexComposeBlend composeBlend;
-    composeBlend.initialize(context.device, context.queue, texSrc->texViewColor, texMsk->texViewColor, texViewColor);
+    WgBindGroupTexBlendMask texBlendMask;
+    texBlendMask.initialize(context.device, context.queue, texSrc->texViewColor, texMsk->texViewColor, texDst->texViewColor, texViewColor);
     WGPUComputePassEncoder computePassEncoder = beginComputePass(commandEncoder);
-    pipeline->use(computePassEncoder, composeBlend, *blendMethod, *opacity);
+    pipeline->use(computePassEncoder, texBlendMask, *blendMethod, *opacity);
     dispatchWorkgroups(computePassEncoder);
     endComputePass(computePassEncoder);
-    composeBlend.release();
+    texBlendMask.release();
 };
 
 
 void WgRenderStorage::maskCompose(
         WgContext& context,
         WGPUCommandEncoder commandEncoder,
-        WgRenderStorage* texMsk0)
+        WgRenderStorage* texMsk0,
+        WgRenderStorage* texMsk1)
 {
     assert(commandEncoder);
     assert(texMsk0);
     WgBindGroupTexMaskCompose maskCompose;
-    maskCompose.initialize(context.device, context.queue, texMsk0->texViewColor, texViewColor);
+    maskCompose.initialize(context.device, context.queue, texMsk0->texViewColor, texMsk1->texViewColor, texViewColor);
     WGPUComputePassEncoder computePassEncoder = beginComputePass(commandEncoder);
     mPipelines->computeMaskCompose.use(computePassEncoder, maskCompose);
     dispatchWorkgroups(computePassEncoder);
@@ -282,6 +283,7 @@ void WgRenderStorage::compose(
     WGPUCommandEncoder commandEncoder,
     WgRenderStorage* texSrc,
     WgRenderStorage* texMsk,
+    WgRenderStorage* texDst,
     WgBindGroupCompositeMethod* composeMethod,
     WgBindGroupBlendMethod* blendMethod,
     WgBindGroupOpacity* opacity)
@@ -289,13 +291,13 @@ void WgRenderStorage::compose(
     assert(commandEncoder);
     assert(texSrc);
     assert(texMsk);
-    WgBindGroupTexComposeBlend composeBlend;
-    composeBlend.initialize(context.device, context.queue, texSrc->texViewColor, texMsk->texViewColor, texViewColor);
+    WgBindGroupTexCompose texCompose;
+    texCompose.initialize(context.device, context.queue, texSrc->texViewColor, texMsk->texViewColor, texDst->texViewColor, texViewColor);
     WGPUComputePassEncoder computePassEncoder = beginComputePass(commandEncoder);
-    mPipelines->computeCompose.use(computePassEncoder, composeBlend, *composeMethod, *blendMethod, *opacity);
+    mPipelines->computeCompose.use(computePassEncoder, texCompose, *composeMethod, *blendMethod, *opacity);
     dispatchWorkgroups(computePassEncoder);
     endComputePass(computePassEncoder);
-    composeBlend.release();
+    texCompose.release();
 }
 
 
@@ -304,11 +306,20 @@ void WgRenderStorage::antialias(WGPUCommandEncoder commandEncoder, WgRenderStora
     assert(commandEncoder);
     assert(targetSrc);
     WGPUComputePassEncoder computePassEncoder = beginComputePass(commandEncoder);
-    mPipelines->computeAntiAliasing.use(computePassEncoder, targetSrc->bindGroupTexStorageRgba, bindGroupTexStorageBgra);
+    mPipelines->computeAntiAliasing.use(computePassEncoder, targetSrc->bindGroupTexStorageRgbaRO, bindGroupTexStorageBgraWO);
     dispatchWorkgroups(computePassEncoder);
     endComputePass(computePassEncoder);
 }
 
+void WgRenderStorage::copy(WGPUCommandEncoder commandEncoder, WgRenderStorage* targetSrc)
+{
+    assert(commandEncoder);
+    assert(targetSrc);
+    WGPUComputePassEncoder computePassEncoder = beginComputePass(commandEncoder);
+    mPipelines->computeCopy.use(computePassEncoder, targetSrc->bindGroupTexStorageRgbaRO, bindGroupTexStorageRgbaWO);
+    dispatchWorkgroups(computePassEncoder);
+    endComputePass(computePassEncoder);
+}
 
 void WgRenderStorage::dispatchWorkgroups(WGPUComputePassEncoder computePassEncoder)
 {
@@ -323,8 +334,8 @@ void WgRenderStorage::beginRenderPass(WGPUCommandEncoder commandEncoder, bool cl
     // render pass depth stencil attachment
     WGPURenderPassDepthStencilAttachment depthStencilAttachment{};
     depthStencilAttachment.view = texViewStencil;
-    depthStencilAttachment.depthLoadOp = WGPULoadOp_Load;
-    depthStencilAttachment.depthStoreOp = WGPUStoreOp_Discard;
+    depthStencilAttachment.depthLoadOp = WGPULoadOp_Undefined;
+    depthStencilAttachment.depthStoreOp = WGPUStoreOp_Undefined;
     depthStencilAttachment.depthClearValue = 1.0f;
     depthStencilAttachment.depthReadOnly = false;
     depthStencilAttachment.stencilLoadOp = WGPULoadOp_Clear;
@@ -334,6 +345,9 @@ void WgRenderStorage::beginRenderPass(WGPUCommandEncoder commandEncoder, bool cl
     // render pass color attachment
     WGPURenderPassColorAttachment colorAttachment{};
     colorAttachment.view = texViewColor;
+    #ifdef __EMSCRIPTEN__
+    colorAttachment.depthSlice = WGPU_DEPTH_SLICE_UNDEFINED;
+    #endif
     colorAttachment.resolveTarget = nullptr;
     colorAttachment.loadOp = clear ? WGPULoadOp_Clear : WGPULoadOp_Load;
     colorAttachment.clearValue = { 0, 0, 0, 0 };
