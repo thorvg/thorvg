@@ -215,26 +215,29 @@ bool GlGeometry::draw(GlRenderTask* task, GlStageBuffer* gpuBuffer, RenderUpdate
 }
 
 
-void GlGeometry::updateTransform(const Matrix* m)
+void GlGeometry::updateTransform(const Matrix& m)
 {
-    if (m) mMatrix = *m;
-    else mathIdentity(&mMatrix);
+    mMatrix = m;
 }
+
 
 void GlGeometry::setViewport(const RenderRegion& viewport)
 {
     this->viewport = viewport;
 }
 
+
 const RenderRegion& GlGeometry::getViewport()
 {
     return viewport;
 }
 
+
 const Matrix& GlGeometry::getTransformMatrix()
 {
     return mMatrix;
 }
+
 
 GlStencilMode GlGeometry::getStencilMode(RenderUpdateFlag flag)
 {
@@ -247,6 +250,7 @@ GlStencilMode GlGeometry::getStencilMode(RenderUpdateFlag flag)
 
     return GlStencilMode::None;
 }
+
 
 RenderRegion GlGeometry::getBounds() const
 {

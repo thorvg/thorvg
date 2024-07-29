@@ -108,7 +108,7 @@ struct WgRenderDataShape: public WgRenderDataPaint
     FillRule fillRule{};
 
     void updateBBox(WgPoint pmin, WgPoint pmax);
-    void updateMeshes(WgContext& context, const RenderShape& rshape, const Matrix* rt);
+    void updateMeshes(WgContext& context, const RenderShape& rshape, const Matrix& rt);
     void updateMeshes(WgContext& context, const WgPolyline* polyline, const RenderStroke* rstroke);
     void releaseMeshes(WgContext& context);
     void release(WgContext& context) override;

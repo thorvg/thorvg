@@ -27,14 +27,14 @@
 /* Internal Class Implementation                                        */
 /************************************************************************/
 
-static inline bool _onlyShifted(const Matrix* m)
+static inline bool _onlyShifted(const Matrix& m)
 {
-    if (mathEqual(m->e11, 1.0f) && mathEqual(m->e22, 1.0f) && mathZero(m->e12) && mathZero(m->e21)) return true;
+    if (mathEqual(m.e11, 1.0f) && mathEqual(m.e22, 1.0f) && mathZero(m.e12) && mathZero(m.e21)) return true;
     return false;
 }
 
 
-static bool _genOutline(SwImage* image, const RenderMesh* mesh, const Matrix* transform, SwMpool* mpool, unsigned tid)
+static bool _genOutline(SwImage* image, const RenderMesh* mesh, const Matrix& transform, SwMpool* mpool, unsigned tid)
 {
     image->outline = mpoolReqOutline(mpool, tid);
     auto outline = image->outline;
@@ -108,21 +108,21 @@ static bool _genOutline(SwImage* image, const RenderMesh* mesh, const Matrix* tr
 /* External Class Implementation                                        */
 /************************************************************************/
 
-bool imagePrepare(SwImage* image, const RenderMesh* mesh, const Matrix* transform, const SwBBox& clipRegion, SwBBox& renderRegion, SwMpool* mpool, unsigned tid)
+bool imagePrepare(SwImage* image, const RenderMesh* mesh, const Matrix& transform, const SwBBox& clipRegion, SwBBox& renderRegion, SwMpool* mpool, unsigned tid)
 {
     image->direct = _onlyShifted(transform);
 
     //Fast track: Non-transformed image but just shifted.
     if (image->direct) {
-        image->ox = -static_cast<int32_t>(nearbyint(transform->e13));
-        image->oy = -static_cast<int32_t>(nearbyint(transform->e23));
+        image->ox = -static_cast<int32_t>(nearbyint(transform.e13));
+        image->oy = -static_cast<int32_t>(nearbyint(transform.e23));
     //Figure out the scale factor by transform matrix
     } else {
-        auto scaleX = sqrtf((transform->e11 * transform->e11) + (transform->e21 * transform->e21));
-        auto scaleY = sqrtf((transform->e22 * transform->e22) + (transform->e12 * transform->e12));
+        auto scaleX = sqrtf((transform.e11 * transform.e11) + (transform.e21 * transform.e21));
+        auto scaleY = sqrtf((transform.e22 * transform.e22) + (transform.e12 * transform.e12));
         image->scale = (fabsf(scaleX - scaleY) > 0.01f) ? 1.0f : scaleX;
 
-        if (mathZero(transform->e12) && mathZero(transform->e21)) image->scaled = true;
+        if (mathZero(transform.e12) && mathZero(transform.e21)) image->scaled = true;
         else image->scaled = false;
     }
 

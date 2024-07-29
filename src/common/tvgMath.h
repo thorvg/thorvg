@@ -75,21 +75,20 @@ static inline bool mathEqual(float a, float b)
 void mathRotate(Matrix* m, float degree);
 bool mathInverse(const Matrix* m, Matrix* out);
 bool mathIdentity(const Matrix* m);
-Matrix mathMultiply(const Matrix* lhs, const Matrix* rhs);
 Matrix operator*(const Matrix& lhs, const Matrix& rhs);
 bool operator==(const Matrix& lhs, const Matrix& rhs);
 
-static inline bool mathRightAngle(const Matrix* m)
+static inline bool mathRightAngle(const Matrix& m)
 {
-   auto radian = fabsf(mathAtan2(m->e21, m->e11));
+   auto radian = fabsf(mathAtan2(m.e21, m.e11));
    if (radian < FLOAT_EPSILON || mathEqual(radian, MATH_PI2) || mathEqual(radian, MATH_PI)) return true;
    return false;
 }
 
 
-static inline bool mathSkewed(const Matrix* m)
+static inline bool mathSkewed(const Matrix& m)
 {
-    return !mathZero(m->e21 + m->e12);
+    return !mathZero(m.e21 + m.e12);
 }
 
 
