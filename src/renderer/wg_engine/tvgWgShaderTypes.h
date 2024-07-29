@@ -35,10 +35,10 @@ struct WgShaderTypeMat4x4f
     float mat[16]{};
 
     WgShaderTypeMat4x4f();
-    WgShaderTypeMat4x4f(const Matrix* transform);
+    WgShaderTypeMat4x4f(const Matrix& transform);
     WgShaderTypeMat4x4f(size_t w, size_t h);
     void identity();
-    void update(const Matrix* transform);
+    void update(const Matrix& transform);
     void update(size_t w, size_t h);
 };
 
