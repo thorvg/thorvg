@@ -93,7 +93,7 @@ void WgRenderer::clearDisposes()
 /* External Class Implementation                                        */
 /************************************************************************/
 
-RenderData WgRenderer::prepare(const RenderShape& rshape, RenderData data, const Matrix* transform, Array<RenderData>& clips, uint8_t opacity, RenderUpdateFlag flags, bool clipper)
+RenderData WgRenderer::prepare(const RenderShape& rshape, RenderData data, const Matrix& transform, Array<RenderData>& clips, uint8_t opacity, RenderUpdateFlag flags, bool clipper)
 {
     // get or create render data shape
     auto renderDataShape = (WgRenderDataShape*)data;
@@ -127,13 +127,13 @@ RenderData WgRenderer::prepare(const RenderShape& rshape, RenderData data, const
 }
 
 
-RenderData WgRenderer::prepare(TVG_UNUSED const Array<RenderData>& scene, TVG_UNUSED RenderData data, TVG_UNUSED const Matrix* transform, TVG_UNUSED Array<RenderData>& clips, TVG_UNUSED uint8_t opacity, TVG_UNUSED RenderUpdateFlag flags)
+RenderData WgRenderer::prepare(TVG_UNUSED const Array<RenderData>& scene, TVG_UNUSED RenderData data, TVG_UNUSED const Matrix& transform, TVG_UNUSED Array<RenderData>& clips, TVG_UNUSED uint8_t opacity, TVG_UNUSED RenderUpdateFlag flags)
 {
     return nullptr;
 }
 
 
-RenderData WgRenderer::prepare(Surface* surface, const RenderMesh* mesh, RenderData data, const Matrix* transform, Array<RenderData>& clips, uint8_t opacity, RenderUpdateFlag flags)
+RenderData WgRenderer::prepare(Surface* surface, const RenderMesh* mesh, RenderData data, const Matrix& transform, Array<RenderData>& clips, uint8_t opacity, RenderUpdateFlag flags)
 {
     // get or create render data shape
     auto renderDataPicture = (WgRenderDataPicture*)data;

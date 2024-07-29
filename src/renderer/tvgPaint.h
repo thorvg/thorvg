@@ -48,16 +48,38 @@ namespace tvg
     struct Paint::Impl
     {
         Paint* paint = nullptr;
-        RenderTransform* rTransform = nullptr;
         Composite* compData = nullptr;
         RenderMethod* renderer = nullptr;
         BlendMethod blendMethod = BlendMethod::Normal;   //uint8_t
+        struct {
+            Matrix m;
+            float degree = 0.0f;      //rotation degree
+            float scale = 1.0f;       //scale factor
+            bool overriding = false;  //user transform?
+
+            void update()
+            {
+                if (overriding) return;
+                m.e11 = 1.0f;
+                m.e12 = 0.0f;
+                m.e21 = 0.0f;
+                m.e22 = 1.0f;
+                m.e31 = 0.0f;
+                m.e32 = 0.0f;
+                m.e33 = 1.0f;
+                tvg::scale(&m, scale, scale);
+                tvg::rotate(&m, degree);
+            }
+        } tr;
         uint8_t renderFlag = RenderUpdateFlag::None;
         uint8_t ctxFlag = ContextFlag::Invalid;
         uint8_t opacity = 255;
         uint8_t refCnt = 0;                              //reference count
 
-        Impl(Paint* pnt) : paint(pnt) {}
+        Impl(Paint* pnt) : paint(pnt)
+        {
+            identity(&tr.m);
+        }
 
         ~Impl()
         {
@@ -65,7 +87,6 @@ namespace tvg
                 if (P(compData->target)->unref() == 0) delete(compData->target);
                 free(compData);
             }
-            delete(rTransform);
             if (renderer && (renderer->unref() == 0)) delete(renderer);
         }
 
@@ -83,23 +104,18 @@ namespace tvg
 
         bool transform(const Matrix& m)
         {
-            if (!rTransform) {
-                if (identity(&m)) return true;
-                rTransform = new RenderTransform();
-            }
-            rTransform->override(m);
+            tr.m = m;
+            tr.overriding = true;
             renderFlag |= RenderUpdateFlag::Transform;
 
             return true;
         }
 
-        Matrix* transform()
+        Matrix& transform()
         {
-            if (rTransform) {
-                if (renderFlag & RenderUpdateFlag::Transform) rTransform->update();
-                return &rTransform->m;
-            }
-            return nullptr;
+            //update transform
+            if (renderFlag & RenderUpdateFlag::Transform) tr.update();
+            return tr.m;
         }
 
         bool composite(Paint* source, Paint* target, CompositeMethod method)
@@ -135,7 +151,7 @@ namespace tvg
         bool scale(float factor);
         bool translate(float x, float y);
         bool bounds(float* x, float* y, float* w, float* h, bool transformed, bool stroking);
-        RenderData update(RenderMethod* renderer, const Matrix* pm, Array<RenderData>& clips, uint8_t opacity, RenderUpdateFlag pFlag, bool clipper = false);
+        RenderData update(RenderMethod* renderer, const Matrix& pm, Array<RenderData>& clips, uint8_t opacity, RenderUpdateFlag pFlag, bool clipper = false);
         bool render(RenderMethod* renderer);
         Paint* duplicate(Paint* ret = nullptr);
     };

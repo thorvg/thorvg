@@ -36,9 +36,9 @@ namespace tvg
 class SwRenderer : public RenderMethod
 {
 public:
-    RenderData prepare(const RenderShape& rshape, RenderData data, const Matrix* transform, Array<RenderData>& clips, uint8_t opacity, RenderUpdateFlag flags, bool clipper) override;
-    RenderData prepare(const Array<RenderData>& scene, RenderData data, const Matrix* transform, Array<RenderData>& clips, uint8_t opacity, RenderUpdateFlag flags) override;
-    RenderData prepare(Surface* surface, const RenderMesh* mesh, RenderData data, const Matrix* transform, Array<RenderData>& clips, uint8_t opacity, RenderUpdateFlag flags) override;
+    RenderData prepare(const RenderShape& rshape, RenderData data, const Matrix& transform, Array<RenderData>& clips, uint8_t opacity, RenderUpdateFlag flags, bool clipper) override;
+    RenderData prepare(const Array<RenderData>& scene, RenderData data, const Matrix& transform, Array<RenderData>& clips, uint8_t opacity, RenderUpdateFlag flags) override;
+    RenderData prepare(Surface* surface, const RenderMesh* mesh, RenderData data, const Matrix& transform, Array<RenderData>& clips, uint8_t opacity, RenderUpdateFlag flags) override;
     bool preRender() override;
     bool renderShape(RenderData data) override;
     bool renderImage(RenderData data) override;
@@ -77,7 +77,7 @@ private:
     SwRenderer();
     ~SwRenderer();
 
-    RenderData prepareCommon(SwTask* task, const Matrix* transform, const Array<RenderData>& clips, uint8_t opacity, RenderUpdateFlag flags);
+    RenderData prepareCommon(SwTask* task, const Matrix& transform, const Array<RenderData>& clips, uint8_t opacity, RenderUpdateFlag flags);
 };
 
 }

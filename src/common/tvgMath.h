@@ -75,21 +75,20 @@ static inline bool equal(float a, float b)
 void rotate(Matrix* m, float degree);
 bool inverse(const Matrix* m, Matrix* out);
 bool identity(const Matrix* m);
-Matrix multiply(const Matrix* lhs, const Matrix* rhs);
 Matrix operator*(const Matrix& lhs, const Matrix& rhs);
 bool operator==(const Matrix& lhs, const Matrix& rhs);
 
-static inline bool rightAngle(const Matrix* m)
+static inline bool rightAngle(const Matrix& m)
 {
-   auto radian = fabsf(tvg::atan2(m->e21, m->e11));
+   auto radian = fabsf(tvg::atan2(m.e21, m.e11));
    if (radian < FLOAT_EPSILON || tvg::equal(radian, MATH_PI2) || tvg::equal(radian, MATH_PI)) return true;
    return false;
 }
 
 
-static inline bool skewed(const Matrix* m)
+static inline bool skewed(const Matrix& m)
 {
-    return !tvg::zero(m->e21 + m->e12);
+    return !tvg::zero(m.e21 + m.e12);
 }
 
 

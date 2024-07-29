@@ -46,32 +46,6 @@ uint32_t RenderMethod::unref()
 }
 
 
-void RenderTransform::override(const Matrix& m)
-{
-    this->m = m;
-    overriding = true;
-}
-
-
-void RenderTransform::update()
-{
-    if (overriding) return;
-
-    m.e11 = 1.0f;
-    m.e12 = 0.0f;
-
-    m.e21 = 0.0f;
-    m.e22 = 1.0f;
-
-    m.e31 = 0.0f;
-    m.e32 = 0.0f;
-    m.e33 = 1.0f;
-
-    tvg::scale(&m, scale, scale);
-    rotate(&m, degree);
-}
-
-
 void RenderRegion::intersect(const RenderRegion& rhs)
 {
     auto x1 = x + w;
