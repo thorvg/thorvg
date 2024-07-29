@@ -252,8 +252,7 @@ static void _updateTransform(LottieGroup* parent, LottieObject** child, float fr
     Matrix matrix;
     if (!_updateTransform(transform, frameNo, false, matrix, opacity, exps)) return;
 
-    auto pmatrix = PP(ctx->propagator)->transform();
-    ctx->propagator->transform(pmatrix ? (*pmatrix * matrix) : matrix);
+    ctx->propagator->transform(PP(ctx->propagator)->transform() * matrix);
     ctx->propagator->opacity(MULTIPLY(opacity, PP(ctx->propagator)->opacity));
 
     //FIXME: preserve the stroke width. too workaround, need a better design.
@@ -418,14 +417,9 @@ static void _repeat(LottieGroup* parent, Shape* path, RenderContext* ctx)
                 translateR(&m, -repeater->anchor.x, -repeater->anchor.y);
                 m = repeater->transform * m;
 
-                auto pm = PP(shape)->transform();
-                if (pm) {
-                    Matrix m;
-                    inverse(&repeater->transform, &m);
-                    *pm = m * *pm;
-                }
-
-                shape->transform(pm ? m * *pm : m);
+                Matrix inv;
+                inverse(&repeater->transform, &inv);
+                shape->transform(m * (inv * PP(shape)->transform()));
                 shapes.push(shape);
             }
         }
@@ -928,8 +922,7 @@ static void _updateRepeater(TVG_UNUSED LottieGroup* parent, LottieObject** child
 
     RenderRepeater r;
     r.cnt = static_cast<int>(repeater->copies(frameNo, exps));
-    if (auto tr = PP(ctx->propagator)->transform()) r.transform = *tr;
-    else identity(&r.transform);
+    r.transform = PP(ctx->propagator)->transform();
     r.offset = repeater->offset(frameNo, exps);
     r.position = repeater->position(frameNo, exps);
     r.anchor = repeater->anchor(frameNo, exps);

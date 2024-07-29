@@ -193,7 +193,7 @@ public:
     bool tesselate(const Surface* image, const RenderMesh* mesh, RenderUpdateFlag flag);
     void disableVertex(uint32_t location);
     bool draw(GlRenderTask* task, GlStageBuffer* gpuBuffer, RenderUpdateFlag flag);
-    void updateTransform(const Matrix* m);
+    void updateTransform(const Matrix& m);
     void setViewport(const RenderRegion& viewport);
     const RenderRegion& getViewport();
     const Matrix& getTransformMatrix();
