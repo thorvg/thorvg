@@ -118,8 +118,12 @@ TEST_CASE("Opacity", "[tvgPaint]")
 
 TEST_CASE("Bounding Box", "[tvgPaint]")
 {
-    auto shape = Shape::gen();
-    REQUIRE(shape);
+    Initializer::init(0);
+
+    auto canvas = SwCanvas::gen();
+    auto shape = Shape::gen().release();
+    canvas->push(tvg::cast(shape));
+    canvas->sync();
 
     //Negative
     float x = 0, y = 0, w = 0, h = 0;
@@ -133,6 +137,8 @@ TEST_CASE("Bounding Box", "[tvgPaint]")
     REQUIRE(y == 10.0f);
     REQUIRE(w == 20.0f);
     REQUIRE(h == 100.0f);
+
+    REQUIRE(canvas->update(shape) == Result::Success);
     REQUIRE(shape->bounds(&x, &y, &w, &h, true) == Result::Success);
     REQUIRE(x == 100.0f);
     REQUIRE(y == 121.0f);
@@ -150,11 +156,15 @@ TEST_CASE("Bounding Box", "[tvgPaint]")
     REQUIRE(y == 10.0f);
     REQUIRE(w == 20.0f);
     REQUIRE(h == 200.0f);
+
+    REQUIRE(canvas->update(shape) == Result::Success);
     REQUIRE(shape->bounds(&x, &y, &w, &h, true) == Result::Success);
     REQUIRE(x == 0.0f);
     REQUIRE(y == 10.0f);
     REQUIRE(w == 20.0f);
     REQUIRE(h == 200.0f);
+
+    Initializer::term();
 }
 
 TEST_CASE("Duplication", "[tvgPaint]")
