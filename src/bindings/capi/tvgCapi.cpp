@@ -576,6 +576,13 @@ TVG_API Tvg_Result tvg_picture_get_size(const Tvg_Paint* paint, float* w, float*
 }
 
 
+TVG_API const Tvg_Paint* tvg_picture_get_paint(Tvg_Paint* paint, uint32_t id)
+{
+    if (!paint) return nullptr;
+    return (Tvg_Paint*) reinterpret_cast<Picture*>(paint)->paint(id);
+}
+
+
 /************************************************************************/
 /* Gradient API                                                         */
 /************************************************************************/

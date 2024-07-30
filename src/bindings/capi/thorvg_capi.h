@@ -2033,6 +2033,22 @@ TVG_API Tvg_Result tvg_picture_set_size(Tvg_Paint* paint, float w, float h);
 TVG_API Tvg_Result tvg_picture_get_size(const Tvg_Paint* paint, float* w, float* h);
 
 
+/*!
+* \brief Retrieve a paint object from the Picture scene by its Unique ID.
+*
+* This function searches for a paint object within the Picture scene that matches the provided @p id.
+*
+* \param[in] paint A Tvg_Paint pointer to the picture object.
+* \param[in] id The Unique ID of the paint object.
+
+* \return A pointer to the paint object that matches the given identifier, or @c nullptr if no matching paint object is found.
+*
+* \see tvg_accessor_generate_id()
+* \note experimental API
+*/
+TVG_API const Tvg_Paint* tvg_picture_get_paint(Tvg_Paint* paint, uint32_t id);
+
+
 /** \} */   // end defgroup ThorVGCapi_Picture
 
 
