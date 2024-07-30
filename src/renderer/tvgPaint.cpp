@@ -292,8 +292,9 @@ RenderData Paint::Impl::update(RenderMethod* renderer, const Matrix& pm, Array<R
     opacity = MULTIPLY(opacity, this->opacity);
 
     RenderData rd = nullptr;
-    auto m = pm * tr.m;
-    PAINT_METHOD(rd, update(renderer, m, clips, opacity, newFlag, clipper));
+
+    tr.cm = pm * tr.m;
+    PAINT_METHOD(rd, update(renderer, tr.cm, clips, opacity, newFlag, clipper));
 
     /* 3. Composition Post Processing */
     if (compFastTrack == Result::Success) renderer->viewport(viewport);
@@ -303,10 +304,10 @@ RenderData Paint::Impl::update(RenderMethod* renderer, const Matrix& pm, Array<R
 }
 
 
-bool Paint::Impl::bounds(float* x, float* y, float* w, float* h, bool transformed, bool stroking)
+bool Paint::Impl::bounds(float* x, float* y, float* w, float* h, bool transformed, bool stroking, bool origin)
 {
     bool ret;
-    const auto& m = this->transform();
+    const auto& m = this->transform(origin);
 
     //Case: No transformed, quick return!
     if (!transformed || mathIdentity(&m)) {
@@ -407,7 +408,7 @@ TVG_DEPRECATED Result Paint::bounds(float* x, float* y, float* w, float* h) cons
 
 Result Paint::bounds(float* x, float* y, float* w, float* h, bool transform) const noexcept
 {
-    if (pImpl->bounds(x, y, w, h, transform, true)) return Result::Success;
+    if (pImpl->bounds(x, y, w, h, transform, true, true)) return Result::Success;
     return Result::InsufficientCondition;
 }
 

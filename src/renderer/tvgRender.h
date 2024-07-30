@@ -111,7 +111,6 @@ struct RenderRegion
     }
 };
 
-
 struct RenderStroke
 {
     float width = 0.0f;
