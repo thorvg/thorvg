@@ -78,7 +78,7 @@ public:
      * @note Experimental API
      */
     const char* marker(uint32_t idx) noexcept;
-    
+
     /**
      * @brief Creates a new LottieAnimation object.
      *

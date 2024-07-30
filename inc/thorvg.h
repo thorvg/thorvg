@@ -1340,6 +1340,21 @@ public:
     Result load(uint32_t* data, uint32_t w, uint32_t h, bool premultiplied, bool copy = false) noexcept;
 
     /**
+     * @brief Retrieve a paint object from the Picture scene by its Unique ID.
+     *
+     * This function searches for a paint object within the Picture scene that matches the provided @p id.
+     *
+     * @param[in] id The Unique ID of the paint object.
+     *
+     * @return A pointer to the paint object that matches the given identifier, or @c nullptr if no matching paint object is found.
+     *
+     * @see Accessor::id()
+     *
+     * @note Experimental API
+     */
+    const Paint* paint(uint32_t id) noexcept;
+
+    /**
      * @brief Sets or removes the triangle mesh to deform the image.
      *
      * If a mesh is provided, the transform property of the Picture will apply to the triangle mesh, and the
