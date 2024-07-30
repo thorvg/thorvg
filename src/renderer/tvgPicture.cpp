@@ -220,3 +220,26 @@ uint32_t Picture::mesh(const Polygon** triangles) const noexcept
     if (triangles) *triangles = pImpl->rm.triangles;
     return pImpl->rm.triangleCnt;
 }
+
+
+const Paint* Picture::paint(uint32_t id) noexcept
+{
+    struct Value
+    {
+        uint32_t id;
+        const Paint* ret;
+    } value = {id, nullptr};
+
+    auto cb = [](const tvg::Paint* paint, void* data) -> bool
+    {
+        auto p = static_cast<Value*>(data);
+        if (p->id == paint->id) {
+            p->ret = paint;
+            return false;
+        }
+        return true;
+    };
+
+    tvg::Accessor::gen()->set(this, cb, &value);
+    return value.ret;
+}
