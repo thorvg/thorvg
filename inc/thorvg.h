@@ -391,15 +391,16 @@ public:
     /**
      * @brief Gets the axis-aligned bounding box of the paint object.
      *
-     * In case @p transform is @c true, all object's transformations are applied first, and then the bounding box is established. Otherwise, the bounding box is determined before any transformations.
-     *
      * @param[out] x The x-coordinate of the upper-left corner of the object.
      * @param[out] y The y-coordinate of the upper-left corner of the object.
      * @param[out] w The width of the object.
      * @param[out] h The height of the object.
-     * @param[in] transformed If @c true, the paint's transformations are taken into account, otherwise they aren't.
+     * @param[in] transformed If @c true, the paint's transformations are taken into account in the scene it belongs to. Otherwise they aren't.
      *
+     * @note This is useful when you need to figure out the bounding box of the paint in the canvas space.
      * @note The bounding box doesn't indicate the actual drawing region. It's the smallest rectangle that encloses the object.
+     * @note If @p transformed is @c true, the paint needs to be pushed into a canvas and updated before this api is called.
+     * @see Canvas::update()
      */
     Result bounds(float* x, float* y, float* w, float* h, bool transformed = false) const noexcept;
 

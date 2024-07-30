@@ -137,11 +137,17 @@ TEST_CASE("Paint Opacity", "[capiPaint]")
 
 TEST_CASE("Paint Bounds", "[capiPaint]")
 {
+    tvg_engine_init(TVG_ENGINE_SW, 0);
+    Tvg_Canvas* canvas = tvg_swcanvas_create();
+
     Tvg_Paint* paint = tvg_shape_new();
     REQUIRE(paint);
 
+    REQUIRE(tvg_canvas_push(canvas, paint) == TVG_RESULT_SUCCESS);
+
     float x, y, w, h;
 
+    REQUIRE(tvg_canvas_update_paint(canvas, paint) == TVG_RESULT_SUCCESS);
     REQUIRE(tvg_shape_append_rect(paint, 0, 10, 20, 100, 0, 0) == TVG_RESULT_SUCCESS);
     REQUIRE(tvg_paint_get_bounds(paint, &x, &y, &w, &h, true) == TVG_RESULT_SUCCESS);
 
@@ -164,6 +170,7 @@ TEST_CASE("Paint Bounds", "[capiPaint]")
     REQUIRE(w == 20);
     REQUIRE(h == 100);
 
+    REQUIRE(tvg_canvas_update_paint(canvas, paint) == TVG_RESULT_SUCCESS);
     REQUIRE(tvg_paint_get_bounds(paint, &x, &y, &w, &h, true) == TVG_RESULT_SUCCESS);
 
     REQUIRE(x == Approx(100.0f).margin(0.000001));
@@ -171,7 +178,8 @@ TEST_CASE("Paint Bounds", "[capiPaint]")
     REQUIRE(w == Approx(40.0f).margin(0.000001));
     REQUIRE(h == Approx(200.0f).margin(0.000001));
 
-    REQUIRE(tvg_paint_del(paint) == TVG_RESULT_SUCCESS);
+    tvg_canvas_destroy(canvas);
+    tvg_engine_term(TVG_ENGINE_SW);
 }
 
 TEST_CASE("Paint Duplication", "[capiPaint]")
