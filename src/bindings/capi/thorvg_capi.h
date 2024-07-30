@@ -954,12 +954,15 @@ TVG_API Tvg_Paint* tvg_paint_duplicate(Tvg_Paint* paint);
 * \param[out] y The y-coordinate of the upper-left corner of the object.
 * \param[out] w The width of the object.
 * \param[out] h The height of the object.
-* \param[in] transformed If @c true, the transformation of the paint is taken into account, otherwise it isn't.
+* \param[in] transformed If @c true, the paint's transformations are taken into account in the scene it belongs to. Otherwise they aren't.
 *
 * \return Tvg_Result enumeration.
 * \retval TVG_RESULT_INVALID_ARGUMENT An invalid Tvg_Paint pointer.
 *
+* \note This is useful when you need to figure out the bounding box of the paint in the canvas space.
 * \note The bounding box doesn't indicate the actual drawing region. It's the smallest rectangle that encloses the object.
+* \note If @p transformed is @c true, the paint needs to be pushed into a canvas and updated before this api is called.
+* \see tvg_canvas_update_paint()
 */
 TVG_API Tvg_Result tvg_paint_get_bounds(const Tvg_Paint* paint, float* x, float* y, float* w, float* h, bool transformed);
 

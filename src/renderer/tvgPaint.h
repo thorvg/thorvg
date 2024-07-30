@@ -52,7 +52,8 @@ namespace tvg
         RenderMethod* renderer = nullptr;
         BlendMethod blendMethod = BlendMethod::Normal;   //uint8_t
         struct {
-            Matrix m;
+            Matrix m;                 //input matrix
+            Matrix cm;                //multipled parents matrix
             float degree = 0.0f;      //rotation degree
             float scale = 1.0f;       //scale factor
             bool overriding = false;  //user transform?
@@ -111,10 +112,11 @@ namespace tvg
             return true;
         }
 
-        Matrix& transform()
+        Matrix& transform(bool origin = false)
         {
             //update transform
             if (renderFlag & RenderUpdateFlag::Transform) tr.update();
+            if (origin) return tr.cm;
             return tr.m;
         }
 
@@ -150,7 +152,7 @@ namespace tvg
         bool rotate(float degree);
         bool scale(float factor);
         bool translate(float x, float y);
-        bool bounds(float* x, float* y, float* w, float* h, bool transformed, bool stroking);
+        bool bounds(float* x, float* y, float* w, float* h, bool transformed, bool stroking, bool origin = false);
         RenderData update(RenderMethod* renderer, const Matrix& pm, Array<RenderData>& clips, uint8_t opacity, RenderUpdateFlag pFlag, bool clipper = false);
         bool render(RenderMethod* renderer);
         Paint* duplicate(Paint* ret = nullptr);
