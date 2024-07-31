@@ -289,7 +289,7 @@ bool TtfLoader::read()
         auto rglyph = reader.glyph(code[idx], gmetrics);
         if (rglyph != INVALID_GLYPH) {
             if (lglyph != INVALID_GLYPH) reader.kerning(lglyph, rglyph, kerning);
-            if (!reader.convert(shape, gmetrics, offset, kerning)) break;
+            if (!reader.convert(shape, gmetrics, offset, kerning, 1U)) break;
         }
         offset.x += (gmetrics.advanceWidth + kerning.x);
         lglyph = rglyph;
