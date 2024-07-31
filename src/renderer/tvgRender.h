@@ -159,7 +159,7 @@ struct RenderStroke
         begin = trim.begin;
         end = trim.end;
 
-        if (fabsf(end - begin) > 1.0f) {
+        if (fabsf(end - begin) >= 1.0f) {
             begin = 0.0f;
             end = 1.0f;
             return false;
@@ -224,7 +224,7 @@ struct RenderShape
     {
         if (!stroke) return false;
         if (stroke->trim.begin == 0.0f && stroke->trim.end == 1.0f) return false;
-        if (fabsf(stroke->trim.end - stroke->trim.begin) > 1.0f) return false;
+        if (fabsf(stroke->trim.end - stroke->trim.begin) >= 1.0f) return false;
         return true;
     }
 
