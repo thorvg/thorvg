@@ -119,6 +119,7 @@ struct LottieObject
     }
 
     virtual bool mergeable() { return false; }
+    virtual LottieProperty* property(uint16_t ix) { return nullptr; }
 
     unsigned long id = 0;
     Type type;
@@ -343,6 +344,13 @@ struct LottieEllipse : LottieShape
     void prepare()
     {
         LottieShape::prepare(LottieObject::Ellipse);
+    }
+
+    LottieProperty* property(uint16_t ix) override
+    {
+        if (position.ix == ix) return &position;
+        if (size.ix == ix) return &size;
+        return nullptr;
     }
 
     LottiePosition position = Point{0.0f, 0.0f};
