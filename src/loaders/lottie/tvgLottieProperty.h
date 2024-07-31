@@ -176,11 +176,13 @@ struct LottieVectorFrame
 struct LottieProperty
 {
     enum class Type : uint8_t { Point = 0, Float, Opacity, Color, PathSet, ColorStop, Position, TextDoc, Invalid };
-    virtual ~LottieProperty() {}
 
     LottieExpression* exp = nullptr;
+    Type type;
+    uint8_t ix;  //property index
 
     //TODO: Apply common bodies?
+    virtual ~LottieProperty() {}
     virtual uint32_t frameCnt() = 0;
     virtual uint32_t nearest(float time) = 0;
     virtual float frameNo(int32_t key) = 0;
@@ -196,7 +198,6 @@ struct LottieExpression
     LottieLayer* layer;
     LottieObject* object;
     LottieProperty* property;
-    LottieProperty::Type type;
 
     bool enabled;
 
@@ -205,7 +206,7 @@ struct LottieExpression
         float in = FLT_MAX;    //looping duration in frame number
         LoopMode mode = None;
     } loop;
-;
+
     ~LottieExpression()
     {
         free(code);

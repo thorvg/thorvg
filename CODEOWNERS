@@ -12,9 +12,5 @@
 /src/loaders/svg/ @JSUYA @mgrudzinska
 /src/loaders/webp/ @JSUYA
 /src/bindings/capi @mgrudzinska
-/src/bindings/wasm @tinyjin
 /src/savers/gif/ @JSUYA
 /src/tools/svg2png/ @JSUYA
-/examples/ @JSUYA @RuiwenTang @SergeyLebedkin @tinyjin @mgrudzinska
-/test/* @JSUYA @RuiwenTang @SergeyLebedkin @tinyjin @mgrudzinska
-/.github/workflows/* @JSUYA

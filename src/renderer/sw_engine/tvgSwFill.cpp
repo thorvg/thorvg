@@ -58,7 +58,7 @@ static void _calculateCoefficients(const SwFill* fill, uint32_t x, uint32_t y, f
     auto deltaDeltaRr = 2.0f * (radial->a11 * radial->a11 + radial->a21 * radial->a21) * radial->invA;
 
     det = b * b + (rr - radial->fr * radial->fr) * radial->invA;
-    deltaDet = 2.0f * b * deltaB + deltaB * deltaB + deltaRr + deltaDeltaRr;
+    deltaDet = 2.0f * b * deltaB + deltaB * deltaB + deltaRr + deltaDeltaRr * 0.5f;
     deltaDeltaDet = 2.0f * deltaB * deltaB + deltaDeltaRr;
 }
 
@@ -205,7 +205,7 @@ static bool _updateColorTable(SwFill* fill, const Fill* fdata, const SwSurface* 
 }
 
 
-bool _prepareLinear(SwFill* fill, const LinearGradient* linear, const Matrix* transform)
+bool _prepareLinear(SwFill* fill, const LinearGradient* linear, const Matrix& transform)
 {
     float x1, x2, y1, y2;
     if (linear->linear(&x1, &y1, &x2, &y2) != Result::Success) return false;
@@ -224,9 +224,9 @@ bool _prepareLinear(SwFill* fill, const LinearGradient* linear, const Matrix* tr
     bool isTransformation = !identity((const Matrix*)(&gradTransform));
 
     if (isTransformation) {
-        if (transform) gradTransform = *transform * gradTransform;
-    } else if (transform) {
-        gradTransform = *transform;
+        gradTransform = transform * gradTransform;
+    } else {
+        gradTransform = transform;
         isTransformation = true;
     }
 
@@ -245,7 +245,7 @@ bool _prepareLinear(SwFill* fill, const LinearGradient* linear, const Matrix* tr
 }
 
 
-bool _prepareRadial(SwFill* fill, const RadialGradient* radial, const Matrix* transform)
+bool _prepareRadial(SwFill* fill, const RadialGradient* radial, const Matrix& transform)
 {
     auto cx = P(radial)->cx;
     auto cy = P(radial)->cy;
@@ -287,12 +287,10 @@ bool _prepareRadial(SwFill* fill, const RadialGradient* radial, const Matrix* tr
     auto gradTransform = radial->transform();
     bool isTransformation = !identity((const Matrix*)(&gradTransform));
 
-    if (transform) {
-        if (isTransformation) gradTransform = *transform * gradTransform;
-        else {
-            gradTransform = *transform;
-            isTransformation = true;
-        }
+    if (isTransformation) gradTransform = transform * gradTransform;
+    else {
+        gradTransform = transform;
+        isTransformation = true;
     }
 
     if (isTransformation) {
@@ -814,7 +812,7 @@ void fillLinear(const SwFill* fill, uint32_t* dst, uint32_t y, uint32_t x, uint3
 }
 
 
-bool fillGenColorTable(SwFill* fill, const Fill* fdata, const Matrix* transform, SwSurface* surface, uint8_t opacity, bool ctable)
+bool fillGenColorTable(SwFill* fill, const Fill* fdata, const Matrix& transform, SwSurface* surface, uint8_t opacity, bool ctable)
 {
     if (!fill) return false;
 

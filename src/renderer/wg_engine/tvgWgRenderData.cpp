@@ -286,7 +286,7 @@ void WgRenderDataShape::updateBBox(WgPoint pmin, WgPoint pmax)
 }
 
 
-void WgRenderDataShape::updateMeshes(WgContext &context, const RenderShape &rshape, const RenderTransform* rt)
+void WgRenderDataShape::updateMeshes(WgContext &context, const RenderShape &rshape, const Matrix& rt)
 {
     releaseMeshes(context);
     strokeFirst = rshape.stroke ? rshape.stroke->strokeFirst : false;
@@ -308,10 +308,10 @@ void WgRenderDataShape::updateMeshes(WgContext &context, const RenderShape &rsha
             polylines.last()->close();
         } else if (cmd == PathCommand::CubicTo) {
             assert(polylines.last()->pts.count > 0);
-            WgPoint pt0 = polylines.last()->pts.last().trans(rt->m);
-            WgPoint pt1 = WgPoint(rshape.path.pts[pntIndex + 0]).trans(rt->m);
-            WgPoint pt2 = WgPoint(rshape.path.pts[pntIndex + 1]).trans(rt->m);
-            WgPoint pt3 = WgPoint(rshape.path.pts[pntIndex + 2]).trans(rt->m);
+            WgPoint pt0 = polylines.last()->pts.last().trans(rt);
+            WgPoint pt1 = WgPoint(rshape.path.pts[pntIndex + 0]).trans(rt);
+            WgPoint pt2 = WgPoint(rshape.path.pts[pntIndex + 1]).trans(rt);
+            WgPoint pt3 = WgPoint(rshape.path.pts[pntIndex + 2]).trans(rt);
             uint32_t nsegs = (uint32_t)(pt0.dist(pt1) + pt1.dist(pt2) + pt2.dist(pt3));
             polylines.last()->appendCubic(
                 rshape.path.pts[pntIndex + 0],

@@ -1084,7 +1084,7 @@ static bool _apply(SwSurface* surface, AASpans* aaSpans)
     | /  |
     3 -- 2
 */
-static bool _rasterTexmapPolygon(SwSurface* surface, const SwImage* image, const Matrix* transform, const SwBBox* region, uint8_t opacity)
+static bool _rasterTexmapPolygon(SwSurface* surface, const SwImage* image, const Matrix& transform, const SwBBox* region, uint8_t opacity)
 {
     if (surface->channelSize == sizeof(uint8_t)) {
         TVGERR("SW_ENGINE", "Not supported grayscale Textmap polygon!");
@@ -1092,7 +1092,7 @@ static bool _rasterTexmapPolygon(SwSurface* surface, const SwImage* image, const
     }
 
     //Exceptions: No dedicated drawing area?
-    if ((!image->rle && !region) || (image->rle && image->rle->size == 0)) return false;
+    if ((!image->rle && !region) || (image->rle && image->rle->size == 0)) return true;
 
    /* Prepare vertices.
       shift XY coordinates to match the sub-pixeling technique. */
@@ -1104,7 +1104,7 @@ static bool _rasterTexmapPolygon(SwSurface* surface, const SwImage* image, const
 
     float ys = FLT_MAX, ye = -1.0f;
     for (int i = 0; i < 4; i++) {
-        if (transform) vertices[i].pt *= *transform;
+        vertices[i].pt *= transform;
         if (vertices[i].pt.y < ys) ys = vertices[i].pt.y;
         if (vertices[i].pt.y > ye) ye = vertices[i].pt.y;
     }
@@ -1150,7 +1150,7 @@ static bool _rasterTexmapPolygon(SwSurface* surface, const SwImage* image, const
       Should provide two Polygons, one for each triangle.
       // TODO: region?
 */
-static bool _rasterTexmapPolygonMesh(SwSurface* surface, const SwImage* image, const RenderMesh* mesh, const Matrix* transform, const SwBBox* region, uint8_t opacity)
+static bool _rasterTexmapPolygonMesh(SwSurface* surface, const SwImage* image, const RenderMesh* mesh, const Matrix& transform, const SwBBox* region, uint8_t opacity)
 {
     if (surface->channelSize == sizeof(uint8_t)) {
         TVGERR("SW_ENGINE", "Not supported grayscale Textmap polygon mesh!");
@@ -1165,9 +1165,9 @@ static bool _rasterTexmapPolygonMesh(SwSurface* surface, const SwImage* image, c
     float ys = FLT_MAX, ye = -1.0f;
     for (uint32_t i = 0; i < mesh->triangleCnt; i++) {
         transformedTris[i] = mesh->triangles[i];
-        transformedTris[i].vertex[0].pt *= *transform;
-        transformedTris[i].vertex[1].pt *= *transform;
-        transformedTris[i].vertex[2].pt *= *transform;
+        transformedTris[i].vertex[0].pt *= transform;
+        transformedTris[i].vertex[1].pt *= transform;
+        transformedTris[i].vertex[2].pt *= transform;
 
         if (transformedTris[i].vertex[0].pt.y < ys) ys = transformedTris[i].vertex[0].pt.y;
         else if (transformedTris[i].vertex[0].pt.y > ye) ye = transformedTris[i].vertex[0].pt.y;
