@@ -179,10 +179,10 @@ struct LottieProperty
 
     LottieExpression* exp = nullptr;
     Type type;
-
-    virtual ~LottieProperty() {}
+    uint8_t ix;  //property index
 
     //TODO: Apply common bodies?
+    virtual ~LottieProperty() {}
     virtual uint32_t frameCnt() = 0;
     virtual uint32_t nearest(float time) = 0;
     virtual float frameNo(int32_t key) = 0;
@@ -206,7 +206,7 @@ struct LottieExpression
         float in = FLT_MAX;    //looping duration in frame number
         LoopMode mode = None;
     } loop;
-;
+
     ~LottieExpression()
     {
         free(code);
