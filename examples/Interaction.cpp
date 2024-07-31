@@ -42,7 +42,7 @@ struct UserExample : tvgexam::Example
         return false;
     }
 
-    bool clicked(tvg::Canvas* canvas, int32_t x, int32_t y) override
+    bool clickdown(tvg::Canvas* canvas, int32_t x, int32_t y) override
     {
         auto picture = animation->picture();
 
