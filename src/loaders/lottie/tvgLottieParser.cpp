@@ -513,6 +513,8 @@ void LottieParser::parseProperty(T& prop, LottieObject* obj)
             comp->slots.push(new LottieSlot(sid, obj, type));
         } else if (KEY_AS("x")) {
             prop.exp = _expression(getStringCopy(), comp, context.layer, context.parent, &prop);
+        } else if (KEY_AS("ix")) {
+            prop.ix = getInt();
         } else skip(key);
     }
     prop.type = type;
