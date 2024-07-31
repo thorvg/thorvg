@@ -329,8 +329,9 @@ void WgRenderDataShape::updateMeshes(WgContext &context, const RenderShape &rsha
     }
     // proceed strokes
     if (rshape.stroke) {
-        float trimBegin = rshape.stroke->trim.begin;
-        float trimEnd   = rshape.stroke->trim.end;
+        float trimBegin{};
+        float trimEnd{};
+        if (!rshape.stroke->strokeTrim(trimBegin, trimEnd)) { trimBegin = 0.0f; trimEnd = 1.0f; }
         if (rshape.stroke->trim.simultaneous) {
             for (uint32_t i = 0; i < polylines.count; i++)
                 updateStrokes(context, polylines[i], rshape.stroke, trimBegin, trimEnd);
