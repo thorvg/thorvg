@@ -64,7 +64,7 @@ public:
     bool header();
     uint32_t glyph(uint32_t codepoint, TtfGlyphMetrics& gmetrics);
     void kerning(uint32_t lglyph, uint32_t rglyph, Point& out);
-    bool convert(Shape* shape, TtfGlyphMetrics& gmetrics, const Point& offset, const Point& kerning);
+    bool convert(Shape* shape, TtfGlyphMetrics& gmetrics, const Point& offset, const Point& kerning, uint16_t componentDepth);
 
 private:
     //table offsets
@@ -73,6 +73,7 @@ private:
     uint32_t loca = 0;
     uint32_t glyf = 0;
     uint32_t kern = 0;
+    uint32_t maxp = 0;
 
     uint32_t cmap_12_13(uint32_t table, uint32_t codepoint, int which) const;
     uint32_t cmap_4(uint32_t table, uint32_t codepoint) const;
@@ -81,6 +82,8 @@ private:
     uint32_t table(const char* tag);
     uint32_t outlineOffset(uint32_t glyph);
     uint32_t glyph(uint32_t codepoint);
+    bool glyphMetrics(uint32_t glyphIndex, TtfGlyphMetrics& gmetrics);
+    bool convertComposite(Shape* shape, TtfGlyphMetrics& gmetrics, const Point& offset, const Point& kerning, uint16_t componentDepth);
     bool genPath(uint8_t* flags, uint16_t basePoint, uint16_t count);
     bool genSimpleOutline(Shape* shape, uint32_t outline, uint32_t cntrsCnt);
     bool points(uint32_t outline, uint8_t* flags, Point* pts, uint32_t ptsCnt, const Point& offset);

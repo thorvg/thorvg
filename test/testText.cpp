@@ -141,4 +141,25 @@ TEST_CASE("Text Basic", "[tvgText]")
     Initializer::term(CanvasEngine::Sw);
 }
 
+TEST_CASE("Text with composite glyphs", "[tvgText]")
+{
+    Initializer::init(tvg::CanvasEngine::Sw, 0);
+
+    auto canvas = SwCanvas::gen();
+
+    auto text = Text::gen();
+    REQUIRE(text);
+
+    REQUIRE(Text::load(TEST_DIR"/Arial.ttf") == tvg::Result::Success);
+    REQUIRE(text->font("Arial", 80) == tvg::Result::Success);
+
+    REQUIRE(text->text("\xc5\xbb\x6f\xc5\x82\xc4\x85\x64\xc5\xba \xc8\xab") == tvg::Result::Success);
+
+    REQUIRE(text->fill(255, 255, 255) == tvg::Result::Success);
+
+    REQUIRE(canvas->push(std::move(text)) == Result::Success);
+
+    Initializer::term(tvg::CanvasEngine::Sw);
+}
+
 #endif

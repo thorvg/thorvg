@@ -391,31 +391,36 @@ uint32_t TtfReader::glyph(uint32_t codepoint, TtfGlyphMetrics& gmetrics)
         TVGERR("TTF", "invalid glyph id, codepoint(0x%x)", codepoint);
         return INVALID_GLYPH;
     }
+    
+    return glyphMetrics(glyph, gmetrics) ? glyph : INVALID_GLYPH;
+}
 
+bool TtfReader::glyphMetrics(uint32_t glyphIndex, TtfGlyphMetrics& gmetrics)
+{
     //horizontal metrics
     if (!hmtx) hmtx = table("hmtx");
 
     //glyph is inside long metrics segment.
-    if (glyph < metrics.numHmtx) {
-        auto offset = hmtx + 4 * glyph;
-        if (!validate(offset, 4)) return INVALID_GLYPH;
+    if (glyphIndex < metrics.numHmtx) {
+        auto offset = hmtx + 4 * glyphIndex;
+        if (!validate(offset, 4)) return false;
         gmetrics.advanceWidth = _u16(data, offset);
         gmetrics.leftSideBearing = _i16(data, offset + 2);
     /* glyph is inside short metrics segment. */
     } else {
         auto boundary = hmtx + 4U * (uint32_t) metrics.numHmtx;
-        if (boundary < 4) return INVALID_GLYPH;
+        if (boundary < 4) return false;
 
         auto offset = boundary - 4;
-        if (!validate(offset, 4)) return INVALID_GLYPH;
+        if (!validate(offset, 4)) return false;
         gmetrics.advanceWidth = _u16(data, offset);
-        offset = boundary + 2 * (glyph - metrics.numHmtx);
-        if (!validate(offset, 2)) return INVALID_GLYPH;
+        offset = boundary + 2 * (glyphIndex - metrics.numHmtx);
+        if (!validate(offset, 2)) return false;
         gmetrics.leftSideBearing = _i16(data, offset);
     }
 
-    gmetrics.outline = outlineOffset(glyph);
-    if (!gmetrics.outline || !validate(gmetrics.outline, 10)) return INVALID_GLYPH;
+    gmetrics.outline = outlineOffset(glyphIndex);
+    if (!gmetrics.outline || !validate(gmetrics.outline, 10)) return false;
 
     //read the bounding box from the font file verbatim.
     float bbox[4];
@@ -424,22 +429,31 @@ uint32_t TtfReader::glyph(uint32_t codepoint, TtfGlyphMetrics& gmetrics)
     bbox[2] = static_cast<float>(_i16(data, gmetrics.outline + 6));
     bbox[3] = static_cast<float>(_i16(data, gmetrics.outline + 8));
 
-    if (bbox[2] <= bbox[0] || bbox[3] <= bbox[1]) return INVALID_GLYPH;
+    if (bbox[2] <= bbox[0] || bbox[3] <= bbox[1]) return false;
 
     gmetrics.minw = bbox[2] - bbox[0] + 1;
     gmetrics.minh = bbox[3] - bbox[1] + 1;
     gmetrics.yOffset = bbox[3];
 
-    return glyph;
+    return true;
 }
 
-
-bool TtfReader::convert(Shape* shape, TtfGlyphMetrics& gmetrics, const Point& offset, const Point& kerning)
+bool TtfReader::convert(Shape* shape, TtfGlyphMetrics& gmetrics, const Point& offset, const Point& kerning, uint16_t componentDepth)
 {
     #define ON_CURVE 0x01
 
-    auto cntrsCnt = (uint32_t) _i16(data, gmetrics.outline);
-    if (cntrsCnt == 0) return false;
+    auto outlineCnt = _i16(data, gmetrics.outline);
+    if (outlineCnt == 0) return false;
+    if (outlineCnt < 0) {
+        uint16_t maxComponentDepth = 1U;
+        if (!maxp) maxp = table("maxp");
+        if (validate(maxp, 32) && _u32(data, maxp) >= 0x00010000U) { // >= version 1.0
+            maxComponentDepth = _u16(data, maxp + 30);
+        }
+        if (componentDepth > maxComponentDepth) return false;
+        return convertComposite(shape, gmetrics, offset, kerning, componentDepth + 1);
+    }
+    auto cntrsCnt = (uint32_t) outlineCnt;
 
     auto outline = gmetrics.outline + 10;
     if (!validate(outline, cntrsCnt * 2 + 2)) return false;
@@ -509,6 +523,73 @@ bool TtfReader::convert(Shape* shape, TtfGlyphMetrics& gmetrics, const Point& of
         pathCmds.push(PathCommand::Close);
         begin = endPts[i] + 1;
     }
+    return true;
+}
+
+bool TtfReader::convertComposite(Shape* shape, TtfGlyphMetrics& gmetrics, const Point& offset, const Point& kerning, uint16_t componentDepth)
+{
+    #define ARG_1_AND_2_ARE_WORDS 0x0001
+    #define ARGS_ARE_XY_VALUES 0x0002
+    #define WE_HAVE_A_SCALE 0x0008
+    #define MORE_COMPONENTS 0x0020
+    #define WE_HAVE_AN_X_AND_Y_SCALE 0x0040
+    #define WE_HAVE_A_TWO_BY_TWO 0x0080
+
+    TtfGlyphMetrics componentGmetrics;
+    Point componentOffset;
+    uint16_t flags, glyphIndex;
+    uint32_t pointer = gmetrics.outline + 10;
+    do {
+        if (!validate(pointer, 4)) return false;
+        flags = _u16(data, pointer);
+        glyphIndex = _u16(data, pointer + 2U);
+        pointer += 4U;
+        if (flags & ARG_1_AND_2_ARE_WORDS) {
+            if (!validate(pointer, 4)) return false;
+            if(flags & ARGS_ARE_XY_VALUES) {
+                componentOffset.x = static_cast<float>(_i16(data, pointer));
+                componentOffset.y = -static_cast<float>(_i16(data, pointer + 2U));
+            } else {
+                // TODO align to parent point
+                componentOffset.x = 0;
+                componentOffset.y = 0;
+            }
+            pointer += 4U;
+        } else {
+            if (!validate(pointer, 2)) return false;
+            if(flags & ARGS_ARE_XY_VALUES) {
+                componentOffset.x = static_cast<float>((int8_t)_u8(data, pointer));
+                componentOffset.y = -static_cast<float>((int8_t)_u8(data, pointer + 1U));
+            } else {
+                // TODO align to parent point
+                componentOffset.x = 0;
+                componentOffset.y = 0;
+            }
+            pointer += 2U;
+        }
+        if (flags & WE_HAVE_A_SCALE) {
+            if (!validate(pointer, 2)) return false;
+            // TODO transformation
+            // F2DOT14  scale;    /* Format 2.14 */
+            pointer += 2U;
+        } else if (flags & WE_HAVE_AN_X_AND_Y_SCALE) {
+            if (!validate(pointer, 4)) return false;
+            // TODO transformation
+            // F2DOT14  xscale;    /* Format 2.14 */
+            // F2DOT14  yscale;    /* Format 2.14 */
+            pointer += 4U;
+        } else if (flags & WE_HAVE_A_TWO_BY_TWO) {
+            if (!validate(pointer, 8)) return false;
+            // TODO transformation
+            // F2DOT14  xscale;    /* Format 2.14 */
+            // F2DOT14  scale01;   /* Format 2.14 */
+            // F2DOT14  scale10;   /* Format 2.14 */
+            // F2DOT14  yscale;    /* Format 2.14 */
+            pointer += 8U;
+        }
+        if (!glyphMetrics(glyphIndex, componentGmetrics)) return false;
+        if (!convert(shape, componentGmetrics, offset + componentOffset, kerning, componentDepth)) return false;
+    } while (flags & MORE_COMPONENTS);
     return true;
 }
 
