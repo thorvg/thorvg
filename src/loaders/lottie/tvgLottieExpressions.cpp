@@ -317,7 +317,7 @@ static void _buildLayer(jerry_value_t context, float frameNo, LottieLayer* layer
 
 static jerry_value_t _value(float frameNo, LottieExpression* exp)
 {
-    switch (exp->type) {
+    switch (exp->property->type) {
         case LottieProperty::Type::Point: {
             auto value = jerry_object();
             auto pos = (*static_cast<LottiePoint*>(exp->property))(frameNo);
@@ -352,7 +352,7 @@ static jerry_value_t _value(float frameNo, LottieExpression* exp)
             return value;
         }
         default: {
-            TVGERR("LOTTIE", "Non supported type for value? = %d", (int) exp->type);
+            TVGERR("LOTTIE", "Non supported type for value? = %d", (int) exp->property->type);
         }
     }
     return jerry_undefined();
@@ -737,7 +737,7 @@ static jerry_value_t _velocityAtTime(const jerry_call_info_t* info, const jerry_
     Point cur, prv;
 
     //compute the velocity
-    switch (exp->type) {
+    switch (exp->property->type) {
         case LottieProperty::Type::Point: {
             prv = (*static_cast<LottiePoint*>(exp->property))(pframe);
             cur = (*static_cast<LottiePoint*>(exp->property))(cframe);
@@ -781,7 +781,7 @@ static jerry_value_t _speedAtTime(const jerry_call_info_t* info, const jerry_val
     Point cur, prv;
 
     //compute the velocity
-    switch (exp->type) {
+    switch (exp->property->type) {
         case LottieProperty::Type::Point: {
             prv = (*static_cast<LottiePoint*>(exp->property))(pframe);
             cur = (*static_cast<LottiePoint*>(exp->property))(cframe);
@@ -1309,7 +1309,7 @@ jerry_value_t LottieExpressions::evaluate(float frameNo, LottieExpression* exp)
     jerry_object_set_native_ptr(thisProperty, nullptr, exp->property);
     _buildProperty(frameNo, global, exp);
 
-    if (exp->type == LottieProperty::Type::PathSet) _buildPath(thisProperty, exp);
+    if (exp->property->type == LottieProperty::Type::PathSet) _buildPath(thisProperty, exp);
     if (exp->object->type == LottieObject::Transform) _buildTransform(global, frameNo, static_cast<LottieTransform*>(exp->object));
 
     //evaluate the code
