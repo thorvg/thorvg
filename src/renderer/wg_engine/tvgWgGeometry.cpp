@@ -107,7 +107,6 @@ void WgPolyline::appendCubic(WgPoint p1, WgPoint p2, WgPoint p3, size_t nsegs)
 void WgPolyline::trim(WgPolyline* polyline, float trimBegin, float trimEnd) const
 {
     assert(polyline);
-    polyline->clear();
     float begLen = len * trimBegin;
     float endLen = len * trimEnd;
     float currentLength = 0.0f;
