@@ -175,7 +175,7 @@ static bool _updateTransform(LottieTransform* transform, float frameNo, bool aut
     }
 
     if (transform->coords) {
-        mathTranslate(&matrix, transform->coords->x(frameNo), transform->coords->y(frameNo));
+        mathTranslate(&matrix, transform->coords->x(frameNo, exps), transform->coords->y(frameNo, exps));
     } else {
         auto position = transform->position(frameNo, exps);
         mathTranslate(&matrix, position.x, position.y);
