@@ -232,6 +232,12 @@ struct LottieText : LottieObject, LottieRenderPooler<tvg::Shape>
         this->prepare();
     }
 
+    LottieProperty* property(uint16_t ix) override
+    {
+        if (doc.ix == ix) return &doc;
+        return nullptr;
+    }
+
     LottieTextDoc doc;
     LottieFont* font;
     Array<LottieTextRange*> ranges;
@@ -256,6 +262,14 @@ struct LottieTrimpath : LottieObject
     {
         if (!start.frames && start.value == 0.0f && !end.frames && end.value == 100.0f && !offset.frames && offset.value == 0.0f) return true;
         return false;
+    }
+
+    LottieProperty* property(uint16_t ix) override
+    {
+        if (start.ix == ix) return &start;
+        if (end.ix == ix) return &end;
+        if (offset.ix == ix) return &offset;
+        return nullptr;
     }
 
     void segment(float frameNo, float& start, float& end, LottieExpressions* exps);
@@ -291,6 +305,13 @@ struct LottieRoundedCorner : LottieObject
     {
         LottieObject::type = LottieObject::RoundedCorner;
     }
+
+    LottieProperty* property(uint16_t ix) override
+    {
+        if (radius.ix == ix) return &radius;
+        return nullptr;
+    }
+
     LottieFloat radius = 0.0f;
 };
 
@@ -302,6 +323,12 @@ struct LottiePath : LottieShape
         LottieShape::prepare(LottieObject::Path);
     }
 
+    LottieProperty* property(uint16_t ix) override
+    {
+        if (pathset.ix == ix) return &pathset;
+        return nullptr;
+    }
+
     LottiePathSet pathset;
 };
 
@@ -311,6 +338,14 @@ struct LottieRect : LottieShape
     void prepare()
     {
         LottieShape::prepare(LottieObject::Rect);
+    }
+
+    LottieProperty* property(uint16_t ix) override
+    {
+        if (position.ix == ix) return &position;
+        if (size.ix == ix) return &size;
+        if (radius.ix == ix) return &radius;
+        return nullptr;
     }
 
     LottiePosition position = Point{0.0f, 0.0f};
@@ -326,6 +361,18 @@ struct LottiePolyStar : LottieShape
     void prepare()
     {
         LottieShape::prepare(LottieObject::Polystar);
+    }
+
+    LottieProperty* property(uint16_t ix) override
+    {
+        if (position.ix == ix) return &position;
+        if (innerRadius.ix == ix) return &innerRadius;
+        if (outerRadius.ix == ix) return &outerRadius;
+        if (innerRoundness.ix == ix) return &innerRoundness;
+        if (outerRoundness.ix == ix) return &outerRoundness;
+        if (rotation.ix == ix) return &rotation;
+        if (ptsCnt.ix == ix) return &ptsCnt;
+        return nullptr;
     }
 
     LottiePosition position = Point{0.0f, 0.0f};
@@ -389,6 +436,22 @@ struct LottieTransform : LottieObject
         return false;
     }
 
+    LottieProperty* property(uint16_t ix) override
+    {
+        if (position.ix == ix) return &position;
+        if (rotation.ix == ix) return &rotation;
+        if (scale.ix == ix) return &scale;
+        if (anchor.ix == ix) return &anchor;
+        if (opacity.ix == ix) return &opacity;
+        if (skewAngle.ix == ix) return &skewAngle;
+        if (skewAxis.ix == ix) return &skewAxis;
+        if (coords) {
+            if (coords->x.ix == ix) return &coords->x;
+            if (coords->y.ix == ix) return &coords->y;
+        }
+        return nullptr;
+    }
+
     LottiePosition position = Point{0.0f, 0.0f};
     LottieFloat rotation = 0.0f;           //z rotation
     LottiePoint scale = Point{100.0f, 100.0f};
@@ -406,6 +469,13 @@ struct LottieSolid : LottieObject
 {
     LottieColor color = RGB24{255, 255, 255};
     LottieOpacity opacity = 255;
+
+    LottieProperty* property(uint16_t ix) override
+    {
+        if (color.ix == ix) return &color;
+        if (opacity.ix == ix) return &opacity;
+        return nullptr;
+    }
 };
 
 
@@ -414,6 +484,17 @@ struct LottieSolidStroke : LottieSolid, LottieStroke
     void prepare()
     {
         LottieObject::type = LottieObject::SolidStroke;
+    }
+
+    LottieProperty* property(uint16_t ix) override
+    {
+        if (width.ix == ix) return &width;
+        if (dashattr) {
+            if (dashattr->value[0].ix == ix) return &dashattr->value[0];
+            if (dashattr->value[1].ix == ix) return &dashattr->value[1];
+            if (dashattr->value[2].ix == ix) return &dashattr->value[2];
+        }
+        return LottieSolid::property(ix);
     }
 
     void override(LottieProperty* prop) override
@@ -458,6 +539,18 @@ struct LottieGradient : LottieObject
         return false;
     }
 
+    LottieProperty* property(uint16_t ix) override
+    {
+        if (start.ix == ix) return &start;
+        if (end.ix == ix) return &end;
+        if (height.ix == ix) return &height;
+        if (angle.ix == ix) return &angle;
+        if (opacity.ix == ix) return &opacity;
+        if (colorStops.ix == ix) return &colorStops;
+        return nullptr;
+    }
+
+
     uint32_t populate(ColorStop& color);
     Fill* fill(float frameNo, LottieExpressions* exps);
 
@@ -497,6 +590,17 @@ struct LottieGradientStroke : LottieGradient, LottieStroke
         LottieGradient::prepare();
     }
 
+    LottieProperty* property(uint16_t ix) override
+    {
+        if (width.ix == ix) return &width;
+        if (dashattr) {
+            if (dashattr->value[0].ix == ix) return &dashattr->value[0];
+            if (dashattr->value[1].ix == ix) return &dashattr->value[1];
+            if (dashattr->value[2].ix == ix) return &dashattr->value[2];
+        }
+        return LottieGradient::property(ix);
+    }
+
     void override(LottieProperty* prop) override
     {
         this->colorStops = *static_cast<LottieColorStop*>(prop);
@@ -526,6 +630,19 @@ struct LottieRepeater : LottieObject
     void prepare()
     {
         LottieObject::type = LottieObject::Repeater;
+    }
+
+    LottieProperty* property(uint16_t ix) override
+    {
+        if (copies.ix == ix) return &copies;
+        if (offset.ix == ix) return &offset;
+        if (position.ix == ix) return &position;
+        if (rotation.ix == ix) return &rotation;
+        if (scale.ix == ix) return &scale;
+        if (anchor.ix == ix) return &anchor;
+        if (startOpacity.ix == ix) return &startOpacity;
+        if (endOpacity.ix == ix) return &endOpacity;
+        return nullptr;
     }
 
     LottieFloat copies = 0.0f;
