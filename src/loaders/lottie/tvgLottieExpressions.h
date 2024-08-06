@@ -42,14 +42,12 @@ public:
     bool result(float frameNo, NumType& out, LottieExpression* exp)
     {
         auto bm_rt = evaluate(frameNo, exp);
+        if (jerry_value_is_undefined(bm_rt)) return false;
 
         if (jerry_value_is_number(bm_rt)) {
             out = (NumType) jerry_value_as_number(bm_rt);
         } else if (auto prop = static_cast<Property*>(jerry_object_get_native_ptr(bm_rt, nullptr))) {
             out = (*prop)(frameNo);
-        } else {
-            TVGERR("LOTTIE", "Failed dispatching a Value!");
-            return false;
         }
         jerry_value_free(bm_rt);
         return true;
@@ -59,6 +57,7 @@ public:
     bool result(float frameNo, Point& out, LottieExpression* exp)
     {
         auto bm_rt = evaluate(frameNo, exp);
+        if (jerry_value_is_undefined(bm_rt)) return false;
 
         if (jerry_value_is_object(bm_rt)) {
             if (auto prop = static_cast<Property*>(jerry_object_get_native_ptr(bm_rt, nullptr))) {
@@ -71,9 +70,6 @@ public:
                 jerry_value_free(x);
                 jerry_value_free(y);
             }
-        } else {
-            TVGERR("LOTTIE", "Failed dispatching Point!");
-            return false;
         }
         jerry_value_free(bm_rt);
         return true;
@@ -83,12 +79,10 @@ public:
     bool result(float frameNo, RGB24& out, LottieExpression* exp)
     {
         auto bm_rt = evaluate(frameNo, exp);
+        if (jerry_value_is_undefined(bm_rt)) return false;
 
         if (auto color = static_cast<Property*>(jerry_object_get_native_ptr(bm_rt, nullptr))) {
             out = (*color)(frameNo);
-        } else {
-            TVGERR("LOTTIE", "Failed dispatching Color!");
-            return false;
         }
         jerry_value_free(bm_rt);
         return true;
@@ -98,12 +92,10 @@ public:
     bool result(float frameNo, Fill* fill, LottieExpression* exp)
     {
         auto bm_rt = evaluate(frameNo, exp);
+        if (jerry_value_is_undefined(bm_rt)) return false;
 
         if (auto colorStop = static_cast<Property*>(jerry_object_get_native_ptr(bm_rt, nullptr))) {
             (*colorStop)(frameNo, fill, this);
-        } else {
-            TVGERR("LOTTIE", "Failed dispatching ColorStop!");
-            return false;
         }
         jerry_value_free(bm_rt);
         return true;
@@ -113,13 +105,11 @@ public:
     bool result(float frameNo, Array<PathCommand>& cmds, Array<Point>& pts, Matrix* transform, float roundness, LottieExpression* exp)
     {
         auto bm_rt = evaluate(frameNo, exp);
+        if (jerry_value_is_undefined(bm_rt)) return false;
 
         if (auto pathset = static_cast<Property*>(jerry_object_get_native_ptr(bm_rt, nullptr))) {
             (*pathset)(frameNo, cmds, pts, transform, roundness);
-         } else {
-            TVGERR("LOTTIE", "Failed dispatching PathSet!");
-            return false;
-         }
+        }
         jerry_value_free(bm_rt);
         return true;
     }
