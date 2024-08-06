@@ -130,11 +130,18 @@ struct LottieExpression
 {
     enum LoopMode : uint8_t { None = 0, InCycle = 1, InPingPong, InOffset, InContinue, OutCycle, OutPingPong, OutOffset, OutContinue };
 
+    //writable expressions variable name and value.
+    struct Writable {
+        char* var;
+        float val;
+    };
+
     char* code;
     LottieComposition* comp;
     LottieLayer* layer;
     LottieObject* object;
     LottieProperty* property;
+    Array<Writable>* writables = nullptr;
 
     struct {
         uint32_t key = 0;      //the keyframe number repeating to
@@ -144,7 +151,27 @@ struct LottieExpression
 
     ~LottieExpression()
     {
+        if (writables) {
+            for (auto p = writables->begin(); p < writables->end(); ++p) {
+                free(p->var);
+            }
+            delete(writables);
+        }
         free(code);
+    }
+
+    bool write(const char* var, float val)
+    {
+        if (!writables) writables = new Array<Writable>;
+        //overwrite the existing value.
+        for (auto p = writables->begin(); p < writables->end(); ++p) {
+            if (!strcmp(var, p->var)) {
+                p->val = val;
+                return true;
+            }
+        }
+        writables->push({strdup(var), val});
+        return true;
     }
 };
 
