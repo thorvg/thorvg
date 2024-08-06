@@ -58,19 +58,27 @@ TEST_CASE("Set", "[tvgAccessor]")
     REQUIRE(accessor->set(picture.get(), nullptr, nullptr) == Result::InvalidArguments);
 
     //Case 2
+    Shape* ret = nullptr;
+
     auto f = [](const tvg::Paint* paint, void* data) -> bool
     {
         if (paint->type() == Type::Shape) {
             auto shape = (tvg::Shape*) paint;
             uint8_t r, g, b;
             shape->fillColor(&r, &g, &b);
-            if (r == 37 && g == 47 && b == 53)
+            if (r == 37 && g == 47 && b == 53) {
                 shape->fill(0, 0, 255);
+                shape->id = Accessor::id("TestAccessor");
+                *static_cast<Shape**>(data) = shape;
+                return false;
+            }
         }
         return true;
     };
 
-    REQUIRE(accessor->set(picture.get(), f, nullptr) == Result::Success);
+    REQUIRE(accessor->set(picture.get(), f, &ret) == Result::Success);
+
+    REQUIRE((ret && ret->id == Accessor::id("TestAccessor")));
 
     REQUIRE(Initializer::term(CanvasEngine::Sw) == Result::Success);
 }
