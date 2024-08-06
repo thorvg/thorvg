@@ -23,7 +23,7 @@
 #ifndef _TVG_WG_RENDERER_H_
 #define _TVG_WG_RENDERER_H_
 
-#include "tvgWgRenderTarget.h"
+#include "tvgWgCompositor.h"
 
 class WgRenderer : public RenderMethod
 {
@@ -61,37 +61,32 @@ private:
     ~WgRenderer();
     void initialize();
     void release();
-    void clearDisposes();
-    void renderClipPath(Array<WgRenderDataPaint*>& clips);
+    void disposeObjects();
 
     WGPUCommandEncoder mCommandEncoder{};
-    WgRenderStorage mRenderStorageInterm; // intermidiate buffer to render
-    WgRenderStorage mRenderStorageCopy;   // copy of destination target (blend and compostition)
-    WgRenderStorage mRenderStorageMask;   // buffer to render mask 
-    WgRenderStorage mRenderStorageRoot;   // root render storage
-    WgRenderStorage mRenderStorageScreen; // storage with data after antializing
-    WgRenderStoragePool mRenderStoragePool; // pool to hold render tree storages
-    WgBindGroupOpacityPool mOpacityPool;    // opacity, blend methods and composite methods pool
-    WgBindGroupBlendMethodPool mBlendMethodPool;
-    WgBindGroupCompositeMethodPool mCompositeMethodPool;
-    WgRenderDataShapePool mRenderDataShapePool;    // render data shpes pool
+    WgRenderDataShapePool mRenderDataShapePool;
 
     // render tree stacks
-    Array<Compositor*> mCompositorStack;
+    WgRenderStorage mStorageRoot;
+    Array<WgCompose*> mCompositorStack;
     Array<WgRenderStorage*> mRenderStorageStack;
+    WgRenderStoragePool mRenderStoragePool;
 
     WgContext mContext;
     WgPipelines mPipelines;
+    WgCompositor mCompositor;
+    
+    // screen buffer
+    WGPUTexture mTexScreen{};
+    WGPUTextureView mTexViewScreen{};
+    WGPUBindGroup mBindGroupScreen{};
+
     Surface mTargetSurface;
+    BlendMethod mBlendMethod{};
     RenderRegion mViewport{};
 
-    BlendMethod mBlendMethod{};    // current blend method
-
-    // disposed resources, they should be released on synced call.
-    struct {
-        Array<RenderData> renderDatas{};
-        Key key;
-    } mDisposed;
+    Array<RenderData> mDisposeRenderDatas{};
+    Key mDisposeKey{};
 };
 
 #endif /* _TVG_WG_RENDERER_H_ */

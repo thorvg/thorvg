@@ -20,6 +20,9 @@
  * SOFTWARE.
  */
 
+#ifndef _TVG_WG_RENDER_DATA_H_
+#define _TVG_WG_RENDER_DATA_H_
+
 #include "tvgWgPipelines.h"
 #include "tvgWgGeometry.h"
 
@@ -70,13 +73,18 @@ struct WgImageData {
 };
 
 enum class WgRenderSettingsType { None = 0, Solid = 1, Linear = 2, Radial = 3 };
+enum class WgRenderRasterType { Solid = 0, Gradient, Image };
 
 struct WgRenderSettings
 {
-    WgBindGroupSolidColor bindGroupSolid{};
-    WgBindGroupLinearGradient bindGroupLinear{};
-    WgBindGroupRadialGradient bindGroupRadial{};
+    WGPUBuffer bufferGroupSolid{};
+    WGPUBuffer bufferGroupLinear{};
+    WGPUBuffer bufferGroupRadial{};
+    WGPUBindGroup bindGroupSolid{};
+    WGPUBindGroup bindGroupLinear{};
+    WGPUBindGroup bindGroupRadial{};
     WgRenderSettingsType fillType{};
+    WgRenderRasterType rasterType{};
     bool skip{};
 
     void update(WgContext& context, const Fill* fill, const uint8_t* color, const RenderUpdateFlag flags);
@@ -85,7 +93,9 @@ struct WgRenderSettings
 
 struct WgRenderDataPaint
 {
-    WgBindGroupPaint bindGroupPaint{};
+    WGPUBuffer bufferModelMat{};
+    WGPUBuffer bufferBlendSettings{};
+    WGPUBindGroup bindGroupPaint{};
     RenderRegion viewport{};
     float opacity{};
     Array<WgRenderDataPaint*> clips;
@@ -94,6 +104,7 @@ struct WgRenderDataPaint
     virtual void release(WgContext& context);
     virtual Type type() { return Type::Undefined; };
 
+    void update(WgContext& context, const tvg::Matrix& transform, tvg::ColorSpace cs, uint8_t opacity);
     void updateClips(tvg::Array<tvg::RenderData> &clips);
 };
 
@@ -133,11 +144,12 @@ public:
 
 struct WgRenderDataPicture: public WgRenderDataPaint
 {
-    WgBindGroupPicture bindGroupPicture{};
+    WGPUBindGroup bindGroupPicture{};
     WgImageData imageData{};
     WgMeshData meshData{};
 
-    void update(WgContext& context);
     void release(WgContext& context) override;
     Type type() override { return Type::Picture; };
 };
+
+#endif // _TVG_WG_RENDER_DATA_H_

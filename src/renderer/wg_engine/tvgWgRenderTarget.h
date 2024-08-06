@@ -23,94 +23,34 @@
 #ifndef _TVG_WG_RENDER_TARGET_H_
 #define _TVG_WG_RENDER_TARGET_H_
 
-#include "tvgWgRenderData.h"
+#include "tvgWgPipelines.h"
+#include "tvgRender.h"
 
-class WgRenderStorage {
-private:
-    // texture buffers
-    WgBindGroupCanvas mBindGroupCanvas;
-    WGPURenderPassEncoder mRenderPassEncoder{};
-    WgPipelines* mPipelines{}; // external handle
-public:
-    WGPUTexture texColor{};
-    WGPUTexture texStencil{};
-    WGPUTextureView texViewColor{};
-    WGPUTextureView texViewStencil{};
-    WgBindGroupTextureStorageRgbaRO bindGroupTexStorageRgbaRO;
-    WgBindGroupTextureStorageRgbaWO bindGroupTexStorageRgbaWO;
-    WgBindGroupTextureStorageBgraWO bindGroupTexStorageBgraWO;
-    uint32_t samples{};
+struct WgRenderStorage {
+    WGPUTexture texture{};
+    WGPUTextureView texView{};
+    WGPUBindGroup bindGroupRead{};
+    WGPUBindGroup bindGroupWrite{};
+    WGPUBindGroup bindGroupTexure{};
     uint32_t width{};
     uint32_t height{};
-    uint32_t workgroupsCountX{};
-    uint32_t workgroupsCountY{};
-public:
-    void initialize(WgContext& context, uint32_t w, uint32_t h, uint32_t samples = 1, WGPUTextureFormat format = WGPUTextureFormat_RGBA8Unorm);
+
+    void initialize(WgContext& context, uint32_t width, uint32_t height);
     void release(WgContext& context);
-
-    void beginRenderPass(WGPUCommandEncoder commandEncoder, bool clear);
-    void endRenderPass();
-
-    void renderShape(WgContext& context, WgRenderDataShape* renderData, WgPipelineBlendType blendType);
-    void renderPicture(WgContext& context, WgRenderDataPicture* renderData, WgPipelineBlendType blendType);
-    void renderClipPath(WgContext& context, WgRenderDataPaint* renderData);
-
-    void blend(
-        WgContext& context,
-        WGPUCommandEncoder commandEncoder,
-        WgPipelineBlend* pipeline,
-        WgRenderStorage* targetSrc,
-        WgRenderStorage* targetDst,
-        WgBindGroupBlendMethod* blendMethod,
-        WgBindGroupOpacity* opacity);
-    void blendMask(
-        WgContext& context,
-        WGPUCommandEncoder commandEncoder,
-        WgPipelineBlendMask* pipeline,
-        WgRenderStorage* texMsk,
-        WgRenderStorage* texSrc,
-        WgRenderStorage* texDst,
-        WgBindGroupBlendMethod* blendMethod,
-        WgBindGroupOpacity* opacity);
-    void maskCompose(
-        WgContext& context,
-        WGPUCommandEncoder commandEncoder,
-        WgRenderStorage* texMsk0,
-        WgRenderStorage* texMsk1);
-    void compose(
-        WgContext& context,
-        WGPUCommandEncoder commandEncoder,
-        WgRenderStorage* texMsk,
-        WgRenderStorage* texSrc,
-        WgRenderStorage* texDst,
-        WgBindGroupCompositeMethod* composeMethod,
-        WgBindGroupBlendMethod* blendMethod,
-        WgBindGroupOpacity* opacity);
-    void antialias(WGPUCommandEncoder commandEncoder, WgRenderStorage* targetSrc);
-    void copy(WGPUCommandEncoder commandEncoder, WgRenderStorage* targetSrc);
-private:
-    void drawShape(WgContext& context, WgRenderDataShape* renderData, WgPipelineBlendType blendType);
-    void drawStroke(WgContext& context, WgRenderDataShape* renderData, WgPipelineBlendType blendType);
-
-    void drawShapeClipPath(WgContext& context, WgRenderDataShape* renderData);
-    void drawPictureClipPath(WgContext& context, WgRenderDataPicture* renderData);
-
-    void dispatchWorkgroups(WGPUComputePassEncoder computePassEncoder);
-
-    WGPUComputePassEncoder beginComputePass(WGPUCommandEncoder commandEncoder);
-    void endComputePass(WGPUComputePassEncoder computePassEncoder);
 };
 
 
 class WgRenderStoragePool {
 private:
-   Array<WgRenderStorage*> mList;
-   Array<WgRenderStorage*> mPool;
+    Array<WgRenderStorage*> list;
+    Array<WgRenderStorage*> pool;
+    uint32_t width{};
+    uint32_t height{};
 public:
-   WgRenderStorage* allocate(WgContext& context, uint32_t w, uint32_t h, uint32_t samples = 1);
-   void free(WgContext& context, WgRenderStorage* renderTarget);
-   void release(WgContext& context);
+    WgRenderStorage* allocate(WgContext& context);
+    void free(WgContext& context, WgRenderStorage* renderTarget);
+
+    void initialize(WgContext& context, uint32_t width, uint32_t height);
+    void release(WgContext& context);
 };
-
-
-#endif
+#endif // _TVG_WG_RENDER_TARGET_H_
