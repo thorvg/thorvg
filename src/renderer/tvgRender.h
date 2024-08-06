@@ -321,6 +321,8 @@ static inline bool MASK_REGION_MERGING(CompositeMethod method)
         //these might expand the rendering region
         case CompositeMethod::AddMask:
         case CompositeMethod::DifferenceMask:
+        case CompositeMethod::LightenMask:
+        case CompositeMethod::DarkenMask:
             return true;
         default:
             TVGERR("RENDERER", "Unsupported Composite Method! = %d", (int)method);
@@ -354,6 +356,8 @@ static inline ColorSpace COMPOSITE_TO_COLORSPACE(RenderMethod* renderer, Composi
         case CompositeMethod::DifferenceMask:
         case CompositeMethod::SubtractMask:
         case CompositeMethod::IntersectMask:
+        case CompositeMethod::LightenMask:
+        case CompositeMethod::DarkenMask:
             return ColorSpace::Grayscale8;
         //TODO: Optimize Luma/InvLuma colorspace to Grayscale8
         case CompositeMethod::LumaMask:
