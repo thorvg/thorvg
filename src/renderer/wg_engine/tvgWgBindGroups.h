@@ -24,300 +24,34 @@
 #define _TVG_WG_BIND_GROUPS_H_
 
 #include "tvgWgCommon.h"
-#include "tvgWgShaderTypes.h"
 
-// @group(0)
-struct WgBindGroupCanvas : public WgBindGroup
-{
-    static WGPUBindGroupLayout layout;
-    static WGPUBindGroupLayout getLayout(WGPUDevice device);
-    static void releaseLayout();
-
-    WGPUBuffer uBufferViewMat{};
-    void initialize(WGPUDevice device, WGPUQueue queue,
-                    WgShaderTypeMat4x4f& uViewMat);
-    void release();
-};
-
-// @group(1)
-struct WgBindGroupPaint : public WgBindGroup
-{
-    static WGPUBindGroupLayout layout;
-    static WGPUBindGroupLayout getLayout(WGPUDevice device);
-    static void releaseLayout();
-
-    WGPUBuffer uBufferModelMat{};
-    WGPUBuffer uBufferBlendSettings{};
-    void initialize(WGPUDevice device, WGPUQueue queue,
-                    WgShaderTypeMat4x4f&       uModelMat,
-                    WgShaderTypeBlendSettings& uBlendSettings);
-    void release();
-};
-
-// @group(2)
-struct WgBindGroupSolidColor : public WgBindGroup
-{
-    static WGPUBindGroupLayout layout;
-    static WGPUBindGroupLayout getLayout(WGPUDevice device);
-    static void releaseLayout();
-
-    WGPUBuffer uBufferSolidColor{};
-    void initialize(WGPUDevice device, WGPUQueue queue,
-                    WgShaderTypeSolidColor &uSolidColor);
-    void release();
-};
-
-// @group(2)
-struct WgBindGroupLinearGradient : public WgBindGroup
-{
-    static WGPUBindGroupLayout layout;
-    static WGPUBindGroupLayout getLayout(WGPUDevice device);
-    static void releaseLayout();
-
-    WGPUBuffer uBufferLinearGradient{};
-    void initialize(WGPUDevice device, WGPUQueue queue,
-                    WgShaderTypeLinearGradient &uLinearGradient);
-    void release();
-};
-
-// @group(2)
-struct WgBindGroupRadialGradient : public WgBindGroup
-{
-    static WGPUBindGroupLayout layout;
-    static WGPUBindGroupLayout getLayout(WGPUDevice device);
-    static void releaseLayout();
-
-    WGPUBuffer uBufferRadialGradient{};
-    void initialize(WGPUDevice device, WGPUQueue queue,
-                    WgShaderTypeRadialGradient &uRadialGradient);
-    void release();
-};
-
-// @group(2)
-struct WgBindGroupPicture : public WgBindGroup
-{
-    static WGPUBindGroupLayout layout;
-    static WGPUBindGroupLayout getLayout(WGPUDevice device);
-    static void releaseLayout();
-
-    void initialize(WGPUDevice device, WGPUQueue queue,
-                    WGPUSampler     uSampler,
-                    WGPUTextureView uTextureView);
-    void release();
-};
-
-// @group(0 or 1)
-struct WgBindGroupTexture : public WgBindGroup
-{
-    static WGPUBindGroupLayout layout;
-    static WGPUBindGroupLayout getLayout(WGPUDevice device);
-    static void releaseLayout();
-
-    void initialize(WGPUDevice device, WGPUQueue queue,
-                    WGPUTextureView uTexture);
-    void release();
-};
-
-// @group(0 or 1)
-struct WgBindGroupTextureStorageRgbaWO : public WgBindGroup
-{
-    static WGPUBindGroupLayout layout;
-    static WGPUBindGroupLayout getLayout(WGPUDevice device);
-    static void releaseLayout();
-
-    void initialize(WGPUDevice device, WGPUQueue queue,
-                    WGPUTextureView uTexture);
-    void release();
-};
-
-// @group(0 or 1)
-struct WgBindGroupTextureStorageRgbaRO : public WgBindGroup
-{
-    static WGPUBindGroupLayout layout;
-    static WGPUBindGroupLayout getLayout(WGPUDevice device);
-    static void releaseLayout();
-
-    void initialize(WGPUDevice device, WGPUQueue queue,
-                    WGPUTextureView uTexture);
-    void release();
-};
-
-
-// @group(0 or 1)
-struct WgBindGroupTextureStorageBgraRO : public WgBindGroup
-{
-    static WGPUBindGroupLayout layout;
-    static WGPUBindGroupLayout getLayout(WGPUDevice device);
-    static WGPUBindGroupLayout getLayoutRO(WGPUDevice device);
-    static WGPUBindGroupLayout getLayoutWO(WGPUDevice device);
-    static void releaseLayout();
-
-    void initialize(WGPUDevice device, WGPUQueue queue,
-                    WGPUTextureView uTexture);
-    void release();
-};
-
-
-// @group(0 or 1)
-struct WgBindGroupTextureStorageBgraWO : public WgBindGroup
-{
-    static WGPUBindGroupLayout layout;
-    static WGPUBindGroupLayout getLayout(WGPUDevice device);
-    static WGPUBindGroupLayout getLayoutRO(WGPUDevice device);
-    static WGPUBindGroupLayout getLayoutWO(WGPUDevice device);
-    static void releaseLayout();
-
-    void initialize(WGPUDevice device, WGPUQueue queue,
-                    WGPUTextureView uTexture);
-    void release();
-};
-
-
-// @group(0 or 1)
-struct WgBindGroupTextureSampled : public WgBindGroup
-{
-    static WGPUBindGroupLayout layout;
-    static WGPUBindGroupLayout getLayout(WGPUDevice device);
-    static void releaseLayout();
-
-    void initialize(WGPUDevice device, WGPUQueue queue,
-                    WGPUSampler     uSampler,
-                    WGPUTextureView uTexture);
-    void release();
-};
-
-// @group(0)
-struct WgBindGroupTexBlend : public WgBindGroup
-{
-    static WGPUBindGroupLayout layout;
-    static WGPUBindGroupLayout getLayout(WGPUDevice device);
-    static void releaseLayout();
-
-    void initialize(WGPUDevice device, WGPUQueue queue,
-                    WGPUTextureView uTexSrc,
-                    WGPUTextureView uTexDst,
-                    WGPUTextureView uTexTrg);
-    void release();
-};
-
-
-// @group(0)
-struct WgBindGroupTexBlendMask : public WgBindGroup
-{
-    static WGPUBindGroupLayout layout;
-    static WGPUBindGroupLayout getLayout(WGPUDevice device);
-    static void releaseLayout();
-
-    void initialize(WGPUDevice device, WGPUQueue queue,
-                    WGPUTextureView uTexSrc,
-                    WGPUTextureView uTexMsk,
-                    WGPUTextureView uTexDst,
-                    WGPUTextureView uTexTrg);
-    void release();
-};
-
-
-// @group(0)
-struct WgBindGroupTexMaskCompose : public WgBindGroup
-{
-    static WGPUBindGroupLayout layout;
-    static WGPUBindGroupLayout getLayout(WGPUDevice device);
-    static void releaseLayout();
-
-    void initialize(WGPUDevice device, WGPUQueue queue,
-                    WGPUTextureView uTexMsk0,
-                    WGPUTextureView uTexMsk1,
-                    WGPUTextureView uTexTrg);
-    void release();
-};
-
-
-// @group(0)
-struct WgBindGroupTexCompose : public WgBindGroup
-{
-    static WGPUBindGroupLayout layout;
-    static WGPUBindGroupLayout getLayout(WGPUDevice device);
-    static void releaseLayout();
-
-    void initialize(WGPUDevice device, WGPUQueue queue,
-                    WGPUTextureView uTexSrc,
-                    WGPUTextureView uTexMsk,
-                    WGPUTextureView uTexDst,
-                    WGPUTextureView uTexTrg);
-    void release();
-};
-
-
-// @group(1 or 2)
-struct WgBindGroupOpacity : public WgBindGroup
-{
-    static WGPUBindGroupLayout layout;
-    static WGPUBindGroupLayout getLayout(WGPUDevice device);
-    static void releaseLayout();
-
-    WGPUBuffer uBufferOpacity{};
-    void initialize(WGPUDevice device, WGPUQueue queue, uint32_t uOpacity);
-    void release();
-};
-
-// @group(2)
-struct WgBindGroupBlendMethod : public WgBindGroup
-{
-    static WGPUBindGroupLayout layout;
-    static WGPUBindGroupLayout getLayout(WGPUDevice device);
-    static void releaseLayout();
-
-    WGPUBuffer uBufferBlendMethod{};
-    void initialize(WGPUDevice device, WGPUQueue queue,
-                    BlendMethod uBlendMethod);
-    void release();
-};
-
-// @group(2)
-struct WgBindGroupCompositeMethod : public WgBindGroup
-{
-    static WGPUBindGroupLayout layout;
-    static WGPUBindGroupLayout getLayout(WGPUDevice device);
-    static void releaseLayout();
-
-    WGPUBuffer uBufferCompositeMethod{};
-    void initialize(WGPUDevice device, WGPUQueue queue,
-                    CompositeMethod uCompositeMethod);
-    void release();
-};
-
-//************************************************************************
-// bind group pools
-//************************************************************************
-
-class WgBindGroupOpacityPool
-{
+class WgBindGroupLayouts {
 private:
-    WgBindGroupOpacity* mPool[256]{};
+    WGPUDevice device{};
+public:
+    WGPUBindGroupLayout layoutTexSampled{};
+    WGPUBindGroupLayout layoutTexScreen1WO{};
+    WGPUBindGroupLayout layoutTexStrorage1WO{};
+    WGPUBindGroupLayout layoutTexStrorage1RO{};
+    WGPUBindGroupLayout layoutTexStrorage2RO{};
+    WGPUBindGroupLayout layoutTexStrorage3RO{};
+    WGPUBindGroupLayout layoutBuffer1Un{};
+    WGPUBindGroupLayout layoutBuffer2Un{};
+    WGPUBindGroupLayout layoutBuffer3Un{};
+public:
+    WGPUBindGroup createBindGroupTexSampled(WGPUSampler sampler, WGPUTextureView texView);
+    WGPUBindGroup createBindGroupScreen1WO(WGPUTextureView texView);
+    WGPUBindGroup createBindGroupStrorage1WO(WGPUTextureView texView);
+    WGPUBindGroup createBindGroupStrorage1RO(WGPUTextureView texView);
+    WGPUBindGroup createBindGroupStrorage2RO(WGPUTextureView texView0, WGPUTextureView texView1);
+    WGPUBindGroup createBindGroupStrorage3RO(WGPUTextureView texView0, WGPUTextureView texView1, WGPUTextureView texView2);
+    WGPUBindGroup createBindGroupBuffer1Un(WGPUBuffer buff);
+    WGPUBindGroup createBindGroupBuffer2Un(WGPUBuffer buff0, WGPUBuffer buff1);
+    WGPUBindGroup createBindGroupBuffer3Un(WGPUBuffer buff0, WGPUBuffer buff1, WGPUBuffer buff2);
+    void releaseBindGroup(WGPUBindGroup& bindGroup);
 public:
     void initialize(WgContext& context);
     void release(WgContext& context);
-    WgBindGroupOpacity* allocate(WgContext& context, uint8_t opacity);
-};
-
-class WgBindGroupBlendMethodPool
-{
-private:
-    WgBindGroupBlendMethod* mPool[(uint8_t)BlendMethod::SoftLight + 1]{};
-public:
-    void initialize(WgContext& context);
-    void release(WgContext& context);
-    WgBindGroupBlendMethod* allocate(WgContext& context, BlendMethod blendMethod);
-};
-
-class WgBindGroupCompositeMethodPool
-{
-private:
-    WgBindGroupCompositeMethod* mPool[(uint8_t)CompositeMethod::DifferenceMask + 1]{};
-public:
-    void initialize(WgContext& context);
-    void release(WgContext& context);
-    WgBindGroupCompositeMethod* allocate(WgContext& context, CompositeMethod composeMethod);
 };
 
 #endif // _TVG_WG_BIND_GROUPS_H_

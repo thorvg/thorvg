@@ -1,6 +1,7 @@
 source_file = [
     'tvgWgBindGroups.h',
     'tvgWgCommon.h',
+    'tvgWgCompositor.h',
     'tvgWgGeometry.h',
     'tvgWgPipelines.h',
     'tvgWgRenderData.h',
@@ -10,6 +11,7 @@ source_file = [
     'tvgWgShaderTypes.h',
     'tvgWgBindGroups.cpp',
     'tvgWgCommon.cpp',
+    'tvgWgCompositor.cpp',
     'tvgWgGeometry.cpp',
     'tvgWgPipelines.cpp',
     'tvgWgRenderData.cpp',

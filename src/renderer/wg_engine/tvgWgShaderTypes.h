@@ -23,7 +23,7 @@
 #ifndef _TVG_WG_SHADER_TYPES_H_
 #define _TVG_WG_SHADER_TYPES_H_
 
-#include "tvgWgCommon.h"
+#include "tvgRender.h"
 
 ///////////////////////////////////////////////////////////////////////////////
 // shader types

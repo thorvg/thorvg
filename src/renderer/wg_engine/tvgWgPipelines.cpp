@@ -23,492 +23,359 @@
 #include "tvgWgPipelines.h"
 #include "tvgWgShaderSrc.h"
 
-#define ARRAY_ELEMENTS_COUNT(arr) sizeof(arr)/sizeof(arr[0])
-
-//************************************************************************
-// graphics pipelines
-//************************************************************************
-
-void WgPipelineFillShapeWinding::initialize(WGPUDevice device)
+WGPUShaderModule WgPipelines::createShaderModule(WGPUDevice device, const char* label, const char* code)
 {
-    // vertex attributes settings
-    WGPUVertexAttribute vertexAttributesPos = { WGPUVertexFormat_Float32x2, sizeof(float) * 0, 0 };
-    WGPUVertexBufferLayout vertexBufferLayouts[] = {
-        makeVertexBufferLayout(&vertexAttributesPos, 1, sizeof(float) * 2)
-    };
-
-    // bind groups
-    WGPUBindGroupLayout bindGroupLayouts[] = {
-        WgBindGroupCanvas::getLayout(device),
-        WgBindGroupPaint::getLayout(device)
-    };
-
-    // stencil function
-    WGPUCompareFunction stencilFunctionFront = WGPUCompareFunction_Always;
-    WGPUStencilOperation stencilOperationFront = WGPUStencilOperation_IncrementWrap;
-    WGPUCompareFunction stencilFunctionBack = WGPUCompareFunction_Always;
-    WGPUStencilOperation stencilOperationBack = WGPUStencilOperation_DecrementWrap;
-
-    // shader source and labels
-    auto shaderSource = cShaderSource_PipelineFill;
-    auto shaderLabel = "The shader fill";
-    auto pipelineLabel = "The render pipeline fill shape winding";
-
-    // allocate all pipeline handles
-    allocate(device, WgPipelineBlendType::SrcOver, WGPUColorWriteMask_None,
-             vertexBufferLayouts, ARRAY_ELEMENTS_COUNT(vertexBufferLayouts),
-             bindGroupLayouts, ARRAY_ELEMENTS_COUNT(bindGroupLayouts),
-             stencilFunctionFront, stencilOperationFront, stencilFunctionBack, stencilOperationBack,
-             shaderSource, shaderLabel, pipelineLabel);
+    WGPUShaderModuleWGSLDescriptor shaderModuleWGSLDesc{};
+    shaderModuleWGSLDesc.chain.sType = WGPUSType_ShaderModuleWGSLDescriptor;
+    shaderModuleWGSLDesc.code = code;
+    const WGPUShaderModuleDescriptor shaderModuleDesc { .nextInChain = &shaderModuleWGSLDesc.chain, .label = label };
+    return wgpuDeviceCreateShaderModule(device, &shaderModuleDesc);
 }
 
 
-void WgPipelineFillShapeEvenOdd::initialize(WGPUDevice device)
+WGPUPipelineLayout WgPipelines::createPipelineLayout(WGPUDevice device, const WGPUBindGroupLayout* bindGroupLayouts, const uint32_t bindGroupLayoutsCount)
 {
-    // vertex attributes settings
-    WGPUVertexAttribute vertexAttributesPos = { WGPUVertexFormat_Float32x2, sizeof(float) * 0, 0 };
-    WGPUVertexBufferLayout vertexBufferLayouts[] = {
-        makeVertexBufferLayout(&vertexAttributesPos, 1, sizeof(float) * 2)
-    };
-
-    // bind groups
-    WGPUBindGroupLayout bindGroupLayouts[] = {
-        WgBindGroupCanvas::getLayout(device),
-        WgBindGroupPaint::getLayout(device)
-    };
-
-    // stencil function
-    WGPUCompareFunction stencilFunctionFront = WGPUCompareFunction_Always;
-    WGPUStencilOperation stencilOperationFront = WGPUStencilOperation_Invert;
-    WGPUCompareFunction stencilFunctionBack = WGPUCompareFunction_Always;
-    WGPUStencilOperation stencilOperationBack = WGPUStencilOperation_Invert;
-
-    // shader source and labels
-    auto shaderSource = cShaderSource_PipelineFill;
-    auto shaderLabel = "The shader fill";
-    auto pipelineLabel = "The render pipeline fill shape Even Odd";
-
-    // allocate all pipeline handles
-    allocate(device, WgPipelineBlendType::SrcOver, WGPUColorWriteMask_None,
-             vertexBufferLayouts, ARRAY_ELEMENTS_COUNT(vertexBufferLayouts),
-             bindGroupLayouts, ARRAY_ELEMENTS_COUNT(bindGroupLayouts),
-             stencilFunctionFront, stencilOperationFront, stencilFunctionBack, stencilOperationBack,
-             shaderSource, shaderLabel, pipelineLabel);
+    const WGPUPipelineLayoutDescriptor pipelineLayoutDesc { .bindGroupLayoutCount = bindGroupLayoutsCount, .bindGroupLayouts = bindGroupLayouts };
+    return wgpuDeviceCreatePipelineLayout(device, &pipelineLayoutDesc);
 }
 
 
-void WgPipelineFillStroke::initialize(WGPUDevice device)
+WGPURenderPipeline WgPipelines::createRenderPipeline(
+    WGPUDevice device, const char* pipelineLabel,
+    const WGPUShaderModule shaderModule, const WGPUPipelineLayout pipelineLayout,
+    const WGPUVertexBufferLayout *vertexBufferLayouts, const uint32_t vertexBufferLayoutsCount,
+    const WGPUColorWriteMaskFlags writeMask,
+    const WGPUCompareFunction stencilFunctionFrnt, const WGPUStencilOperation stencilOperationFrnt,
+    const WGPUCompareFunction stencilFunctionBack, const WGPUStencilOperation stencilOperationBack,
+    const WGPUPrimitiveState primitiveState, const WGPUMultisampleState multisampleState, const WGPUBlendState blendState)
 {
-    // vertex and buffers settings
-    WGPUVertexAttribute vertexAttributesPos = { WGPUVertexFormat_Float32x2, sizeof(float) * 0, 0 };
-    WGPUVertexBufferLayout vertexBufferLayouts[] = {
-        makeVertexBufferLayout(&vertexAttributesPos, 1, sizeof(float) * 2)
+    const WGPUColorTargetState colorTargetState { .format = WGPUTextureFormat_RGBA8Unorm, .blend = &blendState, .writeMask = writeMask };
+    const WGPUColorTargetState colorTargetStates[] { colorTargetState };
+    const WGPUDepthStencilState depthStencilState {
+        .format = WGPUTextureFormat_Stencil8, .depthCompare = WGPUCompareFunction_Always,
+        .stencilFront = { .compare = stencilFunctionFrnt, .failOp = stencilOperationFrnt, .depthFailOp = stencilOperationFrnt, .passOp = stencilOperationFrnt },
+        .stencilBack =  { .compare = stencilFunctionBack, .failOp = stencilOperationBack, .depthFailOp = stencilOperationBack, .passOp = stencilOperationBack },
+        .stencilReadMask = 0xFFFFFFFF, .stencilWriteMask = 0xFFFFFFFF
     };
-
-    // bind groups and layouts
-    WGPUBindGroupLayout bindGroupLayouts[] = {
-        WgBindGroupCanvas::getLayout(device),
-        WgBindGroupPaint::getLayout(device)
+    const WGPUVertexState   vertexState   { .module = shaderModule, .entryPoint = "vs_main", .bufferCount = vertexBufferLayoutsCount, .buffers = vertexBufferLayouts };
+    const WGPUFragmentState fragmentState { .module = shaderModule, .entryPoint = "fs_main", .targetCount = 1, .targets = colorTargetStates };
+    const WGPURenderPipelineDescriptor renderPipelineDesc {
+        .label = pipelineLabel,
+        .layout = pipelineLayout,
+        .vertex = vertexState,
+        .primitive = primitiveState,
+        .depthStencil = &depthStencilState,
+        .multisample = multisampleState,
+        .fragment = &fragmentState
     };
-
-    // stencil function
-    WGPUCompareFunction stencilFunction = WGPUCompareFunction_Always;
-    WGPUStencilOperation stencilOperation = WGPUStencilOperation_Replace;
-
-    // shader source and labels
-    auto shaderSource = cShaderSource_PipelineFill;
-    auto shaderLabel = "The shader fill";
-    auto pipelineLabel = "The render pipeline fill stroke";
-
-    // allocate all pipeline handles
-    allocate(device, WgPipelineBlendType::SrcOver, WGPUColorWriteMask_None,
-             vertexBufferLayouts, ARRAY_ELEMENTS_COUNT(vertexBufferLayouts),
-             bindGroupLayouts, ARRAY_ELEMENTS_COUNT(bindGroupLayouts),
-             stencilFunction, stencilOperation, stencilFunction, stencilOperation,
-             shaderSource, shaderLabel, pipelineLabel);
+    return wgpuDeviceCreateRenderPipeline(device, &renderPipelineDesc);
 }
 
 
-void WgPipelineClipMask::initialize(WGPUDevice device)
+WGPUComputePipeline WgPipelines::createComputePipeline(
+        WGPUDevice device, const char* pipelineLabel,
+        const WGPUShaderModule shaderModule, const WGPUPipelineLayout pipelineLayout)
 {
-    // vertex and buffers settings
-    WGPUVertexAttribute vertexAttributesPos = { WGPUVertexFormat_Float32x2, sizeof(float) * 0, 0 };
-    WGPUVertexBufferLayout vertexBufferLayouts[] = {
-        makeVertexBufferLayout(&vertexAttributesPos, 1, sizeof(float) * 2)
+    const WGPUComputePipelineDescriptor computePipelineDesc{
+        .label = pipelineLabel,
+        .layout = pipelineLayout,
+        .compute = { 
+            .module = shaderModule,
+            .entryPoint = "cs_main"
+        }
     };
-
-    // bind groups
-    WGPUBindGroupLayout bindGroupLayouts[] = {
-        WgBindGroupCanvas::getLayout(device),
-        WgBindGroupPaint::getLayout(device)
-    };
-
-    // stencil function
-    WGPUCompareFunction stencilFunction = WGPUCompareFunction_NotEqual;
-    WGPUStencilOperation stencilOperation = WGPUStencilOperation_Zero;
-
-    // shader source and labels
-    auto shaderSource = cShaderSource_PipelineFill;
-    auto shaderLabel = "The shader fill";
-    auto pipelineLabel = "The render pipeline clip mask";
-
-    // allocate all pipeline handles
-    allocate(device, WgPipelineBlendType::SrcOver, WGPUColorWriteMask_All,
-             vertexBufferLayouts, ARRAY_ELEMENTS_COUNT(vertexBufferLayouts),
-             bindGroupLayouts, ARRAY_ELEMENTS_COUNT(bindGroupLayouts),
-             stencilFunction, stencilOperation, stencilFunction, stencilOperation,
-             shaderSource, shaderLabel, pipelineLabel);
+    return wgpuDeviceCreateComputePipeline(device, &computePipelineDesc);
 }
 
 
-void WgPipelineSolid::initialize(WGPUDevice device, WgPipelineBlendType blendType)
+void WgPipelines::releaseComputePipeline(WGPUComputePipeline& computePipeline)
 {
-    // vertex and buffers settings
-    WGPUVertexAttribute vertexAttributesPos = { WGPUVertexFormat_Float32x2, sizeof(float) * 0, 0 };
-    WGPUVertexBufferLayout vertexBufferLayouts[] = {
-        makeVertexBufferLayout(&vertexAttributesPos, 1, sizeof(float) * 2)
-    };
-
-    // bind groups and layouts
-    WGPUBindGroupLayout bindGroupLayouts[] = {
-        WgBindGroupCanvas::getLayout(device),
-        WgBindGroupPaint::getLayout(device),
-        WgBindGroupSolidColor::getLayout(device)
-    };
-
-    // stencil function
-    WGPUCompareFunction stencilFunction = WGPUCompareFunction_NotEqual;
-    WGPUStencilOperation stencilOperation = WGPUStencilOperation_Zero;
-
-    // shader source and labels
-    auto shaderSource = cShaderSource_PipelineSolid;
-    auto shaderLabel = "The shader solid color";
-    auto pipelineLabel = "The render pipeline solid color";
-
-    // allocate all pipeline handles
-    allocate(device, blendType, WGPUColorWriteMask_All,
-             vertexBufferLayouts, ARRAY_ELEMENTS_COUNT(vertexBufferLayouts),
-             bindGroupLayouts, ARRAY_ELEMENTS_COUNT(bindGroupLayouts),
-             stencilFunction, stencilOperation, stencilFunction, stencilOperation,
-             shaderSource, shaderLabel, pipelineLabel);
+    if (computePipeline) {
+        wgpuComputePipelineRelease(computePipeline);
+        computePipeline = nullptr;
+    }
 }
 
 
-void WgPipelineLinear::initialize(WGPUDevice device, WgPipelineBlendType blendType)
+void WgPipelines::releaseRenderPipeline(WGPURenderPipeline& renderPipeline)
 {
-    // vertex and buffers settings
-    WGPUVertexAttribute vertexAttributesPos = { WGPUVertexFormat_Float32x2, sizeof(float) * 0, 0 };
-    WGPUVertexBufferLayout vertexBufferLayouts[] = {
-        makeVertexBufferLayout(&vertexAttributesPos, 1, sizeof(float) * 2)
-    };
-
-    // bind groups and layouts
-    WGPUBindGroupLayout bindGroupLayouts[] = {
-        WgBindGroupCanvas::getLayout(device),
-        WgBindGroupPaint::getLayout(device),
-        WgBindGroupLinearGradient::getLayout(device)
-    };
-
-    // stencil function
-    WGPUCompareFunction stencilFunction = WGPUCompareFunction_NotEqual;
-    WGPUStencilOperation stencilOperation = WGPUStencilOperation_Zero;
-
-    // shader source and labels
-    auto shaderSource = cShaderSource_PipelineLinear;
-    auto shaderLabel = "The shader linear gradient";
-    auto pipelineLabel = "The render pipeline linear gradient";
-
-    // allocate all pipeline handles
-    allocate(device, blendType, WGPUColorWriteMask_All,
-             vertexBufferLayouts, ARRAY_ELEMENTS_COUNT(vertexBufferLayouts),
-             bindGroupLayouts, ARRAY_ELEMENTS_COUNT(bindGroupLayouts),
-             stencilFunction, stencilOperation, stencilFunction, stencilOperation,
-             shaderSource, shaderLabel, pipelineLabel);
+    if (renderPipeline) {
+        wgpuRenderPipelineRelease(renderPipeline);
+        renderPipeline = nullptr;
+    }
 }
 
 
-void WgPipelineRadial::initialize(WGPUDevice device, WgPipelineBlendType blendType)
+void WgPipelines::releasePipelineLayout(WGPUPipelineLayout& pipelineLayout)
 {
-    // vertex and buffers settings
-    WGPUVertexAttribute vertexAttributesPos = { WGPUVertexFormat_Float32x2, sizeof(float) * 0, 0 };
-    WGPUVertexBufferLayout vertexBufferLayouts[] = {
-        makeVertexBufferLayout(&vertexAttributesPos, 1, sizeof(float) * 2)
-    };
-
-    // bind groups and layouts
-    WGPUBindGroupLayout bindGroupLayouts[] = {
-        WgBindGroupCanvas::getLayout(device),
-        WgBindGroupPaint::getLayout(device),
-        WgBindGroupRadialGradient::getLayout(device)
-    };
-
-    // stencil function
-    WGPUCompareFunction stencilFunction = WGPUCompareFunction_NotEqual;
-    WGPUStencilOperation stencilOperation = WGPUStencilOperation_Zero;
-
-    // shader source and labels
-    auto shaderSource = cShaderSource_PipelineRadial;
-    auto shaderLabel = "The shader radial gradient";
-    auto pipelineLabel = "The render pipeline radial gradient";
-
-    // allocate all pipeline handles
-    allocate(device, blendType, WGPUColorWriteMask_All,
-             vertexBufferLayouts, ARRAY_ELEMENTS_COUNT(vertexBufferLayouts),
-             bindGroupLayouts, ARRAY_ELEMENTS_COUNT(bindGroupLayouts),
-             stencilFunction, stencilOperation, stencilFunction, stencilOperation,
-             shaderSource, shaderLabel, pipelineLabel);
+    if (pipelineLayout) {
+        wgpuPipelineLayoutRelease(pipelineLayout);
+        pipelineLayout = nullptr;
+    }
 }
 
 
-void WgPipelineImage::initialize(WGPUDevice device, WgPipelineBlendType blendType)
+void WgPipelines::releaseShaderModule(WGPUShaderModule& shaderModule)
 {
-    // vertex and buffers settings
-    WGPUVertexAttribute vertexAttributesPos = { WGPUVertexFormat_Float32x2, sizeof(float) * 0, 0 };
-    WGPUVertexAttribute vertexAttributesTex = { WGPUVertexFormat_Float32x2, sizeof(float) * 0, 1 };
-    WGPUVertexBufferLayout vertexBufferLayouts[] = {
-        makeVertexBufferLayout(&vertexAttributesPos, 1, sizeof(float) * 2),
-        makeVertexBufferLayout(&vertexAttributesTex, 1, sizeof(float) * 2)
-    };
-
-    // bind groups and layouts
-    WGPUBindGroupLayout bindGroupLayouts[] = {
-        WgBindGroupCanvas::getLayout(device),
-        WgBindGroupPaint::getLayout(device),
-        WgBindGroupPicture::getLayout(device)
-    };
-
-    // stencil function
-    WGPUCompareFunction stencilFunction = WGPUCompareFunction_Always;
-    WGPUStencilOperation stencilOperation = WGPUStencilOperation_Zero;
-
-    // shader source and labels
-    auto shaderSource = cShaderSource_PipelineImage;
-    auto shaderLabel = "The shader image";
-    auto pipelineLabel = "The render pipeline image";
-
-    // allocate all pipeline handles
-    allocate(device, blendType, WGPUColorWriteMask_All,
-             vertexBufferLayouts, ARRAY_ELEMENTS_COUNT(vertexBufferLayouts),
-             bindGroupLayouts, ARRAY_ELEMENTS_COUNT(bindGroupLayouts),
-             stencilFunction, stencilOperation, stencilFunction, stencilOperation,
-             shaderSource, shaderLabel, pipelineLabel);
+    if (shaderModule) {
+        wgpuShaderModuleRelease(shaderModule);
+        shaderModule = nullptr;
+    }
 }
 
-//************************************************************************
-// compute pipelines
-//************************************************************************
-
-void WgPipelineCopy::initialize(WGPUDevice device)
-{
-    // bind groups and layouts
-    WGPUBindGroupLayout bindGroupLayouts[] = {
-        WgBindGroupTextureStorageRgbaRO::getLayout(device),
-        WgBindGroupTextureStorageRgbaWO::getLayout(device)
-    };
-
-    // shader source and labels
-    auto shaderSource = cShaderSource_PipelineComputeCopy;
-    auto shaderLabel = "The compute shader copy";
-    auto pipelineLabel = "The compute pipeline copy";
-
-    // allocate all pipeline handles
-    allocate(device,
-             bindGroupLayouts, ARRAY_ELEMENTS_COUNT(bindGroupLayouts),
-             shaderSource, shaderLabel, pipelineLabel);
-}
-
-
-void WgPipelineBlend::initialize(WGPUDevice device, const char *shaderSource)
-{
-    // bind groups and layouts
-    WGPUBindGroupLayout bindGroupLayouts[] = {
-        WgBindGroupTexBlend::getLayout(device),
-        WgBindGroupBlendMethod::getLayout(device),
-        WgBindGroupOpacity::getLayout(device)
-    };
-
-    // shader source and labels
-    auto shaderLabel = "The compute shader blend";
-    auto pipelineLabel = "The compute pipeline blend";
-
-    // allocate all pipeline handles
-    allocate(device,
-             bindGroupLayouts, ARRAY_ELEMENTS_COUNT(bindGroupLayouts),
-             shaderSource, shaderLabel, pipelineLabel);
-}
-
-
-void WgPipelineBlendMask::initialize(WGPUDevice device, const char *shaderSource)
-{
-    // bind groups and layouts
-    WGPUBindGroupLayout bindGroupLayouts[] = {
-        WgBindGroupTexBlendMask::getLayout(device),
-        WgBindGroupBlendMethod::getLayout(device),
-        WgBindGroupOpacity::getLayout(device)
-    };
-
-    // shader source and labels
-    auto shaderLabel = "The compute shader blend mask";
-    auto pipelineLabel = "The compute pipeline blend mask";
-
-    // allocate all pipeline handles
-    allocate(device,
-             bindGroupLayouts, ARRAY_ELEMENTS_COUNT(bindGroupLayouts),
-             shaderSource, shaderLabel, pipelineLabel);
-}
-
-
-void WgPipelineMaskCompose::initialize(WGPUDevice device)
-{
-    // bind groups and layouts
-    WGPUBindGroupLayout bindGroupLayouts[] = {
-        WgBindGroupTexMaskCompose::getLayout(device),
-    };
-
-    // shader source and labels
-    auto shaderSource = cShaderSource_PipelineComputeMaskCompose;
-    auto shaderLabel = "The compute shader mask compose";
-    auto pipelineLabel = "The compute pipeline mask compose";
-
-    // allocate all pipeline handles
-    allocate(device,
-             bindGroupLayouts, ARRAY_ELEMENTS_COUNT(bindGroupLayouts),
-             shaderSource, shaderLabel, pipelineLabel);
-}
-
-
-void WgPipelineCompose::initialize(WGPUDevice device)
-{
-    // bind groups and layouts
-    WGPUBindGroupLayout bindGroupLayouts[] = {
-        WgBindGroupTexCompose::getLayout(device),
-        WgBindGroupCompositeMethod::getLayout(device),
-        WgBindGroupBlendMethod::getLayout(device),
-        WgBindGroupOpacity::getLayout(device)
-    };
-
-    // shader source and labels
-    auto shaderSource = cShaderSource_PipelineComputeCompose;
-    auto shaderLabel = "The compute shader compose blend";
-    auto pipelineLabel = "The compute pipeline compose blend";
-
-    // allocate all pipeline handles
-    allocate(device,
-             bindGroupLayouts, ARRAY_ELEMENTS_COUNT(bindGroupLayouts),
-             shaderSource, shaderLabel, pipelineLabel);
-}
-
-
-void WgPipelineAntiAliasing::initialize(WGPUDevice device)
-{
-    // bind groups and layouts
-    WGPUBindGroupLayout bindGroupLayouts[] = {
-        WgBindGroupTextureStorageRgbaRO::getLayout(device),
-        WgBindGroupTextureStorageBgraWO::getLayout(device)
-    };
-
-    // shader source and labels
-    auto shaderSource = cShaderSource_PipelineComputeAntiAlias;
-    auto shaderLabel = "The compute shader anti-aliasing";
-    auto pipelineLabel = "The compute pipeline anti-aliasing";
-
-    // allocate all pipeline handles
-    allocate(device,
-             bindGroupLayouts, ARRAY_ELEMENTS_COUNT(bindGroupLayouts),
-             shaderSource, shaderLabel, pipelineLabel);
-}
-
-//************************************************************************
-// pipelines
-//************************************************************************
 
 void WgPipelines::initialize(WgContext& context)
 {
-    // fill pipelines
-    fillShapeWinding.initialize(context.device);
-    fillShapeEvenOdd.initialize(context.device);
-    fillStroke.initialize(context.device);
-    clipMask.initialize(context.device);
-    for (uint8_t type = (uint8_t)WgPipelineBlendType::SrcOver; type <= (uint8_t)WgPipelineBlendType::Custom; type++) {
-        solid[type].initialize(context.device, (WgPipelineBlendType)type);
-        linear[type].initialize(context.device, (WgPipelineBlendType)type);
-        radial[type].initialize(context.device, (WgPipelineBlendType)type);
-        image[type].initialize(context.device, (WgPipelineBlendType)type);
-    }
-    // compute pipelines
-    computeCopy.initialize(context.device);
-    computeBlendSolid.initialize(context.device, cShaderSource_PipelineComputeBlendSolid);
-    computeBlendGradient.initialize(context.device, cShaderSource_PipelineComputeBlendGradient);
-    computeBlendImage.initialize(context.device, cShaderSource_PipelineComputeBlendImage);
-    computeBlendSolidMask.initialize(context.device, cShaderSource_PipelineComputeBlendSolidMask);
-    computeBlendGradientMask.initialize(context.device, cShaderSource_PipelineComputeBlendGradientMask);
-    computeBlendImageMask.initialize(context.device, cShaderSource_PipelineComputeBlendImageMask);
-    computeMaskCompose.initialize(context.device);
-    computeCompose.initialize(context.device);
-    computeAntiAliasing.initialize(context.device);
-    // store pipelines to context
+    // share pipelines to context
+    assert(!context.pipelines);
     context.pipelines = this;
-}
 
+    // initialize bind group layouts
+    layouts.initialize(context);
 
-void WgPipelines::release()
-{
-    WgBindGroupTexCompose::releaseLayout();
-    WgBindGroupTexMaskCompose::releaseLayout();
-    WgBindGroupTexBlendMask::releaseLayout();
-    WgBindGroupTexBlend::releaseLayout();
-    WgBindGroupTextureStorageBgraRO::releaseLayout();
-    WgBindGroupTextureStorageBgraWO::releaseLayout();
-    WgBindGroupTextureStorageRgbaRO::releaseLayout();
-    WgBindGroupTextureStorageRgbaWO::releaseLayout();
-    WgBindGroupTexture::releaseLayout();
-    WgBindGroupOpacity::releaseLayout();
-    WgBindGroupPicture::releaseLayout();
-    WgBindGroupRadialGradient::releaseLayout();
-    WgBindGroupLinearGradient::releaseLayout();
-    WgBindGroupSolidColor::releaseLayout();
-    WgBindGroupPaint::releaseLayout();
-    WgBindGroupCanvas::releaseLayout();
-    // compute pipelines
-    computeAntiAliasing.release();
-    computeCompose.release();
-    computeBlendImageMask.release();
-    computeBlendGradientMask.release();
-    computeBlendSolidMask.release();
-    computeBlendImage.release();
-    computeBlendGradient.release();
-    computeBlendSolid.release();
-    computeCopy.release();
-    // fill pipelines
-    for (uint8_t type = (uint8_t)WgPipelineBlendType::SrcOver; type <= (uint8_t)WgPipelineBlendType::Custom; type++) {
-        image[type].release();
-        radial[type].release();
-        linear[type].release();
-        solid[type].release();
+    // common pipeline settings
+    const WGPUVertexAttribute vertexAttributePos { .format = WGPUVertexFormat_Float32x2, .offset = 0, .shaderLocation = 0 };
+    const WGPUVertexAttribute vertexAttributeTex { .format = WGPUVertexFormat_Float32x2, .offset = 0, .shaderLocation = 1 };
+    const WGPUVertexAttribute vertexAttributesPos[] { vertexAttributePos };
+    const WGPUVertexAttribute vertexAttributesTex[] { vertexAttributeTex };
+    const WGPUVertexBufferLayout vertexBufferLayoutPos { .arrayStride = 8, .stepMode = WGPUVertexStepMode_Vertex, .attributeCount = 1, .attributes = vertexAttributesPos };
+    const WGPUVertexBufferLayout vertexBufferLayoutTex { .arrayStride = 8, .stepMode = WGPUVertexStepMode_Vertex, .attributeCount = 1, .attributes = vertexAttributesTex };
+    const WGPUVertexBufferLayout vertexBufferLayoutsShape[] { vertexBufferLayoutPos };
+    const WGPUVertexBufferLayout vertexBufferLayoutsImage[] { vertexBufferLayoutPos, vertexBufferLayoutTex };
+    const WGPUPrimitiveState primitiveState { .topology = WGPUPrimitiveTopology_TriangleList };
+    const WGPUMultisampleState multisampleState { .count = 1, .mask = 0xFFFFFFFF, .alphaToCoverageEnabled = false };
+
+    // blend states
+    const WGPUBlendState blendStateSrc {
+        .color = { .operation = WGPUBlendOperation_Add, .srcFactor = WGPUBlendFactor_One, .dstFactor = WGPUBlendFactor_Zero },
+        .alpha = { .operation = WGPUBlendOperation_Add, .srcFactor = WGPUBlendFactor_One, .dstFactor = WGPUBlendFactor_Zero }
+    };
+    const WGPUBlendState blendStateNrm {
+        .color = { .operation = WGPUBlendOperation_Add, .srcFactor = WGPUBlendFactor_One, .dstFactor = WGPUBlendFactor_OneMinusSrcAlpha },
+        .alpha = { .operation = WGPUBlendOperation_Add, .srcFactor = WGPUBlendFactor_One, .dstFactor = WGPUBlendFactor_OneMinusSrcAlpha }
+    };
+    const WGPUBlendState blendStates[] {
+        blendStateSrc, // WgPipelineBlendType::SrcOver
+        blendStateNrm, // WgPipelineBlendType::Normal
+        blendStateSrc  // WgPipelineBlendType::Custom (same as SrcOver)
+    };
+
+    // bind group layouts
+    const WGPUBindGroupLayout bindGroupLayoutsStencil[] = {
+        layouts.layoutBuffer1Un,
+        layouts.layoutBuffer2Un
+    };
+    const WGPUBindGroupLayout bindGroupLayoutsFill[] = {
+        layouts.layoutBuffer1Un,
+        layouts.layoutBuffer2Un,
+        layouts.layoutBuffer1Un
+    };
+    const WGPUBindGroupLayout bindGroupLayoutsImage[] = {
+        layouts.layoutBuffer1Un,
+        layouts.layoutBuffer2Un,
+        layouts.layoutTexSampled
+    };
+    const WGPUBindGroupLayout bindGroupLayoutsMergeMasks[] = {
+        layouts.layoutTexStrorage1RO,
+        layouts.layoutTexStrorage1RO,
+        layouts.layoutTexStrorage1WO
+    };
+    const WGPUBindGroupLayout bindGroupLayoutsBlend[] = {
+        layouts.layoutTexStrorage1RO,
+        layouts.layoutTexStrorage1RO,
+        layouts.layoutTexStrorage1WO,
+        layouts.layoutBuffer1Un
+    };
+    const WGPUBindGroupLayout bindGroupLayoutsCompose[] = {
+        layouts.layoutTexStrorage1RO,
+        layouts.layoutTexStrorage1RO,
+        layouts.layoutTexStrorage1RO,
+        layouts.layoutTexStrorage1WO
+    };
+    const WGPUBindGroupLayout bindGroupLayoutsCopy[] = {
+        layouts.layoutTexStrorage1RO,
+        layouts.layoutTexScreen1WO
+    };
+
+    // pipeline layouts
+    layoutStencil = createPipelineLayout(context.device, bindGroupLayoutsStencil, 2);
+    layoutFill = createPipelineLayout(context.device, bindGroupLayoutsFill, 3);
+    layoutImage = createPipelineLayout(context.device, bindGroupLayoutsImage, 3);
+    layoutBlend = createPipelineLayout(context.device, bindGroupLayoutsBlend, 4);
+    layoutCompose = createPipelineLayout(context.device, bindGroupLayoutsCompose, 4);
+    layoutMergeMasks = createPipelineLayout(context.device, bindGroupLayoutsMergeMasks, 3);
+    layoutCopy = createPipelineLayout(context.device, bindGroupLayoutsCopy, 2);
+
+    // graphics shader modules
+    shaderStencil = createShaderModule(context.device, "The shader stencil", cShaderSrc_Stencil);
+    shaderSolid = createShaderModule(context.device, "The shader solid", cShaderSrc_Solid);
+    shaderRadial = createShaderModule(context.device, "The shader radial", cShaderSrc_Radial);
+    shaderLinear = createShaderModule(context.device, "The shader linear", cShaderSrc_Linear);
+    shaderImage = createShaderModule(context.device, "The shader image", cShaderSrc_Image);
+    // computes shader modules
+    shaderMergeMasks = createShaderModule(context.device, "The shader merge mask", cShaderSrc_MergeMasks);
+    shaderCopy = createShaderModule(context.device, "The shader copy", cShaderSrc_Copy);
+
+    // render pipeline winding
+    winding = createRenderPipeline(
+        context.device, "The render pipeline winding",
+        shaderStencil, layoutStencil,
+        vertexBufferLayoutsShape, 1,
+        WGPUColorWriteMask_None,
+        WGPUCompareFunction_Always, WGPUStencilOperation_IncrementWrap,
+        WGPUCompareFunction_Always, WGPUStencilOperation_DecrementWrap,
+        primitiveState, multisampleState, blendStateSrc);
+    // render pipeline even-odd
+    evenodd = createRenderPipeline(
+        context.device, "The render pipeline even-odd",
+        shaderStencil, layoutStencil,
+        vertexBufferLayoutsShape, 1,
+        WGPUColorWriteMask_None,
+        WGPUCompareFunction_Always, WGPUStencilOperation_Invert,
+        WGPUCompareFunction_Always, WGPUStencilOperation_Invert,
+        primitiveState, multisampleState, blendStateSrc);
+    // render pipeline direct
+    direct = createRenderPipeline(
+        context.device, "The render pipeline direct",
+        shaderStencil, layoutStencil,
+        vertexBufferLayoutsShape, 1,
+        WGPUColorWriteMask_None,
+        WGPUCompareFunction_Always, WGPUStencilOperation_Replace,
+        WGPUCompareFunction_Always, WGPUStencilOperation_Replace,
+        primitiveState, multisampleState, blendStateSrc);
+    // render pipeline clip path
+    clipPath = createRenderPipeline(
+        context.device, "The render pipeline clip path",
+        shaderStencil, layoutStencil,
+        vertexBufferLayoutsShape, 1,
+        WGPUColorWriteMask_All,
+        WGPUCompareFunction_NotEqual, WGPUStencilOperation_Zero,
+        WGPUCompareFunction_NotEqual, WGPUStencilOperation_Zero,
+        primitiveState, multisampleState, blendStateSrc);
+
+    // render pipeline solid
+    for (uint32_t i = 0; i < 3; i++) {
+        solid[i] = createRenderPipeline(
+            context.device, "The render pipeline solid",
+            shaderSolid, layoutFill,
+            vertexBufferLayoutsShape, 1,
+            WGPUColorWriteMask_All,
+            WGPUCompareFunction_NotEqual, WGPUStencilOperation_Zero,
+            WGPUCompareFunction_NotEqual, WGPUStencilOperation_Zero,
+            primitiveState, multisampleState, blendStates[i]);
     }
-    clipMask.release();
-    fillStroke.release();
-    fillShapeEvenOdd.release();
-    fillShapeWinding.release();
+
+    // render pipeline radial
+    for (uint32_t i = 0; i < 3; i++) {
+        radial[i] = createRenderPipeline(
+            context.device, "The render pipeline radial",
+            shaderRadial, layoutFill,
+            vertexBufferLayoutsShape, 1,
+            WGPUColorWriteMask_All,
+            WGPUCompareFunction_NotEqual, WGPUStencilOperation_Zero,
+            WGPUCompareFunction_NotEqual, WGPUStencilOperation_Zero,
+            primitiveState, multisampleState, blendStates[i]);
+    }
+
+    // render pipeline linear
+    for (uint32_t i = 0; i < 3; i++) {
+        linear[i] = createRenderPipeline(
+            context.device, "The render pipeline linear",
+            shaderLinear, layoutFill,
+            vertexBufferLayoutsShape, 1,
+            WGPUColorWriteMask_All,
+            WGPUCompareFunction_NotEqual, WGPUStencilOperation_Zero,
+            WGPUCompareFunction_NotEqual, WGPUStencilOperation_Zero,
+            primitiveState, multisampleState, blendStates[i]);
+    }
+
+    // render pipeline image
+    for (uint32_t i = 0; i < 3; i++) {
+        image[i] = createRenderPipeline(
+            context.device, "The render pipeline image",
+            shaderImage, layoutImage,
+            vertexBufferLayoutsImage, 2,
+            WGPUColorWriteMask_All,
+            WGPUCompareFunction_Always, WGPUStencilOperation_Zero,
+            WGPUCompareFunction_Always, WGPUStencilOperation_Zero,
+            primitiveState, multisampleState, blendStates[i]);
+    }
+
+    // compute pipelines
+    mergeMasks = createComputePipeline(context.device, "The pipeline merge masks", shaderMergeMasks, layoutMergeMasks);
+    copy = createComputePipeline(context.device, "The pipeline copy", shaderCopy, layoutCopy);
+    // compute pipelines blend
+    const size_t shaderBlendCnt = sizeof(cShaderSrc_Blend_Solid)/sizeof(cShaderSrc_Blend_Solid[0]);
+    for (uint32_t i = 0; i < shaderBlendCnt; i++) {
+        // blend shaders
+        shaderBlendSolid[i] = createShaderModule(context.device, "The shader blend solid", cShaderSrc_Blend_Solid[i]);
+        shaderBlendGradient[i] = createShaderModule(context.device, "The shader blend gradient", cShaderSrc_Blend_Gradient[i]);
+        shaderBlendImage[i] = createShaderModule(context.device, "The shader blend image", cShaderSrc_Blend_Image[i]);
+        // blend pipelines
+        blendSolid[i] = createComputePipeline(context.device, "The pipeline blend solid", shaderBlendSolid[i], layoutBlend);
+        blendGradient[i] = createComputePipeline(context.device, "The pipeline blend gradient", shaderBlendGradient[i], layoutBlend);
+        blendImage[i] = createComputePipeline(context.device, "The pipeline blend image", shaderBlendImage[i], layoutBlend);
+    }
+    // compute pipelines compose
+    const size_t shaderComposeCnt = sizeof(cShaderSrc_Compose)/sizeof(cShaderSrc_Compose[0]);
+    for (uint32_t i = 0; i < shaderComposeCnt; i++) {
+        shaderCompose[i] = createShaderModule(context.device, "The shader compose", cShaderSrc_Compose[i]);
+        compose[i] = createComputePipeline(context.device, "The pipeline compose", shaderCompose[i], layoutCompose);
+    }
+}
+
+void WgPipelines::releaseGraphicHandles(WgContext& context)
+{
+    releaseRenderPipeline(clipPath);
+    for (uint32_t i = 0; i < 3; i++) {
+        releaseRenderPipeline(image[i]);
+        releaseRenderPipeline(linear[i]);
+        releaseRenderPipeline(radial[i]);
+        releaseRenderPipeline(solid[i]);
+    }
+    releaseRenderPipeline(direct);
+    releaseRenderPipeline(evenodd);
+    releaseRenderPipeline(winding);
+    releasePipelineLayout(layoutImage);
+    releasePipelineLayout(layoutFill);
+    releasePipelineLayout(layoutStencil);
+    releaseShaderModule(shaderImage);
+    releaseShaderModule(shaderLinear);
+    releaseShaderModule(shaderRadial);
+    releaseShaderModule(shaderSolid);
+    releaseShaderModule(shaderStencil);
 }
 
 
-bool WgPipelines::isBlendMethodSupportsHW(BlendMethod blendMethod)
+void WgPipelines::releaseComputeHandles(WgContext& context)
 {
-    switch (blendMethod) {
-        case BlendMethod::SrcOver:
-        case BlendMethod::Normal:
-            return true;
-        default: return false;
-    };
+    const size_t shaderComposeCnt = sizeof(shaderCompose)/sizeof(shaderCompose[0]);
+    for (uint32_t i = 0; i < shaderComposeCnt; i++) {
+        releaseComputePipeline(compose[i]);
+        releaseShaderModule(shaderCompose[i]);
+    }
+    const size_t shaderBlendImageCnt = sizeof(shaderBlendImage)/sizeof(shaderBlendImage[0]);
+    for (uint32_t i = 0; i < shaderBlendImageCnt; i++) {
+        releaseComputePipeline(blendImage[i]);
+        releaseComputePipeline(blendSolid[i]);
+        releaseComputePipeline(blendGradient[i]);
+        releaseShaderModule(shaderBlendImage[i]);
+        releaseShaderModule(shaderBlendGradient[i]);
+        releaseShaderModule(shaderBlendSolid[i]);
+    }
+    releaseComputePipeline(copy);
+    releaseComputePipeline(mergeMasks);
+    releasePipelineLayout(layoutCompose);
+    releasePipelineLayout(layoutBlend);
+    releasePipelineLayout(layoutMergeMasks);
+    releasePipelineLayout(layoutCopy);
+    releaseShaderModule(shaderMergeMasks);
+    releaseShaderModule(shaderCopy);
 }
 
-
-WgPipelineBlendType WgPipelines::blendMethodToBlendType(BlendMethod blendMethod)
+void WgPipelines::release(WgContext& context)
 {
-    switch (blendMethod) {
-        case BlendMethod::SrcOver: return WgPipelineBlendType::SrcOver;
-        case BlendMethod::Normal: return WgPipelineBlendType::Normal;
-        default: return WgPipelineBlendType::Custom;
-    };
+    releaseComputeHandles(context);
+    releaseGraphicHandles(context);
+    layouts.release(context);
 }
