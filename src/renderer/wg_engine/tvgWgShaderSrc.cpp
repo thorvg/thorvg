@@ -26,10 +26,10 @@
 #define WG_SHADER_SOURCE(...) #__VA_ARGS__
 
 //************************************************************************
-// shader pipeline fill
+// graphics shader source: stencil
 //************************************************************************
 
-const char* cShaderSource_PipelineFill = WG_SHADER_SOURCE(
+const char* cShaderSrc_Stencil = WG_SHADER_SOURCE(
 // vertex input
 struct VertexInput {
     @location(0) position: vec2f
@@ -41,8 +41,8 @@ struct VertexOutput {
 };
 
 // uniforms
-@group(0) @binding(0) var<uniform> uViewMat      : mat4x4f;
-@group(1) @binding(0) var<uniform> uModelMat     : mat4x4f;
+@group(0) @binding(0) var<uniform> uViewMat  : mat4x4f;
+@group(1) @binding(0) var<uniform> uModelMat : mat4x4f;
 
 @vertex
 fn vs_main(in: VertexInput) -> VertexOutput {
@@ -59,10 +59,10 @@ fn fs_main(in: VertexOutput) -> @location(0) vec4f {
 );
 
 //************************************************************************
-// shader pipeline solid
+// graphics shader source: solid
 //************************************************************************
 
-const char* cShaderSource_PipelineSolid = WG_SHADER_SOURCE(
+const char* cShaderSrc_Solid = WG_SHADER_SOURCE(
 // vertex input
 struct VertexInput {
     @location(0) position: vec2f
@@ -109,10 +109,10 @@ fn fs_main(in: VertexOutput) -> @location(0) vec4f {
 );
 
 //************************************************************************
-// shader pipeline linear
+// graphics shader source: linear
 //************************************************************************
 
-const char* cShaderSource_PipelineLinear = WG_SHADER_SOURCE(
+const char* cShaderSrc_Linear = WG_SHADER_SOURCE(
 // vertex input
 struct VertexInput {
     @location(0) position: vec2f
@@ -149,7 +149,7 @@ struct VertexOutput {
 // uniforms
 @group(0) @binding(0) var<uniform> uViewMat        : mat4x4f;
 @group(1) @binding(0) var<uniform> uModelMat       : mat4x4f;
-@group(1) @binding(1) var<uniform> uBlendSettings   : BlendSettings;
+@group(1) @binding(1) var<uniform> uBlendSettings  : BlendSettings;
 @group(2) @binding(0) var<uniform> uLinearGradient : LinearGradient;
 
 @vertex
@@ -212,10 +212,10 @@ fn fs_main(in: VertexOutput) -> @location(0) vec4f {
 );
 
 //************************************************************************
-// shader pipeline radial
+// graphics shader source: radial
 //************************************************************************
 
-const char* cShaderSource_PipelineRadial = WG_SHADER_SOURCE(
+const char* cShaderSrc_Radial = WG_SHADER_SOURCE(
 // vertex input
 struct VertexInput {
     @location(0) position: vec2f
@@ -309,10 +309,10 @@ fn fs_main(in: VertexOutput) -> @location(0) vec4f {
 );
 
 //************************************************************************
-// cShaderSource_PipelineImage
+// graphics shader source: image
 //************************************************************************
 
-const char* cShaderSource_PipelineImage = WG_SHADER_SOURCE(
+const char* cShaderSrc_Image = WG_SHADER_SOURCE(
 // vertex input
 struct VertexInput {
     @location(0) position: vec2f,
@@ -365,296 +365,329 @@ fn fs_main(in: VertexOutput) -> @location(0) vec4f {
 );
 
 //************************************************************************
-// cShaderSource_PipelineComputeBlend
+// compute shaders blend
 //************************************************************************
 
-const std::string strBlendShaderHeader = WG_SHADER_SOURCE(
-@group(0) @binding(0) var imageSrc : texture_storage_2d<rgba8unorm, read>;
-@group(0) @binding(1) var imageDst : texture_storage_2d<rgba8unorm, read>;
-@group(0) @binding(2) var imageTrg : texture_storage_2d<rgba8unorm, write>;
-@group(1) @binding(0) var<uniform> blendMethod : u32;
-@group(2) @binding(0) var<uniform> opacity : f32;
 
-@compute @workgroup_size(8, 8)
-fn cs_main( @builtin(global_invocation_id) id: vec3u) {
-    let texSize = textureDimensions(imageSrc);
-    if ((id.x >= texSize.x) || (id.y >= texSize.y)) { return; };
-
-    let colorSrc= textureLoad(imageSrc, id.xy);
-    if (colorSrc.a == 0.0) { return; }
-    let colorDst = textureLoad(imageDst, id.xy);
-
-    var One: vec3f = vec3(1.0);
-    var So: f32    = opacity;
-    var Sc: vec3f  = colorSrc.rgb;
-    var Sa: f32    = colorSrc.a;
-    var Dc: vec3f  = colorDst.rgb;
-    var Da: f32    = colorDst.a;
-    var Rc: vec3f  = colorDst.rgb;
-    var Ra: f32    = 1.0;
-);
-
-const std::string strBlendMaskShaderHeader = WG_SHADER_SOURCE(
-@group(0) @binding(0) var imageSrc : texture_storage_2d<rgba8unorm, read>;
-@group(0) @binding(1) var imageMsk : texture_storage_2d<rgba8unorm, read>;
-@group(0) @binding(2) var imageDst : texture_storage_2d<rgba8unorm, read>;
-@group(0) @binding(3) var imageTrg : texture_storage_2d<rgba8unorm, write>;
-@group(1) @binding(0) var<uniform> blendMethod : u32;
-@group(2) @binding(0) var<uniform> opacity : f32;
-
-@compute @workgroup_size(8, 8)
-fn cs_main( @builtin(global_invocation_id) id: vec3u) {
-    let texSize = textureDimensions(imageSrc);
-    if ((id.x >= texSize.x) || (id.y >= texSize.y)) { return; };
-
-    let colorMsk = textureLoad(imageMsk, id.xy);
-    if (colorMsk.a == 0.0) { return; }
-    let colorSrc = textureLoad(imageSrc, id.xy);
-    if (colorSrc.a == 0.0) { return; }
-    let colorDst = textureLoad(imageDst, id.xy);
-
-    var One: vec3f = vec3(1.0);
-    var So: f32    = opacity;
-    var Sc: vec3f  = colorSrc.rgb;
-    var Sa: f32    = colorSrc.a;
-    var Dc: vec3f  = colorDst.rgb;
-    var Da: f32    = colorDst.a;
-    var Rc: vec3f  = colorDst.rgb;
-    var Ra: f32    = 1.0;
-);
-
-const std::string strBlendShaderPreConditionsGradient = WG_SHADER_SOURCE(
-    Sc = Sc + Dc.rgb * (1.0 - Sa);
-    Sa = Sa + Da     * (1.0 - Sa);
-);
-
-const std::string strBlendShaderPreConditionsImage = WG_SHADER_SOURCE(
-    Sc = Sc * So;
-    Sa = Sa * So;
-);
-
-const std::string strBlendShaderBlendMethod = WG_SHADER_SOURCE(
-    switch blendMethod {
-        /* Normal     */ case 0u:  {
-            Rc = Sc + Dc * (1.0 - Sa);
-            Ra = Sa + Da * (1.0 - Sa);
-        }
-        /* Add        */ case 1u:  { Rc = Sc + Dc; }
-        /* Screen     */ case 2u:  { Rc = Sc + Dc - Sc * Dc; }
-        /* Multiply   */ case 3u:  { Rc = Sc * Dc; }
-        /* Overlay    */ case 4u:  { 
-            Rc.r = select(1.0 - min(1.0, 2 * (1 - Sc.r) * (1 - Dc.r)), min(1.0, 2 * Sc.r * Dc.r), (Dc.r < 0.5));
-            Rc.g = select(1.0 - min(1.0, 2 * (1 - Sc.g) * (1 - Dc.g)), min(1.0, 2 * Sc.g * Dc.g), (Dc.g < 0.5));
-            Rc.b = select(1.0 - min(1.0, 2 * (1 - Sc.b) * (1 - Dc.b)), min(1.0, 2 * Sc.b * Dc.b), (Dc.b < 0.5));
-        }
-        /* Difference */ case 5u:  { Rc = abs(Dc - Sc); }
-        /* Exclusion  */ case 6u:  { Rc = min(One, Sc + Dc - min(One, 2 * Sc * Dc)); }
-        /* SrcOver    */ case 7u:  { Rc = Sc; Ra = Sa; }
-        /* Darken     */ case 8u:  { Rc = min(Sc, Dc); }
-        /* Lighten    */ case 9u:  { Rc = max(Sc, Dc); }
-        /* ColorDodge */ case 10u: {
-            Rc.r = select(Dc.r, (Dc.r * 255.0 / (255.0 - Sc.r * 255.0))/255.0, (1.0 - Sc.r > 0.0));
-            Rc.g = select(Dc.g, (Dc.g * 255.0 / (255.0 - Sc.g * 255.0))/255.0, (1.0 - Sc.g > 0.0));
-            Rc.b = select(Dc.b, (Dc.b * 255.0 / (255.0 - Sc.b * 255.0))/255.0, (1.0 - Sc.b > 0.0));
-        }
-        /* ColorBurn  */ case 11u: {
-            Rc.r = select(1.0 - Dc.r, (255.0 - (255.0 - Dc.r * 255.0) / (Sc.r * 255.0)) / 255.0, (Sc.r > 0.0));
-            Rc.g = select(1.0 - Dc.g, (255.0 - (255.0 - Dc.g * 255.0) / (Sc.g * 255.0)) / 255.0, (Sc.g > 0.0));
-            Rc.b = select(1.0 - Dc.b, (255.0 - (255.0 - Dc.b * 255.0) / (Sc.b * 255.0)) / 255.0, (Sc.b > 0.0));
-        }
-        /* HardLight  */ case 12u: {
-            Rc.r = select(1.0 - min(1.0, 2 * (1 - Sc.r) * (1 - Dc.r)), min(1.0, 2 * Sc.r * Dc.r), (Sc.r < 0.5));
-            Rc.g = select(1.0 - min(1.0, 2 * (1 - Sc.g) * (1 - Dc.g)), min(1.0, 2 * Sc.g * Dc.g), (Sc.g < 0.5));
-            Rc.b = select(1.0 - min(1.0, 2 * (1 - Sc.b) * (1 - Dc.b)), min(1.0, 2 * Sc.b * Dc.b), (Sc.b < 0.5));
-        }
-        /* SoftLight  */ case 13u: { Rc = min(One, (One - 2 * Sc) * Dc * Dc + 2.0 * Sc * Dc); }
-        default:  { 
-            Rc = Sc + Dc * (1.0 - Sa);
-            Ra = Sa + Da * (1.0 - Sa);
-        }
-    }
-);
-
-const std::string strBlendShaderPostConditionsGradient = WG_SHADER_SOURCE(
-    // nothing
-);
-
-const std::string strBlendShaderPostConditionsImage = WG_SHADER_SOURCE(
-    Rc = select(mix(Dc, Rc, Sa), Rc, blendMethod == 0);
-    Ra = select(mix(Da, Ra, Sa), Ra, blendMethod == 0);
-);
-
-const std::string strBlendShaderFooter = WG_SHADER_SOURCE(
-    textureStore(imageTrg, id.xy, vec4(Rc, Ra));
-}
-);
-
-// pipeline shader modules blend solid
-const std::string strComputeBlendSolid =
-    strBlendShaderHeader + 
-    strBlendShaderBlendMethod + 
-    strBlendShaderFooter;
-const char* cShaderSource_PipelineComputeBlendSolid = strComputeBlendSolid.c_str();
-
-// pipeline shader modules blend gradient
-const std::string strComputeBlendGradient =
-    strBlendShaderHeader + 
-    strBlendShaderPreConditionsGradient + 
-    strBlendShaderBlendMethod + 
-    strBlendShaderPostConditionsGradient + 
-    strBlendShaderFooter;
-const char* cShaderSource_PipelineComputeBlendGradient = strComputeBlendGradient.c_str();
-
-// pipeline shader modules blend image
-const std::string strComputeBlendImage =
-    strBlendShaderHeader + 
-    strBlendShaderPreConditionsImage + 
-    strBlendShaderBlendMethod + 
-    strBlendShaderPostConditionsImage + 
-    strBlendShaderFooter;
-const char* cShaderSource_PipelineComputeBlendImage = strComputeBlendImage.c_str();
-
-// pipeline shader modules blend solid mask
-const std::string strComputeBlendSolidMask =
-    strBlendMaskShaderHeader + 
-    strBlendShaderBlendMethod + 
-    strBlendShaderFooter;
-const char* cShaderSource_PipelineComputeBlendSolidMask = strComputeBlendSolidMask.c_str();
-
-// pipeline shader modules blend gradient mask
-const std::string strComputeBlendGradientMask =
-    strBlendMaskShaderHeader + 
-    strBlendShaderPreConditionsGradient + 
-    strBlendShaderBlendMethod + 
-    strBlendShaderPostConditionsGradient + 
-    strBlendShaderFooter;
-const char* cShaderSource_PipelineComputeBlendGradientMask = strComputeBlendGradientMask.c_str();
-
-// pipeline shader modules blend image mask
-const std::string strComputeBlendImageMask =
-    strBlendMaskShaderHeader + 
-    strBlendShaderPreConditionsImage + 
-    strBlendShaderBlendMethod + 
-    strBlendShaderPostConditionsImage + 
-    strBlendShaderFooter;
-const char* cShaderSource_PipelineComputeBlendImageMask = strComputeBlendImageMask.c_str();
-
-// pipeline shader modules clear
-const char* cShaderSource_PipelineComputeClear = WG_SHADER_SOURCE(
-@group(0) @binding(0) var imageDst : texture_storage_2d<rgba8unorm, write>;
-
-@compute @workgroup_size(8, 8)
-fn cs_main( @builtin(global_invocation_id) id: vec3u) {
-    textureStore(imageDst, id.xy, vec4f(0.0, 0.0, 0.0, 0.0));
-}
-);
-
-
-// pipeline shader modules copy
-const char* cShaderSource_PipelineComputeCopy = WG_SHADER_SOURCE(
-@group(0) @binding(0) var imageSrc : texture_storage_2d<rgba8unorm, read>;
-@group(1) @binding(0) var imageDst : texture_storage_2d<rgba8unorm, write>;
-
-@compute @workgroup_size(8, 8)
-fn cs_main( @builtin(global_invocation_id) id: vec3u) {
-    textureStore(imageDst, id.xy, textureLoad(imageSrc, id.xy));
-}
-);
-
-
-// pipeline shader modules compose
-const char* cShaderSource_PipelineComputeMaskCompose = WG_SHADER_SOURCE(
+const char* cShaderSrc_MergeMasks = WG_SHADER_SOURCE(
 @group(0) @binding(0) var imageMsk0 : texture_storage_2d<rgba8unorm, read>;
-@group(0) @binding(1) var imageMsk1 : texture_storage_2d<rgba8unorm, read>;
-@group(0) @binding(2) var imageTrg  : texture_storage_2d<rgba8unorm, write>;
+@group(1) @binding(0) var imageMsk1 : texture_storage_2d<rgba8unorm, read>;
+@group(2) @binding(0) var imageTrg  : texture_storage_2d<rgba8unorm, write>;
 
 @compute @workgroup_size(8, 8)
-fn cs_main( @builtin(global_invocation_id) id: vec3u) {
+fn cs_main(@builtin(global_invocation_id) id: vec3u) {
     let colorMsk0 = textureLoad(imageMsk0, id.xy);
     let colorMsk1 = textureLoad(imageMsk1, id.xy);
     textureStore(imageTrg, id.xy, colorMsk0 * colorMsk1);
 }
 );
 
-// pipeline shader modules compose
-const char* cShaderSource_PipelineComputeCompose = WG_SHADER_SOURCE(
+
+//************************************************************************
+// compute shaders blend
+//************************************************************************
+
+std::string cBlendHeader = WG_SHADER_SOURCE(
 @group(0) @binding(0) var imageSrc : texture_storage_2d<rgba8unorm, read>;
-@group(0) @binding(1) var imageMsk : texture_storage_2d<rgba8unorm, read>;
-@group(0) @binding(2) var imageDst : texture_storage_2d<rgba8unorm, read>;
-@group(0) @binding(3) var imageTrg : texture_storage_2d<rgba8unorm, write>;
-@group(1) @binding(0) var<uniform> composeMethod : u32;
-@group(2) @binding(0) var<uniform> blendMethod : u32;
-@group(3) @binding(0) var<uniform> opacity : f32;
+@group(1) @binding(0) var imageDst : texture_storage_2d<rgba8unorm, read>;
+@group(2) @binding(0) var imageTgt : texture_storage_2d<rgba8unorm, write>;
+@group(3) @binding(0) var<uniform> So : f32;
 
 @compute @workgroup_size(8, 8)
-fn cs_main( @builtin(global_invocation_id) id: vec3u) {
-    let texSize = textureDimensions(imageSrc);
-    if ((id.x >= texSize.x) || (id.y >= texSize.y)) { return; };
+fn cs_main(@builtin(global_invocation_id) id: vec3u) {
+    let colorSrc = textureLoad(imageSrc, id.xy);
+    if (colorSrc.a == 0.0) { return; }
+    let colorDst = textureLoad(imageDst, id.xy);
 
+    var Sc: vec3f = colorSrc.rgb;
+    var Sa: f32   = colorSrc.a;
+    let Dc: vec3f = colorDst.rgb;
+    let Da: f32   = colorDst.a;
+    var Rc: vec3f = colorDst.rgb;
+    var Ra: f32   = 1.0;
+);
+
+const std::string cBlendPreProcess_Gradient = WG_SHADER_SOURCE(
+    Sc = Sc + Dc * (1.0 - Sa);
+    Sa = Sa + Da * (1.0 - Sa);
+);
+const std::string cBlendPreProcess_Image = WG_SHADER_SOURCE(
+    Sc = Sc * So;
+    Sa = Sa * So;
+);
+
+const std::string cBlendEquation_Normal = WG_SHADER_SOURCE(
+    Rc = Sc + Dc * (1.0 - Sa);
+    Ra = Sa + Da * (1.0 - Sa);
+);
+const std::string cBlendEquation_Add = WG_SHADER_SOURCE(
+    Rc = Sc + Dc;
+);
+const std::string cBlendEquation_Screen = WG_SHADER_SOURCE(
+    Rc = Sc + Dc - Sc * Dc;
+);
+const std::string cBlendEquation_Multiply = WG_SHADER_SOURCE(
+    Rc = Sc * Dc;
+);
+const std::string cBlendEquation_Overlay = WG_SHADER_SOURCE(
+    Rc.r = select(1.0 - min(1.0, 2 * (1 - Sc.r) * (1 - Dc.r)), min(1.0, 2 * Sc.r * Dc.r), (Dc.r < 0.5));
+    Rc.g = select(1.0 - min(1.0, 2 * (1 - Sc.g) * (1 - Dc.g)), min(1.0, 2 * Sc.g * Dc.g), (Dc.g < 0.5));
+    Rc.b = select(1.0 - min(1.0, 2 * (1 - Sc.b) * (1 - Dc.b)), min(1.0, 2 * Sc.b * Dc.b), (Dc.b < 0.5));
+);
+const std::string cBlendEquation_Difference = WG_SHADER_SOURCE(
+    Rc = abs(Dc - Sc);
+);
+const std::string cBlendEquation_Exclusion = WG_SHADER_SOURCE(
+    let One = vec3f(1.0, 1.0, 1.0);
+    Rc = min(One, Sc + Dc - min(One, 2 * Sc * Dc));
+);
+const std::string cBlendEquation_SrcOver = WG_SHADER_SOURCE(
+    Rc = Sc; Ra = Sa;
+);
+const std::string cBlendEquation_Darken = WG_SHADER_SOURCE(
+    Rc = min(Sc, Dc);
+);
+const std::string cBlendEquation_Lighten = WG_SHADER_SOURCE(
+    Rc = max(Sc, Dc);
+);
+const std::string cBlendEquation_ColorDodge = WG_SHADER_SOURCE(
+    Rc.r = select(Dc.r, (Dc.r * 255.0 / (255.0 - Sc.r * 255.0))/255.0, (1.0 - Sc.r > 0.0));
+    Rc.g = select(Dc.g, (Dc.g * 255.0 / (255.0 - Sc.g * 255.0))/255.0, (1.0 - Sc.g > 0.0));
+    Rc.b = select(Dc.b, (Dc.b * 255.0 / (255.0 - Sc.b * 255.0))/255.0, (1.0 - Sc.b > 0.0));
+);
+const std::string cBlendEquation_ColorBurn = WG_SHADER_SOURCE(
+    Rc.r = select(1.0 - Dc.r, (255.0 - (255.0 - Dc.r * 255.0) / (Sc.r * 255.0)) / 255.0, (Sc.r > 0.0));
+    Rc.g = select(1.0 - Dc.g, (255.0 - (255.0 - Dc.g * 255.0) / (Sc.g * 255.0)) / 255.0, (Sc.g > 0.0));
+    Rc.b = select(1.0 - Dc.b, (255.0 - (255.0 - Dc.b * 255.0) / (Sc.b * 255.0)) / 255.0, (Sc.b > 0.0));
+);
+const std::string cBlendEquation_HardLight = WG_SHADER_SOURCE(
+    Rc.r = select(1.0 - min(1.0, 2 * (1 - Sc.r) * (1 - Dc.r)), min(1.0, 2 * Sc.r * Dc.r), (Sc.r < 0.5));
+    Rc.g = select(1.0 - min(1.0, 2 * (1 - Sc.g) * (1 - Dc.g)), min(1.0, 2 * Sc.g * Dc.g), (Sc.g < 0.5));
+    Rc.b = select(1.0 - min(1.0, 2 * (1 - Sc.b) * (1 - Dc.b)), min(1.0, 2 * Sc.b * Dc.b), (Sc.b < 0.5));
+);
+const std::string cBlendEquation_SoftLight = WG_SHADER_SOURCE(
+    let One = vec3f(1.0, 1.0, 1.0);
+    Rc = min(One, (One - 2 * Sc) * Dc * Dc + 2.0 * Sc * Dc);
+);
+
+const std::string cBlendPostProcess_Gradient = WG_SHADER_SOURCE(
+);
+const std::string cBlendPostProcess_Image = WG_SHADER_SOURCE(
+    Rc = mix(Dc, Rc, Sa);
+    Ra = mix(Da, Ra, Sa);
+);
+
+const std::string cBlendFooter = WG_SHADER_SOURCE(
+    textureStore(imageTgt, id.xy, vec4f(Rc, Ra));
+}
+);
+
+std::string blend_solid_Normal     = cBlendHeader + cBlendEquation_Normal     + cBlendFooter;
+std::string blend_solid_Add        = cBlendHeader + cBlendEquation_Add        + cBlendFooter;
+std::string blend_solid_Screen     = cBlendHeader + cBlendEquation_Screen     + cBlendFooter;
+std::string blend_solid_Multiply   = cBlendHeader + cBlendEquation_Multiply   + cBlendFooter;
+std::string blend_solid_Overlay    = cBlendHeader + cBlendEquation_Overlay    + cBlendFooter;
+std::string blend_solid_Difference = cBlendHeader + cBlendEquation_Difference + cBlendFooter;
+std::string blend_solid_Exclusion  = cBlendHeader + cBlendEquation_Exclusion  + cBlendFooter;
+std::string blend_solid_SrcOver    = cBlendHeader + cBlendEquation_SrcOver    + cBlendFooter;
+std::string blend_solid_Darken     = cBlendHeader + cBlendEquation_Darken     + cBlendFooter;
+std::string blend_solid_Lighten    = cBlendHeader + cBlendEquation_Lighten    + cBlendFooter;
+std::string blend_solid_ColorDodge = cBlendHeader + cBlendEquation_ColorDodge + cBlendFooter;
+std::string blend_solid_ColorBurn  = cBlendHeader + cBlendEquation_ColorBurn  + cBlendFooter;
+std::string blend_solid_HardLight  = cBlendHeader + cBlendEquation_HardLight  + cBlendFooter;
+std::string blend_solid_SoftLight  = cBlendHeader + cBlendEquation_SoftLight  + cBlendFooter;
+
+const char* cShaderSrc_Blend_Solid[] {
+    blend_solid_Normal.c_str(),
+    blend_solid_Add.c_str(),
+    blend_solid_Screen.c_str(),
+    blend_solid_Multiply.c_str(),
+    blend_solid_Overlay.c_str(),
+    blend_solid_Difference.c_str(),
+    blend_solid_Exclusion.c_str(),
+    blend_solid_SrcOver.c_str(),
+    blend_solid_Darken.c_str(),
+    blend_solid_Lighten.c_str(),
+    blend_solid_ColorDodge.c_str(),
+    blend_solid_ColorBurn.c_str(),
+    blend_solid_HardLight.c_str(),
+    blend_solid_SoftLight.c_str()
+};
+
+
+const std::string cBlendHeader_Gradient = cBlendHeader + cBlendPreProcess_Gradient;
+const std::string cBlendFooter_Gradient = cBlendPostProcess_Gradient + cBlendFooter;
+std::string blend_gradient_Normal     = cBlendHeader_Gradient + cBlendEquation_Normal     + cBlendFooter_Gradient;
+std::string blend_gradient_Add        = cBlendHeader_Gradient + cBlendEquation_Add        + cBlendFooter_Gradient;
+std::string blend_gradient_Screen     = cBlendHeader_Gradient + cBlendEquation_Screen     + cBlendFooter_Gradient;
+std::string blend_gradient_Multiply   = cBlendHeader_Gradient + cBlendEquation_Multiply   + cBlendFooter_Gradient;
+std::string blend_gradient_Overlay    = cBlendHeader_Gradient + cBlendEquation_Overlay    + cBlendFooter_Gradient;
+std::string blend_gradient_Difference = cBlendHeader_Gradient + cBlendEquation_Difference + cBlendFooter_Gradient;
+std::string blend_gradient_Exclusion  = cBlendHeader_Gradient + cBlendEquation_Exclusion  + cBlendFooter_Gradient;
+std::string blend_gradient_SrcOver    = cBlendHeader_Gradient + cBlendEquation_SrcOver    + cBlendFooter_Gradient;
+std::string blend_gradient_Darken     = cBlendHeader_Gradient + cBlendEquation_Darken     + cBlendFooter_Gradient;
+std::string blend_gradient_Lighten    = cBlendHeader_Gradient + cBlendEquation_Lighten    + cBlendFooter_Gradient;
+std::string blend_gradient_ColorDodge = cBlendHeader_Gradient + cBlendEquation_ColorDodge + cBlendFooter_Gradient;
+std::string blend_gradient_ColorBurn  = cBlendHeader_Gradient + cBlendEquation_ColorBurn  + cBlendFooter_Gradient;
+std::string blend_gradient_HardLight  = cBlendHeader_Gradient + cBlendEquation_HardLight  + cBlendFooter_Gradient;
+std::string blend_gradient_SoftLight  = cBlendHeader_Gradient + cBlendEquation_SoftLight  + cBlendFooter_Gradient;
+
+const char* cShaderSrc_Blend_Gradient[] {
+    blend_gradient_Normal.c_str(),
+    blend_gradient_Add.c_str(),
+    blend_gradient_Screen.c_str(),
+    blend_gradient_Multiply.c_str(),
+    blend_gradient_Overlay.c_str(),
+    blend_gradient_Difference.c_str(),
+    blend_gradient_Exclusion.c_str(),
+    blend_gradient_SrcOver.c_str(),
+    blend_gradient_Darken.c_str(),
+    blend_gradient_Lighten.c_str(),
+    blend_gradient_ColorDodge.c_str(),
+    blend_gradient_ColorBurn.c_str(),
+    blend_gradient_HardLight.c_str(),
+    blend_gradient_SoftLight.c_str()
+};
+
+const std::string cBlendHeader_Image = cBlendHeader + cBlendPreProcess_Image;
+const std::string cBlendFooter_Image = cBlendPostProcess_Image + cBlendFooter;
+std::string blend_image_Normal     = cBlendHeader_Image + cBlendEquation_Normal     + cBlendFooter;
+std::string blend_image_Add        = cBlendHeader_Image + cBlendEquation_Add        + cBlendFooter_Image;
+std::string blend_image_Screen     = cBlendHeader_Image + cBlendEquation_Screen     + cBlendFooter_Image;
+std::string blend_image_Multiply   = cBlendHeader_Image + cBlendEquation_Multiply   + cBlendFooter_Image;
+std::string blend_image_Overlay    = cBlendHeader_Image + cBlendEquation_Overlay    + cBlendFooter_Image;
+std::string blend_image_Difference = cBlendHeader_Image + cBlendEquation_Difference + cBlendFooter_Image;
+std::string blend_image_Exclusion  = cBlendHeader_Image + cBlendEquation_Exclusion  + cBlendFooter_Image;
+std::string blend_image_SrcOver    = cBlendHeader_Image + cBlendEquation_SrcOver    + cBlendFooter_Image;
+std::string blend_image_Darken     = cBlendHeader_Image + cBlendEquation_Darken     + cBlendFooter_Image;
+std::string blend_image_Lighten    = cBlendHeader_Image + cBlendEquation_Lighten    + cBlendFooter_Image;
+std::string blend_image_ColorDodge = cBlendHeader_Image + cBlendEquation_ColorDodge + cBlendFooter_Image;
+std::string blend_image_ColorBurn  = cBlendHeader_Image + cBlendEquation_ColorBurn  + cBlendFooter_Image;
+std::string blend_image_HardLight  = cBlendHeader_Image + cBlendEquation_HardLight  + cBlendFooter_Image;
+std::string blend_image_SoftLight  = cBlendHeader_Image + cBlendEquation_SoftLight  + cBlendFooter_Image;
+
+const char* cShaderSrc_Blend_Image[] {
+    blend_image_Normal.c_str(),
+    blend_image_Add.c_str(),
+    blend_image_Screen.c_str(),
+    blend_image_Multiply.c_str(),
+    blend_image_Overlay.c_str(),
+    blend_image_Difference.c_str(),
+    blend_image_Exclusion.c_str(),
+    blend_image_SrcOver.c_str(),
+    blend_image_Darken.c_str(),
+    blend_image_Lighten.c_str(),
+    blend_image_ColorDodge.c_str(),
+    blend_image_ColorBurn.c_str(),
+    blend_image_HardLight.c_str(),
+    blend_image_SoftLight.c_str()
+};
+
+//************************************************************************
+// compute shaders compose
+//************************************************************************
+
+std::string cComposeHeader = WG_SHADER_SOURCE(
+@group(0) @binding(0) var imageSrc : texture_storage_2d<rgba8unorm, read>;
+@group(1) @binding(0) var imageMsk : texture_storage_2d<rgba8unorm, read>;
+@group(2) @binding(0) var imageDst : texture_storage_2d<rgba8unorm, read>;
+@group(3) @binding(0) var imageTgt : texture_storage_2d<rgba8unorm, write>;
+
+@compute @workgroup_size(8, 8)
+fn cs_main(@builtin(global_invocation_id) id: vec3u) {
     let colorSrc = textureLoad(imageSrc, id.xy);
     let colorMsk = textureLoad(imageMsk, id.xy);
     let colorDst = textureLoad(imageDst, id.xy);
 
-    var One: vec3f  = vec3(1.0);
-    let luma: f32   = dot(colorMsk.xyz, vec3f(0.2125, 0.7154, 0.0721));
-    var So  : f32   = opacity;
-    var Mc  : vec3f = colorMsk.rgb;
-    var Ma  : f32   = colorMsk.a;
-    var MSc : vec3f = colorSrc.rgb;
-    var MSa : f32   = colorSrc.a;
-    var Sc  : vec3f = colorSrc.rgb;
-    var Sa  : f32   = colorSrc.a;
-    var Dc  : vec3f = colorDst.rgb;
-    var Da  : f32   = colorDst.a;
-    var Rc  : vec3f = colorDst.rgb;
-    var Ra  : f32   = 1.0;
+    var Sc : vec3f = colorSrc.rgb;
+    var Sa : f32   = colorSrc.a;
+    var Mc : vec3f = colorMsk.rgb;
+    var Ma : f32   = colorMsk.a;
+    var Dc : vec3f = colorDst.rgb;
+    var Da : f32   = colorDst.a;
+    var Rc : vec3f = colorDst.rgb;
+    var Ra : f32   = colorDst.a;
+);
 
-    if (composeMethod <= /* InvLumaMask */5u) {
-        switch composeMethod {
-            /* AlphaMask      */ case 2u: { Sc = MSc * Ma;         Sa = MSa * Ma; }
-            /* InvAlphaMask   */ case 3u: { Sc = MSc * (1.0 - Ma); Sa = MSa * (1.0 - Ma); }
-            /* LumaMask       */ case 4u: { Sc = MSc * luma;       Sa = MSa * luma; }
-            /* InvLumaMask    */ case 5u: { Sc = MSc * (1.0-luma); Sa = MSa * (1.0-luma); }
-            default: { Sc = MSc; Sa = MSa; }
-        }
-        Rc = Sc + Dc * (1.0 - Sa);
-        Ra = Sa + Da * (1.0 - Sa);
-    } else {
-        Sc = Dc;
-        switch composeMethod {
-            /* AddMask        */ case 6u: { Sa = MSa + Ma * (1.0 - MSa); }
-            /* SubtractMask   */ case 7u: { Sa = MSa * (1.0 - Ma); }
-            /* IntersectMask  */ case 8u: { Sa = MSa * Ma; }
-            /* DifferenceMask */ case 9u: { Sa = MSa * (1.0 - Ma) + Ma * (1.0 - MSa); }
-            default: { Rc = Sc; Ra = Sa; }
-        }
-        Rc = Sc;
-        Ra = Sa;
-    }
+std::string cComposeEquation_None = WG_SHADER_SOURCE(
+    Rc = Dc;
+    Ra = Da;
+);
+std::string cComposeEquation_ClipPath = WG_SHADER_SOURCE(
+    Rc = Sc * Ma + Dc * (1.0 - Sa * Ma);
+    Ra = Sa * Ma + Da * (1.0 - Sa * Ma);
+);
 
-    textureStore(imageTrg, id.xy, vec4f(Rc, Ra));
+std::string cComposeEquation_AlphaMask = WG_SHADER_SOURCE(
+    Rc = Sc * Ma + Dc * (1.0 - Sa * Ma);
+    Ra = Sa * Ma + Da * (1.0 - Sa * Ma);
+);
+std::string cComposeEquation_InvAlphaMask = WG_SHADER_SOURCE(
+    Rc = Sc * (1.0 - Ma) + Dc * (1.0 - Sa * (1.0 - Ma));
+    Ra = Sa * (1.0 - Ma) + Da * (1.0 - Sa * (1.0 - Ma));
+);
+std::string cComposeEquation_LumaMask = WG_SHADER_SOURCE(
+    let luma: f32 = dot(Mc, vec3f(0.2125, 0.7154, 0.0721));
+    Rc = Sc * luma + Dc * (1.0 - Sa * luma);
+    Ra = Sa * luma + Da * (1.0 - Sa * luma);
+);
+std::string cComposeEquation_InvLumaMask = WG_SHADER_SOURCE(
+    let luma: f32 = dot(Mc, vec3f(0.2125, 0.7154, 0.0721));
+    Rc = Sc * (1.0 - luma) + Dc * (1.0 - Sa * (1.0 - luma));
+    Ra = Sa * (1.0 - luma) + Da * (1.0 - Sa * (1.0 - luma));
+);
+std::string cComposeEquation_AddMask = WG_SHADER_SOURCE(
+    Rc = Sc;
+    Ra = Sa + Ma * (1.0 - Sa);
+);
+std::string cComposeEquation_SubtractMask = WG_SHADER_SOURCE(
+    Rc = Sc;
+    Ra = Sa * (1.0 - Ma);
+);
+std::string cComposeEquation_IntersectMask = WG_SHADER_SOURCE(
+    Rc = Sc;
+    Ra = Sa * Ma;
+);
+std::string cComposeEquation_DifferenceMask = WG_SHADER_SOURCE(
+    Rc = Sc;
+    Ra = Sa * (1.0 - Ma) + Ma * (1.0 - Sa);
+);
+
+std::string cComposeFooter = WG_SHADER_SOURCE(
+    textureStore(imageTgt, id.xy, vec4f(Rc, Ra));
 }
 );
 
-// pipeline shader modules anti-aliasing
-const char* cShaderSource_PipelineComputeAntiAlias = WG_SHADER_SOURCE(
+std::string compose_None           = cComposeHeader + cComposeEquation_None           + cComposeFooter;
+std::string compose_ClipPath       = cComposeHeader + cComposeEquation_ClipPath       + cComposeFooter;
+std::string compose_AlphaMask      = cComposeHeader + cComposeEquation_AlphaMask      + cComposeFooter;
+std::string compose_InvAlphaMask   = cComposeHeader + cComposeEquation_InvAlphaMask   + cComposeFooter;
+std::string compose_LumaMask       = cComposeHeader + cComposeEquation_LumaMask       + cComposeFooter;
+std::string compose_InvLumaMask    = cComposeHeader + cComposeEquation_InvLumaMask    + cComposeFooter;
+std::string compose_AddMask        = cComposeHeader + cComposeEquation_AddMask        + cComposeFooter;
+std::string compose_SubtractMask   = cComposeHeader + cComposeEquation_SubtractMask   + cComposeFooter;
+std::string compose_IntersectMask  = cComposeHeader + cComposeEquation_IntersectMask  + cComposeFooter;
+std::string compose_DifferenceMask = cComposeHeader + cComposeEquation_DifferenceMask + cComposeFooter;
+
+const char* cShaderSrc_Compose[10] {
+    compose_None.c_str(),
+    compose_ClipPath.c_str(),
+    compose_AlphaMask.c_str(),
+    compose_InvAlphaMask.c_str(),
+    compose_LumaMask.c_str(),
+    compose_InvLumaMask.c_str(),
+    compose_AddMask.c_str(),
+    compose_SubtractMask.c_str(),
+    compose_IntersectMask.c_str(),
+    compose_DifferenceMask.c_str(),
+};
+
+const char* cShaderSrc_Copy = WG_SHADER_SOURCE(
 @group(0) @binding(0) var imageSrc : texture_storage_2d<rgba8unorm, read>;
 @group(1) @binding(0) var imageDst : texture_storage_2d<bgra8unorm, write>;
 
 @compute @workgroup_size(8, 8)
-fn cs_main( @builtin(global_invocation_id) id: vec3u) {
-    let texSizeSrc = textureDimensions(imageSrc);
-    let texSizeDst = textureDimensions(imageDst);
-    if ((id.x >= texSizeDst.x) || (id.y >= texSizeDst.y)) { return; };
-
-    let samples = u32(texSizeSrc.x / texSizeDst.x);
-    var color = vec4f(0);
-    for (var i = 0u; i < samples; i++) {
-        for (var j = 0u; j < samples; j++) {
-            color += textureLoad(imageSrc, vec2(id.x * samples + j, id.y * samples + i));
-        }
-    }
-
-    textureStore(imageDst, id.xy, color / f32(samples * samples));
+fn cs_main(@builtin(global_invocation_id) id: vec3u) {
+    textureStore(imageDst, id.xy, textureLoad(imageSrc, id.xy));
 }
 );

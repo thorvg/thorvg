@@ -20,37 +20,23 @@
  * SOFTWARE.
  */
 
-#pragma once
-
 #ifndef _TVG_WG_SHADER_SRC_H_
 #define _TVG_WG_SHADER_SRC_H_
 
-//*****************************************************************************
-// render shader modules
-//*****************************************************************************
+// graphics shader sources
+extern const char* cShaderSrc_Stencil;
+extern const char* cShaderSrc_Solid;
+extern const char* cShaderSrc_Linear;
+extern const char* cShaderSrc_Radial;
+extern const char* cShaderSrc_Image;
 
-// pipeline shader modules fill
-extern const char* cShaderSource_PipelineFill;
-extern const char* cShaderSource_PipelineSolid;
-extern const char* cShaderSource_PipelineLinear;
-extern const char* cShaderSource_PipelineRadial;
-extern const char* cShaderSource_PipelineImage;
+// compute shader sources: blend, compose and merge path
+extern const char* cShaderSrc_MergeMasks;
+extern const char* cShaderSrc_Blend_Solid[14];
+extern const char* cShaderSrc_Blend_Solid[14];
+extern const char* cShaderSrc_Blend_Gradient[14];
+extern const char* cShaderSrc_Blend_Image[14];
+extern const char* cShaderSrc_Compose[10];
+extern const char* cShaderSrc_Copy;
 
-//*****************************************************************************
-// compute shader modules
-//*****************************************************************************
-
-// pipeline shader modules clear, compose and blend
-extern const char* cShaderSource_PipelineComputeClear;
-extern const char* cShaderSource_PipelineComputeCopy;
-extern const char* cShaderSource_PipelineComputeBlendSolid;
-extern const char* cShaderSource_PipelineComputeBlendGradient;
-extern const char* cShaderSource_PipelineComputeBlendImage;
-extern const char* cShaderSource_PipelineComputeBlendSolidMask;
-extern const char* cShaderSource_PipelineComputeBlendGradientMask;
-extern const char* cShaderSource_PipelineComputeBlendImageMask;
-extern const char* cShaderSource_PipelineComputeMaskCompose;
-extern const char* cShaderSource_PipelineComputeCompose;
-extern const char* cShaderSource_PipelineComputeAntiAlias;
-
-#endif // _TVG_WG_SHADER_SRC_H_
+#endif // _TVG_WG_SHEDER_SRC_H_

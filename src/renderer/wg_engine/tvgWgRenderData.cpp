@@ -21,11 +21,9 @@
  * SOFTWARE.
  */
 
-#ifndef _TVG_WG_RENDER_DATA_H_
-#define _TVG_WG_RENDER_DATA_H_
-
 #include <algorithm>
 #include "tvgWgRenderData.h"
+#include "tvgWgShaderTypes.h"
 
 //***********************************************************************
 // WgMeshData
@@ -42,7 +40,7 @@ void WgMeshData::draw(WgContext& context, WGPURenderPassEncoder renderPassEncode
 void WgMeshData::drawFan(WgContext& context, WGPURenderPassEncoder renderPassEncoder)
 {
     wgpuRenderPassEncoderSetVertexBuffer(renderPassEncoder, 0, bufferPosition, 0, vertexCount * sizeof(float) * 2);
-    wgpuRenderPassEncoderSetIndexBuffer(renderPassEncoder, context.indexBufferFan, WGPUIndexFormat_Uint32, 0, indexCount * sizeof(uint32_t));
+    wgpuRenderPassEncoderSetIndexBuffer(renderPassEncoder, context.bufferIndexFan, WGPUIndexFormat_Uint32, 0, indexCount * sizeof(uint32_t));
     wgpuRenderPassEncoderDrawIndexed(renderPassEncoder, indexCount, 1, 0, 0, 0);
 }
 
@@ -62,8 +60,8 @@ void WgMeshData::update(WgContext& context, const WgPolyline* polyline)
     assert(polyline->pts.count > 2);
     vertexCount = polyline->pts.count;
     indexCount = (polyline->pts.count - 2) * 3;
-    context.allocateVertexBuffer(bufferPosition, &polyline->pts[0], vertexCount * sizeof(float) * 2);
-    context.allocateIndexBufferFan(vertexCount);
+    context.allocateBufferVertex(bufferPosition, (float *)&polyline->pts[0], vertexCount * sizeof(float) * 2);
+    context.allocateBufferIndexFan(vertexCount);
 }
 
 
@@ -74,13 +72,13 @@ void WgMeshData::update(WgContext& context, const WgGeometryData* geometryData)
     indexCount = geometryData->indexes.count;
     // buffer position data create and write
     if (geometryData->positions.pts.count > 0)
-        context.allocateVertexBuffer(bufferPosition, &geometryData->positions.pts[0], vertexCount * sizeof(float) * 2);
+        context.allocateBufferVertex(bufferPosition, (float *)&geometryData->positions.pts[0], vertexCount * sizeof(float) * 2);
     // buffer tex coords data create and write
     if (geometryData->texCoords.count > 0)
-        context.allocateVertexBuffer(bufferTexCoord, &geometryData->texCoords[0], vertexCount * sizeof(float) * 2);
+        context.allocateBufferVertex(bufferTexCoord, (float *)&geometryData->texCoords[0], vertexCount * sizeof(float) * 2);
     // buffer index data create and write
     if (geometryData->indexes.count > 0)
-        context.allocateIndexBuffer(bufferIndex, &geometryData->indexes[0], indexCount * sizeof(uint32_t));
+        context.allocateBufferIndex(bufferIndex, &geometryData->indexes[0], indexCount * sizeof(uint32_t));
 };
 
 
@@ -92,8 +90,8 @@ void WgMeshData::update(WgContext& context, const WgPoint pmin, const WgPoint pm
         pmin.x, pmin.y, pmax.x, pmin.y,
         pmax.x, pmax.y, pmin.x, pmax.y
     };
-    context.allocateVertexBuffer(bufferPosition, data, sizeof(data));
-    context.allocateIndexBufferFan(vertexCount);
+    context.allocateBufferVertex(bufferPosition, data, sizeof(data));
+    context.allocateBufferIndexFan(vertexCount);
 }
 
 
@@ -186,29 +184,14 @@ void WgImageData::update(WgContext& context, Surface* surface)
 {
     release(context);
     assert(surface);
-    texture = context.createTexture2d(
-        WGPUTextureUsage_TextureBinding | WGPUTextureUsage_CopyDst,
-        WGPUTextureFormat_RGBA8Unorm,
-        surface->w, surface->h, "The shape texture");
+    texture = context.createTexture(surface->w, surface->h, WGPUTextureFormat_RGBA8Unorm);
     assert(texture);
-    textureView = context.createTextureView2d(texture, "The shape texture view");
+    textureView = context.createTextureView(texture);
     assert(textureView);
     // update texture data
-    WGPUImageCopyTexture imageCopyTexture{};
-    imageCopyTexture.nextInChain = nullptr;
-    imageCopyTexture.texture = texture;
-    imageCopyTexture.mipLevel = 0;
-    imageCopyTexture.origin = { 0, 0, 0 };
-    imageCopyTexture.aspect = WGPUTextureAspect_All;
-    WGPUTextureDataLayout textureDataLayout{};
-    textureDataLayout.nextInChain = nullptr;
-    textureDataLayout.offset = 0;
-    textureDataLayout.bytesPerRow = 4 * surface->w;
-    textureDataLayout.rowsPerImage = surface->h;
-    WGPUExtent3D writeSize{};
-    writeSize.width = surface->w;
-    writeSize.height = surface->h;
-    writeSize.depthOrArrayLayers = 1;
+    WGPUImageCopyTexture imageCopyTexture{ .texture = texture };
+    WGPUTextureDataLayout textureDataLayout{ .bytesPerRow = 4 * surface->w, .rowsPerImage = surface->h };
+    WGPUExtent3D writeSize{ .width = surface->w, .height = surface->h, .depthOrArrayLayers = 1 };
     wgpuQueueWriteTexture(context.queue, &imageCopyTexture, surface->data, 4 * surface->w * surface->h, &textureDataLayout, &writeSize);
     wgpuQueueSubmit(context.queue, 0, nullptr);
 };
@@ -228,20 +211,31 @@ void WgRenderSettings::update(WgContext& context, const Fill* fill, const uint8_
 {
     // setup fill properties
     if ((flags & (RenderUpdateFlag::Gradient)) && fill) {
+        rasterType = WgRenderRasterType::Gradient;
         // setup linear fill properties
         if (fill->type() == Type::LinearGradient) {
             WgShaderTypeLinearGradient linearGradient((LinearGradient*)fill);
-            bindGroupLinear.initialize(context.device, context.queue, linearGradient);
+            if (context.allocateBufferUniform(bufferGroupLinear, &linearGradient, sizeof(linearGradient))) {
+                context.pipelines->layouts.releaseBindGroup(bindGroupLinear);
+                bindGroupLinear = context.pipelines->layouts.createBindGroupBuffer1Un(bufferGroupLinear);
+            }
             fillType = WgRenderSettingsType::Linear;
         } else if (fill->type() == Type::RadialGradient) {
             WgShaderTypeRadialGradient radialGradient((RadialGradient*)fill);
-            bindGroupRadial.initialize(context.device, context.queue, radialGradient);
+            if (context.allocateBufferUniform(bufferGroupRadial, &radialGradient, sizeof(radialGradient))) {
+                context.pipelines->layouts.releaseBindGroup(bindGroupRadial);
+                bindGroupRadial = context.pipelines->layouts.createBindGroupBuffer1Un(bufferGroupRadial);
+            }
             fillType = WgRenderSettingsType::Radial;
         }
         skip = false;
     } else if ((flags & (RenderUpdateFlag::Color)) && !fill) {
+        rasterType = WgRenderRasterType::Solid;
         WgShaderTypeSolidColor solidColor(color);
-        bindGroupSolid.initialize(context.device, context.queue, solidColor);
+        if (context.allocateBufferUniform(bufferGroupSolid, &solidColor, sizeof(solidColor))) {
+            context.pipelines->layouts.releaseBindGroup(bindGroupSolid);
+            bindGroupSolid = context.pipelines->layouts.createBindGroupBuffer1Un(bufferGroupSolid);
+        }
         fillType = WgRenderSettingsType::Solid;
         skip = (color[3] == 0);
     }
@@ -250,9 +244,13 @@ void WgRenderSettings::update(WgContext& context, const Fill* fill, const uint8_
 
 void WgRenderSettings::release(WgContext& context)
 {
-    bindGroupSolid.release();
-    bindGroupLinear.release();
-    bindGroupRadial.release();
+    context.pipelines->layouts.releaseBindGroup(bindGroupSolid);
+    context.pipelines->layouts.releaseBindGroup(bindGroupLinear);
+    context.pipelines->layouts.releaseBindGroup(bindGroupRadial);
+    context.releaseBuffer(bufferGroupSolid);
+    context.releaseBuffer(bufferGroupLinear);
+    context.releaseBuffer(bufferGroupRadial);
+
 };
 
 //***********************************************************************
@@ -261,9 +259,24 @@ void WgRenderSettings::release(WgContext& context)
 
 void WgRenderDataPaint::release(WgContext& context)
 {
-    bindGroupPaint.release();
+    context.pipelines->layouts.releaseBindGroup(bindGroupPaint);
+    context.releaseBuffer(bufferModelMat);
+    context.releaseBuffer(bufferBlendSettings);
     clips.clear();
 };
+
+
+void WgRenderDataPaint::update(WgContext& context, const tvg::Matrix& transform, tvg::ColorSpace cs, uint8_t opacity)
+{
+    WgShaderTypeMat4x4f modelMat(transform);
+    WgShaderTypeBlendSettings blendSettings(cs, opacity);
+    bool bufferModelMatChanged = context.allocateBufferUniform(bufferModelMat, &modelMat, sizeof(modelMat));
+    bool bufferBlendSettingsChanged = context.allocateBufferUniform(bufferBlendSettings, &blendSettings, sizeof(blendSettings));
+    if (bufferModelMatChanged || bufferBlendSettingsChanged) {
+        context.pipelines->layouts.releaseBindGroup(bindGroupPaint);
+        bindGroupPaint = context.pipelines->layouts.createBindGroupBuffer2Un(bufferModelMat, bufferBlendSettings);
+    }
+}
 
 
 void WgRenderDataPaint::updateClips(tvg::Array<tvg::RenderData> &clips) {
@@ -496,8 +509,6 @@ void WgRenderDataPicture::release(WgContext& context)
 {
     meshData.release(context);
     imageData.release(context);
-    bindGroupPicture.release();
+    context.pipelines->layouts.releaseBindGroup(bindGroupPicture);
     WgRenderDataPaint::release(context);
 }
-
-#endif //_TVG_WG_RENDER_DATA_H_
