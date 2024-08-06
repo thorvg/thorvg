@@ -194,10 +194,21 @@ static inline uint8_t _opMaskDifference(uint8_t s, uint8_t d, uint8_t a)
 }
 
 
+static inline uint8_t _opMaskLighten(uint8_t s, uint8_t d, uint8_t a)
+{
+    return (s > d) ? s : d;
+}
+
+
+static inline uint8_t _opMaskDarken(uint8_t s, uint8_t d, uint8_t a)
+{
+    return (s < d) ? s : d;
+}
+
+
 static inline bool _direct(CompositeMethod method)
 {
-    //subtract & Intersect allows the direct composition
-    if (method == CompositeMethod::SubtractMask || method == CompositeMethod::IntersectMask) return true;
+    if (method == CompositeMethod::SubtractMask || method == CompositeMethod::IntersectMask || method == CompositeMethod::DarkenMask) return true;
     return false;
 }
 
@@ -209,6 +220,8 @@ static inline SwMask _getMaskOp(CompositeMethod method)
         case CompositeMethod::SubtractMask: return _opMaskSubtract;
         case CompositeMethod::DifferenceMask: return _opMaskDifference;
         case CompositeMethod::IntersectMask: return _opMaskIntersect;
+        case CompositeMethod::LightenMask: return _opMaskLighten;
+        case CompositeMethod::DarkenMask: return _opMaskDarken;
         default: return nullptr;
     }
 }
