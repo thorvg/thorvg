@@ -59,17 +59,15 @@ public:
         auto bm_rt = evaluate(frameNo, exp);
         if (jerry_value_is_undefined(bm_rt)) return false;
 
-        if (jerry_value_is_object(bm_rt)) {
-            if (auto prop = static_cast<Property*>(jerry_object_get_native_ptr(bm_rt, nullptr))) {
-                out = (*prop)(frameNo);
-            } else {
-                auto x = jerry_object_get_index(bm_rt, 0);
-                auto y = jerry_object_get_index(bm_rt, 1);
-                out.x = jerry_value_as_number(x);
-                out.y = jerry_value_as_number(y);
-                jerry_value_free(x);
-                jerry_value_free(y);
-            }
+        if (auto prop = static_cast<Property*>(jerry_object_get_native_ptr(bm_rt, nullptr))) {
+            out = (*prop)(frameNo);
+        } else {
+            auto x = jerry_object_get_index(bm_rt, 0);
+            auto y = jerry_object_get_index(bm_rt, 1);
+            out.x = jerry_value_as_number(x);
+            out.y = jerry_value_as_number(y);
+            jerry_value_free(x);
+            jerry_value_free(y);
         }
         jerry_value_free(bm_rt);
         return true;
@@ -83,6 +81,16 @@ public:
 
         if (auto color = static_cast<Property*>(jerry_object_get_native_ptr(bm_rt, nullptr))) {
             out = (*color)(frameNo);
+        } else {
+            auto r = jerry_object_get_index(bm_rt, 0);
+            auto g = jerry_object_get_index(bm_rt, 1);
+            auto b = jerry_object_get_index(bm_rt, 2);
+            out.rgb[0] = REMAP255(jerry_value_as_number(r));
+            out.rgb[1] = REMAP255(jerry_value_as_number(g));
+            out.rgb[2] = REMAP255(jerry_value_as_number(b));
+            jerry_value_free(r);
+            jerry_value_free(g);
+            jerry_value_free(b);
         }
         jerry_value_free(bm_rt);
         return true;

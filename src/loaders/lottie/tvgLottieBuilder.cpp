@@ -349,7 +349,7 @@ static void _updateSolidFill(TVG_UNUSED LottieGroup* parent, LottieObject** chil
     auto fill = static_cast<LottieSolidFill*>(*child);
 
     ctx->merging = nullptr;
-    auto color = fill->color(frameNo);
+    auto color = fill->color(frameNo, exps);
     ctx->propagator->fill(color.rgb[0], color.rgb[1], color.rgb[2], fill->opacity(frameNo, exps));
     ctx->propagator->fill(fill->rule);
 
