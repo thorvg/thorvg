@@ -340,7 +340,7 @@ void LottieParser::getValue(RGB24& color)
 
     while (nextArrayValue()) {
         auto val = getFloat();
-        if (i < 3) color.rgb[i++] = (int32_t)nearbyint(val * 255.0f);
+        if (i < 3) color.rgb[i++] = REMAP255(val);
     }
 
     //TODO: color filter?
