@@ -4,6 +4,7 @@ endif
 
 source_file = [
    'tvgLottieBuilder.h',
+   'tvgLottieCommon.h',
    'tvgLottieExpressions.h',
    'tvgLottieInterpolator.h',
    'tvgLottieLoader.h',

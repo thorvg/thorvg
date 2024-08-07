@@ -24,10 +24,9 @@
 #define _TVG_LOTTIE_PROPERTY_H_
 
 #include <algorithm>
-#include "tvgCommon.h"
-#include "tvgArray.h"
 #include "tvgMath.h"
 #include "tvgLines.h"
+#include "tvgLottieCommon.h"
 #include "tvgLottieInterpolator.h"
 #include "tvgLottieExpressions.h"
 
@@ -36,68 +35,6 @@
 struct LottieFont;
 struct LottieLayer;
 struct LottieObject;
-
-
-struct PathSet
-{
-    Point* pts = nullptr;
-    PathCommand* cmds = nullptr;
-    uint16_t ptsCnt = 0;
-    uint16_t cmdsCnt = 0;
-};
-
-
-struct RGB24
-{
-    int32_t rgb[3];
-};
-
-
-struct ColorStop
-{
-    Fill::ColorStop* data = nullptr;
-    Array<float>* input = nullptr;
-};
-
-
-struct TextDocument
-{
-    char* text = nullptr;
-    float height;
-    float shift;
-    RGB24 color;
-    struct {
-        Point pos;
-        Point size;
-    } bbox;
-    struct {
-        RGB24 color;
-        float width;
-        bool render = false;
-    } stroke;
-    char* name = nullptr;
-    float size;
-    float tracking = 0.0f;
-    uint8_t justify;
-};
-
-
-static inline RGB24 operator-(const RGB24& lhs, const RGB24& rhs)
-{
-    return {lhs.rgb[0] - rhs.rgb[0], lhs.rgb[1] - rhs.rgb[1], lhs.rgb[2] - rhs.rgb[2]};
-}
-
-
-static inline RGB24 operator+(const RGB24& lhs, const RGB24& rhs)
-{
-    return {lhs.rgb[0] + rhs.rgb[0], lhs.rgb[1] + rhs.rgb[1], lhs.rgb[2] + rhs.rgb[2]};
-}
-
-
-static inline RGB24 operator*(const RGB24& lhs, float rhs)
-{
-    return {(int32_t)nearbyint(lhs.rgb[0] * rhs), (int32_t)nearbyint(lhs.rgb[1] * rhs), (int32_t)nearbyint(lhs.rgb[2] * rhs)};
-}
 
 
 template<typename T>
