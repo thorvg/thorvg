@@ -24,11 +24,11 @@
 #define _TVG_LOTTIE_EXPRESSIONS_H_
 
 #include "tvgCommon.h"
+#include "tvgLottieCommon.h"
 
 struct LottieExpression;
 struct LottieComposition;
 struct LottieLayer;
-struct RGB24;
 
 #ifdef THORVG_LOTTIE_EXPRESSIONS_SUPPORT
 
