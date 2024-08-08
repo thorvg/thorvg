@@ -65,33 +65,31 @@ struct RenderContext
     float roundness = 0.0f;
     bool fragmenting = false;  //render context has been fragmented by filling
     bool reqFragment = false;  //requirement to fragment the render context
-    bool ownPropagator = true; //this rendering context shares the propagator
 
-    RenderContext()
+    RenderContext(Shape* propagator)
     {
-        propagator = Shape::gen().release();
+        //reset
+        if (PP(propagator)->transform()) tvg::identity(PP(propagator)->transform());
+        propagator->opacity(255);
+        P(propagator)->reset();
+
+        PP(propagator)->ref();
+        this->propagator = propagator;
     }
 
     ~RenderContext()
     {
-        if (ownPropagator) delete(propagator);
+        PP(propagator)->unref();
         free(transform);
     }
 
-    RenderContext(const RenderContext& rhs, bool mergeable = false)
+    RenderContext(const RenderContext& rhs, Shape* propagator, bool mergeable = false)
     {
-        if (mergeable) {
-            this->ownPropagator = false;
-            propagator = rhs.propagator;
-            merging = rhs.merging;
-        } else {
-            propagator = static_cast<Shape*>(rhs.propagator->duplicate());
-        }
-
-        for (auto repeater = rhs.repeaters.begin(); repeater < rhs.repeaters.end(); ++repeater) {
-            repeaters.push(*repeater);
-        }
-        roundness = rhs.roundness;
+        if (mergeable) merging = rhs.merging;
+        PP(propagator)->ref();
+        this->propagator = propagator;
+        this->repeaters = rhs.repeaters;
+        this->roundness = rhs.roundness;
     }
 };
 
@@ -277,7 +275,8 @@ static void _updateGroup(LottieGroup* parent, LottieObject** child, float frameN
     if (group->mergeable()) _draw(parent, nullptr, ctx);
 
     Inlist<RenderContext> contexts;
-    contexts.back(new RenderContext(*ctx, group->mergeable()));
+    auto propagator = group->mergeable() ? ctx->propagator : static_cast<Shape*>(PP(ctx->propagator)->duplicate(group->pooling()));
+    contexts.back(new RenderContext(*ctx, propagator, group->mergeable()));
 
     _updateChildren(group, frameNo, contexts, exps);
 
@@ -303,12 +302,12 @@ static void _updateStroke(LottieStroke* stroke, float frameNo, RenderContext* ct
 }
 
 
-static bool _fragmented(LottieObject** child, Inlist<RenderContext>& contexts, RenderContext* ctx)
+static bool _fragmented(LottieGroup* parent, LottieObject** child, Inlist<RenderContext>& contexts, RenderContext* ctx)
 {
     if (!ctx->reqFragment) return false;
     if (ctx->fragmenting) return true;
 
-    contexts.back(new RenderContext(*ctx));
+    contexts.back(new RenderContext(*ctx, static_cast<Shape*>(PP(ctx->propagator)->duplicate(parent->pooling()))));
     auto fragment = contexts.tail;
     fragment->begin = child - 1;
     ctx->fragmenting = true;
@@ -317,9 +316,9 @@ static bool _fragmented(LottieObject** child, Inlist<RenderContext>& contexts, R
 }
 
 
-static void _updateSolidStroke(TVG_UNUSED LottieGroup* parent, LottieObject** child, float frameNo, Inlist<RenderContext>& contexts, RenderContext* ctx, LottieExpressions* exps)
+static void _updateSolidStroke(LottieGroup* parent, LottieObject** child, float frameNo, Inlist<RenderContext>& contexts, RenderContext* ctx, LottieExpressions* exps)
 {
-    if (_fragmented(child, contexts, ctx)) return;
+    if (_fragmented(parent, child, contexts, ctx)) return;
 
     auto stroke = static_cast<LottieSolidStroke*>(*child);
 
@@ -330,9 +329,9 @@ static void _updateSolidStroke(TVG_UNUSED LottieGroup* parent, LottieObject** ch
 }
 
 
-static void _updateGradientStroke(TVG_UNUSED LottieGroup* parent, LottieObject** child, float frameNo, Inlist<RenderContext>& contexts, RenderContext* ctx, LottieExpressions* exps)
+static void _updateGradientStroke(LottieGroup* parent, LottieObject** child, float frameNo, Inlist<RenderContext>& contexts, RenderContext* ctx, LottieExpressions* exps)
 {
-    if (_fragmented(child, contexts, ctx)) return;
+    if (_fragmented(parent, child, contexts, ctx)) return;
 
     auto stroke = static_cast<LottieGradientStroke*>(*child);
 
@@ -342,9 +341,9 @@ static void _updateGradientStroke(TVG_UNUSED LottieGroup* parent, LottieObject**
 }
 
 
-static void _updateSolidFill(TVG_UNUSED LottieGroup* parent, LottieObject** child, float frameNo, TVG_UNUSED Inlist<RenderContext>& contexts, RenderContext* ctx, LottieExpressions* exps)
+static void _updateSolidFill(LottieGroup* parent, LottieObject** child, float frameNo, Inlist<RenderContext>& contexts, RenderContext* ctx, LottieExpressions* exps)
 {
-    if (_fragmented(child, contexts, ctx)) return;
+    if (_fragmented(parent, child, contexts, ctx)) return;
 
     auto fill = static_cast<LottieSolidFill*>(*child);
 
@@ -357,9 +356,9 @@ static void _updateSolidFill(TVG_UNUSED LottieGroup* parent, LottieObject** chil
 }
 
 
-static void _updateGradientFill(TVG_UNUSED LottieGroup* parent, LottieObject** child, float frameNo, TVG_UNUSED Inlist<RenderContext>& contexts, RenderContext* ctx, LottieExpressions* exps)
+static void _updateGradientFill(LottieGroup* parent, LottieObject** child, float frameNo, Inlist<RenderContext>& contexts, RenderContext* ctx, LottieExpressions* exps)
 {
-    if (_fragmented(child, contexts, ctx)) return;
+    if (_fragmented(parent, child, contexts, ctx)) return;
 
     auto fill = static_cast<LottieGradientFill*>(*child);
 
@@ -1047,7 +1046,7 @@ static void _updatePrecomp(LottieComposition* comp, LottieLayer* precomp, float 
     }
 
     //clip the layer viewport
-    auto clipper = precomp->pooling(true);
+    auto clipper = precomp->statical.pooling(true);
     clipper->transform(precomp->cache.matrix);
     precomp->scene->composite(cast(clipper), CompositeMethod::ClipPath);
 }
@@ -1055,7 +1054,7 @@ static void _updatePrecomp(LottieComposition* comp, LottieLayer* precomp, float 
 
 static void _updateSolid(LottieLayer* layer)
 {
-    auto solidFill = layer->pooling(true);
+    auto solidFill = layer->statical.pooling(true);
     solidFill->opacity(layer->cache.opacity);
     layer->scene->push(cast(solidFill));
 }
@@ -1206,12 +1205,11 @@ static void _updateMaskings(LottieLayer* layer, float frameNo, LottieExpressions
     auto pMask = static_cast<LottieMask*>(layer->masks[0]);
     auto pMethod = pMask->method;
 
-    auto pShape = Shape::gen().release();
+    auto pShape = layer->pooling();
+    pShape->reset();
     pShape->fill(255, 255, 255, pMask->opacity(frameNo));
     pShape->transform(layer->cache.matrix);
-    if (pMask->pathset(frameNo, P(pShape)->rs.path.cmds, P(pShape)->rs.path.pts, nullptr, 0.0f, exps)) {
-        P(pShape)->update(RenderUpdateFlag::Path);
-    }
+    pMask->pathset(frameNo, P(pShape)->rs.path.cmds, P(pShape)->rs.path.pts, nullptr, 0.0f, exps);
 
     if (pMethod == CompositeMethod::SubtractMask || pMethod == CompositeMethod::InvAlphaMask) {
         layer->scene->composite(tvg::cast(pShape), CompositeMethod::InvAlphaMask);
@@ -1230,12 +1228,11 @@ static void _updateMaskings(LottieLayer* layer, float frameNo, LottieExpressions
             mask->pathset(frameNo, P(pShape)->rs.path.cmds, P(pShape)->rs.path.pts, nullptr, 0.0f, exps);
         //Chain composition
         } else {
-            auto shape = Shape::gen().release();
+            auto shape = layer->pooling();
+            shape->reset();
             shape->fill(255, 255, 255, mask->opacity(frameNo));
             shape->transform(layer->cache.matrix);
-            if (mask->pathset(frameNo, P(shape)->rs.path.cmds, P(shape)->rs.path.pts, nullptr, 0.0f, exps)) {
-                P(shape)->update(RenderUpdateFlag::Path);
-            }
+            mask->pathset(frameNo, P(shape)->rs.path.cmds, P(shape)->rs.path.pts, nullptr, 0.0f, exps);
             pShape->composite(tvg::cast(shape), method);
             pShape = shape;
             pMethod = method;
@@ -1306,7 +1303,7 @@ static void _updateLayer(LottieComposition* comp, Scene* scene, LottieLayer* lay
         default: {
             if (!layer->children.empty()) {
                 Inlist<RenderContext> contexts;
-                contexts.back(new RenderContext);
+                contexts.back(new RenderContext(layer->pooling()));
                 _updateChildren(layer, frameNo, contexts, exps);
                 contexts.free();
             }

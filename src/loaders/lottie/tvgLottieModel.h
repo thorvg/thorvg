@@ -659,7 +659,7 @@ struct LottieRepeater : LottieObject
 };
 
 
-struct LottieGroup : LottieObject
+struct LottieGroup : LottieObject, LottieRenderPooler<tvg::Shape>
 {
     LottieGroup();
 
@@ -696,7 +696,7 @@ struct LottieGroup : LottieObject
 };
 
 
-struct LottieLayer : LottieGroup, LottieRenderPooler<tvg::Shape>
+struct LottieLayer : LottieGroup
 {
     enum Type : uint8_t {Precomp = 0, Solid, Image, Null, Shape, Text};
 
@@ -721,6 +721,8 @@ struct LottieLayer : LottieGroup, LottieRenderPooler<tvg::Shape>
     LottieTransform* transform = nullptr;
     Array<LottieMask*> masks;
     LottieLayer* matteTarget = nullptr;
+
+    LottieRenderPooler<tvg::Shape> statical;  //static pooler for solid fill and clipper
 
     float timeStretch = 1.0f;
     float w = 0.0f, h = 0.0f;
