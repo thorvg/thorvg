@@ -406,9 +406,9 @@ TVG_DEPRECATED Result Paint::bounds(float* x, float* y, float* w, float* h) cons
 }
 
 
-Result Paint::bounds(float* x, float* y, float* w, float* h, bool transform) const noexcept
+Result Paint::bounds(float* x, float* y, float* w, float* h, bool transformed) const noexcept
 {
-    if (pImpl->bounds(x, y, w, h, transform, true, true)) return Result::Success;
+    if (pImpl->bounds(x, y, w, h, transformed, true, transformed)) return Result::Success;
     return Result::InsufficientCondition;
 }
 
