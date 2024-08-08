@@ -19,7 +19,10 @@ source_file = [
     'tvgWgShaderTypes.cpp'
 ]
 
-wgpu_dep = dependency('wgpu_native')
+wgpu_dep = []
+if not get_option('bindings').contains('wasm_beta')
+    wgpu_dep = dependency('wgpu_native')
+endif
 
 engine_dep += [declare_dependency(
     dependencies        : wgpu_dep,
