@@ -1195,6 +1195,13 @@ static void _updateMaskings(LottieLayer* layer, float frameNo, LottieExpressions
 {
     if (layer->masks.count == 0) return;
 
+    //Introduce an intermediate scene for embracing the matte + masking
+    if (layer->matteTarget) {
+        auto scene = Scene::gen().release();
+        scene->push(cast(layer->scene));
+        layer->scene = scene;
+    }
+
     //Apply the base mask
     auto pMask = static_cast<LottieMask*>(layer->masks[0]);
     auto pMethod = pMask->method;
@@ -1277,11 +1284,7 @@ static void _updateLayer(LottieComposition* comp, Scene* scene, LottieLayer* lay
 
     layer->scene->transform(layer->cache.matrix);
 
-    if (layer->matteTarget && layer->masks.count > 0) TVGERR("LOTTIE", "FIXME: Matte + Masking??");
-
     if (!_updateMatte(comp, frameNo, scene, layer, exps)) return;
-
-    _updateMaskings(layer, frameNo, exps);
 
     switch (layer->type) {
         case LottieLayer::Precomp: {
@@ -1310,6 +1313,8 @@ static void _updateLayer(LottieComposition* comp, Scene* scene, LottieLayer* lay
             break;
         }
     }
+
+    _updateMaskings(layer, frameNo, exps);
 
     layer->scene->blend(layer->blendMethod);
 
