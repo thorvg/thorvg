@@ -148,7 +148,7 @@ struct Text::Impl
     bool bounds(float* x, float* y, float* w, float* h, TVG_UNUSED bool stroking)
     {
         if (!load() || !paint) return false;
-        paint->bounds(x, y, w, h, true);
+        PP(paint)->bounds(x, y, w, h, true, true, false);
         return true;
     }
 
