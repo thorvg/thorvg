@@ -264,7 +264,7 @@ struct Bezier
     Point ctrl2;
     Point end;
 
-    void split(float at, Bezier& left);
+    void split(float t, Bezier& left);
     void split(Bezier& left, Bezier& right) const;
     void split(float at, Bezier& left, Bezier& right) const;
     float length() const;
