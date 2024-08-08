@@ -130,7 +130,7 @@ struct UserExample : tvgexam::Example
         text10->font("Arial", 50);
         text10->text("Linear Text");
         text10->translate(0, 350);
-        text10->bounds(&x, &y, &w2, &h2, true);
+        text10->bounds(&x, &y, &w2, &h2, false);
 
         //LinearGradient
         auto fill = tvg::LinearGradient::gen();
@@ -150,7 +150,7 @@ struct UserExample : tvgexam::Example
         text11->font("NanumGothicCoding", 40);
         text11->text("\xeb\x82\x98\xeb\x88\x94\xea\xb3\xa0\xeb\x94\x95\xec\xbd\x94\xeb\x94\xa9\x28\x55\x54\x46\x2d\x38\x29");
         text11->translate(0, 450);
-        text11->bounds(&x, &y, &w2, &h2, true);
+        text11->bounds(&x, &y, &w2, &h2, false);
 
         //LinearGradient
         auto fill2 = tvg::RadialGradient::gen();
