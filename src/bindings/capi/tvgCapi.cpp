@@ -966,6 +966,16 @@ TVG_API Tvg_Result tvg_lottie_animation_get_marker(Tvg_Animation* animation, uin
     return TVG_RESULT_NOT_SUPPORTED;
 }
 
+TVG_API Tvg_Result tvg_lottie_animation_write(Tvg_Animation* animation, const char* layer, uint32_t ix, const char* var, float val)
+{
+#ifdef THORVG_LOTTIE_LOADER_SUPPORT
+    if (!animation) return TVG_RESULT_INVALID_ARGUMENT;
+    return (Tvg_Result) reinterpret_cast<LottieAnimation*>(animation)->write(layer, ix, var, val);
+#endif
+    return TVG_RESULT_NOT_SUPPORTED;
+}
+
+
 #ifdef __cplusplus
 }
 #endif
