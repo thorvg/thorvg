@@ -534,11 +534,8 @@ static void _updateRect(LottieGroup* parent, LottieObject** child, float frameNo
     auto roundness = rect->radius(frameNo, exps);
     if (ctx->roundness > roundness) roundness = ctx->roundness;
 
-    if (roundness > ROUNDNESS_EPSILON) {
-        if (roundness > size.x * 0.5f)  roundness = size.x * 0.5f;
-        if (roundness > size.y * 0.5f)  roundness = size.y * 0.5f;
-    }
-
+    if (roundness > ROUNDNESS_EPSILON) roundness = std::max(std::min(roundness, size.x * 0.5f), std::min(roundness, size.y * 0.5f));
+    
     if (!ctx->repeaters.empty()) {
         auto shape = rect->pooling();
         shape->reset();
