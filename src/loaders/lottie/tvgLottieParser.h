@@ -90,6 +90,7 @@ private:
     LottieMask* parseMask();
     LottieTrimpath* parseTrimpath();
     LottieRepeater* parseRepeater();
+    LottieOffsetPath* parseOffsetPath();
     LottieFont* parseFont();
     LottieMarker* parseMarker();
 
