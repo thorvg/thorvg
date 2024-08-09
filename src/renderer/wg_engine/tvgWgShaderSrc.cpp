@@ -652,6 +652,14 @@ std::string cComposeEquation_DifferenceMask = WG_SHADER_SOURCE(
     Rc = Sc;
     Ra = Sa * (1.0 - Ma) + Ma * (1.0 - Sa);
 );
+std::string cComposeEquation_LightenMask = WG_SHADER_SOURCE(
+    Rc = Sc;
+    Ra = select(Ma, Sa, Sa > Ma);
+);
+std::string cComposeEquation_DarkenMask = WG_SHADER_SOURCE(
+    Rc = Sc;
+    Ra = select(Sa, Ma, Sa > Ma);
+);
 
 std::string cComposeFooter = WG_SHADER_SOURCE(
     textureStore(imageTgt, id.xy, vec4f(Rc, Ra));
@@ -668,8 +676,10 @@ std::string compose_AddMask        = cComposeHeader + cComposeEquation_AddMask  
 std::string compose_SubtractMask   = cComposeHeader + cComposeEquation_SubtractMask   + cComposeFooter;
 std::string compose_IntersectMask  = cComposeHeader + cComposeEquation_IntersectMask  + cComposeFooter;
 std::string compose_DifferenceMask = cComposeHeader + cComposeEquation_DifferenceMask + cComposeFooter;
+std::string compose_LightenMask    = cComposeHeader + cComposeEquation_LightenMask    + cComposeFooter;
+std::string compose_DarkenMask     = cComposeHeader + cComposeEquation_DarkenMask     + cComposeFooter;
 
-const char* cShaderSrc_Compose[10] {
+const char* cShaderSrc_Compose[12] {
     compose_None.c_str(),
     compose_ClipPath.c_str(),
     compose_AlphaMask.c_str(),
@@ -680,6 +690,8 @@ const char* cShaderSrc_Compose[10] {
     compose_SubtractMask.c_str(),
     compose_IntersectMask.c_str(),
     compose_DifferenceMask.c_str(),
+    compose_LightenMask.c_str(),
+    compose_DarkenMask.c_str()
 };
 
 const char* cShaderSrc_Copy = WG_SHADER_SOURCE(

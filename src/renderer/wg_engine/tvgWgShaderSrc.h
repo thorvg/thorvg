@@ -36,7 +36,7 @@ extern const char* cShaderSrc_Blend_Solid[14];
 extern const char* cShaderSrc_Blend_Solid[14];
 extern const char* cShaderSrc_Blend_Gradient[14];
 extern const char* cShaderSrc_Blend_Image[14];
-extern const char* cShaderSrc_Compose[10];
+extern const char* cShaderSrc_Compose[12];
 extern const char* cShaderSrc_Copy;
 
 #endif // _TVG_WG_SHEDER_SRC_H_

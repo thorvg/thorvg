@@ -40,7 +40,7 @@ private:
     WGPUShaderModule shaderBlendSolid[14];
     WGPUShaderModule shaderBlendGradient[14];
     WGPUShaderModule shaderBlendImage[14];
-    WGPUShaderModule shaderCompose[10];
+    WGPUShaderModule shaderCompose[12];
     WGPUShaderModule shaderCopy;
 private:
     // graphics pipeline layouts
@@ -68,7 +68,7 @@ public:
     WGPUComputePipeline blendSolid[14];
     WGPUComputePipeline blendGradient[14];
     WGPUComputePipeline blendImage[14];
-    WGPUComputePipeline compose[10];
+    WGPUComputePipeline compose[12];
     WGPUComputePipeline copy;
 private:
     void releaseGraphicHandles(WgContext& context);
