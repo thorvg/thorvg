@@ -23,6 +23,9 @@
 #include <thorvg.h>
 #include <emscripten/bind.h>
 #include "tvgPicture.h"
+#ifdef THORVG_WG_RASTER_SUPPORT
+    #include <webgpu/webgpu.h>
+#endif
 
 using namespace emscripten;
 using namespace std;
@@ -36,6 +39,10 @@ public:
     ~TvgLottieAnimation()
     {
         free(buffer);
+        #ifdef THORVG_WG_RASTER_SUPPORT
+            wgpuSurfaceRelease(surface);
+            wgpuInstanceRelease(instance);
+        #endif
         Initializer::term();
     }
 
@@ -74,7 +81,7 @@ public:
     }
 
     // Render methods
-    bool load(string data, string mimetype, int width, int height, string rpath = "")
+    bool load(string data, string mimetype, int width, int height, string selector = "", string rpath = "")
     {
         errorMsg = NoError;
 
@@ -85,8 +92,20 @@ public:
             return false;
         }
 
-        //back up for saving
-        this->data = data;
+        this->data = data; //back up for saving
+
+        #ifdef THORVG_WG_RASTER_SUPPORT
+            this->selector = selector;
+            instance = wgpuCreateInstance(nullptr);
+            // surface
+            WGPUSurfaceDescriptorFromCanvasHTMLSelector canvasDesc{};
+            canvasDesc.chain.next = nullptr;
+            canvasDesc.chain.sType = WGPUSType_SurfaceDescriptorFromCanvasHTMLSelector;
+            canvasDesc.selector = this->selector.c_str();
+            WGPUSurfaceDescriptor surfaceDesc{};
+            surfaceDesc.nextInChain = &canvasDesc.chain;
+            surface = wgpuInstanceCreateSurface(instance, &surfaceDesc);
+        #endif
 
         canvas->clear(true);
 
@@ -184,9 +203,14 @@ public:
         this->width = width;
         this->height = height;
 
-        free(buffer);
-        buffer = (uint8_t*)malloc(width * height * sizeof(uint32_t));
-        canvas->target((uint32_t *)buffer, width, width, height, SwCanvas::ABGR8888S);
+        #ifdef THORVG_WG_RASTER_SUPPORT
+            static_cast<WgCanvas*>(canvas.get())->target(this->instance, this->surface, width, height);
+        #else
+            free(buffer);
+            buffer = (uint8_t*)malloc(width * height * sizeof(uint32_t));
+            static_cast<SwCanvas*>(canvas.get())->target((uint32_t *)buffer, width, width, height, SwCanvas::ABGR8888S);
+        #endif
+
 
         float scale;
         float shiftX = 0.0f, shiftY = 0.0f;
@@ -312,13 +336,22 @@ private:
     explicit TvgLottieAnimation()
     {
         errorMsg = NoError;
+        auto engine = CanvasEngine::Sw;
+        #ifdef THORVG_WG_RASTER_SUPPORT
+            engine = CanvasEngine::Wg;
+        #endif
 
-        if (Initializer::init(0) != Result::Success) {
+
+        if (Initializer::init(0, engine) != Result::Success) {
             errorMsg = "init() fail";
             return;
         }
 
-        canvas = SwCanvas::gen();
+        #ifdef THORVG_WG_RASTER_SUPPORT
+            canvas = WgCanvas::gen();
+        #else
+            canvas = SwCanvas::gen();
+        #endif
         if (!canvas) errorMsg = "Invalid canvas";
 
         animation = Animation::gen();
@@ -327,7 +360,7 @@ private:
 
 private:
     string                 errorMsg;
-    unique_ptr<SwCanvas>   canvas = nullptr;
+    unique_ptr<Canvas>   canvas = nullptr;
     unique_ptr<Animation>  animation = nullptr;
     string                 data;
     uint8_t*               buffer = nullptr;
@@ -335,6 +368,12 @@ private:
     uint32_t               height = 0;
     float                  psize[2];         //picture size
     bool                   updated = false;
+
+    #ifdef THORVG_WG_RASTER_SUPPORT
+    WGPUInstance instance{};
+    WGPUSurface surface{};
+    string selector;
+    #endif
 };
 
 EMSCRIPTEN_BINDINGS(thorvg_bindings)
