@@ -809,35 +809,42 @@ static void _updateStar(LottieGroup* parent, LottiePolyStar* star, Matrix* trans
 }
 
 
-static void _updatePolygon(LottieGroup* parent, LottiePolyStar* star, Matrix* transform, float frameNo, Shape* merging, LottieExpressions* exps)
+static void _updatePolygon(LottieGroup* parent, LottiePolyStar* star, Matrix* transform, float roundness, float frameNo, Shape* merging, LottieExpressions* exps)
 {
     static constexpr auto POLYGON_MAGIC_NUMBER = 0.25f;
 
     auto ptsCnt = size_t(floor(star->ptsCnt(frameNo, exps)));
     auto radius = star->outerRadius(frameNo, exps);
-    auto roundness = star->outerRoundness(frameNo, exps) * 0.01f;
+    auto outerRoundness = star->outerRoundness(frameNo, exps) * 0.01f;
 
     auto angle = deg2rad(-90.0f);
     auto anglePerPoint = 2.0f * MATH_PI / float(ptsCnt);
     auto direction = star->clockwise ? 1.0f : -1.0f;
-    auto hasRoundness = false;
+    auto hasRoundness = !tvg::zero(outerRoundness);
+    bool roundedCorner = roundness > ROUNDNESS_EPSILON && !hasRoundness;
     auto x = radius * cosf(angle);
     auto y = radius * sinf(angle);
 
     angle += anglePerPoint * direction;
 
-    if (tvg::zero(roundness)) {
-        P(merging)->rs.path.pts.reserve(ptsCnt + 2);
-        P(merging)->rs.path.cmds.reserve(ptsCnt + 3);
+    Shape* shape;
+    if (roundedCorner) {
+        shape = star->pooling();
+        shape->reset();
     } else {
-        P(merging)->rs.path.pts.reserve(ptsCnt * 3 + 2);
-        P(merging)->rs.path.cmds.reserve(ptsCnt + 3);
-        hasRoundness = true;
+        shape = merging;
+        if (hasRoundness) {
+            P(shape)->rs.path.pts.reserve(ptsCnt * 3 + 2);
+            P(shape)->rs.path.cmds.reserve(ptsCnt + 3);
+        } else {
+            P(shape)->rs.path.pts.reserve(ptsCnt + 2);
+            P(shape)->rs.path.cmds.reserve(ptsCnt + 3);
+        }
     }
 
     Point in = {x, y};
     if (transform) in *= *transform;
-    merging->moveTo(in.x, in.y);
+    shape->moveTo(in.x, in.y);
 
     for (size_t i = 0; i < ptsCnt; i++) {
         auto previousX = x;
@@ -853,10 +860,10 @@ static void _updatePolygon(LottieGroup* parent, LottiePolyStar* star, Matrix* tr
             auto cp2Dx = cosf(cp2Theta);
             auto cp2Dy = sinf(cp2Theta);
 
-            auto cp1x = radius * roundness * POLYGON_MAGIC_NUMBER * cp1Dx;
-            auto cp1y = radius * roundness * POLYGON_MAGIC_NUMBER * cp1Dy;
-            auto cp2x = radius * roundness * POLYGON_MAGIC_NUMBER * cp2Dx;
-            auto cp2y = radius * roundness * POLYGON_MAGIC_NUMBER * cp2Dy;
+            auto cp1x = radius * outerRoundness * POLYGON_MAGIC_NUMBER * cp1Dx;
+            auto cp1y = radius * outerRoundness * POLYGON_MAGIC_NUMBER * cp1Dy;
+            auto cp2x = radius * outerRoundness * POLYGON_MAGIC_NUMBER * cp2Dx;
+            auto cp2y = radius * outerRoundness * POLYGON_MAGIC_NUMBER * cp2Dy;
 
             Point in2 = {previousX - cp1x, previousY - cp1y};
             Point in3 = {x + cp2x, y + cp2y};
@@ -866,15 +873,17 @@ static void _updatePolygon(LottieGroup* parent, LottiePolyStar* star, Matrix* tr
                 in3 *= *transform;
                 in4 *= *transform;
             }
-            merging->cubicTo(in2.x, in2.y, in3.x, in3.y, in4.x, in4.y);
+            shape->cubicTo(in2.x, in2.y, in3.x, in3.y, in4.x, in4.y);
         } else {
             Point in = {x, y};
             if (transform) in *= *transform;
-            merging->lineTo(in.x, in.y);
+            shape->lineTo(in.x, in.y);
         }
         angle += anglePerPoint * direction;
     }
-    merging->close();
+    shape->close();
+
+    if (roundedCorner) _applyRoundedCorner(shape, merging, 0.0f, roundness, false);
 }
 
 
@@ -897,12 +906,12 @@ static void _updatePolystar(LottieGroup* parent, LottieObject** child, float fra
         auto shape = star->pooling();
         shape->reset();
         if (star->type == LottiePolyStar::Star) _updateStar(parent, star, identity ? nullptr : &matrix, ctx->roundness, frameNo, shape, exps);
-        else _updatePolygon(parent, star, identity  ? nullptr : &matrix, frameNo, shape, exps);
+        else _updatePolygon(parent, star, identity  ? nullptr : &matrix, ctx->roundness, frameNo, shape, exps);
         _repeat(parent, shape, ctx);
     } else {
         _draw(parent, star, ctx);
         if (star->type == LottiePolyStar::Star) _updateStar(parent, star, identity ? nullptr : &matrix, ctx->roundness, frameNo, ctx->merging, exps);
-        else _updatePolygon(parent, star, identity  ? nullptr : &matrix, frameNo, ctx->merging, exps);
+        else _updatePolygon(parent, star, identity  ? nullptr : &matrix, ctx->roundness, frameNo, ctx->merging, exps);
         P(ctx->merging)->update(RenderUpdateFlag::Path);
     }
 }
