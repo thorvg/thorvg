@@ -21,6 +21,7 @@
  */
 
 #include "tvgWgShaderTypes.h"
+#include <cassert>
 
 ///////////////////////////////////////////////////////////////////////////////
 // shader types
@@ -92,10 +93,8 @@ WgShaderTypeBlendSettings::WgShaderTypeBlendSettings(const ColorSpace colorSpace
 
 void WgShaderTypeBlendSettings::update(const ColorSpace colorSpace, uint8_t o)
 {
-    format = (uint32_t)colorSpace;
-    dummy0 = 0.0f;
-    dummy1 = 0.0f;
-    opacity = o / 255.0f;
+    settings[0] = (uint32_t)colorSpace;
+    settings[3] = o / 255.0f;
 }
 
 
@@ -114,53 +113,59 @@ void WgShaderTypeSolidColor::update(const uint8_t* c)
 }
 
 
-WgShaderTypeLinearGradient::WgShaderTypeLinearGradient(const LinearGradient* linearGradient)
+void WgShaderTypeGradient::update(const LinearGradient* linearGradient)
 {
-    update(linearGradient);
-}
-
-
-void WgShaderTypeLinearGradient::update(const LinearGradient* linearGradient)
-{
+    // update gradient data
     const Fill::ColorStop* stops = nullptr;
     auto stopCnt = linearGradient->colorStops(&stops);
-    
-    nStops = stopCnt;
-    spread = uint32_t(linearGradient->spread());
-    
-    for (uint32_t i = 0; i < stopCnt; ++i) {
-        stopPoints[i] = stops[i].offset;
-        stopColors[i * 4 + 0] = stops[i].r / 255.f;
-        stopColors[i * 4 + 1] = stops[i].g / 255.f;
-        stopColors[i * 4 + 2] = stops[i].b / 255.f;
-        stopColors[i * 4 + 3] = stops[i].a / 255.f;
-    }
-    
-    linearGradient->linear(&startPos[0], &startPos[1], &endPos[0], &endPos[1]);
-}
+    updateTexData(stops, stopCnt);
+    // update base points
+    linearGradient->linear(&settings[0], &settings[1], &settings[2], &settings[3]);
+};
 
 
-WgShaderTypeRadialGradient::WgShaderTypeRadialGradient(const RadialGradient* radialGradient)
+void WgShaderTypeGradient::update(const RadialGradient* radialGradient)
 {
-    update(radialGradient);
-}
-
-
-void WgShaderTypeRadialGradient::update(const RadialGradient* radialGradient)
-{
+    // update gradient data
     const Fill::ColorStop* stops = nullptr;
     auto stopCnt = radialGradient->colorStops(&stops);
+    updateTexData(stops, stopCnt);
+    // update base points
+    radialGradient->radial(&settings[2], &settings[3], &settings[0]);
+};
 
-    nStops = stopCnt;
-    spread = uint32_t(radialGradient->spread());
 
-    for (uint32_t i = 0; i < stopCnt; ++i) {
-        stopPoints[i] = stops[i].offset;
-        stopColors[i * 4 + 0] = stops[i].r / 255.f;
-        stopColors[i * 4 + 1] = stops[i].g / 255.f;
-        stopColors[i * 4 + 2] = stops[i].b / 255.f;
-        stopColors[i * 4 + 3] = stops[i].a / 255.f;
+void WgShaderTypeGradient::updateTexData(const Fill::ColorStop* stops, uint32_t stopCnt)
+{
+    assert(stops);
+    // head
+    uint32_t range_s = 0;
+    uint32_t range_e = uint32_t(stops[0].offset * (WG_TEXTURE_GRADIENT_SIZE-1));
+    for (uint32_t ti = range_s; (ti < range_e) && (ti < WG_TEXTURE_GRADIENT_SIZE); ti++) {
+        texData[ti * 4 + 0] = stops[0].r;
+        texData[ti * 4 + 1] = stops[0].g;
+        texData[ti * 4 + 2] = stops[0].b;
+        texData[ti * 4 + 3] = stops[0].a;
     }
-
-    radialGradient->radial(&centerPos[0], &centerPos[1], &radius[0]);
+    // body
+    for (uint32_t di = 1; di < stopCnt; di++) {
+        range_s = uint32_t(stops[di-1].offset * (WG_TEXTURE_GRADIENT_SIZE-1));
+        range_e = uint32_t(stops[di-0].offset * (WG_TEXTURE_GRADIENT_SIZE-1));
+        for (uint32_t ti = range_s; (ti < range_e) && (ti < WG_TEXTURE_GRADIENT_SIZE); ti++) {
+            float t = float(ti - range_s) / (range_e - range_s);
+            texData[ti * 4 + 0] = uint8_t((1.0f - t) * stops[di-1].r + t * stops[di].r);
+            texData[ti * 4 + 1] = uint8_t((1.0f - t) * stops[di-1].g + t * stops[di].g);
+            texData[ti * 4 + 2] = uint8_t((1.0f - t) * stops[di-1].b + t * stops[di].b);
+            texData[ti * 4 + 3] = uint8_t((1.0f - t) * stops[di-1].a + t * stops[di].a);
+        }
+    }
+    // tail
+    range_s = uint32_t(stops[stopCnt-1].offset * (WG_TEXTURE_GRADIENT_SIZE-1));
+    range_e = WG_TEXTURE_GRADIENT_SIZE;
+    for (uint32_t ti = range_s; ti < range_e; ti++) {
+        texData[ti * 4 + 0] = stops[stopCnt-1].r;
+        texData[ti * 4 + 1] = stops[stopCnt-1].g;
+        texData[ti * 4 + 2] = stops[stopCnt-1].b;
+        texData[ti * 4 + 3] = stops[stopCnt-1].a;
+    }
 }

@@ -42,27 +42,17 @@ struct WgShaderTypeMat4x4f
     void update(size_t w, size_t h);
 };
 
-// struct BlendSettings {
-//     format  : u32, // ColorSpace
-//     dummy0  : f32,
-//     dummy1  : f32,
-//     opacity : f32
-// };
+// vec4f
 struct WgShaderTypeBlendSettings
 {
-    uint32_t format{}; // ColorSpace
-    float dummy0{};
-    float dummy1{};
-    float opacity{};
+    float settings[4]{};
 
     WgShaderTypeBlendSettings() {};
     WgShaderTypeBlendSettings(const ColorSpace colorSpace, uint8_t o);
     void update(const ColorSpace colorSpace, uint8_t o);
 };
 
-// struct SolidColor {
-//     color: vec4f
-// };
+// vec4f
 struct WgShaderTypeSolidColor
 {
     float color[4]{};
@@ -71,58 +61,16 @@ struct WgShaderTypeSolidColor
     void update(const uint8_t* c);
 };
 
-// const MAX_LINEAR_GRADIENT_STOPS = 4;
-// struct LinearGradient {
-//     nStops       : u32,
-//     spread       : u32,
-//     dummy0       : u32,
-//     dummy1       : u32,
-//     gradStartPos : vec2f,
-//     gradEndPos   : vec2f,
-//     stopPoints   : vec4f,
-//     stopColors   : array<vec4f, MAX_LINEAR_GRADIENT_STOPS>
-// };
-#define MAX_LINEAR_GRADIENT_STOPS 32
-struct WgShaderTypeLinearGradient
+// sampler, texture, vec4f
+#define WG_TEXTURE_GRADIENT_SIZE 512
+struct WgShaderTypeGradient
 {
-    uint32_t nStops{};
-    uint32_t spread{};
-    uint32_t dummy0{}; // align with WGSL struct
-    uint32_t dummy1{}; // align with WGSL struct
-    float startPos[2]{};
-    float endPos[2]{};
-    float stopPoints[MAX_LINEAR_GRADIENT_STOPS]{};
-    float stopColors[4 * MAX_LINEAR_GRADIENT_STOPS]{};
+    float settings[4]{};
+    uint8_t texData[WG_TEXTURE_GRADIENT_SIZE * 4];
 
-    WgShaderTypeLinearGradient(const LinearGradient* linearGradient);
     void update(const LinearGradient* linearGradient);
-};
-
-// const MAX_RADIAL_GRADIENT_STOPS = 4;
-// struct RadialGradient {
-//     nStops     : u32,
-//     spread     : u32,
-//     dummy0     : u32,
-//     dummy1     : u32,
-//     centerPos  : vec2f,
-//     radius     : vec2f,
-//     stopPoints : vec4f,
-//     stopColors : array<vec4f, MAX_RADIAL_GRADIENT_STOPS>
-// };
-#define MAX_RADIAL_GRADIENT_STOPS 32
-struct WgShaderTypeRadialGradient
-{
-    uint32_t nStops{};
-    uint32_t spread{};
-    uint32_t dummy0{}; // align with WGSL struct
-    uint32_t dummy1{}; // align with WGSL struct
-    float centerPos[2]{};
-    float radius[2]{};
-    float stopPoints[MAX_RADIAL_GRADIENT_STOPS]{};
-    float stopColors[4 * MAX_RADIAL_GRADIENT_STOPS]{};
-
-    WgShaderTypeRadialGradient(const RadialGradient* radialGradient);
     void update(const RadialGradient* radialGradient);
+    void updateTexData(const Fill::ColorStop* stops, uint32_t stopCnt);
 };
 
 #endif // _TVG_WG_SHADER_TYPES_H_

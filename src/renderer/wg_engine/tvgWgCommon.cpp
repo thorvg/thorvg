@@ -69,30 +69,62 @@ void WgContext::initialize(WGPUInstance instance, WGPUSurface surface)
 
     // create shared webgpu assets
     allocateBufferIndexFan(32768);
-    samplerNearest = createSampler(WGPUFilterMode_Nearest, WGPUMipmapFilterMode_Nearest);
-    samplerLinear = createSampler(WGPUFilterMode_Linear, WGPUMipmapFilterMode_Linear);
-    assert(samplerNearest);
-    assert(samplerLinear);
+    samplerNearestRepeat = createSampler(WGPUFilterMode_Nearest, WGPUMipmapFilterMode_Nearest, WGPUAddressMode_Repeat);
+    samplerLinearRepeat = createSampler(WGPUFilterMode_Linear, WGPUMipmapFilterMode_Linear, WGPUAddressMode_Repeat);
+    samplerLinearMirror = createSampler(WGPUFilterMode_Linear, WGPUMipmapFilterMode_Linear, WGPUAddressMode_MirrorRepeat);
+    samplerLinearClamp = createSampler(WGPUFilterMode_Linear, WGPUMipmapFilterMode_Linear, WGPUAddressMode_ClampToEdge);
+    assert(samplerNearestRepeat);
+    assert(samplerLinearRepeat);
+    assert(samplerLinearMirror);
+    assert(samplerLinearClamp);
 }
 
 
 void WgContext::release()
 {
-    releaseSampler(samplerNearest);
-    releaseSampler(samplerLinear);
+    releaseSampler(samplerLinearClamp);
+    releaseSampler(samplerLinearMirror);
+    releaseSampler(samplerLinearRepeat);
+    releaseSampler(samplerNearestRepeat);
     releaseBuffer(bufferIndexFan);
     wgpuDeviceRelease(device);
     wgpuAdapterRelease(adapter);
 }
 
 
-WGPUSampler WgContext::createSampler(WGPUFilterMode filter, WGPUMipmapFilterMode mipmapFilter)
+WGPUSampler WgContext::createSampler(WGPUFilterMode filter, WGPUMipmapFilterMode mipmapFilter, WGPUAddressMode addrMode)
 {
     const WGPUSamplerDescriptor samplerDesc {
+        .addressModeU = addrMode, .addressModeV = addrMode, .addressModeW = addrMode,
         .magFilter = filter, .minFilter = filter, .mipmapFilter = mipmapFilter,
         .lodMinClamp = 0.0f, .lodMaxClamp = 32.0f, .maxAnisotropy = 1
     };
     return wgpuDeviceCreateSampler(device, &samplerDesc);
+}
+
+
+bool WgContext::allocateTexture(WGPUTexture& texture, uint32_t width, uint32_t height, WGPUTextureFormat format, void* data)
+{
+    if ((texture) && (wgpuTextureGetWidth(texture) == width) && (wgpuTextureGetHeight(texture) == height)) {
+        // update texture data
+        const WGPUImageCopyTexture imageCopyTexture{ .texture = texture };
+        const WGPUTextureDataLayout textureDataLayout{ .bytesPerRow = 4 * width, .rowsPerImage = height };
+        const WGPUExtent3D writeSize{ .width = width, .height = height, .depthOrArrayLayers = 1 };
+        wgpuQueueWriteTexture(queue, &imageCopyTexture, data, 4 * width * height, &textureDataLayout, &writeSize);
+        wgpuQueueSubmit(queue, 0, nullptr);
+    } else {
+        releaseTexture(texture);
+        texture = createTexture(width, height, format);
+        // update texture data
+        const WGPUImageCopyTexture imageCopyTexture{ .texture = texture };
+        const WGPUTextureDataLayout textureDataLayout{ .bytesPerRow = 4 * width, .rowsPerImage = height };
+        const WGPUExtent3D writeSize{ .width = width, .height = height, .depthOrArrayLayers = 1 };
+        wgpuQueueWriteTexture(queue, &imageCopyTexture, data, 4 * width * height, &textureDataLayout, &writeSize);
+        wgpuQueueSubmit(queue, 0, nullptr);
+        return true;
+    }
+    return false;
+
 }
 
 
