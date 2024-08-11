@@ -30,7 +30,7 @@ void WgRenderStorage::initialize(WgContext& context, uint32_t width, uint32_t he
     texView = context.createTextureView(texture);
     bindGroupRead = context.pipelines->layouts.createBindGroupStrorage1RO(texView);
     bindGroupWrite = context.pipelines->layouts.createBindGroupStrorage1WO(texView);
-    bindGroupTexure = context.pipelines->layouts.createBindGroupTexSampled(context.samplerNearest, texView);
+    bindGroupTexure = context.pipelines->layouts.createBindGroupTexSampled(context.samplerNearestRepeat, texView);
 }
 
 

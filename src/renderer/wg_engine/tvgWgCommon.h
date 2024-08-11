@@ -44,18 +44,21 @@ struct WgContext {
     WgPipelines* pipelines{};
     // shared webgpu assets
     WGPUBuffer bufferIndexFan{};
-    WGPUSampler samplerNearest{};
-    WGPUSampler samplerLinear{};
+    WGPUSampler samplerNearestRepeat{};
+    WGPUSampler samplerLinearRepeat{};
+    WGPUSampler samplerLinearMirror{};
+    WGPUSampler samplerLinearClamp{};
 
     void initialize(WGPUInstance instance, WGPUSurface surface);
     void release();
     
     // create common objects
-    WGPUSampler createSampler(WGPUFilterMode filter, WGPUMipmapFilterMode mipmapFilter);
+    WGPUSampler createSampler(WGPUFilterMode filter, WGPUMipmapFilterMode mipmapFilter, WGPUAddressMode addrMode);
     WGPUTexture createTexture(uint32_t width, uint32_t height, WGPUTextureFormat format);
     WGPUTexture createTexStorage(uint32_t width, uint32_t height, WGPUTextureFormat format, uint32_t sc = 1);
     WGPUTexture createTexStencil(uint32_t width, uint32_t height, WGPUTextureFormat format, uint32_t sc = 1);
     WGPUTextureView createTextureView(WGPUTexture texture);
+    bool allocateTexture(WGPUTexture& texture, uint32_t width, uint32_t height, WGPUTextureFormat format, void* data);
 
     // release common objects
     void releaseTextureView(WGPUTextureView& textureView);

@@ -212,21 +212,29 @@ void WgRenderSettings::update(WgContext& context, const Fill* fill, const uint8_
     // setup fill properties
     if ((flags & (RenderUpdateFlag::Gradient)) && fill) {
         rasterType = WgRenderRasterType::Gradient;
-        // setup linear fill properties
+        WgShaderTypeGradient gradient;
         if (fill->type() == Type::LinearGradient) {
-            WgShaderTypeLinearGradient linearGradient((LinearGradient*)fill);
-            if (context.allocateBufferUniform(bufferGroupLinear, &linearGradient, sizeof(linearGradient))) {
-                context.pipelines->layouts.releaseBindGroup(bindGroupLinear);
-                bindGroupLinear = context.pipelines->layouts.createBindGroupBuffer1Un(bufferGroupLinear);
-            }
+            gradient.update((LinearGradient*)fill);
             fillType = WgRenderSettingsType::Linear;
         } else if (fill->type() == Type::RadialGradient) {
-            WgShaderTypeRadialGradient radialGradient((RadialGradient*)fill);
-            if (context.allocateBufferUniform(bufferGroupRadial, &radialGradient, sizeof(radialGradient))) {
-                context.pipelines->layouts.releaseBindGroup(bindGroupRadial);
-                bindGroupRadial = context.pipelines->layouts.createBindGroupBuffer1Un(bufferGroupRadial);
-            }
+            gradient.update((RadialGradient*)fill);
             fillType = WgRenderSettingsType::Radial;
+        }
+        // update gpu assets
+        bool bufferGradientSettingsChanged = context.allocateBufferUniform(bufferGroupGradient, &gradient.settings, sizeof(gradient.settings));
+        bool textureGradientChanged = context.allocateTexture(texGradient, WG_TEXTURE_GRADIENT_SIZE, 1, WGPUTextureFormat_RGBA8Unorm, gradient.texData);
+        if (bufferGradientSettingsChanged || textureGradientChanged) {
+            // update texture view
+            context.releaseTextureView(texViewGradient);
+            texViewGradient = context.createTextureView(texGradient);
+            // get sampler by spread type
+            WGPUSampler sampler = context.samplerLinearClamp;
+            if (fill->spread() == FillSpread::Reflect) sampler = context.samplerLinearMirror;
+            if (fill->spread() == FillSpread::Repeat) sampler = context.samplerLinearRepeat;
+            // update bind group
+            context.pipelines->layouts.releaseBindGroup(bindGroupGradient);
+            bindGroupGradient = context.pipelines->layouts.createBindGroupTexSampledBuff1Un(
+                sampler, texViewGradient, bufferGroupGradient);
         }
         skip = false;
     } else if ((flags & (RenderUpdateFlag::Color)) && !fill) {
@@ -245,12 +253,11 @@ void WgRenderSettings::update(WgContext& context, const Fill* fill, const uint8_
 void WgRenderSettings::release(WgContext& context)
 {
     context.pipelines->layouts.releaseBindGroup(bindGroupSolid);
-    context.pipelines->layouts.releaseBindGroup(bindGroupLinear);
-    context.pipelines->layouts.releaseBindGroup(bindGroupRadial);
+    context.pipelines->layouts.releaseBindGroup(bindGroupGradient);
     context.releaseBuffer(bufferGroupSolid);
-    context.releaseBuffer(bufferGroupLinear);
-    context.releaseBuffer(bufferGroupRadial);
-
+    context.releaseBuffer(bufferGroupGradient);
+    context.releaseTexture(texGradient);
+    context.releaseTextureView(texViewGradient);
 };
 
 //***********************************************************************

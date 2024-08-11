@@ -33,6 +33,18 @@ WGPUBindGroup WgBindGroupLayouts::createBindGroupTexSampled(WGPUSampler sampler,
 }
 
 
+WGPUBindGroup WgBindGroupLayouts::createBindGroupTexSampledBuff1Un(WGPUSampler sampler, WGPUTextureView texView, WGPUBuffer buff)
+{
+    const WGPUBindGroupEntry bindGroupEntrys[] = {
+        { .binding = 0, .sampler = sampler },
+        { .binding = 1, .textureView = texView },
+        { .binding = 2, .buffer = buff, .size = wgpuBufferGetSize(buff) }
+    };
+    const WGPUBindGroupDescriptor bindGroupDesc { .layout = layoutTexSampledBuff1Un, .entryCount = 3, .entries = bindGroupEntrys };
+    return wgpuDeviceCreateBindGroup(device, &bindGroupDesc);
+}
+
+
 WGPUBindGroup WgBindGroupLayouts::createBindGroupScreen1WO(WGPUTextureView texView) {
     const WGPUBindGroupEntry bindGroupEntrys[] = {
         { .binding = 0, .textureView = texView }
@@ -151,6 +163,17 @@ void WgBindGroupLayouts::initialize(WgContext& context)
         assert(layoutTexSampled);
     }
 
+    { // bind group layout tex sampled with buffer uniform
+        const WGPUBindGroupLayoutEntry bindGroupLayoutEntries[] {
+            { .binding = 0, .visibility = visibility_frag, .sampler = sampler },
+            { .binding = 1, .visibility = visibility_frag, .texture = texture },
+            { .binding = 2, .visibility = visibility_vert, .buffer = bufferUniform }
+        };
+        const WGPUBindGroupLayoutDescriptor bindGroupLayoutDesc { .entryCount = 3, .entries = bindGroupLayoutEntries };
+        layoutTexSampledBuff1Un = wgpuDeviceCreateBindGroupLayout(device, &bindGroupLayoutDesc);
+        assert(layoutTexSampledBuff1Un);
+    }
+
     { // bind group layout tex screen 1 RO
         const WGPUBindGroupLayoutEntry bindGroupLayoutEntries[] {
             { .binding = 0, .visibility = visibility_frag, .storageTexture = storageScreenWO }
@@ -241,6 +264,7 @@ void WgBindGroupLayouts::release(WgContext& context)
     wgpuBindGroupLayoutRelease(layoutTexStrorage2RO);
     wgpuBindGroupLayoutRelease(layoutTexStrorage1RO);
     wgpuBindGroupLayoutRelease(layoutTexStrorage1WO);
+    wgpuBindGroupLayoutRelease(layoutTexSampledBuff1Un);
     wgpuBindGroupLayoutRelease(layoutTexSampled);
     device = nullptr;
 }
