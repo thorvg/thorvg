@@ -32,11 +32,11 @@ extern const char* cShaderSrc_Image;
 
 // compute shader sources: blend, compose and merge path
 extern const char* cShaderSrc_MergeMasks;
-extern const char* cShaderSrc_Blend_Solid[14];
-extern const char* cShaderSrc_Blend_Solid[14];
-extern const char* cShaderSrc_Blend_Gradient[14];
-extern const char* cShaderSrc_Blend_Image[14];
-extern const char* cShaderSrc_Compose[12];
+extern const char* cShaderSrc_BlendHeader_Solid;
+extern const char* cShaderSrc_BlendHeader_Gradient;
+extern const char* cShaderSrc_BlendHeader_Image;
+extern const char* cShaderSrc_Blend_Funcs;
+extern const char* cShaderSrc_Compose;
 extern const char* cShaderSrc_Copy;
 
 #endif // _TVG_WG_SHEDER_SRC_H_

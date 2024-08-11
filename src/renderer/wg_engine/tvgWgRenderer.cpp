@@ -21,7 +21,6 @@
  */
 
 #include "tvgWgRenderer.h"
-#include <iostream>
 
 WgRenderer::WgRenderer()
 {
@@ -135,7 +134,7 @@ RenderData WgRenderer::prepare(Surface* surface, const RenderMesh* mesh, RenderD
         renderDataPicture->meshData.update(mContext, &geometryData);
         renderDataPicture->imageData.update(mContext, surface);
         renderDataPicture->bindGroupPicture = mContext.pipelines->layouts.createBindGroupTexSampled(
-            mContext.samplerLinear, renderDataPicture->imageData.textureView
+            mContext.samplerLinearRepeat, renderDataPicture->imageData.textureView
         );
     }
 

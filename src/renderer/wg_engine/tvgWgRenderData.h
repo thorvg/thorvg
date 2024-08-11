@@ -78,11 +78,11 @@ enum class WgRenderRasterType { Solid = 0, Gradient, Image };
 struct WgRenderSettings
 {
     WGPUBuffer bufferGroupSolid{};
-    WGPUBuffer bufferGroupLinear{};
-    WGPUBuffer bufferGroupRadial{};
     WGPUBindGroup bindGroupSolid{};
-    WGPUBindGroup bindGroupLinear{};
-    WGPUBindGroup bindGroupRadial{};
+    WGPUTexture texGradient{};
+    WGPUTextureView texViewGradient{};
+    WGPUBuffer bufferGroupGradient{};
+    WGPUBindGroup bindGroupGradient{};
     WgRenderSettingsType fillType{};
     WgRenderRasterType rasterType{};
     bool skip{};

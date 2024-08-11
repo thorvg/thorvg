@@ -371,10 +371,10 @@ void WgCompositor::drawShape(WgContext& context, WgRenderDataShape* renderData, 
         wgpuRenderPassEncoderSetBindGroup(renderPassEncoder, 2, settings.bindGroupSolid, 0, nullptr);
         wgpuRenderPassEncoderSetPipeline(renderPassEncoder, pipelines->solid[blendTypeInd]);
     } else if (settings.fillType == WgRenderSettingsType::Linear) {
-        wgpuRenderPassEncoderSetBindGroup(renderPassEncoder, 2, settings.bindGroupLinear, 0, nullptr);
+        wgpuRenderPassEncoderSetBindGroup(renderPassEncoder, 2, settings.bindGroupGradient, 0, nullptr);
         wgpuRenderPassEncoderSetPipeline(renderPassEncoder, pipelines->linear[blendTypeInd]);
     } else if (settings.fillType == WgRenderSettingsType::Radial) {
-        wgpuRenderPassEncoderSetBindGroup(renderPassEncoder, 2, settings.bindGroupRadial, 0, nullptr);
+        wgpuRenderPassEncoderSetBindGroup(renderPassEncoder, 2, settings.bindGroupGradient, 0, nullptr);
         wgpuRenderPassEncoderSetPipeline(renderPassEncoder, pipelines->radial[blendTypeInd]);
     }
     // draw to color (second pass)
@@ -409,10 +409,10 @@ void WgCompositor::drawStrokes(WgContext& context, WgRenderDataShape* renderData
             wgpuRenderPassEncoderSetBindGroup(renderPassEncoder, 2, settings.bindGroupSolid, 0, nullptr);
             wgpuRenderPassEncoderSetPipeline(renderPassEncoder, pipelines->solid[blendTypeInd]);
         } else if (settings.fillType == WgRenderSettingsType::Linear) {
-            wgpuRenderPassEncoderSetBindGroup(renderPassEncoder, 2, settings.bindGroupLinear, 0, nullptr);
+            wgpuRenderPassEncoderSetBindGroup(renderPassEncoder, 2, settings.bindGroupGradient, 0, nullptr);
             wgpuRenderPassEncoderSetPipeline(renderPassEncoder, pipelines->linear[blendTypeInd]);
         } else if (settings.fillType == WgRenderSettingsType::Radial) {
-            wgpuRenderPassEncoderSetBindGroup(renderPassEncoder, 2, settings.bindGroupRadial, 0, nullptr);
+            wgpuRenderPassEncoderSetBindGroup(renderPassEncoder, 2, settings.bindGroupGradient, 0, nullptr);
             wgpuRenderPassEncoderSetPipeline(renderPassEncoder, pipelines->radial[blendTypeInd]);
         }
         // draw to color (second pass)

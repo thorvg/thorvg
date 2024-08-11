@@ -37,15 +37,16 @@ private:
     WGPUShaderModule shaderImage{};
     // compute pipeline shaders
     WGPUShaderModule shaderMergeMasks;
-    WGPUShaderModule shaderBlendSolid[14];
-    WGPUShaderModule shaderBlendGradient[14];
-    WGPUShaderModule shaderBlendImage[14];
-    WGPUShaderModule shaderCompose[12];
+    WGPUShaderModule shaderBlendSolid;
+    WGPUShaderModule shaderBlendGradient;
+    WGPUShaderModule shaderBlendImage;
+    WGPUShaderModule shaderCompose;
     WGPUShaderModule shaderCopy;
 private:
     // graphics pipeline layouts
     WGPUPipelineLayout layoutStencil{};
-    WGPUPipelineLayout layoutFill{};
+    WGPUPipelineLayout layoutSolid{};
+    WGPUPipelineLayout layoutGradient{};
     WGPUPipelineLayout layoutImage{};
     // compute pipeline layouts
     WGPUPipelineLayout layoutMergeMasks{};
@@ -86,7 +87,8 @@ private:
         const WGPUPrimitiveState primitiveState, const WGPUMultisampleState multisampleState, const WGPUBlendState blendState);
     WGPUComputePipeline createComputePipeline(
         WGPUDevice device, const char* pipelineLabel,
-        const WGPUShaderModule shaderModule, const WGPUPipelineLayout pipelineLayout);
+        const WGPUShaderModule shaderModule, const char* entryPoint,
+        const WGPUPipelineLayout pipelineLayout);
     void releaseComputePipeline(WGPUComputePipeline& computePipeline);
     void releaseRenderPipeline(WGPURenderPipeline& renderPipeline);
     void releasePipelineLayout(WGPUPipelineLayout& pipelineLayout);

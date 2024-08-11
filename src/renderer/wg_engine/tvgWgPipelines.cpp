@@ -22,6 +22,7 @@
 
 #include "tvgWgPipelines.h"
 #include "tvgWgShaderSrc.h"
+#include <cstring>
 
 WGPUShaderModule WgPipelines::createShaderModule(WGPUDevice device, const char* label, const char* code)
 {
@@ -74,14 +75,15 @@ WGPURenderPipeline WgPipelines::createRenderPipeline(
 
 WGPUComputePipeline WgPipelines::createComputePipeline(
         WGPUDevice device, const char* pipelineLabel,
-        const WGPUShaderModule shaderModule, const WGPUPipelineLayout pipelineLayout)
+        const WGPUShaderModule shaderModule, const char* entryPoint,
+        const WGPUPipelineLayout pipelineLayout)
 {
     const WGPUComputePipelineDescriptor computePipelineDesc{
         .label = pipelineLabel,
         .layout = pipelineLayout,
         .compute = { 
             .module = shaderModule,
-            .entryPoint = "cs_main"
+            .entryPoint = entryPoint
         }
     };
     return wgpuDeviceCreateComputePipeline(device, &computePipelineDesc);
@@ -165,10 +167,15 @@ void WgPipelines::initialize(WgContext& context)
         layouts.layoutBuffer1Un,
         layouts.layoutBuffer2Un
     };
-    const WGPUBindGroupLayout bindGroupLayoutsFill[] = {
+    const WGPUBindGroupLayout bindGroupLayoutsSolid[] = {
         layouts.layoutBuffer1Un,
         layouts.layoutBuffer2Un,
         layouts.layoutBuffer1Un
+    };
+    const WGPUBindGroupLayout bindGroupLayoutsGradient[] = {
+        layouts.layoutBuffer1Un,
+        layouts.layoutBuffer2Un,
+        layouts.layoutTexSampledBuff1Un
     };
     const WGPUBindGroupLayout bindGroupLayoutsImage[] = {
         layouts.layoutBuffer1Un,
@@ -199,7 +206,8 @@ void WgPipelines::initialize(WgContext& context)
 
     // pipeline layouts
     layoutStencil = createPipelineLayout(context.device, bindGroupLayoutsStencil, 2);
-    layoutFill = createPipelineLayout(context.device, bindGroupLayoutsFill, 3);
+    layoutSolid = createPipelineLayout(context.device, bindGroupLayoutsSolid, 3);
+    layoutGradient = createPipelineLayout(context.device, bindGroupLayoutsGradient, 3);
     layoutImage = createPipelineLayout(context.device, bindGroupLayoutsImage, 3);
     layoutBlend = createPipelineLayout(context.device, bindGroupLayoutsBlend, 4);
     layoutCompose = createPipelineLayout(context.device, bindGroupLayoutsCompose, 4);
@@ -257,7 +265,7 @@ void WgPipelines::initialize(WgContext& context)
     for (uint32_t i = 0; i < 3; i++) {
         solid[i] = createRenderPipeline(
             context.device, "The render pipeline solid",
-            shaderSolid, layoutFill,
+            shaderSolid, layoutSolid,
             vertexBufferLayoutsShape, 1,
             WGPUColorWriteMask_All,
             WGPUCompareFunction_NotEqual, WGPUStencilOperation_Zero,
@@ -269,7 +277,7 @@ void WgPipelines::initialize(WgContext& context)
     for (uint32_t i = 0; i < 3; i++) {
         radial[i] = createRenderPipeline(
             context.device, "The render pipeline radial",
-            shaderRadial, layoutFill,
+            shaderRadial, layoutGradient,
             vertexBufferLayoutsShape, 1,
             WGPUColorWriteMask_All,
             WGPUCompareFunction_NotEqual, WGPUStencilOperation_Zero,
@@ -281,7 +289,7 @@ void WgPipelines::initialize(WgContext& context)
     for (uint32_t i = 0; i < 3; i++) {
         linear[i] = createRenderPipeline(
             context.device, "The render pipeline linear",
-            shaderLinear, layoutFill,
+            shaderLinear, layoutGradient,
             vertexBufferLayoutsShape, 1,
             WGPUColorWriteMask_All,
             WGPUCompareFunction_NotEqual, WGPUStencilOperation_Zero,
@@ -302,26 +310,68 @@ void WgPipelines::initialize(WgContext& context)
     }
 
     // compute pipelines
-    mergeMasks = createComputePipeline(context.device, "The pipeline merge masks", shaderMergeMasks, layoutMergeMasks);
-    copy = createComputePipeline(context.device, "The pipeline copy", shaderCopy, layoutCopy);
-    // compute pipelines blend
-    const size_t shaderBlendCnt = sizeof(cShaderSrc_Blend_Solid)/sizeof(cShaderSrc_Blend_Solid[0]);
-    for (uint32_t i = 0; i < shaderBlendCnt; i++) {
-        // blend shaders
-        shaderBlendSolid[i] = createShaderModule(context.device, "The shader blend solid", cShaderSrc_Blend_Solid[i]);
-        shaderBlendGradient[i] = createShaderModule(context.device, "The shader blend gradient", cShaderSrc_Blend_Gradient[i]);
-        shaderBlendImage[i] = createShaderModule(context.device, "The shader blend image", cShaderSrc_Blend_Image[i]);
-        // blend pipelines
-        blendSolid[i] = createComputePipeline(context.device, "The pipeline blend solid", shaderBlendSolid[i], layoutBlend);
-        blendGradient[i] = createComputePipeline(context.device, "The pipeline blend gradient", shaderBlendGradient[i], layoutBlend);
-        blendImage[i] = createComputePipeline(context.device, "The pipeline blend image", shaderBlendImage[i], layoutBlend);
+    mergeMasks = createComputePipeline(context.device, "The pipeline merge masks", shaderMergeMasks, "cs_main", layoutMergeMasks);
+    copy = createComputePipeline(context.device, "The pipeline copy", shaderCopy, "cs_main", layoutCopy);
+
+    // compute shader blend names
+    const char* shaderBlendNames[] {
+        "cs_main_Normal",
+        "cs_main_Add",
+        "cs_main_Screen",
+        "cs_main_Multiply",
+        "cs_main_Overlay",
+        "cs_main_Difference",
+        "cs_main_Exclusion",
+        "cs_main_SrcOver",
+        "cs_main_Darken",
+        "cs_main_Lighten",
+        "cs_main_ColorDodge",
+        "cs_main_ColorBurn",
+        "cs_main_HardLight",
+        "cs_main_SoftLight"
+    };
+
+    // create blend shaders
+    char shaderSourceBuff[16384];
+    shaderBlendSolid = createShaderModule(context.device, "The shader blend solid", strcat(strcpy(shaderSourceBuff, cShaderSrc_BlendHeader_Solid), cShaderSrc_Blend_Funcs));
+    shaderBlendGradient = createShaderModule(context.device, "The shader blend gradient", strcat(strcpy(shaderSourceBuff, cShaderSrc_BlendHeader_Gradient), cShaderSrc_Blend_Funcs));
+    shaderBlendImage = createShaderModule(context.device, "The shader blend image", strcat(strcpy(shaderSourceBuff, cShaderSrc_BlendHeader_Image), cShaderSrc_Blend_Funcs));
+
+    // create blend pipelines
+    const size_t shaderBlendNamesCnt = sizeof(shaderBlendNames) / sizeof(shaderBlendNames[0]);
+    const size_t pipesBlendCnt = sizeof(blendSolid) / sizeof(blendSolid[0]);
+    assert(shaderBlendNamesCnt == pipesBlendCnt);
+    for (uint32_t i = 0; i < pipesBlendCnt; i++) {
+        blendSolid[i] = createComputePipeline(context.device, "The pipeline blend solid", shaderBlendSolid, shaderBlendNames[i], layoutBlend);
+        blendGradient[i] = createComputePipeline(context.device, "The pipeline blend gradient", shaderBlendGradient, shaderBlendNames[i], layoutBlend);
+        blendImage[i] = createComputePipeline(context.device, "The pipeline blend image", shaderBlendImage, shaderBlendNames[i], layoutBlend);
     }
-    // compute pipelines compose
-    const size_t shaderComposeCnt = sizeof(cShaderSrc_Compose)/sizeof(cShaderSrc_Compose[0]);
-    for (uint32_t i = 0; i < shaderComposeCnt; i++) {
-        shaderCompose[i] = createShaderModule(context.device, "The shader compose", cShaderSrc_Compose[i]);
-        compose[i] = createComputePipeline(context.device, "The pipeline compose", shaderCompose[i], layoutCompose);
-    }
+
+    // compute shader compose names
+    const char* shaderComposeNames[] {
+        "cs_main_None",
+        "cs_main_ClipPath",
+        "cs_main_AlphaMask",
+        "cs_main_InvAlphaMask",
+        "cs_main_LumaMask",
+        "cs_main_InvLumaMask",
+        "cs_main_AddMask",
+        "cs_main_SubtractMask",
+        "cs_main_IntersectMask",
+        "cs_main_DifferenceMask",
+        "cs_main_LightenMask",
+        "cs_main_DarkenMask"
+    };
+
+    // create compose shaders
+    shaderCompose = createShaderModule(context.device, "The shader compose", cShaderSrc_Compose);
+
+    // create compose pipelines
+    const size_t shaderComposeNamesCnt = sizeof(shaderComposeNames) / sizeof(shaderComposeNames[0]);
+    const size_t pipesComposeCnt = sizeof(compose) / sizeof(compose[0]);
+    assert(shaderComposeNamesCnt == pipesComposeCnt);
+    for (uint32_t i = 0; i < pipesComposeCnt; i++)
+        compose[i] = createComputePipeline(context.device, "The pipeline compose", shaderCompose, shaderComposeNames[i], layoutCompose);
 }
 
 void WgPipelines::releaseGraphicHandles(WgContext& context)
@@ -337,7 +387,8 @@ void WgPipelines::releaseGraphicHandles(WgContext& context)
     releaseRenderPipeline(evenodd);
     releaseRenderPipeline(winding);
     releasePipelineLayout(layoutImage);
-    releasePipelineLayout(layoutFill);
+    releasePipelineLayout(layoutGradient);
+    releasePipelineLayout(layoutSolid);
     releasePipelineLayout(layoutStencil);
     releaseShaderModule(shaderImage);
     releaseShaderModule(shaderLinear);
@@ -349,19 +400,14 @@ void WgPipelines::releaseGraphicHandles(WgContext& context)
 
 void WgPipelines::releaseComputeHandles(WgContext& context)
 {
-    const size_t shaderComposeCnt = sizeof(shaderCompose)/sizeof(shaderCompose[0]);
-    for (uint32_t i = 0; i < shaderComposeCnt; i++) {
+    size_t pipesComposeCnt = sizeof(compose) / sizeof(compose[0]);
+    for (uint32_t i = 0; i < pipesComposeCnt; i++)
         releaseComputePipeline(compose[i]);
-        releaseShaderModule(shaderCompose[i]);
-    }
-    const size_t shaderBlendImageCnt = sizeof(shaderBlendImage)/sizeof(shaderBlendImage[0]);
-    for (uint32_t i = 0; i < shaderBlendImageCnt; i++) {
+    const size_t pipesBlendCnt = sizeof(blendSolid)/sizeof(blendSolid[0]);
+    for (uint32_t i = 0; i < pipesBlendCnt; i++) {
         releaseComputePipeline(blendImage[i]);
         releaseComputePipeline(blendSolid[i]);
         releaseComputePipeline(blendGradient[i]);
-        releaseShaderModule(shaderBlendImage[i]);
-        releaseShaderModule(shaderBlendGradient[i]);
-        releaseShaderModule(shaderBlendSolid[i]);
     }
     releaseComputePipeline(copy);
     releaseComputePipeline(mergeMasks);
@@ -369,6 +415,10 @@ void WgPipelines::releaseComputeHandles(WgContext& context)
     releasePipelineLayout(layoutBlend);
     releasePipelineLayout(layoutMergeMasks);
     releasePipelineLayout(layoutCopy);
+    releaseShaderModule(shaderCompose);
+    releaseShaderModule(shaderBlendImage);
+    releaseShaderModule(shaderBlendGradient);
+    releaseShaderModule(shaderBlendSolid);
     releaseShaderModule(shaderMergeMasks);
     releaseShaderModule(shaderCopy);
 }
