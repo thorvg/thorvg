@@ -120,7 +120,7 @@ struct Text::Impl
         return false;
     }
 
-    RenderData update(RenderMethod* renderer, const Matrix& transform, Array<RenderData>& clips, uint8_t opacity, RenderUpdateFlag pFlag, bool clipper)
+    RenderData update(RenderMethod* renderer, const Matrix& transform, Array<RenderData>& clips, uint8_t opacity, RenderUpdateFlag pFlag, TVG_UNUSED bool clipper)
     {
         if (!load()) return nullptr;
 
@@ -142,7 +142,7 @@ struct Text::Impl
                 P(static_cast<RadialGradient*>(fill))->fr *= scale;
             }
         }
-        return PP(paint)->update(renderer, transform, clips, opacity, pFlag, clipper);
+        return PP(paint)->update(renderer, transform, clips, opacity, pFlag, false);
     }
 
     bool bounds(float* x, float* y, float* w, float* h, TVG_UNUSED bool stroking)

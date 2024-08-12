@@ -89,7 +89,7 @@ struct Picture::Impl
         delete(paint);
     }
 
-    RenderData update(RenderMethod* renderer, const Matrix& transform, Array<RenderData>& clips, uint8_t opacity, RenderUpdateFlag pFlag, bool clipper)
+    RenderData update(RenderMethod* renderer, const Matrix& transform, Array<RenderData>& clips, uint8_t opacity, RenderUpdateFlag pFlag, TVG_UNUSED bool clipper)
     {
         auto flag = static_cast<RenderUpdateFlag>(pFlag | load());
 
@@ -109,7 +109,7 @@ struct Picture::Impl
                 resizing = false;
             }
             needComp = needComposition(opacity) ? true : false;
-            rd = paint->pImpl->update(renderer, transform, clips, opacity, flag, clipper);
+            rd = paint->pImpl->update(renderer, transform, clips, opacity, flag, false);
         }
         return rd;
     }
