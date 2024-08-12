@@ -435,6 +435,11 @@ Paint* Paint::duplicate() const noexcept
 
 Result Paint::composite(std::unique_ptr<Paint> target, CompositeMethod method) noexcept
 {
+    if (method == CompositeMethod::ClipPath && target && target->type() != Type::Shape) {
+        TVGERR("RENDERER", "ClipPath only allows the Shape!");
+        return Result::NonSupport;
+    }
+
     auto p = target.release();
     if (pImpl->composite(this, p, method)) return Result::Success;
     delete(p);
