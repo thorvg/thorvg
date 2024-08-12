@@ -470,9 +470,11 @@ void LottieBuilder::updateRect(LottieGroup* parent, LottieObject** child, float 
     auto position = rect->position(frameNo, exps);
     auto size = rect->size(frameNo, exps);
     auto roundness = rect->radius(frameNo, exps);
-    if (ctx->roundness > roundness) roundness = ctx->roundness;
-
-    if (roundness > ROUNDNESS_EPSILON) roundness = std::min(roundness, std::max(size.x, size.y) * 0.5f);
+    if (roundness == 0.0f)  {
+        if (ctx->roundness > ROUNDNESS_EPSILON) roundness = std::min(ctx->roundness, std::max(size.x, size.y) * 0.5f);
+    } else {
+        roundness = std::min({roundness, size.x * 0.5f, size.y * 0.5f});
+    }
     
     if (!ctx->repeaters.empty()) {
         auto shape = rect->pooling();
