@@ -59,7 +59,6 @@ source_file = [
     'Retaining.cpp',
     'Scene.cpp',
     'SceneBlending.cpp',
-    'SceneClipper.cpp',
     'SceneTransform.cpp',
     'Shape.cpp',
     'Stroke.cpp',
