@@ -199,59 +199,6 @@ struct SwShapeTask : SwTask
 };
 
 
-struct SwSceneTask : SwTask
-{
-    Array<RenderData> scene;    //list of paints render data (SwTask)
-    SwRleData* sceneRle = nullptr;
-
-    bool clip(SwRleData* target) override
-    {
-        //Only one shape
-        if (scene.count == 1) {
-            return static_cast<SwTask*>(*scene.data)->clip(target);
-        }
-
-        //More than one shapes
-        if (sceneRle) rleClipPath(target, sceneRle);
-        else TVGLOG("SW_ENGINE", "No clippers in a scene?");
-
-        return true;
-    }
-
-    SwRleData* rle() override
-    {
-        return sceneRle;
-    }
-
-    void run(unsigned tid) override
-    {
-        //TODO: Skip the run if the scene hans't changed.
-        if (!sceneRle) sceneRle = static_cast<SwRleData*>(calloc(1, sizeof(SwRleData)));
-        else rleReset(sceneRle);
-
-        //Merge shapes if it has more than one shapes
-        if (scene.count > 1) {
-            //Merge first two clippers
-            auto clipper1 = static_cast<SwTask*>(*scene.data);
-            auto clipper2 = static_cast<SwTask*>(*(scene.data + 1));
-
-            rleMerge(sceneRle, clipper1->rle(), clipper2->rle());
-
-            //Unify the remained clippers
-            for (auto rd = scene.begin() + 2; rd < scene.end(); ++rd) {
-                auto clipper = static_cast<SwTask*>(*rd);
-                rleMerge(sceneRle, sceneRle, clipper->rle());
-            }
-        }
-    }
-
-    void dispose() override
-    {
-        rleFree(sceneRle);
-    }
-};
-
-
 struct SwImageTask : SwTask
 {
     SwImage image;
@@ -759,26 +706,6 @@ RenderData SwRenderer::prepare(Surface* surface, const RenderMesh* mesh, RenderD
 
     task->source = surface;
     task->mesh = mesh;
-
-    return prepareCommon(task, transform, clips, opacity, flags);
-}
-
-
-RenderData SwRenderer::prepare(const Array<RenderData>& scene, RenderData data, const Matrix& transform, Array<RenderData>& clips, uint8_t opacity, RenderUpdateFlag flags)
-{
-    //prepare task
-    auto task = static_cast<SwSceneTask*>(data);
-    if (!task) task = new SwSceneTask;
-    else task->done();
-
-    task->scene = scene;
-
-    //TODO: Failed threading them. It would be better if it's possible.
-    //See: https://github.com/thorvg/thorvg/issues/1409
-    //Guarantee composition targets get ready.
-    for (auto task = scene.begin(); task < scene.end(); ++task) {
-        static_cast<SwTask*>(*task)->done();
-    }
 
     return prepareCommon(task, transform, clips, opacity, flags);
 }
