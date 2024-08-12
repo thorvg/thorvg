@@ -38,7 +38,7 @@ struct PathSet
 
 struct RGB24
 {
-    int32_t rgb[3];
+    int32_t rgb[4];
 };
 
 
@@ -79,19 +79,19 @@ static inline int32_t REMAP255(float val)
 
 static inline RGB24 operator-(const RGB24& lhs, const RGB24& rhs)
 {
-    return {lhs.rgb[0] - rhs.rgb[0], lhs.rgb[1] - rhs.rgb[1], lhs.rgb[2] - rhs.rgb[2]};
+    return {lhs.rgb[0] - rhs.rgb[0], lhs.rgb[1] - rhs.rgb[1], lhs.rgb[2] - rhs.rgb[2], lhs.rgb[3] - rhs.rgb[3]};
 }
 
 
 static inline RGB24 operator+(const RGB24& lhs, const RGB24& rhs)
 {
-    return {lhs.rgb[0] + rhs.rgb[0], lhs.rgb[1] + rhs.rgb[1], lhs.rgb[2] + rhs.rgb[2]};
+    return {lhs.rgb[0] + rhs.rgb[0], lhs.rgb[1] + rhs.rgb[1], lhs.rgb[2] + rhs.rgb[2], lhs.rgb[3] - rhs.rgb[3]};
 }
 
 
 static inline RGB24 operator*(const RGB24& lhs, float rhs)
 {
-    return {(int32_t)nearbyintf(lhs.rgb[0] * rhs), (int32_t)nearbyintf(lhs.rgb[1] * rhs), (int32_t)nearbyintf(lhs.rgb[2] * rhs)};
+    return {(int32_t)nearbyintf(lhs.rgb[0] * rhs), (int32_t)nearbyintf(lhs.rgb[1] * rhs), (int32_t)nearbyintf(lhs.rgb[2] * rhs), (int32_t)nearbyintf(lhs.rgb[3] * rhs)};
 }
 
 

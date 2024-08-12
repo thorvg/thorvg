@@ -325,7 +325,7 @@ static void _updateSolidStroke(TVG_UNUSED LottieGroup* parent, LottieObject** ch
 
     ctx->merging = nullptr;
     auto color = stroke->color(frameNo, exps);
-    ctx->propagator->strokeFill(color.rgb[0], color.rgb[1], color.rgb[2], stroke->opacity(frameNo, exps));
+    ctx->propagator->strokeFill(color.rgb[0], color.rgb[1], color.rgb[2], MULTIPLY(color.rgb[3], stroke->opacity(frameNo, exps)));
     _updateStroke(static_cast<LottieStroke*>(stroke), frameNo, ctx, exps);
 }
 
@@ -350,7 +350,7 @@ static void _updateSolidFill(TVG_UNUSED LottieGroup* parent, LottieObject** chil
 
     ctx->merging = nullptr;
     auto color = fill->color(frameNo, exps);
-    ctx->propagator->fill(color.rgb[0], color.rgb[1], color.rgb[2], fill->opacity(frameNo, exps));
+    ctx->propagator->fill(color.rgb[0], color.rgb[1], color.rgb[2], MULTIPLY(color.rgb[3], fill->opacity(frameNo, exps)));
     ctx->propagator->fill(fill->rule);
 
     if (ctx->propagator->strokeWidth() > 0) ctx->propagator->order(true);
@@ -1135,13 +1135,13 @@ static void _updateText(LottieLayer* layer, float frameNo)
                         }
                     }
                 }
-                shape->fill(doc.color.rgb[0], doc.color.rgb[1], doc.color.rgb[2]);
+                shape->fill(doc.color.rgb[0], doc.color.rgb[1], doc.color.rgb[2], doc.color.rgb[3]);
                 shape->translate(cursor.x, cursor.y);
 
                 if (doc.stroke.render) {
                     shape->strokeJoin(StrokeJoin::Round);
                     shape->strokeWidth(doc.stroke.width / scale);
-                    shape->strokeFill(doc.stroke.color.rgb[0], doc.stroke.color.rgb[1], doc.stroke.color.rgb[2]);
+                    shape->strokeFill(doc.stroke.color.rgb[0], doc.stroke.color.rgb[1], doc.stroke.color.rgb[2], doc.stroke.color.rgb[3]);
                 }
 
                 //text range process
@@ -1159,7 +1159,7 @@ static void _updateText(LottieLayer* layer, float frameNo)
                     shape->opacity((*s)->style.opacity(frameNo));
 
                     auto color = (*s)->style.fillColor(frameNo);
-                    shape->fill(color.rgb[0], color.rgb[1], color.rgb[2], (*s)->style.fillOpacity(frameNo));
+                    shape->fill(color.rgb[0], color.rgb[1], color.rgb[2], MULTIPLY(color.rgb[3], (*s)->style.fillOpacity(frameNo)));
 
                     rotate(&matrix, (*s)->style.rotation(frameNo));
 
@@ -1174,7 +1174,7 @@ static void _updateText(LottieLayer* layer, float frameNo)
                     if (doc.stroke.render) {
                         auto strokeColor = (*s)->style.strokeColor(frameNo);
                         shape->strokeWidth((*s)->style.strokeWidth(frameNo) / scale);
-                        shape->strokeFill(strokeColor.rgb[0], strokeColor.rgb[1], strokeColor.rgb[2], (*s)->style.strokeOpacity(frameNo));
+                        shape->strokeFill(strokeColor.rgb[0], strokeColor.rgb[1], strokeColor.rgb[2], MULTIPLY(color.rgb[3], (*s)->style.strokeOpacity(frameNo)));
                     }
                     cursor.x += (*s)->style.letterSpacing(frameNo);
                 }
