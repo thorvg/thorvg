@@ -306,6 +306,18 @@ void WgRenderDataShape::updateBBox(WgPoint pmin, WgPoint pmax)
 }
 
 
+void WgRenderDataShape::updateAABB(const Matrix& rt) {
+    WgPoint p0 = WgPoint(pMin.x, pMin.y).trans(rt);
+    WgPoint p1 = WgPoint(pMax.x, pMin.y).trans(rt);
+    WgPoint p2 = WgPoint(pMin.x, pMax.y).trans(rt);
+    WgPoint p3 = WgPoint(pMax.x, pMax.y).trans(rt);
+    aabb.x = std::min({p0.x, p1.x, p2.x, p3.x});
+    aabb.y = std::min({p0.y, p1.y, p2.y, p3.y});
+    aabb.w = std::max({p0.x, p1.x, p2.x, p3.x}) - aabb.x;
+    aabb.h = std::max({p0.y, p1.y, p2.y, p3.y}) - aabb.y;
+}
+
+
 void WgRenderDataShape::updateMeshes(WgContext &context, const RenderShape &rshape, const Matrix& rt)
 {
     releaseMeshes(context);
@@ -368,6 +380,7 @@ void WgRenderDataShape::updateMeshes(WgContext &context, const RenderShape &rsha
     for (uint32_t i = 0; i < polylines.count; i++)
         delete polylines[i];
     // update shapes bbox
+    updateAABB(rt);
     meshDataBBox.update(context, pMin, pMax);
 }
 
@@ -443,6 +456,7 @@ void WgRenderDataShape::updateStrokes(WgContext& context, const WgPolyline* poly
             geometryData.positions.getBBox(pmin, pmax);
             meshGroupStrokes.append(context, &geometryData);
             meshGroupStrokesBBox.append(context, pmin, pmax);
+            updateBBox(pmin, pmax);
         }
     }
 }

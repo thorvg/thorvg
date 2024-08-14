@@ -185,6 +185,113 @@ fn fs_main(in: VertexOutput) -> @location(0) vec4f {
 )";
 
 //************************************************************************
+// graphics shader source: scene compose
+//************************************************************************
+
+const char* cShaderSrc_Scene_Comp = R"(
+struct VertexInput { @location(0) position: vec2f, @location(1) texCoord: vec2f };
+struct VertexOutput { @builtin(position) position: vec4f, @location(0) texCoord: vec2f };
+
+@group(0) @binding(0) var uSamplerSrc : sampler;
+@group(0) @binding(1) var uTextureSrc : texture_2d<f32>;
+@group(1) @binding(0) var uSamplerMsk : sampler;
+@group(1) @binding(1) var uTextureMsk : texture_2d<f32>;
+
+@vertex
+fn vs_main(in: VertexInput) -> VertexOutput {
+    var out: VertexOutput;
+    out.position = vec4f(in.position.xy, 0.0, 1.0);
+    out.texCoord = in.texCoord;
+    return out;
+}
+
+@fragment
+fn fs_main_None(in: VertexOutput) -> @location(0) vec4f {
+    let src: vec4f = textureSample(uTextureSrc, uSamplerSrc, in.texCoord.xy);
+    return vec4f(src);
+};
+
+@fragment
+fn fs_main_ClipPath(in: VertexOutput) -> @location(0) vec4f {
+    let src: vec4f = textureSample(uTextureSrc, uSamplerSrc, in.texCoord.xy);
+    let msk: vec4f = textureSample(uTextureMsk, uSamplerMsk, in.texCoord.xy);
+    return vec4f(src * msk.a);
+};
+
+@fragment
+fn fs_main_AlphaMask(in: VertexOutput) -> @location(0) vec4f {
+    let src: vec4f = textureSample(uTextureSrc, uSamplerSrc, in.texCoord.xy);
+    let msk: vec4f = textureSample(uTextureMsk, uSamplerMsk, in.texCoord.xy);
+    return vec4f(src * msk.a);
+};
+
+@fragment
+fn fs_main_InvAlphaMask(in: VertexOutput) -> @location(0) vec4f {
+    let src: vec4f = textureSample(uTextureSrc, uSamplerSrc, in.texCoord.xy);
+    let msk: vec4f = textureSample(uTextureMsk, uSamplerMsk, in.texCoord.xy);
+    return vec4f(src * (1.0 - msk.a));
+};
+
+@fragment
+fn fs_main_LumaMask(in: VertexOutput) -> @location(0) vec4f {
+    let src: vec4f = textureSample(uTextureSrc, uSamplerSrc, in.texCoord.xy);
+    let msk: vec4f = textureSample(uTextureMsk, uSamplerMsk, in.texCoord.xy);
+    let luma: f32 = dot(msk.rgb, vec3f(0.2125, 0.7154, 0.0721));
+    return vec4f(src * luma);
+};
+
+@fragment
+fn fs_main_InvLumaMask(in: VertexOutput) -> @location(0) vec4f {
+    let src: vec4f = textureSample(uTextureSrc, uSamplerSrc, in.texCoord.xy);
+    let msk: vec4f = textureSample(uTextureMsk, uSamplerMsk, in.texCoord.xy);
+    let luma: f32 = dot(msk.rgb, vec3f(0.2125, 0.7154, 0.0721));
+    return vec4f(src * (1.0 - luma));
+};
+
+@fragment
+fn fs_main_AddMask(in: VertexOutput) -> @location(0) vec4f {
+    let src: vec4f = textureSample(uTextureSrc, uSamplerSrc, in.texCoord.xy);
+    let msk: vec4f = textureSample(uTextureMsk, uSamplerMsk, in.texCoord.xy);
+    return vec4f(src.rgb, src.a + msk.a * (1.0 - src.a));
+};
+
+@fragment
+fn fs_main_SubtractMask(in: VertexOutput) -> @location(0) vec4f {
+    let src: vec4f = textureSample(uTextureSrc, uSamplerSrc, in.texCoord.xy);
+    let msk: vec4f = textureSample(uTextureMsk, uSamplerMsk, in.texCoord.xy);
+    return vec4f(src.rgb, src.a * (1.0 - msk.a));
+};
+
+@fragment
+fn fs_main_IntersectMask(in: VertexOutput) -> @location(0) vec4f {
+    let src: vec4f = textureSample(uTextureSrc, uSamplerSrc, in.texCoord.xy);
+    let msk: vec4f = textureSample(uTextureMsk, uSamplerMsk, in.texCoord.xy);
+    return vec4f(src.rgb, src.a * msk.a);
+};
+
+@fragment
+fn fs_main_DifferenceMask(in: VertexOutput) -> @location(0) vec4f {
+    let src: vec4f = textureSample(uTextureSrc, uSamplerSrc, in.texCoord.xy);
+    let msk: vec4f = textureSample(uTextureMsk, uSamplerMsk, in.texCoord.xy);
+    return vec4f(src.rgb, src.a * (1.0 - msk.a) + msk.a * (1.0 - src.a));
+};
+
+@fragment
+fn fs_main_LightenMask(in: VertexOutput) -> @location(0) vec4f {
+    let src: vec4f = textureSample(uTextureSrc, uSamplerSrc, in.texCoord.xy);
+    let msk: vec4f = textureSample(uTextureMsk, uSamplerMsk, in.texCoord.xy);
+    return vec4f(src.rgb, max(src.a, msk.a));
+};
+
+@fragment
+fn fs_main_DarkenMask(in: VertexOutput) -> @location(0) vec4f {
+    let src: vec4f = textureSample(uTextureSrc, uSamplerSrc, in.texCoord.xy);
+    let msk: vec4f = textureSample(uTextureMsk, uSamplerMsk, in.texCoord.xy);
+    return vec4f(src.rgb, min(src.a, msk.a));
+};
+)";
+
+//************************************************************************
 // compute shader source: merge clip path masks
 //************************************************************************
 
@@ -409,130 +516,6 @@ fn cs_main_SoftLight(@builtin(global_invocation_id) id: vec3u) {
     let One = vec3f(1.0, 1.0, 1.0);
     let Rc = min(One, (One - 2 * d.Sc) * d.Dc * d.Dc + 2.0 * d.Sc * d.Dc);
     textureStore(imageTgt, id.xy, postProcess(d, vec4f(Rc, 1.0)));
-};
-)";
-
-//************************************************************************
-// compute shader source: compose
-//************************************************************************
-
-const char* cShaderSrc_Compose = R"(
-@group(0) @binding(0) var imageSrc : texture_storage_2d<rgba8unorm, read>;
-@group(1) @binding(0) var imageMsk : texture_storage_2d<rgba8unorm, read>;
-@group(2) @binding(0) var imageDst : texture_storage_2d<rgba8unorm, read>;
-@group(3) @binding(0) var imageTgt : texture_storage_2d<rgba8unorm, write>;
-
-struct FragData { Sc: vec3f, Sa: f32, Mc: vec3f, Ma: f32, Dc: vec3f, Da: f32 };
-fn getFragData(id: vec2u) -> FragData {
-    let colorSrc = textureLoad(imageSrc, id.xy);
-    let colorMsk = textureLoad(imageMsk, id.xy);
-    let colorDst = textureLoad(imageDst, id.xy);
-    var data: FragData;
-    data.Sc = colorSrc.rgb;
-    data.Sa = colorSrc.a;
-    data.Mc = colorMsk.rgb;
-    data.Ma = colorMsk.a;
-    data.Dc = colorDst.rgb;
-    data.Da = colorDst.a;
-    return data;
-};
-
-@compute @workgroup_size(8, 8)
-fn cs_main_None(@builtin(global_invocation_id) id: vec3u) {
-    let d: FragData = getFragData(id.xy);
-    let Rc = d.Dc;
-    let Ra = d.Da;
-    textureStore(imageTgt, id.xy, vec4f(Rc, Ra));
-};
-
-@compute @workgroup_size(8, 8)
-fn cs_main_ClipPath(@builtin(global_invocation_id) id: vec3u) {
-    let d: FragData = getFragData(id.xy);
-    let Rc = d.Sc * d.Ma + d.Dc * (1.0 - d.Sa * d.Ma);
-    let Ra = d.Sa * d.Ma + d.Da * (1.0 - d.Sa * d.Ma);
-    textureStore(imageTgt, id.xy, vec4f(Rc, Ra));
-};
-
-@compute @workgroup_size(8, 8)
-fn cs_main_AlphaMask(@builtin(global_invocation_id) id: vec3u) {
-    let d: FragData = getFragData(id.xy);
-    let Rc = d.Sc * d.Ma + d.Dc * (1.0 - d.Sa * d.Ma);
-    let Ra = d.Sa * d.Ma + d.Da * (1.0 - d.Sa * d.Ma);
-    textureStore(imageTgt, id.xy, vec4f(Rc, Ra));
-};
-
-@compute @workgroup_size(8, 8)
-fn cs_main_InvAlphaMask(@builtin(global_invocation_id) id: vec3u) {
-    let d: FragData = getFragData(id.xy);
-    let Rc = d.Sc * (1.0 - d.Ma) + d.Dc * (1.0 - d.Sa * (1.0 - d.Ma));
-    let Ra = d.Sa * (1.0 - d.Ma) + d.Da * (1.0 - d.Sa * (1.0 - d.Ma));
-    textureStore(imageTgt, id.xy, vec4f(Rc, Ra));
-};
-
-@compute @workgroup_size(8, 8)
-fn cs_main_LumaMask(@builtin(global_invocation_id) id: vec3u) {
-    let d: FragData = getFragData(id.xy);
-    let luma: f32 = dot(d.Mc, vec3f(0.2125, 0.7154, 0.0721));
-    let Rc = d.Sc * luma + d.Dc * (1.0 - d.Sa * luma);
-    let Ra = d.Sa * luma + d.Da * (1.0 - d.Sa * luma);
-    textureStore(imageTgt, id.xy, vec4f(Rc, Ra));
-};
-
-@compute @workgroup_size(8, 8)
-fn cs_main_InvLumaMask(@builtin(global_invocation_id) id: vec3u) {
-    let d: FragData = getFragData(id.xy);
-    let luma: f32 = dot(d.Mc, vec3f(0.2125, 0.7154, 0.0721));
-    let Rc = d.Sc * (1.0 - luma) + d.Dc * (1.0 - d.Sa * (1.0 - luma));
-    let Ra = d.Sa * (1.0 - luma) + d.Da * (1.0 - d.Sa * (1.0 - luma));
-    textureStore(imageTgt, id.xy, vec4f(Rc, Ra));
-};
-
-@compute @workgroup_size(8, 8)
-fn cs_main_AddMask(@builtin(global_invocation_id) id: vec3u) {
-    let d: FragData = getFragData(id.xy);
-    let Rc = d.Sc;
-    let Ra = d.Sa + d.Ma * (1.0 - d.Sa);
-    textureStore(imageTgt, id.xy, vec4f(Rc, Ra));
-};
-
-@compute @workgroup_size(8, 8)
-fn cs_main_SubtractMask(@builtin(global_invocation_id) id: vec3u) {
-    let d: FragData = getFragData(id.xy);
-    let Rc = d.Sc;
-    let Ra = d.Sa * (1.0 - d.Ma);
-    textureStore(imageTgt, id.xy, vec4f(Rc, Ra));
-};
-
-@compute @workgroup_size(8, 8)
-fn cs_main_IntersectMask(@builtin(global_invocation_id) id: vec3u) {
-    let d: FragData = getFragData(id.xy);
-    let Rc = d.Sc;
-    let Ra = d.Sa * d.Ma;
-    textureStore(imageTgt, id.xy, vec4f(Rc, Ra));
-};
-
-@compute @workgroup_size(8, 8)
-fn cs_main_DifferenceMask(@builtin(global_invocation_id) id: vec3u) {
-    let d: FragData = getFragData(id.xy);
-    let Rc = d.Sc;
-    let Ra = d.Sa * (1.0 - d.Ma) + d.Ma * (1.0 - d.Sa);
-    textureStore(imageTgt, id.xy, vec4f(Rc, Ra));
-};
-
-@compute @workgroup_size(8, 8)
-fn cs_main_LightenMask(@builtin(global_invocation_id) id: vec3u) {
-    let d: FragData = getFragData(id.xy);
-    let Rc = d.Sc;
-    let Ra = max(d.Sa, d.Ma);
-    textureStore(imageTgt, id.xy, vec4f(Rc, Ra));
-};
-
-@compute @workgroup_size(8, 8)
-fn cs_main_DarkenMask(@builtin(global_invocation_id) id: vec3u) {
-    let d: FragData = getFragData(id.xy);
-    let Rc = d.Sc;
-    let Ra = min(d.Sa, d.Ma);
-    textureStore(imageTgt, id.xy, vec4f(Rc, Ra));
 };
 )";
 

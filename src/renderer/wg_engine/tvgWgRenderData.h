@@ -97,6 +97,7 @@ struct WgRenderDataPaint
     WGPUBuffer bufferBlendSettings{};
     WGPUBindGroup bindGroupPaint{};
     RenderRegion viewport{};
+    RenderRegion aabb{};
     float opacity{};
     Array<WgRenderDataPaint*> clips;
 
@@ -123,6 +124,7 @@ struct WgRenderDataShape: public WgRenderDataPaint
     FillRule fillRule{};
 
     void updateBBox(WgPoint pmin, WgPoint pmax);
+    void updateAABB(const Matrix& rt);
     void updateMeshes(WgContext& context, const RenderShape& rshape, const Matrix& rt);
     void updateShapes(WgContext& context, const WgPolyline* polyline);
     void updateStrokesList(WgContext& context, Array<WgPolyline*> polylines, const RenderStroke* rstroke, float totalLen, float trimBegin, float trimEnd);

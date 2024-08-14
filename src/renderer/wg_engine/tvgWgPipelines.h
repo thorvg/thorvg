@@ -35,12 +35,12 @@ private:
     WGPUShaderModule shaderRadial{};
     WGPUShaderModule shaderLinear{};
     WGPUShaderModule shaderImage{};
+    WGPUShaderModule shaderSceneComp{};
     // compute pipeline shaders
     WGPUShaderModule shaderMergeMasks;
     WGPUShaderModule shaderBlendSolid;
     WGPUShaderModule shaderBlendGradient;
     WGPUShaderModule shaderBlendImage;
-    WGPUShaderModule shaderCompose;
     WGPUShaderModule shaderCopy;
 private:
     // graphics pipeline layouts
@@ -48,10 +48,10 @@ private:
     WGPUPipelineLayout layoutSolid{};
     WGPUPipelineLayout layoutGradient{};
     WGPUPipelineLayout layoutImage{};
+    WGPUPipelineLayout layoutSceneComp{};
     // compute pipeline layouts
     WGPUPipelineLayout layoutMergeMasks{};
     WGPUPipelineLayout layoutBlend{};
-    WGPUPipelineLayout layoutCompose{};
     WGPUPipelineLayout layoutCopy{};
 public:
     // graphics pipeline
@@ -63,13 +63,13 @@ public:
     WGPURenderPipeline radial[3]{};
     WGPURenderPipeline linear[3]{};
     WGPURenderPipeline image[3]{};
+    WGPURenderPipeline sceneComp[12];
     WGPURenderPipeline clipPath{};
     // compute pipeline
     WGPUComputePipeline mergeMasks;
     WGPUComputePipeline blendSolid[14];
     WGPUComputePipeline blendGradient[14];
     WGPUComputePipeline blendImage[14];
-    WGPUComputePipeline compose[12];
     WGPUComputePipeline copy;
 private:
     void releaseGraphicHandles(WgContext& context);
@@ -79,7 +79,8 @@ private:
     WGPUPipelineLayout createPipelineLayout(WGPUDevice device, const WGPUBindGroupLayout* bindGroupLayouts, const uint32_t bindGroupLayoutsCount);
     WGPURenderPipeline createRenderPipeline(
         WGPUDevice device, const char* pipelineLabel,
-        const WGPUShaderModule shaderModule, const WGPUPipelineLayout pipelineLayout,
+        const WGPUShaderModule shaderModule, const char* vsEntryPoint, const char* fsEntryPoint,
+        const WGPUPipelineLayout pipelineLayout,
         const WGPUVertexBufferLayout *vertexBufferLayouts, const uint32_t vertexBufferLayoutsCount,
         const WGPUColorWriteMaskFlags writeMask,
         const WGPUCompareFunction stencilFunctionFrnt, const WGPUStencilOperation stencilOperationFrnt,
