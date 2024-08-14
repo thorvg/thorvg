@@ -279,26 +279,6 @@ void WgGeometryData::appendBlitBox()
 }
 
 
-void WgGeometryData::appendMesh(const RenderMesh* rmesh)
-{
-    assert(rmesh);
-    positions.pts.reserve(rmesh->triangleCnt * 3);
-    texCoords.reserve(rmesh->triangleCnt * 3);
-    indexes.reserve(rmesh->triangleCnt * 3);
-    for (uint32_t i = 0; i < rmesh->triangleCnt; i++) {
-        positions.appendPoint(rmesh->triangles[i].vertex[0].pt);
-        positions.appendPoint(rmesh->triangles[i].vertex[1].pt);
-        positions.appendPoint(rmesh->triangles[i].vertex[2].pt);
-        texCoords.push(rmesh->triangles[i].vertex[0].uv);
-        texCoords.push(rmesh->triangles[i].vertex[1].uv);
-        texCoords.push(rmesh->triangles[i].vertex[2].uv);
-        indexes.push(i*3 + 0);
-        indexes.push(i*3 + 1);
-        indexes.push(i*3 + 2);
-    }
-}
-
-
 void WgGeometryData::appendStrokeDashed(const WgPolyline* polyline, const RenderStroke *stroke)
 {
     assert(stroke);
