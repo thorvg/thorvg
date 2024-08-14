@@ -84,15 +84,15 @@ struct Compositor
     uint8_t        opacity;
 };
 
-struct RenderMesh
+struct Vertex
 {
-    Polygon* triangles = nullptr;
-    uint32_t triangleCnt = 0;
+   Point pt;
+   Point uv;
+};
 
-    ~RenderMesh()
-    {
-        free(triangles);
-    }
+struct Polygon
+{
+   Vertex vertex[3];
 };
 
 struct RenderRegion
@@ -285,7 +285,7 @@ public:
 
     virtual ~RenderMethod() {}
     virtual RenderData prepare(const RenderShape& rshape, RenderData data, const Matrix& transform, Array<RenderData>& clips, uint8_t opacity, RenderUpdateFlag flags, bool clipper) = 0;
-    virtual RenderData prepare(Surface* surface, const RenderMesh* mesh, RenderData data, const Matrix& transform, Array<RenderData>& clips, uint8_t opacity, RenderUpdateFlag flags) = 0;
+    virtual RenderData prepare(Surface* surface, RenderData data, const Matrix& transform, Array<RenderData>& clips, uint8_t opacity, RenderUpdateFlag flags) = 0;
     virtual bool preRender() = 0;
     virtual bool renderShape(RenderData data) = 0;
     virtual bool renderImage(RenderData data) = 0;

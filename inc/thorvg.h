@@ -258,34 +258,6 @@ struct Matrix
 
 
 /**
- * @brief A data structure representing a texture mesh vertex
- *
- * @param pt The vertex coordinate
- * @param uv The normalized texture coordinate in the range (0.0..1.0, 0.0..1.0)
- *
- * @note Experimental API
- */
-struct Vertex
-{
-   Point pt;
-   Point uv;
-};
-
-
-/**
- * @brief A data structure representing a triangle in a texture mesh
- *
- * @param vertex The three vertices that make up the polygon
- *
- * @note Experimental API
- */
-struct Polygon
-{
-   Vertex vertex[3];
-};
-
-
-/**
  * @class Paint
  *
  * @brief An abstract class for managing graphical elements.
@@ -1354,41 +1326,6 @@ public:
      * @note Experimental API
      */
     const Paint* paint(uint32_t id) noexcept;
-
-    /**
-     * @brief Sets or removes the triangle mesh to deform the image.
-     *
-     * If a mesh is provided, the transform property of the Picture will apply to the triangle mesh, and the
-     * image data will be used as the texture.
-     *
-     * If @p triangles is @c nullptr, or @p triangleCnt is 0, the mesh will be removed.
-     *
-     * Only raster image types are supported at this time (png, jpg). Vector types like svg and tvg do not support.
-     * mesh deformation. However, if required you should be able to render a vector image to a raster image and then apply a mesh.
-     *
-     * @param[in] triangles An array of Polygons(triangles) that make up the mesh, or null to remove the mesh.
-     * @param[in] triangleCnt The number of Polygons(triangles) provided, or 0 to remove the mesh.
-     *
-     * @note The Polygons are copied internally, so modifying them after calling Mesh::mesh has no affect.
-     * @warning Please do not use it, this API is not official one. It could be modified in the next version.
-     *
-     * @note Experimental API
-     */
-    Result mesh(const Polygon* triangles, uint32_t triangleCnt) noexcept;
-
-    /**
-     * @brief Return the number of triangles in the mesh, and optionally get a pointer to the array of triangles in the mesh.
-     *
-     * @param[out] triangles Optional. A pointer to the array of Polygons used by this mesh.
-     *
-     * @return The number of polygons in the array.
-     *
-     * @note Modifying the triangles returned by this method will modify them directly within the mesh.
-     * @warning Please do not use it, this API is not official one. It could be modified in the next version.
-     *
-     * @note Experimental API
-     */
-    uint32_t mesh(const Polygon** triangles) const noexcept;
 
     /**
      * @brief Creates a new Picture object.

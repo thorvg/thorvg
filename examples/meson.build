@@ -66,7 +66,6 @@ source_file = [
     'StrokeMiterlimit.cpp',
     'StrokeTrim.cpp',
     'Svg.cpp',
-    'Texmap.cpp',
     'Text.cpp',
     'Transform.cpp',
     'Tvg.cpp',
