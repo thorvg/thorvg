@@ -27,7 +27,8 @@
 #include "tvgWgRenderData.h"
 
 struct WgCompose: public Compositor {
-    BlendMethod blend;
+    BlendMethod blend{};
+    RenderRegion aabb{};
 };
 
 class WgCompositor {
@@ -51,8 +52,12 @@ private:
     WgRenderStorage storageInterm;
     WgRenderStorage storageClipPath;
     WgRenderStorage storageDstCopy;
+    // composition and blend geometries
+    WgMeshData meshData;
 
     static WgPipelineBlendType blendMethodToBlendType(BlendMethod blendMethod);
+
+    void composeRegion(WgContext& context, WgRenderStorage* src, WgRenderStorage* mask, CompositeMethod composeMethod, RenderRegion& rect);
 public:
     // render target dimensions
     uint32_t width{};
@@ -76,6 +81,7 @@ public:
     void composeShape(WgContext& context, WgRenderDataShape* renderData, WgRenderStorage* mask, CompositeMethod composeMethod);
     void composeStrokes(WgContext& context, WgRenderDataShape* renderData, WgRenderStorage* mask, CompositeMethod composeMethod);
     void composeImage(WgContext& context, WgRenderDataPicture* renderData, WgRenderStorage* mask, CompositeMethod composeMethod);
+    void composeScene(WgContext& context, WgRenderStorage* src, WgRenderStorage* mask, WgCompose* cmp);
 
     void drawClipPath(WgContext& context, WgRenderDataShape* renderData);
     void drawShape(WgContext& context, WgRenderDataShape* renderData, WgPipelineBlendType blendType);
@@ -84,7 +90,6 @@ public:
 
     void mergeMasks(WGPUCommandEncoder encoder, WgRenderStorage* mask0, WgRenderStorage* mask1);
     void blend(WGPUCommandEncoder encoder, WgRenderStorage* src, WgRenderStorage* dst, uint8_t opacity, BlendMethod blendMethod, WgRenderRasterType rasterType);
-    void compose(WGPUCommandEncoder encoder, WgRenderStorage* src, WgRenderStorage* mask, WgRenderStorage* dst, CompositeMethod composeMethod);
 };
 
 #endif // _TVG_WG_COMPOSITOR_H_

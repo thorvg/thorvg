@@ -47,11 +47,17 @@ void WgCompositor::initialize(WgContext& context, uint32_t width, uint32_t heigh
     storageClipPath.initialize(context, width, height);
     storageInterm.initialize(context, width, height);
     storageDstCopy.initialize(context, width, height);
+    // composition and blend geometries
+    WgGeometryData geometryData;
+    geometryData.appendBlitBox();
+    meshData.update(context, &geometryData);
 }
 
 
 void WgCompositor::release(WgContext& context)
 {
+    // composition and blend geometries
+    meshData.release(context);
     // release intermediate render storages
     storageInterm.release(context);
     storageDstCopy.release(context);
@@ -252,6 +258,7 @@ void WgCompositor::blendImage(WgContext& context, WgRenderDataPicture* renderDat
 };
 
 
+// TODO: use direct mask applience
 void WgCompositor::composeShape(WgContext& context, WgRenderDataShape* renderData, WgRenderStorage* mask, CompositeMethod composeMethod)
 {
     assert(mask);
@@ -268,16 +275,17 @@ void WgCompositor::composeShape(WgContext& context, WgRenderDataShape* renderDat
     beginRenderPass(commandEncoder, &storageInterm, true);
     drawShape(context, renderData, WgPipelineBlendType::Custom);
     endRenderPass();
-    // run compisition
-    compose(commandEncoder, &storageInterm, mask, target, composeMethod);
     // restore current render pass
     beginRenderPass(commandEncoder, target, false);
+    RenderRegion rect { 0, 0,(int32_t)width, (int32_t)height };
+    composeRegion(context, &storageInterm, mask, composeMethod, rect);
 }
 
 
-void WgCompositor::composeStrokes(WgContext& context, WgRenderDataShape* renderData, WgRenderStorage* msk, CompositeMethod composeMethod)
+// TODO: use direct mask applience
+void WgCompositor::composeStrokes(WgContext& context, WgRenderDataShape* renderData, WgRenderStorage* mask, CompositeMethod composeMethod)
 {
-    assert(msk);
+    assert(mask);
     assert(renderData);
     assert(commandEncoder);
     assert(currentTarget);
@@ -291,16 +299,17 @@ void WgCompositor::composeStrokes(WgContext& context, WgRenderDataShape* renderD
     beginRenderPass(commandEncoder, &storageInterm, true);
     drawStrokes(context, renderData, WgPipelineBlendType::Custom);
     endRenderPass();
-    // run compisition
-    compose(commandEncoder, &storageInterm, msk, target, composeMethod);
     // restore current render pass
     beginRenderPass(commandEncoder, target, false);
+    RenderRegion rect { 0, 0, (int32_t)width, (int32_t)height };
+    composeRegion(context, &storageInterm, mask, composeMethod, rect);
 }
 
 
-void WgCompositor::composeImage(WgContext& context, WgRenderDataPicture* renderData, WgRenderStorage* msk, CompositeMethod composeMethod)
+// TODO: use direct mask applience
+void WgCompositor::composeImage(WgContext& context, WgRenderDataPicture* renderData, WgRenderStorage* mask, CompositeMethod composeMethod)
 {
-    assert(msk);
+    assert(mask);
     assert(renderData);
     assert(commandEncoder);
     assert(currentTarget);
@@ -311,10 +320,38 @@ void WgCompositor::composeImage(WgContext& context, WgRenderDataPicture* renderD
     beginRenderPass(commandEncoder, &storageInterm, true);
     drawImage(context, renderData, WgPipelineBlendType::Custom);
     endRenderPass();
-    // run compisition
-    compose(commandEncoder, &storageInterm, msk, target, composeMethod);
     // restore current render pass
     beginRenderPass(commandEncoder, target, false);
+    RenderRegion rect { 0, 0, (int32_t)width, (int32_t)height };
+    composeRegion(context, &storageInterm, mask, composeMethod, rect);
+}
+
+
+void WgCompositor::composeScene(WgContext& context, WgRenderStorage* src, WgRenderStorage* mask, WgCompose* cmp)
+{
+    assert(cmp);
+    assert(src);
+    assert(mask);
+    assert(renderPassEncoder);
+    // cut viewport to screen dimensions
+    int32_t xmin = std::max(0, std::min((int32_t)width, cmp->aabb.x));
+    int32_t ymin = std::max(0, std::min((int32_t)height, cmp->aabb.y));
+    int32_t xmax = std::max(0, std::min((int32_t)width, cmp->aabb.x + cmp->aabb.w));
+    int32_t ymax = std::max(0, std::min((int32_t)height, cmp->aabb.y + cmp->aabb.h));
+    if ((xmin >= xmax) || (ymin >= ymax)) return;
+    RenderRegion rect { xmin, ymin, xmax - xmin, ymax - ymin };
+    composeRegion(context, src, mask, cmp->method, rect);
+}
+
+
+void WgCompositor::composeRegion(WgContext& context, WgRenderStorage* src, WgRenderStorage* mask, CompositeMethod composeMethod, RenderRegion& rect)
+{
+    wgpuRenderPassEncoderSetScissorRect(renderPassEncoder, rect.x, rect.y, rect.w, rect.h);
+    wgpuRenderPassEncoderSetStencilReference(renderPassEncoder, 0);
+    wgpuRenderPassEncoderSetBindGroup(renderPassEncoder, 0, src->bindGroupTexure, 0, nullptr);
+    wgpuRenderPassEncoderSetBindGroup(renderPassEncoder, 1, mask->bindGroupTexure, 0, nullptr);
+    wgpuRenderPassEncoderSetPipeline(renderPassEncoder, pipelines->sceneComp[(uint32_t)composeMethod]);
+    meshData.drawImage(context, renderPassEncoder);
 }
 
 
@@ -480,30 +517,6 @@ void WgCompositor::blend(WGPUCommandEncoder encoder, WgRenderStorage* src, WgRen
     wgpuComputePassEncoderSetBindGroup(computePassEncoder, 2, dst->bindGroupWrite, 0, nullptr);
     wgpuComputePassEncoderSetBindGroup(computePassEncoder, 3, bindGroupOpacities[opacity], 0, nullptr);
     wgpuComputePassEncoderSetPipeline(computePassEncoder, pipeline);
-    wgpuComputePassEncoderDispatchWorkgroups(computePassEncoder, (width + 7) / 8, (height + 7) / 8, 1);
-    wgpuComputePassEncoderEnd(computePassEncoder);
-}
-
-
-void WgCompositor::compose(WGPUCommandEncoder encoder, WgRenderStorage* src, WgRenderStorage* mask, WgRenderStorage* dst, CompositeMethod composeMethod)
-{
-    assert(src);
-    assert(mask);
-    assert(dst);
-    assert(!renderPassEncoder);
-    // copy dst storage to temporary read only storage
-    const WGPUImageCopyTexture texSrc { .texture = dst->texture };
-    const WGPUImageCopyTexture texDst { .texture = storageDstCopy.texture };
-    const WGPUExtent3D copySize { .width = width, .height = height, .depthOrArrayLayers = 1 };
-    wgpuCommandEncoderCopyTextureToTexture(encoder, &texSrc, &texDst, &copySize);
-    // execute compose shader
-    const WGPUComputePassDescriptor computePassDescriptor{};
-    WGPUComputePassEncoder computePassEncoder = wgpuCommandEncoderBeginComputePass(encoder, &computePassDescriptor);
-    wgpuComputePassEncoderSetBindGroup(computePassEncoder, 0, src->bindGroupRead, 0, nullptr);
-    wgpuComputePassEncoderSetBindGroup(computePassEncoder, 1, mask->bindGroupRead, 0, nullptr);
-    wgpuComputePassEncoderSetBindGroup(computePassEncoder, 2, storageDstCopy.bindGroupRead, 0, nullptr);
-    wgpuComputePassEncoderSetBindGroup(computePassEncoder, 3, dst->bindGroupWrite, 0, nullptr);
-    wgpuComputePassEncoderSetPipeline(computePassEncoder, pipelines->compose[(size_t)composeMethod]);
     wgpuComputePassEncoderDispatchWorkgroups(computePassEncoder, (width + 7) / 8, (height + 7) / 8, 1);
     wgpuComputePassEncoderEnd(computePassEncoder);
 }

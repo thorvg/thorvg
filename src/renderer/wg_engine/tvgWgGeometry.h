@@ -59,7 +59,7 @@ public:
     inline void normalize() { float rlen = 1.0f / length(); x *= rlen; y *= rlen; }
     inline WgPoint normal() const { float rlen = 1.0f / length(); return { x * rlen, y * rlen }; }
     inline WgPoint lerp(const WgPoint& p, float t) const { return { x + (p.x - x) * t, y + (p.y - y) * t }; };
-    inline WgPoint trans(const Matrix& m) const { return { x * m.e11 + y * m.e12, x * m.e21 + y * m.e22 }; };
+    inline WgPoint trans(const Matrix& m) const { return { x * m.e11 + y * m.e12 + m.e13, x * m.e21 + y * m.e22 + m.e23 }; };
 };
 
 struct WgMath

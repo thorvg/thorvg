@@ -199,8 +199,12 @@ void WgRenderer::dispose(RenderData data) {
 }
 
 
-RenderRegion WgRenderer::region(TVG_UNUSED RenderData data)
+RenderRegion WgRenderer::region(RenderData data)
 {
+    auto renderData = (WgRenderDataPaint*)data;
+    if (renderData->type() == Type::Shape) {
+        return renderData->aabb;
+    }
     return { 0, 0, (int32_t)mTargetSurface.w, (int32_t)mTargetSurface.h };
 }
 
@@ -316,6 +320,7 @@ bool WgRenderer::target(WGPUInstance instance, WGPUSurface surface, uint32_t w, 
 Compositor* WgRenderer::target(TVG_UNUSED const RenderRegion& region, TVG_UNUSED ColorSpace cs)
 {
     mCompositorStack.push(new WgCompose);
+    mCompositorStack.last()->aabb = region;
     return mCompositorStack.last();
 }
 
@@ -354,6 +359,8 @@ bool WgRenderer::endComposite(Compositor* cmp)
         mCompositor.blend(mCommandEncoder, src, dst, comp->opacity, comp->blend, WgRenderRasterType::Image);
         // back render targets to the pool
         mRenderStoragePool.free(mContext, src);
+        // begin previous render pass
+        mCompositor.beginRenderPass(mCommandEncoder, mRenderStorageStack.last(), false);
     } else { // finish composition
         // get source, mask and destination render storages
         WgRenderStorage* src = mRenderStorageStack.last();
@@ -361,14 +368,14 @@ bool WgRenderer::endComposite(Compositor* cmp)
         WgRenderStorage* msk = mRenderStorageStack.last();
         mRenderStorageStack.pop();
         WgRenderStorage* dst = mRenderStorageStack.last();
+        // begin previous render pass
+        mCompositor.beginRenderPass(mCommandEncoder, dst, false);
         // apply composition
-        mCompositor.compose(mCommandEncoder, src, msk, dst,comp->method);
+        mCompositor.composeScene(mContext, src, msk, comp);
         // back render targets to the pool
         mRenderStoragePool.free(mContext, src);
         mRenderStoragePool.free(mContext, msk);
     }
-    // begin previous render pass
-    mCompositor.beginRenderPass(mCommandEncoder, mRenderStorageStack.last(), false);
 
     // delete current compositor settings
     delete mCompositorStack.last();
