@@ -417,7 +417,7 @@ static GLuint _genTexture(Surface* image)
     return tex;
 }
 
-RenderData GlRenderer::prepare(Surface* image, const RenderMesh* mesh, RenderData data, const Matrix& transform, Array<RenderData>& clips, uint8_t opacity, RenderUpdateFlag flags)
+RenderData GlRenderer::prepare(Surface* image, RenderData data, const Matrix& transform, Array<RenderData>& clips, uint8_t opacity, RenderUpdateFlag flags)
 {
     if (flags == RenderUpdateFlag::None) return data;
 
@@ -433,14 +433,14 @@ RenderData GlRenderer::prepare(Surface* image, const RenderMesh* mesh, RenderDat
         sdata->texId = _genTexture(image);
         sdata->opacity = opacity;
         sdata->texColorSpace = image->cs;
-        sdata->texFlipY = (mesh && mesh->triangleCnt) ? 0 : 1;
+        sdata->texFlipY = 1;
         sdata->geometry = make_unique<GlGeometry>();
     }
 
     sdata->geometry->updateTransform(transform);
     sdata->geometry->setViewport(mViewport);
 
-    sdata->geometry->tesselate(image, mesh, flags);
+    sdata->geometry->tesselate(image, flags);
 
     if (!clips.empty()) sdata->clips.push(clips);
 
@@ -1231,4 +1231,5 @@ void GlRenderer::endRenderPass(Compositor* cmp)
         task->setParentSize(static_cast<uint32_t>(currentPass()->getViewport().w), static_cast<uint32_t>(currentPass()->getViewport().h));
         currentPass()->addRenderTask(std::move(task));
     }
+
 }

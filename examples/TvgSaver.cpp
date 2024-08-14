@@ -28,39 +28,10 @@ using namespace std;
 /* ThorVG Saving Contents                                               */
 /************************************************************************/
 
-unique_ptr<tvg::Paint> tvgTexmap(uint32_t * data, int width, int heigth)
-{
-    auto texmap = tvg::Picture::gen();
-    if (!tvgexam::verify(texmap->load(data, width, heigth, true))) return nullptr;
-    texmap->translate(100, 100);
-
-    //Composing Meshes
-    tvg::Polygon triangles[4];
-    triangles[0].vertex[0] = {{100, 125}, {0, 0}};
-    triangles[0].vertex[1] = {{300, 100}, {0.5, 0}};
-    triangles[0].vertex[2] = {{200, 550}, {0, 1}};
-
-    triangles[1].vertex[0] = {{300, 100}, {0.5, 0}};
-    triangles[1].vertex[1] = {{350, 450}, {0.5, 1}};
-    triangles[1].vertex[2] = {{200, 550}, {0, 1}};
-
-    triangles[2].vertex[0] = {{300, 100}, {0.5, 0}};
-    triangles[2].vertex[1] = {{500, 200}, {1, 0}};
-    triangles[2].vertex[2] = {{350, 450}, {0.5, 1}};
-
-    triangles[3].vertex[0] = {{500, 200}, {1, 0}};
-    triangles[3].vertex[1] = {{450, 450}, {1, 1}};
-    triangles[3].vertex[2] = {{350, 450}, {0.5, 1}};
-
-    texmap->mesh(triangles, 4);
-
-    return texmap;
-}
-
-unique_ptr<tvg::Paint> tvgClippedImage(uint32_t * data, int width, int heigth)
+unique_ptr<tvg::Paint> tvgClippedImage(uint32_t * data, int width, int height)
 {
     auto image = tvg::Picture::gen();
-    if (!tvgexam::verify(image->load(data, width, heigth, true))) return nullptr;
+    if (!tvgexam::verify(image->load(data, width, height, true))) return nullptr;
     image->translate(400, 0);
     image->scale(2);
 
@@ -192,10 +163,6 @@ void exportTvg()
     uint32_t *data = (uint32_t*) malloc(sizeof(uint32_t) * width * height);
     file.read(reinterpret_cast<char*>(data), sizeof(uint32_t) * width * height);
     file.close();
-
-    //texmap image
-    auto texmap = tvgTexmap(data, width, height);
-    scene->push(std::move(texmap));
 
     //clipped image
     auto image = tvgClippedImage(data, width, height);

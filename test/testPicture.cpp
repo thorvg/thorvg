@@ -100,67 +100,6 @@ TEST_CASE("Load RAW file and render", "[tvgPicture]")
     free(data);
 }
 
-TEST_CASE("Texture mesh", "[tvgPicture]")
-{
-    auto picture = Picture::gen();
-    REQUIRE(picture);
-
-    ifstream file(TEST_DIR"/rawimage_200x300.raw");
-    if (!file.is_open()) return;
-    auto data = (uint32_t*)malloc(sizeof(uint32_t) * (200*300));
-    file.read(reinterpret_cast<char *>(data), sizeof (uint32_t) * 200 * 300);
-    file.close();
-
-    REQUIRE(picture->load(data, 200, 300, false) == Result::Success);
-
-    //Composing Meshes
-    tvg::Polygon triangles[4];
-    triangles[0].vertex[0] = {{100, 125}, {0, 0}};
-    triangles[0].vertex[1] = {{300, 100}, {0.5, 0}};
-    triangles[0].vertex[2] = {{200, 550}, {0, 1}};
-
-    triangles[1].vertex[0] = {{300, 100}, {0.5, 0}};
-    triangles[1].vertex[1] = {{350, 450}, {0.5, 1}};
-    triangles[1].vertex[2] = {{200, 550}, {0, 1}};
-
-    triangles[2].vertex[0] = {{300, 100}, {0.5, 0}};
-    triangles[2].vertex[1] = {{500, 200}, {1, 0}};
-    triangles[2].vertex[2] = {{350, 450}, {0.5, 1}};
-
-    triangles[3].vertex[0] = {{500, 200}, {1, 0}};
-    triangles[3].vertex[1] = {{450, 450}, {1, 1}};
-    triangles[3].vertex[2] = {{350, 450}, {0.5, 1}};
-
-    //Negative cases
-    const tvg::Polygon* triangles2 = nullptr;
-    REQUIRE(picture->mesh(nullptr, 4) == tvg::Result::InvalidArguments);
-    REQUIRE(picture->mesh(nullptr) == 0);
-    REQUIRE(picture->mesh(&triangles2) == 0);
-    REQUIRE(picture->mesh(triangles, 0) == tvg::Result::InvalidArguments);
-    REQUIRE(picture->mesh(nullptr) == 0);
-    REQUIRE(picture->mesh(&triangles2) == 0);
-
-    //Positive cases
-    REQUIRE(picture->mesh(triangles, 4) == tvg::Result::Success);
-    REQUIRE(picture->mesh(nullptr) == 4);
-    REQUIRE(picture->mesh(&triangles2) == 4);
-
-    for(int i = 0; i < 4; i++) {
-        for(int j = 0; j < 3; j++) {
-            REQUIRE(triangles[i].vertex[j].pt.x == triangles2[i].vertex[j].pt.x);
-            REQUIRE(triangles[i].vertex[j].pt.y == triangles2[i].vertex[j].pt.y);
-            REQUIRE(triangles[i].vertex[j].uv.x == triangles2[i].vertex[j].uv.x);
-            REQUIRE(triangles[i].vertex[j].uv.y == triangles2[i].vertex[j].uv.y);
-        }
-    }
-
-    REQUIRE(picture->mesh(nullptr, 0) == tvg::Result::Success);
-    REQUIRE(picture->mesh(nullptr) == 0);
-    REQUIRE(picture->mesh(&triangles2) == 0);
-
-    free(data);
-}
-
 TEST_CASE("Picture Size", "[tvgPicture]")
 {
     auto picture = Picture::gen();

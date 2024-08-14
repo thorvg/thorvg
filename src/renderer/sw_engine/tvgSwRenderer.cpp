@@ -203,7 +203,6 @@ struct SwImageTask : SwTask
 {
     SwImage image;
     Surface* source;                            //Image source
-    const RenderMesh* mesh = nullptr;           //Should be valid ptr in action
 
     bool clip(SwRleData* target) override
     {
@@ -236,10 +235,9 @@ struct SwImageTask : SwTask
             imageReset(&image);
             if (!image.data || image.w == 0 || image.h == 0) goto end;
 
-            if (!imagePrepare(&image, mesh, transform, clipRegion, bbox, mpool, tid)) goto end;
+            if (!imagePrepare(&image, transform, clipRegion, bbox, mpool, tid)) goto end;
 
-            // TODO: How do we clip the triangle mesh? Only clip non-meshed images for now
-            if (mesh->triangleCnt == 0 && clips.count > 0) {
+            if (clips.count > 0) {
                 if (!imageGenRle(&image, bbox, false)) goto end;
                 if (image.rle) {
                     //Clear current task memorypool here if the clippers would use the same memory pool
@@ -423,7 +421,7 @@ bool SwRenderer::renderImage(RenderData data)
 
     if (task->opacity == 0) return true;
 
-    return rasterImage(surface, &task->image, task->mesh, task->transform, task->bbox, task->opacity);
+    return rasterImage(surface, &task->image, task->transform, task->bbox, task->opacity);
 }
 
 
@@ -632,7 +630,7 @@ bool SwRenderer::endComposite(Compositor* cmp)
     //Default is alpha blending
     if (p->method == CompositeMethod::None) {
         Matrix m = {1, 0, 0, 0, 1, 0, 0, 0, 1};
-        return rasterImage(surface, &p->image, nullptr, m, p->bbox, p->opacity);
+        return rasterImage(surface, &p->image, m, p->bbox, p->opacity);
     }
 
     return true;
@@ -697,7 +695,7 @@ void* SwRenderer::prepareCommon(SwTask* task, const Matrix& transform, const Arr
 }
 
 
-RenderData SwRenderer::prepare(Surface* surface, const RenderMesh* mesh, RenderData data, const Matrix& transform, Array<RenderData>& clips, uint8_t opacity, RenderUpdateFlag flags)
+RenderData SwRenderer::prepare(Surface* surface, RenderData data, const Matrix& transform, Array<RenderData>& clips, uint8_t opacity, RenderUpdateFlag flags)
 {
     //prepare task
     auto task = static_cast<SwImageTask*>(data);
@@ -705,7 +703,6 @@ RenderData SwRenderer::prepare(Surface* surface, const RenderMesh* mesh, RenderD
     else task->done();
 
     task->source = surface;
-    task->mesh = mesh;
 
     return prepareCommon(task, transform, clips, opacity, flags);
 }

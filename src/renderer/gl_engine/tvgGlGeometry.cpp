@@ -58,115 +58,57 @@ bool GlGeometry::tesselate(const RenderShape& rshape, RenderUpdateFlag flag)
     return true;
 }
 
-bool GlGeometry::tesselate(const Surface* image, const RenderMesh* mesh, RenderUpdateFlag flag)
+bool GlGeometry::tesselate(const Surface* image, RenderUpdateFlag flag)
 {
     if (flag & RenderUpdateFlag::Image) {
         fillVertex.clear();
         fillIndex.clear();
 
-        if (mesh && mesh->triangleCnt) {
-            fillVertex.reserve(mesh->triangleCnt * 3 * 5);
-            fillIndex.reserve(mesh->triangleCnt * 3);
+        fillVertex.reserve(5 * 4);
+        fillIndex.reserve(6);
 
-            uint32_t index = 0;
-            for (uint32_t i = 0; i < mesh->triangleCnt; i++) {
-                fillVertex.push(mesh->triangles[i].vertex[0].pt.x);
-                fillVertex.push(mesh->triangles[i].vertex[0].pt.y);
+        float left = 0.f;
+        float top = 0.f;
+        float right = image->w;
+        float bottom = image->h;
 
-                fillVertex.push(mesh->triangles[i].vertex[0].uv.x);
-                fillVertex.push(mesh->triangles[i].vertex[0].uv.y);
+        // left top point
+        fillVertex.push(left);
+        fillVertex.push(top);
 
-                fillVertex.push(mesh->triangles[i].vertex[1].pt.x);
-                fillVertex.push(mesh->triangles[i].vertex[1].pt.y);
+        fillVertex.push(0.f);
+        fillVertex.push(1.f);
+        // left bottom point
+        fillVertex.push(left);
+        fillVertex.push(bottom);
 
-                fillVertex.push(mesh->triangles[i].vertex[1].uv.x);
-                fillVertex.push(mesh->triangles[i].vertex[1].uv.y);
+        fillVertex.push(0.f);
+        fillVertex.push(0.f);
+        // right top point
+        fillVertex.push(right);
+        fillVertex.push(top);
 
-                fillVertex.push(mesh->triangles[i].vertex[2].pt.x);
-                fillVertex.push(mesh->triangles[i].vertex[2].pt.y);
+        fillVertex.push(1.f);
+        fillVertex.push(1.f);
+        // right bottom point
+        fillVertex.push(right);
+        fillVertex.push(bottom);
 
-                fillVertex.push(mesh->triangles[i].vertex[2].uv.x);
-                fillVertex.push(mesh->triangles[i].vertex[2].uv.y);
+        fillVertex.push(1.f);
+        fillVertex.push(0.f);
 
-                fillIndex.push(index);
-                fillIndex.push(index + 1);
-                fillIndex.push(index + 2);
-                index += 3;
-            }
+        fillIndex.push(0);
+        fillIndex.push(1);
+        fillIndex.push(2);
 
-            float left = mesh->triangles[0].vertex[0].pt.x;
-            float top = mesh->triangles[0].vertex[0].pt.y;
-            float right = mesh->triangles[0].vertex[0].pt.x;
-            float bottom = mesh->triangles[0].vertex[0].pt.y;
+        fillIndex.push(2);
+        fillIndex.push(1);
+        fillIndex.push(3);
 
-            for (uint32_t i = 0; i < mesh->triangleCnt; i++) {
-                left = min(left, mesh->triangles[i].vertex[0].pt.x);
-                left = min(left, mesh->triangles[i].vertex[1].pt.x);
-                left = min(left, mesh->triangles[i].vertex[2].pt.x);
-                top = min(top, mesh->triangles[i].vertex[0].pt.y);
-                top = min(top, mesh->triangles[i].vertex[1].pt.y);
-                top = min(top, mesh->triangles[i].vertex[2].pt.y);
-
-                right = max(right, mesh->triangles[i].vertex[0].pt.x);
-                right = max(right, mesh->triangles[i].vertex[1].pt.x);
-                right = max(right, mesh->triangles[i].vertex[2].pt.x);
-                bottom = max(bottom, mesh->triangles[i].vertex[0].pt.y);
-                bottom = max(bottom, mesh->triangles[i].vertex[1].pt.y);
-                bottom = max(bottom, mesh->triangles[i].vertex[2].pt.y);
-            }
-
-            mBounds.x = static_cast<int32_t>(left);
-            mBounds.y = static_cast<int32_t>(top);
-            mBounds.w = static_cast<int32_t>(right - left);
-            mBounds.h = static_cast<int32_t>(bottom - top);
-
-        } else {
-            fillVertex.reserve(5 * 4);
-            fillIndex.reserve(6);
-
-            float left = 0.f;
-            float top = 0.f;
-            float right = image->w;
-            float bottom = image->h;
-
-            // left top point
-            fillVertex.push(left);
-            fillVertex.push(top);
-
-            fillVertex.push(0.f);
-            fillVertex.push(1.f);
-            // left bottom point
-            fillVertex.push(left);
-            fillVertex.push(bottom);
-
-            fillVertex.push(0.f);
-            fillVertex.push(0.f);
-            // right top point
-            fillVertex.push(right);
-            fillVertex.push(top);
-
-            fillVertex.push(1.f);
-            fillVertex.push(1.f);
-            // right bottom point
-            fillVertex.push(right);
-            fillVertex.push(bottom);
-
-            fillVertex.push(1.f);
-            fillVertex.push(0.f);
-
-            fillIndex.push(0);
-            fillIndex.push(1);
-            fillIndex.push(2);
-
-            fillIndex.push(2);
-            fillIndex.push(1);
-            fillIndex.push(3);
-
-            mBounds.x = 0;
-            mBounds.y = 0;
-            mBounds.w = image->w;
-            mBounds.h = image->h;
-        }
+        mBounds.x = 0;
+        mBounds.y = 0;
+        mBounds.w = image->w;
+        mBounds.h = image->h;
     }
 
     return true;

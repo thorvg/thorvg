@@ -98,7 +98,7 @@ RenderData WgRenderer::prepare(const RenderShape& rshape, RenderData data, const
 }
 
 
-RenderData WgRenderer::prepare(Surface* surface, const RenderMesh* mesh, RenderData data, const Matrix& transform, Array<RenderData>& clips, uint8_t opacity, RenderUpdateFlag flags)
+RenderData WgRenderer::prepare(Surface* surface, RenderData data, const Matrix& transform, Array<RenderData>& clips, uint8_t opacity, RenderUpdateFlag flags)
 {
     // get or create render data shape
     auto renderDataPicture = (WgRenderDataPicture*)data;
@@ -116,8 +116,7 @@ RenderData WgRenderer::prepare(Surface* surface, const RenderMesh* mesh, RenderD
     // update image data
     if (flags & (RenderUpdateFlag::Path | RenderUpdateFlag::Image)) {
         WgGeometryData geometryData;
-        if (mesh->triangleCnt == 0) geometryData.appendImageBox(surface->w, surface->h);
-        else geometryData.appendMesh(mesh);
+        geometryData.appendImageBox(surface->w, surface->h);
         renderDataPicture->meshData.release(mContext);
         renderDataPicture->meshData.update(mContext, &geometryData);
         renderDataPicture->imageData.update(mContext, surface);

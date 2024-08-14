@@ -117,7 +117,6 @@ struct WgGeometryData
     void appendCircle(WgPoint center, float radius);
     void appendImageBox(float w, float h);
     void appendBlitBox();
-    void appendMesh(const RenderMesh* rmesh);
     void appendStrokeDashed(const WgPolyline* polyline, const RenderStroke *stroke);
     void appendStrokeJoin(const WgPoint& v0, const WgPoint& v1, const WgPoint& v2,
                           StrokeJoin join, float halfWidth, float miterLimit);
