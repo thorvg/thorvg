@@ -514,7 +514,6 @@ void WgRenderDataShapePool::release(WgContext& context)
 
 void WgRenderDataPicture::release(WgContext& context)
 {
-    meshData.release(context);
     imageData.release(context);
     context.pipelines->layouts.releaseBindGroup(bindGroupPicture);
     WgRenderDataPaint::release(context);

@@ -418,21 +418,6 @@ static bool _parsePicture(TvgBinBlock block, Paint* paint)
 
             return true;
         }
-        case TVG_TAG_PICTURE_MESH: {
-            if (block.length < 1 * SIZE(uint32_t)) return false;
-
-            auto ptr = block.data;
-            uint32_t meshCnt;
-            READ_UI32(&meshCnt, ptr);
-            ptr += SIZE(uint32_t);
-
-            auto size = meshCnt * SIZE(Polygon);
-            if (block.length != SIZE(uint32_t) + size) return false;
-
-            picture->mesh((Polygon*) ptr, meshCnt);
-
-            return true;
-        }
         //Base Paint Properties
         default: {
             if (_parsePaintProperty(block, picture)) return true;
