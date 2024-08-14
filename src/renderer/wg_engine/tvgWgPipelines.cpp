@@ -43,7 +43,8 @@ WGPUPipelineLayout WgPipelines::createPipelineLayout(WGPUDevice device, const WG
 
 WGPURenderPipeline WgPipelines::createRenderPipeline(
     WGPUDevice device, const char* pipelineLabel,
-    const WGPUShaderModule shaderModule, const WGPUPipelineLayout pipelineLayout,
+    const WGPUShaderModule shaderModule, const char* vsEntryPoint, const char* fsEntryPoint,
+    const WGPUPipelineLayout pipelineLayout,
     const WGPUVertexBufferLayout *vertexBufferLayouts, const uint32_t vertexBufferLayoutsCount,
     const WGPUColorWriteMaskFlags writeMask,
     const WGPUCompareFunction stencilFunctionFrnt, const WGPUStencilOperation stencilOperationFrnt,
@@ -58,8 +59,8 @@ WGPURenderPipeline WgPipelines::createRenderPipeline(
         .stencilBack =  { .compare = stencilFunctionBack, .failOp = stencilOperationBack, .depthFailOp = stencilOperationBack, .passOp = stencilOperationBack },
         .stencilReadMask = 0xFFFFFFFF, .stencilWriteMask = 0xFFFFFFFF
     };
-    const WGPUVertexState   vertexState   { .module = shaderModule, .entryPoint = "vs_main", .bufferCount = vertexBufferLayoutsCount, .buffers = vertexBufferLayouts };
-    const WGPUFragmentState fragmentState { .module = shaderModule, .entryPoint = "fs_main", .targetCount = 1, .targets = colorTargetStates };
+    const WGPUVertexState   vertexState   { .module = shaderModule, .entryPoint = vsEntryPoint, .bufferCount = vertexBufferLayoutsCount, .buffers = vertexBufferLayouts };
+    const WGPUFragmentState fragmentState { .module = shaderModule, .entryPoint = fsEntryPoint, .targetCount = 1, .targets = colorTargetStates };
     const WGPURenderPipelineDescriptor renderPipelineDesc {
         .label = pipelineLabel,
         .layout = pipelineLayout,
@@ -182,6 +183,10 @@ void WgPipelines::initialize(WgContext& context)
         layouts.layoutBuffer2Un,
         layouts.layoutTexSampled
     };
+    const WGPUBindGroupLayout bindGroupLayoutsSceneComp[] = {
+        layouts.layoutTexSampled,
+        layouts.layoutTexSampled
+    };
     const WGPUBindGroupLayout bindGroupLayoutsMergeMasks[] = {
         layouts.layoutTexStrorage1RO,
         layouts.layoutTexStrorage1RO,
@@ -193,12 +198,6 @@ void WgPipelines::initialize(WgContext& context)
         layouts.layoutTexStrorage1WO,
         layouts.layoutBuffer1Un
     };
-    const WGPUBindGroupLayout bindGroupLayoutsCompose[] = {
-        layouts.layoutTexStrorage1RO,
-        layouts.layoutTexStrorage1RO,
-        layouts.layoutTexStrorage1RO,
-        layouts.layoutTexStrorage1WO
-    };
     const WGPUBindGroupLayout bindGroupLayoutsCopy[] = {
         layouts.layoutTexStrorage1RO,
         layouts.layoutTexScreen1WO
@@ -209,8 +208,8 @@ void WgPipelines::initialize(WgContext& context)
     layoutSolid = createPipelineLayout(context.device, bindGroupLayoutsSolid, 3);
     layoutGradient = createPipelineLayout(context.device, bindGroupLayoutsGradient, 3);
     layoutImage = createPipelineLayout(context.device, bindGroupLayoutsImage, 3);
+    layoutSceneComp = createPipelineLayout(context.device, bindGroupLayoutsSceneComp, 2);
     layoutBlend = createPipelineLayout(context.device, bindGroupLayoutsBlend, 4);
-    layoutCompose = createPipelineLayout(context.device, bindGroupLayoutsCompose, 4);
     layoutMergeMasks = createPipelineLayout(context.device, bindGroupLayoutsMergeMasks, 3);
     layoutCopy = createPipelineLayout(context.device, bindGroupLayoutsCopy, 2);
 
@@ -220,6 +219,7 @@ void WgPipelines::initialize(WgContext& context)
     shaderRadial = createShaderModule(context.device, "The shader radial", cShaderSrc_Radial);
     shaderLinear = createShaderModule(context.device, "The shader linear", cShaderSrc_Linear);
     shaderImage = createShaderModule(context.device, "The shader image", cShaderSrc_Image);
+    shaderSceneComp = createShaderModule(context.device, "The shader scene composition", cShaderSrc_Scene_Comp);
     // computes shader modules
     shaderMergeMasks = createShaderModule(context.device, "The shader merge mask", cShaderSrc_MergeMasks);
     shaderCopy = createShaderModule(context.device, "The shader copy", cShaderSrc_Copy);
@@ -227,7 +227,7 @@ void WgPipelines::initialize(WgContext& context)
     // render pipeline winding
     winding = createRenderPipeline(
         context.device, "The render pipeline winding",
-        shaderStencil, layoutStencil,
+        shaderStencil, "vs_main", "fs_main", layoutStencil,
         vertexBufferLayoutsShape, 1,
         WGPUColorWriteMask_None,
         WGPUCompareFunction_Always, WGPUStencilOperation_IncrementWrap,
@@ -236,7 +236,7 @@ void WgPipelines::initialize(WgContext& context)
     // render pipeline even-odd
     evenodd = createRenderPipeline(
         context.device, "The render pipeline even-odd",
-        shaderStencil, layoutStencil,
+        shaderStencil, "vs_main", "fs_main", layoutStencil,
         vertexBufferLayoutsShape, 1,
         WGPUColorWriteMask_None,
         WGPUCompareFunction_Always, WGPUStencilOperation_Invert,
@@ -245,7 +245,7 @@ void WgPipelines::initialize(WgContext& context)
     // render pipeline direct
     direct = createRenderPipeline(
         context.device, "The render pipeline direct",
-        shaderStencil, layoutStencil,
+        shaderStencil,"vs_main", "fs_main",  layoutStencil,
         vertexBufferLayoutsShape, 1,
         WGPUColorWriteMask_None,
         WGPUCompareFunction_Always, WGPUStencilOperation_Replace,
@@ -254,7 +254,7 @@ void WgPipelines::initialize(WgContext& context)
     // render pipeline clip path
     clipPath = createRenderPipeline(
         context.device, "The render pipeline clip path",
-        shaderStencil, layoutStencil,
+        shaderStencil, "vs_main", "fs_main", layoutStencil,
         vertexBufferLayoutsShape, 1,
         WGPUColorWriteMask_All,
         WGPUCompareFunction_NotEqual, WGPUStencilOperation_Zero,
@@ -265,7 +265,7 @@ void WgPipelines::initialize(WgContext& context)
     for (uint32_t i = 0; i < 3; i++) {
         solid[i] = createRenderPipeline(
             context.device, "The render pipeline solid",
-            shaderSolid, layoutSolid,
+            shaderSolid, "vs_main", "fs_main", layoutSolid,
             vertexBufferLayoutsShape, 1,
             WGPUColorWriteMask_All,
             WGPUCompareFunction_NotEqual, WGPUStencilOperation_Zero,
@@ -277,7 +277,7 @@ void WgPipelines::initialize(WgContext& context)
     for (uint32_t i = 0; i < 3; i++) {
         radial[i] = createRenderPipeline(
             context.device, "The render pipeline radial",
-            shaderRadial, layoutGradient,
+            shaderRadial, "vs_main", "fs_main", layoutGradient,
             vertexBufferLayoutsShape, 1,
             WGPUColorWriteMask_All,
             WGPUCompareFunction_NotEqual, WGPUStencilOperation_Zero,
@@ -289,7 +289,7 @@ void WgPipelines::initialize(WgContext& context)
     for (uint32_t i = 0; i < 3; i++) {
         linear[i] = createRenderPipeline(
             context.device, "The render pipeline linear",
-            shaderLinear, layoutGradient,
+            shaderLinear, "vs_main", "fs_main", layoutGradient,
             vertexBufferLayoutsShape, 1,
             WGPUColorWriteMask_All,
             WGPUCompareFunction_NotEqual, WGPUStencilOperation_Zero,
@@ -301,12 +301,61 @@ void WgPipelines::initialize(WgContext& context)
     for (uint32_t i = 0; i < 3; i++) {
         image[i] = createRenderPipeline(
             context.device, "The render pipeline image",
-            shaderImage, layoutImage,
+            shaderImage, "vs_main", "fs_main", layoutImage,
             vertexBufferLayoutsImage, 2,
             WGPUColorWriteMask_All,
             WGPUCompareFunction_Always, WGPUStencilOperation_Zero,
             WGPUCompareFunction_Always, WGPUStencilOperation_Zero,
             primitiveState, multisampleState, blendStates[i]);
+    }
+
+    // compute shader names
+    const char* shaderComposeNames[] {
+        "fs_main_None",
+        "fs_main_ClipPath",
+        "fs_main_AlphaMask",
+        "fs_main_InvAlphaMask",
+        "fs_main_LumaMask",
+        "fs_main_InvLumaMask",
+        "fs_main_AddMask",
+        "fs_main_SubtractMask",
+        "fs_main_IntersectMask",
+        "fs_main_DifferenceMask",
+        "fs_main_LightenMask",
+        "fs_main_DarkenMask"
+    };
+
+    // compose shader blend states
+    const WGPUBlendState composeBlends[] {
+        blendStateNrm, // None
+        blendStateNrm, // ClipPath
+        blendStateNrm, // AlphaMask
+        blendStateNrm, // InvAlphaMask
+        blendStateNrm, // LumaMask
+        blendStateNrm, // InvLumaMask
+        blendStateSrc, // AddMask
+        blendStateSrc, // SubtractMask
+        blendStateSrc, // IntersectMask
+        blendStateSrc, // DifferenceMask
+        blendStateSrc, // LightenMask
+        blendStateSrc  // DarkenMask
+    };
+
+    // render pipeline scene composition
+    size_t shaderComposeNamesCnt = sizeof(shaderComposeNames) / sizeof(shaderComposeNames[0]);
+    size_t composeBlendspCnt = sizeof(composeBlends) / sizeof(composeBlends[0]);
+    size_t sceneCompCnt = sizeof(sceneComp) / sizeof(sceneComp[0]);
+    assert(shaderComposeNamesCnt == composeBlendspCnt);
+    assert(composeBlendspCnt == sceneCompCnt);
+    for (uint32_t i = 0; i < sceneCompCnt; i++) {
+        sceneComp[i] = createRenderPipeline(
+            context.device, "The render pipeline scene composition",
+            shaderSceneComp, "vs_main", shaderComposeNames[i], layoutSceneComp,
+            vertexBufferLayoutsImage, 2,
+            WGPUColorWriteMask_All,
+            WGPUCompareFunction_Always, WGPUStencilOperation_Zero,
+            WGPUCompareFunction_Always, WGPUStencilOperation_Zero,
+            primitiveState, multisampleState, composeBlends[i]);
     }
 
     // compute pipelines
@@ -346,37 +395,14 @@ void WgPipelines::initialize(WgContext& context)
         blendGradient[i] = createComputePipeline(context.device, "The pipeline blend gradient", shaderBlendGradient, shaderBlendNames[i], layoutBlend);
         blendImage[i] = createComputePipeline(context.device, "The pipeline blend image", shaderBlendImage, shaderBlendNames[i], layoutBlend);
     }
-
-    // compute shader compose names
-    const char* shaderComposeNames[] {
-        "cs_main_None",
-        "cs_main_ClipPath",
-        "cs_main_AlphaMask",
-        "cs_main_InvAlphaMask",
-        "cs_main_LumaMask",
-        "cs_main_InvLumaMask",
-        "cs_main_AddMask",
-        "cs_main_SubtractMask",
-        "cs_main_IntersectMask",
-        "cs_main_DifferenceMask",
-        "cs_main_LightenMask",
-        "cs_main_DarkenMask"
-    };
-
-    // create compose shaders
-    shaderCompose = createShaderModule(context.device, "The shader compose", cShaderSrc_Compose);
-
-    // create compose pipelines
-    const size_t shaderComposeNamesCnt = sizeof(shaderComposeNames) / sizeof(shaderComposeNames[0]);
-    const size_t pipesComposeCnt = sizeof(compose) / sizeof(compose[0]);
-    assert(shaderComposeNamesCnt == pipesComposeCnt);
-    for (uint32_t i = 0; i < pipesComposeCnt; i++)
-        compose[i] = createComputePipeline(context.device, "The pipeline compose", shaderCompose, shaderComposeNames[i], layoutCompose);
 }
 
 void WgPipelines::releaseGraphicHandles(WgContext& context)
 {
     releaseRenderPipeline(clipPath);
+    size_t pipesSceneCompCnt = sizeof(sceneComp) / sizeof(sceneComp[0]);
+    for (uint32_t i = 0; i < pipesSceneCompCnt; i++)
+        releaseRenderPipeline(sceneComp[i]);
     for (uint32_t i = 0; i < 3; i++) {
         releaseRenderPipeline(image[i]);
         releaseRenderPipeline(linear[i]);
@@ -386,10 +412,12 @@ void WgPipelines::releaseGraphicHandles(WgContext& context)
     releaseRenderPipeline(direct);
     releaseRenderPipeline(evenodd);
     releaseRenderPipeline(winding);
+    releasePipelineLayout(layoutSceneComp);
     releasePipelineLayout(layoutImage);
     releasePipelineLayout(layoutGradient);
     releasePipelineLayout(layoutSolid);
     releasePipelineLayout(layoutStencil);
+    releaseShaderModule(shaderSceneComp);
     releaseShaderModule(shaderImage);
     releaseShaderModule(shaderLinear);
     releaseShaderModule(shaderRadial);
@@ -400,9 +428,6 @@ void WgPipelines::releaseGraphicHandles(WgContext& context)
 
 void WgPipelines::releaseComputeHandles(WgContext& context)
 {
-    size_t pipesComposeCnt = sizeof(compose) / sizeof(compose[0]);
-    for (uint32_t i = 0; i < pipesComposeCnt; i++)
-        releaseComputePipeline(compose[i]);
     const size_t pipesBlendCnt = sizeof(blendSolid)/sizeof(blendSolid[0]);
     for (uint32_t i = 0; i < pipesBlendCnt; i++) {
         releaseComputePipeline(blendImage[i]);
@@ -411,11 +436,9 @@ void WgPipelines::releaseComputeHandles(WgContext& context)
     }
     releaseComputePipeline(copy);
     releaseComputePipeline(mergeMasks);
-    releasePipelineLayout(layoutCompose);
     releasePipelineLayout(layoutBlend);
     releasePipelineLayout(layoutMergeMasks);
     releasePipelineLayout(layoutCopy);
-    releaseShaderModule(shaderCompose);
     releaseShaderModule(shaderBlendImage);
     releaseShaderModule(shaderBlendGradient);
     releaseShaderModule(shaderBlendSolid);
