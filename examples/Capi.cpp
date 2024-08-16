@@ -201,15 +201,35 @@ void contents()
     }
 
 //////6. Animation with a picture
+    //instead loading from a memory, an animation can be loaded directly from a file using:
+    //tvg_picture_load(pict_lottie, EXAMPLE_DIR"/lottie/sample.json")
+    FILE *file = fopen(EXAMPLE_DIR"/lottie/sample.json", "r");
+    if (file == NULL) return;
+    fseek(file, 0, SEEK_END);
+    long data_size = ftell(file);
+    fseek(file, 0, SEEK_SET);
+    auto data = (char*)malloc(data_size + 1);
+    if (!data) return;
+    if (fread(data, 1, data_size, file) != (size_t)data_size) {
+        free(data);
+        fclose(file);
+        return;
+    }
+    //ensure null-termination in case tvg_picture_load_data is called with copy = false
+    data[data_size++] = '\0';
+
     animation = tvg_animation_new();
     Tvg_Paint* pict_lottie = tvg_animation_get_picture(animation);
-    if (tvg_picture_load(pict_lottie, EXAMPLE_DIR"/lottie/sample.json") != TVG_RESULT_SUCCESS) {
-        printf("Problem with loading an lottie file\n");
+    if (tvg_picture_load_data(pict_lottie, data, data_size, nullptr, false) != TVG_RESULT_SUCCESS) {
+        printf("Problem with loading a lottie file\n");
         tvg_animation_del(animation);
     } else {
         tvg_paint_scale(pict_lottie, 3.0f);
         tvg_canvas_push(canvas, pict_lottie);
     }
+
+    free(data);
+    fclose(file);
 
 //////7. Text
     //load from a file
@@ -224,12 +244,12 @@ void contents()
         tvg_canvas_push(canvas, text);
     }
     //load from a memory
-    FILE *file = fopen(EXAMPLE_DIR"/font/SentyCloud.ttf", "rb");
+    file = fopen(EXAMPLE_DIR"/font/SentyCloud.ttf", "rb");
     if (file == NULL) return;
     fseek(file, 0, SEEK_END);
-    long data_size = ftell(file);
+    data_size = ftell(file);
     fseek(file, 0, SEEK_SET);
-    char* data = (char*)malloc(data_size);
+    data = (char*)malloc(data_size);
     if (!data) return;
     if (fread(data, 1, data_size, file) != (size_t)data_size) {
         free(data);
@@ -316,10 +336,12 @@ int main(int argc, char **argv)
         tvg_canvas_clear(canvas, false);
 
         //Update the animation
-        float duration, totalFrame;
-        tvg_animation_get_duration(animation, &duration);
-        tvg_animation_get_total_frame(animation, &totalFrame);
-        tvg_animation_set_frame(animation, totalFrame * progress(elapsed, duration));
+        if (animation) {
+            float duration, totalFrame;
+            tvg_animation_get_duration(animation, &duration);
+            tvg_animation_get_total_frame(animation, &totalFrame);
+            tvg_animation_set_frame(animation, totalFrame * progress(elapsed, duration));
+        }
 
         //Draw the canvas
         tvg_canvas_update(canvas);
