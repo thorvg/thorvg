@@ -38,7 +38,7 @@ unique_ptr<tvg::Paint> tvgClippedImage(uint32_t * data, int width, int height)
     auto imageClip = tvg::Shape::gen();
     imageClip->appendCircle(400, 200, 80, 180);
     imageClip->translate(200, 0);
-    image->composite(std::move(imageClip), tvg::CompositeMethod::ClipPath);
+    image->clip(std::move(imageClip));
 
     return image;
 }

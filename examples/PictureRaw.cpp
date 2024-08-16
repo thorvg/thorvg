@@ -62,7 +62,7 @@ struct UserExample : tvgexam::Example
         auto circle = tvg::Shape::gen();
         circle->appendCircle(350, 350, 200, 200);
 
-        picture2->composite(std::move(circle), tvg::CompositeMethod::ClipPath);
+        picture2->clip(std::move(circle));
 
         canvas->push(std::move(picture2));
 

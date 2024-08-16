@@ -70,7 +70,7 @@ struct UserExample : tvgexam::Example
         clipStar->appendCircle(200, 230, 110, 110);
         clipStar->translate(10, 10);
 
-        star1->composite(std::move(clipStar), tvg::CompositeMethod::ClipPath);
+        star1->clip(std::move(clipStar));
 
         auto star2 = tvg::Shape::gen();
         compose(star2.get());
@@ -91,7 +91,7 @@ struct UserExample : tvgexam::Example
         scene->push(std::move(star2));
 
         //Clipping scene to shape
-        scene->composite(std::move(clip), tvg::CompositeMethod::ClipPath);
+        scene->clip(std::move(clip));
 
         canvas->push(std::move(scene));
 
@@ -118,7 +118,7 @@ struct UserExample : tvgexam::Example
         clipRect->translate(20, 20);
 
         //Clipping scene to rect(shape)
-        star3->composite(std::move(clipRect), tvg::CompositeMethod::ClipPath);
+        star3->clip(std::move(clipRect));
 
         canvas->push(std::move(star3));
 
@@ -136,7 +136,7 @@ struct UserExample : tvgexam::Example
         clipPath->translate(20, 20);
 
         //Clipping picture to path
-        picture->composite(std::move(clipPath), tvg::CompositeMethod::ClipPath);
+        picture->clip(std::move(clipPath));
 
         canvas->push(std::move(picture));
 
@@ -150,7 +150,7 @@ struct UserExample : tvgexam::Example
         clipShape->appendRect(600, 420, 100, 100);
 
         //Clipping shape1 to clipShape
-        shape1->composite(std::move(clipShape), tvg::CompositeMethod::ClipPath);
+        shape1->clip(std::move(clipShape));
 
         canvas->push(std::move(shape1));
 
