@@ -138,7 +138,7 @@ typedef enum {
  */
 typedef enum {
     TVG_COMPOSITE_METHOD_NONE = 0,           ///< No composition is applied.
-    TVG_COMPOSITE_METHOD_CLIP_PATH,          ///< The intersection of the source and the target is determined and only the resulting pixels from the source are rendered. Note that ClipPath only supports the Shape type.
+    TVG_COMPOSITE_METHOD_CLIP_PATH,          ///< The intersection of the source and the target is determined and only the resulting pixels from the source are rendered. Note that ClipPath only supports the Shape type. @deprecated Use Paint::clip() instead.
     TVG_COMPOSITE_METHOD_ALPHA_MASK,         ///< The pixels of the source and the target are alpha blended. As a result, only the part of the source, which intersects with the target is visible.
     TVG_COMPOSITE_METHOD_INVERSE_ALPHA_MASK, ///< The pixels of the source and the complement to the target's pixels are alpha blended. As a result, only the part of the source which is not covered by the target is visible.
     TVG_COMPOSITE_METHOD_LUMA_MASK,          ///< The source pixels are converted to grayscale (luma value) and alpha blended with the target. As a result, only the part of the source which intersects with the target is visible. \since 0.9
@@ -992,6 +992,23 @@ TVG_API Tvg_Result tvg_paint_set_composite_method(Tvg_Paint* paint, Tvg_Paint* t
 * \retval TVG_RESULT_INVALID_ARGUMENT A @c nullptr is passed as the argument.
 */
 TVG_API Tvg_Result tvg_paint_get_composite_method(const Tvg_Paint* paint, const Tvg_Paint** target, Tvg_Composite_Method* method);
+
+
+/*!
+* \brief Clip the drawing region of the paint object.
+*
+* This function restricts the drawing area of the paint object to the specified shape's paths.
+*
+* \param[in] paint The target object of the clipping.
+* \param[in] clipper The shape object as the clipper.
+*
+* \return Tvg_Result enumeration.
+* \retval TVG_RESULT_INVALID_ARGUMENT In case a @c nullptr is passed as the argument.
+* \retval TVG_RESULT_NOT_SUPPORTED If the @p clipper type is not Shape.
+*
+* \note Experimental API
+*/
+TVG_API Tvg_Result tvg_paint_set_clip(Tvg_Paint* paint, Tvg_Paint* clipper);
 
 
 /**

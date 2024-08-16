@@ -49,6 +49,7 @@ namespace tvg
     {
         Paint* paint = nullptr;
         Composite* compData = nullptr;
+        Paint* clipper = nullptr;
         RenderMethod* renderer = nullptr;
         struct {
             Matrix m;                 //input matrix
@@ -88,6 +89,7 @@ namespace tvg
                 if (P(compData->target)->unref() == 0) delete(compData->target);
                 free(compData);
             }
+            if (clipper && P(clipper)->unref() == 0) delete(clipper);
             if (renderer && (renderer->unref() == 0)) delete(renderer);
         }
 
@@ -118,6 +120,20 @@ namespace tvg
             if (renderFlag & RenderUpdateFlag::Transform) tr.update();
             if (origin) return tr.cm;
             return tr.m;
+        }
+
+        void clip(Paint* clipper)
+        {
+            if (this->clipper) {
+                P(this->clipper)->unref();
+                if (this->clipper != clipper && P(this->clipper)->refCnt == 0) {
+                    delete(this->clipper);
+                }
+            }
+            this->clipper = clipper;
+            if (!clipper) return;
+
+            P(clipper)->ref();
         }
 
         bool composite(Paint* source, Paint* target, CompositeMethod method)
