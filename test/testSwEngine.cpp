@@ -44,7 +44,6 @@ TEST_CASE("Basic draw", "[tvgSwEngine]")
     auto shape1 = tvg::Shape::gen();
     REQUIRE(shape1);
 
-    REQUIRE(shape1->appendArc(150, 150, 80, 10, 180, false) == Result::Success);
     REQUIRE(shape1->strokeFill(255, 255, 255, 255) == Result::Success);
     REQUIRE(shape1->strokeWidth(2) == Result::Success);
     REQUIRE(canvas->push(std::move(shape1)) == Result::Success);

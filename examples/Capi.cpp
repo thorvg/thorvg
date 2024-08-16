@@ -143,18 +143,18 @@ void contents()
     //Set a scene
     Tvg_Paint* scene = tvg_scene_new();
 
-    //Set an arc
+    //Set circles
     Tvg_Paint* scene_shape1 = tvg_shape_new();
-    tvg_shape_append_arc(scene_shape1, 175.0f, 600.0f, 150.0f, -45.0f, 90.0f, 1);
-    tvg_shape_append_arc(scene_shape1, 175.0f, 600.0f, 150.0f, 225.0f, -90.0f, 1);
+    tvg_shape_append_circle(scene_shape1, 80.0f, 650.f, 40.0f, 140.0f);
+    tvg_shape_append_circle(scene_shape1, 180.0f, 600.f, 40.0f, 60.0f);
     tvg_shape_set_fill_color(scene_shape1, 0, 0, 255, 150);
-    tvg_shape_set_stroke_color(scene_shape1, 255, 255, 255, 155);
+    tvg_shape_set_stroke_color(scene_shape1, 75, 25, 155, 255);
     tvg_shape_set_stroke_width(scene_shape1, 10.0f);
     tvg_shape_set_stroke_cap(scene_shape1, Tvg_Stroke_Cap::TVG_STROKE_CAP_ROUND);
     tvg_shape_set_stroke_join(scene_shape1, Tvg_Stroke_Join::TVG_STROKE_JOIN_ROUND);
     tvg_shape_set_stroke_trim(scene_shape1, 0.25f, 0.75f, true);
 
-    //Set an arc with a dashed stroke
+    //Set circles with a dashed stroke
     Tvg_Paint* scene_shape2 = tvg_paint_duplicate(scene_shape1);
     tvg_shape_set_fill_color(scene_shape2, 75, 25, 155, 200);
 
@@ -166,9 +166,9 @@ void contents()
     tvg_shape_set_stroke_width(scene_shape2, 15.0f);
 
     //Transform a shape
-    tvg_paint_scale(scene_shape2, 0.7f);
+    tvg_paint_scale(scene_shape2, 0.8f);
     tvg_paint_rotate(scene_shape2, -90.0f);
-    tvg_paint_translate(scene_shape2, -245.0f, 722.0f);
+    tvg_paint_translate(scene_shape2, -200.0f, 800.0f);
 
     //Push the shapes into the scene
     tvg_scene_push(scene, scene_shape1);

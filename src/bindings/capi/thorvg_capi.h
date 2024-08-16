@@ -6,7 +6,7 @@
 *
 * The thorvg_capi module allows to implement the ThorVG client and provides
 * the following functionalities:
-* - drawing shapes: line, arc, curve, polygon, circle, user-defined, ...
+* - drawing shapes: line, curve, polygon, circle, user-defined, ...
 * - filling: solid, linear and radial gradient
 * - scene graph & affine transformation (translation, rotation, scale, ...)
 * - stroking: width, join, cap, dash
@@ -1231,7 +1231,7 @@ TVG_API Tvg_Result tvg_shape_append_circle(Tvg_Paint* paint, float cx, float cy,
 *
 * \note Setting @p sweep value greater than 360 degrees, is equivalent to calling tvg_shape_append_circle(paint, cx, cy, radius, radius).
 */
-TVG_API Tvg_Result tvg_shape_append_arc(Tvg_Paint* paint, float cx, float cy, float radius, float startAngle, float sweep, uint8_t pie);
+TVG_DEPRECATED TVG_API Tvg_Result tvg_shape_append_arc(Tvg_Paint* paint, float cx, float cy, float radius, float startAngle, float sweep, uint8_t pie);
 
 
 /*!

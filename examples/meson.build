@@ -21,7 +21,6 @@ source_file = [
     'Accessor.cpp',
     'AnimateMasking.cpp',
     'Animation.cpp',
-    'Arc.cpp',
     'Blending.cpp',
     'ClipPath.cpp',
     'CustomTransform.cpp',
