@@ -990,7 +990,7 @@ void rleFree(SwRle* rle)
 }
 
 
-void rleClipPath(SwRle *rle, const SwRle *clip)
+void rleClip(SwRle *rle, const SwRle *clip)
 {
     if (rle->size == 0 || clip->size == 0) return;
     auto spanCnt = rle->size > clip->size ? rle->size : clip->size;
@@ -999,11 +999,11 @@ void rleClipPath(SwRle *rle, const SwRle *clip)
 
     _replaceClipSpan(rle, spans, spansEnd - spans);
 
-    TVGLOG("SW_ENGINE", "Using ClipPath!");
+    TVGLOG("SW_ENGINE", "Using Path Clipping!");
 }
 
 
-void rleClipRect(SwRle *rle, const SwBBox* clip)
+void rleClip(SwRle *rle, const SwBBox* clip)
 {
     if (rle->size == 0) return;
     auto spans = static_cast<SwSpan*>(malloc(sizeof(SwSpan) * (rle->size)));
@@ -1011,5 +1011,5 @@ void rleClipRect(SwRle *rle, const SwBBox* clip)
 
     _replaceClipSpan(rle, spans, spansEnd - spans);
 
-    TVGLOG("SW_ENGINE", "Using ClipRect!");
+    TVGLOG("SW_ENGINE", "Using Box Clipping!");
 }

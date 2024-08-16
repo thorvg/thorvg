@@ -157,7 +157,7 @@ enum class FillRule : uint8_t
 enum class CompositeMethod : uint8_t
 {
     None = 0,           ///< No composition is applied.
-    ClipPath,           ///< The intersection of the source and the target is determined and only the resulting pixels from the source are rendered. Note that ClipPath only supports the Shape type.
+    ClipPath,           ///< The intersection of the source and the target is determined and only the resulting pixels from the source are rendered. Note that ClipPath only supports the Shape type. @deprecated Use Paint::clip() instead.
     AlphaMask,          ///< Alpha Masking using the compositing target's pixels as an alpha value.
     InvAlphaMask,       ///< Alpha Masking using the complement to the compositing target's pixels as an alpha value.
     LumaMask,           ///< Alpha Masking using the grayscale (0.2125R + 0.7154G + 0.0721*B) of the compositing target's pixels. @since 0.9
@@ -339,7 +339,6 @@ public:
      * @param[in] o The opacity value in the range [0 ~ 255], where 0 is completely transparent and 255 is opaque.
      *
      * @note Setting the opacity with this API may require multiple render pass for composition. It is recommended to avoid changing the opacity if possible.
-     * @note ClipPath won't use the opacity value. (see: enum class CompositeMethod::ClipPath)
      */
     Result opacity(uint8_t o) noexcept;
 
@@ -350,6 +349,20 @@ public:
      * @param[in] method The method used to composite the source object with the target.
      */
     Result composite(std::unique_ptr<Paint> target, CompositeMethod method) noexcept;
+
+    /**
+     * @brief Clip the drawing region of the paint object.
+     *
+     * This function restricts the drawing area of the paint object to the specified shape's paths.
+     *
+     * @param[in] clipper The shape object as the clipper.
+     *
+     * @retval Result::NonSupport If the @p clipper type is not Shape.
+     *
+     * @note @p clipper only supports the Shape type.
+     * @note Experimental API
+     */
+    Result clip(std::unique_ptr<Paint> clipper) noexcept;
 
     /**
      * @brief Sets the blending method for the paint object.
@@ -1050,7 +1063,6 @@ public:
      * @param[in] a The alpha channel value in the range [0 ~ 255], where 0 is completely transparent and 255 is opaque. The default value is 0.
      *
      * @note Either a solid color or a gradient fill is applied, depending on what was set as last.
-     * @note ClipPath won't use the fill values. (see: enum class CompositeMethod::ClipPath)
      */
     Result fill(uint8_t r, uint8_t g, uint8_t b, uint8_t a = 255) noexcept;
 
