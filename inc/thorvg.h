@@ -1258,7 +1258,7 @@ public:
      * when the @p copy has @c false. This means that loading the same data again will not result in duplicate operations
      * for the sharable @p data. Instead, ThorVG will reuse the previously loaded picture data.
      *
-     * @param[in] data A pointer to a memory location where the content of the picture file is stored.
+     * @param[in] data A pointer to a memory location where the content of the picture file is stored. A null-terminated string is expected for non-binary data if @p copy is @c false.
      * @param[in] size The size in bytes of the memory occupied by the @p data.
      * @param[in] mimeType Mimetype or extension of data such as "jpg", "jpeg", "lottie", "svg", "svg+xml", "png", etc. In case an empty string or an unknown type is provided, the loaders will be tried one by one.
      * @param[in] rpath A resource directory path, if the @p data needs to access any external resources.
