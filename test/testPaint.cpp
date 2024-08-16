@@ -180,7 +180,7 @@ TEST_CASE("Duplication", "[tvgPaint]")
 
     auto comp = Shape::gen();
     REQUIRE(comp);
-    REQUIRE(shape->composite(std::move(comp), CompositeMethod::ClipPath) == Result::Success);
+    REQUIRE(shape->clip(std::move(comp)) == Result::Success);
 
     //Duplication
     auto dup = tvg::cast<Shape>(shape->duplicate());
@@ -199,8 +199,6 @@ TEST_CASE("Duplication", "[tvgPaint]")
     REQUIRE(m.e31 == Approx(0.0f).margin(0.000001));
     REQUIRE(m.e32 == Approx(0.0f).margin(0.000001));
     REQUIRE(m.e33 == Approx(1.0f).margin(0.000001));
-
-    REQUIRE(dup->composite(nullptr) == CompositeMethod::ClipPath);
 }
 
 TEST_CASE("Composition", "[tvgPaint]")
@@ -212,23 +210,19 @@ TEST_CASE("Composition", "[tvgPaint]")
     REQUIRE(shape->composite(nullptr) == CompositeMethod::None);
 
     auto comp = Shape::gen();
-    REQUIRE(shape->composite(nullptr, CompositeMethod::ClipPath) == Result::InvalidArguments);
     REQUIRE(shape->composite(std::move(comp), CompositeMethod::None) == Result::InvalidArguments);
 
-    //ClipPath
+    //Clipping
     comp = Shape::gen();
     auto pComp = comp.get();
-    REQUIRE(shape->composite(std::move(comp), CompositeMethod::ClipPath) == Result::Success);
-
-    const Paint* pComp2 = nullptr;
-    REQUIRE(shape->composite(&pComp2) == CompositeMethod::ClipPath);
-    REQUIRE(pComp == pComp2);
+    REQUIRE(shape->clip(std::move(comp)) == Result::Success);
 
     //AlphaMask
     comp = Shape::gen();
     pComp = comp.get();
     REQUIRE(shape->composite(std::move(comp), CompositeMethod::AlphaMask) == Result::Success);
 
+    const Paint* pComp2 = nullptr;
     REQUIRE(shape->composite(&pComp2) == CompositeMethod::AlphaMask);
     REQUIRE(pComp == pComp2);
 
