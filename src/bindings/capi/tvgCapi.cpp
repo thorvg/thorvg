@@ -260,6 +260,13 @@ TVG_API Tvg_Result tvg_paint_get_type(const Tvg_Paint* paint, Tvg_Type* type)
 }
 
 
+TVG_API Tvg_Result tvg_paint_set_clip(Tvg_Paint* paint, Tvg_Paint* clipper)
+{
+   if (!paint) return TVG_RESULT_INVALID_ARGUMENT;
+   return (Tvg_Result) reinterpret_cast<Paint*>(paint)->clip(unique_ptr<Paint>((Paint*)(clipper)));
+}
+
+
 TVG_DEPRECATED TVG_API Tvg_Result tvg_paint_get_identifier(const Tvg_Paint* paint, Tvg_Identifier* identifier)
 {
     return tvg_paint_get_type(paint, (Tvg_Type*) identifier);

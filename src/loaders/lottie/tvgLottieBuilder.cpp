@@ -961,17 +961,10 @@ void LottieBuilder::updatePrecomp(LottieComposition* comp, LottieLayer* precomp,
         if (!child->matteSrc) updateLayer(comp, precomp->scene, child, frameNo);
     }
 
-    //TODO: remove the intermediate scene....
-    if (precomp->scene->composite(nullptr) != CompositeMethod::None) {
-        auto cscene = Scene::gen().release();
-        cscene->push(cast(precomp->scene));
-        precomp->scene = cscene;
-    }
-
     //clip the layer viewport
     auto clipper = precomp->statical.pooling(true);
     clipper->transform(precomp->cache.matrix);
-    precomp->scene->composite(cast(clipper), CompositeMethod::ClipPath);
+    precomp->scene->clip(cast(clipper));
 }
 
 
@@ -1396,5 +1389,5 @@ void LottieBuilder::build(LottieComposition* comp)
     //viewport clip
     auto clip = Shape::gen();
     clip->appendRect(0, 0, comp->w, comp->h);
-    comp->root->scene->composite(std::move(clip), CompositeMethod::ClipPath);
+    comp->root->scene->clip(std::move(clip));
 }

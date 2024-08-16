@@ -66,8 +66,6 @@ struct SwTask : Task
 
     virtual void dispose() = 0;
     virtual bool clip(SwRle* target) = 0;
-    virtual SwRle* rle() = 0;
-
     virtual ~SwTask() {}
 };
 
@@ -102,19 +100,11 @@ struct SwShapeTask : SwTask
 
     bool clip(SwRle* target) override
     {
-        if (shape.fastTrack) rleClipRect(target, &bbox);
-        else if (shape.rle) rleClipPath(target, shape.rle);
+        if (shape.fastTrack) rleClip(target, &bbox);
+        else if (shape.rle) rleClip(target, shape.rle);
         else return false;
 
         return true;
-    }
-
-    SwRle* rle() override
-    {
-        if (!shape.rle && shape.fastTrack) {
-            shape.rle = rleRender(&shape.bbox);
-        }
-        return shape.rle;
     }
 
     void run(unsigned tid) override
@@ -207,12 +197,6 @@ struct SwImageTask : SwTask
     {
         TVGERR("SW_ENGINE", "Image is used as ClipPath?");
         return true;
-    }
-
-    SwRle* rle() override
-    {
-        TVGERR("SW_ENGINE", "Image is used as Scene ClipPath?");
-        return nullptr;
     }
 
     void run(unsigned tid) override
