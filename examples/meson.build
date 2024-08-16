@@ -22,7 +22,7 @@ source_file = [
     'AnimateMasking.cpp',
     'Animation.cpp',
     'Blending.cpp',
-    'ClipPath.cpp',
+    'Clipping.cpp',
     'CustomTransform.cpp',
     'DataLoad.cpp',
     'DirectUpdate.cpp',
