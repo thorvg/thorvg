@@ -76,15 +76,6 @@ TEST_CASE("Appending Shapes", "[tvgShape]")
     REQUIRE(shape->appendCircle(0, 0, 0, 0) == Result::Success);
     REQUIRE(shape->appendCircle(-99999999.0f, 99999999.0f, 0, 0) == Result::Success);
     REQUIRE(shape->appendCircle(-99999999.0f, 99999999.0f, -99999999.0f, 99999999.0f) == Result::Success);
-
-    REQUIRE(shape->appendArc(0, 0, 0, 0, 0, false) == Result::Success);
-    REQUIRE(shape->appendArc(0, 0, 0, 0, 0, true) == Result::Success);
-    REQUIRE(shape->appendArc(-99999999.0f, 99999999.0f, 0, 0, 0, false) == Result::Success);
-    REQUIRE(shape->appendArc(-99999999.0f, 99999999.0f, 0, 0, 0, true) == Result::Success);
-    REQUIRE(shape->appendArc(-99999999.0f, 99999999.0f, -99999999.0f, 99999999.0f, 0, false) == Result::Success);
-    REQUIRE(shape->appendArc(-99999999.0f, 99999999.0f, -99999999.0f, 99999999.0f, 0, true) == Result::Success);
-    REQUIRE(shape->appendArc(-99999999.0f, 99999999.0f, -99999999.0f, 99999999.0f, -400, false) == Result::Success);
-    REQUIRE(shape->appendArc(-99999999.0f, 99999999.0f, -99999999.0f, 99999999.0f, 400, true) == Result::Success);
 }
 
 TEST_CASE("Appending Paths", "[tvgShape]")

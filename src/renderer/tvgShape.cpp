@@ -156,7 +156,7 @@ Result Shape::appendCircle(float cx, float cy, float rx, float ry) noexcept
 }
 
 
-Result Shape::appendArc(float cx, float cy, float radius, float startAngle, float sweep, bool pie) noexcept
+TVG_DEPRECATED Result Shape::appendArc(float cx, float cy, float radius, float startAngle, float sweep, bool pie) noexcept
 {
     //just circle
     if (sweep >= 360.0f || sweep <= -360.0f) return appendCircle(cx, cy, radius, radius);

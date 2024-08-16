@@ -40,12 +40,10 @@ TEST_CASE("Multiple shapes", "[capiShapes]")
     REQUIRE(tvg_shape_append_rect(paint, 0, 0, 100, 100, 100, 100) == TVG_RESULT_SUCCESS);
     REQUIRE(tvg_shape_append_circle(paint, 100, 100, 50, 50) == TVG_RESULT_SUCCESS);
     REQUIRE(tvg_shape_append_circle(paint, 100, 100, 0, 0) == TVG_RESULT_SUCCESS);
-    REQUIRE(tvg_shape_append_arc(paint, 100, 100, 50, 90, 90, 0) == TVG_RESULT_SUCCESS);
 
     //Invalid paint
     REQUIRE(tvg_shape_append_rect(NULL, 0, 0, 0, 0, 0, 0) == TVG_RESULT_INVALID_ARGUMENT);
     REQUIRE(tvg_shape_append_circle(NULL, 0, 0, 0, 0) == TVG_RESULT_INVALID_ARGUMENT);
-    REQUIRE(tvg_shape_append_arc(NULL, 0, 0, 0, 0, 0, 0) == TVG_RESULT_INVALID_ARGUMENT);
 
     REQUIRE(tvg_paint_del(paint) == TVG_RESULT_SUCCESS);
 }

@@ -964,7 +964,7 @@ public:
      *
      * @note Setting @p sweep value greater than 360 degrees, is equivalent to calling appendCircle(cx, cy, radius, radius).
      */
-    Result appendArc(float cx, float cy, float radius, float startAngle, float sweep, bool pie) noexcept;
+    TVG_DEPRECATED Result appendArc(float cx, float cy, float radius, float startAngle, float sweep, bool pie) noexcept;
 
     /**
      * @brief Appends a given sub-path to the path.
