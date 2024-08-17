@@ -186,9 +186,10 @@ bool LottieLoader::header()
 bool LottieLoader::open(const char* data, uint32_t size, const std::string& rpath, bool copy)
 {
     if (copy) {
-        content = (char*)malloc(size);
+        content = (char*)malloc(size + 1);
         if (!content) return false;
         memcpy((char*)content, data, size);
+        const_cast<char*>(content)[size] = '\0';
     } else content = data;
 
     this->size = size;
