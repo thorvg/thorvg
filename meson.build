@@ -14,7 +14,7 @@ add_project_arguments('-DEXAMPLE_DIR="@0@/examples/resources"'.format(src_dir),
 config_h.set_quoted('THORVG_VERSION_STRING', meson.project_version())
 
 #Multi-Tasking
-if get_option('threads') == true
+if get_option('threads')
   config_h.set10('THORVG_THREAD_SUPPORT', true)
 endif
 
@@ -100,7 +100,7 @@ endif
 #Vectorization
 simd_type = 'none'
 
-if get_option('simd') == true
+if get_option('simd')
   if host_machine.cpu_family().startswith('x86')
     config_h.set10('THORVG_AVX_VECTOR_SUPPORT', true)
     simd_type = 'avx'
@@ -114,16 +114,16 @@ if get_option('simd') == true
 endif
 
 #Bindings
-if get_option('bindings').contains('capi') == true
+if get_option('bindings').contains('capi')
     config_h.set10('THORVG_CAPI_BINDING_SUPPORT', true)
 endif
 
-if get_option('bindings').contains('wasm_beta') == true
+if get_option('bindings').contains('wasm_beta')
     config_h.set10('THORVG_WASM_BINDING_SUPPORT', true)
 endif
 
 #Log
-if get_option('log') == true
+if get_option('log')
     config_h.set10('THORVG_LOG_ENABLED', true)
 endif
 
@@ -151,11 +151,11 @@ subdir('inc')
 subdir('src')
 subdir('tools')
 
-if get_option('examples') == true
+if get_option('examples')
     subdir('examples')
 endif
 
-if get_option('tests') == true
+if get_option('tests')
    subdir('test')
 endif
 

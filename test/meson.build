@@ -1,4 +1,4 @@
-if (lib_type == 'static')
+if lib_type == 'static'
     compiler_flags += ['-DTVG_STATIC']
 endif
 
@@ -27,6 +27,6 @@ tests = executable('tvgUnitTests',
 
 test('Unit Tests', tests, args : ['--success'])
 
-if get_option('bindings').contains('capi') == true
+if get_option('bindings').contains('capi')
     subdir('capi')
 endif

@@ -1,4 +1,4 @@
-if (lib_type == 'static')
+if lib_type == 'static'
     compiler_flags += ['-DTVG_STATIC']
 endif
 
