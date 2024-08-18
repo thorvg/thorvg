@@ -1,4 +1,4 @@
-if (lib_type == 'static')
+if lib_type == 'static'
     compiler_flags += ['-DTVG_STATIC']
 endif
 
@@ -8,7 +8,7 @@ endif
 
 examples_dep = [dependency('sdl2')]
 
-if (get_option('engines').contains('wg_beta'))
+if get_option('engines').contains('wg_beta')
     examples_dep += dependency('wgpu_native')
     if host_machine.system() == 'darwin'
         add_languages('objcpp')
@@ -93,7 +93,7 @@ foreach current_file : source_file
 endforeach
 
 
-if get_option('bindings').contains('capi') == true
+if get_option('bindings').contains('capi')
     capi_source_file = [
         'Capi.cpp'
     ]
