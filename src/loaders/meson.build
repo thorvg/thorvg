@@ -17,7 +17,7 @@ if lottie_loader
 endif
 
 if png_loader
-    if get_option('static') == true
+    if get_option('static')
         subdir('png')
     else
         subdir('external_png')
@@ -28,7 +28,7 @@ if png_loader
 endif
 
 if jpg_loader
-    if get_option('static') == true
+    if get_option('static')
         subdir('jpg')
     else
         subdir('external_jpg')
@@ -39,7 +39,7 @@ if jpg_loader
 endif
 
 if webp_loader
-    if get_option('static') == true
+    if get_option('static')
         subdir('webp')
     else
         subdir('external_webp')
