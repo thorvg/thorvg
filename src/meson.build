@@ -62,6 +62,12 @@ thorvg_lib = library(
     override_options       : override_options
 )
 
+thorvg_dep = declare_dependency(
+  include_directories: thorvg_inc,
+  link_with: thorvg_lib,
+)
+meson.override_dependency('thorvg', thorvg_dep)
+
 pkg_mod = import('pkgconfig')
 
 pkg_mod.generate(
