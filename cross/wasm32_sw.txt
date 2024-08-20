@@ -1,0 +1,21 @@
+[binaries]
+cpp = 'EMSDK:upstream/emscripten/em++.py'
+ar = 'EMSDK:upstream/emscripten/emar.py'
+strip = '-strip'
+
+[properties]
+root = 'EMSDK:upstream/emscripten/system'
+shared_lib_suffix = 'js'
+static_lib_suffix = 'js'
+shared_module_suffix = 'js'
+exe_suffix = 'js'
+
+[built-in options]
+cpp_args = ['-Wshift-negative-value', '-flto', '-Os', '-fno-exceptions']
+cpp_link_args = ['-Wshift-negative-value', '-flto', '-Os', '-fno-exceptions', '--bind', '-sWASM=1', '-sALLOW_MEMORY_GROWTH=1', '-sEXPORT_ES6=1', '-sFORCE_FILESYSTEM=1', '-sMODULARIZE=1', '-sEXPORTED_RUNTIME_METHODS=FS']
+
+[host_machine]
+system = 'emscripten'
+cpu_family = 'wasm32'
+cpu = 'wasm32'
+endian = 'little'
