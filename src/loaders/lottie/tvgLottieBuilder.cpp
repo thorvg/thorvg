@@ -1055,6 +1055,7 @@ void LottieBuilder::updateText(LottieLayer* layer, float frameNo)
             scene = Scene::gen();
             cursor.x = 0.0f;
             cursor.y = ++line * (doc.height / scale);
+            continue;
         }
         //find the glyph
         bool found = false;
