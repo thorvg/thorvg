@@ -358,7 +358,7 @@ public:
      *
      * @note Experimental API
      */
-    Result blend(BlendMethod method) const noexcept;
+    Result blend(BlendMethod method) noexcept;
 
     /**
      * @brief Gets the axis-aligned bounding box of the paint object.
@@ -404,9 +404,9 @@ public:
     CompositeMethod composite(const Paint** target) const noexcept;
 
     /**
-     * @brief Gets the blending method of the object.
+     * @brief Retrieves the current blending method applied to the paint object.
      *
-     * @return The blending method
+     * @return The currently set blending method.
      *
      * @note Experimental API
      */
