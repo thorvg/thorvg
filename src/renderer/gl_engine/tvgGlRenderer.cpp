@@ -231,11 +231,10 @@ const Surface* GlRenderer::mainSurface()
 }
 
 
-bool GlRenderer::blend(TVG_UNUSED BlendMethod method)
+bool GlRenderer::blend(TVG_UNUSED BlendMethod method, TVG_UNUSED bool direct)
 {
-    if (method != BlendMethod::Normal) {
-        return true;
-    }
+    if (method != BlendMethod::Normal) return true;
+
     //TODO:
     return false;
 }
@@ -1231,5 +1230,4 @@ void GlRenderer::endRenderPass(Compositor* cmp)
         task->setParentSize(static_cast<uint32_t>(currentPass()->getViewport().w), static_cast<uint32_t>(currentPass()->getViewport().h));
         currentPass()->addRenderTask(std::move(task));
     }
-
 }
