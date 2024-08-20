@@ -1280,9 +1280,9 @@ public:
      * @param[in] data A pointer to a memory location where the content of the picture raw data is stored.
      * @param[in] w The width of the image @p data in pixels.
      * @param[in] h The height of the image @p data in pixels.
-     * @param[in] premultiplied If @c true, the given image data is alpha-premultiplied.
      * @param[in] copy If @c true the data are copied into the engine local buffer, otherwise they are not.
      *
+     * @note It expects premultiplied alpha data.
      * @since 0.9
      */
     Result load(uint32_t* data, uint32_t w, uint32_t h, bool copy) noexcept;
