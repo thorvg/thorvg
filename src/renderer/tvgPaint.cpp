@@ -488,7 +488,7 @@ TVG_DEPRECATED uint32_t Paint::identifier() const noexcept
 }
 
 
-Result Paint::blend(BlendMethod method) const noexcept
+Result Paint::blend(BlendMethod method) noexcept
 {
     if (pImpl->blendMethod != method) {
         pImpl->blendMethod = method;
