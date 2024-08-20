@@ -131,7 +131,7 @@ TEST_CASE("Set solid text fill", "[capiText]")
 
     REQUIRE(tvg_font_load(TEST_DIR"/Arial.ttf") == TVG_RESULT_SUCCESS);
 
-    REQUIRE(tvg_text_set_fill_color(text, 10, 20, 30) == TVG_RESULT_INSUFFICIENT_CONDITION);
+    REQUIRE(tvg_text_set_fill_color(text, 10, 20, 30) == TVG_RESULT_SUCCESS);
 
     REQUIRE(tvg_text_set_font(text, "Arial", 10.0f, "") == TVG_RESULT_SUCCESS);
 
@@ -156,8 +156,8 @@ TEST_CASE("Set gradient text fill", "[capiText]")
 
     REQUIRE(tvg_font_load(TEST_DIR"/Arial.ttf") == TVG_RESULT_SUCCESS);
 
-    REQUIRE(tvg_text_set_linear_gradient(text, NULL) == TVG_RESULT_INSUFFICIENT_CONDITION);
-    REQUIRE(tvg_text_set_radial_gradient(text, NULL) == TVG_RESULT_INSUFFICIENT_CONDITION);
+    REQUIRE(tvg_text_set_linear_gradient(text, NULL) == TVG_RESULT_MEMORY_CORRUPTION);
+    REQUIRE(tvg_text_set_radial_gradient(text, NULL) == TVG_RESULT_MEMORY_CORRUPTION);
 
     REQUIRE(tvg_text_set_font(text, "Arial", 10.0f, "") == TVG_RESULT_SUCCESS);
 

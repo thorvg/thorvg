@@ -2201,7 +2201,6 @@ TVG_API Tvg_Result tvg_text_set_text(Tvg_Paint* paint, const char* text);
 *
 * \return Tvg_Result enumeration.
 * \retval TVG_RESULT_INVALID_ARGUMENT A \c nullptr passed as the \p paint argument.
-* \retval TVG_RESULT_INSUFFICIENT_CONDITION The font has not been set up prior to this operation.
 *
 * \note Either a solid color or a gradient fill is applied, depending on what was set as last.
 * \note Experimental API
@@ -2220,7 +2219,6 @@ TVG_API Tvg_Result tvg_text_set_fill_color(Tvg_Paint* paint, uint8_t r, uint8_t 
 * \return Tvg_Result enumeration.
 * \retval TVG_RESULT_INVALID_ARGUMENT A \c nullptr passed as the \p paint argument.
 * \retval TVG_RESULT_MEMORY_CORRUPTION An invalid Tvg_Gradient pointer.
-* \retval TVG_RESULT_INSUFFICIENT_CONDITION The font has not been set up prior to this operation.
 *
 * \note Either a solid color or a gradient fill is applied, depending on what was set as last.
 * \note Experimental API
@@ -2239,7 +2237,6 @@ TVG_API Tvg_Result tvg_text_set_linear_gradient(Tvg_Paint* paint, Tvg_Gradient* 
 * \return Tvg_Result enumeration.
 * \retval TVG_RESULT_INVALID_ARGUMENT A \c nullptr passed as the \p paint argument.
 * \retval TVG_RESULT_MEMORY_CORRUPTION An invalid Tvg_Gradient pointer.
-* \retval TVG_RESULT_INSUFFICIENT_CONDITION The font has not been set up prior to this operation.
 *
 * \note Either a solid color or a gradient fill is applied, depending on what was set as last.
 * \note Experimental API

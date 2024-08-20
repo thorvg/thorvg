@@ -1063,7 +1063,6 @@ public:
      * @param[out] b The blue color channel value in the range [0 ~ 255].
      * @param[out] a The alpha channel value in the range [0 ~ 255], where 0 is completely transparent and 255 is opaque.
      *
-     * @return Result::Success when succeed.
      */
     Result fillColor(uint8_t* r, uint8_t* g, uint8_t* b, uint8_t* a = nullptr) const noexcept;
 
@@ -1421,8 +1420,6 @@ public:
      * @param[in] g The green color channel value in the range [0 ~ 255]. The default value is 0.
      * @param[in] b The blue color channel value in the range [0 ~ 255]. The default value is 0.
      *
-     * @retval Result::InsufficientCondition when the font has not been set up prior to this operation.
-     *
      * @see Text::font()
      *
      * @note Experimental API
@@ -1435,8 +1432,6 @@ public:
      * The parts of the text defined as inner are filled.
      *
      * @param[in] f The unique pointer to the gradient fill.
-     *
-     * @retval Result::InsufficientCondition when the font has not been set up prior to this operation.
      *
      * @note Either a solid color or a gradient fill is applied, depending on what was set as last.
      * @note Experimental API
