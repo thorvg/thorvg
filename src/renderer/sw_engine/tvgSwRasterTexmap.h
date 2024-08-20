@@ -505,6 +505,8 @@ static void _rasterPolygonImageSegment(SwSurface* surface, const SwImage* image,
             dx = 1 - (_xa - x1);
             u = _ua + dx * _dudx;
             v = _va + dx * _dvdx;
+            if (u <= -1.0f) u = 0.0f;
+            if (v <= -1.0f) v = 0.0f;
 
             buf = dbuf + ((y * dw) + x1);
 
@@ -560,7 +562,7 @@ static void _rasterPolygonImageSegment(SwSurface* surface, const SwImage* image,
                     u += _dudx;
                     v += _dvdx;
                     //range over?
-                    if ((uint32_t)v >= image->h) break;
+                    if ((uint32_t)v >= image->h || u < 0.0f || v < 0.0f) break;
                 }
             } else {
                 //Draw horizontal line
