@@ -218,7 +218,7 @@ bool WgRenderer::viewport(const RenderRegion& vp)
 }
 
 
-bool WgRenderer::blend(BlendMethod method)
+bool WgRenderer::blend(BlendMethod method, TVG_UNUSED bool direct)
 {
     mBlendMethod = method;
     return false;
