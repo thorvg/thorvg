@@ -1243,7 +1243,7 @@ public:
     Result size(float* w, float* h) const noexcept;
 
     /**
-     * @brief Loads a raw data from a memory block with a given size.
+     * @brief Loads raw data in ARGB8888 format from a memory block of the given size.
      *
      * ThorVG efficiently caches the loaded data using the specified @p data address as a key
      * when the @p copy has @c false. This means that loading the same data again will not result in duplicate operations
