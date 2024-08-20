@@ -237,10 +237,10 @@ TVG_API Tvg_Result tvg_paint_get_composite_method(const Tvg_Paint* paint, const 
 }
 
 
-TVG_API Tvg_Result tvg_paint_set_blend_method(const Tvg_Paint* paint, Tvg_Blend_Method method)
+TVG_API Tvg_Result tvg_paint_set_blend_method(Tvg_Paint* paint, Tvg_Blend_Method method)
 {
    if (!paint) return TVG_RESULT_INVALID_ARGUMENT;
-   return (Tvg_Result) reinterpret_cast<const Paint*>(paint)->blend((BlendMethod)method);
+   return (Tvg_Result) reinterpret_cast<Paint*>(paint)->blend((BlendMethod)method);
 }
 
 
