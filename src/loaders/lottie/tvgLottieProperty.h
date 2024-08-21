@@ -28,8 +28,8 @@
 #include "tvgLottieCommon.h"
 #include "tvgLottieInterpolator.h"
 #include "tvgLottieExpressions.h"
+#include "tvgLottieModifier.h"
 
-#define ROUNDNESS_EPSILON 1.0f
 
 struct LottieFont;
 struct LottieLayer;
@@ -175,81 +175,6 @@ static void _copy(PathSet* pathset, Array<PathCommand>& outCmds)
     inCmds.count = pathset->cmdsCnt;
     outCmds.push(inCmds);
     inCmds.data = nullptr;
-}
-
-
-static void _roundCorner(Array<PathCommand>& cmds, Array<Point>& pts, const Point& prev, const Point& curr, const Point& next, float roundness)
-{
-    auto lenPrev = length(prev - curr);
-    auto rPrev = lenPrev > 0.0f ? 0.5f * std::min(lenPrev * 0.5f, roundness) / lenPrev : 0.0f;
-    auto lenNext = length(next - curr);
-    auto rNext = lenNext > 0.0f ? 0.5f * std::min(lenNext * 0.5f, roundness) / lenNext : 0.0f;
-
-    auto dPrev = rPrev * (curr - prev);
-    auto dNext = rNext * (curr - next);
-
-    pts.push(curr - 2.0f * dPrev);
-    pts.push(curr - dPrev);
-    pts.push(curr - dNext);
-    pts.push(curr - 2.0f * dNext);
-    cmds.push(PathCommand::LineTo);
-    cmds.push(PathCommand::CubicTo);
-}
-
-
-static bool _modifier(Point* inPts, uint32_t inPtsCnt, PathCommand* inCmds, uint32_t inCmdsCnt, Array<PathCommand>& cmds, Array<Point>& pts, Matrix* transform, float roundness)
-{
-    cmds.reserve(inCmdsCnt * 2);
-    pts.reserve((uint16_t)(inPtsCnt * 1.5));
-    auto ptsCnt = pts.count;
-
-    auto startIndex = 0;
-    for (uint32_t iCmds = 0, iPts = 0; iCmds < inCmdsCnt; ++iCmds) {
-        switch (inCmds[iCmds]) {
-            case PathCommand::MoveTo: {
-                startIndex = pts.count;
-                cmds.push(PathCommand::MoveTo);
-                pts.push(inPts[iPts++]);
-                break;
-            }
-            case PathCommand::CubicTo: {
-                auto& prev = inPts[iPts - 1];
-                auto& curr = inPts[iPts + 2];
-                if (iCmds < inCmdsCnt - 1 &&
-                    tvg::zero(inPts[iPts - 1] - inPts[iPts]) &&
-                    tvg::zero(inPts[iPts + 1] - inPts[iPts + 2])) {
-                    if (inCmds[iCmds + 1] == PathCommand::CubicTo &&
-                        tvg::zero(inPts[iPts + 2] - inPts[iPts + 3]) &&
-                        tvg::zero(inPts[iPts + 4] - inPts[iPts + 5])) {
-                        _roundCorner(cmds, pts, prev, curr, inPts[iPts + 5], roundness);
-                        iPts += 3;
-                        break;
-                    } else if (inCmds[iCmds + 1] == PathCommand::Close) {
-                        _roundCorner(cmds, pts, prev, curr, inPts[2], roundness);
-                        pts[startIndex] = pts.last();
-                        iPts += 3;
-                        break;
-                    }
-                }
-                cmds.push(PathCommand::CubicTo);
-                pts.push(inPts[iPts++]);
-                pts.push(inPts[iPts++]);
-                pts.push(inPts[iPts++]);
-                break;
-            }
-            case PathCommand::Close: {
-                cmds.push(PathCommand::Close);
-                break;
-            }
-            default: break;
-        }
-    }
-    if (transform) {
-        for (auto i = ptsCnt; i < pts.count; ++i) {
-            pts[i] *= *transform;
-        }
-    }
-    return true;
 }
 
 
@@ -482,7 +407,7 @@ struct LottiePathSet : LottieProperty
         return (*frames)[frames->count];
     }
 
-    bool operator()(float frameNo, Array<PathCommand>& cmds, Array<Point>& pts, Matrix* transform, float roundness)
+    bool operator()(float frameNo, Array<PathCommand>& cmds, Array<Point>& pts, Matrix* transform, const LottieRoundnessModifier* roundness)
     {
         PathSet* path = nullptr;
         LottieScalarFrame<PathSet>* frame = nullptr;
@@ -507,7 +432,8 @@ struct LottiePathSet : LottieProperty
         }
 
         if (!interpolate) {
-            if (roundness > ROUNDNESS_EPSILON) return _modifier(path->pts, path->ptsCnt, path->cmds, path->cmdsCnt, cmds, pts, transform, roundness);
+            if (roundness) return roundness->modifyPath(path->cmds, path->cmdsCnt, path->pts, path->ptsCnt, cmds, pts, transform);
+
             _copy(path, cmds);
             _copy(path, pts, transform);
             return true;
@@ -516,29 +442,29 @@ struct LottiePathSet : LottieProperty
         auto s = frame->value.pts;
         auto e = (frame + 1)->value.pts;
 
-        if (roundness > ROUNDNESS_EPSILON) {
+        if (roundness) {
             auto interpPts = (Point*)malloc(frame->value.ptsCnt * sizeof(Point));
             auto p = interpPts;
             for (auto i = 0; i < frame->value.ptsCnt; ++i, ++s, ++e, ++p) {
                 *p = lerp(*s, *e, t);
                 if (transform) *p *= *transform;
             }
-            _modifier(interpPts, frame->value.ptsCnt, frame->value.cmds, frame->value.cmdsCnt, cmds, pts, nullptr, roundness);
+            roundness->modifyPath(frame->value.cmds, frame->value.cmdsCnt, interpPts, frame->value.ptsCnt, cmds, pts, nullptr);
             free(interpPts);
             return true;
-        } else {
-            for (auto i = 0; i < frame->value.ptsCnt; ++i, ++s, ++e) {
-                auto pt = lerp(*s, *e, t);
-                if (transform) pt *= *transform;
-                pts.push(pt);
-            }
-            _copy(&frame->value, cmds);
         }
+
+        for (auto i = 0; i < frame->value.ptsCnt; ++i, ++s, ++e) {
+            auto pt = lerp(*s, *e, t);
+            if (transform) pt *= *transform;
+            pts.push(pt);
+        }
+        _copy(&frame->value, cmds);
         return true;
     }
 
 
-    bool operator()(float frameNo, Array<PathCommand>& cmds, Array<Point>& pts, Matrix* transform, float roundness, LottieExpressions* exps)
+    bool operator()(float frameNo, Array<PathCommand>& cmds, Array<Point>& pts, Matrix* transform, const LottieRoundnessModifier* roundness, LottieExpressions* exps)
     {
         if (exps && exp) {
             if (exp->loop.mode != LottieExpression::LoopMode::None) frameNo = _loop(frames, frameNo, exp);

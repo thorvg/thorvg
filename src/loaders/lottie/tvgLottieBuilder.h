@@ -28,6 +28,7 @@
 #include "tvgPaint.h"
 #include "tvgShape.h"
 #include "tvgLottieExpressions.h"
+#include "tvgLottieModifier.h"
 
 struct LottieComposition;
 
@@ -55,7 +56,7 @@ struct RenderContext
     LottieObject** begin = nullptr; //iteration entry point
     Array<RenderRepeater> repeaters;
     Matrix* transform = nullptr;
-    float roundness = 0.0f;
+    LottieRoundnessModifier* roundness = nullptr;
     bool fragmenting = false;  //render context has been fragmented by filling
     bool reqFragment = false;  //requirement to fragment the render context
 
@@ -70,6 +71,7 @@ struct RenderContext
     {
         PP(propagator)->unref();
         free(transform);
+        delete(roundness);
     }
 
     RenderContext(const RenderContext& rhs, Shape* propagator, bool mergeable = false)
@@ -78,7 +80,7 @@ struct RenderContext
         PP(propagator)->ref();
         this->propagator = propagator;
         this->repeaters = rhs.repeaters;
-        this->roundness = rhs.roundness;
+        if (rhs.roundness) this->roundness = new LottieRoundnessModifier(rhs.roundness->r);
     }
 };
 
