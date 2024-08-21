@@ -53,12 +53,10 @@ static bool _arrange(const SwImage* image, const SwBBox* region, int& yStart, in
         regionBottom = image->rle->spans[image->rle->size - 1].y;
     }
 
-    if (yStart >= regionBottom) return false;
-
     if (yStart < regionTop) yStart = regionTop;
     if (yEnd > regionBottom) yEnd = regionBottom;
 
-    return true;
+    return yEnd > yStart;
 }
 
 
