@@ -33,46 +33,66 @@ using namespace tvg;
 
 static const char* NoError = "None";
 
-class __attribute__((visibility("default"))) TvgLottieAnimation
+struct TvgEngineMethod
 {
-public:
-    ~TvgLottieAnimation()
+    virtual ~TvgEngineMethod() {}
+    virtual unique_ptr<Canvas> init(string&) = 0;
+    virtual void resize(Canvas* canvas, int w, int h) = 0;
+    virtual val output(int w, int h)
     {
-        if (engine == tvg::CanvasEngine::Sw) {
-        #ifdef THORVG_SW_RASTER_SUPPORT
-            free(buffer);
-        #endif
-        } else if (engine == tvg::CanvasEngine::Wg) {
+        return val(typed_memory_view<uint8_t>(0, nullptr));
+    }
+};
+
+struct TvgSwEngine : TvgEngineMethod
+{
+    uint8_t* buffer = nullptr;
+
+    ~TvgSwEngine()
+    {
+        free(buffer);
+        Initializer::term(tvg::CanvasEngine::Sw);
+    }
+
+    unique_ptr<Canvas> init(string&) override
+    {
+        Initializer::init(0, tvg::CanvasEngine::Sw);
+        return SwCanvas::gen();
+    }
+
+    void resize(Canvas* canvas, int w, int h) override
+    {
+        free(buffer);
+        buffer = (uint8_t*)malloc(w * h * sizeof(uint32_t));
+        static_cast<SwCanvas*>(canvas)->target((uint32_t *)buffer, w, w, h, SwCanvas::ABGR8888S);
+    }
+
+    val output(int w, int h) override
+    {
+        return val(typed_memory_view(w * h * 4, buffer));
+    }
+};
+
+
+struct TvgWgEngine : TvgEngineMethod
+{
+    #ifdef THORVG_WG_RASTER_SUPPORT
+        WGPUInstance instance{};
+        WGPUSurface surface{};
+    #endif
+
+    ~TvgWgEngine()
+    {
         #ifdef THORVG_WG_RASTER_SUPPORT
             wgpuSurfaceRelease(surface);
             wgpuInstanceRelease(instance);
         #endif
-        }
-
-        Initializer::term();
+        Initializer::term(tvg::CanvasEngine::Wg);
     }
 
-    explicit TvgLottieAnimation(string engine = "sw", string selector = "")
+    unique_ptr<Canvas> init(string& selector) override
     {
-        errorMsg = NoError;
-
-        if (engine == "sw") {
-        #ifdef THORVG_SW_RASTER_SUPPORT
-            this->engine = tvg::CanvasEngine::Sw;
-            if (Initializer::init(0, this->engine) != Result::Success) {
-                errorMsg = "init() fail";
-                return;
-            }
-            canvas = SwCanvas::gen();
-        #endif
-        } else if (engine == "wg") {
         #ifdef THORVG_WG_RASTER_SUPPORT
-            this->engine = tvg::CanvasEngine::Wg;
-            if (Initializer::init(0, this->engine) != Result::Success) {
-                errorMsg = "init() fail";
-                return;
-            }
-
             //Init WebGPU
             instance = wgpuCreateInstance(nullptr);
 
@@ -84,11 +104,45 @@ public:
             WGPUSurfaceDescriptor surfaceDesc{};
             surfaceDesc.nextInChain = &canvasDesc.chain;
             surface = wgpuInstanceCreateSurface(instance, &surfaceDesc);
-
-            canvas = WgCanvas::gen();
         #endif
+
+        Initializer::init(0, tvg::CanvasEngine::Wg);
+        return WgCanvas::gen();
+    }
+
+    void resize(Canvas* canvas, int w, int h) override
+    {
+        static_cast<WgCanvas*>(canvas)->target(instance, surface, w, h);
+    }
+};
+
+
+class __attribute__((visibility("default"))) TvgLottieAnimation
+{
+public:
+    ~TvgLottieAnimation()
+    {
+        delete(engine);
+    }
+
+    explicit TvgLottieAnimation(string engine = "sw", string selector = "")
+    {
+        errorMsg = NoError;
+
+        if (engine == "sw") this->engine = new TvgSwEngine;
+        else if (engine == "wg") this->engine = new TvgWgEngine;
+
+        if (!engine) {
+            errorMsg = "Invalid engine";
+            return;
         }
-        if (!canvas) errorMsg = "Invalid canvas";
+
+        canvas = this->engine->init(selector);
+
+        if (!canvas) {
+            errorMsg = "Unsupported!";
+            return;
+        }
 
         animation = Animation::gen();
         if (!animation) errorMsg = "Invalid animation";
@@ -175,9 +229,7 @@ public:
 
         if (!canvas || !animation) return val(typed_memory_view<uint8_t>(0, nullptr));
 
-        if (!updated) {
-            return output();
-        }
+        if (!updated) return engine->output(width, height);
 
         if (canvas->draw() != Result::Success) {
             errorMsg = "draw() fail";
@@ -188,7 +240,7 @@ public:
 
         updated = false;
 
-        return output();
+        return engine->output(width, height);
     }
 
     bool update()
@@ -237,17 +289,7 @@ public:
         this->width = width;
         this->height = height;
 
-        if (engine == tvg::CanvasEngine::Sw) {
-        #ifdef THORVG_SW_RASTER_SUPPORT
-            free(buffer);
-            buffer = (uint8_t*)malloc(width * height * sizeof(uint32_t));
-            static_cast<SwCanvas*>(canvas.get())->target((uint32_t *)buffer, width, width, height, SwCanvas::ABGR8888S);
-        #endif
-        } else if (engine == tvg::CanvasEngine::Wg) {
-        #ifdef THORVG_WG_RASTER_SUPPORT
-            static_cast<WgCanvas*>(canvas.get())->target(this->instance, this->surface, width, height);
-        #endif
-        }
+        engine->resize(canvas.get(), width, height);
 
         float scale;
         float shiftX = 0.0f, shiftY = 0.0f;
@@ -370,33 +412,15 @@ public:
     // TODO: Advanced APIs wrt Interactivity & theme methods...
 
 private:
-    val output()
-    {
-        if (engine == tvg::CanvasEngine::Sw) {
-        #ifdef THORVG_SW_RASTER_SUPPORT
-            return val(typed_memory_view(width * height * 4, buffer));
-        #endif
-        } 
-        return val(typed_memory_view<uint8_t>(0, nullptr));
-    }
-
-private:
     string                 errorMsg;
-    CanvasEngine           engine;
     unique_ptr<Canvas>     canvas = nullptr;
     unique_ptr<Animation>  animation = nullptr;
+    TvgEngineMethod*       engine = nullptr;
     string                 data;
     uint32_t               width = 0;
     uint32_t               height = 0;
     float                  psize[2];         //picture size
     bool                   updated = false;
-    #ifdef THORVG_SW_RASTER_SUPPORT
-    uint8_t*               buffer = nullptr;
-    #endif
-    #ifdef THORVG_WG_RASTER_SUPPORT
-    WGPUInstance instance{};
-    WGPUSurface surface{};
-    #endif
 };
 
 EMSCRIPTEN_BINDINGS(thorvg_bindings)
