@@ -33,6 +33,7 @@ source_file = [
     'GradientMasking.cpp',
     'GradientStroke.cpp',
     'GradientTransform.cpp',
+    'ImageRotation.cpp',
     'ImageScaleDown.cpp',
     'ImageScaleUp.cpp',
     'Interaction.cpp',
