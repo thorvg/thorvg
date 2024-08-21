@@ -1026,6 +1026,7 @@ static bool _apply(SwSurface* surface, AASpans* aaSpans)
     uint32_t pixel;
     uint32_t* dst;
     int32_t pos;
+    auto limit = surface->buf32 + surface->h * surface->stride;
 
    //left side
    _calcAAEdge(aaSpans, 0);
@@ -1044,7 +1045,7 @@ static bool _apply(SwSurface* surface, AASpans* aaSpans)
             else pixel = *dst;
 
             pos = 1;
-            while (pos <= line->length[0]) {
+            while (pos <= line->length[0] && dst < limit) {
                 *dst = INTERPOLATE(*dst, pixel, line->coverage[0] * pos);
                 ++dst;
                 ++pos;
