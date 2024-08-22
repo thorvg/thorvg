@@ -25,6 +25,7 @@
 
 #include "tvgCommon.h"
 #include "tvgArray.h"
+#include "tvgMath.h"
 
 
 struct LottieRoundnessModifier
@@ -39,5 +40,32 @@ struct LottieRoundnessModifier
     bool modifyRect(const Point& size, float& r) const;
 };
 
+
+struct LottieOffsetModifier
+{
+    float offset;
+    float miterLimit;
+    StrokeJoin join;
+
+    LottieOffsetModifier(float offset, float miter, StrokeJoin join) : offset(offset), miterLimit(miter), join(join) {};
+
+    bool modifyPath(const PathCommand* inCmds, uint32_t inCmdsCnt, const Point* inPts, uint32_t inPtsCnt, Array<PathCommand>& outCmds, Array<Point>& outPts, bool clockwise) const;
+    bool modifyPolystar(const Array<PathCommand>& inCmds, const Array<Point>& inPts, Array<PathCommand>& outCmds, Array<Point>& outPts, bool clockwise) const;
+    bool modifyRect(const PathCommand* inCmds, uint32_t inCmdsCnt, const Point* inPts, uint32_t inPtsCnt, Array<PathCommand>& outCmds, Array<Point>& outPts, bool clockwise) const;
+    bool modifyEllipse(float& rx, float& ry) const;
+
+private:
+    struct State
+    {
+        Line line{};
+        Line firstLine{};
+        bool moveto = false;
+        uint32_t movetoOutIndex = 0;
+        uint32_t movetoInIndex = 0;
+    };
+
+    void line(const PathCommand* inCmds, uint32_t inCmdsCnt, const Point* inPts, uint32_t& currentPt, uint32_t currentCmd, State& state, bool degenerated, Array<PathCommand>& cmds, Array<Point>& pts, float offset) const;
+    void corner(const Line& line, const Line& nextLine, uint32_t movetoIndex, bool nextClose, Array<PathCommand>& cmds, Array<Point>& pts) const;
+};
 
 #endif
