@@ -868,10 +868,8 @@ static void _calcVertCoverage(AALine *lines, int32_t eidx, int32_t y, int32_t re
 
 static void _calcHorizCoverage(AALine *lines, int32_t eidx, int32_t y, int32_t x, int32_t x2)
 {
-    if (lines[y].length[eidx] < abs(x - x2)) {
-        lines[y].length[eidx] = abs(x - x2);
-        lines[y].coverage[eidx] = (255 / (lines[y].length[eidx] + 1));
-    }
+    lines[y].length[eidx] = abs(x - x2);
+    lines[y].coverage[eidx] = (255 / (lines[y].length[eidx] + 1));
 }
 
 
@@ -897,9 +895,14 @@ static void _calcAAEdge(AASpans *aaSpans, int32_t eidx)
         ptx[1] = tx[1]; \
     } while (0)
 
+    struct Point
+    {
+        int32_t x, y;
+    };
+
     int32_t y = 0;
-    SwPoint pEdge = {-1, -1};       //previous edge point
-    SwPoint edgeDiff = {0, 0};      //temporary used for point distance
+    Point pEdge = {-1, -1};       //previous edge point
+    Point edgeDiff = {0, 0};      //temporary used for point distance
 
     /* store bigger to tx[0] between prev and current edge's x positions. */
     int32_t tx[2] = {0, 0};
@@ -1024,6 +1027,7 @@ static void _calcAAEdge(AASpans *aaSpans, int32_t eidx)
 
 static bool _apply(SwSurface* surface, AASpans* aaSpans)
 {
+    auto end = surface->buf32 + surface->h * surface->stride;
     auto y = aaSpans->yStart;
     uint32_t pixel;
     uint32_t* dst;
@@ -1044,8 +1048,13 @@ static bool _apply(SwSurface* surface, AASpans* aaSpans)
             dst = surface->buf32 + (offset + line->x[0]);
             if (line->x[0] > 1) pixel = *(dst - 1);
             else pixel = *dst;
-
             pos = 1;
+
+            //exceptional handling. out of memory bound.
+            if (dst + line->length[0] >= end) {
+                pos += (dst + line->length[0] - end);
+            }
+
             while (pos <= line->length[0]) {
                 *dst = INTERPOLATE(*dst, pixel, line->coverage[0] * pos);
                 ++dst;
@@ -1053,17 +1062,21 @@ static bool _apply(SwSurface* surface, AASpans* aaSpans)
             }
 
             //Right edge
-            dst = surface->buf32 + (offset + line->x[1] - 1);
+            dst = surface->buf32 + offset + line->x[1] - 1;
+
             if (line->x[1] < (int32_t)(surface->w - 1)) pixel = *(dst + 1);
             else pixel = *dst;
+            pos = line->length[1];
 
-            pos = width;
-            while ((int32_t)(width - line->length[1]) < pos) {
-                *dst = INTERPOLATE(*dst, pixel, 255 - (line->coverage[1] * (line->length[1] - (width - pos))));
+            //exceptional handling. out of memory bound.
+            if (dst - pos < surface->buf32) --pos;
+
+            while (pos > 0) {
+                *dst = INTERPOLATE(*dst, pixel, 255 - (line->coverage[1] * pos));
                 --dst;
                 --pos;
             }
-          }
+        }
         y++;
     }
 
