@@ -286,6 +286,8 @@ static inline T lerp(const T &start, const T &end, float t)
     return static_cast<T>(start + (end - start) * t);
 }
 
+uint8_t lerp(const uint8_t &start, const uint8_t &end, float t);
+
 }
 
 #endif //_TVG_MATH_H_
