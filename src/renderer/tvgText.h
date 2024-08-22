@@ -147,7 +147,7 @@ struct Text::Impl
 
         auto text = Text::gen().release();
         auto dup = text->pImpl;
-        static_cast<Shape*>(P(shape)->duplicate(dup->shape));
+        P(shape)->duplicate(dup->shape);
 
         if (loader) {
             dup->loader = loader;
