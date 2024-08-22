@@ -866,6 +866,25 @@ LottieRepeater* LottieParser::parseRepeater()
 }
 
 
+LottieOffsetPath* LottieParser::parseOffsetPath()
+{
+    auto offsetPath = new LottieOffsetPath;
+
+    context.parent = offsetPath;
+
+    while (auto key = nextObjectKey()) {
+        if (parseCommon(offsetPath, key)) continue;
+        else if (KEY_AS("a")) parseProperty<LottieProperty::Type::Float>(offsetPath->offset);
+        else if (KEY_AS("lj")) offsetPath->join = getStrokeJoin();
+        else if (KEY_AS("ml")) parseProperty<LottieProperty::Type::Float>(offsetPath->miterLimit);
+        else skip(key);
+    }
+    offsetPath->prepare();
+
+    return offsetPath;
+}
+
+
 LottieObject* LottieParser::parseObject()
 {
     auto type = getString();
@@ -887,7 +906,7 @@ LottieObject* LottieParser::parseObject()
     else if (!strcmp(type, "mm")) TVGERR("LOTTIE", "MergePath(mm) is not supported yet");
     else if (!strcmp(type, "pb")) TVGERR("LOTTIE", "Puker/Bloat(pb) is not supported yet");
     else if (!strcmp(type, "tw")) TVGERR("LOTTIE", "Twist(tw) is not supported yet");
-    else if (!strcmp(type, "op")) TVGERR("LOTTIE", "Offset Path(op) is not supported yet");
+    else if (!strcmp(type, "op")) return parseOffsetPath();
     else if (!strcmp(type, "zz")) TVGERR("LOTTIE", "Zig Zag(zz) is not supported yet");
     return nullptr;
 }

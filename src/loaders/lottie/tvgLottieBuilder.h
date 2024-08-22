@@ -57,6 +57,7 @@ struct RenderContext
     Array<RenderRepeater> repeaters;
     Matrix* transform = nullptr;
     LottieRoundnessModifier* roundness = nullptr;
+    LottieOffsetModifier* offsetPath = nullptr;
     bool fragmenting = false;  //render context has been fragmented by filling
     bool reqFragment = false;  //requirement to fragment the render context
 
@@ -72,6 +73,7 @@ struct RenderContext
         PP(propagator)->unref();
         free(transform);
         delete(roundness);
+        delete(offsetPath);
     }
 
     RenderContext(const RenderContext& rhs, Shape* propagator, bool mergeable = false)
@@ -81,6 +83,7 @@ struct RenderContext
         this->propagator = propagator;
         this->repeaters = rhs.repeaters;
         if (rhs.roundness) this->roundness = new LottieRoundnessModifier(rhs.roundness->r);
+        if (rhs.offsetPath) this->offsetPath = new LottieOffsetModifier(rhs.offsetPath->offset, rhs.offsetPath->miterLimit, rhs.offsetPath->join);
     }
 };
 
@@ -122,6 +125,7 @@ private:
     void updateTrimpath(LottieGroup* parent, LottieObject** child, float frameNo, Inlist<RenderContext>& contexts, RenderContext* ctx);
     void updateRepeater(LottieGroup* parent, LottieObject** child, float frameNo, Inlist<RenderContext>& contexts, RenderContext* ctx);
     void updateRoundedCorner(LottieGroup* parent, LottieObject** child, float frameNo, Inlist<RenderContext>& contexts, RenderContext* ctx);
+    void updateOffsetPath(LottieGroup* parent, LottieObject** child, float frameNo, Inlist<RenderContext>& contexts, RenderContext* ctx);
 
     LottieExpressions* exps;
 };
