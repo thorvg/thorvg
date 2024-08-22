@@ -106,7 +106,8 @@ struct LottieObject
         Trimpath,
         Text,
         Repeater,
-        RoundedCorner
+        RoundedCorner,
+        OffsetPath
     };
 
     virtual ~LottieObject()
@@ -656,6 +657,19 @@ struct LottieRepeater : LottieObject
     LottieOpacity startOpacity = 255;
     LottieOpacity endOpacity = 255;
     bool inorder = true;        //true: higher,  false: lower
+};
+
+
+struct LottieOffsetPath : LottieObject
+{
+    void prepare()
+    {
+        LottieObject::type = LottieObject::OffsetPath;
+    }
+
+    LottieFloat offset = 0.0f;
+    LottieFloat miterLimit = 4.0f;
+    StrokeJoin join = StrokeJoin::Miter;
 };
 
 

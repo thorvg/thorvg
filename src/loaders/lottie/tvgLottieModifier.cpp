@@ -21,7 +21,6 @@
  */
 
 #include "tvgLottieModifier.h"
-#include "tvgMath.h"
 
 
 /************************************************************************/
@@ -44,6 +43,115 @@ static void _roundCorner(Array<PathCommand>& cmds, Array<Point>& pts, const Poin
     pts.push(curr - 2.0f * dNext);
     cmds.push(PathCommand::LineTo);
     cmds.push(PathCommand::CubicTo);
+}
+
+
+static bool _zero(const Point& p1, const Point& p2)
+{
+    constexpr float epsilon = 1e-3f;
+    return fabsf(p1.x / p2.x - 1.0f) < epsilon && fabsf(p1.y / p2.y - 1.0f) < epsilon;
+}
+
+
+static bool _intersect(const Line& line1, const Line& line2, Point& intersection, bool& inside)
+{
+    if (_zero(line1.pt2, line2.pt1)) {
+        intersection = line1.pt2;
+        inside = true;
+        return true;
+    }
+
+    constexpr float epsilon = 1e-3f;
+    float denom = (line1.pt2.x - line1.pt1.x) * (line2.pt2.y - line2.pt1.y) - (line1.pt2.y - line1.pt1.y) * (line2.pt2.x - line2.pt1.x);
+    if (fabsf(denom) < epsilon) return false;
+
+    float t = ((line2.pt1.x - line1.pt1.x) * (line2.pt2.y - line2.pt1.y) - (line2.pt1.y - line1.pt1.y) * (line2.pt2.x - line2.pt1.x)) / denom;
+    float u = ((line2.pt1.x - line1.pt1.x) * (line1.pt2.y - line1.pt1.y) - (line2.pt1.y - line1.pt1.y) * (line1.pt2.x - line1.pt1.x)) / denom;
+
+    intersection.x = line1.pt1.x + t * (line1.pt2.x - line1.pt1.x);
+    intersection.y = line1.pt1.y + t * (line1.pt2.y - line1.pt1.y);
+    inside = t >= -epsilon && t <= 1.0f + epsilon && u >= -epsilon && u <= 1.0f + epsilon;
+
+    return true;
+}
+
+
+static Line _offset(const Point& p1, const Point& p2, float offset)
+{
+    auto scaledNormal = mathNormal(p1, p2) * offset;
+    return {p1 - scaledNormal, p2 - scaledNormal};
+}
+
+
+void LottieOffsetModifier::corner(const Line& line, const Line& nextLine, uint32_t movetoOutIndex, bool nextClose, Array<PathCommand>& outCmds, Array<Point>& outPts) const
+{
+    bool inside{};
+    Point intersect{};
+    if (_intersect(line, nextLine, intersect, inside)) {
+        if (inside) {
+            if (nextClose) outPts[movetoOutIndex] = intersect;
+            outPts.push(intersect);
+        } else {
+            outPts.push(line.pt2);
+            if (join == StrokeJoin::Round) {
+                outCmds.push(PathCommand::CubicTo);
+                outPts.push((line.pt2 + intersect) * 0.5f);
+                outPts.push((nextLine.pt1 + intersect) * 0.5f);
+                outPts.push(nextLine.pt1);
+            } else if (join == StrokeJoin::Miter) {
+                auto norm = mathNormal(line.pt1, line.pt2);
+                auto nextNorm = mathNormal(nextLine.pt1, nextLine.pt2);
+                auto miterDirection = (norm + nextNorm) / mathLength(norm + nextNorm);
+                outCmds.push(PathCommand::LineTo);
+                if (1.0f <= miterLimit * fabsf(miterDirection.x * norm.x + miterDirection.y * norm.y)) outPts.push(intersect);
+                else outPts.push(nextLine.pt1);
+            } else {
+                outCmds.push(PathCommand::LineTo);
+                outPts.push(nextLine.pt1);
+            }
+        }
+    } else outPts.push(line.pt2);
+}
+
+void LottieOffsetModifier::line(const PathCommand* inCmds, uint32_t inCmdsCnt, const Point* inPts, uint32_t& currentPt, uint32_t currentCmd, State& state, bool degenerated, Array<PathCommand>& outCmds, Array<Point>& outPts, float offset) const
+{
+    if (mathZero(inPts[currentPt - 1] - inPts[currentPt])) {
+        ++currentPt;
+        return;
+    }
+
+    if (inCmds[currentCmd - 1] != PathCommand::LineTo) state.line = _offset(inPts[currentPt - 1], inPts[currentPt], offset);
+
+    if (state.moveto) {
+        outCmds.push(PathCommand::MoveTo);
+        state.movetoOutIndex = outPts.count;
+        outPts.push(state.line.pt1);
+        state.firstLine = state.line;
+        state.moveto = false;
+    }
+
+    auto nonDegeneratedCubic = [&](uint32_t cmd, uint32_t pt) {
+        return inCmds[cmd] == PathCommand::CubicTo && !mathZero(inPts[pt] - inPts[pt + 1]) && !mathZero(inPts[pt + 2] - inPts[pt + 3]);
+    };
+
+    outCmds.push(PathCommand::LineTo);
+
+    if (currentCmd + 1 == inCmdsCnt || inCmds[currentCmd + 1] == PathCommand::MoveTo || nonDegeneratedCubic(currentCmd + 1, currentPt + degenerated)) {
+        outPts.push(state.line.pt2);
+        ++currentPt;
+        return;
+    }
+
+    Line nextLine = state.firstLine;
+    if (inCmds[currentCmd + 1] == PathCommand::LineTo) nextLine = _offset(inPts[currentPt + degenerated], inPts[currentPt + 1 + degenerated], offset);
+    else if (inCmds[currentCmd + 1] == PathCommand::CubicTo) nextLine = _offset(inPts[currentPt + 1 + degenerated], inPts[currentPt + 2 + degenerated], offset);
+    else if (inCmds[currentCmd + 1] == PathCommand::Close && !_zero(inPts[currentPt + degenerated], inPts[state.movetoInIndex + degenerated]))
+        nextLine = _offset(inPts[currentPt + degenerated], inPts[state.movetoInIndex + degenerated], offset);
+
+    corner(state.line, nextLine, state.movetoOutIndex, inCmds[currentCmd + 1] == PathCommand::Close, outCmds, outPts);
+
+    state.line = nextLine;
+    ++currentPt;
 }
 
 /************************************************************************/
@@ -176,5 +284,82 @@ bool LottieRoundnessModifier::modifyPolystar(TVG_UNUSED const Array<PathCommand>
 bool LottieRoundnessModifier::modifyRect(const Point& size, float& r) const
 {
     r = std::min(this->r, std::max(size.x, size.y) * 0.5f);
+    return true;
+}
+
+
+bool LottieOffsetModifier::modifyPath(const PathCommand* inCmds, uint32_t inCmdsCnt, const Point* inPts, uint32_t inPtsCnt, Array<PathCommand>& outCmds, Array<Point>& outPts, bool clockwise) const
+{
+    outCmds.reserve(inCmdsCnt * 2);
+    outPts.reserve(inPtsCnt * (join == StrokeJoin::Round ? 4 : 2));
+
+    State state;
+    auto offset = clockwise ? this->offset : -this->offset;
+
+    for (uint32_t iCmd = 0, iPt = 0; iCmd < inCmdsCnt; ++iCmd) {
+        if (inCmds[iCmd] == PathCommand::MoveTo) {
+            state.moveto = true;
+            state.movetoInIndex = iPt++;
+        } else if (inCmds[iCmd] == PathCommand::LineTo) {
+            line(inCmds, inCmdsCnt, inPts, iPt, iCmd, state, false, outCmds, outPts, offset);
+        } else if (inCmds[iCmd] == PathCommand::CubicTo) {
+            //cubic degenerated to a line
+            if (mathZero(inPts[iPt - 1] - inPts[iPt]) || mathZero(inPts[iPt + 1] - inPts[iPt + 2])) {
+                ++iPt;
+                line(inCmds, inCmdsCnt, inPts, iPt, iCmd, state, true, outCmds, outPts, offset);
+                ++iPt;
+                continue;
+            }
+
+            auto line1 = _offset(inPts[iPt - 1], inPts[iPt], offset);
+            auto line2 = _offset(inPts[iPt], inPts[iPt + 1], offset);
+            auto line3 = _offset(inPts[iPt + 1], inPts[iPt + 2], offset);
+
+            if (state.moveto) {
+                outCmds.push(PathCommand::MoveTo);
+                state.movetoOutIndex = outPts.count;
+                outPts.push(line1.pt1);
+                state.firstLine = line1;
+                state.moveto = false;
+            }
+
+            bool inside{};
+            Point intersect{};
+            _intersect(line1, line2, intersect, inside);
+            outPts.push(intersect);
+            _intersect(line2, line3, intersect, inside);
+            outPts.push(intersect);
+            outPts.push(line3.pt2);
+            outCmds.push(PathCommand::CubicTo);
+
+            iPt += 3;
+        }
+        else {
+            if (!_zero(inPts[iPt - 1], inPts[state.movetoInIndex])) {
+                outCmds.push(PathCommand::LineTo);
+                corner(state.line, state.firstLine, state.movetoOutIndex, true, outCmds, outPts);
+            }
+            outCmds.push(PathCommand::Close);
+        }
+    }
+    return true;
+}
+
+
+bool LottieOffsetModifier::modifyPolystar(const Array<PathCommand>& inCmds, const Array<Point>& inPts, Array<PathCommand>& outCmds, Array<Point>& outPts, bool clockwise) const {
+    return modifyPath(inCmds.data, inCmds.count, inPts.data, inPts.count, outCmds, outPts, clockwise);
+}
+
+
+bool LottieOffsetModifier::modifyRect(const PathCommand* inCmds, uint32_t inCmdsCnt, const Point* inPts, uint32_t inPtsCnt, Array<PathCommand>& outCmds, Array<Point>& outPts, bool clockwise) const
+{
+    return modifyPath(inCmds, inCmdsCnt, inPts, inPtsCnt, outCmds, outPts, clockwise);
+}
+
+
+bool LottieOffsetModifier::modifyEllipse(float& rx, float& ry) const
+{
+    rx += offset;
+    ry += offset;
     return true;
 }

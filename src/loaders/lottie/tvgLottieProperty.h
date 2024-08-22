@@ -409,7 +409,7 @@ struct LottiePathSet : LottieProperty
         return (*frames)[frames->count];
     }
 
-    bool operator()(float frameNo, Array<PathCommand>& cmds, Array<Point>& pts, Matrix* transform, const LottieRoundnessModifier* roundness)
+    bool operator()(float frameNo, Array<PathCommand>& cmds, Array<Point>& pts, Matrix* transform, const LottieRoundnessModifier* roundness, const LottieOffsetModifier* offsetPath)
     {
         PathSet* path = nullptr;
         LottieScalarFrame<PathSet>* frame = nullptr;
@@ -434,7 +434,16 @@ struct LottiePathSet : LottieProperty
         }
 
         if (!interpolate) {
-            if (roundness) return roundness->modifyPath(path->cmds, path->cmdsCnt, path->pts, path->ptsCnt, cmds, pts, transform);
+            if (roundness) {
+                if (offsetPath) {
+                    Array<PathCommand> cmds1(path->cmdsCnt);
+                    Array<Point> pts1(path->ptsCnt);
+                    roundness->modifyPath(path->cmds, path->cmdsCnt, path->pts, path->ptsCnt, cmds1, pts1, transform);
+                    return offsetPath->modifyPath(cmds1.data, cmds1.count, pts1.data, pts1.count, cmds, pts, true);
+                }
+                return roundness->modifyPath(path->cmds, path->cmdsCnt, path->pts, path->ptsCnt, cmds, pts, transform);
+            }
+            if (offsetPath) return offsetPath->modifyPath(path->cmds, path->cmdsCnt, path->pts, path->ptsCnt, cmds, pts, true);
 
             _copy(path, cmds);
             _copy(path, pts, transform);
@@ -444,35 +453,45 @@ struct LottiePathSet : LottieProperty
         auto s = frame->value.pts;
         auto e = (frame + 1)->value.pts;
 
-        if (roundness) {
-            auto interpPts = (Point*)malloc(frame->value.ptsCnt * sizeof(Point));
-            auto p = interpPts;
-            for (auto i = 0; i < frame->value.ptsCnt; ++i, ++s, ++e, ++p) {
-                *p = mathLerp(*s, *e, t);
-                if (transform) *p *= *transform;
+        if (!roundness && !offsetPath) {
+            for (auto i = 0; i < frame->value.ptsCnt; ++i, ++s, ++e) {
+                auto pt = mathLerp(*s, *e, t);
+                if (transform) pt *= *transform;
+                pts.push(pt);
             }
-            roundness->modifyPath(frame->value.cmds, frame->value.cmdsCnt, interpPts, frame->value.ptsCnt, cmds, pts, nullptr);
-            free(interpPts);
+            _copy(&frame->value, cmds);
             return true;
         }
 
-        for (auto i = 0; i < frame->value.ptsCnt; ++i, ++s, ++e) {
-            auto pt = mathLerp(*s, *e, t);
-            if (transform) pt *= *transform;
-            pts.push(pt);
+        auto interpPts = (Point*)malloc(frame->value.ptsCnt * sizeof(Point));
+        auto p = interpPts;
+        for (auto i = 0; i < frame->value.ptsCnt; ++i, ++s, ++e, ++p) {
+            *p = mathLerp(*s, *e, t);
+            if (transform) *p *= *transform;
         }
-        _copy(&frame->value, cmds);
+
+        if (roundness) {
+            if (offsetPath) {
+                Array<PathCommand> cmds1;
+                Array<Point> pts1;
+                roundness->modifyPath(frame->value.cmds, frame->value.cmdsCnt, interpPts, frame->value.ptsCnt, cmds1, pts1, nullptr);
+                offsetPath->modifyPath(cmds1.data, cmds1.count, pts1.data, pts1.count, cmds, pts, true);
+            } else roundness->modifyPath(frame->value.cmds, frame->value.cmdsCnt, interpPts, frame->value.ptsCnt, cmds, pts, nullptr);
+        } else if (offsetPath) offsetPath->modifyPath(frame->value.cmds, frame->value.cmdsCnt, interpPts, frame->value.ptsCnt, cmds, pts, true);
+
+        free(interpPts);
+
         return true;
     }
 
 
-    bool operator()(float frameNo, Array<PathCommand>& cmds, Array<Point>& pts, Matrix* transform, const LottieRoundnessModifier* roundness, LottieExpressions* exps)
+    bool operator()(float frameNo, Array<PathCommand>& cmds, Array<Point>& pts, Matrix* transform, const LottieRoundnessModifier* roundness, const LottieOffsetModifier* offsetPath, LottieExpressions* exps)
     {
         if (exps && exp) {
             if (exp->loop.mode != LottieExpression::LoopMode::None) frameNo = _loop(frames, frameNo, exp);
-            if (exps->result<LottiePathSet>(frameNo, cmds, pts, transform, roundness, exp)) return true;
+            if (exps->result<LottiePathSet>(frameNo, cmds, pts, transform, roundness, offsetPath, exp)) return true;
         }
-        return operator()(frameNo, cmds, pts, transform, roundness);
+        return operator()(frameNo, cmds, pts, transform, roundness, offsetPath);
     }
 
     void prepare() {}
