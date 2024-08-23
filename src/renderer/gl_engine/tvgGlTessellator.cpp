@@ -1645,10 +1645,18 @@ Stroker::Stroker(Array<float> *points, Array<uint32_t> *indices, const Matrix& m
 
 void Stroker::stroke(const RenderShape *rshape)
 {
-    mMiterLimit = rshape->strokeMiterlimit() * 2.f;
-    mStrokeWidth = std::max(mStrokeWidth, rshape->strokeWidth());
+    mMiterLimit = rshape->strokeMiterlimit();
     mStrokeCap = rshape->strokeCap();
     mStrokeJoin = rshape->strokeJoin();
+
+    mStrokeWidth = rshape->strokeWidth();
+    if (isinf(mMatrix.e11)) {
+        float strokeWidth = rshape->strokeWidth() * mMatrix.e11;
+
+        if (strokeWidth <= MIN_GL_STROKE_WIDTH) strokeWidth = MIN_GL_STROKE_WIDTH;
+
+        mStrokeWidth = strokeWidth / mMatrix.e11;
+    }
 
 
     auto cmds = rshape->path.cmds.data;
@@ -1955,7 +1963,7 @@ void Stroker::strokeMiter(const GlPoint &prev, const GlPoint &curr, const GlPoin
 
     auto pe = out * k;
 
-    if (detail::_pointLength(pe) >= mMiterLimit) {
+    if (detail::_pointLength(pe) >= mMiterLimit * strokeRadius()) {
         this->strokeBevel(prev, curr, center);
         return;
     }
