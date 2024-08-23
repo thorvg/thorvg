@@ -48,9 +48,6 @@ void WgRenderer::initialize()
 void WgRenderer::release()
 {
     disposeObjects();
-    mContext.releaseTexture(mTexScreen);
-    mContext.releaseTextureView(mTexViewScreen);
-    mContext.pipelines->layouts.releaseBindGroup(mBindGroupScreen);
     mStorageRoot.release(mContext);
     mRenderStoragePool.release(mContext);
     mRenderDataShapePool.release(mContext);
@@ -252,25 +249,14 @@ bool WgRenderer::sync()
     // get current texture
     WGPUSurfaceTexture surfaceTexture{};
     wgpuSurfaceGetCurrentTexture(mContext.surface, &surfaceTexture);
+    WGPUTextureView dstView = mContext.createTextureView(surfaceTexture.texture);
 
     // create command encoder
     const WGPUCommandEncoderDescriptor commandEncoderDesc{};
     WGPUCommandEncoder commandEncoder = wgpuDeviceCreateCommandEncoder(mContext.device, &commandEncoderDesc);
 
-    // copy render to screen with conversion rgba to bgra (screen format)
-    const WGPUComputePassDescriptor computePassDescriptor{};
-    WGPUComputePassEncoder computePassEncoder = wgpuCommandEncoderBeginComputePass(commandEncoder, &computePassDescriptor);
-    wgpuComputePassEncoderSetBindGroup(computePassEncoder, 0, mStorageRoot.bindGroupRead, 0, nullptr);
-    wgpuComputePassEncoderSetBindGroup(computePassEncoder, 1, mBindGroupScreen, 0, nullptr);
-    wgpuComputePassEncoderSetPipeline(computePassEncoder, mContext.pipelines->copy);
-    wgpuComputePassEncoderDispatchWorkgroups(computePassEncoder, (mStorageRoot.width + 7) / 8, (mStorageRoot.height + 7) / 8, 1);
-    wgpuComputePassEncoderEnd(computePassEncoder);
-
-    // copy dst storage to temporary read only storage
-    const WGPUImageCopyTexture texSrc { .texture = mTexScreen };
-    const WGPUImageCopyTexture texDst { .texture = surfaceTexture.texture };
-    const WGPUExtent3D copySize { .width = mTargetSurface.w, .height = mTargetSurface.h, .depthOrArrayLayers = 1 };
-    wgpuCommandEncoderCopyTextureToTexture(commandEncoder, &texSrc, &texDst, &copySize);
+    // show root offscreen buffer
+    mCompositor.blit(mContext, commandEncoder, &mStorageRoot, dstView);
 
     // release command encoder
     const WGPUCommandBufferDescriptor commandBufferDesc{};
@@ -278,6 +264,7 @@ bool WgRenderer::sync()
     wgpuQueueSubmit(mContext.queue, 1, &commandsBuffer);
     wgpuCommandBufferRelease(commandsBuffer);
     wgpuCommandEncoderRelease(commandEncoder);
+    mContext.releaseTextureView(dstView);
 
     return true;
 }
@@ -295,8 +282,8 @@ bool WgRenderer::target(WGPUInstance instance, WGPUSurface surface, uint32_t w, 
 
     WGPUSurfaceConfiguration surfaceConfiguration {
         .device = mContext.device,
-        .format = WGPUTextureFormat_BGRA8Unorm,
-        .usage = WGPUTextureUsage_CopyDst,
+        .format = mContext.preferredFormat,
+        .usage = WGPUTextureUsage_RenderAttachment,
         .width = w, .height = h,
         #ifdef __EMSCRIPTEN__
         .presentMode = WGPUPresentMode_Fifo,
@@ -309,10 +296,6 @@ bool WgRenderer::target(WGPUInstance instance, WGPUSurface surface, uint32_t w, 
     mRenderStoragePool.initialize(mContext, w, h);
     mStorageRoot.initialize(mContext, w, h);
     mCompositor.initialize(mContext, w, h);
-    // screen buffer
-    mTexScreen = mContext.createTexStorage(w, h, WGPUTextureFormat_BGRA8Unorm);
-    mTexViewScreen = mContext.createTextureView(mTexScreen);
-    mBindGroupScreen = mContext.pipelines->layouts.createBindGroupScreen1WO(mTexViewScreen);
     return true;
 }
 
@@ -355,12 +338,21 @@ bool WgRenderer::endComposite(Compositor* cmp)
         WgRenderStorage* src = mRenderStorageStack.last();
         mRenderStorageStack.pop();
         WgRenderStorage* dst = mRenderStorageStack.last();
-        // apply blend
-        mCompositor.blend(mCommandEncoder, src, dst, comp->opacity, comp->blend, WgRenderRasterType::Image);
+        // apply normal blend
+        if (comp->blend == BlendMethod::Normal) {
+            // begin previous render pass
+            mCompositor.beginRenderPass(mCommandEncoder, dst, false);
+            // apply blend
+            mCompositor.blendScene(mContext, src, comp);
+        // apply custom blend
+        } else {
+            // apply custom blend
+            mCompositor.blend(mCommandEncoder, src, dst, comp->opacity, comp->blend, WgRenderRasterType::Image);
+            // begin previous render pass
+            mCompositor.beginRenderPass(mCommandEncoder, dst, false);
+        }
         // back render targets to the pool
         mRenderStoragePool.free(mContext, src);
-        // begin previous render pass
-        mCompositor.beginRenderPass(mCommandEncoder, mRenderStorageStack.last(), false);
     } else { // finish composition
         // get source, mask and destination render storages
         WgRenderStorage* src = mRenderStorageStack.last();

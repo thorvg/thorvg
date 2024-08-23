@@ -31,7 +31,6 @@ private:
 public:
     WGPUBindGroupLayout layoutTexSampled{};
     WGPUBindGroupLayout layoutTexSampledBuff1Un{};
-    WGPUBindGroupLayout layoutTexScreen1WO{};
     WGPUBindGroupLayout layoutTexStrorage1WO{};
     WGPUBindGroupLayout layoutTexStrorage1RO{};
     WGPUBindGroupLayout layoutTexStrorage2RO{};
@@ -42,7 +41,6 @@ public:
 public:
     WGPUBindGroup createBindGroupTexSampled(WGPUSampler sampler, WGPUTextureView texView);
     WGPUBindGroup createBindGroupTexSampledBuff1Un(WGPUSampler sampler, WGPUTextureView texView, WGPUBuffer buff);
-    WGPUBindGroup createBindGroupScreen1WO(WGPUTextureView texView);
     WGPUBindGroup createBindGroupStrorage1WO(WGPUTextureView texView);
     WGPUBindGroup createBindGroupStrorage1RO(WGPUTextureView texView);
     WGPUBindGroup createBindGroupStrorage2RO(WGPUTextureView texView0, WGPUTextureView texView1);
