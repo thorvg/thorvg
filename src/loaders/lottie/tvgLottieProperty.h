@@ -135,6 +135,7 @@ struct LottieExpression
     LottieLayer* layer;
     LottieObject* object;
     LottieProperty* property;
+    bool disabled = false;
 
     struct {
         uint32_t key = 0;      //the keyframe number repeating to
