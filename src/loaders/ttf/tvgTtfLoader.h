@@ -46,9 +46,9 @@ struct TtfLoader : public FontLoader
     using FontLoader::open;
     bool open(const string& path) override;
     bool open(const char *data, uint32_t size, const string& rpath, bool copy) override;
-    bool resize(Paint* paint, float w, float h) override;
-    bool request(Shape* shape, char* text, bool italic = false) override;
+    bool request(Shape* shape, char* text, float fontSize, bool italic = false) override;
     bool read() override;
+    bool transform() override;
     void clear();
 };
 

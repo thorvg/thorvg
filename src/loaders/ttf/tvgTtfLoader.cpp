@@ -208,20 +208,16 @@ void TtfLoader::clear()
 /* External Class Implementation                                        */
 /************************************************************************/
 
-
-bool TtfLoader::resize(Paint* paint, float sx, TVG_UNUSED float sy)
+bool TtfLoader::transform()
 {
-    if (!paint) return false;
+    if (!shape) return false;
     auto shift = 0.0f;
-    auto dpi = 96.0f / 72.0f;   //dpi base?
-    scale = sx * dpi / reader.metrics.unitsPerEm;
     if (italic) shift = -scale * 0.18f;  //experimental decision.
     Matrix m = {scale, shift, -(shift * reader.metrics.minw), 0, scale, 0, 0, 0, 1};
-    paint->transform(m);
+    shape->transform(m);
 
     return true;
 }
-
 
 TtfLoader::TtfLoader() : FontLoader(FileType::Ttf)
 {
@@ -258,11 +254,14 @@ bool TtfLoader::open(const char* data, uint32_t size, TVG_UNUSED const string& r
 }
 
 
-bool TtfLoader::request(Shape* shape, char* text, bool italic)
+bool TtfLoader::request(Shape* shape, char* text, float fontSize, bool italic)
 {
     this->shape = shape;
     this->text = text;
     this->italic = italic;
+
+    auto dpi = 96.0f / 72.0f;   //dpi base?
+    this->scale = fontSize * dpi / reader.metrics.unitsPerEm;
 
     return true;
 }
