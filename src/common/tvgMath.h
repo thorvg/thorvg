@@ -165,7 +165,7 @@ static inline void log(const Matrix& m)
 
 void operator*=(Point& pt, const Matrix& m);
 Point operator*(const Point& pt, const Matrix& m);
-
+Point normal(const Point& p1, const Point& p2);
 
 static inline bool zero(const Point& p)
 {
@@ -230,17 +230,6 @@ static inline Point operator*(const float& lhs, const Point& rhs)
 static inline Point operator/(const Point& lhs, const float rhs)
 {
     return {lhs.x / rhs, lhs.y / rhs};
-}
-
-
-static inline Point normal(const Point& p1, const Point& p2)
-{
-    auto dir = p2 - p1;
-    auto len = length(dir);
-    if (tvg::zero(len)) return {};
-
-    auto unitDir = dir / len;
-    return {-unitDir.y, unitDir.x};
 }
 
 

@@ -212,6 +212,17 @@ Point operator*(const Point& pt, const Matrix& m)
 }
 
 
+Point normal(const Point& p1, const Point& p2)
+{
+    auto dir = p2 - p1;
+    auto len = length(dir);
+    if (tvg::zero(len)) return {};
+
+    auto unitDir = dir / len;
+    return {-unitDir.y, unitDir.x};
+}
+
+
 float Line::length() const
 {
     return _lineLength(pt1, pt2);
