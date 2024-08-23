@@ -98,9 +98,9 @@ struct Text::Impl
     {
         if (!loader) return false;
 
+        loader->request(shape, utf8, italic);
         //reload
         if (changed) {
-            loader->request(shape, utf8, italic);
             loader->read();
             changed = false;
         }
