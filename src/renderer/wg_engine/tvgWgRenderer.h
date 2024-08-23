@@ -75,11 +75,6 @@ private:
     WgPipelines mPipelines;
     WgCompositor mCompositor;
     
-    // screen buffer
-    WGPUTexture mTexScreen{};
-    WGPUTextureView mTexViewScreen{};
-    WGPUBindGroup mBindGroupScreen{};
-
     Surface mTargetSurface;
     BlendMethod mBlendMethod{};
     RenderRegion mViewport{};

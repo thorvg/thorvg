@@ -45,15 +45,6 @@ WGPUBindGroup WgBindGroupLayouts::createBindGroupTexSampledBuff1Un(WGPUSampler s
 }
 
 
-WGPUBindGroup WgBindGroupLayouts::createBindGroupScreen1WO(WGPUTextureView texView) {
-    const WGPUBindGroupEntry bindGroupEntrys[] = {
-        { .binding = 0, .textureView = texView }
-    };
-    const WGPUBindGroupDescriptor bindGroupDesc { .layout = layoutTexScreen1WO, .entryCount = 1, .entries = bindGroupEntrys };
-    return wgpuDeviceCreateBindGroup(device, &bindGroupDesc);
-}
-
-
 WGPUBindGroup WgBindGroupLayouts::createBindGroupStrorage1WO(WGPUTextureView texView)
 {
     const WGPUBindGroupEntry bindGroupEntrys[] = {
@@ -150,7 +141,6 @@ void WgBindGroupLayouts::initialize(WgContext& context)
     const WGPUTextureBindingLayout texture = { .sampleType = WGPUTextureSampleType_Float, .viewDimension = WGPUTextureViewDimension_2D };
     const WGPUStorageTextureBindingLayout storageTextureWO { .access = WGPUStorageTextureAccess_WriteOnly, .format = WGPUTextureFormat_RGBA8Unorm, .viewDimension = WGPUTextureViewDimension_2D };
     const WGPUStorageTextureBindingLayout storageTextureRO { .access = WGPUStorageTextureAccess_ReadOnly,  .format = WGPUTextureFormat_RGBA8Unorm, .viewDimension = WGPUTextureViewDimension_2D };
-    const WGPUStorageTextureBindingLayout storageScreenWO  { .access = WGPUStorageTextureAccess_WriteOnly, .format = WGPUTextureFormat_BGRA8Unorm, .viewDimension = WGPUTextureViewDimension_2D };
     const WGPUBufferBindingLayout bufferUniform { .type = WGPUBufferBindingType_Uniform };
 
     { // bind group layout tex sampled
@@ -172,15 +162,6 @@ void WgBindGroupLayouts::initialize(WgContext& context)
         const WGPUBindGroupLayoutDescriptor bindGroupLayoutDesc { .entryCount = 3, .entries = bindGroupLayoutEntries };
         layoutTexSampledBuff1Un = wgpuDeviceCreateBindGroupLayout(device, &bindGroupLayoutDesc);
         assert(layoutTexSampledBuff1Un);
-    }
-
-    { // bind group layout tex screen 1 RO
-        const WGPUBindGroupLayoutEntry bindGroupLayoutEntries[] {
-            { .binding = 0, .visibility = visibility_frag, .storageTexture = storageScreenWO }
-        };
-        const WGPUBindGroupLayoutDescriptor bindGroupLayoutDesc { .entryCount = 1, .entries = bindGroupLayoutEntries };
-        layoutTexScreen1WO = wgpuDeviceCreateBindGroupLayout(device, &bindGroupLayoutDesc);
-        assert(layoutTexScreen1WO);
     }
 
     { // bind group layout tex storage 1 WO
@@ -259,7 +240,6 @@ void WgBindGroupLayouts::release(WgContext& context)
     wgpuBindGroupLayoutRelease(layoutBuffer3Un);
     wgpuBindGroupLayoutRelease(layoutBuffer2Un);
     wgpuBindGroupLayoutRelease(layoutBuffer1Un);
-    wgpuBindGroupLayoutRelease(layoutTexScreen1WO);
     wgpuBindGroupLayoutRelease(layoutTexStrorage3RO);
     wgpuBindGroupLayoutRelease(layoutTexStrorage2RO);
     wgpuBindGroupLayoutRelease(layoutTexStrorage1RO);

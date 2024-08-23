@@ -291,6 +291,58 @@ fn fs_main_DarkenMask(in: VertexOutput) -> @location(0) vec4f {
 };
 )";
 
+
+//************************************************************************
+// graphics shader source: scene blend
+//************************************************************************
+
+const char* cShaderSrc_Scene_Blend = R"(
+struct VertexInput { @location(0) position: vec2f, @location(1) texCoord: vec2f };
+struct VertexOutput { @builtin(position) position: vec4f, @location(0) texCoord: vec2f };
+
+@group(0) @binding(0) var uSamplerSrc : sampler;
+@group(0) @binding(1) var uTextureSrc : texture_2d<f32>;
+@group(1) @binding(0) var<uniform> So : f32;
+
+@vertex
+fn vs_main(in: VertexInput) -> VertexOutput {
+    var out: VertexOutput;
+    out.position = vec4f(in.position.xy, 0.0, 1.0);
+    out.texCoord = in.texCoord;
+    return out;
+}
+
+@fragment
+fn fs_main(in: VertexOutput) -> @location(0) vec4f {
+    return textureSample(uTextureSrc, uSamplerSrc, in.texCoord.xy) * So;
+};
+)";
+
+//************************************************************************
+// graphics shader source: texture blit
+//************************************************************************
+
+const char* cShaderSrc_Blit = R"(
+struct VertexInput { @location(0) position: vec2f, @location(1) texCoord: vec2f };
+struct VertexOutput { @builtin(position) position: vec4f, @location(0) texCoord: vec2f };
+
+@group(0) @binding(0) var uSamplerSrc : sampler;
+@group(0) @binding(1) var uTextureSrc : texture_2d<f32>;
+
+@vertex
+fn vs_main(in: VertexInput) -> VertexOutput {
+    var out: VertexOutput;
+    out.position = vec4f(in.position.xy, 0.0, 1.0);
+    out.texCoord = in.texCoord;
+    return out;
+}
+
+@fragment
+fn fs_main(in: VertexOutput) -> @location(0) vec4f {
+    return textureSample(uTextureSrc, uSamplerSrc, in.texCoord.xy);
+};
+)";
+
 //************************************************************************
 // compute shader source: merge clip path masks
 //************************************************************************
@@ -516,19 +568,5 @@ fn cs_main_SoftLight(@builtin(global_invocation_id) id: vec3u) {
     let One = vec3f(1.0, 1.0, 1.0);
     let Rc = min(One, (One - 2 * d.Sc) * d.Dc * d.Dc + 2.0 * d.Sc * d.Dc);
     textureStore(imageTgt, id.xy, postProcess(d, vec4f(Rc, 1.0)));
-};
-)";
-
-//************************************************************************
-// compute shader source: copy
-//************************************************************************
-
-const char* cShaderSrc_Copy = R"(
-@group(0) @binding(0) var imageSrc : texture_storage_2d<rgba8unorm, read>;
-@group(1) @binding(0) var imageDst : texture_storage_2d<bgra8unorm, write>;
-
-@compute @workgroup_size(8, 8)
-fn cs_main(@builtin(global_invocation_id) id: vec3u) {
-    textureStore(imageDst, id.xy, textureLoad(imageSrc, id.xy));
 };
 )";

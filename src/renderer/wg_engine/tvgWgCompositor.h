@@ -58,6 +58,7 @@ private:
     static WgPipelineBlendType blendMethodToBlendType(BlendMethod blendMethod);
 
     void composeRegion(WgContext& context, WgRenderStorage* src, WgRenderStorage* mask, CompositeMethod composeMethod, RenderRegion& rect);
+    RenderRegion shrinkRenderRegion(RenderRegion& rect);
 public:
     // render target dimensions
     uint32_t width{};
@@ -77,6 +78,7 @@ public:
     void blendShape(WgContext& context, WgRenderDataShape* renderData, BlendMethod blendMethod);
     void blendStrokes(WgContext& context, WgRenderDataShape* renderData, BlendMethod blendMethod);
     void blendImage(WgContext& context, WgRenderDataPicture* renderData, BlendMethod blendMethod);
+    void blendScene(WgContext& context, WgRenderStorage* src, WgCompose* cmp);
 
     void composeShape(WgContext& context, WgRenderDataShape* renderData, WgRenderStorage* mask, CompositeMethod composeMethod);
     void composeStrokes(WgContext& context, WgRenderDataShape* renderData, WgRenderStorage* mask, CompositeMethod composeMethod);
@@ -90,6 +92,7 @@ public:
 
     void mergeMasks(WGPUCommandEncoder encoder, WgRenderStorage* mask0, WgRenderStorage* mask1);
     void blend(WGPUCommandEncoder encoder, WgRenderStorage* src, WgRenderStorage* dst, uint8_t opacity, BlendMethod blendMethod, WgRenderRasterType rasterType);
+    void blit(WgContext& context, WGPUCommandEncoder encoder, WgRenderStorage* src, WGPUTextureView dstView);
 };
 
 #endif // _TVG_WG_COMPOSITOR_H_

@@ -87,6 +87,17 @@ WgPipelineBlendType WgCompositor::blendMethodToBlendType(BlendMethod blendMethod
 }
 
 
+RenderRegion WgCompositor::shrinkRenderRegion(RenderRegion& rect)
+{
+    // cut viewport to screen dimensions
+    int32_t xmin = std::max(0, std::min((int32_t)width, rect.x));
+    int32_t ymin = std::max(0, std::min((int32_t)height, rect.y));
+    int32_t xmax = std::max(0, std::min((int32_t)width, rect.x + rect.w));
+    int32_t ymax = std::max(0, std::min((int32_t)height, rect.y + rect.h));
+    return { xmin, ymin, xmax - xmin, ymax - ymin };
+}
+
+
 void WgCompositor::beginRenderPass(WGPUCommandEncoder commandEncoder, WgRenderStorage* target, bool clear)
 {
     assert(commandEncoder);
@@ -258,7 +269,19 @@ void WgCompositor::blendImage(WgContext& context, WgRenderDataPicture* renderDat
 };
 
 
-// TODO: use direct mask applience
+void WgCompositor::blendScene(WgContext& context, WgRenderStorage* src, WgCompose* cmp)
+{
+    assert(currentTarget);
+    RenderRegion rect = shrinkRenderRegion(cmp->aabb);
+    wgpuRenderPassEncoderSetScissorRect(renderPassEncoder, rect.x, rect.y, rect.w, rect.h);
+    wgpuRenderPassEncoderSetStencilReference(renderPassEncoder, 0);
+    wgpuRenderPassEncoderSetBindGroup(renderPassEncoder, 0, src->bindGroupTexure, 0, nullptr);
+    wgpuRenderPassEncoderSetBindGroup(renderPassEncoder, 1, bindGroupOpacities[cmp->opacity], 0, nullptr);
+    wgpuRenderPassEncoderSetPipeline(renderPassEncoder, pipelines->sceneBlend);
+    meshData.drawImage(context, renderPassEncoder);
+}
+
+
 void WgCompositor::composeShape(WgContext& context, WgRenderDataShape* renderData, WgRenderStorage* mask, CompositeMethod composeMethod)
 {
     assert(mask);
@@ -282,7 +305,6 @@ void WgCompositor::composeShape(WgContext& context, WgRenderDataShape* renderDat
 }
 
 
-// TODO: use direct mask applience
 void WgCompositor::composeStrokes(WgContext& context, WgRenderDataShape* renderData, WgRenderStorage* mask, CompositeMethod composeMethod)
 {
     assert(mask);
@@ -306,7 +328,6 @@ void WgCompositor::composeStrokes(WgContext& context, WgRenderDataShape* renderD
 }
 
 
-// TODO: use direct mask applience
 void WgCompositor::composeImage(WgContext& context, WgRenderDataPicture* renderData, WgRenderStorage* mask, CompositeMethod composeMethod)
 {
     assert(mask);
@@ -333,13 +354,7 @@ void WgCompositor::composeScene(WgContext& context, WgRenderStorage* src, WgRend
     assert(src);
     assert(mask);
     assert(renderPassEncoder);
-    // cut viewport to screen dimensions
-    int32_t xmin = std::max(0, std::min((int32_t)width, cmp->aabb.x));
-    int32_t ymin = std::max(0, std::min((int32_t)height, cmp->aabb.y));
-    int32_t xmax = std::max(0, std::min((int32_t)width, cmp->aabb.x + cmp->aabb.w));
-    int32_t ymax = std::max(0, std::min((int32_t)height, cmp->aabb.y + cmp->aabb.h));
-    if ((xmin >= xmax) || (ymin >= ymax)) return;
-    RenderRegion rect { xmin, ymin, xmax - xmin, ymax - ymin };
+    RenderRegion rect = shrinkRenderRegion(cmp->aabb);
     composeRegion(context, src, mask, cmp->method, rect);
 }
 
@@ -519,4 +534,20 @@ void WgCompositor::blend(WGPUCommandEncoder encoder, WgRenderStorage* src, WgRen
     wgpuComputePassEncoderSetPipeline(computePassEncoder, pipeline);
     wgpuComputePassEncoderDispatchWorkgroups(computePassEncoder, (width + 7) / 8, (height + 7) / 8, 1);
     wgpuComputePassEncoderEnd(computePassEncoder);
+}
+
+
+void WgCompositor::blit(WgContext& context, WGPUCommandEncoder encoder, WgRenderStorage* src, WGPUTextureView dstView) {
+    WGPURenderPassDepthStencilAttachment depthStencilAttachment{ .view = texViewStencil, .stencilLoadOp = WGPULoadOp_Load, .stencilStoreOp = WGPUStoreOp_Discard };
+    WGPURenderPassColorAttachment colorAttachment { .view = dstView, .loadOp = WGPULoadOp_Load, .storeOp = WGPUStoreOp_Store };
+    #ifdef __EMSCRIPTEN__
+    colorAttachment.depthSlice = WGPU_DEPTH_SLICE_UNDEFINED;
+    #endif
+    WGPURenderPassDescriptor renderPassDesc{ .colorAttachmentCount = 1, .colorAttachments = &colorAttachment, .depthStencilAttachment = &depthStencilAttachment };
+    WGPURenderPassEncoder renderPass = wgpuCommandEncoderBeginRenderPass(encoder, &renderPassDesc);
+    wgpuRenderPassEncoderSetBindGroup(renderPass, 0, src->bindGroupTexure, 0, nullptr);
+    wgpuRenderPassEncoderSetPipeline(renderPass, pipelines->blit);
+    meshData.drawImage(context, renderPass);
+    wgpuRenderPassEncoderEnd(renderPass);
+    wgpuRenderPassEncoderRelease(renderPass);
 }
