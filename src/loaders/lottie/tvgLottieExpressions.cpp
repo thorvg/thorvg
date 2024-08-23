@@ -1080,7 +1080,7 @@ static void _buildProperty(float frameNo, jerry_value_t context, LottieExpressio
 
 static jerry_value_t _comp(const jerry_call_info_t* info, const jerry_value_t args[], const jerry_length_t argsCnt)
 {
-    auto data = static_cast<ExpContent*>(jerry_object_get_native_ptr(info->function, nullptr));
+    auto data = static_cast<ExpContent*>(jerry_object_get_native_ptr(info->function, &freeCb));
     auto comp = static_cast<LottieLayer*>(data->obj);
     auto layer = comp->layerById(_idByName(args[0]));
 
@@ -1300,6 +1300,8 @@ jerry_value_t LottieExpressions::buildGlobal()
 
 jerry_value_t LottieExpressions::evaluate(float frameNo, LottieExpression* exp)
 {
+    if (exp->disabled) return jerry_undefined();
+
     buildGlobal(exp);
 
     //main composition
@@ -1327,6 +1329,7 @@ jerry_value_t LottieExpressions::evaluate(float frameNo, LottieExpression* exp)
 
     if (jerry_value_is_exception(eval) || jerry_value_is_undefined(eval)) {
         TVGERR("LOTTIE", "Failed to dispatch the expressions!");
+        exp->disabled = true;
         return jerry_undefined();
     }
 
