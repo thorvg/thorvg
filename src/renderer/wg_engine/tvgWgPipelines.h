@@ -36,12 +36,13 @@ private:
     WGPUShaderModule shaderLinear{};
     WGPUShaderModule shaderImage{};
     WGPUShaderModule shaderSceneComp{};
+    WGPUShaderModule shaderSceneBlend{};
+    WGPUShaderModule shaderBlit{};
     // compute pipeline shaders
     WGPUShaderModule shaderMergeMasks;
     WGPUShaderModule shaderBlendSolid;
     WGPUShaderModule shaderBlendGradient;
     WGPUShaderModule shaderBlendImage;
-    WGPUShaderModule shaderCopy;
 private:
     // graphics pipeline layouts
     WGPUPipelineLayout layoutStencil{};
@@ -49,10 +50,11 @@ private:
     WGPUPipelineLayout layoutGradient{};
     WGPUPipelineLayout layoutImage{};
     WGPUPipelineLayout layoutSceneComp{};
+    WGPUPipelineLayout layoutSceneBlend{};
+    WGPUPipelineLayout layoutBlit{};
     // compute pipeline layouts
     WGPUPipelineLayout layoutMergeMasks{};
     WGPUPipelineLayout layoutBlend{};
-    WGPUPipelineLayout layoutCopy{};
 public:
     // graphics pipeline
     WgBindGroupLayouts layouts;
@@ -64,13 +66,14 @@ public:
     WGPURenderPipeline linear[3]{};
     WGPURenderPipeline image[3]{};
     WGPURenderPipeline sceneComp[12];
+    WGPURenderPipeline sceneBlend;
+    WGPURenderPipeline blit{};
     WGPURenderPipeline clipPath{};
     // compute pipeline
     WGPUComputePipeline mergeMasks;
     WGPUComputePipeline blendSolid[14];
     WGPUComputePipeline blendGradient[14];
     WGPUComputePipeline blendImage[14];
-    WGPUComputePipeline copy;
 private:
     void releaseGraphicHandles(WgContext& context);
     void releaseComputeHandles(WgContext& context);
@@ -82,7 +85,7 @@ private:
         const WGPUShaderModule shaderModule, const char* vsEntryPoint, const char* fsEntryPoint,
         const WGPUPipelineLayout pipelineLayout,
         const WGPUVertexBufferLayout *vertexBufferLayouts, const uint32_t vertexBufferLayoutsCount,
-        const WGPUColorWriteMaskFlags writeMask,
+        const WGPUColorWriteMaskFlags writeMask, const WGPUTextureFormat colorTargetFormat,
         const WGPUCompareFunction stencilFunctionFrnt, const WGPUStencilOperation stencilOperationFrnt,
         const WGPUCompareFunction stencilFunctionBack, const WGPUStencilOperation stencilOperationBack,
         const WGPUPrimitiveState primitiveState, const WGPUMultisampleState multisampleState, const WGPUBlendState blendState);

@@ -48,7 +48,7 @@ void WgContext::initialize(WGPUInstance instance, WGPUSurface surface)
     // get adapter and surface properties
     WGPUFeatureName featureNames[32]{};
     size_t featuresCount = wgpuAdapterEnumerateFeatures(adapter, featureNames);
-    preferredFormat = wgpuSurfaceGetPreferredFormat(surface, adapter);
+    preferredFormat = WGPUTextureFormat_BGRA8Unorm;
 
     // request device
     const WGPUDeviceDescriptor deviceDesc { .nextInChain = nullptr, .label = "The device", .requiredFeatureCount = featuresCount, .requiredFeatures = featureNames };
