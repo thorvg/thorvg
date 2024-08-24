@@ -98,13 +98,13 @@ struct Text::Impl
     {
         if (!loader) return false;
 
-        loader->request(shape, utf8, fontSize, italic);
+        loader->request(shape, utf8, italic);
         //reload
         if (changed) {
             loader->read();
             changed = false;
         }
-        return loader->transform();
+        return loader->resize(shape, fontSize, fontSize);
     }
 
     RenderData update(RenderMethod* renderer, const Matrix& transform, Array<RenderData>& clips, uint8_t opacity, RenderUpdateFlag pFlag, TVG_UNUSED bool clipper)
