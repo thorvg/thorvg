@@ -41,7 +41,9 @@ struct Text::Impl
     char* utf8 = nullptr;
     float fontSize;
     bool italic = false;
-    bool changed = false;
+    
+    bool needRead = false;
+    bool needResize = false;
 
     Impl(Text* p) : paint(p), shape(Shape::gen().release())
     {
@@ -59,7 +61,7 @@ struct Text::Impl
         free(this->utf8);
         if (utf8) this->utf8 = strdup(utf8);
         else this->utf8 = nullptr;
-        changed = true;
+        needRead = needResize = true;
 
         return Result::Success;
     }
@@ -69,6 +71,12 @@ struct Text::Impl
         auto loader = LoaderMgr::loader(name);
         if (!loader) return Result::InsufficientCondition;
 
+        auto italic = style && strstr(style, "italic");
+        if(size != fontSize || italic != this->italic) {
+            fontSize = size;
+            this->italic = italic;
+            needResize = true;
+        }
         //Same resource has been loaded.
         if (this->loader == loader) {
             this->loader->sharing--;  //make it sure the reference counting.
@@ -78,9 +86,7 @@ struct Text::Impl
         }
         this->loader = static_cast<FontLoader*>(loader);
 
-        fontSize = size;
-        if (style && strstr(style, "italic")) italic = true;
-        changed = true;
+        needRead = needResize = true;
         return Result::Success;
     }
 
@@ -98,13 +104,19 @@ struct Text::Impl
     {
         if (!loader) return false;
 
-        loader->request(shape, utf8, italic);
-        //reload
-        if (changed) {
-            loader->read();
-            changed = false;
+        if(needRead || needResize) {
+            loader->request(shape, utf8, italic);
+            //reload
+            if (needRead) {
+                if(!loader->read()) return false;
+                needRead = false;
+            }
+            if (needResize) {
+                if(!loader->resize(shape, fontSize, fontSize)) return false;
+                needResize = false;
+            }
         }
-        return loader->resize(shape, fontSize, fontSize);
+        return true;
     }
 
     RenderData update(RenderMethod* renderer, const Matrix& transform, Array<RenderData>& clips, uint8_t opacity, RenderUpdateFlag pFlag, TVG_UNUSED bool clipper)
