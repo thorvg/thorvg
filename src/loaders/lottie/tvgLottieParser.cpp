@@ -903,11 +903,11 @@ LottieObject* LottieParser::parseObject()
     else if (!strcmp(type, "gs")) return parseGradientStroke();
     else if (!strcmp(type, "tm")) return parseTrimpath();
     else if (!strcmp(type, "rp")) return parseRepeater();
-    else if (!strcmp(type, "mm")) TVGERR("LOTTIE", "MergePath(mm) is not supported yet");
-    else if (!strcmp(type, "pb")) TVGERR("LOTTIE", "Puker/Bloat(pb) is not supported yet");
-    else if (!strcmp(type, "tw")) TVGERR("LOTTIE", "Twist(tw) is not supported yet");
+    else if (!strcmp(type, "mm")) TVGLOG("LOTTIE", "MergePath(mm) is not supported yet");
+    else if (!strcmp(type, "pb")) TVGLOG("LOTTIE", "Puker/Bloat(pb) is not supported yet");
+    else if (!strcmp(type, "tw")) TVGLOG("LOTTIE", "Twist(tw) is not supported yet");
     else if (!strcmp(type, "op")) return parseOffsetPath();
-    else if (!strcmp(type, "zz")) TVGERR("LOTTIE", "Zig Zag(zz) is not supported yet");
+    else if (!strcmp(type, "zz")) TVGLOG("LOTTIE", "ZigZag(zz) is not supported yet");
     return nullptr;
 }
 
@@ -1191,8 +1191,16 @@ void LottieParser::parseText(Array<LottieObject*>& parent)
     while (auto key = nextObjectKey()) {
         if (KEY_AS("d")) parseProperty<LottieProperty::Type::TextDoc>(text->doc, text);
         else if (KEY_AS("a")) parseTextRange(text);
-        //else if (KEY_AS("p")) TVGLOG("LOTTIE", "Text Follow Path (p) is not supported"); 
-        //else if (KEY_AS("m")) TVGLOG("LOTTIE", "Text Alignment Option (m) is not supported");
+        else if (KEY_AS("p"))
+        {
+            TVGLOG("LOTTIE", "Text Follow Path (p) is not supported");
+            skip(key);
+        }
+        else if (KEY_AS("m"))
+        {
+            TVGLOG("LOTTIE", "Text Alignment Option (m) is not supported");
+            skip(key);
+        }
         else skip(key);
     }
 
@@ -1298,7 +1306,7 @@ LottieLayer* LottieParser::parseLayer(LottieLayer* precomp)
         else if (KEY_AS("t")) parseText(layer->children);
         else if (KEY_AS("ef"))
         {
-            TVGERR("LOTTIE", "layer effect(ef) is not supported!");
+            TVGLOG("LOTTIE", "layer effect(ef) is not supported!");
             skip(key);
         }
         else skip(key);
