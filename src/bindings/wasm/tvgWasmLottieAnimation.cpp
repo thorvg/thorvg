@@ -132,7 +132,7 @@ public:
         if (engine == "sw") this->engine = new TvgSwEngine;
         else if (engine == "wg") this->engine = new TvgWgEngine;
 
-        if (!engine) {
+        if (!this->engine) {
             errorMsg = "Invalid engine";
             return;
         }
