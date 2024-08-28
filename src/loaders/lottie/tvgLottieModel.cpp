@@ -157,6 +157,7 @@ void LottieTrimpath::segment(float frameNo, float& start, float& end, LottieExpr
         return;
     }
 
+    if (start > end) std::swap(start, end);
     start += o;
     end += o;
 }
