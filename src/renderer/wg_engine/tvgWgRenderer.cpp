@@ -56,6 +56,13 @@ void WgRenderer::release()
     mCompositorStack.clear();
     mRenderStorageStack.clear();
     mPipelines.release(mContext);
+    if (gpuOwner) {
+        if (device) wgpuDeviceRelease(device);
+        device = nullptr;
+        if (adapter) wgpuAdapterRelease(adapter);
+        adapter = nullptr;
+        gpuOwner = false;
+    }
 }
 
 
@@ -246,9 +253,10 @@ bool WgRenderer::clear()
 bool WgRenderer::sync()
 {
     disposeObjects();
+    if (!surface) return false;
     // get current texture
     WGPUSurfaceTexture surfaceTexture{};
-    wgpuSurfaceGetCurrentTexture(mContext.surface, &surfaceTexture);
+    wgpuSurfaceGetCurrentTexture(surface, &surfaceTexture);
     WGPUTextureView dstView = mContext.createTextureView(surfaceTexture.texture);
 
     // create command encoder
@@ -271,14 +279,44 @@ bool WgRenderer::sync()
 
 
 // target for native window handle
-bool WgRenderer::target(WGPUInstance instance, WGPUSurface surface, uint32_t w, uint32_t h)
+bool WgRenderer::target(WGPUInstance instance, WGPUSurface surface, uint32_t w, uint32_t h, WGPUDevice device)
 {
+    gpuOwner = false;
+    this->device = device;
+    if (!this->device) {
+        // request adapter
+        const WGPURequestAdapterOptions requestAdapterOptions { .nextInChain = nullptr, .compatibleSurface = surface, .powerPreference = WGPUPowerPreference_HighPerformance, .forceFallbackAdapter = false };
+        auto onAdapterRequestEnded = [](WGPURequestAdapterStatus status, WGPUAdapter adapter, char const * message, void * pUserData) { *((WGPUAdapter*)pUserData) = adapter; };
+        wgpuInstanceRequestAdapter(instance, &requestAdapterOptions, onAdapterRequestEnded, &this->adapter);
+
+        // get adapter and surface properties
+        WGPUFeatureName featureNames[32]{};
+        size_t featuresCount = wgpuAdapterEnumerateFeatures(this->adapter, featureNames);
+
+        // request device
+        const WGPUDeviceDescriptor deviceDesc { .nextInChain = nullptr, .label = "The device", .requiredFeatureCount = featuresCount, .requiredFeatures = featureNames };
+        auto onDeviceRequestEnded = [](WGPURequestDeviceStatus status, WGPUDevice device, char const * message, void * pUserData) { *((WGPUDevice*)pUserData) = device; };
+        wgpuAdapterRequestDevice(this->adapter, &deviceDesc, onDeviceRequestEnded, &this->device);
+        gpuOwner = true;
+    }
+
+    mContext.initialize(instance, this->device);
+    initialize();
+    target(surface, w, h);
+    mRenderStoragePool.initialize(mContext, w, h);
+    mStorageRoot.initialize(mContext, w, h);
+    mCompositor.initialize(mContext, w, h);
+    return true;
+}
+
+bool WgRenderer::target(WGPUSurface surface, uint32_t w, uint32_t h) {
     // store target surface properties
+    this->surface = surface;
     mTargetSurface.stride = w;
-    mTargetSurface.w = w > 0 ? w : 1;
-    mTargetSurface.h = h > 0 ? h : 1;
-    
-    mContext.initialize(instance, surface);
+    mTargetSurface.w = w;
+    mTargetSurface.h = h;
+    if (w == 0 || h == 0) return false;
+    if (!surface) return true;
 
     WGPUSurfaceConfiguration surfaceConfiguration {
         .device = mContext.device,
@@ -292,10 +330,7 @@ bool WgRenderer::target(WGPUInstance instance, WGPUSurface surface, uint32_t w, 
         #endif
     };
     wgpuSurfaceConfigure(surface, &surfaceConfiguration);
-    initialize();
-    mRenderStoragePool.initialize(mContext, w, h);
-    mStorageRoot.initialize(mContext, w, h);
-    mCompositor.initialize(mContext, w, h);
+
     return true;
 }
 
