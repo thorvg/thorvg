@@ -351,13 +351,8 @@ static jerry_value_t _addsub(const jerry_value_t args[], float addsub)
     if (n1 || n2) {
         auto secondary = n1 ? 0 : 1;
         auto val3 = jerry_value_as_number(args[secondary]);
-        if (secondary == 0) {
-            x = (x * addsub) + val3;
-            y = (y * addsub) + val3;
-        } else {
-            x += (addsub * val3);
-            y += (addsub * val3);
-        }
+        if (secondary == 0) x = (x * addsub) + val3;
+        else x += (addsub * val3);
     //2d + 2d
     } else {
         auto val3 = jerry_object_get_index(args[1], 0);
