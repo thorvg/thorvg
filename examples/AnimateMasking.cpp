@@ -75,6 +75,7 @@ struct UserExample : tvgexam::Example
     bool update(tvg::Canvas* canvas, uint32_t elapsed) override
     {
         if (!canvas) return false;
+        if (!tvgexam::verify(canvas->clear(false))) return false;
 
         /* Update shape directly.
            You can update only necessary properties of this shape,

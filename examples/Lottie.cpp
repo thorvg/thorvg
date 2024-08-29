@@ -78,6 +78,7 @@ struct UserExample : tvgexam::Example
     bool update(tvg::Canvas* canvas, uint32_t elapsed) override
     {
         if (!canvas) return false;
+        if (!tvgexam::verify(canvas->clear(false))) return false;
 
         for (auto& animation : animations) {
             auto progress = tvgexam::progress(elapsed, animation->duration());
