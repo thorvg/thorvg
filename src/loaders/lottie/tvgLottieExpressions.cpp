@@ -334,21 +334,39 @@ static void _buildLayer(jerry_value_t context, float frameNo, LottieLayer* layer
 
 static jerry_value_t _addsub(const jerry_value_t args[], float addsub)
 {
-    //1d
-    if (jerry_value_is_number(args[0])) return jerry_number(jerry_value_as_number(args[0]) + addsub * jerry_value_as_number(args[1]));
+    auto n1 = jerry_value_is_number(args[0]);
+    auto n2 = jerry_value_is_number(args[1]);
 
-    //2d
-    auto val1 = jerry_object_get_index(args[0], 0);
-    auto val2 = jerry_object_get_index(args[0], 1);
-    auto val3 = jerry_object_get_index(args[1], 0);
-    auto val4 = jerry_object_get_index(args[1], 1);
-    auto x = jerry_value_as_number(val1) + addsub * jerry_value_as_number(val3);
-    auto y = jerry_value_as_number(val2) + addsub * jerry_value_as_number(val4);
+    //1d + 1d
+    if (n1 && n2) return jerry_number(jerry_value_as_number(args[0]) + addsub * jerry_value_as_number(args[1]));
 
+    auto val1 = jerry_object_get_index(args[n1 ? 1 : 0], 0);
+    auto val2 = jerry_object_get_index(args[n1 ? 1 : 0], 1);
+    auto x = jerry_value_as_number(val1);
+    auto y = jerry_value_as_number(val2);
     jerry_value_free(val1);
     jerry_value_free(val2);
-    jerry_value_free(val3);
-    jerry_value_free(val4);
+
+    //2d + 1d
+    if (n1 || n2) {
+        auto secondary = n1 ? 0 : 1;
+        auto val3 = jerry_value_as_number(args[secondary]);
+        if (secondary == 0) {
+            x = (x * addsub) + val3;
+            y = (y * addsub) + val3;
+        } else {
+            x += (addsub * val3);
+            y += (addsub * val3);
+        }
+    //2d + 2d
+    } else {
+        auto val3 = jerry_object_get_index(args[1], 0);
+        auto val4 = jerry_object_get_index(args[1], 1);
+        x += (addsub * jerry_value_as_number(val3));
+        y += (addsub * jerry_value_as_number(val4));
+        jerry_value_free(val3);
+        jerry_value_free(val4);
+    }
 
     auto obj = jerry_object();
     val1 = jerry_number(x);
