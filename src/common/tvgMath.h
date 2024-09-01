@@ -68,6 +68,13 @@ static inline bool equal(float a, float b)
 }
 
 
+template <typename T>
+static inline void clamp(T& v, const T& min, const T& max)
+{
+    if (v < min) v = min;
+    else if (v > max) v = max;
+}
+
 /************************************************************************/
 /* Matrix functions                                                     */
 /************************************************************************/
