@@ -367,8 +367,7 @@ float Bezier::angle(float t) const
 uint8_t lerp(const uint8_t &start, const uint8_t &end, float t)
 {
     auto result = static_cast<int>(start + (end - start) * t);
-    if (result > 255) result = 255;
-    else if (result < 0) result = 0;
+    tvg::clamp(result, 0, 255);
     return static_cast<uint8_t>(result);
 }
 
