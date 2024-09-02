@@ -282,6 +282,7 @@ bool TtfLoader::read()
     Point offset = {0.0f, reader.metrics.hhea.ascent};
     Point kerning = {0.0f, 0.0f};
     auto lglyph = INVALID_GLYPH;
+    auto loadMinw = true;
 
     size_t idx = 0;
     while (code[idx] && idx < n) {
@@ -289,11 +290,14 @@ bool TtfLoader::read()
         if (rglyph != INVALID_GLYPH) {
             if (lglyph != INVALID_GLYPH) reader.kerning(lglyph, rglyph, kerning);
             if (!reader.convert(shape, gmetrics, offset, kerning, 1U)) break;
+            offset.x += (gmetrics.advanceWidth + kerning.x);
+            lglyph = rglyph;
+            //store the first glyph with outline min size for italic transform.
+            if (loadMinw && gmetrics.outline) {
+                reader.metrics.minw = gmetrics.minw;
+                loadMinw = false;
+            }
         }
-        offset.x += (gmetrics.advanceWidth + kerning.x);
-        lglyph = rglyph;
-        //store the first glyph min size for italic transform.
-        if (idx == 0) reader.metrics.minw = gmetrics.minw;
         ++idx;
     }
 
