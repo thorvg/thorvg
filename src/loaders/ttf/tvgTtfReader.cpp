@@ -387,12 +387,11 @@ uint32_t TtfReader::glyph(uint32_t codepoint)
 uint32_t TtfReader::glyph(uint32_t codepoint, TtfGlyphMetrics& gmetrics)
 {
     auto glyph = this->glyph(codepoint);
-    if (glyph == INVALID_GLYPH) {
+    if (glyph == INVALID_GLYPH || !glyphMetrics(glyph, gmetrics)) {
         TVGERR("TTF", "invalid glyph id, codepoint(0x%x)", codepoint);
         return INVALID_GLYPH;
     }
-    
-    return glyphMetrics(glyph, gmetrics) ? glyph : INVALID_GLYPH;
+    return glyph;
 }
 
 bool TtfReader::glyphMetrics(uint32_t glyphIndex, TtfGlyphMetrics& gmetrics)
@@ -420,7 +419,12 @@ bool TtfReader::glyphMetrics(uint32_t glyphIndex, TtfGlyphMetrics& gmetrics)
     }
 
     gmetrics.outline = outlineOffset(glyphIndex);
-    if (!gmetrics.outline || !validate(gmetrics.outline, 10)) return false;
+    // glyph without outline
+    if (gmetrics.outline == 0) {
+        gmetrics.minw = gmetrics.minh = gmetrics.yOffset = 0;
+        return true;
+    }
+    if (!validate(gmetrics.outline, 10)) return false;
 
     //read the bounding box from the font file verbatim.
     float bbox[4];
@@ -442,6 +446,7 @@ bool TtfReader::convert(Shape* shape, TtfGlyphMetrics& gmetrics, const Point& of
 {
     #define ON_CURVE 0x01
 
+    if (!gmetrics.outline) return true;
     auto outlineCnt = _i16(data, gmetrics.outline);
     if (outlineCnt == 0) return false;
     if (outlineCnt < 0) {
