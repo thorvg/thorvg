@@ -318,17 +318,22 @@ void LottieParser::getValue(float& val)
 }
 
 
-void LottieParser::getValue(Point& pt)
+bool LottieParser::getValue(Point& pt)
 {
+    auto type = peekType();
+    if (type == kNullType) return false;
+
     int i = 0;
     auto ptr = (float*)(&pt);
 
-    if (peekType() == kArrayType) enterArray();
+    if (type == kArrayType) enterArray();
 
     while (nextArrayValue()) {
         auto val = getFloat();
         if (i < 2) ptr[i++] = val;
     }
+
+    return true;
 }
 
 
@@ -370,14 +375,11 @@ void LottieParser::parseSlotProperty(T& prop)
 template<typename T>
 bool LottieParser::parseTangent(const char *key, LottieVectorFrame<T>& value)
 {
-    if (KEY_AS("ti")) {
-        value.hasTangent = true;
-        getValue(value.inTangent);
-    } else if (KEY_AS("to")) {
-        value.hasTangent = true;
-        getValue(value.outTangent);
-    } else return false;
+    if (KEY_AS("ti") && getValue(value.inTangent)) ;
+    else if (KEY_AS("to") && getValue(value.outTangent)) ;       
+    else return false;
 
+    value.hasTangent = true;
     return true;
 }
 
