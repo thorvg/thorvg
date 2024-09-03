@@ -26,7 +26,7 @@
  #define _USE_MATH_DEFINES
 
 #include <float.h>
-#include <math.h>
+#include <cmath>
 #include "tvgCommon.h"
 
 #define MATH_PI  3.14159265358979323846f

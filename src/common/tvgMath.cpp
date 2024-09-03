@@ -43,9 +43,8 @@ bool mathInverse(const Matrix* m, Matrix* out)
                m->e12 * (m->e21 * m->e33 - m->e23 * m->e31) +
                m->e13 * (m->e21 * m->e32 - m->e22 * m->e31);
 
-    if (mathZero(det)) return false;
-
-    auto invDet = 1 / det;
+    auto invDet = 1.0f / det;
+    if (!std::isfinite(invDet)) return false;
 
     out->e11 = (m->e22 * m->e33 - m->e32 * m->e23) * invDet;
     out->e12 = (m->e13 * m->e32 - m->e12 * m->e33) * invDet;
