@@ -30,6 +30,7 @@ namespace tvg
 
 float strToFloat(const char *nPtr, char **endPtr);  //convert to float
 char* strDuplicate(const char *str, size_t n);      //copy the string
+char* strAppend(char* lhs, const char* rhs, size_t n);  //append the source to the target
 char* strDirname(const char* path);                 //return the full directory name
 
 }
