@@ -141,14 +141,14 @@ static void _dashLineTo(SwDashStroke& dash, const Point* to, const Matrix& trans
         }
         //leftovers
         dash.curLen -= len;
-        if (!dash.curOpGap) {
+        if (!dash.curOpGap && TO_SWCOORD(len) > 2) {
             if (dash.move) {
                 _outlineMoveTo(*dash.outline, &cur.pt1, transform);
                 dash.move = false;
             }
             _outlineLineTo(*dash.outline, &cur.pt2, transform);
         }
-        if (dash.curLen < 1 && TO_SWCOORD(len) > 1) {
+        if (dash.curLen < 0.1f && TO_SWCOORD(len) > 1) {
             //move to next dash
             dash.curIdx = (dash.curIdx + 1) % dash.cnt;
             dash.curLen = dash.pattern[dash.curIdx];
@@ -202,7 +202,7 @@ static void _dashCubicTo(SwDashStroke& dash, const Point* ctrl1, const Point* ct
         }
         //leftovers
         dash.curLen -= len;
-        if (!dash.curOpGap) {
+        if (!dash.curOpGap && TO_SWCOORD(len) > 2) {
             if (dash.move) {
                 _outlineMoveTo(*dash.outline, &cur.start, transform);
                 dash.move = false;
