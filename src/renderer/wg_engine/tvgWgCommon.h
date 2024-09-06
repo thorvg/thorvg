@@ -34,10 +34,9 @@ class WgPipelines;
 struct WgContext {
     // external webgpu handles
     WGPUInstance instance{};
-    WGPUSurface surface{};
-    // common webgpu handles
     WGPUAdapter adapter{};
     WGPUDevice device{};
+    // common webgpu handles
     WGPUQueue queue{};
     WGPUTextureFormat preferredFormat{};
     // external handles (do not release)
@@ -49,7 +48,7 @@ struct WgContext {
     WGPUSampler samplerLinearMirror{};
     WGPUSampler samplerLinearClamp{};
 
-    void initialize(WGPUInstance instance, WGPUSurface surface);
+    void initialize(WGPUInstance instance, WGPUDevice device);
     void release();
     
     // create common objects

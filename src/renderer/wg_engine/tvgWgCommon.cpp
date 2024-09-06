@@ -25,43 +25,16 @@
 #endif
 #include "tvgWgCommon.h"
 #include "tvgArray.h"
-#include <iostream>
 
-void WgContext::initialize(WGPUInstance instance, WGPUSurface surface)
+void WgContext::initialize(WGPUInstance instance, WGPUDevice device)
 {
     assert(instance);
-    assert(surface);
+    assert(device);
     
     // store global instance and surface
     this->instance = instance;
-    this->surface = surface;
-
-    // request adapter
-    const WGPURequestAdapterOptions requestAdapterOptions { .nextInChain = nullptr, .compatibleSurface = surface, .powerPreference = WGPUPowerPreference_HighPerformance, .forceFallbackAdapter = false };
-    auto onAdapterRequestEnded = [](WGPURequestAdapterStatus status, WGPUAdapter adapter, char const * message, void * pUserData) { *((WGPUAdapter*)pUserData) = adapter; };
-    wgpuInstanceRequestAdapter(instance, &requestAdapterOptions, onAdapterRequestEnded, &adapter);
-    #ifdef __EMSCRIPTEN__
-    while (!adapter) emscripten_sleep(10);
-    #endif
-    assert(adapter);
-
-    // get adapter and surface properties
-    WGPUFeatureName featureNames[32]{};
-    size_t featuresCount = wgpuAdapterEnumerateFeatures(adapter, featureNames);
-    preferredFormat = WGPUTextureFormat_BGRA8Unorm;
-
-    // request device
-    const WGPUDeviceDescriptor deviceDesc { .nextInChain = nullptr, .label = "The device", .requiredFeatureCount = featuresCount, .requiredFeatures = featureNames };
-    auto onDeviceRequestEnded = [](WGPURequestDeviceStatus status, WGPUDevice device, char const * message, void * pUserData) { *((WGPUDevice*)pUserData) = device; };
-    wgpuAdapterRequestDevice(adapter, &deviceDesc, onDeviceRequestEnded, &device);
-    #ifdef __EMSCRIPTEN__
-    while (!device) emscripten_sleep(10);
-    #endif
-    assert(device);
-
-    // device uncaptured error callback
-    auto onDeviceError = [](WGPUErrorType type, char const* message, void* pUserData) { std::cout << message << std::endl; };
-    wgpuDeviceSetUncapturedErrorCallback(device, onDeviceError, nullptr);
+    this->device = device;
+    this->preferredFormat = WGPUTextureFormat_BGRA8Unorm;
 
     // get current queue
     queue = wgpuDeviceGetQueue(device);
@@ -87,8 +60,6 @@ void WgContext::release()
     releaseSampler(samplerLinearRepeat);
     releaseSampler(samplerNearestRepeat);
     releaseBuffer(bufferIndexFan);
-    wgpuDeviceRelease(device);
-    wgpuAdapterRelease(adapter);
 }
 
 
