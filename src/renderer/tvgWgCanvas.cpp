@@ -50,11 +50,14 @@ WgCanvas::WgCanvas() : Canvas(nullptr), pImpl(nullptr)
 
 WgCanvas::~WgCanvas()
 {
-    delete pImpl;
+#ifdef THORVG_WG_RASTER_SUPPORT
+    auto renderer = static_cast<WgRenderer*>(Canvas::pImpl->renderer);
+    renderer->target(nullptr, 0, 0);
+#endif
 }
 
 
-Result WgCanvas::target(void* instance, void* surface, uint32_t w, uint32_t h) noexcept
+Result WgCanvas::target(void* instance, void* surface, uint32_t w, uint32_t h, void* device) noexcept
 {
 #ifdef THORVG_WG_RASTER_SUPPORT
     if (Canvas::pImpl->status != Status::Damaged && Canvas::pImpl->status != Status::Synced) {
@@ -67,7 +70,7 @@ Result WgCanvas::target(void* instance, void* surface, uint32_t w, uint32_t h) n
     auto renderer = static_cast<WgRenderer*>(Canvas::pImpl->renderer);
     if (!renderer) return Result::MemoryCorruption;
 
-    if (!renderer->target((WGPUInstance)instance, (WGPUSurface)surface, w, h)) return Result::Unknown;
+    if (!renderer->target((WGPUInstance)instance, (WGPUSurface)surface, w, h, (WGPUDevice)device)) return Result::Unknown;
     Canvas::pImpl->vport = {0, 0, (int32_t)w, (int32_t)h};
     renderer->viewport(Canvas::pImpl->vport);
 

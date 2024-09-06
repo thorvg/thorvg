@@ -45,7 +45,8 @@ public:
     bool clear() override;
     bool sync() override;
 
-    bool target(WGPUInstance instance, WGPUSurface surface, uint32_t w, uint32_t h);
+    bool target(WGPUInstance instance, WGPUSurface surface, uint32_t w, uint32_t h, WGPUDevice device);
+    bool target(WGPUSurface surface, uint32_t w, uint32_t h);
 
     Compositor* target(const RenderRegion& region, ColorSpace cs) override;
     bool beginComposite(Compositor* cmp, CompositeMethod method, uint8_t opacity) override;
@@ -54,6 +55,8 @@ public:
     static WgRenderer* gen();
     static bool init(uint32_t threads);
     static bool term();
+
+    WGPUSurface surface{}; // external handle
 
 private:
     WgRenderer();
@@ -74,13 +77,17 @@ private:
     WgContext mContext;
     WgPipelines mPipelines;
     WgCompositor mCompositor;
-    
+
     Surface mTargetSurface;
     BlendMethod mBlendMethod{};
     RenderRegion mViewport{};
 
     Array<RenderData> mDisposeRenderDatas{};
     Key mDisposeKey{};
+
+    WGPUAdapter adapter{};
+    WGPUDevice device{};
+    bool gpuOwner{};
 };
 
 #endif /* _TVG_WG_RENDERER_H_ */

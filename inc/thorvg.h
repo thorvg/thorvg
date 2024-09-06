@@ -1751,7 +1751,7 @@ public:
      * @param[in] surface WGPUSurface, handle to a presentable surface.
      * @param[in] w The width of the surface.
      * @param[in] h The height of the surface.
-     *
+     * @param[in] device WGPUDevice: desired handle for the WebGPU device. If it is nullptr, ThorVG will assign an appropriate device internally.
      * @retval Result::InsufficientCondition if the canvas is performing rendering. Please ensure the canvas is synced.
      * @retval Result::NonSupport In case the wg engine is not supported.
      *
@@ -1760,7 +1760,7 @@ public:
      * @see Canvas::viewport()
      * @see Canvas::sync()
      */
-    Result target(void* instance, void* surface, uint32_t w, uint32_t h) noexcept;
+    Result target(void* instance, void* surface, uint32_t w, uint32_t h, void* device = nullptr) noexcept;
 
     /**
      * @brief Creates a new WgCanvas object.
