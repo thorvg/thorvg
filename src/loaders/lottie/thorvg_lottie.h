@@ -27,9 +27,7 @@ public:
      *
      * @param[in] slot The Lottie slot data in JSON format to override, or @c nullptr to reset.
      *
-     * @retval Result::Success When succeed.
      * @retval Result::InsufficientCondition In case the animation is not loaded.
-     * @retval Result::InvalidArguments When the given parameter is invalid.
      *
      * @note Experimental API
      */
@@ -45,9 +43,7 @@ public:
     *
     * @param[in] marker The name of the segment marker.
     *
-    * @retval Result::Success When successful.
     * @retval Result::InsufficientCondition If the animation is not loaded.
-    * @retval Result::InvalidArguments When the given parameter is invalid.
     * @retval Result::NonSupport When it's not animatable.
     *
     * @note If a @c marker is specified, the previously set segment will be disregarded.
@@ -78,6 +74,25 @@ public:
      * @note Experimental API
      */
     const char* marker(uint32_t idx) noexcept;
+
+    /**
+     * @brief Updates the value of an expression variable for a specific layer.
+     *
+     * This function sets the value of a specified expression variable within a particular layer.
+     * It is useful for dynamically changing the properties of a layer at runtime.
+     *
+     * @param[in] layer The name of the layer containing the variable to be updated.
+     * @param[in] ix The property index of the variable within the layer.
+     * @param[in] var The name of the variable to be updated.
+     * @param[in] val The new value to assign to the variable.
+     *
+     * @retval Result::InsufficientCondition If the animation is not loaded.
+     * @retval Result::InvalidArguments When the given parameter is invalid.
+     * @retval Result::NonSupport When neither the layer nor the property is found in the current animation.
+     *
+     * @note Experimental API
+     */
+    Result write(const char* layer, uint32_t ix, const char* var, float val);
 
     /**
      * @brief Creates a new LottieAnimation object.
