@@ -43,7 +43,6 @@ public:
     const char* dirName = nullptr;       //base resource directory
 
 private:
-    BlendMethod getBlendMethod();
     RGB24 getColor(const char *str);
     CompositeMethod getMatteType();
     FillRule getFillRule();

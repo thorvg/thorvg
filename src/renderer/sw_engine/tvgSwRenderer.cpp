@@ -452,26 +452,17 @@ bool SwRenderer::blend(BlendMethod method)
     surface->blendMethod = method;
 
     switch (method) {
-        case BlendMethod::Add:
-            surface->blender = opBlendAdd;
-            break;
-        case BlendMethod::Screen:
-            surface->blender = opBlendScreen;
+        case BlendMethod::Normal:
+            surface->blender = nullptr;
             break;
         case BlendMethod::Multiply:
             surface->blender = opBlendMultiply;
             break;
+        case BlendMethod::Screen:
+            surface->blender = opBlendScreen;
+            break;
         case BlendMethod::Overlay:
             surface->blender = opBlendOverlay;
-            break;
-        case BlendMethod::Difference:
-            surface->blender = opBlendDifference;
-            break;
-        case BlendMethod::Exclusion:
-            surface->blender = opBlendExclusion;
-            break;
-        case BlendMethod::SrcOver:
-            surface->blender = opBlendSrcOver;
             break;
         case BlendMethod::Darken:
             surface->blender = opBlendDarken;
@@ -491,7 +482,17 @@ bool SwRenderer::blend(BlendMethod method)
         case BlendMethod::SoftLight:
             surface->blender = opBlendSoftLight;
             break;
+        case BlendMethod::Difference:
+            surface->blender = opBlendDifference;
+            break;
+        case BlendMethod::Exclusion:
+            surface->blender = opBlendExclusion;
+            break;
+        case BlendMethod::Add:
+            surface->blender = opBlendAdd;
+            break;
         default:
+            TVGLOG("SW_ENGINE", "Non supported blending option = %d", (int) method);
             surface->blender = nullptr;
             break;
     }

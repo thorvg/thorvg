@@ -506,13 +506,6 @@ fn cs_main_Exclusion(@builtin(global_invocation_id) id: vec3u) {
 };
 
 @compute @workgroup_size(8, 8)
-fn cs_main_SrcOver(@builtin(global_invocation_id) id: vec3u) {
-    let d: FragData = getFragData(id.xy);
-    if (d.skip) { return; }
-    textureStore(imageTgt, id.xy, postProcess(d, vec4f(d.Sc, d.Sa)));
-};
-
-@compute @workgroup_size(8, 8)
 fn cs_main_Darken(@builtin(global_invocation_id) id: vec3u) {
     let d: FragData = getFragData(id.xy);
     if (d.skip) { return; }

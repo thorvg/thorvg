@@ -77,35 +77,6 @@ CompositeMethod LottieParser::getMaskMethod(bool inversed)
 }
 
 
-BlendMethod LottieParser::getBlendMethod()
-{
-    switch (getInt()) {
-        case 0: return BlendMethod::Normal;
-        case 1: return BlendMethod::Multiply;
-        case 2: return BlendMethod::Screen;
-        case 3: return BlendMethod::Overlay;
-        case 4: return BlendMethod::Darken;
-        case 5: return BlendMethod::Lighten;
-        case 6: return BlendMethod::ColorDodge;
-        case 7: return BlendMethod::ColorBurn;
-        case 8: return BlendMethod::HardLight;
-        case 9: return BlendMethod::SoftLight;
-        case 10: return BlendMethod::Difference;
-        case 11: return BlendMethod::Exclusion;
-        //case 12: return BlendMethod::Hue:
-        //case 13: return BlendMethod::Saturation:
-        //case 14: return BlendMethod::Color:
-        //case 15: return BlendMethod::Luminosity:
-        case 16: return BlendMethod::Add;
-        //case 17: return BlendMethod::HardMix:
-        default: {
-            TVGERR("LOTTIE", "Non-Supported Blend Mode");
-            return BlendMethod::Normal;
-        }
-    }
-}
-
-
 RGB24 LottieParser::getColor(const char *str)
 {
     RGB24 color = {0, 0, 0};
@@ -1293,7 +1264,7 @@ LottieLayer* LottieParser::parseLayer(LottieLayer* precomp)
         else if (KEY_AS("ip")) layer->inFrame = getFloat();
         else if (KEY_AS("op")) layer->outFrame = getFloat();
         else if (KEY_AS("st")) layer->startFrame = getFloat();
-        else if (KEY_AS("bm")) layer->blendMethod = getBlendMethod();
+        else if (KEY_AS("bm")) layer->blendMethod = (BlendMethod) getInt();
         else if (KEY_AS("parent")) layer->pidx = getInt();
         else if (KEY_AS("tm")) parseTimeRemap(layer);
         else if (KEY_AS("w") || KEY_AS("sw")) getLayerSize(layer->w);

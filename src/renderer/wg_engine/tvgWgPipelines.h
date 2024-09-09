@@ -25,7 +25,7 @@
 
 #include "tvgWgBindGroups.h"
 
-enum class WgPipelineBlendType { SrcOver = 0, Normal, Custom };
+enum class WgPipelineBlendType { Normal, Custom };
 
 class WgPipelines {
 private:
@@ -61,19 +61,19 @@ public:
     WGPURenderPipeline winding{};
     WGPURenderPipeline evenodd{};
     WGPURenderPipeline direct{};
-    WGPURenderPipeline solid[3]{};
-    WGPURenderPipeline radial[3]{};
-    WGPURenderPipeline linear[3]{};
-    WGPURenderPipeline image[3]{};
+    WGPURenderPipeline solid[2]{};
+    WGPURenderPipeline radial[2]{};
+    WGPURenderPipeline linear[2]{};
+    WGPURenderPipeline image[2]{};
     WGPURenderPipeline sceneComp[12];
     WGPURenderPipeline sceneBlend;
     WGPURenderPipeline blit{};
     WGPURenderPipeline clipPath{};
     // compute pipeline
     WGPUComputePipeline mergeMasks;
-    WGPUComputePipeline blendSolid[14];
-    WGPUComputePipeline blendGradient[14];
-    WGPUComputePipeline blendImage[14];
+    WGPUComputePipeline blendSolid[18];
+    WGPUComputePipeline blendGradient[18];
+    WGPUComputePipeline blendImage[18];
 private:
     void releaseGraphicHandles(WgContext& context);
     void releaseComputeHandles(WgContext& context);

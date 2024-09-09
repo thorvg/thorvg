@@ -108,13 +108,6 @@ struct UserExample : tvgexam::Example
         shape7->fill(0, 0, 255);
         canvas->push(std::move(shape7));
 
-        //SrcOver
-        auto shape8 = tvg::Shape::gen();
-        shape8->appendRect(550, 600, 150, 150);
-        shape8->blend(tvg::BlendMethod::SrcOver);
-        shape8->fill(10, 255, 155, 50);
-        canvas->push(std::move(shape8));
-
         //Darken
         auto shape9 = tvg::Shape::gen();
         shape9->appendRect(600, 650, 350, 250);
