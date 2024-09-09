@@ -82,7 +82,6 @@ void WgCompositor::release(WgContext& context)
 WgPipelineBlendType WgCompositor::blendMethodToBlendType(BlendMethod blendMethod)
 {
     if (blendMethod == BlendMethod::Normal) return WgPipelineBlendType::Normal;
-    if (blendMethod == BlendMethod::SrcOver) return WgPipelineBlendType::SrcOver;
     return WgPipelineBlendType::Custom;
 }
 

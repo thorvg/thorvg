@@ -1240,7 +1240,6 @@ TEST_CASE("Blending Shapes", "[tvgSwEngine]")
         BlendMethod::Overlay,
         BlendMethod::Difference,
         BlendMethod::Exclusion,
-        BlendMethod::SrcOver,
         BlendMethod::Darken,
         BlendMethod::Lighten,
         BlendMethod::ColorDodge,
