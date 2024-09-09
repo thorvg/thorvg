@@ -1002,6 +1002,7 @@ void LottieBuilder::updateText(LottieLayer* layer, float frameNo)
     Point cursor = {0.0f, 0.0f};
     auto scene = Scene::gen();
     int line = 0;
+    int space = 0;
 
     //text string
     int idx = 0;
@@ -1033,6 +1034,9 @@ void LottieBuilder::updateText(LottieLayer* layer, float frameNo)
             cursor.y = ++line * (doc.height / scale);
             continue;
         }
+
+        if (*p == ' ') ++space;
+
         //find the glyph
         bool found = false;
         for (auto g = text->font->chars.begin(); g < text->font->chars.end(); ++g) {
@@ -1060,6 +1064,7 @@ void LottieBuilder::updateText(LottieLayer* layer, float frameNo)
 
                 //text range process
                 for (auto s = text->ranges.begin(); s < text->ranges.end(); ++s) {
+                    auto basedIdx = idx;
                     float divisor = (*s)->rangeUnit == LottieTextRange::Unit::Percent ? (100.0f / totalChars) : 1;
                     auto offset = (*s)->offset(frameNo) / divisor;
                     auto start = nearbyintf((*s)->start(frameNo) / divisor) + offset;
@@ -1067,7 +1072,11 @@ void LottieBuilder::updateText(LottieLayer* layer, float frameNo)
 
                     if (start > end) std::swap(start, end);
 
-                    if (idx < start || idx >= end) continue;
+                    if ((*s)->based == LottieTextRange::Based::CharsExcludingSpaces) basedIdx = idx - space;
+                    else if ((*s)->based == LottieTextRange::Based::Words) basedIdx = line + space;
+                    else if ((*s)->based == LottieTextRange::Based::Lines) basedIdx = line;
+
+                    if (basedIdx < start || basedIdx >= end) continue;
                     auto matrix = shape->transform();
 
                     shape->opacity((*s)->style.opacity(frameNo));
