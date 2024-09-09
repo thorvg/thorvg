@@ -1136,6 +1136,7 @@ void LottieParser::parseTextRange(LottieText* text)
                 enterObject();
                 while (auto key = nextObjectKey()) {
                     if (KEY_AS("t")) parseProperty<LottieProperty::Type::Float>(selector->style.letterSpacing);
+                    else if (KEY_AS("ls")) parseProperty<LottieProperty::Type::Color>(selector->style.lineSpacing);
                     else if (KEY_AS("fc")) parseProperty<LottieProperty::Type::Color>(selector->style.fillColor);
                     else if (KEY_AS("fo")) parseProperty<LottieProperty::Type::Color>(selector->style.fillOpacity);
                     else if (KEY_AS("sw")) parseProperty<LottieProperty::Type::Float>(selector->style.strokeWidth);
