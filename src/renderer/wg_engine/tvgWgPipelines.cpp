@@ -159,7 +159,6 @@ void WgPipelines::initialize(WgContext& context)
         .alpha = { .operation = WGPUBlendOperation_Add, .srcFactor = WGPUBlendFactor_One, .dstFactor = WGPUBlendFactor_OneMinusSrcAlpha }
     };
     const WGPUBlendState blendStates[] {
-        blendStateSrc, // WgPipelineBlendType::SrcOver
         blendStateNrm, // WgPipelineBlendType::Normal
         blendStateSrc  // WgPipelineBlendType::Custom (same as SrcOver)
     };
@@ -268,7 +267,7 @@ void WgPipelines::initialize(WgContext& context)
         primitiveState, multisampleState, blendStateSrc);
 
     // render pipeline solid
-    for (uint32_t i = 0; i < 3; i++) {
+    for (uint32_t i = 0; i < 2; i++) {
         solid[i] = createRenderPipeline(
             context.device, "The render pipeline solid",
             shaderSolid, "vs_main", "fs_main", layoutSolid,
@@ -280,7 +279,7 @@ void WgPipelines::initialize(WgContext& context)
     }
 
     // render pipeline radial
-    for (uint32_t i = 0; i < 3; i++) {
+    for (uint32_t i = 0; i < 2; i++) {
         radial[i] = createRenderPipeline(
             context.device, "The render pipeline radial",
             shaderRadial, "vs_main", "fs_main", layoutGradient,
@@ -292,7 +291,7 @@ void WgPipelines::initialize(WgContext& context)
     }
 
     // render pipeline linear
-    for (uint32_t i = 0; i < 3; i++) {
+    for (uint32_t i = 0; i < 2; i++) {
         linear[i] = createRenderPipeline(
             context.device, "The render pipeline linear",
             shaderLinear, "vs_main", "fs_main", layoutGradient,
@@ -304,7 +303,7 @@ void WgPipelines::initialize(WgContext& context)
     }
 
     // render pipeline image
-    for (uint32_t i = 0; i < 3; i++) {
+    for (uint32_t i = 0; i < 2; i++) {
         image[i] = createRenderPipeline(
             context.device, "The render pipeline image",
             shaderImage, "vs_main", "fs_main", layoutImage,
@@ -389,19 +388,23 @@ void WgPipelines::initialize(WgContext& context)
     // compute shader blend names
     const char* shaderBlendNames[] {
         "cs_main_Normal",
-        "cs_main_Add",
-        "cs_main_Screen",
         "cs_main_Multiply",
+        "cs_main_Screen",
         "cs_main_Overlay",
-        "cs_main_Difference",
-        "cs_main_Exclusion",
-        "cs_main_SrcOver",
         "cs_main_Darken",
         "cs_main_Lighten",
         "cs_main_ColorDodge",
         "cs_main_ColorBurn",
         "cs_main_HardLight",
-        "cs_main_SoftLight"
+        "cs_main_SoftLight",
+        "cs_main_Difference",
+        "cs_main_Exclusion",
+        "cs_main_Normal",  //TODO: a padding for reserved Hue.
+        "cs_main_Normal",  //TODO: a padding for reserved Saturation.
+        "cs_main_Normal",  //TODO: a padding for reserved Color.
+        "cs_main_Normal",  //TODO: a padding for reserved Luminosity.
+        "cs_main_Add",
+        "cs_main_Normal"   //TODO: a padding for reserved Hardmix.
     };
 
     // create blend shaders
@@ -429,7 +432,7 @@ void WgPipelines::releaseGraphicHandles(WgContext& context)
     size_t pipesSceneCompCnt = sizeof(sceneComp) / sizeof(sceneComp[0]);
     for (uint32_t i = 0; i < pipesSceneCompCnt; i++)
         releaseRenderPipeline(sceneComp[i]);
-    for (uint32_t i = 0; i < 3; i++) {
+    for (uint32_t i = 0; i < 2; i++) {
         releaseRenderPipeline(image[i]);
         releaseRenderPipeline(linear[i]);
         releaseRenderPipeline(radial[i]);

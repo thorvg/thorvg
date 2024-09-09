@@ -289,10 +289,6 @@ TEST_CASE("Blending", "[tvgPaint]")
     REQUIRE(shape->blend(BlendMethod::Exclusion) == Result::Success);
     REQUIRE(shape->blend() == BlendMethod::Exclusion);
 
-    //SrcOver
-    REQUIRE(shape->blend(BlendMethod::SrcOver) == Result::Success);
-    REQUIRE(shape->blend() == BlendMethod::SrcOver);
-
     //Darken
     REQUIRE(shape->blend(BlendMethod::Darken) == Result::Success);
     REQUIRE(shape->blend() == BlendMethod::Darken);
