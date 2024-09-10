@@ -158,6 +158,7 @@ struct LottieTextStyle
     LottiePosition position = Point{0, 0};
     LottiePoint scale = Point{100, 100};
     LottieFloat letterSpacing = 0.0f;
+    LottieFloat lineSpacing = 0.0f;
     LottieFloat strokeWidth = 0.0f;
     LottieFloat rotation = 0.0f;
     LottieOpacity fillOpacity = 255;

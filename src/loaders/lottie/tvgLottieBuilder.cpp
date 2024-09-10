@@ -1003,6 +1003,8 @@ void LottieBuilder::updateText(LottieLayer* layer, float frameNo)
     auto scene = Scene::gen();
     int line = 0;
     int space = 0;
+    auto lineSpacing = 0.0f;
+    auto totalLineSpacing = 0.0f;
 
     //text string
     int idx = 0;
@@ -1028,10 +1030,13 @@ void LottieBuilder::updateText(LottieLayer* layer, float frameNo)
             if (*p == '\0') break;
             ++p;
 
+            totalLineSpacing += lineSpacing;
+            lineSpacing = 0.0f;
+
             //new text group, single scene for each line
             scene = Scene::gen();
             cursor.x = 0.0f;
-            cursor.y = ++line * (doc.height / scale);
+            cursor.y = (++line * doc.height + totalLineSpacing) / scale;
             continue;
         }
 
@@ -1100,6 +1105,9 @@ void LottieBuilder::updateText(LottieLayer* layer, float frameNo)
                         shape->strokeFill(strokeColor.rgb[0], strokeColor.rgb[1], strokeColor.rgb[2], (*s)->style.strokeOpacity(frameNo));
                     }
                     cursor.x += (*s)->style.letterSpacing(frameNo);
+
+                    auto spacing = (*s)->style.lineSpacing(frameNo);
+                    if (spacing > lineSpacing) lineSpacing = spacing;
                 }
 
                 scene->push(cast(shape));
