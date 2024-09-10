@@ -1431,12 +1431,52 @@ static bool _rasterDirectImage(SwSurface* surface, const SwImage* image, const S
 }
 
 
+static bool _rasterDirectMattedBlendingImage(SwSurface* surface, const SwImage* image, const SwBBox& region, uint8_t opacity)
+{
+    if (surface->channelSize == sizeof(uint8_t)) {
+        TVGERR("SW_ENGINE", "Not supported grayscale image!");
+        return false;
+    }
+
+    auto h = static_cast<uint32_t>(region.max.y - region.min.y);
+    auto w = static_cast<uint32_t>(region.max.x - region.min.x);
+    auto csize = surface->compositor->image.channelSize;
+    auto alpha = surface->alpha(surface->compositor->method);
+    auto sbuffer = image->buf32 + (region.min.y + image->oy) * image->stride + (region.min.x + image->ox);
+    auto cbuffer = surface->compositor->image.buf8 + (region.min.y * surface->compositor->image.stride + region.min.x) * csize; //compositor buffer
+    auto buffer = surface->buf32 + (region.min.y * surface->stride) + region.min.x;
+
+    for (uint32_t y = 0; y < h; ++y) {
+        auto dst = buffer;
+        auto cmp = cbuffer;
+        auto src = sbuffer;
+        if (opacity == 255) {
+            for (uint32_t x = 0; x < w; ++x, ++dst, ++src, cmp += csize) {
+                auto tmp = ALPHA_BLEND(*src, alpha(cmp));
+                *dst = INTERPOLATE(surface->blender(tmp, *dst, 255), *dst, A(tmp));
+            }
+        } else {
+            for (uint32_t x = 0; x < w; ++x, ++dst, ++src, cmp += csize) {
+                auto tmp = ALPHA_BLEND(*src, alpha(cmp));
+                *dst = INTERPOLATE(surface->blender(tmp, *dst, 255), *dst, MULTIPLY(opacity, A(tmp)));
+            }
+        }
+        buffer += surface->stride;
+        cbuffer += surface->compositor->image.stride * csize;
+        sbuffer += image->stride;
+    }
+    return true;
+}
+
+
 //Blenders for the following scenarios: [Composition / Non-Composition] * [Opaque / Translucent]
 static bool _directImage(SwSurface* surface, const SwImage* image, const SwBBox& region, uint8_t opacity)
 {
     if (_compositing(surface)) {
-        if (_matting(surface)) return _rasterDirectMattedImage(surface, image, region, opacity);
-        else return _rasterDirectMaskedImage(surface, image, region, opacity);
+        if (_matting(surface)) {
+            if (_blending(surface)) return _rasterDirectMattedBlendingImage(surface, image, region, opacity);
+            else return _rasterDirectMattedImage(surface, image, region, opacity);
+        } else return _rasterDirectMaskedImage(surface, image, region, opacity);
     } else if (_blending(surface)) {
         return _rasterDirectBlendingImage(surface, image, region, opacity);
     } else {
