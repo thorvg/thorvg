@@ -322,12 +322,15 @@ bool WgRenderer::target(WGPUSurface surface, uint32_t w, uint32_t h) {
         .device = mContext.device,
         .format = mContext.preferredFormat,
         .usage = WGPUTextureUsage_RenderAttachment,
+    #ifdef __EMSCRIPTEN__
+        .alphaMode = WGPUCompositeAlphaMode_Premultiplied,
+    #endif
         .width = w, .height = h,
-        #ifdef __EMSCRIPTEN__
+    #ifdef __EMSCRIPTEN__
         .presentMode = WGPUPresentMode_Fifo,
-        #else
+    #else
         .presentMode = WGPUPresentMode_Immediate
-        #endif
+    #endif
     };
     wgpuSurfaceConfigure(surface, &surfaceConfiguration);
 
