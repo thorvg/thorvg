@@ -324,6 +324,7 @@ bool WgRenderer::target(WGPUSurface surface, uint32_t w, uint32_t h) {
         .usage = WGPUTextureUsage_RenderAttachment,
         .width = w, .height = h,
         #ifdef __EMSCRIPTEN__
+        .alphaMode = WGPUCompositeAlphaMode_Premultiplied,
         .presentMode = WGPUPresentMode_Fifo,
         #else
         .presentMode = WGPUPresentMode_Immediate
