@@ -82,6 +82,7 @@ struct WgRenderSettings
     WGPUTexture texGradient{};
     WGPUTextureView texViewGradient{};
     WGPUBuffer bufferGroupGradient{};
+    WGPUBuffer bufferGroupTransfromGrad{};
     WGPUBindGroup bindGroupGradient{};
     WgRenderSettingsType fillType{};
     WgRenderRasterType rasterType{};

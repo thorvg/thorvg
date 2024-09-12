@@ -176,7 +176,7 @@ void WgPipelines::initialize(WgContext& context)
     const WGPUBindGroupLayout bindGroupLayoutsGradient[] = {
         layouts.layoutBuffer1Un,
         layouts.layoutBuffer2Un,
-        layouts.layoutTexSampledBuff1Un
+        layouts.layoutTexSampledBuff2Un
     };
     const WGPUBindGroupLayout bindGroupLayoutsImage[] = {
         layouts.layoutBuffer1Un,
