@@ -1338,11 +1338,13 @@ static bool _rasterDirectMattedImage(SwSurface* surface, const SwImage* image, c
             auto src = sbuffer;
             if (opacity == 255) {
                 for (uint32_t x = 0; x < w; ++x, ++dst, ++src, cmp += csize) {
-                    *dst = MULTIPLY(A(*src), alpha(cmp));
+                    auto tmp = MULTIPLY(A(*src), alpha(cmp));
+                    *dst = tmp + MULTIPLY(*dst, 255 - tmp);
                 }
             } else {
                 for (uint32_t x = 0; x < w; ++x, ++dst, ++src, cmp += csize) {
-                    *dst = MULTIPLY(A(*src), MULTIPLY(opacity, alpha(cmp)));
+                    auto tmp = MULTIPLY(A(*src), MULTIPLY(opacity, alpha(cmp)));
+                    *dst = tmp + MULTIPLY(*dst, 255 - tmp);
                 }
             }
             buffer += surface->stride;
