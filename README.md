@@ -348,7 +348,7 @@ ThorVG has been integrated into the [Godot](https://www.godotengine.org) project
 </p>
 
 ### LVGL
-[LVGL](https://lvgl.io/) is the most popular free and open-source embedded graphics library to create beautiful UIs for any MCU, MPU and display type. The complete graphic framework includes a variety of widgets for you to use in the creation of your GUI, and supports more advanced functions such as animations and anti-aliasing. ThorVG serves as the vector drawing primitives library in the LVGL framework.
+[LVGL](https://lvgl.io/) is an open-source graphics library specifically designed for embedded systems with limited resources. It is lightweight and highly customizable, providing support for graphical user interfaces (GUIs) on microcontrollers, IoT devices, and other embedded platforms. ThorVG serves as the vector drawing primitives library in the LVGL framework.
 
 <p align="center">
   <img width="700" height="auto" src="https://github.com/thorvg/thorvg/blob/main/res/example_lvgl.png">
