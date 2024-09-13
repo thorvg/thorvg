@@ -281,9 +281,28 @@ The result is:
 <br />
 ## Lottie
 
-ThorVG supports the most powerful Lottie Animation [features](https://lottiefiles.com/supported-features). Lottie is a JSON-based vector animation file format that enables seamless distribution of animations on any platform, akin to shipping static assets. These files are compact and compatible with various devices, scaling up or down without pixelation. With Lottie, you can easily create, edit, test, collaborate, and distribute animations in a user-friendly manner. For more information, please visit [Lottie Animation Community](https://lottie.github.io/)' website. <br />
+ThorVG supports the most powerful Lottie Animation [features](https://lottiefiles.com/supported-features). Lottie is an industry standard, JSON-based vector animation file format that enables seamless distribution of animations on any platform, akin to shipping static assets. These files are compact and compatible with various devices, scaling up or down without pixelation. With Lottie, you can easily create, edit, test, collaborate, and distribute animations in a user-friendly manner. For more information, please visit [Lottie Animation Community](https://lottie.github.io/)' website. <br />
+<br />
+ThorVG offers great flexibility in building its binary. Besides serving as a general graphics engine, it can be configured as a compact Lottie animation playback library with specific build options:
+
+```
+$meson setup builddir -Dloaders="lottie"
+```
+
+Alternatively, to support additional bitmap image formats:
+
+```
+$meson setup builddir -Dloaders="lottie, png, jpg, webp"
+```
+
+Please note that ThorVG supports Lottie Expressions by default. Lottie Expressions are small JavaScript code snippets that can be applied to animated properties in your Lottie animations, evaluating to a single value. This is an advanced feature in the Lottie specification and may impact binary size and performance, especially when targeting small devices such as MCUs. If this feature is not essential for your requirements, you can disable it using the `extra` build option in ThorVG:
+
+```
+$meson setup builddir -Dloaders="lottie" -Dextra=""
+```
 
 The following code snippet demonstrates how to use ThorVG to play a Lottie animation.
+
 ```cpp
 auto animation = tvg::Animation::gen();     //generate an animation
 auto picture = animation->picture()         //acquire a picture which associated with the animation.
