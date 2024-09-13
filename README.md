@@ -257,8 +257,7 @@ tvg::Initializer::term();
 
 ThorVG facilitates [SVG Tiny Specification](https://www.w3.org/TR/SVGTiny12/) rendering via its dedicated SVG interpreter. Adhering to the SVG Tiny Specification, the implementation maintains a lightweight profile, rendering it particularly advantageous for embedded systems. While ThorVG comprehensively adheres to most of the SVG Tiny specs, certain features remain unsupported within the current framework. These include:</br>
 
- - Animation
- - Fonts & Text
+ - Animation 
  - Interactivity
  - Multimedia
 
