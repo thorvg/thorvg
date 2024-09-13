@@ -45,6 +45,19 @@ WGPUBindGroup WgBindGroupLayouts::createBindGroupTexSampledBuff1Un(WGPUSampler s
 }
 
 
+WGPUBindGroup WgBindGroupLayouts::createBindGroupTexSampledBuff2Un(WGPUSampler sampler, WGPUTextureView texView, WGPUBuffer buff0, WGPUBuffer buff1)
+{
+    const WGPUBindGroupEntry bindGroupEntrys[] = {
+        { .binding = 0, .sampler = sampler },
+        { .binding = 1, .textureView = texView },
+        { .binding = 2, .buffer = buff0, .size = wgpuBufferGetSize(buff0) },
+        { .binding = 3, .buffer = buff1, .size = wgpuBufferGetSize(buff1) }
+    };
+    const WGPUBindGroupDescriptor bindGroupDesc { .layout = layoutTexSampledBuff2Un, .entryCount = 4, .entries = bindGroupEntrys };
+    return wgpuDeviceCreateBindGroup(device, &bindGroupDesc);
+}
+
+
 WGPUBindGroup WgBindGroupLayouts::createBindGroupStrorage1WO(WGPUTextureView texView)
 {
     const WGPUBindGroupEntry bindGroupEntrys[] = {
@@ -161,6 +174,18 @@ void WgBindGroupLayouts::initialize(WgContext& context)
         };
         const WGPUBindGroupLayoutDescriptor bindGroupLayoutDesc { .entryCount = 3, .entries = bindGroupLayoutEntries };
         layoutTexSampledBuff1Un = wgpuDeviceCreateBindGroupLayout(device, &bindGroupLayoutDesc);
+        assert(layoutTexSampledBuff1Un);
+    }
+
+    { // bind group layout tex sampled with buffer uniforms
+        const WGPUBindGroupLayoutEntry bindGroupLayoutEntries[] {
+            { .binding = 0, .visibility = visibility_frag, .sampler = sampler },
+            { .binding = 1, .visibility = visibility_frag, .texture = texture },
+            { .binding = 2, .visibility = visibility_vert, .buffer = bufferUniform },
+            { .binding = 3, .visibility = visibility_vert, .buffer = bufferUniform }
+        };
+        const WGPUBindGroupLayoutDescriptor bindGroupLayoutDesc { .entryCount = 4, .entries = bindGroupLayoutEntries };
+        layoutTexSampledBuff2Un = wgpuDeviceCreateBindGroupLayout(device, &bindGroupLayoutDesc);
         assert(layoutTexSampledBuff1Un);
     }
 
