@@ -212,6 +212,13 @@ void WgRenderSettings::update(WgContext& context, const Fill* fill, const uint8_
     // setup fill properties
     if ((flags & (RenderUpdateFlag::Gradient)) && fill) {
         rasterType = WgRenderRasterType::Gradient;
+        // get gradient transfrom matrix
+        Matrix fillTransform = fill->transform();
+        Matrix invFillTransform;
+        WgShaderTypeMat4x4f gradientTrans; // identity by default
+        if (inverse(&fillTransform, &invFillTransform))
+            gradientTrans.update(invFillTransform);
+        // get gradient rasterisation settings
         WgShaderTypeGradient gradient;
         if (fill->type() == Type::LinearGradient) {
             gradient.update((LinearGradient*)fill);
@@ -222,8 +229,9 @@ void WgRenderSettings::update(WgContext& context, const Fill* fill, const uint8_
         }
         // update gpu assets
         bool bufferGradientSettingsChanged = context.allocateBufferUniform(bufferGroupGradient, &gradient.settings, sizeof(gradient.settings));
+        bool bufferGradientTransformChanged = context.allocateBufferUniform(bufferGroupTransfromGrad, &gradientTrans.mat, sizeof(gradientTrans.mat));
         bool textureGradientChanged = context.allocateTexture(texGradient, WG_TEXTURE_GRADIENT_SIZE, 1, WGPUTextureFormat_RGBA8Unorm, gradient.texData);
-        if (bufferGradientSettingsChanged || textureGradientChanged) {
+        if (bufferGradientSettingsChanged || textureGradientChanged || bufferGradientTransformChanged) {
             // update texture view
             context.releaseTextureView(texViewGradient);
             texViewGradient = context.createTextureView(texGradient);
@@ -233,8 +241,8 @@ void WgRenderSettings::update(WgContext& context, const Fill* fill, const uint8_
             if (fill->spread() == FillSpread::Repeat) sampler = context.samplerLinearRepeat;
             // update bind group
             context.pipelines->layouts.releaseBindGroup(bindGroupGradient);
-            bindGroupGradient = context.pipelines->layouts.createBindGroupTexSampledBuff1Un(
-                sampler, texViewGradient, bufferGroupGradient);
+            bindGroupGradient = context.pipelines->layouts.createBindGroupTexSampledBuff2Un(
+                sampler, texViewGradient, bufferGroupGradient, bufferGroupTransfromGrad);
         }
         skip = false;
     } else if ((flags & (RenderUpdateFlag::Color)) && !fill) {
@@ -256,6 +264,7 @@ void WgRenderSettings::release(WgContext& context)
     context.pipelines->layouts.releaseBindGroup(bindGroupGradient);
     context.releaseBuffer(bufferGroupSolid);
     context.releaseBuffer(bufferGroupGradient);
+    context.releaseBuffer(bufferGroupTransfromGrad);
     context.releaseTexture(texGradient);
     context.releaseTextureView(texViewGradient);
 };

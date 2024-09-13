@@ -84,7 +84,7 @@ fn fs_main(in: VertexOutput) -> @location(0) vec4f {
 
 const char* cShaderSrc_Linear = R"(
 struct VertexInput { @location(0) position: vec2f };
-struct VertexOutput { @builtin(position) position : vec4f, @location(0) vScreenCoord : vec2f };
+struct VertexOutput { @builtin(position) position : vec4f, @location(0) vScreenCoord : vec4f };
 
 // uniforms
 @group(0) @binding(0) var<uniform> uViewMat : mat4x4f;
@@ -93,18 +93,19 @@ struct VertexOutput { @builtin(position) position : vec4f, @location(0) vScreenC
 @group(2) @binding(0) var uSamplerGrad : sampler;
 @group(2) @binding(1) var uTextureGrad : texture_2d<f32>;
 @group(2) @binding(2) var<uniform> uSettingGrad : vec4f;
+@group(2) @binding(3) var<uniform> uTransformGrad : mat4x4f;
 
 @vertex
 fn vs_main(in: VertexInput) -> VertexOutput {
     var out: VertexOutput;
     out.position = uViewMat * uModelMat * vec4f(in.position.xy, 0.0, 1.0);
-    out.vScreenCoord = in.position.xy;
+    out.vScreenCoord = uTransformGrad * vec4f(in.position.xy, 0.0, 1.0);
     return out;
 }
 
 @fragment
 fn fs_main(in: VertexOutput) -> @location(0) vec4f {
-    let pos = in.vScreenCoord;
+    let pos = in.vScreenCoord.xy;
     let st = uSettingGrad.xy;
     let ed = uSettingGrad.zw;
     let ba = ed - st;
@@ -121,7 +122,7 @@ fn fs_main(in: VertexOutput) -> @location(0) vec4f {
 
 const char* cShaderSrc_Radial = R"(
 struct VertexInput { @location(0) position: vec2f };
-struct VertexOutput { @builtin(position) position : vec4f, @location(0) vScreenCoord : vec2f };
+struct VertexOutput { @builtin(position) position : vec4f, @location(0) vScreenCoord : vec4f };
 
 @group(0) @binding(0) var<uniform> uViewMat : mat4x4f;
 @group(1) @binding(0) var<uniform> uModelMat : mat4x4f;
@@ -129,18 +130,19 @@ struct VertexOutput { @builtin(position) position : vec4f, @location(0) vScreenC
 @group(2) @binding(0) var uSamplerGrad : sampler;
 @group(2) @binding(1) var uTextureGrad : texture_2d<f32>;
 @group(2) @binding(2) var<uniform> uSettingGrad : vec4f;
+@group(2) @binding(3) var<uniform> uTransformGrad : mat4x4f;
 
 @vertex
 fn vs_main(in: VertexInput) -> VertexOutput {
     var out: VertexOutput;
     out.position = uViewMat * uModelMat * vec4f(in.position.xy, 0.0, 1.0);
-    out.vScreenCoord = in.position.xy;
+    out.vScreenCoord = uTransformGrad * vec4f(in.position.xy, 0.0, 1.0);
     return out;
 }
 
 @fragment
 fn fs_main(in: VertexOutput) -> @location(0) vec4f {
-    let t: f32 = distance(uSettingGrad.zw, in.vScreenCoord) / uSettingGrad.r;
+    let t: f32 = distance(uSettingGrad.zw, in.vScreenCoord.xy) / uSettingGrad.r;
     let Sc = textureSample(uTextureGrad, uSamplerGrad, vec2f(t, 0.5));
     let So = uBlendSettings.a;
     return vec4f(Sc.rgb * Sc.a * So, Sc.a * So);
