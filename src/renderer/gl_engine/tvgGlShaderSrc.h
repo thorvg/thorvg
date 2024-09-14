@@ -43,5 +43,14 @@ extern const char* STENCIL_VERT_SHADER;
 extern const char* STENCIL_FRAG_SHADER;
 extern const char* BLIT_VERT_SHADER;
 extern const char* BLIT_FRAG_SHADER;
+extern const char* MULTIPLY_BLEND_FRAG;
+extern const char* SCREEN_BLEND_FRAG;
+extern const char* OVERLAY_BLEND_FRAG;
+extern const char* COLOR_DODGE_BLEND_FRAG;
+extern const char* COLOR_BURN_BLEND_FRAG;
+extern const char* HARD_LIGHT_BLEND_FRAG;
+extern const char* SOFT_LIGHT_BLEND_FRAG;
+extern const char* DIFFERENCE_BLEND_FRAG;
+extern const char* EXCLUSION_BLEND_FRAG;
 
 #endif /* _TVG_GL_SHADERSRC_H_ */

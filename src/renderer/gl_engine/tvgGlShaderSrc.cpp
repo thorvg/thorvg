@@ -198,7 +198,7 @@ void main()                                                                     
                                                                                                         \n
     vec2 ba = ed - st;                                                                                  \n
                                                                                                         \n
-    float d = abs(dot(pos - st, ba) / dot(ba, ba));                                                     \n
+    float d = dot(pos - st, ba) / dot(ba, ba);                                                          \n
                                                                                                         \n
     float t = gradientWrap(d);                                                                          \n
                                                                                                         \n
@@ -509,3 +509,138 @@ const char* BLIT_FRAG_SHADER = TVG_COMPOSE_SHADER(
         FragColor = texture(uSrcTexture, vUV);                      \n
     }
 );
+
+#define COMPLEX_BLEND_HEADER R"(
+    uniform sampler2D uSrcTexture;
+    uniform sampler2D uDstTexture;
+
+    in vec2 vUV;
+    out vec4 FragColor;
+)"
+
+const char* MULTIPLY_BLEND_FRAG = COMPLEX_BLEND_HEADER  R"(
+    void main() {
+        vec4 srcColor = texture(uSrcTexture, vUV);
+        vec4 dstColor = texture(uDstTexture, vUV);
+        FragColor = srcColor * dstColor;
+    }
+)";
+
+#define SCREEN_BLEND_FUNC R"(
+    vec4 screenBlend(vec4 srcColor, vec4 dstColor) {
+        return dstColor + srcColor - (dstColor * srcColor);
+    }
+)"
+
+#define HARD_LIGHT_BLEND_FUNC R"(
+    vec4 hardLightBlend(vec4 srcColor, vec4 dstColor) {
+        return vec4(srcColor.r < 0.5 ? 2.0 * srcColor.r * dstColor.r : 1.0 - 2.0 * (1.0 - srcColor.r) * (1.0 - dstColor.r),
+                    srcColor.g < 0.5 ? 2.0 * srcColor.g * dstColor.g : 1.0 - 2.0 * (1.0 - srcColor.g) * (1.0 - dstColor.g),
+                    srcColor.b < 0.5 ? 2.0 * srcColor.b * dstColor.b : 1.0 - 2.0 * (1.0 - srcColor.b) * (1.0 - dstColor.b),
+                    1.0);
+    }
+)"
+
+#define SOFT_LIGHT_BLEND_FUNC R"(
+    float softLightD(float v) {
+        if (v <= 0.25) return ((16.0 * v - 12.0) * v + 4.0) * v;
+        else return sqrt(v);
+    }
+)"
+
+const char* SCREEN_BLEND_FRAG = COMPLEX_BLEND_HEADER SCREEN_BLEND_FUNC R"(
+    void main() {
+        vec4 srcColor = texture(uSrcTexture, vUV);
+        vec4 dstColor = texture(uDstTexture, vUV);
+        FragColor = screenBlend(srcColor, dstColor);
+    }
+)";
+
+const char* OVERLAY_BLEND_FRAG = COMPLEX_BLEND_HEADER HARD_LIGHT_BLEND_FUNC R"(
+    void main() {
+        vec4 srcColor = texture(uSrcTexture, vUV);
+        vec4 dstColor = texture(uDstTexture, vUV);
+        FragColor = hardLightBlend(dstColor, srcColor);
+    }
+)";
+
+const char* COLOR_DODGE_BLEND_FRAG = COMPLEX_BLEND_HEADER R"(
+    void main() {
+        vec4 srcColor = texture(uSrcTexture, vUV);
+        vec4 dstColor = texture(uDstTexture, vUV);
+
+        float opacity = srcColor.a;
+
+        srcColor *= 255.0;
+        dstColor *= 255.0;
+        vec4 color = vec4(
+            255.0 - srcColor.r > 0.0 ? dstColor.r / (255.0 - srcColor.r) : dstColor.r,
+            255.0 - srcColor.g > 0.0 ? dstColor.g / (255.0 - srcColor.g) : dstColor.g,
+            255.0 - srcColor.b > 0.0 ? dstColor.b / (255.0 - srcColor.b) : dstColor.b,
+            255.0 - srcColor.a > 0.0 ? dstColor.a / (255.0 - srcColor.a) : dstColor.a
+        );
+
+        FragColor = vec4(color.rgb, 255.0) * opacity / 255.0;
+    }
+)";
+
+const char* COLOR_BURN_BLEND_FRAG = COMPLEX_BLEND_HEADER R"(
+    void main() {
+        vec4 srcColor = texture(uSrcTexture, vUV);
+        vec4 dstColor = texture(uDstTexture, vUV);
+
+        float opacity = srcColor.a;
+
+        if (srcColor.a > 0.0) srcColor.rgb /= srcColor.a;
+        if (dstColor.a > 0.0) dstColor.rgb /= dstColor.a;
+        vec4 id = vec4(1.0) - dstColor;
+        vec4 color = vec4(
+            srcColor.r > 0.0 ? (255.0 -  (255.0 - dstColor.r * 255.0) / (srcColor.r * 255.0)) / 255.0 : (1.0 - dstColor.r),
+            srcColor.g > 0.0 ? (255.0 -  (255.0 - dstColor.g * 255.0) / (srcColor.g * 255.0)) / 255.0 : (1.0 - dstColor.g),
+            srcColor.b > 0.0 ? (255.0 -  (255.0 - dstColor.b * 255.0) / (srcColor.b * 255.0)) / 255.0 : (1.0 - dstColor.b),
+            srcColor.a > 0.0 ? (255.0 -  (255.0 - dstColor.a * 255.0) / (srcColor.a * 255.0)) / 255.0 : (1.0 - dstColor.a)
+        );
+
+        FragColor = color * srcColor.a;
+    }
+)";
+
+const char* HARD_LIGHT_BLEND_FRAG = COMPLEX_BLEND_HEADER HARD_LIGHT_BLEND_FUNC R"(
+    void main() {
+        vec4 srcColor = texture(uSrcTexture, vUV);
+        vec4 dstColor = texture(uDstTexture, vUV);
+        FragColor = hardLightBlend(srcColor, dstColor);
+    }
+)";
+
+const char* SOFT_LIGHT_BLEND_FRAG = COMPLEX_BLEND_HEADER SOFT_LIGHT_BLEND_FUNC R"(
+    void main() {
+        vec4 srcColor = texture(uSrcTexture, vUV);
+        vec4 dstColor = texture(uDstTexture, vUV);
+
+        FragColor = vec4(
+            srcColor.r <= 0.5 ? dstColor.r - (1.0 - 2.0 * srcColor.r) * dstColor.r * (1.0 - dstColor.r) : dstColor.r + (2.0 * srcColor.r - 1.0) * (softLightD(dstColor.r) - dstColor.r),
+            srcColor.g <= 0.5 ? dstColor.g - (1.0 - 2.0 * srcColor.g) * dstColor.g * (1.0 - dstColor.g) : dstColor.g + (2.0 * srcColor.g - 1.0) * (softLightD(dstColor.g) - dstColor.g),
+            srcColor.b <= 0.5 ? dstColor.b - (1.0 - 2.0 * srcColor.b) * dstColor.b * (1.0 - dstColor.b) : dstColor.b + (2.0 * srcColor.b - 1.0) * (softLightD(dstColor.b) - dstColor.b),
+            1.0
+            );
+    }
+)";
+
+const char* DIFFERENCE_BLEND_FRAG = COMPLEX_BLEND_HEADER R"(
+    void main() {
+        vec4 srcColor = texture(uSrcTexture, vUV);
+        vec4 dstColor = texture(uDstTexture, vUV);
+
+        FragColor = abs(dstColor - srcColor);
+    }
+)";
+
+const char* EXCLUSION_BLEND_FRAG = COMPLEX_BLEND_HEADER R"(
+    void main() {
+        vec4 srcColor = texture(uSrcTexture, vUV);
+        vec4 dstColor = texture(uDstTexture, vUV);
+
+        FragColor = dstColor + srcColor - (2.0 * dstColor * srcColor);
+    }
+)";
