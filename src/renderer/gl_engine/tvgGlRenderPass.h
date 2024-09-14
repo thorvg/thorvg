@@ -74,6 +74,10 @@ public:
     }
 
     int nextDrawDepth() { return ++mDrawDepth; }
+
+    void setDrawDepth(int32_t depth) { mDrawDepth = depth; }
+
+    GlRenderTarget* getFbo() { return mFbo; }
 private:
     GlRenderTarget* mFbo;
     Array<GlRenderTask*> mTasks = {};

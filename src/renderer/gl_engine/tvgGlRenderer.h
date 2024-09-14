@@ -49,6 +49,15 @@ public:
         RT_MaskDifference,
         RT_Stencil,
         RT_Blit,
+        RT_MultiplyBlend,
+        RT_ScreenBlend,
+        RT_OverlayBlend,
+        RT_ColorDodgeBlend,
+        RT_ColorBurnBlend,
+        RT_HardLightBlend,
+        RT_SoftLightBlend,
+        RT_DifferenceBlend,
+        RT_ExclusionBlend,
 
         RT_None,
     };
@@ -91,6 +100,10 @@ private:
 
     GlRenderPass* currentPass();
 
+    bool beginComplexBlending(const RenderRegion& vp, RenderRegion bounds);
+    void endBlendingCompose(GlRenderTask* stencilTask, const Matrix& matrix);
+    GlProgram* getBlendProgram();
+
     void prepareBlitTask(GlBlitTask* task);
     void prepareCmpTask(GlRenderTask* task, const RenderRegion& vp, uint32_t cmpWidth, uint32_t cmpHeight);
     void endRenderPass(Compositor* cmp);
@@ -105,6 +118,7 @@ private:
     vector<std::unique_ptr<GlProgram>> mPrograms;
     unique_ptr<GlRenderTarget> mRootTarget = {};
     Array<GlRenderTargetPool*> mComposePool = {};
+    Array<GlRenderTargetPool*> mBlendPool = {};
     vector<GlRenderPass> mRenderPassStack = {};
     vector<unique_ptr<GlCompositor>> mComposeStack = {};
 
@@ -113,6 +127,8 @@ private:
         Array<GLuint> textures = {};
         Key key;
     } mDisposed;
+
+    BlendMethod mBlendMethod = BlendMethod::Normal;
 };
 
 #endif /* _TVG_GL_RENDERER_H_ */
