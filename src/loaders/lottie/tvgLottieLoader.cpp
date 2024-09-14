@@ -195,9 +195,8 @@ bool LottieLoader::open(const char* data, uint32_t size, const std::string& rpat
     this->size = size;
     this->copy = copy;
 
-    if (!rpath.empty()) {
-        this->dirName = strdup(rpath.c_str());
-    }
+    if (rpath.empty()) this->dirName = strdup(".");
+    else this->dirName = strdup(rpath.c_str());
 
     return header();
 }
