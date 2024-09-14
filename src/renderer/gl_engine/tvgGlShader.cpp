@@ -79,7 +79,7 @@ uint32_t GlShader::compileShader(uint32_t type, char* shaderSrc)
 #else
     shaderPack[0] ="#version 330 core\n";
 #endif
-    shaderPack[1] = "precision highp float;\n precision mediump int;\n";
+    shaderPack[1] = "precision highp float;\n precision highp int;\n";
     shaderPack[2] = shaderSrc;
 
     // Load the shader source

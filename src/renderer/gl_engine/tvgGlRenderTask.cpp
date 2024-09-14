@@ -308,3 +308,80 @@ void GlClipTask::normalizeDrawDepth(int32_t maxDepth)
     mClipTask->normalizeDrawDepth(maxDepth);
     mMaskTask->normalizeDrawDepth(maxDepth);
 }
+
+GlSimpleBlendTask::GlSimpleBlendTask(BlendMethod method, GlProgram* program)
+ : GlRenderTask(program), mBlendMethod(method) {}
+
+void GlSimpleBlendTask::run()
+{
+    if (mBlendMethod == BlendMethod::Add) glBlendFunc(GL_ONE, GL_ONE);
+    else if (mBlendMethod == BlendMethod::Darken) {
+        glBlendFunc(GL_ONE, GL_ONE);
+        glBlendEquation(GL_MIN);
+    } else if (mBlendMethod == BlendMethod::Lighten) {
+        glBlendFunc(GL_ONE, GL_ONE);
+        glBlendEquation(GL_MAX);
+    }
+    else glBlendFunc(GL_ONE, GL_ONE_MINUS_SRC_ALPHA);
+
+    GlRenderTask::run();
+
+    if (mBlendMethod == BlendMethod::Darken || mBlendMethod == BlendMethod::Lighten) glBlendEquation(GL_FUNC_ADD);
+
+    glBlendFunc(GL_ONE, GL_ONE_MINUS_SRC_ALPHA);
+}
+
+GlComplexBlendTask::GlComplexBlendTask(GlProgram* program, GlRenderTarget* dstFbo, GlRenderTarget* dstCopyFbo, GlRenderTask* stencilTask, GlComposeTask* composeTask)
+ : GlRenderTask(program), mDstFbo(dstFbo), mDstCopyFbo(dstCopyFbo), mStencilTask(stencilTask), mComposeTask(composeTask) {}
+
+GlComplexBlendTask::~GlComplexBlendTask()
+{
+    delete mStencilTask;
+    delete mComposeTask;
+}
+
+void GlComplexBlendTask::run()
+{
+    mComposeTask->run();
+
+    // copy the current fbo to the dstCopyFbo
+    GL_CHECK(glBindFramebuffer(GL_READ_FRAMEBUFFER, mDstFbo->getFboId()));
+    GL_CHECK(glBindFramebuffer(GL_DRAW_FRAMEBUFFER, mDstCopyFbo->getResolveFboId()));
+
+    GL_CHECK(glViewport(0, 0, mDstFbo->getViewport().w, mDstFbo->getViewport().h));
+    GL_CHECK(glScissor(0, 0, mDstFbo->getViewport().w, mDstFbo->getViewport().h));
+    
+    const auto& vp = getViewport();
+
+    GL_CHECK(glBlitFramebuffer(vp.x, vp.y, vp.x + vp.w, vp.y + vp.h, 0, 0, vp.w, vp.h, GL_COLOR_BUFFER_BIT, GL_LINEAR));
+
+    GL_CHECK(glBindFramebuffer(GL_FRAMEBUFFER, mDstFbo->getFboId()));
+
+    GL_CHECK(glEnable(GL_STENCIL_TEST));
+    GL_CHECK(glColorMask(0, 0, 0, 0));
+    GL_CHECK(glStencilFuncSeparate(GL_FRONT, GL_ALWAYS, 0x0, 0xFF));
+    GL_CHECK(glStencilOpSeparate(GL_FRONT, GL_KEEP, GL_KEEP, GL_INCR_WRAP));
+
+    GL_CHECK(glStencilFuncSeparate(GL_BACK, GL_ALWAYS, 0x0, 0xFF));
+    GL_CHECK(glStencilOpSeparate(GL_BACK, GL_KEEP, GL_KEEP, GL_DECR_WRAP));
+
+
+    mStencilTask->run();
+
+    GL_CHECK(glColorMask(1, 1, 1, 1));
+    GL_CHECK(glStencilFunc(GL_NOTEQUAL, 0x0, 0xFF));
+    GL_CHECK(glStencilOp(GL_REPLACE, GL_KEEP, GL_REPLACE));
+
+    GL_CHECK(glBlendFunc(GL_ONE, GL_ZERO));
+
+    GlRenderTask::run();
+
+    GL_CHECK(glDisable(GL_STENCIL_TEST));
+    GL_CHECK(glBlendFunc(GL_ONE, GL_ONE_MINUS_SRC_ALPHA));
+}
+
+void GlComplexBlendTask::normalizeDrawDepth(int32_t maxDepth)
+{
+    mStencilTask->normalizeDrawDepth(maxDepth);
+    GlRenderTask::normalizeDrawDepth(maxDepth);
+}
