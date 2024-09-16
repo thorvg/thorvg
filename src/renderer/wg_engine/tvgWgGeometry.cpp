@@ -65,7 +65,10 @@ void WgPolyline::appendPoint(WgPoint pt)
 {
     if (pts.count > 0) {
         float distance = pts.last().dist(pt);
-        if (distance > 0) {
+        // adjust precision because of real user data points
+        // can be further than the accepted accuracy, 
+        // but still be considered tha same
+        if (!tvg::zero(distance*1e-1)) {
             // update min and max indexes
             iminx = pts[iminx].x >= pt.x ? pts.count : iminx;
             imaxx = pts[imaxx].x <= pt.x ? pts.count : imaxx;
@@ -217,13 +220,13 @@ void WgGeometryData::appendRect(WgPoint p0, WgPoint p1, WgPoint p2, WgPoint p3)
 }
 
 
-void WgGeometryData::appendCircle(WgPoint center, float radius)
+void WgGeometryData::appendCircle(WgPoint center, float radius, float scale)
 {
     uint32_t indexCenter = positions.pts.count;
     positions.appendPoint(center);
     uint32_t index = positions.pts.count;
     positions.appendPoint({ center.x + gMath->sinus[0] * radius, center.y + gMath->cosin[0] * radius });
-    uint32_t nPoints = (uint32_t)(radius * 2.0f);
+    uint32_t nPoints = (uint32_t)(scale * radius * 2.0f);
     nPoints = nPoints < 8 ? 8 : nPoints;
     const uint32_t step = gMath->sinus.count / nPoints;
     for (uint32_t i = step; i < gMath->sinus.count; i += step) {
@@ -279,7 +282,7 @@ void WgGeometryData::appendBlitBox()
 }
 
 
-void WgGeometryData::appendStrokeDashed(const WgPolyline* polyline, const RenderStroke *stroke)
+void WgGeometryData::appendStrokeDashed(const WgPolyline* polyline, const RenderStroke *stroke, float scale)
 {
     assert(stroke);
     assert(polyline);
@@ -308,7 +311,7 @@ void WgGeometryData::appendStrokeDashed(const WgPolyline* polyline, const Render
                 currentLength += stroke->dashPattern[dashIndex];
                 // append stroke if dash
                 if (dashIndex % 2 != 0) {
-                    appendStroke(&dashed, stroke);
+                    appendStroke(&dashed, stroke, scale);
                     dashed.clear();
                 }
             }
@@ -318,14 +321,14 @@ void WgGeometryData::appendStrokeDashed(const WgPolyline* polyline, const Render
         // draw last subline
         if (dashIndex % 2 == 0) {
             dashed.appendPoint(pts.last());
-            appendStroke(&dashed, stroke);
+            appendStroke(&dashed, stroke, scale);
             dashed.clear();
         }
     }
 }
 
 
-void WgGeometryData::appendStrokeJoin(const WgPoint& v0, const WgPoint& v1, const WgPoint& v2, StrokeJoin join, float halfWidth, float miterLimit)
+void WgGeometryData::appendStrokeJoin(const WgPoint& v0, const WgPoint& v1, const WgPoint& v2, StrokeJoin join, float halfWidth, float miterLimit, float scale)
 {
     WgPoint dir0 = (v1 - v0).normal();
     WgPoint dir1 = (v2 - v1).normal();
@@ -334,12 +337,13 @@ void WgGeometryData::appendStrokeJoin(const WgPoint& v0, const WgPoint& v1, cons
     WgPoint offset0 = nrm0 * halfWidth;
     WgPoint offset1 = nrm1 * halfWidth;
     if (join == StrokeJoin::Round) {
-        appendCircle(v1, halfWidth);
+        appendCircle(v1, halfWidth, scale);
     } else if (join == StrokeJoin::Bevel) {
         appendRect(v1 - offset0, v1 + offset1, v1 - offset1, v1 + offset0);
     } else if (join == StrokeJoin::Miter) {
         WgPoint nrm = (nrm0 + nrm1);
-        if (!tvg::zero(dir0.x * dir1.y -  dir0.y * dir1.x)) {
+        // adjust precision because dot product could return above 1 that results  acos returns Nan
+        if (!tvg::zero((dir0.x * dir1.y - dir0.y * dir1.x)*1e-1)) {
             nrm.normalize();
             float cosine = nrm.dot(nrm0);
             float angle = std::acos(dir0.dot(dir1.negative()));
@@ -355,7 +359,7 @@ void WgGeometryData::appendStrokeJoin(const WgPoint& v0, const WgPoint& v1, cons
 }
 
 
-void WgGeometryData::appendStroke(const WgPolyline* polyline, const RenderStroke *stroke)
+void WgGeometryData::appendStroke(const WgPolyline* polyline, const RenderStroke *stroke, float scale)
 {
     assert(stroke);
     assert(polyline);
@@ -369,8 +373,8 @@ void WgGeometryData::appendStroke(const WgPolyline* polyline, const RenderStroke
         WgPoint nrm0 = WgPoint{ -dir0.y, +dir0.x };
         if (stroke->cap == StrokeCap::Round) {
             appendRect(v0 - nrm0 * wdt, v0 + nrm0 * wdt, v1 - nrm0 * wdt, v1 + nrm0 * wdt);
-            appendCircle(polyline->pts[0], wdt);
-            appendCircle(polyline->pts[1], wdt);
+            appendCircle(polyline->pts[0], wdt, scale);
+            appendCircle(polyline->pts[1], wdt, scale);
         } else if (stroke->cap == StrokeCap::Butt) {
             appendRect(v0 - nrm0 * wdt, v0 + nrm0 * wdt, v1 - nrm0 * wdt, v1 + nrm0 * wdt);
         } else if (stroke->cap == StrokeCap::Square) {
@@ -384,7 +388,7 @@ void WgGeometryData::appendStroke(const WgPolyline* polyline, const RenderStroke
             WgPoint v0 = polyline->pts[polyline->pts.count - 2];
             WgPoint v1 = polyline->pts[0];
             WgPoint v2 = polyline->pts[1];
-            appendStrokeJoin(v0, v1, v2, stroke->join, wdt, stroke->miterlimit);
+            appendStrokeJoin(v0, v1, v2, stroke->join, wdt, stroke->miterlimit, scale);
         } else {
             // append first cap
             WgPoint v0 = polyline->pts[0];
@@ -392,7 +396,7 @@ void WgGeometryData::appendStroke(const WgPolyline* polyline, const RenderStroke
             WgPoint dir0 = (v1 - v0) / polyline->dist[1];
             WgPoint nrm0 = WgPoint{ -dir0.y, +dir0.x };
             if (stroke->cap == StrokeCap::Round) {
-                appendCircle(v0, wdt);
+                appendCircle(v0, wdt, scale);
             } else if (stroke->cap == StrokeCap::Butt) {
                 // no cap needed
             } else if (stroke->cap == StrokeCap::Square) {
@@ -405,7 +409,7 @@ void WgGeometryData::appendStroke(const WgPolyline* polyline, const RenderStroke
             dir0 = (v1 - v0) / polyline->dist[polyline->pts.count - 1];
             nrm0 = WgPoint{ -dir0.y, +dir0.x };
             if (stroke->cap == StrokeCap::Round) {
-                appendCircle(v1, wdt);
+                appendCircle(v1, wdt, scale);
             } else if (stroke->cap == StrokeCap::Butt) {
                 // no cap needed
             } else if (stroke->cap == StrokeCap::Square) {
@@ -425,7 +429,7 @@ void WgGeometryData::appendStroke(const WgPolyline* polyline, const RenderStroke
 
             if (i > 0) {
                 WgPoint v0 = polyline->pts[i - 1];
-                appendStrokeJoin(v0, v1, v2, stroke->join, wdt, stroke->miterlimit);
+                appendStrokeJoin(v0, v1, v2, stroke->join, wdt, stroke->miterlimit, scale);
             }
         }
     }

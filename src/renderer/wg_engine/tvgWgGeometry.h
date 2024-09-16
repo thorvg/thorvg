@@ -111,16 +111,15 @@ struct WgGeometryData
     WgGeometryData();
     void clear();
 
-    void appendCubic(WgPoint p1, WgPoint p2, WgPoint p3);
     void appendBox(WgPoint pmin, WgPoint pmax);
     void appendRect(WgPoint p0, WgPoint p1, WgPoint p2, WgPoint p3);
-    void appendCircle(WgPoint center, float radius);
+    void appendCircle(WgPoint center, float radius, float scale = 1.0f);
     void appendImageBox(float w, float h);
     void appendBlitBox();
-    void appendStrokeDashed(const WgPolyline* polyline, const RenderStroke *stroke);
+    void appendStrokeDashed(const WgPolyline* polyline, const RenderStroke *stroke, float scale);
     void appendStrokeJoin(const WgPoint& v0, const WgPoint& v1, const WgPoint& v2,
-                          StrokeJoin join, float halfWidth, float miterLimit);
-    void appendStroke(const WgPolyline* polyline, const RenderStroke *stroke);
+                          StrokeJoin join, float halfWidth, float miterLimit, float scale);
+    void appendStroke(const WgPolyline* polyline, const RenderStroke *stroke, float scale);
 };
 
 #endif // _TVG_WG_GEOMETRY_H_
