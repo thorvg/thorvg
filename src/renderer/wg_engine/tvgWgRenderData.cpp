@@ -22,6 +22,7 @@
  */
 
 #include <algorithm>
+#include "tvgMath.h"
 #include "tvgWgRenderData.h"
 #include "tvgWgShaderTypes.h"
 
@@ -327,11 +328,12 @@ void WgRenderDataShape::updateAABB(const Matrix& rt) {
 }
 
 
-void WgRenderDataShape::updateMeshes(WgContext &context, const RenderShape &rshape, const Matrix& rt)
+void WgRenderDataShape::updateMeshes(WgContext &context, const RenderShape &rshape, const Matrix& tr)
 {
     releaseMeshes(context);
     strokeFirst = rshape.stroke ? rshape.stroke->strokeFirst : false;
 
+    float scale = std::max(sqrt(tr.e11*tr.e11 + tr.e21*tr.e21), 1.0f);
     Array<WgPolyline*> polylines{};
     // decode path
     size_t pntIndex = 0;
@@ -349,16 +351,16 @@ void WgRenderDataShape::updateMeshes(WgContext &context, const RenderShape &rsha
             polylines.last()->close();
         } else if (cmd == PathCommand::CubicTo) {
             assert(polylines.last()->pts.count > 0);
-            WgPoint pt0 = polylines.last()->pts.last().trans(rt);
-            WgPoint pt1 = WgPoint(rshape.path.pts[pntIndex + 0]).trans(rt);
-            WgPoint pt2 = WgPoint(rshape.path.pts[pntIndex + 1]).trans(rt);
-            WgPoint pt3 = WgPoint(rshape.path.pts[pntIndex + 2]).trans(rt);
-            uint32_t nsegs = (uint32_t)(pt0.dist(pt1) + pt1.dist(pt2) + pt2.dist(pt3));
+            WgPoint pt0 = polylines.last()->pts.last().trans(tr);
+            WgPoint pt1 = WgPoint(rshape.path.pts[pntIndex + 0]).trans(tr);
+            WgPoint pt2 = WgPoint(rshape.path.pts[pntIndex + 1]).trans(tr);
+            WgPoint pt3 = WgPoint(rshape.path.pts[pntIndex + 2]).trans(tr);
+            uint32_t nsegs = std::max((uint32_t)(pt0.dist(pt1) + pt1.dist(pt2) + pt2.dist(pt3)), 32U);
             polylines.last()->appendCubic(
                 rshape.path.pts[pntIndex + 0],
                 rshape.path.pts[pntIndex + 1],
                 rshape.path.pts[pntIndex + 2],
-                nsegs / 2);
+                nsegs / 4);
             pntIndex += 3;
         }
     }
@@ -375,13 +377,13 @@ void WgRenderDataShape::updateMeshes(WgContext &context, const RenderShape &rsha
         if (!rshape.stroke->strokeTrim(trimBegin, trimEnd)) { trimBegin = 0.0f; trimEnd = 1.0f; }
         if (rshape.stroke->trim.simultaneous) {
             for (uint32_t i = 0; i < polylines.count; i++)
-                updateStrokes(context, polylines[i], rshape.stroke, trimBegin, trimEnd);
+                updateStrokes(context, polylines[i], rshape.stroke, scale, trimBegin, trimEnd);
         } else {
             if (trimBegin <= trimEnd) {
-                updateStrokesList(context, polylines, rshape.stroke, totalLen, trimBegin, trimEnd);
+                updateStrokesList(context, polylines, rshape.stroke, totalLen, scale, trimBegin, trimEnd);
             } else {
-                updateStrokesList(context, polylines, rshape.stroke, totalLen, 0.0f, trimEnd);
-                updateStrokesList(context, polylines, rshape.stroke, totalLen, trimBegin, 1.0f);
+                updateStrokesList(context, polylines, rshape.stroke, totalLen, scale, 0.0f, trimEnd);
+                updateStrokesList(context, polylines, rshape.stroke, totalLen, scale, trimBegin, 1.0f);
             }
         }
     }
@@ -389,7 +391,7 @@ void WgRenderDataShape::updateMeshes(WgContext &context, const RenderShape &rsha
     for (uint32_t i = 0; i < polylines.count; i++)
         delete polylines[i];
     // update shapes bbox
-    updateAABB(rt);
+    updateAABB(tr);
     meshDataBBox.update(context, pMin, pMax);
 }
 
@@ -407,7 +409,7 @@ void WgRenderDataShape::updateShapes(WgContext& context, const WgPolyline* polyl
     }
 }
 
-void WgRenderDataShape::updateStrokesList(WgContext& context, Array<WgPolyline*> polylines, const RenderStroke* rstroke, float totalLen, float trimBegin, float trimEnd)
+void WgRenderDataShape::updateStrokesList(WgContext& context, Array<WgPolyline*> polylines, const RenderStroke* rstroke, float scale, float totalLen, float trimBegin, float trimEnd)
 {
     float tp1 = totalLen * trimBegin; // trim point begin
     float tp2 = totalLen * trimEnd; // trim point end
@@ -417,7 +419,7 @@ void WgRenderDataShape::updateStrokesList(WgContext& context, Array<WgPolyline*>
         float trimBegin = ((pc <= tp1) && (pc + pl > tp1)) ? (tp1 - pc) / pl : 0.0f;
         float trimEnd   = ((pc <= tp2) && (pc + pl > tp2)) ? (tp2 - pc) / pl : 1.0f;
         if ((pc + pl >= tp1) && (pc <= tp2))
-            updateStrokes(context, polylines[i], rstroke, trimBegin, trimEnd);
+            updateStrokes(context, polylines[i], rstroke, scale, trimBegin, trimEnd);
         pc += pl;
         // break if reached the tail
         if (pc > tp2) break;
@@ -425,7 +427,7 @@ void WgRenderDataShape::updateStrokesList(WgContext& context, Array<WgPolyline*>
 }
 
 
-void WgRenderDataShape::updateStrokes(WgContext& context, const WgPolyline* polyline, const RenderStroke* rstroke, float trimBegin, float trimEnd)
+void WgRenderDataShape::updateStrokes(WgContext& context, const WgPolyline* polyline, const RenderStroke* rstroke, float scale, float trimBegin, float trimEnd)
 {
     assert(polyline);
     // generate strokes geometry
@@ -442,7 +444,7 @@ void WgRenderDataShape::updateStrokes(WgContext& context, const WgPolyline* poly
                 polyline->trim(&trimmed, trimBegin, 1.0f);
                 polyline->trim(&trimmed, 0.0f, trimEnd);
             }
-            geometryData.appendStrokeDashed(&trimmed, rstroke);
+            geometryData.appendStrokeDashed(&trimmed, rstroke, scale);
         } else // trim -> stroke
         if ((trimBegin != 0.0f) || (trimEnd != 1.0f)) {
             trimmed.clear();
@@ -452,12 +454,12 @@ void WgRenderDataShape::updateStrokes(WgContext& context, const WgPolyline* poly
                 polyline->trim(&trimmed, trimBegin, 1.0f);
                 polyline->trim(&trimmed, 0.0f, trimEnd);
             }
-            geometryData.appendStroke(&trimmed, rstroke);
+            geometryData.appendStroke(&trimmed, rstroke, scale);
         } else // split -> stroke
         if (rstroke->dashPattern) {
-            geometryData.appendStrokeDashed(polyline, rstroke);
+            geometryData.appendStrokeDashed(polyline, rstroke, scale);
         } else { // stroke
-            geometryData.appendStroke(polyline, rstroke);
+            geometryData.appendStroke(polyline, rstroke, scale);
         }
         // append render meshes and bboxes
         if(geometryData.positions.pts.count >= 3) {
