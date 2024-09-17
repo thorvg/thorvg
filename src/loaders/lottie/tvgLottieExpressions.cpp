@@ -935,12 +935,19 @@ static jerry_value_t _key(const jerry_call_info_t* info, const jerry_value_t arg
     jerry_object_set_sz(obj, EXP_INDEX, args[0]);
     jerry_object_set_sz(obj, EXP_VALUE, value);
 
+    //direct access, key[0], key[1]
+    if (exp->property->type == LottieProperty::Type::Float) {
+        jerry_object_set_index(obj, 0, value);
+    } else if (exp->property->type == LottieProperty::Type::Point || exp->property->type == LottieProperty::Type::Position) {
+        jerry_object_set_index(obj, 0, jerry_object_get_index(value, 0));
+        jerry_object_set_index(obj, 1, jerry_object_get_index(value, 1));
+    }
+
     jerry_value_free(time);
     jerry_value_free(value);
 
     return obj;
 }
-
 
 
 static jerry_value_t _createPath(const jerry_call_info_t* info, const jerry_value_t args[], const jerry_length_t argsCnt)
