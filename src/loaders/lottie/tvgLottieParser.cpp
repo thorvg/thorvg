@@ -1123,7 +1123,9 @@ void LottieParser::parseTextRange(LottieText* text)
                     else if (KEY_AS("ne")) parseProperty<LottieProperty::Type::Float>(selector->minEase);
                     else if (KEY_AS("a")) parseProperty<LottieProperty::Type::Float>(selector->maxAmount);
                     else if (KEY_AS("b")) selector->based = (LottieTextRange::Based) getInt();
-                    else if (KEY_AS("rn")) selector->randomize = (bool) getInt();
+                    else if (KEY_AS("rn")) {
+                        if (getInt()) selector->random = rand();
+                    }
                     else if (KEY_AS("sh")) selector->shape = (LottieTextRange::Shape) getInt();
                     else if (KEY_AS("o")) parseProperty<LottieProperty::Type::Float>(selector->offset);
                     else if (KEY_AS("r")) selector->rangeUnit = (LottieTextRange::Unit) getInt();

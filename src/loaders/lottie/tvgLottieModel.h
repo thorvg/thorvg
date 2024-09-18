@@ -184,8 +184,10 @@ struct LottieTextRange
     Based based = Chars;
     Shape shape = Square;
     Unit rangeUnit = Percent;
+    uint8_t random = 0;
     bool expressible = false;
-    bool randomize = false;
+
+    void range(float frameNo, size_t totalLen, float& start, float& end);
 };
 
 
