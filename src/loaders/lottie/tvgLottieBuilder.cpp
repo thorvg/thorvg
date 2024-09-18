@@ -1069,14 +1069,10 @@ void LottieBuilder::updateText(LottieLayer* layer, float frameNo)
 
                 //text range process
                 for (auto s = text->ranges.begin(); s < text->ranges.end(); ++s) {
+                    float start, end;
+                    (*s)->range(frameNo, totalChars, start, end);
+
                     auto basedIdx = idx;
-                    float divisor = (*s)->rangeUnit == LottieTextRange::Unit::Percent ? (100.0f / totalChars) : 1;
-                    auto offset = (*s)->offset(frameNo) / divisor;
-                    auto start = nearbyintf((*s)->start(frameNo) / divisor) + offset;
-                    auto end = nearbyintf((*s)->end(frameNo) / divisor) + offset;
-
-                    if (start > end) std::swap(start, end);
-
                     if ((*s)->based == LottieTextRange::Based::CharsExcludingSpaces) basedIdx = idx - space;
                     else if ((*s)->based == LottieTextRange::Based::Words) basedIdx = line + space;
                     else if ((*s)->based == LottieTextRange::Based::Lines) basedIdx = line;
