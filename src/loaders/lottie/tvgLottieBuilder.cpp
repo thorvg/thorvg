@@ -1064,7 +1064,7 @@ void LottieBuilder::updateText(LottieLayer* layer, float frameNo)
                 //text range process
                 for (auto s = text->ranges.begin(); s < text->ranges.end(); ++s) {
                     float start, end;
-                    (*s)->range(frameNo, totalChars, start, end);
+                    (*s)->range(frameNo, float(totalChars), start, end);
 
                     auto basedIdx = idx;
                     if ((*s)->based == LottieTextRange::Based::CharsExcludingSpaces) basedIdx = idx - space;
