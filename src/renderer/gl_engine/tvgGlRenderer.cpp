@@ -234,8 +234,7 @@ void GlRenderer::drawPrimitive(GlShape& sdata, uint8_t r, uint8_t g, uint8_t b, 
 
 void GlRenderer::drawPrimitive(GlShape& sdata, const Fill* fill, RenderUpdateFlag flag, int32_t depth)
 {
-
-    auto vp = currentPass()->getViewport();
+    const auto& vp = currentPass()->getViewport();
     auto bbox = sdata.geometry->getViewport();
 
     bbox.intersect(vp);
@@ -1176,7 +1175,6 @@ bool GlRenderer::renderImage(void* data)
 bool GlRenderer::renderShape(RenderData data)
 {
     auto sdata = static_cast<GlShape*>(data);
-    if (!sdata) return false;
 
     if (currentPass()->isEmpty()) return true;
 

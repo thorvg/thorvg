@@ -735,6 +735,20 @@ static jerry_value_t _valueAtTime(const jerry_call_info_t* info, const jerry_val
 }
 
 
+static jerry_value_t _velocity(float px, float cx, float py, float cy, float elapsed)
+{
+    float velocity[] = {(cx - px) / elapsed, (cy - py) / elapsed};
+    auto obj = jerry_object();
+    auto val1 = jerry_number(velocity[0]);
+    auto val2 = jerry_number(velocity[1]);
+    jerry_object_set_index(obj, 0, val1);
+    jerry_object_set_index(obj, 1, val2);
+    jerry_value_free(val1);
+    jerry_value_free(val2);
+    return obj;
+}
+
+
 static jerry_value_t _velocityAtTime(const jerry_call_info_t* info, const jerry_value_t args[], const jerry_length_t argsCnt)
 {
     auto exp = static_cast<LottieExpression*>(jerry_object_get_native_ptr(info->function, nullptr));
@@ -745,37 +759,27 @@ static jerry_value_t _velocityAtTime(const jerry_call_info_t* info, const jerry_
     auto cframe = exp->property->frameNo(key);
     auto elapsed = (cframe - pframe) / (exp->comp->frameRate);
 
-    Point cur, prv;
-
     //compute the velocity
     switch (exp->property->type) {
         case LottieProperty::Type::Point: {
-            prv = (*static_cast<LottiePoint*>(exp->property))(pframe);
-            cur = (*static_cast<LottiePoint*>(exp->property))(cframe);
-            break;
+            auto prv = (*static_cast<LottiePoint*>(exp->property))(pframe);
+            auto cur = (*static_cast<LottiePoint*>(exp->property))(cframe);
+            return _velocity(prv.x, cur.x, prv.y, cur.y, elapsed);
         }
         case LottieProperty::Type::Position: {
-            prv = (*static_cast<LottiePosition*>(exp->property))(pframe);
-            cur = (*static_cast<LottiePosition*>(exp->property))(cframe);
-            break;
+            auto prv = (*static_cast<LottiePosition*>(exp->property))(pframe);
+            auto cur = (*static_cast<LottiePosition*>(exp->property))(cframe);
+            return _velocity(prv.x, cur.x, prv.y, cur.y, elapsed);
         }
-        default: {
-            TVGLOG("LOTTIE", "Non supported type for velocityAtTime?");
-            return jerry_undefined();
+        case LottieProperty::Type::Float: {
+            auto prv = (*static_cast<LottieFloat*>(exp->property))(pframe);
+            auto cur = (*static_cast<LottieFloat*>(exp->property))(cframe);
+            auto velocity = (cur - prv) / elapsed;
+            return jerry_number(velocity);
         }
+        default: TVGLOG("LOTTIE", "Non supported type for velocityAtTime?");
     }
-
-    float velocity[] = {(cur.x - prv.x) / elapsed, (cur.y - prv.y) / elapsed};
-
-    auto obj = jerry_object();
-    auto val1 = jerry_number(velocity[0]);
-    auto val2 = jerry_number(velocity[1]);
-    jerry_object_set_index(obj, 0, val1);
-    jerry_object_set_index(obj, 1, val2);
-    jerry_value_free(val1);
-    jerry_value_free(val2);
-
-    return obj;
+    return jerry_undefined();
 }
 
 
@@ -931,12 +935,19 @@ static jerry_value_t _key(const jerry_call_info_t* info, const jerry_value_t arg
     jerry_object_set_sz(obj, EXP_INDEX, args[0]);
     jerry_object_set_sz(obj, EXP_VALUE, value);
 
+    //direct access, key[0], key[1]
+    if (exp->property->type == LottieProperty::Type::Float) {
+        jerry_object_set_index(obj, 0, value);
+    } else if (exp->property->type == LottieProperty::Type::Point || exp->property->type == LottieProperty::Type::Position) {
+        jerry_object_set_index(obj, 0, jerry_object_get_index(value, 0));
+        jerry_object_set_index(obj, 1, jerry_object_get_index(value, 1));
+    }
+
     jerry_value_free(time);
     jerry_value_free(value);
 
     return obj;
 }
-
 
 
 static jerry_value_t _createPath(const jerry_call_info_t* info, const jerry_value_t args[], const jerry_length_t argsCnt)

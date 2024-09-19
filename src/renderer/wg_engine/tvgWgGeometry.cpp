@@ -336,7 +336,7 @@ void WgGeometryData::appendStrokeJoin(const WgPoint& v0, const WgPoint& v1, cons
     if (join == StrokeJoin::Round) {
         appendCircle(v1, halfWidth);
     } else if (join == StrokeJoin::Bevel) {
-        appendRect(v1 - offset0, v1 + offset0, v1 - offset1, v1 + offset1);
+        appendRect(v1 - offset0, v1 + offset1, v1 - offset1, v1 + offset0);
     } else if (join == StrokeJoin::Miter) {
         WgPoint nrm = (nrm0 + nrm1);
         if (!tvg::zero(dir0.x * dir1.y -  dir0.y * dir1.x)) {
@@ -348,7 +348,7 @@ void WgGeometryData::appendStrokeJoin(const WgPoint& v0, const WgPoint& v1, cons
                 appendRect(v1 + nrm * (halfWidth / cosine), v1 + offset0, v1 + offset1, v1);
                 appendRect(v1 - nrm * (halfWidth / cosine), v1 - offset0, v1 - offset1, v1);
             } else {
-                appendRect(v1 - offset0, v1 + offset0, v1 - offset1, v1 + offset1);
+                appendRect(v1 - offset0, v1 + offset1, v1 - offset1, v1 + offset0);
             }
         }
     }
