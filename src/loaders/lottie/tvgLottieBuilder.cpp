@@ -1060,6 +1060,7 @@ void LottieBuilder::updateText(LottieLayer* layer, float frameNo)
                 }
                 shape->fill(doc.color.rgb[0], doc.color.rgb[1], doc.color.rgb[2]);
                 shape->translate(cursor.x, cursor.y);
+                shape->opacity(255);
 
                 if (doc.stroke.render) {
                     shape->strokeJoin(StrokeJoin::Round);

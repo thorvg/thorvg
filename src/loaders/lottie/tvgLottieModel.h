@@ -180,7 +180,7 @@ struct LottieTextRange
     LottieFloat maxAmount = 0.0f;
     LottieFloat smoothness = 0.0f;
     LottieFloat start = 0.0f;
-    LottieFloat end = 0.0f;
+    LottieFloat end = FLT_MAX;
     Based based = Chars;
     Shape shape = Square;
     Unit rangeUnit = Percent;
