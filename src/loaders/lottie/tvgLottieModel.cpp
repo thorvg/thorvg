@@ -110,9 +110,9 @@ void LottieSlot::assign(LottieObject* target)
 }
 
 
-void LottieTextRange::range(float frameNo, size_t totalLen, float& start, float& end)
+void LottieTextRange::range(float frameNo, float totalLen, float& start, float& end)
 {
-    float divisor = rangeUnit == Unit::Percent ? (100.0f / totalLen) : 1;
+    auto divisor = (rangeUnit == Unit::Percent) ? (100.0f / totalLen) : 1.0f;
     auto offset = this->offset(frameNo) / divisor;
     start = nearbyintf(this->start(frameNo) / divisor) + offset;
     end = nearbyintf(this->end(frameNo) / divisor) + offset;
@@ -122,8 +122,8 @@ void LottieTextRange::range(float frameNo, size_t totalLen, float& start, float&
     if (random == 0) return;
 
     auto range = end - start;
-    auto len = rangeUnit == Unit::Percent ? 100 : totalLen;
-    start = random % int(len - range);
+    auto len = (rangeUnit == Unit::Percent) ? 100.0f : totalLen;
+    start = static_cast<float>(random % int(len - range));
     end = start + range;
 }
 
