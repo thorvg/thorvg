@@ -52,6 +52,9 @@ public:
     bool beginComposite(RenderCompositor* cmp, CompositeMethod method, uint8_t opacity) override;
     bool endComposite(RenderCompositor* cmp) override;
 
+    bool prepare(RenderEffect* effect) override;
+    bool effect(RenderCompositor* cmp, const RenderEffect* effect) override;
+
     static WgRenderer* gen();
     static bool init(uint32_t threads);
     static bool term();

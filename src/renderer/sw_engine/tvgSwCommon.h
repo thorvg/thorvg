@@ -564,8 +564,12 @@ bool rasterGradientStroke(SwSurface* surface, SwShape* shape, const Fill* fdata,
 bool rasterClear(SwSurface* surface, uint32_t x, uint32_t y, uint32_t w, uint32_t h, pixel_t val = 0);
 void rasterPixel32(uint32_t *dst, uint32_t val, uint32_t offset, int32_t len);
 void rasterGrayscale8(uint8_t *dst, uint8_t val, uint32_t offset, int32_t len);
+void rasterXYFlip(uint32_t* src, uint32_t* dst, int32_t stride, int32_t w, int32_t h, const SwBBox& bbox, bool flipped);
 void rasterUnpremultiply(RenderSurface* surface);
 void rasterPremultiply(RenderSurface* surface);
 bool rasterConvertCS(RenderSurface* surface, ColorSpace to);
+
+bool effectGaussianBlur(SwImage& image, SwImage& buffer, const SwBBox& bbox, const RenderEffectGaussian* params);
+bool effectGaussianPrepare(RenderEffectGaussian* effect);
 
 #endif /* _TVG_SW_COMMON_H_ */
