@@ -24,6 +24,7 @@
 #define _TVG_RENDER_H_
 
 #include <math.h>
+#include <cstdarg>
 #include "tvgCommon.h"
 #include "tvgArray.h"
 #include "tvgLock.h"
@@ -256,8 +257,42 @@ struct RenderShape
     float strokeMiterlimit() const
     {
         if (!stroke) return 4.0f;
-
         return stroke->miterlimit;;
+    }
+};
+
+struct RenderEffect
+{
+    RenderData rd = nullptr;
+    RenderRegion extend = {0, 0, 0, 0};
+    SceneEffect type;
+    bool invalid = false;
+
+    virtual ~RenderEffect()
+    {
+        free(rd);
+    }
+};
+
+struct RenderEffectGaussian : RenderEffect
+{
+    float sigma;
+    uint8_t direction; //0: both, 1: horizontal, 2: vertical
+    uint8_t border;    //0: duplicate, 1: wrap
+    uint8_t quality;   //0 ~ 100  (optional)
+
+    static RenderEffectGaussian* gen(va_list& args)
+    {
+        auto sigma = (float) va_arg(args, double);
+        if (sigma <= 0) return nullptr;
+
+        auto inst = new RenderEffectGaussian;
+        inst->sigma = sigma;
+        inst->direction = std::min(va_arg(args, int), 2);
+        inst->border = std::min(va_arg(args, int), 1);
+        inst->quality = std::min(va_arg(args, int), 100);
+        inst->type = SceneEffect::GaussianBlur;
+        return inst;
     }
 };
 
@@ -292,6 +327,9 @@ public:
     virtual RenderCompositor* target(const RenderRegion& region, ColorSpace cs) = 0;
     virtual bool beginComposite(RenderCompositor* cmp, CompositeMethod method, uint8_t opacity) = 0;
     virtual bool endComposite(RenderCompositor* cmp) = 0;
+
+    virtual bool prepare(RenderEffect* effect) = 0;
+    virtual bool effect(RenderCompositor* cmp, const RenderEffect* effect) = 0;
 };
 
 static inline bool MASK_REGION_MERGING(CompositeMethod method)
@@ -359,7 +397,6 @@ static inline uint8_t MULTIPLY(uint8_t c, uint8_t a)
 {
     return (((c) * (a) + 0xff) >> 8);
 }
-
 
 }
 

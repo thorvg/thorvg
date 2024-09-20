@@ -1817,3 +1817,38 @@ bool rasterConvertCS(RenderSurface* surface, ColorSpace to)
     }
     return false;
 }
+
+
+//TODO: SIMD OPTIMIZATION?
+void rasterXYFlip(uint32_t* src, uint32_t* dst, int32_t stride, int32_t w, int32_t h, const SwBBox& bbox, bool flipped)
+{
+    constexpr int BLOCK = 8;  //experimental decision
+
+    if (flipped) {
+        src += ((bbox.min.x * stride) + bbox.min.y);
+        dst += ((bbox.min.y * stride) + bbox.min.x);
+    } else {
+        src += ((bbox.min.y * stride) + bbox.min.x);
+        dst += ((bbox.min.x * stride) + bbox.min.y);
+    }
+
+    for (int x = 0; x < w; x += BLOCK) {
+        auto bx = std::min(w, x + BLOCK) - x;
+        auto in = &src[x];
+        auto out = &dst[x * stride];
+        for (int y = 0; y < h; y += BLOCK) {
+            auto p = &in[y * stride];
+            auto q = &out[y];
+            auto by = std::min(h, y + BLOCK) - y;
+            for (int xx = 0; xx < bx; ++xx) {
+                for (int yy = 0; yy < by; ++yy) {
+                    *q = *p;
+                    p += stride;
+                    ++q;
+                }
+                p += 1 - by * stride;
+                q += stride - by;
+            }
+        }
+    }
+}

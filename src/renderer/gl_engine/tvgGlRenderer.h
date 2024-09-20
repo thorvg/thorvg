@@ -84,6 +84,9 @@ public:
     bool beginComposite(RenderCompositor* cmp, CompositeMethod method, uint8_t opacity) override;
     bool endComposite(RenderCompositor* cmp) override;
 
+    bool prepare(RenderEffect* effect) override;
+    bool effect(RenderCompositor* cmp, const RenderEffect* effect) override;
+
     static GlRenderer* gen();
     static int init(TVG_UNUSED uint32_t threads);
     static int32_t init();

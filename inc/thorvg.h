@@ -204,6 +204,23 @@ enum class BlendMethod : uint8_t
 
 
 /**
+ * @brief Enumeration that defines methods used for Scene Effects.
+ *
+ * This enum provides options to apply various post-processing effects to a scene.
+ * Scene effects are typically applied to modify the final appearance of a rendered scene, such as blurring.
+ *
+ * @see Scene::push(SceneEffect effect, ...)
+ *
+ * @note Experimental API
+ */
+enum class SceneEffect : uint8_t
+{
+    ClearAll = 0,      ///< Reset all previously applied scene effects, restoring the scene to its original state.
+    GaussianBlur       ///< Apply a blur effect with a Gaussian filter. Param(3) = {sigma(float)[> 0], direction(int)[both: 0 / horizontal: 1 / vertical: 2], border(int)[duplicate: 0 / wrap: 1], quality(int)[0 - 100]}
+};
+
+
+/**
  * @brief Enumeration specifying the engine type used for the graphics backend. For multiple backends bitwise operation is allowed.
  */
 enum class CanvasEngine : uint8_t
@@ -826,11 +843,11 @@ public:
     ~Shape();
 
     /**
-     * @brief Resets the properties of the shape path.
+     * @brief Resets the shape path.
      *
-     * The transformation matrix, the color, the fill and the stroke properties are retained.
+     * The transformation matrix, color, fill, and stroke properties are retained.
      *
-     * @note The memory, where the path data is stored, is not deallocated at this stage for caching effect.
+     * @note The memory where the path data is stored is not deallocated at this stage to allow for caching.
      */
     Result reset() noexcept;
 
@@ -1386,7 +1403,7 @@ public:
      *
      * @warning Please avoid accessing the paints during Scene update/draw. You can access them after calling Canvas::sync().
      * @see Canvas::sync()
-     * @see Scene::push()
+     * @see Scene::push(std::unique_ptr<Paint> paint)
      * @see Scene::clear()
      *
      * @note Experimental API
@@ -1404,6 +1421,20 @@ public:
      * @since 0.2
      */
     Result clear(bool free = true) noexcept;
+
+    /**
+     * @brief Apply a post-processing effect to the scene.
+     *
+     * This function adds a specified scene effect, such as clearing all effects or applying a Gaussian blur,
+     * to the scene after it has been rendered. Multiple effects can be applied in sequence.
+     *
+     * @param[in] effect The scene effect to apply. Options are defined in the SceneEffect enum.
+     *                   For example, use SceneEffect::GaussianBlur to apply a blur with specific parameters.
+     * @param[in] ... Additional variadic parameters required for certain effects (e.g., sigma and direction for GaussianBlur).
+     *
+     * @note Experimental API
+     */
+    Result push(SceneEffect effect, ...) noexcept;
 
     /**
      * @brief Creates a new Scene object.
