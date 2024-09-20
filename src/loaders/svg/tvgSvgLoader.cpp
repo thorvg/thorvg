@@ -177,6 +177,7 @@ static float _toFloat(const SvgParser* svgParse, const char* str, SvgParserLengt
     else if (strstr(str, "%")) {
         if (type == SvgParserLengthType::Vertical) parsedValue = (parsedValue / 100.0f) * svgParse->global.h;
         else if (type == SvgParserLengthType::Horizontal) parsedValue = (parsedValue / 100.0f) * svgParse->global.w;
+        else if (type == SvgParserLengthType::Diagonal) parsedValue = (sqrtf(powf(svgParse->global.w, 2) + powf(svgParse->global.h, 2)) / sqrtf(2.0f)) * (parsedValue / 100.0f);
         else //if other than it's radius
         {
             float max = svgParse->global.w;
@@ -1066,7 +1067,7 @@ static void _handleStrokeDashOffsetAttr(SvgLoaderData* loader, SvgNode* node, co
 static void _handleStrokeWidthAttr(SvgLoaderData* loader, SvgNode* node, const char* value)
 {
     node->style->stroke.flags = (node->style->stroke.flags | SvgStrokeFlags::Width);
-    node->style->stroke.width = _toFloat(loader->svgParse, value, SvgParserLengthType::Horizontal);
+    node->style->stroke.width = _toFloat(loader->svgParse, value, SvgParserLengthType::Diagonal);
 }
 
 
