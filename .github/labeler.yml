@@ -1,0 +1,55 @@
+"APIs":
+  - inc/**/*
+
+"binding":
+  - src/bindings/**/*
+
+"documentation":
+  - docs/**/*
+  - README.md
+
+"example":
+  - examples/**/*
+
+"font":
+  - src/loaders/ttf/**/*
+
+"image":
+  - src/loaders/jpg/**/*
+  - src/loaders/external_jpg/**/*
+  - src/loaders/png/**/*
+  - src/loaders/external_png/**/*
+  - src/loaders/webp/**/*
+  - src/loaders/external_webp/**/*
+  - src/loaders/raw/**/*
+  - src/savers/gif/**/*
+
+"svg":
+  - src/loaders/svg/**/*
+
+"tvg":
+  - src/loaders/tvg/**/*
+
+"test":
+  - test/**/*
+
+"tools":
+  - tools/**/*
+
+"infrastructure":
+  - .github/**/*
+  - meson.build
+  - meson_option.txt
+
+"lottie":
+  - src/loaders/lottie/**/*
+
+"raster":
+  - src/renderer/sw_engine/**/*
+  - src/renderer/wg_engine/**/*
+  - src/renderer/gl_engine/**/*
+
+"renderer":
+  - src/renderer/**/*
+  - src/common/**/*
+
