@@ -411,6 +411,20 @@ bool WgRenderer::endComposite(RenderCompositor* cmp)
 }
 
 
+bool WgRenderer::prepare(TVG_UNUSED RenderEffect* effect)
+{
+    //TODO: Return if the current post effect requires the region expansion
+    return false;
+}
+
+
+bool WgRenderer::effect(TVG_UNUSED RenderCompositor* cmp, TVG_UNUSED const RenderEffect* effect)
+{
+    TVGLOG("WG_ENGINE", "SceneEffect(%d) is not supported", (int)effect->type);
+    return false;
+}
+
+
 WgRenderer* WgRenderer::gen()
 {
     return new WgRenderer();

@@ -534,6 +534,43 @@ const RenderSurface* SwRenderer::mainSurface()
 }
 
 
+SwSurface* SwRenderer::request(int channelSize)
+{
+    SwSurface* cmp = nullptr;
+
+    //Use cached data
+    for (auto p = compositors.begin(); p < compositors.end(); ++p) {
+        if ((*p)->compositor->valid && (*p)->compositor->image.channelSize == channelSize) {
+            cmp = *p;
+            break;
+        }
+    }
+
+    //New Composition
+    if (!cmp) {
+        //Inherits attributes from main surface
+        cmp = new SwSurface(surface);
+        cmp->compositor = new SwCompositor;
+        cmp->compositor->image.data = (pixel_t*)malloc(channelSize * surface->stride * surface->h);
+        cmp->compositor->image.w = surface->w;
+        cmp->compositor->image.h = surface->h;
+        cmp->compositor->image.stride = surface->stride;
+        cmp->compositor->image.direct = true;
+        cmp->compositor->valid = true;
+        cmp->channelSize = cmp->compositor->image.channelSize = channelSize;
+        cmp->w = cmp->compositor->image.w;
+        cmp->h = cmp->compositor->image.h;
+
+        compositors.push(cmp);
+    }
+
+    //Sync. This may have been modified by post-processing.
+    cmp->data = cmp->compositor->image.data;
+
+    return cmp;
+}
+
+
 RenderCompositor* SwRenderer::target(const RenderRegion& region, ColorSpace cs)
 {
     auto x = region.x;
@@ -546,32 +583,11 @@ RenderCompositor* SwRenderer::target(const RenderRegion& region, ColorSpace cs)
     //Out of boundary
     if (x >= sw || y >= sh || x + w < 0 || y + h < 0) return nullptr;
 
-    SwSurface* cmp = nullptr;
-
-    auto reqChannelSize = CHANNEL_SIZE(cs);
-
-    //Use cached data
-    for (auto p = compositors.begin(); p < compositors.end(); ++p) {
-        if ((*p)->compositor->valid && (*p)->compositor->image.channelSize == reqChannelSize) {
-            cmp = *p;
-            break;
-        }
-    }
-
-    //New Composition
-    if (!cmp) {
-        //Inherits attributes from main surface
-        cmp = new SwSurface(surface);
-        cmp->compositor = new SwCompositor;
-
-        //TODO: We can optimize compositor surface size from (surface->stride x surface->h) to Parameter(w x h)
-        cmp->compositor->image.data = (pixel_t*)malloc(reqChannelSize * surface->stride * surface->h);
-        cmp->channelSize = cmp->compositor->image.channelSize = reqChannelSize;
-
-        compositors.push(cmp);
-    }
+    auto cmp = request(CHANNEL_SIZE(cs));
 
     //Boundary Check
+    if (x < 0) x = 0;
+    if (y < 0) y = 0;
     if (x + w > sw) w = (sw - x);
     if (y + h > sh) h = (sh - y);
 
@@ -582,14 +598,6 @@ RenderCompositor* SwRenderer::target(const RenderRegion& region, ColorSpace cs)
     cmp->compositor->bbox.min.y = y;
     cmp->compositor->bbox.max.x = x + w;
     cmp->compositor->bbox.max.y = y + h;
-    cmp->compositor->image.stride = surface->stride;
-    cmp->compositor->image.w = surface->w;
-    cmp->compositor->image.h = surface->h;
-    cmp->compositor->image.direct = true;
-
-    cmp->data = cmp->compositor->image.data;
-    cmp->w = cmp->compositor->image.w;
-    cmp->h = cmp->compositor->image.h;
 
     /* TODO: Currently, only blending might work.
        Blending and composition must be handled together. */
@@ -621,6 +629,27 @@ bool SwRenderer::endComposite(RenderCompositor* cmp)
     }
 
     return true;
+}
+
+
+bool SwRenderer::prepare(RenderEffect* effect)
+{
+    switch (effect->type) {
+        case SceneEffect::GaussianBlur: return effectGaussianPrepare(static_cast<RenderEffectGaussian*>(effect));
+        default: return false;
+    }
+}
+
+
+bool SwRenderer::effect(RenderCompositor* cmp, const RenderEffect* effect)
+{
+    auto p = static_cast<SwCompositor*>(cmp);
+    auto& buffer = request(surface->channelSize)->compositor->image;
+
+    switch (effect->type) {
+        case SceneEffect::GaussianBlur: return effectGaussianBlur(p->image, buffer, p->bbox, static_cast<const RenderEffectGaussian*>(effect));
+        default: return false;
+    }
 }
 
 

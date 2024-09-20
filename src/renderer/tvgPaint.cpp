@@ -366,6 +366,7 @@ void Paint::Impl::reset()
         free(compData);
         compData = nullptr;
     }
+
     tvg::identity(&tr.m);
     tr.degree = 0.0f;
     tr.scale = 1.0f;

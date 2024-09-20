@@ -1055,6 +1055,20 @@ bool GlRenderer::endComposite(RenderCompositor* cmp)
 }
 
 
+bool GlRenderer::prepare(TVG_UNUSED RenderEffect* effect)
+{
+    //TODO: Return if the current post effect requires the region expansion
+    return false;
+}
+
+
+bool GlRenderer::effect(TVG_UNUSED RenderCompositor* cmp, TVG_UNUSED const RenderEffect* effect)
+{
+    TVGLOG("GL_ENGINE", "SceneEffect(%d) is not supported", (int)effect->type);
+    return false;
+}
+
+
 ColorSpace GlRenderer::colorSpace()
 {
     return ColorSpace::Unsupported;

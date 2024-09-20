@@ -60,6 +60,9 @@ public:
     bool endComposite(RenderCompositor* cmp) override;
     void clearCompositors();
 
+    bool prepare(RenderEffect* effect) override;
+    bool effect(RenderCompositor* cmp, const RenderEffect* effect) override;
+
     static SwRenderer* gen();
     static bool init(uint32_t threads);
     static int32_t init();
@@ -76,6 +79,7 @@ private:
     SwRenderer();
     ~SwRenderer();
 
+    SwSurface* request(int channelSize);
     RenderData prepareCommon(SwTask* task, const Matrix& transform, const Array<RenderData>& clips, uint8_t opacity, RenderUpdateFlag flags);
 };
 

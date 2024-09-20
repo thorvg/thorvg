@@ -23,9 +23,8 @@
 #ifndef _TVG_SCENE_H_
 #define _TVG_SCENE_H_
 
-#include <float.h>
+#include "tvgMath.h"
 #include "tvgPaint.h"
-
 
 struct SceneIterator : Iterator
 {
@@ -61,8 +60,9 @@ struct Scene::Impl
     list<Paint*> paints;
     RenderData rd = nullptr;
     Scene* scene = nullptr;
-    uint8_t opacity;                     //for composition
-    bool needComp = false;               //composite or not
+    Array<RenderEffect*>* effects = nullptr;
+    uint8_t opacity;         //for composition
+    bool needComp = false;   //composite or not
 
     Impl(Scene* s) : scene(s)
     {
@@ -70,6 +70,8 @@ struct Scene::Impl
 
     ~Impl()
     {
+        resetEffects();
+
         for (auto paint : paints) {
             if (P(paint)->unref() == 0) delete(paint);
         }
@@ -82,6 +84,9 @@ struct Scene::Impl
     bool needComposition(uint8_t opacity)
     {
         if (opacity == 0 || paints.empty()) return false;
+
+        //post effects requires composition
+        if (effects) return true;
 
         //Masking may require composition (even if opacity == 255)
         auto compMethod = scene->composite(nullptr);
@@ -112,6 +117,7 @@ struct Scene::Impl
         for (auto paint : paints) {
             paint->pImpl->update(renderer, transform, clips, opacity, flag, false);
         }
+
         return nullptr;
     }
 
@@ -131,7 +137,15 @@ struct Scene::Impl
             ret &= paint->pImpl->render(renderer);
         }
 
-        if (cmp) renderer->endComposite(cmp);
+        if (cmp) {
+            //Apply post effects if any.
+            if (effects) {
+                for (auto e = effects->begin(); e < effects->end(); ++e) {
+                    renderer->effect(cmp, *e);
+                }
+            }
+            renderer->endComposite(cmp);
+        }
 
         return ret;
     }
@@ -155,7 +169,20 @@ struct Scene::Impl
             if (y2 < region.y + region.h) y2 = (region.y + region.h);
         }
 
-        return {x1, y1, (x2 - x1), (y2 - y1)};
+        //Extends the render region if post effects require
+        int32_t ex = 0, ey = 0, ew = 0, eh = 0;
+        if (effects) {
+            for (auto e = effects->begin(); e < effects->end(); ++e) {
+                auto effect = *e;
+                if (effect->rd || renderer->prepare(effect)) {
+                    ex = std::min(ex, effect->extend.x);
+                    ey = std::min(ey, effect->extend.y);
+                    ew = std::max(ew, effect->extend.w);
+                    eh = std::max(eh, effect->extend.h);
+                }
+            }
+        }
+        return {x1 + ex, y1 + ey, (x2 - x1) + ew, (y2 - y1) + eh};
     }
 
     bool bounds(float* px, float* py, float* pw, float* ph, bool stroking)
@@ -203,6 +230,8 @@ struct Scene::Impl
             dup->paints.push_back(cdup);
         }
 
+        if (effects) TVGERR("RENDERER", "TODO: Duplicate Effects?");
+
         return scene;
     }
 
@@ -218,6 +247,8 @@ struct Scene::Impl
     {
         return new SceneIterator(&paints);
     }
+
+    Result resetEffects();
 };
 
 #endif //_TVG_SCENE_H_
