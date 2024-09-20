@@ -252,19 +252,8 @@ TEST_CASE("Stroke trim", "[capiStrokeTrim]")
     Tvg_Paint* paint = tvg_shape_new();
     REQUIRE(paint);
 
-    float begin, end;
-    bool simultaneous;
-
-    REQUIRE(tvg_shape_get_stroke_trim(NULL, &begin, &end, &simultaneous) == TVG_RESULT_INVALID_ARGUMENT);
-    REQUIRE(tvg_shape_get_stroke_trim(paint, &begin, &end, &simultaneous) == TVG_RESULT_SUCCESS);
-
     REQUIRE(tvg_shape_set_stroke_trim(NULL, 0.33f, 0.66f, false) == TVG_RESULT_INVALID_ARGUMENT);
     REQUIRE(tvg_shape_set_stroke_trim(paint, 0.33f, 0.66f, false) == TVG_RESULT_SUCCESS);
-    REQUIRE(tvg_shape_get_stroke_trim(paint, &begin, &end, &simultaneous) == TVG_RESULT_SUCCESS);
-    REQUIRE(begin == Approx(0.33).margin(0.000001));
-    REQUIRE(end == Approx(0.66).margin(0.000001));
-    REQUIRE(simultaneous == false);
-
     REQUIRE(tvg_paint_del(paint) == TVG_RESULT_SUCCESS);
 }
 

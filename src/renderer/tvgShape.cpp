@@ -414,12 +414,6 @@ Result Shape::strokeTrim(float begin, float end, bool simultaneous) noexcept
 }
 
 
-bool Shape::strokeTrim(float* begin, float* end) const noexcept
-{
-    return pImpl->strokeTrim(begin, end);
-}
-
-
 Result Shape::fill(FillRule r) noexcept
 {
     pImpl->rs.rule = r;

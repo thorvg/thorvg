@@ -244,14 +244,6 @@ TVG_API Tvg_Result tvg_paint_set_blend_method(Tvg_Paint* paint, Tvg_Blend_Method
 }
 
 
-TVG_API Tvg_Result tvg_paint_get_blend_method(const Tvg_Paint* paint, Tvg_Blend_Method* method)
-{
-    if (!paint || !method) return TVG_RESULT_INVALID_ARGUMENT;
-    *method = static_cast<Tvg_Blend_Method>(reinterpret_cast<const Paint*>(paint)->blend());
-    return TVG_RESULT_SUCCESS;
-}
-
-
 TVG_API Tvg_Result tvg_paint_get_type(const Tvg_Paint* paint, Tvg_Type* type)
 {
     if (!paint || !type) return TVG_RESULT_INVALID_ARGUMENT;
@@ -476,14 +468,6 @@ TVG_API Tvg_Result tvg_shape_set_stroke_trim(Tvg_Paint* paint, float begin, floa
 {
     if (!paint) return TVG_RESULT_INVALID_ARGUMENT;
     return (Tvg_Result) reinterpret_cast<Shape*>(paint)->strokeTrim(begin, end, simultaneous);
-}
-
-
-TVG_API Tvg_Result tvg_shape_get_stroke_trim(Tvg_Paint* paint, float* begin, float* end, bool* simultaneous)
-{
-    if (!paint) return TVG_RESULT_INVALID_ARGUMENT;
-    if (simultaneous) *simultaneous = reinterpret_cast<Shape*>(paint)->strokeTrim(begin, end);
-    return TVG_RESULT_SUCCESS;
 }
 
 
@@ -774,17 +758,10 @@ TVG_API Tvg_Result tvg_text_set_fill_color(Tvg_Paint* paint, uint8_t r, uint8_t 
 }
 
 
-TVG_API Tvg_Result tvg_text_set_linear_gradient(Tvg_Paint* paint, Tvg_Gradient* gradient)
+TVG_API Tvg_Result tvg_text_set_gradient(Tvg_Paint* paint, Tvg_Gradient* gradient)
 {
     if (!paint) return TVG_RESULT_INVALID_ARGUMENT;
-    return (Tvg_Result) reinterpret_cast<Text*>(paint)->fill(unique_ptr<LinearGradient>((LinearGradient*)(gradient)));
-}
-
-
-TVG_API Tvg_Result tvg_text_set_radial_gradient(Tvg_Paint* paint, Tvg_Gradient* gradient)
-{
-    if (!paint) return TVG_RESULT_INVALID_ARGUMENT;
-    return (Tvg_Result) reinterpret_cast<Text*>(paint)->fill(unique_ptr<RadialGradient>((RadialGradient*)(gradient)));
+    return (Tvg_Result) reinterpret_cast<Text*>(paint)->fill(unique_ptr<Fill>((Fill*)(gradient)));
 }
 
 

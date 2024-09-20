@@ -150,23 +150,27 @@ typedef enum {
  *
  * \ingroup ThorVGCapi_Paint
  *
- * @note Experimental API
+ * \since 0.15
  */
 typedef enum {
     TVG_BLEND_METHOD_NORMAL = 0,        ///< Perform the alpha blending(default). S if (Sa == 255), otherwise (Sa * S) + (255 - Sa) * D
-    TVG_BLEND_METHOD_ADD,               ///< Simply adds pixel values of one layer with the other. (S + D)
-    TVG_BLEND_METHOD_SCREEN,            ///< The values of the pixels in the two layers are inverted, multiplied, and then inverted again. (S + D) - (S * D)
     TVG_BLEND_METHOD_MULTIPLY,          ///< Takes the RGB channel values from 0 to 255 of each pixel in the top layer and multiples them with the values for the corresponding pixel from the bottom layer. (S * D)
+    TVG_BLEND_METHOD_SCREEN,            ///< The values of the pixels in the two layers are inverted, multiplied, and then inverted again. (S + D) - (S * D)
     TVG_BLEND_METHOD_OVERLAY,           ///< Combines Multiply and Screen blend modes. (2 * S * D) if (2 * D < Da), otherwise (Sa * Da) - 2 * (Da - S) * (Sa - D)
-    TVG_BLEND_METHOD_DIFFERENCE,        ///< Subtracts the bottom layer from the top layer or the other way around, to always get a non-negative value. (S - D) if (S > D), otherwise (D - S)
-    TVG_BLEND_METHOD_EXCLUSION,         ///< The result is twice the product of the top and bottom layers, subtracted from their sum. s + d - (2 * s * d)
-    TVG_BLEND_METHOD_SRCOVER,           ///< Replace the bottom layer with the top layer.
     TVG_BLEND_METHOD_DARKEN,            ///< Creates a pixel that retains the smallest components of the top and bottom layer pixels. min(S, D)
     TVG_BLEND_METHOD_LIGHTEN,           ///< Only has the opposite action of Darken Only. max(S, D)
     TVG_BLEND_METHOD_COLORDODGE,        ///< Divides the bottom layer by the inverted top layer. D / (255 - S)
     TVG_BLEND_METHOD_COLORBURN,         ///< Divides the inverted bottom layer by the top layer, and then inverts the result. 255 - (255 - D) / S
     TVG_BLEND_METHOD_HARDLIGHT,         ///< The same as Overlay but with the color roles reversed. (2 * S * D) if (S < Sa), otherwise (Sa * Da) - 2 * (Da - S) * (Sa - D)
-    TVG_BLEND_METHOD_SOFTLIGHT          ///< The same as Overlay but with applying pure black or white does not result in pure black or white. (1 - 2 * S) * (D ^ 2) + (2 * S * D)
+    TVG_BLEND_METHOD_SOFTLIGHT,         ///< The same as Overlay but with applying pure black or white does not result in pure black or white. (1 - 2 * S) * (D ^ 2) + (2 * S * D)
+    TVG_BLEND_METHOD_DIFFERENCE,        ///< Subtracts the bottom layer from the top layer or the other way around, to always get a non-negative value. (S - D) if (S > D), otherwise (D - S)
+    TVG_BLEND_METHOD_EXCLUSION,         ///< The result is twice the product of the top and bottom layers, subtracted from their sum. s + d - (2 * s * d)
+    TVG_BLEND_METHOD_HUE,               ///< Reserved. Not supported.
+    TVG_BLEND_METHOD_SATURATION,        ///< Reserved. Not supported.
+    TVG_BLEND_METHOD_COLOR,             ///< Reserved. Not supported.
+    TVG_BLEND_METHOD_LUMINOSITY,        ///< Reserved. Not supported.
+    TVG_BLEND_METHOD_ADD,               ///< Simply adds pixel values of one layer with the other. (S + D)
+    TVG_BLEND_METHOD_HARDMIX            ///< Reserved. Not supported.
 } Tvg_Blend_Method;
 
 
@@ -387,7 +391,7 @@ TVG_API Tvg_Result tvg_engine_term(Tvg_Engine engine_method);
 * \return Tvg_Result enumeration.
 * \retval TVG_RESULT_SUCCESS.
 *
-* \note Experimental API
+* \since 0.15
 */
 TVG_API Tvg_Result tvg_engine_version(uint32_t* major, uint32_t* minor, uint32_t* micro, const char** version);
 
@@ -778,8 +782,8 @@ TVG_API Tvg_Result tvg_canvas_sync(Tvg_Canvas* canvas);
 * \warning It's not allowed to change the viewport during tvg_canvas_update() - tvg_canvas_sync() or tvg_canvas_push() - tvg_canvas_sync().
 *
 * \note When resetting the target, the viewport will also be reset to the target size.
-* \note Experimental API
 * \see tvg_swcanvas_set_target()
+* \since 0.15
 */
 TVG_API Tvg_Result tvg_canvas_set_viewport(Tvg_Canvas* canvas, int32_t x, int32_t y, int32_t w, int32_t h);
 
@@ -1043,27 +1047,9 @@ TVG_DEPRECATED TVG_API Tvg_Result tvg_paint_get_identifier(const Tvg_Paint* pain
  * \return Tvg_Result enumeration.
  * \retval TVG_RESULT_INVALID_ARGUMENT In case a @c nullptr is passed as the argument.
  *
- * @note Experimental API
+ * \since 0.15
  */
 TVG_API Tvg_Result tvg_paint_set_blend_method(Tvg_Paint* paint, Tvg_Blend_Method method);
-
-
-/**
- * @brief Gets the blending method for the paint object.
- *
- * The blending feature allows you to combine colors to create visually appealing effects, including transparency, lighting, shading, and color mixing, among others.
- * its process involves the combination of colors or images from the source paint object with the destination (the lower layer image) using blending operations.
- * The blending operation is determined by the chosen @p BlendMethod, which specifies how the colors or images are combined.
- *
- * \param[in] paint The Tvg_Paint object of which to get the blend method.
- * \param[out] method The blending method of the paint.
- *
- * \return Tvg_Result enumeration.
- * \retval TVG_RESULT_INVALID_ARGUMENT In case a @c nullptr is passed as the argument.
- *
- * @note Experimental API
- */
-TVG_API Tvg_Result tvg_paint_get_blend_method(const Tvg_Paint* paint, Tvg_Blend_Method* method);
 
 
 /** \} */   // end defgroup ThorVGCapi_Paint
@@ -1545,22 +1531,6 @@ TVG_API Tvg_Result tvg_shape_get_stroke_miterlimit(const Tvg_Paint* paint, float
 * \note Experimental API
 */
 TVG_API Tvg_Result tvg_shape_set_stroke_trim(Tvg_Paint* paint, float begin, float end, bool simultaneous);
-
-
-/*!
-* \brief Gets the trim of the stroke along the defined path segment.
-*
-* \param[in] paint A Tvg_Paint pointer to the shape object.
-* \param[out] begin The starting point of the segment to display along the path.
-* \param[out] end Specifies the end of the segment to display along the path.
-* \param[out] simultaneous Determines how to trim multiple paths within a shape.
-*
-* \return Tvg_Result enumeration.
-* \retval TVG_RESULT_INVALID_ARGUMENT An invalid Tvg_Paint pointer.
-*
-* \note Experimental API
-*/
-TVG_API Tvg_Result tvg_shape_get_stroke_trim(Tvg_Paint* paint, float* begin, float* end, bool* simultaneous);
 
 
 /*!
@@ -2185,7 +2155,7 @@ TVG_API Tvg_Result tvg_scene_clear(Tvg_Paint* scene, bool free);
 * \defgroup ThorVGCapi_Text Text
 * \brief A class to represent text objects in a graphical context, allowing for rendering and manipulation of unicode text.
 *
-* \note Experimental API
+* \since 0.15
 *
 * \{
 */
@@ -2198,7 +2168,7 @@ TVG_API Tvg_Result tvg_scene_clear(Tvg_Paint* scene, bool free);
 *
 * \return A new text object.
 *
-* \note Experimental API
+* \since 0.15
 */
 TVG_API Tvg_Paint* tvg_text_new(void);
 
@@ -2252,48 +2222,29 @@ TVG_API Tvg_Result tvg_text_set_text(Tvg_Paint* paint, const char* text);
 * \retval TVG_RESULT_INVALID_ARGUMENT A \c nullptr passed as the \p paint argument.
 *
 * \note Either a solid color or a gradient fill is applied, depending on what was set as last.
-* \note Experimental API
-*
 * \see tvg_text_set_font()
+*
+* \since 0.15
 */
 TVG_API Tvg_Result tvg_text_set_fill_color(Tvg_Paint* paint, uint8_t r, uint8_t g, uint8_t b);
 
 
 /**
-* \brief Sets the linear gradient fill for the text.
+* \brief Sets the gradient fill for the text.
 *
 * \param[in] paint A Tvg_Paint pointer to the text object.
-* \param[in] grad The linear gradient fill
+* \param[in] grad The linear or radial gradient fill
 *
 * \return Tvg_Result enumeration.
 * \retval TVG_RESULT_INVALID_ARGUMENT A \c nullptr passed as the \p paint argument.
 * \retval TVG_RESULT_MEMORY_CORRUPTION An invalid Tvg_Gradient pointer.
 *
 * \note Either a solid color or a gradient fill is applied, depending on what was set as last.
-* \note Experimental API
-*
 * \see tvg_text_set_font()
+*
+* \since 0.15
 */
-TVG_API Tvg_Result tvg_text_set_linear_gradient(Tvg_Paint* paint, Tvg_Gradient* gradient);
-
-
-/**
-* \brief Sets the radial gradient fill for the text.
-*
-* \param[in] paint A Tvg_Paint pointer to the text object.
-* \param[in] grad The radial gradient fill
-*
-* \return Tvg_Result enumeration.
-* \retval TVG_RESULT_INVALID_ARGUMENT A \c nullptr passed as the \p paint argument.
-* \retval TVG_RESULT_MEMORY_CORRUPTION An invalid Tvg_Gradient pointer.
-*
-* \note Either a solid color or a gradient fill is applied, depending on what was set as last.
-* \note Experimental API
-*
-* \see tvg_text_set_font()
-*/
-TVG_API Tvg_Result tvg_text_set_radial_gradient(Tvg_Paint* paint, Tvg_Gradient* gradient);
-
+TVG_API Tvg_Result tvg_text_set_gradient(Tvg_Paint* paint, Tvg_Gradient* gradient);
 
 /**
 * \brief Loads a scalable font data from a file.
@@ -2308,9 +2259,9 @@ TVG_API Tvg_Result tvg_text_set_radial_gradient(Tvg_Paint* paint, Tvg_Gradient* 
 * \retval TVG_RESULT_INVALID_ARGUMENT An invalid \p path passed as an argument.
 * \retval TVG_RESULT_NOT_SUPPORTED When trying to load a file with an unknown extension.
 *
-* \note Experimental API
-*
 * \see tvg_font_unload()
+*
+* \since 0.15
 */
 TVG_API Tvg_Result tvg_font_load(const char* path);
 
@@ -2336,7 +2287,8 @@ TVG_API Tvg_Result tvg_font_load(const char* path);
 * \warning: It's the user responsibility to release the \p data memory.
 *
 * \note To unload the font data loaded using this API, pass the proper \p name and \c nullptr as \p data.
-* \note Experimental API
+*
+* \since 0.15
 */
 TVG_API Tvg_Result tvg_font_load_data(const char* name, const char* data, uint32_t size, const char *mimetype, bool copy);
 
@@ -2352,9 +2304,9 @@ TVG_API Tvg_Result tvg_font_load_data(const char* name, const char* data, uint32
 * \retval TVG_RESULT_INSUFFICIENT_CONDITION The loader is not initialized.
 *
 * \note If the font data is currently in use, it will not be immediately unloaded.
-* \note Experimental API
-*
 * \see tvg_font_load()
+*
+* \since 0.15
 */
 TVG_API Tvg_Result tvg_font_unload(const char* path);
 
@@ -2564,8 +2516,6 @@ TVG_API Tvg_Result tvg_animation_get_duration(Tvg_Animation* animation, float* d
 * \retval TVG_RESULT_INVALID_ARGUMENT When the given parameters are out of range.
 *
 * \note Experimental API
-*
-* \since 0.13
 */
 TVG_API Tvg_Result tvg_animation_set_segment(Tvg_Animation* animation, float begin, float end);
 
@@ -2649,7 +2599,7 @@ TVG_API uint32_t tvg_accessor_generate_id(const char* name);
 *
 * \return Tvg_Animation A new Tvg_LottieAnimation object.
 *
-* \note Experimental API
+* \since 0.15
 */
 TVG_API Tvg_Animation* tvg_lottie_animation_new(void);
 

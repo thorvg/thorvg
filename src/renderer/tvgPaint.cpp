@@ -513,16 +513,13 @@ TVG_DEPRECATED uint32_t Paint::identifier() const noexcept
 
 Result Paint::blend(BlendMethod method) noexcept
 {
+    //TODO: Remove later
+    if (method == BlendMethod::Hue || method == BlendMethod::Saturation || method == BlendMethod::Color || method == BlendMethod::Luminosity || method == BlendMethod::HardMix) return Result::NonSupport;
+
     if (pImpl->blendMethod != method) {
         pImpl->blendMethod = method;
         pImpl->renderFlag |= RenderUpdateFlag::Blend;
     }
 
     return Result::Success;
-}
-
-
-BlendMethod Paint::blend() const noexcept
-{
-    return pImpl->blendMethod;
 }
