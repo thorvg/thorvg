@@ -178,7 +178,7 @@ enum class CompositeMethod : uint8_t
  *
  * @see Paint::blend()
  *
- * @note Experimental API
+ * @since 0.15
  */
 enum class BlendMethod : uint8_t
 {
@@ -211,7 +211,7 @@ enum class CanvasEngine : uint8_t
     All = 0,       ///< All feasible rasterizers. @since 1.0
     Sw = (1 << 1), ///< CPU rasterizer.
     Gl = (1 << 2), ///< OpenGL rasterizer.
-    Wg = (1 << 3), ///< WebGPU rasterizer. (Experimental API)
+    Wg = (1 << 3), ///< WebGPU rasterizer. @since 0.15
 };
 
 
@@ -419,15 +419,6 @@ public:
      * @since 0.5
      */
     CompositeMethod composite(const Paint** target) const noexcept;
-
-    /**
-     * @brief Retrieves the current blending method applied to the paint object.
-     *
-     * @return The currently set blending method.
-     *
-     * @note Experimental API
-     */
-    BlendMethod blend() const noexcept;
 
     /**
      * @brief Returns the ID value of this class.
@@ -661,7 +652,7 @@ public:
      * @warning It's not allowed to change the viewport during Canvas::push() - Canvas::sync() or Canvas::update() - Canvas::sync().
      *
      * @note When resetting the target, the viewport will also be reset to the target size.
-     * @note Experimental API
+     * @since 0.15
      */
     virtual Result viewport(int32_t x, int32_t y, int32_t w, int32_t h) noexcept;
 
@@ -1197,18 +1188,6 @@ public:
     float strokeMiterlimit() const noexcept;
 
     /**
-     * @brief Gets the trim of the stroke along the defined path segment.
-     *
-     * @param[out] begin The starting point of the segment to display along the path.
-     * @param[out] end Specifies the end of the segment to display along the path.
-     *
-     * @return @c true if trimming is applied simultaneously to all paths of the shape, @c false otherwise.
-     *
-     * @note Experimental API
-     */
-    bool strokeTrim(float* begin, float* end) const noexcept;
-
-    /**
      * @brief Creates a new Shape object.
      *
      * @return A new Shape object.
@@ -1458,7 +1437,7 @@ public:
  *
  * @brief A class to represent text objects in a graphical context, allowing for rendering and manipulation of unicode text.
  *
- * @note Experimental API
+ * @since 0.15
  */
 class TVG_API Text final : public Paint
 {
@@ -1503,7 +1482,7 @@ public:
      *
      * @see Text::font()
      *
-     * @note Experimental API
+     * @since 0.15
      */
     Result fill(uint8_t r, uint8_t g, uint8_t b) noexcept;
 
@@ -1515,9 +1494,9 @@ public:
      * @param[in] f The unique pointer to the gradient fill.
      *
      * @note Either a solid color or a gradient fill is applied, depending on what was set as last.
-     * @note Experimental API
-     *
      * @see Text::font()
+     *
+     * @since 0.15
      */
     Result fill(std::unique_ptr<Fill> f) noexcept;
 
@@ -1533,9 +1512,9 @@ public:
      * @retval Result::InvalidArguments In case the @p path is invalid.
      * @retval Result::NonSupport When trying to load a file with an unknown extension.
      *
-     * @note Experimental API
-     *
      * @see Text::unload(const std::string& path)
+     *
+     * @since 0.15
      */
     static Result load(const std::string& path) noexcept;
 
@@ -1560,9 +1539,9 @@ public:
      *
      * @note To unload the font data loaded using this API, pass the proper @p name and @c nullptr as @p data.
      * @note If you are unsure about the MIME type, you can provide an empty value like @c "", and thorvg will attempt to figure it out.
-     * @note Experimental API
-     *
      * @see Text::font(const char* name, float size, const char* style)
+     *
+     * @note 0.15
      */
     static Result load(const char* name, const char* data, uint32_t size, const std::string& mimeType = "ttf", bool copy = false) noexcept;
 
@@ -1576,9 +1555,9 @@ public:
      * @retval Result::InsufficientCondition Fails if the loader is not initialized.
      *
      * @note If the font data is currently in use, it will not be immediately unloaded.
-     * @note Experimental API
-     *
      * @see Text::load(const std::string& path)
+     * 
+     * @since 0.15
      */
     static Result unload(const std::string& path) noexcept;
 
@@ -1587,7 +1566,7 @@ public:
      *
      * @return A new Text object.
      *
-     * @note Experimental API
+     * @since 0.15
      */
     static std::unique_ptr<Text> gen() noexcept;
 
@@ -1747,7 +1726,7 @@ public:
  *
  * @warning Please do not use it. This class is not fully supported yet.
  *
- * @note Experimental API
+ * @since 0.15
  */
 class TVG_API WgCanvas final : public Canvas
 {
@@ -1778,7 +1757,7 @@ public:
      *
      * @return A new WgCanvas object.
      *
-     * @note Experimental API
+     * @since 0.15
      */
     static std::unique_ptr<WgCanvas> gen() noexcept;
 
@@ -1834,7 +1813,7 @@ public:
      *
      * @return The version of the engine in the format major.minor.micro, or a @p nullptr in case of an internal error.
      *
-     * @note Experimental API
+     * @since 0.15
      */
     static const char* version(uint32_t* major, uint32_t* minor, uint32_t* micro) noexcept;
 
@@ -1939,6 +1918,7 @@ public:
      * @note Animation allows a range from 0.0 to 1.0. @p end should not be higher than @p begin.
      * @note If a marker has been specified, its range will be disregarded.
      * @see LottieAnimation::segment(const char* marker)
+     *
      * @note Experimental API
      */
     Result segment(float begin, float end) noexcept;

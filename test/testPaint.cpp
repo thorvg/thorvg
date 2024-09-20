@@ -256,54 +256,39 @@ TEST_CASE("Blending", "[tvgPaint]")
     auto shape = Shape::gen();
     REQUIRE(shape);
 
-    //Default
-    REQUIRE(shape->blend() == BlendMethod::Normal);
-
     //Add
     REQUIRE(shape->blend(BlendMethod::Add) == Result::Success);
-    REQUIRE(shape->blend() == BlendMethod::Add);
 
     //Screen
     REQUIRE(shape->blend(BlendMethod::Screen) == Result::Success);
-    REQUIRE(shape->blend() == BlendMethod::Screen);
 
     //Multiply
     REQUIRE(shape->blend(BlendMethod::Multiply) == Result::Success);
-    REQUIRE(shape->blend() == BlendMethod::Multiply);
 
     //Overlay
     REQUIRE(shape->blend(BlendMethod::Overlay) == Result::Success);
-    REQUIRE(shape->blend() == BlendMethod::Overlay);
 
     //Difference
     REQUIRE(shape->blend(BlendMethod::Difference) == Result::Success);
-    REQUIRE(shape->blend() == BlendMethod::Difference);
 
     //Exclusion
     REQUIRE(shape->blend(BlendMethod::Exclusion) == Result::Success);
-    REQUIRE(shape->blend() == BlendMethod::Exclusion);
 
     //Darken
     REQUIRE(shape->blend(BlendMethod::Darken) == Result::Success);
-    REQUIRE(shape->blend() == BlendMethod::Darken);
 
     //Lighten
     REQUIRE(shape->blend(BlendMethod::Lighten) == Result::Success);
-    REQUIRE(shape->blend() == BlendMethod::Lighten);
 
     //ColorDodge
     REQUIRE(shape->blend(BlendMethod::ColorDodge) == Result::Success);
-    REQUIRE(shape->blend() == BlendMethod::ColorDodge);
 
     //ColorBurn
     REQUIRE(shape->blend(BlendMethod::ColorBurn) == Result::Success);
-    REQUIRE(shape->blend() == BlendMethod::ColorBurn);
 
     //HardLight
     REQUIRE(shape->blend(BlendMethod::HardLight) == Result::Success);
-    REQUIRE(shape->blend() == BlendMethod::HardLight);
 
     //SoftLight
     REQUIRE(shape->blend(BlendMethod::SoftLight) == Result::Success);
-    REQUIRE(shape->blend() == BlendMethod::SoftLight);
 }

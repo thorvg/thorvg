@@ -90,7 +90,7 @@ struct Text::Impl
     bool render(RenderMethod* renderer)
     {
         if (!loader) return true;
-        renderer->blend(paint->blend());
+        renderer->blend(PP(paint)->blendMethod);
         return PP(shape)->render(renderer);
     }
 

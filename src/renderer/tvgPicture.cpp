@@ -20,6 +20,7 @@
  * SOFTWARE.
  */
 
+#include "tvgPaint.h"
 #include "tvgPicture.h"
 
 /************************************************************************/
@@ -73,7 +74,7 @@ bool Picture::Impl::needComposition(uint8_t opacity)
 bool Picture::Impl::render(RenderMethod* renderer)
 {
     bool ret = false;
-    renderer->blend(picture->blend());
+    renderer->blend(PP(picture)->blendMethod);
 
     if (surface) return renderer->renderImage(rd);
     else if (paint) {
