@@ -55,7 +55,7 @@ struct Shape::Impl
 
         RenderCompositor* cmp = nullptr;
 
-        renderer->blend(shape->blend());
+        renderer->blend(PP(shape)->blendMethod);
 
         if (needComp) {
             cmp = renderer->target(bounds(renderer), renderer->colorSpace());

@@ -272,7 +272,7 @@ void contents()
 
         Tvg_Paint *text = tvg_text_new();
         tvg_text_set_font(text, "Arial", 20.0f, "italic");
-        tvg_text_set_linear_gradient(text, grad);
+        tvg_text_set_gradient(text, grad);
         tvg_text_set_text(text, "ThorVG is the best");
         tvg_paint_translate(text, 70.0f, 420.0f);
         tvg_canvas_push(canvas, text);
