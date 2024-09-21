@@ -240,7 +240,7 @@ typedef uint8_t(*SwAlpha)(uint8_t*);                                        //bl
 
 struct SwCompositor;
 
-struct SwSurface : Surface
+struct SwSurface : RenderSurface
 {
     SwJoin  join;
     SwAlpha alphas[4];                    //Alpha:2, InvAlpha:3, Luma:4, InvLuma:5
@@ -258,7 +258,7 @@ struct SwSurface : Surface
     {
     }
 
-    SwSurface(const SwSurface* rhs) : Surface(rhs)
+    SwSurface(const SwSurface* rhs) : RenderSurface(rhs)
     {
         join = rhs->join;
         memcpy(alphas, rhs->alphas, sizeof(alphas));
@@ -268,7 +268,7 @@ struct SwSurface : Surface
      }
 };
 
-struct SwCompositor : Compositor
+struct SwCompositor : RenderCompositor
 {
     SwSurface* recoverSfc;                  //Recover surface when composition is started
     SwCompositor* recoverCmp;               //Recover compositor when composition is done
@@ -564,8 +564,8 @@ bool rasterGradientStroke(SwSurface* surface, SwShape* shape, const Fill* fdata,
 bool rasterClear(SwSurface* surface, uint32_t x, uint32_t y, uint32_t w, uint32_t h, pixel_t val = 0);
 void rasterPixel32(uint32_t *dst, uint32_t val, uint32_t offset, int32_t len);
 void rasterGrayscale8(uint8_t *dst, uint8_t val, uint32_t offset, int32_t len);
-void rasterUnpremultiply(Surface* surface);
-void rasterPremultiply(Surface* surface);
-bool rasterConvertCS(Surface* surface, ColorSpace to);
+void rasterUnpremultiply(RenderSurface* surface);
+void rasterPremultiply(RenderSurface* surface);
+bool rasterConvertCS(RenderSurface* surface, ColorSpace to);
 
 #endif /* _TVG_SW_COMMON_H_ */

@@ -58,7 +58,7 @@ bool GlGeometry::tesselate(const RenderShape& rshape, RenderUpdateFlag flag)
     return true;
 }
 
-bool GlGeometry::tesselate(const Surface* image, RenderUpdateFlag flag)
+bool GlGeometry::tesselate(const RenderSurface* image, RenderUpdateFlag flag)
 {
     if (flag & RenderUpdateFlag::Image) {
         fillVertex.clear();

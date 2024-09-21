@@ -53,7 +53,7 @@ struct Shape::Impl
     {
         if (!rd) return false;
 
-        Compositor* cmp = nullptr;
+        RenderCompositor* cmp = nullptr;
 
         renderer->blend(shape->blend());
 
