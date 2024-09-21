@@ -191,7 +191,7 @@ struct SwShapeTask : SwTask
 struct SwImageTask : SwTask
 {
     SwImage image;
-    Surface* source;                            //Image source
+    RenderSurface* source;                //Image source
 
     bool clip(SwRle* target) override
     {
@@ -490,7 +490,7 @@ RenderRegion SwRenderer::region(RenderData data)
 }
 
 
-bool SwRenderer::beginComposite(Compositor* cmp, CompositeMethod method, uint8_t opacity)
+bool SwRenderer::beginComposite(RenderCompositor* cmp, CompositeMethod method, uint8_t opacity)
 {
     if (!cmp) return false;
     auto p = static_cast<SwCompositor*>(cmp);
@@ -528,13 +528,13 @@ bool SwRenderer::mempool(bool shared)
 }
 
 
-const Surface* SwRenderer::mainSurface()
+const RenderSurface* SwRenderer::mainSurface()
 {
     return surface;
 }
 
 
-Compositor* SwRenderer::target(const RenderRegion& region, ColorSpace cs)
+RenderCompositor* SwRenderer::target(const RenderRegion& region, ColorSpace cs)
 {
     auto x = region.x;
     auto y = region.y;
@@ -603,7 +603,7 @@ Compositor* SwRenderer::target(const RenderRegion& region, ColorSpace cs)
 }
 
 
-bool SwRenderer::endComposite(Compositor* cmp)
+bool SwRenderer::endComposite(RenderCompositor* cmp)
 {
     if (!cmp) return false;
 
@@ -682,7 +682,7 @@ void* SwRenderer::prepareCommon(SwTask* task, const Matrix& transform, const Arr
 }
 
 
-RenderData SwRenderer::prepare(Surface* surface, RenderData data, const Matrix& transform, Array<RenderData>& clips, uint8_t opacity, RenderUpdateFlag flags)
+RenderData SwRenderer::prepare(RenderSurface* surface, RenderData data, const Matrix& transform, Array<RenderData>& clips, uint8_t opacity, RenderUpdateFlag flags)
 {
     //prepare task
     auto task = static_cast<SwImageTask*>(data);

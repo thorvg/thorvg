@@ -117,7 +117,7 @@ struct Scene::Impl
 
     bool render(RenderMethod* renderer)
     {
-        Compositor* cmp = nullptr;
+        RenderCompositor* cmp = nullptr;
         auto ret = true;
 
         renderer->blend(scene->blend());

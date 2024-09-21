@@ -20,6 +20,17 @@
  * SOFTWARE.
  */
 
+struct Vertex
+{
+   Point pt;
+   Point uv;
+};
+
+struct Polygon
+{
+   Vertex vertex[3];
+};
+
 struct AALine
 {
    int32_t x[2];

@@ -45,7 +45,7 @@ public:
     bool open(const char* data, uint32_t size, bool copy) override;
     bool read() override;
 
-    Surface* bitmap() override;
+    RenderSurface* bitmap() override;
 };
 
 #endif //_TVG_PNG_LOADER_H_

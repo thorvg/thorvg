@@ -149,7 +149,7 @@ bool WebpLoader::close()
 }
 
 
-Surface* WebpLoader::bitmap()
+RenderSurface* WebpLoader::bitmap()
 {
     this->done();
 

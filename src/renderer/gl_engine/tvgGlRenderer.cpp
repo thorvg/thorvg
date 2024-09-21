@@ -758,7 +758,7 @@ void GlRenderer::prepareCmpTask(GlRenderTask* task, const RenderRegion& vp, uint
 }
 
 
-void GlRenderer::endRenderPass(Compositor* cmp)
+void GlRenderer::endRenderPass(RenderCompositor* cmp)
 {
     auto gl_cmp = static_cast<GlCompositor*>(cmp);
     if (cmp->method != CompositeMethod::None) {
@@ -999,7 +999,7 @@ bool GlRenderer::postRender()
 }
 
 
-Compositor* GlRenderer::target(const RenderRegion& region, TVG_UNUSED ColorSpace cs)
+RenderCompositor* GlRenderer::target(const RenderRegion& region, TVG_UNUSED ColorSpace cs)
 {
     auto vp = region;
     if (currentPass()->isEmpty()) return nullptr;
@@ -1011,7 +1011,7 @@ Compositor* GlRenderer::target(const RenderRegion& region, TVG_UNUSED ColorSpace
 }
 
 
-bool GlRenderer::beginComposite(Compositor* cmp, CompositeMethod method, uint8_t opacity)
+bool GlRenderer::beginComposite(RenderCompositor* cmp, CompositeMethod method, uint8_t opacity)
 {
     if (!cmp) return false;
 
@@ -1038,7 +1038,7 @@ bool GlRenderer::beginComposite(Compositor* cmp, CompositeMethod method, uint8_t
 }
 
 
-bool GlRenderer::endComposite(Compositor* cmp)
+bool GlRenderer::endComposite(RenderCompositor* cmp)
 {
     if (mComposeStack.empty()) return false;
     if (mComposeStack.back().get() != cmp) return false;
@@ -1061,7 +1061,7 @@ ColorSpace GlRenderer::colorSpace()
 }
 
 
-const Surface* GlRenderer::mainSurface()
+const RenderSurface* GlRenderer::mainSurface()
 {
     return &surface;
 }
@@ -1244,7 +1244,7 @@ void GlRenderer::dispose(RenderData data)
     delete sdata;
 }
 
-static GLuint _genTexture(Surface* image)
+static GLuint _genTexture(RenderSurface* image)
 {
     GLuint tex = 0;
 
@@ -1264,7 +1264,7 @@ static GLuint _genTexture(Surface* image)
 }
 
 
-RenderData GlRenderer::prepare(Surface* image, RenderData data, const Matrix& transform, Array<RenderData>& clips, uint8_t opacity, RenderUpdateFlag flags)
+RenderData GlRenderer::prepare(RenderSurface* image, RenderData data, const Matrix& transform, Array<RenderData>& clips, uint8_t opacity, RenderUpdateFlag flags)
 {
     if (flags == RenderUpdateFlag::None) return data;
 

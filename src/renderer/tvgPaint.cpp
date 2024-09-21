@@ -208,7 +208,7 @@ bool Paint::Impl::render(RenderMethod* renderer)
 {
     if (opacity == 0) return true;
 
-    Compositor* cmp = nullptr;
+    RenderCompositor* cmp = nullptr;
 
     if (compData && !(compData->target->pImpl->ctxFlag & ContextFlag::FastTrack)) {
         RenderRegion region;
