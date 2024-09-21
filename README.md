@@ -24,8 +24,8 @@ The following list shows primitives that are supported by ThorVG: <br />
 - **Lines & Shapes**: rectangles, circles, and paths with coordinate control
 - **Filling**: solid colors, linear & radial gradients, and path clipping
 - **Stroking**: stroke width, joins, caps, dash patterns, and trimming
-- **Scene Management**: Retainable scene graph and object transformations
-- **Composition**: various blendings and maskings
+- **Scene Management**: retainable scene graph and object transformations
+- **Composition**: various blending and masking
 - **Text**: Unicode characters with horizontal text layout using scalable fonts (TTF)
 - **Images**: TVG, SVG, JPG, PNG, WebP, and raw bitmaps
 - **Animations**: Lottie
