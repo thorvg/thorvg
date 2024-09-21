@@ -20,15 +20,16 @@ ThorVG is an open-source graphics library designed for creating vector-based sce
 <br />
 The following list shows primitives that are supported by ThorVG: <br />
 <br />
+ 
+- **Lines & Shapes**: rectangles, circles, and paths with coordinate control
+- **Filling**: solid colors, linear & radial gradients, and path clipping
+- **Stroking**: stroke width, joins, caps, dash patterns, and trimming
+- **Scene Management**: Retainable scene graph and object transformations
+- **Composition**: various blendings and maskings
+- **Text**: Unicode characters with horizontal text layout using scalable fonts (TTF)
+- **Images**: TVG, SVG, JPG, PNG, WebP, and raw bitmaps
+- **Animations**: Lottie
 
- * Shapes: Line, Arc, Curve, Path, Polygon
- * Filling: Solid Color, Linear & Radial Gradients and Texture Mapping 
- * Stroking: Width, Join, Cap, Dash Patterns
- * Scene Graph & Transformations
- * Composition: Blending, Masking, Path Clipping
- * Text: Unicode Characters and Horizontal Text Layout using the Scalable Fonts (TTF)
- * Images: TVG, SVG, JPG, PNG, WebP, Raw Bitmap
- * Animations: Lottie
 <p align="center">
   <img width="700" height="auto" src="https://github.com/thorvg/thorvg/blob/main/res/example_primitives.png">
 </p>
