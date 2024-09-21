@@ -61,6 +61,7 @@ source_file = [
     'SceneBlending.cpp',
     'SceneTransform.cpp',
     'Shape.cpp',
+    'SceneEffect.cpp',
     'Stroke.cpp',
     'StrokeLine.cpp',
     'StrokeMiterlimit.cpp',
