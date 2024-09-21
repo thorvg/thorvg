@@ -68,7 +68,7 @@ struct WgImageData {
     WGPUTexture texture{};
     WGPUTextureView textureView{};
 
-    void update(WgContext& context, Surface* surface);
+    void update(WgContext& context, RenderSurface* surface);
     void release(WgContext& context);
 };
 

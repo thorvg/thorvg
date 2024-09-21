@@ -181,7 +181,7 @@ void WgMeshDataGroup::release(WgContext& context)
 // WgImageData
 //***********************************************************************
 
-void WgImageData::update(WgContext& context, Surface* surface)
+void WgImageData::update(WgContext& context, RenderSurface* surface)
 {
     release(context);
     assert(surface);

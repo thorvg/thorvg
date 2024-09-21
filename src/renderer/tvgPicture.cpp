@@ -77,7 +77,7 @@ bool Picture::Impl::render(RenderMethod* renderer)
 
     if (surface) return renderer->renderImage(rd);
     else if (paint) {
-        Compositor* cmp = nullptr;
+        RenderCompositor* cmp = nullptr;
         if (needComp) {
             cmp = renderer->target(bounds(renderer), renderer->colorSpace());
             renderer->beginComposite(cmp, CompositeMethod::None, 255);

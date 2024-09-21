@@ -26,12 +26,14 @@
 #include "tvgWgRenderTarget.h"
 #include "tvgWgRenderData.h"
 
-struct WgCompose: public Compositor {
+struct WgCompose: RenderCompositor
+{
     BlendMethod blend{};
     RenderRegion aabb{};
 };
 
-class WgCompositor {
+class WgCompositor
+{
 private:
     // pipelines (external handle, do not release)
     WgPipelines* pipelines{};

@@ -114,7 +114,7 @@ RenderData WgRenderer::prepare(const RenderShape& rshape, RenderData data, const
 }
 
 
-RenderData WgRenderer::prepare(Surface* surface, RenderData data, const Matrix& transform, Array<RenderData>& clips, uint8_t opacity, RenderUpdateFlag flags)
+RenderData WgRenderer::prepare(RenderSurface* surface, RenderData data, const Matrix& transform, Array<RenderData>& clips, uint8_t opacity, RenderUpdateFlag flags)
 {
     // get or create render data shape
     auto renderDataPicture = (WgRenderDataPicture*)data;
@@ -238,7 +238,7 @@ ColorSpace WgRenderer::colorSpace()
 }
 
 
-const Surface* WgRenderer::mainSurface()
+const RenderSurface* WgRenderer::mainSurface()
 {
     return &mTargetSurface;
 }
@@ -338,7 +338,7 @@ bool WgRenderer::target(WGPUSurface surface, uint32_t w, uint32_t h) {
 }
 
 
-Compositor* WgRenderer::target(TVG_UNUSED const RenderRegion& region, TVG_UNUSED ColorSpace cs)
+RenderCompositor* WgRenderer::target(TVG_UNUSED const RenderRegion& region, TVG_UNUSED ColorSpace cs)
 {
     mCompositorStack.push(new WgCompose);
     mCompositorStack.last()->aabb = region;
@@ -346,7 +346,7 @@ Compositor* WgRenderer::target(TVG_UNUSED const RenderRegion& region, TVG_UNUSED
 }
 
 
-bool WgRenderer::beginComposite(Compositor* cmp, CompositeMethod method, uint8_t opacity)
+bool WgRenderer::beginComposite(RenderCompositor* cmp, CompositeMethod method, uint8_t opacity)
 {
     // save current composition settings
     WgCompose* compose = (WgCompose *)cmp;
@@ -364,7 +364,7 @@ bool WgRenderer::beginComposite(Compositor* cmp, CompositeMethod method, uint8_t
 }
 
 
-bool WgRenderer::endComposite(Compositor* cmp)
+bool WgRenderer::endComposite(RenderCompositor* cmp)
 {
     // get current composition settings
     WgCompose* comp = (WgCompose *)cmp;

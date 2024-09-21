@@ -140,7 +140,7 @@ bool PngLoader::read()
 }
 
 
-Surface* PngLoader::bitmap()
+RenderSurface* PngLoader::bitmap()
 {
     this->done();
     return ImageLoader::bitmap();

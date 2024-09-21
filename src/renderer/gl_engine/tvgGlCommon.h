@@ -95,7 +95,7 @@ struct GlRadialGradientBlock
     alignas(16) float stopColors[4 * MAX_GRADIENT_STOPS] = {};
 };
 
-struct GlCompositor : public Compositor
+struct GlCompositor : RenderCompositor
 {
     RenderRegion bbox = {};
 

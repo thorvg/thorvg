@@ -29,7 +29,7 @@ class WgRenderer : public RenderMethod
 {
 public:
     RenderData prepare(const RenderShape& rshape, RenderData data, const Matrix& transform, Array<RenderData>& clips, uint8_t opacity, RenderUpdateFlag flags, bool clipper) override;
-    RenderData prepare(Surface* surface, RenderData data, const Matrix& transform, Array<RenderData>& clips, uint8_t opacity, RenderUpdateFlag flags) override;
+    RenderData prepare(RenderSurface* surface, RenderData data, const Matrix& transform, Array<RenderData>& clips, uint8_t opacity, RenderUpdateFlag flags) override;
     bool preRender() override;
     bool renderShape(RenderData data) override;
     bool renderImage(RenderData data) override;
@@ -40,7 +40,7 @@ public:
     bool viewport(const RenderRegion& vp) override;
     bool blend(BlendMethod method) override;
     ColorSpace colorSpace() override;
-    const Surface* mainSurface() override;
+    const RenderSurface* mainSurface() override;
 
     bool clear() override;
     bool sync() override;
@@ -48,9 +48,9 @@ public:
     bool target(WGPUInstance instance, WGPUSurface surface, uint32_t w, uint32_t h, WGPUDevice device);
     bool target(WGPUSurface surface, uint32_t w, uint32_t h);
 
-    Compositor* target(const RenderRegion& region, ColorSpace cs) override;
-    bool beginComposite(Compositor* cmp, CompositeMethod method, uint8_t opacity) override;
-    bool endComposite(Compositor* cmp) override;
+    RenderCompositor* target(const RenderRegion& region, ColorSpace cs) override;
+    bool beginComposite(RenderCompositor* cmp, CompositeMethod method, uint8_t opacity) override;
+    bool endComposite(RenderCompositor* cmp) override;
 
     static WgRenderer* gen();
     static bool init(uint32_t threads);
@@ -78,7 +78,7 @@ private:
     WgPipelines mPipelines;
     WgCompositor mCompositor;
 
-    Surface mTargetSurface;
+    RenderSurface mTargetSurface;
     BlendMethod mBlendMethod{};
     RenderRegion mViewport{};
 

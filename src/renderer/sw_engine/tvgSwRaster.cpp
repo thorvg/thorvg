@@ -1655,7 +1655,7 @@ bool rasterClear(SwSurface* surface, uint32_t x, uint32_t y, uint32_t w, uint32_
 }
 
 
-void rasterUnpremultiply(Surface* surface)
+void rasterUnpremultiply(RenderSurface* surface)
 {
     if (surface->channelSize != sizeof(uint32_t)) return;
 
@@ -1685,7 +1685,7 @@ void rasterUnpremultiply(Surface* surface)
 }
 
 
-void rasterPremultiply(Surface* surface)
+void rasterPremultiply(RenderSurface* surface)
 {
     ScopedLock lock(surface->key);
     if (surface->premultiplied || (surface->channelSize != sizeof(uint32_t))) return;
@@ -1777,7 +1777,7 @@ bool rasterImage(SwSurface* surface, SwImage* image, const Matrix& transform, co
 }
 
 
-bool rasterConvertCS(Surface* surface, ColorSpace to)
+bool rasterConvertCS(RenderSurface* surface, ColorSpace to)
 {
     ScopedLock lock(surface->key);
     if (surface->cs == to) return true;
