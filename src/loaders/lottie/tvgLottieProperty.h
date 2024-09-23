@@ -830,5 +830,7 @@ using LottiePoint = LottieGenericProperty<Point>;
 using LottieFloat = LottieGenericProperty<float>;
 using LottieOpacity = LottieGenericProperty<uint8_t>;
 using LottieColor = LottieGenericProperty<RGB24>;
+using LottieSlider = LottieFloat;
+using LottieCheckbox = LottieGenericProperty<int8_t>;
 
 #endif //_TVG_LOTTIE_PROPERTY_H_
