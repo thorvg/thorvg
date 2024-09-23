@@ -77,6 +77,33 @@ struct LottieStroke
 };
 
 
+struct LottieEffect
+{
+    enum Type : uint8_t
+    {
+        GaussianBlur = 0,
+    };
+
+    virtual ~LottieEffect() {}
+
+    Type type;
+    bool enable = false;
+};
+
+
+struct LottieGaussianBlur : LottieEffect
+{
+    LottieSlider blurness = 0.0f;
+    LottieCheckbox direction = 0;
+    LottieCheckbox wrap = 0;
+
+    LottieGaussianBlur()
+    {
+        type = GaussianBlur;
+    }
+};
+
+
 struct LottieMask
 {
     LottiePathSet pathset;
@@ -737,6 +764,7 @@ struct LottieLayer : LottieGroup
     LottieLayer* comp = nullptr;  //Precompositor, current layer is belonges.
     LottieTransform* transform = nullptr;
     Array<LottieMask*> masks;
+    Array<LottieEffect*> effects;
     LottieLayer* matteTarget = nullptr;
 
     LottieRenderPooler<tvg::Shape> statical;  //static pooler for solid fill and clipper

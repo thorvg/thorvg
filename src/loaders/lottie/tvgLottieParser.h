@@ -50,6 +50,7 @@ private:
     StrokeJoin getStrokeJoin();
     CompositeMethod getMaskMethod(bool inversed);
     LottieInterpolator* getInterpolator(const char* key, Point& in, Point& out);
+    LottieEffect* getEffect(int type);
 
     void getInterpolatorPoint(Point& pt);
     void getPathSet(LottiePathSet& path);
@@ -60,6 +61,7 @@ private:
     void getValue(ColorStop& color);
     void getValue(float& val);
     void getValue(uint8_t& val);
+    void getValue(int8_t& val);
     void getValue(RGB24& color);
     bool getValue(Point& pt);
 
@@ -93,12 +95,15 @@ private:
     LottieFont* parseFont();
     LottieMarker* parseMarker();
 
+    void parseGaussianBlur(LottieGaussianBlur* effect);
+
     bool parseDirection(LottieShape* shape, const char* key);
     bool parseCommon(LottieObject* obj, const char* key);
     void parseObject(Array<LottieObject*>& parent);
     void parseShapes(Array<LottieObject*>& parent);
     void parseText(Array<LottieObject*>& parent);
     void parseMasks(LottieLayer* layer);
+    void parseEffects(LottieLayer* layer);
     void parseTimeRemap(LottieLayer* layer);
     void parseStrokeDash(LottieStroke* stroke);
     void parseGradient(LottieGradient* gradient, const char* key);
@@ -107,6 +112,7 @@ private:
     void parseFonts();
     void parseChars(Array<LottieGlyph*>& glyphs);
     void parseMarkers();
+    void parseEffect(LottieEffect* effect);
     void postProcess(Array<LottieGlyph*>& glyphs);
 
     //Current parsing context

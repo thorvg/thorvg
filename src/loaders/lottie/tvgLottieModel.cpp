@@ -400,6 +400,10 @@ LottieLayer::~LottieLayer()
         delete(*m);
     }
 
+    for (auto e = effects.begin(); e < effects.end(); ++e) {
+        delete(*e);
+    }
+
     delete(transform);
     free(name);
 }
