@@ -24,8 +24,6 @@
 
 WgRenderer::WgRenderer()
 {
-    WgGeometryData::gMath = new WgMath();
-    WgGeometryData::gMath->initialize();
 }
 
 
@@ -33,8 +31,6 @@ WgRenderer::~WgRenderer()
 {
     release();
     mContext.release();
-    WgGeometryData::gMath->release();
-    delete WgGeometryData::gMath;
 }
 
 
@@ -130,11 +126,11 @@ RenderData WgRenderer::prepare(RenderSurface* surface, RenderData data, const Ma
 
     // update image data
     if (flags & (RenderUpdateFlag::Path | RenderUpdateFlag::Image)) {
-        WgGeometryData geometryData;
-        geometryData.appendImageBox(surface->w, surface->h);
+        WgVertexBufferInd vertexBufferInd;
+        vertexBufferInd.appendImageBox(surface->w, surface->h);
         mContext.pipelines->layouts.releaseBindGroup(renderDataPicture->bindGroupPicture);
         renderDataPicture->meshData.release(mContext);
-        renderDataPicture->meshData.update(mContext, &geometryData);
+        renderDataPicture->meshData.update(mContext, vertexBufferInd);
         renderDataPicture->imageData.update(mContext, surface);
         renderDataPicture->bindGroupPicture = mContext.pipelines->layouts.createBindGroupTexSampled(
             mContext.samplerLinearRepeat, renderDataPicture->imageData.textureView
