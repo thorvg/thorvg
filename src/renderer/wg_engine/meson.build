@@ -12,7 +12,6 @@ source_file = [
     'tvgWgBindGroups.cpp',
     'tvgWgCommon.cpp',
     'tvgWgCompositor.cpp',
-    'tvgWgGeometry.cpp',
     'tvgWgPipelines.cpp',
     'tvgWgRenderData.cpp',
     'tvgWgRenderer.cpp',
