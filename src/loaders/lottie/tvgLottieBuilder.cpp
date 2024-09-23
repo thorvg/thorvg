@@ -1191,6 +1191,24 @@ bool LottieBuilder::updateMatte(LottieComposition* comp, float frameNo, Scene* s
 }
 
 
+void LottieBuilder::updateEffect(LottieLayer* layer, float frameNo)
+{
+    if (layer->effects.count == 0) return;
+
+    for (auto ef = layer->effects.begin(); ef < layer->effects.end(); ++ef) {
+        if (!(*ef)->enable) continue;
+        switch ((*ef)->type) {
+            case LottieEffect::GaussianBlur: {
+                auto effect = static_cast<LottieGaussianBlur*>(*ef);
+                layer->scene->push(SceneEffect::GaussianBlur, sqrt(effect->blurness(frameNo)), effect->direction(frameNo) - 1, effect->wrap(frameNo), 50);
+                break;
+            }
+            default: break;
+        }
+    }
+}
+
+
 void LottieBuilder::updateLayer(LottieComposition* comp, Scene* scene, LottieLayer* layer, float frameNo)
 {
     layer->scene = nullptr;
@@ -1245,6 +1263,8 @@ void LottieBuilder::updateLayer(LottieComposition* comp, Scene* scene, LottieLay
     updateMaskings(layer, frameNo);
 
     layer->scene->blend(layer->blendMethod);
+
+    updateEffect(layer, frameNo);
 
     //the given matte source was composited by the target earlier.
     if (!layer->matteSrc) scene->push(cast(layer->scene));

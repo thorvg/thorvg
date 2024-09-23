@@ -57,6 +57,15 @@ static unsigned long _int2str(int num)
 }
 
 
+LottieEffect* LottieParser::getEffect(int type)
+{
+    switch (type) {
+        case 29: return new LottieGaussianBlur;
+        default: return nullptr;
+    }
+}
+
+
 CompositeMethod LottieParser::getMaskMethod(bool inversed)
 {
     auto mode = getString();
@@ -259,6 +268,19 @@ void LottieParser::getValue(Array<Point>& pts)
         Point pt;
         getValue(pt);
         pts.push(pt);
+    }
+}
+
+
+void LottieParser::getValue(int8_t& val)
+{
+    if (peekType() == kArrayType) {
+        enterArray();
+        if (nextArrayValue()) val = getInt();
+        //discard rest
+        while (nextArrayValue()) getInt();
+    } else {
+        val = getFloat();
     }
 }
 
@@ -1233,6 +1255,70 @@ void LottieParser::parseMasks(LottieLayer* layer)
 }
 
 
+void LottieParser::parseGaussianBlur(LottieGaussianBlur* effect)
+{
+    int idx = 0;  //blurness -> direction -> wrap
+    enterArray();
+    while (nextArrayValue()) {
+        enterObject();
+        while (auto key = nextObjectKey()) {
+            if (KEY_AS("v")) {
+                enterObject();
+                while (auto key = nextObjectKey()) {
+                    if (KEY_AS("k")) {
+                        if (idx == 0) parsePropertyInternal(effect->blurness);
+                        else if (idx == 1) parsePropertyInternal(effect->direction);
+                        else if (idx == 2) parsePropertyInternal(effect->wrap);
+                        ++idx;
+                    } else skip(key);
+                }
+            } else skip(key);
+        }
+    }
+}
+
+
+void LottieParser::parseEffect(LottieEffect* effect)
+{
+    switch (effect->type) {
+        case LottieEffect::GaussianBlur: {
+            parseGaussianBlur(static_cast<LottieGaussianBlur*>(effect));
+            break;
+        }
+        default: break;
+    }
+}
+
+
+void LottieParser::parseEffects(LottieLayer* layer)
+{
+    auto invalid = true;
+
+    enterArray();
+    while (nextArrayValue()) {
+        LottieEffect* effect = nullptr;
+        enterObject();
+        while (auto key = nextObjectKey()) {
+            //type must be priortized.
+            if (KEY_AS("ty"))
+            {
+                effect = getEffect(getInt());
+                if (!effect) break;
+                else invalid = false;
+            }
+            else if (effect && KEY_AS("en")) effect->enable = getInt();
+            else if (effect && KEY_AS("ef")) parseEffect(effect);
+            else skip(key);
+        }
+        //TODO: remove when all effects were guaranteed.
+        if (invalid) {
+            TVGLOG("LOTTIE", "Not supported Layer Effect = %d", (int)effect->type);
+            while (auto key = nextObjectKey()) skip(key);
+        } else layer->effects.push(effect);
+    }
+}
+
+
 LottieLayer* LottieParser::parseLayer(LottieLayer* precomp)
 {
     auto layer = new LottieLayer;
@@ -1278,11 +1364,7 @@ LottieLayer* LottieParser::parseLayer(LottieLayer* precomp)
         else if (KEY_AS("refId")) layer->rid = djb2Encode(getString());
         else if (KEY_AS("td")) layer->matteSrc = getInt();      //used for matte layer
         else if (KEY_AS("t")) parseText(layer->children);
-        else if (KEY_AS("ef"))
-        {
-            TVGLOG("LOTTIE", "layer effect(ef) is not supported!");
-            skip(key);
-        }
+        else if (KEY_AS("ef")) parseEffects(layer);
         else skip(key);
     }
 

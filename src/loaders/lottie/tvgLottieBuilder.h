@@ -103,6 +103,7 @@ struct LottieBuilder
     void build(LottieComposition* comp);
 
 private:
+    void updateEffect(LottieLayer* layer, float frameNo);
     void updateLayer(LottieComposition* comp, Scene* scene, LottieLayer* layer, float frameNo);
     bool updateMatte(LottieComposition* comp, float frameNo, Scene* scene, LottieLayer* layer);
     void updatePrecomp(LottieComposition* comp, LottieLayer* precomp, float frameNo);
