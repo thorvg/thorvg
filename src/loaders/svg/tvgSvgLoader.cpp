@@ -1615,7 +1615,7 @@ static constexpr struct
 } circleTags[] = {
     {"cx", SvgParserLengthType::Horizontal, sizeof("cx"), offsetof(SvgCircleNode, cx)},
     {"cy", SvgParserLengthType::Vertical, sizeof("cy"), offsetof(SvgCircleNode, cy)},
-    {"r", SvgParserLengthType::Other, sizeof("r"), offsetof(SvgCircleNode, r)}
+    {"r", SvgParserLengthType::Diagonal, sizeof("r"), offsetof(SvgCircleNode, r)}
 };
 
 
