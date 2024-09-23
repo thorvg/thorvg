@@ -21,6 +21,7 @@
  */
 
 #include <thorvg.h>
+#include <emscripten.h>
 #include <emscripten/bind.h>
 #include "tvgPicture.h"
 #ifdef THORVG_WG_RASTER_SUPPORT
@@ -32,6 +33,47 @@ using namespace std;
 using namespace tvg;
 
 static const char* NoError = "None";
+
+#ifdef THORVG_WG_RASTER_SUPPORT
+    static WGPUInstance instance{};
+    static WGPUAdapter adapter{};
+    static WGPUDevice device{};
+#endif
+
+void init()
+{
+#ifdef THORVG_WG_RASTER_SUPPORT
+    //Init WebGPU
+    if (!instance) instance = wgpuCreateInstance(nullptr);
+
+    // request adapter
+    if (!adapter) {
+        const WGPURequestAdapterOptions requestAdapterOptions { .nextInChain = nullptr, .powerPreference = WGPUPowerPreference_HighPerformance, .forceFallbackAdapter = false };
+        auto onAdapterRequestEnded = [](WGPURequestAdapterStatus status, WGPUAdapter adapter, char const * message, void * pUserData) { *((WGPUAdapter*)pUserData) = adapter; };
+        wgpuInstanceRequestAdapter(instance, &requestAdapterOptions, onAdapterRequestEnded, &adapter);
+        while (!adapter) emscripten_sleep(10);
+    }
+
+    // request device
+    WGPUFeatureName featureNames[32]{};
+    size_t featuresCount = wgpuAdapterEnumerateFeatures(adapter, featureNames);
+    if (!device) {
+        const WGPUDeviceDescriptor deviceDesc { .nextInChain = nullptr, .label = "The device", .requiredFeatureCount = featuresCount, .requiredFeatures = featureNames };
+        auto onDeviceRequestEnded = [](WGPURequestDeviceStatus status, WGPUDevice device, char const * message, void * pUserData) { *((WGPUDevice*)pUserData) = device; };
+        wgpuAdapterRequestDevice(adapter, &deviceDesc, onDeviceRequestEnded, &device);
+        while (!device) emscripten_sleep(10);
+    }
+#endif
+}
+
+void term()
+{
+#ifdef THORVG_WG_RASTER_SUPPORT
+    wgpuDeviceRelease(device);
+    wgpuAdapterRelease(adapter);
+    wgpuInstanceRelease(instance);
+#endif
+}
 
 struct TvgEngineMethod
 {
@@ -77,7 +119,6 @@ struct TvgSwEngine : TvgEngineMethod
 struct TvgWgEngine : TvgEngineMethod
 {
     #ifdef THORVG_WG_RASTER_SUPPORT
-        WGPUInstance instance{};
         WGPUSurface surface{};
     #endif
 
@@ -85,7 +126,6 @@ struct TvgWgEngine : TvgEngineMethod
     {
         #ifdef THORVG_WG_RASTER_SUPPORT
             wgpuSurfaceRelease(surface);
-            wgpuInstanceRelease(instance);
         #endif
         Initializer::term(tvg::CanvasEngine::Wg);
     }
@@ -93,9 +133,6 @@ struct TvgWgEngine : TvgEngineMethod
     unique_ptr<Canvas> init(string& selector) override
     {
         #ifdef THORVG_WG_RASTER_SUPPORT
-            //Init WebGPU
-            instance = wgpuCreateInstance(nullptr);
-
             WGPUSurfaceDescriptorFromCanvasHTMLSelector canvasDesc{};
             canvasDesc.chain.next = nullptr;
             canvasDesc.chain.sType = WGPUSType_SurfaceDescriptorFromCanvasHTMLSelector;
@@ -112,7 +149,7 @@ struct TvgWgEngine : TvgEngineMethod
 
     void resize(Canvas* canvas, int w, int h) override
     {
-        static_cast<WgCanvas*>(canvas)->target(instance, surface, w, h);
+        static_cast<WgCanvas*>(canvas)->target(instance, surface, w, h, device);
     }
 };
 
@@ -423,6 +460,9 @@ private:
 
 EMSCRIPTEN_BINDINGS(thorvg_bindings)
 {
+    emscripten::function("init", &init);
+    emscripten::function("term", &term);
+
     class_<TvgLottieAnimation>("TvgLottieAnimation")
         .constructor<string, string>()
         .function("error", &TvgLottieAnimation ::error, allow_raw_pointers())
