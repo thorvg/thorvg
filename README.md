@@ -26,7 +26,7 @@ The following list shows primitives that are supported by ThorVG: <br />
 - **Stroking**: stroke width, joins, caps, dash patterns, and trimming
 - **Scene Management**: retainable scene graph and object transformations
 - **Composition**: various blending and masking
-- **Text**: Unicode characters with horizontal text layout using scalable fonts (TTF)
+- **Text**: unicode characters with horizontal text layout using scalable fonts (TTF)
 - **Images**: TVG, SVG, JPG, PNG, WebP, and raw bitmaps
 - **Animations**: Lottie
 
