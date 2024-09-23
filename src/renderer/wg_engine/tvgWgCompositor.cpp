@@ -48,9 +48,9 @@ void WgCompositor::initialize(WgContext& context, uint32_t width, uint32_t heigh
     storageInterm.initialize(context, width, height);
     storageDstCopy.initialize(context, width, height);
     // composition and blend geometries
-    WgGeometryData geometryData;
-    geometryData.appendBlitBox();
-    meshData.update(context, &geometryData);
+    WgVertexBufferInd vertexBuffer;
+    vertexBuffer.appendBlitBox();
+    meshData.update(context, vertexBuffer);
 }
 
 
