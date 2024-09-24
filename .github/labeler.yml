@@ -50,6 +50,6 @@
   - src/renderer/gl_engine/**/*
 
 "renderer":
-  - src/renderer/**/*
+  - src/renderer/*
   - src/common/**/*
 
