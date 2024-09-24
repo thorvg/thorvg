@@ -836,7 +836,7 @@ namespace DCT_Upsample
         inline const Element_Type & at(int r, int c) const { return v[r][c]; }
         inline       Element_Type & at(int r, int c)       { return v[r][c]; }
 
-        inline Matrix44() {}
+        inline Matrix44() : v{} {}
 
         inline Matrix44& operator += (const Matrix44& a)
         {
