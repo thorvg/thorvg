@@ -174,9 +174,11 @@ struct WgVertexBuffer {
         // append points
         float t_beg = len_seg_beg > 0.0f ? 1.0f - (len_total_beg - len_beg) / len_seg_beg : 0.0f;
         float t_end = len_seg_end > 0.0f ? 1.0f - (len_total_end - len_end) / len_seg_end : 0.0f;
-        if (index_beg > 0) append(lerp(buff.vbuff[index_beg-1], buff.vbuff[index_beg], t_beg));
+        //t_beg == 1 handled in appendRange
+        if (index_beg > 0 && t_beg != 1.0f) append(lerp(buff.vbuff[index_beg-1], buff.vbuff[index_beg], t_beg));
         appendRange(buff, index_beg, index_end);
-        if (index_end > 0) append(lerp(buff.vbuff[index_end-1], buff.vbuff[index_end], t_end));
+        //t_end == 0 handled in appendRange
+        if (index_end > 0 && t_end != 0.0f) append(lerp(buff.vbuff[index_end-1], buff.vbuff[index_end], t_end));
     }
 
 
