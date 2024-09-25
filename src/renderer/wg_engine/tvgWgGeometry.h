@@ -124,14 +124,14 @@ struct WgVertexBuffer {
     }
 
     // append source vertex buffer in index range from start to end (end not included)
-    void appendRange(const WgVertexBuffer& buff, size_t start_index, size_t end_index) {
-        if (start_index <= end_index)
-            for (size_t i = start_index; i < end_index; i++)
-                append(buff.vbuff[i]);
-        if (start_index > end_index) {
+    void appendRange(const WgVertexBuffer& buff, size_t start_index, size_t end_index, bool loop) {
+        if (loop) {
             for (size_t i = start_index; i < buff.vcount; i++)
                 append(buff.vbuff[i]);
             for (size_t i = 0; i < end_index; i++)
+                append(buff.vbuff[i]);
+        } else {
+            for (size_t i = start_index; i < end_index; i++)
                 append(buff.vbuff[i]);
         }
     }
@@ -182,7 +182,7 @@ struct WgVertexBuffer {
         float t_beg = len_seg_beg > 0.0f ? 1.0f - (len_total_beg - len_beg) / len_seg_beg : 0.0f;
         float t_end = len_seg_end > 0.0f ? 1.0f - (len_total_end - len_end) / len_seg_end : 0.0f;
         if (index_beg > 0) append(lerp(buff.vbuff[index_beg-1], buff.vbuff[index_beg], t_beg));
-        appendRange(buff, index_beg, index_end);
+        appendRange(buff, index_beg, index_end, t_beg > t_end);
         if (index_end > 0) append(lerp(buff.vbuff[index_end-1], buff.vbuff[index_end], t_end));
     }
 
