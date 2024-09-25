@@ -125,15 +125,8 @@ struct WgVertexBuffer {
 
     // append source vertex buffer in index range from start to end (end not included)
     void appendRange(const WgVertexBuffer& buff, size_t start_index, size_t end_index) {
-        if (start_index <= end_index)
-            for (size_t i = start_index; i < end_index; i++)
-                append(buff.vbuff[i]);
-        if (start_index > end_index) {
-            for (size_t i = start_index; i < buff.vcount; i++)
-                append(buff.vbuff[i]);
-            for (size_t i = 0; i < end_index; i++)
-                append(buff.vbuff[i]);
-        }
+        for (size_t i = start_index; i < end_index; i++)
+            append(buff.vbuff[i]);
     }
 
     // append circle (list of triangles)

@@ -365,6 +365,7 @@ void WgRenderDataShape::updateMeshes(WgContext &context, const RenderShape &rsha
     } else {
         float tbeg{}, tend{};
         if (!rshape.stroke->strokeTrim(tbeg, tend)) { tbeg = 0.0f; tend = 1.0f; }
+        bool loop = tbeg > tend;
         if (tbeg == tend) {
             pbuff.decodePath(rshape, false, [&](const WgVertexBuffer& path_buff) {
                 appendShape(context, path_buff);
@@ -372,7 +373,12 @@ void WgRenderDataShape::updateMeshes(WgContext &context, const RenderShape &rsha
         } else if (rshape.stroke->trim.simultaneous) {
             pbuff.decodePath(rshape, true, [&](const WgVertexBuffer& path_buff) {
                 appendShape(context, path_buff);
-                proceedStrokes(context, rshape.stroke, tbeg, tend, path_buff);
+                if (loop) {
+                    proceedStrokes(context, rshape.stroke, tbeg, 1.0f, path_buff);
+                    proceedStrokes(context, rshape.stroke, 0.0f, tend, path_buff);
+                } else {
+                    proceedStrokes(context, rshape.stroke, tbeg, tend, path_buff);
+                }
             });
         } else {
             float totalLen = 0.0f;
@@ -386,10 +392,22 @@ void WgRenderDataShape::updateMeshes(WgContext &context, const RenderShape &rsha
             // append strokes
             pbuff.decodePath(rshape, true, [&](const WgVertexBuffer& path_buff) {
                 float len_path = path_buff.total(); // current path length
-                float tbeg = ((len_acc <= len_beg) && (len_acc + len_path > len_beg)) ? (len_beg - len_acc) / len_path : 0.0f;
-                float tend = ((len_acc <= len_end) && (len_acc + len_path > len_end)) ? (len_end - len_acc) / len_path : 1.0f;
-                if ((len_acc + len_path >= len_beg) && (len_acc <= len_end))
-                    proceedStrokes(context, rshape.stroke, tbeg, tend, path_buff);
+                if (loop) {
+                    if (len_acc + len_path >= len_beg) {
+                        auto tbeg = len_acc <= len_beg ? (len_beg - len_acc) / len_path : 0.0f;
+                        proceedStrokes(context, rshape.stroke, tbeg, 1.0f, path_buff);
+                    }
+                    if (len_acc < len_end) {
+                        auto tend = len_acc + len_path >= len_end ? (len_end - len_acc) / len_path : 1.0f;
+                        proceedStrokes(context, rshape.stroke, 0.0f, tend, path_buff);
+                    }
+                } else {
+                    if (len_acc + len_path >= len_beg && len_acc <= len_end) {
+                        auto tbeg = len_acc <= len_beg ? (len_beg - len_acc) / len_path : 0.0f;
+                        auto tend = len_acc + len_path >= len_end ? (len_end - len_acc) / len_path : 1.0f;
+                        proceedStrokes(context, rshape.stroke, tbeg, tend, path_buff);
+                    }
+                }
                 len_acc += len_path;
             });
         }
