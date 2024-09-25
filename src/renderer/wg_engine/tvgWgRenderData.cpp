@@ -362,38 +362,37 @@ void WgRenderDataShape::updateMeshes(WgContext &context, const RenderShape &rsha
             appendShape(context, path_buff);
         });
     // append shape with strokes
-    } else if (rshape.stroke->trim.simultaneous) {
-        float tbeg{}, tend{};
-        if (!rshape.stroke->strokeTrim(tbeg, tend)) { tbeg = 0.0f; tend = 1.0f; }
-        if (tbeg == tend) return;
-        pbuff.decodePath(rshape, true, [&](const WgVertexBuffer& path_buff) {
-            appendShape(context, path_buff);
-            proceedStrokes(context, rshape.stroke, tbeg, tend, path_buff);
-        });
-    // append shape with strokes with simultaneous flag
     } else {
-        float totalLen = 0.0f;
-        // append shapes
-        pbuff.decodePath(rshape, true, [&](const WgVertexBuffer& path_buff) { 
-            appendShape(context, path_buff);
-            totalLen += path_buff.total();
-        });
-        // append strokes
         float tbeg{}, tend{};
         if (!rshape.stroke->strokeTrim(tbeg, tend)) { tbeg = 0.0f; tend = 1.0f; }
-        if (tbeg == tend) return;
-        float len_beg = totalLen * tbeg; // trim length begin
-        float len_end = totalLen * tend; // trim length end
-        float len_acc = 0.0; // accumulated length
-        // append strokes
-        pbuff.decodePath(rshape, true, [&](const WgVertexBuffer& path_buff) {
-            float len_path = path_buff.total(); // current path length
-            float tbeg = ((len_acc <= len_beg) && (len_acc + len_path > len_beg)) ? (len_beg - len_acc) / len_path : 0.0f;
-            float tend = ((len_acc <= len_end) && (len_acc + len_path > len_end)) ? (len_end - len_acc) / len_path : 1.0f;
-            if ((len_acc + len_path >= len_beg) && (len_acc <= len_end))
+        if (tbeg == tend) {
+            pbuff.decodePath(rshape, false, [&](const WgVertexBuffer& path_buff) {
+                appendShape(context, path_buff);
+            });
+        } else if (rshape.stroke->trim.simultaneous) {
+            pbuff.decodePath(rshape, true, [&](const WgVertexBuffer& path_buff) {
+                appendShape(context, path_buff);
                 proceedStrokes(context, rshape.stroke, tbeg, tend, path_buff);
-            len_acc += len_path;
-        });
+            });
+        } else {
+            float totalLen = 0.0f;
+            pbuff.decodePath(rshape, true, [&](const WgVertexBuffer& path_buff) {
+                appendShape(context, path_buff);
+                totalLen += path_buff.total();
+            });
+            float len_beg = totalLen * tbeg; // trim length begin
+            float len_end = totalLen * tend; // trim length end
+            float len_acc = 0.0; // accumulated length
+            // append strokes
+            pbuff.decodePath(rshape, true, [&](const WgVertexBuffer& path_buff) {
+                float len_path = path_buff.total(); // current path length
+                float tbeg = ((len_acc <= len_beg) && (len_acc + len_path > len_beg)) ? (len_beg - len_acc) / len_path : 0.0f;
+                float tend = ((len_acc <= len_end) && (len_acc + len_path > len_end)) ? (len_end - len_acc) / len_path : 1.0f;
+                if ((len_acc + len_path >= len_beg) && (len_acc <= len_end))
+                    proceedStrokes(context, rshape.stroke, tbeg, tend, path_buff);
+                len_acc += len_path;
+            });
+        }
     } 
     // update shapes bbox
     updateAABB(tr);
