@@ -119,6 +119,7 @@ struct WgVertexBuffer {
 
     // append point
     void append(const Point& p) {
+        if (vcount > 0 && vbuff[vcount - 1] == p) return;
         vbuff[vcount] = p;
         vcount++;
     }
