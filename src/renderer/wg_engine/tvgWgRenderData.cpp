@@ -409,15 +409,29 @@ void WgRenderDataShape::proceedStrokes(WgContext context, const RenderStroke* rs
     if ((tbeg != 0.0f) || (tend != 1.0f)) {
         if (tbeg == tend) return;
         WgVertexBuffer trimed_buff;
-        trimed_buff.trim(buff, tbeg, tend);
-        trimed_buff.updateDistances();
-        // trim ->dash -> stroke
-        if (rstroke->dashPattern) stroke_buff.appendStrokesDashed(trimed_buff, rstroke);
-        // trim -> stroke
-        else stroke_buff.appendStrokes(trimed_buff, rstroke);
-    } else
+        if (tbeg < tend) {
+            // trim beg -> end
+            trimed_buff.reset();
+            trimed_buff.trim(buff, tbeg, tend);
+            trimed_buff.updateDistances();
+            if (rstroke->dashPattern) stroke_buff.appendStrokesDashed(trimed_buff, rstroke);
+            else stroke_buff.appendStrokes(trimed_buff, rstroke);
+        } else {
+            // trim beg -> 1.0f
+            trimed_buff.reset();
+            trimed_buff.trim(buff, tbeg, 1.0f);
+            trimed_buff.updateDistances();
+            if (rstroke->dashPattern) stroke_buff.appendStrokesDashed(trimed_buff, rstroke);
+            else stroke_buff.appendStrokes(trimed_buff, rstroke);
+            // trim 0.0f -> end
+            trimed_buff.reset();
+            trimed_buff.trim(buff, 0.0f, tend);
+            trimed_buff.updateDistances();
+            if (rstroke->dashPattern) stroke_buff.appendStrokesDashed(trimed_buff, rstroke);
+            else stroke_buff.appendStrokes(trimed_buff, rstroke);
+        }
     // dash -> stroke
-    if (rstroke->dashPattern) {
+    }else if (rstroke->dashPattern) {
         stroke_buff.appendStrokesDashed(buff, rstroke);
     // stroke
     } else
