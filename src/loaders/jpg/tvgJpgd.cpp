@@ -36,6 +36,8 @@
 #include <stdio.h>
 #include <setjmp.h>
 #include <stdint.h>
+
+#include "tvgCommon.h"
 #include "tvgJpgd.h"
 
 #ifdef _MSC_VER
@@ -1738,7 +1740,8 @@ void jpeg_decoder::transform_mcu_expand(int mcu_row)
                 DCT_Upsample::R_S<8, 8>::calc(R, S, pSrc_ptr);
                 break;
             default:
-                JPGD_ASSERT(false);
+                TVGERR("JPG", "invalid transform_mcu_expand");
+                return;
         }
         DCT_Upsample::Matrix44 a(P + Q); P -= Q;
         DCT_Upsample::Matrix44& b = P;
