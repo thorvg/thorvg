@@ -239,6 +239,43 @@ TEST_CASE("Animation Lottie10", "[tvgAnimation]")
     REQUIRE(Initializer::term(CanvasEngine::Sw) == Result::Success);
 }
 
+TEST_CASE("Animation Lottie11", "[tvgAnimation]")
+{
+    REQUIRE(Initializer::init(tvg::CanvasEngine::Sw, 0) == Result::Success);
+
+    auto animation = Animation::gen();
+    REQUIRE(animation);
+
+    auto picture = animation->picture();
+
+    ifstream file(TEST_DIR"/test11.json");
+    REQUIRE(file.is_open());
+    file.seekg(0, std::ios::end);
+    auto size = file.tellg();
+    file.seekg(0, std::ios::beg);
+    auto data = (char*)malloc(size);
+    file.seekg(0, ios::beg);
+    file.read(data, size);
+    file.close();
+    REQUIRE(picture->load(data, size, "json", true) == Result::Success);
+
+    REQUIRE(Initializer::term(tvg::CanvasEngine::Sw) == Result::Success);
+}
+
+TEST_CASE("Animation Lottie12", "[tvgAnimation]")
+{
+    REQUIRE(Initializer::init(tvg::CanvasEngine::Sw, 0) == Result::Success);
+
+    auto animation = Animation::gen();
+    REQUIRE(animation);
+
+    auto picture = animation->picture();
+
+    REQUIRE(picture->load(TEST_DIR"/test12.json") == Result::Success);
+
+    REQUIRE(Initializer::term(tvg::CanvasEngine::Sw) == Result::Success);
+}
+
 TEST_CASE("Animation Segment", "[tvgAnimation]")
 {
     REQUIRE(Initializer::init(tvg::CanvasEngine::Sw, 0) == Result::Success);
