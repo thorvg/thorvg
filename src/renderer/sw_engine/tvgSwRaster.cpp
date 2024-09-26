@@ -1507,7 +1507,8 @@ static bool _rasterTranslucentGradientRle(SwSurface* surface, const SwRle* rle, 
     } else if (surface->channelSize == sizeof(uint8_t)) {
         for (uint32_t i = 0; i < rle->size; ++i, ++span) {
             auto dst = &surface->buf8[span->y * surface->stride + span->x];
-            fillMethod()(fill, dst, span->y, span->x, span->len, _opMaskAdd, 255);
+            if (span->coverage == 255) fillMethod()(fill, dst, span->y, span->x, span->len, _opMaskNone, 255);
+            else fillMethod()(fill, dst, span->y, span->x, span->len, _opMaskAdd, span->coverage);
         }
     }
     return true;
