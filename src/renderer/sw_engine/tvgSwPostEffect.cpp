@@ -74,6 +74,7 @@ static void _gaussianBlur(uint8_t* src, uint8_t* dst, int32_t stride, int32_t w,
 
     auto iarr = 1.0f / (dimension + dimension + 1);
 
+    #pragma omp parallel for
     for (int x = 0; x < h; x++) {
         auto p = x * stride;
         auto i = p * 4;                 //current index
