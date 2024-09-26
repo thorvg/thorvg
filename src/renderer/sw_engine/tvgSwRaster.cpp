@@ -1352,13 +1352,23 @@ static bool _rasterBlendingGradientRect(SwSurface* surface, const SwBBox& region
 template<typename fillMethod>
 static bool _rasterTranslucentGradientRect(SwSurface* surface, const SwBBox& region, const SwFill* fill)
 {
-    auto buffer = surface->buf32 + (region.min.y * surface->stride) + region.min.x;
     auto h = static_cast<uint32_t>(region.max.y - region.min.y);
     auto w = static_cast<uint32_t>(region.max.x - region.min.x);
 
-    for (uint32_t y = 0; y < h; ++y) {
-        fillMethod()(fill, buffer, region.min.y + y, region.min.x, w, opBlendPreNormal, 255);
-        buffer += surface->stride;
+    //32 bits
+    if (surface->channelSize == sizeof(uint32_t)) {
+        auto buffer = surface->buf32 + (region.min.y * surface->stride) + region.min.x;
+        for (uint32_t y = 0; y < h; ++y) {
+            fillMethod()(fill, buffer, region.min.y + y, region.min.x, w, opBlendPreNormal, 255);
+            buffer += surface->stride;
+        }
+    //8 bits
+    } else if (surface->channelSize == sizeof(uint8_t)) {
+        auto buffer = surface->buf8 + (region.min.y * surface->stride) + region.min.x;
+        for (uint32_t y = 0; y < h; ++y) {
+            fillMethod()(fill, buffer, region.min.y + y, region.min.x, w, _opMaskAdd, 255);
+            buffer += surface->stride;
+        }
     }
     return true;
 }
@@ -1367,12 +1377,23 @@ static bool _rasterTranslucentGradientRect(SwSurface* surface, const SwBBox& reg
 template<typename fillMethod>
 static bool _rasterSolidGradientRect(SwSurface* surface, const SwBBox& region, const SwFill* fill)
 {
-    auto buffer = surface->buf32 + (region.min.y * surface->stride) + region.min.x;
     auto w = static_cast<uint32_t>(region.max.x - region.min.x);
     auto h = static_cast<uint32_t>(region.max.y - region.min.y);
 
-    for (uint32_t y = 0; y < h; ++y) {
-        fillMethod()(fill, buffer + y * surface->stride, region.min.y + y, region.min.x, w, opBlendSrcOver, 255);
+    //32 bits
+    if (surface->channelSize == sizeof(uint32_t)) {
+        auto buffer = surface->buf32 + (region.min.y * surface->stride) + region.min.x;
+        for (uint32_t y = 0; y < h; ++y) {
+            fillMethod()(fill, buffer, region.min.y + y, region.min.x, w, opBlendSrcOver, 255);
+            buffer += surface->stride;
+        }
+    //8 bits
+    } else if (surface->channelSize == sizeof(uint8_t)) {
+        auto buffer = surface->buf8 + (region.min.y * surface->stride) + region.min.x;
+        for (uint32_t y = 0; y < h; ++y) {
+            fillMethod()(fill, buffer, region.min.y + y, region.min.x, w, _opMaskNone, 255);
+            buffer += surface->stride;
+        }
     }
     return true;
 }
