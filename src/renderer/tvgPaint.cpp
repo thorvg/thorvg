@@ -278,7 +278,7 @@ RenderData Paint::Impl::update(RenderMethod* renderer, const Matrix& pm, Array<R
     if (this->clipper) {
         P(this->clipper)->ctxFlag &= ~ContextFlag::FastTrack;   //reset
         viewport = renderer->viewport();
-        if ((compFastTrack = _compFastTrack(renderer, this->clipper, pm, viewport)) == Result::Success) {
+        if (!P(this->clipper)->clipper && (compFastTrack = _compFastTrack(renderer, this->clipper, pm, viewport)) == Result::Success) {
             P(this->clipper)->ctxFlag |= ContextFlag::FastTrack;
         }
         if (compFastTrack == Result::InsufficientCondition) {
