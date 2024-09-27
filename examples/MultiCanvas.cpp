@@ -22,6 +22,10 @@
 
 #include "Example.h"
 
+#ifdef THORVG_GL_RASTER_SUPPORT
+    #include <SDL2/SDL_opengl.h>
+#endif
+
 #define WIDTH 1024
 #define HEIGHT 1024
 #define NUM_PER_LINE 4
@@ -88,6 +92,10 @@ void mainloop()
 }
 
 
+/************************************************************************/
+/* SW Engine Specific Setup                                             */
+/************************************************************************/
+
 void runSw()
 {
     auto window = SDL_CreateWindow("ThorVG Example (Software)", SDL_WINDOWPOS_UNDEFINED, SDL_WINDOWPOS_UNDEFINED, WIDTH, HEIGHT, SDL_WINDOW_HIDDEN);
@@ -111,24 +119,115 @@ void runSw()
 }
 
 
+/************************************************************************/
+/* GL Engine Specific Setup                                             */
+/************************************************************************/
+
+#ifdef THORVG_GL_RASTER_SUPPORT
+
+typedef void (*PFNGLTEXIMAGE2DPROC)(GLenum target, GLint level, GLenum internalformat, GLsizei width, GLsizei height, GLint border, GLenum format, GLenum type, const GLvoid* pixels);
+typedef void (*PFNGLTEXPARAMETERIPROC)(GLenum target, GLenum pname, GLint param);
+
+PFNGLBINDTEXTUREEXTPROC fglBindTexture = nullptr;
+PFNGLDELETETEXTURESEXTPROC fglDeleteTextures = nullptr;
+PFNGLGENTEXTURESEXTPROC fglGenTextures = nullptr;
+PFNGLTEXIMAGE2DPROC fglTexImage2D = nullptr;
+PFNGLTEXPARAMETERIPROC fglTexParameteri = nullptr;
+PFNGLGENFRAMEBUFFERSPROC fglGenFramebuffers = nullptr;
+PFNGLBINDFRAMEBUFFERPROC fglBindFramebuffer = nullptr;
+PFNGLDELETEFRAMEBUFFERSPROC fglDeleteFramebuffers = nullptr;
+PFNGLFRAMEBUFFERTEXTURE2DPROC fglFramebufferTexture2D = nullptr;
+PFNGLBLITFRAMEBUFFERPROC fglBlitFramebuffer = nullptr;
+
+/* A helper class to manage OpenGL FrameBuffer creation and deletion
+   Also provides a simple way to flush the framebuffer to the screen at given position */
+struct GLFrameBuffer
+{
+    GLuint fbo;
+    GLuint texture;
+
+    ~GLFrameBuffer()
+    {
+        if (fbo) fglDeleteFramebuffers(1, &fbo);
+        if (texture) fglDeleteTextures(1, &texture);
+    }
+
+    GLFrameBuffer(uint32_t width, uint32_t height)
+    {
+        fglGenFramebuffers(1, &fbo);
+        fglBindFramebuffer(GL_FRAMEBUFFER, fbo);
+        fglGenTextures(1, &texture);
+        fglBindTexture(GL_TEXTURE_2D, texture);
+        fglTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA8, width, height, 0, GL_BGRA, GL_UNSIGNED_BYTE, nullptr);
+        fglTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
+        fglTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+        fglFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, GL_TEXTURE_2D, texture, 0);
+        fglBindFramebuffer(GL_FRAMEBUFFER, 0);
+        fglBindTexture(GL_TEXTURE_2D, 0);
+    }
+
+    void blitToScreen(uint32_t posX, uint32_t posY, uint32_t width, uint32_t height)
+    {
+        /* As this is a simple example, we will just blit the framebuffer to the screen
+           For a real application, you should use a shader to sample the texture and draw to the screen */
+        fglBindFramebuffer(GL_READ_FRAMEBUFFER, fbo);
+        fglBindFramebuffer(GL_DRAW_FRAMEBUFFER, 0);
+        fglBlitFramebuffer(0, 0, width, height, posX, posY, posX +width, posY + height, GL_COLOR_BUFFER_BIT, GL_NEAREST);
+    }
+};
+#endif
+
 void runGl()
 {
-#if 1
-    cout << "Not Support OpenGL" << endl;
-#else //TODO with FBO Target?
+#ifdef THORVG_GL_RASTER_SUPPORT
+
+#ifdef THORVG_GL_TARGET_GLES
+        SDL_GL_SetAttribute(SDL_GL_CONTEXT_PROFILE_MASK, SDL_GL_CONTEXT_PROFILE_ES);
+        SDL_GL_SetAttribute(SDL_GL_CONTEXT_MAJOR_VERSION, 3);
+        SDL_GL_SetAttribute(SDL_GL_CONTEXT_MINOR_VERSION, 0);
+#else
+        SDL_GL_SetAttribute(SDL_GL_CONTEXT_PROFILE_MASK, SDL_GL_CONTEXT_PROFILE_CORE);
+        SDL_GL_SetAttribute(SDL_GL_CONTEXT_MAJOR_VERSION, 3);
+        SDL_GL_SetAttribute(SDL_GL_CONTEXT_MINOR_VERSION, 3);
+#endif
+
     auto window = SDL_CreateWindow("ThorVG Example (OpenGL)", SDL_WINDOWPOS_UNDEFINED, SDL_WINDOWPOS_UNDEFINED, WIDTH, HEIGHT, SDL_WINDOW_OPENGL | SDL_WINDOW_HIDDEN);
     auto context = SDL_GL_CreateContext(window);
 
+    fglBindTexture = (PFNGLBINDTEXTUREEXTPROC)SDL_GL_GetProcAddress("glBindTexture");
+    fglDeleteTextures = (PFNGLDELETETEXTURESEXTPROC)SDL_GL_GetProcAddress("glDeleteTextures");
+    fglGenTextures = (PFNGLGENTEXTURESEXTPROC)SDL_GL_GetProcAddress("glGenTextures");
+    fglTexImage2D = (PFNGLTEXIMAGE2DPROC)SDL_GL_GetProcAddress("glTexImage2D");
+    fglTexParameteri = (PFNGLTEXPARAMETERIPROC)SDL_GL_GetProcAddress("glTexParameteri");
+    fglBindFramebuffer = (PFNGLBINDFRAMEBUFFERPROC)SDL_GL_GetProcAddress("glBindFramebuffer");
+    fglGenFramebuffers = (PFNGLGENFRAMEBUFFERSPROC)SDL_GL_GetProcAddress("glGenFramebuffers");
+    fglDeleteFramebuffers = (PFNGLDELETEFRAMEBUFFERSPROC)SDL_GL_GetProcAddress("glDeleteFramebuffers");
+    fglFramebufferTexture2D = (PFNGLFRAMEBUFFERTEXTURE2DPROC)SDL_GL_GetProcAddress("glFramebufferTexture2D");
+    fglBlitFramebuffer = (PFNGLBLITFRAMEBUFFERPROC)SDL_GL_GetProcAddress("glBlitFramebuffer");
+
+    // Create the framebuffer which the GlCanvas can render to
+    // Since the example is just a simple demo, and only run the rendering function once
+    // we can just create one framebuffer
+    GLFrameBuffer glFbo{SIZE, SIZE};
+    
     for (int counter = 0; counter < NUM_PER_LINE * NUM_PER_LINE; ++counter) {
         auto canvas = tvg::GlCanvas::gen();
 
-        //Set the canvas target and draw on it.
-        tvgexam::verify(canvas->target(0, WIDTH, HEIGHT));
+        // Pass the framebuffer id to the GlCanvas
+        tvgexam::verify(canvas->target(glFbo.fbo, SIZE, SIZE));
 
         content(canvas.get());
         if (tvgexam::verify(canvas->draw())) {
             tvgexam::verify(canvas->sync());
         }
+
+        // After the GlCanvas::sync() function, the content is rendered to the framebuffer
+        // The texture is now ready to be blit to the screen
+        auto y = (counter / NUM_PER_LINE) * SIZE;
+        auto x = (counter % NUM_PER_LINE) * SIZE;
+        glFbo.blitToScreen(x, y, SIZE, SIZE);
+
+        // After the framebuffer is blit to the screen, the framebuffer and texture can be reused in the next iteration
     }
 
     SDL_ShowWindow(window);
@@ -138,9 +237,15 @@ void runGl()
 
     SDL_GL_DeleteContext(context);
     SDL_DestroyWindow(window);
+#else
+    cout << "Not Support OpenGL" << endl;
 #endif
 }
 
+
+/************************************************************************/
+/* WG Engine Specific Setup                                             */
+/************************************************************************/
 
 void runWg()
 {
