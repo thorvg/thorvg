@@ -529,6 +529,10 @@ ThorVG stands as a purely open-source initiatives. We are grateful to the indivi
 * [Individuals](https://github.com/thorvg/thorvg/blob/main/AUTHORS)
 * [LottieFiles](https://lottiefiles.com/) by Design Barn Inc.
 * Samsung Electronics Co., Ltd
+ 
+We are also seeking your support to ensure the continued development of the ThorVG project. Your generous donations will help cover operational costs and contribute to the growth of this open-source project. Even a small contribution can make a big difference in securing the future of ThorVG!
+
+* [Open Collective](https://opencollective.com/thorvg)
 
 [Back to contents](#contents)
 <br />
