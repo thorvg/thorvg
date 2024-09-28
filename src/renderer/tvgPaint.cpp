@@ -278,6 +278,8 @@ RenderData Paint::Impl::update(RenderMethod* renderer, const Matrix& pm, Array<R
     if (this->clipper) {
         P(this->clipper)->ctxFlag &= ~ContextFlag::FastTrack;   //reset
         viewport = renderer->viewport();
+        /* TODO: Intersect the clipper's clipper, if both are FastTrack.
+           Update the subsequent clipper first and check its ctxFlag. */
         if (!P(this->clipper)->clipper && (compFastTrack = _compFastTrack(renderer, this->clipper, pm, viewport)) == Result::Success) {
             P(this->clipper)->ctxFlag |= ContextFlag::FastTrack;
         }
