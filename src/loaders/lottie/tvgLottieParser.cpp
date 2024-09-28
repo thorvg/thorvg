@@ -735,7 +735,7 @@ void LottieParser::parseGradient(LottieGradient* gradient, const char* key)
     {
         enterObject();
         while (auto key = nextObjectKey()) {
-            if (KEY_AS("p")) gradient->colorStops.count = getInt();
+            if (KEY_AS("p")) gradient->colorStops.countOrg = getInt();
             else if (KEY_AS("k")) parseProperty<LottieProperty::Type::ColorStop>(gradient->colorStops, gradient);
             else skip(key);
         }

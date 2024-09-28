@@ -502,6 +502,7 @@ struct LottieColorStop : LottieProperty
     Array<LottieScalarFrame<ColorStop>>* frames = nullptr;
     ColorStop value;
     uint16_t count = 0;     //colorstop count
+    uint16_t countOrg = 0;  //originaly declared number of colors in a frame
     bool populated = false;
 
     ~LottieColorStop()
@@ -620,6 +621,7 @@ struct LottieColorStop : LottieProperty
         }
         populated = other.populated;
         count = other.count;
+        countOrg = other.countOrg;
 
         return *this;
     }

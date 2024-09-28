@@ -188,10 +188,10 @@ uint32_t LottieGradient::populate(ColorStop& color)
     colorStops.populated = true;
     if (!color.input) return 0;
 
-    uint32_t alphaCnt = (color.input->count - (colorStops.count * 4)) / 2;
-    Array<Fill::ColorStop> output(colorStops.count + alphaCnt);
+    uint32_t alphaCnt = (color.input->count - (colorStops.countOrg * 4)) / 2;
+    Array<Fill::ColorStop> output(colorStops.countOrg + alphaCnt);
     uint32_t cidx = 0;               //color count
-    uint32_t clast = colorStops.count * 4;
+    uint32_t clast = colorStops.countOrg * 4;
     if (clast > color.input->count) clast = color.input->count;
     uint32_t aidx = clast;           //alpha count
     Fill::ColorStop cs;
