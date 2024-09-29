@@ -161,11 +161,11 @@ void WgCompositor::renderShape(WgContext& context, WgRenderDataShape* renderData
     if (renderData->clips.count != 0) {
         renderClipPath(context, renderData, &storageClipPath);
         if (renderData->strokeFirst) {
-            composeStrokes(context, renderData, &storageClipPath, CompositeMethod::ClipPath);
-            composeShape(context, renderData, &storageClipPath, CompositeMethod::ClipPath);
+            drawStrokesClipped(context, renderData, &storageClipPath);
+            drawShapeClipped(context, renderData, &storageClipPath);
         } else {
-            composeShape(context, renderData, &storageClipPath, CompositeMethod::ClipPath);
-            composeStrokes(context, renderData, &storageClipPath, CompositeMethod::ClipPath);
+            drawShapeClipped(context, renderData, &storageClipPath);
+            drawStrokesClipped(context, renderData, &storageClipPath);
         }
     // use custom blending
     } else if (blentType == WgPipelineBlendType::Custom) {
@@ -197,7 +197,7 @@ void WgCompositor::renderImage(WgContext& context, WgRenderDataPicture* renderDa
     // apply clip path if neccessary
     if (renderData->clips.count != 0) {
         renderClipPath(context, renderData, &storageClipPath);
-        composeImage(context, renderData, &storageClipPath, CompositeMethod::ClipPath);
+        drawImageClipped(context, renderData, &storageClipPath);
     // use custom blending
     } else if (blentType == WgPipelineBlendType::Custom)
         blendImage(context, renderData, blendMethod);
@@ -281,7 +281,7 @@ void WgCompositor::blendScene(WgContext& context, WgRenderStorage* src, WgCompos
 }
 
 
-void WgCompositor::composeShape(WgContext& context, WgRenderDataShape* renderData, WgRenderStorage* mask, CompositeMethod composeMethod)
+void WgCompositor::drawShapeClipped(WgContext& context, WgRenderDataShape* renderData, WgRenderStorage* mask)
 {
     assert(mask);
     assert(renderData);
@@ -299,12 +299,12 @@ void WgCompositor::composeShape(WgContext& context, WgRenderDataShape* renderDat
     endRenderPass();
     // restore current render pass
     beginRenderPass(commandEncoder, target, false);
-    RenderRegion rect { 0, 0,(int32_t)width, (int32_t)height };
-    composeRegion(context, &storageInterm, mask, composeMethod, rect);
+    RenderRegion rect = shrinkRenderRegion(renderData->aabb);
+    clipRegion(context, &storageInterm, mask, rect);
 }
 
 
-void WgCompositor::composeStrokes(WgContext& context, WgRenderDataShape* renderData, WgRenderStorage* mask, CompositeMethod composeMethod)
+void WgCompositor::drawStrokesClipped(WgContext& context, WgRenderDataShape* renderData, WgRenderStorage* mask)
 {
     assert(mask);
     assert(renderData);
@@ -322,12 +322,12 @@ void WgCompositor::composeStrokes(WgContext& context, WgRenderDataShape* renderD
     endRenderPass();
     // restore current render pass
     beginRenderPass(commandEncoder, target, false);
-    RenderRegion rect { 0, 0, (int32_t)width, (int32_t)height };
-    composeRegion(context, &storageInterm, mask, composeMethod, rect);
+    RenderRegion rect = shrinkRenderRegion(renderData->aabb);
+    clipRegion(context, &storageInterm, mask, rect);
 }
 
 
-void WgCompositor::composeImage(WgContext& context, WgRenderDataPicture* renderData, WgRenderStorage* mask, CompositeMethod composeMethod)
+void WgCompositor::drawImageClipped(WgContext& context, WgRenderDataPicture* renderData, WgRenderStorage* mask)
 {
     assert(mask);
     assert(renderData);
@@ -343,7 +343,18 @@ void WgCompositor::composeImage(WgContext& context, WgRenderDataPicture* renderD
     // restore current render pass
     beginRenderPass(commandEncoder, target, false);
     RenderRegion rect { 0, 0, (int32_t)width, (int32_t)height };
-    composeRegion(context, &storageInterm, mask, composeMethod, rect);
+    clipRegion(context, &storageInterm, mask, rect);
+}
+
+
+void WgCompositor::clipRegion(WgContext& context, WgRenderStorage* src, WgRenderStorage* mask, RenderRegion& rect)
+{
+    wgpuRenderPassEncoderSetScissorRect(renderPassEncoder, rect.x, rect.y, rect.w, rect.h);
+    wgpuRenderPassEncoderSetStencilReference(renderPassEncoder, 0);
+    wgpuRenderPassEncoderSetBindGroup(renderPassEncoder, 0, storageInterm.bindGroupTexure, 0, nullptr);
+    wgpuRenderPassEncoderSetBindGroup(renderPassEncoder, 1, mask->bindGroupTexure, 0, nullptr);
+    wgpuRenderPassEncoderSetPipeline(renderPassEncoder, pipelines->sceneClip);
+    meshData.drawImage(context, renderPassEncoder);
 }
 
 
@@ -354,20 +365,13 @@ void WgCompositor::composeScene(WgContext& context, WgRenderStorage* src, WgRend
     assert(mask);
     assert(renderPassEncoder);
     RenderRegion rect = shrinkRenderRegion(cmp->aabb);
-    composeRegion(context, src, mask, cmp->method, rect);
-}
-
-
-void WgCompositor::composeRegion(WgContext& context, WgRenderStorage* src, WgRenderStorage* mask, CompositeMethod composeMethod, RenderRegion& rect)
-{
     wgpuRenderPassEncoderSetScissorRect(renderPassEncoder, rect.x, rect.y, rect.w, rect.h);
     wgpuRenderPassEncoderSetStencilReference(renderPassEncoder, 0);
     wgpuRenderPassEncoderSetBindGroup(renderPassEncoder, 0, src->bindGroupTexure, 0, nullptr);
     wgpuRenderPassEncoderSetBindGroup(renderPassEncoder, 1, mask->bindGroupTexure, 0, nullptr);
-    wgpuRenderPassEncoderSetPipeline(renderPassEncoder, pipelines->sceneComp[(uint32_t)composeMethod]);
+    wgpuRenderPassEncoderSetPipeline(renderPassEncoder, pipelines->sceneComp[(uint32_t)cmp->method]);
     meshData.drawImage(context, renderPassEncoder);
 }
-
 
 void WgCompositor::drawClipPath(WgContext& context, WgRenderDataShape* renderData)
 {
