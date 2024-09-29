@@ -773,7 +773,6 @@ void GlRenderer::endRenderPass(RenderCompositor* cmp)
 
         GlProgram* program = nullptr;
         switch(cmp->method) {
-            case CompositeMethod::ClipPath:
             case CompositeMethod::AlphaMask:
                 program = mPrograms[RT_MaskAlpha].get();
                 break;
