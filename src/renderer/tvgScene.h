@@ -60,6 +60,7 @@ struct Scene::Impl
     list<Paint*> paints;
     RenderData rd = nullptr;
     Scene* scene = nullptr;
+    RenderRegion vport = {0, 0, INT32_MAX, INT32_MAX};
     Array<RenderEffect*>* effects = nullptr;
     uint8_t opacity;         //for composition
     bool needComp = false;   //composite or not
@@ -108,6 +109,8 @@ struct Scene::Impl
 
     RenderData update(RenderMethod* renderer, const Matrix& transform, Array<RenderData>& clips, uint8_t opacity, RenderUpdateFlag flag, TVG_UNUSED bool clipper)
     {
+        this->vport = renderer->viewport();
+
         if ((needComp = needComposition(opacity))) {
             /* Overriding opacity value. If this scene is half-translucent,
                It must do intermediate composition with that opacity value. */
@@ -182,7 +185,10 @@ struct Scene::Impl
                 }
             }
         }
-        return {x1 + ex, y1 + ey, (x2 - x1) + ew, (y2 - y1) + eh};
+
+        auto ret = RenderRegion{x1 + ex, y1 + ey, (x2 - x1) + ew, (y2 - y1) + eh};
+        ret.intersect(this->vport);
+        return ret;
     }
 
     bool bounds(float* px, float* py, float* pw, float* ph, bool stroking)
