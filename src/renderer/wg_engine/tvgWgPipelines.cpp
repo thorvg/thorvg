@@ -324,7 +324,7 @@ void WgPipelines::initialize(WgContext& context)
             WGPUCompareFunction_Always, WGPUStencilOperation_Zero,
             primitiveState, multisampleState, blendStateSrc);
 
-    // render pipeline blit
+    // render pipeline blend
     sceneBlend = createRenderPipeline(context.device, "The render pipeline scene blend",
             shaderSceneBlend, "vs_main", "fs_main", layoutSceneBlend,
             vertexBufferLayoutsImage, 2,
@@ -333,10 +333,21 @@ void WgPipelines::initialize(WgContext& context)
             WGPUCompareFunction_Always, WGPUStencilOperation_Zero,
             primitiveState, multisampleState, blendStateNrm);
 
+    // render pipeline scene clip path
+    sceneClip = createRenderPipeline(
+        context.device, "The render pipeline scene clip path",
+        shaderSceneComp, "vs_main", "fs_main_ClipPath", layoutSceneComp,
+        vertexBufferLayoutsImage, 2,
+        WGPUColorWriteMask_All, offscreenTargetFormat,
+        WGPUCompareFunction_Always, WGPUStencilOperation_Zero,
+        WGPUCompareFunction_Always, WGPUStencilOperation_Zero,
+        primitiveState, multisampleState, blendStateNrm);
+
+    // TODO: remove fs_main_ClipPath shader from list after removing CompositeMethod::ClipPath value
     // compose shader names
     const char* shaderComposeNames[] {
         "fs_main_None",
-        "fs_main_ClipPath",
+        "fs_main_ClipPath", // TODO: remove after CompositeMethod updated
         "fs_main_AlphaMask",
         "fs_main_InvAlphaMask",
         "fs_main_LumaMask",
@@ -349,10 +360,11 @@ void WgPipelines::initialize(WgContext& context)
         "fs_main_DarkenMask"
     };
 
+    // TODO: remove fs_main_ClipPath shader from list after removing CompositeMethod::ClipPath value
     // compose shader blend states
     const WGPUBlendState composeBlends[] {
         blendStateNrm, // None
-        blendStateNrm, // ClipPath
+        blendStateNrm, // ClipPath // TODO: remove after CompositeMethod updated
         blendStateNrm, // AlphaMask
         blendStateNrm, // InvAlphaMask
         blendStateNrm, // LumaMask
@@ -429,6 +441,7 @@ void WgPipelines::releaseGraphicHandles(WgContext& context)
     releaseRenderPipeline(blit);
     releaseRenderPipeline(clipPath);
     releaseRenderPipeline(sceneBlend);
+    releaseRenderPipeline(sceneClip);
     size_t pipesSceneCompCnt = sizeof(sceneComp) / sizeof(sceneComp[0]);
     for (uint32_t i = 0; i < pipesSceneCompCnt; i++)
         releaseRenderPipeline(sceneComp[i]);

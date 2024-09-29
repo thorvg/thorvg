@@ -59,7 +59,7 @@ private:
 
     static WgPipelineBlendType blendMethodToBlendType(BlendMethod blendMethod);
 
-    void composeRegion(WgContext& context, WgRenderStorage* src, WgRenderStorage* mask, CompositeMethod composeMethod, RenderRegion& rect);
+    void clipRegion(WgContext& context, WgRenderStorage* src, WgRenderStorage* mask, RenderRegion& rect);
     RenderRegion shrinkRenderRegion(RenderRegion& rect);
 public:
     // render target dimensions
@@ -82,9 +82,10 @@ public:
     void blendImage(WgContext& context, WgRenderDataPicture* renderData, BlendMethod blendMethod);
     void blendScene(WgContext& context, WgRenderStorage* src, WgCompose* cmp);
 
-    void composeShape(WgContext& context, WgRenderDataShape* renderData, WgRenderStorage* mask, CompositeMethod composeMethod);
-    void composeStrokes(WgContext& context, WgRenderDataShape* renderData, WgRenderStorage* mask, CompositeMethod composeMethod);
-    void composeImage(WgContext& context, WgRenderDataPicture* renderData, WgRenderStorage* mask, CompositeMethod composeMethod);
+    void drawShapeClipped(WgContext& context, WgRenderDataShape* renderData, WgRenderStorage* mask);
+    void drawStrokesClipped(WgContext& context, WgRenderDataShape* renderData, WgRenderStorage* mask);
+    void drawImageClipped(WgContext& context, WgRenderDataPicture* renderData, WgRenderStorage* mask);
+    
     void composeScene(WgContext& context, WgRenderStorage* src, WgRenderStorage* mask, WgCompose* cmp);
 
     void drawClipPath(WgContext& context, WgRenderDataShape* renderData);
