@@ -1125,6 +1125,25 @@ void LottieBuilder::updateMaskings(LottieLayer* layer, float frameNo)
 {
     if (layer->masks.count == 0) return;
 
+    //Apply the base mask
+    auto pMask = static_cast<LottieMask*>(layer->masks[0]);
+    auto pMethod = pMask->method;
+    auto opacity = pMask->opacity(frameNo);
+
+    auto pShape = layer->pooling();
+    pShape->reset();
+    pShape->fill(255, 255, 255, opacity);
+    pShape->transform(layer->cache.matrix);
+    pMask->pathset(frameNo, P(pShape)->rs.path.cmds, P(pShape)->rs.path.pts, nullptr, nullptr, nullptr, exps);
+
+    auto compMethod = (pMethod == CompositeMethod::SubtractMask || pMethod == CompositeMethod::InvAlphaMask) ? CompositeMethod::InvAlphaMask : CompositeMethod::AlphaMask;
+
+    //Cheaper. Replace the masking with a clipper
+    if (layer->masks.count == 1 && compMethod == CompositeMethod::AlphaMask && opacity == 255) {
+        layer->scene->clip(tvg::cast(pShape));
+        return;
+    }
+
     //Introduce an intermediate scene for embracing the matte + masking
     if (layer->matteTarget) {
         auto scene = Scene::gen().release();
@@ -1132,21 +1151,7 @@ void LottieBuilder::updateMaskings(LottieLayer* layer, float frameNo)
         layer->scene = scene;
     }
 
-    //Apply the base mask
-    auto pMask = static_cast<LottieMask*>(layer->masks[0]);
-    auto pMethod = pMask->method;
-
-    auto pShape = layer->pooling();
-    pShape->reset();
-    pShape->fill(255, 255, 255, pMask->opacity(frameNo));
-    pShape->transform(layer->cache.matrix);
-    pMask->pathset(frameNo, P(pShape)->rs.path.cmds, P(pShape)->rs.path.pts, nullptr, nullptr, nullptr, exps);
-
-    if (pMethod == CompositeMethod::SubtractMask || pMethod == CompositeMethod::InvAlphaMask) {
-        layer->scene->composite(tvg::cast(pShape), CompositeMethod::InvAlphaMask);
-    } else {
-        layer->scene->composite(tvg::cast(pShape), CompositeMethod::AlphaMask);
-    }
+    layer->scene->composite(tvg::cast(pShape), compMethod);
 
     //Apply the subsquent masks
     for (auto m = layer->masks.begin() + 1; m < layer->masks.end(); ++m) {
