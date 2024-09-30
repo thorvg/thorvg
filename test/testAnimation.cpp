@@ -259,6 +259,8 @@ TEST_CASE("Animation Lottie11", "[tvgAnimation]")
     file.close();
     REQUIRE(picture->load(data, size, "json", "", true) == Result::Success);
 
+    free(data);
+
     REQUIRE(Initializer::term() == Result::Success);
 }
 
