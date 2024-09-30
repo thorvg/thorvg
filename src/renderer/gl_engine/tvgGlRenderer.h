@@ -47,6 +47,8 @@ public:
         RT_MaskSub,
         RT_MaskIntersect,
         RT_MaskDifference,
+        RT_MaskLighten,
+        RT_MaskDarken,
         RT_Stencil,
         RT_Blit,
         RT_MultiplyBlend,

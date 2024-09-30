@@ -99,6 +99,8 @@ void GlRenderer::initShaders()
     mPrograms.push_back(make_unique<GlProgram>(GlShader::gen(MASK_VERT_SHADER, MASK_SUB_FRAG_SHADER)));
     mPrograms.push_back(make_unique<GlProgram>(GlShader::gen(MASK_VERT_SHADER, MASK_INTERSECT_FRAG_SHADER)));
     mPrograms.push_back(make_unique<GlProgram>(GlShader::gen(MASK_VERT_SHADER, MASK_DIFF_FRAG_SHADER)));
+    mPrograms.push_back(make_unique<GlProgram>(GlShader::gen(MASK_VERT_SHADER, MASK_LIGHTEN_FRAG_SHADER)));
+    mPrograms.push_back(make_unique<GlProgram>(GlShader::gen(MASK_VERT_SHADER, MASK_DARKEN_FRAG_SHADER)));
     // stencil Renderer
     mPrograms.push_back(make_unique<GlProgram>(GlShader::gen(STENCIL_VERT_SHADER, STENCIL_FRAG_SHADER)));
     // blit Renderer
@@ -796,6 +798,12 @@ void GlRenderer::endRenderPass(RenderCompositor* cmp)
                 break;
             case CompositeMethod::DifferenceMask:
                 program = mPrograms[RT_MaskDifference].get();
+                break;
+            case CompositeMethod::LightenMask:
+                program = mPrograms[RT_MaskLighten].get();
+                break;
+            case CompositeMethod::DarkenMask:
+                program = mPrograms[RT_MaskDarken].get();
                 break;
             default:
                 break;

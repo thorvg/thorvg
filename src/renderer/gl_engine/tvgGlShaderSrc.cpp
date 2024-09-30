@@ -473,6 +473,42 @@ void main() {                                                           \n
 }                                                                       \n
 );
 
+const char* MASK_DARKEN_FRAG_SHADER = TVG_COMPOSE_SHADER(
+uniform sampler2D uSrcTexture;                                          \n
+uniform sampler2D uMaskTexture;                                         \n
+                                                                        \n
+in vec2 vUV;                                                            \n
+                                                                        \n
+out vec4 FragColor;                                                     \n
+                                                                        \n
+void main() {                                                           \n
+    vec4 srcColor = texture(uSrcTexture, vUV);                          \n
+    vec4 maskColor = texture(uMaskTexture, vUV);                        \n
+    if (srcColor.a > 0.0) srcColor.rgb /= srcColor.a;                   \n
+    float alpha = min(srcColor.a, maskColor.a);                         \n
+                                                                        \n
+    FragColor = vec4(srcColor.rgb * alpha, alpha);                      \n
+}                                                                       \n
+);
+
+const char* MASK_LIGHTEN_FRAG_SHADER = TVG_COMPOSE_SHADER(
+uniform sampler2D uSrcTexture;                                          \n
+uniform sampler2D uMaskTexture;                                         \n
+                                                                        \n
+in vec2 vUV;                                                            \n
+                                                                        \n
+out vec4 FragColor;                                                     \n
+                                                                        \n
+void main() {                                                           \n
+    vec4 srcColor = texture(uSrcTexture, vUV);                          \n
+    vec4 maskColor = texture(uMaskTexture, vUV);                        \n
+    if (srcColor.a > 0.0) srcColor.rgb /= srcColor.a;                   \n
+    float alpha = max(srcColor.a, maskColor.a);                         \n
+                                                                        \n
+    FragColor = vec4(srcColor.rgb * alpha, alpha);                      \n
+}                                                                       \n
+);
+
 const char* STENCIL_VERT_SHADER = TVG_COMPOSE_SHADER(
     uniform float uDepth;                                           \n
     layout(location = 0) in vec2 aLocation;                         \n
