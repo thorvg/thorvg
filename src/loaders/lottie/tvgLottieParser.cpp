@@ -254,7 +254,8 @@ void LottieParser::getValue(ColorStop& color)
 {
     if (peekType() == kArrayType) enterArray();
 
-    color.input = new Array<float>(static_cast<LottieGradient*>(context.parent)->colorStops.count);
+    if (!color.input) color.input = new Array<float>(static_cast<LottieGradient*>(context.parent)->colorStops.count);
+    else color.input->clear();
 
     while (nextArrayValue()) color.input->push(getFloat());
 }
