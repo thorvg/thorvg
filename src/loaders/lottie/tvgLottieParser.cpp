@@ -1294,6 +1294,7 @@ void LottieParser::parseEffect(LottieEffect* effect)
 void LottieParser::parseEffects(LottieLayer* layer)
 {
     auto invalid = true;
+    auto type = -1;
 
     enterArray();
     while (nextArrayValue()) {
@@ -1303,7 +1304,8 @@ void LottieParser::parseEffects(LottieLayer* layer)
             //type must be priortized.
             if (KEY_AS("ty"))
             {
-                effect = getEffect(getInt());
+                type = getInt();
+                effect = getEffect(type);
                 if (!effect) break;
                 else invalid = false;
             }
@@ -1313,7 +1315,8 @@ void LottieParser::parseEffects(LottieLayer* layer)
         }
         //TODO: remove when all effects were guaranteed.
         if (invalid) {
-            TVGLOG("LOTTIE", "Not supported Layer Effect = %d", (int)effect->type);
+            if (type > -1) TVGLOG("LOTTIE", "Not supported Layer Effect = %d", type);
+            else TVGLOG("LOTTIE", "Unknown Layer Effect type");
             while (auto key = nextObjectKey()) skip(key);
         } else layer->effects.push(effect);
     }
