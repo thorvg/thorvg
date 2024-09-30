@@ -216,7 +216,7 @@ uint32_t LottieGradient::populate(ColorStop& color)
             if (output.count > 0) {
                 auto p = ((*color.input)[cidx] - output.last().offset) / ((*color.input)[aidx] - output.last().offset);
                 cs.a = lerp<uint8_t>(output.last().a, (uint8_t)nearbyint((*color.input)[aidx + 1] * 255.0f), p);
-            } else cs.a = 255;
+            } else cs.a = (uint8_t)nearbyint((*color.input)[aidx + 1] * 255.0f);
             cidx += 4;
         } else {
             cs.offset = (*color.input)[aidx];
@@ -227,7 +227,11 @@ uint32_t LottieGradient::populate(ColorStop& color)
                 cs.r = lerp<uint8_t>(output.last().r, (uint8_t)nearbyint((*color.input)[cidx + 1] * 255.0f), p);
                 cs.g = lerp<uint8_t>(output.last().g, (uint8_t)nearbyint((*color.input)[cidx + 2] * 255.0f), p);
                 cs.b = lerp<uint8_t>(output.last().b, (uint8_t)nearbyint((*color.input)[cidx + 3] * 255.0f), p);
-            } else cs.r = cs.g = cs.b = 255;
+            } else {
+                cs.r = (uint8_t)nearbyint((*color.input)[cidx + 1] * 255.0f);
+                cs.g = (uint8_t)nearbyint((*color.input)[cidx + 2] * 255.0f);
+                cs.b = (uint8_t)nearbyint((*color.input)[cidx + 3] * 255.0f);
+            }
             aidx += 2;
         }
         output.push(cs);
