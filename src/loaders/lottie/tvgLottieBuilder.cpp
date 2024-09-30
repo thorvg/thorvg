@@ -1125,29 +1125,28 @@ static void _updateText(LottieLayer* layer, float frameNo)
                     if (start > end) std::swap(start, end);
 
                     if (idx < start || idx >= end) continue;
-                    auto matrix = PP(shape.get())->transform();
+                    auto matrix = shape->transform();
 
                     shape->opacity((*s)->style.opacity(frameNo));
 
                     auto color = (*s)->style.fillColor(frameNo);
                     shape->fill(color.rgb[0], color.rgb[1], color.rgb[2], (*s)->style.fillOpacity(frameNo));
 
-                    rotate(matrix, (*s)->style.rotation(frameNo));
+                    rotate(&matrix, (*s)->style.rotation(frameNo));
 
                     auto glyphScale = (*s)->style.scale(frameNo) * 0.01f;
-                    tvg::scale(matrix, glyphScale.x, glyphScale.y);
+                    tvg::scale(&matrix, glyphScale.x, glyphScale.y);
 
                     auto position = (*s)->style.position(frameNo);
-                    translate(matrix, position.x, position.y);
+                    translate(&matrix, position.x, position.y);
 
-                    shape->transform(*matrix);
+                    shape->transform(matrix);
 
                     if (doc.stroke.render) {
                         auto strokeColor = (*s)->style.strokeColor(frameNo);
                         shape->stroke((*s)->style.strokeWidth(frameNo) / scale);
                         shape->stroke(strokeColor.rgb[0], strokeColor.rgb[1], strokeColor.rgb[2], (*s)->style.strokeOpacity(frameNo));
                     }
-
                     cursor.x += (*s)->style.letterSpacing(frameNo);
                 }
 
