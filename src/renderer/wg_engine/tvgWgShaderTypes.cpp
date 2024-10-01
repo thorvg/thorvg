@@ -22,6 +22,7 @@
 
 #include "tvgWgShaderTypes.h"
 #include <cassert>
+#include "tvgMath.h"
 
 ///////////////////////////////////////////////////////////////////////////////
 // shader types
@@ -138,34 +139,42 @@ void WgShaderTypeGradient::update(const RadialGradient* radialGradient)
 void WgShaderTypeGradient::updateTexData(const Fill::ColorStop* stops, uint32_t stopCnt)
 {
     assert(stops);
+    static Array<Fill::ColorStop> sstops(stopCnt);
+    sstops.clear();
+    sstops.push(stops[0]);
+    // filter by increasing offset
+    for (uint32_t i = 1; i < stopCnt; i++)
+        if (sstops.last().offset < stops[i].offset)
+            sstops.push(stops[i]);
     // head
     uint32_t range_s = 0;
-    uint32_t range_e = uint32_t(stops[0].offset * (WG_TEXTURE_GRADIENT_SIZE-1));
+    uint32_t range_e = uint32_t(sstops[0].offset * (WG_TEXTURE_GRADIENT_SIZE-1));
     for (uint32_t ti = range_s; (ti < range_e) && (ti < WG_TEXTURE_GRADIENT_SIZE); ti++) {
-        texData[ti * 4 + 0] = stops[0].r;
-        texData[ti * 4 + 1] = stops[0].g;
-        texData[ti * 4 + 2] = stops[0].b;
-        texData[ti * 4 + 3] = stops[0].a;
+        texData[ti * 4 + 0] = sstops[0].r;
+        texData[ti * 4 + 1] = sstops[0].g;
+        texData[ti * 4 + 2] = sstops[0].b;
+        texData[ti * 4 + 3] = sstops[0].a;
     }
     // body
-    for (uint32_t di = 1; di < stopCnt; di++) {
-        range_s = uint32_t(stops[di-1].offset * (WG_TEXTURE_GRADIENT_SIZE-1));
-        range_e = uint32_t(stops[di-0].offset * (WG_TEXTURE_GRADIENT_SIZE-1));
+    for (uint32_t di = 1; di < sstops.count; di++) {
+        range_s = uint32_t(sstops[di-1].offset * (WG_TEXTURE_GRADIENT_SIZE-1));
+        range_e = uint32_t(sstops[di-0].offset * (WG_TEXTURE_GRADIENT_SIZE-1));
+        float delta = 1.0f/(range_e - range_s);
         for (uint32_t ti = range_s; (ti < range_e) && (ti < WG_TEXTURE_GRADIENT_SIZE); ti++) {
-            float t = float(ti - range_s) / (range_e - range_s);
-            texData[ti * 4 + 0] = uint8_t((1.0f - t) * stops[di-1].r + t * stops[di].r);
-            texData[ti * 4 + 1] = uint8_t((1.0f - t) * stops[di-1].g + t * stops[di].g);
-            texData[ti * 4 + 2] = uint8_t((1.0f - t) * stops[di-1].b + t * stops[di].b);
-            texData[ti * 4 + 3] = uint8_t((1.0f - t) * stops[di-1].a + t * stops[di].a);
+            float t = (ti - range_s) * delta;
+            texData[ti * 4 + 0] = lerp(sstops[di-1].r, sstops[di].r, t);
+            texData[ti * 4 + 1] = lerp(sstops[di-1].g, sstops[di].g, t);
+            texData[ti * 4 + 2] = lerp(sstops[di-1].b, sstops[di].b, t);
+            texData[ti * 4 + 3] = lerp(sstops[di-1].a, sstops[di].a, t);
         }
     }
     // tail
-    range_s = uint32_t(stops[stopCnt-1].offset * (WG_TEXTURE_GRADIENT_SIZE-1));
+    range_s = uint32_t(sstops.last().offset * (WG_TEXTURE_GRADIENT_SIZE-1));
     range_e = WG_TEXTURE_GRADIENT_SIZE;
     for (uint32_t ti = range_s; ti < range_e; ti++) {
-        texData[ti * 4 + 0] = stops[stopCnt-1].r;
-        texData[ti * 4 + 1] = stops[stopCnt-1].g;
-        texData[ti * 4 + 2] = stops[stopCnt-1].b;
-        texData[ti * 4 + 3] = stops[stopCnt-1].a;
+        texData[ti * 4 + 0] = sstops[stopCnt-1].r;
+        texData[ti * 4 + 1] = sstops[stopCnt-1].g;
+        texData[ti * 4 + 2] = sstops[stopCnt-1].b;
+        texData[ti * 4 + 3] = sstops[stopCnt-1].a;
     }
 }
