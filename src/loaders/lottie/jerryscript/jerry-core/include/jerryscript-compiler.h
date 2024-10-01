@@ -175,7 +175,7 @@ void *__cdecl _alloca (size_t _Size);
  * Helper to declare (or mimic) a C99 variable-length array.
  */
 #ifndef JERRY_VLA
-#define JERRY_VLA(type, name, size) type name[size]
+#define JERRY_VLA(type, name, size) type* name = (type*)alloca((size) * sizeof(type))
 #endif /* !JERRY_VLA */
 
 /**
