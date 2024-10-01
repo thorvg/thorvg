@@ -21,12 +21,8 @@
  */
 
 #include <thorvg.h>
-#include <emscripten.h>
 #include <emscripten/bind.h>
 #include "tvgPicture.h"
-#ifdef THORVG_WG_RASTER_SUPPORT
-    #include <webgpu/webgpu.h>
-#endif
 
 using namespace emscripten;
 using namespace std;
@@ -34,157 +30,18 @@ using namespace tvg;
 
 static const char* NoError = "None";
 
-#ifdef THORVG_WG_RASTER_SUPPORT
-    static WGPUInstance instance{};
-    static WGPUAdapter adapter{};
-    static WGPUDevice device{};
-#endif
-
-void init()
-{
-#ifdef THORVG_WG_RASTER_SUPPORT
-    //Init WebGPU
-    if (!instance) instance = wgpuCreateInstance(nullptr);
-
-    // request adapter
-    if (!adapter) {
-        const WGPURequestAdapterOptions requestAdapterOptions { .nextInChain = nullptr, .powerPreference = WGPUPowerPreference_HighPerformance, .forceFallbackAdapter = false };
-        auto onAdapterRequestEnded = [](WGPURequestAdapterStatus status, WGPUAdapter adapter, char const * message, void * pUserData) { *((WGPUAdapter*)pUserData) = adapter; };
-        wgpuInstanceRequestAdapter(instance, &requestAdapterOptions, onAdapterRequestEnded, &adapter);
-        while (!adapter) emscripten_sleep(10);
-    }
-
-    // request device
-    WGPUFeatureName featureNames[32]{};
-    size_t featuresCount = wgpuAdapterEnumerateFeatures(adapter, featureNames);
-    if (!device) {
-        const WGPUDeviceDescriptor deviceDesc { .nextInChain = nullptr, .label = "The device", .requiredFeatureCount = featuresCount, .requiredFeatures = featureNames };
-        auto onDeviceRequestEnded = [](WGPURequestDeviceStatus status, WGPUDevice device, char const * message, void * pUserData) { *((WGPUDevice*)pUserData) = device; };
-        wgpuAdapterRequestDevice(adapter, &deviceDesc, onDeviceRequestEnded, &device);
-        while (!device) emscripten_sleep(10);
-    }
-#endif
-}
-
-void term()
-{
-#ifdef THORVG_WG_RASTER_SUPPORT
-    wgpuDeviceRelease(device);
-    wgpuAdapterRelease(adapter);
-    wgpuInstanceRelease(instance);
-#endif
-}
-
-struct TvgEngineMethod
-{
-    virtual ~TvgEngineMethod() {}
-    virtual unique_ptr<Canvas> init(string&) = 0;
-    virtual void resize(Canvas* canvas, int w, int h) = 0;
-    virtual val output(int w, int h)
-    {
-        return val(typed_memory_view<uint8_t>(0, nullptr));
-    }
-};
-
-struct TvgSwEngine : TvgEngineMethod
-{
-    uint8_t* buffer = nullptr;
-
-    ~TvgSwEngine()
-    {
-        free(buffer);
-        Initializer::term(tvg::CanvasEngine::Sw);
-    }
-
-    unique_ptr<Canvas> init(string&) override
-    {
-        Initializer::init(tvg::CanvasEngine::Sw, 0);
-        return SwCanvas::gen();
-    }
-
-    void resize(Canvas* canvas, int w, int h) override
-    {
-        free(buffer);
-        buffer = (uint8_t*)malloc(w * h * sizeof(uint32_t));
-        static_cast<SwCanvas*>(canvas)->target((uint32_t *)buffer, w, w, h, SwCanvas::ABGR8888S);
-    }
-
-    val output(int w, int h) override
-    {
-        return val(typed_memory_view(w * h * 4, buffer));
-    }
-};
-
-
-struct TvgWgEngine : TvgEngineMethod
-{
-    #ifdef THORVG_WG_RASTER_SUPPORT
-        WGPUSurface surface{};
-    #endif
-
-    ~TvgWgEngine()
-    {
-        #ifdef THORVG_WG_RASTER_SUPPORT
-            wgpuSurfaceRelease(surface);
-        #endif
-        Initializer::term(tvg::CanvasEngine::Wg);
-    }
-
-    unique_ptr<Canvas> init(string& selector) override
-    {
-        #ifdef THORVG_WG_RASTER_SUPPORT
-            WGPUSurfaceDescriptorFromCanvasHTMLSelector canvasDesc{};
-            canvasDesc.chain.next = nullptr;
-            canvasDesc.chain.sType = WGPUSType_SurfaceDescriptorFromCanvasHTMLSelector;
-            canvasDesc.selector = selector.c_str();
-
-            WGPUSurfaceDescriptor surfaceDesc{};
-            surfaceDesc.nextInChain = &canvasDesc.chain;
-            surface = wgpuInstanceCreateSurface(instance, &surfaceDesc);
-        #endif
-
-        Initializer::init(tvg::CanvasEngine::Wg, 0);
-        return WgCanvas::gen();
-    }
-
-    void resize(Canvas* canvas, int w, int h) override
-    {
-    #ifdef THORVG_WG_RASTER_SUPPORT
-        static_cast<WgCanvas*>(canvas)->target(instance, surface, w, h, device);
-    #endif
-    }
-};
-
-
 class __attribute__((visibility("default"))) TvgLottieAnimation
 {
 public:
     ~TvgLottieAnimation()
     {
-        delete(engine);
+        free(buffer);
+        Initializer::term(CanvasEngine::Sw);
     }
 
-    explicit TvgLottieAnimation(string engine = "sw", string selector = "")
+    static TvgLottieAnimation* create()
     {
-        errorMsg = NoError;
-
-        if (engine == "sw") this->engine = new TvgSwEngine;
-        else if (engine == "wg") this->engine = new TvgWgEngine;
-
-        if (!this->engine) {
-            errorMsg = "Invalid engine";
-            return;
-        }
-
-        canvas = this->engine->init(selector);
-
-        if (!canvas) {
-            errorMsg = "Unsupported!";
-            return;
-        }
-
-        animation = Animation::gen();
-        if (!animation) errorMsg = "Invalid animation";
+        return new TvgLottieAnimation;
     }
 
     string error()
@@ -228,7 +85,8 @@ public:
             return false;
         }
 
-        this->data = data; //back up for saving
+        //back up for saving
+        this->data = data;
 
         canvas->clear(true);
 
@@ -268,7 +126,7 @@ public:
 
         if (!canvas || !animation) return val(typed_memory_view<uint8_t>(0, nullptr));
 
-        if (!updated) return engine->output(width, height);
+        if (!updated) return val(typed_memory_view(width * height * 4, buffer));
 
         if (canvas->draw() != Result::Success) {
             errorMsg = "draw() fail";
@@ -279,7 +137,7 @@ public:
 
         updated = false;
 
-        return engine->output(width, height);
+        return val(typed_memory_view(width * height * 4, buffer));
     }
 
     bool update()
@@ -326,7 +184,9 @@ public:
         this->width = width;
         this->height = height;
 
-        engine->resize(canvas.get(), width, height);
+        free(buffer);
+        buffer = (uint8_t*)malloc(width * height * sizeof(uint32_t));
+        canvas->target((uint32_t *)buffer, width, width, height, SwCanvas::ABGR8888S);
 
         float scale;
         float shiftX = 0.0f, shiftY = 0.0f;
@@ -446,14 +306,31 @@ public:
         return true;
     }
 
-    // TODO: Advanced APIs wrt Interactivity & theme methods...
+    // TODO: Advanced APIs wrt Interactivty & theme methods...
+
+private:
+    explicit TvgLottieAnimation()
+    {
+        errorMsg = NoError;
+
+        if (Initializer::init(CanvasEngine::Sw, 0) != Result::Success) {
+            errorMsg = "init() fail";
+            return;
+        }
+
+        canvas = SwCanvas::gen();
+        if (!canvas) errorMsg = "Invalid canvas";
+
+        animation = Animation::gen();
+        if (!animation) errorMsg = "Invalid animation";
+    }
 
 private:
     string                 errorMsg;
-    unique_ptr<Canvas>     canvas = nullptr;
+    unique_ptr<SwCanvas>   canvas = nullptr;
     unique_ptr<Animation>  animation = nullptr;
-    TvgEngineMethod*       engine = nullptr;
     string                 data;
+    uint8_t*               buffer = nullptr;
     uint32_t               width = 0;
     uint32_t               height = 0;
     float                  psize[2];         //picture size
@@ -462,11 +339,8 @@ private:
 
 EMSCRIPTEN_BINDINGS(thorvg_bindings)
 {
-    emscripten::function("init", &init);
-    emscripten::function("term", &term);
-
     class_<TvgLottieAnimation>("TvgLottieAnimation")
-        .constructor<string, string>()
+        .constructor(&TvgLottieAnimation ::create)
         .function("error", &TvgLottieAnimation ::error, allow_raw_pointers())
         .function("size", &TvgLottieAnimation ::size)
         .function("duration", &TvgLottieAnimation ::duration)
