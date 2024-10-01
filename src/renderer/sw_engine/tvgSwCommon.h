@@ -486,7 +486,7 @@ SwFixed mathSin(SwFixed angle);
 void mathSplitCubic(SwPoint* base);
 SwFixed mathDiff(SwFixed angle1, SwFixed angle2);
 SwFixed mathLength(const SwPoint& pt);
-bool mathSmallCubic(const SwPoint* base, SwFixed& angleIn, SwFixed& angleMid, SwFixed& angleOut);
+bool mathSmallCubic(const SwPoint* base, SwFixed& angleIn, SwFixed& angleMid, SwFixed& angleOut, bool& ignore);
 SwFixed mathMean(SwFixed angle1, SwFixed angle2);
 SwPoint mathTransform(const Point* to, const Matrix& transform);
 bool mathUpdateOutlineBBox(const SwOutline* outline, const SwBBox& clipRegion, SwBBox& renderRegion, bool fastTrack);

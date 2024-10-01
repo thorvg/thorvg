@@ -44,16 +44,18 @@ SwFixed mathMean(SwFixed angle1, SwFixed angle2)
 }
 
 
-bool mathSmallCubic(const SwPoint* base, SwFixed& angleIn, SwFixed& angleMid, SwFixed& angleOut)
+bool mathSmallCubic(const SwPoint* base, SwFixed& angleIn, SwFixed& angleMid, SwFixed& angleOut, bool& ignore)
 {
     auto d1 = base[2] - base[3];
     auto d2 = base[1] - base[2];
     auto d3 = base[0] - base[1];
+    ignore = false;
 
     if (d1.small()) {
         if (d2.small()) {
             if (d3.small()) {
                 angleIn = angleMid = angleOut = 0;
+                ignore = true;
                 return true;
             } else {
                 angleIn = angleMid = angleOut = mathAtan(d3);

@@ -441,7 +441,17 @@ static void _cubicTo(SwStroke& stroke, const SwPoint& ctrl1, const SwPoint& ctrl
         //initialize with current direction
         angleIn = angleOut = angleMid = stroke.angleIn;
 
-        if (arc < limit && !mathSmallCubic(arc, angleIn, angleMid, angleOut)) {
+        bool ignore;
+        auto small = mathSmallCubic(arc, angleIn, angleMid, angleOut, ignore);
+        if (ignore) {
+            if (arc == bezStack) {
+                stroke.center = to;
+                return;
+            }
+            arc -= 3;
+            continue;
+        }
+        if (arc < limit && !small) {
             if (stroke.firstPt) stroke.angleIn = angleIn;
             mathSplitCubic(arc);
             arc += 3;
