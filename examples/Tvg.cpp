@@ -26,8 +26,8 @@
 /* ThorVG Drawing Contents                                              */
 /************************************************************************/
 
-#define NUM_PER_ROW 8
-#define NUM_PER_COL 8
+#define NUM_PER_ROW 9
+#define NUM_PER_COL 9
 
 struct UserExample : tvgexam::Example
 {
