@@ -1313,7 +1313,7 @@ void LottieParser::parseEffects(LottieLayer* layer)
         }
         //TODO: remove when all effects were guaranteed.
         if (invalid) {
-            TVGLOG("LOTTIE", "Not supported Layer Effect = %d", (int)effect->type);
+            TVGLOG("LOTTIE", "Not supported Layer Effect = %d", effect ? (int)effect->type : -1);
             while (auto key = nextObjectKey()) skip(key);
         } else layer->effects.push(effect);
     }
