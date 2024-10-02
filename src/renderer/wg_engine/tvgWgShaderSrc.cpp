@@ -435,13 +435,11 @@ fn getFragData(id: vec2u) -> FragData {
     data.Dc = colorDst.rgb;
     data.Da = colorDst.a;
     data.skip = false;
-    data.Sc = data.Sc * So;
-    data.Sa = data.Sa * So;
     return data;
 };
 
 fn postProcess(d: FragData, R: vec4f) -> vec4f {
-    return mix(vec4(d.Dc, d.Da), R, d.Sa);
+    return mix(vec4(d.Dc, d.Da), R, d.Sa * So);
 };
 )";
 
