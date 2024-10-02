@@ -299,7 +299,7 @@ void WgCompositor::drawShapeClipped(WgContext& context, WgRenderDataShape* rende
     endRenderPass();
     // restore current render pass
     beginRenderPass(commandEncoder, target, false);
-    RenderRegion rect = shrinkRenderRegion(renderData->aabb);
+    RenderRegion rect { 0, 0, (int32_t)width, (int32_t)height };
     clipRegion(context, &storageInterm, mask, rect);
 }
 
@@ -322,7 +322,7 @@ void WgCompositor::drawStrokesClipped(WgContext& context, WgRenderDataShape* ren
     endRenderPass();
     // restore current render pass
     beginRenderPass(commandEncoder, target, false);
-    RenderRegion rect = shrinkRenderRegion(renderData->aabb);
+    RenderRegion rect { 0, 0, (int32_t)width, (int32_t)height };
     clipRegion(context, &storageInterm, mask, rect);
 }
 
