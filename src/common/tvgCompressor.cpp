@@ -442,7 +442,7 @@ size_t b64Decode(const char* encoded, const size_t len, char** decoded)
     if (!decoded || !encoded || len == 0) return 0;
 
     auto reserved = 3 * (1 + (len >> 2)) + 1;
-    auto output = static_cast<char*>(malloc(reserved * sizeof(char)));
+    auto output = static_cast<char*>(calloc(reserved, sizeof(char)));
     if (!output) return 0;
     output[reserved - 1] = '\0';
 
@@ -490,3 +490,4 @@ unsigned long djb2Encode(const char* str)
 }
 
 }
+
