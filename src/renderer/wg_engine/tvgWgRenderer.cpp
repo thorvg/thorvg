@@ -72,6 +72,7 @@ void WgRenderer::disposeObjects()
             mRenderDataShapePool.free(mContext, (WgRenderDataShape*)renderData);
         } else {
             renderData->release(mContext);
+            delete renderData;
         }
     }
     mDisposeRenderDatas.clear();
