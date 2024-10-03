@@ -67,6 +67,9 @@ private:
     void initialize();
     void release();
     void disposeObjects();
+    void releaseSurfaceTexture();
+
+    WGPUSurfaceTexture surfaceTexture{};
 
     WGPUCommandEncoder mCommandEncoder{};
     WgRenderDataShapePool mRenderDataShapePool;

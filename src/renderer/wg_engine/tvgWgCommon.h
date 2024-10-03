@@ -63,6 +63,7 @@ struct WgContext {
     void releaseTextureView(WGPUTextureView& textureView);
     void releaseTexture(WGPUTexture& texture);
     void releaseSampler(WGPUSampler& sampler);
+    void releaseQueue(WGPUQueue queue);
 
     // create buffer objects (return true, if buffer handle was changed)
     bool allocateBufferUniform(WGPUBuffer& buffer, const void* data, uint64_t size);
