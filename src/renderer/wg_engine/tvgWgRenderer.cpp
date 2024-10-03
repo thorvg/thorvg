@@ -59,6 +59,7 @@ void WgRenderer::release()
         adapter = nullptr;
         gpuOwner = false;
     }
+    releaseSurfaceTexture();
 }
 
 
@@ -247,13 +248,24 @@ bool WgRenderer::clear()
 }
 
 
+void WgRenderer::releaseSurfaceTexture()
+{
+    if (surfaceTexture.texture) {
+        wgpuTextureRelease(surfaceTexture.texture);
+        surfaceTexture.texture = nullptr;
+    }
+}
+
+
 bool WgRenderer::sync()
 {
     disposeObjects();
     if (!surface) return false;
-    // get current texture
-    WGPUSurfaceTexture surfaceTexture{};
+
+    releaseSurfaceTexture();
+
     wgpuSurfaceGetCurrentTexture(surface, &surfaceTexture);
+
     WGPUTextureView dstView = mContext.createTextureView(surfaceTexture.texture);
 
     // create command encoder
