@@ -558,13 +558,15 @@ struct LottieGradient : LottieObject
     bool prepare()
     {
         if (!colorStops.populated) {
+            auto count = colorStops.count;  //colorstop count can be modified after population
             if (colorStops.frames) {
                 for (auto v = colorStops.frames->begin(); v < colorStops.frames->end(); ++v) {
-                    colorStops.count = populate(v->value);
+                    colorStops.count = populate(v->value, count);
                 }
             } else {
-                colorStops.count = populate(colorStops.value);
+                colorStops.count = populate(colorStops.value, count);
             }
+            colorStops.populated = true;
         }
         if (start.frames || end.frames || height.frames || angle.frames || opacity.frames || colorStops.frames) return true;
         return false;
@@ -582,7 +584,7 @@ struct LottieGradient : LottieObject
     }
 
 
-    uint32_t populate(ColorStop& color);
+    uint32_t populate(ColorStop& color, size_t count);
     Fill* fill(float frameNo, LottieExpressions* exps);
 
     LottiePoint start = Point{0.0f, 0.0f};
