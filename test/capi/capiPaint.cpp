@@ -242,14 +242,11 @@ TEST_CASE("Paint Clipping", "[capiPaint]")
     Tvg_Paint* paint = tvg_shape_new();
     REQUIRE(paint);
 
-    Tvg_Paint* target = tvg_shape_new();
-    REQUIRE(target);
-
     REQUIRE(tvg_paint_set_clip(paint, NULL) == TVG_RESULT_SUCCESS);
 
-    Tvg_Paint* target2 = tvg_shape_new();
-    REQUIRE(target2);
-    REQUIRE(tvg_paint_set_clip(paint, target2) == TVG_RESULT_SUCCESS);
+    Tvg_Paint* target = tvg_shape_new();
+    REQUIRE(target);
+    REQUIRE(tvg_paint_set_clip(paint, target) == TVG_RESULT_SUCCESS);
 
     REQUIRE(tvg_paint_set_clip(paint, NULL) == TVG_RESULT_SUCCESS);
 
