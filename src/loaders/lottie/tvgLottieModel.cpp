@@ -183,15 +183,14 @@ void LottieTrimpath::segment(float frameNo, float& start, float& end, LottieExpr
 }
 
 
-uint32_t LottieGradient::populate(ColorStop& color)
+uint32_t LottieGradient::populate(ColorStop& color, size_t count)
 {
-    colorStops.populated = true;
     if (!color.input) return 0;
 
-    uint32_t alphaCnt = (color.input->count - (colorStops.count * 4)) / 2;
-    Array<Fill::ColorStop> output(colorStops.count + alphaCnt);
+    uint32_t alphaCnt = (color.input->count - (count * 4)) / 2;
+    Array<Fill::ColorStop> output(count + alphaCnt);
     uint32_t cidx = 0;               //color count
-    uint32_t clast = colorStops.count * 4;
+    uint32_t clast = count * 4;
     if (clast > color.input->count) clast = color.input->count;
     uint32_t aidx = clast;           //alpha count
     Fill::ColorStop cs;
