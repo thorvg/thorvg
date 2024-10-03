@@ -1270,6 +1270,7 @@ void LottieParser::parseGaussianBlur(LottieGaussianBlur* effect)
                         if (idx == 0) parsePropertyInternal(effect->blurness);
                         else if (idx == 1) parsePropertyInternal(effect->direction);
                         else if (idx == 2) parsePropertyInternal(effect->wrap);
+                        else skip(key);
                         ++idx;
                     } else skip(key);
                 }
