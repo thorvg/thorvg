@@ -27,7 +27,7 @@
   <td id="projectlogo"><img alt="Logo" src="small_logo.png"/></td>
   <td id="projectalign" style="padding-left: 0.5em;">
    <div id="projectname">ThorVG
-   &#160;<span id="projectnumber">v0.14</span>
+   &#160;<span id="projectnumber">v0.15</span>
    </div>
   </td>
  </tr>
@@ -115,9 +115,9 @@ Collaboration diagram for WgCanvas:</div>
 <table class="memberdecls">
 <tr class="heading"><td colspan="2"><h2 class="groupheader"><a name="pub-methods"></a>
 Public Member Functions</h2></td></tr>
-<tr class="memitem:a8374462d6f583b287a3664bee0d22c9a"><td class="memItemLeft" align="right" valign="top"><a class="el" href="group__ThorVG.html#ga28287671eaf7406afd604bd055ba4066">Result</a>&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classtvg_1_1WgCanvas.html#a8374462d6f583b287a3664bee0d22c9a">target</a> (void *instance, void *surface, uint32_t w, uint32_t h) noexcept</td></tr>
-<tr class="memdesc:a8374462d6f583b287a3664bee0d22c9a"><td class="mdescLeft">&#160;</td><td class="mdescRight">Sets the drawing target for the rasterization.  <a href="classtvg_1_1WgCanvas.html#a8374462d6f583b287a3664bee0d22c9a">More...</a><br /></td></tr>
-<tr class="separator:a8374462d6f583b287a3664bee0d22c9a"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:abf98e4ee044acb637747310e55631d32"><td class="memItemLeft" align="right" valign="top"><a class="el" href="group__ThorVG.html#ga28287671eaf7406afd604bd055ba4066">Result</a>&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classtvg_1_1WgCanvas.html#abf98e4ee044acb637747310e55631d32">target</a> (void *instance, void *surface, uint32_t w, uint32_t h, void *device=nullptr) noexcept</td></tr>
+<tr class="memdesc:abf98e4ee044acb637747310e55631d32"><td class="mdescLeft">&#160;</td><td class="mdescRight">Sets the drawing target for the rasterization.  <a href="classtvg_1_1WgCanvas.html#abf98e4ee044acb637747310e55631d32">More...</a><br /></td></tr>
+<tr class="separator:abf98e4ee044acb637747310e55631d32"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="inherit_header pub_methods_classtvg_1_1Canvas"><td colspan="2" onclick="javascript:toggleInherit('pub_methods_classtvg_1_1Canvas')"><img src="closed.png" alt="-"/>&#160;Public Member Functions inherited from <a class="el" href="classtvg_1_1Canvas.html">Canvas</a></td></tr>
 <tr class="memitem:ace6c268f853a4c144076de89b7bbbe75 inherit pub_methods_classtvg_1_1Canvas"><td class="memItemLeft" align="right" valign="top">std::list&lt; <a class="el" href="classtvg_1_1Paint.html">Paint</a> * &gt; &amp;&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classtvg_1_1Canvas.html#ace6c268f853a4c144076de89b7bbbe75">paints</a> () noexcept</td></tr>
 <tr class="memdesc:ace6c268f853a4c144076de89b7bbbe75 inherit pub_methods_classtvg_1_1Canvas"><td class="mdescLeft">&#160;</td><td class="mdescRight">Returns the list of the paints that currently held by the <a class="el" href="classtvg_1_1Canvas.html" title="An abstract class for drawing graphical elements.">Canvas</a>.  <a href="classtvg_1_1Canvas.html#ace6c268f853a4c144076de89b7bbbe75">More...</a><br /></td></tr>
@@ -150,7 +150,7 @@ Static Public Member Functions</h2></td></tr>
 <a name="details" id="details"></a><h2 class="groupheader">Detailed Description</h2>
 <div class="textblock"><p>A class for the rendering graphic elements with a WebGPU raster engine. </p>
 <dl class="section warning"><dt>Warning</dt><dd>Please do not use it. This class is not fully supported yet.</dd></dl>
-<dl class="section note"><dt>Note</dt><dd>Experimental API </dd></dl>
+<dl class="section since"><dt>Since</dt><dd>0.15 </dd></dl>
 </div><h2 class="groupheader">Member Function Documentation</h2>
 <a id="ac284273a5345c1b5b7010f8e35ec7a4c"></a>
 <h2 class="memtitle"><span class="permalink"><a href="#ac284273a5345c1b5b7010f8e35ec7a4c">&#9670;&nbsp;</a></span>gen()</h2>
@@ -177,12 +177,12 @@ Static Public Member Functions</h2></td></tr>
 
 <p>Creates a new <a class="el" href="classtvg_1_1WgCanvas.html" title="A class for the rendering graphic elements with a WebGPU raster engine.">WgCanvas</a> object. </p>
 <dl class="section return"><dt>Returns</dt><dd>A new <a class="el" href="classtvg_1_1WgCanvas.html" title="A class for the rendering graphic elements with a WebGPU raster engine.">WgCanvas</a> object.</dd></dl>
-<dl class="section note"><dt>Note</dt><dd>Experimental API </dd></dl>
+<dl class="section since"><dt>Since</dt><dd>0.15 </dd></dl>
 
 </div>
 </div>
-<a id="a8374462d6f583b287a3664bee0d22c9a"></a>
-<h2 class="memtitle"><span class="permalink"><a href="#a8374462d6f583b287a3664bee0d22c9a">&#9670;&nbsp;</a></span>target()</h2>
+<a id="abf98e4ee044acb637747310e55631d32"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#abf98e4ee044acb637747310e55631d32">&#9670;&nbsp;</a></span>target()</h2>
 
 <div class="memitem">
 <div class="memproto">
@@ -212,7 +212,13 @@ Static Public Member Functions</h2></td></tr>
           <td class="paramkey"></td>
           <td></td>
           <td class="paramtype">uint32_t&#160;</td>
-          <td class="paramname"><em>h</em>&#160;</td>
+          <td class="paramname"><em>h</em>, </td>
+        </tr>
+        <tr>
+          <td class="paramkey"></td>
+          <td></td>
+          <td class="paramtype">void *&#160;</td>
+          <td class="paramname"><em>device</em> = <code>nullptr</code>&#160;</td>
         </tr>
         <tr>
           <td></td>
@@ -233,7 +239,8 @@ Static Public Member Functions</h2></td></tr>
     <tr><td class="paramdir">[in]</td><td class="paramname">instance</td><td>WGPUInstance, context for all other wgpu objects. </td></tr>
     <tr><td class="paramdir">[in]</td><td class="paramname">surface</td><td>WGPUSurface, handle to a presentable surface. </td></tr>
     <tr><td class="paramdir">[in]</td><td class="paramname">w</td><td>The width of the surface. </td></tr>
-    <tr><td class="paramdir">[in]</td><td class="paramname">h</td><td>The height of the surface.</td></tr>
+    <tr><td class="paramdir">[in]</td><td class="paramname">h</td><td>The height of the surface. </td></tr>
+    <tr><td class="paramdir">[in]</td><td class="paramname">device</td><td>WGPUDevice, a desired handle for the wgpu device. If it is <code>nullptr</code>, ThorVG will assign an appropriate device internally.</td></tr>
   </table>
   </dd>
 </dl>

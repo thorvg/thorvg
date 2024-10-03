@@ -21,7 +21,5 @@ var hierarchy =
       [ "Text", "classtvg_1_1Text.html", null ]
     ] ],
     [ "Point", "structtvg_1_1Point.html", null ],
-    [ "Polygon", "structtvg_1_1Polygon.html", null ],
-    [ "Saver", "classtvg_1_1Saver.html", null ],
-    [ "Vertex", "structtvg_1_1Vertex.html", null ]
+    [ "Saver", "classtvg_1_1Saver.html", null ]
 ];

@@ -27,7 +27,7 @@
   <td id="projectlogo"><img alt="Logo" src="small_logo.png"/></td>
   <td id="projectalign" style="padding-left: 0.5em;">
    <div id="projectname">ThorVG
-   &#160;<span id="projectnumber">v0.14</span>
+   &#160;<span id="projectnumber">v0.15</span>
    </div>
   </td>
  </tr>
@@ -121,6 +121,9 @@ Public Member Functions</h2></td></tr>
 <tr class="memitem:a5c77e9f6e855a595945f45a6b19ee983"><td class="memItemLeft" align="right" valign="top"><a class="el" href="group__ThorVG.html#ga28287671eaf7406afd604bd055ba4066">Result</a>&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classtvg_1_1LinearGradient.html#a5c77e9f6e855a595945f45a6b19ee983">linear</a> (float *x1, float *y1, float *x2, float *y2) const noexcept</td></tr>
 <tr class="memdesc:a5c77e9f6e855a595945f45a6b19ee983"><td class="mdescLeft">&#160;</td><td class="mdescRight">Gets the linear gradient bounds.  <a href="classtvg_1_1LinearGradient.html#a5c77e9f6e855a595945f45a6b19ee983">More...</a><br /></td></tr>
 <tr class="separator:a5c77e9f6e855a595945f45a6b19ee983"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a0998d9f221df277cafde4934e3828aa2"><td class="memItemLeft" align="right" valign="top"><a class="el" href="group__ThorVG.html#ga5f787df9cdf370248382504196841479">Type</a>&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classtvg_1_1LinearGradient.html#a0998d9f221df277cafde4934e3828aa2">type</a> () const noexcept override</td></tr>
+<tr class="memdesc:a0998d9f221df277cafde4934e3828aa2"><td class="mdescLeft">&#160;</td><td class="mdescRight">Returns the ID value of this class.  <a href="classtvg_1_1LinearGradient.html#a0998d9f221df277cafde4934e3828aa2">More...</a><br /></td></tr>
+<tr class="separator:a0998d9f221df277cafde4934e3828aa2"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="inherit_header pub_methods_classtvg_1_1Fill"><td colspan="2" onclick="javascript:toggleInherit('pub_methods_classtvg_1_1Fill')"><img src="closed.png" alt="-"/>&#160;Public Member Functions inherited from <a class="el" href="classtvg_1_1Fill.html">Fill</a></td></tr>
 <tr class="memitem:a92717fc84a7d5df56e42e3bc863fce1a inherit pub_methods_classtvg_1_1Fill"><td class="memItemLeft" align="right" valign="top"><a class="el" href="group__ThorVG.html#ga28287671eaf7406afd604bd055ba4066">Result</a>&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classtvg_1_1Fill.html#a92717fc84a7d5df56e42e3bc863fce1a">colorStops</a> (const <a class="el" href="structtvg_1_1Fill_1_1ColorStop.html">ColorStop</a> *colorStops, uint32_t cnt) noexcept</td></tr>
 <tr class="memdesc:a92717fc84a7d5df56e42e3bc863fce1a inherit pub_methods_classtvg_1_1Fill"><td class="mdescLeft">&#160;</td><td class="mdescRight">Sets the parameters of the colors of the gradient and their position.  <a href="classtvg_1_1Fill.html#a92717fc84a7d5df56e42e3bc863fce1a">More...</a><br /></td></tr>
@@ -143,18 +146,16 @@ Public Member Functions</h2></td></tr>
 <tr class="memitem:a48e358abab4478ff7f84dfb85608eaf3 inherit pub_methods_classtvg_1_1Fill"><td class="memItemLeft" align="right" valign="top"><a class="el" href="classtvg_1_1Fill.html">Fill</a> *&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classtvg_1_1Fill.html#a48e358abab4478ff7f84dfb85608eaf3">duplicate</a> () const noexcept</td></tr>
 <tr class="memdesc:a48e358abab4478ff7f84dfb85608eaf3 inherit pub_methods_classtvg_1_1Fill"><td class="mdescLeft">&#160;</td><td class="mdescRight">Creates a copy of the <a class="el" href="classtvg_1_1Fill.html" title="An abstract class representing the gradient fill of the Shape object.">Fill</a> object.  <a href="classtvg_1_1Fill.html#a48e358abab4478ff7f84dfb85608eaf3">More...</a><br /></td></tr>
 <tr class="separator:a48e358abab4478ff7f84dfb85608eaf3 inherit pub_methods_classtvg_1_1Fill"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:a37466e9eff2de62ff15c9df3d72b656d inherit pub_methods_classtvg_1_1Fill"><td class="memItemLeft" align="right" valign="top">uint32_t&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classtvg_1_1Fill.html#a37466e9eff2de62ff15c9df3d72b656d">identifier</a> () const noexcept</td></tr>
-<tr class="memdesc:a37466e9eff2de62ff15c9df3d72b656d inherit pub_methods_classtvg_1_1Fill"><td class="mdescLeft">&#160;</td><td class="mdescRight">Return the unique id value of the <a class="el" href="classtvg_1_1Fill.html" title="An abstract class representing the gradient fill of the Shape object.">Fill</a> instance.  <a href="classtvg_1_1Fill.html#a37466e9eff2de62ff15c9df3d72b656d">More...</a><br /></td></tr>
-<tr class="separator:a37466e9eff2de62ff15c9df3d72b656d inherit pub_methods_classtvg_1_1Fill"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:aee92a597f61d9bbdbd223b5dfc3877b7 inherit pub_methods_classtvg_1_1Fill"><td class="memItemLeft" align="right" valign="top">TVG_DEPRECATED uint32_t&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classtvg_1_1Fill.html#aee92a597f61d9bbdbd223b5dfc3877b7">identifier</a> () const noexcept</td></tr>
+<tr class="separator:aee92a597f61d9bbdbd223b5dfc3877b7 inherit pub_methods_classtvg_1_1Fill"><td class="memSeparator" colspan="2">&#160;</td></tr>
 </table><table class="memberdecls">
 <tr class="heading"><td colspan="2"><h2 class="groupheader"><a name="pub-static-methods"></a>
 Static Public Member Functions</h2></td></tr>
 <tr class="memitem:a346e161f12d8e8ad26b6eaaf5d0f5c5c"><td class="memItemLeft" align="right" valign="top">static std::unique_ptr&lt; <a class="el" href="classtvg_1_1LinearGradient.html">LinearGradient</a> &gt;&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classtvg_1_1LinearGradient.html#a346e161f12d8e8ad26b6eaaf5d0f5c5c">gen</a> () noexcept</td></tr>
 <tr class="memdesc:a346e161f12d8e8ad26b6eaaf5d0f5c5c"><td class="mdescLeft">&#160;</td><td class="mdescRight">Creates a new <a class="el" href="classtvg_1_1LinearGradient.html" title="A class representing the linear gradient fill of the Shape object.">LinearGradient</a> object.  <a href="classtvg_1_1LinearGradient.html#a346e161f12d8e8ad26b6eaaf5d0f5c5c">More...</a><br /></td></tr>
 <tr class="separator:a346e161f12d8e8ad26b6eaaf5d0f5c5c"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:a13df43a335dadaea01769a726dc9ddfd"><td class="memItemLeft" align="right" valign="top">static uint32_t&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classtvg_1_1LinearGradient.html#a13df43a335dadaea01769a726dc9ddfd">identifier</a> () noexcept</td></tr>
-<tr class="memdesc:a13df43a335dadaea01769a726dc9ddfd"><td class="mdescLeft">&#160;</td><td class="mdescRight">Return the unique id value of this class.  <a href="classtvg_1_1LinearGradient.html#a13df43a335dadaea01769a726dc9ddfd">More...</a><br /></td></tr>
-<tr class="separator:a13df43a335dadaea01769a726dc9ddfd"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:ae1adb7ffb2cd728a61829849a31ffaaa"><td class="memItemLeft" align="right" valign="top">static TVG_DEPRECATED uint32_t&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classtvg_1_1LinearGradient.html#ae1adb7ffb2cd728a61829849a31ffaaa">identifier</a> () noexcept</td></tr>
+<tr class="separator:ae1adb7ffb2cd728a61829849a31ffaaa"><td class="memSeparator" colspan="2">&#160;</td></tr>
 </table>
 <a name="details" id="details"></a><h2 class="groupheader">Detailed Description</h2>
 <div class="textblock"><p>A class representing the linear gradient fill of the <a class="el" href="classtvg_1_1Shape.html" title="A class representing two-dimensional figures and their properties.">Shape</a> object. </p>
@@ -188,8 +189,8 @@ Static Public Member Functions</h2></td></tr>
 
 </div>
 </div>
-<a id="a13df43a335dadaea01769a726dc9ddfd"></a>
-<h2 class="memtitle"><span class="permalink"><a href="#a13df43a335dadaea01769a726dc9ddfd">&#9670;&nbsp;</a></span>identifier()</h2>
+<a id="ae1adb7ffb2cd728a61829849a31ffaaa"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#ae1adb7ffb2cd728a61829849a31ffaaa">&#9670;&nbsp;</a></span>identifier()</h2>
 
 <div class="memitem">
 <div class="memproto">
@@ -198,7 +199,7 @@ Static Public Member Functions</h2></td></tr>
   <td class="mlabels-left">
       <table class="memname">
         <tr>
-          <td class="memname">static uint32_t identifier </td>
+          <td class="memname">static TVG_DEPRECATED uint32_t identifier </td>
           <td>(</td>
           <td class="paramname"></td><td>)</td>
           <td></td>
@@ -210,10 +211,7 @@ Static Public Member Functions</h2></td></tr>
   </tr>
 </table>
 </div><div class="memdoc">
-
-<p>Return the unique id value of this class. </p>
-<p>This method can be referred for identifying the <a class="el" href="classtvg_1_1LinearGradient.html" title="A class representing the linear gradient fill of the Shape object.">LinearGradient</a> class type.</p>
-<dl class="section return"><dt>Returns</dt><dd>The type id of the <a class="el" href="classtvg_1_1LinearGradient.html" title="A class representing the linear gradient fill of the Shape object.">LinearGradient</a> class. </dd></dl>
+<dl class="section see"><dt>See also</dt><dd><a class="el" href="classtvg_1_1LinearGradient.html#a0998d9f221df277cafde4934e3828aa2" title="Returns the ID value of this class.">LinearGradient::type()</a> </dd></dl>
 
 </div>
 </div>
@@ -334,7 +332,40 @@ Static Public Member Functions</h2></td></tr>
   </table>
   </dd>
 </dl>
-<dl class="section note"><dt>Note</dt><dd>In case the first and the second points are equal, an object filled with such a gradient fill is not rendered. </dd></dl>
+<dl class="section note"><dt>Note</dt><dd>In case the first and the second points are equal, an object is filled with a single color using the last color specified in the <a class="el" href="classtvg_1_1Fill.html#a92717fc84a7d5df56e42e3bc863fce1a" title="Sets the parameters of the colors of the gradient and their position.">colorStops()</a>. </dd></dl>
+<dl class="section see"><dt>See also</dt><dd><a class="el" href="classtvg_1_1Fill.html#a92717fc84a7d5df56e42e3bc863fce1a" title="Sets the parameters of the colors of the gradient and their position.">Fill::colorStops()</a> </dd></dl>
+
+</div>
+</div>
+<a id="a0998d9f221df277cafde4934e3828aa2"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#a0998d9f221df277cafde4934e3828aa2">&#9670;&nbsp;</a></span>type()</h2>
+
+<div class="memitem">
+<div class="memproto">
+<table class="mlabels">
+  <tr>
+  <td class="mlabels-left">
+      <table class="memname">
+        <tr>
+          <td class="memname"><a class="el" href="group__ThorVG.html#ga5f787df9cdf370248382504196841479">Type</a> type </td>
+          <td>(</td>
+          <td class="paramname"></td><td>)</td>
+          <td> const</td>
+        </tr>
+      </table>
+  </td>
+  <td class="mlabels-right">
+<span class="mlabels"><span class="mlabel">override</span><span class="mlabel">virtual</span><span class="mlabel">noexcept</span></span>  </td>
+  </tr>
+</table>
+</div><div class="memdoc">
+
+<p>Returns the ID value of this class. </p>
+<p>This method can be used to check the current concrete instance type.</p>
+<dl class="section return"><dt>Returns</dt><dd>The class type ID of the <a class="el" href="classtvg_1_1LinearGradient.html" title="A class representing the linear gradient fill of the Shape object.">LinearGradient</a> instance.</dd></dl>
+<dl class="section since"><dt>Since</dt><dd>Experimental API </dd></dl>
+
+<p>Implements <a class="el" href="classtvg_1_1Fill.html#aec24b20e43f4edf0fc046517db603181">Fill</a>.</p>
 
 </div>
 </div>

@@ -3,8 +3,6 @@ var annotated_dup =
     [ "tvg", null, [
       [ "Point", "structtvg_1_1Point.html", null ],
       [ "Matrix", "structtvg_1_1Matrix.html", null ],
-      [ "Vertex", "structtvg_1_1Vertex.html", null ],
-      [ "Polygon", "structtvg_1_1Polygon.html", null ],
       [ "Paint", "classtvg_1_1Paint.html", "classtvg_1_1Paint" ],
       [ "Fill", "classtvg_1_1Fill.html", "classtvg_1_1Fill" ],
       [ "Canvas", "classtvg_1_1Canvas.html", "classtvg_1_1Canvas" ],

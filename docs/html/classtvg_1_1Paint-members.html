@@ -27,7 +27,7 @@
   <td id="projectlogo"><img alt="Logo" src="small_logo.png"/></td>
   <td id="projectalign" style="padding-left: 0.5em;">
    <div id="projectname">ThorVG
-   &#160;<span id="projectnumber">v0.14</span>
+   &#160;<span id="projectnumber">v0.15</span>
    </div>
   </td>
  </tr>
@@ -90,21 +90,23 @@ $(document).ready(function(){initNavTree('classtvg_1_1Paint.html',''); initResiz
 
 <p>This is the complete list of members for <a class="el" href="classtvg_1_1Paint.html">Paint</a>, including all inherited members.</p>
 <table class="directory">
-  <tr class="even"><td class="entry"><a class="el" href="classtvg_1_1Paint.html#a7e1214a5dc2f3c19ddeedc5371c4e488">blend</a>(BlendMethod method) const noexcept</td><td class="entry"><a class="el" href="classtvg_1_1Paint.html">Paint</a></td><td class="entry"></td></tr>
-  <tr><td class="entry"><a class="el" href="classtvg_1_1Paint.html#a4bd3efb580822b2db64034e3f3cd18ad">blend</a>() const noexcept</td><td class="entry"><a class="el" href="classtvg_1_1Paint.html">Paint</a></td><td class="entry"></td></tr>
-  <tr class="even"><td class="entry"><a class="el" href="classtvg_1_1Paint.html#aed5a6ad8edd827a378111b590ed7755d">bounds</a>(float *x, float *y, float *w, float *h) const noexcept</td><td class="entry"><a class="el" href="classtvg_1_1Paint.html">Paint</a></td><td class="entry"></td></tr>
-  <tr><td class="entry"><a class="el" href="classtvg_1_1Paint.html#a1b51b7344eac48d285c073bc488197d3">bounds</a>(float *x, float *y, float *w, float *h, bool transformed) const noexcept</td><td class="entry"><a class="el" href="classtvg_1_1Paint.html">Paint</a></td><td class="entry"></td></tr>
+  <tr class="even"><td class="entry"><a class="el" href="classtvg_1_1Paint.html#a1878016c09373a24de7b8d618d7be6ee">blend</a>(BlendMethod method) noexcept</td><td class="entry"><a class="el" href="classtvg_1_1Paint.html">Paint</a></td><td class="entry"></td></tr>
+  <tr><td class="entry"><a class="el" href="classtvg_1_1Paint.html#aed5a6ad8edd827a378111b590ed7755d">bounds</a>(float *x, float *y, float *w, float *h) const noexcept</td><td class="entry"><a class="el" href="classtvg_1_1Paint.html">Paint</a></td><td class="entry"></td></tr>
+  <tr class="even"><td class="entry"><a class="el" href="classtvg_1_1Paint.html#a1b51b7344eac48d285c073bc488197d3">bounds</a>(float *x, float *y, float *w, float *h, bool transformed) const noexcept</td><td class="entry"><a class="el" href="classtvg_1_1Paint.html">Paint</a></td><td class="entry"></td></tr>
+  <tr><td class="entry"><a class="el" href="classtvg_1_1Paint.html#a750662e70fca25a8a0e3f6661021c35c">clip</a>(std::unique_ptr&lt; Paint &gt; clipper) noexcept</td><td class="entry"><a class="el" href="classtvg_1_1Paint.html">Paint</a></td><td class="entry"></td></tr>
   <tr class="even"><td class="entry"><a class="el" href="classtvg_1_1Paint.html#a2e2d077b820d1cfd6502a86e0221638b">composite</a>(std::unique_ptr&lt; Paint &gt; target, CompositeMethod method) noexcept</td><td class="entry"><a class="el" href="classtvg_1_1Paint.html">Paint</a></td><td class="entry"></td></tr>
   <tr><td class="entry"><a class="el" href="classtvg_1_1Paint.html#aefe4ade5b1b6bc13d518bd5f968af3ee">composite</a>(const Paint **target) const noexcept</td><td class="entry"><a class="el" href="classtvg_1_1Paint.html">Paint</a></td><td class="entry"></td></tr>
   <tr class="even"><td class="entry"><a class="el" href="classtvg_1_1Paint.html#a71afac69fe1e7c352460be5878812635">duplicate</a>() const noexcept</td><td class="entry"><a class="el" href="classtvg_1_1Paint.html">Paint</a></td><td class="entry"></td></tr>
-  <tr><td class="entry"><a class="el" href="classtvg_1_1Paint.html#a37466e9eff2de62ff15c9df3d72b656d">identifier</a>() const noexcept</td><td class="entry"><a class="el" href="classtvg_1_1Paint.html">Paint</a></td><td class="entry"></td></tr>
-  <tr class="even"><td class="entry"><a class="el" href="classtvg_1_1Paint.html#a2f25b71fed3ae390eb8051c7ea65aebf">opacity</a>(uint8_t o) noexcept</td><td class="entry"><a class="el" href="classtvg_1_1Paint.html">Paint</a></td><td class="entry"></td></tr>
-  <tr><td class="entry"><a class="el" href="classtvg_1_1Paint.html#a2ee7517b8bfad47e0f999ba3450e0e3e">opacity</a>() const noexcept</td><td class="entry"><a class="el" href="classtvg_1_1Paint.html">Paint</a></td><td class="entry"></td></tr>
-  <tr class="even"><td class="entry"><a class="el" href="classtvg_1_1Paint.html#a7841fa0c14643e09735d48042ead68f3">rotate</a>(float degree) noexcept</td><td class="entry"><a class="el" href="classtvg_1_1Paint.html">Paint</a></td><td class="entry"></td></tr>
-  <tr><td class="entry"><a class="el" href="classtvg_1_1Paint.html#a5c057876185525c5723215f95a3984f2">scale</a>(float factor) noexcept</td><td class="entry"><a class="el" href="classtvg_1_1Paint.html">Paint</a></td><td class="entry"></td></tr>
-  <tr class="even"><td class="entry"><a class="el" href="classtvg_1_1Paint.html#ac9f6ba428afe884bcc2861de0a2a96f4">transform</a>(const Matrix &amp;m) noexcept</td><td class="entry"><a class="el" href="classtvg_1_1Paint.html">Paint</a></td><td class="entry"></td></tr>
-  <tr><td class="entry"><a class="el" href="classtvg_1_1Paint.html#ad1e49b6eb81e87bd860f19e1b92c574b">transform</a>() noexcept</td><td class="entry"><a class="el" href="classtvg_1_1Paint.html">Paint</a></td><td class="entry"></td></tr>
-  <tr class="even"><td class="entry"><a class="el" href="classtvg_1_1Paint.html#ae896f56bfa51c98a50eee3f2bb62e41e">translate</a>(float x, float y) noexcept</td><td class="entry"><a class="el" href="classtvg_1_1Paint.html">Paint</a></td><td class="entry"></td></tr>
+  <tr><td class="entry"><a class="el" href="classtvg_1_1Paint.html#abaabdc509cdaba7df9f56c6c76f3ae19">id</a></td><td class="entry"><a class="el" href="classtvg_1_1Paint.html">Paint</a></td><td class="entry"></td></tr>
+  <tr class="even"><td class="entry"><a class="el" href="classtvg_1_1Paint.html#aee92a597f61d9bbdbd223b5dfc3877b7">identifier</a>() const noexcept</td><td class="entry"><a class="el" href="classtvg_1_1Paint.html">Paint</a></td><td class="entry"></td></tr>
+  <tr><td class="entry"><a class="el" href="classtvg_1_1Paint.html#a2f25b71fed3ae390eb8051c7ea65aebf">opacity</a>(uint8_t o) noexcept</td><td class="entry"><a class="el" href="classtvg_1_1Paint.html">Paint</a></td><td class="entry"></td></tr>
+  <tr class="even"><td class="entry"><a class="el" href="classtvg_1_1Paint.html#a2ee7517b8bfad47e0f999ba3450e0e3e">opacity</a>() const noexcept</td><td class="entry"><a class="el" href="classtvg_1_1Paint.html">Paint</a></td><td class="entry"></td></tr>
+  <tr><td class="entry"><a class="el" href="classtvg_1_1Paint.html#a7841fa0c14643e09735d48042ead68f3">rotate</a>(float degree) noexcept</td><td class="entry"><a class="el" href="classtvg_1_1Paint.html">Paint</a></td><td class="entry"></td></tr>
+  <tr class="even"><td class="entry"><a class="el" href="classtvg_1_1Paint.html#a5c057876185525c5723215f95a3984f2">scale</a>(float factor) noexcept</td><td class="entry"><a class="el" href="classtvg_1_1Paint.html">Paint</a></td><td class="entry"></td></tr>
+  <tr><td class="entry"><a class="el" href="classtvg_1_1Paint.html#ac9f6ba428afe884bcc2861de0a2a96f4">transform</a>(const Matrix &amp;m) noexcept</td><td class="entry"><a class="el" href="classtvg_1_1Paint.html">Paint</a></td><td class="entry"></td></tr>
+  <tr class="even"><td class="entry"><a class="el" href="classtvg_1_1Paint.html#ad1e49b6eb81e87bd860f19e1b92c574b">transform</a>() noexcept</td><td class="entry"><a class="el" href="classtvg_1_1Paint.html">Paint</a></td><td class="entry"></td></tr>
+  <tr><td class="entry"><a class="el" href="classtvg_1_1Paint.html#ae896f56bfa51c98a50eee3f2bb62e41e">translate</a>(float x, float y) noexcept</td><td class="entry"><a class="el" href="classtvg_1_1Paint.html">Paint</a></td><td class="entry"></td></tr>
+  <tr class="even"><td class="entry"><a class="el" href="classtvg_1_1Paint.html#aec24b20e43f4edf0fc046517db603181">type</a>() const noexcept=0</td><td class="entry"><a class="el" href="classtvg_1_1Paint.html">Paint</a></td><td class="entry"><span class="mlabel">pure virtual</span></td></tr>
 </table></div><!-- contents -->
 </div><!-- doc-content -->
 <!-- start footer part -->

@@ -27,7 +27,7 @@
   <td id="projectlogo"><img alt="Logo" src="small_logo.png"/></td>
   <td id="projectalign" style="padding-left: 0.5em;">
    <div id="projectname">ThorVG
-   &#160;<span id="projectnumber">v0.14</span>
+   &#160;<span id="projectnumber">v0.15</span>
    </div>
   </td>
  </tr>
@@ -130,14 +130,14 @@ Public Member Functions</h2></td></tr>
 <tr class="memdesc:af80639ef3460a5cf06278fdc03c13aad"><td class="mdescLeft">&#160;</td><td class="mdescRight">Gets the size of the image.  <a href="classtvg_1_1Picture.html#af80639ef3460a5cf06278fdc03c13aad">More...</a><br /></td></tr>
 <tr class="separator:af80639ef3460a5cf06278fdc03c13aad"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a1fdf75092cebaa7cde48d6a7d4946368"><td class="memItemLeft" align="right" valign="top"><a class="el" href="group__ThorVG.html#ga28287671eaf7406afd604bd055ba4066">Result</a>&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classtvg_1_1Picture.html#a1fdf75092cebaa7cde48d6a7d4946368">load</a> (uint32_t *data, uint32_t w, uint32_t h, bool copy) noexcept</td></tr>
-<tr class="memdesc:a1fdf75092cebaa7cde48d6a7d4946368"><td class="mdescLeft">&#160;</td><td class="mdescRight">Loads a raw data from a memory block with a given size.  <a href="classtvg_1_1Picture.html#a1fdf75092cebaa7cde48d6a7d4946368">More...</a><br /></td></tr>
+<tr class="memdesc:a1fdf75092cebaa7cde48d6a7d4946368"><td class="mdescLeft">&#160;</td><td class="mdescRight">Loads raw data in ARGB8888 format from a memory block of the given size.  <a href="classtvg_1_1Picture.html#a1fdf75092cebaa7cde48d6a7d4946368">More...</a><br /></td></tr>
 <tr class="separator:a1fdf75092cebaa7cde48d6a7d4946368"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:a761d19e78330e8ce73add01cbf1cd2e9"><td class="memItemLeft" align="right" valign="top"><a class="el" href="group__ThorVG.html#ga28287671eaf7406afd604bd055ba4066">Result</a>&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classtvg_1_1Picture.html#a761d19e78330e8ce73add01cbf1cd2e9">mesh</a> (const <a class="el" href="structtvg_1_1Polygon.html">Polygon</a> *triangles, uint32_t triangleCnt) noexcept</td></tr>
-<tr class="memdesc:a761d19e78330e8ce73add01cbf1cd2e9"><td class="mdescLeft">&#160;</td><td class="mdescRight">Sets or removes the triangle mesh to deform the image.  <a href="classtvg_1_1Picture.html#a761d19e78330e8ce73add01cbf1cd2e9">More...</a><br /></td></tr>
-<tr class="separator:a761d19e78330e8ce73add01cbf1cd2e9"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:ae4d1479dbae28f521da8e90f91a97caa"><td class="memItemLeft" align="right" valign="top">uint32_t&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classtvg_1_1Picture.html#ae4d1479dbae28f521da8e90f91a97caa">mesh</a> (const <a class="el" href="structtvg_1_1Polygon.html">Polygon</a> **triangles) const noexcept</td></tr>
-<tr class="memdesc:ae4d1479dbae28f521da8e90f91a97caa"><td class="mdescLeft">&#160;</td><td class="mdescRight">Return the number of triangles in the mesh, and optionally get a pointer to the array of triangles in the mesh.  <a href="classtvg_1_1Picture.html#ae4d1479dbae28f521da8e90f91a97caa">More...</a><br /></td></tr>
-<tr class="separator:ae4d1479dbae28f521da8e90f91a97caa"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:aeaff657c918ea2a3d984478a5e981ea2"><td class="memItemLeft" align="right" valign="top">const <a class="el" href="classtvg_1_1Paint.html">Paint</a> *&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classtvg_1_1Picture.html#aeaff657c918ea2a3d984478a5e981ea2">paint</a> (uint32_t <a class="el" href="classtvg_1_1Paint.html#abaabdc509cdaba7df9f56c6c76f3ae19">id</a>) noexcept</td></tr>
+<tr class="memdesc:aeaff657c918ea2a3d984478a5e981ea2"><td class="mdescLeft">&#160;</td><td class="mdescRight">Retrieve a paint object from the <a class="el" href="classtvg_1_1Picture.html" title="A class representing an image read in one of the supported formats: raw, svg, png,...">Picture</a> scene by its Unique ID.  <a href="classtvg_1_1Picture.html#aeaff657c918ea2a3d984478a5e981ea2">More...</a><br /></td></tr>
+<tr class="separator:aeaff657c918ea2a3d984478a5e981ea2"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a0998d9f221df277cafde4934e3828aa2"><td class="memItemLeft" align="right" valign="top"><a class="el" href="group__ThorVG.html#ga5f787df9cdf370248382504196841479">Type</a>&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classtvg_1_1Picture.html#a0998d9f221df277cafde4934e3828aa2">type</a> () const noexcept override</td></tr>
+<tr class="memdesc:a0998d9f221df277cafde4934e3828aa2"><td class="mdescLeft">&#160;</td><td class="mdescRight">Returns the ID value of this class.  <a href="classtvg_1_1Picture.html#a0998d9f221df277cafde4934e3828aa2">More...</a><br /></td></tr>
+<tr class="separator:a0998d9f221df277cafde4934e3828aa2"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="inherit_header pub_methods_classtvg_1_1Paint"><td colspan="2" onclick="javascript:toggleInherit('pub_methods_classtvg_1_1Paint')"><img src="closed.png" alt="-"/>&#160;Public Member Functions inherited from <a class="el" href="classtvg_1_1Paint.html">Paint</a></td></tr>
 <tr class="memitem:a7841fa0c14643e09735d48042ead68f3 inherit pub_methods_classtvg_1_1Paint"><td class="memItemLeft" align="right" valign="top"><a class="el" href="group__ThorVG.html#ga28287671eaf7406afd604bd055ba4066">Result</a>&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classtvg_1_1Paint.html#a7841fa0c14643e09735d48042ead68f3">rotate</a> (float degree) noexcept</td></tr>
 <tr class="memdesc:a7841fa0c14643e09735d48042ead68f3 inherit pub_methods_classtvg_1_1Paint"><td class="mdescLeft">&#160;</td><td class="mdescRight">Sets the angle by which the object is rotated.  <a href="classtvg_1_1Paint.html#a7841fa0c14643e09735d48042ead68f3">More...</a><br /></td></tr>
@@ -160,9 +160,12 @@ Public Member Functions</h2></td></tr>
 <tr class="memitem:a2e2d077b820d1cfd6502a86e0221638b inherit pub_methods_classtvg_1_1Paint"><td class="memItemLeft" align="right" valign="top"><a class="el" href="group__ThorVG.html#ga28287671eaf7406afd604bd055ba4066">Result</a>&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classtvg_1_1Paint.html#a2e2d077b820d1cfd6502a86e0221638b">composite</a> (std::unique_ptr&lt; <a class="el" href="classtvg_1_1Paint.html">Paint</a> &gt; target, <a class="el" href="group__ThorVG.html#gaabdf94ada64e69d06deabc5aa6576f87">CompositeMethod</a> method) noexcept</td></tr>
 <tr class="memdesc:a2e2d077b820d1cfd6502a86e0221638b inherit pub_methods_classtvg_1_1Paint"><td class="mdescLeft">&#160;</td><td class="mdescRight">Sets the composition target object and the composition method.  <a href="classtvg_1_1Paint.html#a2e2d077b820d1cfd6502a86e0221638b">More...</a><br /></td></tr>
 <tr class="separator:a2e2d077b820d1cfd6502a86e0221638b inherit pub_methods_classtvg_1_1Paint"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:a7e1214a5dc2f3c19ddeedc5371c4e488 inherit pub_methods_classtvg_1_1Paint"><td class="memItemLeft" align="right" valign="top"><a class="el" href="group__ThorVG.html#ga28287671eaf7406afd604bd055ba4066">Result</a>&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classtvg_1_1Paint.html#a7e1214a5dc2f3c19ddeedc5371c4e488">blend</a> (<a class="el" href="group__ThorVG.html#ga4dd2f3776540c10b565e0446aa8e9e02">BlendMethod</a> method) const noexcept</td></tr>
-<tr class="memdesc:a7e1214a5dc2f3c19ddeedc5371c4e488 inherit pub_methods_classtvg_1_1Paint"><td class="mdescLeft">&#160;</td><td class="mdescRight">Sets the blending method for the paint object.  <a href="classtvg_1_1Paint.html#a7e1214a5dc2f3c19ddeedc5371c4e488">More...</a><br /></td></tr>
-<tr class="separator:a7e1214a5dc2f3c19ddeedc5371c4e488 inherit pub_methods_classtvg_1_1Paint"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a750662e70fca25a8a0e3f6661021c35c inherit pub_methods_classtvg_1_1Paint"><td class="memItemLeft" align="right" valign="top"><a class="el" href="group__ThorVG.html#ga28287671eaf7406afd604bd055ba4066">Result</a>&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classtvg_1_1Paint.html#a750662e70fca25a8a0e3f6661021c35c">clip</a> (std::unique_ptr&lt; <a class="el" href="classtvg_1_1Paint.html">Paint</a> &gt; clipper) noexcept</td></tr>
+<tr class="memdesc:a750662e70fca25a8a0e3f6661021c35c inherit pub_methods_classtvg_1_1Paint"><td class="mdescLeft">&#160;</td><td class="mdescRight">Clip the drawing region of the paint object.  <a href="classtvg_1_1Paint.html#a750662e70fca25a8a0e3f6661021c35c">More...</a><br /></td></tr>
+<tr class="separator:a750662e70fca25a8a0e3f6661021c35c inherit pub_methods_classtvg_1_1Paint"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a1878016c09373a24de7b8d618d7be6ee inherit pub_methods_classtvg_1_1Paint"><td class="memItemLeft" align="right" valign="top"><a class="el" href="group__ThorVG.html#ga28287671eaf7406afd604bd055ba4066">Result</a>&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classtvg_1_1Paint.html#a1878016c09373a24de7b8d618d7be6ee">blend</a> (<a class="el" href="group__ThorVG.html#ga4dd2f3776540c10b565e0446aa8e9e02">BlendMethod</a> method) noexcept</td></tr>
+<tr class="memdesc:a1878016c09373a24de7b8d618d7be6ee inherit pub_methods_classtvg_1_1Paint"><td class="mdescLeft">&#160;</td><td class="mdescRight">Sets the blending method for the paint object.  <a href="classtvg_1_1Paint.html#a1878016c09373a24de7b8d618d7be6ee">More...</a><br /></td></tr>
+<tr class="separator:a1878016c09373a24de7b8d618d7be6ee inherit pub_methods_classtvg_1_1Paint"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:aed5a6ad8edd827a378111b590ed7755d inherit pub_methods_classtvg_1_1Paint"><td class="memItemLeft" align="right" valign="top">TVG_DEPRECATED <a class="el" href="group__ThorVG.html#ga28287671eaf7406afd604bd055ba4066">Result</a>&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classtvg_1_1Paint.html#aed5a6ad8edd827a378111b590ed7755d">bounds</a> (float *x, float *y, float *w, float *h) const noexcept</td></tr>
 <tr class="separator:aed5a6ad8edd827a378111b590ed7755d inherit pub_methods_classtvg_1_1Paint"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a1b51b7344eac48d285c073bc488197d3 inherit pub_methods_classtvg_1_1Paint"><td class="memItemLeft" align="right" valign="top"><a class="el" href="group__ThorVG.html#ga28287671eaf7406afd604bd055ba4066">Result</a>&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classtvg_1_1Paint.html#a1b51b7344eac48d285c073bc488197d3">bounds</a> (float *x, float *y, float *w, float *h, bool transformed) const noexcept</td></tr>
@@ -177,21 +180,23 @@ Public Member Functions</h2></td></tr>
 <tr class="memitem:aefe4ade5b1b6bc13d518bd5f968af3ee inherit pub_methods_classtvg_1_1Paint"><td class="memItemLeft" align="right" valign="top"><a class="el" href="group__ThorVG.html#gaabdf94ada64e69d06deabc5aa6576f87">CompositeMethod</a>&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classtvg_1_1Paint.html#aefe4ade5b1b6bc13d518bd5f968af3ee">composite</a> (const <a class="el" href="classtvg_1_1Paint.html">Paint</a> **target) const noexcept</td></tr>
 <tr class="memdesc:aefe4ade5b1b6bc13d518bd5f968af3ee inherit pub_methods_classtvg_1_1Paint"><td class="mdescLeft">&#160;</td><td class="mdescRight">Gets the composition target object and the composition method.  <a href="classtvg_1_1Paint.html#aefe4ade5b1b6bc13d518bd5f968af3ee">More...</a><br /></td></tr>
 <tr class="separator:aefe4ade5b1b6bc13d518bd5f968af3ee inherit pub_methods_classtvg_1_1Paint"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:a4bd3efb580822b2db64034e3f3cd18ad inherit pub_methods_classtvg_1_1Paint"><td class="memItemLeft" align="right" valign="top"><a class="el" href="group__ThorVG.html#ga4dd2f3776540c10b565e0446aa8e9e02">BlendMethod</a>&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classtvg_1_1Paint.html#a4bd3efb580822b2db64034e3f3cd18ad">blend</a> () const noexcept</td></tr>
-<tr class="memdesc:a4bd3efb580822b2db64034e3f3cd18ad inherit pub_methods_classtvg_1_1Paint"><td class="mdescLeft">&#160;</td><td class="mdescRight">Gets the blending method of the object.  <a href="classtvg_1_1Paint.html#a4bd3efb580822b2db64034e3f3cd18ad">More...</a><br /></td></tr>
-<tr class="separator:a4bd3efb580822b2db64034e3f3cd18ad inherit pub_methods_classtvg_1_1Paint"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:a37466e9eff2de62ff15c9df3d72b656d inherit pub_methods_classtvg_1_1Paint"><td class="memItemLeft" align="right" valign="top">uint32_t&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classtvg_1_1Paint.html#a37466e9eff2de62ff15c9df3d72b656d">identifier</a> () const noexcept</td></tr>
-<tr class="memdesc:a37466e9eff2de62ff15c9df3d72b656d inherit pub_methods_classtvg_1_1Paint"><td class="mdescLeft">&#160;</td><td class="mdescRight">Return the unique id value of the paint instance.  <a href="classtvg_1_1Paint.html#a37466e9eff2de62ff15c9df3d72b656d">More...</a><br /></td></tr>
-<tr class="separator:a37466e9eff2de62ff15c9df3d72b656d inherit pub_methods_classtvg_1_1Paint"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:aee92a597f61d9bbdbd223b5dfc3877b7 inherit pub_methods_classtvg_1_1Paint"><td class="memItemLeft" align="right" valign="top">TVG_DEPRECATED uint32_t&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classtvg_1_1Paint.html#aee92a597f61d9bbdbd223b5dfc3877b7">identifier</a> () const noexcept</td></tr>
+<tr class="separator:aee92a597f61d9bbdbd223b5dfc3877b7 inherit pub_methods_classtvg_1_1Paint"><td class="memSeparator" colspan="2">&#160;</td></tr>
 </table><table class="memberdecls">
 <tr class="heading"><td colspan="2"><h2 class="groupheader"><a name="pub-static-methods"></a>
 Static Public Member Functions</h2></td></tr>
 <tr class="memitem:a68af11946af3c1c63a4e915cd0207811"><td class="memItemLeft" align="right" valign="top">static std::unique_ptr&lt; <a class="el" href="classtvg_1_1Picture.html">Picture</a> &gt;&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classtvg_1_1Picture.html#a68af11946af3c1c63a4e915cd0207811">gen</a> () noexcept</td></tr>
 <tr class="memdesc:a68af11946af3c1c63a4e915cd0207811"><td class="mdescLeft">&#160;</td><td class="mdescRight">Creates a new <a class="el" href="classtvg_1_1Picture.html" title="A class representing an image read in one of the supported formats: raw, svg, png,...">Picture</a> object.  <a href="classtvg_1_1Picture.html#a68af11946af3c1c63a4e915cd0207811">More...</a><br /></td></tr>
 <tr class="separator:a68af11946af3c1c63a4e915cd0207811"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:a13df43a335dadaea01769a726dc9ddfd"><td class="memItemLeft" align="right" valign="top">static uint32_t&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classtvg_1_1Picture.html#a13df43a335dadaea01769a726dc9ddfd">identifier</a> () noexcept</td></tr>
-<tr class="memdesc:a13df43a335dadaea01769a726dc9ddfd"><td class="mdescLeft">&#160;</td><td class="mdescRight">Return the unique id value of this class.  <a href="classtvg_1_1Picture.html#a13df43a335dadaea01769a726dc9ddfd">More...</a><br /></td></tr>
-<tr class="separator:a13df43a335dadaea01769a726dc9ddfd"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:ae1adb7ffb2cd728a61829849a31ffaaa"><td class="memItemLeft" align="right" valign="top">static TVG_DEPRECATED uint32_t&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classtvg_1_1Picture.html#ae1adb7ffb2cd728a61829849a31ffaaa">identifier</a> () noexcept</td></tr>
+<tr class="separator:ae1adb7ffb2cd728a61829849a31ffaaa"><td class="memSeparator" colspan="2">&#160;</td></tr>
+</table><table class="memberdecls">
+<tr class="heading"><td colspan="2"><h2 class="groupheader"><a name="inherited"></a>
+Additional Inherited Members</h2></td></tr>
+<tr class="inherit_header pub_attribs_classtvg_1_1Paint"><td colspan="2" onclick="javascript:toggleInherit('pub_attribs_classtvg_1_1Paint')"><img src="closed.png" alt="-"/>&#160;Public Attributes inherited from <a class="el" href="classtvg_1_1Paint.html">Paint</a></td></tr>
+<tr class="memitem:abaabdc509cdaba7df9f56c6c76f3ae19 inherit pub_attribs_classtvg_1_1Paint"><td class="memItemLeft" align="right" valign="top">uint32_t&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classtvg_1_1Paint.html#abaabdc509cdaba7df9f56c6c76f3ae19">id</a> = 0</td></tr>
+<tr class="memdesc:abaabdc509cdaba7df9f56c6c76f3ae19 inherit pub_attribs_classtvg_1_1Paint"><td class="mdescLeft">&#160;</td><td class="mdescRight">Unique ID of this instance.  <a href="classtvg_1_1Paint.html#abaabdc509cdaba7df9f56c6c76f3ae19">More...</a><br /></td></tr>
+<tr class="separator:abaabdc509cdaba7df9f56c6c76f3ae19 inherit pub_attribs_classtvg_1_1Paint"><td class="memSeparator" colspan="2">&#160;</td></tr>
 </table>
 <a name="details" id="details"></a><h2 class="groupheader">Detailed Description</h2>
 <div class="textblock"><p>A class representing an image read in one of the supported formats: raw, svg, png, jpg, lottie(json) and etc. Besides the methods inherited from the <a class="el" href="classtvg_1_1Paint.html" title="An abstract class for managing graphical elements.">Paint</a>, it provides methods to load &amp; draw images on the canvas. </p>
@@ -227,8 +232,8 @@ See <a class="el" href="classtvg_1_1Animation.html" title="The Animation class e
 
 </div>
 </div>
-<a id="a13df43a335dadaea01769a726dc9ddfd"></a>
-<h2 class="memtitle"><span class="permalink"><a href="#a13df43a335dadaea01769a726dc9ddfd">&#9670;&nbsp;</a></span>identifier()</h2>
+<a id="ae1adb7ffb2cd728a61829849a31ffaaa"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#ae1adb7ffb2cd728a61829849a31ffaaa">&#9670;&nbsp;</a></span>identifier()</h2>
 
 <div class="memitem">
 <div class="memproto">
@@ -237,7 +242,7 @@ See <a class="el" href="classtvg_1_1Animation.html" title="The Animation class e
   <td class="mlabels-left">
       <table class="memname">
         <tr>
-          <td class="memname">static uint32_t identifier </td>
+          <td class="memname">static TVG_DEPRECATED uint32_t identifier </td>
           <td>(</td>
           <td class="paramname"></td><td>)</td>
           <td></td>
@@ -249,10 +254,7 @@ See <a class="el" href="classtvg_1_1Animation.html" title="The Animation class e
   </tr>
 </table>
 </div><div class="memdoc">
-
-<p>Return the unique id value of this class. </p>
-<p>This method can be referred for identifying the <a class="el" href="classtvg_1_1Picture.html" title="A class representing an image read in one of the supported formats: raw, svg, png,...">Picture</a> class type.</p>
-<dl class="section return"><dt>Returns</dt><dd>The type id of the <a class="el" href="classtvg_1_1Picture.html" title="A class representing an image read in one of the supported formats: raw, svg, png,...">Picture</a> class. </dd></dl>
+<dl class="section see"><dt>See also</dt><dd><a class="el" href="classtvg_1_1Picture.html#a0998d9f221df277cafde4934e3828aa2" title="Returns the ID value of this class.">Picture::type()</a> </dd></dl>
 
 </div>
 </div>
@@ -348,7 +350,7 @@ See <a class="el" href="classtvg_1_1Animation.html" title="The Animation class e
 <p>ThorVG efficiently caches the loaded data using the specified <code>data</code> address as a key when the <code>copy</code> has <code>false</code>. This means that loading the same data again will not result in duplicate operations for the sharable <code>data</code>. Instead, ThorVG will reuse the previously loaded picture data.</p>
 <dl class="params"><dt>Parameters</dt><dd>
   <table class="params">
-    <tr><td class="paramdir">[in]</td><td class="paramname">data</td><td>A pointer to a memory location where the content of the picture file is stored. </td></tr>
+    <tr><td class="paramdir">[in]</td><td class="paramname">data</td><td>A pointer to a memory location where the content of the picture file is stored. A null-terminated string is expected for non-binary data if <code>copy</code> is <code>false</code>. </td></tr>
     <tr><td class="paramdir">[in]</td><td class="paramname">size</td><td>The size in bytes of the memory occupied by the <code>data</code>. </td></tr>
     <tr><td class="paramdir">[in]</td><td class="paramname">mimeType</td><td>Mimetype or extension of data such as "jpg", "jpeg", "lottie", "svg", "svg+xml", "png", etc. In case an empty string or an unknown type is provided, the loaders will be tried one by one. </td></tr>
     <tr><td class="paramdir">[in]</td><td class="paramname">copy</td><td>If <code>true</code> the data are copied into the engine local buffer, otherwise they are not.</td></tr>
@@ -362,7 +364,7 @@ See <a class="el" href="classtvg_1_1Animation.html" title="The Animation class e
   </table>
   </dd>
 </dl>
-<dl class="section warning"><dt>Warning</dt><dd>: It's the user responsibility to release the <code>data</code> memory.</dd></dl>
+<dl class="section warning"><dt>Warning</dt><dd>It's the user responsibility to release the <code>data</code> memory.</dd></dl>
 <dl class="section note"><dt>Note</dt><dd>If you are unsure about the MIME type, you can provide an empty value like <code>""</code>, and thorvg will attempt to figure it out. </dd></dl>
 <dl class="section since"><dt>Since</dt><dd>0.5 </dd></dl>
 
@@ -458,7 +460,7 @@ See <a class="el" href="classtvg_1_1Animation.html" title="The Animation class e
 </table>
 </div><div class="memdoc">
 
-<p>Loads a raw data from a memory block with a given size. </p>
+<p>Loads raw data in ARGB8888 format from a memory block of the given size. </p>
 <p>ThorVG efficiently caches the loaded data using the specified <code>data</code> address as a key when the <code>copy</code> has <code>false</code>. This means that loading the same data again will not result in duplicate operations for the sharable <code>data</code>. Instead, ThorVG will reuse the previously loaded picture data.</p>
 <dl class="params"><dt>Parameters</dt><dd>
   <table class="params">
@@ -474,8 +476,8 @@ See <a class="el" href="classtvg_1_1Animation.html" title="The Animation class e
 
 </div>
 </div>
-<a id="ae4d1479dbae28f521da8e90f91a97caa"></a>
-<h2 class="memtitle"><span class="permalink"><a href="#ae4d1479dbae28f521da8e90f91a97caa">&#9670;&nbsp;</a></span>mesh() <span class="overload">[1/2]</span></h2>
+<a id="aeaff657c918ea2a3d984478a5e981ea2"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#aeaff657c918ea2a3d984478a5e981ea2">&#9670;&nbsp;</a></span>paint()</h2>
 
 <div class="memitem">
 <div class="memproto">
@@ -484,59 +486,11 @@ See <a class="el" href="classtvg_1_1Animation.html" title="The Animation class e
   <td class="mlabels-left">
       <table class="memname">
         <tr>
-          <td class="memname">uint32_t mesh </td>
+          <td class="memname">const <a class="el" href="classtvg_1_1Paint.html">Paint</a>* paint </td>
           <td>(</td>
-          <td class="paramtype">const <a class="el" href="structtvg_1_1Polygon.html">Polygon</a> **&#160;</td>
-          <td class="paramname"><em>triangles</em></td><td>)</td>
-          <td> const</td>
-        </tr>
-      </table>
-  </td>
-  <td class="mlabels-right">
-<span class="mlabels"><span class="mlabel">noexcept</span></span>  </td>
-  </tr>
-</table>
-</div><div class="memdoc">
-
-<p>Return the number of triangles in the mesh, and optionally get a pointer to the array of triangles in the mesh. </p>
-<dl class="params"><dt>Parameters</dt><dd>
-  <table class="params">
-    <tr><td class="paramdir">[out]</td><td class="paramname">triangles</td><td>Optional. A pointer to the array of Polygons used by this mesh.</td></tr>
-  </table>
-  </dd>
-</dl>
-<dl class="section return"><dt>Returns</dt><dd>The number of polygons in the array.</dd></dl>
-<dl class="section note"><dt>Note</dt><dd>Modifying the triangles returned by this method will modify them directly within the mesh. </dd></dl>
-<dl class="section warning"><dt>Warning</dt><dd>Please do not use it, this API is not official one. It could be modified in the next version.</dd></dl>
-<dl class="section note"><dt>Note</dt><dd>Experimental API </dd></dl>
-
-</div>
-</div>
-<a id="a761d19e78330e8ce73add01cbf1cd2e9"></a>
-<h2 class="memtitle"><span class="permalink"><a href="#a761d19e78330e8ce73add01cbf1cd2e9">&#9670;&nbsp;</a></span>mesh() <span class="overload">[2/2]</span></h2>
-
-<div class="memitem">
-<div class="memproto">
-<table class="mlabels">
-  <tr>
-  <td class="mlabels-left">
-      <table class="memname">
-        <tr>
-          <td class="memname"><a class="el" href="group__ThorVG.html#ga28287671eaf7406afd604bd055ba4066">Result</a> mesh </td>
-          <td>(</td>
-          <td class="paramtype">const <a class="el" href="structtvg_1_1Polygon.html">Polygon</a> *&#160;</td>
-          <td class="paramname"><em>triangles</em>, </td>
-        </tr>
-        <tr>
-          <td class="paramkey"></td>
-          <td></td>
           <td class="paramtype">uint32_t&#160;</td>
-          <td class="paramname"><em>triangleCnt</em>&#160;</td>
-        </tr>
-        <tr>
+          <td class="paramname"><em>id</em></td><td>)</td>
           <td></td>
-          <td>)</td>
-          <td></td><td></td>
         </tr>
       </table>
   </td>
@@ -546,19 +500,16 @@ See <a class="el" href="classtvg_1_1Animation.html" title="The Animation class e
 </table>
 </div><div class="memdoc">
 
-<p>Sets or removes the triangle mesh to deform the image. </p>
-<p>If a mesh is provided, the transform property of the <a class="el" href="classtvg_1_1Picture.html" title="A class representing an image read in one of the supported formats: raw, svg, png,...">Picture</a> will apply to the triangle mesh, and the image data will be used as the texture.</p>
-<p>If <code>triangles</code> is <code>nullptr</code>, or <code>triangleCnt</code> is 0, the mesh will be removed.</p>
-<p>Only raster image types are supported at this time (png, jpg). Vector types like svg and tvg do not support. mesh deformation. However, if required you should be able to render a vector image to a raster image and then apply a mesh.</p>
+<p>Retrieve a paint object from the <a class="el" href="classtvg_1_1Picture.html" title="A class representing an image read in one of the supported formats: raw, svg, png,...">Picture</a> scene by its Unique ID. </p>
+<p>This function searches for a paint object within the <a class="el" href="classtvg_1_1Picture.html" title="A class representing an image read in one of the supported formats: raw, svg, png,...">Picture</a> scene that matches the provided <code>id</code>.</p>
 <dl class="params"><dt>Parameters</dt><dd>
   <table class="params">
-    <tr><td class="paramdir">[in]</td><td class="paramname">triangles</td><td>An array of Polygons(triangles) that make up the mesh, or null to remove the mesh. </td></tr>
-    <tr><td class="paramdir">[in]</td><td class="paramname">triangleCnt</td><td>The number of Polygons(triangles) provided, or 0 to remove the mesh.</td></tr>
+    <tr><td class="paramdir">[in]</td><td class="paramname">id</td><td>The Unique ID of the paint object.</td></tr>
   </table>
   </dd>
 </dl>
-<dl class="section note"><dt>Note</dt><dd>The Polygons are copied internally, so modifying them after calling Mesh::mesh has no affect. </dd></dl>
-<dl class="section warning"><dt>Warning</dt><dd>Please do not use it, this API is not official one. It could be modified in the next version.</dd></dl>
+<dl class="section return"><dt>Returns</dt><dd>A pointer to the paint object that matches the given identifier, or <code>nullptr</code> if no matching paint object is found.</dd></dl>
+<dl class="section see"><dt>See also</dt><dd><a class="el" href="classtvg_1_1Accessor.html#a4f77dd34469490a192e5b56656f13a50" title="Generate a unique ID (hash key) from a given name.">Accessor::id()</a></dd></dl>
 <dl class="section note"><dt>Note</dt><dd>Experimental API </dd></dl>
 
 </div>
@@ -651,6 +602,38 @@ See <a class="el" href="classtvg_1_1Animation.html" title="The Animation class e
   </table>
   </dd>
 </dl>
+
+</div>
+</div>
+<a id="a0998d9f221df277cafde4934e3828aa2"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#a0998d9f221df277cafde4934e3828aa2">&#9670;&nbsp;</a></span>type()</h2>
+
+<div class="memitem">
+<div class="memproto">
+<table class="mlabels">
+  <tr>
+  <td class="mlabels-left">
+      <table class="memname">
+        <tr>
+          <td class="memname"><a class="el" href="group__ThorVG.html#ga5f787df9cdf370248382504196841479">Type</a> type </td>
+          <td>(</td>
+          <td class="paramname"></td><td>)</td>
+          <td> const</td>
+        </tr>
+      </table>
+  </td>
+  <td class="mlabels-right">
+<span class="mlabels"><span class="mlabel">override</span><span class="mlabel">virtual</span><span class="mlabel">noexcept</span></span>  </td>
+  </tr>
+</table>
+</div><div class="memdoc">
+
+<p>Returns the ID value of this class. </p>
+<p>This method can be used to check the current concrete instance type.</p>
+<dl class="section return"><dt>Returns</dt><dd>The class type ID of the <a class="el" href="classtvg_1_1Picture.html" title="A class representing an image read in one of the supported formats: raw, svg, png,...">Picture</a> instance.</dd></dl>
+<dl class="section since"><dt>Since</dt><dd>Experimental API </dd></dl>
+
+<p>Implements <a class="el" href="classtvg_1_1Paint.html#aec24b20e43f4edf0fc046517db603181">Paint</a>.</p>
 
 </div>
 </div>

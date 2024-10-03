@@ -27,7 +27,7 @@
   <td id="projectlogo"><img alt="Logo" src="small_logo.png"/></td>
   <td id="projectalign" style="padding-left: 0.5em;">
    <div id="projectname">ThorVG
-   &#160;<span id="projectnumber">v0.14</span>
+   &#160;<span id="projectnumber">v0.15</span>
    </div>
   </td>
  </tr>
@@ -85,9 +85,10 @@ $(document).ready(function(){initNavTree('classtvg_1_1Paint.html',''); initResiz
 <div class="header">
   <div class="summary">
 <a href="#pub-methods">Public Member Functions</a> &#124;
+<a href="#pub-attribs">Public Attributes</a> &#124;
 <a href="classtvg_1_1Paint-members.html">List of all members</a>  </div>
   <div class="headertitle">
-<div class="title">Paint<div class="ingroups"><a class="el" href="group__ThorVG.html">ThorVG</a></div></div>  </div>
+<div class="title">Paint<span class="mlabels"><span class="mlabel">abstract</span></span><div class="ingroups"><a class="el" href="group__ThorVG.html">ThorVG</a></div></div>  </div>
 </div><!--header-->
 <div class="contents">
 
@@ -129,9 +130,12 @@ Public Member Functions</h2></td></tr>
 <tr class="memitem:a2e2d077b820d1cfd6502a86e0221638b"><td class="memItemLeft" align="right" valign="top"><a class="el" href="group__ThorVG.html#ga28287671eaf7406afd604bd055ba4066">Result</a>&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classtvg_1_1Paint.html#a2e2d077b820d1cfd6502a86e0221638b">composite</a> (std::unique_ptr&lt; <a class="el" href="classtvg_1_1Paint.html">Paint</a> &gt; target, <a class="el" href="group__ThorVG.html#gaabdf94ada64e69d06deabc5aa6576f87">CompositeMethod</a> method) noexcept</td></tr>
 <tr class="memdesc:a2e2d077b820d1cfd6502a86e0221638b"><td class="mdescLeft">&#160;</td><td class="mdescRight">Sets the composition target object and the composition method.  <a href="classtvg_1_1Paint.html#a2e2d077b820d1cfd6502a86e0221638b">More...</a><br /></td></tr>
 <tr class="separator:a2e2d077b820d1cfd6502a86e0221638b"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:a7e1214a5dc2f3c19ddeedc5371c4e488"><td class="memItemLeft" align="right" valign="top"><a class="el" href="group__ThorVG.html#ga28287671eaf7406afd604bd055ba4066">Result</a>&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classtvg_1_1Paint.html#a7e1214a5dc2f3c19ddeedc5371c4e488">blend</a> (<a class="el" href="group__ThorVG.html#ga4dd2f3776540c10b565e0446aa8e9e02">BlendMethod</a> method) const noexcept</td></tr>
-<tr class="memdesc:a7e1214a5dc2f3c19ddeedc5371c4e488"><td class="mdescLeft">&#160;</td><td class="mdescRight">Sets the blending method for the paint object.  <a href="classtvg_1_1Paint.html#a7e1214a5dc2f3c19ddeedc5371c4e488">More...</a><br /></td></tr>
-<tr class="separator:a7e1214a5dc2f3c19ddeedc5371c4e488"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a750662e70fca25a8a0e3f6661021c35c"><td class="memItemLeft" align="right" valign="top"><a class="el" href="group__ThorVG.html#ga28287671eaf7406afd604bd055ba4066">Result</a>&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classtvg_1_1Paint.html#a750662e70fca25a8a0e3f6661021c35c">clip</a> (std::unique_ptr&lt; <a class="el" href="classtvg_1_1Paint.html">Paint</a> &gt; clipper) noexcept</td></tr>
+<tr class="memdesc:a750662e70fca25a8a0e3f6661021c35c"><td class="mdescLeft">&#160;</td><td class="mdescRight">Clip the drawing region of the paint object.  <a href="classtvg_1_1Paint.html#a750662e70fca25a8a0e3f6661021c35c">More...</a><br /></td></tr>
+<tr class="separator:a750662e70fca25a8a0e3f6661021c35c"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a1878016c09373a24de7b8d618d7be6ee"><td class="memItemLeft" align="right" valign="top"><a class="el" href="group__ThorVG.html#ga28287671eaf7406afd604bd055ba4066">Result</a>&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classtvg_1_1Paint.html#a1878016c09373a24de7b8d618d7be6ee">blend</a> (<a class="el" href="group__ThorVG.html#ga4dd2f3776540c10b565e0446aa8e9e02">BlendMethod</a> method) noexcept</td></tr>
+<tr class="memdesc:a1878016c09373a24de7b8d618d7be6ee"><td class="mdescLeft">&#160;</td><td class="mdescRight">Sets the blending method for the paint object.  <a href="classtvg_1_1Paint.html#a1878016c09373a24de7b8d618d7be6ee">More...</a><br /></td></tr>
+<tr class="separator:a1878016c09373a24de7b8d618d7be6ee"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:aed5a6ad8edd827a378111b590ed7755d"><td class="memItemLeft" align="right" valign="top">TVG_DEPRECATED <a class="el" href="group__ThorVG.html#ga28287671eaf7406afd604bd055ba4066">Result</a>&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classtvg_1_1Paint.html#aed5a6ad8edd827a378111b590ed7755d">bounds</a> (float *x, float *y, float *w, float *h) const noexcept</td></tr>
 <tr class="separator:aed5a6ad8edd827a378111b590ed7755d"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a1b51b7344eac48d285c073bc488197d3"><td class="memItemLeft" align="right" valign="top"><a class="el" href="group__ThorVG.html#ga28287671eaf7406afd604bd055ba4066">Result</a>&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classtvg_1_1Paint.html#a1b51b7344eac48d285c073bc488197d3">bounds</a> (float *x, float *y, float *w, float *h, bool transformed) const noexcept</td></tr>
@@ -146,48 +150,24 @@ Public Member Functions</h2></td></tr>
 <tr class="memitem:aefe4ade5b1b6bc13d518bd5f968af3ee"><td class="memItemLeft" align="right" valign="top"><a class="el" href="group__ThorVG.html#gaabdf94ada64e69d06deabc5aa6576f87">CompositeMethod</a>&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classtvg_1_1Paint.html#aefe4ade5b1b6bc13d518bd5f968af3ee">composite</a> (const <a class="el" href="classtvg_1_1Paint.html">Paint</a> **target) const noexcept</td></tr>
 <tr class="memdesc:aefe4ade5b1b6bc13d518bd5f968af3ee"><td class="mdescLeft">&#160;</td><td class="mdescRight">Gets the composition target object and the composition method.  <a href="classtvg_1_1Paint.html#aefe4ade5b1b6bc13d518bd5f968af3ee">More...</a><br /></td></tr>
 <tr class="separator:aefe4ade5b1b6bc13d518bd5f968af3ee"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:a4bd3efb580822b2db64034e3f3cd18ad"><td class="memItemLeft" align="right" valign="top"><a class="el" href="group__ThorVG.html#ga4dd2f3776540c10b565e0446aa8e9e02">BlendMethod</a>&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classtvg_1_1Paint.html#a4bd3efb580822b2db64034e3f3cd18ad">blend</a> () const noexcept</td></tr>
-<tr class="memdesc:a4bd3efb580822b2db64034e3f3cd18ad"><td class="mdescLeft">&#160;</td><td class="mdescRight">Gets the blending method of the object.  <a href="classtvg_1_1Paint.html#a4bd3efb580822b2db64034e3f3cd18ad">More...</a><br /></td></tr>
-<tr class="separator:a4bd3efb580822b2db64034e3f3cd18ad"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:a37466e9eff2de62ff15c9df3d72b656d"><td class="memItemLeft" align="right" valign="top">uint32_t&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classtvg_1_1Paint.html#a37466e9eff2de62ff15c9df3d72b656d">identifier</a> () const noexcept</td></tr>
-<tr class="memdesc:a37466e9eff2de62ff15c9df3d72b656d"><td class="mdescLeft">&#160;</td><td class="mdescRight">Return the unique id value of the paint instance.  <a href="classtvg_1_1Paint.html#a37466e9eff2de62ff15c9df3d72b656d">More...</a><br /></td></tr>
-<tr class="separator:a37466e9eff2de62ff15c9df3d72b656d"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:aec24b20e43f4edf0fc046517db603181"><td class="memItemLeft" align="right" valign="top">virtual <a class="el" href="group__ThorVG.html#ga5f787df9cdf370248382504196841479">Type</a>&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classtvg_1_1Paint.html#aec24b20e43f4edf0fc046517db603181">type</a> () const noexcept=0</td></tr>
+<tr class="memdesc:aec24b20e43f4edf0fc046517db603181"><td class="mdescLeft">&#160;</td><td class="mdescRight">Returns the ID value of this class.  <a href="classtvg_1_1Paint.html#aec24b20e43f4edf0fc046517db603181">More...</a><br /></td></tr>
+<tr class="separator:aec24b20e43f4edf0fc046517db603181"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:aee92a597f61d9bbdbd223b5dfc3877b7"><td class="memItemLeft" align="right" valign="top">TVG_DEPRECATED uint32_t&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classtvg_1_1Paint.html#aee92a597f61d9bbdbd223b5dfc3877b7">identifier</a> () const noexcept</td></tr>
+<tr class="separator:aee92a597f61d9bbdbd223b5dfc3877b7"><td class="memSeparator" colspan="2">&#160;</td></tr>
+</table><table class="memberdecls">
+<tr class="heading"><td colspan="2"><h2 class="groupheader"><a name="pub-attribs"></a>
+Public Attributes</h2></td></tr>
+<tr class="memitem:abaabdc509cdaba7df9f56c6c76f3ae19"><td class="memItemLeft" align="right" valign="top">uint32_t&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classtvg_1_1Paint.html#abaabdc509cdaba7df9f56c6c76f3ae19">id</a> = 0</td></tr>
+<tr class="memdesc:abaabdc509cdaba7df9f56c6c76f3ae19"><td class="mdescLeft">&#160;</td><td class="mdescRight">Unique ID of this instance.  <a href="classtvg_1_1Paint.html#abaabdc509cdaba7df9f56c6c76f3ae19">More...</a><br /></td></tr>
+<tr class="separator:abaabdc509cdaba7df9f56c6c76f3ae19"><td class="memSeparator" colspan="2">&#160;</td></tr>
 </table>
 <a name="details" id="details"></a><h2 class="groupheader">Detailed Description</h2>
 <div class="textblock"><p>An abstract class for managing graphical elements. </p>
 <p>A graphical element in TVG is any object composed into a <a class="el" href="classtvg_1_1Canvas.html" title="An abstract class for drawing graphical elements.">Canvas</a>. <a class="el" href="classtvg_1_1Paint.html" title="An abstract class for managing graphical elements.">Paint</a> represents such a graphical object and its behaviors such as duplication, transformation and composition. TVG recommends the user to regard a paint as a set of volatile commands. They can prepare a <a class="el" href="classtvg_1_1Paint.html" title="An abstract class for managing graphical elements.">Paint</a> and then request a <a class="el" href="classtvg_1_1Canvas.html" title="An abstract class for drawing graphical elements.">Canvas</a> to run them. </p>
 </div><h2 class="groupheader">Member Function Documentation</h2>
-<a id="a4bd3efb580822b2db64034e3f3cd18ad"></a>
-<h2 class="memtitle"><span class="permalink"><a href="#a4bd3efb580822b2db64034e3f3cd18ad">&#9670;&nbsp;</a></span>blend() <span class="overload">[1/2]</span></h2>
-
-<div class="memitem">
-<div class="memproto">
-<table class="mlabels">
-  <tr>
-  <td class="mlabels-left">
-      <table class="memname">
-        <tr>
-          <td class="memname"><a class="el" href="group__ThorVG.html#ga4dd2f3776540c10b565e0446aa8e9e02">BlendMethod</a> blend </td>
-          <td>(</td>
-          <td class="paramname"></td><td>)</td>
-          <td> const</td>
-        </tr>
-      </table>
-  </td>
-  <td class="mlabels-right">
-<span class="mlabels"><span class="mlabel">noexcept</span></span>  </td>
-  </tr>
-</table>
-</div><div class="memdoc">
-
-<p>Gets the blending method of the object. </p>
-<dl class="section return"><dt>Returns</dt><dd>The blending method</dd></dl>
-<dl class="section note"><dt>Note</dt><dd>Experimental API </dd></dl>
-
-</div>
-</div>
-<a id="a7e1214a5dc2f3c19ddeedc5371c4e488"></a>
-<h2 class="memtitle"><span class="permalink"><a href="#a7e1214a5dc2f3c19ddeedc5371c4e488">&#9670;&nbsp;</a></span>blend() <span class="overload">[2/2]</span></h2>
+<a id="a1878016c09373a24de7b8d618d7be6ee"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#a1878016c09373a24de7b8d618d7be6ee">&#9670;&nbsp;</a></span>blend()</h2>
 
 <div class="memitem">
 <div class="memproto">
@@ -200,7 +180,7 @@ Public Member Functions</h2></td></tr>
           <td>(</td>
           <td class="paramtype"><a class="el" href="group__ThorVG.html#ga4dd2f3776540c10b565e0446aa8e9e02">BlendMethod</a>&#160;</td>
           <td class="paramname"><em>method</em></td><td>)</td>
-          <td> const</td>
+          <td></td>
         </tr>
       </table>
   </td>
@@ -323,18 +303,66 @@ Public Member Functions</h2></td></tr>
 </div><div class="memdoc">
 
 <p>Gets the axis-aligned bounding box of the paint object. </p>
-<p>In case <code>transform</code> is <code>true</code>, all object's transformations are applied first, and then the bounding box is established. Otherwise, the bounding box is determined before any transformations.</p>
 <dl class="params"><dt>Parameters</dt><dd>
   <table class="params">
     <tr><td class="paramdir">[out]</td><td class="paramname">x</td><td>The x-coordinate of the upper-left corner of the object. </td></tr>
     <tr><td class="paramdir">[out]</td><td class="paramname">y</td><td>The y-coordinate of the upper-left corner of the object. </td></tr>
     <tr><td class="paramdir">[out]</td><td class="paramname">w</td><td>The width of the object. </td></tr>
     <tr><td class="paramdir">[out]</td><td class="paramname">h</td><td>The height of the object. </td></tr>
-    <tr><td class="paramdir">[in]</td><td class="paramname">transformed</td><td>If <code>true</code>, the paint's transformations are taken into account, otherwise they aren't.</td></tr>
+    <tr><td class="paramdir">[in]</td><td class="paramname">transformed</td><td>If <code>true</code>, the paint's transformations are taken into account in the scene it belongs to. Otherwise they aren't.</td></tr>
   </table>
   </dd>
 </dl>
-<dl class="section note"><dt>Note</dt><dd>The bounding box doesn't indicate the actual drawing region. It's the smallest rectangle that encloses the object. </dd></dl>
+<dl class="section note"><dt>Note</dt><dd>This is useful when you need to figure out the bounding box of the paint in the canvas space. </dd>
+<dd>
+The bounding box doesn't indicate the actual drawing region. It's the smallest rectangle that encloses the object. </dd>
+<dd>
+If <code>transformed</code> is <code>true</code>, the paint needs to be pushed into a canvas and updated before this api is called. </dd></dl>
+<dl class="section see"><dt>See also</dt><dd><a class="el" href="classtvg_1_1Canvas.html#a89ac8a85a8c22723af9fb07c098472b3" title="Request the canvas to update the paint objects.">Canvas::update()</a> </dd></dl>
+
+</div>
+</div>
+<a id="a750662e70fca25a8a0e3f6661021c35c"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#a750662e70fca25a8a0e3f6661021c35c">&#9670;&nbsp;</a></span>clip()</h2>
+
+<div class="memitem">
+<div class="memproto">
+<table class="mlabels">
+  <tr>
+  <td class="mlabels-left">
+      <table class="memname">
+        <tr>
+          <td class="memname"><a class="el" href="group__ThorVG.html#ga28287671eaf7406afd604bd055ba4066">Result</a> clip </td>
+          <td>(</td>
+          <td class="paramtype">std::unique_ptr&lt; <a class="el" href="classtvg_1_1Paint.html">Paint</a> &gt;&#160;</td>
+          <td class="paramname"><em>clipper</em></td><td>)</td>
+          <td></td>
+        </tr>
+      </table>
+  </td>
+  <td class="mlabels-right">
+<span class="mlabels"><span class="mlabel">noexcept</span></span>  </td>
+  </tr>
+</table>
+</div><div class="memdoc">
+
+<p>Clip the drawing region of the paint object. </p>
+<p>This function restricts the drawing area of the paint object to the specified shape's paths.</p>
+<dl class="params"><dt>Parameters</dt><dd>
+  <table class="params">
+    <tr><td class="paramdir">[in]</td><td class="paramname">clipper</td><td>The shape object as the clipper.</td></tr>
+  </table>
+  </dd>
+</dl>
+<dl class="retval"><dt>Return values</dt><dd>
+  <table class="retval">
+    <tr><td class="paramname"><a class="el" href="group__ThorVG.html#gga28287671eaf7406afd604bd055ba4066aa0cfd518e4385f31d38720579321ed29" title="The value returned in case of choosing unsupported engine features(options).">Result::NonSupport</a></td><td>If the <code>clipper</code> type is not <a class="el" href="classtvg_1_1Shape.html" title="A class representing two-dimensional figures and their properties.">Shape</a>.</td></tr>
+  </table>
+  </dd>
+</dl>
+<dl class="section note"><dt>Note</dt><dd><code>clipper</code> only supports the <a class="el" href="classtvg_1_1Shape.html" title="A class representing two-dimensional figures and their properties.">Shape</a> type. </dd>
+<dd>
+Experimental API </dd></dl>
 
 </div>
 </div>
@@ -448,8 +476,8 @@ Public Member Functions</h2></td></tr>
 
 </div>
 </div>
-<a id="a37466e9eff2de62ff15c9df3d72b656d"></a>
-<h2 class="memtitle"><span class="permalink"><a href="#a37466e9eff2de62ff15c9df3d72b656d">&#9670;&nbsp;</a></span>identifier()</h2>
+<a id="aee92a597f61d9bbdbd223b5dfc3877b7"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#aee92a597f61d9bbdbd223b5dfc3877b7">&#9670;&nbsp;</a></span>identifier()</h2>
 
 <div class="memitem">
 <div class="memproto">
@@ -458,7 +486,7 @@ Public Member Functions</h2></td></tr>
   <td class="mlabels-left">
       <table class="memname">
         <tr>
-          <td class="memname">uint32_t identifier </td>
+          <td class="memname">TVG_DEPRECATED uint32_t identifier </td>
           <td>(</td>
           <td class="paramname"></td><td>)</td>
           <td> const</td>
@@ -470,10 +498,7 @@ Public Member Functions</h2></td></tr>
   </tr>
 </table>
 </div><div class="memdoc">
-
-<p>Return the unique id value of the paint instance. </p>
-<p>This method can be called for checking the current concrete instance type.</p>
-<dl class="section return"><dt>Returns</dt><dd>The type id of the <a class="el" href="classtvg_1_1Paint.html" title="An abstract class for managing graphical elements.">Paint</a> instance. </dd></dl>
+<dl class="section see"><dt>See also</dt><dd><a class="el" href="classtvg_1_1Paint.html#aec24b20e43f4edf0fc046517db603181" title="Returns the ID value of this class.">Paint::type()</a> </dd></dl>
 
 </div>
 </div>
@@ -536,9 +561,7 @@ Public Member Functions</h2></td></tr>
   </table>
   </dd>
 </dl>
-<dl class="section note"><dt>Note</dt><dd>Setting the opacity with this API may require multiple render pass for composition. It is recommended to avoid changing the opacity if possible. </dd>
-<dd>
-ClipPath won't use the opacity value. (see: enum class <a class="el" href="group__ThorVG.html#ggaabdf94ada64e69d06deabc5aa6576f87a60575a18ece363c72551a982450efd52" title="The intersection of the source and the target is determined and only the resulting pixels from the so...">CompositeMethod::ClipPath</a>) </dd></dl>
+<dl class="section note"><dt>Note</dt><dd>Setting the opacity with this API may require multiple render pass for composition. It is recommended to avoid changing the opacity if possible. </dd></dl>
 
 </div>
 </div>
@@ -570,10 +593,17 @@ ClipPath won't use the opacity value. (see: enum class <a class="el" href="group
 <p>The angle in measured clockwise from the horizontal axis. The rotational axis passes through the point on the object with zero coordinates.</p>
 <dl class="params"><dt>Parameters</dt><dd>
   <table class="params">
-    <tr><td class="paramdir">[in]</td><td class="paramname">degree</td><td>The value of the angle in degrees. </td></tr>
+    <tr><td class="paramdir">[in]</td><td class="paramname">degree</td><td>The value of the angle in degrees.</td></tr>
   </table>
   </dd>
 </dl>
+<dl class="retval"><dt>Return values</dt><dd>
+  <table class="retval">
+    <tr><td class="paramname"><a class="el" href="group__ThorVG.html#gga28287671eaf7406afd604bd055ba4066a119732ff568bf103d744e930ae2404f1" title="The value returned in case the request cannot be processed - e.g. asking for properties of an object,...">Result::InsufficientCondition</a></td><td>in case a custom transform is applied. </td></tr>
+  </table>
+  </dd>
+</dl>
+<dl class="section see"><dt>See also</dt><dd><a class="el" href="classtvg_1_1Paint.html#ad1e49b6eb81e87bd860f19e1b92c574b" title="Gets the matrix of the affine transformation of the object.">Paint::transform()</a> </dd></dl>
 
 </div>
 </div>
@@ -604,10 +634,17 @@ ClipPath won't use the opacity value. (see: enum class <a class="el" href="group
 <p>Sets the scale value of the object. </p>
 <dl class="params"><dt>Parameters</dt><dd>
   <table class="params">
-    <tr><td class="paramdir">[in]</td><td class="paramname">factor</td><td>The value of the scaling factor. The default value is 1. </td></tr>
+    <tr><td class="paramdir">[in]</td><td class="paramname">factor</td><td>The value of the scaling factor. The default value is 1.</td></tr>
   </table>
   </dd>
 </dl>
+<dl class="retval"><dt>Return values</dt><dd>
+  <table class="retval">
+    <tr><td class="paramname"><a class="el" href="group__ThorVG.html#gga28287671eaf7406afd604bd055ba4066a119732ff568bf103d744e930ae2404f1" title="The value returned in case the request cannot be processed - e.g. asking for properties of an object,...">Result::InsufficientCondition</a></td><td>in case a custom transform is applied. </td></tr>
+  </table>
+  </dd>
+</dl>
+<dl class="section see"><dt>See also</dt><dd><a class="el" href="classtvg_1_1Paint.html#ad1e49b6eb81e87bd860f19e1b92c574b" title="Gets the matrix of the affine transformation of the object.">Paint::transform()</a> </dd></dl>
 
 </div>
 </div>
@@ -715,10 +752,68 @@ ClipPath won't use the opacity value. (see: enum class <a class="el" href="group
 <dl class="params"><dt>Parameters</dt><dd>
   <table class="params">
     <tr><td class="paramdir">[in]</td><td class="paramname">x</td><td>The value of the horizontal shift. </td></tr>
-    <tr><td class="paramdir">[in]</td><td class="paramname">y</td><td>The value of the vertical shift. </td></tr>
+    <tr><td class="paramdir">[in]</td><td class="paramname">y</td><td>The value of the vertical shift.</td></tr>
   </table>
   </dd>
 </dl>
+<dl class="retval"><dt>Return values</dt><dd>
+  <table class="retval">
+    <tr><td class="paramname"><a class="el" href="group__ThorVG.html#gga28287671eaf7406afd604bd055ba4066a119732ff568bf103d744e930ae2404f1" title="The value returned in case the request cannot be processed - e.g. asking for properties of an object,...">Result::InsufficientCondition</a></td><td>in case a custom transform is applied. </td></tr>
+  </table>
+  </dd>
+</dl>
+<dl class="section see"><dt>See also</dt><dd><a class="el" href="classtvg_1_1Paint.html#ad1e49b6eb81e87bd860f19e1b92c574b" title="Gets the matrix of the affine transformation of the object.">Paint::transform()</a> </dd></dl>
+
+</div>
+</div>
+<a id="aec24b20e43f4edf0fc046517db603181"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#aec24b20e43f4edf0fc046517db603181">&#9670;&nbsp;</a></span>type()</h2>
+
+<div class="memitem">
+<div class="memproto">
+<table class="mlabels">
+  <tr>
+  <td class="mlabels-left">
+      <table class="memname">
+        <tr>
+          <td class="memname">virtual <a class="el" href="group__ThorVG.html#ga5f787df9cdf370248382504196841479">Type</a> type </td>
+          <td>(</td>
+          <td class="paramname"></td><td>)</td>
+          <td> const</td>
+        </tr>
+      </table>
+  </td>
+  <td class="mlabels-right">
+<span class="mlabels"><span class="mlabel">pure virtual</span><span class="mlabel">noexcept</span></span>  </td>
+  </tr>
+</table>
+</div><div class="memdoc">
+
+<p>Returns the ID value of this class. </p>
+<p>This method can be used to check the current concrete instance type.</p>
+<dl class="section return"><dt>Returns</dt><dd>The class type ID of the <a class="el" href="classtvg_1_1Paint.html" title="An abstract class for managing graphical elements.">Paint</a> instance.</dd></dl>
+<dl class="section since"><dt>Since</dt><dd>Experimental API </dd></dl>
+
+<p>Implemented in <a class="el" href="classtvg_1_1Text.html#a0998d9f221df277cafde4934e3828aa2">Text</a>, <a class="el" href="classtvg_1_1Scene.html#a0998d9f221df277cafde4934e3828aa2">Scene</a>, <a class="el" href="classtvg_1_1Picture.html#a0998d9f221df277cafde4934e3828aa2">Picture</a>, and <a class="el" href="classtvg_1_1Shape.html#a0998d9f221df277cafde4934e3828aa2">Shape</a>.</p>
+
+</div>
+</div>
+<h2 class="groupheader">Member Data Documentation</h2>
+<a id="abaabdc509cdaba7df9f56c6c76f3ae19"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#abaabdc509cdaba7df9f56c6c76f3ae19">&#9670;&nbsp;</a></span>id</h2>
+
+<div class="memitem">
+<div class="memproto">
+      <table class="memname">
+        <tr>
+          <td class="memname">uint32_t id = 0</td>
+        </tr>
+      </table>
+</div><div class="memdoc">
+
+<p>Unique ID of this instance. </p>
+<p>This is reserved to specify an paint instance in a scene.</p>
+<dl class="section since"><dt>Since</dt><dd>Experimental API </dd></dl>
 
 </div>
 </div>

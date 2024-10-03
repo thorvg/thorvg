@@ -27,7 +27,7 @@
   <td id="projectlogo"><img alt="Logo" src="small_logo.png"/></td>
   <td id="projectalign" style="padding-left: 0.5em;">
    <div id="projectname">ThorVG
-   &#160;<span id="projectnumber">v0.14</span>
+   &#160;<span id="projectnumber">v0.15</span>
    </div>
   </td>
  </tr>
@@ -303,6 +303,12 @@ Public Member Functions</h2></td></tr>
 
 <p>Guarantees that drawing task is finished. </p>
 <p>The <a class="el" href="classtvg_1_1Canvas.html" title="An abstract class for drawing graphical elements.">Canvas</a> rendering can be performed asynchronously. To make sure that rendering is finished, the <a class="el" href="classtvg_1_1Canvas.html#adbca600af79f9a0b8e8366e3be7450e9" title="Guarantees that drawing task is finished.">sync()</a> must be called after the <a class="el" href="classtvg_1_1Canvas.html#aabf9e5a14da3b4bfd5883c2b4459abd0" title="Requests the canvas to draw the Paint objects.">draw()</a> regardless of threading.</p>
+<dl class="retval"><dt>Return values</dt><dd>
+  <table class="retval">
+    <tr><td class="paramname"><a class="el" href="group__ThorVG.html#gga28287671eaf7406afd604bd055ba4066a119732ff568bf103d744e930ae2404f1" title="The value returned in case the request cannot be processed - e.g. asking for properties of an object,...">Result::InsufficientCondition</a></td><td>The canvas is either already in sync condition or in a damaged condition (a draw is required before syncing).</td></tr>
+  </table>
+  </dd>
+</dl>
 <dl class="section see"><dt>See also</dt><dd><a class="el" href="classtvg_1_1Canvas.html#aabf9e5a14da3b4bfd5883c2b4459abd0" title="Requests the canvas to draw the Paint objects.">Canvas::draw()</a> </dd></dl>
 
 </div>
@@ -404,11 +410,10 @@ Public Member Functions</h2></td></tr>
 <dd>
 <a class="el" href="classtvg_1_1GlCanvas.html#a182ae193566dbc09fc2ec5a369ad38ad" title="Sets the drawing target for rasterization.">GlCanvas::target()</a> </dd>
 <dd>
-<a class="el" href="classtvg_1_1WgCanvas.html#a8374462d6f583b287a3664bee0d22c9a" title="Sets the drawing target for the rasterization.">WgCanvas::target()</a></dd></dl>
+<a class="el" href="classtvg_1_1WgCanvas.html#abf98e4ee044acb637747310e55631d32" title="Sets the drawing target for the rasterization.">WgCanvas::target()</a></dd></dl>
 <dl class="section warning"><dt>Warning</dt><dd>It's not allowed to change the viewport during <a class="el" href="classtvg_1_1Canvas.html#a82c5ec1c1ba93cf7671642400074201e" title="Passes drawing elements to the Canvas using Paint objects.">Canvas::push()</a> - <a class="el" href="classtvg_1_1Canvas.html#adbca600af79f9a0b8e8366e3be7450e9" title="Guarantees that drawing task is finished.">Canvas::sync()</a> or <a class="el" href="classtvg_1_1Canvas.html#a89ac8a85a8c22723af9fb07c098472b3" title="Request the canvas to update the paint objects.">Canvas::update()</a> - <a class="el" href="classtvg_1_1Canvas.html#adbca600af79f9a0b8e8366e3be7450e9" title="Guarantees that drawing task is finished.">Canvas::sync()</a>.</dd></dl>
-<dl class="section note"><dt>Note</dt><dd>When resetting the target, the viewport will also be reset to the target size. </dd>
-<dd>
-Experimental API </dd></dl>
+<dl class="section note"><dt>Note</dt><dd>When resetting the target, the viewport will also be reset to the target size. </dd></dl>
+<dl class="section since"><dt>Since</dt><dd>0.15 </dd></dl>
 
 </div>
 </div>
