@@ -27,7 +27,7 @@
   <td id="projectlogo"><img alt="Logo" src="small_logo.png"/></td>
   <td id="projectalign" style="padding-left: 0.5em;">
    <div id="projectname">ThorVG
-   &#160;<span id="projectnumber">v0.14</span>
+   &#160;<span id="projectnumber">v0.15</span>
    </div>
   </td>
  </tr>
@@ -97,12 +97,15 @@ $(document).ready(function(){initNavTree('classtvg_1_1Accessor.html',''); initRe
 <table class="memberdecls">
 <tr class="heading"><td colspan="2"><h2 class="groupheader"><a name="pub-methods"></a>
 Public Member Functions</h2></td></tr>
-<tr class="memitem:a845badc349250125a45b3d90742d23d1"><td class="memItemLeft" align="right" valign="top">std::unique_ptr&lt; <a class="el" href="classtvg_1_1Picture.html">Picture</a> &gt;&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classtvg_1_1Accessor.html#a845badc349250125a45b3d90742d23d1">set</a> (std::unique_ptr&lt; <a class="el" href="classtvg_1_1Picture.html">Picture</a> &gt; picture, std::function&lt; bool(const <a class="el" href="classtvg_1_1Paint.html">Paint</a> *paint)&gt; func) noexcept</td></tr>
-<tr class="memdesc:a845badc349250125a45b3d90742d23d1"><td class="mdescLeft">&#160;</td><td class="mdescRight">Set the access function for traversing the <a class="el" href="classtvg_1_1Picture.html" title="A class representing an image read in one of the supported formats: raw, svg, png,...">Picture</a> scene tree nodes.  <a href="classtvg_1_1Accessor.html#a845badc349250125a45b3d90742d23d1">More...</a><br /></td></tr>
-<tr class="separator:a845badc349250125a45b3d90742d23d1"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a19696fc28e7eb51f5a4a8603c60e789d"><td class="memItemLeft" align="right" valign="top"><a class="el" href="group__ThorVG.html#ga28287671eaf7406afd604bd055ba4066">Result</a>&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classtvg_1_1Accessor.html#a19696fc28e7eb51f5a4a8603c60e789d">set</a> (const <a class="el" href="classtvg_1_1Picture.html">Picture</a> *picture, std::function&lt; bool(const <a class="el" href="classtvg_1_1Paint.html">Paint</a> *paint, void *data)&gt; func, void *data) noexcept</td></tr>
+<tr class="memdesc:a19696fc28e7eb51f5a4a8603c60e789d"><td class="mdescLeft">&#160;</td><td class="mdescRight">Set the access function for traversing the <a class="el" href="classtvg_1_1Picture.html" title="A class representing an image read in one of the supported formats: raw, svg, png,...">Picture</a> scene tree nodes.  <a href="classtvg_1_1Accessor.html#a19696fc28e7eb51f5a4a8603c60e789d">More...</a><br /></td></tr>
+<tr class="separator:a19696fc28e7eb51f5a4a8603c60e789d"><td class="memSeparator" colspan="2">&#160;</td></tr>
 </table><table class="memberdecls">
 <tr class="heading"><td colspan="2"><h2 class="groupheader"><a name="pub-static-methods"></a>
 Static Public Member Functions</h2></td></tr>
+<tr class="memitem:a4f77dd34469490a192e5b56656f13a50"><td class="memItemLeft" align="right" valign="top">static uint32_t&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classtvg_1_1Accessor.html#a4f77dd34469490a192e5b56656f13a50">id</a> (const char *name) noexcept</td></tr>
+<tr class="memdesc:a4f77dd34469490a192e5b56656f13a50"><td class="mdescLeft">&#160;</td><td class="mdescRight">Generate a unique ID (hash key) from a given name.  <a href="classtvg_1_1Accessor.html#a4f77dd34469490a192e5b56656f13a50">More...</a><br /></td></tr>
+<tr class="separator:a4f77dd34469490a192e5b56656f13a50"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a948e9f4ff06cdc9c19bcc60c1458ecc2"><td class="memItemLeft" align="right" valign="top">static std::unique_ptr&lt; <a class="el" href="classtvg_1_1Accessor.html">Accessor</a> &gt;&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classtvg_1_1Accessor.html#a948e9f4ff06cdc9c19bcc60c1458ecc2">gen</a> () noexcept</td></tr>
 <tr class="memdesc:a948e9f4ff06cdc9c19bcc60c1458ecc2"><td class="mdescLeft">&#160;</td><td class="mdescRight">Creates a new <a class="el" href="classtvg_1_1Accessor.html" title="The Accessor is a utility class to debug the Scene structure by traversing the scene-tree.">Accessor</a> object.  <a href="classtvg_1_1Accessor.html#a948e9f4ff06cdc9c19bcc60c1458ecc2">More...</a><br /></td></tr>
 <tr class="separator:a948e9f4ff06cdc9c19bcc60c1458ecc2"><td class="memSeparator" colspan="2">&#160;</td></tr>
@@ -141,8 +144,8 @@ Static Public Member Functions</h2></td></tr>
 
 </div>
 </div>
-<a id="a845badc349250125a45b3d90742d23d1"></a>
-<h2 class="memtitle"><span class="permalink"><a href="#a845badc349250125a45b3d90742d23d1">&#9670;&nbsp;</a></span>set()</h2>
+<a id="a4f77dd34469490a192e5b56656f13a50"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#a4f77dd34469490a192e5b56656f13a50">&#9670;&nbsp;</a></span>id()</h2>
 
 <div class="memitem">
 <div class="memproto">
@@ -151,16 +154,60 @@ Static Public Member Functions</h2></td></tr>
   <td class="mlabels-left">
       <table class="memname">
         <tr>
-          <td class="memname">std::unique_ptr&lt;<a class="el" href="classtvg_1_1Picture.html">Picture</a>&gt; set </td>
+          <td class="memname">static uint32_t id </td>
           <td>(</td>
-          <td class="paramtype">std::unique_ptr&lt; <a class="el" href="classtvg_1_1Picture.html">Picture</a> &gt;&#160;</td>
+          <td class="paramtype">const char *&#160;</td>
+          <td class="paramname"><em>name</em></td><td>)</td>
+          <td></td>
+        </tr>
+      </table>
+  </td>
+  <td class="mlabels-right">
+<span class="mlabels"><span class="mlabel">static</span><span class="mlabel">noexcept</span></span>  </td>
+  </tr>
+</table>
+</div><div class="memdoc">
+
+<p>Generate a unique ID (hash key) from a given name. </p>
+<p>This function computes a unique identifier value based on the provided string. You can use this to assign a unique ID to the <a class="el" href="classtvg_1_1Paint.html" title="An abstract class for managing graphical elements.">Paint</a> object.</p>
+<dl class="params"><dt>Parameters</dt><dd>
+  <table class="params">
+    <tr><td class="paramdir">[in]</td><td class="paramname">name</td><td>The input string to generate the unique identifier from.</td></tr>
+  </table>
+  </dd>
+</dl>
+<dl class="section return"><dt>Returns</dt><dd>The generated unique identifier value.</dd></dl>
+<dl class="section see"><dt>See also</dt><dd><a class="el" href="classtvg_1_1Paint.html#abaabdc509cdaba7df9f56c6c76f3ae19" title="Unique ID of this instance.">Paint::id</a></dd></dl>
+<dl class="section note"><dt>Note</dt><dd>Experimental API </dd></dl>
+
+</div>
+</div>
+<a id="a19696fc28e7eb51f5a4a8603c60e789d"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#a19696fc28e7eb51f5a4a8603c60e789d">&#9670;&nbsp;</a></span>set()</h2>
+
+<div class="memitem">
+<div class="memproto">
+<table class="mlabels">
+  <tr>
+  <td class="mlabels-left">
+      <table class="memname">
+        <tr>
+          <td class="memname"><a class="el" href="group__ThorVG.html#ga28287671eaf7406afd604bd055ba4066">Result</a> set </td>
+          <td>(</td>
+          <td class="paramtype">const <a class="el" href="classtvg_1_1Picture.html">Picture</a> *&#160;</td>
           <td class="paramname"><em>picture</em>, </td>
         </tr>
         <tr>
           <td class="paramkey"></td>
           <td></td>
-          <td class="paramtype">std::function&lt; bool(const <a class="el" href="classtvg_1_1Paint.html">Paint</a> *paint)&gt;&#160;</td>
-          <td class="paramname"><em>func</em>&#160;</td>
+          <td class="paramtype">std::function&lt; bool(const <a class="el" href="classtvg_1_1Paint.html">Paint</a> *paint, void *data)&gt;&#160;</td>
+          <td class="paramname"><em>func</em>, </td>
+        </tr>
+        <tr>
+          <td class="paramkey"></td>
+          <td></td>
+          <td class="paramtype">void *&#160;</td>
+          <td class="paramname"><em>data</em>&#160;</td>
         </tr>
         <tr>
           <td></td>
@@ -179,12 +226,14 @@ Static Public Member Functions</h2></td></tr>
 <dl class="params"><dt>Parameters</dt><dd>
   <table class="params">
     <tr><td class="paramdir">[in]</td><td class="paramname">picture</td><td>The picture node to traverse the internal scene-tree. </td></tr>
-    <tr><td class="paramdir">[in]</td><td class="paramname">func</td><td>The callback function calling for every paint nodes of the <a class="el" href="classtvg_1_1Picture.html" title="A class representing an image read in one of the supported formats: raw, svg, png,...">Picture</a>.</td></tr>
+    <tr><td class="paramdir">[in]</td><td class="paramname">func</td><td>The callback function calling for every paint nodes of the <a class="el" href="classtvg_1_1Picture.html" title="A class representing an image read in one of the supported formats: raw, svg, png,...">Picture</a>. </td></tr>
+    <tr><td class="paramdir">[in]</td><td class="paramname">data</td><td>Data passed to the <code>func</code> as its argument.</td></tr>
   </table>
   </dd>
 </dl>
-<dl class="section return"><dt>Returns</dt><dd>Return the given <code>picture</code> instance.</dd></dl>
-<dl class="section note"><dt>Note</dt><dd>The bitmap based picture might not have the scene-tree. </dd></dl>
+<dl class="section note"><dt>Note</dt><dd>The bitmap based picture might not have the scene-tree.</dd>
+<dd>
+Experimental API </dd></dl>
 
 </div>
 </div>

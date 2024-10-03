@@ -1,6 +1,6 @@
 var classtvg_1_1Shape =
 [
-    [ "appendArc", "classtvg_1_1Shape.html#a2f003a843ff42f6cee6a726f543836e3", null ],
+    [ "appendArc", "classtvg_1_1Shape.html#a5c2815889f8a3d7d2c980cb225989e43", null ],
     [ "appendCircle", "classtvg_1_1Shape.html#a52eccb2815eaa1231da9c389cd92ffa1", null ],
     [ "appendPath", "classtvg_1_1Shape.html#a3588ea30776a747a22b6ee82dadb9717", null ],
     [ "appendRect", "classtvg_1_1Shape.html#a8ef2587269a01153c9ea4ca4a8d31b49", null ],
@@ -31,7 +31,7 @@ var classtvg_1_1Shape =
     [ "strokeJoin", "classtvg_1_1Shape.html#aac0235df4172e9c079689e5291c7ad5a", null ],
     [ "strokeMiterlimit", "classtvg_1_1Shape.html#a84ec91023314c914e900cade78a9095d", null ],
     [ "strokeMiterlimit", "classtvg_1_1Shape.html#ad8fb8f42c07ac68ef83383b05203ff6f", null ],
-    [ "strokeTrim", "classtvg_1_1Shape.html#a5e0762495957f05713a60540984fdae4", null ],
     [ "strokeTrim", "classtvg_1_1Shape.html#ac69db0796d8e184334add6b0b94b1898", null ],
-    [ "strokeWidth", "classtvg_1_1Shape.html#a1536ec32e91c29dd8300b0d4354773f9", null ]
+    [ "strokeWidth", "classtvg_1_1Shape.html#a1536ec32e91c29dd8300b0d4354773f9", null ],
+    [ "type", "classtvg_1_1Shape.html#a0998d9f221df277cafde4934e3828aa2", null ]
 ];

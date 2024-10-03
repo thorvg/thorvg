@@ -1,4 +1,4 @@
 var searchData=
 [
-  ['vertex_178',['Vertex',['../structtvg_1_1Vertex.html',1,'tvg']]]
+  ['wgcanvas_190',['WgCanvas',['../classtvg_1_1WgCanvas.html',1,'tvg']]]
 ];

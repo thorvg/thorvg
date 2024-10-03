@@ -27,7 +27,7 @@
   <td id="projectlogo"><img alt="Logo" src="small_logo.png"/></td>
   <td id="projectalign" style="padding-left: 0.5em;">
    <div id="projectname">ThorVG
-   &#160;<span id="projectnumber">v0.14</span>
+   &#160;<span id="projectnumber">v0.15</span>
    </div>
   </td>
  </tr>
@@ -119,7 +119,7 @@ Static Public Member Functions</h2></td></tr>
 <a name="details" id="details"></a><h2 class="groupheader">Detailed Description</h2>
 <div class="textblock"><p>A class for exporting a paint object into a specified file, from which to recover the paint data later. </p>
 <p>ThorVG provides a feature for exporting &amp; importing paint data. The <a class="el" href="classtvg_1_1Saver.html" title="A class for exporting a paint object into a specified file, from which to recover the paint data late...">Saver</a> role is to export the paint data to a file. It's useful when you need to save the composed scene or image from a paint object and recreate it later.</p>
-<p>The file format is decided by the extension name(i.e. "*.tvg") while the supported formats depend on the TVG packaging environment. If it doesn't support the file format, the <a class="el" href="classtvg_1_1Saver.html#acda492a458f3ddc2da01df672ecd85bd" title="Exports the given paint data to the given path.">save()</a> method returns the <code>Result::NonSupport</code> result.</p>
+<p>The file format is decided by the extension name(i.e. "*.tvg") while the supported formats depend on the TVG packaging environment. If it doesn't support the file format, the <a class="el" href="classtvg_1_1Saver.html#acda492a458f3ddc2da01df672ecd85bd" title="Exports the given paint data to the given path.">save()</a> method returns the <code><a class="el" href="group__ThorVG.html#gga28287671eaf7406afd604bd055ba4066aa0cfd518e4385f31d38720579321ed29" title="The value returned in case of choosing unsupported engine features(options).">Result::NonSupport</a></code> result.</p>
 <p>Once you export a paint to the file successfully, you can recreate it using the <a class="el" href="classtvg_1_1Picture.html" title="A class representing an image read in one of the supported formats: raw, svg, png,...">Picture</a> class.</p>
 <dl class="section see"><dt>See also</dt><dd><a class="el" href="classtvg_1_1Picture.html#aaf06be7d0b572c5ce35315cbddd7d318" title="Loads a picture data directly from a file.">Picture::load()</a></dd></dl>
 <dl class="section since"><dt>Since</dt><dd>0.5 </dd></dl>

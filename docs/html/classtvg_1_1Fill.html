@@ -27,7 +27,7 @@
   <td id="projectlogo"><img alt="Logo" src="small_logo.png"/></td>
   <td id="projectalign" style="padding-left: 0.5em;">
    <div id="projectname">ThorVG
-   &#160;<span id="projectnumber">v0.14</span>
+   &#160;<span id="projectnumber">v0.15</span>
    </div>
   </td>
  </tr>
@@ -88,7 +88,7 @@ $(document).ready(function(){initNavTree('classtvg_1_1Fill.html',''); initResiza
 <a href="#pub-methods">Public Member Functions</a> &#124;
 <a href="classtvg_1_1Fill-members.html">List of all members</a>  </div>
   <div class="headertitle">
-<div class="title">Fill<div class="ingroups"><a class="el" href="group__ThorVG.html">ThorVG</a></div></div>  </div>
+<div class="title">Fill<span class="mlabels"><span class="mlabel">abstract</span></span><div class="ingroups"><a class="el" href="group__ThorVG.html">ThorVG</a></div></div>  </div>
 </div><!--header-->
 <div class="contents">
 
@@ -134,9 +134,11 @@ Public Member Functions</h2></td></tr>
 <tr class="memitem:a48e358abab4478ff7f84dfb85608eaf3"><td class="memItemLeft" align="right" valign="top"><a class="el" href="classtvg_1_1Fill.html">Fill</a> *&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classtvg_1_1Fill.html#a48e358abab4478ff7f84dfb85608eaf3">duplicate</a> () const noexcept</td></tr>
 <tr class="memdesc:a48e358abab4478ff7f84dfb85608eaf3"><td class="mdescLeft">&#160;</td><td class="mdescRight">Creates a copy of the <a class="el" href="classtvg_1_1Fill.html" title="An abstract class representing the gradient fill of the Shape object.">Fill</a> object.  <a href="classtvg_1_1Fill.html#a48e358abab4478ff7f84dfb85608eaf3">More...</a><br /></td></tr>
 <tr class="separator:a48e358abab4478ff7f84dfb85608eaf3"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:a37466e9eff2de62ff15c9df3d72b656d"><td class="memItemLeft" align="right" valign="top">uint32_t&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classtvg_1_1Fill.html#a37466e9eff2de62ff15c9df3d72b656d">identifier</a> () const noexcept</td></tr>
-<tr class="memdesc:a37466e9eff2de62ff15c9df3d72b656d"><td class="mdescLeft">&#160;</td><td class="mdescRight">Return the unique id value of the <a class="el" href="classtvg_1_1Fill.html" title="An abstract class representing the gradient fill of the Shape object.">Fill</a> instance.  <a href="classtvg_1_1Fill.html#a37466e9eff2de62ff15c9df3d72b656d">More...</a><br /></td></tr>
-<tr class="separator:a37466e9eff2de62ff15c9df3d72b656d"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:aec24b20e43f4edf0fc046517db603181"><td class="memItemLeft" align="right" valign="top">virtual <a class="el" href="group__ThorVG.html#ga5f787df9cdf370248382504196841479">Type</a>&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classtvg_1_1Fill.html#aec24b20e43f4edf0fc046517db603181">type</a> () const noexcept=0</td></tr>
+<tr class="memdesc:aec24b20e43f4edf0fc046517db603181"><td class="mdescLeft">&#160;</td><td class="mdescRight">Returns the ID value of this class.  <a href="classtvg_1_1Fill.html#aec24b20e43f4edf0fc046517db603181">More...</a><br /></td></tr>
+<tr class="separator:aec24b20e43f4edf0fc046517db603181"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:aee92a597f61d9bbdbd223b5dfc3877b7"><td class="memItemLeft" align="right" valign="top">TVG_DEPRECATED uint32_t&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classtvg_1_1Fill.html#aee92a597f61d9bbdbd223b5dfc3877b7">identifier</a> () const noexcept</td></tr>
+<tr class="separator:aee92a597f61d9bbdbd223b5dfc3877b7"><td class="memSeparator" colspan="2">&#160;</td></tr>
 </table>
 <a name="details" id="details"></a><h2 class="groupheader">Detailed Description</h2>
 <div class="textblock"><p>An abstract class representing the gradient fill of the <a class="el" href="classtvg_1_1Shape.html" title="A class representing two-dimensional figures and their properties.">Shape</a> object. </p>
@@ -251,8 +253,8 @@ Public Member Functions</h2></td></tr>
 
 </div>
 </div>
-<a id="a37466e9eff2de62ff15c9df3d72b656d"></a>
-<h2 class="memtitle"><span class="permalink"><a href="#a37466e9eff2de62ff15c9df3d72b656d">&#9670;&nbsp;</a></span>identifier()</h2>
+<a id="aee92a597f61d9bbdbd223b5dfc3877b7"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#aee92a597f61d9bbdbd223b5dfc3877b7">&#9670;&nbsp;</a></span>identifier()</h2>
 
 <div class="memitem">
 <div class="memproto">
@@ -261,7 +263,7 @@ Public Member Functions</h2></td></tr>
   <td class="mlabels-left">
       <table class="memname">
         <tr>
-          <td class="memname">uint32_t identifier </td>
+          <td class="memname">TVG_DEPRECATED uint32_t identifier </td>
           <td>(</td>
           <td class="paramname"></td><td>)</td>
           <td> const</td>
@@ -273,10 +275,7 @@ Public Member Functions</h2></td></tr>
   </tr>
 </table>
 </div><div class="memdoc">
-
-<p>Return the unique id value of the <a class="el" href="classtvg_1_1Fill.html" title="An abstract class representing the gradient fill of the Shape object.">Fill</a> instance. </p>
-<p>This method can be called for checking the current concrete instance type.</p>
-<dl class="section return"><dt>Returns</dt><dd>The type id of the <a class="el" href="classtvg_1_1Fill.html" title="An abstract class representing the gradient fill of the Shape object.">Fill</a> instance. </dd></dl>
+<dl class="section see"><dt>See also</dt><dd><a class="el" href="classtvg_1_1Fill.html#aec24b20e43f4edf0fc046517db603181" title="Returns the ID value of this class.">Fill::type()</a> </dd></dl>
 
 </div>
 </div>
@@ -403,6 +402,38 @@ Public Member Functions</h2></td></tr>
   </table>
   </dd>
 </dl>
+
+</div>
+</div>
+<a id="aec24b20e43f4edf0fc046517db603181"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#aec24b20e43f4edf0fc046517db603181">&#9670;&nbsp;</a></span>type()</h2>
+
+<div class="memitem">
+<div class="memproto">
+<table class="mlabels">
+  <tr>
+  <td class="mlabels-left">
+      <table class="memname">
+        <tr>
+          <td class="memname">virtual <a class="el" href="group__ThorVG.html#ga5f787df9cdf370248382504196841479">Type</a> type </td>
+          <td>(</td>
+          <td class="paramname"></td><td>)</td>
+          <td> const</td>
+        </tr>
+      </table>
+  </td>
+  <td class="mlabels-right">
+<span class="mlabels"><span class="mlabel">pure virtual</span><span class="mlabel">noexcept</span></span>  </td>
+  </tr>
+</table>
+</div><div class="memdoc">
+
+<p>Returns the ID value of this class. </p>
+<p>This method can be used to check the current concrete instance type.</p>
+<dl class="section return"><dt>Returns</dt><dd>The class type ID of the <a class="el" href="classtvg_1_1Fill.html" title="An abstract class representing the gradient fill of the Shape object.">Fill</a> instance.</dd></dl>
+<dl class="section since"><dt>Since</dt><dd>Experimental API </dd></dl>
+
+<p>Implemented in <a class="el" href="classtvg_1_1RadialGradient.html#a0998d9f221df277cafde4934e3828aa2">RadialGradient</a>, and <a class="el" href="classtvg_1_1LinearGradient.html#a0998d9f221df277cafde4934e3828aa2">LinearGradient</a>.</p>
 
 </div>
 </div>
