@@ -845,31 +845,25 @@ bool strokeParseOutline(SwStroke* stroke, const SwOutline& outline)
 
         //A contour cannot start with a cubic control point
         if (type == SW_CURVE_TYPE_CUBIC) return false;
+        ++types;
 
         auto closed =  outline.closed.data ? outline.closed.data[i]: false;
 
         _beginSubPath(*stroke, start, closed);
 
         while (pt < limit) {
-            ++pt;
-            ++types;
-
             //emit a single line_to
             if (types[0] == SW_CURVE_TYPE_POINT) {
+                ++pt;
+                ++types;
                 _lineTo(*stroke, *pt);
             //types cubic
             } else {
-                if (pt + 1 > limit || types[1] != SW_CURVE_TYPE_CUBIC) return false;
-
-                pt += 2;
-                types += 2;
-
-                if (pt <= limit) {
-                    _cubicTo(*stroke, pt[-2], pt[-1], pt[0]);
-                    continue;
-                }
-                _cubicTo(*stroke, pt[-2], pt[-1], start);
-                goto close;
+                pt += 3;
+                types += 3;
+                if (pt <= limit) _cubicTo(*stroke, pt[-2], pt[-1], pt[0]);
+                else if (pt - 1 == limit) _cubicTo(*stroke, pt[-2], pt[-1], start);
+                else goto close;
             }
         }
     close:

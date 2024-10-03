@@ -690,31 +690,27 @@ static void _decomposeOutline(RleWorker& rw)
         auto start = UPSCALE(outline->pts[first]);
         auto pt = outline->pts.data + first;
         auto types = outline->types.data + first;
+        ++types;
 
         _moveTo(rw, UPSCALE(outline->pts[first]));
 
         while (pt < limit) {
-            ++pt;
-            ++types;
-
             //emit a single line_to
             if (types[0] == SW_CURVE_TYPE_POINT) {
+                ++pt;
+                ++types;
                 _lineTo(rw, UPSCALE(*pt));
             //types cubic
             } else {
-                pt += 2;
-                types += 2;
-
-                if (pt <= limit) {
-                    _cubicTo(rw, UPSCALE(pt[-2]), UPSCALE(pt[-1]), UPSCALE(pt[0]));
-                    continue;
-                }
-                _cubicTo(rw, UPSCALE(pt[-2]), UPSCALE(pt[-1]), start);
-                goto close;
+                pt += 3;
+                types += 3;
+                if (pt <= limit) _cubicTo(rw, UPSCALE(pt[-2]), UPSCALE(pt[-1]), UPSCALE(pt[0]));
+                else if (pt - 1 == limit) _cubicTo(rw, UPSCALE(pt[-2]), UPSCALE(pt[-1]), start);
+                else goto close;
             }
         }
-        _lineTo(rw, start);
     close:
+        _lineTo(rw, start);
        first = last + 1;
     }
 }
