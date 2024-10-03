@@ -558,7 +558,12 @@ static void _lineTo(RleWorker& rw, const SwPoint& to)
         /* The fundamental value `prod' determines which side and the  */
         /* exact coordinate where the line exits current cell.  It is  */
         /* also easily updated when moving from one cell to the next.  */
+        size_t idx = 0;
         do {
+            if (++idx > 1000000000) {
+                TVGERR("SW_ENGINE", "Iteration limit reached during RLE generation. The resulting render may be incorrect.");
+                break;
+            }
             auto px = diff.x * ONE_PIXEL;
             auto py = diff.y * ONE_PIXEL;
 
