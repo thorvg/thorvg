@@ -60,6 +60,7 @@ void WgContext::release()
     releaseSampler(samplerLinearRepeat);
     releaseSampler(samplerNearestRepeat);
     releaseBuffer(bufferIndexFan);
+    releaseQueue(queue);
 }
 
 
@@ -256,5 +257,13 @@ void WgContext::releaseBuffer(WGPUBuffer& buffer)
         wgpuBufferDestroy(buffer);
         wgpuBufferRelease(buffer);
         buffer = nullptr;
+    }
+}
+
+void WgContext::releaseQueue(WGPUQueue queue)
+{
+    if (queue) {
+        wgpuQueueRelease(queue);
+        queue = nullptr;
     }
 }

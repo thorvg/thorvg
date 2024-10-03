@@ -40,7 +40,7 @@ struct WgCanvas::Impl
 /************************************************************************/
 
 #ifdef THORVG_WG_RASTER_SUPPORT
-WgCanvas::WgCanvas() : Canvas(WgRenderer::gen()), pImpl(new Impl)
+WgCanvas::WgCanvas() : Canvas(WgRenderer::gen()), pImpl(nullptr)
 #else
 WgCanvas::WgCanvas() : Canvas(nullptr), pImpl(nullptr)
 #endif
