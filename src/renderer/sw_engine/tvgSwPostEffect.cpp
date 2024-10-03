@@ -169,7 +169,7 @@ bool effectGaussianBlur(SwImage& image, SwImage& buffer, const SwBBox& bbox, con
     auto back = buffer.buf8;
     auto swapped = false;
 
-    TVGLOG("SW_ENGINE", "GaussianFilter region(%ld, %ld, %ld, %ld) params(%f %d %d), level(%d)", bbox.min.x, bbox.min.y, bbox.max.x, bbox.max.y, params->sigma, params->direction, params->border, data->level);
+    TVGLOG("SW_ENGINE", "GaussianFilter region(%lld, %lld, %lld, %lld) params(%f %d %d), level(%d)", bbox.min.x, bbox.min.y, bbox.max.x, bbox.max.y, params->sigma, params->direction, params->border, data->level);
 
     //horizontal
     if (params->direction == 0 || params->direction == 1) {

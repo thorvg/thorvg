@@ -200,7 +200,7 @@
 constexpr auto PIXEL_BITS = 8;   //must be at least 6 bits!
 constexpr auto ONE_PIXEL = (1L << PIXEL_BITS);
 
-using Area = long;
+using Area = int64_t;
 
 struct Band
 {
@@ -257,7 +257,7 @@ struct RleWorker
 
 static inline SwPoint UPSCALE(const SwPoint& pt)
 {
-    return {SwCoord(((unsigned long) pt.x) << (PIXEL_BITS - 6)), SwCoord(((unsigned long) pt.y) << (PIXEL_BITS - 6))};
+    return {SwCoord(((uint64_t) pt.x) << (PIXEL_BITS - 6)), SwCoord(((uint64_t) pt.y) << (PIXEL_BITS - 6))};
 }
 
 
@@ -275,13 +275,13 @@ static inline SwCoord TRUNC(const SwCoord x)
 
 static inline SwPoint SUBPIXELS(const SwPoint& pt)
 {
-    return {SwCoord(((unsigned long) pt.x) << PIXEL_BITS), SwCoord(((unsigned long) pt.y) << PIXEL_BITS)};
+    return {SwCoord(((uint64_t) pt.x) << PIXEL_BITS), SwCoord(((uint64_t) pt.y) << PIXEL_BITS)};
 }
 
 
 static inline SwCoord SUBPIXELS(const SwCoord x)
 {
-    return SwCoord(((unsigned long) x) << PIXEL_BITS);
+    return SwCoord(((uint64_t) x) << PIXEL_BITS);
 }
 
 /*
@@ -501,8 +501,8 @@ static void _moveTo(RleWorker& rw, const SwPoint& to)
 static void _lineTo(RleWorker& rw, const SwPoint& to)
 {
 #define SW_UDIV(a, b) \
-    static_cast<SwCoord>(((unsigned long)(a) * (unsigned long)(b)) >> \
-    (sizeof(long) * CHAR_BIT - PIXEL_BITS))
+    static_cast<SwCoord>(((uint64_t)(a) * (uint64_t)(b)) >> \
+    (sizeof(int64_t) * CHAR_BIT - PIXEL_BITS))
 
     auto e1 = TRUNC(rw.pos);
     auto e2 = TRUNC(to);
@@ -552,8 +552,8 @@ static void _lineTo(RleWorker& rw, const SwPoint& to)
 
         /* These macros speed up repetitive divisions by replacing them
            with multiplications and right shifts. */
-        auto dx_r = static_cast<long>(ULONG_MAX >> PIXEL_BITS) / (diff.x);
-        auto dy_r = static_cast<long>(ULONG_MAX >> PIXEL_BITS) / (diff.y);
+        auto dx_r = static_cast<int64_t>(UINT64_MAX >> PIXEL_BITS) / (diff.x);
+        auto dy_r = static_cast<int64_t>(UINT64_MAX >> PIXEL_BITS) / (diff.y);
 
         /* The fundamental value `prod' determines which side and the  */
         /* exact coordinate where the line exits current cell.  It is  */

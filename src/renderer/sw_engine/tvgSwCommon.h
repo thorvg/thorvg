@@ -33,8 +33,8 @@
 #define SW_ANGLE_2PI (SW_ANGLE_PI << 1)
 #define SW_ANGLE_PI2 (SW_ANGLE_PI >> 1)
 
-using SwCoord = signed long;
-using SwFixed = signed long long;
+using SwCoord = int64_t;
+using SwFixed = int64_t;
 
 
 static inline float TO_FLOAT(SwCoord val)
