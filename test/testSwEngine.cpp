@@ -37,7 +37,7 @@ TEST_CASE("Basic draw", "[tvgSwEngine]")
     auto canvas = SwCanvas::gen();
     REQUIRE(canvas);
 
-    uint32_t buffer[100*100];
+    uint32_t buffer[100*100] = {0, };
     REQUIRE(canvas->target(buffer, 100, 100, 100, SwCanvas::Colorspace::ABGR8888S) == Result::Success);
 
     //Arc Line
