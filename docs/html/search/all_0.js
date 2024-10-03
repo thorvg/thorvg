@@ -8,7 +8,7 @@ var searchData=
   ['addmask_5',['AddMask',['../group__ThorVG.html#ggaabdf94ada64e69d06deabc5aa6576f87a8e1e296c3f01c21b1a3db79f0ce4fe9a',1,'tvg']]],
   ['alphamask_6',['AlphaMask',['../group__ThorVG.html#ggaabdf94ada64e69d06deabc5aa6576f87abd68e2bb79d1a5e65ad8f0d202d14cbc',1,'tvg']]],
   ['animation_7',['Animation',['../classtvg_1_1Animation.html',1,'tvg']]],
-  ['appendarc_8',['appendArc',['../classtvg_1_1Shape.html#a2f003a843ff42f6cee6a726f543836e3',1,'tvg::Shape']]],
+  ['appendarc_8',['appendArc',['../classtvg_1_1Shape.html#a5c2815889f8a3d7d2c980cb225989e43',1,'tvg::Shape']]],
   ['appendcircle_9',['appendCircle',['../classtvg_1_1Shape.html#a52eccb2815eaa1231da9c389cd92ffa1',1,'tvg::Shape']]],
   ['appendpath_10',['appendPath',['../classtvg_1_1Shape.html#a3588ea30776a747a22b6ee82dadb9717',1,'tvg::Shape']]],
   ['appendrect_11',['appendRect',['../classtvg_1_1Shape.html#a8ef2587269a01153c9ea4ca4a8d31b49',1,'tvg::Shape']]],
