@@ -246,7 +246,7 @@ struct SwSurface : RenderSurface
     SwAlpha alphas[4];                    //Alpha:2, InvAlpha:3, Luma:4, InvLuma:5
     SwBlender blender = nullptr;          //blender (optional)
     SwCompositor* compositor = nullptr;   //compositor (optional)
-    BlendMethod blendMethod;              //blending method (uint8_t)
+    BlendMethod blendMethod = BlendMethod::Normal;
 
     SwAlpha alpha(CompositeMethod method)
     {
