@@ -20,7 +20,9 @@ if [[ "$GITHUB_EVENT_NAME" == "pull_request" ]]; then
     echo "MEMCHECK errors:"
     echo $PAYLOAD_MEMCHECK
 
-    if [[ $PAYLOAD_MEMCHECK == *"definitely lost:"* || $PAYLOAD_MEMCHECK == *"Invalid read "* || $PAYLOAD_MEMCHECK == *"Invalid write "* ]]; then
+    DEFINITELY_LOST_NUMBER=$(echo "$PAYLOAD_MEMCHECK" | grep -oP 'definitely lost:\s*\K[0-9]+(?=\s*bytes in)')
+    ERROR_NUMBER=$(echo "$PAYLOAD_MEMCHECK" | grep -oP 'ERROR SUMMARY:\s*\K[0-9]+(?=\s*errors)')
+    if [[ $ERROR_NUMBER != 0 || $DEFINITELY_LOST_NUMBER != 0 || $PAYLOAD_MEMCHECK == *"Invalid read "* || $PAYLOAD_MEMCHECK == *"Invalid write "* ]]; then
         OUTPUT+=$'\n**MEMCHECK(VALGRIND) RESULT**:\n'
         OUTPUT+=$'\n`valgrind --leak-check=yes ./tvgUnitTests`\n'
         OUTPUT+=$'\n```\n'
