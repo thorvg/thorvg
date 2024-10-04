@@ -40,7 +40,7 @@ static inline Point lerp(const Point& a, const Point& b, float t) { return a * (
 static inline Point normalize(const Point& a) { float rlen = 1.0f / length(a); return { a.x * rlen, a.y * rlen }; }
 
 // default size of vertex and index buffers
-#define WG_POINTS_COUNT 16384
+#define WG_POINTS_COUNT 32768
 
 // simple vertex buffer
 struct WgVertexBuffer {
@@ -216,9 +216,9 @@ struct WgVertexBuffer {
 
 // simple indexed vertex buffer
 struct WgVertexBufferInd {
-    Point vbuff[WG_POINTS_COUNT*2];
-    Point tbuff[WG_POINTS_COUNT*2];
-    uint32_t ibuff[WG_POINTS_COUNT*4];
+    Point vbuff[WG_POINTS_COUNT*4];
+    Point tbuff[WG_POINTS_COUNT*4];
+    uint32_t ibuff[WG_POINTS_COUNT*8];
     size_t vcount = 0;
     size_t icount = 0;
 
