@@ -847,15 +847,20 @@ static unique_ptr<Scene> _sceneBuildHelper(SvgLoaderData& loaderData, const SvgN
                         scene->push(_useBuildHelper(loaderData, *child, vBox, svgPath, depth + 1, isMaskWhite));
                     else if (!((*child)->type == SvgNodeType::Symbol && node->type != SvgNodeType::Use))
                         scene->push(_sceneBuildHelper(loaderData, *child, vBox, svgPath, false, depth + 1, isMaskWhite));
+                    if ((*child)->id) scene->id = djb2Encode((*child)->id);
                 } else if ((*child)->type == SvgNodeType::Image) {
                     auto image = _imageBuildHelper(loaderData, *child, vBox, svgPath);
                     if (image) {
+                        if ((*child)->id) image->id = djb2Encode((*child)->id);
                         scene->push(std::move(image));
                         if (isMaskWhite) *isMaskWhite = false;
                     }
                 } else if ((*child)->type == SvgNodeType::Text) {
                     auto text = _textBuildHelper(loaderData, *child, vBox, svgPath);
-                    if (text) scene->push(std::move(text));
+                    if (text) {
+                        if ((*child)->id) text->id = djb2Encode((*child)->id);
+                        scene->push(std::move(text));
+                    }
                 } else if ((*child)->type != SvgNodeType::Mask) {
                     auto shape = _shapeBuildHelper(loaderData, *child, vBox, svgPath);
                     if (shape) {
@@ -867,6 +872,7 @@ static unique_ptr<Scene> _sceneBuildHelper(SvgLoaderData& loaderData, const SvgN
                                 *isMaskWhite = false;
                             }
                         }
+                        if ((*child)->id) shape->id = djb2Encode((*child)->id);
                         scene->push(std::move(shape));
                     }
                 }
