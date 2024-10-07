@@ -150,12 +150,6 @@ unique_ptr<Picture> Picture::gen() noexcept
 }
 
 
-TVG_DEPRECATED uint32_t Picture::identifier() noexcept
-{
-    return (uint32_t) Type::Picture;
-}
-
-
 Type Picture::type() const noexcept
 {
     return Type::Picture;

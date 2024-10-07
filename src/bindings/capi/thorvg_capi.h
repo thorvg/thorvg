@@ -612,37 +612,6 @@ TVG_API Tvg_Result tvg_canvas_push(Tvg_Canvas* canvas, Tvg_Paint* paint);
 
 
 /*!
-* \brief Reserves a memory block where the objects pushed into a canvas are stored.
-*
-* If the number of Tvg_Paints to be stored in a canvas is known in advance, calling this function reduces the multiple
-* memory allocations thus improves the performance.
-*
-* \code
-* Tvg_Canvas *canvas = NULL;
-*
-* tvg_engine_init(TVG_ENGINE_SW, 4);
-* canvas = tvg_swcanvas_create();
-*
-* uint32_t *buffer = NULL;
-* buffer = (uint32_t*) malloc(sizeof(uint32_t) * 100 * 100);
-* if (!buffer) return;
-*
-* tvg_swcanvas_set_target(canvas, buffer, 100, 100, 100, TVG_COLORSPACE_ARGB8888);
-*
-* tvg_canvas_destroy(canvas);
-* tvg_engine_term(TVG_ENGINE_SW)
-* \endcode
-*
-* \param[in] canvas The Tvg_Canvas object managing the reserved memory.
-* \param[in] n The number of objects for which the memory is to be reserved.
-*
-* \return Tvg_Result enumeration.
-* \retval TVG_RESULT_INVALID_ARGUMENT An invalid Tvg_Canvas pointer.
-*/
-TVG_DEPRECATED TVG_API Tvg_Result tvg_canvas_reserve(Tvg_Canvas* canvas, uint32_t n);
-
-
-/*!
 * \brief Sets the total number of the paints pushed into the canvas to be zero.
 * Tvg_Paint objects stored in the canvas are released if @p paints is set to @c true, otherwise the memory is not deallocated and
 * all paints should be released manually in order to avoid memory leaks.
@@ -1030,12 +999,6 @@ TVG_API Tvg_Result tvg_paint_get_type(const Tvg_Paint* paint, Tvg_Type* type);
 
 
 /**
-* \see tvg_paint_get_type()
-*/
-TVG_DEPRECATED TVG_API Tvg_Result tvg_paint_get_identifier(const Tvg_Paint* paint, Tvg_Identifier* identifier);
-
-
-/**
  * @brief Sets the blending method for the paint object.
  *
  * The blending feature allows you to combine colors to create visually appealing effects, including transparency, lighting, shading, and color mixing, among others.
@@ -1213,28 +1176,6 @@ TVG_API Tvg_Result tvg_shape_append_rect(Tvg_Paint* paint, float x, float y, flo
 * \retval TVG_RESULT_INVALID_ARGUMENT An invalid Tvg_Paint pointer.
 */
 TVG_API Tvg_Result tvg_shape_append_circle(Tvg_Paint* paint, float cx, float cy, float rx, float ry);
-
-
-/*!
-* \brief Appends a circular arc to the path.
-*
-* The arc is treated as a new sub-path - it is not connected with the previous sub-path.
-* The current point value is set to the end-point of the arc in case @p pie is @c false, and to the center of the arc otherwise.
-*
-* \param[in] paint A Tvg_Paint pointer to the shape object.
-* \param[in] cx The horizontal coordinate of the center of the arc.
-* \param[in] cy The vertical coordinate of the center of the arc.
-* \param[in] radius The radius of the arc.
-* \param[in] startAngle The start angle of the arc given in degrees, measured counter-clockwise from the horizontal line.
-* \param[in] sweep The central angle of the arc given in degrees, measured counter-clockwise from @p startAngle.
-* \param[in] pie Specifies whether to draw radii from the arc's center to both of its end-point - drawn if @c true.
-*
-* \return Tvg_Result enumeration.
-* \retval TVG_RESULT_INVALID_ARGUMENT An invalid Tvg_Paint pointer.
-*
-* \note Setting @p sweep value greater than 360 degrees, is equivalent to calling tvg_shape_append_circle(paint, cx, cy, radius, radius).
-*/
-TVG_DEPRECATED TVG_API Tvg_Result tvg_shape_append_arc(Tvg_Paint* paint, float cx, float cy, float radius, float startAngle, float sweep, uint8_t pie);
 
 
 /*!
@@ -1917,12 +1858,6 @@ TVG_API Tvg_Result tvg_gradient_get_transform(const Tvg_Gradient* grad, Tvg_Matr
 TVG_API Tvg_Result tvg_gradient_get_type(const Tvg_Gradient* grad, Tvg_Type* type);
 
 
-/**
-* \see tvg_gradient_get_type()
-*/
-TVG_DEPRECATED TVG_API Tvg_Result tvg_gradient_get_identifier(const Tvg_Gradient* grad, Tvg_Identifier* identifier);
-
-
 /*!
 * \brief Duplicates the given Tvg_Gradient object.
 *
@@ -2101,22 +2036,6 @@ TVG_API const Tvg_Paint* tvg_picture_get_paint(Tvg_Paint* paint, uint32_t id);
 * \return A new scene object.
 */
 TVG_API Tvg_Paint* tvg_scene_new(void);
-
-
-/*!
-* \brief Sets the size of the container, where all the paints pushed into the scene are stored.
-*
-* If the number of objects pushed into the scene is known in advance, calling the function
-* prevents multiple memory reallocation, thus improving the performance.
-*
-* \param[in] scene A Tvg_Paint pointer to the scene object.
-* \param[in] size The number of objects for which the memory is to be reserved.
-*
-* \return Tvg_Result enumeration.
-* \retval TVG_RESULT_FAILED_ALLOCATION An internal error with a memory allocation.
-* \retval TVG_RESULT_INVALID_ARGUMENT An invalid Tvg_Paint pointer.
-*/
-TVG_DEPRECATED TVG_API Tvg_Result tvg_scene_reserve(Tvg_Paint* scene, uint32_t size);
 
 
 /*!

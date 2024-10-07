@@ -502,12 +502,6 @@ uint8_t Paint::opacity() const noexcept
 }
 
 
-TVG_DEPRECATED uint32_t Paint::identifier() const noexcept
-{
-    return (uint32_t) type();
-}
-
-
 Result Paint::blend(BlendMethod method) noexcept
 {
     //TODO: Remove later
