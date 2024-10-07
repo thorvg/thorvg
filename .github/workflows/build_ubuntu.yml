@@ -26,7 +26,7 @@ jobs:
 
     - name: Build
       run: |
-        meson setup build -Dlog=true -Dengines=all -Dexamples=true -Dloaders=all -Dsavers=all -Dbindings=capi -Dtools=all
+        meson setup build -Dlog=true -Dengines="sw, gl" -Dexamples=true -Dloaders=all -Dsavers=all -Dbindings=capi -Dtools=all
         sudo ninja -C build install
 
   compact_test:
@@ -43,7 +43,7 @@ jobs:
 
     - name: Build
       run: |
-        meson setup build -Dlog=true -Dengines=all -Dloaders=all -Dsavers=all -Dstatic=true -Dthreads=false
+        meson setup build -Dlog=true -Dengines="sw, gl" -Dloaders=all -Dsavers=all -Dstatic=true -Dthreads=false
         sudo ninja -C build install
 
   unit_test:
@@ -64,7 +64,7 @@ jobs:
 
     - name: Build
       run: |
-        meson setup build -Dloaders="all" -Dengines=all -Dsavers="all" -Dbindings="capi" -Dtests=true --errorlogs
+        meson setup build -Dloaders="all" -Dengines="sw, gl" -Dsavers="all" -Dbindings="capi" -Dtests=true --errorlogs
         sudo ninja -C build install test
 
     - uses: actions/upload-artifact@v4

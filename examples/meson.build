@@ -8,7 +8,7 @@ endif
 
 examples_dep = [dependency('sdl2')]
 
-if get_option('engines').contains('wg_beta')
+if all_engines or get_option('engines').contains('wg')
     examples_dep += dependency('wgpu_native')
     if host_machine.system() == 'darwin'
         add_languages('objcpp')
