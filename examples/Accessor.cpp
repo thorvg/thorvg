@@ -60,6 +60,13 @@ struct UserExample : tvgexam::Example
 
         if (!tvgexam::verify(accessor->set(picture.get(), f, nullptr))) return false;
 
+        // Try to retrieve the shape that corresponds to the SVG node with the unique ID "star".
+        if (auto paint = picture->paint(tvg::Accessor::id("star"))) {
+            auto shape = static_cast<tvg::Shape*>(const_cast<tvg::Paint*>(paint));
+            shape->strokeFill(255, 255, 0);
+            shape->strokeWidth(5);
+        }
+
         canvas->push(std::move(picture));
 
         return true;
