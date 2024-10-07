@@ -34,7 +34,7 @@ if all_engines or get_option('engines').contains('gl')
 endif
 
 wg_engine = false
-if get_option('engines').contains('wg_beta')
+if all_engines or get_option('engines').contains('wg')
     wg_engine = true
     config_h.set10('THORVG_WG_RASTER_SUPPORT', true)
 endif
@@ -169,7 +169,7 @@ Summary:
     SIMD Instruction:           @4@
     Raster Engine (SW):         @5@
     Raster Engine (GL):         @6@
-    Raster Engine (WG_BETA):    @7@
+    Raster Engine (WG):         @7@
     Loader (TVG):               @8@
     Loader (SVG):               @9@
     Loader (TTF):               @10@
