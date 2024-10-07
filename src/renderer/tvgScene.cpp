@@ -61,12 +61,6 @@ unique_ptr<Scene> Scene::gen() noexcept
 }
 
 
-TVG_DEPRECATED uint32_t Scene::identifier() noexcept
-{
-    return (uint32_t) Type::Scene;
-}
-
-
 Type Scene::type() const noexcept
 {
     return Type::Scene;

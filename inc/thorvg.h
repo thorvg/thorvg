@@ -457,11 +457,6 @@ public:
      */
     uint32_t id = 0;
 
-    /**
-     * @see Paint::type()
-     */
-    TVG_DEPRECATED uint32_t identifier() const noexcept;
-
     _TVG_DECLARE_PRIVATE(Paint);
 };
 
@@ -562,11 +557,6 @@ public:
      * @since Experimental API
      */
     virtual Type type() const noexcept = 0;
-
-    /**
-     * @see Fill::type()
-     */
-    TVG_DEPRECATED uint32_t identifier() const noexcept;
 
     _TVG_DECLARE_PRIVATE(Fill);
 };
@@ -751,11 +741,6 @@ public:
      */
     Type type() const noexcept override;
 
-    /**
-     * @see LinearGradient::type()
-     */
-    TVG_DEPRECATED static uint32_t identifier() noexcept;
-
     _TVG_DECLARE_PRIVATE(LinearGradient);
 };
 
@@ -815,11 +800,6 @@ public:
      * @since Experimental API
      */
     Type type() const noexcept override;
-
-    /**
-     * @see RadialGradient::type()
-     */
-    TVG_DEPRECATED static uint32_t identifier() noexcept;
 
     _TVG_DECLARE_PRIVATE(RadialGradient);
 };
@@ -939,23 +919,6 @@ public:
      *
      */
     Result appendCircle(float cx, float cy, float rx, float ry) noexcept;
-
-    /**
-     * @brief Appends a circular arc to the path.
-     *
-     * The arc is treated as a new sub-path - it is not connected with the previous sub-path.
-     * The current point value is set to the end-point of the arc in case @p pie is @c false, and to the center of the arc otherwise.
-     *
-     * @param[in] cx The horizontal coordinate of the center of the arc.
-     * @param[in] cy The vertical coordinate of the center of the arc.
-     * @param[in] radius The radius of the arc.
-     * @param[in] startAngle The start angle of the arc given in degrees, measured counter-clockwise from the horizontal line.
-     * @param[in] sweep The central angle of the arc given in degrees, measured counter-clockwise from @p startAngle.
-     * @param[in] pie Specifies whether to draw radii from the arc's center to both of its end-point - drawn if @c true.
-     *
-     * @note Setting @p sweep value greater than 360 degrees, is equivalent to calling appendCircle(cx, cy, radius, radius).
-     */
-    TVG_DEPRECATED Result appendArc(float cx, float cy, float radius, float startAngle, float sweep, bool pie) noexcept;
 
     /**
      * @brief Appends a given sub-path to the path.
@@ -1222,11 +1185,6 @@ public:
      */
     Type type() const noexcept override;
 
-    /**
-     * @see Shape::type()
-     */
-    TVG_DEPRECATED static uint32_t identifier() noexcept;
-
     _TVG_DECLARE_PRIVATE(Shape);
 };
 
@@ -1356,11 +1314,6 @@ public:
      */
     Type type() const noexcept override;
 
-    /**
-     * @see Picture::type()
-     */
-    TVG_DEPRECATED static uint32_t identifier() noexcept;
-
     _TVG_DECLARE_ACCESSOR(Animation);
     _TVG_DECLARE_PRIVATE(Picture);
 };
@@ -1453,11 +1406,6 @@ public:
      * @since Experimental API
      */
     Type type() const noexcept override;
-
-    /**
-     * @see Scene::type()
-     */
-    TVG_DEPRECATED static uint32_t identifier() noexcept;
 
     _TVG_DECLARE_PRIVATE(Scene);
 };
@@ -2097,8 +2045,6 @@ class TVG_API Accessor final
 {
 public:
     ~Accessor();
-
-    TVG_DEPRECATED std::unique_ptr<Picture> set(std::unique_ptr<Picture> picture, std::function<bool(const Paint* paint)> func) noexcept;
 
     /**
      * @brief Set the access function for traversing the Picture scene tree nodes.

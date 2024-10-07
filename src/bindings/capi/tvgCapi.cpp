@@ -97,12 +97,6 @@ TVG_API Tvg_Result tvg_canvas_push(Tvg_Canvas* canvas, Tvg_Paint* paint)
 }
 
 
-TVG_API Tvg_Result tvg_canvas_reserve(Tvg_Canvas* canvas, uint32_t n)
-{
-    return TVG_RESULT_NOT_SUPPORTED;
-}
-
-
 TVG_API Tvg_Result tvg_canvas_clear(Tvg_Canvas* canvas, bool paints, bool buffer)
 {
     if (!canvas) return TVG_RESULT_INVALID_ARGUMENT;
@@ -259,11 +253,6 @@ TVG_API Tvg_Result tvg_paint_set_clip(Tvg_Paint* paint, Tvg_Paint* clipper)
 }
 
 
-TVG_DEPRECATED TVG_API Tvg_Result tvg_paint_get_identifier(const Tvg_Paint* paint, Tvg_Identifier* identifier)
-{
-    return tvg_paint_get_type(paint, (Tvg_Type*) identifier);
-}
-
 /************************************************************************/
 /* Shape API                                                            */
 /************************************************************************/
@@ -313,13 +302,6 @@ TVG_API Tvg_Result tvg_shape_append_rect(Tvg_Paint* paint, float x, float y, flo
 {
     if (!paint) return TVG_RESULT_INVALID_ARGUMENT;
     return (Tvg_Result) reinterpret_cast<Shape*>(paint)->appendRect(x, y, w, h, rx, ry);
-}
-
-
-TVG_DEPRECATED TVG_API Tvg_Result tvg_shape_append_arc(Tvg_Paint* paint, float cx, float cy, float radius, float startAngle, float sweep, uint8_t pie)
-{
-    if (!paint) return TVG_RESULT_INVALID_ARGUMENT;
-    return (Tvg_Result) reinterpret_cast<Shape*>(paint)->appendArc(cx, cy, radius, startAngle, sweep, pie);
 }
 
 
@@ -692,11 +674,6 @@ TVG_API Tvg_Result tvg_gradient_get_type(const Tvg_Gradient* grad, Tvg_Type* typ
 }
 
 
-TVG_DEPRECATED TVG_API Tvg_Result tvg_gradient_get_identifier(const Tvg_Gradient* grad, Tvg_Identifier* identifier)
-{
-    return tvg_gradient_get_type(grad, (Tvg_Type*) identifier);
-}
-
 /************************************************************************/
 /* Scene API                                                            */
 /************************************************************************/
@@ -704,12 +681,6 @@ TVG_DEPRECATED TVG_API Tvg_Result tvg_gradient_get_identifier(const Tvg_Gradient
 TVG_API Tvg_Paint* tvg_scene_new()
 {
     return (Tvg_Paint*) Scene::gen().release();
-}
-
-
-TVG_API Tvg_Result tvg_scene_reserve(Tvg_Paint* scene, uint32_t size)
-{
-    return TVG_RESULT_NOT_SUPPORTED;
 }
 
 
