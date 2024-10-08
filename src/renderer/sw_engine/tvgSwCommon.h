@@ -488,6 +488,7 @@ SwFixed mathAtan(const SwPoint& pt);
 SwFixed mathCos(SwFixed angle);
 SwFixed mathSin(SwFixed angle);
 void mathSplitCubic(SwPoint* base);
+void mathSplitLine(SwPoint* base);
 SwFixed mathDiff(SwFixed angle1, SwFixed angle2);
 SwFixed mathLength(const SwPoint& pt);
 int mathCubicAngle(const SwPoint* base, SwFixed& angleIn, SwFixed& angleMid, SwFixed& angleOut);

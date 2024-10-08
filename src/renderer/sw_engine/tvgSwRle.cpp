@@ -235,6 +235,7 @@ struct RleWorker
     SwPoint pos;
 
     SwPoint bezStack[32 * 3 + 1];
+    SwPoint lineStack[32 + 1];
     int levStack[32];
 
     SwOutline* outline;
@@ -513,103 +514,116 @@ static void _lineTo(RleWorker& rw, const SwPoint& to)
         return;
     }
 
-    auto diff = to - rw.pos;
-    auto f1 = rw.pos - SUBPIXELS(e1);
-    SwPoint f2;
+    auto line = rw.lineStack;
+    line[0] = to;
+    line[1] = rw.pos;
 
-    //inside one cell
-    if (e1 == e2) {
-        ;
-    //any horizontal line
-    } else if (diff.y == 0) {
-        e1.x = e2.x;
-        _setCell(rw, e1);
-    } else if (diff.x == 0) {
-        //vertical line up
-        if (diff.y > 0) {
-            do {
-                f2.y = ONE_PIXEL;
-                rw.cover += (f2.y - f1.y);
-                rw.area += (f2.y - f1.y) * f1.x * 2;
-                f1.y = 0;
-                ++e1.y;
-                _setCell(rw, e1);
-            } while(e1.y != e2.y);
-        //vertical line down
-        } else {
-            do {
-                f2.y = 0;
-                rw.cover += (f2.y - f1.y);
-                rw.area += (f2.y - f1.y) * f1.x * 2;
-                f1.y = ONE_PIXEL;
-                --e1.y;
-                _setCell(rw, e1);
-            } while(e1.y != e2.y);
+    while (true) {
+        auto diff = line[0] - line[1];
+        auto L = HYPOT(diff);
+
+        if (L > SHRT_MAX) {
+            mathSplitLine(line);
+            ++line;
+            continue;
         }
-    //any other line
-    } else {
-        Area prod = diff.x * f1.y - diff.y * f1.x;
+        e1 = TRUNC(line[1]);
+        e2 = TRUNC(line[0]);
 
-        /* These macros speed up repetitive divisions by replacing them
-           with multiplications and right shifts. */
-        auto dx_r = static_cast<long>(ULONG_MAX >> PIXEL_BITS) / (diff.x);
-        auto dy_r = static_cast<long>(ULONG_MAX >> PIXEL_BITS) / (diff.y);
+        auto f1 = line[1] - SUBPIXELS(e1);
+        SwPoint f2;
 
-        /* The fundamental value `prod' determines which side and the  */
-        /* exact coordinate where the line exits current cell.  It is  */
-        /* also easily updated when moving from one cell to the next.  */
-        size_t idx = 0;
-        do {
-            if (++idx > 1000000000) {
-                TVGERR("SW_ENGINE", "Iteration limit reached during RLE generation. The resulting render may be incorrect.");
-                break;
-            }
-            auto px = diff.x * ONE_PIXEL;
-            auto py = diff.y * ONE_PIXEL;
-
-            //left
-            if (prod <= 0 && prod - px > 0) {
-                f2 = {0, SW_UDIV(-prod, -dx_r)};
-                prod -= py;
-                rw.cover += (f2.y - f1.y);
-                rw.area += (f2.y - f1.y) * (f1.x + f2.x);
-                f1 = {ONE_PIXEL, f2.y};
-                --e1.x;
-            //up
-            } else if (prod - px <= 0 && prod - px + py > 0) {
-                prod -= px;
-                f2 = {SW_UDIV(-prod, dy_r), ONE_PIXEL};
-                rw.cover += (f2.y - f1.y);
-                rw.area += (f2.y - f1.y) * (f1.x + f2.x);
-                f1 = {f2.x, 0};
-                ++e1.y;
-            //right
-            } else if (prod - px + py <= 0 && prod + py >= 0) {
-                prod += py;
-                f2 = {ONE_PIXEL, SW_UDIV(prod, dx_r)};
-                rw.cover += (f2.y - f1.y);
-                rw.area += (f2.y - f1.y) * (f1.x + f2.x);
-                f1 = {0, f2.y};
-                ++e1.x;
-            //down
-            } else {
-                f2 = {SW_UDIV(prod, -dy_r), 0};
-                prod += px;
-                rw.cover += (f2.y - f1.y);
-                rw.area += (f2.y - f1.y) * (f1.x + f2.x);
-                f1 = {f2.x, ONE_PIXEL};
-                --e1.y;
-            }
-
+        //inside one cell
+        if (e1 == e2) {
+            ;
+        //any horizontal line
+        } else if (diff.y == 0) {
+            e1.x = e2.x;
             _setCell(rw, e1);
+        } else if (diff.x == 0) {
+            //vertical line up
+            if (diff.y > 0) {
+                do {
+                    f2.y = ONE_PIXEL;
+                    rw.cover += (f2.y - f1.y);
+                    rw.area += (f2.y - f1.y) * f1.x * 2;
+                    f1.y = 0;
+                    ++e1.y;
+                    _setCell(rw, e1);
+                } while(e1.y != e2.y);
+            //vertical line down
+            } else {
+                do {
+                    f2.y = 0;
+                    rw.cover += (f2.y - f1.y);
+                    rw.area += (f2.y - f1.y) * f1.x * 2;
+                    f1.y = ONE_PIXEL;
+                    --e1.y;
+                    _setCell(rw, e1);
+                } while(e1.y != e2.y);
+            }
+        //any other line
+        } else {
+            Area prod = diff.x * f1.y - diff.y * f1.x;
 
-        } while(e1 != e2);
+            /* These macros speed up repetitive divisions by replacing them
+               with multiplications and right shifts. */
+            auto dx_r = static_cast<long>(ULONG_MAX >> PIXEL_BITS) / (diff.x);
+            auto dy_r = static_cast<long>(ULONG_MAX >> PIXEL_BITS) / (diff.y);
+
+            /* The fundamental value `prod' determines which side and the  */
+            /* exact coordinate where the line exits current cell.  It is  */
+            /* also easily updated when moving from one cell to the next.  */
+            do {
+                auto px = diff.x * ONE_PIXEL;
+                auto py = diff.y * ONE_PIXEL;
+
+                //left
+                if (prod <= 0 && prod - px > 0) {
+                    f2 = {0, SW_UDIV(-prod, -dx_r)};
+                    prod -= py;
+                    rw.cover += (f2.y - f1.y);
+                    rw.area += (f2.y - f1.y) * (f1.x + f2.x);
+                    f1 = {ONE_PIXEL, f2.y};
+                    --e1.x;
+                //up
+                } else if (prod - px <= 0 && prod - px + py > 0) {
+                    prod -= px;
+                    f2 = {SW_UDIV(-prod, dy_r), ONE_PIXEL};
+                    rw.cover += (f2.y - f1.y);
+                    rw.area += (f2.y - f1.y) * (f1.x + f2.x);
+                    f1 = {f2.x, 0};
+                    ++e1.y;
+                //right
+                } else if (prod - px + py <= 0 && prod + py >= 0) {
+                    prod += py;
+                    f2 = {ONE_PIXEL, SW_UDIV(prod, dx_r)};
+                    rw.cover += (f2.y - f1.y);
+                    rw.area += (f2.y - f1.y) * (f1.x + f2.x);
+                    f1 = {0, f2.y};
+                    ++e1.x;
+                //down
+                } else {
+                    f2 = {SW_UDIV(prod, -dy_r), 0};
+                    prod += px;
+                    rw.cover += (f2.y - f1.y);
+                    rw.area += (f2.y - f1.y) * (f1.x + f2.x);
+                    f1 = {f2.x, ONE_PIXEL};
+                    --e1.y;
+                }
+
+                _setCell(rw, e1);
+
+            } while(e1 != e2);
+        }
+
+        f2 = {line[0].x - SUBPIXELS(e2.x), line[0].y - SUBPIXELS(e2.y)};
+        rw.cover += (f2.y - f1.y);
+        rw.area += (f2.y - f1.y) * (f1.x + f2.x);
+        rw.pos = line[0];
+
+        if (line-- == rw.lineStack) return;
     }
-
-    f2 = {to.x - SUBPIXELS(e2.x), to.y - SUBPIXELS(e2.y)};
-    rw.cover += (f2.y - f1.y);
-    rw.area += (f2.y - f1.y) * (f1.x + f2.x);
-    rw.pos = to;
 }
 
 
