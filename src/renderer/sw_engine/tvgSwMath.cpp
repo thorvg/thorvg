@@ -242,6 +242,15 @@ void mathSplitCubic(SwPoint* base)
 }
 
 
+void mathSplitLine(SwPoint* base)
+{
+    base[2] = base[1];
+
+    base[1].x = (base[0].x + base[1].x) >> 1;
+    base[1].y = (base[0].y + base[1].y) >> 1;
+}
+
+
 SwFixed mathDiff(SwFixed angle1, SwFixed angle2)
 {
     auto delta = angle2 - angle1;
