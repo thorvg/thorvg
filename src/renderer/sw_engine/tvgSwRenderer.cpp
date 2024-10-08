@@ -41,7 +41,7 @@ struct SwTask : Task
 {
     SwSurface* surface = nullptr;
     SwMpool* mpool = nullptr;
-    SwBBox bbox = {{0, 0}, {0, 0}};       //Whole Rendering Region
+    SwBBox bbox;                          //Rendering Region
     Matrix transform;
     Array<RenderData> clips;
     RenderUpdateFlag flags = RenderUpdateFlag::None;
@@ -112,11 +112,14 @@ struct SwShapeTask : SwTask
 
     void run(unsigned tid) override
     {
-        if (opacity == 0 && !clipper) return;  //Invisible
+        //Invisible
+        if (opacity == 0 && !clipper) {
+            bbox.reset();
+            return;
+        }
 
         auto strokeWidth = validStrokeWidth();
         bool visibleFill = false;
-        auto clipRegion = bbox;
 
         //This checks also for the case, if the invisible shape turned to visible by alpha.
         auto prepareShape = false;
@@ -128,10 +131,11 @@ struct SwShapeTask : SwTask
             rshape->fillColor(nullptr, nullptr, nullptr, &alpha);
             alpha = MULTIPLY(alpha, opacity);
             visibleFill = (alpha > 0 || rshape->fill);
+            shapeReset(&shape);
             if (visibleFill || clipper) {
-                shapeReset(&shape);
-                if (!shapePrepare(&shape, rshape, transform, clipRegion, bbox, mpool, tid, clips.count > 0 ? true : false)) {
+                if (!shapePrepare(&shape, rshape, transform, bbox, shape.bbox, mpool, tid, clips.count > 0 ? true : false)) {
                     visibleFill = false;
+                    shape.bbox.reset();
                 }
             }
         }
@@ -152,7 +156,7 @@ struct SwShapeTask : SwTask
         if (flags & (RenderUpdateFlag::Path | RenderUpdateFlag::Stroke | RenderUpdateFlag::Transform)) {
             if (strokeWidth > 0.0f) {
                 shapeResetStroke(&shape, rshape, transform);
-                if (!shapeGenStrokeRle(&shape, rshape, transform, clipRegion, bbox, mpool, tid)) goto err;
+                if (!shapeGenStrokeRle(&shape, rshape, transform, bbox, shape.bbox, mpool, tid)) goto err;
 
                 if (auto fill = rshape->strokeFill()) {
                     auto ctable = (flags & RenderUpdateFlag::GradientStroke) ? true : false;
@@ -177,9 +181,13 @@ struct SwShapeTask : SwTask
             //Clip stroke rle
             if (shape.strokeRle && !clipper->clip(shape.strokeRle)) goto err;
         }
+
+        bbox = shape.bbox; //sync
+
         return;
 
     err:
+        bbox.reset();
         shapeReset(&shape);
         shapeDelOutline(&shape, mpool, tid);
     }
