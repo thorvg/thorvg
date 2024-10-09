@@ -107,6 +107,7 @@ struct LottieGaussianBlur : LottieEffect
 struct LottieMask
 {
     LottiePathSet pathset;
+    LottieFloat expand = 0.0f;
     LottieOpacity opacity = 255;
     CompositeMethod method;
     bool inverse = false;
