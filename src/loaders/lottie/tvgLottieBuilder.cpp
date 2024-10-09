@@ -1129,12 +1129,21 @@ void LottieBuilder::updateMaskings(LottieLayer* layer, float frameNo)
     auto pMask = static_cast<LottieMask*>(layer->masks[0]);
     auto pMethod = pMask->method;
     auto opacity = pMask->opacity(frameNo);
+    auto expand = pMask->expand(frameNo);
 
     auto pShape = layer->pooling();
     pShape->reset();
     pShape->fill(255, 255, 255, opacity);
     pShape->transform(layer->cache.matrix);
-    pMask->pathset(frameNo, P(pShape)->rs.path.cmds, P(pShape)->rs.path.pts, nullptr, nullptr, nullptr, exps);
+
+    //Apply Masking Expansion (Offset)
+    if (expand == 0.0f) {
+        pMask->pathset(frameNo, P(pShape)->rs.path.cmds, P(pShape)->rs.path.pts, nullptr, nullptr, nullptr, exps);
+    } else {
+        //TODO: Once path direction support is implemented, ensure that the direction is ignored here
+        auto offset = LottieOffsetModifier(pMask->expand(frameNo));
+        pMask->pathset(frameNo, P(pShape)->rs.path.cmds, P(pShape)->rs.path.pts, nullptr, nullptr, &offset, exps);
+    }
 
     auto compMethod = (pMethod == CompositeMethod::SubtractMask || pMethod == CompositeMethod::InvAlphaMask) ? CompositeMethod::InvAlphaMask : CompositeMethod::AlphaMask;
 
