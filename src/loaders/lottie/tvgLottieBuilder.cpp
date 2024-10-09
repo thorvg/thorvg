@@ -1205,7 +1205,7 @@ void LottieBuilder::updateEffect(LottieLayer* layer, float frameNo)
         switch ((*ef)->type) {
             case LottieEffect::GaussianBlur: {
                 auto effect = static_cast<LottieGaussianBlur*>(*ef);
-                layer->scene->push(SceneEffect::GaussianBlur, sqrt(effect->blurness(frameNo)), effect->direction(frameNo) - 1, effect->wrap(frameNo), 50);
+                layer->scene->push(SceneEffect::GaussianBlur, sqrt(effect->blurness(frameNo)), effect->direction(frameNo) - 1, effect->wrap(frameNo), 25);
                 break;
             }
             default: break;

@@ -109,11 +109,13 @@ static void _gaussianBlur(uint8_t* src, uint8_t* dst, int32_t stride, int32_t w,
 
 static int _gaussianInit(int* kernel, float sigma, int level)
 {
+    const auto MAX_LEVEL = SwGaussianBlur::MAX_LEVEL;
+
     //compute the kernel
-    auto wl = (int) sqrt((12 * sigma / level) + 1);
+    auto wl = (int) sqrt((12 * sigma / MAX_LEVEL) + 1);
     if (wl % 2 == 0) --wl;
     auto wu = wl + 2;
-    auto mi = (12 * sigma - level * wl * wl - 4 * level * wl - 3 * level) / (-4 * wl - 4);
+    auto mi = (12 * sigma - MAX_LEVEL * wl * wl - 4 * MAX_LEVEL * wl - 3 * MAX_LEVEL) / (-4 * wl - 4);
     auto m = int(mi + 0.5f);
     auto extends = 0;
 
@@ -169,13 +171,17 @@ bool effectGaussianBlur(SwImage& image, SwImage& buffer, const SwBBox& bbox, con
     auto back = buffer.buf8;
     auto swapped = false;
 
+    //fine-tuning for low-quality (experimental)
+    auto threshold = (std::min(w, h) < 300) ? 2 : 1;
+
     TVGLOG("SW_ENGINE", "GaussianFilter region(%ld, %ld, %ld, %ld) params(%f %d %d), level(%d)", bbox.min.x, bbox.min.y, bbox.max.x, bbox.max.y, params->sigma, params->direction, params->border, data->level);
 
     //horizontal
     if (params->direction == 0 || params->direction == 1) {
         for (int i = 0; i < data->level; ++i) {
-            if (data->kernel[i] == 0) continue;
-            _gaussianBlur(front, back, stride, w, h, bbox, data->kernel[i], params->border, false);
+            auto k = data->kernel[i] / threshold;
+            if (k == 0) continue;
+            _gaussianBlur(front, back, stride, w, h, bbox, k, params->border, false);
             std::swap(front, back);
             swapped = !swapped;
         }
@@ -187,8 +193,9 @@ bool effectGaussianBlur(SwImage& image, SwImage& buffer, const SwBBox& bbox, con
         std::swap(front, back);
 
         for (int i = 0; i < data->level; ++i) {
-            if (data->kernel[i] == 0) continue;
-            _gaussianBlur(front, back, stride, h, w, bbox, data->kernel[i], params->border, true);
+            auto k = data->kernel[i] / threshold;
+            if (k == 0) continue;
+            _gaussianBlur(front, back, stride, h, w, bbox, k, params->border, true);
             std::swap(front, back);
             swapped = !swapped;
         }
