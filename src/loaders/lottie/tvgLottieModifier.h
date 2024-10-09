@@ -47,7 +47,7 @@ struct LottieOffsetModifier
     float miterLimit;
     StrokeJoin join;
 
-    LottieOffsetModifier(float offset, float miter, StrokeJoin join) : offset(offset), miterLimit(miter), join(join) {};
+    LottieOffsetModifier(float offset, float miter = 4.0f, StrokeJoin join = StrokeJoin::Round) : offset(offset), miterLimit(miter), join(join) {};
 
     bool modifyPath(const PathCommand* inCmds, uint32_t inCmdsCnt, const Point* inPts, uint32_t inPtsCnt, Array<PathCommand>& outCmds, Array<Point>& outPts, bool clockwise) const;
     bool modifyPolystar(const Array<PathCommand>& inCmds, const Array<Point>& inPts, Array<PathCommand>& outCmds, Array<Point>& outPts, bool clockwise) const;

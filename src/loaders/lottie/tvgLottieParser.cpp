@@ -1233,6 +1233,7 @@ LottieMask* LottieParser::parseMask()
         }
         else if (valid && KEY_AS("pt")) getPathSet(mask->pathset);
         else if (valid && KEY_AS("o")) parseProperty<LottieProperty::Type::Opacity>(mask->opacity);
+        else if (valid && KEY_AS("x")) parseProperty<LottieProperty::Type::Float>(mask->expand);
         else skip(key);
     }
 
