@@ -66,7 +66,9 @@ The task scheduler has been meticulously crafted to conceal complexity, streamli
   - [Lottie](#lottie)
   - [TVG Picture](#tvg-picture)
   - [In Practice](#in-practice)
+    - [Canva iOS](#canva-ios)
     - [dotLottie](#dotlottie)
+    - [Flux Audio](#flux-audio)
     - [Godot](#godot)
     - [Tizen](#tizen)
   - [Examples](#examples)
@@ -353,10 +355,23 @@ As TVG Saver facilitates the export of the scene-tree into TVG Picture data file
 <br />
 <br />
 ## In Practice
+### Canva iOS
+[Canva](https://www.canva.com), a leading visual communication platform, is a household name among creators, marketers, designers, students, and more, with millions of users worldwide. It empowers users to create stunning visual content with a user-friendly interface and a vast library of templates and design elements. The Canva iOS app transitioned from the existing Lottie animation engine to ThorVG for Lottie animations, resulting in approximately an 80% improvement in rendering speed and a 70% reduction in peak memory usage.
+<p align="center">
+  <img width="700" height="auto" src="https://github.com/thorvg/thorvg/blob/main/res/example_canvaios.png">
+</p>
+
 ### dotLottie
 [dotLottie](https://dotlottie.io/) is an open-source file format that aggregates one or more Lottie files and their associated resources, such as images and fonts, into a single file. This enables an efficient and easy distribution of animations. dotLottie files are ZIP archives compressed with the Deflate compression method and carry the file extension of “.lottie”. Think of it as a superset of Lottie. [LottieFiles](https://lottiefiles.com/) aims to achieve just that. [dotLottie player](https://github.com/LottieFiles/dotlottie-rs) by LottieFiles is now powered by ThorVG.
 <p align="center">
-  <img width="798" height="auto" src="https://github.com/thorvg/thorvg/blob/main/res/example_dotlottie.png">
+  <img width="700" height="auto" src="https://github.com/thorvg/thorvg/blob/main/res/example_dotlottie.png">
+</p>
+
+### Flux Audio
+[Flux Audio](https://www.flux.audio/) is a cutting-edge audio technology company specializing in high-fidelity sound systems and immersive audio experiences. With a focus on delivering precision and quality, Flux Audio leverages advanced software solutions to enhance audio processing across a wide range of devices. ThorVG is integrated into Flux Audio’s user interface, providing efficient and scalable vector rendering for their visual elements, ensuring a sleek and responsive user experience. This collaboration highlights ThorVG’s versatility in high-performance audio platforms.
+
+<p align="center">
+  <img width="800" height="auto" src="https://github.com/thorvg/thorvg/blob/main/res/example_flux.jpg">
 </p>
 
 ### Godot
