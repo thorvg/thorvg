@@ -38,6 +38,7 @@ void WgRenderer::initialize()
 {
     mPipelines.initialize(mContext);
     WgMeshDataGroup::gMeshDataPool = new WgMeshDataPool();
+    WgRenderDataShape::gStrokesGenerator = new WgVertexBufferInd();
 }
 
 
@@ -47,6 +48,7 @@ void WgRenderer::release()
     mStorageRoot.release(mContext);
     mRenderStoragePool.release(mContext);
     mRenderDataShapePool.release(mContext);
+    delete WgRenderDataShape::gStrokesGenerator;
     WgMeshDataGroup::gMeshDataPool->release(mContext);
     delete WgMeshDataGroup::gMeshDataPool;
     mCompositorStack.clear();
@@ -128,11 +130,9 @@ RenderData WgRenderer::prepare(RenderSurface* surface, RenderData data, const Ma
 
     // update image data
     if (flags & (RenderUpdateFlag::Path | RenderUpdateFlag::Image)) {
-        WgVertexBufferInd vertexBufferInd;
-        vertexBufferInd.appendImageBox(surface->w, surface->h);
         mContext.pipelines->layouts.releaseBindGroup(renderDataPicture->bindGroupPicture);
         renderDataPicture->meshData.release(mContext);
-        renderDataPicture->meshData.update(mContext, vertexBufferInd);
+        renderDataPicture->meshData.imageBox(mContext, surface->w, surface->h);
         renderDataPicture->imageData.update(mContext, surface);
         renderDataPicture->bindGroupPicture = mContext.pipelines->layouts.createBindGroupTexSampled(
             mContext.samplerLinearRepeat, renderDataPicture->imageData.textureView
