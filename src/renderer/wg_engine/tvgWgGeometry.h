@@ -216,9 +216,9 @@ struct WgVertexBuffer {
 
 // simple indexed vertex buffer
 struct WgVertexBufferInd {
-    Point vbuff[WG_POINTS_COUNT*4];
-    Point tbuff[WG_POINTS_COUNT*4];
-    uint32_t ibuff[WG_POINTS_COUNT*8];
+    Point vbuff[WG_POINTS_COUNT*16];
+    Point tbuff[WG_POINTS_COUNT*16];
+    uint32_t ibuff[WG_POINTS_COUNT*16];
     size_t vcount = 0;
     size_t icount = 0;
 
@@ -235,42 +235,6 @@ struct WgVertexBufferInd {
             pmin = min(pmin, vbuff[i]);
             pmax = max(pmax, vbuff[i]);
         }
-    }
-
-    // append image box with tex coords
-    void appendImageBox(float w, float h) {
-        Point points[4] { { 0.0f, 0.0f }, { w, 0.0f }, { w, h }, { 0.0f, h } };
-        appendImageBox(points);
-    }
-
-    // append blit box with tex coords
-    void appendBlitBox() {
-        Point points[4] { { -1.0f, +1.0f }, { +1.0f, +1.0f }, { +1.0f, -1.0f }, { -1.0f, -1.0f } };
-        appendImageBox(points);
-    }
-
-    // append image box with tex coords
-    void appendImageBox(Point points[4]) {
-        // append vertexes
-        vbuff[vcount+0] = points[0];
-        vbuff[vcount+1] = points[1];
-        vbuff[vcount+2] = points[2];
-        vbuff[vcount+3] = points[3];
-        // append tex coords
-        tbuff[vcount+0] = { 0.0f, 0.0f };
-        tbuff[vcount+1] = { 1.0f, 0.0f };
-        tbuff[vcount+2] = { 1.0f, 1.0f };
-        tbuff[vcount+3] = { 0.0f, 1.0f };
-        // append indexes
-        ibuff[icount+0] = vcount + 0;
-        ibuff[icount+1] = vcount + 1;
-        ibuff[icount+2] = vcount + 2;
-        ibuff[icount+3] = vcount + 0;
-        ibuff[icount+4] = vcount + 2;
-        ibuff[icount+5] = vcount + 3;
-        // update buffer
-        vcount += 4;
-        icount += 6;
     }
 
     // append quad - two triangles formed from four points
@@ -362,7 +326,7 @@ struct WgVertexBufferInd {
     }
 
     // append miter joint
-    void appendMitter(const Point& v0, const Point& v1, const Point& v2, float dist1, float dist2, float halfWidth, float miterLimit) {
+    void appendMiter(const Point& v0, const Point& v1, const Point& v2, float dist1, float dist2, float halfWidth, float miterLimit) {
         Point sub1 = v1 - v0;
         Point sub2 = v2 - v1;
         Point nrm1 { +sub1.y / dist1, -sub1.x / dist1 };
@@ -433,7 +397,7 @@ struct WgVertexBufferInd {
                 appendBevel(buff.last(1), buff.vbuff[0], buff.vbuff[1], buff.lastDist(0), buff.vdist[1], halfWidth);
             // close by mitter
             else if (rstroke->join == StrokeJoin::Miter) {
-                appendMitter(buff.last(1), buff.vbuff[0], buff.vbuff[1], buff.lastDist(0), buff.vdist[1], halfWidth, rstroke->miterlimit);
+                appendMiter(buff.last(1), buff.vbuff[0], buff.vbuff[1], buff.lastDist(0), buff.vdist[1], halfWidth, rstroke->miterlimit);
             }
         }
 
@@ -444,7 +408,7 @@ struct WgVertexBufferInd {
         // append joints (mitter)
         } else if (rstroke->join == StrokeJoin::Miter) {
             for (size_t i = 1; i < buff.vcount - 1; i++)
-                appendMitter(buff.vbuff[i-1], buff.vbuff[i], buff.vbuff[i+1], buff.vdist[i], buff.vdist[i+1], halfWidth, rstroke->miterlimit);
+                appendMiter(buff.vbuff[i-1], buff.vbuff[i], buff.vbuff[i+1], buff.vdist[i], buff.vdist[i+1], halfWidth, rstroke->miterlimit);
         }
     }
 };

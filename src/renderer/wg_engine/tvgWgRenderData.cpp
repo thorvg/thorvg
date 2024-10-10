@@ -84,7 +84,7 @@ void WgMeshData::update(WgContext& context, const WgVertexBufferInd& vertexBuffe
 };
 
 
-void WgMeshData::update(WgContext& context, const Point pmin, const Point pmax)
+void WgMeshData::bbox(WgContext& context, const Point pmin, const Point pmax)
 {
     vertexCount = 4;
     indexCount = 6;
@@ -94,6 +94,32 @@ void WgMeshData::update(WgContext& context, const Point pmin, const Point pmax)
     };
     context.allocateBufferVertex(bufferPosition, data, sizeof(data));
     context.allocateBufferIndexFan(vertexCount);
+}
+
+
+void WgMeshData::imageBox(WgContext& context, float w, float h)
+{
+    vertexCount = 4;
+    indexCount = 6;
+    const float vdata[] = { 0.0f, 0.0f,    w, 0.0f,   w,    h,  0.0f, h    };
+    const float tdata[] = { 0.0f, 0.0f, 1.0f, 0.0f, 1.0f, 1.0f, 0.0f, 1.0f };
+    const uint32_t idata[] = { 0, 1, 2, 0, 2, 3 };
+    context.allocateBufferVertex(bufferPosition, vdata, sizeof(vdata));
+    context.allocateBufferVertex(bufferTexCoord, tdata, sizeof(tdata));
+    context.allocateBufferIndex(bufferIndex, idata, sizeof(idata));
+}
+
+
+void WgMeshData::blitBox(WgContext& context)
+{
+    vertexCount = 4;
+    indexCount = 6;
+    const float vdata[] = { -1.0f, +1.0f, +1.0f, +1.0f, +1.0f, -1.0f, -1.0f, -1.0f };
+    const float tdata[] = { +0.0f, +0.0f, +1.0f, +0.0f, +1.0f, +1.0f, +0.0f, +1.0f };
+    const uint32_t idata[] = { 0, 1, 2, 0, 2, 3 };
+    context.allocateBufferVertex(bufferPosition, vdata, sizeof(vdata));
+    context.allocateBufferVertex(bufferTexCoord, tdata, sizeof(tdata));
+    context.allocateBufferIndex(bufferIndex, idata, sizeof(idata));
 }
 
 
@@ -164,7 +190,7 @@ void WgMeshDataGroup::append(WgContext& context, const WgVertexBufferInd& vertex
 void WgMeshDataGroup::append(WgContext& context, const Point pmin, const Point pmax)
 {
     meshes.push(gMeshDataPool->allocate(context));
-    meshes.last()->update(context, pmin, pmax);
+    meshes.last()->bbox(context, pmin, pmax);
 }
 
 
@@ -271,6 +297,8 @@ void WgRenderSettings::release(WgContext& context)
 //***********************************************************************
 // WgRenderDataPaint
 //***********************************************************************
+
+WgVertexBufferInd* WgRenderDataPaint::gStrokesGenerator = nullptr;
 
 void WgRenderDataPaint::release(WgContext& context)
 {
@@ -411,11 +439,11 @@ void WgRenderDataShape::updateMeshes(WgContext &context, const RenderShape &rsha
             });
         }
     } 
-    // update shapes bbox (with empty path hadnling)
+    // update shapes bbox (with empty path handling)
     if ((this->meshGroupShapesBBox.meshes.count > 0 ) ||
         (this->meshGroupStrokesBBox.meshes.count > 0)) {
         updateAABB(tr);
-        meshDataBBox.update(context, pMin, pMax);
+        meshDataBBox.bbox(context, pMin, pMax);
     } else aabb = {0, 0, 0, 0};
 }
 
@@ -423,7 +451,7 @@ void WgRenderDataShape::updateMeshes(WgContext &context, const RenderShape &rsha
 void WgRenderDataShape::proceedStrokes(WgContext context, const RenderStroke* rstroke, float tbeg, float tend, const WgVertexBuffer& buff)
 {
     assert(rstroke);
-    WgVertexBufferInd stroke_buff;
+    gStrokesGenerator->reset();
     // trim -> dash -> stroke
     if ((tbeg != 0.0f) || (tend != 1.0f)) {
         if (tbeg == tend) return;
@@ -431,17 +459,17 @@ void WgRenderDataShape::proceedStrokes(WgContext context, const RenderStroke* rs
         trimed_buff.trim(buff, tbeg, tend);
         trimed_buff.updateDistances();
         // trim ->dash -> stroke
-        if (rstroke->dashPattern) stroke_buff.appendStrokesDashed(trimed_buff, rstroke);
+        if (rstroke->dashPattern) gStrokesGenerator->appendStrokesDashed(trimed_buff, rstroke);
         // trim -> stroke
-        else stroke_buff.appendStrokes(trimed_buff, rstroke);
+        else gStrokesGenerator->appendStrokes(trimed_buff, rstroke);
     } else
     // dash -> stroke
     if (rstroke->dashPattern) {
-        stroke_buff.appendStrokesDashed(buff, rstroke);
+        gStrokesGenerator->appendStrokesDashed(buff, rstroke);
     // stroke
     } else
-        stroke_buff.appendStrokes(buff, rstroke);
-    appendStroke(context, stroke_buff);
+        gStrokesGenerator->appendStrokes(buff, rstroke);
+    appendStroke(context, *gStrokesGenerator);
 }
 
 
