@@ -411,9 +411,12 @@ void WgRenderDataShape::updateMeshes(WgContext &context, const RenderShape &rsha
             });
         }
     } 
-    // update shapes bbox
-    updateAABB(tr);
-    meshDataBBox.update(context, pMin, pMax);
+    // update shapes bbox (with empty path hadnling)
+    if ((this->meshGroupShapesBBox.meshes.count > 0 ) ||
+        (this->meshGroupStrokesBBox.meshes.count > 0)) {
+        updateAABB(tr);
+        meshDataBBox.update(context, pMin, pMax);
+    } else aabb = {0, 0, 0, 0};
 }
 
 
@@ -450,6 +453,7 @@ void WgRenderDataShape::releaseMeshes(WgContext &context)
     meshGroupShapes.release(context);
     pMin = {FLT_MAX, FLT_MAX};
     pMax = {0.0f, 0.0f};
+    aabb = {0, 0, 0, 0};
     clips.clear();
 }
 
