@@ -216,9 +216,9 @@ struct WgVertexBuffer {
 
 // simple indexed vertex buffer
 struct WgVertexBufferInd {
-    Point vbuff[WG_POINTS_COUNT*4];
-    Point tbuff[WG_POINTS_COUNT*4];
-    uint32_t ibuff[WG_POINTS_COUNT*8];
+    Point vbuff[WG_POINTS_COUNT*16];
+    Point tbuff[WG_POINTS_COUNT*16];
+    uint32_t ibuff[WG_POINTS_COUNT*16];
     size_t vcount = 0;
     size_t icount = 0;
 
@@ -235,42 +235,6 @@ struct WgVertexBufferInd {
             pmin = min(pmin, vbuff[i]);
             pmax = max(pmax, vbuff[i]);
         }
-    }
-
-    // append image box with tex coords
-    void appendImageBox(float w, float h) {
-        Point points[4] { { 0.0f, 0.0f }, { w, 0.0f }, { w, h }, { 0.0f, h } };
-        appendImageBox(points);
-    }
-
-    // append blit box with tex coords
-    void appendBlitBox() {
-        Point points[4] { { -1.0f, +1.0f }, { +1.0f, +1.0f }, { +1.0f, -1.0f }, { -1.0f, -1.0f } };
-        appendImageBox(points);
-    }
-
-    // append image box with tex coords
-    void appendImageBox(Point points[4]) {
-        // append vertexes
-        vbuff[vcount+0] = points[0];
-        vbuff[vcount+1] = points[1];
-        vbuff[vcount+2] = points[2];
-        vbuff[vcount+3] = points[3];
-        // append tex coords
-        tbuff[vcount+0] = { 0.0f, 0.0f };
-        tbuff[vcount+1] = { 1.0f, 0.0f };
-        tbuff[vcount+2] = { 1.0f, 1.0f };
-        tbuff[vcount+3] = { 0.0f, 1.0f };
-        // append indexes
-        ibuff[icount+0] = vcount + 0;
-        ibuff[icount+1] = vcount + 1;
-        ibuff[icount+2] = vcount + 2;
-        ibuff[icount+3] = vcount + 0;
-        ibuff[icount+4] = vcount + 2;
-        ibuff[icount+5] = vcount + 3;
-        // update buffer
-        vcount += 4;
-        icount += 6;
     }
 
     // append quad - two triangles formed from four points

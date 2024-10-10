@@ -39,7 +39,9 @@ struct WgMeshData {
 
     void update(WgContext& context, const WgVertexBuffer& vertexBuffer);
     void update(WgContext& context, const WgVertexBufferInd& vertexBufferInd);
-    void update(WgContext& context, const Point pmin, const Point pmax);
+    void bbox(WgContext& context, const Point pmin, const Point pmax);
+    void imageBox(WgContext& context, float w, float h);
+    void blitBox(WgContext& context);
     void release(WgContext& context);
 };
 
@@ -94,6 +96,9 @@ struct WgRenderSettings
 
 struct WgRenderDataPaint
 {
+    // global strokes generator. single instance
+    static WgVertexBufferInd* gStrokesGenerator;
+
     WGPUBuffer bufferModelMat{};
     WGPUBuffer bufferBlendSettings{};
     WGPUBindGroup bindGroupPaint{};
