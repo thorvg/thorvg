@@ -38,7 +38,7 @@ TEST_CASE("Basic draw", "[tvgSwEngine]")
     REQUIRE(canvas);
 
     uint32_t buffer[100*100] = {0, };
-    REQUIRE(canvas->target(buffer, 100, 100, 100, SwCanvas::Colorspace::ABGR8888S) == Result::Success);
+    REQUIRE(canvas->target(buffer, 100, 100, 100, ColorSpace::ABGR8888S) == Result::Success);
 
     //Arc Line
     auto shape1 = tvg::Shape::gen();
@@ -100,7 +100,7 @@ TEST_CASE("Image Draw", "[tvgSwEngine]")
     REQUIRE(canvas);
 
     uint32_t buffer[100*100];
-    REQUIRE(canvas->target(buffer, 100, 100, 100, SwCanvas::Colorspace::ABGR8888) == Result::Success);
+    REQUIRE(canvas->target(buffer, 100, 100, 100, ColorSpace::ABGR8888) == Result::Success);
 
     //raw image
     ifstream file(TEST_DIR"/rawimage_200x300.raw");
@@ -385,7 +385,7 @@ TEST_CASE("Rect Draw", "[tvgSwEngine]")
     REQUIRE(canvas);
 
     uint32_t buffer[100*100];
-    REQUIRE(canvas->target(buffer, 100, 100, 100, SwCanvas::Colorspace::ABGR8888) == Result::Success);
+    REQUIRE(canvas->target(buffer, 100, 100, 100, ColorSpace::ABGR8888) == Result::Success);
 
     //Basic shapes and masking
     auto basicShape = tvg::Shape::gen();
@@ -443,7 +443,7 @@ TEST_CASE("RLE Draw", "[tvgSwEngine]")
     REQUIRE(canvas);
 
     uint32_t buffer[100*100];
-    REQUIRE(canvas->target(buffer, 100, 100, 100, SwCanvas::Colorspace::ABGR8888) == Result::Success);
+    REQUIRE(canvas->target(buffer, 100, 100, 100, ColorSpace::ABGR8888) == Result::Success);
 
     //Basic shapes and masking
     auto basicShape = tvg::Shape::gen();
@@ -501,7 +501,7 @@ TEST_CASE("Filling Draw", "[tvgSwEngine]")
     REQUIRE(canvas);
 
     uint32_t buffer[100*100];
-    REQUIRE(canvas->target(buffer, 100, 100, 100, SwCanvas::Colorspace::ABGR8888) == Result::Success);
+    REQUIRE(canvas->target(buffer, 100, 100, 100, ColorSpace::ABGR8888) == Result::Success);
 
     //Fill
     auto linearFill = LinearGradient::gen();
@@ -552,7 +552,7 @@ TEST_CASE("Filling Opaque Draw", "[tvgSwEngine]")
     REQUIRE(canvas);
 
     uint32_t buffer[100*100];
-    REQUIRE(canvas->target(buffer, 100, 100, 100, SwCanvas::Colorspace::ABGR8888) == Result::Success);
+    REQUIRE(canvas->target(buffer, 100, 100, 100, ColorSpace::ABGR8888) == Result::Success);
 
     //Fill
     auto linearFill = LinearGradient::gen();
@@ -601,7 +601,7 @@ TEST_CASE("Filling AlphaMask", "[tvgSwEngine]")
     REQUIRE(canvas);
 
     uint32_t buffer[100*100];
-    REQUIRE(canvas->target(buffer, 100, 100, 100, SwCanvas::Colorspace::ABGR8888) == Result::Success);
+    REQUIRE(canvas->target(buffer, 100, 100, 100, ColorSpace::ABGR8888) == Result::Success);
 
     //Fill
     auto linearFill = LinearGradient::gen();
@@ -660,7 +660,7 @@ TEST_CASE("Filling InvAlphaMask", "[tvgSwEngine]")
     REQUIRE(canvas);
 
     uint32_t buffer[100*100];
-    REQUIRE(canvas->target(buffer, 100, 100, 100, SwCanvas::Colorspace::ABGR8888) == Result::Success);
+    REQUIRE(canvas->target(buffer, 100, 100, 100, ColorSpace::ABGR8888) == Result::Success);
 
     //Fill
     auto linearFill = LinearGradient::gen();
@@ -719,7 +719,7 @@ TEST_CASE("Filling LumaMask", "[tvgSwEngine]")
     REQUIRE(canvas);
 
     uint32_t buffer[100*100];
-    REQUIRE(canvas->target(buffer, 100, 100, 100, SwCanvas::Colorspace::ABGR8888) == Result::Success);
+    REQUIRE(canvas->target(buffer, 100, 100, 100, ColorSpace::ABGR8888) == Result::Success);
 
     //Fill
     auto linearFill = LinearGradient::gen();
@@ -778,7 +778,7 @@ TEST_CASE("Filling Clipping", "[tvgSwEngine]")
     REQUIRE(canvas);
 
     uint32_t buffer[100*100];
-    REQUIRE(canvas->target(buffer, 100, 100, 100, SwCanvas::Colorspace::ABGR8888) == Result::Success);
+    REQUIRE(canvas->target(buffer, 100, 100, 100, ColorSpace::ABGR8888) == Result::Success);
 
     //Fill
     auto linearFill = LinearGradient::gen();
@@ -837,7 +837,7 @@ TEST_CASE("RLE Filling Draw", "[tvgSwEngine]")
     REQUIRE(canvas);
 
     uint32_t buffer[100*100];
-    REQUIRE(canvas->target(buffer, 100, 100, 100, SwCanvas::Colorspace::ABGR8888) == Result::Success);
+    REQUIRE(canvas->target(buffer, 100, 100, 100, ColorSpace::ABGR8888) == Result::Success);
 
     //Fill
     auto linearFill = LinearGradient::gen();
@@ -886,7 +886,7 @@ TEST_CASE("RLE Filling Opaque Draw", "[tvgSwEngine]")
     REQUIRE(canvas);
 
     uint32_t buffer[100*100];
-    REQUIRE(canvas->target(buffer, 100, 100, 100, SwCanvas::Colorspace::ABGR8888) == Result::Success);
+    REQUIRE(canvas->target(buffer, 100, 100, 100, ColorSpace::ABGR8888) == Result::Success);
 
     //Fill
     auto linearFill = LinearGradient::gen();
@@ -935,7 +935,7 @@ TEST_CASE("RLE Filling AlphaMask", "[tvgSwEngine]")
     REQUIRE(canvas);
 
     uint32_t buffer[100*100];
-    REQUIRE(canvas->target(buffer, 100, 100, 100, SwCanvas::Colorspace::ABGR8888) == Result::Success);
+    REQUIRE(canvas->target(buffer, 100, 100, 100, ColorSpace::ABGR8888) == Result::Success);
 
     //Fill
     auto linearFill = LinearGradient::gen();
@@ -994,7 +994,7 @@ TEST_CASE("RLE Filling InvAlphaMask", "[tvgSwEngine]")
     REQUIRE(canvas);
 
     uint32_t buffer[100*100];
-    REQUIRE(canvas->target(buffer, 100, 100, 100, SwCanvas::Colorspace::ABGR8888) == Result::Success);
+    REQUIRE(canvas->target(buffer, 100, 100, 100, ColorSpace::ABGR8888) == Result::Success);
 
     //Fill
     auto linearFill = LinearGradient::gen();
@@ -1053,7 +1053,7 @@ TEST_CASE("RLE Filling LumaMask", "[tvgSwEngine]")
     REQUIRE(canvas);
 
     uint32_t buffer[100*100];
-    REQUIRE(canvas->target(buffer, 100, 100, 100, SwCanvas::Colorspace::ARGB8888) == Result::Success);
+    REQUIRE(canvas->target(buffer, 100, 100, 100, ColorSpace::ARGB8888) == Result::Success);
 
     //Fill
     auto linearFill = LinearGradient::gen();
@@ -1112,7 +1112,7 @@ TEST_CASE("RLE Filling InvLumaMask", "[tvgSwEngine]")
     REQUIRE(canvas);
 
     uint32_t buffer[100*100];
-    REQUIRE(canvas->target(buffer, 100, 100, 100, SwCanvas::Colorspace::ARGB8888) == Result::Success);
+    REQUIRE(canvas->target(buffer, 100, 100, 100, ColorSpace::ARGB8888) == Result::Success);
 
     //Fill
     auto linearFill = LinearGradient::gen();
@@ -1171,7 +1171,7 @@ TEST_CASE("RLE Filling Clipping", "[tvgSwEngine]")
     REQUIRE(canvas);
 
     uint32_t buffer[100*100];
-    REQUIRE(canvas->target(buffer, 100, 100, 100, SwCanvas::Colorspace::ABGR8888) == Result::Success);
+    REQUIRE(canvas->target(buffer, 100, 100, 100, ColorSpace::ABGR8888) == Result::Success);
 
     //Fill
     auto linearFill = LinearGradient::gen();
@@ -1230,7 +1230,7 @@ TEST_CASE("Blending Shapes", "[tvgSwEngine]")
     REQUIRE(canvas);
 
     uint32_t buffer[100*100];
-    REQUIRE(canvas->target(buffer, 100, 100, 100, SwCanvas::Colorspace::ABGR8888) == Result::Success);
+    REQUIRE(canvas->target(buffer, 100, 100, 100, ColorSpace::ABGR8888) == Result::Success);
 
     BlendMethod methods[14] = {
         BlendMethod::Normal,
@@ -1282,7 +1282,7 @@ TEST_CASE("Blending Images", "[tvgSwEngine]")
     REQUIRE(canvas);
 
     uint32_t buffer[100*100];
-    REQUIRE(canvas->target(buffer, 100, 100, 100, SwCanvas::Colorspace::ABGR8888) == Result::Success);
+    REQUIRE(canvas->target(buffer, 100, 100, 100, ColorSpace::ABGR8888) == Result::Success);
 
     //raw image
     ifstream file(TEST_DIR"/rawimage_200x300.raw");
@@ -1365,7 +1365,7 @@ TEST_CASE("Blending with Gradient Filling", "[tvgSwEngine]")
     REQUIRE(canvas);
 
     uint32_t buffer[100*100];
-    REQUIRE(canvas->target(buffer, 100, 100, 100, SwCanvas::Colorspace::ABGR8888) == Result::Success);
+    REQUIRE(canvas->target(buffer, 100, 100, 100, ColorSpace::ABGR8888) == Result::Success);
 
     Fill::ColorStop cs[4] = {
         {0.0f, 0, 0, 0, 0},

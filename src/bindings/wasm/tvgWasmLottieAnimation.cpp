@@ -106,7 +106,7 @@ struct TvgSwEngine : TvgEngineMethod
     {
         free(buffer);
         buffer = (uint8_t*)malloc(w * h * sizeof(uint32_t));
-        static_cast<SwCanvas*>(canvas)->target((uint32_t *)buffer, w, w, h, SwCanvas::ABGR8888S);
+        static_cast<SwCanvas*>(canvas)->target((uint32_t *)buffer, w, w, h, ColorSpace::ABGR8888S);
     }
 
     val output(int w, int h) override

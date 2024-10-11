@@ -232,7 +232,7 @@ bool WgRenderer::blend(BlendMethod method)
 
 ColorSpace WgRenderer::colorSpace()
 {
-    return ColorSpace::Unsupported;
+    return ColorSpace::Unknown;
 }
 
 
