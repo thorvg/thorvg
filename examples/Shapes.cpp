@@ -32,15 +32,23 @@ struct UserExample : tvgexam::Example
     {
         if (!canvas) return false;
 
+        //Prepare a Composite Shape (Rectangle + Rectangle + Circle + Circle)
+        auto shape4 = tvg::Shape::gen();
+        shape4->appendRect(0, 0, 300, 300, 50, 50);     //x, y, w, h, rx, ry
+        shape4->appendCircle(400, 150, 150, 150);       //cx, cy, radiusW, radiusH
+        shape4->appendCircle(600, 150, 150, 100);       //cx, cy, radiusW, radiusH
+        shape4->fill(255, 255, 0);                      //r, g, b
+        canvas->push(std::move(shape4));
+
         //Prepare Round Rectangle
         auto shape1 = tvg::Shape::gen();
-        shape1->appendRect(0, 0, 400, 400, 50, 50);  //x, y, w, h, rx, ry
-        shape1->fill(0, 255, 0);                     //r, g, b
+        shape1->appendRect(0, 450, 300, 300, 50, 50);  //x, y, w, h, rx, ry
+        shape1->fill(0, 255, 0);                       //r, g, b
         canvas->push(std::move(shape1));
 
         //Prepare Circle
         auto shape2 = tvg::Shape::gen();
-        shape2->appendCircle(400, 400, 200, 200);    //cx, cy, radiusW, radiusH
+        shape2->appendCircle(400, 600, 150, 150);    //cx, cy, radiusW, radiusH
         shape2->fill(255, 255, 0);                   //r, g, b
         canvas->push(std::move(shape2));
 
