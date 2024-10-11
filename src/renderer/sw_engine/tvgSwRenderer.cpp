@@ -662,7 +662,7 @@ bool SwRenderer::effect(RenderCompositor* cmp, const RenderEffect* effect)
 ColorSpace SwRenderer::colorSpace()
 {
     if (surface) return surface->cs;
-    else return ColorSpace::Unsupported;
+    else return ColorSpace::Unknown;
 }
 
 

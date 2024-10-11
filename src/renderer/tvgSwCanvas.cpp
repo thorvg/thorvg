@@ -79,9 +79,12 @@ Result SwCanvas::mempool(MempoolPolicy policy) noexcept
 }
 
 
-Result SwCanvas::target(uint32_t* buffer, uint32_t stride, uint32_t w, uint32_t h, Colorspace cs) noexcept
+Result SwCanvas::target(uint32_t* buffer, uint32_t stride, uint32_t w, uint32_t h, ColorSpace cs) noexcept
 {
 #ifdef THORVG_SW_RASTER_SUPPORT
+    if (cs == ColorSpace::Unknown) return Result::InvalidArguments;
+    if (cs == ColorSpace::Grayscale8) return Result::NonSupport;
+
     if (Canvas::pImpl->status != Status::Damaged && Canvas::pImpl->status != Status::Synced) {
         return Result::InsufficientCondition;
     }
