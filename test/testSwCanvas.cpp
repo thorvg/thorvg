@@ -57,14 +57,14 @@ TEST_CASE("Target Buffer", "[tvgSwCanvas]")
     REQUIRE(canvas);
 
     uint32_t buffer[100*100];
-    REQUIRE(canvas->target(buffer, 100, 100, 100, SwCanvas::Colorspace::ABGR8888) == Result::Success);
-    REQUIRE(canvas->target(buffer, 100, 100, 100, SwCanvas::Colorspace::ARGB8888) == Result::Success);
+    REQUIRE(canvas->target(buffer, 100, 100, 100, ColorSpace::ABGR8888) == Result::Success);
+    REQUIRE(canvas->target(buffer, 100, 100, 100, ColorSpace::ARGB8888) == Result::Success);
 
-    REQUIRE(canvas->target(nullptr, 100, 100, 100, SwCanvas::Colorspace::ARGB8888) == Result::InvalidArguments);
-    REQUIRE(canvas->target(buffer, 0, 100, 100, SwCanvas::Colorspace::ARGB8888) == Result::InvalidArguments);
-    REQUIRE(canvas->target(buffer, 100, 0, 100, SwCanvas::Colorspace::ARGB8888) == Result::InvalidArguments);
-    REQUIRE(canvas->target(buffer, 100, 200, 100, SwCanvas::Colorspace::ARGB8888) == Result::InvalidArguments);
-    REQUIRE(canvas->target(buffer, 100, 100, 0, SwCanvas::Colorspace::ARGB8888) == Result::InvalidArguments);
+    REQUIRE(canvas->target(nullptr, 100, 100, 100, ColorSpace::ARGB8888) == Result::InvalidArguments);
+    REQUIRE(canvas->target(buffer, 0, 100, 100, ColorSpace::ARGB8888) == Result::InvalidArguments);
+    REQUIRE(canvas->target(buffer, 100, 0, 100, ColorSpace::ARGB8888) == Result::InvalidArguments);
+    REQUIRE(canvas->target(buffer, 100, 200, 100, ColorSpace::ARGB8888) == Result::InvalidArguments);
+    REQUIRE(canvas->target(buffer, 100, 100, 0, ColorSpace::ARGB8888) == Result::InvalidArguments);
 
     REQUIRE(Initializer::term(CanvasEngine::Sw) == Result::Success);
 }
@@ -104,7 +104,7 @@ TEST_CASE("Pushing Paints", "[tvgSwCanvas]")
     REQUIRE(canvas);
 
     uint32_t buffer[100*100];
-    REQUIRE(canvas->target(buffer, 100, 100, 100, SwCanvas::Colorspace::ARGB8888) == Result::Success);
+    REQUIRE(canvas->target(buffer, 100, 100, 100, ColorSpace::ARGB8888) == Result::Success);
 
     //Try all types of paints.
     REQUIRE(canvas->push(Shape::gen()) == Result::Success);
@@ -172,10 +172,10 @@ TEST_CASE("Clear", "[tvgSwCanvas]")
     REQUIRE(canvas2->clear(false) == Result::InsufficientCondition);
 
     uint32_t buffer[100*100];
-    REQUIRE(canvas->target(buffer, 100, 100, 100, SwCanvas::Colorspace::ARGB8888) == Result::Success);
+    REQUIRE(canvas->target(buffer, 100, 100, 100, ColorSpace::ARGB8888) == Result::Success);
 
     uint32_t buffer2[100*100];
-    REQUIRE(canvas2->target(buffer2, 100, 100, 100, SwCanvas::Colorspace::ARGB8888) == Result::Success);
+    REQUIRE(canvas2->target(buffer2, 100, 100, 100, ColorSpace::ARGB8888) == Result::Success);
 
     //Try 1: Push -> Clear
     for (int i = 0; i < 5; ++i) {
@@ -221,7 +221,7 @@ TEST_CASE("Update", "[tvgSwCanvas]")
     REQUIRE(canvas);
 
     uint32_t buffer[100*100];
-    REQUIRE(canvas->target(buffer, 100, 100, 100, SwCanvas::Colorspace::ARGB8888) == Result::Success);
+    REQUIRE(canvas->target(buffer, 100, 100, 100, ColorSpace::ARGB8888) == Result::Success);
 
     REQUIRE(canvas->update() == Result::InsufficientCondition);
 
@@ -260,7 +260,7 @@ TEST_CASE("Synchronized Drawing", "[tvgSwCanvas]")
     REQUIRE(canvas->draw() == Result::InsufficientCondition);
 
     uint32_t buffer[100*100];
-    REQUIRE(canvas->target(buffer, 100, 100, 100, SwCanvas::Colorspace::ARGB8888) == Result::Success);
+    REQUIRE(canvas->target(buffer, 100, 100, 100, ColorSpace::ARGB8888) == Result::Success);
 
     REQUIRE(canvas->draw() == Result::InsufficientCondition);
     REQUIRE(canvas->sync() == Result::InsufficientCondition);
@@ -295,7 +295,7 @@ TEST_CASE("Asynchronous Drawing", "[tvgSwCanvas]")
     REQUIRE(canvas);
 
     uint32_t buffer[100*100];
-    REQUIRE(canvas->target(buffer, 100, 100, 100, SwCanvas::Colorspace::ARGB8888) == Result::Success);
+    REQUIRE(canvas->target(buffer, 100, 100, 100, ColorSpace::ARGB8888) == Result::Success);
 
     for (int i = 0; i < 3; ++i) {
         auto shape = Shape::gen();
@@ -322,7 +322,7 @@ TEST_CASE("Viewport", "[tvgSwCanvas]")
     REQUIRE(canvas->viewport(25, 25, 100, 100) == Result::Success);
 
     uint32_t buffer[100*100];
-    REQUIRE(canvas->target(buffer, 100, 100, 100, SwCanvas::Colorspace::ARGB8888) == Result::Success);
+    REQUIRE(canvas->target(buffer, 100, 100, 100, ColorSpace::ARGB8888) == Result::Success);
 
     REQUIRE(canvas->viewport(25, 25, 50, 50) == Result::Success);
 

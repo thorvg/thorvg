@@ -107,7 +107,7 @@ void runSw()
         auto offy = SIZE * (counter / NUM_PER_LINE);
         auto w = surface->w - offx;
         auto h = surface->h - offy;
-        tvgexam::verify(canvas->target((uint32_t*)surface->pixels + SIZE * (counter / NUM_PER_LINE) * (surface->pitch / 4) + (counter % NUM_PER_LINE) * SIZE, surface->pitch / 4, w, h, tvg::SwCanvas::ARGB8888));
+        tvgexam::verify(canvas->target((uint32_t*)surface->pixels + SIZE * (counter / NUM_PER_LINE) * (surface->pitch / 4) + (counter % NUM_PER_LINE) * SIZE, surface->pitch / 4, w, h, tvg::ColorSpace::ARGB8888));
         content(canvas.get());
         if (tvgexam::verify(canvas->draw())) {
             tvgexam::verify(canvas->sync());

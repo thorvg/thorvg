@@ -295,7 +295,7 @@ struct SwWindow : Window
         if (!surface) return;
 
         //Set the canvas target and draw on it.
-        verify(canvas->target((uint32_t*)surface->pixels, surface->w, surface->pitch / 4, surface->h, tvg::SwCanvas::ARGB8888));
+        verify(canvas->target((uint32_t*)surface->pixels, surface->w, surface->pitch / 4, surface->h, tvg::ColorSpace::ARGB8888));
     }
 
     void refresh() override

@@ -37,17 +37,6 @@ using pixel_t = uint32_t;
 
 enum RenderUpdateFlag : uint8_t {None = 0, Path = 1, Color = 2, Gradient = 4, Stroke = 8, Transform = 16, Image = 32, GradientStroke = 64, Blend = 128, All = 255};
 
-//TODO: Move this in public header unifying with SwCanvas::Colorspace
-enum ColorSpace : uint8_t
-{
-    ABGR8888 = 0,      //The channels are joined in the order: alpha, blue, green, red. Colors are alpha-premultiplied.
-    ARGB8888,          //The channels are joined in the order: alpha, red, green, blue. Colors are alpha-premultiplied.
-    ABGR8888S,         //The channels are joined in the order: alpha, blue, green, red. Colors are un-alpha-premultiplied.
-    ARGB8888S,         //The channels are joined in the order: alpha, red, green, blue. Colors are un-alpha-premultiplied.
-    Grayscale8,        //One single channel data.
-    Unsupported        //TODO: Change to the default, At the moment, we put it in the last to align with SwCanvas::Colorspace.
-};
-
 struct RenderSurface
 {
     union {
@@ -58,7 +47,7 @@ struct RenderSurface
     Key key;                        //a reserved lock for the thread safety
     uint32_t stride = 0;
     uint32_t w = 0, h = 0;
-    ColorSpace cs = ColorSpace::Unsupported;
+    ColorSpace cs = ColorSpace::Unknown;
     uint8_t channelSize = 0;
     bool premultiplied = false;         //Alpha-premultiplied
 
@@ -364,7 +353,7 @@ static inline uint8_t CHANNEL_SIZE(ColorSpace cs)
             return sizeof(uint32_t);
         case ColorSpace::Grayscale8:
             return sizeof(uint8_t);
-        case ColorSpace::Unsupported:
+        case ColorSpace::Unknown:
         default:
             TVGERR("RENDERER", "Unsupported Channel Size! = %d", (int)cs);
             return 0;
@@ -389,7 +378,7 @@ static inline ColorSpace COMPOSITE_TO_COLORSPACE(RenderMethod* renderer, Composi
             return renderer->colorSpace();
         default:
             TVGERR("RENDERER", "Unsupported Composite Size! = %d", (int)method);
-            return ColorSpace::Unsupported;
+            return ColorSpace::Unknown;
     }
 }
 

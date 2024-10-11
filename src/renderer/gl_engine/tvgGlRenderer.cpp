@@ -870,7 +870,7 @@ void GlRenderer::endRenderPass(RenderCompositor* cmp)
         }
         // image info
         {
-            uint32_t info[4] = {ABGR8888, 0, cmp->opacity, 0};
+            uint32_t info[4] = {(uint32_t)ColorSpace::ABGR8888, 0, cmp->opacity, 0};
             uint32_t loc = task->getProgram()->getUniformBlockIndex("ColorInfo");
 
             task->addBindResource(GlBindingResource{
@@ -1079,7 +1079,7 @@ bool GlRenderer::effect(TVG_UNUSED RenderCompositor* cmp, TVG_UNUSED const Rende
 
 ColorSpace GlRenderer::colorSpace()
 {
-    return ColorSpace::Unsupported;
+    return ColorSpace::Unknown;
 }
 
 
@@ -1156,7 +1156,7 @@ bool GlRenderer::renderImage(void* data)
     }
     // image info
     {
-        uint32_t info[4] = {sdata->texColorSpace, sdata->texFlipY, sdata->opacity, 0};
+        uint32_t info[4] = {(uint32_t)sdata->texColorSpace, sdata->texFlipY, sdata->opacity, 0};
         uint32_t loc = task->getProgram()->getUniformBlockIndex("ColorInfo");
 
         task->addBindResource(GlBindingResource{

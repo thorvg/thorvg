@@ -90,6 +90,20 @@ enum class Result
 
 
 /**
+ * @brief Enumeration specifying the methods of combining the 8-bit color channels into 32-bit color.
+ */
+enum class ColorSpace : uint8_t
+{
+    ABGR8888 = 0,      ///< The channels are joined in the order: alpha, blue, green, red. Colors are alpha-premultiplied.
+    ARGB8888,          ///< The channels are joined in the order: alpha, red, green, blue. Colors are alpha-premultiplied.
+    ABGR8888S,         ///< The channels are joined in the order: alpha, blue, green, red. Colors are un-alpha-premultiplied. @since 0.12
+    ARGB8888S,         ///< The channels are joined in the order: alpha, red, green, blue. Colors are un-alpha-premultiplied. @since 0.12
+    Grayscale8,        ///< One single channel data.
+    Unknown = 255      ///< Unknown channel data. This is reserved for an initial ColorSpace value. @since 1.0
+};
+
+
+/**
  * @brief Enumeration specifying the values of the path commands accepted by TVG.
  *
  * Not to be confused with the path commands from the svg path element (like M, L, Q, H and many others).
@@ -1575,17 +1589,6 @@ public:
     ~SwCanvas();
 
     /**
-     * @brief Enumeration specifying the methods of combining the 8-bit color channels into 32-bit color.
-     */
-    enum Colorspace : uint8_t
-    {
-        ABGR8888 = 0,      ///< The channels are joined in the order: alpha, blue, green, red. Colors are alpha-premultiplied. (a << 24 | b << 16 | g << 8 | r)
-        ARGB8888,          ///< The channels are joined in the order: alpha, red, green, blue. Colors are alpha-premultiplied. (a << 24 | r << 16 | g << 8 | b)
-        ABGR8888S,         ///< The channels are joined in the order: alpha, blue, green, red. Colors are un-alpha-premultiplied. @since 0.12
-        ARGB8888S,         ///< The channels are joined in the order: alpha, red, green, blue. Colors are un-alpha-premultiplied. @since 0.12
-    };
-
-    /**
      * @brief Enumeration specifying the methods of Memory Pool behavior policy.
      * @since 0.4
      */
@@ -1616,7 +1619,7 @@ public:
      * @see Canvas::viewport()
      * @see Canvas::sync()
     */
-    Result target(uint32_t* buffer, uint32_t stride, uint32_t w, uint32_t h, Colorspace cs) noexcept;
+    Result target(uint32_t* buffer, uint32_t stride, uint32_t w, uint32_t h, ColorSpace cs) noexcept;
 
     /**
      * @brief Set sw engine memory pool behavior policy.

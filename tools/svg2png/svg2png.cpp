@@ -126,7 +126,7 @@ public:
             return 1;
         }
 
-        if (canvas->target(buffer, w, w, h, tvg::SwCanvas::ARGB8888S) != tvg::Result::Success) {
+        if (canvas->target(buffer, w, w, h, tvg::ColorSpace::ARGB8888S) != tvg::Result::Success) {
             cout << "Error: Canvas target failure" << endl;
             return 1;
         }
