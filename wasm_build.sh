@@ -10,7 +10,7 @@ if [ -z "$2" ]; then
   EMSDK="$1"
 fi
 
-if [ ! -d "./build_wasm32_$BACKEND" ]; then
+if [ ! -d "./build_wasm" ]; then
     if [[ "$BACKEND" == "wg" ]]; then
       sed "s|EMSDK:|$EMSDK|g" ./cross/wasm32_wg.txt > /tmp/.wasm_cross.txt
       meson -Db_lto=true -Ddefault_library=static -Dstatic=true -Dloaders="all" -Dsavers="all" -Dthreads=false -Dbindings="wasm_beta" -Dengines="wg" --cross-file /tmp/.wasm_cross.txt build_wasm
