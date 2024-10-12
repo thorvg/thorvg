@@ -34,10 +34,6 @@
     #include "tvgPngLoader.h"
 #endif
 
-#ifdef THORVG_TVG_LOADER_SUPPORT
-    #include "tvgTvgLoader.h"
-#endif
-
 #ifdef THORVG_JPG_LOADER_SUPPORT
     #include "tvgJpgLoader.h"
 #endif
@@ -93,12 +89,6 @@ static LoadModule* _find(FileType type)
 #endif
             break;
         }
-        case FileType::Tvg: {
-#ifdef THORVG_TVG_LOADER_SUPPORT
-            return new TvgLoader;
-#endif
-            break;
-        }
         case FileType::Svg: {
 #ifdef THORVG_SVG_LOADER_SUPPORT
             return new SvgLoader;
@@ -129,10 +119,6 @@ static LoadModule* _find(FileType type)
 #ifdef THORVG_LOG_ENABLED
     const char *format;
     switch(type) {
-        case FileType::Tvg: {
-            format = "TVG";
-            break;
-        }
         case FileType::Svg: {
             format = "SVG";
             break;
@@ -175,7 +161,6 @@ static LoadModule* _find(FileType type)
 static LoadModule* _findByPath(const string& path)
 {
     auto ext = path.substr(path.find_last_of(".") + 1);
-    if (!ext.compare("tvg")) return _find(FileType::Tvg);
     if (!ext.compare("svg")) return _find(FileType::Svg);
     if (!ext.compare("json")) return _find(FileType::Lottie);
     if (!ext.compare("png")) return _find(FileType::Png);
@@ -191,8 +176,7 @@ static FileType _convert(const string& mimeType)
 {
     auto type = FileType::Unknown;
 
-    if (mimeType == "tvg") type = FileType::Tvg;
-    else if (mimeType == "svg" || mimeType == "svg+xml") type = FileType::Svg;
+    if (mimeType == "svg" || mimeType == "svg+xml") type = FileType::Svg;
     else if (mimeType == "ttf" || mimeType == "otf") type = FileType::Ttf;
     else if (mimeType == "lottie") type = FileType::Lottie;
     else if (mimeType == "raw") type = FileType::Raw;

@@ -41,14 +41,12 @@ endif
 
 #Tools
 all_tools = get_option('tools').contains('all')
-svg2tvg = all_tools or get_option('tools').contains('svg2tvg')
 lottie2gif = all_tools or get_option('tools').contains('lottie2gif')
 svg2png = all_tools or get_option('tools').contains('svg2png')
 
 #Loaders
 all_loaders = get_option('loaders').contains('all')
-svg_loader = all_loaders or get_option('loaders').contains('svg') or svg2tvg or svg2png
-tvg_loader = all_loaders or get_option('loaders').contains('tvg')
+svg_loader = all_loaders or get_option('loaders').contains('svg') or svg2png
 png_loader = all_loaders or get_option('loaders').contains('png')
 jpg_loader = all_loaders or get_option('loaders').contains('jpg')
 lottie_loader = all_loaders or get_option('loaders').contains('lottie') or lottie2gif
@@ -57,16 +55,11 @@ webp_loader = all_loaders or get_option('loaders').contains('webp')
 
 #Savers
 all_savers = get_option('savers').contains('all')
-tvg_saver = all_savers or get_option('savers').contains('tvg') or svg2tvg
 gif_saver = all_savers or get_option('savers').contains('gif') or lottie2gif
 
 #Loaders/savers/tools config
 if svg_loader
     config_h.set10('THORVG_SVG_LOADER_SUPPORT', true)
-endif
-
-if tvg_loader
-    config_h.set10('THORVG_TVG_LOADER_SUPPORT', true)
 endif
 
 if png_loader
@@ -87,10 +80,6 @@ endif
 
 if webp_loader
     config_h.set10('THORVG_WEBP_LOADER_SUPPORT', true)
-endif
-
-if tvg_saver
-    config_h.set10('THORVG_TVG_SAVER_SUPPORT', true)
 endif
 
 if gif_saver
@@ -170,24 +159,21 @@ Summary:
     Raster Engine (SW):         @5@
     Raster Engine (GL):         @6@
     Raster Engine (WG):         @7@
-    Loader (TVG):               @8@
-    Loader (SVG):               @9@
-    Loader (TTF):               @10@
-    Loader (LOTTIE):            @11@
-    Loader (PNG):               @12@
-    Loader (JPG):               @13@
-    Loader (WEBP):              @14@
-    Saver (TVG):                @15@
-    Saver (GIF):                @16@
-    Binding (CAPI):             @17@
-    Binding (WASM_BETA):        @18@
-    Log Message:                @19@
-    Tests:                      @20@
-    Examples:                   @21@
-    Tool (Svg2Tvg):             @22@
-    Tool (Svg2Png):             @23@
-    Tool (Lottie2Gif):          @24@
-    Extra (Lottie Expressions): @25@
+    Loader (SVG):               @8@
+    Loader (TTF):               @9@
+    Loader (LOTTIE):            @10@
+    Loader (PNG):               @11@
+    Loader (JPG):               @12@
+    Loader (WEBP):              @13@
+    Saver (GIF):                @14@
+    Binding (CAPI):             @15@
+    Binding (WASM_BETA):        @16@
+    Log Message:                @17@
+    Tests:                      @18@
+    Examples:                   @19@
+    Tool (Svg2Png):             @20@
+    Tool (Lottie2Gif):          @21@
+    Extra (Lottie Expressions): @22@
 
 '''.format(
         meson.project_version(),
@@ -198,21 +184,18 @@ Summary:
         sw_engine,
         gl_engine,
         wg_engine,
-        tvg_loader,
         svg_loader,
         ttf_loader,
         lottie_loader,
         png_loader,
         jpg_loader,
         webp_loader,
-        tvg_saver,
         gif_saver,
         get_option('bindings').contains('capi'),
         get_option('bindings').contains('wasm_beta'),
         get_option('log'),
         get_option('tests'),
         get_option('examples'),
-        svg2tvg,
         svg2png,
         lottie2gif,
         lottie_expressions

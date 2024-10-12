@@ -8,7 +8,6 @@
 /src/renderer/wg_engine @SergeyLebedkin
 /src/loaders/external_webp/ @JSUYA
 /src/loaders/raw/ @JSUYA
-/src/loaders/tvg/ @mgrudzinska
 /src/loaders/svg/ @JSUYA @mgrudzinska
 /src/loaders/webp/ @JSUYA
 /src/bindings/capi @mgrudzinska

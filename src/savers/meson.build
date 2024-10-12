@@ -1,9 +1,5 @@
 subsaver_dep = []
 
-if tvg_saver
-    subdir('tvg')
-endif
-
 if gif_saver
     subdir('gif')
 endif

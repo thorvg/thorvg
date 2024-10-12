@@ -27,7 +27,7 @@ The following list shows primitives that are supported by ThorVG: <br />
 - **Scene Management**: retainable scene graph and object transformations
 - **Composition**: various blending and masking
 - **Text**: unicode characters with horizontal text layout using scalable fonts (TTF)
-- **Images**: TVG, SVG, JPG, PNG, WebP, and raw bitmaps
+- **Images**: SVG, JPG, PNG, WebP, and raw bitmaps
 - **Animations**: Lottie
 
 <p align="center">
@@ -64,7 +64,6 @@ The task scheduler has been meticulously crafted to conceal complexity, streamli
   - [Quick Start](#quick-start)
   - [SVG](#svg)
   - [Lottie](#lottie)
-  - [TVG Picture](#tvg-picture)
   - [In Practice](#in-practice)
     - [Canva iOS](#canva-ios)
     - [dotLottie](#dotlottie)
@@ -77,7 +76,6 @@ The task scheduler has been meticulously crafted to conceal complexity, streamli
     - [ThorVG Viewer](#thorvg-viewer)
     - [Lottie to GIF](#lottie-to-gif)
     - [SVG to PNG](#svg-to-png)
-    - [SVG to TVG](#svg-to-tvg)
   - [API Bindings](#api-bindings)
   - [Dependencies](#dependencies)
   - [Contributors](#contributors)
@@ -328,32 +326,6 @@ Please check out the [ThorVG Test App](https://thorvg-perf-test.vercel.app/) to 
 [Back to contents](#contents)
 <br />
 <br />
-## TVG Picture
-
-ThorVG introduces the dedicated vector data format, known as TVG Picture, designed to efficiently store Paint node properties within a scene in binary form. This format is meticulously optimized in advance, ensuring compact file sizes and swift data loading processes. </br>
-</br>
-To leverage the TVG Picture format, ThorVG employs a specialized module called TVG Saver. This module is responsible for optimizing the data associated with all scene-tree nodes and storing them in binary form. During the optimization phase, TVG Saver intelligently eliminates unused information, eliminates duplicated properties, consolidates overlapping shapes, and employs data compression where feasible. Remarkably, these optimizations maintain compatibility with future versions of ThorVG libraries, with data compression utilizing the [Lempel-Ziv-Welchi](https://en.wikipedia.org/wiki/Lempel%E2%80%93Ziv%E2%80%93Welch) algorithm when applicable.</br>
-</br>
-As a result of these efforts, the final data size is notably smaller than other text-based vector data formats, such as SVG. This reduction in data size not only minimizes I/O operations but also mitigates memory bandwidth requirements during data loading. This aspect proves particularly beneficial for programs reliant on substantial vector resources. </br>
-</br>
-Furthermore, TVG Picture substantially streamlines resource loading tasks by circumventing the need for data interpretation, resulting in reduced runtime memory demands and rendering tasks that subsequently enhance performance. </br>
-</br>
-By adopting TVG Picture, you can achieve an average reduction of over 30% in data size and loading times (for more details, refer to "[See More](https://github.com/thorvg/thorvg/wiki/TVG-Picture-Binary-Size)"). Notably, the extent of performance improvement is contingent on resource size and complexity. </br>
-</br>
-<p align="center">
-  <img width="909" height="auto" src="https://github.com/thorvg/thorvg/blob/main/res/example_tvgsize.png">
-</p>
-
-As TVG Saver facilitates the export of the scene-tree into TVG Picture data files (TVG), the subsequent task of importing and restoring this data to programmable instances is efficiently handled by the TVG Loader. For seamless conversion from SVG to TVG, the ThorVG Viewer provides a swift solution.
-
-<p align="center">
-  <img width="710" height="auto" src="https://github.com/thorvg/thorvg/blob/main/res/example_tvgmodule.png">
-</p>
-
-
-[Back to contents](#contents)
-<br />
-<br />
 ## In Practice
 ### Canva iOS
 [Canva](https://www.canva.com), a leading visual communication platform, is a household name among creators, marketers, designers, students, and more, with millions of users worldwide. It empowers users to create stunning visual content with a user-friendly interface and a vast library of templates and design elements. The Canva iOS app transitioned from the existing Lottie animation engine to ThorVG for Lottie animations, resulting in approximately an 80% improvement in rendering speed and a 70% reduction in peak memory usage.
@@ -423,7 +395,7 @@ The ThorVG API documentation can be accessed at [thorvg.org/apis](https://www.th
 <br />
 ## Tools
 ### ThorVG Viewer
-ThorVG provides the resource verification tool for the ThorVG Engine. [ThorVG viewer](https://thorvg.github.io/thorvg.viewer/) does immediate rendering via web browser running on the ThorVG web-assembly binary, allowing real-time editing of the vector elements on it. It doesn't upload your resources to any external server while allowing to export to supported formats such as TVG, so the designer resource copyright is protected.</br>
+ThorVG provides the resource verification tool for the ThorVG Engine. [ThorVG viewer](https://thorvg.github.io/thorvg.viewer/) does immediate rendering via web browser running on the ThorVG web-assembly binary, allowing real-time editing of the vector elements on it. It doesn't upload your resources to any external server while allowing to export to supported formats such as GIF, so the designer resource copyright is protected.</br>
 </br>
 
 <p align="center">
@@ -492,24 +464,6 @@ Examples:
     $ svg2png input.svg -r 200x200 -b ff00ff
     $ svg2png input1.svg input2.svg -r 200x200 -b ff00ff
     $ svg2png . -r 200x200
-```
-
-### SVG to TVG
-ThorVG provides an executable `svg2tvg` converter that generates a TVG file from an SVG file.
-
-To use `svg2tvg`, you need to activate this feature in the build option:
-```
-meson setup builddir -Dtools=svg2tvg -Dsavers=tvg
-```
-
-Examples of the usage of the `svg2tvg`:
-```
-Usage:
-   svg2tvg [SVG file] or [SVG folder]
-
-Examples:
-    $ svg2tvg input.svg
-    $ svg2tvg svgfolder
 ```
 
 [Back to contents](#contents)

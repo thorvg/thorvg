@@ -54,7 +54,7 @@ using namespace tvg;
     #define strdup _strdup
 #endif
 
-enum class FileType { Png = 0, Jpg, Webp, Tvg, Svg, Lottie, Ttf, Raw, Gif, Unknown };
+enum class FileType { Png = 0, Jpg, Webp, Svg, Lottie, Ttf, Raw, Gif, Unknown };
 
 using Size = Point;
 

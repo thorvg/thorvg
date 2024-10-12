@@ -1639,7 +1639,7 @@ bool rasterCompositor(SwSurface* surface)
         surface->alphas[2] = _argbLuma;
         surface->alphas[3] = _argbInvLuma;
     } else {
-        TVGERR("SW_ENGINE", "Unsupported Colorspace(%d) is expected!", surface->cs);
+        TVGERR("SW_ENGINE", "Unsupported Colorspace(%d) is expected!", (int)surface->cs);
         return false;
     }
     return true;

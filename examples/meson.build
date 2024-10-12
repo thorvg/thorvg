@@ -52,7 +52,6 @@ source_file = [
     'PicturePng.cpp',
     'PictureRaw.cpp',
     'PictureSvg.cpp',
-    'PictureTvg.cpp',
     'PictureWebp.cpp',
     'RadialGradient.cpp',
     'Retaining.cpp',
@@ -68,8 +67,6 @@ source_file = [
     'Svg.cpp',
     'Text.cpp',
     'Transform.cpp',
-    'Tvg.cpp',
-    'TvgSaver.cpp',
     'Update.cpp',
     'Viewport.cpp'
 ]

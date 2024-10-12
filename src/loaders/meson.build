@@ -1,9 +1,5 @@
 subloader_dep = []
 
-if tvg_loader
-    subdir('tvg')
-endif
-
 if svg_loader
     subdir('svg')
 endif

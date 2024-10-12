@@ -180,32 +180,6 @@ TEST_CASE("Load Jpg file in Picture", "[capiPicture]")
 
 #endif
 
-#ifdef THORVG_TVG_LOADER_SUPPORT
-
-TEST_CASE("Load Tvg file in Picture", "[capiPicture]")
-{
-    Tvg_Paint* picture = tvg_picture_new();
-    REQUIRE(picture);
-
-    //Invalid file
-    REQUIRE(tvg_picture_load(picture, "invalid.tvg") == TVG_RESULT_INVALID_ARGUMENT);
-
-    //Load Png file
-    REQUIRE(tvg_picture_load(picture, TEST_DIR"/test.tvg") == TVG_RESULT_SUCCESS);
-
-    //Verify Size
-    float wNew = 500.0f, hNew = 500.0f;
-    float w = 0.0f, h = 0.0f;
-    REQUIRE(tvg_picture_set_size(picture, wNew, hNew) == TVG_RESULT_SUCCESS);
-    REQUIRE(tvg_picture_get_size(picture, &w, &h) == TVG_RESULT_SUCCESS);
-    REQUIRE(w == Approx(wNew).epsilon(0.0000001));
-    REQUIRE(h == Approx(hNew).epsilon(0.0000001));
-
-    REQUIRE(tvg_paint_del(picture) == TVG_RESULT_SUCCESS);
-}
-
-#endif
-
 #ifdef THORVG_WEBP_LOADER_SUPPORT
 
 TEST_CASE("Load Webp file in Picture", "[capiPicture]")
