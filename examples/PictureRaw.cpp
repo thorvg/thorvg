@@ -47,12 +47,12 @@ struct UserExample : tvgexam::Example
         file.close();
 
         auto picture = tvg::Picture::gen();
-        if (!tvgexam::verify(picture->load(data, 200, 300, true, true))) return false;
+        if (!tvgexam::verify(picture->load(data, 200, 300, tvg::ColorSpace::ARGB8888, true))) return false;
         picture->translate(400, 250);
         canvas->push(std::move(picture));
 
         auto picture2 = tvg::Picture::gen();
-        if (!tvgexam::verify(picture2->load(data, 200, 300, true, true))) return false;
+        if (!tvgexam::verify(picture2->load(data, 200, 300, tvg::ColorSpace::ARGB8888, true))) return false;
 
         picture2->translate(400, 200);
         picture2->rotate(47);

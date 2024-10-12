@@ -143,11 +143,11 @@ struct Picture::Impl
         return load(loader);
     }
 
-    Result load(uint32_t* data, uint32_t w, uint32_t h, bool premultiplied, bool copy)
+    Result load(uint32_t* data, uint32_t w, uint32_t h, ColorSpace cs, bool copy)
     {
         if (paint || surface) return Result::InsufficientCondition;
 
-        auto loader = static_cast<ImageLoader*>(LoaderMgr::loader(data, w, h, premultiplied, copy));
+        auto loader = static_cast<ImageLoader*>(LoaderMgr::loader(data, w, h, cs, copy));
         if (!loader) return Result::FailedAllocation;
 
         return load(loader);

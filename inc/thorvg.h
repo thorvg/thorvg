@@ -1278,21 +1278,22 @@ public:
     Result size(float* w, float* h) const noexcept;
 
     /**
-     * @brief Loads raw data in ARGB8888 format from a memory block of the given size.
+     * @brief Loads raw image data in a specific format from a memory block of the given size.
      *
-     * ThorVG efficiently caches the loaded data using the specified @p data address as a key
-     * when the @p copy has @c false. This means that loading the same data again will not result in duplicate operations
-     * for the sharable @p data. Instead, ThorVG will reuse the previously loaded picture data.
+     * ThorVG efficiently caches the loaded data, using the provided @p data address as a key
+     * when @p copy is set to @c false. This allows ThorVG to avoid redundant operations
+     * by reusing the previously loaded picture data for the same sharable @p data,
+     * rather than duplicating the load process.
      *
-     * @param[in] data A pointer to a memory location where the content of the picture raw data is stored.
-     * @param[in] w The width of the image @p data in pixels.
-     * @param[in] h The height of the image @p data in pixels.
-     * @param[in] premultiplied If @c true, the given image data is alpha-premultiplied.
-     * @param[in] copy If @c true the data are copied into the engine local buffer, otherwise they are not.
+     * @param[in] data A pointer to the memory block where the raw image data is stored.
+     * @param[in] w The width of the image in pixels.
+     * @param[in] h The height of the image in pixels.
+     * @param[in] cs Specifies how the 32-bit color values should be interpreted.
+     * @param[in] copy If @c true, the data is copied into the engine's local buffer. If @c false, the data is not copied.
      *
      * @since 0.9
      */
-    Result load(uint32_t* data, uint32_t w, uint32_t h, bool premultiplied, bool copy = false) noexcept;
+    Result load(uint32_t* data, uint32_t w, uint32_t h, ColorSpace cs, bool copy = false) noexcept;
 
     /**
      * @brief Retrieve a paint object from the Picture scene by its Unique ID.

@@ -32,7 +32,7 @@ public:
     ~RawLoader();
 
     using LoadModule::open;
-    bool open(const uint32_t* data, uint32_t w, uint32_t h, bool premultiplied, bool copy);
+    bool open(const uint32_t* data, uint32_t w, uint32_t h, ColorSpace cs, bool copy);
     bool read() override;
 };
 

@@ -170,11 +170,11 @@ Result Picture::load(const char* data, uint32_t size, const string& mimeType, co
 }
 
 
-Result Picture::load(uint32_t* data, uint32_t w, uint32_t h, bool premultiplied, bool copy) noexcept
+Result Picture::load(uint32_t* data, uint32_t w, uint32_t h, ColorSpace cs, bool copy) noexcept
 {
-    if (!data || w <= 0 || h <= 0) return Result::InvalidArguments;
+    if (!data || w <= 0 || h <= 0 || cs == ColorSpace::Unknown)  return Result::InvalidArguments;
 
-    return pImpl->load(data, w, h, premultiplied, copy);
+    return pImpl->load(data, w, h, cs, copy);
 }
 
 

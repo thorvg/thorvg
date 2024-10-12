@@ -124,7 +124,7 @@ struct UserExample : tvgexam::Example
             file.close();
 
             auto picture1 = tvg::Picture::gen();
-            if (!tvgexam::verify(picture1->load(data, 200, 300, true, true))) return false;
+            if (!tvgexam::verify(picture1->load(data, 200, 300, tvg::ColorSpace::ARGB8888, true))) return false;
             picture1->scale(0.8);
             picture1->translate(400, 450);
 
