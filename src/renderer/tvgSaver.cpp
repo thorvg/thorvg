@@ -24,9 +24,6 @@
 #include "tvgSaveModule.h"
 #include "tvgPaint.h"
 
-#ifdef THORVG_TVG_SAVER_SUPPORT
-    #include "tvgTvgSaver.h"
-#endif
 #ifdef THORVG_GIF_SAVER_SUPPORT
     #include "tvgGifSaver.h"
 #endif
@@ -51,12 +48,6 @@ struct Saver::Impl
 static SaveModule* _find(FileType type)
 {
     switch(type) {
-        case FileType::Tvg: {
-#ifdef THORVG_TVG_SAVER_SUPPORT
-            return new TvgSaver;
-#endif
-            break;
-        }
         case FileType::Gif: {
 #ifdef THORVG_GIF_SAVER_SUPPORT
             return new GifSaver;
@@ -71,10 +62,6 @@ static SaveModule* _find(FileType type)
 #ifdef THORVG_LOG_ENABLED
     const char *format;
     switch(type) {
-        case FileType::Tvg: {
-            format = "TVG";
-            break;
-        }
         case FileType::Gif: {
             format = "GIF";
             break;
@@ -93,11 +80,7 @@ static SaveModule* _find(FileType type)
 static SaveModule* _find(const string& path)
 {
     auto ext = path.substr(path.find_last_of(".") + 1);
-    if (!ext.compare("tvg")) {
-        return _find(FileType::Tvg);
-    } else if (!ext.compare("gif")) {
-        return _find(FileType::Gif);
-    }
+    if (!ext.compare("gif")) return _find(FileType::Gif);
     return nullptr;
 }
 

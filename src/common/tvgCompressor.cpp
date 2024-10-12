@@ -21,7 +21,7 @@
  */
 
 /*
- * Lempel–Ziv–Welch (LZW) encoder/decoder by Guilherme R. Lampert(guilherme.ronaldo.lampert@gmail.com)
+ * Lempel–Ziv–Welch (LZW) decoder by Guilherme R. Lampert(guilherme.ronaldo.lampert@gmail.com)
 
  * This is the compression scheme used by the GIF image format and the Unix 'compress' tool.
  * Main differences from this implementation is that End Of Input (EOI) and Clear Codes (CC)
@@ -55,8 +55,6 @@
  */
 #include "config.h"
 
-
-
 #include <string>
 #include <memory.h>
 #include "tvgCompressor.h"
@@ -68,135 +66,12 @@ namespace tvg {
 /* LZW Implementation                                                   */
 /************************************************************************/
 
-
 //LZW Dictionary helper:
 constexpr int Nil = -1;
 constexpr int MaxDictBits = 12;
 constexpr int StartBits = 9;
 constexpr int FirstCode = (1 << (StartBits - 1)); // 256
 constexpr int MaxDictEntries = (1 << MaxDictBits);     // 4096
-
-
-//Round up to the next power-of-two number, e.g. 37 => 64
-static int nextPowerOfTwo(int num)
-{
-    --num;
-    for (size_t i = 1; i < sizeof(num) * 8; i <<= 1) {
-        num = num | num >> i;
-    }
-    return ++num;
-}
-
-
-struct BitStreamWriter
-{
-    uint8_t* stream;       //Growable buffer to store our bits. Heap allocated & owned by the class instance.
-    int bytesAllocated;    //Current size of heap-allocated stream buffer *in bytes*.
-    int granularity;       //Amount bytesAllocated multiplies by when auto-resizing in appendBit().
-    int currBytePos;       //Current byte being written to, from 0 to bytesAllocated-1.
-    int nextBitPos;        //Bit position within the current byte to access next. 0 to 7.
-    int numBitsWritten;    //Number of bits in use from the stream buffer, not including byte-rounding padding.
-
-    void internalInit()
-    {
-        stream = nullptr;
-        bytesAllocated = 0;
-        granularity = 2;
-        currBytePos = 0;
-        nextBitPos = 0;
-        numBitsWritten = 0;
-    }
-
-    uint8_t* allocBytes(const int bytesWanted, uint8_t * oldPtr, const int oldSize)
-    {
-        auto newMemory = static_cast<uint8_t *>(malloc(bytesWanted));
-        memset(newMemory, 0, bytesWanted);
-
-        if (oldPtr) {
-            memcpy(newMemory, oldPtr, oldSize);
-            free(oldPtr);
-        }
-        return newMemory;
-    }
-
-    BitStreamWriter()
-    {
-        /* 8192 bits for a start (1024 bytes). It will resize if needed.
-           Default granularity is 2. */
-        internalInit();
-        allocate(8192);
-    }
-
-    BitStreamWriter(const int initialSizeInBits, const int growthGranularity = 2)
-    {
-        internalInit();
-        setGranularity(growthGranularity);
-        allocate(initialSizeInBits);
-    }
-
-    ~BitStreamWriter()
-    {
-        free(stream);
-    }
-
-    void allocate(int bitsWanted)
-    {
-        //Require at least a byte.
-        if (bitsWanted <= 0) bitsWanted = 8;
-
-        //Round upwards if needed:
-        if ((bitsWanted % 8) != 0) bitsWanted = nextPowerOfTwo(bitsWanted);
-
-        //We might already have the required count.
-        const int sizeInBytes = bitsWanted / 8;
-        if (sizeInBytes <= bytesAllocated) return;
-
-        stream = allocBytes(sizeInBytes, stream, bytesAllocated);
-        bytesAllocated = sizeInBytes;
-    }
-
-    void appendBit(const int bit)
-    {
-        const uint32_t mask = uint32_t(1) << nextBitPos;
-        stream[currBytePos] = (stream[currBytePos] & ~mask) | (-bit & mask);
-        ++numBitsWritten;
-
-        if (++nextBitPos == 8) {
-            nextBitPos = 0;
-            if (++currBytePos == bytesAllocated) allocate(bytesAllocated * granularity * 8);
-        }
-    }
-
-    void appendBitsU64(const uint64_t num, const int bitCount)
-    {
-        for (int b = 0; b < bitCount; ++b) {
-            const uint64_t mask = uint64_t(1) << b;
-            const int bit = !!(num & mask);
-            appendBit(bit);
-        }
-    }
-
-    uint8_t* release()
-    {
-        auto oldPtr = stream;
-        internalInit();
-        return oldPtr;
-    }
-
-    void setGranularity(const int growthGranularity)
-    {
-        granularity = (growthGranularity >= 2) ? growthGranularity : 2;
-    }
-
-    int getByteCount() const
-    {
-        int usedBytes = numBitsWritten / 8;
-        int leftovers = numBitsWritten % 8;
-        if (leftovers != 0) ++usedBytes;
-        return usedBytes;
-    }
-};
-
 
 struct BitStreamReader
 {
@@ -270,18 +145,6 @@ struct Dictionary
             entries[i].code  = Nil;
             entries[i].value = i;
         }
-    }
-
-    int findIndex(const int code, const int value) const
-    {
-        if (code == Nil) return value;
-
-        //Linear search for now.
-        //TODO: Worth optimizing with a proper hash-table?
-        for (int i = 0; i < size; ++i) {
-            if (entries[i].code == code && entries[i].value == value) return i;
-        }
-        return Nil;
     }
 
     bool add(const int code, const int value)
@@ -379,51 +242,9 @@ uint8_t* lzwDecode(const uint8_t* compressed, uint32_t compressedSizeBytes, uint
 }
 
 
-uint8_t* lzwEncode(const uint8_t* uncompressed, uint32_t uncompressedSizeBytes, uint32_t* compressedSizeBytes, uint32_t* compressedSizeBits)
-{
-    //LZW encoding context:
-    int code = Nil;
-    int codeBitsWidth = StartBits;
-    Dictionary dictionary;
-
-    //Output bit stream we write to. This will allocate memory as needed to accommodate the encoded data.
-    BitStreamWriter bitStream;
-
-    for (; uncompressedSizeBytes > 0; --uncompressedSizeBytes, ++uncompressed) {
-        const int value = *uncompressed;
-        const int index = dictionary.findIndex(code, value);
-
-        if (index != Nil) {
-            code = index;
-            continue;
-        }
-
-        //Write the dictionary code using the minimum bit-with:
-        bitStream.appendBitsU64(code, codeBitsWidth);
-
-        //Flush it when full so we can restart the sequences.
-        if (!dictionary.flush(codeBitsWidth)) {
-            //There's still space for this sequence.
-            dictionary.add(code, value);
-        }
-        code = value;
-    }
-
-    //Residual code at the end:
-    if (code != Nil) bitStream.appendBitsU64(code, codeBitsWidth);
-
-    //Pass ownership of the compressed data buffer to the user pointer:
-    *compressedSizeBytes = bitStream.getByteCount();
-    *compressedSizeBits = bitStream.numBitsWritten;
-
-    return bitStream.release();
-}
-
-
 /************************************************************************/
 /* B64 Implementation                                                   */
 /************************************************************************/
-
 
 size_t b64Decode(const char* encoded, const size_t len, char** decoded)
 {
@@ -473,7 +294,7 @@ size_t b64Decode(const char* encoded, const size_t len, char** decoded)
 
 
 /************************************************************************/
-/* DJB2 Implementation                                                   */
+/* DJB2 Implementation                                                  */
 /************************************************************************/
 
 unsigned long djb2Encode(const char* str)

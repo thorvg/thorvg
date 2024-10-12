@@ -6,13 +6,13 @@ option('engines',
 
 option('loaders',
    type: 'array',
-   choices: ['', 'tvg', 'svg', 'png', 'jpg', 'lottie', 'ttf', 'webp', 'all'],
-   value: ['svg', 'tvg', 'lottie', 'ttf'],
+   choices: ['', 'svg', 'png', 'jpg', 'lottie', 'ttf', 'webp', 'all'],
+   value: ['svg', 'lottie', 'ttf'],
    description: 'Enable File Loaders in thorvg')
 
 option('savers',
    type: 'array',
-   choices: ['', 'tvg', 'gif', 'all'],
+   choices: ['', 'gif', 'all'],
    value: [''],
    description: 'Enable File Savers in thorvg')
 
@@ -34,7 +34,7 @@ option('bindings',
 
 option('tools',
    type: 'array',
-   choices: ['', 'svg2tvg', 'svg2png', 'lottie2gif', 'all'],
+   choices: ['', 'svg2png', 'lottie2gif', 'all'],
    value: [''],
    description: 'Enable building thorvg tools')
 

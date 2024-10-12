@@ -348,11 +348,7 @@ public:
     // Saver methods
     bool save(string mimetype)
     {
-        if (mimetype == "gif") {
-            return save2Gif();
-        } else if (mimetype == "tvg") {
-            return save2Tvg();
-        }
+        if (mimetype == "gif") return save2Gif();
 
         errorMsg = "Invalid mimetype";
         return false;
@@ -416,34 +412,6 @@ public:
         }
 
         saver->sync();
-
-        return true;
-    }
-
-    bool save2Tvg()
-    {
-        errorMsg = NoError;
-
-        if (!animation) return false;
-
-        auto saver = Saver::gen();
-        if (!saver) {
-            errorMsg = "Invalid saver";
-            return false;
-        }
-
-        //preserve the picture using the reference counting
-        PP(animation->picture())->ref();
-
-        if (saver->save(tvg::cast<Picture>(animation->picture()), "output.tvg") != tvg::Result::Success) {
-            PP(animation->picture())->unref();
-            errorMsg = "save(), fail";
-            return false;
-        }
-
-        saver->sync();
-
-        PP(animation->picture())->unref();
 
         return true;
     }
