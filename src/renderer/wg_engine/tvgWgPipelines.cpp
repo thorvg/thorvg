@@ -343,11 +343,9 @@ void WgPipelines::initialize(WgContext& context)
         WGPUCompareFunction_Always, WGPUStencilOperation_Zero,
         primitiveState, multisampleState, blendStateNrm);
 
-    // TODO: remove fs_main_ClipPath shader from list after removing CompositeMethod::ClipPath value
     // compose shader names
     const char* shaderComposeNames[] {
         "fs_main_None",
-        "fs_main_ClipPath", // TODO: remove after CompositeMethod updated
         "fs_main_AlphaMask",
         "fs_main_InvAlphaMask",
         "fs_main_LumaMask",
@@ -360,11 +358,9 @@ void WgPipelines::initialize(WgContext& context)
         "fs_main_DarkenMask"
     };
 
-    // TODO: remove fs_main_ClipPath shader from list after removing CompositeMethod::ClipPath value
     // compose shader blend states
     const WGPUBlendState composeBlends[] {
         blendStateNrm, // None
-        blendStateNrm, // ClipPath // TODO: remove after CompositeMethod updated
         blendStateNrm, // AlphaMask
         blendStateNrm, // InvAlphaMask
         blendStateNrm, // LumaMask

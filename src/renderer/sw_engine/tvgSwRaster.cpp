@@ -154,7 +154,7 @@ static inline bool _blending(const SwSurface* surface)
    This would help to enhance the performance by avoiding the unnecessary matting from the composition */
 static inline bool _compositing(const SwSurface* surface)
 {
-    if (!surface->compositor || (int)surface->compositor->method <= (int)CompositeMethod::ClipPath) return false;
+    if (!surface->compositor || surface->compositor->method == CompositeMethod::None) return false;
     return true;
 }
 

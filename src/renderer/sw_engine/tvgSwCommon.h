@@ -250,7 +250,7 @@ struct SwSurface : RenderSurface
 
     SwAlpha alpha(CompositeMethod method)
     {
-        auto idx = (int)(method) - 2;       //0: None, 1: ClipPath
+        auto idx = (int)(method) - 1;       //-1 for None
         return alphas[idx > 3 ? 0 : idx];   //CompositeMethod has only four Matting methods.
     }
 

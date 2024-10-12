@@ -457,9 +457,6 @@ Result Paint::clip(std::unique_ptr<Paint> clipper) noexcept
 
 Result Paint::composite(std::unique_ptr<Paint> target, CompositeMethod method) noexcept
 {
-    //TODO: remove. Keep this for the backward compatibility
-    if (target && method == CompositeMethod::ClipPath) return clip(std::move(target));
-
     auto p = target.release();
     if (pImpl->composite(this, p, method)) return Result::Success;
 
@@ -474,11 +471,6 @@ CompositeMethod Paint::composite(const Paint** target) const noexcept
         if (target) *target = pImpl->compData->target;
         return pImpl->compData->method;
     } else {
-        //TODO: remove. Keep this for the backward compatibility
-        if (pImpl->clipper) {
-            if (target) *target = pImpl->clipper;
-            return CompositeMethod::ClipPath;
-        }
         if (target) *target = nullptr;
         return CompositeMethod::None;
     }

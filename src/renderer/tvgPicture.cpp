@@ -63,10 +63,8 @@ bool Picture::Impl::needComposition(uint8_t opacity)
 
     //Composition test
     const Paint* target;
-    auto method = picture->composite(&target);
-    if (!target || method == tvg::CompositeMethod::ClipPath) return false;
-    if (target->pImpl->opacity == 255 || target->pImpl->opacity == 0) return false;
-
+    picture->composite(&target);
+    if (!target || target->pImpl->opacity == 255 || target->pImpl->opacity == 0) return false;
     return true;
 }
 

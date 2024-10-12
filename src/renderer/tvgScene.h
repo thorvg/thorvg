@@ -89,11 +89,8 @@ struct Scene::Impl
         //post effects requires composition
         if (effects) return true;
 
-        //Masking may require composition (even if opacity == 255)
-        auto compMethod = scene->composite(nullptr);
-        if (compMethod != CompositeMethod::None && compMethod != CompositeMethod::ClipPath) return true;
-
-        //Blending may require composition (even if opacity == 255)
+        //Masking / Blending may require composition (even if opacity == 255)
+        if (scene->composite(nullptr) != CompositeMethod::None) return true;
         if (PP(scene)->blendMethod != BlendMethod::Normal) return true;
 
         //Half translucent requires intermediate composition.

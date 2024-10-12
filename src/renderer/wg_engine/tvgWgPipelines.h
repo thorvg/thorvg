@@ -66,7 +66,7 @@ public:
     WGPURenderPipeline linear[2]{};
     WGPURenderPipeline image[2]{};
     WGPURenderPipeline sceneClip;
-    WGPURenderPipeline sceneComp[12]; // TODO: update to 11 after removing CompositeMethod::ClipPath enum value
+    WGPURenderPipeline sceneComp[11];
     WGPURenderPipeline sceneBlend;
     WGPURenderPipeline blit{};
     WGPURenderPipeline clipPath{};
