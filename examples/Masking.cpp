@@ -100,7 +100,7 @@ struct UserExample : tvgexam::Example
         file.close();
 
         auto image = tvg::Picture::gen();
-        if (!tvgexam::verify(image->load(data, 200, 300, true, true))) return false;
+        if (!tvgexam::verify(image->load(data, 200, 300, tvg::ColorSpace::ARGB8888, true))) return false;
         image->translate(500, 400);
 
         //Mask4

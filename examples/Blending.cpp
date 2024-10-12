@@ -126,7 +126,7 @@ struct UserExample : tvgexam::Example
 
         //Lighten
         auto picture = tvg::Picture::gen();
-        if (!tvgexam::verify(picture->load(data, 200, 300, true, true))) return false;
+        if (!tvgexam::verify(picture->load(data, 200, 300, tvg::ColorSpace::ARGB8888, true))) return false;
         picture->translate(800, 700);
         picture->rotate(40);
         picture->blend(tvg::BlendMethod::Lighten);
@@ -141,7 +141,7 @@ struct UserExample : tvgexam::Example
 
         //ColorBurn
         auto picture2 = tvg::Picture::gen();
-        if (!tvgexam::verify(picture2->load(data, 200, 300, true, true))) return false;
+        if (!tvgexam::verify(picture2->load(data, 200, 300, tvg::ColorSpace::ARGB8888, true))) return false;
         picture2->translate(600, 250);
         picture2->blend(tvg::BlendMethod::ColorBurn);
         picture2->opacity(150);
@@ -149,14 +149,14 @@ struct UserExample : tvgexam::Example
 
         //HardLight
         auto picture3 = tvg::Picture::gen();
-        if (!tvgexam::verify(picture3->load(data, 200, 300, true, true))) return false;
+        if (!tvgexam::verify(picture3->load(data, 200, 300, tvg::ColorSpace::ARGB8888, true))) return false;
         picture3->translate(700, 150);
         picture3->blend(tvg::BlendMethod::HardLight);
         canvas->push(std::move(picture3));
 
         //SoftLight
         auto picture4 = tvg::Picture::gen();
-        if (!tvgexam::verify(picture4->load(data, 200, 300, true, true))) return false;
+        if (!tvgexam::verify(picture4->load(data, 200, 300, tvg::ColorSpace::ARGB8888, true))) return false;
         picture4->translate(350, 600);
         picture4->rotate(90);
         picture4->blend(tvg::BlendMethod::SoftLight);

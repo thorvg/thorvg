@@ -45,7 +45,7 @@ RawLoader::~RawLoader()
 }
 
 
-bool RawLoader::open(const uint32_t* data, uint32_t w, uint32_t h, bool premultiplied, bool copy)
+bool RawLoader::open(const uint32_t* data, uint32_t w, uint32_t h, ColorSpace cs, bool copy)
 {
     if (!LoadModule::read()) return true;
 
@@ -66,9 +66,9 @@ bool RawLoader::open(const uint32_t* data, uint32_t w, uint32_t h, bool premulti
     surface.stride = w;
     surface.w = w;
     surface.h = h;
-    surface.cs = ColorSpace::ARGB8888;
+    surface.cs = cs;
     surface.channelSize = sizeof(uint32_t);
-    surface.premultiplied = premultiplied;
+    surface.premultiplied = (cs == ColorSpace::ABGR8888 || cs == ColorSpace::ARGB8888) ? true : false;
 
     return true;
 }

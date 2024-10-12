@@ -45,13 +45,13 @@ TEST_CASE("Load Raw file in Picture", "[capiPicture]")
 
     if (data && fread(data, sizeof(uint32_t), 200*300, fp) > 0) {
         //Negative
-        REQUIRE(tvg_picture_load_raw(picture, nullptr, 100, 100, true, true) == TVG_RESULT_INVALID_ARGUMENT);
-        REQUIRE(tvg_picture_load_raw(nullptr, data, 200, 300, true, true) == TVG_RESULT_INVALID_ARGUMENT);
-        REQUIRE(tvg_picture_load_raw(picture, data, 0, 0, true, true) == TVG_RESULT_INVALID_ARGUMENT);
+        REQUIRE(tvg_picture_load_raw(picture, nullptr, 100, 100, TVG_COLORSPACE_ARGB8888, true) == TVG_RESULT_INVALID_ARGUMENT);
+        REQUIRE(tvg_picture_load_raw(nullptr, data, 200, 300, TVG_COLORSPACE_ARGB8888, true) == TVG_RESULT_INVALID_ARGUMENT);
+        REQUIRE(tvg_picture_load_raw(picture, data, 0, 0, TVG_COLORSPACE_ARGB8888, true) == TVG_RESULT_INVALID_ARGUMENT);
 
         //Positive
-        REQUIRE(tvg_picture_load_raw(picture, data, 200, 300, true, true) == TVG_RESULT_SUCCESS);
-        REQUIRE(tvg_picture_load_raw(picture, data, 200, 300, true, false) == TVG_RESULT_SUCCESS);
+        REQUIRE(tvg_picture_load_raw(picture, data, 200, 300, TVG_COLORSPACE_ARGB8888, true) == TVG_RESULT_SUCCESS);
+        REQUIRE(tvg_picture_load_raw(picture, data, 200, 300, TVG_COLORSPACE_ARGB8888, false) == TVG_RESULT_SUCCESS);
 
         //Verify Size
         float w, h;

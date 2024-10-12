@@ -395,7 +395,7 @@ LoadModule* LoaderMgr::loader(const char* data, uint32_t size, const string& mim
 }
 
 
-LoadModule* LoaderMgr::loader(const uint32_t *data, uint32_t w, uint32_t h, bool premultiplied, bool copy)
+LoadModule* LoaderMgr::loader(const uint32_t *data, uint32_t w, uint32_t h, ColorSpace cs, bool copy)
 {
     //Note that users could use the same data pointer with the different content.
     //Thus caching is only valid for shareable.
@@ -406,7 +406,7 @@ LoadModule* LoaderMgr::loader(const uint32_t *data, uint32_t w, uint32_t h, bool
 
     //function is dedicated for raw images only
     auto loader = new RawLoader;
-    if (loader->open(data, w, h, premultiplied, copy)) {
+    if (loader->open(data, w, h, cs, copy)) {
         if (!copy) {
             loader->hashkey = HASH_KEY((const char*)data);
             ScopedLock lock(key);

@@ -112,7 +112,7 @@ TEST_CASE("Image Draw", "[tvgSwEngine]")
     //Not transformed images
     auto basicPicture = Picture::gen();
     REQUIRE(basicPicture);
-    REQUIRE(basicPicture->load(data, 200, 300, true, false) == Result::Success);
+    REQUIRE(basicPicture->load(data, 200, 300, tvg::ColorSpace::ARGB8888, false) == Result::Success);
     auto rectMask = tvg::Shape::gen();
     REQUIRE(rectMask);
     REQUIRE(rectMask->appendRect(10, 10, 30, 30) == Result::Success);
@@ -178,7 +178,7 @@ TEST_CASE("Image Draw", "[tvgSwEngine]")
     // Transformed images
     basicPicture = Picture::gen();
     REQUIRE(basicPicture);
-    REQUIRE(basicPicture->load(data, 200, 300, true, false) == Result::Success);
+    REQUIRE(basicPicture->load(data, 200, 300, tvg::ColorSpace::ARGB8888, false) == Result::Success);
 
     REQUIRE(basicPicture->rotate(45) == Result::Success);
     rectMask = tvg::Shape::gen();
@@ -243,7 +243,7 @@ TEST_CASE("Image Draw", "[tvgSwEngine]")
     // Upscaled images
     basicPicture = Picture::gen();
     REQUIRE(basicPicture);
-    REQUIRE(basicPicture->load(data, 200, 300, true, false) == Result::Success);
+    REQUIRE(basicPicture->load(data, 200, 300, tvg::ColorSpace::ARGB8888, false) == Result::Success);
     REQUIRE(basicPicture->scale(2) == Result::Success);
     rectMask = tvg::Shape::gen();
     REQUIRE(rectMask);
@@ -307,7 +307,7 @@ TEST_CASE("Image Draw", "[tvgSwEngine]")
     // Downscaled images
     basicPicture = Picture::gen();
     REQUIRE(basicPicture);
-    REQUIRE(basicPicture->load(data, 200, 300, true, false) == Result::Success);
+    REQUIRE(basicPicture->load(data, 200, 300, tvg::ColorSpace::ARGB8888, false) == Result::Success);
     REQUIRE(basicPicture->scale(0.2f) == Result::Success);
     rectMask = tvg::Shape::gen();
     REQUIRE(rectMask);
@@ -1298,7 +1298,7 @@ TEST_CASE("Blending Images", "[tvgSwEngine]")
 
     auto picture = Picture::gen();
     REQUIRE(picture);
-    REQUIRE(picture->load(data, 200, 300, true, false) == Result::Success);
+    REQUIRE(picture->load(data, 200, 300, tvg::ColorSpace::ARGB8888, false) == Result::Success);
     REQUIRE(picture->blend(BlendMethod::Lighten) == Result::Success);
     REQUIRE(picture->clip(std::move(clipper)) == Result::Success);
     REQUIRE(canvas->push(std::move(picture)) == Result::Success);
@@ -1306,7 +1306,7 @@ TEST_CASE("Blending Images", "[tvgSwEngine]")
     //scaled images
     auto picture2 = Picture::gen();
     REQUIRE(picture2);
-    REQUIRE(picture2->load(data, 200, 300, true, false) == Result::Success);
+    REQUIRE(picture2->load(data, 200, 300, tvg::ColorSpace::ARGB8888, false) == Result::Success);
     REQUIRE(picture2->scale(2) == Result::Success);
     REQUIRE(picture2->blend(BlendMethod::Lighten) == Result::Success);
     REQUIRE(canvas->push(std::move(picture2)) == Result::Success);
@@ -1318,7 +1318,7 @@ TEST_CASE("Blending Images", "[tvgSwEngine]")
 
     auto picture3 = Picture::gen();
     REQUIRE(picture3);
-    REQUIRE(picture3->load(data, 200, 300, true, false) == Result::Success);
+    REQUIRE(picture3->load(data, 200, 300, tvg::ColorSpace::ARGB8888, false) == Result::Success);
     REQUIRE(picture3->scale(2) == Result::Success);
     REQUIRE(picture3->blend(BlendMethod::Lighten) == Result::Success);
     REQUIRE(picture3->clip(std::move(clipper2)) == Result::Success);
@@ -1327,14 +1327,14 @@ TEST_CASE("Blending Images", "[tvgSwEngine]")
     //normal image
     auto picture4 = Picture::gen();
     REQUIRE(picture4);
-    REQUIRE(picture4->load(data, 200, 300, true, false) == Result::Success);
+    REQUIRE(picture4->load(data, 200, 300, tvg::ColorSpace::ARGB8888, false) == Result::Success);
     REQUIRE(picture4->blend(BlendMethod::Lighten) == Result::Success);
     REQUIRE(canvas->push(std::move(picture4)) == Result::Success);
 
     //texmap image
     auto picture5 = Picture::gen();
     REQUIRE(picture5);
-    REQUIRE(picture5->load(data, 200, 300, true, false) == Result::Success);
+    REQUIRE(picture5->load(data, 200, 300, tvg::ColorSpace::ARGB8888, false) == Result::Success);
     REQUIRE(picture5->blend(BlendMethod::Lighten) == Result::Success);
     REQUIRE(picture5->rotate(45.0f) == Result::Success);
     REQUIRE(canvas->push(std::move(picture5)) == Result::Success);
@@ -1342,7 +1342,7 @@ TEST_CASE("Blending Images", "[tvgSwEngine]")
     //texmap image with half-translucent
     auto picture6 = Picture::gen();
     REQUIRE(picture6);
-    REQUIRE(picture6->load(data, 200, 300, true, false) == Result::Success);
+    REQUIRE(picture6->load(data, 200, 300, tvg::ColorSpace::ARGB8888, false) == Result::Success);
     REQUIRE(picture6->blend(BlendMethod::Lighten) == Result::Success);
     REQUIRE(picture6->rotate(45.0f) == Result::Success);
     REQUIRE(picture6->opacity(127) == Result::Success);
