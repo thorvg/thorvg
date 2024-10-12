@@ -192,6 +192,8 @@ bool LottieLoader::open(const char* data, uint32_t size, bool copy)
         const_cast<char*>(content)[size] = '\0';
     } else content = data;
 
+    this->dirName = strdup(".");
+
     this->size = size;
     this->copy = copy;
 
