@@ -186,6 +186,24 @@ private:
     GlPoint mPtCur;
 };
 
+class PathTrim
+{
+public:
+    PathTrim(): mCmds(), mPts() {}
+    ~PathTrim() = default;
+    bool trim(const PathCommand* cmds, uint32_t cmd_count, const Point* pts, uint32_t pts_count, float start, float end);
+    const Array<PathCommand>& cmds() const { return mCmds; }
+    const Array<Point>& pts() const { return mPts; }
+
+private:
+    float pathLength(const PathCommand* cmds, uint32_t cmd_count, const Point* pts, uint32_t pts_count);
+    void trimPath(const PathCommand* cmds, uint32_t cmd_count, const Point* pts, uint32_t pts_count, float start, float end);
+
+private:
+    Array<PathCommand> mCmds;
+    Array<Point> mPts;
+};
+
 class BWTessellator
 {
 public:
