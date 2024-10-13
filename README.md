@@ -262,6 +262,12 @@ ThorVG facilitates [SVG Tiny Specification](https://www.w3.org/TR/SVGTiny12/) re
  - Interactivity
  - Multimedia
 
+The figure below highlights ThorVG's SVG rendering capabilities:
+
+<p align="center">
+  <img width="780" height="auto" src="https://github.com/thorvg/thorvg/blob/main/res/example_svg.png">
+</p>
+
 The following code snippet shows how to draw SVG image using ThorVG:
 
 ```cpp
