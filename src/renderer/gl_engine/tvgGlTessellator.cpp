@@ -1664,6 +1664,93 @@ void Stroker::stroke(const RenderShape *rshape)
     auto pts = rshape->path.pts.data;
     auto ptsCnt = rshape->path.pts.count;
 
+    if (rshape->strokeTrim()) {
+        float begin = 0.0f;
+        float end = 0.0f;
+        rshape->stroke->strokeTrim(begin, end);
+
+        if (rshape->stroke->trim.simultaneous) {
+            PathCommand* startCmds = cmds;
+            PathCommand* currCmds = cmds;
+
+            int ptsNum = 0;
+            for (uint32_t i = 0; i < cmdCnt; i++) {
+                switch (*currCmds) {
+                    case PathCommand::MoveTo: {
+                        if (currCmds != startCmds) {
+                            PathTrim trim{};
+
+                            if (trim.trim(startCmds, currCmds - startCmds, pts, ptsNum, begin, end)) {
+                                const auto& sCmds = trim.cmds();
+                                const auto& sPts = trim.pts();
+
+                                doStroke(sCmds.data, sCmds.count, sPts.data, sPts.count);
+                            }
+                            startCmds = currCmds;
+                            pts += ptsNum;
+                            ptsNum = 0;
+                        }
+
+                        currCmds++;
+                        ptsNum++;
+                        break;
+                    }
+                    case PathCommand::LineTo:
+                        currCmds++;
+                        ptsNum++;
+                        break;
+                    case PathCommand::CubicTo:
+                        currCmds++;
+                        ptsNum += 3;
+                        break;
+                    case PathCommand::Close: {
+                        currCmds++;
+
+                        PathTrim trim{};
+
+                        if (trim.trim(startCmds, currCmds - startCmds, pts, ptsNum, begin, end)) {
+                            const auto& sCmds = trim.cmds();
+                            const auto& sPts = trim.pts();
+
+                            doStroke(sCmds.data, sCmds.count, sPts.data, sPts.count);
+                        }
+
+                        startCmds = currCmds;
+                        pts += ptsNum;
+                        ptsNum = 0;
+                        break;
+                    }
+                }
+            }
+
+            if (startCmds != currCmds && ptsNum > 0) {
+                PathTrim trim{};
+
+                if (trim.trim(startCmds, currCmds - startCmds, pts, ptsNum, begin, end)) {
+                    const auto& sCmds = trim.cmds();
+                    const auto& sPts = trim.pts();
+
+                    doStroke(sCmds.data, sCmds.count, sPts.data, sPts.count);
+                }
+                startCmds = currCmds;
+                pts += ptsNum;
+
+                ptsNum = 0;
+            }
+        } else {
+            PathTrim trim{};
+
+            if (trim.trim(cmds, cmdCnt, pts, ptsCnt, begin, end)) {
+                const auto& sCmds = trim.cmds();
+                const auto& sPts = trim.pts();
+
+                doStroke(sCmds.data, sCmds.count, sPts.data, sPts.count);
+            }
+        }
+
+        return;
+    }
+
     const float *dash_pattern = nullptr;
     auto dash_count = rshape->strokeDash(&dash_pattern, nullptr);
 
@@ -2210,6 +2297,327 @@ void DashStroke::cubicTo(const GlPoint &cnt1, const GlPoint &cnt2, const GlPoint
     mPts->push(Point{cnt2.x, cnt2.y});
     mPts->push(Point{end.x, end.y});
     mCmds->push(PathCommand::CubicTo);
+}
+
+bool PathTrim::trim(const PathCommand* cmds, uint32_t cmd_count, const Point* pts, uint32_t pts_count, float start, float end)
+{
+    if (end - start < 0.0001f) return false;
+
+    float len = pathLength(cmds, cmd_count, pts, pts_count);
+
+    if (len < 0.001) return false;
+
+    float startLength = len * start;
+    float endLength = len * end;
+
+    if (startLength >= endLength) return false;
+
+    trimPath(cmds, cmd_count, pts, pts_count, startLength, endLength);
+
+    return true;
+}
+
+float PathTrim::pathLength(const PathCommand* cmds, uint32_t cmd_count, const Point* pts, uint32_t pts_count)
+{
+    float len = 0.0f;
+
+    Point zero = {0.0f, 0.0f};
+
+    const Point* prev = nullptr;
+    const Point* begin = nullptr;
+
+    for (uint32_t i = 0; i < cmd_count; i++) {
+        switch (cmds[i]) {
+            case PathCommand::MoveTo: {
+                prev = pts;
+                begin = pts;
+                pts++;
+                break;
+            }
+
+            case PathCommand::LineTo: {
+                if (prev != nullptr) len += length(prev, pts);
+                if (begin == nullptr) begin = pts;
+
+                prev = pts;
+                pts++;
+                break;
+            }
+
+            case PathCommand::CubicTo: {
+                if (prev == nullptr || begin == nullptr) {
+                    prev = begin = &zero;
+                }
+
+                Bezier b{ *prev, pts[0], pts[1], pts[2]};
+                len += b.length();
+                prev = pts + 2;
+                pts += 3;
+                break;
+            }
+
+            case PathCommand::Close: {
+                if (prev != nullptr && begin != nullptr && prev != begin) {
+                    len += length(prev, begin);
+                }
+
+                prev = begin = nullptr;
+                break;
+            }
+        }
+    }
+
+    return len;
+}
+
+void PathTrim::trimPath(const PathCommand* cmds, uint32_t cmd_count, const Point* pts, uint32_t pts_count, float start, float end)
+{
+    float pos = 0.0f;
+
+    Point zero = {0.0f, 0.0f};
+
+    const Point* prev = nullptr;
+    const Point* begin = nullptr;
+
+    bool closed = true;
+    bool pushedMoveTo = false;
+    bool hasLineTo = false;
+
+    auto handle_line_to = [&](const Point* p1, const Point* p2) {
+        float currLen = length(p1, p2);
+
+        if (pos + currLen < start) {
+            pos += currLen;
+            return;
+        }
+
+        if (pos >= start && pos + currLen <= end) {
+            // the entire edge is within the trim range
+            if (!pushedMoveTo) {
+                mCmds.push(PathCommand::MoveTo);
+                mPts.push(*p1);
+
+                pushedMoveTo = true;
+            }
+
+            mCmds.push(PathCommand::LineTo);
+            mPts.push(*p2);
+        } else if (pos >= start) {
+            // split the edge and save the left part
+            Line l{ *p1, *p2 };
+
+            Line left, right;
+            l.split((pos - end) / currLen, left, right);
+
+            if (!pushedMoveTo) {
+                mCmds.push(PathCommand::MoveTo);
+                mPts.push(*p1);
+
+                pushedMoveTo = true;
+            }
+
+            mCmds.push(PathCommand::LineTo);
+            mPts.push(left.pt2);
+        } else if (pos + currLen <= end) {
+            // split the edge and save the right part
+            Line l{ *p1, *p2 };
+
+            Line left, right;
+
+            l.split((pos + currLen - start) / currLen, left, right);
+
+            if (!pushedMoveTo) {
+                mCmds.push(PathCommand::MoveTo);
+                mPts.push(right.pt1);
+
+                pushedMoveTo = true;
+            }
+
+            mCmds.push(PathCommand::LineTo);
+            mPts.push(right.pt2);
+        } else {
+            // only part of the edge is within the trim range
+            Line l{ *p1, *p2 };
+
+            Line left, right;
+
+            // find the start point
+            l.split((start - pos) / currLen, left, right);
+
+            auto startP = left.pt2;
+
+            // find the end point
+            l.split((end - pos) / currLen, left, right);
+
+            auto endP = right.pt1;
+
+            if (!pushedMoveTo) {
+                mCmds.push(PathCommand::MoveTo);
+                mPts.push(startP);
+
+                pushedMoveTo = true;
+            }
+
+            mCmds.push(PathCommand::LineTo);
+            mPts.push(endP);
+        }
+
+        pos += currLen;
+    };
+
+    for (uint32_t i = 0; i < cmd_count; i++) {
+        if (pos - end > 0.001f) return; // we are done
+
+        switch (cmds[i]) {
+            case PathCommand::MoveTo: {
+                prev = pts;
+                begin = pts;
+                pts++;
+
+                closed = false;
+                break;
+            }
+
+            case PathCommand::LineTo: {
+                if (prev == nullptr) prev = begin = &zero;
+
+                handle_line_to(prev, pts);
+                hasLineTo = true;
+
+                prev = pts;
+                pts++;
+                break;
+            }
+
+            case PathCommand::CubicTo: {
+                if (prev == nullptr) prev = begin = &zero;
+
+                Bezier b{ *prev, pts[0], pts[1], pts[2]};
+
+                float currLen = b.length();
+
+                if (pos + currLen < start || currLen < 0.001) {
+                    pos += currLen;
+                    prev = pts + 2;
+                    pts += 3;
+                    break;
+                }
+
+                if (pos >= start && pos + currLen <= end) {
+                    // the entire edge is within the trim range
+                    if (!pushedMoveTo) {
+                        mCmds.push(PathCommand::MoveTo);
+                        mPts.push(*prev);
+
+                        pushedMoveTo = true;
+                    }
+
+                    mCmds.push(PathCommand::CubicTo);
+                    mPts.push(pts[0]);
+                    mPts.push(pts[1]);
+                    mPts.push(pts[2]);
+                } else if (pos >= start) {
+                    // split the edge and save the left part
+                    Bezier left;
+
+                    b.split((end - pos) / currLen, left);
+
+                    if (!pushedMoveTo) {
+                        mCmds.push(PathCommand::MoveTo);
+                        mPts.push(*prev);
+
+                        pushedMoveTo = true;
+                    }
+
+                    mCmds.push(PathCommand::CubicTo);
+                    mPts.push(left.ctrl1);
+                    mPts.push(left.ctrl2);
+                    mPts.push(left.end);
+                } else if (pos + currLen <= end) {
+                    // split the edge and save the right part
+                    Bezier left, right;
+
+                    b.split((start - pos) / currLen, left, right);
+
+                    if (!pushedMoveTo) {
+                        mCmds.push(PathCommand::MoveTo);
+                        mPts.push(right.start);
+
+                        pushedMoveTo = true;
+                    }
+
+                    mCmds.push(PathCommand::CubicTo);
+                    mPts.push(right.ctrl1);
+                    mPts.push(right.ctrl2);
+                    mPts.push(right.end);
+                } else {
+                    // only part of the edge is within the trim range
+                    Bezier left, right;
+
+                    b.split((start - pos) / currLen, left, right);
+
+                    right.split((end - start) / right.length(), left);
+
+                    if (!pushedMoveTo) {
+                        mCmds.push(PathCommand::MoveTo);
+                        mPts.push(left.start);
+
+                        pushedMoveTo = true;
+                    }
+
+                    mCmds.push(PathCommand::CubicTo);
+                    mPts.push(left.ctrl1);
+                    mPts.push(left.ctrl2);
+                    mPts.push(left.end);
+                }
+
+                hasLineTo = true;
+
+                prev = pts + 2;
+                pos += currLen;
+                pts += 3;
+                break;
+            }
+
+            case PathCommand::Close: {
+                if (closed) break;
+                if (!hasLineTo) {
+                    closed = true;
+                    pushedMoveTo = false;
+                    prev = begin = nullptr;
+                    break;
+                }
+
+                if (*prev == *begin) {
+                    prev = begin = nullptr;
+                    closed = true;
+                    pushedMoveTo = false;
+                    break;
+                }
+
+                float currLen = length(prev, begin);
+
+                if (currLen + pos < start) {
+                    pos += currLen;
+                    break;
+                }
+
+                if (pos + currLen  <= end) {
+                    mCmds.push(PathCommand::Close);
+                    pos += currLen;
+                    break;
+                }
+
+                handle_line_to(prev, begin);
+
+                closed = true;
+                pushedMoveTo = false;
+                prev = begin = nullptr;
+                pos += currLen;
+                break;
+            }
+        }
+    }
 }
 
 
