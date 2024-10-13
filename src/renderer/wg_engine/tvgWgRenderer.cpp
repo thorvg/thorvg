@@ -385,19 +385,10 @@ bool WgRenderer::endComposite(RenderCompositor* cmp)
         WgRenderStorage* src = mRenderStorageStack.last();
         mRenderStorageStack.pop();
         WgRenderStorage* dst = mRenderStorageStack.last();
-        // apply normal blend
-        if (comp->blend == BlendMethod::Normal) {
-            // begin previous render pass
-            mCompositor.beginRenderPass(mCommandEncoder, dst, false);
-            // apply blend
-            mCompositor.blendScene(mContext, src, comp);
-        // apply custom blend
-        } else {
-            // apply custom blend
-            mCompositor.blend(mCommandEncoder, src, dst, comp->opacity, comp->blend, WgRenderRasterType::Image);
-            // begin previous render pass
-            mCompositor.beginRenderPass(mCommandEncoder, dst, false);
-        }
+        // begin previous render pass
+        mCompositor.beginRenderPass(mCommandEncoder, dst, false);
+        // apply composition
+        mCompositor.renderScene(mContext, src, comp);
         // back render targets to the pool
         mRenderStoragePool.free(mContext, src);
     } else { // finish composition
