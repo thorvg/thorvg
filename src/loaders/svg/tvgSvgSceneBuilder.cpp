@@ -37,9 +37,8 @@
 /* Internal Class Implementation                                        */
 /************************************************************************/
 
-static bool _appendShape(SvgLoaderData& loaderData, SvgNode* node, Shape* shape, const Box& vBox, const string& svgPath);
 static bool _appendClipShape(SvgLoaderData& loaderData, SvgNode* node, Shape* shape, const Box& vBox, const string& svgPath, const Matrix* transform);
-static unique_ptr<Scene> _sceneBuildHelper(SvgLoaderData& loaderData, const SvgNode* node, const Box& vBox, const string& svgPath, bool mask, int depth, bool* isMaskWhite = nullptr);
+static unique_ptr<Scene> _sceneBuildHelper(SvgLoaderData& loaderData, const SvgNode* node, const Box& vBox, const string& svgPath, bool mask, int depth);
 
 
 static inline bool _isGroupType(SvgNodeType type)
@@ -277,8 +276,7 @@ static void _applyComposition(SvgLoaderData& loaderData, Paint* paint, const Svg
         if (compNode && compNode->child.count > 0) {
             node->style->mask.applying = true;
 
-            bool isMaskWhite = true;
-            if (auto comp = _sceneBuildHelper(loaderData, compNode, vBox, svgPath, true, 0, &isMaskWhite)) {
+            if (auto comp = _sceneBuildHelper(loaderData, compNode, vBox, svgPath, true, 0)) {
                 if (!compNode->node.mask.userSpace) {
                     Matrix finalTransform = _compositionTransform(paint, node, compNode, SvgNodeType::Mask);
                     comp->transform(finalTransform);
@@ -286,7 +284,7 @@ static void _applyComposition(SvgLoaderData& loaderData, Paint* paint, const Svg
                     if (node->transform) comp->transform(*node->transform);
                 }
 
-                if (compNode->node.mask.type == SvgMaskType::Luminance && !isMaskWhite) {
+                if (compNode->node.mask.type == SvgMaskType::Luminance) {
                     paint->mask(std::move(comp), MaskMethod::Luma);
                 } else {
                     paint->mask(std::move(comp), MaskMethod::Alpha);
@@ -380,14 +378,6 @@ static void _applyProperty(SvgLoaderData& loaderData, SvgNode* node, Shape* vg, 
 }
 
 
-static unique_ptr<Shape> _shapeBuildHelper(SvgLoaderData& loaderData, SvgNode* node, const Box& vBox, const string& svgPath)
-{
-    auto shape = Shape::gen();
-    if (_appendShape(loaderData, node, shape.get(), vBox, svgPath)) return shape;
-    else return nullptr;
-}
-
-
 static bool _recognizeShape(SvgNode* node, Shape* shape)
 {
     switch (node->type) {
@@ -444,12 +434,12 @@ static bool _recognizeShape(SvgNode* node, Shape* shape)
 }
 
 
-static bool _appendShape(SvgLoaderData& loaderData, SvgNode* node, Shape* shape, const Box& vBox, const string& svgPath)
+static unique_ptr<Shape> _shapeBuildHelper(SvgLoaderData& loaderData, SvgNode* node, const Box& vBox, const string& svgPath)
 {
-    if (!_recognizeShape(node, shape)) return false;
-
-    _applyProperty(loaderData, node, shape, vBox, svgPath, false);
-    return true;
+    auto shape = Shape::gen();
+    if (!_recognizeShape(node, shape.get())) return nullptr;
+    _applyProperty(loaderData, node, shape.get(), vBox, svgPath, false);
+    return shape;
 }
 
 
@@ -699,9 +689,9 @@ static Matrix _calculateAspectRatioMatrix(AspectRatioAlign align, AspectRatioMee
 }
 
 
-static unique_ptr<Scene> _useBuildHelper(SvgLoaderData& loaderData, const SvgNode* node, const Box& vBox, const string& svgPath, int depth, bool* isMaskWhite)
+static unique_ptr<Scene> _useBuildHelper(SvgLoaderData& loaderData, const SvgNode* node, const Box& vBox, const string& svgPath, int depth)
 {
-    auto scene = _sceneBuildHelper(loaderData, node, vBox, svgPath, false, depth + 1, isMaskWhite);
+    auto scene = _sceneBuildHelper(loaderData, node, vBox, svgPath, false, depth + 1);
 
     // mUseTransform = mUseTransform * mTranslate
     Matrix mUseTransform = {1, 0, 0, 0, 1, 0, 0, 0, 1};
@@ -813,7 +803,7 @@ static unique_ptr<Text> _textBuildHelper(SvgLoaderData& loaderData, const SvgNod
 }
 
 
-static unique_ptr<Scene> _sceneBuildHelper(SvgLoaderData& loaderData, const SvgNode* node, const Box& vBox, const string& svgPath, bool mask, int depth, bool* isMaskWhite)
+static unique_ptr<Scene> _sceneBuildHelper(SvgLoaderData& loaderData, const SvgNode* node, const Box& vBox, const string& svgPath, bool mask, int depth)
 {
     /* Exception handling: Prevent invalid SVG data input.
        The size is the arbitrary value, we need an experimental size. */
@@ -832,34 +822,22 @@ static unique_ptr<Scene> _sceneBuildHelper(SvgLoaderData& loaderData, const SvgN
             for (uint32_t i = 0; i < node->child.count; ++i, ++child) {
                 if (_isGroupType((*child)->type)) {
                     if ((*child)->type == SvgNodeType::Use)
-                        scene->push(_useBuildHelper(loaderData, *child, vBox, svgPath, depth + 1, isMaskWhite));
+                        scene->push(_useBuildHelper(loaderData, *child, vBox, svgPath, depth + 1));
                     else if (!((*child)->type == SvgNodeType::Symbol && node->type != SvgNodeType::Use))
-                        scene->push(_sceneBuildHelper(loaderData, *child, vBox, svgPath, false, depth + 1, isMaskWhite));
+                        scene->push(_sceneBuildHelper(loaderData, *child, vBox, svgPath, false, depth + 1));
                     if ((*child)->id) scene->id = djb2Encode((*child)->id);
                 } else if ((*child)->type == SvgNodeType::Image) {
-                    auto image = _imageBuildHelper(loaderData, *child, vBox, svgPath);
-                    if (image) {
+                    if (auto image = _imageBuildHelper(loaderData, *child, vBox, svgPath)) {
                         if ((*child)->id) image->id = djb2Encode((*child)->id);
                         scene->push(std::move(image));
-                        if (isMaskWhite) *isMaskWhite = false;
                     }
                 } else if ((*child)->type == SvgNodeType::Text) {
-                    auto text = _textBuildHelper(loaderData, *child, vBox, svgPath);
-                    if (text) {
+                    if (auto text = _textBuildHelper(loaderData, *child, vBox, svgPath)) {
                         if ((*child)->id) text->id = djb2Encode((*child)->id);
                         scene->push(std::move(text));
                     }
                 } else if ((*child)->type != SvgNodeType::Mask) {
-                    auto shape = _shapeBuildHelper(loaderData, *child, vBox, svgPath);
-                    if (shape) {
-                        if (isMaskWhite) {
-                            uint8_t r, g, b;
-                            shape->fillColor(&r, &g, &b);
-                            if (shape->fill() || r < 255 || g < 255 || b < 255 || shape->strokeFill() ||
-                                (shape->strokeFill(&r, &g, &b) == Result::Success && (r < 255 || g < 255 || b < 255))) {
-                                *isMaskWhite = false;
-                            }
-                        }
+                    if (auto shape = _shapeBuildHelper(loaderData, *child, vBox, svgPath)) {
                         if ((*child)->id) shape->id = djb2Encode((*child)->id);
                         scene->push(std::move(shape));
                     }
