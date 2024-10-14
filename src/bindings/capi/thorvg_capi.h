@@ -127,7 +127,7 @@ typedef enum {
     TVG_RESULT_FAILED_ALLOCATION,      ///< The value returned in case of unsuccessful memory allocation.
     TVG_RESULT_MEMORY_CORRUPTION,      ///< The value returned in the event of bad memory handling - e.g. failing in pointer releasing or casting
     TVG_RESULT_NOT_SUPPORTED,          ///< The value returned in case of choosing unsupported engine features(options).
-    TVG_RESULT_UNKNOWN                 ///< The value returned in all other cases.
+    TVG_RESULT_UNKNOWN = 255           ///< The value returned in all other cases.
 } Tvg_Result;
 
 
@@ -217,18 +217,16 @@ typedef enum {
  */
 
 /**
- * \brief Enumeration specifying the values of the path commands accepted by TVG.
- *
- * Not to be confused with the path commands from the svg path element (like M, L, Q, H and many others).
- * TVG interprets all of them and translates to the ones from the PathCommand values.
+ * \brief Enumeration specifying the values of the path commands accepted by ThorVG.
  */
-typedef enum {
-    TVG_PATH_COMMAND_CLOSE = 0, ///< Ends the current sub-path and connects it with its initial point - corresponds to Z command in the svg path commands.
-    TVG_PATH_COMMAND_MOVE_TO,   ///< Sets a new initial point of the sub-path and a new current point - corresponds to M command in the svg path commands.
-    TVG_PATH_COMMAND_LINE_TO,   ///< Draws a line from the current point to the given point and sets a new value of the current point - corresponds to L command in the svg path commands.
-    TVG_PATH_COMMAND_CUBIC_TO   ///< Draws a cubic Bezier curve from the current point to the given point using two given control points and sets a new value of the current point - corresponds to C command in the svg path commands.
-} Tvg_Path_Command;
+typedef uint8_t Tvg_Path_Command;
 
+enum {
+    TVG_PATH_COMMAND_CLOSE = 0,    ///< Ends the current sub-path and connects it with its initial point - corresponds to Z command in the svg path commands.
+    TVG_PATH_COMMAND_MOVE_TO,      ///< Sets a new initial point of the sub-path and a new current point - corresponds to M command in the svg path commands.
+    TVG_PATH_COMMAND_LINE_TO,      ///< Draws a line from the current point to the given point and sets a new value of the current point - corresponds to L command in the svg path commands.
+    TVG_PATH_COMMAND_CUBIC_TO      ///< Draws a cubic Bezier curve from the current point to the given point using two given control points and sets a new value of the current point - corresponds to C command in the svg path commands.
+};
 
 /**
  * \brief Enumeration determining the ending type of a stroke in the open sub-paths.

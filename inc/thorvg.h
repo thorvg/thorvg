@@ -85,7 +85,7 @@ enum class Result
     FailedAllocation,      ///< The value returned in case of unsuccessful memory allocation.
     MemoryCorruption,      ///< The value returned in the event of bad memory handling - e.g. failing in pointer releasing or casting
     NonSupport,            ///< The value returned in case of choosing unsupported engine features(options).
-    Unknown                ///< The value returned in all other cases.
+    Unknown = 255          ///< The value returned in all other cases.
 };
 
 
@@ -104,12 +104,9 @@ enum class ColorSpace : uint8_t
 
 
 /**
- * @brief Enumeration specifying the values of the path commands accepted by TVG.
- *
- * Not to be confused with the path commands from the svg path element (like M, L, Q, H and many others).
- * TVG interprets all of them and translates to the ones from the PathCommand values.
+ * @brief Enumeration specifying the values of the path commands accepted by ThorVG.
  */
-enum class PathCommand
+enum class PathCommand : uint8_t
 {
     Close = 0, ///< Ends the current sub-path and connects it with its initial point. This command doesn't expect any points.
     MoveTo,    ///< Sets a new initial point of the sub-path and a new current point. This command expects 1 point: the starting position.
