@@ -52,6 +52,20 @@ The task scheduler has been meticulously crafted to conceal complexity, streamli
 <p align="center">
   <img width="900" height="auto" src="https://github.com/thorvg/thorvg/blob/main/res/example_thread.png">
 </p>
+ThorVG is currently under development and is expanding its support for essential platforms as needed. The major platforms that ThorVG currently supports for direct integration include the following: <br />
+<br />
+<p align="center">
+  <img width="600" height="auto" src="https://github.com/thorvg/thorvg/blob/main/res/example_platforms.png">
+</p>
+
+- Linux
+- MacOS
+- Windows
+- Tizen
+- iOS
+- Android
+- Web
+- Flutter
 
 ## Contents
 - [ThorVG](#thorvg)
