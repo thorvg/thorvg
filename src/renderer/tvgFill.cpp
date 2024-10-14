@@ -134,18 +134,14 @@ FillSpread Fill::spread() const noexcept
 
 Result Fill::transform(const Matrix& m) noexcept
 {
-    if (!pImpl->transform) {
-        pImpl->transform = static_cast<Matrix*>(malloc(sizeof(Matrix)));
-    }
-    *pImpl->transform = m;
+    pImpl->transform = m;
     return Result::Success;
 }
 
 
-Matrix Fill::transform() const noexcept
+Matrix& Fill::transform() const noexcept
 {
-    if (pImpl->transform) return *pImpl->transform;
-    return {1, 0, 0, 0, 1, 0, 0, 0, 1};
+    return pImpl->transform;
 }
 
 

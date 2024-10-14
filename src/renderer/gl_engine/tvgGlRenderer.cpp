@@ -288,27 +288,15 @@ void GlRenderer::drawPrimitive(GlShape& sdata, const Fill* fill, RenderUpdateFla
     {
         const auto& matrix = sdata.geometry->getTransformMatrix();
 
-        auto gradientTransform = fill->transform();
         float invMat4[16];
-        if (!identity(const_cast<const Matrix*>(&gradientTransform))) {
-            Matrix inv{};
-            inverse(&gradientTransform  , &inv);
-
-            GET_MATRIX44(inv, invMat4);
-        } else {
-            memset(invMat4, 0, 16 * sizeof(float));
-            invMat4[0] = 1.f;
-            invMat4[5] = 1.f;
-            invMat4[10] = 1.f;
-            invMat4[15] = 1.f;
-        }
+        Matrix inv;
+        inverse(&fill->transform(), &inv);
+        GET_MATRIX44(inv, invMat4);
 
         float matrix44[16];
-
         currentPass()->getMatrix(matrix44, matrix);
 
         uint32_t loc = task->getProgram()->getUniformBlockIndex("Matrix");
-
         uint32_t viewOffset = mGpuBuffer->push(matrix44, 16 * sizeof(float), true);
 
         task->addBindResource(GlBindingResource{
