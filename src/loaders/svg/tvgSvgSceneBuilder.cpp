@@ -92,9 +92,8 @@ static unique_ptr<LinearGradient> _applyLinearGradientProperty(SvgStyleGradient*
     Fill::ColorStop* stops;
     int stopCount = 0;
     auto fillGrad = LinearGradient::gen();
-
-    bool isTransform = (g->transform ? true : false);
-    Matrix finalTransform = {1, 0, 0, 0, 1, 0, 0, 0, 1};
+    auto isTransform = (g->transform ? true : false);
+    auto& finalTransform = fillGrad->transform();
     if (isTransform) finalTransform = *g->transform;
 
     if (g->userSpace) {
@@ -105,13 +104,8 @@ static unique_ptr<LinearGradient> _applyLinearGradientProperty(SvgStyleGradient*
     } else {
         Matrix m = {vBox.w, 0, vBox.x, 0, vBox.h, vBox.y, 0, 0, 1};
         if (isTransform) _transformMultiply(&m, &finalTransform);
-        else {
-            finalTransform = m;
-            isTransform = true;
-        }
+        else finalTransform = m;
     }
-
-    if (isTransform) fillGrad->transform(finalTransform);
 
     fillGrad->linear(g->linear->x1, g->linear->y1, g->linear->x2, g->linear->y2);
     fillGrad->spread(g->spread);
@@ -147,9 +141,8 @@ static unique_ptr<RadialGradient> _applyRadialGradientProperty(SvgStyleGradient*
     Fill::ColorStop *stops;
     int stopCount = 0;
     auto fillGrad = RadialGradient::gen();
-
-    bool isTransform = (g->transform ? true : false);
-    Matrix finalTransform = {1, 0, 0, 0, 1, 0, 0, 0, 1};
+    auto isTransform = (g->transform ? true : false);
+    auto& finalTransform = fillGrad->transform();
     if (isTransform) finalTransform = *g->transform;
 
     if (g->userSpace) {
@@ -164,13 +157,8 @@ static unique_ptr<RadialGradient> _applyRadialGradientProperty(SvgStyleGradient*
     } else {
         Matrix m = {vBox.w, 0, vBox.x, 0, vBox.h, vBox.y, 0, 0, 1};
         if (isTransform) _transformMultiply(&m, &finalTransform);
-        else {
-            finalTransform = m;
-            isTransform = true;
-        }
+        else finalTransform = m;
     }
-
-    if (isTransform) fillGrad->transform(finalTransform);
 
     P(fillGrad)->radial(g->radial->cx, g->radial->cy, g->radial->r, g->radial->fx, g->radial->fy, g->radial->fr);
     fillGrad->spread(g->spread);

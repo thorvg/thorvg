@@ -213,10 +213,9 @@ void WgRenderSettings::update(WgContext& context, const Fill* fill, const uint8_
     if ((flags & (RenderUpdateFlag::Gradient)) && fill) {
         rasterType = WgRenderRasterType::Gradient;
         // get gradient transfrom matrix
-        Matrix fillTransform = fill->transform();
         Matrix invFillTransform;
         WgShaderTypeMat4x4f gradientTrans; // identity by default
-        if (inverse(&fillTransform, &invFillTransform))
+        if (inverse(&fill->transform(), &invFillTransform))
             gradientTrans.update(invFillTransform);
         // get gradient rasterisation settings
         WgShaderTypeGradient gradient;

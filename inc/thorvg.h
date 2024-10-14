@@ -546,7 +546,7 @@ public:
      *
      * @return The augmented transformation matrix.
      */
-    Matrix transform() const noexcept;
+    Matrix& transform() const noexcept;
 
     /**
      * @brief Creates a copy of the Fill object.
