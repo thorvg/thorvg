@@ -188,7 +188,7 @@ void LottieBuilder::updateTransform(LottieGroup* parent, LottieObject** child, f
     Matrix matrix;
     if (!_updateTransform(transform, frameNo, false, matrix, opacity, exps)) return;
 
-    ctx->propagator->transform(PP(ctx->propagator)->transform() * matrix);
+    ctx->propagator->transform(ctx->propagator->transform() * matrix);
     ctx->propagator->opacity(MULTIPLY(opacity, PP(ctx->propagator)->opacity));
 
     //FIXME: preserve the stroke width. too workaround, need a better design.
@@ -356,7 +356,7 @@ static void _repeat(LottieGroup* parent, Shape* path, RenderContext* ctx)
 
                 Matrix inv;
                 inverse(&repeater->transform, &inv);
-                shape->transform(m * (inv * PP(shape)->transform()));
+                shape->transform(m * (inv * shape->transform()));
                 shapes.push(shape);
             }
         }
@@ -839,7 +839,7 @@ void LottieBuilder::updateRepeater(TVG_UNUSED LottieGroup* parent, LottieObject*
 
     RenderRepeater r;
     r.cnt = static_cast<int>(repeater->copies(frameNo, exps));
-    r.transform = PP(ctx->propagator)->transform();
+    r.transform = ctx->propagator->transform();
     r.offset = repeater->offset(frameNo, exps);
     r.position = repeater->position(frameNo, exps);
     r.anchor = repeater->anchor(frameNo, exps);
@@ -1072,7 +1072,7 @@ void LottieBuilder::updateText(LottieLayer* layer, float frameNo)
                     else if ((*s)->based == LottieTextRange::Based::Lines) basedIdx = line;
 
                     if (basedIdx < start || basedIdx >= end) continue;
-                    auto matrix = shape->transform();
+                    auto& matrix = shape->transform();
 
                     shape->opacity((*s)->style.opacity(frameNo));
 
@@ -1086,8 +1086,6 @@ void LottieBuilder::updateText(LottieLayer* layer, float frameNo)
 
                     auto position = (*s)->style.position(frameNo);
                     translate(&matrix, position.x, position.y);
-
-                    shape->transform(matrix);
 
                     if (doc.stroke.render) {
                         auto strokeColor = (*s)->style.strokeColor(frameNo);

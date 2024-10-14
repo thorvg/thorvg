@@ -358,7 +358,7 @@ public:
      *
      * @since 0.4
      */
-    Matrix transform() noexcept;
+    Matrix& transform() noexcept;
 
     /**
      * @brief Sets the opacity of the object.

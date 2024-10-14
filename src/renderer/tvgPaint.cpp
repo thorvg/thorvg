@@ -86,7 +86,7 @@ static Result _compFastTrack(RenderMethod* renderer, Paint* cmpTarget, const Mat
     if (ptsCnt == 0) return Result::InvalidArguments;
     if (ptsCnt != 4) return Result::InsufficientCondition;
 
-    auto& rm = P(cmpTarget)->transform();
+    auto& rm = cmpTarget->transform();
 
     //No rotation and no skewing, still can try out clipping the rect region.
     auto tryClip = false;
@@ -423,7 +423,7 @@ Result Paint::transform(const Matrix& m) noexcept
 }
 
 
-Matrix Paint::transform() noexcept
+Matrix& Paint::transform() noexcept
 {
     return pImpl->transform();
 }
