@@ -376,6 +376,8 @@ void WgCompositor::drawClipPath(WgContext& context, WgRenderDataShape* renderDat
     assert(renderData);
     assert(renderPassEncoder);
     assert(renderData->meshGroupShapes.meshes.count == renderData->meshGroupShapesBBox.meshes.count);
+    if (renderData->renderSettingsShape.skip) return;
+    if (renderData->meshGroupShapes.meshes.count == 0) return;
     if ((renderData->viewport.w <= 0) || (renderData->viewport.h <= 0)) return;
     wgpuRenderPassEncoderSetScissorRect(renderPassEncoder, renderData->viewport.x, renderData->viewport.y, renderData->viewport.w, renderData->viewport.h);
     // setup stencil rules
@@ -404,6 +406,7 @@ void WgCompositor::drawShape(WgContext& context, WgRenderDataShape* renderData, 
     assert(renderData->meshGroupShapes.meshes.count == renderData->meshGroupShapesBBox.meshes.count);
     uint32_t blendTypeInd = (uint32_t)blendType;
     if (renderData->renderSettingsShape.skip) return;
+    if (renderData->meshGroupShapes.meshes.count == 0) return;
     if ((renderData->viewport.w <= 0) || (renderData->viewport.h <= 0)) return;
     wgpuRenderPassEncoderSetScissorRect(renderPassEncoder, renderData->viewport.x, renderData->viewport.y, renderData->viewport.w, renderData->viewport.h);
     // setup stencil rules
@@ -442,6 +445,7 @@ void WgCompositor::drawStrokes(WgContext& context, WgRenderDataShape* renderData
     assert(renderData->meshGroupStrokes.meshes.count == renderData->meshGroupStrokesBBox.meshes.count);
     uint32_t blendTypeInd = (uint32_t)blendType;
     if (renderData->renderSettingsStroke.skip) return;
+    if (renderData->meshGroupStrokes.meshes.count == 0) return;
     if ((renderData->viewport.w <= 0) || (renderData->viewport.h <= 0)) return;
     wgpuRenderPassEncoderSetScissorRect(renderPassEncoder, renderData->viewport.x, renderData->viewport.y, renderData->viewport.w, renderData->viewport.h);
     // draw strokes to stencil (first pass)
