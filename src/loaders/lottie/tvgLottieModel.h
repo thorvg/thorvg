@@ -717,6 +717,7 @@ struct LottieGroup : LottieObject, LottieRenderPooler<tvg::Shape>
 
     void prepare(LottieObject::Type type = LottieObject::Group);
     bool mergeable() override { return allowMerge; }
+    LottieProperty* property(uint16_t ix);
 
     LottieObject* content(unsigned long id)
     {
@@ -760,6 +761,8 @@ struct LottieLayer : LottieGroup
 
     void prepare(RGB24* color = nullptr);
     float remap(LottieComposition* comp, float frameNo, LottieExpressions* exp);
+    LottieProperty* property(uint16_t ix);
+    bool write(const char* layer, uint32_t ix, const char* var, float val);
 
     char* name = nullptr;
     LottieLayer* parent = nullptr;
