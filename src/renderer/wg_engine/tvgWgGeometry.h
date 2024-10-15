@@ -335,7 +335,9 @@ struct WgVertexBufferInd {
         Point offset2 = nrm2 * halfWidth;
         Point nrm = normalize(nrm1 + nrm2);
         float cosine = dot(nrm, nrm1);
+        if (tvg::zero(cosine)) return;
         float angle = std::acos(dot(nrm1, -nrm2));
+        if (tvg::zero(angle) || tvg::equal(angle, M_PI)) return;
         float miterRatio = 1.0f / (std::sin(angle) * 0.5f);
         if (miterRatio <= miterLimit) {
             appendQuad(v1 + nrm * (halfWidth / cosine), v1 + offset2, v1 + offset1, v1);
