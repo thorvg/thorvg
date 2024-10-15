@@ -25,56 +25,72 @@
 
 #include "tvgWgBindGroups.h"
 
-enum class WgPipelineBlendType { Normal, Custom };
-
 class WgPipelines {
 private:
-    // graphics pipeline shaders
-    WGPUShaderModule shaderStencil{};
-    WGPUShaderModule shaderSolid{};
-    WGPUShaderModule shaderRadial{};
-    WGPUShaderModule shaderLinear{};
-    WGPUShaderModule shaderImage{};
-    WGPUShaderModule shaderSceneComp{};
-    WGPUShaderModule shaderSceneBlend{};
-    WGPUShaderModule shaderBlit{};
-    // compute pipeline shaders
-    WGPUShaderModule shaderMergeMasks;
-    WGPUShaderModule shaderBlendSolid;
-    WGPUShaderModule shaderBlendGradient;
-    WGPUShaderModule shaderBlendImage;
+    // shaders helpers
+    WGPUShaderModule shader_stencil{};
+    // shaders normal blend
+    WGPUShaderModule shader_solid{};
+    WGPUShaderModule shader_radial{};
+    WGPUShaderModule shader_linear{};
+    WGPUShaderModule shader_image{};
+    WGPUShaderModule shader_scene{};
+    // shaders custom blend
+    WGPUShaderModule shader_solid_blend{};
+    WGPUShaderModule shader_radial_blend{};
+    WGPUShaderModule shader_linear_blend{};
+    WGPUShaderModule shader_image_blend{};
+    WGPUShaderModule shader_scene_blend{};
+    // shader scene compose
+    WGPUShaderModule shader_scene_compose{};
+    WGPUShaderModule shader_merge_masks;
+    // shader blit
+    WGPUShaderModule shader_blit{};
 private:
-    // graphics pipeline layouts
-    WGPUPipelineLayout layoutStencil{};
-    WGPUPipelineLayout layoutSolid{};
-    WGPUPipelineLayout layoutGradient{};
-    WGPUPipelineLayout layoutImage{};
-    WGPUPipelineLayout layoutSceneComp{};
-    WGPUPipelineLayout layoutSceneBlend{};
-    WGPUPipelineLayout layoutBlit{};
-    // compute pipeline layouts
-    WGPUPipelineLayout layoutMergeMasks{};
-    WGPUPipelineLayout layoutBlend{};
+    // layouts helpers
+    WGPUPipelineLayout layout_stencil{};
+    // layouts normal blend
+    WGPUPipelineLayout layout_solid{};
+    WGPUPipelineLayout layout_gradient{};
+    WGPUPipelineLayout layout_image{};
+    WGPUPipelineLayout layout_scene{};
+    // layouts custom blend
+    WGPUPipelineLayout layout_solid_blend{};
+    WGPUPipelineLayout layout_gradient_blend{};
+    WGPUPipelineLayout layout_image_blend{};
+    WGPUPipelineLayout layout_scene_blend{};
+    // layouts scene compose
+    WGPUPipelineLayout layout_scene_compose{};
+    WGPUPipelineLayout layout_merge_masks{};
+    // layouts blit
+    WGPUPipelineLayout layout_blit{};
 public:
-    // graphics pipeline
-    WgBindGroupLayouts layouts;
+    // pipelines helpers
     WGPURenderPipeline winding{};
     WGPURenderPipeline evenodd{};
     WGPURenderPipeline direct{};
-    WGPURenderPipeline solid[2]{};
-    WGPURenderPipeline radial[2]{};
-    WGPURenderPipeline linear[2]{};
-    WGPURenderPipeline image[2]{};
-    WGPURenderPipeline sceneClip;
-    WGPURenderPipeline sceneComp[11];
-    WGPURenderPipeline sceneBlend;
+    WGPURenderPipeline clip_path{};
+    // pipelines normal blend
+    WGPURenderPipeline solid{};
+    WGPURenderPipeline radial{};
+    WGPURenderPipeline linear{};
+    WGPURenderPipeline image{};
+    WGPURenderPipeline scene{};
+    // pipelines custom blend
+    WGPURenderPipeline solid_blend[18]{};
+    WGPURenderPipeline radial_blend[18]{};
+    WGPURenderPipeline linear_blend[18]{};
+    WGPURenderPipeline image_blend[18]{};
+    WGPURenderPipeline scene_blend[18]{};
+    // pipelines compose
+    WGPURenderPipeline scene_compose[11]{};
+    WGPURenderPipeline scene_clip{};
+    WGPUComputePipeline merge_masks{};
+    // pipeline blit
     WGPURenderPipeline blit{};
-    WGPURenderPipeline clipPath{};
-    // compute pipeline
-    WGPUComputePipeline mergeMasks;
-    WGPUComputePipeline blendSolid[18];
-    WGPUComputePipeline blendGradient[18];
-    WGPUComputePipeline blendImage[18];
+public:
+    // layouts
+    WgBindGroupLayouts layouts;
 private:
     void releaseGraphicHandles(WgContext& context);
     void releaseComputeHandles(WgContext& context);
