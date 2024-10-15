@@ -83,7 +83,7 @@ public:
     bool clear() override;
 
     RenderCompositor* target(const RenderRegion& region, ColorSpace cs) override;
-    bool beginComposite(RenderCompositor* cmp, CompositeMethod method, uint8_t opacity) override;
+    bool beginComposite(RenderCompositor* cmp, MaskMethod method, uint8_t opacity) override;
     bool endComposite(RenderCompositor* cmp) override;
 
     bool prepare(RenderEffect* effect) override;

@@ -56,7 +56,7 @@ public:
     bool mempool(bool shared);
 
     RenderCompositor* target(const RenderRegion& region, ColorSpace cs) override;
-    bool beginComposite(RenderCompositor* cmp, CompositeMethod method, uint8_t opacity) override;
+    bool beginComposite(RenderCompositor* cmp, MaskMethod method, uint8_t opacity) override;
     bool endComposite(RenderCompositor* cmp) override;
     void clearCompositors();
 

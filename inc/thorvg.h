@@ -159,25 +159,25 @@ enum class FillRule : uint8_t
 
 
 /**
- * @brief Enumeration indicating the method used in the composition of two objects - the target and the source.
+ * @brief Enumeration indicating the method used in the mask of two objects - the target and the source.
  *
  * Notation: S(Source), T(Target), SA(Source Alpha), TA(Target Alpha)
  *
- * @see Paint::composite()
+ * @see Paint::mask()
  */
-enum class CompositeMethod : uint8_t
+enum class MaskMethod : uint8_t
 {
-    None = 0,           ///< No composition is applied.
-    AlphaMask,          ///< Alpha Masking using the compositing target's pixels as an alpha value.
-    InvAlphaMask,       ///< Alpha Masking using the complement to the compositing target's pixels as an alpha value.
-    LumaMask,           ///< Alpha Masking using the grayscale (0.2125R + 0.7154G + 0.0721*B) of the compositing target's pixels. @since 0.9
-    InvLumaMask,        ///< Alpha Masking using the grayscale (0.2125R + 0.7154G + 0.0721*B) of the complement to the compositing target's pixels. @since 0.11
-    AddMask,            ///< Combines the target and source objects pixels using target alpha. (T * TA) + (S * (255 - TA)) (Experimental API)
-    SubtractMask,       ///< Subtracts the source color from the target color while considering their respective target alpha. (T * TA) - (S * (255 - TA)) (Experimental API)
-    IntersectMask,      ///< Computes the result by taking the minimum value between the target alpha and the source alpha and multiplies it with the target color. (T * min(TA, SA)) (Experimental API)
-    DifferenceMask,     ///< Calculates the absolute difference between the target color and the source color multiplied by the complement of the target alpha. abs(T - S * (255 - TA)) (Experimental API)
-    LightenMask,        ///< Where multiple masks intersect, the highest transparency value is used. (Experimental API)
-    DarkenMask          ///< Where multiple masks intersect, the lowest transparency value is used. (Experimental API)
+    None = 0,       ///< No Masking is applied.
+    Alpha,          ///< Alpha Masking using the masking target's pixels as an alpha value.
+    InvAlpha,       ///< Alpha Masking using the complement to the masking target's pixels as an alpha value.
+    Luma,           ///< Alpha Masking using the grayscale (0.2125R + 0.7154G + 0.0721*B) of the masking target's pixels. @since 0.9
+    InvLuma,        ///< Alpha Masking using the grayscale (0.2125R + 0.7154G + 0.0721*B) of the complement to the masking target's pixels. @since 0.11
+    Add,            ///< Combines the target and source objects pixels using target alpha. (T * TA) + (S * (255 - TA)) (Experimental API)
+    Subtract,       ///< Subtracts the source color from the target color while considering their respective target alpha. (T * TA) - (S * (255 - TA)) (Experimental API)
+    Intersect,      ///< Computes the result by taking the minimum value between the target alpha and the source alpha and multiplies it with the target color. (T * min(TA, SA)) (Experimental API)
+    Difference,     ///< Calculates the absolute difference between the target color and the source color multiplied by the complement of the target alpha. abs(T - S * (255 - TA)) (Experimental API)
+    Lighten,        ///< Where multiple masks intersect, the highest transparency value is used. (Experimental API)
+    Darken          ///< Where multiple masks intersect, the lowest transparency value is used. (Experimental API)
 };
 
 
@@ -370,12 +370,12 @@ public:
     Result opacity(uint8_t o) noexcept;
 
     /**
-     * @brief Sets the composition target object and the composition method.
+     * @brief Sets the masking target object and the masking method.
      *
      * @param[in] target The paint of the target object.
-     * @param[in] method The method used to composite the source object with the target.
+     * @param[in] method The method used to mask the source object with the target.
      */
-    Result composite(std::unique_ptr<Paint> target, CompositeMethod method) noexcept;
+    Result mask(std::unique_ptr<Paint> target, MaskMethod method) noexcept;
 
     /**
      * @brief Clip the drawing region of the paint object.
@@ -437,15 +437,15 @@ public:
     uint8_t opacity() const noexcept;
 
     /**
-     * @brief Gets the composition target object and the composition method.
+     * @brief Gets the masking target object and the masking method.
      *
      * @param[out] target The paint of the target object.
      *
-     * @return The method used to composite the source object with the target.
+     * @return The method used to mask the source object with the target.
      *
      * @since 0.5
      */
-    CompositeMethod composite(const Paint** target) const noexcept;
+    MaskMethod mask(const Paint** target) const noexcept;
 
     /**
      * @brief Returns the ID value of this class.

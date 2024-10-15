@@ -66,22 +66,22 @@ LottieEffect* LottieParser::getEffect(int type)
 }
 
 
-CompositeMethod LottieParser::getMaskMethod(bool inversed)
+MaskMethod LottieParser::getMaskMethod(bool inversed)
 {
     auto mode = getString();
-    if (!mode) return CompositeMethod::None;
+    if (!mode) return MaskMethod::None;
 
     switch (mode[0]) {
         case 'a': {
-            if (inversed) return CompositeMethod::InvAlphaMask;
-            else return CompositeMethod::AddMask;
+            if (inversed) return MaskMethod::InvAlpha;
+            else return MaskMethod::Add;
         }
-        case 's': return CompositeMethod::SubtractMask;
-        case 'i': return CompositeMethod::IntersectMask;
-        case 'f': return CompositeMethod::DifferenceMask;
-        case 'l': return CompositeMethod::LightenMask;
-        case 'd': return CompositeMethod::DarkenMask;
-        default: return CompositeMethod::None;
+        case 's': return MaskMethod::Subtract;
+        case 'i': return MaskMethod::Intersect;
+        case 'f': return MaskMethod::Difference;
+        case 'l': return MaskMethod::Lighten;
+        case 'd': return MaskMethod::Darken;
+        default: return MaskMethod::None;
     }
 }
 
@@ -123,14 +123,14 @@ FillRule LottieParser::getFillRule()
 }
 
 
-CompositeMethod LottieParser::getMatteType()
+MaskMethod LottieParser::getMatteType()
 {
     switch (getInt()) {
-        case 1: return CompositeMethod::AlphaMask;
-        case 2: return CompositeMethod::InvAlphaMask;
-        case 3: return CompositeMethod::LumaMask;
-        case 4: return CompositeMethod::InvLumaMask;
-        default: return CompositeMethod::None;
+        case 1: return MaskMethod::Alpha;
+        case 2: return MaskMethod::InvAlpha;
+        case 3: return MaskMethod::Luma;
+        case 4: return MaskMethod::InvLuma;
+        default: return MaskMethod::None;
     }
 }
 
@@ -1229,7 +1229,7 @@ LottieMask* LottieParser::parseMask()
         else if (KEY_AS("mode"))
         {
             mask->method = getMaskMethod(mask->inverse);
-            if (mask->method == CompositeMethod::None) valid = false;
+            if (mask->method == MaskMethod::None) valid = false;
         }
         else if (valid && KEY_AS("pt")) getPathSet(mask->pathset);
         else if (valid && KEY_AS("o")) parseProperty<LottieProperty::Type::Opacity>(mask->opacity);

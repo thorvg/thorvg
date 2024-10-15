@@ -194,7 +194,7 @@ void contents()
         Tvg_Paint* comp = tvg_shape_new();
         tvg_shape_append_circle(comp, 600.0f, 600.0f, 100.0f, 100.0f);
         tvg_shape_set_fill_color(comp, 0, 0, 0, 200);
-        tvg_paint_set_composite_method(pict, comp, TVG_COMPOSITE_METHOD_INVERSE_ALPHA_MASK);
+        tvg_paint_set_mask_method(pict, comp, TVG_MASK_METHOD_INVERSE_ALPHA);
 
         //Push the scene into the canvas
         tvg_canvas_push(canvas, pict);

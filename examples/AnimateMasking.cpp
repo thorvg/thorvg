@@ -66,7 +66,7 @@ struct UserExample : tvgexam::Example
         mask->appendCircle(180, 180, 75, 75);
         mask->fill(255, 255, 255);         //AlphaMask RGB channels are unused.
 
-        picture2->composite(std::move(mask), tvg::CompositeMethod::AlphaMask);
+        picture2->mask(std::move(mask), tvg::MaskMethod::Alpha);
         canvas->push(std::move(picture2));
 
         return true;

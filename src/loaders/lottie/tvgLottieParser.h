@@ -44,11 +44,11 @@ public:
 
 private:
     RGB24 getColor(const char *str);
-    CompositeMethod getMatteType();
+    MaskMethod getMatteType();
     FillRule getFillRule();
     StrokeCap getStrokeCap();
     StrokeJoin getStrokeJoin();
-    CompositeMethod getMaskMethod(bool inversed);
+    MaskMethod getMaskMethod(bool inversed);
     LottieInterpolator* getInterpolator(const char* key, Point& in, Point& out);
     LottieEffect* getEffect(int type);
 

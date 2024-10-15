@@ -69,7 +69,7 @@ struct RenderSurface
 
 struct RenderCompositor
 {
-    CompositeMethod method;
+    MaskMethod method;
     uint8_t opacity;
 };
 
@@ -314,31 +314,31 @@ public:
     virtual bool sync() = 0;
 
     virtual RenderCompositor* target(const RenderRegion& region, ColorSpace cs) = 0;
-    virtual bool beginComposite(RenderCompositor* cmp, CompositeMethod method, uint8_t opacity) = 0;
+    virtual bool beginComposite(RenderCompositor* cmp, MaskMethod method, uint8_t opacity) = 0;
     virtual bool endComposite(RenderCompositor* cmp) = 0;
 
     virtual bool prepare(RenderEffect* effect) = 0;
     virtual bool effect(RenderCompositor* cmp, const RenderEffect* effect) = 0;
 };
 
-static inline bool MASK_REGION_MERGING(CompositeMethod method)
+static inline bool MASK_REGION_MERGING(MaskMethod method)
 {
     switch(method) {
-        case CompositeMethod::AlphaMask:
-        case CompositeMethod::InvAlphaMask:
-        case CompositeMethod::LumaMask:
-        case CompositeMethod::InvLumaMask:
-        case CompositeMethod::SubtractMask:
-        case CompositeMethod::IntersectMask:
+        case MaskMethod::Alpha:
+        case MaskMethod::InvAlpha:
+        case MaskMethod::Luma:
+        case MaskMethod::InvLuma:
+        case MaskMethod::Subtract:
+        case MaskMethod::Intersect:
             return false;
         //these might expand the rendering region
-        case CompositeMethod::AddMask:
-        case CompositeMethod::DifferenceMask:
-        case CompositeMethod::LightenMask:
-        case CompositeMethod::DarkenMask:
+        case MaskMethod::Add:
+        case MaskMethod::Difference:
+        case MaskMethod::Lighten:
+        case MaskMethod::Darken:
             return true;
         default:
-            TVGERR("RENDERER", "Unsupported Composite Method! = %d", (int)method);
+            TVGERR("RENDERER", "Unsupported Masking Method! = %d", (int)method);
             return false;
     }
 }
@@ -360,24 +360,24 @@ static inline uint8_t CHANNEL_SIZE(ColorSpace cs)
     }
 }
 
-static inline ColorSpace COMPOSITE_TO_COLORSPACE(RenderMethod* renderer, CompositeMethod method)
+static inline ColorSpace MASK_TO_COLORSPACE(RenderMethod* renderer, MaskMethod method)
 {
     switch(method) {
-        case CompositeMethod::AlphaMask:
-        case CompositeMethod::InvAlphaMask:
-        case CompositeMethod::AddMask:
-        case CompositeMethod::DifferenceMask:
-        case CompositeMethod::SubtractMask:
-        case CompositeMethod::IntersectMask:
-        case CompositeMethod::LightenMask:
-        case CompositeMethod::DarkenMask:
+        case MaskMethod::Alpha:
+        case MaskMethod::InvAlpha:
+        case MaskMethod::Add:
+        case MaskMethod::Difference:
+        case MaskMethod::Subtract:
+        case MaskMethod::Intersect:
+        case MaskMethod::Lighten:
+        case MaskMethod::Darken:
             return ColorSpace::Grayscale8;
         //TODO: Optimize Luma/InvLuma colorspace to Grayscale8
-        case CompositeMethod::LumaMask:
-        case CompositeMethod::InvLumaMask:
+        case MaskMethod::Luma:
+        case MaskMethod::InvLuma:
             return renderer->colorSpace();
         default:
-            TVGERR("RENDERER", "Unsupported Composite Size! = %d", (int)method);
+            TVGERR("RENDERER", "Unsupported Masking Size! = %d", (int)method);
             return ColorSpace::Unknown;
     }
 }

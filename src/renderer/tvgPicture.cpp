@@ -63,7 +63,7 @@ bool Picture::Impl::needComposition(uint8_t opacity)
 
     //Composition test
     const Paint* target;
-    picture->composite(&target);
+    picture->mask(&target);
     if (!target || target->pImpl->opacity == 255 || target->pImpl->opacity == 0) return false;
     return true;
 }
@@ -79,7 +79,7 @@ bool Picture::Impl::render(RenderMethod* renderer)
         RenderCompositor* cmp = nullptr;
         if (needComp) {
             cmp = renderer->target(bounds(renderer), renderer->colorSpace());
-            renderer->beginComposite(cmp, CompositeMethod::None, 255);
+            renderer->beginComposite(cmp, MaskMethod::None, 255);
         }
         ret = paint->pImpl->render(renderer);
         if (cmp) renderer->endComposite(cmp);

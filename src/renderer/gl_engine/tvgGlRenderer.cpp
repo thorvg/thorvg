@@ -751,7 +751,7 @@ void GlRenderer::prepareCmpTask(GlRenderTask* task, const RenderRegion& vp, uint
 void GlRenderer::endRenderPass(RenderCompositor* cmp)
 {
     auto gl_cmp = static_cast<GlCompositor*>(cmp);
-    if (cmp->method != CompositeMethod::None) {
+    if (cmp->method != MaskMethod::None) {
         auto self_pass = std::move(mRenderPassStack.back());
         mRenderPassStack.pop_back();
 
@@ -763,43 +763,41 @@ void GlRenderer::endRenderPass(RenderCompositor* cmp)
 
         GlProgram* program = nullptr;
         switch(cmp->method) {
-            case CompositeMethod::AlphaMask:
+            case MaskMethod::Alpha:
                 program = mPrograms[RT_MaskAlpha].get();
                 break;
-            case CompositeMethod::InvAlphaMask:
+            case MaskMethod::InvAlpha:
                 program = mPrograms[RT_MaskAlphaInv].get();
                 break;
-            case CompositeMethod::LumaMask:
+            case MaskMethod::Luma:
                 program = mPrograms[RT_MaskLuma].get();
                 break;
-            case CompositeMethod::InvLumaMask:
+            case MaskMethod::InvLuma:
                 program = mPrograms[RT_MaskLumaInv].get();
                 break;
-            case CompositeMethod::AddMask:
+            case MaskMethod::Add:
                 program = mPrograms[RT_MaskAdd].get();
                 break;
-            case CompositeMethod::SubtractMask:
+            case MaskMethod::Subtract:
                 program = mPrograms[RT_MaskSub].get();
                 break;
-            case CompositeMethod::IntersectMask:
+            case MaskMethod::Intersect:
                 program = mPrograms[RT_MaskIntersect].get();
                 break;
-            case CompositeMethod::DifferenceMask:
+            case MaskMethod::Difference:
                 program = mPrograms[RT_MaskDifference].get();
                 break;
-            case CompositeMethod::LightenMask:
+            case MaskMethod::Lighten:
                 program = mPrograms[RT_MaskLighten].get();
                 break;
-            case CompositeMethod::DarkenMask:
+            case MaskMethod::Darken:
                 program = mPrograms[RT_MaskDarken].get();
                 break;
             default:
                 break;
         }
 
-        if (program == nullptr) {
-            return;
-        }
+        if (!program) return;
 
         auto prev_task = mask_pass.endRenderPass<GlComposeTask>(nullptr, currentPass()->getFboId());
         prev_task->setDrawDepth(currentPass()->nextDrawDepth());
@@ -812,15 +810,8 @@ void GlRenderer::endRenderPass(RenderCompositor* cmp)
 
         prepareCmpTask(compose_task, gl_cmp->bbox, self_pass.getFboWidth(), self_pass.getFboHeight());
 
-        {
-            uint32_t loc = program->getUniformLocation("uSrcTexture");
-            compose_task->addBindResource(GlBindingResource{0, self_pass.getTextureId(), loc});
-        }
-
-        {
-            uint32_t loc = program->getUniformLocation("uMaskTexture");
-            compose_task->addBindResource(GlBindingResource{1, mask_pass.getTextureId(), loc});
-        }
+        compose_task->addBindResource(GlBindingResource{0, self_pass.getTextureId(), (uint)program->getUniformLocation("uSrcTexture")});
+        compose_task->addBindResource(GlBindingResource{1, mask_pass.getTextureId(), (uint)program->getUniformLocation("uMaskTexture")});
 
         compose_task->setDrawDepth(currentPass()->nextDrawDepth());
         compose_task->setParentSize(static_cast<uint32_t>(currentPass()->getViewport().w), static_cast<uint32_t>(currentPass()->getViewport().h));
@@ -1007,7 +998,7 @@ RenderCompositor* GlRenderer::target(const RenderRegion& region, TVG_UNUSED Colo
 }
 
 
-bool GlRenderer::beginComposite(RenderCompositor* cmp, CompositeMethod method, uint8_t opacity)
+bool GlRenderer::beginComposite(RenderCompositor* cmp, MaskMethod method, uint8_t opacity)
 {
     if (!cmp) return false;
 

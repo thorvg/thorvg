@@ -153,7 +153,7 @@ Iterator* Paint::Impl::iterator()
 
 Paint* Paint::Impl::duplicate(Paint* ret)
 {
-    if (ret) ret->composite(nullptr, CompositeMethod::None);
+    if (ret) ret->mask(nullptr, MaskMethod::None);
 
     PAINT_METHOD(ret, duplicate(ret));
 
@@ -163,7 +163,7 @@ Paint* Paint::Impl::duplicate(Paint* ret)
 
     ret->pImpl->opacity = opacity;
 
-    if (compData) ret->pImpl->composite(ret, compData->target->duplicate(), compData->method);
+    if (maskData) ret->pImpl->mask(ret, maskData->target->duplicate(), maskData->method);
     if (clipper) ret->pImpl->clip(clipper->duplicate());
 
     return ret;
@@ -210,19 +210,19 @@ bool Paint::Impl::render(RenderMethod* renderer)
 
     RenderCompositor* cmp = nullptr;
 
-    if (compData && !(compData->target->pImpl->ctxFlag & ContextFlag::FastTrack)) {
+    if (maskData && !(maskData->target->pImpl->ctxFlag & ContextFlag::FastTrack)) {
         RenderRegion region;
         PAINT_METHOD(region, bounds(renderer));
 
-        if (MASK_REGION_MERGING(compData->method)) region.add(P(compData->target)->bounds(renderer));
+        if (MASK_REGION_MERGING(maskData->method)) region.add(P(maskData->target)->bounds(renderer));
         if (region.w == 0 || region.h == 0) return true;
-        cmp = renderer->target(region, COMPOSITE_TO_COLORSPACE(renderer, compData->method));
-        if (renderer->beginComposite(cmp, CompositeMethod::None, 255)) {
-            compData->target->pImpl->render(renderer);
+        cmp = renderer->target(region, MASK_TO_COLORSPACE(renderer, maskData->method));
+        if (renderer->beginComposite(cmp, MaskMethod::None, 255)) {
+            maskData->target->pImpl->render(renderer);
         }
     }
 
-    if (cmp) renderer->beginComposite(cmp, compData->method, compData->target->pImpl->opacity);
+    if (cmp) renderer->beginComposite(cmp, maskData->method, maskData->target->pImpl->opacity);
 
     bool ret;
     PAINT_METHOD(ret, render(renderer));
@@ -248,20 +248,20 @@ RenderData Paint::Impl::update(RenderMethod* renderer, const Matrix& pm, Array<R
     RenderRegion viewport;
     Result compFastTrack = Result::InsufficientCondition;
 
-    if (compData) {
-        auto target = compData->target;
-        auto method = compData->method;
+    if (maskData) {
+        auto target = maskData->target;
+        auto method = maskData->method;
         P(target)->ctxFlag &= ~ContextFlag::FastTrack;   //reset
 
-        /* If the transformation has no rotational factors and the Alpha(InvAlpha)Masking involves a simple rectangle,
-           we can optimize by using the viewport instead of the regular AlphaMasking sequence for improved performance. */
+        /* If the transformation has no rotational factors and the Alpha(InvAlpha) Masking involves a simple rectangle,
+           we can optimize by using the viewport instead of the regular Alphaing sequence for improved performance. */
         if (target->type() == Type::Shape) {
             auto shape = static_cast<Shape*>(target);
             uint8_t a;
             shape->fillColor(nullptr, nullptr, nullptr, &a);
-            //no gradient fill & no compositions of the composition target.
-            if (!shape->fill() && !(PP(shape)->compData)) {
-                if ((method == CompositeMethod::AlphaMask && a == 255 && PP(shape)->opacity == 255) || (method == CompositeMethod::InvAlphaMask && (a == 0 || PP(shape)->opacity == 0))) {
+            //no gradient fill & no maskings of the masking target.
+            if (!shape->fill() && !(PP(shape)->maskData)) {
+                if ((method == MaskMethod::Alpha && a == 255 && PP(shape)->opacity == 255) || (method == MaskMethod::InvAlpha && (a == 0 || PP(shape)->opacity == 0))) {
                     viewport = renderer->viewport();
                     if ((compFastTrack = _compFastTrack(renderer, target, pm, viewport)) == Result::Success) {
                         P(target)->ctxFlag |= ContextFlag::FastTrack;
@@ -361,10 +361,10 @@ void Paint::Impl::reset()
         clipper = nullptr;
     }
 
-    if (compData) {
-        if (P(compData->target)->unref() == 0) delete(compData->target);
-        free(compData);
-        compData = nullptr;
+    if (maskData) {
+        if (P(maskData->target)->unref() == 0) delete(maskData->target);
+        free(maskData);
+        maskData = nullptr;
     }
 
     tvg::identity(&tr.m);
@@ -455,24 +455,24 @@ Result Paint::clip(std::unique_ptr<Paint> clipper) noexcept
 }
 
 
-Result Paint::composite(std::unique_ptr<Paint> target, CompositeMethod method) noexcept
+Result Paint::mask(std::unique_ptr<Paint> target, MaskMethod method) noexcept
 {
     auto p = target.release();
-    if (pImpl->composite(this, p, method)) return Result::Success;
+    if (pImpl->mask(this, p, method)) return Result::Success;
 
     delete(p);
     return Result::InvalidArguments;
 }
 
 
-CompositeMethod Paint::composite(const Paint** target) const noexcept
+MaskMethod Paint::mask(const Paint** target) const noexcept
 {
-    if (pImpl->compData) {
-        if (target) *target = pImpl->compData->target;
-        return pImpl->compData->method;
+    if (pImpl->maskData) {
+        if (target) *target = pImpl->maskData->target;
+        return pImpl->maskData->method;
     } else {
         if (target) *target = nullptr;
-        return CompositeMethod::None;
+        return MaskMethod::None;
     }
 }
 

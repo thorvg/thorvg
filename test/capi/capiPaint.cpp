@@ -261,20 +261,20 @@ TEST_CASE("Paint AlphaMask Composite Method", "[capiPaint]")
     Tvg_Paint* target = tvg_shape_new();
     REQUIRE(target);
 
-    REQUIRE(tvg_paint_set_composite_method(paint, NULL, TVG_COMPOSITE_METHOD_NONE) == TVG_RESULT_SUCCESS);
-    REQUIRE(tvg_paint_set_composite_method(paint, target, TVG_COMPOSITE_METHOD_NONE) == TVG_RESULT_INVALID_ARGUMENT);
-    REQUIRE(tvg_paint_set_composite_method(paint, NULL, TVG_COMPOSITE_METHOD_ALPHA_MASK) == TVG_RESULT_INVALID_ARGUMENT);
+    REQUIRE(tvg_paint_set_mask_method(paint, NULL, TVG_MASK_METHOD_NONE) == TVG_RESULT_SUCCESS);
+    REQUIRE(tvg_paint_set_mask_method(paint, target, TVG_MASK_METHOD_NONE) == TVG_RESULT_INVALID_ARGUMENT);
+    REQUIRE(tvg_paint_set_mask_method(paint, NULL, TVG_MASK_METHOD_ALPHA) == TVG_RESULT_INVALID_ARGUMENT);
 
     Tvg_Paint* target2 = tvg_shape_new();
     REQUIRE(target2);
-    REQUIRE(tvg_paint_set_composite_method(paint, target2, TVG_COMPOSITE_METHOD_ALPHA_MASK) == TVG_RESULT_SUCCESS);
+    REQUIRE(tvg_paint_set_mask_method(paint, target2, TVG_MASK_METHOD_ALPHA) == TVG_RESULT_SUCCESS);
 
     const Tvg_Paint* target3 = nullptr;
-    Tvg_Composite_Method method = TVG_COMPOSITE_METHOD_NONE;
-    REQUIRE(tvg_paint_get_composite_method(paint, NULL, &method) == TVG_RESULT_INVALID_ARGUMENT);
-    REQUIRE(tvg_paint_get_composite_method(paint, &target3, NULL) == TVG_RESULT_INVALID_ARGUMENT);
-    REQUIRE(tvg_paint_get_composite_method(paint, &target3, &method) == TVG_RESULT_SUCCESS);
-    REQUIRE(method == TVG_COMPOSITE_METHOD_ALPHA_MASK);
+    Tvg_Mask_Method method = TVG_MASK_METHOD_NONE;
+    REQUIRE(tvg_paint_get_mask_method(paint, NULL, &method) == TVG_RESULT_INVALID_ARGUMENT);
+    REQUIRE(tvg_paint_get_mask_method(paint, &target3, NULL) == TVG_RESULT_INVALID_ARGUMENT);
+    REQUIRE(tvg_paint_get_mask_method(paint, &target3, &method) == TVG_RESULT_SUCCESS);
+    REQUIRE(method == TVG_MASK_METHOD_ALPHA);
     REQUIRE(target2 == target3);
 
     REQUIRE(tvg_paint_del(paint) == TVG_RESULT_SUCCESS);
@@ -288,20 +288,20 @@ TEST_CASE("Paint InvAlphaMask Composite Method", "[capiPaint]")
     Tvg_Paint* target = tvg_shape_new();
     REQUIRE(target);
 
-    REQUIRE(tvg_paint_set_composite_method(paint, NULL, TVG_COMPOSITE_METHOD_NONE) == TVG_RESULT_SUCCESS);
-    REQUIRE(tvg_paint_set_composite_method(paint, target, TVG_COMPOSITE_METHOD_NONE) == TVG_RESULT_INVALID_ARGUMENT);
-    REQUIRE(tvg_paint_set_composite_method(paint, NULL, TVG_COMPOSITE_METHOD_INVERSE_ALPHA_MASK) == TVG_RESULT_INVALID_ARGUMENT);
+    REQUIRE(tvg_paint_set_mask_method(paint, NULL, TVG_MASK_METHOD_NONE) == TVG_RESULT_SUCCESS);
+    REQUIRE(tvg_paint_set_mask_method(paint, target, TVG_MASK_METHOD_NONE) == TVG_RESULT_INVALID_ARGUMENT);
+    REQUIRE(tvg_paint_set_mask_method(paint, NULL, TVG_MASK_METHOD_INVERSE_ALPHA) == TVG_RESULT_INVALID_ARGUMENT);
 
     Tvg_Paint* target2 = tvg_shape_new();
     REQUIRE(target2);
-    REQUIRE(tvg_paint_set_composite_method(paint, target2, TVG_COMPOSITE_METHOD_INVERSE_ALPHA_MASK) == TVG_RESULT_SUCCESS);
+    REQUIRE(tvg_paint_set_mask_method(paint, target2, TVG_MASK_METHOD_INVERSE_ALPHA) == TVG_RESULT_SUCCESS);
 
     const Tvg_Paint* target3 = nullptr;
-    Tvg_Composite_Method method = TVG_COMPOSITE_METHOD_NONE;
-    REQUIRE(tvg_paint_get_composite_method(paint, NULL, &method) == TVG_RESULT_INVALID_ARGUMENT);
-    REQUIRE(tvg_paint_get_composite_method(paint, &target3, NULL) == TVG_RESULT_INVALID_ARGUMENT);
-    REQUIRE(tvg_paint_get_composite_method(paint, &target3, &method) == TVG_RESULT_SUCCESS);
-    REQUIRE(method == TVG_COMPOSITE_METHOD_INVERSE_ALPHA_MASK);
+    Tvg_Mask_Method method = TVG_MASK_METHOD_NONE;
+    REQUIRE(tvg_paint_get_mask_method(paint, NULL, &method) == TVG_RESULT_INVALID_ARGUMENT);
+    REQUIRE(tvg_paint_get_mask_method(paint, &target3, NULL) == TVG_RESULT_INVALID_ARGUMENT);
+    REQUIRE(tvg_paint_get_mask_method(paint, &target3, &method) == TVG_RESULT_SUCCESS);
+    REQUIRE(method == TVG_MASK_METHOD_INVERSE_ALPHA);
     REQUIRE(target2 == target3);
 
     REQUIRE(tvg_paint_del(paint) == TVG_RESULT_SUCCESS);
@@ -315,25 +315,25 @@ TEST_CASE("Paint LumaMask Composite Method", "[capiPaint]")
     Tvg_Paint* target = tvg_shape_new();
     REQUIRE(target);
 
-    REQUIRE(tvg_paint_set_composite_method(paint, NULL, TVG_COMPOSITE_METHOD_NONE) == TVG_RESULT_SUCCESS);
-    REQUIRE(tvg_paint_set_composite_method(paint, target, TVG_COMPOSITE_METHOD_NONE) == TVG_RESULT_INVALID_ARGUMENT);
-    REQUIRE(tvg_paint_set_composite_method(paint, NULL, TVG_COMPOSITE_METHOD_LUMA_MASK) == TVG_RESULT_INVALID_ARGUMENT);
-    REQUIRE(tvg_paint_set_composite_method(paint, NULL, TVG_COMPOSITE_METHOD_INVERSE_LUMA_MASK) == TVG_RESULT_INVALID_ARGUMENT);
+    REQUIRE(tvg_paint_set_mask_method(paint, NULL, TVG_MASK_METHOD_NONE) == TVG_RESULT_SUCCESS);
+    REQUIRE(tvg_paint_set_mask_method(paint, target, TVG_MASK_METHOD_NONE) == TVG_RESULT_INVALID_ARGUMENT);
+    REQUIRE(tvg_paint_set_mask_method(paint, NULL, TVG_MASK_METHOD_LUMA) == TVG_RESULT_INVALID_ARGUMENT);
+    REQUIRE(tvg_paint_set_mask_method(paint, NULL, TVG_MASK_METHOD_INVERSE_LUMA) == TVG_RESULT_INVALID_ARGUMENT);
 
     Tvg_Paint* target2 = tvg_shape_new();
     REQUIRE(target2);
-    REQUIRE(tvg_paint_set_composite_method(paint, target2, TVG_COMPOSITE_METHOD_LUMA_MASK) == TVG_RESULT_SUCCESS);
+    REQUIRE(tvg_paint_set_mask_method(paint, target2, TVG_MASK_METHOD_LUMA) == TVG_RESULT_SUCCESS);
 
     Tvg_Paint* target3 = tvg_shape_new();
     REQUIRE(target3);
-    REQUIRE(tvg_paint_set_composite_method(paint, target3, TVG_COMPOSITE_METHOD_INVERSE_LUMA_MASK) == TVG_RESULT_SUCCESS);
+    REQUIRE(tvg_paint_set_mask_method(paint, target3, TVG_MASK_METHOD_INVERSE_LUMA) == TVG_RESULT_SUCCESS);
 
     const Tvg_Paint* target4 = nullptr;
-    Tvg_Composite_Method method = TVG_COMPOSITE_METHOD_NONE;
-    REQUIRE(tvg_paint_get_composite_method(paint, NULL, &method) == TVG_RESULT_INVALID_ARGUMENT);
-    REQUIRE(tvg_paint_get_composite_method(paint, &target4, NULL) == TVG_RESULT_INVALID_ARGUMENT);
-    REQUIRE(tvg_paint_get_composite_method(paint, &target4, &method) == TVG_RESULT_SUCCESS);
-    REQUIRE(method == TVG_COMPOSITE_METHOD_INVERSE_LUMA_MASK);
+    Tvg_Mask_Method method = TVG_MASK_METHOD_NONE;
+    REQUIRE(tvg_paint_get_mask_method(paint, NULL, &method) == TVG_RESULT_INVALID_ARGUMENT);
+    REQUIRE(tvg_paint_get_mask_method(paint, &target4, NULL) == TVG_RESULT_INVALID_ARGUMENT);
+    REQUIRE(tvg_paint_get_mask_method(paint, &target4, &method) == TVG_RESULT_SUCCESS);
+    REQUIRE(method == TVG_MASK_METHOD_INVERSE_LUMA);
     REQUIRE(target3 == target4);
 
     REQUIRE(tvg_paint_del(paint) == TVG_RESULT_SUCCESS);

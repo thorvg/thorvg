@@ -38,17 +38,17 @@ namespace tvg
         virtual void begin() = 0;
     };
 
-    struct Composite
+    struct Mask
     {
         Paint* target;
         Paint* source;
-        CompositeMethod method;
+        MaskMethod method;
     };
 
     struct Paint::Impl
     {
         Paint* paint = nullptr;
-        Composite* compData = nullptr;
+        Mask* maskData = nullptr;
         Paint* clipper = nullptr;
         RenderMethod* renderer = nullptr;
         struct {
@@ -85,9 +85,9 @@ namespace tvg
 
         ~Impl()
         {
-            if (compData) {
-                if (P(compData->target)->unref() == 0) delete(compData->target);
-                free(compData);
+            if (maskData) {
+                if (P(maskData->target)->unref() == 0) delete(maskData->target);
+                free(maskData);
             }
             if (clipper && P(clipper)->unref() == 0) delete(clipper);
             if (renderer && (renderer->unref() == 0)) delete(renderer);
@@ -136,30 +136,30 @@ namespace tvg
             P(clipper)->ref();
         }
 
-        bool composite(Paint* source, Paint* target, CompositeMethod method)
+        bool mask(Paint* source, Paint* target, MaskMethod method)
         {
             //Invalid case
-            if ((!target && method != CompositeMethod::None) || (target && method == CompositeMethod::None)) return false;
+            if ((!target && method != MaskMethod::None) || (target && method == MaskMethod::None)) return false;
 
-            if (compData) {
-                P(compData->target)->unref();
-                if ((compData->target != target) && P(compData->target)->refCnt == 0) {
-                    delete(compData->target);
+            if (maskData) {
+                P(maskData->target)->unref();
+                if ((maskData->target != target) && P(maskData->target)->refCnt == 0) {
+                    delete(maskData->target);
                 }
                 //Reset scenario
-                if (!target && method == CompositeMethod::None) {
-                    free(compData);
-                    compData = nullptr;
+                if (!target && method == MaskMethod::None) {
+                    free(maskData);
+                    maskData = nullptr;
                     return true;
                 }
             } else {
-                if (!target && method == CompositeMethod::None) return true;
-                compData = static_cast<Composite*>(calloc(1, sizeof(Composite)));
+                if (!target && method == MaskMethod::None) return true;
+                maskData = static_cast<Mask*>(malloc(sizeof(Mask)));
             }
             P(target)->ref();
-            compData->target = target;
-            compData->source = source;
-            compData->method = method;
+            maskData->target = target;
+            maskData->source = source;
+            maskData->method = method;
             return true;
         }
 

@@ -44,7 +44,7 @@ struct UserExample : tvgexam::Example
         auto picture = tvg::Picture::gen();
         picture->load(EXAMPLE_DIR"/svg/tiger.svg");
         picture->size(w, h);
-        picture->composite(std::move(mask), tvg::CompositeMethod::AlphaMask);
+        picture->mask(std::move(mask), tvg::MaskMethod::Alpha);
         pPicture = picture.get();
         canvas->push(std::move(picture));
 

@@ -248,7 +248,7 @@ struct SwSurface : RenderSurface
     SwCompositor* compositor = nullptr;   //compositor (optional)
     BlendMethod blendMethod = BlendMethod::Normal;
 
-    SwAlpha alpha(CompositeMethod method)
+    SwAlpha alpha(MaskMethod method)
     {
         auto idx = (int)(method) - 1;       //-1 for None
         return alphas[idx > 3 ? 0 : idx];   //CompositeMethod has only four Matting methods.
