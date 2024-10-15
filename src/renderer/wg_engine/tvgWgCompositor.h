@@ -56,46 +56,53 @@ private:
     WgRenderStorage storageDstCopy;
     // composition and blend geometries
     WgMeshData meshData;
-
-    static WgPipelineBlendType blendMethodToBlendType(BlendMethod blendMethod);
-
-    void clipRegion(WgContext& context, WgRenderStorage* src, WgRenderStorage* mask, RenderRegion& rect);
-    RenderRegion shrinkRenderRegion(RenderRegion& rect);
-public:
     // render target dimensions
     uint32_t width{};
     uint32_t height{};
+    
+    // viewport utilities
+    RenderRegion shrinkRenderRegion(RenderRegion& rect);
 public:
     void initialize(WgContext& context, uint32_t width, uint32_t height);
     void release(WgContext& context);
 
+    // render passes workflow
     void beginRenderPass(WGPUCommandEncoder encoder, WgRenderStorage* target, bool clear);
     void endRenderPass();
 
-    void renderClipPath(WgContext& context, WgRenderDataPaint* renderData, WgRenderStorage* dst);
-
+    // render shapes, images and scenes
     void renderShape(WgContext& context, WgRenderDataShape* renderData, BlendMethod blendMethod);
     void renderImage(WgContext& context, WgRenderDataPicture* renderData, BlendMethod blendMethod);
+    void renderScene(WgContext& context, WgRenderStorage* scene, WgCompose* compose);
+    void composeScene(WgContext& context, WgRenderStorage* src, WgRenderStorage* mask, WgCompose* compose);
 
-    void blendShape(WgContext& context, WgRenderDataShape* renderData, BlendMethod blendMethod);
-    void blendStrokes(WgContext& context, WgRenderDataShape* renderData, BlendMethod blendMethod);
-    void blendImage(WgContext& context, WgRenderDataPicture* renderData, BlendMethod blendMethod);
-    void blendScene(WgContext& context, WgRenderStorage* src, WgCompose* cmp);
-
-    void drawShapeClipped(WgContext& context, WgRenderDataShape* renderData, WgRenderStorage* mask);
-    void drawStrokesClipped(WgContext& context, WgRenderDataShape* renderData, WgRenderStorage* mask);
-    void drawImageClipped(WgContext& context, WgRenderDataPicture* renderData, WgRenderStorage* mask);
-    
-    void composeScene(WgContext& context, WgRenderStorage* src, WgRenderStorage* mask, WgCompose* cmp);
-
-    void drawClipPath(WgContext& context, WgRenderDataShape* renderData);
-    void drawShape(WgContext& context, WgRenderDataShape* renderData, WgPipelineBlendType blendType);
-    void drawStrokes(WgContext& context, WgRenderDataShape* renderData, WgPipelineBlendType blendType);
-    void drawImage(WgContext& context, WgRenderDataPicture* renderData, WgPipelineBlendType blendType);
-
-    void mergeMasks(WGPUCommandEncoder encoder, WgRenderStorage* mask0, WgRenderStorage* mask1);
-    void blend(WGPUCommandEncoder encoder, WgRenderStorage* src, WgRenderStorage* dst, uint8_t opacity, BlendMethod blendMethod, WgRenderRasterType rasterType);
+    // blit render storage to texture view (f.e. screen buffer)
     void blit(WgContext& context, WGPUCommandEncoder encoder, WgRenderStorage* src, WGPUTextureView dstView);
+private:
+    // shapes
+    void drawShape(WgContext& context, WgRenderDataShape* renderData);
+    void blendShape(WgContext& context, WgRenderDataShape* renderData, BlendMethod blendMethod);
+    void clipShape(WgContext& context, WgRenderDataShape* renderData, WgRenderStorage* mask); // TODO: optimize
+
+    // strokes
+    void drawStrokes(WgContext& context, WgRenderDataShape* renderData);
+    void blendStrokes(WgContext& context, WgRenderDataShape* renderData, BlendMethod blendMethod);
+    void clipStrokes(WgContext& context, WgRenderDataShape* renderData, WgRenderStorage* mask); // TODO: optimize
+
+    // images
+    void drawImage(WgContext& context, WgRenderDataPicture* renderData);
+    void blendImage(WgContext& context, WgRenderDataPicture* renderData, BlendMethod blendMethod);
+    void clipImage(WgContext& context, WgRenderDataPicture* renderData, WgRenderStorage* mask); // TODO: optimize
+
+    // scenes
+    void drawScene(WgContext& context, WgRenderStorage* scene, WgCompose* compose);
+    void blendScene(WgContext& context, WgRenderStorage* src, WgCompose* compose);
+private:
+    // clip path utils (TODO: optimize)
+    void drawClipPath(WgContext& context, WgRenderDataShape* renderData);
+    void clipRegion(WgContext& context, WgRenderStorage* src, WgRenderStorage* mask, RenderRegion& rect);
+    void renderClipPath(WgContext& context, WgRenderDataPaint* renderData, WgRenderStorage* dst);
+    void mergeMasks(WGPUCommandEncoder encoder, WgRenderStorage* mask0, WgRenderStorage* mask1);
 };
 
 #endif // _TVG_WG_COMPOSITOR_H_
