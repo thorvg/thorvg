@@ -22,10 +22,8 @@
 
 #include "tvgMath.h" /* to include math.h before cstring */
 #include <cstring>
-#include <string>
 #include "tvgShape.h"
 #include "tvgCompressor.h"
-#include "tvgPaint.h"
 #include "tvgFill.h"
 #include "tvgStr.h"
 #include "tvgSvgLoaderCommon.h"
@@ -89,7 +87,6 @@ static void _transformMultiply(const Matrix* mBBox, Matrix* gradTransf)
 static unique_ptr<LinearGradient> _applyLinearGradientProperty(SvgStyleGradient* g, const Box& vBox, int opacity)
 {
     Fill::ColorStop* stops;
-    int stopCount = 0;
     auto fillGrad = LinearGradient::gen();
     auto isTransform = (g->transform ? true : false);
     auto& finalTransform = fillGrad->transform();
@@ -110,27 +107,25 @@ static unique_ptr<LinearGradient> _applyLinearGradientProperty(SvgStyleGradient*
     fillGrad->spread(g->spread);
 
     //Update the stops
-    stopCount = g->stops.count;
-    if (stopCount > 0) {
-        stops = (Fill::ColorStop*)calloc(stopCount, sizeof(Fill::ColorStop));
-        if (!stops) return fillGrad;
-        auto prevOffset = 0.0f;
-        for (uint32_t i = 0; i < g->stops.count; ++i) {
-            auto colorStop = &g->stops[i];
-            //Use premultiplied color
-            stops[i].r = colorStop->r;
-            stops[i].g = colorStop->g;
-            stops[i].b = colorStop->b;
-            stops[i].a = static_cast<uint8_t>((colorStop->a * opacity) / 255);
-            stops[i].offset = colorStop->offset;
-            //check the offset corner cases - refer to: https://svgwg.org/svg2-draft/pservers.html#StopNotes
-            if (colorStop->offset < prevOffset) stops[i].offset = prevOffset;
-            else if (colorStop->offset > 1) stops[i].offset = 1;
-            prevOffset = stops[i].offset;
-        }
-        fillGrad->colorStops(stops, stopCount);
-        free(stops);
+    if (g->stops.count == 0) return fillGrad;
+
+    stops = (Fill::ColorStop*)malloc(g->stops.count * sizeof(Fill::ColorStop));
+    auto prevOffset = 0.0f;
+    for (uint32_t i = 0; i < g->stops.count; ++i) {
+        auto colorStop = &g->stops[i];
+        //Use premultiplied color
+        stops[i].r = colorStop->r;
+        stops[i].g = colorStop->g;
+        stops[i].b = colorStop->b;
+        stops[i].a = static_cast<uint8_t>((colorStop->a * opacity) / 255);
+        stops[i].offset = colorStop->offset;
+        //check the offset corner cases - refer to: https://svgwg.org/svg2-draft/pservers.html#StopNotes
+        if (colorStop->offset < prevOffset) stops[i].offset = prevOffset;
+        else if (colorStop->offset > 1) stops[i].offset = 1;
+        prevOffset = stops[i].offset;
     }
+    fillGrad->colorStops(stops, g->stops.count);
+    free(stops);
     return fillGrad;
 }
 
@@ -138,7 +133,6 @@ static unique_ptr<LinearGradient> _applyLinearGradientProperty(SvgStyleGradient*
 static unique_ptr<RadialGradient> _applyRadialGradientProperty(SvgStyleGradient* g, const Box& vBox, int opacity)
 {
     Fill::ColorStop *stops;
-    int stopCount = 0;
     auto fillGrad = RadialGradient::gen();
     auto isTransform = (g->transform ? true : false);
     auto& finalTransform = fillGrad->transform();
@@ -163,27 +157,25 @@ static unique_ptr<RadialGradient> _applyRadialGradientProperty(SvgStyleGradient*
     fillGrad->spread(g->spread);
 
     //Update the stops
-    stopCount = g->stops.count;
-    if (stopCount > 0) {
-        stops = (Fill::ColorStop*)calloc(stopCount, sizeof(Fill::ColorStop));
-        if (!stops) return fillGrad;
-        auto prevOffset = 0.0f;
-        for (uint32_t i = 0; i < g->stops.count; ++i) {
-            auto colorStop = &g->stops[i];
-            //Use premultiplied color
-            stops[i].r = colorStop->r;
-            stops[i].g = colorStop->g;
-            stops[i].b = colorStop->b;
-            stops[i].a = static_cast<uint8_t>((colorStop->a * opacity) / 255);
-            stops[i].offset = colorStop->offset;
-            //check the offset corner cases - refer to: https://svgwg.org/svg2-draft/pservers.html#StopNotes
-            if (colorStop->offset < prevOffset) stops[i].offset = prevOffset;
-            else if (colorStop->offset > 1) stops[i].offset = 1;
-            prevOffset = stops[i].offset;
-        }
-        fillGrad->colorStops(stops, stopCount);
-        free(stops);
+    if (g->stops.count == 0) return fillGrad;
+
+    stops = (Fill::ColorStop*)malloc(g->stops.count * sizeof(Fill::ColorStop));
+    auto prevOffset = 0.0f;
+    for (uint32_t i = 0; i < g->stops.count; ++i) {
+        auto colorStop = &g->stops[i];
+        //Use premultiplied color
+        stops[i].r = colorStop->r;
+        stops[i].g = colorStop->g;
+        stops[i].b = colorStop->b;
+        stops[i].a = static_cast<uint8_t>((colorStop->a * opacity) / 255);
+        stops[i].offset = colorStop->offset;
+        //check the offset corner cases - refer to: https://svgwg.org/svg2-draft/pservers.html#StopNotes
+        if (colorStop->offset < prevOffset) stops[i].offset = prevOffset;
+        else if (colorStop->offset > 1) stops[i].offset = 1;
+        prevOffset = stops[i].offset;
     }
+    fillGrad->colorStops(stops, g->stops.count);
+    free(stops);
     return fillGrad;
 }
 
@@ -197,8 +189,7 @@ static bool _appendClipUseNode(SvgLoaderData& loaderData, SvgNode* node, Shape* 
     Matrix finalTransform = {1, 0, 0, 0, 1, 0, 0, 0, 1};
     if (node->transform) finalTransform = *node->transform;
     if (node->node.use.x != 0.0f || node->node.use.y != 0.0f) {
-        Matrix m = {1, 0, node->node.use.x, 0, 1, node->node.use.y, 0, 0, 1};
-        finalTransform *= m;
+        finalTransform *= {1, 0, node->node.use.x, 0, 1, node->node.use.y, 0, 0, 1};
     }
     if (child->transform) finalTransform = *child->transform * finalTransform;
 
@@ -208,9 +199,7 @@ static bool _appendClipUseNode(SvgLoaderData& loaderData, SvgNode* node, Shape* 
 
 static bool _appendClipChild(SvgLoaderData& loaderData, SvgNode* node, Shape* shape, const Box& vBox, const string& svgPath, bool clip)
 {
-    if (node->type == SvgNodeType::Use) {
-        return _appendClipUseNode(loaderData, node, shape, vBox, svgPath);
-    }
+    if (node->type == SvgNodeType::Use) return _appendClipUseNode(loaderData, node, shape, vBox, svgPath);
     return _appendClipShape(loaderData, node, shape, vBox, svgPath, nullptr);
 }
 
@@ -228,8 +217,7 @@ static Matrix _compositionTransform(Paint* paint, const SvgNode* node, const Svg
     if (!compNode->node.clip.userSpace) {
         float x, y, w, h;
         P(paint)->bounds(&x, &y, &w, &h, false, false);
-        Matrix mBBox = {w, 0, x, 0, h, y, 0, 0, 1};
-        m *= mBBox;
+        m *= {w, 0, x, 0, h, y, 0, 0, 1};
     }
     return m;
 }
@@ -248,7 +236,6 @@ static void _applyComposition(SvgLoaderData& loaderData, Paint* paint, const Svg
             node->style->clipPath.applying = true;
 
             auto comp = Shape::gen();
-
             auto child = compNode->child.data;
             auto valid = false; //Composite only when valid shapes exist
 
@@ -280,15 +267,11 @@ static void _applyComposition(SvgLoaderData& loaderData, Paint* paint, const Svg
                 if (!compNode->node.mask.userSpace) {
                     Matrix finalTransform = _compositionTransform(paint, node, compNode, SvgNodeType::Mask);
                     comp->transform(finalTransform);
-                } else {
-                    if (node->transform) comp->transform(*node->transform);
+                } else if (node->transform) {
+                    comp->transform(*node->transform);
                 }
-
-                if (compNode->node.mask.type == SvgMaskType::Luminance) {
-                    paint->mask(std::move(comp), MaskMethod::Luma);
-                } else {
-                    paint->mask(std::move(comp), MaskMethod::Alpha);
-                }
+                if (compNode->node.mask.type == SvgMaskType::Luminance) paint->mask(std::move(comp), MaskMethod::Luma);
+                else paint->mask(std::move(comp), MaskMethod::Alpha);
             }
 
             node->style->mask.applying = false;
@@ -330,13 +313,9 @@ static void _applyProperty(SvgLoaderData& loaderData, SvgNode* node, Shape* vg, 
         vg->fill(style->fill.paint.color.r, style->fill.paint.color.g, style->fill.paint.color.b, style->fill.opacity);
     }
 
-    //Apply the fill rule
     vg->fill((tvg::FillRule)style->fill.fillRule);
-    //Rendering order
     vg->order(!style->paintOrder);
-
-    //Apply node opacity
-    if (style->opacity < 255) vg->opacity(style->opacity);
+    vg->opacity(style->opacity);
 
     if (node->type == SvgNodeType::G || node->type == SvgNodeType::Use) return;
 
@@ -445,21 +424,16 @@ static unique_ptr<Shape> _shapeBuildHelper(SvgLoaderData& loaderData, SvgNode* n
 
 static bool _appendClipShape(SvgLoaderData& loaderData, SvgNode* node, Shape* shape, const Box& vBox, const string& svgPath, const Matrix* transform)
 {
+    if (!_recognizeShape(node, shape)) return false;
+
     //The 'transform' matrix has higher priority than the node->transform, since it already contains it
     auto m = transform ? transform : (node->transform ? node->transform : nullptr);
 
     uint32_t currentPtsCnt = 0;
     if (m) {
-        const Point *tmp = nullptr;
-        currentPtsCnt = shape->pathCoords(&tmp);
-    }
-
-    if (!_recognizeShape(node, shape)) return false;
-
-    if (m) {
+        currentPtsCnt = shape->pathCoords(nullptr);
         const Point *pts = nullptr;
         auto ptsCnt = shape->pathCoords(&pts);
-
         auto p = const_cast<Point*>(pts) + currentPtsCnt;
         while (currentPtsCnt++ < ptsCnt) {
             *p *= *m;
@@ -478,9 +452,11 @@ enum class imageMimeTypeEncoding
     utf8 = 0x2
 };
 
+
 constexpr imageMimeTypeEncoding operator|(imageMimeTypeEncoding a, imageMimeTypeEncoding b) {
     return static_cast<imageMimeTypeEncoding>(static_cast<int>(a) | static_cast<int>(b));
 }
+
 
 constexpr bool operator&(imageMimeTypeEncoding a, imageMimeTypeEncoding b) {
     return (static_cast<int>(a) & static_cast<int>(b));
@@ -508,38 +484,37 @@ static bool _isValidImageMimeTypeAndEncoding(const char** href, const char** mim
     //mediatype  := [ type "/" subtype ] *( ";" parameter )
     //parameter  := attribute "=" value
     for (unsigned int i = 0; i < sizeof(imageMimeTypes) / sizeof(imageMimeTypes[0]); i++) {
-        if (!strncmp(*href, imageMimeTypes[i].name, imageMimeTypes[i].sz - 1)) {
-            *href += imageMimeTypes[i].sz  - 1;
-            *mimetype = imageMimeTypes[i].name;
+        if (strncmp(*href, imageMimeTypes[i].name, imageMimeTypes[i].sz - 1)) continue;
+        *href += imageMimeTypes[i].sz  - 1;
+        *mimetype = imageMimeTypes[i].name;
 
-            while (**href && **href != ',') {
-                while (**href && **href != ';') ++(*href);
-                if (!**href) return false;
-                ++(*href);
+        while (**href && **href != ',') {
+            while (**href && **href != ';') ++(*href);
+            if (!**href) return false;
+            ++(*href);
 
-                if (imageMimeTypes[i].encoding & imageMimeTypeEncoding::base64) {
-                    if (!strncmp(*href, "base64,", sizeof("base64,") - 1)) {
-                        *href += sizeof("base64,") - 1;
-                        *encoding = imageMimeTypeEncoding::base64;
-                        return true; //valid base64
-                    }
-                }
-                if (imageMimeTypes[i].encoding & imageMimeTypeEncoding::utf8) {
-                    if (!strncmp(*href, "utf8,", sizeof("utf8,") - 1)) {
-                        *href += sizeof("utf8,") - 1;
-                        *encoding = imageMimeTypeEncoding::utf8;
-                        return true; //valid utf8
-                    }
+            if (imageMimeTypes[i].encoding & imageMimeTypeEncoding::base64) {
+                if (!strncmp(*href, "base64,", sizeof("base64,") - 1)) {
+                    *href += sizeof("base64,") - 1;
+                    *encoding = imageMimeTypeEncoding::base64;
+                    return true; //valid base64
                 }
             }
-            //no encoding defined
-            if (**href == ',' && (imageMimeTypes[i].encoding & imageMimeTypeEncoding::utf8)) {
-                ++(*href);
-                *encoding = imageMimeTypeEncoding::utf8;
-                return true; //allow no encoding defined if utf8 expected
+            if (imageMimeTypes[i].encoding & imageMimeTypeEncoding::utf8) {
+                if (!strncmp(*href, "utf8,", sizeof("utf8,") - 1)) {
+                    *href += sizeof("utf8,") - 1;
+                    *encoding = imageMimeTypeEncoding::utf8;
+                    return true; //valid utf8
+                }
             }
-            return false;
         }
+        //no encoding defined
+        if (**href == ',' && (imageMimeTypes[i].encoding & imageMimeTypeEncoding::utf8)) {
+            ++(*href);
+            *encoding = imageMimeTypeEncoding::utf8;
+            return true; //allow no encoding defined if utf8 expected
+        }
+        return false;
     }
     return false;
 }
@@ -600,11 +575,13 @@ static unique_ptr<Picture> _imageBuildHelper(SvgLoaderData& loaderData, SvgNode*
     TaskScheduler::async(true);
 
     float w, h;
-    Matrix m = {1, 0, 0, 0, 1, 0, 0, 0, 1};
-    if (picture->size(&w, &h) == Result::Success && w  > 0 && h > 0) {
+    Matrix m;
+    if (picture->size(&w, &h) == Result::Success && w > 0 && h > 0) {
         auto sx = node->node.image.w / w;
         auto sy = node->node.image.h / h;
         m = {sx, 0, node->node.image.x, 0, sy, node->node.image.y, 0, 0, 1};
+    } else {
+        m = {1, 0, 0, 0, 1, 0, 0, 0, 1};
     }
     if (node->transform) m = *node->transform * m;
     picture->transform(m);
@@ -622,8 +599,7 @@ static Matrix _calculateAspectRatioMatrix(AspectRatioAlign align, AspectRatioMee
     auto tvx = box.x * sx;
     auto tvy = box.y * sy;
 
-    if (align == AspectRatioAlign::None)
-        return {sx, 0, -tvx, 0, sy, -tvy, 0, 0, 1};
+    if (align == AspectRatioAlign::None) return {sx, 0, -tvx, 0, sy, -tvy, 0, 0, 1};
 
     //Scale
     if (meetOrSlice == AspectRatioMeetOrSlice::Meet) {
@@ -703,7 +679,6 @@ static unique_ptr<Scene> _useBuildHelper(SvgLoaderData& loaderData, const SvgNod
 
     if (node->node.use.symbol) {
         auto symbol = node->node.use.symbol->node.symbol;
-
         auto width = (symbol.hasWidth ? symbol.w : vBox.w);
         if (node->node.use.isWidthSet) width = node->node.use.w;
         auto height = (symbol.hasHeight ? symbol.h : vBox.h);;
@@ -785,8 +760,10 @@ static unique_ptr<Text> _textBuildHelper(SvgLoaderData& loaderData, const SvgNod
     if (!textNode->text) return nullptr;
     auto text = Text::gen();
 
-    Matrix textTransform = {1, 0, 0, 0, 1, 0, 0, 0, 1};
+    Matrix textTransform;
     if (node->transform) textTransform = *node->transform;
+    else textTransform = {1, 0, 0, 0, 1, 0, 0, 0, 1};
+
     translateR(&textTransform, node->node.text.x, node->node.text.y - textNode->fontSize);
     text->transform(textTransform);
 
@@ -812,43 +789,42 @@ static unique_ptr<Scene> _sceneBuildHelper(SvgLoaderData& loaderData, const SvgN
         return nullptr;
     }
 
-    if (_isGroupType(node->type) || mask) {
-        auto scene = Scene::gen();
-        // For a Symbol node, the viewBox transformation has to be applied first - see _useBuildHelper()
-        if (!mask && node->transform && node->type != SvgNodeType::Symbol) scene->transform(*node->transform);
+    if (!_isGroupType(node->type) && !mask) return nullptr;
 
-        if (node->style->display && node->style->opacity != 0) {
-            auto child = node->child.data;
-            for (uint32_t i = 0; i < node->child.count; ++i, ++child) {
-                if (_isGroupType((*child)->type)) {
-                    if ((*child)->type == SvgNodeType::Use)
-                        scene->push(_useBuildHelper(loaderData, *child, vBox, svgPath, depth + 1));
-                    else if (!((*child)->type == SvgNodeType::Symbol && node->type != SvgNodeType::Use))
-                        scene->push(_sceneBuildHelper(loaderData, *child, vBox, svgPath, false, depth + 1));
-                    if ((*child)->id) scene->id = djb2Encode((*child)->id);
-                } else if ((*child)->type == SvgNodeType::Image) {
-                    if (auto image = _imageBuildHelper(loaderData, *child, vBox, svgPath)) {
-                        if ((*child)->id) image->id = djb2Encode((*child)->id);
-                        scene->push(std::move(image));
-                    }
-                } else if ((*child)->type == SvgNodeType::Text) {
-                    if (auto text = _textBuildHelper(loaderData, *child, vBox, svgPath)) {
-                        if ((*child)->id) text->id = djb2Encode((*child)->id);
-                        scene->push(std::move(text));
-                    }
-                } else if ((*child)->type != SvgNodeType::Mask) {
-                    if (auto shape = _shapeBuildHelper(loaderData, *child, vBox, svgPath)) {
-                        if ((*child)->id) shape->id = djb2Encode((*child)->id);
-                        scene->push(std::move(shape));
-                    }
-                }
+    auto scene = Scene::gen();
+    // For a Symbol node, the viewBox transformation has to be applied first - see _useBuildHelper()
+    if (!mask && node->transform && node->type != SvgNodeType::Symbol) scene->transform(*node->transform);
+
+    if (!node->style->display || node->style->opacity == 0) return scene;
+
+    auto child = node->child.data;
+    for (uint32_t i = 0; i < node->child.count; ++i, ++child) {
+        if (_isGroupType((*child)->type)) {
+            if ((*child)->type == SvgNodeType::Use)
+                scene->push(_useBuildHelper(loaderData, *child, vBox, svgPath, depth + 1));
+            else if (!((*child)->type == SvgNodeType::Symbol && node->type != SvgNodeType::Use))
+                scene->push(_sceneBuildHelper(loaderData, *child, vBox, svgPath, false, depth + 1));
+            if ((*child)->id) scene->id = djb2Encode((*child)->id);
+        } else if ((*child)->type == SvgNodeType::Image) {
+            if (auto image = _imageBuildHelper(loaderData, *child, vBox, svgPath)) {
+                if ((*child)->id) image->id = djb2Encode((*child)->id);
+                scene->push(std::move(image));
             }
-            _applyComposition(loaderData, scene.get(), node, vBox, svgPath);
-            scene->opacity(node->style->opacity);
+        } else if ((*child)->type == SvgNodeType::Text) {
+            if (auto text = _textBuildHelper(loaderData, *child, vBox, svgPath)) {
+                if ((*child)->id) text->id = djb2Encode((*child)->id);
+                scene->push(std::move(text));
+            }
+        } else if ((*child)->type != SvgNodeType::Mask) {
+            if (auto shape = _shapeBuildHelper(loaderData, *child, vBox, svgPath)) {
+                if ((*child)->id) shape->id = djb2Encode((*child)->id);
+                scene->push(std::move(shape));
+            }
         }
-        return scene;
     }
-    return nullptr;
+    _applyComposition(loaderData, scene.get(), node, vBox, svgPath);
+    scene->opacity(node->style->opacity);
+    return scene;
 }
 
 
