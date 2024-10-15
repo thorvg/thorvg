@@ -49,7 +49,7 @@ struct UserExample : tvgexam::Example
         fill->colorStops(colorStops,2);
         shape->fill(std::move(fill));
 
-        shape->composite(std::move(mask), tvg::CompositeMethod::AlphaMask);
+        shape->mask(std::move(mask), tvg::MaskMethod::Alpha);
         canvas->push(std::move(shape));
 
     //-------------------------------------------
@@ -81,7 +81,7 @@ struct UserExample : tvgexam::Example
         fill1->colorStops(colorStops1,2);
         shape1->fill(std::move(fill1));
 
-        shape1->composite(std::move(mask1), tvg::CompositeMethod::AlphaMask);
+        shape1->mask(std::move(mask1), tvg::MaskMethod::Alpha);
         canvas->push(std::move(shape1));
 
     //-------------------------------------------
@@ -103,7 +103,7 @@ struct UserExample : tvgexam::Example
         fill2->colorStops(colorStops2,2);
         shape2->fill(std::move(fill2));
 
-        shape2->composite(std::move(mask2), tvg::CompositeMethod::InvAlphaMask);
+        shape2->mask(std::move(mask2), tvg::MaskMethod::InvAlpha);
         canvas->push(std::move(shape2));
 
     //-------------------------------------------
@@ -135,7 +135,7 @@ struct UserExample : tvgexam::Example
         fill3->colorStops(colorStops3,2);
         shape3->fill(std::move(fill3));
 
-        shape3->composite(std::move(mask3), tvg::CompositeMethod::InvAlphaMask);
+        shape3->mask(std::move(mask3), tvg::MaskMethod::InvAlpha);
         canvas->push(std::move(shape3));
 
         return true;

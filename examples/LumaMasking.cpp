@@ -47,8 +47,8 @@ struct UserExample : tvgexam::Example
         nMask->appendCircle(220, 220, 125, 125);
         nMask->fill(255, 200, 255);
 
-        mask->composite(std::move(nMask), tvg::CompositeMethod::LumaMask);
-        shape->composite(std::move(mask), tvg::CompositeMethod::LumaMask);
+        mask->mask(std::move(nMask), tvg::MaskMethod::Luma);
+        shape->mask(std::move(mask), tvg::MaskMethod::Luma);
         canvas->push(std::move(shape));
 
         //SVG
@@ -63,7 +63,7 @@ struct UserExample : tvgexam::Example
         mask2->appendCircle(150, 500, 75, 75);
         mask2->appendRect(150, 500, 200, 200, 30, 30);
         mask2->fill(255, 255, 255);
-        svg->composite(std::move(mask2), tvg::CompositeMethod::LumaMask);
+        svg->mask(std::move(mask2), tvg::MaskMethod::Luma);
         canvas->push(std::move(svg));
 
         //Star
@@ -87,7 +87,7 @@ struct UserExample : tvgexam::Example
         auto mask3 = tvg::Shape::gen();
         mask3->appendCircle(600, 200, 125, 125);
         mask3->fill(0, 255, 255);
-        star->composite(std::move(mask3), tvg::CompositeMethod::LumaMask);
+        star->mask(std::move(mask3), tvg::MaskMethod::Luma);
         canvas->push(std::move(star));
 
         //Image
@@ -111,7 +111,7 @@ struct UserExample : tvgexam::Example
         mask4_circle->fill(128, 0, 128);
         mask4->push(std::move(mask4_rect));
         mask4->push(std::move(mask4_circle));
-        image->composite(std::move(mask4), tvg::CompositeMethod::LumaMask);
+        image->mask(std::move(mask4), tvg::MaskMethod::Luma);
         canvas->push(std::move(image));
 
         free(data);

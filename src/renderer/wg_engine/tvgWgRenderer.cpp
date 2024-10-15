@@ -355,7 +355,7 @@ RenderCompositor* WgRenderer::target(TVG_UNUSED const RenderRegion& region, TVG_
 }
 
 
-bool WgRenderer::beginComposite(RenderCompositor* cmp, CompositeMethod method, uint8_t opacity)
+bool WgRenderer::beginComposite(RenderCompositor* cmp, MaskMethod method, uint8_t opacity)
 {
     // save current composition settings
     WgCompose* compose = (WgCompose *)cmp;
@@ -380,7 +380,7 @@ bool WgRenderer::endComposite(RenderCompositor* cmp)
     // end current render pass
     mCompositor.endRenderPass();
     // finish scene blending
-    if (comp->method == CompositeMethod::None) {
+    if (comp->method == MaskMethod::None) {
         // get source and destination render storages
         WgRenderStorage* src = mRenderStorageStack.last();
         mRenderStorageStack.pop();

@@ -1143,10 +1143,10 @@ void LottieBuilder::updateMaskings(LottieLayer* layer, float frameNo)
         pMask->pathset(frameNo, P(pShape)->rs.path.cmds, P(pShape)->rs.path.pts, nullptr, nullptr, &offset, exps);
     }
 
-    auto compMethod = (pMethod == CompositeMethod::SubtractMask || pMethod == CompositeMethod::InvAlphaMask) ? CompositeMethod::InvAlphaMask : CompositeMethod::AlphaMask;
+    auto compMethod = (pMethod == MaskMethod::Subtract || pMethod == MaskMethod::InvAlpha) ? MaskMethod::InvAlpha : MaskMethod::Alpha;
 
     //Cheaper. Replace the masking with a clipper
-    if (layer->masks.count == 1 && compMethod == CompositeMethod::AlphaMask && opacity == 255) {
+    if (layer->masks.count == 1 && compMethod == MaskMethod::Alpha && opacity == 255) {
         layer->scene->clip(tvg::cast(pShape));
         return;
     }
@@ -1158,16 +1158,16 @@ void LottieBuilder::updateMaskings(LottieLayer* layer, float frameNo)
         layer->scene = scene;
     }
 
-    layer->scene->composite(tvg::cast(pShape), compMethod);
+    layer->scene->mask(tvg::cast(pShape), compMethod);
 
     //Apply the subsquent masks
     for (auto m = layer->masks.begin() + 1; m < layer->masks.end(); ++m) {
         auto mask = static_cast<LottieMask*>(*m);
         auto method = mask->method;
-        if (method == CompositeMethod::None) continue;
+        if (method == MaskMethod::None) continue;
 
         //Append the mask shape
-        if (pMethod == method && (method == CompositeMethod::SubtractMask || method == CompositeMethod::DifferenceMask)) {
+        if (pMethod == method && (method == MaskMethod::Subtract || method == MaskMethod::Difference)) {
             mask->pathset(frameNo, P(pShape)->rs.path.cmds, P(pShape)->rs.path.pts, nullptr, nullptr, nullptr, exps);
         //Chain composition
         } else {
@@ -1176,7 +1176,7 @@ void LottieBuilder::updateMaskings(LottieLayer* layer, float frameNo)
             shape->fill(255, 255, 255, mask->opacity(frameNo));
             shape->transform(layer->cache.matrix);
             mask->pathset(frameNo, P(shape)->rs.path.cmds, P(shape)->rs.path.pts, nullptr, nullptr, nullptr, exps);
-            pShape->composite(tvg::cast(shape), method);
+            pShape->mask(tvg::cast(shape), method);
             pShape = shape;
             pMethod = method;
         }
@@ -1192,8 +1192,8 @@ bool LottieBuilder::updateMatte(LottieComposition* comp, float frameNo, Scene* s
     updateLayer(comp, scene, target, frameNo);
 
     if (target->scene) {
-        layer->scene->composite(cast(target->scene), layer->matteType);
-    } else if (layer->matteType == CompositeMethod::AlphaMask || layer->matteType == CompositeMethod::LumaMask) {
+        layer->scene->mask(cast(target->scene), layer->matteType);
+    } else if (layer->matteType == MaskMethod::Alpha || layer->matteType == MaskMethod::Luma) {
         //matte target is not exist. alpha blending definitely bring an invisible result
         delete(layer->scene);
         layer->scene = nullptr;
@@ -1357,7 +1357,7 @@ static bool _buildComposition(LottieComposition* comp, LottieLayer* parent)
         //attach the precomp layer.
         if (child->rid) _buildReference(comp, child);
 
-        if (child->matteType != CompositeMethod::None) {
+        if (child->matteType != MaskMethod::None) {
             //no index of the matte layer is provided: the layer above is used as the matte source
             if (child->mid == -1) {
                 if (c > parent->children.begin()) {

@@ -132,17 +132,17 @@ typedef enum {
 
 
 /**
- * \brief Enumeration indicating the method used in the composition of two objects - the target and the source.
+ * \brief Enumeration indicating the method used in the masking of two objects - the target and the source.
  *
  * \ingroup ThorVGCapi_Paint
  */
 typedef enum {
-    TVG_COMPOSITE_METHOD_NONE = 0,           ///< No composition is applied.
-    TVG_COMPOSITE_METHOD_ALPHA_MASK,         ///< The pixels of the source and the target are alpha blended. As a result, only the part of the source, which intersects with the target is visible.
-    TVG_COMPOSITE_METHOD_INVERSE_ALPHA_MASK, ///< The pixels of the source and the complement to the target's pixels are alpha blended. As a result, only the part of the source which is not covered by the target is visible.
-    TVG_COMPOSITE_METHOD_LUMA_MASK,          ///< The source pixels are converted to grayscale (luma value) and alpha blended with the target. As a result, only the part of the source which intersects with the target is visible. \since 0.9
-    TVG_COMPOSITE_METHOD_INVERSE_LUMA_MASK   ///< The source pixels are converted to grayscale (luma value) and complement to the target's pixels are alpha blended. As a result, only the part of the source which is not covered by the target is visible. \since 0.14
-} Tvg_Composite_Method;
+    TVG_MASK_METHOD_NONE = 0,      ///< No masking is applied.
+    TVG_MASK_METHOD_ALPHA,         ///< The pixels of the source and the target are alpha blended. As a result, only the part of the source, which intersects with the target is visible.
+    TVG_MASK_METHOD_INVERSE_ALPHA, ///< The pixels of the source and the complement to the target's pixels are alpha blended. As a result, only the part of the source which is not covered by the target is visible.
+    TVG_MASK_METHOD_LUMA,          ///< The source pixels are converted to grayscale (luma value) and alpha blended with the target. As a result, only the part of the source which intersects with the target is visible. \since 0.9
+    TVG_MASK_METHOD_INVERSE_LUMA   ///< The source pixels are converted to grayscale (luma value) and complement to the target's pixels are alpha blended. As a result, only the part of the source which is not covered by the target is visible. \since 0.14
+} Tvg_Mask_Method;
 
 /**
  * @brief Enumeration indicates the method used for blending paint. Please refer to the respective formulas for each method.
@@ -938,29 +938,29 @@ TVG_API Tvg_Result tvg_paint_get_bounds(const Tvg_Paint* paint, float* x, float*
 
 
 /*!
-* \brief Sets the composition target object and the composition method.
+* \brief Sets the masking target object and the masking method.
 *
-* \param[in] paint The source object of the composition.
-* \param[in] target The target object of the composition.
-* \param[in] method The method used to composite the source object with the target.
+* \param[in] paint The source object of the masking.
+* \param[in] target The target object of the masking.
+* \param[in] method The method used to mask the source object with the target.
 *
 * \return Tvg_Result enumeration.
-* \retval TVG_RESULT_INVALID_ARGUMENT An invalid @p paint or @p target object or the @p method equal to TVG_COMPOSITE_METHOD_NONE.
+* \retval TVG_RESULT_INVALID_ARGUMENT An invalid @p paint or @p target object or the @p method equal to TVG_MASK_METHOD_NONE.
 */
-TVG_API Tvg_Result tvg_paint_set_composite_method(Tvg_Paint* paint, Tvg_Paint* target, Tvg_Composite_Method method);
+TVG_API Tvg_Result tvg_paint_set_mask_method(Tvg_Paint* paint, Tvg_Paint* target, Tvg_Mask_Method method);
 
 
 /**
-* \brief Gets the composition target object and the composition method.
+* \brief Gets the masking target object and the masking method.
 *
-* \param[in] paint The source object of the composition.
-* \param[out] target The target object of the composition.
-* \param[out] method The method used to composite the source object with the target.
+* \param[in] paint The source object of the masking.
+* \param[out] target The target object of the masking.
+* \param[out] method The method used to mask the source object with the target.
 *
 * \return Tvg_Result enumeration.
 * \retval TVG_RESULT_INVALID_ARGUMENT A @c nullptr is passed as the argument.
 */
-TVG_API Tvg_Result tvg_paint_get_composite_method(const Tvg_Paint* paint, const Tvg_Paint** target, Tvg_Composite_Method* method);
+TVG_API Tvg_Result tvg_paint_get_mask_method(const Tvg_Paint* paint, const Tvg_Paint** target, Tvg_Mask_Method* method);
 
 
 /*!

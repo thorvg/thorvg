@@ -207,10 +207,10 @@ TEST_CASE("Composition", "[tvgPaint]")
     REQUIRE(shape);
 
     //Negative
-    REQUIRE(shape->composite(nullptr) == CompositeMethod::None);
+    REQUIRE(shape->mask(nullptr) == MaskMethod::None);
 
     auto comp = Shape::gen();
-    REQUIRE(shape->composite(std::move(comp), CompositeMethod::None) == Result::InvalidArguments);
+    REQUIRE(shape->mask(std::move(comp), MaskMethod::None) == Result::InvalidArguments);
 
     //Clipping
     comp = Shape::gen();
@@ -220,34 +220,34 @@ TEST_CASE("Composition", "[tvgPaint]")
     //AlphaMask
     comp = Shape::gen();
     pComp = comp.get();
-    REQUIRE(shape->composite(std::move(comp), CompositeMethod::AlphaMask) == Result::Success);
+    REQUIRE(shape->mask(std::move(comp), MaskMethod::Alpha) == Result::Success);
 
     const Paint* pComp2 = nullptr;
-    REQUIRE(shape->composite(&pComp2) == CompositeMethod::AlphaMask);
+    REQUIRE(shape->mask(&pComp2) == MaskMethod::Alpha);
     REQUIRE(pComp == pComp2);
 
     //InvAlphaMask
     comp = Shape::gen();
     pComp = comp.get();
-    REQUIRE(shape->composite(std::move(comp), CompositeMethod::InvAlphaMask) == Result::Success);
+    REQUIRE(shape->mask(std::move(comp), MaskMethod::InvAlpha) == Result::Success);
 
-    REQUIRE(shape->composite(&pComp2) == CompositeMethod::InvAlphaMask);
+    REQUIRE(shape->mask(&pComp2) == MaskMethod::InvAlpha);
     REQUIRE(pComp == pComp2);
 
     //LumaMask
     comp = Shape::gen();
     pComp = comp.get();
-    REQUIRE(shape->composite(std::move(comp), CompositeMethod::LumaMask) == Result::Success);
+    REQUIRE(shape->mask(std::move(comp), MaskMethod::Luma) == Result::Success);
 
-    REQUIRE(shape->composite(&pComp2) == CompositeMethod::LumaMask);
+    REQUIRE(shape->mask(&pComp2) == MaskMethod::Luma);
     REQUIRE(pComp == pComp2);
 
     //InvLumaMask
     comp = Shape::gen();
     pComp = comp.get();
-    REQUIRE(shape->composite(std::move(comp), CompositeMethod::InvLumaMask) == Result::Success);
+    REQUIRE(shape->mask(std::move(comp), MaskMethod::InvLuma) == Result::Success);
 
-    REQUIRE(shape->composite(&pComp2) == CompositeMethod::InvLumaMask);
+    REQUIRE(shape->mask(&pComp2) == MaskMethod::InvLuma);
     REQUIRE(pComp == pComp2);
 }
 

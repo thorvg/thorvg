@@ -496,7 +496,7 @@ RenderRegion SwRenderer::region(RenderData data)
 }
 
 
-bool SwRenderer::beginComposite(RenderCompositor* cmp, CompositeMethod method, uint8_t opacity)
+bool SwRenderer::beginComposite(RenderCompositor* cmp, MaskMethod method, uint8_t opacity)
 {
     if (!cmp) return false;
     auto p = static_cast<SwCompositor*>(cmp);
@@ -505,7 +505,7 @@ bool SwRenderer::beginComposite(RenderCompositor* cmp, CompositeMethod method, u
     p->opacity = opacity;
 
     //Current Context?
-    if (p->method != CompositeMethod::None) {
+    if (p->method != MaskMethod::None) {
         surface = p->recoverSfc;
         surface->compositor = p;
     }
@@ -629,7 +629,7 @@ bool SwRenderer::endComposite(RenderCompositor* cmp)
     surface->compositor = p->recoverCmp;
 
     //Default is alpha blending
-    if (p->method == CompositeMethod::None) {
+    if (p->method == MaskMethod::None) {
         Matrix m = {1, 0, 0, 0, 1, 0, 0, 0, 1};
         return rasterImage(surface, &p->image, m, p->bbox, p->opacity);
     }

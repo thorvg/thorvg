@@ -58,8 +58,8 @@ struct UserExample : tvgexam::Example
             auto add = tvg::Shape::gen();
             add->appendCircle(175, 100, 50, 50);
             add->fill(255, 255, 255);
-            mask->composite(std::move(add), tvg::CompositeMethod::AddMask);
-            shape->composite(std::move(mask), tvg::CompositeMethod::AlphaMask);
+            mask->mask(std::move(add), tvg::MaskMethod::Add);
+            shape->mask(std::move(mask), tvg::MaskMethod::Alpha);
             canvas->push(std::move(shape));
 
             //Shape + Shape Mask Subtract
@@ -74,8 +74,8 @@ struct UserExample : tvgexam::Example
             auto sub = tvg::Shape::gen();
             sub->appendCircle(400, 100, 50, 50);
             sub->fill(255, 255, 255);
-            mask2->composite(std::move(sub), tvg::CompositeMethod::SubtractMask);
-            shape2->composite(std::move(mask2), tvg::CompositeMethod::AlphaMask);
+            mask2->mask(std::move(sub), tvg::MaskMethod::Subtract);
+            shape2->mask(std::move(mask2), tvg::MaskMethod::Alpha);
             canvas->push(std::move(shape2));
 
             //Shape + Shape Mask Intersect
@@ -90,8 +90,8 @@ struct UserExample : tvgexam::Example
             auto inter = tvg::Shape::gen();
             inter->appendCircle(650, 100, 50, 50);
             inter->fill(255, 255, 255);
-            mask3->composite(std::move(inter), tvg::CompositeMethod::IntersectMask);
-            shape3->composite(std::move(mask3), tvg::CompositeMethod::AlphaMask);
+            mask3->mask(std::move(inter), tvg::MaskMethod::Intersect);
+            shape3->mask(std::move(mask3), tvg::MaskMethod::Alpha);
             canvas->push(std::move(shape3));
 
             //Shape + Shape Mask Difference
@@ -106,8 +106,8 @@ struct UserExample : tvgexam::Example
             auto diff = tvg::Shape::gen();
             diff->appendCircle(900, 100, 50, 50);
             diff->fill(255, 255, 255);
-            mask4->composite(std::move(diff), tvg::CompositeMethod::DifferenceMask);
-            shape4->composite(std::move(mask4), tvg::CompositeMethod::AlphaMask);
+            mask4->mask(std::move(diff), tvg::MaskMethod::Difference);
+            shape4->mask(std::move(mask4), tvg::MaskMethod::Alpha);
             canvas->push(std::move(shape4));
 
             //Shape + Shape Mask Lighten
@@ -122,8 +122,8 @@ struct UserExample : tvgexam::Example
             auto light = tvg::Shape::gen();
             light->appendCircle(1150, 100, 50, 50);
             light->fill(255, 255, 255);
-            mask5->composite(std::move(light), tvg::CompositeMethod::LightenMask);
-            shape5->composite(std::move(mask5), tvg::CompositeMethod::AlphaMask);
+            mask5->mask(std::move(light), tvg::MaskMethod::Lighten);
+            shape5->mask(std::move(mask5), tvg::MaskMethod::Alpha);
             canvas->push(std::move(shape5));
 
             //Shape + Shape Mask Darken
@@ -138,8 +138,8 @@ struct UserExample : tvgexam::Example
             auto dark = tvg::Shape::gen();
             dark->appendCircle(1400, 100, 50, 50);
             dark->fill(255, 255, 255);
-            mask6->composite(std::move(dark), tvg::CompositeMethod::DarkenMask);
-            shape6->composite(std::move(mask6), tvg::CompositeMethod::AlphaMask);
+            mask6->mask(std::move(dark), tvg::MaskMethod::Darken);
+            shape6->mask(std::move(mask6), tvg::MaskMethod::Alpha);
             canvas->push(std::move(shape6));
         }
         {
@@ -155,8 +155,8 @@ struct UserExample : tvgexam::Example
             auto add = tvg::Shape::gen();
             add->appendCircle(175, 300, 50, 50);
             add->fill(255, 255, 255);
-            mask->composite(std::move(add), tvg::CompositeMethod::AddMask);
-            shape->composite(std::move(mask), tvg::CompositeMethod::InvAlphaMask);
+            mask->mask(std::move(add), tvg::MaskMethod::Add);
+            shape->mask(std::move(mask), tvg::MaskMethod::InvAlpha);
             canvas->push(std::move(shape));
 
             //Shape + Shape Mask Subtract
@@ -171,8 +171,8 @@ struct UserExample : tvgexam::Example
             auto sub = tvg::Shape::gen();
             sub->appendCircle(400, 300, 50, 50);
             sub->fill(255, 255, 255);
-            mask2->composite(std::move(sub), tvg::CompositeMethod::SubtractMask);
-            shape2->composite(std::move(mask2), tvg::CompositeMethod::InvAlphaMask);
+            mask2->mask(std::move(sub), tvg::MaskMethod::Subtract);
+            shape2->mask(std::move(mask2), tvg::MaskMethod::InvAlpha);
             canvas->push(std::move(shape2));
 
             //Shape + Shape Mask Intersect
@@ -187,8 +187,8 @@ struct UserExample : tvgexam::Example
             auto inter = tvg::Shape::gen();
             inter->appendCircle(650, 300, 50, 50);
             inter->fill(255, 255, 255);
-            mask3->composite(std::move(inter), tvg::CompositeMethod::IntersectMask);
-            shape3->composite(std::move(mask3), tvg::CompositeMethod::InvAlphaMask);
+            mask3->mask(std::move(inter), tvg::MaskMethod::Intersect);
+            shape3->mask(std::move(mask3), tvg::MaskMethod::InvAlpha);
             canvas->push(std::move(shape3));
 
             //Shape + Shape Mask Difference
@@ -203,8 +203,8 @@ struct UserExample : tvgexam::Example
             auto diff = tvg::Shape::gen();
             diff->appendCircle(900, 300, 50, 50);
             diff->fill(255, 255, 255);
-            mask4->composite(std::move(diff), tvg::CompositeMethod::DifferenceMask);
-            shape4->composite(std::move(mask4), tvg::CompositeMethod::InvAlphaMask);
+            mask4->mask(std::move(diff), tvg::MaskMethod::Difference);
+            shape4->mask(std::move(mask4), tvg::MaskMethod::InvAlpha);
             canvas->push(std::move(shape4));
 
             //Shape + Shape Mask Lighten
@@ -219,8 +219,8 @@ struct UserExample : tvgexam::Example
             auto light = tvg::Shape::gen();
             light->appendCircle(1150, 300, 50, 50);
             light->fill(255, 255, 255);
-            mask5->composite(std::move(light), tvg::CompositeMethod::LightenMask);
-            shape5->composite(std::move(mask5), tvg::CompositeMethod::InvAlphaMask);
+            mask5->mask(std::move(light), tvg::MaskMethod::Lighten);
+            shape5->mask(std::move(mask5), tvg::MaskMethod::InvAlpha);
             canvas->push(std::move(shape5));
 
             //Shape + Shape Mask Darken
@@ -235,8 +235,8 @@ struct UserExample : tvgexam::Example
             auto dark = tvg::Shape::gen();
             dark->appendCircle(1400, 300, 50, 50);
             dark->fill(255, 255, 255);
-            mask6->composite(std::move(dark), tvg::CompositeMethod::DarkenMask);
-            shape6->composite(std::move(mask6), tvg::CompositeMethod::InvAlphaMask);
+            mask6->mask(std::move(dark), tvg::MaskMethod::Darken);
+            shape6->mask(std::move(mask6), tvg::MaskMethod::InvAlpha);
             canvas->push(std::move(shape6));
         }
         {
@@ -252,8 +252,8 @@ struct UserExample : tvgexam::Example
             auto add = tvg::Shape::gen();
             add->appendRect(125, 450, 100, 100);
             add->fill(255, 255, 255);
-            mask->composite(std::move(add), tvg::CompositeMethod::AddMask);
-            shape->composite(std::move(mask), tvg::CompositeMethod::AlphaMask);
+            mask->mask(std::move(add), tvg::MaskMethod::Add);
+            shape->mask(std::move(mask), tvg::MaskMethod::Alpha);
             canvas->push(std::move(shape));
 
             //Rect + Rect Mask Subtract
@@ -268,8 +268,8 @@ struct UserExample : tvgexam::Example
             auto sub = tvg::Shape::gen();
             sub->appendRect(375, 450, 100, 100);
             sub->fill(255, 255, 255);
-            mask2->composite(std::move(sub), tvg::CompositeMethod::SubtractMask);
-            shape2->composite(std::move(mask2), tvg::CompositeMethod::AlphaMask);
+            mask2->mask(std::move(sub), tvg::MaskMethod::Subtract);
+            shape2->mask(std::move(mask2), tvg::MaskMethod::Alpha);
             canvas->push(std::move(shape2));
 
             //Rect + Rect Mask Intersect
@@ -284,8 +284,8 @@ struct UserExample : tvgexam::Example
             auto inter = tvg::Shape::gen();
             inter->appendRect(625, 450, 100, 100);
             inter->fill(255, 255, 255);
-            mask3->composite(std::move(inter), tvg::CompositeMethod::IntersectMask);
-            shape3->composite(std::move(mask3), tvg::CompositeMethod::AlphaMask);
+            mask3->mask(std::move(inter), tvg::MaskMethod::Intersect);
+            shape3->mask(std::move(mask3), tvg::MaskMethod::Alpha);
             canvas->push(std::move(shape3));
 
             //Rect + Rect Mask Difference
@@ -300,8 +300,8 @@ struct UserExample : tvgexam::Example
             auto diff = tvg::Shape::gen();
             diff->appendRect(875, 450, 100, 100);
             diff->fill(255, 255, 255);
-            mask4->composite(std::move(diff), tvg::CompositeMethod::DifferenceMask);
-            shape4->composite(std::move(mask4), tvg::CompositeMethod::AlphaMask);
+            mask4->mask(std::move(diff), tvg::MaskMethod::Difference);
+            shape4->mask(std::move(mask4), tvg::MaskMethod::Alpha);
             canvas->push(std::move(shape4));
 
             //Rect + Rect Mask Lighten
@@ -316,8 +316,8 @@ struct UserExample : tvgexam::Example
             auto light = tvg::Shape::gen();
             light->appendRect(1175, 450, 100, 100);
             light->fill(255, 255, 255);
-            mask5->composite(std::move(light), tvg::CompositeMethod::LightenMask);
-            shape5->composite(std::move(mask5), tvg::CompositeMethod::AlphaMask);
+            mask5->mask(std::move(light), tvg::MaskMethod::Lighten);
+            shape5->mask(std::move(mask5), tvg::MaskMethod::Alpha);
             canvas->push(std::move(shape5));
 
             //Rect + Rect Mask Darken
@@ -332,8 +332,8 @@ struct UserExample : tvgexam::Example
             auto dark = tvg::Shape::gen();
             dark->appendRect(1400, 450, 100, 100);
             dark->fill(255, 255, 255);
-            mask6->composite(std::move(dark), tvg::CompositeMethod::DarkenMask);
-            shape6->composite(std::move(mask6), tvg::CompositeMethod::AlphaMask);
+            mask6->mask(std::move(dark), tvg::MaskMethod::Darken);
+            shape6->mask(std::move(mask6), tvg::MaskMethod::Alpha);
             canvas->push(std::move(shape6));
         }
         {
@@ -351,8 +351,8 @@ struct UserExample : tvgexam::Example
             auto add = tvg::Shape::gen();
             add->appendCircle(150, 750, 50, 50);
             add->fill(255, 255, 255);
-            mask->composite(std::move(add), tvg::CompositeMethod::AddMask);
-            image->composite(std::move(mask), tvg::CompositeMethod::AlphaMask);
+            mask->mask(std::move(add), tvg::MaskMethod::Add);
+            image->mask(std::move(mask), tvg::MaskMethod::Alpha);
             canvas->push(std::move(image));
 
             //Transformed Image + Shape Mask Subtract
@@ -369,8 +369,8 @@ struct UserExample : tvgexam::Example
             auto sub = tvg::Shape::gen();
             sub->appendCircle(400, 750, 50, 50);
             sub->fill(255, 255, 255);
-            mask2->composite(std::move(sub), tvg::CompositeMethod::SubtractMask);
-            image2->composite(std::move(mask2), tvg::CompositeMethod::AlphaMask);
+            mask2->mask(std::move(sub), tvg::MaskMethod::Subtract);
+            image2->mask(std::move(mask2), tvg::MaskMethod::Alpha);
             canvas->push(std::move(image2));
 
             //Transformed Image + Shape Mask Intersect
@@ -387,8 +387,8 @@ struct UserExample : tvgexam::Example
             auto inter = tvg::Shape::gen();
             inter->appendCircle(650, 750, 50, 50);
             inter->fill(255, 255, 255, 127);
-            mask3->composite(std::move(inter), tvg::CompositeMethod::IntersectMask);
-            image3->composite(std::move(mask3), tvg::CompositeMethod::AlphaMask);
+            mask3->mask(std::move(inter), tvg::MaskMethod::Intersect);
+            image3->mask(std::move(mask3), tvg::MaskMethod::Alpha);
             canvas->push(std::move(image3));
 
             //Transformed Image + Shape Mask Difference
@@ -405,8 +405,8 @@ struct UserExample : tvgexam::Example
             auto diff = tvg::Shape::gen();
             diff->appendCircle(900, 750, 50, 50);
             diff->fill(255, 255, 255);
-            mask4->composite(std::move(diff), tvg::CompositeMethod::DifferenceMask);
-            image4->composite(std::move(mask4), tvg::CompositeMethod::AlphaMask);
+            mask4->mask(std::move(diff), tvg::MaskMethod::Difference);
+            image4->mask(std::move(mask4), tvg::MaskMethod::Alpha);
             canvas->push(std::move(image4));
 
             //Transformed Image + Shape Mask Lighten
@@ -423,8 +423,8 @@ struct UserExample : tvgexam::Example
             auto light = tvg::Shape::gen();
             light->appendCircle(1150, 750, 50, 50);
             light->fill(255, 255, 255);
-            mask5->composite(std::move(light), tvg::CompositeMethod::LightenMask);
-            image5->composite(std::move(mask5), tvg::CompositeMethod::AlphaMask);
+            mask5->mask(std::move(light), tvg::MaskMethod::Lighten);
+            image5->mask(std::move(mask5), tvg::MaskMethod::Alpha);
             canvas->push(std::move(image5));
 
             //Transformed Image + Shape Mask Darken
@@ -441,8 +441,8 @@ struct UserExample : tvgexam::Example
             auto dark = tvg::Shape::gen();
             dark->appendCircle(1400, 750, 50, 50);
             dark->fill(255, 255, 255);
-            mask6->composite(std::move(dark), tvg::CompositeMethod::DarkenMask);
-            image6->composite(std::move(mask6), tvg::CompositeMethod::AlphaMask);
+            mask6->mask(std::move(dark), tvg::MaskMethod::Darken);
+            image6->mask(std::move(mask6), tvg::MaskMethod::Alpha);
             canvas->push(std::move(image6));
         }
         {
@@ -460,8 +460,8 @@ struct UserExample : tvgexam::Example
             auto add = tvg::Shape::gen();
             add->appendCircle(150, 950, 50, 50);
             add->fill(255, 255, 255);
-            mask->composite(std::move(add), tvg::CompositeMethod::AddMask);
-            image->composite(std::move(mask), tvg::CompositeMethod::InvAlphaMask);
+            mask->mask(std::move(add), tvg::MaskMethod::Add);
+            image->mask(std::move(mask), tvg::MaskMethod::InvAlpha);
             canvas->push(std::move(image));
 
             //Transformed Image + Shape Mask Subtract
@@ -478,8 +478,8 @@ struct UserExample : tvgexam::Example
             auto sub = tvg::Shape::gen();
             sub->appendCircle(400, 950, 50, 50);
             sub->fill(255, 255, 255);
-            mask2->composite(std::move(sub), tvg::CompositeMethod::SubtractMask);
-            image2->composite(std::move(mask2), tvg::CompositeMethod::InvAlphaMask);
+            mask2->mask(std::move(sub), tvg::MaskMethod::Subtract);
+            image2->mask(std::move(mask2), tvg::MaskMethod::InvAlpha);
             canvas->push(std::move(image2));
 
             //Transformed Image + Shape Mask Intersect
@@ -496,8 +496,8 @@ struct UserExample : tvgexam::Example
             auto inter = tvg::Shape::gen();
             inter->appendCircle(650, 950, 50, 50);
             inter->fill(255, 255, 255, 127);
-            mask3->composite(std::move(inter), tvg::CompositeMethod::IntersectMask);
-            image3->composite(std::move(mask3), tvg::CompositeMethod::InvAlphaMask);
+            mask3->mask(std::move(inter), tvg::MaskMethod::Intersect);
+            image3->mask(std::move(mask3), tvg::MaskMethod::InvAlpha);
             canvas->push(std::move(image3));
 
             //Transformed Image + Shape Mask Difference
@@ -514,8 +514,8 @@ struct UserExample : tvgexam::Example
             auto diff = tvg::Shape::gen();
             diff->appendCircle(900, 950, 50, 50);
             diff->fill(255, 255, 255);
-            mask4->composite(std::move(diff), tvg::CompositeMethod::DifferenceMask);
-            image4->composite(std::move(mask4), tvg::CompositeMethod::InvAlphaMask);
+            mask4->mask(std::move(diff), tvg::MaskMethod::Difference);
+            image4->mask(std::move(mask4), tvg::MaskMethod::InvAlpha);
             canvas->push(std::move(image4));
 
             //Transformed Image + Shape Mask Lighten
@@ -532,8 +532,8 @@ struct UserExample : tvgexam::Example
             auto light = tvg::Shape::gen();
             light->appendCircle(1150, 950, 50, 50);
             light->fill(255, 255, 255);
-            mask5->composite(std::move(light), tvg::CompositeMethod::LightenMask);
-            image5->composite(std::move(mask5), tvg::CompositeMethod::InvAlphaMask);
+            mask5->mask(std::move(light), tvg::MaskMethod::Lighten);
+            image5->mask(std::move(mask5), tvg::MaskMethod::InvAlpha);
             canvas->push(std::move(image5));
 
             //Transformed Image + Shape Mask Darken
@@ -550,8 +550,8 @@ struct UserExample : tvgexam::Example
             auto dark = tvg::Shape::gen();
             dark->appendCircle(1400, 950, 50, 50);
             dark->fill(255, 255, 255);
-            mask6->composite(std::move(dark), tvg::CompositeMethod::DarkenMask);
-            image6->composite(std::move(mask6), tvg::CompositeMethod::InvAlphaMask);
+            mask6->mask(std::move(dark), tvg::MaskMethod::Darken);
+            image6->mask(std::move(mask6), tvg::MaskMethod::InvAlpha);
             canvas->push(std::move(image6));
         }
         free(data);

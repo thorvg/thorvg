@@ -245,7 +245,7 @@ bool LottieLoader::resize(Paint* paint, float w, float h)
 
     //apply the scale to the base clipper
     const Paint* clipper;
-    paint->composite(&clipper);
+    paint->mask(&clipper);
     if (clipper) const_cast<Paint*>(clipper)->transform(m);
 
     return true;

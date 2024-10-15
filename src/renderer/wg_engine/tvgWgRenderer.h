@@ -49,7 +49,7 @@ public:
     bool target(WGPUSurface surface, uint32_t w, uint32_t h);
 
     RenderCompositor* target(const RenderRegion& region, ColorSpace cs) override;
-    bool beginComposite(RenderCompositor* cmp, CompositeMethod method, uint8_t opacity) override;
+    bool beginComposite(RenderCompositor* cmp, MaskMethod method, uint8_t opacity) override;
     bool endComposite(RenderCompositor* cmp) override;
 
     bool prepare(RenderEffect* effect) override;

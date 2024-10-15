@@ -287,9 +287,9 @@ static void _applyComposition(SvgLoaderData& loaderData, Paint* paint, const Svg
                 }
 
                 if (compNode->node.mask.type == SvgMaskType::Luminance && !isMaskWhite) {
-                    paint->composite(std::move(comp), CompositeMethod::LumaMask);
+                    paint->mask(std::move(comp), MaskMethod::Luma);
                 } else {
-                    paint->composite(std::move(comp), CompositeMethod::AlphaMask);
+                    paint->mask(std::move(comp), MaskMethod::Alpha);
                 }
             }
 
@@ -918,12 +918,12 @@ Scene* svgSceneBuild(SvgLoaderData& loaderData, Box vBox, float w, float h, Aspe
     auto viewBoxClip = Shape::gen();
     viewBoxClip->appendRect(0, 0, w, h);
 
-    auto compositeLayer = Scene::gen();
-    compositeLayer->clip(std::move(viewBoxClip));
-    compositeLayer->push(std::move(docNode));
+    auto clippingLayer = Scene::gen();
+    clippingLayer->clip(std::move(viewBoxClip));
+    clippingLayer->push(std::move(docNode));
 
     auto root = Scene::gen();
-    root->push(std::move(compositeLayer));
+    root->push(std::move(clippingLayer));
 
     loaderData.doc->node.doc.vx = vBox.x;
     loaderData.doc->node.doc.vy = vBox.y;

@@ -90,7 +90,7 @@ struct Scene::Impl
         if (effects) return true;
 
         //Masking / Blending may require composition (even if opacity == 255)
-        if (scene->composite(nullptr) != CompositeMethod::None) return true;
+        if (scene->mask(nullptr) != MaskMethod::None) return true;
         if (PP(scene)->blendMethod != BlendMethod::Normal) return true;
 
         //Half translucent requires intermediate composition.
@@ -130,7 +130,7 @@ struct Scene::Impl
 
         if (needComp) {
             cmp = renderer->target(bounds(renderer), renderer->colorSpace());
-            renderer->beginComposite(cmp, CompositeMethod::None, opacity);
+            renderer->beginComposite(cmp, MaskMethod::None, opacity);
         }
 
         for (auto paint : paints) {

@@ -59,7 +59,7 @@ struct Shape::Impl
 
         if (needComp) {
             cmp = renderer->target(bounds(renderer), renderer->colorSpace());
-            renderer->beginComposite(cmp, CompositeMethod::None, opacity);
+            renderer->beginComposite(cmp, MaskMethod::None, opacity);
         }
 
         auto ret = renderer->renderShape(rd);
@@ -80,7 +80,7 @@ struct Shape::Impl
 
         //Composition test
         const Paint* target;
-        auto method = shape->composite(&target);
+        auto method = shape->mask(&target);
         if (!target) return false;
 
         if ((target->pImpl->opacity == 255 || target->pImpl->opacity == 0) && target->type() == Type::Shape) {
@@ -89,7 +89,7 @@ struct Shape::Impl
                 uint8_t r, g, b, a;
                 shape->fillColor(&r, &g, &b, &a);
                 if (a == 0 || a == 255) {
-                    if (method == CompositeMethod::LumaMask || method == CompositeMethod::InvLumaMask) {
+                    if (method == MaskMethod::Luma || method == MaskMethod::InvLuma) {
                         if ((r == 255 && g == 255 && b == 255) || (r == 0 && g == 0 && b == 0)) return false;
                     } else return false;
                 }

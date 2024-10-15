@@ -154,14 +154,14 @@ static inline bool _blending(const SwSurface* surface)
    This would help to enhance the performance by avoiding the unnecessary matting from the composition */
 static inline bool _compositing(const SwSurface* surface)
 {
-    if (!surface->compositor || surface->compositor->method == CompositeMethod::None) return false;
+    if (!surface->compositor || surface->compositor->method == MaskMethod::None) return false;
     return true;
 }
 
 
 static inline bool _matting(const SwSurface* surface)
 {
-    if ((int)surface->compositor->method < (int)CompositeMethod::AddMask) return true;
+    if ((int)surface->compositor->method < (int)MaskMethod::Add) return true;
     else return false;
 }
 
@@ -206,22 +206,22 @@ static inline uint8_t _opMaskDarken(uint8_t s, uint8_t d, uint8_t a)
 }
 
 
-static inline bool _direct(CompositeMethod method)
+static inline bool _direct(MaskMethod method)
 {
-    if (method == CompositeMethod::SubtractMask || method == CompositeMethod::IntersectMask || method == CompositeMethod::DarkenMask) return true;
+    if (method == MaskMethod::Subtract || method == MaskMethod::Intersect || method == MaskMethod::Darken) return true;
     return false;
 }
 
 
-static inline SwMask _getMaskOp(CompositeMethod method)
+static inline SwMask _getMaskOp(MaskMethod method)
 {
     switch (method) {
-        case CompositeMethod::AddMask: return _opMaskAdd;
-        case CompositeMethod::SubtractMask: return _opMaskSubtract;
-        case CompositeMethod::DifferenceMask: return _opMaskDifference;
-        case CompositeMethod::IntersectMask: return _opMaskIntersect;
-        case CompositeMethod::LightenMask: return _opMaskLighten;
-        case CompositeMethod::DarkenMask: return _opMaskDarken;
+        case MaskMethod::Add: return _opMaskAdd;
+        case MaskMethod::Subtract: return _opMaskSubtract;
+        case MaskMethod::Difference: return _opMaskDifference;
+        case MaskMethod::Intersect: return _opMaskIntersect;
+        case MaskMethod::Lighten: return _opMaskLighten;
+        case MaskMethod::Darken: return _opMaskDarken;
         default: return nullptr;
     }
 }
@@ -1626,7 +1626,7 @@ void rasterPixel32(uint32_t *dst, uint32_t val, uint32_t offset, int32_t len)
 
 bool rasterCompositor(SwSurface* surface)
 {
-    //See CompositeMethod, Alpha:3, InvAlpha:4, Luma:5, InvLuma:6
+    //See MaskMethod, Alpha:3, InvAlpha:4, Luma:5, InvLuma:6
     surface->alphas[0] = _alpha;
     surface->alphas[1] = _ialpha;
 

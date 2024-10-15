@@ -109,7 +109,7 @@ struct LottieMask
     LottiePathSet pathset;
     LottieFloat expand = 0.0f;
     LottieOpacity opacity = 255;
-    CompositeMethod method;
+    MaskMethod method;
     bool inverse = false;
 };
 
@@ -788,7 +788,7 @@ struct LottieLayer : LottieGroup
         uint8_t opacity;
     } cache;
 
-    CompositeMethod matteType = CompositeMethod::None;
+    MaskMethod matteType = MaskMethod::None;
     BlendMethod blendMethod = BlendMethod::Normal;
     Type type = Null;
     bool autoOrient = false;
