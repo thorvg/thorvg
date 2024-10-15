@@ -34,6 +34,7 @@ static inline float length2(const Point& a) { return a.x*a.x+a.y*a.y; };
 static inline float distance2(const Point& a, const Point& b) { return length2(a - b); };
 static inline float distance(const Point& a, const Point& b) { return length(a - b); };
 static inline float dot(const Point& a, const Point& b) { return a.x*b.x + a.y*b.y; };
+static inline float cross(const Point& a, const Point& b) { return a.x*b.y - a.y*b.x; };
 static inline Point min(const Point& a, const Point& b) { return { std::min(a.x, b.x), std::min(a.y, b.y) }; };
 static inline Point max(const Point& a, const Point& b) { return { std::max(a.x, b.x), std::max(a.y, b.y) }; };
 static inline Point lerp(const Point& a, const Point& b, float t) { return a * (1.0f - t) + b * t; };
@@ -329,15 +330,14 @@ struct WgVertexBufferInd {
     void appendMiter(const Point& v0, const Point& v1, const Point& v2, float dist1, float dist2, float halfWidth, float miterLimit) {
         Point sub1 = v1 - v0;
         Point sub2 = v2 - v1;
+        if (tvg::zero(cross(sub1, sub2))) return; // collinear
         Point nrm1 { +sub1.y / dist1, -sub1.x / dist1 };
         Point nrm2 { +sub2.y / dist2, -sub2.x / dist2 };
         Point offset1 = nrm1 * halfWidth;
         Point offset2 = nrm2 * halfWidth;
         Point nrm = normalize(nrm1 + nrm2);
         float cosine = dot(nrm, nrm1);
-        if (tvg::zero(cosine)) return;
         float angle = std::acos(dot(nrm1, -nrm2));
-        if (tvg::zero(angle) || tvg::equal(angle, M_PI)) return;
         float miterRatio = 1.0f / (std::sin(angle) * 0.5f);
         if (miterRatio <= miterLimit) {
             appendQuad(v1 + nrm * (halfWidth / cosine), v1 + offset2, v1 + offset1, v1);
