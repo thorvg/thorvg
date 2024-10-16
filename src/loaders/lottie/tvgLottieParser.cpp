@@ -155,6 +155,19 @@ StrokeJoin LottieParser::getStrokeJoin()
 }
 
 
+MergeMode LottieParser::getMergeMode()
+{
+    switch (getInt()) {
+        //TODO: case 1: return MergeMode::Merge;
+        case 2: return MergeMode::Add;
+        case 3: return MergeMode::Subtract;
+        case 4: return MergeMode::Intersect;
+        //TODO: case 5: return MergeMode::ExcludeIntersections;
+        default: return MergeMode::None;
+    }
+}
+
+
 void LottieParser::getValue(TextDocument& doc)
 {
     enterObject();
@@ -881,6 +894,23 @@ LottieOffsetPath* LottieParser::parseOffsetPath()
 }
 
 
+LottieMergePath* LottieParser::parseMergePath()
+{
+    auto mergePath = new LottieMergePath;
+
+    context.parent = mergePath;
+
+    while (auto key = nextObjectKey()) {
+        if (parseCommon(mergePath, key)) continue;
+        else if (KEY_AS("mm")) mergePath->mode = getMergeMode();
+        else skip(key);
+    }
+    mergePath->prepare();
+
+    return mergePath;
+}
+
+
 LottieObject* LottieParser::parseObject()
 {
     auto type = getString();
@@ -899,7 +929,7 @@ LottieObject* LottieParser::parseObject()
     else if (!strcmp(type, "gs")) return parseGradientStroke();
     else if (!strcmp(type, "tm")) return parseTrimpath();
     else if (!strcmp(type, "rp")) return parseRepeater();
-    else if (!strcmp(type, "mm")) TVGLOG("LOTTIE", "MergePath(mm) is not supported yet");
+    else if (!strcmp(type, "mm")) return parseMergePath();
     else if (!strcmp(type, "pb")) TVGLOG("LOTTIE", "Puker/Bloat(pb) is not supported yet");
     else if (!strcmp(type, "tw")) TVGLOG("LOTTIE", "Twist(tw) is not supported yet");
     else if (!strcmp(type, "op")) return parseOffsetPath();

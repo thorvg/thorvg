@@ -135,7 +135,8 @@ struct LottieObject
         Text,
         Repeater,
         RoundedCorner,
-        OffsetPath
+        OffsetPath,
+        MergePath
     };
 
     virtual ~LottieObject()
@@ -656,6 +657,17 @@ struct LottieImage : LottieObject, LottieRenderPooler<tvg::Picture>
 
     ~LottieImage();
     void prepare();
+};
+
+
+struct LottieMergePath : LottieObject
+{
+    void prepare()
+    {
+        LottieObject::type = LottieObject::MergePath;
+    }
+
+    MergeMode mode = MergeMode::None;
 };
 
 

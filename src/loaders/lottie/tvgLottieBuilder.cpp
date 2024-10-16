@@ -28,6 +28,7 @@
 #include "tvgLottieModel.h"
 #include "tvgLottieBuilder.h"
 #include "tvgLottieExpressions.h"
+#include "tvgLottieMergePath.h"
 
 
 /************************************************************************/
@@ -547,8 +548,22 @@ void LottieBuilder::updateEllipse(LottieGroup* parent, LottieObject** child, flo
         _appendCircle(shape, position.x, position.y, size.x * 0.5f, size.y * 0.5f, ctx->offsetPath, ctx->transform, ellipse->clockwise);
         _repeat(parent, shape, ctx);
     } else {
-        _draw(parent, ellipse, ctx);
-        _appendCircle(ctx->merging, position.x, position.y, size.x * 0.5f, size.y * 0.5f, ctx->offsetPath, ctx->transform, ellipse->clockwise);
+        if (ctx->mergeMode != MergeMode::None) {
+            if (P(ctx->merging)->rs.path.cmds.count == 0) {
+                parent->scene->push(cast(ctx->merging));
+                _appendCircle(ctx->merging, position.x, position.y, size.x * 0.5f, size.y * 0.5f, ctx->offsetPath, ctx->transform, ellipse->clockwise);
+            } else {
+                Array<PathCommand> cmds;
+                Array<Point> pts;
+                auto shape = Shape::gen();
+                _appendCircle(shape.get(), position.x, position.y, size.x * 0.5f, size.y * 0.5f, ctx->offsetPath, ctx->transform, ellipse->clockwise);
+                ctx->merging->fill(FillRule::EvenOdd);
+                mergePath(P(ctx->merging)->rs.path.cmds, P(ctx->merging)->rs.path.pts, P(shape.get())->rs.path.cmds, P(shape.get())->rs.path.pts, ctx->mergeMode);
+            }
+        } else {
+            _draw(parent, ellipse, ctx);
+            _appendCircle(ctx->merging, position.x, position.y, size.x * 0.5f, size.y * 0.5f, ctx->offsetPath, ctx->transform, ellipse->clockwise);
+        }
     }
 }
 
@@ -875,6 +890,13 @@ void LottieBuilder::updateTrimpath(TVG_UNUSED LottieGroup* parent, LottieObject*
 }
 
 
+void LottieBuilder::updateMergePath(TVG_UNUSED LottieGroup* parent, LottieObject** child, TVG_UNUSED float frameNo, TVG_UNUSED Inlist<RenderContext>& contexts, RenderContext* ctx)
+{
+    auto mergePath = static_cast<LottieMergePath*>(*child);
+    ctx->mergeMode = mergePath->mode;
+}
+
+
 void LottieBuilder::updateChildren(LottieGroup* parent, float frameNo, Inlist<RenderContext>& contexts)
 {
     contexts.head->begin = parent->children.end() - 1;
@@ -939,6 +961,10 @@ void LottieBuilder::updateChildren(LottieGroup* parent, float frameNo, Inlist<Re
                 }
                 case LottieObject::OffsetPath: {
                     updateOffsetPath(parent, child, frameNo, contexts, ctx);
+                    break;
+                }
+                case LottieObject::MergePath: {
+                    updateMergePath(parent, child, frameNo, contexts, ctx);
                     break;
                 }
                 default: break;

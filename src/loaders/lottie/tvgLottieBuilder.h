@@ -60,6 +60,7 @@ struct RenderContext
     LottieOffsetModifier* offsetPath = nullptr;
     bool fragmenting = false;  //render context has been fragmented by filling
     bool reqFragment = false;  //requirement to fragment the render context
+    MergeMode mergeMode = MergeMode::None;
 
     RenderContext(Shape* propagator)
     {
@@ -82,6 +83,7 @@ struct RenderContext
         PP(propagator)->ref();
         this->propagator = propagator;
         this->repeaters = rhs.repeaters;
+        this->mergeMode = rhs.mergeMode;
         if (rhs.roundness) this->roundness = new LottieRoundnessModifier(rhs.roundness->r);
         if (rhs.offsetPath) this->offsetPath = new LottieOffsetModifier(rhs.offsetPath->offset, rhs.offsetPath->miterLimit, rhs.offsetPath->join);
     }
@@ -127,7 +129,7 @@ private:
     void updateRepeater(LottieGroup* parent, LottieObject** child, float frameNo, Inlist<RenderContext>& contexts, RenderContext* ctx);
     void updateRoundedCorner(LottieGroup* parent, LottieObject** child, float frameNo, Inlist<RenderContext>& contexts, RenderContext* ctx);
     void updateOffsetPath(LottieGroup* parent, LottieObject** child, float frameNo, Inlist<RenderContext>& contexts, RenderContext* ctx);
-
+    void updateMergePath(LottieGroup* parent, LottieObject** child, float frameNo, Inlist<RenderContext>& contexts, RenderContext* ctx);
     LottieExpressions* exps;
 };
 

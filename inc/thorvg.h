@@ -231,6 +231,22 @@ enum class SceneEffect : uint8_t
 
 
 /**
+* @brief Enumeration specifying the boolean operation used to determine how shapes are combined.
+*
+* @note Experimental API
+*/
+ enum class MergeMode : uint8_t
+ {
+  None = 0,               ///< No merging is applied - the shapes are drawn in the order they were added, overlapping each other.
+//TODO:    Merge,                  ///< The shapes are combined without any boolean operation - shapes are threated as they are one.
+  Add = 2,                ///< The shapes are combined together, resulting in a union of the areas covered by each shape.
+  Subtract,               ///< The area of the second shape is subtracted from the first shape, leaving the non-overlapping parts of the first shape.
+  Intersect,              ///< Only the areas where the shapes overlap are retained, resulting in the intersection of the shapes.
+//TODO:    ExcludeIntersections    ///< The overlapping areas of the shapes are excluded, leaving only the non-overlapping parts of each shape.
+};
+
+
+/**
  * @brief Enumeration specifying the engine type used for the graphics backend. For multiple backends bitwise operation is allowed.
  */
 enum class CanvasEngine : uint8_t
