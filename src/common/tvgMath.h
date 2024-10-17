@@ -173,6 +173,8 @@ static inline void log(const Matrix& m)
 void operator*=(Point& pt, const Matrix& m);
 Point operator*(const Point& pt, const Matrix& m);
 Point normal(const Point& p1, const Point& p2);
+void normalize(Point& pt);
+
 
 static inline bool zero(const Point& p)
 {
@@ -216,13 +218,31 @@ static inline Point operator-(const Point& lhs, const Point& rhs)
 }
 
 
+static inline Point operator-(const Point& lhs, const float rhs)
+{
+    return {lhs.x - rhs, lhs.y - rhs};
+}
+
+
 static inline Point operator+(const Point& lhs, const Point& rhs)
 {
     return {lhs.x + rhs.x, lhs.y + rhs.y};
 }
 
 
-static inline Point operator*(const Point& lhs, float rhs)
+static inline Point operator+(const Point& lhs, const float rhs)
+{
+    return {lhs.x + rhs, lhs.y + rhs};
+}
+
+
+static inline Point operator*(const Point& lhs, const Point& rhs)
+{
+    return {lhs.x * rhs.x, lhs.y * rhs.y};
+}
+
+
+static inline Point operator*(const Point& lhs, const float rhs)
 {
     return {lhs.x * rhs, lhs.y * rhs};
 }
@@ -231,6 +251,12 @@ static inline Point operator*(const Point& lhs, float rhs)
 static inline Point operator*(const float& lhs, const Point& rhs)
 {
     return {lhs * rhs.x, lhs * rhs.y};
+}
+
+
+static inline Point operator/(const Point& lhs, const Point& rhs)
+{
+    return {lhs.x / rhs.x, lhs.y / rhs.y};
 }
 
 
