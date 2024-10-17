@@ -304,7 +304,6 @@ void LottieBuilder::updateGradientFill(LottieGroup* parent, LottieObject** child
     //TODO: reuse the fill instance?
     ctx->propagator->fill(unique_ptr<Fill>(fill->fill(frameNo, exps)));
     ctx->propagator->fill(fill->rule);
-    ctx->propagator->opacity(MULTIPLY(fill->opacity(frameNo), PP(ctx->propagator)->opacity));
 
     if (ctx->propagator->strokeWidth() > 0) ctx->propagator->order(true);
 }
