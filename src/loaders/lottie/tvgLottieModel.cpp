@@ -272,6 +272,9 @@ uint32_t LottieGradient::populate(ColorStop& color, size_t count)
 
 Fill* LottieGradient::fill(float frameNo, LottieExpressions* exps)
 {
+    auto opacity = this->opacity(frameNo);
+    if (opacity == 0) return nullptr;
+
     Fill* fill = nullptr;
     auto s = start(frameNo, exps);
     auto e = end(frameNo, exps);
@@ -306,6 +309,15 @@ Fill* LottieGradient::fill(float frameNo, LottieExpressions* exps)
     if (!fill) return nullptr;
 
     colorStops(frameNo, fill, exps);
+
+    //multiply the current opacity with the fill
+    if (opacity < 255) {
+        const Fill::ColorStop* colorStops;
+        auto cnt = fill->colorStops(&colorStops);
+        for (uint32_t i = 0; i < cnt; ++i) {
+            const_cast<Fill::ColorStop*>(&colorStops[i])->a = MULTIPLY(colorStops[i].a, opacity);
+        }
+    }
 
     return fill;
 }
