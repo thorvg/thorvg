@@ -293,8 +293,10 @@ bool LottieOffsetModifier::modifyPath(const PathCommand* inCmds, uint32_t inCmds
     outCmds.reserve(inCmdsCnt * 2);
     outPts.reserve(inPtsCnt * (join == StrokeJoin::Round ? 4 : 2));
 
+    Array<Bezier> stack{5};
     State state;
     auto offset = clockwise ? this->offset : -this->offset;
+    auto threshold = 1.0f / fabsf(offset) + 1.0f;
 
     for (uint32_t iCmd = 0, iPt = 0; iCmd < inCmdsCnt; ++iCmd) {
         if (inCmds[iCmd] == PathCommand::MoveTo) {
@@ -311,26 +313,40 @@ bool LottieOffsetModifier::modifyPath(const PathCommand* inCmds, uint32_t inCmds
                 continue;
             }
 
-            auto line1 = _offset(inPts[iPt - 1], inPts[iPt], offset);
-            auto line2 = _offset(inPts[iPt], inPts[iPt + 1], offset);
-            auto line3 = _offset(inPts[iPt + 1], inPts[iPt + 2], offset);
+            stack.push({inPts[iPt - 1], inPts[iPt], inPts[iPt + 1], inPts[iPt + 2]});
+            while (!stack.empty()) {
+                auto& bezier = stack.last();
+                auto len = tvg::length(bezier.start - bezier.ctrl1) + tvg::length(bezier.ctrl1 - bezier.ctrl2) + tvg::length(bezier.ctrl2 - bezier.end);
 
-            if (state.moveto) {
-                outCmds.push(PathCommand::MoveTo);
-                state.movetoOutIndex = outPts.count;
-                outPts.push(line1.pt1);
-                state.firstLine = line1;
-                state.moveto = false;
+                if (len >  threshold * bezier.length()) {
+                    Bezier next;
+                    bezier.split(0.5f, next);
+                    stack.push(next);
+                    continue;
+                }
+                stack.pop();
+
+                auto line1 = _offset(bezier.start, bezier.ctrl1, offset);
+                auto line2 = _offset(bezier.ctrl1, bezier.ctrl2, offset);
+                auto line3 = _offset(bezier.ctrl2, bezier.end, offset);
+
+                if (state.moveto) {
+                    outCmds.push(PathCommand::MoveTo);
+                    state.movetoOutIndex = outPts.count;
+                    outPts.push(line1.pt1);
+                    state.firstLine = line1;
+                    state.moveto = false;
+                }
+
+                bool inside{};
+                Point intersect{};
+                _intersect(line1, line2, intersect, inside);
+                outPts.push(intersect);
+                _intersect(line2, line3, intersect, inside);
+                outPts.push(intersect);
+                outPts.push(line3.pt2);
+                outCmds.push(PathCommand::CubicTo);
             }
-
-            bool inside{};
-            Point intersect{};
-            _intersect(line1, line2, intersect, inside);
-            outPts.push(intersect);
-            _intersect(line2, line3, intersect, inside);
-            outPts.push(intersect);
-            outPts.push(line3.pt2);
-            outCmds.push(PathCommand::CubicTo);
 
             iPt += 3;
         }
