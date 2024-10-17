@@ -115,8 +115,8 @@ private:
     StrokeCap mStrokeCap = StrokeCap::Square;
     StrokeJoin mStrokeJoin = StrokeJoin::Bevel;
     State mStrokeState = {};
-    Point mLeftTop;
-    Point mRightBottom;
+    Point mLeftTop = {0.0f, 0.0f};
+    Point mRightBottom = {0.0f, 0.0f};
 };
 
 class DashStroke
@@ -176,8 +176,8 @@ private:
 
     Array<float>* mResPoints;
     Array<uint32_t>* mResIndices;
-    Point mLeftTop;
-    Point mRightBottom;
+    Point mLeftTop = {0.0f, 0.0f};
+    Point mRightBottom = {0.0f, 0.0f};
 };
 
 }  // namespace tvg
