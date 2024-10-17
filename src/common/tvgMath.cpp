@@ -222,6 +222,15 @@ Point normal(const Point& p1, const Point& p2)
 }
 
 
+void normalize(Point& pt)
+{
+    if (zero(pt)) return;       //prevent zero division
+    auto ilength = 1.0f / sqrtf((pt.x * pt.x) + (pt.y * pt.y));
+    pt.x *= ilength;
+    pt.y *= ilength;
+}
+
+
 float Line::length() const
 {
     return _lineLength(pt1, pt2);

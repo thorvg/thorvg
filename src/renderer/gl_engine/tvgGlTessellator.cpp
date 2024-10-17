@@ -32,10 +32,6 @@
 namespace tvg
 {
 
-namespace detail
-{
-
-
 // common obj for memory control
 struct Object
 {
@@ -49,7 +45,6 @@ public:
     ~ObjectHeap()
     {
         auto count = pObjs.count;
-
         auto first = pObjs.data;
 
         for (uint32_t i = 0; i < count; ++i) {
@@ -60,7 +55,6 @@ public:
     template<class T, class... Args>
     T *allocate(Args &&...args)
     {
-
         pObjs.push(new T(std::forward<Args>(args)...));
         return static_cast<T *>(pObjs.data[pObjs.count - 1]);
     }
@@ -104,12 +98,13 @@ struct Vertex : public Object
     // right enclosing edge during sweep line
     Edge *right = nullptr;
 
-    GlPoint point = {};
+    Point point = {0.0f, 0.0f};
 
     Vertex() = default;
 
-    Vertex(const GlPoint &p) : point(ceilf(p.x * 100.f) / 100.f, ceilf(p.y * 100.f) / 100.f)
+    Vertex(const Point &p)
     {
+        point = {ceilf(p.x * 100.f) / 100.f, ceilf(p.y * 100.f) / 100.f};
     }
 
     ~Vertex() override = default;
@@ -132,12 +127,12 @@ struct VertexCompare
         return compare(v1->point, v2->point);
     }
 
-    static bool compare(const GlPoint &a, const GlPoint &b);
+    static bool compare(const Point &a, const Point &b);
 };
 
 
 // double linked list for all vertex in shape
-struct VertexList : public LinkedList<detail::Vertex>
+struct VertexList : public LinkedList<Vertex>
 {
     VertexList() = default;
     VertexList(Vertex *head, Vertex *tail) : LinkedList(head, tail)
@@ -146,11 +141,9 @@ struct VertexList : public LinkedList<detail::Vertex>
 
     void insert(Vertex *v, Vertex *prev, Vertex *next);
     void remove(Vertex *v);
-
     void append(VertexList const &other);
     void append(Vertex *v);
     void prepend(Vertex *v);
-
     void close();
 };
 
@@ -160,29 +153,25 @@ struct Edge : public Object
     Vertex *top = nullptr;
     Vertex *bottom = nullptr;
 
-    Edge *above_prev = nullptr;
-    Edge *above_next = nullptr;
-    Edge *below_prev = nullptr;
-    Edge *below_next = nullptr;
+    Edge *abovePrev = nullptr;
+    Edge *aboveNext = nullptr;
+    Edge *belowPrev = nullptr;
+    Edge *belowNext = nullptr;
 
-    // left edge in active list during sweep line
-    Edge *left = nullptr;
-    // right edge in active list during sweep line
-    Edge *right = nullptr;
+    Edge *left = nullptr;     // left edge in active list during sweep line
+    Edge *right = nullptr;    // right edge in active list during sweep line
 
     // edge list in polygon
-    Edge *right_poly_prev = nullptr;
-    Edge *right_poly_next = nullptr;
-    Edge *left_poly_prev = nullptr;
-    Edge *left_poly_next = nullptr;
+    Edge *rightPolyPrev = nullptr;
+    Edge *rightPolyNext = nullptr;
+    Edge *leftPolyPrev = nullptr;
+    Edge *leftPolyNext = nullptr;
 
-    // left polygon during sweep line
-    Polygon *left_poly = nullptr;
-    // right polygon during sweep line
-    Polygon *right_poly = nullptr;
+    Polygon *leftPoly = nullptr;      // left polygon during sweep line
+    Polygon *rightPoly = nullptr;     // right polygon during sweep line
 
-    bool used_in_left = false;
-    bool used_in_right = false;
+    bool usedInLeft = false;
+    bool usedInRight = false;
 
     int32_t winding = 1;
 
@@ -193,27 +182,23 @@ struct Edge : public Object
     // https://stackoverflow.com/questions/1560492/how-to-tell-whether-a-point-is-to-the-right-or-left-side-of-a-line
     // return > 0 means point in left
     // return < 0 means point in right
-    double sideDist(const GlPoint &p);
+    double sideDist(const Point& p);
 
-    bool isRightOf(const GlPoint &p)
+    bool isRightOf(const Point& p)
     {
         return sideDist(p) < 0.0;
     }
 
-    bool isLeftOf(const GlPoint &p)
+    bool isLeftOf(const Point& p)
     {
         return sideDist(p) > 0.0;
     }
 
     // https://en.wikipedia.org/wiki/Line%E2%80%93line_intersection
-    bool intersect(Edge *other, GlPoint *point);
-
+    bool intersect(Edge *other, Point* point);
     void recompute();
-
     void setBottom(Vertex *v);
-
     void setTop(Vertex *v);
-
     void disconnect();
 
 private:
@@ -309,23 +294,23 @@ void Vertex::insertAbove(Edge *e)
         return;
     }
 
-    if (LinkedList<Edge>::contains<&Edge::above_next>(e, &this->edge_above.head, &this->edge_above.tail)) {
+    if (LinkedList<Edge>::contains<&Edge::aboveNext>(e, &this->edge_above.head, &this->edge_above.tail)) {
         return;
     }
 
-    Edge *above_prev = nullptr;
-    Edge *above_next = nullptr;
+    Edge *abovePrev = nullptr;
+    Edge *aboveNext = nullptr;
 
     // find insertion point
-    for (above_next = this->edge_above.head; above_next; above_next = above_next->above_next) {
-        if (above_next->isRightOf(e->top->point)) {
+    for (aboveNext = this->edge_above.head; aboveNext; aboveNext = aboveNext->aboveNext) {
+        if (aboveNext->isRightOf(e->top->point)) {
             break;
         }
 
-        above_prev = above_next;
+        abovePrev = aboveNext;
     }
 
-    LinkedList<Edge>::insert<&Edge::above_prev, &Edge::above_next>(e, above_prev, above_next, &this->edge_above.head,
+    LinkedList<Edge>::insert<&Edge::abovePrev, &Edge::aboveNext>(e, abovePrev, aboveNext, &this->edge_above.head,
                                                                    &this->edge_above.tail);
 }
 
@@ -337,40 +322,44 @@ void Vertex::insertBelow(Edge *e)
         return;
     }
 
-    if (LinkedList<Edge>::contains<&Edge::below_next>(e, &this->edge_below.head, &this->edge_below.tail)) {
+    if (LinkedList<Edge>::contains<&Edge::belowNext>(e, &this->edge_below.head, &this->edge_below.tail)) {
         return;
     }
 
-    Edge *below_prev = nullptr;
-    Edge *below_next = nullptr;
+    Edge *belowPrev = nullptr;
+    Edge *belowNext = nullptr;
 
     // find insertion point
-    for (below_next = this->edge_below.head; below_next; below_next = below_next->below_next) {
-        if (below_next->isRightOf(e->bottom->point)) {
+    for (belowNext = this->edge_below.head; belowNext; belowNext = belowNext->belowNext) {
+        if (belowNext->isRightOf(e->bottom->point)) {
             break;
         }
 
-        below_prev = below_next;
+        belowPrev = belowNext;
     }
 
-    LinkedList<Edge>::insert<&Edge::below_prev, &Edge::below_next>(e, below_prev, below_next, &this->edge_below.head,
+    LinkedList<Edge>::insert<&Edge::belowPrev, &Edge::belowNext>(e, belowPrev, belowNext, &this->edge_below.head,
                                                                    &this->edge_below.tail);
 }
 
-bool VertexCompare::compare(const GlPoint &a, const GlPoint &b)
+
+bool VertexCompare::compare(const Point& a, const Point& b)
 {
     return a.y < b.y || (a.y == b.y && a.x < b.x);
 }
 
+
 void VertexList::insert(Vertex *v, Vertex *prev, Vertex *next)
 {
-    LinkedList<detail::Vertex>::insert<&Vertex::prev, &Vertex::next>(v, prev, next, &head, &tail);
+    LinkedList<Vertex>::insert<&Vertex::prev, &Vertex::next>(v, prev, next, &head, &tail);
 }
+
 
 void VertexList::remove(Vertex *v)
 {
-    LinkedList<detail::Vertex>::remove<&Vertex::prev, &Vertex::next>(v, &head, &tail);
+    LinkedList<Vertex>::remove<&Vertex::prev, &Vertex::next>(v, &head, &tail);
 }
+
 
 void VertexList::append(VertexList const &other)
 {
@@ -388,15 +377,18 @@ void VertexList::append(VertexList const &other)
     tail = other.tail;
 }
 
+
 void VertexList::append(Vertex *v)
 {
     insert(v, tail, nullptr);
 }
 
+
 void VertexList::prepend(Vertex *v)
 {
     insert(v, nullptr, head);
 }
+
 
 void VertexList::close()
 {
@@ -405,6 +397,7 @@ void VertexList::close()
         head->prev = tail;
     }
 }
+
 
 Edge::Edge(Vertex *top, Vertex *bottom, int32_t winding)
     : top(top),
@@ -416,17 +409,16 @@ Edge::Edge(Vertex *top, Vertex *bottom, int32_t winding)
 {
 }
 
-double Edge::sideDist(const GlPoint &p)
+
+double Edge::sideDist(const Point& p)
 {
     return le_a * p.x + le_b * p.y + le_c;
 }
 
-bool Edge::intersect(Edge *other, GlPoint *point)
+
+bool Edge::intersect(Edge *other, Point* point)
 {
-    if (this->top == other->top || this->bottom == other->bottom || this->top == other->bottom ||
-        this->bottom == other->top) {
-        return false;
-    }
+    if (top == other->top || bottom == other->bottom || top == other->bottom || bottom == other->top) return false;
 
     // check if two aabb bounds is intersect
     if (std::min(top->point.x, bottom->point.x) > std::max(other->top->point.x, other->bottom->point.x) ||
@@ -436,50 +428,29 @@ bool Edge::intersect(Edge *other, GlPoint *point)
         return false;
     }
 
-    double denom = le_a * other->le_b - le_b * other->le_a;
+    auto denom = le_a * other->le_b - le_b * other->le_a;
+    if (tvg::zero(denom)) return false;
 
-    if (denom == 0.0) {
-        return false;
-    }
+    auto dx = static_cast<double>(other->top->point.x) - top->point.x;
+    auto dy = static_cast<double>(other->top->point.y) - top->point.y;
+    auto s_number = dy * other->le_b + dx * other->le_a;
+    auto t_number = dy * le_b + dx * le_a;
 
-    double dx = static_cast<double>(other->top->point.x) - top->point.x;
-    double dy = static_cast<double>(other->top->point.y) - top->point.y;
+    if (denom > 0.0 ? (s_number < 0.0 || s_number > denom || t_number < 0.0 || t_number > denom) : (s_number > 0.0 || s_number < denom || t_number > 0.0 || t_number < denom)) return false;
 
-    double s_number = dy * other->le_b + dx * other->le_a;
-    double t_number = dy * le_b + dx * le_a;
-
-    if (denom > 0.0 ? (s_number < 0.0 || s_number > denom || t_number < 0.0 || t_number > denom)
-                    : (s_number > 0.0 || s_number < denom || t_number > 0.0 || t_number < denom)) {
-        return false;
-    }
-
-    double scale = 1.0 / denom;
-
+    auto scale = 1.0 / denom;
     point->x = nearbyintf(static_cast<float>(top->point.x - s_number * le_b * scale));
     point->y = nearbyintf(static_cast<float>(top->point.y + s_number * le_a * scale));
 
-    if (std::isinf(point->x) || std::isinf(point->y)) {
-        return false;
-    }
-
-    if (std::abs(point->x - top->point.x) < 1e-6 && std::abs(point->y - top->point.y) < 1e-6) {
-        return false;
-    }
-
-    if (std::abs(point->x - bottom->point.x) < 1e-6 && std::abs(point->y - bottom->point.y) < 1e-6) {
-        return false;
-    }
-
-    if (std::abs(point->x - other->top->point.x) < 1e-6 && std::abs(point->y - other->top->point.y) < 1e-6) {
-        return false;
-    }
-
-    if (std::abs(point->x - other->bottom->point.x) < 1e-6 && std::abs(point->y - other->bottom->point.y) < 1e-6) {
-        return false;
-    }
+    if (std::isinf(point->x) || std::isinf(point->y)) return false;
+    if (std::abs(point->x - top->point.x) < 1e-6 && std::abs(point->y - top->point.y) < 1e-6) return false;
+    if (std::abs(point->x - bottom->point.x) < 1e-6 && std::abs(point->y - bottom->point.y) < 1e-6) return false;
+    if (std::abs(point->x - other->top->point.x) < 1e-6 && std::abs(point->y - other->top->point.y) < 1e-6) return false;
+    if (std::abs(point->x - other->bottom->point.x) < 1e-6 && std::abs(point->y - other->bottom->point.y) < 1e-6) return false;
 
     return true;
 }
+
 
 void Edge::recompute()
 {
@@ -488,10 +459,11 @@ void Edge::recompute()
     le_c = static_cast<double>(top->point.y) * bottom->point.x - static_cast<double>(top->point.x) * bottom->point.y;
 }
 
+
 void Edge::setBottom(Vertex *v)
 {
     // remove this edge from bottom's above list
-    LinkedList<Edge>::remove<&Edge::above_prev, &Edge::above_next>(this, &bottom->edge_above.head,
+    LinkedList<Edge>::remove<&Edge::abovePrev, &Edge::aboveNext>(this, &bottom->edge_above.head,
                                                                    &bottom->edge_above.tail);
     // update bottom vertex
     bottom = v;
@@ -501,10 +473,11 @@ void Edge::setBottom(Vertex *v)
     bottom->insertAbove(this);
 }
 
+
 void Edge::setTop(Vertex *v)
 {
     // remove this edge from top's below list
-    LinkedList<Edge>::remove<&Edge::below_prev, &Edge::below_next>(this, &top->edge_below.head, &top->edge_below.tail);
+    LinkedList<Edge>::remove<&Edge::belowPrev, &Edge::belowNext>(this, &top->edge_below.head, &top->edge_below.tail);
     // update top vertex
     top = v;
     // recompute line equation
@@ -513,23 +486,25 @@ void Edge::setTop(Vertex *v)
     top->insertBelow(this);
 }
 
+
 static void remove_edge_above(Edge *edge)
 {
-    LinkedList<Edge>::remove<&Edge::above_prev, &Edge::above_next>(edge, &edge->bottom->edge_above.head,
-                                                                   &edge->bottom->edge_above.tail);
+    LinkedList<Edge>::remove<&Edge::abovePrev, &Edge::aboveNext>(edge, &edge->bottom->edge_above.head, &edge->bottom->edge_above.tail);
 }
+
 
 static void remove_edge_below(Edge *edge)
 {
-    LinkedList<Edge>::remove<&Edge::below_prev, &Edge::below_next>(edge, &edge->top->edge_below.head,
-                                                                   &edge->top->edge_below.tail);
+    LinkedList<Edge>::remove<&Edge::belowPrev, &Edge::belowNext>(edge, &edge->top->edge_below.head, &edge->top->edge_below.tail);
 }
+
 
 void Edge::disconnect()
 {
     remove_edge_above(this);
     remove_edge_below(this);
 }
+
 
 void ActiveEdgeList::insert(Edge *e, Edge *prev, Edge *next)
 {
@@ -539,6 +514,7 @@ void ActiveEdgeList::insert(Edge *e, Edge *prev, Edge *next)
     }
 }
 
+
 void ActiveEdgeList::insert(Edge *e, Edge *prev)
 {
     auto next = prev ? prev->right : head;
@@ -546,42 +522,43 @@ void ActiveEdgeList::insert(Edge *e, Edge *prev)
     insert(e, prev, next);
 }
 
+
 void ActiveEdgeList::append(Edge *e)
 {
     insert(e, tail, nullptr);
 }
+
 
 void ActiveEdgeList::remove(Edge *e)
 {
     LinkedList<Edge>::remove<&Edge::left, &Edge::right>(e, &head, &tail);
 }
 
+
 bool ActiveEdgeList::contains(Edge *edge)
 {
     return edge->left || edge->right || head == edge;
 }
 
+
 void ActiveEdgeList::rewind(Vertex **current, Vertex *dst)
 {
-    if (!current || *current == dst || VertexCompare::compare((*current)->point, dst->point)) {
-        return;
-    }
+    if (!current || *current == dst || VertexCompare::compare((*current)->point, dst->point)) return;
 
-    Vertex *v = *current;
+    auto v = *current;
 
     while (v != dst) {
         v = v->prev;
 
-        for (auto e = v->edge_below.head; e; e = e->below_next) {
+        for (auto e = v->edge_below.head; e; e = e->belowNext) {
             this->remove(e);
         }
 
         auto left = v->left;
 
-        for (auto e = v->edge_above.head; e; e = e->above_next) {
+        for (auto e = v->edge_above.head; e; e = e->aboveNext) {
             this->insert(e, left);
             left = e;
-
             auto top = e->top;
             if (VertexCompare::compare(top->point, dst->point) &&
                 ((top->left && !top->left->isLeftOf(e->top->point)) ||
@@ -590,9 +567,9 @@ void ActiveEdgeList::rewind(Vertex **current, Vertex *dst)
             }
         }
     }
-
     *current = v;
 }
+
 
 void ActiveEdgeList::findEnclosing(Vertex *v, Edge **left, Edge **right)
 {
@@ -616,6 +593,7 @@ void ActiveEdgeList::findEnclosing(Vertex *v, Edge **left, Edge **right)
     *left = prev;
     *right = next;
 }
+
 
 static bool _validEdgePair(Edge* left, Edge* right) {
     if (!left || !right) {
@@ -659,6 +637,7 @@ static bool _validEdgePair(Edge* left, Edge* right) {
     return true;
 }
 
+
 bool ActiveEdgeList::valid()
 {
     auto left = head;
@@ -679,6 +658,7 @@ bool ActiveEdgeList::valid()
     return true;
 }
 
+
 Polygon *Polygon::addEdge(Edge *e, Side side, ObjectHeap *heap)
 {
     auto p_parent = this->parent;
@@ -686,11 +666,11 @@ Polygon *Polygon::addEdge(Edge *e, Side side, ObjectHeap *heap)
     auto poly = this;
 
     if (side == Side::kRight) {
-        if (e->used_in_right) {  // already in this polygon
+        if (e->usedInRight) {  // already in this polygon
             return this;
         }
     } else {
-        if (e->used_in_left) {  // already in this polygon
+        if (e->usedInLeft) {  // already in this polygon
             return this;
         }
     }
@@ -729,6 +709,7 @@ Polygon *Polygon::addEdge(Edge *e, Side side, ObjectHeap *heap)
     return poly;
 }
 
+
 Vertex *Polygon::lastVertex() const
 {
     if (tail) {
@@ -738,16 +719,16 @@ Vertex *Polygon::lastVertex() const
     return first_vert;
 }
 
+
 void MonotonePolygon::addEdge(Edge *edge)
 {
     if (this->side == Side::kRight) {
-        LinkedList<Edge>::insert<&Edge::right_poly_prev, &Edge::right_poly_next>(edge, this->last, nullptr,
-                                                                                 &this->first, &this->last);
+        LinkedList<Edge>::insert<&Edge::rightPolyPrev, &Edge::rightPolyNext>(edge, this->last, nullptr, &this->first, &this->last);
     } else {
-        LinkedList<Edge>::insert<&Edge::left_poly_prev, &Edge::left_poly_next>(edge, last, nullptr, &this->first,
-                                                                               &this->last);
+        LinkedList<Edge>::insert<&Edge::leftPolyPrev, &Edge::leftPolyNext>(edge, last, nullptr, &this->first, &this->last);
     }
 }
+
 
 static bool _bezIsFlatten(const Bezier& bz)
 {
@@ -764,6 +745,7 @@ static bool _bezIsFlatten(const Bezier& bz)
     return false;
 }
 
+
 static int32_t _bezierCurveCount(const Bezier &curve)
 {
 
@@ -779,42 +761,42 @@ static int32_t _bezierCurveCount(const Bezier &curve)
     return _bezierCurveCount(left) + _bezierCurveCount(right);
 }
 
-static Bezier _bezFromArc(const GlPoint& start, const GlPoint& end, float radius) {
+
+static Bezier _bezFromArc(const Point& start, const Point& end, float radius)
+{
     // Calculate the angle between the start and end points
-    float angle = tvg::atan2(end.y - start.y, end.x - start.x);
+    auto angle = tvg::atan2(end.y - start.y, end.x - start.x);
 
     // Calculate the control points of the cubic bezier curve
-    float c = radius * 0.552284749831;  // c = radius * (4/3) * tan(pi/8)
+    auto c = radius * 0.552284749831f;  // c = radius * (4/3) * tan(pi/8)
 
     Bezier bz;
-
-    bz.start = Point{start.x, start.y};
-    bz.ctrl1 = Point{start.x + radius * cos(angle), start.y + radius * sin(angle)};
-    bz.ctrl2 = Point{end.x - c * cos(angle), end.y - c * sin(angle)};
-    bz.end = Point{end.x, end.y};
+    bz.start = {start.x, start.y};
+    bz.ctrl1 = {start.x + radius * cos(angle), start.y + radius * sin(angle)};
+    bz.ctrl2 = {end.x - c * cosf(angle), end.y - c * sinf(angle)};
+    bz.end = {end.x, end.y};
 
     return bz;
 }
 
-static float _pointLength(const GlPoint& point)
-{
-    return sqrtf((point.x * point.x) + (point.y * point.y));
-}
 
 static Point _upScalePoint(const Point& p)
 {
     return Point{p.x * 1000.f, p.y * 1000.f};
 }
 
+
 static Point _downScalePoint(const Point& p)
 {
     return Point {p.x / 1000.f, p.y / 1000.f};
 }
 
+
 static float _downScaleFloat(float v)
 {
     return v / 1000.f;
 }
+
 
 static uint32_t _pushVertex(Array<float> *array, float x, float y)
 {
@@ -823,6 +805,7 @@ static uint32_t _pushVertex(Array<float> *array, float x, float y)
     return (array->count - 2) / 2;
 }
 
+
 enum class Orientation
 {
     Linear,
@@ -830,53 +813,27 @@ enum class Orientation
     CounterClockwise,
 };
 
-static Orientation _calcOrientation(const GlPoint &p1, const GlPoint &p2, const GlPoint &p3)
-{
-    float val = (p2.x - p1.x) * (p3.y - p1.y) - (p2.y - p1.y) * (p3.x - p1.x);
 
-    if (std::abs(val) < 0.0001f) {
-        return Orientation::Linear;
-    } else {
-        return val > 0 ? Orientation::Clockwise : Orientation::CounterClockwise;
-    }
+static Orientation _calcOrientation(const Point& p1, const Point& p2, const Point& p3)
+{
+    auto val = (p2.x - p1.x) * (p3.y - p1.y) - (p2.y - p1.y) * (p3.x - p1.x);
+    if (std::abs(val) < 0.0001f) return Orientation::Linear;
+    else return val > 0 ? Orientation::Clockwise : Orientation::CounterClockwise;
 }
 
-static Orientation _calcOrientation(const GlPoint &dir1, const GlPoint &dir2)
+
+static Orientation _calcOrientation(const Point& dir1, const Point& dir2)
 {
-    float val = (dir2.x - dir1.x) * (dir1.y + dir2.y);
-
-    if (std::abs(val) < 0.0001f) {
-        return Orientation::Linear;
-    }
-
+    auto val = (dir2.x - dir1.x) * (dir1.y + dir2.y);
+    if (std::abs(val) < 0.0001f) return Orientation::Linear;
     return val > 0 ? Orientation::Clockwise : Orientation::CounterClockwise;
 }
 
-struct Line
-{
-    GlPoint p1;
-    GlPoint p2;
-};
-
-static void _lineSplitAt(const Line &line, float at, Line *left, Line *right)
-{
-    auto len = _pointLength(line.p2 - line.p1);
-    auto dx = ((line.p2.x - line.p1.x) / len) * at;
-    auto dy = ((line.p2.y - line.p1.y) / len) * at;
-
-    left->p1 = line.p1;
-    left->p2 = GlPoint{line.p1.x + dx, line.p1.y + dy};
-
-    right->p1 = left->p2;
-    right->p2 = line.p2;
-}
-
-}  // namespace detail
 
 Tessellator::Tessellator(Array<float> *points, Array<uint32_t> *indices)
-    : pHeap(new detail::ObjectHeap),
+    : pHeap(new ObjectHeap),
       outlines(),
-      pMesh(new detail::VertexList),
+      pMesh(new VertexList),
       pPolygon(),
       resGlPoints(points),
       resIndices(indices)
@@ -885,17 +842,10 @@ Tessellator::Tessellator(Array<float> *points, Array<uint32_t> *indices)
 
 Tessellator::~Tessellator()
 {
-    if (outlines.count) {
-        auto count = outlines.count;
-
-        for (uint32_t i = 0; i < count; i++) {
-            delete outlines[i];
-        }
+    for (uint32_t i = 0; i < outlines.count; i++) {
+        delete outlines[i];
     }
-
-    if (pMesh) {
-        delete pMesh;
-    }
+    delete pMesh;
 }
 
 
@@ -909,25 +859,16 @@ bool Tessellator::tessellate(const RenderShape *rshape, bool antialias)
     this->fillRule = rshape->rule;
 
     this->visitShape(cmds, cmdCnt, pts, ptsCnt);
-
     this->buildMesh();
-
     this->mergeVertices();
 
     if (!this->simplifyMesh()) return false;
-
     if (!this->tessMesh()) return false;
 
     // output triangles
     for (auto poly = this->pPolygon; poly; poly = poly->next) {
-        if (!this->matchFillRule(poly->winding)) {
-            continue;
-        }
-
-        if (poly->count < 3) {
-            continue;
-        }
-
+        if (!this->matchFillRule(poly->winding)) continue;
+        if (poly->count < 3) continue;
         for (auto m = poly->head; m; m = m->next) {
             this->emitPoly(m);
         }
@@ -939,6 +880,7 @@ bool Tessellator::tessellate(const RenderShape *rshape, bool antialias)
 
     return true;
 }
+
 
 void Tessellator::tessellate(const Array<const RenderShape *> &shapes)
 {
@@ -954,28 +896,20 @@ void Tessellator::tessellate(const Array<const RenderShape *> &shapes)
     }
 
     this->buildMesh();
-
     this->mergeVertices();
-
     this->simplifyMesh();
-
     this->tessMesh();
 
     // output triangles
     for (auto poly = this->pPolygon; poly; poly = poly->next) {
-        if (!this->matchFillRule(poly->winding)) {
-            continue;
-        }
-
-        if (poly->count < 3) {
-            continue;
-        }
-
+        if (!this->matchFillRule(poly->winding)) continue;
+        if (poly->count < 3) continue;
         for (auto m = poly->head; m; m = m->next) {
             this->emitPoly(m);
         }
     }
 }
+
 
 void Tessellator::visitShape(const PathCommand *cmds, uint32_t cmd_count, const Point *pts, uint32_t pts_count)
 {
@@ -990,74 +924,66 @@ void Tessellator::visitShape(const PathCommand *cmds, uint32_t cmd_count, const 
     for (uint32_t i = 0; i < cmd_count; i++) {
         switch (cmds[i]) {
             case PathCommand::MoveTo: {
-                outlines.push(new detail::VertexList);
-
+                outlines.push(new VertexList);
                 auto last = outlines.last();
-
-                last->append(pHeap->allocate<detail::Vertex>(detail::_upScalePoint(*pts)));
+                last->append(pHeap->allocate<Vertex>(_upScalePoint(*pts)));
                 firstPt = pts;
                 pts++;
-            } break;
+                break;
+            }
             case PathCommand::LineTo: {
                 auto last = outlines.last();
-                last->append(pHeap->allocate<detail::Vertex>(detail::_upScalePoint(*pts)));
+                last->append(pHeap->allocate<Vertex>(_upScalePoint(*pts)));
                 pts++;
-            } break;
+                break;
+            }
             case PathCommand::CubicTo: {
                 // bezier curve needs to calculate how many segment to split
                 // for now just break curve into 16 segments for convenient
-
                 auto  last = outlines.last();
-                Point start = detail::_downScalePoint(Point{last->tail->point.x, last->tail->point.y});
+                Point start = _downScalePoint(Point{last->tail->point.x, last->tail->point.y});
                 Point c1 = pts[0];
                 Point c2 = pts[1];
                 Point end = pts[2];
-
                 Bezier curve{start, c1, c2, end};
 
-                auto stepCount = detail::_bezierCurveCount(curve);
-
-                if (stepCount <= 1) {
-                    stepCount = 2;
-                }
-
-                float step = 1.f / stepCount;
+                auto stepCount = _bezierCurveCount(curve);
+                if (stepCount <= 1) stepCount = 2;
+                auto step = 1.f / stepCount;
 
                 for (uint32_t s = 1; s < static_cast<uint32_t>(stepCount); s++) {
-                    last->append(pHeap->allocate<detail::Vertex>(detail::_upScalePoint(curve.at(step * s))));
+                    last->append(pHeap->allocate<Vertex>(_upScalePoint(curve.at(step * s))));
                 }
 
-                last->append(pHeap->allocate<detail::Vertex>(detail::_upScalePoint(end)));
-
+                last->append(pHeap->allocate<Vertex>(_upScalePoint(end)));
                 pts += 3;
-            } break;
+                break;
+            }
             case PathCommand::Close: {
                 if (firstPt && outlines.count > 0) {
                     auto last = outlines.last();
-
-                    last->append(pHeap->allocate<detail::Vertex>(detail::_upScalePoint(*firstPt)));
+                    last->append(pHeap->allocate<Vertex>(_upScalePoint(*firstPt)));
                     firstPt = nullptr;
                 }
-            }
-            default:
                 break;
+            }
+            default: break;
         }
     }
 }
 
+
 void Tessellator::buildMesh()
 {
-    Array<detail::Vertex *> temp{};
+    Array<Vertex *> temp{};
 
     for (uint32_t i = 0; i < outlines.count; i++) {
         auto list = outlines[i];
-
         auto prev = list->tail;
         auto v = list->head;
 
         while (v) {
             auto next = v->next;
-
             auto edge = this->makeEdge(prev, v);
 
             if (edge) {
@@ -1072,24 +998,23 @@ void Tessellator::buildMesh()
         }
     }
 
-    temp.sort<detail::VertexCompare>();
+    temp.sort<VertexCompare>();
 
     for (uint32_t i = 0; i < temp.count; i++) {
         this->pMesh->append(temp[i]);
     }
 }
 
+
 void Tessellator::mergeVertices()
 {
-    if (!pMesh->head) {
-        return;
-    }
+    if (!pMesh->head) return;
 
     for (auto v = pMesh->head->next; v;) {
         auto next = v->next;
 
-        if (detail::VertexCompare::compare(v->point, v->prev->point) || detail::_pointLength(v->point - v->prev->point) <= 0.025f) {
-            // already sorted, this means these two points is same
+        // already sorted, this means these two points is same
+        if (VertexCompare::compare(v->point, v->prev->point) || length(v->point - v->prev->point) <= 0.025f) {
             v->point = v->prev->point;
         }
 
@@ -1098,17 +1023,15 @@ void Tessellator::mergeVertices()
             while (auto e = v->edge_above.head) {
                 e->setBottom(v->prev);
             }
-
             while (auto e = v->edge_below.head) {
                 e->setTop(v->prev);
             }
-
             pMesh->remove(v);
         }
-
         v = next;
     }
 }
+
 
 bool Tessellator::simplifyMesh()
 {
@@ -1118,17 +1041,15 @@ bool Tessellator::simplifyMesh()
     /// all intersections edge and break them into flat segments by adding
     /// intersection point
 
-    detail::ActiveEdgeList ael{};
+    ActiveEdgeList ael{};
 
     for (auto v = pMesh->head; v; v = v->next) {
-        if (!v->isConnected()) {
-            continue;
-        }
+        if (!v->isConnected()) continue;
 
-        detail::Edge *left_enclosing = nullptr;
-        detail::Edge *right_enclosing = nullptr;
+        Edge *left_enclosing = nullptr;
+        Edge *right_enclosing = nullptr;
+        auto intersected = false;
 
-        bool intersected = false;
         do {
             intersected = false;
 
@@ -1137,13 +1058,11 @@ bool Tessellator::simplifyMesh()
             v->left = left_enclosing;
             v->right = right_enclosing;
 
-            if (!ael.valid()) {
-                // If AEL is not valid, means we meet the problem caused by floating point precision
-                return false;
-            }
+            // If AEL is not valid, means we meet the problem caused by floating point precision
+            if (!ael.valid()) return false;
 
             if (v->edge_below.head) {
-                for (auto e = v->edge_below.head; e; e = e->below_next) {
+                for (auto e = v->edge_below.head; e; e = e->belowNext) {
                     // check current edge is intersected by left or right neighbor edges
                     if (checkIntersection(left_enclosing, e, &ael, &v) ||
                         checkIntersection(e, right_enclosing, &ael, &v)) {
@@ -1160,27 +1079,25 @@ bool Tessellator::simplifyMesh()
             }
         } while (intersected);
 
-        if (!ael.valid()) {
-            // If AEL is not valid, means we meet the problem caused by floating point precision
-            return false;
-        }
+        // If AEL is not valid, means we meet the problem caused by floating point precision
+        if (!ael.valid()) return false;
 
         // we are done for all edge end with current point
-        for (auto e = v->edge_above.head; e; e = e->above_next) {
+        for (auto e = v->edge_above.head; e; e = e->aboveNext) {
             ael.remove(e);
         }
 
         auto left = left_enclosing;
 
         // insert all edge start from current point into ael
-        for (auto e = v->edge_below.head; e; e = e->below_next) {
+        for (auto e = v->edge_below.head; e; e = e->belowNext) {
             ael.insert(e, left);
             left = e;
         }
     }
-
     return true;
 }
+
 
 bool Tessellator::tessMesh()
 {
@@ -1188,17 +1105,14 @@ bool Tessellator::tessMesh()
     /// but during the process, we calculate the winding number of left and right
     /// polygon and add edge to them
 
-    detail::ActiveEdgeList ael{};
+    ActiveEdgeList ael{};
 
     for (auto v = pMesh->head; v; v = v->next) {
-        if (!v->isConnected()) {
-            continue;
-        }
-
+        if (!v->isConnected()) continue;
         if (!ael.valid()) return false;
 
-        detail::Edge *left_enclosing = nullptr;
-        detail::Edge *right_enclosing = nullptr;
+        Edge *left_enclosing = nullptr;
+        Edge *right_enclosing = nullptr;
 
         ael.findEnclosing(v, &left_enclosing, &right_enclosing);
 
@@ -1206,52 +1120,52 @@ bool Tessellator::tessMesh()
          *
          *                   ...
          *                      \
-         *      left_poly      head
+         *      leftPoly      head
          *                          v
          *
          */
-        detail::Polygon *left_poly = nullptr;
+        Polygon *leftPoly = nullptr;
         /**
          *
          *              ...
          *         /
-         *       tail     right_poly
+         *       tail     rightPoly
          *     v
          *
          */
-        detail::Polygon *right_poly = nullptr;
+        Polygon *rightPoly = nullptr;
 
         if (v->edge_above.head) {
-            left_poly = v->edge_above.head->left_poly;
-            right_poly = v->edge_above.tail->right_poly;
+            leftPoly = v->edge_above.head->leftPoly;
+            rightPoly = v->edge_above.tail->rightPoly;
         } else {
-            left_poly = left_enclosing ? left_enclosing->right_poly : nullptr;
-            right_poly = right_enclosing ? right_enclosing->left_poly : nullptr;
+            leftPoly = left_enclosing ? left_enclosing->rightPoly : nullptr;
+            rightPoly = right_enclosing ? right_enclosing->leftPoly : nullptr;
         }
 
         if (v->edge_above.head) {
             // add above edge first
-            if (left_poly) {
-                left_poly = left_poly->addEdge(v->edge_above.head, detail::Side::kRight, pHeap.get());
+            if (leftPoly) {
+                leftPoly = leftPoly->addEdge(v->edge_above.head, Side::kRight, pHeap.get());
             }
 
-            if (right_poly) {
-                right_poly = right_poly->addEdge(v->edge_above.tail, detail::Side::kLeft, pHeap.get());
+            if (rightPoly) {
+                rightPoly = rightPoly->addEdge(v->edge_above.tail, Side::kLeft, pHeap.get());
             }
 
             // walk through all edges end with this vertex
-            for (auto e = v->edge_above.head; e != v->edge_above.tail; e = e->above_next) {
-                auto right_edge = e->above_next;
+            for (auto e = v->edge_above.head; e != v->edge_above.tail; e = e->aboveNext) {
+                auto right_edge = e->aboveNext;
 
                 ael.remove(e);
 
-                if (e->right_poly) {
-                    e->right_poly->addEdge(right_edge, detail::Side::kLeft, pHeap.get());
+                if (e->rightPoly) {
+                    e->rightPoly->addEdge(right_edge, Side::kLeft, pHeap.get());
                 }
 
                 // this means there is a new polygon between e and right_edge
-                if (right_edge->left_poly && right_edge->left_poly != e->right_poly) {
-                    right_edge->left_poly->addEdge(e, detail::Side::kRight, pHeap.get());
+                if (right_edge->leftPoly && right_edge->leftPoly != e->rightPoly) {
+                    right_edge->leftPoly->addEdge(e, Side::kRight, pHeap.get());
                 }
             }
 
@@ -1259,13 +1173,13 @@ bool Tessellator::tessMesh()
 
             // there is no edge begin with this vertex
             if (!v->edge_below.head) {
-                if (left_poly && right_poly && left_poly != right_poly) {
+                if (leftPoly && rightPoly && leftPoly != rightPoly) {
                     // polygon not closed at this point
                     // need to mark these two polygon each other, because they will be
                     // linked by a cross edge later
 
-                    left_poly->parent = right_poly;
-                    right_poly->parent = left_poly;
+                    leftPoly->parent = rightPoly;
+                    rightPoly->parent = leftPoly;
                 }
             }
         }
@@ -1273,63 +1187,63 @@ bool Tessellator::tessMesh()
         if (v->edge_below.head) {
             if (!v->edge_above.head) {
                 // there is no edge end with this vertex
-                if (left_poly && right_poly) {
+                if (leftPoly && rightPoly) {
 
-                    if (left_poly == right_poly) {
+                    if (leftPoly == rightPoly) {
                         /**
-                         *   left_poly      right_poly
+                         *   leftPoly      rightPoly
                          *
                          *              v
                          *             / \
                          *            /   \
                          *             ...
                          */
-                        if (left_poly->tail && left_poly->tail->side == detail::Side::kLeft) {
-                            left_poly = this->makePoly(left_poly->lastVertex(), left_poly->winding);
+                        if (leftPoly->tail && leftPoly->tail->side == Side::kLeft) {
+                            leftPoly = this->makePoly(leftPoly->lastVertex(), leftPoly->winding);
 
-                            left_enclosing->right_poly = left_poly;
+                            left_enclosing->rightPoly = leftPoly;
                         } else {
-                            right_poly = this->makePoly(right_poly->lastVertex(), right_poly->winding);
+                            rightPoly = this->makePoly(rightPoly->lastVertex(), rightPoly->winding);
 
-                            right_enclosing->left_poly = right_poly;
+                            right_enclosing->leftPoly = rightPoly;
                         }
                     }
 
                     // need to link this vertex to above polygon
-                    auto join = pHeap->allocate<detail::Edge>(left_poly->lastVertex(), v, 1);
+                    auto join = pHeap->allocate<Edge>(leftPoly->lastVertex(), v, 1);
 
-                    left_poly = left_poly->addEdge(join, detail::Side::kRight, pHeap.get());
-                    right_poly = right_poly->addEdge(join, detail::Side::kLeft, pHeap.get());
+                    leftPoly = leftPoly->addEdge(join, Side::kRight, pHeap.get());
+                    rightPoly = rightPoly->addEdge(join, Side::kLeft, pHeap.get());
                 }
             }
 
             auto left_edge = v->edge_below.head;
-            left_edge->left_poly = left_poly;
+            left_edge->leftPoly = leftPoly;
 
             ael.insert(left_edge, left_enclosing);
 
-            for (auto right_edge = left_edge->below_next; right_edge; right_edge = right_edge->below_next) {
+            for (auto right_edge = left_edge->belowNext; right_edge; right_edge = right_edge->belowNext) {
                 ael.insert(right_edge, left_edge);
 
-                int32_t winding = left_edge->left_poly ? left_edge->left_poly->winding : 0;
+                int32_t winding = left_edge->leftPoly ? left_edge->leftPoly->winding : 0;
 
                 winding += left_edge->winding;
 
                 if (winding != 0) {
                     auto poly = this->makePoly(v, winding);
 
-                    left_edge->right_poly = right_edge->left_poly = poly;
+                    left_edge->rightPoly = right_edge->leftPoly = poly;
                 }
 
                 left_edge = right_edge;
             }
 
-            v->edge_below.tail->right_poly = right_poly;
+            v->edge_below.tail->rightPoly = rightPoly;
         }
     }
-
     return true;
 }
+
 
 bool Tessellator::matchFillRule(int32_t winding)
 {
@@ -1340,7 +1254,8 @@ bool Tessellator::matchFillRule(int32_t winding)
     }
 }
 
-detail::Edge *Tessellator::makeEdge(detail::Vertex *a, detail::Vertex *b)
+
+Edge *Tessellator::makeEdge(Vertex *a, Vertex *b)
 {
     if (!a || !b || a->point == b->point) {
         return nullptr;
@@ -1348,29 +1263,27 @@ detail::Edge *Tessellator::makeEdge(detail::Vertex *a, detail::Vertex *b)
 
     int32_t winding = 1;
 
-    if (detail::VertexCompare::compare(b->point, a->point)) {
+    if (VertexCompare::compare(b->point, a->point)) {
         winding = -1;
         std::swap(a, b);
     }
 
-    return pHeap->allocate<detail::Edge>(a, b, winding);
+    return pHeap->allocate<Edge>(a, b, winding);
 }
 
-bool Tessellator::checkIntersection(detail::Edge *left, detail::Edge *right, detail::ActiveEdgeList *ael,
-                                    detail::Vertex **current)
-{
-    if (!left || !right) {
-        return false;
-    }
 
-    GlPoint p;
+bool Tessellator::checkIntersection(Edge *left, Edge *right, ActiveEdgeList *ael, Vertex **current)
+{
+    if (!left || !right) return false;
+
+    Point p;
 
     if (left->intersect(right, &p) && !std::isinf(p.x) && !std::isinf(p.y)) {
-        detail::Vertex *v;
-        detail::Vertex *top = *current;
+        Vertex *v;
+        Vertex *top = *current;
 
         // the vertex in mesh is sorted, so walk to prev can find latest top point
-        while (top && detail::VertexCompare::compare(p, top->point)) {
+        while (top && VertexCompare::compare(p, top->point)) {
             top = top->prev;
         }
 
@@ -1386,12 +1299,12 @@ bool Tessellator::checkIntersection(detail::Edge *left, detail::Edge *right, det
             // intersect point is between start and end point
             // need to insert new vertex
             auto prev = top;
-            while (prev && detail::VertexCompare::compare(p, prev->point)) {
+            while (prev && VertexCompare::compare(p, prev->point)) {
                 prev = prev->prev;
             }
 
             auto next = prev ? prev->next : pMesh->head;
-            while (next && detail::VertexCompare::compare(next->point, p)) {
+            while (next && VertexCompare::compare(next->point, p)) {
                 prev = next;
                 next = next->next;
             }
@@ -1402,37 +1315,31 @@ bool Tessellator::checkIntersection(detail::Edge *left, detail::Edge *right, det
             } else if (next && next->point == p) {
                 v = next;
             } else {
-                v = pHeap->allocate<detail::Vertex>(p);
+                v = pHeap->allocate<Vertex>(p);
                 v->point = p;
-
                 pMesh->insert(v, prev, next);
             }
         }
 
         ael->rewind(current, top ? top : v);
-
         this->splitEdge(left, v, ael, current);
         this->splitEdge(right, v, ael, current);
 
         return true;
     }
-
     return this->intersectPairEdge(left, right, ael, current);
 }
 
-bool Tessellator::splitEdge(detail::Edge *edge, detail::Vertex *v, detail::ActiveEdgeList *ael,
-                            detail::Vertex **current)
+
+bool Tessellator::splitEdge(Edge *edge, Vertex *v, ActiveEdgeList *ael, Vertex **current)
 {
-    if (!edge->top || !edge->bottom || v == edge->top || v == edge->bottom) {
-        return false;
-    }
+    if (!edge->top || !edge->bottom || v == edge->top || v == edge->bottom) return false;
 
-    int32_t winding = edge->winding;
+    auto winding = edge->winding;
+    Vertex *top;
+    Vertex *bottom;
 
-    detail::Vertex *top;
-    detail::Vertex *bottom;
-
-    if (detail::VertexCompare::compare(v->point, edge->top->point)) {
+    if (VertexCompare::compare(v->point, edge->top->point)) {
         /**
          *
          *   v
@@ -1447,9 +1354,8 @@ bool Tessellator::splitEdge(detail::Edge *edge, detail::Vertex *v, detail::Activ
         top = v;
         bottom = edge->top;
         winding *= -1;
-
         edge->setTop(v);
-    } else if (detail::VertexCompare::compare(edge->bottom->point, v->point)) {
+    } else if (VertexCompare::compare(edge->bottom->point, v->point)) {
         /**
          *
          *   top
@@ -1464,7 +1370,6 @@ bool Tessellator::splitEdge(detail::Edge *edge, detail::Vertex *v, detail::Activ
         top = edge->bottom;
         bottom = v;
         winding *= -1;
-
         edge->setBottom(v);
     } else {
         /**
@@ -1483,45 +1388,31 @@ bool Tessellator::splitEdge(detail::Edge *edge, detail::Vertex *v, detail::Activ
         edge->setBottom(v);
     }
 
-    auto new_edge = pHeap->allocate<detail::Edge>(top, bottom, winding);
+    auto new_edge = pHeap->allocate<Edge>(top, bottom, winding);
 
     bottom->insertAbove(new_edge);
-
     top->insertBelow(new_edge);
 
-    if (new_edge->above_prev == nullptr && new_edge->above_next == nullptr) {
-        return false;
-    }
-
-    if (new_edge->below_prev == nullptr && new_edge->below_next == nullptr) {
-        return false;
-    }
+    if (new_edge->abovePrev == nullptr && new_edge->aboveNext == nullptr) return false;
+    if (new_edge->belowPrev == nullptr && new_edge->belowNext == nullptr) return false;
 
     return true;
 }
 
-bool Tessellator::intersectPairEdge(detail::Edge *left, detail::Edge *right, detail::ActiveEdgeList *ael,
-                                    detail::Vertex **current)
+
+bool Tessellator::intersectPairEdge(Edge *left, Edge *right, ActiveEdgeList *ael,
+                                    Vertex **current)
 {
-    if (!left->top || !left->bottom || !right->top || !right->bottom) {
-        return false;
-    }
+    if (!left->top || !left->bottom || !right->top || !right->bottom) return false;
+    if (left->top == right->top || left->bottom == right->bottom) return false;
 
-    if (left->top == right->top || left->bottom == right->bottom) {
-        return false;
-    }
+    if (_calcOrientation(left->bottom->point - left->top->point, right->bottom->point - right->top->point) ==  Orientation::Linear) return false;
 
-    if (detail::_calcOrientation(left->bottom->point - left->top->point, right->bottom->point - right->top->point) ==
-        detail::Orientation::Linear) {
-        return false;
-    }
-
-    detail::Edge *split = nullptr;
-
-    detail::Vertex *split_at = nullptr;
+    Edge *split = nullptr;
+    Vertex *split_at = nullptr;
 
     // check if these two edge is intersected
-    if (detail::VertexCompare::compare(left->top->point, right->top->point)) {
+    if (VertexCompare::compare(left->top->point, right->top->point)) {
         if (!left->isLeftOf(right->top->point)) {
             split = left;
             split_at = right->top;
@@ -1533,7 +1424,7 @@ bool Tessellator::intersectPairEdge(detail::Edge *left, detail::Edge *right, det
         }
     }
 
-    if (detail::VertexCompare::compare(right->bottom->point, left->bottom->point)) {
+    if (VertexCompare::compare(right->bottom->point, left->bottom->point)) {
         if (!left->isLeftOf(right->bottom->point)) {
             split = left;
             split_at = right->bottom;
@@ -1545,47 +1436,42 @@ bool Tessellator::intersectPairEdge(detail::Edge *left, detail::Edge *right, det
         }
     }
 
-    if (!split) {
-        return false;
-    }
+    if (!split) return false;
 
     ael->rewind(current, split->top);
 
     return splitEdge(split, split_at, ael, current);
 }
 
-detail::Polygon *Tessellator::makePoly(detail::Vertex *v, int32_t winding)
-{
-    auto poly = pHeap->allocate<detail::Polygon>(v, winding);
 
+Polygon *Tessellator::makePoly(Vertex *v, int32_t winding)
+{
+    auto poly = pHeap->allocate<Polygon>(v, winding);
     poly->next = this->pPolygon;
     this->pPolygon = poly;
-
     return poly;
 }
 
-void Tessellator::emitPoly(detail::MonotonePolygon *poly)
+
+void Tessellator::emitPoly(MonotonePolygon *poly)
 {
     auto e = poly->first;
-
-    detail::VertexList vertices;
+    VertexList vertices;
 
     vertices.append(e->top);
     int32_t count = 1;
     while (e != nullptr) {
-        if (poly->side == detail::Side::kRight) {
+        if (poly->side == Side::kRight) {
             vertices.append(e->bottom);
-            e = e->right_poly_next;
+            e = e->rightPolyNext;
         } else {
             vertices.prepend(e->bottom);
-            e = e->left_poly_next;
+            e = e->leftPolyNext;
         }
         count += 1;
     }
 
-    if (count < 3) {
-        return;
-    }
+    if (count < 3) return;
 
     auto first = vertices.head;
     auto v = first->next;
@@ -1612,26 +1498,22 @@ void Tessellator::emitPoly(detail::MonotonePolygon *poly)
 
             count--;
 
-            if (v->prev == first) {
-                v = v->next;
-            } else {
-                v = v->prev;
-            }
+            if (v->prev == first) v = v->next;
+            else v = v->prev;
+
         } else {
             v = v->next;
         }
     }
 }
 
-void Tessellator::emitTriangle(detail::Vertex *p1, detail::Vertex *p2, detail::Vertex *p3)
+
+void Tessellator::emitTriangle(Vertex *p1, Vertex *p2, Vertex *p3)
 {
     // check if index is generated
-    if (p1->index == 0xFFFFFFFF)
-        p1->index = detail::_pushVertex(resGlPoints, detail::_downScaleFloat(p1->point.x), detail::_downScaleFloat(p1->point.y));
-    if (p2->index == 0xFFFFFFFF)
-        p2->index = detail::_pushVertex(resGlPoints, detail::_downScaleFloat(p2->point.x), detail::_downScaleFloat(p2->point.y));
-    if (p3->index == 0xFFFFFFFF)
-        p3->index = detail::_pushVertex(resGlPoints, detail::_downScaleFloat(p3->point.x), detail::_downScaleFloat(p3->point.y));
+    if (p1->index == 0xFFFFFFFF) p1->index = _pushVertex(resGlPoints, _downScaleFloat(p1->point.x), _downScaleFloat(p1->point.y));
+    if (p2->index == 0xFFFFFFFF) p2->index = _pushVertex(resGlPoints, _downScaleFloat(p2->point.x), _downScaleFloat(p2->point.y));
+    if (p3->index == 0xFFFFFFFF) p3->index = _pushVertex(resGlPoints, _downScaleFloat(p3->point.x), _downScaleFloat(p3->point.y));
 
     resIndices->push(p1->index);
     resIndices->push(p2->index);
@@ -1642,6 +1524,7 @@ void Tessellator::emitTriangle(detail::Vertex *p1, detail::Vertex *p2, detail::V
 Stroker::Stroker(Array<float> *points, Array<uint32_t> *indices, const Matrix& matrix) : mResGlPoints(points), mResIndices(indices), mMatrix(matrix)
 {
 }
+
 
 void Stroker::stroke(const RenderShape *rshape)
 {
@@ -1742,6 +1625,7 @@ void Stroker::stroke(const RenderShape *rshape)
     else doDashStroke(cmds, cmdCnt, pts, ptsCnt, dashCnt, dash_pattern);
 }
 
+
 RenderRegion Stroker::bounds() const
 {
     return RenderRegion {
@@ -1752,11 +1636,11 @@ RenderRegion Stroker::bounds() const
     };
 }
 
+
 void Stroker::doStroke(const PathCommand *cmds, uint32_t cmd_count, const Point *pts, uint32_t pts_count)
 {
     mResGlPoints->reserve(pts_count * 4 + 16);
     mResIndices->reserve(pts_count * 3);
-
 
     for (uint32_t i = 0; i < cmd_count; i++) {
         switch (cmds[i]) {
@@ -1767,9 +1651,9 @@ void Stroker::doStroke(const PathCommand *cmds, uint32_t cmd_count, const Point 
                 }
                 mStrokeState.hasMove = true;
                 mStrokeState.firstPt = *pts;
-                mStrokeState.firstPtDir = GlPoint{};
+                mStrokeState.firstPtDir = {0.0f, 0.0f};
                 mStrokeState.prevPt = *pts;
-                mStrokeState.prevPtDir = GlPoint{};
+                mStrokeState.prevPtDir = {0.0f, 0.0f};
                 pts++;
             } break;
             case PathCommand::LineTo: {
@@ -1789,64 +1673,57 @@ void Stroker::doStroke(const PathCommand *cmds, uint32_t cmd_count, const Point 
                 break;
         }
     }
-
     strokeCap();
 }
 
-void Stroker::doDashStroke(const PathCommand *cmds, uint32_t cmd_count, const Point *pts, uint32_t pts_count,
-                           uint32_t dash_count, const float *dash_pattern)
+
+void Stroker::doDashStroke(const PathCommand *cmds, uint32_t cmd_count, const Point *pts, uint32_t pts_count, uint32_t dash_count, const float *dash_pattern)
 {
     Array<PathCommand> dash_cmds{};
-    Array<Point>       dash_pts{};
+    Array<Point> dash_pts{};
 
     dash_cmds.reserve(20 * cmd_count);
     dash_pts.reserve(20 * pts_count);
 
     DashStroke dash(&dash_cmds, &dash_pts, dash_count, dash_pattern);
-
     dash.doStroke(cmds, cmd_count, pts, pts_count);
 
     this->doStroke(dash_cmds.data, dash_cmds.count, dash_pts.data, dash_pts.count);
 }
 
+
 void Stroker::strokeCap()
 {
-    if (mStrokeState.firstPt == mStrokeState.prevPt) {
-        return;
-    }
-
+    if (mStrokeState.firstPt == mStrokeState.prevPt) return;
     if (mStrokeCap == StrokeCap::Butt) return;
-    else if (mStrokeCap == StrokeCap::Square) {
-        strokeSquare(mStrokeState.firstPt, GlPoint{-mStrokeState.firstPtDir.x, -mStrokeState.firstPtDir.y});
+
+    if (mStrokeCap == StrokeCap::Square) {
+        strokeSquare(mStrokeState.firstPt, {-mStrokeState.firstPtDir.x, -mStrokeState.firstPtDir.y});
         strokeSquare(mStrokeState.prevPt, mStrokeState.prevPtDir);
     } else if (mStrokeCap == StrokeCap::Round) {
-        strokeRound(mStrokeState.firstPt, GlPoint{-mStrokeState.firstPtDir.x, -mStrokeState.firstPtDir.y});
+        strokeRound(mStrokeState.firstPt, {-mStrokeState.firstPtDir.x, -mStrokeState.firstPtDir.y});
         strokeRound(mStrokeState.prevPt, mStrokeState.prevPtDir);
     }
-
 }
 
-void Stroker::strokeLineTo(const GlPoint &curr)
+
+void Stroker::strokeLineTo(const Point& curr)
 {
     auto dir = (curr - mStrokeState.prevPt);
-    dir.normalize();
+    normalize(dir);
 
-    if (dir.x == 0.f && dir.y == 0.f) {
-        // same point
-        return;
-    }
+    if (dir.x == 0.f && dir.y == 0.f) return;  //same point
 
-    auto normal = GlPoint{-dir.y, dir.x};
-
+    auto normal = Point{-dir.y, dir.x};
     auto a = mStrokeState.prevPt + normal * strokeRadius();
     auto b = mStrokeState.prevPt - normal * strokeRadius();
     auto c = curr + normal * strokeRadius();
     auto d = curr - normal * strokeRadius();
 
-    auto ia = detail::_pushVertex(mResGlPoints, a.x, a.y);
-    auto ib = detail::_pushVertex(mResGlPoints, b.x, b.y);
-    auto ic = detail::_pushVertex(mResGlPoints, c.x, c.y);
-    auto id = detail::_pushVertex(mResGlPoints, d.x, d.y);
+    auto ia = _pushVertex(mResGlPoints, a.x, a.y);
+    auto ib = _pushVertex(mResGlPoints, b.x, b.y);
+    auto ic = _pushVertex(mResGlPoints, c.x, c.y);
+    auto id = _pushVertex(mResGlPoints, d.x, d.y);
 
     /**
      *   a --------- c
@@ -1867,11 +1744,9 @@ void Stroker::strokeLineTo(const GlPoint &curr)
         // first point after moveTo
         mStrokeState.prevPt = curr;
         mStrokeState.prevPtDir = dir;
-
         mStrokeState.firstPtDir = dir;
     } else {
         this->strokeJoin(dir);
-
         mStrokeState.prevPtDir = dir;
         mStrokeState.prevPt = curr;
     }
@@ -1887,13 +1762,14 @@ void Stroker::strokeLineTo(const GlPoint &curr)
     mRightBottom.y = std::max(mRightBottom.y, max(max(a.y, b.y), max(c.y, d.y)));
 }
 
-void Stroker::strokeCubicTo(const GlPoint &cnt1, const GlPoint &cnt2, const GlPoint &end)
+
+void Stroker::strokeCubicTo(const Point& cnt1, const Point& cnt2, const Point& end)
 {
     Bezier curve{};
-    curve.start = Point{mStrokeState.prevPt.x, mStrokeState.prevPt.y};
-    curve.ctrl1 = Point{cnt1.x, cnt1.y};
-    curve.ctrl2 = Point{cnt2.x, cnt2.y};
-    curve.end = Point{end.x, end.y};
+    curve.start = {mStrokeState.prevPt.x, mStrokeState.prevPt.y};
+    curve.ctrl1 = {cnt1.x, cnt1.y};
+    curve.ctrl2 = {cnt2.x, cnt2.y};
+    curve.end = {end.x, end.y};
 
     Bezier relCurve {curve.start, curve.ctrl1, curve.ctrl2, curve.end};
     relCurve.start *= mMatrix;
@@ -1901,14 +1777,14 @@ void Stroker::strokeCubicTo(const GlPoint &cnt1, const GlPoint &cnt2, const GlPo
     relCurve.ctrl2 *= mMatrix;
     relCurve.end *= mMatrix;
 
-    auto count = detail::_bezierCurveCount(relCurve);
-
-    float step = 1.f / count;
+    auto count = _bezierCurveCount(relCurve);
+    auto step = 1.f / count;
 
     for (int32_t i = 0; i <= count; i++) {
         strokeLineTo(curve.at(step * i));
     }
 }
+
 
 void Stroker::strokeClose()
 {
@@ -1922,24 +1798,16 @@ void Stroker::strokeClose()
     mStrokeState.hasMove = false;
 }
 
-void Stroker::strokeJoin(const GlPoint &dir)
+
+void Stroker::strokeJoin(const Point& dir)
 {
-    auto orientation = detail::_calcOrientation(mStrokeState.prevPt - mStrokeState.prevPtDir, mStrokeState.prevPt,
-                                                mStrokeState.prevPt + dir);
+    auto orientation = _calcOrientation(mStrokeState.prevPt - mStrokeState.prevPtDir, mStrokeState.prevPt, mStrokeState.prevPt + dir);
 
-    if (orientation == detail::Orientation::Linear) {
-        // check is same direction
-        if (mStrokeState.prevPtDir == dir) {
-            return;
-        }
+    if (orientation == Orientation::Linear) {
+        if (mStrokeState.prevPtDir == dir) return;      // check is same direction
+        if (mStrokeJoin != StrokeJoin::Round) return;   // opposite direction
 
-        // opposite direction
-        if (mStrokeJoin != StrokeJoin::Round) {
-            return;
-        }
-
-        auto normal = GlPoint{-dir.y, dir.x};
-
+        auto normal = Point{-dir.y, dir.x};
         auto p1 = mStrokeState.prevPt + normal * strokeRadius();
         auto p2 = mStrokeState.prevPt - normal * strokeRadius();
         auto oc = mStrokeState.prevPt + dir * strokeRadius();
@@ -1948,13 +1816,11 @@ void Stroker::strokeJoin(const GlPoint &dir)
         this->strokeRound(oc, p2, mStrokeState.prevPt);
 
     } else {
-        auto normal = GlPoint{-dir.y, dir.x};
-        auto prevNormal = GlPoint{-mStrokeState.prevPtDir.y, mStrokeState.prevPtDir.x};
+        auto normal = Point{-dir.y, dir.x};
+        auto prevNormal = Point{-mStrokeState.prevPtDir.y, mStrokeState.prevPtDir.x};
+        Point prevJoin, currJoin;
 
-        GlPoint prevJoin{};
-        GlPoint currJoin{};
-
-        if (orientation == detail::Orientation::CounterClockwise) {
+        if (orientation == Orientation::CounterClockwise) {
             prevJoin = mStrokeState.prevPt + prevNormal * strokeRadius();
             currJoin = mStrokeState.prevPt + normal * strokeRadius();
         } else {
@@ -1962,23 +1828,16 @@ void Stroker::strokeJoin(const GlPoint &dir)
             currJoin = mStrokeState.prevPt - normal * strokeRadius();
         }
 
-        if (mStrokeJoin == StrokeJoin::Miter) {
-            this->strokeMiter(prevJoin, currJoin, mStrokeState.prevPt);
-        } else if (mStrokeJoin == StrokeJoin::Bevel) {
-            this->strokeBevel(prevJoin, currJoin, mStrokeState.prevPt);
-        } else {
-            // round join
-            this->strokeRound(prevJoin, currJoin, mStrokeState.prevPt);
-        }
+        if (mStrokeJoin == StrokeJoin::Miter) strokeMiter(prevJoin, currJoin, mStrokeState.prevPt);
+        else if (mStrokeJoin == StrokeJoin::Bevel) strokeBevel(prevJoin, currJoin, mStrokeState.prevPt);
+        else this->strokeRound(prevJoin, currJoin, mStrokeState.prevPt);
     }
 }
 
 
-void Stroker::strokeRound(const GlPoint &prev, const GlPoint &curr, const GlPoint &center)
+void Stroker::strokeRound(const Point &prev, const Point& curr, const Point& center)
 {
-    if (detail::_calcOrientation(prev, center, curr) == detail::Orientation::Linear) {
-        return;
-    }
+    if (_calcOrientation(prev, center, curr) == Orientation::Linear) return;
 
     mLeftTop.x = std::min(mLeftTop.x, min(center.x, min(prev.x, curr.x)));
     mLeftTop.y = std::min(mLeftTop.y, min(center.y, min(prev.y, curr.y)));
@@ -1986,30 +1845,24 @@ void Stroker::strokeRound(const GlPoint &prev, const GlPoint &curr, const GlPoin
     mRightBottom.y = std::max(mRightBottom.y, max(center.y, max(prev.y, curr.y)));
 
     // Fixme: just use bezier curve to calculate step count
-    auto count = detail::_bezierCurveCount(detail::_bezFromArc(prev, curr, strokeRadius()));
-
-    auto c = detail::_pushVertex(mResGlPoints, center.x, center.y);
-
-    auto pi = detail::_pushVertex(mResGlPoints, prev.x, prev.y);
-
-    float step = 1.f / (count - 1);
-
+    auto count = _bezierCurveCount(_bezFromArc(prev, curr, strokeRadius()));
+    auto c = _pushVertex(mResGlPoints, center.x, center.y);
+    auto pi = _pushVertex(mResGlPoints, prev.x, prev.y);
+    auto step = 1.f / (count - 1);
     auto dir = curr - prev;
+
     for (uint32_t i = 1; i < static_cast<uint32_t>(count); i++) {
-        float t = i * step;
-
+        auto t = i * step;
         auto p = prev + dir * t;
-
         auto o_dir = p - center;
-        o_dir.normalize();
+        normalize(o_dir);
 
         auto out = center + o_dir * strokeRadius();
+        auto oi = _pushVertex(mResGlPoints, out.x, out.y);
 
-        auto oi = detail::_pushVertex(mResGlPoints, out.x, out.y);
-
-        this->mResIndices->push(c);
-        this->mResIndices->push(pi);
-        this->mResIndices->push(oi);
+        mResIndices->push(c);
+        mResIndices->push(pi);
+        mResIndices->push(oi);
 
         pi = oi;
 
@@ -2021,38 +1874,32 @@ void Stroker::strokeRound(const GlPoint &prev, const GlPoint &curr, const GlPoin
 }
 
 
-void Stroker::strokeMiter(const GlPoint &prev, const GlPoint &curr, const GlPoint &center)
+void Stroker::strokeMiter(const Point& prev, const Point& curr, const Point& center)
 {
     auto pp1 = prev - center;
     auto pp2 = curr - center;
-
     auto out = pp1 + pp2;
-
-    float k = 2.f * strokeRadius() * strokeRadius() / (out.x * out.x + out.y * out.y);
-
+    auto k = 2.f * strokeRadius() * strokeRadius() / (out.x * out.x + out.y * out.y);
     auto pe = out * k;
 
-    if (detail::_pointLength(pe) >= mMiterLimit * strokeRadius()) {
+    if (length(pe) >= mMiterLimit * strokeRadius()) {
         this->strokeBevel(prev, curr, center);
         return;
     }
 
     auto join = center + pe;
+    auto c = _pushVertex(mResGlPoints, center.x, center.y);
+    auto cp1 = _pushVertex(mResGlPoints, prev.x, prev.y);
+    auto cp2 = _pushVertex(mResGlPoints, curr.x, curr.y);
+    auto e = _pushVertex(mResGlPoints, join.x, join.y);
 
-    auto c = detail::_pushVertex(mResGlPoints, center.x, center.y);
+    mResIndices->push(c);
+    mResIndices->push(cp1);
+    mResIndices->push(e);
 
-    auto cp1 = detail::_pushVertex(mResGlPoints, prev.x, prev.y);
-    auto cp2 = detail::_pushVertex(mResGlPoints, curr.x, curr.y);
-
-    auto e = detail::_pushVertex(mResGlPoints, join.x, join.y);
-
-    this->mResIndices->push(c);
-    this->mResIndices->push(cp1);
-    this->mResIndices->push(e);
-
-    this->mResIndices->push(e);
-    this->mResIndices->push(cp2);
-    this->mResIndices->push(c);
+    mResIndices->push(e);
+    mResIndices->push(cp2);
+    mResIndices->push(c);
 
     mLeftTop.x = std::min(mLeftTop.x, join.x);
     mLeftTop.y = std::min(mLeftTop.y, join.y);
@@ -2062,11 +1909,11 @@ void Stroker::strokeMiter(const GlPoint &prev, const GlPoint &curr, const GlPoin
 }
 
 
-void Stroker::strokeBevel(const GlPoint &prev, const GlPoint &curr, const GlPoint &center)
+void Stroker::strokeBevel(const Point& prev, const Point& curr, const Point& center)
 {
-    auto a = detail::_pushVertex(mResGlPoints, prev.x, prev.y);
-    auto b = detail::_pushVertex(mResGlPoints, curr.x, curr.y);
-    auto c = detail::_pushVertex(mResGlPoints, center.x, center.y);
+    auto a = _pushVertex(mResGlPoints, prev.x, prev.y);
+    auto b = _pushVertex(mResGlPoints, curr.x, curr.y);
+    auto c = _pushVertex(mResGlPoints, center.x, center.y);
 
     mResIndices->push(a);
     mResIndices->push(b);
@@ -2074,20 +1921,19 @@ void Stroker::strokeBevel(const GlPoint &prev, const GlPoint &curr, const GlPoin
 }
 
 
-void Stroker::strokeSquare(const GlPoint& p, const GlPoint& outDir)
+void Stroker::strokeSquare(const Point& p, const Point& outDir)
 {
-    GlPoint normal{-outDir.y, outDir.x};
+    auto normal = Point{-outDir.y, outDir.x};
 
-    GlPoint a = p + normal * strokeRadius();
-    GlPoint b = p - normal * strokeRadius();
-    GlPoint c = a + outDir * strokeRadius();
-    GlPoint d = b + outDir * strokeRadius();
+    auto a = p + normal * strokeRadius();
+    auto b = p - normal * strokeRadius();
+    auto c = a + outDir * strokeRadius();
+    auto d = b + outDir * strokeRadius();
 
-
-    auto ai = detail::_pushVertex(mResGlPoints, a.x, a.y);
-    auto bi = detail::_pushVertex(mResGlPoints, b.x, b.y);
-    auto ci = detail::_pushVertex(mResGlPoints, c.x, c.y);
-    auto di = detail::_pushVertex(mResGlPoints, d.x, d.y);
+    auto ai = _pushVertex(mResGlPoints, a.x, a.y);
+    auto bi = _pushVertex(mResGlPoints, b.x, b.y);
+    auto ci = _pushVertex(mResGlPoints, c.x, c.y);
+    auto di = _pushVertex(mResGlPoints, d.x, d.y);
 
     mResIndices->push(ai);
     mResIndices->push(bi);
@@ -2104,13 +1950,12 @@ void Stroker::strokeSquare(const GlPoint& p, const GlPoint& outDir)
 }
 
 
-void Stroker::strokeRound(const GlPoint& p, const GlPoint& outDir)
+void Stroker::strokeRound(const Point& p, const Point& outDir)
 {
-    GlPoint normal{-outDir.y, outDir.x};
-
-    GlPoint a = p + normal * strokeRadius();
-    GlPoint b = p - normal * strokeRadius();
-    GlPoint c = p + outDir * strokeRadius();
+    auto normal = Point{-outDir.y, outDir.x};
+    auto a = p + normal * strokeRadius();
+    auto b = p - normal * strokeRadius();
+    auto c = p + outDir * strokeRadius();
 
     strokeRound(a, c, p);
     strokeRound(c, b, p);
@@ -2139,7 +1984,6 @@ void DashStroke::doStroke(const PathCommand *cmds, uint32_t cmd_count, const Poi
                 this->dashLineTo(mPtStart);
                 break;
             }
-
             case PathCommand::MoveTo: {
                 // reset the dash state
                 mCurrIdx = 0;
@@ -2154,55 +1998,51 @@ void DashStroke::doStroke(const PathCommand *cmds, uint32_t cmd_count, const Poi
                 pts++;
                 break;
             }
-
             case PathCommand::CubicTo: {
                 this->dashCubicTo(pts[0], pts[1], pts[2]);
                 pts += 3;
                 break;
             }
-            default:
-                break;
+            default: break;
         }
         cmds++;
     }
 }
 
 
-void DashStroke::dashLineTo(const GlPoint &to)
+void DashStroke::dashLineTo(const Point& to)
 {
-    float len = detail::_pointLength(mPtCur - to);
+    auto len = length(mPtCur - to);
 
     if (len < mCurrLen) {
         mCurrLen -= len;
-
         if (!mCurOpGap) {
             this->moveTo(mPtCur);
             this->lineTo(to);
         }
     } else {
-        detail::Line curr{mPtCur, to};
+        Line curr = {mPtCur, to};
 
         while (len > mCurrLen) {
             len -= mCurrLen;
 
-            detail::Line left, right;
-
-            detail::_lineSplitAt(curr, mCurrLen, &left, &right);
+            Line left, right;
+            curr.split(mCurrLen, left, right);
 
             mCurrIdx = (mCurrIdx + 1) % mDashCount;
             if (!mCurOpGap) {
-                this->moveTo(left.p1);
-                this->lineTo(left.p2);
+                this->moveTo(left.pt1);
+                this->lineTo(left.pt2);
             }
             mCurrLen = mDashPattern[mCurrIdx];
             mCurOpGap = !mCurOpGap;
             curr = right;
-            mPtCur = curr.p1;
+            mPtCur = curr.pt1;
         }
         mCurrLen -= len;
         if (!mCurOpGap) {
-            this->moveTo(curr.p1);
-            this->lineTo(curr.p2);
+            this->moveTo(curr.pt1);
+            this->lineTo(curr.pt2);
         }
 
         if (mCurrLen < 1) {
@@ -2216,13 +2056,13 @@ void DashStroke::dashLineTo(const GlPoint &to)
 }
 
 
-void DashStroke::dashCubicTo(const GlPoint &cnt1, const GlPoint &cnt2, const GlPoint &end)
+void DashStroke::dashCubicTo(const Point& cnt1, const Point& cnt2, const Point& end)
 {
     Bezier cur;
-    cur.start = Point{mPtCur.x, mPtCur.y};
-    cur.ctrl1 = Point{cnt1.x, cnt1.y};
-    cur.ctrl2 = Point{cnt2.x, cnt2.y};
-    cur.end = Point{end.x, end.y};
+    cur.start = {mPtCur.x, mPtCur.y};
+    cur.ctrl1 = {cnt1.x, cnt1.y};
+    cur.ctrl2 = {cnt2.x, cnt2.y};
+    cur.end = {end.x, end.y};
 
     auto len = cur.length();
 
@@ -2237,7 +2077,6 @@ void DashStroke::dashCubicTo(const GlPoint &cnt1, const GlPoint &cnt2, const GlP
             len -= mCurrLen;
 
             Bezier left, right;
-
             cur.split(mCurrLen, left, right);
 
             if (mCurrIdx == 0) {
@@ -2264,30 +2103,29 @@ void DashStroke::dashCubicTo(const GlPoint &cnt1, const GlPoint &cnt2, const GlP
             mCurOpGap = !mCurOpGap;
         }
     }
-
     mPtCur = end;
 }
 
 
-void DashStroke::moveTo(const GlPoint &pt)
+void DashStroke::moveTo(const Point& pt)
 {
     mPts->push(Point{pt.x, pt.y});
     mCmds->push(PathCommand::MoveTo);
 }
 
 
-void DashStroke::lineTo(const GlPoint &pt)
+void DashStroke::lineTo(const Point& pt)
 {
     mPts->push(Point{pt.x, pt.y});
     mCmds->push(PathCommand::LineTo);
 }
 
 
-void DashStroke::cubicTo(const GlPoint &cnt1, const GlPoint &cnt2, const GlPoint &end)
+void DashStroke::cubicTo(const Point& cnt1, const Point& cnt2, const Point& end)
 {
-    mPts->push(Point{cnt1.x, cnt1.y});
-    mPts->push(Point{cnt2.x, cnt2.y});
-    mPts->push(Point{end.x, end.y});
+    mPts->push({cnt1.x, cnt1.y});
+    mPts->push({cnt2.x, cnt2.y});
+    mPts->push({end.x, end.y});
     mCmds->push(PathCommand::CubicTo);
 }
 
@@ -2324,7 +2162,6 @@ float PathTrim::pathLength(const PathCommand* cmds, uint32_t cmd_count, const Po
                 pts++;
                 break;
             }
-
             case PathCommand::LineTo: {
                 if (prev != nullptr) len += length(prev, pts);
                 if (begin == nullptr) begin = pts;
@@ -2332,7 +2169,6 @@ float PathTrim::pathLength(const PathCommand* cmds, uint32_t cmd_count, const Po
                 pts++;
                 break;
             }
-
             case PathCommand::CubicTo: {
                 if (prev == nullptr || begin == nullptr) {
                     prev = begin = &zero;
@@ -2343,7 +2179,6 @@ float PathTrim::pathLength(const PathCommand* cmds, uint32_t cmd_count, const Po
                 pts += 3;
                 break;
             }
-
             case PathCommand::Close: {
                 if (prev != nullptr && begin != nullptr && prev != begin) {
                     len += length(prev, begin);
@@ -2586,24 +2421,20 @@ void BWTessellator::tessellate(const RenderShape *rshape, const Matrix& matrix)
                     pts++;
                 } else {
                     auto currIndex = pushVertex(pts->x, pts->y);
-
                     pushTriangle(firstIndex, prevIndex, currIndex);
-
                     prevIndex = currIndex;
                     pts++;
                 }
             } break;
             case PathCommand::CubicTo: {
                 Bezier curve{pts[-1], pts[0], pts[1], pts[2]};
-
                 Bezier relCurve {pts[-1], pts[0], pts[1], pts[2]};
                 relCurve.start *= matrix;
                 relCurve.ctrl1 *= matrix;
                 relCurve.ctrl2 *= matrix;
                 relCurve.end *= matrix;
 
-                auto stepCount = detail::_bezierCurveCount(relCurve);
-
+                auto stepCount = _bezierCurveCount(relCurve);
                 if (stepCount <= 1) stepCount = 2;
 
                 float step = 1.f / stepCount;
@@ -2644,7 +2475,7 @@ RenderRegion BWTessellator::bounds() const
 
 uint32_t BWTessellator::pushVertex(float x, float y)
 {
-    auto index = detail::_pushVertex(mResPoints, x, y);
+    auto index = _pushVertex(mResPoints, x, y);
 
     if (index == 0) {
         mRightBottom.x = mLeftTop.x = x;
