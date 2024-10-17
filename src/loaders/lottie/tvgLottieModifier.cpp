@@ -79,7 +79,18 @@ static bool _intersect(const Line& line1, const Line& line2, Point& intersection
 static Line _offset(const Point& p1, const Point& p2, float offset)
 {
     auto scaledNormal = normal(p1, p2) * offset;
-    return {p1 - scaledNormal, p2 - scaledNormal};
+    return {p1 + scaledNormal, p2 + scaledNormal};
+}
+
+
+static bool _clockwise(const Point* pts, uint32_t n)
+{
+    auto area = 0.0f;
+
+    for (auto i = 0; i < n - 1; i++) area += pts[i].x * pts[i + 1].y - pts[i + 1].x * pts[i].y;
+    area += pts[n - 1].x * pts[0].y - pts[0].x * pts[n - 1].y;
+
+    return area < 0.0f;
 }
 
 
@@ -112,6 +123,7 @@ void LottieOffsetModifier::corner(const Line& line, const Line& nextLine, uint32
         }
     } else outPts.push(line.pt2);
 }
+
 
 void LottieOffsetModifier::line(const PathCommand* inCmds, uint32_t inCmdsCnt, const Point* inPts, uint32_t& currentPt, uint32_t currentCmd, State& state, bool degenerated, Array<PathCommand>& outCmds, Array<Point>& outPts, float offset) const
 {
@@ -288,13 +300,13 @@ bool LottieRoundnessModifier::modifyRect(const Point& size, float& r) const
 }
 
 
-bool LottieOffsetModifier::modifyPath(const PathCommand* inCmds, uint32_t inCmdsCnt, const Point* inPts, uint32_t inPtsCnt, Array<PathCommand>& outCmds, Array<Point>& outPts, bool clockwise) const
+bool LottieOffsetModifier::modifyPath(const PathCommand* inCmds, uint32_t inCmdsCnt, const Point* inPts, uint32_t inPtsCnt, Array<PathCommand>& outCmds, Array<Point>& outPts) const
 {
     outCmds.reserve(inCmdsCnt * 2);
     outPts.reserve(inPtsCnt * (join == StrokeJoin::Round ? 4 : 2));
 
     State state;
-    auto offset = clockwise ? this->offset : -this->offset;
+    auto offset = _clockwise(inPts, inPtsCnt) ? this->offset : -this->offset;
 
     for (uint32_t iCmd = 0, iPt = 0; iCmd < inCmdsCnt; ++iCmd) {
         if (inCmds[iCmd] == PathCommand::MoveTo) {
@@ -346,14 +358,14 @@ bool LottieOffsetModifier::modifyPath(const PathCommand* inCmds, uint32_t inCmds
 }
 
 
-bool LottieOffsetModifier::modifyPolystar(const Array<PathCommand>& inCmds, const Array<Point>& inPts, Array<PathCommand>& outCmds, Array<Point>& outPts, bool clockwise) const {
-    return modifyPath(inCmds.data, inCmds.count, inPts.data, inPts.count, outCmds, outPts, clockwise);
+bool LottieOffsetModifier::modifyPolystar(const Array<PathCommand>& inCmds, const Array<Point>& inPts, Array<PathCommand>& outCmds, Array<Point>& outPts) const {
+    return modifyPath(inCmds.data, inCmds.count, inPts.data, inPts.count, outCmds, outPts);
 }
 
 
-bool LottieOffsetModifier::modifyRect(const PathCommand* inCmds, uint32_t inCmdsCnt, const Point* inPts, uint32_t inPtsCnt, Array<PathCommand>& outCmds, Array<Point>& outPts, bool clockwise) const
+bool LottieOffsetModifier::modifyRect(const PathCommand* inCmds, uint32_t inCmdsCnt, const Point* inPts, uint32_t inPtsCnt, Array<PathCommand>& outCmds, Array<Point>& outPts) const
 {
-    return modifyPath(inCmds, inCmdsCnt, inPts, inPtsCnt, outCmds, outPts, clockwise);
+    return modifyPath(inCmds, inCmdsCnt, inPts, inPtsCnt, outCmds, outPts);
 }
 
 
