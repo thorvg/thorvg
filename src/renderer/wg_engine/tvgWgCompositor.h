@@ -40,6 +40,8 @@ private:
     // global stencil buffer handles
     WGPUTexture texStencil{};
     WGPUTextureView texViewStencil{};
+    WGPUTexture texStencilMS{};
+    WGPUTextureView texViewStencilMS{};
     // global view matrix handles
     WGPUBuffer bufferViewMat{};
     WGPUBindGroup bindGroupViewMat{};
