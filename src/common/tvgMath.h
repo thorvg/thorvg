@@ -174,6 +174,12 @@ void operator*=(Point& pt, const Matrix& m);
 Point operator*(const Point& pt, const Matrix& m);
 Point normal(const Point& p1, const Point& p2);
 
+static inline float cross(const Point& lhs, const Point& rhs)
+{
+    return lhs.x * rhs.y - rhs.x * lhs.y;
+}
+
+
 static inline bool zero(const Point& p)
 {
     return tvg::zero(p.x) && tvg::zero(p.y);
