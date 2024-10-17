@@ -1756,10 +1756,10 @@ void Stroker::strokeLineTo(const Point& curr)
         mRightBottom.y = mLeftTop.y = curr.y;
     }
 
-    mLeftTop.x = std::min(mLeftTop.x, min(min(a.x, b.x), min(c.x, d.x)));
-    mLeftTop.y = std::min(mLeftTop.y, min(min(a.y, b.y), min(c.y, d.y)));
-    mRightBottom.x = std::max(mRightBottom.x, max(max(a.x, b.x), max(c.x, d.x)));
-    mRightBottom.y = std::max(mRightBottom.y, max(max(a.y, b.y), max(c.y, d.y)));
+    mLeftTop.x = std::min(mLeftTop.x, std::min(std::min(a.x, b.x), std::min(c.x, d.x)));
+    mLeftTop.y = std::min(mLeftTop.y, std::min(std::min(a.y, b.y), std::min(c.y, d.y)));
+    mRightBottom.x = std::max(mRightBottom.x, std::max(std::max(a.x, b.x), std::max(c.x, d.x)));
+    mRightBottom.y = std::max(mRightBottom.y, std::max(std::max(a.y, b.y), std::max(c.y, d.y)));
 }
 
 
@@ -1839,10 +1839,10 @@ void Stroker::strokeRound(const Point &prev, const Point& curr, const Point& cen
 {
     if (_calcOrientation(prev, center, curr) == Orientation::Linear) return;
 
-    mLeftTop.x = std::min(mLeftTop.x, min(center.x, min(prev.x, curr.x)));
-    mLeftTop.y = std::min(mLeftTop.y, min(center.y, min(prev.y, curr.y)));
-    mRightBottom.x = std::max(mRightBottom.x, max(center.x, max(prev.x, curr.x)));
-    mRightBottom.y = std::max(mRightBottom.y, max(center.y, max(prev.y, curr.y)));
+    mLeftTop.x = std::min(mLeftTop.x, std::min(center.x, std::min(prev.x, curr.x)));
+    mLeftTop.y = std::min(mLeftTop.y, std::min(center.y, std::min(prev.y, curr.y)));
+    mRightBottom.x = std::max(mRightBottom.x, std::max(center.x, std::max(prev.x, curr.x)));
+    mRightBottom.y = std::max(mRightBottom.y, std::max(center.y, std::max(prev.y, curr.y)));
 
     // Fixme: just use bezier curve to calculate step count
     auto count = _bezierCurveCount(_bezFromArc(prev, curr, strokeRadius()));
@@ -1943,10 +1943,10 @@ void Stroker::strokeSquare(const Point& p, const Point& outDir)
     mResIndices->push(bi);
     mResIndices->push(di);
 
-    mLeftTop.x = std::min(mLeftTop.x, min(min(a.x, b.x), min(c.x, d.x)));
-    mLeftTop.y = std::min(mLeftTop.y, min(min(a.y, b.y), min(c.y, d.y)));
-    mRightBottom.x = std::max(mRightBottom.x, max(max(a.x, b.x), max(c.x, d.x)));
-    mRightBottom.y = std::max(mRightBottom.y, max(max(a.y, b.y), max(c.y, d.y)));
+    mLeftTop.x = std::min(mLeftTop.x, std::min(std::min(a.x, b.x), std::min(c.x, d.x)));
+    mLeftTop.y = std::min(mLeftTop.y, std::min(std::min(a.y, b.y), std::min(c.y, d.y)));
+    mRightBottom.x = std::max(mRightBottom.x, std::max(std::max(a.x, b.x), std::max(c.x, d.x)));
+    mRightBottom.y = std::max(mRightBottom.y, std::max(std::max(a.y, b.y), std::max(c.y, d.y)));
 }
 
 
@@ -2481,10 +2481,10 @@ uint32_t BWTessellator::pushVertex(float x, float y)
         mRightBottom.x = mLeftTop.x = x;
         mRightBottom.y = mLeftTop.y = y;
     } else {
-        mLeftTop.x = min(mLeftTop.x, x);
-        mLeftTop.y = min(mLeftTop.y, y);
-        mRightBottom.x = max(mRightBottom.x, x);
-        mRightBottom.y = max(mRightBottom.y , y);
+        mLeftTop.x = std::min(mLeftTop.x, x);
+        mLeftTop.y = std::min(mLeftTop.y, y);
+        mRightBottom.x = std::max(mRightBottom.x, x);
+        mRightBottom.y = std::max(mRightBottom.y , y);
     }
 
     return index;

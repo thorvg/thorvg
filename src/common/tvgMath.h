@@ -176,6 +176,24 @@ Point normal(const Point& p1, const Point& p2);
 void normalize(Point& pt);
 
 
+static inline Point min(const Point& lhs, const Point& rhs)
+{
+    return {std::min(lhs.x, rhs.x), std::min(lhs.y, rhs.y)};
+}
+
+
+static inline Point max(const Point& lhs, const Point& rhs)
+{
+    return {std::max(lhs.x, rhs.x), std::max(lhs.y, rhs.y)};
+}
+
+
+static inline float dot(const Point& lhs, const Point& rhs)
+{
+    return lhs.x * rhs.x + lhs.y * rhs.y;
+}
+
+
 static inline bool zero(const Point& p)
 {
     return tvg::zero(p.x) && tvg::zero(p.y);
@@ -198,6 +216,12 @@ static inline float length(const Point& a)
 {
     return sqrtf(a.x * a.x + a.y * a.y);
 }
+
+
+static inline float length2(const Point& a)
+{
+    return a.x * a.x + a.y * a.y;
+};
 
 
 static inline bool operator==(const Point& lhs, const Point& rhs)
@@ -263,6 +287,12 @@ static inline Point operator/(const Point& lhs, const Point& rhs)
 static inline Point operator/(const Point& lhs, const float rhs)
 {
     return {lhs.x / rhs, lhs.y / rhs};
+}
+
+
+static inline Point operator-(const Point& a)
+{
+    return {-a.x, -a.y};
 }
 
 
