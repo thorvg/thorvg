@@ -294,11 +294,11 @@ const char* IMAGE_FRAG_SHADER = TVG_COMPOSE_SHADER(
             result.b = color.r * color.a;                                                   \n
             result.a = color.a;                                                             \n
         } else if (uColorInfo.format == 2) { /* FMT_ABGR8888S */                            \n
-            result = color;                                                                 \n
+            result = vec4(color.rgb * color.a, color.a);                                    \n
         } else if (uColorInfo.format == 3) { /* FMT_ARGB8888S */                            \n
-            result.r = color.b;                                                             \n
-            result.g = color.g;                                                             \n
-            result.b = color.b;                                                             \n
+            result.r = color.b * color.a;                                                   \n
+            result.g = color.g * color.a;                                                   \n
+            result.b = color.b * color.a;                                                   \n
             result.a = color.a;                                                             \n
         }                                                                                   \n
         float opacity = float(uColorInfo.opacity) / 255.0;                                  \n

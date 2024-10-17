@@ -1194,6 +1194,10 @@ RenderData GlRenderer::prepare(RenderSurface* image, RenderData data, const Matr
         sdata->texId = _genTexture(image);
         sdata->opacity = opacity;
         sdata->texColorSpace = image->cs;
+        if (!image->premultiplied) {
+            if (image->cs == ColorSpace::ABGR8888) sdata->texColorSpace = ColorSpace::ABGR8888S;
+            else if (image->cs == ColorSpace::ARGB8888) sdata->texColorSpace = ColorSpace::ARGB8888S;
+        }
         sdata->texFlipY = 1;
         sdata->geometry = make_unique<GlGeometry>();
     }
