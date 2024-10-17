@@ -1170,11 +1170,11 @@ static bool _rasterDirectImage(SwSurface* surface, const SwImage* image, const S
             auto src = sbuffer;
             if (opacity == 255) {
                 for (auto x = region.min.x; x < region.max.x; ++x, ++dst, ++src) {
-                    *dst = *src + MULTIPLY(*dst, ~*src);
+                    *dst = *src + MULTIPLY(*dst, IA(*src));
                 }
             } else {
                 for (auto x = region.min.x; x < region.max.x; ++x, ++dst, ++src) {
-                    *dst = INTERPOLATE8(*src, *dst, opacity);
+                    *dst = INTERPOLATE8(A(*src), *dst, opacity);
                 }
             }
         }
