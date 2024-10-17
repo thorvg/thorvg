@@ -1528,8 +1528,7 @@ static bool _rasterTranslucentGradientRle(SwSurface* surface, const SwRle* rle, 
     } else if (surface->channelSize == sizeof(uint8_t)) {
         for (uint32_t i = 0; i < rle->size; ++i, ++span) {
             auto dst = &surface->buf8[span->y * surface->stride + span->x];
-            if (span->coverage == 255) fillMethod()(fill, dst, span->y, span->x, span->len, _opMaskNone, 255);
-            else fillMethod()(fill, dst, span->y, span->x, span->len, _opMaskAdd, span->coverage);
+            fillMethod()(fill, dst, span->y, span->x, span->len, _opMaskAdd, span->coverage);
         }
     }
     return true;
@@ -1586,9 +1585,9 @@ static bool _rasterRadialGradientRle(SwSurface* surface, const SwRle* rle, const
         if (_matting(surface)) return _rasterGradientMattedRle<FillRadial>(surface, rle, fill);
         else return _rasterGradientMaskedRle<FillRadial>(surface, rle, fill);
     } else if (_blending(surface)) {
-        _rasterBlendingGradientRle<FillRadial>(surface, rle, fill);
+        return _rasterBlendingGradientRle<FillRadial>(surface, rle, fill);
     } else {
-        if (fill->translucent) _rasterTranslucentGradientRle<FillRadial>(surface, rle, fill);
+        if (fill->translucent) return _rasterTranslucentGradientRle<FillRadial>(surface, rle, fill);
         else return _rasterSolidGradientRle<FillRadial>(surface, rle, fill);
     }
     return false;
