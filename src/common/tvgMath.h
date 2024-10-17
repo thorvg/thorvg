@@ -194,6 +194,12 @@ static inline float dot(const Point& lhs, const Point& rhs)
 }
 
 
+static inline float cross(const Point& lhs, const Point& rhs)
+{
+    return lhs.x * rhs.y - rhs.x * lhs.y;
+}
+
+
 static inline bool zero(const Point& p)
 {
     return tvg::zero(p.x) && tvg::zero(p.y);
