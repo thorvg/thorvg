@@ -346,20 +346,31 @@ float Bezier::angle(float t) const
 {
     if (t < 0 || t > 1) return 0;
 
-    //derivate
-    // p'(t) = 3 * (-(1-2t+t^2) * p0 + (1 - 4 * t + 3 * t^2) * p1 + (2 * t - 3 *
-    // t^2) * p2 + t^2 * p3)
+    auto pt = derivative(t);
+    return rad2deg(tvg::atan2(pt.y, pt.x));
+}
+
+
+Point Bezier::derivative(float t) const
+{
+    if (t < 0 || t > 1) return {};
+
+    // p'(t) = 3 * [-(1 - 2t + t^2) * p0 + (1 - 4t + 3t^2) * p1 + (2t - 3t^2) * p2 + (t^2) * p3]
     float mt = 1.0f - t;
     float d = t * t;
     float a = -mt * mt;
     float b = 1 - 4 * t + 3 * d;
     float c = 2 * t - 3 * d;
 
-    Point pt ={a * start.x + b * ctrl1.x + c * ctrl2.x + d * end.x, a * start.y + b * ctrl1.y + c * ctrl2.y + d * end.y};
-    pt.x *= 3;
-    pt.y *= 3;
+    return 3.0f * (a * start + b * ctrl1 + c * ctrl2 + d * end);
+}
 
-    return rad2deg(tvg::atan2(pt.y, pt.x));
+
+Point Bezier::secondDerivative(float t) const
+{
+    // p''(t) = 6 * [(1 - t) * p0 + (-2 + 3t) * p1 + (1 - 3t) * p2 + (t) * p3]
+    auto t3 = 3.0f * t;
+    return 6.0f * ((1.0f - t) * start + (-2.0f + t3) * ctrl1 + (1.0f - t3) * ctrl2 + t * end);
 }
 
 

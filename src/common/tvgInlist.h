@@ -104,6 +104,64 @@ struct Inlist
     {
         return head ? false : true;
     }
+
+    template<class COMPARE>
+    void sort()
+    {
+        if (!head) return;
+
+        head = mergeSort<COMPARE>(head);
+
+        tail = head;
+        while (tail->next) {
+            tail = tail->next;
+        }
+    }
+
+private:
+    T* split(T* head)
+    {
+        T* fast = head;
+        T* slow = head;
+        while (fast->next && fast->next->next) {
+            fast = fast->next->next;
+            slow = slow->next;
+        }
+        T* temp = slow->next;
+        slow->next = nullptr;
+        return temp;
+    }
+
+    template<class COMPARE>
+    T* merge(T* first, T* second)
+    {
+        if (!first) return second;
+        if (!second) return first;
+
+        if (COMPARE{}(*first, *second)) {
+            first->next = merge<COMPARE>(first->next, second);
+            first->next->prev = first;
+            first->prev = nullptr;
+            return first;
+        }
+        second->next = merge<COMPARE>(first, second->next);
+        second->next->prev = second;
+        second->prev = nullptr;
+        return second;
+    }
+
+    template<class COMPARE>
+    T* mergeSort(T* head)
+    {
+        if (!head || !head->next) return head;
+
+        T* second = split(head);
+
+        head = mergeSort<COMPARE>(head);
+        second = mergeSort<COMPARE>(second);
+
+        return merge<COMPARE>(head, second);
+    }
 };
 
 }

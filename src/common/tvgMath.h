@@ -240,6 +240,12 @@ static inline Point operator/(const Point& lhs, const float rhs)
 }
 
 
+static inline float dot(const Point& p1, const Point& p2)
+{
+    return p1.x * p2.x + p1.y * p2.y;
+}
+
+
 static inline void log(const Point& pt)
 {
     TVGLOG("COMMON", "Point: [%f %f]", pt.x, pt.y);
@@ -280,6 +286,8 @@ struct Bezier
     float atApprox(float at, float length) const;
     Point at(float t) const;
     float angle(float t) const;
+    Point derivative(float t) const;
+    Point secondDerivative(float t) const;
 };
 
 
