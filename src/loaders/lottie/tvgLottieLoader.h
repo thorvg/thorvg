@@ -77,6 +77,7 @@ private:
     void clear();
     float startFrame();
     void run(unsigned tid) override;
+    void release();
 };
 
 
