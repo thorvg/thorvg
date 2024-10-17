@@ -28,7 +28,9 @@
 
 struct WgRenderStorage {
     WGPUTexture texture{};
+    WGPUTexture textureMS{};
     WGPUTextureView texView{};
+    WGPUTextureView texViewMS{};
     WGPUBindGroup bindGroupRead{};
     WGPUBindGroup bindGroupWrite{};
     WGPUBindGroup bindGroupTexure{};
