@@ -126,7 +126,7 @@ void GlRenderer::drawPrimitive(GlShape& sdata, uint8_t r, uint8_t g, uint8_t b, 
 
     bbox.intersect(vp);
 
-    bool complexBlend = beginComplexBlending(bbox, sdata.geometry->getBounds());
+    auto complexBlend = beginComplexBlending(bbox, sdata.geometry->getBounds());
 
     if (complexBlend) {
         vp = currentPass()->getViewport();
@@ -149,12 +149,7 @@ void GlRenderer::drawPrimitive(GlShape& sdata, uint8_t r, uint8_t g, uint8_t b, 
         return;
     }
 
-    task->setViewport(RenderRegion {
-        x,
-        vp.h - y - h,
-        w,
-        h
-    });
+    task->setViewport({x, vp.h - y - h, w, h});
 
     GlRenderTask* stencilTask = nullptr;
 
@@ -175,60 +170,47 @@ void GlRenderer::drawPrimitive(GlShape& sdata, uint8_t r, uint8_t g, uint8_t b, 
     }
 
     // matrix buffer
-    {
-        const auto& matrix = sdata.geometry->getTransformMatrix();
+    const auto& matrix = sdata.geometry->getTransformMatrix();
 
-        float matrix44[16];
+    float matrix44[16];
+    currentPass()->getMatrix(matrix44, matrix);
+    auto viewOffset = mGpuBuffer->push(matrix44, 16 * sizeof(float), true);
 
-        currentPass()->getMatrix(matrix44, matrix);
+    task->addBindResource(GlBindingResource{
+        0,
+        task->getProgram()->getUniformBlockIndex("Matrix"),
+        mGpuBuffer->getBufferId(),
+        viewOffset,
+        16 * sizeof(float),
+    });
 
-        uint32_t loc = task->getProgram()->getUniformBlockIndex("Matrix");
-
-        uint32_t viewOffset = mGpuBuffer->push(matrix44, 16 * sizeof(float), true);
-
-        task->addBindResource(GlBindingResource{
+    if (stencilTask) {
+        stencilTask->addBindResource(GlBindingResource{
             0,
-            loc,
+            stencilTask->getProgram()->getUniformBlockIndex("Matrix"),
             mGpuBuffer->getBufferId(),
             viewOffset,
             16 * sizeof(float),
         });
-
-        if (stencilTask) {
-            stencilTask->addBindResource(GlBindingResource{
-                0,
-                static_cast<uint32_t>(stencilTask->getProgram()->getUniformBlockIndex("Matrix")),
-                mGpuBuffer->getBufferId(),
-                viewOffset,
-                16 * sizeof(float),
-            });
-        }
     }
+
     // color
-    {
-        float color[4] = {r / 255.f, g / 255.f, b / 255.f, a / 255.f};
+    float color[4] = {r / 255.f, g / 255.f, b / 255.f, a / 255.f};
 
-        uint32_t loc = task->getProgram()->getUniformBlockIndex("ColorInfo");
+    task->addBindResource(GlBindingResource{
+        1,
+        task->getProgram()->getUniformBlockIndex("ColorInfo"),
+        mGpuBuffer->getBufferId(),
+        mGpuBuffer->push(color, 4 * sizeof(float), true),
+         4 * sizeof(float),
+    });
 
-        task->addBindResource(GlBindingResource{
-            1,
-            loc,
-            mGpuBuffer->getBufferId(),
-            mGpuBuffer->push(color, 4 * sizeof(float), true),
-            4 * sizeof(float),
-        });
-    }
-
-    if (stencilTask) {
-        currentPass()->addRenderTask(new GlStencilCoverTask(stencilTask, task, stencilMode));
-    } else {
-        currentPass()->addRenderTask(task);
-    }
+    if (stencilTask) currentPass()->addRenderTask(new GlStencilCoverTask(stencilTask, task, stencilMode));
+    else currentPass()->addRenderTask(task);
 
     if (complexBlend) {
         auto task = new GlRenderTask(mPrograms[RT_Stencil].get());
         sdata.geometry->draw(task, mGpuBuffer.get(), flag);
-
         endBlendingCompose(task, sdata.geometry->getTransformMatrix());
     }
 }
@@ -242,8 +224,7 @@ void GlRenderer::drawPrimitive(GlShape& sdata, const Fill* fill, RenderUpdateFla
     bbox.intersect(vp);
 
     const Fill::ColorStop* stops = nullptr;
-    auto stopCnt = min(fill->colorStops(&stops),
-                       static_cast<uint32_t>(MAX_GRADIENT_STOPS));
+    auto stopCnt = min(fill->colorStops(&stops), static_cast<uint32_t>(MAX_GRADIENT_STOPS));
     if (stopCnt < 2) return;
 
     GlRenderTask* task = nullptr;
@@ -263,19 +244,14 @@ void GlRenderer::drawPrimitive(GlShape& sdata, const Fill* fill, RenderUpdateFla
         return;
     }
 
-    bool complexBlend = beginComplexBlending(bbox, sdata.geometry->getBounds());
+    auto complexBlend = beginComplexBlending(bbox, sdata.geometry->getBounds());
 
     if (complexBlend) vp = currentPass()->getViewport();
 
     auto x = bbox.x - vp.x;
     auto y = bbox.y - vp.y;
 
-    task->setViewport(RenderRegion {
-        x,
-        vp.h - y - bbox.h,
-        bbox.w,
-        bbox.h
-    });
+    task->setViewport({x, vp.h - y - bbox.h, bbox.w, bbox.h});
 
     GlRenderTask* stencilTask = nullptr;
     GlStencilMode stencilMode = sdata.geometry->getStencilMode(flag);
@@ -285,138 +261,131 @@ void GlRenderer::drawPrimitive(GlShape& sdata, const Fill* fill, RenderUpdateFla
     }
 
     // matrix buffer
-    {
-        const auto& matrix = sdata.geometry->getTransformMatrix();
+    const auto& matrix = sdata.geometry->getTransformMatrix();
+    float invMat4[16];
+    Matrix inv;
+    inverse(&fill->transform(), &inv);
+    GET_MATRIX44(inv, invMat4);
 
-        float invMat4[16];
-        Matrix inv;
-        inverse(&fill->transform(), &inv);
-        GET_MATRIX44(inv, invMat4);
+    float matrix44[16];
+    currentPass()->getMatrix(matrix44, matrix);
 
-        float matrix44[16];
-        currentPass()->getMatrix(matrix44, matrix);
+    auto viewOffset = mGpuBuffer->push(matrix44, 16 * sizeof(float), true);
 
-        uint32_t loc = task->getProgram()->getUniformBlockIndex("Matrix");
-        uint32_t viewOffset = mGpuBuffer->push(matrix44, 16 * sizeof(float), true);
+    task->addBindResource(GlBindingResource{
+        0,
+        task->getProgram()->getUniformBlockIndex("Matrix"),
+        mGpuBuffer->getBufferId(),
+        viewOffset,
+        16 * sizeof(float),
+    });
 
-        task->addBindResource(GlBindingResource{
+    if (stencilTask) {
+        stencilTask->addBindResource(GlBindingResource{
             0,
-            loc,
-            mGpuBuffer->getBufferId(),
-            viewOffset,
-            16 * sizeof(float),
-        });
-
-        if (stencilTask) {
-            stencilTask->addBindResource(GlBindingResource{
-                0,
-                static_cast<uint32_t>(stencilTask->getProgram()->getUniformBlockIndex("Matrix")),
-                mGpuBuffer->getBufferId(),
-                viewOffset,
-                16 * sizeof(float),
-            });
-        }
-
-        loc = task->getProgram()->getUniformBlockIndex("InvMatrix");
-        viewOffset = mGpuBuffer->push(invMat4, 16 * sizeof(float), true);
-
-        task->addBindResource(GlBindingResource{
-            1,
-            loc,
+            stencilTask->getProgram()->getUniformBlockIndex("Matrix"),
             mGpuBuffer->getBufferId(),
             viewOffset,
             16 * sizeof(float),
         });
     }
 
-    float alpha = 1.0f;
+    viewOffset = mGpuBuffer->push(invMat4, 16 * sizeof(float), true);
+
+    task->addBindResource(GlBindingResource{
+        1,
+        task->getProgram()->getUniformBlockIndex("InvMatrix"),
+        mGpuBuffer->getBufferId(),
+        viewOffset,
+        16 * sizeof(float),
+    });
+
+    auto alpha = 1.0f;
 
     if (flag & RenderUpdateFlag::GradientStroke) {
-        float strokeWidth = sdata.rshape->strokeWidth();
+        auto strokeWidth = sdata.rshape->strokeWidth();
         if (strokeWidth < MIN_GL_STROKE_WIDTH) {
             alpha = strokeWidth / MIN_GL_STROKE_WIDTH;
         }
     }
 
     // gradient block
-    {
-        GlBindingResource gradientBinding{};
-        uint32_t loc = task->getProgram()->getUniformBlockIndex("GradientInfo");
+    GlBindingResource gradientBinding{};
+    auto loc = task->getProgram()->getUniformBlockIndex("GradientInfo");
 
-        if (fill->type() == Type::LinearGradient) {
-            auto linearFill = static_cast<const LinearGradient*>(fill);
+    if (fill->type() == Type::LinearGradient) {
+        auto linearFill = static_cast<const LinearGradient*>(fill);
 
-            GlLinearGradientBlock gradientBlock;
+        GlLinearGradientBlock gradientBlock;
 
-            gradientBlock.nStops[1] = NOISE_LEVEL;
-            gradientBlock.nStops[2] = static_cast<int32_t>(fill->spread()) * 1.f;
-            uint32_t nStops = 0;
-            for (uint32_t i = 0; i < stopCnt; ++i) {
-                if (i > 0 && gradientBlock.stopPoints[nStops - 1] > stops[i].offset) continue;
+        gradientBlock.nStops[1] = NOISE_LEVEL;
+        gradientBlock.nStops[2] = static_cast<int32_t>(fill->spread()) * 1.f;
+        uint32_t nStops = 0;
+        for (uint32_t i = 0; i < stopCnt; ++i) {
+            if (i > 0 && gradientBlock.stopPoints[nStops - 1] > stops[i].offset) continue;
 
-                gradientBlock.stopPoints[i] = stops[i].offset;
-                gradientBlock.stopColors[i * 4 + 0] = stops[i].r / 255.f;
-                gradientBlock.stopColors[i * 4 + 1] = stops[i].g / 255.f;
-                gradientBlock.stopColors[i * 4 + 2] = stops[i].b / 255.f;
-                gradientBlock.stopColors[i * 4 + 3] = stops[i].a / 255.f * alpha;
-                nStops++;
-            }
-            gradientBlock.nStops[0] = nStops * 1.f;
-
-            float x1, x2, y1, y2;
-            linearFill->linear(&x1, &y1, &x2, &y2);
-
-            gradientBlock.startPos[0] = x1;
-            gradientBlock.startPos[1] = y1;
-            gradientBlock.stopPos[0] = x2;
-            gradientBlock.stopPos[1] = y2;
-
-            gradientBinding = GlBindingResource{
-                2,
-                loc,
-                mGpuBuffer->getBufferId(),
-                mGpuBuffer->push(&gradientBlock, sizeof(GlLinearGradientBlock), true),
-                sizeof(GlLinearGradientBlock),
-            };
-        } else {
-            auto radialFill = static_cast<const RadialGradient*>(fill);
-
-            GlRadialGradientBlock gradientBlock;
-
-            gradientBlock.nStops[1] = NOISE_LEVEL;
-            gradientBlock.nStops[2] = static_cast<int32_t>(fill->spread()) * 1.f;
-
-            uint32_t nStops = 0;
-            for (uint32_t i = 0; i < stopCnt; ++i) {
-                if (i > 0 && gradientBlock.stopPoints[nStops - 1] > stops[i].offset) continue; 
-
-                gradientBlock.stopPoints[i] = stops[i].offset;
-                gradientBlock.stopColors[i * 4 + 0] = stops[i].r / 255.f;
-                gradientBlock.stopColors[i * 4 + 1] = stops[i].g / 255.f;
-                gradientBlock.stopColors[i * 4 + 2] = stops[i].b / 255.f;
-                gradientBlock.stopColors[i * 4 + 3] = stops[i].a / 255.f * alpha;
-                nStops++;
-            }
-            gradientBlock.nStops[0] = nStops * 1.f;
-
-            float x, y, r;
-            radialFill->radial(&x, &y, &r);
-
-            gradientBlock.centerPos[0] = x;
-            gradientBlock.centerPos[1] = y;
-            gradientBlock.radius[0] = r;
-
-            gradientBinding = GlBindingResource{
-                2,
-                loc,
-                mGpuBuffer->getBufferId(),
-                mGpuBuffer->push(&gradientBlock, sizeof(GlRadialGradientBlock), true),
-                sizeof(GlRadialGradientBlock),
-            };
+            gradientBlock.stopPoints[i] = stops[i].offset;
+            gradientBlock.stopColors[i * 4 + 0] = stops[i].r / 255.f;
+            gradientBlock.stopColors[i * 4 + 1] = stops[i].g / 255.f;
+            gradientBlock.stopColors[i * 4 + 2] = stops[i].b / 255.f;
+            gradientBlock.stopColors[i * 4 + 3] = stops[i].a / 255.f * alpha;
+            nStops++;
         }
+        gradientBlock.nStops[0] = nStops * 1.f;
 
-        task->addBindResource(gradientBinding);
+        float x1, x2, y1, y2;
+        linearFill->linear(&x1, &y1, &x2, &y2);
+
+        gradientBlock.startPos[0] = x1;
+        gradientBlock.startPos[1] = y1;
+        gradientBlock.stopPos[0] = x2;
+        gradientBlock.stopPos[1] = y2;
+
+        gradientBinding = GlBindingResource{
+            2,
+            loc,
+            mGpuBuffer->getBufferId(),
+            mGpuBuffer->push(&gradientBlock, sizeof(GlLinearGradientBlock), true),
+            sizeof(GlLinearGradientBlock),
+        };
+    } else {
+        auto radialFill = static_cast<const RadialGradient*>(fill);
+
+        GlRadialGradientBlock gradientBlock;
+
+        gradientBlock.nStops[1] = NOISE_LEVEL;
+        gradientBlock.nStops[2] = static_cast<int32_t>(fill->spread()) * 1.f;
+
+        uint32_t nStops = 0;
+        for (uint32_t i = 0; i < stopCnt; ++i) {
+            if (i > 0 && gradientBlock.stopPoints[nStops - 1] > stops[i].offset) continue; 
+
+            gradientBlock.stopPoints[i] = stops[i].offset;
+            gradientBlock.stopColors[i * 4 + 0] = stops[i].r / 255.f;
+            gradientBlock.stopColors[i * 4 + 1] = stops[i].g / 255.f;
+            gradientBlock.stopColors[i * 4 + 2] = stops[i].b / 255.f;
+            gradientBlock.stopColors[i * 4 + 3] = stops[i].a / 255.f * alpha;
+            nStops++;
+        }
+        gradientBlock.nStops[0] = nStops * 1.f;
+
+        float x, y, r;
+        radialFill->radial(&x, &y, &r);
+
+        gradientBlock.centerPos[0] = x;
+        gradientBlock.centerPos[1] = y;
+        gradientBlock.radius[0] = r;
+
+        gradientBinding = GlBindingResource{
+            2,
+            loc,
+            mGpuBuffer->getBufferId(),
+            mGpuBuffer->push(&gradientBlock, sizeof(GlRadialGradientBlock), true),
+            sizeof(GlRadialGradientBlock),
+        };
     }
+
+    task->addBindResource(gradientBinding);
 
     if (stencilTask) {
         currentPass()->addRenderTask(new GlStencilCoverTask(stencilTask, task, stencilMode));
@@ -494,12 +463,7 @@ void GlRenderer::drawClip(Array<RenderData>& clips)
         auto x = bbox.x - vp.x;
         auto y = bbox.y - vp.y;
 
-        clipTask->setViewport(RenderRegion {
-            x,
-            vp.h - y - bbox.h,
-            bbox.w,
-            bbox.h,
-        });
+        clipTask->setViewport({x, vp.h - y - bbox.h, bbox.w, bbox.h});
 
         const auto& matrix = sdata->geometry->getTransformMatrix();
 
@@ -507,9 +471,8 @@ void GlRenderer::drawClip(Array<RenderData>& clips)
 
         currentPass()->getMatrix(matrix44, matrix);
 
-        uint32_t loc = clipTask->getProgram()->getUniformBlockIndex("Matrix");
-
-        uint32_t viewOffset = mGpuBuffer->push(matrix44, 16 * sizeof(float), true);
+        auto loc = clipTask->getProgram()->getUniformBlockIndex("Matrix");
+        auto viewOffset = mGpuBuffer->push(matrix44, 16 * sizeof(float), true);
 
         clipTask->addBindResource(GlBindingResource{
             0,
@@ -532,7 +495,7 @@ void GlRenderer::drawClip(Array<RenderData>& clips)
         });
 
         maskTask->setDrawRange(identityIndexOffset, 6);
-        maskTask->setViewport(RenderRegion{0, 0, static_cast<int32_t>(vp.w), static_cast<int32_t>(vp.h)});
+        maskTask->setViewport({0, 0, static_cast<int32_t>(vp.w), static_cast<int32_t>(vp.h)});
 
         currentPass()->addRenderTask(new GlClipTask(clipTask, maskTask));
     }
@@ -585,26 +548,19 @@ void GlRenderer::endBlendingCompose(GlRenderTask* stencilTask, const Matrix& mat
         auto w = vp.w;
         auto h = vp.h;
 
-        stencilTask->setViewport(RenderRegion{
-            x,
-            passVp.h - y - h,
-            w,
-            h,
-        });
+        stencilTask->setViewport({x, passVp.h - y - h, w, h});
     }
 
     stencilTask->setDrawDepth(currentPass()->nextDrawDepth());
 
     {
         // set view matrix
-        uint32_t loc = stencilTask->getProgram()->getUniformBlockIndex("Matrix");
-
         float matrix44[16];
         currentPass()->getMatrix(matrix44, matrix);
         uint32_t viewOffset = mGpuBuffer->push(matrix44, 16 * sizeof(float), true);
         stencilTask->addBindResource(GlBindingResource{
             0,
-            loc,
+            stencilTask->getProgram()->getUniformBlockIndex("Matrix"),
             mGpuBuffer->getBufferId(),
             viewOffset,
             16 * sizeof(float),
@@ -618,14 +574,8 @@ void GlRenderer::endBlendingCompose(GlRenderTask* stencilTask, const Matrix& mat
     task->setDrawDepth(currentPass()->nextDrawDepth());
 
     // src and dst texture
-    {
-        uint32_t loc = task->getProgram()->getUniformLocation("uSrcTexture");
-        task->addBindResource(GlBindingResource{1, blendPass.getFbo()->getColorTexture(), loc});
-    }
-    {
-        uint32_t loc = task->getProgram()->getUniformLocation("uDstTexture");
-        task->addBindResource(GlBindingResource{2, dstCopyFbo->getColorTexture(), loc});
-    }
+    task->addBindResource(GlBindingResource{1, blendPass.getFbo()->getColorTexture(), task->getProgram()->getUniformLocation("uSrcTexture")});
+    task->addBindResource(GlBindingResource{2, dstCopyFbo->getColorTexture(), task->getProgram()->getUniformLocation("uDstTexture")});
 
     currentPass()->addRenderTask(task);
 }
@@ -661,11 +611,7 @@ void GlRenderer::prepareBlitTask(GlBlitTask* task)
 {
     RenderRegion region{0, 0, static_cast<int32_t>(surface.w), static_cast<int32_t>(surface.h)};
     prepareCmpTask(task, region, surface.w, surface.h);
-
-    {
-        uint32_t loc = task->getProgram()->getUniformLocation("uSrcTexture");
-        task->addBindResource(GlBindingResource{0, task->getColorTexture(), loc});
-    }
+    task->addBindResource(GlBindingResource{0, task->getColorTexture(), task->getProgram()->getUniformLocation("uSrcTexture")});
 }
 
 
@@ -739,12 +685,7 @@ void GlRenderer::prepareCmpTask(GlRenderTask* task, const RenderRegion& vp, uint
 
     task->setDrawRange(indexOffset, indices.count);
 
-    task->setViewport(RenderRegion{
-        x,
-        static_cast<int32_t>((passVp.h - y - h)),
-        w,
-        h,
-    });
+    task->setViewport({x, static_cast<int32_t>((passVp.h - y - h)), w, h});
 }
 
 
@@ -810,8 +751,8 @@ void GlRenderer::endRenderPass(RenderCompositor* cmp)
 
         prepareCmpTask(compose_task, gl_cmp->bbox, self_pass.getFboWidth(), self_pass.getFboHeight());
 
-        compose_task->addBindResource(GlBindingResource{0, self_pass.getTextureId(), (uint)program->getUniformLocation("uSrcTexture")});
-        compose_task->addBindResource(GlBindingResource{1, mask_pass.getTextureId(), (uint)program->getUniformLocation("uMaskTexture")});
+        compose_task->addBindResource(GlBindingResource{0, self_pass.getTextureId(), program->getUniformLocation("uSrcTexture")});
+        compose_task->addBindResource(GlBindingResource{1, mask_pass.getTextureId(), program->getUniformLocation("uMaskTexture")});
 
         compose_task->setDrawDepth(currentPass()->nextDrawDepth());
         compose_task->setParentSize(static_cast<uint32_t>(currentPass()->getViewport().w), static_cast<uint32_t>(currentPass()->getViewport().h));
@@ -830,41 +771,29 @@ void GlRenderer::endRenderPass(RenderCompositor* cmp)
         task->setDrawDepth(currentPass()->nextDrawDepth());
 
         // matrix buffer
-        {
-            float matrix[16];
-            memset(matrix, 0, 16 * sizeof(float));
-            matrix[0] = 1.f;
-            matrix[5] = 1.f;
-            matrix[10] = 1.f;
-            matrix[15] = 1.f;
-            uint32_t loc = task->getProgram()->getUniformBlockIndex("Matrix");
+        float matrix[16] = {1, 0, 0, 0, 0, 1, 0, 0, 0, 0, 1, 0, 0, 0, 0, 1};
 
-            task->addBindResource(GlBindingResource{
-                0,
-                loc,
-                mGpuBuffer->getBufferId(),
-                mGpuBuffer->push(matrix, 16 * sizeof(float), true),
-                16 * sizeof(float),
-            });
-        }
+        task->addBindResource(GlBindingResource{
+            0,
+            task->getProgram()->getUniformBlockIndex("Matrix"),
+            mGpuBuffer->getBufferId(),
+            mGpuBuffer->push(matrix, 16 * sizeof(float), true),
+            16 * sizeof(float),
+        });
+
         // image info
-        {
-            uint32_t info[4] = {(uint32_t)ColorSpace::ABGR8888, 0, cmp->opacity, 0};
-            uint32_t loc = task->getProgram()->getUniformBlockIndex("ColorInfo");
+        uint32_t info[4] = {(uint32_t)ColorSpace::ABGR8888, 0, cmp->opacity, 0};
 
-            task->addBindResource(GlBindingResource{
-                1,
-                loc,
-                mGpuBuffer->getBufferId(),
-                mGpuBuffer->push(info, 4 * sizeof(uint32_t), true),
-                4 * sizeof(uint32_t),
-            });
-        }
+        task->addBindResource(GlBindingResource{
+            1,
+            task->getProgram()->getUniformBlockIndex("ColorInfo"),
+            mGpuBuffer->getBufferId(),
+            mGpuBuffer->push(info, 4 * sizeof(uint32_t), true),
+            4 * sizeof(uint32_t),
+        });
+
         // texture id
-        {
-            uint32_t loc = task->getProgram()->getUniformLocation("uTexture");
-            task->addBindResource(GlBindingResource{0, renderPass.getTextureId(), loc});
-        }
+        task->addBindResource(GlBindingResource{0, renderPass.getTextureId(), task->getProgram()->getUniformLocation("uTexture")});
         task->setParentSize(static_cast<uint32_t>(currentPass()->getViewport().w), static_cast<uint32_t>(currentPass()->getViewport().h));
         currentPass()->addRenderTask(std::move(task));
     }
@@ -897,7 +826,7 @@ bool GlRenderer::target(int32_t id, uint32_t w, uint32_t h)
     mTargetFboId = static_cast<GLint>(id);
 
     mRootTarget = make_unique<GlRenderTarget>(surface.w, surface.h);
-    mRootTarget->setViewport(RenderRegion{0, 0, static_cast<int32_t>(surface.w), static_cast<int32_t>(surface.h)});
+    mRootTarget->setViewport({0, 0, static_cast<int32_t>(surface.w), static_cast<int32_t>(surface.h)});
     mRootTarget->init(mTargetFboId);
 
     mRenderPassStack.clear();
@@ -932,7 +861,7 @@ bool GlRenderer::sync()
     prepareBlitTask(task);
 
     task->mClearBuffer = mClearBuffer;
-    task->setTargetViewport(RenderRegion{0, 0, static_cast<int32_t>(surface.w), static_cast<int32_t>(surface.h)});
+    task->setTargetViewport({0, 0, static_cast<int32_t>(surface.w), static_cast<int32_t>(surface.h)});
 
     mGpuBuffer->flushToGPU();
     mGpuBuffer->bind();
@@ -955,7 +884,7 @@ bool GlRenderer::sync()
 
 RenderRegion GlRenderer::region(RenderData data)
 {
-    if (currentPass()->isEmpty()) return RenderRegion{0, 0, 0, 0};
+    if (currentPass()->isEmpty()) return {0, 0, 0, 0};
 
     auto shape = reinterpret_cast<GlShape*>(data);
     auto bounds = shape->geometry->getBounds();
@@ -1116,55 +1045,39 @@ bool GlRenderer::renderImage(void* data)
     if (complexBlend) vp = currentPass()->getViewport();
 
     // matrix buffer
-    {
-        const auto& matrix = sdata->geometry->getTransformMatrix();
+    const auto& matrix = sdata->geometry->getTransformMatrix();
+    float matrix44[16];
+    currentPass()->getMatrix(matrix44, matrix);
 
-        float matrix44[16];
-
-        currentPass()->getMatrix(matrix44, matrix);
-
-        uint32_t loc = task->getProgram()->getUniformBlockIndex("Matrix");
-
-        task->addBindResource(GlBindingResource{
-            0,
-            loc,
-            mGpuBuffer->getBufferId(),
-            mGpuBuffer->push(matrix44, 16 * sizeof(float), true),
-            16 * sizeof(float),
-        });
-    }
-    // image info
-    {
-        uint32_t info[4] = {(uint32_t)sdata->texColorSpace, sdata->texFlipY, sdata->opacity, 0};
-        uint32_t loc = task->getProgram()->getUniformBlockIndex("ColorInfo");
-
-        task->addBindResource(GlBindingResource{
-            1,
-            loc,
-            mGpuBuffer->getBufferId(),
-            mGpuBuffer->push(info, 4 * sizeof(uint32_t), true),
-            4 * sizeof(uint32_t),
-        });
-    }
-    // texture id
-    {
-        uint32_t loc = task->getProgram()->getUniformLocation("uTexture");
-        task->addBindResource(GlBindingResource{0, sdata->texId, loc});
-    }
-
-    task->setViewport(RenderRegion{
-        x,
-        vp.h - y - bbox.h,
-        bbox.w,
-        bbox.h
+    task->addBindResource(GlBindingResource{
+        0,
+        task->getProgram()->getUniformBlockIndex("Matrix"),
+        mGpuBuffer->getBufferId(),
+        mGpuBuffer->push(matrix44, 16 * sizeof(float), true),
+        16 * sizeof(float),
     });
+
+    // image info
+    uint32_t info[4] = {(uint32_t)sdata->texColorSpace, sdata->texFlipY, sdata->opacity, 0};
+
+    task->addBindResource(GlBindingResource{
+        1,
+        task->getProgram()->getUniformBlockIndex("ColorInfo"),
+        mGpuBuffer->getBufferId(),
+        mGpuBuffer->push(info, 4 * sizeof(uint32_t), true),
+        4 * sizeof(uint32_t),
+    });
+
+    // texture id
+    task->addBindResource(GlBindingResource{0, sdata->texId, task->getProgram()->getUniformLocation("uTexture")});
+
+    task->setViewport({x, vp.h - y - bbox.h, bbox.w, bbox.h});
 
     currentPass()->addRenderTask(task);
 
     if (complexBlend) {
         auto task = new GlRenderTask(mPrograms[RT_Stencil].get());
         sdata->geometry->draw(task, mGpuBuffer.get(), RenderUpdateFlag::Image);
-
         endBlendingCompose(task, sdata->geometry->getTransformMatrix());
     }
 
