@@ -420,3 +420,11 @@ bool LottieLoader::ready()
     if (comp) return true;
     return false;
 }
+
+
+bool LottieLoader::write(const char* layer, uint32_t ix, const char* var, float val)
+{
+    if (!ready() || !comp->expressions) return false;
+    comp->root->write(layer, ix, var, val);
+    return true;
+}
