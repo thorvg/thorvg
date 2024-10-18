@@ -31,8 +31,10 @@ void WgCompositor::initialize(WgContext& context, uint32_t width, uint32_t heigh
     this->width = width;
     this->height = height;
     // allocate global stencil buffer handles
-    texStencil = context.createTexStencil(width, height, WGPUTextureFormat_Stencil8);
+    texStencil = context.createRenderTarget(width, height, WGPUTextureFormat_Stencil8, 1);
     texViewStencil = context.createTextureView(texStencil);
+    texStencilMS = context.createRenderTarget(width, height, WGPUTextureFormat_Stencil8, 4);
+    texViewStencilMS = context.createTextureView(texStencilMS);
     // allocate global view matrix handles
     WgShaderTypeMat4x4f viewMat(width, height);
     context.allocateBufferUniform(bufferViewMat, &viewMat, sizeof(viewMat));
@@ -71,6 +73,8 @@ void WgCompositor::release(WgContext& context)
     // release global stencil buffer handles
     context.releaseTextureView(texViewStencil);
     context.releaseTexture(texStencil);
+    context.releaseTextureView(texViewStencilMS);
+    context.releaseTexture(texStencilMS);
     height = 0;
     width = 0;
     pipelines = nullptr;
@@ -94,11 +98,12 @@ void WgCompositor::beginRenderPass(WGPUCommandEncoder commandEncoder, WgRenderSt
     assert(target);
     this->currentTarget = target;
     this->commandEncoder = commandEncoder;
-    WGPURenderPassDepthStencilAttachment depthStencilAttachment{ .view = texViewStencil, .stencilLoadOp = WGPULoadOp_Clear, .stencilStoreOp = WGPUStoreOp_Discard };
+    WGPURenderPassDepthStencilAttachment depthStencilAttachment{ .view = texViewStencilMS, .stencilLoadOp = WGPULoadOp_Clear, .stencilStoreOp = WGPUStoreOp_Discard };
     WGPURenderPassColorAttachment colorAttachment{};
-    colorAttachment.view = target->texView,
+    colorAttachment.view = target->texViewMS,
     colorAttachment.loadOp = clear ? WGPULoadOp_Clear : WGPULoadOp_Load,
     colorAttachment.storeOp = WGPUStoreOp_Store;
+    colorAttachment.resolveTarget = target->texView;
     #ifdef __EMSCRIPTEN__
     colorAttachment.depthSlice = WGPU_DEPTH_SLICE_UNDEFINED;
     #endif
