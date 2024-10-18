@@ -53,20 +53,20 @@ struct GlBindingResource
      * Can be a uniform location for a texture
      * Can be a uniform buffer binding index for a uniform block
      */
-    uint32_t        bindPoint = {};
-    uint32_t        location = {};
-    GLuint          gBufferId = {};
-    uint32_t        bufferOffset = {};
-    uint32_t        bufferRange = {};
+    uint32_t        bindPoint = 0;
+    GLint           location = 0;
+    GLuint          gBufferId = 0;
+    uint32_t        bufferOffset = 0;
+    uint32_t        bufferRange = 0;
 
     GlBindingResource() = default;
 
-    GlBindingResource(uint32_t index, uint32_t location, uint32_t bufferId, uint32_t offset, uint32_t range)
+    GlBindingResource(uint32_t index, GLint location, GLuint bufferId, uint32_t offset, uint32_t range)
         : type(GlBindingType::kUniformBuffer), bindPoint(index), location(location), gBufferId(bufferId), bufferOffset(offset), bufferRange(range)
     {
     }
 
-    GlBindingResource(uint32_t bindPoint, uint32_t texId, uint32_t location)
+    GlBindingResource(uint32_t bindPoint, GLuint texId, GLint location)
         : type(GlBindingType::kTexture), bindPoint(bindPoint), location(location), gBufferId(texId)
     {
     }
