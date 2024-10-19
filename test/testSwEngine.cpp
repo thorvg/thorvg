@@ -521,7 +521,7 @@ TEST_CASE("Filling Draw", "[tvgSwEngine]")
     REQUIRE(linearFill->spread(FillSpread::Repeat) == Result::Success);
     REQUIRE(radialFill->spread(FillSpread::Pad) == Result::Success);
     REQUIRE(linearFill->linear(0.0f, 0.0f, 100.0f, 120.0f) == Result::Success);
-    REQUIRE(radialFill->radial(50.0f, 50.0f, 50.0f) == Result::Success);
+    REQUIRE(radialFill->radial(50.0f, 50.0f, 50.0f, 50.0f, 50.0f, 0.0f) == Result::Success);
 
     //Filled Shapes
     auto shape3 = tvg::Shape::gen();
@@ -570,7 +570,7 @@ TEST_CASE("Filling Opaque Draw", "[tvgSwEngine]")
     REQUIRE(linearFill->colorStops(cs, 4) == Result::Success);
     REQUIRE(radialFill->colorStops(cs, 4) == Result::Success);
     REQUIRE(linearFill->linear(0.0f, 0.0f, 100.0f, 120.0f) == Result::Success);
-    REQUIRE(radialFill->radial(50.0f, 50.0f, 50.0f) == Result::Success);
+    REQUIRE(radialFill->radial(50.0f, 50.0f, 50.0f, 50.0f, 50.0f, 0.0f) == Result::Success);
 
     //Filled Shapes
     auto shape3 = tvg::Shape::gen();
@@ -619,7 +619,7 @@ TEST_CASE("Filling AlphaMask", "[tvgSwEngine]")
     REQUIRE(linearFill->colorStops(cs, 4) == Result::Success);
     REQUIRE(radialFill->colorStops(cs, 4) == Result::Success);
     REQUIRE(linearFill->linear(0.0f, 0.0f, 100.0f, 120.0f) == Result::Success);
-    REQUIRE(radialFill->radial(50.0f, 50.0f, 50.0f) == Result::Success);
+    REQUIRE(radialFill->radial(50.0f, 50.0f, 50.0f, 50.0f, 50.0f, 0.0f) == Result::Success);
 
     //Mask
     auto mask = tvg::Shape::gen();
@@ -678,7 +678,7 @@ TEST_CASE("Filling InvAlphaMask", "[tvgSwEngine]")
     REQUIRE(linearFill->colorStops(cs, 4) == Result::Success);
     REQUIRE(radialFill->colorStops(cs, 4) == Result::Success);
     REQUIRE(linearFill->linear(0.0f, 0.0f, 100.0f, 120.0f) == Result::Success);
-    REQUIRE(radialFill->radial(50.0f, 50.0f, 50.0f) == Result::Success);
+    REQUIRE(radialFill->radial(50.0f, 50.0f, 50.0f, 50.0f, 50.0f, 0.0f) == Result::Success);
 
     //Mask
     auto mask = tvg::Shape::gen();
@@ -737,7 +737,7 @@ TEST_CASE("Filling LumaMask", "[tvgSwEngine]")
     REQUIRE(linearFill->colorStops(cs, 4) == Result::Success);
     REQUIRE(radialFill->colorStops(cs, 4) == Result::Success);
     REQUIRE(linearFill->linear(0.0f, 0.0f, 100.0f, 120.0f) == Result::Success);
-    REQUIRE(radialFill->radial(50.0f, 50.0f, 50.0f) == Result::Success);
+    REQUIRE(radialFill->radial(50.0f, 50.0f, 50.0f, 50.0f, 50.0f, 0.0f) == Result::Success);
 
     //Mask
     auto mask = tvg::Shape::gen();
@@ -796,7 +796,7 @@ TEST_CASE("Filling Clipping", "[tvgSwEngine]")
     REQUIRE(linearFill->colorStops(cs, 4) == Result::Success);
     REQUIRE(radialFill->colorStops(cs, 4) == Result::Success);
     REQUIRE(linearFill->linear(0.0f, 0.0f, 100.0f, 120.0f) == Result::Success);
-    REQUIRE(radialFill->radial(50.0f, 50.0f, 50.0f) == Result::Success);
+    REQUIRE(radialFill->radial(50.0f, 50.0f, 50.0f, 50.0f, 50.0f, 0.0f) == Result::Success);
 
     //Clipper
     auto clipper = tvg::Shape::gen();
@@ -855,7 +855,7 @@ TEST_CASE("RLE Filling Draw", "[tvgSwEngine]")
     REQUIRE(linearFill->colorStops(cs, 4) == Result::Success);
     REQUIRE(radialFill->colorStops(cs, 4) == Result::Success);
     REQUIRE(linearFill->linear(0.0f, 0.0f, 100.0f, 120.0f) == Result::Success);
-    REQUIRE(radialFill->radial(50.0f, 50.0f, 50.0f) == Result::Success);
+    REQUIRE(radialFill->radial(50.0f, 50.0f, 50.0f, 50.0f, 50.0f, 0.0f) == Result::Success);
 
     //Filled Shapes
     auto shape3 = tvg::Shape::gen();
@@ -904,7 +904,7 @@ TEST_CASE("RLE Filling Opaque Draw", "[tvgSwEngine]")
     REQUIRE(linearFill->colorStops(cs, 4) == Result::Success);
     REQUIRE(radialFill->colorStops(cs, 4) == Result::Success);
     REQUIRE(linearFill->linear(0.0f, 0.0f, 100.0f, 120.0f) == Result::Success);
-    REQUIRE(radialFill->radial(50.0f, 50.0f, 50.0f) == Result::Success);
+    REQUIRE(radialFill->radial(50.0f, 50.0f, 50.0f, 50.0f, 50.0f, 0.0f) == Result::Success);
 
     //Filled Shapes
     auto shape3 = tvg::Shape::gen();
@@ -953,7 +953,7 @@ TEST_CASE("RLE Filling AlphaMask", "[tvgSwEngine]")
     REQUIRE(linearFill->colorStops(cs, 4) == Result::Success);
     REQUIRE(radialFill->colorStops(cs, 4) == Result::Success);
     REQUIRE(linearFill->linear(0.0f, 0.0f, 100.0f, 120.0f) == Result::Success);
-    REQUIRE(radialFill->radial(50.0f, 50.0f, 50.0f) == Result::Success);
+    REQUIRE(radialFill->radial(50.0f, 50.0f, 50.0f, 50.0f, 50.0f, 0.0f) == Result::Success);
 
     //Mask
     auto mask = tvg::Shape::gen();
@@ -1012,7 +1012,7 @@ TEST_CASE("RLE Filling InvAlphaMask", "[tvgSwEngine]")
     REQUIRE(linearFill->colorStops(cs, 4) == Result::Success);
     REQUIRE(radialFill->colorStops(cs, 4) == Result::Success);
     REQUIRE(linearFill->linear(0.0f, 0.0f, 100.0f, 120.0f) == Result::Success);
-    REQUIRE(radialFill->radial(50.0f, 50.0f, 50.0f) == Result::Success);
+    REQUIRE(radialFill->radial(50.0f, 50.0f, 50.0f, 50.0f, 50.0f, 0.0f) == Result::Success);
 
     //Mask
     auto mask = tvg::Shape::gen();
@@ -1071,7 +1071,7 @@ TEST_CASE("RLE Filling LumaMask", "[tvgSwEngine]")
     REQUIRE(linearFill->colorStops(cs, 4) == Result::Success);
     REQUIRE(radialFill->colorStops(cs, 4) == Result::Success);
     REQUIRE(linearFill->linear(0.0f, 0.0f, 100.0f, 120.0f) == Result::Success);
-    REQUIRE(radialFill->radial(50.0f, 50.0f, 50.0f) == Result::Success);
+    REQUIRE(radialFill->radial(50.0f, 50.0f, 50.0f, 50.0f, 50.0f, 0.0f) == Result::Success);
 
     //Mask
     auto mask = tvg::Shape::gen();
@@ -1130,7 +1130,7 @@ TEST_CASE("RLE Filling InvLumaMask", "[tvgSwEngine]")
     REQUIRE(linearFill->colorStops(cs, 4) == Result::Success);
     REQUIRE(radialFill->colorStops(cs, 4) == Result::Success);
     REQUIRE(linearFill->linear(0.0f, 0.0f, 100.0f, 120.0f) == Result::Success);
-    REQUIRE(radialFill->radial(50.0f, 50.0f, 50.0f) == Result::Success);
+    REQUIRE(radialFill->radial(50.0f, 50.0f, 50.0f, 50.0f, 50.0f, 0.0f) == Result::Success);
 
     //Mask
     auto mask = tvg::Shape::gen();
@@ -1189,7 +1189,7 @@ TEST_CASE("RLE Filling Clipping", "[tvgSwEngine]")
     REQUIRE(linearFill->colorStops(cs, 4) == Result::Success);
     REQUIRE(radialFill->colorStops(cs, 4) == Result::Success);
     REQUIRE(linearFill->linear(0.0f, 0.0f, 100.0f, 120.0f) == Result::Success);
-    REQUIRE(radialFill->radial(50.0f, 50.0f, 50.0f) == Result::Success);
+    REQUIRE(radialFill->radial(50.0f, 50.0f, 50.0f, 50.0f, 50.0f, 0.0f) == Result::Success);
 
     //Mask
     auto clipper = tvg::Shape::gen();
@@ -1391,7 +1391,7 @@ TEST_CASE("Blending with Gradient Filling", "[tvgSwEngine]")
     auto radialFill = RadialGradient::gen();
     REQUIRE(radialFill);
     REQUIRE(radialFill->colorStops(cs, 4) == Result::Success);
-    REQUIRE(radialFill->radial(50.0f, 50.0f, 50.0f) == Result::Success);
+    REQUIRE(radialFill->radial(50.0f, 50.0f, 50.0f, 50.0f, 50.0f, 0.0f) == Result::Success);
 
     auto shape2 = tvg::Shape::gen();
     REQUIRE(shape2);
@@ -1422,7 +1422,7 @@ TEST_CASE("Blending with Gradient Filling", "[tvgSwEngine]")
     auto radialFill2 = RadialGradient::gen();
     REQUIRE(radialFill2);
     REQUIRE(radialFill2->colorStops(cs, 4) == Result::Success);
-    REQUIRE(radialFill2->radial(50.0f, 50.0f, 50.0f) == Result::Success);
+    REQUIRE(radialFill2->radial(50.0f, 50.0f, 50.0f, 50.0f, 50.0f, 0.0f) == Result::Success);
 
     auto mask2 = tvg::Shape::gen();
     REQUIRE(mask2);
@@ -1458,7 +1458,7 @@ TEST_CASE("Blending with Gradient Filling", "[tvgSwEngine]")
     auto radialFill3 = RadialGradient::gen();
     REQUIRE(radialFill3);
     REQUIRE(radialFill3->colorStops(cs, 4) == Result::Success);
-    REQUIRE(radialFill3->radial(50.0f, 50.0f, 50.0f) == Result::Success);
+    REQUIRE(radialFill3->radial(50.0f, 50.0f, 50.0f, 50.0f, 50.0f, 0.0f) == Result::Success);
 
     auto mask4 = tvg::Shape::gen();
     REQUIRE(mask4);

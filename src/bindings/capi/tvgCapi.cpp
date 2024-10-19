@@ -607,17 +607,17 @@ TVG_API Tvg_Result tvg_linear_gradient_get(Tvg_Gradient* grad, float* x1, float*
 }
 
 
-TVG_API Tvg_Result tvg_radial_gradient_set(Tvg_Gradient* grad, float cx, float cy, float radius)
+TVG_API Tvg_Result tvg_radial_gradient_set(Tvg_Gradient* grad, float cx, float cy, float r, float fx, float fy, float fr)
 {
     if (!grad) return TVG_RESULT_INVALID_ARGUMENT;
-    return (Tvg_Result) reinterpret_cast<RadialGradient*>(grad)->radial(cx, cy, radius);
+    return (Tvg_Result) reinterpret_cast<RadialGradient*>(grad)->radial(cx, cy, r, fx, fy, fr);
 }
 
 
-TVG_API Tvg_Result tvg_radial_gradient_get(Tvg_Gradient* grad, float* cx, float* cy, float* radius)
+TVG_API Tvg_Result tvg_radial_gradient_get(Tvg_Gradient* grad, float* cx, float* cy, float* r, float* fx, float* fy, float* fr)
 {
     if (!grad) return TVG_RESULT_INVALID_ARGUMENT;
-    return (Tvg_Result) reinterpret_cast<RadialGradient*>(grad)->radial(cx, cy, radius);
+    return (Tvg_Result) reinterpret_cast<RadialGradient*>(grad)->radial(cx, cy, r, fx, fy, fr);
 }
 
 

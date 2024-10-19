@@ -145,7 +145,7 @@ TEST_CASE("Set gradient text fill", "[capiText]")
 
     Tvg_Gradient *gradientRad = tvg_radial_gradient_new();
     REQUIRE(gradientRad);
-    REQUIRE(tvg_radial_gradient_set(gradientRad, 10.0, 15.0, 30.0) == TVG_RESULT_SUCCESS);
+    REQUIRE(tvg_radial_gradient_set(gradientRad, 10.0, 15.0, 30.0, 10.0, 15.0, 0.0) == TVG_RESULT_SUCCESS);
 
     Tvg_Gradient *gradientLin = tvg_linear_gradient_new();
     REQUIRE(gradientLin);

@@ -38,7 +38,7 @@ struct UserExample : tvgexam::Example
 
         //RadialGradient
         auto fill = tvg::RadialGradient::gen();
-        fill->radial(200, 200, 200);
+        fill->radial(200, 200, 200, 200, 200, 0);   //cx, cy, r, fx, fy, fr
 
         //Gradient Color Stops
         tvg::Fill::ColorStop colorStops[2];
@@ -56,7 +56,7 @@ struct UserExample : tvgexam::Example
 
         //RadialGradient
         auto fill2 = tvg::RadialGradient::gen();
-        fill2->radial(400, 400, 200);
+        fill2->radial(400, 400, 200, 400, 400, 0);   //cx, cy, r, fx, fy, fr
 
         //Gradient Color Stops
         tvg::Fill::ColorStop colorStops2[3];
@@ -75,7 +75,7 @@ struct UserExample : tvgexam::Example
 
         //RadialGradient
         auto fill3 = tvg::RadialGradient::gen();
-        fill3->radial(600, 600, 150);
+        fill3->radial(600, 600, 150, 700, 600, 20);   //cx, cy, r, fx, fy, fr
 
         //Gradient Color Stops
         tvg::Fill::ColorStop colorStops3[4];
