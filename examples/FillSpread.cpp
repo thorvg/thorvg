@@ -49,7 +49,7 @@ struct UserExample : tvgexam::Example
             shape1->appendRect(x1, y1, 2.0f * r, 2.0f * r);
 
             auto fill1 = tvg::RadialGradient::gen();
-            fill1->radial(x1 + r, y1 + r, 40.0f);
+            fill1->radial(x1 + r, y1 + r, 40.0f, x1 + r, y1 + r, 0.0f);
             fill1->colorStops(colorStops, colorCnt);
             fill1->spread(tvg::FillSpread::Pad);
             shape1->fill(std::move(fill1));
@@ -62,7 +62,7 @@ struct UserExample : tvgexam::Example
             shape2->appendRect(x1, y1, 2.0f * r, 2.0f * r);
 
             auto fill2 = tvg::RadialGradient::gen();
-            fill2->radial(x1 + r, y1 + r, 40.0f);
+            fill2->radial(x1 + r, y1 + r, 40.0f, x1 + r, y1 + r, 0.0f);
             fill2->colorStops(colorStops, colorCnt);
             fill2->spread(tvg::FillSpread::Reflect);
             shape2->fill(std::move(fill2));
@@ -75,7 +75,7 @@ struct UserExample : tvgexam::Example
             shape3->appendRect(x1, y1, 2.0f * r, 2.0f * r);
 
             auto fill3 = tvg::RadialGradient::gen();
-            fill3->radial(x1 + r, y1 + r, 40.0f);
+            fill3->radial(x1 + r, y1 + r, 40.0f, x1 + r, y1 + r, 0.0f);
             fill3->colorStops(colorStops, colorCnt);
             fill3->spread(tvg::FillSpread::Repeat);
             shape3->fill(std::move(fill3));

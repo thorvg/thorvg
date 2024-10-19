@@ -294,7 +294,7 @@ Fill* LottieGradient::fill(float frameNo, LottieExpressions* exps)
         auto progress = this->height(frameNo, exps) * 0.01f;
 
         if (tvg::zero(progress)) {
-            P(static_cast<RadialGradient*>(fill))->radial(s.x, s.y, r, s.x, s.y, 0.0f);
+            static_cast<RadialGradient*>(fill)->radial(s.x, s.y, r, s.x, s.y, 0.0f);
         } else {
             if (tvg::equal(progress, 1.0f)) progress = 0.99f;
             auto startAngle = rad2deg(tvg::atan2(e.y - s.y, e.x - s.x));
@@ -302,7 +302,7 @@ Fill* LottieGradient::fill(float frameNo, LottieExpressions* exps)
             auto fx = s.x + cos(angle) * progress * r;
             auto fy = s.y + sin(angle) * progress * r;
             // Lottie doesn't have any focal radius concept
-            P(static_cast<RadialGradient*>(fill))->radial(s.x, s.y, r, fx, fy, 0.0f);
+            static_cast<RadialGradient*>(fill)->radial(s.x, s.y, r, fx, fy, 0.0f);
         }
     }
 
