@@ -163,17 +163,20 @@ RadialGradient::~RadialGradient()
 }
 
 
-Result RadialGradient::radial(float cx, float cy, float r) noexcept
+Result RadialGradient::radial(float cx, float cy, float r, float fx, float fy, float fr) noexcept
 {
-    return pImpl->radial(cx, cy, r, cx, cy, 0.0f);
+    return pImpl->radial(cx, cy, r, fx, fy, fr);
 }
 
 
-Result RadialGradient::radial(float* cx, float* cy, float* r) const noexcept
+Result RadialGradient::radial(float* cx, float* cy, float* r, float* fx, float* fy, float* fr) const noexcept
 {
     if (cx) *cx = pImpl->cx;
     if (cy) *cy = pImpl->cy;
     if (r) *r = pImpl->r;
+    if (fx) *fx = pImpl->fx;
+    if (fy) *fy = pImpl->fy;
+    if (fr) *fr = pImpl->fr;
 
     return Result::Success;
 }
