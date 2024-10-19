@@ -387,7 +387,6 @@ void main() {                                                                   
     vec4 maskColor = texture(uMaskTexture, vUV);                                    \n
                                                                                     \n
     float luma = (0.299 * maskColor.r + 0.587 * maskColor.g + 0.114 * maskColor.b); \n
-    luma *= maskColor.a;                                                            \n
     FragColor = srcColor * (1.0 - luma);                                            \n
 }                                                                                   \n
 );
