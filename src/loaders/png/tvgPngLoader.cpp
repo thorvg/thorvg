@@ -45,7 +45,7 @@ void PngLoader::run(unsigned tid)
     surface.stride = width;
     surface.w = width;
     surface.h = height;
-    surface.cs = ColorSpace::ABGR8888;
+    surface.cs = ColorSpace::ABGR8888S;
     surface.channelSize = sizeof(uint32_t);
 }
 
