@@ -1729,36 +1729,52 @@ TVG_API Tvg_Result tvg_linear_gradient_get(Tvg_Gradient* grad, float* x1, float*
 
 
 /*!
-* \brief Sets the radial gradient bounds.
+* \brief Sets the radial gradient attributes.
 *
-* The radial gradient bounds are defined as a circle centered in a given point (@p cx, @p cy) of a given radius.
+* The radial gradient is defined by the end circle with a center (@p cx, @p cy) and a radius @p r and
+* the start circle with a center/focal point (@p fx, @p fy) and a radius @p fr.
+* The gradient will be rendered such that the gradient stop at an offset of 100% aligns with the edge of the end circle
+* and the stop at an offset of 0% aligns with the edge of the start circle.
 *
 * \param[in] grad The Tvg_Gradient object of which bounds are to be set.
-* \param[in] cx The horizontal coordinate of the center of the bounding circle.
-* \param[in] cy The vertical coordinate of the center of the bounding circle.
-* \param[in] radius The radius of the bounding circle.
+* \param[in] cx The horizontal coordinate of the center of the end circle.
+* \param[in] cy The vertical coordinate of the center of the end circle.
+* \param[in] r The radius of the end circle.
+* \param[in] fx The horizontal coordinate of the center of the start circle.
+* \param[in] fy The vertical coordinate of the center of the start circle.
+* \param[in] fr The radius of the start circle.
 *
 * \return Tvg_Result enumeration.
-* \retval TVG_RESULT_INVALID_ARGUMENT An invalid Tvg_Gradient pointer or the @p radius value less than zero.
+* \retval TVG_RESULT_INVALID_ARGUMENT An invalid Tvg_Gradient pointer or the radius @p r or @p fr value is negative.
 *
-* \note In case the @p radius is zero, an object is filled with a single color using the last color specified in the specified in the tvg_gradient_set_color_stops().
+* \note In case the radius @p r is zero, an object is filled with a single color using the last color specified in the specified in the tvg_gradient_set_color_stops().
+* \note By manipulating the position and size of the focal point, a wide range of visual effects can be achieved, such as directing
+* the gradient focus towards a specific edge or enhancing the depth and complexity of shading patterns.
+* If a focal effect is not desired, simply align the focal point (@p fx and @p fy) with the center of the end circle (@p cx and @p cy)
+* and set the radius (@p fr) to zero. This will result in a uniform gradient without any focal variations.
+*
 * \see tvg_gradient_set_color_stops()
 */
-TVG_API Tvg_Result tvg_radial_gradient_set(Tvg_Gradient* grad, float cx, float cy, float radius);
+TVG_API Tvg_Result tvg_radial_gradient_set(Tvg_Gradient* grad, float cx, float cy, float r, float fx, float fy, float fr);
 
 
 /*!
-* \brief The function gets radial gradient center point ant radius
+* \brief The function gets radial gradient attributes.
 *
-* \param[in] grad The Tvg_Gradient object of which bounds are to be set.
-* \param[out] cx The horizontal coordinate of the center of the bounding circle.
-* \param[out] cy The vertical coordinate of the center of the bounding circle.
-* \param[out] radius The radius of the bounding circle.
+* \param[in] grad The Tvg_Gradient object of which to get the gradient attributes.
+* \param[out] cx The horizontal coordinate of the center of the end circle.
+* \param[out] cy The vertical coordinate of the center of the end circle.
+* \param[out] r The radius of the end circle.
+* \param[out] fx The horizontal coordinate of the center of the start circle.
+* \param[out] fy The vertical coordinate of the center of the start circle.
+* \param[out] fr The radius of the start circle.
 *
 * \return Tvg_Result enumeration.
 * \retval TVG_RESULT_INVALID_ARGUMENT An invalid Tvg_Gradient pointer.
+*
+* \see tvg_radial_gradient_set()
 */
-TVG_API Tvg_Result tvg_radial_gradient_get(Tvg_Gradient* grad, float* cx, float* cy, float* radius);
+TVG_API Tvg_Result tvg_radial_gradient_get(Tvg_Gradient* grad, float* cx, float* cy, float* r, float* fx, float* fy, float* fr);
 
 
 /*!

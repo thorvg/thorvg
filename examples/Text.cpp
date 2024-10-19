@@ -154,7 +154,7 @@ struct UserExample : tvgexam::Example
 
         //LinearGradient
         auto fill2 = tvg::RadialGradient::gen();
-        fill2->radial(x + w2 * 0.5f, y + h2 * 0.5f, w2 * 0.5f);
+        fill2->radial(x + w2 * 0.5f, y + h2 * 0.5f, w2 * 0.5f, x + w2 * 0.5f, y + h2 * 0.5f, 0.0f);
 
         //Gradient Color Stops
         tvg::Fill::ColorStop colorStops2[3];
