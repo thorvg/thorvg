@@ -622,7 +622,7 @@ void fillLinear(const SwFill* fill, uint8_t* dst, uint32_t y, uint32_t x, uint32
         auto t2 = static_cast<int32_t>(t * FIXPT_SIZE);
         auto inc2 = static_cast<int32_t>(inc * FIXPT_SIZE);
         for (uint32_t j = 0; j < len; ++j, ++dst) {
-            auto src = MULTIPLY(_fixedPixel(fill, t2), a);
+            auto src = MULTIPLY(A(_fixedPixel(fill, t2)), a);
             *dst = maskOp(src, *dst, ~src);
             t2 += inc2;
         }
@@ -630,7 +630,7 @@ void fillLinear(const SwFill* fill, uint8_t* dst, uint32_t y, uint32_t x, uint32
     } else {
         uint32_t counter = 0;
         while (counter++ < len) {
-            auto src = MULTIPLY(_pixel(fill, t / GRADIENT_STOP_SIZE), a);
+            auto src = MULTIPLY(A(_pixel(fill, t / GRADIENT_STOP_SIZE)), a);
             *dst = maskOp(src, *dst, ~src);
             ++dst;
             t += inc;
