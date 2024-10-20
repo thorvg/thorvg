@@ -41,7 +41,7 @@ static unique_ptr<Scene> _sceneBuildHelper(SvgLoaderData& loaderData, const SvgN
 
 static inline bool _isGroupType(SvgNodeType type)
 {
-    if (type == SvgNodeType::Doc || type == SvgNodeType::G || type == SvgNodeType::Use || type == SvgNodeType::ClipPath || type == SvgNodeType::Symbol) return true;
+    if (type == SvgNodeType::Doc || type == SvgNodeType::G || type == SvgNodeType::Use || type == SvgNodeType::ClipPath || type == SvgNodeType::Symbol || type == SvgNodeType::Filter) return true;
     return false;
 }
 
@@ -283,6 +283,29 @@ static Paint* _applyComposition(SvgLoaderData& loaderData, Paint* paint, const S
 }
 
 
+static Paint* _applyFilter(SvgLoaderData& loaderData, Paint* paint, const SvgNode* node, const Box& vBox, const string& svgPath)
+{
+    auto filter = node->style->filter.node;
+    if (!filter || filter->child.count == 0) return paint;
+
+    Scene* scene = Scene::gen().release();
+    scene->push(tvg::cast(paint));
+
+    auto child = filter->child.data;
+    for (uint32_t i = 0; i < filter->child.count; ++i, ++child) {
+        if ((*child)->type == SvgNodeType::GaussianBlur) {
+            auto gauss = (*child)->node.gaussianBlur;
+            auto direction = gauss.stdDevX > 0.0f ? (gauss.stdDevY > 0.0f ? 0 : 1) : (gauss.stdDevY > 0.0f ? 2 : -1);
+            if (direction == -1) continue;
+            auto sigma = direction == 2 ? gauss.stdDevY : gauss.stdDevX;
+            auto border = gauss.edgeMode == GaussianBlurEdgeMode::Duplicate ? 0 : 1;
+            scene->push(SceneEffect::GaussianBlur, sigma, direction, border, 100);
+        }
+    }
+
+    return scene;
+}
+
 static Paint* _applyProperty(SvgLoaderData& loaderData, SvgNode* node, Shape* vg, const Box& vBox, const string& svgPath, bool clip)
 {
     SvgStyleProperty* style = node->style;
@@ -351,7 +374,8 @@ static Paint* _applyProperty(SvgLoaderData& loaderData, SvgNode* node, Shape* vg
         vg->strokeFill(style->stroke.paint.color.r, style->stroke.paint.color.g, style->stroke.paint.color.b, style->stroke.opacity);
     }
 
-    return _applyComposition(loaderData, vg, node, vBox, svgPath);
+    auto p = _applyComposition(loaderData, vg, node, vBox, svgPath);
+    return _applyFilter(loaderData, p, node, vBox, svgPath);
 }
 
 
@@ -584,7 +608,8 @@ static Paint* _imageBuildHelper(SvgLoaderData& loaderData, SvgNode* node, const 
     if (node->transform) m = *node->transform * m;
     picture->transform(m);
 
-    return _applyComposition(loaderData, picture.release(), node, vBox, svgPath);
+    auto p = _applyComposition(loaderData, picture.release(), node, vBox, svgPath);
+    return _applyFilter(loaderData, p, node, vBox, svgPath);
 }
 
 
@@ -772,7 +797,8 @@ static Paint* _textBuildHelper(SvgLoaderData& loaderData, const SvgNode* node, c
 
     _applyTextFill(node->style, text, vBox);
 
-    return _applyComposition(loaderData, text, node, vBox, svgPath);
+    auto p = _applyComposition(loaderData, text, node, vBox, svgPath);
+    return _applyFilter(loaderData, p, node, vBox, svgPath);
 }
 
 
@@ -813,7 +839,9 @@ static unique_ptr<Scene> _sceneBuildHelper(SvgLoaderData& loaderData, const SvgN
         }
     }
     scene->opacity(node->style->opacity);
-    return tvg::cast<Scene>(_applyComposition(loaderData, scene.release(), node, vBox, svgPath));
+
+    auto p = _applyComposition(loaderData, scene.release(), node, vBox, svgPath);
+    return tvg::cast<Scene>(_applyFilter(loaderData, p, node, vBox, svgPath));
 }
 
 

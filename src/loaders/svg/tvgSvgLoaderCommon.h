@@ -54,6 +54,8 @@ enum class SvgNodeType
     Mask,
     CssStyle,
     Symbol,
+    Filter,
+    GaussianBlur,
     Unknown
 };
 
@@ -142,6 +144,7 @@ enum class SvgStyleFlags
     PaintOrder = 0x10000,
     StrokeMiterlimit = 0x20000,
     StrokeDashOffset = 0x40000,
+    Filter = 0x80000
 };
 
 constexpr bool operator &(SvgStyleFlags a, SvgStyleFlags b)
@@ -265,6 +268,14 @@ enum class AspectRatioMeetOrSlice
     Slice
 };
 
+enum class GaussianBlurEdgeMode
+{
+    None = 0,
+    Duplicate,
+    Wrap,
+    Mirror
+};
+
 struct SvgDocNode
 {
     float w;       //unit: point or in percentage see: SvgViewFlag
@@ -383,6 +394,20 @@ struct SvgTextNode
     float fontSize;
 };
 
+struct SvgGaussianBlurNode
+{
+    float x, y, width, height;
+    float stdDevX, stdDevY;
+    GaussianBlurEdgeMode edgeMode;
+};
+
+struct SvgFilterNode
+{
+    float x, y, width, height;
+    bool userSpaceFilter;
+    bool userSpacePrimitive;
+};
+
 struct SvgLinearGradient
 {
     float x1;
@@ -486,12 +511,19 @@ struct SvgStyleStroke
     SvgDash dash;
 };
 
+struct SvgFilter
+{
+    char *url;
+    SvgNode* node;
+};
+
 struct SvgStyleProperty
 {
     SvgStyleFill fill;
     SvgStyleStroke stroke;
     SvgComposite clipPath;
     SvgComposite mask;
+    SvgFilter filter;
     int opacity;
     SvgColor color;
     char* cssClass;
@@ -528,6 +560,8 @@ struct SvgNode
         SvgCssStyleNode cssStyle;
         SvgSymbolNode symbol;
         SvgTextNode text;
+        SvgFilterNode filter;
+        SvgGaussianBlurNode gaussianBlur;
     } node;
     ~SvgNode();
 };
