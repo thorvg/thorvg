@@ -20,7 +20,6 @@
  * SOFTWARE.
  */
 
-#include <memory.h>
 #include "tvgJpgLoader.h"
 
 /************************************************************************/
@@ -30,7 +29,7 @@
 void JpgLoader::clear()
 {
     jpgdDelete(decoder);
-    if (freeData) free(data);
+    if (freeData) tvg::free(data);
     decoder = nullptr;
     data = nullptr;
     freeData = false;
@@ -64,7 +63,7 @@ JpgLoader::JpgLoader() : ImageLoader(FileType::Jpg)
 JpgLoader::~JpgLoader()
 {
     clear();
-    free(surface.buf8);
+    tvg::free(surface.buf8);
 }
 
 
@@ -84,7 +83,7 @@ bool JpgLoader::open(const string& path)
 bool JpgLoader::open(const char* data, uint32_t size, TVG_UNUSED const string& rpath, bool copy)
 {
     if (copy) {
-        this->data = (char *) malloc(size);
+        this->data = tvg::malloc<char*>(size);
         if (!this->data) return false;
         memcpy((char *)this->data, data, size);
         freeData = true;

@@ -53,10 +53,7 @@
  * http://www.cs.cf.ac.uk/Dave/Multimedia/node214.html
  * http://marknelson.us/1989/10/01/lzw-data-compression/
  */
-#include "config.h"
-
-#include <string>
-#include <memory.h>
+#include "tvgCommon.h"
 #include "tvgCompressor.h"
 
 namespace tvg {
@@ -209,7 +206,7 @@ uint8_t* lzwDecode(const uint8_t* compressed, uint32_t compressedSizeBytes, uint
     int firstByte = 0;
     int bytesDecoded = 0;
     int codeBitsWidth = StartBits;
-    auto uncompressed = (uint8_t*) malloc(sizeof(uint8_t) * uncompressedSizeBytes);
+    auto uncompressed = tvg::malloc<uint8_t*>(sizeof(uint8_t) * uncompressedSizeBytes);
     auto ptr = uncompressed;
 
     /* We'll reconstruct the dictionary based on the bit stream codes.
@@ -263,7 +260,7 @@ size_t b64Decode(const char* encoded, const size_t len, char** decoded)
     if (!decoded || !encoded || len == 0) return 0;
 
     auto reserved = 3 * (1 + (len >> 2)) + 1;
-    auto output = static_cast<char*>(malloc(reserved * sizeof(char)));
+    auto output = tvg::malloc<char*>(reserved * sizeof(char));
     if (!output) return 0;
     output[reserved - 1] = '\0';
 

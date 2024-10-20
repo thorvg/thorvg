@@ -20,18 +20,8 @@
  * SOFTWARE.
  */
 
-#include <cstring>
 #include <ctype.h>
-#include <string>
-
-#ifdef _WIN32
-    #include <malloc.h>
-#elif defined(__linux__)
-    #include <alloca.h>
-#else
-    #include <stdlib.h>
-#endif
-
+#include "tvgCommon.h"
 #include "tvgXmlParser.h"
 #include "tvgStr.h"
 
@@ -298,7 +288,7 @@ bool isIgnoreUnsupportedLogElements(TVG_UNUSED const char* tagName)
 bool simpleXmlParseAttributes(const char* buf, unsigned bufLength, simpleXMLAttributeCb func, const void* data)
 {
     const char *itr = buf, *itrEnd = buf + bufLength;
-    char* tmpBuf = (char*)malloc(bufLength + 1);
+    auto tmpBuf = tvg::malloc<char*>(bufLength + 1);
 
     if (!buf || !func || !tmpBuf) goto error;
 
@@ -363,11 +353,11 @@ bool simpleXmlParseAttributes(const char* buf, unsigned bufLength, simpleXMLAttr
     }
 
 success:
-    free(tmpBuf);
+    tvg::free(tmpBuf);
     return true;
 
 error:
-    free(tmpBuf);
+    tvg::free(tmpBuf);
     return false;
 }
 

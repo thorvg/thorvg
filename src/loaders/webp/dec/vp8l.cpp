@@ -12,8 +12,6 @@
 // Authors: Vikas Arora (vikaas.arora@gmail.com)
 //          Jyrki Alakuijala (jyrki@google.com)
 
-#include <stdlib.h>
-
 #include "./alphai.h"
 #include "./vp8li.h"
 #include "../dsp/dsp.h"
@@ -21,6 +19,8 @@
 #include "../dsp/yuv.h"
 #include "../utils/huffman.h"
 #include "../utils/utils.h"
+
+#include "tvgCommon.h"
 
 #define NUM_ARGB_CACHE_ROWS          16
 
@@ -352,9 +352,9 @@ static int ReadHuffmanCodes(VP8LDecoder* const dec, int xsize, int ysize,
     }
   }
 
-  huffman_tables = (HuffmanCode*)malloc(num_htree_groups * table_size * sizeof(*huffman_tables));
+  huffman_tables = tvg::malloc<HuffmanCode*>(num_htree_groups * table_size * sizeof(*huffman_tables));
   htree_groups = VP8LHtreeGroupsNew(num_htree_groups);
-  code_lengths = (int*)calloc((uint64_t)max_alphabet_size, sizeof(*code_lengths));
+  code_lengths = tvg::calloc<int*>((uint64_t)max_alphabet_size, sizeof(*code_lengths));
 
   if (htree_groups == NULL || code_lengths == NULL || huffman_tables == NULL) {
     dec->status_ = VP8_STATUS_OUT_OF_MEMORY;
@@ -391,7 +391,7 @@ static int ReadHuffmanCodes(VP8LDecoder* const dec, int xsize, int ysize,
           ((uint32_t)alpha << 24) | (red << 16) | blue;
     }
   }
-  free(code_lengths);
+  tvg::free(code_lengths);
 
   // All OK. Finalize pointers and return.
   hdr->huffman_image_ = huffman_image;
@@ -401,9 +401,9 @@ static int ReadHuffmanCodes(VP8LDecoder* const dec, int xsize, int ysize,
   return 1;
 
  Error:
-  free(code_lengths);
-  free(huffman_image);
-  free(huffman_tables);
+  tvg::free(code_lengths);
+  tvg::free(huffman_image);
+  tvg::free(huffman_tables);
   VP8LHtreeGroupsFree(htree_groups);
   return 0;
 }
@@ -424,7 +424,7 @@ static int AllocateAndInitRescaler(VP8LDecoder* const dec, VP8Io* const io) {
   const uint64_t memory_size = sizeof(*dec->rescaler) +
                                work_size * sizeof(*work) +
                                scaled_data_size * sizeof(*scaled_data);
-  uint8_t* memory = (uint8_t*)calloc(memory_size, sizeof(*memory));
+  uint8_t* memory = tvg::calloc<uint8_t*>(memory_size, sizeof(*memory));
   if (memory == NULL) {
     dec->status_ = VP8_STATUS_OUT_OF_MEMORY;
     return 0;
@@ -1119,7 +1119,7 @@ static int DecodeImageData(VP8LDecoder* const dec, uint32_t* const data,
 // VP8LTransform
 
 static void ClearTransform(VP8LTransform* const transform) {
-  free(transform->data_);
+  tvg::free(transform->data_);
   transform->data_ = NULL;
 }
 
@@ -1128,7 +1128,7 @@ static void ClearTransform(VP8LTransform* const transform) {
 static int ExpandColorMap(int num_colors, VP8LTransform* const transform) {
   int i;
   const int final_num_colors = 1 << (8 >> transform->bits_);
-  uint32_t* const new_color_map = (uint32_t*)malloc((uint64_t)final_num_colors * sizeof(*new_color_map));
+  uint32_t* const new_color_map = tvg::malloc<uint32_t*>((uint64_t)final_num_colors * sizeof(*new_color_map));
   if (new_color_map == NULL) {
     return 0;
   } else {
@@ -1141,7 +1141,7 @@ static int ExpandColorMap(int num_colors, VP8LTransform* const transform) {
     }
     for (; i < 4 * final_num_colors; ++i)
       new_data[i] = 0;  // black tail.
-    free(transform->data_);
+    tvg::free(transform->data_);
     transform->data_ = new_color_map;
   }
   return 1;
@@ -1211,8 +1211,8 @@ static void InitMetadata(VP8LMetadata* const hdr) {
 static void ClearMetadata(VP8LMetadata* const hdr) {
   assert(hdr != NULL);
 
-  free(hdr->huffman_image_);
-  free(hdr->huffman_tables_);
+  tvg::free(hdr->huffman_image_);
+  tvg::free(hdr->huffman_tables_);
   VP8LHtreeGroupsFree(hdr->htree_groups_);
   VP8LColorCacheClear(&hdr->color_cache_);
   VP8LColorCacheClear(&hdr->saved_color_cache_);
@@ -1223,7 +1223,7 @@ static void ClearMetadata(VP8LMetadata* const hdr) {
 // VP8LDecoder
 
 VP8LDecoder* VP8LNew(void) {
-  VP8LDecoder* const dec = (VP8LDecoder*)calloc(1ULL, sizeof(*dec));
+  VP8LDecoder* const dec = tvg::calloc<VP8LDecoder*>(1ULL, sizeof(*dec));
   if (dec == NULL) return NULL;
   dec->status_ = VP8_STATUS_OK;
   dec->state_ = READ_DIM;
@@ -1238,7 +1238,7 @@ void VP8LClear(VP8LDecoder* const dec) {
   if (dec == NULL) return;
   ClearMetadata(&dec->hdr_);
 
-  free(dec->pixels_);
+  tvg::free(dec->pixels_);
   dec->pixels_ = NULL;
   for (i = 0; i < dec->next_transform_; ++i) {
     ClearTransform(&dec->transforms_[i]);
@@ -1246,7 +1246,7 @@ void VP8LClear(VP8LDecoder* const dec) {
   dec->next_transform_ = 0;
   dec->transforms_seen_ = 0;
 
-  free(dec->rescaler_memory);
+  tvg::free(dec->rescaler_memory);
   dec->rescaler_memory = NULL;
 
   dec->output_ = NULL;   // leave no trace behind
@@ -1255,7 +1255,7 @@ void VP8LClear(VP8LDecoder* const dec) {
 void VP8LDelete(VP8LDecoder* const dec) {
   if (dec != NULL) {
     VP8LClear(dec);
-    free(dec);
+    tvg::free(dec);
   }
 }
 
@@ -1326,7 +1326,7 @@ static int DecodeImageStream(int xsize, int ysize,
 
   {
     const uint64_t total_size = (uint64_t)transform_xsize * transform_ysize;
-    data = (uint32_t*)malloc(total_size * sizeof(*data));
+    data = tvg::malloc<uint32_t*>(total_size * sizeof(*data));
     if (data == NULL) {
       dec->status_ = VP8_STATUS_OUT_OF_MEMORY;
       ok = 0;
@@ -1341,7 +1341,7 @@ static int DecodeImageStream(int xsize, int ysize,
 
  End:
   if (!ok) {
-    free(data);
+    tvg::free(data);
     ClearMetadata(hdr);
   } else {
     if (decoded_data != NULL) {
@@ -1371,7 +1371,7 @@ static int AllocateInternalBuffers32b(VP8LDecoder* const dec, int final_width) {
       num_pixels + cache_top_pixels + cache_pixels;
 
   assert(dec->width_ <= final_width);
-  dec->pixels_ = (uint32_t*)malloc(total_num_pixels * sizeof(uint32_t));
+  dec->pixels_ = tvg::malloc<uint32_t*>(total_num_pixels * sizeof(uint32_t));
   if (dec->pixels_ == NULL) {
     dec->argb_cache_ = NULL;    // for sanity check
     dec->status_ = VP8_STATUS_OUT_OF_MEMORY;
@@ -1384,7 +1384,7 @@ static int AllocateInternalBuffers32b(VP8LDecoder* const dec, int final_width) {
 static int AllocateInternalBuffers8b(VP8LDecoder* const dec) {
   const uint64_t total_num_pixels = (uint64_t)dec->width_ * dec->height_;
   dec->argb_cache_ = NULL;    // for sanity check
-  dec->pixels_ = (uint32_t*)malloc(total_num_pixels * sizeof(uint8_t));
+  dec->pixels_ = tvg::malloc<uint32_t*>(total_num_pixels * sizeof(uint8_t));
   if (dec->pixels_ == NULL) {
     dec->status_ = VP8_STATUS_OUT_OF_MEMORY;
     return 0;

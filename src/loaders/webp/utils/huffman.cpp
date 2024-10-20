@@ -12,18 +12,18 @@
 // Author: Urvang Joshi (urvang@google.com)
 
 #include <assert.h>
-#include <stdlib.h>
-#include <string.h>
 #include "./huffman.h"
 #include "../utils/utils.h"
 #include "../webp/format_constants.h"
+
+#include "tvgCommon.h"
 
 // Huffman data read via DecodeImageStream is represented in two (red and green)
 // bytes.
 #define MAX_HTREE_GROUPS    0x10000
 
 HTreeGroup* VP8LHtreeGroupsNew(int num_htree_groups) {
-  HTreeGroup* const htree_groups = (HTreeGroup*)malloc(num_htree_groups * sizeof(*htree_groups));
+  HTreeGroup* const htree_groups = tvg::malloc<HTreeGroup*>(num_htree_groups * sizeof(*htree_groups));
   if (htree_groups == NULL) {
     return NULL;
   }
@@ -33,7 +33,7 @@ HTreeGroup* VP8LHtreeGroupsNew(int num_htree_groups) {
 
 void VP8LHtreeGroupsFree(HTreeGroup* const htree_groups) {
   if (htree_groups != NULL) {
-    free(htree_groups);
+    tvg::free(htree_groups);
   }
 }
 
@@ -113,7 +113,7 @@ int VP8LBuildHuffmanTable(HuffmanCode* const root_table, int root_bits,
     offset[len + 1] = offset[len] + count[len];
   }
 
-  sorted = (int*)malloc(code_lengths_size * sizeof(*sorted));
+  sorted = tvg::malloc<int*>(code_lengths_size * sizeof(*sorted));
   if (sorted == NULL) {
     return 0;
   }
@@ -132,7 +132,7 @@ int VP8LBuildHuffmanTable(HuffmanCode* const root_table, int root_bits,
     code.bits = 0;
     code.value = (uint16_t)sorted[0];
     ReplicateValue(table, 1, total_size, code);
-    free(sorted);
+    tvg::free(sorted);
     return total_size;
   }
 
@@ -152,7 +152,7 @@ int VP8LBuildHuffmanTable(HuffmanCode* const root_table, int root_bits,
       num_nodes += num_open;
       num_open -= count[len];
       if (num_open < 0) {
-        free(sorted);
+        tvg::free(sorted);
         return 0;
       }
       for (; count[len] > 0; --count[len]) {
@@ -171,7 +171,7 @@ int VP8LBuildHuffmanTable(HuffmanCode* const root_table, int root_bits,
       num_nodes += num_open;
       num_open -= count[len];
       if (num_open < 0) {
-        free(sorted);
+        tvg::free(sorted);
         return 0;
       }
       for (; count[len] > 0; --count[len]) {
@@ -194,11 +194,11 @@ int VP8LBuildHuffmanTable(HuffmanCode* const root_table, int root_bits,
 
     // Check if tree is full.
     if (num_nodes != 2 * offset[MAX_ALLOWED_CODE_LENGTH] - 1) {
-      free(sorted);
+      tvg::free(sorted);
       return 0;
     }
   }
 
-  free(sorted);
+  tvg::free(sorted);
   return total_size;
 }

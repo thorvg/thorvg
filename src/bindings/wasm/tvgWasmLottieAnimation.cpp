@@ -20,10 +20,11 @@
  * SOFTWARE.
  */
 
-#include <thorvg.h>
 #include <emscripten.h>
 #include <emscripten/bind.h>
-#include "tvgPicture.h"
+
+#include "tvgCommon.h"
+
 #ifdef THORVG_WG_RASTER_SUPPORT
     #include <webgpu/webgpu.h>
 #endif
@@ -92,7 +93,7 @@ struct TvgSwEngine : TvgEngineMethod
 
     ~TvgSwEngine()
     {
-        free(buffer);
+        tvg::free(buffer);
         Initializer::term(tvg::CanvasEngine::Sw);
     }
 
@@ -104,8 +105,8 @@ struct TvgSwEngine : TvgEngineMethod
 
     void resize(Canvas* canvas, int w, int h) override
     {
-        free(buffer);
-        buffer = (uint8_t*)malloc(w * h * sizeof(uint32_t));
+        tvg::free(buffer);
+        buffer = tvg::malloc<uint8_t*>(w * h * sizeof(uint32_t));
         static_cast<SwCanvas*>(canvas)->target((uint32_t *)buffer, w, w, h, ColorSpace::ABGR8888S);
     }
 

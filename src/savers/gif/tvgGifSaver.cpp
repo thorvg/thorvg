@@ -20,8 +20,6 @@
  * SOFTWARE.
  */
 
-#include <cstring>
-
 #include "tvgGifEncoder.h"
 #include "tvgGifSaver.h"
 
@@ -40,7 +38,7 @@ void GifSaver::run(unsigned tid)
     auto w = static_cast<uint32_t>(vsize[0]);
     auto h = static_cast<uint32_t>(vsize[1]);
 
-    buffer = (uint32_t*)realloc(buffer, sizeof(uint32_t) * w * h);
+    buffer = tvg::realloc<uint32_t*>(buffer, sizeof(uint32_t) * w * h);
     canvas->target(buffer, w, w, h, ColorSpace::ABGR8888S);
     canvas->push(cast(bg));
     bg = nullptr;
@@ -103,10 +101,10 @@ bool GifSaver::close()
     if (animation && PP(animation->picture())->refCnt <= 1) delete(animation);
     animation = nullptr;
 
-    free(path);
+    tvg::free(path);
     path = nullptr;
 
-    free(buffer);
+    tvg::free(buffer);
     buffer = nullptr;
 
     return true;

@@ -145,7 +145,7 @@ struct LottieExpression
 
     ~LottieExpression()
     {
-        free(code);
+        tvg::free(code);
     }
 };
 
@@ -361,17 +361,17 @@ struct LottiePathSet : LottieProperty
             exp = nullptr;
         }
 
-        free(value.cmds);
-        free(value.pts);
+        tvg::free(value.cmds);
+        tvg::free(value.pts);
 
         if (!frames) return;
 
         for (auto p = frames->begin(); p < frames->end(); ++p) {
-            free((*p).value.cmds);
-            free((*p).value.pts);
+            tvg::free((*p).value.cmds);
+            tvg::free((*p).value.pts);
         }
-        free(frames->data);
-        free(frames);
+        tvg::free(frames->data);
+        tvg::free(frames);
     }
 
     uint32_t nearest(float frameNo) override
@@ -392,7 +392,7 @@ struct LottiePathSet : LottieProperty
     LottieScalarFrame<PathSet>& newFrame()
     {
         if (!frames) {
-            frames = static_cast<Array<LottieScalarFrame<PathSet>>*>(calloc(1, sizeof(Array<LottieScalarFrame<PathSet>>)));
+            frames = tvg::calloc<Array<LottieScalarFrame<PathSet>>*>(1, sizeof(Array<LottieScalarFrame<PathSet>>));
         }
         if (frames->count + 1 >= frames->reserved) {
             auto old = frames->reserved;
@@ -462,7 +462,7 @@ struct LottiePathSet : LottieProperty
             return true;
         }
 
-        auto interpPts = (Point*)malloc(frame->value.ptsCnt * sizeof(Point));
+        auto interpPts = tvg::malloc<Point*>(frame->value.ptsCnt * sizeof(Point));
         auto p = interpPts;
         for (auto i = 0; i < frame->value.ptsCnt; ++i, ++s, ++e, ++p) {
             *p = lerp(*s, *e, t);
@@ -478,7 +478,7 @@ struct LottiePathSet : LottieProperty
             } else roundness->modifyPath(frame->value.cmds, frame->value.cmdsCnt, interpPts, frame->value.ptsCnt, cmds, pts, nullptr);
         } else if (offsetPath) offsetPath->modifyPath(frame->value.cmds, frame->value.cmdsCnt, interpPts, frame->value.ptsCnt, cmds, pts);
 
-        free(interpPts);
+        tvg::free(interpPts);
 
         return true;
     }
@@ -517,17 +517,17 @@ struct LottieColorStop : LottieProperty
         }
 
         if (value.data) {
-            free(value.data);
+            tvg::free(value.data);
             value.data = nullptr;
         }
 
         if (!frames) return;
 
         for (auto p = frames->begin(); p < frames->end(); ++p) {
-            free((*p).value.data);
+            tvg::free((*p).value.data);
         }
-        free(frames->data);
-        free(frames);
+        tvg::free(frames->data);
+        tvg::free(frames);
         frames = nullptr;
     }
 
@@ -549,7 +549,7 @@ struct LottieColorStop : LottieProperty
     LottieScalarFrame<ColorStop>& newFrame()
     {
         if (!frames) {
-            frames = static_cast<Array<LottieScalarFrame<ColorStop>>*>(calloc(1, sizeof(Array<LottieScalarFrame<ColorStop>>)));
+            frames = tvg::calloc<Array<LottieScalarFrame<ColorStop>>*>(1, sizeof(Array<LottieScalarFrame<ColorStop>>));
         }
         if (frames->count + 1 >= frames->reserved) {
             auto old = frames->reserved;
@@ -748,19 +748,19 @@ struct LottieTextDoc : LottieProperty
         }
 
         if (value.text) {
-            free(value.text);
+            tvg::free(value.text);
             value.text = nullptr;
         }
         if (value.name) {
-            free(value.name);
+            tvg::free(value.name);
             value.name = nullptr;
         }
 
         if (!frames) return;
 
         for (auto p = frames->begin(); p < frames->end(); ++p) {
-            free((*p).value.text);
-            free((*p).value.name);
+            tvg::free((*p).value.text);
+            tvg::free((*p).value.name);
         }
         delete(frames);
         frames = nullptr;

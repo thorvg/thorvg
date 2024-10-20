@@ -24,10 +24,6 @@
 #include "tvgTaskScheduler.h"
 #include "tvgLoader.h"
 
-#ifdef _WIN32
-    #include <cstring>
-#endif
-
 #ifdef THORVG_SW_RASTER_SUPPORT
     #include "tvgSwRenderer.h"
 #endif
@@ -46,7 +42,6 @@
 /************************************************************************/
 
 static int _initCnt = 0;
-static uint16_t _version = 0;
 
 //enum class operation helper
 static constexpr bool operator &(CanvasEngine a, CanvasEngine b)
@@ -72,7 +67,6 @@ static bool _buildVersionInfo(uint32_t* major, uint32_t* minor, uint32_t* micro)
 
     char sum[7];
     snprintf(sum, sizeof(sum), "%d%02d%02d", majorVal, minorVal, microVal);
-    _version = atoi(sum);
 
     if (major) *major = majorVal;
     if (minor) *minor = minorVal;
@@ -166,12 +160,6 @@ Result Initializer::term(CanvasEngine engine) noexcept
 
 const char* Initializer::version(uint32_t* major, uint32_t* minor, uint32_t* micro) noexcept
 {
-    if ((!major && ! minor && !micro) || _buildVersionInfo(major, minor, micro)) return THORVG_VERSION_STRING;
+    if ((!major && !minor && !micro) || _buildVersionInfo(major, minor, micro)) return THORVG_VERSION_STRING;
     return nullptr;
-}
-
-
-uint16_t THORVG_VERSION_NUMBER()
-{
-    return _version;
 }

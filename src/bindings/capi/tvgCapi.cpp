@@ -20,10 +20,12 @@
  * SOFTWARE.
  */
 
-#include "config.h"
 #include <string>
 #include <thorvg.h>
-#include "thorvg_capi.h"
+
+#include "config.h"
+
+#include <thorvg_capi.h>
 #ifdef THORVG_LOTTIE_LOADER_SUPPORT
 #include <thorvg_lottie.h>
 #endif

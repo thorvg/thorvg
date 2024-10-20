@@ -826,14 +826,14 @@ static AASpans* _AASpans(float ymin, float ymax, const SwImage* image, const SwB
 
     if (!_arrange(image, region, yStart, yEnd)) return nullptr;
 
-    auto aaSpans = static_cast<AASpans*>(malloc(sizeof(AASpans)));
+    auto aaSpans = tvg::malloc<AASpans*>(sizeof(AASpans));
     aaSpans->yStart = yStart;
     aaSpans->yEnd = yEnd;
 
     //Initialize X range
     auto height = yEnd - yStart;
 
-    aaSpans->lines = static_cast<AALine*>(malloc(height * sizeof(AALine)));
+    aaSpans->lines = tvg::malloc<AALine*>(height * sizeof(AALine));
 
     for (int32_t i = 0; i < height; i++) {
         aaSpans->lines[i].x[0] = INT32_MAX;
@@ -1089,8 +1089,8 @@ static bool _apply(SwSurface* surface, AASpans* aaSpans)
         y++;
     }
 
-    free(aaSpans->lines);
-    free(aaSpans);
+    tvg::free(aaSpans->lines);
+    tvg::free(aaSpans);
 
     return true;
 }

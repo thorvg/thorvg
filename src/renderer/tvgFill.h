@@ -59,7 +59,7 @@ struct Fill::Impl
     ~Impl()
     {
         delete(dup);
-        free(colorStops);
+        tvg::free(colorStops);
     }
 
     void method(DuplicateMethod<Fill>* dup)
@@ -73,7 +73,7 @@ struct Fill::Impl
 
         ret->pImpl->cnt = cnt;
         ret->pImpl->spread = spread;
-        ret->pImpl->colorStops = static_cast<ColorStop*>(malloc(sizeof(ColorStop) * cnt));
+        ret->pImpl->colorStops = tvg::malloc<ColorStop*>(sizeof(ColorStop) * cnt);
         memcpy(ret->pImpl->colorStops, colorStops, sizeof(ColorStop) * cnt);
         ret->pImpl->transform = transform;
 

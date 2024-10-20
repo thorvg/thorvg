@@ -44,14 +44,14 @@ struct Text::Impl
 
     ~Impl()
     {
-        free(utf8);
+        tvg::free(utf8);
         LoaderMgr::retrieve(loader);
         delete(shape);
     }
 
     Result text(const char* utf8)
     {
-        free(this->utf8);
+        tvg::free(this->utf8);
         if (utf8) this->utf8 = strdup(utf8);
         else this->utf8 = nullptr;
         changed = true;

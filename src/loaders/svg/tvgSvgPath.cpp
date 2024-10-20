@@ -50,7 +50,6 @@
 
 #define _USE_MATH_DEFINES       //Math Constants are not defined in Standard C/C++.
 
-#include <cstring>
 #include <ctype.h>
 #include "tvgMath.h"
 #include "tvgShape.h"

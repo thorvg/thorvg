@@ -20,7 +20,6 @@
  * SOFTWARE.
  */
 
-#include <memory.h>
 #include "tvgLoader.h"
 #include "tvgPngLoader.h"
 
@@ -62,8 +61,8 @@ PngLoader::PngLoader() : ImageLoader(FileType::Png)
 
 PngLoader::~PngLoader()
 {
-    if (freeData) free(data);
-    free(surface.buf8);
+    if (freeData) tvg::free(data);
+    tvg::free(surface.buf8);
     lodepng_state_cleanup(&state);
 }
 
@@ -80,7 +79,7 @@ bool PngLoader::open(const string& path)
     if (((size = ftell(pngFile)) < 1)) goto finalize;
     if (fseek(pngFile, 0, SEEK_SET)) goto finalize;
 
-    data = (unsigned char *) malloc(size);
+    data = tvg::malloc<unsigned char*>(size);
     if (!data) goto finalize;
 
     freeData = true;
@@ -111,7 +110,7 @@ bool PngLoader::open(const char* data, uint32_t size, TVG_UNUSED const string& r
     if (lodepng_inspect(&width, &height, &state, (unsigned char*)(data), size) > 0) return false;
 
     if (copy) {
-        this->data = (unsigned char *) malloc(size);
+        this->data = tvg::malloc<unsigned char*>(size);
         if (!this->data) return false;
         memcpy((unsigned char *)this->data, data, size);
         freeData = true;
