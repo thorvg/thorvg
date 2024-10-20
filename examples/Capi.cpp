@@ -103,7 +103,7 @@ void contents()
 
     //Prepare a radial gradient for the fill
     Tvg_Gradient* grad2 = tvg_radial_gradient_new();
-    tvg_radial_gradient_set(grad2, 600.0f, 180.0f, 50.0f);
+    tvg_radial_gradient_set(grad2, 600.0f, 180.0f, 50.0f, 640.0f, 180.0f, 0.0f);
     Tvg_Color_Stop color_stops2[3] =
     {
         {0.0f, 255,   0, 255, 255},
@@ -121,11 +121,11 @@ void contents()
     const Tvg_Color_Stop* color_stops2_get;
     tvg_gradient_get_color_stops(grad2, &color_stops2_get, &cnt);
 
-    float cx, cy, radius;
-    tvg_radial_gradient_get(grad2, &cx, &cy, &radius);
+    float cx, cy, r, fx, fy, fr;
+    tvg_radial_gradient_get(grad2, &cx, &cy, &r, &fx, &fy, &fr);
 
     Tvg_Gradient* grad2_stroke = tvg_radial_gradient_new();
-    tvg_radial_gradient_set(grad2_stroke, cx, cy, radius);
+    tvg_radial_gradient_set(grad2_stroke, cx, cy, r, fx, fy, fr);
     tvg_gradient_set_color_stops(grad2_stroke, color_stops2_get, cnt);
     tvg_gradient_set_spread(grad2_stroke, TVG_STROKE_FILL_REPEAT);
 
@@ -261,7 +261,7 @@ void contents()
     } else {
         //Radial gradient
         Tvg_Gradient* grad = tvg_radial_gradient_new();
-        tvg_radial_gradient_set(grad, 200.0f, 200.0f, 20.0f);
+        tvg_radial_gradient_set(grad, 200.0f, 200.0f, 20.0f, 200.0f, 200.0f, 0.0f);
         Tvg_Color_Stop color_stops[2] =
                 {
                         {0.0f, 255,   0, 255, 255},

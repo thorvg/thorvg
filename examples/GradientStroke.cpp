@@ -85,7 +85,7 @@ struct UserExample : tvgexam::Example
         shape2->strokeWidth(80);
 
         auto fillStroke2 = tvg::RadialGradient::gen();
-        fillStroke2->radial(600, 175, 100);
+        fillStroke2->radial(600, 175, 100, 600, 175, 0);
         fillStroke2->colorStops(colorStops2, 2);
         shape2->strokeFill(std::move(fillStroke2));
 
