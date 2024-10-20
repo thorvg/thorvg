@@ -54,10 +54,10 @@ void LottieLoader::run(unsigned tid)
 void LottieLoader::release()
 {
     if (copy) {
-        free((char*)content);
+        tvg::free((char*)content);
         content = nullptr;
     }
-    free(dirName);
+    tvg::free(dirName);
     dirName = nullptr;
 }
 
@@ -198,7 +198,7 @@ bool LottieLoader::header()
 bool LottieLoader::open(const char* data, uint32_t size, const std::string& rpath, bool copy)
 {
     if (copy) {
-        content = (char*)malloc(size + 1);
+        content = tvg::malloc<char*>(size + 1);
         if (!content) return false;
         memcpy((char*)content, data, size);
         const_cast<char*>(content)[size] = '\0';
@@ -227,7 +227,7 @@ bool LottieLoader::open(const string& path)
         return false;
     }
 
-    auto content = (char*)(malloc(sizeof(char) * size + 1));
+    auto content = tvg::malloc<char*>(sizeof(char) * size + 1);
     fseek(f, 0, SEEK_SET);
     auto ret = fread(content, sizeof(char), size, f);
     if (ret < size) {
@@ -312,7 +312,7 @@ bool LottieLoader::override(const char* slot)
         }
 
         if (idx < 1) success = false;
-        free(temp);
+        tvg::free(temp);
         rebuild = overridden = success;
     //reset slots
     } else if (overridden) {

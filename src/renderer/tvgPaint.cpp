@@ -363,7 +363,7 @@ void Paint::Impl::reset()
 
     if (maskData) {
         if (P(maskData->target)->unref() == 0) delete(maskData->target);
-        free(maskData);
+        tvg::free(maskData);
         maskData = nullptr;
     }
 

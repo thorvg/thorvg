@@ -23,8 +23,6 @@
 #ifndef _TVG_LOTTIE_MODEL_H_
 #define _TVG_LOTTIE_MODEL_H_
 
-#include <cstring>
-
 #include "tvgCommon.h"
 #include "tvgRender.h"
 #include "tvgLottieProperty.h"
@@ -174,7 +172,7 @@ struct LottieGlyph
     ~LottieGlyph()
     {
         for (auto p = children.begin(); p < children.end(); ++p) delete(*p);
-        free(code);
+        tvg::free(code);
     }
 };
 
@@ -226,9 +224,9 @@ struct LottieFont
     ~LottieFont()
     {
         for (auto c = chars.begin(); c < chars.end(); ++c) delete(*c);
-        free(style);
-        free(family);
-        free(name);
+        tvg::free(style);
+        tvg::free(family);
+        tvg::free(name);
     }
 
     Array<LottieGlyph*> chars;
@@ -247,7 +245,7 @@ struct LottieMarker
     
     ~LottieMarker()
     {
-        free(name);
+        tvg::free(name);
     }
 };
 
@@ -833,7 +831,7 @@ struct LottieSlot
 
     ~LottieSlot()
     {
-        free(sid);
+        tvg::free(sid);
         if (!overridden) return;
         for (auto pair = pairs.begin(); pair < pairs.end(); ++pair) {
             delete(pair->prop);

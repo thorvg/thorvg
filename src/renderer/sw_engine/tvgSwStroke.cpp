@@ -58,8 +58,8 @@ static void _growBorder(SwStrokeBorder* border, uint32_t newPts)
     while (maxCur < maxNew)
         maxCur += (maxCur >> 1) + 16;
     //OPTIMIZE: use mempool!
-    border->pts = static_cast<SwPoint*>(realloc(border->pts, maxCur * sizeof(SwPoint)));
-    border->tags = static_cast<uint8_t*>(realloc(border->tags, maxCur * sizeof(uint8_t)));
+    border->pts = tvg::realloc<SwPoint*>(border->pts, maxCur * sizeof(SwPoint));
+    border->tags = tvg::realloc<uint8_t*>(border->tags, maxCur * sizeof(uint8_t));
     border->maxPts = maxCur;
 }
 
@@ -803,15 +803,15 @@ void strokeFree(SwStroke* stroke)
     if (!stroke) return;
 
     //free borders
-    if (stroke->borders[0].pts) free(stroke->borders[0].pts);
-    if (stroke->borders[0].tags) free(stroke->borders[0].tags);
-    if (stroke->borders[1].pts) free(stroke->borders[1].pts);
-    if (stroke->borders[1].tags) free(stroke->borders[1].tags);
+    if (stroke->borders[0].pts) tvg::free(stroke->borders[0].pts);
+    if (stroke->borders[0].tags) tvg::free(stroke->borders[0].tags);
+    if (stroke->borders[1].pts) tvg::free(stroke->borders[1].pts);
+    if (stroke->borders[1].tags) tvg::free(stroke->borders[1].tags);
 
     fillFree(stroke->fill);
     stroke->fill = nullptr;
 
-    free(stroke);
+    tvg::free(stroke);
 }
 
 

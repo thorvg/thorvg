@@ -31,8 +31,6 @@
 // Chroma upsampling reference: "Fast Scheme for Image Size Change in the Compressed Domain"
 // http://vision.ai.uiuc.edu/~dugad/research/dct/index.html
 
-#include <memory.h>
-#include <stdlib.h>
 #include <stdio.h>
 #include <setjmp.h>
 #include <stdint.h>
@@ -1087,7 +1085,7 @@ void jpeg_decoder::free_all_blocks()
 
     for (mem_block *b = m_pMem_blocks; b; ) {
         mem_block *n = b->m_pNext;
-        free(b);
+        tvg::free(b);
         b = n;
     }
     m_pMem_blocks = nullptr;
@@ -1117,7 +1115,7 @@ void *jpeg_decoder::alloc(size_t nSize, bool zero)
     }
     if (!rv) {
         int capacity = JPGD_MAX(32768 - 256, (nSize + 2047) & ~2047);
-        mem_block *b = (mem_block*)malloc(sizeof(mem_block) + capacity);
+        mem_block *b = tvg::malloc<mem_block*>(sizeof(mem_block) + capacity);
         if (!b) stop_decoding(JPGD_NOTENOUGHMEM);
         b->m_pNext = m_pMem_blocks; m_pMem_blocks = b;
         b->m_used_count = nSize;
@@ -2967,14 +2965,14 @@ unsigned char* jpgdDecompress(jpeg_decoder* decoder)
     if (decoder->begin_decoding() != JPGD_SUCCESS) return nullptr;
 
     const int dst_bpl = image_width * req_comps;
-    uint8_t *pImage_data = (uint8_t*)malloc(dst_bpl * image_height);
+    uint8_t *pImage_data = tvg::malloc<uint8_t*>(dst_bpl * image_height);
     if (!pImage_data) return nullptr;
 
     for (int y = 0; y < image_height; y++) {
         const uint8_t* pScan_line;
         uint32_t scan_line_len;
         if (decoder->decode((const void**)&pScan_line, &scan_line_len) != JPGD_SUCCESS) {
-            free(pImage_data);
+            tvg::free(pImage_data);
             return nullptr;
         }
 

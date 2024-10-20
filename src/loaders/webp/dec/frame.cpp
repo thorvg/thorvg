@@ -11,9 +11,10 @@
 //
 // Author: Skal (pascal.massimino@gmail.com)
 
-#include <stdlib.h>
 #include "./vp8i.h"
 #include "../utils/utils.h"
+
+#include "tvgCommon.h"
 
 #define ALIGN_CST (32 - 1)
 #define DO_ALIGN(PTR) ((uintptr_t)((PTR) + ALIGN_CST) & ~ALIGN_CST)
@@ -626,9 +627,9 @@ static int AllocateMemory(VP8Decoder* const dec) {
 
   if (needed != (size_t)needed) return 0;  // check for overflow
   if (needed > dec->mem_size_) {
-    free(dec->mem_);
+    tvg::free(dec->mem_);
     dec->mem_size_ = 0;
-    dec->mem_ = malloc(needed * sizeof(uint8_t));
+    dec->mem_ = tvg::malloc(needed * sizeof(uint8_t));
     if (dec->mem_ == NULL) {
       return VP8SetError(dec, VP8_STATUS_OUT_OF_MEMORY,
                          "no memory during frame initialization.");

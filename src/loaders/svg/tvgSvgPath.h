@@ -23,7 +23,7 @@
 #ifndef _TVG_SVG_PATH_H_
 #define _TVG_SVG_PATH_H_
 
-#include <tvgCommon.h>
+#include "tvgCommon.h"
 
 bool svgPathToShape(const char* svgPath, Shape* shape);
 

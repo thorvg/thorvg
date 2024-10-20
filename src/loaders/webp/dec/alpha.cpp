@@ -11,7 +11,6 @@
 //
 // Author: Skal (pascal.massimino@gmail.com)
 
-#include <stdlib.h>
 #include "./alphai.h"
 #include "./vp8i.h"
 #include "./vp8li.h"
@@ -20,11 +19,13 @@
 #include "../utils/utils.h"
 #include "../webp/format_constants.h"
 
+#include "tvgCommon.h"
+
 //------------------------------------------------------------------------------
 // ALPHDecoder object.
 
 ALPHDecoder* ALPHNew(void) {
-  ALPHDecoder* const dec = (ALPHDecoder*)calloc(1ULL, sizeof(*dec));
+  ALPHDecoder* const dec = tvg::calloc<ALPHDecoder*>(1ULL, sizeof(*dec));
   return dec;
 }
 
@@ -32,7 +33,7 @@ void ALPHDelete(ALPHDecoder* const dec) {
   if (dec != NULL) {
     VP8LDelete(dec->vp8l_dec_);
     dec->vp8l_dec_ = NULL;
-    free(dec);
+    tvg::free(dec);
   }
 }
 

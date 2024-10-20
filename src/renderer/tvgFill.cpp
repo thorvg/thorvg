@@ -92,7 +92,7 @@ Result Fill::colorStops(const ColorStop* colorStops, uint32_t cnt) noexcept
 
     if (cnt == 0) {
         if (pImpl->colorStops) {
-            free(pImpl->colorStops);
+            tvg::free(pImpl->colorStops);
             pImpl->colorStops = nullptr;
             pImpl->cnt = 0;
         }
@@ -100,7 +100,7 @@ Result Fill::colorStops(const ColorStop* colorStops, uint32_t cnt) noexcept
     }
 
     if (pImpl->cnt != cnt) {
-        pImpl->colorStops = static_cast<ColorStop*>(realloc(pImpl->colorStops, cnt * sizeof(ColorStop)));
+        pImpl->colorStops = tvg::realloc<ColorStop*>(pImpl->colorStops, cnt * sizeof(ColorStop));
     }
 
     pImpl->cnt = cnt;

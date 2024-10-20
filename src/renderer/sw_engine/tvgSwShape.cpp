@@ -344,7 +344,7 @@ static SwOutline* _genDashOutline(const RenderShape* rshape, const Matrix& trans
     if (trimmed) rshape->stroke->strokeTrim(trimBegin, trimEnd);
 
     if (dash.cnt == 0) {
-        if (trimmed) dash.pattern = (float*)malloc(sizeof(float) * 4);
+        if (trimmed) dash.pattern = tvg::malloc<float*>(sizeof(float) * 4);
         else return nullptr;
     } else {
         //TODO: handle dash + trim - for now trimming ignoring is forced
@@ -411,7 +411,7 @@ static SwOutline* _genDashOutline(const RenderShape* rshape, const Matrix& trans
 
     _outlineEnd(*dash.outline);
 
-    if (trimmed) free(dash.pattern);
+    if (trimmed) tvg::free(dash.pattern);
 
     return dash.outline;
 }
@@ -575,7 +575,7 @@ void shapeDelStroke(SwShape* shape)
 
 void shapeResetStroke(SwShape* shape, const RenderShape* rshape, const Matrix& transform)
 {
-    if (!shape->stroke) shape->stroke = static_cast<SwStroke*>(calloc(1, sizeof(SwStroke)));
+    if (!shape->stroke) shape->stroke = tvg::calloc<SwStroke*>(1, sizeof(SwStroke));
     auto stroke = shape->stroke;
     if (!stroke) return;
 
@@ -642,7 +642,7 @@ bool shapeGenStrokeFillColors(SwShape* shape, const Fill* fill, const Matrix& tr
 void shapeResetFill(SwShape* shape)
 {
     if (!shape->fill) {
-        shape->fill = static_cast<SwFill*>(calloc(1, sizeof(SwFill)));
+        shape->fill = tvg::calloc<SwFill*>(1, sizeof(SwFill));
         if (!shape->fill) return;
     }
     fillReset(shape->fill);
@@ -652,7 +652,7 @@ void shapeResetFill(SwShape* shape)
 void shapeResetStrokeFill(SwShape* shape)
 {
     if (!shape->stroke->fill) {
-        shape->stroke->fill = static_cast<SwFill*>(calloc(1, sizeof(SwFill)));
+        shape->stroke->fill = tvg::calloc<SwFill*>(1, sizeof(SwFill));
         if (!shape->stroke->fill) return;
     }
     fillReset(shape->stroke->fill);

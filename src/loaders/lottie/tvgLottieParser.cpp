@@ -403,7 +403,7 @@ LottieInterpolator* LottieParser::getInterpolator(const char* key, Point& in, Po
 
     //new interpolator
     if (!interpolator) {
-        interpolator = static_cast<LottieInterpolator*>(malloc(sizeof(LottieInterpolator)));
+        interpolator = tvg::malloc<LottieInterpolator*>(sizeof(LottieInterpolator));
         interpolator->set(key, in, out);
         comp->interpolators.push(interpolator);
     }
@@ -941,7 +941,7 @@ LottieImage* LottieParser::parseImage(const char* data, const char* subPath, boo
     //external image resource
     } else {
         auto len = strlen(dirName) + strlen(subPath) + strlen(data) + 2;
-        image->path = static_cast<char*>(malloc(len));
+        image->path = tvg::malloc<char*>(len);
         snprintf(image->path, len, "%s/%s%s", dirName, subPath, data);
     }
 
@@ -1403,8 +1403,8 @@ void LottieParser::postProcess(Array<LottieGlyph*>& glyphs)
             auto& font = comp->fonts[i];
             if (!strcmp(font->family, glyph->family) && !strcmp(font->style, glyph->style)) {
                 font->chars.push(glyph);
-                free(glyph->family);
-                free(glyph->style);
+                tvg::free(glyph->family);
+                tvg::free(glyph->style);
                 break;
             }
         }

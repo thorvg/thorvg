@@ -21,7 +21,6 @@
  */
 
 #include <fstream>
-#include <string.h>
 #include "tvgLoader.h"
 #include "tvgRawLoader.h"
 
@@ -41,7 +40,7 @@ RawLoader::RawLoader() : ImageLoader(FileType::Raw)
 
 RawLoader::~RawLoader()
 {
-    if (copy) free(surface.buf32);
+    if (copy) tvg::free(surface.buf32);
 }
 
 
@@ -56,7 +55,7 @@ bool RawLoader::open(const uint32_t* data, uint32_t w, uint32_t h, ColorSpace cs
     this->copy = copy;
 
     if (copy) {
-        surface.buf32 = (uint32_t*)malloc(sizeof(uint32_t) * w * h);
+        surface.buf32 = tvg::malloc<uint32_t*>(sizeof(uint32_t) * w * h);
         if (!surface.buf32) return false;
         memcpy((void*)surface.buf32, data, sizeof(uint32_t) * w * h);
     }
