@@ -1060,41 +1060,48 @@ void LottieBuilder::updateText(LottieLayer* layer, float frameNo)
                     shape->strokeFill(doc.stroke.color.rgb[0], doc.stroke.color.rgb[1], doc.stroke.color.rgb[2]);
                 }
 
-                //text range process
-                for (auto s = text->ranges.begin(); s < text->ranges.end(); ++s) {
-                    float start, end;
-                    (*s)->range(frameNo, float(totalChars), start, end);
+                if (!text->ranges.empty()) {
+                    Point scaling = {1.0f, 1.0f};
+                    auto rotation = 0.0f;
+                    auto translation = cursor;
 
-                    auto basedIdx = idx;
-                    if ((*s)->based == LottieTextRange::Based::CharsExcludingSpaces) basedIdx = idx - space;
-                    else if ((*s)->based == LottieTextRange::Based::Words) basedIdx = line + space;
-                    else if ((*s)->based == LottieTextRange::Based::Lines) basedIdx = line;
+                    //text range process
+                    for (auto s = text->ranges.begin(); s < text->ranges.end(); ++s) {
+                        float start, end;
+                        (*s)->range(frameNo, float(totalChars), start, end);
 
-                    if (basedIdx < start || basedIdx >= end) continue;
-                    auto& matrix = shape->transform();
+                        auto basedIdx = idx;
+                        if ((*s)->based == LottieTextRange::Based::CharsExcludingSpaces) basedIdx = idx - space;
+                        else if ((*s)->based == LottieTextRange::Based::Words) basedIdx = line + space;
+                        else if ((*s)->based == LottieTextRange::Based::Lines) basedIdx = line;
 
-                    shape->opacity((*s)->style.opacity(frameNo));
+                        if (basedIdx < start || basedIdx >= end) continue;
 
-                    auto color = (*s)->style.fillColor(frameNo);
-                    shape->fill(color.rgb[0], color.rgb[1], color.rgb[2], (*s)->style.fillOpacity(frameNo));
+                        translation = translation + (*s)->style.position(frameNo);
+                        scaling = scaling * (*s)->style.scale(frameNo) * 0.01f;
+                        rotation += (*s)->style.rotation(frameNo);
 
-                    rotate(&matrix, (*s)->style.rotation(frameNo));
+                        shape->opacity((*s)->style.opacity(frameNo));
 
-                    auto glyphScale = (*s)->style.scale(frameNo) * 0.01f;
-                    tvg::scale(&matrix, glyphScale.x, glyphScale.y);
+                        auto color = (*s)->style.fillColor(frameNo);
+                        shape->fill(color.rgb[0], color.rgb[1], color.rgb[2], (*s)->style.fillOpacity(frameNo));
 
-                    auto position = (*s)->style.position(frameNo);
-                    translate(&matrix, position.x, position.y);
+                        if (doc.stroke.render) {
+                            auto strokeColor = (*s)->style.strokeColor(frameNo);
+                            shape->strokeWidth((*s)->style.strokeWidth(frameNo) / scale);
+                            shape->strokeFill(strokeColor.rgb[0], strokeColor.rgb[1], strokeColor.rgb[2], (*s)->style.strokeOpacity(frameNo));
+                        }
+                        cursor.x += (*s)->style.letterSpacing(frameNo);
 
-                    if (doc.stroke.render) {
-                        auto strokeColor = (*s)->style.strokeColor(frameNo);
-                        shape->strokeWidth((*s)->style.strokeWidth(frameNo) / scale);
-                        shape->strokeFill(strokeColor.rgb[0], strokeColor.rgb[1], strokeColor.rgb[2], (*s)->style.strokeOpacity(frameNo));
+                        auto spacing = (*s)->style.lineSpacing(frameNo);
+                        if (spacing > lineSpacing) lineSpacing = spacing;
                     }
-                    cursor.x += (*s)->style.letterSpacing(frameNo);
-
-                    auto spacing = (*s)->style.lineSpacing(frameNo);
-                    if (spacing > lineSpacing) lineSpacing = spacing;
+                    Matrix matrix;
+                    identity(&matrix);
+                    translate(&matrix, translation.x, translation.y);
+                    tvg::scale(&matrix, scaling.x, scaling.y);
+                    rotate(&matrix, rotation);
+                    shape->transform(matrix);
                 }
 
                 scene->push(cast(shape));
