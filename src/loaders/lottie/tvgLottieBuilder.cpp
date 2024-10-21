@@ -1071,20 +1071,25 @@ void LottieBuilder::updateText(LottieLayer* layer, float frameNo)
                     else if ((*s)->based == LottieTextRange::Based::Lines) basedIdx = line;
 
                     if (basedIdx < start || basedIdx >= end) continue;
-                    auto& matrix = shape->transform();
 
                     shape->opacity((*s)->style.opacity(frameNo));
 
                     auto color = (*s)->style.fillColor(frameNo);
                     shape->fill(color.rgb[0], color.rgb[1], color.rgb[2], (*s)->style.fillOpacity(frameNo));
 
+                    Matrix matrix;
+                    identity(&matrix);
+
                     rotate(&matrix, (*s)->style.rotation(frameNo));
 
                     auto glyphScale = (*s)->style.scale(frameNo) * 0.01f;
                     tvg::scale(&matrix, glyphScale.x, glyphScale.y);
 
-                    auto position = (*s)->style.position(frameNo);
+                    //cursor position has to be added since the previous translation will be overwritten
+                    auto position = (*s)->style.position(frameNo) + cursor;
                     translate(&matrix, position.x, position.y);
+
+                    shape->transform(matrix);
 
                     if (doc.stroke.render) {
                         auto strokeColor = (*s)->style.strokeColor(frameNo);
