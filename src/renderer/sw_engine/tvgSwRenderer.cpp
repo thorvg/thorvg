@@ -641,7 +641,7 @@ bool SwRenderer::endComposite(RenderCompositor* cmp)
 bool SwRenderer::prepare(RenderEffect* effect)
 {
     switch (effect->type) {
-        case SceneEffect::GaussianBlur: return effectGaussianPrepare(static_cast<RenderEffectGaussian*>(effect));
+        case SceneEffect::GaussianBlur: return effectGaussianBlurPrepare(static_cast<RenderEffectGaussianBlur*>(effect));
         default: return false;
     }
 }
@@ -653,7 +653,7 @@ bool SwRenderer::effect(RenderCompositor* cmp, const RenderEffect* effect)
     auto& buffer = request(surface->channelSize)->compositor->image;
 
     switch (effect->type) {
-        case SceneEffect::GaussianBlur: return effectGaussianBlur(p->image, buffer, p->bbox, static_cast<const RenderEffectGaussian*>(effect));
+        case SceneEffect::GaussianBlur: return effectGaussianBlur(p->image, buffer, p->bbox, static_cast<const RenderEffectGaussianBlur*>(effect));
         default: return false;
     }
 }

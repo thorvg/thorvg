@@ -105,7 +105,11 @@ Result Scene::push(SceneEffect effect, ...) noexcept
 
     switch (effect) {
         case SceneEffect::GaussianBlur: {
-            re = RenderEffectGaussian::gen(args);
+            re = RenderEffectGaussianBlur::gen(args);
+            break;
+        }
+        case SceneEffect::DropShadow: {
+            re = RenderEffectDropShadow::gen(args);
             break;
         }
         default: break;

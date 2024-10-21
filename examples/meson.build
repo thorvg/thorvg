@@ -60,6 +60,7 @@ source_file = [
     'SceneTransform.cpp',
     'Shapes.cpp',
     'SceneEffect.cpp',
+    'SceneEffect2.cpp',
     'Stroke.cpp',
     'StrokeLine.cpp',
     'StrokeMiterlimit.cpp',
