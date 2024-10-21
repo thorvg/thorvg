@@ -107,7 +107,7 @@ namespace tvg
 
         bool transform(const Matrix& m)
         {
-            tr.m = m;
+            if (&tr.m != &m) tr.m = m;
             tr.overriding = true;
             renderFlag |= RenderUpdateFlag::Transform;
 
