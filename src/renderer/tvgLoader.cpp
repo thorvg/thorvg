@@ -278,10 +278,10 @@ LoadModule* LoaderMgr::loader(const string& path, bool* invalid)
 {
     *invalid = false;
 
-    //TODO: lottie is not sharable.
+    //TODO: svg & lottie is not sharable.
     auto allowCache = true;
     auto ext = path.substr(path.find_last_of(".") + 1);
-    if (!ext.compare("json")) allowCache = false;
+    if (!ext.compare("svg") || !ext.compare("json")) allowCache = false;
 
     if (allowCache) {
         if (auto loader = _findFromCache(path)) return loader;
