@@ -50,6 +50,32 @@ fn fs_main(in: VertexOutput) -> @location(0) vec4f {
 )";
 
 //************************************************************************
+// graphics shader source: depth
+//************************************************************************
+
+const char* cShaderSrc_Depth = R"(
+struct VertexInput { @location(0) position: vec2f };
+struct VertexOutput { @builtin(position) position: vec4f };
+
+@group(0) @binding(0) var<uniform> uViewMat  : mat4x4f;
+@group(1) @binding(0) var<uniform> uModelMat : mat4x4f;
+@group(2) @binding(0) var<uniform> uDepth : f32;
+
+@vertex
+fn vs_main(in: VertexInput) -> VertexOutput {
+    var out: VertexOutput;
+    out.position = uViewMat * uModelMat * vec4f(in.position.xy, 0.0, 1.0);
+    out.position.z = uDepth;
+    return out;
+}
+
+@fragment
+fn fs_main(in: VertexOutput) -> @location(0) vec4f {
+    return vec4f(1.0, 0.5, 0.0, 1.0);
+}
+)";
+
+//************************************************************************
 // graphics shader source: solid normal blend
 //************************************************************************
 

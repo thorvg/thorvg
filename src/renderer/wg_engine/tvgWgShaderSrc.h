@@ -25,6 +25,7 @@
 
 // helper shaders
 extern const char* cShaderSrc_Stencil;
+extern const char* cShaderSrc_Depth;
 // shaders normal blend
 extern const char* cShaderSrc_Solid;
 extern const char* cShaderSrc_Linear;
