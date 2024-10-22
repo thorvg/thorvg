@@ -215,7 +215,7 @@ struct LottieTextRange
     uint8_t random = 0;
     bool expressible = false;
 
-    void range(float frameNo, float totalLen, float& start, float& end);
+    float factor(float frameNo, float totalLen, float idx);
 };
 
 

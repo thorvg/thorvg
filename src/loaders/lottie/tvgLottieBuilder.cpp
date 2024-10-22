@@ -1067,15 +1067,13 @@ void LottieBuilder::updateText(LottieLayer* layer, float frameNo)
 
                     //text range process
                     for (auto s = text->ranges.begin(); s < text->ranges.end(); ++s) {
-                        float start, end;
-                        (*s)->range(frameNo, float(totalChars), start, end);
-
                         auto basedIdx = idx;
                         if ((*s)->based == LottieTextRange::Based::CharsExcludingSpaces) basedIdx = idx - space;
                         else if ((*s)->based == LottieTextRange::Based::Words) basedIdx = line + space;
                         else if ((*s)->based == LottieTextRange::Based::Lines) basedIdx = line;
 
-                        if (basedIdx < start || basedIdx >= end) continue;
+                        auto f = (*s)->factor(frameNo, float(totalChars), (float)basedIdx);
+                        if (tvg::zero(f)) continue;
 
                         translation = translation + (*s)->style.position(frameNo);
                         scaling = scaling * (*s)->style.scale(frameNo) * 0.01f;
