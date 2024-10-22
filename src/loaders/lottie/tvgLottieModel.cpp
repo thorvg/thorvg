@@ -31,6 +31,16 @@
 /* Internal Class Implementation                                        */
 /************************************************************************/
 
+static inline float _applySmoothness(float value, float smoothness)
+{
+    if (smoothness >= 100.0f) return value;
+
+    smoothness /= 100.0f;
+    value = (value - (1.0f - smoothness) * 0.5f) / smoothness;
+    clamp(value, 0.0f, 1.0f);
+
+    return value;
+}
 
 /************************************************************************/
 /* External Class Implementation                                        */
@@ -134,7 +144,7 @@ float LottieTextRange::factor(float frameNo, float totalLen, float idx)
         clamp(f, 0.0f, 1.0f);
     }
 
-    return f;
+    return _applySmoothness(f, this->smoothness(frameNo));
 }
 
 

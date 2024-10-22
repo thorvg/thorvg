@@ -1075,23 +1075,34 @@ void LottieBuilder::updateText(LottieLayer* layer, float frameNo)
                         auto f = (*s)->factor(frameNo, float(totalChars), (float)basedIdx);
                         if (tvg::zero(f)) continue;
 
-                        translation = translation + (*s)->style.position(frameNo);
-                        scaling = scaling * (*s)->style.scale(frameNo) * 0.01f;
-                        rotation += (*s)->style.rotation(frameNo);
+                        translation = translation + f * (*s)->style.position(frameNo);
+                        scaling = scaling * (f * ((*s)->style.scale(frameNo) * 0.01f - Point{1.0f,1.0f}) + Point{1.0f,1.0f});
+                        rotation += f * (*s)->style.rotation(frameNo);
 
                         shape->opacity((*s)->style.opacity(frameNo));
 
                         auto color = (*s)->style.fillColor(frameNo);
-                        shape->fill(color.rgb[0], color.rgb[1], color.rgb[2], (*s)->style.fillOpacity(frameNo));
-
-                        if (doc.stroke.render) {
-                            auto strokeColor = (*s)->style.strokeColor(frameNo);
-                            shape->strokeWidth((*s)->style.strokeWidth(frameNo) / scale);
-                            shape->strokeFill(strokeColor.rgb[0], strokeColor.rgb[1], strokeColor.rgb[2], (*s)->style.strokeOpacity(frameNo));
+                        if (f == 1.0f) shape->fill(color.rgb[0], color.rgb[1], color.rgb[2], (*s)->style.fillOpacity(frameNo));
+                        else {
+                            auto r = lerp<uint8_t>(doc.color.rgb[0], color.rgb[0], f);
+                            auto g = lerp<uint8_t>(doc.color.rgb[1], color.rgb[1], f);
+                            auto b = lerp<uint8_t>(doc.color.rgb[2], color.rgb[2], f);
+                            shape->fill(r, g, b, (*s)->style.fillOpacity(frameNo));
                         }
-                        cursor.x += (*s)->style.letterSpacing(frameNo);
+                        if (doc.stroke.render) {
+                            shape->strokeWidth(f * (*s)->style.strokeWidth(frameNo) / scale);
+                            auto strokeColor = (*s)->style.strokeColor(frameNo);
+                            if (f == 1.0f) shape->strokeFill(strokeColor.rgb[0], strokeColor.rgb[1], strokeColor.rgb[2], (*s)->style.strokeOpacity(frameNo));
+                            else {
+                                auto r = lerp<uint8_t>(doc.stroke.color.rgb[0], strokeColor.rgb[0], f);
+                                auto g = lerp<uint8_t>(doc.stroke.color.rgb[1], strokeColor.rgb[1], f);
+                                auto b = lerp<uint8_t>(doc.stroke.color.rgb[2], strokeColor.rgb[2], f);
+                                shape->strokeFill(r, g, b, (*s)->style.strokeOpacity(frameNo));
+                            }
+                        }
 
-                        auto spacing = (*s)->style.lineSpacing(frameNo);
+                        cursor.x += f * (*s)->style.letterSpacing(frameNo);
+                        auto spacing = f * (*s)->style.lineSpacing(frameNo);
                         if (spacing > lineSpacing) lineSpacing = spacing;
                     }
                     Matrix matrix;
