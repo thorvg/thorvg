@@ -28,22 +28,55 @@
 
 struct UserExample : tvgexam::Example
 {
-    tvg::Scene* pScene = nullptr;
+    tvg::Scene* pScene1 = nullptr;   //direction both
+    tvg::Scene* pScene2 = nullptr;   //direction horizontal
+    tvg::Scene* pScene3 = nullptr;   //direction vertical
 
     bool content(tvg::Canvas* canvas, uint32_t w, uint32_t h) override
     {
         if (!canvas) return false;
 
-        //Prepare a scene for post effects.
-        auto scene = tvg::Scene::gen();
-        pScene = scene.get();
+        //Prepare a scene for post effects (direction both)
+        {
+            auto scene = tvg::Scene::gen();
+            pScene1 = scene.get();
 
-        auto picture = tvg::Picture::gen();
-        picture->load(EXAMPLE_DIR"/svg/tiger.svg");
-        picture->size(w, h);
+            auto picture = tvg::Picture::gen();
+            picture->load(EXAMPLE_DIR"/svg/tiger.svg");
+            picture->size(w / 2, h / 2);
 
-        scene->push(std::move(picture));
-        canvas->push(std::move(scene));
+            scene->push(std::move(picture));
+            canvas->push(std::move(scene));
+        }
+
+        //Prepare a scene for post effects (direction horizontal)
+        {
+            auto scene = tvg::Scene::gen();
+            pScene2 = scene.get();
+
+            auto picture = tvg::Picture::gen();
+            picture->load(EXAMPLE_DIR"/svg/tiger.svg");
+            picture->size(w / 2, h / 2);
+            picture->translate(w / 2, 0);
+
+            scene->push(std::move(picture));
+            canvas->push(std::move(scene));
+        }
+
+        //Prepare a scene for post effects (direction vertical)
+        {
+            auto scene = tvg::Scene::gen();
+            pScene3 = scene.get();
+
+            auto picture = tvg::Picture::gen();
+            picture->load(EXAMPLE_DIR"/svg/tiger.svg");
+            picture->size(w / 2, h / 2);
+            picture->translate(0, h / 2);
+
+            scene->push(std::move(picture));
+            canvas->push(std::move(scene));
+        }
+
 
         return true;
     }
@@ -57,12 +90,17 @@ struct UserExample : tvgexam::Example
         auto progress = tvgexam::progress(elapsed, 2.5f, true);   //2.5 seconds
 
         //Clear the previously applied effects
-        pScene->push(tvg::SceneEffect::ClearAll);
-
+        pScene1->push(tvg::SceneEffect::ClearAll);
         //Apply GaussianBlur post effect (sigma, direction, border option, quality)
-        pScene->push(tvg::SceneEffect::GaussianBlur, 10.0f * progress, 0, 0, 100);
+        pScene1->push(tvg::SceneEffect::GaussianBlur, 10.0f * progress, 0, 0, 100);
 
-        canvas->update(pScene);
+        pScene2->push(tvg::SceneEffect::ClearAll);
+        pScene2->push(tvg::SceneEffect::GaussianBlur, 10.0f * progress, 1, 0, 100);
+
+        pScene3->push(tvg::SceneEffect::ClearAll);
+        pScene3->push(tvg::SceneEffect::GaussianBlur, 10.0f * progress, 2, 0, 100);
+
+        canvas->update();
 
         return true;
     }
