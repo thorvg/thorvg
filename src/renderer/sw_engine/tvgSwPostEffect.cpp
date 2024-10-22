@@ -37,13 +37,12 @@ struct SwGaussianBlur
 static void _gaussianExtendRegion(RenderRegion& region, int extra, int8_t direction)
 {
     //bbox region expansion for feathering
-    if (direction == 0 || direction == 1) {
+    if (direction != 2) {
         region.x = -extra;
-        region.y = -extra;
-    }
-
-    if (direction == 0 || direction == 2) {
         region.w = extra * 2;
+    }
+    if (direction != 1) {
+        region.y = -extra;
         region.h = extra * 2;
     }
 }
