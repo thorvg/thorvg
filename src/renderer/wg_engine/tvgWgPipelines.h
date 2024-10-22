@@ -29,6 +29,7 @@ class WgPipelines {
 private:
     // shaders helpers
     WGPUShaderModule shader_stencil{};
+    WGPUShaderModule shader_depth{};
     // shaders normal blend
     WGPUShaderModule shader_solid{};
     WGPUShaderModule shader_radial{};
@@ -43,12 +44,12 @@ private:
     WGPUShaderModule shader_scene_blend{};
     // shader scene compose
     WGPUShaderModule shader_scene_compose{};
-    WGPUShaderModule shader_merge_masks;
     // shader blit
     WGPUShaderModule shader_blit{};
 private:
     // layouts helpers
     WGPUPipelineLayout layout_stencil{};
+    WGPUPipelineLayout layout_depth{};
     // layouts normal blend
     WGPUPipelineLayout layout_solid{};
     WGPUPipelineLayout layout_gradient{};
@@ -61,15 +62,19 @@ private:
     WGPUPipelineLayout layout_scene_blend{};
     // layouts scene compose
     WGPUPipelineLayout layout_scene_compose{};
-    WGPUPipelineLayout layout_merge_masks{};
     // layouts blit
     WGPUPipelineLayout layout_blit{};
 public:
-    // pipelines helpers
+    // pipelines stencil markup
     WGPURenderPipeline winding{};
     WGPURenderPipeline evenodd{};
     WGPURenderPipeline direct{};
-    WGPURenderPipeline clip_path{};
+    // pipelines clip path markup
+    WGPURenderPipeline copy_stencil_to_depth{};        // depth 0.50, clear stencil
+    WGPURenderPipeline copy_stencil_to_depth_interm{}; // depth 0.75, clear stencil
+    WGPURenderPipeline copy_depth_to_stencil{}; // depth 0.50 and 0.75, update stencil
+    WGPURenderPipeline merge_depth_stencil{};   // depth 0.75, update stencil
+    WGPURenderPipeline clear_depth{}; // depth 1.00, clear ctencil
     // pipelines normal blend
     WGPURenderPipeline solid{};
     WGPURenderPipeline radial{};
@@ -84,8 +89,6 @@ public:
     WGPURenderPipeline scene_blend[18]{};
     // pipelines compose
     WGPURenderPipeline scene_compose[11]{};
-    WGPURenderPipeline scene_clip{};
-    WGPUComputePipeline merge_masks{};
     // pipeline blit
     WGPURenderPipeline blit{};
 public:
@@ -93,7 +96,6 @@ public:
     WgBindGroupLayouts layouts;
 private:
     void releaseGraphicHandles(WgContext& context);
-    void releaseComputeHandles(WgContext& context);
 private:
     WGPUShaderModule createShaderModule(WGPUDevice device, const char* label, const char* code);
     WGPUPipelineLayout createPipelineLayout(WGPUDevice device, const WGPUBindGroupLayout* bindGroupLayouts, const uint32_t bindGroupLayoutsCount);
@@ -105,7 +107,7 @@ private:
         const WGPUColorWriteMaskFlags writeMask, const WGPUTextureFormat colorTargetFormat,
         const WGPUCompareFunction stencilFunctionFrnt, const WGPUStencilOperation stencilOperationFrnt,
         const WGPUCompareFunction stencilFunctionBack, const WGPUStencilOperation stencilOperationBack,
-        const WGPUPrimitiveState primitiveState, const WGPUMultisampleState multisampleState, const WGPUBlendState blendState);
+        const WGPUCompareFunction depthCompare, WGPUBool depthWriteEnabled, const WGPUMultisampleState multisampleState, const WGPUBlendState blendState);
     WGPUComputePipeline createComputePipeline(
         WGPUDevice device, const char* pipelineLabel,
         const WGPUShaderModule shaderModule, const char* entryPoint,

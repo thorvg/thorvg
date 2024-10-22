@@ -51,8 +51,6 @@ private:
     WGPUCommandEncoder commandEncoder{};
     WgRenderStorage* currentTarget{};
     // intermediate render storages
-    WgRenderStorage storageInterm;
-    WgRenderStorage storageClipPath;
     WgRenderStorage storageDstCopy;
     // composition and blend geometries
     WgMeshData meshData;
@@ -82,27 +80,24 @@ private:
     // shapes
     void drawShape(WgContext& context, WgRenderDataShape* renderData);
     void blendShape(WgContext& context, WgRenderDataShape* renderData, BlendMethod blendMethod);
-    void clipShape(WgContext& context, WgRenderDataShape* renderData, WgRenderStorage* mask); // TODO: optimize
+    void clipShape(WgContext& context, WgRenderDataShape* renderData);
 
     // strokes
     void drawStrokes(WgContext& context, WgRenderDataShape* renderData);
     void blendStrokes(WgContext& context, WgRenderDataShape* renderData, BlendMethod blendMethod);
-    void clipStrokes(WgContext& context, WgRenderDataShape* renderData, WgRenderStorage* mask); // TODO: optimize
+    void clipStrokes(WgContext& context, WgRenderDataShape* renderData);
 
     // images
     void drawImage(WgContext& context, WgRenderDataPicture* renderData);
     void blendImage(WgContext& context, WgRenderDataPicture* renderData, BlendMethod blendMethod);
-    void clipImage(WgContext& context, WgRenderDataPicture* renderData, WgRenderStorage* mask); // TODO: optimize
+    void clipImage(WgContext& context, WgRenderDataPicture* renderData);
 
     // scenes
     void drawScene(WgContext& context, WgRenderStorage* scene, WgCompose* compose);
     void blendScene(WgContext& context, WgRenderStorage* src, WgCompose* compose);
 private:
-    // clip path utils (TODO: optimize)
-    void drawClipPath(WgContext& context, WgRenderDataShape* renderData);
-    void clipRegion(WgContext& context, WgRenderStorage* src, WgRenderStorage* mask, RenderRegion& rect);
-    void renderClipPath(WgContext& context, WgRenderDataPaint* renderData, WgRenderStorage* dst);
-    void mergeMasks(WGPUCommandEncoder encoder, WgRenderStorage* mask0, WgRenderStorage* mask1);
+    void renderClipPath(WgContext& context, WgRenderDataPaint* paint);
+    void clearClipPath(WgContext& context, WgRenderDataPaint* paint);
 };
 
 #endif // _TVG_WG_COMPOSITOR_H_
