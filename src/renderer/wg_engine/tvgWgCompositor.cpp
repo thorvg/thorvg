@@ -31,7 +31,7 @@ void WgCompositor::initialize(WgContext& context, uint32_t width, uint32_t heigh
     this->width = width;
     this->height = height;
     // allocate global stencil buffer handles
-    texStencil = context.createTexStencil(width, height, WGPUTextureFormat_Stencil8);
+    texStencil = context.createTexStencil(width, height, WGPUTextureFormat_Depth24PlusStencil8);
     texViewStencil = context.createTextureView(texStencil);
     // allocate global view matrix handles
     WgShaderTypeMat4x4f viewMat(width, height);
@@ -44,8 +44,6 @@ void WgCompositor::initialize(WgContext& context, uint32_t width, uint32_t heigh
         bindGroupOpacities[i] = pipelines->layouts.createBindGroupBuffer1Un(bufferOpacities[i]);
     }
     // initialize intermediate render storages
-    storageClipPath.initialize(context, width, height);
-    storageInterm.initialize(context, width, height);
     storageDstCopy.initialize(context, width, height);
     // composition and blend geometries
     meshData.blitBox(context);
@@ -57,9 +55,7 @@ void WgCompositor::release(WgContext& context)
     // composition and blend geometries
     meshData.release(context);
     // release intermediate render storages
-    storageInterm.release(context);
     storageDstCopy.release(context);
-    storageClipPath.release(context);
     // release opacity pool
     for (uint32_t i = 0; i < 256; i++) {
         context.pipelines->layouts.releaseBindGroup(bindGroupOpacities[i]);
@@ -94,7 +90,12 @@ void WgCompositor::beginRenderPass(WGPUCommandEncoder commandEncoder, WgRenderSt
     assert(target);
     this->currentTarget = target;
     this->commandEncoder = commandEncoder;
-    WGPURenderPassDepthStencilAttachment depthStencilAttachment{ .view = texViewStencil, .stencilLoadOp = WGPULoadOp_Clear, .stencilStoreOp = WGPUStoreOp_Discard };
+    const WGPURenderPassDepthStencilAttachment depthStencilAttachment{ 
+        .view = texViewStencil,
+        .depthLoadOp = WGPULoadOp_Load, .depthStoreOp = WGPUStoreOp_Discard, .depthClearValue = 1.0f,
+        .stencilLoadOp = WGPULoadOp_Load, .stencilStoreOp = WGPUStoreOp_Discard, .stencilClearValue = 0
+    };
+    //WGPURenderPassDepthStencilAttachment depthStencilAttachment{ .view = texViewStencil, .depthClearValue = 1.0f, .stencilLoadOp = WGPULoadOp_Clear, .stencilStoreOp = WGPUStoreOp_Discard };
     WGPURenderPassColorAttachment colorAttachment{};
     colorAttachment.view = target->texView,
     colorAttachment.loadOp = clear ? WGPULoadOp_Clear : WGPULoadOp_Load,
@@ -124,14 +125,15 @@ void WgCompositor::renderShape(WgContext& context, WgRenderDataShape* renderData
     assert(renderPassEncoder);
     // apply clip path if neccessary
     if (renderData->clips.count != 0) {
-        renderClipPath(context, renderData, &storageClipPath);
+        renderClipPath(context, renderData);
         if (renderData->strokeFirst) {
-            clipStrokes(context, renderData, &storageClipPath);
-            clipShape(context, renderData, &storageClipPath);
+            clipStrokes(context, renderData);
+            clipShape(context, renderData);
         } else {
-            clipShape(context, renderData, &storageClipPath);
-            clipStrokes(context, renderData, &storageClipPath);
+            clipShape(context, renderData);
+            clipStrokes(context, renderData);
         }
+        clearClipPath(context, renderData);
     // use custom blending
     } else if (blendMethod != BlendMethod::Normal) {
         if (renderData->strokeFirst) {
@@ -160,8 +162,9 @@ void WgCompositor::renderImage(WgContext& context, WgRenderDataPicture* renderDa
     assert(renderPassEncoder);
     // apply clip path if neccessary
     if (renderData->clips.count != 0) {
-        renderClipPath(context, renderData, &storageClipPath);
-        clipImage(context, renderData, &storageClipPath);
+        renderClipPath(context, renderData);
+        clipImage(context, renderData);
+        clearClipPath(context, renderData);
     // use custom blending
     } else if (blendMethod != BlendMethod::Normal)
         blendImage(context, renderData, blendMethod);
@@ -200,12 +203,16 @@ void WgCompositor::composeScene(WgContext& context, WgRenderStorage* src, WgRend
 
 
 void WgCompositor::blit(WgContext& context, WGPUCommandEncoder encoder, WgRenderStorage* src, WGPUTextureView dstView) {
-    WGPURenderPassDepthStencilAttachment depthStencilAttachment{ .view = texViewStencil, .stencilLoadOp = WGPULoadOp_Load, .stencilStoreOp = WGPUStoreOp_Discard };
+    const WGPURenderPassDepthStencilAttachment depthStencilAttachment{ 
+        .view = texViewStencil,
+        .depthLoadOp = WGPULoadOp_Load, .depthStoreOp = WGPUStoreOp_Discard,
+        .stencilLoadOp = WGPULoadOp_Load, .stencilStoreOp = WGPUStoreOp_Discard
+    };
     WGPURenderPassColorAttachment colorAttachment { .view = dstView, .loadOp = WGPULoadOp_Load, .storeOp = WGPUStoreOp_Store };
     #ifdef __EMSCRIPTEN__
     colorAttachment.depthSlice = WGPU_DEPTH_SLICE_UNDEFINED;
     #endif
-    WGPURenderPassDescriptor renderPassDesc{ .colorAttachmentCount = 1, .colorAttachments = &colorAttachment, .depthStencilAttachment = &depthStencilAttachment };
+    const WGPURenderPassDescriptor renderPassDesc{ .colorAttachmentCount = 1, .colorAttachments = &colorAttachment, .depthStencilAttachment = &depthStencilAttachment };
     WGPURenderPassEncoder renderPass = wgpuCommandEncoderBeginRenderPass(encoder, &renderPassDesc);
     wgpuRenderPassEncoderSetBindGroup(renderPass, 0, src->bindGroupTexure, 0, nullptr);
     wgpuRenderPassEncoderSetPipeline(renderPass, pipelines->blit);
@@ -302,26 +309,46 @@ void WgCompositor::blendShape(WgContext& context, WgRenderDataShape* renderData,
 }
 
 
-void WgCompositor::clipShape(WgContext& context, WgRenderDataShape* renderData, WgRenderStorage* mask)
+void WgCompositor::clipShape(WgContext& context, WgRenderDataShape* renderData)
 {
-    assert(mask);
     assert(renderData);
-    assert(commandEncoder);
-    assert(currentTarget);
-    // skip shape composing if shape do not exist
+    assert(renderPassEncoder);
+    assert(renderData->meshGroupShapes.meshes.count == renderData->meshGroupShapesBBox.meshes.count);
     if (renderData->renderSettingsShape.skip) return;
     if (renderData->meshGroupShapes.meshes.count == 0) return;
-    // store current render pass
-    WgRenderStorage *target = currentTarget;
-    endRenderPass();
-    // render into intermediate buffer
-    beginRenderPass(commandEncoder, &storageInterm, true);
-    drawShape(context, renderData);
-    endRenderPass();
-    // restore current render pass
-    beginRenderPass(commandEncoder, target, false);
-    RenderRegion rect = shrinkRenderRegion(renderData->aabb);
-    clipRegion(context, &storageInterm, mask, rect);
+    if ((renderData->viewport.w <= 0) || (renderData->viewport.h <= 0)) return;
+    wgpuRenderPassEncoderSetScissorRect(renderPassEncoder, renderData->viewport.x, renderData->viewport.y, renderData->viewport.w, renderData->viewport.h);
+    // setup stencil rules
+    WGPURenderPipeline stencilPipeline = (renderData->fillRule == FillRule::Winding) ? pipelines->winding : pipelines->evenodd;
+    wgpuRenderPassEncoderSetStencilReference(renderPassEncoder, 0);
+    wgpuRenderPassEncoderSetBindGroup(renderPassEncoder, 0, bindGroupViewMat, 0, nullptr);
+    wgpuRenderPassEncoderSetBindGroup(renderPassEncoder, 1, renderData->bindGroupPaint, 0, nullptr);
+    wgpuRenderPassEncoderSetPipeline(renderPassEncoder, stencilPipeline);
+    // draw to stencil (first pass)
+    for (uint32_t i = 0; i < renderData->meshGroupShapes.meshes.count; i++)
+        renderData->meshGroupShapes.meshes[i]->drawFan(context, renderPassEncoder);
+    // merge depth and stencil buffer
+    wgpuRenderPassEncoderSetStencilReference(renderPassEncoder, 0);
+    wgpuRenderPassEncoderSetBindGroup(renderPassEncoder, 2, bindGroupOpacities[128], 0, nullptr);
+    wgpuRenderPassEncoderSetPipeline(renderPassEncoder, pipelines->merge_depth_stencil);
+    renderData->meshDataBBox.drawFan(context, renderPassEncoder);
+    // setup fill rules
+    wgpuRenderPassEncoderSetStencilReference(renderPassEncoder, 0);
+    wgpuRenderPassEncoderSetBindGroup(renderPassEncoder, 0, bindGroupViewMat, 0, nullptr);
+    wgpuRenderPassEncoderSetBindGroup(renderPassEncoder, 1, renderData->bindGroupPaint, 0, nullptr);
+    WgRenderSettings& settings = renderData->renderSettingsShape;
+    if (settings.fillType == WgRenderSettingsType::Solid) {
+        wgpuRenderPassEncoderSetBindGroup(renderPassEncoder, 2, settings.bindGroupSolid, 0, nullptr);
+        wgpuRenderPassEncoderSetPipeline(renderPassEncoder, pipelines->solid);
+    } else if (settings.fillType == WgRenderSettingsType::Linear) {
+        wgpuRenderPassEncoderSetBindGroup(renderPassEncoder, 2, settings.bindGroupGradient, 0, nullptr);
+        wgpuRenderPassEncoderSetPipeline(renderPassEncoder, pipelines->linear);
+    } else if (settings.fillType == WgRenderSettingsType::Radial) {
+        wgpuRenderPassEncoderSetBindGroup(renderPassEncoder, 2, settings.bindGroupGradient, 0, nullptr);
+        wgpuRenderPassEncoderSetPipeline(renderPassEncoder, pipelines->radial);
+    }
+    // draw to color (second pass)
+    renderData->meshDataBBox.drawFan(context, renderPassEncoder);
 }
 
 
@@ -413,26 +440,47 @@ void WgCompositor::blendStrokes(WgContext& context, WgRenderDataShape* renderDat
 };
 
 
-void WgCompositor::clipStrokes(WgContext& context, WgRenderDataShape* renderData, WgRenderStorage* mask)
+void WgCompositor::clipStrokes(WgContext& context, WgRenderDataShape* renderData)
 {
-    assert(mask);
     assert(renderData);
-    assert(commandEncoder);
-    assert(currentTarget);
-    // skip shape composing if strokes do not exist
+    assert(renderPassEncoder);
+    assert(renderData->meshGroupStrokes.meshes.count == renderData->meshGroupStrokesBBox.meshes.count);
     if (renderData->renderSettingsStroke.skip) return;
     if (renderData->meshGroupStrokes.meshes.count == 0) return;
-    // store current render pass
-    WgRenderStorage *target = currentTarget;
-    endRenderPass();
-    // render into intermediate buffer
-    beginRenderPass(commandEncoder, &storageInterm, true);
-    drawStrokes(context, renderData);
-    endRenderPass();
-    // restore current render pass
-    beginRenderPass(commandEncoder, target, false);
-    RenderRegion rect = shrinkRenderRegion(renderData->aabb);
-    clipRegion(context, &storageInterm, mask, rect);
+    if ((renderData->viewport.w <= 0) || (renderData->viewport.h <= 0)) return;
+    wgpuRenderPassEncoderSetScissorRect(renderPassEncoder, renderData->viewport.x, renderData->viewport.y, renderData->viewport.w, renderData->viewport.h);
+    // draw strokes to stencil (first pass)
+    for (uint32_t i = 0; i < renderData->meshGroupStrokes.meshes.count; i++) {
+        // setup stencil rules
+        wgpuRenderPassEncoderSetStencilReference(renderPassEncoder, 255);
+        wgpuRenderPassEncoderSetBindGroup(renderPassEncoder, 0, bindGroupViewMat, 0, nullptr);
+        wgpuRenderPassEncoderSetBindGroup(renderPassEncoder, 1, renderData->bindGroupPaint, 0, nullptr);
+        wgpuRenderPassEncoderSetPipeline(renderPassEncoder, pipelines->direct);
+        // draw to stencil (first pass)
+        renderData->meshGroupStrokes.meshes[i]->draw(context, renderPassEncoder);
+        // merge depth and stencil buffer
+        wgpuRenderPassEncoderSetStencilReference(renderPassEncoder, 0);
+        wgpuRenderPassEncoderSetBindGroup(renderPassEncoder, 2, bindGroupOpacities[128], 0, nullptr);
+        wgpuRenderPassEncoderSetPipeline(renderPassEncoder, pipelines->merge_depth_stencil);
+        renderData->meshDataBBox.drawFan(context, renderPassEncoder);
+        // setup fill rules
+        wgpuRenderPassEncoderSetStencilReference(renderPassEncoder, 0);
+        wgpuRenderPassEncoderSetBindGroup(renderPassEncoder, 0, bindGroupViewMat, 0, nullptr);
+        wgpuRenderPassEncoderSetBindGroup(renderPassEncoder, 1, renderData->bindGroupPaint, 0, nullptr);
+        WgRenderSettings& settings = renderData->renderSettingsStroke;
+        if (settings.fillType == WgRenderSettingsType::Solid) {
+            wgpuRenderPassEncoderSetBindGroup(renderPassEncoder, 2, settings.bindGroupSolid, 0, nullptr);
+            wgpuRenderPassEncoderSetPipeline(renderPassEncoder, pipelines->solid);
+        } else if (settings.fillType == WgRenderSettingsType::Linear) {
+            wgpuRenderPassEncoderSetBindGroup(renderPassEncoder, 2, settings.bindGroupGradient, 0, nullptr);
+            wgpuRenderPassEncoderSetPipeline(renderPassEncoder, pipelines->linear);
+        } else if (settings.fillType == WgRenderSettingsType::Radial) {
+            wgpuRenderPassEncoderSetBindGroup(renderPassEncoder, 2, settings.bindGroupGradient, 0, nullptr);
+            wgpuRenderPassEncoderSetPipeline(renderPassEncoder, pipelines->radial);
+        }
+        // draw to color (second pass)
+        renderData->meshGroupStrokesBBox.meshes[i]->drawFan(context, renderPassEncoder);
+    }
 }
 
 
@@ -442,6 +490,13 @@ void WgCompositor::drawImage(WgContext& context, WgRenderDataPicture* renderData
     assert(renderPassEncoder);
     if ((renderData->viewport.w <= 0) || (renderData->viewport.h <= 0)) return;
     wgpuRenderPassEncoderSetScissorRect(renderPassEncoder, renderData->viewport.x, renderData->viewport.y, renderData->viewport.w, renderData->viewport.h);
+    // draw stencil
+    wgpuRenderPassEncoderSetStencilReference(renderPassEncoder, 255);
+    wgpuRenderPassEncoderSetBindGroup(renderPassEncoder, 0, bindGroupViewMat, 0, nullptr);
+    wgpuRenderPassEncoderSetBindGroup(renderPassEncoder, 1, renderData->bindGroupPaint, 0, nullptr);
+    wgpuRenderPassEncoderSetPipeline(renderPassEncoder, pipelines->direct);
+    renderData->meshData.drawImage(context, renderPassEncoder);
+    // draw image
     wgpuRenderPassEncoderSetStencilReference(renderPassEncoder, 0);
     wgpuRenderPassEncoderSetBindGroup(renderPassEncoder, 0, bindGroupViewMat, 0, nullptr);
     wgpuRenderPassEncoderSetBindGroup(renderPassEncoder, 1, renderData->bindGroupPaint, 0, nullptr);
@@ -456,6 +511,7 @@ void WgCompositor::blendImage(WgContext& context, WgRenderDataPicture* renderDat
     assert(renderData);
     assert(renderPassEncoder);
     if ((renderData->viewport.w <= 0) || (renderData->viewport.h <= 0)) return;
+    wgpuRenderPassEncoderSetScissorRect(renderPassEncoder, renderData->viewport.x, renderData->viewport.y, renderData->viewport.w, renderData->viewport.h);
     // copy current render target data to dst storage
     WgRenderStorage *target = currentTarget;
     endRenderPass();
@@ -464,9 +520,14 @@ void WgCompositor::blendImage(WgContext& context, WgRenderDataPicture* renderDat
     const WGPUExtent3D copySize { .width = width, .height = height, .depthOrArrayLayers = 1 };
     wgpuCommandEncoderCopyTextureToTexture(commandEncoder, &texSrc, &texDst, &copySize);
     beginRenderPass(commandEncoder, target, false);
+    // setup stencil rules
+    wgpuRenderPassEncoderSetStencilReference(renderPassEncoder, 255);
+    wgpuRenderPassEncoderSetBindGroup(renderPassEncoder, 0, bindGroupViewMat, 0, nullptr);
+    wgpuRenderPassEncoderSetBindGroup(renderPassEncoder, 1, renderData->bindGroupPaint, 0, nullptr);
+    wgpuRenderPassEncoderSetPipeline(renderPassEncoder, pipelines->direct);
+    renderData->meshData.drawImage(context, renderPassEncoder);
     // blend image
     uint32_t blendMethodInd = (uint32_t)blendMethod;
-    wgpuRenderPassEncoderSetScissorRect(renderPassEncoder, renderData->viewport.x, renderData->viewport.y, renderData->viewport.w, renderData->viewport.h);
     wgpuRenderPassEncoderSetStencilReference(renderPassEncoder, 0);
     wgpuRenderPassEncoderSetBindGroup(renderPassEncoder, 0, bindGroupViewMat, 0, nullptr);
     wgpuRenderPassEncoderSetBindGroup(renderPassEncoder, 1, renderData->bindGroupPaint, 0, nullptr);
@@ -477,23 +538,30 @@ void WgCompositor::blendImage(WgContext& context, WgRenderDataPicture* renderDat
 };
 
 
-void WgCompositor::clipImage(WgContext& context, WgRenderDataPicture* renderData, WgRenderStorage* mask)
+void WgCompositor::clipImage(WgContext& context, WgRenderDataPicture* renderData)
 {
-    assert(mask);
     assert(renderData);
-    assert(commandEncoder);
-    assert(currentTarget);
-    // store current render pass
-    WgRenderStorage *target = currentTarget;
-    endRenderPass();
-    // render into intermediate buffer
-    beginRenderPass(commandEncoder, &storageInterm, true);
-    drawImage(context, renderData);
-    endRenderPass();
-    // restore current render pass
-    beginRenderPass(commandEncoder, target, false);
-    RenderRegion rect { 0, 0, (int32_t)width, (int32_t)height };
-    clipRegion(context, &storageInterm, mask, rect);
+    assert(renderPassEncoder);
+    if ((renderData->viewport.w <= 0) || (renderData->viewport.h <= 0)) return;
+    wgpuRenderPassEncoderSetScissorRect(renderPassEncoder, renderData->viewport.x, renderData->viewport.y, renderData->viewport.w, renderData->viewport.h);
+    // setup stencil rules
+    wgpuRenderPassEncoderSetStencilReference(renderPassEncoder, 255);
+    wgpuRenderPassEncoderSetBindGroup(renderPassEncoder, 0, bindGroupViewMat, 0, nullptr);
+    wgpuRenderPassEncoderSetBindGroup(renderPassEncoder, 1, renderData->bindGroupPaint, 0, nullptr);
+    wgpuRenderPassEncoderSetPipeline(renderPassEncoder, pipelines->direct);
+    renderData->meshData.drawImage(context, renderPassEncoder);
+    // merge depth and stencil buffer
+    wgpuRenderPassEncoderSetStencilReference(renderPassEncoder, 0);
+    wgpuRenderPassEncoderSetBindGroup(renderPassEncoder, 2, bindGroupOpacities[128], 0, nullptr);
+    wgpuRenderPassEncoderSetPipeline(renderPassEncoder, pipelines->merge_depth_stencil);
+    renderData->meshData.drawImage(context, renderPassEncoder);
+    // draw image
+    wgpuRenderPassEncoderSetStencilReference(renderPassEncoder, 0);
+    wgpuRenderPassEncoderSetBindGroup(renderPassEncoder, 0, bindGroupViewMat, 0, nullptr);
+    wgpuRenderPassEncoderSetBindGroup(renderPassEncoder, 1, renderData->bindGroupPaint, 0, nullptr);
+    wgpuRenderPassEncoderSetBindGroup(renderPassEncoder, 2, renderData->bindGroupPicture, 0, nullptr);
+    wgpuRenderPassEncoderSetPipeline(renderPassEncoder, pipelines->image);
+    renderData->meshData.drawImage(context, renderPassEncoder);
 }
 
 
@@ -539,85 +607,91 @@ void WgCompositor::blendScene(WgContext& context, WgRenderStorage* scene, WgComp
 }
 
 
-void WgCompositor::drawClipPath(WgContext& context, WgRenderDataShape* renderData)
+void WgCompositor::renderClipPath(WgContext& context, WgRenderDataPaint* paint)
 {
-    assert(renderData);
+    assert(paint);
     assert(renderPassEncoder);
-    assert(renderData->meshGroupShapes.meshes.count == renderData->meshGroupShapesBBox.meshes.count);
-    if ((renderData->viewport.w <= 0) || (renderData->viewport.h <= 0)) return;
-    wgpuRenderPassEncoderSetScissorRect(renderPassEncoder, renderData->viewport.x, renderData->viewport.y, renderData->viewport.w, renderData->viewport.h);
-    // setup stencil rules
-    WGPURenderPipeline stencilPipeline = (renderData->fillRule == FillRule::Winding) ? pipelines->winding : pipelines->evenodd;
-    wgpuRenderPassEncoderSetStencilReference(renderPassEncoder, 0);
+    assert(paint->clips.count > 0);
+    // reset scissor recr to full screen
+    wgpuRenderPassEncoderSetScissorRect(renderPassEncoder, 0, 0, width, height);
+    // get render data
+    WgRenderDataShape* renderData0 = (WgRenderDataShape*)paint->clips[0];
+    // set transformations
     wgpuRenderPassEncoderSetBindGroup(renderPassEncoder, 0, bindGroupViewMat, 0, nullptr);
-    wgpuRenderPassEncoderSetBindGroup(renderPassEncoder, 1, renderData->bindGroupPaint, 0, nullptr);
+    // markup stencil
+    WGPURenderPipeline stencilPipeline = (renderData0->fillRule == FillRule::Winding) ? pipelines->winding : pipelines->evenodd;
+    wgpuRenderPassEncoderSetStencilReference(renderPassEncoder, 0);
+    wgpuRenderPassEncoderSetBindGroup(renderPassEncoder, 1, renderData0->bindGroupPaint, 0, nullptr);
     wgpuRenderPassEncoderSetPipeline(renderPassEncoder, stencilPipeline);
-    // draw to stencil (first pass)
-    for (uint32_t i = 0; i < renderData->meshGroupShapes.meshes.count; i++)
-        renderData->meshGroupShapes.meshes[i]->drawFan(context, renderPassEncoder);
-    // setup fill rules
+    for (uint32_t i = 0; i < renderData0->meshGroupShapes.meshes.count; i++)
+        renderData0->meshGroupShapes.meshes[i]->drawFan(context, renderPassEncoder);
+    // copy stencil to depth
     wgpuRenderPassEncoderSetStencilReference(renderPassEncoder, 0);
-    wgpuRenderPassEncoderSetBindGroup(renderPassEncoder, 0, bindGroupViewMat, 0, nullptr);
-    wgpuRenderPassEncoderSetBindGroup(renderPassEncoder, 1, renderData->bindGroupPaint, 0, nullptr);
-    wgpuRenderPassEncoderSetPipeline(renderPassEncoder, pipelines->clip_path);
-    // draw to color (second pass)
-    renderData->meshDataBBox.drawFan(context, renderPassEncoder);
-}
-
-
-void WgCompositor::clipRegion(WgContext& context, WgRenderStorage* src, WgRenderStorage* mask, RenderRegion& rect)
-{
-    wgpuRenderPassEncoderSetScissorRect(renderPassEncoder, rect.x, rect.y, rect.w, rect.h);
-    wgpuRenderPassEncoderSetStencilReference(renderPassEncoder, 0);
-    wgpuRenderPassEncoderSetBindGroup(renderPassEncoder, 0, storageInterm.bindGroupTexure, 0, nullptr);
-    wgpuRenderPassEncoderSetBindGroup(renderPassEncoder, 1, mask->bindGroupTexure, 0, nullptr);
-    wgpuRenderPassEncoderSetPipeline(renderPassEncoder, pipelines->scene_clip);
-    meshData.drawImage(context, renderPassEncoder);
-}
-
-
-void WgCompositor::renderClipPath(WgContext& context, WgRenderDataPaint* renderData, WgRenderStorage* dst)
-{
-    assert(renderData);
-    if (renderData->clips.count == 0) return;
-    // store current render pass
-    WgRenderStorage *target = currentTarget;
-    endRenderPass();
-    // render first clip path
-    beginRenderPass(commandEncoder, dst, true);
-    drawClipPath(context, (WgRenderDataShape*)(renderData->clips[0]));
-    endRenderPass();
-    // render amd merge clip paths
-    for (uint32_t i = 1 ; i < renderData->clips.count; i++) {
-        // render clip path
-        beginRenderPass(commandEncoder, &storageInterm, true);
-        drawClipPath(context, (WgRenderDataShape*)(renderData->clips[i]));
-        endRenderPass();
-        // merge masks
-        mergeMasks(commandEncoder, &storageInterm, dst);
+    wgpuRenderPassEncoderSetBindGroup(renderPassEncoder, 1, renderData0->bindGroupPaint, 0, nullptr);
+    wgpuRenderPassEncoderSetBindGroup(renderPassEncoder, 2, bindGroupOpacities[128], 0, nullptr);
+    wgpuRenderPassEncoderSetPipeline(renderPassEncoder, pipelines->copy_stencil_to_depth);
+    renderData0->meshDataBBox.drawFan(context, renderPassEncoder);
+     // merge clip pathes with AND logic
+    for (uint32_t clipIndex = 1; clipIndex < paint->clips.count; clipIndex++) {
+        // get render data
+        WgRenderDataShape* renderData = (WgRenderDataShape*)paint->clips[clipIndex];
+        // markup stencil
+        WGPURenderPipeline stencilPipeline = (renderData->fillRule == FillRule::Winding) ? pipelines->winding : pipelines->evenodd;
+        wgpuRenderPassEncoderSetStencilReference(renderPassEncoder, 0);
+        wgpuRenderPassEncoderSetBindGroup(renderPassEncoder, 1, renderData->bindGroupPaint, 0, nullptr);
+        wgpuRenderPassEncoderSetPipeline(renderPassEncoder, stencilPipeline);
+        for (uint32_t i = 0; i < renderData->meshGroupShapes.meshes.count; i++)
+            renderData->meshGroupShapes.meshes[i]->drawFan(context, renderPassEncoder);
+        // copy stencil to depth (clear stencil)
+        wgpuRenderPassEncoderSetStencilReference(renderPassEncoder, 0);
+        wgpuRenderPassEncoderSetBindGroup(renderPassEncoder, 1, renderData->bindGroupPaint, 0, nullptr);
+        wgpuRenderPassEncoderSetBindGroup(renderPassEncoder, 2, bindGroupOpacities[190], 0, nullptr);
+        wgpuRenderPassEncoderSetPipeline(renderPassEncoder, pipelines->copy_stencil_to_depth_interm);
+        renderData->meshDataBBox.drawFan(context, renderPassEncoder);
+        // copy depth to stencil
+        wgpuRenderPassEncoderSetStencilReference(renderPassEncoder, 1);
+        wgpuRenderPassEncoderSetBindGroup(renderPassEncoder, 1, renderData->bindGroupPaint, 0, nullptr);
+        wgpuRenderPassEncoderSetBindGroup(renderPassEncoder, 2, bindGroupOpacities[190], 0, nullptr);
+        wgpuRenderPassEncoderSetPipeline(renderPassEncoder, pipelines->copy_depth_to_stencil);
+        renderData->meshDataBBox.drawFan(context, renderPassEncoder);
+        // clear depth current (keep stencil)
+        wgpuRenderPassEncoderSetStencilReference(renderPassEncoder, 0);
+        wgpuRenderPassEncoderSetBindGroup(renderPassEncoder, 1, renderData->bindGroupPaint, 0, nullptr);
+        wgpuRenderPassEncoderSetBindGroup(renderPassEncoder, 2, bindGroupOpacities[255], 0, nullptr);
+        wgpuRenderPassEncoderSetPipeline(renderPassEncoder, pipelines->clear_depth);
+        renderData->meshDataBBox.drawFan(context, renderPassEncoder);
+        // clear depth original (keep stencil)
+        wgpuRenderPassEncoderSetStencilReference(renderPassEncoder, 0);
+        wgpuRenderPassEncoderSetBindGroup(renderPassEncoder, 1, renderData0->bindGroupPaint, 0, nullptr);
+        wgpuRenderPassEncoderSetBindGroup(renderPassEncoder, 2, bindGroupOpacities[255], 0, nullptr);
+        wgpuRenderPassEncoderSetPipeline(renderPassEncoder, pipelines->clear_depth);
+        renderData0->meshDataBBox.drawFan(context, renderPassEncoder);
+        // copy stencil to depth (clear stencil)
+        wgpuRenderPassEncoderSetStencilReference(renderPassEncoder, 0);
+        wgpuRenderPassEncoderSetBindGroup(renderPassEncoder, 1, renderData->bindGroupPaint, 0, nullptr);
+        wgpuRenderPassEncoderSetBindGroup(renderPassEncoder, 2, bindGroupOpacities[128], 0, nullptr);
+        wgpuRenderPassEncoderSetPipeline(renderPassEncoder, pipelines->copy_stencil_to_depth);
+        renderData->meshDataBBox.drawFan(context, renderPassEncoder);
     }
-    // restore current render pass
-    beginRenderPass(commandEncoder, target, false);
 }
 
 
-void WgCompositor::mergeMasks(WGPUCommandEncoder encoder, WgRenderStorage* mask0, WgRenderStorage* mask1)
+void WgCompositor::clearClipPath(WgContext& context, WgRenderDataPaint* paint)
 {
-    assert(mask0);
-    assert(mask1);
-    assert(!renderPassEncoder);
-    // copy dst storage to temporary read only storage
-    const WGPUImageCopyTexture texSrc { .texture = mask1->texture };
-    const WGPUImageCopyTexture texDst { .texture = storageDstCopy.texture };
-    const WGPUExtent3D copySize { .width = width, .height = height, .depthOrArrayLayers = 1 };
-    wgpuCommandEncoderCopyTextureToTexture(encoder, &texSrc, &texDst, &copySize);
-    // execute compose shader
-    const WGPUComputePassDescriptor computePassDescriptor{};
-    WGPUComputePassEncoder computePassEncoder = wgpuCommandEncoderBeginComputePass(encoder, &computePassDescriptor);
-    wgpuComputePassEncoderSetBindGroup(computePassEncoder, 0, mask0->bindGroupRead, 0, nullptr);
-    wgpuComputePassEncoderSetBindGroup(computePassEncoder, 1, storageDstCopy.bindGroupRead, 0, nullptr);
-    wgpuComputePassEncoderSetBindGroup(computePassEncoder, 2, mask1->bindGroupWrite, 0, nullptr);
-    wgpuComputePassEncoderSetPipeline(computePassEncoder, pipelines->merge_masks);
-    wgpuComputePassEncoderDispatchWorkgroups(computePassEncoder, (width + 7) / 8, (height + 7) / 8, 1);
-    wgpuComputePassEncoderEnd(computePassEncoder);
+    assert(paint);
+    assert(renderPassEncoder);
+    assert(paint->clips.count > 0);
+    // reset scissor recr to full screen
+    wgpuRenderPassEncoderSetScissorRect(renderPassEncoder, 0, 0, width, height);
+    // get render data
+    for (uint32_t clipIndex = 0; clipIndex < paint->clips.count; clipIndex++) {
+        WgRenderDataShape* renderData = (WgRenderDataShape*)paint->clips[clipIndex];
+        // set transformations
+        wgpuRenderPassEncoderSetStencilReference(renderPassEncoder, 0);
+        wgpuRenderPassEncoderSetBindGroup(renderPassEncoder, 0, bindGroupViewMat, 0, nullptr);
+        wgpuRenderPassEncoderSetBindGroup(renderPassEncoder, 1, renderData->bindGroupPaint, 0, nullptr);
+        wgpuRenderPassEncoderSetBindGroup(renderPassEncoder, 2, bindGroupOpacities[255], 0, nullptr);
+        wgpuRenderPassEncoderSetPipeline(renderPassEncoder, pipelines->clear_depth);
+        renderData->meshDataBBox.drawFan(context, renderPassEncoder);
+    }
 }
