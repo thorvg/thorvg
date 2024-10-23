@@ -422,7 +422,7 @@ bool WgRenderer::prepare(TVG_UNUSED RenderEffect* effect)
 }
 
 
-bool WgRenderer::effect(TVG_UNUSED RenderCompositor* cmp, TVG_UNUSED const RenderEffect* effect)
+bool WgRenderer::effect(TVG_UNUSED RenderCompositor* cmp, TVG_UNUSED const RenderEffect* effect, TVG_UNUSED bool direct)
 {
     TVGLOG("WG_ENGINE", "SceneEffect(%d) is not supported", (int)effect->type);
     return false;

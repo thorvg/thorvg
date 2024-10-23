@@ -87,7 +87,7 @@ public:
     bool endComposite(RenderCompositor* cmp) override;
 
     bool prepare(RenderEffect* effect) override;
-    bool effect(RenderCompositor* cmp, const RenderEffect* effect) override;
+    bool effect(RenderCompositor* cmp, const RenderEffect* effect, bool direct) override;
 
     static GlRenderer* gen();
     static int init(TVG_UNUSED uint32_t threads);

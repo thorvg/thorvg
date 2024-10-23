@@ -53,7 +53,7 @@ public:
     bool endComposite(RenderCompositor* cmp) override;
 
     bool prepare(RenderEffect* effect) override;
-    bool effect(RenderCompositor* cmp, const RenderEffect* effect) override;
+    bool effect(RenderCompositor* cmp, const RenderEffect* effect, bool direct) override;
 
     static WgRenderer* gen();
     static bool init(uint32_t threads);
