@@ -1625,7 +1625,7 @@ void rasterPixel32(uint32_t *dst, uint32_t val, uint32_t offset, int32_t len)
 
 bool rasterCompositor(SwSurface* surface)
 {
-    //See MaskMethod, Alpha:3, InvAlpha:4, Luma:5, InvLuma:6
+    //See MaskMethod, Alpha:1, InvAlpha:2, Luma:3, InvLuma:4
     surface->alphas[0] = _alpha;
     surface->alphas[1] = _ialpha;
 

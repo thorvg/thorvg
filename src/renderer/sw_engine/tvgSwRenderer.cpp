@@ -641,7 +641,8 @@ bool SwRenderer::endComposite(RenderCompositor* cmp)
 bool SwRenderer::prepare(RenderEffect* effect)
 {
     switch (effect->type) {
-        case SceneEffect::GaussianBlur: return effectGaussianPrepare(static_cast<RenderEffectGaussian*>(effect));
+        case SceneEffect::GaussianBlur: return effectGaussianBlurPrepare(static_cast<RenderEffectGaussianBlur*>(effect));
+        case SceneEffect::DropShadow: return effectDropShadowPrepare(static_cast<RenderEffectDropShadow*>(effect));
         default: return false;
     }
 }
@@ -649,11 +650,24 @@ bool SwRenderer::prepare(RenderEffect* effect)
 
 bool SwRenderer::effect(RenderCompositor* cmp, const RenderEffect* effect)
 {
+    if (effect->invalid) return false;
+
     auto p = static_cast<SwCompositor*>(cmp);
-    auto& buffer = request(surface->channelSize)->compositor->image;
 
     switch (effect->type) {
-        case SceneEffect::GaussianBlur: return effectGaussianBlur(p->image, buffer, p->bbox, static_cast<const RenderEffectGaussian*>(effect));
+        case SceneEffect::GaussianBlur: {
+            auto& buffer = request(surface->channelSize)->compositor->image;
+            return effectGaussianBlur(p, buffer, static_cast<const RenderEffectGaussianBlur*>(effect));
+        }
+        case SceneEffect::DropShadow: {
+            auto cmp1 = request(surface->channelSize)->compositor;
+            cmp1->valid = false;
+            auto cmp2 = request(surface->channelSize)->compositor;
+            SwImage* buffers[] = {&cmp1->image, &cmp2->image};
+            auto ret = effectDropShadow(p, buffers, static_cast<const RenderEffectDropShadow*>(effect));
+            cmp1->valid = true;
+            return ret;
+        }
         default: return false;
     }
 }
