@@ -61,7 +61,7 @@ public:
     void clearCompositors();
 
     bool prepare(RenderEffect* effect) override;
-    bool effect(RenderCompositor* cmp, const RenderEffect* effect) override;
+    bool effect(RenderCompositor* cmp, const RenderEffect* effect, bool direct) override;
 
     static SwRenderer* gen();
     static bool init(uint32_t threads);

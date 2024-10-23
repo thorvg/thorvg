@@ -143,8 +143,9 @@ struct Scene::Impl
         if (cmp) {
             //Apply post effects if any.
             if (effects) {
+                auto direct = effects->count == 1 ? true : false;
                 for (auto e = effects->begin(); e < effects->end(); ++e) {
-                    renderer->effect(cmp, *e);
+                    renderer->effect(cmp, *e, direct);
                 }
             }
             renderer->endComposite(cmp);

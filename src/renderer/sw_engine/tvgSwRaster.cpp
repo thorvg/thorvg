@@ -869,16 +869,7 @@ static bool _rasterDirectRleImage(SwSurface* surface, const SwImage* image, uint
         auto dst = &surface->buf32[span->y * surface->stride + span->x];
         auto img = image->buf32 + (span->y + image->oy) * image->stride + (span->x + image->ox);
         auto alpha = MULTIPLY(span->coverage, opacity);
-        if (alpha == 255) {
-            for (uint32_t x = 0; x < span->len; ++x, ++dst, ++img) {
-                *dst = *img + ALPHA_BLEND(*dst, IA(*img));
-            }
-        } else {
-            for (uint32_t x = 0; x < span->len; ++x, ++dst, ++img) {
-                auto src = ALPHA_BLEND(*img, alpha);
-                *dst = src + ALPHA_BLEND(*dst, IA(src));
-            }
-        }
+        rasterTranslucentPixel32(dst, img, span->len, alpha);
     }
     return true;
 }
@@ -1144,27 +1135,14 @@ static bool _rasterDirectImage(SwSurface* surface, const SwImage* image, const S
     //32bits channels
     if (surface->channelSize == sizeof(uint32_t)) {
         auto dbuffer = &surface->buf32[region.min.y * surface->stride + region.min.x];
-
         for (auto y = region.min.y; y < region.max.y; ++y) {
-            auto dst = dbuffer;
-            auto src = sbuffer;
-            if (opacity == 255) {
-                for (auto x = region.min.x; x < region.max.x; x++, dst++, src++) {
-                    *dst = *src + ALPHA_BLEND(*dst, IA(*src));
-                }
-            } else {
-                for (auto x = region.min.x; x < region.max.x; ++x, ++dst, ++src) {
-                    auto tmp = ALPHA_BLEND(*src, opacity);
-                    *dst = tmp + ALPHA_BLEND(*dst, IA(tmp));
-                }
-            }
+            rasterTranslucentPixel32(dbuffer, sbuffer, region.max.x - region.min.x, opacity);
             dbuffer += surface->stride;
             sbuffer += image->stride;
         }
     //8bits grayscale
     } else if (surface->channelSize == sizeof(uint8_t)) {
         auto dbuffer = &surface->buf8[region.min.y * surface->stride + region.min.x];
-
         for (auto y = region.min.y; y < region.max.y; ++y, dbuffer += surface->stride, sbuffer += image->stride) {
             auto dst = dbuffer;
             auto src = sbuffer;
@@ -1597,6 +1575,19 @@ static bool _rasterRadialGradientRle(SwSurface* surface, const SwRle* rle, const
 /************************************************************************/
 /* External Class Implementation                                        */
 /************************************************************************/
+
+void rasterTranslucentPixel32(uint32_t* dst, uint32_t* src, uint32_t len, uint8_t opacity)
+{
+    //TODO: Support SIMD accelerations
+    cRasterTranslucentPixels(dst, src, len, opacity);
+}
+
+
+void rasterPixel32(uint32_t* dst, uint32_t* src, uint32_t len, uint8_t opacity)
+{
+    //TODO: Support SIMD accelerations
+    cRasterPixels(dst, src, len, opacity);
+}
 
 
 void rasterGrayscale8(uint8_t *dst, uint8_t val, uint32_t offset, int32_t len)

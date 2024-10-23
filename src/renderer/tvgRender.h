@@ -276,24 +276,45 @@ struct RenderEffect
     }
 };
 
-struct RenderEffectGaussian : RenderEffect
+struct RenderEffectGaussianBlur : RenderEffect
 {
     float sigma;
     uint8_t direction; //0: both, 1: horizontal, 2: vertical
     uint8_t border;    //0: duplicate, 1: wrap
     uint8_t quality;   //0 ~ 100  (optional)
 
-    static RenderEffectGaussian* gen(va_list& args)
+    static RenderEffectGaussianBlur* gen(va_list& args)
     {
-        auto sigma = (float) va_arg(args, double);
-        if (sigma <= 0) return nullptr;
-
-        auto inst = new RenderEffectGaussian;
-        inst->sigma = sigma;
+        auto inst = new RenderEffectGaussianBlur;
+        inst->sigma = std::max((float) va_arg(args, double), 0.0f);
         inst->direction = std::min(va_arg(args, int), 2);
         inst->border = std::min(va_arg(args, int), 1);
         inst->quality = std::min(va_arg(args, int), 100);
         inst->type = SceneEffect::GaussianBlur;
+        return inst;
+    }
+};
+
+struct RenderEffectDropShadow : RenderEffect
+{
+    uint8_t color[4];  //rgba
+    float angle;
+    float distance;
+    float sigma;
+    uint8_t quality;   //0 ~ 100  (optional)
+
+    static RenderEffectDropShadow* gen(va_list& args)
+    {
+        auto inst = new RenderEffectDropShadow;
+        inst->color[0] = va_arg(args, int);
+        inst->color[1] = va_arg(args, int);
+        inst->color[2] = va_arg(args, int);
+        inst->color[3] = va_arg(args, int);
+        inst->angle = (float) va_arg(args, double);
+        inst->distance = (float) va_arg(args, double);
+        inst->sigma = std::max((float) va_arg(args, double), 0.0f);
+        inst->quality = std::min(va_arg(args, int), 100);
+        inst->type = SceneEffect::DropShadow;
         return inst;
     }
 };
@@ -331,7 +352,7 @@ public:
     virtual bool endComposite(RenderCompositor* cmp) = 0;
 
     virtual bool prepare(RenderEffect* effect) = 0;
-    virtual bool effect(RenderCompositor* cmp, const RenderEffect* effect) = 0;
+    virtual bool effect(RenderCompositor* cmp, const RenderEffect* effect, bool direct) = 0;
 };
 
 static inline bool MASK_REGION_MERGING(CompositeMethod method)
