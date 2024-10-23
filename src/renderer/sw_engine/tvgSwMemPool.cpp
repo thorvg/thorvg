@@ -81,10 +81,10 @@ SwMpool* mpoolInit(uint32_t threads)
 {
     auto allocSize = threads + 1;
 
-    auto mpool = static_cast<SwMpool*>(calloc(1, sizeof(SwMpool)));
-    mpool->outline = static_cast<SwOutline*>(calloc(1, sizeof(SwOutline) * allocSize));
-    mpool->strokeOutline = static_cast<SwOutline*>(calloc(1, sizeof(SwOutline) * allocSize));
-    mpool->dashOutline = static_cast<SwOutline*>(calloc(1, sizeof(SwOutline) * allocSize));
+    auto mpool = tvg::calloc<SwMpool*>(1, sizeof(SwMpool));
+    mpool->outline = tvg::calloc<SwOutline*>(1, sizeof(SwOutline) * allocSize);
+    mpool->strokeOutline = tvg::calloc<SwOutline*>(1, sizeof(SwOutline) * allocSize);
+    mpool->dashOutline = tvg::calloc<SwOutline*>(1, sizeof(SwOutline) * allocSize);
     mpool->allocSize = allocSize;
 
     return mpool;
@@ -120,10 +120,10 @@ bool mpoolTerm(SwMpool* mpool)
 
     mpoolClear(mpool);
 
-    free(mpool->outline);
-    free(mpool->strokeOutline);
-    free(mpool->dashOutline);
-    free(mpool);
+    tvg::free(mpool->outline);
+    tvg::free(mpool->strokeOutline);
+    tvg::free(mpool->dashOutline);
+    tvg::free(mpool);
 
     return true;
 }

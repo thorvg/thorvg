@@ -20,8 +20,8 @@
  * SOFTWARE.
  */
 
+#include <thorvg_lottie.h>
 #include "tvgCommon.h"
-#include "thorvg_lottie.h"
 #include "tvgLottieLoader.h"
 #include "tvgAnimation.h"
 

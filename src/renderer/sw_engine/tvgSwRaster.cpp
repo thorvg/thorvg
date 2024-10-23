@@ -20,13 +20,6 @@
  * SOFTWARE.
  */
 
-#ifdef _WIN32
-    #include <malloc.h>
-#elif defined(__linux__)
-    #include <alloca.h>
-#else
-    #include <stdlib.h>
-#endif
 
 #include "tvgMath.h"
 #include "tvgRender.h"

@@ -378,7 +378,7 @@ void SwRenderer::clearCompositors()
 {
     //Free Composite Caches
     for (auto comp = compositors.begin(); comp < compositors.end(); ++comp) {
-        free((*comp)->compositor->image.data);
+        tvg::free((*comp)->compositor->image.data);
         delete((*comp)->compositor);
         delete(*comp);
     }
@@ -557,7 +557,7 @@ SwSurface* SwRenderer::request(int channelSize)
         //Inherits attributes from main surface
         cmp = new SwSurface(surface);
         cmp->compositor = new SwCompositor;
-        cmp->compositor->image.data = (pixel_t*)malloc(channelSize * surface->stride * surface->h);
+        cmp->compositor->image.data = tvg::malloc<pixel_t*>(channelSize * surface->stride * surface->h);
         cmp->compositor->image.w = surface->w;
         cmp->compositor->image.h = surface->h;
         cmp->compositor->image.stride = surface->stride;

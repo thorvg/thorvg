@@ -18,7 +18,6 @@
  */
 
 #include "ecma-gc.h"
-
 #include "jcontext.h"
 #include "jmem.h"
 #include "jrt-bit-fields.h"
@@ -26,6 +25,8 @@
 
 #define JMEM_ALLOCATOR_INTERNAL
 #include "jmem-allocator-internal.h"
+
+#include "tvgCommon.h"
 
 /** \addtogroup mem Memory allocation
  * @{
@@ -258,7 +259,7 @@ jmem_heap_alloc (const size_t size) /**< size of requested block */
     JERRY_CONTEXT (jmem_heap_limit) += CONFIG_GC_LIMIT;
   }
 
-  return malloc (size);
+  return tvg::malloc(size);
 #endif /* !JERRY_SYSTEM_ALLOCATOR */
 } /* jmem_heap_alloc */
 
@@ -480,7 +481,7 @@ jmem_heap_free_block_internal (void *ptr, /**< pointer to beginning of data spac
   JMEM_VALGRIND_FREELIKE_SPACE (ptr);
 #else /* JERRY_SYSTEM_ALLOCATOR */
   JERRY_CONTEXT (jmem_heap_allocated_size) -= size;
-  free (ptr);
+  tvg::free(ptr);
 #endif /* !JERRY_SYSTEM_ALLOCATOR */
   while (JERRY_CONTEXT (jmem_heap_allocated_size) + CONFIG_GC_LIMIT <= JERRY_CONTEXT (jmem_heap_limit))
   {

@@ -130,8 +130,8 @@ void LottieTextRange::range(float frameNo, float totalLen, float& start, float& 
 
 LottieImage::~LottieImage()
 {
-    free(b64Data);
-    free(mimeType);
+    tvg::free(b64Data);
+    tvg::free(mimeType);
 }
 
 
@@ -420,7 +420,7 @@ LottieLayer::~LottieLayer()
     }
 
     delete(transform);
-    free(name);
+    tvg::free(name);
 }
 
 
@@ -470,13 +470,13 @@ LottieComposition::~LottieComposition()
     if (!initiated && root) delete(root->scene);
 
     delete(root);
-    free(version);
-    free(name);
+    tvg::free(version);
+    tvg::free(name);
 
     //delete interpolators
     for (auto i = interpolators.begin(); i < interpolators.end(); ++i) {
-        free((*i)->key);
-        free(*i);
+        tvg::free((*i)->key);
+        tvg::free(*i);
     }
 
     //delete assets

@@ -12,13 +12,13 @@
 // Author: Skal (pascal.massimino@gmail.com)
 
 #include <assert.h>
-#include <stdlib.h>
 #include "../dec/vp8i.h"
 #include "./webpi.h"
 #include "../dsp/dsp.h"
 #include "../dsp/yuv.h"
 #include "../utils/utils.h"
 
+#include "tvgCommon.h"
 
 // Point-sampling U/V sampler.
 static int EmitSampledRGB(const VP8Io* const io, WebPDecParams* const p) {
@@ -261,7 +261,7 @@ static int InitRGBRescaler(const VP8Io* const io, WebPDecParams* const p) {
     tmp_size2 += out_width;
   }
   total_size = tmp_size1 * sizeof(*work) + tmp_size2 * sizeof(*tmp);
-  p->memory = calloc(1ULL, total_size);
+  p->memory = tvg::calloc(1ULL, total_size);
   if (p->memory == NULL) {
     return 0;   // memory error
   }
@@ -375,7 +375,7 @@ static int CustomPut(const VP8Io* io) {
 
 static void CustomTeardown(const VP8Io* io) {
   WebPDecParams* const p = (WebPDecParams*)io->opaque;
-  free(p->memory);
+  tvg::free(p->memory);
   p->memory = NULL;
 }
 
