@@ -1128,6 +1128,9 @@ void LottieBuilder::updateText(LottieLayer* layer, float frameNo)
                     auto position = (*s)->style.position(frameNo);
                     translate(&matrix, position.x, position.y);
 
+                    // NOTE: duplicated with Mira's PR, should be removed
+                    shape->transform(matrix);
+
                     if (doc.stroke.render) {
                         auto strokeColor = (*s)->style.strokeColor(frameNo);
                         shape->strokeWidth((*s)->style.strokeWidth(frameNo) / scale);
