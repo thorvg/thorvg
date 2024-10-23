@@ -19,6 +19,7 @@
 [![pub](https://img.shields.io/pub/v/thorvg.svg)](https://pub.dev/packages/thorvg)
 
 # ThorVG
+
 <p align="center">
   <img width="800" height="auto" src="https://github.com/thorvg/thorvg/blob/main/res/logo/512/thorvg-banner.png">
 </p>
@@ -74,6 +75,7 @@ ThorVG is currently under development and is expanding its support for essential
 - Flutter
 
 ## Contents
+
 - [ThorVG](#thorvg)
   - [Installation](#installation)
     - [Build and Install](#build-and-install)
@@ -103,17 +105,24 @@ ThorVG is currently under development and is expanding its support for essential
 
 [](#contents)
 <br />
+
 ## Installation
+
 This section details the steps required to configure the environment for installing ThorVG.<br />
 <br />
+
 ### Build and Install
+
 ThorVG supports [meson](https://mesonbuild.com/) build system. Install [meson](http://mesonbuild.com/Getting-meson.html) and [ninja](https://ninja-build.org/) if you don't have them already.
 
 Run meson to configure ThorVG in the thorvg root folder.
+
 ```
 meson setup builddir
 ```
+
 Run ninja to build & install ThorVG:
+
 ```
 ninja -C builddir install
 ```
@@ -123,28 +132,37 @@ Regardless of the installation, all build results (symbols, executable) are gene
 Note that some systems might include ThorVG package as a default component. In that case, you can skip this manual installation.</br>
 
 ### Build with Visual Studio
+
 If you want to create Visual Studio project files, use the command --backend=vs. The resulting solution file (thorvg.sln) will be located in the build folder.
+
 ```
 meson setup builddir --backend=vs
 ```
 
 ### Install with vcpkg
+
 You can download and install pre-packaged ThorVG using the [vcpkg](https://vcpkg.io/en/index.html) package manager.
 
 Clone the vcpkg repo. Make sure you are in the directory you want the tool installed to before doing this.
+
 ```
 git clone https://github.com/Microsoft/vcpkg.git
 ```
+
 Run the bootstrap script to build the vcpkg.
+
 ```
 ./bootstrap-vcpkg.sh
 ```
+
 Install the ThorVG package.
+
 ```
 ./vcpkg install thorvg
 ```
 
 ### Install with Conan
+
 You can download and install pre-packaged ThorVG using the [Conan](https://conan.io/) package manager.
 
 Follow the instructions on [this page on how to set up Conan](https://conan.io/downloads).
@@ -156,6 +174,7 @@ conan install --requires="thorvg/[*]" --build=missing
 ```
 
 ### Install with MSYS2
+
 You can download and install pre-packaged ThorVG using the [MSYS2](https://www.msys2.org/) package manager.
 
 Download and execute the MSYS2 installer on the web page above and follow the steps. When done, just launch one of the terminals in the start menu, according to the architecture and compiler you want (either 32 or 64 bits, with MSVCRT or UCRT library). Then you can install the ThorVG package :
@@ -173,7 +192,9 @@ pacman -Syu
 [Back to contents](#contents)
 <br />
 <br />
+
 ## Quick Start
+
 ThorVG renders vector shapes to a given canvas buffer. The following is a quick start to show you how to use the essential APIs.
 
 First, you should initialize the ThorVG engine:
@@ -271,16 +292,18 @@ Lastly, terminate the engine after its usage:
 ```cpp
 tvg::Initializer::term();
 ```
+
 [Back to contents](#contents)
 <br />
 <br />
+
 ## SVG
 
 ThorVG facilitates [SVG Tiny Specification](https://www.w3.org/TR/SVGTiny12/) rendering via its dedicated SVG interpreter. Adhering to the SVG Tiny Specification, the implementation maintains a lightweight profile, rendering it particularly advantageous for embedded systems. While ThorVG comprehensively adheres to most of the SVG Tiny specs, certain features remain unsupported within the current framework. These include:</br>
 
- - Animation 
- - Interactivity
- - Multimedia
+- Animation
+- Interactivity
+- Multimedia
 
 The figure below highlights ThorVG's SVG rendering capabilities:
 
@@ -305,6 +328,7 @@ The result is:
 [Back to contents](#contents)
 <br />
 <br />
+
 ## Lottie
 
 ThorVG supports the most powerful Lottie Animation [features](https://lottiefiles.com/supported-features). Lottie is an industry standard, JSON-based vector animation file format that enables seamless distribution of animations on any platform, akin to shipping static assets. These files are compact and compatible with various devices, scaling up or down without pixelation. With Lottie, you can easily create, edit, test, collaborate, and distribute animations in a user-friendly manner. For more information, please visit [Lottie Animation Community](https://lottie.github.io/)' website. <br />
@@ -336,13 +360,17 @@ picture->load("lottie.json");               //load a Lottie file
 auto duration = animation->duration();      //figure out the animation duration time in seconds.
 canvas->push(tvg::cast(picture));           //push the picture into the canvas
 ```
+
 First, an animation and a picture are generated. The Lottie file (lottie.json) is loaded into the picture, and then the picture is added to the canvas. The animation frames are controlled using the animation object to play the Lottie animation. Also you might want to know the animation duration time to run your animation loop.
+
 ```cpp
 animation->frame(animation->totalFrame() * progress);  //Set a current animation frame to display
 canvas->update(animation->picture());                  //Update the picture to be redrawn.
 ```
+
 Let's suppose the progress variable determines the position of the animation, ranging from 0 to 1 based on the total duration time of the animation. Adjusting the progress value allows you to control the animation at the desired position. Afterwards, the canvas is updated to redraw the picture with the updated animation frame.<br />
 <br />
+
 <p align="center">
   <img width="600" height="auto" src="https://github.com/thorvg/thorvg/blob/main/res/example_lottie.gif">
 </p>
@@ -352,20 +380,27 @@ Please check out the [ThorVG Test App](https://thorvg-perf-test.vercel.app/) to 
 [Back to contents](#contents)
 <br />
 <br />
+
 ## In Practice
+
 ### Canva iOS
+
 [Canva](https://www.canva.com), a leading visual communication platform, is a household name among creators, marketers, designers, students, and more, with millions of users worldwide. It empowers users to create stunning visual content with a user-friendly interface and a vast library of templates and design elements. The Canva iOS app transitioned from the existing Lottie animation engine to ThorVG for Lottie animations, resulting in approximately an 80% improvement in rendering speed and a 70% reduction in peak memory usage.
+
 <p align="center">
   <img width="700" height="auto" src="https://github.com/thorvg/thorvg/blob/main/res/example_canvaios.png">
 </p>
 
 ### dotLottie
+
 [dotLottie](https://dotlottie.io/) is an open-source file format that aggregates one or more Lottie files and their associated resources, such as images and fonts, into a single file. This enables an efficient and easy distribution of animations. dotLottie files are ZIP archives compressed with the Deflate compression method and carry the file extension of “.lottie”. Think of it as a superset of Lottie. [LottieFiles](https://lottiefiles.com/) aims to achieve just that. [dotLottie player](https://github.com/LottieFiles/dotlottie-rs) by LottieFiles is now powered by ThorVG.
+
 <p align="center">
   <img width="700" height="auto" src="https://github.com/thorvg/thorvg/blob/main/res/example_dotlottie.png">
 </p>
 
 ### Flux Audio
+
 [Flux Audio](https://www.flux.audio/) is a cutting-edge audio technology company specializing in high-fidelity sound systems and immersive audio experiences. With a focus on delivering precision and quality, Flux Audio leverages advanced software solutions to enhance audio processing across a wide range of devices. ThorVG is integrated into the user interface of Flux products, providing efficient and scalable vector rendering for their visual elements, ensuring a sleek and responsive user experience. This collaboration highlights ThorVG’s versatility in high-performance audio platforms.
 
 <p align="center">
@@ -373,6 +408,7 @@ Please check out the [ThorVG Test App](https://thorvg-perf-test.vercel.app/) to 
 </p>
 
 ### Godot
+
 ThorVG has been integrated into the [Godot](https://www.godotengine.org) project to enable the creation of sleek and visually appealing user interfaces (UIs) and vector resources in the Godot game engine. Godot is a modern game engine that is both free and open-source, offering a comprehensive range of tools. With Godot, you can concentrate on developing your game without the need to recreate existing functionalities.
 
 <p align="center">
@@ -380,6 +416,7 @@ ThorVG has been integrated into the [Godot](https://www.godotengine.org) project
 </p>
 
 ### LVGL
+
 [LVGL](https://lvgl.io/) is an open-source graphics library specifically designed for embedded systems with limited resources. It is lightweight and highly customizable, providing support for graphical user interfaces (GUIs) on microcontrollers, IoT devices, and other embedded platforms. ThorVG serves as the vector drawing primitives library in the LVGL framework.
 
 <p align="center">
@@ -387,6 +424,7 @@ ThorVG has been integrated into the [Godot](https://www.godotengine.org) project
 </p>
 
 ### Tizen
+
 ThorVG has been integrated into the [Tizen](https://www.tizen.org) platform as the vector graphics engine. [NUI](https://docs.tizen.org/application/dotnet/guides/user-interface/nui/overview/) is the name of Tizen UI framework which is written in C#. ThorVG is the backend engine of the [NUI Vector Graphics](https://docs.tizen.org/application/dotnet/guides/user-interface/nui/vectorgraphics/Overview/) which is used for vector primitive drawings and scalable image contents such as SVG and Lottie Animation among the Tizen applications.
 
 <p align="center">
@@ -396,17 +434,23 @@ ThorVG has been integrated into the [Tizen](https://www.tizen.org) platform as t
 [Back to contents](#contents)
 <br />
 <br />
+
 ## Examples
+
 There are plenty of sample code in `thorvg/examples` to help you in understanding the ThorVG APIs.
 
 To execute these examples, you can build them with the following meson build option:
+
 ```
 meson setup builddir -Dexamples=true
 ```
+
 Note that these examples require the SDL dev package for launching. If you're using Linux-based OS, you can easily install this package from your OS distribution server. For Ubuntu, you can install it with this command.
+
 ```
 apt-get install libsdl2-dev
 ```
+
 Alternatively, you can read the official guidance [here](https://wiki.libsdl.org/SDL2/Installation) for other platforms. Fore more information, please visit the official [SDL](https://www.libsdl.org/) site.
 
 [Back to contents](#contents)
@@ -414,13 +458,17 @@ Alternatively, you can read the official guidance [here](https://wiki.libsdl.org
 <br />
 
 ## Documentation
+
 The ThorVG API documentation can be accessed at [thorvg.org/apis](https://www.thorvg.org/apis), and is also available in the [C++ API](https://github.com/thorvg/thorvg/blob/main/inc/thorvg.h), [C API](https://github.com/thorvg/thorvg/blob/main/src/bindings/capi/thorvg_capi.h) within this repository.
 
 [Back to contents](#contents)
 <br />
 <br />
+
 ## Tools
+
 ### ThorVG Viewer
+
 ThorVG provides the resource verification tool for the ThorVG Engine. [ThorVG viewer](https://thorvg.github.io/thorvg.viewer/) does immediate rendering via web browser running on the ThorVG web-assembly binary, allowing real-time editing of the vector elements on it. It doesn't upload your resources to any external server while allowing to export to supported formats such as GIF, so the designer resource copyright is protected.</br>
 </br>
 
@@ -429,12 +477,15 @@ ThorVG provides the resource verification tool for the ThorVG Engine. [ThorVG vi
 </p>
 
 ### Lottie to GIF
+
 ThorVG provides an executable `lottie2gif` converter that generates a GIF file from a Lottie file.
 
 To use the `lottie2gif`, you must turn on this feature in the build option:
+
 ```
 meson setup builddir -Dtools=lottie2gif -Dsavers=gif
 ```
+
 To use the 'lottie2gif' converter, you need to provide the 'Lottie files' parameter. This parameter can be a file name with the '.json' extension or a directory name. It also accepts multiple files or directories separated by spaces. If a directory is specified, the converter will search for files with the '.json' extension within that directory and all its subdirectories.<br />
 <br />
 Optionally, you can specify the image resolution in the 'WxH' format, with two numbers separated by an 'x' sign, following the '-r' flag.<br />
@@ -442,6 +493,7 @@ Optionally, you can specify the image resolution in the 'WxH' format, with two n
 Both flags, if provided, are applied to all of the `.json` files.
 
 The usage examples of the `lottie2gif`:
+
 ```
 Usage:
     lottie2gif [Lottie file] or [Lottie folder] [-r resolution] [-f fps] [-b background color]
@@ -461,12 +513,15 @@ Examples:
 ```
 
 ### SVG to PNG
+
 ThorVG provides an executable `svg2png` converter that generates a PNG file from an SVG file.
 
 To use the `svg2png`, you must turn on this feature in the build option:
+
 ```
 meson setup builddir -Dtools=svg2png
 ```
+
 To use the 'svg2png' converter, you need to provide the 'SVG files' parameter. This parameter can be a file name with the '.svg' extension or a directory name. It also accepts multiple files or directories separated by spaces. If a directory is specified, the converter will search for files with the '.svg' extension within that directory and all its subdirectories.<br />
 <br />
 Optionally, you can specify the image resolution in the 'WxH' format, with two numbers separated by an 'x' sign, following the '-r' flag.<br />
@@ -476,6 +531,7 @@ The background color can be set with the `-b` flag. The `bgColor` parameter shou
 Both flags, if provided, are applied to all of the `.svg` files.
 
 The usage examples of the `svg2png`:
+
 ```
 Usage:
     svg2png [SVG files] [-r resolution] [-b bgColor]
@@ -495,44 +551,54 @@ Examples:
 [Back to contents](#contents)
 <br />
 <br />
+
 ## API Bindings
+
 Our main development APIs are written in C++, but ThorVG also provides API bindings for C.
 
 To enable CAPI binding, you need to activate this feature in the build options:
+
 ```
 meson setup builddir -Dbindings="capi"
 ```
+
 [Back to contents](#contents)
 <br />
 <br />
+
 ## Dependencies
+
 ThorVG offers versatile support for image loading, accommodating both static and external loaders. This flexibility ensures that, even in environments without external libraries, users can still leverage static loaders as a reliable alternative. At its foundation, the ThorVG core library is engineered to function autonomously, free from external dependencies. However, it is important to note that ThorVG also encompasses a range of optional feature extensions, each with its specific set of dependencies. The dependencies associated with these selective features are outlined as follows:
 
-* GL engine: [OpenGL v3.3](https://www.khronos.org/opengl/) or [GLES v3.0](https://www.khronos.org/opengles/)
-* WG engine: [webgpu-native](https://github.com/gfx-rs/wgpu-native)
-* External PNG support: [libpng](https://github.com/glennrp/libpng)
-* External JPG support: [turbojpeg](https://github.com/libjpeg-turbo/libjpeg-turbo)
-* External WebP support: [libwebp](https://developers.google.com/speed/webp/download)
-* Examples: [SDL2](https://www.libsdl.org/)
+- GL engine: [OpenGL v3.3](https://www.khronos.org/opengl/) or [GLES v3.0](https://www.khronos.org/opengles/)
+- WG engine: [webgpu-native](https://github.com/gfx-rs/wgpu-native)
+- External PNG support: [libpng](https://github.com/glennrp/libpng)
+- External JPG support: [turbojpeg](https://github.com/libjpeg-turbo/libjpeg-turbo)
+- External WebP support: [libwebp](https://developers.google.com/speed/webp/download)
+- Examples: [SDL2](https://www.libsdl.org/)
 
 [Back to contents](#contents)
 <br />
 <br />
-## Contributors
-ThorVG stands as a purely open-source initiatives. We are grateful to the individuals, organizations, and companies that have contributed to the development of the ThorVG project. The dedicated efforts of the individuals and entities listed below have enabled ThorVG to reach its current state.
 
-* [Individuals](https://github.com/thorvg/thorvg/blob/main/AUTHORS)
-* [LottieFiles](https://lottiefiles.com/) by Design Barn Inc.
-* Samsung Electronics Co., Ltd
- 
+## Contributors
+
+ThorVG stands as a purely open-source initiative. We are grateful to the individuals, organizations, and companies that have contributed to the development of the ThorVG project. The dedicated efforts of the individuals and entities listed below have enabled ThorVG to reach its current state.
+
+- [Individuals](https://github.com/thorvg/thorvg/blob/main/AUTHORS)
+- [LottieFiles](https://lottiefiles.com/) by Design Barn Inc.
+- Samsung Electronics Co., Ltd
+
 We are also seeking your support to ensure the continued development of the ThorVG project. Your generous donations will help cover operational costs and contribute to the growth of this open-source project. Even a small contribution can make a big difference in securing the future of ThorVG!
 
-* [Open Collective](https://opencollective.com/thorvg)
+- [Open Collective](https://opencollective.com/thorvg)
 
 [Back to contents](#contents)
 <br />
 <br />
+
 ## Communication
+
 For real-time conversations and discussions, please join us on [Discord](https://discord.gg/n25xj6J6HM)
 
 [Back to contents](#contents)
