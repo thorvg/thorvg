@@ -37,9 +37,11 @@ class WgCompositor
 private:
     // pipelines (external handle, do not release)
     WgPipelines* pipelines{};
-    // global stencil buffer handles
-    WGPUTexture texStencil{};
-    WGPUTextureView texViewStencil{};
+    // global stencil/depth buffer handles
+    WGPUTexture texDepthStencil{};
+    WGPUTextureView texViewDepthStencil{};
+    WGPUTexture texDepthStencilMS{};
+    WGPUTextureView texViewDepthStencilMS{};
     // global view matrix handles
     WGPUBuffer bufferViewMat{};
     WGPUBindGroup bindGroupViewMat{};
