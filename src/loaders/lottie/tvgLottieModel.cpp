@@ -42,6 +42,23 @@ static inline float _applySmoothness(float value, float smoothness)
     return value;
 }
 
+
+static inline float _applyEasing(LottieInterpolator* interpolator, float value, float minEase, float maxEase)
+{
+    if (minEase == 0.0f && maxEase == 0.0f) return value;
+
+    Point in{0.0f, 0.0f};
+    Point out{1.0f, 1.0f};
+
+    if (minEase > 0.0f) in.x = minEase * 0.01f;
+    else in.y = -minEase * 0.01f;
+    if (maxEase > 0.0f) out.x = 1.0 - maxEase * 0.01f;
+    else out.y = 1.0 + minEase * 0.01f;
+
+    interpolator->set("", in, out);
+    return interpolator->progress(value);
+}
+
 /************************************************************************/
 /* External Class Implementation                                        */
 /************************************************************************/
@@ -144,7 +161,9 @@ float LottieTextRange::factor(float frameNo, float totalLen, float idx)
         clamp(f, 0.0f, 1.0f);
     }
 
-    return _applySmoothness(f, this->smoothness(frameNo)) * this->maxAmount(frameNo) * 0.01f;
+    f = _applyEasing(this->interpolator, f, this->minEase(frameNo), this->maxEase(frameNo));
+    f = _applySmoothness(f, this->smoothness(frameNo));
+    return f * this->maxAmount(frameNo) * 0.01f;
 }
 
 

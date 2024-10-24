@@ -201,6 +201,14 @@ struct LottieTextRange
     enum Shape : uint8_t { Square = 1, RampUp, RampDown, Triangle, Round, Smooth };
     enum Unit : uint8_t { Percent = 1, Index };
 
+    ~LottieTextRange()
+    {
+        if (interpolator) {
+            free(interpolator->key);
+            free(interpolator);
+        }
+    }
+
     LottieTextStyle style;
     LottieFloat offset = 0.0f;
     LottieFloat maxEase = 0.0f;
@@ -209,6 +217,7 @@ struct LottieTextRange
     LottieFloat smoothness = 0.0f;
     LottieFloat start = 0.0f;
     LottieFloat end = FLT_MAX;
+    LottieInterpolator* interpolator = nullptr;
     Based based = Chars;
     Shape shape = Square;
     Unit rangeUnit = Percent;
