@@ -219,6 +219,14 @@ struct LottieTextRange
 };
 
 
+enum LottieTextGrouping : uint8_t { Chars = 1, Word = 2, Line = 3, All = 4 };
+struct LottieTextAlignmentOption
+{
+    LottieTextGrouping grouping = Chars;
+    LottiePoint groupAlignment = Point{0.0f, 0.0f};
+};
+
+
 struct LottieFont
 {
     enum Origin : uint8_t { Local = 0, CssURL, ScriptURL, FontURL, Embedded };
@@ -273,6 +281,7 @@ struct LottieText : LottieObject, LottieRenderPooler<tvg::Shape>
     LottieTextDoc doc;
     LottieFont* font;
     Array<LottieTextRange*> ranges;
+    LottieTextAlignmentOption alignmentOption;
 
     ~LottieText()
     {

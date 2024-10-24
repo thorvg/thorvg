@@ -985,6 +985,7 @@ void LottieBuilder::updateImage(LottieGroup* layer)
 void LottieBuilder::updateText(LottieLayer* layer, float frameNo)
 {
     auto text = static_cast<LottieText*>(layer->children.first());
+    auto textGrouping = text->alignmentOption.grouping;
     auto& doc = text->doc(frameNo);
     auto p = doc.text;
 
@@ -993,6 +994,7 @@ void LottieBuilder::updateText(LottieLayer* layer, float frameNo)
     auto scale = doc.size;
     Point cursor = {0.0f, 0.0f};
     auto scene = Scene::gen();
+    auto textGroup = Scene::gen();
     int line = 0;
     int space = 0;
     auto lineSpacing = 0.0f;
@@ -1014,6 +1016,11 @@ void LottieBuilder::updateText(LottieLayer* layer, float frameNo)
             if (doc.justify == 1) layout.x += doc.bbox.size.x - (cursor.x * scale);  //right aligned
             else if (doc.justify == 2) layout.x += (doc.bbox.size.x * 0.5f) - (cursor.x * 0.5f * scale);  //center aligned
 
+            //new text group, single scene based on text-grouping
+            scene->push(std::move(textGroup));
+            textGroup = Scene::gen();
+            textGroup->translate(cursor.x, cursor.y);
+
             scene->translate(layout.x, layout.y);
             scene->scale(scale);
 
@@ -1032,7 +1039,15 @@ void LottieBuilder::updateText(LottieLayer* layer, float frameNo)
             continue;
         }
 
-        if (*p == ' ') ++space;
+        if (*p == ' ') {
+            ++space;
+            if (textGrouping == LottieTextGrouping::Word) {
+                //new text group, single scene for each word
+                scene->push(std::move(textGroup));
+                textGroup = Scene::gen();
+                textGroup->translate(cursor.x, cursor.y);
+            }
+        }
 
         //find the glyph
         bool found = false;
@@ -1040,6 +1055,13 @@ void LottieBuilder::updateText(LottieLayer* layer, float frameNo)
             auto glyph = *g;
             //draw matched glyphs
             if (!strncmp(glyph->code, p, glyph->len)) {
+                if (textGrouping == LottieTextGrouping::Chars || textGrouping == LottieTextGrouping::All) {
+                    //new text group, single scene for each characters
+                    scene->push(std::move(textGroup));
+                    textGroup = Scene::gen();
+                    textGroup->translate(cursor.x, cursor.y);
+                }
+        
                 auto shape = text->pooling();
                 shape->reset();
                 for (auto g = glyph->children.begin(); g < glyph->children.end(); ++g) {
@@ -1050,8 +1072,9 @@ void LottieBuilder::updateText(LottieLayer* layer, float frameNo)
                         }
                     }
                 }
+                auto& textGroupMatrix = textGroup->transform();
+                shape->translate(cursor.x - textGroupMatrix.e13, cursor.y - textGroupMatrix.e23);
                 shape->fill(doc.color.rgb[0], doc.color.rgb[1], doc.color.rgb[2]);
-                shape->translate(cursor.x, cursor.y);
                 shape->opacity(255);
 
                 if (doc.stroke.render) {
@@ -1071,20 +1094,42 @@ void LottieBuilder::updateText(LottieLayer* layer, float frameNo)
                     else if ((*s)->based == LottieTextRange::Based::Lines) basedIdx = line;
 
                     if (basedIdx < start || basedIdx >= end) continue;
+
                     auto& matrix = shape->transform();
+
+                    // TextGroup transformation is performed once
+                    if (textGroup->paints().size() == 0) {
+                        auto alignment = text->alignmentOption.groupAlignment(frameNo);
+
+                        // center pivoting
+                        textGroupMatrix.e13 += alignment.x;
+                        textGroupMatrix.e23 += alignment.y;
+
+                        rotate(&textGroupMatrix, (*s)->style.rotation(frameNo));
+
+                        auto pivotX = alignment.x * -1;
+                        auto pivotY = alignment.y * -1;
+
+                        //center pivoting
+                        textGroupMatrix.e13 += (pivotX * textGroupMatrix.e11 + pivotX * textGroupMatrix.e12);
+                        textGroupMatrix.e23 += (pivotY * textGroupMatrix.e21 + pivotY * textGroupMatrix.e22);
+                        
+                        textGroup->transform(textGroupMatrix);
+                    }
 
                     shape->opacity((*s)->style.opacity(frameNo));
 
                     auto color = (*s)->style.fillColor(frameNo);
                     shape->fill(color.rgb[0], color.rgb[1], color.rgb[2], (*s)->style.fillOpacity(frameNo));
 
-                    rotate(&matrix, (*s)->style.rotation(frameNo));
-
                     auto glyphScale = (*s)->style.scale(frameNo) * 0.01f;
                     tvg::scale(&matrix, glyphScale.x, glyphScale.y);
 
                     auto position = (*s)->style.position(frameNo);
                     translate(&matrix, position.x, position.y);
+
+                    // NOTE: duplicated with Mira's PR, should be removed
+                    shape->transform(matrix);
 
                     if (doc.stroke.render) {
                         auto strokeColor = (*s)->style.strokeColor(frameNo);
@@ -1097,7 +1142,7 @@ void LottieBuilder::updateText(LottieLayer* layer, float frameNo)
                     if (spacing > lineSpacing) lineSpacing = spacing;
                 }
 
-                scene->push(cast(shape));
+                textGroup->push(cast(shape));
 
                 p += glyph->len;
                 idx += glyph->len;
