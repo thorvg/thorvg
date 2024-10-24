@@ -111,18 +111,18 @@ WGPUTexture WgContext::createTexture(uint32_t width, uint32_t height, WGPUTextur
 }
 
 
-WGPUTexture WgContext::createTexStorage(uint32_t width, uint32_t height, WGPUTextureFormat format, uint32_t sc)
+WGPUTexture WgContext::createTexStorage(uint32_t width, uint32_t height, WGPUTextureFormat format)
 {
     const WGPUTextureDescriptor textureDesc {
         .usage = WGPUTextureUsage_CopySrc | WGPUTextureUsage_CopyDst | WGPUTextureUsage_TextureBinding | WGPUTextureUsage_StorageBinding | WGPUTextureUsage_RenderAttachment,
         .dimension = WGPUTextureDimension_2D, .size = { width, height, 1 },
-        .format = format, .mipLevelCount = 1, .sampleCount = sc
+        .format = format, .mipLevelCount = 1, .sampleCount = 1
     };
     return wgpuDeviceCreateTexture(device, &textureDesc);
 }
 
 
-WGPUTexture WgContext::createTexStencil(uint32_t width, uint32_t height, WGPUTextureFormat format, uint32_t sc)
+WGPUTexture WgContext::createTexAttachement(uint32_t width, uint32_t height, WGPUTextureFormat format, uint32_t sc)
 {
     const WGPUTextureDescriptor textureDesc {
         .usage = WGPUTextureUsage_RenderAttachment,

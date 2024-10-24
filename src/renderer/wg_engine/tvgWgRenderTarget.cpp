@@ -27,7 +27,9 @@ void WgRenderStorage::initialize(WgContext& context, uint32_t width, uint32_t he
     this->width = width;
     this->height = height;
     texture = context.createTexStorage(width, height, WGPUTextureFormat_RGBA8Unorm);
+    textureMS = context.createTexAttachement(width, height, WGPUTextureFormat_RGBA8Unorm, 4);
     texView = context.createTextureView(texture);
+    texViewMS = context.createTextureView(textureMS);
     bindGroupRead = context.pipelines->layouts.createBindGroupStrorage1RO(texView);
     bindGroupWrite = context.pipelines->layouts.createBindGroupStrorage1WO(texView);
     bindGroupTexure = context.pipelines->layouts.createBindGroupTexSampled(context.samplerNearestRepeat, texView);
@@ -39,6 +41,8 @@ void WgRenderStorage::release(WgContext& context)
     context.pipelines->layouts.releaseBindGroup(bindGroupTexure);
     context.pipelines->layouts.releaseBindGroup(bindGroupWrite);
     context.pipelines->layouts.releaseBindGroup(bindGroupRead);
+    context.releaseTextureView(texViewMS);
+    context.releaseTexture(textureMS);
     context.releaseTextureView(texView);
     context.releaseTexture(texture);
     height = 0;
