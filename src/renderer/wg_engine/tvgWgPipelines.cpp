@@ -146,7 +146,8 @@ void WgPipelines::initialize(WgContext& context)
     const WGPUVertexBufferLayout vertexBufferLayoutTex { .arrayStride = 8, .stepMode = WGPUVertexStepMode_Vertex, .attributeCount = 1, .attributes = vertexAttributesTex };
     const WGPUVertexBufferLayout vertexBufferLayoutsShape[] { vertexBufferLayoutPos };
     const WGPUVertexBufferLayout vertexBufferLayoutsImage[] { vertexBufferLayoutPos, vertexBufferLayoutTex };
-    const WGPUMultisampleState multisampleState { .count = 1, .mask = 0xFFFFFFFF, .alphaToCoverageEnabled = false };
+    const WGPUMultisampleState multisampleState   { .count = 4, .mask = 0xFFFFFFFF, .alphaToCoverageEnabled = false };
+    const WGPUMultisampleState multisampleStateX1 { .count = 1, .mask = 0xFFFFFFFF, .alphaToCoverageEnabled = false };
     const WGPUTextureFormat offscreenTargetFormat = WGPUTextureFormat_RGBA8Unorm;
 
     // blend states
@@ -452,7 +453,7 @@ void WgPipelines::initialize(WgContext& context)
         WGPUColorWriteMask_All, context.preferredFormat,
         WGPUCompareFunction_Always, WGPUStencilOperation_Zero,
         WGPUCompareFunction_Always, WGPUStencilOperation_Zero,
-        WGPUCompareFunction_Always, false, multisampleState, blendStateSrc);
+        WGPUCompareFunction_Always, false, multisampleStateX1, blendStateSrc);
 }
 
 void WgPipelines::releaseGraphicHandles(WgContext& context)

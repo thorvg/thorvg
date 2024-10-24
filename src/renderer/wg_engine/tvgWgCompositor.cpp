@@ -31,8 +31,10 @@ void WgCompositor::initialize(WgContext& context, uint32_t width, uint32_t heigh
     this->width = width;
     this->height = height;
     // allocate global stencil buffer handles
-    texStencil = context.createTexStencil(width, height, WGPUTextureFormat_Depth24PlusStencil8);
-    texViewStencil = context.createTextureView(texStencil);
+    texDepthStencil = context.createTexAttachement(width, height, WGPUTextureFormat_Depth24PlusStencil8, 1);
+    texViewDepthStencil = context.createTextureView(texDepthStencil);
+    texDepthStencilMS = context.createTexAttachement(width, height, WGPUTextureFormat_Depth24PlusStencil8, 4);
+    texViewDepthStencilMS = context.createTextureView(texDepthStencilMS);
     // allocate global view matrix handles
     WgShaderTypeMat4x4f viewMat(width, height);
     context.allocateBufferUniform(bufferViewMat, &viewMat, sizeof(viewMat));
@@ -65,8 +67,10 @@ void WgCompositor::release(WgContext& context)
     context.pipelines->layouts.releaseBindGroup(bindGroupViewMat);
     context.releaseBuffer(bufferViewMat);
     // release global stencil buffer handles
-    context.releaseTextureView(texViewStencil);
-    context.releaseTexture(texStencil);
+    context.releaseTextureView(texViewDepthStencilMS);
+    context.releaseTexture(texDepthStencilMS);
+    context.releaseTextureView(texViewDepthStencil);
+    context.releaseTexture(texDepthStencil);
     height = 0;
     width = 0;
     pipelines = nullptr;
@@ -91,15 +95,16 @@ void WgCompositor::beginRenderPass(WGPUCommandEncoder commandEncoder, WgRenderSt
     this->currentTarget = target;
     this->commandEncoder = commandEncoder;
     const WGPURenderPassDepthStencilAttachment depthStencilAttachment{ 
-        .view = texViewStencil,
+        .view = texViewDepthStencilMS,
         .depthLoadOp = WGPULoadOp_Load, .depthStoreOp = WGPUStoreOp_Discard, .depthClearValue = 1.0f,
         .stencilLoadOp = WGPULoadOp_Load, .stencilStoreOp = WGPUStoreOp_Discard, .stencilClearValue = 0
     };
     //WGPURenderPassDepthStencilAttachment depthStencilAttachment{ .view = texViewStencil, .depthClearValue = 1.0f, .stencilLoadOp = WGPULoadOp_Clear, .stencilStoreOp = WGPUStoreOp_Discard };
     WGPURenderPassColorAttachment colorAttachment{};
-    colorAttachment.view = target->texView,
+    colorAttachment.view = target->texViewMS,
     colorAttachment.loadOp = clear ? WGPULoadOp_Clear : WGPULoadOp_Load,
     colorAttachment.storeOp = WGPUStoreOp_Store;
+    colorAttachment.resolveTarget = target->texView;
     #ifdef __EMSCRIPTEN__
     colorAttachment.depthSlice = WGPU_DEPTH_SLICE_UNDEFINED;
     #endif
@@ -204,7 +209,7 @@ void WgCompositor::composeScene(WgContext& context, WgRenderStorage* src, WgRend
 
 void WgCompositor::blit(WgContext& context, WGPUCommandEncoder encoder, WgRenderStorage* src, WGPUTextureView dstView) {
     const WGPURenderPassDepthStencilAttachment depthStencilAttachment{ 
-        .view = texViewStencil,
+        .view = texViewDepthStencil,
         .depthLoadOp = WGPULoadOp_Load, .depthStoreOp = WGPUStoreOp_Discard,
         .stencilLoadOp = WGPULoadOp_Load, .stencilStoreOp = WGPUStoreOp_Discard
     };

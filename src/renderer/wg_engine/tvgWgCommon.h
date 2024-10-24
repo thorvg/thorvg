@@ -54,8 +54,8 @@ struct WgContext {
     // create common objects
     WGPUSampler createSampler(WGPUFilterMode filter, WGPUMipmapFilterMode mipmapFilter, WGPUAddressMode addrMode);
     WGPUTexture createTexture(uint32_t width, uint32_t height, WGPUTextureFormat format);
-    WGPUTexture createTexStorage(uint32_t width, uint32_t height, WGPUTextureFormat format, uint32_t sc = 1);
-    WGPUTexture createTexStencil(uint32_t width, uint32_t height, WGPUTextureFormat format, uint32_t sc = 1);
+    WGPUTexture createTexStorage(uint32_t width, uint32_t height, WGPUTextureFormat format);
+    WGPUTexture createTexAttachement(uint32_t width, uint32_t height, WGPUTextureFormat format, uint32_t sc);
     WGPUTextureView createTextureView(WGPUTexture texture);
     bool allocateTexture(WGPUTexture& texture, uint32_t width, uint32_t height, WGPUTextureFormat format, void* data);
 
