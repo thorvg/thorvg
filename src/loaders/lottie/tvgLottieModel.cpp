@@ -31,7 +31,33 @@
 /* Internal Class Implementation                                        */
 /************************************************************************/
 
+static inline float _applySmoothness(float value, float smoothness)
+{
+    if (smoothness >= 100.0f) return value;
 
+    smoothness /= 100.0f;
+    value = (value - (1.0f - smoothness) * 0.5f) / smoothness;
+    clamp(value, 0.0f, 1.0f);
+
+    return value;
+}
+
+
+static inline float _applyEasing(LottieInterpolator* interpolator, float value, float minEase, float maxEase)
+{
+    if (minEase == 0.0f && maxEase == 0.0f) return value;
+
+    Point in{0.0f, 0.0f};
+    Point out{1.0f, 1.0f};
+
+    if (minEase > 0.0f) in.x = minEase * 0.01f;
+    else in.y = -minEase * 0.01f;
+    if (maxEase > 0.0f) out.x = 1.0 - maxEase * 0.01f;
+    else out.y = 1.0 + minEase * 0.01f;
+
+    interpolator->set("", in, out);
+    return interpolator->progress(value);
+}
 
 /************************************************************************/
 /* External Class Implementation                                        */
@@ -110,21 +136,34 @@ void LottieSlot::assign(LottieObject* target)
 }
 
 
-void LottieTextRange::range(float frameNo, float totalLen, float& start, float& end)
+float LottieTextRange::factor(float frameNo, float totalLen, float idx)
 {
+    auto offset = this->offset(frameNo);
+    auto start = this->start(frameNo) + offset;
+    auto end = this->end(frameNo) + offset;
+
+    if (random > 0) {
+        auto range = end - start;
+        auto len = (rangeUnit == Unit::Percent) ? 100.0f : totalLen;
+        start = static_cast<float>(random % int(len - range));
+        end = start + range;
+    }
+
     auto divisor = (rangeUnit == Unit::Percent) ? (100.0f / totalLen) : 1.0f;
-    auto offset = this->offset(frameNo) / divisor;
-    start = nearbyintf(this->start(frameNo) / divisor) + offset;
-    end = nearbyintf(this->end(frameNo) / divisor) + offset;
+    start /= divisor;
+    end /= divisor;
 
-    if (start > end) std::swap(start, end);
+    auto f = 0.0f;
 
-    if (random == 0) return;
+    if (idx >= std::floor(start)) {
+        auto diff = idx - start;
+        f = diff < 0.0f ? std::min(end, 1.0f) + diff : end - idx;
+        clamp(f, 0.0f, 1.0f);
+    }
 
-    auto range = end - start;
-    auto len = (rangeUnit == Unit::Percent) ? 100.0f : totalLen;
-    start = static_cast<float>(random % int(len - range));
-    end = start + range;
+    f = _applyEasing(this->interpolator, f, this->minEase(frameNo), this->maxEase(frameNo));
+    f = _applySmoothness(f, this->smoothness(frameNo));
+    return f * this->maxAmount(frameNo) * 0.01f;
 }
 
 
