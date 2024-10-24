@@ -122,16 +122,16 @@ namespace tvg
             return tr.m;
         }
 
-        void clip(Paint* clipper)
+        void clip(Paint* clp)
         {
             if (this->clipper) {
                 P(this->clipper)->unref();
-                if (this->clipper != clipper && P(this->clipper)->refCnt == 0) {
+                if (this->clipper != clp && P(this->clipper)->refCnt == 0) {
                     delete(this->clipper);
                 }
             }
-            this->clipper = clipper;
-            if (!clipper) return;
+            this->clipper = clp;
+            if (!clp) return;
 
             P(clipper)->ref();
         }
