@@ -72,7 +72,7 @@ void GlGpuBuffer::unbind(Target target)
     GL_CHECK(glBindBuffer(static_cast<uint32_t>(target), 0));
 }
 
-GlStageBuffer::GlStageBuffer() : mVao(0), mGpuBuffer(new GlGpuBuffer)
+GlStageBuffer::GlStageBuffer() : mVao(0), mGpuBuffer(), mGpuIndexBuffer()
 {
     GL_CHECK(glGenVertexArrays(1, &mVao));
 }
@@ -102,14 +102,33 @@ uint32_t GlStageBuffer::push(void *data, uint32_t size, bool alignGpuOffset)
     return offset;
 }
 
+uint32_t GlStageBuffer::pushIndex(void *data, uint32_t size)
+{
+    uint32_t offset = mIndexBuffer.count;
+
+    if (this->mIndexBuffer.reserved - this->mIndexBuffer.count < size) {
+        this->mIndexBuffer.grow(max(size, this->mIndexBuffer.reserved));
+    }
+
+    memcpy(this->mIndexBuffer.data + offset, data, size);
+
+    this->mIndexBuffer.count += size;
+
+    return offset;
+}
+
 void GlStageBuffer::flushToGPU()
 {
     if (mStageBuffer.empty()) return;
 
 
-    mGpuBuffer->bind(GlGpuBuffer::Target::ARRAY_BUFFER);
-    mGpuBuffer->updateBufferData(GlGpuBuffer::Target::ARRAY_BUFFER, mStageBuffer.count, mStageBuffer.data);
-    mGpuBuffer->unbind(GlGpuBuffer::Target::ARRAY_BUFFER);
+    mGpuBuffer.bind(GlGpuBuffer::Target::ARRAY_BUFFER);
+    mGpuBuffer.updateBufferData(GlGpuBuffer::Target::ARRAY_BUFFER, mStageBuffer.count, mStageBuffer.data);
+    mGpuBuffer.unbind(GlGpuBuffer::Target::ARRAY_BUFFER);
+
+    mGpuIndexBuffer.bind(GlGpuBuffer::Target::ELEMENT_ARRAY_BUFFER);
+    mGpuIndexBuffer.updateBufferData(GlGpuBuffer::Target::ELEMENT_ARRAY_BUFFER, mIndexBuffer.count, mIndexBuffer.data);
+    mGpuIndexBuffer.unbind(GlGpuBuffer::Target::ELEMENT_ARRAY_BUFFER);
 
     mStageBuffer.clear();
 }
@@ -117,22 +136,22 @@ void GlStageBuffer::flushToGPU()
 void GlStageBuffer::bind()
 {
     glBindVertexArray(mVao);
-    mGpuBuffer->bind(GlGpuBuffer::Target::ARRAY_BUFFER);
-    mGpuBuffer->bind(GlGpuBuffer::Target::ELEMENT_ARRAY_BUFFER);
-    mGpuBuffer->bind(GlGpuBuffer::Target::UNIFORM_BUFFER);
+    mGpuBuffer.bind(GlGpuBuffer::Target::ARRAY_BUFFER);
+    mGpuBuffer.bind(GlGpuBuffer::Target::UNIFORM_BUFFER);
+    mGpuIndexBuffer.bind(GlGpuBuffer::Target::ELEMENT_ARRAY_BUFFER);
 }
 
 void GlStageBuffer::unbind()
 {
     glBindVertexArray(0);
-    mGpuBuffer->unbind(GlGpuBuffer::Target::ARRAY_BUFFER);
-    mGpuBuffer->unbind(GlGpuBuffer::Target::ELEMENT_ARRAY_BUFFER);
-    mGpuBuffer->unbind(GlGpuBuffer::Target::UNIFORM_BUFFER);
+    mGpuBuffer.unbind(GlGpuBuffer::Target::ARRAY_BUFFER);
+    mGpuBuffer.unbind(GlGpuBuffer::Target::UNIFORM_BUFFER);
+    mGpuIndexBuffer.unbind(GlGpuBuffer::Target::ELEMENT_ARRAY_BUFFER);
 }
 
 GLuint GlStageBuffer::getBufferId()
 {
-    return mGpuBuffer->getBufferId();
+    return mGpuBuffer.getBufferId();
 }
 
 void GlStageBuffer::alignOffset(uint32_t size)
