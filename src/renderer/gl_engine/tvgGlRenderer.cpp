@@ -478,7 +478,7 @@ void GlRenderer::drawClip(Array<RenderData>& clips)
     mat4[15] = 1.f;
 
     auto identityVertexOffset = mGpuBuffer->push(identityVertex.data, 8 * sizeof(float));
-    auto identityIndexOffset = mGpuBuffer->push(identityIndex.data, 6 * sizeof(uint32_t));
+    auto identityIndexOffset = mGpuBuffer->pushIndex(identityIndex.data, 6 * sizeof(uint32_t));
     auto mat4Offset = mGpuBuffer->push(mat4, 16 * sizeof(float), true);
 
     Array<int32_t> clipDepths(clips.count);
@@ -744,7 +744,7 @@ void GlRenderer::prepareCmpTask(GlRenderTask* task, const RenderRegion& vp, uint
     indices.push(3);
 
     uint32_t vertexOffset = mGpuBuffer->push(vertices.data, vertices.count * sizeof(float));
-    uint32_t indexOffset = mGpuBuffer->push(indices.data, indices.count * sizeof(uint32_t));
+    uint32_t indexOffset = mGpuBuffer->pushIndex(indices.data, indices.count * sizeof(uint32_t));
 
     task->addVertexLayout(GlVertexLayout{0, 2, 4 * sizeof(float), vertexOffset});
     task->addVertexLayout(GlVertexLayout{1, 2, 4 * sizeof(float), vertexOffset + 2 * sizeof(float)});
