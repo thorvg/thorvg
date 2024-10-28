@@ -321,6 +321,7 @@ struct WgVertexBufferInd
 
     void appendLine(const Point& v0, const Point& v1, float dist, float halfWidth)
     {
+        if(tvg::zero(dist)) return;
         Point sub = v1 - v0;
         Point nrm = { +sub.y / dist * halfWidth, -sub.x / dist * halfWidth };
         appendQuad(v0 - nrm, v0 + nrm, v1 - nrm, v1 + nrm);
@@ -328,6 +329,7 @@ struct WgVertexBufferInd
 
     void appendBevel(const Point& v0, const Point& v1, const Point& v2, float dist1, float dist2, float halfWidth)
     {
+        if(tvg::zero(dist1) || tvg::zero(dist2)) return;
         Point sub1 = v1 - v0;
         Point sub2 = v2 - v1;
         Point nrm1 { +sub1.y / dist1 * halfWidth, -sub1.x / dist1 * halfWidth };
@@ -337,6 +339,7 @@ struct WgVertexBufferInd
 
     void appendMiter(const Point& v0, const Point& v1, const Point& v2, float dist1, float dist2, float halfWidth, float miterLimit)
     {
+        if(tvg::zero(dist1) || tvg::zero(dist2)) return;
         auto sub1 = v1 - v0;
         auto sub2 = v2 - v1;
         auto nrm1 = Point{+sub1.y / dist1, -sub1.x / dist1};
@@ -360,6 +363,7 @@ struct WgVertexBufferInd
 
     void appendSquare(Point v0, Point v1, float dist, float halfWidth)
     {
+        if(tvg::zero(dist)) return;
         Point sub = v1 - v0;
         Point offset = sub / dist * halfWidth;
         Point nrm = { +offset.y, -offset.x };
