@@ -208,7 +208,7 @@ fn fs_main(in: VertexOutput) -> @location(0) vec4f {
         case 3u: { Sc = Sc.bgra; }
         default: {}
     }
-    return Sc * So;
+    return vec4f(Sc.rgb * Sc.a * So, Sc.a * So);
 };
 )";
 
@@ -234,7 +234,8 @@ fn vs_main(in: VertexInput) -> VertexOutput {
 
 @fragment
 fn fs_main(in: VertexOutput) -> @location(0) vec4f {
-    return textureSample(uTextureSrc, uSamplerSrc, in.vTexCoord.xy) * So;
+    let Sc = textureSample(uTextureSrc, uSamplerSrc, in.vTexCoord.xy);
+    return vec4f(Sc.rgb * Sc.a * So, Sc.a * So);
 };
 )";
 
