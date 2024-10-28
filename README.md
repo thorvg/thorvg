@@ -99,6 +99,7 @@ ThorVG is currently under development and is expanding its support for essential
   - [API Bindings](#api-bindings)
   - [Dependencies](#dependencies)
   - [Contributors](#contributors)
+  - [Sponsors](#sponsors)
   - [Communication](#communication)
 
 [](#contents)
@@ -524,8 +525,23 @@ ThorVG stands as a purely open-source initiative. We are grateful to the individ
 * [Individuals](https://github.com/thorvg/thorvg/blob/main/AUTHORS)
 * [LottieFiles](https://lottiefiles.com/) by Design Barn Inc.
 * Samsung Electronics Co., Ltd
- 
+
+[Back to contents](#contents)
+<br />
+<br />
+## Sponsors
+We extend our gratitude to our financial sponsors, whose generous support empowers the ThorVG project. Their funding enables us to continually enhance and expand this open-source project, making it more powerful, efficient, and accessible for the entire community.
+<br/>
+<br/>
+<p align="center", href="https://lottiefiles.com">
+  <a href="https://lottiefiles.com">
+  <img width="250" height="auto" src="https://github.com/thorvg/thorvg/blob/main/res/example_lottiefiles.jpg"  alt="LottieFiles">
+  </a>
+</p>
+<br/>
 We are also seeking your support to ensure the continued development of the ThorVG project. Your generous donations will help cover operational costs and contribute to the growth of this open-source project. Even a small contribution can make a big difference in securing the future of ThorVG!
+<br/>
+<br/>
 
 * [Open Collective](https://opencollective.com/thorvg)
 
