@@ -22,7 +22,7 @@
 <p align="center">
   <img width="800" height="auto" src="https://github.com/thorvg/thorvg/blob/main/res/logo/512/thorvg-banner.png">
 </p>
-ThorVG is an open-source graphics library designed for creating vector-based scenes and animations. It combines immense power with remarkable lightweight efficiency, as 'Thor' embodies a dual meaning—symbolizing both thunderous strength and lightning-fast agility. Embracing the philosophy of 'simpler is better,' the ThorVG project provides intuitive, user-friendly interfaces while maintaining a compact footprint and minimal overhead. <br />
+ThorVG is an open-source graphics library designed for creating vector-based scenes and animations. It combines immense power with remarkable lightweight efficiency, as <i>Thor</i> embodies a dual meaning—symbolizing both thunderous strength and lightning-fast agility. Embracing the philosophy of <i>simpler is better</i>, the ThorVG project provides intuitive, user-friendly interfaces while maintaining a compact footprint and minimal overhead. <br />
 <br />
 The following list shows primitives that are supported by ThorVG: <br />
 <br />
