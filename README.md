@@ -22,7 +22,7 @@
 <p align="center">
   <img width="800" height="auto" src="https://github.com/thorvg/thorvg/blob/main/res/logo/512/thorvg-banner.png">
 </p>
-ThorVG is an open-source graphics library designed for creating vector-based scenes and animations. Embracing the philosophy of "Simpler is better," the ThorVG project offers intuitive and user-friendly interfaces, all the while maintaining a compact size and minimal software complexity. <br />
+ThorVG is an open-source graphics library designed for creating vector-based scenes and animations. It combines immense power with remarkable lightweight efficiency, as 'Thor' embodies a dual meaning—symbolizing both thunderous strength and lightning-fast agility. Embracing the philosophy of 'simpler is better,' the ThorVG project provides intuitive, user-friendly interfaces while maintaining a compact footprint and minimal overhead. <br />
 <br />
 The following list shows primitives that are supported by ThorVG: <br />
 <br />
@@ -185,10 +185,10 @@ tvg::Initializer::init(0);   //thread count
 Then it would be best if you prepared an empty canvas for drawing on it:
 
 ```cpp
-static uint32_t buffer[WIDTH * HEIGHT];                                 //canvas target buffer
+static uint32_t buffer[WIDTH * HEIGHT];                                   //canvas target buffer
 
-auto canvas = tvg::SwCanvas::gen();                                     //generate a canvas
-canvas->target(buffer, WIDTH, WIDTH, HEIGHT, tvg::SwCanvas::ARGB8888);  //buffer, stride, w, h, Colorspace
+auto canvas = tvg::SwCanvas::gen();                                       //generate a canvas
+canvas->target(buffer, WIDTH, WIDTH, HEIGHT, tvg::ColorSpace::ARGB8888);  //buffer, stride, w, h, Colorspace
 ```
 
 Next you can draw multiple shapes on the canvas:
