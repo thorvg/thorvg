@@ -1091,15 +1091,13 @@ void LottieBuilder::updateText(LottieLayer* layer, float frameNo)
 
                     //text range process
                     for (auto s = text->ranges.begin(); s < text->ranges.end(); ++s) {
-                        float start, end;
-                        (*s)->range(frameNo, float(totalChars), start, end);
-
                         auto basedIdx = idx;
                         if ((*s)->based == LottieTextRange::Based::CharsExcludingSpaces) basedIdx = idx - space;
                         else if ((*s)->based == LottieTextRange::Based::Words) basedIdx = line + space;
                         else if ((*s)->based == LottieTextRange::Based::Lines) basedIdx = line;
 
-                        if (basedIdx < start || basedIdx >= end) continue;
+                        auto f = (*s)->factor(frameNo, float(totalChars), (float)basedIdx);
+                        if (tvg::zero(f)) continue;
                         needGroup = true;
 
                         translation = translation + (*s)->style.position(frameNo);
@@ -1141,13 +1139,13 @@ void LottieBuilder::updateText(LottieLayer* layer, float frameNo)
                         //center pivoting
                         textGroupMatrix.e13 += (pivotX * textGroupMatrix.e11 + pivotX * textGroupMatrix.e12);
                         textGroupMatrix.e23 += (pivotY * textGroupMatrix.e21 + pivotY * textGroupMatrix.e22);
-                        
+
                         textGroup->transform(textGroupMatrix);
                     }
 
                     auto& matrix = shape->transform();
                     identity(&matrix);
-                    translate(&matrix, (translation.x / scale + cursor.x) - textGroupMatrix.e13, (translation.y / scale + cursor.y) - textGroupMatrix.e23);
+                    translate(&matrix, translation.x / scale + cursor.x - textGroupMatrix.e13, translation.y / scale + cursor.y - textGroupMatrix.e23);
                     tvg::scale(&matrix, scaling.x, scaling.y);
                     shape->transform(matrix);
                 }

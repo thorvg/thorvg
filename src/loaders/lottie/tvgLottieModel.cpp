@@ -110,21 +110,32 @@ void LottieSlot::assign(LottieObject* target)
 }
 
 
-void LottieTextRange::range(float frameNo, float totalLen, float& start, float& end)
+float LottieTextRange::factor(float frameNo, float totalLen, float idx)
 {
+    auto offset = this->offset(frameNo);
+    auto start = this->start(frameNo) + offset;
+    auto end = this->end(frameNo) + offset;
+
+    if (random > 0) {
+        auto range = end - start;
+        auto len = (rangeUnit == Unit::Percent) ? 100.0f : totalLen;
+        start = static_cast<float>(random % int(len - range));
+        end = start + range;
+    }
+
     auto divisor = (rangeUnit == Unit::Percent) ? (100.0f / totalLen) : 1.0f;
-    auto offset = this->offset(frameNo) / divisor;
-    start = nearbyintf(this->start(frameNo) / divisor) + offset;
-    end = nearbyintf(this->end(frameNo) / divisor) + offset;
+    start /= divisor;
+    end /= divisor;
 
-    if (start > end) std::swap(start, end);
+    auto f = 0.0f;
 
-    if (random == 0) return;
+    if (idx >= std::floor(start)) {
+        auto diff = idx - start;
+        f = diff < 0.0f ? std::min(end, 1.0f) + diff : end - idx;
+        clamp(f, 0.0f, 1.0f);
+    }
 
-    auto range = end - start;
-    auto len = (rangeUnit == Unit::Percent) ? 100.0f : totalLen;
-    start = static_cast<float>(random % int(len - range));
-    end = start + range;
+    return f;
 }
 
 
