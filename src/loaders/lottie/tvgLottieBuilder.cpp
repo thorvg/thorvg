@@ -1063,7 +1063,7 @@ void LottieBuilder::updateText(LottieLayer* layer, float frameNo)
                 if (!text->ranges.empty()) {
                     Point scaling = {1.0f, 1.0f};
                     auto rotation = 0.0f;
-                    auto translation = cursor;
+                    Point translation = {0.0f, 0.0f};
 
                     //text range process
                     for (auto s = text->ranges.begin(); s < text->ranges.end(); ++s) {
@@ -1098,7 +1098,7 @@ void LottieBuilder::updateText(LottieLayer* layer, float frameNo)
                     }
                     auto& matrix = shape->transform();
                     identity(&matrix);
-                    translate(&matrix, translation.x, translation.y);
+                    translate(&matrix, translation.x / scale + cursor.x, translation.y / scale + cursor.y);
                     tvg::scale(&matrix, scaling.x, scaling.y);
                     rotate(&matrix, rotation);
                     shape->transform(matrix);
