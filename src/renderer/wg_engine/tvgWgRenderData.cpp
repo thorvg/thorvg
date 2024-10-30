@@ -381,8 +381,12 @@ void WgRenderDataShape::updateMeshes(WgContext &context, const RenderShape &rsha
     releaseMeshes(context);
     strokeFirst = rshape.stroke ? rshape.stroke->strokeFirst : false;
 
+    // get object scale
+    float scale = std::max(std::min(length(Point{tr.e11 + tr.e12,tr.e21 + tr.e22}), 8.0f), 1.0f);
+
     // path decoded vertex buffer
     WgVertexBuffer pbuff;
+    pbuff.reset(scale);
     // append shape without strokes
     if (!rshape.stroke) {
         pbuff.decodePath(rshape, false, [&](const WgVertexBuffer& path_buff) {
@@ -451,11 +455,12 @@ void WgRenderDataShape::updateMeshes(WgContext &context, const RenderShape &rsha
 void WgRenderDataShape::proceedStrokes(WgContext context, const RenderStroke* rstroke, float tbeg, float tend, const WgVertexBuffer& buff)
 {
     assert(rstroke);
-    gStrokesGenerator->reset();
+    gStrokesGenerator->reset(buff.tscale);
     // trim -> dash -> stroke
     if ((tbeg != 0.0f) || (tend != 1.0f)) {
         if (tbeg == tend) return;
         WgVertexBuffer trimed_buff;
+        trimed_buff.reset(buff.tscale);
         trimed_buff.trim(buff, tbeg, tend);
         trimed_buff.updateDistances();
         // trim ->dash -> stroke
