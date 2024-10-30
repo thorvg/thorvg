@@ -1297,14 +1297,23 @@ bool LottieBuilder::updateMatte(LottieComposition* comp, float frameNo, Scene* s
 
 void LottieBuilder::updateEffect(LottieLayer* layer, float frameNo)
 {
+    constexpr int QUALITY = 25;
+    constexpr float BLUR_TO_SIGMA = 0.3f;
+
     if (layer->effects.count == 0) return;
 
     for (auto ef = layer->effects.begin(); ef < layer->effects.end(); ++ef) {
         if (!(*ef)->enable) continue;
         switch ((*ef)->type) {
+            case LottieEffect::DropShadow: {
+                auto effect = static_cast<LottieDropShadow*>(*ef);
+                auto color = effect->color(frameNo);
+                layer->scene->push(SceneEffect::DropShadow, color.rgb[0], color.rgb[1], color.rgb[2], effect->opacity(frameNo), effect->angle(frameNo), effect->distance(frameNo), effect->blurness(frameNo), QUALITY);
+                break;
+            }
             case LottieEffect::GaussianBlur: {
                 auto effect = static_cast<LottieGaussianBlur*>(*ef);
-                layer->scene->push(SceneEffect::GaussianBlur, sqrt(effect->blurness(frameNo)), effect->direction(frameNo) - 1, effect->wrap(frameNo), 25);
+                layer->scene->push(SceneEffect::GaussianBlur, effect->blurness(frameNo) * BLUR_TO_SIGMA, effect->direction(frameNo) - 1, effect->wrap(frameNo), QUALITY);
                 break;
             }
             default: break;

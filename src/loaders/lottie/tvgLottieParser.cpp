@@ -60,6 +60,7 @@ static unsigned long _int2str(int num)
 LottieEffect* LottieParser::getEffect(int type)
 {
     switch (type) {
+        case 25: return new LottieDropShadow;
         case 29: return new LottieGaussianBlur;
         default: return nullptr;
     }
@@ -1296,11 +1297,41 @@ void LottieParser::parseGaussianBlur(LottieGaussianBlur* effect)
 }
 
 
+void LottieParser::parseDropShadow(LottieDropShadow* effect)
+{
+    int idx = 0;  //color -> opacity -> angle -> distance -> blur
+    enterArray();
+    while (nextArrayValue()) {
+        enterObject();
+        while (auto key = nextObjectKey()) {
+            if (KEY_AS("v")) {
+                enterObject();
+                while (auto key = nextObjectKey()) {
+                    if (KEY_AS("k")) {
+                        if (idx == 0) parsePropertyInternal(effect->color);
+                        else if (idx == 1) parsePropertyInternal(effect->opacity);
+                        else if (idx == 2) parsePropertyInternal(effect->angle);
+                        else if (idx == 3) parsePropertyInternal(effect->distance);
+                        else if (idx == 4) parsePropertyInternal(effect->blurness);
+                        else skip(key);
+                        ++idx;
+                    } else skip(key);
+                }
+            } else skip(key);
+        }
+    }
+}
+
+
 void LottieParser::parseEffect(LottieEffect* effect)
 {
     switch (effect->type) {
         case LottieEffect::GaussianBlur: {
             parseGaussianBlur(static_cast<LottieGaussianBlur*>(effect));
+            break;
+        }
+        case LottieEffect::DropShadow: {
+            parseDropShadow(static_cast<LottieDropShadow*>(effect));
             break;
         }
         default: break;
