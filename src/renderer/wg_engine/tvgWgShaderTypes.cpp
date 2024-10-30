@@ -146,6 +146,8 @@ void WgShaderTypeGradient::updateTexData(const Fill::ColorStop* stops, uint32_t 
     for (uint32_t i = 1; i < stopCnt; i++)
         if (sstops.last().offset < stops[i].offset)
             sstops.push(stops[i]);
+        else if (sstops.last().offset == stops[i].offset)
+            sstops.last() = stops[i];
     // head
     uint32_t range_s = 0;
     uint32_t range_e = uint32_t(sstops[0].offset * (WG_TEXTURE_GRADIENT_SIZE-1));
