@@ -119,7 +119,8 @@ struct SwShapeTask : SwTask
         }
 
         auto strokeWidth = validStrokeWidth();
-        bool visibleFill = false;
+        SwBBox renderRegion{};
+        auto visibleFill = false;
 
         //This checks also for the case, if the invisible shape turned to visible by alpha.
         auto prepareShape = false;
@@ -133,9 +134,9 @@ struct SwShapeTask : SwTask
             visibleFill = (alpha > 0 || rshape->fill);
             shapeReset(&shape);
             if (visibleFill || clipper) {
-                if (!shapePrepare(&shape, rshape, transform, bbox, shape.bbox, mpool, tid, clips.count > 0 ? true : false)) {
+                if (!shapePrepare(&shape, rshape, transform, bbox, renderRegion, mpool, tid, clips.count > 0 ? true : false)) {
                     visibleFill = false;
-                    shape.bbox.reset();
+                    renderRegion.reset();
                 }
             }
         }
@@ -156,8 +157,8 @@ struct SwShapeTask : SwTask
         if (flags & (RenderUpdateFlag::Path | RenderUpdateFlag::Stroke | RenderUpdateFlag::Transform)) {
             if (strokeWidth > 0.0f) {
                 shapeResetStroke(&shape, rshape, transform);
-                if (!shapeGenStrokeRle(&shape, rshape, transform, bbox, shape.bbox, mpool, tid)) goto err;
 
+                if (!shapeGenStrokeRle(&shape, rshape, transform, bbox, renderRegion, mpool, tid)) goto err;
                 if (auto fill = rshape->strokeFill()) {
                     auto ctable = (flags & RenderUpdateFlag::GradientStroke) ? true : false;
                     if (ctable) shapeResetStrokeFill(&shape);
@@ -182,7 +183,7 @@ struct SwShapeTask : SwTask
             if (shape.strokeRle && !clipper->clip(shape.strokeRle)) goto err;
         }
 
-        bbox = shape.bbox; //sync
+        bbox = renderRegion; //sync
 
         return;
 

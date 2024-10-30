@@ -498,6 +498,8 @@ bool shapePrepare(SwShape* shape, const RenderShape* rshape, const Matrix& trans
     if (!_genOutline(shape, rshape, transform, mpool, tid, hasComposite)) return false;
     if (!mathUpdateOutlineBBox(shape->outline, clipRegion, renderRegion, shape->fastTrack)) return false;
 
+    shape->bbox = renderRegion;
+
     //Check valid region
     if (renderRegion.max.x - renderRegion.min.x < 1 && renderRegion.max.y - renderRegion.min.y < 1) return false;
 
