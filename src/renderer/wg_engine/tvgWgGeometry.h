@@ -39,15 +39,17 @@ struct WgVertexBuffer
     float vleng[WG_POINTS_COUNT]; // distance to the first point through all previous points
     size_t vcount{};
     bool closed{};
+    float tscale = 1.0f; // tesselation scale
 
     // callback for external process of polyline
     using onPolylineFn = std::function<void(const WgVertexBuffer& buff)>;
 
     // reset buffer
-    void reset()
+    void reset(float scale)
     {
         vcount = 0;
         closed = false;
+        tscale = scale;
     }
 
     // get the last point with optional index offset from the end
@@ -134,8 +136,8 @@ struct WgVertexBuffer
     {
         // get approx circle length
         float clen = 2.0f * radius * MATH_PI;
-        size_t nsegs = std::max((uint32_t)(clen / 8), 16U);
-        // append circle
+        size_t nsegs = std::max((uint32_t)(clen * tscale / 8), 16U);
+        // append circle^
         Point prev { std::sin(0.0f) * radius, std::cos(0.0f) * radius };
         for (size_t i = 1; i <= nsegs; i++) {
             float t = (2.0f * MATH_PI * i) / nsegs;
@@ -151,8 +153,8 @@ struct WgVertexBuffer
     void appendCubic(const Point& v0, const Point& v1, const Point& v2, const Point& v3)
     {
         // get approx cubic length
-        float clen = length(v0 - v1) + length(v1 - v2) + length(v2 - v3);
-        size_t nsegs = std::max((uint32_t)(clen / 8), 16U);
+        float clen = (length(v0 - v1) + length(v1 - v2) + length(v2 - v3));
+        size_t nsegs = std::max((uint32_t)(clen * tscale / 16), 16U);
         // append cubic
         Bezier bezier{v0, v1, v2, v3};
         for (size_t i = 1; i <= nsegs; i++)
@@ -189,7 +191,7 @@ struct WgVertexBuffer
     void decodePath(const RenderShape& rshape, bool update_dist, onPolylineFn onPolyline)
     {
         // decode path
-        reset();
+        reset(tscale);
         size_t pntIndex = 0;
         for (uint32_t cmdIndex = 0; cmdIndex < rshape.path.cmds.count; cmdIndex++) {
             PathCommand cmd = rshape.path.cmds[cmdIndex];
@@ -198,7 +200,7 @@ struct WgVertexBuffer
                 if (update_dist) updateDistances();
                 if ((onPolyline) && (vcount != 0))
                     onPolyline(*this);
-                reset();
+                reset(tscale);
                 append(rshape.path.pts[pntIndex]);
                 pntIndex++;
             } else if (cmd == PathCommand::LineTo) {
@@ -226,11 +228,13 @@ struct WgVertexBufferInd
     uint32_t ibuff[WG_POINTS_COUNT*16];
     size_t vcount = 0;
     size_t icount = 0;
+    float tscale = 1.0f;
 
     // reset buffer
-    void reset()
+    void reset(float scale)
     {
         icount = vcount = 0;
+        tscale = scale;
     }
 
     // get min and max values of the buffer
@@ -269,7 +273,7 @@ struct WgVertexBufferInd
     {
         // dashed buffer
         WgVertexBuffer dashed;
-        dashed.reset();
+        dashed.reset(tscale);
         // ignore single points polyline
         if (buff.vcount < 2) return;
         const float* dashPattern = rstroke->dashPattern;
@@ -294,7 +298,7 @@ struct WgVertexBufferInd
                 if (index_dash % 2 != 0) {
                     dashed.updateDistances();
                     appendStrokes(dashed, rstroke);
-                    dashed.reset();
+                    dashed.reset(tscale);
                 }
             }
             // update current subline length
@@ -391,6 +395,7 @@ struct WgVertexBufferInd
         if ((rstroke->join == StrokeJoin::Round) || (rstroke->cap == StrokeCap::Round)) {
             // create mesh for circle
             WgVertexBuffer circle;
+            circle.reset(buff.tscale);
             circle.appendCircle(halfWidth);
             // append caps (round)
             if (rstroke->cap == StrokeCap::Round) {
