@@ -81,13 +81,29 @@ struct LottieEffect
 {
     enum Type : uint8_t
     {
-        GaussianBlur = 0,
+        DropShadow = 0,
+        GaussianBlur = 1,
     };
 
     virtual ~LottieEffect() {}
 
     Type type;
     bool enable = false;
+};
+
+
+struct LottieDropShadow : LottieEffect
+{
+    LottieColor color;
+    LottieOpacity opacity = 0;
+    LottieAngle angle = 0.0f;
+    LottieSlider distance = 0.0f;
+    LottieSlider blurness = 0.0f;
+
+    LottieDropShadow()
+    {
+        type = DropShadow;
+    }
 };
 
 
