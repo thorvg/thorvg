@@ -1083,13 +1083,15 @@ void LottieBuilder::updateText(LottieLayer* layer, float frameNo)
                     shape->stroke(doc.stroke.color.rgb[0], doc.stroke.color.rgb[1], doc.stroke.color.rgb[2]);
                 }
 
-                bool needGroup = false;
+                auto needGroup = false;
+                //text range process
                 if (!text->ranges.empty()) {
                     Point scaling = {1.0f, 1.0f};
                     auto rotation = 0.0f;
                     Point translation = {0.0f, 0.0f};
+                    auto color = doc.color;
+                    auto strokeColor = doc.stroke.color;
 
-                    //text range process
                     for (auto s = text->ranges.begin(); s < text->ranges.end(); ++s) {
                         auto basedIdx = idx;
                         if ((*s)->based == LottieTextRange::Based::CharsExcludingSpaces) basedIdx = idx - space;
@@ -1100,25 +1102,46 @@ void LottieBuilder::updateText(LottieLayer* layer, float frameNo)
                         if (tvg::zero(f)) continue;
                         needGroup = true;
 
-                        translation = translation + (*s)->style.position(frameNo);
+                        translation = translation + f * (*s)->style.position(frameNo);
                         auto temp = (*s)->style.scale(frameNo);
-                        scaling.x *= temp.x * 0.01f;
-                        scaling.y *= temp.y * 0.01f;
-                        rotation += (*s)->style.rotation(frameNo);
+                        temp.x *= 0.01f;
+                        temp.y *= 0.01f;
+                        temp.x -= 1.0f;
+                        temp.y -= 1.0f;
+                        temp.x *= f;
+                        temp.y *= f;
+                        temp.x += 1.0f;
+                        temp.y += 1.0f;
+                        scaling.x *= temp.x;
+                        scaling.y *= temp.y;
+                        rotation += f * (*s)->style.rotation(frameNo);
 
                         shape->opacity((*s)->style.opacity(frameNo));
 
-                        auto color = (*s)->style.fillColor(frameNo);
+                        auto rangeColor = (*s)->style.fillColor(frameNo); //TODO: use flag to check whether it was really set
+                        if (tvg::equal(f, 1.0f)) color = rangeColor;
+                        else {
+                            color.rgb[0] = lerp<uint8_t>(color.rgb[0], rangeColor.rgb[0], f);
+                            color.rgb[1] = lerp<uint8_t>(color.rgb[1], rangeColor.rgb[1], f);
+                            color.rgb[2] = lerp<uint8_t>(color.rgb[2], rangeColor.rgb[2], f);
+                        }
                         shape->fill(color.rgb[0], color.rgb[1], color.rgb[2], (*s)->style.fillOpacity(frameNo));
 
                         if (doc.stroke.render) {
-                            auto strokeColor = (*s)->style.strokeColor(frameNo);
-                            shape->stroke((*s)->style.strokeWidth(frameNo) / scale);
+                            shape->stroke(f * (*s)->style.strokeWidth(frameNo) / scale);
+                            auto rangeColor = (*s)->style.strokeColor(frameNo); //TODO: use flag to check whether it was really set
+                            if (tvg::equal(f, 1.0f)) strokeColor = rangeColor;
+                            else {
+                                strokeColor.rgb[0] = lerp<uint8_t>(strokeColor.rgb[0], rangeColor.rgb[0], f);
+                                strokeColor.rgb[1] = lerp<uint8_t>(strokeColor.rgb[1], rangeColor.rgb[1], f);
+                                strokeColor.rgb[2] = lerp<uint8_t>(strokeColor.rgb[2], rangeColor.rgb[2], f);
+                            }
                             shape->stroke(strokeColor.rgb[0], strokeColor.rgb[1], strokeColor.rgb[2], (*s)->style.strokeOpacity(frameNo));
                         }
-                        cursor.x += (*s)->style.letterSpacing(frameNo);
 
-                        auto spacing = (*s)->style.lineSpacing(frameNo);
+                        cursor.x += f * (*s)->style.letterSpacing(frameNo);
+
+                        auto spacing = f * (*s)->style.lineSpacing(frameNo);
                         if (spacing > lineSpacing) lineSpacing = spacing;
                     }
 
