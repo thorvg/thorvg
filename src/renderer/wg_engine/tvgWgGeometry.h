@@ -293,6 +293,21 @@ struct WgVertexBufferInd
         // starting state
         uint32_t index_dash = 0;
         float len_total = dashPattern[index_dash];
+        // get dashes length
+        float dashes_lenth{};
+        for (uint32_t i = 0; i < dashCnt; i++) 
+            dashes_lenth += dashPattern[i];
+        if (dashes_lenth == 0) return;
+        // normalize dash offset
+        float dashOffset = rstroke->dashOffset;
+        while(dashOffset < 0) dashOffset += dashes_lenth;
+        while(dashOffset > dashes_lenth) dashOffset -= dashes_lenth;
+        // scip dashes by offset
+        while(len_total < dashOffset) { 
+            index_dash = (index_dash + 1) % dashCnt;
+            len_total += dashPattern[index_dash];
+        }
+        len_total -= dashOffset;
         // iterate by polyline points
         for (uint32_t i = 0; i < buff.vcount - 1; i++) {
             // append current polyline point
@@ -301,8 +316,7 @@ struct WgVertexBufferInd
             // move inside polyline segment
             while(len_total < buff.vdist[i+1]) {
                 // get current point
-                float t = len_total / buff.vdist[i+1];
-                dashed.append(buff.vbuff[i] + (buff.vbuff[i+1] - buff.vbuff[i]) * t);
+                dashed.append(tvg::lerp(buff.vbuff[i], buff.vbuff[i+1], len_total / buff.vdist[i+1]));
                 // update current state
                 index_dash = (index_dash + 1) % dashCnt;
                 len_total += dashPattern[index_dash];
