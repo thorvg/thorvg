@@ -135,6 +135,14 @@ float LottieTextRange::factor(float frameNo, float totalLen, float idx)
         clamp(f, 0.0f, 1.0f);
     }
 
+    //apply smoothness
+    auto smoothness = this->smoothness(frameNo);
+    if (smoothness < 100.0f) {
+        smoothness *= 0.01f;
+        f = (f - (1.0f - smoothness) * 0.5f) / smoothness;
+        clamp(f, 0.0f, 1.0f);
+    }
+
     return f;
 }
 
