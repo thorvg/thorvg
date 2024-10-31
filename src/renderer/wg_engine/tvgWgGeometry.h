@@ -198,8 +198,7 @@ struct WgVertexBuffer
             if (cmd == PathCommand::MoveTo) {
                 // after path decoding we need to update distances and total length
                 if (update_dist) updateDistances();
-                if ((onPolyline) && (vcount != 0))
-                    onPolyline(*this);
+                if ((onPolyline) && (vcount > 0)) onPolyline(*this);
                 reset(tscale);
                 append(rshape.path.pts[pntIndex]);
                 pntIndex++;
@@ -208,15 +207,28 @@ struct WgVertexBuffer
                 pntIndex++;
             } else if (cmd == PathCommand::Close) {
                 close();
+                // proceed path if close command is not the last command and next command is LineTo or CubicTo
+                if ((cmdIndex + 1 < rshape.path.cmds.count) &&
+                    ((rshape.path.cmds[cmdIndex + 1] == PathCommand::LineTo) ||
+                     (rshape.path.cmds[cmdIndex + 1] == PathCommand::CubicTo))) {
+                    // proceed current path
+                    if (update_dist) updateDistances();
+                    if ((vcount > 0) && (onPolyline)) onPolyline(*this);
+                    // append closing point of current path as a first point of the new path
+                    Point last_pt = last();
+                    reset(tscale);
+                    append(last_pt);
+                }
             } else if (cmd == PathCommand::CubicTo) {
+                // append tesselated cubic spline with tscale param
                 appendCubic(vbuff[vcount - 1], rshape.path.pts[pntIndex + 0], rshape.path.pts[pntIndex + 1], rshape.path.pts[pntIndex + 2]);
                 pntIndex += 3;
             }
         }
         // after path decoding we need to update distances and total length
         if (update_dist) updateDistances();
-        if ((onPolyline) && (vcount != 0))
-            onPolyline(*this);
+        if ((vcount > 0) && (onPolyline)) onPolyline(*this);
+        reset(tscale);
     }
 };
 
