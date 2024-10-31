@@ -143,7 +143,7 @@ float LottieTextRange::factor(float frameNo, float totalLen, float idx)
         clamp(f, 0.0f, 1.0f);
     }
 
-    return f;
+    return f * this->maxAmount(frameNo) * 0.01f;
 }
 
 
