@@ -1133,8 +1133,8 @@ void LottieParser::parseTextAlignmentOption(LottieText* text)
 {
     enterObject();
     while (auto key = nextObjectKey()) {
-        if (KEY_AS("g")) text->alignmentOption.grouping = (LottieText::AlignOption::Group) getInt();
-        else if (KEY_AS("a")) parseProperty<LottieProperty::Type::Point>(text->alignmentOption.anchor);
+        if (KEY_AS("g")) text->alignOption.grouping = (LottieText::AlignOption::Group) getInt();
+        else if (KEY_AS("a")) parseProperty<LottieProperty::Type::Point>(text->alignOption.anchor);
         else skip(key);
     }
 }
