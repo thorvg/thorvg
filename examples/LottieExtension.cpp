@@ -103,7 +103,7 @@ struct UserExample : tvgexam::Example
             auto picture = slot1->picture();
             if (!tvgexam::verify(picture->load(EXAMPLE_DIR"/lottie/extensions/slotsample.json"))) return false;
 
-            const char* slotJson = R"({"gradient_fill":{"p":{"a":0,"k":[0,0.1,0.1,0.2,1,1,0.1,0.2,0.1,1]}}})";
+            const char* slotJson = R"({"gradient_fill":{"p":{"p":2,"k":{"k":[0,0.1,0.1,0.2,1,1,0.1,0.2,0,0,1,1]}}}})";
             if (!tvgexam::verify(slot1->override(slotJson))) return false;
 
             sizing(picture, 0);
