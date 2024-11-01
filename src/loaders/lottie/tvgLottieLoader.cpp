@@ -300,6 +300,7 @@ bool LottieLoader::override(const char* slot)
 
         //parsing slot json
         LottieParser parser(temp, dirName);
+        parser.comp = comp;
 
         auto idx = 0;
         while (auto sid = parser.sid(idx == 0)) {
