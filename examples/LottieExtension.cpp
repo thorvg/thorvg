@@ -25,12 +25,13 @@
 /************************************************************************/
 
 #define NUM_PER_ROW 2
-#define NUM_PER_COL 1
+#define NUM_PER_COL 2
 
 struct UserExample : tvgexam::Example
 {
-    unique_ptr<tvg::LottieAnimation> slotAnimation;
-    unique_ptr<tvg::LottieAnimation> markerAnimation;
+    unique_ptr<tvg::LottieAnimation> slot1;
+    unique_ptr<tvg::LottieAnimation> slot2;
+    unique_ptr<tvg::LottieAnimation> marker;
     uint32_t w, h;
     uint32_t size;
 
@@ -58,16 +59,22 @@ struct UserExample : tvgexam::Example
     {
         if (!canvas) return false;
 
-        //slotsample
+        //gradient slot
         {
-            auto progress = tvgexam::progress(elapsed, slotAnimation->duration());
-            slotAnimation->frame(slotAnimation->totalFrame() * progress);
+            auto progress = tvgexam::progress(elapsed, slot1->duration());
+            slot1->frame(slot1->totalFrame() * progress);
+        }
+
+        //solid fill slot
+        {
+            auto progress = tvgexam::progress(elapsed, slot2->duration());
+            slot2->frame(slot2->totalFrame() * progress);
         }
 
         //marker
         {
-            auto progress = tvgexam::progress(elapsed, markerAnimation->duration());
-            markerAnimation->frame(markerAnimation->totalFrame() * progress);
+            auto progress = tvgexam::progress(elapsed, marker->duration());
+            marker->frame(marker->totalFrame() * progress);
         }
 
         canvas->update();
@@ -90,28 +97,42 @@ struct UserExample : tvgexam::Example
         this->h = h;
         this->size = w / NUM_PER_ROW;
 
-        //slotsample
+        //slot (gradient)
         {
-            slotAnimation = tvg::LottieAnimation::gen();
-            auto picture = slotAnimation->picture();
+            slot1 = tvg::LottieAnimation::gen();
+            auto picture = slot1->picture();
             if (!tvgexam::verify(picture->load(EXAMPLE_DIR"/lottie/extensions/slotsample.json"))) return false;
 
             const char* slotJson = R"({"gradient_fill":{"p":{"a":0,"k":[0,0.1,0.1,0.2,1,1,0.1,0.2,0.1,1]}}})";
-            if (!tvgexam::verify(slotAnimation->override(slotJson))) return false;
+            if (!tvgexam::verify(slot1->override(slotJson))) return false;
 
             sizing(picture, 0);
 
             canvas->push(tvg::cast(picture));
         }
 
-        //marker
+        //slot (solid fill)
         {
-            markerAnimation = tvg::LottieAnimation::gen();
-            auto picture = markerAnimation->picture();
-            if (!tvgexam::verify(picture->load(EXAMPLE_DIR"/lottie/extensions/marker_sample.json"))) return false;
-            if (!tvgexam::verify(markerAnimation->segment("sectionC"))) return false;
+            slot2 = tvg::LottieAnimation::gen();
+            auto picture = slot2->picture();
+            if (!tvgexam::verify(picture->load(EXAMPLE_DIR"/lottie/extensions/slotsample2.json"))) return false;
+
+            const char* slotJson = R"({"ball_color":{"p":{"a":1,"k":[{"i":{"x":[0.833],"y":[0.833]},"o":{"x":[0.167],"y":[0.167]},"t":7,"s":[0,0.176,0.867]},{"i":{"x":[0.833],"y":[0.833]},"o":{"x":[0.167],"y":[0.167]},"t":22,"s":[0.867,0,0.533]},{"i":{"x":[0.833],"y":[0.833]},"o":{"x":[0.167],"y":[0.167]},"t":37,"s":[0.867,0,0.533]},{"t":51,"s":[0,0.867,0.255]}]}}})";
+            if (!tvgexam::verify(slot2->override(slotJson))) return false;
 
             sizing(picture, 1);
+
+            canvas->push(tvg::cast(picture));
+        }
+
+        //marker
+        {
+            marker = tvg::LottieAnimation::gen();
+            auto picture = marker->picture();
+            if (!tvgexam::verify(picture->load(EXAMPLE_DIR"/lottie/extensions/marker_sample.json"))) return false;
+            if (!tvgexam::verify(marker->segment("sectionC"))) return false;
+
+            sizing(picture, 2);
 
             canvas->push(tvg::cast(picture));
         }
