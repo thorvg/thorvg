@@ -1444,7 +1444,7 @@ bool LottieParser::apply(LottieSlot* slot)
         case LottieProperty::Type::Color: {
             obj = new LottieSolid;
             context.parent = obj;
-             parseSlotProperty<LottieProperty::Type::Color>(static_cast<LottieSolid*>(obj)->color);
+            parseSlotProperty<LottieProperty::Type::Color>(static_cast<LottieSolid*>(obj)->color);
             break;
         }
         case LottieProperty::Type::TextDoc: {

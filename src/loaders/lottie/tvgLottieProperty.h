@@ -329,12 +329,12 @@ struct LottieGenericProperty : LottieProperty
         return operator()(frameNo);
     }
 
-    T& operator=(const T& other)
+    LottieGenericProperty<T>& operator=(const LottieGenericProperty<T>& other)
     {
         //shallow copy, used for slot overriding
         if (other.frames) {
             frames = other.frames;
-            const_cast<T&>(other).frames = nullptr;
+            const_cast<LottieGenericProperty<T>&>(other).frames = nullptr;
         } else value = other.value;
         return *this;
     }
