@@ -985,6 +985,7 @@ void LottieBuilder::updateImage(LottieGroup* layer)
 void LottieBuilder::updateText(LottieLayer* layer, float frameNo)
 {
     auto text = static_cast<LottieText*>(layer->children.first());
+    auto textGrouping = text->alignmentOption.grouping;
     auto& doc = text->doc(frameNo);
     auto p = doc.text;
 
@@ -993,6 +994,7 @@ void LottieBuilder::updateText(LottieLayer* layer, float frameNo)
     auto scale = doc.size;
     Point cursor = {0.0f, 0.0f};
     auto scene = Scene::gen();
+    auto textGroup = Scene::gen();
     int line = 0;
     int space = 0;
     auto lineSpacing = 0.0f;
@@ -1014,6 +1016,11 @@ void LottieBuilder::updateText(LottieLayer* layer, float frameNo)
             if (doc.justify == 1) layout.x += doc.bbox.size.x - (cursor.x * scale);  //right aligned
             else if (doc.justify == 2) layout.x += (doc.bbox.size.x * 0.5f) - (cursor.x * 0.5f * scale);  //center aligned
 
+            //new text group, single scene based on text-grouping
+            scene->push(std::move(textGroup));
+            textGroup = Scene::gen();
+            textGroup->translate(cursor.x, cursor.y);
+
             scene->translate(layout.x, layout.y);
             scene->scale(scale);
 
@@ -1032,7 +1039,15 @@ void LottieBuilder::updateText(LottieLayer* layer, float frameNo)
             continue;
         }
 
-        if (*p == ' ') ++space;
+        if (*p == ' ') {
+            ++space;
+            if (textGrouping == LottieText::AlignOption::Group::Word) {
+                //new text group, single scene for each word
+                scene->push(std::move(textGroup));
+                textGroup = Scene::gen();
+                textGroup->translate(cursor.x, cursor.y);
+            }
+        }
 
         //find the glyph
         bool found = false;
@@ -1040,6 +1055,14 @@ void LottieBuilder::updateText(LottieLayer* layer, float frameNo)
             auto glyph = *g;
             //draw matched glyphs
             if (!strncmp(glyph->code, p, glyph->len)) {
+                if (textGrouping == LottieText::AlignOption::Group::Chars || textGrouping == LottieText::AlignOption::Group::All) {
+                    //new text group, single scene for each characters
+                    scene->push(std::move(textGroup));
+                    textGroup = Scene::gen();
+                    textGroup->translate(cursor.x, cursor.y);
+                }
+
+                auto textGroupMatrix = textGroup->transform();
                 auto shape = text->pooling();
                 shape->reset();
                 for (auto g = glyph->children.begin(); g < glyph->children.end(); ++g) {
@@ -1051,7 +1074,7 @@ void LottieBuilder::updateText(LottieLayer* layer, float frameNo)
                     }
                 }
                 shape->fill(doc.color.rgb[0], doc.color.rgb[1], doc.color.rgb[2]);
-                shape->translate(cursor.x, cursor.y);
+                shape->translate(cursor.x - textGroupMatrix.e13, cursor.y - textGroupMatrix.e23);
                 shape->opacity(255);
 
                 if (doc.stroke.render) {
@@ -1060,6 +1083,7 @@ void LottieBuilder::updateText(LottieLayer* layer, float frameNo)
                     shape->stroke(doc.stroke.color.rgb[0], doc.stroke.color.rgb[1], doc.stroke.color.rgb[2]);
                 }
 
+                bool needGroup = false;
                 if (!text->ranges.empty()) {
                     Point scaling = {1.0f, 1.0f};
                     auto rotation = 0.0f;
@@ -1076,6 +1100,7 @@ void LottieBuilder::updateText(LottieLayer* layer, float frameNo)
                         else if ((*s)->based == LottieTextRange::Based::Lines) basedIdx = line;
 
                         if (basedIdx < start || basedIdx >= end) continue;
+                        needGroup = true;
 
                         translation = translation + (*s)->style.position(frameNo);
                         auto temp = (*s)->style.scale(frameNo);
@@ -1098,15 +1123,47 @@ void LottieBuilder::updateText(LottieLayer* layer, float frameNo)
                         auto spacing = (*s)->style.lineSpacing(frameNo);
                         if (spacing > lineSpacing) lineSpacing = spacing;
                     }
+
+                    // TextGroup transformation is performed once
+                    if (textGroup->paints().size() == 0 && needGroup) {
+                        identity(&textGroupMatrix);
+                        translate(&textGroupMatrix, cursor.x, cursor.y);
+
+                        auto alignment = text->alignmentOption.anchor(frameNo);
+
+                        // center pivoting
+                        textGroupMatrix.e13 += alignment.x;
+                        textGroupMatrix.e23 += alignment.y;
+
+                        rotate(&textGroupMatrix, rotation);
+
+                        auto pivotX = alignment.x * -1;
+                        auto pivotY = alignment.y * -1;
+
+                        //center pivoting
+                        textGroupMatrix.e13 += (pivotX * textGroupMatrix.e11 + pivotX * textGroupMatrix.e12);
+                        textGroupMatrix.e23 += (pivotY * textGroupMatrix.e21 + pivotY * textGroupMatrix.e22);
+                        
+                        textGroup->transform(textGroupMatrix);
+                    }
+
                     Matrix matrix;
                     identity(&matrix);
-                    translate(&matrix, translation.x / scale + cursor.x, translation.y / scale + cursor.y);
+                    translate(&matrix, (translation.x / scale + cursor.x) - textGroupMatrix.e13, (translation.y / scale + cursor.y) - textGroupMatrix.e23);
                     tvg::scale(&matrix, scaling.x, scaling.y);
-                    rotate(&matrix, rotation);
                     shape->transform(matrix);
                 }
 
-                scene->push(cast(shape));
+                if (needGroup) {
+                    textGroup->push(cast(shape));
+                } else {
+                    // When text isn't selected, exclude the shape from the text group
+                    auto matrix = shape->transform();
+                    matrix.e13 = cursor.x;
+                    matrix.e23 = cursor.y;
+                    shape->transform(matrix);
+                    scene->push(cast(shape));
+                }
 
                 p += glyph->len;
                 idx += glyph->len;
