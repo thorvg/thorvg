@@ -985,7 +985,7 @@ void LottieBuilder::updateImage(LottieGroup* layer)
 void LottieBuilder::updateText(LottieLayer* layer, float frameNo)
 {
     auto text = static_cast<LottieText*>(layer->children.first());
-    auto textGrouping = text->alignmentOption.grouping;
+    auto textGrouping = text->alignOption.grouping;
     auto& doc = text->doc(frameNo);
     auto p = doc.text;
 
@@ -1129,7 +1129,7 @@ void LottieBuilder::updateText(LottieLayer* layer, float frameNo)
                         identity(&textGroupMatrix);
                         translate(&textGroupMatrix, cursor.x, cursor.y);
 
-                        auto alignment = text->alignmentOption.anchor(frameNo);
+                        auto alignment = text->alignOption.anchor(frameNo);
 
                         // center pivoting
                         textGroupMatrix.e13 += alignment.x;

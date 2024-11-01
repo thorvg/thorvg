@@ -179,29 +179,26 @@ struct LottieGlyph
 };
 
 
-struct LottieTextStyle
-{
-    LottieColor fillColor = RGB24{255, 255, 255};
-    LottieColor strokeColor = RGB24{255, 255, 255};
-    LottiePosition position = Point{0, 0};
-    LottiePoint scale = Point{100, 100};
-    LottieFloat letterSpacing = 0.0f;
-    LottieFloat lineSpacing = 0.0f;
-    LottieFloat strokeWidth = 0.0f;
-    LottieFloat rotation = 0.0f;
-    LottieOpacity fillOpacity = 255;
-    LottieOpacity strokeOpacity = 255;
-    LottieOpacity opacity = 255;
-};
-
-
 struct LottieTextRange
 {
     enum Based : uint8_t { Chars = 1, CharsExcludingSpaces, Words, Lines };
     enum Shape : uint8_t { Square = 1, RampUp, RampDown, Triangle, Round, Smooth };
     enum Unit : uint8_t { Percent = 1, Index };
 
-    LottieTextStyle style;
+    struct {
+        LottieColor fillColor = RGB24{255, 255, 255};
+        LottieColor strokeColor = RGB24{255, 255, 255};
+        LottiePosition position = Point{0, 0};
+        LottiePoint scale = Point{100, 100};
+        LottieFloat letterSpacing = 0.0f;
+        LottieFloat lineSpacing = 0.0f;
+        LottieFloat strokeWidth = 0.0f;
+        LottieFloat rotation = 0.0f;
+        LottieOpacity fillOpacity = 255;
+        LottieOpacity strokeOpacity = 255;
+        LottieOpacity opacity = 255;
+    } style;
+
     LottieFloat offset = 0.0f;
     LottieFloat maxEase = 0.0f;
     LottieFloat minEase = 0.0f;
@@ -257,8 +254,8 @@ struct LottieText : LottieObject, LottieRenderPooler<tvg::Shape>
     {
         enum Group : uint8_t { Chars = 1, Word = 2, Line = 3, All = 4 };
         Group grouping = Chars;
-        LottiePoint anchor = Point{0.0f, 0.0f};
-    };
+        LottiePoint anchor{};
+    } alignOption;
 
     void prepare()
     {
@@ -280,7 +277,6 @@ struct LottieText : LottieObject, LottieRenderPooler<tvg::Shape>
     LottieTextDoc doc;
     LottieFont* font;
     Array<LottieTextRange*> ranges;
-    AlignOption alignmentOption;
 
     ~LottieText()
     {
