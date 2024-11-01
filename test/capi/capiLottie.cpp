@@ -41,7 +41,7 @@ TEST_CASE("Lottie Slot", "[capiLottie]")
     REQUIRE(tvg_paint_get_type(picture, &type) == TVG_RESULT_SUCCESS);
     REQUIRE(type == TVG_TYPE_PICTURE);
 
-    const char* slotJson = R"({"gradient_fill":{"p":{"a":0,"k":[0,0.1,0.1,0.2,1,1,0.1,0.2,0.1,1]}}})";
+    const char* slotJson = R"({"gradient_fill":{"p":{"p":2,"k":{"a":0,"k":[0,0.1,0.1,0.2,1,1,0.1,0.2,0.1,1]}}}})";
 
     //Slot override before loaded
     REQUIRE(tvg_lottie_animation_override(animation, slotJson) == TVG_RESULT_INSUFFICIENT_CONDITION);

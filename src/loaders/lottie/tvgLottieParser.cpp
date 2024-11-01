@@ -485,26 +485,31 @@ void LottieParser::parsePropertyInternal(T& prop)
 }
 
 
+template<LottieProperty::Type type>
+void LottieParser::registerSlot(LottieObject* obj)
+{
+    auto sid = getStringCopy();
+
+    //append object if the slot already exists.
+    for (auto slot = comp->slots.begin(); slot < comp->slots.end(); ++slot) {
+        if (strcmp((*slot)->sid, sid)) continue;
+        (*slot)->pairs.push({obj});
+        return;
+    }
+    comp->slots.push(new LottieSlot(sid, obj, type));
+}
+
+
 template<LottieProperty::Type type, typename T>
 void LottieParser::parseProperty(T& prop, LottieObject* obj)
 {
     enterObject();
     while (auto key = nextObjectKey()) {
         if (KEY_AS("k")) parsePropertyInternal(prop);
-        else if (obj && KEY_AS("sid")) {
-            auto sid = getStringCopy();
-            //append object if the slot already exists.
-            for (auto slot = comp->slots.begin(); slot < comp->slots.end(); ++slot) {
-                if (strcmp((*slot)->sid, sid)) continue;
-                (*slot)->pairs.push({obj});
-                break;
-            }
-            comp->slots.push(new LottieSlot(sid, obj, type));
-        } else if (KEY_AS("x")) {
-            prop.exp = _expression(getStringCopy(), comp, context.layer, context.parent, &prop);
-        } else if (KEY_AS("ix")) {
-            prop.ix = getInt();
-        } else skip(key);
+        else if (obj && KEY_AS("sid")) registerSlot<type>(obj);
+        else if (KEY_AS("x")) prop.exp = _expression(getStringCopy(), comp, context.layer, context.parent, &prop);
+        else if (KEY_AS("ix")) prop.ix = getInt();
+        else skip(key);
     }
     prop.type = type;
 }
@@ -750,19 +755,23 @@ LottieRoundedCorner* LottieParser::parseRoundedCorner()
 }
 
 
+void LottieParser::parseColorStop(LottieGradient* gradient)
+{
+    enterObject();
+    while (auto key = nextObjectKey()) {
+        if (KEY_AS("p")) gradient->colorStops.count = getInt();
+        else if (KEY_AS("k")) parseProperty<LottieProperty::Type::ColorStop>(gradient->colorStops, gradient);
+        else if (KEY_AS("sid")) registerSlot<LottieProperty::Type::ColorStop>(gradient);
+        else skip(key);
+    }
+}
+
+
 void LottieParser::parseGradient(LottieGradient* gradient, const char* key)
 {
     if (KEY_AS("t")) gradient->id = getInt();
     else if (KEY_AS("o")) parseProperty<LottieProperty::Type::Opacity>(gradient->opacity, gradient);
-    else if (KEY_AS("g"))
-    {
-        enterObject();
-        while (auto key = nextObjectKey()) {
-            if (KEY_AS("p")) gradient->colorStops.count = getInt();
-            else if (KEY_AS("k")) parseProperty<LottieProperty::Type::ColorStop>(gradient->colorStops, gradient);
-            else skip(key);
-        }
-    }
+    else if (KEY_AS("g")) parseColorStop(gradient);
     else if (KEY_AS("s")) parseProperty<LottieProperty::Type::Point>(gradient->start, gradient);
     else if (KEY_AS("e")) parseProperty<LottieProperty::Type::Point>(gradient->end, gradient);
     else if (KEY_AS("h")) parseProperty<LottieProperty::Type::Float>(gradient->height, gradient);
@@ -1438,7 +1447,10 @@ bool LottieParser::apply(LottieSlot* slot)
         case LottieProperty::Type::ColorStop: {
             obj = new LottieGradient;
             context.parent = obj;
-            parseSlotProperty<LottieProperty::Type::ColorStop>(static_cast<LottieGradient*>(obj)->colorStops);
+            while (auto key = nextObjectKey()) {
+                if (KEY_AS("p")) parseColorStop(static_cast<LottieGradient*>(obj));
+                else skip(key);
+            }
             break;
         }
         case LottieProperty::Type::Color: {

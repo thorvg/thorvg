@@ -38,6 +38,7 @@ public:
     bool parse();
     bool apply(LottieSlot* slot);
     const char* sid(bool first = false);
+    template<LottieProperty::Type type = LottieProperty::Type::Invalid> void registerSlot(LottieObject* obj);
 
     LottieComposition* comp = nullptr;
     const char* dirName = nullptr;       //base resource directory
@@ -107,6 +108,7 @@ private:
     void parseTimeRemap(LottieLayer* layer);
     void parseStrokeDash(LottieStroke* stroke);
     void parseGradient(LottieGradient* gradient, const char* key);
+    void parseColorStop(LottieGradient* gradient);
     void parseTextRange(LottieText* text);
     void parseAssets();
     void parseFonts();
