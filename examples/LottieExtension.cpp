@@ -61,7 +61,7 @@ struct UserExample : tvgexam::Example
         //slotsample
         {
             auto progress = tvgexam::progress(elapsed, slotAnimation->duration());
-            slotAnimation->frame(markerAnimation->totalFrame() * progress);
+            slotAnimation->frame(slotAnimation->totalFrame() * progress);
         }
 
         //marker
