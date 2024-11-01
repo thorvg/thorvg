@@ -253,6 +253,13 @@ struct LottieMarker
 
 struct LottieText : LottieObject, LottieRenderPooler<tvg::Shape>
 {
+    struct AlignOption
+    {
+        enum Group : uint8_t { Chars = 1, Word = 2, Line = 3, All = 4 };
+        Group grouping = Chars;
+        LottiePoint anchor = Point{0.0f, 0.0f};
+    };
+
     void prepare()
     {
         LottieObject::type = LottieObject::Text;
@@ -273,6 +280,7 @@ struct LottieText : LottieObject, LottieRenderPooler<tvg::Shape>
     LottieTextDoc doc;
     LottieFont* font;
     Array<LottieTextRange*> ranges;
+    AlignOption alignmentOption;
 
     ~LottieText()
     {
