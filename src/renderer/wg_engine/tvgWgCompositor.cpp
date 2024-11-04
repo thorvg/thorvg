@@ -88,7 +88,7 @@ RenderRegion WgCompositor::shrinkRenderRegion(RenderRegion& rect)
 }
 
 
-void WgCompositor::beginRenderPass(WGPUCommandEncoder commandEncoder, WgRenderStorage* target, bool clear)
+void WgCompositor::beginRenderPass(WGPUCommandEncoder commandEncoder, WgRenderStorage* target, bool clear, WGPUColor clearColor)
 {
     assert(commandEncoder);
     assert(target);
@@ -105,6 +105,7 @@ void WgCompositor::beginRenderPass(WGPUCommandEncoder commandEncoder, WgRenderSt
     colorAttachment.loadOp = clear ? WGPULoadOp_Clear : WGPULoadOp_Load,
     colorAttachment.storeOp = WGPUStoreOp_Store;
     colorAttachment.resolveTarget = target->texView;
+    colorAttachment.clearValue = clearColor;
     #ifdef __EMSCRIPTEN__
     colorAttachment.depthSlice = WGPU_DEPTH_SLICE_UNDEFINED;
     #endif
