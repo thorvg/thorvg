@@ -221,8 +221,6 @@ const char* LookaheadParserHandler::nextObjectKey()
 
 void LookaheadParserHandler::skip(const char* key)
 {
-    //if (key) TVGLOG("LOTTIE", "Skipped parsing value = %s", key);
-
     if (peekType() == kArrayType) {
         enterArray();
         skipOut(1);
