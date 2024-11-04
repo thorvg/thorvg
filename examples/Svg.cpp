@@ -84,6 +84,9 @@ struct UserExample : tvgexam::Example
 
         canvas->push(std::move(shape));
 
+        //Default font
+        if (!tvgexam::verify(tvg::Text::load(EXAMPLE_DIR"/font/Arial.ttf"))) return false;
+
         this->w = w;
         this->h = h;
         this->size = w / NUM_PER_ROW;
