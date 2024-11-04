@@ -67,7 +67,7 @@ public:
     void release(WgContext& context);
 
     // render passes workflow
-    void beginRenderPass(WGPUCommandEncoder encoder, WgRenderStorage* target, bool clear);
+    void beginRenderPass(WGPUCommandEncoder encoder, WgRenderStorage* target, bool clear, WGPUColor clearColor = { 0.0, 0.0, 0.0, 0.0 });
     void endRenderPass();
 
     // render shapes, images and scenes
