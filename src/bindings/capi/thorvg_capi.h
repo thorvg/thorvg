@@ -110,6 +110,7 @@ typedef struct _Tvg_Animation Tvg_Animation;
 typedef enum {
     TVG_ENGINE_SW = (1 << 1),   ///< CPU rasterizer
     TVG_ENGINE_GL = (1 << 2),   ///< OpenGL rasterizer
+    TVG_ENGINE_WG = (1 << 3)    ///< WebGPU rasterizer
 } Tvg_Engine;
 
 
@@ -487,6 +488,93 @@ TVG_API Tvg_Result tvg_swcanvas_set_target(Tvg_Canvas* canvas, uint32_t* buffer,
 TVG_API Tvg_Result tvg_swcanvas_set_mempool(Tvg_Canvas* canvas, Tvg_Mempool_Policy policy);
 
 /** \} */   // end defgroup ThorVGCapi_SwCanvas
+
+
+/**
+* \defgroup ThorVGCapi_GlCanvas SwCanvas
+* \ingroup ThorVGCapi_Canvas
+*
+* \brief A module for rendering the graphical elements using the opengl engine.
+*
+* \{
+*/
+
+/************************************************************************/
+/* GlCanvas API                                                         */
+/************************************************************************/
+
+/*!
+* \brief Creates a OpenGL rasterizer Canvas object.
+*
+* \return A new Tvg_Canvas object.
+*
+* \since 1.0.0
+*/
+TVG_API Tvg_Canvas* tvg_glcanvas_create(void);
+
+
+/*!
+* \brief Sets the drawing target for rasterization.
+*
+* This function specifies the drawing target where the rasterization will occur. It can target
+* a specific framebuffer object (FBO) or the main surface.
+*
+* \param[in] id The GL target ID, usually indicating the FBO ID. A value of @c 0 specifies the main surface.
+* \param[in] w The width (in pixels) of the raster image.
+* \param[in] h The height (in pixels) of the raster image.
+*
+* \return Tvg_Result enumeration.
+* \retval TVG_RESULT_INSUFFICIENT_CONDITION if the canvas is performing rendering. Please ensure the canvas is synced.
+* \retval TVG_RESULT_NOT_SUPPORTED In case the gl engine is not supported.
+*
+* \note Currently, this only allows the GL_RGBA8 color space format.
+* \note Experimental API
+*/
+TVG_API Tvg_Result tvg_glcanvas_set_target(Tvg_Canvas* canvas, int32_t id, uint32_t w, uint32_t h);
+
+/** \} */   // end defgroup ThorVGCapi_GlCanvas
+
+
+/**
+* \defgroup ThorVGCapi_WgCanvas WGCanvas
+* \ingroup ThorVGCapi_Canvas
+*
+* \brief A module for rendering the graphical elements using the webgpu engine.
+*
+* \{
+*/
+
+/************************************************************************/
+/* WgCanvas API                                                         */
+/************************************************************************/
+
+/*!
+* \brief Creates a WebGPU rasterizer Canvas object.
+*
+* \return A new Tvg_Canvas object.
+*
+* \since 1.0.0
+*/
+TVG_API Tvg_Canvas* tvg_wgcanvas_create(void);
+
+/*!
+* \brief Sets the drawing target for the rasterization.
+*
+* \param[in] instance WGPUInstance, context for all other wgpu objects.
+* \param[in] surface WGPUSurface, handle to a presentable surface.
+* \param[in] w The width of the surface.
+* \param[in] h The height of the surface.
+* \param[in] device WGPUDevice, a desired handle for the wgpu device. If it is @c nullptr, ThorVG will assign an appropriate device internally.
+*
+* \return Tvg_Result enumeration.
+* \retval TVG_RESULT_INSUFFICIENT_CONDITION if the canvas is performing rendering. Please ensure the canvas is synced.
+* \retval TVG_RESULT_NOT_SUPPORTED In case the wg engine is not supported.
+*
+* \note Experimental API
+*/
+TVG_API Tvg_Result tvg_wgcanvas_set_target(Tvg_Canvas* canvas, void* instance, void* surface, uint32_t w, uint32_t h, void* device);
+
+/** \} */   // end defgroup ThorVGCapi_WgCanvas
 
 
 /************************************************************************/
