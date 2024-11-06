@@ -21,6 +21,7 @@
  */
 
 #include "tvgMath.h"
+#include "tvgFill.h"
 #include "tvgGlRenderer.h"
 #include "tvgGlGpuBuffer.h"
 #include "tvgGlGeometry.h"
@@ -411,12 +412,20 @@ void GlRenderer::drawPrimitive(GlShape& sdata, const Fill* fill, RenderUpdateFla
             }
             gradientBlock.nStops[0] = nStops * 1.f;
 
-            float x, y, r;
-            radialFill->radial(&x, &y, &r);
-
-            gradientBlock.centerPos[0] = x;
-            gradientBlock.centerPos[1] = y;
-            gradientBlock.radius[0] = r;
+            float x, y, r, fx, fy, fr;
+            x = P(radialFill)->cx;
+            y = P(radialFill)->cy;
+            r = P(radialFill)->r;
+            fx = P(radialFill)->fx;
+            fy = P(radialFill)->fy;
+            fr = P(radialFill)->fr;
+    
+            gradientBlock.centerPos[0] = fx;
+            gradientBlock.centerPos[1] = fy;
+            gradientBlock.centerPos[2] = x;
+            gradientBlock.centerPos[3] = y;
+            gradientBlock.radius[0] = fr;
+            gradientBlock.radius[1] = r;
 
             gradientBinding = GlBindingResource{
                 2,
