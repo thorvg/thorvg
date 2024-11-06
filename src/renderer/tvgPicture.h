@@ -122,12 +122,12 @@ struct Picture::Impl
         return true;
     }
 
-    Result load(const string& path)
+    Result load(const char* filename)
     {
         if (paint || surface) return Result::InsufficientCondition;
 
         bool invalid;  //Invalid Path
-        auto loader = static_cast<ImageLoader*>(LoaderMgr::loader(path, &invalid));
+        auto loader = static_cast<ImageLoader*>(LoaderMgr::loader(filename, &invalid));
         if (!loader) {
             if (invalid) return Result::InvalidArguments;
             return Result::NonSupport;
@@ -135,7 +135,7 @@ struct Picture::Impl
         return load(loader);
     }
 
-    Result load(const char* data, uint32_t size, const string& mimeType, const string& rpath, bool copy)
+    Result load(const char* data, uint32_t size, const char* mimeType, const char* rpath, bool copy)
     {
         if (paint || surface) return Result::InsufficientCondition;
         auto loader = static_cast<ImageLoader*>(LoaderMgr::loader(data, size, mimeType, rpath, copy));

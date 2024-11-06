@@ -21,6 +21,7 @@
  */
 
 #include "tvgCommon.h"
+#include "tvgStr.h"
 #include "tvgSaveModule.h"
 #include "tvgPaint.h"
 
@@ -77,10 +78,10 @@ static SaveModule* _find(FileType type)
 }
 
 
-static SaveModule* _find(const string& path)
+static SaveModule* _find(const char* filename)
 {
-    auto ext = path.substr(path.find_last_of(".") + 1);
-    if (!ext.compare("gif")) return _find(FileType::Gif);
+    auto ext = strExtension(filename);
+    if (ext && !strcmp(ext, "gif")) return _find(FileType::Gif);
     return nullptr;
 }
 
@@ -100,7 +101,7 @@ Saver::~Saver()
 }
 
 
-Result Saver::save(unique_ptr<Paint> paint, const string& path, uint32_t quality) noexcept
+Result Saver::save(unique_ptr<Paint> paint, const char* filename, uint32_t quality) noexcept
 {
     auto p = paint.release();
     if (!p) return Result::MemoryCorruption;
@@ -111,8 +112,8 @@ Result Saver::save(unique_ptr<Paint> paint, const string& path, uint32_t quality
         return Result::InsufficientCondition;
     }
 
-    if (auto saveModule = _find(path)) {
-        if (saveModule->save(p, pImpl->bg, path, quality)) {
+    if (auto saveModule = _find(filename)) {
+        if (saveModule->save(p, pImpl->bg, filename, quality)) {
             pImpl->saveModule = saveModule;
             return Result::Success;
         } else {
@@ -135,7 +136,7 @@ Result Saver::background(unique_ptr<Paint> paint) noexcept
 }
 
 
-Result Saver::save(unique_ptr<Animation> animation, const string& path, uint32_t quality, uint32_t fps) noexcept
+Result Saver::save(unique_ptr<Animation> animation, const char* filename, uint32_t quality, uint32_t fps) noexcept
 {
     auto a = animation.release();
     if (!a) return Result::MemoryCorruption;
@@ -154,8 +155,8 @@ Result Saver::save(unique_ptr<Animation> animation, const string& path, uint32_t
         return Result::InsufficientCondition;
     }
 
-    if (auto saveModule = _find(path)) {
-        if (saveModule->save(a, pImpl->bg, path, quality, fps)) {
+    if (auto saveModule = _find(filename)) {
+        if (saveModule->save(a, pImpl->bg, filename, quality, fps)) {
             pImpl->saveModule = saveModule;
             return Result::Success;
         } else {

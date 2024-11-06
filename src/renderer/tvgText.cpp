@@ -58,7 +58,7 @@ Result Text::font(const char* name, float size, const char* style) noexcept
 }
 
 
-Result Text::load(const std::string& path) noexcept
+Result Text::load(const char* path) noexcept
 {
     bool invalid; //invalid path
     if (!LoaderMgr::loader(path, &invalid)) {
@@ -70,7 +70,7 @@ Result Text::load(const std::string& path) noexcept
 }
 
 
-Result Text::load(const char* name, const char* data, uint32_t size, const string& mimeType, bool copy) noexcept
+Result Text::load(const char* name, const char* data, uint32_t size, const char* mimeType, bool copy) noexcept
 {
     if (!name || (size == 0 && data)) return Result::InvalidArguments;
 
@@ -85,9 +85,9 @@ Result Text::load(const char* name, const char* data, uint32_t size, const strin
 }
 
 
-Result Text::unload(const std::string& path) noexcept
+Result Text::unload(const char* filename) noexcept
 {
-    if (LoaderMgr::retrieve(path)) return Result::Success;
+    if (LoaderMgr::retrieve(filename)) return Result::Success;
     return Result::InsufficientCondition;
 }
 
