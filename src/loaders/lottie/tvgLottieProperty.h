@@ -112,7 +112,7 @@ struct LottieVectorFrame
 //Property would have an either keyframes or single value.
 struct LottieProperty
 {
-    enum class Type : uint8_t { Point = 0, Float, Opacity, Color, PathSet, ColorStop, Position, TextDoc, Invalid };
+    enum class Type : uint8_t { Point = 0, Float, Opacity, Color, PathSet, ColorStop, Position, TextDoc, Image, Invalid };
 
     LottieExpression* exp = nullptr;
     Type type;
@@ -823,6 +823,52 @@ struct LottieTextDoc : LottieProperty
     }
 
     void prepare() {}
+};
+
+
+struct LottieBitmap : LottieProperty
+{
+    union {
+        char* b64Data = nullptr;
+        char* path;
+    };
+    char* mimeType = nullptr;
+    uint32_t size = 0;
+    float width = 0.0f;
+    float height = 0.0f;
+
+    ~LottieBitmap()
+    {
+        release();
+    }
+
+    void release()
+    {
+        free(b64Data);
+        free(mimeType);
+
+        b64Data = nullptr;
+        mimeType = nullptr;
+    }
+
+    uint32_t frameCnt() override { return 0; }
+    uint32_t nearest(float time) override { return 0; }
+    float frameNo(int32_t key) override { return 0; }
+
+    LottieBitmap& operator=(const LottieBitmap& other)
+    {
+        //shallow copy, used for slot overriding
+        if (other.mimeType) b64Data = other.b64Data;
+        else path = other.path;
+        mimeType = other.mimeType;
+        size = other.size;
+        width = other.width;
+        height = other.height;
+
+        const_cast<LottieBitmap&>(other).b64Data = nullptr;
+        const_cast<LottieBitmap&>(other).mimeType = nullptr;
+        return *this;
+    }
 };
 
 
