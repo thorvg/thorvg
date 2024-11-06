@@ -39,7 +39,7 @@ public:
     bool apply(LottieSlot* slot);
     const char* sid(bool first = false);
     void captureSlots(const char* key);
-    template<LottieProperty::Type type = LottieProperty::Type::Invalid> void registerSlot(LottieObject* obj);
+    template<LottieProperty::Type type = LottieProperty::Type::Invalid> void registerSlot(LottieObject* obj, char* sid);
 
     LottieComposition* comp = nullptr;
     const char* dirName = nullptr;       //base resource directory
@@ -77,7 +77,7 @@ private:
 
     LottieObject* parseObject();
     LottieObject* parseAsset();
-    LottieImage* parseImage(const char* data, const char* subPath, bool embedded, float width, float height);
+    void parseImage(LottieImage* image, const char* data, const char* subPath, bool embedded, float width, float height);
     LottieLayer* parseLayer(LottieLayer* precomp);
     LottieObject* parseGroup();
     LottieRect* parseRect();

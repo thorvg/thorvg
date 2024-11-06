@@ -649,16 +649,14 @@ struct LottieGradientStroke : LottieGradient, LottieStroke
 
 struct LottieImage : LottieObject, LottieRenderPooler<tvg::Picture>
 {
-    union {
-        char* b64Data = nullptr;
-        char* path;
-    };
-    char* mimeType = nullptr;
-    uint32_t size = 0;
-    float width = 0.0f;
-    float height = 0.0f;
+    LottieBitmap data;
 
-    ~LottieImage();
+    void override(LottieProperty* prop) override
+    {
+        this->data = *static_cast<LottieBitmap*>(prop);
+        this->prepare();
+    }
+
     void prepare();
 };
 

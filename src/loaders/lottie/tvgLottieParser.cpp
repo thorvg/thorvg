@@ -486,10 +486,8 @@ void LottieParser::parsePropertyInternal(T& prop)
 
 
 template<LottieProperty::Type type>
-void LottieParser::registerSlot(LottieObject* obj)
+void LottieParser::registerSlot(LottieObject* obj, char* sid)
 {
-    auto sid = getStringCopy();
-
     //append object if the slot already exists.
     for (auto slot = comp->slots.begin(); slot < comp->slots.end(); ++slot) {
         if (strcmp((*slot)->sid, sid)) continue;
@@ -506,7 +504,7 @@ void LottieParser::parseProperty(T& prop, LottieObject* obj)
     enterObject();
     while (auto key = nextObjectKey()) {
         if (KEY_AS("k")) parsePropertyInternal(prop);
-        else if (obj && KEY_AS("sid")) registerSlot<type>(obj);
+        else if (obj && KEY_AS("sid")) registerSlot<type>(obj, getStringCopy());
         else if (KEY_AS("x")) prop.exp = _expression(getStringCopy(), comp, context.layer, context.parent, &prop);
         else if (KEY_AS("ix")) prop.ix = getInt();
         else skip(key);
@@ -761,7 +759,7 @@ void LottieParser::parseColorStop(LottieGradient* gradient)
     while (auto key = nextObjectKey()) {
         if (KEY_AS("p")) gradient->colorStops.count = getInt();
         else if (KEY_AS("k")) parseProperty<LottieProperty::Type::ColorStop>(gradient->colorStops, gradient);
-        else if (KEY_AS("sid")) registerSlot<LottieProperty::Type::ColorStop>(gradient);
+        else if (KEY_AS("sid")) registerSlot<LottieProperty::Type::ColorStop>(gradient, getStringCopy());
         else skip(key);
     }
 }
@@ -931,45 +929,39 @@ void LottieParser::parseObject(Array<LottieObject*>& parent)
 }
 
 
-LottieImage* LottieParser::parseImage(const char* data, const char* subPath, bool embedded, float width, float height)
+void LottieParser::parseImage(LottieImage* image, const char* data, const char* subPath, bool embedded, float width, float height)
 {
-    //Used for Image Asset
-    auto image = new LottieImage;
-
     //embedded image resource. should start with "data:"
     //header look like "data:image/png;base64," so need to skip till ','.
     if (embedded && !strncmp(data, "data:", 5)) {
         //figure out the mimetype
         auto mimeType = data + 11;
         auto needle = strstr(mimeType, ";");
-        image->mimeType = strDuplicate(mimeType, needle - mimeType);
+        image->data.mimeType = strDuplicate(mimeType, needle - mimeType);
         //b64 data
         auto b64Data = strstr(data, ",") + 1;
         size_t length = strlen(data) - (b64Data - data);
-        image->size = b64Decode(b64Data, length, &image->b64Data);
+        image->data.size = b64Decode(b64Data, length, &image->data.b64Data);
     //external image resource
     } else {
         auto len = strlen(dirName) + strlen(subPath) + strlen(data) + 1;
-        image->path = static_cast<char*>(malloc(len));
-        snprintf(image->path, len, "%s%s%s", dirName, subPath, data);
+        image->data.path = static_cast<char*>(malloc(len));
+        snprintf(image->data.path, len, "%s%s%s", dirName, subPath, data);
     }
 
-    image->width = width;
-    image->height = height;
+    image->data.width = width;
+    image->data.height = height;
     image->prepare();
-
-    return image;
 }
 
 
 LottieObject* LottieParser::parseAsset()
 {
-    enterObject();
-
     LottieObject* obj = nullptr;
     unsigned long id = 0;
 
     //Used for Image Asset
+    char* sid = nullptr;
     const char* data = nullptr;
     const char* subPath = nullptr;
     float width = 0.0f;
@@ -991,9 +983,14 @@ LottieObject* LottieParser::parseAsset()
         else if (KEY_AS("w")) width = getFloat();
         else if (KEY_AS("h")) height = getFloat();
         else if (KEY_AS("e")) embedded = getInt();
+        else if (KEY_AS("sid")) sid = getStringCopy();
         else skip(key);
     }
-    if (data) obj = parseImage(data, subPath, embedded, width, height);
+    if (data) {
+        obj = new LottieImage;
+        parseImage(static_cast<LottieImage*>(obj), data, subPath, embedded, width, height);
+        if (sid) registerSlot<LottieProperty::Type::Image>(obj, sid);
+    }
     if (obj) obj->id = id;
     return obj;
 }
@@ -1021,6 +1018,7 @@ void LottieParser::parseAssets()
 {
     enterArray();
     while (nextArrayValue()) {
+        enterObject();
         auto asset = parseAsset();
         if (asset) comp->assets.push(asset);
         else TVGERR("LOTTIE", "Invalid Asset!");
@@ -1476,6 +1474,11 @@ bool LottieParser::apply(LottieSlot* slot)
             obj = new LottieText;
             context.parent = obj;
             parseSlotProperty<LottieProperty::Type::TextDoc>(static_cast<LottieText*>(obj)->doc);
+            break;
+        }
+        case LottieProperty::Type::Image: {
+            obj = parseAsset();
+            context.parent = obj;
             break;
         }
         default: break;
