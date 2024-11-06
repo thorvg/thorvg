@@ -68,6 +68,18 @@ TVG_API Tvg_Canvas* tvg_swcanvas_create()
 }
 
 
+TVG_API Tvg_Canvas* tvg_glcanvas_create()
+{
+    return (Tvg_Canvas*) GlCanvas::gen().release();
+}
+
+
+TVG_API Tvg_Canvas* tvg_wgcanvas_create()
+{
+    return (Tvg_Canvas*) WgCanvas::gen().release();
+}
+
+
 TVG_API Tvg_Result tvg_canvas_destroy(Tvg_Canvas* canvas)
 {
     if (!canvas) return TVG_RESULT_INVALID_ARGUMENT;
@@ -87,6 +99,20 @@ TVG_API Tvg_Result tvg_swcanvas_set_target(Tvg_Canvas* canvas, uint32_t* buffer,
 {
     if (!canvas) return TVG_RESULT_INVALID_ARGUMENT;
     return (Tvg_Result) reinterpret_cast<SwCanvas*>(canvas)->target(buffer, stride, w, h, static_cast<ColorSpace>(cs));
+}
+
+
+TVG_API Tvg_Result tvg_glcanvas_set_target(Tvg_Canvas* canvas, int32_t id, uint32_t w, uint32_t h)
+{
+    if (!canvas) return TVG_RESULT_INVALID_ARGUMENT;
+    return (Tvg_Result) reinterpret_cast<GlCanvas*>(canvas)->target(id, w, h);
+}
+
+
+TVG_API Tvg_Result tvg_wgcanvas_set_target(Tvg_Canvas* canvas, void* instance, void* surface, uint32_t w, uint32_t h, void* device)
+{
+    if (!canvas) return TVG_RESULT_INVALID_ARGUMENT;
+    return (Tvg_Result) reinterpret_cast<WgCanvas*>(canvas)->target(instance, surface, w, h, device);
 }
 
 
