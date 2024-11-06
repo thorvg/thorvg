@@ -154,15 +154,15 @@ Type Picture::type() const noexcept
 }
 
 
-Result Picture::load(const std::string& path) noexcept
+Result Picture::load(const char* filename) noexcept
 {
-    if (path.empty()) return Result::InvalidArguments;
+    if (!filename) return Result::InvalidArguments;
 
-    return pImpl->load(path);
+    return pImpl->load(filename);
 }
 
 
-Result Picture::load(const char* data, uint32_t size, const string& mimeType, const string& rpath, bool copy) noexcept
+Result Picture::load(const char* data, uint32_t size, const char* mimeType, const char* rpath, bool copy) noexcept
 {
     if (!data || size <= 0) return Result::InvalidArguments;
 

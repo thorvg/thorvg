@@ -23,6 +23,7 @@
 #ifndef _TVG_COMMON_H_
 #define _TVG_COMMON_H_
 
+#include <string>
 #include "config.h"
 #include "thorvg.h"
 

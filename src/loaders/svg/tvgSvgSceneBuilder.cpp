@@ -564,7 +564,7 @@ static Paint* _imageBuildHelper(SvgLoaderData& loaderData, SvgNode* node, const 
             auto last = svgPath.find_last_of("/");
             imagePath = svgPath.substr(0, (last == string::npos ? 0 : last + 1)) + imagePath;
         }
-        if (picture->load(imagePath) != Result::Success) {
+        if (picture->load(imagePath.c_str()) != Result::Success) {
             TaskScheduler::async(true);
             return nullptr;
         }

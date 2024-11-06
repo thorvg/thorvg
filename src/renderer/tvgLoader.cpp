@@ -23,6 +23,7 @@
 #include <string.h>
 
 #include "tvgInlist.h"
+#include "tvgStr.h"
 #include "tvgLoader.h"
 #include "tvgLock.h"
 
@@ -158,51 +159,55 @@ static LoadModule* _find(FileType type)
 }
 
 
-static LoadModule* _findByPath(const string& path)
+static LoadModule* _findByPath(const char* filename)
 {
-    auto ext = path.substr(path.find_last_of(".") + 1);
-    if (!ext.compare("svg")) return _find(FileType::Svg);
-    if (!ext.compare("json")) return _find(FileType::Lottie);
-    if (!ext.compare("png")) return _find(FileType::Png);
-    if (!ext.compare("jpg")) return _find(FileType::Jpg);
-    if (!ext.compare("webp")) return _find(FileType::Webp);
-    if (!ext.compare("ttf") || !ext.compare("ttc")) return _find(FileType::Ttf);
-    if (!ext.compare("otf") || !ext.compare("otc")) return _find(FileType::Ttf);
+    auto ext = strExtension(filename);
+    if (!ext) return nullptr;
+
+    if (!strcmp(ext, "svg")) return _find(FileType::Svg);
+    if (!strcmp(ext, "json")) return _find(FileType::Lottie);
+    if (!strcmp(ext, "png")) return _find(FileType::Png);
+    if (!strcmp(ext, "jpg")) return _find(FileType::Jpg);
+    if (!strcmp(ext, "webp")) return _find(FileType::Webp);
+    if (!strcmp(ext, "ttf") || !strcmp(ext, "ttc")) return _find(FileType::Ttf);
+    if (!strcmp(ext, "otf") || !strcmp(ext, "otc")) return _find(FileType::Ttf);
     return nullptr;
 }
 
 
-static FileType _convert(const string& mimeType)
+static FileType _convert(const char* mimeType)
 {
+    if (!mimeType) return FileType::Unknown;
+
     auto type = FileType::Unknown;
 
-    if (mimeType == "svg" || mimeType == "svg+xml") type = FileType::Svg;
-    else if (mimeType == "ttf" || mimeType == "otf") type = FileType::Ttf;
-    else if (mimeType == "lottie") type = FileType::Lottie;
-    else if (mimeType == "raw") type = FileType::Raw;
-    else if (mimeType == "png") type = FileType::Png;
-    else if (mimeType == "jpg" || mimeType == "jpeg") type = FileType::Jpg;
-    else if (mimeType == "webp") type = FileType::Webp;
-    else TVGLOG("RENDERER", "Given mimetype is unknown = \"%s\".", mimeType.c_str());
+    if (!strcmp(mimeType, "svg") || !strcmp(mimeType, "svg+xml")) type = FileType::Svg;
+    else if (!strcmp(mimeType, "ttf") || !strcmp(mimeType, "otf")) type = FileType::Ttf;
+    else if (!strcmp(mimeType, "lottie")) type = FileType::Lottie;
+    else if (!strcmp(mimeType, "raw")) type = FileType::Raw;
+    else if (!strcmp(mimeType, "png")) type = FileType::Png;
+    else if (!strcmp(mimeType, "jpg") || !strcmp(mimeType, "jpeg")) type = FileType::Jpg;
+    else if (!strcmp(mimeType, "webp")) type = FileType::Webp;
+    else TVGLOG("RENDERER", "Given mimetype is unknown = \"%s\".", mimeType);
 
     return type;
 }
 
 
-static LoadModule* _findByType(const string& mimeType)
+static LoadModule* _findByType(const char* mimeType)
 {
     return _find(_convert(mimeType));
 }
 
 
-static LoadModule* _findFromCache(const string& path)
+static LoadModule* _findFromCache(const char* filename)
 {
     ScopedLock lock(key);
 
     auto loader = _activeLoaders.head;
 
     while (loader) {
-        if (loader->pathcache && !strcmp(loader->hashpath, path.c_str())) {
+        if (loader->pathcache && !strcmp(loader->hashpath, filename)) {
             ++loader->sharing;
             return loader;
         }
@@ -212,7 +217,7 @@ static LoadModule* _findFromCache(const string& path)
 }
 
 
-static LoadModule* _findFromCache(const char* data, uint32_t size, const string& mimeType)
+static LoadModule* _findFromCache(const char* data, uint32_t size, const char* mimeType)
 {
     auto type = _convert(mimeType);
     if (type == FileType::Unknown) return nullptr;
@@ -274,23 +279,23 @@ bool LoaderMgr::retrieve(LoadModule* loader)
 }
 
 
-LoadModule* LoaderMgr::loader(const string& path, bool* invalid)
+LoadModule* LoaderMgr::loader(const char* filename, bool* invalid)
 {
     *invalid = false;
 
     //TODO: svg & lottie is not sharable.
     auto allowCache = true;
-    auto ext = path.substr(path.find_last_of(".") + 1);
-    if (!ext.compare("svg") || !ext.compare("json")) allowCache = false;
+    auto ext = strExtension(filename);
+    if (ext && (!strcmp(ext, "svg") || !strcmp(ext, "json"))) allowCache = false;
 
     if (allowCache) {
-        if (auto loader = _findFromCache(path)) return loader;
+        if (auto loader = _findFromCache(filename)) return loader;
     }
 
-    if (auto loader = _findByPath(path)) {
-        if (loader->open(path)) {
+    if (auto loader = _findByPath(filename)) {
+        if (loader->open(filename)) {
             if (allowCache) {
-                loader->hashpath = strdup(path.c_str());
+                loader->hashpath = strdup(filename);
                 loader->pathcache = true;
                 {
                     ScopedLock lock(key);
@@ -304,9 +309,9 @@ LoadModule* LoaderMgr::loader(const string& path, bool* invalid)
     //Unknown MimeType. Try with the candidates in the order
     for (int i = 0; i < static_cast<int>(FileType::Raw); i++) {
         if (auto loader = _find(static_cast<FileType>(i))) {
-            if (loader->open(path)) {
+            if (loader->open(filename)) {
                 if (allowCache) {
-                    loader->hashpath = strdup(path.c_str());
+                    loader->hashpath = strdup(filename);
                     loader->pathcache = true;
                     {
                         ScopedLock lock(key);
@@ -323,9 +328,9 @@ LoadModule* LoaderMgr::loader(const string& path, bool* invalid)
 }
 
 
-bool LoaderMgr::retrieve(const string& path)
+bool LoaderMgr::retrieve(const char* filename)
 {
-    return retrieve(_findFromCache(path));
+    return retrieve(_findFromCache(filename));
 }
 
 
@@ -344,7 +349,7 @@ LoadModule* LoaderMgr::loader(const char* key)
 }
 
 
-LoadModule* LoaderMgr::loader(const char* data, uint32_t size, const string& mimeType, const string& rpath, bool copy)
+LoadModule* LoaderMgr::loader(const char* data, uint32_t size, const char* mimeType, const char* rpath, bool copy)
 {
     //Note that users could use the same data pointer with the different content.
     //Thus caching is only valid for shareable.
@@ -361,7 +366,7 @@ LoadModule* LoaderMgr::loader(const char* data, uint32_t size, const string& mim
     }
 
     //Try with the given MimeType
-    if (!mimeType.empty()) {
+    if (!mimeType) {
         if (auto loader = _findByType(mimeType)) {
             if (loader->open(data, size, rpath, copy)) {
                 if (allowCache) {
@@ -371,7 +376,7 @@ LoadModule* LoaderMgr::loader(const char* data, uint32_t size, const string& mim
                 }
                 return loader;
             } else {
-                TVGLOG("LOADER", "Given mimetype \"%s\" seems incorrect or not supported.", mimeType.c_str());
+                TVGLOG("LOADER", "Given mimetype \"%s\" seems incorrect or not supported.", mimeType);
                 delete(loader);
             }
         }
@@ -420,7 +425,7 @@ LoadModule* LoaderMgr::loader(const uint32_t *data, uint32_t w, uint32_t h, Colo
 
 
 //loads fonts from memory - loader is cached (regardless of copy value) in order to access it while setting font
-LoadModule* LoaderMgr::loader(const char* name, const char* data, uint32_t size, TVG_UNUSED const string& mimeType, bool copy)
+LoadModule* LoaderMgr::loader(const char* name, const char* data, uint32_t size, TVG_UNUSED const char* mimeType, bool copy)
 {
 #ifdef THORVG_TTF_LOADER_SUPPORT
     //TODO: add check for mimetype ?

@@ -3,7 +3,6 @@
 
 #include <functional>
 #include <memory>
-#include <string>
 #include <list>
 
 #ifdef TVG_API
@@ -1233,7 +1232,7 @@ public:
      * This means that loading the same file again will not result in duplicate operations;
      * instead, ThorVG will reuse the previously loaded picture data.
      *
-     * @param[in] path A path to the picture file.
+     * @param[in] filename A file name, including the path, for the picture file.
      *
      * @retval Result::InvalidArguments In case the @p path is invalid.
      * @retval Result::NonSupport When trying to load a file with an unknown extension.
@@ -1241,7 +1240,7 @@ public:
      * @note The Load behavior can be asynchronous if the assigned thread number is greater than zero.
      * @see Initializer::init()
      */
-    Result load(const std::string& path) noexcept;
+    Result load(const char* filename) noexcept;
 
     /**
      * @brief Loads a picture data from a memory block of a given size.
@@ -1264,7 +1263,7 @@ public:
      * @note If you are unsure about the MIME type, you can provide an empty value like @c "", and thorvg will attempt to figure it out.
      * @since 0.5
      */
-    Result load(const char* data, uint32_t size, const std::string& mimeType, const std::string& rpath = "", bool copy = false) noexcept;
+    Result load(const char* data, uint32_t size, const char* mimeType, const char* rpath = "", bool copy = false) noexcept;
 
     /**
      * @brief Resizes the picture content to the given width and height.
@@ -1510,16 +1509,16 @@ public:
      * This means that loading the same file again will not result in duplicate operations;
      * instead, ThorVG will reuse the previously loaded font data.
      *
-     * @param[in] path The path to the font file.
+     * @param[in] filename A file name, including the path, for the font file.
      *
      * @retval Result::InvalidArguments In case the @p path is invalid.
      * @retval Result::NonSupport When trying to load a file with an unknown extension.
      *
-     * @see Text::unload(const std::string& path)
+     * @see Text::unload(const char* filename)
      *
      * @since 0.15
      */
-    static Result load(const std::string& path) noexcept;
+    static Result load(const char* filename) noexcept;
 
     /**
      * @brief Loads a scalable font data (ttf) from a memory block of a given size.
@@ -1546,23 +1545,23 @@ public:
      *
      * @note 0.15
      */
-    static Result load(const char* name, const char* data, uint32_t size, const std::string& mimeType = "ttf", bool copy = false) noexcept;
+    static Result load(const char* name, const char* data, uint32_t size, const char* mimeType = "ttf", bool copy = false) noexcept;
 
     /**
      * @brief Unloads the specified scalable font data (TTF) that was previously loaded.
      *
      * This function is used to release resources associated with a font file that has been loaded into memory.
      *
-     * @param[in] path The file path of the loaded font.
+     * @param[in] filename The file name of the loaded font, including the path.
      *
      * @retval Result::InsufficientCondition Fails if the loader is not initialized.
      *
      * @note If the font data is currently in use, it will not be immediately unloaded.
-     * @see Text::load(const std::string& path)
+     * @see Text::load(const char* filename)
      * 
      * @since 0.15
      */
-    static Result unload(const std::string& path) noexcept;
+    static Result unload(const char* filename) noexcept;
 
     /**
      * @brief Creates a new Text object.
@@ -1979,7 +1978,7 @@ public:
      * if you wish to optimize for speed.
      *
      * @param[in] paint The paint to be saved with all its associated properties.
-     * @param[in] path A path to the file, in which the paint data is to be saved.
+     * @param[in] filename A file name, including the path, where the paint data will be saved.
      * @param[in] quality The encoded quality level. @c 0 is the minimum, @c 100 is the maximum value(recommended).
      *
      * @retval Result::InsufficientCondition If currently saving other resources.
@@ -1991,7 +1990,7 @@ public:
      *
      * @since 0.5
      */
-    Result save(std::unique_ptr<Paint> paint, const std::string& path, uint32_t quality = 100) noexcept;
+    Result save(std::unique_ptr<Paint> paint, const char* filename, uint32_t quality = 100) noexcept;
 
     /**
      * @brief Export the provided animation data to the specified file path.
@@ -1999,7 +1998,7 @@ public:
      * This function exports the given animation data to the provided file path. You can also specify the desired frame rate in frames per second (FPS) by providing the fps parameter.
      *
      * @param[in] animation The animation to be saved, including all associated properties.
-     * @param[in] path The path to the file where the animation will be saved.
+     * @param[in] filename A file name, including the path, where the animation will be saved.
      * @param[in] quality The encoded quality level. @c 0 is the minimum, @c 100 is the maximum value(recommended).
      * @param[in] fps The desired frames per second (FPS). For example, to encode data at 60 FPS, pass 60. Pass 0 to keep the original frame data.
      *
@@ -2014,7 +2013,7 @@ public:
      *
      * @note Experimental API
      */
-    Result save(std::unique_ptr<Animation> animation, const std::string& path, uint32_t quality = 100, uint32_t fps = 0) noexcept;
+    Result save(std::unique_ptr<Animation> animation, const char* filename, uint32_t quality = 100, uint32_t fps = 0) noexcept;
 
     /**
      * @brief Guarantees that the saving task is finished.
