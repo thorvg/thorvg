@@ -162,8 +162,7 @@ public:
 
     void terminate()
     {
-        //Terminate ThorVG Engine
-        tvg::Initializer::term(tvg::CanvasEngine::Sw);
+        tvg::Initializer::term();
         free(buffer);
     }
 
