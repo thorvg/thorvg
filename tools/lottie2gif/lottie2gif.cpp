@@ -92,7 +92,7 @@ private:
       if (saver->save(std::move(animation), out, 100, fps) != Result::Success) return false;
       if (saver->sync() != Result::Success) return false;
 
-      if (Initializer::term(CanvasEngine::Sw) != Result::Success) return false;
+      if (Initializer::term() != Result::Success) return false;
 
       return true;
    }

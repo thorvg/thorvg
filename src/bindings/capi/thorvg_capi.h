@@ -108,8 +108,8 @@ typedef struct _Tvg_Animation Tvg_Animation;
 * \ingroup ThorVGCapi_Initializer
 */
 typedef enum {
-    TVG_ENGINE_SW = (1 << 1),   ///< CPU rasterizer.
-    TVG_ENGINE_GL = (1 << 2)    ///< OpenGL rasterizer.
+    TVG_ENGINE_SW = (1 << 1),   ///< CPU rasterizer
+    TVG_ENGINE_GL = (1 << 2),   ///< OpenGL rasterizer
 } Tvg_Engine;
 
 
@@ -129,6 +129,18 @@ typedef enum {
     TVG_RESULT_NOT_SUPPORTED,          ///< The value returned in case of choosing unsupported engine features(options).
     TVG_RESULT_UNKNOWN = 255           ///< The value returned in all other cases.
 } Tvg_Result;
+
+
+/**
+ * \brief Enumeration specifying the methods of combining the 8-bit color channels into 32-bit color.
+ */
+typedef enum {
+    TVG_COLORSPACE_ABGR8888 = 0,  ///< The channels are joined in the order: alpha, blue, green, red. Colors are alpha-premultiplied.
+    TVG_COLORSPACE_ARGB8888,      ///< The channels are joined in the order: alpha, red, green, blue. Colors are alpha-premultiplied.
+    TVG_COLORSPACE_ABGR8888S,     ///< The channels are joined in the order: alpha, blue, green, red. Colors are un-alpha-premultiplied. (since 0.13)
+    TVG_COLORSPACE_ARGB8888S,     ///< The channels are joined in the order: alpha, red, green, blue. Colors are un-alpha-premultiplied. (since 0.13)
+    TVG_COLORSPACE_UNKNOWN = 255, ///< Unknown channel data. This is reserved for an initial ColorSpace value. (since 1.0)
+} Tvg_Colorspace;
 
 
 /**
@@ -331,13 +343,7 @@ typedef struct
 * You can indicate the number of threads, the count of which is designated @p threads.
 * In the initialization step, TVG will generate/spawn the threads as set by @p threads count.
 *
-* \code
-* tvg_engine_init(TVG_ENGINE_SW, 0);  //Initialize software renderer and use the main thread only
-* \endcode
-*
 * \param[in] engine_method The engine types to initialize. This is relative to the Canvas types, in which it will be used. For multiple backends bitwise operation is allowed.
-*   - TVG_ENGINE_SW: CPU rasterizer
-*   - TVG_ENGINE_GL: OpenGL rasterizer (not supported yet)
 * \param[in] threads The number of additional threads used to perform rendering. Zero indicates only the main thread is to be used.
 *
 * \return Tvg_Result enumeration.
@@ -356,15 +362,7 @@ TVG_API Tvg_Result tvg_engine_init(Tvg_Engine engine_method, unsigned threads);
 *
 * It should be called in case of termination of the TVG client with the same engine types as were passed when tvg_engine_init() was called.
 *
-* \code
-* tvg_engine_init(TVG_ENGINE_SW, 0);
-* //define canvas and shapes, update shapes, general rendering calls
-* tvg_engine_term(TVG_ENGINE_SW);
-* \endcode
-*
 * \param engine_method The engine types to terminate. This is relative to the Canvas types, in which it will be used. For multiple backends bitwise operation is allowed
-*   - TVG_ENGINE_SW: CPU rasterizer
-*   - TVG_ENGINE_GL: OpenGL rasterizer (not supported yet)
 *
 * \return Tvg_Result enumeration.
 * \retval TVG_RESULT_INSUFFICIENT_CONDITION Nothing to be terminated.
@@ -430,39 +428,8 @@ typedef enum {
 } Tvg_Mempool_Policy;
 
 
-/**
- * \brief Enumeration specifying the methods of combining the 8-bit color channels into 32-bit color.
- */
-typedef enum {
-    TVG_COLORSPACE_ABGR8888 = 0,  ///< The channels are joined in the order: alpha, blue, green, red. Colors are alpha-premultiplied.
-    TVG_COLORSPACE_ARGB8888,      ///< The channels are joined in the order: alpha, red, green, blue. Colors are alpha-premultiplied.
-    TVG_COLORSPACE_ABGR8888S,     ///< The channels are joined in the order: alpha, blue, green, red. Colors are un-alpha-premultiplied. @since 0.13
-    TVG_COLORSPACE_ARGB8888S,     ///< The channels are joined in the order: alpha, red, green, blue. Colors are un-alpha-premultiplied. @since 0.13
-    TVG_COLORSPACE_UNKNOWN = 255, ///< Unknown channel data. This is reserved for an initial ColorSpace value. @since 1.0
-} Tvg_Colorspace;
-
-
 /*!
 * \brief Creates a Canvas object.
-*
-* \code
-* Tvg_Canvas *canvas = NULL;
-*
-* tvg_engine_init(TVG_ENGINE_SW, 4);
-* canvas = tvg_swcanvas_create();
-*
-* //set up the canvas buffer
-* uint32_t *buffer = NULL;
-* buffer = (uint32_t*) malloc(sizeof(uint32_t) * 100 * 100);
-* if (!buffer) return;
-*
-* tvg_swcanvas_set_target(canvas, buffer, 100, 100, 100, TVG_COLORSPACE_ARGB8888);
-*
-* //set up paints and add them into the canvas before drawing it
-*
-* tvg_canvas_destroy(canvas);
-* tvg_engine_term(TVG_ENGINE_SW);
-* \endcode
 *
 * \return A new Tvg_Canvas object.
 */
@@ -528,53 +495,6 @@ TVG_API Tvg_Result tvg_swcanvas_set_mempool(Tvg_Canvas* canvas, Tvg_Mempool_Poli
 /*!
 * \brief Clears the canvas internal data, releases all paints stored by the canvas and destroys the canvas object itself.
 *
-* \code
-* static Tvg_Canvas *canvas = NULL;
-* static uint32_t *buffer = NULL;
-*
-* static void _init() {
-*   canvas = tvg_swcanvas_create();
-*   buffer = (uint32_t*) malloc(sizeof(uint32_t) * 100 * 100);
-*   tvg_swcanvas_set_target(canvas, buffer, 100, 100, 100, TVG_COLORSPACE_ARGB8888);
-* }
-*
-* //a task called from main function in a loop
-* static void _job(const int cmd) {
-*   //define a valid rectangle shape
-*   switch (cmd) {
-*     case CMD_EXIT: return 0;
-*     case CMD_ADD_RECT:
-*       tvg_canvas_push(canvas, rect);
-*       break;
-*     case CMD_DEL_RECT:
-*       tvg_paint_del(rect);
-*       //now to safely delete Tvg_Canvas, tvg_canvas_clear() API have to be used
-*       break;
-*     default:
-*       break;
-*   }
-* }
-*
-* int main(int argc, char **argv) {
-*   int cmd = 0;
-*   int stop = 1;
-*
-*   tvg_engine_init(TVG_ENGINE_SW, 4);
-*
-*   while (stop) {
-*      //wait for a command e.g. from a console
-*      stop = _job(cmd);
-*   }
-*   tvg_canvas_clear(canvas, false);
-*   tvg_canvas_destroy(canvas);
-*   tvg_engine_term(TVG_ENGINE_SW);
-*   return 0;
-* }
-*
-* tvg_canvas_destroy(canvas);
-* tvg_engine_term(TVG_ENGINE_SW)
-* \endcode
-*
 * \param[in] canvas The Tvg_Canvas object to be destroyed.
 *
 * \return Tvg_Result enumeration.
@@ -628,49 +548,6 @@ TVG_API Tvg_Result tvg_canvas_clear(Tvg_Canvas* canvas, bool paints, bool buffer
 * \brief Updates all paints in a canvas.
 *
 * Should be called before drawing in order to prepare paints for the rendering.
-*
-* \code
-* //A frame drawing example. Thread safety and events implementation is skipped to show only TVG code.
-*
-* static Tvg_Canvas *canvas = NULL;
-* static Tvg_Paint *rect = NULL;
-*
-* int _frame_render(void) {
-*   tvg_canvas_update(canvas);
-*   tvg_canvas_draw(canvas);
-*   tvg_canvas_sync(canvas);
-* }
-*
-* //event handler from your code or third party library
-* void _event_handler(event *event_data) {
-*   if (!event_data) return NULL;
-*     switch(event_data.type) {
-*       case EVENT_RECT_ADD:
-*         if (!rect) {
-*           tvg_shape_append_rect(rect, 10, 10, 50, 50, 0, 0);
-*           tvg_shape_set_stroke_width(rect, 1.0f);
-*           tvg_shape_set_stroke_color(rect, 255, 0, 0, 255);
-*           tvg_canvas_push(canvas, rect);
-*         }
-*         break;
-*       case EVENT_RECT_MOVE:
-*         if (rect) tvg_paint_translate(rect, 10.0, 10.0);
-*           break;
-*         default:
-*           break;
-*   }
-* }
-*
-* int main(int argc, char **argv) {
-*   //example handler from your code or third party lib
-*   event_handler_add(handler, _event_handler);
-*
-*   //create frame rendering process which calls _frame_render() function.
-*   app_loop_begin(_frame_render);
-*   app_loop_finish();
-*   cleanup();
-* }
-* \endcode
 *
 * \param[in] canvas The Tvg_Canvas object to be updated.
 *
@@ -768,23 +645,6 @@ TVG_API Tvg_Result tvg_canvas_set_viewport(Tvg_Canvas* canvas, int32_t x, int32_
 /************************************************************************/
 /*!
 * \brief Releases the given Tvg_Paint object.
-*
-* \code
-* //example of cleanup function
-* Tvg_Paint *rect = NULL; //rectangle shape added in other function
-*
-* //rectangle delete API
-* int rectangle_delete(void) {
-*   if (rect) tvg_paint_del(rect);
-*   rect = NULL;
-* }
-*
-* int cleanup(void) {
-*   tvg_canvas_clear(canvas, false);
-*   tvg_canvas_destroy(canvas);
-*   canvas = NULL;
-* }
-* \endcode
 *
 * \param[in] paint The Tvg_Paint object to be released.
 *
@@ -1198,16 +1058,6 @@ TVG_API Tvg_Result tvg_shape_append_path(Tvg_Paint* paint, const Tvg_Path_Comman
 *
 * The function does not allocate any data, it operates on internal memory. There is no need to free the @p pts array.
 *
-* \code
-* Tvg_Paint *shape = tvg_shape_new();
-* Tvg_Point *coords = NULL;
-* uint32_t len = 0;
-*
-* tvg_shape_append_circle(shape, 10, 10, 50, 50);
-* tvg_shape_get_path_coords(shape, (const Tvg_Point**)&coords, &len);
-* //TVG approximates a circle by four Bezier curves. In the example above the coords array stores their coordinates.
-* \endcode
-*
 * \param[in] paint A Tvg_Paint pointer to the shape object.
 * \param[out] pts The pointer to the array of the two-dimensional points from the path.
 * \param[out] cnt The length of the @p pts array.
@@ -1222,16 +1072,6 @@ TVG_API Tvg_Result tvg_shape_get_path_coords(const Tvg_Paint* paint, const Tvg_P
 * \brief Gets the commands data of the path.
 *
 * The function does not allocate any data. There is no need to free the @p cmds array.
-*
-* \code
-* Tvg_Paint *shape = tvg_shape_new();
-* Tvg_Path_Command *cmds = NULL;
-* uint32_t len = 0;
-*
-* tvg_shape_append_circle(shape, 10, 10, 50, 50);
-* tvg_shape_get_path_commands(shape, (const Tvg_Path_Command**)&cmds, &len);
-* //TVG approximates a circle by four Bezier curves. In the example above the cmds array stores the commands of the path data.
-* \endcode
 *
 * \param[in] paint A Tvg_Paint pointer to the shape object.
 * \param[out] cmds The pointer to the array of the commands from the path.
@@ -1553,20 +1393,6 @@ TVG_API Tvg_Result tvg_shape_set_paint_order(Tvg_Paint* paint, bool strokeFirst)
 *
 * The parts of the shape defined as inner are filled.
 *
-* \code
-* Tvg_Gradient* grad = tvg_linear_gradient_new();
-* tvg_linear_gradient_set(grad, 700, 700, 800, 800);
-* Tvg_Color_Stop color_stops[4] =
-* {
-*   {0.0 , 0,   0,   0,   255},
-*   {0.25, 255, 0,   0,   255},
-*   {0.5 , 0,   255, 0,   255},
-*   {1.0 , 0,   0,   255, 255}
-* };
-* tvg_gradient_set_color_stops(grad, color_stops, 4);
-* tvg_shape_set_linear_gradient(shape, grad);
-* \endcode
-*
 * \param[in] paint A Tvg_Paint pointer to the shape object.
 * \param[in] grad The linear gradient fill.
 *
@@ -1584,20 +1410,6 @@ TVG_API Tvg_Result tvg_shape_set_linear_gradient(Tvg_Paint* paint, Tvg_Gradient*
 * \brief Sets the radial gradient fill for all of the figures from the path.
 *
 * The parts of the shape defined as inner are filled.
-*
-* \code
-* Tvg_Gradient* grad = tvg_radial_gradient_new();
-* tvg_radial_gradient_set(grad, 550, 550, 50);
-* Tvg_Color_Stop color_stops[4] =
-* {
-*   {0.0 , 0,   0,   0,   255},
-*   {0.25, 255, 0,   0,   255},
-*   {0.5 , 0,   255, 0,   255},
-*   {1.0 , 0,   0,   255, 255}
-* };
-* tvg_gradient_set_color_stops(grad, color_stops, 4);
-* tvg_shape_set_radial_gradient(shape, grad);
-* \endcode
 *
 * \param[in] paint A Tvg_Paint pointer to the shape object.
 * \param[in] grad The radial gradient fill.
@@ -1646,20 +1458,6 @@ TVG_API Tvg_Result tvg_shape_get_gradient(const Tvg_Paint* paint, Tvg_Gradient**
 /*!
 * \brief Creates a new linear gradient object.
 *
-* \code
-* Tvg_Paint* shape = tvg_shape_new();
-* tvg_shape_append_rect(shape, 700, 700, 100, 100, 20, 20);
-* Tvg_Gradient* grad = tvg_linear_gradient_new();
-* tvg_linear_gradient_set(grad, 700, 700, 800, 800);
-* Tvg_Color_Stop color_stops[2] =
-* {
-*   {0.0, 0, 0,   0, 255},
-*   {1.0, 0, 255, 0, 255},
-* };
-* tvg_gradient_set_color_stops(grad, color_stops, 2);
-* tvg_shape_set_linear_gradient(shape, grad);
-* \endcode
-*
 * \return A new linear gradient object.
 */
 TVG_API Tvg_Gradient* tvg_linear_gradient_new(void);
@@ -1667,20 +1465,6 @@ TVG_API Tvg_Gradient* tvg_linear_gradient_new(void);
 
 /*!
 * \brief Creates a new radial gradient object.
-*
-* \code
-* Tvg_Paint* shape = tvg_shape_new();
-* tvg_shape_append_rect(shape, 700, 700, 100, 100, 20, 20);
-* Tvg_Gradient* grad = tvg_radial_gradient_new();
-* tvg_radial_gradient_set(grad, 550, 550, 50);
-* Tvg_Color_Stop color_stops[2] =
-* {
-*   {0.0, 0, 0,   0, 255},
-*   {1.0, 0, 255, 0, 255},
-* };
-* tvg_gradient_set_color_stops(grad, color_stops, 2);
-* tvg_shape_set_radial_gradient(shape, grad);
-* \endcode
 *
 * \return A new radial gradient object.
 */
