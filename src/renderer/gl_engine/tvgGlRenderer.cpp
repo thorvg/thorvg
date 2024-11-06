@@ -369,12 +369,15 @@ void GlRenderer::drawPrimitive(GlShape& sdata, const Fill* fill, RenderUpdateFla
         }
         gradientBlock.nStops[0] = nStops * 1.f;
 
-        float x, y, r;
-        radialFill->radial(&x, &y, &r);
+        float x, y, r, fx, fy, fr;
+        radialFill->radial(&x, &y, &r, &fx, &fy, &fr);
 
-        gradientBlock.centerPos[0] = x;
-        gradientBlock.centerPos[1] = y;
-        gradientBlock.radius[0] = r;
+        gradientBlock.centerPos[0] = fx;
+        gradientBlock.centerPos[1] = fy;
+        gradientBlock.centerPos[2] = x;
+        gradientBlock.centerPos[3] = y;
+        gradientBlock.radius[0] = fr;
+        gradientBlock.radius[1] = r;
 
         gradientBinding = GlBindingResource{
             2,
