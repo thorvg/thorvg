@@ -132,7 +132,7 @@ void WgShaderTypeGradient::update(const RadialGradient* radialGradient)
     auto stopCnt = radialGradient->colorStops(&stops);
     updateTexData(stops, stopCnt);
     // update base points
-    radialGradient->radial(&settings[2], &settings[3], &settings[0]);
+    radialGradient->radial(&settings[0], &settings[1], &settings[2], &settings[4], &settings[5], &settings[6]);
 };
 
 
