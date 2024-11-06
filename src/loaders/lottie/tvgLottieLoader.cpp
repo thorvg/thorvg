@@ -61,8 +61,6 @@ void LottieLoader::release()
         free((char*)content);
         content = nullptr;
     }
-    free(dirName);
-    dirName = nullptr;
 }
 
 
@@ -85,6 +83,8 @@ LottieLoader::~LottieLoader()
     //TODO: correct position?
     delete(comp);
     delete(builder);
+
+    free(dirName);
 }
 
 

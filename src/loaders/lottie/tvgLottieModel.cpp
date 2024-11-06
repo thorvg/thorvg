@@ -61,6 +61,14 @@ void LottieSlot::reset()
                 static_cast<LottieTextDoc*>(pair->prop)->frames = nullptr;
                 break;
             }
+            case LottieProperty::Type::Image: {
+                static_cast<LottieImage*>(pair->obj)->data.release();
+                static_cast<LottieImage*>(pair->obj)->data = *static_cast<LottieBitmap*>(pair->prop);
+                static_cast<LottieBitmap*>(pair->prop)->b64Data = nullptr;
+                static_cast<LottieBitmap*>(pair->prop)->mimeType = nullptr;
+                static_cast<LottieImage*>(pair->obj)->prepare();
+                break;
+            }
             default: break;
         }
         delete(pair->prop);
@@ -108,6 +116,14 @@ void LottieSlot::assign(LottieObject* target)
                 pair->obj->override(&static_cast<LottieText*>(target)->doc);
                 break;
             }
+            case LottieProperty::Type::Image: {
+                if (!overridden) {
+                    pair->prop = new LottieBitmap;
+                    *static_cast<LottieBitmap*>(pair->prop) = static_cast<LottieImage*>(pair->obj)->data;
+                }
+                pair->obj->override(&static_cast<LottieImage*>(target)->data);
+                break;
+            }
             default: break;
         }
     }
@@ -152,13 +168,6 @@ float LottieTextRange::factor(float frameNo, float totalLen, float idx)
 }
 
 
-LottieImage::~LottieImage()
-{
-    free(b64Data);
-    free(mimeType);
-}
-
-
 void LottieImage::prepare()
 {
     LottieObject::type = LottieObject::Image;
@@ -168,14 +177,15 @@ void LottieImage::prepare()
     //force to load a picture on the same thread
     TaskScheduler::async(false);
 
-    if (size > 0) picture->load((const char*)b64Data, size, mimeType);
-    else picture->load(path);
+    if (data.size > 0) picture->load((const char*)data.b64Data, data.size, data.mimeType);
+    else picture->load(data.path);
 
     TaskScheduler::async(true);
 
-    picture->size(width, height);
+    picture->size(data.width, data.height);
     PP(picture)->ref();
 
+    pooler.reset();
     pooler.push(picture);
 }
 
