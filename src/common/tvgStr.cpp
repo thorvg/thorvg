@@ -237,4 +237,16 @@ char* strDirname(const char* path)
     return strDuplicate(path, len);
 }
 
+
+const char* strExtension(const char* filename)
+{
+    auto ext = filename;
+    while (ext) {
+        auto p = strchr(ext, '.');
+        if (!p) break;
+        ext = p + 1;
+    }
+    return ext;
+}
+
 }

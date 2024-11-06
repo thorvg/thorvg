@@ -73,7 +73,7 @@ struct UserExample : tvgexam::Example
         //blueprint
         {
             // Load png file from path.
-            string path = EXAMPLE_DIR"/image/stroke-miterlimit.png";
+            const char* path = EXAMPLE_DIR"/image/stroke-miterlimit.png";
 
             auto picture = tvg::Picture::gen();
             if (!tvgexam::verify(picture->load(path))) return false;

@@ -73,7 +73,7 @@ private:
 
       auto animation = Animation::gen();
       auto picture = animation->picture();
-      if (picture->load(in) != Result::Success) return false;
+      if (picture->load(in.c_str()) != Result::Success) return false;
 
       float width, height;
       picture->size(&width, &height);
@@ -89,7 +89,7 @@ private:
          bg->appendRect(0, 0, width * scale, height * scale);
          saver->background(std::move(bg));
       }
-      if (saver->save(std::move(animation), out, 100, fps) != Result::Success) return false;
+      if (saver->save(std::move(animation), out.c_str(), 100, fps) != Result::Success) return false;
       if (saver->sync() != Result::Success) return false;
 
       if (Initializer::term() != Result::Success) return false;

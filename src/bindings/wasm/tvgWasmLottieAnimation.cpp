@@ -228,6 +228,7 @@ public:
             return false;
         }
 
+        //FIXME: remove this copy, save with a file passing.
         this->data = data; //back up for saving
 
         canvas->clear(true);
@@ -239,7 +240,7 @@ public:
             filetype = "lottie";
         }
 
-        if (animation->picture()->load(data.c_str(), data.size(), filetype, rpath, false) != Result::Success) {
+        if (animation->picture()->load(data.c_str(), data.size(), filetype.c_str(), rpath.c_str(), false) != Result::Success) {
             errorMsg = "load() fail";
             return false;
         }
