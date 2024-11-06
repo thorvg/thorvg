@@ -111,6 +111,7 @@ fn fs_main(in: VertexOutput) -> @location(0) vec4f {
 const char* cShaderSrc_Linear = R"(
 struct VertexInput { @location(0) position: vec2f };
 struct VertexOutput { @builtin(position) position : vec4f, @location(0) vGradCoord : vec4f };
+struct GradSettings { settings: vec4f, focal: vec4f };
 
 // uniforms
 @group(0) @binding(0) var<uniform> uViewMat : mat4x4f;
@@ -118,7 +119,7 @@ struct VertexOutput { @builtin(position) position : vec4f, @location(0) vGradCoo
 @group(1) @binding(1) var<uniform> uBlendSettings : vec4f;
 @group(2) @binding(0) var uSamplerGrad : sampler;
 @group(2) @binding(1) var uTextureGrad : texture_2d<f32>;
-@group(2) @binding(2) var<uniform> uSettingGrad : vec4f;
+@group(2) @binding(2) var<uniform> uSettingGrad : GradSettings;
 @group(2) @binding(3) var<uniform> uTransformGrad : mat4x4f;
 
 @vertex
@@ -132,8 +133,8 @@ fn vs_main(in: VertexInput) -> VertexOutput {
 @fragment
 fn fs_main(in: VertexOutput) -> @location(0) vec4f {
     let pos = in.vGradCoord.xy;
-    let st = uSettingGrad.xy;
-    let ed = uSettingGrad.zw;
+    let st = uSettingGrad.settings.xy;
+    let ed = uSettingGrad.settings.zw;
     let ba = ed - st;
     let t = dot(pos - st, ba) / dot(ba, ba);
     let Sc = textureSample(uTextureGrad, uSamplerGrad, vec2f(t, 0.5));
@@ -149,13 +150,14 @@ fn fs_main(in: VertexOutput) -> @location(0) vec4f {
 const char* cShaderSrc_Radial = R"(
 struct VertexInput { @location(0) position: vec2f };
 struct VertexOutput { @builtin(position) position : vec4f, @location(0) vGradCoord : vec4f };
+struct GradSettings { settings: vec4f, focal: vec4f };
 
 @group(0) @binding(0) var<uniform> uViewMat : mat4x4f;
 @group(1) @binding(0) var<uniform> uModelMat : mat4x4f;
 @group(1) @binding(1) var<uniform> uBlendSettings : vec4f;
 @group(2) @binding(0) var uSamplerGrad : sampler;
 @group(2) @binding(1) var uTextureGrad : texture_2d<f32>;
-@group(2) @binding(2) var<uniform> uSettingGrad : vec4f;
+@group(2) @binding(2) var<uniform> uSettingGrad : GradSettings;
 @group(2) @binding(3) var<uniform> uTransformGrad : mat4x4f;
 
 @vertex
@@ -168,8 +170,16 @@ fn vs_main(in: VertexInput) -> VertexOutput {
 
 @fragment
 fn fs_main(in: VertexOutput) -> @location(0) vec4f {
-    let t: f32 = distance(uSettingGrad.zw, in.vGradCoord.xy) / uSettingGrad.r;
-    let Sc = textureSample(uTextureGrad, uSamplerGrad, vec2f(t, 0.5));
+    // orignal data
+    let d0 = in.vGradCoord.xy - uSettingGrad.settings.xy;
+    let d1 = uSettingGrad.settings.xy - uSettingGrad.focal.xy;
+    let r0 = uSettingGrad.settings.z;
+    let rd = uSettingGrad.focal.z - uSettingGrad.settings.z;
+    let a = 1.0*dot(d1, d1) - 1.0*rd*rd;
+    let b = 2.0*dot(d0, d1) - 2.0*r0*rd;
+    let c = 1.0*dot(d0, d0) - 1.0*r0*r0;
+    let t = (-b + sqrt(b*b - 4*a*c))/(2*a);
+    let Sc = textureSample(uTextureGrad, uSamplerGrad, vec2f(1.0 - t, 0.5));
     let So = uBlendSettings.a;
     return vec4f(Sc.rgb * Sc.a * So, Sc.a * So);
 }
@@ -286,6 +296,7 @@ fn postProcess(d: FragData, R: vec4f) -> vec4f { return R; };
 const char* cShaderSrc_Linear_Blend = R"(
 struct VertexInput { @location(0) position: vec2f };
 struct VertexOutput { @builtin(position) position: vec4f, @location(0) vGradCoord : vec4f, @location(1) vScrCoord: vec2f };
+struct GradSettings { settings: vec4f, focal: vec4f };
 
 @group(0) @binding(0) var<uniform> uViewMat : mat4x4f;
 @group(1) @binding(0) var<uniform> uModelMat : mat4x4f;
@@ -335,13 +346,14 @@ fn postProcess(d: FragData, R: vec4f) -> vec4f { return R; };
 const char* cShaderSrc_Radial_Blend = R"(
 struct VertexInput { @location(0) position: vec2f };
 struct VertexOutput { @builtin(position) position: vec4f, @location(0) vGradCoord : vec4f, @location(1) vScrCoord: vec2f };
+struct GradSettings { settings: vec4f, focal: vec4f };
 
 @group(0) @binding(0) var<uniform> uViewMat : mat4x4f;
 @group(1) @binding(0) var<uniform> uModelMat : mat4x4f;
 @group(1) @binding(1) var<uniform> uBlendSettings : vec4f;
 @group(2) @binding(0) var uSamplerGrad : sampler;
 @group(2) @binding(1) var uTextureGrad : texture_2d<f32>;
-@group(2) @binding(2) var<uniform> uSettingGrad : vec4f;
+@group(2) @binding(2) var<uniform> uSettingGrad : GradSettings;
 @group(2) @binding(3) var<uniform> uTransformGrad : mat4x4f;
 @group(3) @binding(0) var uSamplerDst : sampler;
 @group(3) @binding(1) var uTextureDst : texture_2d<f32>;
@@ -358,9 +370,15 @@ fn vs_main(in: VertexInput) -> VertexOutput {
 
 struct FragData { Sc: vec3f, Sa: f32, So: f32, Dc: vec3f, Da: f32 };
 fn getFragData(in: VertexOutput) -> FragData {
-    // get source data
-    let t: f32 = distance(uSettingGrad.zw, in.vGradCoord.xy) / uSettingGrad.r;
-    let colorSrc = textureSample(uTextureGrad, uSamplerGrad, vec2f(t, 0.5));
+    let d0 = in.vGradCoord.xy - uSettingGrad.settings.xy;
+    let d1 = uSettingGrad.settings.xy - uSettingGrad.focal.xy;
+    let r0 = uSettingGrad.settings.z;
+    let rd = uSettingGrad.focal.z - uSettingGrad.settings.z;
+    let a = 1.0*dot(d1, d1) - 1.0*rd*rd;
+    let b = 2.0*dot(d0, d1) - 2.0*r0*rd;
+    let c = 1.0*dot(d0, d0) - 1.0*r0*r0;
+    let t = (-b + sqrt(b*b - 4*a*c))/(2*a);
+    let colorSrc = textureSample(uTextureGrad, uSamplerGrad, vec2f(1.0 - t, 0.5));
     let colorDst = textureSample(uTextureDst, uSamplerDst, in.vScrCoord.xy);
     // fill fragment data
     var data: FragData;

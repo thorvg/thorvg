@@ -65,7 +65,7 @@ struct WgShaderTypeSolidColor
 #define WG_TEXTURE_GRADIENT_SIZE 512
 struct WgShaderTypeGradient
 {
-    float settings[4]{};
+    float settings[4+4]{}; // WGSL: struct GradSettings { settings: vec4f, focal: vec4f; transform: mat4f };
     uint8_t texData[WG_TEXTURE_GRADIENT_SIZE * 4];
 
     void update(const LinearGradient* linearGradient);
