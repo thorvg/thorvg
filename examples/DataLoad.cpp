@@ -39,14 +39,14 @@ struct UserExample : tvgexam::Example
         shape->appendRect(0, 0, w, h);          //x, y, w, h
         shape->fill(255, 255, 255);             //r, g, b
 
-        canvas->push(std::move(shape));
+        canvas->push(shape);
 
         auto picture = tvg::Picture::gen();
         if (!tvgexam::verify(picture->load(svg, strlen(svg), "svg"))) return false;
 
         picture->size(w, h);
 
-        canvas->push(std::move(picture));
+        canvas->push(picture);
 
         return true;
     }

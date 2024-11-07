@@ -43,7 +43,7 @@ struct UserExample : tvgexam::Example
         shape1->fill(255, 255, 255);
         shape1->fill(tvg::FillRule::Winding);  //Fill all winding shapes
 
-        canvas->push(std::move(shape1));
+        canvas->push(shape1);
 
         //Star 2
         auto shape2 = tvg::Shape::gen();
@@ -56,7 +56,7 @@ struct UserExample : tvgexam::Example
         shape2->fill(255, 255, 255);
         shape2->fill(tvg::FillRule::EvenOdd); //Fill polygons with even odd pattern
 
-        canvas->push(std::move(shape2));
+        canvas->push(shape2);
 
         return true;
     }

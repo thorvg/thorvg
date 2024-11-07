@@ -225,7 +225,7 @@ struct Scene::Impl
     {
         if (ret) TVGERR("RENDERER", "TODO: duplicate()");
 
-        auto scene = Scene::gen().release();
+        auto scene = Scene::gen();
         auto dup = scene->pImpl;
 
         for (auto paint : paints) {

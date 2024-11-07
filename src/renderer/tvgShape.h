@@ -278,14 +278,13 @@ struct Shape::Impl
         flag |= RenderUpdateFlag::Stroke;
     }
 
-    Result strokeFill(unique_ptr<Fill> f)
+    Result strokeFill(Fill* f)
     {
-        auto p = f.release();
-        if (!p) return Result::MemoryCorruption;
+        if (!f) return Result::MemoryCorruption;
 
         if (!rs.stroke) rs.stroke = new RenderStroke();
-        if (rs.stroke->fill && rs.stroke->fill != p) delete(rs.stroke->fill);
-        rs.stroke->fill = p;
+        if (rs.stroke->fill && rs.stroke->fill != f) delete(rs.stroke->fill);
+        rs.stroke->fill = f;
         rs.stroke->color[3] = 0;
 
         flag |= RenderUpdateFlag::Stroke;
@@ -351,7 +350,7 @@ struct Shape::Impl
     {
         auto shape = static_cast<Shape*>(ret);
         if (shape) shape->reset();
-        else shape = Shape::gen().release();
+        else shape = Shape::gen();
 
         auto dup = shape->pImpl;
         delete(dup->rs.fill);

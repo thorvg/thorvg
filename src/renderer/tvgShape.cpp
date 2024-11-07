@@ -43,9 +43,9 @@ Shape :: ~Shape()
 }
 
 
-unique_ptr<Shape> Shape::gen() noexcept
+Shape* Shape::gen() noexcept
 {
-    return unique_ptr<Shape>(new Shape);
+    return new Shape;
 }
 
 
@@ -210,13 +210,12 @@ Result Shape::fill(uint8_t r, uint8_t g, uint8_t b, uint8_t a) noexcept
 }
 
 
-Result Shape::fill(unique_ptr<Fill> f) noexcept
+Result Shape::fill(Fill* f) noexcept
 {
-    auto p = f.release();
-    if (!p) return Result::MemoryCorruption;
+    if (!f) return Result::MemoryCorruption;
 
-    if (pImpl->rs.fill && pImpl->rs.fill != p) delete(pImpl->rs.fill);
-    pImpl->rs.fill = p;
+    if (pImpl->rs.fill && pImpl->rs.fill != f) delete(pImpl->rs.fill);
+    pImpl->rs.fill = f;
     pImpl->flag |= RenderUpdateFlag::Gradient;
 
     return Result::Success;
@@ -272,9 +271,9 @@ Result Shape::strokeFill(uint8_t* r, uint8_t* g, uint8_t* b, uint8_t* a) const n
 }
 
 
-Result Shape::strokeFill(unique_ptr<Fill> f) noexcept
+Result Shape::strokeFill(Fill* f) noexcept
 {
-    return pImpl->strokeFill(std::move(f));
+    return pImpl->strokeFill(f);
 }
 
 

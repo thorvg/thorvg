@@ -37,21 +37,21 @@ struct UserExample : tvgexam::Example
         shape1->appendRect(0, 0, 400, 400, 50, 50);
         shape1->fill(0, 255, 255);
         shape1->blend(tvg::BlendMethod::Normal);
-        canvas->push(std::move(shape1));
+        canvas->push(shape1);
 
         //Add
         auto shape2 = tvg::Shape::gen();
         shape2->appendCircle(400, 400, 200, 200);
         shape2->fill(255, 255, 0, 170);
         shape2->blend(tvg::BlendMethod::Add);
-        canvas->push(std::move(shape2));
+        canvas->push(shape2);
 
         //Multiply
         auto shape3 = tvg::Shape::gen();
         shape3->appendCircle(400, 400, 250, 100);
         shape3->fill(255, 255, 255, 100);
         shape3->blend(tvg::BlendMethod::Multiply);
-        canvas->push(std::move(shape3));
+        canvas->push(shape3);
 
         //Overlay
         auto shape4 = tvg::Shape::gen();
@@ -68,7 +68,7 @@ struct UserExample : tvgexam::Example
         shape4->close();
         shape4->fill(255, 0, 200, 200);
         shape4->blend(tvg::BlendMethod::Overlay);
-        canvas->push(std::move(shape4));
+        canvas->push(shape4);
 
         //Difference
         auto shape5 = tvg::Shape::gen();
@@ -84,9 +84,9 @@ struct UserExample : tvgexam::Example
         colorStops[1] = {1, 255, 255, 255, 100};
         fill->colorStops(colorStops, 2);
 
-        shape5->fill(std::move(fill));
+        shape5->fill(fill);
         shape5->blend(tvg::BlendMethod::Difference);
-        canvas->push(std::move(shape5));
+        canvas->push(shape5);
 
         //Exclusion
         auto shape6 = tvg::Shape::gen();
@@ -97,23 +97,23 @@ struct UserExample : tvgexam::Example
         fill2->radial(300, 800, 150, 300, 800, 0);
         fill2->colorStops(colorStops, 2);
 
-        shape6->fill(std::move(fill2));
+        shape6->fill(fill2);
         shape6->blend(tvg::BlendMethod::Exclusion);
-        canvas->push(std::move(shape6));
+        canvas->push(shape6);
 
         //Screen
         auto shape7 = tvg::Shape::gen();
         shape7->appendCircle(600, 650, 200, 150);
         shape7->blend(tvg::BlendMethod::Screen);
         shape7->fill(0, 0, 255);
-        canvas->push(std::move(shape7));
+        canvas->push(shape7);
 
         //Darken
         auto shape9 = tvg::Shape::gen();
         shape9->appendRect(600, 650, 350, 250);
         shape9->blend(tvg::BlendMethod::Darken);
         shape9->fill(10, 255, 155);
-        canvas->push(std::move(shape9));
+        canvas->push(shape9);
 
         //Prepare Transformed Image
         string path(EXAMPLE_DIR"/image/rawimage_200x300.raw");
@@ -130,14 +130,14 @@ struct UserExample : tvgexam::Example
         picture->translate(800, 700);
         picture->rotate(40);
         picture->blend(tvg::BlendMethod::Lighten);
-        canvas->push(std::move(picture));
+        canvas->push(picture);
 
         //ColorDodge
         auto shape10 = tvg::Shape::gen();
         shape10->appendRect(0, 0, 200, 200, 50, 50);
         shape10->blend(tvg::BlendMethod::ColorDodge);
         shape10->fill(255, 255, 255, 250);
-        canvas->push(std::move(shape10));
+        canvas->push(shape10);
 
         //ColorBurn
         auto picture2 = tvg::Picture::gen();
@@ -145,14 +145,14 @@ struct UserExample : tvgexam::Example
         picture2->translate(600, 250);
         picture2->blend(tvg::BlendMethod::ColorBurn);
         picture2->opacity(150);
-        canvas->push(std::move(picture2));
+        canvas->push(picture2);
 
         //HardLight
         auto picture3 = tvg::Picture::gen();
         if (!tvgexam::verify(picture3->load(data, 200, 300, tvg::ColorSpace::ARGB8888, true))) return false;
         picture3->translate(700, 150);
         picture3->blend(tvg::BlendMethod::HardLight);
-        canvas->push(std::move(picture3));
+        canvas->push(picture3);
 
         //SoftLight
         auto picture4 = tvg::Picture::gen();
@@ -160,7 +160,7 @@ struct UserExample : tvgexam::Example
         picture4->translate(350, 600);
         picture4->rotate(90);
         picture4->blend(tvg::BlendMethod::SoftLight);
-        canvas->push(std::move(picture4));
+        canvas->push(picture4);
 
         free(data);
 

@@ -36,7 +36,7 @@ struct UserExample : tvgexam::Example
         auto bg = tvg::Shape::gen();
         bg->appendRect(0, 0, w, h);    //x, y, w, h
         bg->fill(255, 255, 255);       //r, g, b
-        canvas->push(std::move(bg));
+        canvas->push(bg);
 
         char buf[PATH_MAX];
         snprintf(buf, sizeof(buf), EXAMPLE_DIR"/svg/logo.svg");
@@ -58,7 +58,7 @@ struct UserExample : tvgexam::Example
         picture->translate(shiftX, shiftY);
         picture->scale(scale);
 
-        canvas->push(std::move(picture));
+        canvas->push(picture);
 
         return true;
     }

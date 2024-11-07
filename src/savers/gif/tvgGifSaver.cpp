@@ -31,7 +31,7 @@
 
 void GifSaver::run(unsigned tid)
 {
-    auto canvas = tvg::SwCanvas::gen();
+    auto canvas = unique_ptr<SwCanvas>(SwCanvas::gen());
     if (!canvas) return;
 
     //Do not share the memory pool since this canvas could be running on a thread.
@@ -42,10 +42,10 @@ void GifSaver::run(unsigned tid)
 
     buffer = (uint32_t*)realloc(buffer, sizeof(uint32_t) * w * h);
     canvas->target(buffer, w, w, h, ColorSpace::ABGR8888S);
-    canvas->push(cast(bg));
+    canvas->push(bg);
     bg = nullptr;
 
-    canvas->push(cast(animation->picture()));
+    canvas->push(animation->picture());
 
     //use the default fps
     if (fps > 60.0f) fps = 60.0f;   // just in case

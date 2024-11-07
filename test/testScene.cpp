@@ -25,10 +25,11 @@
 #include "catch.hpp"
 
 using namespace tvg;
+using namespace std;
 
 TEST_CASE("Scene Creation", "[tvgScene]")
 {
-    auto scene = Scene::gen();
+    auto scene = unique_ptr<Scene>(Scene::gen());
     REQUIRE(scene);
 
     REQUIRE(scene->type() == Type::Scene);
@@ -36,30 +37,26 @@ TEST_CASE("Scene Creation", "[tvgScene]")
 
 TEST_CASE("Pushing Paints Into Scene", "[tvgScene]")
 {
-    auto scene = Scene::gen();
+    auto scene = unique_ptr<Scene>(Scene::gen());
     REQUIRE(scene);
 
     Paint* paints[3];
 
     //Pushing Paints
-    auto p1 = Shape::gen();
-    paints[0] = p1.get();
-    REQUIRE(scene->push(std::move(p1)) == Result::Success);
+    paints[0] = Shape::gen();
+    REQUIRE(scene->push(paints[0]) == Result::Success);
 
-    auto p2 = Picture::gen();
-    paints[1] = p2.get();
-    REQUIRE(scene->push(std::move(p2)) == Result::Success);
+    paints[1] = Picture::gen();
+    REQUIRE(scene->push(paints[1]) == Result::Success);
 
-    auto p3 = Picture::gen();
-    paints[2] = p3.get();
-    REQUIRE(scene->push(std::move(p3)) == Result::Success);
+    paints[2] = Picture::gen();
+    REQUIRE(scene->push(paints[2]) == Result::Success);
 
     //Pushing Null Pointer
     REQUIRE(scene->push(nullptr) == Result::MemoryCorruption);
 
     //Pushing Invalid Paint
-    std::unique_ptr<Shape> shape = nullptr;
-    REQUIRE(scene->push(std::move(shape)) == Result::MemoryCorruption);
+    REQUIRE(scene->push(nullptr) == Result::MemoryCorruption);
 
     //Check list of paints
     auto list = scene->paints();
@@ -73,7 +70,7 @@ TEST_CASE("Pushing Paints Into Scene", "[tvgScene]")
 
 TEST_CASE("Scene Clear", "[tvgScene]")
 {
-    auto scene = Scene::gen();
+    auto scene = unique_ptr<Scene>(Scene::gen());
     REQUIRE(scene);
 
     REQUIRE(scene->push(Shape::gen()) == Result::Success);
@@ -84,26 +81,24 @@ TEST_CASE("Scene Clear And Reuse Shape", "[tvgScene]")
 {
     REQUIRE(Initializer::init(0) == Result::Success);
 
-    auto canvas = SwCanvas::gen();
+    auto canvas = unique_ptr<SwCanvas>(SwCanvas::gen());
     REQUIRE(canvas);
 
     auto scene = Scene::gen();
     REQUIRE(scene);
-    Scene *pScene = scene.get();
 
     auto shape = Shape::gen();
     REQUIRE(shape);
-    Shape* pShape = shape.get();
 
-    REQUIRE(scene->push(std::move(shape)) == Result::Success);
-    REQUIRE(canvas->push(std::move(scene)) == Result::Success);
+    REQUIRE(scene->push(shape) == Result::Success);
+    REQUIRE(canvas->push(scene) == Result::Success);
     REQUIRE(canvas->update() == Result::Success);
 
     //No deallocate shape.
-    REQUIRE(pScene->clear(false) == Result::Success);
+    REQUIRE(scene->clear(false) == Result::Success);
 
     //Reuse shape.
-    REQUIRE(pScene->push(std::unique_ptr<Shape>(pShape)) == Result::Success);
+    REQUIRE(scene->push(shape) == Result::Success);
 
     REQUIRE(Initializer::term() == Result::Success);
 }

@@ -38,7 +38,7 @@ struct Text::Impl
     bool italic = false;
     bool changed = false;
 
-    Impl(Text* p) : paint(p), shape(Shape::gen().release())
+    Impl(Text* p) : paint(p), shape(Shape::gen())
     {
     }
 
@@ -145,7 +145,7 @@ struct Text::Impl
 
         load();
 
-        auto text = Text::gen().release();
+        auto text = Text::gen();
         auto dup = text->pImpl;
         P(shape)->duplicate(dup->shape);
 

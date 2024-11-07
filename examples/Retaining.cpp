@@ -36,19 +36,19 @@ struct UserExample : tvgexam::Example
         auto shape1 = tvg::Shape::gen();
         shape1->appendRect(0, 0, 400, 400, 50, 50);  //x, y, w, h, rx, ry
         shape1->fill(0, 255, 0);                     //r, g, b
-        canvas->push(std::move(shape1));
+        canvas->push(shape1);
 
         //Prepare Round Rectangle2
         auto shape2 = tvg::Shape::gen();
         shape2->appendRect(100, 100, 400, 400, 50, 50);  //x, y, w, h, rx, ry
         shape2->fill(255, 255, 0);                       //r, g, b
-        canvas->push(std::move(shape2));
+        canvas->push(shape2);
 
         //Prepare Round Rectangle3
         auto shape3 = tvg::Shape::gen();
         shape3->appendRect(200, 200, 400, 400, 50, 50);  //x, y, w, h, rx, ry
         shape3->fill(0, 255, 255);                       //r, g, b
-        canvas->push(std::move(shape3));
+        canvas->push(shape3);
 
         //Prepare Scene
         auto scene = tvg::Scene::gen();
@@ -58,16 +58,16 @@ struct UserExample : tvgexam::Example
         shape4->fill(255, 0, 0);
         shape4->strokeWidth(5);
         shape4->strokeFill(255, 255, 255);
-        scene->push(std::move(shape4));
+        scene->push(shape4);
 
         auto shape5 = tvg::Shape::gen();
         shape5->appendCircle(550, 550, 150, 150);
         shape5->fill(255, 0, 255);
         shape5->strokeWidth(5);
         shape5->strokeFill(255, 255, 255);
-        scene->push(std::move(shape5));
+        scene->push(shape5);
 
-        canvas->push(std::move(scene));
+        canvas->push(scene);
 
         return true;
     }

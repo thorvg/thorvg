@@ -32,7 +32,7 @@ using namespace std;
 
 TEST_CASE("Picture Creation", "[tvgPicture]")
 {
-    auto picture = Picture::gen();
+    auto picture = unique_ptr<Picture>(Picture::gen());
     REQUIRE(picture);
 
     REQUIRE(picture->type() == Type::Picture);
@@ -40,7 +40,7 @@ TEST_CASE("Picture Creation", "[tvgPicture]")
 
 TEST_CASE("Load RAW Data", "[tvgPicture]")
 {
-    auto picture = Picture::gen();
+    auto picture = unique_ptr<Picture>(Picture::gen());
     REQUIRE(picture);
 
     ifstream file(TEST_DIR"/rawimage_200x300.raw");
@@ -72,26 +72,25 @@ TEST_CASE("Load RAW file and render", "[tvgPicture]")
 {
     REQUIRE(Initializer::init(0) == Result::Success);
 
-    auto canvas = SwCanvas::gen();
+    auto canvas = unique_ptr<SwCanvas>(SwCanvas::gen());
     REQUIRE(canvas);
 
     uint32_t buffer[100*100];
     REQUIRE(canvas->target(buffer, 100, 100, 100, ColorSpace::ABGR8888) == Result::Success);
 
-    auto picture = Picture::gen();
-    REQUIRE(picture);
-
     ifstream file(TEST_DIR"/rawimage_200x300.raw");
     if (!file.is_open()) return;
     auto data = (uint32_t*)malloc(sizeof(uint32_t) * (200*300));
-    if (!data) return;
     file.read(reinterpret_cast<char *>(data), sizeof (uint32_t) * 200 * 300);
     file.close();
+
+    auto picture = Picture::gen();
+    REQUIRE(picture);
 
     REQUIRE(picture->load(data, 200, 300, ColorSpace::ARGB8888, false) == Result::Success);
     REQUIRE(picture->size(100, 150) == Result::Success);
 
-    REQUIRE(canvas->push(std::move(picture)) == Result::Success);
+    REQUIRE(canvas->push(picture) == Result::Success);
 
     REQUIRE(Initializer::term() == Result::Success);
 
@@ -100,7 +99,7 @@ TEST_CASE("Load RAW file and render", "[tvgPicture]")
 
 TEST_CASE("Picture Size", "[tvgPicture]")
 {
-    auto picture = Picture::gen();
+    auto picture = unique_ptr<Picture>(Picture::gen());
     REQUIRE(picture);
 
     float w, h;
@@ -140,7 +139,7 @@ TEST_CASE("Picture Size", "[tvgPicture]")
 
 TEST_CASE("Picture Duplication", "[tvgPicture]")
 {
-    auto picture = Picture::gen();
+    auto picture = unique_ptr<Picture>(Picture::gen());
     REQUIRE(picture);
 
     //Primary
@@ -153,7 +152,7 @@ TEST_CASE("Picture Duplication", "[tvgPicture]")
     REQUIRE(picture->load(data, 200, 300, ColorSpace::ARGB8888, false) == Result::Success);
     REQUIRE(picture->size(100, 100) == Result::Success);
 
-    auto dup = tvg::cast<Picture>(picture->duplicate());
+    auto dup = unique_ptr<Picture>((Picture*)picture->duplicate());
     REQUIRE(dup);
 
     float w, h;
@@ -168,7 +167,7 @@ TEST_CASE("Picture Duplication", "[tvgPicture]")
 
 TEST_CASE("Load SVG file", "[tvgPicture]")
 {
-    auto picture = Picture::gen();
+    auto picture = unique_ptr<Picture>(Picture::gen());
     REQUIRE(picture);
 
     //Invalid file
@@ -185,7 +184,7 @@ TEST_CASE("Load SVG Data", "[tvgPicture]")
 {
     static const char* svg = "<svg height=\"1000\" viewBox=\"0 0 1000 1000\" width=\"1000\" xmlns=\"http://www.w3.org/2000/svg\"><path d=\"M.10681413.09784845 1000.0527.01592069V1000.0851L.06005738 999.9983Z\" fill=\"#ffffff\" stroke-width=\"3.910218\"/><g fill=\"#252f35\"><g stroke-width=\"3.864492\"><path d=\"M256.61221 100.51736H752.8963V386.99554H256.61221Z\"/><path d=\"M201.875 100.51736H238.366478V386.99554H201.875Z\"/><path d=\"M771.14203 100.51736H807.633508V386.99554H771.14203Z\"/></g><path d=\"M420.82388 380H588.68467V422.805317H420.82388Z\" stroke-width=\"3.227\"/><path d=\"m420.82403 440.7101v63.94623l167.86079 25.5782V440.7101Z\"/><path d=\"M420.82403 523.07258V673.47362L588.68482 612.59701V548.13942Z\"/></g><g fill=\"#222f35\"><path d=\"M420.82403 691.37851 588.68482 630.5019 589 834H421Z\"/><path d=\"m420.82403 852.52249h167.86079v28.64782H420.82403v-28.64782 0 0\"/><path d=\"m439.06977 879.17031c0 0-14.90282 8.49429-18.24574 15.8161-4.3792 9.59153 0 31.63185 0 31.63185h167.86079c0 0 4.3792-22.04032 0-31.63185-3.34292-7.32181-18.24574-15.8161-18.24574-15.8161z\"/></g><g fill=\"#ffffff\"><path d=\"m280 140h15v55l8 10 8-10v-55h15v60l-23 25-23-25z\"/><path d=\"m335 140v80h45v-50h-25v10h10v30h-15v-57h18v-13z\"/></g></svg>";
 
-    auto picture = Picture::gen();
+    auto picture = unique_ptr<Picture>(Picture::gen());
     REQUIRE(picture);
 
     //Negative cases
@@ -205,7 +204,7 @@ TEST_CASE("Load SVG file and render", "[tvgPicture]")
 {
     REQUIRE(Initializer::init(0) == Result::Success);
 
-    auto canvas = SwCanvas::gen();
+    auto canvas = unique_ptr<SwCanvas>(SwCanvas::gen());
     REQUIRE(canvas);
 
     auto buffer = new uint32_t[1000*1000];
@@ -219,7 +218,7 @@ TEST_CASE("Load SVG file and render", "[tvgPicture]")
     REQUIRE(picture->load(TEST_DIR"/tag.svg") == Result::Success);
     REQUIRE(picture->size(100, 100) == Result::Success);
 
-    REQUIRE(canvas->push(std::move(picture)) == Result::Success);
+    REQUIRE(canvas->push(picture) == Result::Success);
     REQUIRE(canvas->draw() == Result::Success);
     REQUIRE(canvas->sync() == Result::Success);
 
@@ -234,7 +233,7 @@ TEST_CASE("Load SVG file and render", "[tvgPicture]")
 
 TEST_CASE("Load PNG file from path", "[tvgPicture]")
 {
-    auto picture = Picture::gen();
+    auto picture = unique_ptr<Picture>(Picture::gen());
     REQUIRE(picture);
 
     //Invalid file
@@ -251,7 +250,7 @@ TEST_CASE("Load PNG file from path", "[tvgPicture]")
 
 TEST_CASE("Load PNG file from data", "[tvgPicture]")
 {
-    auto picture = Picture::gen();
+    auto picture = unique_ptr<Picture>(Picture::gen());
     REQUIRE(picture);
 
     //Open file
@@ -277,7 +276,7 @@ TEST_CASE("Load PNG file and render", "[tvgPicture]")
 {
     REQUIRE(Initializer::init(0) == Result::Success);
 
-    auto canvas = SwCanvas::gen();
+    auto canvas = unique_ptr<SwCanvas>(SwCanvas::gen());
     REQUIRE(canvas);
 
     uint32_t buffer[100*100];
@@ -290,7 +289,7 @@ TEST_CASE("Load PNG file and render", "[tvgPicture]")
     REQUIRE(picture->opacity(192) == Result::Success);
     REQUIRE(picture->scale(5.0) == Result::Success);
 
-    REQUIRE(canvas->push(std::move(picture)) == Result::Success);
+    REQUIRE(canvas->push(picture) == Result::Success);
 
     REQUIRE(Initializer::term() == Result::Success);
 }
@@ -301,7 +300,7 @@ TEST_CASE("Load PNG file and render", "[tvgPicture]")
 
 TEST_CASE("Load JPG file from path", "[tvgPicture]")
 {
-    auto picture = Picture::gen();
+    auto picture = unique_ptr<Picture>(Picture::gen());
     REQUIRE(picture);
 
     //Invalid file
@@ -318,7 +317,7 @@ TEST_CASE("Load JPG file from path", "[tvgPicture]")
 
 TEST_CASE("Load JPG file from data", "[tvgPicture]")
 {
-    auto picture = Picture::gen();
+    auto picture = unique_ptr<Picture>(Picture::gen());
     REQUIRE(picture);
 
     //Open file
@@ -347,7 +346,7 @@ TEST_CASE("Load JPG file and render", "[tvgPicture]")
 {
     REQUIRE(Initializer::init(0) == Result::Success);
 
-    auto canvas = SwCanvas::gen();
+    auto canvas = unique_ptr<SwCanvas>(SwCanvas::gen());
     REQUIRE(canvas);
 
     uint32_t buffer[100*100];
@@ -358,7 +357,7 @@ TEST_CASE("Load JPG file and render", "[tvgPicture]")
 
     REQUIRE(picture->load(TEST_DIR"/test.jpg") == Result::Success);
 
-    REQUIRE(canvas->push(std::move(picture)) == Result::Success);
+    REQUIRE(canvas->push(picture) == Result::Success);
 
     REQUIRE(Initializer::term() == Result::Success);
 }
@@ -369,7 +368,7 @@ TEST_CASE("Load JPG file and render", "[tvgPicture]")
 
 TEST_CASE("Load WEBP file from path", "[tvgPicture]")
 {
-    auto picture = Picture::gen();
+    auto picture = unique_ptr<Picture>(Picture::gen());
     REQUIRE(picture);
 
     //Invalid file
@@ -386,7 +385,7 @@ TEST_CASE("Load WEBP file from path", "[tvgPicture]")
 
 TEST_CASE("Load WEBP file from data", "[tvgPicture]")
 {
-    auto picture = Picture::gen();
+    auto picture = unique_ptr<Picture>(Picture::gen());
     REQUIRE(picture);
 
     //Open file
@@ -412,7 +411,7 @@ TEST_CASE("Load WEBP file and render", "[tvgPicture]")
 {
     REQUIRE(Initializer::init(0) == Result::Success);
 
-    auto canvas = SwCanvas::gen();
+    auto canvas = unique_ptr<SwCanvas>(SwCanvas::gen());
     REQUIRE(canvas);
 
     uint32_t buffer[100*100];
@@ -425,9 +424,10 @@ TEST_CASE("Load WEBP file and render", "[tvgPicture]")
     REQUIRE(picture->opacity(192) == Result::Success);
     REQUIRE(picture->scale(5.0) == Result::Success);
 
-    REQUIRE(canvas->push(std::move(picture)) == Result::Success);
+    REQUIRE(canvas->push(picture) == Result::Success);
 
     REQUIRE(Initializer::term() == Result::Success);
 }
 
 #endif
+

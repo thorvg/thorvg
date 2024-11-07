@@ -159,7 +159,7 @@ struct Picture::Impl
 
         load();
 
-        auto picture = Picture::gen().release();
+        auto picture = Picture::gen();
         auto dup = picture->pImpl;
 
         if (paint) dup->paint = paint->duplicate();

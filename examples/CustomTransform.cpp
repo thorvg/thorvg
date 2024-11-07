@@ -95,7 +95,7 @@ struct UserExample : tvgexam::Example
 
         shape->transform(m);
 
-        canvas->push(std::move(shape));
+        canvas->push(shape);
 
         return true;
     }

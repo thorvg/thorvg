@@ -33,7 +33,7 @@ using namespace std;
 
 TEST_CASE("Text Creation", "[tvgText]")
 {
-    auto text = Text::gen();
+    auto text = unique_ptr<Text>(Text::gen());
     REQUIRE(text);
 
     REQUIRE(text->type() == Type::Text);
@@ -43,7 +43,7 @@ TEST_CASE("Load TTF Data from a file", "[tvgText]")
 {
     Initializer::init(0);
 
-    auto text = Text::gen();
+    auto text = unique_ptr<Text>(Text::gen());
     REQUIRE(text);
 
     REQUIRE(Text::unload(TEST_DIR"/invalid.ttf") == tvg::Result::InsufficientCondition);
@@ -71,7 +71,7 @@ TEST_CASE("Load TTF Data from a memory", "[tvgText]")
     file.read(data, size);
     file.close();
 
-    auto text = Text::gen();
+    auto text = unique_ptr<Text>(Text::gen());
     REQUIRE(text);
 
     static const char* svg = "<svg height=\"1000\" viewBox=\"0 0 600 600\" ></svg>";
@@ -100,7 +100,7 @@ TEST_CASE("Text Font", "[tvgText]")
 {
     Initializer::init(0);
 
-    auto text = Text::gen();
+    auto text = unique_ptr<Text>(Text::gen());
     REQUIRE(text);
 
     REQUIRE(Text::load(TEST_DIR"/Arial.ttf") == tvg::Result::Success);
@@ -118,7 +118,7 @@ TEST_CASE("Text Basic", "[tvgText]")
 {
     Initializer::init(0);
 
-    auto canvas = SwCanvas::gen();
+    auto canvas = unique_ptr<SwCanvas>(SwCanvas::gen());
 
     auto text = Text::gen();
     REQUIRE(text);
@@ -133,7 +133,7 @@ TEST_CASE("Text Basic", "[tvgText]")
 
     REQUIRE(text->fill(255, 255, 255) == tvg::Result::Success);
 
-    REQUIRE(canvas->push(std::move(text)) == Result::Success);
+    REQUIRE(canvas->push(text) == Result::Success);
 
     Initializer::term();
 }
@@ -142,7 +142,7 @@ TEST_CASE("Text with composite glyphs", "[tvgText]")
 {
     Initializer::init(0);
 
-    auto canvas = SwCanvas::gen();
+    auto canvas = unique_ptr<SwCanvas>(SwCanvas::gen());
 
     auto text = Text::gen();
     REQUIRE(text);
@@ -154,7 +154,7 @@ TEST_CASE("Text with composite glyphs", "[tvgText]")
 
     REQUIRE(text->fill(255, 255, 255) == tvg::Result::Success);
 
-    REQUIRE(canvas->push(std::move(text)) == Result::Success);
+    REQUIRE(canvas->push(text) == Result::Success);
 
     Initializer::term();
 }

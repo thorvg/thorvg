@@ -139,7 +139,7 @@ void LottieImage::prepare()
 {
     LottieObject::type = LottieObject::Image;
 
-    auto picture = Picture::gen().release();
+    auto picture = Picture::gen();
 
     //force to load a picture on the same thread
     TaskScheduler::async(false);
@@ -281,12 +281,12 @@ Fill* LottieGradient::fill(float frameNo, LottieExpressions* exps)
 
     //Linear Graident
     if (id == 1) {
-        fill = LinearGradient::gen().release();
+        fill = LinearGradient::gen();
         static_cast<LinearGradient*>(fill)->linear(s.x, s.y, e.x, e.y);
     }
     //Radial Gradient
     if (id == 2) {
-        fill = RadialGradient::gen().release();
+        fill = RadialGradient::gen();
 
         auto w = fabsf(e.x - s.x);
         auto h = fabsf(e.y - s.y);
@@ -437,13 +437,13 @@ void LottieLayer::prepare(RGB24* color)
 
     //prepare the viewport clipper
     if (type == LottieLayer::Precomp) {
-        auto clipper = Shape::gen().release();
+        auto clipper = Shape::gen();
         clipper->appendRect(0.0f, 0.0f, w, h);
         PP(clipper)->ref();
         statical.pooler.push(clipper);
     //prepare solid fill in advance if it is a layer type.
     } else if (color && type == LottieLayer::Solid) {
-        auto solidFill = Shape::gen().release();
+        auto solidFill = Shape::gen();
         solidFill->appendRect(0, 0, static_cast<float>(w), static_cast<float>(h));
         solidFill->fill(color->rgb[0], color->rgb[1], color->rgb[2]);
         PP(solidFill)->ref();

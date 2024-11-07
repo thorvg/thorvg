@@ -50,7 +50,7 @@ struct UserExample : tvgexam::Example
             shape1->lineTo(146, 143);
             shape1->close();
             shape1->fill(0, 0, 255);
-            canvas->push(std::move(shape1));
+            canvas->push(shape1);
 
             //Circle
             auto shape2 = tvg::Shape::gen();
@@ -68,7 +68,7 @@ struct UserExample : tvgexam::Example
             shape2->cubicTo(cx - radius, cy - halfRadius, cx - halfRadius, cy - radius, cx, cy - radius);
             shape2->close();
             shape2->fill(255, 0, 0);
-            canvas->push(std::move(shape2));
+            canvas->push(shape2);
         }
 
         //Commands Copy
@@ -106,7 +106,7 @@ struct UserExample : tvgexam::Example
             shape1->appendPath(cmds, 11, pts, 10);     //copy path data
             shape1->fill(0, 255, 0);
             shape1->translate(400, 0);
-            canvas->push(std::move(shape1));
+            canvas->push(shape1);
 
             /* Circle */
             auto cx = 550.0f;
@@ -147,7 +147,7 @@ struct UserExample : tvgexam::Example
             shape2->appendPath(cmds2, 6, pts2, 13);     //copy path data
             shape2->fill(255, 255, 0);
             shape2->translate(-300, 0);
-            canvas->push(std::move(shape2));
+            canvas->push(shape2);
         }
 
         return true;

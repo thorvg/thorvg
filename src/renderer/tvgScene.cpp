@@ -55,9 +55,9 @@ Scene::~Scene()
 }
 
 
-unique_ptr<Scene> Scene::gen() noexcept
+Scene* Scene::gen() noexcept
 {
-    return unique_ptr<Scene>(new Scene);
+    return new Scene;
 }
 
 
@@ -67,12 +67,11 @@ Type Scene::type() const noexcept
 }
 
 
-Result Scene::push(unique_ptr<Paint> paint) noexcept
+Result Scene::push(Paint* paint) noexcept
 {
-    auto p = paint.release();
-    if (!p) return Result::MemoryCorruption;
-    PP(p)->ref();
-    pImpl->paints.push_back(p);
+    if (!paint) return Result::MemoryCorruption;
+    PP(paint)->ref();
+    pImpl->paints.push_back(paint);
 
     return Result::Success;
 }

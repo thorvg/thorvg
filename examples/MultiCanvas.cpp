@@ -41,7 +41,7 @@ void content(tvg::Canvas* canvas)
     auto bg = tvg::Shape::gen();
     bg->appendRect(0, 0, SIZE, SIZE);
     bg->fill(255, 255, 255);
-    canvas->push(std::move(bg));
+    canvas->push(bg);
 
     char buf[PATH_MAX];
     snprintf(buf, sizeof(buf), EXAMPLE_DIR"/svg/logo.svg");
@@ -63,7 +63,7 @@ void content(tvg::Canvas* canvas)
     picture->translate(shiftX, shiftY);
     picture->scale(scale);
 
-    canvas->push(std::move(picture));
+    canvas->push(picture);
 }
 
 
@@ -102,7 +102,7 @@ void runSw()
     auto surface = SDL_GetWindowSurface(window);
 
     for (int counter = 0; counter < NUM_PER_LINE * NUM_PER_LINE; ++counter) {
-        auto canvas = tvg::SwCanvas::gen();
+        auto canvas = unique_ptr<tvg::SwCanvas>(tvg::SwCanvas::gen());
         auto offx = (counter % NUM_PER_LINE) * SIZE;
         auto offy = SIZE * (counter / NUM_PER_LINE);
         auto w = surface->w - offx;
@@ -215,7 +215,7 @@ void runGl()
     GLFrameBuffer glFbo{SIZE, SIZE};
     
     for (int counter = 0; counter < NUM_PER_LINE * NUM_PER_LINE; ++counter) {
-        auto canvas = tvg::GlCanvas::gen();
+        auto canvas = unique_ptr<tvg::GlCanvas>(tvg::GlCanvas::gen());
 
         // Pass the framebuffer id to the GlCanvas
         tvgexam::verify(canvas->target(glFbo.fbo, SIZE, SIZE));

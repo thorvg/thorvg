@@ -25,10 +25,11 @@
 #include "catch.hpp"
 
 using namespace tvg;
+using namespace std;
 
 TEST_CASE("Shape Creation", "[tvgShape]")
 {
-    auto shape = Shape::gen();
+    auto shape = unique_ptr<Shape>(Shape::gen());
     REQUIRE(shape);
 
     REQUIRE(shape->type() == Type::Shape);
@@ -36,7 +37,7 @@ TEST_CASE("Shape Creation", "[tvgShape]")
 
 TEST_CASE("Appending Commands", "[tvgShape]")
 {
-    auto shape = Shape::gen();
+    auto shape = unique_ptr<Shape>(Shape::gen());
     REQUIRE(shape);
 
     REQUIRE(shape->close() == Result::Success);
@@ -62,7 +63,7 @@ TEST_CASE("Appending Commands", "[tvgShape]")
 
 TEST_CASE("Appending Shapes", "[tvgShape]")
 {
-    auto shape = Shape::gen();
+    auto shape = unique_ptr<Shape>(Shape::gen());
     REQUIRE(shape);
 
     REQUIRE(shape->moveTo(100, 100) == Result::Success);
@@ -80,7 +81,7 @@ TEST_CASE("Appending Shapes", "[tvgShape]")
 
 TEST_CASE("Appending Paths", "[tvgShape]")
 {
-    auto shape = Shape::gen();
+    auto shape = unique_ptr<Shape>(Shape::gen());
     REQUIRE(shape);
 
     //Negative cases
@@ -127,7 +128,7 @@ TEST_CASE("Appending Paths", "[tvgShape]")
 
 TEST_CASE("Stroking", "[tvgShape]")
 {
-    auto shape = Shape::gen();
+    auto shape = unique_ptr<Shape>(Shape::gen());
     REQUIRE(shape);
 
     //Stroke Order Before Stroke Setting
@@ -201,7 +202,7 @@ TEST_CASE("Stroking", "[tvgShape]")
 
 TEST_CASE("Shape Filling", "[tvgShape]")
 {
-    auto shape = Shape::gen();
+    auto shape = unique_ptr<Shape>(Shape::gen());
     REQUIRE(shape);
 
     //Fill Color

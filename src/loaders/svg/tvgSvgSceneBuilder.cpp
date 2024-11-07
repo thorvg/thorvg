@@ -36,7 +36,7 @@
 /************************************************************************/
 
 static bool _appendClipShape(SvgLoaderData& loaderData, SvgNode* node, Shape* shape, const Box& vBox, const string& svgPath, const Matrix* transform);
-static unique_ptr<Scene> _sceneBuildHelper(SvgLoaderData& loaderData, const SvgNode* node, const Box& vBox, const string& svgPath, bool mask, int depth);
+static Scene* _sceneBuildHelper(SvgLoaderData& loaderData, const SvgNode* node, const Box& vBox, const string& svgPath, bool mask, int depth);
 
 
 static inline bool _isGroupType(SvgNodeType type)
@@ -84,7 +84,7 @@ static void _transformMultiply(const Matrix* mBBox, Matrix* gradTransf)
 }
 
 
-static unique_ptr<LinearGradient> _applyLinearGradientProperty(SvgStyleGradient* g, const Box& vBox, int opacity)
+static LinearGradient* _applyLinearGradientProperty(SvgStyleGradient* g, const Box& vBox, int opacity)
 {
     Fill::ColorStop* stops;
     auto fillGrad = LinearGradient::gen();
@@ -130,7 +130,7 @@ static unique_ptr<LinearGradient> _applyLinearGradientProperty(SvgStyleGradient*
 }
 
 
-static unique_ptr<RadialGradient> _applyRadialGradientProperty(SvgStyleGradient* g, const Box& vBox, int opacity)
+static RadialGradient* _applyRadialGradientProperty(SvgStyleGradient* g, const Box& vBox, int opacity)
 {
     Fill::ColorStop *stops;
     auto fillGrad = RadialGradient::gen();
@@ -239,8 +239,8 @@ static Paint* _applyComposition(SvgLoaderData& loaderData, Paint* paint, const S
 
     if (!validClip && !validMask) return paint;
 
-    Scene* scene = Scene::gen().release();
-    scene->push(tvg::cast(paint));
+    auto scene = Scene::gen();
+    scene->push(paint);
 
     if (validClip) {
         node->style->clipPath.applying = true;
@@ -250,13 +250,13 @@ static Paint* _applyComposition(SvgLoaderData& loaderData, Paint* paint, const S
         auto valid = false; //Composite only when valid shapes exist
 
         for (uint32_t i = 0; i < clipNode->child.count; ++i, ++child) {
-            if (_appendClipChild(loaderData, *child, clipper.get(), vBox, svgPath, clipNode->child.count > 1)) valid = true;
+            if (_appendClipChild(loaderData, *child, clipper, vBox, svgPath, clipNode->child.count > 1)) valid = true;
         }
 
         if (valid) {
             Matrix finalTransform = _compositionTransform(paint, node, clipNode, SvgNodeType::ClipPath);
             clipper->transform(finalTransform);
-            scene->clip(std::move(clipper));
+            scene->clip(clipper);
         }
 
         node->style->clipPath.applying = false;
@@ -273,7 +273,7 @@ static Paint* _applyComposition(SvgLoaderData& loaderData, Paint* paint, const S
             } else if (node->transform) {
                 mask->transform(*node->transform);
             }
-            scene->mask(std::move(mask), maskNode->node.mask.type == SvgMaskType::Luminance ? MaskMethod::Luma: MaskMethod::Alpha);
+            scene->mask(mask, maskNode->node.mask.type == SvgMaskType::Luminance ? MaskMethod::Luma: MaskMethod::Alpha);
         }
 
         node->style->mask.applying = false;
@@ -298,11 +298,9 @@ static Paint* _applyProperty(SvgLoaderData& loaderData, SvgNode* node, Shape* vg
         auto bBox = vBox;
         if (!style->fill.paint.gradient->userSpace) bBox = _boundingBox(vg);
         if (style->fill.paint.gradient->type == SvgGradientType::Linear) {
-            auto linear = _applyLinearGradientProperty(style->fill.paint.gradient, bBox, style->fill.opacity);
-            vg->fill(std::move(linear));
+            vg->fill(_applyLinearGradientProperty(style->fill.paint.gradient, bBox, style->fill.opacity));
         } else if (style->fill.paint.gradient->type == SvgGradientType::Radial) {
-            auto radial = _applyRadialGradientProperty(style->fill.paint.gradient, bBox, style->fill.opacity);
-            vg->fill(std::move(radial));
+            vg->fill(_applyRadialGradientProperty(style->fill.paint.gradient, bBox, style->fill.opacity));
         }
     } else if (style->fill.paint.url) {
         TVGLOG("SVG", "The fill's url not supported.");
@@ -334,11 +332,9 @@ static Paint* _applyProperty(SvgLoaderData& loaderData, SvgNode* node, Shape* vg
         auto bBox = vBox;
         if (!style->stroke.paint.gradient->userSpace) bBox = _boundingBox(vg);
         if (style->stroke.paint.gradient->type == SvgGradientType::Linear) {
-             auto linear = _applyLinearGradientProperty(style->stroke.paint.gradient, bBox, style->stroke.opacity);
-             vg->strokeFill(std::move(linear));
+             vg->strokeFill(_applyLinearGradientProperty(style->stroke.paint.gradient, bBox, style->stroke.opacity));
         } else if (style->stroke.paint.gradient->type == SvgGradientType::Radial) {
-             auto radial = _applyRadialGradientProperty(style->stroke.paint.gradient, bBox, style->stroke.opacity);
-             vg->strokeFill(std::move(radial));
+             vg->strokeFill(_applyRadialGradientProperty(style->stroke.paint.gradient, bBox, style->stroke.opacity));
         }
     } else if (style->stroke.paint.url) {
         //TODO: Apply the color pointed by url
@@ -414,8 +410,8 @@ static bool _recognizeShape(SvgNode* node, Shape* shape)
 static Paint* _shapeBuildHelper(SvgLoaderData& loaderData, SvgNode* node, const Box& vBox, const string& svgPath)
 {
     auto shape = Shape::gen();
-    if (!_recognizeShape(node, shape.get())) return nullptr;
-    return _applyProperty(loaderData, node, shape.release(), vBox, svgPath, false);
+    if (!_recognizeShape(node, shape)) return nullptr;
+    return _applyProperty(loaderData, node, shape, vBox, svgPath, false);
 }
 
 
@@ -584,7 +580,7 @@ static Paint* _imageBuildHelper(SvgLoaderData& loaderData, SvgNode* node, const 
     if (node->transform) m = *node->transform * m;
     picture->transform(m);
 
-    return _applyComposition(loaderData, picture.release(), node, vBox, svgPath);
+    return _applyComposition(loaderData, picture, node, vBox, svgPath);
 }
 
 
@@ -661,7 +657,7 @@ static Matrix _calculateAspectRatioMatrix(AspectRatioAlign align, AspectRatioMee
 }
 
 
-static unique_ptr<Scene> _useBuildHelper(SvgLoaderData& loaderData, const SvgNode* node, const Box& vBox, const string& svgPath, int depth)
+static Scene* _useBuildHelper(SvgLoaderData& loaderData, const SvgNode* node, const Box& vBox, const string& svgPath, int depth)
 {
     auto scene = _sceneBuildHelper(loaderData, node, vBox, svgPath, false, depth + 1);
 
@@ -709,7 +705,7 @@ static unique_ptr<Scene> _useBuildHelper(SvgLoaderData& loaderData, const SvgNod
             }
             viewBoxClip->transform(mClipTransform);
 
-            scene->clip(std::move(viewBoxClip));
+            scene->clip(viewBoxClip);
         }
     } else {
         scene->transform(mUseTransform);
@@ -729,11 +725,9 @@ static void _applyTextFill(SvgStyleProperty* style, Text* text, const Box& vBox)
         if (!style->fill.paint.gradient->userSpace) bBox = _boundingBox(text);
 
         if (style->fill.paint.gradient->type == SvgGradientType::Linear) {
-            auto linear = _applyLinearGradientProperty(style->fill.paint.gradient, bBox, style->fill.opacity);
-            text->fill(std::move(linear));
+            text->fill(_applyLinearGradientProperty(style->fill.paint.gradient, bBox, style->fill.opacity));
         } else if (style->fill.paint.gradient->type == SvgGradientType::Radial) {
-            auto radial = _applyRadialGradientProperty(style->fill.paint.gradient, bBox, style->fill.opacity);
-            text->fill(std::move(radial));
+            text->fill(_applyRadialGradientProperty(style->fill.paint.gradient, bBox, style->fill.opacity));
         }
     } else if (style->fill.paint.url) {
         //TODO: Apply the color pointed by url
@@ -755,7 +749,7 @@ static Paint* _textBuildHelper(SvgLoaderData& loaderData, const SvgNode* node, c
     auto textNode = &node->node.text;
     if (!textNode->text) return nullptr;
 
-    auto text = Text::gen().release();
+    auto text = Text::gen();
 
     Matrix textTransform;
     if (node->transform) textTransform = *node->transform;
@@ -776,7 +770,7 @@ static Paint* _textBuildHelper(SvgLoaderData& loaderData, const SvgNode* node, c
 }
 
 
-static unique_ptr<Scene> _sceneBuildHelper(SvgLoaderData& loaderData, const SvgNode* node, const Box& vBox, const string& svgPath, bool mask, int depth)
+static Scene* _sceneBuildHelper(SvgLoaderData& loaderData, const SvgNode* node, const Box& vBox, const string& svgPath, bool mask, int depth)
 {
     /* Exception handling: Prevent invalid SVG data input.
        The size is the arbitrary value, we need an experimental size. */
@@ -808,12 +802,12 @@ static unique_ptr<Scene> _sceneBuildHelper(SvgLoaderData& loaderData, const SvgN
             else if ((*child)->type != SvgNodeType::Mask) paint = _shapeBuildHelper(loaderData, *child, vBox, svgPath);
             if (paint) {
                 if ((*child)->id) paint->id = djb2Encode((*child)->id);
-                scene->push(tvg::cast(paint));
+                scene->push(paint);
             }
         }
     }
     scene->opacity(node->style->opacity);
-    return tvg::cast<Scene>(_applyComposition(loaderData, scene.release(), node, vBox, svgPath));
+    return static_cast<Scene*>(_applyComposition(loaderData, scene, node, vBox, svgPath));
 }
 
 
@@ -849,7 +843,7 @@ Scene* svgSceneBuild(SvgLoaderData& loaderData, Box vBox, float w, float h, Aspe
 
     auto docNode = _sceneBuildHelper(loaderData, loaderData.doc, vBox, svgPath, false, 0);
 
-    if (!(viewFlag & SvgViewFlag::Viewbox)) _updateInvalidViewSize(docNode.get(), vBox, w, h, viewFlag);
+    if (!(viewFlag & SvgViewFlag::Viewbox)) _updateInvalidViewSize(docNode, vBox, w, h, viewFlag);
 
     if (!tvg::equal(w, vBox.w) || !tvg::equal(h, vBox.h)) {
         Matrix m = _calculateAspectRatioMatrix(align, meetOrSlice, w, h, vBox);
@@ -862,11 +856,8 @@ Scene* svgSceneBuild(SvgLoaderData& loaderData, Box vBox, float w, float h, Aspe
     viewBoxClip->appendRect(0, 0, w, h);
 
     auto clippingLayer = Scene::gen();
-    clippingLayer->clip(std::move(viewBoxClip));
-    clippingLayer->push(std::move(docNode));
-
-    auto root = Scene::gen();
-    root->push(std::move(clippingLayer));
+    clippingLayer->clip(viewBoxClip);
+    clippingLayer->push(docNode);
 
     loaderData.doc->node.doc.vx = vBox.x;
     loaderData.doc->node.doc.vy = vBox.y;
@@ -875,5 +866,8 @@ Scene* svgSceneBuild(SvgLoaderData& loaderData, Box vBox, float w, float h, Aspe
     loaderData.doc->node.doc.w = w;
     loaderData.doc->node.doc.h = h;
 
-    return root.release();
+    auto root = Scene::gen();
+    root->push(clippingLayer);
+
+    return root;
 }

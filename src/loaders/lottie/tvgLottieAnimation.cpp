@@ -82,7 +82,7 @@ const char* LottieAnimation::marker(uint32_t idx) noexcept
 }
 
 
-unique_ptr<LottieAnimation> LottieAnimation::gen() noexcept
+LottieAnimation* LottieAnimation::gen() noexcept
 {
-    return unique_ptr<LottieAnimation>(new LottieAnimation);
+    return new LottieAnimation;
 }

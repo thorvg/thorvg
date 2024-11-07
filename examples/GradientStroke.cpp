@@ -70,14 +70,14 @@ struct UserExample : tvgexam::Example
         auto fillStroke1 = tvg::LinearGradient::gen();
         fillStroke1->linear(100, 100, 250, 250);
         fillStroke1->colorStops(colorStops1, 3);
-        shape1->strokeFill(std::move(fillStroke1));
+        shape1->strokeFill(fillStroke1);
 
         auto fill1 = tvg::LinearGradient::gen();
         fill1->linear(100, 100, 250, 250);
         fill1->colorStops(colorStops1, 3);
-        shape1->fill(std::move(fill1));
+        shape1->fill(fill1);
 
-        canvas->push(std::move(shape1));
+        canvas->push(shape1);
 
         // radial gradient stroke + duplicate
         auto shape2 = tvg::Shape::gen();
@@ -87,22 +87,22 @@ struct UserExample : tvgexam::Example
         auto fillStroke2 = tvg::RadialGradient::gen();
         fillStroke2->radial(600, 175, 100, 600, 175, 0);
         fillStroke2->colorStops(colorStops2, 2);
-        shape2->strokeFill(std::move(fillStroke2));
+        shape2->strokeFill(fillStroke2);
 
-        auto shape3 = tvg::cast<tvg::Shape>(shape2->duplicate());
+        auto shape3 = static_cast<tvg::Shape*>(shape2->duplicate());
         shape3->translate(0, 200);
 
         auto fillStroke3 = tvg::LinearGradient::gen();
         fillStroke3->linear(500, 115, 700, 235);
         fillStroke3->colorStops(colorStops3, 2);
-        shape3->strokeFill(std::move(fillStroke3));
+        shape3->strokeFill(fillStroke3);
 
-        auto shape4 = tvg::cast<tvg::Shape>(shape2->duplicate());
+        auto shape4 = static_cast<tvg::Shape*>(shape2->duplicate());
         shape4->translate(0, 400);
 
-        canvas->push(std::move(shape2));
-        canvas->push(std::move(shape3));
-        canvas->push(std::move(shape4));
+        canvas->push(shape2);
+        canvas->push(shape3);
+        canvas->push(shape4);
 
         // dashed gradient stroke
         auto shape5 = tvg::Shape::gen();
@@ -114,15 +114,15 @@ struct UserExample : tvgexam::Example
         auto fillStroke5 = tvg::LinearGradient::gen();
         fillStroke5->linear(150, 450, 450, 750);
         fillStroke5->colorStops(colorStops3, 2);
-        shape5->strokeFill(std::move(fillStroke5));
+        shape5->strokeFill(fillStroke5);
 
         auto fill5 = tvg::LinearGradient::gen();
         fill5->linear(150, 450, 450, 750);
         fill5->colorStops(colorStops3, 2);
-        shape5->fill(std::move(fill5));
+        shape5->fill(fill5);
         shape5->scale(0.8);
 
-        canvas->push(std::move(shape5));
+        canvas->push(shape5);
 
         return true;
     }

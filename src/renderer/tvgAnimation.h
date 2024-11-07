@@ -33,7 +33,7 @@ struct Animation::Impl
 
     Impl()
     {
-        picture = Picture::gen().release();
+        picture = Picture::gen();
         PP(picture)->ref();
     }
 

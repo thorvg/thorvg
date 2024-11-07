@@ -47,8 +47,8 @@ struct UserExample : tvgexam::Example
 
         fill->colorStops(colorStops, 2);
 
-        shape1->fill(std::move(fill));
-        canvas->push(std::move(shape1));
+        shape1->fill(fill);
+        canvas->push(shape1);
 
         //Prepare Circle
         auto shape2 = tvg::Shape::gen();
@@ -66,8 +66,8 @@ struct UserExample : tvgexam::Example
 
         fill2->colorStops(colorStops2, 3);
 
-        shape2->fill(std::move(fill2));
-        canvas->push(std::move(shape2));
+        shape2->fill(fill2);
+        canvas->push(shape2);
 
         //Prepare Ellipse
         auto shape3 = tvg::Shape::gen();
@@ -86,8 +86,8 @@ struct UserExample : tvgexam::Example
 
         fill3->colorStops(colorStops3, 4);
 
-        shape3->fill(std::move(fill3));
-        canvas->push(std::move(shape3));
+        shape3->fill(fill3);
+        canvas->push(shape3);
 
         return true;
     }

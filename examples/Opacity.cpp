@@ -40,7 +40,7 @@ struct UserExample : tvgexam::Example
         auto shape1 = tvg::Shape::gen();
         shape1->appendCircle(400, 400, 250, 250);
         shape1->fill(255, 255, 0);
-        scene->push(std::move(shape1));
+        scene->push(shape1);
 
         //Round rectangle
         auto shape2 = tvg::Shape::gen();
@@ -48,11 +48,10 @@ struct UserExample : tvgexam::Example
         shape2->fill(0, 255, 0);
         shape2->strokeWidth(10);
         shape2->strokeFill(255, 255, 255);
-        scene->push(std::move(shape2));
-
+        scene->push(shape2);
 
         //Draw the Scene onto the Canvas
-        canvas->push(std::move(scene));
+        canvas->push(scene);
 
         //Create a Scene 2
         auto scene2 = tvg::Scene::gen();
@@ -79,7 +78,7 @@ struct UserExample : tvgexam::Example
         shape3->strokeFill(255, 255, 255);
         shape3->opacity(127);
 
-        scene2->push(std::move(shape3));
+        scene2->push(shape3);
 
         //Circle
         auto shape4 = tvg::Shape::gen();
@@ -101,10 +100,10 @@ struct UserExample : tvgexam::Example
         shape4->strokeFill(0, 0, 255);
         shape4->opacity(200);
         shape4->scale(3);
-        scene2->push(std::move(shape4));
+        scene2->push(shape4);
 
         //Draw the Scene onto the Canvas
-        canvas->push(std::move(scene2));
+        canvas->push(scene2);
 
         return true;
     }

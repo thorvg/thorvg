@@ -28,19 +28,18 @@
 
 struct UserExample : tvgexam::Example
 {
-    tvg::Picture* pPicture = nullptr;
+    tvg::Picture* picture = nullptr;
 
     bool content(tvg::Canvas* canvas, uint32_t w, uint32_t h) override
     {
         if (!canvas) return false;
 
         //Original
-        auto picture = tvg::Picture::gen();
-        pPicture = picture.get();
+        picture = tvg::Picture::gen();
 
         if (!tvgexam::verify(picture->load(EXAMPLE_DIR"/image/scaledown.jpg"))) return false;
 
-        canvas->push(std::move(picture));
+        canvas->push(picture);
 
         return true;
     }
@@ -53,9 +52,9 @@ struct UserExample : tvgexam::Example
 
         auto progress = tvgexam::progress(elapsed, 7.0f, true);  //play time 7 sec.
 
-        pPicture->scale(1.0f - progress);
+        picture->scale(1.0f - progress);
 
-        canvas->update(pPicture);
+        canvas->update(picture);
 
         return true;
     }

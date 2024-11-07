@@ -43,7 +43,7 @@ struct UserExample : tvgexam::Example
         shape1->strokeWidth(10);
         shape1->strokeJoin(tvg::StrokeJoin::Round);
         shape1->strokeCap(tvg::StrokeCap::Round);
-        canvas->push(std::move(shape1));
+        canvas->push(shape1);
 
         auto shape2 = tvg::Shape::gen();
         shape2->moveTo(270, 50);
@@ -55,7 +55,7 @@ struct UserExample : tvgexam::Example
         shape2->strokeWidth(10);
         shape2->strokeJoin(tvg::StrokeJoin::Bevel);
         shape2->strokeCap(tvg::StrokeCap::Square);
-        canvas->push(std::move(shape2));
+        canvas->push(shape2);
 
         auto shape3 = tvg::Shape::gen();
         shape3->moveTo(520, 50);
@@ -67,7 +67,7 @@ struct UserExample : tvgexam::Example
         shape3->strokeWidth(10);
         shape3->strokeJoin(tvg::StrokeJoin::Miter);
         shape3->strokeCap(tvg::StrokeCap::Butt);
-        canvas->push(std::move(shape3));
+        canvas->push(shape3);
 
         //Test for Stroke Dash
         auto shape4 = tvg::Shape::gen();
@@ -83,7 +83,7 @@ struct UserExample : tvgexam::Example
 
         float dashPattern1[2] = {20, 10};
         shape4->strokeDash(dashPattern1, 2);
-        canvas->push(std::move(shape4));
+        canvas->push(shape4);
 
         auto shape5 = tvg::Shape::gen();
         shape5->moveTo(270, 230);
@@ -98,7 +98,7 @@ struct UserExample : tvgexam::Example
 
         float dashPattern2[2] = {10, 10};
         shape5->strokeDash(dashPattern2, 2);
-        canvas->push(std::move(shape5));
+        canvas->push(shape5);
 
         auto shape6 = tvg::Shape::gen();
         shape6->moveTo(520, 230);
@@ -113,7 +113,7 @@ struct UserExample : tvgexam::Example
 
         float dashPattern3[6] = {10, 10, 1, 8, 1, 10};
         shape6->strokeDash(dashPattern3, 6);
-        canvas->push(std::move(shape6));
+        canvas->push(shape6);
 
         //For a comparison with shapes 10-12
         auto shape7 = tvg::Shape::gen();
@@ -125,7 +125,7 @@ struct UserExample : tvgexam::Example
         shape7->strokeWidth(15);
         shape7->strokeJoin(tvg::StrokeJoin::Round);
         shape7->strokeCap(tvg::StrokeCap::Round);
-        canvas->push(std::move(shape7));
+        canvas->push(shape7);
 
         auto shape8 = tvg::Shape::gen();
         shape8->moveTo(320, 440);
@@ -136,7 +136,7 @@ struct UserExample : tvgexam::Example
         shape8->strokeWidth(15);
         shape8->strokeJoin(tvg::StrokeJoin::Bevel);
         shape8->strokeCap(tvg::StrokeCap::Square);
-        canvas->push(std::move(shape8));
+        canvas->push(shape8);
 
         auto shape9 = tvg::Shape::gen();
         shape9->moveTo(570, 440);
@@ -147,7 +147,7 @@ struct UserExample : tvgexam::Example
         shape9->strokeWidth(15);
         shape9->strokeJoin(tvg::StrokeJoin::Miter);
         shape9->strokeCap(tvg::StrokeCap::Butt);
-        canvas->push(std::move(shape9));
+        canvas->push(shape9);
 
         //Test for Stroke Dash for Circle and Rect
         auto shape10 = tvg::Shape::gen();
@@ -158,7 +158,7 @@ struct UserExample : tvgexam::Example
         shape10->strokeJoin(tvg::StrokeJoin::Round);
         shape10->strokeCap(tvg::StrokeCap::Round);
         shape10->strokeDash(dashPattern1, 2);
-        canvas->push(std::move(shape10));
+        canvas->push(shape10);
 
         auto shape11 = tvg::Shape::gen();
         shape11->appendCircle(320, 700, 20, 60);
@@ -168,7 +168,7 @@ struct UserExample : tvgexam::Example
         shape11->strokeJoin(tvg::StrokeJoin::Bevel);
         shape11->strokeCap(tvg::StrokeCap::Square);
         shape11->strokeDash(dashPattern2, 2);
-        canvas->push(std::move(shape11));
+        canvas->push(shape11);
 
         auto shape12 = tvg::Shape::gen();
         shape12->appendCircle(570, 700, 20, 60);
@@ -178,7 +178,7 @@ struct UserExample : tvgexam::Example
         shape12->strokeJoin(tvg::StrokeJoin::Miter);
         shape12->strokeCap(tvg::StrokeCap::Butt);
         shape12->strokeDash(dashPattern3, 6);
-        canvas->push(std::move(shape12));
+        canvas->push(shape12);
 
         return true;
     }

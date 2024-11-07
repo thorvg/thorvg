@@ -274,7 +274,7 @@ void LottieBuilder::updateGradientStroke(LottieGroup* parent, LottieObject** chi
     auto stroke = static_cast<LottieGradientStroke*>(*child);
 
     ctx->merging = nullptr;
-    ctx->propagator->strokeFill(unique_ptr<Fill>(stroke->fill(frameNo, exps)));
+    ctx->propagator->strokeFill(stroke->fill(frameNo, exps));
     _updateStroke(static_cast<LottieStroke*>(stroke), frameNo, ctx, exps);
 }
 
@@ -302,7 +302,7 @@ void LottieBuilder::updateGradientFill(LottieGroup* parent, LottieObject** child
 
     ctx->merging = nullptr;
     //TODO: reuse the fill instance?
-    ctx->propagator->fill(unique_ptr<Fill>(fill->fill(frameNo, exps)));
+    ctx->propagator->fill(fill->fill(frameNo, exps));
     ctx->propagator->fill(fill->rule);
 
     if (ctx->propagator->strokeWidth() > 0) ctx->propagator->order(true);
@@ -320,7 +320,7 @@ static bool _draw(LottieGroup* parent, LottieShape* shape, RenderContext* ctx)
         ctx->merging = static_cast<Shape*>(ctx->propagator->duplicate());
     }
 
-    parent->scene->push(cast(ctx->merging));
+    parent->scene->push(ctx->merging);
 
     return true;
 }
@@ -366,12 +366,12 @@ static void _repeat(LottieGroup* parent, Shape* path, RenderContext* ctx)
         //push repeat shapes in order.
         if (repeater->inorder) {
             for (auto shape = shapes.begin(); shape < shapes.end(); ++shape) {
-                parent->scene->push(cast(*shape));
+                parent->scene->push(*shape);
                 propagators.push(*shape);
             }
         } else if (!shapes.empty()) {
             for (auto shape = shapes.end() - 1; shape >= shapes.begin(); --shape) {
-                parent->scene->push(cast(*shape));
+                parent->scene->push(*shape);
                 propagators.push(*shape);
             }
         }
@@ -691,6 +691,7 @@ static void _updateStar(TVG_UNUSED LottieGroup* parent, LottiePolyStar* star, Ma
             auto intermediate = Shape::gen();
             roundness->modifyPolystar(P(shape)->rs.path.cmds, P(shape)->rs.path.pts, P(intermediate)->rs.path.cmds, P(intermediate)->rs.path.pts, outerRoundness, hasRoundness);
             offsetPath->modifyPolystar(P(intermediate)->rs.path.cmds, P(intermediate)->rs.path.pts, P(merging)->rs.path.cmds, P(merging)->rs.path.pts);
+            delete(intermediate);
         } else {
             roundness->modifyPolystar(P(shape)->rs.path.cmds, P(shape)->rs.path.pts, P(merging)->rs.path.cmds, P(merging)->rs.path.pts, outerRoundness, hasRoundness);
         }
@@ -777,6 +778,7 @@ static void _updatePolygon(LottieGroup* parent, LottiePolyStar* star, Matrix* tr
             auto intermediate = Shape::gen();
             roundness->modifyPolystar(P(shape)->rs.path.cmds, P(shape)->rs.path.pts, P(intermediate)->rs.path.cmds, P(intermediate)->rs.path.pts, 0.0f, false);
             offsetPath->modifyPolystar(P(intermediate)->rs.path.cmds, P(intermediate)->rs.path.pts, P(merging)->rs.path.cmds, P(merging)->rs.path.pts);
+            delete(intermediate);
         } else {
             roundness->modifyPolystar(P(shape)->rs.path.cmds, P(shape)->rs.path.pts, P(merging)->rs.path.cmds, P(merging)->rs.path.pts, 0.0f, false);
         }
@@ -963,7 +965,7 @@ void LottieBuilder::updatePrecomp(LottieComposition* comp, LottieLayer* precomp,
     //clip the layer viewport
     auto clipper = precomp->statical.pooling(true);
     clipper->transform(precomp->cache.matrix);
-    precomp->scene->clip(cast(clipper));
+    precomp->scene->clip(clipper);
 }
 
 
@@ -971,14 +973,14 @@ void LottieBuilder::updateSolid(LottieLayer* layer)
 {
     auto solidFill = layer->statical.pooling(true);
     solidFill->opacity(layer->cache.opacity);
-    layer->scene->push(cast(solidFill));
+    layer->scene->push(solidFill);
 }
 
 
 void LottieBuilder::updateImage(LottieGroup* layer)
 {
     auto image = static_cast<LottieImage*>(layer->children.first());
-    layer->scene->push(tvg::cast(image->pooling(true)));
+    layer->scene->push(image->pooling(true));
 }
 
 
@@ -992,9 +994,10 @@ void LottieBuilder::updateText(LottieLayer* layer, float frameNo)
     if (!p || !text->font) return;
 
     auto scale = doc.size;
-    Point cursor = {0.0f, 0.0f};
+    Point cursor{};
+    //TODO: Need to revise to alloc scene / textgroup when they are really necessary
     auto scene = Scene::gen();
-    auto textGroup = Scene::gen();
+    Scene* textGroup = Scene::gen();
     int line = 0;
     int space = 0;
     auto lineSpacing = 0.0f;
@@ -1017,14 +1020,15 @@ void LottieBuilder::updateText(LottieLayer* layer, float frameNo)
             else if (doc.justify == 2) layout.x += (doc.bbox.size.x * 0.5f) - (cursor.x * 0.5f * scale);  //center aligned
 
             //new text group, single scene based on text-grouping
-            scene->push(std::move(textGroup));
+            scene->push(textGroup);
             textGroup = Scene::gen();
             textGroup->translate(cursor.x, cursor.y);
 
             scene->translate(layout.x, layout.y);
             scene->scale(scale);
 
-            layer->scene->push(std::move(scene));
+            layer->scene->push(scene);
+            scene = nullptr;
 
             if (*p == '\0') break;
             ++p;
@@ -1043,7 +1047,7 @@ void LottieBuilder::updateText(LottieLayer* layer, float frameNo)
             ++space;
             if (textGrouping == LottieText::AlignOption::Group::Word) {
                 //new text group, single scene for each word
-                scene->push(std::move(textGroup));
+                scene->push(textGroup);
                 textGroup = Scene::gen();
                 textGroup->translate(cursor.x, cursor.y);
             }
@@ -1057,7 +1061,7 @@ void LottieBuilder::updateText(LottieLayer* layer, float frameNo)
             if (!strncmp(glyph->code, p, glyph->len)) {
                 if (textGrouping == LottieText::AlignOption::Group::Chars || textGrouping == LottieText::AlignOption::Group::All) {
                     //new text group, single scene for each characters
-                    scene->push(std::move(textGroup));
+                    scene->push(textGroup);
                     textGroup = Scene::gen();
                     textGroup->translate(cursor.x, cursor.y);
                 }
@@ -1153,14 +1157,14 @@ void LottieBuilder::updateText(LottieLayer* layer, float frameNo)
                 }
 
                 if (needGroup) {
-                    textGroup->push(cast(shape));
+                    textGroup->push(shape);
                 } else {
                     // When text isn't selected, exclude the shape from the text group
                     auto& matrix = shape->transform();
                     matrix.e13 = cursor.x;
                     matrix.e23 = cursor.y;
                     shape->transform(matrix);
-                    scene->push(cast(shape));
+                    scene->push(shape);
                 }
 
                 p += glyph->len;
@@ -1179,6 +1183,9 @@ void LottieBuilder::updateText(LottieLayer* layer, float frameNo)
             ++idx;
         }
     }
+
+    delete(scene);
+    delete(textGroup);
 }
 
 
@@ -1210,18 +1217,18 @@ void LottieBuilder::updateMaskings(LottieLayer* layer, float frameNo)
 
     //Cheaper. Replace the masking with a clipper
     if (layer->masks.count == 1 && compMethod == MaskMethod::Alpha && opacity == 255) {
-        layer->scene->clip(tvg::cast(pShape));
+        layer->scene->clip(pShape);
         return;
     }
 
     //Introduce an intermediate scene for embracing the matte + masking
     if (layer->matteTarget) {
-        auto scene = Scene::gen().release();
-        scene->push(cast(layer->scene));
+        auto scene = Scene::gen();
+        scene->push(layer->scene);
         layer->scene = scene;
     }
 
-    layer->scene->mask(tvg::cast(pShape), compMethod);
+    layer->scene->mask(pShape, compMethod);
 
     //Apply the subsquent masks
     for (auto m = layer->masks.begin() + 1; m < layer->masks.end(); ++m) {
@@ -1239,7 +1246,7 @@ void LottieBuilder::updateMaskings(LottieLayer* layer, float frameNo)
             shape->fill(255, 255, 255, mask->opacity(frameNo));
             shape->transform(layer->cache.matrix);
             mask->pathset(frameNo, P(shape)->rs.path.cmds, P(shape)->rs.path.pts, nullptr, nullptr, nullptr, exps);
-            pShape->mask(tvg::cast(shape), method);
+            pShape->mask(shape, method);
             pShape = shape;
             pMethod = method;
         }
@@ -1255,7 +1262,7 @@ bool LottieBuilder::updateMatte(LottieComposition* comp, float frameNo, Scene* s
     updateLayer(comp, scene, target, frameNo);
 
     if (target->scene) {
-        layer->scene->mask(cast(target->scene), layer->matteType);
+        layer->scene->mask(target->scene, layer->matteType);
     } else if (layer->matteType == MaskMethod::Alpha || layer->matteType == MaskMethod::Luma) {
         //matte target is not exist. alpha blending definitely bring an invisible result
         delete(layer->scene);
@@ -1306,7 +1313,7 @@ void LottieBuilder::updateLayer(LottieComposition* comp, Scene* scene, LottieLay
     if (layer->type != LottieLayer::Null && layer->cache.opacity == 0) return;
 
     //Prepare render data
-    layer->scene = Scene::gen().release();
+    layer->scene = Scene::gen();
     layer->scene->id = layer->id;
 
     //ignore opacity when Null layer?
@@ -1351,7 +1358,7 @@ void LottieBuilder::updateLayer(LottieComposition* comp, Scene* scene, LottieLay
     updateEffect(layer, frameNo);
 
     //the given matte source was composited by the target earlier.
-    if (!layer->matteSrc) scene->push(cast(layer->scene));
+    if (!layer->matteSrc) scene->push(layer->scene);
 }
 
 
@@ -1485,7 +1492,7 @@ void LottieBuilder::build(LottieComposition* comp)
 {
     if (!comp) return;
 
-    comp->root->scene = Scene::gen().release();
+    comp->root->scene = Scene::gen();
 
     _buildComposition(comp, comp->root);
 
@@ -1494,5 +1501,5 @@ void LottieBuilder::build(LottieComposition* comp)
     //viewport clip
     auto clip = Shape::gen();
     clip->appendRect(0, 0, comp->w, comp->h);
-    comp->root->scene->clip(std::move(clip));
+    comp->root->scene->clip(clip);
 }

@@ -37,8 +37,8 @@ void exportGif()
 
     picture->size(800, 800);
 
-    auto saver = tvg::Saver::gen();
-    if (!tvgexam::verify(saver->save(std::move(animation), "./test.gif"))) return;
+    auto saver = unique_ptr<tvg::Saver>(tvg::Saver::gen());
+    if (!tvgexam::verify(saver->save(animation, "./test.gif"))) return;
     saver->sync();
 
     cout << "Successfully exported to test.gif." << endl;

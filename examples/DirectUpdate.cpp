@@ -40,39 +40,26 @@ struct UserExample : tvgexam::Example
         //Shape (for BG)
         auto bg = tvg::Shape::gen();
         bg->appendRect(0, 0, w, h);
-
-        //fill property will be retained
         bg->fill(255, 255, 255);
-
-        canvas->push(std::move(bg));
+        canvas->push(bg);
 
         //Solid Shape
         {
-            auto shape = tvg::Shape::gen();
-
-            /* Acquire shape pointer to access it again.
-            instead, you should consider not to interrupt this pointer life-cycle. */
-            solid = shape.get();
-
-            shape->appendRect(-100, -100, 200, 200);
+            solid = tvg::Shape::gen();
+            solid->appendRect(-100, -100, 200, 200);
 
             //fill property will be retained
-            shape->fill(127, 255, 255);
-            shape->strokeFill(0, 0, 255);
-            shape->strokeWidth(1);
+            solid->fill(127, 255, 255);
+            solid->strokeFill(0, 0, 255);
+            solid->strokeWidth(1);
 
-            canvas->push(std::move(shape));
+            canvas->push(solid);
         }
 
         //Gradient Shape
         {
-            auto shape = tvg::Shape::gen();
-
-            /* Acquire shape pointer to access it again.
-            instead, you should consider not to interrupt this pointer life-cycle. */
-            gradient = shape.get();
-
-            shape->appendRect(w - 200, 0, 200, 200);
+            gradient = tvg::Shape::gen();
+            gradient->appendRect(w - 200, 0, 200, 200);
 
             //LinearGradient
             auto fill = tvg::LinearGradient::gen();
@@ -85,9 +72,9 @@ struct UserExample : tvgexam::Example
             colorStops[2] = {1, 255, 255, 255, 127};
 
             fill->colorStops(colorStops, 3);
-            shape->fill(std::move(fill));
+            gradient->fill(fill);
 
-            canvas->push(std::move(shape));
+            canvas->push(gradient);
         }
 
         this->w = w;

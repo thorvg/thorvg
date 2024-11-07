@@ -59,14 +59,14 @@ struct UserExample : tvgexam::Example
         colorStops[2] = {1, 255, 255, 255, 255};
 
         fill->colorStops(colorStops, 3);
-        shape->fill(std::move(fill));
+        shape->fill(fill);
         shape->translate(385, 400);
 
         //Update Shape1
         shape->scale(1 - 0.75 * progress);
         shape->rotate(360 * progress);
 
-        canvas->push(std::move(shape));
+        canvas->push(shape);
 
         //Shape2
         auto shape2 = tvg::Shape::gen();
@@ -83,12 +83,12 @@ struct UserExample : tvgexam::Example
         colorStops2[1] = {1, 255, 255, 255, 255};
 
         fill2->colorStops(colorStops2, 2);
-        shape2->fill(std::move(fill2));
+        shape2->fill(fill2);
 
         shape2->rotate(360 * progress);
         shape2->translate(400 + progress * 300, 400);
 
-        canvas->push(std::move(shape2));
+        canvas->push(shape2);
 
         //Shape3
         auto shape3 = tvg::Shape::gen();
@@ -109,14 +109,14 @@ struct UserExample : tvgexam::Example
 
         fill3->colorStops(colorStops3, 4);
 
-        shape3->fill(std::move(fill3));
+        shape3->fill(fill3);
         shape3->translate(400, 400);
 
         //Update Shape3
         shape3->rotate(-360 * progress);
         shape3->scale(0.5 + progress);
 
-        canvas->push(std::move(shape3));
+        canvas->push(shape3);
 
         return true;
     }

@@ -28,9 +28,9 @@
 
 struct UserExample : tvgexam::Example
 {
-    tvg::Scene* pScene1 = nullptr;
-    tvg::Scene* pScene2 = nullptr;
-    tvg::Scene* pScene3 = nullptr;
+    tvg::Scene* scene1 = nullptr;
+    tvg::Scene* scene2 = nullptr;
+    tvg::Scene* scene3 = nullptr;
 
     bool content(tvg::Canvas* canvas, uint32_t w, uint32_t h) override
     {
@@ -40,14 +40,13 @@ struct UserExample : tvgexam::Example
         auto bg = tvg::Shape::gen();
         bg->appendRect(0, 0, w, h);
         bg->fill(255, 255, 255);
-        canvas->push(std::move(bg));
+        canvas->push(bg);
 
         float pw, ph;
 
         //Prepare a scene for post effects
         {
-            auto scene = tvg::Scene::gen();
-            pScene1 = scene.get();
+            scene1 = tvg::Scene::gen();
 
             auto picture = tvg::Picture::gen();
             picture->load(EXAMPLE_DIR"/svg/LottieFiles_logo.svg");
@@ -56,14 +55,13 @@ struct UserExample : tvgexam::Example
             picture->size(pw * 0.5f, ph * 0.5f);
             picture->translate(pw * 0.175f, 0.0f);
 
-            scene->push(std::move(picture));
-            canvas->push(std::move(scene));
+            scene1->push(picture);
+            canvas->push(scene1);
         }
 
         //Prepare a scene for post effects
         {
-            auto scene = tvg::Scene::gen();
-            pScene2 = scene.get();
+            scene2 = tvg::Scene::gen();
 
             auto picture = tvg::Picture::gen();
             picture->load(EXAMPLE_DIR"/svg/152932619-bd3d6921-72df-4f09-856b-f9743ae32a14.svg");
@@ -72,14 +70,13 @@ struct UserExample : tvgexam::Example
             picture->translate(pw * 0.45f, ph * 0.45f);
             picture->size(pw * 0.75f, ph * 0.75f);
 
-            scene->push(std::move(picture));
-            canvas->push(std::move(scene));
+            scene2->push(picture);
+            canvas->push(scene2);
         }
 
         //Prepare a scene for post effects
         {
-            auto scene = tvg::Scene::gen();
-            pScene3 = scene.get();
+            scene3 = tvg::Scene::gen();
 
             auto picture = tvg::Picture::gen();
             picture->load(EXAMPLE_DIR"/svg//circles1.svg");
@@ -88,8 +85,8 @@ struct UserExample : tvgexam::Example
             picture->translate(w * 0.3f, h * 0.65f);
             picture->size(pw * 0.75f, ph * 0.75f);
 
-            scene->push(std::move(picture));
-            canvas->push(std::move(scene));
+            scene3->push(picture);
+            canvas->push(scene3);
         }
 
         return true;
@@ -104,15 +101,15 @@ struct UserExample : tvgexam::Example
         auto progress = tvgexam::progress(elapsed, 2.5f, true);   //2.5 seconds
 
         //Clear the previously applied effects
-        pScene1->push(tvg::SceneEffect::ClearAll);
+        scene1->push(tvg::SceneEffect::ClearAll);
         //Apply DropShadow post effect (r, g, b, a, angle, distance, sigma of blurness, quality)
-        pScene1->push(tvg::SceneEffect::DropShadow, 0, 0, 0, 125, 120.0f, 20.0f * progress, 3.0f, 100);
+        scene1->push(tvg::SceneEffect::DropShadow, 0, 0, 0, 125, 120.0f, 20.0f * progress, 3.0f, 100);
 
-        pScene2->push(tvg::SceneEffect::ClearAll);
-        pScene2->push(tvg::SceneEffect::DropShadow, 65, 143, 222, (int)(255.0f * progress), 135.0f, 10.0f, 3.0f, 100);
+        scene2->push(tvg::SceneEffect::ClearAll);
+        scene2->push(tvg::SceneEffect::DropShadow, 65, 143, 222, (int)(255.0f * progress), 135.0f, 10.0f, 3.0f, 100);
 
-        pScene3->push(tvg::SceneEffect::ClearAll);
-        pScene3->push(tvg::SceneEffect::DropShadow, 0, 0, 0, 125, 360.0f * progress, 20.0f, 3.0f, 100);
+        scene3->push(tvg::SceneEffect::ClearAll);
+        scene3->push(tvg::SceneEffect::DropShadow, 0, 0, 0, 125, 360.0f * progress, 20.0f, 3.0f, 100);
 
         canvas->update();
 

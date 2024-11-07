@@ -48,11 +48,12 @@ struct LottieRenderPooler
         }
 
         //no empty, generate a new one.
-        auto p = copy ? static_cast<T*>(pooler[0]->duplicate()) : T::gen().release();
+        auto p = copy ? static_cast<T*>(pooler[0]->duplicate()) : T::gen();
         PP(p)->ref();
         pooler.push(p);
         return p;
     }
 };
+
 
 #endif //_TVG_LOTTIE_RENDER_POOLER_H_

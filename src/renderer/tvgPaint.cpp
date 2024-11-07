@@ -442,25 +442,22 @@ Paint* Paint::duplicate() const noexcept
 }
 
 
-Result Paint::clip(std::unique_ptr<Paint> clipper) noexcept
+Result Paint::clip(Paint* clipper) noexcept
 {
-    auto p = clipper.release();
-
-    if (p && p->type() != Type::Shape) {
+    if (clipper && clipper->type() != Type::Shape) {
         TVGERR("RENDERER", "Clipping only supports the Shape!");
         return Result::NonSupport;
     }
-    pImpl->clip(p);
+    pImpl->clip(clipper);
     return Result::Success;
 }
 
 
-Result Paint::mask(std::unique_ptr<Paint> target, MaskMethod method) noexcept
+Result Paint::mask(Paint* target, MaskMethod method) noexcept
 {
-    auto p = target.release();
-    if (pImpl->mask(this, p, method)) return Result::Success;
+    if (pImpl->mask(this, target, method)) return Result::Success;
 
-    delete(p);
+    delete(target);
     return Result::InvalidArguments;
 }
 

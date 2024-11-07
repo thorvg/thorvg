@@ -38,7 +38,7 @@ TEST_CASE("Lottie Slot", "[tvgLottie]")
 {
     REQUIRE(Initializer::init(0) == Result::Success);
 
-    auto animation = LottieAnimation::gen();
+    auto animation = unique_ptr<LottieAnimation>(LottieAnimation::gen());
     REQUIRE(animation);
 
     auto picture = animation->picture();
@@ -74,7 +74,7 @@ TEST_CASE("Lottie Slot 2", "[tvgLottie]")
 {
     REQUIRE(Initializer::init(0) == Result::Success);
 
-    auto animation = LottieAnimation::gen();
+    auto animation = unique_ptr<LottieAnimation>(LottieAnimation::gen());
     REQUIRE(animation);
 
     auto picture = animation->picture();
@@ -100,7 +100,7 @@ TEST_CASE("Lottie Marker", "[tvgLottie]")
 {
     REQUIRE(Initializer::init(0) == Result::Success);
 
-    auto animation = LottieAnimation::gen();
+    auto animation = unique_ptr<LottieAnimation>(LottieAnimation::gen());
     REQUIRE(animation);
 
     auto picture = animation->picture();
