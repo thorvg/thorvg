@@ -95,7 +95,7 @@ struct LottieEffect
 struct LottieDropShadow : LottieEffect
 {
     LottieColor color;
-    LottieOpacity opacity = 0;
+    LottieFloat opacity = 0;
     LottieAngle angle = 0.0f;
     LottieSlider distance = 0.0f;
     LottieSlider blurness = 0.0f;
