@@ -1279,7 +1279,7 @@ void LottieBuilder::updateEffect(LottieLayer* layer, float frameNo)
             case LottieEffect::DropShadow: {
                 auto effect = static_cast<LottieDropShadow*>(*ef);
                 auto color = effect->color(frameNo);
-                layer->scene->push(SceneEffect::DropShadow, color.rgb[0], color.rgb[1], color.rgb[2], effect->opacity(frameNo), effect->angle(frameNo), effect->distance(frameNo), effect->blurness(frameNo), QUALITY);
+                layer->scene->push(SceneEffect::DropShadow, color.rgb[0], color.rgb[1], color.rgb[2], (int)effect->opacity(frameNo), effect->angle(frameNo), effect->distance(frameNo), effect->blurness(frameNo) * BLUR_TO_SIGMA, QUALITY);
                 break;
             }
             case LottieEffect::GaussianBlur: {
