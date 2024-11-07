@@ -271,19 +271,11 @@ static void _dropShadowShift(uint32_t* dst, uint32_t* src, int stride, SwBBox& r
     auto translucent = (direct || opacity < 255);
 
     //shift offset
-    if (region.min.x + offset.x < 0) {
-        src -= offset.x;
-    } else {
-        dst += offset.x;
-        w -= offset.x;
-    }
+    if (region.min.x + offset.x < 0) src -= offset.x;
+    else dst += offset.x;
 
-    if (region.min.y + offset.y < 0) {
-        src -= (offset.y * stride);
-    } else {
-        dst += (offset.y * stride);
-        h -= offset.y;
-    }
+    if (region.min.y + offset.y < 0) src -= (offset.y * stride);
+    else dst += (offset.y * stride);
 
     for (auto y = 0; y < h; ++y) {
         if (translucent) rasterTranslucentPixel32(dst, src, w, opacity);
