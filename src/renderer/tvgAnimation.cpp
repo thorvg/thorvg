@@ -120,7 +120,7 @@ Result Animation::segment(float *begin, float *end) noexcept
 }
 
 
-unique_ptr<Animation> Animation::gen() noexcept
+Animation* Animation::gen() noexcept
 {
-    return unique_ptr<Animation>(new Animation);
+    return new Animation;
 }

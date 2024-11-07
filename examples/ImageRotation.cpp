@@ -30,7 +30,7 @@
 
 struct UserExample : tvgexam::Example
 {
-    tvg::Picture* pPicture = nullptr;
+    tvg::Picture* picture = nullptr;
 
     float deg2rad(float degree)
     {
@@ -41,12 +41,11 @@ struct UserExample : tvgexam::Example
     {
         if (!canvas) return false;
 
-        auto picture = tvg::Picture::gen();
-        pPicture = picture.get();
+        picture = tvg::Picture::gen();
 
         if (!tvgexam::verify(picture->load(EXAMPLE_DIR"/image/scaledown.jpg"))) return false;
 
-        canvas->push(std::move(picture));
+        canvas->push(picture);
 
         return true;
     }
@@ -81,7 +80,7 @@ struct UserExample : tvgexam::Example
         m.e13 += (-400 * m.e11 + -400 * m.e12);
         m.e23 += (-400 * m.e21 + -400 * m.e22);
 
-        pPicture->transform(m);
+        picture->transform(m);
 
         canvas->update();
 

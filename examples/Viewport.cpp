@@ -30,7 +30,7 @@ struct UserExample : tvgexam::Example
 {
     static constexpr uint32_t VPORT_SIZE = 300;
     uint32_t w, h;
-    tvg::Picture* pPicture = nullptr;
+    tvg::Picture* picture = nullptr;
 
     bool content(tvg::Canvas* canvas, uint32_t w, uint32_t h) override
     {
@@ -42,12 +42,11 @@ struct UserExample : tvgexam::Example
         //Use the opacity for a half-translucent mask.
         mask->opacity(125);
 
-        auto picture = tvg::Picture::gen();
+        picture = tvg::Picture::gen();
         if (!tvgexam::verify(picture->load(EXAMPLE_DIR"/svg/tiger.svg"))) return false;
         picture->size(w, h);
-        picture->mask(std::move(mask), tvg::MaskMethod::Alpha);
-        pPicture = picture.get();
-        canvas->push(std::move(picture));
+        picture->mask(mask, tvg::MaskMethod::Alpha);
+        canvas->push(picture);
 
         this->w = w;
         this->h = h;

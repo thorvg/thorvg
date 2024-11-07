@@ -39,19 +39,19 @@ struct UserExample : tvgexam::Example
         auto shape1 = tvg::Shape::gen();
         shape1->appendRect(0, 0, 400, 400, 50, 50);  //x, y, w, h, rx, ry
         shape1->fill(0, 255, 0);                     //r, g, b
-        scene->push(std::move(shape1));
+        scene->push(shape1);
 
         //Prepare Circle
         auto shape2 = tvg::Shape::gen();
         shape2->appendCircle(400, 400, 200, 200);    //cx, cy, radiusW, radiusH
         shape2->fill(255, 255, 0);                   //r, g, b
-        scene->push(std::move(shape2));
+        scene->push(shape2);
 
         //Prepare Ellipse
         auto shape3 = tvg::Shape::gen();
         shape3->appendCircle(600, 600, 150, 100);    //cx, cy, radiusW, radiusH
         shape3->fill(0, 255, 255);                   //r, g, b
-        scene->push(std::move(shape3));
+        scene->push(shape3);
 
         //Create another Scene
         auto scene2 = tvg::Scene::gen();
@@ -72,7 +72,7 @@ struct UserExample : tvgexam::Example
         shape4->lineTo(146, 143);
         shape4->close();
         shape4->fill(0, 0, 255);
-        scene2->push(std::move(shape4));
+        scene2->push(shape4);
 
         //Circle
         auto shape5 = tvg::Shape::gen();
@@ -89,13 +89,13 @@ struct UserExample : tvgexam::Example
         shape5->cubicTo(cx - halfRadius, cy + radius, cx - radius, cy + halfRadius, cx - radius, cy);
         shape5->cubicTo(cx - radius, cy - halfRadius, cx - halfRadius, cy - radius, cx, cy - radius);
         shape5->fill(255, 0, 0);
-        scene2->push(std::move(shape5));
+        scene2->push(shape5);
 
         //Push scene2 onto the scene
-        scene->push(std::move(scene2));
+        scene->push(scene2);
 
         //Draw the Scene onto the Canvas
-        canvas->push(std::move(scene));
+        canvas->push(scene);
 
         return true;
     }

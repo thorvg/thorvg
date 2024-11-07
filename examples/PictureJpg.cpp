@@ -42,7 +42,7 @@ struct UserExample : tvgexam::Example
             picture->rotate(30 * i);
             picture->size(200, 200);
             picture->opacity(opacity + opacity * i);
-            canvas->push(std::move(picture));
+            canvas->push(picture);
         }
 
         //Open file manually
@@ -62,7 +62,7 @@ struct UserExample : tvgexam::Example
         free(data);
         picture->translate(400, 0);
         picture->scale(0.8);
-        canvas->push(std::move(picture));
+        canvas->push(picture);
 
         return true;
     }

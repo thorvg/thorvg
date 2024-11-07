@@ -38,7 +38,7 @@ struct UserExample : tvgexam::Example
         if (!tvgexam::verify(result)) return false;
         picture->size(w, h);
 
-        auto accessor = tvg::Accessor::gen();
+        auto accessor = unique_ptr<tvg::Accessor>(tvg::Accessor::gen());
 
         //The callback function from lambda expression.
         //This function will be called for every paint nodes of the picture tree.
@@ -58,7 +58,7 @@ struct UserExample : tvgexam::Example
             return true;
         };
 
-        if (!tvgexam::verify(accessor->set(picture.get(), f, nullptr))) return false;
+        if (!tvgexam::verify(accessor->set(picture, f, nullptr))) return false;
 
         // Try to retrieve the shape that corresponds to the SVG node with the unique ID "star".
         if (auto paint = picture->paint(tvg::Accessor::id("star"))) {
@@ -67,7 +67,7 @@ struct UserExample : tvgexam::Example
             shape->strokeWidth(5);
         }
 
-        canvas->push(std::move(picture));
+        canvas->push(picture);
 
         return true;
     }

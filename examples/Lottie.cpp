@@ -68,7 +68,7 @@ struct UserExample : tvgexam::Example
         picture->scale(scale);
         picture->translate((counter % NUM_PER_ROW) * size + shiftX, (counter / NUM_PER_ROW) * (this->h / NUM_PER_COL) + shiftY);
 
-        animations.push_back(std::move(animation));
+        animations.push_back(unique_ptr<tvg::Animation>(animation));
 
         cout << "Lottie: " << path << endl;
 
@@ -97,8 +97,7 @@ struct UserExample : tvgexam::Example
         auto shape = tvg::Shape::gen();
         shape->appendRect(0, 0, w, h);
         shape->fill(75, 75, 75);
-
-        canvas->push(std::move(shape));
+        canvas->push(shape);
 
         this->w = w;
         this->h = h;
@@ -108,7 +107,7 @@ struct UserExample : tvgexam::Example
 
         //Run animation loop
         for (auto& animation : animations) {
-            canvas->push(tvg::cast(animation->picture()));
+            canvas->push(animation->picture());
         }
 
         return true;

@@ -28,8 +28,8 @@
 
 struct UserExample : tvgexam::Example
 {
-    tvg::Shape *pMaskShape = nullptr;
-    tvg::Shape *pMask = nullptr;
+    tvg::Shape* maskShape = nullptr;
+    tvg::Shape* mask = nullptr;
 
     bool content(tvg::Canvas* canvas, uint32_t w, uint32_t h) override
     {
@@ -39,35 +39,33 @@ struct UserExample : tvgexam::Example
         auto bg = tvg::Shape::gen();
         bg->appendRect(0, 0, w, h);
         bg->fill(255, 255, 255);
-        canvas->push(std::move(bg));
+        canvas->push(bg);
 
         //image
         auto picture1 = tvg::Picture::gen();
         if (!tvgexam::verify(picture1->load(EXAMPLE_DIR"/svg/cartman.svg"))) return false;
         picture1->size(400, 400);
-        canvas->push(std::move(picture1));
+        canvas->push(picture1);
 
         auto picture2 = tvg::Picture::gen();
         picture2->load(EXAMPLE_DIR"/svg/logo.svg");
         picture2->size(400, 400);
 
         //mask
-        auto maskShape = tvg::Shape::gen();
-        pMaskShape = maskShape.get();
+        maskShape = tvg::Shape::gen();
         maskShape->appendCircle(180, 180, 75, 75);
         maskShape->fill(125, 125, 125);
         maskShape->strokeFill(25, 25, 25);
         maskShape->strokeJoin(tvg::StrokeJoin::Round);
         maskShape->strokeWidth(10);
-        canvas->push(std::move(maskShape));
+        canvas->push(maskShape);
 
-        auto mask = tvg::Shape::gen();
-        pMask = mask.get();
+        mask = tvg::Shape::gen();
         mask->appendCircle(180, 180, 75, 75);
         mask->fill(255, 255, 255);         //AlphaMask RGB channels are unused.
 
-        picture2->mask(std::move(mask), tvg::MaskMethod::Alpha);
-        canvas->push(std::move(picture2));
+        picture2->mask(mask, tvg::MaskMethod::Alpha);
+        canvas->push(picture2);
 
         return true;
     }
@@ -82,8 +80,8 @@ struct UserExample : tvgexam::Example
         auto progress = tvgexam::progress(elapsed, 3.0f, true);  //play time 3 sec.
 
         // Translate mask object with its stroke & update
-        pMaskShape->translate(0 , progress * 300 - 100);
-        pMask->translate(0 , progress * 300 - 100);
+        maskShape->translate(0 , progress * 300 - 100);
+        mask->translate(0 , progress * 300 - 100);
 
         canvas->update();
 

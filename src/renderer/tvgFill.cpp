@@ -38,7 +38,7 @@ Fill* RadialGradient::Impl::duplicate()
     ret->pImpl->fy = fy;
     ret->pImpl->fr = fr;
 
-    return ret.release();
+    return ret;
 }
 
 
@@ -67,7 +67,7 @@ Fill* LinearGradient::Impl::duplicate()
     ret->pImpl->x2 = x2;
     ret->pImpl->y2 = y2;
 
-    return ret.release();
+    return ret;
 };
 
 
@@ -182,9 +182,9 @@ Result RadialGradient::radial(float* cx, float* cy, float* r, float* fx, float* 
 }
 
 
-unique_ptr<RadialGradient> RadialGradient::gen() noexcept
+RadialGradient* RadialGradient::gen() noexcept
 {
-    return unique_ptr<RadialGradient>(new RadialGradient);
+    return new RadialGradient;
 }
 
 
@@ -228,9 +228,9 @@ Result LinearGradient::linear(float* x1, float* y1, float* x2, float* y2) const 
 }
 
 
-unique_ptr<LinearGradient> LinearGradient::gen() noexcept
+LinearGradient* LinearGradient::gen() noexcept
 {
-    return unique_ptr<LinearGradient>(new LinearGradient);
+    return new LinearGradient;
 }
 
 

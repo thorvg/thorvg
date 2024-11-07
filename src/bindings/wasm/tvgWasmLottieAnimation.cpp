@@ -78,7 +78,7 @@ void term()
 struct TvgEngineMethod
 {
     virtual ~TvgEngineMethod() {}
-    virtual unique_ptr<Canvas> init(string&) = 0;
+    virtual Canvas* init(string&) = 0;
     virtual void resize(Canvas* canvas, int w, int h) = 0;
     virtual val output(int w, int h)
     {
@@ -96,7 +96,7 @@ struct TvgSwEngine : TvgEngineMethod
         Initializer::term(tvg::CanvasEngine::Sw);
     }
 
-    unique_ptr<Canvas> init(string&) override
+    Canvas* init(string&) override
     {
         Initializer::init(0, tvg::CanvasEngine::Sw);
         return SwCanvas::gen();
@@ -130,7 +130,7 @@ struct TvgWgEngine : TvgEngineMethod
         Initializer::term(tvg::CanvasEngine::Wg);
     }
 
-    unique_ptr<Canvas> init(string& selector) override
+    Canvas* init(string& selector) override
     {
         #ifdef THORVG_WG_RASTER_SUPPORT
             WGPUSurfaceDescriptorFromCanvasHTMLSelector canvasDesc{};
@@ -161,6 +161,8 @@ class __attribute__((visibility("default"))) TvgLottieAnimation
 public:
     ~TvgLottieAnimation()
     {
+        delete(animation);
+        delete(canvas);
         delete(engine);
     }
 
@@ -233,6 +235,7 @@ public:
 
         canvas->clear(true);
 
+        delete(animation);
         animation = Animation::gen();
 
         string filetype = mimetype;
@@ -253,7 +256,7 @@ public:
 
         resize(width, height);
 
-        if (canvas->push(cast(animation->picture())) != Result::Success) {
+        if (canvas->push(animation->picture()) != Result::Success) {
             errorMsg = "push() fail";
             return false;
         }
@@ -329,7 +332,7 @@ public:
         this->width = width;
         this->height = height;
 
-        engine->resize(canvas.get(), width, height);
+        engine->resize(canvas, width, height);
 
         float scale;
         float shiftX = 0.0f, shiftY = 0.0f;
@@ -364,14 +367,14 @@ public:
             return false;
         }
 
-        auto saver = Saver::gen();
+        auto saver = unique_ptr<Saver>(Saver::gen());
         if (!saver) {
             errorMsg = "Invalid saver";
             return false;
         }
 
         //animation to save
-        auto animation = Animation::gen();
+        auto animation = unique_ptr<Animation>(Animation::gen());
         if (!animation) {
             errorMsg = "Invalid animation";
             return false;
@@ -407,7 +410,7 @@ public:
             return false;
         }
 
-        if (saver->save(std::move(animation), "output.gif", 100, 30) != tvg::Result::Success) {
+        if (saver->save(animation.release(), "output.gif", 100, 30) != tvg::Result::Success) {
             errorMsg = "save(), fail";
             return false;
         }
@@ -421,8 +424,8 @@ public:
 
 private:
     string                 errorMsg;
-    unique_ptr<Canvas>     canvas = nullptr;
-    unique_ptr<Animation>  animation = nullptr;
+    Canvas*                canvas = nullptr;
+    Animation*             animation = nullptr;
     TvgEngineMethod*       engine = nullptr;
     string                 data;
     uint32_t               width = 0;

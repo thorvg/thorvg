@@ -143,11 +143,11 @@ public:
             shape->appendRect(0, 0, static_cast<float>(w), static_cast<float>(h), 0, 0);
             shape->fill(r, g, b);
 
-            if (canvas->push(std::move(shape)) != tvg::Result::Success) return 1;
+            if (canvas->push(shape) != tvg::Result::Success) return 1;
         }
 
         //Drawing
-        canvas->push(std::move(picture));
+        canvas->push(picture);
         canvas->draw();
         canvas->sync();
 
@@ -179,7 +179,7 @@ private:
         }
 
         //Create a Canvas
-        canvas = tvg::SwCanvas::gen();
+        canvas = unique_ptr<tvg::SwCanvas>(tvg::SwCanvas::gen());
     }
 
     void createBuffer(int w, int h)

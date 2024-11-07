@@ -83,10 +83,10 @@ Result WgCanvas::target(void* instance, void* surface, uint32_t w, uint32_t h, v
 }
 
 
-unique_ptr<WgCanvas> WgCanvas::gen() noexcept
+WgCanvas* WgCanvas::gen() noexcept
 {
 #ifdef THORVG_WG_RASTER_SUPPORT
-    return unique_ptr<WgCanvas>(new WgCanvas);
+    return new WgCanvas;
 #endif
     return nullptr;
 }

@@ -87,11 +87,10 @@ struct UserExample : tvgexam::Example
         if (!canvas) return false;
 
         //Background
-        auto shape = tvg::Shape::gen();
-        shape->appendRect(0, 0, w, h);
-        shape->fill(75, 75, 75);
-
-        canvas->push(std::move(shape));
+        auto bg = tvg::Shape::gen();
+        bg->appendRect(0, 0, w, h);
+        bg->fill(75, 75, 75);
+        canvas->push(bg);
 
         this->w = w;
         this->h = h;
@@ -99,7 +98,7 @@ struct UserExample : tvgexam::Example
 
         //slot (gradient)
         {
-            slot1 = tvg::LottieAnimation::gen();
+            slot1 = std::unique_ptr<tvg::LottieAnimation>(tvg::LottieAnimation::gen());
             auto picture = slot1->picture();
             if (!tvgexam::verify(picture->load(EXAMPLE_DIR"/lottie/extensions/slotsample.json"))) return false;
 
@@ -108,12 +107,12 @@ struct UserExample : tvgexam::Example
 
             sizing(picture, 0);
 
-            canvas->push(tvg::cast(picture));
+            canvas->push(picture);
         }
 
         //slot (solid fill)
         {
-            slot2 = tvg::LottieAnimation::gen();
+            slot2 = std::unique_ptr<tvg::LottieAnimation>(tvg::LottieAnimation::gen());
             auto picture = slot2->picture();
             if (!tvgexam::verify(picture->load(EXAMPLE_DIR"/lottie/extensions/slotsample2.json"))) return false;
 
@@ -122,19 +121,19 @@ struct UserExample : tvgexam::Example
 
             sizing(picture, 1);
 
-            canvas->push(tvg::cast(picture));
+            canvas->push(picture);
         }
 
         //marker
         {
-            marker = tvg::LottieAnimation::gen();
+            marker = std::unique_ptr<tvg::LottieAnimation>(tvg::LottieAnimation::gen());
             auto picture = marker->picture();
             if (!tvgexam::verify(picture->load(EXAMPLE_DIR"/lottie/extensions/marker_sample.json"))) return false;
             if (!tvgexam::verify(marker->segment("sectionC"))) return false;
 
             sizing(picture, 2);
 
-            canvas->push(tvg::cast(picture));
+            canvas->push(picture);
         }
 
         return true;

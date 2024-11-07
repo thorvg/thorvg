@@ -23,6 +23,7 @@
 #include <iostream>
 #include <string.h>
 #include <vector>
+#include <memory>
 #include <thorvg.h>
 #ifdef _WIN32
     #define WIN32_LEAN_AND_MEAN
@@ -80,16 +81,16 @@ private:
       float scale =  static_cast<float>(this->width) / width;
       picture->size(width * scale, height * scale);
 
-      auto saver = Saver::gen();
+      auto saver = unique_ptr<Saver>(Saver::gen());
 
       //set a background color
       if (background) {
          auto bg = Shape::gen();
          bg->fill(r, g, b);
          bg->appendRect(0, 0, width * scale, height * scale);
-         saver->background(std::move(bg));
+         saver->background(bg);
       }
-      if (saver->save(std::move(animation), out.c_str(), 100, fps) != Result::Success) return false;
+      if (saver->save(animation, out.c_str(), 100, fps) != Result::Success) return false;
       if (saver->sync() != Result::Success) return false;
 
       if (Initializer::term() != Result::Success) return false;

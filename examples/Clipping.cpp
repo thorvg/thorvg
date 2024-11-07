@@ -51,13 +51,13 @@ struct UserExample : tvgexam::Example
         auto shape = tvg::Shape::gen();
         shape->appendRect(0, 0, w, h);
         shape->fill(255, 255, 255);
-        canvas->push(std::move(shape));
+        canvas->push(shape);
 
         //////////////////////////////////////////////
         auto scene = tvg::Scene::gen();
 
         auto star1 = tvg::Shape::gen();
-        compose(star1.get());
+        compose(star1);
         star1->fill(255, 255, 0);
         star1->strokeFill(255 ,0, 0);
         star1->strokeWidth(10);
@@ -70,10 +70,10 @@ struct UserExample : tvgexam::Example
         clipStar->appendCircle(200, 230, 110, 110);
         clipStar->translate(10, 10);
 
-        star1->clip(std::move(clipStar));
+        star1->clip((clipStar));
 
         auto star2 = tvg::Shape::gen();
-        compose(star2.get());
+        compose(star2);
         star2->fill(0, 255, 255);
         star2->strokeFill(0 ,255, 0);
         star2->strokeWidth(10);
@@ -87,17 +87,17 @@ struct UserExample : tvgexam::Example
         clip->appendCircle(200, 230, 130, 130);
         clip->translate(10, 10);
 
-        scene->push(std::move(star1));
-        scene->push(std::move(star2));
+        scene->push(star1);
+        scene->push(star2);
 
         //Clipping scene to shape
-        scene->clip(std::move(clip));
+        scene->clip(clip);
 
-        canvas->push(std::move(scene));
+        canvas->push(scene);
 
         //////////////////////////////////////////////
         auto star3 = tvg::Shape::gen();
-        compose(star3.get());
+        compose(star3);
 
         //Fill Gradient
         auto fill = tvg::LinearGradient::gen();
@@ -106,7 +106,7 @@ struct UserExample : tvgexam::Example
         colorStops[0] = {0, 0, 0, 0, 255};
         colorStops[1] = {1, 255, 255, 255, 255};
         fill->colorStops(colorStops, 2);
-        star3->fill(std::move(fill));
+        star3->fill(fill);
 
         star3->strokeFill(255 ,0, 0);
         star3->strokeWidth(10);
@@ -118,9 +118,9 @@ struct UserExample : tvgexam::Example
         clipRect->translate(20, 20);
 
         //Clipping scene to rect(shape)
-        star3->clip(std::move(clipRect));
+        star3->clip(clipRect);
 
-        canvas->push(std::move(star3));
+        canvas->push(star3);
 
         //////////////////////////////////////////////
         auto picture = tvg::Picture::gen();
@@ -136,9 +136,9 @@ struct UserExample : tvgexam::Example
         clipPath->translate(20, 20);
 
         //Clipping picture to path
-        picture->clip(std::move(clipPath));
+        picture->clip(clipPath);
 
-        canvas->push(std::move(picture));
+        canvas->push(picture);
 
         //////////////////////////////////////////////
         auto shape1 = tvg::Shape::gen();
@@ -150,9 +150,9 @@ struct UserExample : tvgexam::Example
         clipShape->appendRect(600, 420, 100, 100);
 
         //Clipping shape1 to clipShape
-        shape1->clip(std::move(clipShape));
+        shape1->clip(clipShape);
 
-        canvas->push(std::move(shape1));
+        canvas->push(shape1);
 
         return true;
     }

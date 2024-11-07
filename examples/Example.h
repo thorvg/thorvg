@@ -21,6 +21,7 @@
  */
 #include "config.h"
 
+#include <memory>
 #include <cmath>
 #include <vector>
 #include <fstream>
@@ -156,6 +157,7 @@ struct Window
     virtual ~Window()
     {
         delete(example);
+        delete(canvas);
 
         //Terminate the SDL
         SDL_DestroyWindow(window);
@@ -269,8 +271,6 @@ struct Window
 
 struct SwWindow : Window
 {
-    unique_ptr<tvg::SwCanvas> canvas = nullptr;
-
     SwWindow(Example* example, uint32_t width, uint32_t height, uint32_t threadsCnt) : Window(tvg::CanvasEngine::Sw, example, width, height, threadsCnt)
     {
         if (!initialized) return;
@@ -284,8 +284,6 @@ struct SwWindow : Window
             return;
         }
 
-        Window::canvas = canvas.get();
-
         resize();
     }
 
@@ -295,7 +293,7 @@ struct SwWindow : Window
         if (!surface) return;
 
         //Set the canvas target and draw on it.
-        verify(canvas->target((uint32_t*)surface->pixels, surface->w, surface->pitch / 4, surface->h, tvg::ColorSpace::ARGB8888));
+        verify(static_cast<tvg::SwCanvas*>(canvas)->target((uint32_t*)surface->pixels, surface->w, surface->pitch / 4, surface->h, tvg::ColorSpace::ARGB8888));
     }
 
     void refresh() override
@@ -311,8 +309,6 @@ struct SwWindow : Window
 struct GlWindow : Window
 {
     SDL_GLContext context;
-
-    unique_ptr<tvg::GlCanvas> canvas = nullptr;
 
     GlWindow(Example* example, uint32_t width, uint32_t height, uint32_t threadsCnt) : Window(tvg::CanvasEngine::Gl, example, width, height, threadsCnt)
     {
@@ -337,8 +333,6 @@ struct GlWindow : Window
             return;
         }
 
-        Window::canvas = canvas.get();
-
         resize();
     }
 
@@ -350,7 +344,7 @@ struct GlWindow : Window
     void resize() override
     {
         //Set the canvas target and draw on it.
-        verify(canvas->target(0, width, height));
+        verify(static_cast<tvg::GlCanvas*>(canvas)->target(0, width, height));
     }
 
     void refresh() override
@@ -367,8 +361,6 @@ struct GlWindow : Window
 
 struct WgWindow : Window
 {
-    unique_ptr<tvg::WgCanvas> canvas = nullptr;
-
     WGPUInstance instance;
     WGPUSurface surface;
 
@@ -428,8 +420,6 @@ struct WgWindow : Window
             return;
         }
 
-        Window::canvas = canvas.get();
-
         resize();
     }
 
@@ -442,7 +432,7 @@ struct WgWindow : Window
     void resize() override
     {
         //Set the canvas target and draw on it.
-        verify(canvas->target(instance, surface, width, height));
+        verify(static_cast<tvg::WgCanvas*>(canvas)->target(instance, surface, width, height));
     }
 
     void refresh() override 

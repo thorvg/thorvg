@@ -33,7 +33,7 @@ struct UserExample : tvgexam::Example
     bool content(tvg::Canvas* canvas, uint32_t w, uint32_t h) override
     {
         //Animation Controller
-        animation = tvg::Animation::gen();
+        animation = unique_ptr<tvg::Animation>(tvg::Animation::gen());
         auto picture = animation->picture();
 
         //Background
@@ -41,7 +41,7 @@ struct UserExample : tvgexam::Example
         shape->appendRect(0, 0, w, h);
         shape->fill(50, 50, 50);
 
-        canvas->push(std::move(shape));
+        canvas->push(shape);
 
         if (!tvgexam::verify(picture->load(EXAMPLE_DIR"/lottie/sample.json"))) return false;
 
@@ -62,7 +62,7 @@ struct UserExample : tvgexam::Example
         picture->scale(scale);
         picture->translate(shiftX, shiftY);
 
-        canvas->push(tvg::cast(picture));
+        canvas->push(picture);
 
         return true;
     }

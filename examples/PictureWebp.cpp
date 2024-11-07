@@ -36,7 +36,7 @@ struct UserExample : tvgexam::Example
         auto bg = tvg::Shape::gen();
         bg->appendRect(0, 0, w, h);             //x, y, w, h
         bg->fill(255, 255, 255);                //r, g, b
-        canvas->push(std::move(bg));
+        canvas->push(bg);
 
         //Load webp file from path
         auto opacity = 31;
@@ -48,7 +48,7 @@ struct UserExample : tvgexam::Example
             picture->rotate(30 * i);
             picture->size(200, 200);
             picture->opacity(opacity + opacity * i);
-            canvas->push(std::move(picture));
+            canvas->push(picture);
         }
 
         //Open file manually
@@ -67,7 +67,7 @@ struct UserExample : tvgexam::Example
         free(data);
         picture->translate(400, 0);
         picture->scale(0.8);
-        canvas->push(std::move(picture));
+        canvas->push(picture);
 
         return true;
     }

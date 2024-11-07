@@ -86,7 +86,7 @@ Accessor::Accessor() : pImpl(nullptr)
 }
 
 
-unique_ptr<Accessor> Accessor::gen() noexcept
+Accessor* Accessor::gen() noexcept
 {
-    return unique_ptr<Accessor>(new Accessor);
+    return new Accessor;
 }

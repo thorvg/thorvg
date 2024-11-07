@@ -29,7 +29,7 @@ using namespace std;
 
 TEST_CASE("Custom Transformation", "[tvgPaint]")
 {
-    auto shape = Shape::gen();
+    auto shape = unique_ptr<Shape>(Shape::gen());
     REQUIRE(shape);
 
     //Verify default transform
@@ -80,7 +80,7 @@ TEST_CASE("Custom Transformation", "[tvgPaint]")
 
 TEST_CASE("Basic Transformation", "[tvgPaint]")
 {
-    auto shape = Shape::gen();
+    auto shape = unique_ptr<Shape>(Shape::gen());
     REQUIRE(shape);
 
     REQUIRE(shape->translate(155.0f, -155.0f) == Result::Success);
@@ -101,7 +101,7 @@ TEST_CASE("Basic Transformation", "[tvgPaint]")
 
 TEST_CASE("Opacity", "[tvgPaint]")
 {
-    auto shape = Shape::gen();
+    auto shape = unique_ptr<Shape>(Shape::gen());
     REQUIRE(shape);
 
     REQUIRE(shape->opacity() == 255);
@@ -120,9 +120,9 @@ TEST_CASE("Bounding Box", "[tvgPaint]")
 {
     Initializer::init(0);
 
-    auto canvas = SwCanvas::gen();
-    auto shape = Shape::gen().release();
-    canvas->push(tvg::cast(shape));
+    auto canvas = unique_ptr<SwCanvas>(SwCanvas::gen());
+    auto shape = Shape::gen();
+    canvas->push(shape);
     canvas->sync();
 
     //Negative
@@ -169,7 +169,7 @@ TEST_CASE("Bounding Box", "[tvgPaint]")
 
 TEST_CASE("Duplication", "[tvgPaint]")
 {
-    auto shape = Shape::gen();
+    auto shape = unique_ptr<Shape>(Shape::gen());
     REQUIRE(shape);
 
     //Setup paint properties
@@ -180,10 +180,10 @@ TEST_CASE("Duplication", "[tvgPaint]")
 
     auto comp = Shape::gen();
     REQUIRE(comp);
-    REQUIRE(shape->clip(std::move(comp)) == Result::Success);
+    REQUIRE(shape->clip(comp) == Result::Success);
 
     //Duplication
-    auto dup = tvg::cast<Shape>(shape->duplicate());
+    auto dup = unique_ptr<Paint>(shape->duplicate());
     REQUIRE(dup);
 
     //Compare properties
@@ -203,57 +203,52 @@ TEST_CASE("Duplication", "[tvgPaint]")
 
 TEST_CASE("Composition", "[tvgPaint]")
 {
-    auto shape = Shape::gen();
+    auto shape = unique_ptr<Shape>(Shape::gen());
     REQUIRE(shape);
 
     //Negative
     REQUIRE(shape->mask(nullptr) == MaskMethod::None);
 
     auto comp = Shape::gen();
-    REQUIRE(shape->mask(std::move(comp), MaskMethod::None) == Result::InvalidArguments);
+    REQUIRE(shape->mask(comp, MaskMethod::None) == Result::InvalidArguments);
 
     //Clipping
     comp = Shape::gen();
-    auto pComp = comp.get();
-    REQUIRE(shape->clip(std::move(comp)) == Result::Success);
+    REQUIRE(shape->clip(comp) == Result::Success);
 
     //AlphaMask
     comp = Shape::gen();
-    pComp = comp.get();
-    REQUIRE(shape->mask(std::move(comp), MaskMethod::Alpha) == Result::Success);
+    REQUIRE(shape->mask(comp, MaskMethod::Alpha) == Result::Success);
 
-    const Paint* pComp2 = nullptr;
-    REQUIRE(shape->mask(&pComp2) == MaskMethod::Alpha);
-    REQUIRE(pComp == pComp2);
+    const Paint* comp2 = nullptr;
+    REQUIRE(shape->mask(&comp2) == MaskMethod::Alpha);
+    REQUIRE(comp == comp2);
 
     //InvAlphaMask
     comp = Shape::gen();
-    pComp = comp.get();
-    REQUIRE(shape->mask(std::move(comp), MaskMethod::InvAlpha) == Result::Success);
+    REQUIRE(shape->mask(comp, MaskMethod::InvAlpha) == Result::Success);
 
-    REQUIRE(shape->mask(&pComp2) == MaskMethod::InvAlpha);
-    REQUIRE(pComp == pComp2);
+    REQUIRE(shape->mask(&comp2) == MaskMethod::InvAlpha);
+    REQUIRE(comp == comp2);
 
     //LumaMask
     comp = Shape::gen();
-    pComp = comp.get();
-    REQUIRE(shape->mask(std::move(comp), MaskMethod::Luma) == Result::Success);
+    REQUIRE(shape->mask(comp, MaskMethod::Luma) == Result::Success);
 
-    REQUIRE(shape->mask(&pComp2) == MaskMethod::Luma);
-    REQUIRE(pComp == pComp2);
+    REQUIRE(shape->mask(&comp2) == MaskMethod::Luma);
+    REQUIRE(comp == comp2);
 
     //InvLumaMask
     comp = Shape::gen();
-    pComp = comp.get();
-    REQUIRE(shape->mask(std::move(comp), MaskMethod::InvLuma) == Result::Success);
+    REQUIRE(shape->mask(comp, MaskMethod::InvLuma) == Result::Success);
 
-    REQUIRE(shape->mask(&pComp2) == MaskMethod::InvLuma);
-    REQUIRE(pComp == pComp2);
+    REQUIRE(shape->mask(&comp2) == MaskMethod::InvLuma);
+    REQUIRE(comp == comp2);
 }
 
 TEST_CASE("Blending", "[tvgPaint]")
 {
-    auto shape = Shape::gen();
+    auto shape = unique_ptr<Shape>(Shape::gen());
     REQUIRE(shape);
 
     //Add

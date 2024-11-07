@@ -31,7 +31,7 @@
 
 struct UserExample : tvgexam::Example
 {
-    std::vector<unique_ptr<tvg::Picture>> pictures;
+    std::vector<tvg::Picture*> pictures;
     uint32_t w, h;
     uint32_t size;
 
@@ -66,7 +66,7 @@ struct UserExample : tvgexam::Example
         picture->scale(scale);
         picture->translate((counter % NUM_PER_ROW) * size + shiftX, (counter / NUM_PER_ROW) * (this->h / NUM_PER_COL) + shiftY);
 
-        pictures.push_back(std::move(picture));
+        pictures.push_back(picture);
 
         cout << "SVG: " << path << endl;
 
@@ -82,7 +82,7 @@ struct UserExample : tvgexam::Example
         shape->appendRect(0, 0, w, h);
         shape->fill(255, 255, 255);
 
-        canvas->push(std::move(shape));
+        canvas->push(shape);
 
         //Default font
         if (!tvgexam::verify(tvg::Text::load(EXAMPLE_DIR"/font/Arial.ttf"))) return false;
@@ -98,7 +98,7 @@ struct UserExample : tvgexam::Example
            This allows time for the tvg resources to finish loading;
            otherwise, you can push pictures immediately. */
         for (auto& paint : pictures) {
-            canvas->push(std::move(paint));
+            canvas->push(paint);
         }
 
         pictures.clear();

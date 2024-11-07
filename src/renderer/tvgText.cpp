@@ -98,15 +98,15 @@ Result Text::fill(uint8_t r, uint8_t g, uint8_t b) noexcept
 }
 
 
-Result Text::fill(unique_ptr<Fill> f) noexcept
+Result Text::fill(Fill* f) noexcept
 {
-    return pImpl->shape->fill(std::move(f));
+    return pImpl->shape->fill(f);
 }
 
 
-unique_ptr<Text> Text::gen() noexcept
+Text* Text::gen() noexcept
 {
-    return unique_ptr<Text>(new Text);
+    return new Text;
 }
 
 

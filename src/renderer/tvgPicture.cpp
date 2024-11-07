@@ -142,9 +142,9 @@ Picture::~Picture()
 }
 
 
-unique_ptr<Picture> Picture::gen() noexcept
+Picture* Picture::gen() noexcept
 {
-    return unique_ptr<Picture>(new Picture);
+    return new Picture;
 }
 
 
@@ -212,6 +212,9 @@ const Paint* Picture::paint(uint32_t id) noexcept
         return true;
     };
 
-    tvg::Accessor::gen()->set(this, cb, &value);
+    auto accessor = tvg::Accessor::gen();
+    accessor->set(this, cb, &value);
+    delete(accessor);
+
     return value.ret;
 }

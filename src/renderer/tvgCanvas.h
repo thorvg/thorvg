@@ -58,17 +58,16 @@ struct Canvas::Impl
         paints.clear();
     }
 
-    Result push(unique_ptr<Paint> paint)
+    Result push(Paint* paint)
     {
         //You cannot push paints during rendering.
         if (status == Status::Drawing) return Result::InsufficientCondition;
 
-        auto p = paint.release();
-        if (!p) return Result::MemoryCorruption;
-        PP(p)->ref();
-        paints.push_back(p);
+        if (!paint) return Result::MemoryCorruption;
+        PP(paint)->ref();
+        paints.push_back(paint);
 
-        return update(p, true);
+        return update(paint, true);
     }
 
     Result clear(bool paints, bool buffer)

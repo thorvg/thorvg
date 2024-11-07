@@ -86,7 +86,7 @@ public:
      *
      * @since 0.15
      */
-    static std::unique_ptr<LottieAnimation> gen() noexcept;
+    static LottieAnimation* gen() noexcept;
 };
 
 } //namespace

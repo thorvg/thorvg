@@ -36,7 +36,7 @@ struct UserExample : tvgexam::Example
         auto shape = tvg::Shape::gen();
         shape->appendRect(-100, -100, 200, 200);
         shape->fill(255, 255, 255);
-        canvas->push(std::move(shape));
+        canvas->push(shape);
 
         return true;
     }
@@ -57,7 +57,7 @@ struct UserExample : tvgexam::Example
         shape->scale(1 - 0.75 * progress);
         shape->rotate(360 * progress);
 
-        canvas->push(std::move(shape));
+        canvas->push(shape);
 
         return true;
     }

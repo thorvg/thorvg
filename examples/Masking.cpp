@@ -47,9 +47,9 @@ struct UserExample : tvgexam::Example
         nMask->appendCircle(220, 220, 125, 125);
         nMask->fill(255, 255, 255);       //AlphaMask RGB channels are unused.
 
-        mask->mask(std::move(nMask), tvg::MaskMethod::Alpha);
-        shape->mask(std::move(mask), tvg::MaskMethod::Alpha);
-        canvas->push(std::move(shape));
+        mask->mask(nMask, tvg::MaskMethod::Alpha);
+        shape->mask(mask, tvg::MaskMethod::Alpha);
+        canvas->push(shape);
 
         //SVG
         auto svg = tvg::Picture::gen();
@@ -63,8 +63,8 @@ struct UserExample : tvgexam::Example
         mask2->appendCircle(150, 500, 75, 75);
         mask2->appendRect(150, 500, 200, 200, 30, 30);
         mask2->fill(255, 255, 255);       //AlphaMask RGB channels are unused.
-        svg->mask(std::move(mask2), tvg::MaskMethod::Alpha);
-        canvas->push(std::move(svg));
+        svg->mask(mask2, tvg::MaskMethod::Alpha);
+        canvas->push(svg);
 
         //Star
         auto star = tvg::Shape::gen();
@@ -89,8 +89,8 @@ struct UserExample : tvgexam::Example
         mask3->appendCircle(600, 200, 125, 125);
         mask3->fill(255, 255, 255);       //AlphaMask RGB channels are unused.
         mask3->opacity(200);
-        star->mask(std::move(mask3), tvg::MaskMethod::Alpha);
-        canvas->push(std::move(star));
+        star->mask(mask3, tvg::MaskMethod::Alpha);
+        canvas->push(star);
 
         //Image
         ifstream file(EXAMPLE_DIR"/image/rawimage_200x300.raw", ios::binary);
@@ -118,8 +118,8 @@ struct UserExample : tvgexam::Example
         mask4->close();
         mask4->fill(255, 255, 255);        //AlphaMask RGB channels are unused.
         mask4->opacity(70);
-        image->mask(std::move(mask4), tvg::MaskMethod::Alpha);
-        canvas->push(std::move(image));
+        image->mask(mask4, tvg::MaskMethod::Alpha);
+        canvas->push(image);
 
         free(data);
 

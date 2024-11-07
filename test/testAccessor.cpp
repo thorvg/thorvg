@@ -25,13 +25,14 @@
 #include "catch.hpp"
 
 using namespace tvg;
+using namespace std;
 
 TEST_CASE("Accessor Creation", "[tvgAccessor]")
 {
-    auto accessor = tvg::Accessor::gen();
+    auto accessor = unique_ptr<Accessor>(Accessor::gen());
     REQUIRE(accessor);
 
-    auto accessor2 = tvg::Accessor::gen();
+    auto accessor2 = unique_ptr<Accessor>(Accessor::gen());
     REQUIRE(accessor2);
 }
 
@@ -41,17 +42,17 @@ TEST_CASE("Set", "[tvgAccessor]")
 {
     REQUIRE(Initializer::init(0) == Result::Success);
 
-    auto canvas = SwCanvas::gen();
+    auto canvas = unique_ptr<SwCanvas>(SwCanvas::gen());
     REQUIRE(canvas);
 
     uint32_t buffer[100*100];
     REQUIRE(canvas->target(buffer, 100, 100, 100, ColorSpace::ABGR8888) == Result::Success);
 
-    auto picture = Picture::gen();
+    auto picture = unique_ptr<Picture>(Picture::gen());
     REQUIRE(picture);
     REQUIRE(picture->load(TEST_DIR"/logo.svg") == Result::Success);
 
-    auto accessor = tvg::Accessor::gen();
+    auto accessor = unique_ptr<Accessor>(Accessor::gen());
     REQUIRE(accessor);
 
     //Case 1

@@ -36,7 +36,7 @@ struct UserExample : tvgexam::Example
         auto shape = tvg::Shape::gen();
         shape->appendRect(0, 0, w, h);
         shape->fill(75, 75, 75);
-        canvas->push(std::move(shape));
+        canvas->push(shape);
 
         //Load a necessary font data.
         //The loaded font will be released when the Initializer::term() is called.
@@ -62,42 +62,42 @@ struct UserExample : tvgexam::Example
         text->font("Arial", 80);
         text->text("THORVG Text");
         text->fill(255, 255, 255);
-        canvas->push(std::move(text));
+        canvas->push(text);
 
         auto text2 = tvg::Text::gen();
         text2->font("Arial", 30, "italic");
         text2->text("Font = \"Arial\", Size = 40, Style=Italic");
         text2->translate(0, 150);
         text2->fill(255, 255, 255);
-        canvas->push(std::move(text2));
+        canvas->push(text2);
 
         auto text3 = tvg::Text::gen();
         text3->font("Arial", 40);
         text3->text("Kerning Test: VA, AV, TJ, JT");
         text3->fill(255, 255, 255);
         text3->translate(0, 225);
-        canvas->push(std::move(text3));
+        canvas->push(text3);
 
         auto text4 = tvg::Text::gen();
         text4->font("Arial", 25);
         text4->text("Purple Text");
         text4->fill(255, 0, 255);
         text4->translate(0, 310);
-        canvas->push(std::move(text4));
+        canvas->push(text4);
 
         auto text5 = tvg::Text::gen();
         text5->font("Arial", 25);
         text5->text("Gray Text");
         text5->fill(150, 150, 150);
         text5->translate(220, 310);
-        canvas->push(std::move(text5));
+        canvas->push(text5);
 
         auto text6 = tvg::Text::gen();
         text6->font("Arial", 25);
         text6->text("Yellow Text");
         text6->fill(255, 255, 0);
         text6->translate(400, 310);
-        canvas->push(std::move(text6));
+        canvas->push(text6);
 
         auto text7 = tvg::Text::gen();
         text7->font("Arial", 15);
@@ -105,7 +105,7 @@ struct UserExample : tvgexam::Example
         text7->fill(0, 0, 0);
         text7->translate(600, 400);
         text7->rotate(30);
-        canvas->push(std::move(text7));
+        canvas->push(text7);
 
         auto text8 = tvg::Text::gen();
         text8->font("Arial", 15);
@@ -113,7 +113,7 @@ struct UserExample : tvgexam::Example
         text8->text("Transformed Text - 90'");
         text8->translate(600, 400);
         text8->rotate(90);
-        canvas->push(std::move(text8));
+        canvas->push(text8);
 
         auto text9 = tvg::Text::gen();
         text9->font("Arial", 15);
@@ -121,7 +121,7 @@ struct UserExample : tvgexam::Example
         text9->text("Transformed Text - 180'");
         text9->translate(800, 400);
         text9->rotate(180);
-        canvas->push(std::move(text9));
+        canvas->push(text9);
 
         //gradient texts
         float x, y, w2, h2;
@@ -142,9 +142,9 @@ struct UserExample : tvgexam::Example
         colorStops[1] = {0.5, 255, 255, 0, 255};
         colorStops[2] = {1, 255, 255, 255, 255};
         fill->colorStops(colorStops, 3);
-        text10->fill(std::move(fill));
+        text10->fill(fill);
 
-        canvas->push(std::move(text10));
+        canvas->push(text10);
 
         auto text11 = tvg::Text::gen();
         text11->font("NanumGothicCoding", 40);
@@ -163,16 +163,16 @@ struct UserExample : tvgexam::Example
         colorStops2[2] = {1, 255, 255, 255, 255};
 
         fill2->colorStops(colorStops2, 3);
-        text11->fill(std::move(fill2));
+        text11->fill(fill2);
 
-        canvas->push(std::move(text11));
+        canvas->push(text11);
 
         auto text12 = tvg::Text::gen();
         text12->font("SentyCloud", 50);
         text12->fill(255, 25, 25);
         text12->text("\xe4\xb8\x8d\xe5\x88\xb0\xe9\x95\xbf\xe5\x9f\x8e\xe9\x9d\x9e\xe5\xa5\xbd\xe6\xb1\x89\xef\xbc\x81");
         text12->translate(0, 525);
-        canvas->push(std::move(text12));
+        canvas->push(text12);
 
         return true;
     }

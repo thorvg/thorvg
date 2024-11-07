@@ -28,9 +28,9 @@
 
 struct UserExample : tvgexam::Example
 {
-    tvg::Scene* pScene1 = nullptr;   //direction both
-    tvg::Scene* pScene2 = nullptr;   //direction horizontal
-    tvg::Scene* pScene3 = nullptr;   //direction vertical
+    tvg::Scene* scene1 = nullptr;   //direction both
+    tvg::Scene* scene2 = nullptr;   //direction horizontal
+    tvg::Scene* scene3 = nullptr;   //direction vertical
 
     bool content(tvg::Canvas* canvas, uint32_t w, uint32_t h) override
     {
@@ -38,43 +38,40 @@ struct UserExample : tvgexam::Example
 
         //Prepare a scene for post effects (direction both)
         {
-            auto scene = tvg::Scene::gen();
-            pScene1 = scene.get();
+            scene1 = tvg::Scene::gen();
 
             auto picture = tvg::Picture::gen();
             picture->load(EXAMPLE_DIR"/svg/tiger.svg");
             picture->size(w / 2, h / 2);
 
-            scene->push(std::move(picture));
-            canvas->push(std::move(scene));
+            scene1->push(picture);
+            canvas->push(scene1);
         }
 
         //Prepare a scene for post effects (direction horizontal)
         {
-            auto scene = tvg::Scene::gen();
-            pScene2 = scene.get();
+            scene2 = tvg::Scene::gen();
 
             auto picture = tvg::Picture::gen();
             picture->load(EXAMPLE_DIR"/svg/tiger.svg");
             picture->size(w / 2, h / 2);
             picture->translate(w / 2, 0);
 
-            scene->push(std::move(picture));
-            canvas->push(std::move(scene));
+            scene2->push(picture);
+            canvas->push(scene2);
         }
 
         //Prepare a scene for post effects (direction vertical)
         {
-            auto scene = tvg::Scene::gen();
-            pScene3 = scene.get();
+            scene3 = tvg::Scene::gen();
 
             auto picture = tvg::Picture::gen();
             picture->load(EXAMPLE_DIR"/svg/tiger.svg");
             picture->size(w / 2, h / 2);
             picture->translate(0, h / 2);
 
-            scene->push(std::move(picture));
-            canvas->push(std::move(scene));
+            scene3->push(picture);
+            canvas->push(scene3);
         }
 
 
@@ -90,15 +87,15 @@ struct UserExample : tvgexam::Example
         auto progress = tvgexam::progress(elapsed, 2.5f, true);   //2.5 seconds
 
         //Clear the previously applied effects
-        pScene1->push(tvg::SceneEffect::ClearAll);
+        scene1->push(tvg::SceneEffect::ClearAll);
         //Apply GaussianBlur post effect (sigma, direction, border option, quality)
-        pScene1->push(tvg::SceneEffect::GaussianBlur, 10.0f * progress, 0, 0, 100);
+        scene1->push(tvg::SceneEffect::GaussianBlur, 10.0f * progress, 0, 0, 100);
 
-        pScene2->push(tvg::SceneEffect::ClearAll);
-        pScene2->push(tvg::SceneEffect::GaussianBlur, 10.0f * progress, 1, 0, 100);
+        scene2->push(tvg::SceneEffect::ClearAll);
+        scene2->push(tvg::SceneEffect::GaussianBlur, 10.0f * progress, 1, 0, 100);
 
-        pScene3->push(tvg::SceneEffect::ClearAll);
-        pScene3->push(tvg::SceneEffect::GaussianBlur, 10.0f * progress, 2, 0, 100);
+        scene3->push(tvg::SceneEffect::ClearAll);
+        scene3->push(tvg::SceneEffect::GaussianBlur, 10.0f * progress, 2, 0, 100);
 
         canvas->update();
 

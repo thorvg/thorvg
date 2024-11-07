@@ -38,25 +38,25 @@ struct UserExample : tvgexam::Example
         shape4->appendCircle(400, 150, 150, 150);       //cx, cy, radiusW, radiusH
         shape4->appendCircle(600, 150, 150, 100);       //cx, cy, radiusW, radiusH
         shape4->fill(255, 255, 0);                      //r, g, b
-        canvas->push(std::move(shape4));
+        canvas->push(shape4);
 
         //Prepare Round Rectangle
         auto shape1 = tvg::Shape::gen();
         shape1->appendRect(0, 450, 300, 300, 50, 50);  //x, y, w, h, rx, ry
         shape1->fill(0, 255, 0);                       //r, g, b
-        canvas->push(std::move(shape1));
+        canvas->push(shape1);
 
         //Prepare Circle
         auto shape2 = tvg::Shape::gen();
         shape2->appendCircle(400, 600, 150, 150);    //cx, cy, radiusW, radiusH
         shape2->fill(255, 255, 0);                   //r, g, b
-        canvas->push(std::move(shape2));
+        canvas->push(shape2);
 
         //Prepare Ellipse
         auto shape3 = tvg::Shape::gen();
         shape3->appendCircle(600, 600, 150, 100);    //cx, cy, radiusW, radiusH
         shape3->fill(0, 255, 255);                   //r, g, b
-        canvas->push(std::move(shape3));
+        canvas->push(shape3);
 
         return true;
     }

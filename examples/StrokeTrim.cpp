@@ -45,14 +45,14 @@ struct UserExample : tvgexam::Example
         shape1->strokeWidth(12);
         shape1->strokeTrim(0.0f, 0.5f, false);
 
-        auto shape2 = tvg::cast<tvg::Shape>(shape1->duplicate());
+        auto shape2 = static_cast<tvg::Shape*>(shape1->duplicate());
         shape2->translate(300, 300);
         shape2->fill(0, 155, 50, 100);
         shape2->strokeFill(0, 255, 0);
         shape2->strokeTrim(0.0f, 0.5f, true);
 
-        canvas->push(std::move(shape1));
-        canvas->push(std::move(shape2));
+        canvas->push(shape1);
+        canvas->push(shape2);
 
         return true;
     }

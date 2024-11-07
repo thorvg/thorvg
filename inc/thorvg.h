@@ -1,8 +1,8 @@
 #ifndef _THORVG_H_
 #define _THORVG_H_
 
+#include <cstdint>
 #include <functional>
-#include <memory>
 #include <list>
 
 #ifdef TVG_API
@@ -375,7 +375,7 @@ public:
      * @param[in] target The paint of the target object.
      * @param[in] method The method used to mask the source object with the target.
      */
-    Result mask(std::unique_ptr<Paint> target, MaskMethod method) noexcept;
+    Result mask(Paint* target, MaskMethod method) noexcept;
 
     /**
      * @brief Clip the drawing region of the paint object.
@@ -389,7 +389,7 @@ public:
      * @note @p clipper only supports the Shape type.
      * @note Experimental API
      */
-    Result clip(std::unique_ptr<Paint> clipper) noexcept;
+    Result clip(Paint* clipper) noexcept;
 
     /**
      * @brief Sets the blending method for the paint object.
@@ -614,7 +614,7 @@ public:
      * @see Canvas::paints()
      * @see Canvas::clear()
      */
-    virtual Result push(std::unique_ptr<Paint> paint) noexcept;
+    virtual Result push(Paint* paint) noexcept;
 
     /**
      * @brief Clear the internal canvas resources that used for the drawing.
@@ -738,7 +738,7 @@ public:
      *
      * @return A new LinearGradient object.
      */
-    static std::unique_ptr<LinearGradient> gen() noexcept;
+    static LinearGradient* gen() noexcept;
 
     /**
      * @brief Returns the ID value of this class.
@@ -810,7 +810,7 @@ public:
      *
      * @return A new RadialGradient object.
      */
-    static std::unique_ptr<RadialGradient> gen() noexcept;
+    static RadialGradient* gen() noexcept;
 
     /**
      * @brief Returns the ID value of this class.
@@ -984,7 +984,7 @@ public:
      *
      * @retval Result::MemoryCorruption In case a @c nullptr is passed as the argument.
      */
-    Result strokeFill(std::unique_ptr<Fill> f) noexcept;
+    Result strokeFill(Fill* f) noexcept;
 
     /**
      * @brief Sets the dash pattern of the stroke.
@@ -1068,7 +1068,7 @@ public:
      *
      * @note Either a solid color or a gradient fill is applied, depending on what was set as last.
      */
-    Result fill(std::unique_ptr<Fill> f) noexcept;
+    Result fill(Fill* f) noexcept;
 
     /**
      * @brief Sets the fill rule for the Shape object.
@@ -1194,7 +1194,7 @@ public:
      *
      * @return A new Shape object.
      */
-    static std::unique_ptr<Shape> gen() noexcept;
+    static Shape* gen() noexcept;
 
     /**
      * @brief Returns the ID value of this class.
@@ -1324,7 +1324,7 @@ public:
      *
      * @return A new Picture object.
      */
-    static std::unique_ptr<Picture> gen() noexcept;
+    static Picture* gen() noexcept;
 
     /**
      * @brief Returns the ID value of this class.
@@ -1370,7 +1370,7 @@ public:
      * @see Scene::paints()
      * @see Scene::clear()
      */
-    Result push(std::unique_ptr<Paint> paint) noexcept;
+    Result push(Paint* paint) noexcept;
 
     /**
      * @brief Returns the list of the paints that currently held by the Scene.
@@ -1379,7 +1379,7 @@ public:
      *
      * @warning Please avoid accessing the paints during Scene update/draw. You can access them after calling Canvas::sync().
      * @see Canvas::sync()
-     * @see Scene::push(std::unique_ptr<Paint> paint)
+     * @see Scene::push(Paint* paint)
      * @see Scene::clear()
      *
      * @note Experimental API
@@ -1417,7 +1417,7 @@ public:
      *
      * @return A new Scene object.
      */
-    static std::unique_ptr<Scene> gen() noexcept;
+    static Scene* gen() noexcept;
 
     /**
      * @brief Returns the ID value of this class.
@@ -1500,7 +1500,7 @@ public:
      *
      * @since 0.15
      */
-    Result fill(std::unique_ptr<Fill> f) noexcept;
+    Result fill(Fill* f) noexcept;
 
     /**
      * @brief Loads a scalable font data (ttf) from a file.
@@ -1570,7 +1570,7 @@ public:
      *
      * @since 0.15
      */
-    static std::unique_ptr<Text> gen() noexcept;
+    static Text* gen() noexcept;
 
     /**
      * @brief Returns the ID value of this class.
@@ -1658,7 +1658,7 @@ public:
      * @brief Creates a new SwCanvas object.
      * @return A new SwCanvas object.
      */
-    static std::unique_ptr<SwCanvas> gen() noexcept;
+    static SwCanvas* gen() noexcept;
 
     _TVG_DECLARE_PRIVATE(SwCanvas);
 };
@@ -1704,7 +1704,7 @@ public:
      *
      * @since 0.14
      */
-    static std::unique_ptr<GlCanvas> gen() noexcept;
+    static GlCanvas* gen() noexcept;
 
     _TVG_DECLARE_PRIVATE(GlCanvas);
 };
@@ -1750,7 +1750,7 @@ public:
      *
      * @since 0.15
      */
-    static std::unique_ptr<WgCanvas> gen() noexcept;
+    static WgCanvas* gen() noexcept;
 
     _TVG_DECLARE_PRIVATE(WgCanvas);
 };
@@ -1933,7 +1933,7 @@ public:
      * @return A new Animation object.
      *
      */
-    static std::unique_ptr<Animation> gen() noexcept;
+    static Animation* gen() noexcept;
 
     _TVG_DECLARE_PRIVATE(Animation);
 };
@@ -1968,7 +1968,7 @@ public:
      *
      * @note Experimental API
      */
-    Result background(std::unique_ptr<Paint> paint) noexcept;
+    Result background(Paint* paint) noexcept;
 
     /**
      * @brief Exports the given @p paint data to the given @p path
@@ -1990,7 +1990,7 @@ public:
      *
      * @since 0.5
      */
-    Result save(std::unique_ptr<Paint> paint, const char* filename, uint32_t quality = 100) noexcept;
+    Result save(Paint* paint, const char* filename, uint32_t quality = 100) noexcept;
 
     /**
      * @brief Export the provided animation data to the specified file path.
@@ -2013,7 +2013,7 @@ public:
      *
      * @note Experimental API
      */
-    Result save(std::unique_ptr<Animation> animation, const char* filename, uint32_t quality = 100, uint32_t fps = 0) noexcept;
+    Result save(Animation* animation, const char* filename, uint32_t quality = 100, uint32_t fps = 0) noexcept;
 
     /**
      * @brief Guarantees that the saving task is finished.
@@ -2036,7 +2036,7 @@ public:
      *
      * @since 0.5
      */
-    static std::unique_ptr<Saver> gen() noexcept;
+    static Saver* gen() noexcept;
 
     _TVG_DECLARE_PRIVATE(Saver);
 };
@@ -2092,33 +2092,10 @@ public:
      *
      * @return A new Accessor object.
      */
-    static std::unique_ptr<Accessor> gen() noexcept;
+    static Accessor* gen() noexcept;
 
     _TVG_DECLARE_PRIVATE(Accessor);
 };
-
-
-/**
- * @brief The cast() function is a utility function used to cast a 'Paint' to type 'T'.
- * @since 0.11
- */
-template<typename T = tvg::Paint>
-std::unique_ptr<T> cast(Paint* paint)
-{
-    return std::unique_ptr<T>(static_cast<T*>(paint));
-}
-
-
-/**
- * @brief The cast() function is a utility function used to cast a 'Fill' to type 'T'.
- * @since 0.11
- */
-template<typename T = tvg::Fill>
-std::unique_ptr<T> cast(Fill* fill)
-{
-    return std::unique_ptr<T>(static_cast<T*>(fill));
-}
-
 
 /** @}*/
 

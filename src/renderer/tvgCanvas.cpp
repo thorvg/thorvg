@@ -43,9 +43,9 @@ list<Paint*>& Canvas::paints() noexcept
 }
 
 
-Result Canvas::push(unique_ptr<Paint> paint) noexcept
+Result Canvas::push(Paint* paint) noexcept
 {
-    return pImpl->push(std::move(paint));
+    return pImpl->push(paint);
 }
 
 
