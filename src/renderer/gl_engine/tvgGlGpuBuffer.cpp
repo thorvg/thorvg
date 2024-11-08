@@ -117,9 +117,13 @@ uint32_t GlStageBuffer::pushIndex(void *data, uint32_t size)
     return offset;
 }
 
-void GlStageBuffer::flushToGPU()
+bool GlStageBuffer::flushToGPU()
 {
-    if (mStageBuffer.empty()) return;
+    if (mStageBuffer.empty() || mIndexBuffer.empty()) {
+        mStageBuffer.clear();
+        mIndexBuffer.clear();
+        return false;
+    }
 
 
     mGpuBuffer.bind(GlGpuBuffer::Target::ARRAY_BUFFER);
@@ -131,6 +135,9 @@ void GlStageBuffer::flushToGPU()
     mGpuIndexBuffer.unbind(GlGpuBuffer::Target::ELEMENT_ARRAY_BUFFER);
 
     mStageBuffer.clear();
+    mIndexBuffer.clear();
+
+    return true;
 }
 
 void GlStageBuffer::bind()
