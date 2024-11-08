@@ -17,6 +17,9 @@ if [ ! -d "./build_wasm" ]; then
     elif [[ "$BACKEND" == "sw" ]]; then
       sed "s|EMSDK:|$EMSDK|g" ./cross/wasm32_sw.txt > /tmp/.wasm_cross.txt
       meson -Db_lto=true -Ddefault_library=static -Dstatic=true -Dloaders="all" -Dsavers="all" -Dthreads=false -Dbindings="wasm_beta" --cross-file /tmp/.wasm_cross.txt build_wasm
+    elif [[ "$BACKEND" == "gl" ]]; then
+      sed "s|EMSDK:|$EMSDK|g" ./cross/wasm32_gl.txt > /tmp/.wasm_cross.txt
+      meson -Db_lto=true -Ddefault_library=static -Dstatic=true -Dloaders="all" -Dsavers="all" -Dthreads=false -Dbindings="wasm_beta" -Dengines="gl" --cross-file /tmp/.wasm_cross.txt build_wasm
     else
       sed "s|EMSDK:|$EMSDK|g" ./cross/wasm32_wg.txt > /tmp/.wasm_cross.txt
       meson -Db_lto=true -Ddefault_library=static -Dstatic=true -Dloaders="all" -Dsavers="all" -Dthreads=false -Dbindings="wasm_beta" -Dengines="wg, sw" --cross-file /tmp/.wasm_cross.txt build_wasm

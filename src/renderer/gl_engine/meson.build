@@ -26,6 +26,9 @@ source_file = [
 if host_machine.system() == 'darwin'
     gl_dep = declare_dependency(link_args: ['-framework', 'OpenGL'])
     compiler_flags += ['-Wno-deprecated']     #for deprecated opengl
+elif cc.get_id() == 'emscripten'
+    target_opengles = true
+    gl_dep = dependency('GLESv3', required: false)
 else
     #find a opengl library with fallbacks
     gl_dep = dependency('GL', required: false)
