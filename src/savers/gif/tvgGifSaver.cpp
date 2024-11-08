@@ -113,14 +113,14 @@ bool GifSaver::close()
 }
 
 
-bool GifSaver::save(TVG_UNUSED Paint* paint, TVG_UNUSED Paint* bg, TVG_UNUSED const string& path, TVG_UNUSED uint32_t quality)
+bool GifSaver::save(TVG_UNUSED Paint* paint, TVG_UNUSED Paint* bg, TVG_UNUSED const char* filename, TVG_UNUSED uint32_t quality)
 {
     TVGLOG("GIF_SAVER", "Paint is not supported.");
     return false;
 }
 
 
-bool GifSaver::save(Animation* animation, Paint* bg, const string& path, TVG_UNUSED uint32_t quality, uint32_t fps)
+bool GifSaver::save(Animation* animation, Paint* bg, const char* filename, TVG_UNUSED uint32_t quality, uint32_t fps)
 {
     close();
 
@@ -138,10 +138,11 @@ bool GifSaver::save(Animation* animation, Paint* bg, const string& path, TVG_UNU
         return false;
     }
 
-    this->path = strdup(path.c_str());
-    if (!this->path) return false;
+    if (!filename) return false;
+    this->path = strdup(filename);
 
     this->animation = animation;
+
     if (bg) this->bg = bg->duplicate();
     this->fps = static_cast<float>(fps);
 

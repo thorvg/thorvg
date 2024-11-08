@@ -1260,10 +1260,10 @@ public:
      *
      * @warning It's the user responsibility to release the @p data memory.
      *
-     * @note If you are unsure about the MIME type, you can provide an empty value like @c "", and thorvg will attempt to figure it out.
+     * @note If you are unsure about the MIME type, you can provide an empty value like @c nullptr, and thorvg will attempt to figure it out.
      * @since 0.5
      */
-    Result load(const char* data, uint32_t size, const char* mimeType, const char* rpath = "", bool copy = false) noexcept;
+    Result load(const char* data, uint32_t size, const char* mimeType, const char* rpath = nullptr, bool copy = false) noexcept;
 
     /**
      * @brief Resizes the picture content to the given width and height.
@@ -1540,7 +1540,7 @@ public:
      * @warning It's the user responsibility to release the @p data memory.
      *
      * @note To unload the font data loaded using this API, pass the proper @p name and @c nullptr as @p data.
-     * @note If you are unsure about the MIME type, you can provide an empty value like @c "", and thorvg will attempt to figure it out.
+     * @note If you are unsure about the MIME type, you can provide an empty value like @c nullptr, and thorvg will attempt to figure it out.
      * @see Text::font(const char* name, float size, const char* style)
      *
      * @note 0.15

@@ -3869,7 +3869,7 @@ bool SvgLoader::header()
 }
 
 
-bool SvgLoader::open(const char* data, uint32_t size, TVG_UNUSED const string& rpath, bool copy)
+bool SvgLoader::open(const char* data, uint32_t size, TVG_UNUSED const char* rpath, bool copy)
 {
     clear();
 
@@ -3887,7 +3887,7 @@ bool SvgLoader::open(const char* data, uint32_t size, TVG_UNUSED const string& r
 }
 
 
-bool SvgLoader::open(const string& path)
+bool SvgLoader::open(const char* path)
 {
     clear();
 

@@ -68,10 +68,10 @@ JpgLoader::~JpgLoader()
 }
 
 
-bool JpgLoader::open(const string& path)
+bool JpgLoader::open(const char* path)
 {
     int width, height;
-    decoder = jpgdHeader(path.c_str(), &width, &height);
+    decoder = jpgdHeader(path, &width, &height);
     if (!decoder) return false;
 
     w = static_cast<float>(width);
@@ -81,7 +81,7 @@ bool JpgLoader::open(const string& path)
 }
 
 
-bool JpgLoader::open(const char* data, uint32_t size, TVG_UNUSED const string& rpath, bool copy)
+bool JpgLoader::open(const char* data, uint32_t size, TVG_UNUSED const char* rpath, bool copy)
 {
     if (copy) {
         this->data = (char *) malloc(size);

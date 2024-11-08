@@ -44,8 +44,8 @@ private:
 public:
     ~GifSaver();
 
-    bool save(Paint* paint, Paint* bg, const string& path, uint32_t quality) override;
-    bool save(Animation* animation, Paint* bg, const string& path, uint32_t quality, uint32_t fps) override;
+    bool save(Paint* paint, Paint* bg, const char* filename, uint32_t quality) override;
+    bool save(Animation* animation, Paint* bg, const char* filename, uint32_t quality, uint32_t fps) override;
     bool close() override;
 };
 

@@ -48,8 +48,8 @@ struct LoadModule
         if (pathcache) free(hashpath);
     }
 
-    virtual bool open(const string& path) { return false; }
-    virtual bool open(const char* data, uint32_t size, const string& rpath, bool copy) { return false; }
+    virtual bool open(const char* path) { return false; }
+    virtual bool open(const char* data, uint32_t size, const char* rpath, bool copy) { return false; }
     virtual bool resize(Paint* paint, float w, float h) { return false; }
     virtual void sync() {};  //finish immediately if any async update jobs.
 

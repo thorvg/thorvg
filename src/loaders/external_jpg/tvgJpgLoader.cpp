@@ -57,9 +57,9 @@ JpgLoader::~JpgLoader()
 }
 
 
-bool JpgLoader::open(const string& path)
+bool JpgLoader::open(const char* path)
 {
-    auto jpegFile = fopen(path.c_str(), "rb");
+    auto jpegFile = fopen(path, "rb");
     if (!jpegFile) return false;
 
     auto ret = false;
@@ -97,7 +97,7 @@ finalize:
 }
 
 
-bool JpgLoader::open(const char* data, uint32_t size, TVG_UNUSED const string& rpath, bool copy)
+bool JpgLoader::open(const char* data, uint32_t size, TVG_UNUSED const char* rpath, bool copy)
 {
     int width, height, subSample, colorSpace;
     if (tjDecompressHeader3(jpegDecompressor, (unsigned char *) data, size, &width, &height, &subSample, &colorSpace) < 0) return false;

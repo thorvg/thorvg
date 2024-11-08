@@ -85,11 +85,11 @@ static void _unmap(TtfLoader* loader)
 
 #elif defined(__linux__)
 
-static bool _map(TtfLoader* loader, const string& path)
+static bool _map(TtfLoader* loader, const char* path)
 {
     auto& reader = loader->reader;
 
-    auto fd = open(path.c_str(), O_RDONLY);
+    auto fd = open(path, O_RDONLY);
     if (fd < 0) return false;
 
     struct stat info;
@@ -116,11 +116,11 @@ static void _unmap(TtfLoader* loader)
     reader.size = 0;
 }
 #else
-static bool _map(TtfLoader* loader, const string& path)
+static bool _map(TtfLoader* loader, const char* path)
 {
     auto& reader = loader->reader;
 
-    auto f = fopen(path.c_str(), "rb");
+    auto f = fopen(path, "rb");
     if (!f) return false;
 
     fseek(f, 0, SEEK_END);
@@ -234,7 +234,7 @@ TtfLoader::~TtfLoader()
 }
 
 
-bool TtfLoader::open(const string& path)
+bool TtfLoader::open(const char* path)
 {
     clear();
     if (!_map(this, path)) return false;
@@ -242,7 +242,7 @@ bool TtfLoader::open(const string& path)
 }
 
 
-bool TtfLoader::open(const char* data, uint32_t size, TVG_UNUSED const string& rpath, bool copy)
+bool TtfLoader::open(const char* data, uint32_t size, TVG_UNUSED const char* rpath, bool copy)
 {
     reader.size = size;
     nomap = true;

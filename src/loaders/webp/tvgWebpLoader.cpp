@@ -69,9 +69,9 @@ WebpLoader::~WebpLoader()
 }
 
 
-bool WebpLoader::open(const string& path)
+bool WebpLoader::open(const char* path)
 {
-    auto f = fopen(path.c_str(), "rb");
+    auto f = fopen(path, "rb");
     if (!f) return false;
 
     fseek(f, 0, SEEK_END);
@@ -104,7 +104,7 @@ bool WebpLoader::open(const string& path)
 }
 
 
-bool WebpLoader::open(const char* data, uint32_t size, TVG_UNUSED const string& rpath, bool copy)
+bool WebpLoader::open(const char* data, uint32_t size, TVG_UNUSED const char* rpath, bool copy)
 {
     if (copy) {
         this->data = (uint8_t*) malloc(size);
