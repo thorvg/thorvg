@@ -52,11 +52,11 @@ PngLoader::~PngLoader()
 }
 
 
-bool PngLoader::open(const string& path)
+bool PngLoader::open(const char* path)
 {
     image->opaque = NULL;
 
-    if (!png_image_begin_read_from_file(image, path.c_str())) return false;
+    if (!png_image_begin_read_from_file(image, path)) return false;
 
     w = (float)image->width;
     h = (float)image->height;
@@ -65,7 +65,7 @@ bool PngLoader::open(const string& path)
 }
 
 
-bool PngLoader::open(const char* data, uint32_t size, TVG_UNUSED const string& rpath, bool copy)
+bool PngLoader::open(const char* data, uint32_t size, TVG_UNUSED const char* rpath, bool copy)
 {
     image->opaque = NULL;
 

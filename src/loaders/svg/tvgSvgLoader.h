@@ -42,8 +42,8 @@ public:
     SvgLoader();
     ~SvgLoader();
 
-    bool open(const string& path) override;
-    bool open(const char* data, uint32_t size, const string& rpath, bool copy) override;
+    bool open(const char* path) override;
+    bool open(const char* data, uint32_t size, const char* rpath, bool copy) override;
     bool resize(Paint* paint, float w, float h) override;
     bool read() override;
     bool close() override;

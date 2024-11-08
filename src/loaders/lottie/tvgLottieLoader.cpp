@@ -195,7 +195,7 @@ bool LottieLoader::header()
 }
 
 
-bool LottieLoader::open(const char* data, uint32_t size, const std::string& rpath, bool copy)
+bool LottieLoader::open(const char* data, uint32_t size, const char* rpath, bool copy)
 {
     if (copy) {
         content = (char*)malloc(size + 1);
@@ -207,16 +207,16 @@ bool LottieLoader::open(const char* data, uint32_t size, const std::string& rpat
     this->size = size;
     this->copy = copy;
 
-    if (rpath.empty()) this->dirName = strdup(".");
-    else this->dirName = strdup(rpath.c_str());
+    if (!rpath) this->dirName = strdup(".");
+    else this->dirName = strdup(rpath);
 
     return header();
 }
 
 
-bool LottieLoader::open(const string& path)
+bool LottieLoader::open(const char* path)
 {
-    auto f = fopen(path.c_str(), "r");
+    auto f = fopen(path, "r");
     if (!f) return false;
 
     fseek(f, 0, SEEK_END);
@@ -238,7 +238,7 @@ bool LottieLoader::open(const string& path)
 
     fclose(f);
 
-    this->dirName = strDirname(path.c_str());
+    this->dirName = strDirname(path);
     this->content = content;
     this->copy = true;
 
