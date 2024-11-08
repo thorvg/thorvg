@@ -56,7 +56,7 @@ public:
 
     uint32_t pushIndex(void* data, uint32_t size);
 
-    void flushToGPU();
+    bool flushToGPU();
 
     void bind();
 
