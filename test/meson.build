@@ -1,5 +1,12 @@
+test_compiler_flags = compiler_flags
+
 if lib_type == 'static'
-    compiler_flags += ['-DTVG_STATIC']
+    test_compiler_flags += ['-DTVG_STATIC']
+endif
+
+test_dep = []
+if host_machine.system() == 'darwin'
+    test_dep += declare_dependency(link_args: ['-framework', 'Cocoa', '-framework', 'IOKit'])
 endif
 
 test_file = [
@@ -23,7 +30,8 @@ tests = executable('tvgUnitTests',
     test_file,
     include_directories : headers,
     link_with : thorvg_lib,
-    cpp_args : compiler_flags)
+    cpp_args : test_compiler_flags,
+    dependencies : test_dep)
 
 test('Unit Tests', tests, args : ['--success'])
 
