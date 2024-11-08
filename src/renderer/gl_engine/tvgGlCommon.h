@@ -42,8 +42,11 @@
 #include "tvgCommon.h"
 #include "tvgRender.h"
 
-
-#define GL_CHECK(x) \
+#ifdef __EMSCRIPTEN__
+    // query GL Error on WebGL is very slow, so disable it on WebGL
+    #define GL_CHECK(x) x
+#else
+    #define GL_CHECK(x) \
         x; \
         do { \
           GLenum glError = glGetError(); \
@@ -52,6 +55,7 @@
             assert(0); \
           } \
         } while(0)
+#endif
 
 enum class GlStencilMode {
     None,
