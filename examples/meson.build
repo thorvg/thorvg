@@ -1,9 +1,11 @@
+examples_compiler_flags = compiler_flags
+
 if lib_type == 'static'
-    compiler_flags += ['-DTVG_STATIC']
+    examples_compiler_flags += ['-DTVG_STATIC']
 endif
 
 if target_opengles
-    compiler_flags += '-DTHORVG_GL_TARGET_GLES=1'
+    examples_compiler_flags += '-DTHORVG_GL_TARGET_GLES=1'
 endif
 
 examples_dep = [dependency('sdl2')]
@@ -13,7 +15,7 @@ if all_engines or get_option('engines').contains('wg')
     if host_machine.system() == 'darwin'
         add_languages('objcpp')
         examples_dep += declare_dependency(link_args: ['-lobjc', '-framework', 'Cocoa', '-framework', 'CoreVideo', '-framework', 'IOKit', '-framework', 'QuartzCore'])
-        compiler_flags += ['-x', 'objective-c++']
+        examples_compiler_flags += ['-x', 'objective-c++']
     endif
 endif
 
@@ -86,7 +88,7 @@ foreach current_file : source_file
     executable(name, current_file,
         include_directories : headers,
         link_with : thorvg_lib,
-        cpp_args : compiler_flags,
+        cpp_args : examples_compiler_flags,
         dependencies : examples_dep)
 endforeach
 
@@ -101,7 +103,7 @@ if get_option('bindings').contains('capi')
         executable(name, current_file,
             include_directories : headers,
             link_with : thorvg_lib,
-            cpp_args : compiler_flags,
+            cpp_args : examples_compiler_flags,
             dependencies : examples_dep)
     endforeach
 endif
