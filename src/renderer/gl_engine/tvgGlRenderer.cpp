@@ -863,10 +863,11 @@ bool GlRenderer::sync()
     task->mClearBuffer = mClearBuffer;
     task->setTargetViewport({0, 0, static_cast<int32_t>(surface.w), static_cast<int32_t>(surface.h)});
 
-    mGpuBuffer->flushToGPU();
-    mGpuBuffer->bind();
+    if (mGpuBuffer->flushToGPU()) {
+        mGpuBuffer->bind();
 
-    task->run();
+        task->run();
+    }
 
     mGpuBuffer->unbind();
 
