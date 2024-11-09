@@ -43,6 +43,10 @@ void LottieLoader::run(unsigned tid)
             ScopedLock lock(key);
             comp = parser.comp;
         }
+        if (parser.slots) {
+            override(parser.slots, false);
+            parser.slots = nullptr;
+        }
         builder->build(comp);
 
         release();
@@ -286,16 +290,16 @@ Paint* LottieLoader::paint()
 }
 
 
-bool LottieLoader::override(const char* slot)
+bool LottieLoader::override(const char* slots, bool copy)
 {
     if (!ready() || comp->slots.count == 0) return false;
 
     auto success = true;
 
     //override slots
-    if (slot) {
+    if (slots) {
         //Copy the input data because the JSON parser will encode the data immediately.
-        auto temp = strdup(slot);
+        auto temp = copy ? strdup(slots) : slots;
 
         //parsing slot json
         LottieParser parser(temp, dirName);
@@ -312,7 +316,7 @@ bool LottieLoader::override(const char* slot)
         }
 
         if (idx < 1) success = false;
-        free(temp);
+        free((char*)temp);
         rebuild = overridden = success;
     //reset slots
     } else if (overridden) {

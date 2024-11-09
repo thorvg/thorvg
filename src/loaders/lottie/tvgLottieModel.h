@@ -584,7 +584,6 @@ struct LottieGradient : LottieObject
         return nullptr;
     }
 
-
     uint32_t populate(ColorStop& color, size_t count);
     Fill* fill(float frameNo, LottieExpressions* exps);
 

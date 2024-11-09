@@ -38,10 +38,12 @@ public:
     bool parse();
     bool apply(LottieSlot* slot);
     const char* sid(bool first = false);
+    void captureSlots(const char* key);
     template<LottieProperty::Type type = LottieProperty::Type::Invalid> void registerSlot(LottieObject* obj);
 
     LottieComposition* comp = nullptr;
     const char* dirName = nullptr;       //base resource directory
+    char* slots = nullptr;
 
 private:
     RGB24 getColor(const char *str);
