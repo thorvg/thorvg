@@ -566,7 +566,8 @@ struct LottieSolidFill : LottieSolid
 
     void override(LottieProperty* prop) override
     {
-        this->color = *static_cast<LottieColor*>(prop);
+        if (prop->type == LottieProperty::Type::Opacity) this->opacity = *static_cast<LottieOpacity*>(prop);
+        else if (prop->type == LottieProperty::Type::Color) this->color = *static_cast<LottieColor*>(prop);
         this->prepare();
     }
 
