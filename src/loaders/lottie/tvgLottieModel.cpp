@@ -76,13 +76,12 @@ void LottieSlot::assign(LottieObject* target)
     for (auto pair = pairs.begin(); pair < pairs.end(); ++pair) {
         //backup the original properties before overwriting
         switch (type) {
-            case LottieProperty::Type::ColorStop: {
+            case LottieProperty::Type::Opacity: {
                 if (!overridden) {
-                    pair->prop = new LottieColorStop;
-                    *static_cast<LottieColorStop*>(pair->prop) = static_cast<LottieGradient*>(pair->obj)->colorStops;
+                    pair->prop = new LottieOpacity;
+                    *static_cast<LottieOpacity*>(pair->prop) = static_cast<LottieSolid*>(pair->obj)->opacity;
                 }
-
-                pair->obj->override(&static_cast<LottieGradient*>(target)->colorStops);
+                pair->obj->override(&static_cast<LottieSolid*>(target)->opacity);
                 break;
             }
             case LottieProperty::Type::Color: {
@@ -90,8 +89,15 @@ void LottieSlot::assign(LottieObject* target)
                     pair->prop = new LottieColor;
                     *static_cast<LottieColor*>(pair->prop) = static_cast<LottieSolid*>(pair->obj)->color;
                 }
-
                 pair->obj->override(&static_cast<LottieSolid*>(target)->color);
+                break;
+            }
+            case LottieProperty::Type::ColorStop: {
+                if (!overridden) {
+                    pair->prop = new LottieColorStop;
+                    *static_cast<LottieColorStop*>(pair->prop) = static_cast<LottieGradient*>(pair->obj)->colorStops;
+                }
+                pair->obj->override(&static_cast<LottieGradient*>(target)->colorStops);
                 break;
             }
             case LottieProperty::Type::TextDoc: {
@@ -99,7 +105,6 @@ void LottieSlot::assign(LottieObject* target)
                     pair->prop = new LottieTextDoc;
                     *static_cast<LottieTextDoc*>(pair->prop) = static_cast<LottieText*>(pair->obj)->doc;
                 }
-
                 pair->obj->override(&static_cast<LottieText*>(target)->doc);
                 break;
             }

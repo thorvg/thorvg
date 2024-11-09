@@ -1444,6 +1444,18 @@ bool LottieParser::apply(LottieSlot* slot)
     LottieObject* obj = nullptr;  //slot object
 
     switch (slot->type) {
+        case LottieProperty::Type::Opacity: {
+            obj = new LottieSolid;
+            context.parent = obj;
+            parseSlotProperty<LottieProperty::Type::Opacity>(static_cast<LottieSolid*>(obj)->opacity);
+            break;
+        }
+        case LottieProperty::Type::Color: {
+            obj = new LottieSolid;
+            context.parent = obj;
+            parseSlotProperty<LottieProperty::Type::Color>(static_cast<LottieSolid*>(obj)->color);
+            break;
+        }
         case LottieProperty::Type::ColorStop: {
             obj = new LottieGradient;
             context.parent = obj;
@@ -1451,12 +1463,6 @@ bool LottieParser::apply(LottieSlot* slot)
                 if (KEY_AS("p")) parseColorStop(static_cast<LottieGradient*>(obj));
                 else skip(key);
             }
-            break;
-        }
-        case LottieProperty::Type::Color: {
-            obj = new LottieSolid;
-            context.parent = obj;
-            parseSlotProperty<LottieProperty::Type::Color>(static_cast<LottieSolid*>(obj)->color);
             break;
         }
         case LottieProperty::Type::TextDoc: {
