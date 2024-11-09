@@ -1516,6 +1516,47 @@ bool LottieParser::apply(LottieSlot* slot)
 }
 
 
+void LottieParser::captureSlots(const char* key)
+{
+    free(slots);
+
+    // TODO: Replace with immediate parsing, once the slot spec is confirmed by the LAC
+
+    auto begin = getPos();
+    auto end = getPos();
+    auto depth = 1;
+    auto invalid = true;
+
+    //get slots string
+    while (++end) {
+        if (*end == '}') {
+            --depth;
+            if (depth == 0) {
+                invalid = false;
+                break;
+            }
+        } else if (*end == '{') {
+            ++depth;
+        }
+    }
+
+    if (invalid) {
+        TVGERR("LOTTIE", "Invalid Slots!");
+        skip(key);
+        return;
+    }
+
+    //composite '{' + slots + '}'
+    auto len = (end - begin + 2);
+    slots = (char*)malloc(sizeof(char) * len + 1);
+    slots[0] = '{';
+    memcpy(slots + 1, begin, len);
+    slots[len] = '\0';
+
+    skip(key);
+}
+
+
 bool LottieParser::parse()
 {
     //verify json.
@@ -1544,6 +1585,7 @@ bool LottieParser::parse()
         else if (KEY_AS("fonts")) parseFonts();
         else if (KEY_AS("chars")) parseChars(glyphs);
         else if (KEY_AS("markers")) parseMarkers();
+        else if (KEY_AS("slots")) captureSlots(key);
         else skip(key);
     }
 
