@@ -57,7 +57,7 @@ TEST_CASE("Set gradient center point and radius", "[capiRadialGradient]")
 
 TEST_CASE("Set gradient in shape", "[capiRadialGradient]")
 {
-    REQUIRE(tvg_shape_set_radial_gradient(NULL, NULL) == TVG_RESULT_INVALID_ARGUMENT);
+    REQUIRE(tvg_shape_set_gradient(NULL, NULL) == TVG_RESULT_INVALID_ARGUMENT);
 
     Tvg_Gradient *gradient = tvg_radial_gradient_new();
     REQUIRE(gradient);
@@ -65,14 +65,14 @@ TEST_CASE("Set gradient in shape", "[capiRadialGradient]")
     Tvg_Paint *shape = tvg_shape_new();
     REQUIRE(shape);
 
-    REQUIRE(tvg_shape_set_radial_gradient(NULL, gradient) == TVG_RESULT_INVALID_ARGUMENT);
-    REQUIRE(tvg_shape_set_radial_gradient(shape, gradient) == TVG_RESULT_SUCCESS);
+    REQUIRE(tvg_shape_set_gradient(NULL, gradient) == TVG_RESULT_INVALID_ARGUMENT);
+    REQUIRE(tvg_shape_set_gradient(shape, gradient) == TVG_RESULT_SUCCESS);
 
     Tvg_Gradient *gradient_ret = NULL;
     REQUIRE(tvg_shape_get_gradient(shape, &gradient_ret) == TVG_RESULT_SUCCESS);
     REQUIRE(gradient_ret);
 
-    REQUIRE(tvg_shape_set_radial_gradient(shape, NULL) == TVG_RESULT_MEMORY_CORRUPTION);
+    REQUIRE(tvg_shape_set_gradient(shape, NULL) == TVG_RESULT_MEMORY_CORRUPTION);
     REQUIRE(tvg_paint_del(shape) == TVG_RESULT_SUCCESS);
 }
 
@@ -210,9 +210,9 @@ TEST_CASE("Stroke Radial Gradient", "[capiRadialGradient]")
 
     REQUIRE(tvg_gradient_set_color_stops(gradient, color_stops, 2) == TVG_RESULT_SUCCESS);
 
-    REQUIRE(tvg_shape_set_stroke_radial_gradient(NULL, NULL) == TVG_RESULT_INVALID_ARGUMENT);
-    REQUIRE(tvg_shape_set_stroke_radial_gradient(NULL, gradient) == TVG_RESULT_INVALID_ARGUMENT);
-    REQUIRE(tvg_shape_set_stroke_radial_gradient(shape, gradient) == TVG_RESULT_SUCCESS);
+    REQUIRE(tvg_shape_set_stroke_gradient(NULL, NULL) == TVG_RESULT_INVALID_ARGUMENT);
+    REQUIRE(tvg_shape_set_stroke_gradient(NULL, gradient) == TVG_RESULT_INVALID_ARGUMENT);
+    REQUIRE(tvg_shape_set_stroke_gradient(shape, gradient) == TVG_RESULT_SUCCESS);
 
     REQUIRE(tvg_shape_get_stroke_gradient(shape, &gradient_ret) == TVG_RESULT_SUCCESS);
     REQUIRE(gradient_ret);

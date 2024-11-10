@@ -390,15 +390,7 @@ TVG_API Tvg_Result tvg_shape_get_stroke_color(const Tvg_Paint* paint, uint8_t* r
 }
 
 
-TVG_API Tvg_Result tvg_shape_set_stroke_linear_gradient(Tvg_Paint* paint, Tvg_Gradient* gradient)
-{
-    if (!paint) return TVG_RESULT_INVALID_ARGUMENT;
-    return (Tvg_Result) reinterpret_cast<Shape*>(paint)->strokeFill((Fill*)(gradient));
-}
-
-
-//TODO: merge with tvg_shape_set_stroke_linear_gradient()
-TVG_API Tvg_Result tvg_shape_set_stroke_radial_gradient(Tvg_Paint* paint, Tvg_Gradient* gradient)
+TVG_API Tvg_Result tvg_shape_set_stroke_gradient(Tvg_Paint* paint, Tvg_Gradient* gradient)
 {
     if (!paint) return TVG_RESULT_INVALID_ARGUMENT;
     return (Tvg_Result) reinterpret_cast<Shape*>(paint)->strokeFill((Fill*)(gradient));
@@ -516,15 +508,7 @@ TVG_API Tvg_Result tvg_shape_set_paint_order(Tvg_Paint* paint, bool strokeFirst)
 }
 
 
-TVG_API Tvg_Result tvg_shape_set_linear_gradient(Tvg_Paint* paint, Tvg_Gradient* gradient)
-{
-    if (!paint) return TVG_RESULT_INVALID_ARGUMENT;
-    return (Tvg_Result) reinterpret_cast<Shape*>(paint)->fill((Fill*)gradient);
-}
-
-
-//TODO: merge with tvg_shape_set_linear_gradient()
-TVG_API Tvg_Result tvg_shape_set_radial_gradient(Tvg_Paint* paint, Tvg_Gradient* gradient)
+TVG_API Tvg_Result tvg_shape_set_gradient(Tvg_Paint* paint, Tvg_Gradient* gradient)
 {
     if (!paint) return TVG_RESULT_INVALID_ARGUMENT;
     return (Tvg_Result) reinterpret_cast<Shape*>(paint)->fill((Fill*)gradient);

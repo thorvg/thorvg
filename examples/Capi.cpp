@@ -62,11 +62,11 @@ void contents()
     Tvg_Gradient* grad1_stroke = tvg_gradient_duplicate(grad1);
 
     //Set a gradient fill
-    tvg_shape_set_linear_gradient(shape1, grad1);
+    tvg_shape_set_gradient(shape1, grad1);
 
     //Set a gradient stroke
     tvg_shape_set_stroke_width(shape1, 20.0f);
-    tvg_shape_set_stroke_linear_gradient(shape1, grad1_stroke);
+    tvg_shape_set_stroke_gradient(shape1, grad1_stroke);
     tvg_shape_set_stroke_join(shape1, TVG_STROKE_JOIN_ROUND);
 
 
@@ -114,7 +114,7 @@ void contents()
     tvg_gradient_set_spread(grad2, TVG_STROKE_FILL_PAD);
 
     //Set a gradient fill
-    tvg_shape_set_radial_gradient(shape3, grad2);
+    tvg_shape_set_gradient(shape3, grad2);
 
     //Prepare a radial gradient for the stroke
     uint32_t cnt;
@@ -131,7 +131,7 @@ void contents()
 
     //Set a gradient stroke
     tvg_shape_set_stroke_width(shape3, 30.0f);
-    tvg_shape_set_stroke_radial_gradient(shape3, grad2_stroke);
+    tvg_shape_set_stroke_gradient(shape3, grad2_stroke);
 
     tvg_paint_set_opacity(shape3, 200);
 
