@@ -1229,10 +1229,10 @@ TVG_API Tvg_Result tvg_shape_get_stroke_color(const Tvg_Paint* paint, uint8_t* r
 
 
 /*!
-* \brief Sets the linear gradient fill of the stroke for all of the figures from the path.
+* \brief Sets the gradient fill of the stroke for all of the figures from the path.
 *
 * \param[in] paint A Tvg_Paint pointer to the shape object.
-* \param[in] grad The linear gradient fill.
+* \param[in] grad The gradient fill.
 *
 * \return Tvg_Result enumeration.
 * \retval TVG_RESULT_INVALID_ARGUMENT An invalid Tvg_Paint pointer.
@@ -1240,22 +1240,7 @@ TVG_API Tvg_Result tvg_shape_get_stroke_color(const Tvg_Paint* paint, uint8_t* r
 *
 * \note Either a solid color or a gradient fill is applied, depending on what was set as last.
 */
-TVG_API Tvg_Result tvg_shape_set_stroke_linear_gradient(Tvg_Paint* paint, Tvg_Gradient* grad);
-
-
-/*!
-* \brief Sets the radial gradient fill of the stroke for all of the figures from the path.
-*
-* \param[in] paint A Tvg_Paint pointer to the shape object.
-* \param[in] grad The radial gradient fill.
-*
-* \return Tvg_Result enumeration.
-* \retval TVG_RESULT_INVALID_ARGUMENT An invalid Tvg_Paint pointer.
-* \retval TVG_RESULT_MEMORY_CORRUPTION An invalid Tvg_Gradient pointer or an error with accessing it.
-*
-* \note Either a solid color or a gradient fill is applied, depending on what was set as last.
-*/
-TVG_API Tvg_Result tvg_shape_set_stroke_radial_gradient(Tvg_Paint* paint, Tvg_Gradient* grad);
+TVG_API Tvg_Result tvg_shape_set_stroke_gradient(Tvg_Paint* paint, Tvg_Gradient* grad);
 
 
 /*!
@@ -1477,12 +1462,12 @@ TVG_API Tvg_Result tvg_shape_set_paint_order(Tvg_Paint* paint, bool strokeFirst)
 
 
 /*!
-* \brief Sets the linear gradient fill for all of the figures from the path.
+* \brief Sets the gradient fill for all of the figures from the path.
 *
 * The parts of the shape defined as inner are filled.
 *
 * \param[in] paint A Tvg_Paint pointer to the shape object.
-* \param[in] grad The linear gradient fill.
+* \param[in] grad The gradient fill.
 *
 * \return Tvg_Result enumeration.
 * \retval TVG_RESULT_INVALID_ARGUMENT An invalid Tvg_Paint pointer.
@@ -1491,25 +1476,7 @@ TVG_API Tvg_Result tvg_shape_set_paint_order(Tvg_Paint* paint, bool strokeFirst)
 * \note Either a solid color or a gradient fill is applied, depending on what was set as last.
 * \see tvg_shape_set_fill_rule()
 */
-TVG_API Tvg_Result tvg_shape_set_linear_gradient(Tvg_Paint* paint, Tvg_Gradient* grad);
-
-
-/*!
-* \brief Sets the radial gradient fill for all of the figures from the path.
-*
-* The parts of the shape defined as inner are filled.
-*
-* \param[in] paint A Tvg_Paint pointer to the shape object.
-* \param[in] grad The radial gradient fill.
-*
-* \return Tvg_Result enumeration.
-* \retval TVG_RESULT_INVALID_ARGUMENT An invalid Tvg_Paint pointer.
-* \retval TVG_RESULT_MEMORY_CORRUPTION An invalid Tvg_Gradient pointer.
-*
-* \note Either a solid color or a gradient fill is applied, depending on what was set as last.
-* \see tvg_shape_set_fill_rule()
-*/
-TVG_API Tvg_Result tvg_shape_set_radial_gradient(Tvg_Paint* paint, Tvg_Gradient* grad);
+TVG_API Tvg_Result tvg_shape_set_gradient(Tvg_Paint* paint, Tvg_Gradient* grad);
 
 
 /*!
