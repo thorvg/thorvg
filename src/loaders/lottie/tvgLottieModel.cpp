@@ -137,19 +137,36 @@ float LottieTextRange::factor(float frameNo, float totalLen, float idx)
 
     auto f = 0.0f;
 
-    if (idx >= std::floor(start)) {
-        auto diff = idx - start;
-        f = diff < 0.0f ? std::min(end, 1.0f) + diff : end - idx;
-        clamp(f, 0.0f, 1.0f);
-    }
-
-    //apply smoothness
     auto smoothness = this->smoothness(frameNo);
-    if (smoothness < 100.0f) {
+    if (tvg::zero(smoothness)) f = idx >= nearbyintf(start) && idx < nearbyintf(end) ? 1.0f : 0.0f;
+    else {
+        if (idx >= std::floor(start)) {
+            auto diff = idx - start;
+            f = diff < 0.0f ? std::min(end, 1.0f) + diff : end - idx;
+        }
         smoothness *= 0.01f;
         f = (f - (1.0f - smoothness) * 0.5f) / smoothness;
-        clamp(f, 0.0f, 1.0f);
     }
+    clamp(f, 0.0f, 1.0f);
+
+    //apply easing
+    auto minEase = this->minEase(frameNo);
+    clamp(minEase, -100.0f, 100.0f);
+    auto maxEase = this->maxEase(frameNo);
+    clamp(maxEase, -100.0f, 100.0f);
+    if (!tvg::zero(minEase) || !tvg::zero(maxEase)) {
+        Point in{1.0f, 1.0f};
+        Point out{0.0f, 0.0f};
+
+        if (maxEase > 0.0f) in.x = 1.0f - maxEase * 0.01f;
+        else in.y = 1.0f + maxEase * 0.01f;
+        if (minEase > 0.0f) out.x = minEase * 0.01f;
+        else out.y = -minEase * 0.01f;
+
+        interpolator->set(nullptr, in, out);
+        f = interpolator->progress(f);
+    }
+    clamp(f, 0.0f, 1.0f);
 
     return f * this->maxAmount(frameNo) * 0.01f;
 }
