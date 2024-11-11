@@ -1320,7 +1320,10 @@ RenderData GlRenderer::prepare(RenderSurface* image, RenderData data, const Matr
 
     sdata->geometry->tesselate(image, flags);
 
-    if (!clips.empty()) sdata->clips.push(clips);
+    if (!clips.empty()) {
+        sdata->clips.clear();
+        sdata->clips.push(clips);
+    }
 
     return sdata;
 }
@@ -1376,7 +1379,10 @@ RenderData GlRenderer::prepare(const RenderShape& rshape, RenderData data, const
         if (!sdata->geometry->tesselate(rshape, sdata->updateFlag)) return sdata;
     }
 
-    if (!clipper && !clips.empty()) sdata->clips.push(clips);
+    if (!clipper && !clips.empty()) {
+        sdata->clips.clear();
+        sdata->clips.push(clips);
+    }
 
     return sdata;
 }
