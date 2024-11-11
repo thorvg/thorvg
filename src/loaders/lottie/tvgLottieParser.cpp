@@ -281,7 +281,7 @@ void LottieParser::getValue(int8_t& val)
         //discard rest
         while (nextArrayValue()) getInt();
     } else {
-        val = getFloat();
+        val = (int8_t)getFloat();
     }
 }
 
