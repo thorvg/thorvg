@@ -1095,6 +1095,9 @@ void LottieBuilder::updateText(LottieLayer* layer, float frameNo)
                     Point translation = {0.0f, 0.0f};
                     auto color = doc.color;
                     auto strokeColor = doc.stroke.color;
+                    uint8_t opacity = 255;
+                    uint8_t fillOpacity = 255;
+                    uint8_t strokeOpacity = 255;
 
                     for (auto s = text->ranges.begin(); s < text->ranges.end(); ++s) {
                         auto basedIdx = idx;
@@ -1107,10 +1110,11 @@ void LottieBuilder::updateText(LottieLayer* layer, float frameNo)
                         needGroup = true;
 
                         translation = translation + f * (*s)->style.position(frameNo);
-                        scaling = scaling * (f * ((*s)->style.scale(frameNo) * 0.01f - Point{1.0f,1.0f}) + Point{1.0f,1.0f});
+                        scaling = scaling * (f * ((*s)->style.scale(frameNo) * 0.01f - Point{1.0f, 1.0f}) + Point{1.0f, 1.0f});
                         rotation += f * (*s)->style.rotation(frameNo);
 
-                        shape->opacity((*s)->style.opacity(frameNo));
+                        opacity = (uint8_t)(opacity - f * (opacity - (*s)->style.opacity(frameNo)));
+                        shape->opacity(opacity);
 
                         auto rangeColor = (*s)->style.fillColor(frameNo); //TODO: use flag to check whether it was really set
                         if (tvg::equal(f, 1.0f)) color = rangeColor;
@@ -1119,7 +1123,8 @@ void LottieBuilder::updateText(LottieLayer* layer, float frameNo)
                             color.rgb[1] = lerp<uint8_t>(color.rgb[1], rangeColor.rgb[1], f);
                             color.rgb[2] = lerp<uint8_t>(color.rgb[2], rangeColor.rgb[2], f);
                         }
-                        shape->fill(color.rgb[0], color.rgb[1], color.rgb[2], (*s)->style.fillOpacity(frameNo));
+                        fillOpacity = (uint8_t)(fillOpacity - f * (fillOpacity - (*s)->style.fillOpacity(frameNo)));
+                        shape->fill(color.rgb[0], color.rgb[1], color.rgb[2], fillOpacity);
 
                         if (doc.stroke.render) {
                             shape->strokeWidth(f * (*s)->style.strokeWidth(frameNo) / scale);
@@ -1130,7 +1135,8 @@ void LottieBuilder::updateText(LottieLayer* layer, float frameNo)
                                 strokeColor.rgb[1] = lerp<uint8_t>(strokeColor.rgb[1], rangeColor.rgb[1], f);
                                 strokeColor.rgb[2] = lerp<uint8_t>(strokeColor.rgb[2], rangeColor.rgb[2], f);
                             }
-                            shape->strokeFill(strokeColor.rgb[0], strokeColor.rgb[1], strokeColor.rgb[2], (*s)->style.strokeOpacity(frameNo));
+                            strokeOpacity = (uint8_t)(strokeOpacity - f * (strokeOpacity - (*s)->style.strokeOpacity(frameNo)));
+                            shape->strokeFill(strokeColor.rgb[0], strokeColor.rgb[1], strokeColor.rgb[2], strokeOpacity);
                         }
 
                         cursor.x += f * (*s)->style.letterSpacing(frameNo);
