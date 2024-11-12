@@ -135,15 +135,47 @@ float LottieTextRange::factor(float frameNo, float totalLen, float idx)
 
     auto f = 0.0f;
 
-    auto smoothness = this->smoothness(frameNo);
-    if (tvg::zero(smoothness)) f = idx >= nearbyintf(start) && idx < nearbyintf(end) ? 1.0f : 0.0f;
-    else {
-        if (idx >= std::floor(start)) {
-            auto diff = idx - start;
-            f = diff < 0.0f ? std::min(end, 1.0f) + diff : end - idx;
+    switch (this->shape) {
+        case Square: {
+            auto smoothness = this->smoothness(frameNo);
+            if (tvg::zero(smoothness)) f = idx >= nearbyintf(start) && idx < nearbyintf(end) ? 1.0f : 0.0f;
+            else {
+                if (idx >= std::floor(start)) {
+                    auto diff = idx - start;
+                    f = diff < 0.0f ? std::min(end, 1.0f) + diff : end - idx;
+                }
+                smoothness *= 0.01f;
+                f = (f - (1.0f - smoothness) * 0.5f) / smoothness;
+            }
+            break;
         }
-        smoothness *= 0.01f;
-        f = (f - (1.0f - smoothness) * 0.5f) / smoothness;
+        case RampUp: {
+            f = tvg::equal(start, end) ? (idx >= end ? 1.0f : 0.0f) : (0.5f + idx - start) / (end - start);
+            break;
+        }
+        case RampDown: {
+            f = tvg::equal(start, end) ? (idx >= end ? 0.0f : 1.0f) : 1.0f - (0.5f + idx - start) / (end - start);
+            break;
+        }
+        case Triangle: {
+            f = tvg::equal(start, end) ? 0.0f : 2.0f * (0.5f + idx - start) / (end - start);
+            f = f < 1.0f ? f : 2.0f - f;
+            break;
+        }
+        case Round: {
+            idx += 0.5f - start;
+            clamp(idx, 0.0f, end - start);
+            auto range = 0.5f * (end - start);
+            auto t = idx - range;
+            f = tvg::equal(start, end) ? 0.0f : sqrtf(1.0f - t * t / (range * range));
+            break;
+        }
+        case Smooth: {
+            idx += 0.5f - start;
+            clamp(idx, 0.0f, end - start);
+            f = tvg::equal(start, end) ? 0.0f : 0.5f * (1.0f + cosf(MATH_PI * (1.0f + 2.0f * idx / (end - start))));
+            break;
+        }
     }
     clamp(f, 0.0f, 1.0f);
 
