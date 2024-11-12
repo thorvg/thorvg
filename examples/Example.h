@@ -368,7 +368,7 @@ struct WgWindow : Window
     {
         if (!initialized) return;
 
-        window = SDL_CreateWindow("ThorVG Example (WebGPU)", SDL_WINDOWPOS_UNDEFINED, SDL_WINDOWPOS_UNDEFINED, width, height, SDL_WINDOW_HIDDEN);
+        window = SDL_CreateWindow("ThorVG Example (WebGPU)", SDL_WINDOWPOS_UNDEFINED, SDL_WINDOWPOS_UNDEFINED, width, height, SDL_WINDOW_SHOWN);
 
         //Here we create our WebGPU surface from the window!
         SDL_SysWMinfo windowWMInfo;
