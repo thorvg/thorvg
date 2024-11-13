@@ -175,6 +175,7 @@ bool effectGaussianBlur(SwCompositor* cmp, SwSurface* surface, const RenderEffec
     auto& bbox = cmp->bbox;
     auto w = (bbox.max.x - bbox.min.x);
     auto h = (bbox.max.y - bbox.min.y);
+    if (w == 0 || h == 0) return true;  //off-screen
     auto stride = cmp->image.stride;
     auto front = cmp->image.buf32;
     auto back = buffer.buf32;
