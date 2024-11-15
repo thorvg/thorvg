@@ -46,6 +46,14 @@ void LottieLoader::run(unsigned tid)
         if (parser.slots) {
             override(parser.slots, false);
             parser.slots = nullptr;
+            for (auto s = comp->slots.begin(); s < comp->slots.end(); ++s) {
+                if ((*s)->overridden) {
+                    (*s)->overridden = false;
+                    for (auto pair = (*s)->pairs.begin(); pair < (*s)->pairs.end(); ++pair) {
+                        delete(pair->prop);
+                    }
+                }
+            }
         }
         builder->build(comp);
 
