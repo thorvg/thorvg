@@ -71,6 +71,10 @@ Result Scene::push(Paint* paint) noexcept
 {
     if (!paint) return Result::InvalidArguments;
     paint->ref();
+
+    //Relocated the paint to the current scene space
+    P(paint)->renderFlag |= RenderUpdateFlag::Transform;
+
     pImpl->paints.push_back(paint);
 
     return Result::Success;
