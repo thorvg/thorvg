@@ -77,7 +77,11 @@ Result Scene::push(unique_ptr<Paint> paint) noexcept
 {
     auto p = paint.release();
     if (!p) return Result::MemoryCorruption;
-    PP(p)->ref();
+    P(p)->ref();
+
+    //Relocated the paint to the current scene space
+    P(p)->renderFlag |= RenderUpdateFlag::Transform;
+
     pImpl->paints.push_back(p);
 
     return Result::Success;
