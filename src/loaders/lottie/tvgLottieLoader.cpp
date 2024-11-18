@@ -294,8 +294,6 @@ bool LottieLoader::override(const char* slots, bool byDefault)
 {
     if (!ready() || comp->slots.count == 0) return false;
 
-    auto success = true;
-
     //override slots
     if (slots) {
         //Copy the input data because the JSON parser will encode the data immediately.
@@ -306,18 +304,21 @@ bool LottieLoader::override(const char* slots, bool byDefault)
         parser.comp = comp;
 
         auto idx = 0;
+        auto succeed = false;
         while (auto sid = parser.sid(idx == 0)) {
+            auto applied = false;
             for (auto s = comp->slots.begin(); s < comp->slots.end(); ++s) {
                 if (strcmp((*s)->sid, sid)) continue;
-                if (!parser.apply(*s, byDefault)) success = false;
+                if (parser.apply(*s, byDefault)) succeed = applied = true;
                 break;
             }
+            if (!applied) parser.skip(sid);
             ++idx;
         }
-
-        if (idx < 1) success = false;
         free((char*)temp);
-        rebuild = overridden = success;
+        rebuild = succeed;
+        overridden |= succeed;
+        return rebuild;
     //reset slots
     } else if (overridden) {
         for (auto s = comp->slots.begin(); s < comp->slots.end(); ++s) {
@@ -326,7 +327,7 @@ bool LottieLoader::override(const char* slots, bool byDefault)
         overridden = false;
         rebuild = true;
     }
-    return success;
+    return true;
 }
 
 
