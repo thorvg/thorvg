@@ -159,7 +159,10 @@ void LottieImage::prepare()
 {
     LottieObject::type = LottieObject::Image;
 
-    auto picture = Picture::gen().release();
+    if (!picture) {
+        picture = Picture::gen().release();
+        PP(picture)->ref();
+    }
 
     //force to load a picture on the same thread
     TaskScheduler::async(false);
@@ -170,10 +173,6 @@ void LottieImage::prepare()
     TaskScheduler::async(true);
 
     picture->size(data.width, data.height);
-    PP(picture)->ref();
-
-    pooler.reset();
-    pooler.push(picture);
 }
 
 
