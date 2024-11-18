@@ -230,9 +230,6 @@ public:
             return false;
         }
 
-        //FIXME: remove this copy, save with a file passing.
-        this->data = data; //back up for saving
-
         canvas->clear(true);
 
         delete(animation);
@@ -350,15 +347,15 @@ public:
     }
 
     // Saver methods
-    bool save(string mimetype)
+    bool save(string data, string mimetype)
     {
-        if (mimetype == "gif") return save2Gif();
+        if (mimetype == "gif") return save2Gif(data);
 
         errorMsg = "Invalid mimetype";
         return false;
     }
 
-    bool save2Gif()
+    bool save2Gif(string data)
     {
         errorMsg = NoError;
 
@@ -427,7 +424,6 @@ private:
     Canvas*                canvas = nullptr;
     Animation*             animation = nullptr;
     TvgEngineMethod*       engine = nullptr;
-    string                 data;
     uint32_t               width = 0;
     uint32_t               height = 0;
     float                  psize[2];         //picture size
