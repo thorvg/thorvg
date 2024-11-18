@@ -1519,7 +1519,10 @@ bool LottieParser::apply(LottieSlot* slot, bool byDefault)
         default: break;
     }
 
-    if (!obj || Invalid()) return false;
+    if (!obj || Invalid()) {
+        delete(obj);
+        return false;
+    }
 
     slot->assign(obj, byDefault);
 
