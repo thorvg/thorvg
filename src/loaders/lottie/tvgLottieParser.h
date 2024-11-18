@@ -36,7 +36,7 @@ public:
     }
 
     bool parse();
-    bool apply(LottieSlot* slot);
+    bool apply(LottieSlot* slot, bool byDefault);
     const char* sid(bool first = false);
     void captureSlots(const char* key);
     template<LottieProperty::Type type = LottieProperty::Type::Invalid> void registerSlot(LottieObject* obj, char* sid);
