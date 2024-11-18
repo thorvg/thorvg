@@ -33,6 +33,7 @@ struct UserExample : tvgexam::Example
     unique_ptr<tvg::LottieAnimation> slot1;
     unique_ptr<tvg::LottieAnimation> slot2;
     unique_ptr<tvg::LottieAnimation> slot3;
+    unique_ptr<tvg::LottieAnimation> slot4;
     unique_ptr<tvg::LottieAnimation> marker;
     uint32_t w, h;
     uint32_t size;
@@ -83,6 +84,12 @@ struct UserExample : tvgexam::Example
         {
             auto progress = tvgexam::progress(elapsed, slot3->duration());
             slot3->frame(slot3->totalFrame() * progress);
+        }
+
+        //overriden default slot
+        {
+            auto progress = tvgexam::progress(elapsed, slot4->duration());
+            slot4->frame(slot4->totalFrame() * progress);
         }
 
         //marker
@@ -163,6 +170,20 @@ struct UserExample : tvgexam::Example
             canvas->push(picture);
         }
 
+        //slot (overriden default slot)
+        {
+            slot4 = std::unique_ptr<tvg::LottieAnimation>(tvg::LottieAnimation::gen());
+            auto picture = slot4->picture();
+            if (!tvgexam::verify(picture->load(EXAMPLE_DIR"/lottie/extensions/slotsample4.json"))) return false;
+
+            const char* slotJson = R"({"bg_color":{"p":{"a":0,"k":[1,0.8196,0.2275]}},"check_color":{"p":{"a":0,"k":[0.0078,0.0078,0.0078]}}})";
+            if (!tvgexam::verify(slot4->override(slotJson))) return false;
+
+            sizing(picture, 4);
+
+            canvas->push(picture);
+        }
+
         //marker
         {
             marker = std::unique_ptr<tvg::LottieAnimation>(tvg::LottieAnimation::gen());
@@ -170,7 +191,7 @@ struct UserExample : tvgexam::Example
             if (!tvgexam::verify(picture->load(EXAMPLE_DIR"/lottie/extensions/marker_sample.json"))) return false;
             if (!tvgexam::verify(marker->segment("sectionC"))) return false;
 
-            sizing(picture, 4);
+            sizing(picture, 5);
 
             canvas->push(picture);
         }
