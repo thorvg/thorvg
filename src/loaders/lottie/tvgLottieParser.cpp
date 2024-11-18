@@ -957,6 +957,8 @@ void LottieParser::parseImage(LottieImage* image, const char* data, const char* 
 
 LottieObject* LottieParser::parseAsset()
 {
+    enterObject();
+
     LottieObject* obj = nullptr;
     unsigned long id = 0;
 
@@ -1018,7 +1020,6 @@ void LottieParser::parseAssets()
 {
     enterArray();
     while (nextArrayValue()) {
-        enterObject();
         auto asset = parseAsset();
         if (asset) comp->assets.push(asset);
         else TVGERR("LOTTIE", "Invalid Asset!");
@@ -1477,7 +1478,10 @@ bool LottieParser::apply(LottieSlot* slot, bool byDefault)
             break;
         }
         case LottieProperty::Type::Image: {
-            obj = parseAsset();
+            while (auto key = nextObjectKey()) {
+                if (KEY_AS("p")) obj = parseAsset();
+                else skip(key);
+            }
             context.parent = obj;
             break;
         }
