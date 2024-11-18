@@ -159,10 +159,7 @@ void LottieImage::prepare()
 {
     LottieObject::type = LottieObject::Image;
 
-    if (!picture) {
-        picture = Picture::gen().release();
-        PP(picture)->ref();
-    }
+    auto picture = Picture::gen().release();
 
     //force to load a picture on the same thread
     TaskScheduler::async(false);
@@ -173,6 +170,22 @@ void LottieImage::prepare()
     TaskScheduler::async(true);
 
     picture->size(data.width, data.height);
+    PP(picture)->ref();
+
+    pooler.push(picture);
+}
+
+
+void LottieImage::update()
+{
+    //Update the picture data
+    TaskScheduler::async(false);
+    for (auto p = pooler.begin(); p < pooler.end(); ++p) {
+        if (data.size > 0) (*p)->load((const char*)data.b64Data, data.size, data.mimeType, false);
+        else (*p)->load(data.path);
+        (*p)->size(data.width, data.height);
+    }
+    TaskScheduler::async(true);
 }
 
 
