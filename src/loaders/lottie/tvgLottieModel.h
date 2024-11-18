@@ -672,24 +672,19 @@ struct LottieGradientStroke : LottieGradient, LottieStroke
 };
 
 
-struct LottieImage : LottieObject
+struct LottieImage : LottieObject, LottieRenderPooler<tvg::Picture>
 {
     LottieBitmap data;
-    Picture* picture = nullptr;
-
-    ~LottieImage()
-    {
-        if (PP(picture)->unref() == 0) delete(picture);
-    }
 
     void override(LottieProperty* prop, bool byDefault = false) override
     {
         if (byDefault) data.release();
         data = *static_cast<LottieBitmap*>(prop);
-        prepare();
+        update();
     }
 
     void prepare();
+    void update();
 };
 
 
