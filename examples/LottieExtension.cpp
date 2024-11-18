@@ -155,7 +155,7 @@ struct UserExample : tvgexam::Example
             auto picture = slot3->picture();
             if (!tvgexam::verify(picture->load(EXAMPLE_DIR"/lottie/extensions/slotsample3.json"))) return false;
 
-            const char* slotJson = R"({"path_img":{"id":"image_0","w":200,"h":300,"u":"images/","p":"logo.png","e":0}})";
+            const char* slotJson = R"({"path_img":{"p":{"id":"image_0","w":200,"h":300,"u":"images/","p":"logo.png","e":0}}})";
             if (!tvgexam::verify(slot3->override(slotJson))) return false;
 
             sizing(picture, 3);
