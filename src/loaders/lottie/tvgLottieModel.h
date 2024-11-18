@@ -142,7 +142,7 @@ struct LottieObject
     {
     }
 
-    virtual void override(LottieProperty* prop)
+    virtual void override(LottieProperty* prop, bool byDefault = false)
     {
         TVGERR("LOTTIE", "Unsupported slot type");
     }
@@ -262,10 +262,11 @@ struct LottieText : LottieObject, LottieRenderPooler<tvg::Shape>
         LottieObject::type = LottieObject::Text;
     }
 
-    void override(LottieProperty* prop) override
+    void override(LottieProperty* prop, bool byDefault = false) override
     {
-        this->doc = *static_cast<LottieTextDoc*>(prop);
-        this->prepare();
+        if (byDefault) doc.release();
+        doc = *static_cast<LottieTextDoc*>(prop);
+        prepare();
     }
 
     LottieProperty* property(uint16_t ix) override
@@ -533,10 +534,11 @@ struct LottieSolidStroke : LottieSolid, LottieStroke
         return LottieSolid::property(ix);
     }
 
-    void override(LottieProperty* prop) override
+    void override(LottieProperty* prop, bool byDefault) override
     {
-        this->color = *static_cast<LottieColor*>(prop);
-        this->prepare();
+        if (byDefault) color.release();
+        color = *static_cast<LottieColor*>(prop);
+        prepare();
     }
 };
 
@@ -548,11 +550,16 @@ struct LottieSolidFill : LottieSolid
         LottieObject::type = LottieObject::SolidFill;
     }
 
-    void override(LottieProperty* prop) override
+    void override(LottieProperty* prop, bool byDefault) override
     {
-        if (prop->type == LottieProperty::Type::Opacity) this->opacity = *static_cast<LottieOpacity*>(prop);
-        else if (prop->type == LottieProperty::Type::Color) this->color = *static_cast<LottieColor*>(prop);
-        this->prepare();
+        if (prop->type == LottieProperty::Type::Opacity) {
+            if (byDefault) opacity.release();
+            opacity = *static_cast<LottieOpacity*>(prop);
+        } else if (prop->type == LottieProperty::Type::Color) {
+            if (byDefault) color.release();
+            color = *static_cast<LottieColor*>(prop);
+        }
+        prepare();
     }
 
     FillRule rule = FillRule::Winding;
@@ -610,10 +617,11 @@ struct LottieGradientFill : LottieGradient
         LottieGradient::prepare();
     }
 
-    void override(LottieProperty* prop) override
+    void override(LottieProperty* prop, bool byDefault) override
     {
-        this->colorStops = *static_cast<LottieColorStop*>(prop);
-        this->prepare();
+        if (byDefault) colorStops.release();
+        colorStops = *static_cast<LottieColorStop*>(prop);
+        prepare();
     }
 
     FillRule rule = FillRule::Winding;
@@ -639,10 +647,11 @@ struct LottieGradientStroke : LottieGradient, LottieStroke
         return LottieGradient::property(ix);
     }
 
-    void override(LottieProperty* prop) override
+    void override(LottieProperty* prop, bool byDefault = false) override
     {
-        this->colorStops = *static_cast<LottieColorStop*>(prop);
-        this->prepare();
+        if (byDefault) colorStops.release();
+        colorStops = *static_cast<LottieColorStop*>(prop);
+        prepare();
     }
 };
 
@@ -651,10 +660,11 @@ struct LottieImage : LottieObject, LottieRenderPooler<tvg::Picture>
 {
     LottieBitmap data;
 
-    void override(LottieProperty* prop) override
+    void override(LottieProperty* prop, bool byDefault = false) override
     {
-        this->data = *static_cast<LottieBitmap*>(prop);
-        this->prepare();
+        if (byDefault) data.release();
+        data = *static_cast<LottieBitmap*>(prop);
+        prepare();
     }
 
     void prepare();
@@ -825,7 +835,7 @@ struct LottieSlot
         LottieProperty* prop;
     };
 
-    void assign(LottieObject* target);
+    void assign(LottieObject* target, bool byDefault);
     void reset();
 
     LottieSlot(char* sid, LottieObject* obj, LottieProperty::Type type) : sid(sid), type(type)
