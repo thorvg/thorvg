@@ -1472,7 +1472,7 @@ const char* LottieParser::sid(bool first)
 }
 
 
-bool LottieParser::apply(LottieSlot* slot)
+bool LottieParser::apply(LottieSlot* slot, bool byDefault)
 {
     enterObject();
 
@@ -1517,7 +1517,7 @@ bool LottieParser::apply(LottieSlot* slot)
 
     if (!obj || Invalid()) return false;
 
-    slot->assign(obj);
+    slot->assign(obj, byDefault);
 
     delete(obj);
 

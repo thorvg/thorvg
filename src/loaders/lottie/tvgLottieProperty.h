@@ -261,6 +261,11 @@ struct LottieGenericProperty : LottieProperty
     LottieGenericProperty(T v) : value(v) {}
     LottieGenericProperty() {}
 
+    LottieGenericProperty(const LottieGenericProperty<T>& rhs)
+    {
+        *this = rhs;
+    }
+
     ~LottieGenericProperty()
     {
         release();
@@ -329,13 +334,13 @@ struct LottieGenericProperty : LottieProperty
         return operator()(frameNo);
     }
 
-    LottieGenericProperty<T>& operator=(const LottieGenericProperty<T>& other)
+    LottieGenericProperty<T>& operator=(const LottieGenericProperty<T>& rhs)
     {
         //shallow copy, used for slot overriding
-        if (other.frames) {
-            frames = other.frames;
-            const_cast<LottieGenericProperty<T>&>(other).frames = nullptr;
-        } else value = other.value;
+        if (rhs.frames) {
+            frames = rhs.frames;
+            const_cast<LottieGenericProperty<T>&>(rhs).frames = nullptr;
+        } else value = rhs.value;
         return *this;
     }
 
@@ -504,6 +509,13 @@ struct LottieColorStop : LottieProperty
     uint16_t count = 0;     //colorstop count
     bool populated = false;
 
+    LottieColorStop() {}
+
+    LottieColorStop(const LottieColorStop& rhs)
+    {
+        *this = rhs;
+    }
+
     ~LottieColorStop()
     {
         release();
@@ -608,18 +620,18 @@ struct LottieColorStop : LottieProperty
         return fill->colorStops(result.data, count);
     }
 
-    LottieColorStop& operator=(const LottieColorStop& other)
+    LottieColorStop& operator=(const LottieColorStop& rhs)
     {
         //shallow copy, used for slot overriding
-        if (other.frames) {
-            frames = other.frames;
-            const_cast<LottieColorStop&>(other).frames = nullptr;
+        if (rhs.frames) {
+            frames = rhs.frames;
+            const_cast<LottieColorStop&>(rhs).frames = nullptr;
         } else {
-            value = other.value;
-            const_cast<LottieColorStop&>(other).value = {nullptr, nullptr};
+            value = rhs.value;
+            const_cast<LottieColorStop&>(rhs).value = {nullptr, nullptr};
         }
-        populated = other.populated;
-        count = other.count;
+        populated = rhs.populated;
+        count = rhs.count;
 
         return *this;
     }
@@ -735,6 +747,13 @@ struct LottieTextDoc : LottieProperty
     Array<LottieScalarFrame<TextDocument>>* frames = nullptr;
     TextDocument value;
 
+    LottieTextDoc() {}
+
+    LottieTextDoc(const LottieTextDoc& rhs)
+    {
+        *this = rhs;
+    }
+
     ~LottieTextDoc()
     {
         release();
@@ -808,16 +827,16 @@ struct LottieTextDoc : LottieProperty
         return frame->value;
     }
 
-    LottieTextDoc& operator=(const LottieTextDoc& other)
+    LottieTextDoc& operator=(const LottieTextDoc& rhs)
     {
         //shallow copy, used for slot overriding
-        if (other.frames) {
-            frames = other.frames;
-            const_cast<LottieTextDoc&>(other).frames = nullptr;
+        if (rhs.frames) {
+            frames = rhs.frames;
+            const_cast<LottieTextDoc&>(rhs).frames = nullptr;
         } else {
-            value = other.value;
-            const_cast<LottieTextDoc&>(other).value.text = nullptr;
-            const_cast<LottieTextDoc&>(other).value.name = nullptr;
+            value = rhs.value;
+            const_cast<LottieTextDoc&>(rhs).value.text = nullptr;
+            const_cast<LottieTextDoc&>(rhs).value.name = nullptr;
         }
         return *this;
     }
@@ -837,6 +856,13 @@ struct LottieBitmap : LottieProperty
     float width = 0.0f;
     float height = 0.0f;
 
+    LottieBitmap() {}
+
+    LottieBitmap(const LottieBitmap& rhs)
+    {
+        *this = rhs;
+    }
+
     ~LottieBitmap()
     {
         release();
@@ -855,18 +881,18 @@ struct LottieBitmap : LottieProperty
     uint32_t nearest(float time) override { return 0; }
     float frameNo(int32_t key) override { return 0; }
 
-    LottieBitmap& operator=(const LottieBitmap& other)
+    LottieBitmap& operator=(const LottieBitmap& rhs)
     {
         //shallow copy, used for slot overriding
-        if (other.mimeType) b64Data = other.b64Data;
-        else path = other.path;
-        mimeType = other.mimeType;
-        size = other.size;
-        width = other.width;
-        height = other.height;
+        if (rhs.mimeType) b64Data = rhs.b64Data;
+        else path = rhs.path;
+        mimeType = rhs.mimeType;
+        size = rhs.size;
+        width = rhs.width;
+        height = rhs.height;
 
-        const_cast<LottieBitmap&>(other).b64Data = nullptr;
-        const_cast<LottieBitmap&>(other).mimeType = nullptr;
+        const_cast<LottieBitmap&>(rhs).b64Data = nullptr;
+        const_cast<LottieBitmap&>(rhs).mimeType = nullptr;
         return *this;
     }
 };
