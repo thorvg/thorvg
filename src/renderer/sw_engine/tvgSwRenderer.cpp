@@ -598,6 +598,8 @@ RenderCompositor* SwRenderer::target(const RenderRegion& region, ColorSpace cs)
     if (x + w > sw) w = (sw - x);
     if (y + h > sh) h = (sh - y);
 
+    if (w == 0 || h == 0) return nullptr;
+
     cmp->compositor->recoverSfc = surface;
     cmp->compositor->recoverCmp = surface->compositor;
     cmp->compositor->valid = false;
