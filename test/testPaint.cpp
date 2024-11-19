@@ -287,3 +287,48 @@ TEST_CASE("Blending", "[tvgPaint]")
     //SoftLight
     REQUIRE(shape->blend(BlendMethod::SoftLight) == Result::Success);
 }
+
+TEST_CASE("Refernce Count", "[tvgPaint]")
+{
+    auto shape = Shape::gen();
+    REQUIRE(shape->refCnt() == 0);
+    REQUIRE(shape->unref(false) == 0);
+    REQUIRE(shape->ref() == 1);
+    REQUIRE(shape->ref() == 2);
+    REQUIRE(shape->ref() == 3);
+    REQUIRE(shape->unref() == 2);
+    REQUIRE(shape->unref() == 1);
+    REQUIRE(shape->unref() == 0);
+
+    Initializer::init(0);
+
+    auto canvas = unique_ptr<SwCanvas>(SwCanvas::gen());
+
+    shape = Shape::gen();
+    REQUIRE(shape->ref() == 1);
+    canvas->push(shape);
+    REQUIRE(shape->refCnt() == 2);
+    canvas->clear();
+    REQUIRE(shape->refCnt() == 1);
+    REQUIRE(shape->unref() == 0);
+
+    shape = Shape::gen();
+    REQUIRE(shape->ref() == 1);
+    auto scene = Scene::gen();
+    scene->push(shape);
+    canvas->push(scene);
+    canvas->clear();
+    REQUIRE(shape->refCnt() == 1);
+    REQUIRE(shape->unref() == 0);
+
+    shape = Shape::gen();
+    REQUIRE(shape->ref() == 1);
+    scene = Scene::gen();
+    scene->push(shape);
+    scene->clear();
+    canvas->push(scene);
+    canvas->clear();
+    REQUIRE(shape->unref() == 0);
+
+    Initializer::term();
+}

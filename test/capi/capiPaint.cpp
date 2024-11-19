@@ -338,3 +338,50 @@ TEST_CASE("Paint LumaMask Composite Method", "[capiPaint]")
 
     REQUIRE(tvg_paint_del(paint) == TVG_RESULT_SUCCESS);
 }
+
+TEST_CASE("Paint Reference Counter", "[capiPaint]")
+{
+    Tvg_Paint* paint = tvg_shape_new();
+    REQUIRE(tvg_paint_get_ref(paint) == 0);
+    REQUIRE(tvg_paint_unref(paint, false) == 0);
+    REQUIRE(tvg_paint_ref(paint) == 1);
+    REQUIRE(tvg_paint_ref(paint) == 2);
+    REQUIRE(tvg_paint_ref(paint) == 3);
+    REQUIRE(tvg_paint_unref(paint, true) == 2);
+    REQUIRE(tvg_paint_unref(paint, true) == 1);
+    REQUIRE(tvg_paint_unref(paint, true) == 0);
+
+    tvg_engine_init(TVG_ENGINE_SW, 0);
+
+    Tvg_Canvas* canvas = tvg_swcanvas_create();
+
+    paint = tvg_shape_new();
+    REQUIRE(tvg_paint_ref(paint) == 1);
+    tvg_canvas_push(canvas, paint);
+    REQUIRE(tvg_paint_get_ref(paint) == 2);
+    tvg_canvas_clear(canvas, true, false);
+    REQUIRE(tvg_paint_get_ref(paint) == 1);
+    REQUIRE(tvg_paint_unref(paint, true) == 0);
+
+    paint = tvg_shape_new();
+    REQUIRE(tvg_paint_ref(paint) == 1);
+    Tvg_Paint* scene = tvg_scene_new();
+    tvg_scene_push(scene, paint);
+    tvg_canvas_push(canvas, scene);
+    tvg_canvas_clear(canvas, true, false);
+    REQUIRE(tvg_paint_get_ref(paint) == 1);
+    REQUIRE(tvg_paint_unref(paint, true) == 0);
+
+    paint = tvg_shape_new();
+    REQUIRE(tvg_paint_ref(paint) == 1);
+    scene = tvg_scene_new();
+    tvg_scene_push(scene, paint);
+    tvg_scene_clear(scene, true);
+    tvg_canvas_push(canvas, scene);
+    tvg_canvas_clear(canvas, true, false);
+    REQUIRE(tvg_paint_unref(paint, true) == 0);
+
+    tvg_canvas_destroy(canvas);
+
+    tvg_engine_term(TVG_ENGINE_SW);
+}
