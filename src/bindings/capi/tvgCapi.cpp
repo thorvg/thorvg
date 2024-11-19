@@ -177,6 +177,27 @@ TVG_API Tvg_Result tvg_paint_del(Tvg_Paint* paint)
 }
 
 
+TVG_API uint8_t tvg_paint_ref(Tvg_Paint* paint)
+{
+    if (!paint) return TVG_RESULT_INVALID_ARGUMENT;
+    return (Tvg_Result) reinterpret_cast<Paint*>(paint)->ref();
+}
+
+
+TVG_API uint8_t tvg_paint_unref(Tvg_Paint* paint, bool free)
+{
+    if (!paint) return TVG_RESULT_INVALID_ARGUMENT;
+    return (Tvg_Result) reinterpret_cast<Paint*>(paint)->unref(free);
+}
+
+
+TVG_API uint8_t tvg_paint_get_ref(const Tvg_Paint* paint)
+{
+    if (!paint) return TVG_RESULT_INVALID_ARGUMENT;
+    return (Tvg_Result) reinterpret_cast<const Paint*>(paint)->refCnt();
+}
+
+
 TVG_API Tvg_Result tvg_paint_scale(Tvg_Paint* paint, float factor)
 {
     if (!paint) return TVG_RESULT_INVALID_ARGUMENT;
