@@ -80,6 +80,9 @@ uint16_t THORVG_VERSION_NUMBER();
 #define PP(A) (((Paint*)(A))->pImpl)   //Access to pimpl.
 
 
+#define TVG_DELETE(PAINT) \
+  if (PAINT->refCnt() == 0) delete(PAINT)
+
 //for debugging
 #if 0
 #include <sys/time.h>

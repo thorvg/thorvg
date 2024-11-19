@@ -60,10 +60,14 @@ struct Canvas::Impl
 
     Result push(Paint* paint)
     {
-        //You cannot push paints during rendering.
-        if (status == Status::Drawing) return Result::InsufficientCondition;
+        if (!paint) return Result::InvalidArguments;
 
-        if (!paint) return Result::MemoryCorruption;
+        //You cannot push paints during rendering.
+        if (status == Status::Drawing) {
+            TVG_DELETE(paint);
+            return Result::InsufficientCondition;
+        }
+
         paint->ref();
         paints.push_back(paint);
 
@@ -88,8 +92,6 @@ struct Canvas::Impl
 
     Result update(Paint* paint, bool force)
     {
-        if (paints.empty() || status == Status::Drawing) return Result::InsufficientCondition;
-
         Array<RenderData> clips;
         auto flag = RenderUpdateFlag::None;
         if (status == Status::Damaged || force) flag = RenderUpdateFlag::All;
@@ -109,8 +111,11 @@ struct Canvas::Impl
 
     Result draw()
     {
+        if (status == Status::Drawing || paints.empty()) return Result::InsufficientCondition;
+
         if (status == Status::Damaged) update(nullptr, false);
-        if (status == Status::Drawing || paints.empty() || !renderer->preRender()) return Result::InsufficientCondition;
+
+        if (!renderer->preRender()) return Result::InsufficientCondition;
 
         bool rendered = false;
         for (auto paint : paints) {

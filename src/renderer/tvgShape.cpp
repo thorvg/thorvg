@@ -212,7 +212,7 @@ Result Shape::fill(uint8_t r, uint8_t g, uint8_t b, uint8_t a) noexcept
 
 Result Shape::fill(Fill* f) noexcept
 {
-    if (!f) return Result::MemoryCorruption;
+    if (!f) return Result::InvalidArguments;
 
     if (pImpl->rs.fill && pImpl->rs.fill != f) delete(pImpl->rs.fill);
     pImpl->rs.fill = f;

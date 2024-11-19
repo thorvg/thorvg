@@ -2116,7 +2116,7 @@ public:
      *
      * @note Experimental API
      */
-    Result set(const Picture* picture, std::function<bool(const Paint* paint, void* data)> func, void* data) noexcept;
+    Result set(Picture* picture, std::function<bool(const Paint* paint, void* data)> func, void* data) noexcept;
 
     /**
      * @brief Generate a unique ID (hash key) from a given name.

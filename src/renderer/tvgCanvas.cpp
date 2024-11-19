@@ -68,6 +68,8 @@ Result Canvas::draw() noexcept
 Result Canvas::update(Paint* paint) noexcept
 {
     TVGLOG("RENDERER", "Update S. ------------------------------ Canvas(%p)", this);
+
+    if (pImpl->paints.empty() || pImpl->status == Status::Drawing) return Result::InsufficientCondition;
     auto ret = pImpl->update(paint, false);
     TVGLOG("RENDERER", "Update E. ------------------------------ Canvas(%p)", this);
 

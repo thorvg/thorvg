@@ -69,7 +69,7 @@ Type Scene::type() const noexcept
 
 Result Scene::push(Paint* paint) noexcept
 {
-    if (!paint) return Result::MemoryCorruption;
+    if (!paint) return Result::InvalidArguments;
     paint->ref();
     pImpl->paints.push_back(paint);
 

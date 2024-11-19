@@ -96,7 +96,7 @@ bool GifSaver::close()
 {
     this->done();
 
-    delete(bg);
+    if (bg) bg->unref();
     bg = nullptr;
 
     //animation holds the picture, it must be 1 at the bottom.
@@ -143,7 +143,10 @@ bool GifSaver::save(Animation* animation, Paint* bg, const char* filename, TVG_U
 
     this->animation = animation;
 
-    if (bg) this->bg = bg->duplicate();
+    if (bg) {
+        bg->ref();
+        this->bg = bg;
+    }
     this->fps = static_cast<float>(fps);
 
     TaskScheduler::request(this);

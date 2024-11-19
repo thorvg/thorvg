@@ -119,7 +119,7 @@ namespace tvg
             clipper->ref();
         }
 
-        bool mask(Paint* source, Paint* target, MaskMethod method)
+        bool mask(Paint* target, MaskMethod method)
         {
             //Invalid case
             if ((!target && method != MaskMethod::None) || (target && method == MaskMethod::None)) return false;
@@ -138,7 +138,7 @@ namespace tvg
             }
             target->ref();
             maskData->target = target;
-            maskData->source = source;
+            maskData->source = paint;
             maskData->method = method;
             return true;
         }

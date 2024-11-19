@@ -85,6 +85,7 @@ TEST_CASE("Canvas draw", "[capiSwCanvas]")
     REQUIRE(tvg_swcanvas_set_target(canvas, buffer, 200, 200, 200, TVG_COLORSPACE_ARGB8888) == TVG_RESULT_SUCCESS);
 
     REQUIRE(tvg_canvas_draw(canvas) == TVG_RESULT_INSUFFICIENT_CONDITION);
+
     REQUIRE(tvg_canvas_sync(canvas) == TVG_RESULT_INSUFFICIENT_CONDITION);
 
     Tvg_Paint* paint = tvg_shape_new();

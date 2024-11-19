@@ -72,7 +72,7 @@ TEST_CASE("Set gradient in shape", "[capiRadialGradient]")
     REQUIRE(tvg_shape_get_gradient(shape, &gradient_ret) == TVG_RESULT_SUCCESS);
     REQUIRE(gradient_ret);
 
-    REQUIRE(tvg_shape_set_gradient(shape, NULL) == TVG_RESULT_MEMORY_CORRUPTION);
+    REQUIRE(tvg_shape_set_gradient(shape, NULL) == TVG_RESULT_INVALID_ARGUMENT);
     REQUIRE(tvg_paint_del(shape) == TVG_RESULT_SUCCESS);
 }
 

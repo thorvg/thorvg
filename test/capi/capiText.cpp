@@ -153,11 +153,11 @@ TEST_CASE("Set gradient text fill", "[capiText]")
 
     REQUIRE(tvg_font_load(TEST_DIR"/Arial.ttf") == TVG_RESULT_SUCCESS);
 
-    REQUIRE(tvg_text_set_gradient(text, NULL) == TVG_RESULT_MEMORY_CORRUPTION);
+    REQUIRE(tvg_text_set_gradient(text, NULL) == TVG_RESULT_INVALID_ARGUMENT);
 
     REQUIRE(tvg_text_set_font(text, "Arial", 10.0f, "") == TVG_RESULT_SUCCESS);
 
-    REQUIRE(tvg_text_set_gradient(text, NULL) == TVG_RESULT_MEMORY_CORRUPTION);
+    REQUIRE(tvg_text_set_gradient(text, NULL) == TVG_RESULT_INVALID_ARGUMENT);
     REQUIRE(tvg_text_set_gradient(NULL, NULL) == TVG_RESULT_INVALID_ARGUMENT);
     REQUIRE(tvg_text_set_gradient(text, gradientLin) == TVG_RESULT_SUCCESS);
     REQUIRE(tvg_text_set_gradient(text, gradientRad) == TVG_RESULT_SUCCESS);
