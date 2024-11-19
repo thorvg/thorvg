@@ -26,6 +26,11 @@ source_file = [
 if host_machine.system() == 'darwin'
     gl_dep = declare_dependency(link_args: ['-framework', 'OpenGL'])
     compiler_flags += ['-Wno-deprecated']     #for deprecated opengl
+elif host_machine.system() == 'windows'
+    gl_dep = [
+        dependency('glew', required: false),
+        declare_dependency(link_args: '-lopengl32')
+    ]
 else
     #find a opengl library with fallbacks
     gl_dep = dependency('GL', required: false)

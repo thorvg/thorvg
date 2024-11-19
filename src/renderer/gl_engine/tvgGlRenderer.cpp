@@ -1300,6 +1300,10 @@ int GlRenderer::init(uint32_t threads)
 
 int32_t GlRenderer::init()
 {
+#ifdef _WIN32
+    GLenum err = glewInit();
+    assert (err == GLEW_OK);
+#endif
     return initEngineCnt;
 }
 
