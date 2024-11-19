@@ -50,20 +50,28 @@ static bool accessChildren(Iterator* it, function<bool(const Paint* paint, void*
 /* External Class Implementation                                        */
 /************************************************************************/
 
-Result Accessor::set(const Picture* picture, function<bool(const Paint* paint, void* data)> func, void* data) noexcept
+Result Accessor::set(Picture* picture, function<bool(const Paint* paint, void* data)> func, void* data) noexcept
 {
     if (!picture || !func) return Result::InvalidArguments;
 
     //Use the Preorder Tree-Search
 
+    picture->ref();
+
     //Root
-    if (!func(picture, data)) return Result::Success;
+    if (!func(picture, data)) {
+        picture->unref();
+        return Result::Success;
+    }
 
     //Children
     if (auto it = IteratorAccessor::iterator(picture)) {
         accessChildren(it, func, data);
         delete(it);
     }
+
+    picture->unref(false);
+
     return Result::Success;
 }
 

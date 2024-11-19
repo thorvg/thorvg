@@ -53,10 +53,10 @@ TEST_CASE("Pushing Paints Into Scene", "[tvgScene]")
     REQUIRE(scene->push(paints[2]) == Result::Success);
 
     //Pushing Null Pointer
-    REQUIRE(scene->push(nullptr) == Result::MemoryCorruption);
+    REQUIRE(scene->push(nullptr) == Result::InvalidArguments);
 
     //Pushing Invalid Paint
-    REQUIRE(scene->push(nullptr) == Result::MemoryCorruption);
+    REQUIRE(scene->push(nullptr) == Result::InvalidArguments);
 
     //Check list of paints
     auto list = scene->paints();

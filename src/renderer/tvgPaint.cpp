@@ -163,8 +163,8 @@ Paint* Paint::Impl::duplicate(Paint* ret)
 
     ret->pImpl->opacity = opacity;
 
-    if (maskData) ret->pImpl->mask(ret, maskData->target->duplicate(), maskData->method);
-    if (clipper) ret->pImpl->clip(clipper->duplicate());
+    if (maskData) ret->mask(maskData->target->duplicate(), maskData->method);
+    if (clipper) ret->clip(clipper->duplicate());
 
     return ret;
 }
@@ -357,7 +357,7 @@ bool Paint::Impl::bounds(float* x, float* y, float* w, float* h, bool transforme
 void Paint::Impl::reset()
 {
     if (clipper) {
-        delete(clipper);
+        clipper->unref();
         clipper = nullptr;
     }
 
@@ -446,6 +446,7 @@ Result Paint::clip(Paint* clipper) noexcept
 {
     if (clipper && clipper->type() != Type::Shape) {
         TVGERR("RENDERER", "Clipping only supports the Shape!");
+        TVG_DELETE(clipper);
         return Result::NonSupport;
     }
     pImpl->clip(clipper);
@@ -455,9 +456,8 @@ Result Paint::clip(Paint* clipper) noexcept
 
 Result Paint::mask(Paint* target, MaskMethod method) noexcept
 {
-    if (pImpl->mask(this, target, method)) return Result::Success;
-
-    delete(target);
+    if (pImpl->mask(target, method)) return Result::Success;
+    if (target) TVG_DELETE(target);
     return Result::InvalidArguments;
 }
 

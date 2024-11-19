@@ -280,7 +280,7 @@ struct Shape::Impl
 
     Result strokeFill(Fill* f)
     {
-        if (!f) return Result::MemoryCorruption;
+        if (!f) return Result::InvalidArguments;
 
         if (!rs.stroke) rs.stroke = new RenderStroke();
         if (rs.stroke->fill && rs.stroke->fill != f) delete(rs.stroke->fill);
