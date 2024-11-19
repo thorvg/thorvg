@@ -362,7 +362,7 @@ void Paint::Impl::reset()
     }
 
     if (maskData) {
-        if (P(maskData->target)->unref() == 0) delete(maskData->target);
+        maskData->target->unref();
         free(maskData);
         maskData = nullptr;
     }
@@ -502,4 +502,34 @@ Result Paint::blend(BlendMethod method) noexcept
     }
 
     return Result::Success;
+}
+
+
+uint8_t Paint::ref() noexcept
+{
+    if (pImpl->refCnt == UINT8_MAX) TVGERR("RENDERER", "Reference Count Overflow!");
+    else ++pImpl->refCnt;
+
+    return pImpl->refCnt;
+}
+
+
+uint8_t Paint::unref(bool free) noexcept
+{
+    if (pImpl->refCnt > 0) --pImpl->refCnt;
+    else TVGERR("RENDERER", "Corrupted Reference Count!");
+
+    if (free && pImpl->refCnt == 0) {
+        //TODO: use the global dismiss function?
+        delete(this);
+        return 0;
+    }
+
+    return pImpl->refCnt;
+}
+
+
+uint8_t Paint::refCnt() const noexcept
+{
+    return pImpl->refCnt;
 }

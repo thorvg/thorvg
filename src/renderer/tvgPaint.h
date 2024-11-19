@@ -76,7 +76,7 @@ namespace tvg
         uint8_t renderFlag;
         uint8_t ctxFlag;
         uint8_t opacity;
-        uint8_t refCnt = 0;                              //reference count
+        uint8_t refCnt = 0;       //reference count
 
         Impl(Paint* pnt) : paint(pnt)
         {
@@ -86,23 +86,11 @@ namespace tvg
         ~Impl()
         {
             if (maskData) {
-                if (P(maskData->target)->unref() == 0) delete(maskData->target);
+                maskData->target->unref();
                 free(maskData);
             }
-            if (clipper && P(clipper)->unref() == 0) delete(clipper);
+            if (clipper) clipper->unref();
             if (renderer && (renderer->unref() == 0)) delete(renderer);
-        }
-
-        uint8_t ref()
-        {
-            if (refCnt == 255) TVGERR("RENDERER", "Corrupted reference count!");
-            return ++refCnt;
-        }
-
-        uint8_t unref()
-        {
-            if (refCnt == 0) TVGERR("RENDERER", "Corrupted reference count!");
-            return --refCnt;
         }
 
         bool transform(const Matrix& m)
@@ -124,16 +112,11 @@ namespace tvg
 
         void clip(Paint* clp)
         {
-            if (this->clipper) {
-                P(this->clipper)->unref();
-                if (this->clipper != clp && P(this->clipper)->refCnt == 0) {
-                    delete(this->clipper);
-                }
-            }
-            this->clipper = clp;
+            if (clipper) clipper->unref(clipper != clp);
+            clipper = clp;
             if (!clp) return;
 
-            P(clipper)->ref();
+            clipper->ref();
         }
 
         bool mask(Paint* source, Paint* target, MaskMethod method)
@@ -142,10 +125,7 @@ namespace tvg
             if ((!target && method != MaskMethod::None) || (target && method == MaskMethod::None)) return false;
 
             if (maskData) {
-                P(maskData->target)->unref();
-                if ((maskData->target != target) && P(maskData->target)->refCnt == 0) {
-                    delete(maskData->target);
-                }
+                maskData->target->unref(maskData->target != target);
                 //Reset scenario
                 if (!target && method == MaskMethod::None) {
                     free(maskData);
@@ -156,7 +136,7 @@ namespace tvg
                 if (!target && method == MaskMethod::None) return true;
                 maskData = static_cast<Mask*>(malloc(sizeof(Mask)));
             }
-            P(target)->ref();
+            target->ref();
             maskData->target = target;
             maskData->source = source;
             maskData->method = method;

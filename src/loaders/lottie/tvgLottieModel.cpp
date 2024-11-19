@@ -21,8 +21,6 @@
  */
 
 #include "tvgMath.h"
-#include "tvgPaint.h"
-#include "tvgFill.h"
 #include "tvgTaskScheduler.h"
 #include "tvgLottieModel.h"
 
@@ -170,7 +168,7 @@ void LottieImage::prepare()
     TaskScheduler::async(true);
 
     picture->size(data.width, data.height);
-    PP(picture)->ref();
+    picture->ref();
 
     pooler.push(picture);
 }
@@ -472,14 +470,14 @@ void LottieLayer::prepare(RGB24* color)
     if (type == LottieLayer::Precomp) {
         auto clipper = Shape::gen();
         clipper->appendRect(0.0f, 0.0f, w, h);
-        PP(clipper)->ref();
+        clipper->ref();
         statical.pooler.push(clipper);
     //prepare solid fill in advance if it is a layer type.
     } else if (color && type == LottieLayer::Solid) {
         auto solidFill = Shape::gen();
         solidFill->appendRect(0, 0, static_cast<float>(w), static_cast<float>(h));
         solidFill->fill(color->rgb[0], color->rgb[1], color->rgb[2]);
-        PP(solidFill)->ref();
+        solidFill->ref();
         statical.pooler.push(solidFill);
     }
 

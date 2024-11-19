@@ -74,7 +74,7 @@ struct Scene::Impl
         resetEffects();
 
         for (auto paint : paints) {
-            if (P(paint)->unref() == 0) delete(paint);
+            paint->unref();
         }
 
         if (auto renderer = PP(scene)->renderer) {
@@ -230,7 +230,7 @@ struct Scene::Impl
 
         for (auto paint : paints) {
             auto cdup = paint->duplicate();
-            P(cdup)->ref();
+            cdup->ref();
             dup->paints.push_back(cdup);
         }
 
@@ -242,7 +242,7 @@ struct Scene::Impl
     void clear(bool free)
     {
         for (auto paint : paints) {
-            if (P(paint)->unref() == 0 && free) delete(paint);
+            paint->unref(free);
         }
         paints.clear();
     }
