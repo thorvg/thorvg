@@ -23,7 +23,6 @@
 #include "tvgCommon.h"
 #include "tvgStr.h"
 #include "tvgSaveModule.h"
-#include "tvgPaint.h"
 
 #ifdef THORVG_GIF_SAVER_SUPPORT
     #include "tvgGifSaver.h"
@@ -107,7 +106,7 @@ Result Saver::save(Paint* paint, const char* filename, uint32_t quality) noexcep
 
     //Already on saving another resource.
     if (pImpl->saveModule) {
-        if (P(paint)->refCnt == 0) delete(paint);
+        if (paint->refCnt() == 0) delete(paint);
         return Result::InsufficientCondition;
     }
 
@@ -116,12 +115,12 @@ Result Saver::save(Paint* paint, const char* filename, uint32_t quality) noexcep
             pImpl->saveModule = saveModule;
             return Result::Success;
         } else {
-            if (P(paint)->refCnt == 0) delete(paint);
+            if (paint->refCnt() == 0) delete(paint);
             delete(saveModule);
             return Result::Unknown;
         }
     }
-    if (P(paint)->refCnt == 0) delete(paint);
+    if (paint->refCnt() == 0) delete(paint);
     return Result::NonSupport;
 }
 
@@ -140,7 +139,7 @@ Result Saver::save(Animation* animation, const char* filename, uint32_t quality,
     if (!animation) return Result::MemoryCorruption;
 
     //animation holds the picture, it must be 1 at the bottom.
-    auto remove = PP(animation->picture())->refCnt <= 1 ? true : false;
+    auto remove = animation->picture()->refCnt() <= 1 ? true : false;
 
     if (tvg::zero(animation->totalFrame())) {
         if (remove) delete(animation);

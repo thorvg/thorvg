@@ -100,7 +100,7 @@ bool GifSaver::close()
     bg = nullptr;
 
     //animation holds the picture, it must be 1 at the bottom.
-    if (animation && PP(animation->picture())->refCnt <= 1) delete(animation);
+    if (animation && animation->picture()->refCnt() <= 1) delete(animation);
     animation = nullptr;
 
     free(path);

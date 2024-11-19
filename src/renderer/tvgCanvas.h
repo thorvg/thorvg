@@ -53,7 +53,7 @@ struct Canvas::Impl
     void clearPaints()
     {
         for (auto paint : paints) {
-            if (P(paint)->unref() == 0) delete(paint);
+            paint->unref();
         }
         paints.clear();
     }
@@ -64,7 +64,7 @@ struct Canvas::Impl
         if (status == Status::Drawing) return Result::InsufficientCondition;
 
         if (!paint) return Result::MemoryCorruption;
-        PP(paint)->ref();
+        paint->ref();
         paints.push_back(paint);
 
         return update(paint, true);
@@ -72,16 +72,18 @@ struct Canvas::Impl
 
     Result clear(bool paints, bool buffer)
     {
+        auto ret = Result::Success;
+
         if (status == Status::Drawing) return Result::InsufficientCondition;
 
         //Clear render target
-        if (buffer) {
-            if (!renderer->clear()) return Result::InsufficientCondition;
+        if (buffer && !renderer->clear()) {
+            ret = Result::InsufficientCondition;
         }
 
         if (paints) clearPaints();
 
-        return Result::Success;
+        return ret;
     }
 
     Result update(Paint* paint, bool force)

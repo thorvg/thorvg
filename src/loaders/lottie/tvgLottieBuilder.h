@@ -25,7 +25,6 @@
 
 #include "tvgCommon.h"
 #include "tvgInlist.h"
-#include "tvgPaint.h"
 #include "tvgShape.h"
 #include "tvgLottieExpressions.h"
 #include "tvgLottieModifier.h"
@@ -64,13 +63,13 @@ struct RenderContext
     RenderContext(Shape* propagator)
     {
         P(propagator)->reset();
-        PP(propagator)->ref();
+        propagator->ref();
         this->propagator = propagator;
     }
 
     ~RenderContext()
     {
-        PP(propagator)->unref();
+        propagator->unref(false);
         free(transform);
         delete(roundness);
         delete(offsetPath);
@@ -79,7 +78,7 @@ struct RenderContext
     RenderContext(const RenderContext& rhs, Shape* propagator, bool mergeable = false)
     {
         if (mergeable) merging = rhs.merging;
-        PP(propagator)->ref();
+        propagator->ref();
         this->propagator = propagator;
         this->repeaters = rhs.repeaters;
         if (rhs.roundness) this->roundness = new LottieRoundnessModifier(rhs.roundness->r);

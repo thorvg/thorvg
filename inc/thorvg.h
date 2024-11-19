@@ -448,6 +448,53 @@ public:
     MaskMethod mask(const Paint** target) const noexcept;
 
     /**
+     * @brief Increment the reference count for the Paint instance.
+     *
+     * This method increases the reference count of the Paint object, allowing shared ownership and control over its lifetime.
+     *
+     * @return The updated reference count after the increment by 1.
+     *
+     * @warning Please ensure that each call to ref() is paired with a corresponding call to unref() to prevent a dangling instance.
+     *
+     * @see Paint::unref()
+     * @see Paint::refCnt()
+     *
+     * @since 1.0
+     */
+    uint8_t ref() noexcept;
+
+    /**
+     * @brief Decrement the reference count for the Paint instance.
+     *
+     * This method decreases the reference count of the Paint object by 1.
+     * If the reference count reaches zero and the @p free flag is set to true, the Paint instance is automatically deleted.
+     *
+     * @param[in] free Flag indicating whether to delete the Paint instance when the reference count reaches zero.
+     *
+     * @return The updated reference count after the decrement.
+     *
+     * @see Paint::ref()
+     * @see Paint::refCnt()
+     *
+     * @since 1.0
+     */
+    uint8_t unref(bool free = true) noexcept;
+
+    /**
+     * @brief Retrieve the current reference count of the Paint instance.
+     *
+     * This method provides the current reference count, allowing the user to check the shared ownership state of the Paint object.
+     *
+     * @return The current reference count of the Paint instance.
+     *
+     * @see Paint::ref()
+     * @see Paint::unref()
+     *
+     * @since 1.0
+     */
+    uint8_t refCnt() const noexcept;
+
+    /**
      * @brief Returns the ID value of this class.
      *
      * This method can be used to check the current concrete instance type.

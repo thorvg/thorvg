@@ -36,7 +36,7 @@ struct LottieRenderPooler
     ~LottieRenderPooler()
     {
         for (auto p = pooler.begin(); p < pooler.end(); ++p) {
-            if (PP(*p)->unref() == 0) delete(*p);
+            (*p)->unref();
         }
     }
 
@@ -44,12 +44,12 @@ struct LottieRenderPooler
     {
         //return available one.
         for (auto p = pooler.begin(); p < pooler.end(); ++p) {
-            if (PP(*p)->refCnt == 1) return *p;
+            if ((*p)->refCnt() == 1) return *p;
         }
 
         //no empty, generate a new one.
         auto p = copy ? static_cast<T*>(pooler[0]->duplicate()) : T::gen();
-        PP(p)->ref();
+        p->ref();
         pooler.push(p);
         return p;
     }
