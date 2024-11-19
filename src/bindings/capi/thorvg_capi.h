@@ -746,6 +746,61 @@ TVG_API Tvg_Result tvg_canvas_set_viewport(Tvg_Canvas* canvas, int32_t x, int32_
 TVG_API Tvg_Result tvg_paint_del(Tvg_Paint* paint);
 
 
+/**
+ * \brief Increment the reference count for the Tvg_Paint object.
+ *
+ * This method increases the reference count of Tvg_Paint object, allowing shared ownership and control over its lifetime.
+ *
+ * \param[in] paint The Tvg_Paint object to increase the reference count.
+ *
+ * \return The updated reference count after the increment by 1.
+ *
+ * \warning Please ensure that each call to tvg_paint_ref() is paired with a corresponding call to tvg_paint_unref() to prevent a dangling instance.
+ *
+ * \see tvg_paint_unref()
+ * \see tvg_paint_get_ref()
+ *
+ * \since 1.0
+ */
+TVG_API uint8_t tvg_paint_ref(Tvg_Paint* paint);
+
+
+/**
+ * \brief Decrement the reference count for the Tvg_Paint object.
+ *
+ * This method decreases the reference count of the Tvg_Paint object by 1.
+ * If the reference count reaches zero and the @p free flag is set to true, the instance is automatically deleted.
+ *
+ * \param[in] paint The Tvg_Paint object to decrease the reference count.
+ * \param[in] free Flag indicating whether to delete the Paint instance when the reference count reaches zero.
+ *
+ * \return The updated reference count after the decrement.
+ *
+ * \see tvg_paint_ref()
+ * \see tvg_paint_get_ref()
+ *
+ * \since 1.0
+ */
+TVG_API uint8_t tvg_paint_unref(Tvg_Paint* paint, bool free);
+
+
+/**
+ * \brief Retrieve the current reference count of the Tvg_Paint object.
+ *
+ * This method provides the current reference count, allowing the user to check the shared ownership state of the Tvg_Paint object.
+ *
+ * \param[in] paint The Tvg_Paint object to return the reference count.
+ *
+ * \return The current reference count of the Tvg_Paint object.
+ *
+ * \see tvg_paint_ref()
+ * \see tvg_paint_unref()
+ *
+ * \since 1.0
+ */
+TVG_API uint8_t tvg_paint_get_ref(const Tvg_Paint* paint);
+
+
 /*!
 * \brief Scales the given Tvg_Paint object by the given factor.
 *
