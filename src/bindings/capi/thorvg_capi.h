@@ -522,15 +522,15 @@ TVG_API Tvg_Canvas* tvg_glcanvas_create(void);
 * \param[in] id The GL target ID, usually indicating the FBO ID. A value of @c 0 specifies the main surface.
 * \param[in] w The width (in pixels) of the raster image.
 * \param[in] h The height (in pixels) of the raster image.
+* \param[in] cs Specifies how the pixel values should be interpreted. Currently, it only allows @c TVG_COLORSPACE_ABGR8888S as @c GL_RGBA8.
 *
 * \return Tvg_Result enumeration.
 * \retval TVG_RESULT_INSUFFICIENT_CONDITION if the canvas is performing rendering. Please ensure the canvas is synced.
 * \retval TVG_RESULT_NOT_SUPPORTED In case the gl engine is not supported.
 *
-* \note Currently, this only allows the GL_RGBA8 color space format.
 * \note Experimental API
 */
-TVG_API Tvg_Result tvg_glcanvas_set_target(Tvg_Canvas* canvas, int32_t id, uint32_t w, uint32_t h);
+TVG_API Tvg_Result tvg_glcanvas_set_target(Tvg_Canvas* canvas, int32_t id, uint32_t w, uint32_t h, Tvg_Colorspace cs);
 
 /** \} */   // end defgroup ThorVGCapi_GlCanvas
 
