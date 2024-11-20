@@ -198,7 +198,7 @@ Next you can draw multiple shapes on the canvas:
 auto rect = tvg::Shape::gen();               //generate a shape
 rect->appendRect(50, 50, 200, 200, 20, 20);  //define it as a rounded rectangle (x, y, w, h, rx, ry)
 rect->fill(100, 100, 100);                   //set its color (r, g, b)
-canvas->push(move(rect));                    //push the rectangle into the canvas
+canvas->push(rect);                         //push the rectangle into the canvas
 
 auto circle = tvg::Shape::gen();             //generate a shape
 circle->appendCircle(400, 400, 100, 100);    //define it as a circle (cx, cy, rx, ry)
@@ -211,8 +211,8 @@ colorStops[0] = {0.0, 255, 255, 255, 255};   //1st color values (offset, r, g, b
 colorStops[1] = {1.0, 0, 0, 0, 255};         //2nd color values (offset, r, g, b, a)
 fill->colorStops(colorStops, 2);             //set the gradient colors info
 
-circle->fill(move(fill));                    //set the circle fill
-canvas->push(move(circle));                  //push the circle into the canvas
+circle->fill(fill);                          //set the circle fill
+canvas->push(circle);                        //push the circle into the canvas
 
 ```
 
@@ -248,7 +248,7 @@ path->strokeCap(tvg::StrokeCap::Round);      //stroke cap style
 float pattern[2] = {10, 10};                 //stroke dash pattern (line, gap)
 path->strokeDash(pattern, 2);                //set the stroke pattern
 
-canvas->push(move(path));                    //push the path into the canvas
+canvas->push(path);                          //push the path into the canvas
 
 ```
 
@@ -294,7 +294,7 @@ The following code snippet shows how to draw SVG image using ThorVG:
 ```cpp
 auto picture = tvg::Picture::gen();         //generate a picture
 picture->load("tiger.svg");                 //load a SVG file
-canvas->push(move(picture));                //push the picture into the canvas
+canvas->push(picture);                      //push the picture into the canvas
 ```
 
 The result is:
