@@ -558,9 +558,9 @@ void mpoolRetDashOutline(SwMpool* mpool, unsigned idx);
 
 bool rasterCompositor(SwSurface* surface);
 bool rasterGradientShape(SwSurface* surface, SwShape* shape, const Fill* fdata, uint8_t opacity);
-bool rasterShape(SwSurface* surface, SwShape* shape, uint8_t r, uint8_t g, uint8_t b, uint8_t a);
+bool rasterShape(SwSurface* surface, SwShape* shape, RenderColor& c);
 bool rasterImage(SwSurface* surface, SwImage* image, const Matrix& transform, const SwBBox& bbox, uint8_t opacity);
-bool rasterStroke(SwSurface* surface, SwShape* shape, uint8_t r, uint8_t g, uint8_t b, uint8_t a);
+bool rasterStroke(SwSurface* surface, SwShape* shape, RenderColor& c);
 bool rasterGradientStroke(SwSurface* surface, SwShape* shape, const Fill* fdata, uint8_t opacity);
 bool rasterClear(SwSurface* surface, uint32_t x, uint32_t y, uint32_t w, uint32_t h, pixel_t val = 0);
 void rasterPixel32(uint32_t *dst, uint32_t val, uint32_t offset, int32_t len);

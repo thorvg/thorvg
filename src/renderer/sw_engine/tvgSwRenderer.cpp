@@ -85,7 +85,7 @@ struct SwShapeTask : SwTask
        Additionally, the stroke style should not be dashed. */
     bool antialiasing(float strokeWidth)
     {
-        return strokeWidth < 2.0f || rshape->stroke->dashCnt > 0 || rshape->stroke->strokeFirst || rshape->strokeTrim() || rshape->stroke->color[3] < 255;;
+        return strokeWidth < 2.0f || rshape->stroke->dashCnt > 0 || rshape->stroke->strokeFirst || rshape->strokeTrim() || rshape->stroke->color.a < 255;
     }
 
     float validStrokeWidth()
@@ -95,7 +95,7 @@ struct SwShapeTask : SwTask
         auto width = rshape->stroke->width;
         if (tvg::zero(width)) return 0.0f;
 
-        if (!rshape->stroke->fill && (MULTIPLY(rshape->stroke->color[3], opacity) == 0)) return 0.0f;
+        if (!rshape->stroke->fill && (MULTIPLY(rshape->stroke->color.a, opacity) == 0)) return 0.0f;
         if (tvg::zero(rshape->stroke->trim.begin - rshape->stroke->trim.end)) return 0.0f;
 
         return (width * sqrt(transform.e11 * transform.e11 + transform.e12 * transform.e12));
@@ -128,8 +128,7 @@ struct SwShapeTask : SwTask
 
         //Shape
         if (flags & (RenderUpdateFlag::Path | RenderUpdateFlag::Transform) || prepareShape) {
-            uint8_t alpha = 0;
-            rshape->fillColor(nullptr, nullptr, nullptr, &alpha);
+            auto alpha = rshape->color.a;
             alpha = MULTIPLY(alpha, opacity);
             visibleFill = (alpha > 0 || rshape->fill);
             shapeReset(&shape);
@@ -270,25 +269,25 @@ static void _termEngine()
 
 static void _renderFill(SwShapeTask* task, SwSurface* surface, uint8_t opacity)
 {
-    uint8_t r, g, b, a;
     if (auto fill = task->rshape->fill) {
         rasterGradientShape(surface, &task->shape, fill, opacity);
     } else {
-        task->rshape->fillColor(&r, &g, &b, &a);
-        a = MULTIPLY(opacity, a);
-        if (a > 0) rasterShape(surface, &task->shape, r, g, b, a);
+        RenderColor c;
+        task->rshape->fillColor(&c.r, &c.g, &c.b, &c.a);
+        c.a = MULTIPLY(opacity, c.a);
+        if (c.a > 0) rasterShape(surface, &task->shape, c);
     }
 }
 
 static void _renderStroke(SwShapeTask* task, SwSurface* surface, uint8_t opacity)
 {
-    uint8_t r, g, b, a;
     if (auto strokeFill = task->rshape->strokeFill()) {
         rasterGradientStroke(surface, &task->shape, strokeFill, opacity);
     } else {
-        if (task->rshape->strokeFill(&r, &g, &b, &a)) {
-            a = MULTIPLY(opacity, a);
-            if (a > 0) rasterStroke(surface, &task->shape, r, g, b, a);
+        RenderColor c;
+        if (task->rshape->strokeFill(&c.r, &c.g, &c.b, &c.a)) {
+            c.a = MULTIPLY(opacity, c.a);
+            if (c.a > 0) rasterStroke(surface, &task->shape, c);
         }
     }
 }

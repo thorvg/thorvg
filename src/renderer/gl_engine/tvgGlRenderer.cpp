@@ -119,7 +119,7 @@ void GlRenderer::initShaders()
 }
 
 
-void GlRenderer::drawPrimitive(GlShape& sdata, uint8_t r, uint8_t g, uint8_t b, uint8_t a, RenderUpdateFlag flag, int32_t depth)
+void GlRenderer::drawPrimitive(GlShape& sdata, const RenderColor& c, RenderUpdateFlag flag, int32_t depth)
 {
     auto vp = currentPass()->getViewport();
     auto bbox = sdata.geometry->getViewport();
@@ -159,7 +159,7 @@ void GlRenderer::drawPrimitive(GlShape& sdata, uint8_t r, uint8_t g, uint8_t b, 
         stencilTask->setDrawDepth(depth);
     }
 
-    a = MULTIPLY(a, sdata.opacity);
+    auto a = MULTIPLY(c.a, sdata.opacity);
 
     if (flag & RenderUpdateFlag::Stroke) {
         float strokeWidth = sdata.rshape->strokeWidth() * sdata.geometry->getTransformMatrix().e11;
@@ -195,7 +195,7 @@ void GlRenderer::drawPrimitive(GlShape& sdata, uint8_t r, uint8_t g, uint8_t b, 
     }
 
     // color
-    float color[4] = {r / 255.f, g / 255.f, b / 255.f, a / 255.f};
+    float color[] = {c.r / 255.f, c.g / 255.f, c.b / 255.f, c.a / 255.f};
 
     task->addBindResource(GlBindingResource{
         1,
@@ -1104,7 +1104,6 @@ bool GlRenderer::renderShape(RenderData data)
 
     if (bbox.w <= 0 || bbox.h <= 0) return true;
 
-    uint8_t r = 0, g = 0, b = 0, a = 0;
     int32_t drawDepth1 = 0, drawDepth2 = 0;
 
     size_t flags = static_cast<size_t>(sdata->updateFlag);
@@ -1122,13 +1121,7 @@ bool GlRenderer::renderShape(RenderData data)
     {
         auto gradient = sdata->rshape->fill;
         if (gradient) drawPrimitive(*sdata, gradient, RenderUpdateFlag::Gradient, drawDepth1);
-        else {
-            sdata->rshape->fillColor(&r, &g, &b, &a);
-            if (a > 0)
-            {
-                drawPrimitive(*sdata, r, g, b, a, RenderUpdateFlag::Color, drawDepth1);
-            }
-        }
+        else if (sdata->rshape->color.a > 0) drawPrimitive(*sdata, sdata->rshape->color, RenderUpdateFlag::Color, drawDepth1);
     }
 
     if (flags & (RenderUpdateFlag::Stroke | RenderUpdateFlag::GradientStroke))
@@ -1136,11 +1129,8 @@ bool GlRenderer::renderShape(RenderData data)
         auto gradient =  sdata->rshape->strokeFill();
         if (gradient) {
             drawPrimitive(*sdata, gradient, RenderUpdateFlag::GradientStroke, drawDepth2);
-        } else {
-            if (sdata->rshape->strokeFill(&r, &g, &b, &a) && a > 0)
-            {
-                drawPrimitive(*sdata, r, g, b, a, RenderUpdateFlag::Stroke, drawDepth2);
-            }
+        } else if (sdata->rshape->stroke && sdata->rshape->stroke->color.a > 0) {
+            drawPrimitive(*sdata, sdata->rshape->stroke->color, RenderUpdateFlag::Stroke, drawDepth2);
         }
     }
 
@@ -1236,9 +1226,8 @@ RenderData GlRenderer::prepare(const RenderShape& rshape, RenderData data, const
     sdata->opacity = opacity;
 
     //invisible?
-    uint8_t alphaF = 0, alphaS = 0;
-    rshape.fillColor(nullptr, nullptr, nullptr, &alphaF);
-    rshape.strokeFill(nullptr, nullptr, nullptr, &alphaS);
+    auto alphaF = rshape.color.a;
+    auto alphaS = rshape.stroke ? rshape.stroke->color.a : 0;
 
     if ( ((flags & RenderUpdateFlag::Gradient) == 0) &&
          ((flags & RenderUpdateFlag::Color) && alphaF == 0) &&

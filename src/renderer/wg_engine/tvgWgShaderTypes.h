@@ -57,8 +57,8 @@ struct WgShaderTypeSolidColor
 {
     float color[4]{};
 
-    WgShaderTypeSolidColor(const uint8_t* c);
-    void update(const uint8_t* c);
+    WgShaderTypeSolidColor(const RenderColor& c);
+    void update(const RenderColor& c);
 };
 
 // sampler, texture, vec4f
