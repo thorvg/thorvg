@@ -72,8 +72,8 @@ struct Shape::Impl
         if (opacity == 0) return false;
 
         //Shape composition is only necessary when stroking & fill are valid.
-        if (!rs.stroke || rs.stroke->width < FLOAT_EPSILON || (!rs.stroke->fill && rs.stroke->color[3] == 0)) return false;
-        if (!rs.fill && rs.color[3] == 0) return false;
+        if (!rs.stroke || rs.stroke->width < FLOAT_EPSILON || (!rs.stroke->fill && rs.stroke->color.a == 0)) return false;
+        if (!rs.fill && rs.color.a == 0) return false;
 
         //translucent fill & stroke
         if (opacity < 255) return true;
@@ -270,10 +270,7 @@ struct Shape::Impl
             flag |= RenderUpdateFlag::GradientStroke;
         }
 
-        rs.stroke->color[0] = r;
-        rs.stroke->color[1] = g;
-        rs.stroke->color[2] = b;
-        rs.stroke->color[3] = a;
+        rs.stroke->color = {r, g, b, a};
 
         flag |= RenderUpdateFlag::Stroke;
     }
@@ -285,7 +282,7 @@ struct Shape::Impl
         if (!rs.stroke) rs.stroke = new RenderStroke();
         if (rs.stroke->fill && rs.stroke->fill != f) delete(rs.stroke->fill);
         rs.stroke->fill = f;
-        rs.stroke->color[3] = 0;
+        rs.stroke->color.a = 0;
 
         flag |= RenderUpdateFlag::Stroke;
         flag |= RenderUpdateFlag::GradientStroke;
@@ -358,9 +355,7 @@ struct Shape::Impl
         //Default Properties
         dup->flag = RenderUpdateFlag::All;
         dup->rs.rule = rs.rule;
-
-        //Color
-        memcpy(dup->rs.color, rs.color, sizeof(rs.color));
+        dup->rs.color = rs.color;
 
         //Path
         dup->rs.path.cmds.push(rs.path.cmds);
@@ -388,7 +383,7 @@ struct Shape::Impl
         rs.path.cmds.clear();
         rs.path.pts.clear();
 
-        rs.color[3] = 0;
+        rs.color.a = 0;
         rs.rule = FillRule::Winding;
 
         delete(rs.stroke);

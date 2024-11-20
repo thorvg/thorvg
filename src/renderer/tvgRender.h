@@ -67,6 +67,11 @@ struct RenderSurface
     }
 };
 
+struct RenderColor
+{
+    uint8_t r, g, b, a;
+};
+
 struct RenderCompositor
 {
     MaskMethod method;
@@ -90,7 +95,7 @@ struct RenderRegion
 struct RenderStroke
 {
     float width = 0.0f;
-    uint8_t color[4] = {0, 0, 0, 0};
+    RenderColor color{};
     Fill *fill = nullptr;
     float* dashPattern = nullptr;
     uint32_t dashCnt = 0;
@@ -109,8 +114,7 @@ struct RenderStroke
     void operator=(const RenderStroke& rhs)
     {
         width = rhs.width;
-
-        memcpy(color, rhs.color, sizeof(color));
+        color = rhs.color;
 
         delete(fill);
         if (rhs.fill) fill = rhs.fill->duplicate();
@@ -173,7 +177,7 @@ struct RenderShape
     } path;
 
     Fill *fill = nullptr;
-    uint8_t color[4] = {0, 0, 0, 0};    //r, g, b, a
+    RenderColor color{};
     RenderStroke *stroke = nullptr;
     FillRule rule = FillRule::Winding;
 
@@ -185,10 +189,10 @@ struct RenderShape
 
     void fillColor(uint8_t* r, uint8_t* g, uint8_t* b, uint8_t* a) const
     {
-        if (r) *r = color[0];
-        if (g) *g = color[1];
-        if (b) *b = color[2];
-        if (a) *a = color[3];
+        if (r) *r = color.r;
+        if (g) *g = color.g;
+        if (b) *b = color.b;
+        if (a) *a = color.a;
     }
 
     float strokeWidth() const
@@ -209,10 +213,10 @@ struct RenderShape
     {
         if (!stroke) return false;
 
-        if (r) *r = stroke->color[0];
-        if (g) *g = stroke->color[1];
-        if (b) *b = stroke->color[2];
-        if (a) *a = stroke->color[3];
+        if (r) *r = stroke->color.r;
+        if (g) *g = stroke->color.g;
+        if (b) *b = stroke->color.b;
+        if (a) *a = stroke->color.a;
 
         return true;
     }

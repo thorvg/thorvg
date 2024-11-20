@@ -99,18 +99,18 @@ void WgShaderTypeBlendSettings::update(const ColorSpace colorSpace, uint8_t o)
 }
 
 
-WgShaderTypeSolidColor::WgShaderTypeSolidColor(const uint8_t* c)
+WgShaderTypeSolidColor::WgShaderTypeSolidColor(const RenderColor& c)
 {
     update(c);
 }
 
 
-void WgShaderTypeSolidColor::update(const uint8_t* c)
+void WgShaderTypeSolidColor::update(const RenderColor& c)
 {
-    color[0] = c[0] / 255.0f; // red
-    color[1] = c[1] / 255.0f; // green
-    color[2] = c[2] / 255.0f; // blue
-    color[3] = c[3] / 255.0f; // alpha
+    color[0] = c.r / 255.0f; // red
+    color[1] = c.g / 255.0f; // green
+    color[2] = c.b / 255.0f; // blue
+    color[3] = c.a / 255.0f; // alpha
 }
 
 

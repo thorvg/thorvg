@@ -233,7 +233,7 @@ void WgImageData::release(WgContext& context)
 // WgRenderSettings
 //***********************************************************************
 
-void WgRenderSettings::update(WgContext& context, const Fill* fill, const uint8_t* color, const RenderUpdateFlag flags)
+void WgRenderSettings::update(WgContext& context, const Fill* fill, const RenderColor& c, const RenderUpdateFlag flags)
 {
     // setup fill properties
     if ((flags & (RenderUpdateFlag::Gradient)) && fill) {
@@ -270,15 +270,15 @@ void WgRenderSettings::update(WgContext& context, const Fill* fill, const uint8_
                 sampler, texViewGradient, bufferGroupGradient, bufferGroupTransfromGrad);
         }
         skip = false;
-    } else if ((flags & (RenderUpdateFlag::Color)) && !fill) {
+    } else if ((flags & RenderUpdateFlag::Color) && !fill) {
         rasterType = WgRenderRasterType::Solid;
-        WgShaderTypeSolidColor solidColor(color);
+        WgShaderTypeSolidColor solidColor(c);
         if (context.allocateBufferUniform(bufferGroupSolid, &solidColor, sizeof(solidColor))) {
             context.pipelines->layouts.releaseBindGroup(bindGroupSolid);
             bindGroupSolid = context.pipelines->layouts.createBindGroupBuffer1Un(bufferGroupSolid);
         }
         fillType = WgRenderSettingsType::Solid;
-        skip = (color[3] == 0);
+        skip = (c.a == 0);
     }
 };
 
