@@ -99,16 +99,14 @@ void WgCompositor::beginRenderPass(WGPUCommandEncoder commandEncoder, WgRenderSt
         .depthLoadOp = WGPULoadOp_Load, .depthStoreOp = WGPUStoreOp_Discard, .depthClearValue = 1.0f,
         .stencilLoadOp = WGPULoadOp_Load, .stencilStoreOp = WGPUStoreOp_Discard, .stencilClearValue = 0
     };
-    //WGPURenderPassDepthStencilAttachment depthStencilAttachment{ .view = texViewStencil, .depthClearValue = 1.0f, .stencilLoadOp = WGPULoadOp_Clear, .stencilStoreOp = WGPUStoreOp_Discard };
-    WGPURenderPassColorAttachment colorAttachment{};
-    colorAttachment.view = target->texViewMS,
-    colorAttachment.loadOp = clear ? WGPULoadOp_Clear : WGPULoadOp_Load,
-    colorAttachment.storeOp = WGPUStoreOp_Store;
-    colorAttachment.resolveTarget = target->texView;
-    colorAttachment.clearValue = clearColor;
-    #ifdef __EMSCRIPTEN__
-    colorAttachment.depthSlice = WGPU_DEPTH_SLICE_UNDEFINED;
-    #endif
+    const WGPURenderPassColorAttachment colorAttachment{
+        .view = target->texViewMS,
+        .depthSlice = WGPU_DEPTH_SLICE_UNDEFINED,
+        .resolveTarget = target->texView,
+        .loadOp = clear ? WGPULoadOp_Clear : WGPULoadOp_Load,
+        .storeOp = WGPUStoreOp_Store,
+        .clearValue = clearColor
+    };
     WGPURenderPassDescriptor renderPassDesc{ .colorAttachmentCount = 1, .colorAttachments = &colorAttachment, .depthStencilAttachment = &depthStencilAttachment };
     renderPassEncoder = wgpuCommandEncoderBeginRenderPass(commandEncoder, &renderPassDesc);
     assert(renderPassEncoder);
