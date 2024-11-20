@@ -102,10 +102,10 @@ TVG_API Tvg_Result tvg_swcanvas_set_target(Tvg_Canvas* canvas, uint32_t* buffer,
 }
 
 
-TVG_API Tvg_Result tvg_glcanvas_set_target(Tvg_Canvas* canvas, int32_t id, uint32_t w, uint32_t h)
+TVG_API Tvg_Result tvg_glcanvas_set_target(Tvg_Canvas* canvas, int32_t id, uint32_t w, uint32_t h, Tvg_Colorspace cs)
 {
     if (!canvas) return TVG_RESULT_INVALID_ARGUMENT;
-    return (Tvg_Result) reinterpret_cast<GlCanvas*>(canvas)->target(id, w, h);
+    return (Tvg_Result) reinterpret_cast<GlCanvas*>(canvas)->target(id, w, h, static_cast<ColorSpace>(cs));
 }
 
 

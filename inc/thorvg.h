@@ -1732,6 +1732,7 @@ public:
      * @param[in] id The GL target ID, usually indicating the FBO ID. A value of @c 0 specifies the main surface.
      * @param[in] w The width (in pixels) of the raster image.
      * @param[in] h The height (in pixels) of the raster image.
+     * @param[in] cs Specifies how the pixel values should be interpreted. Currently, it only allows @c ColorSpace::ABGR8888S as @c GL_RGBA8.
      *
      * @retval Result::InsufficientCondition if the canvas is performing rendering. Please ensure the canvas is synced.
      * @retval Result::NonSupport In case the gl engine is not supported.
@@ -1739,10 +1740,9 @@ public:
      * @see Canvas::viewport()
      * @see Canvas::sync()
      *
-     * @note Currently, this only allows the GL_RGBA8 color space format.
      * @note Experimental API
     */
-    Result target(int32_t id, uint32_t w, uint32_t h) noexcept;
+    Result target(int32_t id, uint32_t w, uint32_t h, ColorSpace cs) noexcept;
 
     /**
      * @brief Creates a new GlCanvas object.
