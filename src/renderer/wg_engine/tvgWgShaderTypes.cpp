@@ -171,12 +171,13 @@ void WgShaderTypeGradient::updateTexData(const Fill::ColorStop* stops, uint32_t 
         }
     }
     // tail
-    range_s = uint32_t(sstops.last().offset * (WG_TEXTURE_GRADIENT_SIZE-1));
+    const tvg::Fill::ColorStop& colorStopLast = sstops.last();
+    range_s = uint32_t(colorStopLast.offset * (WG_TEXTURE_GRADIENT_SIZE-1));
     range_e = WG_TEXTURE_GRADIENT_SIZE;
     for (uint32_t ti = range_s; ti < range_e; ti++) {
-        texData[ti * 4 + 0] = sstops[stopCnt-1].r;
-        texData[ti * 4 + 1] = sstops[stopCnt-1].g;
-        texData[ti * 4 + 2] = sstops[stopCnt-1].b;
-        texData[ti * 4 + 3] = sstops[stopCnt-1].a;
+        texData[ti * 4 + 0] = colorStopLast.r;
+        texData[ti * 4 + 1] = colorStopLast.g;
+        texData[ti * 4 + 2] = colorStopLast.b;
+        texData[ti * 4 + 3] = colorStopLast.a;
     }
 }
