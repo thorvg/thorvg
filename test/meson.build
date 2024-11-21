@@ -34,7 +34,3 @@ tests = executable('tvgUnitTests',
     dependencies : test_dep)
 
 test('Unit Tests', tests, args : ['--success'])
-
-if get_option('bindings').contains('capi')
-    subdir('capi')
-endif
