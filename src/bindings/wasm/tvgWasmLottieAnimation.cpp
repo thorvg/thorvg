@@ -150,7 +150,7 @@ struct TvgWgEngine : TvgEngineMethod
     void resize(Canvas* canvas, int w, int h) override
     {
     #ifdef THORVG_WG_RASTER_SUPPORT
-        static_cast<WgCanvas*>(canvas)->target(instance, surface, w, h, device);
+        static_cast<WgCanvas*>(canvas)->target(device, instance, surface, w, h);
     #endif
     }
 };

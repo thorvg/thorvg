@@ -51,6 +51,7 @@ public:
     WGPUBindGroup createBindGroupBuffer2Un(WGPUBuffer buff0, WGPUBuffer buff1);
     WGPUBindGroup createBindGroupBuffer3Un(WGPUBuffer buff0, WGPUBuffer buff1, WGPUBuffer buff2);
     void releaseBindGroup(WGPUBindGroup& bindGroup);
+    void releaseBindGroupLayout(WGPUBindGroupLayout& bindGroupLayout);
 public:
     void initialize(WgContext& context);
     void release(WgContext& context);

@@ -140,6 +140,12 @@ void WgBindGroupLayouts::releaseBindGroup(WGPUBindGroup& bindGroup)
     bindGroup = nullptr;
 }
 
+void WgBindGroupLayouts::releaseBindGroupLayout(WGPUBindGroupLayout& bindGroupLayout)
+{
+    if (bindGroupLayout) wgpuBindGroupLayoutRelease(bindGroupLayout);
+    bindGroupLayout = nullptr;
+}
+
 
 void WgBindGroupLayouts::initialize(WgContext& context)
 {
@@ -262,14 +268,15 @@ void WgBindGroupLayouts::initialize(WgContext& context)
 
 void WgBindGroupLayouts::release(WgContext& context)
 {
-    wgpuBindGroupLayoutRelease(layoutBuffer3Un);
-    wgpuBindGroupLayoutRelease(layoutBuffer2Un);
-    wgpuBindGroupLayoutRelease(layoutBuffer1Un);
-    wgpuBindGroupLayoutRelease(layoutTexStrorage3RO);
-    wgpuBindGroupLayoutRelease(layoutTexStrorage2RO);
-    wgpuBindGroupLayoutRelease(layoutTexStrorage1RO);
-    wgpuBindGroupLayoutRelease(layoutTexStrorage1WO);
-    wgpuBindGroupLayoutRelease(layoutTexSampledBuff1Un);
-    wgpuBindGroupLayoutRelease(layoutTexSampled);
+    releaseBindGroupLayout(layoutBuffer3Un);
+    releaseBindGroupLayout(layoutBuffer2Un);
+    releaseBindGroupLayout(layoutBuffer1Un);
+    releaseBindGroupLayout(layoutTexStrorage3RO);
+    releaseBindGroupLayout(layoutTexStrorage2RO);
+    releaseBindGroupLayout(layoutTexStrorage1RO);
+    releaseBindGroupLayout(layoutTexStrorage1WO);
+    releaseBindGroupLayout(layoutTexSampledBuff1Un);
+    releaseBindGroupLayout(layoutTexSampledBuff2Un);
+    releaseBindGroupLayout(layoutTexSampled);
     device = nullptr;
 }

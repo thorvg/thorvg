@@ -165,7 +165,8 @@ void WgMeshDataPool::release(WgContext& context)
     mList.clear();
 }
 
-WgMeshDataPool* WgMeshDataGroup::gMeshDataPool = nullptr;
+WgMeshDataPool gMeshDataPoolInstance;
+WgMeshDataPool* WgMeshDataPool::gMeshDataPool = &gMeshDataPoolInstance;
 
 //***********************************************************************
 // WgMeshDataGroup
@@ -174,7 +175,7 @@ WgMeshDataPool* WgMeshDataGroup::gMeshDataPool = nullptr;
 void WgMeshDataGroup::append(WgContext& context, const WgVertexBuffer& vertexBuffer)
 {
     assert(vertexBuffer.vcount >= 3);
-    meshes.push(gMeshDataPool->allocate(context));
+    meshes.push(WgMeshDataPool::gMeshDataPool->allocate(context));
     meshes.last()->update(context, vertexBuffer);
 }
 
@@ -182,14 +183,14 @@ void WgMeshDataGroup::append(WgContext& context, const WgVertexBuffer& vertexBuf
 void WgMeshDataGroup::append(WgContext& context, const WgVertexBufferInd& vertexBufferInd)
 {
     assert(vertexBufferInd.vcount >= 3);
-    meshes.push(gMeshDataPool->allocate(context));
+    meshes.push(WgMeshDataPool::gMeshDataPool->allocate(context));
     meshes.last()->update(context, vertexBufferInd);
 }
 
 
 void WgMeshDataGroup::append(WgContext& context, const Point pmin, const Point pmax)
 {
-    meshes.push(gMeshDataPool->allocate(context));
+    meshes.push(WgMeshDataPool::gMeshDataPool->allocate(context));
     meshes.last()->bbox(context, pmin, pmax);
 }
 
@@ -197,7 +198,7 @@ void WgMeshDataGroup::append(WgContext& context, const Point pmin, const Point p
 void WgMeshDataGroup::release(WgContext& context)
 {
     for (uint32_t i = 0; i < meshes.count; i++)
-        gMeshDataPool->free(context, meshes[i]);
+        WgMeshDataPool::gMeshDataPool->free(context, meshes[i]);
     meshes.clear();
 };
 
@@ -297,8 +298,6 @@ void WgRenderSettings::release(WgContext& context)
 //***********************************************************************
 // WgRenderDataPaint
 //***********************************************************************
-
-WgVertexBufferInd* WgRenderDataPaint::gStrokesGenerator = nullptr;
 
 void WgRenderDataPaint::release(WgContext& context)
 {
@@ -455,7 +454,8 @@ void WgRenderDataShape::updateMeshes(WgContext &context, const RenderShape &rsha
 void WgRenderDataShape::proceedStrokes(WgContext context, const RenderStroke* rstroke, float tbeg, float tend, const WgVertexBuffer& buff)
 {
     assert(rstroke);
-    gStrokesGenerator->reset(buff.tscale);
+    static WgVertexBufferInd strokesGenerator;
+    strokesGenerator.reset(buff.tscale);
     // trim -> dash -> stroke
     if ((tbeg != 0.0f) || (tend != 1.0f)) {
         if (tbeg == tend) return;
@@ -464,17 +464,17 @@ void WgRenderDataShape::proceedStrokes(WgContext context, const RenderStroke* rs
         trimed_buff.trim(buff, tbeg, tend);
         trimed_buff.updateDistances();
         // trim ->dash -> stroke
-        if (rstroke->dashPattern) gStrokesGenerator->appendStrokesDashed(trimed_buff, rstroke);
+        if (rstroke->dashPattern) strokesGenerator.appendStrokesDashed(trimed_buff, rstroke);
         // trim -> stroke
-        else gStrokesGenerator->appendStrokes(trimed_buff, rstroke);
+        else strokesGenerator.appendStrokes(trimed_buff, rstroke);
     } else
     // dash -> stroke
     if (rstroke->dashPattern) {
-        gStrokesGenerator->appendStrokesDashed(buff, rstroke);
+        strokesGenerator.appendStrokesDashed(buff, rstroke);
     // stroke
     } else
-        gStrokesGenerator->appendStrokes(buff, rstroke);
-    appendStroke(context, *gStrokesGenerator);
+        strokesGenerator.appendStrokes(buff, rstroke);
+    appendStroke(context, strokesGenerator);
 }
 
 

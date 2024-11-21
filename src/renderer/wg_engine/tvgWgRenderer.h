@@ -45,8 +45,7 @@ public:
     bool clear() override;
     bool sync() override;
 
-    bool target(WGPUInstance instance, WGPUSurface surface, uint32_t w, uint32_t h, WGPUDevice device);
-    bool target(WGPUSurface surface, uint32_t w, uint32_t h);
+    bool target(WGPUDevice device, WGPUInstance instance, void* target, uint32_t width, uint32_t height, int type = 0);
 
     RenderCompositor* target(const RenderRegion& region, ColorSpace cs) override;
     bool beginComposite(RenderCompositor* cmp, MaskMethod method, uint8_t opacity) override;
@@ -59,8 +58,6 @@ public:
     static bool init(uint32_t threads);
     static bool term();
 
-    WGPUSurface surface{}; // external handle
-
 private:
     WgRenderer();
     ~WgRenderer();
@@ -69,28 +66,37 @@ private:
     void disposeObjects();
     void releaseSurfaceTexture();
 
-    WGPUSurfaceTexture surfaceTexture{};
+    void reguestDevice(WGPUInstance instance, WGPUSurface surface);
+    void releaseDevice();
+    void clearTargets();
+    bool surfaceConfigure(WGPUSurface surface, WgContext& context, uint32_t width, uint32_t height);
 
-    WGPUCommandEncoder mCommandEncoder{};
-    WgRenderDataShapePool mRenderDataShapePool;
-
-    // render tree stacks
+    // render tree stacks and pools
     WgRenderStorage mStorageRoot;
     Array<WgCompose*> mCompositorStack;
     Array<WgRenderStorage*> mRenderStorageStack;
     WgRenderStoragePool mRenderStoragePool;
+    WgRenderDataShapePool mRenderDataShapePool;
 
+    // rendering context
     WgContext mContext;
     WgPipelines mPipelines;
     WgCompositor mCompositor;
 
+    // rendering states
     RenderSurface mTargetSurface;
     BlendMethod mBlendMethod{};
     RenderRegion mViewport{};
 
+    // disposable data list
     Array<RenderData> mDisposeRenderDatas{};
     Key mDisposeKey{};
 
+    // gpu handles
+    WGPUCommandEncoder mCommandEncoder{};
+    WGPUTexture targetTexture{}; // external handle
+    WGPUSurfaceTexture surfaceTexture{};
+    WGPUSurface surface{};  // external handle
     WGPUAdapter adapter{};
     WGPUDevice device{};
     bool gpuOwner{};

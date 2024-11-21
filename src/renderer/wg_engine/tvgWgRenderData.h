@@ -50,14 +50,13 @@ private:
     Array<WgMeshData*> mPool;
     Array<WgMeshData*> mList;
 public:
+    static WgMeshDataPool* gMeshDataPool;
     WgMeshData* allocate(WgContext& context);
     void free(WgContext& context, WgMeshData* meshData);
     void release(WgContext& context);
 };
 
 struct WgMeshDataGroup {
-    static WgMeshDataPool* gMeshDataPool;
-
     Array<WgMeshData*> meshes{};
     
     void append(WgContext& context, const WgVertexBuffer& vertexBuffer);
@@ -96,9 +95,6 @@ struct WgRenderSettings
 
 struct WgRenderDataPaint
 {
-    // global strokes generator. single instance
-    static WgVertexBufferInd* gStrokesGenerator;
-
     WGPUBuffer bufferModelMat{};
     WGPUBuffer bufferBlendSettings{};
     WGPUBindGroup bindGroupPaint{};
