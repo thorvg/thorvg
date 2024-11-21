@@ -109,10 +109,10 @@ TVG_API Tvg_Result tvg_glcanvas_set_target(Tvg_Canvas* canvas, int32_t id, uint3
 }
 
 
-TVG_API Tvg_Result tvg_wgcanvas_set_target(Tvg_Canvas* canvas, void* instance, void* surface, uint32_t w, uint32_t h, void* device)
+TVG_API Tvg_Result tvg_wgcanvas_set_target(Tvg_Canvas* canvas, void* device, void* instance, void* target, uint32_t w, uint32_t h, int type)
 {
     if (!canvas) return TVG_RESULT_INVALID_ARGUMENT;
-    return (Tvg_Result) reinterpret_cast<WgCanvas*>(canvas)->target(instance, surface, w, h, device);
+    return (Tvg_Result) reinterpret_cast<WgCanvas*>(canvas)->target(device, instance, target, w, h, type);
 }
 
 

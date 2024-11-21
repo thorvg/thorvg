@@ -260,7 +260,7 @@ void WgContext::releaseBuffer(WGPUBuffer& buffer)
     }
 }
 
-void WgContext::releaseQueue(WGPUQueue queue)
+void WgContext::releaseQueue(WGPUQueue& queue)
 {
     if (queue) {
         wgpuQueueRelease(queue);

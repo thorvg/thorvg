@@ -425,14 +425,14 @@ struct WgWindow : Window
 
     virtual ~WgWindow()
     {
-        wgpuSurfaceRelease(surface);
+        //wgpuSurfaceRelease(surface);
         wgpuInstanceRelease(instance);
     }
 
     void resize() override
     {
         //Set the canvas target and draw on it.
-        verify(static_cast<tvg::WgCanvas*>(canvas)->target(instance, surface, width, height));
+        verify(static_cast<tvg::WgCanvas*>(canvas)->target(nullptr, instance, surface, width, height));
     }
 
     void refresh() override 
