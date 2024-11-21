@@ -195,7 +195,7 @@ void GlRenderer::drawPrimitive(GlShape& sdata, const RenderColor& c, RenderUpdat
     }
 
     // color
-    float color[] = {c.r / 255.f, c.g / 255.f, c.b / 255.f, c.a / 255.f};
+    float color[] = {c.r / 255.f, c.g / 255.f, c.b / 255.f, a / 255.f};
 
     task->addBindResource(GlBindingResource{
         1,
