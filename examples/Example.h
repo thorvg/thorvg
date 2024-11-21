@@ -425,7 +425,7 @@ struct WgWindow : Window
 
     virtual ~WgWindow()
     {
-        //wgpuSurfaceRelease(surface);
+        wgpuSurfaceRelease(surface);
         wgpuInstanceRelease(instance);
     }
 

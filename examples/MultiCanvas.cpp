@@ -251,11 +251,33 @@ void runGl()
 /* WG Engine Specific Setup                                             */
 /************************************************************************/
 
+#ifdef THORVG_WG_RASTER_SUPPORT
+void wgCopyTextureToTexture(WGPUDevice device, WGPUTexture src, WGPUTexture dst, uint32_t posX, uint32_t posY, uint32_t width, uint32_t height) {
+    WGPUQueue queue = wgpuDeviceGetQueue(device);
+
+    // create command encoder
+    const WGPUCommandEncoderDescriptor commandEncoderDesc{};
+    WGPUCommandEncoder commandEncoder = wgpuDeviceCreateCommandEncoder(device, &commandEncoderDesc);
+
+    // copy canvas data to surface
+    const WGPUImageCopyTexture texSrc { .texture = src };
+    const WGPUImageCopyTexture texDst { .texture = dst, .origin = { .x = posX, .y = posY } };
+    const WGPUExtent3D copySize { .width = width, .height = height, .depthOrArrayLayers = 1 };
+    wgpuCommandEncoderCopyTextureToTexture(commandEncoder, &texSrc, &texDst, &copySize);
+
+    // release command encoder
+    const WGPUCommandBufferDescriptor commandBufferDesc{};
+    WGPUCommandBuffer commandsBuffer = wgpuCommandEncoderFinish(commandEncoder, &commandBufferDesc);
+    wgpuQueueSubmit(queue, 1, &commandsBuffer);
+    wgpuCommandBufferRelease(commandsBuffer);
+    wgpuCommandEncoderRelease(commandEncoder);
+
+    wgpuQueueRelease(queue);
+}
+#endif
+
 void runWg()
 {
-#if 1
-    cout << "Not Support WebGPU" << endl;
-#else
 #ifdef THORVG_WG_RASTER_SUPPORT
     //TODO with Drawing Target?
     auto window = SDL_CreateWindow("ThorVG Example (WebGPU)", SDL_WINDOWPOS_UNDEFINED, SDL_WINDOWPOS_UNDEFINED, WIDTH, HEIGHT, SDL_WINDOW_HIDDEN);
@@ -303,27 +325,76 @@ void runWg()
     surfaceDesc.label = "The surface";
     auto surface = wgpuInstanceCreateSurface(instance, &surfaceDesc);
 
+    // request adapter
+    WGPUAdapter adapter{};
+    const WGPURequestAdapterOptions requestAdapterOptions { .compatibleSurface = surface, .powerPreference = WGPUPowerPreference_HighPerformance };
+    auto onAdapterRequestEnded = [](WGPURequestAdapterStatus status, WGPUAdapter adapter, char const * message, void * pUserData) { *((WGPUAdapter*)pUserData) = adapter; };
+    wgpuInstanceRequestAdapter(instance, &requestAdapterOptions, onAdapterRequestEnded, &adapter);
+
+    // get adapter and surface properties
+    WGPUFeatureName featureNames[32]{};
+    size_t featuresCount = wgpuAdapterEnumerateFeatures(adapter, featureNames);
+
+    // request device
+    WGPUDevice device{};
+    const WGPUDeviceDescriptor deviceDesc { .label = "The shared device", .requiredFeatureCount = featuresCount, .requiredFeatures = featureNames };
+    auto onDeviceRequestEnded = [](WGPURequestDeviceStatus status, WGPUDevice device, char const * message, void * pUserData) { *((WGPUDevice*)pUserData) = device; };
+    wgpuAdapterRequestDevice(adapter, &deviceDesc, onDeviceRequestEnded, &device);
+
+    // setup surface configuration
+    WGPUSurfaceConfiguration surfaceConfiguration {
+        .device = device,
+        .format = WGPUTextureFormat_BGRA8Unorm,
+        .usage = WGPUTextureUsage_RenderAttachment | WGPUTextureUsage_CopyDst,
+        .width = WIDTH, .height = HEIGHT
+    };
+    wgpuSurfaceConfigure(surface, &surfaceConfiguration);
+
+    // create offscren target texure
+    const WGPUTextureDescriptor textureDesc {
+        .usage = WGPUTextureUsage_CopySrc | WGPUTextureUsage_RenderAttachment,
+        .dimension = WGPUTextureDimension_2D, .size = { SIZE, SIZE, 1 },
+        .format = WGPUTextureFormat_BGRA8Unorm, .mipLevelCount = 1, .sampleCount = 1
+    };
+    WGPUTexture renderTarget = wgpuDeviceCreateTexture(device, &textureDesc);
+
+    WGPUSurfaceTexture surfaceTexture{};
+    wgpuSurfaceGetCurrentTexture(surface, &surfaceTexture);
+
     for (int counter = 0; counter < NUM_PER_LINE * NUM_PER_LINE; ++counter) {
-        auto canvas = tvg::WgCanvas::gen();
+        auto canvas = unique_ptr<tvg::WgCanvas>(tvg::WgCanvas::gen());
 
         //Set the canvas target and draw on it.
-        tvgexam::verify(canvas->target(instance, surface, WIDTH, HEIGHT));
+        tvgexam::verify(canvas->target(device, instance, renderTarget, SIZE, SIZE, 1));
 
         content(canvas.get());
         if (tvgexam::verify(canvas->draw())) {
             tvgexam::verify(canvas->sync());
         }
-    }
 
+        // After the WgCanvas::sync() function, the content is rendered to the render target
+        // The texture is now ready to be blit to the screen
+        uint32_t y = (counter / NUM_PER_LINE) * SIZE;
+        uint32_t x = (counter % NUM_PER_LINE) * SIZE;
+        wgCopyTextureToTexture(device, renderTarget, surfaceTexture.texture, x, y, SIZE, SIZE);
+    }
+    
     SDL_ShowWindow(window);
+    wgpuSurfacePresent(surface);
 
     mainloop();
 
+    wgpuTextureRelease(surfaceTexture.texture);
+    wgpuTextureDestroy(renderTarget);
+    wgpuTextureRelease(renderTarget);
+    wgpuDeviceRelease(device);
+    wgpuAdapterRelease(adapter);
+    wgpuSurfaceUnconfigure(surface);
+    wgpuSurfaceRelease(surface);
     wgpuInstanceRelease(instance);
     SDL_DestroyWindow(window);
 #else
-    cout << "webgpu driver is not detected!" << endl;
-#endif
+    cout << "Not Support WebGPU" << endl;
 #endif
 }
 
