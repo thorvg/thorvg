@@ -630,7 +630,7 @@ struct LottieColorStop : LottieProperty
             const_cast<LottieColorStop&>(rhs).frames = nullptr;
         } else {
             value = rhs.value;
-            const_cast<LottieColorStop&>(rhs).value = {nullptr, nullptr};
+            const_cast<LottieColorStop&>(rhs).value = ColorStop();
         }
         populated = rhs.populated;
         count = rhs.count;
