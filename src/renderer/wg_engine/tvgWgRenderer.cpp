@@ -46,13 +46,18 @@ void WgRenderer::release()
     // dispose stored objects
     disposeObjects();
 
+    // clear render data paint pools
+    mRenderDataShapePool.release(mContext);
+    mRenderDataPicturePool.release(mContext);
+    WgMeshDataPool::gMeshDataPool->release(mContext);
+
+    // clear render storage pool
+    mRenderStoragePool.release(mContext);
+
     // clear rendering tree stacks
     mCompositorStack.clear();
     mRenderStorageStack.clear();
-    mRenderStoragePool.release(mContext);
-    mRenderDataShapePool.release(mContext);
-    WgMeshDataPool::gMeshDataPool->release(mContext);
-    mStorageRoot.release(mContext);
+    mRenderStorageRoot.release(mContext);
 
     // release context handles
     mCompositor.release(mContext);
@@ -72,8 +77,7 @@ void WgRenderer::disposeObjects()
         if (renderData->type() == Type::Shape) {
             mRenderDataShapePool.free(mContext, (WgRenderDataShape*)renderData);
         } else {
-            renderData->release(mContext);
-            delete renderData;
+            mRenderDataPicturePool.free(mContext, (WgRenderDataPicture*)renderData);
         }
     }
     mDisposeRenderDatas.clear();
@@ -117,7 +121,7 @@ RenderData WgRenderer::prepare(RenderSurface* surface, RenderData data, const Ma
     // get or create render data shape
     auto renderDataPicture = (WgRenderDataPicture*)data;
     if (!renderDataPicture)
-        renderDataPicture = new WgRenderDataPicture();
+        renderDataPicture = mRenderDataPicturePool.allocate(mContext);
 
     // update paint settings
     renderDataPicture->viewport = mViewport;
@@ -128,13 +132,7 @@ RenderData WgRenderer::prepare(RenderSurface* surface, RenderData data, const Ma
 
     // update image data
     if (flags & (RenderUpdateFlag::Path | RenderUpdateFlag::Image)) {
-        mContext.pipelines->layouts.releaseBindGroup(renderDataPicture->bindGroupPicture);
-        renderDataPicture->meshData.release(mContext);
-        renderDataPicture->meshData.imageBox(mContext, surface->w, surface->h);
-        renderDataPicture->imageData.update(mContext, surface);
-        renderDataPicture->bindGroupPicture = mContext.pipelines->layouts.createBindGroupTexSampled(
-            mContext.samplerLinearRepeat, renderDataPicture->imageData.textureView
-        );
+        renderDataPicture->updateSurface(mContext, surface);
     }
 
     // store clips data
@@ -147,7 +145,7 @@ bool WgRenderer::preRender()
 {
     // push rot render storage to the render tree stack
     assert(mRenderStorageStack.count == 0);
-    mRenderStorageStack.push(&mStorageRoot);
+    mRenderStorageStack.push(&mRenderStorageRoot);
     // create command encoder for drawing
     WGPUCommandEncoderDescriptor commandEncoderDesc{};
     mCommandEncoder = wgpuDeviceCreateCommandEncoder(mContext.device, &commandEncoderDesc);
@@ -191,6 +189,7 @@ bool WgRenderer::postRender()
 
 
 void WgRenderer::dispose(RenderData data) {
+    if (!mContext.queue) return;
     auto renderData = (WgRenderDataPaint*)data;
     if (renderData) {
         ScopedLock lock(mDisposeKey);
@@ -277,7 +276,7 @@ bool WgRenderer::sync()
     WGPUCommandEncoder commandEncoder = wgpuDeviceCreateCommandEncoder(mContext.device, &commandEncoderDesc);
 
     // show root offscreen buffer
-    mCompositor.blit(mContext, commandEncoder, &mStorageRoot, dstTextureView);
+    mCompositor.blit(mContext, commandEncoder, &mRenderStorageRoot, dstTextureView);
 
     // release command encoder
     const WGPUCommandBufferDescriptor commandBufferDesc{};
@@ -317,7 +316,7 @@ bool WgRenderer::target(WGPUDevice device, WGPUInstance instance, void* target, 
 
     // initialize render tree instances
     mRenderStoragePool.initialize(mContext, width, height);
-    mStorageRoot.initialize(mContext, width, height);
+    mRenderStorageRoot.initialize(mContext, width, height);
     mCompositor.initialize(mContext, width, height);
 
     // configure surface (must be called after context creation)

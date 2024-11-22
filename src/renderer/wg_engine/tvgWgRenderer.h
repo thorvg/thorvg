@@ -71,12 +71,17 @@ private:
     void clearTargets();
     bool surfaceConfigure(WGPUSurface surface, WgContext& context, uint32_t width, uint32_t height);
 
-    // render tree stacks and pools
-    WgRenderStorage mStorageRoot;
+    // render tree stacks
+    WgRenderStorage mRenderStorageRoot;
     Array<WgCompose*> mCompositorStack;
     Array<WgRenderStorage*> mRenderStorageStack;
+
+    // render storage pool
     WgRenderStoragePool mRenderStoragePool;
+
+    // render data paint pools
     WgRenderDataShapePool mRenderDataShapePool;
+    WgRenderDataPicturePool mRenderDataPicturePool;
 
     // rendering context
     WgContext mContext;
