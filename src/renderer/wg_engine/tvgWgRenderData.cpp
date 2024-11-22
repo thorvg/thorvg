@@ -207,20 +207,15 @@ void WgMeshDataGroup::release(WgContext& context)
 // WgImageData
 //***********************************************************************
 
-void WgImageData::update(WgContext& context, RenderSurface* surface)
+void WgImageData::update(WgContext& context, const RenderSurface* surface)
 {
-    release(context);
-    assert(surface);
-    texture = context.createTexture(surface->w, surface->h, WGPUTextureFormat_RGBA8Unorm);
-    assert(texture);
-    textureView = context.createTextureView(texture);
-    assert(textureView);
-    // update texture data
-    WGPUImageCopyTexture imageCopyTexture{ .texture = texture };
-    WGPUTextureDataLayout textureDataLayout{ .bytesPerRow = 4 * surface->w, .rowsPerImage = surface->h };
-    WGPUExtent3D writeSize{ .width = surface->w, .height = surface->h, .depthOrArrayLayers = 1 };
-    wgpuQueueWriteTexture(context.queue, &imageCopyTexture, surface->data, 4 * surface->w * surface->h, &textureDataLayout, &writeSize);
-    wgpuQueueSubmit(context.queue, 0, nullptr);
+    // allocate new texture handle
+    bool texHandleChanged = context.allocateTexture(texture, surface->w, surface->h, WGPUTextureFormat_RGBA8Unorm, surface->data);
+    // update texture view of texture handle was changed
+    if (texHandleChanged) {
+        context.releaseTextureView(textureView);
+        textureView = context.createTextureView(texture);
+    }
 };
 
 
@@ -506,26 +501,26 @@ void WgRenderDataShape::release(WgContext& context)
 
 WgRenderDataShape* WgRenderDataShapePool::allocate(WgContext& context)
 {
-    WgRenderDataShape* dataShape{};
+    WgRenderDataShape* renderData{};
     if (mPool.count > 0) {
-        dataShape = mPool.last();
+        renderData = mPool.last();
         mPool.pop();
     } else {
-        dataShape = new WgRenderDataShape();
-        mList.push(dataShape);
+        renderData = new WgRenderDataShape();
+        mList.push(renderData);
     }
-    return dataShape;
+    return renderData;
 }
 
 
-void WgRenderDataShapePool::free(WgContext& context, WgRenderDataShape* dataShape)
+void WgRenderDataShapePool::free(WgContext& context, WgRenderDataShape* renderData)
 {
-    dataShape->meshGroupShapes.release(context);
-    dataShape->meshGroupShapesBBox.release(context);
-    dataShape->meshGroupStrokes.release(context);
-    dataShape->meshGroupStrokesBBox.release(context);
-    dataShape->clips.clear();
-    mPool.push(dataShape);
+    renderData->meshGroupShapes.release(context);
+    renderData->meshGroupShapesBBox.release(context);
+    renderData->meshGroupStrokes.release(context);
+    renderData->meshGroupStrokesBBox.release(context);
+    renderData->clips.clear();
+    mPool.push(renderData);
 }
 
 
@@ -543,10 +538,59 @@ void WgRenderDataShapePool::release(WgContext& context)
 // WgRenderDataPicture
 //***********************************************************************
 
+void WgRenderDataPicture::updateSurface(WgContext& context, const RenderSurface* surface)
+{
+    // upoate mesh data
+    meshData.imageBox(context, surface->w, surface->h);
+    // update texture data
+    imageData.update(context, surface);
+    // update texture bind group
+    context.pipelines->layouts.releaseBindGroup(bindGroupPicture);
+    bindGroupPicture = context.pipelines->layouts.createBindGroupTexSampled(
+        context.samplerLinearRepeat, imageData.textureView
+    );
+}
+
+
 void WgRenderDataPicture::release(WgContext& context)
 {
-    meshData.release(context);
-    imageData.release(context);
     context.pipelines->layouts.releaseBindGroup(bindGroupPicture);
+    imageData.release(context);
+    meshData.release(context);
     WgRenderDataPaint::release(context);
+}
+
+//***********************************************************************
+// WgRenderDataPicturePool
+//***********************************************************************
+
+WgRenderDataPicture* WgRenderDataPicturePool::allocate(WgContext& context)
+{
+    WgRenderDataPicture* renderData{};
+    if (mPool.count > 0) {
+        renderData = mPool.last();
+        mPool.pop();
+    } else {
+        renderData = new WgRenderDataPicture();
+        mList.push(renderData);
+    }
+    return renderData;
+}
+
+
+void WgRenderDataPicturePool::free(WgContext& context, WgRenderDataPicture* renderData)
+{
+    renderData->clips.clear();
+    mPool.push(renderData);
+}
+
+
+void WgRenderDataPicturePool::release(WgContext& context)
+{
+    for (uint32_t i = 0; i < mList.count; i++) {
+        mList[i]->release(context);
+        delete mList[i];
+    }
+    mPool.clear();
+    mList.clear();
 }

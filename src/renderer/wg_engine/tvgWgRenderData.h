@@ -69,7 +69,7 @@ struct WgImageData {
     WGPUTexture texture{};
     WGPUTextureView textureView{};
 
-    void update(WgContext& context, RenderSurface* surface);
+    void update(WgContext& context, const RenderSurface* surface);
     void release(WgContext& context);
 };
 
@@ -142,7 +142,7 @@ private:
     Array<WgRenderDataShape*> mList;
 public:
     WgRenderDataShape* allocate(WgContext& context);
-    void free(WgContext& context, WgRenderDataShape* dataShape);
+    void free(WgContext& context, WgRenderDataShape* renderData);
     void release(WgContext& context);
 };
 
@@ -152,8 +152,19 @@ struct WgRenderDataPicture: public WgRenderDataPaint
     WgImageData imageData{};
     WgMeshData meshData{};
 
+    void updateSurface(WgContext& context, const RenderSurface* surface);
     void release(WgContext& context) override;
     Type type() override { return Type::Picture; };
+};
+
+class WgRenderDataPicturePool {
+private:
+    Array<WgRenderDataPicture*> mPool;
+    Array<WgRenderDataPicture*> mList;
+public:
+    WgRenderDataPicture* allocate(WgContext& context);
+    void free(WgContext& context, WgRenderDataPicture* dataPicture);
+    void release(WgContext& context);
 };
 
 #endif // _TVG_WG_RENDER_DATA_H_
