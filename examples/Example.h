@@ -425,6 +425,8 @@ struct WgWindow : Window
 
     virtual ~WgWindow()
     {
+        //the canvas is tightly relying on the wgpu resource. cut out before rleasing them for safety.
+        static_cast<tvg :: WgCanvas*>(canvas)->target(nullptr, nullptr, nullptr, 0, 0);
         wgpuSurfaceRelease(surface);
         wgpuInstanceRelease(instance);
     }
