@@ -656,7 +656,7 @@ bool SwRenderer::prepare(RenderEffect* effect)
 }
 
 
-bool SwRenderer::effect(RenderCompositor* cmp, const RenderEffect* effect, bool direct)
+bool SwRenderer::effect(RenderCompositor* cmp, const RenderEffect* effect, uint8_t opacity, bool direct)
 {
     if (effect->invalid) return false;
 
@@ -664,14 +664,14 @@ bool SwRenderer::effect(RenderCompositor* cmp, const RenderEffect* effect, bool 
 
     switch (effect->type) {
         case SceneEffect::GaussianBlur: {
-            return effectGaussianBlur(p, request(surface->channelSize), static_cast<const RenderEffectGaussianBlur*>(effect), direct);
+            return effectGaussianBlur(p, request(surface->channelSize), static_cast<const RenderEffectGaussianBlur*>(effect));
         }
         case SceneEffect::DropShadow: {
             auto cmp1 = request(surface->channelSize);
             cmp1->compositor->valid = false;
             auto cmp2 = request(surface->channelSize);
             SwSurface* surfaces[] = {cmp1, cmp2};
-            auto ret = effectDropShadow(p, surfaces, static_cast<const RenderEffectDropShadow*>(effect), direct);
+            auto ret = effectDropShadow(p, surfaces, static_cast<const RenderEffectDropShadow*>(effect), opacity, direct);
             cmp1->compositor->valid = true;
             return ret;
         }

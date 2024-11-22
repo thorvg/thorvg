@@ -145,7 +145,7 @@ struct Scene::Impl
             if (effects) {
                 auto direct = effects->count == 1 ? true : false;
                 for (auto e = effects->begin(); e < effects->end(); ++e) {
-                    renderer->effect(cmp, *e, direct);
+                    renderer->effect(cmp, *e, opacity, direct);
                 }
             }
             renderer->endComposite(cmp);
