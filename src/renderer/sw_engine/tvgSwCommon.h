@@ -572,9 +572,9 @@ void rasterUnpremultiply(RenderSurface* surface);
 void rasterPremultiply(RenderSurface* surface);
 bool rasterConvertCS(RenderSurface* surface, ColorSpace to);
 
-bool effectGaussianBlur(SwCompositor* cmp, SwSurface* surface, const RenderEffectGaussianBlur* params, bool direct);
+bool effectGaussianBlur(SwCompositor* cmp, SwSurface* surface, const RenderEffectGaussianBlur* params);
 bool effectGaussianBlurPrepare(RenderEffectGaussianBlur* effect);
-bool effectDropShadow(SwCompositor* cmp, SwSurface* surfaces[2], const RenderEffectDropShadow* params, bool direct);
+bool effectDropShadow(SwCompositor* cmp, SwSurface* surfaces[2], const RenderEffectDropShadow* params, uint8_t opacity, bool direct);
 bool effectDropShadowPrepare(RenderEffectDropShadow* effect);
 
 #endif /* _TVG_SW_COMMON_H_ */
