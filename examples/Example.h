@@ -156,6 +156,7 @@ struct Window
 
     virtual ~Window()
     {
+        delete(canvas);
         delete(example);
 
         //Terminate the SDL
@@ -270,8 +271,6 @@ struct Window
 
 struct SwWindow : Window
 {
-    unique_ptr<tvg::SwCanvas> canvas = nullptr;
-
     SwWindow(Example* example, uint32_t width, uint32_t height, uint32_t threadsCnt) : Window(tvg::CanvasEngine::Sw, example, width, height, threadsCnt)
     {
         if (!initialized) return;
@@ -279,13 +278,11 @@ struct SwWindow : Window
         window = SDL_CreateWindow("ThorVG Example (Software)", SDL_WINDOWPOS_UNDEFINED, SDL_WINDOWPOS_UNDEFINED, width, height, SDL_WINDOW_HIDDEN | SDL_WINDOW_RESIZABLE);
 
         //Create a Canvas
-        canvas = tvg::SwCanvas::gen();
+        canvas = tvg::SwCanvas::gen().release();
         if (!canvas) {
             cout << "SwCanvas is not supported. Did you enable the SwEngine?" << endl;
             return;
         }
-
-        Window::canvas = canvas.get();
 
         resize();
     }
@@ -296,7 +293,7 @@ struct SwWindow : Window
         if (!surface) return;
 
         //Set the canvas target and draw on it.
-        verify(canvas->target((uint32_t*)surface->pixels, surface->w, surface->pitch / 4, surface->h, tvg::SwCanvas::ARGB8888));
+        verify(static_cast<tvg::SwCanvas*>(canvas)->target((uint32_t*)surface->pixels, surface->w, surface->pitch / 4, surface->h, tvg::SwCanvas::ARGB8888));
 
         canvas->clear(false);
     }
@@ -315,8 +312,6 @@ struct GlWindow : Window
 {
     SDL_GLContext context;
 
-    unique_ptr<tvg::GlCanvas> canvas = nullptr;
-
     GlWindow(Example* example, uint32_t width, uint32_t height, uint32_t threadsCnt) : Window(tvg::CanvasEngine::Gl, example, width, height, threadsCnt)
     {
         if (!initialized) return;
@@ -334,26 +329,28 @@ struct GlWindow : Window
         context = SDL_GL_CreateContext(window);
 
         //Create a Canvas
-        canvas = tvg::GlCanvas::gen();
+        canvas = tvg::GlCanvas::gen().release();
         if (!canvas) {
             cout << "GlCanvas is not supported. Did you enable the GlEngine?" << endl;
             return;
         }
-
-        Window::canvas = canvas.get();
 
         resize();
     }
 
     virtual ~GlWindow()
     {
+        //Free in the reverse order of their creation.
+        delete(canvas);
+        canvas = nullptr;
+
         SDL_GL_DeleteContext(context);
     }
 
     void resize() override
     {
         //Set the canvas target and draw on it.
-        verify(canvas->target(0, width, height));
+        verify(static_cast<tvg::GlCanvas*>(canvas)->target(0, width, height));
     }
 
     void refresh() override
@@ -370,8 +367,6 @@ struct GlWindow : Window
 
 struct WgWindow : Window
 {
-    unique_ptr<tvg::WgCanvas> canvas = nullptr;
-
     WGPUInstance instance;
     WGPUSurface surface;
 
@@ -425,19 +420,21 @@ struct WgWindow : Window
         surface = wgpuInstanceCreateSurface(instance, &surfaceDesc);
 
         //Create a Canvas
-        canvas = tvg::WgCanvas::gen();
+        canvas = tvg::WgCanvas::gen().release();
         if (!canvas) {
             cout << "WgCanvas is not supported. Did you enable the WgEngine?" << endl;
             return;
         }
-
-        Window::canvas = canvas.get();
 
         resize();
     }
 
     virtual ~WgWindow()
     {
+        //Free in the reverse order of their creation.
+        delete(canvas);
+        canvas = nullptr;
+
         wgpuSurfaceRelease(surface);
         wgpuInstanceRelease(instance);
     }
@@ -445,7 +442,7 @@ struct WgWindow : Window
     void resize() override
     {
         //Set the canvas target and draw on it.
-        verify(canvas->target(instance, surface, width, height));
+        verify(static_cast<tvg::WgCanvas*>(canvas)->target(instance, surface, width, height));
     }
 
     void refresh() override 
