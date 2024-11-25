@@ -257,8 +257,9 @@ struct LottieGenericProperty : LottieProperty
     //Property has an either keyframes or single value.
     Array<LottieScalarFrame<T>>* frames = nullptr;
     T value;
+    T curValue;
 
-    LottieGenericProperty(T v) : value(v) {}
+    LottieGenericProperty(T v) : value(v), curValue(v) {}
     LottieGenericProperty() {}
 
     LottieGenericProperty(const LottieGenericProperty<T>& rhs)
@@ -327,11 +328,11 @@ struct LottieGenericProperty : LottieProperty
     T operator()(float frameNo, LottieExpressions* exps)
     {
         if (exps && exp) {
-            T out{};
             if (exp->loop.mode != LottieExpression::LoopMode::None) frameNo = _loop(frames, frameNo, exp);
-            if (exps->result<LottieGenericProperty<T>>(frameNo, out, exp)) return out;
+            if (exps->result<LottieGenericProperty<T>>(frameNo, curValue, exp)) return curValue;
         }
-        return operator()(frameNo);
+        curValue = operator()(frameNo);
+        return curValue;
     }
 
     LottieGenericProperty<T>& operator=(const LottieGenericProperty<T>& rhs)
