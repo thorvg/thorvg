@@ -231,13 +231,13 @@ static jerry_value_t _buildPolystar(LottiePolyStar* polystar, float frameNo)
 static jerry_value_t _buildTrimpath(LottieTrimpath* trimpath, float frameNo)
 {
     jerry_value_t obj = jerry_object();
-    auto start = jerry_number(trimpath->start(frameNo));
+    auto start = jerry_number(trimpath->start.curValue);
     jerry_object_set_sz(obj, "start", start);
     jerry_value_free(start);
-    auto end = jerry_number(trimpath->end(frameNo));
+    auto end = jerry_number(trimpath->end.curValue);
     jerry_object_set_sz(obj, "end", end);
     jerry_value_free(end);
-    auto offset = jerry_number(trimpath->offset(frameNo));
+    auto offset = jerry_number(trimpath->offset.curValue);
     jerry_object_set_sz(obj, EXP_OFFSET, offset);
     jerry_value_free(offset);
 
