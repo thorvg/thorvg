@@ -41,36 +41,10 @@ void LottieSlot::reset()
 {
     if (!overridden) return;
 
+    auto shallow = pairs.count == 1 ? true : false;
+
     for (auto pair = pairs.begin(); pair < pairs.end(); ++pair) {
-        switch (type) {
-            case LottieProperty::Type::ColorStop: {
-                static_cast<LottieGradient*>(pair->obj)->colorStops.release();
-                static_cast<LottieGradient*>(pair->obj)->colorStops = *static_cast<LottieColorStop*>(pair->prop);
-                static_cast<LottieColorStop*>(pair->prop)->frames = nullptr;
-                break;
-            }
-            case LottieProperty::Type::Color: {
-                static_cast<LottieSolid*>(pair->obj)->color.release();
-                static_cast<LottieSolid*>(pair->obj)->color = *static_cast<LottieColor*>(pair->prop);
-                static_cast<LottieColor*>(pair->prop)->frames = nullptr;
-                break;
-            }
-            case LottieProperty::Type::TextDoc: {
-                static_cast<LottieText*>(pair->obj)->doc.release();
-                static_cast<LottieText*>(pair->obj)->doc = *static_cast<LottieTextDoc*>(pair->prop);
-                static_cast<LottieTextDoc*>(pair->prop)->frames = nullptr;
-                break;
-            }
-            case LottieProperty::Type::Image: {
-                static_cast<LottieImage*>(pair->obj)->data.release();
-                static_cast<LottieImage*>(pair->obj)->data = *static_cast<LottieBitmap*>(pair->prop);
-                static_cast<LottieBitmap*>(pair->prop)->b64Data = nullptr;
-                static_cast<LottieBitmap*>(pair->prop)->mimeType = nullptr;
-                static_cast<LottieImage*>(pair->obj)->prepare();
-                break;
-            }
-            default: break;
-        }
+        pair->obj->override(pair->prop, shallow, true);
         delete(pair->prop);
         pair->prop = nullptr;
     }
@@ -81,6 +55,7 @@ void LottieSlot::reset()
 void LottieSlot::assign(LottieObject* target, bool byDefault)
 {
     auto copy = !overridden && !byDefault;
+    auto shallow = pairs.count == 1 ? true : false;
 
     //apply slot object to all targets
     for (auto pair = pairs.begin(); pair < pairs.end(); ++pair) {
@@ -88,27 +63,27 @@ void LottieSlot::assign(LottieObject* target, bool byDefault)
         switch (type) {
             case LottieProperty::Type::Opacity: {
                 if (copy) pair->prop = new LottieOpacity(static_cast<LottieSolid*>(pair->obj)->opacity);
-                pair->obj->override(&static_cast<LottieSolid*>(target)->opacity, byDefault);
+                pair->obj->override(&static_cast<LottieSolid*>(target)->opacity, shallow, byDefault);
                 break;
             }
             case LottieProperty::Type::Color: {
                 if (copy) pair->prop = new LottieColor(static_cast<LottieSolid*>(pair->obj)->color);
-                pair->obj->override(&static_cast<LottieSolid*>(target)->color, byDefault);
+                pair->obj->override(&static_cast<LottieSolid*>(target)->color, shallow, byDefault);
                 break;
             }
             case LottieProperty::Type::ColorStop: {
                 if (copy) pair->prop = new LottieColorStop(static_cast<LottieGradient*>(pair->obj)->colorStops);
-                pair->obj->override(&static_cast<LottieGradient*>(target)->colorStops, byDefault);
+                pair->obj->override(&static_cast<LottieGradient*>(target)->colorStops, shallow, byDefault);
                 break;
             }
             case LottieProperty::Type::TextDoc: {
                 if (copy) pair->prop = new LottieTextDoc(static_cast<LottieText*>(pair->obj)->doc);
-                pair->obj->override(&static_cast<LottieText*>(target)->doc, byDefault);
+                pair->obj->override(&static_cast<LottieText*>(target)->doc, shallow, byDefault);
                 break;
             }
             case LottieProperty::Type::Image: {
                 if (copy) pair->prop = new LottieBitmap(static_cast<LottieImage*>(pair->obj)->data);
-                pair->obj->override(&static_cast<LottieImage*>(target)->data, byDefault);
+                pair->obj->override(&static_cast<LottieImage*>(target)->data, shallow, byDefault);
                 break;
             }
             default: break;

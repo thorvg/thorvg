@@ -263,7 +263,8 @@ struct LottieGenericProperty : LottieProperty
 
     LottieGenericProperty(const LottieGenericProperty<T>& rhs)
     {
-        *this = rhs;
+        copy(rhs);
+        type = rhs.type;
     }
 
     ~LottieGenericProperty()
@@ -334,14 +335,17 @@ struct LottieGenericProperty : LottieProperty
         return operator()(frameNo);
     }
 
-    LottieGenericProperty<T>& operator=(const LottieGenericProperty<T>& rhs)
+    void copy(const LottieGenericProperty<T>& rhs, bool shallow = true)
     {
-        //shallow copy, used for slot overriding
         if (rhs.frames) {
-            frames = rhs.frames;
-            const_cast<LottieGenericProperty<T>&>(rhs).frames = nullptr;
+            if (shallow) {
+                frames = rhs.frames;
+                const_cast<LottieGenericProperty<T>&>(rhs).frames = nullptr;
+            } else {
+                frames = new Array<LottieScalarFrame<T>>;
+                *frames = *rhs.frames;
+            }
         } else value = rhs.value;
-        return *this;
     }
 
     float angle(float frameNo) { return 0; }
@@ -513,7 +517,8 @@ struct LottieColorStop : LottieProperty
 
     LottieColorStop(const LottieColorStop& rhs)
     {
-        *this = rhs;
+        copy(rhs);
+        type = rhs.type;
     }
 
     ~LottieColorStop()
@@ -622,20 +627,22 @@ struct LottieColorStop : LottieProperty
         return fill->colorStops(result.data, count);
     }
 
-    LottieColorStop& operator=(const LottieColorStop& rhs)
+    void copy(const LottieColorStop& rhs, bool shallow = true)
     {
-        //shallow copy, used for slot overriding
         if (rhs.frames) {
-            frames = rhs.frames;
-            const_cast<LottieColorStop&>(rhs).frames = nullptr;
+            if (shallow) {
+                frames = rhs.frames;
+                const_cast<LottieColorStop&>(rhs).frames = nullptr;
+            } else {
+                frames = new Array<LottieScalarFrame<ColorStop>>;
+                *frames = *rhs.frames;
+            }
         } else {
             value = rhs.value;
             const_cast<LottieColorStop&>(rhs).value = ColorStop();
         }
         populated = rhs.populated;
         count = rhs.count;
-
-        return *this;
     }
 
     void prepare() {}
@@ -753,7 +760,8 @@ struct LottieTextDoc : LottieProperty
 
     LottieTextDoc(const LottieTextDoc& rhs)
     {
-        *this = rhs;
+        copy(rhs);
+        type = rhs.type;
     }
 
     ~LottieTextDoc()
@@ -829,18 +837,21 @@ struct LottieTextDoc : LottieProperty
         return frame->value;
     }
 
-    LottieTextDoc& operator=(const LottieTextDoc& rhs)
+    void copy(const LottieTextDoc& rhs, bool shallow = true)
     {
-        //shallow copy, used for slot overriding
         if (rhs.frames) {
-            frames = rhs.frames;
-            const_cast<LottieTextDoc&>(rhs).frames = nullptr;
+            if (shallow) {
+                frames = rhs.frames;
+                const_cast<LottieTextDoc&>(rhs).frames = nullptr;
+            } else {
+                frames = new Array<LottieScalarFrame<TextDocument>>;
+                *frames = *rhs.frames;
+            }
         } else {
             value = rhs.value;
             const_cast<LottieTextDoc&>(rhs).value.text = nullptr;
             const_cast<LottieTextDoc&>(rhs).value.name = nullptr;
         }
-        return *this;
     }
 
     void prepare() {}
@@ -862,7 +873,8 @@ struct LottieBitmap : LottieProperty
 
     LottieBitmap(const LottieBitmap& rhs)
     {
-        *this = rhs;
+        copy(rhs);
+        type = rhs.type;
     }
 
     ~LottieBitmap()
@@ -883,19 +895,23 @@ struct LottieBitmap : LottieProperty
     uint32_t nearest(float time) override { return 0; }
     float frameNo(int32_t key) override { return 0; }
 
-    LottieBitmap& operator=(const LottieBitmap& rhs)
+    void copy(const LottieBitmap& rhs, bool shallow = true)
     {
-        //shallow copy, used for slot overriding
-        if (rhs.mimeType) b64Data = rhs.b64Data;
-        else path = rhs.path;
-        mimeType = rhs.mimeType;
+        if (shallow) {
+            b64Data = rhs.b64Data;
+            mimeType = rhs.mimeType;
+        } else {
+            //TODO: optimize here by avoiding data copy
+            TVGLOG("LOTTIE", "Shallow copy of the image data!");
+            b64Data = strdup(rhs.b64Data);
+            mimeType = strdup(rhs.mimeType);
+        }
         size = rhs.size;
         width = rhs.width;
         height = rhs.height;
 
         const_cast<LottieBitmap&>(rhs).b64Data = nullptr;
         const_cast<LottieBitmap&>(rhs).mimeType = nullptr;
-        return *this;
     }
 };
 
