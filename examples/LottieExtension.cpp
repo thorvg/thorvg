@@ -34,6 +34,7 @@ struct UserExample : tvgexam::Example
     unique_ptr<tvg::LottieAnimation> slot2;
     unique_ptr<tvg::LottieAnimation> slot3;
     unique_ptr<tvg::LottieAnimation> slot4;
+    unique_ptr<tvg::LottieAnimation> slot5;
     unique_ptr<tvg::LottieAnimation> marker;
     uint32_t w, h;
     uint32_t size;
@@ -90,6 +91,12 @@ struct UserExample : tvgexam::Example
         {
             auto progress = tvgexam::progress(elapsed, slot4->duration());
             slot4->frame(slot4->totalFrame() * progress);
+        }
+
+        //duplicate slot
+        {
+            auto progress = tvgexam::progress(elapsed, slot5->duration());
+            slot5->frame(slot5->totalFrame() * progress);
         }
 
         //marker
@@ -184,6 +191,17 @@ struct UserExample : tvgexam::Example
             canvas->push(picture);
         }
 
+        //slot (duplicate slots with default)
+        {
+            slot5 = std::unique_ptr<tvg::LottieAnimation>(tvg::LottieAnimation::gen());
+            auto picture = slot5->picture();
+            if (!tvgexam::verify(picture->load(EXAMPLE_DIR"/lottie/extensions/slotsample5.json"))) return false;
+
+            sizing(picture, 5);
+
+            canvas->push(picture);
+        }
+
         //marker
         {
             marker = std::unique_ptr<tvg::LottieAnimation>(tvg::LottieAnimation::gen());
@@ -191,7 +209,7 @@ struct UserExample : tvgexam::Example
             if (!tvgexam::verify(picture->load(EXAMPLE_DIR"/lottie/extensions/marker_sample.json"))) return false;
             if (!tvgexam::verify(marker->segment("sectionC"))) return false;
 
-            sizing(picture, 5);
+            sizing(picture, 6);
 
             canvas->push(picture);
         }
