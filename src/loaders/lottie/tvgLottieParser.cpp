@@ -487,7 +487,7 @@ void LottieParser::parsePropertyInternal(T& prop)
 
 
 template<LottieProperty::Type type>
-void LottieParser::registerSlot(LottieObject* obj, char* sid)
+void LottieParser::registerSlot(LottieObject* obj, const char* sid)
 {
     //append object if the slot already exists.
     for (auto slot = comp->slots.begin(); slot < comp->slots.end(); ++slot) {
@@ -495,7 +495,7 @@ void LottieParser::registerSlot(LottieObject* obj, char* sid)
         (*slot)->pairs.push({obj});
         return;
     }
-    comp->slots.push(new LottieSlot(sid, obj, type));
+    comp->slots.push(new LottieSlot(strdup(sid), obj, type));
 }
 
 
@@ -505,7 +505,7 @@ void LottieParser::parseProperty(T& prop, LottieObject* obj)
     enterObject();
     while (auto key = nextObjectKey()) {
         if (KEY_AS("k")) parsePropertyInternal(prop);
-        else if (obj && KEY_AS("sid")) registerSlot<type>(obj, getStringCopy());
+        else if (obj && KEY_AS("sid")) registerSlot<type>(obj, getString());
         else if (KEY_AS("x")) prop.exp = _expression(getStringCopy(), comp, context.layer, context.parent, &prop);
         else if (KEY_AS("ix")) prop.ix = getInt();
         else skip(key);
@@ -760,7 +760,7 @@ void LottieParser::parseColorStop(LottieGradient* gradient)
     while (auto key = nextObjectKey()) {
         if (KEY_AS("p")) gradient->colorStops.count = getInt();
         else if (KEY_AS("k")) parseProperty<LottieProperty::Type::ColorStop>(gradient->colorStops, gradient);
-        else if (KEY_AS("sid")) registerSlot<LottieProperty::Type::ColorStop>(gradient, getStringCopy());
+        else if (KEY_AS("sid")) registerSlot<LottieProperty::Type::ColorStop>(gradient, getString());
         else skip(key);
     }
 }
@@ -964,7 +964,7 @@ LottieObject* LottieParser::parseAsset()
     unsigned long id = 0;
 
     //Used for Image Asset
-    char* sid = nullptr;
+    const char* sid = nullptr;
     const char* data = nullptr;
     const char* subPath = nullptr;
     float width = 0.0f;
@@ -986,7 +986,7 @@ LottieObject* LottieParser::parseAsset()
         else if (KEY_AS("w")) width = getFloat();
         else if (KEY_AS("h")) height = getFloat();
         else if (KEY_AS("e")) embedded = getInt();
-        else if (KEY_AS("sid")) sid = getStringCopy();
+        else if (KEY_AS("sid")) sid = getString();
         else skip(key);
     }
     if (data) {
