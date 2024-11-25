@@ -338,6 +338,10 @@ struct GlWindow : Window
 
     virtual ~GlWindow()
     {
+        //Free in the reverse order of their creation.
+        delete(canvas);
+        canvas = nullptr;
+
         SDL_GL_DeleteContext(context);
     }
 
@@ -425,8 +429,10 @@ struct WgWindow : Window
 
     virtual ~WgWindow()
     {
-        //the canvas is tightly relying on the wgpu resource. cut out before rleasing them for safety.
-        static_cast<tvg :: WgCanvas*>(canvas)->target(nullptr, nullptr, nullptr, 0, 0);
+        //Free in the reverse order of their creation.
+        delete(canvas);
+        canvas = nullptr;
+
         wgpuSurfaceRelease(surface);
         wgpuInstanceRelease(instance);
     }
