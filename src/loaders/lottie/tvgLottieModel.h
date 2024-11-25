@@ -279,7 +279,7 @@ struct LottieText : LottieObject, LottieRenderPooler<tvg::Shape>
         LottiePoint anchor{};
     } alignOption;
 
-    void prepare()
+    LottieText()
     {
         LottieObject::type = LottieObject::Text;
     }
@@ -288,7 +288,6 @@ struct LottieText : LottieObject, LottieRenderPooler<tvg::Shape>
     {
         if (byDefault) doc.release();
         doc.copy(*static_cast<LottieTextDoc*>(prop), shallow);
-        prepare();
     }
 
     LottieProperty* property(uint16_t ix) override
@@ -312,7 +311,7 @@ struct LottieTrimpath : LottieObject
 {
     enum Type : uint8_t { Simultaneous = 1, Individual = 2 };
 
-    void prepare()
+    LottieTrimpath()
     {
         LottieObject::type = LottieObject::Trimpath;
     }
@@ -351,7 +350,7 @@ struct LottieShape : LottieObject, LottieRenderPooler<tvg::Shape>
         return true;
     }
 
-    void prepare(LottieObject::Type type)
+    LottieShape(LottieObject::Type type)
     {
         LottieObject::type = type;
     }
@@ -360,7 +359,7 @@ struct LottieShape : LottieObject, LottieRenderPooler<tvg::Shape>
 
 struct LottieRoundedCorner : LottieObject
 {
-    void prepare()
+    LottieRoundedCorner()
     {
         LottieObject::type = LottieObject::RoundedCorner;
     }
@@ -377,10 +376,7 @@ struct LottieRoundedCorner : LottieObject
 
 struct LottiePath : LottieShape
 {
-    void prepare()
-    {
-        LottieShape::prepare(LottieObject::Path);
-    }
+    LottiePath() : LottieShape(LottieObject::Path) {}
 
     LottieProperty* property(uint16_t ix) override
     {
@@ -394,10 +390,7 @@ struct LottiePath : LottieShape
 
 struct LottieRect : LottieShape
 {
-    void prepare()
-    {
-        LottieShape::prepare(LottieObject::Rect);
-    }
+    LottieRect() : LottieShape(LottieObject::Rect) {}
 
     LottieProperty* property(uint16_t ix) override
     {
@@ -417,10 +410,7 @@ struct LottiePolyStar : LottieShape
 {
     enum Type : uint8_t {Star = 1, Polygon};
 
-    void prepare()
-    {
-        LottieShape::prepare(LottieObject::Polystar);
-    }
+    LottiePolyStar() : LottieShape(LottieObject::Polystar) {}
 
     LottieProperty* property(uint16_t ix) override
     {
@@ -447,10 +437,7 @@ struct LottiePolyStar : LottieShape
 
 struct LottieEllipse : LottieShape
 {
-    void prepare()
-    {
-        LottieShape::prepare(LottieObject::Ellipse);
-    }
+    LottieEllipse() : LottieShape(LottieObject::Ellipse) {}
 
     LottieProperty* property(uint16_t ix) override
     {
@@ -484,7 +471,7 @@ struct LottieTransform : LottieObject
         delete(rotationEx);
     }
 
-    void prepare()
+    LottieTransform()
     {
         LottieObject::type = LottieObject::Transform;
     }
@@ -540,7 +527,7 @@ struct LottieSolid : LottieObject
 
 struct LottieSolidStroke : LottieSolid, LottieStroke
 {
-    void prepare()
+    LottieSolidStroke()
     {
         LottieObject::type = LottieObject::SolidStroke;
     }
@@ -560,14 +547,13 @@ struct LottieSolidStroke : LottieSolid, LottieStroke
     {
         if (byDefault) color.release();
         color.copy(*static_cast<LottieColor*>(prop), shallow);
-        prepare();
     }
 };
 
 
 struct LottieSolidFill : LottieSolid
 {
-    void prepare()
+    LottieSolidFill()
     {
         LottieObject::type = LottieObject::SolidFill;
     }
@@ -581,7 +567,6 @@ struct LottieSolidFill : LottieSolid
             if (byDefault) color.release();
             color.copy(*static_cast<LottieColor*>(prop), shallow);
         }
-        prepare();
     }
 
     FillRule rule = FillRule::Winding;
@@ -622,6 +607,7 @@ struct LottieGradient : LottieObject
     {
         if (byDefault) colorStops.release();
         colorStops.copy(*static_cast<LottieColorStop*>(prop), shallow);
+        prepare();
     }
 
     uint32_t populate(ColorStop& color, size_t count);
@@ -639,16 +625,9 @@ struct LottieGradient : LottieObject
 
 struct LottieGradientFill : LottieGradient
 {
-    void prepare()
+    LottieGradientFill()
     {
         LottieObject::type = LottieObject::GradientFill;
-        LottieGradient::prepare();
-    }
-
-    void override(LottieProperty* prop, bool shallow, bool byDefault) override
-    {
-        LottieGradient::override(prop, shallow, byDefault);
-        prepare();
     }
 
     FillRule rule = FillRule::Winding;
@@ -657,10 +636,9 @@ struct LottieGradientFill : LottieGradient
 
 struct LottieGradientStroke : LottieGradient, LottieStroke
 {
-    void prepare()
+    LottieGradientStroke()
     {
         LottieObject::type = LottieObject::GradientStroke;
-        LottieGradient::prepare();
     }
 
     LottieProperty* property(uint16_t ix) override
@@ -672,12 +650,6 @@ struct LottieGradientStroke : LottieGradient, LottieStroke
             if (dashattr->value[2].ix == ix) return &dashattr->value[2];
         }
         return LottieGradient::property(ix);
-    }
-
-    void override(LottieProperty* prop, bool shallow, bool byDefault = false) override
-    {
-        LottieGradient::override(prop, shallow, byDefault);
-        prepare();
     }
 };
 
@@ -700,7 +672,7 @@ struct LottieImage : LottieObject, LottieRenderPooler<tvg::Picture>
 
 struct LottieRepeater : LottieObject
 {
-    void prepare()
+    LottieRepeater()
     {
         LottieObject::type = LottieObject::Repeater;
     }
@@ -734,7 +706,7 @@ struct LottieRepeater : LottieObject
 
 struct LottieOffsetPath : LottieObject
 {
-    void prepare()
+    LottieOffsetPath()
     {
         LottieObject::type = LottieObject::OffsetPath;
     }

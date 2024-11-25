@@ -552,7 +552,6 @@ LottieRect* LottieParser::parseRect()
         else if (parseDirection(rect, key)) continue;
         else skip(key);
     }
-    rect->prepare();
     return rect;
 }
 
@@ -570,7 +569,6 @@ LottieEllipse* LottieParser::parseEllipse()
         else if (parseDirection(ellipse, key)) continue;
         else skip(key);
     }
-    ellipse->prepare();
     return ellipse;
 }
 
@@ -613,7 +611,6 @@ LottieTransform* LottieParser::parseTransform(bool ddd)
         else if (KEY_AS("sa")) parseProperty<LottieProperty::Type::Float>(transform->skewAxis);
         else skip(key);
     }
-    transform->prepare();
     return transform;
 }
 
@@ -632,7 +629,6 @@ LottieSolidFill* LottieParser::parseSolidFill()
         else if (KEY_AS("r")) fill->rule = getFillRule();
         else skip(key);
     }
-    fill->prepare();
     return fill;
 }
 
@@ -675,7 +671,6 @@ LottieSolidStroke* LottieParser::parseSolidStroke()
         else if (KEY_AS("d")) parseStrokeDash(stroke);
         else skip(key);
     }
-    stroke->prepare();
     return stroke;
 }
 
@@ -709,7 +704,6 @@ LottiePath* LottieParser::parsePath()
         else if (parseDirection(path, key)) continue;
         else skip(key);
     }
-    path->prepare();
     return path;
 }
 
@@ -733,7 +727,6 @@ LottiePolyStar* LottieParser::parsePolyStar()
         else if (parseDirection(star, key)) continue;
         else skip(key);
     }
-    star->prepare();
     return star;
 }
 
@@ -749,7 +742,6 @@ LottieRoundedCorner* LottieParser::parseRoundedCorner()
         else if (KEY_AS("r")) parseProperty<LottieProperty::Type::Float>(corner->radius);
         else skip(key);
     }
-    corner->prepare();
     return corner;
 }
 
@@ -832,8 +824,6 @@ LottieTrimpath* LottieParser::parseTrimpath()
         else if (KEY_AS("m")) trim->type = static_cast<LottieTrimpath::Type>(getInt());
         else skip(key);
     }
-    trim->prepare();
-
     return trim;
 }
 
@@ -864,8 +854,6 @@ LottieRepeater* LottieParser::parseRepeater()
         }
         else skip(key);
     }
-    repeater->prepare();
-
     return repeater;
 }
 
@@ -883,8 +871,6 @@ LottieOffsetPath* LottieParser::parseOffsetPath()
         else if (KEY_AS("ml")) parseProperty<LottieProperty::Type::Float>(offsetPath->miterLimit);
         else skip(key);
     }
-    offsetPath->prepare();
-
     return offsetPath;
 }
 
@@ -1219,8 +1205,6 @@ void LottieParser::parseText(Array<LottieObject*>& parent)
         }
         else skip(key);
     }
-
-    text->prepare();
     parent.push(text);
 }
 
