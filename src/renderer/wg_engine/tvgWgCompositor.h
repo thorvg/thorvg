@@ -35,8 +35,8 @@ struct WgCompose: RenderCompositor
 class WgCompositor
 {
 private:
-    // pipelines (external handle, do not release)
-    WgPipelines* pipelines{};
+    // pipelines
+    WgPipelines pipelines{};
     // global stencil/depth buffer handles
     WGPUTexture texDepthStencil{};
     WGPUTextureView texViewDepthStencil{};

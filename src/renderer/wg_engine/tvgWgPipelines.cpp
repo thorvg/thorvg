@@ -23,6 +23,7 @@
 #include "tvgWgPipelines.h"
 #include "tvgWgShaderSrc.h"
 #include <cstring>
+#include <cassert>
 
 WGPUShaderModule WgPipelines::createShaderModule(WGPUDevice device, const char* label, const char* code)
 {
@@ -130,13 +131,6 @@ void WgPipelines::releaseShaderModule(WGPUShaderModule& shaderModule)
 
 void WgPipelines::initialize(WgContext& context)
 {
-    // share pipelines to context
-    assert(!context.pipelines);
-    context.pipelines = this;
-
-    // initialize bind group layouts
-    layouts.initialize(context);
-
     // common pipeline settings
     const WGPUVertexAttribute vertexAttributePos { .format = WGPUVertexFormat_Float32x2, .offset = 0, .shaderLocation = 0 };
     const WGPUVertexAttribute vertexAttributeTex { .format = WGPUVertexFormat_Float32x2, .offset = 0, .shaderLocation = 1 };
@@ -160,6 +154,7 @@ void WgPipelines::initialize(WgContext& context)
         .alpha = { .operation = WGPUBlendOperation_Add, .srcFactor = WGPUBlendFactor_One, .dstFactor = WGPUBlendFactor_OneMinusSrcAlpha }
     };
 
+    const WgBindGroupLayouts& layouts = context.layouts;
     // bind group layouts helpers
     const WGPUBindGroupLayout bindGroupLayoutsStencil[] = { layouts.layoutBuffer1Un, layouts.layoutBuffer2Un };
     const WGPUBindGroupLayout bindGroupLayoutsDepth[] = { layouts.layoutBuffer1Un, layouts.layoutBuffer2Un, layouts.layoutBuffer1Un };
@@ -521,5 +516,4 @@ void WgPipelines::releaseGraphicHandles(WgContext& context)
 void WgPipelines::release(WgContext& context)
 {
     releaseGraphicHandles(context);
-    layouts.release(context);
 }

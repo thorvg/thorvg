@@ -23,6 +23,7 @@
 #ifdef __EMSCRIPTEN__
 #include <emscripten.h>
 #endif
+#include <cassert>
 #include "tvgWgCommon.h"
 #include "tvgArray.h"
 
@@ -50,11 +51,15 @@ void WgContext::initialize(WGPUInstance instance, WGPUDevice device)
     assert(samplerLinearRepeat);
     assert(samplerLinearMirror);
     assert(samplerLinearClamp);
+
+    // initialize bind group layouts
+    layouts.initialize(device);
 }
 
 
 void WgContext::release()
 {
+    layouts.release();
     releaseSampler(samplerLinearClamp);
     releaseSampler(samplerLinearMirror);
     releaseSampler(samplerLinearRepeat);

@@ -30,17 +30,17 @@ void WgRenderStorage::initialize(WgContext& context, uint32_t width, uint32_t he
     textureMS = context.createTexAttachement(width, height, WGPUTextureFormat_RGBA8Unorm, 4);
     texView = context.createTextureView(texture);
     texViewMS = context.createTextureView(textureMS);
-    bindGroupRead = context.pipelines->layouts.createBindGroupStrorage1RO(texView);
-    bindGroupWrite = context.pipelines->layouts.createBindGroupStrorage1WO(texView);
-    bindGroupTexure = context.pipelines->layouts.createBindGroupTexSampled(context.samplerNearestRepeat, texView);
+    bindGroupRead = context.layouts.createBindGroupStrorage1RO(texView);
+    bindGroupWrite = context.layouts.createBindGroupStrorage1WO(texView);
+    bindGroupTexure = context.layouts.createBindGroupTexSampled(context.samplerNearestRepeat, texView);
 }
 
 
 void WgRenderStorage::release(WgContext& context)
 {
-    context.pipelines->layouts.releaseBindGroup(bindGroupTexure);
-    context.pipelines->layouts.releaseBindGroup(bindGroupWrite);
-    context.pipelines->layouts.releaseBindGroup(bindGroupRead);
+    context.layouts.releaseBindGroup(bindGroupTexure);
+    context.layouts.releaseBindGroup(bindGroupWrite);
+    context.layouts.releaseBindGroup(bindGroupRead);
     context.releaseTextureView(texViewMS);
     context.releaseTexture(textureMS);
     context.releaseTextureView(texView);

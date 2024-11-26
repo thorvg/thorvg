@@ -23,7 +23,7 @@
 #ifndef _TVG_WG_BIND_GROUPS_H_
 #define _TVG_WG_BIND_GROUPS_H_
 
-#include "tvgWgCommon.h"
+#include <webgpu/webgpu.h>
 
 class WgBindGroupLayouts {
 private:
@@ -53,8 +53,8 @@ public:
     void releaseBindGroup(WGPUBindGroup& bindGroup);
     void releaseBindGroupLayout(WGPUBindGroupLayout& bindGroupLayout);
 public:
-    void initialize(WgContext& context);
-    void release(WgContext& context);
+    void initialize(WGPUDevice device);
+    void release();
 };
 
 #endif // _TVG_WG_BIND_GROUPS_H_

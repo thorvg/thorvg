@@ -85,7 +85,6 @@ private:
 
     // rendering context
     WgContext mContext;
-    WgPipelines mPipelines;
     WgCompositor mCompositor;
 
     // rendering states

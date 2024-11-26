@@ -61,7 +61,6 @@ void WgRenderer::release()
 
     // release context handles
     mCompositor.release(mContext);
-    mPipelines.release(mContext);
     mContext.release();
 
     // release gpu handles
@@ -312,7 +311,6 @@ bool WgRenderer::target(WGPUDevice device, WGPUInstance instance, void* target, 
 
     // initialize rendering context
     mContext.initialize(instance, this->device);
-    mPipelines.initialize(mContext);
 
     // initialize render tree instances
     mRenderStoragePool.initialize(mContext, width, height);
