@@ -20,6 +20,7 @@
  * SOFTWARE.
  */
 
+#include <cstring>
 #include "tvgCommon.h"
 #include "tvgSaveModule.h"
 #include "tvgPaint.h"
