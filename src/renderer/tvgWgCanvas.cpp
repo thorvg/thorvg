@@ -57,9 +57,11 @@ WgCanvas::~WgCanvas()
 }
 
 
-Result WgCanvas::target(void* device, void* instance, void* target, uint32_t w, uint32_t h, int type) noexcept
+Result WgCanvas::target(void* device, void* instance, void* target, uint32_t w, uint32_t h, ColorSpace cs, int type) noexcept
 {
 #ifdef THORVG_WG_RASTER_SUPPORT
+    if (cs != ColorSpace::ABGR8888S) return Result::NonSupport;
+
     if (Canvas::pImpl->status != Status::Damaged && Canvas::pImpl->status != Status::Synced) {
         return Result::InsufficientCondition;
     }
