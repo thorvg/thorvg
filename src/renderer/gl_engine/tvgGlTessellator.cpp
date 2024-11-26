@@ -1651,7 +1651,7 @@ void Stroker::stroke(const RenderShape *rshape)
     mStrokeWidth = rshape->strokeWidth();
 
     if (isinf(mMatrix.e11)) {
-        auto strokeWidth = rshape->strokeWidth() * mMatrix.e11;
+        auto strokeWidth = rshape->strokeWidth() * getScaleFactor(mMatrix);
         if (strokeWidth <= MIN_GL_STROKE_WIDTH) strokeWidth = MIN_GL_STROKE_WIDTH;
         mStrokeWidth = strokeWidth / mMatrix.e11;
     }

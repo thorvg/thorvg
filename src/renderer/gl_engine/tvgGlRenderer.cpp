@@ -168,7 +168,7 @@ void GlRenderer::drawPrimitive(GlShape& sdata, uint8_t r, uint8_t g, uint8_t b, 
     a = MULTIPLY(a, sdata.opacity);
 
     if (flag & RenderUpdateFlag::Stroke) {
-        float strokeWidth = sdata.rshape->strokeWidth() * sdata.geometry->getTransformMatrix().e11;
+        float strokeWidth = sdata.rshape->strokeWidth() * getScaleFactor(sdata.geometry->getTransformMatrix());
         if (strokeWidth < MIN_GL_STROKE_WIDTH) {
             float alpha = strokeWidth / MIN_GL_STROKE_WIDTH;
             a = MULTIPLY(a, static_cast<uint8_t>(alpha * 255));
