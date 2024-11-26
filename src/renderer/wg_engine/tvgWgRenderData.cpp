@@ -261,8 +261,8 @@ void WgRenderSettings::update(WgContext& context, const Fill* fill, const Render
             if (fill->spread() == FillSpread::Reflect) sampler = context.samplerLinearMirror;
             if (fill->spread() == FillSpread::Repeat) sampler = context.samplerLinearRepeat;
             // update bind group
-            context.pipelines->layouts.releaseBindGroup(bindGroupGradient);
-            bindGroupGradient = context.pipelines->layouts.createBindGroupTexSampledBuff2Un(
+            context.layouts.releaseBindGroup(bindGroupGradient);
+            bindGroupGradient = context.layouts.createBindGroupTexSampledBuff2Un(
                 sampler, texViewGradient, bufferGroupGradient, bufferGroupTransfromGrad);
         }
         skip = false;
@@ -270,8 +270,8 @@ void WgRenderSettings::update(WgContext& context, const Fill* fill, const Render
         rasterType = WgRenderRasterType::Solid;
         WgShaderTypeSolidColor solidColor(c);
         if (context.allocateBufferUniform(bufferGroupSolid, &solidColor, sizeof(solidColor))) {
-            context.pipelines->layouts.releaseBindGroup(bindGroupSolid);
-            bindGroupSolid = context.pipelines->layouts.createBindGroupBuffer1Un(bufferGroupSolid);
+            context.layouts.releaseBindGroup(bindGroupSolid);
+            bindGroupSolid = context.layouts.createBindGroupBuffer1Un(bufferGroupSolid);
         }
         fillType = WgRenderSettingsType::Solid;
         skip = (c.a == 0);
@@ -281,8 +281,8 @@ void WgRenderSettings::update(WgContext& context, const Fill* fill, const Render
 
 void WgRenderSettings::release(WgContext& context)
 {
-    context.pipelines->layouts.releaseBindGroup(bindGroupSolid);
-    context.pipelines->layouts.releaseBindGroup(bindGroupGradient);
+    context.layouts.releaseBindGroup(bindGroupSolid);
+    context.layouts.releaseBindGroup(bindGroupGradient);
     context.releaseBuffer(bufferGroupSolid);
     context.releaseBuffer(bufferGroupGradient);
     context.releaseBuffer(bufferGroupTransfromGrad);
@@ -296,7 +296,7 @@ void WgRenderSettings::release(WgContext& context)
 
 void WgRenderDataPaint::release(WgContext& context)
 {
-    context.pipelines->layouts.releaseBindGroup(bindGroupPaint);
+    context.layouts.releaseBindGroup(bindGroupPaint);
     context.releaseBuffer(bufferModelMat);
     context.releaseBuffer(bufferBlendSettings);
     clips.clear();
@@ -310,8 +310,8 @@ void WgRenderDataPaint::update(WgContext& context, const tvg::Matrix& transform,
     bool bufferModelMatChanged = context.allocateBufferUniform(bufferModelMat, &modelMat, sizeof(modelMat));
     bool bufferBlendSettingsChanged = context.allocateBufferUniform(bufferBlendSettings, &blendSettings, sizeof(blendSettings));
     if (bufferModelMatChanged || bufferBlendSettingsChanged) {
-        context.pipelines->layouts.releaseBindGroup(bindGroupPaint);
-        bindGroupPaint = context.pipelines->layouts.createBindGroupBuffer2Un(bufferModelMat, bufferBlendSettings);
+        context.layouts.releaseBindGroup(bindGroupPaint);
+        bindGroupPaint = context.layouts.createBindGroupBuffer2Un(bufferModelMat, bufferBlendSettings);
     }
 }
 
@@ -545,8 +545,8 @@ void WgRenderDataPicture::updateSurface(WgContext& context, const RenderSurface*
     // update texture data
     imageData.update(context, surface);
     // update texture bind group
-    context.pipelines->layouts.releaseBindGroup(bindGroupPicture);
-    bindGroupPicture = context.pipelines->layouts.createBindGroupTexSampled(
+    context.layouts.releaseBindGroup(bindGroupPicture);
+    bindGroupPicture = context.layouts.createBindGroupTexSampled(
         context.samplerLinearRepeat, imageData.textureView
     );
 }
@@ -554,7 +554,7 @@ void WgRenderDataPicture::updateSurface(WgContext& context, const RenderSurface*
 
 void WgRenderDataPicture::release(WgContext& context)
 {
-    context.pipelines->layouts.releaseBindGroup(bindGroupPicture);
+    context.layouts.releaseBindGroup(bindGroupPicture);
     imageData.release(context);
     meshData.release(context);
     WgRenderDataPaint::release(context);

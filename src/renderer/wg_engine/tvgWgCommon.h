@@ -23,13 +23,10 @@
 #ifndef _TVG_WG_COMMON_H_
 #define _TVG_WG_COMMON_H_
 
-#include <cassert>
-#include <webgpu/webgpu.h>
+#include "tvgWgBindGroups.h"
 
 #define WG_VERTEX_BUFFER_MIN_SIZE 2048
 #define WG_INDEX_BUFFER_MIN_SIZE 2048
-
-class WgPipelines;
 
 struct WgContext {
     // external webgpu handles
@@ -39,14 +36,14 @@ struct WgContext {
     // common webgpu handles
     WGPUQueue queue{};
     WGPUTextureFormat preferredFormat{};
-    // external handles (do not release)
-    WgPipelines* pipelines{};
     // shared webgpu assets
     WGPUBuffer bufferIndexFan{};
     WGPUSampler samplerNearestRepeat{};
     WGPUSampler samplerLinearRepeat{};
     WGPUSampler samplerLinearMirror{};
     WGPUSampler samplerLinearClamp{};
+    // bind groups layouts
+    WgBindGroupLayouts layouts;
 
     void initialize(WGPUInstance instance, WGPUDevice device);
     void release();

@@ -23,7 +23,7 @@
 #ifndef _TVG_WG_PIPELINES_H_
 #define _TVG_WG_PIPELINES_H_
 
-#include "tvgWgBindGroups.h"
+#include "tvgWgCommon.h"
 
 class WgPipelines {
 private:
@@ -91,9 +91,6 @@ public:
     WGPURenderPipeline scene_compose[11]{};
     // pipeline blit
     WGPURenderPipeline blit{};
-public:
-    // layouts
-    WgBindGroupLayouts layouts;
 private:
     void releaseGraphicHandles(WgContext& context);
 private:
