@@ -440,7 +440,7 @@ struct WgWindow : Window
     void resize() override
     {
         //Set the canvas target and draw on it.
-        verify(static_cast<tvg::WgCanvas*>(canvas)->target(nullptr, instance, surface, width, height));
+        verify(static_cast<tvg::WgCanvas*>(canvas)->target(nullptr, instance, surface, width, height, tvg::ColorSpace::ABGR8888S));
     }
 
     void refresh() override 

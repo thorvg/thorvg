@@ -365,7 +365,7 @@ void runWg()
         auto canvas = unique_ptr<tvg::WgCanvas>(tvg::WgCanvas::gen());
 
         //Set the canvas target and draw on it.
-        tvgexam::verify(canvas->target(device, instance, renderTarget, SIZE, SIZE, 1));
+        tvgexam::verify(canvas->target(device, instance, renderTarget, SIZE, SIZE, tvg::ColorSpace::ABGR8888S, 1));
 
         content(canvas.get());
         if (tvgexam::verify(canvas->draw())) {
