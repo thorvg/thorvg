@@ -57,6 +57,11 @@
         } while(0)
 #endif
 
+static inline float getScaleFactor(const Matrix& m)
+{
+    return sqrtf(m.e11 * m.e11 + m.e21 * m.e21);
+}
+
 enum class GlStencilMode {
     None,
     FillWinding,
