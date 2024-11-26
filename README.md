@@ -44,7 +44,13 @@ The following list shows primitives that are supported by ThorVG: <br />
 <p align="center">
   <img width="700" height="auto" src="https://github.com/thorvg/thorvg/blob/main/res/example_structure.png">
 </p>
-If your program includes the main renderer, you can seamlessly utilize ThorVG APIs by transitioning drawing contexts between the main renderer and ThorVG. Throughout these API calls, ThorVG effectively serializes drawing commands among volatile paint nodes. Subsequently, it undertakes synchronous or asynchronous rendering via its backend raster engines.<br />
+If your program includes the main renderer, you can seamlessly utilize ThorVG APIs by transitioning drawing contexts between the main renderer and ThorVG. Throughout these API calls, ThorVG effectively serializes drawing commands among volatile paint nodes. Subsequently, it undertakes synchronous or asynchronous rendering via its backend raster engines. Currently, ThorVG provides its own implementation of multiple raster engines, allowing you to choose the one that best suits your app and system preferences.<br/>
+<br/>
+
+- CPU/SIMD (Software)
+- OpenGL/ES
+- WebGL
+- WebGPU
 <br />
 ThorVG is adept at handling vector images, including formats like SVG, and it remains adaptable for accommodating additional popular formats as needed. In the rendering process, the library may generate intermediate frame buffers for scene compositing, though only when essential. The accompanying diagram provides a concise overview of how to effectively incorporate ThorVG within your system.<br />
 <br />
