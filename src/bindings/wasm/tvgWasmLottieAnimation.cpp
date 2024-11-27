@@ -201,7 +201,7 @@ struct TvgGLEngine : TvgEngineMethod
     #ifdef THORVG_GL_RASTER_SUPPORT
         emscripten_webgl_make_context_current(context);
 
-        static_cast<GlCanvas*>(canvas)->target(0, w, h);
+        static_cast<GlCanvas*>(canvas)->target(0, w, h, ColorSpace::ABGR8888S);
     #endif
     }
 };
