@@ -156,7 +156,7 @@ StrokeJoin LottieParser::getStrokeJoin()
 }
 
 
-void LottieParser::getValue(TextDocument& doc)
+bool LottieParser::getValue(TextDocument& doc)
 {
     enterObject();
     while (auto key = nextObjectKey()) {
@@ -175,10 +175,11 @@ void LottieParser::getValue(TextDocument& doc)
         else if (KEY_AS("of")) doc.stroke.render = getBool();
         else skip(key);
     }
+    return false;
 }
 
 
-void LottieParser::getValue(PathSet& path)
+bool LottieParser::getValue(PathSet& path)
 {
     Array<Point> outs, ins, pts;
     bool closed = false;
@@ -201,8 +202,8 @@ void LottieParser::getValue(PathSet& path)
     if (arrayWrapper) nextArrayValue();
 
     //valid path data?
-    if (ins.empty() || outs.empty() || pts.empty()) return;
-    if (ins.count != outs.count || outs.count != pts.count) return;
+    if (ins.empty() || outs.empty() || pts.empty()) return false;
+    if (ins.count != outs.count || outs.count != pts.count) return false;
 
     //convert path
     auto out = outs.begin();
@@ -248,21 +249,29 @@ void LottieParser::getValue(PathSet& path)
 
     outPts.data = nullptr;
     outCmds.data = nullptr;
+
+    return false;
 }
 
 
-void LottieParser::getValue(ColorStop& color)
+bool LottieParser::getValue(ColorStop& color)
 {
-    if (peekType() == kArrayType) enterArray();
+    if (peekType() == kArrayType) {
+        enterArray();
+        if (!nextArrayValue()) return true;
+    }
 
     if (!color.input) color.input = new Array<float>(static_cast<LottieGradient*>(context.parent)->colorStops.count * 6);
     else color.input->clear();
 
-    while (nextArrayValue()) color.input->push(getFloat());
+    do color.input->push(getFloat());
+    while (nextArrayValue());
+
+    return true;
 }
 
 
-void LottieParser::getValue(Array<Point>& pts)
+bool LottieParser::getValue(Array<Point>& pts)
 {
     enterArray();
     while (nextArrayValue()) {
@@ -271,10 +280,11 @@ void LottieParser::getValue(Array<Point>& pts)
         getValue(pt);
         pts.push(pt);
     }
+    return false;
 }
 
 
-void LottieParser::getValue(int8_t& val)
+bool LottieParser::getValue(int8_t& val)
 {
     if (peekType() == kArrayType) {
         enterArray();
@@ -282,12 +292,13 @@ void LottieParser::getValue(int8_t& val)
         //discard rest
         while (nextArrayValue()) getInt();
     } else {
-        val = (int8_t)getFloat();
+        val = (int8_t) getFloat();
     }
+    return false;
 }
 
 
-void LottieParser::getValue(uint8_t& val)
+bool LottieParser::getValue(uint8_t& val)
 {
     if (peekType() == kArrayType) {
         enterArray();
@@ -297,10 +308,11 @@ void LottieParser::getValue(uint8_t& val)
     } else {
         val = (uint8_t)(getFloat() * 2.55f);
     }
+    return false;
 }
 
 
-void LottieParser::getValue(float& val)
+bool LottieParser::getValue(float& val)
 {
     if (peekType() == kArrayType) {
         enterArray();
@@ -310,40 +322,43 @@ void LottieParser::getValue(float& val)
     } else {
         val = getFloat();
     }
+    return false;
 }
 
 
 bool LottieParser::getValue(Point& pt)
 {
-    auto type = peekType();
-    if (type == kNullType) return false;
-
-    int i = 0;
-    auto ptr = (float*)(&pt);
-
-    if (type == kArrayType) enterArray();
-
-    while (nextArrayValue()) {
-        auto val = getFloat();
-        if (i < 2) ptr[i++] = val;
+    if (peekType() == kNullType) return false;
+    if (peekType() == kArrayType) {
+        enterArray();
+        if (!nextArrayValue()) return false;
     }
+
+    pt.x = getFloat();
+    pt.y = getFloat();
+
+    while (nextArrayValue()) getFloat();  //drop
 
     return true;
 }
 
 
-void LottieParser::getValue(RGB24& color)
+bool LottieParser::getValue(RGB24& color)
 {
-    int i = 0;
-
-    if (peekType() == kArrayType) enterArray();
-
-    while (nextArrayValue()) {
-        auto val = getFloat();
-        if (i < 3) color.rgb[i++] = REMAP255(val);
+    if (peekType() == kArrayType) {
+        enterArray();
+        if (!nextArrayValue()) return false;
     }
 
+    color.rgb[0] = REMAP255(getFloat());
+    color.rgb[1] = REMAP255(getFloat());
+    color.rgb[2] = REMAP255(getFloat());
+
+    while (nextArrayValue()) getFloat(); //drop
+
     //TODO: color filter?
+
+    return true;
 }
 
 
@@ -468,18 +483,10 @@ void LottieParser::parsePropertyInternal(T& prop)
         getValue(prop.value);
     //multi value property
     } else {
-        //TODO: Here might be a single frame.
-        //Can we figure out the frame number in advance?
         enterArray();
         while (nextArrayValue()) {
-            //keyframes value
-            if (peekType() == kObjectType) {
-                parseKeyFrame(prop);
-            //multi value property with no keyframes
-            } else {
-                getValue(prop.value);
-                break;
-            }
+            if (peekType() == kObjectType) parseKeyFrame(prop);  //keyframes value
+            else if (getValue(prop.value)) break; //multi value property with no keyframes
         }
         prop.prepare();
     }

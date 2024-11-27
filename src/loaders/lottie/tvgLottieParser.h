@@ -58,14 +58,14 @@ private:
     void getInterpolatorPoint(Point& pt);
     void getPathSet(LottiePathSet& path);
     void getLayerSize(float& val);
-    void getValue(TextDocument& doc);
-    void getValue(PathSet& path);
-    void getValue(Array<Point>& pts);
-    void getValue(ColorStop& color);
-    void getValue(float& val);
-    void getValue(uint8_t& val);
-    void getValue(int8_t& val);
-    void getValue(RGB24& color);
+    bool getValue(TextDocument& doc);
+    bool getValue(PathSet& path);
+    bool getValue(Array<Point>& pts);
+    bool getValue(ColorStop& color);
+    bool getValue(float& val);
+    bool getValue(uint8_t& val);
+    bool getValue(int8_t& val);
+    bool getValue(RGB24& color);
     bool getValue(Point& pt);
 
     template<typename T> bool parseTangent(const char *key, LottieVectorFrame<T>& value);
