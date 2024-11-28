@@ -97,10 +97,9 @@ fn vs_main(in: VertexInput) -> VertexOutput {
 
 @fragment
 fn fs_main(in: VertexOutput) -> @location(0) vec4f {
-    let Sc = uSolidColor.rgb;
-    let Sa = uSolidColor.a;
+    let Sc = uSolidColor;
     let So = uBlendSettings.a;
-    return vec4f(Sc * Sa * So, Sa * So);
+    return vec4f(Sc.rgb * Sc.a * So, Sc.a * So);
 }
 )";
 
@@ -211,13 +210,6 @@ fn vs_main(in: VertexInput) -> VertexOutput {
 fn fs_main(in: VertexOutput) -> @location(0) vec4f {
     var Sc: vec4f = textureSample(uTextureView, uSampler, in.vTexCoord.xy);
     let So: f32 = uBlendSettings.a;
-    switch u32(uBlendSettings.r) {
-        case 0u: { Sc = Sc.rgba; }
-        case 1u: { Sc = Sc.bgra; }
-        case 2u: { Sc = Sc.rgba; }
-        case 3u: { Sc = Sc.bgra; }
-        default: {}
-    }
     return vec4f(Sc.rgb * Sc.a * So, Sc.a * So);
 };
 )";
@@ -429,13 +421,6 @@ fn getFragData(in: VertexOutput) -> FragData {
     data.So = uBlendSettings.a;
     data.Dc = colorDst.rgb;
     data.Da = colorDst.a;
-    switch u32(uBlendSettings.r) {
-        case 0u: { data.Sc = data.Sc.rgb; }
-        case 1u: { data.Sc = data.Sc.bgr; }
-        case 2u: { data.Sc = data.Sc.rgb; }
-        case 3u: { data.Sc = data.Sc.bgr; }
-        default: {}
-    }
     data.Sc = data.Sc * data.So;
     data.Sa = data.Sa * data.So;
     return data;

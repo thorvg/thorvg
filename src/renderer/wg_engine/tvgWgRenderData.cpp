@@ -209,8 +209,14 @@ void WgMeshDataGroup::release(WgContext& context)
 
 void WgImageData::update(WgContext& context, const RenderSurface* surface)
 {
+    // get appropriate texture format from color space
+    WGPUTextureFormat texFormat = WGPUTextureFormat_BGRA8Unorm;
+    if (surface->cs == ColorSpace::ABGR8888S)
+        texFormat = WGPUTextureFormat_RGBA8Unorm;
+    if (surface->cs == ColorSpace::Grayscale8)
+        texFormat = WGPUTextureFormat_R8Unorm;
     // allocate new texture handle
-    bool texHandleChanged = context.allocateTexture(texture, surface->w, surface->h, WGPUTextureFormat_RGBA8Unorm, surface->data);
+    bool texHandleChanged = context.allocateTexture(texture, surface->w, surface->h, texFormat, surface->data);
     // update texture view of texture handle was changed
     if (texHandleChanged) {
         context.releaseTextureView(textureView);
