@@ -220,7 +220,7 @@ RenderRegion GlGeometry::getBounds() const
             static_cast<int32_t>(ceil(right - floor(left))),
             static_cast<int32_t>(ceil(bottom - floor(top))),
         };
-        if (bounds.x < 0 || bounds.y < 0 || bounds.w < 0 || bounds.h < 0) {
+        if (bounds.w < 0 || bounds.h < 0) {
             return mBounds;
         } else {
             return bounds;
