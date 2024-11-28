@@ -292,38 +292,61 @@ bool WgRenderer::sync()
 // render target handle
 bool WgRenderer::target(WGPUDevice device, WGPUInstance instance, void* target, uint32_t width, uint32_t height, int type)
 {
-    // release existing handles
-    release();
+    // release all existing handles
+    if (!instance || !device || !target) {
+        // release all handles
+        release();
+        return true;
+    }
 
     // can not initialize renderer, give up
-    if (!instance || !device || !target || !width || !height) return false;
+    if (!instance || !device || !target || !width || !height)
+        return false;
 
-    // store target properties
-    mTargetSurface.stride = width;
-    mTargetSurface.w = width;
-    mTargetSurface.h = height;
-
-    // initialize rendering context
-    mContext.initialize(instance, device);
+    // device or instance was changed, need to recreate all instances
+    if ((mContext.device != device) || (mContext.instance != instance)) {
+        // release all handles
+        release();
+        // initialize base rendering handles
+        mContext.initialize(instance, device);
+    // release render targets only
+    } else if (mRenderStorageRoot.texView) {
+        mRenderStoragePool.release(mContext);
+        mRenderStorageRoot.release(mContext);
+        mCompositor.release(mContext);
+        clearTargets();
+    }
 
     // initialize render tree instances
     mRenderStoragePool.initialize(mContext, width, height);
     mRenderStorageRoot.initialize(mContext, width, height);
     mCompositor.initialize(mContext, width, height);
 
+    // store target properties
+    mTargetSurface.stride = width;
+    mTargetSurface.w = width;
+    mTargetSurface.h = height;
+
     // configure surface (must be called after context creation)
     if (type == 0) {
         surface = (WGPUSurface)target;
         surfaceConfigure(surface, mContext, width, height);
     } else targetTexture = (WGPUTexture)target;
+
     return true;
 }
 
 
-void WgRenderer::clearTargets() {
+void WgRenderer::clearTargets()
+{
     releaseSurfaceTexture();
+    if (surface) wgpuSurfaceUnconfigure(surface);
     targetTexture = nullptr;
     surface = nullptr;
+    mTargetSurface.stride = 0;
+    mTargetSurface.w = 0;
+    mTargetSurface.h = 0;
+
 }
 
 
