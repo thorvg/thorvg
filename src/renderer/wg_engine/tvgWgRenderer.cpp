@@ -65,7 +65,6 @@ void WgRenderer::release()
 
     // release gpu handles
     clearTargets();
-    releaseDevice();
 }
 
 
@@ -297,12 +296,7 @@ bool WgRenderer::target(WGPUDevice device, WGPUInstance instance, void* target, 
     release();
 
     // can not initialize renderer, give up
-    if (!instance || !target || !width || !height) return false;
-
-    // store or regest gpu device
-    this->device = device;
-    if (!this->device)
-        reguestDevice(instance, (WGPUSurface)target);
+    if (!instance || !device || !target || !width || !height) return false;
 
     // store target properties
     mTargetSurface.stride = width;
@@ -310,7 +304,7 @@ bool WgRenderer::target(WGPUDevice device, WGPUInstance instance, void* target, 
     mTargetSurface.h = height;
 
     // initialize rendering context
-    mContext.initialize(instance, this->device);
+    mContext.initialize(instance, device);
 
     // initialize render tree instances
     mRenderStoragePool.initialize(mContext, width, height);
@@ -323,37 +317,6 @@ bool WgRenderer::target(WGPUDevice device, WGPUInstance instance, void* target, 
         surfaceConfigure(surface, mContext, width, height);
     } else targetTexture = (WGPUTexture)target;
     return true;
-}
-
-
-void WgRenderer::reguestDevice(WGPUInstance instance, WGPUSurface surface)
-{
-    // request adapter
-    const WGPURequestAdapterOptions requestAdapterOptions { .compatibleSurface = surface, .powerPreference = WGPUPowerPreference_HighPerformance };
-    auto onAdapterRequestEnded = [](WGPURequestAdapterStatus status, WGPUAdapter adapter, char const * message, void * pUserData) { *((WGPUAdapter*)pUserData) = adapter; };
-    wgpuInstanceRequestAdapter(instance, &requestAdapterOptions, onAdapterRequestEnded, &this->adapter);
-
-    // get adapter and surface properties
-    WGPUFeatureName featureNames[32]{};
-    size_t featuresCount = wgpuAdapterEnumerateFeatures(this->adapter, featureNames);
-
-    // request device
-    const WGPUDeviceDescriptor deviceDesc { .label = "The owned device", .requiredFeatureCount = featuresCount, .requiredFeatures = featureNames };
-    auto onDeviceRequestEnded = [](WGPURequestDeviceStatus status, WGPUDevice device, char const * message, void * pUserData) { *((WGPUDevice*)pUserData) = device; };
-    wgpuAdapterRequestDevice(this->adapter, &deviceDesc, onDeviceRequestEnded, &this->device);
-    gpuOwner = true;
-}
-
-
-void WgRenderer::releaseDevice()
-{
-    if (!gpuOwner) return;
-    wgpuDeviceRelease(device);
-    wgpuDeviceDestroy(device);
-    wgpuAdapterRelease(adapter);
-    device = nullptr;
-    adapter = nullptr;
-    gpuOwner = false;
 }
 
 

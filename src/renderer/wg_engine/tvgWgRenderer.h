@@ -66,8 +66,6 @@ private:
     void disposeObjects();
     void releaseSurfaceTexture();
 
-    void reguestDevice(WGPUInstance instance, WGPUSurface surface);
-    void releaseDevice();
     void clearTargets();
     bool surfaceConfigure(WGPUSurface surface, WgContext& context, uint32_t width, uint32_t height);
 
@@ -101,9 +99,6 @@ private:
     WGPUTexture targetTexture{}; // external handle
     WGPUSurfaceTexture surfaceTexture{};
     WGPUSurface surface{};  // external handle
-    WGPUAdapter adapter{};
-    WGPUDevice device{};
-    bool gpuOwner{};
 };
 
 #endif /* _TVG_WG_RENDERER_H_ */
