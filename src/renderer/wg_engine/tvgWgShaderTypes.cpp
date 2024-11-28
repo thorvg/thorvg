@@ -24,9 +24,9 @@
 #include <cassert>
 #include "tvgMath.h"
 
-///////////////////////////////////////////////////////////////////////////////
-// shader types
-///////////////////////////////////////////////////////////////////////////////
+//************************************************************************
+// WgShaderTypeMat4x4f
+//************************************************************************
 
 WgShaderTypeMat4x4f::WgShaderTypeMat4x4f()
 {
@@ -85,34 +85,40 @@ void WgShaderTypeMat4x4f::update(size_t w, size_t h)
     mat[12] = -1.0f;     mat[13] = +1.0f;     mat[14] = +0.0f; mat[15] = +1.0f;
 }
 
+//************************************************************************
+// WgShaderTypeVec4f
+//************************************************************************
 
-WgShaderTypeBlendSettings::WgShaderTypeBlendSettings(const ColorSpace colorSpace, uint8_t o)
+WgShaderTypeVec4f::WgShaderTypeVec4f(const ColorSpace colorSpace, uint8_t o)
 {
     update(colorSpace, o);
 }
 
 
-void WgShaderTypeBlendSettings::update(const ColorSpace colorSpace, uint8_t o)
-{
-    settings[0] = (uint32_t)colorSpace;
-    settings[3] = o / 255.0f;
-}
-
-
-WgShaderTypeSolidColor::WgShaderTypeSolidColor(const RenderColor& c)
+WgShaderTypeVec4f::WgShaderTypeVec4f(const RenderColor& c)
 {
     update(c);
 }
 
 
-void WgShaderTypeSolidColor::update(const RenderColor& c)
+void WgShaderTypeVec4f::update(const ColorSpace colorSpace, uint8_t o)
 {
-    color[0] = c.r / 255.0f; // red
-    color[1] = c.g / 255.0f; // green
-    color[2] = c.b / 255.0f; // blue
-    color[3] = c.a / 255.0f; // alpha
+    vec[0] = (uint32_t)colorSpace;
+    vec[3] = o / 255.0f;
 }
 
+
+void WgShaderTypeVec4f::update(const RenderColor& c)
+{
+    vec[0] = c.r / 255.0f; // red
+    vec[1] = c.g / 255.0f; // green
+    vec[2] = c.b / 255.0f; // blue
+    vec[3] = c.a / 255.0f; // alpha
+}
+
+//************************************************************************
+// WgShaderTypeGradient
+//************************************************************************
 
 void WgShaderTypeGradient::update(const LinearGradient* linearGradient)
 {

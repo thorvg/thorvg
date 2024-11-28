@@ -274,7 +274,7 @@ void WgRenderSettings::update(WgContext& context, const Fill* fill, const Render
         skip = false;
     } else if ((flags & RenderUpdateFlag::Color) && !fill) {
         rasterType = WgRenderRasterType::Solid;
-        WgShaderTypeSolidColor solidColor(c);
+        WgShaderTypeVec4f solidColor(c);
         if (context.allocateBufferUniform(bufferGroupSolid, &solidColor, sizeof(solidColor))) {
             context.layouts.releaseBindGroup(bindGroupSolid);
             bindGroupSolid = context.layouts.createBindGroupBuffer1Un(bufferGroupSolid);
@@ -312,7 +312,7 @@ void WgRenderDataPaint::release(WgContext& context)
 void WgRenderDataPaint::update(WgContext& context, const tvg::Matrix& transform, tvg::ColorSpace cs, uint8_t opacity)
 {
     WgShaderTypeMat4x4f modelMat(transform);
-    WgShaderTypeBlendSettings blendSettings(cs, opacity);
+    WgShaderTypeVec4f blendSettings(cs, opacity);
     bool bufferModelMatChanged = context.allocateBufferUniform(bufferModelMat, &modelMat, sizeof(modelMat));
     bool bufferBlendSettingsChanged = context.allocateBufferUniform(bufferBlendSettings, &blendSettings, sizeof(blendSettings));
     if (bufferModelMatChanged || bufferBlendSettingsChanged) {
