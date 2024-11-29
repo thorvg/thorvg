@@ -67,6 +67,7 @@ bool PngLoader::open(const char* path)
 
 bool PngLoader::open(const char* data, uint32_t size, TVG_UNUSED const char* rpath, bool copy)
 {
+#ifdef THORVG_FILE_IO_SUPPORT
     image->opaque = NULL;
 
     if (!png_image_begin_read_from_memory(image, data, size)) return false;
@@ -75,6 +76,9 @@ bool PngLoader::open(const char* data, uint32_t size, TVG_UNUSED const char* rpa
     h = (float)image->height;
 
     return true;
+#else
+    return false;
+#endif
 }
 
 

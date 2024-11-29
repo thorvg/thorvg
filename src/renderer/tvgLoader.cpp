@@ -159,6 +159,7 @@ static LoadModule* _find(FileType type)
 }
 
 
+#ifdef THORVG_FILE_IO_SUPPORT
 static LoadModule* _findByPath(const char* filename)
 {
     auto ext = strExtension(filename);
@@ -173,6 +174,7 @@ static LoadModule* _findByPath(const char* filename)
     if (!strcmp(ext, "otf") || !strcmp(ext, "otc")) return _find(FileType::Ttf);
     return nullptr;
 }
+#endif
 
 
 static FileType _convert(const char* mimeType)
@@ -281,6 +283,7 @@ bool LoaderMgr::retrieve(LoadModule* loader)
 
 LoadModule* LoaderMgr::loader(const char* filename, bool* invalid)
 {
+#ifdef THORVG_FILE_IO_SUPPORT
     *invalid = false;
 
     //TODO: svg & lottie is not sharable.
@@ -324,6 +327,7 @@ LoadModule* LoaderMgr::loader(const char* filename, bool* invalid)
         }
     }
     *invalid = true;
+#endif
     return nullptr;
 }
 

@@ -116,6 +116,12 @@ if get_option('log')
     config_h.set10('THORVG_LOG_ENABLED', true)
 endif
 
+#File IO
+if get_option('file') == true
+    config_h.set10('THORVG_FILE_IO_SUPPORT', true)
+endif
+
+
 #Extra
 lottie_expressions = lottie_loader and get_option('extra').contains('lottie_expressions')
 
