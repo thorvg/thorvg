@@ -341,7 +341,7 @@ auto animation = tvg::Animation::gen();     //generate an animation
 auto picture = animation->picture()         //acquire a picture which associated with the animation.
 picture->load("lottie.json");               //load a Lottie file
 auto duration = animation->duration();      //figure out the animation duration time in seconds.
-canvas->push(tvg::cast(picture));           //push the picture into the canvas
+canvas->push(picture);                      //push the picture into the canvas
 ```
 First, an animation and a picture are generated. The Lottie file (lottie.json) is loaded into the picture, and then the picture is added to the canvas. The animation frames are controlled using the animation object to play the Lottie animation. Also you might want to know the animation duration time to run your animation loop.
 ```cpp
