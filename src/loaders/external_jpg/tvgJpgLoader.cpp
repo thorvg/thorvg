@@ -59,6 +59,7 @@ JpgLoader::~JpgLoader()
 
 bool JpgLoader::open(const char* path)
 {
+#ifdef THORVG_FILE_IO_SUPPORT
     auto jpegFile = fopen(path, "rb");
     if (!jpegFile) return false;
 
@@ -94,6 +95,9 @@ failure:
 finalize:
     fclose(jpegFile);
     return ret;
+#else
+    return false;
+#endif
 }
 
 

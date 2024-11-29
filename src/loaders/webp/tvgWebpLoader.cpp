@@ -71,6 +71,7 @@ WebpLoader::~WebpLoader()
 
 bool WebpLoader::open(const char* path)
 {
+#ifdef THORVG_FILE_IO_SUPPORT
     auto f = fopen(path, "rb");
     if (!f) return false;
 
@@ -101,6 +102,9 @@ bool WebpLoader::open(const char* path)
     freeData = true;
 
     return true;
+#else
+    return false;
+#endif
 }
 
 

@@ -68,6 +68,7 @@ WebpLoader::~WebpLoader()
 
 bool WebpLoader::open(const char* path)
 {
+#ifdef THORVG_FILE_IO_SUPPORT
     auto webpFile = fopen(path, "rb");
     if (!webpFile) return false;
 
@@ -96,6 +97,9 @@ bool WebpLoader::open(const char* path)
 finalize:
     fclose(webpFile);
     return ret;
+#else
+    return false;
+#endif
 }
 
 

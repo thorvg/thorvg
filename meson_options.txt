@@ -58,6 +58,11 @@ option('static',
    value: false,
    description: 'Force to use static linking modules in thorvg')
 
+option('file',
+   type: 'boolean',
+   value: true,
+   description: 'Enable File IO calls in thorvg')
+
 option('extra',
    type: 'array',
    choices: ['', 'lottie_expressions'],

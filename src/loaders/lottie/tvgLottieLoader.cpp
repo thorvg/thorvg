@@ -220,6 +220,7 @@ bool LottieLoader::open(const char* data, uint32_t size, const char* rpath, bool
 
 bool LottieLoader::open(const char* path)
 {
+#ifdef THORVG_FILE_IO_SUPPORT
     auto f = fopen(path, "r");
     if (!f) return false;
 
@@ -247,6 +248,9 @@ bool LottieLoader::open(const char* path)
     this->copy = true;
 
     return header();
+#else
+    return false;
+#endif
 }
 
 
