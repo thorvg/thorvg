@@ -70,6 +70,7 @@ PngLoader::~PngLoader()
 
 bool PngLoader::open(const string& path)
 {
+#ifdef THORVG_FILE_IO_SUPPORT
     auto pngFile = fopen(path.c_str(), "rb");
     if (!pngFile) return false;
 
@@ -102,6 +103,9 @@ bool PngLoader::open(const string& path)
 finalize:
     fclose(pngFile);
     return ret;
+#else
+    return false;
+#endif
 }
 
 

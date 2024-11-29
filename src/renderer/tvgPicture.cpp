@@ -164,9 +164,14 @@ Type Picture::type() const noexcept
 
 Result Picture::load(const std::string& path) noexcept
 {
+#ifdef THORVG_FILE_IO_SUPPORT
     if (path.empty()) return Result::InvalidArguments;
 
     return pImpl->load(path);
+#else
+    TVGLOG("RENDERER", "FILE IO is disabled!");
+    return Result::NonSupport;
+#endif
 }
 
 

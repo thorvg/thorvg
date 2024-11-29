@@ -36,6 +36,8 @@
 /* Internal Class Implementation                                        */
 /************************************************************************/
 
+#ifdef THORVG_FILE_IO_SUPPORT
+
 #if defined(_WIN32) && (WINAPI_FAMILY == WINAPI_FAMILY_DESKTOP_APP)
 
 static bool _map(TtfLoader* loader, const string& path)
@@ -155,6 +157,8 @@ static void _unmap(TtfLoader* loader)
 }
 #endif
 
+#endif //THORVG_FILE_IO_SUPPORT
+
 
 static uint32_t* _codepoints(const char* text, size_t n)
 {
@@ -199,7 +203,11 @@ void TtfLoader::clear()
         reader.size = 0;
         freeData = false;
         nomap = false;
-    } else _unmap(this);
+    } else {
+#ifdef THORVG_FILE_IO_SUPPORT
+        _unmap(this);
+#endif
+    }
     shape = nullptr;
 }
 
@@ -236,9 +244,13 @@ TtfLoader::~TtfLoader()
 
 bool TtfLoader::open(const string& path)
 {
+#ifdef THORVG_FILE_IO_SUPPORT
     clear();
     if (!_map(this, path)) return false;
     return reader.header();
+#else
+    return false;
+#endif
 }
 
 
