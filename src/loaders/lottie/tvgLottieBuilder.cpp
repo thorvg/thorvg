@@ -1051,12 +1051,25 @@ void LottieBuilder::updateText(LottieLayer* layer, float frameNo)
             }
         }
 
+        /* all lowercase letters are converted to uppercase in the "t" text field, making the "ca" value irrelevant, thus AllCaps is nothing to do.
+           So only convert lowercase letters to uppercase (for 'SmallCaps' an extra scaling factor applied) */
+        auto code = p;
+        auto capScale = 1.0f;
+        char capCode;
+        if ((unsigned char)(p[0]) < 0x80 && doc.caps) {
+            if (*p >= 'a' && *p <= 'z') {
+                capCode = *p + 'A' - 'a';
+                code = &capCode;
+                if (doc.caps == 2) capScale = 0.7f;
+            }
+        }
+
         //find the glyph
         bool found = false;
         for (auto g = text->font->chars.begin(); g < text->font->chars.end(); ++g) {
             auto glyph = *g;
             //draw matched glyphs
-            if (!strncmp(glyph->code, p, glyph->len)) {
+            if (!strncmp(glyph->code, code, glyph->len)) {
                 if (textGrouping == LottieText::AlignOption::Group::Chars || textGrouping == LottieText::AlignOption::Group::All) {
                     //new text group, single scene for each characters
                     scene->push(textGroup);
@@ -1169,7 +1182,7 @@ void LottieBuilder::updateText(LottieLayer* layer, float frameNo)
                     auto& matrix = shape->transform();
                     identity(&matrix);
                     translate(&matrix, translation.x / scale + cursor.x - textGroupMatrix.e13, translation.y / scale + cursor.y - textGroupMatrix.e23);
-                    tvg::scale(&matrix, scaling.x, scaling.y);
+                    tvg::scale(&matrix, scaling.x * capScale, scaling.y * capScale);
                     shape->transform(matrix);
                 }
 
@@ -1180,6 +1193,7 @@ void LottieBuilder::updateText(LottieLayer* layer, float frameNo)
                     auto& matrix = shape->transform();
                     matrix.e13 = cursor.x;
                     matrix.e23 = cursor.y;
+                    matrix.e11 = matrix.e22 = capScale; //cases with matrix scaling factors =! 1 handled in the 'needGroup' scenario
                     shape->transform(matrix);
                     scene->push(shape);
                 }
@@ -1188,7 +1202,7 @@ void LottieBuilder::updateText(LottieLayer* layer, float frameNo)
                 idx += glyph->len;
 
                 //advance the cursor position horizontally
-                cursor.x += glyph->width + doc.tracking;
+                cursor.x += (glyph->width + doc.tracking) * capScale;
 
                 found = true;
                 break;

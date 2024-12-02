@@ -67,7 +67,8 @@ struct TextDocument
     char* name = nullptr;
     float size;
     float tracking = 0.0f;
-    uint8_t justify;
+    uint8_t justify = 0;
+    uint8_t caps = 0;   //0: Regular, 1: AllCaps, 2: SmallCaps
 };
 
 
