@@ -36,6 +36,11 @@ struct Inlist
     T* head = nullptr;
     T* tail = nullptr;
 
+    ~Inlist()
+    {
+        free();
+    }
+
     void free()
     {
         while (head) {
@@ -105,6 +110,14 @@ struct Inlist
         return head ? false : true;
     }
 };
+
+#define INLIST_FOREACH(inlist, cur) \
+    for (auto cur = inlist.head; cur; cur = cur->next)
+
+#define INLIST_SAFE_FOREACH(inlist, cur) \
+    auto cur = inlist.head; \
+    auto next = cur ? cur->next : nullptr; \
+    for (; cur; cur = next, next = (cur ? cur->next : nullptr))
 
 }
 
