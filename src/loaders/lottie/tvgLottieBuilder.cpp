@@ -217,8 +217,6 @@ void LottieBuilder::updateGroup(LottieGroup* parent, LottieObject** child, float
     contexts.back(new RenderContext(*ctx, propagator, group->mergeable()));
 
     updateChildren(group, frameNo, contexts);
-
-    contexts.free();
 }
 
 

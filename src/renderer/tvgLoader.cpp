@@ -206,14 +206,11 @@ static LoadModule* _findFromCache(const char* filename)
 {
     ScopedLock lock(key);
 
-    auto loader = _activeLoaders.head;
-
-    while (loader) {
+    INLIST_FOREACH(_activeLoaders, loader) {
         if (loader->pathcache && !strcmp(loader->hashpath, filename)) {
             ++loader->sharing;
             return loader;
         }
-        loader = loader->next;
     }
     return nullptr;
 }
@@ -225,16 +222,13 @@ static LoadModule* _findFromCache(const char* data, uint32_t size, const char* m
     if (type == FileType::Unknown) return nullptr;
 
     ScopedLock lock(key);
-    auto loader = _activeLoaders.head;
-
     auto key = HASH_KEY(data);
 
-    while (loader) {
+    INLIST_FOREACH(_activeLoaders, loader) {
         if (loader->type == type && loader->hashkey == key) {
             ++loader->sharing;
             return loader;
         }
-        loader = loader->next;
     }
     return nullptr;
 }
@@ -253,15 +247,12 @@ bool LoaderMgr::init()
 
 bool LoaderMgr::term()
 {
-    auto loader = _activeLoaders.head;
-
     //clean up the remained font loaders which is globally used.
-    while (loader && loader->type == FileType::Ttf) {
+    INLIST_SAFE_FOREACH(_activeLoaders, loader) {
+        if (loader->type != FileType::Ttf) break;
         auto ret = loader->close();
-        auto tmp = loader;
-        loader = loader->next;
-        _activeLoaders.remove(tmp);
-        if (ret) delete(tmp);
+        _activeLoaders.remove(loader);
+        if (ret) delete(loader);
     }
     return true;
 }
@@ -340,14 +331,11 @@ bool LoaderMgr::retrieve(const char* filename)
 
 LoadModule* LoaderMgr::loader(const char* key)
 {
-    auto loader = _activeLoaders.head;
-
-    while (loader) {
+    INLIST_FOREACH(_activeLoaders, loader) {
         if (loader->pathcache && strstr(loader->hashpath, key)) {
             ++loader->sharing;
             return loader;
         }
-        loader = loader->next;
     }
     return nullptr;
 }
