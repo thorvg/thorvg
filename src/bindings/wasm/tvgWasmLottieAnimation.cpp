@@ -484,7 +484,7 @@ private:
 
 EMSCRIPTEN_BINDINGS(thorvg_bindings)
 {
-    emscripten::function("init", &init);
+    emscripten::function("init", &init, emscripten::async());
     emscripten::function("term", &term);
 
     class_<TvgLottieAnimation>("TvgLottieAnimation")
