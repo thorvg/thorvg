@@ -574,7 +574,7 @@ TVG_API Tvg_Canvas* tvg_wgcanvas_create(void);
 *
 * \note Experimental API
 */
-TVG_API Tvg_Result tvg_wgcanvas_set_target(Tvg_Canvas* canvas, void* device, void* instance, void* target, uint32_t w, uint32_t h, Tvg_Colorspace cs, int type = 0);
+TVG_API Tvg_Result tvg_wgcanvas_set_target(Tvg_Canvas* canvas, void* device, void* instance, void* target, uint32_t w, uint32_t h, Tvg_Colorspace cs, int type);
 
 /** \} */   // end defgroup ThorVGCapi_WgCanvas
 
