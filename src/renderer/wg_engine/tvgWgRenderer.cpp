@@ -397,7 +397,7 @@ bool WgRenderer::beginComposite(RenderCompositor* cmp, MaskMethod method, uint8_
     mRenderStorageStack.push(storage);
     // begin newly added render pass
     WGPUColor color{};
-    if ((method == MaskMethod::None) && (opacity != 255)) color = { 1.0, 1.0, 1.0, 0.0 };
+    if ((compose->method == MaskMethod::None) && (compose->blend != BlendMethod::Normal)) color = { 1.0, 1.0, 1.0, 0.0 };
     mCompositor.beginRenderPass(mCommandEncoder, mRenderStorageStack.last(), true, color);
     return true;
 }
