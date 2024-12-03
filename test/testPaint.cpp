@@ -325,7 +325,7 @@ TEST_CASE("Refernce Count", "[tvgPaint]")
     REQUIRE(shape->ref() == 1);
     scene = Scene::gen();
     scene->push(shape);
-    scene->clear();
+    scene->remove();
     canvas->push(scene);
     canvas->clear();
     REQUIRE(shape->unref() == 0);

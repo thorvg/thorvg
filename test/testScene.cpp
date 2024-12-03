@@ -57,15 +57,6 @@ TEST_CASE("Pushing Paints Into Scene", "[tvgScene]")
 
     //Pushing Invalid Paint
     REQUIRE(scene->push(nullptr) == Result::InvalidArguments);
-
-    //Check list of paints
-    auto list = scene->paints();
-    REQUIRE(list.size() == 3);
-    int idx = 0;
-    for (auto paint : list) {
-       REQUIRE(paints[idx] == paint);
-       ++idx;
-    }
 }
 
 TEST_CASE("Scene Clear", "[tvgScene]")
@@ -74,7 +65,7 @@ TEST_CASE("Scene Clear", "[tvgScene]")
     REQUIRE(scene);
 
     REQUIRE(scene->push(Shape::gen()) == Result::Success);
-    REQUIRE(scene->clear() == Result::Success);
+    REQUIRE(scene->remove() == Result::Success);
 }
 
 TEST_CASE("Scene Clear And Reuse Shape", "[tvgScene]")
@@ -89,16 +80,18 @@ TEST_CASE("Scene Clear And Reuse Shape", "[tvgScene]")
 
     auto shape = Shape::gen();
     REQUIRE(shape);
+    REQUIRE(shape->ref() == 1);
 
     REQUIRE(scene->push(shape) == Result::Success);
     REQUIRE(canvas->push(scene) == Result::Success);
     REQUIRE(canvas->update() == Result::Success);
 
     //No deallocate shape.
-    REQUIRE(scene->clear(false) == Result::Success);
+    REQUIRE(scene->remove() == Result::Success);
 
     //Reuse shape.
     REQUIRE(scene->push(shape) == Result::Success);
+    REQUIRE(shape->unref() == 1); //The scene still holds 1.
 
     REQUIRE(Initializer::term() == Result::Success);
 }

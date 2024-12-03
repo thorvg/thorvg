@@ -636,32 +636,40 @@ public:
     virtual ~Canvas();
 
     /**
-     * @brief Returns the list of the paints that currently held by the Canvas.
+     * @brief Returns the list of paints currently held by the Canvas.
      *
-     * This function provides the list of paint nodes, allowing users a direct opportunity to modify the scene tree.
+     * This function provides a list of paint nodes, allowing users to access scene-graph information.
      *
      * @warning Please avoid accessing the paints during Canvas update/draw. You can access them after calling sync().
-     * @see Canvas::sync()
+     * @see Canvas::push()
+     * @see Canvas::clear()
      *
-     * @note Experimental API
+     * @warning This is read-only. Do not modify the list.
+     * @note 1.0
      */
-    std::list<Paint*>& paints() noexcept;
+    const std::list<Paint*>& paints() const noexcept;
 
     /**
-     * @brief Passes drawing elements to the Canvas using Paint objects.
+     * @brief Adds a paint object to the root scene.
      *
-     * Only pushed paints in the canvas will be drawing targets.
-     * They are retained by the canvas until you call Canvas::clear().
+     * This function appends a paint object to root scene of the canvas. If the optional @p at
+     * is provided, the new paint object will be inserted immediately before the specified
+     * paint object in the root scene. If @p at is @c nullptr, the paint object will be added
+     * to the end of the root scene.
      *
-     * @param[in] paint A Paint object to be drawn.
+     * @param[in] target A pointer to the Paint object to be added into the root scene.
+     *                   This parameter must not be @c nullptr.
+     * @param[in] at A pointer to an existing Paint object in the root scene before which
+     *               the new paint object will be added. If @c nullptr, the new
+     *               paint object is added to the end of the root scene. The default is @c nullptr.
      *
-     * @retval Result::MemoryCorruption In case a @c nullptr is passed as the argument.
+     * @note The ownership of the @p paint object is transferred to the canvas upon addition.
+     * @note The rendering order of the paints is the same as the order as they were pushed. Consider sorting the paints before pushing them if you intend to use layering.
      *
-     * @note The rendering order of the paints is the same as the order as they were pushed into the canvas. Consider sorting the paints before pushing them if you intend to use layering.
      * @see Canvas::paints()
      * @see Canvas::clear()
      */
-    virtual Result push(Paint* paint) noexcept;
+    Result push(Paint* target, Paint* at = nullptr) noexcept;
 
     /**
      * @brief Clear the internal canvas resources that used for the drawing.
@@ -676,7 +684,24 @@ public:
      * @see Canvas::push()
      * @see Canvas::paints()
      */
-    virtual Result clear(bool paints = true, bool buffer = true) noexcept;
+    Result clear(bool paints = true, bool buffer = true) noexcept;
+
+    /**
+     * @brief Removes a paint object or all paint objects from the root scene.
+     *
+     * This function removes a specified paint object from the root scene. If no paint
+     * object is specified (i.e., the default @c nullptr is used), the function
+     * performs to clear all paints from the root scene.
+     *
+     * @param[in] paint A pointer to the Paint object to be removed from the root scene.
+     *                  If @c nullptr, remove all the paints from the root scene.
+     *
+     * @see Canvas::push()
+     * @see Canvas::paints()
+     *
+     * @since 1.0
+     */
+    Result remove(Paint* paint = nullptr) noexcept;
 
     /**
      * @brief Request the canvas to update the paint objects.
@@ -688,7 +713,7 @@ public:
      *
      * @note The Update behavior can be asynchronous if the assigned thread number is greater than zero.
      */
-    virtual Result update(Paint* paint = nullptr) noexcept;
+    Result update(Paint* paint = nullptr) noexcept;
 
     /**
      * @brief Requests the canvas to draw the Paint objects.
@@ -696,7 +721,7 @@ public:
      * @note Drawing can be asynchronous if the assigned thread number is greater than zero. To guarantee the drawing is done, call sync() afterwards.
      * @see Canvas::sync()
      */
-    virtual Result draw() noexcept;
+    Result draw() noexcept;
 
     /**
      * @brief Sets the drawing region in the canvas.
@@ -718,7 +743,7 @@ public:
      * @note When resetting the target, the viewport will also be reset to the target size.
      * @since 0.15
      */
-    virtual Result viewport(int32_t x, int32_t y, int32_t w, int32_t h) noexcept;
+    Result viewport(int32_t x, int32_t y, int32_t w, int32_t h) noexcept;
 
     /**
      * @brief Guarantees that drawing task is finished.
@@ -730,7 +755,7 @@ public:
      *
      * @see Canvas::draw()
      */
-    virtual Result sync() noexcept;
+    Result sync() noexcept;
 
     _TVG_DECLARE_PRIVATE(Canvas);
 };
@@ -1406,44 +1431,55 @@ public:
     ~Scene();
 
     /**
-     * @brief Passes drawing elements to the Scene using Paint objects.
+     * @brief Inserts a paint object to the scene.
      *
-     * Only the paints pushed into the scene will be the drawn targets.
-     * The paints are retained by the scene until Scene::clear() is called.
+     * This function appends a paint object to the scene. If the optional @p at
+     * is provided, the new paint object will be inserted immediately before the specified
+     * paint object in the scene. If @p at is @c nullptr, the paint object will be added
+     * to the end of the scene.
      *
-     * @param[in] paint A Paint object to be drawn.
+     * @param[in] target A pointer to the Paint object to be added into the scene.
+     *                   This parameter must not be @c nullptr.
+     * @param[in] at A pointer to an existing Paint object in the scene before which
+     *               the new paint object will be added. If @c nullptr, the new
+     *               paint object is added to the end of the scene. The default is @c nullptr.
      *
+     * @note The ownership of the @p paint object is transferred to the scene upon addition.
      * @note The rendering order of the paints is the same as the order as they were pushed. Consider sorting the paints before pushing them if you intend to use layering.
      * @see Scene::paints()
-     * @see Scene::clear()
+     * @see Scene:remove()
      */
-    Result push(Paint* paint) noexcept;
+    Result push(Paint* target, Paint* at = nullptr) noexcept;
 
     /**
-     * @brief Returns the list of the paints that currently held by the Scene.
+     * @brief Returns the list of paints currently held by the Scene.
      *
-     * This function provides the list of paint nodes, allowing users a direct opportunity to modify the scene tree.
+     * This function provides a list of paint nodes, allowing users to access scene-graph information.
      *
-     * @warning Please avoid accessing the paints during Scene update/draw. You can access them after calling Canvas::sync().
-     * @see Canvas::sync()
-     * @see Scene::push(Paint* paint)
-     * @see Scene::clear()
+     * @see Scene::push()
+     * @see Scene:remove()
      *
-     * @note Experimental API
+     * @warning This is read-only. Do not modify the list.
+     * @since 1.0
      */
-    std::list<Paint*>& paints() noexcept;
+    const std::list<Paint*>& paints() const noexcept;
 
     /**
-     * @brief Sets the total number of the paints pushed into the scene to be zero.
-     * Depending on the value of the @p free argument, the paints are freed or not.
+     * @brief Removes a paint object or all paint objects from the scene.
      *
-     * @param[in] free If @c true, the memory occupied by paints is deallocated, otherwise it is not.
+     * This function removes a specified paint object from the scene. If no paint
+     * object is specified (i.e., the default @c nullptr is used), the function
+     * performs to clear all paints from the scene.
      *
-     * @warning If you don't free the paints they become dangled. They are supposed to be reused, otherwise you are responsible for their lives. Thus please use the @p free argument only when you know how it works, otherwise it's not recommended.
+     * @param[in] paint A pointer to the Paint object to be removed from the scene.
+     *                  If @c nullptr, remove all the paints from the scene.
      *
-     * @since 0.2
+     * @see Scene::push()
+     * @see Scene::paints()
+     *
+     * @since 1.0
      */
-    Result clear(bool free = true) noexcept;
+    Result remove(Paint* paint = nullptr) noexcept;
 
     /**
      * @brief Apply a post-processing effect to the scene.
