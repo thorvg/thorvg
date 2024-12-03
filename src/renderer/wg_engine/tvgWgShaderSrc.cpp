@@ -237,7 +237,7 @@ fn vs_main(in: VertexInput) -> VertexOutput {
 @fragment
 fn fs_main(in: VertexOutput) -> @location(0) vec4f {
     let Sc = textureSample(uTextureSrc, uSamplerSrc, in.vTexCoord.xy);
-    return vec4f(Sc.rgb * Sc.a * So, Sc.a * So);
+    return vec4f(Sc.rgb * So, Sc.a * So);
 };
 )";
 
