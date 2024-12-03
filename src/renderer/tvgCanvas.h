@@ -25,18 +25,18 @@
 
 #include "tvgPaint.h"
 
-
 enum Status : uint8_t {Synced = 0, Updating, Drawing, Damaged};
 
 struct Canvas::Impl
 {
-    list<Paint*> paints;
+    Scene* scene;
     RenderMethod* renderer;
     RenderRegion vport = {0, 0, INT32_MAX, INT32_MAX};
     Status status = Status::Synced;
 
-    Impl(RenderMethod* pRenderer) : renderer(pRenderer)
+    Impl(RenderMethod* pRenderer) : scene(Scene::gen()), renderer(pRenderer)
     {
+        scene->ref();
         renderer->ref();
     }
 
@@ -45,33 +45,22 @@ struct Canvas::Impl
         //make it sure any deferred jobs
         renderer->sync();
 
-        clearPaints();
-
+        scene->unref();
         if (renderer->unref() == 0) delete(renderer);
     }
 
-    void clearPaints()
+    Result push(Paint* target, Paint* at)
     {
-        for (auto paint : paints) {
-            paint->unref();
-        }
-        paints.clear();
-    }
-
-    Result push(Paint* paint)
-    {
-        if (!paint) return Result::InvalidArguments;
-
         //You cannot push paints during rendering.
         if (status == Status::Drawing) {
-            TVG_DELETE(paint);
+            TVG_DELETE(target);
             return Result::InsufficientCondition;
         }
 
-        paint->ref();
-        paints.push_back(paint);
+        auto ret = scene->push(target, at);
+        if (ret != Result::Success) return ret;
 
-        return update(paint, true);
+        return update(target, true);
     }
 
     Result clear(bool paints, bool buffer)
@@ -85,10 +74,17 @@ struct Canvas::Impl
             ret = Result::InsufficientCondition;
         }
 
-        if (paints) clearPaints();
+        if (paints) scene->remove();
 
         return ret;
     }
+
+    Result remove(Paint* paint)
+    {
+        if (status == Status::Drawing) return Result::InsufficientCondition;
+        return scene->remove(paint);
+    }
+
 
     Result update(Paint* paint, bool force)
     {
@@ -98,31 +94,22 @@ struct Canvas::Impl
 
         auto m = Matrix{1, 0, 0, 0, 1, 0, 0, 0, 1};
 
-        if (paint) {
-            paint->pImpl->update(renderer, m, clips, 255, flag);
-        } else {
-            for (auto paint : paints) {
-                paint->pImpl->update(renderer, m, clips, 255, flag);
-            }
-        }
+        if (paint) P(paint)->update(renderer, m, clips, 255, flag);
+        else PP(scene)->update(renderer, m, clips, 255, flag);
+
         status = Status::Updating;
         return Result::Success;
     }
 
     Result draw()
     {
-        if (status == Status::Drawing || paints.empty()) return Result::InsufficientCondition;
+        if (status == Status::Drawing || scene->paints().empty()) return Result::InsufficientCondition;
 
         if (status == Status::Damaged) update(nullptr, false);
 
         if (!renderer->preRender()) return Result::InsufficientCondition;
 
-        bool rendered = false;
-        for (auto paint : paints) {
-            if (paint->pImpl->render(renderer)) rendered = true;
-        }
-
-        if (!rendered || !renderer->postRender()) return Result::InsufficientCondition;
+        if (!PP(scene)->render(renderer) || !renderer->postRender()) return Result::InsufficientCondition;
 
         status = Status::Drawing;
         return Result::Success;

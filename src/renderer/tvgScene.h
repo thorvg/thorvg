@@ -23,6 +23,7 @@
 #ifndef _TVG_SCENE_H_
 #define _TVG_SCENE_H_
 
+#include <algorithm>
 #include "tvgMath.h"
 #include "tvgPaint.h"
 
@@ -73,9 +74,7 @@ struct Scene::Impl
     {
         resetEffects();
 
-        for (auto paint : paints) {
-            paint->unref();
-        }
+        clearPaints();
 
         if (auto renderer = PP(scene)->renderer) {
             renderer->dispose(rd);
@@ -239,12 +238,48 @@ struct Scene::Impl
         return scene;
     }
 
-    void clear(bool free)
+    Result clearPaints()
     {
-        for (auto paint : paints) {
-            paint->unref(free);
+        auto itr = paints.begin();
+        while (itr != paints.end()) {
+            (*itr)->unref();
+            paints.erase(itr++);
         }
-        paints.clear();
+        return Result::Success;
+    }
+
+    Result remove(Paint* paint)
+    {
+        owned(paint);
+        paint->unref();
+        paints.remove(paint);
+        return Result::Success;
+    }
+
+    void owned(Paint* paint)
+    {
+#ifdef THORVG_LOG_ENABLED
+        for (auto p : paints) {
+            if (p == paint) return;
+        }
+        TVGERR("RENDERER", "The paint(%p) is not existed from the scene(%p)", paint, scene);
+#endif
+    }
+
+    Result insert(Paint* target, Paint* at)
+    {
+        //Relocated the paint to the current scene space
+        P(target)->renderFlag |= RenderUpdateFlag::Transform;
+
+        if (at == nullptr) {
+            paints.push_back(target);
+        } else {
+            //OPTIMIZE: Remove searching?
+            auto itr = find_if(paints.begin(), paints.end(),[&at](const Paint* paint){ return at == paint; });
+            if (itr == paints.end()) return Result::InvalidArguments;
+            paints.insert(itr, target);
+        }
+        return Result::Success;
     }
 
     Iterator* iterator()

@@ -593,7 +593,7 @@ TVG_API Tvg_Result tvg_wgcanvas_set_target(Tvg_Canvas* canvas, void* device, voi
 * @note If the paints from the canvas should not be released, the tvg_canvas_clear() with a @c free argument value set to @c false should be called.
 * Please be aware that in such a case TVG is not responsible for the paints release anymore and it has to be done manually in order to avoid memory leaks.
 *
-* @see tvg_paint_del(), tvg_canvas_clear()
+* @see tvg_canvas_clear()
 */
 TVG_API Tvg_Result tvg_canvas_destroy(Tvg_Canvas* canvas);
 
@@ -605,16 +605,44 @@ TVG_API Tvg_Result tvg_canvas_destroy(Tvg_Canvas* canvas);
 * @param[in] paint The Tvg_Paint object to be drawn.
 *
 * Only the paints pushed into the canvas will be drawing targets.
-* They are retained by the canvas until you call tvg_canvas_clear().
+* They are retained by the canvas until you call tvg_canvas_clear() or tvg_canvas_remove()
 *
 * @return Tvg_Result return values:
 * @retval TVG_RESULT_INVALID_ARGUMENT In case a @c nullptr is passed as the argument.
 * @retval TVG_RESULT_INSUFFICIENT_CONDITION An internal error.
 *
 * @note The rendering order of the paints is the same as the order as they were pushed. Consider sorting the paints before pushing them if you intend to use layering.
+* @see tvg_canvas_push_at()
+* @see tvg_canvas_remove()
 * @see tvg_canvas_clear()
 */
 TVG_API Tvg_Result tvg_canvas_push(Tvg_Canvas* canvas, Tvg_Paint* paint);
+
+
+/**
+ * @brief Adds a paint object to the root scene.
+ *
+ * This function appends a paint object to root scene of the canvas. If the optional @p at
+ * is provided, the new paint object will be inserted immediately before the specified
+ * paint object in the root scene. If @p at is @c nullptr, the paint object will be added
+ * to the end of the root scene.
+ *
+ * @param[in] canvas The Tvg_Canvas object managing the @p paint.
+ * @param[in] target A pointer to the Paint object to be added into the root scene.
+ *                   This parameter must not be @c nullptr.
+ * @param[in] at A pointer to an existing Paint object in the root scene before which
+ *               the new paint object will be added. If @c nullptr, the new
+ *               paint object is added to the end of the root scene. The default is @c nullptr.
+ *
+ * @note The ownership of the @p paint object is transferred to the canvas upon addition.
+ * @note The rendering order of the paints is the same as the order as they were pushed. Consider sorting the paints before pushing them if you intend to use layering.
+ *
+ * @see tvg_canvas_push()
+ * @see tvg_canvas_remove()
+ * @see tvg_canvas_clear()
+ * @since 1.0
+ */
+TVG_API Tvg_Result tvg_canvas_push_at(Tvg_Canvas* canvas, Tvg_Paint* target, Tvg_Paint* at);
 
 
 /*!
@@ -632,6 +660,24 @@ TVG_API Tvg_Result tvg_canvas_push(Tvg_Canvas* canvas, Tvg_Paint* paint);
 * @see tvg_canvas_destroy()
 */
 TVG_API Tvg_Result tvg_canvas_clear(Tvg_Canvas* canvas, bool paints, bool buffer);
+
+
+/**
+ * @brief Removes a paint object from the root scene.
+ *
+ * This function removes a specified paint object from the root scene. If no paint
+ * object is specified (i.e., the default @c nullptr is used), the function
+ * performs to clear all paints from the scene.
+ *
+ * @param[in] canvas A Tvg_Canvas object to remove the @p paint.
+ * @param[in] paint A pointer to the Paint object to be removed from the root scene.
+ *                  If @c nullptr, remove all the paints from the root scene.
+ *
+ * @see tvg_canvas_push()
+ * @see tvg_canvas_push_at()
+ * @since 1.0
+ */
+TVG_API Tvg_Result tvg_canvas_remove(Tvg_Canvas* canvas, Tvg_Paint* paint);
 
 
 /*!
@@ -743,7 +789,8 @@ TVG_API Tvg_Result tvg_canvas_set_viewport(Tvg_Canvas* canvas, int32_t x, int32_
 *
 * @warning If this function is used, tvg_canvas_clear() with the @c free argument value set to @c false should be used in order to avoid unexpected behaviours.
 *
-* @see tvg_canvas_clear(), tvg_canvas_destroy()
+* @see tvg_canvas_remove()
+* @see tvg_canvas_clear()
 */
 TVG_API Tvg_Result tvg_paint_del(Tvg_Paint* paint);
 
@@ -1945,42 +1992,57 @@ TVG_API const Tvg_Paint* tvg_picture_get_paint(Tvg_Paint* paint, uint32_t id);
 TVG_API Tvg_Paint* tvg_scene_new(void);
 
 
-/*!
-* @brief Passes drawing elements to the scene using Tvg_Paint objects.
-*
-* Only the paints pushed into the scene will be the drawn targets.
-* The paints are retained by the scene until the tvg_scene_clear() is called.
-* If you know the number of pushed objects in advance, please call tvg_scene_reserve().
-*
-* @param[in] scene A Tvg_Paint pointer to the scene object.
-* @param[in] paint A graphical object to be drawn.
-*
-* @return Tvg_Result enumeration.
-* @retval TVG_RESULT_INVALID_ARGUMENT A @c nullptr passed as the argument.
-*
-* @note The rendering order of the paints is the same as the order as they were pushed. Consider sorting the paints before pushing them if you intend to use layering.
-*/
-TVG_API Tvg_Result tvg_scene_push(Tvg_Paint* scene, Tvg_Paint* paint);
+/**
+ * @brief Adds a paint object to the scene.
+ *
+ * This function appends a paint object to the scene.
+ *
+ * @param[in] scene A Tvg_Paint pointer to the scene object.
+ * @param[in] target A pointer to the Paint object to be added into the scene.
+ *
+ * @note The ownership of the @p paint object is transferred to the scene upon addition.
+ *
+ * @see tvg_scene_remove()
+ * @see tvg_scene_push_at()
+ */
+TVG_API Tvg_Result tvg_scene_push(Tvg_Paint* scene, Tvg_Paint* target);
 
+/**
+ * @brief Adds a paint object to the scene.
+ *
+ * This function appends a paint object to the scene. The new paint object @p target will
+ * be inserted immediately before the specified paint object @p at in the scene.
+ *
+ * @param[in] scene A Tvg_Paint pointer to the scene object.
+ * @param[in] target A pointer to the Paint object to be added into the scene.
+ * @param[in] at A pointer to an existing Paint object in the scene before which
+ *               the new paint object will be added. This parameter must not be @c nullptr.
+ *
+ * @note The ownership of the @p paint object is transferred to the scene upon addition.
+ *
+ * @see tvg_scene_remove()
+ * @see tvg_scene_push()
+ * @since 1.0
+ */
+TVG_API Tvg_Result tvg_scene_push_at(Tvg_Paint* scene, Tvg_Paint* target, Tvg_Paint* at);
 
-/*!
-* @brief Clears a scene objects from pushed paints.
-*
-* Tvg_Paint objects stored in the scene are released if @p free is set to @c true, otherwise the memory is not deallocated and
-* all paints should be released manually in order to avoid memory leaks.
-*
-* @param[in] scene The scene object to be cleared.
-* @param[in] free If @c true the memory occupied by paints is deallocated, otherwise it is not.
-*
-* @return Tvg_Result enumeration.
-* @retval TVG_RESULT_INVALID_ARGUMENT An invalid Tvg_Canvas pointer.
-*
-* @warning Please use the @p free argument only when you know how it works, otherwise it's not recommended.
-*/
-TVG_API Tvg_Result tvg_scene_clear(Tvg_Paint* scene, bool free);
+/**
+ * @brief Removes a paint object from the scene.
+ *
+ * This function removes a specified paint object from the scene. If no paint
+ * object is specified (i.e., the default @c nullptr is used), the function
+ * performs to clear all paints from the scene.
+ *
+ * @param[in] scene A Tvg_Paint pointer to the scene object.
+ * @param[in] paint A pointer to the Paint object to be removed from the scene.
+ *                  If @c nullptr, remove all the paints from the scene.
+ *
+ * @see tvg_scene_push()
+ * @since 1.0
+ */
+TVG_API Tvg_Result tvg_scene_remove(Tvg_Paint* scene, Tvg_Paint* paint);
 
 /** \} */   // end defgroup ThorVGCapi_Scene
-
 
 
 /**
