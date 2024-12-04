@@ -25,7 +25,7 @@
 #include <emscripten/bind.h>
 #include "tvgPicture.h"
 #ifdef THORVG_WG_RASTER_SUPPORT
-    #include <webgpu/webgpu.h>
+    #include <emscripten/html5_webgpu.h>
 #endif
 #ifdef THORVG_GL_RASTER_SUPPORT
     #include <emscripten/html5_webgl.h>
