@@ -63,8 +63,8 @@ struct Scene::Impl
     Scene* scene = nullptr;
     RenderRegion vport = {0, 0, INT32_MAX, INT32_MAX};
     Array<RenderEffect*>* effects = nullptr;
+    uint8_t compFlag = CompositionFlag::Invalid;
     uint8_t opacity;         //for composition
-    bool needComp = false;   //composite or not
 
     Impl(Scene* s) : scene(s)
     {
@@ -81,33 +81,35 @@ struct Scene::Impl
         }
     }
 
-    bool needComposition(uint8_t opacity)
+    uint8_t needComposition(uint8_t opacity)
     {
-        if (opacity == 0 || paints.empty()) return false;
+        compFlag = CompositionFlag::Invalid;
 
-        //post effects requires composition
-        if (effects) return true;
+        if (opacity == 0 || paints.empty()) return 0;
 
-        //Masking / Blending may require composition (even if opacity == 255)
-        if (scene->mask(nullptr) != MaskMethod::None) return true;
-        if (PP(scene)->blendMethod != BlendMethod::Normal) return true;
+        //post effects, masking, blending may require composition
+        if (effects) compFlag |= CompositionFlag::PostProcessing;
+        if (scene->mask(nullptr) != MaskMethod::None) compFlag |= CompositionFlag::Masking;
+        if (PP(scene)->blendMethod != BlendMethod::Normal) compFlag |= CompositionFlag::Blending;
 
         //Half translucent requires intermediate composition.
-        if (opacity == 255) return false;
+        if (opacity == 255) return compFlag;
 
         //If scene has several children or only scene, it may require composition.
         //OPTIMIZE: the bitmap type of the picture would not need the composition.
         //OPTIMIZE: a single paint of a scene would not need the composition.
-        if (paints.size() == 1 && paints.front()->type() == Type::Shape) return false;
+        if (paints.size() == 1 && paints.front()->type() == Type::Shape) return compFlag;
 
-        return true;
+        compFlag |= CompositionFlag::Opacity;
+
+        return 1;
     }
 
     RenderData update(RenderMethod* renderer, const Matrix& transform, Array<RenderData>& clips, uint8_t opacity, RenderUpdateFlag flag, TVG_UNUSED bool clipper)
     {
         this->vport = renderer->viewport();
 
-        if ((needComp = needComposition(opacity))) {
+        if (needComposition(opacity)) {
             /* Overriding opacity value. If this scene is half-translucent,
                It must do intermediate composition with that opacity value. */
             this->opacity = opacity;
@@ -127,8 +129,8 @@ struct Scene::Impl
 
         renderer->blend(PP(scene)->blendMethod);
 
-        if (needComp) {
-            cmp = renderer->target(bounds(renderer), renderer->colorSpace());
+        if (compFlag) {
+            cmp = renderer->target(bounds(renderer), renderer->colorSpace(), static_cast<CompositionFlag>(compFlag));
             renderer->beginComposite(cmp, MaskMethod::None, opacity);
         }
 

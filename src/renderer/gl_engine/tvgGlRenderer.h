@@ -82,7 +82,7 @@ public:
     bool sync() override;
     bool clear() override;
 
-    RenderCompositor* target(const RenderRegion& region, ColorSpace cs) override;
+    RenderCompositor* target(const RenderRegion& region, ColorSpace cs, CompositionFlag flags) override;
     bool beginComposite(RenderCompositor* cmp, MaskMethod method, uint8_t opacity) override;
     bool endComposite(RenderCompositor* cmp) override;
 

@@ -375,7 +375,7 @@ bool WgRenderer::surfaceConfigure(WGPUSurface surface, WgContext& context, uint3
 }
 
 
-RenderCompositor* WgRenderer::target(TVG_UNUSED const RenderRegion& region, TVG_UNUSED ColorSpace cs)
+RenderCompositor* WgRenderer::target(const RenderRegion& region, TVG_UNUSED ColorSpace cs, TVG_UNUSED CompositionFlag flags)
 {
     mCompositorStack.push(new WgCompose);
     mCompositorStack.last()->aabb = region;

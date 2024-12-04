@@ -47,7 +47,7 @@ public:
 
     bool target(WGPUDevice device, WGPUInstance instance, void* target, uint32_t width, uint32_t height, int type = 0);
 
-    RenderCompositor* target(const RenderRegion& region, ColorSpace cs) override;
+    RenderCompositor* target(const RenderRegion& region, ColorSpace cs, CompositionFlag flags) override;
     bool beginComposite(RenderCompositor* cmp, MaskMethod method, uint8_t opacity) override;
     bool endComposite(RenderCompositor* cmp) override;
 
