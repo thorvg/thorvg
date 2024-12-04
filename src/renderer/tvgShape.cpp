@@ -60,7 +60,7 @@ Result Shape::reset() noexcept
     pImpl->rs.path.cmds.clear();
     pImpl->rs.path.pts.clear();
 
-    pImpl->flag |= RenderUpdateFlag::Path;
+    pImpl->rFlag |= RenderUpdateFlag::Path;
 
     return Result::Success;
 }
@@ -87,7 +87,7 @@ Result Shape::appendPath(const PathCommand *cmds, uint32_t cmdCnt, const Point* 
     pImpl->grow(cmdCnt, ptsCnt);
     pImpl->append(cmds, cmdCnt, pts, ptsCnt);
 
-    pImpl->flag |= RenderUpdateFlag::Path;
+    pImpl->rFlag |= RenderUpdateFlag::Path;
 
     return Result::Success;
 }
@@ -105,7 +105,7 @@ Result Shape::lineTo(float x, float y) noexcept
 {
     pImpl->lineTo(x, y);
 
-    pImpl->flag |= RenderUpdateFlag::Path;
+    pImpl->rFlag |= RenderUpdateFlag::Path;
 
     return Result::Success;
 }
@@ -115,7 +115,7 @@ Result Shape::cubicTo(float cx1, float cy1, float cx2, float cy2, float x, float
 {
     pImpl->cubicTo(cx1, cy1, cx2, cy2, x, y);
 
-    pImpl->flag |= RenderUpdateFlag::Path;
+    pImpl->rFlag |= RenderUpdateFlag::Path;
 
     return Result::Success;
 }
@@ -125,7 +125,7 @@ Result Shape::close() noexcept
 {
     pImpl->close();
 
-    pImpl->flag |= RenderUpdateFlag::Path;
+    pImpl->rFlag |= RenderUpdateFlag::Path;
 
     return Result::Success;
 }
@@ -144,7 +144,7 @@ Result Shape::appendCircle(float cx, float cy, float rx, float ry) noexcept
     pImpl->cubicTo(cx + rxKappa, cy - ry, cx + rx, cy - ryKappa, cx + rx, cy);
     pImpl->close();
 
-    pImpl->flag |= RenderUpdateFlag::Path;
+    pImpl->rFlag |= RenderUpdateFlag::Path;
 
     return Result::Success;
 }
@@ -184,7 +184,7 @@ Result Shape::appendRect(float x, float y, float w, float h, float rx, float ry)
         pImpl->close();
     }
 
-    pImpl->flag |= RenderUpdateFlag::Path;
+    pImpl->rFlag |= RenderUpdateFlag::Path;
 
     return Result::Success;
 }
@@ -195,14 +195,14 @@ Result Shape::fill(uint8_t r, uint8_t g, uint8_t b, uint8_t a) noexcept
     if (pImpl->rs.fill) {
         delete(pImpl->rs.fill);
         pImpl->rs.fill = nullptr;
-        pImpl->flag |= RenderUpdateFlag::Gradient;
+        pImpl->rFlag |= RenderUpdateFlag::Gradient;
     }
 
     if (r == pImpl->rs.color.r && g == pImpl->rs.color.g && b == pImpl->rs.color.b && a == pImpl->rs.color.a) return Result::Success;
 
     pImpl->rs.color = {r, g, b, a};
 
-    pImpl->flag |= RenderUpdateFlag::Color;
+    pImpl->rFlag |= RenderUpdateFlag::Color;
 
     return Result::Success;
 }
@@ -214,7 +214,7 @@ Result Shape::fill(Fill* f) noexcept
 
     if (pImpl->rs.fill && pImpl->rs.fill != f) delete(pImpl->rs.fill);
     pImpl->rs.fill = f;
-    pImpl->flag |= RenderUpdateFlag::Gradient;
+    pImpl->rFlag |= RenderUpdateFlag::Gradient;
 
     return Result::Success;
 }

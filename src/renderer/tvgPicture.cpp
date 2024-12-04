@@ -56,16 +56,18 @@ RenderUpdateFlag Picture::Impl::load()
 }
 
 
-bool Picture::Impl::needComposition(uint8_t opacity)
+void Picture::Impl::queryComposition(uint8_t opacity)
 {
+    cFlag = CompositionFlag::Invalid;
+
     //In this case, paint(scene) would try composition itself.
-    if (opacity < 255) return false;
+    if (opacity < 255) return;
 
     //Composition test
     const Paint* target;
     picture->mask(&target);
-    if (!target || target->pImpl->opacity == 255 || target->pImpl->opacity == 0) return false;
-    return true;
+    if (!target || target->pImpl->opacity == 255 || target->pImpl->opacity == 0) return;
+    cFlag = CompositionFlag::Opacity;
 }
 
 
@@ -77,8 +79,8 @@ bool Picture::Impl::render(RenderMethod* renderer)
     if (surface) return renderer->renderImage(rd);
     else if (paint) {
         RenderCompositor* cmp = nullptr;
-        if (needComp) {
-            cmp = renderer->target(bounds(renderer), renderer->colorSpace());
+        if (cFlag) {
+            cmp = renderer->target(bounds(renderer), renderer->colorSpace(), static_cast<CompositionFlag>(cFlag));
             renderer->beginComposite(cmp, MaskMethod::None, 255);
         }
         ret = paint->pImpl->render(renderer);

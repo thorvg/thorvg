@@ -36,6 +36,7 @@ using RenderData = void*;
 using pixel_t = uint32_t;
 
 enum RenderUpdateFlag : uint8_t {None = 0, Path = 1, Color = 2, Gradient = 4, Stroke = 8, Transform = 16, Image = 32, GradientStroke = 64, Blend = 128, All = 255};
+enum CompositionFlag : uint8_t {Invalid = 0, Opacity = 1, Blending = 2, Masking = 4, PostProcessing = 8};  //Composition Purpose
 
 struct RenderSurface
 {
@@ -338,7 +339,7 @@ public:
     virtual bool clear() = 0;
     virtual bool sync() = 0;
 
-    virtual RenderCompositor* target(const RenderRegion& region, ColorSpace cs) = 0;
+    virtual RenderCompositor* target(const RenderRegion& region, ColorSpace cs, CompositionFlag flags) = 0;
     virtual bool beginComposite(RenderCompositor* cmp, MaskMethod method, uint8_t opacity) = 0;
     virtual bool endComposite(RenderCompositor* cmp) = 0;
 
