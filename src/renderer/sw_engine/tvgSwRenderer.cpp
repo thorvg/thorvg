@@ -546,15 +546,27 @@ const RenderSurface* SwRenderer::mainSurface()
 }
 
 
-SwSurface* SwRenderer::request(int channelSize)
+SwSurface* SwRenderer::request(int channelSize, bool square)
 {
     SwSurface* cmp = nullptr;
+    uint32_t w, h;
+
+    if (square) {
+        //Same Dimensional Size is demanded for the Post Processing Fast Flipping
+        w = h = std::max(surface->w, surface->h);
+    } else {
+        w = surface->w;
+        h = surface->h;
+    }
 
     //Use cached data
     for (auto p = compositors.begin(); p < compositors.end(); ++p) {
-        if ((*p)->compositor->valid && (*p)->compositor->image.channelSize == channelSize) {
-            cmp = *p;
-            break;
+        auto cur = *p;
+        if (cur->compositor->valid && cur->compositor->image.channelSize == channelSize) {
+            if (w == cur->w && h == cur->h) {
+                cmp = *p;
+                break;
+            }
         }
     }
 
@@ -563,15 +575,13 @@ SwSurface* SwRenderer::request(int channelSize)
         //Inherits attributes from main surface
         cmp = new SwSurface(surface);
         cmp->compositor = new SwCompositor;
-        cmp->compositor->image.data = (pixel_t*)malloc(channelSize * surface->stride * surface->h);
-        cmp->compositor->image.w = surface->w;
-        cmp->compositor->image.h = surface->h;
-        cmp->compositor->image.stride = surface->stride;
+        cmp->compositor->image.data = (pixel_t*)malloc(channelSize * w * h);
+        cmp->w = cmp->compositor->image.w = w;
+        cmp->h = cmp->compositor->image.h = h;
+        cmp->compositor->image.stride = w;
         cmp->compositor->image.direct = true;
         cmp->compositor->valid = true;
         cmp->channelSize = cmp->compositor->image.channelSize = channelSize;
-        cmp->w = cmp->compositor->image.w;
-        cmp->h = cmp->compositor->image.h;
 
         compositors.push(cmp);
     }
@@ -583,7 +593,7 @@ SwSurface* SwRenderer::request(int channelSize)
 }
 
 
-RenderCompositor* SwRenderer::target(const RenderRegion& region, ColorSpace cs)
+RenderCompositor* SwRenderer::target(const RenderRegion& region, ColorSpace cs, CompositionFlag flags)
 {
     auto x = region.x;
     auto y = region.y;
@@ -595,7 +605,7 @@ RenderCompositor* SwRenderer::target(const RenderRegion& region, ColorSpace cs)
     //Out of boundary
     if (x >= sw || y >= sh || x + w < 0 || y + h < 0) return nullptr;
 
-    auto cmp = request(CHANNEL_SIZE(cs));
+    auto cmp = request(CHANNEL_SIZE(cs), (flags & CompositionFlag::PostProcessing));
 
     //Boundary Check
     if (x < 0) x = 0;
@@ -664,12 +674,12 @@ bool SwRenderer::effect(RenderCompositor* cmp, const RenderEffect* effect, uint8
 
     switch (effect->type) {
         case SceneEffect::GaussianBlur: {
-            return effectGaussianBlur(p, request(surface->channelSize), static_cast<const RenderEffectGaussianBlur*>(effect));
+            return effectGaussianBlur(p, request(surface->channelSize, true), static_cast<const RenderEffectGaussianBlur*>(effect));
         }
         case SceneEffect::DropShadow: {
-            auto cmp1 = request(surface->channelSize);
+            auto cmp1 = request(surface->channelSize, true);
             cmp1->compositor->valid = false;
-            auto cmp2 = request(surface->channelSize);
+            auto cmp2 = request(surface->channelSize, true);
             SwSurface* surfaces[] = {cmp1, cmp2};
             auto ret = effectDropShadow(p, surfaces, static_cast<const RenderEffectDropShadow*>(effect), opacity, direct);
             cmp1->compositor->valid = true;

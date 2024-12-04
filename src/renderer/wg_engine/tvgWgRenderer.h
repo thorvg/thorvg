@@ -48,7 +48,7 @@ public:
     bool target(WGPUInstance instance, WGPUSurface surface, uint32_t w, uint32_t h, WGPUDevice device);
     bool target(WGPUSurface surface, uint32_t w, uint32_t h);
 
-    RenderCompositor* target(const RenderRegion& region, ColorSpace cs) override;
+    RenderCompositor* target(const RenderRegion& region, ColorSpace cs, CompositionFlag flags) override;
     bool beginComposite(RenderCompositor* cmp, CompositeMethod method, uint8_t opacity) override;
     bool endComposite(RenderCompositor* cmp) override;
 

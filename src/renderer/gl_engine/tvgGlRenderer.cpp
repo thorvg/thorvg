@@ -1016,7 +1016,7 @@ bool GlRenderer::postRender()
 }
 
 
-RenderCompositor* GlRenderer::target(const RenderRegion& region, TVG_UNUSED ColorSpace cs)
+RenderCompositor* GlRenderer::target(const RenderRegion& region, TVG_UNUSED ColorSpace cs, TVG_UNUSED CompositionFlag flags)
 {
     auto vp = region;
     if (currentPass()->isEmpty()) return nullptr;
