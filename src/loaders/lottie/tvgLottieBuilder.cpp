@@ -38,19 +38,32 @@ static bool _buildComposition(LottieComposition* comp, LottieLayer* parent);
 static bool _draw(LottieGroup* parent, LottieShape* shape, RenderContext* ctx);
 
 
-static void _rotationXYZ(Matrix* m, float degreeX, float degreeY, float degreeZ)
+static void _rotationXYZ(Matrix* m, float degreeX, float degreeY, float degreeZ, Matrix* rotation3d)
 {
     auto radianX = deg2rad(degreeX);
     auto radianY = deg2rad(degreeY);
     auto radianZ = deg2rad(degreeZ);
 
     auto cx = cosf(radianX), sx = sinf(radianX);
-    auto cy = cosf(radianY), sy = sinf(radianY);;
-    auto cz = cosf(radianZ), sz = sinf(radianZ);;
-    m->e11 = cy * cz;
-    m->e12 = -cy * sz;
-    m->e21 = sx * sy * cz + cx * sz;
-    m->e22 = -sx * sy * sz + cx * cz;
+    auto cy = cosf(radianY), sy = sinf(radianY);
+    auto cz = cosf(radianZ), sz = sinf(radianZ);
+
+    rotation3d->e11 = cy * cz;
+    rotation3d->e12 = -cy * sz;
+    rotation3d->e13 = -sy;
+
+    rotation3d->e21 = cz * sy * sx + sz * cx;
+    rotation3d->e22 = -sz * sy * sx + cz * cx;
+    rotation3d->e23 = cy * sx;
+
+    rotation3d->e31 = cz * sy * cx - sz * sx;
+    rotation3d->e32 = -sz * sy * cx - cz * sx;
+    rotation3d->e33 = cy * cx;
+
+    m->e11 = rotation3d->e11;
+    m->e12 = rotation3d->e12;
+    m->e21 = rotation3d->e21;
+    m->e22 = rotation3d->e22;
 }
 
 
@@ -101,7 +114,7 @@ static void _skew(Matrix* m, float angleDeg, float axisDeg)
 }
 
 
-static bool _updateTransform(LottieTransform* transform, float frameNo, bool autoOrient, Matrix& matrix, uint8_t& opacity, LottieExpressions* exps)
+static bool _updateTransform(LottieTransform* transform, float frameNo, bool autoOrient, Matrix& matrix, Matrix* rotation3d, uint8_t& opacity, LottieExpressions* exps)
 {
     identity(&matrix);
 
@@ -119,7 +132,7 @@ static bool _updateTransform(LottieTransform* transform, float frameNo, bool aut
 
     auto angle = 0.0f;
     if (autoOrient) angle = transform->position.angle(frameNo);
-    if (transform->rotationEx) _rotationXYZ(&matrix, transform->rotationEx->x(frameNo, exps), transform->rotationEx->y(frameNo, exps), transform->rotation(frameNo, exps) + angle);
+    if (transform->rotationEx) _rotationXYZ(&matrix, transform->rotationEx->x(frameNo, exps), transform->rotationEx->y(frameNo, exps), transform->rotation(frameNo, exps) + angle, rotation3d);
     else _rotationZ(&matrix, transform->rotation(frameNo, exps) + angle);
 
 
@@ -157,13 +170,25 @@ void LottieBuilder::updateTransform(LottieLayer* layer, float frameNo)
     if (parent) updateTransform(parent, frameNo);
 
     auto& matrix = layer->cache.matrix;
+    auto& rotation3d = layer->cache.rotation3d;
+    _updateTransform(transform, frameNo, layer->autoOrient, matrix, &rotation3d, layer->cache.opacity, exps);
 
-    _updateTransform(transform, frameNo, layer->autoOrient, matrix, layer->cache.opacity, exps);
+    if (parent && !identity((const Matrix*)&parent->cache.matrix)) {
+        if (identity((const Matrix*)&matrix)) { //TODO: test
+            layer->cache.matrix = parent->cache.matrix;
+            layer->cache.rotation3d = parent->cache.rotation3d;
+        } else {
+            layer->cache.matrix = parent->cache.matrix * matrix;
 
-    if (parent) {
-        if (!identity((const Matrix*) &parent->cache.matrix)) {
-            if (identity((const Matrix*) &matrix)) layer->cache.matrix = parent->cache.matrix;
-            else layer->cache.matrix = parent->cache.matrix * matrix;
+            if (transform->rotationEx) {
+                //include remaining terms from the 3d rotation matrix:
+                layer->cache.matrix.e11 += parent->cache.rotation3d.e13 * rotation3d.e31;
+                layer->cache.matrix.e21 += parent->cache.rotation3d.e23 * rotation3d.e31;
+                layer->cache.matrix.e12 += parent->cache.rotation3d.e13 * rotation3d.e32;
+                layer->cache.matrix.e22 += parent->cache.rotation3d.e23 * rotation3d.e32;
+
+                layer->cache.rotation3d = parent->cache.rotation3d * rotation3d; //TODO: test
+            } else layer->cache.rotation3d = parent->cache.rotation3d; //TODO: test
         }
     }
     layer->cache.frameNo = frameNo;
@@ -179,14 +204,14 @@ void LottieBuilder::updateTransform(LottieGroup* parent, LottieObject** child, f
 
     if (parent->mergeable()) {
         if (!ctx->transform) ctx->transform = (Matrix*)malloc(sizeof(Matrix));
-        _updateTransform(transform, frameNo, false, *ctx->transform, opacity, exps);
+        _updateTransform(transform, frameNo, false, *ctx->transform, nullptr, opacity, exps);
         return;
     }
 
     ctx->merging = nullptr;
 
     Matrix matrix;
-    if (!_updateTransform(transform, frameNo, false, matrix, opacity, exps)) return;
+    if (!_updateTransform(transform, frameNo, false, matrix, nullptr, opacity, exps)) return;
 
     ctx->propagator->transform(ctx->propagator->transform() * matrix);
     ctx->propagator->opacity(MULTIPLY(opacity, PP(ctx->propagator)->opacity));
