@@ -88,6 +88,7 @@ public:
     RenderRegion bounds() const;
 
 private:
+    void doTrimStroke(const PathCommand* cmds, uint32_t cmd_count, const Point* pts, uint32_t pts_count, bool simultaneous, float start, float end);
     void doStroke(const PathCommand* cmds, uint32_t cmd_count, const Point* pts, uint32_t pts_count);
     void doDashStroke(const PathCommand* cmds, uint32_t cmd_count, const Point* pts, uint32_t pts_count, uint32_t dash_count, const float* dash_pattern);
 
