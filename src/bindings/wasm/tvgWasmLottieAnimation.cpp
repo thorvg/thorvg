@@ -83,6 +83,7 @@ struct TvgEngineMethod
     virtual ~TvgEngineMethod() {}
     virtual Canvas* init(string&) = 0;
     virtual void resize(Canvas* canvas, int w, int h) = 0;
+    virtual void update() = 0;
     virtual val output(int w, int h)
     {
         return val(typed_memory_view<uint8_t>(0, nullptr));
@@ -116,6 +117,8 @@ struct TvgSwEngine : TvgEngineMethod
     {
         return val(typed_memory_view(w * h * 4, buffer));
     }
+
+    void update() override {}
 };
 
 
@@ -156,6 +159,8 @@ struct TvgWgEngine : TvgEngineMethod
         static_cast<WgCanvas*>(canvas)->target(device, instance, surface, w, h, ColorSpace::ABGR8888S);
     #endif
     }
+
+    void update() override {}
 };
 
 struct TvgGLEngine : TvgEngineMethod
@@ -202,6 +207,12 @@ struct TvgGLEngine : TvgEngineMethod
         emscripten_webgl_make_context_current(context);
 
         static_cast<GlCanvas*>(canvas)->target(0, w, h, ColorSpace::ABGR8888S);
+    #endif
+    }
+
+    void update() override {
+    #ifdef THORVG_GL_RASTER_SUPPORT
+        emscripten_webgl_make_context_current(context);
     #endif
     }
 };
@@ -340,6 +351,8 @@ public:
         if (!updated) return true;
 
         errorMsg = NoError;
+
+        engine->update();
 
         this->canvas->clear(false);
 
