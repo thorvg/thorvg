@@ -519,6 +519,7 @@ TVG_API Tvg_Canvas* tvg_glcanvas_create(void);
 * This function specifies the drawing target where the rasterization will occur. It can target
 * a specific framebuffer object (FBO) or the main surface.
 *
+* @param[in] context The GL context assigning to the current canvas rendering.
 * @param[in] id The GL target ID, usually indicating the FBO ID. A value of @c 0 specifies the main surface.
 * @param[in] w The width (in pixels) of the raster image.
 * @param[in] h The height (in pixels) of the raster image.
@@ -530,7 +531,7 @@ TVG_API Tvg_Canvas* tvg_glcanvas_create(void);
 *
 * @note Experimental API
 */
-TVG_API Tvg_Result tvg_glcanvas_set_target(Tvg_Canvas* canvas, int32_t id, uint32_t w, uint32_t h, Tvg_Colorspace cs);
+TVG_API Tvg_Result tvg_glcanvas_set_target(Tvg_Canvas* canvas, void* context, int32_t id, uint32_t w, uint32_t h, Tvg_Colorspace cs);
 
 /** \} */   // end defgroup ThorVGCapi_GlCanvas
 

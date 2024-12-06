@@ -218,7 +218,7 @@ void runGl()
         auto canvas = unique_ptr<tvg::GlCanvas>(tvg::GlCanvas::gen());
 
         // Pass the framebuffer id to the GlCanvas
-        tvgexam::verify(canvas->target(glFbo.fbo, SIZE, SIZE, tvg::ColorSpace::ABGR8888S));
+        tvgexam::verify(canvas->target(context, glFbo.fbo, SIZE, SIZE, tvg::ColorSpace::ABGR8888S));
 
         content(canvas.get());
         if (tvgexam::verify(canvas->draw())) {
