@@ -1750,6 +1750,7 @@ public:
      * This function specifies the drawing target where the rasterization will occur. It can target
      * a specific framebuffer object (FBO) or the main surface.
      *
+     * @param[in] context The GL context assigning to the current canvas rendering.
      * @param[in] id The GL target ID, usually indicating the FBO ID. A value of @c 0 specifies the main surface.
      * @param[in] w The width (in pixels) of the raster image.
      * @param[in] h The height (in pixels) of the raster image.
@@ -1763,7 +1764,7 @@ public:
      *
      * @note Experimental API
     */
-    Result target(int32_t id, uint32_t w, uint32_t h, ColorSpace cs) noexcept;
+    Result target(void* context, int32_t id, uint32_t w, uint32_t h, ColorSpace cs) noexcept;
 
     /**
      * @brief Creates a new GlCanvas object.

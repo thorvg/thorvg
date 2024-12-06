@@ -41,7 +41,7 @@ GlCanvas::~GlCanvas()
 }
 
 
-Result GlCanvas::target(int32_t id, uint32_t w, uint32_t h, ColorSpace cs) noexcept
+Result GlCanvas::target(void* context, int32_t id, uint32_t w, uint32_t h, ColorSpace cs) noexcept
 {
 #ifdef THORVG_GL_RASTER_SUPPORT
     if (cs != ColorSpace::ABGR8888S) return Result::NonSupport;
