@@ -818,14 +818,15 @@ bool GlRenderer::clear()
 }
 
 
-bool GlRenderer::target(int32_t id, uint32_t w, uint32_t h)
+bool GlRenderer::target(void* context, int32_t id, uint32_t w, uint32_t h)
 {
-    if (id == GL_INVALID_VALUE || w == 0 || h == 0) return false;
+    if (!context || id == GL_INVALID_VALUE || w == 0 || h == 0) return false;
 
     surface.stride = w;
     surface.w = w;
     surface.h = h;
 
+    mContext = context;
     mTargetFboId = static_cast<GLint>(id);
 
     mRootTarget = make_unique<GlRenderTarget>(surface.w, surface.h);
@@ -902,6 +903,9 @@ RenderRegion GlRenderer::region(RenderData data)
 
 bool GlRenderer::preRender()
 {
+#ifdef __EMSCRIPTEN__
+    if (mContext) emscripten_webgl_make_context_current((EMSCRIPTEN_WEBGL_CONTEXT_HANDLE)mContext);
+#endif
     if (mPrograms.size() == 0)
     {
         initShaders();
