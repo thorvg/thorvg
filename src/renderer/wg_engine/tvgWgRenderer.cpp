@@ -307,31 +307,51 @@ bool WgRenderer::target(WGPUDevice device, WGPUInstance instance, void* target, 
     if ((mContext.device != device) || (mContext.instance != instance)) {
         // release all handles
         release();
+
         // initialize base rendering handles
         mContext.initialize(instance, device);
-    // release render targets only
-    } else if (mRenderStorageRoot.texView) {
-        mRenderStoragePool.release(mContext);
-        mRenderStorageRoot.release(mContext);
-        mCompositor.release(mContext);
-        clearTargets();
+
+        // initialize render tree instances
+        mRenderStoragePool.initialize(mContext, width, height);
+        mRenderStorageRoot.initialize(mContext, width, height);
+        mCompositor.initialize(mContext, width, height);
+
+        // store target properties
+        mTargetSurface.stride = width;
+        mTargetSurface.w = width;
+        mTargetSurface.h = height;
+
+        // configure surface (must be called after context creation)
+        if (type == 0) {
+            surface = (WGPUSurface)target;
+            surfaceConfigure(surface, mContext, width, height);
+        } else targetTexture = (WGPUTexture)target;
+        return true;
     }
 
-    // initialize render tree instances
-    mRenderStoragePool.initialize(mContext, width, height);
-    mRenderStorageRoot.initialize(mContext, width, height);
-    mCompositor.initialize(mContext, width, height);
+    // update retnder targets dimentions
+    if ((mTargetSurface.w != width) || (mTargetSurface.h != height)) {
+        // release render tagets
+        mRenderStoragePool.release(mContext);
+        mRenderStorageRoot.release(mContext);
+        clearTargets();
 
-    // store target properties
-    mTargetSurface.stride = width;
-    mTargetSurface.w = width;
-    mTargetSurface.h = height;
+        mRenderStoragePool.initialize(mContext, width, height);
+        mRenderStorageRoot.initialize(mContext, width, height);
+        mCompositor.resize(mContext, width, height);
 
-    // configure surface (must be called after context creation)
-    if (type == 0) {
-        surface = (WGPUSurface)target;
-        surfaceConfigure(surface, mContext, width, height);
-    } else targetTexture = (WGPUTexture)target;
+        // store target properties
+        mTargetSurface.stride = width;
+        mTargetSurface.w = width;
+        mTargetSurface.h = height;
+
+        // configure surface (must be called after context creation)
+        if (type == 0) {
+            surface = (WGPUSurface)target;
+            surfaceConfigure(surface, mContext, width, height);
+        } else targetTexture = (WGPUTexture)target;
+        return true;
+    }
 
     return true;
 }
