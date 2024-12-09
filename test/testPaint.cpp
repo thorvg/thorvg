@@ -308,18 +308,15 @@ TEST_CASE("Refernce Count", "[tvgPaint]")
     REQUIRE(shape->ref() == 1);
     canvas->push(shape);
     REQUIRE(shape->refCnt() == 2);
-    canvas->clear();
-    REQUIRE(shape->refCnt() == 1);
-    REQUIRE(shape->unref() == 0);
+    REQUIRE(shape->unref() == 1);
 
     shape = Shape::gen();
     REQUIRE(shape->ref() == 1);
     auto scene = Scene::gen();
     scene->push(shape);
     canvas->push(scene);
-    canvas->clear();
-    REQUIRE(shape->refCnt() == 1);
-    REQUIRE(shape->unref() == 0);
+    REQUIRE(shape->refCnt() == 2);
+    REQUIRE(shape->unref() == 1);
 
     shape = Shape::gen();
     REQUIRE(shape->ref() == 1);
@@ -327,7 +324,6 @@ TEST_CASE("Refernce Count", "[tvgPaint]")
     scene->push(shape);
     scene->remove();
     canvas->push(scene);
-    canvas->clear();
     REQUIRE(shape->unref() == 0);
 
     Initializer::term();

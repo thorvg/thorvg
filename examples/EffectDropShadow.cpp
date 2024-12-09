@@ -96,8 +96,6 @@ struct UserExample : tvgexam::Example
     {
         if (!canvas) return false;
 
-        canvas->clear(false);
-
         auto progress = tvgexam::progress(elapsed, 2.5f, true);   //2.5 seconds
 
         //Clear the previously applied effects
@@ -125,5 +123,5 @@ struct UserExample : tvgexam::Example
 
 int main(int argc, char **argv)
 {
-    return tvgexam::main(new UserExample, argc, argv, 800, 800, 4, true);
+    return tvgexam::main(new UserExample, argc, argv, false, 800, 800, 4, true);
 }

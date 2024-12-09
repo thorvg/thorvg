@@ -642,7 +642,7 @@ public:
      *
      * @warning Please avoid accessing the paints during Canvas update/draw. You can access them after calling sync().
      * @see Canvas::push()
-     * @see Canvas::clear()
+     * @see Canvas::remove()
      *
      * @warning This is read-only. Do not modify the list.
      * @note 1.0
@@ -667,24 +667,9 @@ public:
      * @note The rendering order of the paints is the same as the order as they were pushed. Consider sorting the paints before pushing them if you intend to use layering.
      *
      * @see Canvas::paints()
-     * @see Canvas::clear()
+     * @see Canvas::remove()
      */
     Result push(Paint* target, Paint* at = nullptr) noexcept;
-
-    /**
-     * @brief Clear the internal canvas resources that used for the drawing.
-     *
-     * This API sets the total number of paints pushed into the canvas to zero.
-     * Depending on the value of the @p paints argument, the paints are either freed or retained.
-     * So if you need to update paint properties while maintaining the existing scene structure, you can set @p paints = false.
-     *
-     * @param[in] paints If @c true, the memory occupied by paints is deallocated; otherwise, the paints will be retained on the canvas.
-     * @param[in] buffer If @c true, the canvas target buffer is cleared with a zero value.
-     *
-     * @see Canvas::push()
-     * @see Canvas::paints()
-     */
-    Result clear(bool paints = true, bool buffer = true) noexcept;
 
     /**
      * @brief Removes a paint object or all paint objects from the root scene.
@@ -716,12 +701,18 @@ public:
     Result update(Paint* paint = nullptr) noexcept;
 
     /**
-     * @brief Requests the canvas to draw the Paint objects.
+     * @brief Requests the canvas to render Paint objects.
      *
-     * @note Drawing can be asynchronous if the assigned thread number is greater than zero. To guarantee the drawing is done, call sync() afterwards.
+     * @param[in] clear If @c true, clears the target buffer to zero before drawing.
+     *
+     * @note Clearing the buffer is unnecessary if the canvas will be fully covered 
+     *       with opaque content, which can improve performance.
+     * @note Drawing may be asynchronous if the thread count is greater than zero. 
+     *       To ensure drawing is complete, call sync() afterwards.
+     *
      * @see Canvas::sync()
      */
-    Result draw() noexcept;
+    Result draw(bool clear = false) noexcept;
 
     /**
      * @brief Sets the drawing region in the canvas.

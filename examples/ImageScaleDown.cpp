@@ -48,8 +48,6 @@ struct UserExample : tvgexam::Example
     {
         if (!canvas) return false;
 
-        canvas->clear(false);
-
         auto progress = tvgexam::progress(elapsed, 7.0f, true);  //play time 7 sec.
 
         picture->scale(1.0f - progress);
@@ -67,5 +65,5 @@ struct UserExample : tvgexam::Example
 
 int main(int argc, char **argv)
 {
-    return tvgexam::main(new UserExample, argc, argv);
+    return tvgexam::main(new UserExample, argc, argv, true);
 }

@@ -133,7 +133,7 @@ private:
         Key key;
     } mDisposed;
 
-    bool mClearBuffer = true;
+    bool mClearBuffer = true;  //FIXME: clear buffer should be optional (default is false)
 
     BlendMethod mBlendMethod = BlendMethod::Normal;
 };

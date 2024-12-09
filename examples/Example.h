@@ -137,6 +137,7 @@ struct Window
     bool needResize = false;
     bool needDraw = false;
     bool initialized = false;
+    bool clearBuffer = false;
     bool print = false;
 
     Window(tvg::CanvasEngine engine, Example* example, uint32_t width, uint32_t height, uint32_t threadsCnt)
@@ -170,7 +171,7 @@ struct Window
     bool draw()
     {
         //Draw the contents to the Canvas
-        if (verify(canvas->draw())) {
+        if (verify(canvas->draw(clearBuffer))) {
             verify(canvas->sync());
             return true;
         }
@@ -525,7 +526,7 @@ bool verify(tvg::Result result, string failMsg)
 }
 
 
-int main(Example* example, int argc, char **argv, uint32_t width = 800, uint32_t height = 800, uint32_t threadsCnt = 4, bool print = false)
+int main(Example* example, int argc, char **argv, bool clearBuffer = false, uint32_t width = 800, uint32_t height = 800, uint32_t threadsCnt = 4, bool print = false)
 {
     auto engine = tvg::CanvasEngine::Sw;
 
@@ -544,6 +545,7 @@ int main(Example* example, int argc, char **argv, uint32_t width = 800, uint32_t
         window = unique_ptr<Window>(new WgWindow(example, width, height, threadsCnt));
     }
 
+    window->clearBuffer = clearBuffer;
     window->print = print;
 
     if (window->ready()) {

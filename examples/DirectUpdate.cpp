@@ -87,9 +87,6 @@ struct UserExample : tvgexam::Example
     {
         if (!canvas) return false;
 
-        //clear buffer and redraw!
-        if (!tvgexam::verify(canvas->clear(false))) return false;
-
         auto progress = tvgexam::progress(elapsed, 2.0f, true);  //play time 2 sec.
 
         //Reset Shape

@@ -332,9 +332,6 @@ int main(int argc, char **argv)
             }
         }
 
-        //Clear the canvas
-        tvg_canvas_clear(canvas, false, true);
-
         //Update the animation
         if (animation) {
             float duration, totalFrame;
@@ -345,7 +342,7 @@ int main(int argc, char **argv)
 
         //Draw the canvas
         tvg_canvas_update(canvas);
-        tvg_canvas_draw(canvas);
+        tvg_canvas_draw(canvas, true);
         tvg_canvas_sync(canvas);
 
         SDL_UpdateWindowSurface(window);
