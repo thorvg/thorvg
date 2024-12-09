@@ -760,15 +760,7 @@ struct LottieLayer : LottieGroup
 
     ~LottieLayer();
 
-    uint8_t opacity(float frameNo)
-    {
-        //return zero if the visibility is false.
-        if (type == Null) return 255;
-        return transform->opacity(frameNo);
-    }
-
     bool mergeable() override { return false; }
-
     void prepare(RGB24* color = nullptr);
     float remap(LottieComposition* comp, float frameNo, LottieExpressions* exp);
 

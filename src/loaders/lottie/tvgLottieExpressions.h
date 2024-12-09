@@ -24,7 +24,7 @@
 #define _TVG_LOTTIE_EXPRESSIONS_H_
 
 #include "tvgCommon.h"
-#include "tvgLottieCommon.h"
+#include "tvgLottieData.h"
 
 struct LottieExpression;
 struct LottieComposition;
