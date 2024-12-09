@@ -65,11 +65,10 @@ void GifSaver::run(unsigned tid)
     auto duration = animation->duration();
 
     for (auto p = 0.0f; p < duration; p += delay) {
-        canvas->clear(false);
         auto frameNo = animation->totalFrame() * (p / duration);
         animation->frame(frameNo);
         canvas->update();
-        if (canvas->draw() == tvg::Result::Success) {
+        if (canvas->draw(true) == tvg::Result::Success) {
             canvas->sync();
         }
         if (!gifWriteFrame(&writer, reinterpret_cast<uint8_t*>(buffer), w, h, uint32_t(delay * 100.0f), transparent)) {

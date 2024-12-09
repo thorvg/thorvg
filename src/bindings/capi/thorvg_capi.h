@@ -589,11 +589,6 @@ TVG_API Tvg_Result tvg_wgcanvas_set_target(Tvg_Canvas* canvas, void* device, voi
 *
 * @return Tvg_Result enumeration.
 * @retval TVG_RESULT_INVALID_ARGUMENT An invalid pointer to the Tvg_Canvas object is passed.
-*
-* @note If the paints from the canvas should not be released, the tvg_canvas_clear() with a @c free argument value set to @c false should be called.
-* Please be aware that in such a case TVG is not responsible for the paints release anymore and it has to be done manually in order to avoid memory leaks.
-*
-* @see tvg_canvas_clear()
 */
 TVG_API Tvg_Result tvg_canvas_destroy(Tvg_Canvas* canvas);
 
@@ -605,7 +600,7 @@ TVG_API Tvg_Result tvg_canvas_destroy(Tvg_Canvas* canvas);
 * @param[in] paint The Tvg_Paint object to be drawn.
 *
 * Only the paints pushed into the canvas will be drawing targets.
-* They are retained by the canvas until you call tvg_canvas_clear() or tvg_canvas_remove()
+* They are retained by the canvas until you call tvg_canvas_remove()
 *
 * @return Tvg_Result return values:
 * @retval TVG_RESULT_INVALID_ARGUMENT In case a @c nullptr is passed as the argument.
@@ -614,7 +609,6 @@ TVG_API Tvg_Result tvg_canvas_destroy(Tvg_Canvas* canvas);
 * @note The rendering order of the paints is the same as the order as they were pushed. Consider sorting the paints before pushing them if you intend to use layering.
 * @see tvg_canvas_push_at()
 * @see tvg_canvas_remove()
-* @see tvg_canvas_clear()
 */
 TVG_API Tvg_Result tvg_canvas_push(Tvg_Canvas* canvas, Tvg_Paint* paint);
 
@@ -639,27 +633,10 @@ TVG_API Tvg_Result tvg_canvas_push(Tvg_Canvas* canvas, Tvg_Paint* paint);
  *
  * @see tvg_canvas_push()
  * @see tvg_canvas_remove()
- * @see tvg_canvas_clear()
+ * @see tvg_canvas_remove()
  * @since 1.0
  */
 TVG_API Tvg_Result tvg_canvas_push_at(Tvg_Canvas* canvas, Tvg_Paint* target, Tvg_Paint* at);
-
-
-/*!
-* @brief Sets the total number of the paints pushed into the canvas to be zero.
-* Tvg_Paint objects stored in the canvas are released if @p paints is set to @c true, otherwise the memory is not deallocated and
-* all paints should be released manually in order to avoid memory leaks.
-*
-* @param[in] canvas The Tvg_Canvas object to be cleared.
-* @param[in] paints If @c true, The memory occupied by paints is deallocated; otherwise, the paints will be retained on the canvas.
-* @param[in] buffer If @c true the canvas target buffer is cleared with a zero value.
-*
-* @return Tvg_Result enumeration.
-* @retval TVG_RESULT_INVALID_ARGUMENT An invalid Tvg_Canvas pointer.
-*
-* @see tvg_canvas_destroy()
-*/
-TVG_API Tvg_Result tvg_canvas_clear(Tvg_Canvas* canvas, bool paints, bool buffer);
 
 
 /**
@@ -718,14 +695,18 @@ TVG_API Tvg_Result tvg_canvas_update_paint(Tvg_Canvas* canvas, Tvg_Paint* paint)
 * All paints from the given canvas will be rasterized to the buffer.
 *
 * @param[in] canvas The Tvg_Canvas object containing elements to be drawn.
+* @param[in] clear If @c true, clears the target buffer to zero before drawing.
 *
 * @return Tvg_Result enumeration.
 * @retval TVG_RESULT_INVALID_ARGUMENT An invalid Tvg_Canvas pointer.
 *
-* @note Drawing can be asynchronous based on the assigned thread number. To guarantee the drawing is done, call tvg_canvas_sync() afterwards.
+* @note Clearing the buffer is unnecessary if the canvas will be fully covered 
+*       with opaque content, which can improve performance.
+* @note Drawing may be asynchronous if the thread count is greater than zero.
+*       To ensure drawing is complete, call tvg_canvas_sync() afterwards.
 * @see tvg_canvas_sync()
 */
-TVG_API Tvg_Result tvg_canvas_draw(Tvg_Canvas* canvas);
+TVG_API Tvg_Result tvg_canvas_draw(Tvg_Canvas* canvas, bool clear);
 
 
 /*!
@@ -787,10 +768,7 @@ TVG_API Tvg_Result tvg_canvas_set_viewport(Tvg_Canvas* canvas, int32_t x, int32_
 * @return Tvg_Result enumeration.
 * @retval TVG_RESULT_INVALID_ARGUMENT An invalid Tvg_Paint pointer.
 *
-* @warning If this function is used, tvg_canvas_clear() with the @c free argument value set to @c false should be used in order to avoid unexpected behaviours.
-*
 * @see tvg_canvas_remove()
-* @see tvg_canvas_clear()
 */
 TVG_API Tvg_Result tvg_paint_del(Tvg_Paint* paint);
 

@@ -63,28 +63,11 @@ struct Canvas::Impl
         return update(target, true);
     }
 
-    Result clear(bool paints, bool buffer)
-    {
-        auto ret = Result::Success;
-
-        if (status == Status::Drawing) return Result::InsufficientCondition;
-
-        //Clear render target
-        if (buffer && !renderer->clear()) {
-            ret = Result::InsufficientCondition;
-        }
-
-        if (paints) scene->remove();
-
-        return ret;
-    }
-
     Result remove(Paint* paint)
     {
         if (status == Status::Drawing) return Result::InsufficientCondition;
         return scene->remove(paint);
     }
-
 
     Result update(Paint* paint, bool force)
     {
@@ -101,9 +84,13 @@ struct Canvas::Impl
         return Result::Success;
     }
 
-    Result draw()
+    Result draw(bool clear)
     {
-        if (status == Status::Drawing || scene->paints().empty()) return Result::InsufficientCondition;
+        if (status == Status::Drawing) return Result::InsufficientCondition;
+
+        if (clear && !renderer->clear()) return Result::InsufficientCondition;
+
+        if (scene->paints().empty()) return Result::InsufficientCondition;
 
         if (status == Status::Damaged) update(nullptr, false);
 
@@ -112,6 +99,7 @@ struct Canvas::Impl
         if (!PP(scene)->render(renderer) || !renderer->postRender()) return Result::InsufficientCondition;
 
         status = Status::Drawing;
+
         return Result::Success;
     }
 

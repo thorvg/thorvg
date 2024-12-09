@@ -239,6 +239,7 @@ const RenderSurface* WgRenderer::mainSurface()
 
 bool WgRenderer::clear()
 {
+    //TODO: clear the current target buffer only if clear() is called
     return true;
 }
 
