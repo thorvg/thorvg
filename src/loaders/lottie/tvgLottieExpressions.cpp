@@ -238,7 +238,7 @@ static jerry_value_t _buildTrimpath(LottieTrimpath* trimpath, float frameNo)
     jerry_object_set_sz(obj, "end", end);
     jerry_value_free(end);
     auto offset = jerry_number(trimpath->offset(frameNo));
-    jerry_object_set_sz(obj, "offset", offset);
+    jerry_object_set_sz(obj, EXP_OFFSET, offset);
     jerry_value_free(offset);
 
     return obj;
