@@ -41,13 +41,17 @@
     #define TVG_DEPRECATED
 #endif
 
-#define _TVG_DECLARE_PRIVATE(A) \
+#define _TVG_DECLARE_PRIVATE2(A) \
     struct Impl; \
-    Impl* pImpl; \
 protected: \
     A(const A&) = delete; \
     const A& operator=(const A&) = delete; \
     A()
+
+#define _TVG_DECLARE_PRIVATE(A) \
+    _TVG_DECLARE_PRIVATE2(A); \
+public: \
+    Impl* pImpl
 
 #define _TVG_DISABLE_CTOR(A) \
     A() = delete; \
@@ -763,8 +767,6 @@ public:
 class TVG_API LinearGradient final : public Fill
 {
 public:
-    ~LinearGradient();
-
     /**
      * @brief Sets the linear gradient bounds.
      *
@@ -814,7 +816,7 @@ public:
      */
     Type type() const noexcept override;
 
-    _TVG_DECLARE_PRIVATE(LinearGradient);
+    _TVG_DECLARE_PRIVATE2(LinearGradient);
 };
 
 
@@ -827,8 +829,6 @@ public:
 class TVG_API RadialGradient final : public Fill
 {
 public:
-    ~RadialGradient();
-
     /**
      * @brief Sets the radial gradient attributes.
      *
@@ -886,7 +886,7 @@ public:
      */
     Type type() const noexcept override;
 
-    _TVG_DECLARE_PRIVATE(RadialGradient);
+    _TVG_DECLARE_PRIVATE2(RadialGradient);
 };
 
 

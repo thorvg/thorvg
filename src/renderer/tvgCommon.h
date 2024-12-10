@@ -78,6 +78,7 @@ uint16_t THORVG_VERSION_NUMBER();
 
 #define P(A) ((A)->pImpl)              //Access to pimpl.
 #define PP(A) (((Paint*)(A))->pImpl)   //Access to pimpl.
+#define PIMPL(INST, CLASS) ((CLASS::Impl*)INST->pImpl)
 
 
 #define TVG_DELETE(PAINT) \

@@ -153,7 +153,7 @@ static RadialGradient* _applyRadialGradientProperty(SvgStyleGradient* g, const B
         else finalTransform = m;
     }
 
-    P(fillGrad)->radial(g->radial->cx, g->radial->cy, g->radial->r, g->radial->fx, g->radial->fy, g->radial->fr);
+    fillGrad->radial(g->radial->cx, g->radial->cy, g->radial->r, g->radial->fx, g->radial->fy, g->radial->fr);
     fillGrad->spread(g->spread);
 
     //Update the stops

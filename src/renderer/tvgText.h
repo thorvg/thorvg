@@ -116,19 +116,20 @@ struct Text::Impl
         if (fill && P(shape)->rFlag & RenderUpdateFlag::Gradient) {
             auto scale = 1.0f / loader->scale;
             if (fill->type() == Type::LinearGradient) {
-                P(static_cast<LinearGradient*>(fill))->x1 *= scale;
-                P(static_cast<LinearGradient*>(fill))->y1 *= scale;
-                P(static_cast<LinearGradient*>(fill))->x2 *= scale;
-                P(static_cast<LinearGradient*>(fill))->y2 *= scale;
+                LINEAR(fill)->x1 *= scale;
+                LINEAR(fill)->y1 *= scale;
+                LINEAR(fill)->x2 *= scale;
+                LINEAR(fill)->y2 *= scale;
             } else {
-                P(static_cast<RadialGradient*>(fill))->cx *= scale;
-                P(static_cast<RadialGradient*>(fill))->cy *= scale;
-                P(static_cast<RadialGradient*>(fill))->r *= scale;
-                P(static_cast<RadialGradient*>(fill))->fx *= scale;
-                P(static_cast<RadialGradient*>(fill))->fy *= scale;
-                P(static_cast<RadialGradient*>(fill))->fr *= scale;
+                RADIAL(fill)->cx *= scale;
+                RADIAL(fill)->cy *= scale;
+                RADIAL(fill)->r *= scale;
+                RADIAL(fill)->fx *= scale;
+                RADIAL(fill)->fy *= scale;
+                RADIAL(fill)->fr *= scale;
             }
         }
+
         return PP(shape)->update(renderer, transform, clips, opacity, pFlag, false);
     }
 
