@@ -527,8 +527,8 @@ bool svgPathToShape(const char* svgPath, Shape* shape)
     bool closed = false;
     char* path = (char*)svgPath;
 
-    auto& pts = P(shape)->rs.path.pts;
-    auto& cmds = P(shape)->rs.path.cmds;
+    auto& pts = SHAPE(shape)->rs.path.pts;
+    auto& cmds = SHAPE(shape)->rs.path.cmds;
     auto lastCmds = cmds.count;
 
     while ((path[0] != '\0')) {

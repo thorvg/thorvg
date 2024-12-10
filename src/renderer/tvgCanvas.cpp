@@ -26,7 +26,7 @@
 /* External Class Implementation                                        */
 /************************************************************************/
 
-Canvas::Canvas(RenderMethod *pRenderer):pImpl(new Impl(pRenderer))
+Canvas::Canvas():pImpl(new Impl)
 {
 }
 

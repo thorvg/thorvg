@@ -26,32 +26,20 @@
     #include "tvgWgRenderer.h"
 #endif
 
-/************************************************************************/
-/* Internal Class Implementation                                        */
-/************************************************************************/
 
-struct WgCanvas::Impl
+WgCanvas::WgCanvas()
 {
-};
-
-
-/************************************************************************/
-/* External Class Implementation                                        */
-/************************************************************************/
-
 #ifdef THORVG_WG_RASTER_SUPPORT
-WgCanvas::WgCanvas() : Canvas(WgRenderer::gen()), pImpl(nullptr)
-#else
-WgCanvas::WgCanvas() : Canvas(nullptr), pImpl(nullptr)
+    pImpl->renderer = WgRenderer::gen();
+    pImpl->renderer->ref();
 #endif
-{
 }
 
 
 WgCanvas::~WgCanvas()
 {
 #ifdef THORVG_WG_RASTER_SUPPORT
-    auto renderer = static_cast<WgRenderer*>(Canvas::pImpl->renderer);
+    auto renderer = static_cast<WgRenderer*>(pImpl->renderer);
     renderer->target(nullptr, nullptr, nullptr, 0, 0);
 #endif
 }
@@ -62,20 +50,20 @@ Result WgCanvas::target(void* device, void* instance, void* target, uint32_t w, 
 #ifdef THORVG_WG_RASTER_SUPPORT
     if (cs != ColorSpace::ABGR8888S) return Result::NonSupport;
 
-    if (Canvas::pImpl->status != Status::Damaged && Canvas::pImpl->status != Status::Synced) {
+    if (pImpl->status != Status::Damaged && pImpl->status != Status::Synced) {
         return Result::InsufficientCondition;
     }
 
     //We know renderer type, avoid dynamic_cast for performance.
-    auto renderer = static_cast<WgRenderer*>(Canvas::pImpl->renderer);
+    auto renderer = static_cast<WgRenderer*>(pImpl->renderer);
     if (!renderer) return Result::MemoryCorruption;
 
     if (!renderer->target((WGPUDevice)device, (WGPUInstance)instance, target, w, h, type)) return Result::Unknown;
-    Canvas::pImpl->vport = {0, 0, (int32_t)w, (int32_t)h};
-    renderer->viewport(Canvas::pImpl->vport);
+    pImpl->vport = {0, 0, (int32_t)w, (int32_t)h};
+    renderer->viewport(pImpl->vport);
 
     //Paints must be updated again with this new target.
-    Canvas::pImpl->status = Status::Damaged;
+    pImpl->status = Status::Damaged;
 
     return Result::Success;
 #endif
