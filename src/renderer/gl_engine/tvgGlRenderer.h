@@ -78,7 +78,7 @@ public:
     ColorSpace colorSpace() override;
     const RenderSurface* mainSurface() override;
 
-    bool target(int32_t id, uint32_t w, uint32_t h);
+    bool target(void* context, int32_t id, uint32_t w, uint32_t h);
     bool sync() override;
     bool clear() override;
 
@@ -115,6 +115,7 @@ private:
 
     void clearDisposes();
 
+    void* mContext;
     RenderSurface surface;
     GLint mTargetFboId = 0;
     RenderRegion mViewport;
