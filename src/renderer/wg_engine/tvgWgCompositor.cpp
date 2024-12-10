@@ -28,40 +28,59 @@ void WgCompositor::initialize(WgContext& context, uint32_t width, uint32_t heigh
     // pipelines (external handle, do not release)
     pipelines.initialize(context);
     // initialize opacity pool
+    initPools(context);
+    // allocate global view matrix handles
+    WgShaderTypeMat4x4f viewMat(width, height);
+    context.allocateBufferUniform(bufferViewMat, &viewMat, sizeof(viewMat));
+    bindGroupViewMat = context.layouts.createBindGroupBuffer1Un(bufferViewMat);
+    // create render targets handles
+    resize(context, width, height);
+    // composition and blend geometries
+    meshData.blitBox(context);
+}
+
+
+void WgCompositor::initPools(WgContext& context)
+{
     for (uint32_t i = 0; i < 256; i++) {
         float opacity = i / 255.0f;
         context.allocateBufferUniform(bufferOpacities[i], &opacity, sizeof(float));
         bindGroupOpacities[i] = context.layouts.createBindGroupBuffer1Un(bufferOpacities[i]);
     }
-    // create render targets handles
-    resize(context, width, height);
 }
 
 
 void WgCompositor::release(WgContext& context)
 {
+    // composition and blend geometries
+    meshData.release(context);
     // release render targets habdles
     resize(context, 0, 0);
+    // release opacity pool
+    releasePools(context);
+    // release global view matrix handles
+    context.layouts.releaseBindGroup(bindGroupViewMat);
+    context.releaseBuffer(bufferViewMat);
+    // release pipelines
+    pipelines.release(context);
+}
+
+
+void WgCompositor::releasePools(WgContext& context)
+{
     // release opacity pool
     for (uint32_t i = 0; i < 256; i++) {
         context.layouts.releaseBindGroup(bindGroupOpacities[i]);
         context.releaseBuffer(bufferOpacities[i]);
     }
-    // release pipelines
-    pipelines.release(context);
 }
 
 
 void WgCompositor::resize(WgContext& context, uint32_t width, uint32_t height) {
     // release existig handles
     if ((this->width != width) || (this->height != height)) {
-        // composition and blend geometries
-        meshData.release(context);
         // release intermediate render storages
         storageDstCopy.release(context);
-        // release global view matrix handles
-        context.layouts.releaseBindGroup(bindGroupViewMat);
-        context.releaseBuffer(bufferViewMat);
         // release global stencil buffer handles
         context.releaseTextureView(texViewDepthStencilMS);
         context.releaseTexture(texDepthStencilMS);
@@ -77,19 +96,16 @@ void WgCompositor::resize(WgContext& context, uint32_t width, uint32_t height) {
         // store render target dimensions
         this->width = width;
         this->height = height;
+        // reallocate global view matrix handles
+        WgShaderTypeMat4x4f viewMat(width, height);
+        context.allocateBufferUniform(bufferViewMat, &viewMat, sizeof(viewMat));
         // allocate global stencil buffer handles
         texDepthStencil = context.createTexAttachement(width, height, WGPUTextureFormat_Depth24PlusStencil8, 1);
         texViewDepthStencil = context.createTextureView(texDepthStencil);
         texDepthStencilMS = context.createTexAttachement(width, height, WGPUTextureFormat_Depth24PlusStencil8, 4);
         texViewDepthStencilMS = context.createTextureView(texDepthStencilMS);
-        // allocate global view matrix handles
-        WgShaderTypeMat4x4f viewMat(width, height);
-        context.allocateBufferUniform(bufferViewMat, &viewMat, sizeof(viewMat));
-        bindGroupViewMat = context.layouts.createBindGroupBuffer1Un(bufferViewMat);
         // initialize intermediate render storages
         storageDstCopy.initialize(context, width, height);
-        // composition and blend geometries
-        meshData.blitBox(context);
     }
 }
 

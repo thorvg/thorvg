@@ -64,7 +64,9 @@ private:
     RenderRegion shrinkRenderRegion(RenderRegion& rect);
 public:
     void initialize(WgContext& context, uint32_t width, uint32_t height);
+    void initPools(WgContext& context);
     void release(WgContext& context);
+    void releasePools(WgContext& context);
     void resize(WgContext& context, uint32_t width, uint32_t height);
 
     // render passes workflow
