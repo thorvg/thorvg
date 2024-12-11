@@ -282,7 +282,7 @@ public:
             return false;
         }
 
-        canvas->clear(true);
+        canvas->remove();
 
         delete(animation);
         animation = Animation::gen();
@@ -323,7 +323,7 @@ public:
 
         if (!updated) return engine->output(width, height);
 
-        if (canvas->draw() != Result::Success) {
+        if (canvas->draw(true) != Result::Success) {
             errorMsg = "draw() fail";
             return val(typed_memory_view<uint8_t>(0, nullptr));
         }
@@ -340,8 +340,6 @@ public:
         if (!updated) return true;
 
         errorMsg = NoError;
-
-        this->canvas->clear(false);
 
         if (canvas->update() != Result::Success) {
             errorMsg = "update() fail";
