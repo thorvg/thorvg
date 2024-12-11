@@ -27,80 +27,143 @@
 #include <cstring>
 #include "tvgCommon.h"
 
-template<typename T>
-struct DuplicateMethod
-{
-    virtual ~DuplicateMethod() {}
-    virtual T* duplicate() = 0;
-};
-
-template<class T>
-struct FillDup : DuplicateMethod<Fill>
-{
-    T* inst = nullptr;
-
-    FillDup(T* _inst) : inst(_inst) {}
-    ~FillDup() {}
-
-    Fill* duplicate() override
-    {
-        return inst->duplicate();
-    }
-};
+#define LINEAR(A) PIMPL(A, LinearGradient)
+#define RADIAL(A) PIMPL(A, RadialGradient)
 
 struct Fill::Impl
 {
     ColorStop* colorStops = nullptr;
     Matrix transform = {1.0f, 0.0f, 0.0f, 0.0f, 1.0f, 0.0f, 0.0f, 0.0f, 1.0f};
-    uint32_t cnt = 0;
-    DuplicateMethod<Fill>* dup = nullptr;
-    FillSpread spread;
+    uint16_t cnt = 0;
+    FillSpread spread = FillSpread::Pad;
 
-    ~Impl()
+    virtual ~Impl()
     {
-        delete(dup);
         free(colorStops);
     }
 
-    void method(DuplicateMethod<Fill>* dup)
+    void copy(Fill::Impl* dup)
     {
-        this->dup = dup;
+        cnt = dup->cnt;
+        spread = dup->spread;
+        colorStops = static_cast<ColorStop*>(malloc(sizeof(ColorStop) * dup->cnt));
+        memcpy(colorStops, dup->colorStops, sizeof(ColorStop) * dup->cnt);
+        transform = dup->transform;
     }
 
-    Fill* duplicate()
+    Result update(const ColorStop* colorStops, uint32_t cnt)
     {
-        auto ret = dup->duplicate();
+        if ((!colorStops && cnt > 0) || (colorStops && cnt == 0)) return Result::InvalidArguments;
 
-        ret->pImpl->cnt = cnt;
-        ret->pImpl->spread = spread;
-        ret->pImpl->colorStops = static_cast<ColorStop*>(malloc(sizeof(ColorStop) * cnt));
-        memcpy(ret->pImpl->colorStops, colorStops, sizeof(ColorStop) * cnt);
-        ret->pImpl->transform = transform;
+        if (cnt == 0) {
+            if (this->colorStops) {
+                free(this->colorStops);
+                this->colorStops = nullptr;
+                this->cnt = 0;
+            }
+            return Result::Success;
+        }
 
-        return ret;
+        if (cnt != this->cnt) {
+            this->colorStops = static_cast<ColorStop*>(realloc(this->colorStops, cnt * sizeof(ColorStop)));
+        }
+
+        this->cnt = cnt;
+        memcpy(this->colorStops, colorStops, cnt * sizeof(ColorStop));
+
+        return Result::Success;
     }
+
+    virtual Fill* duplicate() = 0;
 };
 
 
-struct RadialGradient::Impl
+struct RadialGradient::Impl : Fill::Impl
 {
     float cx = 0.0f, cy = 0.0f;
     float fx = 0.0f, fy = 0.0f;
     float r = 0.0f, fr = 0.0f;
 
-    Fill* duplicate();
-    Result radial(float cx, float cy, float r, float fx, float fy, float fr);
+    Fill* duplicate() override
+    {
+        auto ret = RadialGradient::gen();
+        RADIAL(ret)->copy(this);
+        RADIAL(ret)->cx = cx;
+        RADIAL(ret)->cy = cy;
+        RADIAL(ret)->r = r;
+        RADIAL(ret)->fx = fx;
+        RADIAL(ret)->fy = fy;
+        RADIAL(ret)->fr = fr;
+
+        return ret;
+    }
+
+    Result radial(float cx, float cy, float r, float fx, float fy, float fr)
+    {
+        if (r < 0 || fr < 0) return Result::InvalidArguments;
+
+        this->cx = cx;
+        this->cy = cy;
+        this->r = r;
+        this->fx = fx;
+        this->fy = fy;
+        this->fr = fr;
+
+        return Result::Success;
+    }
+
+    Result radial(float* cx, float* cy, float* r, float* fx, float* fy, float* fr) const
+    {
+        if (cx) *cx = this->cx;
+        if (cy) *cy = this->cy;
+        if (r) *r = this->r;
+        if (fx) *fx = this->fx;
+        if (fy) *fy = this->fy;
+        if (fr) *fr = this->fr;
+
+        return Result::Success;
+    }
 };
 
 
-struct LinearGradient::Impl
+struct LinearGradient::Impl : Fill::Impl
 {
     float x1 = 0.0f;
     float y1 = 0.0f;
     float x2 = 0.0f;
     float y2 = 0.0f;
 
-    Fill* duplicate();
+    Fill* duplicate() override
+    {
+        auto ret = LinearGradient::gen();
+        LINEAR(ret)->copy(this);
+        LINEAR(ret)->x1 = x1;
+        LINEAR(ret)->y1 = y1;
+        LINEAR(ret)->x2 = x2;
+        LINEAR(ret)->y2 = y2;
+
+        return ret;
+    }
+
+    Result linear(float x1, float y1, float x2, float y2) noexcept
+    {
+        this->x1 = x1;
+        this->y1 = y1;
+        this->x2 = x2;
+        this->y2 = y2;
+
+        return Result::Success;
+    }
+
+    Result linear(float* x1, float* y1, float* x2, float* y2) const noexcept
+    {
+        if (x1) *x1 = this->x1;
+        if (x2) *x2 = this->x2;
+        if (y1) *y1 = this->y1;
+        if (y2) *y2 = this->y2;
+
+        return Result::Success;
+    }
 };
 
 

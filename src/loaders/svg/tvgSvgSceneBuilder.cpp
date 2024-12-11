@@ -153,7 +153,7 @@ static RadialGradient* _applyRadialGradientProperty(SvgStyleGradient* g, const B
         else finalTransform = m;
     }
 
-    P(fillGrad)->radial(g->radial->cx, g->radial->cy, g->radial->r, g->radial->fx, g->radial->fy, g->radial->fr);
+    fillGrad->radial(g->radial->cx, g->radial->cy, g->radial->r, g->radial->fx, g->radial->fy, g->radial->fr);
     fillGrad->spread(g->spread);
 
     //Update the stops
@@ -216,7 +216,7 @@ static Matrix _compositionTransform(Paint* paint, const SvgNode* node, const Svg
     }
     if (!compNode->node.clip.userSpace) {
         float x, y, w, h;
-        P(paint)->bounds(&x, &y, &w, &h, false, false);
+        PAINT(paint)->bounds(&x, &y, &w, &h, false, false);
         m *= {w, 0, x, 0, h, y, 0, 0, 1};
     }
     return m;

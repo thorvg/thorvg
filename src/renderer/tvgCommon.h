@@ -75,10 +75,7 @@ using Size = Point;
 
 uint16_t THORVG_VERSION_NUMBER();
 
-
-#define P(A) ((A)->pImpl)              //Access to pimpl.
-#define PP(A) (((Paint*)(A))->pImpl)   //Access to pimpl.
-
+#define PIMPL(INST, CLASS) ((CLASS::Impl*)INST->pImpl)   //Access to pimpl
 
 #define TVG_DELETE(PAINT) \
   if (PAINT->refCnt() == 0) delete(PAINT)

@@ -26,24 +26,16 @@
 #include "tvgAnimation.h"
 
 
-/************************************************************************/
-/* Internal Class Implementation                                        */
-/************************************************************************/
-
-/************************************************************************/
-/* External Class Implementation                                        */
-/************************************************************************/
-
-LottieAnimation::~LottieAnimation()
+LottieAnimation::LottieAnimation()
 {
 }
 
 
 Result LottieAnimation::override(const char* slot) noexcept
 {
-    if (!pImpl->picture->pImpl->loader) return Result::InsufficientCondition;
+    if (!PICTURE(pImpl->picture)->loader) return Result::InsufficientCondition;
 
-    if (static_cast<LottieLoader*>(pImpl->picture->pImpl->loader)->override(slot)) return Result::Success;
+    if (static_cast<LottieLoader*>(PICTURE(pImpl->picture)->loader)->override(slot)) return Result::Success;
 
     return Result::InvalidArguments;
 }
@@ -51,7 +43,7 @@ Result LottieAnimation::override(const char* slot) noexcept
 
 Result LottieAnimation::segment(const char* marker) noexcept
 {
-    auto loader = pImpl->picture->pImpl->loader;
+    auto loader = PICTURE(pImpl->picture)->loader;
     if (!loader) return Result::InsufficientCondition;
 
     if (!marker) {
@@ -68,7 +60,7 @@ Result LottieAnimation::segment(const char* marker) noexcept
 
 uint32_t LottieAnimation::markersCnt() noexcept
 {
-    auto loader = pImpl->picture->pImpl->loader;
+    auto loader = PICTURE(pImpl->picture)->loader;
     if (!loader) return 0;
     return static_cast<LottieLoader*>(loader)->markersCnt();
 }
@@ -76,7 +68,7 @@ uint32_t LottieAnimation::markersCnt() noexcept
 
 const char* LottieAnimation::marker(uint32_t idx) noexcept
 {
-    auto loader = pImpl->picture->pImpl->loader;
+    auto loader = PICTURE(pImpl->picture)->loader;
     if (!loader) return nullptr;
     return static_cast<LottieLoader*>(loader)->markers(idx);
 }

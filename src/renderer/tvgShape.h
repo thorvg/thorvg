@@ -27,25 +27,22 @@
 #include "tvgMath.h"
 #include "tvgPaint.h"
 
+#define SHAPE(A) PIMPL(A, Shape)
 
-struct Shape::Impl
+struct Shape::Impl : Paint::Impl
 {
-    RenderShape rs;                     //shape data
-    RenderData rd = nullptr;            //engine data
-    Shape* shape;
-    uint8_t rFlag = RenderUpdateFlag::None;
-    uint8_t cFlag = CompositionFlag::Invalid;
-    uint8_t opacity;                    //for composition
+    RenderShape rs;
+    RenderData rd = nullptr;
+    uint8_t compFlag = CompositionFlag::Invalid;
+    uint8_t opacity;    //for composition
 
-    Impl(Shape* s) : shape(s)
+    Impl(Shape* s) : Paint::Impl(s)
     {
     }
 
     ~Impl()
     {
-        if (auto renderer = PP(shape)->renderer) {
-            renderer->dispose(rd);
-        }
+        if (renderer) renderer->dispose(rd);
     }
 
     bool render(RenderMethod* renderer)
@@ -54,10 +51,10 @@ struct Shape::Impl
 
         RenderCompositor* cmp = nullptr;
 
-        renderer->blend(PP(shape)->blendMethod);
+        renderer->blend(blendMethod);
 
-        if (cFlag) {
-            cmp = renderer->target(bounds(renderer), renderer->colorSpace(), static_cast<CompositionFlag>(cFlag));
+        if (compFlag) {
+            cmp = renderer->target(bounds(renderer), renderer->colorSpace(), static_cast<CompositionFlag>(compFlag));
             renderer->beginComposite(cmp, MaskMethod::None, opacity);
         }
 
@@ -68,7 +65,7 @@ struct Shape::Impl
 
     bool needComposition(uint8_t opacity)
     {
-        cFlag = CompositionFlag::Invalid;
+        compFlag = CompositionFlag::Invalid;
 
         if (opacity == 0) return false;
 
@@ -78,13 +75,13 @@ struct Shape::Impl
 
         //translucent fill & stroke
         if (opacity < 255) {
-            cFlag = CompositionFlag::Opacity;
+            compFlag = CompositionFlag::Opacity;
             return true;
         }
 
         //Composition test
         const Paint* target;
-        auto method = shape->mask(&target);
+        auto method = paint->mask(&target);
         if (!target) return false;
 
         if ((target->pImpl->opacity == 255 || target->pImpl->opacity == 0) && target->type() == Type::Shape) {
@@ -100,13 +97,13 @@ struct Shape::Impl
             }
         }
 
-        cFlag = CompositionFlag::Masking;
+        compFlag = CompositionFlag::Masking;
         return true;
     }
 
     RenderData update(RenderMethod* renderer, const Matrix& transform, Array<RenderData>& clips, uint8_t opacity, RenderUpdateFlag pFlag, bool clipper)
     {
-        if (static_cast<RenderUpdateFlag>(pFlag | rFlag) == RenderUpdateFlag::None) return rd;
+        if (static_cast<RenderUpdateFlag>(pFlag | renderFlag) == RenderUpdateFlag::None) return rd;
 
         if (needComposition(opacity)) {
             /* Overriding opacity value. If this scene is half-translucent,
@@ -115,8 +112,7 @@ struct Shape::Impl
             opacity = 255;
         }
 
-        rd = renderer->prepare(rs, rd, transform, clips, opacity, static_cast<RenderUpdateFlag>(pFlag | rFlag), clipper);
-        rFlag = RenderUpdateFlag::None;
+        rd = renderer->prepare(rs, rd, transform, clips, opacity, static_cast<RenderUpdateFlag>(pFlag | renderFlag), clipper);
         return rd;
     }
 
@@ -191,6 +187,7 @@ struct Shape::Impl
     {
         rs.path.cmds.push(PathCommand::LineTo);
         rs.path.pts.push({x, y});
+        renderFlag |= RenderUpdateFlag::Path;
     }
 
     void cubicTo(float cx1, float cy1, float cx2, float cy2, float x, float y)
@@ -199,21 +196,23 @@ struct Shape::Impl
         rs.path.pts.push({cx1, cy1});
         rs.path.pts.push({cx2, cy2});
         rs.path.pts.push({x, y});
+
+        renderFlag |= RenderUpdateFlag::Path;
     }
 
     void close()
     {
         //Don't close multiple times.
         if (rs.path.cmds.count > 0 && rs.path.cmds.last() == PathCommand::Close) return;
-
         rs.path.cmds.push(PathCommand::Close);
+        renderFlag |= RenderUpdateFlag::Path;
     }
 
     void strokeWidth(float width)
     {
         if (!rs.stroke) rs.stroke = new RenderStroke();
         rs.stroke->width = width;
-        rFlag |= RenderUpdateFlag::Stroke;
+        renderFlag |= RenderUpdateFlag::Stroke;
     }
 
     void strokeTrim(float begin, float end, bool simultaneous)
@@ -223,13 +222,12 @@ struct Shape::Impl
             rs.stroke = new RenderStroke();
         }
 
-        if (tvg::equal(rs.stroke->trim.begin, begin) && tvg::equal(rs.stroke->trim.end, end) &&
-            rs.stroke->trim.simultaneous == simultaneous) return;
+        if (tvg::equal(rs.stroke->trim.begin, begin) && tvg::equal(rs.stroke->trim.end, end) && rs.stroke->trim.simultaneous == simultaneous) return;
 
         rs.stroke->trim.begin = begin;
         rs.stroke->trim.end = end;
         rs.stroke->trim.simultaneous = simultaneous;
-        rFlag |= RenderUpdateFlag::Stroke;
+        renderFlag |= RenderUpdateFlag::Stroke;
     }
 
     bool strokeTrim(float* begin, float* end)
@@ -249,21 +247,26 @@ struct Shape::Impl
     {
         if (!rs.stroke) rs.stroke = new RenderStroke();
         rs.stroke->cap = cap;
-        rFlag |= RenderUpdateFlag::Stroke;
+        renderFlag |= RenderUpdateFlag::Stroke;
     }
 
     void strokeJoin(StrokeJoin join)
     {
         if (!rs.stroke) rs.stroke = new RenderStroke();
         rs.stroke->join = join;
-        rFlag |= RenderUpdateFlag::Stroke;
+        renderFlag |= RenderUpdateFlag::Stroke;
     }
 
-    void strokeMiterlimit(float miterlimit)
+    Result strokeMiterlimit(float miterlimit)
     {
+        // https://www.w3.org/TR/SVG2/painting.html#LineJoin
+        // - A negative value for stroke-miterlimit must be treated as an illegal value.
+        if (miterlimit < 0.0f) return Result::InvalidArguments;
         if (!rs.stroke) rs.stroke = new RenderStroke();
         rs.stroke->miterlimit = miterlimit;
-        rFlag |= RenderUpdateFlag::Stroke;
+        renderFlag |= RenderUpdateFlag::Stroke;
+
+        return Result::Success;
     }
 
     void strokeFill(uint8_t r, uint8_t g, uint8_t b, uint8_t a)
@@ -272,12 +275,12 @@ struct Shape::Impl
         if (rs.stroke->fill) {
             delete(rs.stroke->fill);
             rs.stroke->fill = nullptr;
-            rFlag |= RenderUpdateFlag::GradientStroke;
+            renderFlag |= RenderUpdateFlag::GradientStroke;
         }
 
         rs.stroke->color = {r, g, b, a};
 
-        rFlag |= RenderUpdateFlag::Stroke;
+        renderFlag |= RenderUpdateFlag::Stroke;
     }
 
     Result strokeFill(Fill* f)
@@ -289,8 +292,8 @@ struct Shape::Impl
         rs.stroke->fill = f;
         rs.stroke->color.a = 0;
 
-        rFlag |= RenderUpdateFlag::Stroke;
-        rFlag |= RenderUpdateFlag::GradientStroke;
+        renderFlag |= RenderUpdateFlag::Stroke;
+        renderFlag |= RenderUpdateFlag::GradientStroke;
 
         return Result::Success;
     }
@@ -325,7 +328,7 @@ struct Shape::Impl
         }
         rs.stroke->dashCnt = cnt;
         rs.stroke->dashOffset = offset;
-        rFlag |= RenderUpdateFlag::Stroke;
+        renderFlag |= RenderUpdateFlag::Stroke;
 
         return Result::Success;
     }
@@ -340,12 +343,99 @@ struct Shape::Impl
     {
         if (!rs.stroke) rs.stroke = new RenderStroke();
         rs.stroke->strokeFirst = strokeFirst;
-        rFlag |= RenderUpdateFlag::Stroke;
+        renderFlag |= RenderUpdateFlag::Stroke;
     }
 
-    void update(RenderUpdateFlag flag)
+    Result fill(Fill* f)
     {
-        rFlag |= flag;
+        if (!f) return Result::InvalidArguments;
+
+        if (rs.fill && rs.fill != f) delete(rs.fill);
+        rs.fill = f;
+        renderFlag |= RenderUpdateFlag::Gradient;
+
+        return Result::Success;
+    }
+
+    void fill(uint8_t r, uint8_t g, uint8_t b, uint8_t a)
+    {
+        if (rs.fill) {
+            delete(rs.fill);
+            rs.fill = nullptr;
+            renderFlag |= RenderUpdateFlag::Gradient;
+        }
+
+        if (r == rs.color.r && g == rs.color.g && b == rs.color.b && a == rs.color.a) return;
+
+        rs.color = {r, g, b, a};
+        renderFlag |= RenderUpdateFlag::Color;
+    }
+
+    void resetPath()
+    {
+        rs.path.cmds.clear();
+        rs.path.pts.clear();
+        renderFlag |= RenderUpdateFlag::Path;
+    }
+
+    Result appendPath(const PathCommand *cmds, uint32_t cmdCnt, const Point* pts, uint32_t ptsCnt)
+    {
+        if (cmdCnt == 0 || ptsCnt == 0 || !cmds || !pts) return Result::InvalidArguments;
+
+        grow(cmdCnt, ptsCnt);
+        append(cmds, cmdCnt, pts, ptsCnt);
+        renderFlag |= RenderUpdateFlag::Path;
+
+        return Result::Success;
+    }
+
+    void appendCircle(float cx, float cy, float rx, float ry)
+    {
+        auto rxKappa = rx * PATH_KAPPA;
+        auto ryKappa = ry * PATH_KAPPA;
+
+        grow(6, 13);
+        moveTo(cx + rx, cy);
+        cubicTo(cx + rx, cy + ryKappa, cx + rxKappa, cy + ry, cx, cy + ry);
+        cubicTo(cx - rxKappa, cy + ry, cx - rx, cy + ryKappa, cx - rx, cy);
+        cubicTo(cx - rx, cy - ryKappa, cx - rxKappa, cy - ry, cx, cy - ry);
+        cubicTo(cx + rxKappa, cy - ry, cx + rx, cy - ryKappa, cx + rx, cy);
+        close();
+    }
+
+    void appendRect(float x, float y, float w, float h, float rx, float ry)
+    {
+        auto halfW = w * 0.5f;
+        auto halfH = h * 0.5f;
+
+        //clamping cornerRadius by minimum size
+        if (rx > halfW) rx = halfW;
+        if (ry > halfH) ry = halfH;
+
+        //rectangle
+        if (rx == 0 && ry == 0) {
+            grow(5, 4);
+            moveTo(x, y);
+            lineTo(x + w, y);
+            lineTo(x + w, y + h);
+            lineTo(x, y + h);
+            close();
+        //rounded rectangle or circle
+        } else {
+            auto hrx = rx * PATH_KAPPA;
+            auto hry = ry * PATH_KAPPA;
+            grow(10, 17);
+            moveTo(x + rx, y);
+            lineTo(x + w - rx, y);
+            cubicTo(x + w - rx + hrx, y, x + w, y + ry - hry, x + w, y + ry);
+            lineTo(x + w, y + h - ry);
+            cubicTo(x + w, y + h - ry + hry, x + w - rx + hrx, y + h, x + w - rx, y + h);
+            lineTo(x + rx, y + h);
+            cubicTo(x + rx - hrx, y + h, x, y + h - ry + hry, x, y + h - ry);
+            lineTo(x, y + ry);
+            cubicTo(x, y + ry - hry, x + rx - hrx, y, x + rx, y);
+            close();
+        }
     }
 
     Paint* duplicate(Paint* ret)
@@ -354,11 +444,11 @@ struct Shape::Impl
         if (shape) shape->reset();
         else shape = Shape::gen();
 
-        auto dup = shape->pImpl;
+        auto dup = SHAPE(shape);
         delete(dup->rs.fill);
 
         //Default Properties
-        dup->rFlag = RenderUpdateFlag::All;
+        dup->renderFlag = RenderUpdateFlag::All;
         dup->rs.rule = rs.rule;
         dup->rs.color = rs.color;
 
@@ -384,7 +474,7 @@ struct Shape::Impl
 
     void reset()
     {
-        PP(shape)->reset();
+        PAINT(paint)->reset();
         rs.path.cmds.clear();
         rs.path.pts.clear();
 
