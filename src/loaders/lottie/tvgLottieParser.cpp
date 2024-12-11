@@ -60,8 +60,9 @@ static unsigned long _int2str(int num)
 LottieEffect* LottieParser::getEffect(int type)
 {
     switch (type) {
-        case 25: return new LottieDropShadow;
-        case 29: return new LottieGaussianBlur;
+        case 21: return new LottieFxFill;
+        case 25: return new LottieFxDropShadow;
+        case 29: return new LottieFxGaussianBlur;
         default: return nullptr;
     }
 }
@@ -1268,7 +1269,30 @@ void LottieParser::parseMasks(LottieLayer* layer)
 }
 
 
-void LottieParser::parseGaussianBlur(LottieGaussianBlur* effect)
+void LottieParser::parseFill(LottieFxFill* effect)
+{
+    int idx = 0;  //fill mask -> all mask -> color -> invert -> h feather -> v feather -> opacity
+    enterArray();
+    while (nextArrayValue()) {
+        enterObject();
+        while (auto key = nextObjectKey()) {
+            if (KEY_AS("v")) {
+                enterObject();
+                while (auto key = nextObjectKey()) {
+                    if (KEY_AS("k")) {
+                        if (idx == 2) parsePropertyInternal(effect->color);
+                        else if (idx == 6) parsePropertyInternal(effect->opacity);
+                        else skip(key);
+                    } else skip(key);
+                }
+                ++idx;
+            } else skip(key);
+        }
+    }
+}
+
+
+void LottieParser::parseGaussianBlur(LottieFxGaussianBlur* effect)
 {
     int idx = 0;  //blurness -> direction -> wrap
     enterArray();
@@ -1292,7 +1316,7 @@ void LottieParser::parseGaussianBlur(LottieGaussianBlur* effect)
 }
 
 
-void LottieParser::parseDropShadow(LottieDropShadow* effect)
+void LottieParser::parseDropShadow(LottieFxDropShadow* effect)
 {
     int idx = 0;  //color -> opacity -> angle -> distance -> blur
     enterArray();
@@ -1321,12 +1345,16 @@ void LottieParser::parseDropShadow(LottieDropShadow* effect)
 void LottieParser::parseEffect(LottieEffect* effect)
 {
     switch (effect->type) {
+        case LottieEffect::Fill: {
+            parseFill(static_cast<LottieFxFill*>(effect));
+            break;
+        }
         case LottieEffect::GaussianBlur: {
-            parseGaussianBlur(static_cast<LottieGaussianBlur*>(effect));
+            parseGaussianBlur(static_cast<LottieFxGaussianBlur*>(effect));
             break;
         }
         case LottieEffect::DropShadow: {
-            parseDropShadow(static_cast<LottieDropShadow*>(effect));
+            parseDropShadow(static_cast<LottieFxDropShadow*>(effect));
             break;
         }
         default: break;
@@ -1336,11 +1364,10 @@ void LottieParser::parseEffect(LottieEffect* effect)
 
 void LottieParser::parseEffects(LottieLayer* layer)
 {
-    auto invalid = true;
-
     enterArray();
     while (nextArrayValue()) {
         LottieEffect* effect = nullptr;
+        auto invalid = true;
         enterObject();
         while (auto key = nextObjectKey()) {
             //type must be priortized.

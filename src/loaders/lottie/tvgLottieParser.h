@@ -98,8 +98,9 @@ private:
     LottieFont* parseFont();
     LottieMarker* parseMarker();
 
-    void parseGaussianBlur(LottieGaussianBlur* effect);
-    void parseDropShadow(LottieDropShadow* effect);
+    void parseFill(LottieFxFill* effect);
+    void parseGaussianBlur(LottieFxGaussianBlur* effect);
+    void parseDropShadow(LottieFxDropShadow* effect);
 
     bool parseDirection(LottieShape* shape, const char* key);
     bool parseCommon(LottieObject* obj, const char* key);
