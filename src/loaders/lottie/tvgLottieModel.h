@@ -83,6 +83,7 @@ struct LottieEffect
     {
         DropShadow = 0,
         GaussianBlur = 1,
+        Fill = 2,
     };
 
     virtual ~LottieEffect() {}
@@ -92,28 +93,45 @@ struct LottieEffect
 };
 
 
-struct LottieDropShadow : LottieEffect
+struct LottieFxFill : LottieEffect
+{
+    //LottieFloat fillMask?
+    //LottieDropDown allMask?
+    LottieColor color;
+    //LottieDropDown inverted
+    //LottieSlider horizontalFeather
+    //LottieSlider verticalFeather
+    LottieSlider opacity = 0;
+
+    LottieFxFill()
+    {
+        type = Fill;
+    }
+};
+
+
+struct LottieFxDropShadow : LottieEffect
 {
     LottieColor color;
-    LottieFloat opacity = 0;
+    LottieSlider opacity = 0;
     LottieAngle angle = 0.0f;
     LottieSlider distance = 0.0f;
     LottieSlider blurness = 0.0f;
 
-    LottieDropShadow()
+    LottieFxDropShadow()
     {
         type = DropShadow;
     }
 };
 
 
-struct LottieGaussianBlur : LottieEffect
+struct LottieFxGaussianBlur : LottieEffect
 {
     LottieSlider blurness = 0.0f;
     LottieCheckbox direction = 0;
     LottieCheckbox wrap = 0;
 
-    LottieGaussianBlur()
+    LottieFxGaussianBlur()
     {
         type = GaussianBlur;
     }
