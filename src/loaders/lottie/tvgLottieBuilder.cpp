@@ -1314,14 +1314,20 @@ void LottieBuilder::updateEffect(LottieLayer* layer, float frameNo)
     for (auto ef = layer->effects.begin(); ef < layer->effects.end(); ++ef) {
         if (!(*ef)->enable) continue;
         switch ((*ef)->type) {
+            case LottieEffect::Fill: {
+                auto effect = static_cast<LottieFxFill*>(*ef);
+                auto color = effect->color(frameNo);
+                layer->scene->push(SceneEffect::Fill, color.rgb[0], color.rgb[1], color.rgb[2], (int)(255.0f *effect->opacity(frameNo)));
+                break;
+            }
             case LottieEffect::DropShadow: {
-                auto effect = static_cast<LottieDropShadow*>(*ef);
+                auto effect = static_cast<LottieFxDropShadow*>(*ef);
                 auto color = effect->color(frameNo);
                 layer->scene->push(SceneEffect::DropShadow, color.rgb[0], color.rgb[1], color.rgb[2], (int)effect->opacity(frameNo), effect->angle(frameNo), effect->distance(frameNo), effect->blurness(frameNo) * BLUR_TO_SIGMA, QUALITY);
                 break;
             }
             case LottieEffect::GaussianBlur: {
-                auto effect = static_cast<LottieGaussianBlur*>(*ef);
+                auto effect = static_cast<LottieFxGaussianBlur*>(*ef);
                 layer->scene->push(SceneEffect::GaussianBlur, effect->blurness(frameNo) * BLUR_TO_SIGMA, effect->direction(frameNo) - 1, effect->wrap(frameNo), QUALITY);
                 break;
             }
