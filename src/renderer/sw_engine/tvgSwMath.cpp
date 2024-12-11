@@ -272,7 +272,7 @@ SwPoint mathTransform(const Point* to, const Matrix& transform)
 }
 
 
-bool mathClipBBox(const SwBBox& clipper, SwBBox& clippee)
+bool mathClipBBox(const SwBBox& clipper, SwBBox& clippee, uint8_t* clipperType)
 {
     clippee.max.x = (clippee.max.x < clipper.max.x) ? clippee.max.x : clipper.max.x;
     clippee.max.y = (clippee.max.y < clipper.max.y) ? clippee.max.y : clipper.max.y;
@@ -280,17 +280,23 @@ bool mathClipBBox(const SwBBox& clipper, SwBBox& clippee)
     clippee.min.y = (clippee.min.y > clipper.min.y) ? clippee.min.y : clipper.min.y;
 
     //Check valid region
-    if (clippee.max.x - clippee.min.x < 1 && clippee.max.y - clippee.min.y < 1) return false;
+    if (clippee.max.x - clippee.min.x < 1 && clippee.max.y - clippee.min.y < 1) {
+        if (clipperType) *clipperType = 2;
+        return false;
+    }
 
     //Check boundary
     if (clippee.min.x >= clipper.max.x || clippee.min.y >= clipper.max.y ||
-        clippee.max.x <= clipper.min.x || clippee.max.y <= clipper.min.y) return false;
+        clippee.max.x <= clipper.min.x || clippee.max.y <= clipper.min.y) {
+        if (clipperType) *clipperType = 2;
+        return false;
+    }
 
     return true;
 }
 
 
-bool mathUpdateOutlineBBox(const SwOutline* outline, const SwBBox& clipRegion, SwBBox& renderRegion, bool fastTrack)
+bool mathUpdateOutlineBBox(const SwOutline* outline, const SwBBox& clipRegion, SwBBox& renderRegion, uint8_t* clipperType, bool fastTrack)
 {
     if (!outline) return false;
 
@@ -324,5 +330,5 @@ bool mathUpdateOutlineBBox(const SwOutline* outline, const SwBBox& clipRegion, S
         renderRegion.min.y = yMin >> 6;
         renderRegion.max.y = (yMax + 63) >> 6;
     }
-    return mathClipBBox(clipRegion, renderRegion);
+    return mathClipBBox(clipRegion, renderRegion, clipperType);
 }

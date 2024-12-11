@@ -493,10 +493,10 @@ static bool _genOutline(SwShape* shape, const RenderShape* rshape, const Matrix&
 /* External Class Implementation                                        */
 /************************************************************************/
 
-bool shapePrepare(SwShape* shape, const RenderShape* rshape, const Matrix& transform,  const SwBBox& clipRegion, SwBBox& renderRegion, SwMpool* mpool, unsigned tid, bool hasComposite)
+bool shapePrepare(SwShape* shape, const RenderShape* rshape, const Matrix& transform, const SwBBox& clipRegion, SwBBox& renderRegion, uint8_t* clipperType, SwMpool* mpool, unsigned tid, bool hasComposite)
 {
     if (!_genOutline(shape, rshape, transform, mpool, tid, hasComposite)) return false;
-    if (!mathUpdateOutlineBBox(shape->outline, clipRegion, renderRegion, shape->fastTrack)) return false;
+    if (!mathUpdateOutlineBBox(shape->outline, clipRegion, renderRegion, clipperType, shape->fastTrack)) return false;
 
     shape->bbox = renderRegion;
 
@@ -614,7 +614,7 @@ bool shapeGenStrokeRle(SwShape* shape, const RenderShape* rshape, const Matrix& 
 
     strokeOutline = strokeExportOutline(shape->stroke, mpool, tid);
 
-    if (!mathUpdateOutlineBBox(strokeOutline, clipRegion, renderRegion, false)) {
+    if (!mathUpdateOutlineBBox(strokeOutline, clipRegion, renderRegion, nullptr, false)) {
         ret = false;
         goto clear;
     }

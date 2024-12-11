@@ -490,11 +490,11 @@ SwFixed mathLength(const SwPoint& pt);
 int mathCubicAngle(const SwPoint* base, SwFixed& angleIn, SwFixed& angleMid, SwFixed& angleOut);
 SwFixed mathMean(SwFixed angle1, SwFixed angle2);
 SwPoint mathTransform(const Point* to, const Matrix& transform);
-bool mathUpdateOutlineBBox(const SwOutline* outline, const SwBBox& clipRegion, SwBBox& renderRegion, bool fastTrack);
-bool mathClipBBox(const SwBBox& clipper, SwBBox& clippee);
+bool mathUpdateOutlineBBox(const SwOutline* outline, const SwBBox& clipRegion, SwBBox& renderRegion, uint8_t* clipperType, bool fastTrack);
+bool mathClipBBox(const SwBBox& clipper, SwBBox& clippee, uint8_t* clipperType);
 
 void shapeReset(SwShape* shape);
-bool shapePrepare(SwShape* shape, const RenderShape* rshape, const Matrix& transform, const SwBBox& clipRegion, SwBBox& renderRegion, SwMpool* mpool, unsigned tid, bool hasComposite);
+bool shapePrepare(SwShape* shape, const RenderShape* rshape, const Matrix& transform, const SwBBox& clipRegion, SwBBox& renderRegion, uint8_t* clipperType, SwMpool* mpool, unsigned tid, bool hasComposite);
 bool shapePrepared(const SwShape* shape);
 bool shapeGenRle(SwShape* shape, const RenderShape* rshape, bool antiAlias);
 void shapeDelOutline(SwShape* shape, SwMpool* mpool, uint32_t tid);
@@ -543,7 +543,7 @@ SwRle* rleRender(const SwBBox* bbox);
 void rleFree(SwRle* rle);
 void rleReset(SwRle* rle);
 void rleMerge(SwRle* rle, SwRle* clip1, SwRle* clip2);
-void rleClip(SwRle* rle, const SwRle* clip);
+void rleClip(SwRle* rle, const SwRle* clip, uint8_t clipperType);
 void rleClip(SwRle* rle, const SwBBox* clip);
 
 SwMpool* mpoolInit(uint32_t threads);

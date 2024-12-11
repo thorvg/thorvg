@@ -1020,9 +1020,12 @@ void rleFree(SwRle* rle)
 }
 
 
-void rleClip(SwRle *rle, const SwRle *clip)
+void rleClip(SwRle *rle, const SwRle *clip, uint8_t clipperType)
 {
-    if (rle->size == 0 || clip->size == 0) return;
+    if (rle->size == 0 || clip->size == 0) {
+        if (clipperType == 2) _replaceClipSpan(rle, nullptr, 0);
+        return;
+    }
     auto spanCnt = rle->size > clip->size ? rle->size : clip->size;
     auto spans = static_cast<SwSpan*>(malloc(sizeof(SwSpan) * (spanCnt)));
     auto spansEnd = _intersectSpansRegion(clip, rle, spans, spanCnt);

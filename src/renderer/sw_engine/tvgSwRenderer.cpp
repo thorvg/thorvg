@@ -77,7 +77,7 @@ struct SwShapeTask : SwTask
 {
     SwShape shape;
     const RenderShape* rshape = nullptr;
-    bool clipper = false;
+    uint8_t clipperType = 0; //0-none, 1-valid clipper, 2-clipper outside the render region
 
     /* We assume that if the stroke width is greater than 2,
        the shape's outline beneath the stroke could be adequately covered by the stroke drawing.
@@ -104,7 +104,7 @@ struct SwShapeTask : SwTask
     bool clip(SwRle* target) override
     {
         if (shape.fastTrack) rleClip(target, &bbox);
-        else if (shape.rle) rleClip(target, shape.rle);
+        else if (shape.rle) rleClip(target, shape.rle, clipperType);
         else return false;
 
         return true;
@@ -113,7 +113,7 @@ struct SwShapeTask : SwTask
     void run(unsigned tid) override
     {
         //Invisible
-        if (opacity == 0 && !clipper) {
+        if (opacity == 0 && !clipperType) {
             bbox.reset();
             return;
         }
@@ -132,8 +132,8 @@ struct SwShapeTask : SwTask
             alpha = MULTIPLY(alpha, opacity);
             visibleFill = (alpha > 0 || rshape->fill);
             shapeReset(&shape);
-            if (visibleFill || clipper) {
-                if (!shapePrepare(&shape, rshape, transform, bbox, renderRegion, mpool, tid, clips.count > 0 ? true : false)) {
+            if (visibleFill || clipperType) {
+                if (!shapePrepare(&shape, rshape, transform, bbox, renderRegion, &clipperType, mpool, tid, clips.count > 0)) {
                     visibleFill = false;
                     renderRegion.reset();
                 }
@@ -141,7 +141,7 @@ struct SwShapeTask : SwTask
         }
         //Fill
         if (flags & (RenderUpdateFlag::Path |RenderUpdateFlag::Gradient | RenderUpdateFlag::Transform | RenderUpdateFlag::Color)) {
-            if (visibleFill || clipper) {
+            if (visibleFill || clipperType) {
                 if (!shapeGenRle(&shape, rshape, antialiasing(strokeWidth))) goto err;
             }
             if (auto fill = rshape->fill) {
@@ -763,7 +763,7 @@ RenderData SwRenderer::prepare(const RenderShape& rshape, RenderData data, const
     else task->done();
 
     task->rshape = &rshape;
-    task->clipper = clipper;
+    task->clipperType = clipper ? 1 : 0;
 
     return prepareCommon(task, transform, clips, opacity, flags);
 }

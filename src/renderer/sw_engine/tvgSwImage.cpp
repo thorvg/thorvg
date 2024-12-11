@@ -91,7 +91,7 @@ bool imagePrepare(SwImage* image, const Matrix& transform, const SwBBox& clipReg
     }
 
     if (!_genOutline(image, transform, mpool, tid)) return false;
-    return mathUpdateOutlineBBox(image->outline, clipRegion, renderRegion, image->direct);
+    return mathUpdateOutlineBBox(image->outline, clipRegion, renderRegion, nullptr, image->direct);
 }
 
 
