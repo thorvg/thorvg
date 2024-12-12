@@ -41,9 +41,12 @@ static const char* NoError = "None";
     static WGPUInstance instance{};
     static WGPUAdapter adapter{};
     static WGPUDevice device{};
+    static bool adapterRequested = false;
+    static bool deviceRequested = false;
 #endif
 
-void init()
+// 0: success, 1: fail, 2: wait for async request
+int init()
 {
 #ifdef THORVG_WG_RASTER_SUPPORT
     //Init WebGPU
@@ -51,22 +54,32 @@ void init()
 
     // request adapter
     if (!adapter) {
+        if (adapterRequested) return 2;
+
         const WGPURequestAdapterOptions requestAdapterOptions { .nextInChain = nullptr, .powerPreference = WGPUPowerPreference_HighPerformance, .forceFallbackAdapter = false };
         auto onAdapterRequestEnded = [](WGPURequestAdapterStatus status, WGPUAdapter adapter, char const * message, void * pUserData) { *((WGPUAdapter*)pUserData) = adapter; };
         wgpuInstanceRequestAdapter(instance, &requestAdapterOptions, onAdapterRequestEnded, &adapter);
-        while (!adapter) emscripten_sleep(10);
+
+        adapterRequested = true;
+        return 2;
     }
 
     // request device
+    if (deviceRequested) return device == nullptr ? 2 : 0;
+
     WGPUFeatureName featureNames[32]{};
     size_t featuresCount = wgpuAdapterEnumerateFeatures(adapter, featureNames);
     if (!device) {
         const WGPUDeviceDescriptor deviceDesc { .nextInChain = nullptr, .label = "The device", .requiredFeatureCount = featuresCount, .requiredFeatures = featureNames };
         auto onDeviceRequestEnded = [](WGPURequestDeviceStatus status, WGPUDevice device, char const * message, void * pUserData) { *((WGPUDevice*)pUserData) = device; };
         wgpuAdapterRequestDevice(adapter, &deviceDesc, onDeviceRequestEnded, &device);
-        while (!device) emscripten_sleep(10);
+
+        deviceRequested = true;
+        return 2;
     }
 #endif
+
+    return 0;
 }
 
 void term()
