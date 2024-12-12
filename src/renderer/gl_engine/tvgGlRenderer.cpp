@@ -982,7 +982,7 @@ bool GlRenderer::prepare(TVG_UNUSED RenderEffect* effect)
 }
 
 
-bool GlRenderer::effect(TVG_UNUSED RenderCompositor* cmp, TVG_UNUSED const RenderEffect* effect, TVG_UNUSED uint8_t opacity, TVG_UNUSED bool direct)
+bool GlRenderer::effect(TVG_UNUSED RenderCompositor* cmp, TVG_UNUSED const RenderEffect* effect, TVG_UNUSED bool direct)
 {
     TVGLOG("GL_ENGINE", "SceneEffect(%d) is not supported", (int)effect->type);
     return false;

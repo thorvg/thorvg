@@ -574,7 +574,9 @@ bool rasterConvertCS(RenderSurface* surface, ColorSpace to);
 
 bool effectGaussianBlur(SwCompositor* cmp, SwSurface* surface, const RenderEffectGaussianBlur* params);
 bool effectGaussianBlurPrepare(RenderEffectGaussianBlur* effect);
-bool effectDropShadow(SwCompositor* cmp, SwSurface* surfaces[2], const RenderEffectDropShadow* params, uint8_t opacity, bool direct);
+bool effectDropShadow(SwCompositor* cmp, SwSurface* surfaces[2], const RenderEffectDropShadow* params, bool direct);
 bool effectDropShadowPrepare(RenderEffectDropShadow* effect);
+bool effectFillPrepare(RenderEffectFill* effect);
+bool effectFill(SwCompositor* cmp, const RenderEffectFill* params, bool direct);
 
 #endif /* _TVG_SW_COMMON_H_ */

@@ -109,6 +109,10 @@ Result Scene::push(SceneEffect effect, ...) noexcept
             re = RenderEffectDropShadow::gen(args);
             break;
         }
+        case SceneEffect::Fill: {
+            re = RenderEffectFill::gen(args);
+            break;
+        }
         default: break;
     }
 
