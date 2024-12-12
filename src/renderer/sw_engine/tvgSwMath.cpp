@@ -279,9 +279,6 @@ bool mathClipBBox(const SwBBox& clipper, SwBBox& clippee)
     clippee.min.x = (clippee.min.x > clipper.min.x) ? clippee.min.x : clipper.min.x;
     clippee.min.y = (clippee.min.y > clipper.min.y) ? clippee.min.y : clipper.min.y;
 
-    //Check valid region
-    if (clippee.max.x - clippee.min.x < 1 && clippee.max.y - clippee.min.y < 1) return false;
-
     //Check boundary
     if (clippee.min.x >= clipper.max.x || clippee.min.y >= clipper.max.y ||
         clippee.max.x <= clipper.min.x || clippee.max.y <= clipper.min.y) return false;
