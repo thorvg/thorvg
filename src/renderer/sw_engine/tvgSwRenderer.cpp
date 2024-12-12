@@ -634,11 +634,14 @@ bool SwRenderer::endComposite(RenderCompositor* cmp)
     if (!cmp) return false;
 
     auto p = static_cast<SwCompositor*>(cmp);
-    p->valid = true;
 
     //Recover Context
     surface = p->recoverSfc;
     surface->compositor = p->recoverCmp;
+
+    //only invalid (currently used) surface can be composited
+    if (p->valid) return true;
+    p->valid = true;
 
     //Default is alpha blending
     if (p->method == MaskMethod::None) {
@@ -655,16 +658,22 @@ bool SwRenderer::prepare(RenderEffect* effect)
     switch (effect->type) {
         case SceneEffect::GaussianBlur: return effectGaussianBlurPrepare(static_cast<RenderEffectGaussianBlur*>(effect));
         case SceneEffect::DropShadow: return effectDropShadowPrepare(static_cast<RenderEffectDropShadow*>(effect));
+        case SceneEffect::Fill: return effectFillPrepare(static_cast<RenderEffectFill*>(effect));
         default: return false;
     }
 }
 
 
-bool SwRenderer::effect(RenderCompositor* cmp, const RenderEffect* effect, uint8_t opacity, bool direct)
+bool SwRenderer::effect(RenderCompositor* cmp, const RenderEffect* effect, bool direct)
 {
-    if (effect->invalid) return false;
+    if (!effect->valid) return false;
 
     auto p = static_cast<SwCompositor*>(cmp);
+
+    if (p->image.channelSize != sizeof(uint32_t)) {
+        TVGERR("SW_ENGINE", "Not supported grayscale Gaussian Blur!");
+        return false;
+    }
 
     switch (effect->type) {
         case SceneEffect::GaussianBlur: {
@@ -675,9 +684,12 @@ bool SwRenderer::effect(RenderCompositor* cmp, const RenderEffect* effect, uint8
             cmp1->compositor->valid = false;
             auto cmp2 = request(surface->channelSize, true);
             SwSurface* surfaces[] = {cmp1, cmp2};
-            auto ret = effectDropShadow(p, surfaces, static_cast<const RenderEffectDropShadow*>(effect), opacity, direct);
+            auto ret = effectDropShadow(p, surfaces, static_cast<const RenderEffectDropShadow*>(effect), direct);
             cmp1->compositor->valid = true;
             return ret;
+        }
+        case SceneEffect::Fill: {
+            return effectFill(p, static_cast<const RenderEffectFill*>(effect), direct);
         }
         default: return false;
     }
