@@ -109,6 +109,6 @@ if get_option('bindings').contains('capi')
     endforeach
 endif
 
-execute_all_src = join_paths(meson.source_root(), 'examples/all.sh')
-execute_all_dst = join_paths(meson.build_root(), 'examples/all.sh')
+execute_all_src = join_paths(meson.project_source_root(), 'examples/all.sh')
+execute_all_dst = join_paths(meson.project_build_root(), 'examples/all.sh')
 run_command('cp', execute_all_src, execute_all_dst, check: true)
