@@ -269,7 +269,7 @@ struct RenderEffect
     RenderData rd = nullptr;
     RenderRegion extend = {0, 0, 0, 0};
     SceneEffect type;
-    bool invalid = false;
+    bool valid = false;
 
     virtual ~RenderEffect()
     {
@@ -320,6 +320,22 @@ struct RenderEffectDropShadow : RenderEffect
     }
 };
 
+struct RenderEffectFill : RenderEffect
+{
+    uint8_t color[4];  //rgba
+
+    static RenderEffectFill* gen(va_list& args)
+    {
+        auto inst = new RenderEffectFill;
+        inst->color[0] = va_arg(args, int);
+        inst->color[1] = va_arg(args, int);
+        inst->color[2] = va_arg(args, int);
+        inst->color[3] = std::min(va_arg(args, int), 255);
+        inst->type = SceneEffect::Fill;
+        return inst;
+    }
+};
+
 class RenderMethod
 {
 private:
@@ -353,7 +369,7 @@ public:
     virtual bool endComposite(RenderCompositor* cmp) = 0;
 
     virtual bool prepare(RenderEffect* effect) = 0;
-    virtual bool effect(RenderCompositor* cmp, const RenderEffect* effect, uint8_t opacity, bool direct) = 0;
+    virtual bool effect(RenderCompositor* cmp, const RenderEffect* effect, bool direct) = 0;
 };
 
 static inline bool MASK_REGION_MERGING(CompositeMethod method)

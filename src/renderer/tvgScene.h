@@ -143,9 +143,10 @@ struct Scene::Impl
         if (cmp) {
             //Apply post effects if any.
             if (effects) {
-                auto direct = effects->count == 1 ? true : false;
+                //Notify the possiblity of the direct composition of the effect result to the origin surface.
+                auto direct = (effects->count == 1) & (compFlag == CompositionFlag::PostProcessing);
                 for (auto e = effects->begin(); e < effects->end(); ++e) {
-                    renderer->effect(cmp, *e, opacity, direct);
+                    renderer->effect(cmp, *e, direct);
                 }
             }
             renderer->endComposite(cmp);
@@ -178,7 +179,7 @@ struct Scene::Impl
         if (effects) {
             for (auto e = effects->begin(); e < effects->end(); ++e) {
                 auto effect = *e;
-                if (effect->rd || renderer->prepare(effect)) {
+                if (effect->valid || renderer->prepare(effect)) {
                     ex = std::min(ex, effect->extend.x);
                     ey = std::min(ey, effect->extend.y);
                     ew = std::max(ew, effect->extend.w);
