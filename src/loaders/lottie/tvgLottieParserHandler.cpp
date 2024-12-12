@@ -219,7 +219,7 @@ const char* LookaheadParserHandler::nextObjectKey()
 }
 
 
-void LookaheadParserHandler::skip(const char* key)
+void LookaheadParserHandler::skip()
 {
     if (peekType() == kArrayType) {
         enterArray();

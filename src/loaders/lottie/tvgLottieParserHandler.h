@@ -192,7 +192,7 @@ struct LookaheadParserHandler
     void getNull();
     bool parseNext();
     const char* nextObjectKey();
-    void skip(const char* key);
+    void skip();
     void skipOut(int depth);
     int peekType();
     char* getPos();
