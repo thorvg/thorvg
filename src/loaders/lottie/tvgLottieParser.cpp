@@ -925,7 +925,7 @@ void LottieParser::parseObject(Array<LottieObject*>& parent)
 }
 
 
-void LottieParser::parseImage(LottieImage* image, const char* data, const char* subPath, bool embedded, float width, float height)
+bool LottieParser::parseImage(LottieImage* image, const char* data, const char* subPath, bool embedded, float width, float height)
 {
     //embedded image resource. should start with "data:"
     //header look like "data:image/png;base64," so need to skip till ','.
@@ -947,7 +947,7 @@ void LottieParser::parseImage(LottieImage* image, const char* data, const char* 
 
     image->data.width = width;
     image->data.height = height;
-    image->prepare();
+    return image->prepare();
 }
 
 
@@ -986,8 +986,10 @@ LottieObject* LottieParser::parseAsset()
     }
     if (data) {
         obj = new LottieImage;
-        parseImage(static_cast<LottieImage*>(obj), data, subPath, embedded, width, height);
-        if (sid) registerSlot<LottieProperty::Type::Image>(obj, sid);
+        if (!parseImage(static_cast<LottieImage*>(obj), data, subPath, embedded, width, height)) {
+            delete(obj);
+            obj = nullptr;
+        } else if (sid) registerSlot<LottieProperty::Type::Image>(obj, sid);
     }
     if (obj) obj->id = id;
     return obj;

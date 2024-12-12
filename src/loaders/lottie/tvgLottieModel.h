@@ -683,7 +683,7 @@ struct LottieImage : LottieObject, LottieRenderPooler<tvg::Picture>
         update();
     }
 
-    void prepare();
+    bool prepare();
     void update();
 };
 

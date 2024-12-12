@@ -177,7 +177,7 @@ float LottieTextRange::factor(float frameNo, float totalLen, float idx)
 }
 
 
-void LottieImage::prepare()
+bool LottieImage::prepare()
 {
     LottieObject::type = LottieObject::Image;
 
@@ -186,15 +186,23 @@ void LottieImage::prepare()
     //force to load a picture on the same thread
     TaskScheduler::async(false);
 
-    if (data.size > 0) picture->load((const char*)data.b64Data, data.size, data.mimeType);
-    else picture->load(data.path);
+    auto ret = Result::Success;
+    if (data.size > 0) ret = picture->load((const char*)data.b64Data, data.size, data.mimeType);
+    else ret = picture->load(data.path);
 
     TaskScheduler::async(true);
+
+    if (ret != Result::Success) {
+        TVGLOG("LOTTIE", "Error while loading image data.");
+        delete(picture);
+        return false;
+    }
 
     picture->size(data.width, data.height);
     picture->ref();
 
     pooler.push(picture);
+    return true;
 }
 
 

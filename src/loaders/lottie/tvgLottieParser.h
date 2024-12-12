@@ -77,7 +77,7 @@ private:
 
     LottieObject* parseObject();
     LottieObject* parseAsset();
-    void parseImage(LottieImage* image, const char* data, const char* subPath, bool embedded, float width, float height);
+    bool parseImage(LottieImage* image, const char* data, const char* subPath, bool embedded, float width, float height);
     LottieLayer* parseLayer(LottieLayer* precomp);
     LottieObject* parseGroup();
     LottieRect* parseRect();

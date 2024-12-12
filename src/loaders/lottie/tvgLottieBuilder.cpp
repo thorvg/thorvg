@@ -977,6 +977,7 @@ void LottieBuilder::updateSolid(LottieLayer* layer)
 
 void LottieBuilder::updateImage(LottieGroup* layer)
 {
+    if (layer->children.empty()) return;
     auto image = static_cast<LottieImage*>(layer->children.first());
     layer->scene->push(image->pooling(true));
 }
