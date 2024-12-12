@@ -317,7 +317,7 @@ bool LottieLoader::override(const char* slots, bool byDefault)
                 if (parser.apply(*s, byDefault)) succeed = applied = true;
                 break;
             }
-            if (!applied) parser.skip(sid);
+            if (!applied) parser.skip();
             ++idx;
         }
         free((char*)temp);
