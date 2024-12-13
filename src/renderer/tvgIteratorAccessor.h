@@ -34,7 +34,7 @@ public:
     //Utility Method: Iterator Accessor
     static Iterator* iterator(const Paint* paint)
     {
-        return paint->pImpl->iterator();
+        return PAINT(paint)->iterator();
     }
 };
 

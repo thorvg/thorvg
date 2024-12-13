@@ -62,6 +62,29 @@ private:
     
     // viewport utilities
     RenderRegion shrinkRenderRegion(RenderRegion& rect);
+
+    // shapes
+    void drawShape(WgContext& context, WgRenderDataShape* renderData);
+    void blendShape(WgContext& context, WgRenderDataShape* renderData, BlendMethod blendMethod);
+    void clipShape(WgContext& context, WgRenderDataShape* renderData);
+
+    // strokes
+    void drawStrokes(WgContext& context, WgRenderDataShape* renderData);
+    void blendStrokes(WgContext& context, WgRenderDataShape* renderData, BlendMethod blendMethod);
+    void clipStrokes(WgContext& context, WgRenderDataShape* renderData);
+
+    // images
+    void drawImage(WgContext& context, WgRenderDataPicture* renderData);
+    void blendImage(WgContext& context, WgRenderDataPicture* renderData, BlendMethod blendMethod);
+    void clipImage(WgContext& context, WgRenderDataPicture* renderData);
+
+    // scenes
+    void drawScene(WgContext& context, WgRenderStorage* scene, WgCompose* compose);
+    void blendScene(WgContext& context, WgRenderStorage* src, WgCompose* compose);
+
+    void renderClipPath(WgContext& context, WgRenderDataPaint* paint);
+    void clearClipPath(WgContext& context, WgRenderDataPaint* paint);
+
 public:
     void initialize(WgContext& context, uint32_t width, uint32_t height);
     void initPools(WgContext& context);
@@ -81,28 +104,6 @@ public:
 
     // blit render storage to texture view (f.e. screen buffer)
     void blit(WgContext& context, WGPUCommandEncoder encoder, WgRenderStorage* src, WGPUTextureView dstView);
-private:
-    // shapes
-    void drawShape(WgContext& context, WgRenderDataShape* renderData);
-    void blendShape(WgContext& context, WgRenderDataShape* renderData, BlendMethod blendMethod);
-    void clipShape(WgContext& context, WgRenderDataShape* renderData);
-
-    // strokes
-    void drawStrokes(WgContext& context, WgRenderDataShape* renderData);
-    void blendStrokes(WgContext& context, WgRenderDataShape* renderData, BlendMethod blendMethod);
-    void clipStrokes(WgContext& context, WgRenderDataShape* renderData);
-
-    // images
-    void drawImage(WgContext& context, WgRenderDataPicture* renderData);
-    void blendImage(WgContext& context, WgRenderDataPicture* renderData, BlendMethod blendMethod);
-    void clipImage(WgContext& context, WgRenderDataPicture* renderData);
-
-    // scenes
-    void drawScene(WgContext& context, WgRenderStorage* scene, WgCompose* compose);
-    void blendScene(WgContext& context, WgRenderStorage* src, WgCompose* compose);
-private:
-    void renderClipPath(WgContext& context, WgRenderDataPaint* paint);
-    void clearClipPath(WgContext& context, WgRenderDataPaint* paint);
 };
 
 #endif // _TVG_WG_COMPOSITOR_H_

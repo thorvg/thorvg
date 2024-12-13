@@ -66,15 +66,17 @@ static void _calculateCoefficients(const SwFill* fill, uint32_t x, uint32_t y, f
 static uint32_t _estimateAAMargin(const Fill* fdata)
 {
     constexpr float marginScalingFactor = 800.0f;
+
     if (fdata->type() == Type::RadialGradient) {
-        auto radius = P(static_cast<const RadialGradient*>(fdata))->r;
+        auto radius = RADIAL(fdata)->r;
         return tvg::zero(radius) ? 0 : static_cast<uint32_t>(marginScalingFactor / radius);
+    } else {
+        auto grad = LINEAR(fdata);
+        Point p1 {grad->x1, grad->y1};
+        Point p2 {grad->x2, grad->y2};
+        auto len = length(&p1, &p2);
+        return tvg::zero(len) ? 0 : static_cast<uint32_t>(marginScalingFactor / len);
     }
-    auto grad = P(static_cast<const LinearGradient*>(fdata));
-    Point p1 {grad->x1, grad->y1};
-    Point p2 {grad->x2, grad->y2};
-    auto len = length(&p1, &p2);
-    return tvg::zero(len) ? 0 : static_cast<uint32_t>(marginScalingFactor / len);
 }
 
 
@@ -129,7 +131,6 @@ static bool _updateColorTable(SwFill* fill, const Fill* fdata, const SwSurface* 
 
     if (!fill->ctable) {
         fill->ctable = static_cast<uint32_t*>(malloc(GRADIENT_STOP_SIZE * sizeof(uint32_t)));
-        if (!fill->ctable) return false;
     }
 
     const Fill::ColorStop* colors;
@@ -145,7 +146,6 @@ static bool _updateColorTable(SwFill* fill, const Fill* fdata, const SwSurface* 
     auto g = pColors->g;
     auto b = pColors->b;
     auto rgba = surface->join(r, g, b, a);
-
     auto inc = 1.0f / static_cast<float>(GRADIENT_STOP_SIZE);
     auto pos = 1.5f * inc;
     uint32_t i = 0;
@@ -173,6 +173,7 @@ static bool _updateColorTable(SwFill* fill, const Fill* fdata, const SwSurface* 
         auto next = curr + 1;
         auto delta = 1.0f / (next->offset - curr->offset);
         auto a2 = MULTIPLY(next->a, opacity);
+
         if (!fill->translucent && a2 < 255) fill->translucent = true;
 
         auto rgba2 = surface->join(next->r, next->g, next->b, a2);
@@ -181,10 +182,8 @@ static bool _updateColorTable(SwFill* fill, const Fill* fdata, const SwSurface* 
             auto t = (pos - curr->offset) * delta;
             auto dist = static_cast<int32_t>(255 * t);
             auto dist2 = 255 - dist;
-
             auto color = INTERPOLATE(rgba, rgba2, dist2);
             fill->ctable[i] = ALPHA_BLEND((color | 0xff000000), (color >> 24));
-
             ++i;
             pos += inc;
         }
@@ -195,8 +194,9 @@ static bool _updateColorTable(SwFill* fill, const Fill* fdata, const SwSurface* 
     }
     rgba = ALPHA_BLEND((rgba | 0xff000000), a);
 
-    for (; i < GRADIENT_STOP_SIZE; ++i)
+    for (; i < GRADIENT_STOP_SIZE; ++i) {
         fill->ctable[i] = rgba;
+    }
 
     //For repeat fill spread apply anti-aliasing between the last and first colors,
     //othewise make sure the last color stop is represented at the end of the table.
@@ -210,7 +210,7 @@ static bool _updateColorTable(SwFill* fill, const Fill* fdata, const SwSurface* 
 bool _prepareLinear(SwFill* fill, const LinearGradient* linear, const Matrix& pTransform)
 {
     float x1, x2, y1, y2;
-    if (linear->linear(&x1, &y1, &x2, &y2) != Result::Success) return false;
+    linear->linear(&x1, &y1, &x2, &y2);
 
     fill->linear.dx = x2 - x1;
     fill->linear.dy = y2 - y1;
@@ -244,12 +244,8 @@ bool _prepareLinear(SwFill* fill, const LinearGradient* linear, const Matrix& pT
 
 bool _prepareRadial(SwFill* fill, const RadialGradient* radial, const Matrix& pTransform)
 {
-    auto cx = P(radial)->cx;
-    auto cy = P(radial)->cy;
-    auto r = P(radial)->r;
-    auto fx = P(radial)->fx;
-    auto fy = P(radial)->fy;
-    auto fr = P(radial)->fr;
+    float cx, cy, r, fx, fy, fr;
+    radial->radial(&cx, &cy, &r, &fx, &fy, &fr);
 
     if (tvg::zero(r)) {
         fill->solid = true;

@@ -40,8 +40,8 @@ public:
     void updateBufferData(Target target, uint32_t size, const void* data);
     void bind(Target target);
     void unbind(Target target);
-
     uint32_t getBufferId() { return mGlBufferId; }
+
 private:
     uint32_t    mGlBufferId = 0;
 
@@ -53,19 +53,15 @@ public:
     ~GlStageBuffer();
 
     uint32_t push(void* data, uint32_t size, bool alignGpuOffset = false);
-
     uint32_t pushIndex(void* data, uint32_t size);
-
     bool flushToGPU();
-
     void bind();
-
     void unbind();
-
     GLuint getBufferId();
+
 private:
     void alignOffset(uint32_t size);
-private:
+
     GLuint mVao = 0;
     GlGpuBuffer mGpuBuffer = {};
     GlGpuBuffer mGpuIndexBuffer = {};

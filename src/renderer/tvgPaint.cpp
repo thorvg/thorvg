@@ -33,10 +33,10 @@
 
 #define PAINT_METHOD(ret, METHOD) \
     switch (paint->type()) { \
-        case Type::Shape: ret = P((Shape*)paint)->METHOD; break; \
-        case Type::Scene: ret = P((Scene*)paint)->METHOD; break; \
-        case Type::Picture: ret = P((Picture*)paint)->METHOD; break; \
-        case Type::Text: ret = P((Text*)paint)->METHOD; break; \
+        case Type::Shape: ret = SHAPE(paint)->METHOD; break; \
+        case Type::Scene: ret = SCENE(paint)->METHOD; break; \
+        case Type::Picture: ret = PICTURE(paint)->METHOD; break; \
+        case Type::Text: ret = TEXT(paint)->METHOD; break; \
         default: ret = {}; \
     }
 
@@ -170,40 +170,6 @@ Paint* Paint::Impl::duplicate(Paint* ret)
 }
 
 
-bool Paint::Impl::rotate(float degree)
-{
-    if (tr.overriding) return false;
-    if (tvg::equal(degree, tr.degree)) return true;
-    tr.degree = degree;
-    renderFlag |= RenderUpdateFlag::Transform;
-
-    return true;
-}
-
-
-bool Paint::Impl::scale(float factor)
-{
-    if (tr.overriding) return false;
-    if (tvg::equal(factor, tr.scale)) return true;
-    tr.scale = factor;
-    renderFlag |= RenderUpdateFlag::Transform;
-
-    return true;
-}
-
-
-bool Paint::Impl::translate(float x, float y)
-{
-    if (tr.overriding) return false;
-    if (tvg::equal(x, tr.m.e13) && tvg::equal(y, tr.m.e23)) return true;
-    tr.m.e13 = x;
-    tr.m.e23 = y;
-    renderFlag |= RenderUpdateFlag::Transform;
-
-    return true;
-}
-
-
 bool Paint::Impl::render(RenderMethod* renderer)
 {
     if (opacity == 0) return true;
@@ -214,7 +180,7 @@ bool Paint::Impl::render(RenderMethod* renderer)
         RenderRegion region;
         PAINT_METHOD(region, bounds(renderer));
 
-        if (MASK_REGION_MERGING(maskData->method)) region.add(P(maskData->target)->bounds(renderer));
+        if (MASK_REGION_MERGING(maskData->method)) region.add(PAINT(maskData->target)->bounds(renderer));
         if (region.w == 0 || region.h == 0) return true;
         cmp = renderer->target(region, MASK_TO_COLORSPACE(renderer, maskData->method), CompositionFlag::Masking);
         if (renderer->beginComposite(cmp, MaskMethod::None, 255)) {
@@ -251,7 +217,7 @@ RenderData Paint::Impl::update(RenderMethod* renderer, const Matrix& pm, Array<R
     if (maskData) {
         auto target = maskData->target;
         auto method = maskData->method;
-        P(target)->ctxFlag &= ~ContextFlag::FastTrack;   //reset
+        PAINT(target)->ctxFlag &= ~ContextFlag::FastTrack;   //reset
 
         /* If the transformation has no rotational factors and the Alpha(InvAlpha) Masking involves a simple rectangle,
            we can optimize by using the viewport instead of the regular Alphaing sequence for improved performance. */
@@ -260,31 +226,31 @@ RenderData Paint::Impl::update(RenderMethod* renderer, const Matrix& pm, Array<R
             uint8_t a;
             shape->fillColor(nullptr, nullptr, nullptr, &a);
             //no gradient fill & no maskings of the masking target.
-            if (!shape->fill() && !(PP(shape)->maskData)) {
-                if ((method == MaskMethod::Alpha && a == 255 && PP(shape)->opacity == 255) || (method == MaskMethod::InvAlpha && (a == 0 || PP(shape)->opacity == 0))) {
+            if (!shape->fill() && !(PAINT(shape)->maskData)) {
+                if ((method == MaskMethod::Alpha && a == 255 && PAINT(shape)->opacity == 255) || (method == MaskMethod::InvAlpha && (a == 0 || PAINT(shape)->opacity == 0))) {
                     viewport = renderer->viewport();
                     if ((compFastTrack = _compFastTrack(renderer, target, pm, viewport)) == Result::Success) {
-                        P(target)->ctxFlag |= ContextFlag::FastTrack;
+                        PAINT(target)->ctxFlag |= ContextFlag::FastTrack;
                     }
                 }
             }
         }
         if (compFastTrack == Result::InsufficientCondition) {
-            trd = P(target)->update(renderer, pm, clips, 255, pFlag, false);
+            trd = PAINT(target)->update(renderer, pm, clips, 255, pFlag, false);
         }
     }
 
     /* 2. Clipping */
     if (this->clipper) {
-        P(this->clipper)->ctxFlag &= ~ContextFlag::FastTrack;   //reset
+        PAINT(this->clipper)->ctxFlag &= ~ContextFlag::FastTrack;   //reset
         viewport = renderer->viewport();
         /* TODO: Intersect the clipper's clipper, if both are FastTrack.
            Update the subsequent clipper first and check its ctxFlag. */
-        if (!P(this->clipper)->clipper && (compFastTrack = _compFastTrack(renderer, this->clipper, pm, viewport)) == Result::Success) {
-            P(this->clipper)->ctxFlag |= ContextFlag::FastTrack;
+        if (!PAINT(this->clipper)->clipper && (compFastTrack = _compFastTrack(renderer, this->clipper, pm, viewport)) == Result::Success) {
+            PAINT(this->clipper)->ctxFlag |= ContextFlag::FastTrack;
         }
         if (compFastTrack == Result::InsufficientCondition) {
-            trd = P(this->clipper)->update(renderer, pm, clips, 255, pFlag, true);
+            trd = PAINT(this->clipper)->update(renderer, pm, clips, 255, pFlag, true);
             clips.push(trd);
         }
     }
@@ -354,37 +320,11 @@ bool Paint::Impl::bounds(float* x, float* y, float* w, float* h, bool transforme
 }
 
 
-void Paint::Impl::reset()
-{
-    if (clipper) {
-        clipper->unref();
-        clipper = nullptr;
-    }
-
-    if (maskData) {
-        maskData->target->unref();
-        free(maskData);
-        maskData = nullptr;
-    }
-
-    tvg::identity(&tr.m);
-    tr.degree = 0.0f;
-    tr.scale = 1.0f;
-    tr.overriding = false;
-
-    blendMethod = BlendMethod::Normal;
-    renderFlag = RenderUpdateFlag::None;
-    ctxFlag = ContextFlag::Default;
-    opacity = 255;
-    paint->id = 0;
-}
-
-
 /************************************************************************/
 /* External Class Implementation                                        */
 /************************************************************************/
 
-Paint :: Paint() : pImpl(new Impl(this))
+Paint :: Paint()
 {
 }
 
@@ -464,13 +404,7 @@ Result Paint::mask(Paint* target, MaskMethod method) noexcept
 
 MaskMethod Paint::mask(const Paint** target) const noexcept
 {
-    if (pImpl->maskData) {
-        if (target) *target = pImpl->maskData->target;
-        return pImpl->maskData->method;
-    } else {
-        if (target) *target = nullptr;
-        return MaskMethod::None;
-    }
+    return pImpl->mask(target);
 }
 
 
@@ -495,37 +429,20 @@ Result Paint::blend(BlendMethod method) noexcept
 {
     //TODO: Remove later
     if (method == BlendMethod::Hue || method == BlendMethod::Saturation || method == BlendMethod::Color || method == BlendMethod::Luminosity || method == BlendMethod::HardMix) return Result::NonSupport;
-
-    if (pImpl->blendMethod != method) {
-        pImpl->blendMethod = method;
-        pImpl->renderFlag |= RenderUpdateFlag::Blend;
-    }
-
+    pImpl->blend(method);
     return Result::Success;
 }
 
 
 uint8_t Paint::ref() noexcept
 {
-    if (pImpl->refCnt == UINT8_MAX) TVGERR("RENDERER", "Reference Count Overflow!");
-    else ++pImpl->refCnt;
-
-    return pImpl->refCnt;
+    return pImpl->ref();
 }
 
 
 uint8_t Paint::unref(bool free) noexcept
 {
-    if (pImpl->refCnt > 0) --pImpl->refCnt;
-    else TVGERR("RENDERER", "Corrupted Reference Count!");
-
-    if (free && pImpl->refCnt == 0) {
-        //TODO: use the global dismiss function?
-        delete(this);
-        return 0;
-    }
-
-    return pImpl->refCnt;
+    return pImpl->unref(free);
 }
 
 

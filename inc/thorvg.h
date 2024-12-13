@@ -43,11 +43,15 @@
 
 #define _TVG_DECLARE_PRIVATE(A) \
     struct Impl; \
-    Impl* pImpl; \
 protected: \
     A(const A&) = delete; \
     const A& operator=(const A&) = delete; \
     A()
+
+#define _TVG_DECLARE_PRIVATE_BASE(A) \
+    _TVG_DECLARE_PRIVATE(A); \
+public: \
+    Impl* pImpl
 
 #define _TVG_DISABLE_CTOR(A) \
     A() = delete; \
@@ -515,7 +519,7 @@ public:
      */
     uint32_t id = 0;
 
-    _TVG_DECLARE_PRIVATE(Paint);
+    _TVG_DECLARE_PRIVATE_BASE(Paint);
 };
 
 
@@ -616,7 +620,7 @@ public:
      */
     virtual Type type() const noexcept = 0;
 
-    _TVG_DECLARE_PRIVATE(Fill);
+    _TVG_DECLARE_PRIVATE_BASE(Fill);
 };
 
 
@@ -633,7 +637,6 @@ public:
 class TVG_API Canvas
 {
 public:
-    Canvas(RenderMethod*);
     virtual ~Canvas();
 
     /**
@@ -749,7 +752,7 @@ public:
      */
     Result sync() noexcept;
 
-    _TVG_DECLARE_PRIVATE(Canvas);
+    _TVG_DECLARE_PRIVATE_BASE(Canvas);
 };
 
 
@@ -764,8 +767,6 @@ public:
 class TVG_API LinearGradient final : public Fill
 {
 public:
-    ~LinearGradient();
-
     /**
      * @brief Sets the linear gradient bounds.
      *
@@ -828,8 +829,6 @@ public:
 class TVG_API RadialGradient final : public Fill
 {
 public:
-    ~RadialGradient();
-
     /**
      * @brief Sets the radial gradient attributes.
      *
@@ -906,8 +905,6 @@ public:
 class TVG_API Shape final : public Paint
 {
 public:
-    ~Shape();
-
     /**
      * @brief Resets the shape path.
      *
@@ -1287,8 +1284,6 @@ public:
 class TVG_API Picture final : public Paint
 {
 public:
-    ~Picture();
-
     /**
      * @brief Loads a picture data directly from a file.
      *
@@ -1420,8 +1415,6 @@ public:
 class TVG_API Scene final : public Paint
 {
 public:
-    ~Scene();
-
     /**
      * @brief Inserts a paint object to the scene.
      *
@@ -1519,8 +1512,6 @@ public:
 class TVG_API Text final : public Paint
 {
 public:
-    ~Text();
-
     /**
      * @brief Sets the font properties for the text.
      *
@@ -1902,7 +1893,7 @@ public:
 class TVG_API Animation
 {
 public:
-    ~Animation();
+    virtual ~Animation();
 
     /**
      * @brief Specifies the current frame in the animation.
@@ -2012,7 +2003,7 @@ public:
      */
     static Animation* gen() noexcept;
 
-    _TVG_DECLARE_PRIVATE(Animation);
+    _TVG_DECLARE_PRIVATE_BASE(Animation);
 };
 
 
@@ -2115,7 +2106,7 @@ public:
      */
     static Saver* gen() noexcept;
 
-    _TVG_DECLARE_PRIVATE(Saver);
+    _TVG_DECLARE_PRIVATE_BASE(Saver);
 };
 
 
@@ -2171,7 +2162,7 @@ public:
      */
     static Accessor* gen() noexcept;
 
-    _TVG_DECLARE_PRIVATE(Accessor);
+    _TVG_DECLARE_PRIVATE_BASE(Accessor);
 };
 
 /** @}*/

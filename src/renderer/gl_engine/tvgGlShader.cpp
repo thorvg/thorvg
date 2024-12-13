@@ -23,34 +23,8 @@
 #include "tvgGlShader.h"
 
 /************************************************************************/
-/* External Class Implementation                                        */
+/* Internal Class Implementation                                        */
 /************************************************************************/
-
-shared_ptr<GlShader> GlShader::gen(const char* vertSrc, const char* fragSrc)
-{
-    shared_ptr<GlShader> shader = make_shared<GlShader>();
-    shader->createShader(vertSrc, fragSrc);
-    return shader;
-}
-
-
-GlShader::~GlShader()
-{
-    glDeleteShader(mVtShader);
-    glDeleteShader(mFrShader);
-}
-
-uint32_t GlShader::getVertexShader()
-{
-    return mVtShader;
-}
-
-
-uint32_t GlShader::getFragmentShader()
-{
-    return mFrShader;
-}
-
 
 void GlShader::createShader(const char* vertSrc, const char* fragSrc)
 {
@@ -110,3 +84,31 @@ uint32_t GlShader::compileShader(uint32_t type, char* shaderSrc)
     return shader;
 }
 
+/************************************************************************/
+/* External Class Implementation                                        */
+/************************************************************************/
+
+shared_ptr<GlShader> GlShader::gen(const char* vertSrc, const char* fragSrc)
+{
+    shared_ptr<GlShader> shader = make_shared<GlShader>();
+    shader->createShader(vertSrc, fragSrc);
+    return shader;
+}
+
+
+GlShader::~GlShader()
+{
+    glDeleteShader(mVtShader);
+    glDeleteShader(mFrShader);
+}
+
+uint32_t GlShader::getVertexShader()
+{
+    return mVtShader;
+}
+
+
+uint32_t GlShader::getFragmentShader()
+{
+    return mFrShader;
+}

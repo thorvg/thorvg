@@ -24,9 +24,6 @@
 #include "tvgGlProgram.h"
 #include "tvgGlRenderPass.h"
 
-/************************************************************************/
-/* External Class Implementation                                        */
-/************************************************************************/
 
 GlRenderTask::GlRenderTask(GlProgram* program, GlRenderTask* other): mProgram(program)
 {

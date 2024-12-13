@@ -29,6 +29,43 @@
 uint32_t GlProgram::mCurrentProgram = 0;
 
 
+void GlProgram::linkProgram(std::shared_ptr<GlShader> shader)
+{
+    GLint linked;
+
+    // Create the program object
+    uint32_t progObj = glCreateProgram();
+    assert(progObj);
+
+    glAttachShader(progObj, shader->getVertexShader());
+    glAttachShader(progObj, shader->getFragmentShader());
+
+    // Link the program
+    glLinkProgram(progObj);
+
+    // Check the link status
+    glGetProgramiv(progObj, GL_LINK_STATUS, &linked);
+
+    if (!linked)
+    {
+        GLint infoLen = 0;
+        glGetProgramiv(progObj, GL_INFO_LOG_LENGTH, &infoLen);
+        if (infoLen > 0)
+        {
+            auto infoLog = static_cast<char*>(malloc(sizeof(char) * infoLen));
+            glGetProgramInfoLog(progObj, infoLen, NULL, infoLog);
+            TVGERR("GL_ENGINE", "Error linking shader: %s", infoLog);
+            free(infoLog);
+
+        }
+        glDeleteProgram(progObj);
+        progObj = 0;
+        assert(0);
+    }
+    mProgramObj = progObj;
+}
+
+
 /************************************************************************/
 /* External Class Implementation                                        */
 /************************************************************************/
@@ -149,40 +186,3 @@ void GlProgram::setUniform4x4Value(int32_t location, int count, const float* val
 {
     GL_CHECK(glUniformMatrix4fv(location, count, GL_FALSE, &values[0]));
 }
-
-void GlProgram::linkProgram(std::shared_ptr<GlShader> shader)
-{
-    GLint linked;
-
-    // Create the program object
-    uint32_t progObj = glCreateProgram();
-    assert(progObj);
-
-    glAttachShader(progObj, shader->getVertexShader());
-    glAttachShader(progObj, shader->getFragmentShader());
-
-    // Link the program
-    glLinkProgram(progObj);
-
-    // Check the link status
-    glGetProgramiv(progObj, GL_LINK_STATUS, &linked);
-
-    if (!linked)
-    {
-        GLint infoLen = 0;
-        glGetProgramiv(progObj, GL_INFO_LOG_LENGTH, &infoLen);
-        if (infoLen > 0)
-        {
-            auto infoLog = static_cast<char*>(malloc(sizeof(char) * infoLen));
-            glGetProgramInfoLog(progObj, infoLen, NULL, infoLog);
-            TVGERR("GL_ENGINE", "Error linking shader: %s", infoLog);
-            free(infoLog);
-
-        }
-        glDeleteProgram(progObj);
-        progObj = 0;
-        assert(0);
-    }
-    mProgramObj = progObj;
-}
-

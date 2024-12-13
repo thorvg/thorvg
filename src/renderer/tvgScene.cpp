@@ -20,38 +20,12 @@
  * SOFTWARE.
  */
 
-#include <cstdarg>
 #include "tvgScene.h"
 
-/************************************************************************/
-/* Internal Class Implementation                                        */
-/************************************************************************/
 
-Result Scene::Impl::resetEffects()
+Scene::Scene()
 {
-    if (effects) {
-        for (auto e = effects->begin(); e < effects->end(); ++e) {
-            delete(*e);
-        }
-        delete(effects);
-        effects = nullptr;
-    }
-    return Result::Success;
-}
-
-
-/************************************************************************/
-/* External Class Implementation                                        */
-/************************************************************************/
-
-Scene::Scene() : pImpl(new Impl(this))
-{
-}
-
-
-Scene::~Scene()
-{
-    delete(pImpl);
+    pImpl = new Impl(this);
 }
 
 
@@ -69,56 +43,27 @@ Type Scene::type() const noexcept
 
 Result Scene::push(Paint* target, Paint* at) noexcept
 {
-    if (!target) return Result::InvalidArguments;
-    target->ref();
-
-    return pImpl->insert(target, at);
+    return SCENE(this)->insert(target, at);
 }
 
 
 Result Scene::remove(Paint* paint) noexcept
 {
-    if (paint) return pImpl->remove(paint);
-    else return pImpl->clearPaints();
+    if (paint) return SCENE(this)->remove(paint);
+    else return SCENE(this)->clearPaints();
 }
 
 
 const list<Paint*>& Scene::paints() const noexcept
 {
-    return pImpl->paints;
+    return SCENE(this)->paints;
 }
 
 
 Result Scene::push(SceneEffect effect, ...) noexcept
 {
-    if (effect == SceneEffect::ClearAll) return pImpl->resetEffects();
-
-    if (!pImpl->effects) pImpl->effects = new Array<RenderEffect*>;
-
     va_list args;
     va_start(args, effect);
 
-    RenderEffect* re = nullptr;
-
-    switch (effect) {
-        case SceneEffect::GaussianBlur: {
-            re = RenderEffectGaussianBlur::gen(args);
-            break;
-        }
-        case SceneEffect::DropShadow: {
-            re = RenderEffectDropShadow::gen(args);
-            break;
-        }
-        case SceneEffect::Fill: {
-            re = RenderEffectFill::gen(args);
-            break;
-        }
-        default: break;
-    }
-
-    if (!re) return Result::InvalidArguments;
-
-    pImpl->effects->push(re);
-
-    return Result::Success;
+    return SCENE(this)->push(effect, args);
 }

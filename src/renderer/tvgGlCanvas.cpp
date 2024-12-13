@@ -24,38 +24,20 @@
 
 #ifdef THORVG_GL_RASTER_SUPPORT
     #include "tvgGlRenderer.h"
-#else
-    class GlRenderer : public RenderMethod
-    {
-        //Non Supported. Dummy Class */
-    };
 #endif
 
-/************************************************************************/
-/* Internal Class Implementation                                        */
-/************************************************************************/
-
-struct GlCanvas::Impl
+GlCanvas::GlCanvas()
 {
-};
-
-
-/************************************************************************/
-/* External Class Implementation                                        */
-/************************************************************************/
-
 #ifdef THORVG_GL_RASTER_SUPPORT
-GlCanvas::GlCanvas() : Canvas(GlRenderer::gen()), pImpl(nullptr)
-#else
-GlCanvas::GlCanvas() : Canvas(nullptr), pImpl(nullptr)
+    pImpl->renderer = GlRenderer::gen();
+    pImpl->renderer->ref();
 #endif
-{
 }
 
 
 GlCanvas::~GlCanvas()
 {
-    delete(pImpl);
+    //TODO:
 }
 
 
@@ -64,20 +46,20 @@ Result GlCanvas::target(int32_t id, uint32_t w, uint32_t h, ColorSpace cs) noexc
 #ifdef THORVG_GL_RASTER_SUPPORT
     if (cs != ColorSpace::ABGR8888S) return Result::NonSupport;
 
-    if (Canvas::pImpl->status != Status::Damaged && Canvas::pImpl->status != Status::Synced) {
+    if (pImpl->status != Status::Damaged && pImpl->status != Status::Synced) {
         return Result::InsufficientCondition;
     }
 
     //We know renderer type, avoid dynamic_cast for performance.
-    auto renderer = static_cast<GlRenderer*>(Canvas::pImpl->renderer);
+    auto renderer = static_cast<GlRenderer*>(pImpl->renderer);
     if (!renderer) return Result::MemoryCorruption;
 
     if (!renderer->target(id, w, h)) return Result::Unknown;
-    Canvas::pImpl->vport = {0, 0, (int32_t)w, (int32_t)h};
-    renderer->viewport(Canvas::pImpl->vport);
+    pImpl->vport = {0, 0, (int32_t)w, (int32_t)h};
+    renderer->viewport(pImpl->vport);
 
     //Paints must be updated again with this new target.
-    Canvas::pImpl->status = Status::Damaged;
+    pImpl->status = Status::Damaged;
 
     return Result::Success;
 #endif

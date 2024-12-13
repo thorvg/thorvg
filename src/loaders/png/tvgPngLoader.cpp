@@ -29,7 +29,6 @@
 /* Internal Class Implementation                                        */
 /************************************************************************/
 
-
 void PngLoader::run(unsigned tid)
 {
     auto width = static_cast<unsigned>(w);

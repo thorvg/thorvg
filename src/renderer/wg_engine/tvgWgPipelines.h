@@ -46,7 +46,7 @@ private:
     WGPUShaderModule shader_scene_compose{};
     // shader blit
     WGPUShaderModule shader_blit{};
-private:
+
     // layouts helpers
     WGPUPipelineLayout layout_stencil{};
     WGPUPipelineLayout layout_depth{};
@@ -93,7 +93,6 @@ public:
     WGPURenderPipeline blit{};
 private:
     void releaseGraphicHandles(WgContext& context);
-private:
     WGPUShaderModule createShaderModule(WGPUDevice device, const char* label, const char* code);
     WGPUPipelineLayout createPipelineLayout(WGPUDevice device, const WGPUBindGroupLayout* bindGroupLayouts, const uint32_t bindGroupLayoutsCount);
     WGPURenderPipeline createRenderPipeline(

@@ -28,17 +28,18 @@
 #include "tvgFill.h"
 #include "tvgLoader.h"
 
-struct Text::Impl
+#define TEXT(A) PIMPL(A, Text)
+
+struct Text::Impl : Paint::Impl
 {
+    Shape* shape;   //text shape
     FontLoader* loader = nullptr;
-    Text* paint;
-    Shape* shape;
     char* utf8 = nullptr;
     float fontSize;
     bool italic = false;
     bool changed = false;
 
-    Impl(Text* p) : paint(p), shape(Shape::gen())
+    Impl(Text* p) : Paint::Impl(p), shape(Shape::gen())
     {
     }
 
@@ -84,14 +85,14 @@ struct Text::Impl
 
     RenderRegion bounds(RenderMethod* renderer)
     {
-        return P(shape)->bounds(renderer);
+        return SHAPE(shape)->bounds(renderer);
     }
 
     bool render(RenderMethod* renderer)
     {
         if (!loader) return true;
-        renderer->blend(PP(paint)->blendMethod);
-        return PP(shape)->render(renderer);
+        renderer->blend(blendMethod);
+        return PAINT(shape)->render(renderer);
     }
 
     bool load()
@@ -112,30 +113,31 @@ struct Text::Impl
         if (!load()) return nullptr;
 
         //transform the gradient coordinates based on the final scaled font.
-        auto fill = P(shape)->rs.fill;
-        if (fill && P(shape)->rFlag & RenderUpdateFlag::Gradient) {
+        auto fill = SHAPE(shape)->rs.fill;
+        if (fill && SHAPE(shape)->renderFlag & RenderUpdateFlag::Gradient) {
             auto scale = 1.0f / loader->scale;
             if (fill->type() == Type::LinearGradient) {
-                P(static_cast<LinearGradient*>(fill))->x1 *= scale;
-                P(static_cast<LinearGradient*>(fill))->y1 *= scale;
-                P(static_cast<LinearGradient*>(fill))->x2 *= scale;
-                P(static_cast<LinearGradient*>(fill))->y2 *= scale;
+                LINEAR(fill)->x1 *= scale;
+                LINEAR(fill)->y1 *= scale;
+                LINEAR(fill)->x2 *= scale;
+                LINEAR(fill)->y2 *= scale;
             } else {
-                P(static_cast<RadialGradient*>(fill))->cx *= scale;
-                P(static_cast<RadialGradient*>(fill))->cy *= scale;
-                P(static_cast<RadialGradient*>(fill))->r *= scale;
-                P(static_cast<RadialGradient*>(fill))->fx *= scale;
-                P(static_cast<RadialGradient*>(fill))->fy *= scale;
-                P(static_cast<RadialGradient*>(fill))->fr *= scale;
+                RADIAL(fill)->cx *= scale;
+                RADIAL(fill)->cy *= scale;
+                RADIAL(fill)->r *= scale;
+                RADIAL(fill)->fx *= scale;
+                RADIAL(fill)->fy *= scale;
+                RADIAL(fill)->fr *= scale;
             }
         }
-        return PP(shape)->update(renderer, transform, clips, opacity, pFlag, false);
+
+        return PAINT(shape)->update(renderer, transform, clips, opacity, pFlag, false);
     }
 
     bool bounds(float* x, float* y, float* w, float* h, TVG_UNUSED bool stroking)
     {
         if (!load()) return false;
-        PP(shape)->bounds(x, y, w, h, true, true, false);
+        PAINT(shape)->bounds(x, y, w, h, true, true, false);
         return true;
     }
 
@@ -146,8 +148,8 @@ struct Text::Impl
         load();
 
         auto text = Text::gen();
-        auto dup = text->pImpl;
-        P(shape)->duplicate(dup->shape);
+        auto dup = TEXT(text);
+        SHAPE(shape)->duplicate(dup->shape);
 
         if (loader) {
             dup->loader = loader;

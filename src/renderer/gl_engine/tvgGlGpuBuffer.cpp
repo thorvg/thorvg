@@ -26,7 +26,7 @@
 #include <string.h>
 
 /************************************************************************/
-/* Internal Class Implementation                                        */
+/* GlGpuBuffer Implementation                                           */
 /************************************************************************/
 
 static GLint _getGpuBufferAlign() 
@@ -39,7 +39,26 @@ static GLint _getGpuBufferAlign()
     }
 
     return offset;
-} 
+}
+
+
+void GlGpuBuffer::updateBufferData(Target target, uint32_t size, const void* data)
+{
+    GL_CHECK(glBufferData(static_cast<uint32_t>(target), size, data, GL_STATIC_DRAW));
+}
+
+
+void GlGpuBuffer::bind(Target target)
+{
+    GL_CHECK(glBindBuffer(static_cast<uint32_t>(target), mGlBufferId));
+}
+
+
+void GlGpuBuffer::unbind(Target target)
+{
+    GL_CHECK(glBindBuffer(static_cast<uint32_t>(target), 0));
+}
+
 
 GlGpuBuffer::GlGpuBuffer()
 {
@@ -56,26 +75,15 @@ GlGpuBuffer::~GlGpuBuffer()
     }
 }
 
-
-void GlGpuBuffer::updateBufferData(Target target, uint32_t size, const void* data)
-{
-    GL_CHECK(glBufferData(static_cast<uint32_t>(target), size, data, GL_STATIC_DRAW));
-}
-
-void GlGpuBuffer::bind(Target target)
-{
-    GL_CHECK(glBindBuffer(static_cast<uint32_t>(target), mGlBufferId));
-}
-
-void GlGpuBuffer::unbind(Target target)
-{
-    GL_CHECK(glBindBuffer(static_cast<uint32_t>(target), 0));
-}
+/************************************************************************/
+/* GlStageBuffer Implementation                                         */
+/************************************************************************/
 
 GlStageBuffer::GlStageBuffer() : mVao(0), mGpuBuffer(), mGpuIndexBuffer()
 {
     GL_CHECK(glGenVertexArrays(1, &mVao));
 }
+
 
 GlStageBuffer::~GlStageBuffer()
 {
@@ -84,6 +92,7 @@ GlStageBuffer::~GlStageBuffer()
         mVao = 0;
     }
 }
+
 
 uint32_t GlStageBuffer::push(void *data, uint32_t size, bool alignGpuOffset)
 {
@@ -102,6 +111,7 @@ uint32_t GlStageBuffer::push(void *data, uint32_t size, bool alignGpuOffset)
     return offset;
 }
 
+
 uint32_t GlStageBuffer::pushIndex(void *data, uint32_t size)
 {
     uint32_t offset = mIndexBuffer.count;
@@ -116,6 +126,7 @@ uint32_t GlStageBuffer::pushIndex(void *data, uint32_t size)
 
     return offset;
 }
+
 
 bool GlStageBuffer::flushToGPU()
 {
@@ -140,6 +151,7 @@ bool GlStageBuffer::flushToGPU()
     return true;
 }
 
+
 void GlStageBuffer::bind()
 {
     glBindVertexArray(mVao);
@@ -147,6 +159,7 @@ void GlStageBuffer::bind()
     mGpuBuffer.bind(GlGpuBuffer::Target::UNIFORM_BUFFER);
     mGpuIndexBuffer.bind(GlGpuBuffer::Target::ELEMENT_ARRAY_BUFFER);
 }
+
 
 void GlStageBuffer::unbind()
 {
@@ -156,10 +169,12 @@ void GlStageBuffer::unbind()
     mGpuIndexBuffer.unbind(GlGpuBuffer::Target::ELEMENT_ARRAY_BUFFER);
 }
 
+
 GLuint GlStageBuffer::getBufferId()
 {
     return mGpuBuffer.getBufferId();
 }
+
 
 void GlStageBuffer::alignOffset(uint32_t size)
 {
