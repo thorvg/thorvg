@@ -1020,9 +1020,9 @@ void rleFree(SwRle* rle)
 }
 
 
-void rleClip(SwRle *rle, const SwRle *clip)
+bool rleClip(SwRle *rle, const SwRle *clip)
 {
-    if (rle->size == 0 || clip->size == 0) return;
+    if (rle->size == 0 || clip->size == 0) return false;
     auto spanCnt = rle->size > clip->size ? rle->size : clip->size;
     auto spans = static_cast<SwSpan*>(malloc(sizeof(SwSpan) * (spanCnt)));
     auto spansEnd = _intersectSpansRegion(clip, rle, spans, spanCnt);
@@ -1030,17 +1030,21 @@ void rleClip(SwRle *rle, const SwRle *clip)
     _replaceClipSpan(rle, spans, spansEnd - spans);
 
     TVGLOG("SW_ENGINE", "Using Path Clipping!");
+
+    return true;
 }
 
 
-void rleClip(SwRle *rle, const SwBBox* clip)
+bool rleClip(SwRle *rle, const SwBBox* clip)
 {
-    if (rle->size == 0) return;
+    if (rle->size == 0) return false;
     auto spans = static_cast<SwSpan*>(malloc(sizeof(SwSpan) * (rle->size)));
     auto spansEnd = _intersectSpansRect(clip, rle, spans, rle->size);
 
     _replaceClipSpan(rle, spans, spansEnd - spans);
 
     TVGLOG("SW_ENGINE", "Using Box Clipping!");
+
+    return true;
 }
 

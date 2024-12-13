@@ -543,8 +543,8 @@ SwRle* rleRender(const SwBBox* bbox);
 void rleFree(SwRle* rle);
 void rleReset(SwRle* rle);
 void rleMerge(SwRle* rle, SwRle* clip1, SwRle* clip2);
-void rleClip(SwRle* rle, const SwRle* clip);
-void rleClip(SwRle* rle, const SwBBox* clip);
+bool rleClip(SwRle* rle, const SwRle* clip);
+bool rleClip(SwRle* rle, const SwBBox* clip);
 
 SwMpool* mpoolInit(uint32_t threads);
 bool mpoolTerm(SwMpool* mpool);
