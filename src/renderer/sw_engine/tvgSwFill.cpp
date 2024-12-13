@@ -375,6 +375,7 @@ void fillRadial(const SwFill* fill, uint32_t* dst, uint32_t y, uint32_t x, uint3
             for (uint32_t i = 0 ; i < len ; ++i, ++dst, cmp += csize) {
                 *dst = opBlendNormal(_pixel(fill, sqrtf(det) - b), *dst, alpha(cmp));
                 det += deltaDet;
+                if (det < 0.0f) det = 0.0f;
                 deltaDet += deltaDeltaDet;
                 b += deltaB;
             }
@@ -382,6 +383,7 @@ void fillRadial(const SwFill* fill, uint32_t* dst, uint32_t y, uint32_t x, uint3
             for (uint32_t i = 0 ; i < len ; ++i, ++dst, cmp += csize) {
                 *dst = opBlendNormal(_pixel(fill, sqrtf(det) - b), *dst, MULTIPLY(opacity, alpha(cmp)));
                 det += deltaDet;
+                if (det < 0.0f) det = 0.0f;
                 deltaDet += deltaDeltaDet;
                 b += deltaB;
             }
@@ -409,6 +411,7 @@ void fillRadial(const SwFill* fill, uint32_t* dst, uint32_t y, uint32_t x, uint3
         for (uint32_t i = 0; i < len; ++i, ++dst) {
             *dst = op(_pixel(fill, sqrtf(det) - b), *dst, a);
             det += deltaDet;
+            if (det < 0.0f) det = 0.0f;
             deltaDet += deltaDeltaDet;
             b += deltaB;
         }
@@ -437,6 +440,7 @@ void fillRadial(const SwFill* fill, uint8_t* dst, uint32_t y, uint32_t x, uint32
             auto src = MULTIPLY(a, A(_pixel(fill, sqrtf(det) - b)));
             *dst = maskOp(src, *dst, ~src);
             det += deltaDet;
+            if (det < 0.0f) det = 0.0f;
             deltaDet += deltaDeltaDet;
             b += deltaB;
         }
@@ -466,6 +470,7 @@ void fillRadial(const SwFill* fill, uint8_t* dst, uint32_t y, uint32_t x, uint32
             auto src = MULTIPLY(A(_pixel(fill, sqrtf(det))), a);
             auto tmp = maskOp(src, *cmp, 0);
             *dst = tmp + MULTIPLY(*dst, ~tmp);
+            if (det < 0.0f) det = 0.0f;
             deltaDet += deltaDeltaDet;
             b += deltaB;
         }
@@ -506,6 +511,7 @@ void fillRadial(const SwFill* fill, uint32_t* dst, uint32_t y, uint32_t x, uint3
                 auto tmp = op(_pixel(fill, sqrtf(det) - b), *dst, 255);
                 *dst = op2(tmp, *dst, 255);
                 det += deltaDet;
+                if (det < 0.0f) det = 0.0f;
                 deltaDet += deltaDeltaDet;
                 b += deltaB;
             }
@@ -515,6 +521,7 @@ void fillRadial(const SwFill* fill, uint32_t* dst, uint32_t y, uint32_t x, uint3
                 auto tmp2 = op2(tmp, *dst, 255);
                 *dst = INTERPOLATE(tmp2, *dst, a);
                 det += deltaDet;
+                if (det < 0.0f) det = 0.0f;
                 deltaDet += deltaDeltaDet;
                 b += deltaB;
             }
