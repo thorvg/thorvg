@@ -35,13 +35,9 @@ bool GlGeometry::tesselate(const RenderShape& rshape, RenderUpdateFlag flag)
         fillVertex.clear();
         fillIndex.clear();
 
-
         BWTessellator bwTess{&fillVertex, &fillIndex};
-
         bwTess.tessellate(&rshape, mMatrix);
-
         mFillRule = rshape.rule;
-
         mBounds = bwTess.bounds();
     }
 
@@ -51,7 +47,6 @@ bool GlGeometry::tesselate(const RenderShape& rshape, RenderUpdateFlag flag)
 
         Stroker stroke{&strokeVertex, &strokeIndex, mMatrix};
         stroke.stroke(&rshape);
-
         mBounds = stroke.bounds();
     }
 
@@ -123,10 +118,7 @@ void GlGeometry::disableVertex(uint32_t location)
 
 bool GlGeometry::draw(GlRenderTask* task, GlStageBuffer* gpuBuffer, RenderUpdateFlag flag)
 {
-
-    if (flag == RenderUpdateFlag::None) {
-        return false;
-    }
+    if (flag == RenderUpdateFlag::None) return false;
 
     Array<float>* vertexBuffer = nullptr;
     Array<uint32_t>* indexBuffer = nullptr;
@@ -220,10 +212,7 @@ RenderRegion GlGeometry::getBounds() const
             static_cast<int32_t>(ceil(right - floor(left))),
             static_cast<int32_t>(ceil(bottom - floor(top))),
         };
-        if (bounds.w < 0 || bounds.h < 0) {
-            return mBounds;
-        } else {
-            return bounds;
-        }
+        if (bounds.w < 0 || bounds.h < 0) return mBounds;
+        else return bounds;
     }
 }

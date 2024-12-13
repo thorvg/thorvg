@@ -30,7 +30,6 @@
 /* Internal Class Implementation                                        */
 /************************************************************************/
 
-
 void WebpLoader::run(unsigned tid)
 {
     //TODO: acquire the current colorspace format & pre-multiplied alpha image.

@@ -61,7 +61,7 @@ private:
     Polygon *makePoly(Vertex* v, int32_t winding);
     void emitPoly(MonotonePolygon* poly);
     void emitTriangle(Vertex* p1, Vertex* p2, Vertex* p3);
-private:
+
     FillRule fillRule = FillRule::Winding;
     std::unique_ptr<ObjectHeap> pHeap;
     Array<VertexList*> outlines;
@@ -134,7 +134,6 @@ private:
     void lineTo(const Point& pt);
     void cubicTo(const Point& pt1, const Point& pt2, const Point& pt3);
 
-private:
     Array<PathCommand>* mCmds;
     Array<Point>* mPts;
     uint32_t mDashCount;

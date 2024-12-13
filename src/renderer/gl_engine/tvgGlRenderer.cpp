@@ -803,11 +803,9 @@ void GlRenderer::endRenderPass(RenderCompositor* cmp)
 }
 
 
-
 /************************************************************************/
 /* External Class Implementation                                        */
 /************************************************************************/
-
 
 bool GlRenderer::clear()
 {

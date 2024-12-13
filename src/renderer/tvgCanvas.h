@@ -34,10 +34,9 @@ struct Canvas::Impl
     RenderRegion vport = {0, 0, INT32_MAX, INT32_MAX};
     Status status = Status::Synced;
 
-    Impl(RenderMethod* pRenderer) : scene(Scene::gen()), renderer(pRenderer)
+    Impl() : scene(Scene::gen())
     {
         scene->ref();
-        renderer->ref();
     }
 
     ~Impl()
@@ -77,8 +76,8 @@ struct Canvas::Impl
 
         auto m = Matrix{1, 0, 0, 0, 1, 0, 0, 0, 1};
 
-        if (paint) P(paint)->update(renderer, m, clips, 255, flag);
-        else PP(scene)->update(renderer, m, clips, 255, flag);
+        if (paint) PAINT(paint)->update(renderer, m, clips, 255, flag);
+        else PAINT(scene)->update(renderer, m, clips, 255, flag);
 
         status = Status::Updating;
         return Result::Success;
@@ -96,7 +95,7 @@ struct Canvas::Impl
 
         if (!renderer->preRender()) return Result::InsufficientCondition;
 
-        if (!PP(scene)->render(renderer) || !renderer->postRender()) return Result::InsufficientCondition;
+        if (!PAINT(scene)->render(renderer) || !renderer->postRender()) return Result::InsufficientCondition;
 
         status = Status::Drawing;
 
