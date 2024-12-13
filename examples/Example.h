@@ -349,7 +349,7 @@ struct GlWindow : Window
     void resize() override
     {
         //Set the canvas target and draw on it.
-        verify(static_cast<tvg::GlCanvas*>(canvas)->target(0, width, height, tvg::ColorSpace::ABGR8888S));
+        verify(static_cast<tvg::GlCanvas*>(canvas)->target(context, 0, width, height, tvg::ColorSpace::ABGR8888S));
     }
 
     void refresh() override

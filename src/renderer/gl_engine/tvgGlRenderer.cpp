@@ -55,6 +55,17 @@ void GlRenderer::clearDisposes()
 }
 
 
+void GlRenderer::makeContextCurrent()
+{
+#ifdef __EMSCRIPTEN__
+    auto targetContext = (EMSCRIPTEN_WEBGL_CONTEXT_HANDLE)mContext;
+    if (emscripten_webgl_get_current_context() != targetContext) {
+        emscripten_webgl_make_context_current(targetContext);
+    }
+#endif
+}
+
+
 GlRenderer::GlRenderer() :mGpuBuffer(new GlStageBuffer), mPrograms(), mComposePool()
 {
 }
@@ -818,16 +829,18 @@ bool GlRenderer::clear()
 }
 
 
-bool GlRenderer::target(int32_t id, uint32_t w, uint32_t h)
+bool GlRenderer::target(void* context, int32_t id, uint32_t w, uint32_t h)
 {
-    if (id == GL_INVALID_VALUE || w == 0 || h == 0) return false;
+    if (!context || id == GL_INVALID_VALUE || w == 0 || h == 0) return false;
 
     surface.stride = w;
     surface.w = w;
     surface.h = h;
 
+    mContext = context;
     mTargetFboId = static_cast<GLint>(id);
 
+    makeContextCurrent();
     mRootTarget = make_unique<GlRenderTarget>(surface.w, surface.h);
     mRootTarget->setViewport({0, 0, static_cast<int32_t>(surface.w), static_cast<int32_t>(surface.h)});
     mRootTarget->init(mTargetFboId);
@@ -902,6 +915,7 @@ RenderRegion GlRenderer::region(RenderData data)
 
 bool GlRenderer::preRender()
 {
+    makeContextCurrent();
     if (mPrograms.size() == 0)
     {
         initShaders();
