@@ -300,7 +300,7 @@ void GlRenderer::drawPrimitive(GlShape& sdata, const Fill* fill, RenderUpdateFla
         16 * sizeof(float),
     });
 
-    auto alpha = 1.0f;
+    auto alpha = sdata.opacity / 255.f;
 
     if (flag & RenderUpdateFlag::GradientStroke) {
         auto strokeWidth = sdata.rshape->strokeWidth();
