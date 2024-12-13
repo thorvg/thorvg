@@ -342,7 +342,7 @@ void GlRenderer::drawPrimitive(GlShape& sdata, const Fill* fill, RenderUpdateFla
         });
     }
 
-    float alpha = 1.0f;
+    auto alpha = sdata.opacity / 255.f;
 
     if (flag & RenderUpdateFlag::GradientStroke) {
         float strokeWidth = sdata.rshape->strokeWidth();
@@ -401,7 +401,7 @@ void GlRenderer::drawPrimitive(GlShape& sdata, const Fill* fill, RenderUpdateFla
 
             uint32_t nStops = 0;
             for (uint32_t i = 0; i < stopCnt; ++i) {
-                if (i > 0 && gradientBlock.stopPoints[nStops - 1] > stops[i].offset) continue; 
+                if (i > 0 && gradientBlock.stopPoints[nStops - 1] > stops[i].offset) continue;
 
                 gradientBlock.stopPoints[i] = stops[i].offset;
                 gradientBlock.stopColors[i * 4 + 0] = stops[i].r / 255.f;
@@ -419,7 +419,7 @@ void GlRenderer::drawPrimitive(GlShape& sdata, const Fill* fill, RenderUpdateFla
             fx = P(radialFill)->fx;
             fy = P(radialFill)->fy;
             fr = P(radialFill)->fr;
-    
+
             gradientBlock.centerPos[0] = fx;
             gradientBlock.centerPos[1] = fy;
             gradientBlock.centerPos[2] = x;
