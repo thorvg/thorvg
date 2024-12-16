@@ -132,6 +132,10 @@ Result Scene::push(SceneEffect effect, ...) noexcept
             re = RenderEffectFill::gen(args);
             break;
         }
+        case SceneEffect::Tint: {
+            re = RenderEffectTint::gen(args);
+            break;
+        }
         default: break;
     }
 
