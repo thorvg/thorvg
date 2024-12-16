@@ -26,24 +26,55 @@
 /* ThorVG Drawing Contents                                              */
 /************************************************************************/
 
+#define SIZE 400
+
 struct UserExample : tvgexam::Example
 {
-    tvg::Scene* scene[3] = {nullptr, nullptr, nullptr};
+    tvg::Scene* blur[3] = {nullptr, nullptr, nullptr};   //(for direction both, horizontal, vertical)
+    tvg::Scene* fill = nullptr;
+    tvg::Scene* tint = nullptr;
 
     bool content(tvg::Canvas* canvas, uint32_t w, uint32_t h) override
     {
         if (!canvas) return false;
 
+        //blur scene
         for (int i = 0; i < 3; ++i) {
-            scene[i] = tvg::Scene::gen();
+            blur[i] = tvg::Scene::gen();
 
             auto picture = tvg::Picture::gen();
             picture->load(EXAMPLE_DIR"/svg/tiger.svg");
-            picture->size(w / 3, h);
-            picture->translate((w / 3) * i, 0);
+            picture->size(SIZE, SIZE);
+            picture->translate(SIZE * i, 0);
 
-            scene[i]->push(picture);
-            canvas->push(scene[i]);
+            blur[i]->push(picture);
+            canvas->push(blur[i]);
+        }
+
+        //fill scene
+        {
+            fill = tvg::Scene::gen();
+
+            auto picture = tvg::Picture::gen();
+            picture->load(EXAMPLE_DIR"/svg/tiger.svg");
+            picture->size(SIZE, SIZE);
+            picture->translate(0, SIZE);
+
+            fill->push(picture);
+            canvas->push(fill);
+        }
+
+        //tint scene
+        {
+            tint = tvg::Scene::gen();
+
+            auto picture = tvg::Picture::gen();
+            picture->load(EXAMPLE_DIR"/svg/tiger.svg");
+            picture->size(SIZE, SIZE);
+            picture->translate(SIZE, SIZE);
+
+            tint->push(picture);
+            canvas->push(tint);
         }
 
         return true;
@@ -55,16 +86,19 @@ struct UserExample : tvgexam::Example
 
         auto progress = tvgexam::progress(elapsed, 2.5f, true);   //2.5 seconds
 
-        //Clear the previously applied effects
-        scene[0]->push(tvg::SceneEffect::ClearAll);
+        //Apply GaussianBlur post effect (sigma, direction, border option, quality)
+        for (int i = 0; i < 3; ++i) {
+            blur[i]->push(tvg::SceneEffect::ClearAll);
+            blur[i]->push(tvg::SceneEffect::GaussianBlur, 10.0f * progress, i, 0, 100);
+        }
+
         //Apply Fill post effect (rgba)
-        scene[0]->push(tvg::SceneEffect::Fill, 255, 255, 0, (int)(255.0f * progress));
+        fill->push(tvg::SceneEffect::ClearAll);
+        fill->push(tvg::SceneEffect::Fill, (int)(progress * 255), 0, 0, (int)(255.0f * progress));
 
-        scene[1]->push(tvg::SceneEffect::ClearAll);
-        scene[1]->push(tvg::SceneEffect::Fill, 255, 255, 255, (int)(255.0f * progress));
-
-        scene[2]->push(tvg::SceneEffect::ClearAll);
-        scene[2]->push(tvg::SceneEffect::Fill, 0, 255, 255, (int)(255.0f * progress));
+        //Apply Tint post effect (black:rgb, white:rgb, intensity)
+        tint->push(tvg::SceneEffect::ClearAll);
+        tint->push(tvg::SceneEffect::Tint, 0, 0, 0, 0, (int)(progress * 255), 0, progress * 100.0f);
 
         canvas->update();
 
@@ -80,5 +114,5 @@ struct UserExample : tvgexam::Example
 
 int main(int argc, char **argv)
 {
-    return tvgexam::main(new UserExample, argc, argv, true, 1200, 400, 4, true);
+    return tvgexam::main(new UserExample, argc, argv, true, SIZE * 3, SIZE * 2, 4, true);
 }
