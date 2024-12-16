@@ -450,3 +450,58 @@ bool effectFill(SwCompositor* cmp, const RenderEffectFill* params, bool direct)
     }
     return true;
 }
+
+
+/************************************************************************/
+/* Tint Implementation                                                  */
+/************************************************************************/
+
+bool effectTintPrepare(RenderEffectTint* params)
+{
+    params->valid = true;
+    return true;
+}
+
+
+bool effectTint(SwCompositor* cmp, const RenderEffectTint* params, bool direct)
+{
+    auto& bbox = cmp->bbox;
+    auto w = size_t(bbox.max.x - bbox.min.x);
+    auto h = size_t(bbox.max.y - bbox.min.y);
+    auto black = cmp->recoverSfc->join(params->black[0], params->black[1], params->black[2], 255);
+    auto white = cmp->recoverSfc->join(params->white[0], params->white[1], params->white[2], 255);
+    auto opacity = cmp->opacity;
+    auto luma = cmp->recoverSfc->alphas[2];  //luma function
+
+    TVGLOG("SW_ENGINE", "Tint region(%ld, %ld, %ld, %ld), param(%d %d %d, %d %d %d, %f)", bbox.min.x, bbox.min.y, bbox.max.x, bbox.max.y, params->black[0], params->black[1], params->black[2], params->white[0], params->white[1], params->white[2], params->intensity);
+
+    if (direct) {
+        auto dbuffer = cmp->recoverSfc->buf32 + (bbox.min.y * cmp->recoverSfc->stride + bbox.min.x);
+        auto sbuffer = cmp->image.buf32 + (bbox.min.y * cmp->image.stride + bbox.min.x);
+        for (size_t y = 0; y < h; ++y) {
+            auto dst = dbuffer;
+            auto src = sbuffer;
+            for (size_t x = 0; x < w; ++x, ++dst, ++src) {
+                auto tmp = rasterUnpremultiply(*src);
+                auto val = INTERPOLATE(INTERPOLATE(black, white, luma((uint8_t*)&tmp)), tmp, params->intensity);
+                *dst = INTERPOLATE(val, *dst, MULTIPLY(opacity, A(tmp)));
+            }
+            dbuffer += cmp->image.stride;
+            sbuffer += cmp->recoverSfc->stride;
+        }
+        cmp->valid = true;  //no need the subsequent composition
+    } else {
+        auto dbuffer = cmp->image.buf32 + (bbox.min.y * cmp->image.stride + bbox.min.x);
+        for (size_t y = 0; y < h; ++y) {
+            auto dst = dbuffer;
+            for (size_t x = 0; x < w; ++x, ++dst) {
+                auto tmp = rasterUnpremultiply(*dst);
+                auto val = INTERPOLATE(INTERPOLATE(black, white, luma((uint8_t*)&tmp)), tmp, params->intensity);
+                *dst = ALPHA_BLEND(val, A(tmp));
+            }
+            dbuffer += cmp->image.stride;
+        }
+    }
+
+    return true;
+}
