@@ -98,6 +98,7 @@ private:
     LottieFont* parseFont();
     LottieMarker* parseMarker();
 
+    void parseTint(LottieFxTint* effect);
     void parseFill(LottieFxFill* effect);
     void parseGaussianBlur(LottieFxGaussianBlur* effect);
     void parseDropShadow(LottieFxDropShadow* effect);
