@@ -655,6 +655,7 @@ bool SwRenderer::prepare(RenderEffect* effect)
         case SceneEffect::GaussianBlur: return effectGaussianBlurPrepare(static_cast<RenderEffectGaussianBlur*>(effect));
         case SceneEffect::DropShadow: return effectDropShadowPrepare(static_cast<RenderEffectDropShadow*>(effect));
         case SceneEffect::Fill: return effectFillPrepare(static_cast<RenderEffectFill*>(effect));
+        case SceneEffect::Tint: return effectTintPrepare(static_cast<RenderEffectTint*>(effect));
         default: return false;
     }
 }
@@ -686,6 +687,9 @@ bool SwRenderer::effect(RenderCompositor* cmp, const RenderEffect* effect, bool 
         }
         case SceneEffect::Fill: {
             return effectFill(p, static_cast<const RenderEffectFill*>(effect), direct);
+        }
+        case SceneEffect::Tint: {
+            return effectTint(p, static_cast<const RenderEffectTint*>(effect), direct);
         }
         default: return false;
     }

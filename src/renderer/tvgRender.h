@@ -301,7 +301,7 @@ struct RenderEffectDropShadow : RenderEffect
         inst->color[0] = va_arg(args, int);
         inst->color[1] = va_arg(args, int);
         inst->color[2] = va_arg(args, int);
-        inst->color[3] = std::min(va_arg(args, int), 255);
+        inst->color[3] = va_arg(args, int);
         inst->angle = (float) va_arg(args, double);
         inst->distance = (float) va_arg(args, double);
         inst->sigma = std::max((float) va_arg(args, double), 0.0f);
@@ -321,8 +321,29 @@ struct RenderEffectFill : RenderEffect
         inst->color[0] = va_arg(args, int);
         inst->color[1] = va_arg(args, int);
         inst->color[2] = va_arg(args, int);
-        inst->color[3] = std::min(va_arg(args, int), 255);
+        inst->color[3] = va_arg(args, int);
         inst->type = SceneEffect::Fill;
+        return inst;
+    }
+};
+
+struct RenderEffectTint : RenderEffect
+{
+    uint8_t black[3];  //rgb
+    uint8_t white[3];  //rgb
+    float intensity;   //0 - 100
+
+    static RenderEffectTint* gen(va_list& args)
+    {
+        auto inst = new RenderEffectTint;
+        inst->black[0] = va_arg(args, int);
+        inst->black[1] = va_arg(args, int);
+        inst->black[2] = va_arg(args, int);
+        inst->white[0] = va_arg(args, int);
+        inst->white[1] = va_arg(args, int);
+        inst->white[2] = va_arg(args, int);
+        inst->intensity = std::min((float)va_arg(args, double), 100.0f) * 2.55f;
+        inst->type = SceneEffect::Tint;
         return inst;
     }
 };
