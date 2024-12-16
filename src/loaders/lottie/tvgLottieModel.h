@@ -82,8 +82,9 @@ struct LottieEffect
     enum Type : uint8_t
     {
         DropShadow = 0,
-        GaussianBlur = 1,
-        Fill = 2,
+        GaussianBlur,
+        Fill,
+        Tint
     };
 
     virtual ~LottieEffect() {}
@@ -109,6 +110,17 @@ struct LottieFxFill : LottieEffect
     }
 };
 
+struct LottieFxTint : LottieEffect
+{
+    LottieColor black;
+    LottieColor white;
+    LottieSlider intensity;
+
+    LottieFxTint()
+    {
+        type = Tint;
+    }
+};
 
 struct LottieFxDropShadow : LottieEffect
 {

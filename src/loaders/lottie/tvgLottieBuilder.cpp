@@ -1314,6 +1314,13 @@ void LottieBuilder::updateEffect(LottieLayer* layer, float frameNo)
     for (auto ef = layer->effects.begin(); ef < layer->effects.end(); ++ef) {
         if (!(*ef)->enable) continue;
         switch ((*ef)->type) {
+            case LottieEffect::Tint: {
+                auto effect = static_cast<LottieFxTint*>(*ef);
+                auto black = effect->black(frameNo);
+                auto white = effect->white(frameNo);
+                layer->scene->push(SceneEffect::Tint, black.rgb[0], black.rgb[1], black.rgb[2], white.rgb[0], white.rgb[1], white.rgb[2], effect->intensity(frameNo));
+                break;
+            }
             case LottieEffect::Fill: {
                 auto effect = static_cast<LottieFxFill*>(*ef);
                 auto color = effect->color(frameNo);
