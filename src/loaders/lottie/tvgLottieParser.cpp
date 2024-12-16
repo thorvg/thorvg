@@ -60,6 +60,7 @@ static unsigned long _int2str(int num)
 LottieEffect* LottieParser::getEffect(int type)
 {
     switch (type) {
+        case 20: return new LottieFxTint;
         case 21: return new LottieFxFill;
         case 25: return new LottieFxDropShadow;
         case 29: return new LottieFxGaussianBlur;
@@ -1269,6 +1270,30 @@ void LottieParser::parseMasks(LottieLayer* layer)
 }
 
 
+void LottieParser::parseTint(LottieFxTint* effect)
+{
+    int idx = 0;  //black -> white -> intenstiy
+    enterArray();
+    while (nextArrayValue()) {
+        enterObject();
+        while (auto key = nextObjectKey()) {
+            if (KEY_AS("v")) {
+                enterObject();
+                while (auto key = nextObjectKey()) {
+                    if (KEY_AS("k")) {
+                        if (idx == 0) parsePropertyInternal(effect->black);
+                        else if (idx == 1) parsePropertyInternal(effect->white);
+                        else if (idx == 2) parsePropertyInternal(effect->intensity);
+                        else skip(key);
+                    } else skip(key);
+                }
+                ++idx;
+            } else skip(key);
+        }
+    }
+}
+
+
 void LottieParser::parseFill(LottieFxFill* effect)
 {
     int idx = 0;  //fill mask -> all mask -> color -> invert -> h feather -> v feather -> opacity
@@ -1345,6 +1370,10 @@ void LottieParser::parseDropShadow(LottieFxDropShadow* effect)
 void LottieParser::parseEffect(LottieEffect* effect)
 {
     switch (effect->type) {
+        case LottieEffect::Tint: {
+            parseTint(static_cast<LottieFxTint*>(effect));
+            break;
+        }
         case LottieEffect::Fill: {
             parseFill(static_cast<LottieFxFill*>(effect));
             break;
