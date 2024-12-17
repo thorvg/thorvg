@@ -1314,28 +1314,36 @@ void LottieBuilder::updateEffect(LottieLayer* layer, float frameNo)
     for (auto ef = layer->effects.begin(); ef < layer->effects.end(); ++ef) {
         if (!(*ef)->enable) continue;
         switch ((*ef)->type) {
-            case LottieEffect::Tint: {
+            case SceneEffect::GaussianBlur: {
+                auto effect = static_cast<LottieFxGaussianBlur*>(*ef);
+                layer->scene->push(SceneEffect::GaussianBlur, effect->blurness(frameNo) * BLUR_TO_SIGMA, effect->direction(frameNo) - 1, effect->wrap(frameNo), QUALITY);
+                break;
+            }
+            case SceneEffect::DropShadow: {
+                auto effect = static_cast<LottieFxDropShadow*>(*ef);
+                auto color = effect->color(frameNo);
+                layer->scene->push(SceneEffect::DropShadow, color.rgb[0], color.rgb[1], color.rgb[2], (int)effect->opacity(frameNo), effect->angle(frameNo), effect->distance(frameNo), effect->blurness(frameNo) * BLUR_TO_SIGMA, QUALITY);
+                break;
+            }
+            case SceneEffect::Fill: {
+                auto effect = static_cast<LottieFxFill*>(*ef);
+                auto color = effect->color(frameNo);
+                layer->scene->push(SceneEffect::Fill, color.rgb[0], color.rgb[1], color.rgb[2], (int)(255.0f *effect->opacity(frameNo)));
+                break;
+            }
+            case SceneEffect::Tint: {
                 auto effect = static_cast<LottieFxTint*>(*ef);
                 auto black = effect->black(frameNo);
                 auto white = effect->white(frameNo);
                 layer->scene->push(SceneEffect::Tint, black.rgb[0], black.rgb[1], black.rgb[2], white.rgb[0], white.rgb[1], white.rgb[2], effect->intensity(frameNo));
                 break;
             }
-            case LottieEffect::Fill: {
-                auto effect = static_cast<LottieFxFill*>(*ef);
-                auto color = effect->color(frameNo);
-                layer->scene->push(SceneEffect::Fill, color.rgb[0], color.rgb[1], color.rgb[2], (int)(255.0f *effect->opacity(frameNo)));
-                break;
-            }
-            case LottieEffect::DropShadow: {
-                auto effect = static_cast<LottieFxDropShadow*>(*ef);
-                auto color = effect->color(frameNo);
-                layer->scene->push(SceneEffect::DropShadow, color.rgb[0], color.rgb[1], color.rgb[2], (int)effect->opacity(frameNo), effect->angle(frameNo), effect->distance(frameNo), effect->blurness(frameNo) * BLUR_TO_SIGMA, QUALITY);
-                break;
-            }
-            case LottieEffect::GaussianBlur: {
-                auto effect = static_cast<LottieFxGaussianBlur*>(*ef);
-                layer->scene->push(SceneEffect::GaussianBlur, effect->blurness(frameNo) * BLUR_TO_SIGMA, effect->direction(frameNo) - 1, effect->wrap(frameNo), QUALITY);
+            case SceneEffect::Trintone: {
+                auto effect = static_cast<LottieFxTrintone*>(*ef);
+                auto dark = effect->dark(frameNo);
+                auto midtone = effect->midtone(frameNo);
+                auto bright = effect->bright(frameNo);
+                layer->scene->push(SceneEffect::Trintone, dark.rgb[0], dark.rgb[1], dark.rgb[2], midtone.rgb[0], midtone.rgb[1], midtone.rgb[2], bright.rgb[0], bright.rgb[1], bright.rgb[2]);
                 break;
             }
             default: break;

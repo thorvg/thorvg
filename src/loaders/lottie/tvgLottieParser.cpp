@@ -62,6 +62,7 @@ LottieEffect* LottieParser::getEffect(int type)
     switch (type) {
         case 20: return new LottieFxTint;
         case 21: return new LottieFxFill;
+        case 23: return new LottieFxTrintone;
         case 25: return new LottieFxDropShadow;
         case 29: return new LottieFxGaussianBlur;
         default: return nullptr;
@@ -1294,6 +1295,31 @@ void LottieParser::parseTint(LottieFxTint* effect)
 }
 
 
+void LottieParser::parseTrintone(LottieFxTrintone* effect)
+{
+    int idx = 0;  //bright, midtone, dark
+    enterArray();
+    while (nextArrayValue()) {
+        enterObject();
+        while (auto key = nextObjectKey()) {
+            if (KEY_AS("v")) {
+                enterObject();
+                while (auto key = nextObjectKey()) {
+                    if (KEY_AS("k")) {
+                        if (idx == 0) parsePropertyInternal(effect->bright);
+                        else if (idx == 1) parsePropertyInternal(effect->midtone);
+                        else if (idx == 2) parsePropertyInternal(effect->dark);
+                        else skip();
+                    } else skip();
+                }
+                ++idx;
+            } else skip();
+        }
+    }
+}
+
+
+
 void LottieParser::parseFill(LottieFxFill* effect)
 {
     int idx = 0;  //fill mask -> all mask -> color -> invert -> h feather -> v feather -> opacity
@@ -1370,20 +1396,24 @@ void LottieParser::parseDropShadow(LottieFxDropShadow* effect)
 void LottieParser::parseEffect(LottieEffect* effect)
 {
     switch (effect->type) {
-        case LottieEffect::Tint: {
+        case SceneEffect::GaussianBlur: {
             parseTint(static_cast<LottieFxTint*>(effect));
             break;
         }
-        case LottieEffect::Fill: {
-            parseFill(static_cast<LottieFxFill*>(effect));
+        case SceneEffect::DropShadow: {
+            parseDropShadow(static_cast<LottieFxDropShadow*>(effect));
             break;
         }
-        case LottieEffect::GaussianBlur: {
+        case SceneEffect::Fill: {
             parseGaussianBlur(static_cast<LottieFxGaussianBlur*>(effect));
             break;
         }
-        case LottieEffect::DropShadow: {
-            parseDropShadow(static_cast<LottieFxDropShadow*>(effect));
+        case SceneEffect::Tint: {
+            parseFill(static_cast<LottieFxFill*>(effect));
+            break;
+        }
+        case SceneEffect::Trintone: {
+            parseTrintone(static_cast<LottieFxTrintone*>(effect));
             break;
         }
         default: break;
