@@ -34,6 +34,7 @@ The following list shows primitives that are supported by ThorVG: <br />
 - **Composition**: various blending and masking
 - **Text**: unicode characters with horizontal text layout using scalable fonts (TTF)
 - **Images**: SVG, JPG, PNG, WebP, and raw bitmaps
+- **Effects**: blur, drop shadow, fill, tint, tritone and color replacement
 - **Animations**: Lottie
 
 <p align="center">
