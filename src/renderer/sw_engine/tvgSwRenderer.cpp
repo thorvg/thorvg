@@ -656,6 +656,7 @@ bool SwRenderer::prepare(RenderEffect* effect)
         case SceneEffect::DropShadow: return effectDropShadowPrepare(static_cast<RenderEffectDropShadow*>(effect));
         case SceneEffect::Fill: return effectFillPrepare(static_cast<RenderEffectFill*>(effect));
         case SceneEffect::Tint: return effectTintPrepare(static_cast<RenderEffectTint*>(effect));
+        case SceneEffect::Trintone: return effectTrintonePrepare(static_cast<RenderEffectTrintone*>(effect));
         default: return false;
     }
 }
@@ -690,6 +691,9 @@ bool SwRenderer::effect(RenderCompositor* cmp, const RenderEffect* effect, bool 
         }
         case SceneEffect::Tint: {
             return effectTint(p, static_cast<const RenderEffectTint*>(effect), direct);
+        }
+        case SceneEffect::Trintone: {
+            return effectTrintone(p, static_cast<const RenderEffectTrintone*>(effect), direct);
         }
         default: return false;
     }

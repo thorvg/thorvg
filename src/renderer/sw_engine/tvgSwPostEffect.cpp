@@ -475,6 +475,8 @@ bool effectTint(SwCompositor* cmp, const RenderEffectTint* params, bool direct)
 
     TVGLOG("SW_ENGINE", "Tint region(%ld, %ld, %ld, %ld), param(%d %d %d, %d %d %d, %f)", bbox.min.x, bbox.min.y, bbox.max.x, bbox.max.y, params->black[0], params->black[1], params->black[2], params->white[0], params->white[1], params->white[2], params->intensity);
 
+    /* Tint Formula: (1 - L) * Black + L * White, where the L is Luminance. */
+
     if (direct) {
         auto dbuffer = cmp->recoverSfc->buf32 + (bbox.min.y * cmp->recoverSfc->stride + bbox.min.x);
         auto sbuffer = cmp->image.buf32 + (bbox.min.y * cmp->image.stride + bbox.min.x);
@@ -498,6 +500,76 @@ bool effectTint(SwCompositor* cmp, const RenderEffectTint* params, bool direct)
                 auto tmp = rasterUnpremultiply(*dst);
                 auto val = INTERPOLATE(INTERPOLATE(black, white, luma((uint8_t*)&tmp)), tmp, params->intensity);
                 *dst = ALPHA_BLEND(val, A(tmp));
+            }
+            dbuffer += cmp->image.stride;
+        }
+    }
+
+    return true;
+}
+
+
+/************************************************************************/
+/* Trintone Implementation                                              */
+/************************************************************************/
+
+static uint32_t _trintone(uint32_t s, uint32_t m, uint32_t h, int l)
+{
+    /* Trintone Formula:
+       if (L < 0.5) { (1 - 2L) * Shadow + 2L * Midtone }
+       else { (1 - 2(L - 0.5)) * Midtone + (2(L - 0.5)) * Highlight }
+       Where the L is Luminance. */
+
+    if (l < 128) {
+        auto a = std::min(l * 2, 255);
+        return ALPHA_BLEND(s, 255 - a) + ALPHA_BLEND(m, a);
+    } else {
+        auto a = 2 * std::max(0, l - 128);
+        return ALPHA_BLEND(m, 255 - a) + ALPHA_BLEND(h, a);
+    }
+}
+
+bool effectTrintonePrepare(RenderEffectTrintone* params)
+{
+    params->valid = true;
+    return true;
+}
+
+
+bool effectTrintone(SwCompositor* cmp, const RenderEffectTrintone* params, bool direct)
+{
+    auto& bbox = cmp->bbox;
+    auto w = size_t(bbox.max.x - bbox.min.x);
+    auto h = size_t(bbox.max.y - bbox.min.y);
+    auto shadow = cmp->recoverSfc->join(params->shadow[0], params->shadow[1], params->shadow[2], 255);
+    auto midtone = cmp->recoverSfc->join(params->midtone[0], params->midtone[1], params->midtone[2], 255);
+    auto highlight = cmp->recoverSfc->join(params->highlight[0], params->highlight[1], params->highlight[2], 255);
+    auto opacity = cmp->opacity;
+    auto luma = cmp->recoverSfc->alphas[2];  //luma function
+
+    TVGLOG("SW_ENGINE", "Trintone region(%ld, %ld, %ld, %ld), param(%d %d %d, %d %d %d, %d %d %d)", bbox.min.x, bbox.min.y, bbox.max.x, bbox.max.y, params->shadow[0], params->shadow[1], params->shadow[2], params->midtone[0], params->midtone[1], params->midtone[2], params->highlight[0], params->highlight[1], params->highlight[2]);
+
+    if (direct) {
+        auto dbuffer = cmp->recoverSfc->buf32 + (bbox.min.y * cmp->recoverSfc->stride + bbox.min.x);
+        auto sbuffer = cmp->image.buf32 + (bbox.min.y * cmp->image.stride + bbox.min.x);
+        for (size_t y = 0; y < h; ++y) {
+            auto dst = dbuffer;
+            auto src = sbuffer;
+            for (size_t x = 0; x < w; ++x, ++dst, ++src) {
+                auto tmp = rasterUnpremultiply(*src);
+                *dst = INTERPOLATE(_trintone(shadow, midtone, highlight, luma((uint8_t*)&tmp)), *dst, MULTIPLY(opacity, A(tmp)));
+            }
+            dbuffer += cmp->image.stride;
+            sbuffer += cmp->recoverSfc->stride;
+        }
+        cmp->valid = true;  //no need the subsequent composition
+    } else {
+        auto dbuffer = cmp->image.buf32 + (bbox.min.y * cmp->image.stride + bbox.min.x);
+        for (size_t y = 0; y < h; ++y) {
+            auto dst = dbuffer;
+            for (size_t x = 0; x < w; ++x, ++dst) {
+                auto tmp = rasterUnpremultiply(*dst);
+                *dst = ALPHA_BLEND(_trintone(shadow, midtone, highlight, luma((uint8_t*)&tmp)), A(tmp));
             }
             dbuffer += cmp->image.stride;
         }

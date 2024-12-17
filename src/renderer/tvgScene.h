@@ -330,6 +330,10 @@ struct Scene::Impl : Paint::Impl
                 re = RenderEffectTint::gen(args);
                 break;
             }
+            case SceneEffect::Trintone: {
+                re = RenderEffectTrintone::gen(args);
+                break;
+            }
             default: break;
         }
 
