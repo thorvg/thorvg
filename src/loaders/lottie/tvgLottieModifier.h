@@ -68,4 +68,14 @@ private:
     void corner(const Line& line, const Line& nextLine, uint32_t movetoIndex, bool nextClose, Array<PathCommand>& cmds, Array<Point>& pts) const;
 };
 
+
+struct LottieTrimpathModifier
+{
+    float start, end;
+    bool simultaneous;
+
+    LottieTrimpathModifier(float s, float e, bool sim) : start(s), end(e), simultaneous(sim) {};
+
+    bool modifyPath(const Array<PathCommand>& inCmds, const Array<Point>& inPts, Array<PathCommand>& outCmds, Array<Point>& outPts) const;
+};
 #endif

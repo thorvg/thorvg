@@ -211,7 +211,7 @@ void LottieImage::update()
 }
 
 
-void LottieTrimpath::segment(float frameNo, float& start, float& end, LottieExpressions* exps)
+bool LottieTrimpath::segment(float frameNo, float& start, float& end, LottieExpressions* exps)
 {
     start = this->start(frameNo, exps) * 0.01f;
     tvg::clamp(start, 0.0f, 1.0f);
@@ -224,17 +224,30 @@ void LottieTrimpath::segment(float frameNo, float& start, float& end, LottieExpr
     if (tvg::zero(diff)) {
         start = 0.0f;
         end = 0.0f;
-        return;
+        return true;
     }
-    if (tvg::equal(diff, 1.0f) || tvg::equal(diff, 2.0f)) {
+    if (diff >= 1.0f) {
         start = 0.0f;
         end = 1.0f;
-        return;
+        return false;
     }
 
     if (start > end) std::swap(start, end);
     start += o;
     end += o;
+
+    auto loop = true;
+    if (start > 1.0f && end > 1.0f) loop = false;
+    if (start < 0.0f && end < 0.0f) loop = false;
+    if (start >= 0.0f && start <= 1.0f && end >= 0.0f  && end <= 1.0f) loop = false;
+
+    if (start > 1.0f) start -= 1.0f;
+    if (start < 0.0f) start += 1.0f;
+    if (end > 1.0f) end -= 1.0f;
+    if (end < 0.0f) end += 1.0f;
+
+    if ((loop && start < end) || (!loop && start > end)) std::swap(start, end);
+    return true;
 }
 
 

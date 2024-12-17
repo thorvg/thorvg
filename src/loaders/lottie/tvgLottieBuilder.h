@@ -54,6 +54,7 @@ struct RenderContext
     Shape* merging = nullptr;  //merging shapes if possible (if shapes have same properties)
     LottieObject** begin = nullptr; //iteration entry point
     Array<RenderRepeater> repeaters;
+    Array<LottieTrimpathModifier*> trimpaths;
     Matrix* transform = nullptr;
     LottieRoundnessModifier* roundness = nullptr;
     LottieOffsetModifier* offsetPath = nullptr;
@@ -73,6 +74,7 @@ struct RenderContext
         free(transform);
         delete(roundness);
         delete(offsetPath);
+        for (auto trimpath: trimpaths) delete(trimpath);
     }
 
     RenderContext(const RenderContext& rhs, Shape* propagator, bool mergeable = false)
@@ -81,6 +83,10 @@ struct RenderContext
         propagator->ref();
         this->propagator = propagator;
         this->repeaters = rhs.repeaters;
+        this->trimpaths.reserve(rhs.trimpaths.count);
+        for (auto trimpath: rhs.trimpaths) {
+            this->trimpaths.push(new LottieTrimpathModifier(trimpath->start, trimpath->end, trimpath->simultaneous));
+        }
         if (rhs.roundness) this->roundness = new LottieRoundnessModifier(rhs.roundness->r);
         if (rhs.offsetPath) this->offsetPath = new LottieOffsetModifier(rhs.offsetPath->offset, rhs.offsetPath->miterLimit, rhs.offsetPath->join);
     }
