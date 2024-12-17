@@ -33,6 +33,7 @@ struct UserExample : tvgexam::Example
     tvg::Scene* blur[3] = {nullptr, nullptr, nullptr};   //(for direction both, horizontal, vertical)
     tvg::Scene* fill = nullptr;
     tvg::Scene* tint = nullptr;
+    tvg::Scene* trintone = nullptr;
 
     bool content(tvg::Canvas* canvas, uint32_t w, uint32_t h) override
     {
@@ -77,6 +78,20 @@ struct UserExample : tvgexam::Example
             canvas->push(tint);
         }
 
+        //trinton scene
+        {
+            trintone = tvg::Scene::gen();
+
+            auto picture = tvg::Picture::gen();
+            picture->load(EXAMPLE_DIR"/svg/tiger.svg");
+            picture->size(SIZE, SIZE);
+            picture->translate(SIZE * 2, SIZE);
+
+            trintone->push(picture);
+            canvas->push(trintone);
+        }
+
+
         return true;
     }
 
@@ -94,11 +109,15 @@ struct UserExample : tvgexam::Example
 
         //Apply Fill post effect (rgba)
         fill->push(tvg::SceneEffect::ClearAll);
-        fill->push(tvg::SceneEffect::Fill, (int)(progress * 255), 0, 0, (int)(255.0f * progress));
+        fill->push(tvg::SceneEffect::Fill, 0, (int)(progress * 255), 0, (int)(255.0f * progress));
 
         //Apply Tint post effect (black:rgb, white:rgb, intensity)
         tint->push(tvg::SceneEffect::ClearAll);
         tint->push(tvg::SceneEffect::Tint, 0, 0, 0, 0, (int)(progress * 255), 0, progress * 100.0f);
+
+        //Apply Trintone post effect (shadow:rgb, midtone:rgb, highlight:rgb)
+        trintone->push(tvg::SceneEffect::ClearAll);
+        trintone->push(tvg::SceneEffect::Trintone, 0, (int)(progress * 255), 0, 199, 110, 36, 255, 255, 255);
 
         canvas->update();
 
