@@ -585,6 +585,7 @@ bool effectFillPrepare(RenderEffectFill* effect);
 bool effectFill(SwCompositor* cmp, const RenderEffectFill* params, bool direct);
 bool effectTintPrepare(RenderEffectTint* effect);
 bool effectTint(SwCompositor* cmp, const RenderEffectTint* params, bool direct);
-
+bool effectTritonePrepare(RenderEffectTritone* effect);
+bool effectTritone(SwCompositor* cmp, const RenderEffectTritone* params, bool direct);
 
 #endif /* _TVG_SW_COMMON_H_ */

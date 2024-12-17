@@ -136,6 +136,10 @@ Result Scene::push(SceneEffect effect, ...) noexcept
             re = RenderEffectTint::gen(args);
             break;
         }
+        case SceneEffect::Tritone: {
+            re = RenderEffectTritone::gen(args);
+            break;
+        }
         default: break;
     }
 
