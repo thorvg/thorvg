@@ -79,34 +79,26 @@ struct LottieStroke
 
 struct LottieEffect
 {
-    enum Type : uint8_t
-    {
-        DropShadow = 0,
-        GaussianBlur,
-        Fill,
-        Tint
-    };
+    enum Type : uint8_t {Tint = 20, Fill, Tritone = 23, DropShadow = 25, GaussianBlur = 29};
 
     virtual ~LottieEffect() {}
-
     Type type;
     bool enable = false;
 };
 
-
 struct LottieFxFill : LottieEffect
 {
-    //LottieFloat fillMask?
+    //int16_t mask layer
     //LottieDropDown allMask?
     LottieColor color;
     //LottieDropDown inverted
     //LottieSlider horizontalFeather
     //LottieSlider verticalFeather
-    LottieSlider opacity = 0;
+    LottieSlider opacity;
 
     LottieFxFill()
     {
-        type = Fill;
+        type = LottieEffect::Fill;
     }
 };
 
@@ -118,7 +110,19 @@ struct LottieFxTint : LottieEffect
 
     LottieFxTint()
     {
-        type = Tint;
+        type = LottieEffect::Tint;
+    }
+};
+
+struct LottieFxTritone : LottieEffect
+{
+    LottieColor bright;
+    LottieColor midtone;
+    LottieColor dark;
+
+    LottieFxTritone()
+    {
+        type = LottieEffect::Tritone;
     }
 };
 
@@ -132,10 +136,9 @@ struct LottieFxDropShadow : LottieEffect
 
     LottieFxDropShadow()
     {
-        type = DropShadow;
+        type = LottieEffect::DropShadow;
     }
 };
-
 
 struct LottieFxGaussianBlur : LottieEffect
 {
@@ -145,7 +148,7 @@ struct LottieFxGaussianBlur : LottieEffect
 
     LottieFxGaussianBlur()
     {
-        type = GaussianBlur;
+        type = LottieEffect::GaussianBlur;
     }
 };
 
