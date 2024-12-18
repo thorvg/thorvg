@@ -1220,7 +1220,7 @@ void LottieBuilder::updateText(LottieLayer* layer, float frameNo)
 }
 
 
-void LottieBuilder::updateMaskings(LottieLayer* layer, float frameNo)
+void LottieBuilder::updateMasks(LottieLayer* layer, float frameNo)
 {
     if (layer->masks.count == 0) return;
 
@@ -1306,6 +1306,60 @@ bool LottieBuilder::updateMatte(LottieComposition* comp, float frameNo, Scene* s
 }
 
 
+void LottieBuilder::updateStrokeEffect(LottieLayer* layer, LottieFxStroke* effect, float frameNo)
+{
+    if (layer->masks.count == 0) return;
+
+    auto shape = layer->pooling();
+    shape->reset();
+
+    //FIXME: all mask
+    if (effect->allMask(frameNo)) {
+        for (auto m = layer->masks.begin(); m < layer->masks.end(); ++m) {
+            auto mask = *m;
+            mask->pathset(frameNo, SHAPE(shape)->rs.path.cmds, SHAPE(shape)->rs.path.pts, nullptr, nullptr, nullptr, exps);
+        }
+    //A specific mask
+    } else {
+        auto idx = static_cast<uint32_t>(effect->mask(frameNo) - 1);
+        if (idx < 0 || idx >= layer->masks.count) return;
+        auto mask = layer->masks[idx];
+        mask->pathset(frameNo, SHAPE(shape)->rs.path.cmds, SHAPE(shape)->rs.path.pts, nullptr, nullptr, nullptr, exps);
+    }
+
+    shape->transform(layer->cache.matrix);
+    shape->strokeTrim(effect->begin(frameNo) * 0.01f, effect->end(frameNo) * 0.01f);
+    shape->strokeFill(255, 255, 255, (int)(effect->opacity(frameNo) * 255.0f));
+    shape->strokeJoin(StrokeJoin::Round);
+    shape->strokeCap(StrokeCap::Round);
+
+    auto size = effect->size(frameNo) * 2.0f;
+    shape->strokeWidth(size);
+
+    //fill the color to the layer shapes if any
+    auto color = effect->color(frameNo);
+    if (color.rgb[0] != 255 || color.rgb[1] != 255 || color.rgb[2] != 255) {
+        auto accessor = tvg::Accessor::gen();
+        auto stroke = (layer->type == LottieLayer::Type::Shape) ? true : false;
+        auto f = [color, size, stroke](const tvg::Paint* paint, void* data) -> bool {
+            if (paint->type() == tvg::Type::Shape) {
+                auto shape = (tvg::Shape*) paint;
+                //expand shape to fill the stroke region
+                if (stroke) {
+                    shape->strokeWidth(size);
+                    shape->strokeFill(color.rgb[0], color.rgb[1], color.rgb[2], 255);
+                }
+                shape->fill(color.rgb[0], color.rgb[1], color.rgb[2], 255);
+            }
+            return true;
+        };
+        accessor->set(layer->scene, f, nullptr);
+    }
+
+    layer->scene->mask(shape, MaskMethod::Alpha);
+}
+
+
 void LottieBuilder::updateEffect(LottieLayer* layer, float frameNo)
 {
     constexpr int QUALITY = 25;
@@ -1327,6 +1381,11 @@ void LottieBuilder::updateEffect(LottieLayer* layer, float frameNo)
                 auto effect = static_cast<LottieFxFill*>(*ef);
                 auto color = effect->color(frameNo);
                 layer->scene->push(SceneEffect::Fill, color.rgb[0], color.rgb[1], color.rgb[2], (int)(255.0f * effect->opacity(frameNo)));
+                break;
+            }
+            case LottieEffect::Stroke: {
+                auto effect = static_cast<LottieFxStroke*>(*ef);
+                updateStrokeEffect(layer, effect, frameNo);
                 break;
             }
             case LottieEffect::Tritone: {
@@ -1406,7 +1465,7 @@ void LottieBuilder::updateLayer(LottieComposition* comp, Scene* scene, LottieLay
         }
     }
 
-    updateMaskings(layer, frameNo);
+    updateMasks(layer, frameNo);
 
     layer->scene->blend(layer->blendMethod);
 
