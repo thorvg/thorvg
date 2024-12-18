@@ -62,6 +62,7 @@ LottieEffect* LottieParser::getEffect(int type)
     switch (type) {
         case LottieEffect::Tint: return new LottieFxTint;
         case LottieEffect::Fill: return new LottieFxFill;
+        case LottieEffect::Stroke: return new LottieFxStroke;
         case LottieEffect::Tritone: return new LottieFxTritone;
         case LottieEffect::DropShadow: return new LottieFxDropShadow;
         case LottieEffect::GaussianBlur: return new LottieFxGaussianBlur;
@@ -1261,7 +1262,7 @@ void LottieParser::parseMasks(LottieLayer* layer)
 
 void LottieParser::parseTint(LottieFxTint* effect)
 {
-    int idx = 0;  //black -> white -> intenstiy
+    int idx = 0;
     enterArray();
     while (nextArrayValue()) {
         enterObject();
@@ -1285,7 +1286,7 @@ void LottieParser::parseTint(LottieFxTint* effect)
 
 void LottieParser::parseTritone(LottieFxTritone* effect)
 {
-    int idx = 0;  //bright, midtone, dark
+    int idx = 0;
     enterArray();
     while (nextArrayValue()) {
         enterObject();
@@ -1309,7 +1310,7 @@ void LottieParser::parseTritone(LottieFxTritone* effect)
 
 void LottieParser::parseFill(LottieFxFill* effect)
 {
-    int idx = 0;  //fill mask -> all mask -> color -> invert -> h feather -> v feather -> opacity
+    int idx = 0;
     enterArray();
     while (nextArrayValue()) {
         enterObject();
@@ -1332,7 +1333,7 @@ void LottieParser::parseFill(LottieFxFill* effect)
 
 void LottieParser::parseGaussianBlur(LottieFxGaussianBlur* effect)
 {
-    int idx = 0;  //blurness -> direction -> wrap
+    int idx = 0;
     enterArray();
     while (nextArrayValue()) {
         enterObject();
@@ -1356,7 +1357,7 @@ void LottieParser::parseGaussianBlur(LottieFxGaussianBlur* effect)
 
 void LottieParser::parseDropShadow(LottieFxDropShadow* effect)
 {
-    int idx = 0;  //color -> opacity -> angle -> distance -> blur
+    int idx = 0;
     enterArray();
     while (nextArrayValue()) {
         enterObject();
@@ -1380,6 +1381,34 @@ void LottieParser::parseDropShadow(LottieFxDropShadow* effect)
 }
 
 
+void LottieParser::parseStroke(LottieFxStroke* effect)
+{
+    int idx = 0;
+    enterArray();
+    while (nextArrayValue()) {
+        enterObject();
+        while (auto key = nextObjectKey()) {
+            if (KEY_AS("v")) {
+                enterObject();
+                while (auto key = nextObjectKey()) {
+                    if (KEY_AS("k")) {
+                        if (idx == 0) parsePropertyInternal(effect->mask);
+                        else if (idx == 1) parsePropertyInternal(effect->allMask);
+                        else if (idx == 3) parsePropertyInternal(effect->color);
+                        else if (idx == 4) parsePropertyInternal(effect->size);
+                        else if (idx == 6) parsePropertyInternal(effect->opacity);
+                        else if (idx == 7) parsePropertyInternal(effect->begin);
+                        else if (idx == 8) parsePropertyInternal(effect->end);
+                        else skip(key);
+                        ++idx;
+                    } else skip(key);
+                }
+            } else skip(key);
+        }
+    }
+}
+
+
 void LottieParser::parseEffect(LottieEffect* effect)
 {
     switch (effect->type) {
@@ -1389,6 +1418,10 @@ void LottieParser::parseEffect(LottieEffect* effect)
         }
         case LottieEffect::Fill: {
             parseFill(static_cast<LottieFxFill*>(effect));
+            break;
+        }
+        case LottieEffect::Stroke: {
+            parseStroke(static_cast<LottieFxStroke*>(effect));
             break;
         }
         case LottieEffect::Tritone: {
