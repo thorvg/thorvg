@@ -1227,34 +1227,60 @@ void LottieBuilder::updateText(LottieLayer* layer, float frameNo)
 
 void LottieBuilder::updateMaskings(LottieLayer* layer, float frameNo)
 {
-    if (layer->masks.count == 0) return;
+        if (layer->masks.count == 0) return;
 
-    //Apply the base mask
-    auto pMask = static_cast<LottieMask*>(layer->masks[0]);
-    auto pMethod = pMask->method;
-    auto opacity = pMask->opacity(frameNo);
-    auto expand = pMask->expand(frameNo);
+    Shape* pShape = nullptr;
+    CompositeMethod pMethod;
+    uint8_t pOpacity;
 
-    auto pShape = layer->pooling();
-    pShape->reset();
-    pShape->fill(255, 255, 255, opacity);
-    pShape->transform(layer->cache.matrix);
+    for (auto m = layer->masks.begin(); m < layer->masks.end(); ++m) {
+        auto mask = *m;
+        if (mask->method == CompositeMethod::None) continue;
 
-    //Apply Masking Expansion (Offset)
-    if (expand == 0.0f) {
-        pMask->pathset(frameNo, P(pShape)->rs.path.cmds, P(pShape)->rs.path.pts, nullptr, nullptr, nullptr, exps);
-    } else {
-        //TODO: Once path direction support is implemented, ensure that the direction is ignored here
-        auto offset = LottieOffsetModifier(pMask->expand(frameNo));
-        pMask->pathset(frameNo, P(pShape)->rs.path.cmds, P(pShape)->rs.path.pts, nullptr, nullptr, &offset, exps);
-    }
+        auto method = mask->method;
+        auto opacity = mask->opacity(frameNo);
+        auto expand = mask->expand(frameNo);
+        auto fastTrack = false;  //single clipping
 
-    auto compMethod = (pMethod == CompositeMethod::SubtractMask || pMethod == CompositeMethod::InvAlphaMask) ? CompositeMethod::InvAlphaMask : CompositeMethod::AlphaMask;
+        //the first mask
+        if (!pShape) {
+            pShape = layer->pooling();
+            pShape->reset();
+            pShape->fill(255, 255, 255, opacity);
+            pShape->transform(layer->cache.matrix);
+            auto compMethod = (method == CompositeMethod::SubtractMask || method == CompositeMethod::InvAlphaMask) ? CompositeMethod::InvAlphaMask : CompositeMethod::AlphaMask;
+            //Cheaper. Replace the masking with a clipper
+            if (layer->masks.count == 1 && compMethod == CompositeMethod::AlphaMask) {
+                layer->scene->opacity(MULTIPLY(layer->scene->opacity(), opacity));
+                layer->scene->clip(cast(pShape));
+                fastTrack = true;
+            } else {
+                layer->scene->composite(cast(pShape), compMethod);
+            }
+        //Chain mask composition
+        } else if (pMethod != method || pOpacity != opacity || (method != CompositeMethod::SubtractMask && method != CompositeMethod::DifferenceMask)) {
+            auto shape = layer->pooling();
+            shape->reset();
+            shape->fill(255, 255, 255, opacity);
+            shape->transform(layer->cache.matrix);
+            pShape->composite(cast(shape), method);
+            pShape = shape;
+        }
 
-    //Cheaper. Replace the masking with a clipper
-    if (layer->masks.count == 1 && compMethod == CompositeMethod::AlphaMask && opacity == 255) {
-        layer->scene->clip(tvg::cast(pShape));
-        return;
+        //Default Masking
+        if (expand == 0.0f) {
+            mask->pathset(frameNo, P(pShape)->rs.path.cmds, P(pShape)->     rs.path.pts, nullptr, nullptr, nullptr, exps);
+        //Masking with Expansion (Offset)
+        } else {
+            //TODO: Once path direction support is implemented, ensure that the direction is ignored here
+            auto offset = LottieOffsetModifier(expand);
+            mask->pathset(frameNo, P(pShape)->rs.path.cmds, P(pShape)->rs.path.pts, nullptr, nullptr, &offset, exps);
+        }
+
+        if (fastTrack) return;
+
+        pOpacity = opacity;
+        pMethod = method;
     }
 
     //Introduce an intermediate scene for embracing the matte + masking
@@ -1262,30 +1288,6 @@ void LottieBuilder::updateMaskings(LottieLayer* layer, float frameNo)
         auto scene = Scene::gen().release();
         scene->push(cast(layer->scene));
         layer->scene = scene;
-    }
-
-    layer->scene->composite(tvg::cast(pShape), compMethod);
-
-    //Apply the subsquent masks
-    for (auto m = layer->masks.begin() + 1; m < layer->masks.end(); ++m) {
-        auto mask = static_cast<LottieMask*>(*m);
-        auto method = mask->method;
-        if (method == CompositeMethod::None) continue;
-
-        //Append the mask shape
-        if (pMethod == method && (method == CompositeMethod::SubtractMask || method == CompositeMethod::DifferenceMask)) {
-            mask->pathset(frameNo, P(pShape)->rs.path.cmds, P(pShape)->rs.path.pts, nullptr, nullptr, nullptr, exps);
-        //Chain composition
-        } else {
-            auto shape = layer->pooling();
-            shape->reset();
-            shape->fill(255, 255, 255, mask->opacity(frameNo));
-            shape->transform(layer->cache.matrix);
-            mask->pathset(frameNo, P(shape)->rs.path.cmds, P(shape)->rs.path.pts, nullptr, nullptr, nullptr, exps);
-            pShape->composite(tvg::cast(shape), method);
-            pShape = shape;
-            pMethod = method;
-        }
     }
 }
 

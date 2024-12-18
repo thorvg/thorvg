@@ -1235,27 +1235,15 @@ void LottieParser::getLayerSize(float& val)
 LottieMask* LottieParser::parseMask()
 {
     auto mask = new LottieMask;
-    auto valid = true;  //skip if the mask mode is none.
-
     enterObject();
     while (auto key = nextObjectKey()) {
         if (KEY_AS("inv")) mask->inverse = getBool();
-        else if (KEY_AS("mode"))
-        {
-            mask->method = getMaskMethod(mask->inverse);
-            if (mask->method == CompositeMethod::None) valid = false;
-        }
-        else if (valid && KEY_AS("pt")) getPathSet(mask->pathset);
-        else if (valid && KEY_AS("o")) parseProperty<LottieProperty::Type::Opacity>(mask->opacity);
-        else if (valid && KEY_AS("x")) parseProperty<LottieProperty::Type::Float>(mask->expand);
+        else if (KEY_AS("mode")) mask->method = getMaskMethod(mask->inverse);
+        else if (KEY_AS("pt")) getPathSet(mask->pathset);
+        else if (KEY_AS("o")) parseProperty<LottieProperty::Type::Opacity>(mask->opacity);
+        else if (KEY_AS("x")) parseProperty<LottieProperty::Type::Float>(mask->expand);
         else skip(key);
     }
-
-    if (!valid) {
-        delete(mask);
-        return nullptr;
-    }
-
     return mask;
 }
 
@@ -1317,7 +1305,6 @@ void LottieParser::parseTritone(LottieFxTritone* effect)
         }
     }
 }
-
 
 
 void LottieParser::parseFill(LottieFxFill* effect)
