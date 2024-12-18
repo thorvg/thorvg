@@ -339,9 +339,9 @@ static SwOutline* _genDashOutline(const RenderShape* rshape, const Matrix& trans
     SwDashStroke dash;
     auto offset = 0.0f;
     dash.cnt = rshape->strokeDash((const float**)&dash.pattern, &offset);
-    auto simultaneous = rshape->stroke->trim.simultaneous;
+    auto simultaneous = rshape->trim && rshape->trim->simultaneous;
     float trimBegin = 0.0f, trimEnd = 1.0f;
-    if (trimmed) rshape->stroke->strokeTrim(trimBegin, trimEnd);
+    if (trimmed) rshape->trim->trim(trimBegin, trimEnd);
 
     if (dash.cnt == 0) {
         if (trimmed) dash.pattern = (float*)malloc(sizeof(float) * 4);
@@ -586,7 +586,7 @@ bool shapeGenStrokeRle(SwShape* shape, const RenderShape* rshape, const Matrix& 
     auto ret = true;
 
     //Dash style (+trimming)
-    auto trimmed = rshape->strokeTrim();
+    auto trimmed = rshape->trim && rshape->trim->valid();
     if (rshape->stroke->dashCnt > 0 || trimmed) {
         shapeOutline = _genDashOutline(rshape, transform, trimmed, mpool, tid);
         if (!shapeOutline) return false;

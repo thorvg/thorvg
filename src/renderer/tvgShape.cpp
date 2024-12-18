@@ -233,9 +233,9 @@ float Shape::strokeMiterlimit() const noexcept
 }
 
 
-Result Shape::strokeTrim(float begin, float end, bool simultaneous) noexcept
+Result Shape::trim(float start, float end, bool simultaneous) noexcept
 {
-    SHAPE(this)->strokeTrim(begin, end, simultaneous);
+    SHAPE(this)->pathTrim(start, end, simultaneous);
     return Result::Success;
 }
 

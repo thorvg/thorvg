@@ -28,6 +28,7 @@
 #include "tvgCommon.h"
 #include "tvgArray.h"
 #include "tvgLock.h"
+#include "tvgTrim.h"
 
 namespace tvg
 {
@@ -106,12 +107,6 @@ struct RenderStroke
     StrokeJoin join = StrokeJoin::Bevel;
     bool strokeFirst = false;
 
-    struct {
-        float begin = 0.0f;
-        float end = 1.0f;
-        bool simultaneous = true;
-    } trim;
-
     void operator=(const RenderStroke& rhs)
     {
         width = rhs.width;
@@ -133,33 +128,6 @@ struct RenderStroke
         cap = rhs.cap;
         join = rhs.join;
         strokeFirst = rhs.strokeFirst;
-        trim = rhs.trim;
-    }
-
-    bool strokeTrim(float& begin, float& end) const
-    {
-        begin = trim.begin;
-        end = trim.end;
-
-        if (fabsf(end - begin) >= 1.0f) {
-            begin = 0.0f;
-            end = 1.0f;
-            return false;
-        }
-
-        auto loop = true;
-
-        if (begin > 1.0f && end > 1.0f) loop = false;
-        if (begin < 0.0f && end < 0.0f) loop = false;
-        if (begin >= 0.0f && begin <= 1.0f && end >= 0.0f  && end <= 1.0f) loop = false;
-
-        if (begin > 1.0f) begin -= 1.0f;
-        if (begin < 0.0f) begin += 1.0f;
-        if (end > 1.0f) end -= 1.0f;
-        if (end < 0.0f) end += 1.0f;
-
-        if ((loop && begin < end) || (!loop && begin > end)) std::swap(begin, end);
-        return true;
     }
 
     ~RenderStroke()
@@ -180,12 +148,14 @@ struct RenderShape
     Fill *fill = nullptr;
     RenderColor color{};
     RenderStroke *stroke = nullptr;
+    Trim* trim = nullptr;
     FillRule rule = FillRule::Winding;
 
     ~RenderShape()
     {
         delete(fill);
         delete(stroke);
+        delete(trim);
     }
 
     void fillColor(uint8_t* r, uint8_t* g, uint8_t* b, uint8_t* a) const
@@ -200,14 +170,6 @@ struct RenderShape
     {
         if (!stroke) return 0;
         return stroke->width;
-    }
-
-    bool strokeTrim() const
-    {
-        if (!stroke) return false;
-        if (stroke->trim.begin == 0.0f && stroke->trim.end == 1.0f) return false;
-        if (fabsf(stroke->trim.end - stroke->trim.begin) >= 1.0f) return false;
-        return true;
     }
 
     bool strokeFill(uint8_t* r, uint8_t* g, uint8_t* b, uint8_t* a) const

@@ -215,32 +215,32 @@ struct Shape::Impl : Paint::Impl
         renderFlag |= RenderUpdateFlag::Stroke;
     }
 
-    void strokeTrim(float begin, float end, bool simultaneous)
+    void pathTrim(float start, float end, bool simultaneous)
     {
-        if (!rs.stroke) {
-            if (begin == 0.0f && end == 1.0f) return;
-            rs.stroke = new RenderStroke();
+        if (!rs.trim) {
+            if (start == 0.0f && end == 1.0f) return;
+            rs.trim = new Trim();
         }
 
-        if (tvg::equal(rs.stroke->trim.begin, begin) && tvg::equal(rs.stroke->trim.end, end) && rs.stroke->trim.simultaneous == simultaneous) return;
+        if (tvg::equal(rs.trim->start, start) && tvg::equal(rs.trim->end, end) && rs.trim->simultaneous == simultaneous) return;
 
-        rs.stroke->trim.begin = begin;
-        rs.stroke->trim.end = end;
-        rs.stroke->trim.simultaneous = simultaneous;
+        rs.trim->start = start;
+        rs.trim->end = end;
+        rs.trim->simultaneous = simultaneous;
         renderFlag |= RenderUpdateFlag::Stroke;
     }
 
-    bool strokeTrim(float* begin, float* end)
+    bool pathTrim(float* start, float* end)
     {
-        if (rs.stroke) {
-            if (begin) *begin = rs.stroke->trim.begin;
-            if (end) *end = rs.stroke->trim.end;
-            return rs.stroke->trim.simultaneous;
-        } else {
-            if (begin) *begin = 0.0f;
-            if (end) *end = 1.0f;
-            return false;
+        if (rs.trim) {
+            if (start) *start = rs.trim->start;
+            if (end) *end = rs.trim->end;
+            return rs.trim->simultaneous;
         }
+
+        if (start) *start = 0.0f;
+        if (end) *end = 1.0f;
+        return false;
     }
 
     void strokeCap(StrokeCap cap)
@@ -465,6 +465,15 @@ struct Shape::Impl : Paint::Impl
             dup->rs.stroke = nullptr;
         }
 
+        //Trim
+        if (rs.trim) {
+            if (!dup->rs.trim) dup->rs.trim = new Trim;
+            *dup->rs.trim = *rs.trim;
+        } else {
+            delete(dup->rs.trim);
+            dup->rs.trim = nullptr;
+        }
+
         //Fill
         if (rs.fill) dup->rs.fill = rs.fill->duplicate();
         else dup->rs.fill = nullptr;
@@ -486,6 +495,9 @@ struct Shape::Impl : Paint::Impl
 
         delete(rs.fill);
         rs.fill = nullptr;
+
+        delete(rs.trim);
+        rs.trim = nullptr;
     }
 
     Iterator* iterator()

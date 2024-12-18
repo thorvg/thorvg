@@ -28,6 +28,7 @@ source_file = [
    'tvgShape.h',
    'tvgTaskScheduler.h',
    'tvgText.h',
+   'tvgTrim.h',
    'tvgAccessor.cpp',
    'tvgAnimation.cpp',
    'tvgCanvas.cpp',

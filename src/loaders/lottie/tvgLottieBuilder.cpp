@@ -858,18 +858,18 @@ void LottieBuilder::updateTrimpath(TVG_UNUSED LottieGroup* parent, LottieObject*
 {
     auto trimpath = static_cast<LottieTrimpath*>(*child);
 
-    float begin, end;
-    trimpath->segment(frameNo, begin, end, exps);
+    float start, end;
+    trimpath->segment(frameNo, start, end, exps);
 
-    if (SHAPE(ctx->propagator)->rs.stroke) {
-        auto pbegin = SHAPE(ctx->propagator)->rs.stroke->trim.begin;
-        auto pend = SHAPE(ctx->propagator)->rs.stroke->trim.end;
-        auto length = fabsf(pend - pbegin);
-        begin = (length * begin) + pbegin;
-        end = (length * end) + pbegin;
+    if (SHAPE(ctx->propagator)->rs.trim) {
+        auto pstart = SHAPE(ctx->propagator)->rs.trim->start;
+        auto pend = SHAPE(ctx->propagator)->rs.trim->end;
+        auto length = fabsf(pend - pstart);
+        start = (length * start) + pstart;
+        end = (length * end) + pstart;
     }
 
-    ctx->propagator->strokeTrim(begin, end, trimpath->type == LottieTrimpath::Type::Simultaneous);
+    ctx->propagator->trim(start, end, trimpath->type == LottieTrimpath::Type::Simultaneous);
     ctx->merging = nullptr;
 }
 
