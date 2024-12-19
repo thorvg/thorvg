@@ -363,7 +363,7 @@ struct LottieTrimpath : LottieObject
         return nullptr;
     }
 
-    void segment(float frameNo, float& start, float& end, LottieExpressions* exps);
+    bool segment(float frameNo, float& start, float& end, LottieExpressions* exps);
 
     LottieFloat start = 0.0f;
     LottieFloat end = 100.0f;
