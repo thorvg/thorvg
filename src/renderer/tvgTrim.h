@@ -23,46 +23,23 @@
 #ifndef _TVG_TRIM_H
 #define _TVG_TRIM_H
 
+#include "tvgCommon.h"
+#include "tvgArray.h"
+
+namespace tvg
+{
+
 struct Trim
 {
     float start = 0.0f;
     float end = 1.0f;
     bool simultaneous = true;
 
-    bool valid() const
-    {
-        if (start == 0.0f && end == 1.0f) return false;
-        if (fabsf(end - start) >= 1.0f) return false;
-        return true;
-    }
-
-    bool trim(float& start, float& end) const
-    {
-        start = this->start;
-        end = this->end;
-
-        if (fabsf(end - start) >= 1.0f) {
-            start = 0.0f;
-            end = 1.0f;
-            return false;
-        }
-
-        auto loop = true;
-
-        if (start > 1.0f && end > 1.0f) loop = false;
-        if (start < 0.0f && end < 0.0f) loop = false;
-        if (start >= 0.0f && start <= 1.0f && end >= 0.0f  && end <= 1.0f) loop = false;
-
-        if (start > 1.0f) start -= 1.0f;
-        if (start < 0.0f) start += 1.0f;
-        if (end > 1.0f) end -= 1.0f;
-        if (end < 0.0f) end += 1.0f;
-
-        if ((loop && start < end) || (!loop && start > end)) std::swap(start, end);
-        return true;
-    }
+    bool valid() const;
+    bool trim(float& start, float& end) const;
+    bool trim(const Array<PathCommand>& inCmds, const Array<Point>& inPts, Array<PathCommand>& outCmds, Array<Point>& outPts) const;
 };
 
-
+}
 
 #endif //_TVG_TRIM_H

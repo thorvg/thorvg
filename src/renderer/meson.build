@@ -45,6 +45,7 @@ source_file = [
    'tvgSwCanvas.cpp',
    'tvgTaskScheduler.cpp',
    'tvgText.cpp',
+   'tvgTrim.cpp',
    'tvgWgCanvas.cpp'
 ]
 

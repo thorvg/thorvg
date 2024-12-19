@@ -139,11 +139,14 @@ struct RenderStroke
 
 struct RenderShape
 {
-    struct
+    struct PathData
     {
         Array<PathCommand> cmds;
         Array<Point> pts;
-    } path;
+    };
+
+    PathData path;
+    PathData trimmedPath;
 
     Fill *fill = nullptr;
     RenderColor color{};

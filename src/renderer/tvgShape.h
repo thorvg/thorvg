@@ -112,6 +112,8 @@ struct Shape::Impl : Paint::Impl
             opacity = 255;
         }
 
+        if (rs.trim && rs.trim->valid()) rs.trim->trim(rs.path.cmds, rs.path.pts, rs.trimmedPath.cmds, rs.trimmedPath.pts);
+
         rd = renderer->prepare(rs, rd, transform, clips, opacity, static_cast<RenderUpdateFlag>(pFlag | renderFlag), clipper);
         return rd;
     }
@@ -227,7 +229,7 @@ struct Shape::Impl : Paint::Impl
         rs.trim->start = start;
         rs.trim->end = end;
         rs.trim->simultaneous = simultaneous;
-        renderFlag |= RenderUpdateFlag::Stroke;
+        renderFlag |= RenderUpdateFlag::Path;
     }
 
     bool pathTrim(float* start, float* end)
@@ -375,6 +377,8 @@ struct Shape::Impl : Paint::Impl
     {
         rs.path.cmds.clear();
         rs.path.pts.clear();
+        rs.trimmedPath.cmds.clear();
+        rs.trimmedPath.pts.clear();
         renderFlag |= RenderUpdateFlag::Path;
     }
 
