@@ -88,14 +88,14 @@ struct SwShapeTask : SwTask
         return strokeWidth < 2.0f || rshape->stroke->dashCnt > 0 || rshape->stroke->strokeFirst || rshape->strokeTrim() || rshape->stroke->color.a < 255;
     }
 
-    float validStrokeWidth()
+    float validStrokeWidth(bool clipper)
     {
         if (!rshape->stroke) return 0.0f;
 
         auto width = rshape->stroke->width;
         if (tvg::zero(width)) return 0.0f;
 
-        if (!rshape->stroke->fill && (MULTIPLY(rshape->stroke->color.a, opacity) == 0)) return 0.0f;
+        if (!clipper && (!rshape->stroke->fill && (MULTIPLY(rshape->stroke->color.a, opacity) == 0))) return 0.0f;
         if (tvg::zero(rshape->stroke->trim.begin - rshape->stroke->trim.end)) return 0.0f;
 
         return (width * sqrt(transform.e11 * transform.e11 + transform.e12 * transform.e12));
@@ -103,8 +103,9 @@ struct SwShapeTask : SwTask
 
     bool clip(SwRle* target) override
     {
+        if (shape.strokeRle) return rleClip(target, shape.strokeRle);
         if (shape.fastTrack) return rleClip(target, &bbox);
-        else if (shape.rle) return rleClip(target, shape.rle);
+        if (shape.rle) return rleClip(target, shape.rle);
         return false;
     }
 
@@ -116,7 +117,7 @@ struct SwShapeTask : SwTask
             return;
         }
 
-        auto strokeWidth = validStrokeWidth();
+        auto strokeWidth = validStrokeWidth(clipper);
         SwBBox renderRegion{};
         auto visibleFill = false;
 
@@ -154,14 +155,11 @@ struct SwShapeTask : SwTask
         if (flags & (RenderUpdateFlag::Path | RenderUpdateFlag::Stroke | RenderUpdateFlag::Transform)) {
             if (strokeWidth > 0.0f) {
                 shapeResetStroke(&shape, rshape, transform);
-
                 if (!shapeGenStrokeRle(&shape, rshape, transform, bbox, renderRegion, mpool, tid)) goto err;
                 if (auto fill = rshape->strokeFill()) {
                     auto ctable = (flags & RenderUpdateFlag::GradientStroke) ? true : false;
                     if (ctable) shapeResetStrokeFill(&shape);
                     if (!shapeGenStrokeFillColors(&shape, fill, transform, surface, opacity, ctable)) goto err;
-                } else {
-                    shapeDelStrokeFill(&shape);
                 }
             } else {
                 shapeDelStroke(&shape);
