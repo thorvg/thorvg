@@ -32,7 +32,7 @@ class GlProgram;
 class GlRenderPass
 {
 public:
-    GlRenderPass(GlRenderTarget* fbo);
+    GlRenderPass(GlRenderTarget* fbo, RenderRegion viewport);
     GlRenderPass(GlRenderPass&& other);
 
     ~GlRenderPass();
@@ -45,7 +45,7 @@ public:
 
     GLuint getTextureId() { return mFbo->getColorTexture(); }
 
-    const RenderRegion& getViewport() const { return mFbo->getViewport(); }
+    const RenderRegion& getViewport() const { return mViewport; }
 
     uint32_t getFboWidth() const { return mFbo->getWidth(); }
 
@@ -63,7 +63,7 @@ public:
 
         auto task = new T(program, targetFbo, mFbo, std::move(mTasks));
 
-        const auto& vp = mFbo->getViewport();
+        const auto& vp = mViewport;
 
         task->setRenderSize(static_cast<uint32_t>(vp.w), static_cast<uint32_t>(vp.h));
 
@@ -77,6 +77,7 @@ public:
     GlRenderTarget* getFbo() { return mFbo; }
 private:
     GlRenderTarget* mFbo;
+    RenderRegion mViewport;
     Array<GlRenderTask*> mTasks = {};
     int32_t mDrawDepth = 0;
 };

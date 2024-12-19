@@ -29,12 +29,16 @@ GlRenderTarget::~GlRenderTarget()
     if (mFbo == 0) return;
     GL_CHECK(glBindFramebuffer(GL_FRAMEBUFFER, 0));
     GL_CHECK(glDeleteFramebuffers(1, &mFbo));
+    GL_CHECK(glDeleteFramebuffers(1, &mResolveFbo));
 
     if (mColorTex != 0) {
         GL_CHECK(glDeleteTextures(1, &mColorTex));
     }
     if (mDepthStencilBuffer != 0) {
         GL_CHECK(glDeleteRenderbuffers(1, &mDepthStencilBuffer));
+    }
+    if (mColorBuffer!= 0) {
+        GL_CHECK(glDeleteRenderbuffers(1, &mColorBuffer));
     }
 }
 
@@ -118,15 +122,15 @@ GlRenderTarget* GlRenderTargetPool::getRenderTarget(const RenderRegion& vp, GLui
     for (uint32_t i = 0; i < mPool.count; i++) {
         auto rt = mPool[i];
 
-        if (rt->getWidth() == width && rt->getHeight() == height) {
-            rt->setViewport(vp);
+        if (rt->getWidth() == width && rt->getHeight() == height && !rt->isInUse()) {
+            rt->setInUse(true);
             return rt;
         }
     }
 
     auto rt = new GlRenderTarget(width, height);
     rt->init(resolveId);
-    rt->setViewport(vp);
+    rt->setInUse(true);
     mPool.push(rt);
     return rt;
 }

@@ -206,17 +206,21 @@ private:
 class GlComplexBlendTask: public GlRenderTask
 {
 public:
-    GlComplexBlendTask(GlProgram* program, GlRenderTarget* dstFbo, GlRenderTarget* dstCopyFbo, GlRenderTask* stencilTask, GlComposeTask* composeTask);
+    GlComplexBlendTask(GlProgram* program, GlRenderTarget* dstFbo, GlRenderTarget* dstCopyFbo, GlComposeTask* composeTask);
     ~GlComplexBlendTask() override;
 
     void run() override;
 
     void normalizeDrawDepth(int32_t maxDepth) override;
+
+    void setViewport(const RenderRegion& viewport) { mViewport = viewport; }
+    void setCopyViewport(const RenderRegion& viewport) { mCopyViewport = viewport; }
 private:
     GlRenderTarget* mDstFbo;
     GlRenderTarget* mDstCopyFbo;
-    GlRenderTask* mStencilTask;
     GlComposeTask* mComposeTask;
+    RenderRegion mViewport = {};
+    RenderRegion mCopyViewport = {};
 };
 
 #endif /* _TVG_GL_RENDER_TASK_H_ */
