@@ -1544,18 +1544,18 @@ void Stroker::stroke(const RenderShape *rshape)
     auto pts = rshape->path.pts.data;
     auto ptsCnt = rshape->path.pts.count;
 
-    if (rshape->strokeTrim()) {
-        auto begin = 0.0f;
+    if (rshape->trim && rshape->trim->valid()) {
+        auto start = 0.0f;
         auto end = 0.0f;
-        rshape->stroke->strokeTrim(begin, end);
+        rshape->trim->trim(start, end);
 
-        if (begin == end) return;
+        if (start == end) return;
 
-        if (begin > end) {
-            doTrimStroke(cmds, cmdCnt, pts, ptsCnt, rshape->stroke->trim.simultaneous, begin, 1.0f);
-            doTrimStroke(cmds, cmdCnt, pts, ptsCnt, rshape->stroke->trim.simultaneous, 0.0f, end);
+        if (start > end) {
+            doTrimStroke(cmds, cmdCnt, pts, ptsCnt, rshape->trim->simultaneous, start, 1.0f);
+            doTrimStroke(cmds, cmdCnt, pts, ptsCnt, rshape->trim->simultaneous, 0.0f, end);
         } else {
-            doTrimStroke(cmds, cmdCnt, pts, ptsCnt, rshape->stroke->trim.simultaneous, begin,  end);
+            doTrimStroke(cmds, cmdCnt, pts, ptsCnt, rshape->trim->simultaneous, start,  end);
         }
 
         return;

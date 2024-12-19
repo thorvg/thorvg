@@ -193,7 +193,7 @@ TEST_CASE("Stroking", "[tvgShape]")
     REQUIRE(shape->strokeMiterlimit() == 1000.0f);
     REQUIRE(shape->strokeMiterlimit(-0.001f) == Result::InvalidArguments);
 
-    REQUIRE(shape->strokeTrim(0.3f, 0.88f, false) == Result::Success);
+    REQUIRE(shape->trim(0.3f, 0.88f, false) == Result::Success);
 
     //Stroke Order After Stroke Setting
     REQUIRE(shape->order(true) == Result::Success);

@@ -1095,18 +1095,18 @@ public:
     Result strokeMiterlimit(float miterlimit) noexcept;
 
     /**
-     * @brief Sets the trim of the stroke along the defined path segment, allowing control over which part of the stroke is visible.
+     * @brief Sets the trim of the shape along the defined path segment, allowing control over which part of the shape is visible.
      *
      * If the values of the arguments @p begin and @p end exceed the 0-1 range, they are wrapped around in a manner similar to angle wrapping, effectively treating the range as circular.
      *
-     * @param[in] begin Specifies the start of the segment to display along the path.
+     * @param[in] start Specifies the start of the segment to display along the path.
      * @param[in] end Specifies the end of the segment to display along the path.
      * @param[in] simultaneous Determines how to trim multiple paths within a single shape. If set to @c true (default), trimming is applied simultaneously to all paths;
      * Otherwise, all paths are treated as a single entity with a combined length equal to the sum of their individual lengths and are trimmed as such.
      *
      * @note Experimental API
      */
-    Result strokeTrim(float begin, float end, bool simultaneous = true) noexcept;
+    Result trim(float start, float end, bool simultaneous = true) noexcept;
 
     /**
      * @brief Sets the solid color for all of the figures from the path.

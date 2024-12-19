@@ -85,7 +85,7 @@ struct SwShapeTask : SwTask
        Additionally, the stroke style should not be dashed. */
     bool antialiasing(float strokeWidth)
     {
-        return strokeWidth < 2.0f || rshape->stroke->dashCnt > 0 || rshape->stroke->strokeFirst || rshape->strokeTrim() || rshape->stroke->color.a < 255;
+        return strokeWidth < 2.0f || rshape->stroke->dashCnt > 0 || rshape->stroke->strokeFirst || (rshape->trim && rshape->trim->valid()) || rshape->stroke->color.a < 255;
     }
 
     float validStrokeWidth()
@@ -96,7 +96,7 @@ struct SwShapeTask : SwTask
         if (tvg::zero(width)) return 0.0f;
 
         if (!rshape->stroke->fill && (MULTIPLY(rshape->stroke->color.a, opacity) == 0)) return 0.0f;
-        if (tvg::zero(rshape->stroke->trim.begin - rshape->stroke->trim.end)) return 0.0f;
+        if (rshape->trim && tvg::zero(rshape->trim->start - rshape->trim->end)) return 0.0f;
 
         return (width * sqrt(transform.e11 * transform.e11 + transform.e12 * transform.e12));
     }
