@@ -53,106 +53,111 @@ struct UserExample : tvgexam::Example
         shape->fill(255, 255, 255);
         canvas->push(shape);
 
-        //////////////////////////////////////////////
-        auto scene = tvg::Scene::gen();
+        {
+            auto scene = tvg::Scene::gen();
 
-        auto star1 = tvg::Shape::gen();
-        compose(star1);
-        star1->fill(255, 255, 0);
-        star1->strokeFill(255 ,0, 0);
-        star1->strokeWidth(10);
+            auto star1 = tvg::Shape::gen();
+            compose(star1);
+            star1->fill(255, 255, 0);
+            star1->strokeFill(255 ,0, 0);
+            star1->strokeWidth(10);
 
-        //Move Star1
-        star1->translate(-10, -10);
+            //Move Star1
+            star1->translate(-10, -10);
 
-        // color/alpha/opacity are ignored for a clip object - no need to set them
-        auto clipStar = tvg::Shape::gen();
-        clipStar->appendCircle(200, 230, 110, 110);
-        clipStar->translate(10, 10);
+            // color/alpha/opacity are ignored for a clip object - no need to set them
+            auto clipStar = tvg::Shape::gen();
+            clipStar->appendCircle(200, 230, 110, 110);
+            clipStar->translate(10, 10);
 
-        star1->clip((clipStar));
+            star1->clip((clipStar));
 
-        auto star2 = tvg::Shape::gen();
-        compose(star2);
-        star2->fill(0, 255, 255);
-        star2->strokeFill(0 ,255, 0);
-        star2->strokeWidth(10);
-        star2->opacity(100);
+            auto star2 = tvg::Shape::gen();
+            compose(star2);
+            star2->fill(0, 255, 255);
+            star2->strokeFill(0 ,255, 0);
+            star2->strokeWidth(10);
+            star2->opacity(100);
 
-        //Move Star2
-        star2->translate(10, 40);
+            //Move Star2
+            star2->translate(10, 40);
 
-        // color/alpha/opacity are ignored for a clip object - no need to set them
-        auto clip = tvg::Shape::gen();
-        clip->appendCircle(200, 230, 130, 130);
-        clip->translate(10, 10);
+            // color/alpha/opacity are ignored for a clip object - no need to set them
+            auto clip = tvg::Shape::gen();
+            clip->appendCircle(200, 230, 130, 130);
+            clip->translate(10, 10);
 
-        scene->push(star1);
-        scene->push(star2);
+            scene->push(star1);
+            scene->push(star2);
 
-        //Clipping scene to shape
-        scene->clip(clip);
+            //Clipping scene to shape
+            scene->clip(clip);
 
-        canvas->push(scene);
+            canvas->push(scene);
+        }
 
-        //////////////////////////////////////////////
-        auto star3 = tvg::Shape::gen();
-        compose(star3);
+        {
+            auto star3 = tvg::Shape::gen();
+            compose(star3);
 
-        //Fill Gradient
-        auto fill = tvg::LinearGradient::gen();
-        fill->linear(100, 100, 300, 300);
-        tvg::Fill::ColorStop colorStops[2];
-        colorStops[0] = {0, 0, 0, 0, 255};
-        colorStops[1] = {1, 255, 255, 255, 255};
-        fill->colorStops(colorStops, 2);
-        star3->fill(fill);
+            //Fill Gradient
+            auto fill = tvg::LinearGradient::gen();
+            fill->linear(100, 100, 300, 300);
+            tvg::Fill::ColorStop colorStops[2];
+            colorStops[0] = {0, 0, 0, 0, 255};
+            colorStops[1] = {1, 255, 255, 255, 255};
+            fill->colorStops(colorStops, 2);
+            star3->fill(fill);
 
-        star3->strokeFill(255 ,0, 0);
-        star3->strokeWidth(10);
-        star3->translate(400, 0);
+            star3->strokeFill(255 ,0, 0);
+            star3->strokeWidth(10);
+            star3->translate(400, 0);
 
-        // color/alpha/opacity are ignored for a clip object - no need to set them
-        auto clipRect = tvg::Shape::gen();
-        clipRect->appendRect(500, 120, 200, 200);          //x, y, w, h
-        clipRect->translate(20, 20);
+            // color/alpha/opacity are ignored for a clip object - no need to set them
+            auto clipRect = tvg::Shape::gen();
+            clipRect->appendRect(500, 120, 200, 200);          //x, y, w, h
+            clipRect->translate(20, 20);
 
-        //Clipping scene to rect(shape)
-        star3->clip(clipRect);
+            //Clipping scene to rect(shape)
+            star3->clip(clipRect);
 
-        canvas->push(star3);
+            canvas->push(star3);
+        }
 
-        //////////////////////////////////////////////
-        auto picture = tvg::Picture::gen();
-        if (!tvgexam::verify(picture->load(EXAMPLE_DIR"/svg/cartman.svg"))) return false;
+        {
+            auto picture = tvg::Picture::gen();
+            if (!tvgexam::verify(picture->load(EXAMPLE_DIR"/svg/cartman.svg"))) return false;
 
-        picture->scale(3);
-        picture->translate(50, 400);
+            picture->scale(3);
+            picture->translate(50, 400);
 
-        // color/alpha/opacity are ignored for a clip object - no need to set them
-        auto clipPath = tvg::Shape::gen();
-        clipPath->appendCircle(200, 510, 50, 50);          //x, y, w, h, rx, ry
-        clipPath->appendCircle(200, 650, 50, 50);          //x, y, w, h, rx, ry
-        clipPath->translate(20, 20);
+            // color/alpha/opacity are ignored for a clip object - no need to set them
+            auto clipPath = tvg::Shape::gen();
+            clipPath->appendCircle(200, 510, 50, 50);          //x, y, w, h, rx, ry
+            clipPath->appendCircle(200, 650, 50, 50);          //x, y, w, h, rx, ry
+            clipPath->translate(20, 20);
 
-        //Clipping picture to path
-        picture->clip(clipPath);
+            //Clipping picture to path
+            picture->clip(clipPath);
 
-        canvas->push(picture);
+            canvas->push(picture);
+        }
 
-        //////////////////////////////////////////////
-        auto shape1 = tvg::Shape::gen();
-        shape1->appendRect(500, 420, 100, 100, 20, 20);
-        shape1->fill(255, 0, 255, 160);
+        {
+            auto shape1 = tvg::Shape::gen();
+            shape1->appendRect(500, 420, 250, 250, 20, 20);
+            shape1->fill(255, 0, 255, 160);
 
-        // color/alpha/opacity are ignored for a clip object - no need to set them
-        auto clipShape = tvg::Shape::gen();
-        clipShape->appendRect(600, 420, 100, 100);
+            // color/alpha/opacity are ignored for a clip object - no need to set them
+            auto clipShape = tvg::Shape::gen();
+            clipShape->appendCircle(600, 550, 150, 150);
+            clipShape->strokeWidth(20);
 
-        //Clipping shape1 to clipShape
-        shape1->clip(clipShape);
+            //Clipping shape1 to clipShape
+            shape1->clip(clipShape);
 
-        canvas->push(shape1);
+            canvas->push(shape1);
+        }
 
         return true;
     }
