@@ -511,10 +511,6 @@ bool shapePrepared(const SwShape* shape)
 
 bool shapeGenRle(SwShape* shape, TVG_UNUSED const RenderShape* rshape, bool antiAlias)
 {
-    //FIXME: Should we draw it?
-    //Case: Stroke Line
-    //if (shape.outline->opened) return true;
-
     //Case A: Fast Track Rectangle Drawing
     if (shape->fastTrack) return true;
 
