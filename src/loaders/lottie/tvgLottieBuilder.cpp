@@ -1220,7 +1220,7 @@ void LottieBuilder::updateText(LottieLayer* layer, float frameNo)
 }
 
 
-void LottieBuilder::updateMaskings(LottieLayer* layer, float frameNo)
+void LottieBuilder::updateMasks(LottieLayer* layer, float frameNo)
 {
     if (layer->masks.count == 0) return;
 
@@ -1306,6 +1306,55 @@ bool LottieBuilder::updateMatte(LottieComposition* comp, float frameNo, Scene* s
 }
 
 
+void LottieBuilder::updateStrokeEffect(LottieLayer* layer, LottieFxStroke* effect, float frameNo)
+{
+    if (layer->type != LottieLayer::Type::Solid ||  layer->masks.count == 0) {
+        TVGERR("LOTTIE", "Layer (%d) is not appropriate for Stroke Effect, mask(%d)", (int)layer->type, layer->masks.count);
+        return;
+    }
+
+    Shape* shape = nullptr;
+
+    for (auto m = layer->masks.begin(); m < layer->masks.end(); ++m) {
+        auto mask = *m;
+        if (mask->method != MaskMethod::None) continue;
+        if (!shape) {
+            shape = layer->pooling();
+            shape->reset();
+        }
+        mask->pathset(frameNo, SHAPE(shape)->rs.path.cmds, SHAPE(shape)->rs.path.pts, nullptr, nullptr, nullptr, exps);
+    }
+
+    if (!shape) return;
+
+    //TODO: clipping with stroking?
+
+    shape->transform(layer->cache.matrix);
+    shape->strokeTrim(effect->begin(frameNo) * 0.01f, effect->end(frameNo) * 0.01f);
+    shape->strokeFill(255, 255, 255);  //TODO: remove
+    shape->strokeWidth(effect->size(frameNo));
+
+    //apply the color to the solid fill (bg)
+    auto bg = static_cast<Shape*>(layer->scene->paints().front());
+    auto color = effect->color(frameNo);
+    bg->fill(color.rgb[0], color.rgb[1], color.rgb[1], (int)(effect->opacity(frameNo) * 255.0f));
+
+    //TODO: space?
+    //TODO: hardness?
+
+    auto val = effect->style(frameNo);
+
+    //TODO: refactoring with aligning the thorvg enum values.
+    StrokeCap cap;
+    if (val == 1) cap = StrokeCap::Butt;
+    else if (val == 2) cap = StrokeCap::Square;
+    else cap = StrokeCap::Round;
+    shape->strokeCap(cap);
+
+    layer->scene->mask(shape, MaskMethod::Alpha); //TODO: replace with clipping
+}
+
+
 void LottieBuilder::updateEffect(LottieLayer* layer, float frameNo)
 {
     constexpr int QUALITY = 25;
@@ -1327,6 +1376,11 @@ void LottieBuilder::updateEffect(LottieLayer* layer, float frameNo)
                 auto effect = static_cast<LottieFxFill*>(*ef);
                 auto color = effect->color(frameNo);
                 layer->scene->push(SceneEffect::Fill, color.rgb[0], color.rgb[1], color.rgb[2], (int)(255.0f *effect->opacity(frameNo)));
+                break;
+            }
+            case LottieEffect::Stroke: {
+                auto effect = static_cast<LottieFxStroke*>(*ef);
+                updateStrokeEffect(layer, effect, frameNo);
                 break;
             }
             case LottieEffect::Tritone: {
@@ -1406,7 +1460,7 @@ void LottieBuilder::updateLayer(LottieComposition* comp, Scene* scene, LottieLay
         }
     }
 
-    updateMaskings(layer, frameNo);
+    updateMasks(layer, frameNo);
 
     layer->scene->blend(layer->blendMethod);
 
