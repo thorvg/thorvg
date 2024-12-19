@@ -119,47 +119,6 @@ RGB24 LottieParser::getColor(const char *str)
 }
 
 
-FillRule LottieParser::getFillRule()
-{
-    switch (getInt()) {
-        case 1: return FillRule::NonZero;
-        default: return FillRule::EvenOdd;
-    }
-}
-
-
-MaskMethod LottieParser::getMatteType()
-{
-    switch (getInt()) {
-        case 1: return MaskMethod::Alpha;
-        case 2: return MaskMethod::InvAlpha;
-        case 3: return MaskMethod::Luma;
-        case 4: return MaskMethod::InvLuma;
-        default: return MaskMethod::None;
-    }
-}
-
-
-StrokeCap LottieParser::getStrokeCap()
-{
-    switch (getInt()) {
-        case 1: return StrokeCap::Butt;
-        case 2: return StrokeCap::Round;
-        default: return StrokeCap::Square;
-    }
-}
-
-
-StrokeJoin LottieParser::getStrokeJoin()
-{
-    switch (getInt()) {
-        case 1: return StrokeJoin::Miter;
-        case 2: return StrokeJoin::Round;
-        default: return StrokeJoin::Bevel;
-    }
-}
-
-
 bool LottieParser::getValue(TextDocument& doc)
 {
     enterObject();
@@ -638,7 +597,7 @@ LottieSolidFill* LottieParser::parseSolidFill()
         else if (KEY_AS("c")) parseProperty<LottieProperty::Type::Color>(fill->color, fill);
         else if (KEY_AS("o")) parseProperty<LottieProperty::Type::Opacity>(fill->opacity, fill);
         else if (KEY_AS("fillEnabled")) fill->hidden |= !getBool();
-        else if (KEY_AS("r")) fill->rule = getFillRule();
+        else if (KEY_AS("r")) fill->rule = (getInt() == 1) ? FillRule::NonZero : FillRule::EvenOdd;
         else skip();
     }
     return fill;
@@ -676,8 +635,8 @@ LottieSolidStroke* LottieParser::parseSolidStroke()
         else if (KEY_AS("c")) parseProperty<LottieProperty::Type::Color>(stroke->color, stroke);
         else if (KEY_AS("o")) parseProperty<LottieProperty::Type::Opacity>(stroke->opacity, stroke);
         else if (KEY_AS("w")) parseProperty<LottieProperty::Type::Float>(stroke->width, stroke);
-        else if (KEY_AS("lc")) stroke->cap = getStrokeCap();
-        else if (KEY_AS("lj")) stroke->join = getStrokeJoin();
+        else if (KEY_AS("lc")) stroke->cap = (StrokeCap) getInt();
+        else if (KEY_AS("lj")) stroke->join = (StrokeJoin) getInt();
         else if (KEY_AS("ml")) stroke->miterLimit = getFloat();
         else if (KEY_AS("fillEnabled")) stroke->hidden |= !getBool();
         else if (KEY_AS("d")) parseStrokeDash(stroke);
@@ -791,7 +750,7 @@ LottieGradientFill* LottieParser::parseGradientFill()
 
     while (auto key = nextObjectKey()) {
         if (parseCommon(fill, key)) continue;
-        else if (KEY_AS("r")) fill->rule = getFillRule();
+        else if (KEY_AS("r")) fill->rule = (getInt() == 1) ? FillRule::NonZero : FillRule::EvenOdd;
         else parseGradient(fill, key);
     }
 
@@ -809,8 +768,8 @@ LottieGradientStroke* LottieParser::parseGradientStroke()
 
     while (auto key = nextObjectKey()) {
         if (parseCommon(stroke, key)) continue;
-        else if (KEY_AS("lc")) stroke->cap = getStrokeCap();
-        else if (KEY_AS("lj")) stroke->join = getStrokeJoin();
+        else if (KEY_AS("lc")) stroke->cap = (StrokeCap) getInt();
+        else if (KEY_AS("lj")) stroke->join = (StrokeJoin) getInt();
         else if (KEY_AS("ml")) stroke->miterLimit = getFloat();
         else if (KEY_AS("w")) parseProperty<LottieProperty::Type::Float>(stroke->width);
         else if (KEY_AS("d")) parseStrokeDash(stroke);
@@ -879,7 +838,7 @@ LottieOffsetPath* LottieParser::parseOffsetPath()
     while (auto key = nextObjectKey()) {
         if (parseCommon(offsetPath, key)) continue;
         else if (KEY_AS("a")) parseProperty<LottieProperty::Type::Float>(offsetPath->offset);
-        else if (KEY_AS("lj")) offsetPath->join = getStrokeJoin();
+        else if (KEY_AS("lj")) offsetPath->join = (StrokeJoin) getInt();
         else if (KEY_AS("ml")) parseProperty<LottieProperty::Type::Float>(offsetPath->miterLimit);
         else skip();
     }
@@ -1508,7 +1467,7 @@ LottieLayer* LottieParser::parseLayer(LottieLayer* precomp)
         else if (KEY_AS("w") || KEY_AS("sw")) getLayerSize(layer->w);
         else if (KEY_AS("h") || KEY_AS("sh")) getLayerSize(layer->h);
         else if (KEY_AS("sc")) color = getColor(getString());
-        else if (KEY_AS("tt")) layer->matteType = getMatteType();
+        else if (KEY_AS("tt")) layer->matteType = (MaskMethod) getInt();
         else if (KEY_AS("tp")) layer->mid = getInt();
         else if (KEY_AS("masksProperties")) parseMasks(layer);
         else if (KEY_AS("hd")) layer->hidden = getBool();

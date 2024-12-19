@@ -47,10 +47,7 @@ public:
 
 private:
     RGB24 getColor(const char *str);
-    MaskMethod getMatteType();
     FillRule getFillRule();
-    StrokeCap getStrokeCap();
-    StrokeJoin getStrokeJoin();
     MaskMethod getMaskMethod(bool inversed);
     LottieInterpolator* getInterpolator(const char* key, Point& in, Point& out);
     LottieEffect* getEffect(int type);
