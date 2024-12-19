@@ -66,7 +66,6 @@ source_file = [
     'Stroke.cpp',
     'StrokeLine.cpp',
     'StrokeMiterlimit.cpp',
-    'StrokeShort.cpp',
     'StrokeTrim.cpp',
     'Svg.cpp',
     'Text.cpp',

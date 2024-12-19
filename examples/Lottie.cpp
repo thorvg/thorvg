@@ -103,7 +103,7 @@ struct UserExample : tvgexam::Example
         this->h = h;
         this->size = w / NUM_PER_ROW;
 
-        this->scandir(EXAMPLE_DIR"/lottie");
+        this->scandir(EXAMPLE_DIR"/lottie/x");
 
         //Run animation loop
         for (auto& animation : animations) {
