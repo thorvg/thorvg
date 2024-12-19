@@ -129,6 +129,7 @@ struct RenderStroke
             dashPattern = nullptr;
         }
         dashCnt = rhs.dashCnt;
+        dashOffset = rhs.dashOffset;
         miterlimit = rhs.miterlimit;
         cap = rhs.cap;
         join = rhs.join;
