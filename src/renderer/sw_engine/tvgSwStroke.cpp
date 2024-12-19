@@ -374,8 +374,8 @@ static void _lineTo(SwStroke& stroke, const SwPoint& to)
 {
     auto delta = to - stroke.center;
 
-    //a zero-length lineto is a no-op; avoid creating a spurious corner
-    if (delta.zero()) return;
+    //a zero-length lineto is a no-op if stroke width is 0; avoid creating a spurious corner
+    if (delta.zero() && stroke.width == 0) return;
 
     /* The lineLength is used to determine the intersection of strokes outlines.
        The scale needs to be reverted since the stroke width has not been scaled.
@@ -451,8 +451,8 @@ static void _cubicTo(SwStroke& stroke, const SwPoint& ctrl1, const SwPoint& ctrl
             continue;
         }
 
-        //ignoreable size
-        if (valid < 0 && arc == bezStack) {
+        //ignoreable size if stroke width is 0
+        if (valid < 0 && arc == bezStack && stroke.width == 0) {
             stroke.center = to;
             return;
         }
