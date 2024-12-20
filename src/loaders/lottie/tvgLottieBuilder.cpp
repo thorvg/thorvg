@@ -1331,7 +1331,7 @@ void LottieBuilder::updateEffect(LottieLayer* layer, float frameNo)
             case LottieEffect::Fill: {
                 auto effect = static_cast<LottieFxFill*>(*ef);
                 auto color = effect->color(frameNo);
-                layer->scene->push(SceneEffect::Fill, color.rgb[0], color.rgb[1], color.rgb[2], (int)(255.0f *effect->opacity(frameNo)));
+                layer->scene->push(SceneEffect::Fill, color.rgb[0], color.rgb[1], color.rgb[2], (int)(255.0f * effect->opacity(frameNo)));
                 break;
             }
             case LottieEffect::Tritone: {

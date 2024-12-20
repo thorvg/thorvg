@@ -341,7 +341,7 @@ struct RenderEffectTint : RenderEffect
 {
     uint8_t black[3];  //rgb
     uint8_t white[3];  //rgb
-    float intensity;   //0 - 100
+    uint8_t intensity; //0 - 255
 
     static RenderEffectTint* gen(va_list& args)
     {
@@ -352,7 +352,7 @@ struct RenderEffectTint : RenderEffect
         inst->white[0] = va_arg(args, int);
         inst->white[1] = va_arg(args, int);
         inst->white[2] = va_arg(args, int);
-        inst->intensity = std::min((float)va_arg(args, double), 100.0f) * 2.55f;
+        inst->intensity = (uint8_t)(va_arg(args, double) * 2.55f);
         inst->type = SceneEffect::Tint;
         return inst;
     }
