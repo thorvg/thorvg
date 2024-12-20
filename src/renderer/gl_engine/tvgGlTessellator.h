@@ -105,7 +105,6 @@ class Stroker final
         GlPoint firstPtDir = {};
         GlPoint prevPt = {};
         GlPoint prevPtDir = {};
-        bool hasMove = false;
     };
 public:
     Stroker(Array<float>* points, Array<uint32_t>* indices, const Matrix& matrix);
@@ -144,7 +143,11 @@ private:
 
     void strokeSquare(const GlPoint& p, const GlPoint& outDir);
 
+    void strokeSquarePoint(const GlPoint& p);
+
     void strokeRound(const GlPoint& p, const GlPoint& outDir);
+
+    void strokeRoundPoint(const GlPoint& p);
 private:
     Array<float>* mResGlPoints;
     Array<uint32_t>* mResIndices;
