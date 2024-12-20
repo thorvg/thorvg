@@ -1655,38 +1655,42 @@ void Stroker::doStroke(const PathCommand *cmds, uint32_t cmd_count, const Point 
     mResGlPoints->reserve(pts_count * 4 + 16);
     mResIndices->reserve(pts_count * 3);
 
+    auto validStrokeCap = false;
+
     for (uint32_t i = 0; i < cmd_count; i++) {
         switch (cmds[i]) {
             case PathCommand::MoveTo: {
-                if (mStrokeState.hasMove) {
+                if (validStrokeCap) { // check this, so we can skip if path only contains move instruction
                     strokeCap();
-                    mStrokeState.hasMove = false;
+                    validStrokeCap = false;
                 }
-                mStrokeState.hasMove = true;
                 mStrokeState.firstPt = *pts;
                 mStrokeState.firstPtDir = {0.0f, 0.0f};
                 mStrokeState.prevPt = *pts;
                 mStrokeState.prevPtDir = {0.0f, 0.0f};
                 pts++;
+                validStrokeCap = false;
             } break;
             case PathCommand::LineTo: {
+                validStrokeCap = true;
                 this->strokeLineTo(*pts);
                 pts++;
             } break;
             case PathCommand::CubicTo: {
+                validStrokeCap = true;
                 this->strokeCubicTo(pts[0], pts[1], pts[2]);
                 pts += 3;
             } break;
             case PathCommand::Close: {
                 this->strokeClose();
 
-                mStrokeState.hasMove = false;
+                validStrokeCap = false;
             } break;
             default:
                 break;
         }
     }
-    strokeCap();
+    if (validStrokeCap) strokeCap();
 }
 
 
@@ -1707,15 +1711,20 @@ void Stroker::doDashStroke(const PathCommand *cmds, uint32_t cmd_count, const Po
 
 void Stroker::strokeCap()
 {
-    if (mStrokeState.firstPt == mStrokeState.prevPt) return;
     if (mStrokeCap == StrokeCap::Butt) return;
 
     if (mStrokeCap == StrokeCap::Square) {
-        strokeSquare(mStrokeState.firstPt, {-mStrokeState.firstPtDir.x, -mStrokeState.firstPtDir.y});
-        strokeSquare(mStrokeState.prevPt, mStrokeState.prevPtDir);
+        if (mStrokeState.firstPt == mStrokeState.prevPt) strokeSquarePoint(mStrokeState.firstPt);
+        else {
+            strokeSquare(mStrokeState.firstPt, {-mStrokeState.firstPtDir.x, -mStrokeState.firstPtDir.y});
+            strokeSquare(mStrokeState.prevPt, mStrokeState.prevPtDir);
+        }
     } else if (mStrokeCap == StrokeCap::Round) {
-        strokeRound(mStrokeState.firstPt, {-mStrokeState.firstPtDir.x, -mStrokeState.firstPtDir.y});
-        strokeRound(mStrokeState.prevPt, mStrokeState.prevPtDir);
+        if (mStrokeState.firstPt == mStrokeState.prevPt) strokeRoundPoint(mStrokeState.firstPt);
+        else {
+            strokeRound(mStrokeState.firstPt, {-mStrokeState.firstPtDir.x, -mStrokeState.firstPtDir.y});
+            strokeRound(mStrokeState.prevPt, mStrokeState.prevPtDir);
+        }
     }
 }
 
@@ -1807,8 +1816,6 @@ void Stroker::strokeClose()
 
     // join firstPt with prevPt
     this->strokeJoin(mStrokeState.firstPtDir);
-
-    mStrokeState.hasMove = false;
 }
 
 
@@ -1887,6 +1894,33 @@ void Stroker::strokeRound(const Point &prev, const Point& curr, const Point& cen
 }
 
 
+void Stroker::strokeRoundPoint(const Point &p)
+{
+    // Fixme: just use bezier curve to calculate step count
+    auto count = _bezierCurveCount(_bezFromArc(p, p, strokeRadius())) * 2;
+    auto c = _pushVertex(mResGlPoints, p.x, p.y);
+    auto step = 2 * M_PI / (count - 1);
+
+    for (uint32_t i = 1; i <= static_cast<uint32_t>(count); i++) {
+        float angle = i * step;
+        Point dir = {cos(angle), sin(angle)};
+        Point out = p + dir * strokeRadius();
+        auto oi = _pushVertex(mResGlPoints, out.x, out.y);
+
+        if (oi > 1) {
+            mResIndices->push(c);
+            mResIndices->push(oi);
+            mResIndices->push(oi - 1);
+        }
+    }
+
+    mLeftTop.x = std::min(mLeftTop.x, p.x - strokeRadius());
+    mLeftTop.y = std::min(mLeftTop.y, p.y - strokeRadius());
+    mRightBottom.x = std::max(mRightBottom.x, p.x + strokeRadius());
+    mRightBottom.y = std::max(mRightBottom.y, p.y + strokeRadius());
+}
+
+
 void Stroker::strokeMiter(const Point& prev, const Point& curr, const Point& center)
 {
     auto pp1 = prev - center;
@@ -1955,6 +1989,36 @@ void Stroker::strokeSquare(const Point& p, const Point& outDir)
     mResIndices->push(ci);
     mResIndices->push(bi);
     mResIndices->push(di);
+
+    mLeftTop.x = std::min(mLeftTop.x, std::min(std::min(a.x, b.x), std::min(c.x, d.x)));
+    mLeftTop.y = std::min(mLeftTop.y, std::min(std::min(a.y, b.y), std::min(c.y, d.y)));
+    mRightBottom.x = std::max(mRightBottom.x, std::max(std::max(a.x, b.x), std::max(c.x, d.x)));
+    mRightBottom.y = std::max(mRightBottom.y, std::max(std::max(a.y, b.y), std::max(c.y, d.y)));
+}
+
+
+void Stroker::strokeSquarePoint(const Point& p)
+{
+    auto offsetX = Point{strokeRadius(), 0.0f};
+    auto offsetY = Point{0.0f, strokeRadius()};
+
+    auto a = p + offsetX + offsetY;
+    auto b = p - offsetX + offsetY;
+    auto c = p - offsetX - offsetY;
+    auto d = p + offsetX - offsetY;
+
+    auto ai = _pushVertex(mResGlPoints, a.x, a.y);
+    auto bi = _pushVertex(mResGlPoints, b.x, b.y);
+    auto ci = _pushVertex(mResGlPoints, c.x, c.y);
+    auto di = _pushVertex(mResGlPoints, d.x, d.y);
+
+    mResIndices->push(ai);
+    mResIndices->push(bi);
+    mResIndices->push(ci);
+
+    mResIndices->push(ci);
+    mResIndices->push(di);
+    mResIndices->push(ai);
 
     mLeftTop.x = std::min(mLeftTop.x, std::min(std::min(a.x, b.x), std::min(c.x, d.x)));
     mLeftTop.y = std::min(mLeftTop.y, std::min(std::min(a.y, b.y), std::min(c.y, d.y)));
