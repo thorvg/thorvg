@@ -233,11 +233,7 @@ bool LottieLoader::open(const string& path)
 
     auto content = (char*)(malloc(sizeof(char) * size + 1));
     fseek(f, 0, SEEK_SET);
-    auto ret = fread(content, sizeof(char), size, f);
-    if (ret < size) {
-        fclose(f);
-        return false;
-    }
+    size = fread(content, sizeof(char), size, f);
     content[size] = '\0';
 
     fclose(f);
