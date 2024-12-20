@@ -1711,14 +1711,18 @@ void Stroker::strokeCap()
 
     if (mStrokeCap == StrokeCap::Square) {
         if (mStrokeState.firstPt == mStrokeState.prevPt) {
-            strokeSquarePoint(mStrokeState.firstPt);
+            if (mStrokeWidth > 0) {
+                strokeSquarePoint(mStrokeState.firstPt);
+            }
         } else {
             strokeSquare(mStrokeState.firstPt, {-mStrokeState.firstPtDir.x, -mStrokeState.firstPtDir.y});
             strokeSquare(mStrokeState.prevPt, mStrokeState.prevPtDir);
         }
     } else if (mStrokeCap == StrokeCap::Round) {
         if (mStrokeState.firstPt == mStrokeState.prevPt) {
-            strokeRoundPoint(mStrokeState.firstPt);
+            if (mStrokeWidth > 0) {
+                strokeRoundPoint(mStrokeState.firstPt);
+            }
         } else {
             strokeRound(mStrokeState.firstPt, {-mStrokeState.firstPtDir.x, -mStrokeState.firstPtDir.y});
             strokeRound(mStrokeState.prevPt, mStrokeState.prevPtDir);
