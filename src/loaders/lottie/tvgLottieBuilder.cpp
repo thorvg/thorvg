@@ -858,18 +858,21 @@ void LottieBuilder::updateTrimpath(TVG_UNUSED LottieGroup* parent, LottieObject*
 {
     auto trimpath = static_cast<LottieTrimpath*>(*child);
 
-    float begin, end;
-    trimpath->segment(frameNo, begin, end, exps);
+    float start, end;
+    if (!trimpath->segment(frameNo, start, end, exps)) return;
+    bool simultaneous = trimpath->type == LottieTrimpath::Type::Simultaneous;
 
-    if (SHAPE(ctx->propagator)->rs.stroke) {
-        auto pbegin = SHAPE(ctx->propagator)->rs.stroke->trim.begin;
-        auto pend = SHAPE(ctx->propagator)->rs.stroke->trim.end;
-        auto length = fabsf(pend - pbegin);
-        begin = (length * begin) + pbegin;
-        end = (length * end) + pbegin;
+    //optimization - merge trimpaths if have the same type
+    if (!ctx->trimpaths.empty() && ctx->trimpaths.last()->simultaneous == simultaneous) {
+        auto pstart = ctx->trimpaths.last()->start;
+        auto pend = ctx->trimpaths.last()->end;
+        auto length = fabsf(pend - pstart);
+        ctx->trimpaths.last()->start = length * start + pstart;
+        ctx->trimpaths.last()->end = length * end + pstart;
+    } else {
+        ctx->trimpaths.push(new LottieTrimpathModifier(start, end, simultaneous));
     }
 
-    ctx->propagator->strokeTrim(begin, end, trimpath->type == LottieTrimpath::Type::Simultaneous);
     ctx->merging = nullptr;
 }
 
@@ -944,6 +947,29 @@ void LottieBuilder::updateChildren(LottieGroup* parent, float frameNo, Inlist<Re
             }
             if (ctx->propagator->opacity() == 0) break;
         }
+
+        if (ctx->merging && !ctx->trimpaths.empty()) {
+            for (auto trimpath: ctx->trimpaths) {
+                Array<PathCommand> cmds;
+                Array<Point> pts;
+
+                auto& path = SHAPE(ctx->merging)->rs.path;
+                trimpath->modifyPath(path.cmds, path.pts, cmds, pts);
+
+                path.cmds.reset();
+                path.cmds.data = cmds.data;
+                path.cmds.count = cmds.count;
+                cmds.data = nullptr;
+
+                path.pts.reset();
+                path.pts.data = pts.data;
+                path.pts.count = pts.count;
+                pts.data = nullptr;
+
+                PAINT(ctx->merging)->update(RenderUpdateFlag::Path);
+            }
+        }
+
         delete(ctx);
     }
 }
