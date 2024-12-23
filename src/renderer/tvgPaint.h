@@ -109,7 +109,7 @@ namespace tvg
 
             if (free && refCnt == 0) {
                 //TODO: use the global dismiss function?
-                delete(this);
+                delete(paint);
                 return 0;
             }
 
