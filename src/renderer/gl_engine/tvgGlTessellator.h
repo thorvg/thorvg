@@ -106,7 +106,9 @@ private:
     void strokeMiter(const Point& prev, const Point& curr, const Point& center);
     void strokeBevel(const Point& prev, const Point& curr, const Point& center);
     void strokeSquare(const Point& p, const Point& outDir);
+    void strokeSquarePoint(const Point& p);
     void strokeRound(const Point& p, const Point& outDir);
+    void strokeRoundPoint(const Point& p);
 
     Array<float>* mResGlPoints;
     Array<uint32_t>* mResIndices;
