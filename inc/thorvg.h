@@ -2113,7 +2113,7 @@ public:
     /**
      * @brief Set the access function for traversing the Picture scene tree nodes.
      *
-     * @param[in] picture The picture node to traverse the internal scene-tree.
+     * @param[in] paint The paint node to traverse the internal scene-tree.
      * @param[in] func The callback function calling for every paint nodes of the Picture.
      * @param[in] data Data passed to the @p func as its argument.
      *
@@ -2121,7 +2121,7 @@ public:
      *
      * @note Experimental API
      */
-    Result set(const Picture* picture, std::function<bool(const Paint* paint, void* data)> func, void* data) noexcept;
+    Result set(Paint* paint, std::function<bool(const Paint* paint, void* data)> func, void* data) noexcept;
 
     /**
      * @brief Generate a unique ID (hash key) from a given name.
