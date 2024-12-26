@@ -1224,6 +1224,13 @@ void LottieBuilder::updateMaskings(LottieLayer* layer, float frameNo)
 {
     if (layer->masks.count == 0) return;
 
+    //Introduce an intermediate scene for embracing the matte + masking
+    if (layer->matteTarget) {
+        auto scene = Scene::gen();
+        scene->push(layer->scene);
+        layer->scene = scene;
+    }
+
     Shape* pShape = nullptr;
     MaskMethod pMethod;
     uint8_t pOpacity;
@@ -1276,13 +1283,6 @@ void LottieBuilder::updateMaskings(LottieLayer* layer, float frameNo)
 
         pOpacity = opacity;
         pMethod = method;
-    }
-
-    //Introduce an intermediate scene for embracing the matte + masking
-    if (layer->matteTarget) {
-        auto scene = Scene::gen();
-        scene->push(layer->scene);
-        layer->scene = scene;
     }
 }
 
