@@ -54,6 +54,8 @@ enum class SvgNodeType
     Mask,
     CssStyle,
     Symbol,
+    Filter,
+    GaussianBlur,
     Unknown
 };
 
@@ -142,6 +144,7 @@ enum class SvgStyleFlags
     PaintOrder = 0x10000,
     StrokeMiterlimit = 0x20000,
     StrokeDashOffset = 0x40000,
+    Filter = 0x80000
 };
 
 constexpr bool operator &(SvgStyleFlags a, SvgStyleFlags b)
@@ -383,6 +386,16 @@ struct SvgTextNode
     float fontSize;
 };
 
+struct SvgGaussianBlurNode
+{
+    float stdDevX, stdDevY;
+    bool edgeModeWrap;
+};
+
+struct SvgFilterNode
+{
+};
+
 struct SvgLinearGradient
 {
     float x1;
@@ -486,12 +499,19 @@ struct SvgStyleStroke
     SvgDash dash;
 };
 
+struct SvgFilter
+{
+    char *url;
+    SvgNode* node;
+};
+
 struct SvgStyleProperty
 {
     SvgStyleFill fill;
     SvgStyleStroke stroke;
     SvgComposite clipPath;
     SvgComposite mask;
+    SvgFilter filter;
     int opacity;
     SvgColor color;
     char* cssClass;
@@ -528,6 +548,8 @@ struct SvgNode
         SvgCssStyleNode cssStyle;
         SvgSymbolNode symbol;
         SvgTextNode text;
+        SvgFilterNode filter;
+        SvgGaussianBlurNode gaussianBlur;
     } node;
     ~SvgNode();
 };
