@@ -62,7 +62,7 @@ private:
     void emitPoly(MonotonePolygon* poly);
     void emitTriangle(Vertex* p1, Vertex* p2, Vertex* p3);
 
-    FillRule fillRule = FillRule::Winding;
+    FillRule fillRule = FillRule::NonZero;
     std::unique_ptr<ObjectHeap> pHeap;
     Array<VertexList*> outlines;
     VertexList* pMesh;

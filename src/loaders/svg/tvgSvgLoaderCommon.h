@@ -198,12 +198,6 @@ constexpr SvgGradientFlags operator |(SvgGradientFlags a, SvgGradientFlags b)
     return SvgGradientFlags(int(a) | int(b));
 }
 
-enum class SvgFillRule
-{
-    Winding = 0,
-    OddEven = 1
-};
-
 enum class SvgMaskType
 {
     Luminance = 0,

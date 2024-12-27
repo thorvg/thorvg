@@ -122,7 +122,7 @@ RGB24 LottieParser::getColor(const char *str)
 FillRule LottieParser::getFillRule()
 {
     switch (getInt()) {
-        case 1: return FillRule::Winding;
+        case 1: return FillRule::NonZero;
         default: return FillRule::EvenOdd;
     }
 }

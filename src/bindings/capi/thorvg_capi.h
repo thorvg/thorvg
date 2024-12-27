@@ -275,7 +275,7 @@ typedef enum {
  * @brief Enumeration specifying the algorithm used to establish which parts of the shape are treated as the inside of the shape.
  */
 typedef enum {
-    TVG_FILL_RULE_WINDING = 0, ///< A line from the point to a location outside the shape is drawn. The intersections of the line with the path segment of the shape are counted. Starting from zero, if the path segment of the shape crosses the line clockwise, one is added, otherwise one is subtracted. If the resulting sum is non zero, the point is inside the shape.
+    TVG_FILL_RULE_NON_ZERO = 0, ///< A line from the point to a location outside the shape is drawn. The intersections of the line with the path segment of the shape are counted. Starting from zero, if the path segment of the shape crosses the line clockwise, one is added, otherwise one is subtracted. If the resulting sum is non zero, the point is inside the shape.
     TVG_FILL_RULE_EVEN_ODD     ///< A line from the point to a location outside the shape is drawn and its intersections with the path segments of the shape are counted. If the number of intersections is an odd number, the point is inside the shape.
 } Tvg_Fill_Rule;
 
@@ -1509,7 +1509,7 @@ TVG_API Tvg_Result tvg_shape_get_fill_color(const Tvg_Paint* paint, uint8_t* r, 
 * @brief Sets the shape's fill rule.
 *
 * @param[in] paint A Tvg_Paint pointer to the shape object.
-* @param[in] rule The fill rule value. The default value is @c TVG_FILL_RULE_WINDING.
+* @param[in] rule The fill rule value. The default value is @c TVG_FILL_RULE_NON_ZERO.
 *
 * @return Tvg_Result enumeration.
 * @retval TVG_RESULT_INVALID_ARGUMENT An invalid Tvg_Paint pointer.

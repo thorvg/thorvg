@@ -108,7 +108,7 @@ private:
     Array<uint32_t> strokeIndex = {};
     Matrix mMatrix = {};
 
-    FillRule mFillRule = FillRule::Winding;
+    FillRule mFillRule = FillRule::NonZero;
     RenderRegion mBounds = {};
 };
 
