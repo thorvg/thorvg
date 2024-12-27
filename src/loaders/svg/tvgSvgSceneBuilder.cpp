@@ -180,26 +180,21 @@ static RadialGradient* _applyRadialGradientProperty(SvgStyleGradient* g, const B
 }
 
 
-//The SVG standard allows only for 'use' nodes that point directly to a basic shape.
-static bool _appendClipUseNode(SvgLoaderData& loaderData, SvgNode* node, Shape* shape, const Box& vBox, const string& svgPath)
+static bool _appendClipChild(SvgLoaderData& loaderData, SvgNode* node, Shape* shape, const Box& vBox, const string& svgPath)
 {
-    if (node->child.count != 1) return false;
-    auto child = *(node->child.data);
+    //The SVG standard allows only for 'use' nodes that point directly to a basic shape.
+    if (node->type == SvgNodeType::Use) {
+        auto child = *(node->child.data);
 
-    Matrix finalTransform = {1, 0, 0, 0, 1, 0, 0, 0, 1};
-    if (node->transform) finalTransform = *node->transform;
-    if (node->node.use.x != 0.0f || node->node.use.y != 0.0f) {
-        finalTransform *= {1, 0, node->node.use.x, 0, 1, node->node.use.y, 0, 0, 1};
+        Matrix finalTransform = {1, 0, 0, 0, 1, 0, 0, 0, 1};
+        if (node->transform) finalTransform = *node->transform;
+        if (node->node.use.x != 0.0f || node->node.use.y != 0.0f) {
+            finalTransform *= {1, 0, node->node.use.x, 0, 1, node->node.use.y, 0, 0, 1};
+        }
+        if (child->transform) finalTransform = *child->transform * finalTransform;
+
+        return _appendClipShape(loaderData, child, shape, vBox, svgPath, identity((const Matrix*)(&finalTransform)) ? nullptr : &finalTransform);
     }
-    if (child->transform) finalTransform = *child->transform * finalTransform;
-
-    return _appendClipShape(loaderData, child, shape, vBox, svgPath, identity((const Matrix*)(&finalTransform)) ? nullptr : &finalTransform);
-}
-
-
-static bool _appendClipChild(SvgLoaderData& loaderData, SvgNode* node, Shape* shape, const Box& vBox, const string& svgPath, bool clip)
-{
-    if (node->type == SvgNodeType::Use) return _appendClipUseNode(loaderData, node, shape, vBox, svgPath);
     return _appendClipShape(loaderData, node, shape, vBox, svgPath, nullptr);
 }
 
@@ -250,7 +245,7 @@ static Paint* _applyComposition(SvgLoaderData& loaderData, Paint* paint, const S
         auto valid = false; //Composite only when valid shapes exist
 
         for (uint32_t i = 0; i < clipNode->child.count; ++i, ++child) {
-            if (_appendClipChild(loaderData, *child, clipper, vBox, svgPath, clipNode->child.count > 1)) valid = true;
+            if (_appendClipChild(loaderData, *child, clipper, vBox, svgPath)) valid = true;
         }
 
         if (valid) {
@@ -434,7 +429,6 @@ static bool _appendClipShape(SvgLoaderData& loaderData, SvgNode* node, Shape* sh
         }
     }
 
-    _applyProperty(loaderData, node, shape, vBox, svgPath, true);
     return true;
 }
 
