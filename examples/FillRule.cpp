@@ -41,7 +41,7 @@ struct UserExample : tvgexam::Example
         shape1->lineTo(80, 355);
         shape1->close();
         shape1->fill(255, 255, 255);
-        shape1->fill(tvg::FillRule::Winding);  //Fill all winding shapes
+        shape1->fill(tvg::FillRule::NonZero);  //Fill all winding shapes
 
         canvas->push(shape1);
 

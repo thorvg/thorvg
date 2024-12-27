@@ -64,7 +64,7 @@ static inline float getScaleFactor(const Matrix& m)
 
 enum class GlStencilMode {
     None,
-    FillWinding,
+    FillNonZero,
     FillEvenOdd,
     Stroke,
 };

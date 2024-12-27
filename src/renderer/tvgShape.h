@@ -479,7 +479,7 @@ struct Shape::Impl : Paint::Impl
         rs.path.pts.clear();
 
         rs.color.a = 0;
-        rs.rule = FillRule::Winding;
+        rs.rule = FillRule::NonZero;
 
         delete(rs.stroke);
         rs.stroke = nullptr;

@@ -156,7 +156,7 @@ enum class FillSpread : uint8_t
  */
 enum class FillRule : uint8_t
 {
-    Winding = 0, ///< A line from the point to a location outside the shape is drawn. The intersections of the line with the path segment of the shape are counted. Starting from zero, if the path segment of the shape crosses the line clockwise, one is added, otherwise one is subtracted. If the resulting sum is non zero, the point is inside the shape.
+    NonZero = 0, ///< A line from the point to a location outside the shape is drawn. The intersections of the line with the path segment of the shape are counted. Starting from zero, if the path segment of the shape crosses the line clockwise, one is added, otherwise one is subtracted. If the resulting sum is non zero, the point is inside the shape.
     EvenOdd      ///< A line from the point to a location outside the shape is drawn and its intersections with the path segments of the shape are counted. If the number of intersections is an odd number, the point is inside the shape.
 };
 
@@ -1136,7 +1136,7 @@ public:
     /**
      * @brief Sets the fill rule for the Shape object.
      *
-     * @param[in] r The fill rule value. The default value is @c FillRule::Winding.
+     * @param[in] r The fill rule value. The default value is @c FillRule::NonZero.
      */
     Result fill(FillRule r) noexcept;
 

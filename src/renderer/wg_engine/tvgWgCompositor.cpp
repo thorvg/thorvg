@@ -271,7 +271,7 @@ void WgCompositor::drawShape(WgContext& context, WgRenderDataShape* renderData)
     if ((renderData->viewport.w <= 0) || (renderData->viewport.h <= 0)) return;
     wgpuRenderPassEncoderSetScissorRect(renderPassEncoder, renderData->viewport.x, renderData->viewport.y, renderData->viewport.w, renderData->viewport.h);
     // setup stencil rules
-    WGPURenderPipeline stencilPipeline = (renderData->fillRule == FillRule::Winding) ? pipelines.winding : pipelines.evenodd;
+    WGPURenderPipeline stencilPipeline = (renderData->fillRule == FillRule::NonZero) ? pipelines.nonzero : pipelines.evenodd;
     wgpuRenderPassEncoderSetStencilReference(renderPassEncoder, 0);
     wgpuRenderPassEncoderSetBindGroup(renderPassEncoder, 0, bindGroupViewMat, 0, nullptr);
     wgpuRenderPassEncoderSetBindGroup(renderPassEncoder, 1, renderData->bindGroupPaint, 0, nullptr);
@@ -318,7 +318,7 @@ void WgCompositor::blendShape(WgContext& context, WgRenderDataShape* renderData,
     // render shape with blend settings
     wgpuRenderPassEncoderSetScissorRect(renderPassEncoder, renderData->viewport.x, renderData->viewport.y, renderData->viewport.w, renderData->viewport.h);
     // setup stencil rules
-    WGPURenderPipeline stencilPipeline = (renderData->fillRule == FillRule::Winding) ? pipelines.winding : pipelines.evenodd;
+    WGPURenderPipeline stencilPipeline = (renderData->fillRule == FillRule::NonZero) ? pipelines.nonzero : pipelines.evenodd;
     wgpuRenderPassEncoderSetStencilReference(renderPassEncoder, 0);
     wgpuRenderPassEncoderSetBindGroup(renderPassEncoder, 0, bindGroupViewMat, 0, nullptr);
     wgpuRenderPassEncoderSetBindGroup(renderPassEncoder, 1, renderData->bindGroupPaint, 0, nullptr);
@@ -358,7 +358,7 @@ void WgCompositor::clipShape(WgContext& context, WgRenderDataShape* renderData)
     if ((renderData->viewport.w <= 0) || (renderData->viewport.h <= 0)) return;
     wgpuRenderPassEncoderSetScissorRect(renderPassEncoder, renderData->viewport.x, renderData->viewport.y, renderData->viewport.w, renderData->viewport.h);
     // setup stencil rules
-    WGPURenderPipeline stencilPipeline = (renderData->fillRule == FillRule::Winding) ? pipelines.winding : pipelines.evenodd;
+    WGPURenderPipeline stencilPipeline = (renderData->fillRule == FillRule::NonZero) ? pipelines.nonzero : pipelines.evenodd;
     wgpuRenderPassEncoderSetStencilReference(renderPassEncoder, 0);
     wgpuRenderPassEncoderSetBindGroup(renderPassEncoder, 0, bindGroupViewMat, 0, nullptr);
     wgpuRenderPassEncoderSetBindGroup(renderPassEncoder, 1, renderData->bindGroupPaint, 0, nullptr);
@@ -658,7 +658,7 @@ void WgCompositor::renderClipPath(WgContext& context, WgRenderDataPaint* paint)
     // set transformations
     wgpuRenderPassEncoderSetBindGroup(renderPassEncoder, 0, bindGroupViewMat, 0, nullptr);
     // markup stencil
-    WGPURenderPipeline stencilPipeline = (renderData0->fillRule == FillRule::Winding) ? pipelines.winding : pipelines.evenodd;
+    WGPURenderPipeline stencilPipeline = (renderData0->fillRule == FillRule::NonZero) ? pipelines.nonzero : pipelines.evenodd;
     wgpuRenderPassEncoderSetStencilReference(renderPassEncoder, 0);
     wgpuRenderPassEncoderSetBindGroup(renderPassEncoder, 1, renderData0->bindGroupPaint, 0, nullptr);
     wgpuRenderPassEncoderSetPipeline(renderPassEncoder, stencilPipeline);
@@ -675,7 +675,7 @@ void WgCompositor::renderClipPath(WgContext& context, WgRenderDataPaint* paint)
         // get render data
         WgRenderDataShape* renderData = (WgRenderDataShape*)paint->clips[clipIndex];
         // markup stencil
-        WGPURenderPipeline stencilPipeline = (renderData->fillRule == FillRule::Winding) ? pipelines.winding : pipelines.evenodd;
+        WGPURenderPipeline stencilPipeline = (renderData->fillRule == FillRule::NonZero) ? pipelines.nonzero : pipelines.evenodd;
         wgpuRenderPassEncoderSetStencilReference(renderPassEncoder, 0);
         wgpuRenderPassEncoderSetBindGroup(renderPassEncoder, 1, renderData->bindGroupPaint, 0, nullptr);
         wgpuRenderPassEncoderSetPipeline(renderPassEncoder, stencilPipeline);

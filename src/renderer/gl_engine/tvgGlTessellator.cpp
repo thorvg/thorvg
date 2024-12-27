@@ -884,7 +884,7 @@ bool Tessellator::tessellate(const RenderShape *rshape, bool antialias)
 
 void Tessellator::tessellate(const Array<const RenderShape *> &shapes)
 {
-    this->fillRule = FillRule::Winding;
+    this->fillRule = FillRule::NonZero;
 
     for (uint32_t i = 0; i < shapes.count; i++) {
         auto cmds = shapes[i]->path.cmds.data;
@@ -1247,7 +1247,7 @@ bool Tessellator::tessMesh()
 
 bool Tessellator::matchFillRule(int32_t winding)
 {
-    if (fillRule == FillRule::Winding) {
+    if (fillRule == FillRule::NonZero) {
         return winding != 0;
     } else {
         return (winding & 0x1) != 0;

@@ -179,7 +179,7 @@ GlStencilMode GlGeometry::getStencilMode(RenderUpdateFlag flag)
     if (flag & RenderUpdateFlag::GradientStroke) return GlStencilMode::Stroke;
     if (flag & RenderUpdateFlag::Image) return GlStencilMode::None;
 
-    if (mFillRule == FillRule::Winding) return GlStencilMode::FillWinding;
+    if (mFillRule == FillRule::NonZero) return GlStencilMode::FillNonZero;
     if (mFillRule == FillRule::EvenOdd) return GlStencilMode::FillEvenOdd;
 
     return GlStencilMode::None;

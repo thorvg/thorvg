@@ -621,7 +621,7 @@ struct LottieSolidFill : LottieSolid
         }
     }
 
-    FillRule rule = FillRule::Winding;
+    FillRule rule = FillRule::NonZero;
 };
 
 
@@ -682,7 +682,7 @@ struct LottieGradientFill : LottieGradient
         LottieObject::type = LottieObject::GradientFill;
     }
 
-    FillRule rule = FillRule::Winding;
+    FillRule rule = FillRule::NonZero;
 };
 
 

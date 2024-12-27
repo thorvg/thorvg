@@ -66,7 +66,7 @@ private:
     WGPUPipelineLayout layout_blit{};
 public:
     // pipelines stencil markup
-    WGPURenderPipeline winding{};
+    WGPURenderPipeline nonzero{};
     WGPURenderPipeline evenodd{};
     WGPURenderPipeline direct{};
     // pipelines clip path markup

@@ -181,7 +181,7 @@ struct RenderShape
     Fill *fill = nullptr;
     RenderColor color{};
     RenderStroke *stroke = nullptr;
-    FillRule rule = FillRule::Winding;
+    FillRule rule = FillRule::NonZero;
 
     ~RenderShape()
     {

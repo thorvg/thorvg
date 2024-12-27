@@ -185,7 +185,7 @@ void WgPipelines::initialize(WgContext& context)
     const WGPUBindGroupLayout bindGroupLayoutsBlit[] { layouts.layoutTexSampled };
 
     // depth stencil state markup
-    const WGPUDepthStencilState depthStencilStateWinding = makeDepthStencilState(WGPUCompareFunction_Always, false, WGPUCompareFunction_Always, WGPUStencilOperation_IncrementWrap, WGPUCompareFunction_Always, WGPUStencilOperation_DecrementWrap);
+    const WGPUDepthStencilState depthStencilStateNonZero = makeDepthStencilState(WGPUCompareFunction_Always, false, WGPUCompareFunction_Always, WGPUStencilOperation_IncrementWrap, WGPUCompareFunction_Always, WGPUStencilOperation_DecrementWrap);
     const WGPUDepthStencilState depthStencilStateEvenOdd = makeDepthStencilState(WGPUCompareFunction_Always, false, WGPUCompareFunction_Always, WGPUStencilOperation_Invert);
     const WGPUDepthStencilState depthStencilStateDirect  = makeDepthStencilState(WGPUCompareFunction_Always, false, WGPUCompareFunction_Always, WGPUStencilOperation_Replace);
     // depth stencil state clip path
@@ -237,13 +237,13 @@ void WgPipelines::initialize(WgContext& context)
     // layout blit
     layout_blit = createPipelineLayout(context.device, bindGroupLayoutsBlit, 1);
 
-    // render pipeline winding
-    winding = createRenderPipeline(
-        context.device, "The render pipeline winding",
+    // render pipeline nonzero
+    nonzero = createRenderPipeline(
+        context.device, "The render pipeline nonzero",
         shader_stencil, "vs_main", "fs_main",
         layout_stencil, vertexBufferLayoutsShape, 1,
         WGPUColorWriteMask_None, offscreenTargetFormat, blendStateSrc,
-        depthStencilStateWinding, multisampleState);
+        depthStencilStateNonZero, multisampleState);
     // render pipeline even-odd
     evenodd = createRenderPipeline(
         context.device, "The render pipeline even-odd",
@@ -471,7 +471,7 @@ void WgPipelines::releaseGraphicHandles(WgContext& context)
     // pipelines stencil markup
     releaseRenderPipeline(direct);
     releaseRenderPipeline(evenodd);
-    releaseRenderPipeline(winding);
+    releaseRenderPipeline(nonzero);
     // layouts
     releasePipelineLayout(layout_blit);
     releasePipelineLayout(layout_scene_compose);

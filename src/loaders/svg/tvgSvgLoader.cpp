@@ -318,7 +318,7 @@ static constexpr struct
 };
 
 
-_PARSE_TAG(FillRule, fillRule, FillRule, fillRuleTags, FillRule::Winding)
+_PARSE_TAG(FillRule, fillRule, FillRule, fillRuleTags, FillRule::NonZero)
 
 
 /* parse the dash pattern used during stroking a path.
@@ -1367,7 +1367,7 @@ static SvgNode* _createNode(SvgNode* parent, SvgNodeType type)
     node->style->fill.paint.curColor = false;
     node->style->curColorSet = false;
     //Default fill rule is nonzero
-    node->style->fill.fillRule = FillRule::Winding;
+    node->style->fill.fillRule = FillRule::NonZero;
 
     //Default stroke is none
     node->style->stroke.paint.none = true;
