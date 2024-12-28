@@ -575,7 +575,7 @@ LottieTransform* LottieParser::parseTransform(bool ddd)
         else if (KEY_AS("a")) parseProperty<LottieProperty::Type::Point>(transform->anchor);
         else if (KEY_AS("s")) parseProperty<LottieProperty::Type::Point>(transform->scale, transform);
         else if (KEY_AS("r")) parseProperty<LottieProperty::Type::Float>(transform->rotation, transform);
-        else if (KEY_AS("o")) parseProperty<LottieProperty::Type::Opacity>(transform->opacity);
+        else if (KEY_AS("o")) parseProperty<LottieProperty::Type::Opacity>(transform->opacity, transform);
         else if (transform->rotationEx && KEY_AS("rx")) parseProperty<LottieProperty::Type::Float>(transform->rotationEx->x);
         else if (transform->rotationEx && KEY_AS("ry")) parseProperty<LottieProperty::Type::Float>(transform->rotationEx->y);
         else if (transform->rotationEx && KEY_AS("rz")) parseProperty<LottieProperty::Type::Float>(transform->rotation);

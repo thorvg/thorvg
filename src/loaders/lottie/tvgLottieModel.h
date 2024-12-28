@@ -568,6 +568,11 @@ struct LottieTransform : LottieObject
                 scale.copy(*static_cast<LottiePoint*>(prop), shallow);
                 break;
             }
+            case LottieProperty::Type::Opacity: {
+                if (byDefault) opacity.release();
+                opacity.copy(*static_cast<LottieOpacity*>(prop), shallow);
+                break;
+            }
             default: break;
         }
     }
