@@ -69,6 +69,11 @@ void LottieSlot::assign(LottieObject* target, bool byDefault)
                 pair->obj->override(&static_cast<LottieTransform*>(target)->scale, shallow, byDefault);
                 break;
             }
+            case LottieProperty::Type::Float: {
+                if (copy) pair->prop = new LottieFloat(static_cast<LottieTransform*>(pair->obj)->rotation);
+                pair->obj->override(&static_cast<LottieTransform*>(target)->rotation, shallow, byDefault);
+                break;
+            }
             case LottieProperty::Type::Opacity: {
                 if (copy) pair->prop = new LottieOpacity(static_cast<LottieSolid*>(pair->obj)->opacity);
                 pair->obj->override(&static_cast<LottieSolid*>(target)->opacity, shallow, byDefault);
