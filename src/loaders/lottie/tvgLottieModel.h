@@ -558,6 +558,11 @@ struct LottieTransform : LottieObject
                 position.copy(*static_cast<LottiePosition*>(prop), shallow);
                 break;
             }
+            case LottieProperty::Type::Point: {
+                if (byDefault) scale.release();
+                scale.copy(*static_cast<LottiePoint*>(prop), shallow);
+                break;
+            }
             default: break;
         }
     }

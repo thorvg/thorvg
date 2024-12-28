@@ -573,7 +573,7 @@ LottieTransform* LottieParser::parseTransform(bool ddd)
             transform->position.type = LottieProperty::Type::Position;
         }
         else if (KEY_AS("a")) parseProperty<LottieProperty::Type::Point>(transform->anchor);
-        else if (KEY_AS("s")) parseProperty<LottieProperty::Type::Point>(transform->scale);
+        else if (KEY_AS("s")) parseProperty<LottieProperty::Type::Point>(transform->scale, transform);
         else if (KEY_AS("r")) parseProperty<LottieProperty::Type::Float>(transform->rotation);
         else if (KEY_AS("o")) parseProperty<LottieProperty::Type::Opacity>(transform->opacity);
         else if (transform->rotationEx && KEY_AS("rx")) parseProperty<LottieProperty::Type::Float>(transform->rotationEx->x);
@@ -1547,6 +1547,12 @@ bool LottieParser::apply(LottieSlot* slot, bool byDefault)
             obj = new LottieTransform;
             context.parent = obj;
             parseSlotProperty<LottieProperty::Type::Position>(static_cast<LottieTransform*>(obj)->position);
+            break;
+        }
+        case LottieProperty::Type::Point: {
+            obj = new LottieTransform;
+            context.parent = obj;
+            parseSlotProperty<LottieProperty::Type::Point>(static_cast<LottieTransform*>(obj)->scale);
             break;
         }
         case LottieProperty::Type::Opacity: {
