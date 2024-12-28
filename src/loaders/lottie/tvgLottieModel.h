@@ -550,6 +550,18 @@ struct LottieTransform : LottieObject
         return nullptr;
     }
 
+    void override(LottieProperty* prop, bool shallow, bool byDefault) override
+    {
+        switch (prop->type) {
+            case LottieProperty::Type::Position: {
+                if (byDefault) position.release();
+                position.copy(*static_cast<LottiePosition*>(prop), shallow);
+                break;
+            }
+            default: break;
+        }
+    }
+
     LottiePosition position = Point{0.0f, 0.0f};
     LottieFloat rotation = 0.0f;           //z rotation
     LottiePoint scale = Point{100.0f, 100.0f};
