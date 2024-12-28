@@ -741,6 +741,19 @@ struct LottiePosition : LottieProperty
         return frame->angle(frame + 1, frameNo);
     }
 
+    void copy(const LottiePosition& rhs, bool shallow = true)
+    {
+        if (rhs.frames) {
+            if (shallow) {
+                frames = rhs.frames;
+                const_cast<LottiePosition&>(rhs).frames = nullptr;
+            } else {
+                frames = new Array<LottieVectorFrame<Point>>;
+                *frames = *rhs.frames;
+            }
+        } else value = rhs.value;
+    }
+
     void prepare()
     {
         if (!frames || frames->count < 2) return;
