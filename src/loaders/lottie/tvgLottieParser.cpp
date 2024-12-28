@@ -608,14 +608,15 @@ LottieTransform* LottieParser::parseTransform(bool ddd)
                 else if (transform->coords && KEY_AS("x")) parseProperty<LottieProperty::Type::Float>(transform->coords->x);
                 else if (transform->coords && KEY_AS("y")) parseProperty<LottieProperty::Type::Float>(transform->coords->y);
                 else if (KEY_AS("x")) transform->position.exp = _expression(getStringCopy(), comp, context.layer, context.parent, &transform->position);
+                else if (KEY_AS("sid")) registerSlot<LottieProperty::Type::Position>(transform, getString());
                 else skip(key);
             }
             transform->position.type = LottieProperty::Type::Position;
         }
         else if (KEY_AS("a")) parseProperty<LottieProperty::Type::Point>(transform->anchor);
-        else if (KEY_AS("s")) parseProperty<LottieProperty::Type::Point>(transform->scale);
-        else if (KEY_AS("r")) parseProperty<LottieProperty::Type::Float>(transform->rotation);
-        else if (KEY_AS("o")) parseProperty<LottieProperty::Type::Opacity>(transform->opacity);
+        else if (KEY_AS("s")) parseProperty<LottieProperty::Type::Point>(transform->scale, transform);
+        else if (KEY_AS("r")) parseProperty<LottieProperty::Type::Float>(transform->rotation, transform);
+        else if (KEY_AS("o")) parseProperty<LottieProperty::Type::Opacity>(transform->opacity, transform);
         else if (transform->rotationEx && KEY_AS("rx")) parseProperty<LottieProperty::Type::Float>(transform->rotationEx->x);
         else if (transform->rotationEx && KEY_AS("ry")) parseProperty<LottieProperty::Type::Float>(transform->rotationEx->y);
         else if (transform->rotationEx && KEY_AS("rz")) parseProperty<LottieProperty::Type::Float>(transform->rotation);
@@ -1582,6 +1583,24 @@ bool LottieParser::apply(LottieSlot* slot, bool byDefault)
     LottieObject* obj = nullptr;  //slot object
 
     switch (slot->type) {
+        case LottieProperty::Type::Position: {
+            obj = new LottieTransform;
+            context.parent = obj;
+            parseSlotProperty<LottieProperty::Type::Position>(static_cast<LottieTransform*>(obj)->position);
+            break;
+        }
+        case LottieProperty::Type::Point: {
+            obj = new LottieTransform;
+            context.parent = obj;
+            parseSlotProperty<LottieProperty::Type::Point>(static_cast<LottieTransform*>(obj)->scale);
+            break;
+        }
+        case LottieProperty::Type::Float: {
+            obj = new LottieTransform;
+            context.parent = obj;
+            parseSlotProperty<LottieProperty::Type::Float>(static_cast<LottieTransform*>(obj)->rotation);
+            break;
+        }
         case LottieProperty::Type::Opacity: {
             obj = new LottieSolid;
             context.parent = obj;
