@@ -172,8 +172,9 @@ struct SwShapeTask : SwTask
         //Clip Path
         for (auto clip = clips.begin(); clip < clips.end(); ++clip) {
             auto clipper = static_cast<SwTask*>(*clip);
-            if (shape.rle && !clipper->clip(shape.rle)) goto err;                 //Clip shape rle
-            if (shape.strokeRle && !clipper->clip(shape.strokeRle)) goto err;     //Clip stroke rle
+            auto clipShapeRle = shape.rle ? clipper->clip(shape.rle) : true;
+            auto clipStrokeRle = shape.strokeRle ? clipper->clip(shape.strokeRle) : true;
+            if (!clipShapeRle && !clipStrokeRle) goto err;
         }
 
         bbox = renderRegion; //sync
