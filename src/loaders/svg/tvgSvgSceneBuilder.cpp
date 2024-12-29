@@ -417,14 +417,13 @@ static Paint* _shapeBuildHelper(SvgLoaderData& loaderData, SvgNode* node, const 
 
 static bool _appendClipShape(SvgLoaderData& loaderData, SvgNode* node, Shape* shape, const Box& vBox, const string& svgPath, const Matrix* transform)
 {
+    auto currentPtsCnt = shape->pathCoords(nullptr);
     if (!_recognizeShape(node, shape)) return false;
 
     //The 'transform' matrix has higher priority than the node->transform, since it already contains it
     auto m = transform ? transform : (node->transform ? node->transform : nullptr);
 
-    uint32_t currentPtsCnt = 0;
     if (m) {
-        currentPtsCnt = shape->pathCoords(nullptr);
         const Point *pts = nullptr;
         auto ptsCnt = shape->pathCoords(&pts);
         auto p = const_cast<Point*>(pts) + currentPtsCnt;
@@ -434,7 +433,7 @@ static bool _appendClipShape(SvgLoaderData& loaderData, SvgNode* node, Shape* sh
         }
     }
 
-    _applyProperty(loaderData, node, shape, vBox, svgPath, true);
+    _applyComposition(loaderData, shape, node, vBox, svgPath);
     return true;
 }
 
