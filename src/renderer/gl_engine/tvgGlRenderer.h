@@ -23,8 +23,7 @@
 #ifndef _TVG_GL_RENDERER_H_
 #define _TVG_GL_RENDERER_H_
 
-#include <vector>
-
+#include "tvgArray.h"
 #include "tvgGlRenderTarget.h"
 #include "tvgGlRenderTask.h"
 #include "tvgGlGpuBuffer.h"
@@ -113,29 +112,27 @@ private:
     void prepareCmpTask(GlRenderTask* task, const RenderRegion& vp, uint32_t cmpWidth, uint32_t cmpHeight);
     void endRenderPass(RenderCompositor* cmp);
 
-    void clearDisposes();
+    void flush();
 
     RenderSurface surface;
     GLint mTargetFboId = 0;
     RenderRegion mViewport;
-    //TODO: remove all unique_ptr / replace the vector with tvg::Array
-    unique_ptr<GlStageBuffer> mGpuBuffer;
-    vector<std::unique_ptr<GlProgram>> mPrograms;
-    unique_ptr<GlRenderTarget> mRootTarget = {};
-    Array<GlRenderTargetPool*> mComposePool = {};
-    Array<GlRenderTargetPool*> mBlendPool = {};
-    vector<GlRenderPass> mRenderPassStack = {};
-    vector<unique_ptr<GlCompositor>> mComposeStack = {};
+    GlStageBuffer mGpuBuffer;
+    GlRenderTarget mRootTarget;
+    Array<GlProgram*> mPrograms;
+    Array<GlRenderTargetPool*> mComposePool;
+    Array<GlRenderTargetPool*> mBlendPool;
+    Array<GlRenderPass*> mRenderPassStack;
+    Array<GlCompositor*> mComposeStack;
 
     //Disposed resources. They should be released on synced call.
     struct {
-        Array<GLuint> textures = {};
+        Array<GLuint> textures;
         Key key;
     } mDisposed;
 
-    bool mClearBuffer = true;  //FIXME: clear buffer should be optional (default is false)
-
     BlendMethod mBlendMethod = BlendMethod::Normal;
+    bool mClearBuffer = true;  //FIXME: clear buffer should be optional (default is false)
 };
 
 #endif /* _TVG_GL_RENDERER_H_ */

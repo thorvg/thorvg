@@ -24,8 +24,7 @@
 #define _TVG_GL_TESSELLATOR_H_
 
 #include <cstdint>
-#include "tvgGlGeometry.h"
-#include "tvgMath.h"
+#include "tvgGlCommon.h"
 
 namespace tvg
 {
@@ -63,7 +62,7 @@ private:
     void emitTriangle(Vertex* p1, Vertex* p2, Vertex* p3);
 
     FillRule fillRule = FillRule::NonZero;
-    std::unique_ptr<ObjectHeap> pHeap;
+    ObjectHeap* pHeap;
     Array<VertexList*> outlines;
     VertexList* pMesh;
     Polygon* pPolygon;

@@ -23,9 +23,6 @@
 #ifndef _TVG_GL_RENDER_TASK_H_
 #define _TVG_GL_RENDER_TASK_H_
 
-#include <memory>
-#include <vector>
-
 #include "tvgGlCommon.h"
 #include "tvgGlProgram.h"
 

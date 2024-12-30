@@ -29,25 +29,29 @@
 uint32_t GlProgram::mCurrentProgram = 0;
 
 
-void GlProgram::linkProgram(std::shared_ptr<GlShader> shader)
+/************************************************************************/
+/* External Class Implementation                                        */
+/************************************************************************/
+
+GlProgram::GlProgram(const char* vertSrc, const char* fragSrc)
 {
-    GLint linked;
+    auto shader = GlShader(vertSrc, fragSrc);
 
     // Create the program object
     uint32_t progObj = glCreateProgram();
     assert(progObj);
 
-    glAttachShader(progObj, shader->getVertexShader());
-    glAttachShader(progObj, shader->getFragmentShader());
+    glAttachShader(progObj, shader.getVertexShader());
+    glAttachShader(progObj, shader.getFragmentShader());
 
     // Link the program
     glLinkProgram(progObj);
 
     // Check the link status
+    GLint linked;
     glGetProgramiv(progObj, GL_LINK_STATUS, &linked);
 
-    if (!linked)
-    {
+    if (!linked) {
         GLint infoLen = 0;
         glGetProgramiv(progObj, GL_INFO_LOG_LENGTH, &infoLen);
         if (infoLen > 0)
@@ -66,39 +70,16 @@ void GlProgram::linkProgram(std::shared_ptr<GlShader> shader)
 }
 
 
-/************************************************************************/
-/* External Class Implementation                                        */
-/************************************************************************/
-
-unique_ptr<GlProgram> GlProgram::gen(std::shared_ptr<GlShader> shader)
-{
-    return make_unique<GlProgram>(shader);
-}
-
-
-GlProgram::GlProgram(std::shared_ptr<GlShader> shader)
-{
-    linkProgram(shader);
-}
-
-
 GlProgram::~GlProgram()
 {
-    if (mCurrentProgram == mProgramObj)
-    {
-        unload();
-    }
+    if (mCurrentProgram == mProgramObj) unload();
     glDeleteProgram(mProgramObj);
 }
 
 
 void GlProgram::load()
 {
-    if (mCurrentProgram == mProgramObj)
-    {
-        return;
-    }
-
+    if (mCurrentProgram == mProgramObj) return;
     mCurrentProgram = mProgramObj;
     GL_CHECK(glUseProgram(mProgramObj));
 

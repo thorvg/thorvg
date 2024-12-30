@@ -28,7 +28,6 @@
 class GlRenderTarget
 {
 public:
-    GlRenderTarget(uint32_t width, uint32_t height);
     ~GlRenderTarget();
 
     void init(GLint resolveId);
@@ -43,9 +42,10 @@ public:
     void setViewport(const RenderRegion& vp) { mViewport = vp; }
     const RenderRegion& getViewport() const { return mViewport; }
 
+    uint32_t mWidth;
+    uint32_t mHeight;
+
 private:
-    uint32_t mWidth = 0;
-    uint32_t mHeight = 0;
     RenderRegion mViewport{};
     GLuint mFbo = 0;
     GLuint mColorBuffer = 0;

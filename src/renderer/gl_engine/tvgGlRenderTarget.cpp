@@ -22,8 +22,6 @@
 
 #include "tvgGlRenderTarget.h"
 
-GlRenderTarget::GlRenderTarget(uint32_t width, uint32_t height): mWidth(width), mHeight(height) {}
-
 GlRenderTarget::~GlRenderTarget()
 {
     if (mFbo == 0) return;
@@ -124,7 +122,9 @@ GlRenderTarget* GlRenderTargetPool::getRenderTarget(const RenderRegion& vp, GLui
         }
     }
 
-    auto rt = new GlRenderTarget(width, height);
+    auto rt = new GlRenderTarget;
+    rt->mWidth = width;
+    rt->mHeight = height;
     rt->init(resolveId);
     rt->setViewport(vp);
     mPool.push(rt);

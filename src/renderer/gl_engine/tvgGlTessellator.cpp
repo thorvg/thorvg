@@ -20,14 +20,14 @@
  * SOFTWARE.
  */
 
-#include "tvgMath.h"
-#include "tvgGlTessellator.h"
-#include "tvgRender.h"
-#include "tvgGlList.h"
-
 #include <algorithm>
 #include <cmath>
 #include <cstdint>
+
+#include "tvgGlCommon.h"
+#include "tvgGlTessellator.h"
+#include "tvgRender.h"
+#include "tvgGlList.h"
 
 namespace tvg
 {
@@ -845,6 +845,8 @@ Tessellator::~Tessellator()
     for (uint32_t i = 0; i < outlines.count; i++) {
         delete outlines[i];
     }
+
+    delete pHeap;
     delete pMesh;
 }
 
@@ -1146,11 +1148,11 @@ bool Tessellator::tessMesh()
         if (v->edge_above.head) {
             // add above edge first
             if (leftPoly) {
-                leftPoly = leftPoly->addEdge(v->edge_above.head, Side::kRight, pHeap.get());
+                leftPoly = leftPoly->addEdge(v->edge_above.head, Side::kRight, pHeap);
             }
 
             if (rightPoly) {
-                rightPoly = rightPoly->addEdge(v->edge_above.tail, Side::kLeft, pHeap.get());
+                rightPoly = rightPoly->addEdge(v->edge_above.tail, Side::kLeft, pHeap);
             }
 
             // walk through all edges end with this vertex
@@ -1160,12 +1162,12 @@ bool Tessellator::tessMesh()
                 ael.remove(e);
 
                 if (e->rightPoly) {
-                    e->rightPoly->addEdge(right_edge, Side::kLeft, pHeap.get());
+                    e->rightPoly->addEdge(right_edge, Side::kLeft, pHeap);
                 }
 
                 // this means there is a new polygon between e and right_edge
                 if (right_edge->leftPoly && right_edge->leftPoly != e->rightPoly) {
-                    right_edge->leftPoly->addEdge(e, Side::kRight, pHeap.get());
+                    right_edge->leftPoly->addEdge(e, Side::kRight, pHeap);
                 }
             }
 
@@ -1212,8 +1214,8 @@ bool Tessellator::tessMesh()
                     // need to link this vertex to above polygon
                     auto join = pHeap->allocate<Edge>(leftPoly->lastVertex(), v, 1);
 
-                    leftPoly = leftPoly->addEdge(join, Side::kRight, pHeap.get());
-                    rightPoly = rightPoly->addEdge(join, Side::kLeft, pHeap.get());
+                    leftPoly = leftPoly->addEdge(join, Side::kRight, pHeap);
+                    rightPoly = rightPoly->addEdge(join, Side::kLeft, pHeap);
                 }
             }
 
