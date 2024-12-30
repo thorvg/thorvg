@@ -480,6 +480,18 @@ bool WgRenderer::effect(TVG_UNUSED RenderCompositor* cmp, TVG_UNUSED const Rende
 }
 
 
+bool WgRenderer::preUpdate()
+{
+    return true;
+}
+
+
+bool WgRenderer::postUpdate()
+{
+    return true;
+}
+
+
 WgRenderer* WgRenderer::gen()
 {
     return new WgRenderer();

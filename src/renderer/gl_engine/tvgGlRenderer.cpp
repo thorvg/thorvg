@@ -1233,6 +1233,18 @@ bool GlRenderer::viewport(const RenderRegion& vp)
 }
 
 
+bool GlRenderer::preUpdate()
+{
+    return true;
+}
+
+
+bool GlRenderer::postUpdate()
+{
+    return true;
+}
+
+
 int GlRenderer::init(uint32_t threads)
 {
     if ((initEngineCnt++) > 0) return true;

@@ -363,6 +363,18 @@ bool SwRenderer::target(pixel_t* data, uint32_t stride, uint32_t w, uint32_t h, 
 }
 
 
+bool SwRenderer::preUpdate()
+{
+    return true;
+}
+
+
+bool SwRenderer::postUpdate()
+{
+    return true;
+}
+
+
 bool SwRenderer::preRender()
 {
     return true;
