@@ -26,13 +26,6 @@
 /* Internal Class Implementation                                        */
 /************************************************************************/
 
-void GlShader::createShader(const char* vertSrc, const char* fragSrc)
-{
-    mVtShader = compileShader(GL_VERTEX_SHADER, const_cast<char*>(vertSrc));
-    mFrShader = compileShader(GL_FRAGMENT_SHADER, const_cast<char*>(fragSrc));
-}
-
-
 uint32_t GlShader::compileShader(uint32_t type, char* shaderSrc)
 {
     GLuint shader;
@@ -88,11 +81,10 @@ uint32_t GlShader::compileShader(uint32_t type, char* shaderSrc)
 /* External Class Implementation                                        */
 /************************************************************************/
 
-shared_ptr<GlShader> GlShader::gen(const char* vertSrc, const char* fragSrc)
+GlShader::GlShader(const char* vertSrc, const char* fragSrc)
 {
-    shared_ptr<GlShader> shader = make_shared<GlShader>();
-    shader->createShader(vertSrc, fragSrc);
-    return shader;
+    mVtShader = compileShader(GL_VERTEX_SHADER, const_cast<char*>(vertSrc));
+    mFrShader = compileShader(GL_FRAGMENT_SHADER, const_cast<char*>(fragSrc));
 }
 
 

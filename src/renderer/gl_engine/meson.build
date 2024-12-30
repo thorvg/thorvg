@@ -1,6 +1,5 @@
 source_file = [
    'tvgGlCommon.h',
-   'tvgGlGeometry.h',
    'tvgGlGpuBuffer.h',
    'tvgGlList.h',
    'tvgGlProgram.h',

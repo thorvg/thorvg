@@ -21,10 +21,9 @@
  * SOFTWARE.
  */
 
-#include "tvgMath.h"
+#include "tvgGlCommon.h"
 #include "tvgGlRenderPass.h"
 #include "tvgGlRenderTask.h"
-#include "tvgGlGeometry.h"
 
 GlRenderPass::GlRenderPass(GlRenderTarget* fbo): mFbo(fbo), mTasks(), mDrawDepth(0) {}
 

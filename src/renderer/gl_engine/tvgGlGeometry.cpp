@@ -20,14 +20,10 @@
  * SOFTWARE.
  */
 
+#include "tvgGlCommon.h"
 #include "tvgGlGpuBuffer.h"
-#include "tvgGlGeometry.h"
 #include "tvgGlTessellator.h"
 #include "tvgGlRenderTask.h"
-
-GlGeometry::~GlGeometry()
-{
-}
 
 bool GlGeometry::tesselate(const RenderShape& rshape, RenderUpdateFlag flag)
 {

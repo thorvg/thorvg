@@ -28,14 +28,13 @@
 class GlShader
 {
 public:
-    static std::shared_ptr<GlShader> gen(const char* vertSrc, const char* fragSrc);
+    GlShader(const char* vertSrc, const char* fragSrc);
     ~GlShader();
 
     uint32_t getVertexShader();
     uint32_t getFragmentShader();
 
 private:
-    void    createShader(const char* vertSrc, const char* fragSrc);
     uint32_t compileShader(uint32_t type, char* shaderSrc);
 
     uint32_t mVtShader;
