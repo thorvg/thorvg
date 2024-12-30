@@ -76,8 +76,12 @@ struct Canvas::Impl
 
         auto m = Matrix{1, 0, 0, 0, 1, 0, 0, 0, 1};
 
+        if (!renderer->preUpdate()) return Result::InsufficientCondition;
+
         if (paint) PAINT(paint)->update(renderer, m, clips, 255, flag);
         else PAINT(scene)->update(renderer, m, clips, 255, flag);
+
+        if (!renderer->postUpdate()) return Result::InsufficientCondition;
 
         status = Status::Updating;
         return Result::Success;
