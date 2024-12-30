@@ -184,8 +184,8 @@ static bool _appendClipChild(SvgLoaderData& loaderData, SvgNode* node, Shape* sh
 {
     //The SVG standard allows only for 'use' nodes that point directly to a basic shape.
     if (node->type == SvgNodeType::Use) {
+        if (node->child.count != 1) return false;
         auto child = *(node->child.data);
-
         Matrix finalTransform = {1, 0, 0, 0, 1, 0, 0, 0, 1};
         if (node->transform) finalTransform = *node->transform;
         if (node->node.use.x != 0.0f || node->node.use.y != 0.0f) {
@@ -217,11 +217,32 @@ static Matrix _compositionTransform(Paint* paint, const SvgNode* node, const Svg
     return m;
 }
 
+static void _applyClip(SvgLoaderData& loaderData, Paint* paint, const SvgNode* node, const SvgNode* clipNode, const Box& vBox, const string& svgPath)
+{
+    node->style->clipPath.applying = true;
+
+    auto clipper = Shape::gen();
+    auto child = clipNode->child.data;
+    auto valid = false; //Composite only when valid shapes exist
+
+    for (uint32_t i = 0; i < clipNode->child.count; ++i, ++child) {
+        if (_appendClipChild(loaderData, *child, clipper, vBox, svgPath)) valid = true;
+    }
+
+    if (valid) {
+        Matrix finalTransform = _compositionTransform(paint, node, clipNode, SvgNodeType::ClipPath);
+        clipper->transform(finalTransform);
+        paint->clip(clipper);
+    } else {
+        delete(clipper);
+    }
+
+    node->style->clipPath.applying = false;
+}
+
 
 static Paint* _applyComposition(SvgLoaderData& loaderData, Paint* paint, const SvgNode* node, const Box& vBox, const string& svgPath)
 {
-    /* Do not drop in Circular Dependency for ClipPath.
-       Composition can be applied recursively if its children nodes have composition target to this one. */
     if (node->style->clipPath.applying || node->style->mask.applying) {
         TVGLOG("SVG", "Multiple composition tried! Check out circular dependency?");
         return paint;
@@ -237,25 +258,7 @@ static Paint* _applyComposition(SvgLoaderData& loaderData, Paint* paint, const S
     auto scene = Scene::gen();
     scene->push(paint);
 
-    if (validClip) {
-        node->style->clipPath.applying = true;
-
-        auto clipper = Shape::gen();
-        auto child = clipNode->child.data;
-        auto valid = false; //Composite only when valid shapes exist
-
-        for (uint32_t i = 0; i < clipNode->child.count; ++i, ++child) {
-            if (_appendClipChild(loaderData, *child, clipper, vBox, svgPath)) valid = true;
-        }
-
-        if (valid) {
-            Matrix finalTransform = _compositionTransform(paint, node, clipNode, SvgNodeType::ClipPath);
-            clipper->transform(finalTransform);
-            scene->clip(clipper);
-        }
-
-        node->style->clipPath.applying = false;
-    }
+    if (validClip) _applyClip(loaderData, scene, node, clipNode, vBox, svgPath);
 
     /* Mask */
     if (validMask) {
@@ -412,14 +415,14 @@ static Paint* _shapeBuildHelper(SvgLoaderData& loaderData, SvgNode* node, const 
 
 static bool _appendClipShape(SvgLoaderData& loaderData, SvgNode* node, Shape* shape, const Box& vBox, const string& svgPath, const Matrix* transform)
 {
+    auto currentPtsCnt = shape->pathCoords(nullptr);
+
     if (!_recognizeShape(node, shape)) return false;
 
     //The 'transform' matrix has higher priority than the node->transform, since it already contains it
     auto m = transform ? transform : (node->transform ? node->transform : nullptr);
 
-    uint32_t currentPtsCnt = 0;
     if (m) {
-        currentPtsCnt = shape->pathCoords(nullptr);
         const Point *pts = nullptr;
         auto ptsCnt = shape->pathCoords(&pts);
         auto p = const_cast<Point*>(pts) + currentPtsCnt;
@@ -427,6 +430,13 @@ static bool _appendClipShape(SvgLoaderData& loaderData, SvgNode* node, Shape* sh
             *p *= *m;
             ++p;
         }
+    }
+
+    //Apply Clip Chaining
+    auto clipNode = node->style->clipPath.node;
+    if (clipNode && clipNode->child.count > 0) {
+        if (node->style->clipPath.applying) TVGLOG("SVG", "Multiple composition tried! Check out circular dependency?");
+        else _applyClip(loaderData, shape, node, clipNode, vBox, svgPath);
     }
 
     return true;
