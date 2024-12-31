@@ -814,8 +814,7 @@ bool GlRenderer::target(void* context, int32_t id, uint32_t w, uint32_t h)
     mContext = context;
     mTargetFboId = static_cast<GLint>(id);
 
-    mRootTarget.mWidth = surface.w;
-    mRootTarget.mHeight = surface.h;
+    mRootTarget = GlRenderTarget(surface.w, surface.h);
     mRootTarget.setViewport({0, 0, static_cast<int32_t>(surface.w), static_cast<int32_t>(surface.h)});
     mRootTarget.init(mTargetFboId);
 
