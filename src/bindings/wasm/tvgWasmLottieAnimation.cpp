@@ -188,7 +188,7 @@ struct TvgWgEngine : TvgEngineMethod
 
 struct TvgGLEngine : TvgEngineMethod
 {
-    uintptr_t context = 0;
+    EMSCRIPTEN_WEBGL_CONTEXT_HANDLE context = 0;
     ~TvgGLEngine() override
     {
     #ifdef THORVG_GL_RASTER_SUPPORT
@@ -227,9 +227,7 @@ struct TvgGLEngine : TvgEngineMethod
     void resize(Canvas* canvas, int w, int h) override
     {
     #ifdef THORVG_GL_RASTER_SUPPORT
-        emscripten_webgl_make_context_current(context);
-
-        static_cast<GlCanvas*>(canvas)->target(0, w, h, ColorSpace::ABGR8888S);
+        static_cast<GlCanvas*>(canvas)->target((void*)context, 0, w, h, ColorSpace::ABGR8888S);
     #endif
     }
 };
