@@ -191,7 +191,7 @@ static bool _appendClipChild(SvgLoaderData& loaderData, SvgNode* node, Shape* sh
         if (node->node.use.x != 0.0f || node->node.use.y != 0.0f) {
             finalTransform *= {1, 0, node->node.use.x, 0, 1, node->node.use.y, 0, 0, 1};
         }
-        if (child->transform) finalTransform = *child->transform * finalTransform;
+        if (child->transform) finalTransform *= *child->transform;
 
         return _appendClipShape(loaderData, child, shape, vBox, svgPath, identity((const Matrix*)(&finalTransform)) ? nullptr : &finalTransform);
     }
