@@ -217,7 +217,7 @@ static Matrix _compositionTransform(Paint* paint, const SvgNode* node, const Svg
     return m;
 }
 
-static void _applyClip(SvgLoaderData& loaderData, Paint* paint, const SvgNode* node, const SvgNode* clipNode, const Box& vBox, const string& svgPath)
+static bool _applyClip(SvgLoaderData& loaderData, Paint* paint, const SvgNode* node, const SvgNode* clipNode, const Box& vBox, const string& svgPath)
 {
     node->style->clipPath.applying = true;
 
@@ -238,6 +238,7 @@ static void _applyClip(SvgLoaderData& loaderData, Paint* paint, const SvgNode* n
     }
 
     node->style->clipPath.applying = false;
+    return valid;
 }
 
 
@@ -250,18 +251,25 @@ static Paint* _applyComposition(SvgLoaderData& loaderData, Paint* paint, const S
 
     auto clipNode = node->style->clipPath.node;
     auto maskNode = node->style->mask.node;
-    auto validClip = (clipNode && clipNode->child.count > 0) ? true : false;
-    auto validMask = (maskNode && maskNode->child.count > 0) ? true : false;
 
-    if (!validClip && !validMask) return paint;
+    if (!clipNode && !maskNode) return paint;
+    if ((clipNode && clipNode->child.empty()) || (maskNode && maskNode->child.empty())) {
+        delete(paint);
+        return nullptr;
+    }
 
     auto scene = Scene::gen();
     scene->push(paint);
 
-    if (validClip) _applyClip(loaderData, scene, node, clipNode, vBox, svgPath);
+    if (clipNode) {
+        if (!_applyClip(loaderData, scene, node, clipNode, vBox, svgPath)) {
+            delete(scene);
+            return nullptr;
+        }
+    }
 
     /* Mask */
-    if (validMask) {
+    if (maskNode) {
         node->style->mask.applying = true;
 
         if (auto mask = _sceneBuildHelper(loaderData, maskNode, vBox, svgPath, true, 0)) {
@@ -433,10 +441,13 @@ static bool _appendClipShape(SvgLoaderData& loaderData, SvgNode* node, Shape* sh
     }
 
     //Apply Clip Chaining
-    auto clipNode = node->style->clipPath.node;
-    if (clipNode && clipNode->child.count > 0) {
-        if (node->style->clipPath.applying) TVGLOG("SVG", "Multiple composition tried! Check out circular dependency?");
-        else _applyClip(loaderData, shape, node, clipNode, vBox, svgPath);
+    if (auto clipNode = node->style->clipPath.node) {
+        if (clipNode->child.count == 0) return false;
+        if (node->style->clipPath.applying) {
+            TVGLOG("SVG", "Multiple composition tried! Check out circular dependency?");
+            return false;
+        }
+        return _applyClip(loaderData, shape, node, clipNode, vBox, svgPath);
     }
 
     return true;
