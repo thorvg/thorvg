@@ -277,11 +277,6 @@ static inline SwPoint SUBPIXELS(const SwPoint& pt)
 }
 
 
-static inline SwCoord SUBPIXELS(const SwCoord x)
-{
-    return SwCoord(((unsigned long) x) << PIXEL_BITS);
-}
-
 /*
  *  Approximate sqrt(x*x+y*y) using the `alpha max plus beta min'
  *  algorithm.  We use alpha = 1, beta = 3/8, giving us results with a
