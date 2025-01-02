@@ -46,6 +46,13 @@ struct SwPoint
 {
     SwCoord x, y;
 
+    SwPoint& operator-=(const SwPoint& rhs)
+    {
+        x -= rhs.x;
+        y -= rhs.y;
+        return *this;
+    }
+
     SwPoint& operator+=(const SwPoint& rhs)
     {
         x += rhs.x;
