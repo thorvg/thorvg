@@ -306,7 +306,6 @@ static void _horizLine(RleWorker& rw, SwCoord x, SwCoord y, SwCoord area, SwCoor
     /* compute the coverage line's coverage, depending on the outline fill rule */
     /* the coverage percentage is area/(PIXEL_BITS*PIXEL_BITS*2) */
     auto coverage = static_cast<int>(area >> (PIXEL_BITS * 2 + 1 - 8));    //range 0 - 255
-
     if (coverage < 0) coverage = -coverage;
 
     if (rw.outline->fillRule == FillRule::EvenOdd) {
@@ -320,12 +319,8 @@ static void _horizLine(RleWorker& rw, SwCoord x, SwCoord y, SwCoord area, SwCoor
     if (coverage == 0) return;
 
     //span has ushort coordinates. check limit overflow
-    if (x >= SHRT_MAX) {
-        TVGERR("SW_ENGINE", "X-coordinate overflow!");
-        return;
-    }
-    if (y >= SHRT_MAX) {
-        TVGERR("SW_ENGINE", "Y-coordinate overflow!");
+    if (x >= SHRT_MAX || y >= SHRT_MAX) {
+        TVGERR("SW_ENGINE", "XY-coordinate overflow!");
         return;
     }
 
@@ -342,7 +337,6 @@ static void _horizLine(RleWorker& rw, SwCoord x, SwCoord y, SwCoord area, SwCoor
             if (x + aCount >= rw.cellMax.x) xOver -= (x + aCount - rw.cellMax.x);
             if (x < rw.cellMin.x) xOver -= (rw.cellMin.x - x);
 
-            //span->len += (aCount + xOver) - 1;
             span->len += (aCount + xOver);
             return;
         }
@@ -432,9 +426,7 @@ static bool _recordCell(RleWorker& rw)
 {
     if (rw.area | rw.cover) {
         auto cell = _findCell(rw);
-
-        if (cell == nullptr) return false;
-
+        if (!cell) return false;
         cell->area += rw.area;
         cell->cover += rw.cover;
     }
@@ -457,17 +449,14 @@ static bool _setCell(RleWorker& rw, SwPoint pos)
 
     /* All cells that are on the left of the clipping region go to the
        min_ex - 1 horizontal position. */
-    pos.x -= rw.cellMin.x;
-    pos.y -= rw.cellMin.y;
+    pos -= rw.cellMin;
 
     if (pos.x > rw.cellMax.x) pos.x = rw.cellMax.x;
 
     //Are we moving to a different cell?
     if (pos != rw.cellPos) {
         //Record the current one if it is valid
-        if (!rw.invalid) {
-            if (!_recordCell(rw)) return false;
-        }
+        if (!rw.invalid && !_recordCell(rw)) return false;
     }
 
     rw.area = 0;
@@ -496,9 +485,7 @@ static bool _startCell(RleWorker& rw, SwPoint pos)
 static bool _moveTo(RleWorker& rw, const SwPoint& to)
 {
     //record current cell, if any */
-    if (!rw.invalid) {
-        if (!_recordCell(rw)) return false;
-    }
+    if (!rw.invalid && !_recordCell(rw)) return false;
 
     //start to a new position
     if (!_startCell(rw, TRUNC(to))) return false;
@@ -511,10 +498,7 @@ static bool _moveTo(RleWorker& rw, const SwPoint& to)
 
 static bool _lineTo(RleWorker& rw, const SwPoint& to)
 {
-#define SW_UDIV(a, b) \
-    static_cast<SwCoord>(((unsigned long)(a) * (unsigned long)(b)) >> \
-    (sizeof(long) * CHAR_BIT - PIXEL_BITS))
-
+#define SW_UDIV(a, b) (SwCoord)(((unsigned long)(a) * (unsigned long)(b)) >> (sizeof(long) * CHAR_BIT - PIXEL_BITS))
     auto e1 = TRUNC(rw.pos);
     auto e2 = TRUNC(to);
 
@@ -627,7 +611,7 @@ static bool _lineTo(RleWorker& rw, const SwPoint& to)
             } while(e1 != e2);
         }
 
-        f2 = {line[0].x - SUBPIXELS(e2.x), line[0].y - SUBPIXELS(e2.y)};
+        f2 = line[0] - SUBPIXELS(e2);
         rw.cover += (f2.y - f1.y);
         rw.area += (f2.y - f1.y) * (f1.x + f2.x);
         rw.pos = line[0];
@@ -744,20 +728,18 @@ static bool _decomposeOutline(RleWorker& rw)
         }
     close:
         if (!_lineTo(rw, start)) return false;
-       first = last + 1;
+        first = last + 1;
     }
 
     return true;
 }
 
 
-static int _genRle(RleWorker& rw)
+static bool _genRle(RleWorker& rw)
 {
-    if (!_decomposeOutline(rw)) return -1;
-    if (!rw.invalid) {
-        if (!_recordCell(rw)) return -1;
-    }
-    return 0;
+    if (!_decomposeOutline(rw)) return false;
+    if (!rw.invalid && !_recordCell(rw)) return false;
+    return true;
 }
 
 
@@ -907,7 +889,6 @@ SwRle* rleRender(SwRle* rle, const SwOutline* outline, const SwBBox& renderRegio
     auto min = rw.cellMin.y;
     auto yMax = rw.cellMax.y;
     SwCoord max;
-    int ret;
 
     for (int n = 0; n < bandCnt; ++n, min = max) {
         max = min + rw.bandSize;
@@ -943,13 +924,10 @@ SwRle* rleRender(SwRle* rle, const SwOutline* outline, const SwBBox& renderRegio
             rw.cellMax.y = band->max;
             rw.cellYCnt = band->max - band->min;
 
-            ret = _genRle(rw);
-            if (ret == 0) {
+            if (_genRle(rw)) {
                 _sweep(rw);
                 --band;
                 continue;
-            } else if (ret == 1) {
-                goto error;
             }
 
         reduce_bands:

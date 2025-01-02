@@ -597,14 +597,10 @@ static void _addCap(SwStroke& stroke, SwFixed angle, int32_t side)
         delta += delta2 + stroke.center;
 
         _borderLineTo(border, delta, false);
-
     } else if (stroke.cap == StrokeCap::Round) {
-
         stroke.angleIn = angle;
         stroke.angleOut = angle + SW_ANGLE_PI;
         _arcTo(stroke, side);
-        return;
-
     } else {  //Butt
         auto rotate = SIDE_TO_ROTATE(side);
         auto border = stroke.borders + side;
