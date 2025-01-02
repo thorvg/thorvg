@@ -460,7 +460,9 @@ static bool _setCell(RleWorker& rw, SwPoint pos)
     pos.x -= rw.cellMin.x;
     pos.y -= rw.cellMin.y;
 
-    if (pos.x > rw.cellMax.x) pos.x = rw.cellMax.x;
+    //exceptions
+    if (pos.x < 0) pos.x = -1;
+    else if (pos.x > rw.cellMax.x) pos.x = rw.cellMax.x;
 
     //Are we moving to a different cell?
     if (pos != rw.cellPos) {
@@ -468,11 +470,9 @@ static bool _setCell(RleWorker& rw, SwPoint pos)
         if (!rw.invalid) {
             if (!_recordCell(rw)) return false;
         }
+        rw.area = rw.cover = 0;
+        rw.cellPos = pos;
     }
-
-    rw.area = 0;
-    rw.cover = 0;
-    rw.cellPos = pos;
     rw.invalid = ((unsigned)pos.y >= (unsigned)rw.cellYCnt || pos.x >= rw.cellXCnt);
 
     return true;
