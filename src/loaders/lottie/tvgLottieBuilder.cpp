@@ -1254,6 +1254,7 @@ void LottieBuilder::updateMasks(LottieLayer* layer, float frameNo)
             //Cheaper. Replace the masking with a clipper
             if (layer->masks.count == 1 && compMethod == MaskMethod::Alpha) {
                 layer->scene->opacity(MULTIPLY(layer->scene->opacity(), opacity));
+                pShape->strokeWidth(0.0f); //enforce fill clipper over stroke clipper
                 layer->scene->clip(pShape);
                 fastTrack = true;
             } else {
