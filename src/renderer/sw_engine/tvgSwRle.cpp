@@ -503,116 +503,100 @@ static bool _lineTo(RleWorker& rw, const SwPoint& to)
         return true;
     }
 
-    auto line = rw.lineStack;
-    line[0] = to;
-    line[1] = rw.pos;
+    auto diff = to - rw.pos;
+    auto f1 = rw.pos - SUBPIXELS(e1);
+    SwPoint f2;
 
-    while (true) {
-        auto diff = line[0] - line[1];
-        auto L = HYPOT(diff);
-
-        if (L > SHRT_MAX) {
-            mathSplitLine(line);
-            ++line;
-            continue;
-        }
-        e1 = TRUNC(line[1]);
-        e2 = TRUNC(line[0]);
-
-        auto f1 = line[1] - SUBPIXELS(e1);
-        SwPoint f2;
-
-        //inside one cell
-        if (e1 == e2) {
-            ;
-        //any horizontal line
-        } else if (diff.y == 0) {
-            e1.x = e2.x;
-            if (!_setCell(rw, e1)) return false;
-        } else if (diff.x == 0) {
-            //vertical line up
-            if (diff.y > 0) {
-                do {
-                    f2.y = ONE_PIXEL;
-                    rw.cover += (f2.y - f1.y);
-                    rw.area += (f2.y - f1.y) * f1.x * 2;
-                    f1.y = 0;
-                    ++e1.y;
-                    if (!_setCell(rw, e1)) return false;
-                } while(e1.y != e2.y);
-            //vertical line down
-            } else {
-                do {
-                    f2.y = 0;
-                    rw.cover += (f2.y - f1.y);
-                    rw.area += (f2.y - f1.y) * f1.x * 2;
-                    f1.y = ONE_PIXEL;
-                    --e1.y;
-                    if (!_setCell(rw, e1)) return false;
-                } while(e1.y != e2.y);
-            }
-        //any other line
-        } else {
-            Area prod = diff.x * f1.y - diff.y * f1.x;
-
-            /* These macros speed up repetitive divisions by replacing them
-               with multiplications and right shifts. */
-            auto dx_r = static_cast<long>(ULONG_MAX >> PIXEL_BITS) / (diff.x);
-            auto dy_r = static_cast<long>(ULONG_MAX >> PIXEL_BITS) / (diff.y);
-
-            /* The fundamental value `prod' determines which side and the  */
-            /* exact coordinate where the line exits current cell.  It is  */
-            /* also easily updated when moving from one cell to the next.  */
+    //inside one cell
+    if (e1 == e2) {
+        ;
+    //any horizontal line
+    } else if (diff.y == 0) {
+        e1.x = e2.x;
+        if (!_setCell(rw, e1)) return false;
+    } else if (diff.x == 0) {
+        //vertical line up
+        if (diff.y > 0) {
             do {
-                auto px = diff.x * ONE_PIXEL;
-                auto py = diff.y * ONE_PIXEL;
-
-                //left
-                if (prod <= 0 && prod - px > 0) {
-                    f2 = {0, SW_UDIV(-prod, -dx_r)};
-                    prod -= py;
-                    rw.cover += (f2.y - f1.y);
-                    rw.area += (f2.y - f1.y) * (f1.x + f2.x);
-                    f1 = {ONE_PIXEL, f2.y};
-                    --e1.x;
-                //up
-                } else if (prod - px <= 0 && prod - px + py > 0) {
-                    prod -= px;
-                    f2 = {SW_UDIV(-prod, dy_r), ONE_PIXEL};
-                    rw.cover += (f2.y - f1.y);
-                    rw.area += (f2.y - f1.y) * (f1.x + f2.x);
-                    f1 = {f2.x, 0};
-                    ++e1.y;
-                //right
-                } else if (prod - px + py <= 0 && prod + py >= 0) {
-                    prod += py;
-                    f2 = {ONE_PIXEL, SW_UDIV(prod, dx_r)};
-                    rw.cover += (f2.y - f1.y);
-                    rw.area += (f2.y - f1.y) * (f1.x + f2.x);
-                    f1 = {0, f2.y};
-                    ++e1.x;
-                //down
-                } else {
-                    f2 = {SW_UDIV(prod, -dy_r), 0};
-                    prod += px;
-                    rw.cover += (f2.y - f1.y);
-                    rw.area += (f2.y - f1.y) * (f1.x + f2.x);
-                    f1 = {f2.x, ONE_PIXEL};
-                    --e1.y;
-                }
-
+                f2.y = ONE_PIXEL;
+                rw.cover += (f2.y - f1.y);
+                rw.area += (f2.y - f1.y) * f1.x * 2;
+                f1.y = 0;
+                ++e1.y;
                 if (!_setCell(rw, e1)) return false;
-
-            } while(e1 != e2);
+            } while(e1.y != e2.y);
+        //vertical line down
+        } else {
+            do {
+                f2.y = 0;
+                rw.cover += (f2.y - f1.y);
+                rw.area += (f2.y - f1.y) * f1.x * 2;
+                f1.y = ONE_PIXEL;
+                --e1.y;
+                if (!_setCell(rw, e1)) return false;
+            } while(e1.y != e2.y);
         }
+    //any other line
+    } else {
+        Area prod = diff.x * f1.y - diff.y * f1.x;
 
-        f2 = line[0] - SUBPIXELS(e2);
-        rw.cover += (f2.y - f1.y);
-        rw.area += (f2.y - f1.y) * (f1.x + f2.x);
-        rw.pos = line[0];
+        /* These macros speed up repetitive divisions by replacing them
+            with multiplications and right shifts. */
+        auto dx_r = static_cast<long>(ULONG_MAX >> PIXEL_BITS) / (diff.x);
+        auto dy_r = static_cast<long>(ULONG_MAX >> PIXEL_BITS) / (diff.y);
 
-        if (line-- == rw.lineStack) return true;
+        /* The fundamental value `prod' determines which side and the  */
+        /* exact coordinate where the line exits current cell.  It is  */
+        /* also easily updated when moving from one cell to the next.  */
+        do {
+            auto px = diff.x * ONE_PIXEL;
+            auto py = diff.y * ONE_PIXEL;
+
+            //left
+            if (prod <= 0 && prod - px > 0) {
+                f2 = {0, SW_UDIV(-prod, -dx_r)};
+                prod -= py;
+                rw.cover += (f2.y - f1.y);
+                rw.area += (f2.y - f1.y) * (f1.x + f2.x);
+                f1 = {ONE_PIXEL, f2.y};
+                --e1.x;
+            //up
+            } else if (prod - px <= 0 && prod - px + py > 0) {
+                prod -= px;
+                f2 = {SW_UDIV(-prod, dy_r), ONE_PIXEL};
+                rw.cover += (f2.y - f1.y);
+                rw.area += (f2.y - f1.y) * (f1.x + f2.x);
+                f1 = {f2.x, 0};
+                ++e1.y;
+            //right
+            } else if (prod - px + py <= 0 && prod + py >= 0) {
+                prod += py;
+                f2 = {ONE_PIXEL, SW_UDIV(prod, dx_r)};
+                rw.cover += (f2.y - f1.y);
+                rw.area += (f2.y - f1.y) * (f1.x + f2.x);
+                f1 = {0, f2.y};
+                ++e1.x;
+            //down
+            } else {
+                f2 = {SW_UDIV(prod, -dy_r), 0};
+                prod += px;
+                rw.cover += (f2.y - f1.y);
+                rw.area += (f2.y - f1.y) * (f1.x + f2.x);
+                f1 = {f2.x, ONE_PIXEL};
+                --e1.y;
+            }
+
+            if (!_setCell(rw, e1)) return false;
+
+        } while(e1 != e2);
     }
+
+    f2 = to - SUBPIXELS(e2);
+    rw.cover += (f2.y - f1.y);
+    rw.area += (f2.y - f1.y) * (f1.x + f2.x);
+    rw.pos = to;
+
+    return true;
 }
 
 
@@ -703,26 +687,16 @@ static bool _decomposeOutline(RleWorker& rw)
         if (!_moveTo(rw, UPSCALE(outline->pts[first]))) return false;
 
         while (pt < limit) {
-            //emit a single line_to
-            if (types[0] == SW_CURVE_TYPE_POINT) {
-                ++pt;
-                ++types;
-                if (!_lineTo(rw, UPSCALE(*pt))) return false;
-            //types cubic
-            } else {
-                pt += 3;
-                types += 3;
-                if (pt <= limit) {
-                    if (!_cubicTo(rw, UPSCALE(pt[-2]), UPSCALE(pt[-1]), UPSCALE(pt[0]))) return false;
-                }
-                else if (pt - 1 == limit) {
-                    if (!_cubicTo(rw, UPSCALE(pt[-2]), UPSCALE(pt[-1]), start)) return false;
-                }
-                else goto close;
-            }
+            pt += 3;
+            types += 3;
+            if (pt <= limit) {
+                if (!_cubicTo(rw, UPSCALE(pt[-2]), UPSCALE(pt[-1]), UPSCALE(pt[0]))) return false;
+            } else if (pt - 1 == limit) {
+                if (!_cubicTo(rw, UPSCALE(pt[-2]), UPSCALE(pt[-1]), start)) return false;
+            } else goto close;
         }
     close:
-        if (!_lineTo(rw, start)) return false;
+        if (!_cubicTo(rw, rw.bezStack[0], start, start)) return false;
         first = last + 1;
     }
 
