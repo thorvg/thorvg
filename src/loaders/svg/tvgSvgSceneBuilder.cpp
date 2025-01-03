@@ -250,18 +250,20 @@ static Paint* _applyComposition(SvgLoaderData& loaderData, Paint* paint, const S
 
     auto clipNode = node->style->clipPath.node;
     auto maskNode = node->style->mask.node;
-    auto validClip = (clipNode && clipNode->child.count > 0) ? true : false;
-    auto validMask = (maskNode && maskNode->child.count > 0) ? true : false;
 
-    if (!validClip && !validMask) return paint;
+    if (!clipNode && !maskNode) return paint;
+    if ((clipNode && clipNode->child.empty()) || (maskNode && maskNode->child.empty())) {
+        delete(paint);
+        return nullptr;
+    }
 
     auto scene = Scene::gen();
     scene->push(paint);
 
-    if (validClip) _applyClip(loaderData, scene, node, clipNode, vBox, svgPath);
+    if (clipNode) _applyClip(loaderData, scene, node, clipNode, vBox, svgPath);
 
     /* Mask */
-    if (validMask) {
+    if (maskNode) {
         node->style->mask.applying = true;
 
         if (auto mask = _sceneBuildHelper(loaderData, maskNode, vBox, svgPath, true, 0)) {
