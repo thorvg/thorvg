@@ -71,6 +71,9 @@ public:
     const char* markers(uint32_t index);
     bool segment(const char* marker, float& begin, float& end);
 
+    //Expressions
+    bool write(const char* layer, uint32_t ix, const char* var, float val);
+
 private:
     bool ready();
     bool header();
