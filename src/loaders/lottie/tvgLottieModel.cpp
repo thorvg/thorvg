@@ -156,27 +156,23 @@ float LottieTextRange::factor(float frameNo, float totalLen, float idx)
             break;
         }
         case Round: {
-            idx += 0.5f - start;
-            clamp(idx, 0.0f, end - start);
+            idx = tvg::clamp(idx + (0.5f - start), 0.0f, end - start);
             auto range = 0.5f * (end - start);
             auto t = idx - range;
             f = tvg::equal(start, end) ? 0.0f : sqrtf(1.0f - t * t / (range * range));
             break;
         }
         case Smooth: {
-            idx += 0.5f - start;
-            clamp(idx, 0.0f, end - start);
+            idx = tvg::clamp(idx + (0.5f - start), 0.0f, end - start);
             f = tvg::equal(start, end) ? 0.0f : 0.5f * (1.0f + cosf(MATH_PI * (1.0f + 2.0f * idx / (end - start))));
             break;
         }
     }
-    clamp(f, 0.0f, 1.0f);
+    f = tvg::clamp(f, 0.0f, 1.0f);
 
     //apply easing
-    auto minEase = this->minEase(frameNo);
-    clamp(minEase, -100.0f, 100.0f);
-    auto maxEase = this->maxEase(frameNo);
-    clamp(maxEase, -100.0f, 100.0f);
+    auto minEase = tvg::clamp(this->minEase(frameNo), -100.0f, 100.0f);
+    auto maxEase = tvg::clamp(this->maxEase(frameNo), -100.0f, 100.0f);
     if (!tvg::zero(minEase) || !tvg::zero(maxEase)) {
         Point in{1.0f, 1.0f};
         Point out{0.0f, 0.0f};
@@ -189,7 +185,7 @@ float LottieTextRange::factor(float frameNo, float totalLen, float idx)
         interpolator->set(nullptr, in, out);
         f = interpolator->progress(f);
     }
-    clamp(f, 0.0f, 1.0f);
+    f = tvg::clamp(f, 0.0f, 1.0f);
 
     return f * this->maxAmount(frameNo) * 0.01f;
 }
@@ -231,10 +227,8 @@ void LottieImage::update()
 
 void LottieTrimpath::segment(float frameNo, float& start, float& end, LottieExpressions* exps)
 {
-    start = this->start(frameNo, exps) * 0.01f;
-    tvg::clamp(start, 0.0f, 1.0f);
-    end = this->end(frameNo, exps) * 0.01f;
-    tvg::clamp(end, 0.0f, 1.0f);
+    start = tvg::clamp(this->start(frameNo, exps) * 0.01f, 0.0f, 1.0f);
+    end = tvg::clamp(this->end(frameNo, exps) * 0.01f, 0.0f, 1.0f);
 
     auto o = fmodf(this->offset(frameNo, exps), 360.0f) / 360.0f;  //0 ~ 1
 
