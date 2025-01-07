@@ -24,7 +24,7 @@
 /* ThorVG Drawing Contents                                              */
 /************************************************************************/
 
-#define NUM_PER_ROW 3
+#define NUM_PER_ROW 4
 #define NUM_PER_COL 3
 
 struct UserExample : tvgexam::Example
@@ -35,6 +35,10 @@ struct UserExample : tvgexam::Example
     unique_ptr<tvg::LottieAnimation> slot3;
     unique_ptr<tvg::LottieAnimation> slot4;
     unique_ptr<tvg::LottieAnimation> slot5;
+    unique_ptr<tvg::LottieAnimation> slot6;
+    unique_ptr<tvg::LottieAnimation> slot7;
+    unique_ptr<tvg::LottieAnimation> slot8;
+    unique_ptr<tvg::LottieAnimation> slot9;
     unique_ptr<tvg::LottieAnimation> marker;
     uint32_t w, h;
     uint32_t size;
@@ -97,6 +101,30 @@ struct UserExample : tvgexam::Example
         {
             auto progress = tvgexam::progress(elapsed, slot5->duration());
             slot5->frame(slot5->totalFrame() * progress);
+        }
+
+        //position slot
+        {
+            auto progress = tvgexam::progress(elapsed, slot6->duration());
+            slot6->frame(slot6->totalFrame() * progress);
+        }
+
+        //scale slot
+        {
+            auto progress = tvgexam::progress(elapsed, slot7->duration());
+            slot7->frame(slot7->totalFrame() * progress);
+        }
+
+        //rotation slot
+        {
+            auto progress = tvgexam::progress(elapsed, slot8->duration());
+            slot8->frame(slot8->totalFrame() * progress);
+        }
+
+        //opacity slot
+        {
+            auto progress = tvgexam::progress(elapsed, slot9->duration());
+            slot9->frame(slot9->totalFrame() * progress);
         }
 
         //marker
@@ -202,6 +230,62 @@ struct UserExample : tvgexam::Example
             canvas->push(picture);
         }
 
+        //slot (transform: position)
+        {
+            slot6 = std::unique_ptr<tvg::LottieAnimation>(tvg::LottieAnimation::gen());
+            auto picture = slot6->picture();
+            if (!tvgexam::verify(picture->load(EXAMPLE_DIR"/lottie/extensions/slotsample6.json"))) return false;
+
+            const char* slotJson = R"({"position_id":{"p":{"a":1,"k":[{"i":{"x":0.833,"y":0.833},"o":{"x":0.167,"y":0.167},"s":[100,100],"t":0},{"s":[200,300],"t":100}]}}})";
+            if (!tvgexam::verify(slot6->override(slotJson))) return false;
+
+            sizing(picture, 6);
+
+            canvas->push(picture);
+        }
+
+        //slot (transform: scale)
+        {
+            slot7 = std::unique_ptr<tvg::LottieAnimation>(tvg::LottieAnimation::gen());
+            auto picture = slot7->picture();
+            if (!tvgexam::verify(picture->load(EXAMPLE_DIR"/lottie/extensions/slotsample7.json"))) return false;
+
+            const char* slotJson = R"({"scale_id":{"p":{"a":1,"k":[{"i":{"x":0.833,"y":0.833},"o":{"x":0.167,"y":0.167},"s":[0,0],"t":0},{"s":[100,100],"t":100}]}}})";
+            if (!tvgexam::verify(slot7->override(slotJson))) return false;
+
+            sizing(picture, 7);
+
+            canvas->push(picture);
+        }
+
+        //slot (transform: rotation)
+        {
+            slot8 = std::unique_ptr<tvg::LottieAnimation>(tvg::LottieAnimation::gen());
+            auto picture = slot8->picture();
+            if (!tvgexam::verify(picture->load(EXAMPLE_DIR"/lottie/extensions/slotsample8.json"))) return false;
+
+            const char* slotJson = R"({"rotation_id":{"p":{"a":1,"k":[{"i":{"x":0.833,"y":0.833},"o":{"x":0.167,"y":0.167},"s":[0],"t":0},{"s":[180],"t":100}]}}})";
+            if (!tvgexam::verify(slot8->override(slotJson))) return false;
+
+            sizing(picture, 8);
+
+            canvas->push(picture);
+        }
+
+        //slot (transform: opacity)
+        {
+            slot9 = std::unique_ptr<tvg::LottieAnimation>(tvg::LottieAnimation::gen());
+            auto picture = slot9->picture();
+            if (!tvgexam::verify(picture->load(EXAMPLE_DIR"/lottie/extensions/slotsample9.json"))) return false;
+
+            const char* slotJson = R"({"opacity_id":{"p":{"a":1,"k":[{"i":{"x":0.833,"y":0.833},"o":{"x":0.167,"y":0.167},"s":[0],"t":0},{"s":[100],"t":100}]}}})";
+            if (!tvgexam::verify(slot9->override(slotJson))) return false;
+
+            sizing(picture, 9);
+
+            canvas->push(picture);
+        }
+
         //marker
         {
             marker = std::unique_ptr<tvg::LottieAnimation>(tvg::LottieAnimation::gen());
@@ -209,7 +293,7 @@ struct UserExample : tvgexam::Example
             if (!tvgexam::verify(picture->load(EXAMPLE_DIR"/lottie/extensions/marker_sample.json"))) return false;
             if (!tvgexam::verify(marker->segment("sectionC"))) return false;
 
-            sizing(picture, 6);
+            sizing(picture, 10);
 
             canvas->push(picture);
         }
