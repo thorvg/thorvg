@@ -69,10 +69,9 @@ static inline bool equal(float a, float b)
 
 
 template <typename T>
-static inline void clamp(T& v, const T& min, const T& max)
+static inline constexpr const T& clamp(const T& v, const T& min, const T& max)
 {
-    if (v < min) v = min;
-    else if (v > max) v = max;
+    return std::min(std::max(v, min), max);
 }
 
 /************************************************************************/
