@@ -38,11 +38,8 @@ struct UserExample : tvgexam::Example
         bg->fill(255, 255, 255);       //r, g, b
         canvas->push(bg);
 
-        char buf[PATH_MAX];
-        snprintf(buf, sizeof(buf), EXAMPLE_DIR"/svg/logo.svg");
-
         auto picture = tvg::Picture::gen();
-        if (!tvgexam::verify(picture->load(buf))) return false;
+        if (!tvgexam::verify(picture->load(EXAMPLE_DIR"/svg/logo.svg"))) return false;
 
         float scale;
         float shiftX = 0.0f, shiftY = 0.0f;

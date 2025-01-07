@@ -43,11 +43,8 @@ void content(tvg::Canvas* canvas)
     bg->fill(255, 255, 255);
     canvas->push(bg);
 
-    char buf[PATH_MAX];
-    snprintf(buf, sizeof(buf), EXAMPLE_DIR"/svg/logo.svg");
-
     auto picture = tvg::Picture::gen();
-    if (!tvgexam::verify(picture->load(buf))) return;
+    if (!tvgexam::verify(picture->load(EXAMPLE_DIR"/svg/logo.svg"))) return;
 
     float scale;
     float shiftX = 0.0f, shiftY = 0.0f;

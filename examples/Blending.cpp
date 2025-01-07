@@ -28,139 +28,148 @@
 
 struct UserExample : tvgexam::Example
 {
+    void blender(tvg::Canvas* canvas, const char* name, tvg::BlendMethod method, float x, float y, uint32_t* data)
+    {
+        auto text = tvg::Text::gen();
+        text->font("Arial", 15);
+        text->text(name);
+        text->fill(255, 255, 255);
+        text->translate(x + 20, y);
+        canvas->push(text);
+
+        //solid
+        {
+            auto bottom = tvg::Shape::gen();
+            bottom->appendRect(20.0f + x, 25.0f + y, 100.0f, 100.0f, 10.0f, 10.0f);
+            bottom->fill(255, 255, 0);
+            canvas->push(bottom);
+
+            auto top = tvg::Shape::gen();
+            top->appendRect(45.0f + x, 50.0f + y, 100.0f, 100.0f, 10.0f, 10.0f);
+            top->fill(0, 255, 255);
+            top->blend(method);
+            canvas->push(top);
+        }
+
+        //solid (half transparent)
+        {
+            auto bottom = tvg::Shape::gen();
+            bottom->appendRect(170.0f + x, 25.0f + y, 100.0f, 100.0f, 10.0f, 10.0f);
+            bottom->fill(255, 255, 0, 127);
+            canvas->push(bottom);
+
+            auto top = tvg::Shape::gen();
+            top->appendRect(195.0f + x, 50.0f + y, 100.0f, 100.0f, 10.0f, 10.0f);
+            top->fill(0, 255, 255, 127);
+            top->blend(method);
+            canvas->push(top);
+        }
+
+        //gradient blending
+        {
+            tvg::Fill::ColorStop colorStops[2];
+            colorStops[0] = {0, 255, 0, 255, 255};
+            colorStops[1] = {1, 0, 255, 0, 127};
+
+            auto fill = tvg::LinearGradient::gen();
+            fill->linear(325.0f + x, 25.0f + y, 425.0f + x, 125.0f + y);
+            fill->colorStops(colorStops, 2);
+
+            auto bottom = tvg::Shape::gen();
+            bottom->appendRect(325.0f + x, 25.0f + y, 100.0f, 100.0f, 10.0f, 10.0f);
+            bottom->fill(fill);
+            canvas->push(bottom);
+
+            auto fill2 = tvg::LinearGradient::gen();
+            fill2->linear(350.0f + x, 50.0f + y, 450.0f + x, 150.0f + y);
+            fill2->colorStops(colorStops, 2);
+
+            auto top = tvg::Shape::gen();
+            top->appendRect(350.0f + x, 50.0f + y, 100.0f, 100.0f, 10.0f, 10.0f);
+            top->fill(fill2);
+            top->blend(method);
+            canvas->push(top);
+        }
+
+        //image
+        {
+            auto bottom = tvg::Picture::gen();
+            bottom->load(data, 200, 300, tvg::ColorSpace::ARGB8888, true);
+            bottom->translate(475 + x, 25.0f + y);
+            bottom->scale(0.35f);
+            canvas->push(bottom);
+
+            auto top = bottom->duplicate();
+            top->translate(500.0f + x, 50.0f + y);
+            top->rotate(-10.0f);
+            top->blend(method);
+            canvas->push(top);
+        }
+
+        //scene
+        {
+            auto bottom = tvg::Picture::gen();
+            bottom->load(EXAMPLE_DIR"/svg/tiger.svg");
+            bottom->translate(600.0f + x, 25.0f + y);
+            bottom->scale(0.11f);
+            canvas->push(bottom);
+
+            auto top = bottom->duplicate();
+            top->translate(625.0f + x, 50.0f + y);
+            top->blend(method);
+            canvas->push(top);
+        }
+
+        //scene (half transparent)
+        {
+            auto bottom = tvg::Picture::gen();
+            bottom->load(EXAMPLE_DIR"/svg/tiger.svg");
+            bottom->translate(750.0f + x, 25.0f + y);
+            bottom->scale(0.11f);
+            bottom->opacity(127);
+            canvas->push(bottom);
+
+            auto top = bottom->duplicate();
+            top->translate(775.0f + x, 50.0f + y);
+            top->blend(method);
+            canvas->push(top);
+        }
+    }
+
+
     bool content(tvg::Canvas* canvas, uint32_t w, uint32_t h) override
     {
         if (!canvas) return false;
 
-        //Normal
-        auto shape1 = tvg::Shape::gen();
-        shape1->appendRect(0, 0, 400, 400, 50, 50);
-        shape1->fill(0, 255, 255);
-        shape1->blend(tvg::BlendMethod::Normal);
-        canvas->push(shape1);
+        if (!tvgexam::verify(tvg::Text::load(EXAMPLE_DIR"/font/Arial.ttf"))) return false;
 
-        //Add
-        auto shape2 = tvg::Shape::gen();
-        shape2->appendCircle(400, 400, 200, 200);
-        shape2->fill(255, 255, 0, 170);
-        shape2->blend(tvg::BlendMethod::Add);
-        canvas->push(shape2);
-
-        //Multiply
-        auto shape3 = tvg::Shape::gen();
-        shape3->appendCircle(400, 400, 250, 100);
-        shape3->fill(255, 255, 255, 100);
-        shape3->blend(tvg::BlendMethod::Multiply);
-        canvas->push(shape3);
-
-        //Overlay
-        auto shape4 = tvg::Shape::gen();
-        shape4->moveTo(199, 234);
-        shape4->lineTo(253, 343);
-        shape4->lineTo(374, 360);
-        shape4->lineTo(287, 444);
-        shape4->lineTo(307, 565);
-        shape4->lineTo(199, 509);
-        shape4->lineTo(97, 565);
-        shape4->lineTo(112, 445);
-        shape4->lineTo(26, 361);
-        shape4->lineTo(146, 343);
-        shape4->close();
-        shape4->fill(255, 0, 200, 200);
-        shape4->blend(tvg::BlendMethod::Overlay);
-        canvas->push(shape4);
-
-        //Difference
-        auto shape5 = tvg::Shape::gen();
-        shape5->appendCircle(300, 600, 200, 200);
-
-        //LinearGradient
-        auto fill = tvg::LinearGradient::gen();
-        fill->linear(300, 600, 200, 200);
-
-        //Gradient Color Stops
-        tvg::Fill::ColorStop colorStops[2];
-        colorStops[0] = {0, 0, 0, 0, 255};
-        colorStops[1] = {1, 255, 255, 255, 100};
-        fill->colorStops(colorStops, 2);
-
-        shape5->fill(fill);
-        shape5->blend(tvg::BlendMethod::Difference);
-        canvas->push(shape5);
-
-        //Exclusion
-        auto shape6 = tvg::Shape::gen();
-        shape6->appendCircle(300, 800, 150, 150);
-
-        //RadialGradient
-        auto fill2 = tvg::RadialGradient::gen();
-        fill2->radial(300, 800, 150, 300, 800, 0);
-        fill2->colorStops(colorStops, 2);
-
-        shape6->fill(fill2);
-        shape6->blend(tvg::BlendMethod::Exclusion);
-        canvas->push(shape6);
-
-        //Screen
-        auto shape7 = tvg::Shape::gen();
-        shape7->appendCircle(600, 650, 200, 150);
-        shape7->blend(tvg::BlendMethod::Screen);
-        shape7->fill(0, 0, 255);
-        canvas->push(shape7);
-
-        //Darken
-        auto shape9 = tvg::Shape::gen();
-        shape9->appendRect(600, 650, 350, 250);
-        shape9->blend(tvg::BlendMethod::Darken);
-        shape9->fill(10, 255, 155);
-        canvas->push(shape9);
-
-        //Prepare Transformed Image
+        //Prepare Image
         string path(EXAMPLE_DIR"/image/rawimage_200x300.raw");
-
         ifstream file(path, ios::binary);
         if (!file.is_open()) return false;
         auto data = (uint32_t*)malloc(sizeof(uint32_t) * (200*300));
         file.read(reinterpret_cast<char *>(data), sizeof (uint32_t) * 200 * 300);
         file.close();
 
-        //Lighten
-        auto picture = tvg::Picture::gen();
-        if (!tvgexam::verify(picture->load(data, 200, 300, tvg::ColorSpace::ARGB8888, true))) return false;
-        picture->translate(800, 700);
-        picture->rotate(40);
-        picture->blend(tvg::BlendMethod::Lighten);
-        canvas->push(picture);
+        blender(canvas, "Normal", tvg::BlendMethod::Normal, 0.0f, 0.0f, data);
+        blender(canvas, "Multiply", tvg::BlendMethod::Multiply, 0.0f, 150.0f, data);
+        blender(canvas, "Screen", tvg::BlendMethod::Screen, 0.0f, 300.0f, data);
+        blender(canvas, "Overlay", tvg::BlendMethod::Overlay, 0.0f, 450.0f, data);
+        blender(canvas, "Darken", tvg::BlendMethod::Darken, 0.f, 600.0f, data);
+        blender(canvas, "Lighten", tvg::BlendMethod::Lighten, 0.0f, 750.0f, data);
+        blender(canvas, "ColorDodge", tvg::BlendMethod::ColorDodge, 0.0f, 900.0f, data);
+        blender(canvas, "ColorBurn", tvg::BlendMethod::ColorBurn, 0.0f, 1050.0f, data);
+        blender(canvas, "HardLight", tvg::BlendMethod::HardLight, 0.0f, 1200.0f, data);
 
-        //ColorDodge
-        auto shape10 = tvg::Shape::gen();
-        shape10->appendRect(0, 0, 200, 200, 50, 50);
-        shape10->blend(tvg::BlendMethod::ColorDodge);
-        shape10->fill(255, 255, 255, 250);
-        canvas->push(shape10);
-
-        //ColorBurn
-        auto picture2 = tvg::Picture::gen();
-        if (!tvgexam::verify(picture2->load(data, 200, 300, tvg::ColorSpace::ARGB8888, true))) return false;
-        picture2->translate(600, 250);
-        picture2->blend(tvg::BlendMethod::ColorBurn);
-        picture2->opacity(150);
-        canvas->push(picture2);
-
-        //HardLight
-        auto picture3 = tvg::Picture::gen();
-        if (!tvgexam::verify(picture3->load(data, 200, 300, tvg::ColorSpace::ARGB8888, true))) return false;
-        picture3->translate(700, 150);
-        picture3->blend(tvg::BlendMethod::HardLight);
-        canvas->push(picture3);
-
-        //SoftLight
-        auto picture4 = tvg::Picture::gen();
-        if (!tvgexam::verify(picture4->load(data, 200, 300, tvg::ColorSpace::ARGB8888, true))) return false;
-        picture4->translate(350, 600);
-        picture4->rotate(90);
-        picture4->blend(tvg::BlendMethod::SoftLight);
-        canvas->push(picture4);
+        blender(canvas, "SoftLight", tvg::BlendMethod::SoftLight, 900.0f, 0.0f, data);
+        blender(canvas, "Difference", tvg::BlendMethod::Difference, 900.0f, 150.0f, data);
+        blender(canvas, "Exclusion", tvg::BlendMethod::Exclusion, 900.0f, 300.0f, data);
+        blender(canvas, "Hue (Not Supported)", tvg::BlendMethod::Hue, 900.0f, 450.0f, data);
+        blender(canvas, "Saturation (Not Supported)", tvg::BlendMethod::Saturation, 900.0f, 600.0f, data);
+        blender(canvas, "Color (Not Supported)", tvg::BlendMethod::Color, 900.0f, 750.0f, data);
+        blender(canvas, "Luminosity (Not Supported)", tvg::BlendMethod::Luminosity, 900.0f, 900.0f, data);
+        blender(canvas, "Add", tvg::BlendMethod::Add, 900.0f, 1050.0f, data);
+        blender(canvas, "HardMix (Not Supported)", tvg::BlendMethod::HardMix, 900.0f, 1200.0f, data);
 
         free(data);
 
@@ -175,5 +184,5 @@ struct UserExample : tvgexam::Example
 
 int main(int argc, char **argv)
 {
-    return tvgexam::main(new UserExample, argc, argv, true, 1024, 1024);
+    return tvgexam::main(new UserExample, argc, argv, true, 1800, 1380);
 }
