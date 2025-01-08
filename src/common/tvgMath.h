@@ -161,7 +161,7 @@ static inline void operator*=(Matrix& lhs, const Matrix& rhs)
 
 static inline void log(const Matrix& m)
 {
-    TVGLOG("COMMON", "Matrix: [%f %f %f] [%f %f %f] [%f %f %f]", m.e11, m.e12, m.e13, m.e21, m.e22, m.e23, m.e31, m.e32, m.e33);
+    TVGLOG("COMMON", "Matrix: [%f %f %f] [%f %f %f] [%f %f %f]", static_cast<double>(m.e11), static_cast<double>(m.e12), static_cast<double>(m.e13), static_cast<double>(m.e21), static_cast<double>(m.e22), static_cast<double>(m.e23), static_cast<double>(m.e31), static_cast<double>(m.e32), static_cast<double>(m.e33));
 }
 
 
@@ -303,7 +303,7 @@ static inline Point operator-(const Point& a)
 
 static inline void log(const Point& pt)
 {
-    TVGLOG("COMMON", "Point: [%f %f]", pt.x, pt.y);
+    TVGLOG("COMMON", "Point: [%f %f]", static_cast<double>(pt.x), static_cast<double>(pt.y));
 }
 
 

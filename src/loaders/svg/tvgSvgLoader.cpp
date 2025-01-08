@@ -1031,7 +1031,7 @@ static void _handleStrokeMiterlimitAttr(SvgLoaderData* loader, SvgNode* node, co
     // - A negative value for stroke-miterlimit must be treated as an illegal value.
     if (miterlimit < 0.0f) {
         TVGERR("SVG", "A stroke-miterlimit change (%f <- %f) with a negative value is omitted.",
-            node->style->stroke.miterlimit, miterlimit);
+            static_cast<double>(node->style->stroke.miterlimit), static_cast<double>(miterlimit));
         return;
     }
 
