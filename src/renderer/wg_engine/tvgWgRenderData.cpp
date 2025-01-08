@@ -333,7 +333,7 @@ void WgRenderDataPaint::updateClips(tvg::Array<tvg::RenderData> &clips) {
 // WgRenderDataShape
 //***********************************************************************
 
-void WgRenderDataShape::appendShape(WgContext context, const WgVertexBuffer& vertexBuffer)
+void WgRenderDataShape::appendShape(WgContext& context, const WgVertexBuffer& vertexBuffer)
 {
     if (vertexBuffer.vcount < 3) return;
     Point pmin{}, pmax{};
@@ -344,7 +344,7 @@ void WgRenderDataShape::appendShape(WgContext context, const WgVertexBuffer& ver
 }
 
 
-void WgRenderDataShape::appendStroke(WgContext context, const WgVertexBufferInd& vertexBufferInd)
+void WgRenderDataShape::appendStroke(WgContext& context, const WgVertexBufferInd& vertexBufferInd)
 {
     if (vertexBufferInd.vcount < 3) return;
     Point pmin{}, pmax{};
@@ -376,7 +376,7 @@ void WgRenderDataShape::updateAABB(const Matrix& tr) {
 }
 
 
-void WgRenderDataShape::updateMeshes(WgContext &context, const RenderShape &rshape, const Matrix& tr)
+void WgRenderDataShape::updateMeshes(WgContext& context, const RenderShape &rshape, const Matrix& tr)
 {
     releaseMeshes(context);
     strokeFirst = rshape.stroke ? rshape.stroke->strokeFirst : false;
@@ -452,7 +452,7 @@ void WgRenderDataShape::updateMeshes(WgContext &context, const RenderShape &rsha
 }
 
 
-void WgRenderDataShape::proceedStrokes(WgContext context, const RenderStroke* rstroke, float tbeg, float tend, const WgVertexBuffer& buff)
+void WgRenderDataShape::proceedStrokes(WgContext& context, const RenderStroke* rstroke, float tbeg, float tend, const WgVertexBuffer& buff)
 {
     assert(rstroke);
     static WgVertexBufferInd strokesGenerator;
@@ -479,7 +479,7 @@ void WgRenderDataShape::proceedStrokes(WgContext context, const RenderStroke* rs
 }
 
 
-void WgRenderDataShape::releaseMeshes(WgContext &context)
+void WgRenderDataShape::releaseMeshes(WgContext& context)
 {
     meshGroupStrokesBBox.release(context);
     meshGroupStrokes.release(context);
