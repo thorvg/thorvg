@@ -170,7 +170,7 @@ ecma_errol0_dtoa (double val, /**< ecma number */
   high_bound.value = mid.value;
   high_bound.offset = mid.offset;
 
-  if (ECMA_NEXT_FLOAT (val) != INFINITY)
+  if (static_cast<double>(ECMA_NEXT_FLOAT (val)) != INFINITY)
   {
     high_bound.offset += (ECMA_NEXT_FLOAT (val) - val) * power_of_10 / (2.0 + ERROL0_EPSILON);
   }

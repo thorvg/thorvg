@@ -338,7 +338,7 @@ static jerry_value_t _addsub(const jerry_value_t args[], float addsub)
     auto n2 = jerry_value_is_number(args[1]);
 
     //1d + 1d
-    if (n1 && n2) return jerry_number(jerry_value_as_number(args[0]) + addsub * jerry_value_as_number(args[1]));
+    if (n1 && n2) return jerry_number(jerry_value_as_number(args[0]) + static_cast<double>(addsub) * jerry_value_as_number(args[1]));
 
     auto val1 = jerry_object_get_index(args[n1 ? 1 : 0], 0);
     auto val2 = jerry_object_get_index(args[n1 ? 1 : 0], 1);
@@ -351,14 +351,14 @@ static jerry_value_t _addsub(const jerry_value_t args[], float addsub)
     if (n1 || n2) {
         auto secondary = n1 ? 0 : 1;
         auto val3 = jerry_value_as_number(args[secondary]);
-        if (secondary == 0) x = (x * addsub) + val3;
-        else x += (addsub * val3);
+        if (secondary == 0) x = (x * static_cast<double>(addsub)) + val3;
+        else x += (static_cast<double>(addsub) * val3);
     //2d + 2d
     } else {
         auto val3 = jerry_object_get_index(args[1], 0);
         auto val4 = jerry_object_get_index(args[1], 1);
-        x += (addsub * jerry_value_as_number(val3));
-        y += (addsub * jerry_value_as_number(val4));
+        x += (static_cast<double>(addsub) * jerry_value_as_number(val3));
+        y += (static_cast<double>(addsub) * jerry_value_as_number(val4));
         jerry_value_free(val3);
         jerry_value_free(val4);
     }
@@ -378,13 +378,13 @@ static jerry_value_t _addsub(const jerry_value_t args[], float addsub)
 static jerry_value_t _muldiv(const jerry_value_t arg1, float arg2)
 {
     //1d
-    if (jerry_value_is_number(arg1)) return jerry_number(jerry_value_as_number(arg1) * arg2);
+    if (jerry_value_is_number(arg1)) return jerry_number(jerry_value_as_number(arg1) * static_cast<double>(arg2));
 
     //2d
     auto val1 = jerry_object_get_index(arg1, 0);
     auto val2 = jerry_object_get_index(arg1, 1);
-    auto x = jerry_value_as_number(val1) * arg2;
-    auto y = jerry_value_as_number(val2) * arg2;
+    auto x = jerry_value_as_number(val1) * static_cast<double>(arg2);
+    auto y = jerry_value_as_number(val2) * static_cast<double>(arg2);
 
     jerry_value_free(val1);
     jerry_value_free(val2);
@@ -421,7 +421,7 @@ static jerry_value_t _mul(const jerry_call_info_t* info, const jerry_value_t arg
 
 static jerry_value_t _div(const jerry_call_info_t* info, const jerry_value_t args[], const jerry_length_t argsCnt)
 {
-    return _muldiv(args[0], 1.0f / jerry_value_as_number(args[1]));
+    return _muldiv(args[0], 1.0 / jerry_value_as_number(args[1]));
 }
 
 
@@ -568,7 +568,7 @@ static jerry_value_t _normalize(const jerry_call_info_t* info, const jerry_value
     jerry_value_free(val1);
     jerry_value_free(val2);
 
-    auto length = sqrtf(x * x + y * y);
+    auto length = sqrt(x * x + y * y);
 
     x /= length;
     y /= length;
