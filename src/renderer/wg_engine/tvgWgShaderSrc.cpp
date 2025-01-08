@@ -514,9 +514,9 @@ fn fs_main_Lighten(in: VertexOutput) -> @location(0) vec4f {
 fn fs_main_ColorDodge(in: VertexOutput) -> @location(0) vec4f {
     let d: FragData = getFragData(in);
     var Rc: vec3f;
-    Rc.r = select(d.Dc.r, (d.Dc.r * 255.0 / (255.0 - d.Sc.r * 255.0))/255.0, (1.0 - d.Sc.r > 0.0));
-    Rc.g = select(d.Dc.g, (d.Dc.g * 255.0 / (255.0 - d.Sc.g * 255.0))/255.0, (1.0 - d.Sc.g > 0.0));
-    Rc.b = select(d.Dc.b, (d.Dc.b * 255.0 / (255.0 - d.Sc.b * 255.0))/255.0, (1.0 - d.Sc.b > 0.0));
+    Rc.r = select(d.Dc.r, d.Dc.r / (1 - d.Sc.r), d.Sc.r < 1);
+    Rc.g = select(d.Dc.g, d.Dc.g / (1 - d.Sc.g), d.Sc.g < 1);
+    Rc.b = select(d.Dc.b, d.Dc.b / (1 - d.Sc.b), d.Sc.b < 1);
     return postProcess(d, vec4f(Rc, 1.0));
 }
 
@@ -524,9 +524,9 @@ fn fs_main_ColorDodge(in: VertexOutput) -> @location(0) vec4f {
 fn fs_main_ColorBurn(in: VertexOutput) -> @location(0) vec4f {
     let d: FragData = getFragData(in);
     var Rc: vec3f;
-    Rc.r = select(1.0 - d.Dc.r, (255.0 - (255.0 - d.Dc.r * 255.0) / (d.Sc.r * 255.0)) / 255.0, (d.Sc.r > 0.0));
-    Rc.g = select(1.0 - d.Dc.g, (255.0 - (255.0 - d.Dc.g * 255.0) / (d.Sc.g * 255.0)) / 255.0, (d.Sc.g > 0.0));
-    Rc.b = select(1.0 - d.Dc.b, (255.0 - (255.0 - d.Dc.b * 255.0) / (d.Sc.b * 255.0)) / 255.0, (d.Sc.b > 0.0));
+    Rc.r = select(d.Dc.r, 1 - (1 - d.Dc.r) / d.Sc.r, d.Sc.r > 0);
+    Rc.g = select(d.Dc.g, 1 - (1 - d.Dc.g) / d.Sc.g, d.Sc.g > 0);
+    Rc.b = select(d.Dc.b, 1 - (1 - d.Dc.b) / d.Sc.b, d.Sc.b > 0);
     return postProcess(d, vec4f(Rc, 1.0));
 }
 
