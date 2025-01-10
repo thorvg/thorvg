@@ -54,5 +54,7 @@ extern const char* HARD_LIGHT_BLEND_FRAG;
 extern const char* SOFT_LIGHT_BLEND_FRAG;
 extern const char* DIFFERENCE_BLEND_FRAG;
 extern const char* EXCLUSION_BLEND_FRAG;
+extern const char* LIGHTEN_BLEND_FRAG;
+extern const char* DARKEN_BLEND_FRAG;
 
 #endif /* _TVG_GL_SHADERSRC_H_ */

@@ -44,16 +44,19 @@ public:
     void setViewport(const RenderRegion& vp) { mViewport = vp; }
     const RenderRegion& getViewport() const { return mViewport; }
 
+    bool isInUse() const { return mInUse; }
+    void setInUse(bool inUse) { mInUse = inUse; }
 
 private:
-    uint32_t mWidth = 0;
-    uint32_t mHeight = 0;
+    uint32_t mWidth;
+    uint32_t mHeight;
     RenderRegion mViewport{};
     GLuint mFbo = 0;
     GLuint mColorBuffer = 0;
     GLuint mDepthStencilBuffer = 0;
     GLuint mResolveFbo = 0;
     GLuint mColorTex = 0;
+    bool mInUse = false;
 };
 
 class GlRenderTargetPool {
