@@ -336,9 +336,9 @@ static void _rasterPolygonImageSegment(SwSurface* surface, const SwImage* image,
                 //Draw horizontal line
                 while (x++ < x2) {
                     uu = (int) u;
-                    if (uu >= sw) continue;
+                    if (uu < 0 || uu >= sw) continue;
                     vv = (int) v;
-                    if (vv >= sh) continue;
+                    if (vv < 0 || vv >= sh) continue;
 
                     ar = (int)(255.0f * (1.0f - modff(u, &iptr)));
                     ab = (int)(255.0f * (1.0f - modff(v, &iptr)));
