@@ -1379,7 +1379,7 @@ void LottieBuilder::updateEffect(LottieLayer* layer, float frameNo)
                 auto effect = static_cast<LottieFxTint*>(*ef);
                 auto black = effect->black(frameNo);
                 auto white = effect->white(frameNo);
-                layer->scene->push(SceneEffect::Tint, black.rgb[0], black.rgb[1], black.rgb[2], white.rgb[0], white.rgb[1], white.rgb[2], effect->intensity(frameNo));
+                layer->scene->push(SceneEffect::Tint, black.rgb[0], black.rgb[1], black.rgb[2], white.rgb[0], white.rgb[1], white.rgb[2], (double)effect->intensity(frameNo));
                 break;
             }
             case LottieEffect::Fill: {
@@ -1405,12 +1405,12 @@ void LottieBuilder::updateEffect(LottieLayer* layer, float frameNo)
                 auto effect = static_cast<LottieFxDropShadow*>(*ef);
                 auto color = effect->color(frameNo);
                 //seems the opacity range in dropshadow is 0 ~ 256
-                layer->scene->push(SceneEffect::DropShadow, color.rgb[0], color.rgb[1], color.rgb[2], std::min(255, (int)effect->opacity(frameNo)), effect->angle(frameNo), effect->distance(frameNo), effect->blurness(frameNo) * BLUR_TO_SIGMA, QUALITY);
+                layer->scene->push(SceneEffect::DropShadow, color.rgb[0], color.rgb[1], color.rgb[2], std::min(255, (int)effect->opacity(frameNo)), (double)effect->angle(frameNo), (double)effect->distance(frameNo), (double)effect->blurness(frameNo) * BLUR_TO_SIGMA, QUALITY);
                 break;
             }
             case LottieEffect::GaussianBlur: {
                 auto effect = static_cast<LottieFxGaussianBlur*>(*ef);
-                layer->scene->push(SceneEffect::GaussianBlur, effect->blurness(frameNo) * BLUR_TO_SIGMA, effect->direction(frameNo) - 1, effect->wrap(frameNo), QUALITY);
+                layer->scene->push(SceneEffect::GaussianBlur, (double)effect->blurness(frameNo) * BLUR_TO_SIGMA, effect->direction(frameNo) - 1, effect->wrap(frameNo), QUALITY);
                 break;
             }
             default: break;

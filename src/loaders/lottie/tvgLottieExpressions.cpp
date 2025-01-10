@@ -484,7 +484,7 @@ static jerry_value_t _linear(const jerry_call_info_t* info, const jerry_value_t 
 static jerry_value_t _ease(const jerry_call_info_t* info, const jerry_value_t args[], const jerry_length_t argsCnt)
 {
     auto t = (float) jerry_value_as_number(args[0]);
-    t = (t < 0.5) ? (4 * t * t * t) : (1.0f - pow(-2.0f * t + 2.0f, 3) * 0.5f);
+    t = (t < 0.5f) ? (4 * t * t * t) : (1.0f - powf(-2.0f * t + 2.0f, 3) * 0.5f);
     return _interp(t, args, jerry_value_as_uint32(argsCnt));
 }
 
@@ -501,7 +501,7 @@ static jerry_value_t _easeIn(const jerry_call_info_t* info, const jerry_value_t 
 static jerry_value_t _easeOut(const jerry_call_info_t* info, const jerry_value_t args[], const jerry_length_t argsCnt)
 {
     auto t = (float) jerry_value_as_number(args[0]);
-    t = 1.0f - pow(1.0f - t, 3);
+    t = 1.0f - powf(1.0f - t, 3);
     return _interp(t, args, jerry_value_as_uint32(argsCnt));
 }
 
