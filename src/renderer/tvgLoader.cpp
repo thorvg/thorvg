@@ -358,7 +358,7 @@ LoadModule* LoaderMgr::loader(const char* data, uint32_t size, const char* mimeT
     }
 
     //Try with the given MimeType
-    if (!mimeType) {
+    if (mimeType) {
         if (auto loader = _findByType(mimeType)) {
             if (loader->open(data, size, rpath, copy)) {
                 if (allowCache) {
