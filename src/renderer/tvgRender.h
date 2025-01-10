@@ -343,7 +343,7 @@ struct RenderEffectTint : RenderEffect
         inst->white[0] = va_arg(args, int);
         inst->white[1] = va_arg(args, int);
         inst->white[2] = va_arg(args, int);
-        inst->intensity = (uint8_t)(va_arg(args, double) * 2.55f);
+        inst->intensity = (uint8_t)(va_arg(args, double) * 2.55);
         inst->type = SceneEffect::Tint;
         return inst;
     }
