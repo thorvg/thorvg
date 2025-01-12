@@ -41,7 +41,7 @@ static Scene* _sceneBuildHelper(SvgLoaderData& loaderData, const SvgNode* node, 
 
 static inline bool _isGroupType(SvgNodeType type)
 {
-    if (type == SvgNodeType::Doc || type == SvgNodeType::G || type == SvgNodeType::Use || type == SvgNodeType::ClipPath || type == SvgNodeType::Symbol) return true;
+    if (type == SvgNodeType::Doc || type == SvgNodeType::G || type == SvgNodeType::Use || type == SvgNodeType::ClipPath || type == SvgNodeType::Symbol || type == SvgNodeType::Filter) return true;
     return false;
 }
 
@@ -288,6 +288,66 @@ static Paint* _applyComposition(SvgLoaderData& loaderData, Paint* paint, const S
 }
 
 
+static Paint* _applyFilter(SvgLoaderData& loaderData, Paint* paint, const SvgNode* node, const Box& vBox, const string& svgPath)
+{
+    auto filterNode = node->style->filter.node;
+    if (!filterNode || filterNode->child.count == 0) return paint;
+    auto& filter = filterNode->node.filter;
+
+    auto scene = Scene::gen();
+
+    Box bbox{};
+    paint->bounds(&bbox.x, &bbox.y, &bbox.w, &bbox.h, false);
+    Box clipBox = filter.filterUserSpace ? filter.box : Box{bbox.x + filter.box.x * bbox.w, bbox.y + filter.box.y * bbox.h, filter.box.w * bbox.w, filter.box.h * bbox.h};
+    auto primitiveUserSpace = filter.primitiveUserSpace;
+    auto sx = paint->transform().e11;
+    auto sy = paint->transform().e22;
+
+    auto child = filterNode->child.data;
+    for (uint32_t i = 0; i < filterNode->child.count; ++i, ++child) {
+        if ((*child)->type == SvgNodeType::GaussianBlur) {
+            auto& gauss = (*child)->node.gaussianBlur;
+
+            auto direction = gauss.stdDevX > 0.0f ? (gauss.stdDevY > 0.0f ? 0 : 1) : (gauss.stdDevY > 0.0f ? 2 : -1);
+            if (direction == -1) continue;
+
+            auto stdDevX = gauss.stdDevX;
+            auto stdDevY = gauss.stdDevY;
+            if (gauss.hasBox) {
+                auto gaussBox = gauss.box;
+                auto isPercent = gauss.isPercentage;
+                if (primitiveUserSpace) {
+                    if (isPercent[0]) gaussBox.x *= loaderData.svgParse->global.w;
+                    if (isPercent[1]) gaussBox.y *= loaderData.svgParse->global.h;
+                    if (isPercent[2]) gaussBox.w *= loaderData.svgParse->global.w;
+                    if (isPercent[3]) gaussBox.h *= loaderData.svgParse->global.h;
+                } else {
+                    stdDevX *= bbox.w;
+                    stdDevY *= bbox.h;
+                    if (isPercent[0]) gaussBox.x = bbox.x + gauss.box.x * bbox.w;
+                    if (isPercent[1]) gaussBox.y = bbox.y + gauss.box.y * bbox.h;
+                    if (isPercent[2]) gaussBox.w *= bbox.w;
+                    if (isPercent[3]) gaussBox.h *= bbox.h;
+                }
+                clipBox.intersect(gaussBox);
+            } else if (!primitiveUserSpace) {
+                stdDevX *= bbox.w;
+                stdDevY *= bbox.h;
+            }
+            scene->push(SceneEffect::GaussianBlur, 1.25f * (direction == 2 ? stdDevY * sy : stdDevX * sx), direction, gauss.edgeModeWrap, 55);
+        }
+    }
+
+    scene->push(paint);
+
+    auto clip = Shape::gen();
+    clip->appendRect(clipBox.x, clipBox.y, clipBox.w, clipBox.h);
+    clip->transform(paint->transform());
+    scene->clip(clip);
+
+    return scene;
+}
+
 static Paint* _applyProperty(SvgLoaderData& loaderData, SvgNode* node, Shape* vg, const Box& vBox, const string& svgPath, bool clip)
 {
     SvgStyleProperty* style = node->style;
@@ -352,7 +412,8 @@ static Paint* _applyProperty(SvgLoaderData& loaderData, SvgNode* node, Shape* vg
         vg->strokeFill(style->stroke.paint.color.r, style->stroke.paint.color.g, style->stroke.paint.color.b, style->stroke.opacity);
     }
 
-    return _applyComposition(loaderData, vg, node, vBox, svgPath);
+    auto p = _applyFilter(loaderData, vg, node, vBox, svgPath);
+    return _applyComposition(loaderData, p, node, vBox, svgPath);
 }
 
 
@@ -596,7 +657,8 @@ static Paint* _imageBuildHelper(SvgLoaderData& loaderData, SvgNode* node, const 
     if (node->transform) m = *node->transform * m;
     picture->transform(m);
 
-    return _applyComposition(loaderData, picture, node, vBox, svgPath);
+    auto p = _applyFilter(loaderData, picture, node, vBox, svgPath);
+    return _applyComposition(loaderData, p, node, vBox, svgPath);
 }
 
 
@@ -782,7 +844,8 @@ static Paint* _textBuildHelper(SvgLoaderData& loaderData, const SvgNode* node, c
 
     _applyTextFill(node->style, text, vBox);
 
-    return _applyComposition(loaderData, text, node, vBox, svgPath);
+    auto p = _applyFilter(loaderData, text, node, vBox, svgPath);
+    return _applyComposition(loaderData, p, node, vBox, svgPath);
 }
 
 
@@ -823,7 +886,9 @@ static Scene* _sceneBuildHelper(SvgLoaderData& loaderData, const SvgNode* node, 
         }
     }
     scene->opacity(node->style->opacity);
-    return static_cast<Scene*>(_applyComposition(loaderData, scene, node, vBox, svgPath));
+
+    auto p = _applyFilter(loaderData, scene, node, vBox, svgPath);
+    return static_cast<Scene*>(_applyComposition(loaderData, p, node, vBox, svgPath));
 }
 
 
