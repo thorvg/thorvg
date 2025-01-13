@@ -293,7 +293,7 @@ struct SwWindow : Window
         if (!surface) return;
 
         //Set the canvas target and draw on it.
-        verify(static_cast<tvg::SwCanvas*>(canvas)->target((uint32_t*)surface->pixels, surface->w, surface->pitch / 4, surface->h, tvg::SwCanvas::ARGB8888));
+        verify(static_cast<tvg::SwCanvas*>(canvas)->target((uint32_t*)surface->pixels, surface->pitch / 4, surface->w, surface->h, tvg::SwCanvas::ARGB8888));
 
         canvas->clear(false);
     }
