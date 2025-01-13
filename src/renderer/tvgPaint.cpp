@@ -224,7 +224,7 @@ RenderData Paint::Impl::update(RenderMethod* renderer, const Matrix& pm, Array<R
         if (target->type() == Type::Shape) {
             auto shape = static_cast<Shape*>(target);
             uint8_t a;
-            shape->fillColor(nullptr, nullptr, nullptr, &a);
+            shape->fill(nullptr, nullptr, nullptr, &a);
             //no gradient fill & no maskings of the masking target.
             if (!shape->fill() && !(PAINT(shape)->maskData)) {
                 if ((method == MaskMethod::Alpha && a == 255 && PAINT(shape)->opacity == 255) || (method == MaskMethod::InvAlpha && (a == 0 || PAINT(shape)->opacity == 0))) {

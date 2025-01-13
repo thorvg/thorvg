@@ -208,10 +208,10 @@ TEST_CASE("Shape Filling", "[tvgShape]")
     //Fill Color
     uint8_t r, g, b, a;
     REQUIRE(shape->fill(255, 100, 50, 5) == Result::Success);
-    REQUIRE(shape->fillColor(&r, nullptr, &b, nullptr) == Result::Success);
+    REQUIRE(shape->fill(&r, nullptr, &b, nullptr) == Result::Success);
     REQUIRE(r == 255);
     REQUIRE(b == 50);
-    REQUIRE(shape->fillColor(&r, &g, &b, &a) == Result::Success);
+    REQUIRE(shape->fill(&r, &g, &b, &a) == Result::Success);
     REQUIRE(g == 100);
     REQUIRE(a == 5);
 
