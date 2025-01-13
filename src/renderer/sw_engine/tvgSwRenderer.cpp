@@ -577,7 +577,7 @@ SwSurface* SwRenderer::request(int channelSize, bool square)
         cmp = new SwSurface(surface);
         cmp->compositor = new SwCompositor;
         cmp->compositor->image.data = (pixel_t*)malloc(channelSize * w * h);
-        cmp->w = cmp->compositor->image.w = w;
+        cmp->w = cmp->stride = cmp->compositor->image.w = w;
         cmp->h = cmp->compositor->image.h = h;
         cmp->compositor->image.stride = w;
         cmp->compositor->image.direct = true;
