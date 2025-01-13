@@ -1225,33 +1225,26 @@ TVG_API Tvg_Result tvg_shape_append_path(Tvg_Paint* paint, const Tvg_Path_Comman
 
 
 /*!
-* @brief Gets the points values of the path.
+* @brief Retrieves the current path data of the shape.
 *
-* The function does not allocate any data, it operates on internal memory. There is no need to free the @p pts array.
+* This function provides access to the shape's path data, including the commands
+* and points that define the path.
 *
-* @param[in] paint A Tvg_Paint pointer to the shape object.
-* @param[out] pts The pointer to the array of the two-dimensional points from the path.
-* @param[out] cnt The length of the @p pts array.
-*
-* @return Tvg_Result enumeration.
-* @retval TVG_RESULT_INVALID_ARGUMENT A @c nullptr passed as the argument.
-*/
-TVG_API Tvg_Result tvg_shape_get_path_coords(const Tvg_Paint* paint, const Tvg_Point** pts, uint32_t* cnt);
-
-
-/*!
-* @brief Gets the commands data of the path.
-*
-* The function does not allocate any data. There is no need to free the @p cmds array.
-*
-* @param[in] paint A Tvg_Paint pointer to the shape object.
-* @param[out] cmds The pointer to the array of the commands from the path.
-* @param[out] cnt The length of the @p cmds array.
+* @param[out] cmds Pointer to the array of commands representing the path.
+*                  Can be @c nullptr if this information is not needed.
+* @param[out] cmdsCnt Pointer to the variable that receives the number of commands in the @p cmds array.
+*                     Can be @c nullptr if this information is not needed.
+* @param[out] pts Pointer to the array of two-dimensional points that define the path.
+*                 Can be @c nullptr if this information is not needed.
+* @param[out] ptsCnt Pointer to the variable that receives the number of points in the @p pts array.
+*                    Can be @c nullptr if this information is not needed.
 *
 * @return Tvg_Result enumeration.
-* @retval TVG_RESULT_INVALID_ARGUMENT A @c nullptr passed as the argument.
+* @retval TVG_RESULT_INVALID_ARGUMENT An invalid Tvg_Paint pointer.
+*
+* @note If any of the arguments are @c nullptr, that value will be ignored.
 */
-TVG_API Tvg_Result tvg_shape_get_path_commands(const Tvg_Paint* paint, const Tvg_Path_Command** cmds, uint32_t* cnt);
+TVG_API Tvg_Result tvg_shape_get_path(const Tvg_Paint* paint, const Tvg_Path_Command** cmds, uint32_t* cmdsCnt, const Tvg_Point** pts, uint32_t* ptsCnt);
 
 
 /*!
@@ -2149,7 +2142,7 @@ TVG_API Tvg_Result tvg_font_load(const char* path);
 * @param[in] name The name under which the font will be stored and accessible (e.x. in a @p tvg_text_set_font API).
 * @param[in] data A pointer to a memory location where the content of the font data is stored.
 * @param[in] size The size in bytes of the memory occupied by the @p data.
-* @param[in] mimetype Mimetype or extension of font data. In case a @c NULL or an empty "" value is provided the loader will be determined automatically.
+* @param[in] mimetype Mimetype or extension of font data. In case a @c nullptr or an empty "" value is provided the loader will be determined automatically.
 * @param[in] copy If @c true the data are copied into the engine local buffer, otherwise they are not (default).
 *
 * @return Tvg_Result enumeration.

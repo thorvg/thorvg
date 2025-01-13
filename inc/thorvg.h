@@ -1150,22 +1150,21 @@ public:
     Result order(bool strokeFirst) noexcept;
 
     /**
-     * @brief Gets the commands data of the path.
+     * @brief Retrieves the current path data of the shape.
      *
-     * @param[out] cmds The pointer to the array of the commands from the path.
+     * This function provides access to the shape's path data, including the commands
+     * and points that define the path.
      *
-     * @return The length of the @p cmds array when succeed, zero otherwise.
+     * @param[out] cmds Pointer to the array of commands representing the path.
+     *                  Can be @c nullptr if this information is not needed.
+     * @param[out] cmdsCnt Pointer to the variable that receives the number of commands in the @p cmds array.
+     *                     Can be @c nullptr if this information is not needed.
+     * @param[out] pts Pointer to the array of two-dimensional points that define the path.
+     *                 Can be @c nullptr if this information is not needed.
+     * @param[out] ptsCnt Pointer to the variable that receives the number of points in the @p pts array.
+     *                    Can be @c nullptr if this information is not needed.
      */
-    uint32_t pathCommands(const PathCommand** cmds) const noexcept;
-
-    /**
-     * @brief Gets the points values of the path.
-     *
-     * @param[out] pts The pointer to the array of the two-dimensional points from the path.
-     *
-     * @return The length of the @p pts array when succeed, zero otherwise.
-     */
-    uint32_t pathCoords(const Point** pts) const noexcept;
+    Result path(const PathCommand** cmds, uint32_t* cmdsCnt, const Point** pts, uint32_t* ptsCnt) const noexcept;
 
     /**
      * @brief Gets the pointer to the gradient fill of the shape.
