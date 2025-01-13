@@ -48,7 +48,7 @@ struct UserExample : tvgexam::Example
                 auto shape = (tvg::Shape*) paint;
                 //override color?
                 uint8_t r, g, b;
-                shape->fillColor(&r, &g, &b);
+                shape->fill(&r, &g, &b);
                 if (r == 255 && g == 180 && b == 0)
                     shape->fill(0, 0, 255);
 

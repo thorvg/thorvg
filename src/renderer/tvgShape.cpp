@@ -124,7 +124,7 @@ Result Shape::fill(Fill* f) noexcept
 }
 
 
-Result Shape::fillColor(uint8_t* r, uint8_t* g, uint8_t* b, uint8_t* a) const noexcept
+Result Shape::fill(uint8_t* r, uint8_t* g, uint8_t* b, uint8_t* a) const noexcept
 {
     SHAPE(this)->rs.fillColor(r, g, b, a);
     return Result::Success;

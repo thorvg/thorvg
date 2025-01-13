@@ -88,7 +88,7 @@ struct Shape::Impl : Paint::Impl
             auto shape = static_cast<const Shape*>(target);
             if (!shape->fill()) {
                 uint8_t r, g, b, a;
-                shape->fillColor(&r, &g, &b, &a);
+                shape->fill(&r, &g, &b, &a);
                 if (a == 0 || a == 255) {
                     if (method == MaskMethod::Luma || method == MaskMethod::InvLuma) {
                         if ((r == 255 && g == 255 && b == 255) || (r == 0 && g == 0 && b == 0)) return false;
