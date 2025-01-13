@@ -49,17 +49,15 @@ Result Shape::reset() noexcept
 }
 
 
-uint32_t Shape::pathCommands(const PathCommand** cmds) const noexcept
+Result Shape::path(const PathCommand** cmds, uint32_t* cmdsCnt, const Point** pts, uint32_t* ptsCnt) const noexcept
 {
     if (cmds) *cmds = SHAPE(this)->rs.path.cmds.data;
-    return SHAPE(this)->rs.path.cmds.count;
-}
+    if (cmdsCnt) *cmdsCnt = SHAPE(this)->rs.path.cmds.count;
 
-
-uint32_t Shape::pathCoords(const Point** pts) const noexcept
-{
     if (pts) *pts = SHAPE(this)->rs.path.pts.data;
-    return SHAPE(this)->rs.path.pts.count;
+    if (ptsCnt) *ptsCnt = SHAPE(this)->rs.path.pts.count;
+
+    return Result::Success;
 }
 
 

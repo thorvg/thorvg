@@ -73,14 +73,11 @@ void contents()
 //////2. Solid transformed shape
     //Set a shape
     const Tvg_Path_Command* cmds;
-    uint32_t cmdCnt;
     const Tvg_Point* pts;
-    uint32_t ptsCnt;
+    uint32_t cmdCnt, ptsCnt;
+    tvg_shape_get_path(shape1, &cmds, &cmdCnt, &pts, &ptsCnt);
 
     Tvg_Paint* shape2 = tvg_shape_new();
-    tvg_shape_get_path_commands(shape1, &cmds, &cmdCnt);
-    tvg_shape_get_path_coords(shape1, &pts, &ptsCnt);
-
     tvg_shape_append_path(shape2, cmds, cmdCnt, pts, ptsCnt);
     tvg_shape_set_fill_color(shape2, 255, 255, 255, 128);
 

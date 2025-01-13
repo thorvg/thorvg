@@ -80,7 +80,8 @@ static Result _compFastTrack(RenderMethod* renderer, Paint* cmpTarget, const Mat
 
     //Rectangle Candidates?
     const Point* pts;
-    auto ptsCnt = shape->pathCoords(&pts);
+    uint32_t ptsCnt;
+    shape->path(nullptr, nullptr, &pts, &ptsCnt);
 
     //nothing to clip
     if (ptsCnt == 0) return Result::InvalidArguments;
