@@ -1549,7 +1549,7 @@ void Stroker::stroke(const RenderShape *rshape)
     if (rshape->strokeTrim()) {
         auto begin = 0.0f;
         auto end = 0.0f;
-        rshape->stroke->strokeTrim(begin, end);
+        rshape->stroke->trim.get(begin, end);
 
         if (begin == end) return;
 

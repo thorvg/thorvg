@@ -395,7 +395,7 @@ void WgRenderDataShape::updateMeshes(WgContext& context, const RenderShape &rsha
     // append shape with strokes
     } else {
         float tbeg{}, tend{};
-        if (!rshape.stroke->strokeTrim(tbeg, tend)) { tbeg = 0.0f; tend = 1.0f; }
+        if (!rshape.stroke->trim.get(tbeg, tend)) { tbeg = 0.0f; tend = 1.0f; }
         bool loop = tbeg > tend;
         if (tbeg == tend) {
             pbuff.decodePath(rshape, false, [&](const WgVertexBuffer& path_buff) {
