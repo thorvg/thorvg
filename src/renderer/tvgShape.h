@@ -211,6 +211,11 @@ struct Shape::Impl : Paint::Impl
 
     void strokeTrim(float begin, float end, bool simultaneous)
     {
+        if (fabsf(end - begin) >= 1.0f) {
+            begin = 0.0f;
+            end = 1.0f;
+        }
+
         if (!rs.stroke) {
             if (begin == 0.0f && end == 1.0f) return;
             rs.stroke = new RenderStroke();

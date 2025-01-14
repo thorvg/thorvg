@@ -341,7 +341,7 @@ static SwOutline* _genDashOutline(const RenderShape* rshape, const Matrix& trans
     dash.cnt = rshape->strokeDash((const float**)&dash.pattern, &offset);
     auto simultaneous = rshape->stroke->trim.simultaneous;
     float trimBegin = 0.0f, trimEnd = 1.0f;
-    if (trimmed) rshape->stroke->strokeTrim(trimBegin, trimEnd);
+    if (trimmed) rshape->stroke->trim.get(trimBegin, trimEnd);
 
     if (dash.cnt == 0) {
         if (trimmed) dash.pattern = (float*)malloc(sizeof(float) * 4);
