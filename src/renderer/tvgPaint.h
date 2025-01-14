@@ -53,6 +53,8 @@ namespace tvg
         Mask* maskData = nullptr;
         Paint* clipper = nullptr;
         RenderMethod* renderer = nullptr;
+        RenderData rd = nullptr;
+
         struct {
             Matrix m;                 //input matrix
             Matrix cm;                //multipled parents matrix
@@ -88,11 +90,23 @@ namespace tvg
         virtual ~Impl()
         {
             if (maskData) {
-                maskData->target->unref();
+                if (maskData->target->unref() > 0) {
+                    PAINT(maskData->target)->dispose();
+                }
                 free(maskData);
             }
-            if (clipper) clipper->unref();
-            if (renderer && (renderer->unref() == 0)) delete(renderer);
+            if (clipper && clipper->unref() > 0) {
+                PAINT(clipper)->dispose();
+            }
+
+            dispose();
+        }
+
+        void dispose()
+        {
+            if (!renderer || !rd) return;
+            renderer->dispose(rd);
+            rd = renderer = nullptr;
         }
 
         uint8_t ref()
@@ -140,7 +154,9 @@ namespace tvg
 
         void clip(Paint* clp)
         {
-            if (clipper) clipper->unref(clipper != clp);
+            if (clipper && clipper->unref(clipper != clp) > 0) {
+                PAINT(clipper)->dispose();
+            }
             clipper = clp;
             if (!clp) return;
 
@@ -153,7 +169,9 @@ namespace tvg
             if ((!target && method != MaskMethod::None) || (target && method == MaskMethod::None)) return false;
 
             if (maskData) {
-                maskData->target->unref(maskData->target != target);
+                if (maskData->target->unref(maskData->target != target) > 0) {
+                    PAINT(maskData->target)->dispose();
+                }
                 //Reset scenario
                 if (!target && method == MaskMethod::None) {
                     free(maskData);

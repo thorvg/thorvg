@@ -24,20 +24,6 @@
 #include "tvgRender.h"
 
 
-uint32_t RenderMethod::ref()
-{
-    ScopedLock lock(key);
-    return (++refCnt);
-}
-
-
-uint32_t RenderMethod::unref()
-{
-    ScopedLock lock(key);
-    return (--refCnt);
-}
-
-
 void RenderRegion::intersect(const RenderRegion& rhs)
 {
     auto x1 = x + w;

@@ -202,11 +202,7 @@ bool Paint::Impl::render(RenderMethod* renderer)
 
 RenderData Paint::Impl::update(RenderMethod* renderer, const Matrix& pm, Array<RenderData>& clips, uint8_t opacity, RenderUpdateFlag pFlag, bool clipper)
 {
-    if (this->renderer != renderer) {
-        if (this->renderer) TVGERR("RENDERER", "paint's renderer has been changed!");
-        renderer->ref();
-        this->renderer = renderer;
-    }
+    if (this->renderer != renderer) this->renderer = renderer;
 
     if (renderFlag & RenderUpdateFlag::Transform) tr.update();
 

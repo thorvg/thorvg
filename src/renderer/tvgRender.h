@@ -374,14 +374,7 @@ struct RenderEffectTritone : RenderEffect
 
 class RenderMethod
 {
-private:
-    uint32_t refCnt = 0;        //reference count
-    Key key;
-
 public:
-    uint32_t ref();
-    uint32_t unref();
-
     virtual ~RenderMethod() {}
     virtual bool preUpdate() = 0;
     virtual RenderData prepare(const RenderShape& rshape, RenderData data, const Matrix& transform, Array<RenderData>& clips, uint8_t opacity, RenderUpdateFlag flags, bool clipper) = 0;

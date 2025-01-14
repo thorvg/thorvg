@@ -30,7 +30,6 @@ GlCanvas::GlCanvas()
 {
 #ifdef THORVG_GL_RASTER_SUPPORT
     pImpl->renderer = GlRenderer::gen();
-    pImpl->renderer->ref();
 #endif
 }
 

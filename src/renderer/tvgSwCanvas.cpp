@@ -32,7 +32,6 @@ SwCanvas::SwCanvas()
 {
 #ifdef THORVG_SW_RASTER_SUPPORT
     pImpl->renderer = SwRenderer::gen();
-    pImpl->renderer->ref();
 #endif
 }
 

@@ -43,9 +43,8 @@ struct Canvas::Impl
     {
         //make it sure any deferred jobs
         renderer->sync();
-
         scene->unref();
-        if (renderer->unref() == 0) delete(renderer);
+        delete(renderer);
     }
 
     Result push(Paint* target, Paint* at)

@@ -31,7 +31,6 @@ WgCanvas::WgCanvas()
 {
 #ifdef THORVG_WG_RASTER_SUPPORT
     pImpl->renderer = WgRenderer::gen();
-    pImpl->renderer->ref();
 #endif
 }
 
