@@ -690,18 +690,12 @@ const char* COLOR_DODGE_BLEND_FRAG = COMPLEX_BLEND_HEADER R"(
         vec4 srcColor = texture(uSrcTexture, vUV);
         vec4 dstColor = texture(uDstTexture, vUV);
 
-        float opacity = srcColor.a;
-
-        srcColor *= 255.0;
-        dstColor *= 255.0;
-        vec4 color = vec4(
-            255.0 - srcColor.r > 0.0 ? dstColor.r / (255.0 - srcColor.r) : dstColor.r,
-            255.0 - srcColor.g > 0.0 ? dstColor.g / (255.0 - srcColor.g) : dstColor.g,
-            255.0 - srcColor.b > 0.0 ? dstColor.b / (255.0 - srcColor.b) : dstColor.b,
-            255.0 - srcColor.a > 0.0 ? dstColor.a / (255.0 - srcColor.a) : dstColor.a
+        FragColor = vec4(
+            1.0 - srcColor.r > 0.0 ? dstColor.r / (1.0 - srcColor.r) : dstColor.r,
+            1.0 - srcColor.g > 0.0 ? dstColor.g / (1.0 - srcColor.g) : dstColor.g,
+            1.0 - srcColor.b > 0.0 ? dstColor.b / (1.0 - srcColor.b) : dstColor.b,
+            1.0
         );
-
-        FragColor = vec4(color.rgb, 255.0) * opacity / 255.0;
     }
 )";
 
@@ -710,19 +704,12 @@ const char* COLOR_BURN_BLEND_FRAG = COMPLEX_BLEND_HEADER R"(
         vec4 srcColor = texture(uSrcTexture, vUV);
         vec4 dstColor = texture(uDstTexture, vUV);
 
-        float opacity = srcColor.a;
-
-        if (srcColor.a > 0.0) srcColor.rgb /= srcColor.a;
-        if (dstColor.a > 0.0) dstColor.rgb /= dstColor.a;
-        vec4 id = vec4(1.0) - dstColor;
-        vec4 color = vec4(
-            srcColor.r > 0.0 ? (255.0 -  (255.0 - dstColor.r * 255.0) / (srcColor.r * 255.0)) / 255.0 : (1.0 - dstColor.r),
-            srcColor.g > 0.0 ? (255.0 -  (255.0 - dstColor.g * 255.0) / (srcColor.g * 255.0)) / 255.0 : (1.0 - dstColor.g),
-            srcColor.b > 0.0 ? (255.0 -  (255.0 - dstColor.b * 255.0) / (srcColor.b * 255.0)) / 255.0 : (1.0 - dstColor.b),
-            srcColor.a > 0.0 ? (255.0 -  (255.0 - dstColor.a * 255.0) / (srcColor.a * 255.0)) / 255.0 : (1.0 - dstColor.a)
+        FragColor = vec4(
+            srcColor.r > 0.0 ? (1.0 - (1.0 - dstColor.r) / srcColor.r) : dstColor.r,
+            srcColor.g > 0.0 ? (1.0 - (1.0 - dstColor.g) / srcColor.g) : dstColor.g,
+            srcColor.b > 0.0 ? (1.0 - (1.0 - dstColor.b) / srcColor.b) : dstColor.b,
+            1.0
         );
-
-        FragColor = color * srcColor.a;
     }
 )";
 
