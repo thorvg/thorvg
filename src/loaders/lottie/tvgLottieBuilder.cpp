@@ -1092,10 +1092,11 @@ void LottieBuilder::updateText(LottieLayer* layer, float frameNo)
                 shape->translate(cursor.x - textGroupMatrix.e13, cursor.y - textGroupMatrix.e23);
                 shape->opacity(255);
 
-                if (doc.stroke.render) {
+                if (doc.stroke.width > 0.0f) {
                     shape->strokeJoin(StrokeJoin::Round);
                     shape->strokeWidth(doc.stroke.width / scale);
                     shape->strokeFill(doc.stroke.color.rgb[0], doc.stroke.color.rgb[1], doc.stroke.color.rgb[2]);
+                    shape->order(doc.stroke.below);
                 }
 
                 auto needGroup = false;
@@ -1137,8 +1138,8 @@ void LottieBuilder::updateText(LottieLayer* layer, float frameNo)
                         fillOpacity = (uint8_t)(fillOpacity - f * (fillOpacity - (*s)->style.fillOpacity(frameNo)));
                         shape->fill(color.rgb[0], color.rgb[1], color.rgb[2], fillOpacity);
 
-                        if (doc.stroke.render) {
-                            shape->strokeWidth(f * (*s)->style.strokeWidth(frameNo) / scale);
+                        shape->strokeWidth(f * (*s)->style.strokeWidth(frameNo) / scale);
+                        if (shape->strokeWidth() > 0.0f) {
                             auto rangeColor = (*s)->style.strokeColor(frameNo); //TODO: use flag to check whether it was really set
                             if (tvg::equal(f, 1.0f)) strokeColor = rangeColor;
                             else {
@@ -1148,6 +1149,7 @@ void LottieBuilder::updateText(LottieLayer* layer, float frameNo)
                             }
                             strokeOpacity = (uint8_t)(strokeOpacity - f * (strokeOpacity - (*s)->style.strokeOpacity(frameNo)));
                             shape->strokeFill(strokeColor.rgb[0], strokeColor.rgb[1], strokeColor.rgb[2], strokeOpacity);
+                            shape->order(doc.stroke.below);
                         }
 
                         cursor.x += f * (*s)->style.letterSpacing(frameNo);
