@@ -161,56 +161,51 @@ struct WgVertexBuffer
             append(bezier.at((float)i / nsegs));
     }
 
-    // trim source buffer
-    void trim(const WgVertexBuffer& buff, float beg, float end)
-    {
-        // empty buffer guard
-        if (buff.vcount == 0) return;
-        // initialize
-        float len_beg = buff.total() * beg;
-        float len_end = buff.total() * end;
-        // find points
-        size_t index_beg = buff.getIndexByLength(len_beg);
-        size_t index_end = buff.getIndexByLength(len_end);
-        float len_total_beg = buff.vleng[index_beg];
-        float len_total_end = buff.vleng[index_end];
-        float len_seg_beg = buff.vdist[index_beg];
-        float len_seg_end = buff.vdist[index_end];
-        // append points
-        float t_beg = len_seg_beg > 0.0f ? 1.0f - (len_total_beg - len_beg) / len_seg_beg : 0.0f;
-        float t_end = len_seg_end > 0.0f ? 1.0f - (len_total_end - len_end) / len_seg_end : 0.0f;
-        //t_beg == 1 handled in appendRange
-        if (index_beg > 0 && t_beg != 1.0f) append(lerp(buff.vbuff[index_beg-1], buff.vbuff[index_beg], t_beg));
-        appendRange(buff, index_beg, index_end);
-        //t_end == 0 handled in appendRange
-        if (index_end > 0 && t_end != 0.0f) append(lerp(buff.vbuff[index_end-1], buff.vbuff[index_end], t_end));
-    }
-
-
     // decode path with callback for external prcesses
-    void decodePath(const RenderShape& rshape, bool update_dist, onPolylineFn onPolyline)
+    void decodePath(const RenderShape& rshape, bool update_dist, onPolylineFn onPolyline, bool trim = false)
     {
         // decode path
         reset(tscale);
+
+        PathCommand *cmds, *trimmedCmds = nullptr;
+        Point *pts, *trimmedPts = nullptr;
+        uint32_t cmdCnt{};
+
+        if (trim) {
+            RenderPath trimmedPath;
+            if (!rshape.stroke->trim.trim(rshape.path, trimmedPath)) return;
+
+            cmds = trimmedCmds = trimmedPath.cmds.data;
+            cmdCnt = trimmedPath.cmds.count;
+            pts = trimmedPts = trimmedPath.pts.data;
+
+            trimmedPath.cmds.data = nullptr;
+            trimmedPath.pts.data = nullptr;
+        } else {
+            cmds = rshape.path.cmds.data;
+            cmdCnt = rshape.path.cmds.count;
+            pts = rshape.path.pts.data;
+        }
+
         size_t pntIndex = 0;
-        ARRAY_FOREACH(p, rshape.path.cmds) {
-            auto cmd = *p;
+        for (uint32_t i = 0; i < cmdCnt; i++) {
+            auto& cmd = cmds[i];
             if (cmd == PathCommand::MoveTo) {
                 // after path decoding we need to update distances and total length
                 if (update_dist) updateDistances();
                 if ((onPolyline) && (vcount > 0)) onPolyline(*this);
                 reset(tscale);
-                append(rshape.path.pts[pntIndex]);
+                append(pts[pntIndex]);
                 pntIndex++;
             } else if (cmd == PathCommand::LineTo) {
-                append(rshape.path.pts[pntIndex]);
+                append(pts[pntIndex]);
                 pntIndex++;
             } else if (cmd == PathCommand::Close) {
                 close();
                 // proceed path if close command is not the last command and next command is LineTo or CubicTo
-                if (((p + 1) < rshape.path.cmds.end()) &&
-                    ((*(p + 1) == PathCommand::LineTo) ||
-                     (*(p + 1) == PathCommand::CubicTo))) {
+                if (i + 1 < cmdCnt &&
+                    (cmds[i + 1] == PathCommand::LineTo ||
+                     cmds[i + 1] == PathCommand::CubicTo)) {
                     // proceed current path
                     if (update_dist) updateDistances();
                     if ((vcount > 0) && (onPolyline)) onPolyline(*this);
@@ -221,10 +216,14 @@ struct WgVertexBuffer
                 }
             } else if (cmd == PathCommand::CubicTo) {
                 // append tesselated cubic spline with tscale param
-                appendCubic(vbuff[vcount - 1], rshape.path.pts[pntIndex + 0], rshape.path.pts[pntIndex + 1], rshape.path.pts[pntIndex + 2]);
+                appendCubic(vbuff[vcount - 1], pts[pntIndex + 0], pts[pntIndex + 1], pts[pntIndex + 2]);
                 pntIndex += 3;
             }
         }
+
+        free(trimmedCmds);
+        free(trimmedPts);
+
         // after path decoding we need to update distances and total length
         if (update_dist) updateDistances();
         if ((vcount > 0) && (onPolyline)) onPolyline(*this);
