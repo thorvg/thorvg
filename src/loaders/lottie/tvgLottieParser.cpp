@@ -136,7 +136,7 @@ bool LottieParser::getValue(TextDocument& doc)
         else if (KEY_AS("sz")) getValue(doc.bbox.size);
         else if (KEY_AS("sc")) getValue(doc.stroke.color);
         else if (KEY_AS("sw")) doc.stroke.width = getFloat();
-        else if (KEY_AS("of")) doc.stroke.render = getBool();
+        else if (KEY_AS("of")) doc.stroke.below = !getBool();
         else skip();
     }
     return false;

@@ -62,7 +62,7 @@ struct TextDocument
     struct {
         RGB24 color;
         float width;
-        bool render = false;
+        bool below = false;
     } stroke;
     char* name = nullptr;
     float size;
