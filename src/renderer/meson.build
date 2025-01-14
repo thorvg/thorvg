@@ -28,6 +28,7 @@ source_file = [
    'tvgShape.h',
    'tvgTaskScheduler.h',
    'tvgText.h',
+   'tvgTrimPath.h',
    'tvgAccessor.cpp',
    'tvgAnimation.cpp',
    'tvgCanvas.cpp',
@@ -44,6 +45,7 @@ source_file = [
    'tvgSwCanvas.cpp',
    'tvgTaskScheduler.cpp',
    'tvgText.cpp',
+   'tvgTrimPath.cpp',
    'tvgWgCanvas.cpp'
 ]
 
