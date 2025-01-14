@@ -1970,14 +1970,14 @@ TVG_API Tvg_Paint* tvg_scene_new(void);
  * This function appends a paint object to the scene.
  *
  * @param[in] scene A Tvg_Paint pointer to the scene object.
- * @param[in] target A pointer to the Paint object to be added into the scene.
+ * @param[in] paint A pointer to the Paint object to be added into the scene.
  *
  * @note The ownership of the @p paint object is transferred to the scene upon addition.
  *
  * @see tvg_scene_remove()
  * @see tvg_scene_push_at()
  */
-TVG_API Tvg_Result tvg_scene_push(Tvg_Paint* scene, Tvg_Paint* target);
+TVG_API Tvg_Result tvg_scene_push(Tvg_Paint* scene, Tvg_Paint* paint);
 
 /**
  * @brief Adds a paint object to the scene.
