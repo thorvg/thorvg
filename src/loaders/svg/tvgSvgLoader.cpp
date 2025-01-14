@@ -3089,34 +3089,19 @@ static void _copyAttr(SvgNode* to, const SvgNode* from)
     //Copy node attribute
     switch (from->type) {
         case SvgNodeType::Circle: {
-            to->node.circle.cx = from->node.circle.cx;
-            to->node.circle.cy = from->node.circle.cy;
-            to->node.circle.r = from->node.circle.r;
+            to->node.circle = from->node.circle;
             break;
         }
         case SvgNodeType::Ellipse: {
-            to->node.ellipse.cx = from->node.ellipse.cx;
-            to->node.ellipse.cy = from->node.ellipse.cy;
-            to->node.ellipse.rx = from->node.ellipse.rx;
-            to->node.ellipse.ry = from->node.ellipse.ry;
+            to->node.ellipse = from->node.ellipse;
             break;
         }
         case SvgNodeType::Rect: {
-            to->node.rect.x = from->node.rect.x;
-            to->node.rect.y = from->node.rect.y;
-            to->node.rect.w = from->node.rect.w;
-            to->node.rect.h = from->node.rect.h;
-            to->node.rect.rx = from->node.rect.rx;
-            to->node.rect.ry = from->node.rect.ry;
-            to->node.rect.hasRx = from->node.rect.hasRx;
-            to->node.rect.hasRy = from->node.rect.hasRy;
+            to->node.rect = from->node.rect;
             break;
         }
         case SvgNodeType::Line: {
-            to->node.line.x1 = from->node.line.x1;
-            to->node.line.y1 = from->node.line.y1;
-            to->node.line.x2 = from->node.line.x2;
-            to->node.line.y2 = from->node.line.y2;
+            to->node.line = from->node.line;
             break;
         }
         case SvgNodeType::Path: {

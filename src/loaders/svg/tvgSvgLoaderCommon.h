@@ -305,37 +305,23 @@ struct SvgUseNode
 
 struct SvgEllipseNode
 {
-    float cx;
-    float cy;
-    float rx;
-    float ry;
+    float cx, cy, rx, ry;
 };
 
 struct SvgCircleNode
 {
-    float cx;
-    float cy;
-    float r;
+    float cx, cy, r;
 };
 
 struct SvgRectNode
 {
-    float x;
-    float y;
-    float w;
-    float h;
-    float rx;
-    float ry;
-    bool hasRx;
-    bool hasRy;
+    float x, y, w, h, rx, ry;
+    bool hasRx, hasRy;
 };
 
 struct SvgLineNode
 {
-    float x1;
-    float y1;
-    float x2;
-    float y2;
+    float x1, y1, x2, y2;
 };
 
 struct SvgImageNode
@@ -379,10 +365,7 @@ struct SvgTextNode
 
 struct SvgLinearGradient
 {
-    float x1;
-    float y1;
-    float x2;
-    float y2;
+    float x1, y1, x2, y2;
     bool isX1Percentage;
     bool isY1Percentage;
     bool isX2Percentage;
@@ -391,12 +374,7 @@ struct SvgLinearGradient
 
 struct SvgRadialGradient
 {
-    float cx;
-    float cy;
-    float fx;
-    float fy;
-    float r;
-    float fr;
+    float cx, cy, fx, fy, r, fr;
     bool isCxPercentage;
     bool isCyPercentage;
     bool isFxPercentage;
@@ -414,9 +392,7 @@ struct SvgComposite
 
 struct SvgColor
 {
-    uint8_t r;
-    uint8_t g;
-    uint8_t b;
+    uint8_t r, g, b;
 };
 
 struct SvgPaint
