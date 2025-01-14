@@ -288,7 +288,7 @@ struct SwMpool
 {
     SwOutline* outline;
     SwOutline* strokeOutline;
-    SwOutline* dashOutline;
+    SwOutline* dashOutline; //Trimming treated as a special case of dashing
     unsigned allocSize;
 };
 

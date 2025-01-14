@@ -226,14 +226,6 @@ static void _dashClose(SwDashStroke& dash, const Matrix& transform)
 }
 
 
-static void _dashMoveTo(SwDashStroke& dash, const Point* pts)
-{
-    dash.ptCur = *pts;
-    dash.ptStart = *pts;
-    dash.move = true;
-}
-
-
 static void _dashMoveTo(SwDashStroke& dash, uint32_t offIdx, float offset, const Point* pts)
 {
     dash.curIdx = offIdx % dash.cnt;
@@ -244,112 +236,36 @@ static void _dashMoveTo(SwDashStroke& dash, uint32_t offIdx, float offset, const
 }
 
 
-static void _trimPattern(SwDashStroke* dash, const RenderShape* rshape, float length, float trimBegin, float trimEnd)
+static SwOutline* _genDashOutline(const RenderShape* rshape, const Matrix& transform, SwMpool* mpool, unsigned tid, bool trimmed)
 {
-    auto begin = length * trimBegin;
-    auto end = length * trimEnd;
+    PathCommand *cmds, *trimmedCmds = nullptr;
+    Point *pts, *trimmedPts = nullptr;
+    uint32_t cmdCnt, ptsCnt;
 
-    //default
-    if (end > begin) {
-        if (begin > 0.0f) dash->cnt = 4;
-        else dash->cnt = 2;
-        //looping
-    } else dash->cnt = 3;
+    if (trimmed) {
+        RenderPath trimmedPath;
+        if (!rshape->stroke->trim.trim(rshape->path, trimmedPath)) return nullptr;
 
-    if (dash->cnt == 2) {
-        dash->pattern[0] = end - begin;
-        dash->pattern[1] = length - (end - begin);
-    } else if (dash->cnt == 3) {
-        dash->pattern[0] = end;
-        dash->pattern[1] = (begin - end);
-        dash->pattern[2] = length - begin;
+        cmds = trimmedCmds = trimmedPath.cmds.data;
+        cmdCnt = trimmedPath.cmds.count;
+        pts = trimmedPts = trimmedPath.pts.data;
+        ptsCnt = trimmedPath.pts.count;
+
+        trimmedPath.cmds.data = nullptr;
+        trimmedPath.pts.data = nullptr;
     } else {
-        dash->pattern[0] = 0;     //zero dash to start with a space.
-        dash->pattern[1] = begin;
-        dash->pattern[2] = end - begin;
-        dash->pattern[3] = length - end;
+        cmds = rshape->path.cmds.data;
+        cmdCnt = rshape->path.cmds.count;
+        pts = rshape->path.pts.data;
+        ptsCnt = rshape->path.pts.count;
     }
-}
-
-
-static float _outlineLength(const RenderShape* rshape, uint32_t shiftPts, uint32_t shiftCmds, bool subpath)
-{
-    const PathCommand* cmds = rshape->path.cmds.data + shiftCmds;
-    auto cmdCnt = rshape->path.cmds.count - shiftCmds;
-    const Point* pts = rshape->path.pts.data + shiftPts;
-    auto ptsCnt = rshape->path.pts.count - shiftPts;
-
-    //No actual shape data
-    if (cmdCnt <= 0 || ptsCnt <= 0) return 0.0f;
-
-    const Point* close = nullptr;
-    auto len = 0.0f;
-
-    //must begin with moveTo
-    if (cmds[0] == PathCommand::MoveTo) {
-        close = pts;
-        cmds++;
-        pts++;
-        cmdCnt--;
-    }
-
-    while (cmdCnt-- > 0) {
-        switch (*cmds) {
-            case PathCommand::Close: {
-                len += length(pts - 1, close);
-                if (subpath) return len;
-                break;
-            }
-            case PathCommand::MoveTo: {
-                if (subpath) return len;
-                close = pts;
-                ++pts;
-                break;
-            }
-            case PathCommand::LineTo: {
-                len += length(pts - 1, pts);
-                ++pts;
-                break;
-            }
-            case PathCommand::CubicTo: {
-                len += Bezier{*(pts - 1), *pts, *(pts + 1), *(pts + 2)}.length();
-                pts += 3;
-                break;
-            }
-        }
-        ++cmds;
-    }
-    return len;
-}
-
-
-static SwOutline* _genDashOutline(const RenderShape* rshape, const Matrix& transform, bool trimmed, SwMpool* mpool, unsigned tid)
-{
-    const PathCommand* cmds = rshape->path.cmds.data;
-    auto cmdCnt = rshape->path.cmds.count;
-    const Point* pts = rshape->path.pts.data;
-    auto ptsCnt = rshape->path.pts.count;
 
     //No actual shape data
     if (cmdCnt == 0 || ptsCnt == 0) return nullptr;
 
-    auto startPts = pts;
-    auto startCmds = cmds;
-
     SwDashStroke dash;
     auto offset = 0.0f;
     dash.cnt = rshape->strokeDash((const float**)&dash.pattern, &offset);
-    auto simultaneous = rshape->stroke->trim.simultaneous;
-    float trimBegin = 0.0f, trimEnd = 1.0f;
-    if (trimmed) rshape->stroke->trim.get(trimBegin, trimEnd);
-
-    if (dash.cnt == 0) {
-        if (trimmed) dash.pattern = (float*)malloc(sizeof(float) * 4);
-        else return nullptr;
-    } else {
-        //TODO: handle dash + trim - for now trimming ignoring is forced
-        trimmed = false;
-    }
 
     //offset
     auto patternLength = 0.0f;
@@ -373,7 +289,6 @@ static SwOutline* _genDashOutline(const RenderShape* rshape, const Matrix& trans
 
     //must begin with moveTo
     if (cmds[0] == PathCommand::MoveTo) {
-        if (trimmed) _trimPattern(&dash, rshape, _outlineLength(rshape, 0, 0, simultaneous), trimBegin, trimEnd);
         _dashMoveTo(dash, offIdx, offset, pts);
         cmds++;
         pts++;
@@ -386,12 +301,7 @@ static SwOutline* _genDashOutline(const RenderShape* rshape, const Matrix& trans
                 break;
             }
             case PathCommand::MoveTo: {
-                if (trimmed) {
-                    if (simultaneous) {
-                        _trimPattern(&dash, rshape, _outlineLength(rshape, pts - startPts, cmds - startCmds, true), trimBegin, trimEnd);
-                        _dashMoveTo(dash, offIdx, offset, pts);
-                    } else _dashMoveTo(dash, pts);
-                } else _dashMoveTo(dash, offIdx, offset, pts);
+                _dashMoveTo(dash, offIdx, offset, pts);
                 ++pts;
                 break;
             }
@@ -409,9 +319,10 @@ static SwOutline* _genDashOutline(const RenderShape* rshape, const Matrix& trans
         ++cmds;
     }
 
-    _outlineEnd(*dash.outline);
+    free(trimmedCmds);
+    free(trimmedPts);
 
-    if (trimmed) free(dash.pattern);
+    _outlineEnd(*dash.outline);
 
     return dash.outline;
 }
@@ -437,18 +348,34 @@ static bool _axisAlignedRect(const SwOutline* outline)
 }
 
 
-static bool _genOutline(SwShape* shape, const RenderShape* rshape, const Matrix& transform, SwMpool* mpool, unsigned tid, bool hasComposite)
+static SwOutline* _genOutline(SwShape* shape, const RenderShape* rshape, const Matrix& transform, SwMpool* mpool, unsigned tid, bool hasComposite, bool trimmed = false)
 {
-    const PathCommand* cmds = rshape->path.cmds.data;
-    auto cmdCnt = rshape->path.cmds.count;
-    const Point* pts = rshape->path.pts.data;
-    auto ptsCnt = rshape->path.pts.count;
+    PathCommand *cmds, *trimmedCmds = nullptr;
+    Point *pts, *trimmedPts = nullptr;
+    uint32_t cmdCnt, ptsCnt;
+
+    if (trimmed) {
+        RenderPath trimmedPath;
+        if (!rshape->stroke->trim.trim(rshape->path, trimmedPath)) return nullptr;
+
+        cmds = trimmedCmds = trimmedPath.cmds.data;
+        cmdCnt = trimmedPath.cmds.count;
+        pts = trimmedPts = trimmedPath.pts.data;
+        ptsCnt = trimmedPath.pts.count;
+
+        trimmedPath.cmds.data = nullptr;
+        trimmedPath.pts.data = nullptr;
+    } else {
+        cmds = rshape->path.cmds.data;
+        cmdCnt = rshape->path.cmds.count;
+        pts = rshape->path.pts.data;
+        ptsCnt = rshape->path.pts.count;
+    }
 
     //No actual shape data
-    if (cmdCnt == 0 || ptsCnt == 0) return false;
+    if (cmdCnt == 0 || ptsCnt == 0) return nullptr;
 
-    shape->outline = mpoolReqOutline(mpool, tid);
-    auto outline = shape->outline;
+    auto outline = trimmed ? mpoolReqDashOutline(mpool, tid) : mpoolReqOutline(mpool, tid);
     auto closed = false;
 
     //Generate Outlines
@@ -482,10 +409,12 @@ static bool _genOutline(SwShape* shape, const RenderShape* rshape, const Matrix&
     if (!closed) _outlineEnd(*outline);
 
     outline->fillRule = rshape->rule;
-    shape->outline = outline;
 
-    shape->fastTrack = (!hasComposite && _axisAlignedRect(shape->outline));
-    return true;
+    free(trimmedCmds);
+    free(trimmedPts);
+
+    if (!trimmed) shape->fastTrack = (!hasComposite && _axisAlignedRect(outline));
+    return outline;
 }
 
 
@@ -495,7 +424,8 @@ static bool _genOutline(SwShape* shape, const RenderShape* rshape, const Matrix&
 
 bool shapePrepare(SwShape* shape, const RenderShape* rshape, const Matrix& transform,  const SwBBox& clipRegion, SwBBox& renderRegion, SwMpool* mpool, unsigned tid, bool hasComposite)
 {
-    if (!_genOutline(shape, rshape, transform, mpool, tid, hasComposite)) return false;
+    if (auto out = _genOutline(shape, rshape, transform, mpool, tid, hasComposite)) shape->outline = out;
+    else return false;
     if (!mathUpdateOutlineBBox(shape->outline, clipRegion, renderRegion, shape->fastTrack)) return false;
 
     shape->bbox = renderRegion;
@@ -581,16 +511,22 @@ bool shapeGenStrokeRle(SwShape* shape, const RenderShape* rshape, const Matrix& 
     auto dashStroking = false;
     auto ret = true;
 
-    //Dash style (+trimming)
+    //Dash style with/without trimming
     auto trimmed = rshape->strokeTrim();
-    if (rshape->stroke->dashCnt > 0 || trimmed) {
-        shapeOutline = _genDashOutline(rshape, transform, trimmed, mpool, tid);
+    if (rshape->stroke->dashCnt > 0) {
+        shapeOutline = _genDashOutline(rshape, transform, mpool, tid, trimmed);
+        if (!shapeOutline) return false;
+        dashStroking = true;
+    //Trimming
+    } else if (trimmed) {
+        shapeOutline = _genOutline(shape, rshape, transform, mpool, tid, false, true);
         if (!shapeOutline) return false;
         dashStroking = true;
     //Normal style
     } else {
         if (!shape->outline) {
-            if (!_genOutline(shape, rshape, transform, mpool, tid, false)) return false;
+            if (auto out = _genOutline(shape, rshape, transform, mpool, tid, false)) shape->outline = out;
+            else return false;
         }
         shapeOutline = shape->outline;
     }
