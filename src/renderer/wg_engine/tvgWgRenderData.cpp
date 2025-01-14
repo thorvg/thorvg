@@ -387,62 +387,24 @@ void WgRenderDataShape::updateMeshes(WgContext& context, const RenderShape &rsha
     // path decoded vertex buffer
     WgVertexBuffer pbuff;
     pbuff.reset(scale);
-    // append shape without strokes
-    if (!rshape.stroke) {
-        pbuff.decodePath(rshape, false, [&](const WgVertexBuffer& path_buff) {
+
+    if (rshape.strokeTrim()) {
+        WgVertexBuffer trimbuff;
+        trimbuff.reset(scale);
+
+        pbuff.decodePath(rshape, true, [&](const WgVertexBuffer& path_buff) {
             appendShape(context, path_buff);
         });
-    // append shape with strokes
+        trimbuff.decodePath(rshape, true, [&](const WgVertexBuffer& path_buff) {
+            appendShape(context, path_buff);
+            proceedStrokes(context, rshape.stroke, path_buff);
+        }, true);
     } else {
-        float tbeg{}, tend{};
-        if (!rshape.stroke->trim.get(tbeg, tend)) { tbeg = 0.0f; tend = 1.0f; }
-        bool loop = tbeg > tend;
-        if (tbeg == tend) {
-            pbuff.decodePath(rshape, false, [&](const WgVertexBuffer& path_buff) {
-                appendShape(context, path_buff);
-            });
-        } else if (rshape.stroke->trim.simultaneous) {
-            pbuff.decodePath(rshape, true, [&](const WgVertexBuffer& path_buff) {
-                appendShape(context, path_buff);
-                if (loop) {
-                    proceedStrokes(context, rshape.stroke, tbeg, 1.0f, path_buff);
-                    proceedStrokes(context, rshape.stroke, 0.0f, tend, path_buff);
-                } else {
-                    proceedStrokes(context, rshape.stroke, tbeg, tend, path_buff);
-                }
-            });
-        } else {
-            float totalLen = 0.0f;
-            pbuff.decodePath(rshape, true, [&](const WgVertexBuffer& path_buff) {
-                appendShape(context, path_buff);
-                totalLen += path_buff.total();
-            });
-            float len_beg = totalLen * tbeg; // trim length begin
-            float len_end = totalLen * tend; // trim length end
-            float len_acc = 0.0; // accumulated length
-            // append strokes
-            pbuff.decodePath(rshape, true, [&](const WgVertexBuffer& path_buff) {
-                float len_path = path_buff.total(); // current path length
-                if (loop) {
-                    if (len_acc + len_path >= len_beg) {
-                        auto tbeg = len_acc <= len_beg ? (len_beg - len_acc) / len_path : 0.0f;
-                        proceedStrokes(context, rshape.stroke, tbeg, 1.0f, path_buff);
-                    }
-                    if (len_acc < len_end) {
-                        auto tend = len_acc + len_path >= len_end ? (len_end - len_acc) / len_path : 1.0f;
-                        proceedStrokes(context, rshape.stroke, 0.0f, tend, path_buff);
-                    }
-                } else {
-                    if (len_acc + len_path >= len_beg && len_acc <= len_end) {
-                        auto tbeg = len_acc <= len_beg ? (len_beg - len_acc) / len_path : 0.0f;
-                        auto tend = len_acc + len_path >= len_end ? (len_end - len_acc) / len_path : 1.0f;
-                        proceedStrokes(context, rshape.stroke, tbeg, tend, path_buff);
-                    }
-                }
-                len_acc += len_path;
-            });
-        }
-    } 
+        pbuff.decodePath(rshape, true, [&](const WgVertexBuffer& path_buff) {
+            appendShape(context, path_buff);
+            if (rshape.stroke) proceedStrokes(context, rshape.stroke, path_buff);
+        });
+    }
     // update shapes bbox (with empty path handling)
     if ((this->meshGroupShapesBBox.meshes.count > 0 ) ||
         (this->meshGroupStrokesBBox.meshes.count > 0)) {
@@ -452,29 +414,15 @@ void WgRenderDataShape::updateMeshes(WgContext& context, const RenderShape &rsha
 }
 
 
-void WgRenderDataShape::proceedStrokes(WgContext& context, const RenderStroke* rstroke, float tbeg, float tend, const WgVertexBuffer& buff)
+void WgRenderDataShape::proceedStrokes(WgContext& context, const RenderStroke* rstroke, const WgVertexBuffer& buff)
 {
     assert(rstroke);
     static WgVertexBufferInd strokesGenerator;
     strokesGenerator.reset(buff.tscale);
-    // trim -> dash -> stroke
-    if ((tbeg != 0.0f) || (tend != 1.0f)) {
-        if (tbeg == tend) return;
-        WgVertexBuffer trimed_buff;
-        trimed_buff.reset(buff.tscale);
-        trimed_buff.trim(buff, tbeg, tend);
-        trimed_buff.updateDistances();
-        // trim ->dash -> stroke
-        if (rstroke->dashPattern) strokesGenerator.appendStrokesDashed(trimed_buff, rstroke);
-        // trim -> stroke
-        else strokesGenerator.appendStrokes(trimed_buff, rstroke);
-    } else
-    // dash -> stroke
-    if (rstroke->dashPattern) {
-        strokesGenerator.appendStrokesDashed(buff, rstroke);
-    // stroke
-    } else
-        strokesGenerator.appendStrokes(buff, rstroke);
+
+    if (rstroke->dashPattern) strokesGenerator.appendStrokesDashed(buff, rstroke);
+    else strokesGenerator.appendStrokes(buff, rstroke);
+
     appendStroke(context, strokesGenerator);
 }
 

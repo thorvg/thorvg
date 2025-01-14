@@ -130,7 +130,7 @@ struct WgRenderDataShape: public WgRenderDataPaint
     void updateBBox(Point pmin, Point pmax);
     void updateAABB(const Matrix& tr);
     void updateMeshes(WgContext& context, const RenderShape& rshape, const Matrix& tr);
-    void proceedStrokes(WgContext& context, const RenderStroke* rstroke, float tbeg, float tend, const WgVertexBuffer& buff);
+    void proceedStrokes(WgContext& context, const RenderStroke* rstroke, const WgVertexBuffer& buff);
     void releaseMeshes(WgContext& context);
     void release(WgContext& context) override;
     Type type() override { return Type::Shape; };
