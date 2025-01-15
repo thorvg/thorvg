@@ -1541,26 +1541,26 @@ void Stroker::stroke(const RenderShape *rshape)
         mStrokeWidth = strokeWidth / mMatrix.e11;
     }
 
-    auto cmds = rshape->path.cmds.data;
-    auto cmdCnt = rshape->path.cmds.count;
-    auto pts = rshape->path.pts.data;
-    auto ptsCnt = rshape->path.pts.count;
+    PathCommand *cmds, *trimmedCmds = nullptr;
+    Point *pts, *trimmedPts = nullptr;
+    uint32_t cmdCnt = 0, ptsCnt = 0;
 
     if (rshape->strokeTrim()) {
-        auto begin = 0.0f;
-        auto end = 0.0f;
-        rshape->stroke->trim.get(begin, end);
+        RenderPath trimmedPath;
+        if (!rshape->stroke->trim.trim(rshape->path, trimmedPath)) return;
 
-        if (begin == end) return;
+        cmds = trimmedCmds = trimmedPath.cmds.data;
+        cmdCnt = trimmedPath.cmds.count;
+        pts = trimmedPts = trimmedPath.pts.data;
+        ptsCnt = trimmedPath.pts.count;
 
-        if (begin > end) {
-            doTrimStroke(cmds, cmdCnt, pts, ptsCnt, rshape->stroke->trim.simultaneous, begin, 1.0f);
-            doTrimStroke(cmds, cmdCnt, pts, ptsCnt, rshape->stroke->trim.simultaneous, 0.0f, end);
-        } else {
-            doTrimStroke(cmds, cmdCnt, pts, ptsCnt, rshape->stroke->trim.simultaneous, begin,  end);
-        }
-
-        return;
+        trimmedPath.cmds.data = nullptr;
+        trimmedPath.pts.data = nullptr;
+    } else {
+        cmds = rshape->path.cmds.data;
+        cmdCnt = rshape->path.cmds.count;
+        pts = rshape->path.pts.data;
+        ptsCnt = rshape->path.pts.count;
     }
 
     const float *dash_pattern = nullptr;
@@ -1568,6 +1568,9 @@ void Stroker::stroke(const RenderShape *rshape)
 
     if (dashCnt == 0) doStroke(cmds, cmdCnt, pts, ptsCnt);
     else doDashStroke(cmds, cmdCnt, pts, ptsCnt, dashCnt, dash_pattern);
+
+    free(trimmedCmds);
+    free(trimmedPts);
 }
 
 
@@ -1579,76 +1582,6 @@ RenderRegion Stroker::bounds() const
         static_cast<int32_t>(ceil(mRightBottom.x - floor(mLeftTop.x))),
         static_cast<int32_t>(ceil(mRightBottom.y - floor(mLeftTop.y))),
     };
-}
-
-void Stroker::doTrimStroke(const PathCommand* cmds, uint32_t cmdCnt, const Point* pts, uint32_t ptsCnt, bool simultaneous, float start, float end)
-{
-    if (simultaneous) {
-        auto startCmds = cmds;
-        auto currCmds = cmds;
-        int ptsNum = 0;
-        for (uint32_t i = 0; i < cmdCnt; i++) {
-            switch (*currCmds) {
-                case PathCommand::MoveTo: {
-                    if (currCmds != startCmds) {
-                        PathTrim trim{};
-                        if (trim.trim(startCmds, currCmds - startCmds, pts, ptsNum, start, end)) {
-                            const auto& sCmds = trim.cmds();
-                            const auto& sPts = trim.pts();
-                            doStroke(sCmds.data, sCmds.count, sPts.data, sPts.count);
-                        }
-                        startCmds = currCmds;
-                        pts += ptsNum;
-                        ptsNum = 0;
-                    }
-                    currCmds++;
-                    ptsNum++;
-                    break;
-                }
-                case PathCommand::LineTo:
-                    currCmds++;
-                    ptsNum++;
-                    break;
-                case PathCommand::CubicTo:
-                    currCmds++;
-                    ptsNum += 3;
-                    break;
-                case PathCommand::Close: {
-                    PathTrim trim{};
-                    currCmds++;
-                    if (trim.trim(startCmds, currCmds - startCmds, pts, ptsNum, start, end)) {
-                        const auto& sCmds = trim.cmds();
-                        const auto& sPts = trim.pts();
-                        doStroke(sCmds.data, sCmds.count, sPts.data, sPts.count);
-                    }
-                    startCmds = currCmds;
-                    pts += ptsNum;
-                    ptsNum = 0;
-                    break;
-                }
-            }
-        }
-
-        if (startCmds != currCmds && ptsNum > 0) {
-            PathTrim trim{};
-
-            if (trim.trim(startCmds, currCmds - startCmds, pts, ptsNum, start, end)) {
-                const auto& sCmds = trim.cmds();
-                const auto& sPts = trim.pts();
-                doStroke(sCmds.data, sCmds.count, sPts.data, sPts.count);
-            }
-            startCmds = currCmds;
-            pts += ptsNum;
-            ptsNum = 0;
-        }
-    } else {
-        PathTrim trim{};
-        if (trim.trim(cmds, cmdCnt, pts, ptsCnt, start, end)) {
-            const auto& sCmds = trim.cmds();
-            const auto& sPts = trim.pts();
-            doStroke(sCmds.data, sCmds.count, sPts.data, sPts.count);
-        }
-    }
 }
 
 
@@ -2206,222 +2139,6 @@ void DashStroke::cubicTo(const Point& cnt1, const Point& cnt2, const Point& end)
     mPts->push({cnt2.x, cnt2.y});
     mPts->push({end.x, end.y});
     mCmds->push(PathCommand::CubicTo);
-}
-
-
-bool PathTrim::trim(const PathCommand* cmds, uint32_t cmd_count, const Point* pts, uint32_t pts_count, float start, float end)
-{
-    if (end - start < 0.0001f) return false;
-
-    auto len = pathLength(cmds, cmd_count, pts, pts_count);
-    if (len < 0.001f) return false;
-
-    auto startLength = len * start;
-    auto endLength = len * end;
-    if (startLength >= endLength) return false;
-
-    trimPath(cmds, cmd_count, pts, pts_count, startLength, endLength);
-
-    return true;
-}
-
-
-float PathTrim::pathLength(const PathCommand* cmds, uint32_t cmd_count, const Point* pts, uint32_t pts_count)
-{
-    auto len = 0.0f;
-    Point zero = {0.0f, 0.0f};
-    const Point* prev = nullptr;
-    const Point* begin = nullptr;
-
-    for (uint32_t i = 0; i < cmd_count; i++) {
-        switch (cmds[i]) {
-            case PathCommand::MoveTo: {
-                prev = pts;
-                begin = pts;
-                pts++;
-                break;
-            }
-            case PathCommand::LineTo: {
-                if (prev != nullptr) len += length(prev, pts);
-                if (begin == nullptr) begin = pts;
-                prev = pts;
-                pts++;
-                break;
-            }
-            case PathCommand::CubicTo: {
-                if (prev == nullptr || begin == nullptr) {
-                    prev = begin = &zero;
-                }
-                Bezier b{ *prev, pts[0], pts[1], pts[2]};
-                len += b.length();
-                prev = pts + 2;
-                pts += 3;
-                break;
-            }
-            case PathCommand::Close: {
-                if (prev != nullptr && begin != nullptr && prev != begin) {
-                    len += length(prev, begin);
-                }
-                prev = begin = nullptr;
-                break;
-            }
-        }
-    }
-    return len;
-}
-
-
-void PathTrim::trimPath(const PathCommand* cmds, uint32_t cmd_count, const Point* pts, uint32_t pts_count, float start, float end)
-{
-    auto pos = 0.0f;
-    Point zero = {0.0f, 0.0f};
-    Point prev = {};
-    Point begin = {};
-    auto closed = true;
-    auto pushedMoveTo = false;
-    auto hasLineTo = false;
-
-    auto handle_line_to = [&](const Point* p1, const Point* p2) {
-        auto currLen = length(p1, p2);
-        if (pos + currLen <= start) {
-            pos += currLen;
-            prev = *p2;
-            return;
-        }
-
-        if (pos >= end)  {
-            prev = *p2;
-            return;
-        }
-
-        Line line{*p1, *p2};
-
-        if (pos < start) {
-            Line left, right;
-            line.split(start - pos, left, right);
-
-            pos += left.length();
-            line = right;
-        }
-
-        if (pos + currLen > end) {
-            Line left, right;
-            line.split(end - pos, left, right);
-            pos += left.length();
-            line = left;
-        }
-
-        if (!pushedMoveTo) {
-            mCmds.push(PathCommand::MoveTo);
-            mPts.push(line.pt1);
-            pushedMoveTo = true;
-            begin = line.pt1;
-        }
-
-        pos += line.length();
-
-        mCmds.push(PathCommand::LineTo);
-        mPts.push(line.pt2);
-        prev = line.pt2;
-        hasLineTo = true;
-        closed = false;
-    };
-
-    for (uint32_t i = 0; i < cmd_count; i++) {
-        if (pos - end > 0.001f) return; // we are done
-
-        if (pos >= end) return;
-
-        switch (cmds[i]) {
-            case PathCommand::MoveTo: {
-                prev = *pts;
-                begin = *pts;
-                pts++;
-                closed = false;
-                break;
-            }
-            case PathCommand::LineTo: {
-                handle_line_to(&prev, pts);
-                hasLineTo = true;
-                pts++;
-                break;
-            }
-            case PathCommand::CubicTo: {
-                Bezier b{ prev, pts[0], pts[1], pts[2]};
-
-                auto currLen = b.length();
-                if (pos + currLen <= start) {
-                    pos += currLen;
-                    prev = pts[2];
-                    pts += 3;
-                    break;
-                }
-
-                if (pos < start) {
-                    Bezier left, right;
-                    b.split(start - pos, left, right);
-                    pos += left.length();
-                    b = right;
-                }
-
-                if (pos + currLen > end) {
-                    Bezier left, right;
-                    b.split(end - pos, left, right);
-                    pos += left.length();
-                    b = left;
-                }
-
-                if (!pushedMoveTo) {
-                    mCmds.push(PathCommand::MoveTo);
-                    mPts.push(b.start);
-                    pushedMoveTo = true;
-                }
-
-
-                pos += b.length();
-                mCmds.push(PathCommand::CubicTo);
-                mPts.push(b.ctrl1);
-                mPts.push(b.ctrl2);
-                mPts.push(b.end);
-                prev = b.end;
-                hasLineTo = true;
-                closed = false;
-                pts += 3;
-                break;
-            }
-            case PathCommand::Close: {
-                if (closed) break;
-                if (!hasLineTo) {
-                    closed = true;
-                    pushedMoveTo = false;
-                    prev = begin = zero;
-                    break;
-                }
-                if (prev == begin) {
-                    prev = begin = zero;
-                    closed = true;
-                    pushedMoveTo = false;
-                    break;
-                }
-                auto currLen = length(&prev, &begin);
-                if (currLen + pos < start) {
-                    pos += currLen;
-                    break;
-                }
-                if (pos + currLen  <= end) {
-                    mCmds.push(PathCommand::Close);
-                    pos += currLen;
-                    break;
-                }
-                // handle_line_to(&prev, &begin);
-                closed = true;
-                pushedMoveTo = false;
-                prev = begin = zero;
-                pos += currLen;
-                break;
-            }
-        }
-    }
 }
 
 
