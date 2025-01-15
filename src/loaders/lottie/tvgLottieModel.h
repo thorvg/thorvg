@@ -241,7 +241,7 @@ struct LottieGlyph
 
     ~LottieGlyph()
     {
-        for (auto p = children.begin(); p < children.end(); ++p) delete(*p);
+        ARRAY_FOREACH(p, children) delete(*p);
         free(code);
     }
 };
@@ -296,7 +296,7 @@ struct LottieFont
 
     ~LottieFont()
     {
-        for (auto c = chars.begin(); c < chars.end(); ++c) delete(*c);
+        ARRAY_FOREACH(p, chars) delete(*p);
         free(style);
         free(family);
         free(name);
@@ -354,7 +354,7 @@ struct LottieText : LottieObject, LottieRenderPooler<tvg::Shape>
 
     ~LottieText()
     {
-        for (auto r = ranges.begin(); r < ranges.end(); ++r) delete(*r);
+        ARRAY_FOREACH(p, ranges) delete(*p);
     }
 };
 
@@ -659,7 +659,7 @@ struct LottieGradient : LottieObject
         if (!colorStops.populated) {
             auto count = colorStops.count;  //colorstop count can be modified after population
             if (colorStops.frames) {
-                for (auto v = colorStops.frames->begin(); v < colorStops.frames->end(); ++v) {
+                ARRAY_FOREACH(v, *colorStops.frames) {
                     colorStops.count = populate(v->value, count);
                 }
             } else {
@@ -802,7 +802,7 @@ struct LottieGroup : LottieObject, LottieRenderPooler<tvg::Shape>
 
     virtual ~LottieGroup()
     {
-        for (auto p = children.begin(); p < children.end(); ++p) delete(*p);
+        ARRAY_FOREACH(p, children) delete(*p);
     }
 
     void prepare(LottieObject::Type type = LottieObject::Group);
@@ -813,8 +813,8 @@ struct LottieGroup : LottieObject, LottieRenderPooler<tvg::Shape>
         if (this->id == id) return this;
 
         //source has children, find recursively.
-        for (auto c = children.begin(); c < children.end(); ++c) {
-            auto child = *c;
+        ARRAY_FOREACH(p, children) {
+            auto child = *p;
             if (child->type == LottieObject::Type::Group || child->type == LottieObject::Type::Layer) {
                 if (auto ret = static_cast<LottieGroup*>(child)->content(id)) return ret;
             } else if (child->id == id) return child;
@@ -878,9 +878,9 @@ struct LottieLayer : LottieGroup
 
     LottieLayer* layerById(unsigned long id)
     {
-        for (auto child = children.begin(); child < children.end(); ++child) {
-            if ((*child)->type != LottieObject::Type::Layer) continue;
-            auto layer = static_cast<LottieLayer*>(*child);
+        ARRAY_FOREACH(p, children) {
+            if ((*p)->type != LottieObject::Type::Layer) continue;
+            auto layer = static_cast<LottieLayer*>(*p);
             if (layer->id == id) return layer;
         }
         return nullptr;
@@ -888,9 +888,9 @@ struct LottieLayer : LottieGroup
 
     LottieLayer* layerByIdx(int16_t idx)
     {
-        for (auto child = children.begin(); child < children.end(); ++child) {
-            if ((*child)->type != LottieObject::Type::Layer) continue;
-            auto layer = static_cast<LottieLayer*>(*child);
+        ARRAY_FOREACH(p, children) {
+            if ((*p)->type != LottieObject::Type::Layer) continue;
+            auto layer = static_cast<LottieLayer*>(*p);
             if (layer->idx == idx) return layer;
         }
         return nullptr;
@@ -917,9 +917,7 @@ struct LottieSlot
     {
         free(sid);
         if (!overridden) return;
-        for (auto pair = pairs.begin(); pair < pairs.end(); ++pair) {
-            delete(pair->prop);
-        }
+        ARRAY_FOREACH(pair, pairs) delete(pair->prop);
     }
 
     char* sid;
@@ -957,8 +955,8 @@ struct LottieComposition
 
     LottieLayer* asset(unsigned long id)
     {
-        for (auto asset = assets.begin(); asset < assets.end(); ++asset) {
-            auto layer = static_cast<LottieLayer*>(*asset);
+        ARRAY_FOREACH(p, assets) {
+            auto layer = static_cast<LottieLayer*>(*p);
             if (layer->id == id) return layer;
         }
         return nullptr;

@@ -307,9 +307,9 @@ bool LottieLoader::override(const char* slots, bool byDefault)
         auto succeed = false;
         while (auto sid = parser.sid(idx == 0)) {
             auto applied = false;
-            for (auto s = comp->slots.begin(); s < comp->slots.end(); ++s) {
-                if (strcmp((*s)->sid, sid)) continue;
-                if (parser.apply(*s, byDefault)) succeed = applied = true;
+            ARRAY_FOREACH(p, comp->slots) {
+                if (strcmp((*p)->sid, sid)) continue;
+                if (parser.apply(*p, byDefault)) succeed = applied = true;
                 break;
             }
             if (!applied) parser.skip();
@@ -321,8 +321,8 @@ bool LottieLoader::override(const char* slots, bool byDefault)
         return rebuild;
     //reset slots
     } else if (overridden) {
-        for (auto s = comp->slots.begin(); s < comp->slots.end(); ++s) {
-            (*s)->reset();
+        ARRAY_FOREACH(p, comp->slots) {
+            (*p)->reset();
         }
         overridden = false;
         rebuild = true;
@@ -404,10 +404,10 @@ bool LottieLoader::segment(const char* marker, float& begin, float& end)
 {
     if (!ready() || comp->markers.count == 0) return false;
 
-    for (auto m = comp->markers.begin(); m < comp->markers.end(); ++m) {
-        if (!strcmp(marker, (*m)->name)) {
-            begin = (*m)->time / frameCnt;
-            end = ((*m)->time + (*m)->duration) / frameCnt;
+    ARRAY_FOREACH(p, comp->markers) {
+        if (!strcmp(marker, (*p)->name)) {
+            begin = (*p)->time / frameCnt;
+            end = ((*p)->time + (*p)->duration) / frameCnt;
             return true;
         }
     }

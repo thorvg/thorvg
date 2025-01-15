@@ -140,8 +140,8 @@ struct Scene::Impl : Paint::Impl
             if (effects) {
                 //Notify the possiblity of the direct composition of the effect result to the origin surface.
                 auto direct = (effects->count == 1) & (compFlag == CompositionFlag::PostProcessing);
-                for (auto e = effects->begin(); e < effects->end(); ++e) {
-                    renderer->effect(cmp, *e, direct);
+                ARRAY_FOREACH(p, *effects) {
+                    renderer->effect(cmp, *p, direct);
                 }
             }
             renderer->endComposite(cmp);
@@ -172,8 +172,8 @@ struct Scene::Impl : Paint::Impl
         //Extends the render region if post effects require
         int32_t ex = 0, ey = 0, ew = 0, eh = 0;
         if (effects) {
-            for (auto e = effects->begin(); e < effects->end(); ++e) {
-                auto effect = *e;
+            ARRAY_FOREACH(p, *effects) {
+                auto effect = *p;
                 if (effect->valid || renderer->prepare(effect)) {
                     ex = std::min(ex, effect->extend.x);
                     ey = std::min(ey, effect->extend.y);
@@ -293,9 +293,7 @@ struct Scene::Impl : Paint::Impl
     Result resetEffects()
     {
         if (effects) {
-            for (auto e = effects->begin(); e < effects->end(); ++e) {
-                delete(*e);
-            }
+            ARRAY_FOREACH(p, *effects) delete(*p);
             delete(effects);
             effects = nullptr;
         }

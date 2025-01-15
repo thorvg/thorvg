@@ -35,7 +35,7 @@ struct LottieRenderPooler
 
     ~LottieRenderPooler()
     {
-        for (auto p = pooler.begin(); p < pooler.end(); ++p) {
+        ARRAY_FOREACH(p, pooler) {
             (*p)->unref();
         }
     }
@@ -43,7 +43,7 @@ struct LottieRenderPooler
     T* pooling(bool copy = false)
     {
         //return available one.
-        for (auto p = pooler.begin(); p < pooler.end(); ++p) {
+        ARRAY_FOREACH(p, pooler) {
             if ((*p)->refCnt() == 1) return *p;
         }
 

@@ -1966,9 +1966,8 @@ static SvgNode* _findNodeById(SvgNode *node, const char* id)
     if (node->id && !strcmp(node->id, id)) return node;
 
     if (node->child.count > 0) {
-        auto child = node->child.data;
-        for (uint32_t i = 0; i < node->child.count; ++i, ++child) {
-            result = _findNodeById(*child, id);
+        ARRAY_FOREACH(p, node->child) {
+            result = _findNodeById(*p, id);
             if (result) break;
         }
     }
@@ -2812,8 +2811,8 @@ static GradientFactoryMethod _findGradientFactory(const char* name)
 
 static void _cloneGradStops(Array<Fill::ColorStop>& dst, const Array<Fill::ColorStop>& src)
 {
-    for (uint32_t i = 0; i < src.count; ++i) {
-        dst.push(src[i]);
+    ARRAY_FOREACH(p, src) {
+        dst.push(*p);
     }
 }
 
@@ -2972,8 +2971,8 @@ static void _styleInherit(SvgStyleProperty* child, const SvgStyleProperty* paren
         if (parent->stroke.dash.array.count > 0) {
             child->stroke.dash.array.clear();
             child->stroke.dash.array.reserve(parent->stroke.dash.array.count);
-            for (uint32_t i = 0; i < parent->stroke.dash.array.count; ++i) {
-                child->stroke.dash.array.push(parent->stroke.dash.array[i]);
+            ARRAY_FOREACH(p, parent->stroke.dash.array) {
+                child->stroke.dash.array.push(*p);
             }
         }
     }
@@ -3047,8 +3046,8 @@ static void _styleCopy(SvgStyleProperty* to, const SvgStyleProperty* from)
         if (from->stroke.dash.array.count > 0) {
             to->stroke.dash.array.clear();
             to->stroke.dash.array.reserve(from->stroke.dash.array.count);
-            for (uint32_t i = 0; i < from->stroke.dash.array.count; ++i) {
-                to->stroke.dash.array.push(from->stroke.dash.array[i]);
+            ARRAY_FOREACH(p, from->stroke.dash.array) {
+                to->stroke.dash.array.push(*p);
             }
         }
     }
@@ -3183,17 +3182,16 @@ static void _cloneNode(SvgNode* from, SvgNode* parent, int depth)
     _styleInherit(newNode->style, parent->style);
     _copyAttr(newNode, from);
 
-    auto child = from->child.data;
-    for (uint32_t i = 0; i < from->child.count; ++i, ++child) {
-        _cloneNode(*child, newNode, depth + 1);
+    ARRAY_FOREACH(p, from->child) {
+        _cloneNode(*p, newNode, depth + 1);
     }
 }
 
 
 static void _clonePostponedNodes(Array<SvgNodeIdPair>* cloneNodes, SvgNode* doc)
 {
-    for (uint32_t i = 0; i < cloneNodes->count; ++i) {
-        auto nodeIdPair = (*cloneNodes)[i];
+    ARRAY_FOREACH(p, *cloneNodes) {
+        auto nodeIdPair = *p;
         auto defs = _getDefsNode(nodeIdPair.node);
         auto nodeFrom = _findNodeById(defs, nodeIdPair.id);
         if (!nodeFrom) nodeFrom = _findNodeById(doc, nodeIdPair.id);
@@ -3477,9 +3475,8 @@ static void _updateStyle(SvgNode* node, SvgStyleProperty* parentStyle)
     _styleInherit(node->style, parentStyle);
     _inefficientNodeCheck(node);
 
-    auto child = node->child.data;
-    for (uint32_t i = 0; i < node->child.count; ++i, ++child) {
-        _updateStyle(*child, node->style);
+    ARRAY_FOREACH(p, node->child) {
+        _updateStyle(*p, node->style);
     }
 }
 
@@ -3488,24 +3485,19 @@ static SvgStyleGradient* _gradientDup(SvgLoaderData* loader, Array<SvgStyleGradi
 {
     SvgStyleGradient* result = nullptr;
 
-    auto gradList = gradients->data;
-
-    for (uint32_t i = 0; i < gradients->count; ++i) {
-        if ((*gradList)->id && !strcmp((*gradList)->id, id)) {
-            result = _cloneGradient(*gradList);
+    ARRAY_FOREACH(p, *gradients) {
+        if ((*p)->id && !strcmp((*p)->id, id)) {
+            result = _cloneGradient(*p);
             break;
         }
-        ++gradList;
     }
 
     if (result && result->ref) {
-        gradList = gradients->data;
-        for (uint32_t i = 0; i < gradients->count; ++i) {
-            if ((*gradList)->id && !strcmp((*gradList)->id, result->ref)) {
-                _inheritGradient(loader, result, *gradList);
+        ARRAY_FOREACH(p, *gradients) {
+            if ((*p)->id && !strcmp((*p)->id, result->ref)) {
+                _inheritGradient(loader, result, *p);
                 break;
             }
-            ++gradList;
         }
     }
 
@@ -3516,9 +3508,8 @@ static SvgStyleGradient* _gradientDup(SvgLoaderData* loader, Array<SvgStyleGradi
 static void _updateGradient(SvgLoaderData* loader, SvgNode* node, Array<SvgStyleGradient*>* gradients)
 {
     if (node->child.count > 0) {
-        auto child = node->child.data;
-        for (uint32_t i = 0; i < node->child.count; ++i, ++child) {
-            _updateGradient(loader, *child, gradients);
+        ARRAY_FOREACH(p, node->child) {
+            _updateGradient(loader, *p, gradients);
         }
     } else {
         if (node->style->fill.paint.url) {
@@ -3556,9 +3547,8 @@ static void _updateComposite(SvgNode* node, SvgNode* root)
         if (findResult) node->style->mask.node = findResult;
     }
     if (node->child.count > 0) {
-        auto child = node->child.data;
-        for (uint32_t i = 0; i < node->child.count; ++i, ++child) {
-            _updateComposite(*child, root);
+        ARRAY_FOREACH(p, node->child) {
+            _updateComposite(*p, root);
         }
     }
 }
@@ -3592,10 +3582,7 @@ static void _freeNode(SvgNode* node)
 {
     if (!node) return;
 
-    auto child = node->child.data;
-    for (uint32_t i = 0; i < node->child.count; ++i, ++child) {
-        _freeNode(*child);
-    }
+    ARRAY_FOREACH(p, node->child) _freeNode(*p);
     node->child.reset();
 
     free(node->id);
@@ -3620,11 +3607,9 @@ static void _freeNode(SvgNode* node)
              break;
          }
          case SvgNodeType::Defs: {
-             auto gradients = node->node.defs.gradients.data;
-             for (size_t i = 0; i < node->node.defs.gradients.count; ++i) {
-                 (*gradients)->clear();
-                 free(*gradients);
-                 ++gradients;
+            ARRAY_FOREACH(p, node->node.defs.gradients) {
+                 (*p)->clear();
+                 free(*p);
              }
              node->node.defs.gradients.reset();
              break;
@@ -3712,9 +3697,9 @@ void SvgLoader::clear(bool all)
     free(loaderData.svgParse);
     loaderData.svgParse = nullptr;
 
-    for (auto gradient = loaderData.gradients.begin(); gradient < loaderData.gradients.end(); ++gradient) {
-        (*gradient)->clear();
-        free(*gradient);
+    ARRAY_FOREACH(p, loaderData.gradients) {
+        (*p)->clear();
+        free(*p);
     }
     loaderData.gradients.reset();
 
@@ -3724,9 +3709,7 @@ void SvgLoader::clear(bool all)
 
     if (!all) return;
 
-    for (auto p = loaderData.images.begin(); p < loaderData.images.end(); ++p) {
-        free(*p);
-    }
+    ARRAY_FOREACH(p, loaderData.images) free(*p);
     loaderData.images.reset();
 
     if (copy) free((char*)content);

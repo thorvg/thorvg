@@ -222,11 +222,10 @@ static bool _applyClip(SvgLoaderData& loaderData, Paint* paint, const SvgNode* n
     node->style->clipPath.applying = true;
 
     auto clipper = Shape::gen();
-    auto child = clipNode->child.data;
     auto valid = false; //Composite only when valid shapes exist
 
-    for (uint32_t i = 0; i < clipNode->child.count; ++i, ++child) {
-        if (_appendClipChild(loaderData, *child, clipper, vBox, svgPath)) valid = true;
+    ARRAY_FOREACH(p, clipNode->child) {
+        if (_appendClipChild(loaderData, *p, clipper, vBox, svgPath)) valid = true;
     }
 
     if (valid) {
@@ -804,21 +803,21 @@ static Scene* _sceneBuildHelper(SvgLoaderData& loaderData, const SvgNode* node, 
 
     if (!node->style->display || node->style->opacity == 0) return scene;
 
-    auto child = node->child.data;
-    for (uint32_t i = 0; i < node->child.count; ++i, ++child) {
-        if (_isGroupType((*child)->type)) {
-            if ((*child)->type == SvgNodeType::Use)
-                scene->push(_useBuildHelper(loaderData, *child, vBox, svgPath, depth + 1));
-            else if (!((*child)->type == SvgNodeType::Symbol && node->type != SvgNodeType::Use))
-                scene->push(_sceneBuildHelper(loaderData, *child, vBox, svgPath, false, depth + 1));
-            if ((*child)->id) scene->id = djb2Encode((*child)->id);
+    ARRAY_FOREACH(p, node->child) {
+        auto child = *p;
+        if (_isGroupType(child->type)) {
+            if (child->type == SvgNodeType::Use)
+                scene->push(_useBuildHelper(loaderData, child, vBox, svgPath, depth + 1));
+            else if (!(child->type == SvgNodeType::Symbol && node->type != SvgNodeType::Use))
+                scene->push(_sceneBuildHelper(loaderData, child, vBox, svgPath, false, depth + 1));
+            if (child->id) scene->id = djb2Encode(child->id);
         } else {
             Paint* paint = nullptr;
-            if ((*child)->type == SvgNodeType::Image) paint = _imageBuildHelper(loaderData, *child, vBox, svgPath);
-            else if ((*child)->type == SvgNodeType::Text) paint = _textBuildHelper(loaderData, *child, vBox, svgPath);
-            else if ((*child)->type != SvgNodeType::Mask) paint = _shapeBuildHelper(loaderData, *child, vBox, svgPath);
+            if (child->type == SvgNodeType::Image) paint = _imageBuildHelper(loaderData, child, vBox, svgPath);
+            else if (child->type == SvgNodeType::Text) paint = _textBuildHelper(loaderData, child, vBox, svgPath);
+            else if (child->type != SvgNodeType::Mask) paint = _shapeBuildHelper(loaderData, child, vBox, svgPath);
             if (paint) {
-                if ((*child)->id) paint->id = djb2Encode((*child)->id);
+                if (child->id) paint->id = djb2Encode(child->id);
                 scene->push(paint);
             }
         }

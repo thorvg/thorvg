@@ -841,8 +841,8 @@ bool strokeParseOutline(SwStroke* stroke, const SwOutline& outline)
     uint32_t first = 0;
     uint32_t i = 0;
 
-    for (auto cntr = outline.cntrs.begin(); cntr < outline.cntrs.end(); ++cntr, ++i) {
-        auto last = *cntr;           //index of last point in contour
+    ARRAY_FOREACH(p, outline.cntrs) {
+        auto last = *p;           //index of last point in contour
         auto limit = outline.pts.data + last;
 
         //Skip empty points

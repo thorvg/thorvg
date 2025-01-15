@@ -186,9 +186,9 @@ static jerry_value_t _buildGroup(LottieGroup* group, float frameNo)
     auto obj = jerry_function_external(_content);
 
     //attach a transform
-    for (auto c = group->children.begin(); c < group->children.end(); ++c) {
-        if ((*c)->type == LottieObject::Type::Transform) {
-            _buildTransform(obj, frameNo, static_cast<LottieTransform*>(*c));
+    ARRAY_FOREACH(p, group->children) {
+        if ((*p)->type == LottieObject::Type::Transform) {
+            _buildTransform(obj, frameNo, static_cast<LottieTransform*>(*p));
             break;
         }
     }

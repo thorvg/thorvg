@@ -193,8 +193,8 @@ struct WgVertexBuffer
         // decode path
         reset(tscale);
         size_t pntIndex = 0;
-        for (uint32_t cmdIndex = 0; cmdIndex < rshape.path.cmds.count; cmdIndex++) {
-            PathCommand cmd = rshape.path.cmds[cmdIndex];
+        ARRAY_FOREACH(p, rshape.path.cmds) {
+            auto cmd = *p;
             if (cmd == PathCommand::MoveTo) {
                 // after path decoding we need to update distances and total length
                 if (update_dist) updateDistances();
@@ -208,9 +208,9 @@ struct WgVertexBuffer
             } else if (cmd == PathCommand::Close) {
                 close();
                 // proceed path if close command is not the last command and next command is LineTo or CubicTo
-                if ((cmdIndex + 1 < rshape.path.cmds.count) &&
-                    ((rshape.path.cmds[cmdIndex + 1] == PathCommand::LineTo) ||
-                     (rshape.path.cmds[cmdIndex + 1] == PathCommand::CubicTo))) {
+                if (((p + 1) < rshape.path.cmds.end()) &&
+                    ((*(p + 1) == PathCommand::LineTo) ||
+                     (*(p + 1) == PathCommand::CubicTo))) {
                     // proceed current path
                     if (update_dist) updateDistances();
                     if ((vcount > 0) && (onPolyline)) onPolyline(*this);

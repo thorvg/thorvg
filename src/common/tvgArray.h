@@ -27,6 +27,9 @@
 #include <cstdint>
 #include <cstdlib>
 
+#define ARRAY_FOREACH(A, B) \
+    for (auto A = (B).begin(); A < (B).end(); ++A)
+
 namespace tvg
 {
 

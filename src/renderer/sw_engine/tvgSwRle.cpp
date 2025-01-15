@@ -692,8 +692,8 @@ static bool _decomposeOutline(RleWorker& rw)
     auto outline = rw.outline;
     auto first = 0;  //index of first point in contour
 
-    for (auto cntr = outline->cntrs.begin(); cntr < outline->cntrs.end(); ++cntr) {
-        auto last = *cntr;
+    ARRAY_FOREACH(p, outline->cntrs) {
+        auto last = *p;
         auto limit = outline->pts.data + last;
         auto start = UPSCALE(outline->pts[first]);
         auto pt = outline->pts.data + first;

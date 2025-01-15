@@ -70,8 +70,8 @@ void WgRenderer::release()
 
 void WgRenderer::disposeObjects()
 {
-    for (uint32_t i = 0; i < mDisposeRenderDatas.count; i++) {
-        WgRenderDataPaint* renderData = (WgRenderDataPaint*)mDisposeRenderDatas[i];
+    ARRAY_FOREACH(p, mDisposeRenderDatas) {
+        auto renderData = (WgRenderDataPaint*)(*p);
         if (renderData->type() == Type::Shape) {
             mRenderDataShapePool.free(mContext, (WgRenderDataShape*)renderData);
         } else {
