@@ -2481,7 +2481,7 @@ TVG_API Tvg_Animation* tvg_lottie_animation_new(void);
 * @retval TVG_RESULT_INVALID_ARGUMENT When the given @p slot is invalid
 * @retval TVG_RESULT_NOT_SUPPORTED The Lottie Animation is not supported.
 *
-* @note Experimental API
+* @since 1.0
 */
 TVG_API Tvg_Result tvg_lottie_animation_override(Tvg_Animation* animation, const char* slot);
 
@@ -2497,7 +2497,7 @@ TVG_API Tvg_Result tvg_lottie_animation_override(Tvg_Animation* animation, const
 * @retval TVG_RESULT_INVALID_ARGUMENT When the given @p marker is invalid.
 * @retval TVG_RESULT_NOT_SUPPORTED The Lottie Animation is not supported.
 *
-* @note Experimental API
+* @since 1.0
 */
 TVG_API Tvg_Result tvg_lottie_animation_set_marker(Tvg_Animation* animation, const char* marker);
 
@@ -2511,7 +2511,7 @@ TVG_API Tvg_Result tvg_lottie_animation_set_marker(Tvg_Animation* animation, con
 * @return Tvg_Result enumeration.
 * @retval TVG_RESULT_INVALID_ARGUMENT In case a @c nullptr is passed as the argument.
 *
-* @note Experimental API
+* @since 1.0
 */
 TVG_API Tvg_Result tvg_lottie_animation_get_markers_cnt(Tvg_Animation* animation, uint32_t* cnt);
 
@@ -2526,7 +2526,7 @@ TVG_API Tvg_Result tvg_lottie_animation_get_markers_cnt(Tvg_Animation* animation
 * @return Tvg_Result enumeration.
 * @retval TVG_RESULT_INVALID_ARGUMENT In case @c nullptr is passed as the argument or @c idx is out of range.
 *
-* @note Experimental API
+* @since 1.0
 */
 TVG_API Tvg_Result tvg_lottie_animation_get_marker(Tvg_Animation* animation, uint32_t idx, const char** name);
 
