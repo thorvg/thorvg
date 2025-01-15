@@ -52,24 +52,20 @@ void GlRenderer::flush()
         mDisposed.textures.clear();
     }
 
-    for (auto p = mRenderPassStack.begin(); p < mRenderPassStack.end(); ++p) {
-        delete(*p);
-    }
+    ARRAY_FOREACH(p, mRenderPassStack) delete(*p);
+
     mRenderPassStack.clear();
 
-    for (auto p = mComposePool.begin(); p < mComposePool.end(); p++) {
-        delete(*p);
-    }
+    ARRAY_FOREACH(p, mComposePool) delete(*p);
+
     mComposePool.clear();
 
-    for (auto p = mBlendPool.begin(); p < mBlendPool.end(); p++) {
-        delete(*p);
-    }
+    ARRAY_FOREACH(p, mBlendPool) delete(*p);
+
     mBlendPool.clear();
 
-    for (auto p = mComposeStack.begin(); p < mComposeStack.end(); p++) {
-        delete(*p);
-    }
+    ARRAY_FOREACH(p, mComposeStack) delete(*p);
+
     mComposeStack.clear();
 }
 
@@ -98,9 +94,7 @@ GlRenderer::~GlRenderer()
 
     flush();
 
-    for (auto p = mPrograms.begin(); p < mPrograms.end(); ++p) {
-        delete(*p);
-    }
+    ARRAY_FOREACH(p, mPrograms) delete(*p);
 
     if (rendererCnt == 0 && initEngineCnt == 0) _termEngine();
 }

@@ -41,7 +41,7 @@ void LottieSlot::reset()
 
     auto shallow = pairs.count == 1 ? true : false;
 
-    for (auto pair = pairs.begin(); pair < pairs.end(); ++pair) {
+    ARRAY_FOREACH(pair, pairs) {
         pair->obj->override(pair->prop, shallow, true);
         delete(pair->prop);
         pair->prop = nullptr;
@@ -56,7 +56,7 @@ void LottieSlot::assign(LottieObject* target, bool byDefault)
     auto shallow = pairs.count == 1 ? true : false;
 
     //apply slot object to all targets
-    for (auto pair = pairs.begin(); pair < pairs.end(); ++pair) {
+    ARRAY_FOREACH(pair, pairs) {
         //backup the original properties before overwriting
         switch (type) {
             case LottieProperty::Type::Position: {
@@ -216,7 +216,7 @@ void LottieImage::update()
 {
     //Update the picture data
     TaskScheduler::async(false);
-    for (auto p = pooler.begin(); p < pooler.end(); ++p) {
+    ARRAY_FOREACH(p, pooler) {
         if (data.size > 0) (*p)->load((const char*)data.b64Data, data.size, data.mimeType);
         else (*p)->load(data.path);
         (*p)->size(data.width, data.height);
@@ -478,13 +478,8 @@ LottieLayer::~LottieLayer()
     //No need to free assets children because the Composition owns them.
     if (rid) children.clear();
 
-    for (auto m = masks.begin(); m < masks.end(); ++m) {
-        delete(*m);
-    }
-
-    for (auto e = effects.begin(); e < effects.end(); ++e) {
-        delete(*e);
-    }
+    ARRAY_FOREACH(p, masks) delete(*p);
+    ARRAY_FOREACH(p, effects) delete(*p);
 
     delete(transform);
     free(name);
@@ -497,7 +492,7 @@ void LottieLayer::prepare(RGB24* color)
        so force it to be a Null Layer and release all resource. */
     if (hidden) {
         type = LottieLayer::Null;
-        for (auto p = children.begin(); p < children.end(); ++p) delete(*p);
+        ARRAY_FOREACH(p, children) delete(*p);
         children.reset();
         return;
     }
@@ -540,28 +535,13 @@ LottieComposition::~LottieComposition()
     free(version);
     free(name);
 
-    //delete interpolators
-    for (auto i = interpolators.begin(); i < interpolators.end(); ++i) {
-        free((*i)->key);
-        free(*i);
+    ARRAY_FOREACH(p, interpolators) {
+        free((*p)->key);
+        free(*p);
     }
 
-    //delete assets
-    for (auto a = assets.begin(); a < assets.end(); ++a) {
-        delete(*a);
-    }
-
-    //delete fonts
-    for (auto f = fonts.begin(); f < fonts.end(); ++f) {
-        delete(*f);
-    }
-
-    //delete slots
-    for (auto s = slots.begin(); s < slots.end(); ++s) {
-        delete(*s);
-    }
-    
-    for (auto m = markers.begin(); m < markers.end(); ++m) {
-        delete(*m);
-    }
+    ARRAY_FOREACH(p, assets) delete(*p);
+    ARRAY_FOREACH(p, fonts) delete(*p);
+    ARRAY_FOREACH(p, slots) delete(*p);
+    ARRAY_FOREACH(p, markers) delete(*p);
 }

@@ -377,7 +377,7 @@ struct LottiePathSet : LottieProperty
 
         if (!frames) return;
 
-        for (auto p = frames->begin(); p < frames->end(); ++p) {
+        ARRAY_FOREACH(p, *frames) {
             free((*p).value.cmds);
             free((*p).value.pts);
         }
@@ -542,7 +542,7 @@ struct LottieColorStop : LottieProperty
 
         if (!frames) return;
 
-        for (auto p = frames->begin(); p < frames->end(); ++p) {
+        ARRAY_FOREACH(p, *frames) {
             free((*p).value.data);
         }
         free(frames->data);
@@ -800,7 +800,7 @@ struct LottieTextDoc : LottieProperty
 
         if (!frames) return;
 
-        for (auto p = frames->begin(); p < frames->end(); ++p) {
+        ARRAY_FOREACH(p, *frames) {
             free((*p).value.text);
             free((*p).value.name);
         }

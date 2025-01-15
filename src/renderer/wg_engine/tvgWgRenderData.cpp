@@ -157,9 +157,9 @@ void WgMeshDataPool::free(WgContext& context, WgMeshData* meshData)
 
 void WgMeshDataPool::release(WgContext& context)
 {
-    for (uint32_t i = 0; i < mList.count; i++) {
-        mList[i]->release(context);
-        delete mList[i];
+    ARRAY_FOREACH(p, mList) {
+        (*p)->release(context);
+        delete(*p);
     }
     mPool.clear();
     mList.clear();
@@ -197,8 +197,8 @@ void WgMeshDataGroup::append(WgContext& context, const Point pmin, const Point p
 
 void WgMeshDataGroup::release(WgContext& context)
 {
-    for (uint32_t i = 0; i < meshes.count; i++)
-        WgMeshDataPool::gMeshDataPool->free(context, meshes[i]);
+    ARRAY_FOREACH(p, meshes)
+        WgMeshDataPool::gMeshDataPool->free(context, *p);
     meshes.clear();
 };
 
@@ -324,9 +324,9 @@ void WgRenderDataPaint::update(WgContext& context, const tvg::Matrix& transform,
 
 void WgRenderDataPaint::updateClips(tvg::Array<tvg::RenderData> &clips) {
     this->clips.clear();
-    for (uint32_t i = 0; i < clips.count; i++)
-        if (clips[i])
-            this->clips.push((WgRenderDataPaint*)clips[i]);
+    ARRAY_FOREACH(p, clips) {
+        this->clips.push((WgRenderDataPaint*)(*p));
+    }
 }
 
 //***********************************************************************
@@ -532,9 +532,9 @@ void WgRenderDataShapePool::free(WgContext& context, WgRenderDataShape* renderDa
 
 void WgRenderDataShapePool::release(WgContext& context)
 {
-    for (uint32_t i = 0; i < mList.count; i++) {
-        mList[i]->release(context);
-        delete mList[i];
+    ARRAY_FOREACH(p, mList) {
+        (*p)->release(context);
+        delete(*p);
     }
     mPool.clear();
     mList.clear();
@@ -593,9 +593,9 @@ void WgRenderDataPicturePool::free(WgContext& context, WgRenderDataPicture* rend
 
 void WgRenderDataPicturePool::release(WgContext& context)
 {
-    for (uint32_t i = 0; i < mList.count; i++) {
-        mList[i]->release(context);
-        delete mList[i];
+    ARRAY_FOREACH(p, mList) {
+        (*p)->release(context);
+        delete(*p);
     }
     mPool.clear();
     mList.clear();

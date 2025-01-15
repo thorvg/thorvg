@@ -377,8 +377,8 @@ LottieInterpolator* LottieParser::getInterpolator(const char* key, Point& in, Po
     LottieInterpolator* interpolator = nullptr;
 
     //get a cached interpolator if it has any.
-    for (auto i = comp->interpolators.begin(); i < comp->interpolators.end(); ++i) {
-        if (!strncmp((*i)->key, key, sizeof(buf))) interpolator = *i;
+    ARRAY_FOREACH(p, comp->interpolators) {
+        if (!strncmp((*p)->key, key, sizeof(buf))) interpolator = *p;
     }
 
     //new interpolator
@@ -461,9 +461,9 @@ template<LottieProperty::Type type>
 void LottieParser::registerSlot(LottieObject* obj, const char* sid)
 {
     //append object if the slot already exists.
-    for (auto slot = comp->slots.begin(); slot < comp->slots.end(); ++slot) {
-        if (strcmp((*slot)->sid, sid)) continue;
-        (*slot)->pairs.push({obj});
+    ARRAY_FOREACH(p, comp->slots) {
+        if (strcmp((*p)->sid, sid)) continue;
+        (*p)->pairs.push({obj});
         return;
     }
     comp->slots.push(new LottieSlot(strdup(sid), obj, type));

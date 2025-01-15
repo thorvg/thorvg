@@ -170,8 +170,8 @@ struct SwShapeTask : SwTask
         shapeDelOutline(&shape, mpool, tid);
 
         //Clip Path
-        for (auto clip = clips.begin(); clip < clips.end(); ++clip) {
-            auto clipper = static_cast<SwTask*>(*clip);
+        ARRAY_FOREACH(p, clips) {
+            auto clipper = static_cast<SwTask*>(*p);
             auto clipShapeRle = shape.rle ? clipper->clip(shape.rle) : true;
             auto clipStrokeRle = shape.strokeRle ? clipper->clip(shape.strokeRle) : true;
             if (!clipShapeRle && !clipStrokeRle) goto err;
@@ -231,8 +231,8 @@ struct SwImageTask : SwTask
                 if (image.rle) {
                     //Clear current task memorypool here if the clippers would use the same memory pool
                     imageDelOutline(&image, mpool, tid);
-                    for (auto clip = clips.begin(); clip < clips.end(); ++clip) {
-                        auto clipper = static_cast<SwTask*>(*clip);
+                    ARRAY_FOREACH(p, clips) {
+                        auto clipper = static_cast<SwTask*>(*p);
                         if (!clipper->clip(image.rle)) goto err;
                     }
                     return;
@@ -314,12 +314,12 @@ bool SwRenderer::clear()
 
 bool SwRenderer::sync()
 {
-    for (auto task = tasks.begin(); task < tasks.end(); ++task) {
-        if ((*task)->disposed) {
-            delete(*task);
+    ARRAY_FOREACH(p, tasks) {
+        if ((*p)->disposed) {
+            delete(*p);
         } else {
-            (*task)->done();
-            (*task)->pushed = false;
+            (*p)->done();
+            (*p)->pushed = false;
         }
     }
     tasks.clear();
@@ -384,10 +384,10 @@ bool SwRenderer::preRender()
 void SwRenderer::clearCompositors()
 {
     //Free Composite Caches
-    for (auto comp = compositors.begin(); comp < compositors.end(); ++comp) {
-        free((*comp)->compositor->image.data);
-        delete((*comp)->compositor);
-        delete(*comp);
+    ARRAY_FOREACH(p, compositors) {
+        free((*p)->compositor->image.data);
+        delete((*p)->compositor);
+        delete(*p);
     }
     compositors.reset();
 }
@@ -400,9 +400,9 @@ bool SwRenderer::postRender()
         rasterUnpremultiply(surface);
     }
 
-    for (auto task = tasks.begin(); task < tasks.end(); ++task) {
-        if ((*task)->disposed) delete(*task);
-        else (*task)->pushed = false;
+    ARRAY_FOREACH(p, tasks) {
+        if ((*p)->disposed) delete(*p);
+        else (*p)->pushed = false;
     }
     tasks.clear();
 
@@ -561,7 +561,7 @@ SwSurface* SwRenderer::request(int channelSize, bool square)
     }
 
     //Use cached data
-    for (auto p = compositors.begin(); p < compositors.end(); ++p) {
+    ARRAY_FOREACH(p, compositors) {
         auto cur = *p;
         if (cur->compositor->valid && cur->compositor->image.channelSize == channelSize) {
             if (w == cur->w && h == cur->h) {
@@ -737,8 +737,8 @@ void* SwRenderer::prepareCommon(SwTask* task, const Matrix& transform, const Arr
     //TODO: Failed threading them. It would be better if it's possible.
     //See: https://github.com/thorvg/thorvg/issues/1409
     //Guarantee composition targets get ready.
-    for (auto clip = clips.begin(); clip < clips.end(); ++clip) {
-        static_cast<SwTask*>(*clip)->done();
+    ARRAY_FOREACH(p, clips) {
+        static_cast<SwTask*>(*p)->done();
     }
 
     task->clips = clips;
