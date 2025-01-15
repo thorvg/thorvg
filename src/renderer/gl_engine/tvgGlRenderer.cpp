@@ -1116,7 +1116,6 @@ bool GlRenderer::renderShape(RenderData data)
 void GlRenderer::dispose(RenderData data)
 {
     auto sdata = static_cast<GlShape*>(data);
-    if (!sdata) return;
 
     //dispose the non thread-safety resources on clearDisposes() call
     if (sdata->texId) {

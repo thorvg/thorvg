@@ -60,7 +60,6 @@ struct Picture::Impl : Paint::Impl
     ImageLoader* loader = nullptr;
     Paint* vector = nullptr;          //vector picture uses
     RenderSurface* bitmap = nullptr;  //bitmap picture uses
-    RenderData rd = nullptr;
     float w = 0, h = 0;
     uint8_t compFlag = CompositionFlag::Invalid;
     bool resizing = false;
@@ -72,7 +71,6 @@ struct Picture::Impl : Paint::Impl
     ~Impl()
     {
         LoaderMgr::retrieve(loader);
-        if (bitmap && renderer) renderer->dispose(rd);
         delete(vector);
     }
 
@@ -96,7 +94,7 @@ struct Picture::Impl : Paint::Impl
                 resizing = false;
             }
             queryComposition(opacity);
-            rd = vector->pImpl->update(renderer, transform, clips, opacity, flag, false);
+            return vector->pImpl->update(renderer, transform, clips, opacity, flag, false);
         }
         return rd;
     }

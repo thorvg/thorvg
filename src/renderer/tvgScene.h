@@ -62,7 +62,6 @@ struct SceneIterator : Iterator
 struct Scene::Impl : Paint::Impl
 {
     list<Paint*> paints;     //children list
-    RenderData rd = nullptr;
     RenderRegion vport = {0, 0, INT32_MAX, INT32_MAX};
     Array<RenderEffect*>* effects = nullptr;
     uint8_t compFlag = CompositionFlag::Invalid;
@@ -77,8 +76,6 @@ struct Scene::Impl : Paint::Impl
         resetEffects();
 
         clearPaints();
-
-        if (renderer) renderer->dispose(rd);
     }
 
     uint8_t needComposition(uint8_t opacity)
