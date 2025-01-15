@@ -34,7 +34,6 @@ struct TrimPath
     bool simultaneous = true;
 
     bool valid() const;
-    bool get(float& begin, float& end) const;
     bool trim(const RenderPath& in, RenderPath& out) const;
 };
 

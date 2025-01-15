@@ -249,23 +249,8 @@ static void _trim(const PathCommand* inCmds, uint32_t inCmdsCnt, const Point* in
 }
 
 
-/************************************************************************/
-/* External Class Implementation                                        */
-/************************************************************************/
-
-
-bool TrimPath::valid() const
+static void _get(float& begin, float& end)
 {
-    if (begin == 0.0f && end == 1.0f) return false;
-    return true;
-}
-
-
-bool TrimPath::get(float& begin, float& end) const
-{
-    begin = this->begin;
-    end = this->end;
-
     auto loop = true;
 
     if (begin > 1.0f && end > 1.0f) loop = false;
@@ -278,14 +263,25 @@ bool TrimPath::get(float& begin, float& end) const
     if (end < 0.0f) end += 1.0f;
 
     if ((loop && begin < end) || (!loop && begin > end)) std::swap(begin, end);
+}
+
+
+/************************************************************************/
+/* External Class Implementation                                        */
+/************************************************************************/
+
+
+bool TrimPath::valid() const
+{
+    if (begin == 0.0f && end == 1.0f) return false;
     return true;
 }
 
 
 bool TrimPath::trim(const RenderPath& in, RenderPath& out) const
 {
-    float begin, end;
-    get(begin, end);
+    float begin = this->begin, end = this->end;
+    _get(begin, end);
 
     if (in.pts.count < 2 || tvg::zero(begin - end)) return false;
 
