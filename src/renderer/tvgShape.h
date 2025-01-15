@@ -32,17 +32,11 @@
 struct Shape::Impl : Paint::Impl
 {
     RenderShape rs;
-    RenderData rd = nullptr;
     uint8_t compFlag = CompositionFlag::Invalid;
     uint8_t opacity;    //for composition
 
     Impl(Shape* s) : Paint::Impl(s)
     {
-    }
-
-    ~Impl()
-    {
-        if (renderer) renderer->dispose(rd);
     }
 
     bool render(RenderMethod* renderer)

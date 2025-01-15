@@ -721,7 +721,6 @@ ColorSpace SwRenderer::colorSpace()
 void SwRenderer::dispose(RenderData data)
 {
     auto task = static_cast<SwTask*>(data);
-    if (!task) return;
     task->done();
     task->dispose();
 

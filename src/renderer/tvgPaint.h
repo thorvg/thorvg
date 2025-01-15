@@ -53,6 +53,8 @@ namespace tvg
         Mask* maskData = nullptr;
         Paint* clipper = nullptr;
         RenderMethod* renderer = nullptr;
+        RenderData rd = nullptr;
+
         struct {
             Matrix m;                 //input matrix
             Matrix cm;                //multipled parents matrix
@@ -91,8 +93,13 @@ namespace tvg
                 maskData->target->unref();
                 free(maskData);
             }
+
             if (clipper) clipper->unref();
-            if (renderer && (renderer->unref() == 0)) delete(renderer);
+
+            if (renderer) {
+                if (rd) renderer->dispose(rd);
+                if (renderer->unref() == 0) delete(renderer);
+            }
         }
 
         uint8_t ref()

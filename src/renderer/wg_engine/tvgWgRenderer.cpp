@@ -188,11 +188,8 @@ bool WgRenderer::postRender()
 
 void WgRenderer::dispose(RenderData data) {
     if (!mContext.queue) return;
-    auto renderData = (WgRenderDataPaint*)data;
-    if (renderData) {
-        ScopedLock lock(mDisposeKey);
-        mDisposeRenderDatas.push(data);
-    }
+    ScopedLock lock(mDisposeKey);
+    mDisposeRenderDatas.push(data);
 }
 
 
