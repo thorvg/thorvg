@@ -803,7 +803,7 @@ bool GlRenderer::target(void* context, int32_t id, uint32_t w, uint32_t h)
     //assume the context zero is invalid
     if (!context || id == GL_INVALID_VALUE || w == 0 || h == 0) return false;
 
-    currentContext();
+    if (mContext) currentContext();
 
     flush();
 
@@ -813,6 +813,8 @@ bool GlRenderer::target(void* context, int32_t id, uint32_t w, uint32_t h)
 
     mContext = context;
     mTargetFboId = static_cast<GLint>(id);
+
+    currentContext();
 
     mRootTarget = GlRenderTarget(surface.w, surface.h);
     mRootTarget.setViewport({0, 0, static_cast<int32_t>(surface.w), static_cast<int32_t>(surface.h)});
