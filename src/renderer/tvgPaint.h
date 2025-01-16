@@ -72,7 +72,7 @@ namespace tvg
                 m.e31 = 0.0f;
                 m.e32 = 0.0f;
                 m.e33 = 1.0f;
-                tvg::scale(&m, scale, scale);
+                tvg::scale(&m, {scale, scale});
                 tvg::rotate(&m, degree);
             }
         } tr;

@@ -771,7 +771,7 @@ static Paint* _textBuildHelper(SvgLoaderData& loaderData, const SvgNode* node, c
     if (node->transform) textTransform = *node->transform;
     else textTransform = {1.0f, 0.0f, 0.0f, 0.0f, 1.0f, 0.0f, 0.0f, 0.0f, 1.0f};
 
-    translateR(&textTransform, node->node.text.x, node->node.text.y - textNode->fontSize);
+    translateR(&textTransform, {node->node.text.x, node->node.text.y - textNode->fontSize});
     text->transform(textTransform);
 
     //TODO: handle def values of font and size as used in a system?

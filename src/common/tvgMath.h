@@ -114,38 +114,38 @@ static inline void identity(Matrix* m)
 }
 
 
-static inline void scale(Matrix* m, float sx, float sy)
+static inline void scale(Matrix* m, const Point& p)
 {
-    m->e11 *= sx;
-    m->e22 *= sy;
+    m->e11 *= p.x;
+    m->e22 *= p.y;
 }
 
 
-static inline void scaleR(Matrix* m, float x, float y)
+static inline void scaleR(Matrix* m, const Point& p)
 {
-    if (x != 1.0f) {
-        m->e11 *= x;
-        m->e21 *= x;
+    if (p.x != 1.0f) {
+        m->e11 *= p.x;
+        m->e21 *= p.x;
     }
-    if (y != 1.0f) {
-        m->e22 *= y;
-        m->e12 *= y;
+    if (p.y != 1.0f) {
+        m->e22 *= p.y;
+        m->e12 *= p.y;
     }
 }
 
 
-static inline void translate(Matrix* m, float x, float y)
+static inline void translate(Matrix* m, const Point& p)
 {
-    m->e13 += x;
-    m->e23 += y;
+    m->e13 += p.x;
+    m->e23 += p.y;
 }
 
 
-static inline void translateR(Matrix* m, float x, float y)
+static inline void translateR(Matrix* m, const Point& p)
 {
-    if (x == 0.0f && y == 0.0f) return;
-    m->e13 += (x * m->e11 + y * m->e12);
-    m->e23 += (x * m->e21 + y * m->e22);
+    if (p.x == 0.0f && p.y == 0.0f) return;
+    m->e13 += (p.x * m->e11 + p.y * m->e12);
+    m->e23 += (p.x * m->e21 + p.y * m->e22);
 }
 
 

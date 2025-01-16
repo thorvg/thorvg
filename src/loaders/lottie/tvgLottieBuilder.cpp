@@ -110,12 +110,8 @@ static bool _updateTransform(LottieTransform* transform, float frameNo, bool aut
         return false;
     }
 
-    if (transform->coords) {
-        translate(&matrix, transform->coords->x(frameNo, exps), transform->coords->y(frameNo, exps));
-    } else {
-        auto position = transform->position(frameNo, exps);
-        translate(&matrix, position.x, position.y);
-    }
+    if (transform->coords) translate(&matrix, {transform->coords->x(frameNo, exps), transform->coords->y(frameNo, exps)});
+    else translate(&matrix, transform->position(frameNo, exps));
 
     auto angle = 0.0f;
     if (autoOrient) angle = transform->position.angle(frameNo);
@@ -133,11 +129,10 @@ static bool _updateTransform(LottieTransform* transform, float frameNo, bool aut
     }
 
     auto scale = transform->scale(frameNo, exps);
-    scaleR(&matrix, scale.x * 0.01f, scale.y * 0.01f);
+    scaleR(&matrix, scale * 0.01f);
 
     //Lottie specific anchor transform.
-    auto anchor = transform->anchor(frameNo, exps);
-    translateR(&matrix, -anchor.x, -anchor.y);
+    translateR(&matrix, -transform->anchor(frameNo, exps));
 
     //invisible just in case.
     if (scale.x == 0.0f || scale.y == 0.0f) opacity = 0;
@@ -345,10 +340,10 @@ static void _repeat(LottieGroup* parent, Shape* path, RenderContext* ctx)
 
                 Matrix m;
                 identity(&m);
-                translate(&m, repeater->position.x * multiplier + repeater->anchor.x, repeater->position.y * multiplier + repeater->anchor.y);
-                scale(&m, powf(repeater->scale.x * 0.01f, multiplier), powf(repeater->scale.y * 0.01f, multiplier));
+                translate(&m, repeater->position * multiplier + repeater->anchor);
+                scale(&m, {powf(repeater->scale.x * 0.01f, multiplier), powf(repeater->scale.y * 0.01f, multiplier)});
                 rotate(&m, repeater->rotation * multiplier);
-                translateR(&m, -repeater->anchor.x, -repeater->anchor.y);
+                translateR(&m, -repeater->anchor);
                 m = repeater->transform * m;
 
                 Matrix inv;
@@ -791,8 +786,7 @@ void LottieBuilder::updatePolystar(LottieGroup* parent, LottieObject** child, fl
     //Optimize: Can we skip the individual coords transform?
     Matrix matrix;
     identity(&matrix);
-    auto position = star->position(frameNo, exps);
-    translate(&matrix, position.x, position.y);
+    translate(&matrix, star->position(frameNo, exps));
     rotate(&matrix, star->rotation(frameNo, exps));
 
     if (ctx->transform) matrix = *ctx->transform * matrix;
@@ -1162,7 +1156,7 @@ void LottieBuilder::updateText(LottieLayer* layer, float frameNo)
                     // TextGroup transformation is performed once
                     if (textGroup->paints().size() == 0 && needGroup) {
                         identity(&textGroupMatrix);
-                        translate(&textGroupMatrix, cursor.x, cursor.y);
+                        translate(&textGroupMatrix, cursor);
 
                         auto alignment = text->alignOption.anchor(frameNo);
 
@@ -1172,20 +1166,18 @@ void LottieBuilder::updateText(LottieLayer* layer, float frameNo)
 
                         rotate(&textGroupMatrix, rotation);
 
-                        auto pivotX = alignment.x * -1;
-                        auto pivotY = alignment.y * -1;
-
                         //center pivoting
-                        textGroupMatrix.e13 += (pivotX * textGroupMatrix.e11 + pivotX * textGroupMatrix.e12);
-                        textGroupMatrix.e23 += (pivotY * textGroupMatrix.e21 + pivotY * textGroupMatrix.e22);
+                        auto pivot = alignment * -1;
+                        textGroupMatrix.e13 += (pivot.x * textGroupMatrix.e11 + pivot.x * textGroupMatrix.e12);
+                        textGroupMatrix.e23 += (pivot.y * textGroupMatrix.e21 + pivot.y * textGroupMatrix.e22);
 
                         textGroup->transform(textGroupMatrix);
                     }
 
                     auto& matrix = shape->transform();
                     identity(&matrix);
-                    translate(&matrix, translation.x / scale + cursor.x - textGroupMatrix.e13, translation.y / scale + cursor.y - textGroupMatrix.e23);
-                    tvg::scale(&matrix, scaling.x * capScale, scaling.y * capScale);
+                    translate(&matrix, (translation / scale + cursor) - Point{textGroupMatrix.e13, textGroupMatrix.e23});
+                    tvg::scale(&matrix, scaling * capScale);
                     shape->transform(matrix);
                 }
 
