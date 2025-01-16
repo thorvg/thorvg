@@ -20,6 +20,8 @@
  * SOFTWARE.
  */
 
+#include <iostream>
+
 struct Vertex
 {
    Point pt;
@@ -115,7 +117,11 @@ static void _rasterBlendingPolygonImageSegment(SwSurface* surface, const SwImage
 
     while (y < yEnd) {
         x1 = (int32_t)_xa;
+        std::cout << "_xa = " << _xa << std::endl;
+        std::cout << "x1 = " << x1 << std::endl;
         x2 = (int32_t)_xb;
+        std::cout << "_xb = " << _xb << std::endl;
+        std::cout << "x2 = " << x2 << std::endl;
 
         if (!region) {
             minx = INT32_MAX;
@@ -153,7 +159,14 @@ static void _rasterBlendingPolygonImageSegment(SwSurface* surface, const SwImage
                 while (x++ < x2) {
                     uu = (int) u;
                     if (uu >= sw) continue;
-                    vv = (int) v;
+                    
+                    vv = (int)v;
+                    if (vv < 0) {
+                      // std::cout << "Before conversion v = " << v << std::endl;
+                      // std::cout << "After conversion vv = " << vv << std::endl;
+                      // vv = -1;
+                    }
+                    
                     if (vv >= sh) continue;
 
                     ar = (int)(255 * (1 - modff(u, &iptr)));
@@ -197,6 +210,11 @@ static void _rasterBlendingPolygonImageSegment(SwSurface* surface, const SwImage
                     uu = (int) u;
                     if (uu >= sw) continue;
                     vv = (int) v;
+                    if (vv < 0) {
+                      // std::cout << "Before conversion v = " << v << std::endl;
+                      // std::cout << "After conversion vv = " << vv << std::endl;
+                      // vv = -1;
+                    }
                     if (vv >= sh) continue;
 
                     ar = (int)(255 * (1 - modff(u, &iptr)));
@@ -299,6 +317,12 @@ static void _rasterPolygonImageSegment(SwSurface* surface, const SwImage* image,
         x1 = (int32_t)_xa;
         x2 = (int32_t)_xb;
 
+        // x1 = static_cast<int32_t>(std::round(_xa));
+        // x2 = static_cast<int32_t>(std::round(_xb));
+
+        // std::cout << "_xa: " << _xa << " _xb: " << _xb << std::endl;
+        // std::cout << "x1: " << x1 << " x2: " << x2 << std::endl;
+
         if (!region) {
             minx = INT32_MAX;
             maxx = 0;
@@ -335,17 +359,41 @@ static void _rasterPolygonImageSegment(SwSurface* surface, const SwImage* image,
             if (opacity == 255) {
                 //Draw horizontal line
                 while (x++ < x2) {
+                    // cout << "image: " << image->w << " " << image->h << endl;
                     uu = (int) u;
-                    if (uu < 0 || uu >= sw) continue;
-                    vv = (int) v;
-                    if (vv < 0 || vv >= sh) continue;
+                    // cout << "uu: " << uu << " sw: " << sw << endl;
+                    if (uu >= sw) continue;
+
+                    vv = (int)v;
+                    if (vv < 0) {
+                      // std::cout << "Before conversion v = " << v << std::endl;
+                      // std::cout << "After conversion vv = " << vv << std::endl;
+                      // vv = -1;
+                    }
+                    // cout << "vv: " << vv << " sh: " << sh << endl;
+                    if (vv >= sh) continue; // -1
 
                     ar = (int)(255.0f * (1.0f - modff(u, &iptr)));
                     ab = (int)(255.0f * (1.0f - modff(v, &iptr)));
                     iru = uu + 1;
                     irv = vv + 1;
 
+                    bool flag = false;
+                    if ((vv * sw) + uu < 0) {
+                      // problem from here
+                      // Intel processor doesn't raise segmentation fault
+                      // Arm processor raises segmentation fault
+                        flag = true;
+                        std::cout << "vv * sw + uu = " << (vv * sw) + uu << std::endl;
+                    }
+
+                    // For example, (vv * sw) + uu = -843
                     px = *(sbuf + (vv * sw) + uu);
+
+                    if (flag) {
+                      std::cout << "check: px = " << px << std::endl;
+                    }
+
 
                     /* horizontal interpolate */
                     if (iru < sw) {
@@ -386,7 +434,13 @@ static void _rasterPolygonImageSegment(SwSurface* surface, const SwImage* image,
                 //Draw horizontal line
                 while (x++ < x2) {
                     uu = (int) u;
-                    vv = (int) v;
+
+                    vv = (int)v;
+                    if (vv < 0) {
+                      // std::cout << "Before conversion v = " << v << std::endl;
+                      // std::cout << "After conversion vv = " << vv << std::endl;
+                      // vv = -1;
+                    }
 
                     ar = (int)(255.0f * (1.0f - modff(u, &iptr)));
                     ab = (int)(255.0f * (1.0f - modff(v, &iptr)));
