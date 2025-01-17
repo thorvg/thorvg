@@ -315,9 +315,11 @@ static void _buildLayer(jerry_value_t context, float frameNo, LottieLayer* layer
     //marker.nearestKey(t)
     //marker.numKeys
 
-    auto name = jerry_string_sz(layer->name);
-    jerry_object_set_sz(context, EXP_NAME, name);
-    jerry_value_free(name);
+    if (layer->name) {
+        auto name = jerry_string_sz(layer->name);
+        jerry_object_set_sz(context, EXP_NAME, name);
+        jerry_value_free(name);
+    }
 
     auto toComp = jerry_function_external(_toComp);
     jerry_object_set_sz(context, "toComp", toComp);
@@ -1276,9 +1278,11 @@ void LottieExpressions::buildComp(LottieComposition* comp, float frameNo, Lottie
     //bgColor
     //pixelAspect
 
-    auto name = jerry_string((jerry_char_t*)comp->name, strlen(comp->name), JERRY_ENCODING_UTF8);
-    jerry_object_set_sz(thisComp, EXP_NAME, name);
-    jerry_value_free(name);
+    if (comp->name) {
+        auto name = jerry_string((jerry_char_t*)comp->name, strlen(comp->name), JERRY_ENCODING_UTF8);
+        jerry_object_set_sz(thisComp, EXP_NAME, name);
+        jerry_value_free(name);
+    }
 }
 
 
