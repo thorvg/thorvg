@@ -32,21 +32,8 @@ struct SwGaussianBlur
     static constexpr int MAX_LEVEL = 3;
     int level;
     int kernel[MAX_LEVEL];
+    int extends;
 };
-
-
-static void _gaussianExtendRegion(RenderRegion& region, int extra, int8_t direction)
-{
-    //bbox region expansion for feathering
-    if (direction != 2) {
-        region.x = -extra;
-        region.w = extra * 2;
-    }
-    if (direction != 1) {
-        region.y = -extra;
-        region.h = extra * 2;
-    }
-}
 
 
 static int _gaussianEdgeWrap(int end, int idx)
@@ -142,24 +129,41 @@ static int _gaussianInit(SwGaussianBlur* data, float sigma, int quality)
 }
 
 
-bool effectGaussianBlurPrepare(RenderEffectGaussianBlur* params)
+bool effectGaussianBlurRegion(RenderEffectGaussianBlur* params)
 {
-    auto rd = (SwGaussianBlur*)malloc(sizeof(SwGaussianBlur));
+    //bbox region expansion for feathering
+    auto& region = params->extend;
+    auto extra = static_cast<SwGaussianBlur*>(params->rd)->extends;
 
-    auto extends = _gaussianInit(rd, params->sigma * params->sigma, params->quality);
-
-    //invalid
-    if (extends == 0) {
-        free(rd);
-        return false;
+    if (params->direction != 2) {
+        region.x = -extra;
+        region.w = extra * 2;
+    }
+    if (params->direction != 1) {
+        region.y = -extra;
+        region.h = extra * 2;
     }
 
-    _gaussianExtendRegion(params->extend, extends, params->direction);
-
-    params->rd = rd;
-    params->valid = true;
-
     return true;
+}
+
+
+void effectGaussianBlurUpdate(RenderEffectGaussianBlur* params, const Matrix& transform)
+{
+    if (!params->rd) params->rd = (SwGaussianBlur*)malloc(sizeof(SwGaussianBlur));
+    auto rd = static_cast<SwGaussianBlur*>(params->rd);
+
+    //compute box kernel sizes
+    auto scale = sqrt(transform.e11 * transform.e11 + transform.e12 * transform.e12);
+    rd->extends = _gaussianInit(rd, std::pow(params->sigma * scale, 2), params->quality);
+
+    //invalid
+    if (rd->extends == 0) {
+        params->valid = false;
+        return;
+    }
+
+    params->valid = true;
 }
 
 
@@ -281,9 +285,13 @@ static void _dropShadowShift(uint32_t* dst, uint32_t* src, int stride, SwBBox& r
 }
 
 
-static void _dropShadowExtendRegion(RenderRegion& region, int extra, SwPoint& offset)
+bool effectDropShadowRegion(RenderEffectDropShadow* params)
 {
     //bbox region expansion for feathering
+    auto& region = params->extend;
+    auto& offset = static_cast<SwDropShadow*>(params->rd)->offset;
+    auto extra = static_cast<SwDropShadow*>(params->rd)->extends;
+
     region.x = -extra;
     region.w = extra * 2;
     region.y = -extra;
@@ -293,20 +301,24 @@ static void _dropShadowExtendRegion(RenderRegion& region, int extra, SwPoint& of
     region.y = std::min(region.y + (int32_t)offset.y, region.y);
     region.w += abs(offset.x);
     region.h += abs(offset.y);
+
+    return true;
 }
 
 
-bool effectDropShadowPrepare(RenderEffectDropShadow* params)
+void effectDropShadowUpdate(RenderEffectDropShadow* params, const Matrix& transform)
 {
-    auto rd = (SwDropShadow*)malloc(sizeof(SwDropShadow));
+    if (!params->rd) params->rd = (SwDropShadow*)malloc(sizeof(SwDropShadow));
+    auto rd = static_cast<SwDropShadow*>(params->rd);
 
     //compute box kernel sizes
-    auto extends = _gaussianInit(rd, params->sigma * params->sigma, params->quality);
+    auto scale = sqrt(transform.e11 * transform.e11 + transform.e12 * transform.e12);
+    rd->extends = _gaussianInit(rd, std::pow(params->sigma * scale, 2), params->quality);
 
     //invalid
-    if (extends == 0 || params->color[3] == 0) {
-        free(rd);
-        return false;
+    if (rd->extends == 0 || params->color[3] == 0) {
+        params->valid = false;
+        return;
     }
 
     //offset
@@ -317,13 +329,7 @@ bool effectDropShadowPrepare(RenderEffectDropShadow* params)
         rd->offset = {0, 0};
     }
 
-    //bbox region expansion for feathering
-    _dropShadowExtendRegion(params->extend, extends, rd->offset);
-
-    params->rd = rd;
     params->valid = true;
-
-    return true;
 }
 
 
@@ -405,10 +411,9 @@ bool effectDropShadow(SwCompositor* cmp, SwSurface* surface[2], const RenderEffe
 /* Fill Implementation                                                  */
 /************************************************************************/
 
-bool effectFillPrepare(RenderEffectFill* params)
+void effectFillUpdate(RenderEffectFill* params)
 {
     params->valid = true;
-    return true;
 }
 
 
@@ -456,10 +461,9 @@ bool effectFill(SwCompositor* cmp, const RenderEffectFill* params, bool direct)
 /* Tint Implementation                                                  */
 /************************************************************************/
 
-bool effectTintPrepare(RenderEffectTint* params)
+void effectTintUpdate(RenderEffectTint* params)
 {
     params->valid = true;
-    return true;
 }
 
 
@@ -529,10 +533,10 @@ static uint32_t _trintone(uint32_t s, uint32_t m, uint32_t h, int l)
     }
 }
 
-bool effectTritonePrepare(RenderEffectTritone* params)
+
+void effectTritoneUpdate(RenderEffectTritone* params)
 {
     params->valid = true;
-    return true;
 }
 
 
