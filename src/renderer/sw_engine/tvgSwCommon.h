@@ -584,14 +584,16 @@ bool rasterConvertCS(RenderSurface* surface, ColorSpace to);
 uint32_t rasterUnpremultiply(uint32_t data);
 
 bool effectGaussianBlur(SwCompositor* cmp, SwSurface* surface, const RenderEffectGaussianBlur* params);
-bool effectGaussianBlurPrepare(RenderEffectGaussianBlur* effect);
+bool effectGaussianBlurRegion(RenderEffectGaussianBlur* effect);
+void effectGaussianBlurUpdate(RenderEffectGaussianBlur* effect, const Matrix& transform);
 bool effectDropShadow(SwCompositor* cmp, SwSurface* surfaces[2], const RenderEffectDropShadow* params, bool direct);
-bool effectDropShadowPrepare(RenderEffectDropShadow* effect);
-bool effectFillPrepare(RenderEffectFill* effect);
+bool effectDropShadowRegion(RenderEffectDropShadow* effect);
+void effectDropShadowUpdate(RenderEffectDropShadow* effect, const Matrix& transform);
+void effectFillUpdate(RenderEffectFill* effect);
 bool effectFill(SwCompositor* cmp, const RenderEffectFill* params, bool direct);
-bool effectTintPrepare(RenderEffectTint* effect);
+void effectTintUpdate(RenderEffectTint* effect);
 bool effectTint(SwCompositor* cmp, const RenderEffectTint* params, bool direct);
-bool effectTritonePrepare(RenderEffectTritone* effect);
+void effectTritoneUpdate(RenderEffectTritone* effect);
 bool effectTritone(SwCompositor* cmp, const RenderEffectTritone* params, bool direct);
 
 #endif /* _TVG_SW_COMMON_H_ */

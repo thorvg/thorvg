@@ -116,6 +116,12 @@ struct Scene::Impl : Paint::Impl
             paint->pImpl->update(renderer, transform, clips, opacity, flag, false);
         }
 
+        if (effects) {
+            ARRAY_FOREACH(p, *effects) {
+                renderer->prepare(*p, transform);
+            }
+        }
+
         return nullptr;
     }
 
@@ -141,7 +147,7 @@ struct Scene::Impl : Paint::Impl
                 //Notify the possiblity of the direct composition of the effect result to the origin surface.
                 auto direct = (effects->count == 1) & (compFlag == CompositionFlag::PostProcessing);
                 ARRAY_FOREACH(p, *effects) {
-                    renderer->effect(cmp, *p, direct);
+                    if ((*p)->valid) renderer->render(cmp, *p, direct);
                 }
             }
             renderer->endComposite(cmp);
@@ -174,7 +180,7 @@ struct Scene::Impl : Paint::Impl
         if (effects) {
             ARRAY_FOREACH(p, *effects) {
                 auto effect = *p;
-                if (effect->valid || renderer->prepare(effect)) {
+                if (effect->valid && renderer->region(effect)) {
                     ex = std::min(ex, effect->extend.x);
                     ey = std::min(ey, effect->extend.y);
                     ew = std::max(ew, effect->extend.w);
