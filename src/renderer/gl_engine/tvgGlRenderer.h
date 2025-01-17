@@ -87,8 +87,9 @@ public:
     bool beginComposite(RenderCompositor* cmp, MaskMethod method, uint8_t opacity) override;
     bool endComposite(RenderCompositor* cmp) override;
 
-    bool prepare(RenderEffect* effect) override;
-    bool effect(RenderCompositor* cmp, const RenderEffect* effect, bool direct) override;
+    void prepare(RenderEffect* effect, const Matrix& transform) override;
+    bool region(RenderEffect* effect) override;
+    bool render(RenderCompositor* cmp, const RenderEffect* effect, bool direct) override;
 
     static GlRenderer* gen();
     static int init(TVG_UNUSED uint32_t threads);

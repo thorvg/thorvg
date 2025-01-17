@@ -946,14 +946,20 @@ bool GlRenderer::endComposite(RenderCompositor* cmp)
 }
 
 
-bool GlRenderer::prepare(TVG_UNUSED RenderEffect* effect)
+void GlRenderer::prepare(TVG_UNUSED RenderEffect* effect, TVG_UNUSED const Matrix& transform)
+{
+    //TODO: prepare the effect
+}
+
+
+bool GlRenderer::region(TVG_UNUSED RenderEffect* effect)
 {
     //TODO: Return if the current post effect requires the region expansion
     return false;
 }
 
 
-bool GlRenderer::effect(TVG_UNUSED RenderCompositor* cmp, TVG_UNUSED const RenderEffect* effect, TVG_UNUSED bool direct)
+bool GlRenderer::render(TVG_UNUSED RenderCompositor* cmp, TVG_UNUSED const RenderEffect* effect, TVG_UNUSED bool direct)
 {
     TVGLOG("GL_ENGINE", "SceneEffect(%d) is not supported", (int)effect->type);
     return false;

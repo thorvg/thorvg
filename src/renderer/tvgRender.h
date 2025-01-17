@@ -406,8 +406,9 @@ public:
     virtual bool beginComposite(RenderCompositor* cmp, MaskMethod method, uint8_t opacity) = 0;
     virtual bool endComposite(RenderCompositor* cmp) = 0;
 
-    virtual bool prepare(RenderEffect* effect) = 0;
-    virtual bool effect(RenderCompositor* cmp, const RenderEffect* effect, bool direct) = 0;
+    virtual void prepare(RenderEffect* effect, const Matrix& transform) = 0;
+    virtual bool region(RenderEffect* effect) = 0;
+    virtual bool render(RenderCompositor* cmp, const RenderEffect* effect, bool direct) = 0;
 };
 
 static inline bool MASK_REGION_MERGING(MaskMethod method)
