@@ -844,6 +844,7 @@ bool strokeParseOutline(SwStroke* stroke, const SwOutline& outline)
     ARRAY_FOREACH(p, outline.cntrs) {
         auto last = *p;           //index of last point in contour
         auto limit = outline.pts.data + last;
+        ++i;
 
         //Skip empty points
         if (last <= first) {
@@ -860,7 +861,7 @@ bool strokeParseOutline(SwStroke* stroke, const SwOutline& outline)
         if (type == SW_CURVE_TYPE_CUBIC) return false;
         ++types;
 
-        auto closed =  outline.closed.data ? outline.closed.data[i]: false;
+        auto closed =  outline.closed.data ? outline.closed.data[i - 1]: false;
 
         _beginSubPath(*stroke, start, closed);
 
