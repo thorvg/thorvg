@@ -147,89 +147,45 @@ static void _rasterBlendingPolygonImageSegment(SwSurface* surface, const SwImage
 
             x = x1;
 
-            if (opacity == 255) {
-                //Draw horizontal line
-                while (x++ < x2) {
-                    uu = (int) u;
-                    vv = (int) v;
+            //Draw horizontal line
+            while (x++ < x2) {
+                uu = (int) u;
+                vv = (int) v;
 
-                    if ((uint32_t) uu >= image->w || (uint32_t) vv >= image->h) continue;
+                if ((uint32_t) uu >= image->w || (uint32_t) vv >= image->h) continue;
 
-                    ar = (int)(255 * (1 - modff(u, &iptr)));
-                    ab = (int)(255 * (1 - modff(v, &iptr)));
-                    iru = uu + 1;
-                    irv = vv + 1;
+                ar = (int)(255 * (1 - modff(u, &iptr)));
+                ab = (int)(255 * (1 - modff(v, &iptr)));
+                iru = uu + 1;
+                irv = vv + 1;
 
-                    px = *(sbuf + (vv * image->stride) + uu);
+                px = *(sbuf + (vv * image->stride) + uu);
 
+                /* horizontal interpolate */
+                if (iru < sw) {
+                    /* right pixel */
+                    int px2 = *(sbuf + (vv * image->stride) + iru);
+                    px = INTERPOLATE(px, px2, ar);
+                }
+                /* vertical interpolate */
+                if (irv < sh) {
+                    /* bottom pixel */
+                    int px2 = *(sbuf + (irv * image->stride) + uu);
                     /* horizontal interpolate */
                     if (iru < sw) {
-                        /* right pixel */
-                        int px2 = *(sbuf + (vv * image->stride) + iru);
-                        px = INTERPOLATE(px, px2, ar);
+                        /* bottom right pixel */
+                        int px3 = *(sbuf + (irv * image->stride) + iru);
+                        px2 = INTERPOLATE(px2, px3, ar);
                     }
-                    /* vertical interpolate */
-                    if (irv < sh) {
-                        /* bottom pixel */
-                        int px2 = *(sbuf + (irv * image->stride) + uu);
-
-                        /* horizontal interpolate */
-                        if (iru < sw) {
-                            /* bottom right pixel */
-                            int px3 = *(sbuf + (irv * image->stride) + iru);
-                            px2 = INTERPOLATE(px2, px3, ar);
-                        }
-                        px = INTERPOLATE(px, px2, ab);
-                    }
-                    *buf = surface->blender(px, *buf, IA(px));
-                    ++buf;
-
-                    //Step UV horizontally
-                    u += _dudx;
-                    v += _dvdx;
+                    px = INTERPOLATE(px, px2, ab);
                 }
-            } else {
-                //Draw horizontal line
-                while (x++ < x2) {
-                    uu = (int) u;
-                    vv = (int) v;
+                auto tmp = surface->blender(px, *buf, 255);
+                *buf = INTERPOLATE(tmp, *buf, MULTIPLY(opacity, A(px)));
+                ++buf;
 
-                    if ((uint32_t) uu >= image->w || (uint32_t) vv >= image->h) continue;
-
-                    ar = (int)(255 * (1 - modff(u, &iptr)));
-                    ab = (int)(255 * (1 - modff(v, &iptr)));
-                    iru = uu + 1;
-                    irv = vv + 1;
-
-                    px = *(sbuf + (vv * image->stride) + uu);
-
-                    /* horizontal interpolate */
-                    if (iru < sw) {
-                        /* right pixel */
-                        int px2 = *(sbuf + (vv * image->stride) + iru);
-                        px = INTERPOLATE(px, px2, ar);
-                    }
-                    /* vertical interpolate */
-                    if (irv < sh) {
-                        /* bottom pixel */
-                        int px2 = *(sbuf + (irv * image->stride) + uu);
-
-                        /* horizontal interpolate */
-                        if (iru < sw) {
-                            /* bottom right pixel */
-                            int px3 = *(sbuf + (irv * image->stride) + iru);
-                            px2 = INTERPOLATE(px2, px3, ar);
-                        }
-                        px = INTERPOLATE(px, px2, ab);
-                    }
-                    auto src = ALPHA_BLEND(px, opacity);
-                    *buf = surface->blender(src, *buf, IA(src));
-                    ++buf;
-
-                    //Step UV horizontally
-                    u += _dudx;
-                    v += _dvdx;
-                }
+                //Step UV horizontally
+                u += _dudx;
+                v += _dvdx;
             }
         }
 
