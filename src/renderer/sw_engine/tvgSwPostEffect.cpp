@@ -36,22 +36,23 @@ struct SwGaussianBlur
 };
 
 
-static int _gaussianEdgeWrap(int end, int idx)
+static inline int _gaussianEdgeWrap(int end, int idx)
 {
-    auto r = idx % end;
-    return (r < 0) ? end + r : r;
+    auto r = idx % (end + 1);
+    return (r < 0) ? (end + 1) + r : r;
 }
 
 
-static int _gaussianEdgeExtend(int end, int idx)
+static inline int _gaussianEdgeExtend(int end, int idx)
 {
     if (idx < 0) return 0;
-    else if (idx >= end) return end - 1;
+    else if (idx > end) return end;
     return idx;
 }
 
 
-static int _gaussianRemap(int end, int idx, int border)
+template<int border>
+static inline int _gaussianRemap(int end, int idx)
 {
     if (border == 1) return _gaussianEdgeWrap(end, idx);
     return _gaussianEdgeExtend(end, idx);
@@ -59,7 +60,8 @@ static int _gaussianRemap(int end, int idx, int border)
 
 
 //TODO: SIMD OPTIMIZATION?
-static void _gaussianFilter(uint8_t* dst, uint8_t* src, int32_t stride, int32_t w, int32_t h, const SwBBox& bbox, int32_t dimension, int border, bool flipped)
+template<int border = 0>
+static void _gaussianFilter(uint8_t* dst, uint8_t* src, int32_t stride, int32_t w, int32_t h, const SwBBox& bbox, int32_t dimension, bool flipped)
 {
     if (flipped) {
         src += (bbox.min.x * stride + bbox.min.y) << 2;
@@ -70,6 +72,7 @@ static void _gaussianFilter(uint8_t* dst, uint8_t* src, int32_t stride, int32_t 
     }
 
     auto iarr = 1.0f / (dimension + dimension + 1);
+    auto end = w - 1;
 
     #pragma omp parallel for
     for (int y = 0; y < h; ++y) {
@@ -81,7 +84,7 @@ static void _gaussianFilter(uint8_t* dst, uint8_t* src, int32_t stride, int32_t 
 
         //initial accumulation
         for (int x = l; x < r; ++x) {
-            auto id = (_gaussianRemap(w, x, border) + p) * 4;
+            auto id = (_gaussianRemap<border>(end, x) + p) * 4;
             acc[0] += src[id++];
             acc[1] += src[id++];
             acc[2] += src[id++];
@@ -89,16 +92,17 @@ static void _gaussianFilter(uint8_t* dst, uint8_t* src, int32_t stride, int32_t 
         }
         //perform filtering
         for (int x = 0; x < w; ++x, ++r, ++l) {
-            auto rid = (_gaussianRemap(w, r, border) + p) * 4;
-            auto lid = (_gaussianRemap(w, l, border) + p) * 4;
+            auto rid = (_gaussianRemap<border>(end, r) + p) * 4;
+            auto lid = (_gaussianRemap<border>(end, l) + p) * 4;
             acc[0] += src[rid++] - src[lid++];
             acc[1] += src[rid++] - src[lid++];
             acc[2] += src[rid++] - src[lid++];
             acc[3] += src[rid] - src[lid];
-            dst[i++] = static_cast<uint8_t>(acc[0] * iarr + 0.5f);
-            dst[i++] = static_cast<uint8_t>(acc[1] * iarr + 0.5f);
-            dst[i++] = static_cast<uint8_t>(acc[2] * iarr + 0.5f);
-            dst[i++] = static_cast<uint8_t>(acc[3] * iarr + 0.5f);
+            //ignored rounding for the performance. It should be originally: acc[idx] * iarr + 0.5f
+            dst[i++] = static_cast<uint8_t>(acc[0] * iarr);
+            dst[i++] = static_cast<uint8_t>(acc[1] * iarr);
+            dst[i++] = static_cast<uint8_t>(acc[2] * iarr);
+            dst[i++] = static_cast<uint8_t>(acc[3] * iarr);
         }
     }
 }
@@ -188,7 +192,7 @@ bool effectGaussianBlur(SwCompositor* cmp, SwSurface* surface, const RenderEffec
     //horizontal
     if (params->direction != 2) {
         for (int i = 0; i < data->level; ++i) {
-            _gaussianFilter(reinterpret_cast<uint8_t*>(back), reinterpret_cast<uint8_t*>(front), stride, w, h, bbox, data->kernel[i], params->border, false);
+            _gaussianFilter(reinterpret_cast<uint8_t*>(back), reinterpret_cast<uint8_t*>(front), stride, w, h, bbox, data->kernel[i], false);
             std::swap(front, back);
             swapped = !swapped;
         }
@@ -200,7 +204,7 @@ bool effectGaussianBlur(SwCompositor* cmp, SwSurface* surface, const RenderEffec
         std::swap(front, back);
 
         for (int i = 0; i < data->level; ++i) {
-            _gaussianFilter(reinterpret_cast<uint8_t*>(back), reinterpret_cast<uint8_t*>(front), stride, h, w, bbox, data->kernel[i], params->border, true);
+            _gaussianFilter(reinterpret_cast<uint8_t*>(back), reinterpret_cast<uint8_t*>(front), stride, h, w, bbox, data->kernel[i], true);
             std::swap(front, back);
             swapped = !swapped;
         }
@@ -235,6 +239,7 @@ static void _dropShadowFilter(uint32_t* dst, uint32_t* src, int stride, int w, i
         dst += (bbox.min.y * stride + bbox.min.x);
     }
     auto iarr = 1.0f / (dimension + dimension + 1);
+    auto end = w - 1;
 
     #pragma omp parallel for
     for (int y = 0; y < h; ++y) {
@@ -246,15 +251,16 @@ static void _dropShadowFilter(uint32_t* dst, uint32_t* src, int stride, int w, i
 
         //initial accumulation
         for (int x = l; x < r; ++x) {
-            auto id = _gaussianEdgeExtend(w, x) + p;
+            auto id = _gaussianEdgeExtend(end, x) + p;
             acc += A(src[id]);
         }
         //perform filtering
         for (int x = 0; x < w; ++x, ++r, ++l) {
-            auto rid = _gaussianEdgeExtend(w, r) + p;
-            auto lid = _gaussianEdgeExtend(w, l) + p;
+            auto rid = _gaussianEdgeExtend(end, r) + p;
+            auto lid = _gaussianEdgeExtend(end, l) + p;
             acc += A(src[rid]) - A(src[lid]);
-            dst[i++] = ALPHA_BLEND(color, static_cast<uint8_t>(acc * iarr + 0.5f));
+            //ignored rounding for the performance. It should be originally: acc * iarr
+            dst[i++] = ALPHA_BLEND(color, static_cast<uint8_t>(acc * iarr));
         }
     }
 }
