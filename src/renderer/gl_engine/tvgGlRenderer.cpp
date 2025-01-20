@@ -45,7 +45,7 @@ static void _termEngine()
 }
 
 
-void GlRenderer::flush()
+void GlRenderer::clearDisposes()
 {
     if (mDisposed.textures.count > 0) {
         glDeleteTextures(mDisposed.textures.count, mDisposed.textures.data);
@@ -53,19 +53,21 @@ void GlRenderer::flush()
     }
 
     ARRAY_FOREACH(p, mRenderPassStack) delete(*p);
-
     mRenderPassStack.clear();
+}
+
+
+void GlRenderer::flush()
+{
+    clearDisposes();
 
     ARRAY_FOREACH(p, mComposePool) delete(*p);
-
     mComposePool.clear();
 
     ARRAY_FOREACH(p, mBlendPool) delete(*p);
-
     mBlendPool.clear();
 
     ARRAY_FOREACH(p, mComposeStack) delete(*p);
-
     mComposeStack.clear();
 }
 
@@ -850,7 +852,7 @@ bool GlRenderer::sync()
 
     GL_CHECK(glDisable(GL_SCISSOR_TEST));
 
-    flush();
+    clearDisposes();
 
     delete task;
 
