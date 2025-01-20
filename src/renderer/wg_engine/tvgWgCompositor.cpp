@@ -671,7 +671,7 @@ void WgCompositor::renderClipPath(WgContext& context, WgRenderDataPaint* paint)
     wgpuRenderPassEncoderSetPipeline(renderPassEncoder, pipelines.copy_stencil_to_depth);
     renderData0->meshDataBBox.drawFan(context, renderPassEncoder);
     // merge clip pathes with AND logic
-    for (auto p = paint->clips.begin() + 1; paint->clips.end(); ++p) {
+    for (auto p = paint->clips.begin() + 1; p < paint->clips.end(); ++p) {
         // get render data
         WgRenderDataShape* renderData = (WgRenderDataShape*)(*p);
         // markup stencil
