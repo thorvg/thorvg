@@ -116,6 +116,7 @@ private:
     void endRenderPass(RenderCompositor* cmp);
 
     void flush();
+    void clearDisposes();
     void currentContext();
 
     void* mContext = nullptr;
