@@ -30,9 +30,10 @@
 struct LottieParser : LookaheadParserHandler
 {
 public:
-    LottieParser(const char *str, const char* dirName) : LookaheadParserHandler(str)
+    LottieParser(const char *str, const char* dirName, bool expressions) : LookaheadParserHandler(str)
     {
         this->dirName = dirName;
+        this->expressions = expressions;
     }
 
     bool parse();
@@ -44,6 +45,7 @@ public:
     LottieComposition* comp = nullptr;
     const char* dirName = nullptr;       //base resource directory
     char* slots = nullptr;
+    bool expressions = false;            //support expressions?
 
 private:
     RGB24 getColor(const char *str);
@@ -51,6 +53,7 @@ private:
     MaskMethod getMaskMethod(bool inversed);
     LottieInterpolator* getInterpolator(const char* key, Point& in, Point& out);
     LottieEffect* getEffect(int type);
+    LottieExpression* getExpression(char* code, LottieComposition* comp, LottieLayer* layer, LottieObject* object, LottieProperty* property);
 
     void getInterpolatorPoint(Point& pt);
     void getPathSet(LottiePathSet& path);

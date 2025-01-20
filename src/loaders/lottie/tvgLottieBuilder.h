@@ -98,6 +98,11 @@ struct LottieBuilder
         LottieExpressions::retrieve(exps);
     }
 
+    bool expressions()
+    {
+        return exps ? true : false;
+    }
+
     bool update(LottieComposition* comp, float progress);
     void build(LottieComposition* comp);
 

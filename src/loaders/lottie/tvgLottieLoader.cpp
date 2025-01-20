@@ -37,7 +37,7 @@ void LottieLoader::run(unsigned tid)
         builder->update(comp, frameNo);
     //initial loading
     } else {
-        LottieParser parser(content, dirName);
+        LottieParser parser(content, dirName, builder->expressions());
         if (!parser.parse()) return;
         {
             ScopedLock lock(key);
@@ -300,7 +300,7 @@ bool LottieLoader::override(const char* slots, bool byDefault)
         auto temp = byDefault ? slots : strdup(slots);
 
         //parsing slot json
-        LottieParser parser(temp, dirName);
+        LottieParser parser(temp, dirName, builder->expressions());
         parser.comp = comp;
 
         auto idx = 0;
