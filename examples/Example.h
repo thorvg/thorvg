@@ -64,7 +64,7 @@ bool verify(tvg::Result result, string failMsg = "");
 
 struct Example
 {
-    uint32_t elapsed = 0.0f;
+    uint32_t elapsed = 0;
 
     virtual bool content(tvg::Canvas* canvas, uint32_t w, uint32_t h) = 0;
     virtual bool update(tvg::Canvas* canvas, uint32_t elapsed) { return false; }
@@ -490,10 +490,10 @@ struct WgWindow : Window
 float progress(uint32_t elapsed, float durationInSec, bool rewind = false)
 {
     auto duration = uint32_t(durationInSec * 1000.0f); //sec -> millisec.
-    if (duration == 0.0f) return 0.0f;
+    if (duration == 0) return 0.0f;
     auto forward = ((elapsed / duration) % 2 == 0) ? true : false;
-    auto clamped = elapsed % duration;
-    auto progress = ((float)clamped / (float)duration);
+    auto wrapped = elapsed % duration;
+    auto progress = ((float)wrapped / (float)duration);
     if (rewind) return forward ? progress : (1 - progress);
     return progress;
 }
