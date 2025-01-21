@@ -21,7 +21,7 @@ source_file = [
 ]
 
 wgpu_dep = []
-if not get_option('bindings').contains('wasm_beta')
+if host_machine.system() != 'emscripten'
     wgpu_dep = dependency('wgpu_native')
 endif
 
