@@ -45,6 +45,7 @@ source_file = [
     'InvMasking.cpp',
     'LinearGradient.cpp',
     'Lottie.cpp',
+    'LottieTweening.cpp',
     'LumaMasking.cpp',
     'Masking.cpp',
     'MaskingMethods.cpp',
