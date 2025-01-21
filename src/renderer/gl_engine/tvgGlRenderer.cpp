@@ -1234,33 +1234,36 @@ bool GlRenderer::renderShape(RenderData data)
 
     if (flags & (RenderUpdateFlag::Stroke | RenderUpdateFlag::GradientStroke)) drawDepth2 = currentPass()->nextDrawDepth();
 
-
     if (!sdata->clips.empty()) drawClip(sdata->clips);
 
-    if (flags & (RenderUpdateFlag::Color | RenderUpdateFlag::Gradient))
-    {
-        auto gradient = sdata->rshape->fill;
-        if (gradient) drawPrimitive(*sdata, gradient, RenderUpdateFlag::Gradient, drawDepth1);
-        else {
-            sdata->rshape->fillColor(&r, &g, &b, &a);
-            if (a > 0)
-            {
+    auto processFill = [&]() {
+        if (flags & (RenderUpdateFlag::Color | RenderUpdateFlag::Gradient)) {
+            if (const auto& gradient = sdata->rshape->fill) {
+                drawPrimitive(*sdata, gradient, RenderUpdateFlag::Gradient, drawDepth1);
+            } else if (sdata->rshape->color[3] > 0) {
+                sdata->rshape->fillColor(&r, &g, &b, &a);
                 drawPrimitive(*sdata, r, g, b, a, RenderUpdateFlag::Color, drawDepth1);
             }
         }
-    }
+    };
 
-    if (flags & (RenderUpdateFlag::Stroke | RenderUpdateFlag::GradientStroke))
-    {
-        auto gradient =  sdata->rshape->strokeFill();
-        if (gradient) {
-            drawPrimitive(*sdata, gradient, RenderUpdateFlag::GradientStroke, drawDepth2);
-        } else {
-            if (sdata->rshape->strokeColor(&r, &g, &b, &a) && a > 0)
-            {
+    auto processStroke = [&]() {
+        if (!sdata->rshape->stroke) return;
+        if (flags & (RenderUpdateFlag::Stroke | RenderUpdateFlag::GradientStroke)) {
+            if (const auto& gradient = sdata->rshape->strokeFill()) {
+                drawPrimitive(*sdata, gradient, RenderUpdateFlag::GradientStroke, drawDepth2);
+            } else if (sdata->rshape->strokeColor(&r, &g, &b, &a) && a > 0) {
                 drawPrimitive(*sdata, r, g, b, a, RenderUpdateFlag::Stroke, drawDepth2);
             }
         }
+    };
+
+    if (sdata->rshape->stroke && sdata->rshape->stroke->strokeFirst) {
+        processStroke();
+        processFill();
+    } else {
+        processFill();
+        processStroke();
     }
 
     return true;
