@@ -1891,7 +1891,6 @@ public:
  *
  * @since 0.13
  */
-
 class TVG_API Animation
 {
 public:
@@ -1910,7 +1909,6 @@ public:
      *       Values less than 0.001 may be disregarded and may not be accurately retained by the Animation.
      *
      * @see totalFrame()
-     *
      */
     Result frame(float no) noexcept;
 
@@ -1924,7 +1922,6 @@ public:
      * @return A picture instance that is tied to this animation.
      *
      * @warning The picture instance is owned by Animation. It should not be deleted manually.
-     *
      */
     Picture* picture() const noexcept;
 
@@ -1935,9 +1932,8 @@ public:
      *
      * @note If the Picture is not properly configured, this function will return 0.
      *
-     * @see Animation::frame(float no)
+     * @see Animation::frame()
      * @see Animation::totalFrame()
-     *
      */
     float curFrame() const noexcept;
 
@@ -1948,7 +1944,6 @@ public:
      *
      * @note Frame numbering starts from 0.
      * @note If the Picture is not properly configured, this function will return 0.
-     *
      */
     float totalFrame() const noexcept;
 
@@ -1958,7 +1953,6 @@ public:
      * @return The duration of the animation in seconds.
      *
      * @note If the Picture is not properly configured, this function will return 0.
-     *
      */
     float duration() const noexcept;
 
@@ -1970,30 +1964,33 @@ public:
      * After setting, the number of animation frames and the playback time are calculated
      * by mapping the playback segment as the entire range.
      *
-     * @param[in] begin segment start.
-     * @param[in] end segment end.
+     * @param[in] begin segment begin frame.
+     * @param[in] end segment end frame.
      *
      * @retval Result::InsufficientCondition In case the animation is not loaded.
+     * @retval Result::InvalidArguments If the @p begin is higher than @p end.
      * @retval Result::NonSupport When it's not animatable.
      *
-     * @note Animation allows a range from 0.0 to 1.0. @p end should not be higher than @p begin.
+     * @note Animation allows a range from 0.0 to the total frame. @p end should not be higher than @p begin.
      * @note If a marker has been specified, its range will be disregarded.
-     * @see LottieAnimation::segment(const char* marker)
      *
-     * @note Experimental API
+     * @see LottieAnimation::segment(const char* marker)
+     * @see Animation::totalFrame()
+     *
+     * @since 1.0
      */
     Result segment(float begin, float end) noexcept;
 
     /**
-     * @brief Gets the current segment.
+     * @brief Gets the current segment range information.
      *
-     * @param[out] begin segment start.
-     * @param[out] end segment end.
+     * @param[out] begin segment begin frame.
+     * @param[out] end segment end frame.
      *
      * @retval Result::InsufficientCondition In case the animation is not loaded.
      * @retval Result::NonSupport When it's not animatable.
      *
-     * @note Experimental API
+     * @since 1.0
      */
     Result segment(float* begin, float* end = nullptr) noexcept;
 
@@ -2001,7 +1998,6 @@ public:
      * @brief Creates a new Animation object.
      *
      * @return A new Animation object.
-     *
      */
     static Animation* gen() noexcept;
 

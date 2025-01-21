@@ -2373,31 +2373,42 @@ TVG_API Tvg_Result tvg_animation_get_duration(Tvg_Animation* animation, float* d
 /*!
 * @brief Specifies the playback segment of the animation.
 *
+* The set segment is designated as the play area of the animation.
+* This is useful for playing a specific segment within the entire animation.
+* After setting, the number of animation frames and the playback time are calculated
+* by mapping the playback segment as the entire range.
+*
 * @param[in] animation The Tvg_Animation pointer to the animation object.
-* @param[in] begin segment begin.
-* @param[in] end segment end.
+* @param[in] begin segment begin frame.
+* @param[in] end segment end frame.
 *
 * @return Tvg_Result enumeration.
 * @retval TVG_RESULT_INSUFFICIENT_CONDITION In case the animation is not loaded.
-* @retval TVG_RESULT_INVALID_ARGUMENT When the given parameters are out of range.
+* @retval TVG_RESULT_INVALID_ARGUMENT If the @p begin is higher than @p end.
 *
-* @note Experimental API
+* @note Animation allows a range from 0.0 to the total frame. @p end should not be higher than @p begin.
+* @note If a marker has been specified, its range will be disregarded.
+*
+* @see tvg_lottie_animation_set_marker()
+* @see tvg_animation_get_total_frame()
+
+* @since 1.0
 */
 TVG_API Tvg_Result tvg_animation_set_segment(Tvg_Animation* animation, float begin, float end);
 
 
 /*!
-* @brief Gets the current segment.
+* @brief Gets the current segment range information.
 *
 * @param[in] animation The Tvg_Animation pointer to the animation object.
-* @param[out] begin segment begin.
-* @param[out] end segment end.
+* @param[out] begin segment begin frame.
+* @param[out] end segment end frame.
 *
 * @return Tvg_Result enumeration.
 * @retval TVG_RESULT_INSUFFICIENT_CONDITION In case the animation is not loaded.
-* @retval TVG_RESULT_INVALID_ARGUMENT When the given parameters are @c nullptr.
+* @retval TVG_RESULT_INVALID_ARGUMENT An invalid Tvg_Animation pointer.
 *
-* @note Experimental API
+* @since 1.0
 */
 TVG_API Tvg_Result tvg_animation_get_segment(Tvg_Animation* animation, float* begin, float* end);
 

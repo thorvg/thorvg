@@ -97,8 +97,7 @@ bool LottieLoader::header()
         if (comp) {
             w = static_cast<float>(comp->w);
             h = static_cast<float>(comp->h);
-            frameDuration = comp->duration();
-            frameCnt = comp->frameCnt();
+            segmentEnd = frameCnt = comp->frameCnt();
             frameRate = comp->frameRate;
             return true;
         } else {
@@ -190,10 +189,9 @@ bool LottieLoader::header()
         return false;
     }
 
-    frameCnt = (endFrame - startFrame);
-    frameDuration = frameCnt / frameRate;
+    segmentEnd = frameCnt = (endFrame - startFrame);
 
-    TVGLOG("LOTTIE", "info: frame rate = %f, duration = %f size = %f x %f", frameRate, frameDuration, w, h);
+    TVGLOG("LOTTIE", "info: frame rate = %f, duration = %f size = %f x %f", frameRate, frameCnt / frameRate, w, h);
 
     return true;
 }
@@ -355,13 +353,13 @@ bool LottieLoader::frame(float no)
 
 float LottieLoader::startFrame()
 {
-    return frameCnt * segmentBegin;
+    return segmentBegin;
 }
 
 
 float LottieLoader::totalFrame()
 {
-    return (segmentEnd - segmentBegin) * frameCnt;
+    return segmentEnd - segmentBegin;
 }
 
 
@@ -373,8 +371,7 @@ float LottieLoader::curFrame()
 
 float LottieLoader::duration()
 {
-    if (segmentBegin == 0.0f && segmentEnd == 1.0f) return frameDuration;
-    return frameCnt * (segmentEnd - segmentBegin) / frameRate;
+    return (segmentEnd - segmentBegin) / frameRate;
 }
 
 
@@ -400,14 +397,28 @@ const char* LottieLoader::markers(uint32_t index)
 }
 
 
+Result LottieLoader::segment(float begin, float end)
+{
+    if (begin < 0.0f) begin = 0.0f;
+    if (end > frameCnt) end = frameCnt;
+
+    if (begin > end) return Result::InvalidArguments;
+
+    segmentBegin = begin;
+    segmentEnd = end;
+
+    return Result::Success;
+}
+
+
 bool LottieLoader::segment(const char* marker, float& begin, float& end)
 {
     if (!ready() || comp->markers.count == 0) return false;
 
     ARRAY_FOREACH(p, comp->markers) {
         if (!strcmp(marker, (*p)->name)) {
-            begin = (*p)->time / frameCnt;
-            end = ((*p)->time + (*p)->duration) / frameCnt;
+            begin = (*p)->time;
+            end = (*p)->time + (*p)->duration;
             return true;
         }
     }
