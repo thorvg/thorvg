@@ -71,6 +71,11 @@ struct Example
     virtual void populate(const char* path) {}
     virtual ~Example() {}
 
+    float timestamp()
+    {
+        return float(SDL_GetTicks()) * 0.001f;
+    }
+
     void scandir(const char* path)
     {
         char buf[PATH_MAX];

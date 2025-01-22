@@ -29,6 +29,7 @@
 struct UserExample : tvgexam::Example
 {
     unique_ptr<tvg::Animation> animation;
+    float begin = 0.0f;
 
     bool hitting(const tvg::Paint* paint, int32_t x, int32_t y, float segment1, float segment2)
     {
@@ -36,7 +37,8 @@ struct UserExample : tvgexam::Example
         tvgexam::verify(paint->bounds(&px, &py, &pw, &ph, true));
         if (x >= px && x <= px + pw && y >= py && y <= py + ph) {
             tvgexam::verify(animation->segment(segment1, segment2));
-            elapsed = 0.0f;
+            elapsed = 0;
+            begin = timestamp();
             return true;
         }
         return false;
@@ -122,12 +124,13 @@ struct UserExample : tvgexam::Example
     {
         if (!canvas) return false;
 
-        auto progress = tvgexam::progress(elapsed, animation->duration());
+        auto progress = (timestamp() - begin) / animation->duration();
 
         //Default is a stopped motion
-        if (progress > 0.95f) {
+        if (progress > 1.0f) {
             animation->segment(0.0f, 0.0f);
-            elapsed = progress = 0.0f;
+            this->elapsed = 0;
+            progress = 0.0f;
         }
 
         //Update animation frame only when it's changed
