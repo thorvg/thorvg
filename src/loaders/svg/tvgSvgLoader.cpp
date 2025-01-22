@@ -1475,36 +1475,22 @@ static SvgNode* _createNode(SvgNode* parent, SvgNodeType type)
         return nullptr;
     }
 
-    //Update the default value of stroke and fill
-    //https://www.w3.org/TR/SVGTiny12/painting.html#SpecifyingPaint
-    node->style->fill.paint.none = false;
-    //Default fill opacity is 1
-    node->style->fill.opacity = 255;
+    //Set the default values other than 0/false: https://www.w3.org/TR/SVGTiny12/painting.html#SpecifyingPaint
     node->style->opacity = 255;
-    //Default current color is not set
-    node->style->fill.paint.curColor = false;
-    node->style->curColorSet = false;
-    //Default fill rule is nonzero
+
+    node->style->fill.opacity = 255;
     node->style->fill.fillRule = FillRule::NonZero;
 
-    //Default stroke is none
     node->style->stroke.paint.none = true;
-    //Default stroke opacity is 1
     node->style->stroke.opacity = 255;
-    //Default stroke current color is not set
-    node->style->stroke.paint.curColor = false;
-    //Default stroke width is 1
     node->style->stroke.width = 1;
-    //Default line cap is butt
     node->style->stroke.cap = StrokeCap::Butt;
-    //Default line join is miter
     node->style->stroke.join = StrokeJoin::Miter;
     node->style->stroke.miterlimit = 4.0f;
     node->style->stroke.scale = 1.0;
 
     node->style->paintOrder = _toPaintOrder("fill stroke");
 
-    //Default display is true("inline").
     node->style->display = true;
 
     node->parent = parent;
@@ -1608,13 +1594,6 @@ static SvgNode* _createSymbolNode(SvgLoaderData* loader, SvgNode* parent, const 
 
     loader->svgParse->node->node.symbol.align = AspectRatioAlign::XMidYMid;
     loader->svgParse->node->node.symbol.meetOrSlice = AspectRatioMeetOrSlice::Meet;
-    loader->svgParse->node->node.symbol.overflowVisible = false;
-
-    loader->svgParse->node->node.symbol.hasViewBox = false;
-    loader->svgParse->node->node.symbol.hasWidth = false;
-    loader->svgParse->node->node.symbol.hasHeight = false;
-    loader->svgParse->node->node.symbol.vx = 0.0f;
-    loader->svgParse->node->node.symbol.vy = 0.0f;
 
     func(buf, bufLength, _attrParseSymbolNode, loader);
 
@@ -1626,16 +1605,9 @@ static SvgNode* _createGaussianBlurNode(SvgLoaderData* loader, SvgNode* parent, 
 {
     loader->svgParse->node = _createNode(parent, SvgNodeType::GaussianBlur);
     if (!loader->svgParse->node) return nullptr;
-    SvgGaussianBlurNode& gaussianBlur = loader->svgParse->node->node.gaussianBlur;
 
     loader->svgParse->node->style->display = false;
-
-    gaussianBlur.stdDevX = 0.0f;
-    gaussianBlur.stdDevY = 0.0f;
-    gaussianBlur.box = {0.0f, 0.0f, 1.0f, 1.0f};
-    for (auto& p : gaussianBlur.isPercentage) p = false;
-    gaussianBlur.hasBox = false;
-    gaussianBlur.edgeModeWrap = false;
+    loader->svgParse->node->node.gaussianBlur.box = {0.0f, 0.0f, 1.0f, 1.0f};
 
     func(buf, bufLength, _attrParseGaussianBlurNode, loader);
 
@@ -1650,10 +1622,7 @@ static SvgNode* _createFilterNode(SvgLoaderData* loader, SvgNode* parent, const 
     SvgFilterNode& filter = loader->svgParse->node->node.filter;
 
     loader->svgParse->node->style->display = false;
-
     filter.box = {-0.1f, -0.1f, 1.2f, 1.2f};
-    for (auto& p : filter.isPercentage) p = false;
-    filter.filterUserSpace = false;
     filter.primitiveUserSpace = true;
 
     func(buf, bufLength, _attrParseFilterNode, loader);
@@ -1969,8 +1938,6 @@ static SvgNode* _createRectNode(SvgLoaderData* loader, SvgNode* parent, const ch
 
     if (!loader->svgParse->node) return nullptr;
 
-    loader->svgParse->node->node.rect.hasRx = loader->svgParse->node->node.rect.hasRy = false;
-
     func(buf, bufLength, _attrParseRectNode, loader);
     return loader->svgParse->node;
 }
@@ -2228,9 +2195,6 @@ static SvgNode* _createUseNode(SvgLoaderData* loader, SvgNode* parent, const cha
 
     if (!loader->svgParse->node) return nullptr;
 
-    loader->svgParse->node->node.use.isWidthSet = false;
-    loader->svgParse->node->node.use.isHeightSet = false;
-
     func(buf, bufLength, _attrParseUseNode, loader);
     return loader->svgParse->node;
 }
@@ -2298,8 +2262,6 @@ static SvgNode* _createTextNode(SvgLoaderData* loader, SvgNode* parent, const ch
 
     //TODO: support the def font and size as used in a system?
     loader->svgParse->node->node.text.fontSize = 10.0f;
-    loader->svgParse->node->node.text.fontFamily = nullptr;
-    loader->svgParse->node->node.text.text = nullptr;
 
     func(buf, bufLength, _attrParseTextNode, loader);
 
@@ -2637,7 +2599,6 @@ static SvgStyleGradient* _createRadialGradient(SvgLoaderData* loader, const char
 
     grad->flags = SvgGradientFlags::None;
     grad->type = SvgGradientType::Radial;
-    grad->userSpace = false;
     grad->radial = (SvgRadialGradient*)calloc(1, sizeof(SvgRadialGradient));
     if (!grad->radial) {
         grad->clear();
@@ -2929,7 +2890,6 @@ static SvgStyleGradient* _createLinearGradient(SvgLoaderData* loader, const char
 
     grad->flags = SvgGradientFlags::None;
     grad->type = SvgGradientType::Linear;
-    grad->userSpace = false;
     grad->linear = (SvgLinearGradient*)calloc(1, sizeof(SvgLinearGradient));
     if (!grad->linear) {
         grad->clear();
