@@ -160,6 +160,7 @@ struct RenderShape
     RenderColor color{};
     RenderStroke *stroke = nullptr;
     FillRule rule = FillRule::NonZero;
+    bool fillTrim = false;
 
     ~RenderShape()
     {
