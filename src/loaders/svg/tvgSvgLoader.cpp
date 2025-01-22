@@ -1475,36 +1475,22 @@ static SvgNode* _createNode(SvgNode* parent, SvgNodeType type)
         return nullptr;
     }
 
-    //Update the default value of stroke and fill
-    //https://www.w3.org/TR/SVGTiny12/painting.html#SpecifyingPaint
-    node->style->fill.paint.none = false;
-    //Default fill opacity is 1
-    node->style->fill.opacity = 255;
+    //Set the default values other than 0/false: https://www.w3.org/TR/SVGTiny12/painting.html#SpecifyingPaint
     node->style->opacity = 255;
-    //Default current color is not set
-    node->style->fill.paint.curColor = false;
-    node->style->curColorSet = false;
-    //Default fill rule is nonzero
+
+    node->style->fill.opacity = 255;
     node->style->fill.fillRule = FillRule::NonZero;
 
-    //Default stroke is none
     node->style->stroke.paint.none = true;
-    //Default stroke opacity is 1
     node->style->stroke.opacity = 255;
-    //Default stroke current color is not set
-    node->style->stroke.paint.curColor = false;
-    //Default stroke width is 1
     node->style->stroke.width = 1;
-    //Default line cap is butt
     node->style->stroke.cap = StrokeCap::Butt;
-    //Default line join is miter
     node->style->stroke.join = StrokeJoin::Miter;
     node->style->stroke.miterlimit = 4.0f;
     node->style->stroke.scale = 1.0;
 
     node->style->paintOrder = _toPaintOrder("fill stroke");
 
-    //Default display is true("inline").
     node->style->display = true;
 
     node->parent = parent;
