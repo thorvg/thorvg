@@ -241,6 +241,8 @@ struct WgVertexBufferInd
     size_t vcount = 0;
     size_t icount = 0;
     float tscale = 1.0f;
+    // intermediate buffer for stroke dashing
+    WgVertexBuffer dashed;
 
     // reset buffer
     void reset(float scale)
@@ -284,7 +286,6 @@ struct WgVertexBufferInd
     void appendStrokesDashed(const WgVertexBuffer& buff, const RenderStroke* rstroke)
     {
         // dashed buffer
-        WgVertexBuffer dashed;
         dashed.reset(tscale);
         // ignore single points polyline
         if (buff.vcount < 2) return;
