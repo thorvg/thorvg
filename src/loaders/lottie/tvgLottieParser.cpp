@@ -1242,6 +1242,8 @@ void LottieParser::parseTint(LottieFxTint* effect)
                 ++idx;
             } else skip();
         }
+        //handle extra AE-generated "Ignored" effect value
+        if (idx > 2) skip();
     }
 }
 
