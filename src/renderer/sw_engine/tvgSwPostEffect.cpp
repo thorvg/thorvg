@@ -108,6 +108,7 @@ static void _gaussianFilter(uint8_t* dst, uint8_t* src, int32_t stride, int32_t 
 }
 
 
+//Fast Almost-Gaussian Filtering Method by Peter Kovesi
 static int _gaussianInit(SwGaussianBlur* data, float sigma, int quality)
 {
     const auto MAX_LEVEL = SwGaussianBlur::MAX_LEVEL;
