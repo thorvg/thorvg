@@ -17,13 +17,52 @@
  * SOFTWARE.
  */
 
-#include "webp/decode.h"
 #include "tvgWebpLoader.h"
 
 
 /************************************************************************/
 /* Internal Class Implementation                                        */
 /************************************************************************/
+
+#ifdef THORVG_MODULE_SUPPORT
+#define WEBP_MODULE_PLUGIN_PATH ("loaders/external_webp/" WEBP_MODULE_PLUGIN)
+
+void WebpLoader::init() {
+    TVGLOG("DYLIB", "WebpLoader::init()");
+    
+    #ifdef _WIN32
+    webpDecodeBgra = reinterpret_cast<webp_decode_bgra_f>(GetProcAddress(dl_handle, "webp_decode_bgra"));
+    webpGetInfo = reinterpret_cast<webp_get_info_f>(GetProcAddress(dl_handle, "webp_get_info"));
+    webpFree = reinterpret_cast<webp_free_f>(GetProcAddress(dl_handle, "webp_free"));
+    #else
+    webpDecodeBgra = reinterpret_cast<webp_decode_bgra_f>(dlsym(dl_handle, "webp_decode_bgra"));
+    webpGetInfo = reinterpret_cast<webp_get_info_f>(dlsym(dl_handle, "webp_get_info"));
+    webpFree = reinterpret_cast<webp_free_f>(dlsym(dl_handle, "webp_free"));
+    #endif
+}
+
+bool WebpLoader::moduleLoad() {
+    TVGLOG("DYLIB", "WebpLoader::moduleLoad()");
+    #ifdef _WIN32
+    dl_handle = LoadLibrary(WEBP_MODULE_PLUGIN_PATH);
+    #else
+    dl_handle = dlopen(WEBP_MODULE_PLUGIN_PATH, RTLD_LAZY);
+    #endif
+    return (dl_handle == nullptr);
+}
+
+void WebpLoader::moduleFree() {
+    if (!dl_handle) return;
+
+    TVGLOG("DYLIB", "WebpLoader::moduleFree()");
+
+    #ifdef _WIN32
+    FreeLibrary(dl_handle);
+    #else
+    dlclose(dl_handle);
+    #endif
+}
+#endif
 
 void WebpLoader::clear()
 {
@@ -36,10 +75,10 @@ void WebpLoader::clear()
 void WebpLoader::run(unsigned tid)
 {
     if (surface.cs == ColorSpace::ARGB8888 || surface.cs == ColorSpace::ARGB8888S) {
-        surface.buf8 = WebPDecodeBGRA(data, size, nullptr, nullptr);
+        surface.buf8 = webpDecodeBgra(data, size, nullptr, nullptr);
         surface.cs = ColorSpace::ARGB8888;
     } else  {
-        surface.buf8 = WebPDecodeRGBA(data, size, nullptr, nullptr);
+        surface.buf8 = webpDecodeBgra(data, size, nullptr, nullptr);
         surface.cs = ColorSpace::ABGR8888;
     }
 
@@ -59,6 +98,22 @@ void WebpLoader::run(unsigned tid)
 
 WebpLoader::WebpLoader() : ImageLoader(FileType::Webp)
 {
+#ifdef THORVG_MODULE_SUPPORT
+    if (moduleLoad()) {
+        TVGERR("DYLIB", "WebpLoader::WebpLoader() : moduleLoad() failed");
+        return;
+    }
+
+    init();
+
+    if (!webpDecodeBgra) TVGERR("DYLIB", "WebpLoader::webpDecodeBgra() : can't find symbol");
+    if (!webpGetInfo) TVGERR("DYLIB", "WebpLoader::webpGetInfo() : can't find symbol");
+    if (!webpFree) TVGERR("DYLIB", "WebpLoader::webpFree() : can't find symbol");
+#else
+    webpDecodeBgra = webp_decode_bgra;
+    webpGetInfo = webp_get_info;
+    webpFree = webp_free;
+#endif
 }
 
 
@@ -66,6 +121,10 @@ WebpLoader::~WebpLoader()
 {
     clear();
     free(surface.buf8);
+
+#ifdef THORVG_MODULE_SUPPORT
+    moduleFree();
+#endif
 }
 
 
@@ -95,7 +154,7 @@ bool WebpLoader::open(const char* path)
     fclose(f);
 
     int width, height;
-    if (!WebPGetInfo(data, size, &width, &height)) return false;
+    if (!webpGetInfo(data, size, &width, &height)) return false;
 
     w = static_cast<float>(width);
     h = static_cast<float>(height);
@@ -121,7 +180,7 @@ bool WebpLoader::open(const char* data, uint32_t size, TVG_UNUSED const char* rp
     }
 
     int width, height;
-    if (!WebPGetInfo(this->data, size, &width, &height)) return false;
+    if (!webpGetInfo(this->data, size, &width, &height)) return false;
 
     w = static_cast<float>(width);
     h = static_cast<float>(height);

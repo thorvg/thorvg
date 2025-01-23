@@ -53,6 +53,9 @@ lottie_loader = all_loaders or get_option('loaders').contains('lottie') or lotti
 ttf_loader = all_loaders or get_option('loaders').contains('ttf')
 webp_loader = all_loaders or get_option('loaders').contains('webp')
 
+#Modules
+module_support = get_option('module') == true
+
 #Savers
 all_savers = get_option('savers').contains('all')
 gif_saver = all_savers or get_option('savers').contains('gif') or lottie2gif
@@ -84,6 +87,26 @@ endif
 
 if gif_saver
     config_h.set10('THORVG_GIF_SAVER_SUPPORT', true)
+endif
+
+if module_support
+    config_h.set10('THORVG_MODULE_SUPPORT', true)
+
+    if meson.get_compiler('cpp').get_id() != 'msvc'
+        lib_prefix = 'lib'
+    else
+        lib_prefix = ''
+    endif
+
+    if host_machine.system() == 'darwin'
+        lib_suffix = '.dylib'
+    elif host_machine.system() == 'windows'
+        lib_suffix = '.dll'
+    else
+        lib_suffix = '.so'
+    endif
+
+    config_h.set_quoted('WEBP_MODULE_PLUGIN', lib_prefix + 'thorvg-webp-loader' + lib_suffix)
 endif
 
 #Vectorization
@@ -180,7 +203,7 @@ Summary:
     Tool (Svg2Png):             @20@
     Tool (Lottie2Gif):          @21@
     Extra (Lottie Expressions): @22@
-
+    Module (Dynamic Library):   @23@
 '''.format(
         meson.project_version(),
         get_option('buildtype'),
@@ -204,7 +227,8 @@ Summary:
         get_option('examples'),
         svg2png,
         lottie2gif,
-        lottie_expressions
+        lottie_expressions,
+        module_support
     )
 
 message(summary)

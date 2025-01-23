@@ -26,6 +26,32 @@
 #include "tvgLoader.h"
 #include "tvgTaskScheduler.h"
 
+#ifdef _WIN32
+# include <windows.h>
+#else
+# include <dlfcn.h>
+#endif  // _WIN32
+
+// Dynamic function pointer types
+using webp_decode_bgra_f = uint8_t* (*)(const uint8_t* data, size_t data_size, int* width, int* height);
+using webp_get_info_f = int (*)(const uint8_t* data, size_t data_size, int* width, int* height);
+using webp_free_f = void (*)(void* ptr);
+
+
+#ifdef __cplusplus
+extern "C" {
+#endif
+
+// Dynamic library wrapper functions
+extern uint8_t* webp_decode_bgra(const uint8_t* data, size_t data_size, int* width, int* height);
+extern int      webp_get_info(const uint8_t* data, size_t data_size, int* width, int* height);
+extern void     webp_free(void* ptr);
+
+#ifdef __cplusplus
+}
+#endif
+
+
 class WebpLoader : public ImageLoader, public Task
 {
 public:
@@ -44,6 +70,22 @@ private:
     unsigned char* data = nullptr;
     unsigned long size = 0;
     bool freeData = false;
+
+#ifdef THORVG_MODULE_SUPPORT
+    // Dynamic Loader implementation
+    #ifdef _WIN32
+    HMODULE dl_handle{nullptr};
+    #else
+    void *dl_handle{nullptr};
+    #endif
+    void init();
+    bool moduleLoad();
+    void moduleFree();
+#endif
+
+    webp_decode_bgra_f webpDecodeBgra{nullptr};
+    webp_get_info_f    webpGetInfo{nullptr};
+    webp_free_f        webpFree{nullptr};
 };
 
 #endif //_TVG_WEBP_LOADER_H_

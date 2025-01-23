@@ -63,6 +63,11 @@ option('file',
    value: true,
    description: 'Enable File IO calls in thorvg')
 
+option('module',
+   type: 'boolean',
+   value: false,
+   description: 'Enable ThorVG dynamic module')
+
 option('extra',
    type: 'array',
    choices: ['', 'lottie_expressions'],
