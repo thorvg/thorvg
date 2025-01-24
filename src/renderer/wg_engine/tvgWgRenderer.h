@@ -56,6 +56,7 @@ public:
     void prepare(TVG_UNUSED RenderEffect* effect, TVG_UNUSED const Matrix& transform) override;
     bool region(RenderEffect* effect) override;
     bool render(RenderCompositor* cmp, const RenderEffect* effect, bool direct) override;
+    void dispose(TVG_UNUSED RenderEffect* effect) override;
 
     static WgRenderer* gen();
     static bool init(uint32_t threads);

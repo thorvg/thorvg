@@ -691,7 +691,7 @@ bool SwRenderer::render(RenderCompositor* cmp, const RenderEffect* effect, bool 
         TVGERR("SW_ENGINE", "Not supported grayscale Gaussian Blur!");
         return false;
     }
-
+    
     switch (effect->type) {
         case SceneEffect::GaussianBlur: {
             return effectGaussianBlur(p, request(surface->channelSize, true), static_cast<const RenderEffectGaussianBlur*>(effect));
@@ -716,6 +716,13 @@ bool SwRenderer::render(RenderCompositor* cmp, const RenderEffect* effect, bool 
         }
         default: return false;
     }
+}
+
+
+void SwRenderer::dispose(RenderEffect* effect) 
+{
+    free(effect->rd);
+    effect->rd = nullptr;
 }
 
 

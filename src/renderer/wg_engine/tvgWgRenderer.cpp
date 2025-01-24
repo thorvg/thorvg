@@ -483,6 +483,12 @@ bool WgRenderer::render(TVG_UNUSED RenderCompositor* cmp, TVG_UNUSED const Rende
 }
 
 
+void WgRenderer::dispose(TVG_UNUSED RenderEffect* effect)
+{
+    //TODO: dispose the effect
+}
+
+
 bool WgRenderer::preUpdate()
 {
     return true;

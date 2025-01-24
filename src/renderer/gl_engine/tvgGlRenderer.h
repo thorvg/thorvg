@@ -90,6 +90,7 @@ public:
     void prepare(RenderEffect* effect, const Matrix& transform) override;
     bool region(RenderEffect* effect) override;
     bool render(RenderCompositor* cmp, const RenderEffect* effect, bool direct) override;
+    void dispose(TVG_UNUSED RenderEffect* effect) override;
 
     static GlRenderer* gen();
     static int init(TVG_UNUSED uint32_t threads);
