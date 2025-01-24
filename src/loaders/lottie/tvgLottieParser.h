@@ -98,12 +98,13 @@ private:
     LottieFont* parseFont();
     LottieMarker* parseMarker();
 
-    void parseStroke(LottieFxStroke* effect);
-    void parseTritone(LottieFxTritone* effect);
-    void parseTint(LottieFxTint* effect);
-    void parseFill(LottieFxFill* effect);
-    void parseGaussianBlur(LottieFxGaussianBlur* effect);
-    void parseDropShadow(LottieFxDropShadow* effect);
+    void parseEffect(LottieEffect* effect, void(LottieParser::*func)(LottieEffect*, int));
+    void parseStroke(LottieEffect* effect, int idx);
+    void parseTritone(LottieEffect* effect, int idx);
+    void parseTint(LottieEffect* effect, int idx);
+    void parseFill(LottieEffect* effect, int idx);
+    void parseGaussianBlur(LottieEffect* effect, int idx);
+    void parseDropShadow(LottieEffect* effect, int idx);
 
     bool parseDirection(LottieShape* shape, const char* key);
     bool parseCommon(LottieObject* obj, const char* key);
