@@ -968,6 +968,12 @@ bool GlRenderer::render(TVG_UNUSED RenderCompositor* cmp, TVG_UNUSED const Rende
 }
 
 
+void GlRenderer::dispose(TVG_UNUSED RenderEffect* effect)
+{
+    //TODO: dispose the effect
+}
+
+
 ColorSpace GlRenderer::colorSpace()
 {
     return ColorSpace::Unknown;

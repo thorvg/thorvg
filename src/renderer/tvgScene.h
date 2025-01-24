@@ -299,7 +299,10 @@ struct Scene::Impl : Paint::Impl
     Result resetEffects()
     {
         if (effects) {
-            ARRAY_FOREACH(p, *effects) delete(*p);
+            ARRAY_FOREACH(p, *effects) {
+                renderer->dispose(*p);
+                delete(*p);
+            }
             delete(effects);
             effects = nullptr;
         }

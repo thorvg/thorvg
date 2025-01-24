@@ -263,10 +263,7 @@ struct RenderEffect
     SceneEffect type;
     bool valid = false;
 
-    virtual ~RenderEffect()
-    {
-        free(rd);
-    }
+    virtual ~RenderEffect() {}
 };
 
 struct RenderEffectGaussianBlur : RenderEffect
@@ -409,6 +406,7 @@ public:
     virtual void prepare(RenderEffect* effect, const Matrix& transform) = 0;
     virtual bool region(RenderEffect* effect) = 0;
     virtual bool render(RenderCompositor* cmp, const RenderEffect* effect, bool direct) = 0;
+    virtual void dispose(RenderEffect* effect) = 0;
 };
 
 static inline bool MASK_REGION_MERGING(MaskMethod method)
