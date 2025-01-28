@@ -1610,7 +1610,7 @@ public:
      * @note If you are unsure about the MIME type, you can provide an empty value like @c nullptr, and thorvg will attempt to figure it out.
      * @see Text::font(const char* name, float size, const char* style)
      *
-     * @note 0.15
+     * @since 0.15
      */
     static Result load(const char* name, const char* data, uint32_t size, const char* mimeType = "ttf", bool copy = false) noexcept;
 
