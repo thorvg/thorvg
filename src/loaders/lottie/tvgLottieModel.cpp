@@ -60,12 +60,12 @@ void LottieSlot::assign(LottieObject* target, bool byDefault)
         //backup the original properties before overwriting
         switch (type) {
             case LottieProperty::Type::Position: {
-                if (copy) pair->prop = new LottiePosition(static_cast<LottieTransform*>(pair->obj)->position);
+                if (copy) pair->prop = new LottieVector(static_cast<LottieTransform*>(pair->obj)->position);
                 pair->obj->override(&static_cast<LottieTransform*>(target)->position, shallow, byDefault);
                 break;
             }
             case LottieProperty::Type::Point: {
-                if (copy) pair->prop = new LottiePoint(static_cast<LottieTransform*>(pair->obj)->scale);
+                if (copy) pair->prop = new LottieScalar(static_cast<LottieTransform*>(pair->obj)->scale);
                 pair->obj->override(&static_cast<LottieTransform*>(target)->scale, shallow, byDefault);
                 break;
             }

@@ -111,7 +111,7 @@ static jerry_value_t _value(float frameNo, LottieProperty* property)
     switch (property->type) {
         case LottieProperty::Type::Point: {
             auto value = jerry_object();
-            auto pos = (*static_cast<LottiePoint*>(property))(frameNo);
+            auto pos = (*static_cast<LottieScalar*>(property))(frameNo);
             auto val1 = jerry_number(pos.x);
             auto val2 = jerry_number(pos.y);
             jerry_object_set_index(value, 0, val1);
@@ -133,7 +133,7 @@ static jerry_value_t _value(float frameNo, LottieProperty* property)
         }
         case LottieProperty::Type::Position: {
             auto value = jerry_object();
-            auto pos = (*static_cast<LottiePosition*>(property))(frameNo);
+            auto pos = (*static_cast<LottieVector*>(property))(frameNo);
             auto val1 = jerry_number(pos.x);
             auto val2 = jerry_number(pos.y);
             jerry_object_set_index(value, 0, val1);
@@ -764,13 +764,13 @@ static jerry_value_t _velocityAtTime(const jerry_call_info_t* info, const jerry_
     //compute the velocity
     switch (exp->property->type) {
         case LottieProperty::Type::Point: {
-            auto prv = (*static_cast<LottiePoint*>(exp->property))(pframe);
-            auto cur = (*static_cast<LottiePoint*>(exp->property))(cframe);
+            auto prv = (*static_cast<LottieScalar*>(exp->property))(pframe);
+            auto cur = (*static_cast<LottieScalar*>(exp->property))(cframe);
             return _velocity(prv.x, cur.x, prv.y, cur.y, elapsed);
         }
         case LottieProperty::Type::Position: {
-            auto prv = (*static_cast<LottiePosition*>(exp->property))(pframe);
-            auto cur = (*static_cast<LottiePosition*>(exp->property))(cframe);
+            auto prv = (*static_cast<LottieVector*>(exp->property))(pframe);
+            auto cur = (*static_cast<LottieVector*>(exp->property))(cframe);
             return _velocity(prv.x, cur.x, prv.y, cur.y, elapsed);
         }
         case LottieProperty::Type::Float: {
@@ -800,13 +800,13 @@ static jerry_value_t _speedAtTime(const jerry_call_info_t* info, const jerry_val
     //compute the velocity
     switch (exp->property->type) {
         case LottieProperty::Type::Point: {
-            prv = (*static_cast<LottiePoint*>(exp->property))(pframe);
-            cur = (*static_cast<LottiePoint*>(exp->property))(cframe);
+            prv = (*static_cast<LottieScalar*>(exp->property))(pframe);
+            cur = (*static_cast<LottieScalar*>(exp->property))(cframe);
             break;
         }
         case LottieProperty::Type::Position: {
-            prv = (*static_cast<LottiePosition*>(exp->property))(pframe);
-            cur = (*static_cast<LottiePosition*>(exp->property))(cframe);
+            prv = (*static_cast<LottieVector*>(exp->property))(pframe);
+            cur = (*static_cast<LottieVector*>(exp->property))(cframe);
             break;
         }
         default: {

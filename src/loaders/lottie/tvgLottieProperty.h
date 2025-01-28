@@ -55,6 +55,15 @@ struct LottieScalarFrame
         }
         return lerp(value, next->value, t);
     }
+
+    float angle(LottieScalarFrame* next, float frameNo)
+    {
+        return 0.0f;
+    }
+
+    void prepare(TVG_UNUSED LottieScalarFrame* next)
+    {
+    }
 };
 
 
@@ -253,17 +262,17 @@ float _loop(T* frames, float frameNo, LottieExpression* exp)
 }
 
 
-template<typename T>
+template<typename Frame, typename Value, bool Scalar = 1>
 struct LottieGenericProperty : LottieProperty
 {
     //Property has an either keyframes or single value.
-    Array<LottieScalarFrame<T>>* frames = nullptr;
-    T value;
+    Array<Frame>* frames = nullptr;
+    Value value;
 
-    LottieGenericProperty(T v) : value(v) {}
+    LottieGenericProperty(Value v) : value(v) {}
     LottieGenericProperty() {}
 
-    LottieGenericProperty(const LottieGenericProperty<T>& rhs)
+    LottieGenericProperty(const LottieGenericProperty<Frame, Value>& rhs)
     {
         copy(rhs);
         type = rhs.type;
@@ -299,24 +308,24 @@ struct LottieGenericProperty : LottieProperty
         return _frameNo(frames, key);
     }
 
-    LottieScalarFrame<T>& newFrame()
+    Frame& newFrame()
     {
-        if (!frames) frames = new Array<LottieScalarFrame<T>>;
+        if (!frames) frames = new Array<Frame>;
         if (frames->count + 1 >= frames->reserved) {
             auto old = frames->reserved;
             frames->grow(frames->count + 2);
-            memset((void*)(frames->data + old), 0x00, sizeof(LottieScalarFrame<T>) * (frames->reserved - old));
+            memset((void*)(frames->data + old), 0x00, sizeof(Frame) * (frames->reserved - old));
         }
         ++frames->count;
         return frames->last();
     }
 
-    LottieScalarFrame<T>& nextFrame()
+    Frame& nextFrame()
     {
         return (*frames)[frames->count];
     }
 
-    T operator()(float frameNo)
+    Value operator()(float frameNo)
     {
         if (!frames) return value;
         if (frames->count == 1 || frameNo <= frames->first().no) return frames->first().value;
@@ -327,31 +336,51 @@ struct LottieGenericProperty : LottieProperty
         return frame->interpolate(frame + 1, frameNo);
     }
 
-    T operator()(float frameNo, LottieExpressions* exps)
+    Value operator()(float frameNo, LottieExpressions* exps)
     {
         if (exps && exp) {
-            T out{};
+            Value out{};
             frameNo = _loop(frames, frameNo, exp);
-            if (exps->result<LottieGenericProperty<T>>(frameNo, out, exp)) return out;
+            if (exps->result<LottieGenericProperty<Frame, Value>>(frameNo, out, exp)) return out;
         }
         return operator()(frameNo);
     }
 
-    void copy(const LottieGenericProperty<T>& rhs, bool shallow = true)
+    void copy(const LottieGenericProperty<Frame, Value, Scalar>& rhs, bool shallow = true)
     {
         if (rhs.frames) {
             if (shallow) {
                 frames = rhs.frames;
-                const_cast<LottieGenericProperty<T>&>(rhs).frames = nullptr;
+                const_cast<LottieGenericProperty<Frame, Value, Scalar>&>(rhs).frames = nullptr;
             } else {
-                frames = new Array<LottieScalarFrame<T>>;
+                frames = new Array<Frame>;
                 *frames = *rhs.frames;
             }
         } else value = rhs.value;
     }
 
-    float angle(float frameNo) { return 0; }
-    void prepare() {}
+    float angle(float frameNo)
+    {
+        if (!frames || frames->count == 1) return 0;
+
+        if (frameNo <= frames->first().no) return frames->first().angle(frames->data + 1, frames->first().no);
+        if (frameNo >= frames->last().no) {
+            auto frame = frames->data + frames->count - 2;
+            return frame->angle(frame + 1, frames->last().no);
+        }
+
+        auto frame = frames->data + _bsearch(frames, frameNo);
+        return frame->angle(frame + 1, frameNo);
+    }
+
+    void prepare()
+    {
+        if (Scalar) return;
+        if (!frames || frames->count < 2) return;
+        for (auto frame = frames->begin() + 1; frame < frames->end(); ++frame) {
+            (frame - 1)->prepare(frame);
+        }
+    }
 };
 
 
@@ -649,121 +678,6 @@ struct LottieColorStop : LottieProperty
 };
 
 
-struct LottiePosition : LottieProperty
-{
-    Array<LottieVectorFrame<Point>>* frames = nullptr;
-    Point value;
-
-    LottiePosition(Point v) : value(v)
-    {
-    }
-
-    ~LottiePosition()
-    {
-        release();
-    }
-
-    void release()
-    {
-        delete(frames);
-        frames = nullptr;
-
-        if (exp) {
-            delete(exp);
-            exp = nullptr;
-        }
-    }
-
-    uint32_t nearest(float frameNo) override
-    {
-        return _nearest(frames, frameNo);
-    }
-
-    uint32_t frameCnt() override
-    {
-        return frames ? frames->count : 1;
-    }
-
-    float frameNo(int32_t key) override
-    {
-        return _frameNo(frames, key);
-    }
-
-    LottieVectorFrame<Point>& newFrame()
-    {
-        if (!frames) frames = new Array<LottieVectorFrame<Point>>;
-        if (frames->count + 1 >= frames->reserved) {
-            auto old = frames->reserved;
-            frames->grow(frames->count + 2);
-            memset((void*)(frames->data + old), 0x00, sizeof(LottieVectorFrame<Point>) * (frames->reserved - old));
-        }
-        ++frames->count;
-        return frames->last();
-    }
-
-    LottieVectorFrame<Point>& nextFrame()
-    {
-        return (*frames)[frames->count];
-    }
-
-    Point operator()(float frameNo)
-    {
-        if (!frames) return value;
-        if (frames->count == 1 || frameNo <= frames->first().no) return frames->first().value;
-        if (frameNo >= frames->last().no) return frames->last().value;
-
-        auto frame = frames->data + _bsearch(frames, frameNo);
-        if (tvg::equal(frame->no, frameNo)) return frame->value;
-        return frame->interpolate(frame + 1, frameNo);
-    }
-
-    Point operator()(float frameNo, LottieExpressions* exps)
-    {
-        Point out{};
-        if (exps && exp) {
-            frameNo = _loop(frames, frameNo, exp);
-            if (exps->result<LottiePosition>(frameNo, out, exp)) return out;
-        }
-        return operator()(frameNo);
-    }
-
-    float angle(float frameNo)
-    {
-        if (!frames || frames->count == 1) return 0;
-
-        if (frameNo <= frames->first().no) return frames->first().angle(frames->data + 1, frames->first().no);
-        if (frameNo >= frames->last().no) {
-            auto frame = frames->data + frames->count - 2;
-            return frame->angle(frame + 1, frames->last().no);
-        }
-
-        auto frame = frames->data + _bsearch(frames, frameNo);
-        return frame->angle(frame + 1, frameNo);
-    }
-
-    void copy(const LottiePosition& rhs, bool shallow = true)
-    {
-        if (rhs.frames) {
-            if (shallow) {
-                frames = rhs.frames;
-                const_cast<LottiePosition&>(rhs).frames = nullptr;
-            } else {
-                frames = new Array<LottieVectorFrame<Point>>;
-                *frames = *rhs.frames;
-            }
-        } else value = rhs.value;
-    }
-
-    void prepare()
-    {
-        if (!frames || frames->count < 2) return;
-        for (auto frame = frames->begin() + 1; frame < frames->end(); ++frame) {
-            (frame - 1)->prepare(frame);
-        }
-    }
-};
-
-
 struct LottieTextDoc : LottieProperty
 {
     Array<LottieScalarFrame<TextDocument>>* frames = nullptr;
@@ -929,10 +843,11 @@ struct LottieBitmap : LottieProperty
 };
 
 
-using LottiePoint = LottieGenericProperty<Point>;
-using LottieFloat = LottieGenericProperty<float>;
-using LottieOpacity = LottieGenericProperty<uint8_t>;
-using LottieColor = LottieGenericProperty<RGB24>;
-using LottieInteger = LottieGenericProperty<int8_t>;
+using LottieScalar = LottieGenericProperty<LottieScalarFrame<Point>, Point>;
+using LottieFloat = LottieGenericProperty<LottieScalarFrame<float>, float>;
+using LottieOpacity = LottieGenericProperty<LottieScalarFrame<uint8_t>, uint8_t>;
+using LottieColor = LottieGenericProperty<LottieScalarFrame<RGB24>, RGB24>;
+using LottieInteger = LottieGenericProperty<LottieScalarFrame<int8_t>, int8_t>;
+using LottieVector = LottieGenericProperty<LottieVectorFrame<Point>, Point, 0>;
 
 #endif //_TVG_LOTTIE_PROPERTY_H_
