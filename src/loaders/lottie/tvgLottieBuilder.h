@@ -56,7 +56,7 @@ struct RenderContext
     Array<RenderRepeater> repeaters;
     Matrix* transform = nullptr;
     LottieRoundnessModifier* roundness = nullptr;
-    LottieOffsetModifier* offsetPath = nullptr;
+    LottieOffsetModifier* offset = nullptr;
     bool fragmenting = false;  //render context has been fragmented by filling
     bool reqFragment = false;  //requirement to fragment the render context
 
@@ -72,7 +72,7 @@ struct RenderContext
         propagator->unref(false);
         free(transform);
         delete(roundness);
-        delete(offsetPath);
+        delete(offset);
     }
 
     RenderContext(const RenderContext& rhs, Shape* propagator, bool mergeable = false)
@@ -80,9 +80,9 @@ struct RenderContext
         if (mergeable) merging = rhs.merging;
         propagator->ref();
         this->propagator = propagator;
-        this->repeaters = rhs.repeaters;
-        if (rhs.roundness) this->roundness = new LottieRoundnessModifier(rhs.roundness->r);
-        if (rhs.offsetPath) this->offsetPath = new LottieOffsetModifier(rhs.offsetPath->offset, rhs.offsetPath->miterLimit, rhs.offsetPath->join);
+        repeaters = rhs.repeaters;
+        if (rhs.roundness) roundness = new LottieRoundnessModifier(rhs.roundness->r);
+        if (rhs.offset) offset = new LottieOffsetModifier(rhs.offset->offset, rhs.offset->miterLimit, rhs.offset->join);
     }
 };
 

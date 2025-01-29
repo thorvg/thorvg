@@ -373,7 +373,7 @@ static void _repeat(LottieGroup* parent, Shape* path, RenderContext* ctx)
 }
 
 
-static void _appendRect(Shape* shape, float x, float y, float w, float h, float r, const LottieOffsetModifier* offsetPath, Matrix* transform, bool clockwise)
+static void _appendRect(Shape* shape, float x, float y, float w, float h, float r, const LottieOffsetModifier* offset, Matrix* transform, bool clockwise)
 {
     //sharp rect
     if (tvg::zero(r)) {
@@ -400,7 +400,7 @@ static void _appendRect(Shape* shape, float x, float y, float w, float h, float 
             }
         }
 
-        if (offsetPath) offsetPath->modifyRect(commands, 5, points, 4, SHAPE(shape)->rs.path.cmds, SHAPE(shape)->rs.path.pts);
+        if (offset) offset->modifyRect(commands, 5, points, 4, SHAPE(shape)->rs.path.cmds, SHAPE(shape)->rs.path.pts);
         else shape->appendPath(commands, 5, points, 4);
     //round rect
     } else {
@@ -453,7 +453,7 @@ static void _appendRect(Shape* shape, float x, float y, float w, float h, float 
             }
         }
 
-        if (offsetPath) offsetPath->modifyRect(commands, cmdCnt, points, ptsCnt, SHAPE(shape)->rs.path.cmds, SHAPE(shape)->rs.path.pts);
+        if (offset) offset->modifyRect(commands, cmdCnt, points, ptsCnt, SHAPE(shape)->rs.path.cmds, SHAPE(shape)->rs.path.pts);
         else shape->appendPath(commands, cmdCnt, points, ptsCnt);
     }
 }
@@ -475,18 +475,18 @@ void LottieBuilder::updateRect(LottieGroup* parent, LottieObject** child, float 
     if (!ctx->repeaters.empty()) {
         auto shape = rect->pooling();
         shape->reset();
-        _appendRect(shape, position.x - size.x * 0.5f, position.y - size.y * 0.5f, size.x, size.y, r, ctx->offsetPath, ctx->transform, rect->clockwise);
+        _appendRect(shape, position.x - size.x * 0.5f, position.y - size.y * 0.5f, size.x, size.y, r, ctx->offset, ctx->transform, rect->clockwise);
         _repeat(parent, shape, ctx);
     } else {
         _draw(parent, rect, ctx);
-        _appendRect(ctx->merging, position.x - size.x * 0.5f, position.y - size.y * 0.5f, size.x, size.y, r, ctx->offsetPath, ctx->transform, rect->clockwise);
+        _appendRect(ctx->merging, position.x - size.x * 0.5f, position.y - size.y * 0.5f, size.x, size.y, r, ctx->offset, ctx->transform, rect->clockwise);
     }
 }
 
 
-static void _appendCircle(Shape* shape, float cx, float cy, float rx, float ry, const LottieOffsetModifier* offsetPath, Matrix* transform, bool clockwise)
+static void _appendCircle(Shape* shape, float cx, float cy, float rx, float ry, const LottieOffsetModifier* offset, Matrix* transform, bool clockwise)
 {
-    if (offsetPath) offsetPath->modifyEllipse(rx, ry);
+    if (offset) offset->modifyEllipse(rx, ry);
 
     if (rx == 0.0f || ry == 0.0f) return;
 
@@ -536,11 +536,11 @@ void LottieBuilder::updateEllipse(LottieGroup* parent, LottieObject** child, flo
     if (!ctx->repeaters.empty()) {
         auto shape = ellipse->pooling();
         shape->reset();
-        _appendCircle(shape, position.x, position.y, size.x * 0.5f, size.y * 0.5f, ctx->offsetPath, ctx->transform, ellipse->clockwise);
+        _appendCircle(shape, position.x, position.y, size.x * 0.5f, size.y * 0.5f, ctx->offset, ctx->transform, ellipse->clockwise);
         _repeat(parent, shape, ctx);
     } else {
         _draw(parent, ellipse, ctx);
-        _appendCircle(ctx->merging, position.x, position.y, size.x * 0.5f, size.y * 0.5f, ctx->offsetPath, ctx->transform, ellipse->clockwise);
+        _appendCircle(ctx->merging, position.x, position.y, size.x * 0.5f, size.y * 0.5f, ctx->offset, ctx->transform, ellipse->clockwise);
     }
 }
 
@@ -552,18 +552,18 @@ void LottieBuilder::updatePath(LottieGroup* parent, LottieObject** child, float 
     if (!ctx->repeaters.empty()) {
         auto shape = path->pooling();
         shape->reset();
-        path->pathset(frameNo, SHAPE(shape)->rs.path.cmds, SHAPE(shape)->rs.path.pts, ctx->transform, ctx->roundness, ctx->offsetPath, exps);
+        path->pathset(frameNo, SHAPE(shape)->rs.path.cmds, SHAPE(shape)->rs.path.pts, ctx->transform, ctx->roundness, ctx->offset, exps);
         _repeat(parent, shape, ctx);
     } else {
         _draw(parent, path, ctx);
-        if (path->pathset(frameNo, SHAPE(ctx->merging)->rs.path.cmds, SHAPE(ctx->merging)->rs.path.pts, ctx->transform, ctx->roundness, ctx->offsetPath, exps)) {
+        if (path->pathset(frameNo, SHAPE(ctx->merging)->rs.path.cmds, SHAPE(ctx->merging)->rs.path.pts, ctx->transform, ctx->roundness, ctx->offset, exps)) {
             PAINT(ctx->merging)->update(RenderUpdateFlag::Path);
         }
     }
 }
 
 
-static void _updateStar(TVG_UNUSED LottieGroup* parent, LottiePolyStar* star, Matrix* transform, const LottieRoundnessModifier* roundness, const LottieOffsetModifier* offsetPath, float frameNo, Shape* merging, LottieExpressions* exps)
+static void _updateStar(TVG_UNUSED LottieGroup* parent, LottiePolyStar* star, Matrix* transform, const LottieRoundnessModifier* roundness, const LottieOffsetModifier* offset, float frameNo, Shape* merging, LottieExpressions* exps)
 {
     static constexpr auto POLYSTAR_MAGIC_NUMBER = 0.47829f / 0.28f;
 
@@ -585,7 +585,7 @@ static void _updateStar(TVG_UNUSED LottieGroup* parent, LottiePolyStar* star, Ma
     bool roundedCorner = roundness && (tvg::zero(innerRoundness) || tvg::zero(outerRoundness));
 
     Shape* shape;
-    if (roundedCorner || offsetPath) {
+    if (roundedCorner || offset) {
         shape = star->pooling();
         shape->reset();
     } else {
@@ -680,19 +680,19 @@ static void _updateStar(TVG_UNUSED LottieGroup* parent, LottiePolyStar* star, Ma
     shape->close();
 
     if (roundedCorner) {
-        if (offsetPath) {
+        if (offset) {
             auto intermediate = Shape::gen();
             roundness->modifyPolystar(SHAPE(shape)->rs.path.cmds, SHAPE(shape)->rs.path.pts, SHAPE(intermediate)->rs.path.cmds, SHAPE(intermediate)->rs.path.pts, outerRoundness, hasRoundness);
-            offsetPath->modifyPolystar(SHAPE(intermediate)->rs.path.cmds, SHAPE(intermediate)->rs.path.pts, SHAPE(merging)->rs.path.cmds, SHAPE(merging)->rs.path.pts);
+            offset->modifyPolystar(SHAPE(intermediate)->rs.path.cmds, SHAPE(intermediate)->rs.path.pts, SHAPE(merging)->rs.path.cmds, SHAPE(merging)->rs.path.pts);
             delete(intermediate);
         } else {
             roundness->modifyPolystar(SHAPE(shape)->rs.path.cmds, SHAPE(shape)->rs.path.pts, SHAPE(merging)->rs.path.cmds, SHAPE(merging)->rs.path.pts, outerRoundness, hasRoundness);
         }
-    } else if (offsetPath) offsetPath->modifyPolystar(SHAPE(shape)->rs.path.cmds, SHAPE(shape)->rs.path.pts, SHAPE(merging)->rs.path.cmds, SHAPE(merging)->rs.path.pts);
+    } else if (offset) offset->modifyPolystar(SHAPE(shape)->rs.path.cmds, SHAPE(shape)->rs.path.pts, SHAPE(merging)->rs.path.cmds, SHAPE(merging)->rs.path.pts);
 }
 
 
-static void _updatePolygon(LottieGroup* parent, LottiePolyStar* star, Matrix* transform, const LottieRoundnessModifier* roundness, const LottieOffsetModifier* offsetPath, float frameNo, Shape* merging, LottieExpressions* exps)
+static void _updatePolygon(LottieGroup* parent, LottiePolyStar* star, Matrix* transform, const LottieRoundnessModifier* roundness, const LottieOffsetModifier* offset, float frameNo, Shape* merging, LottieExpressions* exps)
 {
     static constexpr auto POLYGON_MAGIC_NUMBER = 0.25f;
 
@@ -711,7 +711,7 @@ static void _updatePolygon(LottieGroup* parent, LottiePolyStar* star, Matrix* tr
     angle += anglePerPoint * direction;
 
     Shape* shape;
-    if (roundedCorner || offsetPath) {
+    if (roundedCorner || offset) {
         shape = star->pooling();
         shape->reset();
     } else {
@@ -767,15 +767,15 @@ static void _updatePolygon(LottieGroup* parent, LottiePolyStar* star, Matrix* tr
     shape->close();
 
     if (roundedCorner) {
-        if (offsetPath) {
+        if (offset) {
             auto intermediate = Shape::gen();
             roundness->modifyPolystar(SHAPE(shape)->rs.path.cmds, SHAPE(shape)->rs.path.pts, SHAPE(intermediate)->rs.path.cmds, SHAPE(intermediate)->rs.path.pts, 0.0f, false);
-            offsetPath->modifyPolystar(SHAPE(intermediate)->rs.path.cmds, SHAPE(intermediate)->rs.path.pts, SHAPE(merging)->rs.path.cmds, SHAPE(merging)->rs.path.pts);
+            offset->modifyPolystar(SHAPE(intermediate)->rs.path.cmds, SHAPE(intermediate)->rs.path.pts, SHAPE(merging)->rs.path.cmds, SHAPE(merging)->rs.path.pts);
             delete(intermediate);
         } else {
             roundness->modifyPolystar(SHAPE(shape)->rs.path.cmds, SHAPE(shape)->rs.path.pts, SHAPE(merging)->rs.path.cmds, SHAPE(merging)->rs.path.pts, 0.0f, false);
         }
-    } else if (offsetPath) offsetPath->modifyPolystar(SHAPE(shape)->rs.path.cmds, SHAPE(shape)->rs.path.pts, SHAPE(merging)->rs.path.cmds, SHAPE(merging)->rs.path.pts);
+    } else if (offset) offset->modifyPolystar(SHAPE(shape)->rs.path.cmds, SHAPE(shape)->rs.path.pts, SHAPE(merging)->rs.path.cmds, SHAPE(merging)->rs.path.pts);
 }
 
 
@@ -796,13 +796,13 @@ void LottieBuilder::updatePolystar(LottieGroup* parent, LottieObject** child, fl
     if (!ctx->repeaters.empty()) {
         auto shape = star->pooling();
         shape->reset();
-        if (star->type == LottiePolyStar::Star) _updateStar(parent, star, identity ? nullptr : &matrix, ctx->roundness, ctx->offsetPath, frameNo, shape, exps);
-        else _updatePolygon(parent, star, identity  ? nullptr : &matrix, ctx->roundness, ctx->offsetPath, frameNo, shape, exps);
+        if (star->type == LottiePolyStar::Star) _updateStar(parent, star, identity ? nullptr : &matrix, ctx->roundness, ctx->offset, frameNo, shape, exps);
+        else _updatePolygon(parent, star, identity  ? nullptr : &matrix, ctx->roundness, ctx->offset, frameNo, shape, exps);
         _repeat(parent, shape, ctx);
     } else {
         _draw(parent, star, ctx);
-        if (star->type == LottiePolyStar::Star) _updateStar(parent, star, identity ? nullptr : &matrix, ctx->roundness, ctx->offsetPath, frameNo, ctx->merging, exps);
-        else _updatePolygon(parent, star, identity  ? nullptr : &matrix, ctx->roundness, ctx->offsetPath, frameNo, ctx->merging, exps);
+        if (star->type == LottiePolyStar::Star) _updateStar(parent, star, identity ? nullptr : &matrix, ctx->roundness, ctx->offset, frameNo, ctx->merging, exps);
+        else _updatePolygon(parent, star, identity  ? nullptr : &matrix, ctx->roundness, ctx->offset, frameNo, ctx->merging, exps);
         PAINT(ctx->merging)->update(RenderUpdateFlag::Path);
     }
 }
@@ -821,8 +821,8 @@ void LottieBuilder::updateRoundedCorner(TVG_UNUSED LottieGroup* parent, LottieOb
 
 void LottieBuilder::updateOffsetPath(TVG_UNUSED LottieGroup* parent, LottieObject** child, float frameNo, TVG_UNUSED Inlist<RenderContext>& contexts, RenderContext* ctx)
 {
-    auto offsetPath = static_cast<LottieOffsetPath*>(*child);
-    if (!ctx->offsetPath) ctx->offsetPath = new LottieOffsetModifier(offsetPath->offset(frameNo, exps), offsetPath->miterLimit(frameNo, exps), offsetPath->join);
+    auto offset = static_cast<LottieOffsetPath*>(*child);
+    if (!ctx->offset) ctx->offset = new LottieOffsetModifier(offset->offset(frameNo, exps), offset->miterLimit(frameNo, exps), offset->join);
 }
 
 
