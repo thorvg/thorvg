@@ -448,7 +448,7 @@ struct LottiePathSet : LottieProperty
         return (*frames)[frames->count];
     }
 
-    bool operator()(float frameNo, Array<PathCommand>& cmds, Array<Point>& pts, Matrix* transform, const LottieRoundnessModifier* roundness, const LottieOffsetModifier* offsetPath)
+    bool operator()(float frameNo, Array<PathCommand>& cmds, Array<Point>& pts, Matrix* transform, const LottieRoundnessModifier* roundness, const LottieOffsetModifier* offset)
     {
         PathSet* path = nullptr;
         LottieScalarFrame<PathSet>* frame = nullptr;
@@ -474,15 +474,15 @@ struct LottiePathSet : LottieProperty
 
         if (!interpolate) {
             if (roundness) {
-                if (offsetPath) {
+                if (offset) {
                     Array<PathCommand> cmds1(path->cmdsCnt);
                     Array<Point> pts1(path->ptsCnt);
                     roundness->modifyPath(path->cmds, path->cmdsCnt, path->pts, path->ptsCnt, cmds1, pts1, transform);
-                    return offsetPath->modifyPath(cmds1.data, cmds1.count, pts1.data, pts1.count, cmds, pts);
+                    return offset->modifyPath(cmds1.data, cmds1.count, pts1.data, pts1.count, cmds, pts);
                 }
                 return roundness->modifyPath(path->cmds, path->cmdsCnt, path->pts, path->ptsCnt, cmds, pts, transform);
             }
-            if (offsetPath) return offsetPath->modifyPath(path->cmds, path->cmdsCnt, path->pts, path->ptsCnt, cmds, pts);
+            if (offset) return offset->modifyPath(path->cmds, path->cmdsCnt, path->pts, path->ptsCnt, cmds, pts);
 
             _copy(path, cmds);
             _copy(path, pts, transform);
@@ -492,7 +492,7 @@ struct LottiePathSet : LottieProperty
         auto s = frame->value.pts;
         auto e = (frame + 1)->value.pts;
 
-        if (!roundness && !offsetPath) {
+        if (!roundness && !offset) {
             for (auto i = 0; i < frame->value.ptsCnt; ++i, ++s, ++e) {
                 auto pt = lerp(*s, *e, t);
                 if (transform) pt *= *transform;
@@ -510,13 +510,13 @@ struct LottiePathSet : LottieProperty
         }
 
         if (roundness) {
-            if (offsetPath) {
+            if (offset) {
                 Array<PathCommand> cmds1;
                 Array<Point> pts1;
                 roundness->modifyPath(frame->value.cmds, frame->value.cmdsCnt, interpPts, frame->value.ptsCnt, cmds1, pts1, nullptr);
-                offsetPath->modifyPath(cmds1.data, cmds1.count, pts1.data, pts1.count, cmds, pts);
+                offset->modifyPath(cmds1.data, cmds1.count, pts1.data, pts1.count, cmds, pts);
             } else roundness->modifyPath(frame->value.cmds, frame->value.cmdsCnt, interpPts, frame->value.ptsCnt, cmds, pts, nullptr);
-        } else if (offsetPath) offsetPath->modifyPath(frame->value.cmds, frame->value.cmdsCnt, interpPts, frame->value.ptsCnt, cmds, pts);
+        } else if (offset) offset->modifyPath(frame->value.cmds, frame->value.cmdsCnt, interpPts, frame->value.ptsCnt, cmds, pts);
 
         free(interpPts);
 
@@ -524,13 +524,13 @@ struct LottiePathSet : LottieProperty
     }
 
 
-    bool operator()(float frameNo, Array<PathCommand>& cmds, Array<Point>& pts, Matrix* transform, const LottieRoundnessModifier* roundness, const LottieOffsetModifier* offsetPath, LottieExpressions* exps)
+    bool operator()(float frameNo, Array<PathCommand>& cmds, Array<Point>& pts, Matrix* transform, const LottieRoundnessModifier* roundness, const LottieOffsetModifier* offset, LottieExpressions* exps)
     {
         if (exps && exp) {
             frameNo = _loop(frames, frameNo, exp);
-            if (exps->result<LottiePathSet>(frameNo, cmds, pts, transform, roundness, offsetPath, exp)) return true;
+            if (exps->result<LottiePathSet>(frameNo, cmds, pts, transform, roundness, offset, exp)) return true;
         }
-        return operator()(frameNo, cmds, pts, transform, roundness, offsetPath);
+        return operator()(frameNo, cmds, pts, transform, roundness, offset);
     }
 
     void prepare() {}
