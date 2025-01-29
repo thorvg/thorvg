@@ -325,8 +325,15 @@ struct LottieGenericProperty : LottieProperty
         return (*frames)[frames->count];
     }
 
-    Value operator()(float frameNo)
+    Value operator()(float frameNo, LottieExpressions* exps = nullptr)
     {
+        //overriding with expressions
+        if (exps && exp) {
+            Value out{};
+            frameNo = _loop(frames, frameNo, exp);
+            if (exps->result<LottieGenericProperty<Frame, Value>>(frameNo, out, exp)) return out;
+        }
+
         if (!frames) return value;
         if (frames->count == 1 || frameNo <= frames->first().no) return frames->first().value;
         if (frameNo >= frames->last().no) return frames->last().value;
@@ -334,16 +341,6 @@ struct LottieGenericProperty : LottieProperty
         auto frame = frames->data + _bsearch(frames, frameNo);
         if (tvg::equal(frame->no, frameNo)) return frame->value;
         return frame->interpolate(frame + 1, frameNo);
-    }
-
-    Value operator()(float frameNo, LottieExpressions* exps)
-    {
-        if (exps && exp) {
-            Value out{};
-            frameNo = _loop(frames, frameNo, exp);
-            if (exps->result<LottieGenericProperty<Frame, Value>>(frameNo, out, exp)) return out;
-        }
-        return operator()(frameNo);
     }
 
     void copy(const LottieGenericProperty<Frame, Value, Scalar>& rhs, bool shallow = true)
@@ -448,8 +445,14 @@ struct LottiePathSet : LottieProperty
         return (*frames)[frames->count];
     }
 
-    bool operator()(float frameNo, Array<PathCommand>& cmds, Array<Point>& pts, Matrix* transform, const LottieRoundnessModifier* roundness, const LottieOffsetModifier* offset)
+    bool operator()(float frameNo, Array<PathCommand>& cmds, Array<Point>& pts, Matrix* transform, const LottieRoundnessModifier* roundness, const LottieOffsetModifier* offset, LottieExpressions* exps = nullptr)
     {
+        //overriding with expressions
+        if (exps && exp) {
+            frameNo = _loop(frames, frameNo, exp);
+            if (exps->result<LottiePathSet>(frameNo, cmds, pts, transform, roundness, offset, exp)) return true;
+        }
+
         PathSet* path = nullptr;
         LottieScalarFrame<PathSet>* frame = nullptr;
         float t;
@@ -521,16 +524,6 @@ struct LottiePathSet : LottieProperty
         free(interpPts);
 
         return true;
-    }
-
-
-    bool operator()(float frameNo, Array<PathCommand>& cmds, Array<Point>& pts, Matrix* transform, const LottieRoundnessModifier* roundness, const LottieOffsetModifier* offset, LottieExpressions* exps)
-    {
-        if (exps && exp) {
-            frameNo = _loop(frames, frameNo, exp);
-            if (exps->result<LottiePathSet>(frameNo, cmds, pts, transform, roundness, offset, exp)) return true;
-        }
-        return operator()(frameNo, cmds, pts, transform, roundness, offset);
     }
 
     void prepare() {}
@@ -613,8 +606,9 @@ struct LottieColorStop : LottieProperty
         return (*frames)[frames->count];
     }
 
-    Result operator()(float frameNo, Fill* fill, LottieExpressions* exps)
+    Result operator()(float frameNo, Fill* fill, LottieExpressions* exps = nullptr)
     {
+        //overriding with expressions
         if (exps && exp) {
             frameNo = _loop(frames, frameNo, exp);
             if (exps->result<LottieColorStop>(frameNo, fill, exp)) return Result::Success;
@@ -754,8 +748,11 @@ struct LottieTextDoc : LottieProperty
         return (*frames)[frames->count];
     }
 
-    TextDocument& operator()(float frameNo)
+    TextDocument& operator()(float frameNo, LottieExpressions* exps = nullptr)
     {
+        //overriding with expressions
+        if (exps && exp) TVGERR("LOTTIE", "Not support TextDocument expressions?");
+
         if (!frames) return value;
         if (frames->count == 1 || frameNo <= frames->first().no) return frames->first().value;
         if (frameNo >= frames->last().no) return frames->last().value;

@@ -980,7 +980,7 @@ void LottieBuilder::updateText(LottieLayer* layer, float frameNo)
 {
     auto text = static_cast<LottieText*>(layer->children.first());
     auto textGrouping = text->alignOption.grouping;
-    auto& doc = text->doc(frameNo);
+    auto& doc = text->doc(frameNo, exps);
     auto p = doc.text;
 
     if (!p || !text->font) return;
