@@ -691,9 +691,9 @@ const char* COLOR_DODGE_BLEND_FRAG = COMPLEX_BLEND_HEADER R"(
         vec4 dstColor = texture(uDstTexture, vUV);
 
         FragColor = vec4(
-            1.0 - srcColor.r > 0.0 ? dstColor.r / (1.0 - srcColor.r) : dstColor.r,
-            1.0 - srcColor.g > 0.0 ? dstColor.g / (1.0 - srcColor.g) : dstColor.g,
-            1.0 - srcColor.b > 0.0 ? dstColor.b / (1.0 - srcColor.b) : dstColor.b,
+            srcColor.r < 1.0 ? dstColor.r / (1.0 - srcColor.r) : (dstColor.r > 0.0 ? 1.0 : 0.0),
+            srcColor.g < 1.0 ? dstColor.g / (1.0 - srcColor.g) : (dstColor.g > 0.0 ? 1.0 : 0.0),
+            srcColor.b < 1.0 ? dstColor.b / (1.0 - srcColor.b) : (dstColor.b > 0.0 ? 1.0 : 0.0),
             1.0
         );
     }
@@ -705,9 +705,9 @@ const char* COLOR_BURN_BLEND_FRAG = COMPLEX_BLEND_HEADER R"(
         vec4 dstColor = texture(uDstTexture, vUV);
 
         FragColor = vec4(
-            srcColor.r > 0.0 ? (1.0 - (1.0 - dstColor.r) / srcColor.r) : dstColor.r,
-            srcColor.g > 0.0 ? (1.0 - (1.0 - dstColor.g) / srcColor.g) : dstColor.g,
-            srcColor.b > 0.0 ? (1.0 - (1.0 - dstColor.b) / srcColor.b) : dstColor.b,
+            srcColor.r > 0.0 ? (1.0 - (1.0 - dstColor.r) / srcColor.r) : (dstColor.r < 1.0 ? 0.0 : 1.0),
+            srcColor.g > 0.0 ? (1.0 - (1.0 - dstColor.g) / srcColor.g) : (dstColor.g < 1.0 ? 0.0 : 1.0),
+            srcColor.b > 0.0 ? (1.0 - (1.0 - dstColor.b) / srcColor.b) : (dstColor.b < 1.0 ? 0.0 : 1.0),
             1.0
         );
     }
