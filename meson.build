@@ -102,6 +102,8 @@ if module_support
         lib_suffix = '.dylib'
     elif host_machine.system() == 'windows'
         lib_suffix = '.dll'
+    elif meson.get_compiler('cpp').get_id() == 'emscripten'
+        lib_suffix = '.wasm'
     else
         lib_suffix = '.so'
     endif
