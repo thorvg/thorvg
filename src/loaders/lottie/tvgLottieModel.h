@@ -867,6 +867,7 @@ struct LottieLayer : LottieGroup
     struct {
         float frameNo = -1.0f;
         Matrix matrix;
+        Matrix rotation3d;
         uint8_t opacity;
     } cache;
 
