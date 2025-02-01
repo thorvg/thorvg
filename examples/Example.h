@@ -26,6 +26,7 @@
 #include <vector>
 #include <fstream>
 #include <iostream>
+#include <cstring>
 #include <thorvg.h>
 #include <SDL2/SDL.h>
 #include <SDL2/SDL_syswm.h>
