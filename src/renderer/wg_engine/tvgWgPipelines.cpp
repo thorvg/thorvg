@@ -183,6 +183,8 @@ void WgPipelines::initialize(WgContext& context)
     const WGPUBindGroupLayout bindGroupLayoutsSceneCompose[] { layouts.layoutTexSampled, layouts.layoutTexSampled };
     // bind group layouts blit
     const WGPUBindGroupLayout bindGroupLayoutsBlit[] { layouts.layoutTexSampled };
+    // bind group layouts effects
+    const WGPUBindGroupLayout bindGroupLayoutsGaussian[] { layouts.layoutTexStrorage1RO, layouts.layoutTexStrorage1WO, layouts.layoutBuffer1Un, layouts.layoutBuffer1Un };
 
     // depth stencil state markup
     const WGPUDepthStencilState depthStencilStateNonZero = makeDepthStencilState(WGPUCompareFunction_Always, false, WGPUCompareFunction_Always, WGPUStencilOperation_IncrementWrap, WGPUCompareFunction_Always, WGPUStencilOperation_DecrementWrap);
@@ -218,6 +220,9 @@ void WgPipelines::initialize(WgContext& context)
     shader_scene_compose = createShaderModule(context.device, "The shader scene composition", cShaderSrc_Scene_Compose);
     // shader blit
     shader_blit = createShaderModule(context.device, "The shader blit", cShaderSrc_Blit);
+    // shader effects
+    shader_gaussian_horz = createShaderModule(context.device, "The shader gaussian horizontal", cShaderSrc_GaussianBlur_Horz);
+    shader_gaussian_vert = createShaderModule(context.device, "The shader gaussian vertical", cShaderSrc_GaussianBlur_Vert);
 
     // layouts
     layout_stencil = createPipelineLayout(context.device, bindGroupLayoutsStencil, 2);
@@ -236,6 +241,8 @@ void WgPipelines::initialize(WgContext& context)
     layout_scene_compose = createPipelineLayout(context.device, bindGroupLayoutsSceneCompose, 2);
     // layout blit
     layout_blit = createPipelineLayout(context.device, bindGroupLayoutsBlit, 1);
+    // layout effects
+    layout_gaussian = createPipelineLayout(context.device, bindGroupLayoutsGaussian, 4);
 
     // render pipeline nonzero
     nonzero = createRenderPipeline(
@@ -439,10 +446,21 @@ void WgPipelines::initialize(WgContext& context)
         layout_blit, vertexBufferLayoutsImage, 2,
         WGPUColorWriteMask_All, context.preferredFormat, blendStateSrc, // must be preferred screen pixel format
         depthStencilStateScene, multisampleStateX1);
+
+    // compute pipeline gaussian blur
+    gaussian_horz = createComputePipeline(
+        context.device, "The compute pipeline gaussian blur horizontal",
+        shader_gaussian_horz, "cs_main", layout_gaussian);
+    gaussian_vert = createComputePipeline(
+        context.device, "The compute pipeline gaussian blur vertical",
+        shader_gaussian_vert, "cs_main", layout_gaussian);
 }
 
 void WgPipelines::releaseGraphicHandles(WgContext& context)
 {
+    // pipeline effects
+    releaseComputePipeline(gaussian_vert);
+    releaseComputePipeline(gaussian_horz);
     // pipeline blit
     releaseRenderPipeline(blit);
     // pipelines compose
@@ -473,6 +491,7 @@ void WgPipelines::releaseGraphicHandles(WgContext& context)
     releaseRenderPipeline(evenodd);
     releaseRenderPipeline(nonzero);
     // layouts
+    releasePipelineLayout(layout_gaussian);
     releasePipelineLayout(layout_blit);
     releasePipelineLayout(layout_scene_compose);
     releasePipelineLayout(layout_scene_blend);
@@ -486,6 +505,8 @@ void WgPipelines::releaseGraphicHandles(WgContext& context)
     releasePipelineLayout(layout_depth);
     releasePipelineLayout(layout_stencil);
     // shaders
+    releaseShaderModule(shader_gaussian_horz);
+    releaseShaderModule(shader_gaussian_vert);
     releaseShaderModule(shader_blit);
     releaseShaderModule(shader_scene_compose);
     releaseShaderModule(shader_scene_blend);
