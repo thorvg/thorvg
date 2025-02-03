@@ -116,6 +116,14 @@ void WgShaderTypeVec4f::update(const RenderColor& c)
     vec[3] = c.a / 255.0f; // alpha
 }
 
+void WgShaderTypeVec4f::update(const RenderRegion& r)
+{
+    vec[0] = r.x; // left
+    vec[1] = r.y; // top
+    vec[2] = r.x + r.w - 1; // right
+    vec[3] = r.y + r.h - 1; // bottom
+}
+
 //************************************************************************
 // WgShaderTypeGradient
 //************************************************************************
@@ -186,4 +194,19 @@ void WgShaderTypeGradient::updateTexData(const Fill::ColorStop* stops, uint32_t 
         texData[ti * 4 + 2] = colorStopLast.b;
         texData[ti * 4 + 3] = colorStopLast.a;
     }
+}
+
+//************************************************************************
+// WgShaderTypeGaussianBlur
+//************************************************************************
+
+void WgShaderTypeGaussianBlur::update(const RenderEffectGaussianBlur* gaussian, const Matrix& transform)
+{
+    assert(gaussian);
+    const float sigma = gaussian->sigma;
+    const float scale = std::sqrt(transform.e11 * transform.e11 + transform.e12 * transform.e12);
+    settings[0] = sigma;
+    settings[1] = scale;
+    settings[2] = 2 * sigma * scale; // kernel size
+    extend = settings[2] * 2;
 }

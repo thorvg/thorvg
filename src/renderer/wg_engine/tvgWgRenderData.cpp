@@ -369,10 +369,10 @@ void WgRenderDataShape::updateAABB(const Matrix& tr) {
     Point p1 = Point{pMax.x, pMin.y} * tr;
     Point p2 = Point{pMin.x, pMax.y} * tr;
     Point p3 = Point{pMax.x, pMax.y} * tr;
-    aabb.x = std::min({p0.x, p1.x, p2.x, p3.x});
-    aabb.y = std::min({p0.y, p1.y, p2.y, p3.y});
-    aabb.w = std::max({p0.x, p1.x, p2.x, p3.x}) - aabb.x;
-    aabb.h = std::max({p0.y, p1.y, p2.y, p3.y}) - aabb.y;
+    aabb.pMin.x = std::min({p0.x, p1.x, p2.x, p3.x});
+    aabb.pMin.y = std::min({p0.y, p1.y, p2.y, p3.y});
+    aabb.pMax.x = std::max({p0.x, p1.x, p2.x, p3.x});
+    aabb.pMax.y = std::max({p0.y, p1.y, p2.y, p3.y});
 }
 
 
@@ -448,7 +448,7 @@ void WgRenderDataShape::updateMeshes(WgContext& context, const RenderShape &rsha
         (this->meshGroupStrokesBBox.meshes.count > 0)) {
         updateAABB(tr);
         meshDataBBox.bbox(context, pMin, pMax);
-    } else aabb = {0, 0, 0, 0};
+    } else aabb = {{0, 0}, {0, 0}};
 }
 
 
@@ -487,7 +487,7 @@ void WgRenderDataShape::releaseMeshes(WgContext& context)
     meshGroupShapes.release(context);
     pMin = {FLT_MAX, FLT_MAX};
     pMax = {0.0f, 0.0f};
-    aabb = {0, 0, 0, 0};
+    aabb = {{0, 0}, {0, 0}};
     clips.clear();
 }
 
@@ -592,6 +592,122 @@ void WgRenderDataPicturePool::free(WgContext& context, WgRenderDataPicture* rend
 
 
 void WgRenderDataPicturePool::release(WgContext& context)
+{
+    ARRAY_FOREACH(p, mList) {
+        (*p)->release(context);
+        delete(*p);
+    }
+    mPool.clear();
+    mList.clear();
+}
+
+//***********************************************************************
+// WgRenderDataGaussian
+//***********************************************************************
+
+void WgRenderDataViewport::update(WgContext& context, const RenderRegion& region) {
+    WgShaderTypeVec4f viewport;
+    viewport.update(region);
+    bool bufferViewportChanged = context.allocateBufferUniform(bufferViewport, &viewport, sizeof(viewport));
+    if (bufferViewportChanged) {
+        context.layouts.releaseBindGroup(bindGroupViewport);
+        bindGroupViewport = context.layouts.createBindGroupBuffer1Un(bufferViewport);
+    }
+}
+
+
+void WgRenderDataViewport::release(WgContext& context) {
+    context.releaseBuffer(bufferViewport);
+    context.layouts.releaseBindGroup(bindGroupViewport);
+}
+
+//***********************************************************************
+// WgRenderDataViewportPool
+//***********************************************************************
+
+WgRenderDataViewport* WgRenderDataViewportPool::allocate(WgContext& context)
+{
+    WgRenderDataViewport* renderData{};
+    if (mPool.count > 0) {
+        renderData = mPool.last();
+        mPool.pop();
+    } else {
+        renderData = new WgRenderDataViewport();
+        mList.push(renderData);
+    }
+    return renderData;
+}
+
+
+void WgRenderDataViewportPool::free(WgContext& context, WgRenderDataViewport* renderData)
+{
+    if (renderData) mPool.push(renderData);
+}
+
+
+void WgRenderDataViewportPool::release(WgContext& context)
+{
+    ARRAY_FOREACH(p, mList) {
+        (*p)->release(context);
+        delete(*p);
+    }
+    mPool.clear();
+    mList.clear();
+}
+
+//***********************************************************************
+// WgRenderDataGaussian
+//***********************************************************************
+
+void WgRenderDataGaussian::update(WgContext& context, RenderEffectGaussianBlur* gaussian, const Matrix& transform)
+{
+    assert(gaussian);
+    // compute gaussian blur data
+    WgShaderTypeGaussianBlur gaussianSettings;
+    gaussianSettings.update(gaussian, transform);
+    // update bind group and buffers
+    bool bufferSettingsChanged = context.allocateBufferUniform(bufferSettings, &gaussianSettings.settings, sizeof(gaussianSettings.settings));
+    if (bufferSettingsChanged) {
+        // update bind group
+        context.layouts.releaseBindGroup(bindGroupGaussian);
+        bindGroupGaussian = context.layouts.createBindGroupBuffer1Un(bufferSettings);
+    }
+    level = int(WG_GAUSSIAN_MAX_LEVEL * ((gaussian->quality - 1) * 0.01f)) + 1;
+    extend = gaussianSettings.extend;
+}
+
+
+void WgRenderDataGaussian::release(WgContext& context)
+{
+    context.releaseBuffer(bufferSettings);
+    context.layouts.releaseBindGroup(bindGroupGaussian);
+}
+
+//***********************************************************************
+// WgRenderDataGaussianPool
+//***********************************************************************
+
+WgRenderDataGaussian* WgRenderDataGaussianPool::allocate(WgContext& context)
+{
+    WgRenderDataGaussian* renderData{};
+    if (mPool.count > 0) {
+        renderData = mPool.last();
+        mPool.pop();
+    } else {
+        renderData = new WgRenderDataGaussian();
+        mList.push(renderData);
+    }
+    return renderData;
+}
+
+
+void WgRenderDataGaussianPool::free(WgContext& context, WgRenderDataGaussian* renderData)
+{
+    if (renderData) mPool.push(renderData);
+}
+
+
+void WgRenderDataGaussianPool::release(WgContext& context)
 {
     ARRAY_FOREACH(p, mList) {
         (*p)->release(context);
