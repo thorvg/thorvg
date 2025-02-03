@@ -409,7 +409,7 @@ void LottieGroup::prepare(LottieObject::Type type)
     size_t strokeCnt = 0;
     size_t fillCnt = 0;
 
-    for (auto c = children.end() - 1; c >= children.begin(); --c) {
+    ARRAY_REVERSE_FOREACH(c, children) {
         auto child = static_cast<LottieObject*>(*c);
 
         if (child->type == LottieObject::Type::Trimpath) trimpath = true;
