@@ -325,7 +325,7 @@ static void _repeat(LottieGroup* parent, Shape* path, RenderContext* ctx)
     propagators.push(ctx->propagator);
     Array<Shape*> shapes;
 
-    for (auto repeater = ctx->repeaters.end() - 1; repeater >= ctx->repeaters.begin(); --repeater) {
+    ARRAY_REVERSE_FOREACH(repeater, ctx->repeaters) {
         shapes.reserve(repeater->cnt);
 
         for (int i = 0; i < repeater->cnt; ++i) {
@@ -363,7 +363,7 @@ static void _repeat(LottieGroup* parent, Shape* path, RenderContext* ctx)
                 propagators.push(*p);
             }
         } else if (!shapes.empty()) {
-            for (auto shape = shapes.end() - 1; shape >= shapes.begin(); --shape) {
+            ARRAY_REVERSE_FOREACH(shape, shapes) {
                 parent->scene->push(*shape);
                 propagators.push(*shape);
             }
@@ -949,7 +949,7 @@ void LottieBuilder::updatePrecomp(LottieComposition* comp, LottieLayer* precomp,
 
     frameNo = precomp->remap(comp, frameNo, exps);
 
-    for (auto c = precomp->children.end() - 1; c >= precomp->children.begin(); --c) {
+    ARRAY_REVERSE_FOREACH(c, precomp->children) {
         auto child = static_cast<LottieLayer*>(*c);
         if (!child->matteSrc) updateLayer(comp, precomp->scene, child, frameNo);
     }
@@ -1589,7 +1589,7 @@ bool LottieBuilder::update(LottieComposition* comp, float frameNo)
 
     if (exps && comp->expressions) exps->update(comp->timeAtFrame(frameNo));
 
-    for (auto child = root->children.end() - 1; child >= root->children.begin(); --child) {
+    ARRAY_REVERSE_FOREACH(child, root->children) {
         auto layer = static_cast<LottieLayer*>(*child);
         if (!layer->matteSrc) updateLayer(comp, root->scene, layer, frameNo);
     }
