@@ -373,89 +373,85 @@ static void _repeat(LottieGroup* parent, Shape* path, RenderContext* ctx)
 }
 
 
-static void _appendRect(Shape* shape, float x, float y, float w, float h, float r, const LottieOffsetModifier* offset, Matrix* transform, bool clockwise)
+static void _sharpRect(Point* pts, int& ptsCnt, PathCommand* cmds, int& cmdsCnt, Point& pos, Point& size, float r, bool clockwise, RenderContext* ctx)
 {
-    //sharp rect
-    if (tvg::zero(r)) {
-        PathCommand commands[] = {
-            PathCommand::MoveTo, PathCommand::LineTo, PathCommand::LineTo,
-            PathCommand::LineTo, PathCommand::Close
-        };
+    ptsCnt = 4;
+    cmdsCnt = 5;
 
-        Point points[4];
-        if (clockwise) {
-            points[0] = {x + w, y};
-            points[1] = {x + w, y + h};
-            points[2] = {x, y + h};
-            points[3] = {x, y};
-        } else {
-            points[0] = {x + w, y};
-            points[1] = {x, y};
-            points[2] = {x, y + h};
-            points[3] = {x + w, y + h};
-        }
-        if (transform) {
-            for (int i = 0; i < 4; i++) {
-                points[i] *= *transform;
-            }
-        }
+    cmds[0] = PathCommand::MoveTo;
+    cmds[1] = cmds[2] = cmds[3] = PathCommand::LineTo;
+    cmds[4] = PathCommand::Close;
 
-        if (offset) offset->modifyRect(commands, 5, points, 4, SHAPE(shape)->rs.path.cmds, SHAPE(shape)->rs.path.pts);
-        else shape->appendPath(commands, 5, points, 4);
-    //round rect
+    pts[0] = {pos.x + size.x, pos.y};
+    pts[2] = {pos.x, pos.y + size.y};
+
+    if (clockwise) {
+        pts[1] = pos + size;
+        pts[3] = pos;
     } else {
-        constexpr int cmdCnt = 10;
-        PathCommand commands[cmdCnt];
-
-        auto halfW = w * 0.5f;
-        auto halfH = h * 0.5f;
-        auto rx = r > halfW ? halfW : r;
-        auto ry = r > halfH ? halfH : r;
-        auto hrx = rx * PATH_KAPPA;
-        auto hry = ry * PATH_KAPPA;
-
-        constexpr int ptsCnt = 17;
-        Point points[ptsCnt];
-        if (clockwise) {
-            commands[0] = PathCommand::MoveTo; commands[1] = PathCommand::LineTo; commands[2] = PathCommand::CubicTo;
-            commands[3] = PathCommand::LineTo; commands[4] = PathCommand::CubicTo;commands[5] = PathCommand::LineTo;
-            commands[6] = PathCommand::CubicTo; commands[7] = PathCommand::LineTo; commands[8] = PathCommand::CubicTo;
-            commands[9] = PathCommand::Close;
-
-            points[0] = {x + w, y + ry}; //moveTo
-            points[1] = {x + w, y + h - ry}; //lineTo
-            points[2] = {x + w, y + h - ry + hry}; points[3] = {x + w - rx + hrx, y + h}; points[4] = {x + w - rx, y + h}; //cubicTo
-            points[5] = {x + rx, y + h}, //lineTo
-            points[6] = {x + rx - hrx, y + h}; points[7] = {x, y + h - ry + hry}; points[8] = {x, y + h - ry}; //cubicTo
-            points[9] = {x, y + ry}, //lineTo
-            points[10] = {x, y + ry - hry}; points[11] = {x + rx - hrx, y}; points[12] = {x + rx, y}; //cubicTo
-            points[13] = {x + w - rx, y}; //lineTo
-            points[14] = {x + w - rx + hrx, y}; points[15] = {x + w, y + ry - hry}; points[16] = {x + w, y + ry}; //cubicTo
-        } else {
-            commands[0] = PathCommand::MoveTo; commands[1] = PathCommand::CubicTo; commands[2] = PathCommand::LineTo;
-            commands[3] = PathCommand::CubicTo; commands[4] = PathCommand::LineTo; commands[5] = PathCommand::CubicTo;
-            commands[6] = PathCommand::LineTo; commands[7] = PathCommand::CubicTo; commands[8] = PathCommand::LineTo;
-            commands[9] = PathCommand::Close;
-
-            points[0] = {x + w, y + ry}; //moveTo
-            points[1] = {x + w, y + ry - hry}; points[2] = {x + w - rx + hrx, y}; points[3] = {x + w - rx, y}; //cubicTo
-            points[4] = {x + rx, y}, //lineTo
-            points[5] = {x + rx - hrx, y}; points[6] = {x, y + ry - hry}; points[7] = {x, y + ry}; //cubicTo
-            points[8] = {x, y + h - ry}; //lineTo
-            points[9] = {x, y + h - ry + hry}; points[10] = {x + rx - hrx, y + h}; points[11] = {x + rx, y + h}; //cubicTo
-            points[12] = {x + w - rx, y + h}; //lineTo
-            points[13] = {x + w - rx + hrx, y + h}; points[14] = {x + w, y + h - ry + hry}; points[15] = {x + w, y + h - ry}; //cubicTo
-            points[16] = {x + w, y + ry}; //lineTo
-        }
-        if (transform) {
-            for (int i = 0; i < ptsCnt; i++) {
-                points[i] *= *transform;
-            }
-        }
-
-        if (offset) offset->modifyRect(commands, cmdCnt, points, ptsCnt, SHAPE(shape)->rs.path.cmds, SHAPE(shape)->rs.path.pts);
-        else shape->appendPath(commands, cmdCnt, points, ptsCnt);
+        pts[1] = pos;
+        pts[3] = pos + size;
     }
+}
+
+static void _roundRect(Point* pts, int& ptsCnt, PathCommand* cmds, int& cmdsCnt, Point& pos, Point& size, float r, bool clockwise, RenderContext* ctx)
+{
+    ptsCnt = 17;
+    cmdsCnt = 10;
+
+    auto hsize = size * 0.5f;
+    auto rsize = Point{r > hsize.x ? hsize.x : r, r > hsize.y ? hsize.y : r};
+    auto hr = rsize * PATH_KAPPA;
+
+    cmds[0] = PathCommand::MoveTo;
+    cmds[9] = PathCommand::Close;
+    pts[0] = {pos.x + size.x, pos.y + rsize.y}; //move
+
+    if (clockwise) {
+        cmds[1] = cmds[3] = cmds[5] = cmds[7] = PathCommand::LineTo; 
+        cmds[2] = cmds[4] = cmds[6] = cmds[8] = PathCommand::CubicTo;
+
+        pts[1] = {pos.x + size.x, pos.y + size.y - rsize.y}; //line
+        pts[2] = {pos.x + size.x, pos.y + size.y - rsize.y + hr.y}; pts[3] = {pos.x + size.x - rsize.x + hr.x, pos.y + size.y}; pts[4] = {pos.x + size.x - rsize.x, pos.y + size.y};  //cubic
+        pts[5] = {pos.x + rsize.x, pos.y + size.y}, //line
+        pts[6] = {pos.x + rsize.x - hr.x, pos.y + size.y}; pts[7] = {pos.x, pos.y + size.y - rsize.y + hr.y}; pts[8] = {pos.x, pos.y + size.y - rsize.y}; //cubic
+        pts[9] = {pos.x, pos.y + rsize.y}, //line
+        pts[10] = {pos.x, pos.y + rsize.y - hr.y}; pts[11] = {pos.x + rsize.x - hr.x, pos.y}; pts[12] = {pos.x + rsize.x, pos.y}; //cubic
+        pts[13] = {pos.x + size.x - rsize.x, pos.y}; //line
+        pts[14] = {pos.x + size.x - rsize.x + hr.x, pos.y}; pts[15] = {pos.x + size.x, pos.y + rsize.y - hr.y}; pts[16] = {pos.x + size.x, pos.y + rsize.y}; //cubic
+    } else {
+        cmds[1] = cmds[3] = cmds[5] = cmds[7] = PathCommand::CubicTo;
+        cmds[2] = cmds[4] = cmds[6] = cmds[8] = PathCommand::LineTo;
+
+        pts[1] = {pos.x + size.x, pos.y + rsize.y - hr.y}; pts[2] = {pos.x + size.x - rsize.x + hr.x, pos.y}; pts[3] = {pos.x + size.x - rsize.x, pos.y}; //cubic
+        pts[4] = {pos.x + rsize.x, pos.y}; //line
+        pts[5] = {pos.x + rsize.x - hr.x, pos.y}; pts[6] = {pos.x, pos.y + rsize.y - hr.y}; pts[7] = {pos.x, pos.y + rsize.y}; //cubic
+        pts[8] = {pos.x, pos.y + size.y - rsize.y}; //line
+        pts[9] = {pos.x, pos.y + size.y - rsize.y + hr.y}; pts[10] = {pos.x + rsize.x - hr.x, pos.y + size.y}; pts[11] = {pos.x + rsize.x, pos.y + size.y}; //cubic
+        pts[12] = {pos.x + size.x - rsize.x, pos.y + size.y}; //line
+        pts[13] = {pos.x + size.x - rsize.x + hr.x, pos.y + size.y}; pts[14] = {pos.x + size.x, pos.y + size.y - rsize.y + hr.y}; pts[15] = {pos.x + size.x, pos.y + size.y - rsize.y}; //cubic
+        pts[16] = {pos.x + size.x, pos.y + rsize.y}; //line
+    }
+}
+
+
+static void _appendRect(Shape* shape, Point& pos, Point& size, float r, bool clockwise, RenderContext* ctx)
+{
+    Point pts[17];
+    PathCommand cmds[10];
+    int ptsCnt, cmdsCnt;
+
+    if (tvg::zero(r)) _sharpRect(pts, ptsCnt, cmds, cmdsCnt, pos, size, r, clockwise, ctx);
+    else _roundRect(pts, ptsCnt, cmds, cmdsCnt, pos, size, r, clockwise, ctx);
+
+    if (ctx->transform) {
+        for (int i = 0; i < ptsCnt; i++) {
+            pts[i] *= *ctx->transform;
+        }
+    }
+
+    if (ctx->offset) ctx->offset->modifyRect(cmds, cmdsCnt, pts, ptsCnt, SHAPE(shape)->rs.path.cmds, SHAPE(shape)->rs.path.pts);
+    else shape->appendPath(cmds, cmdsCnt, pts, ptsCnt);
 }
 
 
@@ -463,23 +459,24 @@ void LottieBuilder::updateRect(LottieGroup* parent, LottieObject** child, float 
 {
     auto rect = static_cast<LottieRect*>(*child);
 
-    auto position = rect->position(frameNo, exps);
     auto size = rect->size(frameNo, exps);
+    auto pos = rect->position(frameNo, exps) - size * 0.5f;
     auto r = rect->radius(frameNo, exps);
+
     if (r == 0.0f)  {
         if (ctx->roundness) ctx->roundness->modifyRect(size, r);
     } else {
         r = std::min({r, size.x * 0.5f, size.y * 0.5f});
     }
-    
+
     if (!ctx->repeaters.empty()) {
         auto shape = rect->pooling();
         shape->reset();
-        _appendRect(shape, position.x - size.x * 0.5f, position.y - size.y * 0.5f, size.x, size.y, r, ctx->offset, ctx->transform, rect->clockwise);
+        _appendRect(shape, pos, size, r, rect->clockwise, ctx);
         _repeat(parent, shape, ctx);
     } else {
         _draw(parent, rect, ctx);
-        _appendRect(ctx->merging, position.x - size.x * 0.5f, position.y - size.y * 0.5f, size.x, size.y, r, ctx->offset, ctx->transform, rect->clockwise);
+        _appendRect(ctx->merging, pos, size, r, rect->clockwise, ctx);
     }
 }
 
