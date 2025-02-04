@@ -41,12 +41,12 @@ DYNAMIC_API uint8_t* webp_decode_bgra(const uint8_t* data, size_t data_size, int
     return WebPDecodeBGRA(data, data_size, width, height);
 }
 
-DYNAMIC_API int __attribute__((visibility("default"))) webp_get_info(const uint8_t* data, size_t data_size, int* width, int* height)
+DYNAMIC_API int webp_get_info(const uint8_t* data, size_t data_size, int* width, int* height)
 {
     return WebPGetInfo(data, data_size, width, height);
 }
 
-DYNAMIC_API void __attribute__((visibility("default"))) webp_free(void* ptr)
+DYNAMIC_API void webp_free(void* ptr)
 {
     // WebPFree(ptr);
 }

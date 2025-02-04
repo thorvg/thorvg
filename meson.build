@@ -92,7 +92,7 @@ endif
 if module_support
     config_h.set10('THORVG_MODULE_SUPPORT', true)
 
-    if meson.get_compiler('cpp').get_id() != 'msvc'
+    if meson.get_compiler('cpp').get_id() != 'msvc' and meson.get_compiler('cpp').get_id() != 'emscripten'
         lib_prefix = 'lib'
     else
         lib_prefix = ''

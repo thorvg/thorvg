@@ -21,9 +21,9 @@ if get_option('module')
           include_directories : include_directories('.'),
           dependencies : webp_deb,
           install : true,
-          cpp_args : ['-s', 'SIDE_MODULE=1'],
-          link_args : ['-s', 'SIDE_MODULE=1'],
-          gnu_symbol_visibility : 'hidden',
+          cpp_args : ['-s', 'SIDE_MODULE=1', '-o', 'thorvg-webp-loader.wasm'],
+          link_args : ['-s', 'SIDE_MODULE=1', '-s', 'WASM=1', '-o', 'thorvg-webp-loader.wasm'],
+          # gnu_symbol_visibility : 'hidden',
         )
     else
         webp_loader = shared_module('thorvg-webp-loader',

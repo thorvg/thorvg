@@ -22,7 +22,7 @@ if [ ! -d "./build_wasm" ]; then
       meson -Db_lto=true -Ddefault_library=static -Dstatic=true -Dloaders="all" -Dsavers="all" -Dthreads=false -Dbindings="wasm_beta" -Dengines="gl" --cross-file /tmp/.wasm_cross.txt build_wasm
     else
       sed "s|EMSDK:|$EMSDK|g" ./cross/wasm32.txt > /tmp/.wasm_cross.txt
-      meson -Db_lto=true -Ddefault_library=static -Dstatic=true -Dloaders="all" -Dsavers="all" -Dthreads=false -Dbindings="wasm_beta" -Dengines="wg, gl, sw" -Dmodule=true --cross-file /tmp/.wasm_cross.txt build_wasm
+      meson -Db_lto=true -Ddefault_library=static -Dstatic=true -Dloaders="all" -Dsavers="all" -Dthreads=false -Dbindings="wasm_beta" -Dengines="wg, gl, sw" -Dmodule=true -Dlog=true --cross-file /tmp/.wasm_cross.txt build_wasm
     fi
 fi
 

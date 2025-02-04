@@ -18,6 +18,8 @@
  */
 
 #include "tvgWebpLoader.h"
+#include "iostream"
+#include "emscripten.h"
 
 
 /************************************************************************/
@@ -26,6 +28,8 @@
 
 #ifdef THORVG_MODULE_SUPPORT
 #define WEBP_MODULE_PLUGIN_PATH ("loaders/external_webp/" WEBP_MODULE_PLUGIN)
+
+#define WEBP_MODULE_WASM_PATH ("./thorvg-webp-loader.wasm")
 
 void WebpLoader::init() {
     TVGLOG("DYLIB", "WebpLoader::init()");
@@ -45,6 +49,8 @@ bool WebpLoader::moduleLoad() {
     TVGLOG("DYLIB", "WebpLoader::moduleLoad()");
     #ifdef _WIN32
     dl_handle = LoadLibrary(WEBP_MODULE_PLUGIN_PATH);
+    #elif __EMSCRIPTEN__
+    dl_handle = dlopen("/thorvg-webp-loader.wasm", RTLD_NOW);
     #else
     dl_handle = dlopen(WEBP_MODULE_PLUGIN_PATH, RTLD_LAZY);
     #endif
@@ -101,6 +107,7 @@ WebpLoader::WebpLoader() : ImageLoader(FileType::Webp)
 #ifdef THORVG_MODULE_SUPPORT
     if (moduleLoad()) {
         TVGERR("DYLIB", "WebpLoader::WebpLoader() : moduleLoad() failed");
+        cout << dlerror() << endl;
         return;
     }
 
