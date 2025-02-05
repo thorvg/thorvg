@@ -1162,6 +1162,18 @@ void LottieParser::parseTextRange(LottieText* text)
 }
 
 
+void LottieParser::parseTextFollowPath(LottieText* text)
+{
+    enterObject();
+    while (auto key = nextObjectKey()) {
+        if (KEY_AS("m")) text->followPath.maskIdx = getInt();
+        else if (KEY_AS("f")) parseProperty<LottieProperty::Type::Float>(text->followPath.firstMargin);
+        else if (KEY_AS("p")) parseProperty<LottieProperty::Type::Opacity>(text->followPath.perpendicular);
+        else skip();
+    }
+}
+
+
 void LottieParser::parseText(Array<LottieObject*>& parent)
 {
     enterObject();
@@ -1172,11 +1184,7 @@ void LottieParser::parseText(Array<LottieObject*>& parent)
         if (KEY_AS("d")) parseProperty<LottieProperty::Type::TextDoc>(text->doc, text);
         else if (KEY_AS("a")) parseTextRange(text);
         else if (KEY_AS("m")) parseTextAlignmentOption(text);
-        else if (KEY_AS("p"))
-        {
-            TVGLOG("LOTTIE", "Text Follow Path (p) is not supported");
-            skip();
-        }
+        else if (KEY_AS("p")) parseTextFollowPath(text);
         else skip();
     }
     parent.push(text);
