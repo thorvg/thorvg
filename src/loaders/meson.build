@@ -35,14 +35,15 @@ if jpg_loader
 endif
 
 if webp_loader
-    if get_option('static')
-        subdir('webp')
-    else
-        subdir('external_webp')
-        if not webp_dep.found()
-            subdir('webp')
-        endif
-    endif
+  subdir('webp')
+    # if get_option('static')
+    #     subdir('webp')
+    # else
+    #     subdir('external_webp')
+    #     if not webp_dep.found()
+    #         subdir('webp')
+    #     endif
+    # endif
 endif
 
 subdir('raw')
