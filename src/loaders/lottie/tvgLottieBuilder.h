@@ -57,6 +57,7 @@ struct RenderContext
     Matrix* transform = nullptr;
     LottieRoundnessModifier* roundness = nullptr;
     LottieOffsetModifier* offset = nullptr;
+    LottieModifier* modifier = nullptr;
     bool fragmenting = false;  //render context has been fragmented by filling
     bool reqFragment = false;  //requirement to fragment the render context
 
@@ -81,8 +82,20 @@ struct RenderContext
         propagator->ref();
         this->propagator = propagator;
         repeaters = rhs.repeaters;
-        if (rhs.roundness) roundness = new LottieRoundnessModifier(rhs.roundness->r);
-        if (rhs.offset) offset = new LottieOffsetModifier(rhs.offset->offset, rhs.offset->miterLimit, rhs.offset->join);
+        if (rhs.roundness) {
+            roundness = new LottieRoundnessModifier(rhs.roundness->buffer, rhs.roundness->r);
+            update(roundness);
+        }
+        if (rhs.offset) {
+            offset = new LottieOffsetModifier(rhs.offset->offset, rhs.offset->miterLimit, rhs.offset->join);
+            update(offset);
+        }
+    }
+
+    void update(LottieModifier* next)
+    {
+        if (modifier) modifier = modifier->decorate(next);
+        else modifier = next;
     }
 };
 
@@ -108,6 +121,7 @@ struct LottieBuilder
 
 private:
     void appendRect(Shape* shape, Point& pos, Point& size, float r, bool clockwise, RenderContext* ctx);
+    bool fragmented(LottieGroup* parent, LottieObject** child, Inlist<RenderContext>& contexts, RenderContext* ctx);
 
     void updateStrokeEffect(LottieLayer* layer, LottieFxStroke* effect, float frameNo);
     void updateEffect(LottieLayer* layer, float frameNo);
