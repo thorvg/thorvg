@@ -1074,7 +1074,7 @@ void LottieBuilder::updateText(LottieLayer* layer, float frameNo)
                 ARRAY_FOREACH(p, glyph->children) {
                     auto group = static_cast<LottieGroup*>(*p);
                     ARRAY_FOREACH(p, group->children) {
-                        if (static_cast<LottiePath*>(*p)->pathset(frameNo, SHAPE(shape)->rs.path.cmds, SHAPE(shape)->rs.path.pts, nullptr, nullptr, nullptr)) {
+                        if (static_cast<LottiePath*>(*p)->pathset(frameNo, SHAPE(shape)->rs.path.cmds, SHAPE(shape)->rs.path.pts, nullptr, nullptr, nullptr, exps)) {
                             PAINT(shape)->update(RenderUpdateFlag::Path);
                         }
                     }
@@ -1113,40 +1113,40 @@ void LottieBuilder::updateText(LottieLayer* layer, float frameNo)
                         if (tvg::zero(f)) continue;
                         needGroup = true;
 
-                        translation = translation + f * range->style.position(frameNo);
-                        scaling = scaling * (f * (range->style.scale(frameNo) * 0.01f - Point{1.0f, 1.0f}) + Point{1.0f, 1.0f});
-                        rotation += f * range->style.rotation(frameNo);
+                        translation = translation + f * range->style.position(frameNo, exps);
+                        scaling = scaling * (f * (range->style.scale(frameNo, exps) * 0.01f - Point{1.0f, 1.0f}) + Point{1.0f, 1.0f});
+                        rotation += f * range->style.rotation(frameNo, exps);
 
-                        opacity = (uint8_t)(opacity - f * (opacity - range->style.opacity(frameNo)));
+                        opacity = (uint8_t)(opacity - f * (opacity - range->style.opacity(frameNo, exps)));
                         shape->opacity(opacity);
 
-                        auto rangeColor = range->style.fillColor(frameNo); //TODO: use flag to check whether it was really set
+                        auto rangeColor = range->style.fillColor(frameNo, exps); //TODO: use flag to check whether it was really set
                         if (tvg::equal(f, 1.0f)) color = rangeColor;
                         else {
                             color.rgb[0] = lerp<uint8_t>(color.rgb[0], rangeColor.rgb[0], f);
                             color.rgb[1] = lerp<uint8_t>(color.rgb[1], rangeColor.rgb[1], f);
                             color.rgb[2] = lerp<uint8_t>(color.rgb[2], rangeColor.rgb[2], f);
                         }
-                        fillOpacity = (uint8_t)(fillOpacity - f * (fillOpacity - range->style.fillOpacity(frameNo)));
+                        fillOpacity = (uint8_t)(fillOpacity - f * (fillOpacity - range->style.fillOpacity(frameNo, exps)));
                         shape->fill(color.rgb[0], color.rgb[1], color.rgb[2], fillOpacity);
 
-                        shape->strokeWidth(f * range->style.strokeWidth(frameNo) / scale);
+                        shape->strokeWidth(f * range->style.strokeWidth(frameNo, exps) / scale);
                         if (shape->strokeWidth() > 0.0f) {
-                            auto rangeColor = range->style.strokeColor(frameNo); //TODO: use flag to check whether it was really set
+                            auto rangeColor = range->style.strokeColor(frameNo, exps); //TODO: use flag to check whether it was really set
                             if (tvg::equal(f, 1.0f)) strokeColor = rangeColor;
                             else {
                                 strokeColor.rgb[0] = lerp<uint8_t>(strokeColor.rgb[0], rangeColor.rgb[0], f);
                                 strokeColor.rgb[1] = lerp<uint8_t>(strokeColor.rgb[1], rangeColor.rgb[1], f);
                                 strokeColor.rgb[2] = lerp<uint8_t>(strokeColor.rgb[2], rangeColor.rgb[2], f);
                             }
-                            strokeOpacity = (uint8_t)(strokeOpacity - f * (strokeOpacity - range->style.strokeOpacity(frameNo)));
+                            strokeOpacity = (uint8_t)(strokeOpacity - f * (strokeOpacity - range->style.strokeOpacity(frameNo, exps)));
                             shape->strokeFill(strokeColor.rgb[0], strokeColor.rgb[1], strokeColor.rgb[2], strokeOpacity);
                             shape->order(doc.stroke.below);
                         }
 
-                        cursor.x += f * range->style.letterSpacing(frameNo);
+                        cursor.x += f * range->style.letterSpacing(frameNo, exps);
 
-                        auto spacing = f * range->style.lineSpacing(frameNo);
+                        auto spacing = f * range->style.lineSpacing(frameNo, exps);
                         if (spacing > lineSpacing) lineSpacing = spacing;
                     }
 
@@ -1155,7 +1155,7 @@ void LottieBuilder::updateText(LottieLayer* layer, float frameNo)
                         identity(&textGroupMatrix);
                         translate(&textGroupMatrix, cursor);
 
-                        auto alignment = text->alignOption.anchor(frameNo);
+                        auto alignment = text->alignOption.anchor(frameNo, exps);
 
                         // center pivoting
                         textGroupMatrix.e13 += alignment.x;
