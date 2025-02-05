@@ -170,14 +170,15 @@ struct RenderStroke
     }
 };
 
+struct RenderPath
+{
+    Array<PathCommand> cmds;
+    Array<Point> pts;
+};
+
 struct RenderShape
 {
-    struct
-    {
-        Array<PathCommand> cmds;
-        Array<Point> pts;
-    } path;
-
+    RenderPath path;
     Fill *fill = nullptr;
     RenderColor color{};
     RenderStroke *stroke = nullptr;
