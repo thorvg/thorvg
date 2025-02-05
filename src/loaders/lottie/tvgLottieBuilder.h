@@ -107,6 +107,8 @@ struct LottieBuilder
     void build(LottieComposition* comp);
 
 private:
+    void appendRect(Shape* shape, Point& pos, Point& size, float r, bool clockwise, RenderContext* ctx);
+
     void updateStrokeEffect(LottieLayer* layer, LottieFxStroke* effect, float frameNo);
     void updateEffect(LottieLayer* layer, float frameNo);
     void updateLayer(LottieComposition* comp, Scene* scene, LottieLayer* layer, float frameNo);
@@ -128,11 +130,14 @@ private:
     void updateEllipse(LottieGroup* parent, LottieObject** child, float frameNo, Inlist<RenderContext>& contexts, RenderContext* ctx);
     void updatePath(LottieGroup* parent, LottieObject** child, float frameNo, Inlist<RenderContext>& contexts, RenderContext* ctx);
     void updatePolystar(LottieGroup* parent, LottieObject** child, float frameNo, Inlist<RenderContext>& contexts, RenderContext* ctx);
+    void updateStar(LottiePolyStar* star, float frameNo, Matrix* transform, Shape* merging, RenderContext* ctx);
+    void updatePolygon(LottieGroup* parent, LottiePolyStar* star, float frameNo, Matrix* transform, Shape* merging, RenderContext* ctx);
     void updateTrimpath(LottieGroup* parent, LottieObject** child, float frameNo, Inlist<RenderContext>& contexts, RenderContext* ctx);
     void updateRepeater(LottieGroup* parent, LottieObject** child, float frameNo, Inlist<RenderContext>& contexts, RenderContext* ctx);
     void updateRoundedCorner(LottieGroup* parent, LottieObject** child, float frameNo, Inlist<RenderContext>& contexts, RenderContext* ctx);
     void updateOffsetPath(LottieGroup* parent, LottieObject** child, float frameNo, Inlist<RenderContext>& contexts, RenderContext* ctx);
 
+    RenderPath buffer;   //resusable path
     LottieExpressions* exps;
 };
 

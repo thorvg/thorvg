@@ -51,7 +51,7 @@ struct LottieOffsetModifier
 
     bool modifyPath(PathCommand* inCmds, uint32_t inCmdsCnt, Point* inPts, uint32_t inPtsCnt, RenderPath& out) const;
     bool modifyPolystar(RenderPath& in, RenderPath& out) const;
-    bool modifyRect(PathCommand* inCmds, uint32_t inCmdsCnt, Point* inPts, uint32_t inPtsCnt, RenderPath& out) const;
+    bool modifyRect(RenderPath& in, RenderPath& out) const;
     bool modifyEllipse(Point& radius) const;
 
 private:

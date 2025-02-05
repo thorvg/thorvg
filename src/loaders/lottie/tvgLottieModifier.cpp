@@ -381,9 +381,9 @@ bool LottieOffsetModifier::modifyPolystar(RenderPath& in, RenderPath& out) const
 }
 
 
-bool LottieOffsetModifier::modifyRect(PathCommand* inCmds, uint32_t inCmdsCnt, Point* inPts, uint32_t inPtsCnt, RenderPath& out) const
+bool LottieOffsetModifier::modifyRect(RenderPath& in, RenderPath& out) const
 {
-    return modifyPath(inCmds, inCmdsCnt, inPts, inPtsCnt, out);
+    return modifyPath(in.cmds.data, in.cmds.count, in.pts.data, in.pts.count, out);
 }
 
 
