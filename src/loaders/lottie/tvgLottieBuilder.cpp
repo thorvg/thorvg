@@ -458,7 +458,6 @@ static void _appendRect(Shape* shape, Point& pos, Point& size, float r, bool clo
 void LottieBuilder::updateRect(LottieGroup* parent, LottieObject** child, float frameNo, TVG_UNUSED Inlist<RenderContext>& contexts, RenderContext* ctx)
 {
     auto rect = static_cast<LottieRect*>(*child);
-
     auto size = rect->size(frameNo, exps);
     auto pos = rect->position(frameNo, exps) - size * 0.5f;
     auto r = rect->radius(frameNo, exps);
@@ -481,45 +480,36 @@ void LottieBuilder::updateRect(LottieGroup* parent, LottieObject** child, float 
 }
 
 
-static void _appendCircle(Shape* shape, float cx, float cy, float rx, float ry, const LottieOffsetModifier* offset, Matrix* transform, bool clockwise)
+static void _appendCircle(Shape* shape, Point& center, Point& radius, bool clockwise, RenderContext* ctx)
 {
-    if (offset) offset->modifyEllipse(rx, ry);
+    if (ctx->offset) ctx->offset->modifyEllipse(radius);
 
-    if (rx == 0.0f || ry == 0.0f) return;
+    if (tvg::zero(radius)) return;
 
-    auto rxKappa = rx * PATH_KAPPA;
-    auto ryKappa = ry * PATH_KAPPA;
+    auto rKappa = radius * PATH_KAPPA;
 
     constexpr int cmdsCnt = 6;
-    PathCommand commands[cmdsCnt] = {
-        PathCommand::MoveTo, PathCommand::CubicTo, PathCommand::CubicTo,
-        PathCommand::CubicTo, PathCommand::CubicTo, PathCommand::Close
-    };
+    PathCommand cmds[cmdsCnt] = {PathCommand::MoveTo, PathCommand::CubicTo, PathCommand::CubicTo, PathCommand::CubicTo, PathCommand::CubicTo, PathCommand::Close};
 
     constexpr int ptsCnt = 13;
-    Point points[ptsCnt];
+    Point pts[ptsCnt];
 
-    if (clockwise) {
-        points[0] = {cx, cy - ry}; //moveTo
-        points[1] = {cx + rxKappa, cy - ry}; points[2] = {cx + rx, cy - ryKappa}; points[3] = {cx + rx, cy}; //cubicTo
-        points[4] = {cx + rx, cy + ryKappa}; points[5] = {cx + rxKappa, cy + ry}; points[6] = {cx, cy + ry}; //cubicTo
-        points[7] = {cx - rxKappa, cy + ry}; points[8] = {cx - rx, cy + ryKappa}; points[9] = {cx - rx, cy}; //cubicTo
-        points[10] = {cx - rx, cy - ryKappa}; points[11] = {cx - rxKappa, cy - ry}; points[12] = {cx, cy - ry}; //cubicTo
-    } else {
-        points[0] = {cx, cy - ry}; //moveTo
-        points[1] = {cx - rxKappa, cy - ry}; points[2] = {cx - rx, cy - ryKappa}; points[3] = {cx - rx, cy}; //cubicTo
-        points[4] = {cx - rx, cy + ryKappa}; points[5] = {cx - rxKappa, cy + ry}; points[6] = {cx, cy + ry}; //cubicTo
-        points[7] = {cx + rxKappa, cy + ry}; points[8] = {cx + rx, cy + ryKappa}; points[9] = {cx + rx, cy}; //cubicTo
-        points[10] = {cx + rx, cy - ryKappa}; points[11] = {cx + rxKappa, cy - ry}; points[12] = {cx, cy - ry}; //cubicTo
-    }
+    int table[2][ptsCnt] = {{0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12}, {0, 11, 10, 9, 8, 7, 6, 5, 4, 3, 2, 1, 12}};
+    int* idx = clockwise ? table[0] : table[1];
 
-    if (transform) {
+    pts[idx[0]] = {center.x, center.y - radius.y}; //moveTo
+    pts[idx[1]] = {center.x + rKappa.x, center.y - radius.y}; pts[idx[2]] = {center.x + radius.x, center.y - rKappa.y}; pts[idx[3]] = {center.x + radius.x, center.y}; //cubicTo
+    pts[idx[4]] = {center.x + radius.x, center.y + rKappa.y}; pts[idx[5]] = {center.x + rKappa.x, center.y + radius.y}; pts[idx[6]] = {center.x, center.y + radius.y}; //cubicTo
+    pts[idx[7]] = {center.x - rKappa.x, center.y + radius.y}; pts[idx[8]] = {center.x - radius.x, center.y + rKappa.y}; pts[idx[9]] = {center.x - radius.x, center.y}; //cubicTo
+    pts[idx[10]] = {center.x - radius.x, center.y - rKappa.y}; pts[idx[11]] = {center.x - rKappa.x, center.y - radius.y}; pts[idx[12]] = {center.x, center.y - radius.y}; //cubicTo
+
+    if (ctx->transform) {
         for (int i = 0; i < ptsCnt; ++i) {
-            points[i] *= *transform;
+            pts[i] *= *ctx->transform;
         }
     }
     
-    shape->appendPath(commands, cmdsCnt, points, ptsCnt);
+    shape->appendPath(cmds, cmdsCnt, pts, ptsCnt);
 }
 
 
@@ -527,17 +517,17 @@ void LottieBuilder::updateEllipse(LottieGroup* parent, LottieObject** child, flo
 {
     auto ellipse = static_cast<LottieEllipse*>(*child);
 
-    auto position = ellipse->position(frameNo, exps);
-    auto size = ellipse->size(frameNo, exps);
+    auto pos = ellipse->position(frameNo, exps);
+    auto size = ellipse->size(frameNo, exps) * 0.5f;
 
     if (!ctx->repeaters.empty()) {
         auto shape = ellipse->pooling();
         shape->reset();
-        _appendCircle(shape, position.x, position.y, size.x * 0.5f, size.y * 0.5f, ctx->offset, ctx->transform, ellipse->clockwise);
+        _appendCircle(shape, pos, size, ellipse->clockwise, ctx);
         _repeat(parent, shape, ctx);
     } else {
         _draw(parent, ellipse, ctx);
-        _appendCircle(ctx->merging, position.x, position.y, size.x * 0.5f, size.y * 0.5f, ctx->offset, ctx->transform, ellipse->clockwise);
+        _appendCircle(ctx->merging, pos, size, ellipse->clockwise, ctx);
     }
 }
 
