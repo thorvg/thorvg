@@ -233,7 +233,7 @@ static void _updateStroke(LottieStroke* stroke, float frameNo, RenderContext* ct
 }
 
 
-static bool _fragmented(LottieGroup* parent, LottieObject** child, Inlist<RenderContext>& contexts, RenderContext* ctx)
+bool LottieBuilder::fragmented(LottieGroup* parent, LottieObject** child, Inlist<RenderContext>& contexts, RenderContext* ctx)
 {
     if (!ctx->reqFragment) return false;
     if (ctx->fragmenting) return true;
@@ -249,7 +249,7 @@ static bool _fragmented(LottieGroup* parent, LottieObject** child, Inlist<Render
 
 void LottieBuilder::updateSolidStroke(LottieGroup* parent, LottieObject** child, float frameNo, Inlist<RenderContext>& contexts, RenderContext* ctx)
 {
-    if (_fragmented(parent, child, contexts, ctx)) return;
+    if (fragmented(parent, child, contexts, ctx)) return;
 
     auto stroke = static_cast<LottieSolidStroke*>(*child);
 
@@ -262,7 +262,7 @@ void LottieBuilder::updateSolidStroke(LottieGroup* parent, LottieObject** child,
 
 void LottieBuilder::updateGradientStroke(LottieGroup* parent, LottieObject** child, float frameNo, Inlist<RenderContext>& contexts, RenderContext* ctx)
 {
-    if (_fragmented(parent, child, contexts, ctx)) return;
+    if (fragmented(parent, child, contexts, ctx)) return;
 
     auto stroke = static_cast<LottieGradientStroke*>(*child);
 
@@ -274,7 +274,7 @@ void LottieBuilder::updateGradientStroke(LottieGroup* parent, LottieObject** chi
 
 void LottieBuilder::updateSolidFill(LottieGroup* parent, LottieObject** child, float frameNo, Inlist<RenderContext>& contexts, RenderContext* ctx)
 {
-    if (_fragmented(parent, child, contexts, ctx)) return;
+    if (fragmented(parent, child, contexts, ctx)) return;
 
     auto fill = static_cast<LottieSolidFill*>(*child);
 
@@ -289,7 +289,7 @@ void LottieBuilder::updateSolidFill(LottieGroup* parent, LottieObject** child, f
 
 void LottieBuilder::updateGradientFill(LottieGroup* parent, LottieObject** child, float frameNo, Inlist<RenderContext>& contexts, RenderContext* ctx)
 {
-    if (_fragmented(parent, child, contexts, ctx)) return;
+    if (fragmented(parent, child, contexts, ctx)) return;
 
     auto fill = static_cast<LottieGradientFill*>(*child);
 
@@ -547,11 +547,11 @@ void LottieBuilder::updatePath(LottieGroup* parent, LottieObject** child, float 
     if (!ctx->repeaters.empty()) {
         auto shape = path->pooling();
         shape->reset();
-        path->pathset(frameNo, SHAPE(shape)->rs.path, ctx->transform, exps, ctx->roundness, ctx->offset);
+        path->pathset(frameNo, SHAPE(shape)->rs.path, ctx->transform, exps, ctx->modifier);
         _repeat(parent, shape, ctx);
     } else {
         _draw(parent, path, ctx);
-        if (path->pathset(frameNo, SHAPE(ctx->merging)->rs.path, ctx->transform, exps, ctx->roundness, ctx->offset)) {
+        if (path->pathset(frameNo, SHAPE(ctx->merging)->rs.path, ctx->transform, exps, ctx->modifier)) {
             PAINT(ctx->merging)->update(RenderUpdateFlag::Path);
         }
     }
@@ -674,13 +674,7 @@ void LottieBuilder::updateStar(LottiePolyStar* star, float frameNo, Matrix* tran
     }
     shape->close();
 
-    if (roundedCorner) {
-        if (ctx->offset) {
-            buffer.clear();
-            ctx->roundness->modifyPolystar(SHAPE(shape)->rs.path, buffer, outerRoundness, hasRoundness);
-            ctx->offset->modifyPolystar(buffer, SHAPE(merging)->rs.path);
-        } else ctx->roundness->modifyPolystar(SHAPE(shape)->rs.path, SHAPE(merging)->rs.path, outerRoundness, hasRoundness);
-    } else if (ctx->offset) ctx->offset->modifyPolystar(SHAPE(shape)->rs.path, SHAPE(merging)->rs.path);
+    if (ctx->modifier) ctx->modifier->modifyPolystar(SHAPE(shape)->rs.path, SHAPE(merging)->rs.path, outerRoundness, hasRoundness);
 }
 
 
@@ -758,13 +752,7 @@ void LottieBuilder::updatePolygon(LottieGroup* parent, LottiePolyStar* star, flo
     }
     shape->close();
 
-    if (roundedCorner) {
-        if (ctx->offset) {
-            buffer.clear();
-            ctx->roundness->modifyPolystar(SHAPE(shape)->rs.path, buffer, 0.0f, false);
-            ctx->offset->modifyPolystar(buffer, SHAPE(merging)->rs.path);
-        } else ctx->roundness->modifyPolystar(SHAPE(shape)->rs.path, SHAPE(merging)->rs.path, 0.0f, false);
-    } else if (ctx->offset) ctx->offset->modifyPolystar(SHAPE(shape)->rs.path, SHAPE(merging)->rs.path);
+    if (ctx->modifier) ctx->modifier->modifyPolystar(SHAPE(shape)->rs.path, SHAPE(merging)->rs.path, 0.0f, false);
 }
 
 
@@ -803,8 +791,10 @@ void LottieBuilder::updateRoundedCorner(TVG_UNUSED LottieGroup* parent, LottieOb
     auto r = roundedCorner->radius(frameNo, exps);
     if (r < LottieRoundnessModifier::ROUNDNESS_EPSILON) return;
 
-    if (!ctx->roundness) ctx->roundness = new LottieRoundnessModifier(r);
+    if (!ctx->roundness) ctx->roundness = new LottieRoundnessModifier(&buffer, r);
     else if (ctx->roundness->r < r) ctx->roundness->r = r;
+
+    ctx->update(ctx->roundness);
 }
 
 
@@ -812,6 +802,8 @@ void LottieBuilder::updateOffsetPath(TVG_UNUSED LottieGroup* parent, LottieObjec
 {
     auto offset = static_cast<LottieOffsetPath*>(*child);
     if (!ctx->offset) ctx->offset = new LottieOffsetModifier(offset->offset(frameNo, exps), offset->miterLimit(frameNo, exps), offset->join);
+
+    ctx->update(ctx->offset);
 }
 
 
@@ -1261,7 +1253,7 @@ void LottieBuilder::updateMasks(LottieLayer* layer, float frameNo)
         } else {
             //TODO: Once path direction support is implemented, ensure that the direction is ignored here
             auto offset = LottieOffsetModifier(expand);
-            mask->pathset(frameNo, SHAPE(pShape)->rs.path, nullptr, exps, nullptr, &offset);
+            mask->pathset(frameNo, SHAPE(pShape)->rs.path, nullptr, exps, &offset);
         }
 
         if (fastTrack) return;
@@ -1309,7 +1301,7 @@ void LottieBuilder::updateStrokeEffect(LottieLayer* layer, LottieFxStroke* effec
         auto idx = static_cast<uint32_t>(effect->mask(frameNo) - 1);
         if (idx < 0 || idx >= layer->masks.count) return;
         auto mask = layer->masks[idx];
-        mask->pathset(frameNo, SHAPE(shape)->rs.path, nullptr, exps, nullptr, nullptr);
+        mask->pathset(frameNo, SHAPE(shape)->rs.path, nullptr, exps);
     }
 
     shape->transform(layer->cache.matrix);

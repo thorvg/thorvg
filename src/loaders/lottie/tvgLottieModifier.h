@@ -28,31 +28,69 @@
 #include "tvgMath.h"
 #include "tvgRender.h"
 
-struct LottieRoundnessModifier
+
+struct LottieModifier
+{
+    enum Type : uint8_t {Roundness = 0, Offset};
+
+    LottieModifier* next = nullptr;
+    Type type;
+
+    virtual ~LottieModifier() {}
+
+    virtual bool modifyPath(PathCommand* inCmds, uint32_t inCmdsCnt, Point* inPts, uint32_t inPtsCnt, Matrix* transform, RenderPath& out) = 0;
+    virtual bool modifyPolystar(RenderPath& in, RenderPath& out, float outerRoundness, bool hasRoundness) = 0;
+
+    LottieModifier* decorate(LottieModifier* next)
+    {
+        /* TODO: build the decorative chaining here.
+           currently we only have roundness and offset. */
+
+        //roundness -> offset
+        if (next->type == Roundness) {
+            next->next = this;
+            return next;
+        }
+
+        //just in the order.
+        this->next = next;
+        return this;
+    }
+};
+
+struct LottieRoundnessModifier : LottieModifier
 {
     static constexpr float ROUNDNESS_EPSILON = 1.0f;
+
+    RenderPath* buffer;
     float r;
 
-    LottieRoundnessModifier(float r) : r(r) {};
+    LottieRoundnessModifier(RenderPath* buffer, float r) : buffer(buffer), r(r)
+    {
+        type = Roundness;
+    }
 
-    bool modifyPath(PathCommand* inCmds, uint32_t inCmdsCnt, Point* inPts, uint32_t inPtsCnt, Matrix* transform, RenderPath& out) const;
-    bool modifyPolystar(RenderPath& in, RenderPath& out, float outerRoundness, bool hasRoundness) const;
-    bool modifyRect(Point& size, float& r) const;
+    bool modifyPath(PathCommand* inCmds, uint32_t inCmdsCnt, Point* inPts, uint32_t inPtsCnt, Matrix* transform, RenderPath& out) override;
+    bool modifyPolystar(RenderPath& in, RenderPath& out, float outerRoundness, bool hasRoundness) override;
+    bool modifyRect(Point& size, float& r);
 };
 
 
-struct LottieOffsetModifier
+struct LottieOffsetModifier : LottieModifier
 {
     float offset;
     float miterLimit;
     StrokeJoin join;
 
-    LottieOffsetModifier(float offset, float miter = 4.0f, StrokeJoin join = StrokeJoin::Round) : offset(offset), miterLimit(miter), join(join) {}
+    LottieOffsetModifier(float offset, float miter = 4.0f, StrokeJoin join = StrokeJoin::Round) : offset(offset), miterLimit(miter), join(join)
+    {
+        type = Offset;
+    }
 
-    bool modifyPath(PathCommand* inCmds, uint32_t inCmdsCnt, Point* inPts, uint32_t inPtsCnt, RenderPath& out) const;
-    bool modifyPolystar(RenderPath& in, RenderPath& out) const;
-    bool modifyRect(RenderPath& in, RenderPath& out) const;
-    bool modifyEllipse(Point& radius) const;
+    bool modifyPath(PathCommand* inCmds, uint32_t inCmdsCnt, Point* inPts, uint32_t inPtsCnt, Matrix* transform, RenderPath& out) override;
+    bool modifyPolystar(RenderPath& in, RenderPath& out, float outerRoundness, bool hasRoundness) override;
+    bool modifyRect(RenderPath& in, RenderPath& out);
+    bool modifyEllipse(Point& radius);
 
 private:
     struct State
@@ -64,8 +102,8 @@ private:
         uint32_t movetoInIndex = 0;
     };
 
-    void line(RenderPath& out, PathCommand* inCmds, uint32_t inCmdsCnt, Point* inPts, uint32_t& curPt, uint32_t curCmd, State& state, float offset, bool degenerated) const;
-    void corner(RenderPath& out, Line& line, Line& nextLine, uint32_t movetoIndex, bool nextClose) const;
+    void line(RenderPath& out, PathCommand* inCmds, uint32_t inCmdsCnt, Point* inPts, uint32_t& curPt, uint32_t curCmd, State& state, float offset, bool degenerated);
+    void corner(RenderPath& out, Line& line, Line& nextLine, uint32_t movetoIndex, bool nextClose);
 };
 
 #endif
