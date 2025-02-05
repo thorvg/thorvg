@@ -174,6 +174,13 @@ struct RenderPath
 {
     Array<PathCommand> cmds;
     Array<Point> pts;
+
+    void clear()
+    {
+        pts.clear();
+        cmds.clear();
+    }
+
 };
 
 struct RenderShape
