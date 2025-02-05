@@ -387,9 +387,9 @@ bool LottieOffsetModifier::modifyRect(const PathCommand* inCmds, uint32_t inCmds
 }
 
 
-bool LottieOffsetModifier::modifyEllipse(float& rx, float& ry) const
+bool LottieOffsetModifier::modifyEllipse(Point& radius) const
 {
-    rx += offset;
-    ry += offset;
+    radius.x += offset;
+    radius.y += offset;
     return true;
 }
