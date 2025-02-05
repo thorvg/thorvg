@@ -26,7 +26,7 @@
 #include "tvgCommon.h"
 #include "tvgArray.h"
 #include "tvgMath.h"
-
+#include "tvgRender.h"
 
 struct LottieRoundnessModifier
 {
@@ -35,9 +35,9 @@ struct LottieRoundnessModifier
 
     LottieRoundnessModifier(float r) : r(r) {};
 
-    bool modifyPath(const PathCommand* inCmds, uint32_t inCmdsCnt, const Point* inPts, uint32_t inPtsCnt, Array<PathCommand>& outCmds, Array<Point>& outPts, Matrix* transform) const;
-    bool modifyPolystar(const Array<PathCommand>& inCmds, const Array<Point>& inPts, Array<PathCommand>& outCmds, Array<Point>& outPts, float outerRoundness, bool hasRoundness) const;
-    bool modifyRect(const Point& size, float& r) const;
+    bool modifyPath(PathCommand* inCmds, uint32_t inCmdsCnt, Point* inPts, uint32_t inPtsCnt, Matrix* transform, RenderPath& out) const;
+    bool modifyPolystar(RenderPath& in, RenderPath& out, float outerRoundness, bool hasRoundness) const;
+    bool modifyRect(Point& size, float& r) const;
 };
 
 
@@ -47,11 +47,11 @@ struct LottieOffsetModifier
     float miterLimit;
     StrokeJoin join;
 
-    LottieOffsetModifier(float offset, float miter = 4.0f, StrokeJoin join = StrokeJoin::Round) : offset(offset), miterLimit(miter), join(join) {};
+    LottieOffsetModifier(float offset, float miter = 4.0f, StrokeJoin join = StrokeJoin::Round) : offset(offset), miterLimit(miter), join(join) {}
 
-    bool modifyPath(const PathCommand* inCmds, uint32_t inCmdsCnt, const Point* inPts, uint32_t inPtsCnt, Array<PathCommand>& outCmds, Array<Point>& outPts) const;
-    bool modifyPolystar(const Array<PathCommand>& inCmds, const Array<Point>& inPts, Array<PathCommand>& outCmds, Array<Point>& outPts) const;
-    bool modifyRect(const PathCommand* inCmds, uint32_t inCmdsCnt, const Point* inPts, uint32_t inPtsCnt, Array<PathCommand>& outCmds, Array<Point>& outPts) const;
+    bool modifyPath(PathCommand* inCmds, uint32_t inCmdsCnt, Point* inPts, uint32_t inPtsCnt, RenderPath& out) const;
+    bool modifyPolystar(RenderPath& in, RenderPath& out) const;
+    bool modifyRect(PathCommand* inCmds, uint32_t inCmdsCnt, Point* inPts, uint32_t inPtsCnt, RenderPath& out) const;
     bool modifyEllipse(Point& radius) const;
 
 private:
@@ -64,8 +64,8 @@ private:
         uint32_t movetoInIndex = 0;
     };
 
-    void line(const PathCommand* inCmds, uint32_t inCmdsCnt, const Point* inPts, uint32_t& currentPt, uint32_t currentCmd, State& state, bool degenerated, Array<PathCommand>& cmds, Array<Point>& pts, float offset) const;
-    void corner(const Line& line, const Line& nextLine, uint32_t movetoIndex, bool nextClose, Array<PathCommand>& cmds, Array<Point>& pts) const;
+    void line(RenderPath& out, PathCommand* inCmds, uint32_t inCmdsCnt, Point* inPts, uint32_t& curPt, uint32_t curCmd, State& state, float offset, bool degenerated) const;
+    void corner(RenderPath& out, Line& line, Line& nextLine, uint32_t movetoIndex, bool nextClose) const;
 };
 
 #endif
