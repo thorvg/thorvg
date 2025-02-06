@@ -40,7 +40,6 @@ source_file = [
     'ImageRotation.cpp',
     'ImageScaleDown.cpp',
     'ImageScaleUp.cpp',
-    'Interaction.cpp',
     'InvLumaMasking.cpp',
     'InvMasking.cpp',
     'LinearGradient.cpp',
