@@ -54,10 +54,7 @@ private:
     SvgViewFlag viewFlag = SvgViewFlag::None;
     AspectRatioAlign align = AspectRatioAlign::XMidYMid;
     AspectRatioMeetOrSlice meetOrSlice = AspectRatioMeetOrSlice::Meet;
-    float vx = 0;
-    float vy = 0;
-    float vw = 0;
-    float vh = 0;
+    Box vbox{};
 
     bool header();
     void clear(bool all = true);

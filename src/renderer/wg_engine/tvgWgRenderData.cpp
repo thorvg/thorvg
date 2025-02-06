@@ -365,14 +365,12 @@ void WgRenderDataShape::updateBBox(Point pmin, Point pmax)
 
 
 void WgRenderDataShape::updateAABB(const Matrix& tr) {
-    Point p0 = Point{pMin.x, pMin.y} * tr;
-    Point p1 = Point{pMax.x, pMin.y} * tr;
-    Point p2 = Point{pMin.x, pMax.y} * tr;
-    Point p3 = Point{pMax.x, pMax.y} * tr;
-    aabb.pMin.x = std::min({p0.x, p1.x, p2.x, p3.x});
-    aabb.pMin.y = std::min({p0.y, p1.y, p2.y, p3.y});
-    aabb.pMax.x = std::max({p0.x, p1.x, p2.x, p3.x});
-    aabb.pMax.y = std::max({p0.y, p1.y, p2.y, p3.y});
+    auto p0 = Point{pMin.x, pMin.y} * tr;
+    auto p1 = Point{pMax.x, pMin.y} * tr;
+    auto p2 = Point{pMin.x, pMax.y} * tr;
+    auto p3 = Point{pMax.x, pMax.y} * tr;
+    aabb.min = {std::min({p0.x, p1.x, p2.x, p3.x}), std::min({p0.y, p1.y, p2.y, p3.y})};
+    aabb.max = {std::max({p0.x, p1.x, p2.x, p3.x}), std::max({p0.y, p1.y, p2.y, p3.y})};
 }
 
 

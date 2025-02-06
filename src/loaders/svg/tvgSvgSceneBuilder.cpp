@@ -940,10 +940,7 @@ Scene* svgSceneBuild(SvgLoaderData& loaderData, Box vBox, float w, float h, Aspe
     clippingLayer->clip(viewBoxClip);
     clippingLayer->push(docNode);
 
-    loaderData.doc->node.doc.vx = vBox.x;
-    loaderData.doc->node.doc.vy = vBox.y;
-    loaderData.doc->node.doc.vw = vBox.w;
-    loaderData.doc->node.doc.vh = vBox.h;
+    loaderData.doc->node.doc.vbox = vBox;
     loaderData.doc->node.doc.w = w;
     loaderData.doc->node.doc.h = h;
 

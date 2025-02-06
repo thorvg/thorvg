@@ -2502,10 +2502,10 @@ void BWTessellator::tessellate(const RenderShape *rshape, const Matrix& matrix)
 RenderRegion BWTessellator::bounds() const
 {
     return RenderRegion {
-        static_cast<int32_t>(floor(mLeftTop.x)),
-        static_cast<int32_t>(floor(mLeftTop.y)),
-        static_cast<int32_t>(ceil(mRightBottom.x - floor(mLeftTop.x))),
-        static_cast<int32_t>(ceil(mRightBottom.y - floor(mLeftTop.y))),
+        static_cast<int32_t>(floor(bbox.min.x)),
+        static_cast<int32_t>(floor(bbox.min.y)),
+        static_cast<int32_t>(ceil(bbox.max.x - floor(bbox.min.x))),
+        static_cast<int32_t>(ceil(bbox.max.y - floor(bbox.min.y))),
     };
 }
 
@@ -2515,13 +2515,10 @@ uint32_t BWTessellator::pushVertex(float x, float y)
     auto index = _pushVertex(mResPoints, x, y);
 
     if (index == 0) {
-        mRightBottom.x = mLeftTop.x = x;
-        mRightBottom.y = mLeftTop.y = y;
+        bbox.max = bbox.min = {x, y};
     } else {
-        mLeftTop.x = std::min(mLeftTop.x, x);
-        mLeftTop.y = std::min(mLeftTop.y, y);
-        mRightBottom.x = std::max(mRightBottom.x, x);
-        mRightBottom.y = std::max(mRightBottom.y , y);
+        bbox.min = {std::min(bbox.min.x, x), std::min(bbox.min.y, y)};
+        bbox.max = {std::max(bbox.max.x, x), std::max(bbox.max.y, y)};
     }
 
     return index;
