@@ -38,30 +38,30 @@ static bool _buildComposition(LottieComposition* comp, LottieLayer* parent);
 static bool _draw(LottieGroup* parent, LottieShape* shape, RenderContext* ctx);
 
 
-static void _rotationXYZ(Matrix* m, float degreeX, float degreeY, float degreeZ)
+static void _rotate(LottieTransform* transform, float frameNo, Matrix& m, float angle, LottieExpressions* exps)
 {
-    auto radianX = deg2rad(degreeX);
-    auto radianY = deg2rad(degreeY);
-    auto radianZ = deg2rad(degreeZ);
-
-    auto cx = cosf(radianX), sx = sinf(radianX);
-    auto cy = cosf(radianY), sy = sinf(radianY);;
-    auto cz = cosf(radianZ), sz = sinf(radianZ);;
-    m->e11 = cy * cz;
-    m->e12 = -cy * sz;
-    m->e21 = sx * sy * cz + cx * sz;
-    m->e22 = -sx * sy * sz + cx * cz;
-}
-
-
-static void _rotationZ(Matrix* m, float degree)
-{
-    if (degree == 0.0f) return;
-    auto radian = deg2rad(degree);
-    m->e11 = cosf(radian);
-    m->e12 = -sinf(radian);
-    m->e21 = sinf(radian);
-    m->e22 = cosf(radian);
+    //rotation xyz
+    if (transform->rotationEx) {
+        auto radianX = deg2rad(transform->rotationEx->x(frameNo, exps));
+        auto radianY = deg2rad(transform->rotationEx->y(frameNo, exps));
+        auto radianZ = deg2rad(transform->rotation(frameNo, exps)) + angle;
+        auto cx = cosf(radianX), sx = sinf(radianX);
+        auto cy = cosf(radianY), sy = sinf(radianY);;
+        auto cz = cosf(radianZ), sz = sinf(radianZ);;
+        m.e11 = cy * cz;
+        m.e12 = -cy * sz;
+        m.e21 = sx * sy * cz + cx * sz;
+        m.e22 = -sx * sy * sz + cx * cz;
+    //rotation z
+    } else {
+        auto degree = transform->rotation(frameNo, exps) + angle;
+        if (degree == 0.0f) return;
+        auto radian = deg2rad(degree);
+        m.e11 = cosf(radian);
+        m.e12 = -sinf(radian);
+        m.e21 = sinf(radian);
+        m.e22 = cosf(radian);
+    }
 }
 
 
@@ -115,9 +115,7 @@ static bool _updateTransform(LottieTransform* transform, float frameNo, bool aut
 
     auto angle = 0.0f;
     if (autoOrient) angle = transform->position.angle(frameNo);
-    if (transform->rotationEx) _rotationXYZ(&matrix, transform->rotationEx->x(frameNo, exps), transform->rotationEx->y(frameNo, exps), transform->rotation(frameNo, exps) + angle);
-    else _rotationZ(&matrix, transform->rotation(frameNo, exps) + angle);
-
+    _rotate(transform, frameNo, matrix, angle, exps);
 
     auto skewAngle = transform->skewAngle(frameNo, exps);
     if (skewAngle != 0.0f) {
