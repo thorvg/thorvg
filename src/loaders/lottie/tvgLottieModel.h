@@ -52,21 +52,20 @@ struct LottieStroke
         return dashattr->value[no];
     }
 
-    float dashOffset(float frameNo, LottieExpressions* exps)
+    float dashOffset(float frameNo, Tween& tween, LottieExpressions* exps)
     {
-        return dash(0)(frameNo, exps);
+        return dash(0)(frameNo, tween, exps);
     }
 
-    float dashGap(float frameNo, LottieExpressions* exps)
+    float dashSize(float frameNo, Tween& tween, LottieExpressions* exps)
     {
-        return dash(2)(frameNo, exps);
+        auto d = dash(1)(frameNo, tween, exps);
+        return (d > 0.0f) ? d : 0.0f;
     }
 
-    float dashSize(float frameNo, LottieExpressions* exps)
+    float dashGap(float frameNo, Tween& tween, LottieExpressions* exps)
     {
-        auto d = dash(1)(frameNo, exps);
-        if (d == 0.0f) return 0.1f;
-        else return d;
+        return dash(2)(frameNo, tween, exps);
     }
 
     LottieFloat width = 0.0f;
@@ -382,7 +381,7 @@ struct LottieTrimpath : LottieObject
         return nullptr;
     }
 
-    void segment(float frameNo, float& start, float& end, LottieExpressions* exps);
+    void segment(float frameNo, float& start, float& end, Tween& tween, LottieExpressions* exps);
 
     LottieFloat start = 0.0f;
     LottieFloat end = 100.0f;
@@ -690,7 +689,7 @@ struct LottieGradient : LottieObject
     }
 
     uint32_t populate(ColorStop& color, size_t count);
-    Fill* fill(float frameNo, LottieExpressions* exps);
+    Fill* fill(float frameNo, Tween& tween, LottieExpressions* exps);
 
     LottieScalar start = Point{0.0f, 0.0f};
     LottieScalar end = Point{0.0f, 0.0f};
@@ -960,6 +959,13 @@ struct LottieComposition
             if (layer->id == id) return layer;
         }
         return nullptr;
+    }
+
+    void clamp(float& frameNo)
+    {
+        frameNo += root->inFrame;
+        if (frameNo < root->inFrame) frameNo = root->inFrame;
+        if (frameNo >= root->outFrame) frameNo = root->outFrame - 1;
     }
 
     LottieLayer* root = nullptr;

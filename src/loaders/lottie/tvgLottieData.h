@@ -72,6 +72,14 @@ struct TextDocument
 };
 
 
+struct Tween
+{
+    float frameNo = 0.0f;
+    float progress = 0.0f;  //greater than 0 and smaller than 1
+    bool active = false;
+};
+
+
 static inline int32_t REMAP255(float val)
 {
     return (int32_t)nearbyintf(val * 255.0f);

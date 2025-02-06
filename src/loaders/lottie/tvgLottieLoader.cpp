@@ -127,7 +127,7 @@ bool LottieLoader::header()
             ++p;
             continue;
         }
-        //version.
+        //version
         if (!strncmp(p, "\"v\":", 4)) {
             p += 4;
             continue;
@@ -329,21 +329,25 @@ bool LottieLoader::override(const char* slots, bool byDefault)
 }
 
 
+float LottieLoader::shorten(float frameNo)
+{
+    //This ensures that the target frame number is reached.
+    return nearbyintf((frameNo + startFrame()) * 10000.0f) * 0.0001f;
+}
+
+
 bool LottieLoader::frame(float no)
 {
-    auto frameNo = no + startFrame();
-
-    //This ensures that the target frame number is reached.
-    frameNo *= 10000.0f;
-    frameNo = nearbyintf(frameNo);
-    frameNo *= 0.0001f;
+    no = shorten(no);
 
     //Skip update if frame diff is too small.
-    if (fabsf(this->frameNo - frameNo) <= 0.0009f) return false;
+    if (!builder->tweening() && fabsf(this->frameNo - no) <= 0.0009f) return false;
 
     this->done();
 
-    this->frameNo = frameNo;
+    this->frameNo = no;
+
+    builder->offTween();
 
     TaskScheduler::request(this);
 
@@ -435,4 +439,22 @@ bool LottieLoader::ready()
     done();
     if (comp) return true;
     return false;
+}
+
+
+bool LottieLoader::tween(float from, float to, float progress)
+{
+    //tweening is not necessary
+    if (tvg::zero(progress)) return frame(from);
+    else if (tvg::equal(progress, 1.0f)) return frame(to);
+
+    done();
+
+    frameNo = shorten(from);
+
+    builder->onTween(shorten(to), progress);
+
+    TaskScheduler::request(this);
+
+    return true;
 }

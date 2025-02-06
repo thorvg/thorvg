@@ -36,6 +36,10 @@ struct LottieLayer;
 struct LottieObject;
 
 
+//default keyframe updates condition (no tweening)
+#define DEFAULT_COND (!tween.active || !frames || (frames->count == 1))
+
+
 template<typename T>
 struct LottieScalarFrame
 {
@@ -159,32 +163,32 @@ struct LottieExpression
 };
 
 
-static void _copy(PathSet* pathset, Array<Point>& outPts, Matrix* transform)
+static void _copy(PathSet* pathset, Array<Point>& out, Matrix* transform)
 {
-    Array<Point> inPts;
+    Array<Point> in;
 
     if (transform) {
         for (int i = 0; i < pathset->ptsCnt; ++i) {
             Point pt = pathset->pts[i];
             pt *= *transform;
-            outPts.push(pt);
+            out.push(pt);
         }
     } else {
-        inPts.data = pathset->pts;
-        inPts.count = pathset->ptsCnt;
-        outPts.push(inPts);
-        inPts.data = nullptr;
+        in.data = pathset->pts;
+        in.count = pathset->ptsCnt;
+        out.push(in);
+        in.data = nullptr;
     }
 }
 
 
-static void _copy(PathSet* pathset, Array<PathCommand>& outCmds)
+static void _copy(PathSet* pathset, Array<PathCommand>& out)
 {
-    Array<PathCommand> inCmds;
-    inCmds.data = pathset->cmds;
-    inCmds.count = pathset->cmdsCnt;
-    outCmds.push(inCmds);
-    inCmds.data = nullptr;
+    Array<PathCommand> in;
+    in.data = pathset->cmds;
+    in.count = pathset->cmdsCnt;
+    out.push(in);
+    in.data = nullptr;
 }
 
 
@@ -343,6 +347,12 @@ struct LottieGenericProperty : LottieProperty
         return frame->interpolate(frame + 1, frameNo);
     }
 
+    Value operator()(float frameNo, Tween& tween, LottieExpressions* exps)
+    {
+        if (DEFAULT_COND) return operator()(frameNo, exps);
+        return lerp(operator()(frameNo, exps), operator()(tween.frameNo, exps), tween.progress);
+    }
+
     void copy(const LottieGenericProperty<Frame, Value, Scalar>& rhs, bool shallow = true)
     {
         if (rhs.frames) {
@@ -368,6 +378,12 @@ struct LottieGenericProperty : LottieProperty
 
         auto frame = frames->data + _bsearch(frames, frameNo);
         return frame->angle(frame + 1, frameNo);
+    }
+
+    float angle(float frameNo, Tween& tween)
+    {
+        if (DEFAULT_COND) return angle(frameNo);
+        return lerp(angle(frameNo), angle(tween.frameNo), tween.progress);
     }
 
     void prepare()
@@ -456,7 +472,6 @@ struct LottiePathSet : LottieProperty
             if (tvg::equal(frame->no, frameNo)) path = &frame->value;
             else if (frame->value.ptsCnt != (frame + 1)->value.ptsCnt) {
                 path = &frame->value;
-                TVGLOG("LOTTIE", "Different numbers of points in consecutive frames - interpolation omitted.");
             } else {
                 t = (frameNo - frame->no) / ((frame + 1)->no - frame->no);
                 if (frame->interpolator) t = frame->interpolator->progress(t);
@@ -524,6 +539,27 @@ struct LottiePathSet : LottieProperty
         return true;
     }
 
+    bool tweening(float frameNo, RenderPath& out, Matrix* transform, LottieModifier* modifier, Tween& tween, LottieExpressions* exps)
+    {
+        RenderPath to;  //used as temp as well.
+        auto pivot = out.pts.count;
+        if (!operator()(frameNo, out, transform, exps)) return false;
+        if (!operator()(tween.frameNo, to, transform, exps)) return false;
+
+        auto from = out.pts.data + pivot;
+        if (to.pts.count != out.pts.count - pivot) TVGLOG("LOTTIE", "Tweening has different numbers of points in consecutive frames.");
+
+        for (uint32_t i = 0; i < std::min(to.pts.count, (out.pts.count - pivot)); ++i) {
+            from[i] = lerp(from[i], to.pts[i], tween.progress);
+        }
+
+        if (!modifier) return true;
+
+        //Apply modifiers
+        to.clear();
+        return modifier->modifyPath(to.cmds.data, to.cmds.count, to.pts.data, to.pts.count, transform, out);
+    }
+
     bool operator()(float frameNo, RenderPath& out, Matrix* transform, LottieExpressions* exps, LottieModifier* modifier = nullptr)
     {
         //overriding with expressions
@@ -536,7 +572,11 @@ struct LottiePathSet : LottieProperty
         else return defaultPath(frameNo, out, transform);
     }
 
-    void prepare() {}
+    bool operator()(float frameNo, RenderPath& out, Matrix* transform, Tween& tween, LottieExpressions* exps, LottieModifier* modifier = nullptr)
+    {
+        if (DEFAULT_COND) return operator()(frameNo, out, transform, exps, modifier);
+        return tweening(frameNo, out, transform, modifier, tween, exps);
+    }
 };
 
 
@@ -616,6 +656,38 @@ struct LottieColorStop : LottieProperty
         return (*frames)[frames->count];
     }
 
+    Result tweening(float frameNo, Fill* fill, Tween& tween, LottieExpressions* exps)
+    {
+        auto frame = frames->data + _bsearch(frames, frameNo);
+        if (tvg::equal(frame->no, frameNo)) return fill->colorStops(frame->value.data, count);
+
+        //from
+        operator()(frameNo, fill, exps);
+
+        //to
+        auto dup = fill->duplicate();
+        operator()(tween.frameNo, dup, exps);
+
+        //interpolate
+        const Fill::ColorStop* from;
+        auto fromCnt = fill->colorStops(&from);
+
+        const Fill::ColorStop* to;
+        auto toCnt = fill->colorStops(&to);
+
+        if (fromCnt != toCnt) TVGLOG("LOTTIE", "Tweening has different numbers of color data in consecutive frames.");
+
+        for (uint32_t i = 0; i < std::min(fromCnt, toCnt); ++i) {
+            const_cast<Fill::ColorStop*>(from)->offset = lerp(from->offset, to->offset, tween.progress);
+            const_cast<Fill::ColorStop*>(from)->r = lerp(from->r, to->r, tween.progress);
+            const_cast<Fill::ColorStop*>(from)->g = lerp(from->g, to->g, tween.progress);
+            const_cast<Fill::ColorStop*>(from)->b = lerp(from->b, to->b, tween.progress);
+            const_cast<Fill::ColorStop*>(from)->a = lerp(from->a, to->a, tween.progress);
+        }
+
+        return Result::Success;
+    }
+
     Result operator()(float frameNo, Fill* fill, LottieExpressions* exps = nullptr)
     {
         //overriding with expressions
@@ -658,6 +730,12 @@ struct LottieColorStop : LottieProperty
             result.push({offset, r, g, b, a});
         }
         return fill->colorStops(result.data, count);
+    }
+
+    Result operator()(float frameNo, Fill* fill, Tween& tween, LottieExpressions* exps)
+    {
+        if (DEFAULT_COND) return operator()(frameNo, fill, exps);
+        return tweening(frameNo, fill, tween, exps);
     }
 
     void copy(const LottieColorStop& rhs, bool shallow = true)

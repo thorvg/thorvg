@@ -2542,6 +2542,25 @@ TVG_API Tvg_Result tvg_lottie_animation_get_markers_cnt(Tvg_Animation* animation
 TVG_API Tvg_Result tvg_lottie_animation_get_marker(Tvg_Animation* animation, uint32_t idx, const char** name);
 
 
+/**
+ * @brief Interpolates between two frames over a specified duration.
+ *
+ * This method performs tweening, a process of generating intermediate frame
+ * between @p from and @p to based on the given @p progress.
+ *
+ * @param[in] animation The Tvg_Animation pointer to the Lottie animation object.
+ * @param[in] from The start frame number of the interpolation.
+ * @param[in] to The end frame number of the interpolation.
+ * @param[in] progress The current progress of the interpolation (range: 0.0 to 1.0).
+ *
+ * @return Tvg_Result enumeration.
+ * @retval TVG_RESULT_INSUFFICIENT_CONDITION In case the animation is not loaded.
+ *
+ * @note Experimental API
+ */
+TVG_API Tvg_Result tvg_lottie_animation_tween(Tvg_Animation* animation, float from, float to, float progress);
+
+
 /** \} */   // end addtogroup ThorVGCapi_LottieAnimation
 
 
