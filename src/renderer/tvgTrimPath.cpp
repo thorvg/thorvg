@@ -224,8 +224,8 @@ static void _trimPath(const PathCommand* inCmds, uint32_t inCmdsCnt, const Point
             if (len + dLen > trimEnd) {
                 _trimAt(cmds, pts, moveTo, 0.0f, trimEnd - len, start, out);
                 start = true;
-                //add the whole segment
-            } else _add(cmds, pts, moveTo, start, out);
+            //add the whole segment
+            } else if (len + dLen > trimStart + EPSILON) _add(cmds, pts, moveTo, start, out);
         }
 
         len += dLen;
