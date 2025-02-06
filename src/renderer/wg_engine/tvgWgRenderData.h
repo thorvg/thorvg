@@ -26,11 +26,6 @@
 #include "tvgWgPipelines.h"
 #include "tvgWgGeometry.h"
 
-struct WgAabb {
-    Point pMin{};
-    Point pMax{};
-};
-
 struct WgMeshData {
     WGPUBuffer bufferPosition{};
     WGPUBuffer bufferTexCoord{};
@@ -104,7 +99,7 @@ struct WgRenderDataPaint
     WGPUBuffer bufferBlendSettings{};
     WGPUBindGroup bindGroupPaint{};
     RenderRegion viewport{};
-    WgAabb aabb{};
+    BBox aabb{{},{}};
     float opacity{};
     Array<WgRenderDataPaint*> clips;
 

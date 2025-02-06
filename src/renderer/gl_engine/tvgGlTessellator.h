@@ -176,8 +176,7 @@ private:
 
     Array<float>* mResPoints;
     Array<uint32_t>* mResIndices;
-    Point mLeftTop = {0.0f, 0.0f};
-    Point mRightBottom = {0.0f, 0.0f};
+    BBox bbox = {{}, {}};
 };
 
 }  // namespace tvg

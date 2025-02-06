@@ -285,12 +285,8 @@ enum class AspectRatioMeetOrSlice
 
 struct SvgDocNode
 {
-    float w;       //unit: point or in percentage see: SvgViewFlag
-    float h;       //unit: point or in percentage see: SvgViewFlag
-    float vx;
-    float vy;
-    float vw;
-    float vh;
+    float w, h;   //unit: point or in percentage see: SvgViewFlag
+    Box vbox;
     SvgViewFlag viewFlag;
     SvgNode* defs;
     SvgNode* style;
@@ -558,10 +554,7 @@ struct SvgParser
     SvgStyleGradient* styleGrad;
     Fill::ColorStop gradStop;
     SvgStopStyleFlags flags;
-    struct
-    {
-        float x, y, w, h;
-    } global;
+    Box global;
     struct
     {
         bool parsedFx;

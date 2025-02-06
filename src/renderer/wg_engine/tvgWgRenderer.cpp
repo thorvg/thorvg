@@ -203,8 +203,8 @@ RenderRegion WgRenderer::region(RenderData data)
 {
     auto renderData = (WgRenderDataPaint*)data;
     if (renderData->type() == Type::Shape) {
-        Point v1 = renderData->aabb.pMin;
-        Point v2 = renderData->aabb.pMax;
+        auto& v1 = renderData->aabb.min;
+        auto& v2 = renderData->aabb.max;
         RenderRegion renderRegion;
         renderRegion.x = static_cast<int32_t>(nearbyint(v1.x));
         renderRegion.y = static_cast<int32_t>(nearbyint(v1.y));
