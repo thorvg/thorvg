@@ -960,6 +960,16 @@ TVG_API Tvg_Result tvg_lottie_animation_get_marker(Tvg_Animation* animation, uin
     return TVG_RESULT_NOT_SUPPORTED;
 }
 
+
+TVG_API Tvg_Result tvg_lottie_animation_tween(Tvg_Animation* animation, float from, float to, float progress)
+{
+#ifdef THORVG_LOTTIE_LOADER_SUPPORT
+    if (!animation) return TVG_RESULT_INVALID_ARGUMENT;
+    return (Tvg_Result) reinterpret_cast<LottieAnimation*>(animation)->tween(from, to, progress);
+#endif
+    return TVG_RESULT_NOT_SUPPORTED;
+}
+
 #ifdef __cplusplus
 }
 #endif

@@ -225,12 +225,10 @@ void LottieImage::update()
 }
 
 
-void LottieTrimpath::segment(float frameNo, float& start, float& end, LottieExpressions* exps)
+void LottieTrimpath::segment(float frameNo, float& start, float& end, Tween& tween, LottieExpressions* exps)
 {
-    start = tvg::clamp(this->start(frameNo, exps) * 0.01f, 0.0f, 1.0f);
-    end = tvg::clamp(this->end(frameNo, exps) * 0.01f, 0.0f, 1.0f);
-
-    auto o = fmodf(this->offset(frameNo, exps), 360.0f) / 360.0f;  //0 ~ 1
+    start = tvg::clamp(this->start(frameNo, tween, exps) * 0.01f, 0.0f, 1.0f);
+    end = tvg::clamp(this->end(frameNo, tween, exps) * 0.01f, 0.0f, 1.0f);
 
     auto diff = fabs(start - end);
     if (tvg::zero(diff)) {
@@ -245,6 +243,8 @@ void LottieTrimpath::segment(float frameNo, float& start, float& end, LottieExpr
     }
 
     if (start > end) std::swap(start, end);
+
+    auto o = fmodf(this->offset(frameNo, tween, exps), 360.0f) / 360.0f;  //0 ~ 1
     start += o;
     end += o;
 }
@@ -337,14 +337,14 @@ uint32_t LottieGradient::populate(ColorStop& color, size_t count)
 }
 
 
-Fill* LottieGradient::fill(float frameNo, LottieExpressions* exps)
+Fill* LottieGradient::fill(float frameNo, Tween& tween, LottieExpressions* exps)
 {
-    auto opacity = this->opacity(frameNo);
+    auto opacity = this->opacity(frameNo, tween, exps);
     if (opacity == 0) return nullptr;
 
     Fill* fill = nullptr;
-    auto s = start(frameNo, exps);
-    auto e = end(frameNo, exps);
+    auto s = start(frameNo, tween, exps);
+    auto e = end(frameNo, tween, exps);
 
     //Linear Graident
     if (id == 1) {
@@ -358,14 +358,14 @@ Fill* LottieGradient::fill(float frameNo, LottieExpressions* exps)
         auto w = fabsf(e.x - s.x);
         auto h = fabsf(e.y - s.y);
         auto r = (w > h) ? (w + 0.375f * h) : (h + 0.375f * w);
-        auto progress = this->height(frameNo, exps) * 0.01f;
+        auto progress = this->height(frameNo, tween, exps) * 0.01f;
 
         if (tvg::zero(progress)) {
             static_cast<RadialGradient*>(fill)->radial(s.x, s.y, r, s.x, s.y, 0.0f);
         } else {
             if (tvg::equal(progress, 1.0f)) progress = 0.99f;
             auto startAngle = rad2deg(tvg::atan2(e.y - s.y, e.x - s.x));
-            auto angle = deg2rad((startAngle + this->angle(frameNo, exps)));
+            auto angle = deg2rad((startAngle + this->angle(frameNo, tween, exps)));
             auto fx = s.x + cos(angle) * progress * r;
             auto fy = s.y + sin(angle) * progress * r;
             // Lottie doesn't have any focal radius concept
@@ -375,7 +375,7 @@ Fill* LottieGradient::fill(float frameNo, LottieExpressions* exps)
 
     if (!fill) return nullptr;
 
-    colorStops(frameNo, fill, exps);
+    colorStops(frameNo, fill, tween, exps);
 
     //multiply the current opacity with the fill
     if (opacity < 255) {

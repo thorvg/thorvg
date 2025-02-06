@@ -45,7 +45,7 @@ public:
     Key key;
     char* dirName = nullptr;            //base resource directory
     bool copy = false;                  //"content" is owned by this loader
-    bool overridden = false;             //overridden properties with slots
+    bool overridden = false;            //overridden properties with slots
     bool rebuild = false;               //require building the lottie scene
 
     LottieLoader();
@@ -70,6 +70,9 @@ public:
     const char* markers(uint32_t index);
     bool segment(const char* marker, float& begin, float& end);
     Result segment(float begin, float end) override;
+
+    float shorten(float frameNo);  //Reduce the accuracy for performance
+    bool tween(float from, float to, float progress);
 
 private:
     bool ready();

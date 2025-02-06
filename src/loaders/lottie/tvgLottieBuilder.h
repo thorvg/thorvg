@@ -116,6 +116,23 @@ struct LottieBuilder
         return exps ? true : false;
     }
 
+    void offTween()
+    {
+        if (tween.active) tween.active = false;
+    }
+
+    void onTween(float to, float progress)
+    {
+        tween.frameNo = to;
+        tween.progress = progress;
+        tween.active = true;
+    }
+
+    bool tweening()
+    {
+        return tween.active;
+    }
+
     bool update(LottieComposition* comp, float progress);
     void build(LottieComposition* comp);
 
@@ -128,6 +145,7 @@ private:
     void updateLayer(LottieComposition* comp, Scene* scene, LottieLayer* layer, float frameNo);
     bool updateMatte(LottieComposition* comp, float frameNo, Scene* scene, LottieLayer* layer);
     void updatePrecomp(LottieComposition* comp, LottieLayer* precomp, float frameNo);
+    void updatePrecomp(LottieComposition* comp, LottieLayer* precomp, float frameNo, Tween& tween);
     void updateSolid(LottieLayer* layer);
     void updateImage(LottieGroup* layer);
     void updateText(LottieLayer* layer, float frameNo);
@@ -144,8 +162,8 @@ private:
     void updateEllipse(LottieGroup* parent, LottieObject** child, float frameNo, Inlist<RenderContext>& contexts, RenderContext* ctx);
     void updatePath(LottieGroup* parent, LottieObject** child, float frameNo, Inlist<RenderContext>& contexts, RenderContext* ctx);
     void updatePolystar(LottieGroup* parent, LottieObject** child, float frameNo, Inlist<RenderContext>& contexts, RenderContext* ctx);
-    void updateStar(LottiePolyStar* star, float frameNo, Matrix* transform, Shape* merging, RenderContext* ctx);
-    void updatePolygon(LottieGroup* parent, LottiePolyStar* star, float frameNo, Matrix* transform, Shape* merging, RenderContext* ctx);
+    void updateStar(LottiePolyStar* star, float frameNo, Matrix* transform, Shape* merging, RenderContext* ctx, Tween& tween, LottieExpressions* exps);
+    void updatePolygon(LottieGroup* parent, LottiePolyStar* star, float frameNo, Matrix* transform, Shape* merging, RenderContext* ctx, Tween& tween, LottieExpressions* exps);
     void updateTrimpath(LottieGroup* parent, LottieObject** child, float frameNo, Inlist<RenderContext>& contexts, RenderContext* ctx);
     void updateRepeater(LottieGroup* parent, LottieObject** child, float frameNo, Inlist<RenderContext>& contexts, RenderContext* ctx);
     void updateRoundedCorner(LottieGroup* parent, LottieObject** child, float frameNo, Inlist<RenderContext>& contexts, RenderContext* ctx);
@@ -153,6 +171,7 @@ private:
 
     RenderPath buffer;   //resusable path
     LottieExpressions* exps;
+    Tween tween;
 };
 
 #endif //_TVG_LOTTIE_BUILDER_H
