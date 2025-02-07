@@ -1,4 +1,4 @@
-/*
+    /*
  * Copyright (c) 2023 - 2025 the ThorVG project. All rights reserved.
 
  * Permission is hereby granted, free of charge, to any person obtaining a copy
@@ -226,4 +226,10 @@ void LookaheadParserHandler::skip()
 char* LookaheadParserHandler::getPos()
 {
     return iss.src_;
+}
+
+
+bool LookaheadParserHandler::isPrimitive()
+{
+    return state >= kHasNull && state <= kHasKey;
 }
