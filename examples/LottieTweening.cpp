@@ -95,7 +95,7 @@ struct UserExample : tvgexam::Example
         cout << "tween to: " << states[stateIdx].name << endl;
     }
 
-    bool clicked(tvg::Canvas* canvas, int32_t x, int32_t y) override
+    bool clickdown(tvg::Canvas* canvas, int32_t x, int32_t y) override
     {
         int i = 0;
         for (auto& state : states) {
