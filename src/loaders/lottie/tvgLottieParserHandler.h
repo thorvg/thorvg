@@ -197,6 +197,7 @@ struct LookaheadParserHandler
     void skip(const char* key = nullptr);
     void skipOut(int depth);
     int peekType();
+    bool isPrimitive();
     char* getPos();
 };
 

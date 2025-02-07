@@ -888,11 +888,8 @@ LottieOffsetPath* LottieParser::parseOffsetPath()
 }
 
 
-LottieObject* LottieParser::parseObject()
+LottieObject* LottieParser::parseObject(const char* type)
 {
-    auto type = getString();
-    if (!type) return nullptr;
-
     if (!strcmp(type, "gr")) return parseGroup();
     else if (!strcmp(type, "rc")) return parseRect();
     else if (!strcmp(type, "el")) return parseEllipse();
@@ -915,17 +912,58 @@ LottieObject* LottieParser::parseObject()
 }
 
 
+//capture the type name if the upcoming type is irregularly addressed after the actual properties.
+char* LottieParser::captureType()
+{
+    if (!isPrimitive() || !strcmp(val.GetString(), "ty")) return nullptr;
+
+    auto level = 0;
+    for (auto p = getPos(); *p != '\0'; ++p) {
+        if (*p == '{') level++;
+        else if (*p == '}') {
+            if (--level < 0) break;
+        } else if (level == 0) {
+            if (!strncmp(p, "\"ty\"", 4)) {
+                p += 4;
+                while (*p != '\0' && (isspace(*p) || *p == '\n')) ++p;
+                if (*p++ != ':') return nullptr;
+                while (*p != '\0' && (isspace(*p) || *p == '\n')) ++p;
+                if (*p++ != '\"') return nullptr;
+                const char* start = p;
+                while (*p != '\0' && *p != '\"') ++p;
+                if (*p == '\"') return strDuplicate(start, p - start);
+                return nullptr;
+            }
+        }
+    }
+    return nullptr;
+}
+
+
 void LottieParser::parseObject(Array<LottieObject*>& parent)
 {
     enterObject();
-    while (auto key = nextObjectKey()) {
-        if (KEY_AS("ty")) {
-            if (auto child = parseObject()) {
-                if (child->hidden) delete(child);
-                else parent.push(child);
-            }
-        } else skip(key);
+
+    auto type = captureType();
+    auto freeType = false;
+
+    if (!type) {
+        if (auto key = nextObjectKey()) {
+            if (KEY_AS("ty")) type = (char*)getString();
+            else skip();
+        }
+    } else freeType = true;
+
+    if (type) {
+        if (auto child = parseObject(type)) {
+            if (child->hidden) delete(child);
+            else parent.push(child);
+        }
     }
+
+    if (freeType) free(type);
+
+    while(nextObjectKey()) skip();
 }
 
 
@@ -1136,20 +1174,7 @@ void LottieParser::parseTimeRemap(LottieLayer* layer)
 void LottieParser::parseShapes(Array<LottieObject*>& parent)
 {
     enterArray();
-    while (nextArrayValue()) {
-        enterObject();
-        while (auto key = nextObjectKey()) {
-            if (KEY_AS("it")) {
-                enterArray();
-                while (nextArrayValue()) parseObject(parent);
-            } else if (KEY_AS("ty")) {
-                if (auto child = parseObject()) {
-                    if (child->hidden) delete(child);
-                    else parent.push(child);
-                }
-            } else skip(key);
-        }
-     }
+    while (nextArrayValue()) parseObject(parent);
 }
 
 

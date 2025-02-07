@@ -75,7 +75,7 @@ private:
     template<LottieProperty::Type type = LottieProperty::Type::Invalid, typename T> void parseProperty(T& prop, LottieObject* obj = nullptr);
     template<LottieProperty::Type type = LottieProperty::Type::Invalid, typename T> void parseSlotProperty(T& prop);
 
-    LottieObject* parseObject();
+    LottieObject* parseObject(const char* type);
     LottieObject* parseAsset();
     void parseImage(LottieImage* image, const char* data, const char* subPath, bool embedded, float width, float height);
     LottieLayer* parseLayer(LottieLayer* precomp);
@@ -126,6 +126,8 @@ private:
     void parseMarkers();
     void parseEffect(LottieEffect* effect);
     void postProcess(Array<LottieGlyph*>& glyphs);
+
+    char* captureType();
 
     //Current parsing context
     struct Context {
