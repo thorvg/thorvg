@@ -44,9 +44,13 @@
 "lottie":
   - src/loaders/lottie/**/*
 
-"raster":
+"cpu":
   - src/renderer/sw_engine/**/*
+
+"webgpu":
   - src/renderer/wg_engine/**/*
+
+"gl":
   - src/renderer/gl_engine/**/*
 
 "renderer":
