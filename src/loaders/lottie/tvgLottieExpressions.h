@@ -139,6 +139,8 @@ private:
     void buildComp(LottieComposition* comp, float frameNo, LottieExpression* exp);
     void buildComp(jerry_value_t context, float frameNo, LottieLayer* comp, LottieExpression* exp);
     void buildGlobal(LottieExpression* exp);
+    void buildWritables(LottieExpression* exp);
+    void resetWritables(LottieExpression* exp);
 
     //global object, attributes, methods
     jerry_value_t global;
