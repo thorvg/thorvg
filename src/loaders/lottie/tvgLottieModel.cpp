@@ -41,7 +41,7 @@ void LottieSlot::reset()
 
     auto shallow = pairs.count == 1 ? true : false;
 
-    for (auto pair = pairs.begin(); pair < pairs.end(); ++pair) {
+    ARRAY_FOREACH(pair, pairs) {
         pair->obj->override(pair->prop, shallow, true);
         delete(pair->prop);
         pair->prop = nullptr;
@@ -56,16 +56,16 @@ void LottieSlot::assign(LottieObject* target, bool byDefault)
     auto shallow = pairs.count == 1 ? true : false;
 
     //apply slot object to all targets
-    for (auto pair = pairs.begin(); pair < pairs.end(); ++pair) {
+    ARRAY_FOREACH(pair, pairs) {
         //backup the original properties before overwriting
         switch (type) {
             case LottieProperty::Type::Position: {
-                if (copy) pair->prop = new LottiePosition(static_cast<LottieTransform*>(pair->obj)->position);
+                if (copy) pair->prop = new LottieVector(static_cast<LottieTransform*>(pair->obj)->position);
                 pair->obj->override(&static_cast<LottieTransform*>(target)->position, shallow, byDefault);
                 break;
             }
             case LottieProperty::Type::Point: {
-                if (copy) pair->prop = new LottiePoint(static_cast<LottieTransform*>(pair->obj)->scale);
+                if (copy) pair->prop = new LottieScalar(static_cast<LottieTransform*>(pair->obj)->scale);
                 pair->obj->override(&static_cast<LottieTransform*>(target)->scale, shallow, byDefault);
                 break;
             }
@@ -216,7 +216,7 @@ void LottieImage::update()
 {
     //Update the picture data
     TaskScheduler::async(false);
-    for (auto p = pooler.begin(); p < pooler.end(); ++p) {
+    ARRAY_FOREACH(p, pooler) {
         if (data.size > 0) (*p)->load((const char*)data.b64Data, data.size, data.mimeType);
         else (*p)->load(data.path);
         (*p)->size(data.width, data.height);
@@ -225,12 +225,10 @@ void LottieImage::update()
 }
 
 
-void LottieTrimpath::segment(float frameNo, float& start, float& end, LottieExpressions* exps)
+void LottieTrimpath::segment(float frameNo, float& start, float& end, Tween& tween, LottieExpressions* exps)
 {
-    start = tvg::clamp(this->start(frameNo, exps) * 0.01f, 0.0f, 1.0f);
-    end = tvg::clamp(this->end(frameNo, exps) * 0.01f, 0.0f, 1.0f);
-
-    auto o = fmodf(this->offset(frameNo, exps), 360.0f) / 360.0f;  //0 ~ 1
+    start = tvg::clamp(this->start(frameNo, tween, exps) * 0.01f, 0.0f, 1.0f);
+    end = tvg::clamp(this->end(frameNo, tween, exps) * 0.01f, 0.0f, 1.0f);
 
     auto diff = fabs(start - end);
     if (tvg::zero(diff)) {
@@ -245,6 +243,8 @@ void LottieTrimpath::segment(float frameNo, float& start, float& end, LottieExpr
     }
 
     if (start > end) std::swap(start, end);
+
+    auto o = fmodf(this->offset(frameNo, tween, exps), 360.0f) / 360.0f;  //0 ~ 1
     start += o;
     end += o;
 }
@@ -337,14 +337,14 @@ uint32_t LottieGradient::populate(ColorStop& color, size_t count)
 }
 
 
-Fill* LottieGradient::fill(float frameNo, LottieExpressions* exps)
+Fill* LottieGradient::fill(float frameNo, Tween& tween, LottieExpressions* exps)
 {
-    auto opacity = this->opacity(frameNo);
+    auto opacity = this->opacity(frameNo, tween, exps);
     if (opacity == 0) return nullptr;
 
     Fill* fill = nullptr;
-    auto s = start(frameNo, exps);
-    auto e = end(frameNo, exps);
+    auto s = start(frameNo, tween, exps);
+    auto e = end(frameNo, tween, exps);
 
     //Linear Graident
     if (id == 1) {
@@ -358,14 +358,14 @@ Fill* LottieGradient::fill(float frameNo, LottieExpressions* exps)
         auto w = fabsf(e.x - s.x);
         auto h = fabsf(e.y - s.y);
         auto r = (w > h) ? (w + 0.375f * h) : (h + 0.375f * w);
-        auto progress = this->height(frameNo, exps) * 0.01f;
+        auto progress = this->height(frameNo, tween, exps) * 0.01f;
 
         if (tvg::zero(progress)) {
             static_cast<RadialGradient*>(fill)->radial(s.x, s.y, r, s.x, s.y, 0.0f);
         } else {
             if (tvg::equal(progress, 1.0f)) progress = 0.99f;
             auto startAngle = rad2deg(tvg::atan2(e.y - s.y, e.x - s.x));
-            auto angle = deg2rad((startAngle + this->angle(frameNo, exps)));
+            auto angle = deg2rad((startAngle + this->angle(frameNo, tween, exps)));
             auto fx = s.x + cos(angle) * progress * r;
             auto fy = s.y + sin(angle) * progress * r;
             // Lottie doesn't have any focal radius concept
@@ -375,7 +375,7 @@ Fill* LottieGradient::fill(float frameNo, LottieExpressions* exps)
 
     if (!fill) return nullptr;
 
-    colorStops(frameNo, fill, exps);
+    colorStops(frameNo, fill, tween, exps);
 
     //multiply the current opacity with the fill
     if (opacity < 255) {
@@ -409,7 +409,7 @@ void LottieGroup::prepare(LottieObject::Type type)
     size_t strokeCnt = 0;
     size_t fillCnt = 0;
 
-    for (auto c = children.end() - 1; c >= children.begin(); --c) {
+    ARRAY_REVERSE_FOREACH(c, children) {
         auto child = static_cast<LottieObject*>(*c);
 
         if (child->type == LottieObject::Type::Trimpath) trimpath = true;
@@ -478,13 +478,8 @@ LottieLayer::~LottieLayer()
     //No need to free assets children because the Composition owns them.
     if (rid) children.clear();
 
-    for (auto m = masks.begin(); m < masks.end(); ++m) {
-        delete(*m);
-    }
-
-    for (auto e = effects.begin(); e < effects.end(); ++e) {
-        delete(*e);
-    }
+    ARRAY_FOREACH(p, masks) delete(*p);
+    ARRAY_FOREACH(p, effects) delete(*p);
 
     delete(transform);
     free(name);
@@ -497,7 +492,7 @@ void LottieLayer::prepare(RGB24* color)
        so force it to be a Null Layer and release all resource. */
     if (hidden) {
         type = LottieLayer::Null;
-        for (auto p = children.begin(); p < children.end(); ++p) delete(*p);
+        ARRAY_FOREACH(p, children) delete(*p);
         children.reset();
         return;
     }
@@ -540,28 +535,13 @@ LottieComposition::~LottieComposition()
     free(version);
     free(name);
 
-    //delete interpolators
-    for (auto i = interpolators.begin(); i < interpolators.end(); ++i) {
-        free((*i)->key);
-        free(*i);
+    ARRAY_FOREACH(p, interpolators) {
+        free((*p)->key);
+        free(*p);
     }
 
-    //delete assets
-    for (auto a = assets.begin(); a < assets.end(); ++a) {
-        delete(*a);
-    }
-
-    //delete fonts
-    for (auto f = fonts.begin(); f < fonts.end(); ++f) {
-        delete(*f);
-    }
-
-    //delete slots
-    for (auto s = slots.begin(); s < slots.end(); ++s) {
-        delete(*s);
-    }
-    
-    for (auto m = markers.begin(); m < markers.end(); ++m) {
-        delete(*m);
-    }
+    ARRAY_FOREACH(p, assets) delete(*p);
+    ARRAY_FOREACH(p, fonts) delete(*p);
+    ARRAY_FOREACH(p, slots) delete(*p);
+    ARRAY_FOREACH(p, markers) delete(*p);
 }

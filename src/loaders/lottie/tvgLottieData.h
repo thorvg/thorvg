@@ -62,13 +62,21 @@ struct TextDocument
     struct {
         RGB24 color;
         float width;
-        bool render = false;
+        bool below = false;
     } stroke;
     char* name = nullptr;
     float size;
     float tracking = 0.0f;
     uint8_t justify = 0;
     uint8_t caps = 0;   //0: Regular, 1: AllCaps, 2: SmallCaps
+};
+
+
+struct Tween
+{
+    float frameNo = 0.0f;
+    float progress = 0.0f;  //greater than 0 and smaller than 1
+    bool active = false;
 };
 
 

@@ -1150,22 +1150,21 @@ public:
     Result order(bool strokeFirst) noexcept;
 
     /**
-     * @brief Gets the commands data of the path.
+     * @brief Retrieves the current path data of the shape.
      *
-     * @param[out] cmds The pointer to the array of the commands from the path.
+     * This function provides access to the shape's path data, including the commands
+     * and points that define the path.
      *
-     * @return The length of the @p cmds array when succeed, zero otherwise.
+     * @param[out] cmds Pointer to the array of commands representing the path.
+     *                  Can be @c nullptr if this information is not needed.
+     * @param[out] cmdsCnt Pointer to the variable that receives the number of commands in the @p cmds array.
+     *                     Can be @c nullptr if this information is not needed.
+     * @param[out] pts Pointer to the array of two-dimensional points that define the path.
+     *                 Can be @c nullptr if this information is not needed.
+     * @param[out] ptsCnt Pointer to the variable that receives the number of points in the @p pts array.
+     *                    Can be @c nullptr if this information is not needed.
      */
-    uint32_t pathCommands(const PathCommand** cmds) const noexcept;
-
-    /**
-     * @brief Gets the points values of the path.
-     *
-     * @param[out] pts The pointer to the array of the two-dimensional points from the path.
-     *
-     * @return The length of the @p pts array when succeed, zero otherwise.
-     */
-    uint32_t pathCoords(const Point** pts) const noexcept;
+    Result path(const PathCommand** cmds, uint32_t* cmdsCnt, const Point** pts, uint32_t* ptsCnt) const noexcept;
 
     /**
      * @brief Gets the pointer to the gradient fill of the shape.
@@ -1183,7 +1182,7 @@ public:
      * @param[out] a The alpha channel value in the range [0 ~ 255], where 0 is completely transparent and 255 is opaque.
      *
      */
-    Result fillColor(uint8_t* r, uint8_t* g, uint8_t* b, uint8_t* a = nullptr) const noexcept;
+    Result fill(uint8_t* r, uint8_t* g, uint8_t* b, uint8_t* a = nullptr) const noexcept;
 
     /**
      * @brief Gets the fill rule value.
@@ -1611,7 +1610,7 @@ public:
      * @note If you are unsure about the MIME type, you can provide an empty value like @c nullptr, and thorvg will attempt to figure it out.
      * @see Text::font(const char* name, float size, const char* style)
      *
-     * @note 0.15
+     * @since 0.15
      */
     static Result load(const char* name, const char* data, uint32_t size, const char* mimeType = "ttf", bool copy = false) noexcept;
 
@@ -1892,7 +1891,6 @@ public:
  *
  * @since 0.13
  */
-
 class TVG_API Animation
 {
 public:
@@ -1911,7 +1909,6 @@ public:
      *       Values less than 0.001 may be disregarded and may not be accurately retained by the Animation.
      *
      * @see totalFrame()
-     *
      */
     Result frame(float no) noexcept;
 
@@ -1925,7 +1922,6 @@ public:
      * @return A picture instance that is tied to this animation.
      *
      * @warning The picture instance is owned by Animation. It should not be deleted manually.
-     *
      */
     Picture* picture() const noexcept;
 
@@ -1936,9 +1932,8 @@ public:
      *
      * @note If the Picture is not properly configured, this function will return 0.
      *
-     * @see Animation::frame(float no)
+     * @see Animation::frame()
      * @see Animation::totalFrame()
-     *
      */
     float curFrame() const noexcept;
 
@@ -1949,7 +1944,6 @@ public:
      *
      * @note Frame numbering starts from 0.
      * @note If the Picture is not properly configured, this function will return 0.
-     *
      */
     float totalFrame() const noexcept;
 
@@ -1959,7 +1953,6 @@ public:
      * @return The duration of the animation in seconds.
      *
      * @note If the Picture is not properly configured, this function will return 0.
-     *
      */
     float duration() const noexcept;
 
@@ -1971,30 +1964,33 @@ public:
      * After setting, the number of animation frames and the playback time are calculated
      * by mapping the playback segment as the entire range.
      *
-     * @param[in] begin segment start.
-     * @param[in] end segment end.
+     * @param[in] begin segment begin frame.
+     * @param[in] end segment end frame.
      *
      * @retval Result::InsufficientCondition In case the animation is not loaded.
+     * @retval Result::InvalidArguments If the @p begin is higher than @p end.
      * @retval Result::NonSupport When it's not animatable.
      *
-     * @note Animation allows a range from 0.0 to 1.0. @p end should not be higher than @p begin.
+     * @note Animation allows a range from 0.0 to the total frame. @p end should not be higher than @p begin.
      * @note If a marker has been specified, its range will be disregarded.
-     * @see LottieAnimation::segment(const char* marker)
      *
-     * @note Experimental API
+     * @see LottieAnimation::segment(const char* marker)
+     * @see Animation::totalFrame()
+     *
+     * @since 1.0
      */
     Result segment(float begin, float end) noexcept;
 
     /**
-     * @brief Gets the current segment.
+     * @brief Gets the current segment range information.
      *
-     * @param[out] begin segment start.
-     * @param[out] end segment end.
+     * @param[out] begin segment begin frame.
+     * @param[out] end segment end frame.
      *
      * @retval Result::InsufficientCondition In case the animation is not loaded.
      * @retval Result::NonSupport When it's not animatable.
      *
-     * @note Experimental API
+     * @since 1.0
      */
     Result segment(float* begin, float* end = nullptr) noexcept;
 
@@ -2002,7 +1998,6 @@ public:
      * @brief Creates a new Animation object.
      *
      * @return A new Animation object.
-     *
      */
     static Animation* gen() noexcept;
 

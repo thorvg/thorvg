@@ -47,7 +47,7 @@ struct Fill::Impl
         cnt = dup->cnt;
         spread = dup->spread;
         colorStops = static_cast<ColorStop*>(malloc(sizeof(ColorStop) * dup->cnt));
-        memcpy(colorStops, dup->colorStops, sizeof(ColorStop) * dup->cnt);
+        if (dup->cnt > 0) memcpy(colorStops, dup->colorStops, sizeof(ColorStop) * dup->cnt);
         transform = dup->transform;
     }
 

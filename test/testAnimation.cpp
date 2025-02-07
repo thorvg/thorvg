@@ -301,7 +301,7 @@ TEST_CASE("Animation Segment", "[tvgAnimation]")
     //Get current segment before segment
     REQUIRE(animation->segment(&begin, &end) == Result::Success);
     REQUIRE(begin == 0.0f);
-    REQUIRE(end == 1.0f);
+    REQUIRE(end == animation->totalFrame());
 
     //Segment by range
     REQUIRE(animation->segment(0.25, 0.5) == Result::Success);
@@ -320,7 +320,7 @@ TEST_CASE("Animation Segment", "[tvgAnimation]")
     REQUIRE(end == 0.5f);
 
     //Segment by invalid range
-    REQUIRE(animation->segment(-0.5, 1.5) == Result::InvalidArguments);
+    REQUIRE(animation->segment(1.5, -0.5) == Result::InvalidArguments);
 
     REQUIRE(Initializer::term() == Result::Success);
 }

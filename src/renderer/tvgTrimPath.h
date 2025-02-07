@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2024 the ThorVG project. All rights reserved.
+ * Copyright (c) 2025 the ThorVG project. All rights reserved.
 
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to deal
@@ -20,40 +20,23 @@
  * SOFTWARE.
  */
 
-#ifndef _TVG_LOTTIE_RENDER_POOLER_H_
-#define _TVG_LOTTIE_RENDER_POOLER_H_
+#ifndef _TVG_TRIM_PATH_H
+#define _TVG_TRIM_PATH_H
 
-#include "tvgCommon.h"
-#include "tvgArray.h"
-#include "tvgPaint.h"
-
-
-template<typename T>
-struct LottieRenderPooler
+namespace tvg
 {
-    Array<T*> pooler;
+struct RenderPath;
 
-    ~LottieRenderPooler()
-    {
-        ARRAY_FOREACH(p, pooler) {
-            (*p)->unref();
-        }
-    }
+struct TrimPath
+{
+    float begin = 0.0f;
+    float end = 1.0f;
+    bool simultaneous = true;
 
-    T* pooling(bool copy = false)
-    {
-        //return available one.
-        ARRAY_FOREACH(p, pooler) {
-            if ((*p)->refCnt() == 1) return *p;
-        }
-
-        //no empty, generate a new one.
-        auto p = copy ? static_cast<T*>(pooler[0]->duplicate()) : T::gen();
-        p->ref();
-        pooler.push(p);
-        return p;
-    }
+    bool valid() const;
+    bool trim(const RenderPath& in, RenderPath& out) const;
 };
 
+}
 
-#endif //_TVG_LOTTIE_RENDER_POOLER_H_
+#endif //_TVG_TRIM_PATH_H

@@ -90,4 +90,4 @@ Once you've submitted a pull request (PR), please ensure the following checklist
 - Assignees: You should be assigned.
 - Labels: Mark the appropriate Patch Purpose.
 - Automated Integration Test: All must pass.
-<p align="center"><img width="1000" height="1072" src="https://github.com/thorvg/thorvg/blob/main/res/contribution.png"></p>
+<p align="center"><img width="1000" height="auto" src="https://github.com/thorvg/thorvg/blob/main/res/contribution.png"></p>

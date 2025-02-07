@@ -45,31 +45,29 @@ static void _termEngine()
 }
 
 
-void GlRenderer::flush()
+void GlRenderer::clearDisposes()
 {
     if (mDisposed.textures.count > 0) {
         glDeleteTextures(mDisposed.textures.count, mDisposed.textures.data);
         mDisposed.textures.clear();
     }
 
-    for (auto p = mRenderPassStack.begin(); p < mRenderPassStack.end(); ++p) {
-        delete(*p);
-    }
+    ARRAY_FOREACH(p, mRenderPassStack) delete(*p);
     mRenderPassStack.clear();
+}
 
-    for (auto p = mComposePool.begin(); p < mComposePool.end(); p++) {
-        delete(*p);
-    }
+
+void GlRenderer::flush()
+{
+    clearDisposes();
+
+    ARRAY_FOREACH(p, mComposePool) delete(*p);
     mComposePool.clear();
 
-    for (auto p = mBlendPool.begin(); p < mBlendPool.end(); p++) {
-        delete(*p);
-    }
+    ARRAY_FOREACH(p, mBlendPool) delete(*p);
     mBlendPool.clear();
 
-    for (auto p = mComposeStack.begin(); p < mComposeStack.end(); p++) {
-        delete(*p);
-    }
+    ARRAY_FOREACH(p, mComposeStack) delete(*p);
     mComposeStack.clear();
 }
 
@@ -98,9 +96,7 @@ GlRenderer::~GlRenderer()
 
     flush();
 
-    for (auto p = mPrograms.begin(); p < mPrograms.end(); ++p) {
-        delete(*p);
-    }
+    ARRAY_FOREACH(p, mPrograms) delete(*p);
 
     if (rendererCnt == 0 && initEngineCnt == 0) _termEngine();
 }
@@ -803,7 +799,7 @@ bool GlRenderer::target(void* context, int32_t id, uint32_t w, uint32_t h)
     //assume the context zero is invalid
     if (!context || id == GL_INVALID_VALUE || w == 0 || h == 0) return false;
 
-    currentContext();
+    if (mContext) currentContext();
 
     flush();
 
@@ -813,6 +809,8 @@ bool GlRenderer::target(void* context, int32_t id, uint32_t w, uint32_t h)
 
     mContext = context;
     mTargetFboId = static_cast<GLint>(id);
+
+    currentContext();
 
     mRootTarget = GlRenderTarget(surface.w, surface.h);
     mRootTarget.setViewport({0, 0, static_cast<int32_t>(surface.w), static_cast<int32_t>(surface.h)});
@@ -854,7 +852,7 @@ bool GlRenderer::sync()
 
     GL_CHECK(glDisable(GL_SCISSOR_TEST));
 
-    flush();
+    clearDisposes();
 
     delete task;
 
@@ -950,17 +948,29 @@ bool GlRenderer::endComposite(RenderCompositor* cmp)
 }
 
 
-bool GlRenderer::prepare(TVG_UNUSED RenderEffect* effect)
+void GlRenderer::prepare(TVG_UNUSED RenderEffect* effect, TVG_UNUSED const Matrix& transform)
+{
+    //TODO: prepare the effect
+}
+
+
+bool GlRenderer::region(TVG_UNUSED RenderEffect* effect)
 {
     //TODO: Return if the current post effect requires the region expansion
     return false;
 }
 
 
-bool GlRenderer::effect(TVG_UNUSED RenderCompositor* cmp, TVG_UNUSED const RenderEffect* effect, TVG_UNUSED bool direct)
+bool GlRenderer::render(TVG_UNUSED RenderCompositor* cmp, TVG_UNUSED const RenderEffect* effect, TVG_UNUSED bool direct)
 {
     TVGLOG("GL_ENGINE", "SceneEffect(%d) is not supported", (int)effect->type);
     return false;
+}
+
+
+void GlRenderer::dispose(TVG_UNUSED RenderEffect* effect)
+{
+    //TODO: dispose the effect
 }
 
 
@@ -1089,24 +1099,35 @@ bool GlRenderer::renderShape(RenderData data)
 
     if (flags & (RenderUpdateFlag::Stroke | RenderUpdateFlag::GradientStroke)) drawDepth2 = currentPass()->nextDrawDepth();
 
-
     if (!sdata->clips.empty()) drawClip(sdata->clips);
 
-    if (flags & (RenderUpdateFlag::Color | RenderUpdateFlag::Gradient))
-    {
-        auto gradient = sdata->rshape->fill;
-        if (gradient) drawPrimitive(*sdata, gradient, RenderUpdateFlag::Gradient, drawDepth1);
-        else if (sdata->rshape->color.a > 0) drawPrimitive(*sdata, sdata->rshape->color, RenderUpdateFlag::Color, drawDepth1);
-    }
-
-    if (flags & (RenderUpdateFlag::Stroke | RenderUpdateFlag::GradientStroke))
-    {
-        auto gradient =  sdata->rshape->strokeFill();
-        if (gradient) {
-            drawPrimitive(*sdata, gradient, RenderUpdateFlag::GradientStroke, drawDepth2);
-        } else if (sdata->rshape->stroke && sdata->rshape->stroke->color.a > 0) {
-            drawPrimitive(*sdata, sdata->rshape->stroke->color, RenderUpdateFlag::Stroke, drawDepth2);
+    auto processFill = [&]() {
+        if (flags & (RenderUpdateFlag::Color | RenderUpdateFlag::Gradient)) {
+            if (const auto& gradient = sdata->rshape->fill) {
+                drawPrimitive(*sdata, gradient, RenderUpdateFlag::Gradient, drawDepth1);
+            } else if (sdata->rshape->color.a > 0) {
+                drawPrimitive(*sdata, sdata->rshape->color, RenderUpdateFlag::Color, drawDepth1);
+            }
         }
+    };
+
+    auto processStroke = [&]() {
+        if (!sdata->rshape->stroke) return;
+        if (flags & (RenderUpdateFlag::Stroke | RenderUpdateFlag::GradientStroke)) {
+            if (const auto& gradient = sdata->rshape->strokeFill()) {
+                drawPrimitive(*sdata, gradient, RenderUpdateFlag::GradientStroke, drawDepth2);
+            } else if (sdata->rshape->stroke->color.a > 0) {
+                drawPrimitive(*sdata, sdata->rshape->stroke->color, RenderUpdateFlag::Stroke, drawDepth2);
+            }
+        }
+    };
+
+    if (sdata->rshape->stroke && sdata->rshape->stroke->strokeFirst) {
+        processStroke();
+        processFill();
+    } else {
+        processFill();
+        processStroke();
     }
 
     return true;
@@ -1116,7 +1137,6 @@ bool GlRenderer::renderShape(RenderData data)
 void GlRenderer::dispose(RenderData data)
 {
     auto sdata = static_cast<GlShape*>(data);
-    if (!sdata) return;
 
     //dispose the non thread-safety resources on clearDisposes() call
     if (sdata->texId) {

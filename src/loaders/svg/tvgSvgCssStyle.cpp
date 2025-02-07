@@ -138,8 +138,8 @@ static void _copyStyle(SvgStyleProperty* to, const SvgStyleProperty* from)
         if (from->stroke.dash.array.count > 0) {
             to->stroke.dash.array.clear();
             to->stroke.dash.array.reserve(from->stroke.dash.array.count);
-            for (uint32_t i = 0; i < from->stroke.dash.array.count; ++i) {
-                to->stroke.dash.array.push(from->stroke.dash.array[i]);
+            ARRAY_FOREACH(p, from->stroke.dash.array) {
+                to->stroke.dash.array.push(*p);
             }
             to->stroke.flags = (to->stroke.flags | SvgStrokeFlags::Dash);
             to->flags = (to->flags | SvgStyleFlags::StrokeDashArray);
@@ -211,10 +211,9 @@ SvgNode* cssFindStyleNode(const SvgNode* style, const char* title, SvgNodeType t
 {
     if (!style) return nullptr;
 
-    auto child = style->child.data;
-    for (uint32_t i = 0; i < style->child.count; ++i, ++child) {
-        if ((*child)->type == type) {
-            if ((!title && !(*child)->id) || (title && (*child)->id && !strcmp((*child)->id, title))) return (*child);
+    ARRAY_FOREACH(p, style->child) {
+        if ((*p)->type == type) {
+            if ((!title && !(*p)->id) || (title && (*p)->id && !strcmp((*p)->id, title))) return *p;
         }
     }
     return nullptr;
@@ -225,10 +224,9 @@ SvgNode* cssFindStyleNode(const SvgNode* style, const char* title)
 {
     if (!style || !title) return nullptr;
 
-    auto child = style->child.data;
-    for (uint32_t i = 0; i < style->child.count; ++i, ++child) {
-        if ((*child)->type == SvgNodeType::CssStyle) {
-            if ((*child)->id && !strcmp((*child)->id, title)) return (*child);
+    ARRAY_FOREACH(p, style->child) {
+        if ((*p)->type == SvgNodeType::CssStyle) {
+            if ((*p)->id && !strcmp((*p)->id, title)) return *p;
         }
     }
     return nullptr;
@@ -238,12 +236,11 @@ SvgNode* cssFindStyleNode(const SvgNode* style, const char* title)
 void cssUpdateStyle(SvgNode* doc, SvgNode* style)
 {
     if (doc->child.count > 0) {
-        auto child = doc->child.data;
-        for (uint32_t i = 0; i < doc->child.count; ++i, ++child) {
-            if (auto cssNode = cssFindStyleNode(style, nullptr, (*child)->type)) {
-                cssCopyStyleAttr(*child, cssNode);
+        ARRAY_FOREACH(p, doc->child) {
+            if (auto cssNode = cssFindStyleNode(style, nullptr, (*p)->type)) {
+                cssCopyStyleAttr(*p, cssNode);
             }
-            cssUpdateStyle(*child, style);
+            cssUpdateStyle(*p, style);
         }
     }
 }
@@ -251,9 +248,8 @@ void cssUpdateStyle(SvgNode* doc, SvgNode* style)
 
 void cssApplyStyleToPostponeds(Array<SvgNodeIdPair>& postponeds, SvgNode* style)
 {
-    for (uint32_t i = 0; i < postponeds.count; ++i) {
-        auto nodeIdPair = postponeds[i];
-
+    ARRAY_FOREACH(p, postponeds) {
+        auto nodeIdPair = *p;
         //css styling: tag.name has higher priority than .name
         if (auto cssNode = cssFindStyleNode(style, nodeIdPair.id, nodeIdPair.node->type)) {
             cssCopyStyleAttr(nodeIdPair.node, cssNode);

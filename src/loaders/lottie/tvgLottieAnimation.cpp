@@ -33,9 +33,10 @@ LottieAnimation::LottieAnimation()
 
 Result LottieAnimation::override(const char* slot) noexcept
 {
-    if (!PICTURE(pImpl->picture)->loader) return Result::InsufficientCondition;
+    auto loader = PICTURE(pImpl->picture)->loader;
+    if (!loader) return Result::InsufficientCondition;
 
-    if (static_cast<LottieLoader*>(PICTURE(pImpl->picture)->loader)->override(slot)) return Result::Success;
+    if (static_cast<LottieLoader*>(loader)->override(slot)) return Result::Success;
 
     return Result::InvalidArguments;
 }
@@ -47,14 +48,23 @@ Result LottieAnimation::segment(const char* marker) noexcept
     if (!loader) return Result::InsufficientCondition;
 
     if (!marker) {
-        static_cast<FrameModule*>(loader)->segment(0.0f, 1.0f);
+        static_cast<LottieLoader*>(loader)->segment(0.0f, FLT_MAX);
         return Result::Success;
     }
     
     float begin, end;
     if (!static_cast<LottieLoader*>(loader)->segment(marker, begin, end)) return Result::InvalidArguments;
 
-    return static_cast<Animation*>(this)->segment(begin, end);
+    return static_cast<LottieLoader*>(loader)->segment(begin, end);
+}
+
+
+Result LottieAnimation::tween(float from, float to, float progress) noexcept
+{
+    auto loader = PICTURE(pImpl->picture)->loader;
+    if (!loader) return Result::InsufficientCondition;
+    if (!static_cast<LottieLoader*>(loader)->tween(from, to, progress)) return Result::InsufficientCondition;
+    return Result::Success;
 }
 
 

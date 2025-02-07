@@ -29,8 +29,7 @@
 struct LottieExpression;
 struct LottieComposition;
 struct LottieLayer;
-struct LottieRoundnessModifier;
-struct LottieOffsetModifier;
+struct LottieModifier;
 
 #ifdef THORVG_LOTTIE_EXPRESSIONS_SUPPORT
 
@@ -112,13 +111,13 @@ public:
     }
 
     template<typename Property>
-    bool result(float frameNo, Array<PathCommand>& cmds, Array<Point>& pts, Matrix* transform, const LottieRoundnessModifier* roundness, const LottieOffsetModifier* offsetPath, LottieExpression* exp)
+    bool result(float frameNo, RenderPath& out, Matrix* transform, LottieModifier* modifier, LottieExpression* exp)
     {
         auto bm_rt = evaluate(frameNo, exp);
         if (jerry_value_is_undefined(bm_rt)) return false;
 
         if (auto pathset = static_cast<Property*>(jerry_object_get_native_ptr(bm_rt, nullptr))) {
-            (*pathset)(frameNo, cmds, pts, transform, roundness, offsetPath);
+            (*pathset)(frameNo, out, transform, nullptr, modifier);
         }
         jerry_value_free(bm_rt);
         return true;
@@ -157,7 +156,7 @@ struct LottieExpressions
     template<typename Property> bool result(TVG_UNUSED float, TVG_UNUSED Point&, LottieExpression*) { return false; }
     template<typename Property> bool result(TVG_UNUSED float, TVG_UNUSED RGB24&, TVG_UNUSED LottieExpression*) { return false; }
     template<typename Property> bool result(TVG_UNUSED float, TVG_UNUSED Fill*, TVG_UNUSED LottieExpression*) { return false; }
-    template<typename Property> bool result(TVG_UNUSED float, TVG_UNUSED Array<PathCommand>&, TVG_UNUSED Array<Point>&, TVG_UNUSED Matrix* transform, TVG_UNUSED const LottieRoundnessModifier*, TVG_UNUSED const LottieOffsetModifier*, TVG_UNUSED LottieExpression*) { return false; }
+    template<typename Property> bool result(TVG_UNUSED float, TVG_UNUSED RenderPath&, TVG_UNUSED Matrix*, TVG_UNUSED LottieModifier*, TVG_UNUSED LottieExpression*) { return false; }
     void update(TVG_UNUSED float) {}
     static LottieExpressions* instance() { return nullptr; }
     static void retrieve(TVG_UNUSED LottieExpressions* instance) {}

@@ -49,6 +49,8 @@ void WgRenderer::release()
     // clear render data paint pools
     mRenderDataShapePool.release(mContext);
     mRenderDataPicturePool.release(mContext);
+    mRenderDataGaussianPool.release(mContext);
+    mRenderDataViewportPool.release(mContext);
     WgMeshDataPool::gMeshDataPool->release(mContext);
 
     // clear render storage pool
@@ -70,8 +72,8 @@ void WgRenderer::release()
 
 void WgRenderer::disposeObjects()
 {
-    for (uint32_t i = 0; i < mDisposeRenderDatas.count; i++) {
-        WgRenderDataPaint* renderData = (WgRenderDataPaint*)mDisposeRenderDatas[i];
+    ARRAY_FOREACH(p, mDisposeRenderDatas) {
+        auto renderData = (WgRenderDataPaint*)(*p);
         if (renderData->type() == Type::Shape) {
             mRenderDataShapePool.free(mContext, (WgRenderDataShape*)renderData);
         } else {
@@ -182,17 +184,18 @@ bool WgRenderer::postRender()
     // pop root render storage to the render tree stack
     mRenderStorageStack.pop();
     assert(mRenderStorageStack.count == 0);
+    // clear viewport list and store allocated handles to pool
+    ARRAY_FOREACH(p, mRenderDataViewportList)
+        mRenderDataViewportPool.free(mContext, *p);
+    mRenderDataViewportList.clear();
     return true;
 }
 
 
 void WgRenderer::dispose(RenderData data) {
     if (!mContext.queue) return;
-    auto renderData = (WgRenderDataPaint*)data;
-    if (renderData) {
-        ScopedLock lock(mDisposeKey);
-        mDisposeRenderDatas.push(data);
-    }
+    ScopedLock lock(mDisposeKey);
+    mDisposeRenderDatas.push(data);
 }
 
 
@@ -200,7 +203,14 @@ RenderRegion WgRenderer::region(RenderData data)
 {
     auto renderData = (WgRenderDataPaint*)data;
     if (renderData->type() == Type::Shape) {
-        return renderData->aabb;
+        auto& v1 = renderData->aabb.min;
+        auto& v2 = renderData->aabb.max;
+        RenderRegion renderRegion;
+        renderRegion.x = static_cast<int32_t>(nearbyint(v1.x));
+        renderRegion.y = static_cast<int32_t>(nearbyint(v1.y));
+        renderRegion.w = static_cast<int32_t>(nearbyint(v2.x)) - renderRegion.x;
+        renderRegion.h = static_cast<int32_t>(nearbyint(v2.y)) - renderRegion.y;
+        return renderRegion;
     }
     return { 0, 0, (int32_t)mTargetSurface.w, (int32_t)mTargetSurface.h };
 }
@@ -398,16 +408,24 @@ bool WgRenderer::surfaceConfigure(WGPUSurface surface, WgContext& context, uint3
 
 RenderCompositor* WgRenderer::target(const RenderRegion& region, TVG_UNUSED ColorSpace cs, TVG_UNUSED CompositionFlag flags)
 {
-    mCompositorStack.push(new WgCompose);
-    mCompositorStack.last()->aabb = region;
-    return mCompositorStack.last();
+    // create and setup compose data
+    WgCompose* compose = new WgCompose();
+    compose->aabb = region;
+    if (flags & PostProcessing) {
+        compose->aabb = region;
+        compose->rdViewport = mRenderDataViewportPool.allocate(mContext);
+        compose->rdViewport->update(mContext, region);
+        mRenderDataViewportList.push(compose->rdViewport);
+    }
+    mCompositorStack.push(compose);
+    return compose;
 }
 
 
 bool WgRenderer::beginComposite(RenderCompositor* cmp, MaskMethod method, uint8_t opacity)
 {
     // save current composition settings
-    WgCompose* compose = (WgCompose *)cmp;
+    WgCompose* compose = (WgCompose*)cmp;
     compose->method = method;
     compose->opacity = opacity;
     compose->blend = mBlendMethod;
@@ -427,8 +445,8 @@ bool WgRenderer::beginComposite(RenderCompositor* cmp, MaskMethod method, uint8_
 bool WgRenderer::endComposite(RenderCompositor* cmp)
 {
     // get current composition settings
-    WgCompose* comp = (WgCompose *)cmp;
-    // end current render pass
+    WgCompose* comp = (WgCompose*)cmp;
+    // we must to end current render pass to run blend/composition mechanics
     mCompositor.endRenderPass();
     // finish scene blending
     if (comp->method == MaskMethod::None) {
@@ -466,18 +484,67 @@ bool WgRenderer::endComposite(RenderCompositor* cmp)
 }
 
 
-bool WgRenderer::prepare(TVG_UNUSED RenderEffect* effect)
+void WgRenderer::prepare(RenderEffect* effect, const Matrix& transform)
 {
-    //TODO: Return if the current post effect requires the region expansion
+    // prepare gaussian blur data
+    if (effect->type == SceneEffect::GaussianBlur) {
+        auto gaussianBlur = (RenderEffectGaussianBlur*)effect;
+        auto renderDataGaussian = (WgRenderDataGaussian*)gaussianBlur->rd;
+        if (!renderDataGaussian) {
+            renderDataGaussian = mRenderDataGaussianPool.allocate(mContext);
+            gaussianBlur->rd = renderDataGaussian;
+        }
+        renderDataGaussian->update(mContext, gaussianBlur, transform);
+        effect->valid = true;
+    }
+}
+
+
+bool WgRenderer::region(RenderEffect* effect)
+{
+    if (effect->type == SceneEffect::GaussianBlur) {
+        auto gaussian = (RenderEffectGaussianBlur*)effect;
+        auto renderDataGaussian = (WgRenderDataGaussian*)gaussian->rd;
+        if (gaussian->direction != 2) {
+            gaussian->extend.x = -renderDataGaussian->extend;
+            gaussian->extend.w = +renderDataGaussian->extend * 2;
+        }
+        if (gaussian->direction != 1) {
+            gaussian->extend.y = -renderDataGaussian->extend;
+            gaussian->extend.h = +renderDataGaussian->extend * 2;
+        }
+        return true;
+    }
     return false;
 }
 
 
-bool WgRenderer::effect(TVG_UNUSED RenderCompositor* cmp, TVG_UNUSED const RenderEffect* effect, TVG_UNUSED bool direct)
+bool WgRenderer::render(RenderCompositor* cmp, const RenderEffect* effect, TVG_UNUSED bool direct)
 {
-    TVGLOG("WG_ENGINE", "SceneEffect(%d) is not supported", (int)effect->type);
+    // we must to end current render pass to resolve ms texture before effect
+    mCompositor.endRenderPass();
+
+    // handle gaussian blur
+    if (effect->type == SceneEffect::GaussianBlur) {
+        WgCompose* comp = (WgCompose*)cmp;
+        WgRenderStorage* dst = mRenderStorageStack.last();
+        RenderEffectGaussianBlur* gaussianBlur = (RenderEffectGaussianBlur*)effect;
+        mCompositor.gaussianBlur(mContext, dst, gaussianBlur, comp);
+        return true;
+    }
     return false;
 }
+
+
+void WgRenderer::dispose(RenderEffect* effect)
+{
+    // dispose gaussian blur data
+    if (effect->type == SceneEffect::GaussianBlur) {
+        auto gaussianBlur = (RenderEffectGaussianBlur*)effect;
+        mRenderDataGaussianPool.free(mContext, (WgRenderDataGaussian*)gaussianBlur->rd);
+        gaussianBlur->rd = nullptr;
+    }
+};
 
 
 bool WgRenderer::preUpdate()

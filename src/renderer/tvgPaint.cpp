@@ -80,7 +80,8 @@ static Result _compFastTrack(RenderMethod* renderer, Paint* cmpTarget, const Mat
 
     //Rectangle Candidates?
     const Point* pts;
-    auto ptsCnt = shape->pathCoords(&pts);
+    uint32_t ptsCnt;
+    shape->path(nullptr, nullptr, &pts, &ptsCnt);
 
     //nothing to clip
     if (ptsCnt == 0) return Result::InvalidArguments;
@@ -118,10 +119,10 @@ static Result _compFastTrack(RenderMethod* renderer, Paint* cmpTarget, const Mat
         if (v1.x > v2.x) std::swap(v1.x, v2.x);
         if (v1.y > v2.y) std::swap(v1.y, v2.y);
 
-        after.x = static_cast<int32_t>(v1.x);
-        after.y = static_cast<int32_t>(v1.y);
-        after.w = static_cast<int32_t>(ceil(v2.x - after.x));
-        after.h = static_cast<int32_t>(ceil(v2.y - after.y));
+        after.x = static_cast<int32_t>(nearbyint(v1.x));
+        after.y = static_cast<int32_t>(nearbyint(v1.y));
+        after.w = static_cast<int32_t>(nearbyint(v2.x)) - after.x;
+        after.h = static_cast<int32_t>(nearbyint(v2.y)) - after.y;
 
         if (after.w < 0) after.w = 0;
         if (after.h < 0) after.h = 0;
@@ -224,7 +225,7 @@ RenderData Paint::Impl::update(RenderMethod* renderer, const Matrix& pm, Array<R
         if (target->type() == Type::Shape) {
             auto shape = static_cast<Shape*>(target);
             uint8_t a;
-            shape->fillColor(nullptr, nullptr, nullptr, &a);
+            shape->fill(nullptr, nullptr, nullptr, &a);
             //no gradient fill & no maskings of the masking target.
             if (!shape->fill() && !(PAINT(shape)->maskData)) {
                 if ((method == MaskMethod::Alpha && a == 255 && PAINT(shape)->opacity == 255) || (method == MaskMethod::InvAlpha && (a == 0 || PAINT(shape)->opacity == 0))) {

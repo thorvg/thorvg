@@ -52,6 +52,7 @@ struct WgShaderTypeVec4f
     WgShaderTypeVec4f(const RenderColor& c);
     void update(const ColorSpace colorSpace, uint8_t o);
     void update(const RenderColor& c);
+    void update(const RenderRegion& r);
 };
 
 // sampler, texture, vec4f
@@ -64,6 +65,15 @@ struct WgShaderTypeGradient
     void update(const LinearGradient* linearGradient);
     void update(const RadialGradient* radialGradient);
     void updateTexData(const Fill::ColorStop* stops, uint32_t stopCnt);
+};
+
+// gaussian settings: sigma, scale, extend
+struct WgShaderTypeGaussianBlur
+{
+    float settings[4]{}; // [0]: sigma, [1]: scale, [2]: kernel size, [3]: unused
+    uint32_t extend{};
+
+    void update(const RenderEffectGaussianBlur* gaussian, const Matrix& transform);
 };
 
 #endif // _TVG_WG_SHADER_TYPES_H_

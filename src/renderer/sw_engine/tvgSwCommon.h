@@ -288,7 +288,7 @@ struct SwMpool
 {
     SwOutline* outline;
     SwOutline* strokeOutline;
-    SwOutline* dashOutline;
+    SwOutline* dashOutline; //Trimming treated as a special case of dashing
     unsigned allocSize;
 };
 
@@ -448,9 +448,9 @@ static inline uint32_t opBlendColorDodge(uint32_t s, uint32_t d, TVG_UNUSED uint
 {
     // d / (1 - s)
     s = 0xffffffff - s;
-    auto c1 = (C1(s) == 0) ? C1(d) : std::min(C1(d) * 255 / C1(s), 255);
-    auto c2 = (C2(s) == 0) ? C2(d) : std::min(C2(d) * 255 / C2(s), 255);
-    auto c3 = (C3(s) == 0) ? C3(d) : std::min(C3(d) * 255 / C3(s), 255);
+    auto c1 = C1(d) == 0 ? 0 : (C1(s) == 0 ? 255 : std::min(C1(d) * 255 / C1(s), 255));
+    auto c2 = C2(d) == 0 ? 0 : (C2(s) == 0 ? 255 : std::min(C2(d) * 255 / C2(s), 255));
+    auto c3 = C3(d) == 0 ? 0 : (C3(s) == 0 ? 255 : std::min(C3(d) * 255 / C3(s), 255));
     return JOIN(255, c1, c2, c3);
 }
 
@@ -458,9 +458,9 @@ static inline uint32_t opBlendColorBurn(uint32_t s, uint32_t d, TVG_UNUSED uint8
 {
     // 1 - (1 - d) / s
     auto id = 0xffffffff - d;
-    auto c1 = (C1(s) == 0) ? C1(d) : 255 - std::min(C1(id) * 255 / C1(s), 255);
-    auto c2 = (C2(s) == 0) ? C2(d) : 255 - std::min(C2(id) * 255 / C2(s), 255);
-    auto c3 = (C3(s) == 0) ? C3(d) : 255 - std::min(C3(id) * 255 / C3(s), 255);
+    auto c1 = C1(d) == 255 ? 255 : (C1(s) == 0 ? 0 : 255 - std::min(C1(id) * 255 / C1(s), 255));
+    auto c2 = C2(d) == 255 ? 255 : (C2(s) == 0 ? 0 : 255 - std::min(C2(id) * 255 / C2(s), 255));
+    auto c3 = C3(d) == 255 ? 255 : (C3(s) == 0 ? 0 : 255 - std::min(C3(id) * 255 / C3(s), 255));
 
     return JOIN(255, c1, c2, c3);
 }
@@ -584,14 +584,16 @@ bool rasterConvertCS(RenderSurface* surface, ColorSpace to);
 uint32_t rasterUnpremultiply(uint32_t data);
 
 bool effectGaussianBlur(SwCompositor* cmp, SwSurface* surface, const RenderEffectGaussianBlur* params);
-bool effectGaussianBlurPrepare(RenderEffectGaussianBlur* effect);
+bool effectGaussianBlurRegion(RenderEffectGaussianBlur* effect);
+void effectGaussianBlurUpdate(RenderEffectGaussianBlur* effect, const Matrix& transform);
 bool effectDropShadow(SwCompositor* cmp, SwSurface* surfaces[2], const RenderEffectDropShadow* params, bool direct);
-bool effectDropShadowPrepare(RenderEffectDropShadow* effect);
-bool effectFillPrepare(RenderEffectFill* effect);
+bool effectDropShadowRegion(RenderEffectDropShadow* effect);
+void effectDropShadowUpdate(RenderEffectDropShadow* effect, const Matrix& transform);
+void effectFillUpdate(RenderEffectFill* effect);
 bool effectFill(SwCompositor* cmp, const RenderEffectFill* params, bool direct);
-bool effectTintPrepare(RenderEffectTint* effect);
+void effectTintUpdate(RenderEffectTint* effect);
 bool effectTint(SwCompositor* cmp, const RenderEffectTint* params, bool direct);
-bool effectTritonePrepare(RenderEffectTritone* effect);
+void effectTritoneUpdate(RenderEffectTritone* effect);
 bool effectTritone(SwCompositor* cmp, const RenderEffectTritone* params, bool direct);
 
 #endif /* _TVG_SW_COMMON_H_ */

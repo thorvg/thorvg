@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2024 the ThorVG project. All rights reserved.
+ * Copyright (c) 2024 - 2025 the ThorVG project. All rights reserved.
 
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to deal
@@ -26,6 +26,7 @@
 #include <vector>
 #include <fstream>
 #include <iostream>
+#include <cstring>
 #include <thorvg.h>
 #include <SDL2/SDL.h>
 #include <SDL2/SDL_syswm.h>
@@ -63,13 +64,18 @@ bool verify(tvg::Result result, string failMsg = "");
 
 struct Example
 {
-    uint32_t elapsed = 0.0f;
+    uint32_t elapsed = 0;
 
     virtual bool content(tvg::Canvas* canvas, uint32_t w, uint32_t h) = 0;
     virtual bool update(tvg::Canvas* canvas, uint32_t elapsed) { return false; }
     virtual bool clicked(tvg::Canvas* canvas, int32_t x, int32_t y) { return false; }
     virtual void populate(const char* path) {}
     virtual ~Example() {}
+
+    float timestamp()
+    {
+        return float(SDL_GetTicks()) * 0.001f;
+    }
 
     void scandir(const char* path)
     {
@@ -294,7 +300,7 @@ struct SwWindow : Window
         if (!surface) return;
 
         //Set the canvas target and draw on it.
-        verify(static_cast<tvg::SwCanvas*>(canvas)->target((uint32_t*)surface->pixels, surface->w, surface->pitch / 4, surface->h, tvg::ColorSpace::ARGB8888));
+        verify(static_cast<tvg::SwCanvas*>(canvas)->target((uint32_t*)surface->pixels, surface->pitch / 4, surface->w, surface->h, tvg::ColorSpace::ARGB8888));
     }
 
     void refresh() override
@@ -484,10 +490,10 @@ struct WgWindow : Window
 float progress(uint32_t elapsed, float durationInSec, bool rewind = false)
 {
     auto duration = uint32_t(durationInSec * 1000.0f); //sec -> millisec.
-    if (duration == 0.0f) return 0.0f;
+    if (duration == 0) return 0.0f;
     auto forward = ((elapsed / duration) % 2 == 0) ? true : false;
-    auto clamped = elapsed % duration;
-    auto progress = ((float)clamped / (float)duration);
+    auto wrapped = elapsed % duration;
+    auto progress = ((float)wrapped / (float)duration);
     if (rewind) return forward ? progress : (1 - progress);
     return progress;
 }

@@ -188,7 +188,7 @@ struct TvgWgEngine : TvgEngineMethod
 
 struct TvgGLEngine : TvgEngineMethod
 {
-    EMSCRIPTEN_WEBGL_CONTEXT_HANDLE context = 0;
+    intptr_t context = 0;
     ~TvgGLEngine() override
     {
     #ifdef THORVG_GL_RASTER_SUPPORT

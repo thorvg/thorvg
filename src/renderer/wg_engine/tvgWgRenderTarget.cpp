@@ -83,9 +83,9 @@ void WgRenderStoragePool::initialize(WgContext& context, uint32_t width, uint32_
 
 void WgRenderStoragePool::release(WgContext& context)
 {
-    for (uint32_t i = 0; i < list.count; i++) {
-       list[i]->release(context);
-       delete list[i];
+    ARRAY_FOREACH(p, list) {
+       (*p)->release(context);
+       delete(*p);
     }
     list.clear();
     pool.clear();

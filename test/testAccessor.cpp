@@ -66,7 +66,7 @@ TEST_CASE("Set", "[tvgAccessor]")
         if (paint->type() == Type::Shape) {
             auto shape = (tvg::Shape*) paint;
             uint8_t r, g, b;
-            shape->fillColor(&r, &g, &b);
+            shape->fill(&r, &g, &b);
             if (r == 37 && g == 47 && b == 53) {
                 shape->fill(0, 0, 255);
                 shape->id = Accessor::id("TestAccessor");

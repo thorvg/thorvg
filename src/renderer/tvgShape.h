@@ -32,17 +32,11 @@
 struct Shape::Impl : Paint::Impl
 {
     RenderShape rs;
-    RenderData rd = nullptr;
     uint8_t compFlag = CompositionFlag::Invalid;
     uint8_t opacity;    //for composition
 
     Impl(Shape* s) : Paint::Impl(s)
     {
-    }
-
-    ~Impl()
-    {
-        if (renderer) renderer->dispose(rd);
     }
 
     bool render(RenderMethod* renderer)
@@ -88,7 +82,7 @@ struct Shape::Impl : Paint::Impl
             auto shape = static_cast<const Shape*>(target);
             if (!shape->fill()) {
                 uint8_t r, g, b, a;
-                shape->fillColor(&r, &g, &b, &a);
+                shape->fill(&r, &g, &b, &a);
                 if (a == 0 || a == 255) {
                     if (method == MaskMethod::Luma || method == MaskMethod::InvLuma) {
                         if ((r == 255 && g == 255 && b == 255) || (r == 0 && g == 0 && b == 0)) return false;
@@ -217,6 +211,11 @@ struct Shape::Impl : Paint::Impl
 
     void strokeTrim(float begin, float end, bool simultaneous)
     {
+        if (fabsf(end - begin) >= 1.0f) {
+            begin = 0.0f;
+            end = 1.0f;
+        }
+
         if (!rs.stroke) {
             if (begin == 0.0f && end == 1.0f) return;
             rs.stroke = new RenderStroke();

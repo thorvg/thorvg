@@ -123,10 +123,10 @@ TVG_API Tvg_Result tvg_canvas_push(Tvg_Canvas* canvas, Tvg_Paint* paint)
 }
 
 
-TVG_API Tvg_Result tvg_canvas_push_at(Tvg_Canvas* canvas, Tvg_Paint* paint, Tvg_Paint* at)
+TVG_API Tvg_Result tvg_canvas_push_at(Tvg_Canvas* canvas, Tvg_Paint* target, Tvg_Paint* at)
 {
-    if (!canvas || !paint || !at) return TVG_RESULT_INVALID_ARGUMENT;
-    return (Tvg_Result) reinterpret_cast<Canvas*>(canvas)->push((Paint*)paint, (Paint*) at);
+    if (!canvas || !target || !at) return TVG_RESULT_INVALID_ARGUMENT;
+    return (Tvg_Result) reinterpret_cast<Canvas*>(canvas)->push((Paint*)target, (Paint*) at);
 }
 
 
@@ -373,18 +373,10 @@ TVG_API Tvg_Result tvg_shape_append_path(Tvg_Paint* paint, const Tvg_Path_Comman
 }
 
 
-TVG_API Tvg_Result tvg_shape_get_path_coords(const Tvg_Paint* paint, const Tvg_Point** pts, uint32_t* cnt)
+TVG_API Tvg_Result tvg_shape_get_path(const Tvg_Paint* paint, const Tvg_Path_Command** cmds, uint32_t* cmdsCnt, const Tvg_Point** pts, uint32_t* ptsCnt)
 {
-    if (!paint || !pts || !cnt) return TVG_RESULT_INVALID_ARGUMENT;
-    *cnt = reinterpret_cast<const Shape*>(paint)->pathCoords((const Point**)pts);
-    return TVG_RESULT_SUCCESS;
-}
-
-
-TVG_API Tvg_Result tvg_shape_get_path_commands(const Tvg_Paint* paint, const Tvg_Path_Command** cmds, uint32_t* cnt)
-{
-    if (!paint || !cmds || !cnt) return TVG_RESULT_INVALID_ARGUMENT;
-    *cnt = reinterpret_cast<const Shape*>(paint)->pathCommands((const PathCommand**)cmds);
+    if (!paint) return TVG_RESULT_INVALID_ARGUMENT;
+    return (Tvg_Result) reinterpret_cast<const Shape*>(paint)->path((const PathCommand**)cmds, cmdsCnt, (const Point**)pts, ptsCnt);
     return TVG_RESULT_SUCCESS;
 }
 
@@ -510,7 +502,7 @@ TVG_API Tvg_Result tvg_shape_set_fill_color(Tvg_Paint* paint, uint8_t r, uint8_t
 TVG_API Tvg_Result tvg_shape_get_fill_color(const Tvg_Paint* paint, uint8_t* r, uint8_t* g, uint8_t* b, uint8_t* a)
 {
     if (!paint) return TVG_RESULT_INVALID_ARGUMENT;
-    return (Tvg_Result) reinterpret_cast<const Shape*>(paint)->fillColor(r, g, b, a);
+    return (Tvg_Result) reinterpret_cast<const Shape*>(paint)->fill(r, g, b, a);
 }
 
 
@@ -964,6 +956,16 @@ TVG_API Tvg_Result tvg_lottie_animation_get_marker(Tvg_Animation* animation, uin
     *name = reinterpret_cast<LottieAnimation*>(animation)->marker(idx);
     if (!(*name)) return TVG_RESULT_INVALID_ARGUMENT;
     return TVG_RESULT_SUCCESS;
+#endif
+    return TVG_RESULT_NOT_SUPPORTED;
+}
+
+
+TVG_API Tvg_Result tvg_lottie_animation_tween(Tvg_Animation* animation, float from, float to, float progress)
+{
+#ifdef THORVG_LOTTIE_LOADER_SUPPORT
+    if (!animation) return TVG_RESULT_INVALID_ARGUMENT;
+    return (Tvg_Result) reinterpret_cast<LottieAnimation*>(animation)->tween(from, to, progress);
 #endif
     return TVG_RESULT_NOT_SUPPORTED;
 }

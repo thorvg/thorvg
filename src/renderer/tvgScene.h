@@ -62,7 +62,6 @@ struct SceneIterator : Iterator
 struct Scene::Impl : Paint::Impl
 {
     list<Paint*> paints;     //children list
-    RenderData rd = nullptr;
     RenderRegion vport = {0, 0, INT32_MAX, INT32_MAX};
     Array<RenderEffect*>* effects = nullptr;
     uint8_t compFlag = CompositionFlag::Invalid;
@@ -77,8 +76,6 @@ struct Scene::Impl : Paint::Impl
         resetEffects();
 
         clearPaints();
-
-        if (renderer) renderer->dispose(rd);
     }
 
     uint8_t needComposition(uint8_t opacity)
@@ -119,6 +116,12 @@ struct Scene::Impl : Paint::Impl
             paint->pImpl->update(renderer, transform, clips, opacity, flag, false);
         }
 
+        if (effects) {
+            ARRAY_FOREACH(p, *effects) {
+                renderer->prepare(*p, transform);
+            }
+        }
+
         return nullptr;
     }
 
@@ -143,8 +146,8 @@ struct Scene::Impl : Paint::Impl
             if (effects) {
                 //Notify the possiblity of the direct composition of the effect result to the origin surface.
                 auto direct = (effects->count == 1) & (compFlag == CompositionFlag::PostProcessing);
-                for (auto e = effects->begin(); e < effects->end(); ++e) {
-                    renderer->effect(cmp, *e, direct);
+                ARRAY_FOREACH(p, *effects) {
+                    if ((*p)->valid) renderer->render(cmp, *p, direct);
                 }
             }
             renderer->endComposite(cmp);
@@ -175,9 +178,9 @@ struct Scene::Impl : Paint::Impl
         //Extends the render region if post effects require
         int32_t ex = 0, ey = 0, ew = 0, eh = 0;
         if (effects) {
-            for (auto e = effects->begin(); e < effects->end(); ++e) {
-                auto effect = *e;
-                if (effect->valid || renderer->prepare(effect)) {
+            ARRAY_FOREACH(p, *effects) {
+                auto effect = *p;
+                if (effect->valid && renderer->region(effect)) {
                     ex = std::min(ex, effect->extend.x);
                     ey = std::min(ey, effect->extend.y);
                     ew = std::max(ew, effect->extend.w);
@@ -296,8 +299,9 @@ struct Scene::Impl : Paint::Impl
     Result resetEffects()
     {
         if (effects) {
-            for (auto e = effects->begin(); e < effects->end(); ++e) {
-                delete(*e);
+            ARRAY_FOREACH(p, *effects) {
+                renderer->dispose(*p);
+                delete(*p);
             }
             delete(effects);
             effects = nullptr;

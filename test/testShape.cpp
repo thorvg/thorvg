@@ -110,10 +110,11 @@ TEST_CASE("Appending Paths", "[tvgShape]")
     REQUIRE(shape->appendPath(cmds, 5, pts, 5) == Result::Success);
 
     const PathCommand* cmds2;
-    REQUIRE(shape->pathCommands(&cmds2) == 5);
-
     const Point* pts2;
-    REQUIRE(shape->pathCoords(&pts2) == 5);
+    uint32_t cmds2Cnt, pts2Cnt;
+    REQUIRE(shape->path(&cmds2, &cmds2Cnt, &pts2, &pts2Cnt) == Result::Success);
+    REQUIRE(cmds2Cnt == 5);
+    REQUIRE(pts2Cnt == 5);
 
     for (int i = 0; i < 5; ++i) {
         REQUIRE(cmds2[i] == cmds[i]);
@@ -122,8 +123,9 @@ TEST_CASE("Appending Paths", "[tvgShape]")
     }
 
     shape->reset();
-    REQUIRE(shape->pathCommands(nullptr) == 0);
-    REQUIRE(shape->pathCoords(nullptr) == 0);
+    REQUIRE(shape->path(nullptr, &cmds2Cnt, nullptr, &pts2Cnt) == Result::Success);
+    REQUIRE(cmds2Cnt == 0);
+    REQUIRE(pts2Cnt == 0);
 }
 
 TEST_CASE("Stroking", "[tvgShape]")
@@ -208,10 +210,10 @@ TEST_CASE("Shape Filling", "[tvgShape]")
     //Fill Color
     uint8_t r, g, b, a;
     REQUIRE(shape->fill(255, 100, 50, 5) == Result::Success);
-    REQUIRE(shape->fillColor(&r, nullptr, &b, nullptr) == Result::Success);
+    REQUIRE(shape->fill(&r, nullptr, &b, nullptr) == Result::Success);
     REQUIRE(r == 255);
     REQUIRE(b == 50);
-    REQUIRE(shape->fillColor(&r, &g, &b, &a) == Result::Success);
+    REQUIRE(shape->fill(&r, &g, &b, &a) == Result::Success);
     REQUIRE(g == 100);
     REQUIRE(a == 5);
 

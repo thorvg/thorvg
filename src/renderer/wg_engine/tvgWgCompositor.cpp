@@ -22,6 +22,7 @@
 
 #include "tvgWgCompositor.h"
 #include "tvgWgShaderTypes.h"
+#include <iostream>
 
 void WgCompositor::initialize(WgContext& context, uint32_t width, uint32_t height)
 {
@@ -115,8 +116,8 @@ RenderRegion WgCompositor::shrinkRenderRegion(RenderRegion& rect)
     // cut viewport to screen dimensions
     int32_t xmin = std::max(0, std::min((int32_t)width, rect.x));
     int32_t ymin = std::max(0, std::min((int32_t)height, rect.y));
-    int32_t xmax = std::max(0, std::min((int32_t)width, rect.x + rect.w));
-    int32_t ymax = std::max(0, std::min((int32_t)height, rect.y + rect.h));
+    int32_t xmax = std::max(xmin, std::min((int32_t)width, rect.x + rect.w));
+    int32_t ymax = std::max(ymin, std::min((int32_t)height, rect.y + rect.h));
     return { xmin, ymin, xmax - xmin, ymax - ymin };
 }
 
@@ -150,11 +151,13 @@ void WgCompositor::beginRenderPass(WGPUCommandEncoder commandEncoder, WgRenderSt
 
 void WgCompositor::endRenderPass()
 {
-    assert(renderPassEncoder);
-    wgpuRenderPassEncoderEnd(renderPassEncoder);
-    wgpuRenderPassEncoderRelease(renderPassEncoder);
-    this->renderPassEncoder = nullptr;
-    this->currentTarget = nullptr;
+    if (currentTarget) {
+        assert(renderPassEncoder);
+        wgpuRenderPassEncoderEnd(renderPassEncoder);
+        wgpuRenderPassEncoderRelease(renderPassEncoder);
+        this->renderPassEncoder = nullptr;
+        this->currentTarget = nullptr;
+    }
 }
 
 
@@ -277,8 +280,8 @@ void WgCompositor::drawShape(WgContext& context, WgRenderDataShape* renderData)
     wgpuRenderPassEncoderSetBindGroup(renderPassEncoder, 1, renderData->bindGroupPaint, 0, nullptr);
     wgpuRenderPassEncoderSetPipeline(renderPassEncoder, stencilPipeline);
     // draw to stencil (first pass)
-    for (uint32_t i = 0; i < renderData->meshGroupShapes.meshes.count; i++)
-        renderData->meshGroupShapes.meshes[i]->drawFan(context, renderPassEncoder);
+    ARRAY_FOREACH(p, renderData->meshGroupShapes.meshes)
+        (*p)->drawFan(context, renderPassEncoder);
     // setup fill rules
     wgpuRenderPassEncoderSetStencilReference(renderPassEncoder, 0);
     wgpuRenderPassEncoderSetBindGroup(renderPassEncoder, 0, bindGroupViewMat, 0, nullptr);
@@ -324,8 +327,8 @@ void WgCompositor::blendShape(WgContext& context, WgRenderDataShape* renderData,
     wgpuRenderPassEncoderSetBindGroup(renderPassEncoder, 1, renderData->bindGroupPaint, 0, nullptr);
     wgpuRenderPassEncoderSetPipeline(renderPassEncoder, stencilPipeline);
     // draw to stencil (first pass)
-    for (uint32_t i = 0; i < renderData->meshGroupShapes.meshes.count; i++)
-        renderData->meshGroupShapes.meshes[i]->drawFan(context, renderPassEncoder);
+    ARRAY_FOREACH(p, renderData->meshGroupShapes.meshes)
+        (*p)->drawFan(context, renderPassEncoder);
     // setup fill rules
     wgpuRenderPassEncoderSetStencilReference(renderPassEncoder, 0);
     wgpuRenderPassEncoderSetBindGroup(renderPassEncoder, 0, bindGroupViewMat, 0, nullptr);
@@ -364,8 +367,8 @@ void WgCompositor::clipShape(WgContext& context, WgRenderDataShape* renderData)
     wgpuRenderPassEncoderSetBindGroup(renderPassEncoder, 1, renderData->bindGroupPaint, 0, nullptr);
     wgpuRenderPassEncoderSetPipeline(renderPassEncoder, stencilPipeline);
     // draw to stencil (first pass)
-    for (uint32_t i = 0; i < renderData->meshGroupShapes.meshes.count; i++)
-        renderData->meshGroupShapes.meshes[i]->drawFan(context, renderPassEncoder);
+    ARRAY_FOREACH(p, renderData->meshGroupShapes.meshes)
+        (*p)->drawFan(context, renderPassEncoder);
     // merge depth and stencil buffer
     wgpuRenderPassEncoderSetStencilReference(renderPassEncoder, 0);
     wgpuRenderPassEncoderSetBindGroup(renderPassEncoder, 2, bindGroupOpacities[128], 0, nullptr);
@@ -662,25 +665,25 @@ void WgCompositor::renderClipPath(WgContext& context, WgRenderDataPaint* paint)
     wgpuRenderPassEncoderSetStencilReference(renderPassEncoder, 0);
     wgpuRenderPassEncoderSetBindGroup(renderPassEncoder, 1, renderData0->bindGroupPaint, 0, nullptr);
     wgpuRenderPassEncoderSetPipeline(renderPassEncoder, stencilPipeline);
-    for (uint32_t i = 0; i < renderData0->meshGroupShapes.meshes.count; i++)
-        renderData0->meshGroupShapes.meshes[i]->drawFan(context, renderPassEncoder);
+    ARRAY_FOREACH(p, renderData0->meshGroupShapes.meshes)
+        (*p)->drawFan(context, renderPassEncoder);
     // copy stencil to depth
     wgpuRenderPassEncoderSetStencilReference(renderPassEncoder, 0);
     wgpuRenderPassEncoderSetBindGroup(renderPassEncoder, 1, renderData0->bindGroupPaint, 0, nullptr);
     wgpuRenderPassEncoderSetBindGroup(renderPassEncoder, 2, bindGroupOpacities[128], 0, nullptr);
     wgpuRenderPassEncoderSetPipeline(renderPassEncoder, pipelines.copy_stencil_to_depth);
     renderData0->meshDataBBox.drawFan(context, renderPassEncoder);
-     // merge clip pathes with AND logic
-    for (uint32_t clipIndex = 1; clipIndex < paint->clips.count; clipIndex++) {
+    // merge clip pathes with AND logic
+    for (auto p = paint->clips.begin() + 1; p < paint->clips.end(); ++p) {
         // get render data
-        WgRenderDataShape* renderData = (WgRenderDataShape*)paint->clips[clipIndex];
+        WgRenderDataShape* renderData = (WgRenderDataShape*)(*p);
         // markup stencil
         WGPURenderPipeline stencilPipeline = (renderData->fillRule == FillRule::NonZero) ? pipelines.nonzero : pipelines.evenodd;
         wgpuRenderPassEncoderSetStencilReference(renderPassEncoder, 0);
         wgpuRenderPassEncoderSetBindGroup(renderPassEncoder, 1, renderData->bindGroupPaint, 0, nullptr);
         wgpuRenderPassEncoderSetPipeline(renderPassEncoder, stencilPipeline);
-        for (uint32_t i = 0; i < renderData->meshGroupShapes.meshes.count; i++)
-            renderData->meshGroupShapes.meshes[i]->drawFan(context, renderPassEncoder);
+        ARRAY_FOREACH(p, renderData->meshGroupShapes.meshes)
+            (*p)->drawFan(context, renderPassEncoder);
         // copy stencil to depth (clear stencil)
         wgpuRenderPassEncoderSetStencilReference(renderPassEncoder, 0);
         wgpuRenderPassEncoderSetBindGroup(renderPassEncoder, 1, renderData->bindGroupPaint, 0, nullptr);
@@ -723,8 +726,8 @@ void WgCompositor::clearClipPath(WgContext& context, WgRenderDataPaint* paint)
     // reset scissor recr to full screen
     wgpuRenderPassEncoderSetScissorRect(renderPassEncoder, 0, 0, width, height);
     // get render data
-    for (uint32_t clipIndex = 0; clipIndex < paint->clips.count; clipIndex++) {
-        WgRenderDataShape* renderData = (WgRenderDataShape*)paint->clips[clipIndex];
+    ARRAY_FOREACH(p, paint->clips) {
+        WgRenderDataShape* renderData = (WgRenderDataShape*)(*p);
         // set transformations
         wgpuRenderPassEncoderSetStencilReference(renderPassEncoder, 0);
         wgpuRenderPassEncoderSetBindGroup(renderPassEncoder, 0, bindGroupViewMat, 0, nullptr);
@@ -732,5 +735,53 @@ void WgCompositor::clearClipPath(WgContext& context, WgRenderDataPaint* paint)
         wgpuRenderPassEncoderSetBindGroup(renderPassEncoder, 2, bindGroupOpacities[255], 0, nullptr);
         wgpuRenderPassEncoderSetPipeline(renderPassEncoder, pipelines.clear_depth);
         renderData->meshDataBBox.drawFan(context, renderPassEncoder);
+    }
+}
+
+
+void WgCompositor::gaussianBlur(WgContext& context, WgRenderStorage* dst, const RenderEffectGaussianBlur* params, const WgCompose* compose)
+{
+    assert(dst);
+    assert(params);
+    assert(params->rd);
+    assert(compose->rdViewport);
+    assert(!renderPassEncoder);
+    auto renderDataGaussian = (WgRenderDataGaussian*)params->rd;
+    auto viewport = compose->rdViewport;
+    for (uint32_t level = 0; level < renderDataGaussian->level; level++) {
+        // horizontal blur
+        if (params->direction != 2) {
+            const WGPUImageCopyTexture texSrc { .texture = dst->texture };
+            const WGPUImageCopyTexture texDst { .texture = storageDstCopy.texture };
+            const WGPUExtent3D copySize { .width = width, .height = height, .depthOrArrayLayers = 1 };
+            wgpuCommandEncoderCopyTextureToTexture(commandEncoder, &texSrc, &texDst, &copySize);
+            WGPUComputePassDescriptor computePassDesc{ .label = "Compute pass gaussian blur horizontal" };
+            WGPUComputePassEncoder computePassEncoder = wgpuCommandEncoderBeginComputePass(commandEncoder, &computePassDesc);
+            wgpuComputePassEncoderSetBindGroup(computePassEncoder, 0, storageDstCopy.bindGroupRead, 0, nullptr);
+            wgpuComputePassEncoderSetBindGroup(computePassEncoder, 1, dst->bindGroupWrite, 0, nullptr);
+            wgpuComputePassEncoderSetBindGroup(computePassEncoder, 2, renderDataGaussian->bindGroupGaussian, 0, nullptr);
+            wgpuComputePassEncoderSetBindGroup(computePassEncoder, 3, viewport->bindGroupViewport, 0, nullptr);
+            wgpuComputePassEncoderSetPipeline(computePassEncoder, pipelines.gaussian_horz);
+            wgpuComputePassEncoderDispatchWorkgroups(computePassEncoder, width / 16, height / 16, 1);
+            wgpuComputePassEncoderEnd(computePassEncoder);
+            wgpuComputePassEncoderRelease(computePassEncoder);
+        }
+        // vertical blur
+        if (params->direction != 1) {
+            const WGPUImageCopyTexture texSrc { .texture = dst->texture };
+            const WGPUImageCopyTexture texDst { .texture = storageDstCopy.texture };
+            const WGPUExtent3D copySize { .width = width, .height = height, .depthOrArrayLayers = 1 };
+            wgpuCommandEncoderCopyTextureToTexture(commandEncoder, &texSrc, &texDst, &copySize);
+            WGPUComputePassDescriptor computePassDesc{ .label = "Compute pass gaussian blur vertical" };
+            WGPUComputePassEncoder computePassEncoder = wgpuCommandEncoderBeginComputePass(commandEncoder, &computePassDesc);
+            wgpuComputePassEncoderSetBindGroup(computePassEncoder, 0, storageDstCopy.bindGroupRead, 0, nullptr);
+            wgpuComputePassEncoderSetBindGroup(computePassEncoder, 1, dst->bindGroupWrite, 0, nullptr);
+            wgpuComputePassEncoderSetBindGroup(computePassEncoder, 2, renderDataGaussian->bindGroupGaussian, 0, nullptr);
+            wgpuComputePassEncoderSetBindGroup(computePassEncoder, 3, viewport->bindGroupViewport, 0, nullptr);
+            wgpuComputePassEncoderSetPipeline(computePassEncoder, pipelines.gaussian_vert);
+            wgpuComputePassEncoderDispatchWorkgroups(computePassEncoder, width / 16, height / 16, 1);
+            wgpuComputePassEncoderEnd(computePassEncoder);
+            wgpuComputePassEncoderRelease(computePassEncoder);
+        }
     }
 }

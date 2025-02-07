@@ -99,7 +99,7 @@ struct WgRenderDataPaint
     WGPUBuffer bufferBlendSettings{};
     WGPUBindGroup bindGroupPaint{};
     RenderRegion viewport{};
-    RenderRegion aabb{};
+    BBox aabb{{},{}};
     float opacity{};
     Array<WgRenderDataPaint*> clips;
 
@@ -130,7 +130,7 @@ struct WgRenderDataShape: public WgRenderDataPaint
     void updateBBox(Point pmin, Point pmax);
     void updateAABB(const Matrix& tr);
     void updateMeshes(WgContext& context, const RenderShape& rshape, const Matrix& tr);
-    void proceedStrokes(WgContext& context, const RenderStroke* rstroke, float tbeg, float tend, const WgVertexBuffer& buff);
+    void proceedStrokes(WgContext& context, const RenderStroke* rstroke, const WgVertexBuffer& buff);
     void releaseMeshes(WgContext& context);
     void release(WgContext& context) override;
     Type type() override { return Type::Shape; };
@@ -164,6 +164,53 @@ private:
 public:
     WgRenderDataPicture* allocate(WgContext& context);
     void free(WgContext& context, WgRenderDataPicture* dataPicture);
+    void release(WgContext& context);
+};
+
+struct WgRenderDataViewport
+{
+    WGPUBindGroup bindGroupViewport{};
+    WGPUBuffer bufferViewport{};
+
+    void update(WgContext& context, const RenderRegion& region);
+    void release(WgContext& context);
+};
+
+class WgRenderDataViewportPool {
+private:
+    // pool contains all created but unused render data for viewport
+    Array<WgRenderDataViewport*> mPool;
+    // list contains all created render data for viewport
+    // to ensure that all created instances will be released
+    Array<WgRenderDataViewport*> mList;
+public:
+    WgRenderDataViewport* allocate(WgContext& context);
+    void free(WgContext& context, WgRenderDataViewport* renderData);
+    void release(WgContext& context);
+};
+
+#define WG_GAUSSIAN_MAX_LEVEL 3
+struct WgRenderDataGaussian
+{
+    WGPUBindGroup bindGroupGaussian{};
+    WGPUBuffer bufferSettings{};
+    uint32_t extend{};
+    uint32_t level{};
+
+    void update(WgContext& context, RenderEffectGaussianBlur* gaussian, const Matrix& transform);
+    void release(WgContext& context);
+};
+
+class WgRenderDataGaussianPool {
+private:
+    // pool contains all created but unused render data for gaussian filter
+    Array<WgRenderDataGaussian*> mPool;
+    // list contains all created render data for gaussian filter
+    // to ensure that all created instances will be released
+    Array<WgRenderDataGaussian*> mList;
+public:
+    WgRenderDataGaussian* allocate(WgContext& context);
+    void free(WgContext& context, WgRenderDataGaussian* renderData);
     void release(WgContext& context);
 };
 

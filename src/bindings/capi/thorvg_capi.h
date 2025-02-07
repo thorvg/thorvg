@@ -1225,33 +1225,26 @@ TVG_API Tvg_Result tvg_shape_append_path(Tvg_Paint* paint, const Tvg_Path_Comman
 
 
 /*!
-* @brief Gets the points values of the path.
+* @brief Retrieves the current path data of the shape.
 *
-* The function does not allocate any data, it operates on internal memory. There is no need to free the @p pts array.
+* This function provides access to the shape's path data, including the commands
+* and points that define the path.
 *
-* @param[in] paint A Tvg_Paint pointer to the shape object.
-* @param[out] pts The pointer to the array of the two-dimensional points from the path.
-* @param[out] cnt The length of the @p pts array.
-*
-* @return Tvg_Result enumeration.
-* @retval TVG_RESULT_INVALID_ARGUMENT A @c nullptr passed as the argument.
-*/
-TVG_API Tvg_Result tvg_shape_get_path_coords(const Tvg_Paint* paint, const Tvg_Point** pts, uint32_t* cnt);
-
-
-/*!
-* @brief Gets the commands data of the path.
-*
-* The function does not allocate any data. There is no need to free the @p cmds array.
-*
-* @param[in] paint A Tvg_Paint pointer to the shape object.
-* @param[out] cmds The pointer to the array of the commands from the path.
-* @param[out] cnt The length of the @p cmds array.
+* @param[out] cmds Pointer to the array of commands representing the path.
+*                  Can be @c nullptr if this information is not needed.
+* @param[out] cmdsCnt Pointer to the variable that receives the number of commands in the @p cmds array.
+*                     Can be @c nullptr if this information is not needed.
+* @param[out] pts Pointer to the array of two-dimensional points that define the path.
+*                 Can be @c nullptr if this information is not needed.
+* @param[out] ptsCnt Pointer to the variable that receives the number of points in the @p pts array.
+*                    Can be @c nullptr if this information is not needed.
 *
 * @return Tvg_Result enumeration.
-* @retval TVG_RESULT_INVALID_ARGUMENT A @c nullptr passed as the argument.
+* @retval TVG_RESULT_INVALID_ARGUMENT An invalid Tvg_Paint pointer.
+*
+* @note If any of the arguments are @c nullptr, that value will be ignored.
 */
-TVG_API Tvg_Result tvg_shape_get_path_commands(const Tvg_Paint* paint, const Tvg_Path_Command** cmds, uint32_t* cnt);
+TVG_API Tvg_Result tvg_shape_get_path(const Tvg_Paint* paint, const Tvg_Path_Command** cmds, uint32_t* cmdsCnt, const Tvg_Point** pts, uint32_t* ptsCnt);
 
 
 /*!
@@ -1977,14 +1970,14 @@ TVG_API Tvg_Paint* tvg_scene_new(void);
  * This function appends a paint object to the scene.
  *
  * @param[in] scene A Tvg_Paint pointer to the scene object.
- * @param[in] target A pointer to the Paint object to be added into the scene.
+ * @param[in] paint A pointer to the Paint object to be added into the scene.
  *
  * @note The ownership of the @p paint object is transferred to the scene upon addition.
  *
  * @see tvg_scene_remove()
  * @see tvg_scene_push_at()
  */
-TVG_API Tvg_Result tvg_scene_push(Tvg_Paint* scene, Tvg_Paint* target);
+TVG_API Tvg_Result tvg_scene_push(Tvg_Paint* scene, Tvg_Paint* paint);
 
 /**
  * @brief Adds a paint object to the scene.
@@ -2149,7 +2142,7 @@ TVG_API Tvg_Result tvg_font_load(const char* path);
 * @param[in] name The name under which the font will be stored and accessible (e.x. in a @p tvg_text_set_font API).
 * @param[in] data A pointer to a memory location where the content of the font data is stored.
 * @param[in] size The size in bytes of the memory occupied by the @p data.
-* @param[in] mimetype Mimetype or extension of font data. In case a @c NULL or an empty "" value is provided the loader will be determined automatically.
+* @param[in] mimetype Mimetype or extension of font data. In case a @c nullptr or an empty "" value is provided the loader will be determined automatically.
 * @param[in] copy If @c true the data are copied into the engine local buffer, otherwise they are not (default).
 *
 * @return Tvg_Result enumeration.
@@ -2380,31 +2373,42 @@ TVG_API Tvg_Result tvg_animation_get_duration(Tvg_Animation* animation, float* d
 /*!
 * @brief Specifies the playback segment of the animation.
 *
+* The set segment is designated as the play area of the animation.
+* This is useful for playing a specific segment within the entire animation.
+* After setting, the number of animation frames and the playback time are calculated
+* by mapping the playback segment as the entire range.
+*
 * @param[in] animation The Tvg_Animation pointer to the animation object.
-* @param[in] begin segment begin.
-* @param[in] end segment end.
+* @param[in] begin segment begin frame.
+* @param[in] end segment end frame.
 *
 * @return Tvg_Result enumeration.
 * @retval TVG_RESULT_INSUFFICIENT_CONDITION In case the animation is not loaded.
-* @retval TVG_RESULT_INVALID_ARGUMENT When the given parameters are out of range.
+* @retval TVG_RESULT_INVALID_ARGUMENT If the @p begin is higher than @p end.
 *
-* @note Experimental API
+* @note Animation allows a range from 0.0 to the total frame. @p end should not be higher than @p begin.
+* @note If a marker has been specified, its range will be disregarded.
+*
+* @see tvg_lottie_animation_set_marker()
+* @see tvg_animation_get_total_frame()
+
+* @since 1.0
 */
 TVG_API Tvg_Result tvg_animation_set_segment(Tvg_Animation* animation, float begin, float end);
 
 
 /*!
-* @brief Gets the current segment.
+* @brief Gets the current segment range information.
 *
 * @param[in] animation The Tvg_Animation pointer to the animation object.
-* @param[out] begin segment begin.
-* @param[out] end segment end.
+* @param[out] begin segment begin frame.
+* @param[out] end segment end frame.
 *
 * @return Tvg_Result enumeration.
 * @retval TVG_RESULT_INSUFFICIENT_CONDITION In case the animation is not loaded.
-* @retval TVG_RESULT_INVALID_ARGUMENT When the given parameters are @c nullptr.
+* @retval TVG_RESULT_INVALID_ARGUMENT An invalid Tvg_Animation pointer.
 *
-* @note Experimental API
+* @since 1.0
 */
 TVG_API Tvg_Result tvg_animation_get_segment(Tvg_Animation* animation, float* begin, float* end);
 
@@ -2488,7 +2492,7 @@ TVG_API Tvg_Animation* tvg_lottie_animation_new(void);
 * @retval TVG_RESULT_INVALID_ARGUMENT When the given @p slot is invalid
 * @retval TVG_RESULT_NOT_SUPPORTED The Lottie Animation is not supported.
 *
-* @note Experimental API
+* @since 1.0
 */
 TVG_API Tvg_Result tvg_lottie_animation_override(Tvg_Animation* animation, const char* slot);
 
@@ -2504,7 +2508,7 @@ TVG_API Tvg_Result tvg_lottie_animation_override(Tvg_Animation* animation, const
 * @retval TVG_RESULT_INVALID_ARGUMENT When the given @p marker is invalid.
 * @retval TVG_RESULT_NOT_SUPPORTED The Lottie Animation is not supported.
 *
-* @note Experimental API
+* @since 1.0
 */
 TVG_API Tvg_Result tvg_lottie_animation_set_marker(Tvg_Animation* animation, const char* marker);
 
@@ -2518,7 +2522,7 @@ TVG_API Tvg_Result tvg_lottie_animation_set_marker(Tvg_Animation* animation, con
 * @return Tvg_Result enumeration.
 * @retval TVG_RESULT_INVALID_ARGUMENT In case a @c nullptr is passed as the argument.
 *
-* @note Experimental API
+* @since 1.0
 */
 TVG_API Tvg_Result tvg_lottie_animation_get_markers_cnt(Tvg_Animation* animation, uint32_t* cnt);
 
@@ -2533,9 +2537,28 @@ TVG_API Tvg_Result tvg_lottie_animation_get_markers_cnt(Tvg_Animation* animation
 * @return Tvg_Result enumeration.
 * @retval TVG_RESULT_INVALID_ARGUMENT In case @c nullptr is passed as the argument or @c idx is out of range.
 *
-* @note Experimental API
+* @since 1.0
 */
 TVG_API Tvg_Result tvg_lottie_animation_get_marker(Tvg_Animation* animation, uint32_t idx, const char** name);
+
+
+/**
+ * @brief Interpolates between two frames over a specified duration.
+ *
+ * This method performs tweening, a process of generating intermediate frame
+ * between @p from and @p to based on the given @p progress.
+ *
+ * @param[in] animation The Tvg_Animation pointer to the Lottie animation object.
+ * @param[in] from The start frame number of the interpolation.
+ * @param[in] to The end frame number of the interpolation.
+ * @param[in] progress The current progress of the interpolation (range: 0.0 to 1.0).
+ *
+ * @return Tvg_Result enumeration.
+ * @retval TVG_RESULT_INSUFFICIENT_CONDITION In case the animation is not loaded.
+ *
+ * @note Experimental API
+ */
+TVG_API Tvg_Result tvg_lottie_animation_tween(Tvg_Animation* animation, float from, float to, float progress);
 
 
 /** \} */   // end addtogroup ThorVGCapi_LottieAnimation

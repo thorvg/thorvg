@@ -170,8 +170,8 @@ struct SwShapeTask : SwTask
         shapeDelOutline(&shape, mpool, tid);
 
         //Clip Path
-        for (auto clip = clips.begin(); clip < clips.end(); ++clip) {
-            auto clipper = static_cast<SwTask*>(*clip);
+        ARRAY_FOREACH(p, clips) {
+            auto clipper = static_cast<SwTask*>(*p);
             auto clipShapeRle = shape.rle ? clipper->clip(shape.rle) : true;
             auto clipStrokeRle = shape.strokeRle ? clipper->clip(shape.strokeRle) : true;
             if (!clipShapeRle && !clipStrokeRle) goto err;
@@ -231,8 +231,8 @@ struct SwImageTask : SwTask
                 if (image.rle) {
                     //Clear current task memorypool here if the clippers would use the same memory pool
                     imageDelOutline(&image, mpool, tid);
-                    for (auto clip = clips.begin(); clip < clips.end(); ++clip) {
-                        auto clipper = static_cast<SwTask*>(*clip);
+                    ARRAY_FOREACH(p, clips) {
+                        auto clipper = static_cast<SwTask*>(*p);
                         if (!clipper->clip(image.rle)) goto err;
                     }
                     return;
@@ -314,12 +314,12 @@ bool SwRenderer::clear()
 
 bool SwRenderer::sync()
 {
-    for (auto task = tasks.begin(); task < tasks.end(); ++task) {
-        if ((*task)->disposed) {
-            delete(*task);
+    ARRAY_FOREACH(p, tasks) {
+        if ((*p)->disposed) {
+            delete(*p);
         } else {
-            (*task)->done();
-            (*task)->pushed = false;
+            (*p)->done();
+            (*p)->pushed = false;
         }
     }
     tasks.clear();
@@ -384,10 +384,10 @@ bool SwRenderer::preRender()
 void SwRenderer::clearCompositors()
 {
     //Free Composite Caches
-    for (auto comp = compositors.begin(); comp < compositors.end(); ++comp) {
-        free((*comp)->compositor->image.data);
-        delete((*comp)->compositor);
-        delete(*comp);
+    ARRAY_FOREACH(p, compositors) {
+        free((*p)->compositor->image.data);
+        delete((*p)->compositor);
+        delete(*p);
     }
     compositors.reset();
 }
@@ -400,9 +400,9 @@ bool SwRenderer::postRender()
         rasterUnpremultiply(surface);
     }
 
-    for (auto task = tasks.begin(); task < tasks.end(); ++task) {
-        if ((*task)->disposed) delete(*task);
-        else (*task)->pushed = false;
+    ARRAY_FOREACH(p, tasks) {
+        if ((*p)->disposed) delete(*p);
+        else (*p)->pushed = false;
     }
     tasks.clear();
 
@@ -561,7 +561,7 @@ SwSurface* SwRenderer::request(int channelSize, bool square)
     }
 
     //Use cached data
-    for (auto p = compositors.begin(); p < compositors.end(); ++p) {
+    ARRAY_FOREACH(p, compositors) {
         auto cur = *p;
         if (cur->compositor->valid && cur->compositor->image.channelSize == channelSize) {
             if (w == cur->w && h == cur->h) {
@@ -579,7 +579,7 @@ SwSurface* SwRenderer::request(int channelSize, bool square)
         cmp->compositor->image.data = (pixel_t*)malloc(channelSize * w * h);
         cmp->w = cmp->compositor->image.w = w;
         cmp->h = cmp->compositor->image.h = h;
-        cmp->compositor->image.stride = w;
+        cmp->stride = cmp->compositor->image.stride = w;
         cmp->compositor->image.direct = true;
         cmp->compositor->valid = true;
         cmp->channelSize = cmp->compositor->image.channelSize = channelSize;
@@ -660,30 +660,38 @@ bool SwRenderer::endComposite(RenderCompositor* cmp)
 }
 
 
-bool SwRenderer::prepare(RenderEffect* effect)
+void SwRenderer::prepare(RenderEffect* effect, const Matrix& transform)
 {
     switch (effect->type) {
-        case SceneEffect::GaussianBlur: return effectGaussianBlurPrepare(static_cast<RenderEffectGaussianBlur*>(effect));
-        case SceneEffect::DropShadow: return effectDropShadowPrepare(static_cast<RenderEffectDropShadow*>(effect));
-        case SceneEffect::Fill: return effectFillPrepare(static_cast<RenderEffectFill*>(effect));
-        case SceneEffect::Tint: return effectTintPrepare(static_cast<RenderEffectTint*>(effect));
-        case SceneEffect::Tritone: return effectTritonePrepare(static_cast<RenderEffectTritone*>(effect));
+        case SceneEffect::GaussianBlur: effectGaussianBlurUpdate(static_cast<RenderEffectGaussianBlur*>(effect), transform); break;
+        case SceneEffect::DropShadow: effectDropShadowUpdate(static_cast<RenderEffectDropShadow*>(effect), transform); break;
+        case SceneEffect::Fill: effectFillUpdate(static_cast<RenderEffectFill*>(effect)); break;
+        case SceneEffect::Tint: effectTintUpdate(static_cast<RenderEffectTint*>(effect)); break;
+        case SceneEffect::Tritone: effectTritoneUpdate(static_cast<RenderEffectTritone*>(effect)); break;
+        default: break;
+    }
+}
+
+
+bool SwRenderer::region(RenderEffect* effect)
+{
+    switch (effect->type) {
+        case SceneEffect::GaussianBlur: return effectGaussianBlurRegion(static_cast<RenderEffectGaussianBlur*>(effect));
+        case SceneEffect::DropShadow: return effectDropShadowRegion(static_cast<RenderEffectDropShadow*>(effect));
         default: return false;
     }
 }
 
 
-bool SwRenderer::effect(RenderCompositor* cmp, const RenderEffect* effect, bool direct)
+bool SwRenderer::render(RenderCompositor* cmp, const RenderEffect* effect, bool direct)
 {
-    if (!effect->valid) return false;
-
     auto p = static_cast<SwCompositor*>(cmp);
 
     if (p->image.channelSize != sizeof(uint32_t)) {
         TVGERR("SW_ENGINE", "Not supported grayscale Gaussian Blur!");
         return false;
     }
-
+    
     switch (effect->type) {
         case SceneEffect::GaussianBlur: {
             return effectGaussianBlur(p, request(surface->channelSize, true), static_cast<const RenderEffectGaussianBlur*>(effect));
@@ -711,6 +719,13 @@ bool SwRenderer::effect(RenderCompositor* cmp, const RenderEffect* effect, bool 
 }
 
 
+void SwRenderer::dispose(RenderEffect* effect) 
+{
+    free(effect->rd);
+    effect->rd = nullptr;
+}
+
+
 ColorSpace SwRenderer::colorSpace()
 {
     if (surface) return surface->cs;
@@ -721,7 +736,6 @@ ColorSpace SwRenderer::colorSpace()
 void SwRenderer::dispose(RenderData data)
 {
     auto task = static_cast<SwTask*>(data);
-    if (!task) return;
     task->done();
     task->dispose();
 
@@ -738,8 +752,8 @@ void* SwRenderer::prepareCommon(SwTask* task, const Matrix& transform, const Arr
     //TODO: Failed threading them. It would be better if it's possible.
     //See: https://github.com/thorvg/thorvg/issues/1409
     //Guarantee composition targets get ready.
-    for (auto clip = clips.begin(); clip < clips.end(); ++clip) {
-        static_cast<SwTask*>(*clip)->done();
+    ARRAY_FOREACH(p, clips) {
+        static_cast<SwTask*>(*p)->done();
     }
 
     task->clips = clips;

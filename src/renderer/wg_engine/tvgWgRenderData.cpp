@@ -157,9 +157,9 @@ void WgMeshDataPool::free(WgContext& context, WgMeshData* meshData)
 
 void WgMeshDataPool::release(WgContext& context)
 {
-    for (uint32_t i = 0; i < mList.count; i++) {
-        mList[i]->release(context);
-        delete mList[i];
+    ARRAY_FOREACH(p, mList) {
+        (*p)->release(context);
+        delete(*p);
     }
     mPool.clear();
     mList.clear();
@@ -197,8 +197,8 @@ void WgMeshDataGroup::append(WgContext& context, const Point pmin, const Point p
 
 void WgMeshDataGroup::release(WgContext& context)
 {
-    for (uint32_t i = 0; i < meshes.count; i++)
-        WgMeshDataPool::gMeshDataPool->free(context, meshes[i]);
+    ARRAY_FOREACH(p, meshes)
+        WgMeshDataPool::gMeshDataPool->free(context, *p);
     meshes.clear();
 };
 
@@ -324,9 +324,9 @@ void WgRenderDataPaint::update(WgContext& context, const tvg::Matrix& transform,
 
 void WgRenderDataPaint::updateClips(tvg::Array<tvg::RenderData> &clips) {
     this->clips.clear();
-    for (uint32_t i = 0; i < clips.count; i++)
-        if (clips[i])
-            this->clips.push((WgRenderDataPaint*)clips[i]);
+    ARRAY_FOREACH(p, clips) {
+        this->clips.push((WgRenderDataPaint*)(*p));
+    }
 }
 
 //***********************************************************************
@@ -365,14 +365,12 @@ void WgRenderDataShape::updateBBox(Point pmin, Point pmax)
 
 
 void WgRenderDataShape::updateAABB(const Matrix& tr) {
-    Point p0 = Point{pMin.x, pMin.y} * tr;
-    Point p1 = Point{pMax.x, pMin.y} * tr;
-    Point p2 = Point{pMin.x, pMax.y} * tr;
-    Point p3 = Point{pMax.x, pMax.y} * tr;
-    aabb.x = std::min({p0.x, p1.x, p2.x, p3.x});
-    aabb.y = std::min({p0.y, p1.y, p2.y, p3.y});
-    aabb.w = std::max({p0.x, p1.x, p2.x, p3.x}) - aabb.x;
-    aabb.h = std::max({p0.y, p1.y, p2.y, p3.y}) - aabb.y;
+    auto p0 = Point{pMin.x, pMin.y} * tr;
+    auto p1 = Point{pMax.x, pMin.y} * tr;
+    auto p2 = Point{pMin.x, pMax.y} * tr;
+    auto p3 = Point{pMax.x, pMax.y} * tr;
+    aabb.min = {std::min({p0.x, p1.x, p2.x, p3.x}), std::min({p0.y, p1.y, p2.y, p3.y})};
+    aabb.max = {std::max({p0.x, p1.x, p2.x, p3.x}), std::max({p0.y, p1.y, p2.y, p3.y})};
 }
 
 
@@ -387,94 +385,42 @@ void WgRenderDataShape::updateMeshes(WgContext& context, const RenderShape &rsha
     // path decoded vertex buffer
     WgVertexBuffer pbuff;
     pbuff.reset(scale);
-    // append shape without strokes
-    if (!rshape.stroke) {
-        pbuff.decodePath(rshape, false, [&](const WgVertexBuffer& path_buff) {
+
+    if (rshape.strokeTrim()) {
+        WgVertexBuffer trimbuff;
+        trimbuff.reset(scale);
+
+        pbuff.decodePath(rshape, true, [&](const WgVertexBuffer& path_buff) {
             appendShape(context, path_buff);
         });
-    // append shape with strokes
+        trimbuff.decodePath(rshape, true, [&](const WgVertexBuffer& path_buff) {
+            appendShape(context, path_buff);
+            proceedStrokes(context, rshape.stroke, path_buff);
+        }, true);
     } else {
-        float tbeg{}, tend{};
-        if (!rshape.stroke->strokeTrim(tbeg, tend)) { tbeg = 0.0f; tend = 1.0f; }
-        bool loop = tbeg > tend;
-        if (tbeg == tend) {
-            pbuff.decodePath(rshape, false, [&](const WgVertexBuffer& path_buff) {
-                appendShape(context, path_buff);
-            });
-        } else if (rshape.stroke->trim.simultaneous) {
-            pbuff.decodePath(rshape, true, [&](const WgVertexBuffer& path_buff) {
-                appendShape(context, path_buff);
-                if (loop) {
-                    proceedStrokes(context, rshape.stroke, tbeg, 1.0f, path_buff);
-                    proceedStrokes(context, rshape.stroke, 0.0f, tend, path_buff);
-                } else {
-                    proceedStrokes(context, rshape.stroke, tbeg, tend, path_buff);
-                }
-            });
-        } else {
-            float totalLen = 0.0f;
-            pbuff.decodePath(rshape, true, [&](const WgVertexBuffer& path_buff) {
-                appendShape(context, path_buff);
-                totalLen += path_buff.total();
-            });
-            float len_beg = totalLen * tbeg; // trim length begin
-            float len_end = totalLen * tend; // trim length end
-            float len_acc = 0.0; // accumulated length
-            // append strokes
-            pbuff.decodePath(rshape, true, [&](const WgVertexBuffer& path_buff) {
-                float len_path = path_buff.total(); // current path length
-                if (loop) {
-                    if (len_acc + len_path >= len_beg) {
-                        auto tbeg = len_acc <= len_beg ? (len_beg - len_acc) / len_path : 0.0f;
-                        proceedStrokes(context, rshape.stroke, tbeg, 1.0f, path_buff);
-                    }
-                    if (len_acc < len_end) {
-                        auto tend = len_acc + len_path >= len_end ? (len_end - len_acc) / len_path : 1.0f;
-                        proceedStrokes(context, rshape.stroke, 0.0f, tend, path_buff);
-                    }
-                } else {
-                    if (len_acc + len_path >= len_beg && len_acc <= len_end) {
-                        auto tbeg = len_acc <= len_beg ? (len_beg - len_acc) / len_path : 0.0f;
-                        auto tend = len_acc + len_path >= len_end ? (len_end - len_acc) / len_path : 1.0f;
-                        proceedStrokes(context, rshape.stroke, tbeg, tend, path_buff);
-                    }
-                }
-                len_acc += len_path;
-            });
-        }
-    } 
+        pbuff.decodePath(rshape, true, [&](const WgVertexBuffer& path_buff) {
+            appendShape(context, path_buff);
+            if (rshape.stroke) proceedStrokes(context, rshape.stroke, path_buff);
+        });
+    }
     // update shapes bbox (with empty path handling)
     if ((this->meshGroupShapesBBox.meshes.count > 0 ) ||
         (this->meshGroupStrokesBBox.meshes.count > 0)) {
         updateAABB(tr);
         meshDataBBox.bbox(context, pMin, pMax);
-    } else aabb = {0, 0, 0, 0};
+    } else aabb = {{0, 0}, {0, 0}};
 }
 
 
-void WgRenderDataShape::proceedStrokes(WgContext& context, const RenderStroke* rstroke, float tbeg, float tend, const WgVertexBuffer& buff)
+void WgRenderDataShape::proceedStrokes(WgContext& context, const RenderStroke* rstroke, const WgVertexBuffer& buff)
 {
     assert(rstroke);
     static WgVertexBufferInd strokesGenerator;
     strokesGenerator.reset(buff.tscale);
-    // trim -> dash -> stroke
-    if ((tbeg != 0.0f) || (tend != 1.0f)) {
-        if (tbeg == tend) return;
-        WgVertexBuffer trimed_buff;
-        trimed_buff.reset(buff.tscale);
-        trimed_buff.trim(buff, tbeg, tend);
-        trimed_buff.updateDistances();
-        // trim ->dash -> stroke
-        if (rstroke->dashPattern) strokesGenerator.appendStrokesDashed(trimed_buff, rstroke);
-        // trim -> stroke
-        else strokesGenerator.appendStrokes(trimed_buff, rstroke);
-    } else
-    // dash -> stroke
-    if (rstroke->dashPattern) {
-        strokesGenerator.appendStrokesDashed(buff, rstroke);
-    // stroke
-    } else
-        strokesGenerator.appendStrokes(buff, rstroke);
+
+    if (rstroke->dashPattern) strokesGenerator.appendStrokesDashed(buff, rstroke);
+    else strokesGenerator.appendStrokes(buff, rstroke);
+
     appendStroke(context, strokesGenerator);
 }
 
@@ -487,7 +433,7 @@ void WgRenderDataShape::releaseMeshes(WgContext& context)
     meshGroupShapes.release(context);
     pMin = {FLT_MAX, FLT_MAX};
     pMax = {0.0f, 0.0f};
-    aabb = {0, 0, 0, 0};
+    aabb = {{0, 0}, {0, 0}};
     clips.clear();
 }
 
@@ -532,9 +478,9 @@ void WgRenderDataShapePool::free(WgContext& context, WgRenderDataShape* renderDa
 
 void WgRenderDataShapePool::release(WgContext& context)
 {
-    for (uint32_t i = 0; i < mList.count; i++) {
-        mList[i]->release(context);
-        delete mList[i];
+    ARRAY_FOREACH(p, mList) {
+        (*p)->release(context);
+        delete(*p);
     }
     mPool.clear();
     mList.clear();
@@ -593,9 +539,125 @@ void WgRenderDataPicturePool::free(WgContext& context, WgRenderDataPicture* rend
 
 void WgRenderDataPicturePool::release(WgContext& context)
 {
-    for (uint32_t i = 0; i < mList.count; i++) {
-        mList[i]->release(context);
-        delete mList[i];
+    ARRAY_FOREACH(p, mList) {
+        (*p)->release(context);
+        delete(*p);
+    }
+    mPool.clear();
+    mList.clear();
+}
+
+//***********************************************************************
+// WgRenderDataGaussian
+//***********************************************************************
+
+void WgRenderDataViewport::update(WgContext& context, const RenderRegion& region) {
+    WgShaderTypeVec4f viewport;
+    viewport.update(region);
+    bool bufferViewportChanged = context.allocateBufferUniform(bufferViewport, &viewport, sizeof(viewport));
+    if (bufferViewportChanged) {
+        context.layouts.releaseBindGroup(bindGroupViewport);
+        bindGroupViewport = context.layouts.createBindGroupBuffer1Un(bufferViewport);
+    }
+}
+
+
+void WgRenderDataViewport::release(WgContext& context) {
+    context.releaseBuffer(bufferViewport);
+    context.layouts.releaseBindGroup(bindGroupViewport);
+}
+
+//***********************************************************************
+// WgRenderDataViewportPool
+//***********************************************************************
+
+WgRenderDataViewport* WgRenderDataViewportPool::allocate(WgContext& context)
+{
+    WgRenderDataViewport* renderData{};
+    if (mPool.count > 0) {
+        renderData = mPool.last();
+        mPool.pop();
+    } else {
+        renderData = new WgRenderDataViewport();
+        mList.push(renderData);
+    }
+    return renderData;
+}
+
+
+void WgRenderDataViewportPool::free(WgContext& context, WgRenderDataViewport* renderData)
+{
+    if (renderData) mPool.push(renderData);
+}
+
+
+void WgRenderDataViewportPool::release(WgContext& context)
+{
+    ARRAY_FOREACH(p, mList) {
+        (*p)->release(context);
+        delete(*p);
+    }
+    mPool.clear();
+    mList.clear();
+}
+
+//***********************************************************************
+// WgRenderDataGaussian
+//***********************************************************************
+
+void WgRenderDataGaussian::update(WgContext& context, RenderEffectGaussianBlur* gaussian, const Matrix& transform)
+{
+    assert(gaussian);
+    // compute gaussian blur data
+    WgShaderTypeGaussianBlur gaussianSettings;
+    gaussianSettings.update(gaussian, transform);
+    // update bind group and buffers
+    bool bufferSettingsChanged = context.allocateBufferUniform(bufferSettings, &gaussianSettings.settings, sizeof(gaussianSettings.settings));
+    if (bufferSettingsChanged) {
+        // update bind group
+        context.layouts.releaseBindGroup(bindGroupGaussian);
+        bindGroupGaussian = context.layouts.createBindGroupBuffer1Un(bufferSettings);
+    }
+    level = int(WG_GAUSSIAN_MAX_LEVEL * ((gaussian->quality - 1) * 0.01f)) + 1;
+    extend = gaussianSettings.extend;
+}
+
+
+void WgRenderDataGaussian::release(WgContext& context)
+{
+    context.releaseBuffer(bufferSettings);
+    context.layouts.releaseBindGroup(bindGroupGaussian);
+}
+
+//***********************************************************************
+// WgRenderDataGaussianPool
+//***********************************************************************
+
+WgRenderDataGaussian* WgRenderDataGaussianPool::allocate(WgContext& context)
+{
+    WgRenderDataGaussian* renderData{};
+    if (mPool.count > 0) {
+        renderData = mPool.last();
+        mPool.pop();
+    } else {
+        renderData = new WgRenderDataGaussian();
+        mList.push(renderData);
+    }
+    return renderData;
+}
+
+
+void WgRenderDataGaussianPool::free(WgContext& context, WgRenderDataGaussian* renderData)
+{
+    if (renderData) mPool.push(renderData);
+}
+
+
+void WgRenderDataGaussianPool::release(WgContext& context)
+{
+    ARRAY_FOREACH(p, mList) {
+        (*p)->release(context);
+        delete(*p);
     }
     mPool.clear();
     mList.clear();
