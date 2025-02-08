@@ -59,6 +59,8 @@ public:
         RT_SoftLightBlend,
         RT_DifferenceBlend,
         RT_ExclusionBlend,
+        RT_LightenBlend,
+        RT_DarkenBlend,
 
         RT_None,
     };
@@ -108,12 +110,13 @@ private:
 
     GlRenderPass* currentPass();
 
-    bool beginComplexBlending(const RenderRegion& vp, RenderRegion bounds);
-    void endBlendingCompose(GlRenderTask* stencilTask, const Matrix& matrix);
-    GlProgram* getBlendProgram();
+    bool beginComplexBlending(BlendMethod blend, const RenderRegion& vp, RenderRegion bounds);
+    void endBlendingCompose(BlendMethod blend);
+    GlProgram* getBlendProgram(BlendMethod blend);
 
     void prepareBlitTask(GlBlitTask* task);
     void prepareCmpTask(GlRenderTask* task, const RenderRegion& vp, uint32_t cmpWidth, uint32_t cmpHeight);
+    void prepareCmpStencilTask(GlRenderTask* task, RenderRegion& vp);
     void endRenderPass(RenderCompositor* cmp);
 
     void flush();

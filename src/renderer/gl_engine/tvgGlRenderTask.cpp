@@ -325,12 +325,11 @@ void GlSimpleBlendTask::run()
     glBlendFunc(GL_ONE, GL_ONE_MINUS_SRC_ALPHA);
 }
 
-GlComplexBlendTask::GlComplexBlendTask(GlProgram* program, GlRenderTarget* dstFbo, GlRenderTarget* dstCopyFbo, GlRenderTask* stencilTask, GlComposeTask* composeTask)
- : GlRenderTask(program), mDstFbo(dstFbo), mDstCopyFbo(dstCopyFbo), mStencilTask(stencilTask), mComposeTask(composeTask) {}
+GlComplexBlendTask::GlComplexBlendTask(GlProgram* program, GlRenderTarget* dstFbo, GlRenderTarget* dstCopyFbo, GlComposeTask* composeTask)
+ : GlRenderTask(program), mDstFbo(dstFbo), mDstCopyFbo(dstCopyFbo), mComposeTask(composeTask) {}
 
 GlComplexBlendTask::~GlComplexBlendTask()
 {
-    delete mStencilTask;
     delete mComposeTask;
 }
 
@@ -342,29 +341,14 @@ void GlComplexBlendTask::run()
     GL_CHECK(glBindFramebuffer(GL_READ_FRAMEBUFFER, mDstFbo->getFboId()));
     GL_CHECK(glBindFramebuffer(GL_DRAW_FRAMEBUFFER, mDstCopyFbo->getResolveFboId()));
 
-    GL_CHECK(glViewport(0, 0, mDstFbo->getViewport().w, mDstFbo->getViewport().h));
-    GL_CHECK(glScissor(0, 0, mDstFbo->getViewport().w, mDstFbo->getViewport().h));
+    GL_CHECK(glViewport(0, 0, mViewport.w, mViewport.h));
+    GL_CHECK(glScissor(0, 0, mViewport.w, mViewport.h));
     
     const auto& vp = getViewport();
 
     GL_CHECK(glBlitFramebuffer(vp.x, vp.y, vp.x + vp.w, vp.y + vp.h, 0, 0, vp.w, vp.h, GL_COLOR_BUFFER_BIT, GL_LINEAR));
 
     GL_CHECK(glBindFramebuffer(GL_FRAMEBUFFER, mDstFbo->getFboId()));
-
-    GL_CHECK(glEnable(GL_STENCIL_TEST));
-    GL_CHECK(glColorMask(0, 0, 0, 0));
-    GL_CHECK(glStencilFuncSeparate(GL_FRONT, GL_ALWAYS, 0x0, 0xFF));
-    GL_CHECK(glStencilOpSeparate(GL_FRONT, GL_KEEP, GL_KEEP, GL_INCR_WRAP));
-
-    GL_CHECK(glStencilFuncSeparate(GL_BACK, GL_ALWAYS, 0x0, 0xFF));
-    GL_CHECK(glStencilOpSeparate(GL_BACK, GL_KEEP, GL_KEEP, GL_DECR_WRAP));
-
-
-    mStencilTask->run();
-
-    GL_CHECK(glColorMask(1, 1, 1, 1));
-    GL_CHECK(glStencilFunc(GL_NOTEQUAL, 0x0, 0xFF));
-    GL_CHECK(glStencilOp(GL_REPLACE, GL_KEEP, GL_REPLACE));
 
     GL_CHECK(glBlendFunc(GL_ONE, GL_ZERO));
 
@@ -376,6 +360,5 @@ void GlComplexBlendTask::run()
 
 void GlComplexBlendTask::normalizeDrawDepth(int32_t maxDepth)
 {
-    mStencilTask->normalizeDrawDepth(maxDepth);
     GlRenderTask::normalizeDrawDepth(maxDepth);
 }

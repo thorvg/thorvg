@@ -139,6 +139,8 @@ void GlRenderer::initShaders()
     mPrograms.push(new GlProgram(MASK_VERT_SHADER, SOFT_LIGHT_BLEND_FRAG));
     mPrograms.push(new GlProgram(MASK_VERT_SHADER, DIFFERENCE_BLEND_FRAG));
     mPrograms.push(new GlProgram(MASK_VERT_SHADER, EXCLUSION_BLEND_FRAG));
+    mPrograms.push(new GlProgram(MASK_VERT_SHADER, LIGHTEN_BLEND_FRAG));
+    mPrograms.push(new GlProgram(MASK_VERT_SHADER, DARKEN_BLEND_FRAG));
 }
 
 
@@ -149,7 +151,7 @@ void GlRenderer::drawPrimitive(GlShape& sdata, const RenderColor& c, RenderUpdat
 
     bbox.intersect(vp);
 
-    auto complexBlend = beginComplexBlending(bbox, sdata.geometry.getBounds());
+    auto complexBlend = beginComplexBlending(mBlendMethod, bbox, sdata.geometry.getBounds());
 
     if (complexBlend) {
         vp = currentPass()->getViewport();
@@ -231,11 +233,7 @@ void GlRenderer::drawPrimitive(GlShape& sdata, const RenderColor& c, RenderUpdat
     if (stencilTask) currentPass()->addRenderTask(new GlStencilCoverTask(stencilTask, task, stencilMode));
     else currentPass()->addRenderTask(task);
 
-    if (complexBlend) {
-        auto task = new GlRenderTask(mPrograms[RT_Stencil]);
-        sdata.geometry.draw(task, &mGpuBuffer, flag);
-        endBlendingCompose(task, sdata.geometry.getTransformMatrix());
-    }
+    if (complexBlend) endBlendingCompose(mBlendMethod);
 }
 
 
@@ -267,7 +265,7 @@ void GlRenderer::drawPrimitive(GlShape& sdata, const Fill* fill, RenderUpdateFla
         return;
     }
 
-    auto complexBlend = beginComplexBlending(bbox, sdata.geometry.getBounds());
+    auto complexBlend = beginComplexBlending(mBlendMethod, bbox, sdata.geometry.getBounds());
 
     if (complexBlend) vp = currentPass()->getViewport();
 
@@ -419,11 +417,7 @@ void GlRenderer::drawPrimitive(GlShape& sdata, const Fill* fill, RenderUpdateFla
         currentPass()->addRenderTask(task);
     }
 
-    if (complexBlend) {
-        auto task = new GlRenderTask(mPrograms[RT_Stencil]);
-        sdata.geometry.draw(task, &mGpuBuffer, flag);
-        endBlendingCompose(task, sdata.geometry.getTransformMatrix());
-    }
+    if (complexBlend) endBlendingCompose(mBlendMethod);
 }
 
 
@@ -519,7 +513,7 @@ GlRenderPass* GlRenderer::currentPass()
     return mRenderPassStack.last();
 }
 
-bool GlRenderer::beginComplexBlending(const RenderRegion& vp, RenderRegion bounds)
+bool GlRenderer::beginComplexBlending(BlendMethod blend, const RenderRegion& vp, RenderRegion bounds)
 {
     if (vp.w == 0 || vp.h == 0) return false;
 
@@ -527,18 +521,18 @@ bool GlRenderer::beginComplexBlending(const RenderRegion& vp, RenderRegion bound
 
     if (bounds.w == 0 || bounds.h == 0) return false;
 
-    if (mBlendMethod == BlendMethod::Normal || mBlendMethod == BlendMethod::Add || mBlendMethod == BlendMethod::Darken || mBlendMethod == BlendMethod::Lighten) return false;
+    if (blend == BlendMethod::Normal || blend == BlendMethod::Add) return false;
 
     if (mBlendPool.empty()) mBlendPool.push(new GlRenderTargetPool(surface.w, surface.h));
 
     auto blendFbo = mBlendPool[0]->getRenderTarget(bounds);
 
-    mRenderPassStack.push(new GlRenderPass(blendFbo));
+    mRenderPassStack.push(new GlRenderPass(blendFbo, bounds));
 
     return true;
 }
 
-void GlRenderer::endBlendingCompose(GlRenderTask* stencilTask, const Matrix& matrix)
+void GlRenderer::endBlendingCompose(BlendMethod blend)
 {
     auto blendPass = mRenderPassStack.last();
     mRenderPassStack.pop();
@@ -551,34 +545,10 @@ void GlRenderer::endBlendingCompose(GlRenderTask* stencilTask, const Matrix& mat
     if (mBlendPool.count < 2) mBlendPool.push(new GlRenderTargetPool(surface.w, surface.h));
     auto dstCopyFbo = mBlendPool[1]->getRenderTarget(vp);
 
-    {
-        const auto& passVp = currentPass()->getViewport();
+    auto task = new GlComplexBlendTask(getBlendProgram(blend), currentPass()->getFbo(), dstCopyFbo, composeTask);
 
-        auto x = vp.x;
-        auto y = vp.y;
-        auto w = vp.w;
-        auto h = vp.h;
-
-        stencilTask->setViewport({x, passVp.h - y - h, w, h});
-    }
-
-    stencilTask->setDrawDepth(currentPass()->nextDrawDepth());
-
-    {
-        // set view matrix
-        float matrix44[16];
-        currentPass()->getMatrix(matrix44, matrix);
-        uint32_t viewOffset = mGpuBuffer.push(matrix44, 16 * sizeof(float), true);
-        stencilTask->addBindResource(GlBindingResource{
-            0,
-            stencilTask->getProgram()->getUniformBlockIndex("Matrix"),
-            mGpuBuffer.getBufferId(),
-            viewOffset,
-            16 * sizeof(float),
-        });
-    }
-
-    auto task = new GlComplexBlendTask(getBlendProgram(), currentPass()->getFbo(), dstCopyFbo, stencilTask, composeTask);
+    task->setViewport(currentPass()->getViewport());
+    task->setCopyViewport(blendPass->getViewport());
 
     prepareCmpTask(task, vp, blendPass->getFboWidth(), blendPass->getFboHeight());
 
@@ -593,9 +563,9 @@ void GlRenderer::endBlendingCompose(GlRenderTask* stencilTask, const Matrix& mat
     delete(blendPass);
 }
 
-GlProgram* GlRenderer::getBlendProgram()
+GlProgram* GlRenderer::getBlendProgram(BlendMethod blend)
 {
-    switch (mBlendMethod) {
+    switch (blend) {
         case BlendMethod::Multiply: return mPrograms[RT_MultiplyBlend];
         case BlendMethod::Screen: return mPrograms[RT_ScreenBlend];
         case BlendMethod::Overlay: return mPrograms[RT_OverlayBlend];
@@ -605,6 +575,8 @@ GlProgram* GlRenderer::getBlendProgram()
         case BlendMethod::SoftLight: return mPrograms[RT_SoftLightBlend];
         case BlendMethod::Difference: return mPrograms[RT_DifferenceBlend];
         case BlendMethod::Exclusion: return mPrograms[RT_ExclusionBlend];
+        case BlendMethod::Lighten: return mPrograms[RT_LightenBlend];
+        case BlendMethod::Darken: return mPrograms[RT_DarkenBlend];
         default: return nullptr;
     }
 }
@@ -691,6 +663,41 @@ void GlRenderer::prepareCmpTask(GlRenderTask* task, const RenderRegion& vp, uint
     task->setViewport({x, static_cast<int32_t>((passVp.h - y - h)), w, h});
 }
 
+void GlRenderer::prepareCmpStencilTask(GlRenderTask* task, RenderRegion& vp)
+{
+    auto x = 0;
+    auto y = 0;
+    auto w = vp.w;
+    auto h = vp.h;
+
+    Array<float> vertices(4 * 2);
+    // left top
+    vertices.push(x);
+    vertices.push(y);
+    // left bottom
+    vertices.push(x);
+    vertices.push(y + h);
+    // right top
+    vertices.push(x + w);
+    vertices.push(y);
+    // right bottom
+    vertices.push(x + w);
+    vertices.push(y + h);
+
+    Array<uint32_t> indices(6);
+    indices.push(0);
+    indices.push(1);
+    indices.push(2);
+    indices.push(2);
+    indices.push(1);
+    indices.push(3);
+
+    uint32_t vertexOffset = mGpuBuffer.push(vertices.data, vertices.count * sizeof(float));
+    uint32_t indexOffset = mGpuBuffer.pushIndex(indices.data, indices.count * sizeof(uint32_t));
+    task->addVertexLayout(GlVertexLayout{0, 2, 2 * sizeof(float), vertexOffset});
+    task->setDrawRange(indexOffset, indices.count);
+}
+
 
 void GlRenderer::endRenderPass(RenderCompositor* cmp)
 {
@@ -702,6 +709,8 @@ void GlRenderer::endRenderPass(RenderCompositor* cmp)
         // mask is pushed first
         auto maskPass = mRenderPassStack.last();
         mRenderPassStack.pop();
+
+        bool complexBlend = beginComplexBlending(glCmp->blend, glCmp->bbox, glCmp->bbox);
 
         GlProgram* program = nullptr;
         switch(cmp->method) {
@@ -738,6 +747,11 @@ void GlRenderer::endRenderPass(RenderCompositor* cmp)
             currentPass()->addRenderTask(compose_task);
         }
 
+        if (complexBlend) endBlendingCompose(glCmp->blend);
+
+        maskPass->getFbo()->setInUse(false);
+        selfPass->getFbo()->setInUse(false);
+
         delete(selfPass);
         delete(maskPass);
     } else {
@@ -746,6 +760,8 @@ void GlRenderer::endRenderPass(RenderCompositor* cmp)
         mRenderPassStack.pop();
 
         if (!renderPass->isEmpty()) {
+            bool complexBlend = beginComplexBlending(glCmp->blend, glCmp->bbox, glCmp->bbox);
+
             auto task = renderPass->endRenderPass<GlDrawBlitTask>(mPrograms[RT_Image], currentPass()->getFboId());
             task->setRenderSize(static_cast<uint32_t>(glCmp->bbox.w), static_cast<uint32_t>(glCmp->bbox.h));
             prepareCmpTask(task, glCmp->bbox, renderPass->getFboWidth(), renderPass->getFboHeight());
@@ -773,10 +789,22 @@ void GlRenderer::endRenderPass(RenderCompositor* cmp)
                 4 * sizeof(uint32_t),
             });
 
+            task->addBindResource(GlBindingResource{
+                1,
+                task->getProgram()->getUniformBlockIndex("ColorInfo"),
+                mGpuBuffer.getBufferId(),
+                mGpuBuffer.push(info, 4 * sizeof(uint32_t), true),
+                4 * sizeof(uint32_t),
+            });
+
             // texture id
             task->addBindResource(GlBindingResource{0, renderPass->getTextureId(), task->getProgram()->getUniformLocation("uTexture")});
             task->setParentSize(static_cast<uint32_t>(currentPass()->getViewport().w), static_cast<uint32_t>(currentPass()->getViewport().h));
             currentPass()->addRenderTask(std::move(task));
+
+            if (complexBlend) endBlendingCompose(glCmp->blend);
+            renderPass->getFbo()->setInUse(false);
+
         }
         delete(renderPass);
     }
@@ -878,7 +906,7 @@ bool GlRenderer::preRender()
 {
     currentContext();
     if (mPrograms.empty()) initShaders();
-    mRenderPassStack.push(new GlRenderPass(&mRootTarget));
+    mRenderPassStack.push(new GlRenderPass(&mRootTarget, RenderRegion{0, 0, static_cast<int32_t>(surface.w), static_cast<int32_t>(surface.h)}));
 
     return true;
 }
@@ -916,13 +944,14 @@ bool GlRenderer::beginComposite(RenderCompositor* cmp, MaskMethod method, uint8_
     }
 
     auto glCmp = static_cast<GlCompositor*>(cmp);
+    glCmp->blend = mBlendMethod;
 
     if (glCmp->bbox.w > 0 && glCmp->bbox.h > 0) {
         auto renderTarget = mComposePool[index]->getRenderTarget(glCmp->bbox);
-        mRenderPassStack.push(new GlRenderPass(renderTarget));
+        mRenderPassStack.push(new GlRenderPass(renderTarget, glCmp->bbox));
     } else {
         // empty render pass
-        mRenderPassStack.push(new GlRenderPass(nullptr));
+        mRenderPassStack.push(new GlRenderPass(nullptr, glCmp->bbox));
     }
 
     return true;
@@ -1009,6 +1038,10 @@ bool GlRenderer::renderImage(void* data)
 
     auto bbox = sdata->geometry.getViewport();
 
+    bool complexBlend = beginComplexBlending(mBlendMethod, bbox, sdata->geometry.getBounds());
+
+    if (complexBlend) vp = currentPass()->getViewport();
+
     bbox.intersect(vp);
 
     if (bbox.w <= 0 || bbox.h <= 0) return true;
@@ -1021,17 +1054,16 @@ bool GlRenderer::renderImage(void* data)
 
     if (!sdata->clips.empty()) drawClip(sdata->clips);
 
-    auto task = new GlRenderTask(mPrograms[RT_Image]);
+    GlRenderTask* task = nullptr;
+    if (mBlendMethod != BlendMethod::Normal && !complexBlend) task = new GlSimpleBlendTask(mBlendMethod, mPrograms[RT_Image]);
+    else task = new GlRenderTask(mPrograms[RT_Image]);
+
     task->setDrawDepth(drawDepth);
 
     if (!sdata->geometry.draw(task, &mGpuBuffer, RenderUpdateFlag::Image)) {
         delete task;
         return true;
     }
-
-    bool complexBlend = beginComplexBlending(bbox, sdata->geometry.getBounds());
-
-    if (complexBlend) vp = currentPass()->getViewport();
 
     // matrix buffer
     const auto& matrix = sdata->geometry.getTransformMatrix();
@@ -1064,11 +1096,7 @@ bool GlRenderer::renderImage(void* data)
 
     currentPass()->addRenderTask(task);
 
-    if (complexBlend) {
-        auto task = new GlRenderTask(mPrograms[RT_Stencil]);
-        sdata->geometry.draw(task, &mGpuBuffer, RenderUpdateFlag::Image);
-        endBlendingCompose(task, sdata->geometry.getTransformMatrix());
-    }
+    if (complexBlend) endBlendingCompose(mBlendMethod);
 
     return true;
 }
