@@ -191,7 +191,7 @@ bool LottieLoader::header()
 
     segmentEnd = frameCnt = (endFrame - startFrame);
 
-    TVGLOG("LOTTIE", "info: frame rate = %f, duration = %f size = %f x %f", frameRate, frameCnt / frameRate, w, h);
+    TVGLOG("LOTTIE", "info: frame rate = %f, duration = %f size = %f x %f", frameRate, static_cast<double>(frameCnt / frameRate), static_cast<double>(w), static_cast<double>(h));
 
     return true;
 }

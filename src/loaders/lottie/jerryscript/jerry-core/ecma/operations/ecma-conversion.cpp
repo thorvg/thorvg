@@ -957,7 +957,7 @@ ecma_op_to_length (ecma_value_t value, /**< ecma value */
   }
 
   /* 4 */
-  if (num <= 0.0f)
+  if (num <= 0.0)
   {
     *length = 0;
     return ECMA_VALUE_EMPTY;
@@ -1005,7 +1005,7 @@ ecma_op_to_index (ecma_value_t value, /**< ecma value */
   }
 
   /* 2.b - 2.d */
-  if (integer_index < 0.0f || integer_index > ECMA_NUMBER_MAX_SAFE_INTEGER)
+  if (integer_index < 0.0 || integer_index > ECMA_NUMBER_MAX_SAFE_INTEGER)
   {
     return ecma_raise_range_error (ECMA_ERR_INVALID_OR_OUT_OF_RANGE_INDEX);
   }
