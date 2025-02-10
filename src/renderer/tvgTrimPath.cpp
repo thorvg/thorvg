@@ -240,7 +240,10 @@ static void _trim(const PathCommand* inCmds, uint32_t inCmdsCnt, const Point* in
     auto trimStart = begin * totalLength;
     auto trimEnd = end * totalLength;
 
-    if (trimStart > trimEnd) {
+    if (fabsf(begin - end) < EPSILON) {
+        _trimPath(inCmds, inCmdsCnt, inPts, inPtsCnt, trimStart, totalLength, out);
+        _trimPath(inCmds, inCmdsCnt, inPts, inPtsCnt, 0.0f, trimStart, out);
+    } else if (begin > end) {
         _trimPath(inCmds, inCmdsCnt, inPts, inPtsCnt, trimStart, totalLength, out);
         _trimPath(inCmds, inCmdsCnt, inPts, inPtsCnt, 0.0f, trimEnd, out);
     } else {
@@ -280,10 +283,10 @@ bool TrimPath::valid() const
 
 bool TrimPath::trim(const RenderPath& in, RenderPath& out) const
 {
+    if (in.pts.count < 2 || tvg::zero(begin - end)) return false;
+
     float begin = this->begin, end = this->end;
     _get(begin, end);
-
-    if (in.pts.count < 2 || tvg::zero(begin - end)) return false;
 
     out.cmds.reserve(in.cmds.count * 2);
     out.pts.reserve(in.pts.count * 2);
