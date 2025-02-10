@@ -30,6 +30,7 @@
 #include <thorvg.h>
 #include <SDL2/SDL.h>
 #include <SDL2/SDL_syswm.h>
+
 #ifdef _WIN32
     #include <windows.h>
     #ifndef PATH_MAX
@@ -148,6 +149,9 @@ struct Window
 
     Window(tvg::CanvasEngine engine, Example* example, uint32_t width, uint32_t height, uint32_t threadsCnt)
     {
+        SDL_SetHint(SDL_HINT_WINDOWS_DPI_AWARENESS, "system");  //disable High DPI (for windows)
+        //SDL_SetHint(SDL_HINT_VIDEO_HIGHDPI_DISABLED, "1");            //disable High DPI (for macos)
+
         //Initialize ThorVG Engine (engine: raster method)
         if (!verify(tvg::Initializer::init(threadsCnt, engine), "Failed to init ThorVG engine!")) return;
 
