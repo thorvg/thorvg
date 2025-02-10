@@ -348,13 +348,13 @@ static bool _axisAlignedRect(const SwOutline* outline)
 }
 
 
-static SwOutline* _genOutline(SwShape* shape, const RenderShape* rshape, const Matrix& transform, SwMpool* mpool, unsigned tid, bool hasComposite, bool trimmed = false)
+static SwOutline* _genOutline(SwShape* shape, const RenderShape* rshape, const Matrix& transform, SwMpool* mpool, unsigned tid, bool hasComposite, bool strokeTrim = false)
 {
     PathCommand *cmds, *trimmedCmds = nullptr;
     Point *pts, *trimmedPts = nullptr;
     uint32_t cmdCnt, ptsCnt;
 
-    if (trimmed) {
+    if (strokeTrim || rshape->fillTrim) {
         RenderPath trimmedPath;
         if (!rshape->stroke->trim.trim(rshape->path, trimmedPath)) return nullptr;
 
@@ -375,7 +375,7 @@ static SwOutline* _genOutline(SwShape* shape, const RenderShape* rshape, const M
     //No actual shape data
     if (cmdCnt == 0 || ptsCnt == 0) return nullptr;
 
-    auto outline = trimmed ? mpoolReqDashOutline(mpool, tid) : mpoolReqOutline(mpool, tid);
+    auto outline = strokeTrim ? mpoolReqDashOutline(mpool, tid) : mpoolReqOutline(mpool, tid);
     auto closed = false;
 
     //Generate Outlines
@@ -413,7 +413,7 @@ static SwOutline* _genOutline(SwShape* shape, const RenderShape* rshape, const M
     free(trimmedCmds);
     free(trimmedPts);
 
-    if (!trimmed) shape->fastTrack = (!hasComposite && _axisAlignedRect(outline));
+    if (!strokeTrim) shape->fastTrack = (!hasComposite && _axisAlignedRect(outline));
     return outline;
 }
 
@@ -519,14 +519,22 @@ bool shapeGenStrokeRle(SwShape* shape, const RenderShape* rshape, const Matrix& 
         dashStroking = true;
     //Trimming
     } else if (trimmed) {
-        shapeOutline = _genOutline(shape, rshape, transform, mpool, tid, false, true);
-        if (!shapeOutline) return false;
-        dashStroking = true;
+        if (rshape->fillTrim) {
+            if (!shape->outline) {
+                shape->outline = _genOutline(shape, rshape, transform, mpool, tid, false);
+                if (!shape->outline) return false;
+            }
+        } else {
+            shape->outline = _genOutline(shape, rshape, transform, mpool, tid, false, true);
+            if (!shape->outline) return false;
+            dashStroking = true;
+        }
+        shapeOutline = shape->outline;
     //Normal style
     } else {
         if (!shape->outline) {
-            if (auto out = _genOutline(shape, rshape, transform, mpool, tid, false)) shape->outline = out;
-            else return false;
+            shape->outline = _genOutline(shape, rshape, transform, mpool, tid, false);
+            if (!shape->outline) return false;
         }
         shapeOutline = shape->outline;
     }

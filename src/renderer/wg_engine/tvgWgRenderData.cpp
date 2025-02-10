@@ -387,16 +387,23 @@ void WgRenderDataShape::updateMeshes(WgContext& context, const RenderShape &rsha
     pbuff.reset(scale);
 
     if (rshape.strokeTrim()) {
-        WgVertexBuffer trimbuff;
-        trimbuff.reset(scale);
+        if (rshape.fillTrim) {
+            pbuff.decodePath(rshape, true, [&](const WgVertexBuffer& path_buff) {
+                appendShape(context, path_buff);
+                proceedStrokes(context, rshape.stroke, path_buff);
+            }, true);
+        } else {
+            WgVertexBuffer trimbuff;
+            trimbuff.reset(scale);
 
-        pbuff.decodePath(rshape, true, [&](const WgVertexBuffer& path_buff) {
-            appendShape(context, path_buff);
-        });
-        trimbuff.decodePath(rshape, true, [&](const WgVertexBuffer& path_buff) {
-            appendShape(context, path_buff);
-            proceedStrokes(context, rshape.stroke, path_buff);
-        }, true);
+            pbuff.decodePath(rshape, true, [&](const WgVertexBuffer& path_buff) {
+                appendShape(context, path_buff);
+            });
+            trimbuff.decodePath(rshape, true, [&](const WgVertexBuffer& path_buff) {
+                appendShape(context, path_buff);
+                proceedStrokes(context, rshape.stroke, path_buff);
+            }, true);
+        }
     } else {
         pbuff.decodePath(rshape, true, [&](const WgVertexBuffer& path_buff) {
             appendShape(context, path_buff);
