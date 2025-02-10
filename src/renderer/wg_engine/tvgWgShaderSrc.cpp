@@ -721,11 +721,15 @@ fn cs_main(@builtin(global_invocation_id) id: vec3u) {
 }
 )";
 
-const char* cShaderSrc_GaussianBlur_Horz = R"(
+const char* cShaderSrc_GaussianBlur = R"(
 @group(0) @binding(0) var imageSrc : texture_storage_2d<rgba8unorm, read>;
 @group(1) @binding(0) var imageDst : texture_storage_2d<rgba8unorm, write>;
 @group(2) @binding(0) var<uniform> settings: vec4f;
 @group(3) @binding(0) var<uniform> viewport: vec4f;
+
+const N: u32 = 128;
+const M: u32 = N * 3;
+var<workgroup> buff: array<vec4f, M>;
 
 fn gaussian(x: f32, sigma: f32) -> f32 {
     let a = 0.39894f / sigma;
@@ -733,82 +737,90 @@ fn gaussian(x: f32, sigma: f32) -> f32 {
     return a * exp(b);
 }
 
-@compute @workgroup_size(16, 16)
-fn cs_main(@builtin(global_invocation_id) id: vec3u) {
-    // id conversion
-    let iid = vec2i(id.xy);
-    // viewport decode
-    let xmin = i32(viewport.x);
-    let ymin = i32(viewport.y);
-    let xmax = i32(viewport.z);
-    let ymax = i32(viewport.w);
+@compute @workgroup_size(N, 1)
+fn cs_main_horz(@builtin(global_invocation_id) gid: vec3u,
+                @builtin(local_invocation_id)  lid: vec3u) {
     // settings decode
     let sigma = settings.x;
     let scale = settings.y;
     let size = i32(settings.z);
 
-    // draw borders points outside of viewport
-    if ((iid.x < xmin) || (iid.x > xmax) || (iid.y < ymin) || (iid.y > ymax)) { return; }
-
-    // apply filter
-    var weight = gaussian(0.0, sigma);
-    var color = weight * textureLoad(imageSrc, id.xy);
-    var sum = weight;
-    for (var i: i32 = 1; i < size; i++) {
-        let ii = i32(f32(i) * scale);
-        let idneg = vec2i(clamp(iid.x - ii, xmin, xmax), iid.y);
-        let idpos = vec2i(clamp(iid.x + ii, xmin, xmax), iid.y);
-        weight = gaussian(f32(i) * scale, sigma);
-        color += (weight * textureLoad(imageSrc, vec2u(idneg)));
-        color += (weight * textureLoad(imageSrc, vec2u(idpos)));
-        sum += (2.0 * weight);
-    }
-    textureStore(imageDst, id.xy, color / sum);
-}
-)";
-
-const char* cShaderSrc_GaussianBlur_Vert = R"(
-@group(0) @binding(0) var imageSrc : texture_storage_2d<rgba8unorm, read>;
-@group(1) @binding(0) var imageDst : texture_storage_2d<rgba8unorm, write>;
-@group(2) @binding(0) var<uniform> settings: vec4f;
-@group(3) @binding(0) var<uniform> viewport: vec4f;
-
-fn gaussian(x: f32, sigma: f32) -> f32 {
-    let a = 0.39894f / sigma;
-    let b = -(x * x) / (2.0 * sigma * sigma);
-    return a * exp(b);
-}
-
-@compute @workgroup_size(16, 16)
-fn cs_main(@builtin(global_invocation_id) id: vec3u) {
-    // id conversion
-    let iid = vec2i(id.xy);
     // viewport decode
     let xmin = i32(viewport.x);
     let ymin = i32(viewport.y);
     let xmax = i32(viewport.z);
     let ymax = i32(viewport.w);
+
+    // tex coord
+    let uid = vec2u(gid.x + u32(xmin), gid.y + u32(ymin));
+    let iid = vec2i(uid);
+
+    // load source to local workgroup memory
+    buff[lid.x + N*0] = textureLoad(imageSrc, uid - vec2u(N, 0));
+    buff[lid.x + N*1] = textureLoad(imageSrc, uid + vec2u(0, 0));
+    buff[lid.x + N*2] = textureLoad(imageSrc, uid + vec2u(N, 0));
+    workgroupBarrier();
+
+    // apply filter
+    var weight = gaussian(0.0, sigma);
+    var color = weight * buff[lid.x + N];
+    var sum = weight;
+
+    for (var i: i32 = 1; i < size; i++) {
+        let ii = i32(f32(i) * scale);
+        weight = gaussian(f32(i) * scale, sigma);
+        let poffset = min(iid.x + ii, xmax) - iid.x;
+        let noffset = max(iid.x - ii, xmin) - iid.x;
+        color += (weight * buff[i32(lid.x + N) + poffset]);
+        color += (weight * buff[i32(lid.x + N) + noffset]);
+        sum += (2.0 * weight);
+    }
+
+    // store result
+    textureStore(imageDst, uid, color / sum);
+}
+
+@compute @workgroup_size(1, N)
+fn cs_main_vert(@builtin(global_invocation_id) gid: vec3u,
+                @builtin(local_invocation_id)  lid: vec3u) {
     // settings decode
     let sigma = settings.x;
     let scale = settings.y;
     let size = i32(settings.z);
 
-    // draw borders points outside of viewport
-    if ((iid.x < xmin) || (iid.x > xmax) || (iid.y < ymin) || (iid.y > ymax)) { return; }
+    // viewport decode
+    let xmin = i32(viewport.x);
+    let ymin = i32(viewport.y);
+    let xmax = i32(viewport.z);
+    let ymax = i32(viewport.w);
+
+    // tex coord
+    let uid = vec2u(gid.x + u32(xmin), gid.y + u32(ymin));
+    let iid = vec2i(uid);
+
+    // load source to local workgroup memory
+    buff[lid.y + N*0] = textureLoad(imageSrc, uid - vec2u(0, N));
+    buff[lid.y + N*1] = textureLoad(imageSrc, uid + vec2u(0, 0));
+    buff[lid.y + N*2] = textureLoad(imageSrc, uid + vec2u(0, N));
+    workgroupBarrier();
 
     // apply filter
     var weight = gaussian(0.0, sigma);
-    var color = weight * textureLoad(imageSrc, id.xy);
+    var color = weight * buff[lid.y + N];
     var sum = weight;
+
     for (var i: i32 = 1; i < size; i++) {
         let ii = i32(f32(i) * scale);
-        let idneg = vec2i(iid.x, clamp(iid.y - ii, ymin, ymax));
-        let idpos = vec2i(iid.x, clamp(iid.y + ii, ymin, ymax));
         weight = gaussian(f32(i) * scale, sigma);
-        color += (weight * textureLoad(imageSrc, vec2u(idneg)));
-        color += (weight * textureLoad(imageSrc, vec2u(idpos)));
+        let poffset = min(iid.y + ii, ymax) - iid.y;
+        let noffset = max(iid.y - ii, ymin) - iid.y;
+        color += (weight * buff[i32(lid.y + N) + poffset]);
+        color += (weight * buff[i32(lid.y + N) + noffset]);
         sum += (2.0 * weight);
     }
-    textureStore(imageDst, id.xy, color / sum);
+
+    // store result
+    textureStore(imageDst, uid, color / sum);
+    //textureStore(imageDst, uid, vec4f(1.0, 0.0, 0.0, 1.0));
 }
 )";
