@@ -47,8 +47,7 @@ private:
     // shader blit
     WGPUShaderModule shader_blit{};
     // shader effects
-    WGPUShaderModule shader_gaussian_horz{};
-    WGPUShaderModule shader_gaussian_vert{};
+    WGPUShaderModule shader_gaussian;
 
     // layouts helpers
     WGPUPipelineLayout layout_stencil{};

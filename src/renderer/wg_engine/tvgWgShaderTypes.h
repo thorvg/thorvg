@@ -68,6 +68,7 @@ struct WgShaderTypeGradient
 };
 
 // gaussian settings: sigma, scale, extend
+#define WG_GAUSSIAN_KERNEL_SIZE_MAX (128.0f)
 struct WgShaderTypeGaussianBlur
 {
     float settings[4]{}; // [0]: sigma, [1]: scale, [2]: kernel size, [3]: unused

@@ -205,8 +205,9 @@ void WgShaderTypeGaussianBlur::update(const RenderEffectGaussianBlur* gaussian, 
     assert(gaussian);
     const float sigma = gaussian->sigma;
     const float scale = std::sqrt(transform.e11 * transform.e11 + transform.e12 * transform.e12);
+    const float kernel = std::min(WG_GAUSSIAN_KERNEL_SIZE_MAX, 2 * sigma * scale); // kernel size
     settings[0] = sigma;
-    settings[1] = scale;
-    settings[2] = 2 * sigma * scale; // kernel size
+    settings[1] = std::min(WG_GAUSSIAN_KERNEL_SIZE_MAX / kernel, scale);
+    settings[2] = kernel;
     extend = settings[2] * 2;
 }

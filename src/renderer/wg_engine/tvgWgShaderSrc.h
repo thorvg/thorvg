@@ -46,7 +46,6 @@ extern const char* cShaderSrc_Blit;
 
 // compute shader sources: effects
 extern const char* cShaderSrc_MergeMasks;
-extern const char* cShaderSrc_GaussianBlur_Vert;
-extern const char* cShaderSrc_GaussianBlur_Horz;
+extern const char* cShaderSrc_GaussianBlur;
 
 #endif // _TVG_WG_SHEDER_SRC_H_

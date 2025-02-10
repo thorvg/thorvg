@@ -221,8 +221,7 @@ void WgPipelines::initialize(WgContext& context)
     // shader blit
     shader_blit = createShaderModule(context.device, "The shader blit", cShaderSrc_Blit);
     // shader effects
-    shader_gaussian_horz = createShaderModule(context.device, "The shader gaussian horizontal", cShaderSrc_GaussianBlur_Horz);
-    shader_gaussian_vert = createShaderModule(context.device, "The shader gaussian vertical", cShaderSrc_GaussianBlur_Vert);
+    shader_gaussian = createShaderModule(context.device, "The shader gaussian", cShaderSrc_GaussianBlur);
 
     // layouts
     layout_stencil = createPipelineLayout(context.device, bindGroupLayoutsStencil, 2);
@@ -450,10 +449,10 @@ void WgPipelines::initialize(WgContext& context)
     // compute pipeline gaussian blur
     gaussian_horz = createComputePipeline(
         context.device, "The compute pipeline gaussian blur horizontal",
-        shader_gaussian_horz, "cs_main", layout_gaussian);
+        shader_gaussian, "cs_main_horz", layout_gaussian);
     gaussian_vert = createComputePipeline(
         context.device, "The compute pipeline gaussian blur vertical",
-        shader_gaussian_vert, "cs_main", layout_gaussian);
+        shader_gaussian, "cs_main_vert", layout_gaussian);
 }
 
 void WgPipelines::releaseGraphicHandles(WgContext& context)
@@ -505,8 +504,7 @@ void WgPipelines::releaseGraphicHandles(WgContext& context)
     releasePipelineLayout(layout_depth);
     releasePipelineLayout(layout_stencil);
     // shaders
-    releaseShaderModule(shader_gaussian_horz);
-    releaseShaderModule(shader_gaussian_vert);
+    releaseShaderModule(shader_gaussian);
     releaseShaderModule(shader_blit);
     releaseShaderModule(shader_scene_compose);
     releaseShaderModule(shader_scene_blend);

@@ -747,41 +747,45 @@ void WgCompositor::gaussianBlur(WgContext& context, WgRenderStorage* dst, const 
     assert(compose->rdViewport);
     assert(!renderPassEncoder);
     auto renderDataGaussian = (WgRenderDataGaussian*)params->rd;
+    auto aabb = compose->aabb;
     auto viewport = compose->rdViewport;
+    WgRenderStorage* sbuff = dst;
+    WgRenderStorage* dbuff = &storageDstCopy;
+
+    // begin compute pass
+    WGPUComputePassDescriptor computePassDesc{ .label = "Compute pass gaussian blur" };
+    WGPUComputePassEncoder computePassEncoder = wgpuCommandEncoderBeginComputePass(commandEncoder, &computePassDesc);
     for (uint32_t level = 0; level < renderDataGaussian->level; level++) {
         // horizontal blur
         if (params->direction != 2) {
-            const WGPUImageCopyTexture texSrc { .texture = dst->texture };
-            const WGPUImageCopyTexture texDst { .texture = storageDstCopy.texture };
-            const WGPUExtent3D copySize { .width = width, .height = height, .depthOrArrayLayers = 1 };
-            wgpuCommandEncoderCopyTextureToTexture(commandEncoder, &texSrc, &texDst, &copySize);
-            WGPUComputePassDescriptor computePassDesc{ .label = "Compute pass gaussian blur horizontal" };
-            WGPUComputePassEncoder computePassEncoder = wgpuCommandEncoderBeginComputePass(commandEncoder, &computePassDesc);
-            wgpuComputePassEncoderSetBindGroup(computePassEncoder, 0, storageDstCopy.bindGroupRead, 0, nullptr);
-            wgpuComputePassEncoderSetBindGroup(computePassEncoder, 1, dst->bindGroupWrite, 0, nullptr);
+            wgpuComputePassEncoderSetBindGroup(computePassEncoder, 0, sbuff->bindGroupRead, 0, nullptr);
+            wgpuComputePassEncoderSetBindGroup(computePassEncoder, 1, dbuff->bindGroupWrite, 0, nullptr);
             wgpuComputePassEncoderSetBindGroup(computePassEncoder, 2, renderDataGaussian->bindGroupGaussian, 0, nullptr);
             wgpuComputePassEncoderSetBindGroup(computePassEncoder, 3, viewport->bindGroupViewport, 0, nullptr);
             wgpuComputePassEncoderSetPipeline(computePassEncoder, pipelines.gaussian_horz);
-            wgpuComputePassEncoderDispatchWorkgroups(computePassEncoder, width / 16, height / 16, 1);
-            wgpuComputePassEncoderEnd(computePassEncoder);
-            wgpuComputePassEncoderRelease(computePassEncoder);
+            wgpuComputePassEncoderDispatchWorkgroups(computePassEncoder, (aabb.w - 1) / 128 + 1, aabb.h, 1);
+            std::swap(sbuff, dbuff);
         }
         // vertical blur
         if (params->direction != 1) {
-            const WGPUImageCopyTexture texSrc { .texture = dst->texture };
-            const WGPUImageCopyTexture texDst { .texture = storageDstCopy.texture };
-            const WGPUExtent3D copySize { .width = width, .height = height, .depthOrArrayLayers = 1 };
-            wgpuCommandEncoderCopyTextureToTexture(commandEncoder, &texSrc, &texDst, &copySize);
-            WGPUComputePassDescriptor computePassDesc{ .label = "Compute pass gaussian blur vertical" };
-            WGPUComputePassEncoder computePassEncoder = wgpuCommandEncoderBeginComputePass(commandEncoder, &computePassDesc);
-            wgpuComputePassEncoderSetBindGroup(computePassEncoder, 0, storageDstCopy.bindGroupRead, 0, nullptr);
-            wgpuComputePassEncoderSetBindGroup(computePassEncoder, 1, dst->bindGroupWrite, 0, nullptr);
+            wgpuComputePassEncoderSetBindGroup(computePassEncoder, 0, sbuff->bindGroupRead, 0, nullptr);
+            wgpuComputePassEncoderSetBindGroup(computePassEncoder, 1, dbuff->bindGroupWrite, 0, nullptr);
             wgpuComputePassEncoderSetBindGroup(computePassEncoder, 2, renderDataGaussian->bindGroupGaussian, 0, nullptr);
             wgpuComputePassEncoderSetBindGroup(computePassEncoder, 3, viewport->bindGroupViewport, 0, nullptr);
             wgpuComputePassEncoderSetPipeline(computePassEncoder, pipelines.gaussian_vert);
-            wgpuComputePassEncoderDispatchWorkgroups(computePassEncoder, width / 16, height / 16, 1);
-            wgpuComputePassEncoderEnd(computePassEncoder);
-            wgpuComputePassEncoderRelease(computePassEncoder);
+            wgpuComputePassEncoderDispatchWorkgroups(computePassEncoder, aabb.w, (aabb.h - 1) / 128 + 1, 1);
+            std::swap(sbuff, dbuff);
         }
+    }
+    // end compute pass
+    wgpuComputePassEncoderEnd(computePassEncoder);
+    wgpuComputePassEncoderRelease(computePassEncoder);
+
+    // if final result stored in intermidiate buffer we must copy result to destination buffer
+    if (sbuff == &storageDstCopy) {
+        const WGPUImageCopyTexture texSrc { .texture = sbuff->texture, .origin = { .x = (uint32_t)aabb.x, .y = (uint32_t)aabb.y } };
+        const WGPUImageCopyTexture texDst { .texture = dbuff->texture, .origin = { .x = (uint32_t)aabb.x, .y = (uint32_t)aabb.y } };
+        const WGPUExtent3D copySize { .width = (uint32_t)aabb.w, .height = (uint32_t)aabb.h, .depthOrArrayLayers = 1 };
+        wgpuCommandEncoderCopyTextureToTexture(commandEncoder, &texSrc, &texDst, &copySize);
     }
 }
