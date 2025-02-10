@@ -330,6 +330,13 @@ struct LottieText : LottieObject, LottieRenderPooler<tvg::Shape>
         LottieScalar anchor{};
     } alignOption;
 
+    struct
+    {
+        LottieFloat firstMargin = 0.0f;
+        LottieToggle perpendicular = 1;
+        int8_t maskIdx = -1;
+    } followPath;
+
     LottieText()
     {
         LottieObject::type = LottieObject::Text;
