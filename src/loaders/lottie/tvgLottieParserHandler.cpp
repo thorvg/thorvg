@@ -1,4 +1,4 @@
-/*
+    /*
  * Copyright (c) 2023 - 2025 the ThorVG project. All rights reserved.
 
  * Permission is hereby granted, free of charge, to any person obtaining a copy
@@ -43,6 +43,7 @@
  */
 
 #include "tvgLottieParserHandler.h"
+#include "tvgStr.h"
 
 
 /************************************************************************/
@@ -184,6 +185,14 @@ int LookaheadParserHandler::peekType()
 }
 
 
+Value* LookaheadParserHandler::peekValue() {
+    if (state >= kHasNull && state <= kHasKey) {
+        return &val;
+    }
+    return nullptr;
+}
+
+
 void LookaheadParserHandler::skipOut(int depth)
 {
     do {
@@ -230,6 +239,31 @@ void LookaheadParserHandler::skip()
     } else {
         skipOut(0);
     }
+}
+
+
+char* LookaheadParserHandler::findObjectType()
+{
+    auto level = 0;
+    for (auto p = iss.src_; *p != '\0'; ++p) {
+        if (*p == '{') level++;
+        else if (*p == '}') {
+            if (--level < 0) break;
+        } else if (level == 0) {
+            if (!strncmp(p, "\"ty\"", 4)) {
+                p += 4;
+                while (*p != '\0' && (isspace(*p) || *p == '\n')) ++p;
+                if (*p++ != ':') return nullptr;
+                while (*p != '\0' && (isspace(*p) || *p == '\n')) ++p;
+                if (*p++ != '\"') return nullptr;
+                const char* start = p;
+                while (*p != '\0' && *p != '\"') ++p;
+                if (*p == '\"') return strDuplicate(start, p - start);
+                return nullptr;
+            }
+        }
+    }
+    return nullptr;
 }
 
 
