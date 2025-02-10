@@ -1315,6 +1315,11 @@ int GlRenderer::term()
 
 GlRenderer* GlRenderer::gen()
 {
+    auto init = gladLoaderLoadGL();
+    if (init == 0) {
+        TVGERR("GL_ENGINE", "gladLoadGL() failed");
+        return nullptr;
+    }
     //TODO: GL minimum version check, should be replaced with the runtime linking in GlRenderer::init()
     GLint vMajor, vMinor;
     glGetIntegerv(GL_MAJOR_VERSION, &vMajor);

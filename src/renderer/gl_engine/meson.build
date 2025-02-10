@@ -1,4 +1,6 @@
 source_file = [
+   'tvgGl.cpp',
+   'tvgGl.h',
    'tvgGlCommon.h',
    'tvgGlGpuBuffer.h',
    'tvgGlList.h',
@@ -55,7 +57,6 @@ endif
 
 engine_dep += [declare_dependency(
     compile_args        : gl_target_profile,
-    dependencies        : gl_dep,
     include_directories : include_directories('.'),
     sources             : source_file,
 )]
