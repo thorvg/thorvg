@@ -236,15 +236,16 @@ void LottieTrimpath::segment(float frameNo, float& start, float& end, Tween& twe
         end = 0.0f;
         return;
     }
-    if (tvg::equal(diff, 1.0f) || tvg::equal(diff, 2.0f)) {
+
+    //Even if the start and end values do not cause trimming, an offset > 0 can still affect dashing starting point
+    auto o = fmodf(this->offset(frameNo, tween, exps), 360.0f) / 360.0f;  //0 ~ 1
+    if (tvg::zero(o) && diff >= 1.0f) {
         start = 0.0f;
         end = 1.0f;
         return;
     }
 
     if (start > end) std::swap(start, end);
-
-    auto o = fmodf(this->offset(frameNo, tween, exps), 360.0f) / 360.0f;  //0 ~ 1
     start += o;
     end += o;
 }

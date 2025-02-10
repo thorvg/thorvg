@@ -211,10 +211,8 @@ struct Shape::Impl : Paint::Impl
 
     void strokeTrim(float begin, float end, bool simultaneous)
     {
-        if (fabsf(end - begin) >= 1.0f) {
-            begin = 0.0f;
-            end = 1.0f;
-        }
+        //Even if there is no trimming effect, begin can still affect dashing starting point
+        if (fabsf(end - begin) >= 1.0f) end = begin + 1.0f;
 
         if (!rs.stroke) {
             if (begin == 0.0f && end == 1.0f) return;
