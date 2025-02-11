@@ -162,7 +162,7 @@ static void _add(const PathCommand* cmds, const Point* pts, const Point& moveTo,
 }
 
 
-static void _trimPath(const PathCommand* inCmds, uint32_t inCmdsCnt, const Point* inPts, TVG_UNUSED uint32_t inPtsCnt, float trimStart, float trimEnd, RenderPath& out)
+static void _trimPath(const PathCommand* inCmds, uint32_t inCmdsCnt, const Point* inPts, TVG_UNUSED uint32_t inPtsCnt, float trimStart, float trimEnd, RenderPath& out, bool connect = false)
 {
     auto cmds = const_cast<PathCommand*>(inCmds);
     auto pts = const_cast<Point*>(inPts);
@@ -203,7 +203,7 @@ static void _trimPath(const PathCommand* inCmds, uint32_t inCmdsCnt, const Point
         ++cmds;
     };
 
-    bool start = true;
+    auto start = !connect;
     for (uint32_t i = 0; i < inCmdsCnt; ++i) {
         auto dLen = _length();
 
@@ -234,15 +234,18 @@ static void _trimPath(const PathCommand* inCmds, uint32_t inCmdsCnt, const Point
 }
 
 
-static void _trim(const PathCommand* inCmds, uint32_t inCmdsCnt, const Point* inPts, uint32_t inPtsCnt, float begin, float end, RenderPath& out)
+static void _trim(const PathCommand* inCmds, uint32_t inCmdsCnt, const Point* inPts, uint32_t inPtsCnt, float begin, float end, bool connect, RenderPath& out)
 {
     auto totalLength = _pathLength(inCmds, inCmdsCnt, inPts, inPtsCnt);
     auto trimStart = begin * totalLength;
     auto trimEnd = end * totalLength;
 
-    if (trimStart > trimEnd) {
+    if (fabsf(begin - end) < EPSILON) {
         _trimPath(inCmds, inCmdsCnt, inPts, inPtsCnt, trimStart, totalLength, out);
-        _trimPath(inCmds, inCmdsCnt, inPts, inPtsCnt, 0.0f, trimEnd, out);
+        _trimPath(inCmds, inCmdsCnt, inPts, inPtsCnt, 0.0f, trimStart, out, connect);
+    } else if (begin > end) {
+        _trimPath(inCmds, inCmdsCnt, inPts, inPtsCnt, trimStart, totalLength, out);
+        _trimPath(inCmds, inCmdsCnt, inPts, inPtsCnt, 0.0f, trimEnd, out, connect);
     } else {
         _trimPath(inCmds, inCmdsCnt, inPts, inPtsCnt, trimStart, trimEnd, out);
     }
@@ -280,10 +283,10 @@ bool TrimPath::valid() const
 
 bool TrimPath::trim(const RenderPath& in, RenderPath& out) const
 {
+    if (in.pts.count < 2 || tvg::zero(begin - end)) return false;
+
     float begin = this->begin, end = this->end;
     _get(begin, end);
-
-    if (in.pts.count < 2 || tvg::zero(begin - end)) return false;
 
     out.cmds.reserve(in.cmds.count * 2);
     out.pts.reserve(in.pts.count * 2);
@@ -298,7 +301,7 @@ bool TrimPath::trim(const RenderPath& in, RenderPath& out) const
         while (i < in.cmds.count) {
             switch (in.cmds[i]) {
                 case PathCommand::MoveTo: {
-                    if (startCmds != cmds) _trim(startCmds, cmds - startCmds, startPts, pts - startPts, begin, end, out);
+                    if (startCmds != cmds) _trim(startCmds, cmds - startCmds, startPts, pts - startPts, begin, end, *(cmds - 1) == PathCommand::Close, out);
                     startPts = pts;
                     startCmds = cmds;
                     ++pts;
@@ -317,7 +320,7 @@ bool TrimPath::trim(const RenderPath& in, RenderPath& out) const
                 }
                 case PathCommand::Close: {
                     ++cmds;
-                    if (startCmds != cmds) _trim(startCmds, cmds - startCmds, startPts, pts - startPts, begin, end, out);
+                    if (startCmds != cmds) _trim(startCmds, cmds - startCmds, startPts, pts - startPts, begin, end, *(cmds - 1) == PathCommand::Close, out);
                     startPts = pts;
                     startCmds = cmds;
                     break;
@@ -325,9 +328,9 @@ bool TrimPath::trim(const RenderPath& in, RenderPath& out) const
             }
             i++;
         }
-        if (startCmds != cmds) _trim(startCmds, cmds - startCmds, startPts, pts - startPts, begin, end, out);
+        if (startCmds != cmds) _trim(startCmds, cmds - startCmds, startPts, pts - startPts, begin, end, *(cmds - 1) == PathCommand::Close, out);
     } else {
-        _trim(in.cmds.data, in.cmds.count, in.pts.data, in.pts.count, begin, end, out);
+        _trim(in.cmds.data, in.cmds.count, in.pts.data, in.pts.count, begin, end, false, out);
     }
 
     return out.pts.count >= 2;
