@@ -612,15 +612,12 @@ void LottieParser::parseStrokeDash(LottieStroke* stroke)
     enterArray();
     while (nextArrayValue()) {
         enterObject();
-        int idx = 0;
+        const char* style = nullptr;
         while (auto key = nextObjectKey()) {
-            if (KEY_AS("n")) {
-                auto style = getString();
-                if (!strcmp("o", style)) idx = 0;           //offset
-                else if (!strcmp("d", style)) idx = 1;      //dash
-                else if (!strcmp("g", style)) idx = 2;      //gap
-            } else if (KEY_AS("v")) {
-                parseProperty<LottieProperty::Type::Float>(stroke->dash(idx));
+            if (KEY_AS("n")) style = getString();
+            else if (KEY_AS("v")) {
+                if (style && !strcmp("o", style)) parseProperty<LottieProperty::Type::Float>(stroke->dashOffset());
+                else parseProperty<LottieProperty::Type::Float>(stroke->dashValue());
             } else skip();
         }
     }
