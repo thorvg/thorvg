@@ -371,93 +371,26 @@ static void _repeat(LottieGroup* parent, Shape* path, RenderContext* ctx)
 }
 
 
-static void _sharpRect(RenderPath& out, Point& pos, Point& size, float r, bool clockwise, RenderContext* ctx)
-{
-    auto& pts = out.pts;
-    auto& cmds = out.cmds;
-
-    pts.reserve(4);
-    pts.count = 4;
-    cmds.reserve(5);
-    cmds.count = 5;
-
-    cmds[0] = PathCommand::MoveTo;
-    cmds[1] = cmds[2] = cmds[3] = PathCommand::LineTo;
-    cmds[4] = PathCommand::Close;
-
-    pts[0] = {pos.x + size.x, pos.y};
-    pts[2] = {pos.x, pos.y + size.y};
-
-    if (clockwise) {
-        pts[1] = pos + size;
-        pts[3] = pos;
-    } else {
-        pts[1] = pos;
-        pts[3] = pos + size;
-    }
-}
-
-static void _roundRect(RenderPath& out, Point& pos, Point& size, float r, bool clockwise, RenderContext* ctx)
-{
-    auto& pts = out.pts;
-    auto& cmds = out.cmds;
-
-    pts.reserve(17);
-    pts.count = 17;
-    cmds.reserve(10);
-    cmds.count = 10;
-
-    auto hsize = size * 0.5f;
-    auto rsize = Point{r > hsize.x ? hsize.x : r, r > hsize.y ? hsize.y : r};
-    auto hr = rsize * PATH_KAPPA;
-
-    cmds[0] = PathCommand::MoveTo;
-    cmds[9] = PathCommand::Close;
-    pts[0] = {pos.x + size.x, pos.y + rsize.y}; //move
-
-    if (clockwise) {
-        cmds[1] = cmds[3] = cmds[5] = cmds[7] = PathCommand::LineTo; 
-        cmds[2] = cmds[4] = cmds[6] = cmds[8] = PathCommand::CubicTo;
-
-        pts[1] = {pos.x + size.x, pos.y + size.y - rsize.y}; //line
-        pts[2] = {pos.x + size.x, pos.y + size.y - rsize.y + hr.y}; pts[3] = {pos.x + size.x - rsize.x + hr.x, pos.y + size.y}; pts[4] = {pos.x + size.x - rsize.x, pos.y + size.y};  //cubic
-        pts[5] = {pos.x + rsize.x, pos.y + size.y}, //line
-        pts[6] = {pos.x + rsize.x - hr.x, pos.y + size.y}; pts[7] = {pos.x, pos.y + size.y - rsize.y + hr.y}; pts[8] = {pos.x, pos.y + size.y - rsize.y}; //cubic
-        pts[9] = {pos.x, pos.y + rsize.y}, //line
-        pts[10] = {pos.x, pos.y + rsize.y - hr.y}; pts[11] = {pos.x + rsize.x - hr.x, pos.y}; pts[12] = {pos.x + rsize.x, pos.y}; //cubic
-        pts[13] = {pos.x + size.x - rsize.x, pos.y}; //line
-        pts[14] = {pos.x + size.x - rsize.x + hr.x, pos.y}; pts[15] = {pos.x + size.x, pos.y + rsize.y - hr.y}; pts[16] = {pos.x + size.x, pos.y + rsize.y}; //cubic
-    } else {
-        cmds[1] = cmds[3] = cmds[5] = cmds[7] = PathCommand::CubicTo;
-        cmds[2] = cmds[4] = cmds[6] = cmds[8] = PathCommand::LineTo;
-
-        pts[1] = {pos.x + size.x, pos.y + rsize.y - hr.y}; pts[2] = {pos.x + size.x - rsize.x + hr.x, pos.y}; pts[3] = {pos.x + size.x - rsize.x, pos.y}; //cubic
-        pts[4] = {pos.x + rsize.x, pos.y}; //line
-        pts[5] = {pos.x + rsize.x - hr.x, pos.y}; pts[6] = {pos.x, pos.y + rsize.y - hr.y}; pts[7] = {pos.x, pos.y + rsize.y}; //cubic
-        pts[8] = {pos.x, pos.y + size.y - rsize.y}; //line
-        pts[9] = {pos.x, pos.y + size.y - rsize.y + hr.y}; pts[10] = {pos.x + rsize.x - hr.x, pos.y + size.y}; pts[11] = {pos.x + rsize.x, pos.y + size.y}; //cubic
-        pts[12] = {pos.x + size.x - rsize.x, pos.y + size.y}; //line
-        pts[13] = {pos.x + size.x - rsize.x + hr.x, pos.y + size.y}; pts[14] = {pos.x + size.x, pos.y + size.y - rsize.y + hr.y}; pts[15] = {pos.x + size.x, pos.y + size.y - rsize.y}; //cubic
-        pts[16] = {pos.x + size.x, pos.y + rsize.y}; //line
-    }
-}
-
-
 void LottieBuilder::appendRect(Shape* shape, Point& pos, Point& size, float r, bool clockwise, RenderContext* ctx)
 {
-    buffer.clear();
+    auto temp = (ctx->offset) ? Shape::gen() : shape;
 
-    if (tvg::zero(r)) _sharpRect(buffer, pos, size, r, clockwise, ctx);
-    else _roundRect(buffer, pos, size, r, clockwise, ctx);
+    auto before = SHAPE(temp)->rs.path.pts.count;
+
+    temp->appendRect(pos.x, pos.y, size.x, size.y, r, r, clockwise);
+
+    auto after = SHAPE(temp)->rs.path.pts.count;
 
     if (ctx->transform) {
-        ARRAY_FOREACH(pt, buffer.pts) {
-            *pt *= *ctx->transform;
+        for (uint32_t i = before; i < after; ++i) {
+            SHAPE(temp)->rs.path.pts[i] *= *ctx->transform;
         }
     }
 
-    if (ctx->offset) ctx->offset->modifyRect(buffer, SHAPE(shape)->rs.path);
-    else shape->appendPath(buffer.cmds.data, buffer.cmds.count, buffer.pts.data, buffer.pts.count);
+    if (ctx->offset) {
+        ctx->offset->modifyRect(SHAPE(temp)->rs.path, SHAPE(shape)->rs.path);
+        delete(temp);
+    }
 }
 
 
@@ -490,32 +423,18 @@ static void _appendCircle(Shape* shape, Point& center, Point& radius, bool clock
 {
     if (ctx->offset) ctx->offset->modifyEllipse(radius);
 
-    if (tvg::zero(radius)) return;
+    auto before = SHAPE(shape)->rs.path.pts.count;
 
-    auto rKappa = radius * PATH_KAPPA;
+    shape->appendCircle(center.x, center.y, radius.x, radius.y, clockwise);
 
-    constexpr int cmdsCnt = 6;
-    PathCommand cmds[cmdsCnt] = {PathCommand::MoveTo, PathCommand::CubicTo, PathCommand::CubicTo, PathCommand::CubicTo, PathCommand::CubicTo, PathCommand::Close};
+    auto after = SHAPE(shape)->rs.path.pts.count;
 
-    constexpr int ptsCnt = 13;
-    Point pts[ptsCnt];
-
-    int table[2][ptsCnt] = {{0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12}, {0, 11, 10, 9, 8, 7, 6, 5, 4, 3, 2, 1, 12}};
-    int* idx = clockwise ? table[0] : table[1];
-
-    pts[idx[0]] = {center.x, center.y - radius.y}; //moveTo
-    pts[idx[1]] = {center.x + rKappa.x, center.y - radius.y}; pts[idx[2]] = {center.x + radius.x, center.y - rKappa.y}; pts[idx[3]] = {center.x + radius.x, center.y}; //cubicTo
-    pts[idx[4]] = {center.x + radius.x, center.y + rKappa.y}; pts[idx[5]] = {center.x + rKappa.x, center.y + radius.y}; pts[idx[6]] = {center.x, center.y + radius.y}; //cubicTo
-    pts[idx[7]] = {center.x - rKappa.x, center.y + radius.y}; pts[idx[8]] = {center.x - radius.x, center.y + rKappa.y}; pts[idx[9]] = {center.x - radius.x, center.y}; //cubicTo
-    pts[idx[10]] = {center.x - radius.x, center.y - rKappa.y}; pts[idx[11]] = {center.x - rKappa.x, center.y - radius.y}; pts[idx[12]] = {center.x, center.y - radius.y}; //cubicTo
 
     if (ctx->transform) {
-        for (int i = 0; i < ptsCnt; ++i) {
-            pts[i] *= *ctx->transform;
+        for (uint32_t i = before; i < after; ++i) {
+            SHAPE(shape)->rs.path.pts[i] *= *ctx->transform;
         }
     }
-    
-    shape->appendPath(cmds, cmdsCnt, pts, ptsCnt);
 }
 
 

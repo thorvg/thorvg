@@ -95,16 +95,16 @@ Result Shape::close() noexcept
 }
 
 
-Result Shape::appendCircle(float cx, float cy, float rx, float ry) noexcept
+Result Shape::appendCircle(float cx, float cy, float rx, float ry, bool cw) noexcept
 {
-    SHAPE(this)->appendCircle(cx, cy, rx, ry);
+    SHAPE(this)->appendCircle(cx, cy, rx, ry, cw);
     return Result::Success;
 }
 
 
-Result Shape::appendRect(float x, float y, float w, float h, float rx, float ry) noexcept
+Result Shape::appendRect(float x, float y, float w, float h, float rx, float ry, bool cw) noexcept
 {
-    SHAPE(this)->appendRect(x, y, w, h, rx, ry);
+    SHAPE(this)->appendRect(x, y, w, h, rx, ry, cw);
     return Result::Success;
 }
 

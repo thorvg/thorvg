@@ -43,13 +43,13 @@ struct UserExample : tvgexam::Example
         shape1->strokeJoin(tvg::StrokeJoin::Round);
         shape1->strokeCap(tvg::StrokeCap::Round);
         shape1->strokeWidth(12);
-        shape1->strokeTrim(0.0f, 0.5f, false);
+        shape1->strokeTrim(0.25f, 0.75f, false);
 
         auto shape2 = static_cast<tvg::Shape*>(shape1->duplicate());
         shape2->translate(300, 300);
         shape2->fill(0, 155, 50, 100);
         shape2->strokeFill(0, 255, 0);
-        shape2->strokeTrim(0.0f, 0.5f, true);
+        shape2->strokeTrim(0.25f, 0.75f, true);
 
         canvas->push(shape1);
         canvas->push(shape2);
