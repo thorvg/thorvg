@@ -240,10 +240,7 @@ static void _trim(const PathCommand* inCmds, uint32_t inCmdsCnt, const Point* in
     auto trimStart = begin * totalLength;
     auto trimEnd = end * totalLength;
 
-    if (fabsf(begin - end) < EPSILON) {
-        _trimPath(inCmds, inCmdsCnt, inPts, inPtsCnt, trimStart, totalLength, out);
-        _trimPath(inCmds, inCmdsCnt, inPts, inPtsCnt, 0.0f, trimStart, out, connect);
-    } else if (begin > end) {
+    if (begin >= end) {
         _trimPath(inCmds, inCmdsCnt, inPts, inPtsCnt, trimStart, totalLength, out);
         _trimPath(inCmds, inCmdsCnt, inPts, inPtsCnt, 0.0f, trimEnd, out, connect);
     } else {
