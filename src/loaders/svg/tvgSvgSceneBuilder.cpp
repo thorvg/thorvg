@@ -180,6 +180,56 @@ static RadialGradient* _applyRadialGradientProperty(SvgStyleGradient* g, const B
 }
 
 
+static void _appendRect(Shape* shape, float x, float y, float w, float h, float rx, float ry)
+{
+    auto halfW = w * 0.5f;
+    auto halfH = h * 0.5f;
+
+    //clamping cornerRadius by minimum size
+    if (rx > halfW) rx = halfW;
+    if (ry > halfH) ry = halfH;
+
+    if (rx == 0 && ry == 0) {
+        SHAPE(shape)->grow(5, 4);
+        shape->moveTo(x, y);
+        shape->lineTo(x + w, y);
+        shape->lineTo(x + w, y + h);
+        shape->lineTo(x, y + h);
+        shape->close();
+    } else {
+        auto hrx = rx * PATH_KAPPA;
+        auto hry = ry * PATH_KAPPA;
+
+        SHAPE(shape)->grow(10, 17);
+        shape->moveTo(x + rx, y);
+        shape->lineTo(x + w - rx, y);
+        shape->cubicTo(x + w - rx + hrx, y, x + w, y + ry - hry, x + w, y + ry);
+        shape->lineTo(x + w, y + h - ry);
+        shape->cubicTo(x + w, y + h - ry + hry, x + w - rx + hrx, y + h, x + w - rx, y + h);
+        shape->lineTo(x + rx, y + h);
+        shape->cubicTo(x + rx - hrx, y + h, x, y + h - ry + hry, x, y + h - ry);
+        shape->lineTo(x, y + ry);
+        shape->cubicTo(x, y + ry - hry, x + rx - hrx, y, x + rx, y);
+        shape->close();
+    }
+}
+
+
+static void _appendCircle(Shape* shape, float cx, float cy, float rx, float ry)
+{
+    auto rxKappa = rx * PATH_KAPPA;
+    auto ryKappa = ry * PATH_KAPPA;
+
+    SHAPE(shape)->grow(6, 13);
+    shape->moveTo(cx + rx, cy);
+    shape->cubicTo(cx + rx, cy + ryKappa, cx + rxKappa, cy + ry, cx, cy + ry);
+    shape->cubicTo(cx - rxKappa, cy + ry, cx - rx, cy + ryKappa, cx - rx, cy);
+    shape->cubicTo(cx - rx, cy - ryKappa, cx - rxKappa, cy - ry, cx, cy - ry);
+    shape->cubicTo(cx + rxKappa, cy - ry, cx + rx, cy - ryKappa, cx + rx, cy);
+    shape->close();
+}
+
+
 static bool _appendClipChild(SvgLoaderData& loaderData, SvgNode* node, Shape* shape, const Box& vBox, const string& svgPath)
 {
     //The SVG standard allows only for 'use' nodes that point directly to a basic shape.
@@ -430,7 +480,7 @@ static bool _recognizeShape(SvgNode* node, Shape* shape)
             break;
         }
         case SvgNodeType::Ellipse: {
-            shape->appendCircle(node->node.ellipse.cx, node->node.ellipse.cy, node->node.ellipse.rx, node->node.ellipse.ry);
+            _appendCircle(shape, node->node.ellipse.cx, node->node.ellipse.cy, node->node.ellipse.rx, node->node.ellipse.ry);
             break;
         }
         case SvgNodeType::Polygon: {
@@ -453,11 +503,11 @@ static bool _recognizeShape(SvgNode* node, Shape* shape)
             break;
         }
         case SvgNodeType::Circle: {
-            shape->appendCircle(node->node.circle.cx, node->node.circle.cy, node->node.circle.r, node->node.circle.r);
+            _appendCircle(shape, node->node.circle.cx, node->node.circle.cy, node->node.circle.r, node->node.circle.r);
             break;
         }
         case SvgNodeType::Rect: {
-            shape->appendRect(node->node.rect.x, node->node.rect.y, node->node.rect.w, node->node.rect.h, node->node.rect.rx, node->node.rect.ry);
+            _appendRect(shape, node->node.rect.x, node->node.rect.y, node->node.rect.w, node->node.rect.h, node->node.rect.rx, node->node.rect.ry);
             break;
         }
         case SvgNodeType::Line: {
@@ -774,7 +824,7 @@ static Scene* _useBuildHelper(SvgLoaderData& loaderData, const SvgNode* node, co
 
         if (!node->node.use.symbol->node.symbol.overflowVisible) {
             auto viewBoxClip = Shape::gen();
-            viewBoxClip->appendRect(0, 0, width, height, 0, 0);
+            viewBoxClip->appendRect(0, 0, width, height);
 
             // mClipTransform = mUseTransform * mSymbolTransform
             Matrix mClipTransform = mUseTransform;

@@ -983,10 +983,11 @@ public:
      * @param[in] h The height of the rectangle.
      * @param[in] rx The x-axis radius of the ellipse defining the rounded corners of the rectangle.
      * @param[in] ry The y-axis radius of the ellipse defining the rounded corners of the rectangle.
+     * @param[in] cw Specifies the path direction: @c true for clockwise, @c false for counterclockwise.
      *
      * @note For @p rx and @p ry greater than or equal to the half of @p w and the half of @p h, respectively, the shape become an ellipse.
      */
-    Result appendRect(float x, float y, float w, float h, float rx = 0, float ry = 0) noexcept;
+    Result appendRect(float x, float y, float w, float h, float rx = 0, float ry = 0, bool cw = true) noexcept;
 
     /**
      * @brief Appends an ellipse to the path.
@@ -1001,9 +1002,10 @@ public:
      * @param[in] cy The vertical coordinate of the center of the ellipse.
      * @param[in] rx The x-axis radius of the ellipse.
      * @param[in] ry The y-axis radius of the ellipse.
+     * @param[in] cw Specifies the path direction: @c true for clockwise, @c false for counterclockwise.
      *
      */
-    Result appendCircle(float cx, float cy, float rx, float ry) noexcept;
+    Result appendCircle(float cx, float cy, float rx, float ry, bool cw = true) noexcept;
 
     /**
      * @brief Appends a given sub-path to the path.

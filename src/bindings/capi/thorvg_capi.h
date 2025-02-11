@@ -1175,13 +1175,14 @@ TVG_API Tvg_Result tvg_shape_close(Tvg_Paint* paint);
 * @param[in] h The height of the rectangle.
 * @param[in] rx The x-axis radius of the ellipse defining the rounded corners of the rectangle.
 * @param[in] ry The y-axis radius of the ellipse defining the rounded corners of the rectangle.
+* @param[in] cw Specifies the path direction: @c true for clockwise, @c false for counterclockwise.
 *
 * @return Tvg_Result enumeration.
 * @retval TVG_RESULT_INVALID_ARGUMENT An invalid Tvg_Paint pointer.
 *
 & @note For @p rx and @p ry greater than or equal to the half of @p w and the half of @p h, respectively, the shape become an ellipse.
 */
-TVG_API Tvg_Result tvg_shape_append_rect(Tvg_Paint* paint, float x, float y, float w, float h, float rx, float ry);
+TVG_API Tvg_Result tvg_shape_append_rect(Tvg_Paint* paint, float x, float y, float w, float h, float rx, float ry, bool cw);
 
 
 /*!
@@ -1198,11 +1199,12 @@ TVG_API Tvg_Result tvg_shape_append_rect(Tvg_Paint* paint, float x, float y, flo
 * @param[in] cy The vertical coordinate of the center of the ellipse.
 * @param[in] rx The x-axis radius of the ellipse.
 * @param[in] ry The y-axis radius of the ellipse.
+* @param[in] cw Specifies the path direction: @c true for clockwise, @c false for counterclockwise.
 *
 * @return Tvg_Result enumeration.
 * @retval TVG_RESULT_INVALID_ARGUMENT An invalid Tvg_Paint pointer.
 */
-TVG_API Tvg_Result tvg_shape_append_circle(Tvg_Paint* paint, float cx, float cy, float rx, float ry);
+TVG_API Tvg_Result tvg_shape_append_circle(Tvg_Paint* paint, float cx, float cy, float rx, float ry, bool cw);
 
 
 /*!

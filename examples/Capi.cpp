@@ -94,9 +94,9 @@ void contents()
 //////3. Radial gradient shape with a radial dashed stroke
     //Set a shape
     Tvg_Paint* shape3 = tvg_shape_new();
-    tvg_shape_append_rect(shape3, 550.0f, 20.0f, 100.0f, 50.0f, 0.0f, 0.0f);
-    tvg_shape_append_circle(shape3, 600.0f, 150.0f, 100.0f, 50.0f);
-    tvg_shape_append_rect(shape3, 550.0f, 230.0f, 100.0f, 100.0f, 20.0f, 40.0f);
+    tvg_shape_append_rect(shape3, 550.0f, 20.0f, 100.0f, 50.0f, 0.0f, 0.0f, true);
+    tvg_shape_append_circle(shape3, 600.0f, 150.0f, 100.0f, 50.0f, true);
+    tvg_shape_append_rect(shape3, 550.0f, 230.0f, 100.0f, 100.0f, 20.0f, 40.0f, true);
 
     //Prepare a radial gradient for the fill
     Tvg_Gradient* grad2 = tvg_radial_gradient_new();
@@ -142,8 +142,8 @@ void contents()
 
     //Set circles
     Tvg_Paint* scene_shape1 = tvg_shape_new();
-    tvg_shape_append_circle(scene_shape1, 80.0f, 650.f, 40.0f, 140.0f);
-    tvg_shape_append_circle(scene_shape1, 180.0f, 600.f, 40.0f, 60.0f);
+    tvg_shape_append_circle(scene_shape1, 80.0f, 650.f, 40.0f, 140.0f, true);
+    tvg_shape_append_circle(scene_shape1, 180.0f, 600.f, 40.0f, 60.0f, true);
     tvg_shape_set_fill_color(scene_shape1, 0, 0, 255, 150);
     tvg_shape_set_stroke_color(scene_shape1, 75, 25, 155, 255);
     tvg_shape_set_stroke_width(scene_shape1, 10.0f);
@@ -189,7 +189,7 @@ void contents()
 
         // Set a composite shape
         Tvg_Paint* comp = tvg_shape_new();
-        tvg_shape_append_circle(comp, 600.0f, 600.0f, 100.0f, 100.0f);
+        tvg_shape_append_circle(comp, 600.0f, 600.0f, 100.0f, 100.0f, true);
         tvg_shape_set_fill_color(comp, 0, 0, 0, 200);
         tvg_paint_set_mask_method(pict, comp, TVG_MASK_METHOD_INVERSE_ALPHA);
 

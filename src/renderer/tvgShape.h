@@ -386,52 +386,111 @@ struct Shape::Impl : Paint::Impl
         return Result::Success;
     }
 
-    void appendCircle(float cx, float cy, float rx, float ry)
+    void appendCircle(float cx, float cy, float rx, float ry, bool cw)
     {
         auto rxKappa = rx * PATH_KAPPA;
         auto ryKappa = ry * PATH_KAPPA;
 
-        grow(6, 13);
-        moveTo(cx + rx, cy);
-        cubicTo(cx + rx, cy + ryKappa, cx + rxKappa, cy + ry, cx, cy + ry);
-        cubicTo(cx - rxKappa, cy + ry, cx - rx, cy + ryKappa, cx - rx, cy);
-        cubicTo(cx - rx, cy - ryKappa, cx - rxKappa, cy - ry, cx, cy - ry);
-        cubicTo(cx + rxKappa, cy - ry, cx + rx, cy - ryKappa, cx + rx, cy);
-        close();
+        rs.path.cmds.grow(6);
+        auto cmds = rs.path.cmds.end();
+
+        cmds[0] = PathCommand::MoveTo;
+        cmds[1] = PathCommand::CubicTo;
+        cmds[2] = PathCommand::CubicTo;
+        cmds[3] = PathCommand::CubicTo;
+        cmds[4] = PathCommand::CubicTo;
+        cmds[5] = PathCommand::Close;
+
+        rs.path.cmds.count += 6;
+
+        int table[2][13] = {{0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12}, {0, 11, 10, 9, 8, 7, 6, 5, 4, 3, 2, 1, 12}};
+        int* idx = cw ? table[0] : table[1];
+
+        rs.path.pts.grow(13);
+        auto pts = rs.path.pts.end();
+
+        pts[idx[0]] = {cx, cy - ry}; //moveTo
+        pts[idx[1]] = {cx + rxKappa, cy - ry}; pts[idx[2]] = {cx + rx, cy - ryKappa}; pts[idx[3]] = {cx + rx, cy}; //cubicTo
+        pts[idx[4]] = {cx + rx, cy + ryKappa}; pts[idx[5]] = {cx + rxKappa, cy + ry}; pts[idx[6]] = {cx, cy + ry}; //cubicTo
+        pts[idx[7]] = {cx - rxKappa, cy + ry}; pts[idx[8]] = {cx - rx, cy + ryKappa}; pts[idx[9]] = {cx - rx, cy}; //cubicTo
+        pts[idx[10]] = {cx - rx, cy - ryKappa}; pts[idx[11]] = {cx - rxKappa, cy - ry}; pts[idx[12]] = {cx, cy - ry}; //cubicTo
+
+        rs.path.pts.count += 13;
+
+        renderFlag |= RenderUpdateFlag::Path;
     }
 
-    void appendRect(float x, float y, float w, float h, float rx, float ry)
+    void appendRect(float x, float y, float w, float h, float rx, float ry, bool cw)
     {
-        auto halfW = w * 0.5f;
-        auto halfH = h * 0.5f;
+        //sharp rect
+        if (tvg::zero(rx) && tvg::zero(ry)) {
+            rs.path.cmds.grow(5);
+            rs.path.pts.grow(4);
 
-        //clamping cornerRadius by minimum size
-        if (rx > halfW) rx = halfW;
-        if (ry > halfH) ry = halfH;
+            auto cmds = rs.path.cmds.end();
+            auto pts = rs.path.pts.end();
 
-        //rectangle
-        if (rx == 0 && ry == 0) {
-            grow(5, 4);
-            moveTo(x, y);
-            lineTo(x + w, y);
-            lineTo(x + w, y + h);
-            lineTo(x, y + h);
-            close();
-        //rounded rectangle or circle
+            cmds[0] = PathCommand::MoveTo;
+            cmds[1] = cmds[2] = cmds[3] = PathCommand::LineTo;
+            cmds[4] = PathCommand::Close;
+
+            pts[0] = {x + w, y};
+            pts[2] = {x, y + h};
+            if (cw) {
+                pts[1] = {x + w, y + h};
+                pts[3] = {x, y};
+            } else {
+                pts[1] = {x, y};
+                pts[3] = {x + w, y + h};
+            }
+
+            rs.path.cmds.count += 5;
+            rs.path.pts.count += 4;
+        //round rect
         } else {
-            auto hrx = rx * PATH_KAPPA;
-            auto hry = ry * PATH_KAPPA;
-            grow(10, 17);
-            moveTo(x + rx, y);
-            lineTo(x + w - rx, y);
-            cubicTo(x + w - rx + hrx, y, x + w, y + ry - hry, x + w, y + ry);
-            lineTo(x + w, y + h - ry);
-            cubicTo(x + w, y + h - ry + hry, x + w - rx + hrx, y + h, x + w - rx, y + h);
-            lineTo(x + rx, y + h);
-            cubicTo(x + rx - hrx, y + h, x, y + h - ry + hry, x, y + h - ry);
-            lineTo(x, y + ry);
-            cubicTo(x, y + ry - hry, x + rx - hrx, y, x + rx, y);
-            close();
+            auto hsize = Point{w * 0.5f, h * 0.5f};
+            rx = (rx > hsize.x) ? hsize.x : rx;
+            ry = (ry > hsize.y) ? hsize.y : ry;
+            auto hr = Point{rx * PATH_KAPPA, ry * PATH_KAPPA};
+
+            rs.path.cmds.grow(10);
+            rs.path.pts.grow(17);
+
+            auto cmds = rs.path.cmds.end();
+            auto pts = rs.path.pts.end();
+
+            cmds[0] = PathCommand::MoveTo;
+            cmds[9] = PathCommand::Close;
+            pts[0] = {x + w, y + ry}; //move
+
+            if (cw) {
+                cmds[1] = cmds[3] = cmds[5] = cmds[7] = PathCommand::LineTo;
+                cmds[2] = cmds[4] = cmds[6] = cmds[8] = PathCommand::CubicTo;
+
+                pts[1] = {x + w, y + h - ry}; //line
+                pts[2] = {x + w, y + h - ry + hr.y}; pts[3] = {x + w - rx + hr.x, y + h}; pts[4] = {x + w - rx, y + h};  //cubic
+                pts[5] = {x + rx, y + h}, //line
+                pts[6] = {x + rx - hr.x, y + h}; pts[7] = {x, y + h - ry + hr.y}; pts[8] = {x, y + h - ry}; //cubic
+                pts[9] = {x, y + ry}, //line
+                pts[10] = {x, y + ry - hr.y}; pts[11] = {x + rx - hr.x, y}; pts[12] = {x + rx, y}; //cubic
+                pts[13] = {x + w - rx, y}; //line
+                pts[14] = {x + w - rx + hr.x, y}; pts[15] = {x + w, y + ry - hr.y}; pts[16] = {x + w, y + ry}; //cubic
+            } else {
+                cmds[1] = cmds[3] = cmds[5] = cmds[7] = PathCommand::CubicTo;
+                cmds[2] = cmds[4] = cmds[6] = cmds[8] = PathCommand::LineTo;
+
+                pts[1] = {x + w, y + ry - hr.y}; pts[2] = {x + w - rx + hr.x, y}; pts[3] = {x + w - rx, y}; //cubic
+                pts[4] = {x + rx, y}; //line
+                pts[5] = {x + rx - hr.x, y}; pts[6] = {x, y + ry - hr.y}; pts[7] = {x, y + ry}; //cubic
+                pts[8] = {x, y + h - ry}; //line
+                pts[9] = {x, y + h - ry + hr.y}; pts[10] = {x + rx - hr.x, y + h}; pts[11] = {x + rx, y + h}; //cubic
+                pts[12] = {x + w - rx, y + h}; //line
+                pts[13] = {x + w - rx + hr.x, y + h}; pts[14] = {x + w, y + h - ry + hr.y}; pts[15] = {x + w, y + h - ry}; //cubic
+                pts[16] = {x + w, y + ry}; //line
+            }
+
+            rs.path.cmds.count += 10;
+            rs.path.pts.count += 17;
         }
     }
 
