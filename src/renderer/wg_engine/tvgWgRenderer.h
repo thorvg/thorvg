@@ -60,12 +60,12 @@ public:
 
     static WgRenderer* gen();
     static bool init(uint32_t threads);
+    static int32_t init();
     static bool term();
 
 private:
     WgRenderer();
     ~WgRenderer();
-    void initialize();
     void release();
     void disposeObjects();
     void releaseSurfaceTexture();

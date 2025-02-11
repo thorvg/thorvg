@@ -20,21 +20,23 @@
  * SOFTWARE.
  */
 
+#include <atomic>
 #include "tvgWgRenderer.h"
 
-WgRenderer::WgRenderer()
+
+/************************************************************************/
+/* Internal Class Implementation                                        */
+/************************************************************************/
+
+static atomic<int32_t> initEngineCnt{};
+static atomic<int32_t> rendererCnt{};
+
+
+static void _termEngine()
 {
-}
+    if (rendererCnt > 0) return;
 
-
-WgRenderer::~WgRenderer()
-{
-    release();
-}
-
-
-void WgRenderer::initialize()
-{
+    //TODO:
 }
 
 
@@ -82,6 +84,58 @@ void WgRenderer::disposeObjects()
     }
     mDisposeRenderDatas.clear();
 }
+
+
+void WgRenderer::releaseSurfaceTexture()
+{
+    if (surfaceTexture.texture) {
+        wgpuTextureRelease(surfaceTexture.texture);
+        surfaceTexture.texture = nullptr;
+    }
+}
+
+
+void WgRenderer::clearTargets()
+{
+    releaseSurfaceTexture();
+    if (surface) wgpuSurfaceUnconfigure(surface);
+    targetTexture = nullptr;
+    surface = nullptr;
+    mTargetSurface.stride = 0;
+    mTargetSurface.w = 0;
+    mTargetSurface.h = 0;
+
+}
+
+
+bool WgRenderer::surfaceConfigure(WGPUSurface surface, WgContext& context, uint32_t width, uint32_t height)
+{
+    // store target surface properties
+    this->surface = surface;
+    if (width == 0 || height == 0 || !surface) return false;
+
+    // setup surface configuration
+    WGPUSurfaceConfiguration surfaceConfiguration {
+        .device = context.device,
+        .format = context.preferredFormat,
+        .usage = WGPUTextureUsage_RenderAttachment,
+    #ifdef __EMSCRIPTEN__
+        .alphaMode = WGPUCompositeAlphaMode_Premultiplied,
+    #endif
+        .width = width,
+        .height = height,
+    #ifndef __EMSCRIPTEN__
+        .presentMode = WGPUPresentMode_Fifo,
+    #endif
+    };
+    wgpuSurfaceConfigure(surface, &surfaceConfiguration);
+    return true;
+}
+
+
+/************************************************************************/
+/* External Class Implementation                                        */
+/************************************************************************/
 
 
 RenderData WgRenderer::prepare(const RenderShape& rshape, RenderData data, const Matrix& transform, Array<RenderData>& clips, uint8_t opacity, RenderUpdateFlag flags, bool clipper)
@@ -254,15 +308,6 @@ bool WgRenderer::clear()
 }
 
 
-void WgRenderer::releaseSurfaceTexture()
-{
-    if (surfaceTexture.texture) {
-        wgpuTextureRelease(surfaceTexture.texture);
-        surfaceTexture.texture = nullptr;
-    }
-}
-
-
 bool WgRenderer::sync()
 {
     disposeObjects();
@@ -368,41 +413,18 @@ bool WgRenderer::target(WGPUDevice device, WGPUInstance instance, void* target, 
 }
 
 
-void WgRenderer::clearTargets()
+WgRenderer::WgRenderer()
 {
-    releaseSurfaceTexture();
-    if (surface) wgpuSurfaceUnconfigure(surface);
-    targetTexture = nullptr;
-    surface = nullptr;
-    mTargetSurface.stride = 0;
-    mTargetSurface.w = 0;
-    mTargetSurface.h = 0;
-
 }
 
 
-bool WgRenderer::surfaceConfigure(WGPUSurface surface, WgContext& context, uint32_t width, uint32_t height)
+WgRenderer::~WgRenderer()
 {
-    // store target surface properties
-    this->surface = surface;
-    if (width == 0 || height == 0 || !surface) return false;
+    release();
 
-    // setup surface configuration
-    WGPUSurfaceConfiguration surfaceConfiguration {
-        .device = context.device,
-        .format = context.preferredFormat,
-        .usage = WGPUTextureUsage_RenderAttachment,
-    #ifdef __EMSCRIPTEN__
-        .alphaMode = WGPUCompositeAlphaMode_Premultiplied,
-    #endif
-        .width = width,
-        .height = height,
-    #ifndef __EMSCRIPTEN__
-        .presentMode = WGPUPresentMode_Fifo,
-    #endif
-    };
-    wgpuSurfaceConfigure(surface, &surfaceConfiguration);
-    return true;
+    --rendererCnt;
+
+    if (rendererCnt == 0 && initEngineCnt == 0) _termEngine();
 }
 
 
@@ -559,19 +581,36 @@ bool WgRenderer::postUpdate()
 }
 
 
-WgRenderer* WgRenderer::gen()
+bool WgRenderer::init(TVG_UNUSED uint32_t threads)
 {
-    return new WgRenderer();
+    if ((initEngineCnt++) > 0) return true;
+
+    //TODO: global engine init
+
+    return true;
 }
 
 
-bool WgRenderer::init(TVG_UNUSED uint32_t threads)
+int32_t WgRenderer::init()
 {
-    return true;
+    return initEngineCnt;
 }
 
 
 bool WgRenderer::term()
 {
+    if ((--initEngineCnt) > 0) return true;
+
+    initEngineCnt = 0;
+
+    _termEngine();
+
     return true;
+}
+
+
+WgRenderer* WgRenderer::gen()
+{
+    ++rendererCnt;
+    return new WgRenderer();
 }

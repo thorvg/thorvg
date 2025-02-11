@@ -74,6 +74,7 @@ Result WgCanvas::target(void* device, void* instance, void* target, uint32_t w, 
 WgCanvas* WgCanvas::gen() noexcept
 {
 #ifdef THORVG_WG_RASTER_SUPPORT
+    if (WgRenderer::init() <= 0) return nullptr;
     return new WgCanvas;
 #endif
     return nullptr;
