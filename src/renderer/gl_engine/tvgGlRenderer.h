@@ -93,9 +93,9 @@ public:
     void dispose(TVG_UNUSED RenderEffect* effect) override;
 
     static GlRenderer* gen();
-    static int init(TVG_UNUSED uint32_t threads);
+    static bool init(TVG_UNUSED uint32_t threads);
     static int32_t init();
-    static int term();
+    static bool term();
 
 private:
     GlRenderer(); 

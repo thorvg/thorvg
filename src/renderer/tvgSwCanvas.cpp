@@ -76,7 +76,7 @@ Result SwCanvas::target(uint32_t* buffer, uint32_t stride, uint32_t w, uint32_t 
     auto renderer = static_cast<SwRenderer*>(pImpl->renderer);
     if (!renderer) return Result::MemoryCorruption;
 
-    if (!renderer->target(buffer, stride, w, h, static_cast<ColorSpace>(cs))) return Result::InvalidArguments;
+    if (!renderer->target(buffer, stride, w, h, cs)) return Result::InvalidArguments;
     pImpl->vport = {0, 0, (int32_t)w, (int32_t)h};
     renderer->viewport(pImpl->vport);
 

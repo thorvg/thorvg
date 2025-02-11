@@ -20,6 +20,7 @@
  * SOFTWARE.
  */
 
+#include <atomic>
 #include "tvgGlCommon.h"
 #include "tvgGlRenderer.h"
 #include "tvgGlGpuBuffer.h"
@@ -33,8 +34,8 @@
 
 #define NOISE_LEVEL 0.5f
 
-static int32_t initEngineCnt = false;
-static int32_t rendererCnt = 0;
+static atomic<int32_t> initEngineCnt{};
+static atomic<int32_t> rendererCnt{};
 
 
 static void _termEngine()
@@ -1285,7 +1286,7 @@ bool GlRenderer::postUpdate()
 }
 
 
-int GlRenderer::init(uint32_t threads)
+bool GlRenderer::init(uint32_t threads)
 {
     if ((initEngineCnt++) > 0) return true;
 
@@ -1301,7 +1302,7 @@ int32_t GlRenderer::init()
 }
 
 
-int GlRenderer::term()
+bool GlRenderer::term()
 {
     if ((--initEngineCnt) > 0) return true;
 
