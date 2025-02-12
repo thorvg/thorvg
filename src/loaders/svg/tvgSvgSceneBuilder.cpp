@@ -384,7 +384,7 @@ static Paint* _applyFilter(SvgLoaderData& loaderData, Paint* paint, const SvgNod
                 stdDevX *= bbox.w;
                 stdDevY *= bbox.h;
             }
-            scene->push(SceneEffect::GaussianBlur, 1.25f * (direction == 2 ? stdDevY * sy : stdDevX * sx), direction, gauss.edgeModeWrap, 55);
+            scene->push(SceneEffect::GaussianBlur, (double)(1.25f * (direction == 2 ? stdDevY * sy : stdDevX * sx)), direction, gauss.edgeModeWrap, 55);
         }
     }
 

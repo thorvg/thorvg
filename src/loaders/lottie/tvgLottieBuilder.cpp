@@ -1303,12 +1303,12 @@ void LottieBuilder::updateEffect(LottieLayer* layer, float frameNo)
                 auto effect = static_cast<LottieFxDropShadow*>(*p);
                 auto color = effect->color(frameNo);
                 //seems the opacity range in dropshadow is 0 ~ 256
-                layer->scene->push(SceneEffect::DropShadow, color.rgb[0], color.rgb[1], color.rgb[2], std::min(255, (int)effect->opacity(frameNo)), (double)effect->angle(frameNo), (double)effect->distance(frameNo), (double)effect->blurness(frameNo) * BLUR_TO_SIGMA, QUALITY);
+                layer->scene->push(SceneEffect::DropShadow, color.rgb[0], color.rgb[1], color.rgb[2], std::min(255, (int)effect->opacity(frameNo)), (double)effect->angle(frameNo), (double)effect->distance(frameNo), (double)(effect->blurness(frameNo) * BLUR_TO_SIGMA), QUALITY);
                 break;
             }
             case LottieEffect::GaussianBlur: {
                 auto effect = static_cast<LottieFxGaussianBlur*>(*p);
-                layer->scene->push(SceneEffect::GaussianBlur, (double)effect->blurness(frameNo) * BLUR_TO_SIGMA, effect->direction(frameNo) - 1, effect->wrap(frameNo), QUALITY);
+                layer->scene->push(SceneEffect::GaussianBlur, (double)(effect->blurness(frameNo) * BLUR_TO_SIGMA), effect->direction(frameNo) - 1, effect->wrap(frameNo), QUALITY);
                 break;
             }
             default: break;

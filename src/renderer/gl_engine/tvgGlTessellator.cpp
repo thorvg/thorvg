@@ -182,16 +182,16 @@ struct Edge : public Object
     // https://stackoverflow.com/questions/1560492/how-to-tell-whether-a-point-is-to-the-right-or-left-side-of-a-line
     // return > 0 means point in left
     // return < 0 means point in right
-    double sideDist(const Point& p);
+    float sideDist(const Point& p);
 
     bool isRightOf(const Point& p)
     {
-        return sideDist(p) < 0.0;
+        return sideDist(p) < 0.0f;
     }
 
     bool isLeftOf(const Point& p)
     {
-        return sideDist(p) > 0.0;
+        return sideDist(p) > 0.0f;
     }
 
     // https://en.wikipedia.org/wiki/Line%E2%80%93line_intersection
@@ -202,9 +202,9 @@ struct Edge : public Object
     void disconnect();
 
 private:
-    double le_a;
-    double le_b;
-    double le_c;
+    float le_a;
+    float le_b;
+    float le_c;
 };
 
 
@@ -403,14 +403,14 @@ Edge::Edge(Vertex *top, Vertex *bottom, int32_t winding)
     : top(top),
       bottom(bottom),
       winding(winding),
-      le_a(static_cast<double>(bottom->point.y) - top->point.y),
-      le_b(static_cast<double>(top->point.x) - bottom->point.x),
-      le_c(static_cast<double>(top->point.y) * bottom->point.x - static_cast<double>(top->point.x) * bottom->point.y)
+      le_a(bottom->point.y - top->point.y),
+      le_b(top->point.x - bottom->point.x),
+      le_c(top->point.y * bottom->point.x - top->point.x * bottom->point.y)
 {
 }
 
 
-double Edge::sideDist(const Point& p)
+float Edge::sideDist(const Point& p)
 {
     return le_a * p.x + le_b * p.y + le_c;
 }
@@ -431,22 +431,22 @@ bool Edge::intersect(Edge *other, Point* point)
     auto denom = le_a * other->le_b - le_b * other->le_a;
     if (tvg::zero(denom)) return false;
 
-    auto dx = static_cast<double>(other->top->point.x) - top->point.x;
-    auto dy = static_cast<double>(other->top->point.y) - top->point.y;
+    auto dx = other->top->point.x - top->point.x;
+    auto dy = other->top->point.y - top->point.y;
     auto s_number = dy * other->le_b + dx * other->le_a;
     auto t_number = dy * le_b + dx * le_a;
 
-    if (denom > 0.0 ? (s_number < 0.0 || s_number > denom || t_number < 0.0 || t_number > denom) : (s_number > 0.0 || s_number < denom || t_number > 0.0 || t_number < denom)) return false;
+    if (denom > 0.0f ? (s_number < 0.0f || s_number > denom || t_number < 0.0f || t_number > denom) : (s_number > 0.0f || s_number < denom || t_number > 0.0f || t_number < denom)) return false;
 
-    auto scale = 1.0 / denom;
-    point->x = nearbyintf(static_cast<float>(top->point.x - s_number * le_b * scale));
-    point->y = nearbyintf(static_cast<float>(top->point.y + s_number * le_a * scale));
+    auto scale = 1.0f / denom;
+    point->x = nearbyintf(top->point.x - s_number * le_b * scale);
+    point->y = nearbyintf(top->point.y + s_number * le_a * scale);
 
     if (std::isinf(point->x) || std::isinf(point->y)) return false;
-    if (std::abs(point->x - top->point.x) < 1e-6 && std::abs(point->y - top->point.y) < 1e-6) return false;
-    if (std::abs(point->x - bottom->point.x) < 1e-6 && std::abs(point->y - bottom->point.y) < 1e-6) return false;
-    if (std::abs(point->x - other->top->point.x) < 1e-6 && std::abs(point->y - other->top->point.y) < 1e-6) return false;
-    if (std::abs(point->x - other->bottom->point.x) < 1e-6 && std::abs(point->y - other->bottom->point.y) < 1e-6) return false;
+    if (fabsf(point->x - top->point.x) < 1e-6f && fabsf(point->y - top->point.y) < 1e-6f) return false;
+    if (fabsf(point->x - bottom->point.x) < 1e-6f && fabsf(point->y - bottom->point.y) < 1e-6f) return false;
+    if (fabsf(point->x - other->top->point.x) < 1e-6f && fabsf(point->y - other->top->point.y) < 1e-6f) return false;
+    if (fabsf(point->x - other->bottom->point.x) < 1e-6f && fabsf(point->y - other->bottom->point.y) < 1e-6f) return false;
 
     return true;
 }
@@ -454,9 +454,9 @@ bool Edge::intersect(Edge *other, Point* point)
 
 void Edge::recompute()
 {
-    le_a = static_cast<double>(bottom->point.y) - top->point.y;
-    le_b = static_cast<double>(top->point.x) - bottom->point.x;
-    le_c = static_cast<double>(top->point.y) * bottom->point.x - static_cast<double>(top->point.x) * bottom->point.y;
+    le_a = bottom->point.y - top->point.y;
+    le_b = top->point.x - bottom->point.x;
+    le_c = top->point.y * bottom->point.x - top->point.x * bottom->point.y;
 }
 
 
@@ -1488,12 +1488,12 @@ void Tessellator::emitPoly(MonotonePolygon *poly)
             return;
         }
 
-        double ax = static_cast<double>(curr->point.x) - prev->point.x;
-        double ay = static_cast<double>(curr->point.y) - prev->point.y;
-        double bx = static_cast<double>(next->point.x) - curr->point.x;
-        double by = static_cast<double>(next->point.y) - curr->point.y;
+        auto ax = curr->point.x - prev->point.x;
+        auto ay = curr->point.y - prev->point.y;
+        auto bx = next->point.x - curr->point.x;
+        auto by = next->point.y - curr->point.y;
 
-        if (ax * by - ay * bx >= 0.0) {
+        if (ax * by - ay * bx >= 0.0f) {
             emitTriangle(prev, curr, next);
             v->prev->next = v->next;
             v->next->prev = v->prev;

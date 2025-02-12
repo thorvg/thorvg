@@ -54,8 +54,8 @@ struct UserExample : tvgexam::Example
         shape->appendRect(-100, -100, 200, 200, (100 * progress), (100 * progress));
         shape->fill(rand() % 255, rand() % 255, rand() % 255);
         shape->translate(800 * progress, 800 * progress);
-        shape->scale(1 - 0.75 * progress);
-        shape->rotate(360 * progress);
+        shape->scale(1.0f - 0.75f * progress);
+        shape->rotate(360.0f * progress);
 
         canvas->push(shape);
 

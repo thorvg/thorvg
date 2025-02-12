@@ -104,7 +104,7 @@ struct UserExample : tvgexam::Example
         //Apply GaussianBlur post effect (sigma, direction, border option, quality)
         for (int i = 0; i < 3; ++i) {
             blur[i]->push(tvg::SceneEffect::ClearAll);
-            blur[i]->push(tvg::SceneEffect::GaussianBlur, 10.0f * progress, i, 0, 100);
+            blur[i]->push(tvg::SceneEffect::GaussianBlur, (double)(10.0f * progress), i, 0, 100);
         }
 
         //Apply Fill post effect (rgba)
@@ -113,7 +113,7 @@ struct UserExample : tvgexam::Example
 
         //Apply Tint post effect (black:rgb, white:rgb, intensity)
         tint->push(tvg::SceneEffect::ClearAll);
-        tint->push(tvg::SceneEffect::Tint, 0, 0, 0, 0, (int)(progress * 255), 0, progress * 100.0f);
+        tint->push(tvg::SceneEffect::Tint, 0, 0, 0, 0, (int)(progress * 255), 0, (double)(progress * 100.0f));
 
         //Apply Trintone post effect (shadow:rgb, midtone:rgb, highlight:rgb)
         trintone->push(tvg::SceneEffect::ClearAll);
