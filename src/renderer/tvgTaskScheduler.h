@@ -104,6 +104,7 @@ struct TaskScheduler
     static void term();
     static void request(Task* task);
     static void async(bool on);
+    static bool onthread();  //figure out whether on worker thread or not
 };
 
 }  //namespace

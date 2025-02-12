@@ -522,26 +522,6 @@ bool SwRenderer::beginComposite(RenderCompositor* cmp, MaskMethod method, uint8_
 }
 
 
-bool SwRenderer::mempool(bool shared)
-{
-    if (shared == sharedMpool) return true;
-
-    if (shared) {
-        if (!sharedMpool) {
-            if (!mpoolTerm(mpool)) return false;
-            mpool = globalMpool;
-        }
-    } else {
-        if (sharedMpool) mpool = mpoolInit(threadsCnt);
-    }
-
-    sharedMpool = shared;
-
-    if (mpool) return true;
-    return false;
-}
-
-
 const RenderSurface* SwRenderer::mainSurface()
 {
     return surface;
@@ -811,8 +791,15 @@ RenderData SwRenderer::prepare(const RenderShape& rshape, RenderData data, const
 }
 
 
-SwRenderer::SwRenderer():mpool(globalMpool)
+SwRenderer::SwRenderer()
 {
+    if (TaskScheduler::onthread()) {
+        TVGLOG("SW_RENDERER", "Running on a non-dominant thread!, Renderer(%p)", this);
+        mpool = mpoolInit(threadsCnt);
+    } else {
+        mpool = globalMpool;
+        sharedMpool = true;
+    }
 }
 
 
