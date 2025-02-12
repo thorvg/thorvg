@@ -412,7 +412,7 @@ Edge::Edge(Vertex *top, Vertex *bottom, int32_t winding)
 
 double Edge::sideDist(const Point& p)
 {
-    return le_a * p.x + le_b * p.y + le_c;
+    return le_a * static_cast<double>(p.x) + le_b * static_cast<double>(p.y) + le_c;
 }
 
 
