@@ -187,7 +187,7 @@ Then it would be best if you prepared an empty canvas for drawing on it:
 static uint32_t buffer[WIDTH * HEIGHT];                                   //canvas target buffer
 
 auto canvas = tvg::SwCanvas::gen();                                       //generate a canvas
-canvas->target(buffer, WIDTH, WIDTH, HEIGHT, tvg::ColorSpace::ARGB8888);  //buffer, stride, w, h, Colorspace
+canvas->target(buffer, WIDTH, WIDTH, HEIGHT, tvg::SwCanvas::ARGB8888);  //buffer, stride, w, h, Colorspace
 ```
 
 Next you can draw multiple shapes on the canvas:
