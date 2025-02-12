@@ -372,7 +372,7 @@ LottieInterpolator* LottieParser::getInterpolator(const char* key, Point& in, Po
     char buf[20];
 
     if (!key) {
-        snprintf(buf, sizeof(buf), "%.2f_%.2f_%.2f_%.2f", in.x, in.y, out.x, out.y);
+        snprintf(buf, sizeof(buf), "%.2f_%.2f_%.2f_%.2f", (double)in.x, (double)in.y, (double)out.x, (double)out.y);
         key = buf;
     }
 

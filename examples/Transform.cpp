@@ -49,7 +49,7 @@ struct UserExample : tvgexam::Example
         shape->appendCircle(115, 200, 170, 100);
         shape->fill(255, 255, 255);
         shape->translate(385, 400);
-        shape->scale(1 - 0.75 * progress);
+        shape->scale(1.0f - 0.75f * progress);
         shape->rotate(360 * progress);
 
         canvas->push(shape);
@@ -71,8 +71,8 @@ struct UserExample : tvgexam::Example
         shape3->appendRect(100, 100, 150, 50, 20, 20);
         shape3->fill(255, 0, 255);
         shape3->translate(400, 400);
-        shape3->rotate(-360 * progress);
-        shape3->scale(0.5 + progress);
+        shape3->rotate(-360.0f * progress);
+        shape3->scale(0.5f + progress);
         canvas->push(shape3);
 
         return true;
