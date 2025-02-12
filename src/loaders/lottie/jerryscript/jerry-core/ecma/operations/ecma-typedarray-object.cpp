@@ -149,7 +149,7 @@ ecma_typedarray_get_float_element (lit_utf8_byte_t *src) /**< the location in th
 {
   float num;
   ECMA_TYPEDARRAY_GET_ELEMENT (src, num, float);
-  return ecma_make_number_value (num);
+  return ecma_make_number_value ((ecma_value_t)num);
 } /* ecma_typedarray_get_float_element */
 
 /**

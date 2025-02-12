@@ -523,7 +523,6 @@ ecma_builtin_math_dispatch_routine (uint8_t builtin_routine_id, /**< built-in wi
       }
       case ECMA_MATH_OBJECT_FROUND:
       {
-        x = (float) x;
         break;
       }
       case ECMA_MATH_OBJECT_IMUL:
