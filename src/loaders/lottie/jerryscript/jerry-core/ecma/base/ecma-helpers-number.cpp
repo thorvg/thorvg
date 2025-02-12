@@ -259,7 +259,7 @@ ecma_number_t JERRY_ATTR_CONST
 ecma_number_get_prev (ecma_number_t num) /**< ecma-number */
 {
 #if defined(__GNUC__) || defined(__clang__)
-  return __builtin_nextafter (num, -INFINITY);
+  return __builtin_nextafter ((double)num, (double)-INFINITY);
 #else /* !defined (__GNUC__) && !defined (__clang__) */
   JERRY_ASSERT (!ecma_number_is_nan (num));
   ecma_binary_num_t binary = ecma_number_to_binary (num);
@@ -294,7 +294,7 @@ ecma_number_t JERRY_ATTR_CONST
 ecma_number_get_next (ecma_number_t num) /**< ecma-number */
 {
 #if defined(__GNUC__) || defined(__clang__)
-  return __builtin_nextafter (num, INFINITY);
+  return __builtin_nextafter ((double)num, (double)INFINITY);
 #else /* !defined (__GNUC__) && !defined (__clang__) */
   JERRY_ASSERT (!ecma_number_is_nan (num));
   ecma_binary_num_t binary = ecma_number_to_binary (num);

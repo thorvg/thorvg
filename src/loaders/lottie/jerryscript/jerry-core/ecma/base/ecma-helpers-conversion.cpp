@@ -704,7 +704,7 @@ ecma_number_to_uint32 (ecma_number_t num) /**< ecma-number */
   /* 2 ^ 32 */
   const uint64_t uint64_2_pow_32 = (1ull << 32);
 
-  const ecma_number_t num_2_pow_32 = (float) uint64_2_pow_32;
+  const ecma_number_t num_2_pow_32 = uint64_2_pow_32;
 
   ecma_number_t num_in_uint32_range;
 
