@@ -22,7 +22,6 @@
 #include "ecma-gc.h"
 #include "ecma-globals.h"
 #include "ecma-lcache.h"
-#include "ecma-line-info.h"
 #include "ecma-property-hashmap.h"
 
 #include "byte-code.h"
@@ -555,16 +554,8 @@ ecma_create_named_accessor_property (ecma_object_t *object_p, /**< object */
   uint8_t type_and_flags = prop_attributes;
 
   ecma_property_value_t value;
-#if JERRY_CPOINTER_32_BIT
-  ecma_getter_setter_pointers_t *getter_setter_pair_p;
-  getter_setter_pair_p = jmem_pools_alloc (sizeof (ecma_getter_setter_pointers_t));
-  ECMA_SET_POINTER (getter_setter_pair_p->getter_cp, get_p);
-  ECMA_SET_POINTER (getter_setter_pair_p->setter_cp, set_p);
-  ECMA_SET_NON_NULL_POINTER (value.getter_setter_pair_cp, getter_setter_pair_p);
-#else /* !JERRY_CPOINTER_32_BIT */
   ECMA_SET_POINTER (value.getter_setter_pair.getter_cp, get_p);
   ECMA_SET_POINTER (value.getter_setter_pair.setter_cp, set_p);
-#endif /* JERRY_CPOINTER_32_BIT */
 
   return ecma_create_property (object_p, name_p, type_and_flags, value, out_prop_p);
 } /* ecma_create_named_accessor_property */
@@ -935,11 +926,7 @@ ecma_named_data_property_assign_value (ecma_object_t *obj_p, /**< object */
 ecma_getter_setter_pointers_t *
 ecma_get_named_accessor_property (const ecma_property_value_t *prop_value_p) /**< property value reference */
 {
-#if JERRY_CPOINTER_32_BIT
-  return ECMA_GET_NON_NULL_POINTER (ecma_getter_setter_pointers_t, prop_value_p->getter_setter_pair_cp);
-#else /* !JERRY_CPOINTER_32_BIT */
   return (ecma_getter_setter_pointers_t *) &prop_value_p->getter_setter_pair;
-#endif /* JERRY_CPOINTER_32_BIT */
 } /* ecma_get_named_accessor_property */
 
 /**
@@ -952,13 +939,7 @@ ecma_set_named_accessor_property_getter (ecma_object_t *object_p, /**< the prope
 {
   ecma_assert_object_contains_the_property (object_p, prop_value_p, false);
 
-#if JERRY_CPOINTER_32_BIT
-  ecma_getter_setter_pointers_t *getter_setter_pair_p;
-  getter_setter_pair_p = ECMA_GET_NON_NULL_POINTER (ecma_getter_setter_pointers_t, prop_value_p->getter_setter_pair_cp);
-  ECMA_SET_POINTER (getter_setter_pair_p->getter_cp, getter_p);
-#else /* !JERRY_CPOINTER_32_BIT */
   ECMA_SET_POINTER (prop_value_p->getter_setter_pair.getter_cp, getter_p);
-#endif /* JERRY_CPOINTER_32_BIT */
 } /* ecma_set_named_accessor_property_getter */
 
 /**
@@ -971,13 +952,7 @@ ecma_set_named_accessor_property_setter (ecma_object_t *object_p, /**< the prope
 {
   ecma_assert_object_contains_the_property (object_p, prop_value_p, false);
 
-#if JERRY_CPOINTER_32_BIT
-  ecma_getter_setter_pointers_t *getter_setter_pair_p;
-  getter_setter_pair_p = ECMA_GET_NON_NULL_POINTER (ecma_getter_setter_pointers_t, prop_value_p->getter_setter_pair_cp);
-  ECMA_SET_POINTER (getter_setter_pair_p->setter_cp, setter_p);
-#else /* !JERRY_CPOINTER_32_BIT */
   ECMA_SET_POINTER (prop_value_p->getter_setter_pair.setter_cp, setter_p);
-#endif /* JERRY_CPOINTER_32_BIT */
 } /* ecma_set_named_accessor_property_setter */
 
 #if JERRY_MODULE_SYSTEM
@@ -999,17 +974,10 @@ ecma_property_to_reference (ecma_property_t *property_p) /**< data or reference 
 
   jmem_cpointer_tag_t offset = (jmem_cpointer_tag_t) (((uintptr_t) property_p) & 0x1);
 
-#if JERRY_CPOINTER_32_BIT
-  if (offset != 0)
-  {
-    --referenced_value_p;
-  }
-#else /* !JERRY_CPOINTER_32_BIT */
   if (offset == 0)
   {
     ++referenced_value_p;
   }
-#endif /* JERRY_CPOINTER_32_BIT */
 
   JERRY_ASSERT ((((uintptr_t) referenced_value_p) & (((uintptr_t) 1 << JMEM_ALIGNMENT_LOG) - 1)) == 0);
 
@@ -1029,17 +997,10 @@ ecma_get_property_value_from_named_reference (ecma_property_value_t *reference_p
   ecma_value_t value = reference_p->value;
   reference_p = ECMA_GET_NON_NULL_POINTER_FROM_POINTER_TAG (ecma_property_value_t, value);
 
-#if JERRY_CPOINTER_32_BIT
-  if (ECMA_GET_FIRST_BIT_FROM_POINTER_TAG (value))
-  {
-    ++reference_p;
-  }
-#else /* !JERRY_CPOINTER_32_BIT */
   if (!ECMA_GET_FIRST_BIT_FROM_POINTER_TAG (value))
   {
     --reference_p;
   }
-#endif /* JERRY_CPOINTER_32_BIT */
 
   return reference_p;
 } /* ecma_get_property_value_from_named_reference */
@@ -1438,16 +1399,6 @@ ecma_script_deref (ecma_value_t script_value) /**< script value */
   }
 #endif /* JERRY_MODULE_SYSTEM */
 
-#if JERRY_FUNCTION_TO_STRING
-  ecma_deref_ecma_string (ecma_get_string_from_value (script_p->source_code));
-
-  if (type & CBC_SCRIPT_HAS_FUNCTION_ARGUMENTS)
-  {
-    ecma_deref_ecma_string (ecma_get_string_from_value (CBC_SCRIPT_GET_FUNCTION_ARGUMENTS (script_p, type)));
-    script_size += sizeof (ecma_value_t);
-  }
-#endif /* JERRY_FUNCTION_TO_STRING */
-
   jmem_heap_free_block (script_p, script_size);
 } /* ecma_script_deref */
 
@@ -1534,13 +1485,6 @@ ecma_bytecode_deref (ecma_compiled_code_t *bytecode_p) /**< byte code pointer */
       JERRY_CONTEXT (ecma_gc_new_objects) += collection_p->item_count * 2;
       ecma_collection_free_template_literal (collection_p);
     }
-
-#if JERRY_LINE_INFO
-    if (bytecode_p->status_flags & CBC_CODE_FLAGS_HAS_LINE_INFO)
-    {
-      ecma_line_info_free (ecma_compiled_code_get_line_info (bytecode_p));
-    }
-#endif /* JERRY_LINE_INFO */
 
   }
   else
@@ -1686,36 +1630,6 @@ ecma_compiled_code_get_tagged_template_collection (const ecma_compiled_code_t *b
   ecma_value_t *base_p = ecma_compiled_code_resolve_function_name (bytecode_header_p);
   return ECMA_GET_INTERNAL_VALUE_POINTER (ecma_collection_t, base_p[-1]);
 } /* ecma_compiled_code_get_tagged_template_collection */
-
-#if JERRY_LINE_INFO
-
-/**
- * Get the line info data from the byte code
- *
- * @return pointer to the line info data
- */
-uint8_t *
-ecma_compiled_code_get_line_info (const ecma_compiled_code_t *bytecode_header_p) /**< compiled code */
-{
-  JERRY_ASSERT (bytecode_header_p != NULL);
-  JERRY_ASSERT (bytecode_header_p->status_flags & CBC_CODE_FLAGS_HAS_LINE_INFO);
-
-  ecma_value_t *base_p = ecma_compiled_code_resolve_arguments_start (bytecode_header_p);
-
-  if (CBC_FUNCTION_GET_TYPE (bytecode_header_p->status_flags) != CBC_FUNCTION_CONSTRUCTOR)
-  {
-    base_p--;
-  }
-
-  if (bytecode_header_p->status_flags & CBC_CODE_FLAGS_HAS_TAGGED_LITERALS)
-  {
-    base_p--;
-  }
-
-  return ECMA_GET_INTERNAL_VALUE_POINTER (uint8_t, base_p[-1]);
-} /* ecma_compiled_code_get_line_info */
-
-#endif /* JERRY_LINE_INFO */
 
 /**
  * Get the source name of a compiled code.

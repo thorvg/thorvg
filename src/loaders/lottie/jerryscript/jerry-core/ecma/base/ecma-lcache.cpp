@@ -33,11 +33,7 @@
 /**
  * Bitshift index for calculating hash.
  */
-#if JERRY_CPOINTER_32_BIT
-#define ECMA_LCACHE_HASH_BITSHIFT_INDEX (2 * JMEM_ALIGNMENT_LOG)
-#else /* !JERRY_CPOINTER_32_BIT */
 #define ECMA_LCACHE_HASH_BITSHIFT_INDEX 0
-#endif /* JERRY_CPOINTER_32_BIT */
 
 /**
  * Mask for hash bits

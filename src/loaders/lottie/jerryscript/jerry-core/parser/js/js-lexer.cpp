@@ -653,9 +653,6 @@ lexer_parse_identifier (parser_context_t *context_p, /**< context */
       {
         decoded_length = 2 * 3;
         status_flags = LEXER_LIT_LOCATION_HAS_ESCAPE;
-#if JERRY_FUNCTION_TO_STRING
-        context_p->global_status_flags |= ECMA_PARSE_INTERNAL_HAS_4_BYTE_MARKER;
-#endif /* JERRY_FUNCTION_TO_STRING */
       }
     }
 
@@ -1041,9 +1038,6 @@ lexer_parse_string (parser_context_t *context_p, /**< context */
       source_p += 4;
       raw_length_adjust += 2;
       column++;
-#if JERRY_FUNCTION_TO_STRING
-      context_p->global_status_flags |= ECMA_PARSE_INTERNAL_HAS_4_BYTE_MARKER;
-#endif /* JERRY_FUNCTION_TO_STRING */
       continue;
     }
     else if (*source_p == LIT_CHAR_TAB)
@@ -1466,11 +1460,6 @@ void
 lexer_next_token (parser_context_t *context_p) /**< context */
 {
   size_t length;
-
-#if JERRY_FUNCTION_TO_STRING
-  /* Needed by arrow functions with expression body */
-  context_p->function_end_p = context_p->source_p;
-#endif /* JERRY_FUNCTION_TO_STRING */
 
   lexer_skip_spaces (context_p);
 
@@ -3019,13 +3008,6 @@ lexer_expect_object_literal_id (parser_context_t *context_p, /**< context */
 
   JERRY_ASSERT ((ident_opts & LEXER_OBJ_IDENT_CLASS_IDENTIFIER) || !(ident_opts & LEXER_OBJ_IDENT_CLASS_NO_STATIC));
 
-#if JERRY_FUNCTION_TO_STRING
-  if (ident_opts & LEXER_OBJ_IDENT_SET_FUNCTION_START)
-  {
-    context_p->function_start_p = context_p->source_p;
-  }
-#endif /* JERRY_FUNCTION_TO_STRING */
-
   if (lexer_parse_identifier (context_p, LEXER_PARSE_NO_OPTS))
   {
     if (!(ident_opts & (LEXER_OBJ_IDENT_ONLY_IDENTIFIERS | LEXER_OBJ_IDENT_OBJECT_PATTERN)))
@@ -3086,10 +3068,6 @@ lexer_expect_object_literal_id (parser_context_t *context_p, /**< context */
       }
       case LIT_CHAR_LEFT_SQUARE:
       {
-#if JERRY_FUNCTION_TO_STRING
-        const uint8_t *function_start_p = context_p->function_start_p;
-#endif /* JERRY_FUNCTION_TO_STRING */
-
         lexer_consume_next_character (context_p);
 
         lexer_next_token (context_p);
@@ -3099,10 +3077,6 @@ lexer_expect_object_literal_id (parser_context_t *context_p, /**< context */
         {
           parser_raise_error (context_p, PARSER_ERR_RIGHT_SQUARE_EXPECTED);
         }
-
-#if JERRY_FUNCTION_TO_STRING
-        context_p->function_start_p = function_start_p;
-#endif /* JERRY_FUNCTION_TO_STRING */
         return;
       }
       case LIT_CHAR_ASTERISK:

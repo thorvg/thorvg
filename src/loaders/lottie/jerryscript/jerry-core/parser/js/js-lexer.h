@@ -274,11 +274,7 @@ typedef enum
   LEXER_OBJ_IDENT_CLASS_NO_STATIC = (1u << 2), /**< static keyword was not present before the identifier */
   LEXER_OBJ_IDENT_OBJECT_PATTERN = (1u << 3), /**< parse "get"/"set" as string literal in object pattern */
   LEXER_OBJ_IDENT_CLASS_PRIVATE = (1u << 4), /**< static keyword was not present before the identifier */
-#if JERRY_FUNCTION_TO_STRING
-  LEXER_OBJ_IDENT_SET_FUNCTION_START = (1u << 5), /**< set function start */
-#else /* !JERRY_FUNCTION_TO_STRING */
   LEXER_OBJ_IDENT_SET_FUNCTION_START = 0, /**< set function start (disabled) */
-#endif /* JERRY_FUNCTION_TO_STRING */
 } lexer_obj_ident_opts_t;
 
 /**

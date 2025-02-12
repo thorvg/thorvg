@@ -82,11 +82,7 @@ typedef enum
 /**
  * Type of property length.
  */
-#if JERRY_CPOINTER_32_BIT
-typedef uint32_t prop_length_t;
-#else /* !JERRY_CPOINTER_32_BIT */
 typedef uint16_t prop_length_t;
-#endif /* JERRY_CPOINTER_32_BIT */
 
 /**
  * Literal data.

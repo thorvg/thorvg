@@ -441,18 +441,6 @@ typedef struct
 struct scanner_context_t;
 typedef struct scanner_context_t scanner_context_t;
 
-#if JERRY_LINE_INFO
-
-typedef struct
-{
-  parser_mem_page_t *last_page_p; /**< last page of line info data */
-  uint32_t byte_code_position; /**< last byte code position */
-  parser_line_counter_t line; /**< last line */
-  parser_line_counter_t column; /**< last column */
-} parser_line_info_data_t;
-
-#endif /* JERRY_LINE_INFO */
-
 /**
  * List of private field contexts
  */
@@ -495,14 +483,6 @@ typedef struct parser_saved_context_t
 #ifndef JERRY_NDEBUG
   uint16_t context_stack_depth; /**< current context stack depth */
 #endif /* !JERRY_NDEBUG */
-
-#if JERRY_LINE_INFO
-  parser_line_info_data_t *line_info_p; /**< line info data */
-#endif /* JERRY_LINE_INFO */
-
-#if JERRY_FUNCTION_TO_STRING
-  const uint8_t *function_start_p; /**< start position of the current function */
-#endif /* JERRY_FUNCTION_TO_STRING */
 } parser_saved_context_t;
 
 /**
@@ -592,14 +572,6 @@ typedef struct
   uint32_t total_byte_code_size; /**< total byte code size */
 #endif /* JERRY_PARSER_DUMP_BYTE_CODE */
 
-#if JERRY_LINE_INFO
-  parser_line_info_data_t *line_info_p; /**< line info data */
-#endif /* JERRY_LINE_INFO */
-
-#if JERRY_FUNCTION_TO_STRING
-  const uint8_t *function_start_p; /**< start position of the function which will be parsed */
-  const uint8_t *function_end_p; /**< end position of the current function */
-#endif /* JERRY_FUNCTION_TO_STRING */
 } parser_context_t;
 
 /**
@@ -848,19 +820,6 @@ void
 parser_module_add_names_to_node (parser_context_t *context_p, ecma_string_t *imex_name_p, ecma_string_t *local_name_p);
 
 #endif /* JERRY_MODULE_SYSTEM */
-
-/*
- * @}
- *
- * \addtogroup jsparser_line_info_create Create line info data
- * @{
- */
-
-#if JERRY_LINE_INFO
-void parser_line_info_free (parser_line_info_data_t *line_info_p);
-void parser_line_info_append (parser_context_t *context_p, parser_line_counter_t line, parser_line_counter_t column);
-uint8_t *parser_line_info_generate (parser_context_t *context_p);
-#endif /* JERRY_LINE_INFO */
 
 /**
  * @}

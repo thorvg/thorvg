@@ -1562,13 +1562,6 @@ ecma_gc_free_property (ecma_object_t *object_p, /**< object */
     {
       return;
     }
-
-#if JERRY_CPOINTER_32_BIT
-    ecma_getter_setter_pointers_t *getter_setter_pair_p;
-    getter_setter_pair_p =
-      ECMA_GET_NON_NULL_POINTER (ecma_getter_setter_pointers_t, prop_pair_p->values[index].getter_setter_pair_cp);
-    jmem_pools_free (getter_setter_pair_p, sizeof (ecma_getter_setter_pointers_t));
-#endif /* JERRY_CPOINTER_32_BIT */
     return;
   }
 

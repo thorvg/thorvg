@@ -1978,10 +1978,6 @@ parser_parse_unary_expression (parser_context_t *context_p, /**< context */
       {
         JERRY_ASSERT (context_p->next_scanner_info_p->type == SCANNER_TYPE_FUNCTION);
 
-#if JERRY_FUNCTION_TO_STRING
-        context_p->function_start_p = context_p->token.lit_location.char_p;
-#endif /* JERRY_FUNCTION_TO_STRING */
-
         uint32_t arrow_status_flags =
           (PARSER_IS_FUNCTION | PARSER_IS_ARROW_FUNCTION
            | (context_p->status_flags & (PARSER_INSIDE_CLASS_FIELD | PARSER_IS_CLASS_STATIC_BLOCK)));
@@ -2086,9 +2082,6 @@ parser_parse_unary_expression (parser_context_t *context_p, /**< context */
     }
     case LEXER_KEYW_FUNCTION:
     {
-#if JERRY_FUNCTION_TO_STRING
-      context_p->function_start_p = context_p->token.lit_location.char_p;
-#endif /* JERRY_FUNCTION_TO_STRING */
       parser_parse_function_expression (context_p, PARSER_FUNCTION_CLOSURE | PARSER_IS_FUNC_EXPRESSION);
       break;
     }
@@ -2226,10 +2219,6 @@ parser_parse_unary_expression (parser_context_t *context_p, /**< context */
                     && context_p->next_scanner_info_p->type == SCANNER_TYPE_FUNCTION);
 
       parser_check_assignment_expr (context_p);
-
-#if JERRY_FUNCTION_TO_STRING
-      context_p->function_start_p = context_p->source_p - 1;
-#endif /* JERRY_FUNCTION_TO_STRING */
 
       uint32_t arrow_status_flags =
         (PARSER_IS_FUNCTION | PARSER_IS_ARROW_FUNCTION
@@ -3592,9 +3581,6 @@ parser_pattern_process_assignment (parser_context_t *context_p, /**< context */
   }
 
   parser_line_counter_t ident_line_counter = context_p->token.line;
-#if JERRY_LINE_INFO
-  parser_line_counter_t ident_column_counter = context_p->token.column;
-#endif /* JERRY_LINE_INFO */
 
   if (flags & PARSER_PATTERN_BINDING)
   {
@@ -3648,9 +3634,6 @@ parser_pattern_process_assignment (parser_context_t *context_p, /**< context */
   }
 
   parser_pattern_form_assignment (context_p, flags, rhs_opcode, literal_index, ident_line_counter);
-#if JERRY_LINE_INFO
-  parser_line_info_append (context_p, ident_line_counter, ident_column_counter);
-#endif /* JERRY_LINE_INFO */
   return false;
 } /* parser_pattern_process_assignment */
 
@@ -3835,9 +3818,6 @@ parser_parse_object_initializer (parser_context_t *context_p, /**< context */
                     || context_p->token.type == LEXER_COMMA);
 
       parser_pattern_form_assignment (context_p, flags, push_prop_opcode, prop_index, start_line);
-#if JERRY_LINE_INFO
-      parser_line_info_append (context_p, start_line, start_column);
-#endif /* JERRY_LINE_INFO */
     }
 
     if (context_p->token.type == LEXER_RIGHT_BRACE)

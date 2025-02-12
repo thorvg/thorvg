@@ -28,23 +28,12 @@
  * @{
  * Valgrind-related options and headers
  */
-#if JERRY_VALGRIND
-#include "memcheck.h"
-
-#define JMEM_VALGRIND_NOACCESS_SPACE(p, s)   VALGRIND_MAKE_MEM_NOACCESS ((p), (s))
-#define JMEM_VALGRIND_UNDEFINED_SPACE(p, s)  VALGRIND_MAKE_MEM_UNDEFINED ((p), (s))
-#define JMEM_VALGRIND_DEFINED_SPACE(p, s)    VALGRIND_MAKE_MEM_DEFINED ((p), (s))
-#define JMEM_VALGRIND_MALLOCLIKE_SPACE(p, s) VALGRIND_MALLOCLIKE_BLOCK ((p), (s), 0, 0)
-#define JMEM_VALGRIND_RESIZE_SPACE(p, o, n)  VALGRIND_RESIZEINPLACE_BLOCK ((p), (o), (n), 0)
-#define JMEM_VALGRIND_FREELIKE_SPACE(p)      VALGRIND_FREELIKE_BLOCK ((p), 0)
-#else /* !JERRY_VALGRIND */
 #define JMEM_VALGRIND_NOACCESS_SPACE(p, s)
 #define JMEM_VALGRIND_UNDEFINED_SPACE(p, s)
 #define JMEM_VALGRIND_DEFINED_SPACE(p, s)
 #define JMEM_VALGRIND_MALLOCLIKE_SPACE(p, s)
 #define JMEM_VALGRIND_RESIZE_SPACE(p, o, n)
 #define JMEM_VALGRIND_FREELIKE_SPACE(p)
-#endif /* JERRY_VALGRIND */
 /** @} */
 
 void jmem_heap_init (void);

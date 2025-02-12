@@ -453,11 +453,8 @@ parser_parse_var_statement (parser_context_t *context_p) /**< context */
       lexer_expect_identifier (context_p, LEXER_IDENT_LITERAL);
       JERRY_ASSERT (context_p->token.type == LEXER_LITERAL
                     && context_p->token.lit_location.type == LEXER_IDENT_LITERAL);
-#if JERRY_LINE_INFO
-      parser_line_counter_t ident_column_counter = context_p->token.column;
-#endif /* JERRY_LINE_INFO */
 
-#if JERRY_MODULE_SYSTEM
+                    #if JERRY_MODULE_SYSTEM
       parser_module_append_export_name (context_p);
 #endif /* JERRY_MODULE_SYSTEM */
 
@@ -476,9 +473,6 @@ parser_parse_var_statement (parser_context_t *context_p) /**< context */
 
       if (context_p->token.type == LEXER_ASSIGN)
       {
-#if JERRY_LINE_INFO
-        parser_line_info_append (context_p, ident_line_counter, ident_column_counter);
-#endif /* JERRY_LINE_INFO */
 
         uint16_t index = context_p->lit_object.index;
 
@@ -600,13 +594,6 @@ parser_parse_function_statement (parser_context_t *context_p) /**< context */
       parser_raise_error (context_p, PARSER_ERR_LEXICAL_SINGLE_STATEMENT);
     }
   }
-#if JERRY_FUNCTION_TO_STRING
-  if (!(context_p->next_scanner_info_p->u8_arg & SCANNER_FUNCTION_ASYNC))
-  {
-    context_p->function_start_p = context_p->token.lit_location.char_p;
-  }
-#endif /* JERRY_FUNCTION_TO_STRING */
-
   bool is_generator_function = false;
 
   if (lexer_consume_generator (context_p))
@@ -1701,10 +1688,6 @@ parser_parse_switch_statement_start (parser_context_t *context_p) /**< context *
 
     switch_case_was_found = true;
 
-#if JERRY_LINE_INFO
-    parser_line_info_append (context_p, context_p->token.line, context_p->token.column);
-#endif /* JERRY_LINE_INFO */
-
     parser_parse_expression (context_p, PARSE_EXPR);
 
     if (context_p->token.type != LEXER_COLON)
@@ -2356,9 +2339,6 @@ parser_parse_export_statement (parser_context_t *context_p) /**< context */
           && context_p->next_scanner_info_p->source_p == context_p->source_p
           && context_p->next_scanner_info_p->type == SCANNER_TYPE_FUNCTION)
       {
-#if JERRY_FUNCTION_TO_STRING
-        context_p->function_start_p = context_p->token.lit_location.char_p;
-#endif /* JERRY_FUNCTION_TO_STRING */
         lexer_next_token (context_p);
       }
 
@@ -2600,10 +2580,6 @@ parser_parse_statements (parser_context_t *context_p) /**< context */
         context_p->status_flags &= (uint32_t) ~PARSER_IS_STRICT;
       }
 
-#if JERRY_LINE_INFO
-      parser_line_info_append (context_p, context_p->token.line, context_p->token.column);
-#endif /* JERRY_LINE_INFO */
-
       lexer_construct_literal_object (context_p, &lit_location, LEXER_STRING_LITERAL);
       parser_emit_cbc_literal_from_token (context_p, CBC_PUSH_LITERAL);
       /* The extra_value is used for saving the token. */
@@ -2654,17 +2630,6 @@ parser_parse_statements (parser_context_t *context_p) /**< context */
 
     JERRY_ASSERT (context_p->stack_top_uint8 != PARSER_STATEMENT_PRIVATE_SCOPE
                   && context_p->stack_top_uint8 != PARSER_STATEMENT_PRIVATE_CONTEXT);
-
-#if JERRY_LINE_INFO
-    if (context_p->token.type != LEXER_SEMICOLON && context_p->token.type != LEXER_LEFT_BRACE
-        && context_p->token.type != LEXER_RIGHT_BRACE && context_p->token.type != LEXER_KEYW_VAR
-        && context_p->token.type != LEXER_KEYW_LET && context_p->token.type != LEXER_KEYW_CONST
-        && context_p->token.type != LEXER_KEYW_FUNCTION && context_p->token.type != LEXER_KEYW_CASE
-        && context_p->token.type != LEXER_KEYW_DEFAULT)
-    {
-      parser_line_info_append (context_p, context_p->token.line, context_p->token.column);
-    }
-#endif /* JERRY_LINE_INFO */
 
     switch (context_p->token.type)
     {
@@ -2963,9 +2928,6 @@ parser_parse_statements (parser_context_t *context_p) /**< context */
                 parser_raise_error (context_p, PARSER_ERR_LEXICAL_SINGLE_STATEMENT);
               }
 
-#if JERRY_FUNCTION_TO_STRING
-              context_p->function_start_p = context_p->token.lit_location.char_p;
-#endif /* JERRY_FUNCTION_TO_STRING */
               lexer_next_token (context_p);
               JERRY_ASSERT (context_p->token.type == LEXER_KEYW_FUNCTION);
               continue;
@@ -3051,17 +3013,6 @@ parser_parse_statements (parser_context_t *context_p) /**< context */
       {
         if (context_p->status_flags & PARSER_IS_CLOSURE)
         {
-#if JERRY_LINE_INFO
-          if (context_p->line_info_p == NULL)
-          {
-            parser_line_info_append (context_p, context_p->token.line, context_p->token.column);
-          }
-#endif /* JERRY_LINE_INFO */
-
-#if JERRY_FUNCTION_TO_STRING
-          context_p->function_end_p = context_p->source_p;
-#endif /* JERRY_FUNCTION_TO_STRING */
-
           parser_stack_pop_uint8 (context_p);
           context_p->last_statement.current_p = NULL;
           /* There is no lexer_next_token here, since the
@@ -3214,13 +3165,6 @@ consume_last_statement:
   {
     parser_raise_error (context_p, PARSER_ERR_STATEMENT_EXPECTED);
   }
-
-#if JERRY_LINE_INFO
-  if (context_p->line_info_p == NULL)
-  {
-    parser_line_info_append (context_p, context_p->token.line, context_p->token.column);
-  }
-#endif /* JERRY_LINE_INFO */
 } /* parser_parse_statements */
 
 /**
