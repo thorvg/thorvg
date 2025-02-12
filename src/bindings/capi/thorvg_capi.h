@@ -419,16 +419,6 @@ TVG_API Tvg_Result tvg_engine_version(uint32_t* major, uint32_t* minor, uint32_t
 /* SwCanvas API                                                         */
 /************************************************************************/
 
-/**
- * @brief Enumeration specifying the methods of Memory Pool behavior policy.
- */
-typedef enum {
-    TVG_MEMPOOL_POLICY_DEFAULT = 0, ///< Default behavior that ThorVG is designed to.
-    TVG_MEMPOOL_POLICY_SHAREABLE,   ///< Memory Pool is shared among canvases.
-    TVG_MEMPOOL_POLICY_INDIVIDUAL   ///< Allocate designated memory pool that is used only by the current canvas instance.
-} Tvg_Mempool_Policy;
-
-
 /*!
 * @brief Creates a Canvas object.
 *
@@ -461,31 +451,6 @@ TVG_API Tvg_Canvas* tvg_swcanvas_create(void);
 */
 TVG_API Tvg_Result tvg_swcanvas_set_target(Tvg_Canvas* canvas, uint32_t* buffer, uint32_t stride, uint32_t w, uint32_t h, Tvg_Colorspace cs);
 
-
-/*!
-* @brief Sets the software engine memory pool behavior policy.
-*
-* ThorVG draws a lot of shapes, it allocates/deallocates a few chunk of memory
-* while processing rendering. It internally uses one shared memory pool
-* which can be reused among the canvases in order to avoid memory overhead.
-*
-* Thus ThorVG suggests using a memory pool policy to satisfy user demands,
-* if it needs to guarantee the thread-safety of the internal data access.
-*
-* @param[in] canvas The Tvg_Canvas object of which the Memory Pool behavior is to be specified.
-* @param[in] policy The method specifying the Memory Pool behavior. The default value is @c TVG_MEMPOOL_POLICY_DEFAULT.
-*
-* @return Tvg_Result enumeration.
-* @retval TVG_RESULT_INVALID_ARGUMENTS An invalid canvas pointer passed.
-* @retval TVG_RESULT_INSUFFICIENT_CONDITION The canvas contains some paints already.
-* @retval TVG_RESULT_NOT_SUPPORTED The software engine is not supported.
-*
-* @note When @c policy is set as @c TVG_MEMPOOL_POLICY_INDIVIDUAL, the current instance of canvas uses its own individual
-*       memory data, which is not shared with others. This is necessary when the canvas is accessed on a worker-thread.
-*
-* @warning It's not allowed after pushing any paints.
-*/
-TVG_API Tvg_Result tvg_swcanvas_set_mempool(Tvg_Canvas* canvas, Tvg_Mempool_Policy policy);
 
 /** \} */   // end defgroup ThorVGCapi_SwCanvas
 

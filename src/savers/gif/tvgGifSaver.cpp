@@ -34,9 +34,6 @@ void GifSaver::run(unsigned tid)
     auto canvas = unique_ptr<SwCanvas>(SwCanvas::gen());
     if (!canvas) return;
 
-    //Do not share the memory pool since this canvas could be running on a thread.
-    canvas->mempool(SwCanvas::Individual);
-
     auto w = static_cast<uint32_t>(vsize[0]);
     auto h = static_cast<uint32_t>(vsize[1]);
 

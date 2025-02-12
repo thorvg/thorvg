@@ -88,13 +88,6 @@ TVG_API Tvg_Result tvg_canvas_destroy(Tvg_Canvas* canvas)
 }
 
 
-TVG_API Tvg_Result tvg_swcanvas_set_mempool(Tvg_Canvas* canvas, Tvg_Mempool_Policy policy)
-{
-    if (!canvas) return TVG_RESULT_INVALID_ARGUMENT;
-    return (Tvg_Result) reinterpret_cast<SwCanvas*>(canvas)->mempool(static_cast<SwCanvas::MempoolPolicy>(policy));
-}
-
-
 TVG_API Tvg_Result tvg_swcanvas_set_target(Tvg_Canvas* canvas, uint32_t* buffer, uint32_t stride, uint32_t w, uint32_t h, Tvg_Colorspace cs)
 {
     if (!canvas) return TVG_RESULT_INVALID_ARGUMENT;
