@@ -203,7 +203,7 @@ ecma_builtin_number_prototype_object_to_string (ecma_number_t this_arg_number, /
   if (fraction_part > 0.0)
   {
     uint8_t digit;
-    ecma_number_t precision = (ecma_number_get_next (this_arg_number) - this_arg_number) * 0.5f;
+    ecma_number_t precision = (ecma_number_get_next (this_arg_number) - this_arg_number) * 0.5;
     precision = JERRY_MAX (precision, ECMA_NUMBER_MIN_VALUE);
 
     do
