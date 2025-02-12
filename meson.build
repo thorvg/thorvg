@@ -57,6 +57,9 @@ webp_loader = all_loaders or get_option('loaders').contains('webp')
 all_savers = get_option('savers').contains('all')
 gif_saver = all_savers or get_option('savers').contains('gif') or lottie2gif
 
+#logging
+logging = get_option('log')
+
 #Loaders/savers/tools config
 if svg_loader
     config_h.set10('THORVG_SVG_LOADER_SUPPORT', true)
@@ -112,7 +115,7 @@ if get_option('bindings').contains('wasm_beta')
 endif
 
 #Log
-if get_option('log')
+if logging
     config_h.set10('THORVG_LOG_ENABLED', true)
 endif
 
