@@ -34,7 +34,7 @@ struct UserExample : tvgexam::Example
 
     float deg2rad(float degree)
     {
-        return degree * (M_PI / 180.0f);
+        return degree * (float(M_PI) / 180.0f);
     }
 
     bool content(tvg::Canvas* canvas, uint32_t w, uint32_t h) override

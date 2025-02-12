@@ -63,8 +63,8 @@ struct UserExample : tvgexam::Example
         shape->translate(385, 400);
 
         //Update Shape1
-        shape->scale(1 - 0.75 * progress);
-        shape->rotate(360 * progress);
+        shape->scale(1.0f - 0.75f * progress);
+        shape->rotate(360.0f * progress);
 
         canvas->push(shape);
 
@@ -113,8 +113,8 @@ struct UserExample : tvgexam::Example
         shape3->translate(400, 400);
 
         //Update Shape3
-        shape3->rotate(-360 * progress);
-        shape3->scale(0.5 + progress);
+        shape3->rotate(-360.0f * progress);
+        shape3->scale(0.5f + progress);
 
         canvas->push(shape3);
 
