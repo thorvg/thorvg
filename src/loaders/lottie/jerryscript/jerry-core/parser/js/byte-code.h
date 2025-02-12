@@ -979,9 +979,6 @@ typedef struct
 #if JERRY_SOURCE_NAME
   ecma_value_t source_name; /**< source name */
 #endif /* JERRY_SOURCE_NAME */
-#if JERRY_FUNCTION_TO_STRING
-  ecma_value_t source_code; /**< source code */
-#endif /* JERRY_FUNCTION_TO_STRING */
 } cbc_script_t;
 
 /**

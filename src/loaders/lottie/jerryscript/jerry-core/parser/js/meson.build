@@ -15,7 +15,6 @@ source_file = [
     'js-lexer.cpp',
     'js-parser.cpp',
     'js-parser-expr.cpp',
-    'js-parser-line-info-create.cpp',
     'js-parser-mem.cpp',
     'js-parser-module.cpp',
     'js-parser-statm.cpp',

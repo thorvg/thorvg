@@ -126,13 +126,6 @@ ecma_compiled_code_resolve_extended_info (const ecma_compiled_code_t *bytecode_h
     base_p--;
   }
 
-#if JERRY_LINE_INFO
-  if (bytecode_header_p->status_flags & CBC_CODE_FLAGS_HAS_LINE_INFO)
-  {
-    base_p--;
-  }
-#endif /* JERRY_LINE_INFO */
-
   JERRY_ASSERT (((uint8_t *) base_p)[-1] != 0);
 
   return ((uint8_t *) base_p) - 1;

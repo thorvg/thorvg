@@ -19,10 +19,6 @@
 
 #if JERRY_PARSER
 
-#if JERRY_LINE_INFO
-#include "jcontext.h"
-#endif /* JERRY_LINE_INFO */
-
 /** \addtogroup parser Parser
  * @{
  *

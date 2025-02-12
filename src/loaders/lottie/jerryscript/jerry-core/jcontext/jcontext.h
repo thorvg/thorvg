@@ -121,9 +121,6 @@ struct jerry_context_t
 #if JERRY_BUILTIN_REGEXP
   re_compiled_code_t *re_cache[RE_CACHE_SIZE]; /**< regex cache */
 #endif /* JERRY_BUILTIN_REGEXP */
-#if JERRY_CPOINTER_32_BIT
-  jmem_pools_chunk_t *jmem_free_16_byte_chunk_p; /**< list of free sixteen byte pool chunks */
-#endif /* JERRY_CPOINTER_32_BIT */
   const lit_utf8_byte_t *const *lit_magic_string_ex_array; /**< array of external magic strings */
   const lit_utf8_size_t *lit_magic_string_ex_sizes; /**< external magic string lengths */
   jmem_cpointer_t ecma_gc_objects_cp; /**< List of currently alive objects. */
@@ -177,11 +174,6 @@ struct jerry_context_t
 #endif /* JERRY_BUILTIN_REGEXP */
   ecma_job_queue_item_t *job_queue_head_p; /**< points to the head item of the job queue */
   ecma_job_queue_item_t *job_queue_tail_p; /**< points to the tail item of the job queue */
-#if JERRY_PROMISE_CALLBACK
-  uint32_t promise_callback_filters; /**< reported event types for promise callback */
-  void *promise_callback_user_p; /**< user pointer for promise callback */
-  jerry_promise_event_cb_t promise_callback; /**< user function for tracking Promise object operations */
-#endif /* JERRY_PROMISE_CALLBACK */
 
 #if JERRY_BUILTIN_TYPEDARRAY
   uint32_t arraybuffer_compact_allocation_limit; /**< maximum size of compact allocation */

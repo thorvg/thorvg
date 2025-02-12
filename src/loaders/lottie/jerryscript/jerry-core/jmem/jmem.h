@@ -55,11 +55,7 @@
 /**
  * Shift for tag part in jmem_cpointer_tag_t
  */
-#if defined(JMEM_CAN_STORE_POINTER_VALUE_DIRECTLY) && JERRY_CPOINTER_32_BIT
-#define JMEM_TAG_SHIFT 0
-#else /* !JMEM_CAN_STORE_POINTER_VALUE_DIRECTLY || !JERRY_CPOINTER_32_BIT */
 #define JMEM_TAG_SHIFT 3
-#endif /* JMEM_CAN_STORE_POINTER_VALUE_DIRECTLY && JERRY_CPOINTER_32_BIT */
 
 /**
  * Bit mask for tag part in jmem_cpointer_tag_t
@@ -94,11 +90,7 @@ enum
 /**
  * Compressed pointer
  */
-#if JERRY_CPOINTER_32_BIT
-typedef uint32_t jmem_cpointer_t;
-#else /* !JERRY_CPOINTER_32_BIT */
 typedef uint16_t jmem_cpointer_t;
-#endif /* JERRY_CPOINTER_32_BIT */
 
 /**
  * Compressed pointer with tag value

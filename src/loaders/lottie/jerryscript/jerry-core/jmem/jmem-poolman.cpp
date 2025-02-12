@@ -24,10 +24,6 @@
 #define JMEM_ALLOCATOR_INTERNAL
 #include "jmem-allocator-internal.h"
 
-#if JERRY_MEM_GC_BEFORE_EACH_ALLOC
-#include "ecma-gc.h"
-#endif /* JERRY_MEM_GC_BEFORE_EACH_ALLOC */
-
 /** \addtogroup mem Memory allocation
  * @{
  *
@@ -44,9 +40,6 @@ jmem_pools_finalize (void)
   jmem_pools_collect_empty ();
 
   JERRY_ASSERT (JERRY_CONTEXT (jmem_free_8_byte_chunk_p) == NULL);
-#if JERRY_CPOINTER_32_BIT
-  JERRY_ASSERT (JERRY_CONTEXT (jmem_free_16_byte_chunk_p) == NULL);
-#endif /* JERRY_CPOINTER_32_BIT */
 } /* jmem_pools_finalize */
 
 /**
@@ -58,18 +51,9 @@ jmem_pools_finalize (void)
 void *JERRY_ATTR_HOT
 jmem_pools_alloc (size_t size) /**< size of the chunk */
 {
-#if JERRY_MEM_GC_BEFORE_EACH_ALLOC
-  ecma_gc_run ();
-#endif /* JERRY_MEM_GC_BEFORE_EACH_ALLOC */
-
-#if JERRY_CPOINTER_32_BIT
-  if (size <= 8)
-  {
-#else /* !JERRY_CPOINTER_32_BIT */
   JERRY_ASSERT (size <= 8);
-#endif /* JERRY_CPOINTER_32_BIT */
 
-    if (JERRY_CONTEXT (jmem_free_8_byte_chunk_p) != NULL)
+  if (JERRY_CONTEXT (jmem_free_8_byte_chunk_p) != NULL)
     {
       const jmem_pools_chunk_t *const chunk_p = JERRY_CONTEXT (jmem_free_8_byte_chunk_p);
 
@@ -86,30 +70,6 @@ jmem_pools_alloc (size_t size) /**< size of the chunk */
       JMEM_HEAP_STAT_ALLOC (8);
       return chunk_p;
     }
-
-#if JERRY_CPOINTER_32_BIT
-  }
-
-  JERRY_ASSERT (size <= 16);
-
-  if (JERRY_CONTEXT (jmem_free_16_byte_chunk_p) != NULL)
-  {
-    const jmem_pools_chunk_t *const chunk_p = JERRY_CONTEXT (jmem_free_16_byte_chunk_p);
-
-    JMEM_VALGRIND_DEFINED_SPACE (chunk_p, sizeof (jmem_pools_chunk_t));
-    JERRY_CONTEXT (jmem_free_16_byte_chunk_p) = chunk_p->next_p;
-    JMEM_VALGRIND_UNDEFINED_SPACE (chunk_p, sizeof (jmem_pools_chunk_t));
-
-    JMEM_HEAP_STAT_ALLOC (16);
-    return (void *) chunk_p;
-  }
-  else
-  {
-    void *chunk_p = jmem_heap_alloc_block_internal (16);
-    JMEM_HEAP_STAT_ALLOC (16);
-    return chunk_p;
-  }
-#endif /* JERRY_CPOINTER_32_BIT */
 } /* jmem_pools_alloc */
 
 /**
@@ -128,26 +88,10 @@ jmem_pools_free (void *chunk_p, /**< pointer to the chunk */
 
   JMEM_VALGRIND_DEFINED_SPACE (chunk_to_free_p, size);
 
-#if JERRY_CPOINTER_32_BIT
-  if (size <= 8)
-  {
-#else /* !JERRY_CPOINTER_32_BIT */
   JERRY_ASSERT (size <= 8);
-#endif /* JERRY_CPOINTER_32_BIT */
 
-    chunk_to_free_p->next_p = JERRY_CONTEXT (jmem_free_8_byte_chunk_p);
-    JERRY_CONTEXT (jmem_free_8_byte_chunk_p) = chunk_to_free_p;
-
-#if JERRY_CPOINTER_32_BIT
-  }
-  else
-  {
-    JERRY_ASSERT (size <= 16);
-
-    chunk_to_free_p->next_p = JERRY_CONTEXT (jmem_free_16_byte_chunk_p);
-    JERRY_CONTEXT (jmem_free_16_byte_chunk_p) = chunk_to_free_p;
-  }
-#endif /* JERRY_CPOINTER_32_BIT */
+  chunk_to_free_p->next_p = JERRY_CONTEXT (jmem_free_8_byte_chunk_p);
+  JERRY_CONTEXT (jmem_free_8_byte_chunk_p) = chunk_to_free_p;
 
   JMEM_VALGRIND_NOACCESS_SPACE (chunk_to_free_p, size);
 } /* jmem_pools_free */
@@ -170,21 +114,6 @@ jmem_pools_collect_empty (void)
     jmem_heap_free_block_internal (chunk_p, 8);
     chunk_p = next_p;
   }
-
-#if JERRY_CPOINTER_32_BIT
-  chunk_p = JERRY_CONTEXT (jmem_free_16_byte_chunk_p);
-  JERRY_CONTEXT (jmem_free_16_byte_chunk_p) = NULL;
-
-  while (chunk_p)
-  {
-    JMEM_VALGRIND_DEFINED_SPACE (chunk_p, sizeof (jmem_pools_chunk_t));
-    jmem_pools_chunk_t *const next_p = chunk_p->next_p;
-    JMEM_VALGRIND_NOACCESS_SPACE (chunk_p, sizeof (jmem_pools_chunk_t));
-
-    jmem_heap_free_block_internal (chunk_p, 16);
-    chunk_p = next_p;
-  }
-#endif /* JERRY_CPOINTER_32_BIT */
 } /* jmem_pools_collect_empty */
 
 /**

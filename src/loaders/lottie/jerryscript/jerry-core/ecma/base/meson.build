@@ -9,7 +9,6 @@ source_file = [
     'ecma-helpers.h',
     'ecma-init-finalize.h',
     'ecma-lcache.h',
-    'ecma-line-info.h',
     'ecma-literal-storage.h',
     'ecma-module.h',
     'ecma-property-hashmap.h',
@@ -27,7 +26,6 @@ source_file = [
     'ecma-helpers.cpp',
     'ecma-init-finalize.cpp',
     'ecma-lcache.cpp',
-    'ecma-line-info.cpp',
     'ecma-literal-storage.cpp',
     'ecma-module.cpp',
     'ecma-property-hashmap.cpp'

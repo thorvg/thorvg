@@ -30,10 +30,6 @@
 #include "jcontext.h"
 #include "jrt.h"
 
-#if JERRY_LINE_INFO
-#include "vm.h"
-#endif /* JERRY_LINE_INFO */
-
 /** \addtogroup ecma ECMA
  * @{
  *
@@ -147,22 +143,6 @@ ecma_new_standard_error (jerry_error_t error_type, /**< native error type */
     JERRY_CONTEXT (error_object_created_callback_p)
     (ecma_make_object_value (error_object_p), JERRY_CONTEXT (error_object_created_callback_user_p));
     JERRY_CONTEXT (status_flags) &= (uint32_t) ~ECMA_STATUS_ERROR_UPDATE;
-  }
-  else
-  {
-#if JERRY_LINE_INFO
-    /* Default decorator when line info is enabled. */
-    ecma_string_t *stack_str_p = ecma_get_magic_string (LIT_MAGIC_STRING_STACK);
-
-    ecma_property_value_t *prop_value_p =
-      ecma_create_named_data_property (error_object_p, stack_str_p, ECMA_PROPERTY_CONFIGURABLE_WRITABLE, NULL);
-    ecma_deref_ecma_string (stack_str_p);
-
-    ecma_value_t backtrace_value = vm_get_backtrace (0);
-
-    prop_value_p->value = backtrace_value;
-    ecma_deref_object (ecma_get_object_from_value (backtrace_value));
-#endif /* JERRY_LINE_INFO */
   }
 
   return error_object_p;
