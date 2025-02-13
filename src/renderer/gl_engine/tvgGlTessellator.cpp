@@ -2216,7 +2216,7 @@ void DashStroke::doStroke(const PathCommand *cmds, uint32_t cmd_count, const Poi
             case PathCommand::MoveTo: {
                 // reset the dash state
                 mCurrIdx = 0;
-                mCurrLen = 0.f;
+                mCurrLen = mDashPattern[0];
                 mCurOpGap = false;
                 mPtStart = mPtCur = *pts;
                 pts++;
@@ -2256,17 +2256,17 @@ void DashStroke::dashLineTo(const GlPoint &to)
         detail::Line curr{mPtCur, to};
 
         while (len > mCurrLen) {
-            len -= mCurrLen;
-
-            detail::Line left, right;
-
-            detail::_lineSplitAt(curr, mCurrLen, &left, &right);
-
+            detail::Line right;
+            if (mCurrLen > 0.0f) {
+                detail::Line left;
+                detail::_lineSplitAt(curr, mCurrLen, &left, &right);
+                len -= mCurrLen;
+                if (!mCurOpGap) {
+                    this->moveTo(left.p1);
+                    this->lineTo(left.p2);
+                }
+            } else right = curr;
             mCurrIdx = (mCurrIdx + 1) % mDashCount;
-            if (!mCurOpGap) {
-                this->moveTo(left.p1);
-                this->lineTo(left.p2);
-            }
             mCurrLen = mDashPattern[mCurrIdx];
             mCurOpGap = !mCurOpGap;
             curr = right;
@@ -2307,17 +2307,16 @@ void DashStroke::dashCubicTo(const GlPoint &cnt1, const GlPoint &cnt2, const GlP
         }
     } else {
         while (len > mCurrLen) {
-            len -= mCurrLen;
-
-            Bezier left, right;
-
-            cur.split(mCurrLen, left, right);
-
-            if (mCurrIdx == 0) {
-                this->moveTo(left.start);
-                this->cubicTo(left.ctrl1, left.ctrl2, left.end);
-            }
-
+            Bezier right;
+            if (mCurrLen > 0.0f) {
+                Bezier left;
+                cur.split(mCurrLen, left, right);
+                len -= mCurrLen;
+                if (!mCurOpGap) {
+                    this->moveTo(left.start);
+                    this->cubicTo(left.ctrl1, left.ctrl2, left.end);
+                }
+            } else right = cur;
             mCurrIdx = (mCurrIdx + 1) % mDashCount;
             mCurrLen = mDashPattern[mCurrIdx];
             mCurOpGap = !mCurOpGap;
