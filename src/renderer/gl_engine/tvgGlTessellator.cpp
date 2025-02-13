@@ -1564,10 +1564,11 @@ void Stroker::stroke(const RenderShape *rshape)
     }
 
     const float *dash_pattern = nullptr;
-    auto dashCnt = rshape->strokeDash(&dash_pattern, nullptr);
+    auto dash_offset = 0.0f;
+    auto dashCnt = rshape->strokeDash(&dash_pattern, &dash_offset);
 
     if (dashCnt == 0) doStroke(cmds, cmdCnt, pts, ptsCnt);
-    else doDashStroke(cmds, cmdCnt, pts, ptsCnt, dashCnt, dash_pattern);
+    else doDashStroke(cmds, cmdCnt, pts, ptsCnt, dashCnt, dash_pattern, dash_offset);
 
     free(trimmedCmds);
     free(trimmedPts);
@@ -1629,7 +1630,7 @@ void Stroker::doStroke(const PathCommand *cmds, uint32_t cmd_count, const Point 
 }
 
 
-void Stroker::doDashStroke(const PathCommand *cmds, uint32_t cmd_count, const Point *pts, uint32_t pts_count, uint32_t dash_count, const float *dash_pattern)
+void Stroker::doDashStroke(const PathCommand *cmds, uint32_t cmd_count, const Point *pts, uint32_t pts_count, uint32_t dash_count, const float *dash_pattern, float dash_offset)
 {
     Array<PathCommand> dash_cmds{};
     Array<Point> dash_pts{};
@@ -1637,7 +1638,7 @@ void Stroker::doDashStroke(const PathCommand *cmds, uint32_t cmd_count, const Po
     dash_cmds.reserve(20 * cmd_count);
     dash_pts.reserve(20 * pts_count);
 
-    DashStroke dash(&dash_cmds, &dash_pts, dash_count, dash_pattern);
+    DashStroke dash(&dash_cmds, &dash_pts, dash_count, dash_pattern, dash_offset);
     dash.doStroke(cmds, cmd_count, pts, pts_count);
 
     this->doStroke(dash_cmds.data, dash_cmds.count, dash_pts.data, dash_pts.count);
@@ -1974,11 +1975,12 @@ void Stroker::strokeRound(const Point& p, const Point& outDir)
 }
 
 
-DashStroke::DashStroke(Array<PathCommand> *cmds, Array<Point> *pts, uint32_t dash_count, const float *dash_pattern)
+DashStroke::DashStroke(Array<PathCommand> *cmds, Array<Point> *pts, uint32_t dash_count, const float *dash_pattern, float dash_offset)
     : mCmds(cmds),
       mPts(pts),
       mDashCount(dash_count),
       mDashPattern(dash_pattern),
+      mDashOffset(dash_offset),
       mCurrLen(),
       mCurrIdx(),
       mCurOpGap(false),
@@ -1990,6 +1992,26 @@ DashStroke::DashStroke(Array<PathCommand> *cmds, Array<Point> *pts, uint32_t das
 
 void DashStroke::doStroke(const PathCommand *cmds, uint32_t cmd_count, const Point *pts, uint32_t pts_count)
 {
+    int32_t idx = 0;
+    auto offset = mDashOffset;
+    bool gap = false;
+    if (!tvg::zero(mDashOffset)) {
+        auto len = 0.0f;
+        for (auto i = 0; i < mDashCount; ++i) len += mDashPattern[i];
+        if (mDashCount % 2) len *= 2;
+
+        offset = fmodf(offset, len);
+        if (offset < 0) offset += len;
+
+        for (uint32_t i = 0; i < mDashCount * (mDashCount % 2 + 1); ++i, ++idx) {
+            auto curPattern = mDashPattern[i % mDashCount];
+            if (offset < curPattern) break;
+            offset -= curPattern;
+            gap = !gap;
+        }
+        idx = idx % mDashCount;
+    }
+
     for (uint32_t i = 0; i < cmd_count; i++) {
         switch (*cmds) {
             case PathCommand::Close: {
@@ -1998,9 +2020,9 @@ void DashStroke::doStroke(const PathCommand *cmds, uint32_t cmd_count, const Poi
             }
             case PathCommand::MoveTo: {
                 // reset the dash state
-                mCurrIdx = 0;
-                mCurrLen = mDashPattern[0];
-                mCurOpGap = false;
+                mCurrIdx = idx;
+                mCurrLen = mDashPattern[idx] - offset;
+                mCurOpGap = gap;
                 mPtStart = mPtCur = *pts;
                 pts++;
                 break;
