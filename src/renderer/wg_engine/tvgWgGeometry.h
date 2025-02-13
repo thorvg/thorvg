@@ -309,10 +309,10 @@ struct WgVertexBufferInd
         }
         len_total -= dashOffset;
         // iterate by polyline points
+        auto gap = false;
         for (uint32_t i = 0; i < buff.vcount - 1; i++) {
             // append current polyline point
-            if (index_dash % 2 == 0)
-                dashed.append(buff.vbuff[i]);
+            if (!gap) dashed.append(buff.vbuff[i]);
             // move inside polyline segment
             while(len_total < buff.vdist[i+1]) {
                 // get current point
@@ -321,17 +321,18 @@ struct WgVertexBufferInd
                 index_dash = (index_dash + 1) % dashCnt;
                 len_total += dashPattern[index_dash];
                 // preceed stroke if dash
-                if (index_dash % 2 != 0) {
+                if (!gap) {
                     dashed.updateDistances();
                     appendStrokes(dashed, rstroke);
                     dashed.reset(tscale);
                 }
+                gap = !gap;
             }
             // update current subline length
             len_total -= buff.vdist[i+1];
         }
         // draw last subline
-        if (index_dash % 2 == 0) {
+        if (!gap) {
             dashed.append(buff.last());
             dashed.updateDistances();
             appendStrokes(dashed, rstroke);
