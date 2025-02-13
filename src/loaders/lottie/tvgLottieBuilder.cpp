@@ -898,6 +898,21 @@ void LottieBuilder::updateImage(LottieGroup* layer)
 }
 
 
+void _fontURLText(LottieText* text, Scene* main, float frameNo, Tween& tween, LottieExpressions* exps)
+{
+    auto& doc = text->doc(frameNo, exps);
+    if (!doc.text) return;
+
+    const float ptPerPx = 0.75f; //1 pt = 1/72; 1 in = 96 px; -> 72/96 = 0.75
+    auto txt = Text::gen();
+    txt->font(doc.name, doc.size * 100.0f * ptPerPx);
+    txt->translate(0.0f, -doc.size * 100.0f);
+    txt->text(doc.text);
+    txt->fill(doc.color.rgb[0], doc.color.rgb[1], doc.color.rgb[2]);
+    main->push(txt);
+}
+
+
 void LottieBuilder::updateText(LottieLayer* layer, float frameNo)
 {
     auto text = static_cast<LottieText*>(layer->children.first());
@@ -906,6 +921,11 @@ void LottieBuilder::updateText(LottieLayer* layer, float frameNo)
     auto p = doc.text;
 
     if (!p || !text->font) return;
+
+    if (text->font->origin == LottieFont::Origin::FontURL) {
+        _fontURLText(text, layer->scene, frameNo, tween, exps);
+        return;
+    }
 
     auto scale = doc.size;
     Point cursor{};
