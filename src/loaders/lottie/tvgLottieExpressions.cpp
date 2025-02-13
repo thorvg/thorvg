@@ -691,7 +691,7 @@ static jerry_value_t _nearestKey(const jerry_call_info_t* info, const jerry_valu
     auto exp = static_cast<LottieExpression*>(jerry_object_get_native_ptr(info->function, nullptr));
     auto time = jerry_value_as_number(args[0]);
     auto frameNo = exp->comp->frameAtTime(time);
-    auto index = jerry_number(exp->property->nearest(frameNo));
+    auto index = jerry_number((float)exp->property->nearest(frameNo));
 
     auto obj = jerry_object();
     jerry_object_set_sz(obj, EXP_INDEX, index);
@@ -1080,7 +1080,7 @@ static void _buildProperty(float frameNo, jerry_value_t context, LottieExpressio
     jerry_object_set_sz(context, "nearestKey", nearestKey);
     jerry_value_free(nearestKey);
 
-    auto numKeys = jerry_number(exp->property->frameCnt());
+    auto numKeys = jerry_number((float)exp->property->frameCnt());
     jerry_object_set_sz(context, "numKeys", numKeys);
     jerry_value_free(numKeys);
 
@@ -1236,7 +1236,7 @@ void LottieExpressions::buildComp(jerry_value_t context, float frameNo, LottieLa
     jerry_object_set_native_ptr(layer, &freeCb, _expcontent(exp, frameNo, comp));
     jerry_value_free(layer);
 
-    auto numLayers = jerry_number(comp->children.count);
+    auto numLayers = jerry_number((float)comp->children.count);
     jerry_object_set_sz(context, "numLayers", numLayers);
     jerry_value_free(numLayers);
 }
