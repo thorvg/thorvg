@@ -44,8 +44,6 @@ static unsigned long _int2str(int num)
 
 LottieExpression* LottieParser::getExpression(char* code, LottieComposition* comp, LottieLayer* layer, LottieObject* object, LottieProperty* property)
 {
-    if (!expressions) return nullptr;
-
     if (!comp->expressions) comp->expressions = true;
 
     auto inst = new LottieExpression;
@@ -479,7 +477,7 @@ void LottieParser::parseProperty(T& prop, LottieObject* obj)
     while (auto key = nextObjectKey()) {
         if (KEY_AS("k")) parsePropertyInternal(prop);
         else if (obj && KEY_AS("sid")) registerSlot<type>(obj, getString());
-        else if (KEY_AS("x")) prop.exp = getExpression(getStringCopy(), comp, context.layer, context.parent, &prop);
+        else if (KEY_AS("x") && expressions) prop.exp = getExpression(getStringCopy(), comp, context.layer, context.parent, &prop);
         else if (KEY_AS("ix")) prop.ix = getInt();
         else skip();
     }
@@ -568,7 +566,7 @@ LottieTransform* LottieParser::parseTransform(bool ddd)
                 //check separateCoord to figure out whether "x(expression)" / "x(coord)"
                 else if (transform->coords && KEY_AS("x")) parseProperty<LottieProperty::Type::Float>(transform->coords->x);
                 else if (transform->coords && KEY_AS("y")) parseProperty<LottieProperty::Type::Float>(transform->coords->y);
-                else if (KEY_AS("x")) transform->position.exp = getExpression(getStringCopy(), comp, context.layer, context.parent, &transform->position);
+                else if (KEY_AS("x") && expressions) transform->position.exp = getExpression(getStringCopy(), comp, context.layer, context.parent, &transform->position);
                 else if (KEY_AS("sid")) registerSlot<LottieProperty::Type::Position>(transform, getString());
                 else skip();
             }
@@ -657,7 +655,7 @@ void LottieParser::getPathSet(LottiePathSet& path)
             } else {
                 getValue(path.value);
             }
-        } else if (KEY_AS("x")) {
+        } else if (KEY_AS("x") && expressions) {
             path.exp = getExpression(getStringCopy(), comp, context.layer, context.parent, &path);
         } else skip();
     }

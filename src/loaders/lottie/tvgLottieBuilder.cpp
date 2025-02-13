@@ -1269,6 +1269,7 @@ void LottieBuilder::updateStrokeEffect(LottieLayer* layer, LottieFxStroke* effec
             return true;
         };
         accessor->set(layer->scene, f, nullptr);
+        delete(accessor);
     }
 
     layer->scene->mask(shape, MaskMethod::Alpha);
