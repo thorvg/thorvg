@@ -280,6 +280,7 @@ struct LottieGenericProperty : LottieProperty
     {
         copy(rhs);
         type = rhs.type;
+        ix = rhs.ix;
     }
 
     ~LottieGenericProperty()
@@ -593,6 +594,7 @@ struct LottieColorStop : LottieProperty
     {
         copy(rhs);
         type = rhs.type;
+        ix = rhs.ix;
     }
 
     ~LottieColorStop()
@@ -771,6 +773,7 @@ struct LottieTextDoc : LottieProperty
     {
         copy(rhs);
         type = rhs.type;
+        ix = rhs.ix;
     }
 
     ~LottieTextDoc()
@@ -887,6 +890,7 @@ struct LottieBitmap : LottieProperty
     {
         copy(rhs);
         type = rhs.type;
+        ix = rhs.ix;
     }
 
     ~LottieBitmap()
