@@ -87,7 +87,7 @@ public:
 
 private:
     void doStroke(const PathCommand* cmds, uint32_t cmd_count, const Point* pts, uint32_t pts_count);
-    void doDashStroke(const PathCommand* cmds, uint32_t cmd_count, const Point* pts, uint32_t pts_count, uint32_t dash_count, const float* dash_pattern);
+    void doDashStroke(const PathCommand* cmds, uint32_t cmd_count, const Point* pts, uint32_t pts_count, uint32_t dash_count, const float* dash_pattern, float dash_offset);
 
     float strokeRadius() const
     {
@@ -122,7 +122,7 @@ private:
 class DashStroke
 {
 public:
-    DashStroke(Array<PathCommand>* cmds, Array<Point>* pts, uint32_t dash_count, const float* dash_pattern);
+    DashStroke(Array<PathCommand>* cmds, Array<Point>* pts, uint32_t dash_count, const float* dash_pattern, float dash_offset);
     ~DashStroke() = default;
     void doStroke(const PathCommand* cmds, uint32_t cmd_count, const Point* pts, uint32_t pts_count);
 
@@ -137,6 +137,7 @@ private:
     Array<Point>* mPts;
     uint32_t mDashCount;
     const float* mDashPattern;
+    float mDashOffset;
     float mCurrLen;
     int32_t mCurrIdx;
     bool mCurOpGap;
