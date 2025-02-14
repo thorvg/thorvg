@@ -85,7 +85,7 @@ public:
 
 private:
     void doStroke(const RenderPath& path);
-    void doDashStroke(const RenderPath& path, const float* patterns, uint32_t patternCnt, float offset);
+    void doDashStroke(const RenderPath& path, const float* patterns, uint32_t patternCnt, float offset, float length);
 
     float strokeRadius() const
     {
@@ -119,8 +119,7 @@ private:
 class DashStroke
 {
 public:
-    DashStroke(Array<PathCommand>* cmds, Array<Point>* pts, const float* patterns, uint32_t patternCnt, float offset);
-    ~DashStroke() = default;
+    DashStroke(Array<PathCommand>* cmds, Array<Point>* pts, const float* patterns, uint32_t patternCnt, float offset, float length);
     void doStroke(const RenderPath& path);
 
 private:
@@ -135,12 +134,13 @@ private:
     const float* mDashPattern;
     uint32_t mDashCount;
     float mDashOffset;
-    float mCurrLen;
-    int32_t mCurrIdx;
-    bool mCurOpGap;
-    bool mMove;
-    Point mPtStart;
-    Point mPtCur;
+    float mDashLength;
+    float mCurrLen = 0.0f;
+    int32_t mCurrIdx = 0;
+    bool mCurOpGap = false;
+    bool mMove = true;
+    Point mPtStart = {};
+    Point mPtCur = {};
 };
 
 class BWTessellator

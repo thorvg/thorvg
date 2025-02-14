@@ -352,48 +352,43 @@ struct WgIndexedVertexBuffer
         vcount += 4;
         icount += 6;
     }
-    
-    // dash buffer by pattern
+
+
     void appendStrokesDashed(const WgVertexBuffer& buff, const RenderStroke* rstroke)
     {
-        // dashed buffer
         dashed->reset(scale);
-        // ignore single points polyline
-        if (buff.count < 2) return;
-        const float* dashPattern = rstroke->dashPattern;
-        size_t dashCnt = rstroke->dashCnt;
-        // starting state
-        uint32_t index_dash = 0;
-        float len_total = dashPattern[index_dash];
-        // get dashes length
-        float dashes_lenth{};
-        for (uint32_t i = 0; i < dashCnt * (dashCnt % 2 + 1); i++) {
-            dashes_lenth += dashPattern[i % dashCnt];
-        }
-        if (dashes_lenth == 0) return;
+        auto& dash = rstroke->dash;
+
+        if (buff.count < 2 || tvg::zero(dash.length)) return;
+
+        uint32_t index = 0;
+        auto total = dash.pattern[index];
+        auto length = (dash.count % 2) ? dash.length * 2 : dash.length;
+
         // normalize dash offset
-        float dashOffset = rstroke->dashOffset;
-        while(dashOffset < 0) dashOffset += dashes_lenth;
-        while(dashOffset > dashes_lenth) dashOffset -= dashes_lenth;
+        auto dashOffset = dash.offset;
+        while(dashOffset < 0) dashOffset += length;
+        while(dashOffset > length) dashOffset -= length;
         auto gap = false;
+
         // scip dashes by offset
-        while(len_total <= dashOffset) {
-            index_dash = (index_dash + 1) % dashCnt;
-            len_total += dashPattern[index_dash];
+        while(total <= dashOffset) {
+            index = (index + 1) % dash.count;
+            total += dash.pattern[index];
             gap = !gap;
         }
-        len_total -= dashOffset;
+        total -= dashOffset;
+
         // iterate by polyline points
         for (uint32_t i = 0; i < buff.count - 1; i++) {
-            // append current polyline point
             if (!gap) dashed->append(buff.data[i]);
             // move inside polyline segment
-            while(len_total < buff.dist[i+1].interval) {
+            while(total < buff.dist[i+1].interval) {
                 // get current point
-                dashed->append(tvg::lerp(buff.data[i], buff.data[i+1], len_total / buff.dist[i+1].interval));
+                dashed->append(tvg::lerp(buff.data[i], buff.data[i+1], total / buff.dist[i+1].interval));
                 // update current state
-                index_dash = (index_dash + 1) % dashCnt;
-                len_total += dashPattern[index_dash];
+                index = (index + 1) % dash.count;
+                total += dash.pattern[index];
                 // preceed stroke if dash
                 if (!gap) {
                     dashed->updateDistances();
@@ -403,7 +398,7 @@ struct WgIndexedVertexBuffer
                 gap = !gap;
             }
             // update current subline length
-            len_total -= buff.dist[i+1].interval;
+            total -= buff.dist[i+1].interval;
         }
         // draw last subline
         if (!gap) {

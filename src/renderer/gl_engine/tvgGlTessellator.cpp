@@ -1507,12 +1507,9 @@ void Stroker::stroke(const RenderShape *rshape, const RenderPath& path)
         mStrokeWidth = strokeWidth / mMatrix.e11;
     }
 
-    const float *patterns = nullptr;
-    auto offset = 0.0f;
-    auto patternCnt = rshape->strokeDash(&patterns, &offset);
-
-    if (patternCnt == 0) doStroke(path);
-    else doDashStroke(path, patterns, patternCnt, offset);
+    auto& dash = rshape->stroke->dash;
+    if (dash.count == 0) doStroke(path);
+    else doDashStroke(path, dash.pattern, dash.count, dash.offset, dash.length);
 }
 
 
@@ -1572,14 +1569,14 @@ void Stroker::doStroke(const RenderPath& path)
 }
 
 
-void Stroker::doDashStroke(const RenderPath& path, const float *patterns, uint32_t patternCnt, float offset)
+void Stroker::doDashStroke(const RenderPath& path, const float *patterns, uint32_t patternCnt, float offset, float length)
 {
     RenderPath dpath;
 
     dpath.cmds.reserve(20 * path.cmds.count);
     dpath.pts.reserve(20 * path.pts.count);
 
-    DashStroke dash(&dpath.cmds, &dpath.pts, patterns, patternCnt, offset);
+    DashStroke dash(&dpath.cmds, &dpath.pts, patterns, patternCnt, offset, length);
     dash.doStroke(path);
     doStroke(dpath);
 }
@@ -1915,18 +1912,13 @@ void Stroker::strokeRound(const Point& p, const Point& outDir)
 }
 
 
-DashStroke::DashStroke(Array<PathCommand> *cmds, Array<Point> *pts, const float *patterns, uint32_t patternCnt, float offset)
+DashStroke::DashStroke(Array<PathCommand> *cmds, Array<Point> *pts, const float *patterns, uint32_t patternCnt, float offset, float length)
     : mCmds(cmds),
       mPts(pts),
       mDashPattern(patterns),
       mDashCount(patternCnt),
       mDashOffset(offset),
-      mCurrLen(),
-      mCurrIdx(),
-      mCurOpGap(false),
-      mMove(true),
-      mPtStart(),
-      mPtCur()
+      mDashLength(length)
 {
 }
 
@@ -1937,12 +1929,9 @@ void DashStroke::doStroke(const RenderPath& path)
     auto offset = mDashOffset;
     bool gap = false;
     if (!tvg::zero(mDashOffset)) {
-        auto len = 0.0f;
-        for (uint32_t i = 0; i < mDashCount; ++i) len += mDashPattern[i];
-        if (mDashCount % 2) len *= 2;
-
-        offset = fmodf(offset, len);
-        if (offset < 0) offset += len;
+        auto length = (mDashCount % 2) ? mDashLength * 2 : mDashLength;
+        offset = fmodf(offset, length);
+        if (offset < 0) offset += length;
 
         for (uint32_t i = 0; i < mDashCount * (mDashCount % 2 + 1); ++i, ++idx) {
             auto curPattern = mDashPattern[i % mDashCount];
