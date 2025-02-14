@@ -1542,12 +1542,10 @@ void Stroker::stroke(const RenderShape *rshape, const RenderPath& path)
     auto cmdCnt = path.cmds.count;
     auto ptsCnt = path.pts.count;
 
-    const float *dash_pattern = nullptr;
-    auto dash_offset = 0.0f;
-    auto dashCnt = rshape->strokeDash(&dash_pattern, &dash_offset);
-
-    if (dashCnt == 0) doStroke(cmds, cmdCnt, pts, ptsCnt);
-    else doDashStroke(cmds, cmdCnt, pts, ptsCnt, dashCnt, dash_pattern, dash_offset);
+    auto len = 0.0f;
+    for (size_t i = 0; i < rshape->stroke->dashCnt; ++i) len += rshape->stroke->dashPattern[i];
+    if (rshape->stroke->dashCnt > 0 && len > FLT_EPSILON) doDashStroke(cmds, cmdCnt, pts, ptsCnt, rshape->stroke->dashCnt, rshape->stroke->dashPattern, rshape->stroke->dashOffset);
+    else doStroke(cmds, cmdCnt, pts, ptsCnt);
 }
 
 
