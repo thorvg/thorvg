@@ -303,14 +303,23 @@ struct LottieFont
         free(style);
         free(family);
         free(name);
+        free(data.b64src);
     }
+
+    struct {
+        char* b64src = nullptr;
+        uint32_t size = 0;
+    } data;
 
     Array<LottieGlyph*> chars;
     char* name = nullptr;
     char* family = nullptr;
     char* style = nullptr;
+    size_t dataSize = 0;
     float ascent = 0.0f;
     Origin origin = Embedded;
+
+    void prepare();
 };
 
 struct LottieMarker

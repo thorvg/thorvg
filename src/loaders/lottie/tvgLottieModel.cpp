@@ -197,6 +197,16 @@ float LottieTextRange::factor(float frameNo, float totalLen, float idx)
 }
 
 
+void LottieFont::prepare()
+{
+    if (!data.b64src || !name) return;
+
+    TaskScheduler::async(false);
+    Text::load(name, data.b64src, data.size, "ttf", false);
+    TaskScheduler::async(true);
+}
+
+
 void LottieImage::prepare()
 {
     LottieObject::type = LottieObject::Image;
