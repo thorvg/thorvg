@@ -336,18 +336,19 @@ static void _parseDashArray(SvgLoaderData* loader, const char *str, SvgDash* das
         str = _skipComma(str);
         float parsedValue = toFloat(str, &end);
         if (str == end) break;
-        if (parsedValue <= 0.0f) break;
+        if (parsedValue < 0.0f) {
+            dash->array.reset();
+            return;
+        }
         if (*end == '%') {
             ++end;
             //Refers to the diagonal length of the viewport.
             //https://www.w3.org/TR/SVG2/coords.html#Units
             parsedValue = (sqrtf(powf(loader->svgParse->global.w, 2) + powf(loader->svgParse->global.h, 2)) / sqrtf(2.0f)) * (parsedValue / 100.0f);
         }
-        (*dash).array.push(parsedValue);
+        dash->array.push(parsedValue);
         str = end;
     }
-    //If dash array size is 1, it means that dash and gap size are the same.
-    if ((*dash).array.count == 1) (*dash).array.push((*dash).array[0]);
 }
 
 

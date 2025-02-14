@@ -1511,7 +1511,9 @@ void Stroker::stroke(const RenderShape *rshape, const RenderPath& path)
     auto offset = 0.0f;
     auto patternCnt = rshape->strokeDash(&patterns, &offset);
 
-    if (patternCnt == 0) doStroke(path);
+    auto len = 0.0f;
+    for (size_t i = 0; i < patternCnt; ++i) len += patterns[i];
+    if (patternCnt == 0 || len < FLT_EPSILON) doStroke(path);
     else doDashStroke(path, patterns, patternCnt, offset);
 }
 
@@ -1580,7 +1582,7 @@ void Stroker::doDashStroke(const RenderPath& path, const float *patterns, uint32
     dpath.pts.reserve(20 * path.pts.count);
 
     DashStroke dash(&dpath.cmds, &dpath.pts, patterns, patternCnt, offset);
-    dash.doStroke(path);
+    dash.doStroke(path, mStrokeCap != StrokeCap::Butt);
     doStroke(dpath);
 }
 
@@ -1931,7 +1933,7 @@ DashStroke::DashStroke(Array<PathCommand> *cmds, Array<Point> *pts, const float 
 }
 
 
-void DashStroke::doStroke(const RenderPath& path)
+void DashStroke::doStroke(const RenderPath& path, bool add_zero)
 {
     int32_t idx = 0;
     auto offset = mDashOffset;
@@ -1957,7 +1959,7 @@ void DashStroke::doStroke(const RenderPath& path)
     ARRAY_FOREACH(cmd, path.cmds) {
         switch (*cmd) {
             case PathCommand::Close: {
-                this->dashLineTo(mPtStart);
+                this->dashLineTo(mPtStart, add_zero);
                 break;
             }
             case PathCommand::MoveTo: {
@@ -1971,12 +1973,12 @@ void DashStroke::doStroke(const RenderPath& path)
                 break;
             }
             case PathCommand::LineTo: {
-                this->dashLineTo(*pts);
+                this->dashLineTo(*pts, add_zero);
                 pts++;
                 break;
             }
             case PathCommand::CubicTo: {
-                this->dashCubicTo(pts[0], pts[1], pts[2]);
+                this->dashCubicTo(pts[0], pts[1], pts[2], add_zero);
                 pts += 3;
                 break;
             }
@@ -1986,7 +1988,7 @@ void DashStroke::doStroke(const RenderPath& path)
 }
 
 
-void DashStroke::dashLineTo(const Point& to)
+void DashStroke::dashLineTo(const Point& to, bool add_zero)
 {
     auto len = length(mPtCur - to);
 
@@ -2006,7 +2008,7 @@ void DashStroke::dashLineTo(const Point& to)
 
         while (len - mCurrLen > 0.0001f) {
             Line right;
-            if (mCurrLen > 0.0f) {
+            if (mCurrLen > 0.0f || add_zero) {
                 Line left;
                 curr.split(mCurrLen, left, right);
                 len -= mCurrLen;
@@ -2045,7 +2047,7 @@ void DashStroke::dashLineTo(const Point& to)
 }
 
 
-void DashStroke::dashCubicTo(const Point& cnt1, const Point& cnt2, const Point& end)
+void DashStroke::dashCubicTo(const Point& cnt1, const Point& cnt2, const Point& end, bool add_zero)
 {
     Bezier cur;
     cur.start = {mPtCur.x, mPtCur.y};
@@ -2069,7 +2071,7 @@ void DashStroke::dashCubicTo(const Point& cnt1, const Point& cnt2, const Point& 
     } else {
         while (len - mCurrLen > 0.0001f) {
             Bezier right;
-            if (mCurrLen > 0.0f) {
+            if (mCurrLen > 0.0f || add_zero) {
                 Bezier left;
                 cur.split(mCurrLen, left, right);
                 len -= mCurrLen;
