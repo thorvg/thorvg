@@ -954,6 +954,19 @@ LottieObject* LottieParser::parseAsset()
 }
 
 
+void LottieParser::parseFontData(LottieFont* font, const char* data)
+{
+    if (!data) return;
+    if (strncmp(data, "data:font/ttf;base64,", sizeof("data:font/ttf;base64,") - 1) != 0) {
+        TVGLOG("LOTTIE", "Unsupported embeded font data format");
+        return;
+    }
+
+    auto ttf = data + sizeof("data:font/ttf;base64,") - 1;
+    font->data.size = b64Decode(ttf, strlen(ttf), &font->data.b64src);
+}
+
+
 LottieFont* LottieParser::parseFont()
 {
     enterObject();
@@ -964,10 +977,13 @@ LottieFont* LottieParser::parseFont()
         if (KEY_AS("fName")) font->name = getStringCopy();
         else if (KEY_AS("fFamily")) font->family = getStringCopy();
         else if (KEY_AS("fStyle")) font->style = getStringCopy();
+        else if (KEY_AS("fPath")) parseFontData(font, getString());
         else if (KEY_AS("ascent")) font->ascent = getFloat();
         else if (KEY_AS("origin")) font->origin = (LottieFont::Origin) getInt();
         else skip();
     }
+
+    font->prepare();
     return font;
 }
 
