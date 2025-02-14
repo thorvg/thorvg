@@ -511,7 +511,9 @@ bool shapeGenStrokeRle(SwShape* shape, const RenderShape* rshape, const Matrix& 
 
     //Dash style with/without trimming
     auto trimmed = rshape->strokeTrim();
-    if (rshape->stroke->dashCnt > 0) {
+    auto len = 0.0f;
+    for (size_t i = 0; i < rshape->stroke->dashCnt; ++i) len += rshape->stroke->dashPattern[i];
+    if (rshape->stroke->dashCnt > 0 && len > FLT_EPSILON) {
         shapeOutline = _genDashOutline(rshape, transform, mpool, tid, trimmed);
         if (!shapeOutline) return false;
         dashStroking = true;
