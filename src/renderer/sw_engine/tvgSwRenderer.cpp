@@ -325,8 +325,6 @@ bool SwRenderer::sync()
     }
     tasks.clear();
 
-    if (!sharedMpool) mpoolClear(mpool);
-
     return true;
 }
 
@@ -796,6 +794,7 @@ SwRenderer::SwRenderer()
     if (TaskScheduler::onthread()) {
         TVGLOG("SW_RENDERER", "Running on a non-dominant thread!, Renderer(%p)", this);
         mpool = mpoolInit(threadsCnt);
+        sharedMpool = false;
     } else {
         mpool = globalMpool;
         sharedMpool = true;
