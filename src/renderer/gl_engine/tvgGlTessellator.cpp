@@ -1746,7 +1746,7 @@ void Stroker::strokeCubicTo(const Point& cnt1, const Point& cnt2, const Point& e
 
 void Stroker::strokeClose()
 {
-    if (mStrokeState.prevPt != mStrokeState.firstPt) {
+    if (length(mStrokeState.prevPt - mStrokeState.firstPt) > 0.015625f) {
         this->strokeLineTo(mStrokeState.firstPt);
     }
 
