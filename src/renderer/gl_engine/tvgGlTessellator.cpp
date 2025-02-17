@@ -1997,7 +1997,7 @@ void DashStroke::doStroke(const PathCommand *cmds, uint32_t cmd_count, const Poi
     bool gap = false;
     if (!tvg::zero(mDashOffset)) {
         auto len = 0.0f;
-        for (auto i = 0; i < mDashCount; ++i) len += mDashPattern[i];
+        for (uint32_t i = 0; i < mDashCount; ++i) len += mDashPattern[i];
         if (mDashCount % 2) len *= 2;
 
         offset = fmodf(offset, len);
