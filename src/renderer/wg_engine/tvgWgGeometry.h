@@ -148,7 +148,7 @@ struct WgVertexBuffer
     void close()
     {
         // check if last point is not to close to the first point
-        if (!tvg::zero(length2(data[0] - last()))) {
+        if (length(data[0] - last()) > 0.015625f) {
             append(data[0]);
         }
         closed = true;
