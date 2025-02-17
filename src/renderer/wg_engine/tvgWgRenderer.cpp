@@ -160,9 +160,12 @@ RenderData WgRenderer::prepare(const RenderShape& rshape, RenderData data, const
     // setup fill settings
     renderDataShape->viewport = mViewport;
     renderDataShape->opacity = opacity;
-    renderDataShape->renderSettingsShape.update(mContext, rshape.fill, rshape.color, flags);
-    if (rshape.stroke)
-        renderDataShape->renderSettingsStroke.update(mContext, rshape.stroke->fill, rshape.stroke->color, flags);
+    if (flags & RenderUpdateFlag::Gradient && rshape.fill) renderDataShape->renderSettingsShape.updateFill(mContext, rshape.fill);
+    else if (flags & RenderUpdateFlag::Color) renderDataShape->renderSettingsShape.updateColor(mContext, rshape.color);
+    if (rshape.stroke) {
+        if (flags & RenderUpdateFlag::GradientStroke && rshape.stroke->fill) renderDataShape->renderSettingsStroke.updateFill(mContext, rshape.stroke->fill);
+        else if (flags & RenderUpdateFlag::Stroke) renderDataShape->renderSettingsStroke.updateColor(mContext, rshape.stroke->color);
+    }
 
     // store clips data
     renderDataShape->updateClips(clips);

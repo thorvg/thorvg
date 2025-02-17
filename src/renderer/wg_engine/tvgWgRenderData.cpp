@@ -223,53 +223,54 @@ void WgImageData::release(WgContext& context)
 // WgRenderSettings
 //***********************************************************************
 
-void WgRenderSettings::update(WgContext& context, const Fill* fill, const RenderColor& c, const RenderUpdateFlag flags)
+void WgRenderSettings::updateFill(WgContext& context, const Fill* fill)
 {
-    // setup fill properties
-    if ((flags & (RenderUpdateFlag::Gradient)) && fill) {
-        rasterType = WgRenderRasterType::Gradient;
-        // get gradient transfrom matrix
-        Matrix invFillTransform;
-        WgShaderTypeMat4x4f gradientTrans; // identity by default
-        if (inverse(&fill->transform(), &invFillTransform))
-            gradientTrans.update(invFillTransform);
-        // get gradient rasterisation settings
-        WgShaderTypeGradient gradient;
-        if (fill->type() == Type::LinearGradient) {
-            gradient.update((LinearGradient*)fill);
-            fillType = WgRenderSettingsType::Linear;
-        } else if (fill->type() == Type::RadialGradient) {
-            gradient.update((RadialGradient*)fill);
-            fillType = WgRenderSettingsType::Radial;
-        }
-        // update gpu assets
-        bool bufferGradientSettingsChanged = context.allocateBufferUniform(bufferGroupGradient, &gradient.settings, sizeof(gradient.settings));
-        bool bufferGradientTransformChanged = context.allocateBufferUniform(bufferGroupTransfromGrad, &gradientTrans.mat, sizeof(gradientTrans.mat));
-        bool textureGradientChanged = context.allocateTexture(texGradient, WG_TEXTURE_GRADIENT_SIZE, 1, WGPUTextureFormat_RGBA8Unorm, gradient.texData);
-        if (bufferGradientSettingsChanged || textureGradientChanged || bufferGradientTransformChanged) {
-            // update texture view
-            context.releaseTextureView(texViewGradient);
-            texViewGradient = context.createTextureView(texGradient);
-            // get sampler by spread type
-            WGPUSampler sampler = context.samplerLinearClamp;
-            if (fill->spread() == FillSpread::Reflect) sampler = context.samplerLinearMirror;
-            if (fill->spread() == FillSpread::Repeat) sampler = context.samplerLinearRepeat;
-            // update bind group
-            context.layouts.releaseBindGroup(bindGroupGradient);
-            bindGroupGradient = context.layouts.createBindGroupTexSampledBuff2Un(
-                sampler, texViewGradient, bufferGroupGradient, bufferGroupTransfromGrad);
-        }
-        skip = false;
-    } else if ((flags & RenderUpdateFlag::Color) && !fill) {
-        rasterType = WgRenderRasterType::Solid;
-        WgShaderTypeVec4f solidColor(c);
-        if (context.allocateBufferUniform(bufferGroupSolid, &solidColor, sizeof(solidColor))) {
-            context.layouts.releaseBindGroup(bindGroupSolid);
-            bindGroupSolid = context.layouts.createBindGroupBuffer1Un(bufferGroupSolid);
-        }
-        fillType = WgRenderSettingsType::Solid;
-        skip = (c.a == 0);
+    rasterType = WgRenderRasterType::Gradient;
+    // get gradient transfrom matrix
+    Matrix invFillTransform;
+    WgShaderTypeMat4x4f gradientTrans; // identity by default
+    if (inverse(&fill->transform(), &invFillTransform))
+        gradientTrans.update(invFillTransform);
+    // get gradient rasterisation settings
+    WgShaderTypeGradient gradient;
+    if (fill->type() == Type::LinearGradient) {
+        gradient.update((LinearGradient*)fill);
+        fillType = WgRenderSettingsType::Linear;
+    } else if (fill->type() == Type::RadialGradient) {
+        gradient.update((RadialGradient*)fill);
+        fillType = WgRenderSettingsType::Radial;
     }
+    // update gpu assets
+    bool bufferGradientSettingsChanged = context.allocateBufferUniform(bufferGroupGradient, &gradient.settings, sizeof(gradient.settings));
+    bool bufferGradientTransformChanged = context.allocateBufferUniform(bufferGroupTransfromGrad, &gradientTrans.mat, sizeof(gradientTrans.mat));
+    bool textureGradientChanged = context.allocateTexture(texGradient, WG_TEXTURE_GRADIENT_SIZE, 1, WGPUTextureFormat_RGBA8Unorm, gradient.texData);
+    if (bufferGradientSettingsChanged || textureGradientChanged || bufferGradientTransformChanged) {
+        // update texture view
+        context.releaseTextureView(texViewGradient);
+        texViewGradient = context.createTextureView(texGradient);
+        // get sampler by spread type
+        WGPUSampler sampler = context.samplerLinearClamp;
+        if (fill->spread() == FillSpread::Reflect) sampler = context.samplerLinearMirror;
+        if (fill->spread() == FillSpread::Repeat) sampler = context.samplerLinearRepeat;
+        // update bind group
+        context.layouts.releaseBindGroup(bindGroupGradient);
+        bindGroupGradient = context.layouts.createBindGroupTexSampledBuff2Un(
+            sampler, texViewGradient, bufferGroupGradient, bufferGroupTransfromGrad);
+    }
+    skip = false;
+};
+
+
+void WgRenderSettings::updateColor(WgContext& context, const RenderColor& c)
+{
+    rasterType = WgRenderRasterType::Solid;
+    WgShaderTypeVec4f solidColor(c);
+    if (context.allocateBufferUniform(bufferGroupSolid, &solidColor, sizeof(solidColor))) {
+        context.layouts.releaseBindGroup(bindGroupSolid);
+        bindGroupSolid = context.layouts.createBindGroupBuffer1Un(bufferGroupSolid);
+    }
+    fillType = WgRenderSettingsType::Solid;
+    skip = (c.a == 0);
 };
 
 
