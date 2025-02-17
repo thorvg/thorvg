@@ -38,7 +38,7 @@ struct WgMeshData {
     void drawImage(WgContext& context, WGPURenderPassEncoder renderPassEncoder);
 
     void update(WgContext& context, const WgVertexBuffer& vertexBuffer);
-    void update(WgContext& context, const WgVertexBufferInd& vertexBufferInd);
+    void update(WgContext& context, const WgIndexedVertexBuffer& vertexBufferInd);
     void bbox(WgContext& context, const Point pmin, const Point pmax);
     void imageBox(WgContext& context, float w, float h);
     void blitBox(WgContext& context);
@@ -60,7 +60,7 @@ struct WgMeshDataGroup {
     Array<WgMeshData*> meshes{};
     
     void append(WgContext& context, const WgVertexBuffer& vertexBuffer);
-    void append(WgContext& context, const WgVertexBufferInd& vertexBufferInd);
+    void append(WgContext& context, const WgIndexedVertexBuffer& vertexBufferInd);
     void append(WgContext& context, const Point pmin, const Point pmax);
     void release(WgContext& context);
 };
@@ -126,11 +126,11 @@ struct WgRenderDataShape: public WgRenderDataPaint
     FillRule fillRule{};
 
     void appendShape(WgContext& context, const WgVertexBuffer& vertexBuffer);
-    void appendStroke(WgContext& context, const WgVertexBufferInd& vertexBufferInd);
+    void appendStroke(WgContext& context, const WgIndexedVertexBuffer& vertexBufferInd);
     void updateBBox(Point pmin, Point pmax);
     void updateAABB(const Matrix& tr);
-    void updateMeshes(WgContext& context, const RenderShape& rshape, const Matrix& tr);
-    void proceedStrokes(WgContext& context, const RenderStroke* rstroke, const WgVertexBuffer& buff);
+    void updateMeshes(WgContext& context, const RenderShape& rshape, const Matrix& tr, WgGeometryBufferPool* pool);
+    void proceedStrokes(WgContext& context, const RenderStroke* rstroke, const WgVertexBuffer& buff, WgGeometryBufferPool* pool);
     void releaseMeshes(WgContext& context);
     void release(WgContext& context) override;
     Type type() override { return Type::Shape; };

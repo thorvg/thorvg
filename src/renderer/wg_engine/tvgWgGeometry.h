@@ -29,57 +29,93 @@
 
 
 // default size of vertex and index buffers
-#define WG_POINTS_COUNT 32768
+#define WG_DEFAULT_BUFFER_SIZE 2048
+
+struct WgVertexBuffer;
+struct WgIndexedVertexBuffer;
+
+struct WgGeometryBufferPool
+{
+private:
+    Array<WgVertexBuffer*> vbuffers;
+    Array<WgIndexedVertexBuffer*> ibuffers;
+
+public:
+    ~WgGeometryBufferPool();
+
+    WgVertexBuffer* reqVertexBuffer(float scale = 1.0f);
+    WgIndexedVertexBuffer* reqIndexedVertexBuffer(float scale = 1.0f);
+    void retVertexBuffer(WgVertexBuffer* buffer);
+    void retIndexedVertexBuffer(WgIndexedVertexBuffer* buffer);
+
+    static WgGeometryBufferPool* instance();  //return the shared buffer pool
+};
+
 
 // simple vertex buffer
 struct WgVertexBuffer
 {
-    Point vbuff[WG_POINTS_COUNT]; // vertex buffer
-    float vdist[WG_POINTS_COUNT]; // distance to previous point
-    float vleng[WG_POINTS_COUNT]; // distance to the first point through all previous points
-    size_t vcount{};
-    bool closed{};
-    float tscale = 1.0f; // tesselation scale
+    Point* data;           // vertex buffer
+    struct Distance {
+        float interval;    // distance to previous point
+        float length;      // distance to the first point through all previous points
+    } *dist;
+    uint32_t count = 0;
+    uint32_t reserved = WG_DEFAULT_BUFFER_SIZE;
+    float scale;           // tesselation scale
+    bool closed = false;
 
     // callback for external process of polyline
     using onPolylineFn = std::function<void(const WgVertexBuffer& buff)>;
 
+    WgVertexBuffer(float scale = 1.0f) : scale(scale)
+    {
+        data = (Point*)malloc(sizeof(Point) * reserved);
+        dist = (Distance*)malloc(sizeof(Distance) * reserved);
+    }
+
+    ~WgVertexBuffer()
+    {
+        free(data);
+        free(dist);
+    }
+
     // reset buffer
     void reset(float scale)
     {
-        vcount = 0;
+        count = 0;
         closed = false;
-        tscale = scale;
+        this->scale = scale;
     }
 
     // get the last point with optional index offset from the end
     Point last(size_t offset = 0) const
     {
-        return vbuff[vcount - offset - 1];
+        return data[count - offset - 1];
     }
 
     // get the last distance with optional index offset from the end
     float lastDist(size_t offset = 0) const
     {
-        return vdist[vcount - offset - 1];
+        return dist[count - offset - 1].interval;
     }
 
     // get total length
     float total() const
     {
-        return (vcount == 0) ? 0.0f : vleng[vcount-1];
+        return (count == 0) ? 0.0f : dist[count-1].length;
     }
 
     // get next vertex index by length using binary search
     size_t getIndexByLength(float len) const
     {
-        if (vcount <= 1) return 0;
+        if (count <= 1) return 0;
         size_t left = 0;
-        size_t right = vcount - 1;
+        size_t right = count - 1;
         while (left <= right) {
             size_t mid = left + (right - left) / 2;
-            if (vleng[mid] == len) return mid;
-            else if (vleng[mid] < len) left = mid + 1;
+            if (dist[mid].length == len) return mid;
+            else if (dist[mid].length < len) left = mid + 1;
             else right = mid - 1;
         }
         return right + 1;
@@ -88,23 +124,23 @@ struct WgVertexBuffer
     // get min and max values of the buffer
     void getMinMax(Point& pmin, Point& pmax) const
     {
-        if (vcount == 0) return;
-        pmax = pmin = vbuff[0];
-        for (size_t i = 1; i < vcount; i++) {
-            pmin = min(pmin, vbuff[i]);
-            pmax = max(pmax, vbuff[i]);
+        if (count == 0) return;
+        pmax = pmin = data[0];
+        for (size_t i = 1; i < count; i++) {
+            pmin = min(pmin, data[i]);
+            pmax = max(pmax, data[i]);
         }
     }
 
     // update points distancess to the prev point and total length
     void updateDistances()
     {
-        if (vcount == 0) return;
-        vdist[0] = 0.0f;
-        vleng[0] = 0.0f;
-        for (size_t i = 1; i < vcount; i++) {
-            vdist[i] = length(vbuff[i-1] - vbuff[i]);
-            vleng[i] = vleng[i-1] + vdist[i];
+        if (count == 0) return;
+        dist[0].interval = 0.0f;
+        dist[0].length = 0.0f;
+        for (size_t i = 1; i < count; i++) {
+            dist[i].interval = tvg::length(data[i-1] - data[i]);
+            dist[i].length = dist[i-1].length + dist[i].interval;
         }
     }
 
@@ -112,23 +148,29 @@ struct WgVertexBuffer
     void close()
     {
         // check if last point is not to close to the first point
-        if (!tvg::zero(length2(vbuff[0] - last())))
-            append(vbuff[0]);
+        if (!tvg::zero(length2(data[0] - last()))) {
+            append(data[0]);
+        }
         closed = true;
     }
 
     // append point
     void append(const Point& p)
     {
-        vbuff[vcount] = p;
-        vcount++;
+        if (count >= reserved) {
+            reserved *= 2;
+            data = (Point*) realloc(data, reserved * sizeof(Point));
+            dist = (Distance*) realloc(dist, reserved * sizeof(Distance));
+        }
+        data[count++] = p;
     }
 
     // append source vertex buffer in index range from start to end (end not included)
     void appendRange(const WgVertexBuffer& buff, size_t start_index, size_t end_index)
     {
-        for (size_t i = start_index; i < end_index; i++)
-            append(buff.vbuff[i]);
+        for (size_t i = start_index; i < end_index; i++) {
+            append(buff.data[i]);
+        }
     }
 
     // append circle (list of triangles)
@@ -136,7 +178,7 @@ struct WgVertexBuffer
     {
         // get approx circle length
         float clen = 2.0f * radius * MATH_PI;
-        size_t nsegs = std::max((uint32_t)(clen * tscale / 8), 16U);
+        size_t nsegs = std::max((uint32_t)(clen * scale / 8), 16U);
         // append circle^
         Point prev { std::sin(0.0f) * radius, std::cos(0.0f) * radius };
         for (size_t i = 1; i <= nsegs; i++) {
@@ -153,19 +195,20 @@ struct WgVertexBuffer
     void appendCubic(const Point& v0, const Point& v1, const Point& v2, const Point& v3)
     {
         // get approx cubic length
-        float clen = (length(v0 - v1) + length(v1 - v2) + length(v2 - v3));
-        size_t nsegs = std::max((uint32_t)(clen * tscale / 16), 16U);
+        float clen = (tvg::length(v0 - v1) + tvg::length(v1 - v2) + tvg::length(v2 - v3));
+        size_t nsegs = std::max((uint32_t)(clen * scale / 16), 16U);
         // append cubic
         Bezier bezier{v0, v1, v2, v3};
-        for (size_t i = 1; i <= nsegs; i++)
+        for (size_t i = 1; i <= nsegs; i++) {
             append(bezier.at((float)i / nsegs));
+        }
     }
 
     // decode path with callback for external prcesses
     void decodePath(const RenderShape& rshape, bool update_dist, onPolylineFn onPolyline, bool trim = false)
     {
         // decode path
-        reset(tscale);
+        reset(scale);
 
         PathCommand *cmds, *trimmedCmds = nullptr;
         Point *pts, *trimmedPts = nullptr;
@@ -193,8 +236,8 @@ struct WgVertexBuffer
             if (cmd == PathCommand::MoveTo) {
                 // after path decoding we need to update distances and total length
                 if (update_dist) updateDistances();
-                if ((onPolyline) && (vcount > 0)) onPolyline(*this);
-                reset(tscale);
+                if ((onPolyline) && (count > 0)) onPolyline(*this);
+                reset(scale);
                 append(pts[pntIndex]);
                 pntIndex++;
             } else if (cmd == PathCommand::LineTo) {
@@ -203,20 +246,18 @@ struct WgVertexBuffer
             } else if (cmd == PathCommand::Close) {
                 close();
                 // proceed path if close command is not the last command and next command is LineTo or CubicTo
-                if (i + 1 < cmdCnt &&
-                    (cmds[i + 1] == PathCommand::LineTo ||
-                     cmds[i + 1] == PathCommand::CubicTo)) {
+                if (i + 1 < cmdCnt && (cmds[i + 1] == PathCommand::LineTo || cmds[i + 1] == PathCommand::CubicTo)) {
                     // proceed current path
                     if (update_dist) updateDistances();
-                    if ((vcount > 0) && (onPolyline)) onPolyline(*this);
+                    if ((count > 0) && (onPolyline)) onPolyline(*this);
                     // append closing point of current path as a first point of the new path
                     Point last_pt = last();
-                    reset(tscale);
+                    reset(scale);
                     append(last_pt);
                 }
             } else if (cmd == PathCommand::CubicTo) {
-                // append tesselated cubic spline with tscale param
-                appendCubic(vbuff[vcount - 1], pts[pntIndex + 0], pts[pntIndex + 1], pts[pntIndex + 2]);
+                // append tesselated cubic spline with scale param
+                appendCubic(data[count - 1], pts[pntIndex + 0], pts[pntIndex + 1], pts[pntIndex + 2]);
                 pntIndex += 3;
             }
         }
@@ -226,28 +267,58 @@ struct WgVertexBuffer
 
         // after path decoding we need to update distances and total length
         if (update_dist) updateDistances();
-        if ((vcount > 0) && (onPolyline)) onPolyline(*this);
-        reset(tscale);
+        if ((count > 0) && (onPolyline)) onPolyline(*this);
+        reset(scale);
     }
 };
 
-// simple indexed vertex buffer
-struct WgVertexBufferInd
+
+struct WgIndexedVertexBuffer
 {
-    Point vbuff[WG_POINTS_COUNT*16];
-    Point tbuff[WG_POINTS_COUNT*16];
-    uint32_t ibuff[WG_POINTS_COUNT*16];
-    size_t vcount = 0;
-    size_t icount = 0;
-    float tscale = 1.0f;
-    // intermediate buffer for stroke dashing
-    WgVertexBuffer dashed;
+    Point* vbuff;
+    uint32_t* ibuff;
+    uint32_t vcount = 0, icount = 0;
+    size_t vreserved = WG_DEFAULT_BUFFER_SIZE;
+    size_t ireserved = WG_DEFAULT_BUFFER_SIZE * 2;
+    WgGeometryBufferPool* pool;
+    WgVertexBuffer* dashed;   // intermediate buffer for stroke dashing
+    float scale;
+
+    WgIndexedVertexBuffer(WgGeometryBufferPool* pool, float scale = 1.0f) : pool(pool), scale(scale)
+    {
+        vbuff = (Point*)malloc(sizeof(Point) * vreserved);
+        ibuff = (uint32_t*)malloc(sizeof(uint32_t) * ireserved);
+        dashed = pool->reqVertexBuffer();
+    }
+
+    ~WgIndexedVertexBuffer()
+    {
+        pool->retVertexBuffer(dashed);
+        free(vbuff);
+        free(ibuff);
+    }
 
     // reset buffer
     void reset(float scale)
     {
         icount = vcount = 0;
-        tscale = scale;
+        this->scale = scale;
+    }
+
+    void growIndex(size_t grow)
+    {
+        if (icount + grow >= ireserved) {
+            ireserved *= 2;
+            ibuff = (uint32_t*) realloc(ibuff, ireserved * sizeof(uint32_t));
+        }
+    }
+
+    void growVertex(size_t grow)
+    {
+        if (vcount + grow >= vreserved) {
+            vreserved *= 2;
+            vbuff = (Point*) realloc(vbuff, vreserved * sizeof(Point));
+        }
     }
 
     // get min and max values of the buffer
@@ -264,19 +335,20 @@ struct WgVertexBufferInd
     // append quad - two triangles formed from four points
     void appendQuad(const Point& p0, const Point& p1, const Point& p2, const Point& p3)
     {
-        // append vertexes
+        growVertex(4);
         vbuff[vcount+0] = p0;
         vbuff[vcount+1] = p1;
         vbuff[vcount+2] = p2;
         vbuff[vcount+3] = p3;
-        // append indexes
+
+        growIndex(6);
         ibuff[icount+0] = vcount + 0;
         ibuff[icount+1] = vcount + 1;
         ibuff[icount+2] = vcount + 2;
         ibuff[icount+3] = vcount + 1;
         ibuff[icount+4] = vcount + 3;
         ibuff[icount+5] = vcount + 2;
-        // update buffer
+
         vcount += 4;
         icount += 6;
     }
@@ -285,9 +357,9 @@ struct WgVertexBufferInd
     void appendStrokesDashed(const WgVertexBuffer& buff, const RenderStroke* rstroke)
     {
         // dashed buffer
-        dashed.reset(tscale);
+        dashed->reset(scale);
         // ignore single points polyline
-        if (buff.vcount < 2) return;
+        if (buff.count < 2) return;
         const float* dashPattern = rstroke->dashPattern;
         size_t dashCnt = rstroke->dashCnt;
         // starting state
@@ -295,8 +367,9 @@ struct WgVertexBufferInd
         float len_total = dashPattern[index_dash];
         // get dashes length
         float dashes_lenth{};
-        for (uint32_t i = 0; i < dashCnt * (dashCnt % 2 + 1); i++)
+        for (uint32_t i = 0; i < dashCnt * (dashCnt % 2 + 1); i++) {
             dashes_lenth += dashPattern[i % dashCnt];
+        }
         if (dashes_lenth == 0) return;
         // normalize dash offset
         float dashOffset = rstroke->dashOffset;
@@ -311,51 +384,54 @@ struct WgVertexBufferInd
         }
         len_total -= dashOffset;
         // iterate by polyline points
-        for (uint32_t i = 0; i < buff.vcount - 1; i++) {
+        for (uint32_t i = 0; i < buff.count - 1; i++) {
             // append current polyline point
-            if (!gap) dashed.append(buff.vbuff[i]);
+            if (!gap) dashed->append(buff.data[i]);
             // move inside polyline segment
-            while(len_total < buff.vdist[i+1]) {
+            while(len_total < buff.dist[i+1].interval) {
                 // get current point
-                dashed.append(tvg::lerp(buff.vbuff[i], buff.vbuff[i+1], len_total / buff.vdist[i+1]));
+                dashed->append(tvg::lerp(buff.data[i], buff.data[i+1], len_total / buff.dist[i+1].interval));
                 // update current state
                 index_dash = (index_dash + 1) % dashCnt;
                 len_total += dashPattern[index_dash];
                 // preceed stroke if dash
                 if (!gap) {
-                    dashed.updateDistances();
-                    appendStrokes(dashed, rstroke);
-                    dashed.reset(tscale);
+                    dashed->updateDistances();
+                    appendStrokes(*dashed, rstroke);
+                    dashed->reset(scale);
                 }
                 gap = !gap;
             }
             // update current subline length
-            len_total -= buff.vdist[i+1];
+            len_total -= buff.dist[i+1].interval;
         }
         // draw last subline
         if (!gap) {
-            dashed.append(buff.last());
-            dashed.updateDistances();
-            appendStrokes(dashed, rstroke);
+            dashed->append(buff.last());
+            dashed->updateDistances();
+            appendStrokes(*dashed, rstroke);
         }
     }
 
     // append buffer with optional offset
     void appendBuffer(const WgVertexBuffer& buff, Point offset = Point{0.0f, 0.0f})
     {
-        for (uint32_t i = 0; i < buff.vcount; i++ ) {
-            vbuff[vcount + i] = buff.vbuff[i] + offset;
+        growVertex(buff.count);
+        growIndex(buff.count);
+
+        for (uint32_t i = 0; i < buff.count; i++) {
+            vbuff[vcount + i] = buff.data[i] + offset;
             ibuff[icount + i] = vcount + i;
         }
-        vcount += buff.vcount;
-        icount += buff.vcount;
+        vcount += buff.count;
+        icount += buff.count;
     };
 
     void appendLine(const Point& v0, const Point& v1, float dist, float halfWidth)
     {
         if(tvg::zero(dist)) return;
         Point sub = v1 - v0;
-        Point nrm = { +sub.y / dist * halfWidth, -sub.x / dist * halfWidth };
+        Point nrm = {sub.y / dist * halfWidth, -sub.x / dist * halfWidth};
         appendQuad(v0 - nrm, v0 + nrm, v1 - nrm, v1 + nrm);
     }
 
@@ -364,8 +440,8 @@ struct WgVertexBufferInd
         if(tvg::zero(dist1) || tvg::zero(dist2)) return;
         Point sub1 = v1 - v0;
         Point sub2 = v2 - v1;
-        Point nrm1 { +sub1.y / dist1 * halfWidth, -sub1.x / dist1 * halfWidth };
-        Point nrm2 { +sub2.y / dist2 * halfWidth, -sub2.x / dist2 * halfWidth };
+        Point nrm1 {sub1.y / dist1 * halfWidth, -sub1.x / dist1 * halfWidth};
+        Point nrm2 {sub2.y / dist2 * halfWidth, -sub2.x / dist2 * halfWidth};
         appendQuad(v1 - nrm1, v1 + nrm1, v1 - nrm2, v1 + nrm2);
     }
 
@@ -398,7 +474,7 @@ struct WgVertexBufferInd
         if(tvg::zero(dist)) return;
         Point sub = v1 - v0;
         Point offset = sub / dist * halfWidth;
-        Point nrm = { +offset.y, -offset.x };
+        Point nrm = {+offset.y, -offset.x};
         appendQuad(v1 - nrm, v1 + nrm, v1 + offset - nrm, v1 + offset + nrm);
     }
 
@@ -406,16 +482,18 @@ struct WgVertexBufferInd
     {
         assert(rstroke);
         // empty buffer gueard
-        if (buff.vcount < 2) return;
+        if (buff.count < 2) return;
+
         float halfWidth = rstroke->width * 0.5f;
 
         // append core lines
-        for (size_t i = 1; i < buff.vcount; i++)
-            appendLine(buff.vbuff[i-1], buff.vbuff[i], buff.vdist[i], halfWidth);
+        for (size_t i = 1; i < buff.count; i++) {
+            appendLine(buff.data[i-1], buff.data[i], buff.dist[i].interval, halfWidth);
+        }
 
         // append caps (square)
         if ((rstroke->cap == StrokeCap::Square) && !buff.closed) {
-            appendSquare(buff.vbuff[1], buff.vbuff[0], buff.vdist[1], halfWidth);
+            appendSquare(buff.data[1], buff.data[0], buff.dist[1].interval, halfWidth);
             appendSquare(buff.last(1), buff.last(0), buff.lastDist(0), halfWidth);
         }
 
@@ -423,19 +501,19 @@ struct WgVertexBufferInd
         if ((rstroke->join == StrokeJoin::Round) || (rstroke->cap == StrokeCap::Round)) {
             // create mesh for circle
             WgVertexBuffer circle;
-            circle.reset(buff.tscale);
+            circle.reset(buff.scale);
             circle.appendCircle(halfWidth);
             // append caps (round)
             if (rstroke->cap == StrokeCap::Round) {
-                appendBuffer(circle, buff.vbuff[0]);
+                appendBuffer(circle, buff.data[0]);
                 // append ending cap if polyline is not closed
-                if (!buff.closed) 
-                    appendBuffer(circle, buff.last());
+                if (!buff.closed) appendBuffer(circle, buff.last());
             }
             // append joints (round)
             if (rstroke->join == StrokeJoin::Round) {
-                for (size_t i = 1; i < buff.vcount - 1; i++)
-                    appendBuffer(circle, buff.vbuff[i]);
+                for (size_t i = 1; i < buff.count - 1; i++) {
+                    appendBuffer(circle, buff.data[i]);
+                }
                 if (buff.closed) appendBuffer(circle, buff.last());
             }
         }
@@ -443,22 +521,24 @@ struct WgVertexBufferInd
         // append closed endings
         if (buff.closed) {
             // close by bevel
-            if (rstroke->join == StrokeJoin::Bevel)
-                appendBevel(buff.last(1), buff.vbuff[0], buff.vbuff[1], buff.lastDist(0), buff.vdist[1], halfWidth);
+            if (rstroke->join == StrokeJoin::Bevel) {
+                appendBevel(buff.last(1), buff.data[0], buff.data[1], buff.lastDist(0), buff.dist[1].interval, halfWidth);
             // close by mitter
-            else if (rstroke->join == StrokeJoin::Miter) {
-                appendMiter(buff.last(1), buff.vbuff[0], buff.vbuff[1], buff.lastDist(0), buff.vdist[1], halfWidth, rstroke->miterlimit);
+            } else if (rstroke->join == StrokeJoin::Miter) {
+                appendMiter(buff.last(1), buff.data[0], buff.data[1], buff.lastDist(0), buff.dist[1].interval, halfWidth, rstroke->miterlimit);
             }
         }
 
         // append joints (bevel)
         if (rstroke->join == StrokeJoin::Bevel) {
-            for (size_t i = 1; i < buff.vcount - 1; i++)
-                appendBevel(buff.vbuff[i-1], buff.vbuff[i], buff.vbuff[i+1], buff.vdist[i], buff.vdist[i+1], halfWidth);
+            for (size_t i = 1; i < buff.count - 1; i++) {
+                appendBevel(buff.data[i-1], buff.data[i], buff.data[i+1], buff.dist[i].interval, buff.dist[i+1].interval, halfWidth);
+            }
         // append joints (mitter)
         } else if (rstroke->join == StrokeJoin::Miter) {
-            for (size_t i = 1; i < buff.vcount - 1; i++)
-                appendMiter(buff.vbuff[i-1], buff.vbuff[i], buff.vbuff[i+1], buff.vdist[i], buff.vdist[i+1], halfWidth, rstroke->miterlimit);
+            for (size_t i = 1; i < buff.count - 1; i++) {
+                appendMiter(buff.data[i-1], buff.data[i], buff.data[i+1], buff.dist[i].interval, buff.dist[i+1].interval, halfWidth, rstroke->miterlimit);
+            }
         }
     }
 };
