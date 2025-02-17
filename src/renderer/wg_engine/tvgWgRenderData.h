@@ -89,7 +89,8 @@ struct WgRenderSettings
     WgRenderRasterType rasterType{};
     bool skip{};
 
-    void update(WgContext& context, const Fill* fill, const RenderColor& c, const RenderUpdateFlag flags);
+    void updateFill(WgContext& context, const Fill* fill);
+    void updateColor(WgContext& context, const RenderColor& c);
     void release(WgContext& context);
 };
 
