@@ -77,7 +77,7 @@ private:
     Array<SwSurface*>    compositors;                 //render targets cache list
     SwMpool*             mpool;                       //private memory pool
     RenderRegion         vport;                       //viewport
-    bool                 sharedMpool = true;          //memory-pool behavior policy
+    bool                 sharedMpool;                 //memory-pool behavior policy
 
     SwRenderer();
     ~SwRenderer();
