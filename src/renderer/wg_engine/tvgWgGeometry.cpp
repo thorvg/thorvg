@@ -77,6 +77,7 @@ WgGeometryBufferPool* WgGeometryBufferPool::instance()
 
 WgGeometryBufferPool::~WgGeometryBufferPool()
 {
-    ARRAY_FOREACH(p, vbuffers) delete(*p);
+    //The indexed buffer may contain the vertex buffer, so free the memory in reverse order.
     ARRAY_FOREACH(p, ibuffers) delete(*p);
+    ARRAY_FOREACH(p, vbuffers) delete(*p);
 }
