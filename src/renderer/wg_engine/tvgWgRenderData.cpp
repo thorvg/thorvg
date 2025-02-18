@@ -374,7 +374,7 @@ void WgRenderDataShape::updateMeshes(WgContext& context, const RenderShape &rsha
     // path decoded vertex buffer
     auto pbuff = pool->reqVertexBuffer(scale);
 
-    if (rshape.strokeTrim()) {
+    if (rshape.trimpath()) {
         auto trimbuff =  pool->reqVertexBuffer(scale);
         pbuff->decodePath(rshape, true, [&](const WgVertexBuffer& path_buff) {
             appendShape(context, path_buff);

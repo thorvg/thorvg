@@ -764,7 +764,7 @@ void LottieBuilder::updateTrimpath(TVG_UNUSED LottieGroup* parent, LottieObject*
         end = (length * end) + pbegin;
     }
 
-    ctx->propagator->strokeTrim(begin, end, trimpath->type == LottieTrimpath::Type::Simultaneous);
+    ctx->propagator->trimpath(begin, end, trimpath->type == LottieTrimpath::Type::Simultaneous);
     ctx->merging = nullptr;
 }
 
@@ -1257,7 +1257,7 @@ void LottieBuilder::updateStrokeEffect(LottieLayer* layer, LottieFxStroke* effec
     }
 
     shape->transform(layer->cache.matrix);
-    shape->strokeTrim(effect->begin(frameNo) * 0.01f, effect->end(frameNo) * 0.01f);
+    shape->trimpath(effect->begin(frameNo) * 0.01f, effect->end(frameNo) * 0.01f);
     shape->strokeFill(255, 255, 255, (int)(effect->opacity(frameNo) * 255.0f));
     shape->strokeJoin(StrokeJoin::Round);
     shape->strokeCap(StrokeCap::Round);
