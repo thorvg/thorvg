@@ -1544,7 +1544,7 @@ void Stroker::stroke(const RenderShape *rshape)
     Point *pts, *trimmedPts = nullptr;
     uint32_t cmdCnt = 0, ptsCnt = 0;
 
-    if (rshape->strokeTrim()) {
+    if (rshape->trimpath()) {
         RenderPath trimmedPath;
         if (!rshape->stroke->trim.trim(rshape->path, trimmedPath)) return;
 

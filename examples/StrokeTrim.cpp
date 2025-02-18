@@ -43,7 +43,7 @@ struct UserExample : tvgexam::Example
         shape1->strokeJoin(tvg::StrokeJoin::Round);
         shape1->strokeCap(tvg::StrokeCap::Round);
         shape1->strokeWidth(12);
-        shape1->strokeTrim(0.25f, 0.75f, false);
+        shape1->trimpath(0.25f, 0.75f, false);
 
         auto shape2 = static_cast<tvg::Shape*>(shape1->duplicate());
         shape2->translate(300, 300);
@@ -52,7 +52,7 @@ struct UserExample : tvgexam::Example
 
         float dashPatterns[] = {10, 20};
         shape2->strokeDash(dashPatterns, 2, 10);
-        shape2->strokeTrim(0.25f, 0.75f, true);
+        shape2->trimpath(0.25f, 0.75f, true);
 
         canvas->push(shape1);
         canvas->push(shape2);

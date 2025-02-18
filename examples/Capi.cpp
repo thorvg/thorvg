@@ -149,7 +149,7 @@ void contents()
     tvg_shape_set_stroke_width(scene_shape1, 10.0f);
     tvg_shape_set_stroke_cap(scene_shape1, Tvg_Stroke_Cap::TVG_STROKE_CAP_ROUND);
     tvg_shape_set_stroke_join(scene_shape1, Tvg_Stroke_Join::TVG_STROKE_JOIN_ROUND);
-    tvg_shape_set_stroke_trim(scene_shape1, 0.25f, 0.75f, true);
+    tvg_shape_set_trimpath(scene_shape1, 0.25f, 0.75f, true);
 
     //Set circles with a dashed stroke
     Tvg_Paint* scene_shape2 = tvg_paint_duplicate(scene_shape1);
