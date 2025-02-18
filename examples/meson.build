@@ -44,7 +44,6 @@ source_file = [
     'InvMasking.cpp',
     'LinearGradient.cpp',
     'Lottie.cpp',
-    'LottieTweening.cpp',
     'LumaMasking.cpp',
     'Masking.cpp',
     'MaskingMethods.cpp',
@@ -76,7 +75,7 @@ source_file = [
 
 
 if lottie_loader
-  source_file += 'LottieExtension.cpp'
+  source_file += ['LottieExtension.cpp', 'LottieTweening.cpp']
 endif
 
 if lottie_expressions
