@@ -1570,8 +1570,8 @@ void Stroker::stroke(const RenderShape *rshape)
     if (dashCnt == 0) doStroke(cmds, cmdCnt, pts, ptsCnt);
     else doDashStroke(cmds, cmdCnt, pts, ptsCnt, dashCnt, dash_pattern, dash_offset);
 
-    free(trimmedCmds);
-    free(trimmedPts);
+    tvg::free(trimmedCmds);
+    tvg::free(trimmedPts);
 }
 
 

@@ -20,7 +20,6 @@
  * SOFTWARE.
  */
 
-#include "tvgMath.h"
 #include "tvgSwCommon.h"
 #include "tvgFill.h"
 
@@ -130,7 +129,7 @@ static bool _updateColorTable(SwFill* fill, const Fill* fdata, const SwSurface* 
     if (fill->solid) return true;
 
     if (!fill->ctable) {
-        fill->ctable = static_cast<uint32_t*>(malloc(GRADIENT_STOP_SIZE * sizeof(uint32_t)));
+        fill->ctable = tvg::malloc<uint32_t*>(GRADIENT_STOP_SIZE * sizeof(uint32_t));
     }
 
     const Fill::ColorStop* colors;
@@ -830,7 +829,7 @@ const Fill::ColorStop* fillFetchSolid(const SwFill* fill, const Fill* fdata)
 void fillReset(SwFill* fill)
 {
     if (fill->ctable) {
-        free(fill->ctable);
+        tvg::free(fill->ctable);
         fill->ctable = nullptr;
     }
     fill->translucent = false;
@@ -842,7 +841,7 @@ void fillFree(SwFill* fill)
 {
     if (!fill) return;
 
-    if (fill->ctable) free(fill->ctable);
+    if (fill->ctable) tvg::free(fill->ctable);
 
-    free(fill);
+    tvg::free(fill);
 }

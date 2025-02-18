@@ -20,16 +20,7 @@
  * SOFTWARE.
  */
 
-#include <cstring>
 #include <algorithm>
-#ifdef _WIN32
-    #include <malloc.h>
-#elif defined(__linux__) || defined(__ZEPHYR__)
-    #include <alloca.h>
-#else
-    #include <stdlib.h>
-#endif
-
 #include "tvgCommon.h"
 #include "tvgMath.h"
 #include "tvgLottieModel.h"
@@ -177,7 +168,7 @@ void LottieBuilder::updateTransform(LottieGroup* parent, LottieObject** child, f
     uint8_t opacity;
 
     if (parent->mergeable()) {
-        if (!ctx->transform) ctx->transform = (Matrix*)malloc(sizeof(Matrix));
+        if (!ctx->transform) ctx->transform = tvg::malloc<Matrix*>(sizeof(Matrix));
         _updateTransform(transform, frameNo, *ctx->transform, opacity, false, tween, exps);
         return;
     }

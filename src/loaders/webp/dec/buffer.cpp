@@ -11,7 +11,7 @@
 //
 // Author: Skal (pascal.massimino@gmail.com)
 
-#include <stdlib.h>
+#include "tvgCommon.h"
 
 #include "./vp8i.h"
 #include "./webpi.h"
@@ -104,7 +104,7 @@ static VP8StatusCode AllocateBuffer(WebPDecBuffer* const buffer) {
     total_size = size + 2 * uv_size + a_size;
 
     // Security/sanity checks
-    output = (uint8_t*)malloc(total_size * sizeof(*output));
+    output = tvg::malloc<uint8_t*>(total_size * sizeof(*output));
     if (output == NULL) {
       return VP8_STATUS_OUT_OF_MEMORY;
     }
@@ -217,7 +217,7 @@ int WebPInitDecBufferInternal(WebPDecBuffer* buffer, int version) {
 void WebPFreeDecBuffer(WebPDecBuffer* buffer) {
   if (buffer != NULL) {
     if (!buffer->is_external_memory) {
-      free(buffer->private_memory);
+      tvg::free(buffer->private_memory);
     }
     buffer->private_memory = NULL;
   }

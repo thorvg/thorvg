@@ -24,10 +24,6 @@
 #include "tvgTaskScheduler.h"
 #include "tvgLoader.h"
 
-#ifdef _WIN32
-    #include <cstring>
-#endif
-
 #ifdef THORVG_SW_RASTER_SUPPORT
     #include "tvgSwRenderer.h"
 #endif
@@ -174,4 +170,14 @@ const char* Initializer::version(uint32_t* major, uint32_t* minor, uint32_t* mic
 uint16_t THORVG_VERSION_NUMBER()
 {
     return _version;
+}
+
+
+void* operator new(std::size_t size) {
+    return tvg::malloc(size);
+}
+
+
+void operator delete(void* ptr) noexcept {
+    tvg::free(ptr);
 }

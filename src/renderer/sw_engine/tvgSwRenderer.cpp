@@ -25,7 +25,6 @@
 #endif
 #include <algorithm>
 #include <atomic>
-#include "tvgMath.h"
 #include "tvgSwCommon.h"
 #include "tvgTaskScheduler.h"
 #include "tvgSwRenderer.h"
@@ -384,7 +383,7 @@ void SwRenderer::clearCompositors()
 {
     //Free Composite Caches
     ARRAY_FOREACH(p, compositors) {
-        free((*p)->compositor->image.data);
+        tvg::free((*p)->compositor->image.data);
         delete((*p)->compositor);
         delete(*p);
     }
@@ -555,7 +554,7 @@ SwSurface* SwRenderer::request(int channelSize, bool square)
         //Inherits attributes from main surface
         cmp = new SwSurface(surface);
         cmp->compositor = new SwCompositor;
-        cmp->compositor->image.data = (pixel_t*)malloc(channelSize * w * h);
+        cmp->compositor->image.data = tvg::malloc<pixel_t*>(channelSize * w * h);
         cmp->w = cmp->compositor->image.w = w;
         cmp->h = cmp->compositor->image.h = h;
         cmp->stride = cmp->compositor->image.stride = w;
@@ -700,7 +699,7 @@ bool SwRenderer::render(RenderCompositor* cmp, const RenderEffect* effect, bool 
 
 void SwRenderer::dispose(RenderEffect* effect) 
 {
-    free(effect->rd);
+    tvg::free(effect->rd);
     effect->rd = nullptr;
 }
 

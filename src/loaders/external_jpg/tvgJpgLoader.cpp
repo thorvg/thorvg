@@ -20,7 +20,6 @@
  * SOFTWARE.
  */
 
-#include <memory.h>
 #include <turbojpeg.h>
 #include "tvgJpgLoader.h"
 
@@ -30,7 +29,7 @@
 
 void JpgLoader::clear()
 {
-    if (freeData) free(data);
+    if (freeData) tvg::free(data);
     data = nullptr;
     size = 0;
     freeData = false;
@@ -69,7 +68,7 @@ bool JpgLoader::open(const char* path)
     if (((size = ftell(jpegFile)) < 1)) goto finalize;
     if (fseek(jpegFile, 0, SEEK_SET)) goto finalize;
 
-    data = (unsigned char *) malloc(size);
+    data = tvg::malloc<unsigned char*>(size);
     if (!data) goto finalize;
 
     freeData = true;
@@ -106,7 +105,7 @@ bool JpgLoader::open(const char* data, uint32_t size, TVG_UNUSED const char* rpa
     if (tjDecompressHeader3(jpegDecompressor, (unsigned char *) data, size, &width, &height, &subSample, &colorSpace) < 0) return false;
 
     if (copy) {
-        this->data = (unsigned char *) malloc(size);
+        this->data = tvg::malloc<unsigned char*>(size);
         if (!this->data) return false;
         memcpy((unsigned char *)this->data, data, size);
         freeData = true;

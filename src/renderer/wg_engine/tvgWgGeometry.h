@@ -70,14 +70,14 @@ struct WgVertexBuffer
 
     WgVertexBuffer(float scale = 1.0f) : scale(scale)
     {
-        data = (Point*)malloc(sizeof(Point) * reserved);
-        dist = (Distance*)malloc(sizeof(Distance) * reserved);
+        data = tvg::malloc<Point*>(sizeof(Point) * reserved);
+        dist = tvg::malloc<Distance*>(sizeof(Distance) * reserved);
     }
 
     ~WgVertexBuffer()
     {
-        free(data);
-        free(dist);
+        tvg::free(data);
+        tvg::free(dist);
     }
 
     // reset buffer
@@ -159,8 +159,8 @@ struct WgVertexBuffer
     {
         if (count >= reserved) {
             reserved *= 2;
-            data = (Point*) realloc(data, reserved * sizeof(Point));
-            dist = (Distance*) realloc(dist, reserved * sizeof(Distance));
+            data = tvg::realloc<Point*>(data, reserved * sizeof(Point));
+            dist = tvg::realloc<Distance*>(dist, reserved * sizeof(Distance));
         }
         data[count++] = p;
     }
@@ -262,8 +262,8 @@ struct WgVertexBuffer
             }
         }
 
-        free(trimmedCmds);
-        free(trimmedPts);
+        tvg::free(trimmedCmds);
+        tvg::free(trimmedPts);
 
         // after path decoding we need to update distances and total length
         if (update_dist) updateDistances();
@@ -286,16 +286,16 @@ struct WgIndexedVertexBuffer
 
     WgIndexedVertexBuffer(WgGeometryBufferPool* pool, float scale = 1.0f) : pool(pool), scale(scale)
     {
-        vbuff = (Point*)malloc(sizeof(Point) * vreserved);
-        ibuff = (uint32_t*)malloc(sizeof(uint32_t) * ireserved);
+        vbuff = tvg::malloc<Point*>(sizeof(Point) * vreserved);
+        ibuff = tvg::malloc<uint32_t*>(sizeof(uint32_t) * ireserved);
         dashed = pool->reqVertexBuffer();
     }
 
     ~WgIndexedVertexBuffer()
     {
         pool->retVertexBuffer(dashed);
-        free(vbuff);
-        free(ibuff);
+        tvg::free(vbuff);
+        tvg::free(ibuff);
     }
 
     // reset buffer
@@ -309,7 +309,7 @@ struct WgIndexedVertexBuffer
     {
         if (icount + grow >= ireserved) {
             ireserved *= 2;
-            ibuff = (uint32_t*) realloc(ibuff, ireserved * sizeof(uint32_t));
+            ibuff = tvg::realloc<uint32_t*>(ibuff, ireserved * sizeof(uint32_t));
         }
     }
 
@@ -317,7 +317,7 @@ struct WgIndexedVertexBuffer
     {
         if (vcount + grow >= vreserved) {
             vreserved *= 2;
-            vbuff = (Point*) realloc(vbuff, vreserved * sizeof(Point));
+            vbuff = tvg::realloc<Point*>(vbuff, vreserved * sizeof(Point));
         }
     }
 

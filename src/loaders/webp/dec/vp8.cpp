@@ -11,7 +11,7 @@
 //
 // Author: Skal (pascal.massimino@gmail.com)
 
-#include <stdlib.h>
+#include "tvgCommon.h"
 
 #include "./alphai.h"
 #include "./vp8i.h"
@@ -45,7 +45,7 @@ int VP8InitIoInternal(VP8Io* const io, int version) {
 }
 
 VP8Decoder* VP8New(void) {
-  VP8Decoder* const dec = (VP8Decoder*)calloc(1ULL, sizeof(*dec));
+  VP8Decoder* const dec = tvg::calloc<VP8Decoder*>(1ULL, sizeof(*dec));
   if (dec != NULL) {
     SetOk(dec);
     dec->ready_ = 0;
@@ -68,7 +68,7 @@ const char* VP8StatusMessage(VP8Decoder* const dec) {
 void VP8Delete(VP8Decoder* const dec) {
   if (dec != NULL) {
     VP8Clear(dec);
-    free(dec);
+    tvg::free(dec);
   }
 }
 
@@ -670,7 +670,7 @@ void VP8Clear(VP8Decoder* const dec) {
   }
   ALPHDelete(dec->alph_dec_);
   dec->alph_dec_ = NULL;
-  free(dec->mem_);
+  tvg::free(dec->mem_);
   dec->mem_ = NULL;
   dec->mem_size_ = 0;
   memset(&dec->br_, 0, sizeof(dec->br_));

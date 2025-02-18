@@ -36,8 +36,7 @@
           different translation units of a single application.
  */
 
-#include <cstdlib>  // malloc(), realloc(), free(), size_t
-#include <cstring>  // memset(), memcpy(), memmove(), memcmp()
+#include "tvgCommon.h"
 
 ///////////////////////////////////////////////////////////////////////////////
 // RAPIDJSON_VERSION_STRING
@@ -694,15 +693,15 @@ RAPIDJSON_NAMESPACE_END
 
 #ifndef RAPIDJSON_MALLOC
 ///! customization point for global \c malloc
-#define RAPIDJSON_MALLOC(size) std::malloc(size)
+#define RAPIDJSON_MALLOC(size) tvg::malloc(size)
 #endif
 #ifndef RAPIDJSON_REALLOC
 ///! customization point for global \c realloc
-#define RAPIDJSON_REALLOC(ptr, new_size) std::realloc(ptr, new_size)
+#define RAPIDJSON_REALLOC(ptr, new_size) tvg::realloc(ptr, new_size)
 #endif
 #ifndef RAPIDJSON_FREE
 ///! customization point for global \c free
-#define RAPIDJSON_FREE(ptr) std::free(ptr)
+#define RAPIDJSON_FREE(ptr) tvg::free(ptr)
 #endif
 
 ///////////////////////////////////////////////////////////////////////////////

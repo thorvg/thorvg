@@ -245,7 +245,7 @@ struct LottieGlyph
     ~LottieGlyph()
     {
         ARRAY_FOREACH(p, children) delete(*p);
-        free(code);
+        tvg::free(code);
     }
 };
 
@@ -258,7 +258,7 @@ struct LottieTextRange
 
     ~LottieTextRange()
     {
-        free(interpolator);
+        tvg::free(interpolator);
     }
 
     struct {
@@ -300,10 +300,10 @@ struct LottieFont
     ~LottieFont()
     {
         ARRAY_FOREACH(p, chars) delete(*p);
-        free(style);
-        free(family);
-        free(name);
-        free(data.b64src);
+        tvg::free(style);
+        tvg::free(family);
+        tvg::free(name);
+        tvg::free(data.b64src);
     }
 
     struct {
@@ -330,7 +330,7 @@ struct LottieMarker
     
     ~LottieMarker()
     {
-        free(name);
+        tvg::free(name);
     }
 };
 
@@ -925,7 +925,7 @@ struct LottieSlot
 
     ~LottieSlot()
     {
-        free(sid);
+        tvg::free(sid);
         if (!overridden) return;
         ARRAY_FOREACH(pair, pairs) delete(pair->prop);
     }

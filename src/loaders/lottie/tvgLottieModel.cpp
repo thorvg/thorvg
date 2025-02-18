@@ -493,7 +493,7 @@ LottieLayer::~LottieLayer()
     ARRAY_FOREACH(p, effects) delete(*p);
 
     delete(transform);
-    free(name);
+    tvg::free(name);
 }
 
 
@@ -543,12 +543,12 @@ LottieComposition::~LottieComposition()
     if (!initiated && root) delete(root->scene);
 
     delete(root);
-    free(version);
-    free(name);
+    tvg::free(version);
+    tvg::free(name);
 
     ARRAY_FOREACH(p, interpolators) {
-        free((*p)->key);
-        free(*p);
+        tvg::free((*p)->key);
+        tvg::free(*p);
     }
 
     ARRAY_FOREACH(p, assets) delete(*p);

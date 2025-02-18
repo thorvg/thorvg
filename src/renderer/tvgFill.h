@@ -23,8 +23,6 @@
 #ifndef _TVG_FILL_H_
 #define _TVG_FILL_H_
 
-#include <cstdlib>
-#include <cstring>
 #include "tvgCommon.h"
 
 #define LINEAR(A) PIMPL(A, LinearGradient)
@@ -39,14 +37,14 @@ struct Fill::Impl
 
     virtual ~Impl()
     {
-        free(colorStops);
+        tvg::free(colorStops);
     }
 
     void copy(Fill::Impl* dup)
     {
         cnt = dup->cnt;
         spread = dup->spread;
-        colorStops = static_cast<ColorStop*>(malloc(sizeof(ColorStop) * dup->cnt));
+        colorStops = tvg::malloc<ColorStop*>(sizeof(ColorStop) * dup->cnt);
         if (dup->cnt > 0) memcpy(colorStops, dup->colorStops, sizeof(ColorStop) * dup->cnt);
         transform = dup->transform;
     }
@@ -57,7 +55,7 @@ struct Fill::Impl
 
         if (cnt == 0) {
             if (this->colorStops) {
-                free(this->colorStops);
+                tvg::free(this->colorStops);
                 this->colorStops = nullptr;
                 this->cnt = 0;
             }
@@ -65,7 +63,7 @@ struct Fill::Impl
         }
 
         if (cnt != this->cnt) {
-            this->colorStops = static_cast<ColorStop*>(realloc(this->colorStops, cnt * sizeof(ColorStop)));
+            this->colorStops = tvg::realloc<ColorStop*>(this->colorStops, cnt * sizeof(ColorStop));
         }
 
         this->cnt = cnt;

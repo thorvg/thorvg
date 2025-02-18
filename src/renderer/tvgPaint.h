@@ -23,6 +23,7 @@
 #ifndef _TVG_PAINT_H_
 #define _TVG_PAINT_H_
 
+#include "tvgCommon.h"
 #include "tvgRender.h"
 #include "tvgMath.h"
 
@@ -91,7 +92,7 @@ namespace tvg
         {
             if (maskData) {
                 maskData->target->unref();
-                free(maskData);
+                tvg::free(maskData);
             }
 
             if (clipper) clipper->unref();
@@ -163,13 +164,13 @@ namespace tvg
                 maskData->target->unref(maskData->target != target);
                 //Reset scenario
                 if (!target && method == MaskMethod::None) {
-                    free(maskData);
+                    tvg::free(maskData);
                     maskData = nullptr;
                     return true;
                 }
             } else {
                 if (!target && method == MaskMethod::None) return true;
-                maskData = static_cast<Mask*>(malloc(sizeof(Mask)));
+                maskData = tvg::malloc<Mask*>(sizeof(Mask));
             }
             target->ref();
             maskData->target = target;
@@ -198,7 +199,7 @@ namespace tvg
 
             if (maskData) {
                 maskData->target->unref();
-                free(maskData);
+                tvg::free(maskData);
                 maskData = nullptr;
             }
 

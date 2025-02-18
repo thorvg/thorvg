@@ -24,7 +24,7 @@
 #define _TVG_GL_COMMON_H_
 
 #include <assert.h>
-#include <memory>
+
 #if defined (THORVG_GL_TARGET_GLES)
     #include <GLES3/gl3.h>
     #define TVG_REQUIRE_GL_MAJOR_VER 3
