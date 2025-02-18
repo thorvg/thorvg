@@ -21,6 +21,7 @@
  */
 
 #include <atomic>
+#include "tvgTaskScheduler.h"
 #include "tvgWgRenderer.h"
 
 
