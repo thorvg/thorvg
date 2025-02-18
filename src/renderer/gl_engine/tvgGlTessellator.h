@@ -43,7 +43,7 @@ class Tessellator final
 public:
     Tessellator(GlGeometryBuffer* buffer);
     ~Tessellator();
-    bool tessellate(const RenderShape *rshape, bool antialias = false);
+    bool tessellate(const RenderShape *rshape, const RenderPath& path, bool antialias = false);
     void tessellate(const Array<const RenderShape*> &shapes);
 
 private:
@@ -81,7 +81,7 @@ class Stroker
 public:
     Stroker(GlGeometryBuffer* buffer, const Matrix& matrix);
     ~Stroker() = default;
-    void stroke(const RenderShape *rshape);
+    void stroke(const RenderShape *rshape, const RenderPath& path);
     RenderRegion bounds() const;
 
 private:
@@ -148,7 +148,7 @@ class BWTessellator
 public:
     BWTessellator(GlGeometryBuffer* buffer);
     ~BWTessellator() = default;
-    void tessellate(const RenderShape *rshape, const Matrix& matrix);
+    void tessellate(const RenderPath& path, const Matrix& matrix);
     RenderRegion bounds() const;
 
 private:

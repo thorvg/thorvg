@@ -28,11 +28,18 @@
 
 bool GlGeometry::tesselate(const RenderShape& rshape, RenderUpdateFlag flag)
 {
+    const RenderPath* path = nullptr;
+    RenderPath trimmedPath;
+    if (rshape.trimpath()) {
+        if (!rshape.stroke->trim.trim(rshape.path, trimmedPath)) return true;
+        path = &trimmedPath;
+    } else path = &rshape.path;
+
     if (flag & (RenderUpdateFlag::Color | RenderUpdateFlag::Gradient | RenderUpdateFlag::Transform | RenderUpdateFlag::Path)) {
         fill.clear();
 
         BWTessellator bwTess{&fill};
-        bwTess.tessellate(&rshape, matrix);
+        bwTess.tessellate(*path, matrix);
         fillRule = rshape.rule;
         bounds = bwTess.bounds();
     }
@@ -41,7 +48,7 @@ bool GlGeometry::tesselate(const RenderShape& rshape, RenderUpdateFlag flag)
         stroke.clear();
 
         Stroker stroker{&stroke, matrix};
-        stroker.stroke(&rshape);
+        stroker.stroke(&rshape, *path);
         bounds = stroker.bounds();
     }
 
