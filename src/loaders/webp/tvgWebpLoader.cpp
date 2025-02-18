@@ -27,7 +27,7 @@
 
 void WebpLoader::clear()
 {
-    if (freeData) free(data);
+    if (freeData) tvg::free(data);
     data = nullptr;
     freeData = false;
 }
@@ -65,7 +65,7 @@ WebpLoader::WebpLoader() : ImageLoader(FileType::Webp)
 WebpLoader::~WebpLoader()
 {
     clear();
-    free(surface.buf8);
+    tvg::free(surface.buf8);
 }
 
 
@@ -83,7 +83,7 @@ bool WebpLoader::open(const char* path)
         return false;
     }
 
-    data = (uint8_t*)malloc(size);
+    data = tvg::malloc<uint8_t*>(size);
 
     fseek(f, 0, SEEK_SET);
     auto ret = fread(data, sizeof(char), size, f);
@@ -111,7 +111,7 @@ bool WebpLoader::open(const char* path)
 bool WebpLoader::open(const char* data, uint32_t size, TVG_UNUSED const char* rpath, bool copy)
 {
     if (copy) {
-        this->data = (uint8_t*) malloc(size);
+        this->data = tvg::malloc<uint8_t*>(size);
         if (!this->data) return false;
         memcpy((uint8_t*)this->data, data, size);
         freeData = true;

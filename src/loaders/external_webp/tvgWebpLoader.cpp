@@ -57,7 +57,7 @@ WebpLoader::~WebpLoader()
 {
     this->done();
 
-    if (freeData) free(data);
+    if (freeData) tvg::free(data);
     data = nullptr;
     size = 0;
     freeData = false;
@@ -78,7 +78,7 @@ bool WebpLoader::open(const char* path)
     if (((size = ftell(webpFile)) < 1)) goto finalize;
     if (fseek(webpFile, 0, SEEK_SET)) goto finalize;
 
-    data = (unsigned char *) malloc(size);
+    data = tvg::malloc<unsigned char*>(size);
     if (!data) goto finalize;
 
     freeData = true;
@@ -105,7 +105,7 @@ finalize:
 bool WebpLoader::open(const char* data, uint32_t size, TVG_UNUSED const char* rpath, bool copy)
 {
     if (copy) {
-        this->data = (unsigned char *) malloc(size);
+        this->data = tvg::malloc<unsigned char*>(size);
         if (!this->data) return false;
         memcpy((unsigned char *)this->data, data, size);
         freeData = true;

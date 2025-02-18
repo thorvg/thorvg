@@ -383,7 +383,7 @@ LottieInterpolator* LottieParser::getInterpolator(const char* key, Point& in, Po
 
     //new interpolator
     if (!interpolator) {
-        interpolator = static_cast<LottieInterpolator*>(malloc(sizeof(LottieInterpolator)));
+        interpolator = tvg::malloc<LottieInterpolator*>(sizeof(LottieInterpolator));
         interpolator->set(key, in, out);
         comp->interpolators.push(interpolator);
     }
@@ -901,7 +901,7 @@ void LottieParser::parseImage(LottieImage* image, const char* data, const char* 
     //external image resource
     } else {
         auto len = strlen(dirName) + strlen(subPath) + strlen(data) + 2;
-        image->data.path = static_cast<char*>(malloc(len));
+        image->data.path = tvg::malloc<char*>(len);
         snprintf(image->data.path, len, "%s/%s%s", dirName, subPath, data);
     }
 
@@ -1135,7 +1135,7 @@ void LottieParser::parseTextRange(LottieText* text)
                     if (KEY_AS("t")) selector->expressible = (bool) getInt();
                     else if (KEY_AS("xe")) {
                         parseProperty<LottieProperty::Type::Float>(selector->maxEase);
-                        selector->interpolator = static_cast<LottieInterpolator*>(malloc(sizeof(LottieInterpolator)));
+                        selector->interpolator = tvg::malloc<LottieInterpolator*>(sizeof(LottieInterpolator));
                     }
                     else if (KEY_AS("ne")) parseProperty<LottieProperty::Type::Float>(selector->minEase);
                     else if (KEY_AS("a")) parseProperty<LottieProperty::Type::Float>(selector->maxAmount);
@@ -1467,8 +1467,8 @@ void LottieParser::postProcess(Array<LottieGlyph*>& glyphs)
             auto& font = comp->fonts[i];
             if (!strcmp(font->family, glyph->family) && !strcmp(font->style, glyph->style)) {
                 font->chars.push(glyph);
-                free(glyph->family);
-                free(glyph->style);
+                tvg::free(glyph->family);
+                tvg::free(glyph->style);
                 break;
             }
         }
@@ -1570,7 +1570,7 @@ bool LottieParser::apply(LottieSlot* slot, bool byDefault)
 
 void LottieParser::captureSlots(const char* key)
 {
-    free(slots);
+    tvg::free(slots);
 
     // TODO: Replace with immediate parsing, once the slot spec is confirmed by the LAC
 
@@ -1600,7 +1600,7 @@ void LottieParser::captureSlots(const char* key)
 
     //composite '{' + slots + '}'
     auto len = (end - begin + 2);
-    slots = (char*)malloc(sizeof(char) * len + 1);
+    slots = tvg::malloc<char*>(sizeof(char) * len + 1);
     slots[0] = '{';
     memcpy(slots + 1, begin, len);
     slots[len] = '\0';

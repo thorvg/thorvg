@@ -45,7 +45,6 @@
 // Finally, call GifEnd() to close the file handle and free memory.
 //
 
-#include <memory.h>
 #include "tvgMath.h"
 #include "tvgGifEncoder.h"
 
@@ -465,7 +464,7 @@ static void _writeLzwImage(GifWriter* writer, uint32_t width, uint32_t height, u
 
     fputc(minCodeSize, f); // min code size 8 bits
 
-    GifLzwNode* codetree = (GifLzwNode*)malloc(sizeof(GifLzwNode)*4096);
+    GifLzwNode* codetree = tvg::malloc<GifLzwNode*>(sizeof(GifLzwNode)*4096);
 
     memset(codetree, 0, sizeof(GifLzwNode)*4096);
     int32_t curCode = -1;
@@ -531,7 +530,7 @@ static void _writeLzwImage(GifWriter* writer, uint32_t width, uint32_t height, u
 
     fputc(0, f); // image block terminator
 
-    free(codetree);
+    tvg::free(codetree);
 }
 
 
@@ -553,8 +552,8 @@ bool gifBegin(GifWriter* writer, const char* filename, uint32_t width, uint32_t 
     writer->firstFrame = true;
 
     // allocate
-    writer->oldImage = (uint8_t*)malloc(width*height*4);
-    writer->tmpImage = (uint8_t*)malloc(width*height*4);
+    writer->oldImage = tvg::malloc<uint8_t*>(width*height*4);
+    writer->tmpImage = tvg::malloc<uint8_t*>(width*height*4);
 
     fputs("GIF89a", writer->f);
 
@@ -618,8 +617,8 @@ bool gifEnd(GifWriter* writer)
 
     fputc(0x3b, writer->f); // end of file
     fclose(writer->f);
-    free(writer->oldImage);
-    free(writer->tmpImage);
+    tvg::free(writer->oldImage);
+    tvg::free(writer->tmpImage);
 
     writer->f = NULL;
     writer->oldImage = NULL;

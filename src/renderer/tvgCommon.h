@@ -23,7 +23,17 @@
 #ifndef _TVG_COMMON_H_
 #define _TVG_COMMON_H_
 
+#ifdef _WIN32
+    #include <malloc.h>
+#elif defined(__linux__) || defined(__ZEPHYR__)
+    #include <alloca.h>
+#else
+    #include <stdlib.h>
+#endif
 #include <string>
+#include <cstdint>
+#include <cstdlib>
+#include <cstring>
 #include "config.h"
 #include "thorvg.h"
 
@@ -55,40 +65,59 @@ using namespace tvg;
     #define strdup _strdup
 #endif
 
-enum class FileType { Png = 0, Jpg, Webp, Svg, Lottie, Ttf, Raw, Gif, Unknown };
+void* operator new(std::size_t size);
+void operator delete(void* ptr) noexcept;
 
-using Size = Point;
+namespace tvg {
 
-#ifdef THORVG_LOG_ENABLED
-    constexpr auto ErrorColor = "\033[31m";  //red
-    constexpr auto ErrorBgColor = "\033[41m";//bg red
-    constexpr auto LogColor = "\033[32m";    //green
-    constexpr auto LogBgColor = "\033[42m";  //bg green
-    constexpr auto GreyColor = "\033[90m";   //grey
-    constexpr auto ResetColors = "\033[0m";  //default
-    #define TVGERR(tag, fmt, ...) fprintf(stderr, "%s[E]%s %s" tag "%s (%s %d): %s" fmt "\n", ErrorBgColor, ResetColors, ErrorColor, GreyColor, __FILE__, __LINE__, ResetColors, ##__VA_ARGS__)
-    #define TVGLOG(tag, fmt, ...) fprintf(stdout, "%s[L]%s %s" tag "%s (%s %d): %s" fmt "\n", LogBgColor, ResetColors, LogColor, GreyColor, __FILE__, __LINE__, ResetColors, ##__VA_ARGS__)
-#else
-    #define TVGERR(...) do {} while(0)
-    #define TVGLOG(...) do {} while(0)
-#endif
+    enum class FileType { Png = 0, Jpg, Webp, Svg, Lottie, Ttf, Raw, Gif, Unknown };
 
-uint16_t THORVG_VERSION_NUMBER();
+    using Size = Point;
 
-#define PIMPL(INST, CLASS) ((CLASS::Impl*)INST->pImpl)   //Access to pimpl
+    #ifdef THORVG_LOG_ENABLED
+        constexpr auto ErrorColor = "\033[31m";  //red
+        constexpr auto ErrorBgColor = "\033[41m";//bg red
+        constexpr auto LogColor = "\033[32m";    //green
+        constexpr auto LogBgColor = "\033[42m";  //bg green
+        constexpr auto GreyColor = "\033[90m";   //grey
+        constexpr auto ResetColors = "\033[0m";  //default
+        #define TVGERR(tag, fmt, ...) fprintf(stderr, "%s[E]%s %s" tag "%s (%s %d): %s" fmt "\n", ErrorBgColor, ResetColors, ErrorColor, GreyColor, __FILE__, __LINE__, ResetColors, ##__VA_ARGS__)
+        #define TVGLOG(tag, fmt, ...) fprintf(stdout, "%s[L]%s %s" tag "%s (%s %d): %s" fmt "\n", LogBgColor, ResetColors, LogColor, GreyColor, __FILE__, __LINE__, ResetColors, ##__VA_ARGS__)
+    #else
+        #define TVGERR(...) do {} while(0)
+        #define TVGLOG(...) do {} while(0)
+    #endif
 
-#define TVG_DELETE(PAINT) \
-  if (PAINT->refCnt() == 0) delete(PAINT)
+    uint16_t THORVG_VERSION_NUMBER();
 
-//for debugging
-#if 0
-#include <sys/time.h>
-static inline double THORVG_TIMESTAMP()
-{
-   struct timeval tv;
-   gettimeofday(&tv, NULL);
-   return (tv.tv_sec + tv.tv_usec / 1000000.0);
+    #define PIMPL(INST, CLASS) ((CLASS::Impl*)INST->pImpl)   //Access to pimpl
+
+    #define TVG_DELETE(PAINT) \
+    if (PAINT->refCnt() == 0) delete(PAINT)
+
+    //custom memory allocators
+    template<typename T = void*>
+    static inline T malloc(size_t size)
+    {
+        return static_cast<T>(std::malloc(size));
+    }
+
+    template<typename T = void*>
+    static inline T calloc(size_t nmem, size_t size)
+    {
+        return static_cast<T>(std::calloc(nmem, size));
+    }
+
+    template<typename T = void*>
+    static inline T realloc(void* ptr, size_t size)
+    {
+        return static_cast<T>(std::realloc(ptr, size));
+    }
+
+    static inline void free(void* ptr)
+    {
+        std::free(ptr);
+    }
 }
-#endif
 
 #endif //_TVG_COMMON_H_

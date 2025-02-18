@@ -23,7 +23,7 @@
 #ifndef _TVG_SHAPE_H_
 #define _TVG_SHAPE_H_
 
-#include <memory.h>
+#include "tvgCommon.h"
 #include "tvgMath.h"
 #include "tvgPaint.h"
 
@@ -307,16 +307,16 @@ struct Shape::Impl : Paint::Impl
 
         //Reset dash
         if (!pattern && cnt == 0) {
-            free(rs.stroke->dashPattern);
+            tvg::free(rs.stroke->dashPattern);
             rs.stroke->dashPattern = nullptr;
         } else {
             if (!rs.stroke) rs.stroke = new RenderStroke();
             if (rs.stroke->dashCnt != cnt) {
-                free(rs.stroke->dashPattern);
+                tvg::free(rs.stroke->dashPattern);
                 rs.stroke->dashPattern = nullptr;
             }
             if (!rs.stroke->dashPattern) {
-                rs.stroke->dashPattern = static_cast<float*>(malloc(sizeof(float) * cnt));
+                rs.stroke->dashPattern = tvg::malloc<float*>(sizeof(float) * cnt);
                 if (!rs.stroke->dashPattern) return Result::FailedAllocation;
             }
             for (uint32_t i = 0; i < cnt; ++i) {

@@ -133,7 +133,7 @@ static bool _map(TtfLoader* loader, const char* path)
         return false;
     }
 
-    reader.data = (uint8_t*)malloc(reader.size);
+    reader.data = tvg::malloc<uint8_t*>(reader.size);
 
     fseek(f, 0, SEEK_SET);
     auto ret = fread(reader.data, sizeof(char), reader.size, f);
@@ -151,7 +151,7 @@ static bool _map(TtfLoader* loader, const char* path)
 static void _unmap(TtfLoader* loader)
 {
     auto& reader = loader->reader;
-    free(reader.data);
+    tvg::free(reader.data);
     reader.data = nullptr;
     reader.size = 0;
 }
@@ -167,7 +167,7 @@ static uint32_t* _codepoints(const char* text, size_t n)
 
     auto utf8 = text;
     //preserve approximate enough space.
-    auto utf32 = (uint32_t*) malloc(sizeof(uint32_t) * (n + 1));
+    auto utf32 = tvg::malloc<uint32_t*>(sizeof(uint32_t) * (n + 1));
 
     while(*utf8) {
         if (!(*utf8 & 0x80U)) {
@@ -186,7 +186,7 @@ static uint32_t* _codepoints(const char* text, size_t n)
             c += (*utf8++ & 0x3fU);
             utf32[i++] = c;
         } else {
-            free(utf32);
+            tvg::free(utf32);
             return nullptr;
         }
     }
@@ -198,7 +198,7 @@ static uint32_t* _codepoints(const char* text, size_t n)
 void TtfLoader::clear()
 {
     if (nomap) {
-        if (freeData) free(reader.data);
+        if (freeData) tvg::free(reader.data);
         reader.data = nullptr;
         reader.size = 0;
         freeData = false;
@@ -260,7 +260,7 @@ bool TtfLoader::open(const char* data, uint32_t size, TVG_UNUSED const char* rpa
     nomap = true;
 
     if (copy) {
-        reader.data = (uint8_t*)malloc(size);
+        reader.data = tvg::malloc<uint8_t*>(size);
         if (!reader.data) return false;
         memcpy((char*)reader.data, data, reader.size);
         freeData = true;
@@ -313,7 +313,7 @@ bool TtfLoader::read()
         ++idx;
     }
 
-    free(code);
+    tvg::free(code);
 
     return true;
 }

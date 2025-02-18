@@ -56,10 +56,10 @@ GlProgram::GlProgram(const char* vertSrc, const char* fragSrc)
         glGetProgramiv(progObj, GL_INFO_LOG_LENGTH, &infoLen);
         if (infoLen > 0)
         {
-            auto infoLog = static_cast<char*>(malloc(sizeof(char) * infoLen));
+            auto infoLog = tvg::malloc<char*>(sizeof(char) * infoLen);
             glGetProgramInfoLog(progObj, infoLen, NULL, infoLog);
             TVGERR("GL_ENGINE", "Error linking shader: %s", infoLog);
-            free(infoLog);
+            tvg::free(infoLog);
 
         }
         glDeleteProgram(progObj);

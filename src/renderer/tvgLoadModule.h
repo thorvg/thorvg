@@ -23,6 +23,7 @@
 #ifndef _TVG_LOAD_MODULE_H_
 #define _TVG_LOAD_MODULE_H_
 
+#include "tvgCommon.h"
 #include "tvgRender.h"
 #include "tvgInlist.h"
 
@@ -45,7 +46,7 @@ struct LoadModule
     LoadModule(FileType type) : type(type) {}
     virtual ~LoadModule()
     {
-        if (pathcache) free(hashpath);
+        if (pathcache) tvg::free(hashpath);
     }
 
     virtual bool open(const char* path) { return false; }

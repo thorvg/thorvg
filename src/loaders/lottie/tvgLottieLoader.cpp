@@ -58,7 +58,7 @@ void LottieLoader::run(unsigned tid)
 void LottieLoader::release()
 {
     if (copy) {
-        free((char*)content);
+        tvg::free((char*)content);
         content = nullptr;
     }
 }
@@ -84,7 +84,7 @@ LottieLoader::~LottieLoader()
     delete(comp);
     delete(builder);
 
-    free(dirName);
+    tvg::free(dirName);
 }
 
 
@@ -200,7 +200,7 @@ bool LottieLoader::header()
 bool LottieLoader::open(const char* data, uint32_t size, const char* rpath, bool copy)
 {
     if (copy) {
-        content = (char*)malloc(size + 1);
+        content = tvg::malloc<char*>(size + 1);
         if (!content) return false;
         memcpy((char*)content, data, size);
         const_cast<char*>(content)[size] = '\0';
@@ -230,7 +230,7 @@ bool LottieLoader::open(const char* path)
         return false;
     }
 
-    auto content = (char*)(malloc(sizeof(char) * size + 1));
+    auto content = tvg::malloc<char*>(sizeof(char) * size + 1);
     fseek(f, 0, SEEK_SET);
     size = fread(content, sizeof(char), size, f);
     content[size] = '\0';
@@ -313,7 +313,7 @@ bool LottieLoader::override(const char* slots, bool byDefault)
             if (!applied) parser.skip();
             ++idx;
         }
-        free((char*)temp);
+        tvg::free((char*)temp);
         rebuild = succeed;
         overridden |= succeed;
         return rebuild;

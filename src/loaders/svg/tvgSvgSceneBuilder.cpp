@@ -21,7 +21,6 @@
  */
 
 #include "tvgMath.h" /* to include math.h before cstring */
-#include <cstring>
 #include "tvgShape.h"
 #include "tvgCompressor.h"
 #include "tvgFill.h"
@@ -109,7 +108,7 @@ static LinearGradient* _applyLinearGradientProperty(SvgStyleGradient* g, const B
     //Update the stops
     if (g->stops.count == 0) return fillGrad;
 
-    stops = (Fill::ColorStop*)malloc(g->stops.count * sizeof(Fill::ColorStop));
+    stops = tvg::malloc<Fill::ColorStop*>(g->stops.count * sizeof(Fill::ColorStop));
     auto prevOffset = 0.0f;
     for (uint32_t i = 0; i < g->stops.count; ++i) {
         auto colorStop = &g->stops[i];
@@ -125,7 +124,7 @@ static LinearGradient* _applyLinearGradientProperty(SvgStyleGradient* g, const B
         prevOffset = stops[i].offset;
     }
     fillGrad->colorStops(stops, g->stops.count);
-    free(stops);
+    tvg::free(stops);
     return fillGrad;
 }
 
@@ -159,7 +158,7 @@ static RadialGradient* _applyRadialGradientProperty(SvgStyleGradient* g, const B
     //Update the stops
     if (g->stops.count == 0) return fillGrad;
 
-    stops = (Fill::ColorStop*)malloc(g->stops.count * sizeof(Fill::ColorStop));
+    stops = tvg::malloc<Fill::ColorStop*>(g->stops.count * sizeof(Fill::ColorStop));
     auto prevOffset = 0.0f;
     for (uint32_t i = 0; i < g->stops.count; ++i) {
         auto colorStop = &g->stops[i];
@@ -175,7 +174,7 @@ static RadialGradient* _applyRadialGradientProperty(SvgStyleGradient* g, const B
         prevOffset = stops[i].offset;
     }
     fillGrad->colorStops(stops, g->stops.count);
-    free(stops);
+    tvg::free(stops);
     return fillGrad;
 }
 
@@ -659,14 +658,14 @@ static Paint* _imageBuildHelper(SvgLoaderData& loaderData, SvgNode* node, const 
         if (encoding == imageMimeTypeEncoding::base64) {
             auto size = b64Decode(href, strlen(href), &decoded);
             if (picture->load(decoded, size, mimetype) != Result::Success) {
-                free(decoded);
+                tvg::free(decoded);
                 TaskScheduler::async(true);
                 return nullptr;
             }
         } else {
             auto size = svgUtilURLDecode(href, &decoded);
             if (picture->load(decoded, size, mimetype) != Result::Success) {
-                free(decoded);
+                tvg::free(decoded);
                 TaskScheduler::async(true);
                 return nullptr;
             }

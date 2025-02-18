@@ -24,9 +24,7 @@
 #ifndef TVG_GIF_ENCODER_H
 #define TVG_GIF_ENCODER_H
 
-#include <stdio.h>
-#include <cstdint>
-
+#include "tvgCommon.h"
 
 typedef struct
 {

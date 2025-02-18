@@ -117,9 +117,9 @@ struct RenderStroke
         if (rhs.fill) fill = rhs.fill->duplicate();
         else fill = nullptr;
 
-        free(dashPattern);
+        tvg::free(dashPattern);
         if (rhs.dashCnt > 0) {
-            dashPattern = static_cast<float*>(malloc(sizeof(float) * rhs.dashCnt));
+            dashPattern = tvg::malloc<float*>(sizeof(float) * rhs.dashCnt);
             memcpy(dashPattern, rhs.dashPattern, sizeof(float) * rhs.dashCnt);
         } else {
             dashPattern = nullptr;
@@ -135,7 +135,7 @@ struct RenderStroke
 
     ~RenderStroke()
     {
-        free(dashPattern);
+        tvg::free(dashPattern);
         delete(fill);
     }
 };

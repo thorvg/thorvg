@@ -20,18 +20,9 @@
  * SOFTWARE.
  */
 
-
-#ifdef _WIN32
-    #include <malloc.h>
-#elif defined(__linux__) || defined(__ZEPHYR__)
-    #include <alloca.h>
-#else
-    #include <stdlib.h>
-#endif
-
+#include "tvgTtfReader.h"
 #include "tvgMath.h"
 #include "tvgShape.h"
-#include "tvgTtfReader.h"
 
 /************************************************************************/
 /* Internal Class Implementation                                        */

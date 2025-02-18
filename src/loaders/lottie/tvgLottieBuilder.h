@@ -71,7 +71,7 @@ struct RenderContext
     ~RenderContext()
     {
         propagator->unref(false);
-        free(transform);
+        tvg::free(transform);
         delete(roundness);
         delete(offset);
     }
