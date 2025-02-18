@@ -1413,7 +1413,7 @@ TVG_API Tvg_Result tvg_shape_get_stroke_miterlimit(const Tvg_Paint* paint, float
 
 
 /*!
-* @brief Sets the trim of the stroke along the defined path segment, allowing control over which part of the stroke is visible.
+* @brief Sets the trim of the shape along the defined path segment, allowing control over which part of the shape is visible.
 *
 * If the values of the arguments @p begin and @p end exceed the 0-1 range, they are wrapped around in a manner similar to angle wrapping, effectively treating the range as circular.
 *
@@ -1428,7 +1428,7 @@ TVG_API Tvg_Result tvg_shape_get_stroke_miterlimit(const Tvg_Paint* paint, float
 *
 * @note Experimental API
 */
-TVG_API Tvg_Result tvg_shape_set_stroke_trim(Tvg_Paint* paint, float begin, float end, bool simultaneous);
+TVG_API Tvg_Result tvg_shape_set_trimpath(Tvg_Paint* paint, float begin, float end, bool simultaneous);
 
 
 /*!
