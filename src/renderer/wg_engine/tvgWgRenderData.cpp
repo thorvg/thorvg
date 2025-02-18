@@ -374,22 +374,11 @@ void WgRenderDataShape::updateMeshes(WgContext& context, const RenderShape &rsha
     // path decoded vertex buffer
     auto pbuff = pool->reqVertexBuffer(scale);
 
-    if (rshape.trimpath()) {
-        auto trimbuff =  pool->reqVertexBuffer(scale);
-        pbuff->decodePath(rshape, true, [&](const WgVertexBuffer& path_buff) {
-            appendShape(context, path_buff);
-        });
-        trimbuff->decodePath(rshape, true, [&](const WgVertexBuffer& path_buff) {
-            appendShape(context, path_buff);
-            proceedStrokes(context, rshape.stroke, path_buff, pool);
-        }, true);
-        pool->retVertexBuffer(trimbuff);
-    } else {
-        pbuff->decodePath(rshape, true, [&](const WgVertexBuffer& path_buff) {
-            appendShape(context, path_buff);
-            if (rshape.stroke) proceedStrokes(context, rshape.stroke, path_buff, pool);
-        });
-    }
+    pbuff->decodePath(rshape, true, [&](const WgVertexBuffer& path_buff) {
+        appendShape(context, path_buff);
+        if (rshape.stroke) proceedStrokes(context, rshape.stroke, path_buff, pool);
+    }, rshape.trimpath());
+
     // update shapes bbox (with empty path handling)
     if ((this->meshGroupShapesBBox.meshes.count > 0 ) ||
         (this->meshGroupStrokesBBox.meshes.count > 0)) {
