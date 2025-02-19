@@ -214,4 +214,31 @@ public:
     void release(WgContext& context);
 };
 
+struct WgRenderDataDropShadow
+{
+    WGPUBindGroup bindGroupGaussian{};
+    WGPUBindGroup bindGroupDropShadow{};
+    WGPUBuffer bufferGaussian{};
+    WGPUBuffer bufferSettings{};
+    uint32_t extend{};
+    uint32_t level{};
+    Point offset{};
+
+    void update(WgContext& context, RenderEffectDropShadow* dropShadow, const Matrix& transform);
+    void release(WgContext& context);
+};
+
+class WgRenderDataDropShadowPool {
+private:
+    // pool contains all created but unused render data for drop shadow
+    Array<WgRenderDataDropShadow*> mPool;
+    // list contains all created render data for drop shadow
+    // to ensure that all created instances will be released
+    Array<WgRenderDataDropShadow*> mList;
+public:
+    WgRenderDataDropShadow* allocate(WgContext& context);
+    void free(WgContext& context, WgRenderDataDropShadow* renderData);
+    void release(WgContext& context);
+};
+
 #endif // _TVG_WG_RENDER_DATA_H_

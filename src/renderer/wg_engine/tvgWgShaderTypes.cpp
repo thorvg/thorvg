@@ -200,14 +200,49 @@ void WgShaderTypeGradient::updateTexData(const Fill::ColorStop* stops, uint32_t 
 // WgShaderTypeGaussianBlur
 //************************************************************************
 
-void WgShaderTypeGaussianBlur::update(const RenderEffectGaussianBlur* gaussian, const Matrix& transform)
+void WgShaderTypeGaussianBlur::update(float sigma, const Matrix& transform)
 {
-    assert(gaussian);
-    const float sigma = gaussian->sigma;
     const float scale = std::sqrt(transform.e11 * transform.e11 + transform.e12 * transform.e12);
     const float kernel = std::min(WG_GAUSSIAN_KERNEL_SIZE_MAX, 2 * sigma * scale); // kernel size
     settings[0] = sigma;
     settings[1] = std::min(WG_GAUSSIAN_KERNEL_SIZE_MAX / kernel, scale);
     settings[2] = kernel;
-    extend = settings[2] * 2;
+    settings[3] = 0.0f; // unused
+    extend = settings[2] * 2; // kernel
+}
+
+
+void WgShaderTypeGaussianBlur::update(const RenderEffectGaussianBlur* gaussian, const Matrix& transform)
+{
+    assert(gaussian);
+    update(gaussian->sigma, transform);
+}
+
+
+void WgShaderTypeGaussianBlur::update(const RenderEffectDropShadow* dropShadow, const Matrix& transform)
+{
+    assert(dropShadow);
+    update(dropShadow->sigma, transform);
+}
+
+//************************************************************************
+// WgShaderTypeDropShadow
+//************************************************************************
+
+void WgShaderTypeDropShadow::update(const RenderEffectDropShadow* dropShadow, const Matrix& transform)
+{
+    assert(dropShadow);
+    const float scale = std::sqrt(transform.e11 * transform.e11 + transform.e12 * transform.e12);
+    const float radian = tvg::deg2rad(90.0f - dropShadow->angle);
+    offset = {0, 0};
+    if (dropShadow->distance > 0.0f) offset = { 
+        +1.0f * dropShadow->distance * cosf(radian) * scale,
+        -1.0f * dropShadow->distance * sinf(radian) * scale
+    };
+    settings[0] = dropShadow->color[0] / 255.0f; // red
+    settings[1] = dropShadow->color[1] / 255.0f; // green
+    settings[2] = dropShadow->color[2] / 255.0f; // blue
+    settings[3] = dropShadow->color[3] / 255.0f; // alpha
+    settings[4] = offset.x;
+    settings[5] = offset.y;
 }

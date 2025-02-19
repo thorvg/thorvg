@@ -650,3 +650,78 @@ void WgRenderDataGaussianPool::release(WgContext& context)
     mPool.clear();
     mList.clear();
 }
+
+//***********************************************************************
+// WgRenderDataDropShadow
+//***********************************************************************
+
+void WgRenderDataDropShadow::update(WgContext& context, RenderEffectDropShadow* dropShadow, const Matrix& transform)
+{
+    assert(dropShadow);
+    // compute gaussian blur data
+    WgShaderTypeGaussianBlur gaussianSettings;
+    gaussianSettings.update(dropShadow, transform);
+    // update bind group and buffers
+    bool bufferGaussianChanged = context.allocateBufferUniform(bufferGaussian, &gaussianSettings.settings, sizeof(gaussianSettings.settings));
+    if (bufferGaussianChanged) {
+        // update bind group
+        context.layouts.releaseBindGroup(bindGroupGaussian);
+        bindGroupGaussian = context.layouts.createBindGroupBuffer1Un(bufferGaussian);
+    }
+    // compute drop shadow data
+    WgShaderTypeDropShadow dropShadowSettings;
+    dropShadowSettings.update(dropShadow, transform);
+    // update bind group and buffers
+    bool bufferSettingsChanged = context.allocateBufferUniform(bufferSettings, &dropShadowSettings.settings, sizeof(dropShadowSettings.settings));
+    if (bufferSettingsChanged) {
+        // update bind group
+        context.layouts.releaseBindGroup(bindGroupDropShadow);
+        bindGroupDropShadow = context.layouts.createBindGroupBuffer1Un(bufferSettings);
+    }
+    level = int(WG_GAUSSIAN_MAX_LEVEL * ((dropShadow->quality - 1) * 0.01f)) + 1;
+    extend = gaussianSettings.extend;
+    offset = dropShadowSettings.offset;
+}
+
+
+void WgRenderDataDropShadow::release(WgContext& context)
+{
+    context.releaseBuffer(bufferSettings);
+    context.releaseBuffer(bufferGaussian);
+    context.layouts.releaseBindGroup(bindGroupDropShadow);
+    context.layouts.releaseBindGroup(bindGroupGaussian);
+}
+
+//***********************************************************************
+// WgRenderDataGaussianPool
+//***********************************************************************
+
+WgRenderDataDropShadow* WgRenderDataDropShadowPool::allocate(WgContext& context)
+{
+    WgRenderDataDropShadow* renderData{};
+    if (mPool.count > 0) {
+        renderData = mPool.last();
+        mPool.pop();
+    } else {
+        renderData = new WgRenderDataDropShadow();
+        mList.push(renderData);
+    }
+    return renderData;
+}
+
+
+void WgRenderDataDropShadowPool::free(WgContext& context, WgRenderDataDropShadow* renderData)
+{
+    if (renderData) mPool.push(renderData);
+}
+
+
+void WgRenderDataDropShadowPool::release(WgContext& context)
+{
+    ARRAY_FOREACH(p, mList) {
+        (*p)->release(context);
+        delete(*p);
+    }
+    mPool.clear();
+    mList.clear();
+}

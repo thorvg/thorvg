@@ -80,8 +80,10 @@ void WgCompositor::releasePools(WgContext& context)
 void WgCompositor::resize(WgContext& context, uint32_t width, uint32_t height) {
     // release existig handles
     if ((this->width != width) || (this->height != height)) {
+        context.layouts.releaseBindGroup(bindGroupStorageTemp);
         // release intermediate render storages
-        storageDstCopy.release(context);
+        storageTemp1.release(context);
+        storageTemp0.release(context);
         // release global stencil buffer handles
         context.releaseTextureView(texViewDepthStencilMS);
         context.releaseTexture(texDepthStencilMS);
@@ -106,7 +108,9 @@ void WgCompositor::resize(WgContext& context, uint32_t width, uint32_t height) {
         texDepthStencilMS = context.createTexAttachement(width, height, WGPUTextureFormat_Depth24PlusStencil8, 4);
         texViewDepthStencilMS = context.createTextureView(texDepthStencilMS);
         // initialize intermediate render storages
-        storageDstCopy.initialize(context, width, height);
+        storageTemp0.initialize(context, width, height);
+        storageTemp1.initialize(context, width, height);
+        bindGroupStorageTemp = context.layouts.createBindGroupStrorage2RO(storageTemp0.texView, storageTemp1.texView);
     }
 }
 
@@ -119,6 +123,25 @@ RenderRegion WgCompositor::shrinkRenderRegion(RenderRegion& rect)
     int32_t xmax = std::max(xmin, std::min((int32_t)width, rect.x + rect.w));
     int32_t ymax = std::max(ymin, std::min((int32_t)height, rect.y + rect.h));
     return { xmin, ymin, xmax - xmin, ymax - ymin };
+}
+
+
+void WgCompositor::copyTexture(const WgRenderStorage* dst, const WgRenderStorage* src)
+{
+    const RenderRegion region = { 0, 0, (int32_t)src->width, (int32_t)src->height };
+    copyTexture(dst, src, region);
+}
+
+
+void WgCompositor::copyTexture(const WgRenderStorage* dst, const WgRenderStorage* src, const RenderRegion& region)
+{
+    assert(dst);
+    assert(src);
+    assert(commandEncoder);
+    const WGPUImageCopyTexture texSrc { .texture = src->texture, .origin = { .x = (uint32_t)region.x, .y = (uint32_t)region.y } };
+    const WGPUImageCopyTexture texDst { .texture = dst->texture, .origin = { .x = (uint32_t)region.x, .y = (uint32_t)region.y } };
+    const WGPUExtent3D copySize { .width = (uint32_t)region.w, .height = (uint32_t)region.h, .depthOrArrayLayers = 1 };
+    wgpuCommandEncoderCopyTextureToTexture(commandEncoder, &texSrc, &texDst, &copySize);
 }
 
 
@@ -313,10 +336,7 @@ void WgCompositor::blendShape(WgContext& context, WgRenderDataShape* renderData,
     // copy current render target data to dst storage
     WgRenderStorage *target = currentTarget;
     endRenderPass();
-    const WGPUImageCopyTexture texSrc { .texture = target->texture };
-    const WGPUImageCopyTexture texDst { .texture = storageDstCopy.texture };
-    const WGPUExtent3D copySize { .width = width, .height = height, .depthOrArrayLayers = 1 };
-    wgpuCommandEncoderCopyTextureToTexture(commandEncoder, &texSrc, &texDst, &copySize);
+    copyTexture(&storageTemp0, target);
     beginRenderPass(commandEncoder, target, false);
     // render shape with blend settings
     wgpuRenderPassEncoderSetScissorRect(renderPassEncoder, renderData->viewport.x, renderData->viewport.y, renderData->viewport.w, renderData->viewport.h);
@@ -333,7 +353,7 @@ void WgCompositor::blendShape(WgContext& context, WgRenderDataShape* renderData,
     wgpuRenderPassEncoderSetStencilReference(renderPassEncoder, 0);
     wgpuRenderPassEncoderSetBindGroup(renderPassEncoder, 0, bindGroupViewMat, 0, nullptr);
     wgpuRenderPassEncoderSetBindGroup(renderPassEncoder, 1, renderData->bindGroupPaint, 0, nullptr);
-    wgpuRenderPassEncoderSetBindGroup(renderPassEncoder, 3, storageDstCopy.bindGroupTexure, 0, nullptr);
+    wgpuRenderPassEncoderSetBindGroup(renderPassEncoder, 3, storageTemp0.bindGroupTexure, 0, nullptr);
     uint32_t blendMethodInd = (uint32_t)blendMethod;
     WgRenderSettings& settings = renderData->renderSettingsShape;
     if (settings.fillType == WgRenderSettingsType::Solid) {
@@ -444,10 +464,7 @@ void WgCompositor::blendStrokes(WgContext& context, WgRenderDataShape* renderDat
     // copy current render target data to dst storage
     WgRenderStorage *target = currentTarget;
     endRenderPass();
-    const WGPUImageCopyTexture texSrc { .texture = target->texture };
-    const WGPUImageCopyTexture texDst { .texture = storageDstCopy.texture };
-    const WGPUExtent3D copySize { .width = width, .height = height, .depthOrArrayLayers = 1 };
-    wgpuCommandEncoderCopyTextureToTexture(commandEncoder, &texSrc, &texDst, &copySize);
+    copyTexture(&storageTemp0, target);
     beginRenderPass(commandEncoder, target, false);
     wgpuRenderPassEncoderSetScissorRect(renderPassEncoder, renderData->viewport.x, renderData->viewport.y, renderData->viewport.w, renderData->viewport.h);
     // draw strokes to stencil (first pass)
@@ -463,7 +480,7 @@ void WgCompositor::blendStrokes(WgContext& context, WgRenderDataShape* renderDat
         wgpuRenderPassEncoderSetStencilReference(renderPassEncoder, 0);
         wgpuRenderPassEncoderSetBindGroup(renderPassEncoder, 0, bindGroupViewMat, 0, nullptr);
         wgpuRenderPassEncoderSetBindGroup(renderPassEncoder, 1, renderData->bindGroupPaint, 0, nullptr);
-        wgpuRenderPassEncoderSetBindGroup(renderPassEncoder, 3, storageDstCopy.bindGroupTexure, 0, nullptr);
+        wgpuRenderPassEncoderSetBindGroup(renderPassEncoder, 3, storageTemp0.bindGroupTexure, 0, nullptr);
         uint32_t blendMethodInd = (uint32_t)blendMethod;
         WgRenderSettings& settings = renderData->renderSettingsStroke;
         if (settings.fillType == WgRenderSettingsType::Solid) {
@@ -557,10 +574,7 @@ void WgCompositor::blendImage(WgContext& context, WgRenderDataPicture* renderDat
     // copy current render target data to dst storage
     WgRenderStorage *target = currentTarget;
     endRenderPass();
-    const WGPUImageCopyTexture texSrc { .texture = target->texture };
-    const WGPUImageCopyTexture texDst { .texture = storageDstCopy.texture };
-    const WGPUExtent3D copySize { .width = width, .height = height, .depthOrArrayLayers = 1 };
-    wgpuCommandEncoderCopyTextureToTexture(commandEncoder, &texSrc, &texDst, &copySize);
+    copyTexture(&storageTemp0, target);
     beginRenderPass(commandEncoder, target, false);
     // setup stencil rules
     wgpuRenderPassEncoderSetStencilReference(renderPassEncoder, 255);
@@ -574,7 +588,7 @@ void WgCompositor::blendImage(WgContext& context, WgRenderDataPicture* renderDat
     wgpuRenderPassEncoderSetBindGroup(renderPassEncoder, 0, bindGroupViewMat, 0, nullptr);
     wgpuRenderPassEncoderSetBindGroup(renderPassEncoder, 1, renderData->bindGroupPaint, 0, nullptr);
     wgpuRenderPassEncoderSetBindGroup(renderPassEncoder, 2, renderData->bindGroupPicture, 0, nullptr);
-    wgpuRenderPassEncoderSetBindGroup(renderPassEncoder, 3, storageDstCopy.bindGroupTexure, 0, nullptr);
+    wgpuRenderPassEncoderSetBindGroup(renderPassEncoder, 3, storageTemp0.bindGroupTexure, 0, nullptr);
     wgpuRenderPassEncoderSetPipeline(renderPassEncoder, pipelines.image_blend[blendMethodInd]);
     renderData->meshData.drawImage(context, renderPassEncoder);
 };
@@ -631,10 +645,7 @@ void WgCompositor::blendScene(WgContext& context, WgRenderStorage* scene, WgComp
     // copy current render target data to dst storage
     WgRenderStorage *target = currentTarget;
     endRenderPass();
-    const WGPUImageCopyTexture texSrc { .texture = target->texture };
-    const WGPUImageCopyTexture texDst { .texture = storageDstCopy.texture };
-    const WGPUExtent3D copySize { .width = width, .height = height, .depthOrArrayLayers = 1 };
-    wgpuCommandEncoderCopyTextureToTexture(commandEncoder, &texSrc, &texDst, &copySize);
+    copyTexture(&storageTemp0, target);
     beginRenderPass(commandEncoder, target, false);
     // blend scene
     uint32_t blendMethodInd = (uint32_t)compose->blend;
@@ -642,7 +653,7 @@ void WgCompositor::blendScene(WgContext& context, WgRenderStorage* scene, WgComp
     wgpuRenderPassEncoderSetScissorRect(renderPassEncoder, rect.x, rect.y, rect.w, rect.h);
     wgpuRenderPassEncoderSetStencilReference(renderPassEncoder, 0);
     wgpuRenderPassEncoderSetBindGroup(renderPassEncoder, 0, scene->bindGroupTexure, 0, nullptr);
-    wgpuRenderPassEncoderSetBindGroup(renderPassEncoder, 1, storageDstCopy.bindGroupTexure, 0, nullptr);
+    wgpuRenderPassEncoderSetBindGroup(renderPassEncoder, 1, storageTemp0.bindGroupTexure, 0, nullptr);
     wgpuRenderPassEncoderSetBindGroup(renderPassEncoder, 2, bindGroupOpacities[compose->opacity], 0, nullptr);
     wgpuRenderPassEncoderSetPipeline(renderPassEncoder, pipelines.scene_blend[blendMethodInd]);
     meshData.drawImage(context, renderPassEncoder);
@@ -739,7 +750,7 @@ void WgCompositor::clearClipPath(WgContext& context, WgRenderDataPaint* paint)
 }
 
 
-void WgCompositor::gaussianBlur(WgContext& context, WgRenderStorage* dst, const RenderEffectGaussianBlur* params, const WgCompose* compose)
+bool WgCompositor::gaussianBlur(WgContext& context, WgRenderStorage* dst, const RenderEffectGaussianBlur* params, const WgCompose* compose)
 {
     assert(dst);
     assert(params);
@@ -750,7 +761,7 @@ void WgCompositor::gaussianBlur(WgContext& context, WgRenderStorage* dst, const 
     auto aabb = compose->aabb;
     auto viewport = compose->rdViewport;
     WgRenderStorage* sbuff = dst;
-    WgRenderStorage* dbuff = &storageDstCopy;
+    WgRenderStorage* dbuff = &storageTemp0;
 
     // begin compute pass
     WGPUComputePassDescriptor computePassDesc{ .label = "Compute pass gaussian blur" };
@@ -782,10 +793,64 @@ void WgCompositor::gaussianBlur(WgContext& context, WgRenderStorage* dst, const 
     wgpuComputePassEncoderRelease(computePassEncoder);
 
     // if final result stored in intermidiate buffer we must copy result to destination buffer
-    if (sbuff == &storageDstCopy) {
-        const WGPUImageCopyTexture texSrc { .texture = sbuff->texture, .origin = { .x = (uint32_t)aabb.x, .y = (uint32_t)aabb.y } };
-        const WGPUImageCopyTexture texDst { .texture = dbuff->texture, .origin = { .x = (uint32_t)aabb.x, .y = (uint32_t)aabb.y } };
-        const WGPUExtent3D copySize { .width = (uint32_t)aabb.w, .height = (uint32_t)aabb.h, .depthOrArrayLayers = 1 };
-        wgpuCommandEncoderCopyTextureToTexture(commandEncoder, &texSrc, &texDst, &copySize);
+    if (sbuff == &storageTemp0) 
+        copyTexture(sbuff, dbuff, aabb);
+
+    return true;
+}
+
+
+bool WgCompositor::dropShadow(WgContext& context, WgRenderStorage* dst, const RenderEffectDropShadow* params, const WgCompose* compose)
+{
+    assert(dst);
+    assert(params);
+    assert(params->rd);
+    assert(compose->rdViewport);
+    assert(!renderPassEncoder);
+
+    auto renderDataDropShadow = (WgRenderDataDropShadow*)params->rd;
+    auto aabb = compose->aabb;
+    auto viewport = compose->rdViewport;
+
+    { // apply blur
+        copyTexture(&storageTemp1, dst, aabb);
+        WgRenderStorage* sbuff = &storageTemp1;
+        WgRenderStorage* dbuff = &storageTemp0;
+        WGPUComputePassDescriptor computePassDesc{ .label = "Compute pass drop shadow blur" };
+        WGPUComputePassEncoder computePassEncoder = wgpuCommandEncoderBeginComputePass(commandEncoder, &computePassDesc);
+        // horizontal blur
+        wgpuComputePassEncoderSetBindGroup(computePassEncoder, 0, sbuff->bindGroupRead, 0, nullptr);
+        wgpuComputePassEncoderSetBindGroup(computePassEncoder, 1, dbuff->bindGroupWrite, 0, nullptr);
+        wgpuComputePassEncoderSetBindGroup(computePassEncoder, 2, renderDataDropShadow->bindGroupGaussian, 0, nullptr);
+        wgpuComputePassEncoderSetBindGroup(computePassEncoder, 3, viewport->bindGroupViewport, 0, nullptr);
+        wgpuComputePassEncoderSetPipeline(computePassEncoder, pipelines.gaussian_horz);
+        wgpuComputePassEncoderDispatchWorkgroups(computePassEncoder, (aabb.w - 1) / 128 + 1, aabb.h, 1);
+        std::swap(sbuff, dbuff);
+        // vertical blur
+        wgpuComputePassEncoderSetBindGroup(computePassEncoder, 0, sbuff->bindGroupRead, 0, nullptr);
+        wgpuComputePassEncoderSetBindGroup(computePassEncoder, 1, dbuff->bindGroupWrite, 0, nullptr);
+        wgpuComputePassEncoderSetBindGroup(computePassEncoder, 2, renderDataDropShadow->bindGroupGaussian, 0, nullptr);
+        wgpuComputePassEncoderSetBindGroup(computePassEncoder, 3, viewport->bindGroupViewport, 0, nullptr);
+        wgpuComputePassEncoderSetPipeline(computePassEncoder, pipelines.gaussian_vert);
+        wgpuComputePassEncoderDispatchWorkgroups(computePassEncoder, aabb.w, (aabb.h - 1) / 128 + 1, 1);
+        std::swap(sbuff, dbuff);
+        wgpuComputePassEncoderEnd(computePassEncoder);
+        wgpuComputePassEncoderRelease(computePassEncoder);
     }
+    
+    { // blend origin (temp0), shadow (temp1) to destination
+        copyTexture(&storageTemp0, dst, aabb);
+        WGPUComputePassDescriptor computePassDesc{ .label = "Compute pass drop shadow blend" };
+        WGPUComputePassEncoder computePassEncoder = wgpuCommandEncoderBeginComputePass(commandEncoder, &computePassDesc);
+        wgpuComputePassEncoderSetBindGroup(computePassEncoder, 0, bindGroupStorageTemp, 0, nullptr);
+        wgpuComputePassEncoderSetBindGroup(computePassEncoder, 1, dst->bindGroupWrite, 0, nullptr);
+        wgpuComputePassEncoderSetBindGroup(computePassEncoder, 2, renderDataDropShadow->bindGroupDropShadow, 0, nullptr);
+        wgpuComputePassEncoderSetBindGroup(computePassEncoder, 3, viewport->bindGroupViewport, 0, nullptr);
+        wgpuComputePassEncoderSetPipeline(computePassEncoder, pipelines.dropshadow);
+        wgpuComputePassEncoderDispatchWorkgroups(computePassEncoder, (aabb.w - 1) / 128 + 1, aabb.h, 1);
+        wgpuComputePassEncoderEnd(computePassEncoder);
+        wgpuComputePassEncoderRelease(computePassEncoder);
+    }
+
+    return true;
 }

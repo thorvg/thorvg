@@ -52,6 +52,7 @@ void WgRenderer::release()
     mRenderDataShapePool.release(mContext);
     mRenderDataPicturePool.release(mContext);
     mRenderDataGaussianPool.release(mContext);
+    mRenderDataDropShadowPool.release(mContext);
     mRenderDataViewportPool.release(mContext);
     WgMeshDataPool::gMeshDataPool->release(mContext);
 
@@ -527,12 +528,24 @@ void WgRenderer::prepare(RenderEffect* effect, const Matrix& transform)
         }
         renderDataGaussian->update(mContext, gaussianBlur, transform);
         effect->valid = true;
+    } else
+    // prepare drop shadow data
+    if (effect->type == SceneEffect::DropShadow) {
+        auto dropShadow = (RenderEffectDropShadow*)effect;
+        auto renderDataDropShadow = (WgRenderDataDropShadow*)dropShadow->rd;
+        if (!renderDataDropShadow) {
+            renderDataDropShadow = mRenderDataDropShadowPool.allocate(mContext);
+            dropShadow->rd = renderDataDropShadow;
+        }
+        renderDataDropShadow->update(mContext, dropShadow, transform);
+        effect->valid = true;
     }
 }
 
 
 bool WgRenderer::region(RenderEffect* effect)
 {
+    // update gaussian blur region
     if (effect->type == SceneEffect::GaussianBlur) {
         auto gaussian = (RenderEffectGaussianBlur*)effect;
         auto renderDataGaussian = (WgRenderDataGaussian*)gaussian->rd;
@@ -545,6 +558,16 @@ bool WgRenderer::region(RenderEffect* effect)
             gaussian->extend.h = +renderDataGaussian->extend * 2;
         }
         return true;
+    } else
+    // update drop shadow region
+    if (effect->type == SceneEffect::DropShadow) {
+        auto dropShadow = (RenderEffectDropShadow*)effect;
+        auto renderDataDropShadow = (WgRenderDataDropShadow*)dropShadow->rd;
+        dropShadow->extend.x = -(renderDataDropShadow->extend + std::abs(renderDataDropShadow->offset.x));
+        dropShadow->extend.w = +(renderDataDropShadow->extend + std::abs(renderDataDropShadow->offset.x)) * 2;
+        dropShadow->extend.y = -(renderDataDropShadow->extend + std::abs(renderDataDropShadow->offset.y));
+        dropShadow->extend.h = +(renderDataDropShadow->extend + std::abs(renderDataDropShadow->offset.y)) * 2;
+        return true;
     }
     return false;
 }
@@ -554,14 +577,13 @@ bool WgRenderer::render(RenderCompositor* cmp, const RenderEffect* effect, TVG_U
 {
     // we must to end current render pass to resolve ms texture before effect
     mCompositor.endRenderPass();
+    WgCompose* comp = (WgCompose*)cmp;
+    WgRenderStorage* dst = mRenderStorageStack.last();
 
-    // handle gaussian blur
-    if (effect->type == SceneEffect::GaussianBlur) {
-        WgCompose* comp = (WgCompose*)cmp;
-        WgRenderStorage* dst = mRenderStorageStack.last();
-        RenderEffectGaussianBlur* gaussianBlur = (RenderEffectGaussianBlur*)effect;
-        mCompositor.gaussianBlur(mContext, dst, gaussianBlur, comp);
-        return true;
+    switch (effect->type) {
+        case SceneEffect::GaussianBlur: return mCompositor.gaussianBlur(mContext, dst, (RenderEffectGaussianBlur*)effect, comp);
+        case SceneEffect::DropShadow: return mCompositor.dropShadow(mContext, dst, (RenderEffectDropShadow*)effect, comp);
+        default: return false;
     }
     return false;
 }
@@ -569,12 +591,12 @@ bool WgRenderer::render(RenderCompositor* cmp, const RenderEffect* effect, TVG_U
 
 void WgRenderer::dispose(RenderEffect* effect)
 {
-    // dispose gaussian blur data
-    if (effect->type == SceneEffect::GaussianBlur) {
-        auto gaussianBlur = (RenderEffectGaussianBlur*)effect;
-        mRenderDataGaussianPool.free(mContext, (WgRenderDataGaussian*)gaussianBlur->rd);
-        gaussianBlur->rd = nullptr;
+    switch (effect->type) {
+        case SceneEffect::GaussianBlur: mRenderDataGaussianPool.free(mContext, (WgRenderDataGaussian*)effect->rd);
+        case SceneEffect::DropShadow: mRenderDataDropShadowPool.free(mContext, (WgRenderDataDropShadow*)effect->rd);
+        default: effect->rd = nullptr;
     }
+    effect->rd = nullptr;
 };
 
 
