@@ -947,6 +947,43 @@ static void _updateInvalidViewSize(Scene* scene, Box& vBox, float& w, float& h, 
     if (!validHeight) h *= vBox.h;
 }
 
+
+static void _loadFonts(Array<FontFace>& fonts)
+{
+    if (fonts.empty()) return;
+
+    static constexpr struct {
+        const char* prefix;
+        size_t len;
+    } prefixes[] = {
+        {"data:font/ttf;base64,", sizeof("data:font/ttf;base64,") - 1},
+        {"data:application/font-ttf;base64,", sizeof("data:application/font-ttf;base64,") - 1}
+    };
+
+
+    ARRAY_FOREACH(p, fonts) {
+        if (!p->name) continue;
+
+        size_t shift = 0;
+        for (const auto& prefix : prefixes) {
+            if (p->srcLen > prefix.len && !memcmp(p->src, prefix.prefix, prefix.len)) {
+                shift = prefix.len;
+                break;
+            }
+        }
+        if (shift == 0) {
+            TVGLOG("SVG", "The embedded font \"%s\" data not loaded properly.", p->name);
+            continue;
+        }
+
+        auto size = b64Decode(p->src + shift, p->srcLen - shift, &p->decoded);
+
+        TaskScheduler::async(false);
+        if (Text::load(p->name, p->decoded, size) != Result::Success) TVGERR("SVG", "Error while loading the ttf font named \"%s\".", p->name);
+        TaskScheduler::async(true);
+    }
+}
+
 /************************************************************************/
 /* External Class Implementation                                        */
 /************************************************************************/
@@ -956,6 +993,8 @@ Scene* svgSceneBuild(SvgLoaderData& loaderData, Box vBox, float w, float h, Aspe
     //TODO: aspect ratio is valid only if viewBox was set
 
     if (!loaderData.doc || (loaderData.doc->type != SvgNodeType::Doc)) return nullptr;
+
+    _loadFonts(loaderData.fonts);
 
     auto docNode = _sceneBuildHelper(loaderData, loaderData.doc, vBox, svgPath, false, 0);
 
