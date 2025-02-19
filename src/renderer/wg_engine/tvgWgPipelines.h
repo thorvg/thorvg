@@ -48,6 +48,7 @@ private:
     WGPUShaderModule shader_blit{};
     // shader effects
     WGPUShaderModule shader_gaussian;
+    WGPUShaderModule shader_dropshadow;
 
     // layouts helpers
     WGPUPipelineLayout layout_stencil{};
@@ -68,6 +69,7 @@ private:
     WGPUPipelineLayout layout_blit{};
     // layouts effects
     WGPUPipelineLayout layout_gaussian{};
+    WGPUPipelineLayout layout_dropshadow{};
 public:
     // pipelines stencil markup
     WGPURenderPipeline nonzero{};
@@ -98,6 +100,7 @@ public:
     // effects
     WGPUComputePipeline gaussian_horz{};
     WGPUComputePipeline gaussian_vert{};
+    WGPUComputePipeline dropshadow{};
 private:
     void releaseGraphicHandles(WgContext& context);
     WGPUShaderModule createShaderModule(WGPUDevice device, const char* label, const char* code);

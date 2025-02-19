@@ -86,6 +86,7 @@ private:
     WgRenderDataShapePool mRenderDataShapePool;
     WgRenderDataPicturePool mRenderDataPicturePool;
     WgRenderDataGaussianPool mRenderDataGaussianPool;
+    WgRenderDataDropShadowPool mRenderDataDropShadowPool;
     WgRenderDataViewportPool mRenderDataViewportPool;
 
     // rendering context
