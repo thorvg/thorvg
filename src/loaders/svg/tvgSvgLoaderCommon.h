@@ -568,6 +568,12 @@ struct SvgNodeIdPair
     char *id;
 };
 
+struct EmbeddedFont
+{
+    char* name;
+    char* src;
+};
+
 enum class OpenedTagType : uint8_t
 {
     Other = 0,
@@ -587,6 +593,7 @@ struct SvgLoaderData
     Array<SvgNodeIdPair> cloneNodes;
     Array<SvgNodeIdPair> nodesToStyle;
     Array<char*> images;        //embedded images
+    Array<EmbeddedFont> fonts;
     int level = 0;
     bool result = false;
     OpenedTagType openedTag = OpenedTagType::Other;
