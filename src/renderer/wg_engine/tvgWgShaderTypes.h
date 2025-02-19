@@ -74,7 +74,18 @@ struct WgShaderTypeGaussianBlur
     float settings[4]{}; // [0]: sigma, [1]: scale, [2]: kernel size, [3]: unused
     uint32_t extend{};
 
+    void update(float sigma, const Matrix& transform);
     void update(const RenderEffectGaussianBlur* gaussian, const Matrix& transform);
+    void update(const RenderEffectDropShadow* dropShadow, const Matrix& transform);
+};
+
+// drop shadow settings: color, offset
+struct WgShaderTypeDropShadow
+{
+    float settings[8]{}; // [0..3]: color, [4, 5]: offset
+    Point offset{};
+
+    void update(const RenderEffectDropShadow* dropShadow, const Matrix& transform);
 };
 
 #endif // _TVG_WG_SHADER_TYPES_H_

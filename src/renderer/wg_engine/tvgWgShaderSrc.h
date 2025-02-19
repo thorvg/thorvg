@@ -45,7 +45,7 @@ extern const char* cShaderSrc_Scene_Compose;
 extern const char* cShaderSrc_Blit;
 
 // compute shader sources: effects
-extern const char* cShaderSrc_MergeMasks;
 extern const char* cShaderSrc_GaussianBlur;
+extern const char* cShaderSrc_DropShadow;
 
 #endif // _TVG_WG_SHEDER_SRC_H_

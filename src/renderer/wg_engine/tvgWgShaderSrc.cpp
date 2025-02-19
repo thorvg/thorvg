@@ -708,19 +708,6 @@ fn fs_main(in: VertexOutput) -> @location(0) vec4f {
 // compute shader source: merge clip path masks
 //************************************************************************
 
-const char* cShaderSrc_MergeMasks = R"(
-@group(0) @binding(0) var imageMsk0 : texture_storage_2d<rgba8unorm, read>;
-@group(1) @binding(0) var imageMsk1 : texture_storage_2d<rgba8unorm, read>;
-@group(2) @binding(0) var imageTrg  : texture_storage_2d<rgba8unorm, write>;
-
-@compute @workgroup_size(8, 8)
-fn cs_main(@builtin(global_invocation_id) id: vec3u) {
-    let colorMsk0 = textureLoad(imageMsk0, id.xy);
-    let colorMsk1 = textureLoad(imageMsk1, id.xy);
-    textureStore(imageTrg, id.xy, colorMsk0 * colorMsk1);
-}
-)";
-
 const char* cShaderSrc_GaussianBlur = R"(
 @group(0) @binding(0) var imageSrc : texture_storage_2d<rgba8unorm, read>;
 @group(1) @binding(0) var imageDst : texture_storage_2d<rgba8unorm, write>;
@@ -821,6 +808,31 @@ fn cs_main_vert(@builtin(global_invocation_id) gid: vec3u,
 
     // store result
     textureStore(imageDst, uid, color / sum);
-    //textureStore(imageDst, uid, vec4f(1.0, 0.0, 0.0, 1.0));
+}
+)";
+
+const char* cShaderSrc_DropShadow = R"(
+@group(0) @binding(0) var imageSrc : texture_storage_2d<rgba8unorm, read>;
+@group(0) @binding(1) var imageSdw : texture_storage_2d<rgba8unorm, read>;
+@group(1) @binding(0) var imageTrg : texture_storage_2d<rgba8unorm, write>;
+@group(2) @binding(0) var<uniform> settings: array<vec4f, 2>;
+@group(3) @binding(0) var<uniform> viewport: vec4f;
+
+@compute @workgroup_size(128, 1)
+fn cs_main(@builtin(global_invocation_id) gid: vec3u) {
+    // decode viewport and settings
+    let vmin = vec2u(viewport.xy);
+    let vmax = vec2u(viewport.zw);
+    let voff = vec2i(settings[1].xy);
+
+    // tex coord
+    let uid = gid.xy + vmin;
+    let oid = clamp(vec2u(vec2i(uid) - voff), vmin, vmax);
+
+    let orig = textureLoad(imageSrc, uid);
+    let blur = textureLoad(imageSdw, oid);
+    let shad = settings[0] * blur.a;
+    let color = orig + shad * (1.0 - orig.a);
+    textureStore(imageTrg, uid.xy, color);
 }
 )";
