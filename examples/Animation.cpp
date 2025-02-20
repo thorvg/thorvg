@@ -20,6 +20,7 @@
  * SOFTWARE.
  */
 
+#include <thorvg_lottie.h>
 #include "Example.h"
 
 /************************************************************************/
@@ -28,12 +29,12 @@
 
 struct UserExample : tvgexam::Example
 {
-    unique_ptr<tvg::Animation> animation;
+    unique_ptr<tvg::LottieAnimation> animation;
 
     bool content(tvg::Canvas* canvas, uint32_t w, uint32_t h) override
     {
         //Animation Controller
-        animation = unique_ptr<tvg::Animation>(tvg::Animation::gen());
+        animation = unique_ptr<tvg::LottieAnimation>(tvg::LottieAnimation::gen());
         auto picture = animation->picture();
 
         //Background
@@ -44,6 +45,9 @@ struct UserExample : tvgexam::Example
         canvas->push(shape);
 
         if (!tvgexam::verify(picture->load(EXAMPLE_DIR"/lottie/sample.json"))) return false;
+
+        const char* slotJson = R"({"rect_position":{"p":{"x": "var $bm_rt = [];\n$bm_rt[0] = value[0] + Math.cos(2 * Math.PI * time) * 100;\n$bm_rt[1] = value[1];"}}})";
+        if (!tvgexam::verify(animation->override(slotJson))) return false;
 
         //image scaling preserving its aspect ratio
         float scale;
@@ -90,5 +94,6 @@ struct UserExample : tvgexam::Example
 
 int main(int argc, char **argv)
 {
-    return tvgexam::main(new UserExample, argc, argv, false, 1024, 1024);
+  // Ensure thread is 1 for expression support
+    return tvgexam::main(new UserExample, argc, argv, false, 1024, 1024, 1);
 }
