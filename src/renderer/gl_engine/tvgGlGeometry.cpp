@@ -25,25 +25,24 @@
 #include "tvgGlTessellator.h"
 #include "tvgGlRenderTask.h"
 
+
 bool GlGeometry::tesselate(const RenderShape& rshape, RenderUpdateFlag flag)
 {
     if (flag & (RenderUpdateFlag::Color | RenderUpdateFlag::Gradient | RenderUpdateFlag::Transform | RenderUpdateFlag::Path)) {
-        fillVertex.clear();
-        fillIndex.clear();
+        fill.clear();
 
-        BWTessellator bwTess{&fillVertex, &fillIndex};
-        bwTess.tessellate(&rshape, mMatrix);
-        mFillRule = rshape.rule;
-        mBounds = bwTess.bounds();
+        BWTessellator bwTess{&fill};
+        bwTess.tessellate(&rshape, matrix);
+        fillRule = rshape.rule;
+        bounds = bwTess.bounds();
     }
 
     if (flag & (RenderUpdateFlag::Stroke | RenderUpdateFlag::GradientStroke | RenderUpdateFlag::Transform)) {
-        strokeVertex.clear();
-        strokeIndex.clear();
+        stroke.clear();
 
-        Stroker stroke{&strokeVertex, &strokeIndex, mMatrix};
-        stroke.stroke(&rshape);
-        mBounds = stroke.bounds();
+        Stroker stroker{&stroke, matrix};
+        stroker.stroke(&rshape);
+        bounds = stroker.bounds();
     }
 
     return true;
@@ -52,11 +51,10 @@ bool GlGeometry::tesselate(const RenderShape& rshape, RenderUpdateFlag flag)
 bool GlGeometry::tesselate(const RenderSurface* image, RenderUpdateFlag flag)
 {
     if (flag & RenderUpdateFlag::Image) {
-        fillVertex.clear();
-        fillIndex.clear();
+        fill.clear();
 
-        fillVertex.reserve(5 * 4);
-        fillIndex.reserve(6);
+        fill.vertex.reserve(5 * 4);
+        fill.index.reserve(6);
 
         float left = 0.f;
         float top = 0.f;
@@ -64,42 +62,42 @@ bool GlGeometry::tesselate(const RenderSurface* image, RenderUpdateFlag flag)
         float bottom = image->h;
 
         // left top point
-        fillVertex.push(left);
-        fillVertex.push(top);
+        fill.vertex.push(left);
+        fill.vertex.push(top);
 
-        fillVertex.push(0.f);
-        fillVertex.push(1.f);
+        fill.vertex.push(0.f);
+        fill.vertex.push(1.f);
         // left bottom point
-        fillVertex.push(left);
-        fillVertex.push(bottom);
+        fill.vertex.push(left);
+        fill.vertex.push(bottom);
 
-        fillVertex.push(0.f);
-        fillVertex.push(0.f);
+        fill.vertex.push(0.f);
+        fill.vertex.push(0.f);
         // right top point
-        fillVertex.push(right);
-        fillVertex.push(top);
+        fill.vertex.push(right);
+        fill.vertex.push(top);
 
-        fillVertex.push(1.f);
-        fillVertex.push(1.f);
+        fill.vertex.push(1.f);
+        fill.vertex.push(1.f);
         // right bottom point
-        fillVertex.push(right);
-        fillVertex.push(bottom);
+        fill.vertex.push(right);
+        fill.vertex.push(bottom);
 
-        fillVertex.push(1.f);
-        fillVertex.push(0.f);
+        fill.vertex.push(1.f);
+        fill.vertex.push(0.f);
 
-        fillIndex.push(0);
-        fillIndex.push(1);
-        fillIndex.push(2);
+        fill.index.push(0);
+        fill.index.push(1);
+        fill.index.push(2);
 
-        fillIndex.push(2);
-        fillIndex.push(1);
-        fillIndex.push(3);
+        fill.index.push(2);
+        fill.index.push(1);
+        fill.index.push(3);
 
-        mBounds.x = 0;
-        mBounds.y = 0;
-        mBounds.w = image->w;
-        mBounds.h = image->h;
+        bounds.x = 0;
+        bounds.y = 0;
+        bounds.w = image->w;
+        bounds.h = image->h;
     }
 
     return true;
@@ -116,21 +114,11 @@ bool GlGeometry::draw(GlRenderTask* task, GlStageBuffer* gpuBuffer, RenderUpdate
 {
     if (flag == RenderUpdateFlag::None) return false;
 
-    Array<float>* vertexBuffer = nullptr;
-    Array<uint32_t>* indexBuffer = nullptr;
+    auto buffer = ((flag & RenderUpdateFlag::Stroke) || (flag & RenderUpdateFlag::GradientStroke)) ? &stroke : &fill;
+    if (buffer->index.empty()) return false;
 
-    if ((flag & RenderUpdateFlag::Stroke) || (flag & RenderUpdateFlag::GradientStroke)) {
-        vertexBuffer = &strokeVertex;
-        indexBuffer = &strokeIndex;
-    } else {
-        vertexBuffer = &fillVertex;
-        indexBuffer = &fillIndex;
-    }
-
-    if (indexBuffer->count == 0) return false;
-
-    uint32_t vertexOffset = gpuBuffer->push(vertexBuffer->data, vertexBuffer->count * sizeof(float));
-    uint32_t indexOffset = gpuBuffer->pushIndex(indexBuffer->data, indexBuffer->count * sizeof(uint32_t));
+    auto vertexOffset = gpuBuffer->push(buffer->vertex.data, buffer->vertex.count * sizeof(float));
+    auto indexOffset = gpuBuffer->pushIndex(buffer->index.data, buffer->index.count * sizeof(uint32_t));
 
     // vertex layout
     if (flag & RenderUpdateFlag::Image) {
@@ -140,32 +128,8 @@ bool GlGeometry::draw(GlRenderTask* task, GlStageBuffer* gpuBuffer, RenderUpdate
     } else {
         task->addVertexLayout(GlVertexLayout{0, 2, 2 * sizeof(float), vertexOffset});
     }
-    task->setDrawRange(indexOffset, indexBuffer->count);
+    task->setDrawRange(indexOffset, buffer->index.count);
     return true;
-}
-
-
-void GlGeometry::updateTransform(const Matrix& m)
-{
-    mMatrix = m;
-}
-
-
-void GlGeometry::setViewport(const RenderRegion& viewport)
-{
-    this->viewport = viewport;
-}
-
-
-const RenderRegion& GlGeometry::getViewport()
-{
-    return viewport;
-}
-
-
-const Matrix& GlGeometry::getTransformMatrix()
-{
-    return mMatrix;
 }
 
 
@@ -175,8 +139,8 @@ GlStencilMode GlGeometry::getStencilMode(RenderUpdateFlag flag)
     if (flag & RenderUpdateFlag::GradientStroke) return GlStencilMode::Stroke;
     if (flag & RenderUpdateFlag::Image) return GlStencilMode::None;
 
-    if (mFillRule == FillRule::NonZero) return GlStencilMode::FillNonZero;
-    if (mFillRule == FillRule::EvenOdd) return GlStencilMode::FillEvenOdd;
+    if (fillRule == FillRule::NonZero) return GlStencilMode::FillNonZero;
+    if (fillRule == FillRule::EvenOdd) return GlStencilMode::FillEvenOdd;
 
     return GlStencilMode::None;
 }
@@ -184,18 +148,18 @@ GlStencilMode GlGeometry::getStencilMode(RenderUpdateFlag flag)
 
 RenderRegion GlGeometry::getBounds() const
 {
-    if (identity(&mMatrix)) {
-        return mBounds;
+    if (identity(&matrix)) {
+        return bounds;
     } else {
-        Point lt{static_cast<float>(mBounds.x), static_cast<float>(mBounds.y)};
-        Point lb{static_cast<float>(mBounds.x), static_cast<float>(mBounds.y + mBounds.h)};
-        Point rt{static_cast<float>(mBounds.x + mBounds.w), static_cast<float>(mBounds.y)};
-        Point rb{static_cast<float>(mBounds.x + mBounds.w), static_cast<float>(mBounds.y + mBounds.h)};
+        Point lt{static_cast<float>(bounds.x), static_cast<float>(bounds.y)};
+        Point lb{static_cast<float>(bounds.x), static_cast<float>(bounds.y + bounds.h)};
+        Point rt{static_cast<float>(bounds.x + bounds.w), static_cast<float>(bounds.y)};
+        Point rb{static_cast<float>(bounds.x + bounds.w), static_cast<float>(bounds.y + bounds.h)};
 
-        lt *= mMatrix;
-        lb *= mMatrix;
-        rt *= mMatrix;
-        rb *= mMatrix;
+        lt *= matrix;
+        lb *= matrix;
+        rt *= matrix;
+        rb *= matrix;
 
         float left = min(min(lt.x, lb.x), min(rt.x, rb.x));
         float top = min(min(lt.y, lb.y), min(rt.y, rb.y));
@@ -208,7 +172,7 @@ RenderRegion GlGeometry::getBounds() const
             static_cast<int32_t>(ceil(right - floor(left))),
             static_cast<int32_t>(ceil(bottom - floor(top))),
         };
-        if (bounds.w < 0 || bounds.h < 0) return mBounds;
+        if (bounds.w < 0 || bounds.h < 0) return this->bounds;
         else return bounds;
     }
 }

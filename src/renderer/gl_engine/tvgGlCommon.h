@@ -130,30 +130,34 @@ enum class GlStencilMode {
 class GlStageBuffer;
 class GlRenderTask;
 
-class GlGeometry
+struct GlGeometryBuffer {
+    Array<float> vertex;
+    Array<uint32_t> index;
+
+    void clear()
+    {
+        vertex.clear();
+        index.clear();
+    }
+
+};
+
+struct GlGeometry
 {
-public:
     bool tesselate(const RenderShape& rshape, RenderUpdateFlag flag);
     bool tesselate(const RenderSurface* image, RenderUpdateFlag flag);
     void disableVertex(uint32_t location);
     bool draw(GlRenderTask* task, GlStageBuffer* gpuBuffer, RenderUpdateFlag flag);
-    void updateTransform(const Matrix& m);
-    void setViewport(const RenderRegion& viewport);
-    const RenderRegion& getViewport();
-    const Matrix& getTransformMatrix();
     GlStencilMode getStencilMode(RenderUpdateFlag flag);
     RenderRegion getBounds() const;
 
-private:
+    GlGeometryBuffer fill, stroke;
+    Matrix matrix = {};
     RenderRegion viewport = {};
-    Array<float> fillVertex;
-    Array<float> strokeVertex;
-    Array<uint32_t> fillIndex;
-    Array<uint32_t> strokeIndex;
-    Matrix mMatrix = {};
-    FillRule mFillRule = FillRule::NonZero;
-    RenderRegion mBounds = {};
+    RenderRegion bounds = {};
+    FillRule fillRule = FillRule::NonZero;
 };
+
 
 struct GlShape
 {

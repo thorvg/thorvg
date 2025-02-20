@@ -41,7 +41,7 @@ struct RenderShape;
 class Tessellator final
 {
 public:
-    Tessellator(Array<float>* points, Array<uint32_t>* indices);
+    Tessellator(GlGeometryBuffer* buffer);
     ~Tessellator();
     bool tessellate(const RenderShape *rshape, bool antialias = false);
     void tessellate(const Array<const RenderShape*> &shapes);
@@ -66,11 +66,10 @@ private:
     Array<VertexList*> outlines;
     VertexList* pMesh;
     Polygon* pPolygon;
-    Array<float>* resGlPoints;
-    Array<uint32_t>* resIndices;
+    GlGeometryBuffer* buffer;
 };
 
-class Stroker final
+class Stroker
 {
     struct State
     {
@@ -80,7 +79,7 @@ class Stroker final
         Point prevPtDir;
     };
 public:
-    Stroker(Array<float>* points, Array<uint32_t>* indices, const Matrix& matrix);
+    Stroker(GlGeometryBuffer* buffer, const Matrix& matrix);
     ~Stroker() = default;
     void stroke(const RenderShape *rshape);
     RenderRegion bounds() const;
@@ -107,8 +106,7 @@ private:
     void strokeRound(const Point& p, const Point& outDir);
     void strokeRoundPoint(const Point& p);
 
-    Array<float>* mResGlPoints;
-    Array<uint32_t>* mResIndices;
+    GlGeometryBuffer* mBuffer;
     Matrix mMatrix;
     float mStrokeWidth = MIN_GL_STROKE_WIDTH;
     float mMiterLimit = 4.f;
@@ -148,7 +146,7 @@ private:
 class BWTessellator
 {
 public:
-    BWTessellator(Array<float>* points, Array<uint32_t>* indices);
+    BWTessellator(GlGeometryBuffer* buffer);
     ~BWTessellator() = default;
     void tessellate(const RenderShape *rshape, const Matrix& matrix);
     RenderRegion bounds() const;
@@ -157,8 +155,7 @@ private:
     uint32_t pushVertex(float x, float y);
     void pushTriangle(uint32_t a, uint32_t b, uint32_t c);
 
-    Array<float>* mResPoints;
-    Array<uint32_t>* mResIndices;
+    GlGeometryBuffer* mBuffer;
     BBox bbox = {{}, {}};
 };
 
