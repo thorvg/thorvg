@@ -150,12 +150,30 @@ struct GlGeometry
     bool draw(GlRenderTask* task, GlStageBuffer* gpuBuffer, RenderUpdateFlag flag);
     GlStencilMode getStencilMode(RenderUpdateFlag flag);
     RenderRegion getBounds() const;
+    void reset();
 
-    GlGeometryBuffer fill, stroke;
+    GlGeometry();
+    ~GlGeometry();
+
+    GlGeometryBuffer* fill;
+    GlGeometryBuffer* stroke;
     Matrix matrix = {};
     RenderRegion viewport = {};
     RenderRegion bounds = {};
     FillRule fillRule = FillRule::NonZero;
+};
+
+
+struct GlGeometryBufferPool
+{
+    ~GlGeometryBufferPool();
+    GlGeometryBuffer* acquire();
+    void retrieve(GlGeometryBuffer* p);
+    static GlGeometryBufferPool* instance();
+
+private:
+    Array<GlGeometryBuffer*> pool;
+    Key key;
 };
 
 
