@@ -1355,7 +1355,7 @@ jerry_value_t LottieExpressions::evaluate(float frameNo, LottieExpression* exp)
     //evaluate the code
     auto eval = jerry_eval((jerry_char_t *) exp->code, strlen(exp->code), JERRY_PARSE_NO_OPTS);
 
-    if (jerry_value_is_exception(eval) || jerry_value_is_undefined(eval)) {
+    if (jerry_value_is_exception(eval)) {
         TVGERR("LOTTIE", "Failed to dispatch the expressions!");
         exp->disabled = true;
         return jerry_undefined();
