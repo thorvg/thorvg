@@ -77,15 +77,15 @@ struct UserExample : tvgexam::Example
     {
         if (!canvas) return false;
 
+        //The default font for fallback in case
+        tvg::Text::load(EXAMPLE_DIR"/font/Arial.ttf");
+
         //Background
         auto shape = tvg::Shape::gen();
         shape->appendRect(0, 0, w, h);
         shape->fill(255, 255, 255);
 
         canvas->push(shape);
-
-        //Default font
-        if (!tvgexam::verify(tvg::Text::load(EXAMPLE_DIR"/font/Arial.ttf"))) return false;
 
         this->w = w;
         this->h = h;

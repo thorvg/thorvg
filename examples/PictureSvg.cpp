@@ -32,6 +32,9 @@ struct UserExample : tvgexam::Example
     {
         if (!canvas) return false;
 
+        //default font for fallback in case
+        tvg::Text::load(EXAMPLE_DIR"/font/Arial.ttf");
+
         //Background
         auto bg = tvg::Shape::gen();
         bg->appendRect(0, 0, w, h);    //x, y, w, h
