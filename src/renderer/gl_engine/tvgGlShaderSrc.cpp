@@ -610,130 +610,198 @@ const char* BLIT_FRAG_SHADER = TVG_COMPOSE_SHADER(
     \
     in vec2 vUV; \
     out vec4 FragColor; \
+
+    // 1/1024.
+    const float kEhCloseEnoughHalf = 0.0009765625;
 )"
 
 const char* MULTIPLY_BLEND_FRAG = COMPLEX_BLEND_HEADER  R"(
     void main()
     {
-        vec4 srcColor = texture(uSrcTexture, vUV);
-        vec4 dstColor = texture(uDstTexture, vUV);
-        FragColor = srcColor * dstColor;
+        vec4 src = texture(uSrcTexture, vUV);
+        vec4 dst = texture(uDstTexture, vUV);
+
+        FragColor = vec4((1.0 - src.a)*dst.rgb + (1.0 - dst.a)*src.rgb + src.rgb*dst.rgb, src.a + (1.0 - src.a)*dst.a);
     }
 )";
 
-#define SCREEN_BLEND_FUNC R"( \
-    vec4 screenBlend(vec4 srcColor, vec4 dstColor) \
-    { \
-        return dstColor + srcColor - (dstColor * srcColor); \
-    } \
-)"
-
-#define HARD_LIGHT_BLEND_FUNC R"( \
-    vec4 hardLightBlend(vec4 srcColor, vec4 dstColor) \
-    { \
-        return vec4(srcColor.r < 0.5 ? 2.0 * srcColor.r * dstColor.r : 1.0 - 2.0 * (1.0 - srcColor.r) * (1.0 - dstColor.r), \
-                    srcColor.g < 0.5 ? 2.0 * srcColor.g * dstColor.g : 1.0 - 2.0 * (1.0 - srcColor.g) * (1.0 - dstColor.g), \
-                    srcColor.b < 0.5 ? 2.0 * srcColor.b * dstColor.b : 1.0 - 2.0 * (1.0 - srcColor.b) * (1.0 - dstColor.b), \
-                    1.0); \
-    } \
-)"
-
-#define SOFT_LIGHT_BLEND_FUNC R"( \
-    float softLightD(float v) \
-    { \
-        if (v <= 0.25) return ((16.0 * v - 12.0) * v + 4.0) * v; \
-        else return sqrt(v); \
-    } \
-)"
-
-const char* SCREEN_BLEND_FRAG = COMPLEX_BLEND_HEADER SCREEN_BLEND_FUNC R"(
+const char* SCREEN_BLEND_FRAG = COMPLEX_BLEND_HEADER R"(
     void main()
     {
         vec4 srcColor = texture(uSrcTexture, vUV);
         vec4 dstColor = texture(uDstTexture, vUV);
-        FragColor = screenBlend(srcColor, dstColor);
+        FragColor = srcColor + (1.0 - srcColor) * dstColor;
     }
 )";
 
-const char* OVERLAY_BLEND_FRAG = COMPLEX_BLEND_HEADER HARD_LIGHT_BLEND_FUNC R"(
+#define BLEND_OVERLAY_FUNC R"(
+    float blend_overlay_component(vec2 s, vec2 d)
+    {
+        return (2.0 * d.x <= d.y) ? 2.0 * s.x * d.x
+                                  : s.y * d.y - 2.0 * (d.y - d.x) * (s.y - s.x);
+    }
+
+    vec4 blend_overlay(vec4 src, vec4 dst)
+    {
+        vec4 result = vec4(
+            blend_overlay_component(src.ra, dst.ra),
+            blend_overlay_component(src.ga, dst.ga),
+            blend_overlay_component(src.ba, dst.ba),
+            src.a + (1.0 - src.a) * dst.a
+        );
+
+        result.rgb += dst.rgb*(1 - src.a) + src.rgb*(1 - dst.a);
+
+        return result;
+    }
+)"
+
+const char* OVERLAY_BLEND_FRAG = COMPLEX_BLEND_HEADER BLEND_OVERLAY_FUNC R"(
     void main()
     {
         vec4 srcColor = texture(uSrcTexture, vUV);
         vec4 dstColor = texture(uDstTexture, vUV);
-        FragColor = hardLightBlend(dstColor, srcColor);
+
+        FragColor = blend_overlay(srcColor, dstColor);
     }
 )";
 
 const char* COLOR_DODGE_BLEND_FRAG = COMPLEX_BLEND_HEADER R"(
+    float color_dodge_component(vec2 s, vec2 d)
+    {
+        float dxScale = d.x == 0.0 ? 0.0 : 1.0;
+        float delta = dxScale * min(d.y, abs(s.y - s.x) >= kEhCloseEnoughHalf ? (d.x * s.y / (s.y - s.x)) : d.y);
+
+        return delta * s.y + s.x * (1.0 - d.y) + d.x * (1.0 - s.y);
+    }
+
     void main()
     {
         vec4 srcColor = texture(uSrcTexture, vUV);
         vec4 dstColor = texture(uDstTexture, vUV);
 
         FragColor = vec4(
-            srcColor.r < 1.0 ? dstColor.r / (1.0 - srcColor.r) : (dstColor.r > 0.0 ? 1.0 : 0.0),
-            srcColor.g < 1.0 ? dstColor.g / (1.0 - srcColor.g) : (dstColor.g > 0.0 ? 1.0 : 0.0),
-            srcColor.b < 1.0 ? dstColor.b / (1.0 - srcColor.b) : (dstColor.b > 0.0 ? 1.0 : 0.0),
-            1.0
+            color_dodge_component(srcColor.ra, dstColor.ra),
+            color_dodge_component(srcColor.ga, dstColor.ga),
+            color_dodge_component(srcColor.ba, dstColor.ba),
+            srcColor.a + (1.0 - srcColor.a) * dstColor.a
         );
     }
 )";
 
 const char* COLOR_BURN_BLEND_FRAG = COMPLEX_BLEND_HEADER R"(
+    float color_burn_component(vec2 s, vec2 d)
+    {
+        float dyTerm = d.y == d.x ? d.y : 0.0;
+        float delta = abs(s.x) >= kEhCloseEnoughHalf ? d.y - min(d.y, ((d.y - d.x) * s.y / s.x)) : dyTerm;
+
+        return delta * s.y + s.x * (1.0 - d.y) + d.x * (1.0 - s.y);
+    }
+
     void main()
     {
         vec4 srcColor = texture(uSrcTexture, vUV);
         vec4 dstColor = texture(uDstTexture, vUV);
 
         FragColor = vec4(
-            srcColor.r > 0.0 ? (1.0 - (1.0 - dstColor.r) / srcColor.r) : (dstColor.r < 1.0 ? 0.0 : 1.0),
-            srcColor.g > 0.0 ? (1.0 - (1.0 - dstColor.g) / srcColor.g) : (dstColor.g < 1.0 ? 0.0 : 1.0),
-            srcColor.b > 0.0 ? (1.0 - (1.0 - dstColor.b) / srcColor.b) : (dstColor.b < 1.0 ? 0.0 : 1.0),
-            1.0
+            color_burn_component(srcColor.ra, dstColor.ra),
+            color_burn_component(srcColor.ga, dstColor.ga),
+            color_burn_component(srcColor.ba, dstColor.ba),
+            srcColor.a + (1.0 - srcColor.a) * dstColor.a
         );
     }
 )";
 
-const char* HARD_LIGHT_BLEND_FRAG = COMPLEX_BLEND_HEADER HARD_LIGHT_BLEND_FUNC R"(
+const char* HARD_LIGHT_BLEND_FRAG = COMPLEX_BLEND_HEADER BLEND_OVERLAY_FUNC R"(
     void main()
     {
         vec4 srcColor = texture(uSrcTexture, vUV);
         vec4 dstColor = texture(uDstTexture, vUV);
-        FragColor = hardLightBlend(srcColor, dstColor);
+
+        FragColor = blend_overlay(dstColor, srcColor);
     }
 )";
 
-const char* SOFT_LIGHT_BLEND_FRAG = COMPLEX_BLEND_HEADER SOFT_LIGHT_BLEND_FUNC R"(
+const char* SOFT_LIGHT_BLEND_FRAG = COMPLEX_BLEND_HEADER R"(
+    float soft_light_component(vec2 s, vec2 d)
+    {
+        if (2.0 * s.x <= s.y) {
+            return (d.x * d.x * (s.y - 2.0 * s.x) / d.y) + (1.0 - d.y) * s.x + d.x * (-s.y + 2.0 * s.x + 1.0);
+        } else if(4.0 * d.x <= d.y) {
+            float DSqd = d.x * d.x;
+            float DCub = DSqd * d.x;
+            float DaSqd = d.y * d.y;
+            float DaCub = DaSqd * d.y;
+
+            return (DaSqd * (s.x - d.x * (3.0 * s.y - 6.0 * s.x - 1.0)) + 12.0 * d.y * DSqd * (s.y - 2.0 * s.x) - 16.0 * DCub * (s.y - 2.0 * s.x) - DaCub * s.x) / DaSqd;
+        } else {
+            return d.x * (s.y - 2.0 * s.x + 1.0) + s.x - sqrt(d.y * d.x) * (s.y - 2.0 * s.x) - d.y * s.x;
+        }
+    }
+
     void main()
     {
         vec4 srcColor = texture(uSrcTexture, vUV);
         vec4 dstColor = texture(uDstTexture, vUV);
 
-        FragColor = vec4(
-            srcColor.r <= 0.5 ? dstColor.r - (1.0 - 2.0 * srcColor.r) * dstColor.r * (1.0 - dstColor.r) : dstColor.r + (2.0 * srcColor.r - 1.0) * (softLightD(dstColor.r) - dstColor.r),
-            srcColor.g <= 0.5 ? dstColor.g - (1.0 - 2.0 * srcColor.g) * dstColor.g * (1.0 - dstColor.g) : dstColor.g + (2.0 * srcColor.g - 1.0) * (softLightD(dstColor.g) - dstColor.g),
-            srcColor.b <= 0.5 ? dstColor.b - (1.0 - 2.0 * srcColor.b) * dstColor.b * (1.0 - dstColor.b) : dstColor.b + (2.0 * srcColor.b - 1.0) * (softLightD(dstColor.b) - dstColor.b),
-            1.0
-            );
+        FragColor = dstColor.a == 0.0 ? srcColor : vec4(
+                                                      soft_light_component(srcColor.ra, dstColor.ra),
+                                                      soft_light_component(srcColor.ga, dstColor.ga),
+                                                      soft_light_component(srcColor.ba, dstColor.ba),
+                                                      srcColor.a + (1.0 - srcColor.a) * dstColor.a
+                                                   );
     }
 )";
 
 const char* DIFFERENCE_BLEND_FRAG = COMPLEX_BLEND_HEADER R"(
     void main()
     {
-        vec4 srcColor = texture(uSrcTexture, vUV);
-        vec4 dstColor = texture(uDstTexture, vUV);
+        vec4 src = texture(uSrcTexture, vUV);
+        vec4 dst = texture(uDstTexture, vUV);
 
-        FragColor = abs(dstColor - srcColor);
+        FragColor = vec4(src.rgb + dst.rgb - 2.0 * min(src.rgb * dst.a, dst.rgb * src.a), src.a + (1.0 - src.a) * dst.a);
     }
 )";
 
 const char* EXCLUSION_BLEND_FRAG = COMPLEX_BLEND_HEADER R"(
     void main()
     {
+        vec4 src = texture(uSrcTexture, vUV);
+        vec4 dst = texture(uDstTexture, vUV);
+
+        FragColor = vec4(dst.rgb + src.rgb - 2.0 * dst.rgb * src.rgb, src.a + (1.0 - src.a) * dst.a);
+    }
+)";
+
+#define LD_BLEND_FUNC R"(
+    vec4 blendSrcOver(vec4 src, vec4 dst) { return src + (1 - src.a)*dst; }
+
+    vec4 blendLightDarken(float mode, vec4 src, vec4 dst)
+    {
+        vec4 a = blendSrcOver(src, dst);
+        vec3 b = (1.0 - dst.a) * src.rgb + dst.rgb;
+        a.rgb = mode * min(a.rgb * mode, b.rgb * mode);
+
+        return a;
+    }
+)"
+
+const char* LIGHTEN_BLEND_FRAG = COMPLEX_BLEND_HEADER LD_BLEND_FUNC R"(
+    void main()
+    {
         vec4 srcColor = texture(uSrcTexture, vUV);
         vec4 dstColor = texture(uDstTexture, vUV);
 
-        FragColor = dstColor + srcColor - (2.0 * dstColor * srcColor);
+        FragColor = blendLightDarken(-1.0, srcColor, dstColor);
+    }
+)";
+
+const char* DARKEN_BLEND_FRAG = COMPLEX_BLEND_HEADER LD_BLEND_FUNC R"(
+    void main()
+    {
+        vec4 srcColor = texture(uSrcTexture, vUV);
+        vec4 dstColor = texture(uDstTexture, vUV);
+
+        FragColor = blendLightDarken(1.0, srcColor, dstColor);
     }
 )";
