@@ -95,5 +95,5 @@ struct UserExample : tvgexam::Example
 int main(int argc, char **argv)
 {
   // Ensure thread is 1 for expression support
-    return tvgexam::main(new UserExample, argc, argv, false, 1024, 1024, 1);
+    return tvgexam::main(new UserExample, argc, argv, false, 500, 500, 1);
 }
