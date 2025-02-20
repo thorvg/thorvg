@@ -26,6 +26,10 @@
 #include "tvgLottieParser.h"
 #include "tvgLottieExpressions.h"
 
+#ifdef __EMSCRIPTEN__
+    #include <emscripten/fetch.h>
+#endif
+
 
 /************************************************************************/
 /* Internal Class Implementation                                        */
@@ -953,6 +957,45 @@ LottieObject* LottieParser::parseAsset()
     return obj;
 }
 
+void downloadSucceeded(emscripten_fetch_t *fetch) {
+  printf("Finished downloading %llu bytes from URL %s.\n", fetch->numBytes, fetch->url);
+  // The data is now available at fetch->data[0] through fetch->data[fetch->numBytes-1];
+  const char* fontName = static_cast<const char*>(fetch->userData);
+  auto res = Text::load(fontName, reinterpret_cast<const char*>(fetch->data), fetch->numBytes, "ttf", true);
+  if (res != Result::Success) {
+    printf("Failed to load font");
+  } else {
+    printf("Font loaded successfully");
+    // printf("Font name: %s", fontName);
+  }
+  emscripten_fetch_close(fetch); // Free data associated with the fetch.
+}
+
+void downloadFailed(emscripten_fetch_t *fetch) {
+  printf("Downloading %s failed, HTTP failure status code: %d.\n", fetch->url, fetch->status);
+  emscripten_fetch_close(fetch); // Also free data on failure.
+}
+
+void parseFontURL(LottieFont* font, const char* data) {
+#ifdef __EMSCRIPTEN__
+    if (!data || !font->name) return;
+    size_t len = strlen(data);
+    if (len < 4) return;
+    if (strcmp(data + len - 4, ".ttf") != 0) return;
+
+    // Fetch font data from URL using emscripten
+    emscripten_fetch_attr_t attr;
+    emscripten_fetch_attr_init(&attr);
+    attr.attributes = EMSCRIPTEN_FETCH_LOAD_TO_MEMORY;
+    attr.onsuccess = downloadSucceeded;
+    attr.onerror = downloadFailed;
+    attr.userData = (void*)font->name;
+    emscripten_fetch(&attr, data);
+    return;
+#endif
+        TVGLOG("LOTTIE", "Font URL loading is only supported in Emscripten builds");
+        return;
+}
 
 void LottieParser::parseFontData(LottieFont* font, const char* data)
 {
@@ -972,16 +1015,35 @@ LottieFont* LottieParser::parseFont()
     enterObject();
 
     auto font = new LottieFont;
+#ifdef __EMSCRIPTEN__
+    char* url = nullptr;
+#endif
 
     while (auto key = nextObjectKey()) {
         if (KEY_AS("fName")) font->name = getStringCopy();
         else if (KEY_AS("fFamily")) font->family = getStringCopy();
         else if (KEY_AS("fStyle")) font->style = getStringCopy();
-        else if (KEY_AS("fPath")) parseFontData(font, getString());
+        else if (KEY_AS("fPath")) {
+            auto data = getString();
+#ifdef __EMSCRIPTEN__
+            if (strncmp(data, "https://", 8) == 0) {
+                url = strdup(data);
+                continue;
+            }
+#endif
+            parseFontData(font, data);
+        }
         else if (KEY_AS("ascent")) font->ascent = getFloat();
         else if (KEY_AS("origin")) font->origin = (LottieFont::Origin) getInt();
         else skip();
     }
+
+    // post process here 
+    // if parseFontdata is failed, and has fName, try to load from URL
+#ifdef __EMSCRIPTEN__
+    parseFontURL(font, url);
+    tvg::free(url);
+#endif
 
     font->prepare();
     return font;
