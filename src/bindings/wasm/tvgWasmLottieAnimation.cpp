@@ -24,6 +24,7 @@
 #include <emscripten.h>
 #include <emscripten/bind.h>
 #include "tvgPicture.h"
+#include "tvgWasmDefaultFont.h"
 #ifdef THORVG_WG_RASTER_SUPPORT
     #include <emscripten/html5_webgpu.h>
 #endif
@@ -115,6 +116,10 @@ struct TvgEngineMethod
     {
         return val(typed_memory_view<uint8_t>(0, nullptr));
     }
+
+    void loadFont() {
+        Text::load("default", reinterpret_cast<const char*>(DEFAULT_FONT), DEFAULT_FONT_SIZE, "ttf", false);
+    }
 };
 
 struct TvgSwEngine : TvgEngineMethod
@@ -130,6 +135,7 @@ struct TvgSwEngine : TvgEngineMethod
     Canvas* init(string&) override
     {
         Initializer::init(0, tvg::CanvasEngine::Sw);
+        loadFont();
         return SwCanvas::gen();
     }
 
@@ -175,6 +181,7 @@ struct TvgWgEngine : TvgEngineMethod
         #endif
 
         Initializer::init(0, tvg::CanvasEngine::Wg);
+        loadFont();
         return WgCanvas::gen();
     }
 
@@ -220,6 +227,7 @@ struct TvgGLEngine : TvgEngineMethod
     #endif
 
         if (Initializer::init(0, tvg::CanvasEngine::Gl) != Result::Success) return nullptr;
+        loadFont();
 
         return GlCanvas::gen();
     }
