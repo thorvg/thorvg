@@ -175,16 +175,16 @@ struct RenderShape
         if (a) *a = color.a;
     }
 
+    bool trimpath() const
+    {
+        if (!stroke) return false;
+        return stroke->trim.valid();
+    }
+
     float strokeWidth() const
     {
         if (!stroke) return 0;
         return stroke->width;
-    }
-
-    bool strokeTrim() const
-    {
-        if (!stroke) return false;
-        return stroke->trim.valid();
     }
 
     bool strokeFill(uint8_t* r, uint8_t* g, uint8_t* b, uint8_t* a) const

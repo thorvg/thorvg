@@ -851,12 +851,12 @@ Tessellator::~Tessellator()
 }
 
 
-bool Tessellator::tessellate(const RenderShape *rshape, bool antialias)
+bool Tessellator::tessellate(const RenderShape *rshape, const RenderPath& path, bool antialias)
 {
-    auto cmds = rshape->path.cmds.data;
-    auto cmdCnt = rshape->path.cmds.count;
-    auto pts = rshape->path.pts.data;
-    auto ptsCnt = rshape->path.pts.count;
+    auto cmds = path.cmds.data;
+    auto cmdCnt = path.cmds.count;
+    auto pts = path.pts.data;
+    auto ptsCnt = path.pts.count;
 
     this->fillRule = rshape->rule;
 
@@ -889,10 +889,17 @@ void Tessellator::tessellate(const Array<const RenderShape *> &shapes)
     this->fillRule = FillRule::NonZero;
 
     for (uint32_t i = 0; i < shapes.count; i++) {
-        auto cmds = shapes[i]->path.cmds.data;
-        auto cmdCnt = shapes[i]->path.cmds.count;
-        auto pts = shapes[i]->path.pts.data;
-        auto ptsCnt = shapes[i]->path.pts.count;
+        const RenderPath* path = nullptr;
+        RenderPath trimmedPath;
+        if (shapes[i]->trimpath()) {
+            if (!shapes[i]->stroke->trim.trim(shapes[i]->path, trimmedPath)) continue;
+            path = &trimmedPath;
+        } else path = &shapes[i]->path;
+
+        auto cmds = path->cmds.data;
+        auto cmdCnt = path->cmds.count;
+        auto pts = path->pts.data;
+        auto ptsCnt = path->pts.count;
 
         this->visitShape(cmds, cmdCnt, pts, ptsCnt);
     }
@@ -1528,7 +1535,7 @@ Stroker::Stroker(Array<float> *points, Array<uint32_t> *indices, const Matrix& m
 }
 
 
-void Stroker::stroke(const RenderShape *rshape)
+void Stroker::stroke(const RenderShape *rshape, const RenderPath& path)
 {
     mMiterLimit = rshape->strokeMiterlimit();
     mStrokeCap = rshape->strokeCap();
@@ -1541,27 +1548,10 @@ void Stroker::stroke(const RenderShape *rshape)
         mStrokeWidth = strokeWidth / mMatrix.e11;
     }
 
-    PathCommand *cmds, *trimmedCmds = nullptr;
-    Point *pts, *trimmedPts = nullptr;
-    uint32_t cmdCnt = 0, ptsCnt = 0;
-
-    if (rshape->strokeTrim()) {
-        RenderPath trimmedPath;
-        if (!rshape->stroke->trim.trim(rshape->path, trimmedPath)) return;
-
-        cmds = trimmedCmds = trimmedPath.cmds.data;
-        cmdCnt = trimmedPath.cmds.count;
-        pts = trimmedPts = trimmedPath.pts.data;
-        ptsCnt = trimmedPath.pts.count;
-
-        trimmedPath.cmds.data = nullptr;
-        trimmedPath.pts.data = nullptr;
-    } else {
-        cmds = rshape->path.cmds.data;
-        cmdCnt = rshape->path.cmds.count;
-        pts = rshape->path.pts.data;
-        ptsCnt = rshape->path.pts.count;
-    }
+    auto cmds = path.cmds.data;
+    auto pts = path.pts.data;
+    auto cmdCnt = path.cmds.count;
+    auto ptsCnt = path.pts.count;
 
     const float *dash_pattern = nullptr;
     auto dash_offset = 0.0f;
@@ -1569,9 +1559,6 @@ void Stroker::stroke(const RenderShape *rshape)
 
     if (dashCnt == 0) doStroke(cmds, cmdCnt, pts, ptsCnt);
     else doDashStroke(cmds, cmdCnt, pts, ptsCnt, dashCnt, dash_pattern, dash_offset);
-
-    tvg::free(trimmedCmds);
-    tvg::free(trimmedPts);
 }
 
 
@@ -2170,12 +2157,12 @@ BWTessellator::BWTessellator(Array<float>* points, Array<uint32_t>* indices): mR
 }
 
 
-void BWTessellator::tessellate(const RenderShape *rshape, const Matrix& matrix)
+void BWTessellator::tessellate(TVG_UNUSED const RenderShape *rshape, const RenderPath& path, const Matrix& matrix)
 {
-    auto cmds = rshape->path.cmds.data;
-    auto cmdCnt = rshape->path.cmds.count;
-    auto pts = rshape->path.pts.data;
-    auto ptsCnt = rshape->path.pts.count;
+    auto cmds = path.cmds.data;
+    auto cmdCnt = path.cmds.count;
+    auto pts = path.pts.data;
+    auto ptsCnt = path.pts.count;
 
     if (ptsCnt <= 2) return;
 

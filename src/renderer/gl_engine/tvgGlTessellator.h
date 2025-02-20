@@ -43,7 +43,7 @@ class Tessellator final
 public:
     Tessellator(Array<float>* points, Array<uint32_t>* indices);
     ~Tessellator();
-    bool tessellate(const RenderShape *rshape, bool antialias = false);
+    bool tessellate(const RenderShape *rshape, const RenderPath& path, bool antialias = false);
     void tessellate(const Array<const RenderShape*> &shapes);
 
 private:
@@ -82,7 +82,7 @@ class Stroker final
 public:
     Stroker(Array<float>* points, Array<uint32_t>* indices, const Matrix& matrix);
     ~Stroker() = default;
-    void stroke(const RenderShape *rshape);
+    void stroke(const RenderShape *rshape, const RenderPath& path);
     RenderRegion bounds() const;
 
 private:
@@ -150,7 +150,7 @@ class BWTessellator
 public:
     BWTessellator(Array<float>* points, Array<uint32_t>* indices);
     ~BWTessellator() = default;
-    void tessellate(const RenderShape *rshape, const Matrix& matrix);
+    void tessellate(const RenderShape *rshape, const RenderPath& path, const Matrix& matrix);
     RenderRegion bounds() const;
 
 private:
