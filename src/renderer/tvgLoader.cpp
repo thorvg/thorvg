@@ -249,7 +249,7 @@ bool LoaderMgr::term()
 {
     //clean up the remained font loaders which is globally used.
     INLIST_SAFE_FOREACH(_activeLoaders, loader) {
-        if (loader->type != FileType::Ttf) break;
+        if (loader->type != FileType::Ttf) continue;
         auto ret = loader->close();
         _activeLoaders.remove(loader);
         if (ret) delete(loader);
