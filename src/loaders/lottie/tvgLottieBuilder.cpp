@@ -894,9 +894,13 @@ void _fontURLText(LottieText* text, Scene* main, float frameNo, Tween& tween, Lo
     auto& doc = text->doc(frameNo, exps);
     if (!doc.text) return;
 
-    const float ptPerPx = 0.75f; //1 pt = 1/72; 1 in = 96 px; -> 72/96 = 0.75
+    const float size = doc.size * 75.0f; //1 pt = 1/72; 1 in = 96 px; -> 72/96 = 0.75
     auto txt = Text::gen();
-    txt->font(doc.name, doc.size * 100.0f * ptPerPx);
+    auto res = txt->font(doc.name, size);
+    if (res != Result::Success) {
+        txt->font(nullptr, size);
+    }
+
     txt->translate(0.0f, -doc.size * 100.0f);
     txt->text(doc.text);
     txt->fill(doc.color.rgb[0], doc.color.rgb[1], doc.color.rgb[2]);

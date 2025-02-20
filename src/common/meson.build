@@ -1,6 +1,7 @@
 source_file = [
    'tvgArray.h',
    'tvgCompressor.h',
+   'tvgFont.h',
    'tvgInlist.h',
    'tvgLock.h',
    'tvgMath.h',
