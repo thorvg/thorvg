@@ -114,6 +114,7 @@ namespace tvg {
         return static_cast<T>(std::realloc(ptr, size));
     }
 
+    template<typename T = void*>
     static inline void free(void* ptr)
     {
         std::free(ptr);
