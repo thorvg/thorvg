@@ -356,6 +356,15 @@ struct LottieGenericProperty : LottieProperty
 
     void copy(const LottieGenericProperty<Frame, Value, Scalar>& rhs, bool shallow = true)
     {
+        // TODO: 슬롯 데이터 이전 로직에 expression에 대한 정보 추가 필요
+        if (rhs.exp) {
+            exp = rhs.exp;
+            exp->property = this; // Slot JSON obj의 프로퍼티를 바라보면 안되므로, exp를 덮어씌울 때는 반드시 원본 obj의 property를 지정해주어야함. otherwise heap UAF
+            const_cast<LottieGenericProperty<Frame, Value, Scalar>&>(rhs).exp = nullptr;
+            return;  // Exp가 있는 경우 해당 슬롯은 코드 데이터만 있는것으로 assume && spec 확인 필요
+            // 동시에 overriding가능한 경우 슬롯에 다른 데이터가 없는지 검사 후 flag를 선언하여, 값을 덮어씌우지 않도록 해야함
+        }
+
         if (rhs.frames) {
             if (shallow) {
                 frames = rhs.frames;
@@ -365,13 +374,6 @@ struct LottieGenericProperty : LottieProperty
                 *frames = *rhs.frames;
             }
         } else value = rhs.value;
-
-        // TODO: 슬롯 데이터 이전 로직에 expression에 대한 정보 추가 필요
-        if (rhs.exp) {
-            exp = rhs.exp;
-            exp->property = this; // Slot JSON obj의 프로퍼티를 바라보면 안되므로, exp를 덮어씌울 때는 반드시 원본 obj의 property를 지정해주어야함. otherwise heap UAF
-            const_cast<LottieGenericProperty<Frame, Value, Scalar>&>(rhs).exp = nullptr;
-        }
     }
 
     float angle(float frameNo)
