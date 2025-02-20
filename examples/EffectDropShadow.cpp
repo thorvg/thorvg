@@ -101,13 +101,13 @@ struct UserExample : tvgexam::Example
         //Clear the previously applied effects
         scene1->push(tvg::SceneEffect::ClearAll);
         //Apply DropShadow post effect (r, g, b, a, angle, distance, sigma of blurness, quality)
-        scene1->push(tvg::SceneEffect::DropShadow, 0, 0, 0, 125, 120, (double)(20.0f * progress), 3, 100);
+        scene1->push(tvg::SceneEffect::DropShadow, 0, 0, 0, 125, 120.0, (double)(20.0f * progress), 3.0, 100);
 
         scene2->push(tvg::SceneEffect::ClearAll);
-        scene2->push(tvg::SceneEffect::DropShadow, 65, 143, 222, (int)(255.0f * progress), 135, 10, 3, 100);
+        scene2->push(tvg::SceneEffect::DropShadow, 65, 143, 222, (int)(255.0f * progress), 135.0, 10.0, 3.0, 100);
 
         scene3->push(tvg::SceneEffect::ClearAll);
-        scene3->push(tvg::SceneEffect::DropShadow, 0, 0, 0, 125, (double)(360.0f * progress), 20, 3, 100);
+        scene3->push(tvg::SceneEffect::DropShadow, 0, 0, 0, 125, (double)(360.0f * progress), 20.0, 3.0, 100);
 
         canvas->update();
 
