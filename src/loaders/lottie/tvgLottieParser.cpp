@@ -26,7 +26,6 @@
 #include "tvgLottieParser.h"
 #include "tvgLottieExpressions.h"
 
-
 /************************************************************************/
 /* Internal Class Implementation                                        */
 /************************************************************************/
@@ -469,6 +468,7 @@ void LottieParser::registerSlot(LottieObject* obj, const char* sid)
     
     auto slot = new LottieSlot(strdup(sid), obj, type);
     slot->layer = context.layer;
+    slot->parent = context.parent;
     comp->slots.push(slot);
 }
 
@@ -1501,41 +1501,42 @@ bool LottieParser::apply(LottieSlot* slot, bool byDefault)
     //OPTIMIZE: we can create the property directly, without object
     LottieObject* obj = nullptr;  //slot object
     context.layer = slot->layer;
+    context.parent = slot->parent;
 
     switch (slot->type) {
         case LottieProperty::Type::Position: {
             obj = new LottieTransform;
-            context.parent = obj;
+            // context.parent = obj;
             parseSlotProperty<LottieProperty::Type::Position>(static_cast<LottieTransform*>(obj)->position);
             break;
         }
         case LottieProperty::Type::Point: {
             obj = new LottieTransform;
-            context.parent = obj;
+            // context.parent = obj;
             parseSlotProperty<LottieProperty::Type::Point>(static_cast<LottieTransform*>(obj)->scale);
             break;
         }
         case LottieProperty::Type::Float: {
             obj = new LottieTransform;
-            context.parent = obj;
+            // context.parent = obj;
             parseSlotProperty<LottieProperty::Type::Float>(static_cast<LottieTransform*>(obj)->rotation);
             break;
         }
         case LottieProperty::Type::Opacity: {
             obj = new LottieSolid;
-            context.parent = obj;
+            // context.parent = obj;
             parseSlotProperty<LottieProperty::Type::Opacity>(static_cast<LottieSolid*>(obj)->opacity);
             break;
         }
         case LottieProperty::Type::Color: {
             obj = new LottieSolid;
-            context.parent = obj;
+            // context.parent = obj;
             parseSlotProperty<LottieProperty::Type::Color>(static_cast<LottieSolid*>(obj)->color);
             break;
         }
         case LottieProperty::Type::ColorStop: {
             obj = new LottieGradient;
-            context.parent = obj;
+            // context.parent = obj;
             while (auto key = nextObjectKey()) {
                 if (KEY_AS("p")) parseColorStop(static_cast<LottieGradient*>(obj));
                 else skip();
@@ -1544,7 +1545,7 @@ bool LottieParser::apply(LottieSlot* slot, bool byDefault)
         }
         case LottieProperty::Type::TextDoc: {
             obj = new LottieText;
-            context.parent = obj;
+            // context.parent = obj;
             parseSlotProperty<LottieProperty::Type::TextDoc>(static_cast<LottieText*>(obj)->doc);
             break;
         }
@@ -1553,7 +1554,7 @@ bool LottieParser::apply(LottieSlot* slot, bool byDefault)
                 if (KEY_AS("p")) obj = parseAsset();
                 else skip();
             }
-            context.parent = obj;
+            // context.parent = obj;
             break;
         }
         default: break;
@@ -1566,7 +1567,7 @@ bool LottieParser::apply(LottieSlot* slot, bool byDefault)
 
     slot->assign(obj, byDefault);
 
-    // delete(obj); // 여기서 expression을 위한 property가 free 됨 (수정필요)
+    delete(obj);
 
     return true;
 }

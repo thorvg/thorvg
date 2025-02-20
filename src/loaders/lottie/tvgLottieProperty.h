@@ -369,6 +369,7 @@ struct LottieGenericProperty : LottieProperty
         // TODO: 슬롯 데이터 이전 로직에 expression에 대한 정보 추가 필요
         if (rhs.exp) {
             exp = rhs.exp;
+            exp->property = this; // Slot JSON obj의 프로퍼티를 바라보면 안되므로, exp를 덮어씌울 때는 반드시 원본 obj의 property를 지정해주어야함. otherwise heap UAF
             const_cast<LottieGenericProperty<Frame, Value, Scalar>&>(rhs).exp = nullptr;
         }
     }

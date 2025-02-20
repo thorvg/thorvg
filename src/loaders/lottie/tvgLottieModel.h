@@ -937,6 +937,7 @@ struct LottieSlot
 
     // used for expression
     LottieLayer* layer = nullptr;
+    LottieObject* parent = nullptr;
 };
 
 
