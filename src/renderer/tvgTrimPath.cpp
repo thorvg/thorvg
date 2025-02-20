@@ -31,42 +31,6 @@
 /* Internal Class Implementation                                        */
 /************************************************************************/
 
-static float _pathLength(const PathCommand* cmds, uint32_t cmdsCnt, const Point* pts, uint32_t ptsCnt)
-{
-    if (ptsCnt < 2) return 0.0f;
-
-    auto start = pts;
-    auto totalLength = 0.0f;
-
-    while (cmdsCnt-- > 0) {
-        switch (*cmds) {
-            case PathCommand::Close: {
-                totalLength += length(pts - 1, start);
-                break;
-            }
-            case PathCommand::MoveTo: {
-                start = pts;
-                ++pts;
-                break;
-            }
-            case PathCommand::LineTo: {
-                totalLength += length(pts - 1, pts);
-                ++pts;
-                break;
-            }
-            case PathCommand::CubicTo: {
-                totalLength += Bezier{*(pts - 1), *pts, *(pts + 1), *(pts + 2)}.length();
-                pts += 3;
-                break;
-            }
-        }
-        ++cmds;
-    }
-
-    return totalLength;
-}
-
-
 static void _trimAt(const PathCommand* cmds, const Point* pts, Point& moveTo, float at1, float at2, bool start, RenderPath& out)
 {
     switch (*cmds) {
@@ -236,7 +200,7 @@ static void _trimPath(const PathCommand* inCmds, uint32_t inCmdsCnt, const Point
 
 static void _trim(const PathCommand* inCmds, uint32_t inCmdsCnt, const Point* inPts, uint32_t inPtsCnt, float begin, float end, bool connect, RenderPath& out)
 {
-    auto totalLength = _pathLength(inCmds, inCmdsCnt, inPts, inPtsCnt);
+    auto totalLength = tvg::pathLength(inCmds, inCmdsCnt, inPts, inPtsCnt);
     auto trimStart = begin * totalLength;
     auto trimEnd = end * totalLength;
 

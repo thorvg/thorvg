@@ -372,6 +372,43 @@ float Bezier::angle(float t) const
 }
 
 
+
+float pathLength(const PathCommand* cmds, uint32_t cmdsCnt, const Point* pts, uint32_t ptsCnt)
+{
+    if (ptsCnt < 2) return 0.0f;
+
+    auto start = pts;
+    auto totalLength = 0.0f;
+
+    while (cmdsCnt-- > 0) {
+        switch (*cmds) {
+            case PathCommand::Close: {
+                totalLength += length(pts - 1, start);
+                break;
+            }
+            case PathCommand::MoveTo: {
+                start = pts;
+                ++pts;
+                break;
+            }
+            case PathCommand::LineTo: {
+                totalLength += length(pts - 1, pts);
+                ++pts;
+                break;
+            }
+            case PathCommand::CubicTo: {
+                totalLength += Bezier{*(pts - 1), *pts, *(pts + 1), *(pts + 2)}.length();
+                pts += 3;
+                break;
+            }
+        }
+        ++cmds;
+    }
+
+    return totalLength;
+}
+
+
 uint8_t lerp(const uint8_t &start, const uint8_t &end, float t)
 {
     return static_cast<uint8_t>(tvg::clamp(static_cast<int>(start + (end - start) * t), 0, 255));
