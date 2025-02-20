@@ -118,7 +118,7 @@ struct TvgEngineMethod
     }
 
     void loadFont() {
-        Text::load("default", reinterpret_cast<const char*>(DEFAULT_FONT), DEFAULT_FONT_SIZE, "ttf", false);
+        Text::load("default", get_default_font(), DEFAULT_FONT_SIZE, "ttf", false);
     }
 };
 
