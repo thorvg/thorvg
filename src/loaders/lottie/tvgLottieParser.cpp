@@ -466,7 +466,10 @@ void LottieParser::registerSlot(LottieObject* obj, const char* sid)
         (*p)->pairs.push({obj});
         return;
     }
-    comp->slots.push(new LottieSlot(strdup(sid), obj, type));
+    
+    auto slot = new LottieSlot(strdup(sid), obj, type);
+    slot->layer = context.layer;
+    comp->slots.push(slot);
 }
 
 
@@ -1497,6 +1500,7 @@ bool LottieParser::apply(LottieSlot* slot, bool byDefault)
 
     //OPTIMIZE: we can create the property directly, without object
     LottieObject* obj = nullptr;  //slot object
+    context.layer = slot->layer;
 
     switch (slot->type) {
         case LottieProperty::Type::Position: {
@@ -1562,7 +1566,7 @@ bool LottieParser::apply(LottieSlot* slot, bool byDefault)
 
     slot->assign(obj, byDefault);
 
-    delete(obj);
+    // delete(obj); // 여기서 expression을 위한 property가 free 됨 (수정필요)
 
     return true;
 }

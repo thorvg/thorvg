@@ -934,6 +934,9 @@ struct LottieSlot
     Array<Pair> pairs;
     LottieProperty::Type type;
     bool overridden = false;
+
+    // used for expression
+    LottieLayer* layer = nullptr;
 };
 
 

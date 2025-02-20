@@ -365,6 +365,12 @@ struct LottieGenericProperty : LottieProperty
                 *frames = *rhs.frames;
             }
         } else value = rhs.value;
+
+        // TODO: 슬롯 데이터 이전 로직에 expression에 대한 정보 추가 필요
+        if (rhs.exp) {
+            exp = rhs.exp;
+            const_cast<LottieGenericProperty<Frame, Value, Scalar>&>(rhs).exp = nullptr;
+        }
     }
 
     float angle(float frameNo)
