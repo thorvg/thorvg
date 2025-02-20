@@ -1178,7 +1178,7 @@ RenderData GlRenderer::prepare(RenderSurface* image, RenderData data, const Matr
         sdata->opacity = opacity;
         sdata->texColorSpace = image->cs;
         sdata->texFlipY = 1;
-        sdata->geometry = GlGeometry();
+        sdata->geometry.reset();
     }
 
     sdata->geometry.matrix = transform;
@@ -1211,7 +1211,7 @@ RenderData GlRenderer::prepare(const RenderShape& rshape, RenderData data, const
     sdata->viewHt = static_cast<float>(surface.h);
     sdata->updateFlag = RenderUpdateFlag::None;
 
-    sdata->geometry = GlGeometry();
+    sdata->geometry.reset();
     sdata->opacity = opacity;
 
     //invisible?
