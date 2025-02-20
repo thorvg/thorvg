@@ -72,7 +72,7 @@ struct UserExample : tvgexam::Example
         canvas->push(text2);
 
         auto text3 = tvg::Text::gen();
-        text3->font("Arial", 40);
+        text3->font(nullptr, 40);  //Use any font
         text3->text("Kerning Test: VA, AV, TJ, JT");
         text3->fill(255, 255, 255);
         text3->translate(0, 225);
