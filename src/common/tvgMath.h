@@ -356,6 +356,7 @@ struct BBox
 };
 
 
+float pathLength(const PathCommand* cmds, uint32_t cmdsCnt, const Point* pts, uint32_t ptsCnt);
 
 /************************************************************************/
 /* Interpolation functions                                              */

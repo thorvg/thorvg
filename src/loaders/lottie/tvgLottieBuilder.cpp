@@ -889,42 +889,6 @@ void LottieBuilder::updateImage(LottieGroup* layer)
 }
 
 
-static float _pathLength(const PathCommand* cmds, uint32_t cmdsCnt, const Point* pts, uint32_t ptsCnt)
-{
-    if (cmdsCnt == 0 || ptsCnt == 0) return 0.0f;
-
-    auto start = pts;
-    auto totalLength = 0.0f;
-
-    while (cmdsCnt-- > 0) {
-        switch (*cmds) {
-            case PathCommand::Close: {
-                totalLength += length(pts - 1, start);
-                break;
-            }
-            case PathCommand::MoveTo: {
-                start = pts;
-                ++pts;
-                break;
-            }
-            case PathCommand::LineTo: {
-                totalLength += length(pts - 1, pts);
-                ++pts;
-                break;
-            }
-            case PathCommand::CubicTo: {
-                totalLength += Bezier{*(pts - 1), *pts, *(pts + 1), *(pts + 2)}.length();
-                pts += 3;
-                break;
-            }
-        }
-        ++cmds;
-    }
-
-    return totalLength;
-}
-
-
 struct FollowPath
 {
     LottieMask* mask;
@@ -948,7 +912,7 @@ struct FollowPath
         }
         cmds = SHAPE(sh)->rs.path.cmds.data;
         cmdsCnt = SHAPE(sh)->rs.path.cmds.count;
-        totalLen = _pathLength(cmds, cmdsCnt, pts, SHAPE(sh)->rs.path.pts.count);
+        totalLen = tvg::pathLength(cmds, cmdsCnt, pts, SHAPE(sh)->rs.path.pts.count);
         currentLen = 0.0f;
         start = pts;
     }
