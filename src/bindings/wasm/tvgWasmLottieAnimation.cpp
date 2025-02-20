@@ -123,7 +123,7 @@ struct TvgSwEngine : TvgEngineMethod
 
     ~TvgSwEngine()
     {
-        free(buffer);
+        std::free(buffer);
         Initializer::term(tvg::CanvasEngine::Sw);
     }
 
@@ -135,8 +135,8 @@ struct TvgSwEngine : TvgEngineMethod
 
     void resize(Canvas* canvas, int w, int h) override
     {
-        free(buffer);
-        buffer = (uint8_t*)malloc(w * h * sizeof(uint32_t));
+        std::free(buffer);
+        buffer = (uint8_t*)std::malloc(w * h * sizeof(uint32_t));
         static_cast<SwCanvas*>(canvas)->target((uint32_t *)buffer, w, w, h, ColorSpace::ABGR8888S);
     }
 
