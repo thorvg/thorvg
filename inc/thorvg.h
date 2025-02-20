@@ -1528,6 +1528,7 @@ public:
      *
      * @retval Result::InsufficientCondition when the specified @p name cannot be found.
      *
+     * @note If the @p name is not specified, ThorVG will select any available font candidate.
      * @note Experimental API
      */
     Result font(const char* name, float size, const char* style = nullptr) noexcept;

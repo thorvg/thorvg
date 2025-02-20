@@ -34,6 +34,7 @@ struct LoaderMgr
     static LoadModule* loader(const uint32_t* data, uint32_t w, uint32_t h, ColorSpace cs, bool copy);
     static LoadModule* loader(const char* name, const char* data, uint32_t size, const char* mimeType, bool copy);
     static LoadModule* loader(const char* key);
+    static LoadModule* anyfont();
     static bool retrieve(const char* filename);
     static bool retrieve(LoadModule* loader);
 };

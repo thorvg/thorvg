@@ -2021,6 +2021,7 @@ TVG_API Tvg_Paint* tvg_text_new(void);
 * @retval TVG_RESULT_INVALID_ARGUMENT A @c nullptr passed as the @p paint argument.
 * @retval TVG_RESULT_INSUFFICIENT_CONDITION  The specified @p name cannot be found.
 *
+* @note If the @p name is not specified, ThorVG will select any available font candidate.
 * @note Experimental API
 */
 TVG_API Tvg_Result tvg_text_set_font(Tvg_Paint* paint, const char* name, float size, const char* style);

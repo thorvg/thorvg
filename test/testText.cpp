@@ -108,6 +108,7 @@ TEST_CASE("Text Font", "[tvgText]")
     REQUIRE(text->font("Arial", 80) == tvg::Result::Success);
     REQUIRE(text->font("Arial", 1) == tvg::Result::Success);
     REQUIRE(text->font("Arial", 50) == tvg::Result::Success);
+    REQUIRE(text->font(nullptr, 50) == tvg::Result::Success);
     REQUIRE(text->font("InvalidFont", 80) == tvg::Result::InsufficientCondition);
 
     Initializer::term();
