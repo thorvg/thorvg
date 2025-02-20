@@ -27,7 +27,6 @@
 
 namespace tvg
 {
-    uint8_t* lzwDecode(const uint8_t* compressed, uint32_t compressedSizeBytes, uint32_t compressedSizeBits, uint32_t uncompressedSizeBytes);
     size_t b64Decode(const char* encoded, const size_t len, char** decoded);
     unsigned long djb2Encode(const char* str);
 }
