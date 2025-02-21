@@ -32,64 +32,6 @@ struct UserExample : tvgexam::Example
     {
         if (!canvas) return false;
 
-        //Solid Rectangle
-        auto shape = tvg::Shape::gen();
-        shape->appendRect(0, 0, 400, 400);
-        shape->fill(255, 0, 0);
-
-        //Mask
-        auto mask = tvg::Shape::gen();
-        mask->appendCircle(200, 200, 125, 125);
-        mask->fill(255, 100, 255);
-
-        //Nested Mask
-        auto nMask = tvg::Shape::gen();
-        nMask->appendCircle(220, 220, 125, 125);
-        nMask->fill(255, 200, 255);
-
-        mask->mask(nMask, tvg::MaskMethod::Luma);
-        shape->mask(mask, tvg::MaskMethod::Luma);
-        canvas->push(shape);
-
-        //SVG
-        auto svg = tvg::Picture::gen();
-        if (!tvgexam::verify(svg->load(EXAMPLE_DIR"/svg/cartman.svg"))) return false;
-        svg->opacity(100);
-        svg->scale(3);
-        svg->translate(50, 400);
-
-        //Mask2
-        auto mask2 = tvg::Shape::gen();
-        mask2->appendCircle(150, 500, 75, 75);
-        mask2->appendRect(150, 500, 200, 200, 30, 30);
-        mask2->fill(255, 255, 255);
-        svg->mask(mask2, tvg::MaskMethod::Luma);
-        canvas->push(svg);
-
-        //Star
-        auto star = tvg::Shape::gen();
-        star->fill(80, 80, 80);
-        star->moveTo(599, 34);
-        star->lineTo(653, 143);
-        star->lineTo(774, 160);
-        star->lineTo(687, 244);
-        star->lineTo(707, 365);
-        star->lineTo(599, 309);
-        star->lineTo(497, 365);
-        star->lineTo(512, 245);
-        star->lineTo(426, 161);
-        star->lineTo(546, 143);
-        star->close();
-        star->strokeWidth(10);
-        star->strokeFill(255, 255, 255);
-
-        //Mask3
-        auto mask3 = tvg::Shape::gen();
-        mask3->appendCircle(600, 200, 125, 125);
-        mask3->fill(0, 255, 255);
-        star->mask(mask3, tvg::MaskMethod::Luma);
-        canvas->push(star);
-
         //Image
         ifstream file(EXAMPLE_DIR"/image/rawimage_200x300.raw", ios::binary);
         if (!file.is_open()) return false;
@@ -97,22 +39,161 @@ struct UserExample : tvgexam::Example
         file.read(reinterpret_cast<char *>(data), sizeof (uint32_t) * 200 * 300);
         file.close();
 
-        auto image = tvg::Picture::gen();
-        if (!tvgexam::verify(image->load(data, 200, 300, tvg::ColorSpace::ARGB8888, true))) return false;
-        image->translate(500, 400);
+        //Luma Masking
+        {
+            //Solid Rectangle
+            auto shape = tvg::Shape::gen();
+            shape->appendRect(0, 0, 400, 400);
+            shape->fill(255, 0, 0);
 
-        //Mask4
-        auto mask4 = tvg::Scene::gen();
-        auto mask4_rect = tvg::Shape::gen();
-        mask4_rect->appendRect(500, 400, 200, 300);
-        mask4_rect->fill(255, 255, 255);
-        auto mask4_circle = tvg::Shape::gen();
-        mask4_circle->appendCircle(600, 550, 125, 125);
-        mask4_circle->fill(128, 0, 128);
-        mask4->push(mask4_rect);
-        mask4->push(mask4_circle);
-        image->mask(mask4, tvg::MaskMethod::Luma);
-        canvas->push(image);
+            //Mask
+            auto mask = tvg::Shape::gen();
+            mask->appendCircle(200, 200, 125, 125);
+            mask->fill(255, 100, 255);
+
+            //Nested Mask
+            auto nMask = tvg::Shape::gen();
+            nMask->appendCircle(220, 220, 125, 125);
+            nMask->fill(255, 200, 255);
+
+            mask->mask(nMask, tvg::MaskMethod::Luma);
+            shape->mask(mask, tvg::MaskMethod::Luma);
+            canvas->push(shape);
+
+            //SVG
+            auto svg = tvg::Picture::gen();
+            if (!tvgexam::verify(svg->load(EXAMPLE_DIR"/svg/cartman.svg"))) return false;
+            svg->opacity(100);
+            svg->scale(3);
+            svg->translate(50, 400);
+
+            //Mask2
+            auto mask2 = tvg::Shape::gen();
+            mask2->appendCircle(150, 500, 75, 75);
+            mask2->appendRect(150, 500, 200, 200, 30, 30);
+            mask2->fill(255, 255, 255);
+            svg->mask(mask2, tvg::MaskMethod::Luma);
+            canvas->push(svg);
+
+            //Star
+            auto star = tvg::Shape::gen();
+            star->fill(80, 80, 80);
+            star->moveTo(599, 34);
+            star->lineTo(653, 143);
+            star->lineTo(774, 160);
+            star->lineTo(687, 244);
+            star->lineTo(707, 365);
+            star->lineTo(599, 309);
+            star->lineTo(497, 365);
+            star->lineTo(512, 245);
+            star->lineTo(426, 161);
+            star->lineTo(546, 143);
+            star->close();
+            star->strokeWidth(10);
+            star->strokeFill(255, 255, 255);
+
+            //Mask3
+            auto mask3 = tvg::Shape::gen();
+            mask3->appendCircle(600, 200, 125, 125);
+            mask3->fill(0, 255, 255);
+            star->mask(mask3, tvg::MaskMethod::Luma);
+            canvas->push(star);
+
+            auto image = tvg::Picture::gen();
+            if (!tvgexam::verify(image->load(data, 200, 300, tvg::ColorSpace::ARGB8888, true))) return false;
+            image->translate(500, 400);
+
+            //Mask4
+            auto mask4 = tvg::Scene::gen();
+            auto mask4_rect = tvg::Shape::gen();
+            mask4_rect->appendRect(500, 400, 200, 300);
+            mask4_rect->fill(255, 255, 255);
+            auto mask4_circle = tvg::Shape::gen();
+            mask4_circle->appendCircle(600, 550, 125, 125);
+            mask4_circle->fill(128, 0, 128);
+            mask4->push(mask4_rect);
+            mask4->push(mask4_circle);
+            image->mask(mask4, tvg::MaskMethod::Luma);
+            canvas->push(image);
+        }
+
+        //Inverse Luma Masking
+        {
+            //Solid Rectangle
+            auto shape = tvg::Shape::gen();
+            shape->appendRect(800, 0, 400, 400);
+            shape->fill(255, 0, 0);
+
+            //Mask
+            auto mask = tvg::Shape::gen();
+            mask->appendCircle(1000, 200, 125, 125);
+            mask->fill(255, 100, 255);
+
+            //Nested Mask
+            auto nMask = tvg::Shape::gen();
+            nMask->appendCircle(1020, 220, 125, 125);
+            nMask->fill(255, 200, 255);
+
+            mask->mask(nMask, tvg::MaskMethod::InvLuma);
+            shape->mask(mask, tvg::MaskMethod::InvLuma);
+            canvas->push(shape);
+
+            //SVG
+            auto svg = tvg::Picture::gen();
+            if (!tvgexam::verify(svg->load(EXAMPLE_DIR"/svg/cartman.svg"))) return false;
+            svg->opacity(100);
+            svg->scale(3);
+            svg->translate(850, 400);
+
+            //Mask2
+            auto mask2 = tvg::Shape::gen();
+            mask2->appendCircle(950, 500, 75, 75);
+            mask2->appendRect(950, 500, 200, 200, 30, 30);
+            mask2->fill(255, 255, 255);
+            svg->mask(mask2, tvg::MaskMethod::InvLuma);
+            canvas->push(svg);
+
+            //Star
+            auto star = tvg::Shape::gen();
+            star->fill(80, 80, 80);
+            star->moveTo(1399, 34);
+            star->lineTo(1453, 143);
+            star->lineTo(1574, 160);
+            star->lineTo(1487, 244);
+            star->lineTo(1507, 365);
+            star->lineTo(1399, 309);
+            star->lineTo(1297, 365);
+            star->lineTo(1312, 245);
+            star->lineTo(1226, 161);
+            star->lineTo(1346, 143);
+            star->close();
+            star->strokeWidth(10);
+            star->strokeFill(255, 255, 255);
+
+            //Mask3
+            auto mask3 = tvg::Shape::gen();
+            mask3->appendCircle(1400, 200, 125, 125);
+            mask3->fill(0, 255, 255);
+            star->mask(mask3, tvg::MaskMethod::InvLuma);
+            canvas->push(star);
+
+            auto image = tvg::Picture::gen();
+            if (!tvgexam::verify(image->load(data, 200, 300, tvg::ColorSpace::ARGB8888, true))) return false;
+            image->translate(1300, 400);
+
+            //Mask4
+            auto mask4 = tvg::Scene::gen();
+            auto mask4_rect = tvg::Shape::gen();
+            mask4_rect->appendRect(1300, 400, 200, 300);
+            mask4_rect->fill(255, 255, 255);
+            auto mask4_circle = tvg::Shape::gen();
+            mask4_circle->appendCircle(1400, 550, 125, 125);
+            mask4_circle->fill(128, 0, 128);
+            mask4->push(mask4_rect);
+            mask4->push(mask4_circle);
+            image->mask(mask4, tvg::MaskMethod::InvLuma);
+            canvas->push(image);
+        }
 
         free(data);
 
@@ -127,5 +208,5 @@ struct UserExample : tvgexam::Example
 
 int main(int argc, char **argv)
 {
-    return tvgexam::main(new UserExample, argc, argv);
+    return tvgexam::main(new UserExample, argc, argv, false, 1600, 800);
 }
