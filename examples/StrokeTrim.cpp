@@ -49,6 +49,9 @@ struct UserExample : tvgexam::Example
         shape2->translate(300, 300);
         shape2->fill(0, 155, 50, 100);
         shape2->strokeFill(0, 255, 0);
+
+        float dashPatterns[] = {10, 20};
+        shape2->strokeDash(dashPatterns, 2, 10);
         shape2->strokeTrim(0.25f, 0.75f, true);
 
         canvas->push(shape1);

@@ -32,66 +32,6 @@ struct UserExample : tvgexam::Example
     {
         if (!canvas) return false;
 
-        //Solid Rectangle
-        auto shape = tvg::Shape::gen();
-        shape->appendRect(0, 0, 400, 400);
-        shape->fill(0, 0, 255);
-
-        //Mask
-        auto mask = tvg::Shape::gen();
-        mask->appendCircle(200, 200, 125, 125);
-        mask->fill(255, 255, 255);        //AlphaMask RGB channels are unused.
-
-        //Nested Mask
-        auto nMask = tvg::Shape::gen();
-        nMask->appendCircle(220, 220, 125, 125);
-        nMask->fill(255, 255, 255);       //AlphaMask RGB channels are unused.
-
-        mask->mask(nMask, tvg::MaskMethod::Alpha);
-        shape->mask(mask, tvg::MaskMethod::Alpha);
-        canvas->push(shape);
-
-        //SVG
-        auto svg = tvg::Picture::gen();
-        if (!tvgexam::verify(svg->load(EXAMPLE_DIR"/svg/cartman.svg"))) return false;
-        svg->opacity(100);
-        svg->scale(3);
-        svg->translate(50, 400);
-
-        //Mask2
-        auto mask2 = tvg::Shape::gen();
-        mask2->appendCircle(150, 500, 75, 75);
-        mask2->appendRect(150, 500, 200, 200, 30, 30);
-        mask2->fill(255, 255, 255);       //AlphaMask RGB channels are unused.
-        svg->mask(mask2, tvg::MaskMethod::Alpha);
-        canvas->push(svg);
-
-        //Star
-        auto star = tvg::Shape::gen();
-        star->fill(80, 80, 80);
-        star->moveTo(599, 34);
-        star->lineTo(653, 143);
-        star->lineTo(774, 160);
-        star->lineTo(687, 244);
-        star->lineTo(707, 365);
-        star->lineTo(599, 309);
-        star->lineTo(497, 365);
-        star->lineTo(512, 245);
-        star->lineTo(426, 161);
-        star->lineTo(546, 143);
-        star->close();
-        star->strokeWidth(30);
-        star->strokeJoin(tvg::StrokeJoin::Miter);
-        star->strokeFill(255, 255, 255);
-
-        //Mask3
-        auto mask3 = tvg::Shape::gen();
-        mask3->appendCircle(600, 200, 125, 125);
-        mask3->fill(255, 255, 255);       //AlphaMask RGB channels are unused.
-        mask3->opacity(200);
-        star->mask(mask3, tvg::MaskMethod::Alpha);
-        canvas->push(star);
-
         //Image
         ifstream file(EXAMPLE_DIR"/image/rawimage_200x300.raw", ios::binary);
         if (!file.is_open()) return false;
@@ -99,27 +39,173 @@ struct UserExample : tvgexam::Example
         file.read(reinterpret_cast<char*>(data), sizeof (uint32_t) * 200 * 300);
         file.close();
 
-        auto image = tvg::Picture::gen();
-        if (!tvgexam::verify(image->load(data, 200, 300, tvg::ColorSpace::ARGB8888, true))) return false;
-        image->translate(500, 400);
+        //Masking
+        {
+            //Solid Rectangle
+            auto shape = tvg::Shape::gen();
+            shape->appendRect(0, 0, 400, 400);
+            shape->fill(0, 0, 255);
 
-        //Mask4
-        auto mask4 = tvg::Shape::gen();
-        mask4->moveTo(599, 384);
-        mask4->lineTo(653, 493);
-        mask4->lineTo(774, 510);
-        mask4->lineTo(687, 594);
-        mask4->lineTo(707, 715);
-        mask4->lineTo(599, 659);
-        mask4->lineTo(497, 715);
-        mask4->lineTo(512, 595);
-        mask4->lineTo(426, 511);
-        mask4->lineTo(546, 493);
-        mask4->close();
-        mask4->fill(255, 255, 255);        //AlphaMask RGB channels are unused.
-        mask4->opacity(70);
-        image->mask(mask4, tvg::MaskMethod::Alpha);
-        canvas->push(image);
+            //Mask
+            auto mask = tvg::Shape::gen();
+            mask->appendCircle(200, 200, 125, 125);
+            mask->fill(255, 255, 255);        //AlphaMask RGB channels are unused.
+
+            //Nested Mask
+            auto nMask = tvg::Shape::gen();
+            nMask->appendCircle(220, 220, 125, 125);
+            nMask->fill(255, 255, 255);       //AlphaMask RGB channels are unused.
+
+            mask->mask(nMask, tvg::MaskMethod::Alpha);
+            shape->mask(mask, tvg::MaskMethod::Alpha);
+            canvas->push(shape);
+
+            //SVG
+            auto svg = tvg::Picture::gen();
+            if (!tvgexam::verify(svg->load(EXAMPLE_DIR"/svg/cartman.svg"))) return false;
+            svg->opacity(100);
+            svg->scale(3);
+            svg->translate(50, 400);
+
+            //Mask2
+            auto mask2 = tvg::Shape::gen();
+            mask2->appendCircle(150, 500, 75, 75);
+            mask2->appendRect(150, 500, 200, 200, 30, 30);
+            mask2->fill(255, 255, 255);       //AlphaMask RGB channels are unused.
+            svg->mask(mask2, tvg::MaskMethod::Alpha);
+            canvas->push(svg);
+
+            //Star
+            auto star = tvg::Shape::gen();
+            star->fill(80, 80, 80);
+            star->moveTo(599, 34);
+            star->lineTo(653, 143);
+            star->lineTo(774, 160);
+            star->lineTo(687, 244);
+            star->lineTo(707, 365);
+            star->lineTo(599, 309);
+            star->lineTo(497, 365);
+            star->lineTo(512, 245);
+            star->lineTo(426, 161);
+            star->lineTo(546, 143);
+            star->close();
+            star->strokeWidth(30);
+            star->strokeJoin(tvg::StrokeJoin::Miter);
+            star->strokeFill(255, 255, 255);
+
+            //Mask3
+            auto mask3 = tvg::Shape::gen();
+            mask3->appendCircle(600, 200, 125, 125);
+            mask3->fill(255, 255, 255);       //AlphaMask RGB channels are unused.
+            mask3->opacity(200);
+            star->mask(mask3, tvg::MaskMethod::Alpha);
+            canvas->push(star);
+
+            auto image = tvg::Picture::gen();
+            if (!tvgexam::verify(image->load(data, 200, 300, tvg::ColorSpace::ARGB8888, true))) return false;
+            image->translate(500, 400);
+
+            //Mask4
+            auto mask4 = tvg::Shape::gen();
+            mask4->moveTo(599, 384);
+            mask4->lineTo(653, 493);
+            mask4->lineTo(774, 510);
+            mask4->lineTo(687, 594);
+            mask4->lineTo(707, 715);
+            mask4->lineTo(599, 659);
+            mask4->lineTo(497, 715);
+            mask4->lineTo(512, 595);
+            mask4->lineTo(426, 511);
+            mask4->lineTo(546, 493);
+            mask4->close();
+            mask4->fill(255, 255, 255);        //AlphaMask RGB channels are unused.
+            mask4->opacity(70);
+            image->mask(mask4, tvg::MaskMethod::Alpha);
+            canvas->push(image);
+        }
+
+        //Inverse Masking
+        {
+            //Solid Rectangle
+            auto shape = tvg::Shape::gen();
+            shape->appendRect(800, 0, 400, 400);
+            shape->fill(0, 0, 255);
+
+            //Mask
+            auto mask = tvg::Shape::gen();
+            mask->appendCircle(1000, 200, 125, 125);
+            mask->fill(255, 255, 255);     //InvAlphaMask RGB channels are unused.
+
+            //Nested Mask
+            auto nMask = tvg::Shape::gen();
+            nMask->appendCircle(1020, 220, 125, 125);
+            nMask->fill(255, 255, 255);    //InvAlphaMask RGB channels are unused.
+
+            mask->mask(nMask, tvg::MaskMethod::InvAlpha);
+            shape->mask(mask, tvg::MaskMethod::InvAlpha);
+            canvas->push(shape);
+
+            //SVG
+            auto svg = tvg::Picture::gen();
+            if (!tvgexam::verify(svg->load(EXAMPLE_DIR"/svg/cartman.svg"))) return false;
+            svg->opacity(100);
+            svg->scale(3);
+            svg->translate(850, 400);
+
+            //Mask2
+            auto mask2 = tvg::Shape::gen();
+            mask2->appendCircle(950, 500, 75, 75);
+            mask2->appendRect(950, 500, 200, 200, 30, 30);
+            mask2->fill(255, 255, 255);   //InvAlphaMask RGB channels are unused.
+            svg->mask(mask2, tvg::MaskMethod::InvAlpha);
+            canvas->push(svg);
+
+            //Star
+            auto star = tvg::Shape::gen();
+            star->fill(80, 80, 80);
+            star->moveTo(1399, 34);
+            star->lineTo(1453, 143);
+            star->lineTo(1574, 160);
+            star->lineTo(1487, 244);
+            star->lineTo(1507, 365);
+            star->lineTo(1399, 309);
+            star->lineTo(1297, 365);
+            star->lineTo(1312, 245);
+            star->lineTo(1226, 161);
+            star->lineTo(1346, 143);
+            star->close();
+            star->strokeWidth(10);
+            star->strokeFill(255, 255, 255);
+
+            //Mask3
+            auto mask3 = tvg::Shape::gen();
+            mask3->appendCircle(1400, 200, 125, 125);
+            mask3->fill(255, 255, 255);        //InvAlphaMask RGB channels are unused.
+            star->mask(mask3, tvg::MaskMethod::InvAlpha);
+            canvas->push(star);
+
+            auto image = tvg::Picture::gen();
+            if (!tvgexam::verify(image->load(data, 200, 300, tvg::ColorSpace::ABGR8888, true))) return false;
+            image->translate(1300, 400);
+
+            //Mask4
+            auto mask4 = tvg::Shape::gen();
+            mask4->moveTo(1399, 384);
+            mask4->lineTo(1453, 493);
+            mask4->lineTo(1574, 510);
+            mask4->lineTo(1487, 594);
+            mask4->lineTo(1507, 715);
+            mask4->lineTo(1399, 659);
+            mask4->lineTo(1297, 715);
+            mask4->lineTo(1312, 595);
+            mask4->lineTo(1226, 511);
+            mask4->lineTo(1346, 493);
+            mask4->close();
+            mask4->fill(255, 255, 255);      //InvAlphaMask RGB channels are unused.
+            mask4->opacity(70);
+            image->mask(mask4, tvg::MaskMethod::InvAlpha);
+            canvas->push(image);
+        }
 
         free(data);
 
@@ -134,5 +220,5 @@ struct UserExample : tvgexam::Example
 
 int main(int argc, char **argv)
 {
-    return tvgexam::main(new UserExample, argc, argv);
+    return tvgexam::main(new UserExample, argc, argv, false, 1600, 800);
 }
