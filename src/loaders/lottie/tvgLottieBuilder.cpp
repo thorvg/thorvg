@@ -1177,14 +1177,10 @@ void LottieBuilder::updateMasks(LottieLayer* layer, float frameNo)
         //the first mask
         if (!pShape) {
             pShape = layer->pooling();
-            pShape->reset();
-            pShape->fill(255, 255, 255, opacity);
-            pShape->transform(layer->cache.matrix);
             auto compMethod = (method == MaskMethod::Subtract || method == MaskMethod::InvAlpha) ? MaskMethod::InvAlpha : MaskMethod::Alpha;
             //Cheaper. Replace the masking with a clipper
             if (layer->masks.count == 1 && compMethod == MaskMethod::Alpha) {
                 layer->scene->opacity(MULTIPLY(layer->scene->opacity(), opacity));
-                pShape->strokeWidth(0.0f); //enforce fill clipper over stroke clipper
                 layer->scene->clip(pShape);
                 fastTrack = true;
             } else {
@@ -1193,12 +1189,15 @@ void LottieBuilder::updateMasks(LottieLayer* layer, float frameNo)
         //Chain mask composition
         } else if (pMethod != method || pOpacity != opacity || (method != MaskMethod::Subtract && method != MaskMethod::Difference)) {
             auto shape = layer->pooling();
-            shape->reset();
-            shape->fill(255, 255, 255, opacity);
-            shape->transform(layer->cache.matrix);
             pShape->mask(shape, method);
             pShape = shape;
         }
+
+        pShape->reset();
+        pShape->trimpath(0.0f, 1.0f);
+        pShape->strokeWidth(0.0f);
+        pShape->fill(255, 255, 255, opacity);
+        pShape->transform(layer->cache.matrix);
 
         //Default Masking
         if (expand == 0.0f) {
