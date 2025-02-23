@@ -332,7 +332,7 @@ bool LoaderMgr::retrieve(const char* filename)
 LoadModule* LoaderMgr::loader(const char* key)
 {
     INLIST_FOREACH(_activeLoaders, loader) {
-        if (loader->pathcache && strstr(loader->hashpath, key)) {
+        if (loader->pathcache && !strcmp(loader->hashpath, key)) {
             ++loader->sharing;
             return loader;
         }
