@@ -232,6 +232,22 @@ static LoadModule* _findFromCache(const char* data, uint32_t size, const char* m
 }
 
 
+static bool _match(const char* path, const char* fontName)
+{
+    auto name = (const char*)strrchr(path, '/');
+#ifdef _WIN32
+    if (name) {
+        if (auto c = (const char*)strrchr(path, '\\')) name = c;
+    } else name = strrchr(path, '\\');
+#endif
+    name = name ? name + 1 : path;
+
+    auto ext = (const char*)strrchr(name, '.');
+    auto len = ext ? ext - name : 0;
+
+    return len > 0 ? !strncmp(name, fontName, len) : !strcmp(name, fontName);
+}
+
 /************************************************************************/
 /* External Class Implementation                                        */
 /************************************************************************/
@@ -330,7 +346,7 @@ bool LoaderMgr::retrieve(const char* filename)
 LoadModule* LoaderMgr::loader(const char* key)
 {
     INLIST_FOREACH(_activeLoaders, loader) {
-        if (loader->pathcache && strstr(loader->hashpath, key)) {
+        if (loader->pathcache && _match(loader->hashpath, key)) {
             ++loader->sharing;
             return loader;
         }
