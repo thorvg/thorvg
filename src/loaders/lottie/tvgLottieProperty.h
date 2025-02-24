@@ -356,6 +356,20 @@ struct LottieGenericProperty : LottieProperty
 
     void copy(const LottieGenericProperty<Frame, Value, Scalar>& rhs, bool shallow = true)
     {
+        // Only override the expression if one exists
+        if (rhs.exp) {
+            if (shallow) {
+                exp = rhs.exp;
+                const_cast<LottieGenericProperty<Frame, Value, Scalar>&>(rhs).exp = nullptr;
+            } else {
+                exp = new LottieExpression;
+                *exp = *rhs.exp;
+            }
+
+            exp->property = this;
+            return;
+        }
+
         if (rhs.frames) {
             if (shallow) {
                 frames = rhs.frames;
