@@ -2300,7 +2300,7 @@ void DashStroke::dashLineTo(const GlPoint &to)
             this->lineTo(curr.p2);
         }
 
-        if (mCurrLen < 1) {
+        if (mCurrLen < 0.1f) {
             mCurrIdx = (mCurrIdx + 1) % mDashCount;
             mCurrLen = mDashPattern[mCurrIdx];
             mCurOpGap = !mCurOpGap;
@@ -2352,7 +2352,7 @@ void DashStroke::dashCubicTo(const GlPoint &cnt1, const GlPoint &cnt2, const GlP
             this->cubicTo(cur.ctrl1, cur.ctrl2, cur.end);
         }
 
-        if (mCurrLen < 1) {
+        if (mCurrLen < 0.1f) {
             mCurrIdx = (mCurrIdx + 1) % mDashCount;
             mCurrLen = mDashPattern[mCurrIdx];
             mCurOpGap = !mCurOpGap;
