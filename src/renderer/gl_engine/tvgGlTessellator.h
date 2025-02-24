@@ -187,6 +187,7 @@ private:
     float mCurrLen;
     int32_t mCurrIdx;
     bool mCurOpGap;
+    bool mMove;
     GlPoint mPtStart;
     GlPoint mPtCur;
 };
