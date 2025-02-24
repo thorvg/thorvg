@@ -2056,7 +2056,7 @@ void DashStroke::dashLineTo(const Point& to)
             this->lineTo(curr.pt2);
         }
 
-        if (mCurrLen < 1) {
+        if (mCurrLen < 0.1f) {
             mCurrIdx = (mCurrIdx + 1) % mDashCount;
             mCurrLen = mDashPattern[mCurrIdx];
             mCurOpGap = !mCurOpGap;
@@ -2108,7 +2108,7 @@ void DashStroke::dashCubicTo(const Point& cnt1, const Point& cnt2, const Point& 
             this->cubicTo(cur.ctrl1, cur.ctrl2, cur.end);
         }
 
-        if (mCurrLen < 1) {
+        if (mCurrLen < 0.1f) {
             mCurrIdx = (mCurrIdx + 1) % mDashCount;
             mCurrLen = mDashPattern[mCurrIdx];
             mCurOpGap = !mCurOpGap;
