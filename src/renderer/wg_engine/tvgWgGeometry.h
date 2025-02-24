@@ -377,7 +377,7 @@ struct WgIndexedVertexBuffer
         while(dashOffset > dashes_lenth) dashOffset -= dashes_lenth;
         auto gap = false;
         // scip dashes by offset
-        while(len_total < dashOffset) {
+        while(len_total <= dashOffset) {
             index_dash = (index_dash + 1) % dashCnt;
             len_total += dashPattern[index_dash];
             gap = !gap;
