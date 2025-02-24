@@ -919,7 +919,7 @@ struct LottieSlot
     void assign(LottieObject* target, bool byDefault);
     void reset();
 
-    LottieSlot(char* sid, LottieObject* obj, LottieProperty::Type type) : sid(sid), type(type)
+    LottieSlot(LottieLayer* layer, LottieObject* parent, char* sid, LottieObject* obj, LottieProperty::Type type) : context{layer, parent}, sid(sid), type(type)
     {
         pairs.push({obj});
     }
@@ -931,9 +931,15 @@ struct LottieSlot
         ARRAY_FOREACH(pair, pairs) delete(pair->prop);
     }
 
+    struct {
+        LottieLayer* layer;
+        LottieObject* parent;
+    } context;
+
     char* sid;
     Array<Pair> pairs;
     LottieProperty::Type type;
+
     bool overridden = false;
 };
 
