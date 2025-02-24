@@ -488,13 +488,13 @@ bool TtfReader::convert(Shape* shape, TtfGlyphMetrics& gmetrics, const Point& of
 
     for (uint32_t i = 0; i < cntrsCnt; ++i) {
         //contour must start with move to
+        bool offCurve = !(flags[begin] & ON_CURVE);
+        Point ptsBegin = offCurve ? (pts[begin] + pts[endPts[i]]) * 0.5f : pts[begin];
         pathCmds.push(PathCommand::MoveTo);
-        pathPts.push(pts[begin]);
+        pathPts.push(ptsBegin);
 
-        bool offCurve = false;
-        auto last = (endPts[i] - begin) + 1;
-
-        for (uint32_t x = 1; x < last; ++x) {
+        auto cnt = endPts[i] - begin + 1;
+        for (uint32_t x = 1; x < cnt; ++x) {
             if (flags[begin + x] & ON_CURVE) {
                 if (offCurve) {
                     pathCmds.push(PathCommand::CubicTo);
@@ -520,9 +520,9 @@ bool TtfReader::convert(Shape* shape, TtfGlyphMetrics& gmetrics, const Point& of
         }
         if (offCurve) {
             pathCmds.push(PathCommand::CubicTo);
-            pathPts.push(pathPts.last() + (2.0f/3.0f) * (pts[begin + last - 1] - pathPts.last()));
-            pathPts.push(pts[begin] + (2.0f/3.0f) * (pts[begin + last - 1] - pts[begin]));
-            pathPts.push(pts[begin]);
+            pathPts.push(pathPts.last() + (2.0f/3.0f) * (pts[begin + cnt - 1] - pathPts.last()));
+            pathPts.push(ptsBegin + (2.0f/3.0f) * (pts[begin + cnt - 1] - ptsBegin));
+            pathPts.push(ptsBegin);
         }
         //contour must end with close
         pathCmds.push(PathCommand::Close);
