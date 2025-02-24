@@ -39,6 +39,7 @@ struct UserExample : tvgexam::Example
     unique_ptr<tvg::LottieAnimation> slot7;
     unique_ptr<tvg::LottieAnimation> slot8;
     unique_ptr<tvg::LottieAnimation> slot9;
+    unique_ptr<tvg::LottieAnimation> slot10;
     unique_ptr<tvg::LottieAnimation> marker;
     uint32_t w, h;
     uint32_t size;
@@ -125,6 +126,12 @@ struct UserExample : tvgexam::Example
         {
             auto progress = tvgexam::progress(elapsed, slot9->duration());
             slot9->frame(slot9->totalFrame() * progress);
+        }
+
+        //expression slot
+        {
+            auto progress = tvgexam::progress(elapsed, slot10->duration());
+            slot10->frame(slot10->totalFrame() * progress);
         }
 
         //marker
@@ -286,6 +293,20 @@ struct UserExample : tvgexam::Example
             canvas->push(picture);
         }
 
+        //slot (expression)
+        {
+            slot10 = std::unique_ptr<tvg::LottieAnimation>(tvg::LottieAnimation::gen());
+            auto picture = slot10->picture();
+            if (!tvgexam::verify(picture->load(EXAMPLE_DIR"/lottie/extensions/slotsample10.json"))) return false;
+
+            const char* slotJson = R"({"rect_rotation":{"p":{"x":"var $bm_rt = time * 360;"}},"rect_scale":{"p":{"x":"var $bm_rt = [];$bm_rt[0] = value[0] + Math.cos(2 * Math.PI * time) * 100;$bm_rt[1] = value[1];"}},"rect_position":{"p":{"x":"var $bm_rt = [];$bm_rt[0] = value[0] + Math.cos(2 * Math.PI * time) * 100;$bm_rt[1] = value[1];"}}})";
+            if (!tvgexam::verify(slot10->override(slotJson))) return false;
+
+            sizing(picture, 10);
+
+            canvas->push(picture);
+        }
+
         //marker
         {
             marker = std::unique_ptr<tvg::LottieAnimation>(tvg::LottieAnimation::gen());
@@ -293,7 +314,7 @@ struct UserExample : tvgexam::Example
             if (!tvgexam::verify(picture->load(EXAMPLE_DIR"/lottie/extensions/marker_sample.json"))) return false;
             if (!tvgexam::verify(marker->segment("sectionC"))) return false;
 
-            sizing(picture, 10);
+            sizing(picture, 11);
 
             canvas->push(picture);
         }
@@ -309,5 +330,5 @@ struct UserExample : tvgexam::Example
 
 int main(int argc, char **argv)
 {
-    return tvgexam::main(new UserExample, argc, argv, 1024, 1024);
+    return tvgexam::main(new UserExample, argc, argv, false, 1024, 1024, 1);
 }
