@@ -130,7 +130,7 @@ static bool _updateTransform(LottieTransform* transform, float frameNo, Matrix& 
     translateR(&matrix, -transform->anchor(frameNo, tween, exps));
 
     //invisible just in case.
-    if (tvg::zero(scale)) opacity = 0;
+    if (scale.x == 0.0f || scale.y == 0.0f) opacity = 0;
     else opacity = transform->opacity(frameNo, tween, exps);
 
     return true;
