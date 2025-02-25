@@ -336,6 +336,29 @@ struct LottieMarker
     }
 };
 
+
+struct LottieTextFollowPath
+{
+private:
+    RenderPath path;
+    PathCommand* cmds;
+    uint32_t cmdsCnt;
+    Point* pts;
+    Point* start;
+    float totalLen;
+    float currentLen;
+    Point split(float dLen, float lenSearched, float& angle);
+
+public:
+    LottieFloat firstMargin = 0.0f;
+    LottieMask* mask;
+    int8_t maskIdx = -1;
+
+    Point position(float lenSearched, float& angle);
+    float prepare(LottieMask* mask, float frameNo, float scale, Tween& tween, LottieExpressions* exps);
+};
+
+
 struct LottieText : LottieObject, LottieRenderPooler<tvg::Shape>
 {
     struct AlignOption
@@ -364,6 +387,7 @@ struct LottieText : LottieObject, LottieRenderPooler<tvg::Shape>
 
     LottieTextDoc doc;
     LottieFont* font;
+    LottieTextFollowPath* followPath = nullptr;
     Array<LottieTextRange*> ranges;
 
     ~LottieText()

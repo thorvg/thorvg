@@ -120,6 +120,7 @@ private:
     void parseColorStop(LottieGradient* gradient);
     void parseTextRange(LottieText* text);
     void parseTextAlignmentOption(LottieText* text);
+    void parseTextFollowPath(LottieText* text);
     void parseAssets();
     void parseFonts();
     void parseChars(Array<LottieGlyph*>& glyphs);

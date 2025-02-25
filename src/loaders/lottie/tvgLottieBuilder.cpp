@@ -974,6 +974,8 @@ void LottieBuilder::updateText(LottieLayer* layer, float frameNo)
     int space = 0;
     auto lineSpacing = 0.0f;
     auto totalLineSpacing = 0.0f;
+    auto followPath = (text->followPath && ((uint32_t)text->followPath->maskIdx < layer->masks.count)) ? text->followPath : nullptr;
+    auto firstMargin = followPath ? followPath->prepare(layer->masks[followPath->maskIdx], frameNo, scale, tween, exps) : 0.0f;
 
     //text string
     int idx = 0;
@@ -1163,10 +1165,23 @@ void LottieBuilder::updateText(LottieLayer* layer, float frameNo)
                     textGroup->push(shape);
                 } else {
                     // When text isn't selected, exclude the shape from the text group
+                    // Cases with matrix scaling factors =! 1 handled in the 'needGroup' scenario
                     auto& matrix = shape->transform();
-                    matrix.e13 = cursor.x;
-                    matrix.e23 = cursor.y;
-                    matrix.e11 = matrix.e22 = capScale; //cases with matrix scaling factors =! 1 handled in the 'needGroup' scenario
+
+                    if (followPath) {
+                        identity(&matrix);
+                        auto angle = 0.0f;
+                        auto halfGlyphWidth = glyph->width * 0.5f;
+                        auto position = followPath->position(cursor.x + halfGlyphWidth + firstMargin, angle);
+                        matrix.e11 = matrix.e22 = capScale;
+                        matrix.e13 = position.x - halfGlyphWidth * matrix.e11;
+                        matrix.e23 = position.y - halfGlyphWidth * matrix.e21;
+                    } else {
+                        matrix.e11 = matrix.e22 = capScale;
+                        matrix.e13 = cursor.x;
+                        matrix.e23 = cursor.y;
+                    }
+
                     shape->transform(matrix);
                     scene->push(shape);
                 }
