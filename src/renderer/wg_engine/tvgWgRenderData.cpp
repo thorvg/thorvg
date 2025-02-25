@@ -580,133 +580,81 @@ void WgRenderDataViewportPool::release(WgContext& context)
 }
 
 //***********************************************************************
-// WgRenderDataGaussian
+// WgRenderDataEffectParams
 //***********************************************************************
 
-void WgRenderDataGaussian::update(WgContext& context, RenderEffectGaussianBlur* gaussian, const Matrix& transform)
+void WgRenderDataEffectParams::update(WgContext& context, const WgShaderTypeEffectParams& effectParams)
+{
+    if (context.allocateBufferUniform(bufferParams, &effectParams.params, sizeof(effectParams.params))) {
+        context.layouts.releaseBindGroup(bindGroupParams);
+        bindGroupParams = context.layouts.createBindGroupBuffer1Un(bufferParams);
+    }
+}
+
+
+void WgRenderDataEffectParams::update(WgContext& context, const RenderEffectGaussianBlur* gaussian, const Matrix& transform)
 {
     assert(gaussian);
-    // compute gaussian blur data
-    WgShaderTypeGaussianBlur gaussianSettings;
-    gaussianSettings.update(gaussian, transform);
-    // update bind group and buffers
-    bool bufferSettingsChanged = context.allocateBufferUniform(bufferSettings, &gaussianSettings.settings, sizeof(gaussianSettings.settings));
-    if (bufferSettingsChanged) {
-        // update bind group
-        context.layouts.releaseBindGroup(bindGroupGaussian);
-        bindGroupGaussian = context.layouts.createBindGroupBuffer1Un(bufferSettings);
-    }
+    WgShaderTypeEffectParams effectParams;
+    effectParams.update(gaussian, transform);
+    update(context, effectParams);
     level = int(WG_GAUSSIAN_MAX_LEVEL * ((gaussian->quality - 1) * 0.01f)) + 1;
-    extend = gaussianSettings.extend;
+    extend = effectParams.extend;
 }
 
 
-void WgRenderDataGaussian::release(WgContext& context)
-{
-    context.releaseBuffer(bufferSettings);
-    context.layouts.releaseBindGroup(bindGroupGaussian);
-}
-
-//***********************************************************************
-// WgRenderDataGaussianPool
-//***********************************************************************
-
-WgRenderDataGaussian* WgRenderDataGaussianPool::allocate(WgContext& context)
-{
-    WgRenderDataGaussian* renderData{};
-    if (mPool.count > 0) {
-        renderData = mPool.last();
-        mPool.pop();
-    } else {
-        renderData = new WgRenderDataGaussian();
-        mList.push(renderData);
-    }
-    return renderData;
-}
-
-
-void WgRenderDataGaussianPool::free(WgContext& context, WgRenderDataGaussian* renderData)
-{
-    if (renderData) mPool.push(renderData);
-}
-
-
-void WgRenderDataGaussianPool::release(WgContext& context)
-{
-    ARRAY_FOREACH(p, mList) {
-        (*p)->release(context);
-        delete(*p);
-    }
-    mPool.clear();
-    mList.clear();
-}
-
-//***********************************************************************
-// WgRenderDataDropShadow
-//***********************************************************************
-
-void WgRenderDataDropShadow::update(WgContext& context, RenderEffectDropShadow* dropShadow, const Matrix& transform)
+void WgRenderDataEffectParams::update(WgContext& context, const RenderEffectDropShadow* dropShadow, const Matrix& transform)
 {
     assert(dropShadow);
-    // compute gaussian blur data
-    WgShaderTypeGaussianBlur gaussianSettings;
-    gaussianSettings.update(dropShadow, transform);
-    // update bind group and buffers
-    bool bufferGaussianChanged = context.allocateBufferUniform(bufferGaussian, &gaussianSettings.settings, sizeof(gaussianSettings.settings));
-    if (bufferGaussianChanged) {
-        // update bind group
-        context.layouts.releaseBindGroup(bindGroupGaussian);
-        bindGroupGaussian = context.layouts.createBindGroupBuffer1Un(bufferGaussian);
-    }
-    // compute drop shadow data
-    WgShaderTypeDropShadow dropShadowSettings;
-    dropShadowSettings.update(dropShadow, transform);
-    // update bind group and buffers
-    bool bufferSettingsChanged = context.allocateBufferUniform(bufferSettings, &dropShadowSettings.settings, sizeof(dropShadowSettings.settings));
-    if (bufferSettingsChanged) {
-        // update bind group
-        context.layouts.releaseBindGroup(bindGroupDropShadow);
-        bindGroupDropShadow = context.layouts.createBindGroupBuffer1Un(bufferSettings);
-    }
+    WgShaderTypeEffectParams effectParams;
+    effectParams.update(dropShadow, transform);
+    update(context, effectParams);
     level = int(WG_GAUSSIAN_MAX_LEVEL * ((dropShadow->quality - 1) * 0.01f)) + 1;
-    extend = gaussianSettings.extend;
-    offset = dropShadowSettings.offset;
+    extend = effectParams.extend;
+    offset = effectParams.offset;
 }
 
 
-void WgRenderDataDropShadow::release(WgContext& context)
+void WgRenderDataEffectParams::update(WgContext& context, const RenderEffectFill* fill)
 {
-    context.releaseBuffer(bufferSettings);
-    context.releaseBuffer(bufferGaussian);
-    context.layouts.releaseBindGroup(bindGroupDropShadow);
-    context.layouts.releaseBindGroup(bindGroupGaussian);
+    assert(fill);
+    WgShaderTypeEffectParams effectParams;
+    effectParams.update(fill);
+    update(context, effectParams);
+}
+
+
+void WgRenderDataEffectParams::release(WgContext& context)
+{
+    context.releaseBuffer(bufferParams);
+    context.layouts.releaseBindGroup(bindGroupParams);
 }
 
 //***********************************************************************
-// WgRenderDataGaussianPool
+// WgRenderDataColorsPool
 //***********************************************************************
 
-WgRenderDataDropShadow* WgRenderDataDropShadowPool::allocate(WgContext& context)
+WgRenderDataEffectParams* WgRenderDataEffectParamsPool::allocate(WgContext& context)
 {
-    WgRenderDataDropShadow* renderData{};
+    WgRenderDataEffectParams* renderData{};
     if (mPool.count > 0) {
         renderData = mPool.last();
         mPool.pop();
     } else {
-        renderData = new WgRenderDataDropShadow();
+        renderData = new WgRenderDataEffectParams();
         mList.push(renderData);
     }
     return renderData;
 }
 
 
-void WgRenderDataDropShadowPool::free(WgContext& context, WgRenderDataDropShadow* renderData)
+void WgRenderDataEffectParamsPool::free(WgContext& context, WgRenderDataEffectParams* renderData)
 {
     if (renderData) mPool.push(renderData);
 }
 
 
-void WgRenderDataDropShadowPool::release(WgContext& context)
+void WgRenderDataEffectParamsPool::release(WgContext& context)
 {
     ARRAY_FOREACH(p, mList) {
         (*p)->release(context);
