@@ -197,52 +197,53 @@ void WgShaderTypeGradient::updateTexData(const Fill::ColorStop* stops, uint32_t 
 }
 
 //************************************************************************
-// WgShaderTypeGaussianBlur
+// WgShaderTypeEffectParams
 //************************************************************************
 
-void WgShaderTypeGaussianBlur::update(float sigma, const Matrix& transform)
-{
-    const float scale = std::sqrt(transform.e11 * transform.e11 + transform.e12 * transform.e12);
-    const float kernel = std::min(WG_GAUSSIAN_KERNEL_SIZE_MAX, 2 * sigma * scale); // kernel size
-    settings[0] = sigma;
-    settings[1] = std::min(WG_GAUSSIAN_KERNEL_SIZE_MAX / kernel, scale);
-    settings[2] = kernel;
-    settings[3] = 0.0f; // unused
-    extend = settings[2] * 2; // kernel
-}
-
-
-void WgShaderTypeGaussianBlur::update(const RenderEffectGaussianBlur* gaussian, const Matrix& transform)
+void WgShaderTypeEffectParams::update(const RenderEffectGaussianBlur* gaussian, const Matrix& transform)
 {
     assert(gaussian);
-    update(gaussian->sigma, transform);
-}
-
-
-void WgShaderTypeGaussianBlur::update(const RenderEffectDropShadow* dropShadow, const Matrix& transform)
-{
-    assert(dropShadow);
-    update(dropShadow->sigma, transform);
-}
-
-//************************************************************************
-// WgShaderTypeDropShadow
-//************************************************************************
-
-void WgShaderTypeDropShadow::update(const RenderEffectDropShadow* dropShadow, const Matrix& transform)
-{
-    assert(dropShadow);
+    const float sigma = gaussian->sigma;
     const float scale = std::sqrt(transform.e11 * transform.e11 + transform.e12 * transform.e12);
+    const float kernel = std::min(WG_GAUSSIAN_KERNEL_SIZE_MAX, 2 * sigma * scale); // kernel size
+    params[0] = sigma;
+    params[1] = std::min(WG_GAUSSIAN_KERNEL_SIZE_MAX / kernel, scale);
+    params[2] = kernel;
+    params[3] = 0.0f;
+    extend = params[2] * 2; // kernel
+}
+
+
+void WgShaderTypeEffectParams::update(const RenderEffectDropShadow* dropShadow, const Matrix& transform)
+{
+    assert(dropShadow);
     const float radian = tvg::deg2rad(90.0f - dropShadow->angle);
+    const float sigma = dropShadow->sigma;
+    const float scale = std::sqrt(transform.e11 * transform.e11 + transform.e12 * transform.e12);
+    const float kernel = std::min(WG_GAUSSIAN_KERNEL_SIZE_MAX, 2 * sigma * scale); // kernel size
     offset = {0, 0};
-    if (dropShadow->distance > 0.0f) offset = { 
+    if (dropShadow->distance > 0.0f) offset = {
         +1.0f * dropShadow->distance * cosf(radian) * scale,
         -1.0f * dropShadow->distance * sinf(radian) * scale
     };
-    settings[0] = dropShadow->color[0] / 255.0f; // red
-    settings[1] = dropShadow->color[1] / 255.0f; // green
-    settings[2] = dropShadow->color[2] / 255.0f; // blue
-    settings[3] = dropShadow->color[3] / 255.0f; // alpha
-    settings[4] = offset.x;
-    settings[5] = offset.y;
+    params[0] = sigma;
+    params[1] = std::min(WG_GAUSSIAN_KERNEL_SIZE_MAX / kernel, scale);
+    params[2] = kernel;
+    params[3] = 0.0f;
+    params[4] = dropShadow->color[0] / 255.0f; // red
+    params[5] = dropShadow->color[1] / 255.0f; // green
+    params[6] = dropShadow->color[2] / 255.0f; // blue
+    params[7] = dropShadow->color[3] / 255.0f; // alpha
+    params[8] = offset.x;
+    params[9] = offset.y;
+    extend = params[2] * 2; // kernel
+}
+
+
+void WgShaderTypeEffectParams::update(const RenderEffectFill* fill)
+{
+    params[0] = fill->color[0] / 255.0f;
+    params[1] = fill->color[1] / 255.0f;
+    params[2] = fill->color[2] / 255.0f;
+    params[3] = fill->color[3] / 255.0f;
 }

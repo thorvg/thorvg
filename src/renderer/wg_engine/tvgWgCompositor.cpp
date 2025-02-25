@@ -757,7 +757,7 @@ bool WgCompositor::gaussianBlur(WgContext& context, WgRenderStorage* dst, const 
     assert(params->rd);
     assert(compose->rdViewport);
     assert(!renderPassEncoder);
-    auto renderDataGaussian = (WgRenderDataGaussian*)params->rd;
+    auto renderData = (WgRenderDataEffectParams*)params->rd;
     auto aabb = compose->aabb;
     auto viewport = compose->rdViewport;
     WgRenderStorage* sbuff = dst;
@@ -766,12 +766,12 @@ bool WgCompositor::gaussianBlur(WgContext& context, WgRenderStorage* dst, const 
     // begin compute pass
     WGPUComputePassDescriptor computePassDesc{ .label = "Compute pass gaussian blur" };
     WGPUComputePassEncoder computePassEncoder = wgpuCommandEncoderBeginComputePass(commandEncoder, &computePassDesc);
-    for (uint32_t level = 0; level < renderDataGaussian->level; level++) {
+    for (uint32_t level = 0; level < renderData->level; level++) {
         // horizontal blur
         if (params->direction != 2) {
             wgpuComputePassEncoderSetBindGroup(computePassEncoder, 0, sbuff->bindGroupRead, 0, nullptr);
             wgpuComputePassEncoderSetBindGroup(computePassEncoder, 1, dbuff->bindGroupWrite, 0, nullptr);
-            wgpuComputePassEncoderSetBindGroup(computePassEncoder, 2, renderDataGaussian->bindGroupGaussian, 0, nullptr);
+            wgpuComputePassEncoderSetBindGroup(computePassEncoder, 2, renderData->bindGroupParams, 0, nullptr);
             wgpuComputePassEncoderSetBindGroup(computePassEncoder, 3, viewport->bindGroupViewport, 0, nullptr);
             wgpuComputePassEncoderSetPipeline(computePassEncoder, pipelines.gaussian_horz);
             wgpuComputePassEncoderDispatchWorkgroups(computePassEncoder, (aabb.w - 1) / 128 + 1, aabb.h, 1);
@@ -781,7 +781,7 @@ bool WgCompositor::gaussianBlur(WgContext& context, WgRenderStorage* dst, const 
         if (params->direction != 1) {
             wgpuComputePassEncoderSetBindGroup(computePassEncoder, 0, sbuff->bindGroupRead, 0, nullptr);
             wgpuComputePassEncoderSetBindGroup(computePassEncoder, 1, dbuff->bindGroupWrite, 0, nullptr);
-            wgpuComputePassEncoderSetBindGroup(computePassEncoder, 2, renderDataGaussian->bindGroupGaussian, 0, nullptr);
+            wgpuComputePassEncoderSetBindGroup(computePassEncoder, 2, renderData->bindGroupParams, 0, nullptr);
             wgpuComputePassEncoderSetBindGroup(computePassEncoder, 3, viewport->bindGroupViewport, 0, nullptr);
             wgpuComputePassEncoderSetPipeline(computePassEncoder, pipelines.gaussian_vert);
             wgpuComputePassEncoderDispatchWorkgroups(computePassEncoder, aabb.w, (aabb.h - 1) / 128 + 1, 1);
@@ -808,7 +808,7 @@ bool WgCompositor::dropShadow(WgContext& context, WgRenderStorage* dst, const Re
     assert(compose->rdViewport);
     assert(!renderPassEncoder);
 
-    auto renderDataDropShadow = (WgRenderDataDropShadow*)params->rd;
+    auto renderDataParams = (WgRenderDataEffectParams*)params->rd;
     auto aabb = compose->aabb;
     auto viewport = compose->rdViewport;
 
@@ -821,7 +821,7 @@ bool WgCompositor::dropShadow(WgContext& context, WgRenderStorage* dst, const Re
         // horizontal blur
         wgpuComputePassEncoderSetBindGroup(computePassEncoder, 0, sbuff->bindGroupRead, 0, nullptr);
         wgpuComputePassEncoderSetBindGroup(computePassEncoder, 1, dbuff->bindGroupWrite, 0, nullptr);
-        wgpuComputePassEncoderSetBindGroup(computePassEncoder, 2, renderDataDropShadow->bindGroupGaussian, 0, nullptr);
+        wgpuComputePassEncoderSetBindGroup(computePassEncoder, 2, renderDataParams->bindGroupParams, 0, nullptr);
         wgpuComputePassEncoderSetBindGroup(computePassEncoder, 3, viewport->bindGroupViewport, 0, nullptr);
         wgpuComputePassEncoderSetPipeline(computePassEncoder, pipelines.gaussian_horz);
         wgpuComputePassEncoderDispatchWorkgroups(computePassEncoder, (aabb.w - 1) / 128 + 1, aabb.h, 1);
@@ -829,7 +829,7 @@ bool WgCompositor::dropShadow(WgContext& context, WgRenderStorage* dst, const Re
         // vertical blur
         wgpuComputePassEncoderSetBindGroup(computePassEncoder, 0, sbuff->bindGroupRead, 0, nullptr);
         wgpuComputePassEncoderSetBindGroup(computePassEncoder, 1, dbuff->bindGroupWrite, 0, nullptr);
-        wgpuComputePassEncoderSetBindGroup(computePassEncoder, 2, renderDataDropShadow->bindGroupGaussian, 0, nullptr);
+        wgpuComputePassEncoderSetBindGroup(computePassEncoder, 2, renderDataParams->bindGroupParams, 0, nullptr);
         wgpuComputePassEncoderSetBindGroup(computePassEncoder, 3, viewport->bindGroupViewport, 0, nullptr);
         wgpuComputePassEncoderSetPipeline(computePassEncoder, pipelines.gaussian_vert);
         wgpuComputePassEncoderDispatchWorkgroups(computePassEncoder, aabb.w, (aabb.h - 1) / 128 + 1, 1);
@@ -844,13 +844,41 @@ bool WgCompositor::dropShadow(WgContext& context, WgRenderStorage* dst, const Re
         WGPUComputePassEncoder computePassEncoder = wgpuCommandEncoderBeginComputePass(commandEncoder, &computePassDesc);
         wgpuComputePassEncoderSetBindGroup(computePassEncoder, 0, bindGroupStorageTemp, 0, nullptr);
         wgpuComputePassEncoderSetBindGroup(computePassEncoder, 1, dst->bindGroupWrite, 0, nullptr);
-        wgpuComputePassEncoderSetBindGroup(computePassEncoder, 2, renderDataDropShadow->bindGroupDropShadow, 0, nullptr);
+        wgpuComputePassEncoderSetBindGroup(computePassEncoder, 2, renderDataParams->bindGroupParams, 0, nullptr);
         wgpuComputePassEncoderSetBindGroup(computePassEncoder, 3, viewport->bindGroupViewport, 0, nullptr);
         wgpuComputePassEncoderSetPipeline(computePassEncoder, pipelines.dropshadow);
         wgpuComputePassEncoderDispatchWorkgroups(computePassEncoder, (aabb.w - 1) / 128 + 1, aabb.h, 1);
         wgpuComputePassEncoderEnd(computePassEncoder);
         wgpuComputePassEncoderRelease(computePassEncoder);
     }
+
+    return true;
+}
+
+
+bool WgCompositor::fillEffect(WgContext& context, WgRenderStorage* dst, const RenderEffectFill* params, const WgCompose* compose)
+{
+    assert(dst);
+    assert(params);
+    assert(params->rd);
+    assert(compose->rdViewport);
+    assert(!renderPassEncoder);
+
+    auto renderDataParams = (WgRenderDataEffectParams*)params->rd;
+    auto aabb = compose->aabb;
+    auto viewport = compose->rdViewport;
+
+    copyTexture(&storageTemp0, dst, aabb);
+    WGPUComputePassDescriptor computePassDesc{ .label = "Compute pass fill" };
+    WGPUComputePassEncoder computePassEncoder = wgpuCommandEncoderBeginComputePass(commandEncoder, &computePassDesc);
+    wgpuComputePassEncoderSetBindGroup(computePassEncoder, 0, bindGroupStorageTemp, 0, nullptr);
+    wgpuComputePassEncoderSetBindGroup(computePassEncoder, 1, dst->bindGroupWrite, 0, nullptr);
+    wgpuComputePassEncoderSetBindGroup(computePassEncoder, 2, renderDataParams->bindGroupParams, 0, nullptr);
+    wgpuComputePassEncoderSetBindGroup(computePassEncoder, 3, viewport->bindGroupViewport, 0, nullptr);
+    wgpuComputePassEncoderSetPipeline(computePassEncoder, pipelines.fill_effect);
+    wgpuComputePassEncoderDispatchWorkgroups(computePassEncoder, (aabb.w - 1) / 128 + 1, aabb.h, 1);
+    wgpuComputePassEncoderEnd(computePassEncoder);
+    wgpuComputePassEncoderRelease(computePassEncoder);
 
     return true;
 }

@@ -67,25 +67,21 @@ struct WgShaderTypeGradient
     void updateTexData(const Fill::ColorStop* stops, uint32_t stopCnt);
 };
 
-// gaussian settings: sigma, scale, extend
+// gaussian params: sigma, scale, extend
 #define WG_GAUSSIAN_KERNEL_SIZE_MAX (128.0f)
-struct WgShaderTypeGaussianBlur
+// gaussian blur, drop shadow, fill, tint, tritone
+struct WgShaderTypeEffectParams
 {
-    float settings[4]{}; // [0]: sigma, [1]: scale, [2]: kernel size, [3]: unused
-    uint32_t extend{};
+    // gaussian blur: [0]: sigma, [1]: scale, [2]: kernel size
+    // drop shadow:   [0]: sigma, [1]: scale, [2]: kernel size, [4..7]: color, [8, 9]: offset
+    // fill:          [0..3]: color
+    float params[4+4+4]{}; // settings: array<vec4f, 3>;
+    uint32_t extend{};     // gaussian blur extend
+    Point offset{};        // drop shadow offset
 
-    void update(float sigma, const Matrix& transform);
     void update(const RenderEffectGaussianBlur* gaussian, const Matrix& transform);
     void update(const RenderEffectDropShadow* dropShadow, const Matrix& transform);
-};
-
-// drop shadow settings: color, offset
-struct WgShaderTypeDropShadow
-{
-    float settings[8]{}; // [0..3]: color, [4, 5]: offset
-    Point offset{};
-
-    void update(const RenderEffectDropShadow* dropShadow, const Matrix& transform);
+    void update(const RenderEffectFill* fill);
 };
 
 #endif // _TVG_WG_SHADER_TYPES_H_

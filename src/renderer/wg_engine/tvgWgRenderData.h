@@ -25,6 +25,7 @@
 
 #include "tvgWgPipelines.h"
 #include "tvgWgGeometry.h"
+#include "tvgWgShaderTypes.h"
 
 struct WgMeshData {
     WGPUBuffer bufferPosition{};
@@ -190,55 +191,34 @@ public:
     void release(WgContext& context);
 };
 
+// gaussian blur, drop shadow, fill, tint, tritone
 #define WG_GAUSSIAN_MAX_LEVEL 3
-struct WgRenderDataGaussian
+struct WgRenderDataEffectParams
 {
-    WGPUBindGroup bindGroupGaussian{};
-    WGPUBuffer bufferSettings{};
-    uint32_t extend{};
-    uint32_t level{};
-
-    void update(WgContext& context, RenderEffectGaussianBlur* gaussian, const Matrix& transform);
-    void release(WgContext& context);
-};
-
-class WgRenderDataGaussianPool {
-private:
-    // pool contains all created but unused render data for gaussian filter
-    Array<WgRenderDataGaussian*> mPool;
-    // list contains all created render data for gaussian filter
-    // to ensure that all created instances will be released
-    Array<WgRenderDataGaussian*> mList;
-public:
-    WgRenderDataGaussian* allocate(WgContext& context);
-    void free(WgContext& context, WgRenderDataGaussian* renderData);
-    void release(WgContext& context);
-};
-
-struct WgRenderDataDropShadow
-{
-    WGPUBindGroup bindGroupGaussian{};
-    WGPUBindGroup bindGroupDropShadow{};
-    WGPUBuffer bufferGaussian{};
-    WGPUBuffer bufferSettings{};
+    WGPUBindGroup bindGroupParams{};
+    WGPUBuffer bufferParams{};
     uint32_t extend{};
     uint32_t level{};
     Point offset{};
 
-    void update(WgContext& context, RenderEffectDropShadow* dropShadow, const Matrix& transform);
+    void update(WgContext& context, const WgShaderTypeEffectParams& effectParams);
+    void update(WgContext& context, const RenderEffectGaussianBlur* gaussian, const Matrix& transform);
+    void update(WgContext& context, const RenderEffectDropShadow* dropShadow, const Matrix& transform);
+    void update(WgContext& context, const RenderEffectFill* fill);
     void release(WgContext& context);
 };
 
-class WgRenderDataDropShadowPool {
+// effect params pool
+class WgRenderDataEffectParamsPool {
 private:
-    // pool contains all created but unused render data for drop shadow
-    Array<WgRenderDataDropShadow*> mPool;
-    // list contains all created render data for drop shadow
+    // pool contains all created but unused render data for params
+    Array<WgRenderDataEffectParams*> mPool;
+    // list contains all created render data for params
     // to ensure that all created instances will be released
-    Array<WgRenderDataDropShadow*> mList;
+    Array<WgRenderDataEffectParams*> mList;
 public:
-    WgRenderDataDropShadow* allocate(WgContext& context);
-    void free(WgContext& context, WgRenderDataDropShadow* renderData);
+    WgRenderDataEffectParams* allocate(WgContext& context);
+    void free(WgContext& context, WgRenderDataEffectParams* renderData);
     void release(WgContext& context);
 };
 

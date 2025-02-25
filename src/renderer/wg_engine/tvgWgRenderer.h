@@ -85,9 +85,8 @@ private:
     // render data paint pools
     WgRenderDataShapePool mRenderDataShapePool;
     WgRenderDataPicturePool mRenderDataPicturePool;
-    WgRenderDataGaussianPool mRenderDataGaussianPool;
-    WgRenderDataDropShadowPool mRenderDataDropShadowPool;
     WgRenderDataViewportPool mRenderDataViewportPool;
+    WgRenderDataEffectParamsPool mRenderDataEffectParamsPool;
 
     // rendering context
     WgContext mContext;
