@@ -63,10 +63,10 @@ source_file = [
     'Stroke.cpp',
     'StrokeLine.cpp',
     'StrokeMiterlimit.cpp',
-    'StrokeTrim.cpp',
     'Svg.cpp',
     'Text.cpp',
     'Transform.cpp',
+    'TrimPath.cpp',
     'Update.cpp',
     'Viewport.cpp'
 ]
