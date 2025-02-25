@@ -100,6 +100,42 @@ float _bezAt(const Bezier& bz, float at, float length, LengthFunc lineLengthFunc
 
 namespace tvg {
 
+float length(const PathCommand* cmds, uint32_t cmdsCnt, const Point* pts, uint32_t ptsCnt)
+{
+    if (ptsCnt < 2) return 0.0f;
+
+    auto start = pts;
+    auto length = 0.0f;
+
+    while (cmdsCnt-- > 0) {
+        switch (*cmds) {
+            case PathCommand::Close: {
+                length += tvg::length(pts - 1, start);
+                break;
+            }
+            case PathCommand::MoveTo: {
+                start = pts;
+                ++pts;
+                break;
+            }
+            case PathCommand::LineTo: {
+                length += tvg::length(pts - 1, pts);
+                ++pts;
+                break;
+            }
+            case PathCommand::CubicTo: {
+                length += Bezier{*(pts - 1), *pts, *(pts + 1), *(pts + 2)}.length();
+                pts += 3;
+                break;
+            }
+        }
+        ++cmds;
+    }
+
+    return length;
+}
+
+
 //https://en.wikipedia.org/wiki/Remez_algorithm
 float atan2(float y, float x)
 {
