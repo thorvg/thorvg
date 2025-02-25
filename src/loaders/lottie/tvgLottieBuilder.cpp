@@ -889,6 +889,156 @@ void LottieBuilder::updateImage(LottieGroup* layer)
 }
 
 
+struct FollowPath
+{
+    LottieMask* mask;
+
+    FollowPath(LottieMask* mask) : mask{mask} {}
+    ~FollowPath()
+    {
+        delete sh;
+    }
+
+    void set(float frameNo, float scale, LottieExpressions* exps)
+    {
+        sh = Shape::gen();
+        Matrix m{1.0f / scale, 0.0f, 0.0f, 0.0f, 1.0f / scale, 0.0f, 0.0f, 0.0f, 1.0f};
+        mask->pathset(frameNo, SHAPE(sh)->rs.path, &m, exps);
+        pts = SHAPE(sh)->rs.path.pts.data;
+        if (SHAPE(sh)->rs.path.pts.count < 2) {
+            mask = nullptr;
+            delete sh;
+            return;
+        }
+        cmds = SHAPE(sh)->rs.path.cmds.data;
+        cmdsCnt = SHAPE(sh)->rs.path.cmds.count;
+        totalLen = tvg::length(cmds, cmdsCnt, pts, SHAPE(sh)->rs.path.pts.count);
+        currentLen = 0.0f;
+        start = pts;
+    }
+
+    Point position(float lenSearched, float& angle)
+    {
+        auto _shift = [&]() -> void {
+            switch (*cmds) {
+                case PathCommand::MoveTo:
+                    start = pts;
+                    ++pts;
+                    break;
+                case PathCommand::LineTo:
+                    ++pts;
+                    break;
+                case PathCommand::CubicTo:
+                    pts += 3;
+                    break;
+                case PathCommand::Close:
+                    break;
+            }
+            ++cmds;
+            --cmdsCnt;
+        };
+
+        auto _length = [&]() -> float {
+            switch (*cmds) {
+                case PathCommand::MoveTo:
+                    return 0.0f;
+                case PathCommand::LineTo:
+                    return length(pts - 1, pts);
+                case PathCommand::CubicTo:
+                    return Bezier{*(pts - 1), *pts, *(pts + 1), *(pts + 2)}.length();
+                case PathCommand::Close:
+                    return length(pts - 1, start);
+            }
+            return 0.0f;
+        };
+
+        //beyond the curve
+        if (lenSearched > totalLen) {
+            //shape is closed -> wrapping
+            if (SHAPE(sh)->rs.path.cmds.last() == PathCommand::Close) {
+                lenSearched -= totalLen;
+                pts = SHAPE(sh)->rs.path.pts.data;
+                cmds = SHAPE(sh)->rs.path.cmds.data;
+                cmdsCnt = SHAPE(sh)->rs.path.cmds.count;
+                currentLen = 0.0f;
+            //linear interpolation
+            } else {
+                while (cmdsCnt > 1) _shift();
+                switch (*cmds) {
+                    case PathCommand::MoveTo:
+                        angle = 0.0f;
+                        return *pts;
+                    case PathCommand::LineTo: {
+                        auto len = lenSearched - totalLen;
+                        auto dp = *pts - *(pts - 1);
+                        angle = tvg::atan2(dp.y, dp.x);
+                        return {pts->x + len * cos(angle), pts->y + len * sin(angle)};
+                    }
+                    case PathCommand::CubicTo: {
+                        auto len = lenSearched - totalLen;
+                        angle = deg2rad(Bezier{*(pts - 1), *pts, *(pts + 1), *(pts + 2)}.angle(0.999f));
+                        return {(pts + 2)->x + len * cos(angle), (pts + 2)->y + len * sin(angle)};
+                    }
+                    case PathCommand::Close: {
+                        auto len = lenSearched - totalLen;
+                        auto dp = *start - *(pts - 1);
+                        angle = tvg::atan2(dp.y, dp.x);
+                        return {(pts - 1)->x + len * cos(angle), (pts - 1)->y + len * sin(angle)};
+                    }
+                }
+            }
+        }
+
+        while (cmdsCnt > 0) {
+            auto dLen = _length();
+            if (currentLen + dLen <= lenSearched) {
+                _shift();
+                currentLen += dLen;
+                continue;
+            }
+            return split(dLen, lenSearched, angle);
+        }
+        return {};
+    }
+
+private:
+    Shape* sh = nullptr;
+    PathCommand* cmds;
+    uint32_t cmdsCnt;
+    Point* pts;
+    float totalLen;
+    float currentLen;
+    Point* start;
+
+    Point split(float dLen, float lenSearched, float& angle)
+    {
+        switch (*cmds) {
+            case PathCommand::MoveTo: {
+                angle = 0.0f;
+                return {};
+            }
+            case PathCommand::LineTo: {
+                auto dp = *pts - *(pts - 1);
+                angle = tvg::atan2(dp.y, dp.x);
+                return {};
+            }
+            case PathCommand::CubicTo: {
+                auto bz = Bezier{*(pts - 1), *pts, *(pts + 1), *(pts + 2)};
+                float t = bz.at(lenSearched - currentLen, dLen);
+                angle = deg2rad(bz.angle(t));
+                return bz.at(t);
+            }
+            case PathCommand::Close: {
+                auto dp = *start - *(pts - 1);
+                angle = tvg::atan2(dp.y, dp.x);
+                return {};
+            }
+        }
+        return {};
+    }
+};
+
+
 static void _fontText(LottieText* text, Scene* scene, float frameNo, LottieExpressions* exps)
 {
     auto& doc = text->doc(frameNo, exps);
@@ -930,6 +1080,10 @@ void LottieBuilder::updateText(LottieLayer* layer, float frameNo)
     int space = 0;
     auto lineSpacing = 0.0f;
     auto totalLineSpacing = 0.0f;
+
+    FollowPath followPath(layer->masks.count > text->followPath.maskIdx ? layer->masks[text->followPath.maskIdx] : nullptr);
+    if (followPath.mask) followPath.set(frameNo, scale, exps);
+    auto firstMargin = text->followPath.firstMargin(frameNo) / scale;
 
     //text string
     int idx = 0;
@@ -1120,10 +1274,24 @@ void LottieBuilder::updateText(LottieLayer* layer, float frameNo)
                     textGroup->push(shape);
                 } else {
                     // When text isn't selected, exclude the shape from the text group
+                    // Cases with matrix scaling factors =! 1 handled in the 'needGroup' scenario
                     auto& matrix = shape->transform();
-                    matrix.e13 = cursor.x;
-                    matrix.e23 = cursor.y;
-                    matrix.e11 = matrix.e22 = capScale; //cases with matrix scaling factors =! 1 handled in the 'needGroup' scenario
+
+                    if (followPath.mask) {
+                        identity(&matrix);
+                        auto angle = 0.0f;
+                        auto halfGlyphWidth = glyph->width * 0.5f;
+                        auto position = followPath.position(cursor.x + halfGlyphWidth + firstMargin, angle);
+                        matrix.e11 = matrix.e22 = capScale;
+                        if (text->followPath.perpendicular(frameNo)) rotate(&matrix, rad2deg(angle));
+                        matrix.e13 = position.x - halfGlyphWidth * matrix.e11;
+                        matrix.e23 = position.y - halfGlyphWidth * matrix.e21;
+                    } else {
+                        matrix.e11 = matrix.e22 = capScale;
+                        matrix.e13 = cursor.x;
+                        matrix.e23 = cursor.y;
+                    }
+
                     shape->transform(matrix);
                     scene->push(shape);
                 }
