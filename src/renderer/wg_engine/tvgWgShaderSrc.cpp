@@ -711,7 +711,7 @@ fn fs_main(in: VertexOutput) -> @location(0) vec4f {
 const char* cShaderSrc_GaussianBlur = R"(
 @group(0) @binding(0) var imageSrc : texture_storage_2d<rgba8unorm, read>;
 @group(1) @binding(0) var imageDst : texture_storage_2d<rgba8unorm, write>;
-@group(2) @binding(0) var<uniform> settings: vec4f;
+@group(2) @binding(0) var<uniform> settings: array<vec4f, 3>;
 @group(3) @binding(0) var<uniform> viewport: vec4f;
 
 const N: u32 = 128;
@@ -728,9 +728,9 @@ fn gaussian(x: f32, sigma: f32) -> f32 {
 fn cs_main_horz(@builtin(global_invocation_id) gid: vec3u,
                 @builtin(local_invocation_id)  lid: vec3u) {
     // settings decode
-    let sigma = settings.x;
-    let scale = settings.y;
-    let size = i32(settings.z);
+    let sigma = settings[0].x;
+    let scale = settings[0].y;
+    let size = i32(settings[0].z);
 
     // viewport decode
     let xmin = i32(viewport.x);
@@ -771,9 +771,9 @@ fn cs_main_horz(@builtin(global_invocation_id) gid: vec3u,
 fn cs_main_vert(@builtin(global_invocation_id) gid: vec3u,
                 @builtin(local_invocation_id)  lid: vec3u) {
     // settings decode
-    let sigma = settings.x;
-    let scale = settings.y;
-    let size = i32(settings.z);
+    let sigma = settings[0].x;
+    let scale = settings[0].y;
+    let size = i32(settings[0].z);
 
     // viewport decode
     let xmin = i32(viewport.x);
@@ -811,19 +811,19 @@ fn cs_main_vert(@builtin(global_invocation_id) gid: vec3u,
 }
 )";
 
-const char* cShaderSrc_DropShadow = R"(
+const char* cShaderSrc_Effects = R"(
 @group(0) @binding(0) var imageSrc : texture_storage_2d<rgba8unorm, read>;
 @group(0) @binding(1) var imageSdw : texture_storage_2d<rgba8unorm, read>;
 @group(1) @binding(0) var imageTrg : texture_storage_2d<rgba8unorm, write>;
-@group(2) @binding(0) var<uniform> settings: array<vec4f, 2>;
+@group(2) @binding(0) var<uniform> settings: array<vec4f, 3>;
 @group(3) @binding(0) var<uniform> viewport: vec4f;
 
 @compute @workgroup_size(128, 1)
-fn cs_main(@builtin(global_invocation_id) gid: vec3u) {
+fn cs_main_drop_shadow(@builtin(global_invocation_id) gid: vec3u) {
     // decode viewport and settings
     let vmin = vec2u(viewport.xy);
     let vmax = vec2u(viewport.zw);
-    let voff = vec2i(settings[1].xy);
+    let voff = vec2i(settings[2].xy);
 
     // tex coord
     let uid = gid.xy + vmin;
@@ -831,8 +831,23 @@ fn cs_main(@builtin(global_invocation_id) gid: vec3u) {
 
     let orig = textureLoad(imageSrc, uid);
     let blur = textureLoad(imageSdw, oid);
-    let shad = settings[0] * blur.a;
+    let shad = settings[1] * blur.a;
     let color = orig + shad * (1.0 - orig.a);
+    textureStore(imageTrg, uid.xy, color);
+}
+    
+@compute @workgroup_size(128, 1)
+fn cs_main_fill(@builtin(global_invocation_id) gid: vec3u) {
+    // decode viewport and settings
+    let vmin = vec2u(viewport.xy);
+    let vmax = vec2u(viewport.zw);
+
+    // tex coord
+    let uid = gid.xy + vmin;
+
+    let orig = textureLoad(imageSrc, uid);
+    let fill = settings[0];
+    let color = fill * orig.a * fill.a;
     textureStore(imageTrg, uid.xy, color);
 }
 )";
