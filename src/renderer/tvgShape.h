@@ -209,7 +209,7 @@ struct Shape::Impl : Paint::Impl
         renderFlag |= RenderUpdateFlag::Stroke;
     }
 
-    void trimpath(const TrimPath& trim)
+    void trimpath(const RenderTrimPath& trim)
     {
         if (!rs.stroke) {
             if (trim.begin == 0.0f && trim.end == 1.0f) return;

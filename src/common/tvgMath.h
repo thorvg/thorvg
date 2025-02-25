@@ -76,6 +76,9 @@ static inline constexpr const T& clamp(const T& v, const T& min, const T& max)
     return v;
 }
 
+float length(const PathCommand* cmds, uint32_t cmdsCnt, const Point* pts, uint32_t ptsCnt);
+
+
 /************************************************************************/
 /* Matrix functions                                                     */
 /************************************************************************/
