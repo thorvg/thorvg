@@ -29,11 +29,133 @@
 /* Internal Class Implementation                                        */
 /************************************************************************/
 
-
+Point LottieTextFollowPath::split(float dLen, float lenSearched, float& angle)
+{
+    switch (*cmds) {
+        case PathCommand::MoveTo: {
+            angle = 0.0f;
+            break;
+        }
+        case PathCommand::LineTo: {
+            auto dp = *pts - *(pts - 1);
+            angle = tvg::atan2(dp.y, dp.x);
+            break;
+        }
+        case PathCommand::CubicTo: {
+            auto bz = Bezier{*(pts - 1), *pts, *(pts + 1), *(pts + 2)};
+            float t = bz.at(lenSearched - currentLen, dLen);
+            angle = deg2rad(bz.angle(t));
+            return bz.at(t);
+        }
+        case PathCommand::Close: {
+            auto dp = *start - *(pts - 1);
+            angle = tvg::atan2(dp.y, dp.x);
+            break;
+        }
+    }
+    return {};
+}
 
 /************************************************************************/
 /* External Class Implementation                                        */
 /************************************************************************/
+
+float LottieTextFollowPath::prepare(LottieMask* mask, float frameNo, float scale, Tween& tween, LottieExpressions* exps)
+{
+    this->mask = mask;
+    Matrix m{1.0f / scale, 0.0f, 0.0f, 0.0f, 1.0f / scale, 0.0f, 0.0f, 0.0f, 1.0f};
+    mask->pathset(frameNo, path, &m, tween, exps);
+
+    pts = path.pts.data;
+    cmds = path.cmds.data;
+    cmdsCnt = path.cmds.count;
+    totalLen = tvg::length(cmds, cmdsCnt, pts, path.pts.count);
+    currentLen = 0.0f;
+    start = pts;
+
+    return firstMargin(frameNo, tween, exps) / scale;
+}
+
+Point LottieTextFollowPath::position(float lenSearched, float& angle)
+{
+    auto shift = [&]() -> void {
+        switch (*cmds) {
+            case PathCommand::MoveTo:
+                start = pts;
+                ++pts;
+                break;
+            case PathCommand::LineTo:
+                ++pts;
+                break;
+            case PathCommand::CubicTo:
+                pts += 3;
+                break;
+            case PathCommand::Close:
+                break;
+        }
+        ++cmds;
+        --cmdsCnt;
+    };
+
+    auto length = [&]() -> float {
+        switch (*cmds) {
+            case PathCommand::MoveTo: return 0.0f;
+            case PathCommand::LineTo: return tvg::length(pts - 1, pts);
+            case PathCommand::CubicTo: return Bezier{*(pts - 1), *pts, *(pts + 1), *(pts + 2)}.length();
+            case PathCommand::Close: return tvg::length(pts - 1, start);
+        }
+        return 0.0f;
+    };
+
+    //beyond the curve
+    if (lenSearched > totalLen) {
+        //shape is closed -> wrapping
+        if (path.cmds.last() == PathCommand::Close) {
+            lenSearched -= totalLen;
+            pts = path.pts.data;
+            cmds = path.cmds.data;
+            cmdsCnt = path.cmds.count;
+            currentLen = 0.0f;
+        //linear interpolation
+        } else {
+            while (cmdsCnt > 1) shift();
+            switch (*cmds) {
+                case PathCommand::MoveTo:
+                    angle = 0.0f;
+                    return *pts;
+                case PathCommand::LineTo: {
+                    auto len = lenSearched - totalLen;
+                    auto dp = *pts - *(pts - 1);
+                    angle = tvg::atan2(dp.y, dp.x);
+                    return {pts->x + len * cos(angle), pts->y + len * sin(angle)};
+                }
+                case PathCommand::CubicTo: {
+                    auto len = lenSearched - totalLen;
+                    angle = deg2rad(Bezier{*(pts - 1), *pts, *(pts + 1), *(pts + 2)}.angle(0.999f));
+                    return {(pts + 2)->x + len * cos(angle), (pts + 2)->y + len * sin(angle)};
+                }
+                case PathCommand::Close: {
+                    auto len = lenSearched - totalLen;
+                    auto dp = *start - *(pts - 1);
+                    angle = tvg::atan2(dp.y, dp.x);
+                    return {(pts - 1)->x + len * cos(angle), (pts - 1)->y + len * sin(angle)};
+                }
+            }
+        }
+    }
+
+    while (cmdsCnt > 0) {
+        auto dLen = length();
+        if (currentLen + dLen <= lenSearched) {
+            shift();
+            currentLen += dLen;
+            continue;
+        }
+        return split(dLen, lenSearched, angle);
+    }
+    return {};
+}
+
 
 void LottieSlot::reset()
 {
