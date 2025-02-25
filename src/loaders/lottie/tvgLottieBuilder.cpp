@@ -954,6 +954,9 @@ void LottieBuilder::updateText(LottieLayer* layer, float frameNo)
     auto lineSpacing = 0.0f;
     auto totalLineSpacing = 0.0f;
 
+    auto followPath = text->followPath && layer->masks.count > text->followPath->maskIdx && text->followPath->set(layer->masks[text->followPath->maskIdx], frameNo, scale, exps);;
+    auto firstMargin = followPath ? text->followPath->firstMargin(frameNo) / scale : 0.0f;
+
     //text string
     int idx = 0;
     auto totalChars = strlen(p);
@@ -1143,10 +1146,24 @@ void LottieBuilder::updateText(LottieLayer* layer, float frameNo)
                     textGroup->push(shape);
                 } else {
                     // When text isn't selected, exclude the shape from the text group
+                    // Cases with matrix scaling factors =! 1 handled in the 'needGroup' scenario
                     auto& matrix = shape->transform();
-                    matrix.e13 = cursor.x;
-                    matrix.e23 = cursor.y;
-                    matrix.e11 = matrix.e22 = capScale; //cases with matrix scaling factors =! 1 handled in the 'needGroup' scenario
+
+                    if (followPath) {
+                        identity(&matrix);
+                        auto angle = 0.0f;
+                        auto halfGlyphWidth = glyph->width * 0.5f;
+                        auto position = text->followPath->position(cursor.x + halfGlyphWidth + firstMargin, angle);
+                        matrix.e11 = matrix.e22 = capScale;
+                        if (text->followPath->perpendicular(frameNo)) rotate(&matrix, rad2deg(angle));
+                        matrix.e13 = position.x - halfGlyphWidth * matrix.e11;
+                        matrix.e23 = position.y - halfGlyphWidth * matrix.e21;
+                    } else {
+                        matrix.e11 = matrix.e22 = capScale;
+                        matrix.e13 = cursor.x;
+                        matrix.e23 = cursor.y;
+                    }
+
                     shape->transform(matrix);
                     scene->push(shape);
                 }
