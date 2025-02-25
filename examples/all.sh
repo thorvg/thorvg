@@ -3,7 +3,8 @@ RED='\033[31m'
 GREEN='\033[32m'
 NC='\033[0m'
 
-INTERVAL=${1:-2}
+ENGINE=${1:-"sw"}
+INTERVAL=${2:-2}
 CHECK_OS="`uname -s`"
 
 if [[ "$CHECK_OS" = "Darwin"* ]]; then
@@ -19,7 +20,7 @@ do
 	fi
 
 	echo -e "Execute: "${GREEN}$EXAMPLE${NC}" for "$INTERVAL" second(s)"
-	$EXAMPLE &
+	$EXAMPLE $ENGINE &
 	EXAMPLE_PID=$!
 	sleep $INTERVAL
 	kill -s SIGTERM $EXAMPLE_PID
