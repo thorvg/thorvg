@@ -233,73 +233,100 @@ static void _updateStroke(LottieStroke* stroke, float frameNo, RenderContext* ct
 }
 
 
-bool LottieBuilder::fragmented(LottieGroup* parent, LottieObject** child, Inlist<RenderContext>& contexts, RenderContext* ctx)
+bool LottieBuilder::fragmented(LottieGroup* parent, LottieObject** child, Inlist<RenderContext>& contexts, RenderContext* ctx, RenderFragment fragment)
 {
-    if (!ctx->reqFragment) return false;
-    if (ctx->fragmenting) return true;
+    if (ctx->fragment) return true;
 
-    contexts.back(new RenderContext(*ctx, static_cast<Shape*>(PAINT(ctx->propagator)->duplicate(parent->pooling()))));
-    auto fragment = contexts.tail;
-    fragment->begin = child - 1;
-    ctx->fragmenting = true;
+    if (!ctx->reqFragment || ctx->fragment == RenderFragment::ByNone) return false;
+
+    contexts.back(new RenderContext(*ctx, (Shape*)(PAINT(ctx->propagator)->duplicate(parent->pooling()))));
+
+    contexts.tail->begin = child - 1;
+    ctx->fragment = fragment;
 
     return false;
 }
 
 
-void LottieBuilder::updateSolidStroke(LottieGroup* parent, LottieObject** child, float frameNo, Inlist<RenderContext>& contexts, RenderContext* ctx)
+bool LottieBuilder::updateSolidStroke(LottieGroup* parent, LottieObject** child, float frameNo, Inlist<RenderContext>& contexts, RenderContext* ctx)
 {
-    if (fragmented(parent, child, contexts, ctx)) return;
-
     auto stroke = static_cast<LottieSolidStroke*>(*child);
+    auto opacity = stroke->opacity(frameNo, tween, exps);
+
+    //interrupted by fully opaque, stop the current rendering
+    if (ctx->fragment == RenderFragment::ByStroke && opacity == 255) return true;
+
+    if (fragmented(parent, child, contexts, ctx, RenderFragment::ByStroke)) return false;
+    if (opacity == 0) return false;
 
     ctx->merging = nullptr;
     auto color = stroke->color(frameNo, tween, exps);
-    ctx->propagator->strokeFill(color.rgb[0], color.rgb[1], color.rgb[2], stroke->opacity(frameNo, tween, exps));
+    ctx->propagator->strokeFill(color.rgb[0], color.rgb[1], color.rgb[2], opacity);
     _updateStroke(static_cast<LottieStroke*>(stroke), frameNo, ctx, tween, exps);
+
+    return false;
 }
 
 
-void LottieBuilder::updateGradientStroke(LottieGroup* parent, LottieObject** child, float frameNo, Inlist<RenderContext>& contexts, RenderContext* ctx)
+bool LottieBuilder::updateGradientStroke(LottieGroup* parent, LottieObject** child, float frameNo, Inlist<RenderContext>& contexts, RenderContext* ctx)
 {
-    if (fragmented(parent, child, contexts, ctx)) return;
-
     auto stroke = static_cast<LottieGradientStroke*>(*child);
+    auto opacity = stroke->opacity(frameNo, tween, exps);
+
+    //interrupted by fully opaque, stop the current rendering
+    if (ctx->fragment == RenderFragment::ByStroke && stroke->opaque && opacity == 255) return true;
+
+    if (fragmented(parent, child, contexts, ctx, RenderFragment::ByStroke)) return false;
 
     ctx->merging = nullptr;
-    ctx->propagator->strokeFill(stroke->fill(frameNo, tween, exps));
+    if (auto val = stroke->fill(frameNo, opacity, tween, exps)) ctx->propagator->strokeFill(val);
     _updateStroke(static_cast<LottieStroke*>(stroke), frameNo, ctx, tween, exps);
+
+    return false;
 }
 
 
-void LottieBuilder::updateSolidFill(LottieGroup* parent, LottieObject** child, float frameNo, Inlist<RenderContext>& contexts, RenderContext* ctx)
+bool LottieBuilder::updateSolidFill(LottieGroup* parent, LottieObject** child, float frameNo, Inlist<RenderContext>& contexts, RenderContext* ctx)
 {
-    if (fragmented(parent, child, contexts, ctx)) return;
-
     auto fill = static_cast<LottieSolidFill*>(*child);
+    auto opacity = fill->opacity(frameNo, tween, exps);
+
+    //interrupted by fully opaque, stop the current rendering
+    if (ctx->fragment == RenderFragment::ByFill && opacity == 255) return true;
+
+    if (fragmented(parent, child, contexts, ctx, RenderFragment::ByFill)) return false;
+    if (opacity == 0) return false;
 
     ctx->merging = nullptr;
 
     auto color = fill->color(frameNo, tween, exps);
-    ctx->propagator->fill(color.rgb[0], color.rgb[1], color.rgb[2], fill->opacity(frameNo, tween, exps));
+    ctx->propagator->fill(color.rgb[0], color.rgb[1], color.rgb[2], opacity);
     ctx->propagator->fill(fill->rule);
 
     if (ctx->propagator->strokeWidth() > 0) ctx->propagator->order(true);
+
+    return false;
 }
 
 
-void LottieBuilder::updateGradientFill(LottieGroup* parent, LottieObject** child, float frameNo, Inlist<RenderContext>& contexts, RenderContext* ctx)
+bool LottieBuilder::updateGradientFill(LottieGroup* parent, LottieObject** child, float frameNo, Inlist<RenderContext>& contexts, RenderContext* ctx)
 {
-    if (fragmented(parent, child, contexts, ctx)) return;
-
     auto fill = static_cast<LottieGradientFill*>(*child);
+    auto opacity = fill->opacity(frameNo, tween, exps);
+
+    //interrupted by fully opaque, stop the current rendering
+    if (ctx->fragment == RenderFragment::ByFill && fill->opaque && opacity == 255) return true;
+
+    if (fragmented(parent, child, contexts, ctx, RenderFragment::ByFill)) return false;
 
     ctx->merging = nullptr;
-    //TODO: reuse the fill instance?
-    ctx->propagator->fill(fill->fill(frameNo, tween, exps));
+
+    if (auto val = fill->fill(frameNo, opacity, tween, exps)) ctx->propagator->fill(val);
     ctx->propagator->fill(fill->rule);
 
     if (ctx->propagator->strokeWidth() > 0) ctx->propagator->order(true);
+
+    return false;
 }
 
 
@@ -769,6 +796,7 @@ void LottieBuilder::updateChildren(LottieGroup* parent, float frameNo, Inlist<Re
     while (!contexts.empty()) {
         auto ctx = contexts.front();
         ctx->reqFragment = parent->reqFragment;
+        auto stop = false;
         for (auto child = ctx->begin; child >= parent->children.data; --child) {
             //Here switch-case statements are more performant than virtual methods.
             switch ((*child)->type) {
@@ -781,19 +809,19 @@ void LottieBuilder::updateChildren(LottieGroup* parent, float frameNo, Inlist<Re
                     break;
                 }
                 case LottieObject::SolidFill: {
-                    updateSolidFill(parent, child, frameNo, contexts, ctx);
+                    stop = updateSolidFill(parent, child, frameNo, contexts, ctx);
                     break;
                 }
                 case LottieObject::SolidStroke: {
-                    updateSolidStroke(parent, child, frameNo, contexts, ctx);
+                    stop = updateSolidStroke(parent, child, frameNo, contexts, ctx);
                     break;
                 }
                 case LottieObject::GradientFill: {
-                    updateGradientFill(parent, child, frameNo, contexts, ctx);
+                    stop = updateGradientFill(parent, child, frameNo, contexts, ctx);
                     break;
                 }
                 case LottieObject::GradientStroke: {
-                    updateGradientStroke(parent, child, frameNo, contexts, ctx);
+                    stop = updateGradientStroke(parent, child, frameNo, contexts, ctx);
                     break;
                 }
                 case LottieObject::Rect: {
@@ -832,7 +860,7 @@ void LottieBuilder::updateChildren(LottieGroup* parent, float frameNo, Inlist<Re
             }
 
             //stop processing for those invisible contents
-            if (ctx->propagator->opacity() == skip) break;
+            if (stop || ctx->propagator->opacity() == skip) break;
         }
         delete(ctx);
     }

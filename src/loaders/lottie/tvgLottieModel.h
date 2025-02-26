@@ -701,7 +701,7 @@ struct LottieGradient : LottieObject
     }
 
     uint32_t populate(ColorStop& color, size_t count);
-    Fill* fill(float frameNo, Tween& tween, LottieExpressions* exps);
+    Fill* fill(float frameNo, uint8_t opacity, Tween& tween, LottieExpressions* exps);
 
     LottieScalar start = Point{0.0f, 0.0f};
     LottieScalar end = Point{0.0f, 0.0f};
@@ -709,7 +709,8 @@ struct LottieGradient : LottieObject
     LottieFloat angle = 0.0f;
     LottieOpacity opacity = 255;
     LottieColorStop colorStops;
-    uint8_t id = 0;    //1: linear, 2: radial
+    uint8_t id = 0; //1: linear, 2: radial
+    bool opaque = true; //fully opaque or not
 };
 
 
