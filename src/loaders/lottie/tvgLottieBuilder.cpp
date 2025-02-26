@@ -377,15 +377,12 @@ static void _repeat(LottieGroup* parent, Shape* path, RenderContext* ctx)
 void LottieBuilder::appendRect(Shape* shape, Point& pos, Point& size, float r, bool clockwise, RenderContext* ctx)
 {
     auto temp = (ctx->offset) ? Shape::gen() : shape;
-
-    auto before = SHAPE(temp)->rs.path.pts.count;
+    auto cnt = SHAPE(temp)->rs.path.pts.count;
 
     temp->appendRect(pos.x, pos.y, size.x, size.y, r, r, clockwise);
 
-    auto after = SHAPE(temp)->rs.path.pts.count;
-
     if (ctx->transform) {
-        for (uint32_t i = before; i < after; ++i) {
+        for (auto i = cnt; i < SHAPE(temp)->rs.path.pts.count; ++i) {
             SHAPE(temp)->rs.path.pts[i] *= *ctx->transform;
         }
     }
@@ -410,14 +407,14 @@ void LottieBuilder::updateRect(LottieGroup* parent, LottieObject** child, float 
         r = std::min({r, size.x * 0.5f, size.y * 0.5f});
     }
 
-    if (!ctx->repeaters.empty()) {
+    if (ctx->repeaters.empty()) {
+        _draw(parent, rect, ctx);
+        appendRect(ctx->merging, pos, size, r, rect->clockwise, ctx);
+    } else {
         auto shape = rect->pooling();
         shape->reset();
         appendRect(shape, pos, size, r, rect->clockwise, ctx);
         _repeat(parent, shape, ctx);
-    } else {
-        _draw(parent, rect, ctx);
-        appendRect(ctx->merging, pos, size, r, rect->clockwise, ctx);
     }
 }
 
@@ -426,15 +423,12 @@ static void _appendCircle(Shape* shape, Point& center, Point& radius, bool clock
 {
     if (ctx->offset) ctx->offset->modifyEllipse(radius);
 
-    auto before = SHAPE(shape)->rs.path.pts.count;
+    auto cnt = SHAPE(shape)->rs.path.pts.count;
 
     shape->appendCircle(center.x, center.y, radius.x, radius.y, clockwise);
 
-    auto after = SHAPE(shape)->rs.path.pts.count;
-
-
     if (ctx->transform) {
-        for (uint32_t i = before; i < after; ++i) {
+        for (auto i = cnt; i < SHAPE(shape)->rs.path.pts.count; ++i) {
             SHAPE(shape)->rs.path.pts[i] *= *ctx->transform;
         }
     }
@@ -444,7 +438,6 @@ static void _appendCircle(Shape* shape, Point& center, Point& radius, bool clock
 void LottieBuilder::updateEllipse(LottieGroup* parent, LottieObject** child, float frameNo, TVG_UNUSED Inlist<RenderContext>& contexts, RenderContext* ctx)
 {
     auto ellipse = static_cast<LottieEllipse*>(*child);
-
     auto pos = ellipse->position(frameNo, tween, exps);
     auto size = ellipse->size(frameNo, tween, exps) * 0.5f;
 
@@ -690,17 +683,17 @@ void LottieBuilder::updatePolystar(LottieGroup* parent, LottieObject** child, fl
 
     auto identity = tvg::identity((const Matrix*)&matrix);
 
-    if (!ctx->repeaters.empty()) {
+    if (ctx->repeaters.empty()) {
+        _draw(parent, star, ctx);
+        if (star->type == LottiePolyStar::Star) updateStar(star, frameNo, (identity ? nullptr : &matrix), ctx->merging, ctx, tween, exps);
+        else updatePolygon(parent, star, frameNo, (identity  ? nullptr : &matrix), ctx->merging, ctx, tween, exps);
+        PAINT(ctx->merging)->update(RenderUpdateFlag::Path);
+    } else {
         auto shape = star->pooling();
         shape->reset();
         if (star->type == LottiePolyStar::Star) updateStar(star, frameNo, (identity ? nullptr : &matrix), shape, ctx, tween, exps);
         else updatePolygon(parent, star, frameNo, (identity  ? nullptr : &matrix), shape, ctx, tween, exps);
         _repeat(parent, shape, ctx);
-    } else {
-        _draw(parent, star, ctx);
-        if (star->type == LottiePolyStar::Star) updateStar(star, frameNo, (identity ? nullptr : &matrix), ctx->merging, ctx, tween, exps);
-        else updatePolygon(parent, star, frameNo, (identity  ? nullptr : &matrix), ctx->merging, ctx, tween, exps);
-        PAINT(ctx->merging)->update(RenderUpdateFlag::Path);
     }
 }
 
