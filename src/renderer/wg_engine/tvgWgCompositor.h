@@ -68,7 +68,6 @@ private:
     void copyTexture(const WgRenderStorage* dst, const WgRenderStorage* src);
     void copyTexture(const WgRenderStorage* dst, const WgRenderStorage* src, const RenderRegion& region);
 
-
     // shapes
     void drawShape(WgContext& context, WgRenderDataShape* renderData);
     void blendShape(WgContext& context, WgRenderDataShape* renderData, BlendMethod blendMethod);
@@ -88,6 +87,8 @@ private:
     void drawScene(WgContext& context, WgRenderStorage* scene, WgCompose* compose);
     void blendScene(WgContext& context, WgRenderStorage* src, WgCompose* compose);
 
+    // the renderer prioritizes clipping with the stroke over the shape's fill
+    void markupClipPath(WgContext& context, WgRenderDataShape* renderData);
     void renderClipPath(WgContext& context, WgRenderDataPaint* paint);
     void clearClipPath(WgContext& context, WgRenderDataPaint* paint);
 
