@@ -376,7 +376,7 @@ void WgRenderDataShape::updateMeshes(WgContext& context, const RenderShape &rsha
 
     pbuff->decodePath(rshape, true, [&](const WgVertexBuffer& path_buff) {
         appendShape(context, path_buff);
-        if (rshape.stroke) proceedStrokes(context, rshape.stroke, path_buff, pool);
+        if ((rshape.stroke) && (rshape.stroke->width > 0)) proceedStrokes(context, rshape.stroke, path_buff, pool);
     }, rshape.trimpath());
 
     // update shapes bbox (with empty path handling)

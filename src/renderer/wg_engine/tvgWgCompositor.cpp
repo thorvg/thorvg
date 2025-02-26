@@ -660,6 +660,26 @@ void WgCompositor::blendScene(WgContext& context, WgRenderStorage* scene, WgComp
 }
 
 
+void WgCompositor::markupClipPath(WgContext& context, WgRenderDataShape* renderData)
+{
+    wgpuRenderPassEncoderSetBindGroup(renderPassEncoder, 0, bindGroupViewMat, 0, nullptr);
+    wgpuRenderPassEncoderSetBindGroup(renderPassEncoder, 1, renderData->bindGroupPaint, 0, nullptr);
+    // markup stencil
+    if (renderData->meshGroupStrokes.meshes.count > 0) {
+        wgpuRenderPassEncoderSetStencilReference(renderPassEncoder, 255);
+        wgpuRenderPassEncoderSetPipeline(renderPassEncoder, pipelines.direct);
+        ARRAY_FOREACH(p, renderData->meshGroupStrokes.meshes)
+            (*p)->draw(context, renderPassEncoder);
+    } else {
+        WGPURenderPipeline stencilPipeline = (renderData->fillRule == FillRule::NonZero) ? pipelines.nonzero : pipelines.evenodd;
+        wgpuRenderPassEncoderSetStencilReference(renderPassEncoder, 0);
+        wgpuRenderPassEncoderSetPipeline(renderPassEncoder, stencilPipeline);
+        ARRAY_FOREACH(p, renderData->meshGroupShapes.meshes)
+            (*p)->drawFan(context, renderPassEncoder);
+    }
+}
+
+
 void WgCompositor::renderClipPath(WgContext& context, WgRenderDataPaint* paint)
 {
     assert(paint);
@@ -669,17 +689,11 @@ void WgCompositor::renderClipPath(WgContext& context, WgRenderDataPaint* paint)
     wgpuRenderPassEncoderSetScissorRect(renderPassEncoder, 0, 0, width, height);
     // get render data
     WgRenderDataShape* renderData0 = (WgRenderDataShape*)paint->clips[0];
-    // set transformations
-    wgpuRenderPassEncoderSetBindGroup(renderPassEncoder, 0, bindGroupViewMat, 0, nullptr);
     // markup stencil
-    WGPURenderPipeline stencilPipeline = (renderData0->fillRule == FillRule::NonZero) ? pipelines.nonzero : pipelines.evenodd;
-    wgpuRenderPassEncoderSetStencilReference(renderPassEncoder, 0);
-    wgpuRenderPassEncoderSetBindGroup(renderPassEncoder, 1, renderData0->bindGroupPaint, 0, nullptr);
-    wgpuRenderPassEncoderSetPipeline(renderPassEncoder, stencilPipeline);
-    ARRAY_FOREACH(p, renderData0->meshGroupShapes.meshes)
-        (*p)->drawFan(context, renderPassEncoder);
+    markupClipPath(context, renderData0);
     // copy stencil to depth
     wgpuRenderPassEncoderSetStencilReference(renderPassEncoder, 0);
+    wgpuRenderPassEncoderSetBindGroup(renderPassEncoder, 0, bindGroupViewMat, 0, nullptr);
     wgpuRenderPassEncoderSetBindGroup(renderPassEncoder, 1, renderData0->bindGroupPaint, 0, nullptr);
     wgpuRenderPassEncoderSetBindGroup(renderPassEncoder, 2, bindGroupOpacities[128], 0, nullptr);
     wgpuRenderPassEncoderSetPipeline(renderPassEncoder, pipelines.copy_stencil_to_depth);
@@ -689,12 +703,7 @@ void WgCompositor::renderClipPath(WgContext& context, WgRenderDataPaint* paint)
         // get render data
         WgRenderDataShape* renderData = (WgRenderDataShape*)(*p);
         // markup stencil
-        WGPURenderPipeline stencilPipeline = (renderData->fillRule == FillRule::NonZero) ? pipelines.nonzero : pipelines.evenodd;
-        wgpuRenderPassEncoderSetStencilReference(renderPassEncoder, 0);
-        wgpuRenderPassEncoderSetBindGroup(renderPassEncoder, 1, renderData->bindGroupPaint, 0, nullptr);
-        wgpuRenderPassEncoderSetPipeline(renderPassEncoder, stencilPipeline);
-        ARRAY_FOREACH(p, renderData->meshGroupShapes.meshes)
-            (*p)->drawFan(context, renderPassEncoder);
+        markupClipPath(context, renderData);
         // copy stencil to depth (clear stencil)
         wgpuRenderPassEncoderSetStencilReference(renderPassEncoder, 0);
         wgpuRenderPassEncoderSetBindGroup(renderPassEncoder, 1, renderData->bindGroupPaint, 0, nullptr);
