@@ -46,6 +46,8 @@ struct RenderRepeater
     bool inorder;
 };
 
+enum RenderFragment : uint8_t {ByNone = 0, ByFill, ByStroke};
+
 struct RenderContext
 {
     INLIST_ITEM(RenderContext);
@@ -58,7 +60,7 @@ struct RenderContext
     LottieRoundnessModifier* roundness = nullptr;
     LottieOffsetModifier* offset = nullptr;
     LottieModifier* modifier = nullptr;
-    bool fragmenting = false;  //render context has been fragmented by filling
+    RenderFragment fragment = ByNone;  //render context has been fragmented
     bool reqFragment = false;  //requirement to fragment the render context
 
     RenderContext(Shape* propagator)
@@ -76,12 +78,12 @@ struct RenderContext
         delete(offset);
     }
 
-    RenderContext(const RenderContext& rhs, Shape* propagator, bool mergeable = false)
+    RenderContext(const RenderContext& rhs, Shape* propagator, bool mergeable = false) : propagator(propagator)
     {
         if (mergeable) merging = rhs.merging;
         propagator->ref();
-        this->propagator = propagator;
         repeaters = rhs.repeaters;
+        fragment = rhs.fragment;
         if (rhs.roundness) {
             roundness = new LottieRoundnessModifier(rhs.roundness->buffer, rhs.roundness->r);
             update(roundness);
@@ -138,7 +140,7 @@ struct LottieBuilder
 
 private:
     void appendRect(Shape* shape, Point& pos, Point& size, float r, bool clockwise, RenderContext* ctx);
-    bool fragmented(LottieGroup* parent, LottieObject** child, Inlist<RenderContext>& contexts, RenderContext* ctx);
+    bool fragmented(LottieGroup* parent, LottieObject** child, Inlist<RenderContext>& contexts, RenderContext* ctx, RenderFragment fragment);
 
     void updateStrokeEffect(LottieLayer* layer, LottieFxStroke* effect, float frameNo);
     void updateEffect(LottieLayer* layer, float frameNo);
@@ -154,10 +156,10 @@ private:
     void updateChildren(LottieGroup* parent, float frameNo, Inlist<RenderContext>& contexts, uint8_t skip);
     void updateGroup(LottieGroup* parent, LottieObject** child, float frameNo, Inlist<RenderContext>& pcontexts, RenderContext* ctx, uint8_t skip);
     void updateTransform(LottieGroup* parent, LottieObject** child, float frameNo, Inlist<RenderContext>& contexts, RenderContext* ctx);
-    void updateSolidFill(LottieGroup* parent, LottieObject** child, float frameNo, Inlist<RenderContext>& contexts, RenderContext* ctx);
-    void updateSolidStroke(LottieGroup* parent, LottieObject** child, float frameNo, Inlist<RenderContext>& contexts, RenderContext* ctx);
-    void updateGradientFill(LottieGroup* parent, LottieObject** child, float frameNo, Inlist<RenderContext>& contexts, RenderContext* ctx);
-    void updateGradientStroke(LottieGroup* parent, LottieObject** child, float frameNo, Inlist<RenderContext>& contexts, RenderContext* ctx);
+    bool updateSolidFill(LottieGroup* parent, LottieObject** child, float frameNo, Inlist<RenderContext>& contexts, RenderContext* ctx);
+    bool updateSolidStroke(LottieGroup* parent, LottieObject** child, float frameNo, Inlist<RenderContext>& contexts, RenderContext* ctx);
+    bool updateGradientFill(LottieGroup* parent, LottieObject** child, float frameNo, Inlist<RenderContext>& contexts, RenderContext* ctx);
+    bool updateGradientStroke(LottieGroup* parent, LottieObject** child, float frameNo, Inlist<RenderContext>& contexts, RenderContext* ctx);
     void updateRect(LottieGroup* parent, LottieObject** child, float frameNo, Inlist<RenderContext>& contexts, RenderContext* ctx);
     void updateEllipse(LottieGroup* parent, LottieObject** child, float frameNo, Inlist<RenderContext>& contexts, RenderContext* ctx);
     void updatePath(LottieGroup* parent, LottieObject** child, float frameNo, Inlist<RenderContext>& contexts, RenderContext* ctx);
