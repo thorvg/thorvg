@@ -915,10 +915,15 @@ struct LottieSlot
         LottieProperty* prop;
     };
 
+    struct Context {
+        LottieLayer* layer;
+        LottieObject* parent;
+    };
+
     void assign(LottieObject* target, bool byDefault);
     void reset();
 
-    LottieSlot(char* sid, LottieObject* obj, LottieProperty::Type type) : sid(sid), type(type)
+    LottieSlot(char* sid, LottieObject* obj, LottieProperty::Type type, Context context) : sid(sid), type(type), context(context)
     {
         pairs.push({obj});
     }
@@ -934,6 +939,9 @@ struct LottieSlot
     Array<Pair> pairs;
     LottieProperty::Type type;
     bool overridden = false;
+
+    //parsing context, used for expression
+    Context context;
 };
 
 
