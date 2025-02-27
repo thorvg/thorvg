@@ -247,3 +247,16 @@ void WgShaderTypeEffectParams::update(const RenderEffectFill* fill)
     params[2] = fill->color[2] / 255.0f;
     params[3] = fill->color[3] / 255.0f;
 }
+
+void WgShaderTypeEffectParams::update(const RenderEffectTint* tint) 
+{
+    params[0] = tint->black[0] / 255.0f;
+    params[1] = tint->black[1] / 255.0f;
+    params[2] = tint->black[2] / 255.0f;
+    params[3] = 0.0f;
+    params[4] = tint->white[0] / 255.0f;
+    params[5] = tint->white[1] / 255.0f;
+    params[6] = tint->white[2] / 255.0f;
+    params[7] = 0.0f;
+    params[8] = tint->intensity / 255.0f;
+}

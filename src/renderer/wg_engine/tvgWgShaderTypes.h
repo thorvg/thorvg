@@ -75,6 +75,7 @@ struct WgShaderTypeEffectParams
     // gaussian blur: [0]: sigma, [1]: scale, [2]: kernel size
     // drop shadow:   [0]: sigma, [1]: scale, [2]: kernel size, [4..7]: color, [8, 9]: offset
     // fill:          [0..3]: color
+    // tint:          [0..2]: black, [4..6]: white, [8]: intensity
     float params[4+4+4]{}; // settings: array<vec4f, 3>;
     uint32_t extend{};     // gaussian blur extend
     Point offset{};        // drop shadow offset
@@ -82,6 +83,7 @@ struct WgShaderTypeEffectParams
     void update(const RenderEffectGaussianBlur* gaussian, const Matrix& transform);
     void update(const RenderEffectDropShadow* dropShadow, const Matrix& transform);
     void update(const RenderEffectFill* fill);
+    void update(const RenderEffectTint* tint);
 };
 
 #endif // _TVG_WG_SHADER_TYPES_H_

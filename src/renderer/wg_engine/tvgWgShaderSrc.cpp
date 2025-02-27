@@ -843,11 +843,29 @@ fn cs_main_fill(@builtin(global_invocation_id) gid: vec3u) {
     let vmax = vec2u(viewport.zw);
 
     // tex coord
-    let uid = gid.xy + vmin;
+    let uid = min(gid.xy + vmin, vmax);
 
     let orig = textureLoad(imageSrc, uid);
     let fill = settings[0];
     let color = fill * orig.a * fill.a;
+    textureStore(imageTrg, uid.xy, color);
+}
+
+@compute @workgroup_size(128, 1)
+fn cs_main_tint(@builtin(global_invocation_id) gid: vec3u) {
+    // decode viewport and settings
+    let vmin = vec2u(viewport.xy);
+    let vmax = vec2u(viewport.zw);
+
+    // tex coord
+    let uid = min(gid.xy + vmin, vmax);
+
+    let orig = textureLoad(imageSrc, uid);
+    let luma: f32 = dot(orig.rgb, vec3f(0.2125, 0.7154, 0.0721));
+    let black = settings[0];
+    let white = settings[1];
+    let intens = settings[2].r;
+    let color = mix(orig, mix(white, black, luma), intens) * orig.a;
     textureStore(imageTrg, uid.xy, color);
 }
 )";
