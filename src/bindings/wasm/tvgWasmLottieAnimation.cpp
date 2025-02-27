@@ -156,42 +156,42 @@ struct TvgSwEngine : TvgEngineMethod
 
 struct TvgWgEngine : TvgEngineMethod
 {
-    #ifdef THORVG_WG_RASTER_SUPPORT
-        WGPUSurface surface{};
-    #endif
+#ifdef THORVG_WG_RASTER_SUPPORT
+    WGPUSurface surface{};
+#endif
 
     ~TvgWgEngine()
     {
-        #ifdef THORVG_WG_RASTER_SUPPORT
-            wgpuSurfaceRelease(surface);
-        #endif
+    #ifdef THORVG_WG_RASTER_SUPPORT
+        wgpuSurfaceRelease(surface);
         Initializer::term(tvg::CanvasEngine::Wg);
         retrieveFont();
+    #endif
     }
 
     Canvas* init(string& selector) override
     {
-        #ifdef THORVG_WG_RASTER_SUPPORT
-            WGPUSurfaceDescriptorFromCanvasHTMLSelector canvasDesc{};
-            canvasDesc.chain.next = nullptr;
-            canvasDesc.chain.sType = WGPUSType_SurfaceDescriptorFromCanvasHTMLSelector;
-            canvasDesc.selector = selector.c_str();
+    #ifdef THORVG_WG_RASTER_SUPPORT
+        WGPUSurfaceDescriptorFromCanvasHTMLSelector canvasDesc{};
+        canvasDesc.chain.next = nullptr;
+        canvasDesc.chain.sType = WGPUSType_SurfaceDescriptorFromCanvasHTMLSelector;
+        canvasDesc.selector = selector.c_str();
 
-            WGPUSurfaceDescriptor surfaceDesc{};
-            surfaceDesc.nextInChain = &canvasDesc.chain;
-            surface = wgpuInstanceCreateSurface(instance, &surfaceDesc);
-        #endif
+        WGPUSurfaceDescriptor surfaceDesc{};
+        surfaceDesc.nextInChain = &canvasDesc.chain;
+        surface = wgpuInstanceCreateSurface(instance, &surfaceDesc);
 
         Initializer::init(0, tvg::CanvasEngine::Wg);
         loadFont();
         return WgCanvas::gen();
+    #else
+        return nullptr;
+    #endif
     }
 
     void resize(Canvas* canvas, int w, int h) override
     {
-    #ifdef THORVG_WG_RASTER_SUPPORT
-        static_cast<WgCanvas*>(canvas)->target(device, instance, surface, w, h, ColorSpace::ABGR8888S);
-    #endif
+        if (canvas) static_cast<WgCanvas*>(canvas)->target(device, instance, surface, w, h, ColorSpace::ABGR8888S);
     }
 };
 
@@ -206,8 +206,8 @@ struct TvgGLEngine : TvgEngineMethod
             emscripten_webgl_destroy_context(context);
             context = 0;
         }
-    #endif
         retrieveFont();
+    #endif
     }
 
     Canvas* init(string& selector) override
@@ -227,19 +227,19 @@ struct TvgGLEngine : TvgEngineMethod
         if (context == 0) return nullptr;
 
         emscripten_webgl_make_context_current(context);
-    #endif
 
         if (Initializer::init(0, tvg::CanvasEngine::Gl) != Result::Success) return nullptr;
         loadFont();
 
         return GlCanvas::gen();
+    #else
+        return nullptr;
+    #endif
     }
 
     void resize(Canvas* canvas, int w, int h) override
     {
-    #ifdef THORVG_GL_RASTER_SUPPORT
-        static_cast<GlCanvas*>(canvas)->target((void*)context, 0, w, h, ColorSpace::ABGR8888S);
-    #endif
+        if (canvas) static_cast<GlCanvas*>(canvas)->target((void*)context, 0, w, h, ColorSpace::ABGR8888S);
     }
 };
 
