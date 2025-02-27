@@ -248,6 +248,7 @@ void WgShaderTypeEffectParams::update(const RenderEffectFill* fill)
     params[3] = fill->color[3] / 255.0f;
 }
 
+
 void WgShaderTypeEffectParams::update(const RenderEffectTint* tint) 
 {
     params[0] = tint->black[0] / 255.0f;
@@ -259,4 +260,21 @@ void WgShaderTypeEffectParams::update(const RenderEffectTint* tint)
     params[6] = tint->white[2] / 255.0f;
     params[7] = 0.0f;
     params[8] = tint->intensity / 255.0f;
+}
+
+
+void WgShaderTypeEffectParams::update(const RenderEffectTritone* tritone)
+{
+    params[0] = tritone->shadow[0] / 255.0f;
+    params[1] = tritone->shadow[1] / 255.0f;
+    params[2] = tritone->shadow[2] / 255.0f;
+    params[3] = 0.0f;
+    params[4] = tritone->midtone[0] / 255.0f;
+    params[5] = tritone->midtone[1] / 255.0f;
+    params[6] = tritone->midtone[2] / 255.0f;
+    params[7] = 0.0f;
+    params[8] = tritone->highlight[0] / 255.0f;
+    params[9] = tritone->highlight[1] / 255.0f;
+    params[10] = tritone->highlight[2] / 255.0f;
+    params[11] = 0.0f;
 }

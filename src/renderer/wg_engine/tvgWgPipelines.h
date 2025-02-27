@@ -101,8 +101,9 @@ public:
     WGPUComputePipeline gaussian_horz{};
     WGPUComputePipeline gaussian_vert{};
     WGPUComputePipeline dropshadow{};
-    WGPUComputePipeline fill_effect{}; 
-    WGPUComputePipeline tint_effect{}; 
+    WGPUComputePipeline fill_effect{};
+    WGPUComputePipeline tint_effect{};
+    WGPUComputePipeline tritone_effect{};
 private:
     void releaseGraphicHandles(WgContext& context);
     WGPUShaderModule createShaderModule(WGPUDevice device, const char* label, const char* code);

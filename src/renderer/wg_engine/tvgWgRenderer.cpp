@@ -564,6 +564,17 @@ void WgRenderer::prepare(RenderEffect* effect, const Matrix& transform)
         }
         renderData->update(mContext, renderEffect);
         effect->valid = true;
+    } else
+    // prepare tritone
+    if (effect->type == SceneEffect::Tritone) {
+        auto renderEffect = (RenderEffectTritone*)effect;
+        auto renderData = (WgRenderDataEffectParams*)renderEffect->rd;
+        if (!renderData) {
+            renderData = mRenderDataEffectParamsPool.allocate(mContext);
+            renderEffect->rd = renderData;
+        }
+        renderData->update(mContext, renderEffect);
+        effect->valid = true;
     }
 }
 
@@ -610,6 +621,7 @@ bool WgRenderer::render(RenderCompositor* cmp, const RenderEffect* effect, TVG_U
         case SceneEffect::DropShadow: return mCompositor.dropShadow(mContext, dst, (RenderEffectDropShadow*)effect, comp);
         case SceneEffect::Fill: return mCompositor.fillEffect(mContext, dst, (RenderEffectFill*)effect, comp);
         case SceneEffect::Tint: return mCompositor.tintEffect(mContext, dst, (RenderEffectFill*)effect, comp);
+        case SceneEffect::Tritone : return mCompositor.tritoneEffect(mContext, dst, (RenderEffectFill*)effect, comp);
         default: return false;
     }
     return false;
