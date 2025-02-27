@@ -461,6 +461,7 @@ void WgPipelines::initialize(WgContext& context)
 void WgPipelines::releaseGraphicHandles(WgContext& context)
 {
     // pipeline effects
+    releaseComputePipeline(tritone_effect);
     releaseComputePipeline(tint_effect);
     releaseComputePipeline(fill_effect);
     releaseComputePipeline(dropshadow);
@@ -512,6 +513,7 @@ void WgPipelines::releaseGraphicHandles(WgContext& context)
     releasePipelineLayout(layout_stencil);
     // shaders
     releaseShaderModule(shader_effects);
+    releaseShaderModule(shader_gauss);
     releaseShaderModule(shader_blit);
     releaseShaderModule(shader_scene_compose);
     releaseShaderModule(shader_scene_blend);
