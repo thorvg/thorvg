@@ -205,6 +205,7 @@ struct WgRenderDataEffectParams
     void update(WgContext& context, const RenderEffectGaussianBlur* gaussian, const Matrix& transform);
     void update(WgContext& context, const RenderEffectDropShadow* dropShadow, const Matrix& transform);
     void update(WgContext& context, const RenderEffectFill* fill);
+    void update(WgContext& context, const RenderEffectTint* tint);
     void release(WgContext& context);
 };
 

@@ -624,6 +624,15 @@ void WgRenderDataEffectParams::update(WgContext& context, const RenderEffectFill
 }
 
 
+void WgRenderDataEffectParams::update(WgContext& context, const RenderEffectTint* tint)
+{
+    assert(tint);
+    WgShaderTypeEffectParams effectParams;
+    effectParams.update(tint);
+    update(context, effectParams);
+}
+
+
 void WgRenderDataEffectParams::release(WgContext& context)
 {
     context.releaseBuffer(bufferParams);

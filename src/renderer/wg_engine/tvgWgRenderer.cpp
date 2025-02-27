@@ -542,10 +542,21 @@ void WgRenderer::prepare(RenderEffect* effect, const Matrix& transform)
         }
         renderData->update(mContext, renderEffect, transform);
         effect->valid = true;
-    }
+    } else
     // prepare fill
     if (effect->type == SceneEffect::Fill) {
         auto renderEffect = (RenderEffectFill*)effect;
+        auto renderData = (WgRenderDataEffectParams*)renderEffect->rd;
+        if (!renderData) {
+            renderData = mRenderDataEffectParamsPool.allocate(mContext);
+            renderEffect->rd = renderData;
+        }
+        renderData->update(mContext, renderEffect);
+        effect->valid = true;
+    } else
+    // prepare tint
+    if (effect->type == SceneEffect::Tint) {
+        auto renderEffect = (RenderEffectTint*)effect;
         auto renderData = (WgRenderDataEffectParams*)renderEffect->rd;
         if (!renderData) {
             renderData = mRenderDataEffectParamsPool.allocate(mContext);
@@ -598,6 +609,7 @@ bool WgRenderer::render(RenderCompositor* cmp, const RenderEffect* effect, TVG_U
         case SceneEffect::GaussianBlur: return mCompositor.gaussianBlur(mContext, dst, (RenderEffectGaussianBlur*)effect, comp);
         case SceneEffect::DropShadow: return mCompositor.dropShadow(mContext, dst, (RenderEffectDropShadow*)effect, comp);
         case SceneEffect::Fill: return mCompositor.fillEffect(mContext, dst, (RenderEffectFill*)effect, comp);
+        case SceneEffect::Tint: return mCompositor.tintEffect(mContext, dst, (RenderEffectFill*)effect, comp);
         default: return false;
     }
     return false;
