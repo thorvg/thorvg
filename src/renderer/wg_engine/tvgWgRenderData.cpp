@@ -633,6 +633,15 @@ void WgRenderDataEffectParams::update(WgContext& context, const RenderEffectTint
 }
 
 
+void WgRenderDataEffectParams::update(WgContext& context, const RenderEffectTritone* tritone)
+{
+    assert(tritone);
+    WgShaderTypeEffectParams effectParams;
+    effectParams.update(tritone);
+    update(context, effectParams);
+}
+
+
 void WgRenderDataEffectParams::release(WgContext& context)
 {
     context.releaseBuffer(bufferParams);

@@ -910,3 +910,30 @@ bool WgCompositor::tintEffect(WgContext& context, WgRenderStorage* dst, const Re
 
     return true;
 }
+
+bool WgCompositor::tritoneEffect(WgContext& context, WgRenderStorage* dst, const RenderEffectFill* params, const WgCompose* compose)
+{
+    assert(dst);
+    assert(params);
+    assert(params->rd);
+    assert(compose->rdViewport);
+    assert(!renderPassEncoder);
+
+    auto renderDataParams = (WgRenderDataEffectParams*)params->rd;
+    auto aabb = compose->aabb;
+    auto viewport = compose->rdViewport;
+
+    copyTexture(&storageTemp0, dst, aabb);
+    WGPUComputePassDescriptor computePassDesc{ .label = "Compute pass tritone" };
+    WGPUComputePassEncoder computePassEncoder = wgpuCommandEncoderBeginComputePass(commandEncoder, &computePassDesc);
+    wgpuComputePassEncoderSetBindGroup(computePassEncoder, 0, bindGroupStorageTemp, 0, nullptr);
+    wgpuComputePassEncoderSetBindGroup(computePassEncoder, 1, dst->bindGroupWrite, 0, nullptr);
+    wgpuComputePassEncoderSetBindGroup(computePassEncoder, 2, renderDataParams->bindGroupParams, 0, nullptr);
+    wgpuComputePassEncoderSetBindGroup(computePassEncoder, 3, viewport->bindGroupViewport, 0, nullptr);
+    wgpuComputePassEncoderSetPipeline(computePassEncoder, pipelines.tritone_effect);
+    wgpuComputePassEncoderDispatchWorkgroups(computePassEncoder, (aabb.w - 1) / 128 + 1, aabb.h, 1);
+    wgpuComputePassEncoderEnd(computePassEncoder);
+    wgpuComputePassEncoderRelease(computePassEncoder);
+
+    return true;
+}

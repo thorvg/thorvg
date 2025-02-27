@@ -206,6 +206,7 @@ struct WgRenderDataEffectParams
     void update(WgContext& context, const RenderEffectDropShadow* dropShadow, const Matrix& transform);
     void update(WgContext& context, const RenderEffectFill* fill);
     void update(WgContext& context, const RenderEffectTint* tint);
+    void update(WgContext& context, const RenderEffectTritone* tritone);
     void release(WgContext& context);
 };
 

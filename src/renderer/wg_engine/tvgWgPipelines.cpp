@@ -455,6 +455,7 @@ void WgPipelines::initialize(WgContext& context)
     dropshadow    = createComputePipeline(context.device, "The compute pipeline drop shadow blend", shader_effects, "cs_main_drop_shadow", layout_effects);
     fill_effect   = createComputePipeline(context.device, "The compute pipeline fill effect", shader_effects, "cs_main_fill", layout_effects);
     tint_effect   = createComputePipeline(context.device, "The compute pipeline tint effect", shader_effects, "cs_main_tint", layout_effects);
+    tritone_effect= createComputePipeline(context.device, "The compute pipeline tritone effect", shader_effects, "cs_main_tritone", layout_effects);
 }
 
 void WgPipelines::releaseGraphicHandles(WgContext& context)

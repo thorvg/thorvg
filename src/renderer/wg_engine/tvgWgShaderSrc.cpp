@@ -868,4 +868,26 @@ fn cs_main_tint(@builtin(global_invocation_id) gid: vec3u) {
     let color = mix(orig, mix(white, black, luma), intens) * orig.a;
     textureStore(imageTrg, uid.xy, color);
 }
+
+@compute @workgroup_size(128, 1)
+fn cs_main_tritone(@builtin(global_invocation_id) gid: vec3u) {
+    // decode viewport and settings
+    let vmin = vec2u(viewport.xy);
+    let vmax = vec2u(viewport.zw);
+
+    // tex coord
+    let uid = min(gid.xy + vmin, vmax);
+
+    let orig = textureLoad(imageSrc, uid);
+    let luma: f32 = dot(orig.rgb, vec3f(0.2125, 0.7154, 0.0721));
+    let shadow = settings[0];
+    let midtone = settings[1];
+    let highlight = settings[2];
+    let color = select(
+        mix(shadow, midtone, luma * 2.0f),
+        mix(midtone, highlight, (luma - 0.5f)*2.0f),
+        luma >= 0.5f
+    ) * orig.a;
+    textureStore(imageTrg, uid.xy, color);
+}
 )";
