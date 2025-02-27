@@ -78,6 +78,9 @@ static Result _compFastTrack(RenderMethod* renderer, Paint* cmpTarget, const Mat
     /* Access Shape class by Paint is bad... but it's ok still it's an internal usage. */
     auto shape = static_cast<Shape*>(cmpTarget);
 
+    //Trimming likely makes the shape non-rectangular
+    if (SHAPE(shape)->rs.trimpath()) return Result::InsufficientCondition;
+
     //Rectangle Candidates?
     const Point* pts;
     uint32_t ptsCnt;
