@@ -458,3 +458,12 @@ bool LottieLoader::tween(float from, float to, float progress)
 
     return true;
 }
+
+
+bool LottieLoader::write(const char* layer, uint32_t ix, const char* var, float val)
+{
+    if (!ready() || !comp->expressions) return false;
+    comp->root->write(layer, ix, var, val);
+
+    return true;
+}
