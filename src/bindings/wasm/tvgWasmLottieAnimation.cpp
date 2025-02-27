@@ -118,7 +118,7 @@ struct TvgEngineMethod
     }
 
     void loadFont() {
-        Text::load("default", reinterpret_cast<const char*>(DEFAULT_FONT), DEFAULT_FONT_SIZE, "ttf", false);
+        Text::load("default", requestFont(), DEFAULT_FONT_SIZE, "ttf", false);
     }
 };
 
@@ -130,6 +130,7 @@ struct TvgSwEngine : TvgEngineMethod
     {
         std::free(buffer);
         Initializer::term(tvg::CanvasEngine::Sw);
+        retrieveFont();
     }
 
     Canvas* init(string&) override
@@ -165,6 +166,7 @@ struct TvgWgEngine : TvgEngineMethod
             wgpuSurfaceRelease(surface);
         #endif
         Initializer::term(tvg::CanvasEngine::Wg);
+        retrieveFont();
     }
 
     Canvas* init(string& selector) override
@@ -205,6 +207,7 @@ struct TvgGLEngine : TvgEngineMethod
             context = 0;
         }
     #endif
+        retrieveFont();
     }
 
     Canvas* init(string& selector) override
