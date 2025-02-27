@@ -70,7 +70,7 @@ void operator delete(void* ptr) noexcept;
 
 namespace tvg {
 
-    enum class FileType { Png = 0, Jpg, Webp, Svg, Lottie, Ttf, Raw, Gif, Unknown };
+    enum class FileType { Png = 0, Jpg, Webp, Svg, Lot, Ttf, Raw, Gif, Unknown };
 
     using Size = Point;
 

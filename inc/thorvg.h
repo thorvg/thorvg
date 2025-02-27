@@ -1278,7 +1278,7 @@ public:
 /**
  * @class Picture
  *
- * @brief A class representing an image read in one of the supported formats: raw, svg, png, jpg, lottie(json) and etc.
+ * @brief A class representing an image read in one of the supported formats: raw, svg, png, jpg, lot and etc.
  * Besides the methods inherited from the Paint, it provides methods to load & draw images on the canvas.
  *
  * @note Supported formats are depended on the available TVG loaders.
@@ -1313,7 +1313,7 @@ public:
      *
      * @param[in] data A pointer to a memory location where the content of the picture file is stored. A null-terminated string is expected for non-binary data if @p copy is @c false.
      * @param[in] size The size in bytes of the memory occupied by the @p data.
-     * @param[in] mimeType Mimetype or extension of data such as "jpg", "jpeg", "lottie", "svg", "svg+xml", "png", etc. In case an empty string or an unknown type is provided, the loaders will be tried one by one.
+     * @param[in] mimeType Mimetype or extension of data such as "jpg", "jpeg", "lot", "lottie+json", "svg", "svg+xml", "png", etc. In case an empty string or an unknown type is provided, the loaders will be tried one by one.
      * @param[in] rpath A resource directory path, if the @p data needs to access any external resources.
      * @param[in] copy If @c true the data are copied into the engine local buffer, otherwise they are not.
      *
@@ -1883,7 +1883,7 @@ public:
     /**
      * @brief Retrieves a picture instance associated with this animation instance.
      *
-     * This function provides access to the picture instance that can be used to load animation formats, such as Lottie(json).
+     * This function provides access to the picture instance that can be used to load animation formats, such as lot.
      * After setting up the picture, it can be pushed to the designated canvas, enabling control over animation frames
      * with this Animation instance.
      *
