@@ -74,6 +74,9 @@ public:
     float shorten(float frameNo);  //Reduce the accuracy for performance
     bool tween(float from, float to, float progress);
 
+    //Expressions
+    bool write(const char* layer, uint32_t ix, const char* var, float val);
+
 private:
     bool ready();
     bool header();
