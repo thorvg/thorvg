@@ -1325,6 +1325,34 @@ jerry_value_t LottieExpressions::buildGlobal()
     return global;
 }
 
+static jerry_value_t _writable(const jerry_call_info_t* info, const jerry_value_t args[], const jerry_length_t argsCnt)
+{
+    auto p = static_cast<float*>(jerry_object_get_native_ptr(info->function, nullptr));
+    if (!p) return jerry_number(args[0]);
+    return jerry_number(*p);
+}
+
+
+void LottieExpressions::buildWritables(LottieExpression* exp)
+{
+    if (!exp->writables) return;
+    for (auto p = exp->writables->begin(); p < exp->writables->end(); ++p) {
+        auto writable = jerry_function_external(_writable);
+        jerry_object_set_native_ptr(writable, nullptr, &p->val);
+        jerry_object_set_sz(global, p->var, writable);
+        jerry_value_free(writable);
+    }
+}
+
+
+void LottieExpressions::resetWritables(LottieExpression* exp)
+{
+    if (!exp->writables) return;
+    for (auto p = exp->writables->begin(); p < exp->writables->end(); ++p) {
+        jerry_object_set_sz(global, p->var, jerry_undefined());
+    }
+}
+
 
 jerry_value_t LottieExpressions::evaluate(float frameNo, LottieExpression* exp)
 {
@@ -1337,6 +1365,9 @@ jerry_value_t LottieExpressions::evaluate(float frameNo, LottieExpression* exp)
 
     //this composition
     buildComp(thisComp, frameNo, exp->layer->comp, exp);
+
+    //update writable values
+    buildWritables(exp);
 
     //update global context values
     _buildProperty(frameNo, global, exp);
@@ -1357,11 +1388,14 @@ jerry_value_t LottieExpressions::evaluate(float frameNo, LottieExpression* exp)
 
     if (jerry_value_is_exception(eval)) {
         TVGERR("LOTTIE", "Failed to dispatch the expressions!");
-        exp->disabled = true;
+        //exp->disabled = true;
+        resetWritables(exp);
         return jerry_undefined();
     }
 
     jerry_value_free(eval);
+
+    resetWritables(exp);
 
     return jerry_object_get_sz(global, "$bm_rt");
 }
