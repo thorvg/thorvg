@@ -1326,9 +1326,20 @@ jerry_value_t LottieExpressions::buildGlobal()
 }
 
 
+void LottieExpressions::buildWritables(LottieExpression* exp)
+{
+    if (exp->writables.empty()) return;
+    ARRAY_FOREACH(p, exp->writables) {
+        auto writable = jerry_number(p->val);
+        jerry_object_set_sz(global, p->var, writable);
+        jerry_value_free(writable);
+    }
+}
+
+
 jerry_value_t LottieExpressions::evaluate(float frameNo, LottieExpression* exp)
 {
-    if (exp->disabled) return jerry_undefined();
+    if (exp->disabled && exp->writables.empty()) return jerry_undefined();
 
     buildGlobal(exp);
 
@@ -1351,6 +1362,9 @@ jerry_value_t LottieExpressions::evaluate(float frameNo, LottieExpression* exp)
 
     //expansions per object type
     if (exp->object->type == LottieObject::Transform) _buildTransform(global, frameNo, static_cast<LottieTransform*>(exp->object));
+
+    //update writable values
+    buildWritables(exp);
 
     //evaluate the code
     auto eval = jerry_eval((jerry_char_t *) exp->code, strlen(exp->code), JERRY_PARSE_NO_OPTS);
