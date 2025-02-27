@@ -573,6 +573,7 @@ LottieTransform* LottieParser::parseTransform(bool ddd)
                 else if (transform->coords && KEY_AS("y")) parseProperty<LottieProperty::Type::Float>(transform->coords->y);
                 else if (KEY_AS("x") && expressions) transform->position.exp = getExpression(getStringCopy(), comp, context.layer, context.parent, &transform->position);
                 else if (KEY_AS("sid")) registerSlot<LottieProperty::Type::Position>(transform, getString());
+                else if (KEY_AS("ix")) transform->position.ix = getInt();
                 else skip();
             }
             transform->position.type = LottieProperty::Type::Position;

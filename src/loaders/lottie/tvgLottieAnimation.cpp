@@ -84,6 +84,18 @@ const char* LottieAnimation::marker(uint32_t idx) noexcept
 }
 
 
+Result LottieAnimation::assign(const char* layer, uint32_t ix, const char* var, float val)
+{
+    if (!layer || !var) return Result::InvalidArguments;
+
+    auto loader = PICTURE(pImpl->picture)->loader;
+    if (!loader) return Result::InsufficientCondition;
+    if (static_cast<LottieLoader*>(loader)->assign(layer, ix, var, val)) return Result::Success;
+
+    return Result::NonSupport;
+}
+
+
 LottieAnimation* LottieAnimation::gen() noexcept
 {
     return new LottieAnimation;
