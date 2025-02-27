@@ -326,7 +326,7 @@ public:
 
         string filetype = mimetype;
         if (filetype == "json") {
-            filetype = "lottie";
+            filetype = "lottie+json";
         }
 
         if (animation->picture()->load(data.c_str(), data.size(), filetype.c_str(), rpath.c_str(), false) != Result::Success) {
@@ -464,7 +464,7 @@ public:
             return false;
         }
 
-        if (animation->picture()->load(data.c_str(), data.size(), "lottie", nullptr, false) != Result::Success) {
+        if (animation->picture()->load(data.c_str(), data.size(), "lot", nullptr, false) != Result::Success) {
             errorMsg = "load() fail";
             return false;
         }

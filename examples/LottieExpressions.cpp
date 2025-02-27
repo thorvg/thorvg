@@ -43,7 +43,7 @@ struct UserExample : tvgexam::Example
 
         //ignore if not lottie.
         const char *ext = path + strlen(path) - 4;
-        if (strcmp(ext, "json")) return;
+        if (strcmp(ext, "json") && strcmp(ext, "lot")) return;
 
         //Animation Controller
         auto animation = tvg::Animation::gen();

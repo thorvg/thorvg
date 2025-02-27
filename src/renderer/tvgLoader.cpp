@@ -102,7 +102,7 @@ static LoadModule* _find(FileType type)
 #endif
             break;
         }
-        case FileType::Lottie: {
+        case FileType::Lot: {
 #ifdef THORVG_LOTTIE_LOADER_SUPPORT
             return new LottieLoader;
 #endif
@@ -128,8 +128,8 @@ static LoadModule* _find(FileType type)
             format = "TTF";
             break;
         }
-        case FileType::Lottie: {
-            format = "lottie(json)";
+        case FileType::Lot: {
+            format = "LOT";
             break;
         }
         case FileType::Raw: {
@@ -166,7 +166,7 @@ static LoadModule* _findByPath(const char* filename)
     if (!ext) return nullptr;
 
     if (!strcmp(ext, "svg")) return _find(FileType::Svg);
-    if (!strcmp(ext, "json")) return _find(FileType::Lottie);
+    if (!strcmp(ext, "lot") || !strcmp(ext, "json")) return _find(FileType::Lot);
     if (!strcmp(ext, "png")) return _find(FileType::Png);
     if (!strcmp(ext, "jpg")) return _find(FileType::Jpg);
     if (!strcmp(ext, "webp")) return _find(FileType::Webp);
@@ -185,7 +185,7 @@ static FileType _convert(const char* mimeType)
 
     if (!strcmp(mimeType, "svg") || !strcmp(mimeType, "svg+xml")) type = FileType::Svg;
     else if (!strcmp(mimeType, "ttf") || !strcmp(mimeType, "otf")) type = FileType::Ttf;
-    else if (!strcmp(mimeType, "lottie")) type = FileType::Lottie;
+    else if (!strcmp(mimeType, "lot") || !strcmp(mimeType, "lottie+json")) type = FileType::Lot;
     else if (!strcmp(mimeType, "raw")) type = FileType::Raw;
     else if (!strcmp(mimeType, "png")) type = FileType::Png;
     else if (!strcmp(mimeType, "jpg") || !strcmp(mimeType, "jpeg")) type = FileType::Jpg;
@@ -280,7 +280,7 @@ LoadModule* LoaderMgr::loader(const char* filename, bool* invalid)
     //TODO: svg & lottie is not sharable.
     auto allowCache = true;
     auto ext = strExtension(filename);
-    if (ext && (!strcmp(ext, "svg") || !strcmp(ext, "json"))) allowCache = false;
+    if (ext && (!strcmp(ext, "svg") || !strcmp(ext, "json") || !strcmp(ext, "lot"))) allowCache = false;
 
     if (allowCache) {
         if (auto loader = _findFromCache(filename)) return loader;
@@ -362,7 +362,7 @@ LoadModule* LoaderMgr::loader(const char* data, uint32_t size, const char* mimeT
     //TODO: lottie is not sharable.
     if (allowCache) {
         auto type = _convert(mimeType);
-        if (type == FileType::Lottie) allowCache = false;
+        if (type == FileType::Lot) allowCache = false;
     }
 
     if (allowCache) {

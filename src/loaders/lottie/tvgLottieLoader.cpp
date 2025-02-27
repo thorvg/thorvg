@@ -68,7 +68,7 @@ void LottieLoader::release()
 /* External Class Implementation                                        */
 /************************************************************************/
 
-LottieLoader::LottieLoader() : FrameModule(FileType::Lottie), builder(new LottieBuilder)
+LottieLoader::LottieLoader() : FrameModule(FileType::Lot), builder(new LottieBuilder)
 {
 
 }

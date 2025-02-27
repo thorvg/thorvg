@@ -1847,7 +1847,7 @@ TVG_API Tvg_Result tvg_picture_load_raw(Tvg_Paint* paint, uint32_t *data, uint32
 * @param[in] paint A Tvg_Paint pointer to the picture object.
 * @param[in] data A pointer to a memory location where the content of the picture file is stored. A null-terminated string is expected for non-binary data if @p copy is @c false
 * @param[in] size The size in bytes of the memory occupied by the @p data.
-* @param[in] mimetype Mimetype or extension of data such as "jpg", "jpeg", "svg", "svg+xml", "lottie", "png", etc. In case an empty string or an unknown type is provided, the loaders will be tried one by one.
+* @param[in] mimetype Mimetype or extension of data such as "jpg", "jpeg", "svg", "svg+xml", "lot", "lottie+json", "png", etc. In case an empty string or an unknown type is provided, the loaders will be tried one by one.
 * @param[in] rpath A resource directory path, if the @p data needs to access any external resources.
 * @param[in] copy If @c true the data are copied into the engine local buffer, otherwise they are not.
 *
@@ -2273,7 +2273,7 @@ TVG_API Tvg_Result tvg_animation_set_frame(Tvg_Animation* animation, float no);
 /*!
 * @brief Retrieves a picture instance associated with this animation instance.
 *
-* This function provides access to the picture instance that can be used to load animation formats, such as Lottie(json).
+* This function provides access to the picture instance that can be used to load animation formats, such as lot.
 * After setting up the picture, it can be pushed to the designated canvas, enabling control over animation frames
 * with this Animation instance.
 *
