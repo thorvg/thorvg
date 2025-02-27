@@ -33,7 +33,7 @@ void exportGif()
 {
     auto animation = tvg::Animation::gen();
     auto picture = animation->picture();
-    if (!tvgexam::verify(picture->load(EXAMPLE_DIR"/lottie/walker.json"))) return;
+    if (!tvgexam::verify(picture->load(EXAMPLE_DIR"/lottie/sample.json"))) return;
 
     picture->size(800, 800);
 
