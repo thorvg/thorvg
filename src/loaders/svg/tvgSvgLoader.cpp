@@ -20,16 +20,14 @@
  * SOFTWARE.
  */
 
-#include <cstring>
 #include <fstream>
-#include <float.h>
+#include "tvgStr.h"
+#include "tvgMath.h"
 #include "tvgLoader.h"
 #include "tvgXmlParser.h"
 #include "tvgSvgLoader.h"
 #include "tvgSvgSceneBuilder.h"
-#include "tvgStr.h"
 #include "tvgSvgCssStyle.h"
-#include "tvgMath.h"
 
 /************************************************************************/
 /* Internal Class Implementation                                        */
@@ -65,7 +63,7 @@ static char* _copyId(const char* str)
     if (!str) return nullptr;
     if (strlen(str) == 0) return nullptr;
 
-    return strdup(str);
+    return strDuplicate(str);
 }
 
 
@@ -2011,7 +2009,7 @@ static char* _idFromHref(const char* href)
 {
     href = _skipSpace(href, nullptr);
     if ((*href) == '#') href++;
-    return strdup(href);
+    return strDuplicate(href);
 }
 
 
@@ -2233,7 +2231,7 @@ static bool _attrParseTextNode(void* data, const char* key, const char* value)
     if (STR_AS(key, "font-family")) {
         if (value) {
             tvg::free(text->fontFamily);
-            text->fontFamily = strdup(value);
+            text->fontFamily = strDuplicate(value);
         }
     } else if (STR_AS(key, "style")) {
         return simpleXmlParseW3CAttribute(value, strlen(value), _parseStyleAttr, loader);
@@ -3216,15 +3214,15 @@ static void _copyAttr(SvgNode* to, const SvgNode* from)
     to->style->flags = (to->style->flags | from->style->flags);
     if (from->style->clipPath.url) {
         tvg::free(to->style->clipPath.url);
-        to->style->clipPath.url = strdup(from->style->clipPath.url);
+        to->style->clipPath.url = strDuplicate(from->style->clipPath.url);
     }
     if (from->style->mask.url) {
         tvg::free(to->style->mask.url);
-        to->style->mask.url = strdup(from->style->mask.url);
+        to->style->mask.url = strDuplicate(from->style->mask.url);
     }
     if (from->style->filter.url) {
         if (to->style->filter.url) tvg::free(to->style->filter.url);
-        to->style->filter.url = strdup(from->style->filter.url);
+        to->style->filter.url = strDuplicate(from->style->filter.url);
     }
 
     //Copy node attribute
@@ -3248,7 +3246,7 @@ static void _copyAttr(SvgNode* to, const SvgNode* from)
         case SvgNodeType::Path: {
             if (from->node.path.path) {
                 tvg::free(to->node.path.path);
-                to->node.path.path = strdup(from->node.path.path);
+                to->node.path.path = strDuplicate(from->node.path.path);
             }
             break;
         }
@@ -3271,7 +3269,7 @@ static void _copyAttr(SvgNode* to, const SvgNode* from)
             to->node.image.h = from->node.image.h;
             if (from->node.image.href) {
                 tvg::free(to->node.image.href);
-                to->node.image.href = strdup(from->node.image.href);
+                to->node.image.href = strDuplicate(from->node.image.href);
             }
             break;
         }
@@ -3291,11 +3289,11 @@ static void _copyAttr(SvgNode* to, const SvgNode* from)
             to->node.text.fontSize = from->node.text.fontSize;
             if (from->node.text.text) {
                 tvg::free(to->node.text.text);
-                to->node.text.text = strdup(from->node.text.text);
+                to->node.text.text = strDuplicate(from->node.text.text);
             }
             if (from->node.text.fontFamily) {
                 tvg::free(to->node.text.fontFamily);
-                to->node.text.fontFamily = strdup(from->node.text.fontFamily);
+                to->node.text.fontFamily = strDuplicate(from->node.text.fontFamily);
             }
             break;
         }

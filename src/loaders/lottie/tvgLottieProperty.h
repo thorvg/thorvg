@@ -25,6 +25,7 @@
 
 #include <algorithm>
 #include "tvgMath.h"
+#include "tvgStr.h"
 #include "tvgLottieData.h"
 #include "tvgLottieInterpolator.h"
 #include "tvgLottieExpressions.h"
@@ -919,8 +920,8 @@ struct LottieBitmap : LottieProperty
         } else {
             //TODO: optimize here by avoiding data copy
             TVGLOG("LOTTIE", "Shallow copy of the image data!");
-            b64Data = strdup(rhs.b64Data);
-            mimeType = strdup(rhs.mimeType);
+            b64Data = strDuplicate(rhs.b64Data);
+            mimeType = strDuplicate(rhs.mimeType);
         }
         size = rhs.size;
         width = rhs.width;

@@ -466,7 +466,7 @@ void LottieParser::registerSlot(LottieObject* obj, const char* sid)
         (*p)->pairs.push({obj});
         return;
     }
-    comp->slots.push(new LottieSlot(strdup(sid), obj, type));
+    comp->slots.push(new LottieSlot(strDuplicate(sid), obj, type));
 }
 
 

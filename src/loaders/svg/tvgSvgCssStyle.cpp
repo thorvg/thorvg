@@ -20,6 +20,7 @@
  * SOFTWARE.
  */
 
+#include "tvgStr.h"
 #include "tvgSvgCssStyle.h"
 
 /************************************************************************/
@@ -71,7 +72,7 @@ static void _copyStyle(SvgStyleProperty* to, const SvgStyleProperty* from)
         to->fill.paint.curColor = from->fill.paint.curColor;
         if (from->fill.paint.url) {
             if (to->fill.paint.url) tvg::free(to->fill.paint.url);
-            to->fill.paint.url = strdup(from->fill.paint.url);
+            to->fill.paint.url = strDuplicate(from->fill.paint.url);
         }
         to->fill.flags = (to->fill.flags | SvgFillFlags::Paint);
         to->flags = (to->flags | SvgStyleFlags::Fill);
@@ -105,7 +106,7 @@ static void _copyStyle(SvgStyleProperty* to, const SvgStyleProperty* from)
         to->stroke.paint.curColor = from->stroke.paint.curColor;
         if (from->stroke.paint.url) {
             if (to->stroke.paint.url) tvg::free(to->stroke.paint.url);
-            to->stroke.paint.url = strdup(from->stroke.paint.url);
+            to->stroke.paint.url = strDuplicate(from->stroke.paint.url);
         }
         to->stroke.flags = (to->stroke.flags | SvgStrokeFlags::Paint);
         to->flags = (to->flags | SvgStyleFlags::Stroke);
@@ -196,11 +197,11 @@ void cssCopyStyleAttr(SvgNode* to, const SvgNode* from)
 
     if (from->style->clipPath.url) {
         if (to->style->clipPath.url) tvg::free(to->style->clipPath.url);
-        to->style->clipPath.url = strdup(from->style->clipPath.url);
+        to->style->clipPath.url = strDuplicate(from->style->clipPath.url);
     }
     if (from->style->mask.url) {
         if (to->style->mask.url) tvg::free(to->style->mask.url);
-        to->style->mask.url = strdup(from->style->mask.url);
+        to->style->mask.url = strDuplicate(from->style->mask.url);
     }
 }
 

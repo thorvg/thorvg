@@ -62,7 +62,6 @@ using namespace tvg;
 
 #if defined(_MSC_VER) && defined(__clang__)
     #define strncpy strncpy_s
-    #define strdup _strdup
 #endif
 
 void* operator new(std::size_t size);
