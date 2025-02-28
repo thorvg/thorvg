@@ -20,8 +20,6 @@
  * SOFTWARE.
  */
 
-#include <string.h>
-
 #include "tvgInlist.h"
 #include "tvgStr.h"
 #include "tvgLoader.h"
@@ -289,7 +287,7 @@ LoadModule* LoaderMgr::loader(const char* filename, bool* invalid)
     if (auto loader = _findByPath(filename)) {
         if (loader->open(filename)) {
             if (allowCache) {
-                loader->hashpath = strdup(filename);
+                loader->hashpath = strDuplicate(filename);
                 loader->pathcache = true;
                 {
                     ScopedLock lock(key);
@@ -305,7 +303,7 @@ LoadModule* LoaderMgr::loader(const char* filename, bool* invalid)
         if (auto loader = _find(static_cast<FileType>(i))) {
             if (loader->open(filename)) {
                 if (allowCache) {
-                    loader->hashpath = strdup(filename);
+                    loader->hashpath = strDuplicate(filename);
                     loader->pathcache = true;
                     {
                         ScopedLock lock(key);
@@ -438,7 +436,7 @@ LoadModule* LoaderMgr::loader(const char* name, const char* data, uint32_t size,
     //function is dedicated for ttf loader (the only supported font loader)
     auto loader = new TtfLoader;
     if (loader->open(data, size, "", copy)) {
-        loader->hashpath = strdup(name);
+        loader->hashpath = strDuplicate(name);
         loader->pathcache = true;
         ScopedLock lock(key);
         _activeLoaders.back(loader);

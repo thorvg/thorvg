@@ -24,8 +24,7 @@
  * License, v. 2.0. If a copy of the MPL was not distributed with this
  * file, You can obtain one at http://mozilla.org/MPL/2.0/. */
 
-#include <string.h>
-#include "tvgCommon.h"
+#include "tvgStr.h"
 #include "tvgMath.h"
 #include "tvgLottieInterpolator.h"
 
@@ -127,7 +126,7 @@ float LottieInterpolator::progress(float t)
 
 void LottieInterpolator::set(const char* key, Point& inTangent, Point& outTangent)
 {
-    if (key) this->key = strdup(key);
+    if (key) this->key = strDuplicate(key);
     this->inTangent = inTangent;
     this->outTangent = outTangent;
 

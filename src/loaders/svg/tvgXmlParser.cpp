@@ -21,8 +21,9 @@
  */
 
 #include <ctype.h>
-#include "tvgXmlParser.h"
 #include "tvgStr.h"
+#include "tvgXmlParser.h"
+
 
 /************************************************************************/
 /* Internal Class Implementation                                        */
@@ -550,7 +551,7 @@ const char* simpleXmlParseCSSAttribute(const char* buf, unsigned bufLength, char
         if (*p == '.') break;
     }
 
-    if (p == itr) *tag = strdup("all");
+    if (p == itr) *tag = strDuplicate("all");
     else *tag = strDuplicate(itr, p - itr);
 
     if (p == itrEnd) *name = nullptr;

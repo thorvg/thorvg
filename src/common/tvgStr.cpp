@@ -212,10 +212,9 @@ char* strDuplicate(const char *str, size_t n)
     if (len < n) n = len;
 
     auto ret = tvg::malloc<char*>(n + 1);
-    if (!ret) return nullptr;
     ret[n] = '\0';
 
-    return (char *) memcpy(ret, str, n);
+    return (char*)memcpy(ret, str, n);
 }
 
 char* strAppend(char* lhs, const char* rhs, size_t n)

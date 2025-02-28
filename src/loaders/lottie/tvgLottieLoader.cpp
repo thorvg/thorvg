@@ -20,11 +20,11 @@
  * SOFTWARE.
  */
 
-#include "tvgLottieLoader.h"
+#include "tvgStr.h"
+ #include "tvgLottieLoader.h"
 #include "tvgLottieModel.h"
 #include "tvgLottieParser.h"
 #include "tvgLottieBuilder.h"
-#include "tvgStr.h"
 
 /************************************************************************/
 /* Internal Class Implementation                                        */
@@ -209,8 +209,8 @@ bool LottieLoader::open(const char* data, uint32_t size, const char* rpath, bool
     this->size = size;
     this->copy = copy;
 
-    if (!rpath) this->dirName = strdup(".");
-    else this->dirName = strdup(rpath);
+    if (!rpath) this->dirName = strDuplicate(".");
+    else this->dirName = strDuplicate(rpath);
 
     return header();
 }
@@ -295,7 +295,7 @@ bool LottieLoader::override(const char* slots, bool byDefault)
     //override slots
     if (slots) {
         //Copy the input data because the JSON parser will encode the data immediately.
-        auto temp = byDefault ? slots : strdup(slots);
+        auto temp = byDefault ? slots : strDuplicate(slots);
 
         //parsing slot json
         LottieParser parser(temp, dirName, builder->expressions());

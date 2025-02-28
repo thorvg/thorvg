@@ -22,6 +22,7 @@
 
 #include <cstring>
 
+#include "tvgStr.h"
 #include "tvgGifEncoder.h"
 #include "tvgGifSaver.h"
 
@@ -135,7 +136,7 @@ bool GifSaver::save(Animation* animation, Paint* bg, const char* filename, TVG_U
     }
 
     if (!filename) return false;
-    this->path = strdup(filename);
+    this->path = strDuplicate(filename);
 
     this->animation = animation;
 
