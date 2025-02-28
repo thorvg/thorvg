@@ -939,5 +939,6 @@ using LottieOpacity = LottieGenericProperty<LottieScalarFrame<uint8_t>, uint8_t>
 using LottieColor = LottieGenericProperty<LottieScalarFrame<RGB24>, RGB24>;
 using LottieInteger = LottieGenericProperty<LottieScalarFrame<int8_t>, int8_t>;
 using LottieVector = LottieGenericProperty<LottieVectorFrame<Point>, Point, 0>;
+using LottieToggle = LottieOpacity;
 
 #endif //_TVG_LOTTIE_PROPERTY_H_
