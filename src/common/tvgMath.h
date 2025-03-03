@@ -344,6 +344,7 @@ struct Bezier
     float atApprox(float at, float length) const;
     Point at(float t) const;
     float angle(float t) const;
+    void bounds(Point& min, Point& max) const;
 };
 
 

@@ -100,6 +100,13 @@ float _bezAt(const Bezier& bz, float at, float length, LengthFunc lineLengthFunc
 
 namespace tvg {
 
+
+uint8_t lerp(const uint8_t &start, const uint8_t &end, float t)
+{
+    return static_cast<uint8_t>(tvg::clamp(static_cast<int>(start + (end - start) * t), 0, 255));
+}
+
+
 float length(const PathCommand* cmds, uint32_t cmdsCnt, const Point* pts, uint32_t ptsCnt)
 {
     if (ptsCnt < 2) return 0.0f;
@@ -408,9 +415,38 @@ float Bezier::angle(float t) const
 }
 
 
-uint8_t lerp(const uint8_t &start, const uint8_t &end, float t)
+void Bezier::bounds(Point& min, Point& max) const
 {
-    return static_cast<uint8_t>(tvg::clamp(static_cast<int>(start + (end - start) * t), 0, 255));
+    if (min.x > start.x) min.x = start.x;
+    if (min.y > start.y) min.y = start.y;
+    if (min.x > end.x) min.x = end.x;
+    if (min.y > end.y) min.y = end.y;
+
+    if (max.x < start.x) max.x = start.x;
+    if (max.y < start.y) max.y = start.y;
+    if (max.x < end.x) max.x = end.x;
+    if (max.y < end.y) max.y = end.y;
+
+    //find x/y-direction extrema (solving derivative of Bezier curve)
+    auto findMinMax = [&](float start, float ctrl1, float ctrl2, float end, float& min, float& max) -> void {
+        auto a = -1.0f * start + 3.0f * ctrl1 - 3.0f * ctrl2 + end;
+        auto b = start - 2.0f * ctrl1 + ctrl2;
+        auto c = -1.0f * start + ctrl1;
+        auto h = b * b - a * c;
+        if (h <= 0.0f) return;
+        h = sqrtf(h);
+        float t[2] = {(-b - h) / a, (-b + h) / a};
+        for (int i = 0; i < 2; ++i) {
+            if (t[i] <= 0.0f || t[i] >= 1.0f) continue;
+            auto s = 1.0f - t[i];
+            auto q = s * s * s * start + 3.0f * s * s * t[i] * ctrl1 + 3.0f * s * t[i] * t[i] * ctrl2 + t[i] * t[i] * t[i] * end;
+            if (q < min) min = q;
+            if (q > max) max = q;
+        }
+    };
+
+    findMinMax(start.x, ctrl1.x, ctrl2.x, end.x, min.x, max.x);
+    findMinMax(start.y, ctrl1.y, ctrl2.y, end.y, min.y, max.y);
 }
 
 }
