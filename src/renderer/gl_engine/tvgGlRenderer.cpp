@@ -477,7 +477,8 @@ void GlRenderer::drawClip(Array<RenderData>& clips)
 
         clipTask->setDrawDepth(clipDepths[i]);
 
-        sdata->geometry.draw(clipTask, &mGpuBuffer, RenderUpdateFlag::Path);
+        auto flag = (sdata->geometry.stroke.vertex.count > 0) ? RenderUpdateFlag::Stroke : RenderUpdateFlag::Path;
+        sdata->geometry.draw(clipTask, &mGpuBuffer, flag);
 
         auto bbox = sdata->geometry.viewport;
 
@@ -1226,7 +1227,7 @@ RenderData GlRenderer::prepare(const RenderShape& rshape, RenderData data, const
     }
 
     if (clipper) {
-        sdata->updateFlag = RenderUpdateFlag::Path;
+        sdata->updateFlag = (rshape.stroke && (rshape.stroke->width > 0)) ? RenderUpdateFlag::Stroke : RenderUpdateFlag::Path;
     } else {
         if (alphaF) sdata->updateFlag = static_cast<RenderUpdateFlag>(RenderUpdateFlag::Color | sdata->updateFlag);
         if (rshape.fill) sdata->updateFlag = static_cast<RenderUpdateFlag>(RenderUpdateFlag::Gradient | sdata->updateFlag);
