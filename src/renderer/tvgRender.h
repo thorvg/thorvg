@@ -104,6 +104,7 @@ struct RenderPath
         cmds.clear();
     }
 
+    bool bounds(float* x, float* y, float* w, float* h);
 };
 
 struct RenderTrimPath

@@ -40,6 +40,64 @@ uint32_t RenderMethod::unref()
     return (--refCnt);
 }
 
+/************************************************************************/
+/* RenderPath Class Implementation                                      */
+/************************************************************************/
+
+bool RenderPath::bounds(float* x, float* y, float* w, float* h)
+{
+    //unexpected
+    if (cmds.empty() || cmds.first() == PathCommand::CubicTo) return false;
+
+    auto min = Point{FLT_MAX, FLT_MAX};
+    auto max = Point{-FLT_MAX, -FLT_MAX};
+
+    auto pt = pts.begin();
+    auto cmd = cmds.begin();
+
+    auto assign = [&](Point* pt, Point& min, Point& max) -> void {
+        if (pt->x < min.x) min.x = pt->x;
+        if (pt->y < min.y) min.y = pt->y;
+        if (pt->x > max.x) max.x = pt->x;
+        if (pt->y > max.y) max.y = pt->y;
+    };
+
+    while (cmd < cmds.end()) {
+        switch (*cmd) {
+            case PathCommand::MoveTo: {
+                //skip the invalid assignments
+                if (cmd + 1 < cmds.end()) {
+                    auto next = *(cmd + 1);
+                    if (next == PathCommand::LineTo || next == PathCommand::CubicTo) {
+                        assign(pt, min, max);
+                    }
+                }
+                ++pt;
+                break;
+            }
+            case PathCommand::LineTo: {
+                assign(pt, min, max);
+                ++pt;
+                break;
+            }
+            case PathCommand::CubicTo: {
+                Bezier bz = {pt[-1], pt[0], pt[1], pt[2]};
+                bz.bounds(min, max);
+                pt += 3;
+                break;
+            }
+            default: break;
+        }
+        ++cmd;
+    }
+
+    if (x) *x = min.x;
+    if (y) *y = min.y;
+    if (w) *w = max.x - min.x;
+    if (h) *h = max.y - min.y;
+
+    return true;
+}
 
 /************************************************************************/
 /* RenderRegion Class Implementation                                    */

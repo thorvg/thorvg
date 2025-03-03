@@ -118,24 +118,7 @@ struct Shape::Impl : Paint::Impl
 
     bool bounds(float* x, float* y, float* w, float* h, bool stroking)
     {
-        //Path bounding size
-        if (rs.path.pts.count > 0 ) {
-            auto pts = rs.path.pts.begin();
-            Point min = { pts->x, pts->y };
-            Point max = { pts->x, pts->y };
-
-            for (auto pts2 = pts + 1; pts2 < rs.path.pts.end(); ++pts2) {
-                if (pts2->x < min.x) min.x = pts2->x;
-                if (pts2->y < min.y) min.y = pts2->y;
-                if (pts2->x > max.x) max.x = pts2->x;
-                if (pts2->y > max.y) max.y = pts2->y;
-            }
-
-            if (x) *x = min.x;
-            if (y) *y = min.y;
-            if (w) *w = max.x - min.x;
-            if (h) *h = max.y - min.y;
-        }
+        if (!rs.path.bounds(x, y, w, h)) return false;
 
         //Stroke feathering
         if (stroking && rs.stroke) {
@@ -144,7 +127,7 @@ struct Shape::Impl : Paint::Impl
             if (w) *w += rs.stroke->width;
             if (h) *h += rs.stroke->width;
         }
-        return rs.path.pts.count > 0 ? true : false;
+        return true;
     }
 
     void reserveCmd(uint32_t cmdCnt)
