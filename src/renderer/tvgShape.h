@@ -116,17 +116,24 @@ struct Shape::Impl : Paint::Impl
         return renderer->region(rd);
     }
 
-    bool bounds(float* x, float* y, float* w, float* h, bool stroking)
+    bool bounds(Point* pt4, bool stroking)
     {
-        if (!rs.path.bounds(x, y, w, h)) return false;
+        float x, y, w, h;
+        if (!rs.path.bounds(&x, &y, &w, &h)) return false;
 
         //Stroke feathering
         if (stroking && rs.stroke) {
-            if (x) *x -= rs.stroke->width * 0.5f;
-            if (y) *y -= rs.stroke->width * 0.5f;
-            if (w) *w += rs.stroke->width;
-            if (h) *h += rs.stroke->width;
+            x -= rs.stroke->width * 0.5f;
+            y -= rs.stroke->width * 0.5f;
+            w += rs.stroke->width;
+            h += rs.stroke->width;
         }
+
+        pt4[0] = {x, y};
+        pt4[1] = {x + w, y};
+        pt4[2] = {x + w, y + h};
+        pt4[3] = {x, y + h};
+
         return true;
     }
 

@@ -277,48 +277,41 @@ RenderData Paint::Impl::update(RenderMethod* renderer, const Matrix& pm, Array<R
 }
 
 
-bool Paint::Impl::bounds(float* x, float* y, float* w, float* h, bool transformed, bool stroking, bool origin)
+bool Paint::Impl::bounds(float* x, float* y, float* w, float* h, bool stroking)
+{
+    Point pts[4];
+    if (!bounds(pts, false, stroking, false)) return false;
+
+    Point min = {FLT_MAX, FLT_MAX};
+    Point max = {-FLT_MAX, -FLT_MAX};
+
+    for (int i = 0; i < 4; ++i) {
+        if (pts[i].x < min.x) min.x = pts[i].x;
+        if (pts[i].x > max.x) max.x = pts[i].x;
+        if (pts[i].y < min.y) min.y = pts[i].y;
+        if (pts[i].y > max.y) max.y = pts[i].y;
+    }
+
+    if (x) *x = min.x;
+    if (y) *y = min.y;
+    if (w) *w = max.x - min.x;
+    if (h) *h = max.y - min.y;
+    return true;
+}
+
+
+bool Paint::Impl::bounds(Point* pt4, bool transformed, bool stroking, bool origin)
 {
     bool ret;
+    PAINT_METHOD(ret, bounds(pt4, stroking));
+
+    if (!ret || !transformed) return ret;
+
     const auto& m = this->transform(origin);
-
-    //Case: No transformed, quick return!
-    if (!transformed || identity(&m)) {
-        PAINT_METHOD(ret, bounds(x, y, w, h, stroking));
-        return ret;
-    }
-
-    //Case: Transformed
-    auto tx = 0.0f;
-    auto ty = 0.0f;
-    auto tw = 0.0f;
-    auto th = 0.0f;
-
-    PAINT_METHOD(ret, bounds(&tx, &ty, &tw, &th, stroking));
-
-    //Get vertices
-    Point pt[4] = {{tx, ty}, {tx + tw, ty}, {tx + tw, ty + th}, {tx, ty + th}};
-
-    //New bounding box
-    auto x1 = FLT_MAX;
-    auto y1 = FLT_MAX;
-    auto x2 = -FLT_MAX;
-    auto y2 = -FLT_MAX;
-
-    //Compute the AABB after transformation
-    for (int i = 0; i < 4; i++) {
-        pt[i] *= m;
-
-        if (pt[i].x < x1) x1 = pt[i].x;
-        if (pt[i].x > x2) x2 = pt[i].x;
-        if (pt[i].y < y1) y1 = pt[i].y;
-        if (pt[i].y > y2) y2 = pt[i].y;
-    }
-
-    if (x) *x = x1;
-    if (y) *y = y1;
-    if (w) *w = x2 - x1;
-    if (h) *h = y2 - y1;
+    pt4[0] *= m;
+    pt4[1] *= m;
+    pt4[2] *= m;
+    pt4[3] *= m;
 
     return ret;
 }
@@ -373,9 +366,17 @@ Matrix& Paint::transform() noexcept
 }
 
 
-Result Paint::bounds(float* x, float* y, float* w, float* h, bool transformed) const noexcept
+Result Paint::bounds(float* x, float* y, float* w, float* h) const noexcept
 {
-    if (pImpl->bounds(x, y, w, h, transformed, true, transformed)) return Result::Success;
+    if (pImpl->bounds(x, y, w, h, true)) return Result::Success;
+    return Result::InsufficientCondition;
+}
+
+
+Result Paint::bounds(Point* pt4) const noexcept
+{
+    if (!pt4) return Result::InvalidArguments;
+    if (pImpl->bounds(pt4, true, true, true)) return Result::Success;
     return Result::InsufficientCondition;
 }
 

@@ -114,13 +114,12 @@ struct Picture::Impl : Paint::Impl
         return Result::Success;
     }
 
-
-    bool bounds(float* x, float* y, float* w, float* h, bool stroking)
+    bool bounds(Point* pt4, bool stroking)
     {
-        if (x) *x = 0;
-        if (y) *y = 0;
-        if (w) *w = this->w;
-        if (h) *h = this->h;
+        pt4[0] = {0.0f, 0.0f};
+        pt4[1] = {w, 0.0f};
+        pt4[2] = {w, h};
+        pt4[3] = {0.0f, h};
         return true;
     }
 

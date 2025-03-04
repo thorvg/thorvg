@@ -927,7 +927,7 @@ static void _fontText(LottieText* text, Scene* scene, float frameNo, LottieExpre
     txt->fill(doc.color.rgb[0], doc.color.rgb[1], doc.color.rgb[2]);
 
     float width;
-    txt->bounds(nullptr, nullptr, &width, nullptr, false);
+    txt->bounds(nullptr, nullptr, &width, nullptr);
 
     auto cursorX = width * doc.justify;
     txt->translate(cursorX, -doc.size * 100.0f);

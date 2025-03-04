@@ -47,26 +47,10 @@ static inline bool _isGroupType(SvgNodeType type)
 
 //According to: https://www.w3.org/TR/SVG11/coords.html#ObjectBoundingBoxUnits (the last paragraph)
 //a stroke width should be ignored for bounding box calculations
-static Box _boundingBox(const Shape* shape)
+static Box _boundingBox(Paint* shape)
 {
     float x, y, w, h;
-    shape->bounds(&x, &y, &w, &h, false);
-
-    if (auto strokeW = shape->strokeWidth()) {
-        x += 0.5f * strokeW;
-        y += 0.5f * strokeW;
-        w -= strokeW;
-        h -= strokeW;
-    }
-
-    return {x, y, w, h};
-}
-
-
-static Box _boundingBox(const Text* text)
-{
-    float x, y, w, h;
-    text->bounds(&x, &y, &w, &h, false);
+    PAINT(shape)->bounds(&x, &y, &w, &h, false);
     return {x, y, w, h};
 }
 
@@ -260,7 +244,7 @@ static Matrix _compositionTransform(Paint* paint, const SvgNode* node, const Svg
     }
     if (!compNode->node.clip.userSpace) {
         float x, y, w, h;
-        PAINT(paint)->bounds(&x, &y, &w, &h, false, false);
+        PAINT(paint)->bounds(&x, &y, &w, &h, false);
         m *= {w, 0, x, 0, h, y, 0, 0, 1};
     }
     return m;
@@ -346,7 +330,7 @@ static Paint* _applyFilter(SvgLoaderData& loaderData, Paint* paint, const SvgNod
     auto scene = Scene::gen();
 
     Box bbox{};
-    paint->bounds(&bbox.x, &bbox.y, &bbox.w, &bbox.h, false);
+    paint->bounds(&bbox.x, &bbox.y, &bbox.w, &bbox.h);
     Box clipBox = filter.filterUserSpace ? filter.box : Box{bbox.x + filter.box.x * bbox.w, bbox.y + filter.box.y * bbox.h, filter.box.w * bbox.w, filter.box.h * bbox.h};
     auto primitiveUserSpace = filter.primitiveUserSpace;
     auto sx = paint->transform().e11;
@@ -943,13 +927,13 @@ static Scene* _sceneBuildHelper(SvgLoaderData& loaderData, const SvgNode* node, 
 }
 
 
-static void _updateInvalidViewSize(const Scene* scene, Box& vBox, float& w, float& h, SvgViewFlag viewFlag)
+static void _updateInvalidViewSize(Scene* scene, Box& vBox, float& w, float& h, SvgViewFlag viewFlag)
 {
     bool validWidth = (viewFlag & SvgViewFlag::Width);
     bool validHeight = (viewFlag & SvgViewFlag::Height);
 
     float x, y;
-    scene->bounds(&x, &y, &vBox.w, &vBox.h, false);
+    scene->bounds(&x, &y, &vBox.w, &vBox.h);
     if (!validWidth && !validHeight) {
         vBox.x = x;
         vBox.y = y;
