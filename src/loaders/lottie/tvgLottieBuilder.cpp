@@ -923,9 +923,20 @@ static void _fontText(LottieText* text, Scene* scene, float frameNo, LottieExpre
         //fallback to any available font
         txt->font(nullptr, size);
     }
-    txt->translate(0.0f, -doc.size * 100.0f);
     txt->text(doc.text);
     txt->fill(doc.color.rgb[0], doc.color.rgb[1], doc.color.rgb[2]);
+
+    float width;
+    txt->bounds(nullptr, nullptr, &width, nullptr, false);
+
+    float cursorX = 0.0f;
+    if (doc.justify == 1) {
+        cursorX = width * -1;
+    } else if (doc.justify == 2) {
+        cursorX = width * -0.5f;
+    }
+
+    txt->translate(cursorX, -doc.size * 100.0f);
     scene->push(txt);
 }
 
