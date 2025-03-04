@@ -24,6 +24,7 @@ source_file = [
     'AnimateMasking.cpp',
     'Animation.cpp',
     'Blending.cpp',
+    'BoundingBox.cpp',
     'Clipping.cpp',
     'CustomTransform.cpp',
     'DataLoad.cpp',
