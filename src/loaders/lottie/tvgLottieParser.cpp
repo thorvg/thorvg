@@ -126,7 +126,12 @@ bool LottieParser::getValue(TextDocument& doc)
         if (KEY_AS("s")) doc.size = getFloat() * 0.01f;
         else if (KEY_AS("f")) doc.name = getStringCopy();
         else if (KEY_AS("t")) doc.text = getStringCopy();
-        else if (KEY_AS("j")) doc.justify = getInt();
+        else if (KEY_AS("j"))
+        {
+            auto val = getInt();
+            if (val == 1) doc.justify = -1.0f;        //right align
+            else if (val == 2) doc.justify = -0.5f;   //center align
+        }
         else if (KEY_AS("ca")) doc.caps = getInt();
         else if (KEY_AS("tr")) doc.tracking = getFloat() * 0.1f;
         else if (KEY_AS("lh")) doc.height = getFloat();
