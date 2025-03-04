@@ -929,13 +929,7 @@ static void _fontText(LottieText* text, Scene* scene, float frameNo, LottieExpre
     float width;
     txt->bounds(nullptr, nullptr, &width, nullptr, false);
 
-    float cursorX = 0.0f;
-    if (doc.justify == 1) {
-        cursorX = width * -1;
-    } else if (doc.justify == 2) {
-        cursorX = width * -0.5f;
-    }
-
+    auto cursorX = width * doc.justify;
     txt->translate(cursorX, -doc.size * 100.0f);
     scene->push(txt);
 }
@@ -977,9 +971,8 @@ void LottieBuilder::updateText(LottieLayer* layer, float frameNo)
             if (ascent > doc.bbox.size.y) ascent = doc.bbox.size.y;
             Point layout = {doc.bbox.pos.x, doc.bbox.pos.y + ascent - doc.shift};
 
-            //adjust the layout
-            if (doc.justify == 1) layout.x += doc.bbox.size.x - (cursor.x * scale);  //right aligned
-            else if (doc.justify == 2) layout.x += (doc.bbox.size.x * 0.5f) - (cursor.x * 0.5f * scale);  //center aligned
+            //horizontal alignment
+            layout.x += -1.0f * doc.bbox.size.x * doc.justify + (cursor.x * scale) * doc.justify;
 
             //new text group, single scene based on text-grouping
             scene->push(textGroup);
