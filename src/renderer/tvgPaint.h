@@ -256,7 +256,8 @@ namespace tvg
 
         RenderRegion bounds(RenderMethod* renderer) const;
         Iterator* iterator();
-        bool bounds(float* x, float* y, float* w, float* h, bool transformed, bool stroking, bool origin = false);
+        bool bounds(float* x, float* y, float* w, float* h, bool stroking);
+        bool bounds(Point* pt4, bool transformed, bool stroking, bool origin = false);
         RenderData update(RenderMethod* renderer, const Matrix& pm, Array<RenderData>& clips, uint8_t opacity, RenderUpdateFlag pFlag, bool clipper = false);
         bool render(RenderMethod* renderer);
         Paint* duplicate(Paint* ret = nullptr);

@@ -194,34 +194,28 @@ struct Scene::Impl : Paint::Impl
         return ret;
     }
 
-    bool bounds(float* px, float* py, float* pw, float* ph, bool stroking)
+    bool bounds(Point* pt4, bool stroking)
     {
         if (paints.empty()) return false;
 
-        auto x1 = FLT_MAX;
-        auto y1 = FLT_MAX;
-        auto x2 = -FLT_MAX;
-        auto y2 = -FLT_MAX;
+        Point min = {FLT_MAX, FLT_MAX};
+        Point max = {-FLT_MAX, -FLT_MAX};
 
         for (auto paint : paints) {
-            auto x = FLT_MAX;
-            auto y = FLT_MAX;
-            auto w = 0.0f;
-            auto h = 0.0f;
-
-            if (!PAINT(paint)->bounds(&x, &y, &w, &h, true, stroking)) continue;
-
+            Point tmp[4];
+            if (!PAINT(paint)->bounds(tmp, true, stroking)) continue;
             //Merge regions
-            if (x < x1) x1 = x;
-            if (x2 < x + w) x2 = (x + w);
-            if (y < y1) y1 = y;
-            if (y2 < y + h) y2 = (y + h);
+            for (int i = 0; i < 4; ++i) {
+                if (tmp[i].x < min.x) min.x = tmp[i].x;
+                if (tmp[i].x > max.x) max.x = tmp[i].x;
+                if (tmp[i].y < min.y) min.y = tmp[i].y;
+                if (tmp[i].y > max.y) max.y = tmp[i].y;
+            }
         }
-
-        if (px) *px = x1;
-        if (py) *py = y1;
-        if (pw) *pw = (x2 - x1);
-        if (ph) *ph = (y2 - y1);
+        pt4[0] = min;
+        pt4[1] = {max.x, min.y};
+        pt4[2] = max;
+        pt4[3] = {min.x, max.y};
 
         return true;
     }

@@ -256,12 +256,17 @@ TVG_API Tvg_Result tvg_paint_get_opacity(const Tvg_Paint* paint, uint8_t* opacit
 }
 
 
-TVG_API Tvg_Result tvg_paint_get_bounds(const Tvg_Paint* paint, float* x, float* y, float* w, float* h, bool transformed)
+TVG_API Tvg_Result tvg_paint_get_aabb(const Tvg_Paint* paint, float* x, float* y, float* w, float* h)
 {
    if (!paint) return TVG_RESULT_INVALID_ARGUMENT;
-   return (Tvg_Result) reinterpret_cast<const Paint*>(paint)->bounds(x, y, w, h, transformed);
+   return (Tvg_Result) reinterpret_cast<const Paint*>(paint)->bounds(x, y, w, h);
 }
 
+TVG_API Tvg_Result tvg_paint_get_obb(const Tvg_Paint* paint, Tvg_Point* pt4)
+{
+   if (!paint) return TVG_RESULT_INVALID_ARGUMENT;
+   return (Tvg_Result) reinterpret_cast<const Paint*>(paint)->bounds((Point*)pt4);
+}
 
 TVG_API Tvg_Result tvg_paint_set_mask_method(Tvg_Paint* paint, Tvg_Paint* target, Tvg_Mask_Method method)
 {

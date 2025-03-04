@@ -412,20 +412,42 @@ public:
     Result blend(BlendMethod method) noexcept;
 
     /**
-     * @brief Gets the axis-aligned bounding box of the paint object.
+     * @brief Retrieves the object-oriented bounding box (OBB) of the paint object in canvas space.
+     * 
+     * This function returns the bounding box of the paint, as an oriented bounding box (OBB) after transformations are applied.
      *
-     * @param[out] x The x-coordinate of the upper-left corner of the object.
-     * @param[out] y The y-coordinate of the upper-left corner of the object.
-     * @param[out] w The width of the object.
-     * @param[out] h The height of the object.
-     * @param[in] transformed If @c true, the paint's transformations are taken into account in the scene it belongs to. Otherwise they aren't.
+     * @param[out] pt4 An array of four points representing the bounding box. The array size must be 4.
      *
-     * @note This is useful when you need to figure out the bounding box of the paint in the canvas space.
-     * @note The bounding box doesn't indicate the actual drawing region. It's the smallest rectangle that encloses the object.
-     * @note If @p transformed is @c true, the paint needs to be pushed into a canvas and updated before this api is called.
+     * @retval Result::InvalidArguments @p pt4 is @c nullptr.
+     * @retval Result::InsufficientCondition If it failed to compute the bounding box (mostly due to invalid path information).
+     * 
+     * @note The paint must be pushed into a canvas and updated before calling this function.
+     *
+     * @see Paint::bounds(float* x, float* y, folat* w, float* h)
+     * @see Canvas::update()
+     *
+     * @since 1.0
+     */
+    Result bounds(Point* pt4) const noexcept;
+
+    /**
+     * @brief Retrieves the axis-aligned bounding box (AABB) of the paint object in local space.
+     *
+     * This function returns the bounding box of the paint object relative to its local coordinate system, without applying any transformations.
+     *
+     * @param[out] x The x-coordinate of the upper-left corner of the bounding box.
+     * @param[out] y The y-coordinate of the upper-left corner of the bounding box.
+     * @param[out] w The width of the bounding box.
+     * @param[out] h The height of the bounding box.
+     *
+     * @retval Result::InsufficientCondition If it failed to compute the bounding box (mostly due to invalid path information).
+     *
+     * @note The bounding box is calculated in the object's local space, meaning transformations such as scaling, rotation, or translation are not applied.
+     *
+     * @see Paint::bounds(Point* pt4)
      * @see Canvas::update()
      */
-    Result bounds(float* x, float* y, float* w, float* h, bool transformed = false) const noexcept;
+    Result bounds(float* x, float* y, float* w, float* h) const noexcept;
 
     /**
      * @brief Duplicates the object.

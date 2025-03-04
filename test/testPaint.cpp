@@ -127,23 +127,28 @@ TEST_CASE("Bounding Box", "[tvgPaint]")
 
     //Negative
     float x = 0, y = 0, w = 0, h = 0;
-    REQUIRE(shape->bounds(&x, &y, &w, &h, false) == Result::InsufficientCondition);
+    REQUIRE(shape->bounds(&x, &y, &w, &h) == Result::InsufficientCondition);
 
     //Case 1
     REQUIRE(shape->appendRect(0.0f, 10.0f, 20.0f, 100.0f, 50.0f, 50.0f) == Result::Success);
     REQUIRE(shape->translate(100.0f, 111.0f) == Result::Success);
-    REQUIRE(shape->bounds(&x, &y, &w, &h, false) == Result::Success);
+    REQUIRE(shape->bounds(&x, &y, &w, &h) == Result::Success);
     REQUIRE(x == 0.0f);
     REQUIRE(y == 10.0f);
     REQUIRE(w == 20.0f);
     REQUIRE(h == 100.0f);
 
     REQUIRE(canvas->update(shape) == Result::Success);
-    REQUIRE(shape->bounds(&x, &y, &w, &h, true) == Result::Success);
-    REQUIRE(x == 100.0f);
-    REQUIRE(y == 121.0f);
-    REQUIRE(w == 20.0f);
-    REQUIRE(h == 100.0f);
+    Point pts[4];
+    REQUIRE(shape->bounds(pts) == Result::Success);
+    REQUIRE(pts[0].x == 100.0f);
+    REQUIRE(pts[3].x == 100.0f);
+    REQUIRE(pts[0].y == 121.0f);
+    REQUIRE(pts[1].y == 121.0f);
+    REQUIRE(pts[1].x == 120.0f);
+    REQUIRE(pts[2].x == 120.0f);
+    REQUIRE(pts[2].y == 221.0f);
+    REQUIRE(pts[3].y == 221.0f);
 
     //Case 2
     REQUIRE(shape->reset() == Result::Success);
@@ -151,18 +156,22 @@ TEST_CASE("Bounding Box", "[tvgPaint]")
     REQUIRE(shape->lineTo(20.0f, 210.0f) == Result::Success);
     auto identity = Matrix{1.0f, 0.0f, 0.0f, 0.0f, 1.0f, 0.0f, 0.0f, 0.0f, 1.0f};
     REQUIRE(shape->transform(identity) == Result::Success);
-    REQUIRE(shape->bounds(&x, &y, &w, &h, false) == Result::Success);
+    REQUIRE(shape->bounds(&x, &y, &w, &h) == Result::Success);
     REQUIRE(x == 0.0f);
     REQUIRE(y == 10.0f);
     REQUIRE(w == 20.0f);
     REQUIRE(h == 200.0f);
 
     REQUIRE(canvas->update(shape) == Result::Success);
-    REQUIRE(shape->bounds(&x, &y, &w, &h, true) == Result::Success);
-    REQUIRE(x == 0.0f);
-    REQUIRE(y == 10.0f);
-    REQUIRE(w == 20.0f);
-    REQUIRE(h == 200.0f);
+    REQUIRE(shape->bounds(pts) == Result::Success);
+    REQUIRE(pts[0].x == 0.0f);
+    REQUIRE(pts[3].x == 0.0f);
+    REQUIRE(pts[0].y == 10.0f);
+    REQUIRE(pts[1].y == 10.0f);
+    REQUIRE(pts[1].x == 20.0f);
+    REQUIRE(pts[2].x == 20.0f);
+    REQUIRE(pts[2].y == 210.0f);
+    REQUIRE(pts[3].y == 210.0f);
 
     Initializer::term();
 }

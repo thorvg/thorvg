@@ -134,10 +134,10 @@ struct Text::Impl : Paint::Impl
         return PAINT(shape)->update(renderer, transform, clips, opacity, pFlag, false);
     }
 
-    bool bounds(float* x, float* y, float* w, float* h, TVG_UNUSED bool stroking)
+    bool bounds(Point* pt4, TVG_UNUSED bool stroking)
     {
         if (!load()) return false;
-        PAINT(shape)->bounds(x, y, w, h, true, true, false);
+        PAINT(shape)->bounds(pt4, true, true, false);
         return true;
     }
 
