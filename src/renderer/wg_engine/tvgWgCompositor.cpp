@@ -153,8 +153,8 @@ void WgCompositor::beginRenderPass(WGPUCommandEncoder commandEncoder, WgRenderSt
     this->commandEncoder = commandEncoder;
     const WGPURenderPassDepthStencilAttachment depthStencilAttachment{ 
         .view = texViewDepthStencilMS,
-        .depthLoadOp = WGPULoadOp_Load, .depthStoreOp = WGPUStoreOp_Discard, .depthClearValue = 1.0f,
-        .stencilLoadOp = WGPULoadOp_Load, .stencilStoreOp = WGPUStoreOp_Discard, .stencilClearValue = 0
+        .depthLoadOp = WGPULoadOp_Clear, .depthStoreOp = WGPUStoreOp_Discard, .depthClearValue = 1.0f,
+        .stencilLoadOp = WGPULoadOp_Clear, .stencilStoreOp = WGPUStoreOp_Discard, .stencilClearValue = 0
     };
     //WGPURenderPassDepthStencilAttachment depthStencilAttachment{ .view = texViewStencil, .depthClearValue = 1.0f, .stencilLoadOp = WGPULoadOp_Clear, .stencilStoreOp = WGPUStoreOp_Discard };
     WGPURenderPassColorAttachment colorAttachment{};
