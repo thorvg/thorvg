@@ -250,12 +250,13 @@ RenderData Paint::Impl::update(RenderMethod* renderer, const Matrix& pm, Array<R
         viewport = renderer->viewport();
         /* TODO: Intersect the clipper's clipper, if both are FastTrack.
            Update the subsequent clipper first and check its ctxFlag. */
-        if (!PAINT(this->clipper)->clipper && (compFastTrack = _compFastTrack(renderer, this->clipper, pm, viewport)) == Result::Success) {
+        if (!PAINT(this->clipper)->clipper && _compFastTrack(renderer, this->clipper, pm, viewport) == Result::Success) {
             PAINT(this->clipper)->ctxFlag |= ContextFlag::FastTrack;
-        }
-        if (compFastTrack == Result::InsufficientCondition) {
+            compFastTrack = Result::Success;
+        } else {
             trd = PAINT(this->clipper)->update(renderer, pm, clips, 255, pFlag, true);
             clips.push(trd);
+            compFastTrack = Result::InsufficientCondition;
         }
     }
 
