@@ -43,7 +43,7 @@ struct UserExample : tvgexam::Example
 
         picture = tvg::Picture::gen();
 
-        if (!tvgexam::verify(picture->load(EXAMPLE_DIR"/image/scaledown.jpg"))) return false;
+        if (!tvgexam::verify(picture->load(EXAMPLE_DIR"/image/scale.jpg"))) return false;
 
         canvas->push(picture);
 
