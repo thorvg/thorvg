@@ -213,7 +213,7 @@ struct LottieObject
     {
     }
 
-    virtual void override(LottieProperty* prop, bool shallow, bool byDefault)
+    virtual void override(LottieProperty* prop, bool shallow, bool release)
     {
         TVGERR("LOTTIE", "Unsupported slot type");
     }
@@ -562,26 +562,26 @@ struct LottieTransform : LottieObject
         return nullptr;
     }
 
-    void override(LottieProperty* prop, bool shallow, bool byDefault) override
+    void override(LottieProperty* prop, bool shallow, bool release) override
     {
         switch (prop->type) {
             case LottieProperty::Type::Position: {
-                if (byDefault) position.release();
+                if (release) position.release();
                 position.copy(*static_cast<LottiePosition*>(prop), shallow);
                 break;
             }
             case LottieProperty::Type::Float: {
-                if (byDefault) rotation.release();
+                if (release) rotation.release();
                 rotation.copy(*static_cast<LottieFloat*>(prop), shallow);
                 break;
             }
             case LottieProperty::Type::Point: {
-                if (byDefault) scale.release();
+                if (release) scale.release();
                 scale.copy(*static_cast<LottiePoint*>(prop), shallow);
                 break;
             }
             case LottieProperty::Type::Opacity: {
-                if (byDefault) opacity.release();
+                if (release) opacity.release();
                 opacity.copy(*static_cast<LottieOpacity*>(prop), shallow);
                 break;
             }
@@ -633,9 +633,9 @@ struct LottieSolidStroke : LottieSolid, LottieStroke
         return LottieSolid::property(ix);
     }
 
-    void override(LottieProperty* prop, bool shallow, bool byDefault) override
+    void override(LottieProperty* prop, bool shallow, bool release) override
     {
-        if (byDefault) color.release();
+        if (release) color.release();
         color.copy(*static_cast<LottieColor*>(prop), shallow);
     }
 };
@@ -648,13 +648,13 @@ struct LottieSolidFill : LottieSolid
         LottieObject::type = LottieObject::SolidFill;
     }
 
-    void override(LottieProperty* prop, bool shallow, bool byDefault) override
+    void override(LottieProperty* prop, bool shallow, bool release) override
     {
         if (prop->type == LottieProperty::Type::Opacity) {
-            if (byDefault) opacity.release();
+            if (release) opacity.release();
             opacity.copy(*static_cast<LottieOpacity*>(prop), shallow);
         } else if (prop->type == LottieProperty::Type::Color) {
-            if (byDefault) color.release();
+            if (release) color.release();
             color.copy(*static_cast<LottieColor*>(prop), shallow);
         }
     }
@@ -693,9 +693,9 @@ struct LottieGradient : LottieObject
         return nullptr;
     }
 
-    void override(LottieProperty* prop, bool shallow, bool byDefault = false) override
+    void override(LottieProperty* prop, bool shallow, bool release = false) override
     {
-        if (byDefault) colorStops.release();
+        if (release) colorStops.release();
         colorStops.copy(*static_cast<LottieColorStop*>(prop), shallow);
         prepare();
     }
@@ -747,9 +747,9 @@ struct LottieImage : LottieObject, LottieRenderPooler<tvg::Picture>
 {
     LottieBitmap data;
 
-    void override(LottieProperty* prop, bool shallow, bool byDefault = false) override
+    void override(LottieProperty* prop, bool shallow, bool release = false) override
     {
-        if (byDefault) data.release();
+        if (release) data.release();
         data.copy(*static_cast<LottieBitmap*>(prop), shallow);
         update();
     }
