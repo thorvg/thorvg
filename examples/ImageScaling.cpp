@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2020 - 2025 the ThorVG project. All rights reserved.
+ * Copyright (c) 2021 - 2025 the ThorVG project. All rights reserved.
 
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to deal
@@ -28,44 +28,18 @@
 
 struct UserExample : tvgexam::Example
 {
-    tvg::Shape* maskShape = nullptr;
-    tvg::Shape* mask = nullptr;
+    tvg::Picture* picture = nullptr;
 
     bool content(tvg::Canvas* canvas, uint32_t w, uint32_t h) override
     {
         if (!canvas) return false;
 
-        // background
-        auto bg = tvg::Shape::gen();
-        bg->appendRect(0, 0, w, h);
-        bg->fill(255, 255, 255);
-        canvas->push(bg);
+        //Original
+        picture = tvg::Picture::gen();
 
-        //image
-        auto picture1 = tvg::Picture::gen();
-        if (!tvgexam::verify(picture1->load(EXAMPLE_DIR"/svg/cartman.svg"))) return false;
-        picture1->size(400, 400);
-        canvas->push(picture1);
+        if (!tvgexam::verify(picture->load(EXAMPLE_DIR"/image/scale.jpg"))) return false;
 
-        auto picture2 = tvg::Picture::gen();
-        picture2->load(EXAMPLE_DIR"/svg/logo.svg");
-        picture2->size(400, 400);
-
-        //mask
-        maskShape = tvg::Shape::gen();
-        maskShape->appendCircle(180, 180, 75, 75);
-        maskShape->fill(125, 125, 125);
-        maskShape->strokeFill(25, 25, 25);
-        maskShape->strokeJoin(tvg::StrokeJoin::Round);
-        maskShape->strokeWidth(10);
-        canvas->push(maskShape);
-
-        mask = tvg::Shape::gen();
-        mask->appendCircle(180, 180, 75, 75);
-        mask->fill(255, 255, 255);         //AlphaMask RGB channels are unused.
-
-        picture2->mask(mask, tvg::MaskMethod::Alpha);
-        canvas->push(picture2);
+        canvas->push(picture);
 
         return true;
     }
@@ -74,16 +48,11 @@ struct UserExample : tvgexam::Example
     {
         if (!canvas) return false;
 
-        /* Update shape directly.
-           You can update only necessary properties of this shape,
-           while retaining other properties. */
-        auto progress = tvgexam::progress(elapsed, 3.0f, true);  //play time 3 sec.
+        auto progress = tvgexam::progress(elapsed, 3.0f, true);  //play time 3 secs.
 
-        // Translate mask object with its stroke & update
-        maskShape->translate(0 , progress * 300 - 100);
-        mask->translate(0 , progress * 300 - 100);
+        picture->scale((1.0f - progress) * 1.5f);
 
-        canvas->update();
+        canvas->update(picture);
 
         return true;
     }
@@ -96,5 +65,5 @@ struct UserExample : tvgexam::Example
 
 int main(int argc, char **argv)
 {
-    return tvgexam::main(new UserExample, argc, argv);
+    return tvgexam::main(new UserExample, argc, argv, true, 1024, 1024);
 }
