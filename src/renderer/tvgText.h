@@ -62,7 +62,7 @@ struct Text::Impl : Paint::Impl
 
     Result font(const char* name, float size, const char* style)
     {
-        auto loader = name ? LoaderMgr::loader(name) : LoaderMgr::anyfont();
+        auto loader = name ? LoaderMgr::font(name) : LoaderMgr::anyfont();
         if (!loader) return Result::InsufficientCondition;
 
         if (style && strstr(style, "italic")) italic = true;

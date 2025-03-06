@@ -33,20 +33,30 @@ struct LoadModule
     INLIST_ITEM(LoadModule);
 
     //Use either hashkey(data) or hashpath(path)
-    union {
-        uintptr_t hashkey;
-        char* hashpath = nullptr;
-    };
+    uintptr_t hashkey = 0;
+    char* hashpath = nullptr;
 
     FileType type;                                  //current loader file type
     uint16_t sharing = 0;                           //reference count
     bool readied = false;                           //read done already.
-    bool pathcache = false;                         //cached by path
+    bool cached = false;                            //cached for sharing
 
     LoadModule(FileType type) : type(type) {}
     virtual ~LoadModule()
     {
-        if (pathcache) tvg::free(hashpath);
+        tvg::free(hashpath);
+    }
+
+    void cache(uintptr_t data)
+    {
+        hashkey = data;
+        cached = true;
+    }
+
+    void cache(char* data)
+    {
+        hashpath = data;
+        cached = true;
     }
 
     virtual bool open(const char* path) { return false; }
@@ -59,12 +69,6 @@ struct LoadModule
         if (readied) return false;
         readied = true;
         return true;
-    }
-
-    bool cached()
-    {
-        if (hashkey) return true;
-        return false;
     }
 
     virtual bool close()
@@ -99,6 +103,7 @@ struct ImageLoader : LoadModule
 struct FontLoader : LoadModule
 {
     float scale = 1.0f;
+    char* name = nullptr;
 
     FontLoader(FileType type) : LoadModule(type) {}
 

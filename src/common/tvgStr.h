@@ -37,7 +37,8 @@ float toFloat(const char *str, char **end);                    //convert to floa
 char* duplicate(const char *str, size_t n = SIZE_MAX);         //copy the string
 char* append(char* lhs, const char* rhs, size_t n);            //append the rhs to the lhs
 char* dirname(const char* path);                               //return the full directory name
-const char* fileext(const char* filename);                     //return the file extension name
+char* filename(const char* path);                              //return the file name without extension
+const char* fileext(const char* path);                         //return the file extension name
 
 }
 #endif //_TVG_STR_H_
