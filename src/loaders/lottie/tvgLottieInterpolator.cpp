@@ -126,7 +126,7 @@ float LottieInterpolator::progress(float t)
 
 void LottieInterpolator::set(const char* key, Point& inTangent, Point& outTangent)
 {
-    if (key) this->key = strDuplicate(key);
+    if (key) this->key = duplicate(key);
     this->inTangent = inTangent;
     this->outTangent = outTangent;
 

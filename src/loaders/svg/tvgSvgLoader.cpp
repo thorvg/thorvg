@@ -63,7 +63,7 @@ static char* _copyId(const char* str)
     if (!str) return nullptr;
     if (strlen(str) == 0) return nullptr;
 
-    return strDuplicate(str);
+    return duplicate(str);
 }
 
 
@@ -79,7 +79,7 @@ static bool _parseNumber(const char** content, const char** end, float* number)
 {
     const char* _end = end ? *end : nullptr;
 
-    *number = strToFloat(*content, (char**)&_end);
+    *number = toFloat(*content, (char**)&_end);
     //If the start of string is not number
     if ((*content) == _end) {
         if (end) *end = _end;
@@ -137,7 +137,7 @@ static void _parseAspectRatio(const char** content, AspectRatioAlign* align, Asp
 // According to https://www.w3.org/TR/SVG/coords.html#Units
 static float _toFloat(const SvgParser* svgParse, const char* str, SvgParserLengthType type)
 {
-    float parsedValue = strToFloat(str, nullptr);
+    float parsedValue = toFloat(str, nullptr);
 
     if (strstr(str, "cm")) parsedValue *= PX_PER_CM;
     else if (strstr(str, "mm")) parsedValue *= PX_PER_MM;
@@ -166,7 +166,7 @@ static float _gradientToFloat(const SvgParser* svgParse, const char* str, bool& 
 {
     char* end = nullptr;
 
-    float parsedValue = strToFloat(str, &end);
+    float parsedValue = toFloat(str, &end);
     isPercentage = false;
 
     if (strstr(str, "%")) {
@@ -189,7 +189,7 @@ static float _toOffset(const char* str)
     char* end = nullptr;
     auto strEnd = str + strlen(str);
 
-    float parsedValue = strToFloat(str, &end);
+    float parsedValue = toFloat(str, &end);
 
     end = _skipSpace(end, nullptr);
     auto ptr = strstr(str, "%");
@@ -206,7 +206,7 @@ static float _toOffset(const char* str)
 static int _toOpacity(const char* str)
 {
     char* end = nullptr;
-    float opacity = strToFloat(str, &end);
+    float opacity = toFloat(str, &end);
 
     if (end) {
         if (end[0] == '%' && end[1] == '\0') return lrint(opacity * 2.55f);
@@ -334,7 +334,7 @@ static void _parseDashArray(SvgLoaderData* loader, const char *str, SvgDash* das
 
     while (*str) {
         str = _skipComma(str);
-        float parsedValue = strToFloat(str, &end);
+        float parsedValue = toFloat(str, &end);
         if (str == end) break;
         if (parsedValue <= 0.0f) break;
         if (*end == '%') {
@@ -371,7 +371,7 @@ static char* _idFromUrl(const char* url)
         if (*id == ' ' || *id == '\'') return nullptr;
     }
 
-    return strDuplicate(open, (close - open + 1));
+    return duplicate(open, (close - open + 1));
 }
 
 
@@ -379,7 +379,7 @@ static unsigned char _parseColor(const char* value, char** end)
 {
     float r;
 
-    r = strToFloat(value, end);
+    r = toFloat(value, end);
     *end = _skipSpace(*end, nullptr);
     if (**end == '%') {
         r = 255 * r / 100;
@@ -730,7 +730,7 @@ static char* _parseNumbersArray(char* str, float* points, int* ptCount, int len)
 
     str = _skipSpace(str, nullptr);
     while ((count < len) && (isdigit(*str) || *str == '-' || *str == '+' || *str == '.')) {
-        points[count++] = strToFloat(str, &end);
+        points[count++] = toFloat(str, &end);
         str = end;
         str = _skipSpace(str, nullptr);
         if (*str == ',') ++str;
@@ -932,7 +932,7 @@ static bool _attrParseSvgNode(void* data, const char* key, const char* value)
     } else if (STR_AS(key, "style")) {
         return simpleXmlParseW3CAttribute(value, strlen(value), _parseStyleAttr, loader);
 #ifdef THORVG_LOG_ENABLED
-    } else if ((STR_AS(key, "x") || STR_AS(key, "y")) && fabsf(strToFloat(value, nullptr)) > FLOAT_EPSILON) {
+    } else if ((STR_AS(key, "x") || STR_AS(key, "y")) && fabsf(toFloat(value, nullptr)) > FLOAT_EPSILON) {
         TVGLOG("SVG", "Unsupported attributes used [Elements type: Svg][Attribute: %s][Value: %s]", key, value);
 #endif
     } else {
@@ -1025,7 +1025,7 @@ static void _handleStrokeLineJoinAttr(TVG_UNUSED SvgLoaderData* loader, SvgNode*
 static void _handleStrokeMiterlimitAttr(SvgLoaderData* loader, SvgNode* node, const char* value)
 {
     char* end = nullptr;
-    const float miterlimit = strToFloat(value, &end);
+    const float miterlimit = toFloat(value, &end);
 
     // https://www.w3.org/TR/SVG2/painting.html#LineJoin
     // - A negative value for stroke-miterlimit must be treated as an illegal value.
@@ -1202,7 +1202,7 @@ static bool _parseStyleAttr(void* data, const char* key, const char* value, bool
                 while (size > 0 && isspace(value[size - 1])) {
                     size--;
                 }
-                value = strDuplicate(value, size);
+                value = duplicate(value, size);
                 importance = true;
             }
             if (style) {
@@ -1426,7 +1426,7 @@ static void _parseGaussianBlurStdDeviation(const char** content, float* x, float
 
     while (*str && n < 2) {
         str = _skipComma(str);
-        auto parsedValue = strToFloat(str, &end);
+        auto parsedValue = toFloat(str, &end);
         if (parsedValue < 0.0f) break;
         deviation[n++] = parsedValue;
         str = end;
@@ -2009,7 +2009,7 @@ static char* _idFromHref(const char* href)
 {
     href = _skipSpace(href, nullptr);
     if ((*href) == '#') href++;
-    return strDuplicate(href);
+    return duplicate(href);
 }
 
 
@@ -2231,7 +2231,7 @@ static bool _attrParseTextNode(void* data, const char* key, const char* value)
     if (STR_AS(key, "font-family")) {
         if (value) {
             tvg::free(text->fontFamily);
-            text->fontFamily = strDuplicate(value);
+            text->fontFamily = duplicate(value);
         }
     } else if (STR_AS(key, "style")) {
         return simpleXmlParseW3CAttribute(value, strlen(value), _parseStyleAttr, loader);
@@ -3214,15 +3214,15 @@ static void _copyAttr(SvgNode* to, const SvgNode* from)
     to->style->flags = (to->style->flags | from->style->flags);
     if (from->style->clipPath.url) {
         tvg::free(to->style->clipPath.url);
-        to->style->clipPath.url = strDuplicate(from->style->clipPath.url);
+        to->style->clipPath.url = duplicate(from->style->clipPath.url);
     }
     if (from->style->mask.url) {
         tvg::free(to->style->mask.url);
-        to->style->mask.url = strDuplicate(from->style->mask.url);
+        to->style->mask.url = duplicate(from->style->mask.url);
     }
     if (from->style->filter.url) {
         if (to->style->filter.url) tvg::free(to->style->filter.url);
-        to->style->filter.url = strDuplicate(from->style->filter.url);
+        to->style->filter.url = duplicate(from->style->filter.url);
     }
 
     //Copy node attribute
@@ -3246,7 +3246,7 @@ static void _copyAttr(SvgNode* to, const SvgNode* from)
         case SvgNodeType::Path: {
             if (from->node.path.path) {
                 tvg::free(to->node.path.path);
-                to->node.path.path = strDuplicate(from->node.path.path);
+                to->node.path.path = duplicate(from->node.path.path);
             }
             break;
         }
@@ -3269,7 +3269,7 @@ static void _copyAttr(SvgNode* to, const SvgNode* from)
             to->node.image.h = from->node.image.h;
             if (from->node.image.href) {
                 tvg::free(to->node.image.href);
-                to->node.image.href = strDuplicate(from->node.image.href);
+                to->node.image.href = duplicate(from->node.image.href);
             }
             break;
         }
@@ -3289,11 +3289,11 @@ static void _copyAttr(SvgNode* to, const SvgNode* from)
             to->node.text.fontSize = from->node.text.fontSize;
             if (from->node.text.text) {
                 tvg::free(to->node.text.text);
-                to->node.text.text = strDuplicate(from->node.text.text);
+                to->node.text.text = duplicate(from->node.text.text);
             }
             if (from->node.text.fontFamily) {
                 tvg::free(to->node.text.fontFamily);
-                to->node.text.fontFamily = strDuplicate(from->node.text.fontFamily);
+                to->node.text.fontFamily = duplicate(from->node.text.fontFamily);
             }
             break;
         }
@@ -3489,7 +3489,7 @@ static void _svgLoaderParserXmlOpen(SvgLoaderData* loader, const char* content, 
 static void _svgLoaderParserText(SvgLoaderData* loader, const char* content, unsigned int length)
 {
     auto text = &loader->svgParse->node->node.text;
-    text->text = strAppend(text->text, content, length);
+    text->text = append(text->text, content, length);
 }
 
 

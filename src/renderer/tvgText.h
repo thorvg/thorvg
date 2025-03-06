@@ -53,7 +53,7 @@ struct Text::Impl : Paint::Impl
     Result text(const char* utf8)
     {
         tvg::free(this->utf8);
-        if (utf8) this->utf8 = strDuplicate(utf8);
+        if (utf8) this->utf8 = tvg::duplicate(utf8);
         else this->utf8 = nullptr;
         changed = true;
 
@@ -156,7 +156,7 @@ struct Text::Impl : Paint::Impl
             ++dup->loader->sharing;
         }
 
-        dup->utf8 = strDuplicate(utf8);
+        dup->utf8 = tvg::duplicate(utf8);
         dup->italic = italic;
         dup->fontSize = fontSize;
 

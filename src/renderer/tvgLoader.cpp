@@ -160,7 +160,7 @@ static LoadModule* _find(FileType type)
 #ifdef THORVG_FILE_IO_SUPPORT
 static LoadModule* _findByPath(const char* filename)
 {
-    auto ext = strExtension(filename);
+    auto ext = fileext(filename);
     if (!ext) return nullptr;
 
     if (!strcmp(ext, "svg")) return _find(FileType::Svg);
@@ -277,7 +277,7 @@ LoadModule* LoaderMgr::loader(const char* filename, bool* invalid)
 
     //TODO: svg & lottie is not sharable.
     auto allowCache = true;
-    auto ext = strExtension(filename);
+    auto ext = fileext(filename);
     if (ext && (!strcmp(ext, "svg") || !strcmp(ext, "json") || !strcmp(ext, "lot"))) allowCache = false;
 
     if (allowCache) {
@@ -287,7 +287,7 @@ LoadModule* LoaderMgr::loader(const char* filename, bool* invalid)
     if (auto loader = _findByPath(filename)) {
         if (loader->open(filename)) {
             if (allowCache) {
-                loader->hashpath = strDuplicate(filename);
+                loader->hashpath = duplicate(filename);
                 loader->pathcache = true;
                 {
                     ScopedLock lock(key);
@@ -303,7 +303,7 @@ LoadModule* LoaderMgr::loader(const char* filename, bool* invalid)
         if (auto loader = _find(static_cast<FileType>(i))) {
             if (loader->open(filename)) {
                 if (allowCache) {
-                    loader->hashpath = strDuplicate(filename);
+                    loader->hashpath = duplicate(filename);
                     loader->pathcache = true;
                     {
                         ScopedLock lock(key);
@@ -436,7 +436,7 @@ LoadModule* LoaderMgr::loader(const char* name, const char* data, uint32_t size,
     //function is dedicated for ttf loader (the only supported font loader)
     auto loader = new TtfLoader;
     if (loader->open(data, size, "", copy)) {
-        loader->hashpath = strDuplicate(name);
+        loader->hashpath = duplicate(name);
         loader->pathcache = true;
         ScopedLock lock(key);
         _activeLoaders.back(loader);
