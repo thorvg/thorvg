@@ -205,7 +205,7 @@ static LoadModule* _findFromCache(const char* filename)
     ScopedLock lock(key);
 
     INLIST_FOREACH(_activeLoaders, loader) {
-        if (loader->cached && !strcmp(loader->hashpath, filename)) {
+        if (loader->cached && loader->hashpath && !strcmp(loader->hashpath, filename)) {
             ++loader->sharing;
             return loader;
         }

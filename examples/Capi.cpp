@@ -217,7 +217,7 @@ void contents()
 
     animation = tvg_animation_new();
     Tvg_Paint* pict_lottie = tvg_animation_get_picture(animation);
-    if (tvg_picture_load_data(pict_lottie, data, data_size, nullptr, nullptr, false) != TVG_RESULT_SUCCESS) {
+    if (tvg_picture_load_data(pict_lottie, data, data_size, "lot", nullptr, false) != TVG_RESULT_SUCCESS) {
         printf("Problem with loading a lottie file\n");
         tvg_animation_del(animation);
     } else {
