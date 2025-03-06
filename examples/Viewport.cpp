@@ -36,6 +36,9 @@ struct UserExample : tvgexam::Example
     {
         if (!canvas) return false;
 
+        //set viewport before canvas become dirty.
+        if (!tvgexam::verify(canvas->viewport(0, 0, VPORT_SIZE, VPORT_SIZE))) return false;
+
         auto mask = tvg::Shape::gen();
         mask->appendCircle(w/2, h/2, w/2, h/2);
         mask->fill(255, 255, 255);
