@@ -375,6 +375,27 @@ static char* _idFromUrl(const char* url)
 }
 
 
+static char* _srcFromUrl(const char* url)
+{
+    auto open = strchr(url, '(');
+    auto close = strchr(url, ')');
+    if (!open || !close || open >= close) return nullptr;
+
+    open = strchr(open, '\'');
+    if (!open || open >= close) return nullptr;
+    ++open;
+
+    close = strchr(open, '\'');
+    if (!close || close == open) return nullptr;
+    --close;
+
+    while (open < close && *open == ' ') ++open;
+    while (open < close && *close == ' ') --close;
+
+    return strDuplicate(open, (close - open + 1));
+}
+
+
 static unsigned char _parseColor(const char* value, char** end)
 {
     float r;
@@ -2082,6 +2103,43 @@ static SvgNode* _createImageNode(SvgLoaderData* loader, SvgNode* parent, const c
 }
 
 
+static char* _unquote(const char* str)
+{
+    auto len = str ? strlen(str) : 0;
+    if (len >= 2 && str[0] == '\'' && str[len - 1] == '\'') return strDuplicate(str + 1, len - 2);
+    return strdup(str);
+}
+
+
+static bool _attrParseFontFace(void* data, const char* key, const char* value)
+{
+    if (!key || !value) return false;
+
+    key = _skipSpace(key, nullptr);
+    value = _skipSpace(value, nullptr);
+
+    auto loader = (SvgLoaderData*)data;
+    auto& font = loader->fonts.last();
+
+    if (STR_AS(key, "font-family")) {
+        if (font.name) tvg::free(font.name);
+        font.name = _unquote(value);
+    } else if (STR_AS(key, "src")) {
+        if (font.src) tvg::free(font.src);
+        font.src = _srcFromUrl(value);
+    }
+
+    return true;
+}
+
+
+static void _createFontFace(SvgLoaderData* loader, const char* buf, unsigned bufLength, parseAttributes func)
+{
+    loader->fonts.push(FontFace());
+    func(buf, bufLength, _attrParseFontFace, loader);
+}
+
+
 static SvgNode* _getDefsNode(SvgNode* node)
 {
     if (!node) return nullptr;
@@ -3515,6 +3573,8 @@ static void _svgLoaderParserXmlCssStyle(SvgLoaderData* loader, const char* conte
             TVGLOG("SVG", "Unsupported elements used in the internal CSS style sheets [Elements: %s]", tag);
         } else if (STR_AS(tag, "all")) {
             if ((node = _createCssStyleNode(loader, loader->cssStyle, attrs, attrsLength, simpleXmlParseW3CAttribute))) node->id = _copyId(name);
+        } else if (STR_AS(tag, "@font-face")) { //css at-rule specifying font
+            _createFontFace(loader, attrs, attrsLength, simpleXmlParseW3CAttribute);
         } else if (!isIgnoreUnsupportedLogElements(tag)) {
             TVGLOG("SVG", "Unsupported elements used in the internal CSS style sheets [Elements: %s]", tag);
         }
@@ -3867,6 +3927,13 @@ void SvgLoader::clear(bool all)
 
     ARRAY_FOREACH(p, loaderData.images) tvg::free(*p);
     loaderData.images.reset();
+
+    ARRAY_FOREACH(p, loaderData.fonts) {
+        Text::unload(p->name);
+        tvg::free(p->decoded);
+        tvg::free(p->name); //p->src is freed right after loading the font
+    }
+    loaderData.fonts.reset();
 
     if (copy) tvg::free((char*)content);
 
