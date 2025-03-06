@@ -124,7 +124,7 @@ const char* LookaheadParserHandler::getString()
 char* LookaheadParserHandler::getStringCopy()
 {
     auto str = getString();
-    if (str) return strDuplicate(str);
+    if (str) return duplicate(str);
     return nullptr;
 }
 

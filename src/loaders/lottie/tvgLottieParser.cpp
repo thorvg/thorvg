@@ -471,7 +471,7 @@ void LottieParser::registerSlot(LottieObject* obj, const char* sid)
         (*p)->pairs.push({obj});
         return;
     }
-    comp->slots.push(new LottieSlot(strDuplicate(sid), obj, type));
+    comp->slots.push(new LottieSlot(duplicate(sid), obj, type));
 }
 
 
@@ -898,7 +898,7 @@ void LottieParser::parseImage(LottieImage* image, const char* data, const char* 
         //figure out the mimetype
         auto mimeType = data + 11;
         auto needle = strstr(mimeType, ";");
-        image->data.mimeType = strDuplicate(mimeType, needle - mimeType);
+        image->data.mimeType = duplicate(mimeType, needle - mimeType);
         //b64 data
         auto b64Data = strstr(data, ",") + 1;
         size_t length = strlen(data) - (b64Data - data);

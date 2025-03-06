@@ -80,7 +80,7 @@ static SaveModule* _find(FileType type)
 
 static SaveModule* _find(const char* filename)
 {
-    auto ext = strExtension(filename);
+    auto ext = fileext(filename);
     if (ext && !strcmp(ext, "gif")) return _find(FileType::Gif);
     return nullptr;
 }

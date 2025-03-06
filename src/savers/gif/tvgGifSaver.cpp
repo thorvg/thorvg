@@ -136,7 +136,7 @@ bool GifSaver::save(Animation* animation, Paint* bg, const char* filename, TVG_U
     }
 
     if (!filename) return false;
-    this->path = strDuplicate(filename);
+    this->path = duplicate(filename);
 
     this->animation = animation;
 
