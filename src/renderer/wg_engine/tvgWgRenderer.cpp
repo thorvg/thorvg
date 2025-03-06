@@ -620,8 +620,8 @@ bool WgRenderer::render(RenderCompositor* cmp, const RenderEffect* effect, TVG_U
         case SceneEffect::GaussianBlur: return mCompositor.gaussianBlur(mContext, dst, (RenderEffectGaussianBlur*)effect, comp);
         case SceneEffect::DropShadow: return mCompositor.dropShadow(mContext, dst, (RenderEffectDropShadow*)effect, comp);
         case SceneEffect::Fill: return mCompositor.fillEffect(mContext, dst, (RenderEffectFill*)effect, comp);
-        case SceneEffect::Tint: return mCompositor.tintEffect(mContext, dst, (RenderEffectFill*)effect, comp);
-        case SceneEffect::Tritone : return mCompositor.tritoneEffect(mContext, dst, (RenderEffectFill*)effect, comp);
+        case SceneEffect::Tint: return mCompositor.tintEffect(mContext, dst, (RenderEffectTint*)effect, comp);
+        case SceneEffect::Tritone : return mCompositor.tritoneEffect(mContext, dst, (RenderEffectTritone*)effect, comp);
         default: return false;
     }
     return false;

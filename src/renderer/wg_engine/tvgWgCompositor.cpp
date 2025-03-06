@@ -873,19 +873,15 @@ bool WgCompositor::fillEffect(WgContext& context, WgRenderStorage* dst, const Re
     assert(compose->rdViewport);
     assert(!renderPassEncoder);
 
-    auto renderDataParams = (WgRenderDataEffectParams*)params->rd;
-    auto aabb = compose->aabb;
-    auto viewport = compose->rdViewport;
-
-    copyTexture(&storageTemp0, dst, aabb);
+    copyTexture(&storageTemp0, dst, compose->aabb);
     WGPUComputePassDescriptor computePassDesc{ .label = "Compute pass fill" };
     WGPUComputePassEncoder computePassEncoder = wgpuCommandEncoderBeginComputePass(commandEncoder, &computePassDesc);
     wgpuComputePassEncoderSetBindGroup(computePassEncoder, 0, bindGroupStorageTemp, 0, nullptr);
     wgpuComputePassEncoderSetBindGroup(computePassEncoder, 1, dst->bindGroupWrite, 0, nullptr);
-    wgpuComputePassEncoderSetBindGroup(computePassEncoder, 2, renderDataParams->bindGroupParams, 0, nullptr);
-    wgpuComputePassEncoderSetBindGroup(computePassEncoder, 3, viewport->bindGroupViewport, 0, nullptr);
+    wgpuComputePassEncoderSetBindGroup(computePassEncoder, 2, static_cast<WgRenderDataEffectParams*>(params->rd)->bindGroupParams, 0, nullptr);
+    wgpuComputePassEncoderSetBindGroup(computePassEncoder, 3, compose->rdViewport->bindGroupViewport, 0, nullptr);
     wgpuComputePassEncoderSetPipeline(computePassEncoder, pipelines.fill_effect);
-    wgpuComputePassEncoderDispatchWorkgroups(computePassEncoder, (aabb.w - 1) / 128 + 1, aabb.h, 1);
+    wgpuComputePassEncoderDispatchWorkgroups(computePassEncoder, (compose->aabb.w - 1) / 128 + 1, compose->aabb.h, 1);
     wgpuComputePassEncoderEnd(computePassEncoder);
     wgpuComputePassEncoderRelease(computePassEncoder);
 
@@ -893,7 +889,7 @@ bool WgCompositor::fillEffect(WgContext& context, WgRenderStorage* dst, const Re
 }
 
 
-bool WgCompositor::tintEffect(WgContext& context, WgRenderStorage* dst, const RenderEffectFill* params, const WgCompose* compose)
+bool WgCompositor::tintEffect(WgContext& context, WgRenderStorage* dst, const RenderEffectTint* params, const WgCompose* compose)
 {
     assert(dst);
     assert(params);
@@ -901,26 +897,22 @@ bool WgCompositor::tintEffect(WgContext& context, WgRenderStorage* dst, const Re
     assert(compose->rdViewport);
     assert(!renderPassEncoder);
 
-    auto renderDataParams = (WgRenderDataEffectParams*)params->rd;
-    auto aabb = compose->aabb;
-    auto viewport = compose->rdViewport;
-
-    copyTexture(&storageTemp0, dst, aabb);
+    copyTexture(&storageTemp0, dst, compose->aabb);
     WGPUComputePassDescriptor computePassDesc{ .label = "Compute pass tint" };
     WGPUComputePassEncoder computePassEncoder = wgpuCommandEncoderBeginComputePass(commandEncoder, &computePassDesc);
     wgpuComputePassEncoderSetBindGroup(computePassEncoder, 0, bindGroupStorageTemp, 0, nullptr);
     wgpuComputePassEncoderSetBindGroup(computePassEncoder, 1, dst->bindGroupWrite, 0, nullptr);
-    wgpuComputePassEncoderSetBindGroup(computePassEncoder, 2, renderDataParams->bindGroupParams, 0, nullptr);
-    wgpuComputePassEncoderSetBindGroup(computePassEncoder, 3, viewport->bindGroupViewport, 0, nullptr);
+    wgpuComputePassEncoderSetBindGroup(computePassEncoder, 2, static_cast<WgRenderDataEffectParams*>(params->rd)->bindGroupParams, 0, nullptr);
+    wgpuComputePassEncoderSetBindGroup(computePassEncoder, 3, compose->rdViewport->bindGroupViewport, 0, nullptr);
     wgpuComputePassEncoderSetPipeline(computePassEncoder, pipelines.tint_effect);
-    wgpuComputePassEncoderDispatchWorkgroups(computePassEncoder, (aabb.w - 1) / 128 + 1, aabb.h, 1);
+    wgpuComputePassEncoderDispatchWorkgroups(computePassEncoder, (compose->aabb.w - 1) / 128 + 1, compose->aabb.h, 1);
     wgpuComputePassEncoderEnd(computePassEncoder);
     wgpuComputePassEncoderRelease(computePassEncoder);
 
     return true;
 }
 
-bool WgCompositor::tritoneEffect(WgContext& context, WgRenderStorage* dst, const RenderEffectFill* params, const WgCompose* compose)
+bool WgCompositor::tritoneEffect(WgContext& context, WgRenderStorage* dst, const RenderEffectTritone* params, const WgCompose* compose)
 {
     assert(dst);
     assert(params);
@@ -928,19 +920,15 @@ bool WgCompositor::tritoneEffect(WgContext& context, WgRenderStorage* dst, const
     assert(compose->rdViewport);
     assert(!renderPassEncoder);
 
-    auto renderDataParams = (WgRenderDataEffectParams*)params->rd;
-    auto aabb = compose->aabb;
-    auto viewport = compose->rdViewport;
-
-    copyTexture(&storageTemp0, dst, aabb);
+    copyTexture(&storageTemp0, dst, compose->aabb);
     WGPUComputePassDescriptor computePassDesc{ .label = "Compute pass tritone" };
     WGPUComputePassEncoder computePassEncoder = wgpuCommandEncoderBeginComputePass(commandEncoder, &computePassDesc);
     wgpuComputePassEncoderSetBindGroup(computePassEncoder, 0, bindGroupStorageTemp, 0, nullptr);
     wgpuComputePassEncoderSetBindGroup(computePassEncoder, 1, dst->bindGroupWrite, 0, nullptr);
-    wgpuComputePassEncoderSetBindGroup(computePassEncoder, 2, renderDataParams->bindGroupParams, 0, nullptr);
-    wgpuComputePassEncoderSetBindGroup(computePassEncoder, 3, viewport->bindGroupViewport, 0, nullptr);
+    wgpuComputePassEncoderSetBindGroup(computePassEncoder, 2, static_cast<WgRenderDataEffectParams*>(params->rd)->bindGroupParams, 0, nullptr);
+    wgpuComputePassEncoderSetBindGroup(computePassEncoder, 3, compose->rdViewport->bindGroupViewport, 0, nullptr);
     wgpuComputePassEncoderSetPipeline(computePassEncoder, pipelines.tritone_effect);
-    wgpuComputePassEncoderDispatchWorkgroups(computePassEncoder, (aabb.w - 1) / 128 + 1, aabb.h, 1);
+    wgpuComputePassEncoderDispatchWorkgroups(computePassEncoder, (compose->aabb.w - 1) / 128 + 1, compose->aabb.h, 1);
     wgpuComputePassEncoderEnd(computePassEncoder);
     wgpuComputePassEncoderRelease(computePassEncoder);
 

@@ -116,8 +116,8 @@ public:
     bool gaussianBlur(WgContext& context, WgRenderStorage* dst, const RenderEffectGaussianBlur* params, const WgCompose* compose);
     bool dropShadow(WgContext& context, WgRenderStorage* dst, const RenderEffectDropShadow* params, const WgCompose* compose);
     bool fillEffect(WgContext& context, WgRenderStorage* dst, const RenderEffectFill* params, const WgCompose* compose);
-    bool tintEffect(WgContext& context, WgRenderStorage* dst, const RenderEffectFill* params, const WgCompose* compose);
-    bool tritoneEffect(WgContext& context, WgRenderStorage* dst, const RenderEffectFill* params, const WgCompose* compose);
+    bool tintEffect(WgContext& context, WgRenderStorage* dst, const RenderEffectTint* params, const WgCompose* compose);
+    bool tritoneEffect(WgContext& context, WgRenderStorage* dst, const RenderEffectTritone* params, const WgCompose* compose);
 };
 
 #endif // _TVG_WG_COMPOSITOR_H_
