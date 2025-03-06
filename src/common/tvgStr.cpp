@@ -206,6 +206,7 @@ error:
     return 0.0f;
 }
 
+
 char* duplicate(const char *str, size_t n)
 {
     auto len = strlen(str);
@@ -217,6 +218,7 @@ char* duplicate(const char *str, size_t n)
     return (char*)memcpy(ret, str, n);
 }
 
+
 char* append(char* lhs, const char* rhs, size_t n)
 {
     if (!rhs) return lhs;
@@ -225,20 +227,36 @@ char* append(char* lhs, const char* rhs, size_t n)
     return strncat(lhs, rhs, n);
 }
 
+
 char* dirname(const char* path)
 {
-    const char *ptr = strrchr(path, '/');
+    auto ptr = strrchr(path, '/');
 #ifdef _WIN32
-    if (ptr) ptr = strrchr(ptr + 1, '\\');
+    ptr = strrchr(ptr ? ptr : path, '\\');
 #endif
-    int len = int(ptr + 1 - path);  // +1 to include '/'
+    auto len = ptr ? size_t(ptr - path + 1) : SIZE_MAX;
     return duplicate(path, len);
 }
 
 
-const char* fileext(const char* filename)
+char* filename(const char* path)
 {
-    auto ext = filename;
+    const char* ptr = strrchr(path, '/');
+#ifdef _WIN32
+    auto ptr2 = strrchr(ptr ? ptr : path, '\\');
+    if (ptr2) ptr = ptr2;
+#endif
+    if (ptr) ++ptr;
+    else ptr = path;
+    auto dot = fileext(ptr);
+    auto len = (dot > ptr) ? (size_t)(dot - ptr - 1) : strlen(ptr);
+    return duplicate(ptr, len);
+}
+
+
+const char* fileext(const char* path)
+{
+    auto ext = path;
     while (ext) {
         auto p = strchr(ext, '.');
         if (!p) break;

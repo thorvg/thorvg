@@ -67,7 +67,7 @@ Result Text::load(const char* name, const char* data, uint32_t size, const char*
 
     //unload font
     if (!data) {
-        if (LoaderMgr::retrieve(name)) return Result::Success;
+        if (LoaderMgr::retrieve(LoaderMgr::font(name))) return Result::Success;
         return Result::InsufficientCondition;
     }
 

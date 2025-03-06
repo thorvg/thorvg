@@ -205,7 +205,7 @@ static LoadModule* _findFromCache(const char* filename)
     ScopedLock lock(key);
 
     INLIST_FOREACH(_activeLoaders, loader) {
-        if (loader->pathcache && !strcmp(loader->hashpath, filename)) {
+        if (loader->cached && !strcmp(loader->hashpath, filename)) {
             ++loader->sharing;
             return loader;
         }
@@ -260,7 +260,7 @@ bool LoaderMgr::retrieve(LoadModule* loader)
 {
     if (!loader) return false;
     if (loader->close()) {
-        if (loader->cached()) {
+        if (loader->cached) {
             ScopedLock lock(key);
             _activeLoaders.remove(loader);
         }
@@ -287,8 +287,7 @@ LoadModule* LoaderMgr::loader(const char* filename, bool* invalid)
     if (auto loader = _findByPath(filename)) {
         if (loader->open(filename)) {
             if (allowCache) {
-                loader->hashpath = duplicate(filename);
-                loader->pathcache = true;
+                loader->cache(duplicate(filename));
                 {
                     ScopedLock lock(key);
                     _activeLoaders.back(loader);
@@ -303,8 +302,7 @@ LoadModule* LoaderMgr::loader(const char* filename, bool* invalid)
         if (auto loader = _find(static_cast<FileType>(i))) {
             if (loader->open(filename)) {
                 if (allowCache) {
-                    loader->hashpath = duplicate(filename);
-                    loader->pathcache = true;
+                    loader->cache(duplicate(filename));
                     {
                         ScopedLock lock(key);
                         _activeLoaders.back(loader);
@@ -324,30 +322,6 @@ LoadModule* LoaderMgr::loader(const char* filename, bool* invalid)
 bool LoaderMgr::retrieve(const char* filename)
 {
     return retrieve(_findFromCache(filename));
-}
-
-
-LoadModule* LoaderMgr::loader(const char* key)
-{
-    INLIST_FOREACH(_activeLoaders, loader) {
-        if (loader->pathcache && strstr(loader->hashpath, key)) {
-            ++loader->sharing;
-            return loader;
-        }
-    }
-    return nullptr;
-}
-
-
-LoadModule* LoaderMgr::anyfont()
-{
-    INLIST_FOREACH(_activeLoaders, loader) {
-        if ((loader->type == FileType::Ttf) && loader->pathcache) {
-            ++loader->sharing;
-            return loader;
-        }
-    }
-    return nullptr;
 }
 
 
@@ -372,7 +346,7 @@ LoadModule* LoaderMgr::loader(const char* data, uint32_t size, const char* mimeT
         if (auto loader = _findByType(mimeType)) {
             if (loader->open(data, size, rpath, copy)) {
                 if (allowCache) {
-                    loader->hashkey = HASH_KEY(data);
+                    loader->cache(HASH_KEY(data));
                     ScopedLock lock(key);
                     _activeLoaders.back(loader);
                 }
@@ -389,7 +363,7 @@ LoadModule* LoaderMgr::loader(const char* data, uint32_t size, const char* mimeT
         if (loader) {
             if (loader->open(data, size, rpath, copy)) {
                 if (allowCache) {
-                    loader->hashkey = HASH_KEY(data);
+                    loader->cache(HASH_KEY(data));
                     ScopedLock lock(key);
                     _activeLoaders.back(loader);
                 }
@@ -415,7 +389,7 @@ LoadModule* LoaderMgr::loader(const uint32_t *data, uint32_t w, uint32_t h, Colo
     auto loader = new RawLoader;
     if (loader->open(data, w, h, cs, copy)) {
         if (!copy) {
-            loader->hashkey = HASH_KEY((const char*)data);
+            loader->cache(HASH_KEY((const char*)data));
             ScopedLock lock(key);
             _activeLoaders.back(loader);
         }
@@ -431,13 +405,13 @@ LoadModule* LoaderMgr::loader(const char* name, const char* data, uint32_t size,
 {
 #ifdef THORVG_TTF_LOADER_SUPPORT
     //TODO: add check for mimetype ?
-    if (auto loader = _findFromCache(name)) return loader;
+    if (auto loader = font(name)) return loader;
 
     //function is dedicated for ttf loader (the only supported font loader)
     auto loader = new TtfLoader;
     if (loader->open(data, size, "", copy)) {
-        loader->hashpath = duplicate(name);
-        loader->pathcache = true;
+        loader->name = duplicate(name);
+        loader->cached = true;  //force it.
         ScopedLock lock(key);
         _activeLoaders.back(loader);
         return loader;
@@ -446,5 +420,30 @@ LoadModule* LoaderMgr::loader(const char* name, const char* data, uint32_t size,
     TVGLOG("LOADER", "The font data \"%s\" could not be loaded.", name);
     delete(loader);
 #endif
+    return nullptr;
+}
+
+
+LoadModule* LoaderMgr::font(const char* name)
+{
+    INLIST_FOREACH(_activeLoaders, loader) {
+        if (loader->type != FileType::Ttf) continue;
+        if (loader->cached && tvg::equal(name, static_cast<FontLoader*>(loader)->name)) {
+            ++loader->sharing;
+            return loader;
+        }
+    }
+    return nullptr;
+}
+
+
+LoadModule* LoaderMgr::anyfont()
+{
+    INLIST_FOREACH(_activeLoaders, loader) {
+        if (loader->cached && loader->type == FileType::Ttf) {
+            ++loader->sharing;
+            return loader;
+        }
+    }
     return nullptr;
 }

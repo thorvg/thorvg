@@ -21,6 +21,7 @@
  */
 
 
+#include "tvgStr.h"
 #include "tvgTtfLoader.h"
 
 #if defined(_WIN32) && (WINAPI_FAMILY == WINAPI_FAMILY_DESKTOP_APP)
@@ -208,6 +209,9 @@ void TtfLoader::clear()
         _unmap(this);
 #endif
     }
+
+    tvg::free(name);
+    name = nullptr;
     shape = nullptr;
 }
 
@@ -247,6 +251,9 @@ bool TtfLoader::open(const char* path)
 #ifdef THORVG_FILE_IO_SUPPORT
     clear();
     if (!_map(this, path)) return false;
+
+    name = tvg::filename(path);
+
     return reader.header();
 #else
     return false;
