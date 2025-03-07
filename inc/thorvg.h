@@ -1076,14 +1076,17 @@ public:
     /**
      * @brief Sets the dash pattern of the stroke.
      *
-     * @param[in] dashPattern The array of consecutive pair values of the dash length and the gap length.
+     * @param[in] dashPattern An array of alternating dash and gap lengths.
      * @param[in] cnt The length of the @p dashPattern array.
-     * @param[in] offset The shift of the starting point within the repeating dash pattern from which the path's dashing begins.
+     * @param[in] offset The shift of the starting point within the repeating dash pattern, from which the pattern begins to be applied.
      *
-     * @retval Result::InvalidArguments In case @p dashPattern is @c nullptr and @p cnt > 0, @p cnt is zero, any of the dash pattern values is zero or less.
+     * @retval Result::InvalidArguments In case @p dashPattern is @c nullptr and @p cnt > 0 or @p dashPattern is not @c nullptr and @p cnt is zero.
      *
      * @note To reset the stroke dash pattern, pass @c nullptr to @p dashPattern and zero to @p cnt.
-     * @warning @p cnt must be greater than 1 if the dash pattern is valid.
+     * @note Values of @p dashPattern less than zero are treated as zero.
+     * @note If all values in the @p dashPattern are equal to or less than 0, the dash is ignored.
+     * @note If the @p dashPattern contains an odd number of elements, the sequence is repeated in the same
+     * order to form an even-length pattern, preserving the alternation of dashes and gaps.
      *
      * @since 1.0
      */

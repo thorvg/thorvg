@@ -1328,14 +1328,18 @@ TVG_API Tvg_Result tvg_shape_get_stroke_gradient(const Tvg_Paint* paint, Tvg_Gra
 * @brief Sets the shape's stroke dash pattern.
 *
 * @param[in] paint A Tvg_Paint pointer to the shape object.
-* @param[in] dashPattern The array of consecutive pair values of the dash length and the gap length.
+* @param[in] dashPattern An array of alternating dash and gap lengths.
 * @param[in] cnt The size of the @p dashPattern array.
-* @param[in] offset The shift of the starting point within the repeating dash pattern from which the path's dashing begins.
+* @param[in] offset The shift of the starting point within the repeating dash pattern, from which the pattern begins to be applied.
 *
 * @return Tvg_Result enumeration.
-* @retval TVG_RESULT_INVALID_ARGUMENT An invalid pointer passed as an argument and @p cnt > 0, the given length of the array is less than two or any of the @p dashPattern values is zero or less.
+* @retval TVG_RESULT_INVALID_ARGUMENT In case @p dashPattern is @c nullptr and @p cnt > 0 or @p dashPattern is not @c nullptr and @p cnt is zero.
 *
 * @note To reset the stroke dash pattern, pass @c nullptr to @p dashPattern and zero to @p cnt.
+* @note Values of @p dashPattern less than zero are treated as zero.
+* @note If all values in the @p dashPattern are equal to or less than 0, the dash is ignored.
+* @note If the @p dashPattern contains an odd number of elements, the sequence is repeated in the same
+* order to form an even-length pattern, preserving the alternation of dashes and gaps.
 * @since 1.0
 */
 TVG_API Tvg_Result tvg_shape_set_stroke_dash(Tvg_Paint* paint, const float* dashPattern, uint32_t cnt, float offset);

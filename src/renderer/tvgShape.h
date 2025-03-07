@@ -282,18 +282,15 @@ struct Shape::Impl : Paint::Impl
 
     Result strokeDash(const float* pattern, uint32_t cnt, float offset)
     {
-        if ((cnt == 1) || (!pattern && cnt > 0) || (pattern && cnt == 0)) {
+        if ((!pattern && cnt > 0) || (pattern && cnt == 0)) {
             return Result::InvalidArguments;
-        }
-
-        for (uint32_t i = 0; i < cnt; i++) {
-            if (pattern[i] < FLOAT_EPSILON) return Result::InvalidArguments;
         }
 
         //Reset dash
         if (!pattern && cnt == 0) {
             tvg::free(rs.stroke->dashPattern);
             rs.stroke->dashPattern = nullptr;
+            rs.stroke->dashCnt = 0;
         } else {
             if (!rs.stroke) rs.stroke = new RenderStroke();
             if (rs.stroke->dashCnt != cnt) {
@@ -304,9 +301,7 @@ struct Shape::Impl : Paint::Impl
                 rs.stroke->dashPattern = tvg::malloc<float*>(sizeof(float) * cnt);
                 if (!rs.stroke->dashPattern) return Result::FailedAllocation;
             }
-            for (uint32_t i = 0; i < cnt; ++i) {
-                rs.stroke->dashPattern[i] = pattern[i];
-            }
+            for (uint32_t i = 0; i < cnt; ++i) rs.stroke->dashPattern[i] = (pattern[i] < FLT_EPSILON) ? 0.0f : pattern[i];
         }
         rs.stroke->dashCnt = cnt;
         rs.stroke->dashOffset = offset;
