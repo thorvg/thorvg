@@ -55,7 +55,7 @@ void GlRenderPass::getMatrix(float *dst, const Matrix &matrix) const
     const auto& vp = getViewport();
 
     Matrix postMatrix{};
-    identity(&postMatrix);
+    tvg::identity(&postMatrix);
     translate(&postMatrix, {(float)-vp.x, (float)-vp.y});
 
     auto m = postMatrix * matrix;

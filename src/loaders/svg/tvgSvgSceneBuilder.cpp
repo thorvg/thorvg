@@ -226,7 +226,7 @@ static bool _appendClipChild(SvgLoaderData& loaderData, SvgNode* node, Shape* sh
         }
         if (child->transform) finalTransform *= *child->transform;
 
-        return _appendClipShape(loaderData, child, shape, vBox, svgPath, identity((const Matrix*)(&finalTransform)) ? nullptr : &finalTransform);
+        return _appendClipShape(loaderData, child, shape, vBox, svgPath, tvg::identity((const Matrix*)(&finalTransform)) ? nullptr : &finalTransform);
     }
     return _appendClipShape(loaderData, node, shape, vBox, svgPath, nullptr);
 }

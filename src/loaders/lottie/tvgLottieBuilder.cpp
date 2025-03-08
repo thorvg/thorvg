@@ -101,7 +101,7 @@ static void _skew(Matrix* m, float angleDeg, float axisDeg)
 
 static bool _updateTransform(LottieTransform* transform, float frameNo, Matrix& matrix, uint8_t& opacity, bool autoOrient, Tween& tween, LottieExpressions* exps)
 {
-    identity(&matrix);
+    tvg::identity(&matrix);
 
     if (!transform) {
         opacity = 255;
@@ -151,8 +151,8 @@ void LottieBuilder::updateTransform(LottieLayer* layer, float frameNo)
     _updateTransform(transform, frameNo, matrix, layer->cache.opacity, layer->autoOrient, tween, exps);
 
     if (parent) {
-        if (!identity((const Matrix*) &parent->cache.matrix)) {
-            if (identity((const Matrix*) &matrix)) layer->cache.matrix = parent->cache.matrix;
+        if (!tvg::identity((const Matrix*) &parent->cache.matrix)) {
+            if (tvg::identity((const Matrix*) &matrix)) layer->cache.matrix = parent->cache.matrix;
             else layer->cache.matrix = parent->cache.matrix * matrix;
         }
     }
@@ -363,11 +363,11 @@ static void _repeat(LottieGroup* parent, Shape* path, RenderContext* ctx)
                 auto shape = static_cast<Shape*>((*p)->duplicate());
                 SHAPE(shape)->rs.path = SHAPE(path)->rs.path;
 
-                auto opacity = repeater->interpOpacity ? lerp<uint8_t>(repeater->startOpacity, repeater->endOpacity, static_cast<float>(i + 1) / repeater->cnt) : repeater->startOpacity;
+                auto opacity = repeater->interpOpacity ? tvg::lerp<uint8_t>(repeater->startOpacity, repeater->endOpacity, static_cast<float>(i + 1) / repeater->cnt) : repeater->startOpacity;
                 shape->opacity(opacity);
 
                 Matrix m;
-                identity(&m);
+                tvg::identity(&m);
                 translate(&m, repeater->position * multiplier + repeater->anchor);
                 scale(&m, {powf(repeater->scale.x * 0.01f, multiplier), powf(repeater->scale.y * 0.01f, multiplier)});
                 rotate(&m, repeater->rotation * multiplier);
@@ -702,7 +702,7 @@ void LottieBuilder::updatePolystar(LottieGroup* parent, LottieObject** child, fl
 
     //Optimize: Can we skip the individual coords transform?
     Matrix matrix;
-    identity(&matrix);
+    tvg::identity(&matrix);
     translate(&matrix, star->position(frameNo, tween, exps));
     rotate(&matrix, star->rotation(frameNo, tween, exps));
 
@@ -1089,9 +1089,9 @@ void LottieBuilder::updateText(LottieLayer* layer, float frameNo)
                         auto rangeColor = range->style.fillColor(frameNo, tween, exps); //TODO: use flag to check whether it was really set
                         if (tvg::equal(f, 1.0f)) color = rangeColor;
                         else {
-                            color.rgb[0] = lerp<uint8_t>(color.rgb[0], rangeColor.rgb[0], f);
-                            color.rgb[1] = lerp<uint8_t>(color.rgb[1], rangeColor.rgb[1], f);
-                            color.rgb[2] = lerp<uint8_t>(color.rgb[2], rangeColor.rgb[2], f);
+                            color.rgb[0] = tvg::lerp<uint8_t>(color.rgb[0], rangeColor.rgb[0], f);
+                            color.rgb[1] = tvg::lerp<uint8_t>(color.rgb[1], rangeColor.rgb[1], f);
+                            color.rgb[2] = tvg::lerp<uint8_t>(color.rgb[2], rangeColor.rgb[2], f);
                         }
                         fillOpacity = (uint8_t)(fillOpacity - f * (fillOpacity - range->style.fillOpacity(frameNo, tween, exps)));
                         shape->fill(color.rgb[0], color.rgb[1], color.rgb[2], fillOpacity);
@@ -1101,9 +1101,9 @@ void LottieBuilder::updateText(LottieLayer* layer, float frameNo)
                             auto rangeColor = range->style.strokeColor(frameNo, tween, exps); //TODO: use flag to check whether it was really set
                             if (tvg::equal(f, 1.0f)) strokeColor = rangeColor;
                             else {
-                                strokeColor.rgb[0] = lerp<uint8_t>(strokeColor.rgb[0], rangeColor.rgb[0], f);
-                                strokeColor.rgb[1] = lerp<uint8_t>(strokeColor.rgb[1], rangeColor.rgb[1], f);
-                                strokeColor.rgb[2] = lerp<uint8_t>(strokeColor.rgb[2], rangeColor.rgb[2], f);
+                                strokeColor.rgb[0] = tvg::lerp<uint8_t>(strokeColor.rgb[0], rangeColor.rgb[0], f);
+                                strokeColor.rgb[1] = tvg::lerp<uint8_t>(strokeColor.rgb[1], rangeColor.rgb[1], f);
+                                strokeColor.rgb[2] = tvg::lerp<uint8_t>(strokeColor.rgb[2], rangeColor.rgb[2], f);
                             }
                             strokeOpacity = (uint8_t)(strokeOpacity - f * (strokeOpacity - range->style.strokeOpacity(frameNo, tween, exps)));
                             shape->strokeFill(strokeColor.rgb[0], strokeColor.rgb[1], strokeColor.rgb[2], strokeOpacity);
@@ -1117,7 +1117,7 @@ void LottieBuilder::updateText(LottieLayer* layer, float frameNo)
 
                     // TextGroup transformation is performed once
                     if (textGroup->paints().size() == 0 && needGroup) {
-                        identity(&textGroupMatrix);
+                        tvg::identity(&textGroupMatrix);
                         translate(&textGroupMatrix, cursor);
 
                         auto alignment = text->alignOption.anchor(frameNo, tween, exps);
@@ -1137,7 +1137,7 @@ void LottieBuilder::updateText(LottieLayer* layer, float frameNo)
                     }
 
                     auto& matrix = shape->transform();
-                    identity(&matrix);
+                    tvg::identity(&matrix);
                     translate(&matrix, (translation / scale + cursor) - Point{textGroupMatrix.e13, textGroupMatrix.e23});
                     tvg::scale(&matrix, scaling * capScale);
                     shape->transform(matrix);
