@@ -451,7 +451,7 @@ static jerry_value_t _interp(float t, const jerry_value_t args[], int argsCnt)
         Point pt1 = {(float)jerry_value_as_number(val1),  (float)jerry_value_as_number(val2)};
         Point pt2 = {(float)jerry_value_as_number(val3),  (float)jerry_value_as_number(val4)};
         Point ret;
-        ret = lerp(pt1, pt2, t);
+        ret = tvg::lerp(pt1, pt2, t);
 
         jerry_value_free(val1);
         jerry_value_free(val2);
@@ -472,7 +472,7 @@ static jerry_value_t _interp(float t, const jerry_value_t args[], int argsCnt)
     //1d
     auto val1 = (float) jerry_value_as_number(args[idx + 1]);
     auto val2 = (float) jerry_value_as_number(args[idx + 2]);
-    return jerry_number(lerp(val1, val2, t));
+    return jerry_number(tvg::lerp(val1, val2, t));
 }
 
 

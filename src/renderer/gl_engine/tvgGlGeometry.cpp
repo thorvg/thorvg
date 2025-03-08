@@ -155,7 +155,7 @@ GlStencilMode GlGeometry::getStencilMode(RenderUpdateFlag flag)
 
 RenderRegion GlGeometry::getBounds() const
 {
-    if (identity(&matrix)) {
+    if (tvg::identity(&matrix)) {
         return bounds;
     } else {
         Point lt{static_cast<float>(bounds.x), static_cast<float>(bounds.y)};
