@@ -178,10 +178,10 @@ void WgShaderTypeGradient::updateTexData(const Fill::ColorStop* stops, uint32_t 
         float delta = 1.0f/(range_e - range_s);
         for (uint32_t ti = range_s; (ti < range_e) && (ti < WG_TEXTURE_GRADIENT_SIZE); ti++) {
             float t = (ti - range_s) * delta;
-            texData[ti * 4 + 0] = lerp(sstops[di-1].r, sstops[di].r, t);
-            texData[ti * 4 + 1] = lerp(sstops[di-1].g, sstops[di].g, t);
-            texData[ti * 4 + 2] = lerp(sstops[di-1].b, sstops[di].b, t);
-            texData[ti * 4 + 3] = lerp(sstops[di-1].a, sstops[di].a, t);
+            texData[ti * 4 + 0] = tvg::lerp(sstops[di-1].r, sstops[di].r, t);
+            texData[ti * 4 + 1] = tvg::lerp(sstops[di-1].g, sstops[di].g, t);
+            texData[ti * 4 + 2] = tvg::lerp(sstops[di-1].b, sstops[di].b, t);
+            texData[ti * 4 + 3] = tvg::lerp(sstops[di-1].a, sstops[di].a, t);
         }
     }
     // tail

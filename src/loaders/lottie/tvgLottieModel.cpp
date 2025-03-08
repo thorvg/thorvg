@@ -292,7 +292,7 @@ uint32_t LottieGradient::populate(ColorStop& color, size_t count)
             //generate alpha value
             if (output.count > 0) {
                 auto p = ((*color.input)[cidx] - output.last().offset) / ((*color.input)[aidx] - output.last().offset);
-                cs.a = lerp<uint8_t>(output.last().a, (uint8_t)nearbyint((*color.input)[aidx + 1] * 255.0f), p);
+                cs.a = tvg::lerp<uint8_t>(output.last().a, (uint8_t)nearbyint((*color.input)[aidx + 1] * 255.0f), p);
             } else cs.a = (uint8_t)nearbyint((*color.input)[aidx + 1] * 255.0f);
             cidx += 4;
         } else {
@@ -301,9 +301,9 @@ uint32_t LottieGradient::populate(ColorStop& color, size_t count)
             //generate color value
             if (output.count > 0) {
                 auto p = ((*color.input)[aidx] - output.last().offset) / ((*color.input)[cidx] - output.last().offset);
-                cs.r = lerp<uint8_t>(output.last().r, (uint8_t)nearbyint((*color.input)[cidx + 1] * 255.0f), p);
-                cs.g = lerp<uint8_t>(output.last().g, (uint8_t)nearbyint((*color.input)[cidx + 2] * 255.0f), p);
-                cs.b = lerp<uint8_t>(output.last().b, (uint8_t)nearbyint((*color.input)[cidx + 3] * 255.0f), p);
+                cs.r = tvg::lerp<uint8_t>(output.last().r, (uint8_t)nearbyint((*color.input)[cidx + 1] * 255.0f), p);
+                cs.g = tvg::lerp<uint8_t>(output.last().g, (uint8_t)nearbyint((*color.input)[cidx + 2] * 255.0f), p);
+                cs.b = tvg::lerp<uint8_t>(output.last().b, (uint8_t)nearbyint((*color.input)[cidx + 3] * 255.0f), p);
             } else {
                 cs.r = (uint8_t)nearbyint((*color.input)[cidx + 1] * 255.0f);
                 cs.g = (uint8_t)nearbyint((*color.input)[cidx + 2] * 255.0f);

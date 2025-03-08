@@ -782,7 +782,7 @@ static Matrix* _parseTransformationMatrix(const char* value)
     const int POINT_CNT = 8;
 
     auto matrix = tvg::malloc<Matrix*>(sizeof(Matrix));
-    identity(matrix);
+    tvg::identity(matrix);
 
     float points[POINT_CNT];
     int ptCount = 0;

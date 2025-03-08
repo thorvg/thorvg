@@ -58,7 +58,7 @@ struct LottieScalarFrame
             if (t < 1.0f) return value;
             else return next->value;
         }
-        return lerp(value, next->value, t);
+        return tvg::lerp(value, next->value, t);
     }
 
     float angle(LottieScalarFrame* next, float frameNo)
@@ -97,7 +97,7 @@ struct LottieVectorFrame
             Bezier bz = {value, value + outTangent, next->value + inTangent, next->value};
             return bz.at(bz.atApprox(t * length, length));
         } else {
-            return lerp(value, next->value, t);
+            return tvg::lerp(value, next->value, t);
         }
     }
 
@@ -352,7 +352,7 @@ struct LottieGenericProperty : LottieProperty
     Value operator()(float frameNo, Tween& tween, LottieExpressions* exps)
     {
         if (DEFAULT_COND) return operator()(frameNo, exps);
-        return lerp(operator()(frameNo, exps), operator()(tween.frameNo, exps), tween.progress);
+        return tvg::lerp(operator()(frameNo, exps), operator()(tween.frameNo, exps), tween.progress);
     }
 
     void copy(const LottieGenericProperty<Frame, Value, Scalar>& rhs, bool shallow = true)
@@ -385,7 +385,7 @@ struct LottieGenericProperty : LottieProperty
     float angle(float frameNo, Tween& tween)
     {
         if (DEFAULT_COND) return angle(frameNo);
-        return lerp(angle(frameNo), angle(tween.frameNo), tween.progress);
+        return tvg::lerp(angle(frameNo), angle(tween.frameNo), tween.progress);
     }
 
     void prepare()
@@ -505,7 +505,7 @@ struct LottiePathSet : LottieProperty
         auto p = interpPts;
 
         for (auto i = 0; i < frame->value.ptsCnt; ++i, ++s, ++e, ++p) {
-            *p = lerp(*s, *e, t);
+            *p = tvg::lerp(*s, *e, t);
             if (transform) *p *= *transform;
         }
 
@@ -533,7 +533,7 @@ struct LottiePathSet : LottieProperty
         auto e = (frame + 1)->value.pts;
 
         for (auto i = 0; i < frame->value.ptsCnt; ++i, ++s, ++e) {
-            auto pt = lerp(*s, *e, t);
+            auto pt = tvg::lerp(*s, *e, t);
             if (transform) pt *= *transform;
             out.pts.push(pt);
         }
@@ -552,7 +552,7 @@ struct LottiePathSet : LottieProperty
         if (to.pts.count != out.pts.count - pivot) TVGLOG("LOTTIE", "Tweening has different numbers of points in consecutive frames.");
 
         for (uint32_t i = 0; i < std::min(to.pts.count, (out.pts.count - pivot)); ++i) {
-            from[i] = lerp(from[i], to.pts[i], tween.progress);
+            from[i] = tvg::lerp(from[i], to.pts[i], tween.progress);
         }
 
         if (!modifier) return true;
@@ -681,11 +681,11 @@ struct LottieColorStop : LottieProperty
         if (fromCnt != toCnt) TVGLOG("LOTTIE", "Tweening has different numbers of color data in consecutive frames.");
 
         for (uint32_t i = 0; i < std::min(fromCnt, toCnt); ++i) {
-            const_cast<Fill::ColorStop*>(from)->offset = lerp(from->offset, to->offset, tween.progress);
-            const_cast<Fill::ColorStop*>(from)->r = lerp(from->r, to->r, tween.progress);
-            const_cast<Fill::ColorStop*>(from)->g = lerp(from->g, to->g, tween.progress);
-            const_cast<Fill::ColorStop*>(from)->b = lerp(from->b, to->b, tween.progress);
-            const_cast<Fill::ColorStop*>(from)->a = lerp(from->a, to->a, tween.progress);
+            const_cast<Fill::ColorStop*>(from)->offset = tvg::lerp(from->offset, to->offset, tween.progress);
+            const_cast<Fill::ColorStop*>(from)->r = tvg::lerp(from->r, to->r, tween.progress);
+            const_cast<Fill::ColorStop*>(from)->g = tvg::lerp(from->g, to->g, tween.progress);
+            const_cast<Fill::ColorStop*>(from)->b = tvg::lerp(from->b, to->b, tween.progress);
+            const_cast<Fill::ColorStop*>(from)->a = tvg::lerp(from->a, to->a, tween.progress);
         }
 
         return Result::Success;
@@ -725,11 +725,11 @@ struct LottieColorStop : LottieProperty
         Array<Fill::ColorStop> result;
 
         for (auto i = 0; i < count; ++i, ++s, ++e) {
-            auto offset = lerp(s->offset, e->offset, t);
-            auto r = lerp(s->r, e->r, t);
-            auto g = lerp(s->g, e->g, t);
-            auto b = lerp(s->b, e->b, t);
-            auto a = lerp(s->a, e->a, t);
+            auto offset = tvg::lerp(s->offset, e->offset, t);
+            auto r = tvg::lerp(s->r, e->r, t);
+            auto g = tvg::lerp(s->g, e->g, t);
+            auto b = tvg::lerp(s->b, e->b, t);
+            auto a = tvg::lerp(s->a, e->a, t);
             result.push({offset, r, g, b, a});
         }
         return fill->colorStops(result.data, count);
