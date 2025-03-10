@@ -177,6 +177,9 @@ struct LottieProperty
 
     bool copy(LottieProperty* rhs, bool shallow)
     {
+        type = rhs->type;
+        ix = rhs->ix;
+
         if (!rhs->exp) return false;
         if (shallow) {
             exp = rhs->exp;
@@ -306,8 +309,6 @@ struct LottieGenericProperty : LottieProperty
     LottieGenericProperty(const LottieGenericProperty<Frame, Value>& rhs)
     {
         copy(const_cast<LottieGenericProperty<Frame, Value>&>(rhs));
-        type = rhs.type;
-        ix = rhs.ix;
     }
 
     ~LottieGenericProperty()
@@ -622,8 +623,6 @@ struct LottieColorStop : LottieProperty
     LottieColorStop(const LottieColorStop& rhs)
     {
         copy(const_cast<LottieColorStop&>(rhs));
-        type = rhs.type;
-        ix = rhs.ix;
     }
 
     ~LottieColorStop()
@@ -803,8 +802,6 @@ struct LottieTextDoc : LottieProperty
     LottieTextDoc(const LottieTextDoc& rhs)
     {
         copy(const_cast<LottieTextDoc&>(rhs));
-        type = rhs.type;
-        ix = rhs.ix;
     }
 
     ~LottieTextDoc()
@@ -922,8 +919,6 @@ struct LottieBitmap : LottieProperty
     LottieBitmap(const LottieBitmap& rhs)
     {
         copy(const_cast<LottieBitmap&>(rhs));
-        type = rhs.type;
-        ix = rhs.ix;
     }
 
     ~LottieBitmap()
