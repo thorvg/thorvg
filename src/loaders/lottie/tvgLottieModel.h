@@ -57,7 +57,9 @@ struct LottieStroke
         if (dashattr->size + 1 > dashattr->allocated) {
             dashattr->allocated = dashattr->size + 2;
             auto newValues = new LottieFloat[dashattr->allocated];
-            for (uint8_t i = 0; i < dashattr->size; ++i) newValues[i] = LottieFloat(dashattr->values[i]);
+            for (uint8_t i = 0; i < dashattr->size; ++i) {
+                newValues[i].copy(dashattr->values[i]);
+            }
             delete[] dashattr->values;
             dashattr->values = newValues;
         }
