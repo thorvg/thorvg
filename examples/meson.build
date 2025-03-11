@@ -77,7 +77,7 @@ if lottie_loader
 endif
 
 if lottie_expressions
-    source_file += 'LottieExpressions.cpp'
+    source_file += ['LottieExpressions.cpp', 'LottieInteraction.cpp']
 endif
 
 foreach current_file : source_file
