@@ -23,6 +23,7 @@
 #include "tvgMath.h"
 #include "tvgTaskScheduler.h"
 #include "tvgLottieModel.h"
+#include "tvgCompressor.h"
 
 
 /************************************************************************/
@@ -409,6 +410,18 @@ LottieGroup::LottieGroup()
 }
 
 
+LottieProperty* LottieGroup::property(uint16_t ix)
+{
+    //children
+    ARRAY_FOREACH(p, children) {
+        auto child = static_cast<LottieObject*>(*p);
+        if (auto property = child->property(ix)) return property;
+    }
+
+    return nullptr;
+}
+
+
 void LottieGroup::prepare(LottieObject::Type type)
 {
     LottieObject::type = type;
@@ -495,6 +508,17 @@ LottieLayer::~LottieLayer()
 }
 
 
+LottieProperty* LottieLayer::property(uint16_t ix)
+{
+    //transform
+    if (transform) {
+        if (auto property = transform->property(ix)) return property;
+    }
+
+    return LottieGroup::property(ix);
+}
+
+
 void LottieLayer::prepare(RGB24* color)
 {
     /* if layer is hidden, only useful data is its transform matrix.
@@ -533,6 +557,20 @@ float LottieLayer::remap(LottieComposition* comp, float frameNo, LottieExpressio
         frameNo -= startFrame;
     }
     return (frameNo / timeStretch);
+}
+
+
+bool LottieLayer::write(const char* layer, uint32_t ix, const char* var, float val)
+{
+    //find the target layer by name
+    auto target = layerById(djb2Encode(layer));
+    if (!target) return false;
+
+    //find the target property by ix
+    auto property = target->property(ix);
+    if (property && property->exp) return property->exp->write(var, val);
+
+    return false;
 }
 
 

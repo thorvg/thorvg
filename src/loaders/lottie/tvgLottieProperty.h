@@ -128,11 +128,18 @@ struct LottieExpression
 {
     enum LoopMode : uint8_t { None = 0, InCycle = 1, InPingPong, InOffset, InContinue, OutCycle, OutPingPong, OutOffset, OutContinue };
 
+    //writable expressions variable name and value.
+    struct Writable {
+        char* var;
+        float val;
+    };
+
     char* code;
     LottieComposition* comp;
     LottieLayer* layer;
     LottieObject* object;
     LottieProperty* property;
+    Array<Writable>* writables = nullptr;
     bool disabled = false;
 
     struct {
@@ -155,7 +162,25 @@ struct LottieExpression
 
     ~LottieExpression()
     {
+        if (writables) {
+            ARRAY_FOREACH(p, *writables) tvg::free(p->var);
+            delete(writables);
+        }
         tvg::free(code);
+    }
+
+    bool write(const char* var, float val)
+    {
+        if (!writables) writables = new Array<Writable>;
+        //overwrite the existing value
+        ARRAY_FOREACH(p, *writables) {
+            if (!strcmp(var, p->var)) {
+                p->val = val;
+                return true;
+            }
+        }
+        writables->push({tvg::duplicate(var), val});
+        return true;
     }
 };
 
