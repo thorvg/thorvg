@@ -482,7 +482,7 @@ static bool _setCell(RleWorker& rw, SwPoint pos)
 static bool _startCell(RleWorker& rw, SwPoint pos)
 {
     if (pos.x > rw.cellMax.x) pos.x = rw.cellMax.x;
-    if (pos.x < rw.cellMin.x) pos.x = rw.cellMin.x;
+    if (pos.x < rw.cellMin.x) pos.x = rw.cellMin.x - 1;
 
     rw.area = 0;
     rw.cover = 0;
