@@ -258,21 +258,22 @@ static inline SwPoint UPSCALE(const SwPoint& pt)
 }
 
 
-static inline SwPoint TRUNC(const SwPoint& pt)
-{
-    return  {pt.x >> PIXEL_BITS, pt.y >> PIXEL_BITS};
-}
-
-
 static inline SwCoord TRUNC(const SwCoord x)
 {
     return  x >> PIXEL_BITS;
 }
 
 
-static inline SwPoint SUBPIXELS(const SwPoint& pt)
+static inline SwPoint TRUNC(const SwPoint& pt)
 {
-    return {SwCoord(((unsigned long) pt.x) << PIXEL_BITS), SwCoord(((unsigned long) pt.y) << PIXEL_BITS)};
+    return  {TRUNC(pt.x), TRUNC(pt.y)};
+}
+
+
+static inline SwPoint FRACT(const SwPoint& pt)
+{
+
+    return {pt.x & (ONE_PIXEL - 1), pt.y & (ONE_PIXEL - 1)};
 }
 
 
@@ -330,7 +331,6 @@ static void _horizLine(RleWorker& rw, SwCoord x, SwCoord y, SwCoord area, SwCoor
             SwCoord xOver = 0;
             if (x + aCount >= rw.cellMax.x) xOver -= (x + aCount - rw.cellMax.x);
             if (x < rw.cellMin.x) xOver -= (rw.cellMin.x - x);
-
             span->len += (aCount + xOver);
             return;
         }
@@ -397,7 +397,7 @@ static Cell* _findCell(RleWorker& rw)
     auto pcell = &rw.yCells[rw.cellPos.y];
 
     while(true) {
-        Cell* cell = *pcell;
+        auto cell = *pcell;
         if (!cell || cell->x > x) break;
         if (cell->x == x) return cell;
         pcell = &cell->next;
@@ -492,7 +492,6 @@ static bool _moveTo(RleWorker& rw, const SwPoint& to)
 
 static bool _lineTo(RleWorker& rw, const SwPoint& to)
 {
-#define SW_UDIV(a, b) (SwCoord)(((unsigned long)(a) * (unsigned long)(b)) >> (sizeof(long) * CHAR_BIT - PIXEL_BITS))
     auto e1 = TRUNC(rw.pos);
     auto e2 = TRUNC(to);
 
@@ -518,7 +517,7 @@ static bool _lineTo(RleWorker& rw, const SwPoint& to)
         e1 = TRUNC(line[1]);
         e2 = TRUNC(line[0]);
 
-        auto f1 = line[1] - SUBPIXELS(e1);
+        auto f1 = FRACT(line[1]);
         SwPoint f2;
 
         //inside one cell
@@ -552,23 +551,25 @@ static bool _lineTo(RleWorker& rw, const SwPoint& to)
             }
         //any other line
         } else {
+            #define SW_UDIV(a, b) (SwCoord)((uint64_t(a) * uint64_t(b)) >> 32)
+
             Area prod = diff.x * f1.y - diff.y * f1.x;
 
             /* These macros speed up repetitive divisions by replacing them
                with multiplications and right shifts. */
-            auto dx_r = static_cast<long>(ULONG_MAX >> PIXEL_BITS) / (diff.x);
-            auto dy_r = static_cast<long>(ULONG_MAX >> PIXEL_BITS) / (diff.y);
+            auto dxr = (e1.x != e2.x) ? (int64_t)0xffffffff / diff.x : 0;
+            auto dyr = (e1.y != e2.y) ? (int64_t)0xffffffff / diff.y : 0;
+            auto px = diff.x * ONE_PIXEL;
+            auto py = diff.y * ONE_PIXEL;
 
             /* The fundamental value `prod' determines which side and the  */
             /* exact coordinate where the line exits current cell.  It is  */
             /* also easily updated when moving from one cell to the next.  */
-            do {
-                auto px = diff.x * ONE_PIXEL;
-                auto py = diff.y * ONE_PIXEL;
 
+            do {
                 //left
                 if (prod <= 0 && prod - px > 0) {
-                    f2 = {0, SW_UDIV(-prod, -dx_r)};
+                    f2 = {0, SW_UDIV(-prod, -dxr)};
                     prod -= py;
                     rw.cover += (f2.y - f1.y);
                     rw.area += (f2.y - f1.y) * (f1.x + f2.x);
@@ -577,7 +578,7 @@ static bool _lineTo(RleWorker& rw, const SwPoint& to)
                 //up
                 } else if (prod - px <= 0 && prod - px + py > 0) {
                     prod -= px;
-                    f2 = {SW_UDIV(-prod, dy_r), ONE_PIXEL};
+                    f2 = {SW_UDIV(-prod, dyr), ONE_PIXEL};
                     rw.cover += (f2.y - f1.y);
                     rw.area += (f2.y - f1.y) * (f1.x + f2.x);
                     f1 = {f2.x, 0};
@@ -585,14 +586,14 @@ static bool _lineTo(RleWorker& rw, const SwPoint& to)
                 //right
                 } else if (prod - px + py <= 0 && prod + py >= 0) {
                     prod += py;
-                    f2 = {ONE_PIXEL, SW_UDIV(prod, dx_r)};
+                    f2 = {ONE_PIXEL, SW_UDIV(prod, dxr)};
                     rw.cover += (f2.y - f1.y);
                     rw.area += (f2.y - f1.y) * (f1.x + f2.x);
                     f1 = {0, f2.y};
                     ++e1.x;
                 //down
                 } else {
-                    f2 = {SW_UDIV(prod, -dy_r), 0};
+                    f2 = {SW_UDIV(prod, -dyr), 0};
                     prod += px;
                     rw.cover += (f2.y - f1.y);
                     rw.area += (f2.y - f1.y) * (f1.x + f2.x);
@@ -605,7 +606,7 @@ static bool _lineTo(RleWorker& rw, const SwPoint& to)
             } while(e1 != e2);
         }
 
-        f2 = line[0] - SUBPIXELS(e2);
+        f2 = FRACT(line[0]);
         rw.cover += (f2.y - f1.y);
         rw.area += (f2.y - f1.y) * (f1.x + f2.x);
         rw.pos = line[0];
@@ -713,8 +714,7 @@ static bool _decomposeOutline(RleWorker& rw)
                 types += 3;
                 if (pt <= limit) {
                     if (!_cubicTo(rw, UPSCALE(pt[-2]), UPSCALE(pt[-1]), UPSCALE(pt[0]))) return false;
-                }
-                else if (pt - 1 == limit) {
+                } else if (pt - 1 == limit) {
                     if (!_cubicTo(rw, UPSCALE(pt[-2]), UPSCALE(pt[-1]), start)) return false;
                 }
                 else goto close;
