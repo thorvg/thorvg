@@ -195,6 +195,8 @@ struct LookaheadParserHandler
     void skip();
     void skipOut(int depth);
     int peekType();
+    Value* peekValue();
+    char* findObjectType();
     char* getPos();
 };
 
