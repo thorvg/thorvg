@@ -850,77 +850,47 @@ Tessellator::~Tessellator()
 }
 
 
-bool Tessellator::tessellate(const RenderShape *rshape, const RenderPath& path, bool antialias)
+void Tessellator::tessellate(const Array<const RenderShape*> &shapes)
 {
-    this->fillRule = rshape->rule;
-
-    this->visitShape(path.cmds.data, path.cmds.count, path.pts.data, path.pts.count);
-    this->buildMesh();
-    this->mergeVertices();
-
-    if (!this->simplifyMesh()) return false;
-    if (!this->tessMesh()) return false;
-
-    // output triangles
-    for (auto poly = this->pPolygon; poly; poly = poly->next) {
-        if (!this->matchFillRule(poly->winding)) continue;
-        if (poly->count < 3) continue;
-        for (auto m = poly->head; m; m = m->next) {
-            this->emitPoly(m);
-        }
-    }
-
-    if (antialias) {
-        // TODO extract outline from current polygon list and generate aa edges
-    }
-
-    return true;
-}
-
-
-void Tessellator::tessellate(const Array<const RenderShape *> &shapes)
-{
-    this->fillRule = FillRule::NonZero;
+    fillRule = FillRule::NonZero;
 
     for (uint32_t i = 0; i < shapes.count; i++) {
-        const RenderPath* path = nullptr;
         RenderPath trimmedPath;
         if (shapes[i]->trimpath()) {
             if (!shapes[i]->stroke->trim.trim(shapes[i]->path, trimmedPath)) continue;
-            path = &trimmedPath;
-        } else path = &shapes[i]->path;
-
-        this->visitShape(path->cmds.data, path->cmds.count, path->pts.data, path->pts.count);
+            visitShape(trimmedPath);
+        } else visitShape(shapes[i]->path);
     }
 
-    this->buildMesh();
-    this->mergeVertices();
-    this->simplifyMesh();
-    this->tessMesh();
+    buildMesh();
+    mergeVertices();
+    simplifyMesh();
+    tessMesh();
 
     // output triangles
-    for (auto poly = this->pPolygon; poly; poly = poly->next) {
-        if (!this->matchFillRule(poly->winding)) continue;
+    for (auto poly = pPolygon; poly; poly = poly->next) {
+        if (!matchFillRule(poly->winding)) continue;
         if (poly->count < 3) continue;
         for (auto m = poly->head; m; m = m->next) {
-            this->emitPoly(m);
+            emitPoly(m);
         }
     }
 }
 
 
-void Tessellator::visitShape(const PathCommand *cmds, uint32_t cmd_count, const Point *pts, uint32_t pts_count)
+void Tessellator::visitShape(const RenderPath& path)
 {
     // all points at least need to be visit once
     // so the points count is at least the same as the count in shape
-    buffer->vertex.reserve(pts_count * 2);
+    buffer->vertex.reserve(path.pts.count * 2);
     // triangle fans, the indices count is at least triangles number * 3
-    buffer->index.reserve((pts_count - 2) * 3);
+    buffer->index.reserve((path.pts.count - 2) * 3);
 
     const Point *firstPt = nullptr;
+    auto pts = path.pts.data;
 
-    for (uint32_t i = 0; i < cmd_count; i++) {
-        switch (cmds[i]) {
+    ARRAY_FOREACH(cmd, path.cmds) {
+        switch (*cmd) {
             case PathCommand::MoveTo: {
                 outlines.push(new VertexList);
                 auto last = outlines.last();
@@ -1537,17 +1507,12 @@ void Stroker::stroke(const RenderShape *rshape, const RenderPath& path)
         mStrokeWidth = strokeWidth / mMatrix.e11;
     }
 
-    auto cmds = path.cmds.data;
-    auto pts = path.pts.data;
-    auto cmdCnt = path.cmds.count;
-    auto ptsCnt = path.pts.count;
+    const float *patterns = nullptr;
+    auto offset = 0.0f;
+    auto patternCnt = rshape->strokeDash(&patterns, &offset);
 
-    const float *dash_pattern = nullptr;
-    auto dash_offset = 0.0f;
-    auto dashCnt = rshape->strokeDash(&dash_pattern, &dash_offset);
-
-    if (dashCnt == 0) doStroke(cmds, cmdCnt, pts, ptsCnt);
-    else doDashStroke(cmds, cmdCnt, pts, ptsCnt, dashCnt, dash_pattern, dash_offset);
+    if (patternCnt == 0) doStroke(path);
+    else doDashStroke(path, patterns, patternCnt, offset);
 }
 
 
@@ -1562,15 +1527,16 @@ RenderRegion Stroker::bounds() const
 }
 
 
-void Stroker::doStroke(const PathCommand *cmds, uint32_t cmd_count, const Point *pts, uint32_t pts_count)
+void Stroker::doStroke(const RenderPath& path)
 {
-    mBuffer->vertex.reserve(pts_count * 4 + 16);
-    mBuffer->index.reserve(pts_count * 3);
+    mBuffer->vertex.reserve(path.pts.count * 4 + 16);
+    mBuffer->index.reserve(path.pts.count * 3);
 
     auto validStrokeCap = false;
+    auto pts = path.pts.data;
 
-    for (uint32_t i = 0; i < cmd_count; i++) {
-        switch (cmds[i]) {
+    ARRAY_FOREACH(cmd, path.cmds) {
+        switch (*cmd) {
             case PathCommand::MoveTo: {
                 if (validStrokeCap) { // check this, so we can skip if path only contains move instruction
                     strokeCap();
@@ -1606,18 +1572,16 @@ void Stroker::doStroke(const PathCommand *cmds, uint32_t cmd_count, const Point 
 }
 
 
-void Stroker::doDashStroke(const PathCommand *cmds, uint32_t cmd_count, const Point *pts, uint32_t pts_count, uint32_t dash_count, const float *dash_pattern, float dash_offset)
+void Stroker::doDashStroke(const RenderPath& path, const float *patterns, uint32_t patternCnt, float offset)
 {
-    Array<PathCommand> dash_cmds{};
-    Array<Point> dash_pts{};
+    RenderPath dpath;
 
-    dash_cmds.reserve(20 * cmd_count);
-    dash_pts.reserve(20 * pts_count);
+    dpath.cmds.reserve(20 * path.cmds.count);
+    dpath.pts.reserve(20 * path.pts.count);
 
-    DashStroke dash(&dash_cmds, &dash_pts, dash_count, dash_pattern, dash_offset);
-    dash.doStroke(cmds, cmd_count, pts, pts_count);
-
-    this->doStroke(dash_cmds.data, dash_cmds.count, dash_pts.data, dash_pts.count);
+    DashStroke dash(&dpath.cmds, &dpath.pts, patterns, patternCnt, offset);
+    dash.doStroke(path);
+    doStroke(dpath);
 }
 
 
@@ -1951,12 +1915,12 @@ void Stroker::strokeRound(const Point& p, const Point& outDir)
 }
 
 
-DashStroke::DashStroke(Array<PathCommand> *cmds, Array<Point> *pts, uint32_t dash_count, const float *dash_pattern, float dash_offset)
+DashStroke::DashStroke(Array<PathCommand> *cmds, Array<Point> *pts, const float *patterns, uint32_t patternCnt, float offset)
     : mCmds(cmds),
       mPts(pts),
-      mDashCount(dash_count),
-      mDashPattern(dash_pattern),
-      mDashOffset(dash_offset),
+      mDashPattern(patterns),
+      mDashCount(patternCnt),
+      mDashOffset(offset),
       mCurrLen(),
       mCurrIdx(),
       mCurOpGap(false),
@@ -1967,7 +1931,7 @@ DashStroke::DashStroke(Array<PathCommand> *cmds, Array<Point> *pts, uint32_t das
 }
 
 
-void DashStroke::doStroke(const PathCommand *cmds, uint32_t cmd_count, const Point *pts, uint32_t pts_count)
+void DashStroke::doStroke(const RenderPath& path)
 {
     int32_t idx = 0;
     auto offset = mDashOffset;
@@ -1989,8 +1953,9 @@ void DashStroke::doStroke(const PathCommand *cmds, uint32_t cmd_count, const Poi
         idx = idx % mDashCount;
     }
 
-    for (uint32_t i = 0; i < cmd_count; i++) {
-        switch (*cmds) {
+    auto pts = path.pts.data;
+    ARRAY_FOREACH(cmd, path.cmds) {
+        switch (*cmd) {
             case PathCommand::Close: {
                 this->dashLineTo(mPtStart);
                 break;
@@ -2017,7 +1982,6 @@ void DashStroke::doStroke(const PathCommand *cmds, uint32_t cmd_count, const Poi
             }
             default: break;
         }
-        cmds++;
     }
 }
 

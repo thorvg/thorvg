@@ -43,11 +43,10 @@ class Tessellator final
 public:
     Tessellator(GlGeometryBuffer* buffer);
     ~Tessellator();
-    bool tessellate(const RenderShape *rshape, const RenderPath& path, bool antialias = false);
     void tessellate(const Array<const RenderShape*> &shapes);
 
 private:
-    void visitShape(const PathCommand *cmds, uint32_t cmd_count, const Point *pts, uint32_t pts_count);
+    void visitShape(const RenderPath& path);
     void buildMesh();
     void mergeVertices();
     bool simplifyMesh();
@@ -85,8 +84,8 @@ public:
     RenderRegion bounds() const;
 
 private:
-    void doStroke(const PathCommand* cmds, uint32_t cmd_count, const Point* pts, uint32_t pts_count);
-    void doDashStroke(const PathCommand* cmds, uint32_t cmd_count, const Point* pts, uint32_t pts_count, uint32_t dash_count, const float* dash_pattern, float dash_offset);
+    void doStroke(const RenderPath& path);
+    void doDashStroke(const RenderPath& path, const float* patterns, uint32_t patternCnt, float offset);
 
     float strokeRadius() const
     {
@@ -120,9 +119,9 @@ private:
 class DashStroke
 {
 public:
-    DashStroke(Array<PathCommand>* cmds, Array<Point>* pts, uint32_t dash_count, const float* dash_pattern, float dash_offset);
+    DashStroke(Array<PathCommand>* cmds, Array<Point>* pts, const float* patterns, uint32_t patternCnt, float offset);
     ~DashStroke() = default;
-    void doStroke(const PathCommand* cmds, uint32_t cmd_count, const Point* pts, uint32_t pts_count);
+    void doStroke(const RenderPath& path);
 
 private:
     void dashLineTo(const Point& pt);
@@ -133,8 +132,8 @@ private:
 
     Array<PathCommand>* mCmds;
     Array<Point>* mPts;
-    uint32_t mDashCount;
     const float* mDashPattern;
+    uint32_t mDashCount;
     float mDashOffset;
     float mCurrLen;
     int32_t mCurrIdx;
