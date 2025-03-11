@@ -912,26 +912,42 @@ void LottieBuilder::updateImage(LottieGroup* layer)
 }
 
 
+//TODO: unify with the updateText() building logic
 static void _fontText(LottieText* text, Scene* scene, float frameNo, LottieExpressions* exps)
 {
     auto& doc = text->doc(frameNo, exps);
     if (!doc.text) return;
 
+    auto delim = "\r\n";
     auto size = doc.size * 75.0f; //1 pt = 1/72; 1 in = 96 px; -> 72/96 = 0.75
-    auto txt = Text::gen();
-    if (txt->font(doc.name, size) != Result::Success) {
-        //fallback to any available font
-        txt->font(nullptr, size);
+    auto lineHeight = doc.size * 100.0f;
+
+    auto buf = (char*)alloca(strlen(doc.text) + 1);
+    strcpy(buf, doc.text);
+    auto token = std::strtok(buf, delim);
+
+    auto cnt = 0;
+    while (token) {
+        auto txt = Text::gen();
+        if (txt->font(doc.name, size) != Result::Success) {
+            //fallback to any available font
+            txt->font(nullptr, size);
+        }
+
+        txt->text(token);
+        txt->fill(doc.color.rgb[0], doc.color.rgb[1], doc.color.rgb[2]);
+
+        float width;
+        txt->bounds(nullptr, nullptr, &width, nullptr);
+
+        auto cursorX = width * doc.justify;
+        auto cursorY = lineHeight * cnt;
+        txt->translate(cursorX, -lineHeight + cursorY);
+
+        token = std::strtok(nullptr, delim);
+        scene->push(txt);
+        cnt++;
     }
-    txt->text(doc.text);
-    txt->fill(doc.color.rgb[0], doc.color.rgb[1], doc.color.rgb[2]);
-
-    float width;
-    txt->bounds(nullptr, nullptr, &width, nullptr);
-
-    auto cursorX = width * doc.justify;
-    txt->translate(cursorX, -doc.size * 100.0f);
-    scene->push(txt);
 }
 
 
