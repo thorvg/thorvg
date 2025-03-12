@@ -23,15 +23,22 @@
 #ifndef _TVG_TASK_SCHEDULER_H_
 #define _TVG_TASK_SCHEDULER_H_
 
-#include <mutex>
-#include <condition_variable>
-
 #include "tvgCommon.h"
 #include "tvgInlist.h"
 
+#ifdef THORVG_THREAD_SUPPORT
+    #include <atomic>
+    #include <thread>
+    #include <mutex>
+    #include <condition_variable>
+#endif
+
 namespace tvg {
 
+
 #ifdef THORVG_THREAD_SUPPORT
+
+using ThreadID = std::thread::id;
 
 struct Task
 {
@@ -79,6 +86,8 @@ private:
 
 #else  //THORVG_THREAD_SUPPORT
 
+using ThreadID = uint8_t;
+
 struct Task
 {
 public:
@@ -105,6 +114,7 @@ struct TaskScheduler
     static void request(Task* task);
     static void async(bool on);
     static bool onthread();  //figure out whether on worker thread or not
+    static ThreadID tid();
 };
 
 }  //namespace

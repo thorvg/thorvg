@@ -20,23 +20,16 @@
  * SOFTWARE.
  */
 
-#include <thread>
-#include <atomic>
+
 #include "tvgArray.h"
 #include "tvgInlist.h"
 #include "tvgTaskScheduler.h"
-
 
 /************************************************************************/
 /* Internal Class Implementation                                        */
 /************************************************************************/
 
 namespace tvg {
-
-struct TaskSchedulerImpl;
-static TaskSchedulerImpl* _inst = nullptr;
-static std::thread::id _tid;   //dominant thread id
-
 
 #ifdef THORVG_THREAD_SUPPORT
 
@@ -196,11 +189,14 @@ struct TaskSchedulerImpl
 /* External Class Implementation                                        */
 /************************************************************************/
 
+static TaskSchedulerImpl* _inst = nullptr;
+static ThreadID _tid;   //dominant thread id
+
 void TaskScheduler::init(uint32_t threads)
 {
     if (_inst) return;
     _inst = new TaskSchedulerImpl(threads);
-    _tid = std::this_thread::get_id();
+    _tid = tid();
 }
 
 
@@ -219,8 +215,7 @@ void TaskScheduler::request(Task* task)
 
 uint32_t TaskScheduler::threads()
 {
-    if (_inst) return _inst->threadCnt();
-    return 0;
+    return _inst ? _inst->threadCnt() : 0;
 }
 
 
@@ -230,7 +225,18 @@ void TaskScheduler::async(bool on)
     _async = on;
 }
 
+
 bool TaskScheduler::onthread()
 {
-    return _tid != std::this_thread::get_id();
+    return _tid != tid();
+}
+
+
+ThreadID TaskScheduler::tid()
+{
+#ifdef THORVG_THREAD_SUPPORT
+    return std::this_thread::get_id();
+#else
+    return 0;
+#endif
 }
