@@ -1506,6 +1506,75 @@ const char* LottieParser::sid(bool first)
 }
 
 
+LottieProperty* LottieParser::slotData(LottieSlot* slot)
+{
+    enterObject();
+
+    //OPTIMIZE: we can create the property directly, without object
+    LottieObject* obj = nullptr;  //slot object
+    context = {slot->context.layer, slot->context.parent};
+
+    switch (slot->type) {
+        case LottieProperty::Type::Position: {
+            obj = new LottieTransform;
+            parseSlotProperty<LottieProperty::Type::Position>(static_cast<LottieTransform*>(obj)->position);
+            break;
+        }
+        case LottieProperty::Type::Point: {
+            obj = new LottieTransform;
+            parseSlotProperty<LottieProperty::Type::Point>(static_cast<LottieTransform*>(obj)->scale);
+            break;
+        }
+        case LottieProperty::Type::Float: {
+            obj = new LottieTransform;
+            parseSlotProperty<LottieProperty::Type::Float>(static_cast<LottieTransform*>(obj)->rotation);
+            break;
+        }
+        case LottieProperty::Type::Opacity: {
+            obj = new LottieSolid;
+            parseSlotProperty<LottieProperty::Type::Opacity>(static_cast<LottieSolid*>(obj)->opacity);
+            break;
+        }
+        case LottieProperty::Type::Color: {
+            obj = new LottieSolid;
+            parseSlotProperty<LottieProperty::Type::Color>(static_cast<LottieSolid*>(obj)->color);
+            break;
+        }
+        case LottieProperty::Type::ColorStop: {
+            obj = new LottieGradient;
+            while (auto key = nextObjectKey()) {
+                if (KEY_AS("p")) parseColorStop(static_cast<LottieGradient*>(obj));
+                else skip();
+            }
+            break;
+        }
+        case LottieProperty::Type::TextDoc: {
+            obj = new LottieText;
+            parseSlotProperty<LottieProperty::Type::TextDoc>(static_cast<LottieText*>(obj)->doc);
+            break;
+        }
+        case LottieProperty::Type::Image: {
+            while (auto key = nextObjectKey()) {
+                if (KEY_AS("p")) obj = parseAsset();
+                else skip();
+            }
+            break;
+        }
+        default: break;
+    }
+
+    if (!obj || Invalid()) {
+        delete(obj);
+        return nullptr;
+    }
+
+    auto prop = slot->data(obj);
+    delete(obj);
+
+    return prop;
+}
+
+
 bool LottieParser::apply(LottieSlot* slot, bool byDefault)
 {
     enterObject();
@@ -1568,7 +1637,8 @@ bool LottieParser::apply(LottieSlot* slot, bool byDefault)
         return false;
     }
 
-    slot->assign(obj, byDefault);
+    auto prop = slot->data(obj);
+    slot->apply(prop, byDefault);
 
     delete(obj);
 
