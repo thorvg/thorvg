@@ -58,6 +58,11 @@ public:
     Paint* paint() override;
     bool override(const char* slot, bool byDefault = false);
 
+    //Slot APIs
+    uint32_t genSlot(const char* slot);
+    bool applySlot(uint32_t slotId, bool byDefault = false);
+    bool delSlot(uint32_t slotId, bool byDefault = false);
+
     //Frame Controls
     bool frame(float no) override;
     float totalFrame() override;
