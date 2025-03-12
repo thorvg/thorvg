@@ -21,7 +21,7 @@
  */
 
 #include <cstring>
-
+#include <memory>
 #include "tvgStr.h"
 #include "tvgGifEncoder.h"
 #include "tvgGifSaver.h"
