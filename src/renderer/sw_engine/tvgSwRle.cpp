@@ -844,7 +844,7 @@ SwRle* rleRender(SwRle* rle, const SwOutline* outline, const SwBBox& renderRegio
 {
     if (!outline) return nullptr;
 
-    constexpr auto RENDER_POOL_SIZE = 16384L;
+    constexpr auto RENDER_POOL_SIZE = 32768L;
     constexpr auto BAND_SIZE = 40;
 
     //TODO: We can preserve several static workers in advance
@@ -866,7 +866,7 @@ SwRle* rleRender(SwRle* rle, const SwOutline* outline, const SwBBox& renderRegio
     rw.cellXCnt = rw.cellMax.x - rw.cellMin.x;
     rw.cellYCnt = rw.cellMax.y - rw.cellMin.y;
     rw.outline = const_cast<SwOutline*>(outline);
-    rw.bandSize = rw.bufferSize / (sizeof(Cell) * 2);  //bandSize: 256
+    rw.bandSize = rw.bufferSize / (sizeof(Cell) * 4);  //bandSize: 256
     rw.bandShoot = 0;
     rw.antiAlias = antiAlias;
 
