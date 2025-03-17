@@ -177,7 +177,8 @@ struct UserExample : tvgexam::Example
             if (!tvgexam::verify(picture->load(EXAMPLE_DIR"/lottie/extensions/slotsample1.json"))) return false;
 
             const char* slotJson = R"({"gradient_fill":{"p":{"p":2,"k":{"k":[0,0.1,0.1,0.2,1,1,0.1,0.2,0,0,1,1]}}}})";
-            if (!tvgexam::verify(slot1->override(slotJson))) return false;
+            auto slotId = slot1->genSlot(slotJson);
+            if (!tvgexam::verify(slot1->applySlot(slotId))) return false;
 
             sizing(picture, 1);
 
@@ -191,7 +192,8 @@ struct UserExample : tvgexam::Example
             if (!tvgexam::verify(picture->load(EXAMPLE_DIR"/lottie/extensions/slotsample2.json"))) return false;
 
             const char* slotJson = R"({"ball_color":{"p":{"a":1,"k":[{"i":{"x":[0.833],"y":[0.833]},"o":{"x":[0.167],"y":[0.167]},"t":7,"s":[0,0.176,0.867]},{"i":{"x":[0.833],"y":[0.833]},"o":{"x":[0.167],"y":[0.167]},"t":22,"s":[0.867,0,0.533]},{"i":{"x":[0.833],"y":[0.833]},"o":{"x":[0.167],"y":[0.167]},"t":37,"s":[0.867,0,0.533]},{"t":51,"s":[0,0.867,0.255]}]}}})";
-            if (!tvgexam::verify(slot2->override(slotJson))) return false;
+            auto slotId = slot2->genSlot(slotJson);
+            if (!tvgexam::verify(slot2->applySlot(slotId))) return false;
 
             sizing(picture, 2);
 
@@ -205,7 +207,8 @@ struct UserExample : tvgexam::Example
             if (!tvgexam::verify(picture->load(EXAMPLE_DIR"/lottie/extensions/slotsample3.json"))) return false;
 
             const char* slotJson = R"({"path_img":{"p":{"id":"image_0","w":200,"h":300,"u":"images/","p":"logo.png","e":0}}})";
-            if (!tvgexam::verify(slot3->override(slotJson))) return false;
+            auto slotId = slot3->genSlot(slotJson);
+            if (!tvgexam::verify(slot3->applySlot(slotId))) return false;
 
             sizing(picture, 3);
 
@@ -219,7 +222,8 @@ struct UserExample : tvgexam::Example
             if (!tvgexam::verify(picture->load(EXAMPLE_DIR"/lottie/extensions/slotsample4.json"))) return false;
 
             const char* slotJson = R"({"bg_color":{"p":{"a":0,"k":[1,0.8196,0.2275]}},"check_color":{"p":{"a":0,"k":[0.0078,0.0078,0.0078]}}})";
-            if (!tvgexam::verify(slot4->override(slotJson))) return false;
+            auto slotId = slot4->genSlot(slotJson);
+            if (!tvgexam::verify(slot4->applySlot(slotId))) return false;
 
             sizing(picture, 4);
 
@@ -244,7 +248,8 @@ struct UserExample : tvgexam::Example
             if (!tvgexam::verify(picture->load(EXAMPLE_DIR"/lottie/extensions/slotsample6.json"))) return false;
 
             const char* slotJson = R"({"position_id":{"p":{"a":1,"k":[{"i":{"x":0.833,"y":0.833},"o":{"x":0.167,"y":0.167},"s":[100,100],"t":0},{"s":[200,300],"t":100}]}}})";
-            if (!tvgexam::verify(slot6->override(slotJson))) return false;
+            auto slotId = slot6->genSlot(slotJson);
+            if (!tvgexam::verify(slot6->applySlot(slotId))) return false;
 
             sizing(picture, 6);
 
@@ -258,7 +263,8 @@ struct UserExample : tvgexam::Example
             if (!tvgexam::verify(picture->load(EXAMPLE_DIR"/lottie/extensions/slotsample7.json"))) return false;
 
             const char* slotJson = R"({"scale_id":{"p":{"a":1,"k":[{"i":{"x":0.833,"y":0.833},"o":{"x":0.167,"y":0.167},"s":[0,0],"t":0},{"s":[100,100],"t":100}]}}})";
-            if (!tvgexam::verify(slot7->override(slotJson))) return false;
+            auto slotId = slot7->genSlot(slotJson);
+            if (!tvgexam::verify(slot7->applySlot(slotId))) return false;
 
             sizing(picture, 7);
 
@@ -272,7 +278,8 @@ struct UserExample : tvgexam::Example
             if (!tvgexam::verify(picture->load(EXAMPLE_DIR"/lottie/extensions/slotsample8.json"))) return false;
 
             const char* slotJson = R"({"rotation_id":{"p":{"a":1,"k":[{"i":{"x":0.833,"y":0.833},"o":{"x":0.167,"y":0.167},"s":[0],"t":0},{"s":[180],"t":100}]}}})";
-            if (!tvgexam::verify(slot8->override(slotJson))) return false;
+            auto slotId = slot8->genSlot(slotJson);
+            if (!tvgexam::verify(slot8->applySlot(slotId))) return false;
 
             sizing(picture, 8);
 
@@ -286,7 +293,8 @@ struct UserExample : tvgexam::Example
             if (!tvgexam::verify(picture->load(EXAMPLE_DIR"/lottie/extensions/slotsample9.json"))) return false;
 
             const char* slotJson = R"({"opacity_id":{"p":{"a":1,"k":[{"i":{"x":0.833,"y":0.833},"o":{"x":0.167,"y":0.167},"s":[0],"t":0},{"s":[100],"t":100}]}}})";
-            if (!tvgexam::verify(slot9->override(slotJson))) return false;
+            auto slotId = slot9->genSlot(slotJson);
+            if (!tvgexam::verify(slot9->applySlot(slotId))) return false;
 
             sizing(picture, 9);
 
@@ -300,7 +308,8 @@ struct UserExample : tvgexam::Example
             if (!tvgexam::verify(picture->load(EXAMPLE_DIR"/lottie/extensions/slotsample10.json"))) return false;
 
             const char* slotJson = R"({"rect_rotation":{"p":{"x":"var $bm_rt = time * 360;"}},"rect_scale":{"p":{"x":"var $bm_rt = [];$bm_rt[0] = value[0] + Math.cos(2 * Math.PI * time) * 100;$bm_rt[1] = value[1];"}},"rect_position":{"p":{"x":"var $bm_rt = [];$bm_rt[0] = value[0] + Math.cos(2 * Math.PI * time) * 100;$bm_rt[1] = value[1];"}}})";
-            if (!tvgexam::verify(slot10->override(slotJson))) return false;
+            auto slotId = slot10->genSlot(slotJson);
+            if (!tvgexam::verify(slot10->applySlot(slotId))) return false;
 
             sizing(picture, 10);
 
@@ -320,6 +329,19 @@ struct UserExample : tvgexam::Example
         }
 
         return true;
+    }
+
+    ~UserExample()
+    {
+        slot1->delSlot(0);
+        slot2->delSlot(0);
+        slot3->delSlot(0);
+        slot4->delSlot(0);
+        slot6->delSlot(0);
+        slot7->delSlot(0);
+        slot8->delSlot(0);
+        slot9->delSlot(0);
+        slot10->delSlot(0);
     }
 };
 
