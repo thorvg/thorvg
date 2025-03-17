@@ -946,18 +946,19 @@ struct LottieBitmap : LottieProperty
         if (shallow) {
             b64Data = rhs.b64Data;
             mimeType = rhs.mimeType;
+
+            rhs.b64Data = nullptr;
+            rhs.mimeType = nullptr;
         } else {
             //TODO: optimize here by avoiding data copy
             TVGLOG("LOTTIE", "Shallow copy of the image data!");
             b64Data = duplicate(rhs.b64Data);
-            mimeType = duplicate(rhs.mimeType);
+            if (rhs.mimeType) mimeType = duplicate(rhs.mimeType);
         }
+
         size = rhs.size;
         width = rhs.width;
         height = rhs.height;
-
-        rhs.b64Data = nullptr;
-        rhs.mimeType = nullptr;
     }
 };
 
