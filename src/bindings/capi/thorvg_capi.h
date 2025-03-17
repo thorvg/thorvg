@@ -2537,19 +2537,47 @@ TVG_API Tvg_Animation* tvg_lottie_animation_new(void);
 
 
 /*!
-* @brief Override the lottie properties through the slot data.
+* @brief Generates a new slot from the given slot data.
 *
-* @param[in] animation The Tvg_Animation object to override the property with the slot.
-* @param[in] slot The Lottie slot data in json, or @c nullptr to reset.
+* @param[in] animation The Tvg_Animation pointer to the Lottie animation object.
+* @param[in] slot The Lottie slot data in JSON format.
+*
+* @return The generated slot ID when successful, 0 otherwise.
+*
+* @since 1.0
+*/
+TVG_API uint32_t tvg_lottie_animation_gen_slot(Tvg_Animation* animation, const char* slot);
+
+
+/*!
+* @brief Applies a previously generated slot to the animation.
+*
+* @param[in] animation The Tvg_Animation pointer to the Lottie animation object.
+* @param[in] id The ID of the slot to apply, or 0 to reset all slots.
 *
 * @return Tvg_Result enumeration.
-* @retval TVG_RESULT_INSUFFICIENT_CONDITION In case the animation is not loaded.
-* @retval TVG_RESULT_INVALID_ARGUMENT When the given @p slot is invalid
+* @retval TVG_RESULT_INSUFFICIENT_CONDITION In case the animation is not loaded or the slot ID is invalid.
 * @retval TVG_RESULT_NOT_SUPPORTED The Lottie Animation is not supported.
 *
 * @since 1.0
 */
-TVG_API Tvg_Result tvg_lottie_animation_override(Tvg_Animation* animation, const char* slot);
+TVG_API Tvg_Result tvg_lottie_animation_apply_slot(Tvg_Animation* animation, uint32_t id);
+
+
+/*!
+* @brief Deletes a previously generated slot.
+*
+* @param[in] animation The Tvg_Animation pointer to the Lottie animation object.
+* @param[in] id The ID of the slot to delete, or 0 to delete all slots.
+*
+* @return Tvg_Result enumeration.
+* @retval TVG_RESULT_INSUFFICIENT_CONDITION In case the animation is not loaded or the slot ID is invalid.
+* @retval TVG_RESULT_NOT_SUPPORTED The Lottie Animation is not supported.
+*
+* @since 1.0
+*/
+TVG_API Tvg_Result tvg_lottie_animation_del_slot(Tvg_Animation* animation, uint32_t id);
+
 
 
 /*!
