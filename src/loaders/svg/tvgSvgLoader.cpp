@@ -45,9 +45,12 @@
 
 #define STR_AS(A, B) !strcmp((A), (B))
 
-typedef bool (*parseAttributes)(const char* buf, unsigned bufLength, simpleXMLAttributeCb func, const void* data);
+typedef bool (*parseAttributes)(const char* buf, unsigned bufLength, xmlAttributeCb func, const void* data);
 typedef SvgNode* (*FactoryMethod)(SvgLoaderData* loader, SvgNode* parent, const char* buf, unsigned bufLength, parseAttributes func);
 typedef SvgStyleGradient* (*GradientFactoryMethod)(SvgLoaderData* loader, const char* buf, unsigned bufLength);
+static bool _parseStyleAttr(void* data, const char* key, const char* value);
+static bool _parseStyleAttr(void* data, const char* key, const char* value, bool style);
+
 
 static char* _skipSpace(const char* str, const char* end)
 {
@@ -62,7 +65,6 @@ static char* _copyId(const char* str)
 {
     if (!str) return nullptr;
     if (strlen(str) == 0) return nullptr;
-
     return duplicate(str);
 }
 
@@ -77,7 +79,7 @@ static const char* _skipComma(const char* content)
 
 static bool _parseNumber(const char** content, const char** end, float* number)
 {
-    const char* _end = end ? *end : nullptr;
+    auto _end = end ? *end : nullptr;
 
     *number = toFloat(*content, (char**)&_end);
     //If the start of string is not number
@@ -166,7 +168,7 @@ static float _gradientToFloat(const SvgParser* svgParse, const char* str, bool& 
 {
     char* end = nullptr;
 
-    float parsedValue = toFloat(str, &end);
+    auto parsedValue = toFloat(str, &end);
     isPercentage = false;
 
     if (strstr(str, "%")) {
@@ -189,7 +191,7 @@ static float _toOffset(const char* str)
     char* end = nullptr;
     auto strEnd = str + strlen(str);
 
-    float parsedValue = toFloat(str, &end);
+    auto parsedValue = toFloat(str, &end);
 
     end = _skipSpace(end, nullptr);
     auto ptr = strstr(str, "%");
@@ -206,7 +208,7 @@ static float _toOffset(const char* str)
 static int _toOpacity(const char* str)
 {
     char* end = nullptr;
-    float opacity = toFloat(str, &end);
+    auto opacity = toFloat(str, &end);
 
     if (end) {
         if (end[0] == '%' && end[1] == '\0') return lrint(opacity * 2.55f);
@@ -228,9 +230,9 @@ static SvgMaskType _toMaskType(const char* str)
 //If any is omitted, will be rendered in its default order after the specified ones.
 static bool _toPaintOrder(const char* str)
 {
-    uint8_t position = 1;
-    uint8_t strokePosition = 0;
-    uint8_t fillPosition = 0;
+    auto position = 1;
+    auto strokePosition = 0;
+    auto fillPosition = 0;
 
     while (*str != '\0') {
         str = _skipSpace(str, nullptr);
@@ -334,7 +336,7 @@ static void _parseDashArray(SvgLoaderData* loader, const char *str, SvgDash* das
 
     while (*str) {
         str = _skipComma(str);
-        float parsedValue = toFloat(str, &end);
+        auto parsedValue = toFloat(str, &end);
         if (str == end) break;
         if (parsedValue <= 0.0f) break;
         if (*end == '%') {
@@ -398,9 +400,7 @@ static size_t _srcFromUrl(const char* url, char*& src)
 
 static unsigned char _parseColor(const char* value, char** end)
 {
-    float r;
-
-    r = toFloat(value, end);
+    auto r = toFloat(value, end);
     *end = _skipSpace(*end, nullptr);
     if (**end == '%') {
         r = 255 * r / 100;
@@ -574,79 +574,77 @@ static constexpr struct
 
 static bool _hslToRgb(float hue, float saturation, float brightness, uint8_t* red, uint8_t* green, uint8_t* blue)
 {
-    if (!red || !green || !blue) return false;
-
-    float sv, vsf, f, p, q, t, v;
-    float _red = 0, _green = 0, _blue = 0;
-    uint32_t i = 0;
+    auto r = 0.0f, g = 0.0f, b = 0.0f;
+    auto i = 0;
 
     while (hue < 0) hue += 360.0f;
     hue = fmod(hue, 360.0f);
     saturation = saturation > 0 ? std::min(saturation, 1.0f) : 0.0f;
     brightness = brightness > 0 ? std::min(brightness, 1.0f) : 0.0f;
 
-    if (tvg::zero(saturation))  _red = _green = _blue = brightness;
+    if (tvg::zero(saturation))  r = g = b = brightness;
     else {
         if (tvg::equal(hue, 360.0)) hue = 0.0f;
         hue /= 60.0f;
 
-        v = (brightness <= 0.5f) ? (brightness * (1.0f + saturation)) : (brightness + saturation - (brightness * saturation));
-        p = brightness + brightness - v;
+        auto v = (brightness <= 0.5f) ? (brightness * (1.0f + saturation)) : (brightness + saturation - (brightness * saturation));
+        auto p = brightness + brightness - v;
 
+        float sv;
         if (!tvg::zero(v)) sv = (v - p) / v;
-        else sv = 0;
+        else sv = 0.0f;
 
         i = static_cast<uint8_t>(hue);
-        f = hue - i;
+        auto f = hue - i;
 
-        vsf = v * sv * f;
+        auto vsf = v * sv * f;
 
-        t = p + vsf;
-        q = v - vsf;
+        auto t = p + vsf;
+        auto q = v - vsf;
 
         switch (i) {
             case 0: {
-                _red = v;
-                _green = t;
-                _blue = p;
+                r = v;
+                g = t;
+                b = p;
                 break;
             }
             case 1: {
-                _red = q;
-                _green = v;
-                _blue = p;
+                r = q;
+                g = v;
+                b = p;
                 break;
             }
             case 2: {
-                _red = p;
-                _green = v;
-                _blue = t;
+                r = p;
+                g = v;
+                b = t;
                 break;
             }
             case 3: {
-                _red = p;
-                _green = q;
-                _blue = v;
+                r = p;
+                g = q;
+                b = v;
                 break;
             }
             case 4: {
-                _red = t;
-                _green = p;
-                _blue = v;
+                r = t;
+                g = p;
+                b = v;
                 break;
             }
             case 5: {
-                _red = v;
-                _green = p;
-                _blue = q;
+                r = v;
+                g = p;
+                b = q;
                 break;
             }
         }
     }
 
-    *red = (uint8_t)nearbyint(_red * 255.0f);
-    *green = (uint8_t)nearbyint(_green * 255.0f);
-    *blue = (uint8_t)nearbyint(_blue * 255.0f);
+    *red = (uint8_t)nearbyint(r * 255.0f);
+    *green = (uint8_t)nearbyint(g * 255.0f);
+    *blue = (uint8_t)nearbyint(b * 255.0f);
 
     return true;
 }
@@ -654,9 +652,7 @@ static bool _hslToRgb(float hue, float saturation, float brightness, uint8_t* re
 
 static bool _toColor(const char* str, uint8_t* r, uint8_t* g, uint8_t* b, char** ref)
 {
-    unsigned int len = strlen(str);
-    char *red, *green, *blue;
-    unsigned char tr, tg, tb;
+    auto len = strlen(str);
 
     if (len == 4 && str[0] == '#') {
         //Case for "#456" should be interpreted as "#445566"
@@ -688,11 +684,12 @@ static bool _toColor(const char* str, uint8_t* r, uint8_t* g, uint8_t* b, char**
         }
         return true;
     } else if (len >= 10 && (str[0] == 'r' || str[0] == 'R') && (str[1] == 'g' || str[1] == 'G') && (str[2] == 'b' || str[2] == 'B') && str[3] == '(' && str[len - 1] == ')') {
-        tr = _parseColor(str + 4, &red);
+        char *red, *green, *blue;
+        auto tr = _parseColor(str + 4, &red);
         if (red && *red == ',') {
-            tg = _parseColor(red + 1, &green);
+            auto tg = _parseColor(red + 1, &green);
             if (green && *green == ',') {
-                tb = _parseColor(green + 1, &blue);
+                auto tb = _parseColor(green + 1, &blue);
                 if (blue && blue[0] == ')' && blue[1] == '\0') {
                     *r = tr;
                     *g = tg;
@@ -747,10 +744,10 @@ static bool _toColor(const char* str, uint8_t* r, uint8_t* g, uint8_t* b, char**
 static char* _parseNumbersArray(char* str, float* points, int* ptCount, int len)
 {
     int count = 0;
-    char* end = nullptr;
 
     str = _skipSpace(str, nullptr);
     while ((count < len) && (isdigit(*str) || *str == '-' || *str == '+' || *str == '.')) {
+        char* end = nullptr;
         points[count++] = toFloat(str, &end);
         str = end;
         str = _skipSpace(str, nullptr);
@@ -807,8 +804,8 @@ static Matrix* _parseTransformationMatrix(const char* value)
 
     float points[POINT_CNT];
     int ptCount = 0;
-    char* str = (char*)value;
-    char* end = str + strlen(str);
+    auto str = (char*)value;
+    auto end = str + strlen(str);
 
     while (str < end) {
         auto state = MatrixState::Unknown;
@@ -902,10 +899,6 @@ static void _postpone(Array<SvgNodeIdPair>& nodes, SvgNode *node, char* id)
 }
 
 
-static bool _parseStyleAttr(void* data, const char* key, const char* value);
-static bool _parseStyleAttr(void* data, const char* key, const char* value, bool style);
-
-
 static bool _attrParseSvgNode(void* data, const char* key, const char* value)
 {
     SvgLoaderData* loader = (SvgLoaderData*)data;
@@ -951,7 +944,7 @@ static bool _attrParseSvgNode(void* data, const char* key, const char* value)
     } else if (STR_AS(key, "preserveAspectRatio")) {
         _parseAspectRatio(&value, &doc->align, &doc->meetOrSlice);
     } else if (STR_AS(key, "style")) {
-        return simpleXmlParseW3CAttribute(value, strlen(value), _parseStyleAttr, loader);
+        return xmlParseW3CAttribute(value, strlen(value), _parseStyleAttr, loader);
 #ifdef THORVG_LOG_ENABLED
     } else if ((STR_AS(key, "x") || STR_AS(key, "y")) && fabsf(toFloat(value, nullptr)) > FLOAT_EPSILON) {
         TVGLOG("SVG", "Unsupported attributes used [Elements type: Svg][Attribute: %s][Value: %s]", key, value);
@@ -1051,8 +1044,7 @@ static void _handleStrokeMiterlimitAttr(SvgLoaderData* loader, SvgNode* node, co
     // https://www.w3.org/TR/SVG2/painting.html#LineJoin
     // - A negative value for stroke-miterlimit must be treated as an illegal value.
     if (miterlimit < 0.0f) {
-        TVGERR("SVG", "A stroke-miterlimit change (%f <- %f) with a negative value is omitted.",
-            node->style->stroke.miterlimit, miterlimit);
+        TVGERR("SVG", "A stroke-miterlimit change (%f <- %f) with a negative value is omitted.", node->style->stroke.miterlimit, miterlimit);
         return;
     }
 
@@ -1261,7 +1253,7 @@ static bool _attrParseGNode(void* data, const char* key, const char* value)
     SvgNode* node = loader->svgParse->node;
 
     if (STR_AS(key, "style")) {
-        return simpleXmlParseW3CAttribute(value, strlen(value), _parseStyleAttr, loader);
+        return xmlParseW3CAttribute(value, strlen(value), _parseStyleAttr, loader);
     } else if (STR_AS(key, "transform")) {
         node->transform = _parseTransformationMatrix(value);
     } else if (STR_AS(key, "id")) {
@@ -1292,7 +1284,7 @@ static bool _attrParseClipPathNode(void* data, const char* key, const char* valu
     SvgClipNode* clip = &(node->node.clip);
 
     if (STR_AS(key, "style")) {
-        return simpleXmlParseW3CAttribute(value, strlen(value), _parseStyleAttr, loader);
+        return xmlParseW3CAttribute(value, strlen(value), _parseStyleAttr, loader);
     } else if (STR_AS(key, "transform")) {
         node->transform = _parseTransformationMatrix(value);
     } else if (STR_AS(key, "id")) {
@@ -1311,12 +1303,12 @@ static bool _attrParseClipPathNode(void* data, const char* key, const char* valu
 
 static bool _attrParseMaskNode(void* data, const char* key, const char* value)
 {
-    SvgLoaderData* loader = (SvgLoaderData*)data;
-    SvgNode* node = loader->svgParse->node;
-    SvgMaskNode* mask = &(node->node.mask);
+    auto loader = (SvgLoaderData*)data;
+    auto node = loader->svgParse->node;
+    auto mask = &(node->node.mask);
 
     if (STR_AS(key, "style")) {
-        return simpleXmlParseW3CAttribute(value, strlen(value), _parseStyleAttr, loader);
+        return xmlParseW3CAttribute(value, strlen(value), _parseStyleAttr, loader);
     } else if (STR_AS(key, "transform")) {
         node->transform = _parseTransformationMatrix(value);
     } else if (STR_AS(key, "id")) {
@@ -1337,8 +1329,8 @@ static bool _attrParseMaskNode(void* data, const char* key, const char* value)
 
 static bool _attrParseCssStyleNode(void* data, const char* key, const char* value)
 {
-    SvgLoaderData* loader = (SvgLoaderData*)data;
-    SvgNode* node = loader->svgParse->node;
+    auto loader = (SvgLoaderData*)data;
+    auto node = loader->svgParse->node;
 
     if (STR_AS(key, "id")) {
         if (value) tvg::free(node->id);
@@ -1373,7 +1365,6 @@ static bool _attrParseSymbolNode(void* data, const char* key, const char* value)
     } else {
         return _attrParseGNode(data, key, value);
     }
-
     return true;
 }
 
@@ -1433,7 +1424,6 @@ static bool _attrParseFilterNode(void* data, const char* key, const char* value)
     } else if (STR_AS(key, "filterUnits")) {
         if (STR_AS(value, "userSpaceOnUse")) filter->filterUserSpace = true;
     }
-
     return true;
 }
 
@@ -1484,22 +1474,13 @@ static SvgNode* _createNode(SvgNode* parent, SvgNodeType type)
 {
     SvgNode* node = tvg::calloc<SvgNode*>(1, sizeof(SvgNode));
 
-    if (!node) return nullptr;
-
     //Default fill property
     node->style = tvg::calloc<SvgStyleProperty*>(1, sizeof(SvgStyleProperty));
 
-    if (!node->style) {
-        tvg::free(node);
-        return nullptr;
-    }
-
     //Set the default values other than 0/false: https://www.w3.org/TR/SVGTiny12/painting.html#SpecifyingPaint
     node->style->opacity = 255;
-
     node->style->fill.opacity = 255;
     node->style->fill.fillRule = FillRule::NonZero;
-
     node->style->stroke.paint.none = true;
     node->style->stroke.opacity = 255;
     node->style->stroke.width = 1;
@@ -1507,11 +1488,8 @@ static SvgNode* _createNode(SvgNode* parent, SvgNodeType type)
     node->style->stroke.join = StrokeJoin::Miter;
     node->style->stroke.miterlimit = 4.0f;
     node->style->stroke.scale = 1.0;
-
     node->style->paintOrder = _toPaintOrder("fill stroke");
-
     node->style->display = true;
-
     node->parent = parent;
     node->type = type;
 
@@ -1523,19 +1501,14 @@ static SvgNode* _createNode(SvgNode* parent, SvgNodeType type)
 static SvgNode* _createDefsNode(TVG_UNUSED SvgLoaderData* loader, TVG_UNUSED SvgNode* parent, const char* buf, unsigned bufLength, TVG_UNUSED parseAttributes func)
 {
     if (loader->def && loader->doc->node.doc.defs) return loader->def;
-    SvgNode* node = _createNode(nullptr, SvgNodeType::Defs);
-
-    loader->def = node;
-    loader->doc->node.doc.defs = node;
-    return node;
+    loader->def = loader->doc->node.doc.defs = _createNode(nullptr, SvgNodeType::Defs);
+    return loader->def;
 }
 
 
 static SvgNode* _createGNode(TVG_UNUSED SvgLoaderData* loader, SvgNode* parent, const char* buf, unsigned bufLength, parseAttributes func)
 {
     loader->svgParse->node = _createNode(parent, SvgNodeType::G);
-    if (!loader->svgParse->node) return nullptr;
-
     func(buf, bufLength, _attrParseGNode, loader);
     return loader->svgParse->node;
 }
@@ -1544,8 +1517,7 @@ static SvgNode* _createGNode(TVG_UNUSED SvgLoaderData* loader, SvgNode* parent, 
 static SvgNode* _createSvgNode(SvgLoaderData* loader, SvgNode* parent, const char* buf, unsigned bufLength, parseAttributes func)
 {
     loader->svgParse->node = _createNode(parent, SvgNodeType::Doc);
-    if (!loader->svgParse->node) return nullptr;
-    SvgDocNode* doc = &(loader->svgParse->node->node.doc);
+    auto doc = &(loader->svgParse->node->node.doc);
 
     loader->svgParse->global.w = 1.0f;
     loader->svgParse->global.h = 1.0f;
@@ -1663,7 +1635,7 @@ static bool _attrParsePathNode(void* data, const char* key, const char* value)
         //Temporary: need to copy
         path->path = _copyId(value);
     } else if (STR_AS(key, "style")) {
-        return simpleXmlParseW3CAttribute(value, strlen(value), _parseStyleAttr, loader);
+        return xmlParseW3CAttribute(value, strlen(value), _parseStyleAttr, loader);
     } else if (STR_AS(key, "clip-path")) {
         _handleClipPathAttr(loader, node, value);
     } else if (STR_AS(key, "mask")) {
@@ -1727,7 +1699,7 @@ static bool _attrParseCircleNode(void* data, const char* key, const char* value)
     }
 
     if (STR_AS(key, "style")) {
-        return simpleXmlParseW3CAttribute(value, strlen(value), _parseStyleAttr, loader);
+        return xmlParseW3CAttribute(value, strlen(value), _parseStyleAttr, loader);
     } else if (STR_AS(key, "clip-path")) {
         _handleClipPathAttr(loader, node, value);
     } else if (STR_AS(key, "mask")) {
@@ -1796,7 +1768,7 @@ static bool _attrParseEllipseNode(void* data, const char* key, const char* value
     } else if (STR_AS(key, "class")) {
         _handleCssClassAttr(loader, node, value);
     } else if (STR_AS(key, "style")) {
-        return simpleXmlParseW3CAttribute(value, strlen(value), _parseStyleAttr, loader);
+        return xmlParseW3CAttribute(value, strlen(value), _parseStyleAttr, loader);
     } else if (STR_AS(key, "clip-path")) {
         _handleClipPathAttr(loader, node, value);
     } else if (STR_AS(key, "mask")) {
@@ -1847,7 +1819,7 @@ static bool _attrParsePolygonNode(void* data, const char* key, const char* value
     if (STR_AS(key, "points")) {
         return _attrParsePolygonPoints(value, polygon);
     } else if (STR_AS(key, "style")) {
-        return simpleXmlParseW3CAttribute(value, strlen(value), _parseStyleAttr, loader);
+        return xmlParseW3CAttribute(value, strlen(value), _parseStyleAttr, loader);
     } else if (STR_AS(key, "clip-path")) {
         _handleClipPathAttr(loader, node, value);
     } else if (STR_AS(key, "mask")) {
@@ -1936,7 +1908,7 @@ static bool _attrParseRectNode(void* data, const char* key, const char* value)
     } else if (STR_AS(key, "class")) {
         _handleCssClassAttr(loader, node, value);
     } else if (STR_AS(key, "style")) {
-        ret = simpleXmlParseW3CAttribute(value, strlen(value), _parseStyleAttr, loader);
+        ret = xmlParseW3CAttribute(value, strlen(value), _parseStyleAttr, loader);
     } else if (STR_AS(key, "clip-path")) {
         _handleClipPathAttr(loader, node, value);
     } else if (STR_AS(key, "mask")) {
@@ -2001,7 +1973,7 @@ static bool _attrParseLineNode(void* data, const char* key, const char* value)
     } else if (STR_AS(key, "class")) {
         _handleCssClassAttr(loader, node, value);
     } else if (STR_AS(key, "style")) {
-        return simpleXmlParseW3CAttribute(value, strlen(value), _parseStyleAttr, loader);
+        return xmlParseW3CAttribute(value, strlen(value), _parseStyleAttr, loader);
     } else if (STR_AS(key, "clip-path")) {
         _handleClipPathAttr(loader, node, value);
     } else if (STR_AS(key, "mask")) {
@@ -2076,7 +2048,7 @@ static bool _attrParseImageNode(void* data, const char* key, const char* value)
     } else if (STR_AS(key, "class")) {
         _handleCssClassAttr(loader, node, value);
     } else if (STR_AS(key, "style")) {
-        return simpleXmlParseW3CAttribute(value, strlen(value), _parseStyleAttr, loader);
+        return xmlParseW3CAttribute(value, strlen(value), _parseStyleAttr, loader);
     } else if (STR_AS(key, "clip-path")) {
         _handleClipPathAttr(loader, node, value);
     } else if (STR_AS(key, "mask")) {
@@ -2143,7 +2115,7 @@ static SvgNode* _getDefsNode(SvgNode* node)
 {
     if (!node) return nullptr;
 
-    while (node->parent != nullptr) {
+    while (node->parent) {
         node = node->parent;
     }
 
@@ -2158,16 +2130,14 @@ static SvgNode* _findNodeById(SvgNode *node, const char* id)
 {
     if (!node) return nullptr;
 
-    SvgNode* result = nullptr;
     if (node->id && STR_AS(node->id, id)) return node;
 
     if (node->child.count > 0) {
         ARRAY_FOREACH(p, node->child) {
-            result = _findNodeById(*p, id);
-            if (result) break;
+            if (auto result = _findNodeById(*p, id)) return result;
         }
     }
-    return result;
+    return nullptr;
 }
 
 
@@ -2291,7 +2261,7 @@ static bool _attrParseTextNode(void* data, const char* key, const char* value)
             text->fontFamily = duplicate(value);
         }
     } else if (STR_AS(key, "style")) {
-        return simpleXmlParseW3CAttribute(value, strlen(value), _parseStyleAttr, loader);
+        return xmlParseW3CAttribute(value, strlen(value), _parseStyleAttr, loader);
     } else if (STR_AS(key, "clip-path")) {
         _handleClipPathAttr(loader, node, value);
     } else if (STR_AS(key, "mask")) {
@@ -2677,7 +2647,7 @@ static SvgStyleGradient* _createRadialGradient(SvgLoaderData* loader, const char
 
     loader->svgParse->gradient.parsedFx = false;
     loader->svgParse->gradient.parsedFy = false;
-    simpleXmlParseAttributes(buf, bufLength,
+    xmlParseAttributes(buf, bufLength,
         _attrParseRadialGradientNode, loader);
 
     for (unsigned int i = 0; i < sizeof(radialTags) / sizeof(radialTags[0]); i++) {
@@ -2748,7 +2718,7 @@ static bool _attrParseStops(void* data, const char* key, const char* value)
             _toColor(value, &stop->r, &stop->g, &stop->b, nullptr);
         }
     } else if (STR_AS(key, "style")) {
-        simpleXmlParseW3CAttribute(value, strlen(value), _attrParseStopsStyle, data);
+        xmlParseW3CAttribute(value, strlen(value), _attrParseStopsStyle, data);
     } else {
         return false;
     }
@@ -2957,7 +2927,7 @@ static SvgStyleGradient* _createLinearGradient(SvgLoaderData* loader, const char
     grad->linear->x2 = 1.0f;
     grad->linear->isX2Percentage = true;
 
-    simpleXmlParseAttributes(buf, bufLength, _attrParseLinearGradientNode, loader);
+    xmlParseAttributes(buf, bufLength, _attrParseLinearGradientNode, loader);
 
     for (unsigned int i = 0; i < sizeof(linear_tags) / sizeof(linear_tags[0]); i++) {
         linear_tags[i].tagRecalc(loader, grad->linear, grad->userSpace);
@@ -3454,7 +3424,7 @@ static void _svgLoaderParserXmlOpen(SvgLoaderData* loader, const char* content, 
     GradientFactoryMethod gradientMethod;
     SvgNode *node = nullptr, *parent = nullptr;
     loader->level++;
-    attrs = simpleXmlFindAttributesTag(content, length);
+    attrs = xmlFindAttributesTag(content, length);
 
     if (!attrs) {
         //Parse the empty tag
@@ -3478,7 +3448,7 @@ static void _svgLoaderParserXmlOpen(SvgLoaderData* loader, const char* content, 
         if (empty) return;
         if (!loader->doc) {
             if (!STR_AS(tagName, "svg")) return; //Not a valid svg document
-            node = method(loader, nullptr, attrs, attrsLength, simpleXmlParseAttributes);
+            node = method(loader, nullptr, attrs, attrsLength, xmlParseAttributes);
             loader->doc = node;
         } else {
             if (STR_AS(tagName, "svg")) return; //Already loaded <svg>(SvgNodeType::Doc) tag
@@ -3488,13 +3458,13 @@ static void _svgLoaderParserXmlOpen(SvgLoaderData* loader, const char* content, 
                 // TODO: For now only the first style node is saved. After the css id selector
                 // is introduced this if condition shouldn't be necessary any more
                 if (!loader->cssStyle) {
-                    node = method(loader, nullptr, attrs, attrsLength, simpleXmlParseAttributes);
+                    node = method(loader, nullptr, attrs, attrsLength, xmlParseAttributes);
                     loader->cssStyle = node;
                     loader->doc->node.doc.style = node;
                     loader->openedTag = OpenedTagType::Style;
                 }
             } else {
-                node = method(loader, parent, attrs, attrsLength, simpleXmlParseAttributes);
+                node = method(loader, parent, attrs, attrsLength, xmlParseAttributes);
             }
         }
 
@@ -3506,7 +3476,7 @@ static void _svgLoaderParserXmlOpen(SvgLoaderData* loader, const char* content, 
     } else if ((method = _findGraphicsFactory(tagName))) {
         if (loader->stack.count > 0) parent = loader->stack.last();
         else parent = loader->doc;
-        node = method(loader, parent, attrs, attrsLength, simpleXmlParseAttributes);
+        node = method(loader, parent, attrs, attrsLength, xmlParseAttributes);
         if (node && !empty) {
             if (STR_AS(tagName, "text")) loader->openedTag = OpenedTagType::Text;
             auto defs = _createDefsNode(loader, nullptr, nullptr, 0, nullptr);
@@ -3537,7 +3507,7 @@ static void _svgLoaderParserXmlOpen(SvgLoaderData* loader, const char* content, 
         /* default value for opacity */
         loader->svgParse->gradStop = {0.0f, 0, 0, 0, 255};
         loader->svgParse->flags = SvgStopStyleFlags::StopDefault;
-        simpleXmlParseAttributes(attrs, attrsLength, _attrParseStops, loader);
+        xmlParseAttributes(attrs, attrsLength, _attrParseStops, loader);
         loader->latestGradient->stops.push(loader->svgParse->gradStop);
     } else {
         loader->latestGradient = nullptr;
@@ -3548,8 +3518,8 @@ static void _svgLoaderParserXmlOpen(SvgLoaderData* loader, const char* content, 
 
 static void _svgLoaderParserText(SvgLoaderData* loader, const char* content, unsigned int length)
 {
-    auto text = &loader->svgParse->node->node.text;
-    text->text = append(text->text, content, length);
+    auto& text = loader->svgParse->node->node.text;
+    text.text = append(text.text, content, length);
 }
 
 
@@ -3564,19 +3534,19 @@ static void _svgLoaderParserXmlCssStyle(SvgLoaderData* loader, const char* conte
     GradientFactoryMethod gradientMethod;
     SvgNode *node = nullptr;
 
-    while (auto next = simpleXmlParseCSSAttribute(content, length, &tag, &name, &attrs, &attrsLength)) {
+    while (auto next = xmlParseCSSAttribute(content, length, &tag, &name, &attrs, &attrsLength)) {
         if ((method = _findGroupFactory(tag))) {
-            if ((node = method(loader, loader->cssStyle, attrs, attrsLength, simpleXmlParseW3CAttribute))) node->id = _copyId(name);
+            if ((node = method(loader, loader->cssStyle, attrs, attrsLength, xmlParseW3CAttribute))) node->id = _copyId(name);
         } else if ((method = _findGraphicsFactory(tag))) {
-            if ((node = method(loader, loader->cssStyle, attrs, attrsLength, simpleXmlParseW3CAttribute))) node->id = _copyId(name);
+            if ((node = method(loader, loader->cssStyle, attrs, attrsLength, xmlParseW3CAttribute))) node->id = _copyId(name);
         } else if ((gradientMethod = _findGradientFactory(tag))) {
             TVGLOG("SVG", "Unsupported elements used in the internal CSS style sheets [Elements: %s]", tag);
         } else if (STR_AS(tag, "stop")) {
             TVGLOG("SVG", "Unsupported elements used in the internal CSS style sheets [Elements: %s]", tag);
         } else if (STR_AS(tag, "all")) {
-            if ((node = _createCssStyleNode(loader, loader->cssStyle, attrs, attrsLength, simpleXmlParseW3CAttribute))) node->id = _copyId(name);
+            if ((node = _createCssStyleNode(loader, loader->cssStyle, attrs, attrsLength, xmlParseW3CAttribute))) node->id = _copyId(name);
         } else if (STR_AS(tag, "@font-face")) { //css at-rule specifying font
-            _createFontFace(loader, attrs, attrsLength, simpleXmlParseW3CAttribute);
+            _createFontFace(loader, attrs, attrsLength, xmlParseW3CAttribute);
         } else if (!isIgnoreUnsupportedLogElements(tag)) {
             TVGLOG("SVG", "Unsupported elements used in the internal CSS style sheets [Elements: %s]", tag);
         }
@@ -3591,35 +3561,35 @@ static void _svgLoaderParserXmlCssStyle(SvgLoaderData* loader, const char* conte
 }
 
 
-static bool _svgLoaderParser(void* data, SimpleXMLType type, const char* content, unsigned int length)
+static bool _svgLoaderParser(void* data, XMLType type, const char* content, unsigned int length)
 {
     SvgLoaderData* loader = (SvgLoaderData*)data;
 
     switch (type) {
-        case SimpleXMLType::Open: {
+        case XMLType::Open: {
             _svgLoaderParserXmlOpen(loader, content, length, false);
             break;
         }
-        case SimpleXMLType::OpenEmpty: {
+        case XMLType::OpenEmpty: {
             _svgLoaderParserXmlOpen(loader, content, length, true);
             break;
         }
-        case SimpleXMLType::Close: {
+        case XMLType::Close: {
             _svgLoaderParserXmlClose(loader, content, length);
             break;
         }
-        case SimpleXMLType::Data:
-        case SimpleXMLType::CData: {
+        case XMLType::Data:
+        case XMLType::CData: {
             if (loader->openedTag == OpenedTagType::Style) _svgLoaderParserXmlCssStyle(loader, content, length);
             else if (loader->openedTag == OpenedTagType::Text) _svgLoaderParserText(loader, content, length);
             break;
         }
-        case SimpleXMLType::DoctypeChild: {
+        case XMLType::DoctypeChild: {
             break;
         }
-        case SimpleXMLType::Ignored:
-        case SimpleXMLType::Comment:
-        case SimpleXMLType::Doctype: {
+        case XMLType::Ignored:
+        case XMLType::Comment:
+        case XMLType::Doctype: {
             break;
         }
         default: {
@@ -3631,91 +3601,44 @@ static bool _svgLoaderParser(void* data, SimpleXMLType type, const char* content
 }
 
 
-static void _inefficientNodeCheck(TVG_UNUSED SvgNode* node)
-{
-#ifdef THORVG_LOG_ENABLED
-    auto type = simpleXmlNodeTypeToString(node->type);
-
-    if (!node->style->display && node->type != SvgNodeType::ClipPath) TVGLOG("SVG", "Inefficient elements used [Display is none][Node Type : %s]", type);
-    if (node->style->opacity == 0) TVGLOG("SVG", "Inefficient elements used [Opacity is zero][Node Type : %s]", type);
-    if (node->style->fill.opacity == 0 && node->style->stroke.opacity == 0) TVGLOG("SVG", "Inefficient elements used [Fill opacity and stroke opacity are zero][Node Type : %s]", type);
-
-    switch (node->type) {
-        case SvgNodeType::Path: {
-            if (!node->node.path.path) TVGLOG("SVG", "Inefficient elements used [Empty path][Node Type : %s]", type);
-            break;
-        }
-        case SvgNodeType::Ellipse: {
-            if (node->node.ellipse.rx == 0 && node->node.ellipse.ry == 0) TVGLOG("SVG", "Inefficient elements used [Size is zero][Node Type : %s]", type);
-            break;
-        }
-        case SvgNodeType::Polygon:
-        case SvgNodeType::Polyline: {
-            if (node->node.polygon.pts.count < 2) TVGLOG("SVG", "Inefficient elements used [Invalid Polygon][Node Type : %s]", type);
-            break;
-        }
-        case SvgNodeType::Circle: {
-            if (node->node.circle.r == 0) TVGLOG("SVG", "Inefficient elements used [Size is zero][Node Type : %s]", type);
-            break;
-        }
-        case SvgNodeType::Rect: {
-            if (node->node.rect.w == 0 && node->node.rect.h) TVGLOG("SVG", "Inefficient elements used [Size is zero][Node Type : %s]", type);
-            break;
-        }
-        case SvgNodeType::Line: {
-            if (node->node.line.x1 == node->node.line.x2 && node->node.line.y1 == node->node.line.y2) TVGLOG("SVG", "Inefficient elements used [Size is zero][Node Type : %s]", type);
-            break;
-        }
-        default: break;
-    }
-#endif
-}
-
-
 static void _updateStyle(SvgNode* node, SvgStyleProperty* parentStyle)
 {
     _styleInherit(node->style, parentStyle);
-    _inefficientNodeCheck(node);
-
     ARRAY_FOREACH(p, node->child) {
         _updateStyle(*p, node->style);
     }
 }
 
 
-static SvgStyleGradient* _gradientDup(SvgLoaderData* loader, Array<SvgStyleGradient*>* gradients, const char* id)
+static void _updateGradient(SvgLoaderData* loader, SvgNode* node, Array<SvgStyleGradient*>* gradients)
 {
-    SvgStyleGradient* result = nullptr;
+    auto duplicate = [&](SvgLoaderData* loader, Array<SvgStyleGradient*>* gradients, const char* id) -> SvgStyleGradient* {
+        SvgStyleGradient* result = nullptr;
 
-    ARRAY_FOREACH(p, *gradients) {
-        if ((*p)->id && STR_AS((*p)->id, id)) {
-            result = _cloneGradient(*p);
-            break;
-        }
-    }
-
-    if (result && result->ref) {
         ARRAY_FOREACH(p, *gradients) {
-            if ((*p)->id && STR_AS((*p)->id, result->ref)) {
-                _inheritGradient(loader, result, *p);
+            if ((*p)->id && STR_AS((*p)->id, id)) {
+                result = _cloneGradient(*p);
                 break;
             }
         }
-    }
+        if (result && result->ref) {
+            ARRAY_FOREACH(p, *gradients) {
+                if ((*p)->id && STR_AS((*p)->id, result->ref)) {
+                    _inheritGradient(loader, result, *p);
+                    break;
+                }
+            }
+        }
+        return result;
+    };
 
-    return result;
-}
-
-
-static void _updateGradient(SvgLoaderData* loader, SvgNode* node, Array<SvgStyleGradient*>* gradients)
-{
     if (node->child.count > 0) {
         ARRAY_FOREACH(p, node->child) {
             _updateGradient(loader, *p, gradients);
         }
     } else {
         if (node->style->fill.paint.url) {
-            auto newGrad = _gradientDup(loader, gradients, node->style->fill.paint.url);
+            auto newGrad = duplicate(loader, gradients, node->style->fill.paint.url);
             if (newGrad) {
                 if (node->style->fill.paint.gradient) {
                     node->style->fill.paint.gradient->clear();
@@ -3725,7 +3648,7 @@ static void _updateGradient(SvgLoaderData* loader, SvgNode* node, Array<SvgStyle
             }
         }
         if (node->style->stroke.paint.url) {
-            auto newGrad = _gradientDup(loader, gradients, node->style->stroke.paint.url);
+            auto newGrad = duplicate(loader, gradients, node->style->stroke.paint.url);
             if (newGrad) {
                 if (node->style->stroke.paint.gradient) {
                     node->style->stroke.paint.gradient->clear();
@@ -3759,14 +3682,10 @@ static void _updateComposite(SvgNode* node, SvgNode* root)
 static void _updateFilter(SvgNode* node, SvgNode* root)
 {
     if (node->style->filter.url && !node->style->filter.node) {
-        SvgNode* findResult = _findNodeById(root, node->style->filter.url);
-        if (findResult) node->style->filter.node = findResult;
+        node->style->filter.node = _findNodeById(root, node->style->filter.url);
     }
-    if (node->child.count > 0) {
-        auto child = node->child.data;
-        for (uint32_t i = 0; i < node->child.count; ++i, ++child) {
-            _updateFilter(*child, root);
-        }
+    ARRAY_FOREACH(child, node->child) {
+        _updateFilter(*child, root);
     }
 }
 
@@ -3858,7 +3777,7 @@ static bool _svgLoaderParserForValidCheckXmlOpen(SvgLoaderData* loader, const ch
     SvgNode *node = nullptr;
     int attrsLength = 0;
     loader->level++;
-    attrs = simpleXmlFindAttributesTag(content, length);
+    attrs = xmlFindAttributesTag(content, length);
 
     if (!attrs) {
         //Parse the empty tag
@@ -3878,7 +3797,7 @@ static bool _svgLoaderParserForValidCheckXmlOpen(SvgLoaderData* loader, const ch
     if ((method = _findGroupFactory(tagName))) {
         if (!loader->doc) {
             if (!STR_AS(tagName, "svg")) return true; //Not a valid svg document
-            node = method(loader, nullptr, attrs, attrsLength, simpleXmlParseAttributes);
+            node = method(loader, nullptr, attrs, attrsLength, xmlParseAttributes);
             loader->doc = node;
             loader->stack.push(node);
             return false;
@@ -3888,24 +3807,16 @@ static bool _svgLoaderParserForValidCheckXmlOpen(SvgLoaderData* loader, const ch
 }
 
 
-static bool _svgLoaderParserForValidCheck(void* data, SimpleXMLType type, const char* content, unsigned int length)
+static bool _svgLoaderParserForValidCheck(void* data, XMLType type, const char* content, unsigned int length)
 {
-    SvgLoaderData* loader = (SvgLoaderData*)data;
-    bool res = true;;
-
     switch (type) {
-        case SimpleXMLType::Open:
-        case SimpleXMLType::OpenEmpty: {
+        case XMLType::Open:
+        case XMLType::OpenEmpty: {
             //If 'res' is false, it means <svg> tag is found.
-            res = _svgLoaderParserForValidCheckXmlOpen(loader, content, length);
-            break;
+            return _svgLoaderParserForValidCheckXmlOpen(static_cast<SvgLoaderData*>(data), content, length);
         }
-        default: {
-            break;
-        }
+        default: return true;
     }
-
-    return res;
 }
 
 
@@ -3973,7 +3884,7 @@ void SvgLoader::run(unsigned tid)
         return;
     }
 
-    if (!simpleXmlParse(content, size, true, _svgLoaderParser, &(loaderData))) return;
+    if (!xmlParse(content, size, true, _svgLoaderParser, &(loaderData))) return;
 
     if (loaderData.doc) {
         auto defs = loaderData.doc->node.doc.defs;
@@ -3994,16 +3905,17 @@ void SvgLoader::run(unsigned tid)
 
         if (loaderData.gradients.count > 0) _updateGradient(&loaderData, loaderData.doc, &loaderData.gradients);
         if (defs) _updateGradient(&loaderData, loaderData.doc, &defs->node.defs.gradients);
-    }
-    root = svgSceneBuild(loaderData, vbox, w, h, align, meetOrSlice, svgPath, viewFlag);
 
-    //In case no viewbox and width/height data is provided the completion of loading
-    //has to be forced, in order to establish this data based on the whole picture.
-    if (!(viewFlag & SvgViewFlag::Viewbox)) {
-        //Override viewbox & size again after svg loading.
-        vbox = loaderData.doc->node.doc.vbox;
-        w = loaderData.doc->node.doc.w;
-        h = loaderData.doc->node.doc.h;
+        root = svgSceneBuild(loaderData, vbox, w, h, align, meetOrSlice, svgPath, viewFlag);
+
+        //In case no viewbox and width/height data is provided the completion of loading
+        //has to be forced, in order to establish this data based on the whole picture.
+        if (!(viewFlag & SvgViewFlag::Viewbox)) {
+            //Override viewbox & size again after svg loading.
+            vbox = loaderData.doc->node.doc.vbox;
+            w = loaderData.doc->node.doc.w;
+            h = loaderData.doc->node.doc.h;
+        }
     }
 
     clear(false);
@@ -4016,70 +3928,67 @@ bool SvgLoader::header()
     //If the <svg> tag is found, the loaded file is valid and stores viewbox information.
     //After that, the remaining content data is parsed in order with async.
     loaderData.svgParse = tvg::malloc<SvgParser*>(sizeof(SvgParser));
-    if (!loaderData.svgParse) return false;
-
     loaderData.svgParse->flags = SvgStopStyleFlags::StopDefault;
     viewFlag = SvgViewFlag::None;
 
-    simpleXmlParse(content, size, true, _svgLoaderParserForValidCheck, &(loaderData));
+    xmlParse(content, size, true, _svgLoaderParserForValidCheck, &(loaderData));
 
-    if (loaderData.doc && loaderData.doc->type == SvgNodeType::Doc) {
-        viewFlag = loaderData.doc->node.doc.viewFlag;
-        align = loaderData.doc->node.doc.align;
-        meetOrSlice = loaderData.doc->node.doc.meetOrSlice;
-
-        if (viewFlag & SvgViewFlag::Viewbox) {
-            vbox = loaderData.doc->node.doc.vbox;
-
-            if (viewFlag & SvgViewFlag::Width) w = loaderData.doc->node.doc.w;
-            else {
-                w = loaderData.doc->node.doc.vbox.w;
-                if (viewFlag & SvgViewFlag::WidthInPercent) {
-                    w *= loaderData.doc->node.doc.w;
-                    viewFlag = (viewFlag ^ SvgViewFlag::WidthInPercent);
-                }
-                viewFlag = (viewFlag | SvgViewFlag::Width);
-            }
-            if (viewFlag & SvgViewFlag::Height) h = loaderData.doc->node.doc.h;
-            else {
-                h = loaderData.doc->node.doc.vbox.h;
-                if (viewFlag & SvgViewFlag::HeightInPercent) {
-                    h *= loaderData.doc->node.doc.h;
-                    viewFlag = (viewFlag ^ SvgViewFlag::HeightInPercent);
-                }
-                viewFlag = (viewFlag | SvgViewFlag::Height);
-            }
-        //In case no viewbox and width/height data is provided the completion of loading
-        //has to be forced, in order to establish this data based on the whole picture.
-        } else {
-            //Before loading, set default viewbox & size if they are empty
-            vbox.x = vbox.y = 0.0f;
-            if (viewFlag & SvgViewFlag::Width) {
-                vbox.w = w = loaderData.doc->node.doc.w;
-            } else {
-                vbox.w = 1.0f;
-                if (viewFlag & SvgViewFlag::WidthInPercent) {
-                    w = loaderData.doc->node.doc.w;
-                } else w = 1.0f;
-            }
-
-            if (viewFlag & SvgViewFlag::Height) {
-                vbox.h = h = loaderData.doc->node.doc.h;
-            } else {
-                vbox.h = 1.0f;
-                if (viewFlag & SvgViewFlag::HeightInPercent) {
-                    h = loaderData.doc->node.doc.h;
-                } else h = 1.0f;
-            }
-
-            run(0);
-        }
-
-        return true;
+    if (!loaderData.doc || loaderData.doc->type != SvgNodeType::Doc) {
+        TVGLOG("SVG", "No SVG File. There is no <svg/>");
+        return false;
     }
 
-    TVGLOG("SVG", "No SVG File. There is no <svg/>");
-    return false;
+    viewFlag = loaderData.doc->node.doc.viewFlag;
+    align = loaderData.doc->node.doc.align;
+    meetOrSlice = loaderData.doc->node.doc.meetOrSlice;
+
+    if (viewFlag & SvgViewFlag::Viewbox) {
+        vbox = loaderData.doc->node.doc.vbox;
+
+        if (viewFlag & SvgViewFlag::Width) w = loaderData.doc->node.doc.w;
+        else {
+            w = loaderData.doc->node.doc.vbox.w;
+            if (viewFlag & SvgViewFlag::WidthInPercent) {
+                w *= loaderData.doc->node.doc.w;
+                viewFlag = (viewFlag ^ SvgViewFlag::WidthInPercent);
+            }
+            viewFlag = (viewFlag | SvgViewFlag::Width);
+        }
+        if (viewFlag & SvgViewFlag::Height) h = loaderData.doc->node.doc.h;
+        else {
+            h = loaderData.doc->node.doc.vbox.h;
+            if (viewFlag & SvgViewFlag::HeightInPercent) {
+                h *= loaderData.doc->node.doc.h;
+                viewFlag = (viewFlag ^ SvgViewFlag::HeightInPercent);
+            }
+            viewFlag = (viewFlag | SvgViewFlag::Height);
+        }
+    //In case no viewbox and width/height data is provided the completion of loading
+    //has to be forced, in order to establish this data based on the whole picture.
+    } else {
+        //Before loading, set default viewbox & size if they are empty
+        vbox.x = vbox.y = 0.0f;
+        if (viewFlag & SvgViewFlag::Width) {
+            vbox.w = w = loaderData.doc->node.doc.w;
+        } else {
+            vbox.w = 1.0f;
+            if (viewFlag & SvgViewFlag::WidthInPercent) {
+                w = loaderData.doc->node.doc.w;
+            } else w = 1.0f;
+        }
+
+        if (viewFlag & SvgViewFlag::Height) {
+            vbox.h = h = loaderData.doc->node.doc.h;
+        } else {
+            vbox.h = 1.0f;
+            if (viewFlag & SvgViewFlag::HeightInPercent) {
+                h = loaderData.doc->node.doc.h;
+            } else h = 1.0f;
+        }
+
+        run(0);
+    }
+    return true;
 }
 
 
