@@ -811,6 +811,7 @@ static bool _rasterDirectMattedRleImage(SwSurface* surface, const SwImage* image
     auto alpha = surface->alpha(surface->compositor->method);
 
     for (uint32_t i = 0; i < image->rle->size; ++i, ++span) {
+        if (span->y + image->oy < 0 || span->x + image->ox < 0) continue;
         auto dst = &surface->buf32[span->y * surface->stride + span->x];
         auto cmp = &cbuffer[(span->y * surface->compositor->image.stride + span->x) * csize];
         auto img = image->buf32 + (span->y + image->oy) * image->stride + (span->x + image->ox);
@@ -836,6 +837,7 @@ static bool _rasterDirectBlendingRleImage(SwSurface* surface, const SwImage* ima
     auto span = image->rle->spans;
 
     for (uint32_t i = 0; i < image->rle->size; ++i, ++span) {
+        if (span->y + image->oy < 0 || span->x + image->ox < 0) continue;
         auto dst = &surface->buf32[span->y * surface->stride + span->x];
         auto img = image->buf32 + (span->y + image->oy) * image->stride + (span->x + image->ox);
         auto alpha = MULTIPLY(span->coverage, opacity);
@@ -859,6 +861,7 @@ static bool _rasterDirectRleImage(SwSurface* surface, const SwImage* image, uint
     auto span = image->rle->spans;
 
     for (uint32_t i = 0; i < image->rle->size; ++i, ++span) {
+        if (span->y + image->oy < 0 || span->x + image->ox < 0) continue;
         auto dst = &surface->buf32[span->y * surface->stride + span->x];
         auto img = image->buf32 + (span->y + image->oy) * image->stride + (span->x + image->ox);
         auto alpha = MULTIPLY(span->coverage, opacity);
