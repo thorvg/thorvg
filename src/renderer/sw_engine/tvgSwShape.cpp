@@ -97,7 +97,7 @@ static bool _outlineClose(SwOutline& outline)
 }
 
 
-static void _dashLineTo(SwDashStroke& dash, const Point* to, const Matrix& transform)
+static void _dashLineTo(SwDashStroke& dash, const Point* to, const Matrix& transform, bool addZero)
 {
     Line cur = {dash.ptCur, *to};
     auto len = cur.length();
@@ -118,7 +118,7 @@ static void _dashLineTo(SwDashStroke& dash, const Point* to, const Matrix& trans
     } else {
         while (len - dash.curLen > 0.0001f) {
             Line left, right;
-            if (dash.curLen > 0) {
+            if (dash.curLen > 0 || addZero) {
                 len -= dash.curLen;
                 cur.split(dash.curLen, left, right);
                 if (!dash.curOpGap) {
@@ -158,7 +158,7 @@ static void _dashLineTo(SwDashStroke& dash, const Point* to, const Matrix& trans
 }
 
 
-static void _dashCubicTo(SwDashStroke& dash, const Point* ctrl1, const Point* ctrl2, const Point* to, const Matrix& transform)
+static void _dashCubicTo(SwDashStroke& dash, const Point* ctrl1, const Point* ctrl2, const Point* to, const Matrix& transform, bool addZero)
 {
     Bezier cur = {dash.ptCur, *ctrl1, *ctrl2, *to};
     auto len = cur.length();
@@ -179,7 +179,7 @@ static void _dashCubicTo(SwDashStroke& dash, const Point* ctrl1, const Point* ct
     } else {
         while ((len - dash.curLen) > 0.0001f) {
             Bezier left, right;
-            if (dash.curLen > 0) {
+            if (dash.curLen > 0 || addZero) {
                 len -= dash.curLen;
                 cur.split(dash.curLen, left, right);
                 if (!dash.curOpGap) {
@@ -219,9 +219,9 @@ static void _dashCubicTo(SwDashStroke& dash, const Point* ctrl1, const Point* ct
 }
 
 
-static void _dashClose(SwDashStroke& dash, const Matrix& transform)
+static void _dashClose(SwDashStroke& dash, const Matrix& transform, bool addZero)
 {
-    _dashLineTo(dash, &dash.ptStart, transform);
+    _dashLineTo(dash, &dash.ptStart, transform, addZero);
 }
 
 
@@ -292,10 +292,11 @@ static SwOutline* _genDashOutline(const RenderShape* rshape, const Matrix& trans
         pts++;
     }
 
+    auto addZero = rshape->stroke->cap != StrokeCap::Butt;
     while (--cmdCnt > 0) {
         switch (*cmds) {
             case PathCommand::Close: {
-                _dashClose(dash, transform);
+                _dashClose(dash, transform, addZero);
                 break;
             }
             case PathCommand::MoveTo: {
@@ -304,12 +305,12 @@ static SwOutline* _genDashOutline(const RenderShape* rshape, const Matrix& trans
                 break;
             }
             case PathCommand::LineTo: {
-                _dashLineTo(dash, pts, transform);
+                _dashLineTo(dash, pts, transform, addZero);
                 ++pts;
                 break;
             }
             case PathCommand::CubicTo: {
-                _dashCubicTo(dash, pts, pts + 1, pts + 2, transform);
+                _dashCubicTo(dash, pts, pts + 1, pts + 2, transform, addZero);
                 pts += 3;
                 break;
             }
@@ -509,7 +510,7 @@ bool shapeGenStrokeRle(SwShape* shape, const RenderShape* rshape, const Matrix& 
     auto ret = true;
 
     //Dash style with/without trimming
-    if (rshape->stroke->dash.count > 0) {
+    if (rshape->stroke->dash.length > FLT_EPSILON) {
         shapeOutline = _genDashOutline(rshape, transform, mpool, tid, rshape->trimpath());
         if (!shapeOutline) return false;
         dashStroking = true;
