@@ -138,7 +138,7 @@ struct Text::Impl : Paint::Impl
     bool bounds(Point* pt4, TVG_UNUSED bool stroking)
     {
         if (!load()) return false;
-        PAINT(shape)->bounds(pt4, true, true, false);
+        PAINT(shape)->bounds(pt4, true, true);
         return true;
     }
 

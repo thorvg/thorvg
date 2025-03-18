@@ -59,7 +59,6 @@ namespace tvg
 
         struct {
             Matrix m;                 //input matrix
-            Matrix cm;                //multipled parents matrix
             float degree;             //rotation degree
             float scale;              //scale factor
             bool overriding;          //user transform?
@@ -148,7 +147,6 @@ namespace tvg
         {
             //update transform
             if (renderFlag & RenderUpdateFlag::Transform) tr.update();
-            if (origin) return tr.cm;
             return tr.m;
         }
 

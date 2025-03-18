@@ -267,8 +267,7 @@ RenderData Paint::Impl::update(RenderMethod* renderer, const Matrix& pm, Array<R
 
     RenderData rd = nullptr;
 
-    tr.cm = pm * tr.m;
-    PAINT_METHOD(rd, update(renderer, tr.cm, clips, opacity, newFlag, clipper));
+    PAINT_METHOD(rd, update(renderer, pm * tr.m, clips, opacity, newFlag, clipper));
 
     /* 4. Composition Post Processing */
     if (compFastTrack == Result::Success) renderer->viewport(viewport);
@@ -281,7 +280,7 @@ RenderData Paint::Impl::update(RenderMethod* renderer, const Matrix& pm, Array<R
 bool Paint::Impl::bounds(float* x, float* y, float* w, float* h, bool stroking)
 {
     Point pts[4];
-    if (!bounds(pts, false, stroking, false)) return false;
+    if (!bounds(pts, false, stroking)) return false;
 
     Point min = {FLT_MAX, FLT_MAX};
     Point max = {-FLT_MAX, -FLT_MAX};
@@ -308,7 +307,16 @@ bool Paint::Impl::bounds(Point* pt4, bool transformed, bool stroking, bool origi
 
     if (!ret || !transformed) return ret;
 
-    const auto& m = this->transform(origin);
+    auto transform = [&](Paint::Impl* p) -> Matrix {
+        Matrix tm = p->transform();
+        while (p->parent) {
+            p = PAINT(p->parent);
+            tm = p->transform() * tm;
+        }
+        return tm;
+    };
+
+    auto m = origin ? transform(this) : this->transform();
     pt4[0] *= m;
     pt4[1] *= m;
     pt4[2] *= m;
