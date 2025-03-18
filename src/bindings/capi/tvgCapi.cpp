@@ -169,6 +169,12 @@ TVG_API Tvg_Result tvg_canvas_set_viewport(Tvg_Canvas* canvas, int32_t x, int32_
 /* Paint API                                                            */
 /************************************************************************/
 
+TVG_API const Tvg_Paint* tvg_paint_get_parent(const Tvg_Paint* paint)
+{
+    return (const Tvg_Paint*) reinterpret_cast<const Paint*>(paint)->parent();
+}
+
+
 TVG_API Tvg_Result tvg_paint_del(Tvg_Paint* paint)
 {
     if (!paint) return TVG_RESULT_INVALID_ARGUMENT;

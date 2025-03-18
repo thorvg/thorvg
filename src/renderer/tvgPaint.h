@@ -51,6 +51,7 @@ namespace tvg
     struct Paint::Impl
     {
         Paint* paint = nullptr;
+        Paint* parent = nullptr;
         Mask* maskData = nullptr;
         Paint* clipper = nullptr;
         RenderMethod* renderer = nullptr;
@@ -91,11 +92,11 @@ namespace tvg
         virtual ~Impl()
         {
             if (maskData) {
-                maskData->target->unref();
+                PAINT(maskData->target)->unref();
                 tvg::free(maskData);
             }
 
-            if (clipper) clipper->unref();
+            if (clipper) PAINT(clipper)->unref();
 
             if (renderer) {
                 if (rd) renderer->dispose(rd);
@@ -110,13 +111,18 @@ namespace tvg
             return refCnt;
         }
 
-        uint8_t unref(bool free)
+        uint8_t unref(bool free = true)
+        {
+            parent = nullptr;
+            return unrefx(free);
+        }
+
+        uint8_t unrefx(bool free)
         {
             if (refCnt > 0) --refCnt;
             else TVGERR("RENDERER", "Corrupted Reference Count!");
 
             if (free && refCnt == 0) {
-                //TODO: use the global dismiss function?
                 delete(paint);
                 return 0;
             }
@@ -146,37 +152,37 @@ namespace tvg
             return tr.m;
         }
 
-        void clip(Paint* clp)
+        Result clip(Paint* clp)
         {
-            if (clipper) clipper->unref(clipper != clp);
+            if (PAINT(clp)->parent) return Result::InsufficientCondition;
+            if (clipper) PAINT(clipper)->unref(clipper != clp);
             clipper = clp;
-            if (!clp) return;
-
-            clipper->ref();
+            if (clp) {
+                clp->ref();
+                PAINT(clp)->parent = parent;
+            }
+            return Result::Success;
         }
 
-        bool mask(Paint* target, MaskMethod method)
+        Result mask(Paint* target, MaskMethod method)
         {
-            //Invalid case
-            if ((!target && method != MaskMethod::None) || (target && method == MaskMethod::None)) return false;
+            if (target && PAINT(target)->parent) return Result::InsufficientCondition;
 
             if (maskData) {
-                maskData->target->unref(maskData->target != target);
-                //Reset scenario
-                if (!target && method == MaskMethod::None) {
-                    tvg::free(maskData);
-                    maskData = nullptr;
-                    return true;
-                }
-            } else {
-                if (!target && method == MaskMethod::None) return true;
-                maskData = tvg::malloc<Mask*>(sizeof(Mask));
+                PAINT(maskData->target)->unref(maskData->target != target);
+                tvg::free(maskData);
+                maskData = nullptr;
             }
+
+            if (!target && method == MaskMethod::None) return Result::Success;
+
+            maskData = tvg::malloc<Mask*>(sizeof(Mask));
             target->ref();
             maskData->target = target;
+            PAINT(target)->parent = parent;
             maskData->source = paint;
             maskData->method = method;
-            return true;
+            return Result::Success;
         }
 
         MaskMethod mask(const Paint** target) const
@@ -193,12 +199,12 @@ namespace tvg
         void reset()
         {
             if (clipper) {
-                clipper->unref();
+                PAINT(clipper)->unref();
                 clipper = nullptr;
             }
 
             if (maskData) {
-                maskData->target->unref();
+                PAINT(maskData->target)->unref();
                 tvg::free(maskData);
                 maskData = nullptr;
             }
@@ -208,6 +214,7 @@ namespace tvg
             tr.scale = 1.0f;
             tr.overriding = false;
 
+            parent = nullptr;
             blendMethod = BlendMethod::Normal;
             renderFlag = RenderUpdateFlag::None;
             ctxFlag = ContextFlag::Default;

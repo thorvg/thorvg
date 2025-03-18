@@ -51,10 +51,7 @@ struct Canvas::Impl
     Result push(Paint* target, Paint* at)
     {
         //You cannot push paints during rendering.
-        if (status == Status::Drawing) {
-            TVG_DELETE(target);
-            return Result::InsufficientCondition;
-        }
+        if (status == Status::Drawing) return Result::InsufficientCondition;
 
         auto ret = scene->push(target, at);
         if (ret != Result::Success) return ret;

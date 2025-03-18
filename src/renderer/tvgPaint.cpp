@@ -392,19 +392,15 @@ Result Paint::clip(Paint* clipper) noexcept
 {
     if (clipper && clipper->type() != Type::Shape) {
         TVGERR("RENDERER", "Clipping only supports the Shape!");
-        TVG_DELETE(clipper);
         return Result::NonSupport;
     }
-    pImpl->clip(clipper);
-    return Result::Success;
+    return pImpl->clip(clipper);
 }
 
 
 Result Paint::mask(Paint* target, MaskMethod method) noexcept
 {
-    if (pImpl->mask(target, method)) return Result::Success;
-    if (target) TVG_DELETE(target);
-    return Result::InvalidArguments;
+    return pImpl->mask(target, method);
 }
 
 
@@ -448,11 +444,17 @@ uint8_t Paint::ref() noexcept
 
 uint8_t Paint::unref(bool free) noexcept
 {
-    return pImpl->unref(free);
+    return pImpl->unrefx(free);
 }
 
 
 uint8_t Paint::refCnt() const noexcept
 {
     return pImpl->refCnt;
+}
+
+
+const Paint* Paint::parent() const noexcept
+{
+    return pImpl->parent;
 }

@@ -229,6 +229,7 @@ struct Scene::Impl : Paint::Impl
 
         for (auto paint : paints) {
             auto cdup = paint->duplicate();
+            PAINT(cdup)->parent = scene;
             cdup->ref();
             dup->paints.push_back(cdup);
         }
@@ -242,7 +243,7 @@ struct Scene::Impl : Paint::Impl
     {
         auto itr = paints.begin();
         while (itr != paints.end()) {
-            (*itr)->unref();
+            PAINT((*itr))->unref();
             paints.erase(itr++);
         }
         return Result::Success;
@@ -250,31 +251,24 @@ struct Scene::Impl : Paint::Impl
 
     Result remove(Paint* paint)
     {
-        owned(paint);
-        paint->unref();
+        if (PAINT(paint)->parent != this->paint) return Result::InsufficientCondition;
+        PAINT(paint)->unref();
         paints.remove(paint);
         return Result::Success;
-    }
-
-    void owned(Paint* paint)
-    {
-#ifdef THORVG_LOG_ENABLED
-        for (auto p : paints) {
-            if (p == paint) return;
-        }
-        TVGERR("RENDERER", "The paint(%p) is not existed from the scene(%p)", paint, this->paint);
-#endif
     }
 
     Result insert(Paint* target, Paint* at)
     {
         if (!target) return Result::InvalidArguments;
+        auto timpl = PAINT(target);
+        if (timpl->parent) return Result::InsufficientCondition;
+
         target->ref();
 
         //Relocated the paint to the current scene space
-        PAINT(target)->renderFlag |= RenderUpdateFlag::Transform;
+        timpl->renderFlag |= RenderUpdateFlag::Transform;
 
-        if (at == nullptr) {
+        if (!at) {
             paints.push_back(target);
         } else {
             //OPTIMIZE: Remove searching?
@@ -282,6 +276,9 @@ struct Scene::Impl : Paint::Impl
             if (itr == paints.end()) return Result::InvalidArguments;
             paints.insert(itr, target);
         }
+        timpl->parent = paint;
+        if (timpl->clipper) PAINT(timpl->clipper)->parent = paint;
+        if (timpl->maskData) PAINT(timpl->maskData->target)->parent = paint;
         return Result::Success;
     }
 
