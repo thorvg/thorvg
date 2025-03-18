@@ -41,6 +41,7 @@ struct Text::Impl : Paint::Impl
 
     Impl(Text* p) : Paint::Impl(p), shape(Shape::gen())
     {
+        PAINT(shape)->parent = p;
     }
 
     ~Impl()
@@ -149,6 +150,8 @@ struct Text::Impl : Paint::Impl
 
         auto text = Text::gen();
         auto dup = TEXT(text);
+        dup->parent = text;
+
         SHAPE(shape)->duplicate(dup->shape);
 
         if (loader) {

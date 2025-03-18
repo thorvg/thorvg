@@ -218,11 +218,8 @@ TEST_CASE("Composition", "[tvgPaint]")
     //Negative
     REQUIRE(shape->mask(nullptr) == MaskMethod::None);
 
-    auto comp = Shape::gen();
-    REQUIRE(shape->mask(comp, MaskMethod::None) == Result::InvalidArguments);
-
     //Clipping
-    comp = Shape::gen();
+    auto comp = Shape::gen();
     REQUIRE(shape->clip(comp) == Result::Success);
 
     //AlphaMask

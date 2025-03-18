@@ -165,7 +165,10 @@ struct Picture::Impl : Paint::Impl
         auto picture = Picture::gen();
         auto dup = PICTURE(picture);
 
-        if (vector) dup->vector = vector->duplicate();
+        if (vector) {
+            dup->vector = vector->duplicate();
+            PAINT(dup->vector)->parent = picture;
+        }
 
         if (loader) {
             dup->loader = loader;
@@ -211,6 +214,7 @@ struct Picture::Impl : Paint::Impl
             } else {
                 vector = loader->paint();
                 if (vector) {
+                    PAINT(vector)->parent = paint;
                     if (w != loader->w || h != loader->h) {
                         if (!resizing) {
                             w = loader->w;

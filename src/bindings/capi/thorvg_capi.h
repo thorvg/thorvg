@@ -715,7 +715,6 @@ TVG_API Tvg_Result tvg_canvas_set_viewport(Tvg_Canvas* canvas, int32_t x, int32_
 
 /** \} */   // end defgroup ThorVGCapi_Canvas
 
-
 /**
 * @defgroup ThorVGCapi_Paint Paint
 * @brief A module for managing graphical elements. It enables duplication, transformation and composition.
@@ -964,6 +963,8 @@ TVG_API Tvg_Result tvg_paint_get_obb(const Tvg_Paint* paint, Tvg_Point* pt4);
 * @param[in] target The target object of the masking.
 * @param[in] method The method used to mask the source object with the target.
 *
+* @retval TVG_RESULT_INSUFFICIENT_CONDITION if the target has already belonged to another paint.
+*
 * @return Tvg_Result enumeration.
 
 */
@@ -993,11 +994,30 @@ TVG_API Tvg_Result tvg_paint_get_mask_method(const Tvg_Paint* paint, const Tvg_P
 *
 * @return Tvg_Result enumeration.
 * @retval TVG_RESULT_INVALID_ARGUMENT In case a @c nullptr is passed as the argument.
+* @retval TVG_RESULT_INSUFFICIENT_CONDITION if the target has already belonged to another paint.
 * @retval TVG_RESULT_NOT_SUPPORTED If the @p clipper type is not Shape.
 *
 * @since 1.0
 */
 TVG_API Tvg_Result tvg_paint_clip(Tvg_Paint* paint, Tvg_Paint* clipper);
+
+
+/**
+ * @brief Retrieves the parent paint object.
+ *
+ * This function returns a pointer to the parent object if the current paint
+ * belongs to one. Otherwise, it returns @c nullptr.
+ *
+ * @param[in] paint The Tvg_Paint object of which to get the scene.
+ *
+ * @return A pointer to the parent object if available, otherwise @c nullptr.
+ *
+ * @see tvg_scene_push()
+ * @see tvg_canvas_push()
+ *
+ * @since 1.0
+*/
+TVG_API const Tvg_Paint* tvg_paint_get_parent(const Tvg_Paint* paint);
 
 
 /**

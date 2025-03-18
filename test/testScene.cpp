@@ -39,18 +39,25 @@ TEST_CASE("Pushing Paints Into Scene", "[tvgScene]")
 {
     auto scene = unique_ptr<Scene>(Scene::gen());
     REQUIRE(scene);
+    REQUIRE(scene->parent() == nullptr);
 
     Paint* paints[3];
 
     //Pushing Paints
     paints[0] = Shape::gen();
+    REQUIRE(paints[0]->parent() == nullptr);
     REQUIRE(scene->push(paints[0]) == Result::Success);
+    REQUIRE(paints[0]->parent() == scene.get());
 
     paints[1] = Picture::gen();
+    REQUIRE(paints[1]->parent() == nullptr);
     REQUIRE(scene->push(paints[1]) == Result::Success);
+    REQUIRE(paints[1]->parent() == scene.get());
 
     paints[2] = Picture::gen();
+    REQUIRE(paints[2]->parent() == nullptr);
     REQUIRE(scene->push(paints[2]) == Result::Success);
+    REQUIRE(paints[2]->parent() == scene.get());
 
     //Pushing Null Pointer
     REQUIRE(scene->push(nullptr) == Result::InvalidArguments);

@@ -310,6 +310,21 @@ public:
     virtual ~Paint();
 
     /**
+     * @brief Retrieves the parent paint object.
+     *
+     * This function returns a pointer to the parent object if the current paint
+     * belongs to one. Otherwise, it returns @c nullptr.
+     *
+     * @return A pointer to the parent object if available, otherwise @c nullptr.
+     *
+     * @see Scene::push()
+     * @see Canvas::push()
+     *
+     * @since 1.0
+    */
+    const Paint* parent() const noexcept;
+
+    /**
      * @brief Sets the angle by which the object is rotated.
      *
      * The angle in measured clockwise from the horizontal axis.
@@ -381,6 +396,8 @@ public:
      *
      * @param[in] target The paint of the target object.
      * @param[in] method The method used to mask the source object with the target.
+     *
+     * @retval Result::InsufficientCondition if the target has already belonged to another paint.
      */
     Result mask(Paint* target, MaskMethod method) noexcept;
 
@@ -392,6 +409,7 @@ public:
      * @param[in] clipper The shape object as the clipper.
      *
      * @retval Result::NonSupport If the @p clipper type is not Shape.
+     * @retval Result::InsufficientCondition if the target has already belonged to another paint.
      *
      * @note @p clipper only supports the Shape type.
      * @since 1.0
