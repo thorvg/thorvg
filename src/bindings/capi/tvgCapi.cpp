@@ -298,7 +298,7 @@ TVG_API Tvg_Result tvg_paint_get_type(const Tvg_Paint* paint, Tvg_Type* type)
 }
 
 
-TVG_API Tvg_Result tvg_paint_set_clip(Tvg_Paint* paint, Tvg_Paint* clipper)
+TVG_API Tvg_Result tvg_paint_clip(Tvg_Paint* paint, Tvg_Paint* clipper)
 {
    if (!paint) return TVG_RESULT_INVALID_ARGUMENT;
    return (Tvg_Result) reinterpret_cast<Paint*>(paint)->clip((Paint*)(clipper));

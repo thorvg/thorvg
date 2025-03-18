@@ -224,7 +224,7 @@ enum class BlendMethod : uint8_t
  *
  * @see Scene::push(SceneEffect effect, ...)
  *
- * @note Experimental API
+ * @since 1.0
  */
 enum class SceneEffect : uint8_t
 {
@@ -257,7 +257,7 @@ enum class CanvasEngine : uint8_t
  * @see Paint::type()
  * @see Fill::type()
  *
- * @note Experimental API
+ * @since 1.0
  */
 enum class Type : uint8_t
 {
@@ -394,7 +394,7 @@ public:
      * @retval Result::NonSupport If the @p clipper type is not Shape.
      *
      * @note @p clipper only supports the Shape type.
-     * @note Experimental API
+     * @since 1.0
      */
     Result clip(Paint* clipper) noexcept;
 
@@ -407,7 +407,7 @@ public:
      *
      * @param[in] method The blending method to be set.
      *
-     * @note Experimental API
+     * @since 1.0
      */
     Result blend(BlendMethod method) noexcept;
 
@@ -1128,7 +1128,7 @@ public:
      * @param[in] simultaneous Determines how to trim multiple paths within a single shape. If set to @c true (default), trimming is applied simultaneously to all paths;
      * Otherwise, all paths are treated as a single entity with a combined length equal to the sum of their individual lengths and are trimmed as such.
      *
-     * @note Experimental API
+     * @since 1.0
      */
     Result trimpath(float begin, float end, bool simultaneous = true) noexcept;
 
@@ -1399,7 +1399,7 @@ public:
      *
      * @see Accessor::id()
      *
-     * @note Experimental API
+     * @since 1.0
      */
     const Paint* paint(uint32_t id) noexcept;
 
@@ -1501,7 +1501,7 @@ public:
      *                   For example, use SceneEffect::GaussianBlur to apply a blur with specific parameters.
      * @param[in] ... Additional variadic parameters required for certain effects (e.g., sigma and direction for GaussianBlur).
      *
-     * @note Experimental API
+     * @since 1.0
      */
     Result push(SceneEffect effect, ...) noexcept;
 
@@ -1551,7 +1551,7 @@ public:
      * @retval Result::InsufficientCondition when the specified @p name cannot be found.
      *
      * @note If the @p name is not specified, ThorVG will select any available font candidate.
-     * @note Experimental API
+     * @since 1.0
      */
     Result font(const char* name, float size, const char* style = nullptr) noexcept;
 
@@ -1563,7 +1563,7 @@ public:
      *
      * @param[in] text The multi-byte text encoded with utf8 string to be rendered.
      *
-     * @note Experimental API
+     * @since 1.0
      */
     Result text(const char* text) noexcept;
 

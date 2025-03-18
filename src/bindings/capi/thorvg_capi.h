@@ -211,7 +211,7 @@ typedef enum {
  * @see tvg_paint_get_type()
  * @see tvg_gradient_get_type()
  *
- * @note Experimental API
+ * @since 1.0
  */
 typedef enum {
     TVG_TYPE_UNDEF = 0,        ///< Undefined type.
@@ -995,9 +995,9 @@ TVG_API Tvg_Result tvg_paint_get_mask_method(const Tvg_Paint* paint, const Tvg_P
 * @retval TVG_RESULT_INVALID_ARGUMENT In case a @c nullptr is passed as the argument.
 * @retval TVG_RESULT_NOT_SUPPORTED If the @p clipper type is not Shape.
 *
-* @note Experimental API
+* @since 1.0
 */
-TVG_API Tvg_Result tvg_paint_set_clip(Tvg_Paint* paint, Tvg_Paint* clipper);
+TVG_API Tvg_Result tvg_paint_clip(Tvg_Paint* paint, Tvg_Paint* clipper);
 
 
 /**
@@ -1009,7 +1009,7 @@ TVG_API Tvg_Result tvg_paint_set_clip(Tvg_Paint* paint, Tvg_Paint* clipper);
 * @return Tvg_Result enumeration.
 * @retval TVG_RESULT_INVALID_ARGUMENT In case a @c nullptr is passed as the argument.
 *
-* @note Experimental API
+* @since 1.0
 */
 TVG_API Tvg_Result tvg_paint_get_type(const Tvg_Paint* paint, Tvg_Type* type);
 
@@ -1450,7 +1450,7 @@ TVG_API Tvg_Result tvg_shape_get_stroke_miterlimit(const Tvg_Paint* paint, float
 * @return Tvg_Result enumeration.
 * @retval TVG_RESULT_INVALID_ARGUMENT An invalid Tvg_Paint pointer.
 *
-* @note Experimental API
+* @since 1.0
 */
 TVG_API Tvg_Result tvg_shape_set_trimpath(Tvg_Paint* paint, float begin, float end, bool simultaneous);
 
@@ -1771,7 +1771,7 @@ TVG_API Tvg_Result tvg_gradient_get_transform(const Tvg_Gradient* grad, Tvg_Matr
 * @return Tvg_Result enumeration.
 * @retval TVG_RESULT_INVALID_ARGUMENT In case a @c nullptr is passed as the argument.
 *
-* @note Experimental API
+* @since 1.0
 */
 TVG_API Tvg_Result tvg_gradient_get_type(const Tvg_Gradient* grad, Tvg_Type* type);
 
@@ -1924,7 +1924,7 @@ TVG_API Tvg_Result tvg_picture_get_size(const Tvg_Paint* paint, float* w, float*
 * @return A pointer to the paint object that matches the given identifier, or @c nullptr if no matching paint object is found.
 *
 * @see tvg_accessor_generate_id()
-* @note experimental API
+* @note Experimental API
 */
 TVG_API const Tvg_Paint* tvg_picture_get_paint(Tvg_Paint* paint, uint32_t id);
 
@@ -2046,7 +2046,7 @@ TVG_API Tvg_Paint* tvg_text_new(void);
 * @retval TVG_RESULT_INSUFFICIENT_CONDITION  The specified @p name cannot be found.
 *
 * @note If the @p name is not specified, ThorVG will select any available font candidate.
-* @note Experimental API
+* @since 1.0
 */
 TVG_API Tvg_Result tvg_text_set_font(Tvg_Paint* paint, const char* name, float size, const char* style);
 
@@ -2063,7 +2063,7 @@ TVG_API Tvg_Result tvg_text_set_font(Tvg_Paint* paint, const char* name, float s
 * @return Tvg_Result enumeration.
 * @retval TVG_RESULT_INVALID_ARGUMENT A @c nullptr passed as the @p paint argument.
 *
-* @note Experimental API
+* @since 1.0
 */
 TVG_API Tvg_Result tvg_text_set_text(Tvg_Paint* paint, const char* text);
 
@@ -2548,7 +2548,7 @@ TVG_API Tvg_Result tvg_lottie_animation_get_marker(Tvg_Animation* animation, uin
  * @return Tvg_Result enumeration.
  * @retval TVG_RESULT_INSUFFICIENT_CONDITION In case the animation is not loaded.
  *
- * @note Experimental API
+ * @since 1.0
  */
 TVG_API Tvg_Result tvg_lottie_animation_tween(Tvg_Animation* animation, float from, float to, float progress);
 
