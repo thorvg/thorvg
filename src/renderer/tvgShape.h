@@ -116,10 +116,10 @@ struct Shape::Impl : Paint::Impl
         return renderer->region(rd);
     }
 
-    bool bounds(Point* pt4, bool stroking)
+    Result bounds(Point* pt4, Matrix& m, bool obb, bool stroking)
     {
         float x, y, w, h;
-        if (!rs.path.bounds(&x, &y, &w, &h)) return false;
+        if (!rs.path.bounds(obb ? nullptr : &m, &x, &y, &w, &h)) return Result::InsufficientCondition;
 
         //Stroke feathering
         if (stroking && rs.stroke) {
@@ -134,7 +134,14 @@ struct Shape::Impl : Paint::Impl
         pt4[2] = {x + w, y + h};
         pt4[3] = {x, y + h};
 
-        return true;
+        if (obb) {
+            pt4[0] *= m;
+            pt4[1] *= m;
+            pt4[2] *= m;
+            pt4[3] *= m;
+        }
+
+        return Result::Success;
     }
 
     void reserveCmd(uint32_t cmdCnt)

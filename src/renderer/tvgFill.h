@@ -24,6 +24,7 @@
 #define _TVG_FILL_H_
 
 #include "tvgCommon.h"
+#include "tvgMath.h"
 
 #define LINEAR(A) PIMPL(A, LinearGradient)
 #define RADIAL(A) PIMPL(A, RadialGradient)
@@ -31,7 +32,7 @@
 struct Fill::Impl
 {
     ColorStop* colorStops = nullptr;
-    Matrix transform = {1.0f, 0.0f, 0.0f, 0.0f, 1.0f, 0.0f, 0.0f, 0.0f, 1.0f};
+    Matrix transform = tvg::identity();
     uint16_t cnt = 0;
     FillSpread spread = FillSpread::Pad;
 

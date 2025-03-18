@@ -194,16 +194,16 @@ struct Scene::Impl : Paint::Impl
         return ret;
     }
 
-    bool bounds(Point* pt4, bool stroking)
+    Result bounds(Point* pt4, Matrix& m, TVG_UNUSED bool obb, bool stroking)
     {
-        if (paints.empty()) return false;
+        if (paints.empty()) return Result::InsufficientCondition;
 
         Point min = {FLT_MAX, FLT_MAX};
         Point max = {-FLT_MAX, -FLT_MAX};
 
         for (auto paint : paints) {
             Point tmp[4];
-            if (!PAINT(paint)->bounds(tmp, true, stroking)) continue;
+            if (PAINT(paint)->bounds(tmp, nullptr, false, stroking) != Result::Success) continue;
             //Merge regions
             for (int i = 0; i < 4; ++i) {
                 if (tmp[i].x < min.x) min.x = tmp[i].x;
@@ -212,12 +212,12 @@ struct Scene::Impl : Paint::Impl
                 if (tmp[i].y > max.y) max.y = tmp[i].y;
             }
         }
-        pt4[0] = min;
-        pt4[1] = {max.x, min.y};
-        pt4[2] = max;
-        pt4[3] = {min.x, max.y};
+        pt4[0] = min * m;
+        pt4[1] = Point{max.x, min.y} * m;
+        pt4[2] = max * m;
+        pt4[3] = Point{min.x, max.y} * m;
 
-        return true;
+        return Result::Success;
     }
 
     Paint* duplicate(Paint* ret)

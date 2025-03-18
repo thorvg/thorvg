@@ -2996,7 +2996,7 @@ static void _inheritGradient(SvgLoaderData* loader, SvgStyleGradient* to, SvgSty
 
     if (!to->transform && from->transform) {
         to->transform = tvg::malloc<Matrix*>(sizeof(Matrix));
-        if (to->transform) memcpy(to->transform, from->transform, sizeof(Matrix));
+        if (to->transform) *to->transform = *from->transform;
     }
 
     if (to->type == SvgGradientType::Linear) {
@@ -3061,7 +3061,7 @@ static SvgStyleGradient* _cloneGradient(SvgStyleGradient* from)
 
     if (from->transform) {
         grad->transform = tvg::calloc<Matrix*>(1, sizeof(Matrix));
-        if (grad->transform) memcpy(grad->transform, from->transform, sizeof(Matrix));
+        if (grad->transform) *grad->transform = *from->transform;
     }
 
     if (grad->type == SvgGradientType::Linear) {

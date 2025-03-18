@@ -439,8 +439,6 @@ public:
      * @retval Result::InvalidArguments @p pt4 is @c nullptr.
      * @retval Result::InsufficientCondition If it failed to compute the bounding box (mostly due to invalid path information).
      * 
-     * @note The paint must be pushed into a canvas and updated before calling this function.
-     *
      * @see Paint::bounds(float* x, float* y, folat* w, float* h)
      * @see Canvas::update()
      *
@@ -449,9 +447,9 @@ public:
     Result bounds(Point* pt4) const noexcept;
 
     /**
-     * @brief Retrieves the axis-aligned bounding box (AABB) of the paint object in local space.
+     * @brief Retrieves the axis-aligned bounding box (AABB) of the paint object in canvas space.
      *
-     * This function returns the bounding box of the paint object relative to its local coordinate system, without applying any transformations.
+     * This function returns the bounding box of the paint, as an axis-aligned bounding box (AABB) after transformations are applied.
      *
      * @param[out] x The x-coordinate of the upper-left corner of the bounding box.
      * @param[out] y The y-coordinate of the upper-left corner of the bounding box.
@@ -459,8 +457,6 @@ public:
      * @param[out] h The height of the bounding box.
      *
      * @retval Result::InsufficientCondition If it failed to compute the bounding box (mostly due to invalid path information).
-     *
-     * @note The bounding box is calculated in the object's local space, meaning transformations such as scaling, rotation, or translation are not applied.
      *
      * @see Paint::bounds(Point* pt4)
      * @see Canvas::update()

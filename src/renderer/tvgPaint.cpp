@@ -267,8 +267,7 @@ RenderData Paint::Impl::update(RenderMethod* renderer, const Matrix& pm, Array<R
 
     RenderData rd = nullptr;
 
-    tr.cm = pm * tr.m;
-    PAINT_METHOD(rd, update(renderer, tr.cm, clips, opacity, newFlag, clipper));
+    PAINT_METHOD(rd, update(renderer, pm * tr.m, clips, opacity, newFlag, clipper));
 
     /* 4. Composition Post Processing */
     if (compFastTrack == Result::Success) renderer->viewport(viewport);
@@ -278,10 +277,10 @@ RenderData Paint::Impl::update(RenderMethod* renderer, const Matrix& pm, Array<R
 }
 
 
-bool Paint::Impl::bounds(float* x, float* y, float* w, float* h, bool stroking)
+Result Paint::Impl::bounds(float* x, float* y, float* w, float* h, Matrix* pm, bool stroking)
 {
     Point pts[4];
-    if (!bounds(pts, false, stroking, false)) return false;
+    if (bounds(pts, pm, false, stroking) != Result::Success) return Result::InsufficientCondition;
 
     Point min = {FLT_MAX, FLT_MAX};
     Point max = {-FLT_MAX, -FLT_MAX};
@@ -297,23 +296,17 @@ bool Paint::Impl::bounds(float* x, float* y, float* w, float* h, bool stroking)
     if (y) *y = min.y;
     if (w) *w = max.x - min.x;
     if (h) *h = max.y - min.y;
-    return true;
+    return Result::Success;
 }
 
 
-bool Paint::Impl::bounds(Point* pt4, bool transformed, bool stroking, bool origin)
+Result Paint::Impl::bounds(Point* pt4, Matrix* pm, bool obb, bool stroking)
 {
-    bool ret;
-    PAINT_METHOD(ret, bounds(pt4, stroking));
+    auto m = this->transform();
+    if (pm) m = *pm * m;
 
-    if (!ret || !transformed) return ret;
-
-    const auto& m = this->transform(origin);
-    pt4[0] *= m;
-    pt4[1] *= m;
-    pt4[2] *= m;
-    pt4[3] *= m;
-
+    Result ret;
+    PAINT_METHOD(ret, bounds(pt4, m, obb, stroking));
     return ret;
 }
 
@@ -369,16 +362,16 @@ Matrix& Paint::transform() noexcept
 
 Result Paint::bounds(float* x, float* y, float* w, float* h) const noexcept
 {
-    if (pImpl->bounds(x, y, w, h, true)) return Result::Success;
-    return Result::InsufficientCondition;
+    auto pm = pImpl->ptransform();
+    return pImpl->bounds(x, y, w, h, &pm, true);
 }
 
 
 Result Paint::bounds(Point* pt4) const noexcept
 {
     if (!pt4) return Result::InvalidArguments;
-    if (pImpl->bounds(pt4, true, true, true)) return Result::Success;
-    return Result::InsufficientCondition;
+    auto pm = pImpl->ptransform();
+    return pImpl->bounds(pt4, &pm, true, true);
 }
 
 

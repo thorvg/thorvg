@@ -44,7 +44,7 @@ uint32_t RenderMethod::unref()
 /* RenderPath Class Implementation                                      */
 /************************************************************************/
 
-bool RenderPath::bounds(float* x, float* y, float* w, float* h)
+bool RenderPath::bounds(Matrix* m, float* x, float* y, float* w, float* h)
 {
     //unexpected
     if (cmds.empty() || cmds.first() == PathCommand::CubicTo) return false;
@@ -55,11 +55,11 @@ bool RenderPath::bounds(float* x, float* y, float* w, float* h)
     auto pt = pts.begin();
     auto cmd = cmds.begin();
 
-    auto assign = [&](Point* pt, Point& min, Point& max) -> void {
-        if (pt->x < min.x) min.x = pt->x;
-        if (pt->y < min.y) min.y = pt->y;
-        if (pt->x > max.x) max.x = pt->x;
-        if (pt->y > max.y) max.y = pt->y;
+    auto assign = [&](const Point& pt, Point& min, Point& max) -> void {
+        if (pt.x < min.x) min.x = pt.x;
+        if (pt.y < min.y) min.y = pt.y;
+        if (pt.x > max.x) max.x = pt.x;
+        if (pt.y > max.y) max.y = pt.y;
     };
 
     while (cmd < cmds.end()) {
@@ -69,19 +69,19 @@ bool RenderPath::bounds(float* x, float* y, float* w, float* h)
                 if (cmd + 1 < cmds.end()) {
                     auto next = *(cmd + 1);
                     if (next == PathCommand::LineTo || next == PathCommand::CubicTo) {
-                        assign(pt, min, max);
+                        assign(*pt * m, min, max);
                     }
                 }
                 ++pt;
                 break;
             }
             case PathCommand::LineTo: {
-                assign(pt, min, max);
+                assign(*pt * m, min, max);
                 ++pt;
                 break;
             }
             case PathCommand::CubicTo: {
-                Bezier bz = {pt[-1], pt[0], pt[1], pt[2]};
+                Bezier bz = {pt[-1] * m, pt[0] * m, pt[1] * m, pt[2] * m};
                 bz.bounds(min, max);
                 pt += 3;
                 break;

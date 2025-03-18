@@ -59,7 +59,6 @@ namespace tvg
 
         struct {
             Matrix m;                 //input matrix
-            Matrix cm;                //multipled parents matrix
             float degree;             //rotation degree
             float scale;              //scale factor
             bool overriding;          //user transform?
@@ -144,12 +143,22 @@ namespace tvg
             return true;
         }
 
-        Matrix& transform(bool origin = false)
+        Matrix& transform()
         {
             //update transform
             if (renderFlag & RenderUpdateFlag::Transform) tr.update();
-            if (origin) return tr.cm;
             return tr.m;
+        }
+
+        Matrix ptransform()
+        {
+            auto p = this;
+            auto tm = identity();
+            while (p->parent) {
+                p = PAINT(p->parent);
+                tm = p->transform() * tm;
+            }
+            return tm;
         }
 
         Result clip(Paint* clp)
@@ -263,8 +272,8 @@ namespace tvg
 
         RenderRegion bounds(RenderMethod* renderer) const;
         Iterator* iterator();
-        bool bounds(float* x, float* y, float* w, float* h, bool stroking);
-        bool bounds(Point* pt4, bool transformed, bool stroking, bool origin = false);
+        Result bounds(float* x, float* y, float* w, float* h, Matrix* pm, bool stroking);
+        Result bounds(Point* pt4, Matrix* pm, bool obb, bool stroking);
         RenderData update(RenderMethod* renderer, const Matrix& pm, Array<RenderData>& clips, uint8_t opacity, RenderUpdateFlag pFlag, bool clipper = false);
         bool render(RenderMethod* renderer);
         Paint* duplicate(Paint* ret = nullptr);

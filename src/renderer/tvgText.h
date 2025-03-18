@@ -135,11 +135,10 @@ struct Text::Impl : Paint::Impl
         return PAINT(shape)->update(renderer, transform, clips, opacity, pFlag, false);
     }
 
-    bool bounds(Point* pt4, TVG_UNUSED bool stroking)
+    Result bounds(Point* pt4, Matrix& m, bool obb, TVG_UNUSED bool stroking)
     {
-        if (!load()) return false;
-        PAINT(shape)->bounds(pt4, true, true, false);
-        return true;
+        if (!load()) return Result::InsufficientCondition;
+        return PAINT(shape)->bounds(pt4, &m, obb, true);
     }
 
     Paint* duplicate(Paint* ret)
