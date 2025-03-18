@@ -912,9 +912,9 @@ TVG_API Tvg_Paint* tvg_paint_duplicate(Tvg_Paint* paint);
 
 
 /**
- * @brief Retrieves the axis-aligned bounding box (AABB) of the paint object in local space.
+ * @brief Retrieves the axis-aligned bounding box (AABB) of the paint object in canvas space.
  *
- * This function returns the bounding box of the paint object relative to its local coordinate system, without applying any transformations.
+ * This function returns the bounding box of the paint, as an axis-aligned bounding box (AABB) after transformations are applied.
  *
  * @param[in] paint The Tvg_Paint object of which to get the bounds.
  * @param[out] x The x-coordinate of the upper-left corner of the bounding box.
@@ -926,8 +926,6 @@ TVG_API Tvg_Paint* tvg_paint_duplicate(Tvg_Paint* paint);
  * @retval TVG_RESULT_INVALID_ARGUMENT An invalid @p paint.
  * @retval TVG_RESULT_INSUFFICIENT_CONDITION If it failed to compute the bounding box (mostly due to invalid path information).
  *  
- * @note The bounding box is calculated in the object's local space, meaning transformations such as scaling, rotation, or translation are not applied.
- *
  * @see tvg_paint_get_obb()
  * @see tvg_canvas_update_paint()
  */
@@ -946,8 +944,6 @@ TVG_API Tvg_Result tvg_paint_get_aabb(const Tvg_Paint* paint, float* x, float* y
  * @retval TVG_RESULT_INVALID_ARGUMENT @p paint or @p pt4 is invalid.
  * @retval TVG_RESULT_INSUFFICIENT_CONDITION If it failed to compute the bounding box (mostly due to invalid path information).
  * 
- * @note The paint must be pushed into a canvas and updated before calling this function.
- *
  * @see tvg_paint_get_aabb()
  * @see tvg_canvas_update_paint()
  *

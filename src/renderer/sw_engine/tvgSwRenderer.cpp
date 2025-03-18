@@ -630,7 +630,7 @@ bool SwRenderer::endComposite(RenderCompositor* cmp)
 
     //Default is alpha blending
     if (p->method == MaskMethod::None) {
-        Matrix m = {1, 0, 0, 0, 1, 0, 0, 0, 1};
+        auto m = tvg::identity();
         return rasterImage(surface, &p->image, m, p->bbox, p->opacity);
     }
 

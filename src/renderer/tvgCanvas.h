@@ -71,7 +71,7 @@ struct Canvas::Impl
         auto flag = RenderUpdateFlag::None;
         if (status == Status::Damaged || force) flag = RenderUpdateFlag::All;
 
-        auto m = Matrix{1, 0, 0, 0, 1, 0, 0, 0, 1};
+        auto m = tvg::identity();
 
         if (!renderer->preUpdate()) return Result::InsufficientCondition;
 

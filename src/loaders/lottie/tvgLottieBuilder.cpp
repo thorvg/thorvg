@@ -553,8 +553,7 @@ void LottieBuilder::updateStar(LottiePolyStar* star, float frameNo, Matrix* tran
         hasRoundness = true;
     }
 
-    Point in = {x, y};
-    if (transform) in *= *transform;
+    auto in = Point{x, y} * transform;
     shape->moveTo(in.x, in.y);
 
     for (size_t i = 0; i < numPoints; i++) {
@@ -595,18 +594,12 @@ void LottieBuilder::updateStar(LottiePolyStar* star, float frameNo, Matrix* tran
                 cp2x *= partialPointAmount;
                 cp2y *= partialPointAmount;
             }
-            Point in2 = {previousX - cp1x, previousY - cp1y};
-            Point in3 = {x + cp2x, y + cp2y};
-            Point in4 = {x, y};
-            if (transform) {
-                in2 *= *transform;
-                in3 *= *transform;
-                in4 *= *transform;
-            }
+            auto in2 = Point{previousX - cp1x, previousY - cp1y} * transform;
+            auto in3 = Point{x + cp2x, y + cp2y} * transform;
+            auto in4 = Point{x, y} * transform;
             shape->cubicTo(in2.x, in2.y, in3.x, in3.y, in4.x, in4.y);
         } else {
-            Point in = {x, y};
-            if (transform) in *= *transform;
+            auto in = Point{x, y} * transform;
             shape->lineTo(in.x, in.y);
         }
         angle += dTheta * direction;
@@ -651,8 +644,7 @@ void LottieBuilder::updatePolygon(LottieGroup* parent, LottiePolyStar* star, flo
         }
     }
 
-    Point in = {x, y};
-    if (transform) in *= *transform;
+    auto in = Point{x, y} * transform;
     shape->moveTo(in.x, in.y);
 
     for (size_t i = 0; i < ptsCnt; i++) {
@@ -674,14 +666,9 @@ void LottieBuilder::updatePolygon(LottieGroup* parent, LottiePolyStar* star, flo
             auto cp2x = radius * outerRoundness * POLYGON_MAGIC_NUMBER * cp2Dx;
             auto cp2y = radius * outerRoundness * POLYGON_MAGIC_NUMBER * cp2Dy;
 
-            Point in2 = {previousX - cp1x, previousY - cp1y};
-            Point in3 = {x + cp2x, y + cp2y};
-            Point in4 = {x, y};
-            if (transform) {
-                in2 *= *transform;
-                in3 *= *transform;
-                in4 *= *transform;
-            }
+            auto in2 = Point{previousX - cp1x, previousY - cp1y} * transform;
+            auto in3 = Point{x + cp2x, y + cp2y} * transform;
+            auto in4 = Point{x, y} * transform;
             shape->cubicTo(in2.x, in2.y, in3.x, in3.y, in4.x, in4.y);
         } else {
             Point in = {x, y};
