@@ -20,9 +20,6 @@
  * SOFTWARE.
  */
 
-#ifdef __EMSCRIPTEN__
-#include <emscripten.h>
-#endif
 #include <cassert>
 #include "tvgWgCommon.h"
 #include "tvgArray.h"
