@@ -383,8 +383,8 @@ void WgRenderDataShape::updateMeshes(WgContext& context, const RenderShape &rsha
     if ((this->meshGroupShapesBBox.meshes.count > 0 ) ||
         (this->meshGroupStrokesBBox.meshes.count > 0)) {
         updateAABB(tr);
-        meshDataBBox.bbox(context, pMin, pMax);
     } else aabb = {{0, 0}, {0, 0}};
+    meshDataBBox.bbox(context, pMin, pMax);
 
     pool->retVertexBuffer(pbuff);
 }
