@@ -442,7 +442,7 @@ void main() {                                               \n
 const char* MASK_LUMA_FRAG_SHADER = TVG_COMPOSE_SHADER(
 uniform sampler2D uSrcTexture;                                                                          \n
 uniform sampler2D uMaskTexture;                                                                         \n
-                                                                                                        \n
+                                                                                                     \n
 in vec2 vUV;                                                                                            \n
                                                                                                         \n
 out vec4 FragColor;                                                                                     \n
@@ -455,8 +455,7 @@ void main() {                                                                   
         maskColor = vec4(maskColor.rgb / maskColor.a, maskColor.a);                                     \n
     }                                                                                                   \n
                                                                                                         \n
-    FragColor =                                                                                         \n
-        srcColor * (0.299 * maskColor.r + 0.587 * maskColor.g + 0.114 * maskColor.b) * maskColor.a;     \n
+    FragColor = srcColor * dot(maskColor.rgb, vec3(0.2125, 0.7154, 0.0721)) * maskColor.a;              \n
 }                                                                                                       \n
 );
 
@@ -472,7 +471,7 @@ void main() {                                                                   
     vec4 srcColor = texture(uSrcTexture, vUV);                                      \n
     vec4 maskColor = texture(uMaskTexture, vUV);                                    \n
                                                                                     \n
-    float luma = (0.299 * maskColor.r + 0.587 * maskColor.g + 0.114 * maskColor.b); \n
+    float luma = dot(maskColor.rgb, vec3(0.2125, 0.7154, 0.0721));                  \n
     FragColor = srcColor * (1.0 - luma);                                            \n
 }                                                                                   \n
 );
