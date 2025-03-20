@@ -41,7 +41,7 @@ struct Array
     uint32_t count = 0;
     uint32_t reserved = 0;
 
-    Array(){}
+    Array() = default;
 
     Array(int32_t size)
     {
