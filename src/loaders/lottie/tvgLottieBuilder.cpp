@@ -26,7 +26,7 @@
 #include "tvgLottieModel.h"
 #include "tvgLottieBuilder.h"
 #include "tvgLottieExpressions.h"
-
+#include "tvgText.h"
 
 /************************************************************************/
 /* Internal Class Implementation                                        */
@@ -899,45 +899,6 @@ void LottieBuilder::updateImage(LottieGroup* layer)
 }
 
 
-//TODO: unify with the updateText() building logic
-static void _fontText(LottieText* text, Scene* scene, float frameNo, LottieExpressions* exps)
-{
-    auto& doc = text->doc(frameNo, exps);
-    if (!doc.text) return;
-
-    auto delim = "\r\n";
-    auto size = doc.size * 75.0f; //1 pt = 1/72; 1 in = 96 px; -> 72/96 = 0.75
-    auto lineHeight = doc.size * 100.0f;
-
-    auto buf = (char*)alloca(strlen(doc.text) + 1);
-    strcpy(buf, doc.text);
-    auto token = std::strtok(buf, delim);
-
-    auto cnt = 0;
-    while (token) {
-        auto txt = Text::gen();
-        if (txt->font(doc.name, size) != Result::Success) {
-            //fallback to any available font
-            txt->font(nullptr, size);
-        }
-
-        txt->text(token);
-        txt->fill(doc.color.rgb[0], doc.color.rgb[1], doc.color.rgb[2]);
-
-        float width;
-        txt->bounds(nullptr, nullptr, &width, nullptr);
-
-        auto cursorX = width * doc.justify;
-        auto cursorY = lineHeight * cnt;
-        txt->translate(cursorX, -lineHeight + cursorY);
-
-        token = std::strtok(nullptr, delim);
-        scene->push(txt);
-        cnt++;
-    }
-}
-
-
 void LottieBuilder::updateText(LottieLayer* layer, float frameNo)
 {
     auto text = static_cast<LottieText*>(layer->children.first());
@@ -946,11 +907,6 @@ void LottieBuilder::updateText(LottieLayer* layer, float frameNo)
     auto p = doc.text;
 
     if (!p || !text->font) return;
-
-    if (text->font->origin != LottieFont::Origin::Embedded) {
-        _fontText(text, layer->scene, frameNo, exps);
-        return;
-    }
 
     auto scale = doc.size;
     Point cursor{};
@@ -966,6 +922,7 @@ void LottieBuilder::updateText(LottieLayer* layer, float frameNo)
 
     //text string
     int idx = 0;
+    float spaceWidth = 0.0f;
     auto totalChars = strlen(p);
     while (true) {
         //TODO: remove nested scenes.
@@ -1027,167 +984,240 @@ void LottieBuilder::updateText(LottieLayer* layer, float frameNo)
         }
 
         //find the glyph
-        bool found = false;
+        LottieGlyph* glyph = nullptr;
         ARRAY_FOREACH(g, text->font->chars) {
-            auto glyph = *g;
-            //draw matched glyphs
-            if (!strncmp(glyph->code, code, glyph->len)) {
-                if (textGrouping == LottieText::AlignOption::Group::Chars || textGrouping == LottieText::AlignOption::Group::All) {
-                    //new text group, single scene for each characters
-                    scene->push(textGroup);
-                    textGroup = Scene::gen();
-                    textGroup->translate(cursor.x, cursor.y);
-                }
-
-                auto& textGroupMatrix = textGroup->transform();
-                auto shape = text->pooling();
-                shape->reset();
-                ARRAY_FOREACH(p, glyph->children) {
-                    auto group = static_cast<LottieGroup*>(*p);
-                    ARRAY_FOREACH(p, group->children) {
-                        if (static_cast<LottiePath*>(*p)->pathset(frameNo, SHAPE(shape)->rs.path, nullptr, tween, exps)) {
-                            PAINT(shape)->update(RenderUpdateFlag::Path);
-                        }
-                    }
-                }
-                shape->fill(doc.color.rgb[0], doc.color.rgb[1], doc.color.rgb[2]);
-                shape->translate(cursor.x - textGroupMatrix.e13, cursor.y - textGroupMatrix.e23);
-                shape->opacity(255);
-
-                if (doc.stroke.width > 0.0f) {
-                    shape->strokeJoin(StrokeJoin::Round);
-                    shape->strokeWidth(doc.stroke.width / scale);
-                    shape->strokeFill(doc.stroke.color.rgb[0], doc.stroke.color.rgb[1], doc.stroke.color.rgb[2]);
-                    shape->order(doc.stroke.below);
-                }
-
-                auto needGroup = false;
-                //text range process
-                if (!text->ranges.empty()) {
-                    Point scaling = {1.0f, 1.0f};
-                    auto rotation = 0.0f;
-                    Point translation = {0.0f, 0.0f};
-                    auto color = doc.color;
-                    auto strokeColor = doc.stroke.color;
-                    uint8_t opacity = 255;
-                    uint8_t fillOpacity = 255;
-                    uint8_t strokeOpacity = 255;
-
-                    ARRAY_FOREACH(p, text->ranges) {
-                        auto range = *p;
-                        auto basedIdx = idx;
-                        if (range->based == LottieTextRange::Based::CharsExcludingSpaces) basedIdx = idx - space;
-                        else if (range->based == LottieTextRange::Based::Words) basedIdx = line + space;
-                        else if (range->based == LottieTextRange::Based::Lines) basedIdx = line;
-
-                        auto f = range->factor(frameNo, float(totalChars), (float)basedIdx);
-                        if (tvg::zero(f)) continue;
-                        needGroup = true;
-
-                        translation = translation + f * range->style.position(frameNo, tween, exps);
-                        scaling = scaling * (f * (range->style.scale(frameNo, tween, exps) * 0.01f - Point{1.0f, 1.0f}) + Point{1.0f, 1.0f});
-                        rotation += f * range->style.rotation(frameNo, tween, exps);
-
-                        opacity = (uint8_t)(opacity - f * (opacity - range->style.opacity(frameNo, tween, exps)));
-                        shape->opacity(opacity);
-
-                        auto rangeColor = range->style.fillColor(frameNo, tween, exps); //TODO: use flag to check whether it was really set
-                        if (tvg::equal(f, 1.0f)) color = rangeColor;
-                        else {
-                            color.rgb[0] = tvg::lerp<uint8_t>(color.rgb[0], rangeColor.rgb[0], f);
-                            color.rgb[1] = tvg::lerp<uint8_t>(color.rgb[1], rangeColor.rgb[1], f);
-                            color.rgb[2] = tvg::lerp<uint8_t>(color.rgb[2], rangeColor.rgb[2], f);
-                        }
-                        fillOpacity = (uint8_t)(fillOpacity - f * (fillOpacity - range->style.fillOpacity(frameNo, tween, exps)));
-                        shape->fill(color.rgb[0], color.rgb[1], color.rgb[2], fillOpacity);
-
-                        shape->strokeWidth(f * range->style.strokeWidth(frameNo, tween, exps) / scale);
-                        if (shape->strokeWidth() > 0.0f) {
-                            auto rangeColor = range->style.strokeColor(frameNo, tween, exps); //TODO: use flag to check whether it was really set
-                            if (tvg::equal(f, 1.0f)) strokeColor = rangeColor;
-                            else {
-                                strokeColor.rgb[0] = tvg::lerp<uint8_t>(strokeColor.rgb[0], rangeColor.rgb[0], f);
-                                strokeColor.rgb[1] = tvg::lerp<uint8_t>(strokeColor.rgb[1], rangeColor.rgb[1], f);
-                                strokeColor.rgb[2] = tvg::lerp<uint8_t>(strokeColor.rgb[2], rangeColor.rgb[2], f);
-                            }
-                            strokeOpacity = (uint8_t)(strokeOpacity - f * (strokeOpacity - range->style.strokeOpacity(frameNo, tween, exps)));
-                            shape->strokeFill(strokeColor.rgb[0], strokeColor.rgb[1], strokeColor.rgb[2], strokeOpacity);
-                            shape->order(doc.stroke.below);
-                        }
-                        cursor.x += f * range->style.letterSpacing(frameNo, tween, exps);
-
-                        auto spacing = f * range->style.lineSpacing(frameNo, tween, exps);
-                        if (spacing > lineSpacing) lineSpacing = spacing;
-                    }
-
-                    // TextGroup transformation is performed once
-                    if (textGroup->paints().size() == 0 && needGroup) {
-                        tvg::identity(&textGroupMatrix);
-                        translate(&textGroupMatrix, cursor);
-
-                        auto alignment = text->alignOption.anchor(frameNo, tween, exps);
-
-                        // center pivoting
-                        textGroupMatrix.e13 += alignment.x;
-                        textGroupMatrix.e23 += alignment.y;
-
-                        rotate(&textGroupMatrix, rotation);
-
-                        //center pivoting
-                        auto pivot = alignment * -1;
-                        textGroupMatrix.e13 += (pivot.x * textGroupMatrix.e11 + pivot.x * textGroupMatrix.e12);
-                        textGroupMatrix.e23 += (pivot.y * textGroupMatrix.e21 + pivot.y * textGroupMatrix.e22);
-
-                        textGroup->transform(textGroupMatrix);
-                    }
-
-                    auto& matrix = shape->transform();
-                    tvg::identity(&matrix);
-                    translate(&matrix, (translation / scale + cursor) - Point{textGroupMatrix.e13, textGroupMatrix.e23});
-                    tvg::scale(&matrix, scaling * capScale);
-                    shape->transform(matrix);
-                }
-
-                if (needGroup) {
-                    textGroup->push(shape);
-                } else {
-                    // When text isn't selected, exclude the shape from the text group
-                    // Cases with matrix scaling factors =! 1 handled in the 'needGroup' scenario
-                    auto& matrix = shape->transform();
-
-                    if (followPath) {
-                        identity(&matrix);
-                        auto angle = 0.0f;
-                        auto halfGlyphWidth = glyph->width * 0.5f;
-                        auto position = followPath->position(cursor.x + halfGlyphWidth + firstMargin, angle);
-                        matrix.e11 = matrix.e22 = capScale;
-                        matrix.e13 = position.x - halfGlyphWidth * matrix.e11;
-                        matrix.e23 = position.y - halfGlyphWidth * matrix.e21;
-                    } else {
-                        matrix.e11 = matrix.e22 = capScale;
-                        matrix.e13 = cursor.x;
-                        matrix.e23 = cursor.y;
-                    }
-
-                    shape->transform(matrix);
-                    scene->push(shape);
-                }
-
-                p += glyph->len;
-                idx += glyph->len;
-
-                //advance the cursor position horizontally
-                cursor.x += (glyph->width + doc.tracking) * capScale;
-
-                found = true;
+            if (!strncmp((*g)->code, code, (*g)->len)) {
+                glyph = *g;
                 break;
             }
         }
 
-        if (!found) {
+        if (textGrouping == LottieText::AlignOption::Group::Chars || textGrouping == LottieText::AlignOption::Group::All) {
+            //new text group, single scene for each characters
+            scene->push(textGroup);
+            textGroup = Scene::gen();
+            textGroup->translate(cursor.x, cursor.y);
+        }
+
+        //draw the glyph
+        auto& textGroupMatrix = textGroup->transform();
+        float glyphSpacing = 0.0f;
+        Shape* shape = nullptr;
+        Text* txt = nullptr;
+
+        if (glyph) {
+            shape = text->pooling();
+            shape->reset();
+            ARRAY_FOREACH(p, glyph->children) {
+                auto group = static_cast<LottieGroup*>(*p);
+                ARRAY_FOREACH(p, group->children) {
+                    if (static_cast<LottiePath*>(*p)->pathset(frameNo, SHAPE(shape)->rs.path, nullptr, tween, exps)) {
+                        PAINT(shape)->update(RenderUpdateFlag::Path);
+                    }
+                }
+            }
+        } else {
+            txt = tvg::Text::gen();
+            if (text->font->origin == LottieFont::Origin::Embedded || txt->font(doc.name, 75.0f) != Result::Success) {
+                //fallback to any available font
+                txt->font(nullptr, 75.0f);
+            }
+
+            float letterSpacing = 0.0f;
+            if (*p == ' ') {
+                if (spaceWidth > 0.0f) glyphSpacing = spaceWidth;
+                else {
+                    // Calculate space width by measuring "a a" vs "aa"
+                    const char* withSpace = "a a";
+                    const char* withoutSpace = "aa";
+                    
+                    txt->text(withSpace);
+                    txt->bounds(nullptr, nullptr, &spaceWidth, nullptr);
+                    
+                    float widthNoSpace;
+                    txt->text(withoutSpace); 
+                    txt->bounds(nullptr, nullptr, &widthNoSpace, nullptr);
+                    
+                    spaceWidth = glyphSpacing = spaceWidth - widthNoSpace;
+                }
+            } else if (*(p + 1) != '\0') {
+                // Get width of current char + next char
+                char twoChars[3] = {*p, *(p + 1), '\0'};
+                txt->text(twoChars);
+                float twoCharWidth;
+                txt->bounds(nullptr, nullptr, &twoCharWidth, nullptr);
+
+                // Get width of next char alone
+                char nextChar[2] = {*(p + 1), '\0'};
+                txt->text(nextChar);
+                float nextCharWidth;
+                txt->bounds(nullptr, nullptr, &nextCharWidth, nullptr);
+
+                // Calculate spacing between chars
+                letterSpacing = twoCharWidth - nextCharWidth; // Caching might help performance?
+            }
+
+            char targetChar[2] = {*p, '\0'};
+            txt->text(targetChar);
+
+            if (letterSpacing > 0.0f) {
+                float width;
+                txt->bounds(nullptr, nullptr, &width, nullptr);
+                glyphSpacing = letterSpacing - width;
+            }
+
+            shape = TEXT(txt)->shape;
+        }
+
+        shape->fill(doc.color.rgb[0], doc.color.rgb[1], doc.color.rgb[2]);
+        shape->translate(cursor.x - textGroupMatrix.e13, cursor.y - textGroupMatrix.e23);
+        shape->opacity(255);
+
+        if (doc.stroke.width > 0.0f) {
+            shape->strokeJoin(StrokeJoin::Round);
+            shape->strokeWidth(doc.stroke.width / scale);
+            shape->strokeFill(doc.stroke.color.rgb[0], doc.stroke.color.rgb[1], doc.stroke.color.rgb[2]);
+            shape->order(doc.stroke.below);
+        }
+
+        auto needGroup = false;
+        //text range process
+        if (!text->ranges.empty()) {
+            Point scaling = {1.0f, 1.0f};
+            auto rotation = 0.0f;
+            Point translation = {0.0f, 0.0f};
+            auto color = doc.color;
+            auto strokeColor = doc.stroke.color;
+            uint8_t opacity = 255;
+            uint8_t fillOpacity = 255;
+            uint8_t strokeOpacity = 255;
+
+            ARRAY_FOREACH(p, text->ranges) {
+                auto range = *p;
+                auto basedIdx = idx;
+                if (range->based == LottieTextRange::Based::CharsExcludingSpaces) basedIdx = idx - space;
+                else if (range->based == LottieTextRange::Based::Words) basedIdx = line + space;
+                else if (range->based == LottieTextRange::Based::Lines) basedIdx = line;
+
+                auto f = range->factor(frameNo, float(totalChars), (float)basedIdx);
+                if (tvg::zero(f)) continue;
+                needGroup = true;
+
+                translation = translation + f * range->style.position(frameNo, tween, exps);
+                scaling = scaling * (f * (range->style.scale(frameNo, tween, exps) * 0.01f - Point{1.0f, 1.0f}) + Point{1.0f, 1.0f});
+                rotation += f * range->style.rotation(frameNo, tween, exps);
+
+                opacity = (uint8_t)(opacity - f * (opacity - range->style.opacity(frameNo, tween, exps)));
+                shape->opacity(opacity);
+
+                auto rangeColor = range->style.fillColor(frameNo, tween, exps); //TODO: use flag to check whether it was really set
+                if (tvg::equal(f, 1.0f)) color = rangeColor;
+                else {
+                    color.rgb[0] = tvg::lerp<uint8_t>(color.rgb[0], rangeColor.rgb[0], f);
+                    color.rgb[1] = tvg::lerp<uint8_t>(color.rgb[1], rangeColor.rgb[1], f);
+                    color.rgb[2] = tvg::lerp<uint8_t>(color.rgb[2], rangeColor.rgb[2], f);
+                }
+                fillOpacity = (uint8_t)(fillOpacity - f * (fillOpacity - range->style.fillOpacity(frameNo, tween, exps)));
+                shape->fill(color.rgb[0], color.rgb[1], color.rgb[2], fillOpacity);
+
+                shape->strokeWidth(f * range->style.strokeWidth(frameNo, tween, exps) / scale);
+                if (shape->strokeWidth() > 0.0f) {
+                    auto rangeColor = range->style.strokeColor(frameNo, tween, exps); //TODO: use flag to check whether it was really set
+                    if (tvg::equal(f, 1.0f)) strokeColor = rangeColor;
+                    else {
+                        strokeColor.rgb[0] = tvg::lerp<uint8_t>(strokeColor.rgb[0], rangeColor.rgb[0], f);
+                        strokeColor.rgb[1] = tvg::lerp<uint8_t>(strokeColor.rgb[1], rangeColor.rgb[1], f);
+                        strokeColor.rgb[2] = tvg::lerp<uint8_t>(strokeColor.rgb[2], rangeColor.rgb[2], f);
+                    }
+                    strokeOpacity = (uint8_t)(strokeOpacity - f * (strokeOpacity - range->style.strokeOpacity(frameNo, tween, exps)));
+                    shape->strokeFill(strokeColor.rgb[0], strokeColor.rgb[1], strokeColor.rgb[2], strokeOpacity);
+                    shape->order(doc.stroke.below);
+                }
+                cursor.x += f * range->style.letterSpacing(frameNo, tween, exps);
+
+                auto spacing = f * range->style.lineSpacing(frameNo, tween, exps);
+                if (spacing > lineSpacing) lineSpacing = spacing;
+            }
+
+            // TextGroup transformation is performed once
+            if (textGroup->paints().size() == 0 && needGroup) {
+                tvg::identity(&textGroupMatrix);
+                translate(&textGroupMatrix, cursor);
+
+                auto alignment = text->alignOption.anchor(frameNo, tween, exps);
+
+                // center pivoting
+                textGroupMatrix.e13 += alignment.x;
+                textGroupMatrix.e23 += alignment.y;
+
+                rotate(&textGroupMatrix, rotation);
+
+                //center pivoting
+                auto pivot = alignment * -1;
+                textGroupMatrix.e13 += (pivot.x * textGroupMatrix.e11 + pivot.x * textGroupMatrix.e12);
+                textGroupMatrix.e23 += (pivot.y * textGroupMatrix.e21 + pivot.y * textGroupMatrix.e22);
+
+                textGroup->transform(textGroupMatrix);
+            }
+
+            auto& matrix = txt ? txt->transform() : shape->transform();
+            tvg::identity(&matrix);
+            translate(&matrix, (translation / scale + cursor) - Point{textGroupMatrix.e13, textGroupMatrix.e23});
+            tvg::scale(&matrix, scaling * capScale);
+
+            if (txt) {
+                matrix.e23 -= 100.0f; // Align line height for the local font
+                txt->transform(matrix);
+            } else shape->transform(matrix);
+        }
+
+        //glyph width
+        float glyphWidth = 0.0f;
+        if (glyph) glyphWidth = glyph->width;
+        else if (txt) txt->bounds(nullptr, nullptr, &glyphWidth, nullptr);
+
+        if (needGroup) {
+            if (txt) textGroup->push(txt);
+            else textGroup->push(shape);
+        } else {
+            // When text isn't selected, exclude the shape from the text group
+            // Cases with matrix scaling factors =! 1 handled in the 'needGroup' scenario
+            auto& matrix = txt ? txt->transform() : shape->transform();
+
+            if (followPath) {
+                identity(&matrix);
+                auto angle = 0.0f;
+                auto halfGlyphWidth = glyphWidth * 0.5f;
+                auto position = followPath->position(cursor.x + halfGlyphWidth + firstMargin, angle);
+                matrix.e11 = matrix.e22 = capScale;
+                matrix.e13 = position.x - halfGlyphWidth * matrix.e11;
+                matrix.e23 = position.y - halfGlyphWidth * matrix.e21;
+            } else {
+                matrix.e11 = matrix.e22 = capScale;
+                matrix.e13 = cursor.x;
+                matrix.e23 = cursor.y;
+            }
+
+            if (txt) {
+                matrix.e23 -= 100.0f; // Align line height for the local font
+                txt->transform(matrix);
+                scene->push(txt);
+            } else {
+                shape->transform(matrix);
+                scene->push(shape);
+            }
+        }
+
+        if (glyph) {
+            p += glyph->len;
+            idx += glyph->len;
+        } else {
             ++p;
             ++idx;
         }
+
+        //advance the cursor position horizontally
+        cursor.x += (glyphWidth + glyphSpacing + doc.tracking) * capScale;
     }
 
     delete(scene);
