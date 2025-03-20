@@ -149,7 +149,6 @@ struct Text::Impl : Paint::Impl
 
         auto text = Text::gen();
         auto dup = TEXT(text);
-        dup->parent = text;
 
         SHAPE(shape)->duplicate(dup->shape);
 

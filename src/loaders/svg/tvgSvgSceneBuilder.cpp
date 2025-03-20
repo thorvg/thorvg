@@ -375,7 +375,6 @@ static Paint* _applyFilter(SvgLoaderData& loaderData, Paint* paint, const SvgNod
 
     auto clip = Shape::gen();
     clip->appendRect(clipBox.x, clipBox.y, clipBox.w, clipBox.h);
-    clip->transform(paint->transform());
     scene->clip(clip);
 
     return scene;

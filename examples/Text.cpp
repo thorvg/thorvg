@@ -129,7 +129,6 @@ struct UserExample : tvgexam::Example
         auto text10 = tvg::Text::gen();
         text10->font("Arial", 50);
         text10->text("Linear Text");
-        text10->translate(0, 350);
         text10->bounds(&x, &y, &w2, &h2);
 
         //LinearGradient
@@ -144,15 +143,16 @@ struct UserExample : tvgexam::Example
         fill->colorStops(colorStops, 3);
         text10->fill(fill);
 
+        text10->translate(0, 350);
+
         canvas->push(text10);
 
         auto text11 = tvg::Text::gen();
         text11->font("NanumGothicCoding", 40);
         text11->text("\xeb\x82\x98\xeb\x88\x94\xea\xb3\xa0\xeb\x94\x95\xec\xbd\x94\xeb\x94\xa9\x28\x55\x54\x46\x2d\x38\x29");
-        text11->translate(0, 450);
         text11->bounds(&x, &y, &w2, &h2);
 
-        //LinearGradient
+        //RadialGradient
         auto fill2 = tvg::RadialGradient::gen();
         fill2->radial(x + w2 * 0.5f, y + h2 * 0.5f, w2 * 0.5f, x + w2 * 0.5f, y + h2 * 0.5f, 0.0f);
 
@@ -163,7 +163,10 @@ struct UserExample : tvgexam::Example
         colorStops2[2] = {1, 255, 255, 255, 255};
 
         fill2->colorStops(colorStops2, 3);
+
         text11->fill(fill2);
+
+        text11->translate(0, 450);
 
         canvas->push(text11);
 

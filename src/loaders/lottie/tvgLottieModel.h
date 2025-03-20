@@ -393,6 +393,7 @@ struct LottieText : LottieObject, LottieRenderPooler<tvg::Shape>
     ~LottieText()
     {
         ARRAY_FOREACH(p, ranges) delete(*p);
+        delete(followPath);
     }
 };
 
