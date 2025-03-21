@@ -25,6 +25,7 @@
 #include "tvgLottieModel.h"
 #include "tvgLottieParser.h"
 #include "tvgLottieBuilder.h"
+#include "tvgCompressor.h"
 
 /************************************************************************/
 /* Internal Class Implementation                                        */
@@ -44,7 +45,9 @@ void LottieLoader::run(unsigned tid)
             comp = parser.comp;
         }
         if (parser.slots) {
-            override(parser.slots, true);
+            auto slotId = genSlot(parser.slots);
+            applySlot(slotId, true);
+            delSlot(slotId, true);
             parser.slots = nullptr;
         }
         builder->build(comp);
@@ -288,44 +291,125 @@ Paint* LottieLoader::paint()
 }
 
 
-bool LottieLoader::override(const char* slots, bool byDefault)
+bool LottieLoader::applySlot(uint32_t slotId, bool byDefault)
 {
-    if (!ready() || comp->slots.count == 0) return false;
+    if (!ready() || comp->slots.count == 0 || comp->slotDatas.empty()) return false;
 
-    //override slots
-    if (slots) {
-        //Copy the input data because the JSON parser will encode the data immediately.
-        auto temp = byDefault ? slots : duplicate(slots);
-
-        //parsing slot json
-        LottieParser parser(temp, dirName, builder->expressions());
-        parser.comp = comp;
-
-        auto idx = 0;
-        auto succeed = false;
-        while (auto sid = parser.sid(idx == 0)) {
-            auto applied = false;
-            ARRAY_FOREACH(p, comp->slots) {
-                if (strcmp((*p)->sid, sid)) continue;
-                if (parser.apply(*p, byDefault)) succeed = applied = true;
-                break;
-            }
-            if (!applied) parser.skip();
-            ++idx;
-        }
-        tvg::free((char*)temp);
-        rebuild = succeed;
-        overridden |= succeed;
-        return rebuild;
-    //reset slots
-    } else if (overridden) {
+    if (slotId == 0) {
         ARRAY_FOREACH(p, comp->slots) {
             (*p)->reset();
         }
         overridden = false;
         rebuild = true;
+        return true;
     }
+
+    LottieSlotData* slotData = nullptr;
+
+    INLIST_FOREACH(comp->slotDatas, p) {
+        if (p->id == slotId) {
+            slotData = p;
+            break;
+        }
+    }
+
+    if (!slotData) return false;
+
+    ARRAY_FOREACH(p, slotData->datas) {
+        ARRAY_FOREACH(q, comp->slots) {
+            if (strcmp((*q)->sid, p->sid)) continue;
+            (*q)->apply(p->prop, byDefault);
+            break;
+        }
+    }
+
+    overridden = true;
+    rebuild = true;
     return true;
+}
+
+
+bool LottieLoader::delSlot(uint32_t slotId, bool byDefault)
+{
+    if (!ready() || comp->slots.count == 0 || comp->slotDatas.empty()) return false;
+
+    if (slotId == 0) {
+        if (!byDefault) {
+            ARRAY_FOREACH(p, comp->slots) {
+                (*p)->reset();
+            }
+            rebuild = true;
+        }
+
+        comp->slotDatas.free();
+        overridden = false;
+        return true;
+    }
+
+    LottieSlotData* slotData = nullptr;
+
+    INLIST_FOREACH(comp->slotDatas, p) {
+        if (p->id == slotId) {
+            slotData = p;
+            break;
+        }
+    }
+
+    if (!slotData) return false;
+
+    ARRAY_FOREACH(p, slotData->datas) {
+        ARRAY_FOREACH(q, comp->slots) {
+            if (strcmp((*q)->sid, p->sid)) continue;
+            if (!byDefault && (*q)->overridden) {
+                (*q)->reset();
+                rebuild = true;
+            }
+            break;
+        }
+    }
+
+    comp->slotDatas.remove(slotData);
+    delete(slotData);
+    return true;
+}
+
+
+uint32_t LottieLoader::genSlot(const char* slots)
+{
+    if (!slots || !ready() || comp->slots.count == 0) return 0;
+
+    auto temp = duplicate(slots);
+
+    //parsing slot json
+    LottieParser parser(temp, dirName, builder->expressions());
+    parser.comp = comp;
+    
+    auto idx = 0;
+    bool generated = false;
+    LottieSlotData* slotData = new LottieSlotData(djb2Encode(slots));
+    while (auto sid = parser.sid(idx == 0)) {
+        ARRAY_FOREACH(p, comp->slots) {
+            if (strcmp((*p)->sid, sid)) continue;
+            auto prop = parser.slotData(*p);
+
+            if (prop) {
+                slotData->datas.push({duplicate(sid), prop});
+                generated = true;
+            }
+            break;
+        }
+        ++idx;
+    }
+
+    tvg::free((char*)temp);
+
+    if (generated) comp->slotDatas.back(slotData);
+    else {
+        delete(slotData);
+        return 0;
+    }
+
+    return slotData->id;
 }
 
 
