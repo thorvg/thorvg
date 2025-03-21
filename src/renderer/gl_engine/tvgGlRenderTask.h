@@ -219,4 +219,21 @@ private:
     GlComposeTask* mComposeTask;
 };
 
+class GlGaussianBlurTask: public GlRenderTask
+{
+public:
+    GlGaussianBlurTask(const RenderEffect* effect): GlRenderTask(nullptr), mEffect(effect){};
+    ~GlGaussianBlurTask() override{ delete gaussTaskVert; delete gaussTaskHorz; };
+
+    GlRenderTask* gaussTaskVert{};
+    GlRenderTask* gaussTaskHorz{};
+    GlRenderTarget* targetDest{};
+    GlRenderTarget* targetTemp0{};
+    GlRenderTarget* targetTemp1{};
+
+    void run() override;
+protected:
+    const RenderEffect* mEffect;
+};
+
 #endif /* _TVG_GL_RENDER_TASK_H_ */

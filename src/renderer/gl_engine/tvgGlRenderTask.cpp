@@ -379,3 +379,45 @@ void GlComplexBlendTask::normalizeDrawDepth(int32_t maxDepth)
     mStencilTask->normalizeDrawDepth(maxDepth);
     GlRenderTask::normalizeDrawDepth(maxDepth);
 }
+
+void GlGaussianBlurTask::run() {
+    GL_CHECK(glDisable(GL_BLEND));
+    uint32_t width = targetDest->getWidth();
+    uint32_t height = targetDest->getHeight();
+
+    GL_CHECK(glScissor(0, 0, width, height));
+    GL_CHECK(glBindFramebuffer(GL_READ_FRAMEBUFFER, targetDest->getFboId()));
+    GL_CHECK(glBindFramebuffer(GL_DRAW_FRAMEBUFFER, targetTemp0->getResolveFboId()));
+    GL_CHECK(glBlitFramebuffer(0, 0, width, height, 0, 0, width, height, GL_COLOR_BUFFER_BIT, GL_NEAREST));
+    GL_CHECK(glScissor(0, 0, width, height));
+    GL_CHECK(glBindFramebuffer(GL_READ_FRAMEBUFFER, targetTemp0->getResolveFboId()));
+    GL_CHECK(glBindFramebuffer(GL_DRAW_FRAMEBUFFER, targetTemp1->getResolveFboId()));
+    GL_CHECK(glBlitFramebuffer(0, 0, width, height, 0, 0, width, height, GL_COLOR_BUFFER_BIT, GL_NEAREST));
+
+    auto blur = (RenderEffectGaussianBlur*)mEffect;
+    int32_t widthTemp = (int32_t)targetTemp0->getWidth();
+    int32_t heightTemp = (int32_t)targetTemp0->getHeight();
+    GL_CHECK(glViewport(0, 0, widthTemp, heightTemp));
+    // horizontal
+    if (blur->direction == 1) {
+        GL_CHECK(glBindFramebuffer(GL_FRAMEBUFFER, targetDest->getFboId()));
+        GL_CHECK(glViewport(0, 0, widthTemp, heightTemp));
+        gaussTaskHorz->addBindResource(GlBindingResource{0, targetTemp0->getColorTexture(), gaussTaskHorz->getProgram()->getUniformLocation("uSrcTexture")});
+        gaussTaskHorz->run();
+    } // vertical
+    else if (blur->direction == 2) {
+        GL_CHECK(glBindFramebuffer(GL_FRAMEBUFFER, targetDest->getFboId()));
+        gaussTaskVert->addBindResource(GlBindingResource{0, targetTemp0->getColorTexture(), gaussTaskVert->getProgram()->getUniformLocation("uSrcTexture")});
+        gaussTaskVert->run();
+    } // both
+    else {
+        GL_CHECK(glBindFramebuffer(GL_FRAMEBUFFER, targetTemp1->getResolveFboId()));
+        GL_CHECK(glViewport(0, 0, widthTemp, heightTemp));
+        gaussTaskVert->addBindResource(GlBindingResource{0, targetTemp0->getColorTexture(), gaussTaskVert->getProgram()->getUniformLocation("uSrcTexture")});
+        gaussTaskVert->run();
+        GL_CHECK(glBindFramebuffer(GL_FRAMEBUFFER, targetDest->getFboId()));
+        gaussTaskHorz->addBindResource(GlBindingResource{0, targetTemp1->getColorTexture(), gaussTaskHorz->getProgram()->getUniformLocation("uSrcTexture")});
+        gaussTaskHorz->run();
+    }
+    GL_CHECK(glEnable(GL_BLEND));
+};

@@ -63,9 +63,7 @@ public:
 
         auto task = new T(program, targetFbo, mFbo, std::move(mTasks));
 
-        const auto& vp = mFbo->getViewport();
-
-        task->setRenderSize(static_cast<uint32_t>(vp.w), static_cast<uint32_t>(vp.h));
+        task->setRenderSize(getFboWidth(), getFboHeight());
 
         return task;
     }
