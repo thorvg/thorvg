@@ -99,34 +99,20 @@ uint32_t alignPow2(uint32_t value)
     return ret;
 }
 
-GlRenderTarget* GlRenderTargetPool::getRenderTarget(const RenderRegion& vp, GLuint resolveId)
+GlRenderTarget* GlRenderTargetPool::getRenderTarget(GLuint resolveId)
 {
-    uint32_t width = static_cast<uint32_t>(vp.w);
-    uint32_t height = static_cast<uint32_t>(vp.h);
-
-    // pow2 align width and height
-    if (width >= mMaxWidth) width = mMaxWidth;
-    else width = alignPow2(width);
-
-    if (width >= mMaxWidth) width = mMaxWidth;
-
-    if (height >= mMaxHeight) height = mMaxHeight;
-    else height = alignPow2(height);
-
-    if (height >= mMaxHeight) height = mMaxHeight;
-
     for (uint32_t i = 0; i < mPool.count; i++) {
         auto rt = mPool[i];
 
-        if (rt->getWidth() == width && rt->getHeight() == height) {
-            rt->setViewport(vp);
+        if (rt->getWidth() == mMaxWidth && rt->getHeight() == mMaxHeight) {
+            rt->setViewport({0, 0, (int32_t)mMaxWidth, (int32_t)mMaxHeight});
             return rt;
         }
     }
 
-    auto rt = new GlRenderTarget(width, height);
+    auto rt = new GlRenderTarget(mMaxWidth, mMaxHeight);
     rt->init(resolveId);
-    rt->setViewport(vp);
+    rt->setViewport({0, 0, (int32_t)mMaxWidth, (int32_t)mMaxHeight});
     mPool.push(rt);
     return rt;
 }
