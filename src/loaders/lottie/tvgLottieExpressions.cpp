@@ -89,6 +89,21 @@ static char* _name(jerry_value_t args)
 }
 
 
+static char* _concat(const jerry_value_t args[])
+{
+    auto ch1 = _name(args[0]);
+    auto ch2 = _name(args[1]);
+
+    size_t len = strlen(ch1) + strlen(ch2) + 1;
+    auto result = tvg::malloc<char*>(len * sizeof(char));
+    strcpy(result, ch1);
+    strcat(result, ch2);
+    tvg::free(ch1);
+    tvg::free(ch2);
+    return result;
+}
+
+
 static unsigned long _idByName(jerry_value_t args)
 {
     auto name = _name(args);
@@ -341,6 +356,16 @@ static jerry_value_t _addsub(const jerry_value_t args[], float addsub)
 
     //1d + 1d
     if (n1 && n2) return jerry_number(jerry_value_as_number(args[0]) + addsub * jerry_value_as_number(args[1]));
+
+    auto c1 = jerry_value_is_string(args[0]);
+    auto c2 = jerry_value_is_string(args[1]);
+
+    if (c1 || c2) {
+        auto ret = _concat(args);
+        auto val = jerry_string_sz(ret);
+        tvg::free(ret);
+        return val;
+    }
 
     auto val1 = jerry_object_get_index(args[n1 ? 1 : 0], 0);
     auto val2 = jerry_object_get_index(args[n1 ? 1 : 0], 1);

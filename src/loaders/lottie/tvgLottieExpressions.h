@@ -123,6 +123,27 @@ public:
         return true;
     }
 
+    template<typename Property>
+    bool result(float frameNo, char** out, LottieExpression* exp)
+    {
+        auto bm_rt = evaluate(frameNo, exp);
+        if (jerry_value_is_undefined(bm_rt)) return false;
+
+        if (!jerry_value_is_string(bm_rt)) {
+            jerry_value_free(bm_rt);
+            return false;
+        }
+
+        auto len = jerry_string_length(bm_rt);
+        auto txt = tvg::malloc<jerry_char_t*>(len * sizeof(jerry_char_t) + 1);
+        jerry_string_to_buffer(bm_rt, JERRY_ENCODING_UTF8, txt, len);
+        txt[len] = '\0';
+
+        *out = (char*) txt;
+        jerry_value_free(bm_rt);
+        return true;
+    }
+
     void update(float curTime);
 
     //singleton (no thread safety)
@@ -157,6 +178,7 @@ struct LottieExpressions
     template<typename Property> bool result(TVG_UNUSED float, TVG_UNUSED RGB24&, TVG_UNUSED LottieExpression*) { return false; }
     template<typename Property> bool result(TVG_UNUSED float, TVG_UNUSED Fill*, TVG_UNUSED LottieExpression*) { return false; }
     template<typename Property> bool result(TVG_UNUSED float, TVG_UNUSED RenderPath&, TVG_UNUSED Matrix*, TVG_UNUSED LottieModifier*, TVG_UNUSED LottieExpression*) { return false; }
+    template<typename Property> bool result(TVG_UNUSED float, TVG_UNUSED char**, TVG_UNUSED LottieExpression*) { return false; }
     void update(TVG_UNUSED float) {}
     static LottieExpressions* instance() { return nullptr; }
     static void retrieve(TVG_UNUSED LottieExpressions* instance) {}
