@@ -33,6 +33,7 @@ static inline bool equal(const char* a, const char* b)
     return !strcmp(a, b) && strlen(a) == strlen(b);
 }
 
+char* concat(const char* a, const char* b);
 float toFloat(const char *str, char **end);                    //convert to float
 char* duplicate(const char *str, size_t n = SIZE_MAX);         //copy the string
 char* append(char* lhs, const char* rhs, size_t n);            //append the rhs to the lhs

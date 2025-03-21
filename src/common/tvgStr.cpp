@@ -265,4 +265,14 @@ const char* fileext(const char* path)
     return ext;
 }
 
+
+char* concat(const char* a, const char* b)
+{
+    auto len = strlen(a) + strlen(b) + 1;
+    auto ret = tvg::malloc<char*>(len * sizeof(char));
+    strcpy(ret, a);
+    strcat(ret, b);
+    return ret;
+}
+
 }
