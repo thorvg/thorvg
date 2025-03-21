@@ -217,6 +217,18 @@ jerry_value_is_object (const jerry_value_t value) /**< api value */
 } /* jerry_value_is_object */
 
 /**
+ * Check if the specified value is string.
+ *
+ * @return true  - if the specified value is string,
+ *         false - otherwise
+ */
+bool
+jerry_value_is_string (const jerry_value_t value) /**< api value */
+{
+  return ecma_is_value_string (value);
+} /* jerry_value_is_string */
+
+/**
  * Check if the specified value is undefined.
  *
  * @return true  - if the specified value is undefined,
