@@ -867,17 +867,27 @@ struct LottieTextDoc : LottieProperty
         return (*frames)[frames->count];
     }
 
-    TextDocument& operator()(float frameNo, LottieExpressions* exps = nullptr)
+    TextDocument& operator()(float frameNo)
     {
-        //overriding with expressions
-        if (exps && exp) TVGERR("LOTTIE", "Not support TextDocument expressions?");
-
         if (!frames) return value;
         if (frames->count == 1 || frameNo <= frames->first().no) return frames->first().value;
         if (frameNo >= frames->last().no) return frames->last().value;
 
         auto frame = frames->data + _bsearch(frames, frameNo);
         return frame->value;
+    }
+
+    TextDocument& operator()(float frameNo, LottieExpressions* exps)
+    {
+        auto& out = operator()(frameNo);
+
+        //overriding with expressions
+        if (exps && exp) {
+            frameNo = _loop(frames, frameNo, exp);
+            exps->result(frameNo, out, exp);
+        }
+
+        return out;
     }
 
     void copy(LottieTextDoc& rhs, bool shallow = true)

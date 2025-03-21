@@ -123,6 +123,21 @@ public:
         return true;
     }
 
+    bool result(float frameNo, TextDocument& doc, LottieExpression* exp)
+    {
+        auto bm_rt = evaluate(frameNo, exp);
+        if (jerry_value_is_undefined(bm_rt)) return false;
+
+        if (jerry_value_is_string(bm_rt)) {
+            auto len = jerry_string_length(bm_rt);
+            doc.text = tvg::realloc<char*>(doc.text, (len + 1) * sizeof(jerry_char_t));
+            jerry_string_to_buffer(bm_rt, JERRY_ENCODING_UTF8, (jerry_char_t*)doc.text, len);
+            doc.text[len] = '\0';
+        }
+        jerry_value_free(bm_rt);
+        return true;
+    }
+
     void update(float curTime);
 
     //singleton (no thread safety)
@@ -157,6 +172,7 @@ struct LottieExpressions
     template<typename Property> bool result(TVG_UNUSED float, TVG_UNUSED RGB24&, TVG_UNUSED LottieExpression*) { return false; }
     template<typename Property> bool result(TVG_UNUSED float, TVG_UNUSED Fill*, TVG_UNUSED LottieExpression*) { return false; }
     template<typename Property> bool result(TVG_UNUSED float, TVG_UNUSED RenderPath&, TVG_UNUSED Matrix*, TVG_UNUSED LottieModifier*, TVG_UNUSED LottieExpression*) { return false; }
+    bool result(TVG_UNUSED float, TVG_UNUSED TextDocument& doc, TVG_UNUSED LottieExpression*) { return false; }
     void update(TVG_UNUSED float) {}
     static LottieExpressions* instance() { return nullptr; }
     static void retrieve(TVG_UNUSED LottieExpressions* instance) {}

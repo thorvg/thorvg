@@ -336,6 +336,19 @@ static void _buildLayer(jerry_value_t context, float frameNo, LottieLayer* layer
 
 static jerry_value_t _addsub(const jerry_value_t args[], float addsub)
 {
+    //string + string
+    if (jerry_value_is_string(args[0]) || jerry_value_is_string(args[1])) {
+        auto a = _name(args[0]);
+        auto b = _name(args[1]);
+        auto ret = tvg::concat(a, b);
+        auto val = jerry_string_sz(ret);
+        tvg::free(ret);
+        tvg::free(a);
+        tvg::free(b);
+        return val;
+    }
+
+    //number + number
     auto n1 = jerry_value_is_number(args[0]);
     auto n2 = jerry_value_is_number(args[1]);
 
