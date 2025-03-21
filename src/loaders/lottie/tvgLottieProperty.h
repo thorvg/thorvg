@@ -869,9 +869,23 @@ struct LottieTextDoc : LottieProperty
 
     TextDocument& operator()(float frameNo, LottieExpressions* exps = nullptr)
     {
-        //overriding with expressions
-        if (exps && exp) TVGERR("LOTTIE", "Not support TextDocument expressions?");
+        TextDocument& out = defaultTextDoc(frameNo);
 
+        //overriding with expressions
+        if (exps && exp) {
+            char* txt = nullptr;
+            frameNo = _loop(frames, frameNo, exp);
+            if (exps->result<LottieTextDoc>(frameNo, &txt, exp)) {
+                if (out.text) tvg::free(out.text);
+                out.text = txt;
+            }
+        }
+
+        return out;
+    }
+
+    TextDocument& defaultTextDoc(float frameNo)
+    {
         if (!frames) return value;
         if (frames->count == 1 || frameNo <= frames->first().no) return frames->first().value;
         if (frameNo >= frames->last().no) return frames->last().value;
