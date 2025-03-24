@@ -573,8 +573,6 @@ static unique_ptr<Picture> _imageBuildHelper(SvgLoaderData& loaderData, SvgNode*
     if (!node->node.image.href || !strlen(node->node.image.href)) return nullptr;
     auto picture = Picture::gen();
 
-    TaskScheduler::async(false);    //force to load a picture on the same thread
-
     const char* href = node->node.image.href;
     if (!strncmp(href, "data:", sizeof("data:") - 1)) {
         href += sizeof("data:") - 1;
@@ -586,14 +584,12 @@ static unique_ptr<Picture> _imageBuildHelper(SvgLoaderData& loaderData, SvgNode*
             auto size = b64Decode(href, strlen(href), &decoded);
             if (picture->load(decoded, size, mimetype, false) != Result::Success) {
                 free(decoded);
-                TaskScheduler::async(true);
                 return nullptr;
             }
         } else {
             auto size = svgUtilURLDecode(href, &decoded);
             if (picture->load(decoded, size, mimetype, false) != Result::Success) {
                 free(decoded);
-                TaskScheduler::async(true);
                 return nullptr;
             }
         }
@@ -605,7 +601,6 @@ static unique_ptr<Picture> _imageBuildHelper(SvgLoaderData& loaderData, SvgNode*
         const char *dot = strrchr(href, '.');
         if (dot && !strcmp(dot, ".svg")) {
             TVGLOG("SVG", "Embedded svg file is disabled.");
-            TaskScheduler::async(true);
             return nullptr;
         }
         string imagePath = href;
@@ -614,12 +609,9 @@ static unique_ptr<Picture> _imageBuildHelper(SvgLoaderData& loaderData, SvgNode*
             imagePath = svgPath.substr(0, (last == string::npos ? 0 : last + 1)) + imagePath;
         }
         if (picture->load(imagePath) != Result::Success) {
-            TaskScheduler::async(true);
             return nullptr;
         }
     }
-
-    TaskScheduler::async(true);
 
     float w, h;
     Matrix m = {1, 0, 0, 0, 1, 0, 0, 0, 1};
@@ -931,9 +923,7 @@ static void _loadFonts(Array<FontFace>& fonts)
 
         auto size = b64Decode(p->src + shift, p->srcLen - shift, &p->decoded);
 
-        TaskScheduler::async(false);
         if (Text::load(p->name, p->decoded, size) != Result::Success) TVGERR("SVG", "Error while loading the ttf font named \"%s\".", p->name);
-        TaskScheduler::async(true);
     }
 }
 

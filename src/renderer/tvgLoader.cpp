@@ -68,7 +68,7 @@ uintptr_t HASH_KEY(const char* data)
 
 ColorSpace ImageLoader::cs = ColorSpace::ARGB8888;
 
-static Key key;
+static Key _key;
 static Inlist<LoadModule> _activeLoaders;
 
 
@@ -215,7 +215,7 @@ static LoadModule* _findByType(const string& mimeType)
 
 static LoadModule* _findFromCache(const string& path)
 {
-    ScopedLock lock(key);
+    ScopedLock lock(_key);
 
     auto loader = _activeLoaders.head;
 
@@ -235,11 +235,10 @@ static LoadModule* _findFromCache(const char* data, uint32_t size, const string&
     auto type = _convert(mimeType);
     if (type == FileType::Unknown) return nullptr;
 
-    ScopedLock lock(key);
-    auto loader = _activeLoaders.head;
-
     auto key = HASH_KEY(data);
+    ScopedLock lock(_key);
 
+    auto loader = _activeLoaders.head;
     while (loader) {
         if (loader->type == type && loader->hashkey == key) {
             ++loader->sharing;
@@ -285,9 +284,9 @@ bool LoaderMgr::term()
 bool LoaderMgr::retrieve(LoadModule* loader)
 {
     if (!loader) return false;
+
     if (loader->close()) {
         if (loader->cached()) {
-            ScopedLock lock(key);
             _activeLoaders.remove(loader);
         }
         delete(loader);
@@ -316,7 +315,7 @@ LoadModule* LoaderMgr::loader(const string& path, bool* invalid)
                 loader->hashpath = strdup(path.c_str());
                 loader->pathcache = true;
                 {
-                    ScopedLock lock(key);
+                    ScopedLock lock(_key);
                     _activeLoaders.back(loader);
                 }
             }
@@ -332,7 +331,7 @@ LoadModule* LoaderMgr::loader(const string& path, bool* invalid)
                     loader->hashpath = strdup(path.c_str());
                     loader->pathcache = true;
                     {
-                        ScopedLock lock(key);
+                        ScopedLock lock(_key);
                         _activeLoaders.back(loader);
                     }
                 }
@@ -390,7 +389,7 @@ LoadModule* LoaderMgr::loader(const char* data, uint32_t size, const string& mim
             if (loader->open(data, size, copy)) {
                 if (allowCache) {
                     loader->hashkey = HASH_KEY(data);
-                    ScopedLock lock(key);
+                    ScopedLock lock(_key);
                     _activeLoaders.back(loader);
                 }
                 return loader;
@@ -407,7 +406,7 @@ LoadModule* LoaderMgr::loader(const char* data, uint32_t size, const string& mim
             if (loader->open(data, size, copy)) {
                 if (allowCache) {
                     loader->hashkey = HASH_KEY(data);
-                    ScopedLock lock(key);
+                    ScopedLock lock(_key);
                     _activeLoaders.back(loader);
                 }
                 return loader;
@@ -433,7 +432,7 @@ LoadModule* LoaderMgr::loader(const uint32_t *data, uint32_t w, uint32_t h, bool
     if (loader->open(data, w, h, copy)) {
         if (!copy) {
             loader->hashkey = HASH_KEY((const char*)data);
-            ScopedLock lock(key);
+            ScopedLock lock(_key);
             _activeLoaders.back(loader);
         }
         return loader;
@@ -455,7 +454,7 @@ LoadModule* LoaderMgr::loader(const char* name, const char* data, uint32_t size,
     if (loader->open(data, size, copy)) {
         loader->hashpath = strdup(name);
         loader->pathcache = true;
-        ScopedLock lock(key);
+        ScopedLock lock(_key);
         _activeLoaders.back(loader);
         return loader;
     }
