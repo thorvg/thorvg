@@ -2284,7 +2284,7 @@ void DashStroke::dashLineTo(const GlPoint &to)
     } else {
         detail::Line curr{mPtCur, to};
 
-        while (len - mCurrLen > 0.0001f) {
+        while (len - mCurrLen > DASH_PATTERN_THRESHOLD) {
             detail::Line right;
             if (mCurrLen > 0.0f) {
                 detail::Line left;
@@ -2347,7 +2347,7 @@ void DashStroke::dashCubicTo(const GlPoint &cnt1, const GlPoint &cnt2, const GlP
             this->cubicTo(cnt1, cnt2, end);
         }
     } else {
-        while (len - mCurrLen > 0.0001f) {
+        while (len - mCurrLen > DASH_PATTERN_THRESHOLD) {
             Bezier right;
             if (mCurrLen > 0.0f) {
                 Bezier left;
