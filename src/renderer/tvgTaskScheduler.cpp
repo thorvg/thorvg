@@ -33,8 +33,6 @@ namespace tvg {
 
 #ifdef THORVG_THREAD_SUPPORT
 
-static thread_local bool _async = true;
-
 struct TaskQueue {
     Inlist<Task>             taskDeque;
     mutex                    mtx;
@@ -150,7 +148,7 @@ struct TaskSchedulerImpl
     void request(Task* task)
     {
         //Async
-        if (threads.count > 0 && _async) {
+        if (threads.count > 0) {
             task->prepare();
             auto i = idx++;
             for (uint32_t n = 0; n < threads.count; ++n) {
@@ -170,8 +168,6 @@ struct TaskSchedulerImpl
 };
 
 #else //THORVG_THREAD_SUPPORT
-
-static bool _async = true;
 
 struct TaskSchedulerImpl
 {
@@ -216,13 +212,6 @@ void TaskScheduler::request(Task* task)
 uint32_t TaskScheduler::threads()
 {
     return _inst ? _inst->threadCnt() : 0;
-}
-
-
-void TaskScheduler::async(bool on)
-{
-    //toggle async tasking for each thread on/off
-    _async = on;
 }
 
 
