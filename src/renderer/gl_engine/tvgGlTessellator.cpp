@@ -1993,7 +1993,7 @@ void DashStroke::dashLineTo(const Point& to)
     } else {
         Line curr = {mPtCur, to};
 
-        while (len - mCurrLen > 0.0001f) {
+        while (len - mCurrLen > DASH_PATTERN_THRESHOLD) {
             Line right;
             if (mCurrLen > 0.0f) {
                 Line left;
@@ -2056,7 +2056,7 @@ void DashStroke::dashCubicTo(const Point& cnt1, const Point& cnt2, const Point& 
             this->cubicTo(cnt1, cnt2, end);
         }
     } else {
-        while (len - mCurrLen > 0.0001f) {
+        while (len - mCurrLen > DASH_PATTERN_THRESHOLD) {
             Bezier right;
             if (mCurrLen > 0.0f) {
                 Bezier left;

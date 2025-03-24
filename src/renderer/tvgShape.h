@@ -301,9 +301,9 @@ struct Shape::Impl : Paint::Impl
             if (!dash.pattern) dash.pattern = tvg::malloc<float*>(sizeof(float) * cnt);
             dash.length = 0.0f;
             for (uint32_t i = 0; i < cnt; ++i) {
-                if (pattern[i] < FLT_EPSILON) {
+                if (pattern[i] < DASH_PATTERN_THRESHOLD) {
                     dash.count = 0;
-                    return Result::InvalidArguments;                    
+                    return Result::InvalidArguments;
                 }
                 dash.pattern[i] = pattern[i];
                 dash.length += dash.pattern[i];
