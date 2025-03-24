@@ -309,10 +309,17 @@ bool mathUpdateOutlineBBox(const SwOutline* outline, const SwBBox& clipRegion, S
         if (yMax < pt->y) yMax = pt->y;
     }
 
-    renderRegion.min.x = xMin >> 6;
-    renderRegion.max.x = (xMax + 63) >> 6;
-    renderRegion.min.y = yMin >> 6;
-    renderRegion.max.y = (yMax + 63) >> 6;
+    if (fastTrack) {
+        renderRegion.min.x = static_cast<SwCoord>(round(xMin / 64.0f));
+        renderRegion.max.x = static_cast<SwCoord>(round(xMax / 64.0f));
+        renderRegion.min.y = static_cast<SwCoord>(round(yMin / 64.0f));
+        renderRegion.max.y = static_cast<SwCoord>(round(yMax / 64.0f));
+    } else {
+        renderRegion.min.x = xMin >> 6;
+        renderRegion.max.x = (xMax + 63) >> 6;
+        renderRegion.min.y = yMin >> 6;
+        renderRegion.max.y = (yMax + 63) >> 6;
+    }
 
     return mathClipBBox(clipRegion, renderRegion);
 }
