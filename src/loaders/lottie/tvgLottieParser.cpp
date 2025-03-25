@@ -1079,9 +1079,12 @@ LottieObject* LottieParser::parseGroup()
             while (nextArrayValue()) parseObject(group->children);
         } else skip();
     }
-    if (group->children.empty()) {
+
+    if (group->children.count == 1) {
+        auto child = group->children.first();
+        group->children.clear();
         delete(group);
-        return nullptr;
+        return child;
     }
     group->prepare();
 
