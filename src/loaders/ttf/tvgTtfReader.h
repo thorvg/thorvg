@@ -23,6 +23,7 @@
 #ifndef _TVG_TTF_READER_H
 #define _TVG_TTF_READER_H
 
+#include <atomic>
 #include "tvgCommon.h"
 #include "tvgArray.h"
 
@@ -55,7 +56,6 @@ public:
             float lineGap;
         } hhea;
 
-        float minw;            //first glyph width (used for italic)
         uint16_t unitsPerEm;
         uint16_t numHmtx;      //the number of Horizontal metrics table
         uint8_t locaFormat;    //0 for short offsets, 1 for long
@@ -68,12 +68,12 @@ public:
 
 private:
     //table offsets
-    uint32_t cmap = 0;
-    uint32_t hmtx = 0;
-    uint32_t loca = 0;
-    uint32_t glyf = 0;
-    uint32_t kern = 0;
-    uint32_t maxp = 0;
+    atomic<uint32_t> cmap{};
+    atomic<uint32_t> hmtx{};
+    atomic<uint32_t> loca{};
+    atomic<uint32_t> glyf{};
+    atomic<uint32_t> kern{};
+    atomic<uint32_t> maxp{};
 
     uint32_t cmap_12_13(uint32_t table, uint32_t codepoint, int which) const;
     uint32_t cmap_4(uint32_t table, uint32_t codepoint) const;

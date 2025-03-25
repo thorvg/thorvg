@@ -217,17 +217,16 @@ void TtfLoader::clear()
 /************************************************************************/
 
 
-bool TtfLoader::transform(Paint* paint, float fontSize, bool italic)
+float TtfLoader::transform(Paint* paint, FontMetrics& metrics, float fontSize, bool italic)
 {
-    if (!paint) return false;
     auto shift = 0.0f;
     auto dpi = 96.0f / 72.0f;   //dpi base?
-    scale = fontSize * dpi / reader.metrics.unitsPerEm;
+    auto scale = fontSize * dpi / reader.metrics.unitsPerEm;
     if (italic) shift = -scale * 0.18f;  //experimental decision.
-    Matrix m = {scale, shift, -(shift * reader.metrics.minw), 0, scale, 0, 0, 0, 1};
+    Matrix m = {scale, shift, -(shift * metrics.minw), 0, scale, 0, 0, 0, 1};
     paint->transform(m);
 
-    return true;
+    return scale;
 }
 
 
@@ -270,21 +269,11 @@ bool TtfLoader::open(const char* data, uint32_t size, bool copy)
 }
 
 
-bool TtfLoader::request(Shape* shape, char* text)
-{
-    this->shape = shape;
-    this->text = text;
-
-    return true;
-}
-
-
-bool TtfLoader::read()
+bool TtfLoader::read(Shape* shape, char* text, FontMetrics& out)
 {
     if (!text) return false;
 
     shape->reset();
-    shape->fill(FillRule::EvenOdd);
 
     auto n = strlen(text);
     auto code = _codepoints(text, n);
@@ -306,7 +295,7 @@ bool TtfLoader::read()
             lglyph = rglyph;
             //store the first glyph with outline min size for italic transform.
             if (loadMinw && gmetrics.outline) {
-                reader.metrics.minw = gmetrics.minw;
+                out.minw = gmetrics.minw;
                 loadMinw = false;
             }
         }
