@@ -24,6 +24,7 @@
 #define _TVG_TEXT_H
 
 #include "tvgStr.h"
+#include "tvgMath.h"
 #include "tvgShape.h"
 #include "tvgFill.h"
 #include "tvgLoader.h"
@@ -34,6 +35,7 @@ struct Text::Impl : Paint::Impl
 {
     Shape* shape;   //text shape
     FontLoader* loader = nullptr;
+    FontMetrics metrics;
     char* utf8 = nullptr;
     float fontSize;
     bool italic = false;
@@ -42,6 +44,7 @@ struct Text::Impl : Paint::Impl
     Impl(Text* p) : Paint::Impl(p), shape(Shape::gen())
     {
         PAINT(shape)->parent = p;
+        shape->fill(FillRule::EvenOdd);
     }
 
     ~Impl()
@@ -96,27 +99,26 @@ struct Text::Impl : Paint::Impl
         return PAINT(shape)->render(renderer);
     }
 
-    bool load()
+    float load()
     {
-        if (!loader) return false;
+        if (!loader) return 0.0f;
 
-        loader->request(shape, utf8);
         //reload
         if (changed) {
-            loader->read();
+            loader->read(shape, utf8, metrics);
             changed = false;
         }
-        return loader->transform(shape, fontSize, italic);
+        return loader->transform(shape, metrics, fontSize, italic);
     }
 
     RenderData update(RenderMethod* renderer, const Matrix& transform, Array<RenderData>& clips, uint8_t opacity, RenderUpdateFlag pFlag, TVG_UNUSED bool clipper)
     {
-        if (!load()) return nullptr;
+        auto scale = 1.0f / load();
+        if (tvg::zero(scale)) return nullptr;
 
         //transform the gradient coordinates based on the final scaled font.
         auto fill = SHAPE(shape)->rs.fill;
         if (fill && SHAPE(shape)->renderFlag & RenderUpdateFlag::Gradient) {
-            auto scale = 1.0f / loader->scale;
             if (fill->type() == Type::LinearGradient) {
                 LINEAR(fill)->x1 *= scale;
                 LINEAR(fill)->y1 *= scale;
@@ -137,7 +139,7 @@ struct Text::Impl : Paint::Impl
 
     Result bounds(Point* pt4, Matrix& m, bool obb, TVG_UNUSED bool stroking)
     {
-        if (!load()) return Result::InsufficientCondition;
+        if (load() == 0.0f) return Result::InsufficientCondition;
         return PAINT(shape)->bounds(pt4, &m, obb, true);
     }
 

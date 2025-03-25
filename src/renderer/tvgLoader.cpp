@@ -20,6 +20,7 @@
  * SOFTWARE.
  */
 
+#include <atomic>
 #include "tvgInlist.h"
 #include "tvgStr.h"
 #include "tvgLoader.h"
@@ -61,7 +62,8 @@ uintptr_t HASH_KEY(const char* data)
 /* Internal Class Implementation                                        */
 /************************************************************************/
 
-ColorSpace ImageLoader::cs = ColorSpace::ARGB8888;
+//TODO: remove it.
+atomic<ColorSpace> ImageLoader::cs{ColorSpace::ARGB8888};
 
 static Key _key;
 static Inlist<LoadModule> _activeLoaders;
