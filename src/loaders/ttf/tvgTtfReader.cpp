@@ -63,12 +63,10 @@ static int _cmpu32(const void *a, const void *b)
 
 bool TtfReader::validate(uint32_t offset, uint32_t margin) const
 {
-#if 1
     if ((offset > size) || (size - offset < margin)) {
         TVGERR("TTF", "Invalidate data");
         return false;
     }
-#endif
     return true;
 }
 
@@ -195,8 +193,11 @@ uint32_t TtfReader::outlineOffset(uint32_t glyph)
 {
     uint32_t cur, next;
 
-    if (!loca) loca = table("loca");
-    if (!glyf) glyf = table("glyf");
+    auto loca = this->loca.load();
+    if (loca == 0) this->loca = loca = table("loca");
+
+    auto glyf = this->glyf.load();
+    if (glyf == 0) this->glyf = glyf = table("glyf");
 
     if (metrics.locaFormat == 0) {
         auto base = loca + 2 * glyph;
@@ -318,8 +319,8 @@ bool TtfReader::header()
     metrics.numHmtx = _u16(data, hhea + 34);
 
     //kerning
-    this->kern = table("kern");
-    if (this->kern) {
+    auto kern = this->kern = table("kern");
+    if (kern) {
         if (!validate(kern, 4)) return false;
         if (_u16(data, kern) != 0) return false;
     }
@@ -330,8 +331,9 @@ bool TtfReader::header()
 
 uint32_t TtfReader::glyph(uint32_t codepoint)
 {
+    auto cmap = this->cmap.load();
     if (cmap == 0) {
-        cmap = table("cmap");
+        this->cmap = cmap = table("cmap");
         if (!validate(cmap, 4)) return -1;
     }
 
@@ -388,7 +390,8 @@ uint32_t TtfReader::glyph(uint32_t codepoint, TtfGlyphMetrics& gmetrics)
 bool TtfReader::glyphMetrics(uint32_t glyphIndex, TtfGlyphMetrics& gmetrics)
 {
     //horizontal metrics
-    if (!hmtx) hmtx = table("hmtx");
+    auto hmtx = this->hmtx.load();
+    if (hmtx == 0) this->hmtx = hmtx = table("hmtx");
 
     //glyph is inside long metrics segment.
     if (glyphIndex < metrics.numHmtx) {
@@ -442,7 +445,8 @@ bool TtfReader::convert(Shape* shape, TtfGlyphMetrics& gmetrics, const Point& of
     if (outlineCnt == 0) return false;
     if (outlineCnt < 0) {
         uint16_t maxComponentDepth = 1U;
-        if (!maxp) maxp = table("maxp");
+        auto maxp = this->maxp.load();
+        if (maxp == 0) this->maxp = maxp = table("maxp");
         if (validate(maxp, 32) && _u32(data, maxp) >= 0x00010000U) { // >= version 1.0
             maxComponentDepth = _u16(data, maxp + 30);
         }
@@ -598,7 +602,7 @@ void TtfReader::kerning(uint32_t lglyph, uint32_t rglyph, Point& out)
 
     if (!kern) return;
 
-    auto kern = this->kern;
+    auto kern = this->kern.load();
 
     out.x = out.y = 0.0f;
 
