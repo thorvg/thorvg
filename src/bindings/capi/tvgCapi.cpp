@@ -903,6 +903,28 @@ TVG_API Tvg_Result tvg_animation_del(Tvg_Animation* animation)
 /* Accessor API                                                         */
 /************************************************************************/
 
+TVG_API Tvg_Accessor* tvg_accessor_new()
+{
+    return (Tvg_Accessor*) Accessor::gen();
+}
+
+
+TVG_API Tvg_Result tvg_accessor_del(Tvg_Accessor* accessor)
+{
+    if (!accessor) return TVG_RESULT_INVALID_ARGUMENT;
+    delete(reinterpret_cast<Accessor*>(accessor));
+    return TVG_RESULT_SUCCESS;
+}
+
+
+TVG_API Tvg_Result tvg_accessor_set(Tvg_Accessor* accessor, Tvg_Paint* paint, bool (*func)(Tvg_Paint* paint, void* data), void* data)
+{
+    if (!accessor) return TVG_RESULT_INVALID_ARGUMENT;
+    return (Tvg_Result) reinterpret_cast<Accessor*>(accessor)->set(static_cast<Picture*>(reinterpret_cast<Paint*>(paint)),
+        [func](const Paint* paint, void* data) { return func((Tvg_Paint*) paint, data); }, data);
+}
+
+
 TVG_API uint32_t tvg_accessor_generate_id(const char* name)
 {
     return Accessor::id(name);
