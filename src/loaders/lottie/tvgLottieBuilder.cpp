@@ -1032,14 +1032,11 @@ void LottieBuilder::updateText(LottieLayer* layer, float frameNo)
                 auto& textGroupMatrix = textGroup->transform();
                 auto shape = text->pooling();
                 shape->reset();
-
                 ARRAY_FOREACH(p, glyph->children) {
-                    //Either group of a single path
-                    if ((*p)->type == LottieObject::Group) {
-                        ARRAY_FOREACH(p2, static_cast<LottieGroup*>(*p)->children) {
-                            static_cast<LottiePath*>(*p2)->pathset(frameNo, SHAPE(shape)->rs.path, nullptr, tween, exps);
-                        }
-                    } else static_cast<LottiePath*>(*p)->pathset(frameNo, SHAPE(shape)->rs.path, nullptr, tween, exps);
+                    auto group = static_cast<LottieGroup*>(*p);
+                    ARRAY_FOREACH(p, group->children) {
+                        static_cast<LottiePath*>(*p)->pathset(frameNo, SHAPE(shape)->rs.path, nullptr, tween, exps);
+                    }
                 }
                 shape->fill(doc.color.rgb[0], doc.color.rgb[1], doc.color.rgb[2]);
                 shape->translate(cursor.x - textGroupMatrix.e13, cursor.y - textGroupMatrix.e23);
