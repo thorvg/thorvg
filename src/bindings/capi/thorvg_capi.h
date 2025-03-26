@@ -2457,6 +2457,8 @@ TVG_API Tvg_Result tvg_animation_del(Tvg_Animation* animation);
 * @brief Creates a new accessor object.
 *
 * @return A new accessor object.
+*
+* @note Experimental API
 */
 TVG_API Tvg_Accessor* tvg_accessor_new();
 
@@ -2468,6 +2470,8 @@ TVG_API Tvg_Accessor* tvg_accessor_new();
 *
 * @return Tvg_Result enumeration.
 * @retval TVG_RESULT_INVALID_ARGUMENT An invalid Tvg_Accessor pointer.
+*
+* @note Experimental API
 */
 TVG_API Tvg_Result tvg_accessor_del(Tvg_Accessor* accessor);
 
@@ -2486,6 +2490,8 @@ TVG_API Tvg_Result tvg_accessor_del(Tvg_Accessor* accessor);
 *
 * @return Tvg_Result enumeration.
 * @retval TVG_RESULT_INVALID_ARGUMENT An invalid Tvg_Accessor, Tvg_Paint, or function pointer.
+*
+* @note Experimental API
 */
 TVG_API Tvg_Result tvg_accessor_set_paint(Tvg_Accessor* accessor, Tvg_Paint* paint, bool (*func)(Tvg_Paint* paint, void* data), void* data);
 
