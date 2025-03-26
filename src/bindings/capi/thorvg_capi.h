@@ -2493,7 +2493,7 @@ TVG_API Tvg_Result tvg_accessor_del(Tvg_Accessor* accessor);
 *
 * @note Experimental API
 */
-TVG_API Tvg_Result tvg_accessor_set_paint(Tvg_Accessor* accessor, Tvg_Paint* paint, bool (*func)(Tvg_Paint* paint, void* data), void* data);
+TVG_API Tvg_Result tvg_accessor_set(Tvg_Accessor* accessor, Tvg_Paint* paint, bool (*func)(Tvg_Paint* paint, void* data), void* data);
 
 
 /*!
