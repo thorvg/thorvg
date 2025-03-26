@@ -1439,7 +1439,6 @@ void LottieBuilder::updateLayer(LottieComposition* comp, Scene* scene, LottieLay
 
     updateEffect(layer, frameNo);
 
-    //the given matte source was composited by the target earlier.
     if (!layer->matteSrc) scene->push(layer->scene);
 }
 
@@ -1529,6 +1528,7 @@ static bool _buildComposition(LottieComposition* comp, LottieLayer* parent)
         }
 
         if (child->matteTarget) {
+            child->matteTarget->matteSrc = true;
             //parenting
             _buildHierarchy(parent, child->matteTarget);
             //precomp referencing
