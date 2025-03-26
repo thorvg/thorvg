@@ -900,11 +900,8 @@ void LottieBuilder::updateImage(LottieGroup* layer)
 
 
 //TODO: unify with the updateText() building logic
-static void _fontText(LottieText* text, Scene* scene, float frameNo, LottieExpressions* exps)
+static void _fontText(TextDocument& doc, Scene* scene)
 {
-    auto& doc = text->doc(frameNo, exps);
-    if (!doc.text) return;
-
     auto delim = "\r\n";
     auto size = doc.size * 75.0f; //1 pt = 1/72; 1 in = 96 px; -> 72/96 = 0.75
     auto lineHeight = doc.size * 100.0f;
@@ -948,7 +945,7 @@ void LottieBuilder::updateText(LottieLayer* layer, float frameNo)
     if (!p || !text->font) return;
 
     if (text->font->origin != LottieFont::Origin::Embedded) {
-        _fontText(text, layer->scene, frameNo, exps);
+        _fontText(doc, layer->scene);
         return;
     }
 
