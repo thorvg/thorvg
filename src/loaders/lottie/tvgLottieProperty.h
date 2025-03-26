@@ -218,15 +218,12 @@ struct LottieProperty
 
 static void _copy(PathSet* pathset, Array<Point>& out, Matrix* transform)
 {
-    Array<Point> in;
-
     if (transform) {
         for (int i = 0; i < pathset->ptsCnt; ++i) {
-            Point pt = pathset->pts[i];
-            pt *= *transform;
-            out.push(pt);
+            out.push(pathset->pts[i] * *transform);
         }
     } else {
+        Array<Point> in;
         in.data = pathset->pts;
         in.count = pathset->ptsCnt;
         out.push(in);
