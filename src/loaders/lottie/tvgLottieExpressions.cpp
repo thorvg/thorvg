@@ -68,6 +68,30 @@ static ExpContent* _expcontent(LottieExpression* exp, float frameNo, LottieObjec
 }
 
 
+static jerry_value_t _point2d(const Point& pt)
+{
+    auto obj = jerry_object();
+    auto v1 = jerry_number(pt.x);
+    auto v2 = jerry_number(pt.y);
+    jerry_object_set_index(obj, 0, v1);
+    jerry_object_set_index(obj, 1, v2);
+    jerry_value_free(v1);
+    jerry_value_free(v2);
+    return obj;
+}
+
+
+static Point _point2d(jerry_value_t obj)
+{
+    auto v1 = jerry_object_get_index(obj, 0);
+    auto v2 = jerry_object_get_index(obj, 1);
+    Point pt = {jerry_value_as_number(v1), jerry_value_as_number(v2)};
+    jerry_value_free(v1);
+    jerry_value_free(v2);
+    return pt;
+}
+
+
 static void contentFree(void *native_p, struct jerry_object_native_info_t *info_p)
 {
     tvg::free(native_p);
@@ -110,15 +134,7 @@ static jerry_value_t _value(float frameNo, LottieProperty* property)
 {
     switch (property->type) {
         case LottieProperty::Type::Point: {
-            auto value = jerry_object();
-            auto pos = (*static_cast<LottieScalar*>(property))(frameNo);
-            auto val1 = jerry_number(pos.x);
-            auto val2 = jerry_number(pos.y);
-            jerry_object_set_index(value, 0, val1);
-            jerry_object_set_index(value, 1, val2);
-            jerry_value_free(val1);
-            jerry_value_free(val2);
-            return value;
+            return _point2d((*static_cast<LottieScalar*>(property))(frameNo));
         }
         case LottieProperty::Type::Float: {
             return jerry_number((*static_cast<LottieFloat*>(property))(frameNo));
@@ -132,15 +148,7 @@ static jerry_value_t _value(float frameNo, LottieProperty* property)
             return value;
         }
         case LottieProperty::Type::Position: {
-            auto value = jerry_object();
-            auto pos = (*static_cast<LottieVector*>(property))(frameNo);
-            auto val1 = jerry_number(pos.x);
-            auto val2 = jerry_number(pos.y);
-            jerry_object_set_index(value, 0, val1);
-            jerry_object_set_index(value, 1, val2);
-            jerry_value_free(val1);
-            jerry_value_free(val2);
-            return value;
+            return _point2d((*static_cast<LottieVector*>(property))(frameNo));
         }
         default: {
             TVGERR("LOTTIE", "Non supported type for value? = %d", (int) property->type);
@@ -355,39 +363,23 @@ static jerry_value_t _addsub(const jerry_value_t args[], float addsub)
     //1d + 1d
     if (n1 && n2) return jerry_number(jerry_value_as_number(args[0]) + addsub * jerry_value_as_number(args[1]));
 
-    auto val1 = jerry_object_get_index(args[n1 ? 1 : 0], 0);
-    auto val2 = jerry_object_get_index(args[n1 ? 1 : 0], 1);
-    auto x = jerry_value_as_number(val1);
-    auto y = jerry_value_as_number(val2);
-    jerry_value_free(val1);
-    jerry_value_free(val2);
+    auto pt = _point2d(args[n1 ? 1 : 0]);
 
     //2d + 1d
     if (n1 || n2) {
         auto secondary = n1 ? 0 : 1;
         auto val3 = jerry_value_as_number(args[secondary]);
-        if (secondary == 0) x = (x * addsub) + val3;
-        else x += (addsub * val3);
+        if (secondary == 0) pt.x = (pt.x * addsub) + val3;
+        else pt.x += (addsub * val3);
     //2d + 2d
     } else {
-        auto val3 = jerry_object_get_index(args[1], 0);
-        auto val4 = jerry_object_get_index(args[1], 1);
-        x += (addsub * jerry_value_as_number(val3));
-        y += (addsub * jerry_value_as_number(val4));
-        jerry_value_free(val3);
-        jerry_value_free(val4);
+        pt += _point2d(args[1]) * addsub;
     }
 
-    auto obj = jerry_object();
-    val1 = jerry_number(x);
-    val2 = jerry_number(y);
-    jerry_object_set_index(obj, 0, val1);
-    jerry_object_set_index(obj, 1, val2);
-    jerry_value_free(val1);
-    jerry_value_free(val2);
-
-    return obj;
+    return _point2d(pt);
 }
+
+
 
 
 static jerry_value_t _muldiv(const jerry_value_t arg1, float arg2)
@@ -396,23 +388,7 @@ static jerry_value_t _muldiv(const jerry_value_t arg1, float arg2)
     if (jerry_value_is_number(arg1)) return jerry_number(jerry_value_as_number(arg1) * arg2);
 
     //2d
-    auto val1 = jerry_object_get_index(arg1, 0);
-    auto val2 = jerry_object_get_index(arg1, 1);
-    auto x = jerry_value_as_number(val1) * arg2;
-    auto y = jerry_value_as_number(val2) * arg2;
-
-    jerry_value_free(val1);
-    jerry_value_free(val2);
-
-    auto obj = jerry_object();
-    val1 = jerry_number(x);
-    val2 = jerry_number(y);
-    jerry_object_set_index(obj, 0, val1);
-    jerry_object_set_index(obj, 1, val2);
-    jerry_value_free(val1);
-    jerry_value_free(val2);
-
-    return obj;
+    return _point2d(_point2d(arg1) * arg2);
 }
 
 
@@ -456,49 +432,24 @@ static jerry_value_t _interp(float t, const jerry_value_t args[], int argsCnt)
 
     //2d
     if (jerry_value_is_object(args[idx + 1]) && jerry_value_is_object(args[idx + 2])) {
-        auto val1 = jerry_object_get_index(args[idx + 1], 0);
-        auto val2 = jerry_object_get_index(args[idx + 1], 1);
-        auto val3 = jerry_object_get_index(args[idx + 2], 0);
-        auto val4 = jerry_object_get_index(args[idx + 2], 1);
-
-        Point pt1 = {(float)jerry_value_as_number(val1),  (float)jerry_value_as_number(val2)};
-        Point pt2 = {(float)jerry_value_as_number(val3),  (float)jerry_value_as_number(val4)};
-        Point ret;
-        ret = tvg::lerp(pt1, pt2, t);
-
-        jerry_value_free(val1);
-        jerry_value_free(val2);
-        jerry_value_free(val3);
-        jerry_value_free(val4);
-
-        auto obj = jerry_object();
-        val1 = jerry_number(ret.x);
-        val2 = jerry_number(ret.y);
-        jerry_object_set_index(obj, 0, val1);
-        jerry_object_set_index(obj, 1, val2);
-        jerry_value_free(val1);
-        jerry_value_free(val2);
-
-        return obj;
+        return _point2d(tvg::lerp(_point2d(args[idx + 1]), _point2d(args[idx + 2]), t));
     }
 
     //1d
-    auto val1 = (float) jerry_value_as_number(args[idx + 1]);
-    auto val2 = (float) jerry_value_as_number(args[idx + 2]);
-    return jerry_number(tvg::lerp(val1, val2, t));
+    return jerry_number(tvg::lerp(jerry_value_as_number(args[idx + 1]), jerry_value_as_number(args[idx + 2]), t));
 }
 
 
 static jerry_value_t _linear(const jerry_call_info_t* info, const jerry_value_t args[], const jerry_length_t argsCnt)
 {
-    auto t = (float) jerry_value_as_number(args[0]);
+    auto t = jerry_value_as_number(args[0]);
     return _interp(t, args, jerry_value_as_uint32(argsCnt));
 }
 
 
 static jerry_value_t _ease(const jerry_call_info_t* info, const jerry_value_t args[], const jerry_length_t argsCnt)
 {
-    auto t = (float) jerry_value_as_number(args[0]);
+    auto t = jerry_value_as_number(args[0]);
     t = (t < 0.5f) ? (4 * t * t * t) : (1.0f - powf(-2.0f * t + 2.0f, 3) * 0.5f);
     return _interp(t, args, jerry_value_as_uint32(argsCnt));
 }
@@ -507,7 +458,7 @@ static jerry_value_t _ease(const jerry_call_info_t* info, const jerry_value_t ar
 
 static jerry_value_t _easeIn(const jerry_call_info_t* info, const jerry_value_t args[], const jerry_length_t argsCnt)
 {
-    auto t = (float) jerry_value_as_number(args[0]);
+    auto t = jerry_value_as_number(args[0]);
     t = t * t * t;
     return _interp(t, args, jerry_value_as_uint32(argsCnt));
 }
@@ -515,7 +466,7 @@ static jerry_value_t _easeIn(const jerry_call_info_t* info, const jerry_value_t 
 
 static jerry_value_t _easeOut(const jerry_call_info_t* info, const jerry_value_t args[], const jerry_length_t argsCnt)
 {
-    auto t = (float) jerry_value_as_number(args[0]);
+    auto t = jerry_value_as_number(args[0]);
     t = 1.0f - powf(1.0f - t, 3);
     return _interp(t, args, jerry_value_as_uint32(argsCnt));
 }
@@ -537,99 +488,44 @@ static jerry_value_t _clamp(const jerry_call_info_t* info, const jerry_value_t a
 
 static jerry_value_t _dot(const jerry_call_info_t* info, const jerry_value_t args[], const jerry_length_t argsCnt)
 {
-    auto val1 = jerry_object_get_index(args[0], 0);
-    auto val2 = jerry_object_get_index(args[0], 1);
-    auto val3 = jerry_object_get_index(args[1], 0);
-    auto val4 = jerry_object_get_index(args[1], 1);
-
-    auto x = jerry_value_as_number(val1) * jerry_value_as_number(val3);
-    auto y = jerry_value_as_number(val2) * jerry_value_as_number(val4);
-
-    jerry_value_free(val1);
-    jerry_value_free(val2);
-    jerry_value_free(val3);
-    jerry_value_free(val4);
-
-    return jerry_number(x + y);
+    return jerry_number(tvg::dot(_point2d(args[0]), _point2d(args[1])));
 }
 
 
 static jerry_value_t _cross(const jerry_call_info_t* info, const jerry_value_t args[], const jerry_length_t argsCnt)
 {
-    auto val1 = jerry_object_get_index(args[0], 0);
-    auto val2 = jerry_object_get_index(args[0], 1);
-    auto val3 = jerry_object_get_index(args[1], 0);
-    auto val4 = jerry_object_get_index(args[1], 1);
-
-    auto x = jerry_value_as_number(val1) * jerry_value_as_number(val4);
-    auto y = jerry_value_as_number(val2) * jerry_value_as_number(val3);
-
-    jerry_value_free(val1);
-    jerry_value_free(val2);
-    jerry_value_free(val3);
-    jerry_value_free(val4);
-
-    return jerry_number(x - y);
+    return jerry_number(tvg::cross(_point2d(args[0]), _point2d(args[1])));
 }
 
 
 static jerry_value_t _normalize(const jerry_call_info_t* info, const jerry_value_t args[], const jerry_length_t argsCnt)
 {
-    auto val1 = jerry_object_get_index(args[0], 0);
-    auto val2 = jerry_object_get_index(args[0], 1);
-    auto x = jerry_value_as_number(val1);
-    auto y = jerry_value_as_number(val2);
-
-    jerry_value_free(val1);
-    jerry_value_free(val2);
-
-    auto length = sqrtf(x * x + y * y);
-
-    x /= length;
-    y /= length;
-
-    auto obj = jerry_object();
-    val1 = jerry_number(x);
-    val2 = jerry_number(y);
-    jerry_object_set_index(obj, 0, val1);
-    jerry_object_set_index(obj, 0, val2);
-    jerry_value_free(val1);
-    jerry_value_free(val2);
-
-    return obj;
+    auto pt = _point2d(args[0]);
+    return _point2d(pt / tvg::length(pt));
 }
 
 
 static jerry_value_t _length(const jerry_call_info_t* info, const jerry_value_t args[], const jerry_length_t argsCnt)
 {
-    auto val1 = jerry_object_get_index(args[0], 0);
-    auto val2 = jerry_object_get_index(args[0], 1);
-    auto x = jerry_value_as_number(val1);
-    auto y = jerry_value_as_number(val2);
-
-    jerry_value_free(val1);
-    jerry_value_free(val2);
-
-    return jerry_number(sqrtf(x * x + y * y));
+    return jerry_number(tvg::length(_point2d(args[0])));
 }
 
 
 static jerry_value_t _random(const jerry_call_info_t* info, const jerry_value_t args[], const jerry_length_t argsCnt)
 {
-    auto val = (float)(rand() % 10000001);
-    return jerry_number(val * 0.0000001f);
+    return jerry_number((float)(rand() % 10000001) * 0.0000001f);
 }
 
 
 static jerry_value_t _deg2rad(const jerry_call_info_t* info, const jerry_value_t args[], const jerry_length_t argsCnt)
 {
-    return jerry_number(deg2rad((float)jerry_value_as_number(args[0])));
+    return jerry_number(deg2rad(jerry_value_as_number(args[0])));
 }
 
 
 static jerry_value_t _rad2deg(const jerry_call_info_t* info, const jerry_value_t args[], const jerry_length_t argsCnt)
 {
-    return jerry_number(rad2deg((float)jerry_value_as_number(args[0])));
+    return jerry_number(rad2deg(jerry_value_as_number(args[0])));
 }
 
 
@@ -752,15 +648,7 @@ static jerry_value_t _valueAtTime(const jerry_call_info_t* info, const jerry_val
 
 static jerry_value_t _velocity(float px, float cx, float py, float cy, float elapsed)
 {
-    float velocity[] = {(cx - px) / elapsed, (cy - py) / elapsed};
-    auto obj = jerry_object();
-    auto val1 = jerry_number(velocity[0]);
-    auto val2 = jerry_number(velocity[1]);
-    jerry_object_set_index(obj, 0, val1);
-    jerry_object_set_index(obj, 1, val2);
-    jerry_value_free(val1);
-    jerry_value_free(val2);
-    return obj;
+    return _point2d({(cx - px) / elapsed, (cy - py) / elapsed});
 }
 
 
@@ -877,7 +765,7 @@ static jerry_value_t _loopOutDuration(const jerry_call_info_t* info, const jerry
     if (!_loopOutCommon(exp, args, argsCnt)) return jerry_undefined();
 
     if (argsCnt > 1) {
-        exp->loop.in = exp->comp->frameAtTime((float)jerry_value_as_int32(args[1]));
+        exp->loop.in = exp->comp->frameAtTime(jerry_value_as_number(args[1]));
     }
 
     auto obj = jerry_object();
@@ -926,7 +814,7 @@ static jerry_value_t _loopInDuration(const jerry_call_info_t* info, const jerry_
     auto exp = static_cast<LottieExpression*>(jerry_object_get_native_ptr(info->function, nullptr));
 
     if (argsCnt > 1) {
-        exp->loop.in = exp->comp->frameAtTime((float)jerry_value_as_int32(args[1]));
+        exp->loop.in = exp->comp->frameAtTime(jerry_value_as_number(args[1]));
     }
 
     if (!_loopInCommon(exp, args, argsCnt)) return jerry_undefined();
