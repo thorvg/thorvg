@@ -167,12 +167,8 @@ void LottieBuilder::updateTransform(LottieLayer* layer, float frameNo)
 
     _updateTransform(transform, frameNo, layer->autoOrient, matrix, layer->cache.opacity, exps);
 
-    if (parent) {
-        if (!identity((const Matrix*) &parent->cache.matrix)) {
-            if (identity((const Matrix*) &matrix)) layer->cache.matrix = parent->cache.matrix;
-            else layer->cache.matrix = parent->cache.matrix * matrix;
-        }
-    }
+    if (parent) layer->cache.matrix = parent->cache.matrix * matrix;
+
     layer->cache.frameNo = frameNo;
 }
 
@@ -182,25 +178,30 @@ void LottieBuilder::updateTransform(LottieGroup* parent, LottieObject** child, f
     auto transform = static_cast<LottieTransform*>(*child);
     if (!transform) return;
 
+    Matrix m;
     uint8_t opacity;
 
     if (parent->mergeable()) {
-        if (!ctx->transform) ctx->transform = (Matrix*)malloc(sizeof(Matrix));
-        _updateTransform(transform, frameNo, false, *ctx->transform, opacity, exps);
+        if (ctx->transform) {
+            _updateTransform(transform, frameNo, false, m, opacity, exps);
+            *ctx->transform *= m;
+        } else {
+            ctx->transform = new Matrix;
+            _updateTransform(transform, frameNo, false, *ctx->transform, opacity, exps);
+        }
         return;
     }
 
     ctx->merging = nullptr;
 
-    Matrix matrix;
-    if (!_updateTransform(transform, frameNo, false, matrix, opacity, exps)) return;
+    if (!_updateTransform(transform, frameNo, false, m, opacity, exps)) return;
 
-    ctx->propagator->transform(PP(ctx->propagator)->transform() * matrix);
+    ctx->propagator->transform(PP(ctx->propagator)->transform() * m);
     ctx->propagator->opacity(MULTIPLY(opacity, PP(ctx->propagator)->opacity));
 
     //FIXME: preserve the stroke width. too workaround, need a better design.
     if (P(ctx->propagator)->rs.strokeWidth() > 0.0f) {
-        auto denominator = sqrtf(matrix.e11 * matrix.e11 + matrix.e12 * matrix.e12);
+        auto denominator = sqrtf(m.e11 * m.e11 + m.e12 * m.e12);
         if (denominator > 1.0f) ctx->propagator->stroke(ctx->propagator->strokeWidth() / denominator);
     }
 }

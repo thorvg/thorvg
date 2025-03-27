@@ -71,7 +71,7 @@ struct RenderContext
     ~RenderContext()
     {
         PP(propagator)->unref();
-        free(transform);
+        delete(transform);
         delete(roundness);
         delete(offsetPath);
     }
@@ -84,6 +84,10 @@ struct RenderContext
         this->repeaters = rhs.repeaters;
         if (rhs.roundness) this->roundness = new LottieRoundnessModifier(rhs.roundness->r);
         if (rhs.offsetPath) this->offsetPath = new LottieOffsetModifier(rhs.offsetPath->offset, rhs.offsetPath->miterLimit, rhs.offsetPath->join);
+        if (rhs.transform) {
+            transform = new Matrix;
+            *transform = *rhs.transform;
+        }
     }
 };
 
