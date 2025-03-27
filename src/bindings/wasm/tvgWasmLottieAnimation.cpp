@@ -191,7 +191,9 @@ struct TvgWgEngine : TvgEngineMethod
 
     void resize(Canvas* canvas, int w, int h) override
     {
+    #ifdef THORVG_WG_RASTER_SUPPORT
         if (canvas) static_cast<WgCanvas*>(canvas)->target(device, instance, surface, w, h, ColorSpace::ABGR8888S);
+    #endif
     }
 };
 
