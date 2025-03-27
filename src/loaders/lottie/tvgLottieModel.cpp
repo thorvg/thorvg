@@ -551,7 +551,7 @@ void LottieGroup::prepare(LottieObject::Type type)
 
         /* Figure out if this group is a simple path drawing.
            In that case, the rendering context can be sharable with the parent's. */
-        if (allowMerge && (child->type == LottieObject::Group || !child->mergeable())) allowMerge = false;
+        if (allowMerge && !child->mergeable()) allowMerge = false;
 
         //Figure out this group has visible contents
         switch (child->type) {

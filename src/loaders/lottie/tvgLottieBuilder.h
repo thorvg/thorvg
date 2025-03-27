@@ -73,7 +73,7 @@ struct RenderContext
     ~RenderContext()
     {
         propagator->unref(false);
-        tvg::free(transform);
+        delete(transform);
         delete(roundness);
         delete(offset);
     }
@@ -91,6 +91,10 @@ struct RenderContext
         if (rhs.offset) {
             offset = new LottieOffsetModifier(rhs.offset->offset, rhs.offset->miterLimit, rhs.offset->join);
             update(offset);
+        }
+        if (rhs.transform) {
+            transform = new Matrix;
+            *transform = *rhs.transform;
         }
     }
 

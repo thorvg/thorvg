@@ -150,12 +150,8 @@ void LottieBuilder::updateTransform(LottieLayer* layer, float frameNo)
 
     _updateTransform(transform, frameNo, matrix, layer->cache.opacity, layer->autoOrient, tween, exps);
 
-    if (parent) {
-        if (!tvg::identity((const Matrix*) &parent->cache.matrix)) {
-            if (tvg::identity((const Matrix*) &matrix)) layer->cache.matrix = parent->cache.matrix;
-            else layer->cache.matrix = parent->cache.matrix * matrix;
-        }
-    }
+    if (parent) layer->cache.matrix = parent->cache.matrix * matrix;
+
     layer->cache.frameNo = frameNo;
 }
 
@@ -165,25 +161,30 @@ void LottieBuilder::updateTransform(LottieGroup* parent, LottieObject** child, f
     auto transform = static_cast<LottieTransform*>(*child);
     if (!transform) return;
 
+    Matrix m;
     uint8_t opacity;
 
     if (parent->mergeable()) {
-        if (!ctx->transform) ctx->transform = tvg::malloc<Matrix*>(sizeof(Matrix));
-        _updateTransform(transform, frameNo, *ctx->transform, opacity, false, tween, exps);
+        if (ctx->transform) {
+            _updateTransform(transform, frameNo, m, opacity, false, tween, exps);
+            *ctx->transform *= m;
+        } else {
+            ctx->transform = new Matrix;
+            _updateTransform(transform, frameNo, *ctx->transform, opacity, false, tween, exps);
+        }
         return;
     }
 
     ctx->merging = nullptr;
 
-    Matrix matrix;
-    if (!_updateTransform(transform, frameNo, matrix, opacity, false, tween, exps)) return;
+    if (!_updateTransform(transform, frameNo, m, opacity, false, tween, exps)) return;
 
-    ctx->propagator->transform(ctx->propagator->transform() * matrix);
+    ctx->propagator->transform(ctx->propagator->transform() * m);
     ctx->propagator->opacity(MULTIPLY(opacity, PAINT(ctx->propagator)->opacity));
 
     //FIXME: preserve the stroke width. too workaround, need a better design.
     if (SHAPE(ctx->propagator)->rs.strokeWidth() > 0.0f) {
-        auto denominator = sqrtf(matrix.e11 * matrix.e11 + matrix.e12 * matrix.e12);
+        auto denominator = sqrtf(m.e11 * m.e11 + m.e12 * m.e12);
         if (denominator > 1.0f) ctx->propagator->strokeWidth(ctx->propagator->strokeWidth() / denominator);
     }
 }
