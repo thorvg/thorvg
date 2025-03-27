@@ -26,8 +26,8 @@
 /* ThorVG Drawing Contents                                              */
 /************************************************************************/
 
-#define NUM_PER_ROW 4
-#define NUM_PER_COL 4
+#define NUM_PER_ROW 5
+#define NUM_PER_COL 5
 
 struct UserExample : tvgexam::Example
 {
@@ -122,5 +122,5 @@ struct UserExample : tvgexam::Example
 
 int main(int argc, char **argv)
 {
-    return tvgexam::main(new UserExample, argc, argv, false, 800, 800, 0, true);
+    return tvgexam::main(new UserExample, argc, argv, false, 1024, 1024, 0, true);
 }
