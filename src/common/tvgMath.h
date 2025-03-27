@@ -288,6 +288,13 @@ static inline Point operator+(const Point& lhs, const float rhs)
 }
 
 
+static inline void operator+=(Point& lhs, const Point& rhs)
+{
+    lhs.x += rhs.x;
+    lhs.y += rhs.y;
+}
+
+
 static inline Point operator*(const Point& lhs, const Point& rhs)
 {
     return {lhs.x * rhs.x, lhs.y * rhs.y};
