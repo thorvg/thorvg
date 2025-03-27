@@ -61,7 +61,7 @@ public:
     GlRenderTargetPool(uint32_t maxWidth, uint32_t maxHeight);
     ~GlRenderTargetPool();
 
-    GlRenderTarget* getRenderTarget(GLuint resolveId = 0);
+    GlRenderTarget* getRenderTarget(const RenderRegion& vp, GLuint resolveId = 0);
 private:
     uint32_t mMaxWidth = 0;
     uint32_t mMaxHeight = 0;

@@ -60,9 +60,6 @@ public:
         RT_DifferenceBlend,
         RT_ExclusionBlend,
 
-        RT_GaussianVert,
-        RT_GaussianHorz,
-
         RT_None,
     };
 
@@ -119,9 +116,6 @@ private:
     void prepareCmpTask(GlRenderTask* task, const RenderRegion& vp, uint32_t cmpWidth, uint32_t cmpHeight);
     void endRenderPass(RenderCompositor* cmp);
 
-    void effectGaussianBlurUpdate(RenderEffectGaussianBlur* effect, const Matrix& transform);
-    bool effectGaussianBlurRegion(RenderEffectGaussianBlur* effect);
-
     void flush();
     void clearDisposes();
     void currentContext();
@@ -132,8 +126,6 @@ private:
     RenderRegion mViewport;
     GlStageBuffer mGpuBuffer;
     GlRenderTarget mRootTarget;
-    GlRenderTarget mTempTarget0;
-    GlRenderTarget mTempTarget1;
     Array<GlProgram*> mPrograms;
     Array<GlRenderTargetPool*> mComposePool;
     Array<GlRenderTargetPool*> mBlendPool;
