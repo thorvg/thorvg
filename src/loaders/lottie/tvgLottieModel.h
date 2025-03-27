@@ -569,8 +569,7 @@ struct LottieTransform : LottieObject
 
     bool mergeable() override
     {
-        if (!opacity.frames && opacity.value == 255) return true;
-        return false;
+        return true;
     }
 
     LottieProperty* property(uint16_t ix) override
