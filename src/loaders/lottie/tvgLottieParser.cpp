@@ -242,10 +242,10 @@ bool LottieParser::getValue(ColorStop& color)
 
 bool LottieParser::getValue(Array<Point>& pts)
 {
+    Point pt{};
     enterArray();
     while (nextArrayValue()) {
         enterArray();
-        Point pt;
         getValue(pt);
         pts.push(pt);
     }
