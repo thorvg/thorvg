@@ -25,87 +25,12 @@
 #include <emscripten/bind.h>
 #include "tvgPicture.h"
 #include "tvgWasmDefaultFont.h"
-#ifdef THORVG_WG_RASTER_SUPPORT
-    #include <emscripten/html5_webgpu.h>
-#endif
-#ifdef THORVG_GL_RASTER_SUPPORT
-    #include <emscripten/html5_webgl.h>
-#endif
 
 using namespace emscripten;
 using namespace std;
 using namespace tvg;
 
 static const char* NoError = "None";
-
-#ifdef THORVG_WG_RASTER_SUPPORT
-    static WGPUInstance instance{};
-    static WGPUAdapter adapter{};
-    static WGPUDevice device{};
-    static bool adapterRequested = false;
-    static bool deviceRequested = false;
-    static bool initializationFailed = false;
-#endif
-
-// 0: success, 1: fail, 2: wait for async request
-int init()
-{
-#ifdef THORVG_WG_RASTER_SUPPORT
-    if (initializationFailed) return 1;
-
-    //Init WebGPU
-    if (!instance) instance = wgpuCreateInstance(nullptr);
-
-    // request adapter
-    if (!adapter) {
-        if (adapterRequested) return 2;
-
-        const WGPURequestAdapterOptions requestAdapterOptions { .nextInChain = nullptr, .powerPreference = WGPUPowerPreference_HighPerformance, .forceFallbackAdapter = false };
-        auto onAdapterRequestEnded = [](WGPURequestAdapterStatus status, WGPUAdapter adapter, char const* message, void* pUserData) { 
-            if (status != WGPURequestAdapterStatus_Success) {
-                initializationFailed = true;
-                return;
-            }
-            *((WGPUAdapter*)pUserData) = adapter;
-        };
-        wgpuInstanceRequestAdapter(instance, &requestAdapterOptions, onAdapterRequestEnded, &adapter);
-
-        adapterRequested = true;
-        return 2;
-    }
-
-    // request device
-    if (deviceRequested) return device == nullptr ? 2 : 0;
-
-    WGPUFeatureName featureNames[32]{};
-    size_t featuresCount = wgpuAdapterEnumerateFeatures(adapter, featureNames);
-    if (!device) {
-        const WGPUDeviceDescriptor deviceDesc { .nextInChain = nullptr, .label = "The device", .requiredFeatureCount = featuresCount, .requiredFeatures = featureNames };
-        auto onDeviceRequestEnded = [](WGPURequestDeviceStatus status, WGPUDevice device, char const* message, void* pUserData) {
-            if (status != WGPURequestDeviceStatus_Success) {
-                initializationFailed = true;
-                return;
-            }
-            *((WGPUDevice*)pUserData) = device; 
-        };
-        wgpuAdapterRequestDevice(adapter, &deviceDesc, onDeviceRequestEnded, &device);
-
-        deviceRequested = true;
-        return 2;
-    }
-#endif
-
-    return 0;
-}
-
-void term()
-{
-#ifdef THORVG_WG_RASTER_SUPPORT
-    wgpuDeviceRelease(device);
-    wgpuAdapterRelease(adapter);
-    wgpuInstanceRelease(instance);
-#endif
-}
 
 struct TvgEngineMethod
 {
@@ -154,24 +79,30 @@ struct TvgSwEngine : TvgEngineMethod
 };
 
 
+#ifdef THORVG_WG_RASTER_SUPPORT
+
+#include <emscripten/html5_webgpu.h>
+
+static WGPUInstance instance{};
+static WGPUAdapter adapter{};
+static WGPUDevice device{};
+static bool adapterRequested = false;
+static bool deviceRequested = false;
+static bool initializationFailed = false;
+
 struct TvgWgEngine : TvgEngineMethod
 {
-#ifdef THORVG_WG_RASTER_SUPPORT
     WGPUSurface surface{};
-#endif
 
     ~TvgWgEngine()
     {
-    #ifdef THORVG_WG_RASTER_SUPPORT
         wgpuSurfaceRelease(surface);
         Initializer::term(tvg::CanvasEngine::Wg);
         retrieveFont();
-    #endif
     }
 
     Canvas* init(string& selector) override
     {
-    #ifdef THORVG_WG_RASTER_SUPPORT
         WGPUSurfaceDescriptorFromCanvasHTMLSelector canvasDesc{};
         canvasDesc.chain.next = nullptr;
         canvasDesc.chain.sType = WGPUSType_SurfaceDescriptorFromCanvasHTMLSelector;
@@ -184,37 +115,91 @@ struct TvgWgEngine : TvgEngineMethod
         Initializer::init(0, tvg::CanvasEngine::Wg);
         loadFont();
         return WgCanvas::gen();
-    #else
-        return nullptr;
-    #endif
     }
 
     void resize(Canvas* canvas, int w, int h) override
     {
-    #ifdef THORVG_WG_RASTER_SUPPORT
         if (canvas) static_cast<WgCanvas*>(canvas)->target(device, instance, surface, w, h, ColorSpace::ABGR8888S);
-    #endif
     }
+
+    static int init()
+    {
+        if (initializationFailed) return 1;
+
+        //Init WebGPU
+        if (!instance) instance = wgpuCreateInstance(nullptr);
+
+        // request adapter
+        if (!adapter) {
+            if (adapterRequested) return 2;
+
+            const WGPURequestAdapterOptions requestAdapterOptions { .nextInChain = nullptr, .powerPreference = WGPUPowerPreference_HighPerformance, .forceFallbackAdapter = false };
+            auto onAdapterRequestEnded = [](WGPURequestAdapterStatus status, WGPUAdapter adapter, char const* message, void* pUserData) {
+                if (status != WGPURequestAdapterStatus_Success) {
+                    initializationFailed = true;
+                    return;
+                }
+                *((WGPUAdapter*)pUserData) = adapter;
+            };
+            wgpuInstanceRequestAdapter(instance, &requestAdapterOptions, onAdapterRequestEnded, &adapter);
+
+            adapterRequested = true;
+            return 2;
+        }
+
+        // request device
+        if (deviceRequested) return device == nullptr ? 2 : 0;
+
+        WGPUFeatureName featureNames[32]{};
+        size_t featuresCount = wgpuAdapterEnumerateFeatures(adapter, featureNames);
+        if (!device) {
+            const WGPUDeviceDescriptor deviceDesc { .nextInChain = nullptr, .label = "The device", .requiredFeatureCount = featuresCount, .requiredFeatures = featureNames };
+            auto onDeviceRequestEnded = [](WGPURequestDeviceStatus status, WGPUDevice device, char const* message, void* pUserData) {
+                if (status != WGPURequestDeviceStatus_Success) {
+                    initializationFailed = true;
+                    return;
+                }
+                *((WGPUDevice*)pUserData) = device;
+            };
+            wgpuAdapterRequestDevice(adapter, &deviceDesc, onDeviceRequestEnded, &device);
+
+            deviceRequested = true;
+            return 2;
+        }
+        return 0;
+    }
+
+    static void term()
+    {
+        wgpuDeviceRelease(device);
+        wgpuAdapterRelease(adapter);
+        wgpuInstanceRelease(instance);
+    }
+
 };
+#endif
+
+
+#ifdef THORVG_GL_RASTER_SUPPORT
+
+#include <emscripten/html5_webgl.h>
 
 struct TvgGLEngine : TvgEngineMethod
 {
     intptr_t context = 0;
-    ~TvgGLEngine() override
+
+    ~TvgGLEngine()
     {
-    #ifdef THORVG_GL_RASTER_SUPPORT
         if (context) {
             Initializer::term(tvg::CanvasEngine::Gl);
             emscripten_webgl_destroy_context(context);
             context = 0;
         }
         retrieveFont();
-    #endif
     }
 
     Canvas* init(string& selector) override
     {
-    #ifdef THORVG_GL_RASTER_SUPPORT
         EmscriptenWebGLContextAttributes attrs{};
         attrs.alpha = true;
         attrs.depth = false;
@@ -234,9 +219,6 @@ struct TvgGLEngine : TvgEngineMethod
         loadFont();
 
         return GlCanvas::gen();
-    #else
-        return nullptr;
-    #endif
     }
 
     void resize(Canvas* canvas, int w, int h) override
@@ -244,6 +226,7 @@ struct TvgGLEngine : TvgEngineMethod
         if (canvas) static_cast<GlCanvas*>(canvas)->target((void*)context, 0, w, h, ColorSpace::ABGR8888S);
     }
 };
+#endif
 
 
 class __attribute__((visibility("default"))) TvgLottieAnimation
@@ -261,8 +244,12 @@ public:
         errorMsg = NoError;
 
         if (engine == "sw") this->engine = new TvgSwEngine;
+#ifdef THORVG_GL_RASTER_SUPPORT
         else if (engine == "gl") this->engine = new TvgGLEngine;
+#endif
+#ifdef THORVG_WG_RASTER_SUPPORT
         else if (engine == "wg") this->engine = new TvgWgEngine;
+#endif
 
         if (!this->engine) {
             errorMsg = "Invalid engine";
@@ -285,7 +272,6 @@ public:
         return errorMsg;
     }
 
-    // Getter methods
     val size()
     {
         return val(typed_memory_view(2, psize));
@@ -309,7 +295,6 @@ public:
         return animation->curFrame();
     }
 
-    // Render methods
     bool load(string data, string mimetype, int width, int height, string rpath = "")
     {
         errorMsg = NoError;
@@ -435,11 +420,9 @@ public:
         updated = true;
     }
 
-    // Saver methods
     bool save(string data, string mimetype)
     {
         if (mimetype == "gif") return save2Gif(data);
-
         errorMsg = "Invalid mimetype";
         return false;
     }
@@ -491,7 +474,7 @@ public:
         bg->fill(255, 255, 255, 255);
         bg->appendRect(0, 0, GIF_SIZE, GIF_SIZE);
 
-        if (saver->background(std::move(bg)) != Result::Success) {
+        if (saver->background(bg) != Result::Success) {
             errorMsg = "background() fail";
             return false;
         }
@@ -518,6 +501,25 @@ private:
     float                  psize[2];         //picture size
     bool                   updated = false;
 };
+
+
+// 0: success, 1: fail, 2: wait for async request
+int init()
+{
+#ifdef THORVG_WG_RASTER_SUPPORT
+    TvgWgEngine::init();
+#endif
+    return 0;
+}
+
+
+void term()
+{
+#ifdef THORVG_WG_RASTER_SUPPORT
+    TvgWgEngine::term();
+#endif
+}
+
 
 EMSCRIPTEN_BINDINGS(thorvg_bindings)
 {
