@@ -54,7 +54,7 @@ private:
 
    void helpMsg()
    {
-      cout << "Usage: \n   lottie2gif [Lottie file] or [Lottie folder] [-r resolution] [-f fps] [-b background color]\n\nExamples: \n    $ lottie2gif input.json\n    $ lottie2gif input.json -r 600x600\n    $ lottie2gif input.json -f 30\n    $ lottie2gif input.json -r 600x600 -f 30\n    $ lottie2gif lottiefolder\n    $ lottie2gif lottiefolder -r 600x600 -f 30 -b fa7410\n\n";
+      cout << "Usage: \n   tvg_lottie2gif [Lottie file] or [Lottie folder] [-r resolution] [-f fps] [-b background color]\n\nExamples: \n    $ tvg_lottie2gif input.json\n    $ tvg_lottie2gif input.json -r 600x600\n    $ tvg_lottie2gif input.json -f 30\n    $ tvg_lottie2gif input.json -r 600x600 -f 30\n    $ tvg_lottie2gif lottiefolder\n    $ tvg_lottie2gif lottiefolder -r 600x600 -f 30 -b fa7410\n\n";
    }
 
    bool validate(string& lottieName)
