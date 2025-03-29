@@ -152,7 +152,7 @@ jobs:
           rm files.zip
           cp test/regression/check_same_image_size.py check_same_image_size.py
           # Forces to run tasks on different threads if possible, which should help find problem with data races
-          taskset -c 0-15 python3 check_same_image_size.py AA_5.svg ./build/src/tools/svg2png/svg2png 100 500 2>&1 | tee result_image_size.txt
+          taskset -c 0-15 python3 check_same_image_size.py AA_5.svg ./build/src/tools/svg2png/tvg-svg2png 100 500 2>&1 | tee result_image_size.txt
 
       - name: Check results
         run: |

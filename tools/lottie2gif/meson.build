@@ -1,6 +1,6 @@
 lottie2gif_src  = files('lottie2gif.cpp')
 
-executable('lottie2gif',
+executable('tvg-lottie2gif',
            lottie2gif_src,
            include_directories : headers,
            cpp_args : compiler_flags,

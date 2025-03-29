@@ -1,6 +1,6 @@
 svg2png_src  = files('svg2png.cpp', 'lodepng.cpp')
 
-executable('svg2png',
+executable('tvg-svg2png',
            svg2png_src,
            include_directories : headers,
            cpp_args : compiler_flags,

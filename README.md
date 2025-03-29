@@ -442,22 +442,22 @@ ThorVG provides the resource verification tool for the ThorVG Engine. [ThorVG vi
 </p>
 
 ### Lottie to GIF
-ThorVG provides an executable `lottie2gif` converter that generates a GIF file from a Lottie file.
+ThorVG provides an executable `tvg-lottie2gif` converter that generates a GIF file from a Lottie file.
 
-To use the `lottie2gif`, you must turn on this feature in the build option:
+To use the `tvg-lottie2gif`, you must turn on this feature in the build option:
 ```
 meson setup builddir -Dtools=lottie2gif -Dsavers=gif
 ```
-To use the 'lottie2gif' converter, you need to provide the 'Lottie files' parameter. This parameter can be a file name with the '.json' extension or a directory name. It also accepts multiple files or directories separated by spaces. If a directory is specified, the converter will search for files with the '.json' extension within that directory and all its subdirectories.<br />
+To use the 'tvg-lottie2gif' converter, you need to provide the 'Lottie files' parameter. This parameter can be a file name with the '.json' extension or a directory name. It also accepts multiple files or directories separated by spaces. If a directory is specified, the converter will search for files with the '.json' extension within that directory and all its subdirectories.<br />
 <br />
 Optionally, you can specify the image resolution in the 'WxH' format, with two numbers separated by an 'x' sign, following the '-r' flag.<br />
 <br />
 Both flags, if provided, are applied to all of the `.json` files.
 
-The usage examples of the `lottie2gif`:
+The usage examples of the `tvg-lottie2gif`:
 ```
 Usage:
-    lottie2gif [Lottie file] or [Lottie folder] [-r resolution] [-f fps] [-b background color]
+    tvg-lottie2gif [Lottie file] or [Lottie folder] [-r resolution] [-f fps] [-b background color]
 
 Flags:
     -r set the output image resolution.
@@ -465,22 +465,22 @@ Flags:
     -b specifies the base background color (RGB in hex). If not specified, the background color will follow the original content.
 
 Examples:
-    $ lottie2gif input.json
-    $ lottie2gif input.json -f 30
-    $ lottie2gif input.json -r 600x600 -f 30
-    $ lottie2gif lottiefolder
-    $ lottie2gif lottiefolder -r 600x600
-    $ lottie2gif lottiefolder -r 600x600 -f 30 -b fa7410
+    $ tvg-lottie2gif input.json
+    $ tvg-lottie2gif input.json -f 30
+    $ tvg-lottie2gif input.json -r 600x600 -f 30
+    $ tvg-lottie2gif lottiefolder
+    $ tvg-lottie2gif lottiefolder -r 600x600
+    $ tvg-lottie2gif lottiefolder -r 600x600 -f 30 -b fa7410
 ```
 
 ### SVG to PNG
-ThorVG provides an executable `svg2png` converter that generates a PNG file from an SVG file.
+ThorVG provides an executable `tvg-svg2png` converter that generates a PNG file from an SVG file.
 
-To use the `svg2png`, you must turn on this feature in the build option:
+To use the `tvg-svg2png`, you must turn on this feature in the build option:
 ```
 meson setup builddir -Dtools=svg2png
 ```
-To use the 'svg2png' converter, you need to provide the 'SVG files' parameter. This parameter can be a file name with the '.svg' extension or a directory name. It also accepts multiple files or directories separated by spaces. If a directory is specified, the converter will search for files with the '.svg' extension within that directory and all its subdirectories.<br />
+To use the 'tvg-svg2png' converter, you need to provide the 'SVG files' parameter. This parameter can be a file name with the '.svg' extension or a directory name. It also accepts multiple files or directories separated by spaces. If a directory is specified, the converter will search for files with the '.svg' extension within that directory and all its subdirectories.<br />
 <br />
 Optionally, you can specify the image resolution in the 'WxH' format, with two numbers separated by an 'x' sign, following the '-r' flag.<br />
 <br />
@@ -488,21 +488,21 @@ The background color can be set with the `-b` flag. The `bgColor` parameter shou
 <br />
 Both flags, if provided, are applied to all of the `.svg` files.
 
-The usage examples of the `svg2png`:
+The usage examples of the `tvg-svg2png`:
 ```
 Usage:
-    svg2png [SVG files] [-r resolution] [-b bgColor]
+    tvg-svg2png [SVG files] [-r resolution] [-b bgColor]
 
 Flags:
     -r set the output image resolution.
     -b set the output image background color.
 
 Examples:
-    $ svg2png input.svg
-    $ svg2png input.svg -r 200x200
-    $ svg2png input.svg -r 200x200 -b ff00ff
-    $ svg2png input1.svg input2.svg -r 200x200 -b ff00ff
-    $ svg2png . -r 200x200
+    $ tvg-svg2png input.svg
+    $ tvg-svg2png input.svg -r 200x200
+    $ tvg-svg2png input.svg -r 200x200 -b ff00ff
+    $ tvg-svg2png input1.svg input2.svg -r 200x200 -b ff00ff
+    $ tvg-svg2png . -r 200x200
 ```
 
 [Back to contents](#contents)
