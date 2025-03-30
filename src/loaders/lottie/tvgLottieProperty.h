@@ -195,7 +195,7 @@ struct LottieProperty
     //TODO: Apply common bodies?
     virtual ~LottieProperty() {}
     virtual uint32_t frameCnt() = 0;
-    virtual uint32_t nearest(float time) = 0;
+    virtual uint32_t nearest(float frameNo) = 0;
     virtual float frameNo(int32_t key) = 0;
 
     bool copy(LottieProperty* rhs, bool shallow)
@@ -966,7 +966,7 @@ struct LottieBitmap : LottieProperty
     }
 
     uint32_t frameCnt() override { return 0; }
-    uint32_t nearest(float time) override { return 0; }
+    uint32_t nearest(float frameNo) override { return 0; }
     float frameNo(int32_t key) override { return 0; }
 
     void copy(LottieBitmap& rhs, bool shallow = true)

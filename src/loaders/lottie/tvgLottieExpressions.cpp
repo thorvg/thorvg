@@ -652,18 +652,16 @@ static jerry_value_t _valueAtTime(const jerry_call_info_t* info, const jerry_val
 }
 
 
-static jerry_value_t _velocity(float px, float cx, float py, float cy, float elapsed)
+static jerry_value_t _velocity(Point& prv, Point& cur, float elapsed)
 {
-    return _point2d({(cx - px) / elapsed, (cy - py) / elapsed});
+    return _point2d({(cur.x - prv.x) / elapsed, (cur.y - prv.y) / elapsed});
 }
 
 
 static jerry_value_t _velocityAtTime(const jerry_call_info_t* info, const jerry_value_t args[], const jerry_length_t argsCnt)
 {
     auto exp = static_cast<LottieExpression*>(jerry_object_get_native_ptr(info->function, nullptr));
-    auto time = jerry_value_as_number(args[0]);
-    auto frameNo = exp->comp->frameAtTime(time);
-    auto key = exp->property->nearest(frameNo);
+    auto key = exp->property->nearest(exp->comp->frameAtTime(jerry_value_as_number(args[0])));
     auto pframe = exp->property->frameNo(key - 1);
     auto cframe = exp->property->frameNo(key);
     auto elapsed = (cframe - pframe) / (exp->comp->frameRate);
@@ -673,18 +671,17 @@ static jerry_value_t _velocityAtTime(const jerry_call_info_t* info, const jerry_
         case LottieProperty::Type::Point: {
             auto prv = (*static_cast<LottieScalar*>(exp->property))(pframe);
             auto cur = (*static_cast<LottieScalar*>(exp->property))(cframe);
-            return _velocity(prv.x, cur.x, prv.y, cur.y, elapsed);
+            return _velocity(prv, cur, elapsed);
         }
         case LottieProperty::Type::Position: {
             auto prv = (*static_cast<LottieVector*>(exp->property))(pframe);
             auto cur = (*static_cast<LottieVector*>(exp->property))(cframe);
-            return _velocity(prv.x, cur.x, prv.y, cur.y, elapsed);
+            return _velocity(prv, cur, elapsed);
         }
         case LottieProperty::Type::Float: {
             auto prv = (*static_cast<LottieFloat*>(exp->property))(pframe);
             auto cur = (*static_cast<LottieFloat*>(exp->property))(cframe);
-            auto velocity = (cur - prv) / elapsed;
-            return jerry_number(velocity);
+            return jerry_number((cur - prv) / elapsed);
         }
         default: TVGLOG("LOTTIE", "Non supported type for velocityAtTime?");
     }
@@ -695,12 +692,9 @@ static jerry_value_t _velocityAtTime(const jerry_call_info_t* info, const jerry_
 static jerry_value_t _speedAtTime(const jerry_call_info_t* info, const jerry_value_t args[], const jerry_length_t argsCnt)
 {
     auto exp = static_cast<LottieExpression*>(jerry_object_get_native_ptr(info->function, nullptr));
-    auto time = jerry_value_as_number(args[0]);
-    auto frameNo = exp->comp->frameAtTime(time);
-    auto key = exp->property->nearest(frameNo);
+    auto key = exp->property->nearest(exp->comp->frameAtTime(jerry_value_as_number(args[0])));
     auto pframe = exp->property->frameNo(key - 1);
     auto cframe = exp->property->frameNo(key);
-    auto elapsed = (cframe - pframe) / (exp->comp->frameRate);
 
     Point cur, prv;
 
@@ -722,9 +716,9 @@ static jerry_value_t _speedAtTime(const jerry_call_info_t* info, const jerry_val
         }
     }
 
+    auto elapsed = (cframe - pframe) / (exp->comp->frameRate);
     auto speed = sqrtf(pow(cur.x - prv.x, 2) + pow(cur.y - prv.y, 2)) / elapsed;
-    auto obj = jerry_number(speed);
-    return obj;
+    return jerry_number(speed);
 }
 
 
@@ -752,6 +746,31 @@ static jerry_value_t _wiggle(const jerry_call_info_t* info, const jerry_value_t 
     }
     return _point2d(result);
 }
+
+
+static jerry_value_t _temporalWiggle(const jerry_call_info_t* info, const jerry_value_t args[], const jerry_length_t argsCnt)
+{
+    auto data = static_cast<ExpContent*>(jerry_object_get_native_ptr(info->function, &freeCb));
+    auto freq = jerry_value_as_number(args[0]);
+    auto amp = jerry_value_as_number(args[1]);
+    auto octaves = (argsCnt > 2) ? jerry_value_as_int32(args[2]) : 1;
+    auto ampm = (argsCnt > 3) ? jerry_value_as_number(args[3]) : 5.0f;
+    auto time = (argsCnt > 4) ? jerry_value_as_number(args[4]) : data->exp->comp->timeAtFrame(data->frameNo);
+    auto wiggleTime = time;
+
+    for (int o = 0; o < octaves; ++o) {
+        auto repeat = int(time * freq);
+        auto frac = (time * freq - float(repeat));
+        for (int i = 0; i < repeat; ++i) {
+            wiggleTime += (_rand() * 2.0f - 1.0f) * amp * frac;
+        }
+        freq *= 2.0f;
+        amp *= ampm;
+    }
+
+    return _value(data->exp->comp->frameAtTime(wiggleTime), data->exp->property);
+}
+
 
 
 static bool _loopOutCommon(LottieExpression* exp, const jerry_value_t args[], const jerry_length_t argsCnt)
@@ -860,8 +879,7 @@ static jerry_value_t _loopInDuration(const jerry_call_info_t* info, const jerry_
 static jerry_value_t _key(const jerry_call_info_t* info, const jerry_value_t args[], const jerry_length_t argsCnt)
 {
     auto exp = static_cast<LottieExpression*>(jerry_object_get_native_ptr(info->function, nullptr));
-    auto key = jerry_value_as_int32(args[0]);
-    auto frameNo = exp->property->frameNo(key);
+    auto frameNo = exp->property->frameNo(jerry_value_as_int32(args[0]));
     auto time = jerry_number(exp->comp->timeAtFrame(frameNo));
     auto value = _value(frameNo, exp->property);
 
@@ -982,7 +1000,11 @@ static void _buildProperty(float frameNo, jerry_value_t context, LottieExpressio
     jerry_object_set_native_ptr(wiggle, &freeCb, _expcontent(exp, frameNo, exp->object));
     jerry_value_free(wiggle);
 
-    //temporalWiggle(freq, amp, octaves=1, amp_mult=.5, t=time)
+    auto temporalWiggle = jerry_function_external(_temporalWiggle);
+    jerry_object_set_sz(context, "temporalWiggle", temporalWiggle);
+    jerry_object_set_native_ptr(temporalWiggle, &freeCb, _expcontent(exp, frameNo, exp->object));
+    jerry_value_free(temporalWiggle);
+
     //smooth(width=.2, samples=5, t=time)
 
     auto loopIn = jerry_function_external(_loopIn);
