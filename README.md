@@ -95,8 +95,9 @@ ThorVG is actively under development, continuously expanding its support for ess
     - [Flux Audio](#flux-audio)
     - [Godot](#godot)
     - [Tizen](#tizen)
-  - [Examples](#examples)
-  - [Documentation](#documentation)
+  - [References](#references)
+  - [APIs](#apis)
+  - [Examples](#examples)    
   - [Tools](#tools)
     - [ThorVG Viewer](#thorvg-viewer)
     - [Lottie to GIF](#lottie-to-gif)
@@ -402,6 +403,19 @@ ThorVG has been integrated into the [Tizen](https://www.tizen.org) platform as t
 [Back to contents](#contents)
 <br />
 <br />
+## References
+- [Universal Motion Graphics across All Platforms: Unleashing Creativity with ThorVG](https://youtu.be/qhHMycRPQ9M?si=RXAag3Fxm8R7W_I0)
+- [Canva Enhances iOS Lottie Rendering: 80% Faster and 70% More Efficient with ThorVG](https://lottiefiles.com/blog/working-with-lottie-animations/canva-enhances-ios-rendering-faster-and-efficient-with-thorvg)
+
+[Back to contents](#contents)
+<br />
+<br />
+## APIs
+The ThorVG API documentation can be accessed at [thorvg.org/apis](https://www.thorvg.org/apis), and is also available in the [C++ API](https://github.com/thorvg/thorvg/blob/main/inc/thorvg.h), [C API](https://github.com/thorvg/thorvg/blob/main/src/bindings/capi/thorvg_capi.h) within this repository.
+
+[Back to contents](#contents)
+<br />
+<br />
 ## Examples
 There are plenty of sample code in `thorvg/examples` to help you in understanding the ThorVG APIs.
 
@@ -414,13 +428,6 @@ Note that these examples require the SDL dev package for launching. If you're us
 apt-get install libsdl2-dev
 ```
 Alternatively, you can read the official guidance [here](https://wiki.libsdl.org/SDL2/Installation) for other platforms. Fore more information, please visit the official [SDL](https://www.libsdl.org/) site.
-
-[Back to contents](#contents)
-<br />
-<br />
-
-## Documentation
-The ThorVG API documentation can be accessed at [thorvg.org/apis](https://www.thorvg.org/apis), and is also available in the [C++ API](https://github.com/thorvg/thorvg/blob/main/inc/thorvg.h), [C API](https://github.com/thorvg/thorvg/blob/main/src/bindings/capi/thorvg_capi.h) within this repository.
 
 [Back to contents](#contents)
 <br />
