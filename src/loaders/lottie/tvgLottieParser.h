@@ -99,7 +99,8 @@ private:
     void parseFontData(LottieFont* font, const char* data);
     LottieMarker* parseMarker();
 
-    void parseEffect(LottieEffect* effect, void(LottieParser::*func)(LottieEffect*, int));
+    bool parseEffect(LottieEffect* effect, void(LottieParser::*func)(LottieEffect*, int));
+    void parseCustom(LottieEffect* effect, int idx);
     void parseStroke(LottieEffect* effect, int idx);
     void parseTritone(LottieEffect* effect, int idx);
     void parseTint(LottieEffect* effect, int idx);
@@ -125,7 +126,7 @@ private:
     void parseFonts();
     void parseChars(Array<LottieGlyph*>& glyphs);
     void parseMarkers();
-    void parseEffect(LottieEffect* effect);
+    bool parseEffect(LottieEffect* effect);
     void postProcess(Array<LottieGlyph*>& glyphs);
 
     //Current parsing context
