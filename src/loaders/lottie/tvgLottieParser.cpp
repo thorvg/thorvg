@@ -636,8 +636,8 @@ LottieSolidStroke* LottieParser::parseSolidStroke()
         else if (KEY_AS("c")) parseProperty(stroke->color, stroke);
         else if (KEY_AS("o")) parseProperty(stroke->opacity, stroke);
         else if (KEY_AS("w")) parseProperty(stroke->width, stroke);
-        else if (KEY_AS("lc")) stroke->cap = (StrokeCap) getInt();
-        else if (KEY_AS("lj")) stroke->join = (StrokeJoin) getInt();
+        else if (KEY_AS("lc")) stroke->cap = (StrokeCap) (getInt() - 1);
+        else if (KEY_AS("lj")) stroke->join = (StrokeJoin) (getInt() - 1);
         else if (KEY_AS("ml")) stroke->miterLimit = getFloat();
         else if (KEY_AS("fillEnabled")) stroke->hidden |= !getBool();
         else if (KEY_AS("d")) parseStrokeDash(stroke);
@@ -769,8 +769,8 @@ LottieGradientStroke* LottieParser::parseGradientStroke()
 
     while (auto key = nextObjectKey()) {
         if (parseCommon(stroke, key)) continue;
-        else if (KEY_AS("lc")) stroke->cap = (StrokeCap) getInt();
-        else if (KEY_AS("lj")) stroke->join = (StrokeJoin) getInt();
+        else if (KEY_AS("lc")) stroke->cap = (StrokeCap) (getInt() - 1);
+        else if (KEY_AS("lj")) stroke->join = (StrokeJoin) (getInt() - 1);
         else if (KEY_AS("ml")) stroke->miterLimit = getFloat();
         else if (KEY_AS("w")) parseProperty(stroke->width);
         else if (KEY_AS("d")) parseStrokeDash(stroke);
