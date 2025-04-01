@@ -186,14 +186,15 @@ struct LottieExpression
 //Property would have an either keyframes or single value.
 struct LottieProperty
 {
-    enum class Type : uint8_t { Invalid = 0, Float, Integer, Scalar, Vector, PathSet, Color, Opacity, ColorStop, TextDoc, Image};
+    enum class Type : uint8_t {Invalid = 0, Integer, Float, Scalar, Vector, PathSet, Color, Opacity, ColorStop, TextDoc, Image};
 
     LottieExpression* exp = nullptr;
+    uint32_t ix;  //property index  (used as a name id for indexing by custom layer effect as well)
     Type type;
-    uint8_t ix;  //property index
 
     LottieProperty(Type type = Type::Invalid) : type(type) {}
     virtual ~LottieProperty() {}
+
     virtual uint32_t frameCnt() = 0;
     virtual uint32_t nearest(float frameNo) = 0;
     virtual float frameNo(int32_t key) = 0;
@@ -1006,6 +1007,5 @@ using LottieScalar = LottieGenericProperty<LottieScalarFrame<Point>, Point, Lott
 using LottieVector = LottieGenericProperty<LottieVectorFrame<Point>, Point, LottieProperty::Type::Vector, 0>;
 using LottieColor = LottieGenericProperty<LottieScalarFrame<RGB24>, RGB24, LottieProperty::Type::Color>;
 using LottieOpacity = LottieGenericProperty<LottieScalarFrame<uint8_t>, uint8_t, LottieProperty::Type::Opacity>;
-
 
 #endif //_TVG_LOTTIE_PROPERTY_H_

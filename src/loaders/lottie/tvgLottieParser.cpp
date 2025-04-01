@@ -60,6 +60,7 @@ LottieExpression* LottieParser::getExpression(char* code, LottieComposition* com
 LottieEffect* LottieParser::getEffect(int type)
 {
     switch (type) {
+        case LottieEffect::Custom: return new LottieFxCustom;
         case LottieEffect::Tint: return new LottieFxTint;
         case LottieEffect::Fill: return new LottieFxFill;
         case LottieEffect::Stroke: return new LottieFxStroke;
@@ -1255,24 +1256,59 @@ void LottieParser::parseMasks(LottieLayer* layer)
 }
 
 
-void LottieParser::parseEffect(LottieEffect* effect, void(LottieParser::*func)(LottieEffect*, int))
+bool LottieParser::parseEffect(LottieEffect* effect, void(LottieParser::*func)(LottieEffect*, int))
 {
-    int idx = 0;
+    //custom effect expects dynamic property allocations
+    auto custom = (effect->type == LottieEffect::Custom) ? true : false;
+    LottieProperty* property = nullptr;
+
     enterArray();
+    int idx = 0;
     while (nextArrayValue()) {
         enterObject();
         while (auto key = nextObjectKey()) {
-            if (KEY_AS("v")) {
+            if (custom && KEY_AS("ty")) {
+                property = static_cast<LottieFxCustom*>(effect)->property(getInt());
+            } else if (KEY_AS("v")) {
                 if (peekType() == kObjectType) {
                     enterObject();
                     while (auto key = nextObjectKey()) {
-                        if (KEY_AS("k")) (this->*func)(effect, idx);
+                        if (KEY_AS("k")) (this->*func)(effect, idx++);
                         else skip();
                     }
-                    ++idx;
                 } else skip();
+            } else if (property && KEY_AS("nm")) {
+                property->ix = djb2Encode(getString());
             } else skip();
         }
+    }
+    return true;
+}
+
+
+void LottieParser::parseCustom(LottieEffect* effect, int idx)
+{
+    if ((uint32_t)idx >= static_cast<LottieFxCustom*>(effect)->props.count) {
+        TVGERR("LOTTIE", "Parsing error in Custom effect!");
+        return;
+    }
+
+    auto prop = static_cast<LottieFxCustom*>(effect)->props[idx];
+
+    switch (prop->type) {
+        case LottieProperty::Type::Integer: {
+            parsePropertyInternal(*static_cast<LottieInteger*>(prop)); break;
+        }
+        case LottieProperty::Type::Float: {
+            parsePropertyInternal(*static_cast<LottieFloat*>(prop)); break;
+        }
+        case LottieProperty::Type::Vector: {
+            parsePropertyInternal(*static_cast<LottieVector*>(prop)); break;
+        }
+        case LottieProperty::Type::Color: {
+            parsePropertyInternal(*static_cast<LottieColor*>(prop)); break;
+        }
+        default: TVGLOG("LOTTIE", "Missing Property Type? = %d", (int) prop->type); break;
     }
 }
 
@@ -1348,34 +1384,17 @@ void LottieParser::parseStroke(LottieEffect* effect, int idx)
 }
 
 
-void LottieParser::parseEffect(LottieEffect* effect)
+bool LottieParser::parseEffect(LottieEffect* effect)
 {
     switch (effect->type) {
-        case LottieEffect::Tint: {
-            parseEffect(effect, &LottieParser::parseTint);
-            break;
-        }
-        case LottieEffect::Fill: {
-            parseEffect(effect, &LottieParser::parseFill);
-            break;
-        }
-        case LottieEffect::Stroke: {
-            parseEffect(effect, &LottieParser::parseStroke);
-            break;
-        }
-        case LottieEffect::Tritone: {
-            parseEffect(effect, &LottieParser::parseTritone);
-            break;
-        }
-        case LottieEffect::DropShadow: {
-            parseEffect(effect, &LottieParser::parseDropShadow);
-            break;
-        }
-        case LottieEffect::GaussianBlur: {
-            parseEffect(effect, &LottieParser::parseGaussianBlur);
-            break;
-        }
-        default: break;
+        case LottieEffect::Custom: return parseEffect(effect, &LottieParser::parseCustom);
+        case LottieEffect::Tint: return parseEffect(effect, &LottieParser::parseTint);
+        case LottieEffect::Fill: return parseEffect(effect, &LottieParser::parseFill);
+        case LottieEffect::Stroke: return parseEffect(effect, &LottieParser::parseStroke);
+        case LottieEffect::Tritone: return parseEffect(effect, &LottieParser::parseTritone);
+        case LottieEffect::DropShadow: return parseEffect(effect, &LottieParser::parseDropShadow);
+        case LottieEffect::GaussianBlur: return parseEffect(effect, &LottieParser::parseGaussianBlur);
+        default: return false;
     }
 }
 
@@ -1395,6 +1414,8 @@ void LottieParser::parseEffects(LottieLayer* layer)
                 if (!effect) break;
                 else invalid = false;
             }
+            else if (effect && KEY_AS("nm")) effect->id = djb2Encode(getString());
+            else if (effect && KEY_AS("ix")) effect->ix = getInt();
             else if (effect && KEY_AS("en")) effect->enable = getInt();
             else if (effect && KEY_AS("ef")) parseEffect(effect);
             else skip();
