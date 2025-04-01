@@ -23,9 +23,9 @@
 #ifndef _TVG_LOTTIE_MODEL_H_
 #define _TVG_LOTTIE_MODEL_H_
 
-#include <cstring>
-
 #include "tvgCommon.h"
+#include "tvgStr.h"
+#include "tvgCompressor.h"
 #include "tvgRender.h"
 #include "tvgLottieProperty.h"
 #include "tvgLottieRenderPooler.h"
@@ -83,11 +83,60 @@ struct LottieStroke
 
 struct LottieEffect
 {
-    enum Type : uint8_t {Tint = 20, Fill, Stroke, Tritone, DropShadow = 25, GaussianBlur = 29};
+    enum Type : uint8_t {Custom = 5, Tint = 20, Fill, Stroke, Tritone, DropShadow = 25, GaussianBlur = 29};
 
     virtual ~LottieEffect() {}
+
+    uint32_t id;
     Type type;
     bool enable = false;
+};
+
+
+struct LottieFxCustom : LottieEffect
+{
+    char* name = nullptr;
+    Array<LottieProperty*> props;
+
+    LottieFxCustom()
+    {
+        type = LottieEffect::Custom;
+    }
+
+    ~LottieFxCustom()
+    {
+        ARRAY_FOREACH(p, props) delete(*p);
+    }
+
+    LottieProperty* property(int type)
+    {
+        LottieProperty* prop = nullptr;
+
+        switch (type) {
+            case 0:  //integer
+            case 7:  //checkbox
+                prop = new LottieInteger; break;
+            case 2:
+                prop = new LottieColor; break;
+            case 3:
+                prop = new LottieVector; break;
+            case 6:  //ignored?
+            default:
+                printf("missing property = %d\n", type);
+                return nullptr;
+        }
+        if (prop) props.push(prop);
+        return prop;
+    }
+
+    LottieProperty* property(const char* name)
+    {
+        auto ix = static_cast<uint32_t>(djb2Encode(name));
+        ARRAY_FOREACH(p, props) {
+            if ((*p)->ix == ix) return *p;
+        }
+        return nullptr;
+    }
 };
 
 struct LottieFxFill : LottieEffect
@@ -915,6 +964,15 @@ struct LottieLayer : LottieGroup
     Type type = Null;
     bool autoOrient = false;
     bool matteSrc = false;
+
+    LottieEffect* effect(const char* name)
+    {
+        auto id = static_cast<uint32_t>(djb2Encode(name));
+        ARRAY_FOREACH(p, effects) {
+            if (id == (*p)->id) return *p;
+        }
+        return nullptr;
+    }
 
     LottieLayer* layerById(unsigned long id)
     {

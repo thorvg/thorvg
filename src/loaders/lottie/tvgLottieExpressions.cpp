@@ -35,7 +35,10 @@
 struct ExpContent
 {
     LottieExpression* exp;
-    LottieObject* obj;
+    union {
+        LottieObject* obj;
+        LottieEffect* effect;
+    };
     float frameNo;
 };
 
@@ -58,12 +61,12 @@ static const char* EXP_EFFECT= "effect";
 static LottieExpressions* exps = nullptr;   //singleton instance engine
 
 
-static ExpContent* _expcontent(LottieExpression* exp, float frameNo, LottieObject* obj)
+static ExpContent* _expcontent(LottieExpression* exp, float frameNo, void* obj)
 {
     auto data = tvg::malloc<ExpContent*>(sizeof(ExpContent));
     data->exp = exp;
     data->frameNo = frameNo;
-    data->obj = obj;
+    data->obj = (LottieObject*)obj;
     return data;
 }
 
@@ -535,11 +538,33 @@ static jerry_value_t _rad2deg(const jerry_call_info_t* info, const jerry_value_t
 }
 
 
+static jerry_value_t _effectProperty(const jerry_call_info_t* info, const jerry_value_t args[], const jerry_length_t argsCnt)
+{
+    auto data = static_cast<ExpContent*>(jerry_object_get_native_ptr(info->function, &freeCb));
+    auto name = _name(args[0]);
+    if (!name) return jerry_undefined();
+    auto property = static_cast<LottieFxCustom*>(data->effect)->property(name);
+    tvg::free(name);
+
+    return _value(data->frameNo, property);
+}
+
+
 static jerry_value_t _effect(const jerry_call_info_t* info, const jerry_value_t args[], const jerry_length_t argsCnt)
 {
-    TVGLOG("LOTTIE", "effect is not supported in expressions!");
+    auto data = static_cast<ExpContent*>(jerry_object_get_native_ptr(info->function, &freeCb));
+    auto name = _name(args[0]);
 
-    return jerry_undefined();
+    auto effect = data->exp->layer->effect(name);
+    tvg::free(name);
+
+    if (!effect) return jerry_undefined();
+
+    //find a effect property
+    auto obj = jerry_function_external(_effectProperty);
+    jerry_object_set_native_ptr(obj, &freeCb, _expcontent(data->exp, data->frameNo, effect));
+    jerry_object_set_sz(obj, "", obj);
+    return obj;
 }
 
 
@@ -1060,6 +1085,11 @@ static void _buildProperty(float frameNo, jerry_value_t context, LottieExpressio
 
     //expansions per types
     if (exp->property->type == LottieProperty::Type::PathSet) _buildPath(context, exp);
+
+    auto effect = jerry_function_external(_effect);
+    jerry_object_set_sz(context, EXP_EFFECT, effect);
+    jerry_object_set_native_ptr(effect, &freeCb, _expcontent(exp, frameNo, nullptr));
+    jerry_value_free(effect);
 }
 
 
@@ -1265,10 +1295,6 @@ jerry_value_t LottieExpressions::buildGlobal()
 
     thisProperty = jerry_object();
     jerry_object_set_sz(global, "thisProperty", thisProperty);
-
-    auto effect = jerry_function_external(_effect);
-    jerry_object_set_sz(global, EXP_EFFECT, effect);
-    jerry_value_free(effect);
 
     auto fromCompToSurface = jerry_function_external(_fromCompToSurface);
     jerry_object_set_sz(global, "fromCompToSurface", fromCompToSurface);
