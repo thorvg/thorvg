@@ -250,9 +250,9 @@ enum {
  * @brief Enumeration determining the ending type of a stroke in the open sub-paths.
  */
 typedef enum {
-    TVG_STROKE_CAP_SQUARE = 0, ///< The stroke is extended in both endpoints of a sub-path by a rectangle, with the width equal to the stroke width and the length equal to the half of the stroke width. For zero length sub-paths the square is rendered with the size of the stroke width.
-    TVG_STROKE_CAP_BUTT,       ///< The stroke ends exactly at each of the two endpoints of a sub-path. For zero length sub-paths no stroke is rendered.
-    TVG_STROKE_CAP_ROUND       ///< The stroke is extended in both endpoints of a sub-path by a half circle, with a radius equal to the half of a stroke width. For zero length sub-paths a full circle is rendered.
+    TVG_STROKE_CAP_BUTT = 0, ///< The stroke ends exactly at each of the two endpoints of a sub-path. For zero length sub-paths no stroke is rendered.
+    TVG_STROKE_CAP_ROUND,    ///< The stroke is extended in both endpoints of a sub-path by a half circle, with a radius equal to the half of a stroke width. For zero length sub-paths a full circle is rendered.
+    TVG_STROKE_CAP_SQUARE    ///< The stroke is extended in both endpoints of a sub-path by a rectangle, with the width equal to the stroke width and the length equal to the half of the stroke width. For zero length sub-paths the square is rendered with the size of the stroke width.
 } Tvg_Stroke_Cap;
 
 
@@ -260,9 +260,9 @@ typedef enum {
  * @brief Enumeration specifying how to fill the area outside the gradient bounds.
  */
 typedef enum {
-    TVG_STROKE_JOIN_BEVEL = 0, ///< The outer corner of the joined path segments is bevelled at the join point. The triangular region of the corner is enclosed by a straight line between the outer corners of each stroke.
-    TVG_STROKE_JOIN_MITER,     ///< The outer corner of the joined path segments is spiked. The spike is created by extension beyond the join point of the outer edges of the stroke until they intersect. In case the extension goes beyond the limit, the join style is converted to the Bevel style.
-    TVG_STROKE_JOIN_ROUND      ///< The outer corner of the joined path segments is rounded. The circular region is centered at the join point.
+    TVG_STROKE_JOIN_MITER = 0, ///< The outer corner of the joined path segments is spiked. The spike is created by extension beyond the join point of the outer edges of the stroke until they intersect. In case the extension goes beyond the limit, the join style is converted to the Bevel style.
+    TVG_STROKE_JOIN_ROUND,     ///< The outer corner of the joined path segments is rounded. The circular region is centered at the join point.
+    TVG_STROKE_JOIN_BEVEL      ///< The outer corner of the joined path segments is bevelled at the join point. The triangular region of the corner is enclosed by a straight line between the outer corners of each stroke.
 } Tvg_Stroke_Join;
 
 
