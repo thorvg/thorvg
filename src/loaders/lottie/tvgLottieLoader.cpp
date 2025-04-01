@@ -319,9 +319,7 @@ bool LottieLoader::override(const char* slots, bool byDefault)
         return rebuild;
     //reset slots
     } else if (overridden) {
-        ARRAY_FOREACH(p, comp->slots) {
-            (*p)->reset();
-        }
+        ARRAY_FOREACH(p, comp->slots) (*p)->reset();
         overridden = false;
         rebuild = true;
     }

@@ -139,22 +139,22 @@ static jerry_value_t _toComp(const jerry_call_info_t* info, const jerry_value_t 
 static jerry_value_t _value(float frameNo, LottieProperty* property)
 {
     switch (property->type) {
-        case LottieProperty::Type::Point: {
-            return _point2d((*static_cast<LottieScalar*>(property))(frameNo));
-        }
         case LottieProperty::Type::Float: {
             return jerry_number((*static_cast<LottieFloat*>(property))(frameNo));
         }
-        case LottieProperty::Type::Opacity: {
-            return jerry_number((*static_cast<LottieOpacity*>(property))(frameNo));
+        case LottieProperty::Type::Scalar: {
+            return _point2d((*static_cast<LottieScalar*>(property))(frameNo));
+        }
+        case LottieProperty::Type::Vector: {
+            return _point2d((*static_cast<LottieVector*>(property))(frameNo));
         }
         case LottieProperty::Type::PathSet: {
             auto value = jerry_object();
             jerry_object_set_native_ptr(value, nullptr, property);
             return value;
         }
-        case LottieProperty::Type::Position: {
-            return _point2d((*static_cast<LottieVector*>(property))(frameNo));
+        case LottieProperty::Type::Opacity: {
+            return jerry_number((*static_cast<LottieOpacity*>(property))(frameNo));
         }
         default: {
             TVGERR("LOTTIE", "Non supported type for value? = %d", (int) property->type);
@@ -668,20 +668,20 @@ static jerry_value_t _velocityAtTime(const jerry_call_info_t* info, const jerry_
 
     //compute the velocity
     switch (exp->property->type) {
-        case LottieProperty::Type::Point: {
-            auto prv = (*static_cast<LottieScalar*>(exp->property))(pframe);
-            auto cur = (*static_cast<LottieScalar*>(exp->property))(cframe);
-            return _velocity(prv, cur, elapsed);
-        }
-        case LottieProperty::Type::Position: {
-            auto prv = (*static_cast<LottieVector*>(exp->property))(pframe);
-            auto cur = (*static_cast<LottieVector*>(exp->property))(cframe);
-            return _velocity(prv, cur, elapsed);
-        }
         case LottieProperty::Type::Float: {
             auto prv = (*static_cast<LottieFloat*>(exp->property))(pframe);
             auto cur = (*static_cast<LottieFloat*>(exp->property))(cframe);
             return jerry_number((cur - prv) / elapsed);
+        }
+        case LottieProperty::Type::Scalar: {
+            auto prv = (*static_cast<LottieScalar*>(exp->property))(pframe);
+            auto cur = (*static_cast<LottieScalar*>(exp->property))(cframe);
+            return _velocity(prv, cur, elapsed);
+        }
+        case LottieProperty::Type::Vector: {
+            auto prv = (*static_cast<LottieVector*>(exp->property))(pframe);
+            auto cur = (*static_cast<LottieVector*>(exp->property))(cframe);
+            return _velocity(prv, cur, elapsed);
         }
         default: TVGLOG("LOTTIE", "Non supported type for velocityAtTime?");
     }
@@ -700,12 +700,12 @@ static jerry_value_t _speedAtTime(const jerry_call_info_t* info, const jerry_val
 
     //compute the velocity
     switch (exp->property->type) {
-        case LottieProperty::Type::Point: {
+        case LottieProperty::Type::Scalar: {
             prv = (*static_cast<LottieScalar*>(exp->property))(pframe);
             cur = (*static_cast<LottieScalar*>(exp->property))(cframe);
             break;
         }
-        case LottieProperty::Type::Position: {
+        case LottieProperty::Type::Vector: {
             prv = (*static_cast<LottieVector*>(exp->property))(pframe);
             cur = (*static_cast<LottieVector*>(exp->property))(cframe);
             break;
@@ -891,7 +891,7 @@ static jerry_value_t _key(const jerry_call_info_t* info, const jerry_value_t arg
     //direct access, key[0], key[1]
     if (exp->property->type == LottieProperty::Type::Float) {
         jerry_object_set_index(obj, 0, value);
-    } else if (exp->property->type == LottieProperty::Type::Point || exp->property->type == LottieProperty::Type::Position) {
+    } else if (exp->property->type == LottieProperty::Type::Scalar || exp->property->type == LottieProperty::Type::Vector) {
         jerry_object_set_index(obj, 0, jerry_object_get_index(value, 0));
         jerry_object_set_index(obj, 1, jerry_object_get_index(value, 1));
     }

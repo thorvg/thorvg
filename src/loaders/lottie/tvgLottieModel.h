@@ -591,19 +591,19 @@ struct LottieTransform : LottieObject
     void override(LottieProperty* prop, bool shallow, bool release) override
     {
         switch (prop->type) {
-            case LottieProperty::Type::Position: {
-                if (release) position.release();
-                position.copy(*static_cast<LottieVector*>(prop), shallow);
-                break;
-            }
             case LottieProperty::Type::Float: {
                 if (release) rotation.release();
                 rotation.copy(*static_cast<LottieFloat*>(prop), shallow);
                 break;
             }
-            case LottieProperty::Type::Point: {
+            case LottieProperty::Type::Scalar: {
                 if (release) scale.release();
                 scale.copy(*static_cast<LottieScalar*>(prop), shallow);
+                break;
+            }
+            case LottieProperty::Type::Vector: {
+                if (release) position.release();
+                position.copy(*static_cast<LottieVector*>(prop), shallow);
                 break;
             }
             case LottieProperty::Type::Opacity: {
@@ -676,12 +676,12 @@ struct LottieSolidFill : LottieSolid
 
     void override(LottieProperty* prop, bool shallow, bool release) override
     {
-        if (prop->type == LottieProperty::Type::Opacity) {
-            if (release) opacity.release();
-            opacity.copy(*static_cast<LottieOpacity*>(prop), shallow);
-        } else if (prop->type == LottieProperty::Type::Color) {
+        if (prop->type == LottieProperty::Type::Color) {
             if (release) color.release();
             color.copy(*static_cast<LottieColor*>(prop), shallow);
+        } else if (prop->type == LottieProperty::Type::Opacity) {
+            if (release) opacity.release();
+            opacity.copy(*static_cast<LottieOpacity*>(prop), shallow);
         }
     }
 
