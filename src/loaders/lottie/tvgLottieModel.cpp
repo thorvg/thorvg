@@ -182,19 +182,24 @@ void LottieSlot::assign(LottieObject* target, bool byDefault)
     ARRAY_FOREACH(pair, pairs) {
         //backup the original properties before overwriting
         switch (type) {
-            case LottieProperty::Type::Position: {
-                if (copy) pair->prop = new LottieVector(static_cast<LottieTransform*>(pair->obj)->position);
-                pair->obj->override(&static_cast<LottieTransform*>(target)->position, shallow, !copy);
+            case LottieProperty::Type::Float: {
+                if (copy) pair->prop = new LottieFloat(static_cast<LottieTransform*>(pair->obj)->rotation);
+                pair->obj->override(&static_cast<LottieTransform*>(target)->rotation, shallow, !copy);
                 break;
             }
-            case LottieProperty::Type::Point: {
+            case LottieProperty::Type::Scalar: {
                 if (copy) pair->prop = new LottieScalar(static_cast<LottieTransform*>(pair->obj)->scale);
                 pair->obj->override(&static_cast<LottieTransform*>(target)->scale, shallow, !copy);
                 break;
             }
-            case LottieProperty::Type::Float: {
-                if (copy) pair->prop = new LottieFloat(static_cast<LottieTransform*>(pair->obj)->rotation);
-                pair->obj->override(&static_cast<LottieTransform*>(target)->rotation, shallow, !copy);
+            case LottieProperty::Type::Vector: {
+                if (copy) pair->prop = new LottieVector(static_cast<LottieTransform*>(pair->obj)->position);
+                pair->obj->override(&static_cast<LottieTransform*>(target)->position, shallow, !copy);
+                break;
+            }
+            case LottieProperty::Type::Color: {
+                if (copy) pair->prop = new LottieColor(static_cast<LottieSolid*>(pair->obj)->color);
+                pair->obj->override(&static_cast<LottieSolid*>(target)->color, shallow, !copy);
                 break;
             }
             case LottieProperty::Type::Opacity: {
@@ -203,11 +208,6 @@ void LottieSlot::assign(LottieObject* target, bool byDefault)
                     else pair->prop = new LottieOpacity(static_cast<LottieSolid*>(pair->obj)->opacity);
                 }
                 pair->obj->override(&static_cast<LottieSolid*>(target)->opacity, shallow, !copy);
-                break;
-            }
-            case LottieProperty::Type::Color: {
-                if (copy) pair->prop = new LottieColor(static_cast<LottieSolid*>(pair->obj)->color);
-                pair->obj->override(&static_cast<LottieSolid*>(target)->color, shallow, !copy);
                 break;
             }
             case LottieProperty::Type::ColorStop: {
