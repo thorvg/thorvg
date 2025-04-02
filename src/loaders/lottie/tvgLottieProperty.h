@@ -319,6 +319,8 @@ float _loop(T* frames, float frameNo, LottieExpression* exp)
 template<typename Frame, typename Value, LottieProperty::Type PType = LottieProperty::Type::Invalid, bool Scalar = 1>
 struct LottieGenericProperty : LottieProperty
 {
+    using MyProperty = LottieGenericProperty<Frame, Value, PType, Scalar>;
+
     //Property has an either keyframes or single value.
     Array<Frame>* frames = nullptr;
     Value value;
@@ -327,9 +329,9 @@ struct LottieGenericProperty : LottieProperty
 
     LottieGenericProperty() : LottieProperty(PType) {}
 
-    LottieGenericProperty(const LottieGenericProperty<Frame, Value>& rhs)
+    LottieGenericProperty(const MyProperty& rhs)
     {
-        copy(const_cast<LottieGenericProperty<Frame, Value>&>(rhs));
+        copy(const_cast<MyProperty&>(rhs));
     }
 
     ~LottieGenericProperty()
@@ -385,7 +387,7 @@ struct LottieGenericProperty : LottieProperty
         if (exps && exp) {
             Value out{};
             frameNo = _loop(frames, frameNo, exp);
-            if (exps->result<LottieGenericProperty<Frame, Value>>(frameNo, out, exp)) return out;
+            if (exps->result<MyProperty>(frameNo, out, exp)) return out;
         }
 
         if (!frames) return value;
@@ -403,7 +405,7 @@ struct LottieGenericProperty : LottieProperty
         return tvg::lerp(operator()(frameNo, exps), operator()(tween.frameNo, exps), tween.progress);
     }
 
-    void copy(LottieGenericProperty<Frame, Value, PType, Scalar>& rhs, bool shallow = true)
+    void copy(MyProperty& rhs, bool shallow = true)
     {
         if (LottieProperty::copy(&rhs, shallow)) return;
 
