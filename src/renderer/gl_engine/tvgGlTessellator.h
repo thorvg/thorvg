@@ -79,11 +79,12 @@ class DashStroke
 {
 public:
     DashStroke(Array<PathCommand>* cmds, Array<Point>* pts, const float* patterns, uint32_t patternCnt, float offset, float length);
-    void doStroke(const RenderPath& path);
+    void doStroke(const RenderPath& path, bool drawPoint);
 
 private:
-    void dashLineTo(const Point& pt);
-    void dashCubicTo(const Point& pt1, const Point& pt2, const Point& pt3);
+    void drawPoint(const Point& p);
+    void dashLineTo(const Point& pt, bool drawPoint);
+    void dashCubicTo(const Point& pt1, const Point& pt2, const Point& pt3, bool drawPoint);
     void moveTo(const Point& pt);
     void lineTo(const Point& pt);
     void cubicTo(const Point& pt1, const Point& pt2, const Point& pt3);

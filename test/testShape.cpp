@@ -157,21 +157,30 @@ TEST_CASE("Stroking", "[tvgShape]")
     REQUIRE(shape->strokeFill(nullptr, nullptr, nullptr, nullptr) == Result::Success);
 
     //Stroke Dash
-    float dashPattern[3] = {0, 1.5f, 2.22f};
-    REQUIRE(shape->strokeDash(dashPattern, 3) == Result::InvalidArguments);
+    REQUIRE(shape->strokeDash(nullptr, 3) == Result::InvalidArguments);
 
-    float dashPattern2[3] = {1.0f, 1.5f, 2.22f};
-    REQUIRE(shape->strokeDash(dashPattern2, 3) == Result::Success);
-    REQUIRE(shape->strokeDash(dashPattern2, 3, 4.5) == Result::Success);
+    float dashPattern0[3] = {-10.0f, 1.5f, 2.22f};
+    REQUIRE(shape->strokeDash(dashPattern0, 0) == Result::InvalidArguments);
+    REQUIRE(shape->strokeDash(dashPattern0, 3) == Result::Success);
 
-    const float* dashPattern3;
+    float dashPattern1[2] = {0.0f, 0.0f};
+    REQUIRE(shape->strokeDash(dashPattern1, 2) == Result::Success);
+
+    float dashPattern2[1] = {10.0f};
+    REQUIRE(shape->strokeDash(dashPattern2, 1) == Result::Success);
+
+    float dashPattern3[3] = {1.0f, 1.5f, 2.22f};
+    REQUIRE(shape->strokeDash(dashPattern3, 3) == Result::Success);
+    REQUIRE(shape->strokeDash(dashPattern3, 3, 4.5) == Result::Success);
+
+    const float* dashPattern4;
     float offset;
     REQUIRE(shape->strokeDash(nullptr) == 3);
-    REQUIRE(shape->strokeDash(&dashPattern3) == 3);
-    REQUIRE(shape->strokeDash(&dashPattern3, &offset) == 3);
-    REQUIRE(dashPattern3[0] == 1.0f);
-    REQUIRE(dashPattern3[1] == 1.5f);
-    REQUIRE(dashPattern3[2] == 2.22f);
+    REQUIRE(shape->strokeDash(&dashPattern4) == 3);
+    REQUIRE(shape->strokeDash(&dashPattern4, &offset) == 3);
+    REQUIRE(dashPattern4[0] == 1.0f);
+    REQUIRE(dashPattern4[1] == 1.5f);
+    REQUIRE(dashPattern4[2] == 2.22f);
     REQUIRE(offset == 4.5f);
 
     REQUIRE(shape->strokeDash(nullptr, 0) == Result::Success);

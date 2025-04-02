@@ -118,7 +118,7 @@ void Stroker::stroke(const RenderShape *rshape, const RenderPath& path)
     }
 
     auto& dash = rshape->stroke->dash;
-    if (dash.count == 0) doStroke(path);
+    if (dash.length < DASH_PATTERN_THRESHOLD) doStroke(path);
     else doDashStroke(path, dash.pattern, dash.count, dash.offset, dash.length);
 }
 
@@ -182,7 +182,7 @@ void Stroker::doDashStroke(const RenderPath& path, const float *patterns, uint32
     dpath.pts.reserve(20 * path.pts.count);
 
     DashStroke dash(&dpath.cmds, &dpath.pts, patterns, patternCnt, offset, length);
-    dash.doStroke(path);
+    dash.doStroke(path, mStrokeCap != StrokeCap::Butt);
     doStroke(dpath);
 }
 
@@ -528,8 +528,9 @@ DashStroke::DashStroke(Array<PathCommand> *cmds, Array<Point> *pts, const float 
 }
 
 
-void DashStroke::doStroke(const RenderPath& path)
+void DashStroke::doStroke(const RenderPath& path, bool validPoint)
 {
+    //validPoint: zero length segment with non-butt cap still should be rendered as a point - only the caps are visible
     int32_t idx = 0;
     auto offset = mDashOffset;
     bool gap = false;
@@ -551,7 +552,7 @@ void DashStroke::doStroke(const RenderPath& path)
     ARRAY_FOREACH(cmd, path.cmds) {
         switch (*cmd) {
             case PathCommand::Close: {
-                this->dashLineTo(mPtStart);
+                this->dashLineTo(mPtStart, validPoint);
                 break;
             }
             case PathCommand::MoveTo: {
@@ -565,12 +566,12 @@ void DashStroke::doStroke(const RenderPath& path)
                 break;
             }
             case PathCommand::LineTo: {
-                this->dashLineTo(*pts);
+                this->dashLineTo(*pts, validPoint);
                 pts++;
                 break;
             }
             case PathCommand::CubicTo: {
-                this->dashCubicTo(pts[0], pts[1], pts[2]);
+                this->dashCubicTo(pts[0], pts[1], pts[2], validPoint);
                 pts += 3;
                 break;
             }
@@ -580,7 +581,17 @@ void DashStroke::doStroke(const RenderPath& path)
 }
 
 
-void DashStroke::dashLineTo(const Point& to)
+void DashStroke::drawPoint(const Point& p)
+{
+    if (mMove || mDashPattern[mCurrIdx] < FLOAT_EPSILON) {
+        this->moveTo(p);
+        mMove = false;
+    }
+    this->lineTo(p);
+}
+
+
+void DashStroke::dashLineTo(const Point& to, bool validPoint)
 {
     auto len = length(mPtCur - to);
 
@@ -611,7 +622,10 @@ void DashStroke::dashLineTo(const Point& to)
                     }
                     this->lineTo(left.pt2);
                 }
-            } else right = curr;
+            } else {
+                if (validPoint && !mCurOpGap) drawPoint(curr.pt1);
+                right = curr;
+            }
             mCurrIdx = (mCurrIdx + 1) % mDashCount;
             mCurrLen = mDashPattern[mCurrIdx];
             mCurOpGap = !mCurOpGap;
@@ -639,7 +653,7 @@ void DashStroke::dashLineTo(const Point& to)
 }
 
 
-void DashStroke::dashCubicTo(const Point& cnt1, const Point& cnt2, const Point& end)
+void DashStroke::dashCubicTo(const Point& cnt1, const Point& cnt2, const Point& end, bool validPoint)
 {
     Bezier cur;
     cur.start = {mPtCur.x, mPtCur.y};
@@ -674,7 +688,10 @@ void DashStroke::dashCubicTo(const Point& cnt1, const Point& cnt2, const Point& 
                     }
                     this->cubicTo(left.ctrl1, left.ctrl2, left.end);
                 }
-            } else right = cur;
+            } else {
+                if (validPoint && !mCurOpGap) drawPoint(cur.start);
+                right = cur;
+            }
             mCurrIdx = (mCurrIdx + 1) % mDashCount;
             mCurrLen = mDashPattern[mCurrIdx];
             mCurOpGap = !mCurOpGap;

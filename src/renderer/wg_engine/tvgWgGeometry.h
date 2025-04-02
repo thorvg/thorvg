@@ -359,7 +359,7 @@ struct WgIndexedVertexBuffer
         dashed->reset(scale);
         auto& dash = rstroke->dash;
 
-        if (buff.count < 2 || tvg::zero(dash.length)) return;
+        if (buff.count < 2) return;
 
         uint32_t index = 0;
         auto total = dash.pattern[index];
@@ -372,12 +372,14 @@ struct WgIndexedVertexBuffer
         auto gap = false;
 
         // scip dashes by offset
-        while(total <= dashOffset) {
-            index = (index + 1) % dash.count;
-            total += dash.pattern[index];
-            gap = !gap;
+        if (dashOffset > 0.0f) {
+            while(total <= dashOffset) {
+                index = (index + 1) % dash.count;
+                total += dash.pattern[index];
+                gap = !gap;
+            }
+            total -= dashOffset;
         }
-        total -= dashOffset;
 
         // iterate by polyline points
         for (uint32_t i = 0; i < buff.count - 1; i++) {
@@ -466,7 +468,11 @@ struct WgIndexedVertexBuffer
 
     void appendSquare(Point v0, Point v1, float dist, float halfWidth)
     {
-        if(tvg::zero(dist)) return;
+        // zero length segment with square cap still should be rendered as a point - only the caps are visible
+        if(tvg::zero(dist)) {
+            appendQuad(v1 + Point{-halfWidth, -halfWidth}, v1 + Point{-halfWidth, halfWidth}, v1 + Point{halfWidth, -halfWidth}, v1 + Point{halfWidth, halfWidth});
+            return;
+        }
         Point sub = v1 - v0;
         Point offset = sub / dist * halfWidth;
         Point nrm = {+offset.y, -offset.x};
