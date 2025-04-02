@@ -3888,7 +3888,7 @@ SvgLoader::SvgLoader() : ImageLoader(FileType::Svg)
 
 SvgLoader::~SvgLoader()
 {
-    this->done();
+    done();
     clear();
 }
 
