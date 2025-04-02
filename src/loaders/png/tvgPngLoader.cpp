@@ -61,6 +61,7 @@ PngLoader::PngLoader() : ImageLoader(FileType::Png)
 
 PngLoader::~PngLoader()
 {
+    done();
     if (freeData) tvg::free(data);
     tvg::free(surface.buf8);
     lodepng_state_cleanup(&state);

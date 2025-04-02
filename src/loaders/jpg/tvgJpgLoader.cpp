@@ -62,6 +62,7 @@ JpgLoader::JpgLoader() : ImageLoader(FileType::Jpg)
 
 JpgLoader::~JpgLoader()
 {
+    done();
     clear();
     tvg::free(surface.buf8);
 }

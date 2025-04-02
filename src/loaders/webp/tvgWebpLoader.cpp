@@ -64,6 +64,7 @@ WebpLoader::WebpLoader() : ImageLoader(FileType::Webp)
 
 WebpLoader::~WebpLoader()
 {
+    done();
     clear();
     tvg::free(surface.buf8);
 }
