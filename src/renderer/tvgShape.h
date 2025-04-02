@@ -289,7 +289,7 @@ struct Shape::Impl : Paint::Impl
 
     Result strokeDash(const float* pattern, uint32_t cnt, float offset)
     {
-        if ((cnt == 1) || (!pattern && cnt > 0) || (pattern && cnt == 0)) return Result::InvalidArguments;
+        if ((!pattern && cnt > 0) || (pattern && cnt == 0)) return Result::InvalidArguments;
         if (!rs.stroke) rs.stroke = new RenderStroke;
         //Reset dash
         auto& dash = rs.stroke->dash;
@@ -301,11 +301,7 @@ struct Shape::Impl : Paint::Impl
             if (!dash.pattern) dash.pattern = tvg::malloc<float*>(sizeof(float) * cnt);
             dash.length = 0.0f;
             for (uint32_t i = 0; i < cnt; ++i) {
-                if (pattern[i] < DASH_PATTERN_THRESHOLD) {
-                    dash.count = 0;
-                    return Result::InvalidArguments;
-                }
-                dash.pattern[i] = pattern[i];
+                dash.pattern[i] = pattern[i] < 0.0f ? 0.0f : pattern[i];
                 dash.length += dash.pattern[i];
             }
         }
