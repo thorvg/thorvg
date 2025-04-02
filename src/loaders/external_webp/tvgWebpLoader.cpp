@@ -55,7 +55,7 @@ WebpLoader::WebpLoader() : ImageLoader(FileType::Webp)
 
 WebpLoader::~WebpLoader()
 {
-    this->done();
+    done();
 
     if (freeData) tvg::free(data);
     data = nullptr;
