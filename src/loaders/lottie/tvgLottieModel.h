@@ -258,6 +258,13 @@ struct LottieTextRange
     enum Shape : uint8_t { Square = 1, RampUp, RampDown, Triangle, Round, Smooth };
     enum Unit : uint8_t { Percent = 1, Index };
 
+    LottieTextRange()
+    {
+        style.flags.fillColor = 0;
+        style.flags.strokeColor = 0;
+        style.flags.strokeWidth = 0;
+    }
+
     ~LottieTextRange()
     {
         tvg::free(interpolator);
@@ -275,6 +282,11 @@ struct LottieTextRange
         LottieOpacity fillOpacity = 255;
         LottieOpacity strokeOpacity = 255;
         LottieOpacity opacity = 255;
+        struct {
+            bool fillColor : 1;
+            bool strokeColor : 1;
+            bool strokeWidth : 1;
+        } flags;
     } style;
 
     LottieFloat offset = 0.0f;
@@ -292,6 +304,22 @@ struct LottieTextRange
     bool expressible = false;
 
     float factor(float frameNo, float totalLen, float idx);
+
+    void color(float frameNo, RGB24& fillColor, RGB24& strokeColor, float factor, Tween& tween, LottieExpressions* exps)
+    {
+        if (style.flags.fillColor) {
+            auto color = style.fillColor(frameNo, tween, exps);
+            fillColor.rgb[0] = tvg::lerp<uint8_t>(fillColor.rgb[0], color.rgb[0], factor);
+            fillColor.rgb[1] = tvg::lerp<uint8_t>(fillColor.rgb[1], color.rgb[1], factor);
+            fillColor.rgb[2] = tvg::lerp<uint8_t>(fillColor.rgb[2], color.rgb[2], factor);
+        }
+        if (style.flags.strokeColor) {
+            auto color = style.strokeColor(frameNo, tween, exps);
+            strokeColor.rgb[0] = tvg::lerp<uint8_t>(strokeColor.rgb[0], color.rgb[0], factor);
+            strokeColor.rgb[1] = tvg::lerp<uint8_t>(strokeColor.rgb[1], color.rgb[1], factor);
+            strokeColor.rgb[2] = tvg::lerp<uint8_t>(strokeColor.rgb[2], color.rgb[2], factor);
+        }
+    }
 };
 
 
