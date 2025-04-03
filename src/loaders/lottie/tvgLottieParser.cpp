@@ -1195,11 +1195,17 @@ void LottieParser::parseTextRange(LottieText* text)
                 while (auto key = nextObjectKey()) {
                     if (KEY_AS("t")) parseProperty<LottieProperty::Type::Float>(selector->style.letterSpacing);
                     else if (KEY_AS("ls")) parseProperty<LottieProperty::Type::Color>(selector->style.lineSpacing);
-                    else if (KEY_AS("fc")) parseProperty<LottieProperty::Type::Color>(selector->style.fillColor);
-                    else if (KEY_AS("fo")) parseProperty<LottieProperty::Type::Color>(selector->style.fillOpacity);
-                    else if (KEY_AS("sw")) parseProperty<LottieProperty::Type::Float>(selector->style.strokeWidth);
-                    else if (KEY_AS("sc")) parseProperty<LottieProperty::Type::Color>(selector->style.strokeColor);
-                    else if (KEY_AS("so")) parseProperty<LottieProperty::Type::Opacity>(selector->style.strokeOpacity);
+                    else if (KEY_AS("fc")) {
+                        parseProperty<LottieProperty::Type::Color>(selector->style.fillColor);
+                        selector->style.flags.fillColor = true;
+                    } else if (KEY_AS("fo")) parseProperty<LottieProperty::Type::Color>(selector->style.fillOpacity);
+                    else if (KEY_AS("sw")) {
+                        parseProperty<LottieProperty::Type::Float>(selector->style.strokeWidth);
+                        selector->style.flags.strokeWidth = true;
+                    } else if (KEY_AS("sc")) {
+                        parseProperty<LottieProperty::Type::Color>(selector->style.strokeColor);
+                        selector->style.flags.strokeColor = true;
+                    } else if (KEY_AS("so")) parseProperty<LottieProperty::Type::Opacity>(selector->style.strokeOpacity);
                     else if (KEY_AS("o")) parseProperty<LottieProperty::Type::Opacity>(selector->style.opacity);
                     else if (KEY_AS("p")) parseProperty<LottieProperty::Type::Position>(selector->style.position);
                     else if (KEY_AS("s")) parseProperty<LottieProperty::Type::Position>(selector->style.scale);

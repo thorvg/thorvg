@@ -1169,25 +1169,13 @@ void LottieBuilder::updateText(LottieLayer* layer, float frameNo)
                         opacity = (uint8_t)(opacity - f * (opacity - (*s)->style.opacity(frameNo)));
                         shape->opacity(opacity);
 
-                        auto rangeColor = (*s)->style.fillColor(frameNo); //TODO: use flag to check whether it was really set
-                        if (tvg::equal(f, 1.0f)) color = rangeColor;
-                        else {
-                            color.rgb[0] = lerp<uint8_t>(color.rgb[0], rangeColor.rgb[0], f);
-                            color.rgb[1] = lerp<uint8_t>(color.rgb[1], rangeColor.rgb[1], f);
-                            color.rgb[2] = lerp<uint8_t>(color.rgb[2], rangeColor.rgb[2], f);
-                        }
+                        (*s)->color(frameNo, color, strokeColor, f, exps);
+
                         fillOpacity = (uint8_t)(fillOpacity - f * (fillOpacity - (*s)->style.fillOpacity(frameNo)));
                         shape->fill(color.rgb[0], color.rgb[1], color.rgb[2], fillOpacity);
 
-                        shape->stroke(f * (*s)->style.strokeWidth(frameNo) / scale);
+                        if ((*s)->style.flags.strokeWidth)  shape->stroke(f * (*s)->style.strokeWidth(frameNo) / scale);
                         if (shape->strokeWidth() > 0.0f) {
-                            auto rangeColor = (*s)->style.strokeColor(frameNo); //TODO: use flag to check whether it was really set
-                            if (tvg::equal(f, 1.0f)) strokeColor = rangeColor;
-                            else {
-                                strokeColor.rgb[0] = lerp<uint8_t>(strokeColor.rgb[0], rangeColor.rgb[0], f);
-                                strokeColor.rgb[1] = lerp<uint8_t>(strokeColor.rgb[1], rangeColor.rgb[1], f);
-                                strokeColor.rgb[2] = lerp<uint8_t>(strokeColor.rgb[2], rangeColor.rgb[2], f);
-                            }
                             strokeOpacity = (uint8_t)(strokeOpacity - f * (strokeOpacity - (*s)->style.strokeOpacity(frameNo)));
                             shape->stroke(strokeColor.rgb[0], strokeColor.rgb[1], strokeColor.rgb[2], strokeOpacity);
                             shape->order(doc.stroke.below);
