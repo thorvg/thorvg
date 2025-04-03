@@ -1132,7 +1132,8 @@ void LottieParser::parseTextRange(LottieText* text)
                 enterObject();
                 while (auto key = nextObjectKey()) {
                     if (KEY_AS("t")) selector->expressible = (bool) getInt();
-                    else if (KEY_AS("xe")) {
+                    else if (KEY_AS("xe"))
+                    {
                         parseProperty(selector->maxEase);
                         selector->interpolator = tvg::malloc<LottieInterpolator*>(sizeof(LottieInterpolator));
                     }
@@ -1153,10 +1154,22 @@ void LottieParser::parseTextRange(LottieText* text)
                 while (auto key = nextObjectKey()) {
                     if (KEY_AS("t")) parseProperty(selector->style.letterSpacing);
                     else if (KEY_AS("ls")) parseProperty(selector->style.lineSpacing);
-                    else if (KEY_AS("fc")) parseProperty(selector->style.fillColor);
+                    else if (KEY_AS("fc"))
+                    {
+                        parseProperty(selector->style.fillColor);
+                        selector->style.flags.fillColor = true;
+                    }
                     else if (KEY_AS("fo")) parseProperty(selector->style.fillOpacity);
-                    else if (KEY_AS("sw")) parseProperty(selector->style.strokeWidth);
-                    else if (KEY_AS("sc")) parseProperty(selector->style.strokeColor);
+                    else if (KEY_AS("sw"))
+                    {
+                        parseProperty(selector->style.strokeWidth);
+                        selector->style.flags.strokeWidth = true;
+                    }
+                    else if (KEY_AS("sc"))
+                    {
+                        parseProperty(selector->style.strokeColor);
+                        selector->style.flags.strokeColor = true;
+                    }
                     else if (KEY_AS("so")) parseProperty(selector->style.strokeOpacity);
                     else if (KEY_AS("o")) parseProperty(selector->style.opacity);
                     else if (KEY_AS("p")) parseProperty(selector->style.position);
