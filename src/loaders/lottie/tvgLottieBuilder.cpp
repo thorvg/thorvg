@@ -968,7 +968,7 @@ void LottieBuilder::updateText(LottieLayer* layer, float frameNo)
             Point layout = {doc.bbox.pos.x, doc.bbox.pos.y + ascent - doc.shift};
 
             //horizontal alignment
-            layout.x += -1.0f * doc.bbox.size.x * doc.justify + (cursor.x * scale) * doc.justify;
+            layout.x += doc.justify * (-1.0f * doc.bbox.size.x + cursor.x * scale);
 
             //new text group, single scene based on text-grouping
             scene->push(textGroup);
