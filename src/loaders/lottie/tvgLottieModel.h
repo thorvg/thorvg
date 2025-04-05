@@ -275,6 +275,16 @@ struct LottieTextRange
         LottieOpacity fillOpacity = 255;
         LottieOpacity strokeOpacity = 255;
         LottieOpacity opacity = 255;
+
+        union {
+            struct {
+                bool fillColor : 1;
+                bool strokeColor : 1;
+                bool strokeWidth : 1;
+            } flags;
+
+            uint8_t flag = 0;
+        };
     } style;
 
     LottieFloat offset = 0.0f;
