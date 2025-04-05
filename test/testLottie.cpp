@@ -46,26 +46,33 @@ TEST_CASE("Lottie Slot", "[tvgLottie]")
 
     const char* slotJson = R"({"gradient_fill":{"p":{"p":2,"k":{"a":0,"k":[0,0.1,0.1,0.2,1,1,0.1,0.2,0.1,1]}}}})";
 
-    //Slot override before loaded
-    REQUIRE(animation->override(slotJson) == Result::InsufficientCondition);
+    //Slot generation before loaded
+    REQUIRE(animation->genSlot(slotJson) == 0);
 
     //Animation load
     REQUIRE(picture->load(TEST_DIR"/lottieslot.json") == Result::Success);
 
+    //Slot generation
+    auto slotId = animation->genSlot(slotJson);
+    REQUIRE(slotId > 0);
+
     //Slot revert before overriding
-    REQUIRE(animation->override(nullptr) == Result::Success);
+    REQUIRE(animation->applySlot(0) == Result::Success);
 
     //Slot override
-    REQUIRE(animation->override(slotJson) == Result::Success);
+    REQUIRE(animation->applySlot(slotId) == Result::Success);
 
     //Slot revert
-    REQUIRE(animation->override(nullptr) == Result::Success);
+    REQUIRE(animation->applySlot(0) == Result::Success);
 
     //Slot override after reverting
-    REQUIRE(animation->override(slotJson) == Result::Success);
+    REQUIRE(animation->applySlot(slotId) == Result::Success);
 
-    //Slot override with invalid JSON
-    REQUIRE(animation->override("") == Result::InvalidArguments);
+    //Slot generation with invalid JSON
+    REQUIRE(animation->genSlot("") == 0);
+
+    //Slot deletion
+    REQUIRE(animation->delSlot(slotId) == Result::Success);
 
     REQUIRE(Initializer::term() == Result::Success);
 }
@@ -84,14 +91,21 @@ TEST_CASE("Lottie Slot 2", "[tvgLottie]")
     //Animation load
     REQUIRE(picture->load(TEST_DIR"/lottieslotkeyframe.json") == Result::Success);
 
+    //Slot generation
+    auto slotId = animation->genSlot(slotJson);
+    REQUIRE(slotId > 0);
+
     //Slot override
-    REQUIRE(animation->override(slotJson) == Result::Success);
+    REQUIRE(animation->applySlot(slotId) == Result::Success);
 
     //Slot revert
-    REQUIRE(animation->override(nullptr) == Result::Success);
+    REQUIRE(animation->applySlot(0) == Result::Success);
 
     //Slot override after reverting
-    REQUIRE(animation->override(slotJson) == Result::Success);
+    REQUIRE(animation->applySlot(slotId) == Result::Success);
+
+    //Slot deletion
+    REQUIRE(animation->delSlot(slotId) == Result::Success);
 
     REQUIRE(Initializer::term() == Result::Success);
 }
