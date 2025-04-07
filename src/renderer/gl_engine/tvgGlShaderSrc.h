@@ -54,5 +54,8 @@ extern const char* HARD_LIGHT_BLEND_FRAG;
 extern const char* SOFT_LIGHT_BLEND_FRAG;
 extern const char* DIFFERENCE_BLEND_FRAG;
 extern const char* EXCLUSION_BLEND_FRAG;
+extern const char* EFFECT_VERTEX;
+extern const char* GAUSSIAN_VERTICAL;
+extern const char* GAUSSIAN_HORIZONTAL;
 
 #endif /* _TVG_GL_SHADERSRC_H_ */

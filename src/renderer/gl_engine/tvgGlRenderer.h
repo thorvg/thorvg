@@ -60,6 +60,9 @@ public:
         RT_DifferenceBlend,
         RT_ExclusionBlend,
 
+        RT_GaussianVert,
+        RT_GaussianHorz,
+
         RT_None,
     };
 
@@ -90,7 +93,7 @@ public:
     void prepare(RenderEffect* effect, const Matrix& transform) override;
     bool region(RenderEffect* effect) override;
     bool render(RenderCompositor* cmp, const RenderEffect* effect, bool direct) override;
-    void dispose(TVG_UNUSED RenderEffect* effect) override;
+    void dispose(RenderEffect* effect) override;
 
     static GlRenderer* gen();
     static bool init(TVG_UNUSED uint32_t threads);
@@ -115,6 +118,9 @@ private:
     void prepareBlitTask(GlBlitTask* task);
     void prepareCmpTask(GlRenderTask* task, const RenderRegion& vp, uint32_t cmpWidth, uint32_t cmpHeight);
     void endRenderPass(RenderCompositor* cmp);
+
+    void effectGaussianBlurUpdate(RenderEffectGaussianBlur* effect, const Matrix& transform);
+    bool effectGaussianBlurRegion(RenderEffectGaussianBlur* effect);
 
     void flush();
     void clearDisposes();

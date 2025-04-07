@@ -140,6 +140,10 @@ void GlRenderer::initShaders()
     mPrograms.push(new GlProgram(MASK_VERT_SHADER, SOFT_LIGHT_BLEND_FRAG));
     mPrograms.push(new GlProgram(MASK_VERT_SHADER, DIFFERENCE_BLEND_FRAG));
     mPrograms.push(new GlProgram(MASK_VERT_SHADER, EXCLUSION_BLEND_FRAG));
+
+    // effects
+    mPrograms.push(new GlProgram(EFFECT_VERTEX, GAUSSIAN_VERTICAL));
+    mPrograms.push(new GlProgram(EFFECT_VERTEX, GAUSSIAN_HORIZONTAL));
 }
 
 
@@ -944,29 +948,108 @@ bool GlRenderer::endComposite(RenderCompositor* cmp)
 }
 
 
-void GlRenderer::prepare(TVG_UNUSED RenderEffect* effect, TVG_UNUSED const Matrix& transform)
+void GlRenderer::effectGaussianBlurUpdate(RenderEffectGaussianBlur* effect, const Matrix& transform)
 {
-    //TODO: prepare the effect
+    GlGaussianBlur* blur = (GlGaussianBlur*)effect->rd;
+    if (!blur) blur = tvg::malloc<GlGaussianBlur*>(sizeof(GlGaussianBlur));
+    blur->sigma = effect->sigma;
+    blur->scale = std::sqrt(transform.e11 * transform.e11 + transform.e12 * transform.e12);
+    blur->extend = 2 * blur->sigma * blur->scale;
+    blur->level = int(GL_GAUSSIAN_MAX_LEVEL * ((effect->quality - 1) * 0.01f)) + 1;
+    effect->rd = blur;
+    effect->valid = true;
 }
 
 
-bool GlRenderer::region(TVG_UNUSED RenderEffect* effect)
+bool GlRenderer::effectGaussianBlurRegion(RenderEffectGaussianBlur* effect)
 {
-    //TODO: Return if the current post effect requires the region expansion
+    auto gaussianBlur = (GlGaussianBlur*)effect->rd;
+    if (effect->direction != 2) {
+        effect->extend.x = -gaussianBlur->extend;
+        effect->extend.w = +gaussianBlur->extend * 2;
+    }
+    if (effect->direction != 1) {
+        effect->extend.y = -gaussianBlur->extend;
+        effect->extend.h = +gaussianBlur->extend * 2;
+    }
+    return true;
+};
+
+
+void GlRenderer::prepare(RenderEffect* effect, const Matrix& transform)
+{
+    // we must be sure, that we have intermidiate FBOs
+    if (mBlendPool.count < 1) mBlendPool.push(new GlRenderTargetPool(surface.w, surface.h));
+    if (mBlendPool.count < 2) mBlendPool.push(new GlRenderTargetPool(surface.w, surface.h));
+    
+    switch (effect->type) {
+        case SceneEffect::GaussianBlur: effectGaussianBlurUpdate(static_cast<RenderEffectGaussianBlur*>(effect), transform); break;
+        default: break;
+    }
+    effect->valid = true;
+}
+
+
+bool GlRenderer::region(RenderEffect* effect)
+{
+    switch (effect->type) {
+        case SceneEffect::GaussianBlur: return effectGaussianBlurRegion(static_cast<RenderEffectGaussianBlur*>(effect));
+        default: return false;
+    }
     return false;
 }
 
 
-bool GlRenderer::render(TVG_UNUSED RenderCompositor* cmp, TVG_UNUSED const RenderEffect* effect, TVG_UNUSED bool direct)
+bool GlRenderer::render(TVG_UNUSED RenderCompositor* cmp, const RenderEffect* effect, bool direct)
 {
-    TVGLOG("GL_ENGINE", "SceneEffect(%d) is not supported", (int)effect->type);
+    // get current pass and properties
+    auto pass = currentPass();
+    if (pass->isEmpty()) return false;
+    auto vp = pass->getViewport();
+
+    // add render geometry
+    const float vdata[] = {-1.0f, +1.0f, +1.0f, +1.0f, +1.0f, -1.0f, -1.0f, -1.0f};
+    const uint32_t idata[] = { 0, 1, 2, 0, 2, 3 };
+    auto voffset = mGpuBuffer.push((void*)vdata, sizeof(vdata));
+    auto ioffset = mGpuBuffer.pushIndex((void*)idata, sizeof(idata));
+
+    if (effect->type == SceneEffect::GaussianBlur) {
+        // get gaussian programs
+        GlProgram* programHorz = mPrograms[RT_GaussianHorz];
+        GlProgram* programVert = mPrograms[RT_GaussianVert];
+        // get current and intermidiate framebuffers
+        auto dstFbo = pass->getFbo();
+        auto dstCopyFbo0 = mBlendPool[0]->getRenderTarget(vp);
+        auto dstCopyFbo1 = mBlendPool[1]->getRenderTarget(vp);
+        // add uniform data
+        GlGaussianBlur* blur = (GlGaussianBlur*)(effect->rd);
+        auto blurOffset = mGpuBuffer.push(blur, sizeof(GlGaussianBlur), true);
+   
+        // create gaussian blur tasks
+        auto gaussianTask = new GlGaussianBlurTask(dstFbo, dstCopyFbo0, dstCopyFbo1);
+        gaussianTask->effect = (RenderEffectGaussianBlur*)effect;
+        gaussianTask->setViewport({0, 0, vp.w, vp.h});
+        // horizontal blur task and geometry
+        gaussianTask->horzTask = new GlRenderTask(programHorz);
+        gaussianTask->horzTask->addBindResource(GlBindingResource{0, programHorz->getUniformBlockIndex("Gaussian"), mGpuBuffer.getBufferId(), blurOffset, sizeof(GlGaussianBlur)});
+        gaussianTask->horzTask->addVertexLayout(GlVertexLayout{0, 2, 2 * sizeof(float), voffset});
+        gaussianTask->horzTask->setDrawRange(ioffset, 6);
+        // vertical blur task and geometry
+        gaussianTask->vertTask = new GlRenderTask(programVert);
+        gaussianTask->vertTask->addBindResource(GlBindingResource{0, programVert->getUniformBlockIndex("Gaussian"), mGpuBuffer.getBufferId(), blurOffset, sizeof(GlGaussianBlur)});
+        gaussianTask->vertTask->addVertexLayout(GlVertexLayout{0, 2, 2 * sizeof(float), voffset});
+        gaussianTask->vertTask->setDrawRange(ioffset, 6);
+        // add task to render pipeline
+        pass->addRenderTask(gaussianTask);
+    }
     return false;
 }
 
 
-void GlRenderer::dispose(TVG_UNUSED RenderEffect* effect)
+void GlRenderer::dispose(RenderEffect* effect)
 {
-    //TODO: dispose the effect
+    tvg::free(effect->rd);
+    effect->rd = nullptr;
 }
 
 

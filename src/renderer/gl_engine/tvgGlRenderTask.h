@@ -219,4 +219,22 @@ private:
     GlComposeTask* mComposeTask;
 };
 
+class GlGaussianBlurTask: public GlRenderTask
+{
+public:
+    GlGaussianBlurTask(GlRenderTarget* dstFbo, GlRenderTarget* dstCopyFbo0, GlRenderTarget* dstCopyFbo1): 
+        GlRenderTask(nullptr), mDstFbo(dstFbo), mDstCopyFbo0(dstCopyFbo0), mDstCopyFbo1(dstCopyFbo1) {};
+    ~GlGaussianBlurTask(){ delete horzTask; delete vertTask; };
+
+    void run() override;
+
+    GlRenderTask* horzTask;
+    GlRenderTask* vertTask;
+    RenderEffectGaussianBlur* effect;
+private:
+    GlRenderTarget* mDstFbo;
+    GlRenderTarget* mDstCopyFbo0;
+    GlRenderTarget* mDstCopyFbo1;
+};
+
 #endif /* _TVG_GL_RENDER_TASK_H_ */
