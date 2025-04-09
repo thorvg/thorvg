@@ -776,7 +776,7 @@ void main()
     
     for (int y = -radius; y <= radius; ++y) {
         float weight = gaussian(float(y), sigma);
-        vec2 offset = min(vec2(1.0), vec2(0.0, float(y) * texelSize.y));
+        vec2 offset = vec2(0.0, float(y) * texelSize.y);
         colorSum += texture(uSrcTexture, vUV + offset) * weight;
         weightSum += weight;
     }
@@ -812,8 +812,7 @@ void main()
     
     for (int y = -radius; y <= radius; ++y) {
         float weight = gaussian(float(y), sigma);
-        //vec2 offset = vec2(float(y) * texelSize.x, 0.0);
-        vec2 offset = min(vec2(1.0), vec2(float(y) * texelSize.x, 0.0));
+        vec2 offset = vec2(float(y) * texelSize.x, 0.0);
         colorSum += texture(uSrcTexture, vUV + offset) * weight;
         weightSum += weight;
     }
@@ -856,5 +855,31 @@ void main()
     vec4 white = uParams.params[1];
     float intens = uParams.params[2].r;
     FragColor = mix(orig, mix(white, black, luma), intens) * orig.a;
+} 
+)";
+
+const char* EFFECT_TRITONE = R"(
+uniform sampler2D uSrcTexture;
+layout(std140) uniform Params {
+    vec4 params[3];
+} uParams;
+
+in vec2 vUV;
+out vec4 FragColor;
+
+void main()
+{
+    vec4 orig = texture(uSrcTexture, vUV);
+    float luma = dot(orig.rgb, vec3(0.2125, 0.7154, 0.0721));
+    vec4 shadow = uParams.params[0];
+    vec4 midtone = uParams.params[1];
+    vec4 highlight = uParams.params[2];
+
+    FragColor = vec4(
+        luma >= 0.5f ? mix(midtone.r, highlight.r, (luma - 0.5f)*2.0f) : mix(shadow.r, midtone.r, luma * 2.0f),
+        luma >= 0.5f ? mix(midtone.g, highlight.g, (luma - 0.5f)*2.0f) : mix(shadow.g, midtone.g, luma * 2.0f),
+        luma >= 0.5f ? mix(midtone.b, highlight.b, (luma - 0.5f)*2.0f) : mix(shadow.b, midtone.b, luma * 2.0f),
+        luma >= 0.5f ? mix(midtone.a, highlight.a, (luma - 0.5f)*2.0f) : mix(shadow.a, midtone.a, luma * 2.0f)
+    ) * orig.a;
 } 
 )";
