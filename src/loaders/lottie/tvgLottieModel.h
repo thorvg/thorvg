@@ -87,7 +87,7 @@ struct LottieEffect
 
     virtual ~LottieEffect() {}
 
-    unsigned long id;
+    unsigned long nm;  //encoded by djb2
     int16_t ix;
     Type type;
     bool enable = false;
@@ -988,9 +988,9 @@ struct LottieLayer : LottieGroup
     float outFrame = 0.0f;
     float startFrame = 0.0f;
     unsigned long rid = 0;      //pre-composition reference id.
-    int16_t mid = -1;           //id of the matte layer.
-    int16_t pidx = -1;          //index of the parent layer.
-    int16_t idx = -1;           //index of the current layer.
+    int16_t mix = -1;           //index of the matte layer.
+    int16_t pix = -1;           //index of the parent layer.
+    int16_t ix = -1;            //index of the current layer.
 
     struct {
         float frameNo = -1.0f;
@@ -1007,7 +1007,7 @@ struct LottieLayer : LottieGroup
     LottieEffect* effectById(unsigned long id)
     {
         ARRAY_FOREACH(p, effects) {
-            if (id == (*p)->id) return *p;
+            if (id == (*p)->nm) return *p;
         }
         return nullptr;
     }
@@ -1031,12 +1031,12 @@ struct LottieLayer : LottieGroup
         return nullptr;
     }
 
-    LottieLayer* layerByIdx(int16_t idx)
+    LottieLayer* layerByIdx(int16_t ix)
     {
         ARRAY_FOREACH(p, children) {
             if ((*p)->type != LottieObject::Type::Layer) continue;
             auto layer = static_cast<LottieLayer*>(*p);
-            if (layer->idx == idx) return layer;
+            if (layer->ix == ix) return layer;
         }
         return nullptr;
     }

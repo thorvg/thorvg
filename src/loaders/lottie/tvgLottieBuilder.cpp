@@ -1450,9 +1450,9 @@ static void _buildReference(LottieComposition* comp, LottieLayer* layer)
 
 static void _buildHierarchy(LottieGroup* parent, LottieLayer* child)
 {
-    if (child->pidx == -1) return;
+    if (child->pix == -1) return;
 
-    if (child->matteTarget && child->pidx == child->matteTarget->idx) {
+    if (child->matteTarget && child->pix == child->matteTarget->ix) {
         child->parent = child->matteTarget;
         return;
     }
@@ -1460,11 +1460,11 @@ static void _buildHierarchy(LottieGroup* parent, LottieLayer* child)
     ARRAY_FOREACH(p, parent->children) {
         auto parent = static_cast<LottieLayer*>(*p);
         if (child == parent) continue;
-        if (child->pidx == parent->idx) {
+        if (child->pix == parent->ix) {
             child->parent = parent;
             break;
         }
-        if (parent->matteTarget && parent->matteTarget->idx == child->pidx) {
+        if (parent->matteTarget && parent->matteTarget->ix == child->pix) {
             child->parent = parent->matteTarget;
             break;
         }
@@ -1506,12 +1506,12 @@ static bool _buildComposition(LottieComposition* comp, LottieLayer* parent)
 
         if (child->matteType != MaskMethod::None) {
             //no index of the matte layer is provided: the layer above is used as the matte source
-            if (child->mid == -1) {
+            if (child->mix == -1) {
                 if (p > parent->children.begin()) {
                     child->matteTarget = static_cast<LottieLayer*>(*(p - 1));
                 }
             //matte layer is specified by an index.
-            } else child->matteTarget = parent->layerByIdx(child->mid);
+            } else child->matteTarget = parent->layerByIdx(child->mix);
         }
 
         if (child->matteTarget) {

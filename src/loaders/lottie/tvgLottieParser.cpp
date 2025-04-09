@@ -1415,7 +1415,7 @@ void LottieParser::parseEffects(LottieLayer* layer)
                 if (!effect) break;
                 else invalid = false;
             }
-            else if (effect && KEY_AS("nm")) effect->id = djb2Encode(getString());
+            else if (effect && KEY_AS("nm")) effect->nm = djb2Encode(getString());
             else if (effect && KEY_AS("ix")) effect->ix = getInt();
             else if (effect && KEY_AS("en")) effect->enable = getInt();
             else if (effect && KEY_AS("ef")) parseEffect(effect);
@@ -1449,7 +1449,7 @@ LottieLayer* LottieParser::parseLayer(LottieLayer* precomp)
             layer->id = djb2Encode(layer->name);
         }
         else if (KEY_AS("ddd")) ddd = getInt();  //3d layer
-        else if (KEY_AS("ind")) layer->idx = getInt();
+        else if (KEY_AS("ind")) layer->ix = getInt();
         else if (KEY_AS("ty")) layer->type = (LottieLayer::Type) getInt();
         else if (KEY_AS("sr")) layer->timeStretch = getFloat();
         else if (KEY_AS("ks"))
@@ -1463,13 +1463,13 @@ LottieLayer* LottieParser::parseLayer(LottieLayer* precomp)
         else if (KEY_AS("op")) layer->outFrame = getFloat();
         else if (KEY_AS("st")) layer->startFrame = getFloat();
         else if (KEY_AS("bm")) layer->blendMethod = (BlendMethod) getInt();
-        else if (KEY_AS("parent")) layer->pidx = getInt();
+        else if (KEY_AS("parent")) layer->pix = getInt();
         else if (KEY_AS("tm")) parseTimeRemap(layer);
         else if (KEY_AS("w") || KEY_AS("sw")) getLayerSize(layer->w);
         else if (KEY_AS("h") || KEY_AS("sh")) getLayerSize(layer->h);
         else if (KEY_AS("sc")) color = getColor(getString());
         else if (KEY_AS("tt")) layer->matteType = (MaskMethod) getInt();
-        else if (KEY_AS("tp")) layer->mid = getInt();
+        else if (KEY_AS("tp")) layer->mix = getInt();
         else if (KEY_AS("masksProperties")) parseMasks(layer);
         else if (KEY_AS("hd")) layer->hidden = getBool();
         else if (KEY_AS("refId")) layer->rid = djb2Encode(getString());
