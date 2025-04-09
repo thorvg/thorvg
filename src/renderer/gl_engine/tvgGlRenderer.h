@@ -126,6 +126,7 @@ private:
     void effectGaussianBlurUpdate(RenderEffectGaussianBlur* effect, const Matrix& transform);
     void effectFillUpdate(RenderEffectFill* effect, const Matrix& transform);
     void effectTintUpdate(RenderEffectTint* effect, const Matrix& transform);
+    void effectTritoneUpdate(RenderEffectTritone* effect, const Matrix& transform);
 
     bool effectGaussianBlurRegion(RenderEffectGaussianBlur* effect);
 

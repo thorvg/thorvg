@@ -211,6 +211,7 @@ struct GlGaussianBlur {
 struct GlEffectParams {
     // fill:          [0..3]: color
     // tint:          [0..2]: black,  [4..6]: white,   [8]: intensity
+    // tritone:       [0..2]: shadow, [4..6]: midtone, [8..10]: highlight
     float params[4+4+4];
 };
 

@@ -437,7 +437,6 @@ void GlGaussianBlurTask::run()
 
 void GlEffectColorTransformTask::run()
 {
-    // const auto vp = getViewport();
     const auto width = mDstFbo->getWidth();
     const auto height = mDstFbo->getHeight();
     // get targets handles and pass to shader
@@ -447,7 +446,7 @@ void GlEffectColorTransformTask::run()
 
     GL_CHECK(glViewport(0, 0, width, height));
     GL_CHECK(glScissor(0, 0, width, height));
-    // we need to make full copy of dst to intermidiate buffers to be shure, that they are not containe prev data
+    // we need to make a full copy of dst to intermediate buffers to be sure that they don’t contain prev data.
     GL_CHECK(glBindFramebuffer(GL_READ_FRAMEBUFFER, mDstFbo->getFboId()));
     GL_CHECK(glBindFramebuffer(GL_DRAW_FRAMEBUFFER, mDstCopyFbo->getResolveFboId()));
     GL_CHECK(glBlitFramebuffer(0, 0, width, height, 0, 0, width, height, GL_COLOR_BUFFER_BIT, GL_NEAREST));

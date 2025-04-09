@@ -59,5 +59,6 @@ extern const char* GAUSSIAN_VERTICAL;
 extern const char* GAUSSIAN_HORIZONTAL;
 extern const char* EFFECT_FILL;
 extern const char* EFFECT_TINT;
+extern const char* EFFECT_TRITONE;
 
 #endif /* _TVG_GL_SHADERSRC_H_ */

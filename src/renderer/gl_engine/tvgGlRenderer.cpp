@@ -146,6 +146,7 @@ void GlRenderer::initShaders()
     mPrograms.push(new GlProgram(EFFECT_VERTEX, GAUSSIAN_HORIZONTAL));
     mPrograms.push(new GlProgram(EFFECT_VERTEX, EFFECT_FILL));
     mPrograms.push(new GlProgram(EFFECT_VERTEX, EFFECT_TINT));
+    mPrograms.push(new GlProgram(EFFECT_VERTEX, EFFECT_TRITONE));
 }
 
 
@@ -994,6 +995,27 @@ void GlRenderer::effectTintUpdate(RenderEffectTint* effect, const Matrix& transf
 }
 
 
+void GlRenderer::effectTritoneUpdate(RenderEffectTritone* effect, const Matrix& transform)
+{
+    auto params = (GlEffectParams*)effect->rd;
+    if (!params) params = tvg::malloc<GlEffectParams*>(sizeof(GlEffectParams));
+    params->params[0] = effect->shadow[0] / 255.0f;
+    params->params[1] = effect->shadow[1] / 255.0f;
+    params->params[2] = effect->shadow[2] / 255.0f;
+    params->params[3] = 0.0f;
+    params->params[4] = effect->midtone[0] / 255.0f;
+    params->params[5] = effect->midtone[1] / 255.0f;
+    params->params[6] = effect->midtone[2] / 255.0f;
+    params->params[7] = 0.0f;
+    params->params[8] = effect->highlight[0] / 255.0f;
+    params->params[9] = effect->highlight[1] / 255.0f;
+    params->params[10] = effect->highlight[2] / 255.0f;
+    params->params[11] = 0.0f;
+    effect->rd = params;
+    effect->valid = true;
+}
+
+
 bool GlRenderer::effectGaussianBlurRegion(RenderEffectGaussianBlur* effect)
 {
     auto gaussianBlur = (GlGaussianBlur*)effect->rd;
@@ -1019,6 +1041,7 @@ void GlRenderer::prepare(RenderEffect* effect, const Matrix& transform)
         case SceneEffect::GaussianBlur: effectGaussianBlurUpdate(static_cast<RenderEffectGaussianBlur*>(effect), transform); break;
         case SceneEffect::Fill: effectFillUpdate(static_cast<RenderEffectFill*>(effect), transform); break;
         case SceneEffect::Tint: effectTintUpdate(static_cast<RenderEffectTint*>(effect), transform); break;
+        case SceneEffect::Tritone: effectTritoneUpdate(static_cast<RenderEffectTritone*>(effect), transform); break;
         default: break;
     }
     effect->valid = true;
@@ -1029,8 +1052,9 @@ bool GlRenderer::region(RenderEffect* effect)
 {
     switch (effect->type) {
         case SceneEffect::GaussianBlur: return effectGaussianBlurRegion(static_cast<RenderEffectGaussianBlur*>(effect));
-        case SceneEffect::Fill: return true;
-        case SceneEffect::Tint: return true;
+        case SceneEffect::Fill:
+        case SceneEffect::Tint:
+        case SceneEffect::Tritone: return true;
         default: return false;
     }
     return false;
@@ -1079,17 +1103,19 @@ bool GlRenderer::render(TVG_UNUSED RenderCompositor* cmp, const RenderEffect* ef
         // add task to render pipeline
         pass->addRenderTask(gaussianTask);
     } // effect fill 
-    else if ((effect->type == SceneEffect::Fill) || (effect->type == SceneEffect::Tint)) {
+    else if ((effect->type == SceneEffect::Fill) || (effect->type == SceneEffect::Tint) || (effect->type == SceneEffect::Tritone)) {
         GlProgram* program{};
         if (effect->type == SceneEffect::Fill) program = mPrograms[RT_EffectFill];
         else if (effect->type == SceneEffect::Tint) program = mPrograms[RT_EffectTint];
+        else if (effect->type == SceneEffect::Tritone) program = mPrograms[RT_EffectTritone];
+        else return false;
         // get current and intermidiate framebuffers
         auto dstFbo = pass->getFbo();
         auto dstCopyFbo = mBlendPool[0]->getRenderTarget(vp);
         // add uniform data
         auto params = (GlEffectParams*)(effect->rd);
         auto paramsOffset = mGpuBuffer.push(params, sizeof(GlEffectParams), true);
-        // create gaussian blur tasks
+        // create and setup task
         auto task = new GlEffectColorTransformTask(program, dstFbo, dstCopyFbo);
         task->setViewport({0, 0, vp.w, vp.h});
         task->addBindResource(GlBindingResource{0, program->getUniformBlockIndex("Params"), mGpuBuffer.getBufferId(), paramsOffset, sizeof(GlEffectParams)});
