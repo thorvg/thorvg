@@ -334,7 +334,7 @@ static void _buildLayer(jerry_value_t context, float frameNo, LottieLayer* layer
     jerry_object_set_sz(context, EXP_HEIGHT, height);
     jerry_value_free(height);
 
-    auto index = jerry_number(layer->idx);
+    auto index = jerry_number(layer->ix);
     jerry_object_set_sz(context, EXP_INDEX, index);
     jerry_value_free(index);
 
@@ -1242,7 +1242,7 @@ static void _buildMath(jerry_value_t context)
 
 void LottieExpressions::buildGlobal(LottieExpression* exp)
 {
-    auto index = jerry_number(exp->layer->idx);
+    auto index = jerry_number(exp->layer->ix);
     jerry_object_set_sz(global, EXP_INDEX, index);
     jerry_value_free(index);
 }
