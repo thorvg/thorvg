@@ -776,7 +776,7 @@ void main()
     
     for (int y = -radius; y <= radius; ++y) {
         float weight = gaussian(float(y), sigma);
-        vec2 offset = vec2(0.0, float(y) * texelSize.y);
+        vec2 offset = min(vec2(1.0), vec2(0.0, float(y) * texelSize.y));
         colorSum += texture(uSrcTexture, vUV + offset) * weight;
         weightSum += weight;
     }
@@ -812,7 +812,8 @@ void main()
     
     for (int y = -radius; y <= radius; ++y) {
         float weight = gaussian(float(y), sigma);
-        vec2 offset = vec2(float(y) * texelSize.x, 0.0);
+        //vec2 offset = vec2(float(y) * texelSize.x, 0.0);
+        vec2 offset = min(vec2(1.0), vec2(float(y) * texelSize.x, 0.0));
         colorSum += texture(uSrcTexture, vUV + offset) * weight;
         weightSum += weight;
     }
@@ -835,5 +836,25 @@ void main()
     vec4 orig = texture(uSrcTexture, vUV);
     vec4 fill = uParams.params[0];
     FragColor = fill * orig.a * fill.a;
+} 
+)";
+
+const char* EFFECT_TINT = R"(
+uniform sampler2D uSrcTexture;
+layout(std140) uniform Params {
+    vec4 params[3];
+} uParams;
+
+in vec2 vUV;
+out vec4 FragColor;
+
+void main()
+{
+    vec4 orig = texture(uSrcTexture, vUV);
+    float luma = dot(orig.rgb, vec3(0.2125, 0.7154, 0.0721));
+    vec4 black = uParams.params[0];
+    vec4 white = uParams.params[1];
+    float intens = uParams.params[2].r;
+    FragColor = mix(orig, mix(white, black, luma), intens) * orig.a;
 } 
 )";
