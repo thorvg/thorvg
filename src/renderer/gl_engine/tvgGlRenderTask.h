@@ -237,4 +237,17 @@ private:
     GlRenderTarget* mDstCopyFbo1;
 };
 
+class GlEffectColorTransformTask: public GlRenderTask
+{
+public:
+    GlEffectColorTransformTask(GlProgram* program, GlRenderTarget* dstFbo, GlRenderTarget* dstCopyFbo):
+        GlRenderTask(program), mDstFbo(dstFbo), mDstCopyFbo(dstCopyFbo) {};
+    ~GlEffectColorTransformTask() {};
+
+    void run() override;
+private:
+    GlRenderTarget* mDstFbo;
+    GlRenderTarget* mDstCopyFbo;
+};
+
 #endif /* _TVG_GL_RENDER_TASK_H_ */

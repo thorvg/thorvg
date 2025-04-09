@@ -62,6 +62,10 @@ public:
 
         RT_GaussianVert,
         RT_GaussianHorz,
+        //RT_DropShadow,
+        RT_EffectFill,
+        RT_EffectTint,
+        RT_EffectTritone,
 
         RT_None,
     };
@@ -120,6 +124,8 @@ private:
     void endRenderPass(RenderCompositor* cmp);
 
     void effectGaussianBlurUpdate(RenderEffectGaussianBlur* effect, const Matrix& transform);
+    void effectFillUpdate(RenderEffectFill* effect, const Matrix& transform);
+
     bool effectGaussianBlurRegion(RenderEffectGaussianBlur* effect);
 
     void flush();

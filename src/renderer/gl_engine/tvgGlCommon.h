@@ -208,4 +208,9 @@ struct GlGaussianBlur {
     float extend{};
 };
 
+struct GlEffectParams {
+    // fill: [0..3]: color
+    float params[4+4+4];
+};
+
 #endif /* _TVG_GL_COMMON_H_ */

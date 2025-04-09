@@ -144,6 +144,7 @@ void GlRenderer::initShaders()
     // effects
     mPrograms.push(new GlProgram(EFFECT_VERTEX, GAUSSIAN_VERTICAL));
     mPrograms.push(new GlProgram(EFFECT_VERTEX, GAUSSIAN_HORIZONTAL));
+    mPrograms.push(new GlProgram(EFFECT_VERTEX, EFFECT_FILL));
 }
 
 
@@ -961,6 +962,19 @@ void GlRenderer::effectGaussianBlurUpdate(RenderEffectGaussianBlur* effect, cons
 }
 
 
+void GlRenderer::effectFillUpdate(RenderEffectFill* effect, const Matrix& transform)
+{
+    auto params = (GlEffectParams*)effect->rd;
+    if (!params) params = tvg::malloc<GlEffectParams*>(sizeof(GlEffectParams));
+    params->params[0] = effect->color[0] / 255.0f;
+    params->params[1] = effect->color[1] / 255.0f;
+    params->params[2] = effect->color[2] / 255.0f;
+    params->params[3] = effect->color[3] / 255.0f;
+    effect->rd = params;
+    effect->valid = true;
+}
+
+
 bool GlRenderer::effectGaussianBlurRegion(RenderEffectGaussianBlur* effect)
 {
     auto gaussianBlur = (GlGaussianBlur*)effect->rd;
@@ -984,6 +998,7 @@ void GlRenderer::prepare(RenderEffect* effect, const Matrix& transform)
     
     switch (effect->type) {
         case SceneEffect::GaussianBlur: effectGaussianBlurUpdate(static_cast<RenderEffectGaussianBlur*>(effect), transform); break;
+        case SceneEffect::Fill: effectFillUpdate(static_cast<RenderEffectFill*>(effect), transform); break;
         default: break;
     }
     effect->valid = true;
@@ -994,6 +1009,7 @@ bool GlRenderer::region(RenderEffect* effect)
 {
     switch (effect->type) {
         case SceneEffect::GaussianBlur: return effectGaussianBlurRegion(static_cast<RenderEffectGaussianBlur*>(effect));
+        case SceneEffect::Fill: return true;
         default: return false;
     }
     return false;
@@ -1041,6 +1057,24 @@ bool GlRenderer::render(TVG_UNUSED RenderCompositor* cmp, const RenderEffect* ef
         gaussianTask->vertTask->setDrawRange(ioffset, 6);
         // add task to render pipeline
         pass->addRenderTask(gaussianTask);
+    } // effect fill 
+    else if (effect->type == SceneEffect::Fill) {
+        GlProgram* program{};
+        if (effect->type == SceneEffect::Fill) program = mPrograms[RT_EffectFill];
+        // get current and intermidiate framebuffers
+        auto dstFbo = pass->getFbo();
+        auto dstCopyFbo = mBlendPool[0]->getRenderTarget(vp);
+        // add uniform data
+        auto params = (GlEffectParams*)(effect->rd);
+        auto paramsOffset = mGpuBuffer.push(params, sizeof(GlEffectParams), true);
+        // create gaussian blur tasks
+        auto task = new GlEffectColorTransformTask(program, dstFbo, dstCopyFbo);
+        task->setViewport({0, 0, vp.w, vp.h});
+        task->addBindResource(GlBindingResource{0, program->getUniformBlockIndex("Params"), mGpuBuffer.getBufferId(), paramsOffset, sizeof(GlEffectParams)});
+        task->addVertexLayout(GlVertexLayout{0, 2, 2 * sizeof(float), voffset});
+        task->setDrawRange(ioffset, 6);
+        // add task to render pipeline
+        pass->addRenderTask(task);
     }
     return false;
 }
