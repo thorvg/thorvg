@@ -447,7 +447,7 @@ void GlEffectColorTransformTask::run()
 
     GL_CHECK(glViewport(0, 0, width, height));
     GL_CHECK(glScissor(0, 0, width, height));
-    // we need to make full copy of dst to intermediate buffers to be sure, that they are not contained prev data
+    // we need to make full copy of dst to intermidiate buffers to be shure, that they are not containe prev data
     GL_CHECK(glBindFramebuffer(GL_READ_FRAMEBUFFER, mDstFbo->getFboId()));
     GL_CHECK(glBindFramebuffer(GL_DRAW_FRAMEBUFFER, mDstCopyFbo->getResolveFboId()));
     GL_CHECK(glBlitFramebuffer(0, 0, width, height, 0, 0, width, height, GL_COLOR_BUFFER_BIT, GL_NEAREST));
