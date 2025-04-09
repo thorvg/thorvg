@@ -434,3 +434,27 @@ void GlGaussianBlurTask::run()
     }
     GL_CHECK(glEnable(GL_BLEND));
 }
+
+void GlEffectColorTransformTask::run()
+{
+    // const auto vp = getViewport();
+    const auto width = mDstFbo->getWidth();
+    const auto height = mDstFbo->getHeight();
+    // get targets handles and pass to shader
+    GLuint dstCopyTexId = mDstCopyFbo->getColorTexture();
+    GLint srcTextureLoc = getProgram()->getUniformLocation("uSrcTexture");
+    addBindResource({ 0, dstCopyTexId, srcTextureLoc });
+
+    GL_CHECK(glViewport(0, 0, width, height));
+    GL_CHECK(glScissor(0, 0, width, height));
+    // we need to make full copy of dst to intermediate buffers to be sure, that they are not contained prev data
+    GL_CHECK(glBindFramebuffer(GL_READ_FRAMEBUFFER, mDstFbo->getFboId()));
+    GL_CHECK(glBindFramebuffer(GL_DRAW_FRAMEBUFFER, mDstCopyFbo->getResolveFboId()));
+    GL_CHECK(glBlitFramebuffer(0, 0, width, height, 0, 0, width, height, GL_COLOR_BUFFER_BIT, GL_NEAREST));
+    GL_CHECK(glBindFramebuffer(GL_FRAMEBUFFER, mDstFbo->getFboId()));
+
+    // run transform
+    GL_CHECK(glDisable(GL_BLEND));
+    GlRenderTask::run();
+    GL_CHECK(glEnable(GL_BLEND));
+}
