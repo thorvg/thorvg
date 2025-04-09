@@ -65,6 +65,7 @@ float LottieTextFollowPath::prepare(LottieMask* mask, float frameNo, float scale
 {
     this->mask = mask;
     Matrix m{1.0f / scale, 0.0f, 0.0f, 0.0f, 1.0f / scale, 0.0f, 0.0f, 0.0f, 1.0f};
+    path.clear();
     mask->pathset(frameNo, path, &m, tween, exps);
 
     pts = path.pts.data;
@@ -112,7 +113,7 @@ Point LottieTextFollowPath::position(float lenSearched, float& angle)
     if (lenSearched > totalLen) {
         //shape is closed -> wrapping
         if (path.cmds.last() == PathCommand::Close) {
-            lenSearched -= totalLen;
+            while (lenSearched > totalLen) lenSearched -= totalLen;
             pts = path.pts.data;
             cmds = path.cmds.data;
             cmdsCnt = path.cmds.count;
