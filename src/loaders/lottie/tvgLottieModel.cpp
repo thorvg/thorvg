@@ -110,7 +110,7 @@ Point LottieTextFollowPath::position(float lenSearched, float& angle)
     };
 
     //beyond the curve
-    if (lenSearched > totalLen) {
+    if (lenSearched >= totalLen) {
         //shape is closed -> wrapping
         if (path.cmds.last() == PathCommand::Close) {
             while (lenSearched > totalLen) lenSearched -= totalLen;
@@ -148,7 +148,7 @@ Point LottieTextFollowPath::position(float lenSearched, float& angle)
 
     while (cmdsCnt > 0) {
         auto dLen = length();
-        if (currentLen + dLen <= lenSearched) {
+        if (currentLen + dLen < lenSearched) {
             shift();
             currentLen += dLen;
             continue;
