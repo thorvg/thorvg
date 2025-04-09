@@ -80,36 +80,47 @@ float LottieTextFollowPath::prepare(LottieMask* mask, float frameNo, float scale
 
 Point LottieTextFollowPath::position(float lenSearched, float& angle)
 {
+    //position before the start of the curve
+    if (lenSearched <= 0.0f) {
+        //shape is closed -> wrapping
+        if (path.cmds.last() == PathCommand::Close) {
+            while (lenSearched < 0.0f) lenSearched += totalLen;
+            pts = path.pts.data;
+            cmds = path.cmds.data;
+            cmdsCnt = path.cmds.count;
+            currentLen = 0.0f;
+        //linear interpolation
+        } else {
+            if (cmds >= path.cmds.data + path.cmds.count - 1) return *start;
+            switch (*(cmds + 1)) {
+                case PathCommand::LineTo: {
+                    auto dp = *(pts + 1) - *pts;
+                    angle = tvg::atan2(dp.y, dp.x);
+                    return {pts->x + lenSearched * cos(angle), pts->y + lenSearched * sin(angle)};
+                }
+                case PathCommand::CubicTo: {
+                    angle = deg2rad(Bezier{*pts, *(pts + 1), *(pts + 2), *(pts + 3)}.angle(0.0001f));
+                    return {pts->x + lenSearched * cos(angle), pts->y + lenSearched * sin(angle)};
+                }
+                default:
+                    angle = 0.0f;
+                return *start;
+            }
+        }
+    }
+
     auto shift = [&]() -> void {
         switch (*cmds) {
-            case PathCommand::MoveTo:
-                start = pts;
-                ++pts;
-                break;
-            case PathCommand::LineTo:
-                ++pts;
-                break;
-            case PathCommand::CubicTo:
-                pts += 3;
-                break;
-            case PathCommand::Close:
-                break;
+            case PathCommand::MoveTo: start = pts; ++pts; break;
+            case PathCommand::LineTo: ++pts; break;
+            case PathCommand::CubicTo: pts += 3; break;
+            case PathCommand::Close: break;
         }
         ++cmds;
         --cmdsCnt;
     };
 
-    auto length = [&]() -> float {
-        switch (*cmds) {
-            case PathCommand::MoveTo: return 0.0f;
-            case PathCommand::LineTo: return tvg::length(pts - 1, pts);
-            case PathCommand::CubicTo: return Bezier{*(pts - 1), *pts, *(pts + 1), *(pts + 2)}.length();
-            case PathCommand::Close: return tvg::length(pts - 1, start);
-        }
-        return 0.0f;
-    };
-
-    //beyond the curve
+    //position beyond the end of the curve
     if (lenSearched >= totalLen) {
         //shape is closed -> wrapping
         if (path.cmds.last() == PathCommand::Close) {
@@ -145,6 +156,24 @@ Point LottieTextFollowPath::position(float lenSearched, float& angle)
             }
         }
     }
+
+    //reset required if text partially crosses curve start
+    if (lenSearched < currentLen) {
+        pts = path.pts.data;
+        cmds = path.cmds.data;
+        cmdsCnt = path.cmds.count;
+        currentLen = 0.0f;
+    }
+
+    auto length = [&]() -> float {
+        switch (*cmds) {
+            case PathCommand::MoveTo: return 0.0f;
+            case PathCommand::LineTo: return tvg::length(pts - 1, pts);
+            case PathCommand::CubicTo: return Bezier{*(pts - 1), *pts, *(pts + 1), *(pts + 2)}.length();
+            case PathCommand::Close: return tvg::length(pts - 1, start);
+            default: return 0.0f;
+        }
+    };
 
     while (cmdsCnt > 0) {
         auto dLen = length();
