@@ -189,8 +189,8 @@ struct LottieProperty
     enum class Type : uint8_t {Invalid = 0, Integer, Float, Scalar, Vector, PathSet, Color, Opacity, ColorStop, TextDoc, Image};
 
     LottieExpression* exp = nullptr;
-    uint32_t ix;  //property index  (used as a name id for indexing by custom layer effect as well)
     Type type;
+    uint8_t ix;  //property index
 
     LottieProperty(Type type = Type::Invalid) : type(type) {}
     virtual ~LottieProperty() {}

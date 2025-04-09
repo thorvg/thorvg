@@ -96,8 +96,15 @@ struct LottieEffect
 
 struct LottieFxCustom : LottieEffect
 {
+    struct Property
+    {
+        LottieProperty* property;
+        unsigned long nm = 0;  //encoded by djb2
+        unsigned long mn = 0;  //encoded by djb2
+    };
+
     char* name = nullptr;
-    Array<LottieProperty*> props;
+    Array<Property> props;
 
     LottieFxCustom()
     {
@@ -106,10 +113,10 @@ struct LottieFxCustom : LottieEffect
 
     ~LottieFxCustom()
     {
-        ARRAY_FOREACH(p, props) delete(*p);
+        ARRAY_FOREACH(p, props) delete(p->property);
     }
 
-    LottieProperty* property(int type)
+    Property* property(int type)
     {
         LottieProperty* prop = nullptr;
 
@@ -126,15 +133,18 @@ struct LottieFxCustom : LottieEffect
                 TVGLOG("LOTTIE", "missing custom property = %d\n", type);
                 return nullptr;
         }
-        if (prop) props.push(prop);
-        return prop;
+        if (prop) {
+            props.push({prop, });
+            return &props.last();
+        }
+        return nullptr;
     }
 
     LottieProperty* property(const char* name)
     {
-        auto ix = static_cast<uint32_t>(djb2Encode(name));
+        auto id = djb2Encode(name);
         ARRAY_FOREACH(p, props) {
-            if ((*p)->ix == ix) return *p;
+            if (p->mn == id || p->nm == id) return p->property;
         }
         return nullptr;
     }

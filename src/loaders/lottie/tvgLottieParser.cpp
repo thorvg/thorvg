@@ -1260,16 +1260,16 @@ bool LottieParser::parseEffect(LottieEffect* effect, void(LottieParser::*func)(L
 {
     //custom effect expects dynamic property allocations
     auto custom = (effect->type == LottieEffect::Custom) ? true : false;
-    LottieProperty* property = nullptr;
+    LottieFxCustom::Property* property = nullptr;
 
     enterArray();
     int idx = 0;
     while (nextArrayValue()) {
         enterObject();
         while (auto key = nextObjectKey()) {
-            if (custom && KEY_AS("ty")) {
-                property = static_cast<LottieFxCustom*>(effect)->property(getInt());
-            } else if (KEY_AS("v")) {
+            if (custom && KEY_AS("ty")) property = static_cast<LottieFxCustom*>(effect)->property(getInt());
+            else if (KEY_AS("v"))
+            {
                 if (peekType() == kObjectType) {
                     enterObject();
                     while (auto key = nextObjectKey()) {
@@ -1277,9 +1277,10 @@ bool LottieParser::parseEffect(LottieEffect* effect, void(LottieParser::*func)(L
                         else skip();
                     }
                 } else skip();
-            } else if (property && KEY_AS("nm")) {
-                property->ix = djb2Encode(getString());
-            } else skip();
+            }
+            else if (property && KEY_AS("nm")) property->nm = djb2Encode(getString());
+            else if (property && KEY_AS("mn")) property->mn = djb2Encode(getString());
+            else skip();
         }
     }
     return true;
@@ -1293,7 +1294,7 @@ void LottieParser::parseCustom(LottieEffect* effect, int idx)
         return;
     }
 
-    auto prop = static_cast<LottieFxCustom*>(effect)->props[idx];
+    auto prop = static_cast<LottieFxCustom*>(effect)->props[idx].property;
 
     switch (prop->type) {
         case LottieProperty::Type::Integer: {
