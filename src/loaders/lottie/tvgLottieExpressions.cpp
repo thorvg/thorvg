@@ -40,6 +40,7 @@ struct ExpContent
         LottieEffect* effect;
     };
     float frameNo;
+    size_t refCnt;
 };
 
 static jerry_value_t _content(const jerry_call_info_t* info, const jerry_value_t args[], const jerry_length_t argsCnt);
@@ -61,12 +62,20 @@ static const char* EXP_EFFECT= "effect";
 static LottieExpressions* exps = nullptr;   //singleton instance engine
 
 
-static ExpContent* _expcontent(LottieExpression* exp, float frameNo, void* obj)
+static ExpContent* _expcontent(LottieExpression* exp, float frameNo, void* obj, size_t refCnt = 1)
 {
     auto data = tvg::malloc<ExpContent*>(sizeof(ExpContent));
     data->exp = exp;
     data->frameNo = frameNo;
     data->obj = (LottieObject*)obj;
+    data->refCnt = refCnt;
+    return data;
+}
+
+
+static inline ExpContent* _expcontent(ExpContent* data)
+{
+    ++data->refCnt;
     return data;
 }
 
@@ -134,7 +143,9 @@ static RGB24 _color(jerry_value_t obj)
 
 static void contentFree(void *native_p, struct jerry_object_native_info_t *info_p)
 {
-    tvg::free(native_p);
+    if (--static_cast<ExpContent*>(native_p)->refCnt == 0) {
+        tvg::free(native_p);
+    }
 }
 
 static jerry_object_native_info_t freeCb {contentFree, 0, 0};
@@ -406,14 +417,16 @@ static void _buildLayer(jerry_value_t context, float frameNo, LottieLayer* layer
     jerry_value_free(toComp);
 
     //content("name"), #look for the named property from a layer
+    auto data = _expcontent(exp, frameNo, layer, 2);
+
     auto content = jerry_function_external(_content);
     jerry_object_set_sz(context, EXP_CONTENT, content);
-    jerry_object_set_native_ptr(content, &freeCb, _expcontent(exp, frameNo, layer));
+    jerry_object_set_native_ptr(content, &freeCb, data);
     jerry_value_free(content);
 
     auto effect = jerry_function_external(_effect);
     jerry_object_set_sz(context, EXP_EFFECT, effect);
-    jerry_object_set_native_ptr(effect, &freeCb, _expcontent(exp, frameNo, layer));
+    jerry_object_set_native_ptr(effect, &freeCb, data);
     jerry_value_free(effect);
 }
 
@@ -694,7 +707,7 @@ static jerry_value_t _propertyGroup(const jerry_call_info_t* info, const jerry_v
     //intermediate group
     if (level == 1) {
         auto group = jerry_function_external(_property);
-        jerry_object_set_native_ptr(group, &freeCb, _expcontent(data->exp, data->frameNo, data->obj));
+        jerry_object_set_native_ptr(group, &freeCb, _expcontent(data));
         jerry_object_set_sz(group, "", group);
         return group;
     }
@@ -1057,15 +1070,26 @@ static void _buildProperty(float frameNo, jerry_value_t context, LottieExpressio
     jerry_object_set_native_ptr(speedAtTime, nullptr, exp);
     jerry_value_free(speedAtTime);
 
-    auto wiggle = jerry_function_external(_wiggle);
-    jerry_object_set_sz(context, "wiggle", wiggle);
-    jerry_object_set_native_ptr(wiggle, &freeCb, _expcontent(exp, frameNo, exp->object));
-    jerry_value_free(wiggle);
+    {
+        auto data =  _expcontent(exp, frameNo, exp->object, 3);
 
-    auto temporalWiggle = jerry_function_external(_temporalWiggle);
-    jerry_object_set_sz(context, "temporalWiggle", temporalWiggle);
-    jerry_object_set_native_ptr(temporalWiggle, &freeCb, _expcontent(exp, frameNo, exp->object));
-    jerry_value_free(temporalWiggle);
+        auto wiggle = jerry_function_external(_wiggle);
+        jerry_object_set_sz(context, "wiggle", wiggle);
+        jerry_object_set_native_ptr(wiggle, &freeCb, data);
+        jerry_value_free(wiggle);
+
+        auto temporalWiggle = jerry_function_external(_temporalWiggle);
+        jerry_object_set_sz(context, "temporalWiggle", temporalWiggle);
+        jerry_object_set_native_ptr(temporalWiggle, &freeCb, data);
+        jerry_value_free(temporalWiggle);
+
+        auto propertyGroup = jerry_function_external(_propertyGroup);
+        jerry_object_set_native_ptr(propertyGroup, &freeCb, data);
+        jerry_object_set_sz(context, "propertyGroup", propertyGroup);
+        jerry_value_free(propertyGroup);
+
+        //propertyIndex
+    }
 
     //smooth(width=.2, samples=5, t=time)
 
@@ -1105,28 +1129,30 @@ static void _buildProperty(float frameNo, jerry_value_t context, LottieExpressio
     jerry_object_set_sz(context, "numKeys", numKeys);
     jerry_value_free(numKeys);
 
-    auto propertyGroup = jerry_function_external(_propertyGroup);
-    jerry_object_set_native_ptr(propertyGroup, &freeCb, _expcontent(exp, frameNo, exp->object));
-    jerry_object_set_sz(context, "propertyGroup", propertyGroup);
-    jerry_value_free(propertyGroup);
-
-    //propertyIndex
-
     //name
 
-    //content("name"), #look for the named property from a layer
-    auto content = jerry_function_external(_content);
-    jerry_object_set_sz(context, EXP_CONTENT, content);
-    jerry_object_set_native_ptr(content, &freeCb, _expcontent(exp, frameNo, exp->layer));
-    jerry_value_free(content);
+    {
+        auto data = _expcontent(exp, frameNo, exp->layer, 2);
 
-    //expansions per types
-    if (exp->property->type == LottieProperty::Type::PathSet) _buildPath(context, exp);
+        //content("name"), #look for the named property from a layer
+        auto content = jerry_function_external(_content);
+        jerry_object_set_sz(context, EXP_CONTENT, content);
+        jerry_object_set_native_ptr(content, &freeCb, data);
+        jerry_value_free(content);
+
+        auto effect = jerry_function_external(_effect);
+        jerry_object_set_sz(context, EXP_EFFECT, effect);
+        jerry_object_set_native_ptr(effect, &freeCb, data);
+        jerry_value_free(effect);
+    }
 
     auto effect = jerry_function_external(_effect);
     jerry_object_set_sz(context, EXP_EFFECT, effect);
     jerry_object_set_native_ptr(effect, &freeCb, _expcontent(exp, frameNo, exp->layer));
     jerry_value_free(effect);
+
+    //expansions per types
+    if (exp->property->type == LottieProperty::Type::PathSet) _buildPath(context, exp);
 }
 
 
@@ -1250,11 +1276,6 @@ void LottieExpressions::buildGlobal(LottieExpression* exp)
 
 void LottieExpressions::buildComp(jerry_value_t context, float frameNo, LottieLayer* comp, LottieExpression* exp)
 {
-    auto data = static_cast<ExpContent*>(jerry_object_get_native_ptr(context, &freeCb));
-    data->exp = exp;
-    data->frameNo = frameNo;
-    data->obj = comp;
-
     //layer(index) / layer(name) / layer(otherLayer, reIndex)
     auto layer = jerry_function_external(_layer);
     jerry_object_set_sz(context, "layer", layer);
@@ -1318,13 +1339,11 @@ jerry_value_t LottieExpressions::buildGlobal()
 
     //comp(name)
     comp = jerry_function_external(_comp);
-    jerry_object_set_native_ptr(comp, &freeCb, _expcontent(nullptr, 0.0f, nullptr));
     jerry_object_set_sz(global, "comp", comp);
 
     //footage(name)
 
     thisComp = jerry_object();
-    jerry_object_set_native_ptr(thisComp, &freeCb, _expcontent(nullptr, 0.0f, nullptr));
     jerry_object_set_sz(global, "thisComp", thisComp);
 
     thisLayer = jerry_object();
