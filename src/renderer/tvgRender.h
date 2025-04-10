@@ -107,6 +107,7 @@ struct RenderPath
     }
 
     bool bounds(Matrix* m, float* x, float* y, float* w, float* h);
+    Point point(float progress);
 };
 
 struct RenderTrimPath
