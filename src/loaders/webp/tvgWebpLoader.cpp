@@ -138,7 +138,7 @@ bool WebpLoader::read()
 
     if (!data || w == 0 || h == 0) return false;
 
-    surface.cs = this->cs;
+    surface.cs = ImageLoader::cs;
 
     TaskScheduler::request(this);
 
