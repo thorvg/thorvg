@@ -102,9 +102,9 @@ static jerry_value_t _point2d(const Point& pt)
 static jerry_value_t _color(RGB24 rgb)
 {
     auto value = jerry_object();
-    auto r = jerry_number(rgb.rgb[0]);
-    auto g = jerry_number(rgb.rgb[1]);
-    auto b = jerry_number(rgb.rgb[2]);
+    auto r = jerry_number((float)rgb.rgb[0]);
+    auto g = jerry_number((float)rgb.rgb[1]);
+    auto b = jerry_number((float)rgb.rgb[2]);
     jerry_object_set_index(value, 0, r);
     jerry_object_set_index(value, 1, g);
     jerry_object_set_index(value, 2, b);
@@ -131,9 +131,9 @@ static RGB24 _color(jerry_value_t obj)
     auto r = jerry_object_get_index(obj, 0);
     auto g = jerry_object_get_index(obj, 1);
     auto b = jerry_object_get_index(obj, 2);
-    out.rgb[0] = jerry_value_as_number(r);
-    out.rgb[1] = jerry_value_as_number(g);
-    out.rgb[2] = jerry_value_as_number(b);
+    out.rgb[0] = jerry_value_as_int32(r);
+    out.rgb[1] = jerry_value_as_int32(g);
+    out.rgb[2] = jerry_value_as_int32(b);
     jerry_value_free(r);
     jerry_value_free(g);
     jerry_value_free(b);
