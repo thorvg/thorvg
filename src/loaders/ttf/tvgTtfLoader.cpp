@@ -277,6 +277,7 @@ bool TtfLoader::read(Shape* shape, char* text, FontMetrics& out)
 
     auto n = strlen(text);
     auto code = _codepoints(text, n);
+    if (!code) return false;
 
     //TODO: optimize with the texture-atlas?
     TtfGlyphMetrics gmetrics;
