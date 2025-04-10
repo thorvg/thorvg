@@ -57,6 +57,7 @@ extern const char* EXCLUSION_BLEND_FRAG;
 extern const char* EFFECT_VERTEX;
 extern const char* GAUSSIAN_VERTICAL;
 extern const char* GAUSSIAN_HORIZONTAL;
+extern const char* EFFECT_DROPSHADOW;
 extern const char* EFFECT_FILL;
 extern const char* EFFECT_TINT;
 extern const char* EFFECT_TRITONE;
