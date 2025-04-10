@@ -38,6 +38,8 @@ struct ExpContent
     union {
         LottieObject* obj;
         LottieEffect* effect;
+        LottieProperty* property;
+        void *data;
     };
     float frameNo;
     size_t refCnt;
@@ -62,14 +64,14 @@ static const char* EXP_EFFECT= "effect";
 static LottieExpressions* exps = nullptr;   //singleton instance engine
 
 
-static ExpContent* _expcontent(LottieExpression* exp, float frameNo, void* obj, size_t refCnt = 1)
+static ExpContent* _expcontent(LottieExpression* exp, float frameNo, void* data, size_t refCnt = 1)
 {
-    auto data = tvg::malloc<ExpContent*>(sizeof(ExpContent));
-    data->exp = exp;
-    data->frameNo = frameNo;
-    data->obj = (LottieObject*)obj;
-    data->refCnt = refCnt;
-    return data;
+    auto ret = tvg::malloc<ExpContent*>(sizeof(ExpContent));
+    ret->exp = exp;
+    ret->frameNo = frameNo;
+    ret->data = data;
+    ret->refCnt = refCnt;
+    return ret;
 }
 
 
@@ -472,7 +474,6 @@ static jerry_value_t _muldiv(const jerry_value_t arg1, float arg2)
 {
     //1d
     if (jerry_value_is_number(arg1)) return jerry_number(jerry_value_as_number(arg1) * arg2);
-
     //2d
     return _point2d(_point2d(arg1) * arg2);
 }
@@ -647,26 +648,114 @@ static jerry_value_t _content(const jerry_call_info_t* info, const jerry_value_t
 }
 
 
+static jerry_value_t _createPath(const jerry_call_info_t* info, const jerry_value_t args[], const jerry_length_t argsCnt)
+{
+    //TODO: arg1: points, arg2: inTangents, arg3: outTangents, arg4: isClosed
+    auto arg1 = jerry_value_to_object(args[0]);
+    auto pathset = jerry_object_get_native_ptr(arg1, nullptr);
+    if (!pathset) {
+        TVGERR("LOTTIE", "failed createPath()");
+        return jerry_undefined();
+    }
+
+    jerry_value_free(arg1);
+
+    auto obj = jerry_object();
+    jerry_object_set_native_ptr(obj, nullptr, pathset);
+    return obj;
+}
+
+
+static jerry_value_t _points(const jerry_call_info_t* info, const jerry_value_t args[], const jerry_length_t argsCnt)
+{
+    /* TODO: ThorVG prebuilds the path data for performance.
+       It actually need to constructs the Array<Point> for points, inTangents, outTangents and then return here... */
+    auto data = static_cast<ExpContent*>(jerry_object_get_native_ptr(info->function, &freeCb));
+
+    auto obj = jerry_object();
+    jerry_object_set_native_ptr(obj, nullptr, data->property);
+    return obj;
+}
+
+
+static jerry_value_t _pointOnPath(const jerry_call_info_t* info, const jerry_value_t args[], const jerry_length_t argsCnt)
+{
+    auto data = static_cast<ExpContent*>(jerry_object_get_native_ptr(info->function, &freeCb));
+    auto pathset = static_cast<LottiePathSet*>(data->property);
+    auto progress = jerry_value_as_number(args[0]);
+    RenderPath out;
+    (*pathset)(data->frameNo, out, nullptr, nullptr);
+    return _point2d(out.point(progress));
+}
+
+
+static void _buildPath(jerry_value_t context, float frameNo, LottieProperty* pathset)
+{
+    auto data = _expcontent(nullptr, frameNo, pathset, 2);
+
+    //Trick for fast building path.
+    auto points = jerry_function_external(_points);
+    jerry_object_set_native_ptr(points, &freeCb, data);
+    jerry_object_set_sz(context, "points", points);
+    jerry_value_free(points);
+
+    auto pointOnPath = jerry_function_external(_pointOnPath);
+    jerry_object_set_native_ptr(pointOnPath, &freeCb, data);
+    jerry_object_set_sz(context, "pointOnPath", pointOnPath);
+    jerry_value_free(pointOnPath);
+
+    //inTangents
+    //outTangents
+    //isClosed
+}
+
+
+static jerry_value_t _layerChild(const jerry_call_info_t* info, const jerry_value_t args[], const jerry_length_t argsCnt)
+{
+    auto data = static_cast<ExpContent*>(jerry_object_get_native_ptr(info->function, &freeCb));
+    jerry_value_t obj = jerry_undefined();
+
+    //find a member by index
+    if (jerry_value_is_number(args[0])) {
+        auto idx = (uint32_t)jerry_value_as_int32(args[0]) - 1;
+        auto children = static_cast<Array<LottieObject*>*>(data->data);
+        if (idx < children->count) {
+            obj = jerry_function_external(_layerChild);
+            jerry_object_set_native_ptr(obj, &freeCb, _expcontent(data->exp, data->frameNo, (*children)[idx]));
+        }
+    //find a member by name
+    } else {
+        auto name = _name(args[0]);
+        if (name) {
+            //for backward compatibility: reserved ADOBE keyword
+            if (!strcmp(name, "ADBE Root Vectors Group") || !strcmp(name, "ADBE Vectors Group")) {
+                auto group = static_cast<LottieGroup*>(data->obj);
+                if (group->type == LottieObject::Type::Group || group->type == LottieObject::Type::Layer) {
+                    obj = jerry_function_external(_layerChild);
+                    jerry_object_set_native_ptr(obj, &freeCb, _expcontent(data->exp, data->frameNo, &group->children));
+                }
+            } else if (!strcmp(name, "ADBE Vector Shape")) {
+                obj = jerry_object();
+                _buildPath(obj, data->frameNo, &static_cast<LottiePath*>(data->obj)->pathset);
+            }
+            tvg::free(name);
+        }
+    }
+    return obj;
+}
+
+
 static jerry_value_t _layer(const jerry_call_info_t* info, const jerry_value_t args[], const jerry_length_t argsCnt)
 {
     auto data = static_cast<ExpContent*>(jerry_object_get_native_ptr(info->function, &freeCb));
     auto comp = static_cast<LottieLayer*>(data->obj);
-    LottieLayer* layer;
 
-    //layer index
-    if (jerry_value_is_number(args[0])) {
-        auto idx = (uint16_t)jerry_value_as_int32(args[0]);
-        layer = comp->layerByIdx(idx);
-        jerry_value_free(idx);
-    //layer name
-    } else {
-        layer = comp->layerById(_idByName(args[0]));
-    }
-
+    //either index or name
+    auto layer = jerry_value_is_number(args[0]) ? comp->layerByIdx((uint16_t)jerry_value_as_int32(args[0])) : comp->layerById(_idByName(args[0]));
     if (!layer) return jerry_undefined();
 
-    auto obj = jerry_object();
-    jerry_object_set_native_ptr(obj, nullptr, layer);
+    auto obj = jerry_function_external(_layerChild);
+    jerry_object_set_native_ptr(obj, &freeCb, _expcontent(data->exp, data->frameNo, layer));
     _buildLayer(obj, data->frameNo, layer, comp, data->exp);
 
     return obj;
@@ -845,7 +934,6 @@ static jerry_value_t _temporalWiggle(const jerry_call_info_t* info, const jerry_
 }
 
 
-
 static bool _loopOutCommon(LottieExpression* exp, const jerry_value_t args[], const jerry_length_t argsCnt)
 {
     exp->loop.mode = LottieExpression::LoopMode::OutCycle;
@@ -888,9 +976,7 @@ static jerry_value_t _loopOutDuration(const jerry_call_info_t* info, const jerry
 
     if (!_loopOutCommon(exp, args, argsCnt)) return jerry_undefined();
 
-    if (argsCnt > 1) {
-        exp->loop.in = exp->comp->frameAtTime(jerry_value_as_number(args[1]));
-    }
+    if (argsCnt > 1) exp->loop.in = exp->comp->frameAtTime(jerry_value_as_number(args[1]));
 
     auto obj = jerry_object();
     jerry_object_set_native_ptr(obj, nullptr, exp->property);
@@ -973,69 +1059,6 @@ static jerry_value_t _key(const jerry_call_info_t* info, const jerry_value_t arg
     jerry_value_free(value);
 
     return obj;
-}
-
-
-static jerry_value_t _createPath(const jerry_call_info_t* info, const jerry_value_t args[], const jerry_length_t argsCnt)
-{
-    //TODO: arg1: points, arg2: inTangents, arg3: outTangents, arg4: isClosed
-    auto arg1 = jerry_value_to_object(args[0]);
-    auto pathset = jerry_object_get_native_ptr(arg1, nullptr);
-    if (!pathset) {
-        TVGERR("LOTTIE", "failed createPath()");
-        return jerry_undefined();
-    }
-
-    jerry_value_free(arg1);
-
-    auto obj = jerry_object();
-    jerry_object_set_native_ptr(obj, nullptr, pathset);
-    return obj;
-}
-
-
-static jerry_value_t _uniformPath(const jerry_call_info_t* info, const jerry_value_t args[], const jerry_length_t argsCnt)
-{
-    auto pathset = static_cast<LottiePathSet*>(jerry_object_get_native_ptr(info->function, nullptr));
-
-    /* TODO: ThorVG prebuilds the path data for performance.
-       It actually need to constructs the Array<Point> for points, inTangents, outTangents and then return here... */
-    auto obj = jerry_object();
-    jerry_object_set_native_ptr(obj, nullptr, pathset);
-    return obj;
-}
-
-
-static jerry_value_t _isClosed(const jerry_call_info_t* info, const jerry_value_t args[], const jerry_length_t argsCnt)
-{
-    //TODO: Not used
-    return jerry_boolean(true);
-}
-
-
-static void _buildPath(jerry_value_t context, LottieExpression* exp)
-{
-    //Trick for fast building path.
-    auto points = jerry_function_external(_uniformPath);
-    jerry_object_set_native_ptr(points, nullptr, exp->property);
-    jerry_object_set_sz(context, "points", points);
-    jerry_value_free(points);
-
-    auto inTangents = jerry_function_external(_uniformPath);
-    jerry_object_set_native_ptr(inTangents, nullptr, exp->property);
-    jerry_object_set_sz(context, "inTangents", inTangents);
-    jerry_value_free(inTangents);
-
-    auto outTangents = jerry_function_external(_uniformPath);
-    jerry_object_set_native_ptr(outTangents, nullptr, exp->property);
-    jerry_object_set_sz(context, "outTangents", outTangents);
-    jerry_value_free(outTangents);
-
-    auto isClosed = jerry_function_external(_isClosed);
-    jerry_object_set_native_ptr(isClosed, nullptr, exp->property);
-    jerry_object_set_sz(context, "isClosed", isClosed);
-    jerry_value_free(isClosed);
-
 }
 
 
@@ -1150,7 +1173,7 @@ static void _buildProperty(float frameNo, jerry_value_t context, LottieExpressio
     jerry_value_free(effect);
 
     //expansions per types
-    if (exp->property->type == LottieProperty::Type::PathSet) _buildPath(context, exp);
+    if (exp->property->type == LottieProperty::Type::PathSet) _buildPath(context, frameNo, exp->property);
 }
 
 
