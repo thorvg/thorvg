@@ -391,7 +391,7 @@ struct LottieText : LottieObject, LottieRenderPooler<tvg::Shape>
     }
 
     LottieTextDoc doc;
-    LottieFont* font;
+    LottieFont* font = nullptr;
     Array<LottieTextRange*> ranges;
 
     ~LottieText()
