@@ -160,6 +160,14 @@ enum class FillRule : uint8_t
     EvenOdd      ///< A line from the point to a location outside the shape is drawn and its intersections with the path segments of the shape are counted. If the number of intersections is an odd number, the point is inside the shape.
 };
 
+/**
+ * @brief Enumeration specifying whether the shapes are anti-aliased or not.
+ */
+enum class ShapeRendering : uint8_t
+{
+    AntiAliased = 0, ///< The shape has anti-aliasing applied to it.
+    CrispEdges      ///< The shape has crisp edges, no anti-aliasing applied to it.
+};
 
 /**
  * @brief Enumeration indicating the method used in the mask of two objects - the target and the source.
@@ -1179,6 +1187,17 @@ public:
     Result fill(FillRule r) noexcept;
 
     /**
+     * @brief Sets the shape rendering method style for the lines of the Shape object.
+     *
+     * The shape rendering method determines whether the lines are anti-aliased or not.
+     *
+     * @param[in] sr The shape rendering method value. The default value is @c ShapeRendering::AntiAliased.
+     *
+     * @retval Result::Success when succeed.
+     */
+    Result shapeRendering(ShapeRendering sr) noexcept;
+
+    /**
      * @brief Sets the rendering order of the stroke and the fill.
      *
      * @param[in] strokeFirst If @c true the stroke is rendered before the fill, otherwise the stroke is rendered as the second one (the default option).
@@ -1228,6 +1247,13 @@ public:
      * @return The fill rule value of the shape.
      */
     FillRule fillRule() const noexcept;
+
+    /**
+     * @brief Gets the shape rendering method value.
+     *
+     * @return The shape rendering method value of the shape.
+     */
+    ShapeRendering shapeRendering() const noexcept;
 
     /**
      * @brief Gets the stroke width.

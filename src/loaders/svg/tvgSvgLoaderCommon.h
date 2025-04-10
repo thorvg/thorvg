@@ -124,7 +124,8 @@ enum class SvgStrokeFlags
     Join = 0x40,
     Dash = 0x80,
     Miterlimit = 0x100,
-    DashOffset = 0x200
+    DashOffset = 0x200,
+    AntiAliasing = 0x400,
 };
 
 constexpr bool operator &(SvgStrokeFlags a, SvgStrokeFlags b)
@@ -165,7 +166,8 @@ enum class SvgStyleFlags
     PaintOrder = 0x10000,
     StrokeMiterlimit = 0x20000,
     StrokeDashOffset = 0x40000,
-    Filter = 0x80000
+    Filter = 0x80000,
+    ShapeRendering = 0x100000
 };
 
 constexpr bool operator &(SvgStyleFlags a, SvgStyleFlags b)
@@ -491,6 +493,7 @@ struct SvgStyleStroke
     StrokeJoin join;
     float miterlimit;
     SvgDash dash;
+    ShapeRendering antiAlias;
 };
 
 struct SvgFilter

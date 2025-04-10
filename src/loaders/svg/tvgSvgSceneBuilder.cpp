@@ -420,6 +420,7 @@ static Paint* _applyProperty(SvgLoaderData& loaderData, SvgNode* node, Shape* vg
     vg->strokeCap(style->stroke.cap);
     vg->strokeJoin(style->stroke.join);
     vg->strokeMiterlimit(style->stroke.miterlimit);
+    vg->shapeRendering(style->stroke.antiAlias);
     vg->strokeDash(style->stroke.dash.array.data, style->stroke.dash.array.count, style->stroke.dash.offset);
 
     //If stroke property is nullptr then do nothing
