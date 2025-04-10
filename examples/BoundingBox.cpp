@@ -245,6 +245,25 @@ struct UserExample : tvgexam::Example
 
         {
             auto scene = tvg::Scene::gen();
+            scene->translate(790, 390);
+            scene->scale(0.5f);
+            scene->rotate(20);
+
+            auto shape = tvg::Shape::gen();
+            shape->moveTo(0, 0);
+            shape->lineTo(300, 200);
+            shape->lineTo(0, 200);
+            shape->fill(255, 0, 255);
+            shape->close();
+            shape->rotate(20);
+            scene->push(shape);
+
+            canvas->push(scene);
+            bbox(canvas, scene);
+        }
+
+        {
+            auto scene = tvg::Scene::gen();
             scene->translate(250, 490);
             scene->scale(0.7f);
 
@@ -258,7 +277,7 @@ struct UserExample : tvgexam::Example
 
             canvas->push(scene);
             bbox(canvas, scene);
-    }
+        }
 
         return true;
     }
