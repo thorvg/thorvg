@@ -237,6 +237,24 @@ private:
     GlRenderTarget* mDstCopyFbo1;
 };
 
+class GlEffectDropShadowTask: public GlRenderTask
+{
+public:
+    GlEffectDropShadowTask(GlProgram* program, GlRenderTarget* dstFbo, GlRenderTarget* dstCopyFbo0, GlRenderTarget* dstCopyFbo1): 
+        GlRenderTask(program), mDstFbo(dstFbo), mDstCopyFbo0(dstCopyFbo0), mDstCopyFbo1(dstCopyFbo1) {};
+    ~GlEffectDropShadowTask(){ delete horzTask; delete vertTask; };
+
+    void run() override;
+
+    GlRenderTask* horzTask;
+    GlRenderTask* vertTask;
+    RenderEffectDropShadow* effect;
+private:
+    GlRenderTarget* mDstFbo;
+    GlRenderTarget* mDstCopyFbo0;
+    GlRenderTarget* mDstCopyFbo1;
+};
+
 class GlEffectColorTransformTask: public GlRenderTask
 {
 public:

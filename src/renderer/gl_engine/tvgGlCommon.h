@@ -208,6 +208,11 @@ struct GlGaussianBlur {
     float extend{};
 };
 
+struct GlDropShadow: GlGaussianBlur {
+    float color[4];
+    float offset[2];
+};
+
 struct GlEffectParams {
     // fill:          [0..3]: color
     // tint:          [0..2]: black,  [4..6]: white,   [8]: intensity
