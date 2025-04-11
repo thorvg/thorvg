@@ -94,6 +94,8 @@ ThorVG is actively under development, continuously expanding its support for ess
     - [dotLottie](#dotlottie)
     - [Flux Audio](#flux-audio)
     - [Godot](#godot)
+    - [Lottie Creator](#lottie-creator)
+    - [LVGL](#lvgl)
     - [Tizen](#tizen)
   - [References](#references)
   - [APIs](#apis)
@@ -384,6 +386,14 @@ ThorVG has been integrated into the [Godot](https://www.godotengine.org) project
 
 <p align="center">
   <img width="798" height="auto" src="https://github.com/thorvg/thorvg/blob/main/res/example_godot.png">
+</p>
+
+### Lottie Creator
+
+[Lottie Creator](https://creator.lottiefiles.com/) is designed to create ultra-lightweight, highly customizable and interactive animations for web, apps and social. Supercharged with AI-based Motion Copilot. ThorVG is powering the Canvas engine behind Lottie Creator — enabling fast and scalable vector graphics rendering across platforms.
+
+<p align="center">
+  <img width="800" height="auto" src="https://github.com/thorvg/thorvg/blob/main/res/example_creator.png">
 </p>
 
 ### LVGL
