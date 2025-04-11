@@ -435,6 +435,60 @@ void GlGaussianBlurTask::run()
     GL_CHECK(glEnable(GL_BLEND));
 }
 
+
+void GlEffectDropShadowTask::run()
+{
+    const auto vp = getViewport();
+    const auto width = mDstFbo->getWidth();
+    const auto height = mDstFbo->getHeight();
+
+    // get targets handles
+    GLuint dstCopyTexId0 = mDstCopyFbo0->getColorTexture();
+    GLuint dstCopyTexId1 = mDstCopyFbo1->getColorTexture();
+    // get programs properties
+    GlProgram* programHorz = horzTask->getProgram();
+    GlProgram* programVert = vertTask->getProgram();
+    GLint horzSrcTextureLoc = programHorz->getUniformLocation("uSrcTexture");
+    GLint vertSrcTextureLoc = programVert->getUniformLocation("uSrcTexture");
+
+    GLint srcTextureLoc = getProgram()->getUniformLocation("uSrcTexture");
+    GLint blrTextureLoc = getProgram()->getUniformLocation("uBlrTexture");
+    addBindResource({ 0, dstCopyTexId0, srcTextureLoc });
+    addBindResource({ 1, dstCopyTexId1, blrTextureLoc });
+
+    GL_CHECK(glViewport(0, 0, width, height));
+    GL_CHECK(glScissor(0, 0, width, height));
+
+    // we need to make a full copy of dst to intermediate buffers to be sure that they don’t contain prev data.
+    GL_CHECK(glBindFramebuffer(GL_READ_FRAMEBUFFER, mDstFbo->getFboId()));
+    GL_CHECK(glBindFramebuffer(GL_DRAW_FRAMEBUFFER, mDstCopyFbo0->getResolveFboId()));
+    GL_CHECK(glBlitFramebuffer(0, 0, width, height, 0, 0, width, height, GL_COLOR_BUFFER_BIT, GL_NEAREST));
+    GL_CHECK(glBindFramebuffer(GL_READ_FRAMEBUFFER, mDstFbo->getFboId()));
+    GL_CHECK(glBindFramebuffer(GL_DRAW_FRAMEBUFFER, mDstCopyFbo1->getResolveFboId()));
+    GL_CHECK(glBlitFramebuffer(0, 0, width, height, 0, 0, width, height, GL_COLOR_BUFFER_BIT, GL_NEAREST));
+    
+    GL_CHECK(glDisable(GL_BLEND));
+    // horizontal blur
+    GL_CHECK(glBindFramebuffer(GL_FRAMEBUFFER, mDstCopyFbo0->getResolveFboId()));
+    horzTask->setViewport(vp);
+    horzTask->addBindResource({ 0, dstCopyTexId1, horzSrcTextureLoc });
+    horzTask->run();
+    // vertical blur
+    GL_CHECK(glBindFramebuffer(GL_FRAMEBUFFER, mDstCopyFbo1->getResolveFboId()));
+    vertTask->setViewport(vp);
+    vertTask->addBindResource({ 0, dstCopyTexId0, vertSrcTextureLoc });
+    vertTask->run();
+    // copy original image to intermediate buffer
+    GL_CHECK(glBindFramebuffer(GL_READ_FRAMEBUFFER, mDstFbo->getFboId()));
+    GL_CHECK(glBindFramebuffer(GL_DRAW_FRAMEBUFFER, mDstCopyFbo0->getResolveFboId()));
+    GL_CHECK(glBlitFramebuffer(0, 0, width, height, 0, 0, width, height, GL_COLOR_BUFFER_BIT, GL_NEAREST));
+    // run drop shadow effect
+    GL_CHECK(glBindFramebuffer(GL_FRAMEBUFFER, mDstFbo->getFboId()));
+    GlRenderTask::run();
+    GL_CHECK(glEnable(GL_BLEND));
+}
+
+
 void GlEffectColorTransformTask::run()
 {
     const auto width = mDstFbo->getWidth();
