@@ -140,7 +140,7 @@ private:
 
     void buildComp(LottieComposition* comp, float frameNo, LottieExpression* exp);
     void buildComp(jerry_value_t context, float frameNo, LottieLayer* comp, LottieExpression* exp);
-    void buildGlobal(LottieExpression* exp);
+    void buildGlobal(float frameNo, LottieExpression* exp);
     void buildWritables(LottieExpression* exp);
 
     Point toPoint2d(jerry_value_t obj);

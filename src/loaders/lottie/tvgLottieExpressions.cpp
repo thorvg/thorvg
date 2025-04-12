@@ -1266,8 +1266,10 @@ static void _buildMath(jerry_value_t context)
 }
 
 
-void LottieExpressions::buildGlobal(LottieExpression* exp)
+void LottieExpressions::buildGlobal(float frameNo, LottieExpression* exp)
 {
+    jerry_object_set_native_ptr(comp, &freeCb, _expcontent(exp, frameNo, exp->layer));
+
     auto index = jerry_number(exp->layer->ix);
     jerry_object_set_sz(global, EXP_INDEX, index);
     jerry_value_free(index);
@@ -1382,7 +1384,7 @@ jerry_value_t LottieExpressions::evaluate(float frameNo, LottieExpression* exp)
 {
     if (exp->disabled && exp->writables.empty()) return jerry_undefined();
 
-    buildGlobal(exp);
+    buildGlobal(frameNo, exp);
 
     //main composition
     buildComp(exp->comp, frameNo, exp);
