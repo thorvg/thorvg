@@ -88,6 +88,7 @@ struct LottieEffect
     virtual ~LottieEffect() {}
 
     unsigned long nm;  //encoded by djb2
+    unsigned long mn;  //encoded by djb2
     int16_t ix;
     Type type;
     bool enable = false;
@@ -1007,7 +1008,7 @@ struct LottieLayer : LottieGroup
     LottieEffect* effectById(unsigned long id)
     {
         ARRAY_FOREACH(p, effects) {
-            if (id == (*p)->nm) return *p;
+            if (id == (*p)->nm || id == (*p)->mn) return *p;
         }
         return nullptr;
     }
