@@ -163,7 +163,7 @@ namespace tvg
 
         Result clip(Paint* clp)
         {
-            if (PAINT(clp)->parent) return Result::InsufficientCondition;
+            if (clp && PAINT(clp)->parent) return Result::InsufficientCondition;
             if (clipper) PAINT(clipper)->unref(clipper != clp);
             clipper = clp;
             if (clp) {
