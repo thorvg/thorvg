@@ -141,6 +141,7 @@ void WgBindGroupLayouts::releaseBindGroup(WGPUBindGroup& bindGroup)
     bindGroup = nullptr;
 }
 
+
 void WgBindGroupLayouts::releaseBindGroupLayout(WGPUBindGroupLayout& bindGroupLayout)
 {
     if (bindGroupLayout) wgpuBindGroupLayoutRelease(bindGroupLayout);
@@ -160,7 +161,6 @@ void WgBindGroupLayouts::initialize(WGPUDevice device)
     const WGPUSamplerBindingLayout sampler = { .type = WGPUSamplerBindingType_Filtering };
     const WGPUTextureBindingLayout texture = { .sampleType = WGPUTextureSampleType_Float, .viewDimension = WGPUTextureViewDimension_2D };
     const WGPUStorageTextureBindingLayout storageTextureWO { .access = WGPUStorageTextureAccess_WriteOnly, .format = WGPUTextureFormat_RGBA8Unorm, .viewDimension = WGPUTextureViewDimension_2D };
-    const WGPUStorageTextureBindingLayout storageTextureRO { .access = WGPUStorageTextureAccess_ReadOnly,  .format = WGPUTextureFormat_RGBA8Unorm, .viewDimension = WGPUTextureViewDimension_2D };
     const WGPUBufferBindingLayout bufferUniform { .type = WGPUBufferBindingType_Uniform };
 
     // bind group layout tex sampled with buffer uniforms
@@ -190,9 +190,9 @@ void WgBindGroupLayouts::initialize(WGPUDevice device)
 
     // bind group layout tex storages RO
     const WGPUBindGroupLayoutEntry entriesTexStoragesRO[] {
-        { .binding = 0, .visibility = visibility_frag, .storageTexture = storageTextureRO },
-        { .binding = 1, .visibility = visibility_frag, .storageTexture = storageTextureRO },
-        { .binding = 2, .visibility = visibility_frag, .storageTexture = storageTextureRO }
+        { .binding = 0, .visibility = visibility_frag, .texture = texture },
+        { .binding = 1, .visibility = visibility_frag, .texture = texture },
+        { .binding = 2, .visibility = visibility_frag, .texture = texture }
     };
     const WGPUBindGroupLayoutDescriptor layoutDescTexStorages1RO { .entryCount = 1, .entries = entriesTexStoragesRO };
     const WGPUBindGroupLayoutDescriptor layoutDescTexStorages2RO { .entryCount = 2, .entries = entriesTexStoragesRO };
