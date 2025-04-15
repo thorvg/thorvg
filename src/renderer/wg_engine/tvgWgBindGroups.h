@@ -44,6 +44,7 @@ public:
     WGPUBindGroup createBindGroupTexSampledBuff1Un(WGPUSampler sampler, WGPUTextureView texView, WGPUBuffer buff);
     WGPUBindGroup createBindGroupTexSampledBuff2Un(WGPUSampler sampler, WGPUTextureView texView, WGPUBuffer buff0, WGPUBuffer buff1);
     WGPUBindGroup createBindGroupStrorage1WO(WGPUTextureView texView);
+    // for read-only access in compute shaders, use texture_2d<f32> instead of texture_storage_2d<rgba8unorm, read>
     WGPUBindGroup createBindGroupStrorage1RO(WGPUTextureView texView);
     WGPUBindGroup createBindGroupStrorage2RO(WGPUTextureView texView0, WGPUTextureView texView1);
     WGPUBindGroup createBindGroupStrorage3RO(WGPUTextureView texView0, WGPUTextureView texView1, WGPUTextureView texView2);

@@ -709,7 +709,7 @@ fn fs_main(in: VertexOutput) -> @location(0) vec4f {
 //************************************************************************
 
 const char* cShaderSrc_GaussianBlur = R"(
-@group(0) @binding(0) var imageSrc : texture_storage_2d<rgba8unorm, read>;
+@group(0) @binding(0) var imageSrc : texture_2d<f32>;
 @group(1) @binding(0) var imageDst : texture_storage_2d<rgba8unorm, write>;
 @group(2) @binding(0) var<uniform> settings: array<vec4f, 3>;
 @group(3) @binding(0) var<uniform> viewport: vec4f;
@@ -743,9 +743,9 @@ fn cs_main_horz(@builtin(global_invocation_id) gid: vec3u,
     let iid = vec2i(uid);
 
     // load source to local workgroup memory
-    buff[lid.x + N*0] = textureLoad(imageSrc, uid - vec2u(N, 0));
-    buff[lid.x + N*1] = textureLoad(imageSrc, uid + vec2u(0, 0));
-    buff[lid.x + N*2] = textureLoad(imageSrc, uid + vec2u(N, 0));
+    buff[lid.x + N*0] = textureLoad(imageSrc, uid - vec2u(N, 0), 0);
+    buff[lid.x + N*1] = textureLoad(imageSrc, uid + vec2u(0, 0), 0);
+    buff[lid.x + N*2] = textureLoad(imageSrc, uid + vec2u(N, 0), 0);
     workgroupBarrier();
 
     // apply filter
@@ -786,9 +786,9 @@ fn cs_main_vert(@builtin(global_invocation_id) gid: vec3u,
     let iid = vec2i(uid);
 
     // load source to local workgroup memory
-    buff[lid.y + N*0] = textureLoad(imageSrc, uid - vec2u(0, N));
-    buff[lid.y + N*1] = textureLoad(imageSrc, uid + vec2u(0, 0));
-    buff[lid.y + N*2] = textureLoad(imageSrc, uid + vec2u(0, N));
+    buff[lid.y + N*0] = textureLoad(imageSrc, uid - vec2u(0, N), 0);
+    buff[lid.y + N*1] = textureLoad(imageSrc, uid + vec2u(0, 0), 0);
+    buff[lid.y + N*2] = textureLoad(imageSrc, uid + vec2u(0, N), 0);
     workgroupBarrier();
 
     // apply filter
@@ -812,8 +812,8 @@ fn cs_main_vert(@builtin(global_invocation_id) gid: vec3u,
 )";
 
 const char* cShaderSrc_Effects = R"(
-@group(0) @binding(0) var imageSrc : texture_storage_2d<rgba8unorm, read>;
-@group(0) @binding(1) var imageSdw : texture_storage_2d<rgba8unorm, read>;
+@group(0) @binding(0) var imageSrc : texture_2d<f32>;
+@group(0) @binding(1) var imageSdw : texture_2d<f32>;
 @group(1) @binding(0) var imageTrg : texture_storage_2d<rgba8unorm, write>;
 @group(2) @binding(0) var<uniform> settings: array<vec4f, 3>;
 @group(3) @binding(0) var<uniform> viewport: vec4f;
@@ -829,8 +829,8 @@ fn cs_main_drop_shadow(@builtin(global_invocation_id) gid: vec3u) {
     let uid = gid.xy + vmin;
     let oid = clamp(vec2u(vec2i(uid) - voff), vmin, vmax);
 
-    let orig = textureLoad(imageSrc, uid);
-    let blur = textureLoad(imageSdw, oid);
+    let orig = textureLoad(imageSrc, uid, 0);
+    let blur = textureLoad(imageSdw, oid, 0);
     let shad = settings[1] * blur.a;
     let color = orig + shad * (1.0 - orig.a);
     textureStore(imageTrg, uid.xy, color);
@@ -845,7 +845,7 @@ fn cs_main_fill(@builtin(global_invocation_id) gid: vec3u) {
     // tex coord
     let uid = min(gid.xy + vmin, vmax);
 
-    let orig = textureLoad(imageSrc, uid);
+    let orig = textureLoad(imageSrc, uid, 0);
     let fill = settings[0];
     let color = fill * orig.a * fill.a;
     textureStore(imageTrg, uid.xy, color);
@@ -860,7 +860,7 @@ fn cs_main_tint(@builtin(global_invocation_id) gid: vec3u) {
     // tex coord
     let uid = min(gid.xy + vmin, vmax);
 
-    let orig = textureLoad(imageSrc, uid);
+    let orig = textureLoad(imageSrc, uid, 0);
     let luma: f32 = dot(orig.rgb, vec3f(0.2125, 0.7154, 0.0721));
     let black = settings[0];
     let white = settings[1];
@@ -878,7 +878,7 @@ fn cs_main_tritone(@builtin(global_invocation_id) gid: vec3u) {
     // tex coord
     let uid = min(gid.xy + vmin, vmax);
 
-    let orig = textureLoad(imageSrc, uid);
+    let orig = textureLoad(imageSrc, uid, 0);
     let luma: f32 = dot(orig.rgb, vec3f(0.2125, 0.7154, 0.0721));
     let shadow = settings[0];
     let midtone = settings[1];
