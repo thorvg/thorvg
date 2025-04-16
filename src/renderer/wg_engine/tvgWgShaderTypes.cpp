@@ -230,10 +230,13 @@ void WgShaderTypeEffectParams::update(const RenderEffectDropShadow* dropShadow, 
     params[1] = std::min(WG_GAUSSIAN_KERNEL_SIZE_MAX / kernel, scale);
     params[2] = kernel;
     params[3] = 0.0f;
-    params[4] = dropShadow->color[0] / 255.0f; // red
-    params[5] = dropShadow->color[1] / 255.0f; // green
-    params[6] = dropShadow->color[2] / 255.0f; // blue
+
     params[7] = dropShadow->color[3] / 255.0f; // alpha
+    //Color is premultiplied to avoid multiplication in the fragment shader:
+    params[4] = dropShadow->color[0] / 255.0f * params[7]; // red
+    params[5] = dropShadow->color[1] / 255.0f * params[7]; // green
+    params[6] = dropShadow->color[2] / 255.0f * params[7]; // blue
+
     params[8] = offset.x;
     params[9] = offset.y;
     extend = params[2] * 2; // kernel
