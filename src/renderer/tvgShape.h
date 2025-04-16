@@ -478,6 +478,7 @@ struct Shape::Impl : Paint::Impl
             rs.path.cmds.count += 10;
             rs.path.pts.count += 17;
         }
+        renderFlag |= RenderUpdateFlag::Path;
     }
 
     Paint* duplicate(Paint* ret)
