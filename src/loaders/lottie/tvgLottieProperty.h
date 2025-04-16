@@ -286,6 +286,7 @@ float _frameNo(T* frames, int32_t key)
 template<typename T>
 float _loop(T* frames, float frameNo, LottieExpression* exp)
 {
+    if (!frames) return frameNo;
     if (exp->loop.mode == LottieExpression::LoopMode::None) return frameNo;
 
     if (frameNo >= exp->loop.in || frameNo < frames->first().no || frameNo < frames->last().no) return frameNo;
