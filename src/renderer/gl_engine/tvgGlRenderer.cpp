@@ -979,10 +979,11 @@ void GlRenderer::effectDropShadowUpdate(RenderEffectDropShadow* effect, const Ma
     dropShadow->sigma = sigma;
     dropShadow->scale = scale;
     dropShadow->level = int(GL_GAUSSIAN_MAX_LEVEL * ((effect->quality - 1) * 0.01f)) + 1;
-    dropShadow->color[0] = effect->color[0] / 255.0f;
-    dropShadow->color[1] = effect->color[1] / 255.0f;
-    dropShadow->color[2] = effect->color[2] / 255.0f;
     dropShadow->color[3] = effect->color[3] / 255.0f;
+    //Drop shadow effect applies blending in the shader (GL_BLEND disabled), so the color should be premultiplied:
+    dropShadow->color[0] = effect->color[0] / 255.0f * dropShadow->color[3];
+    dropShadow->color[1] = effect->color[1] / 255.0f * dropShadow->color[3];
+    dropShadow->color[2] = effect->color[2] / 255.0f * dropShadow->color[3];
     dropShadow->offset[0] = offset.x;
     dropShadow->offset[1] = offset.y;
     dropShadow->extend = 2 * std::max(sigma * scale + std::abs(offset.x), sigma * scale + std::abs(offset.y));
