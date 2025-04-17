@@ -23,17 +23,6 @@ public:
     ~LottieAnimation() override;
 
     /**
-     * @brief Override Lottie properties using slot data.
-     *
-     * @param[in] slot The Lottie slot data in JSON format to override, or @c nullptr to reset.
-     *
-     * @retval Result::InsufficientCondition In case the animation is not loaded.
-     *
-     * @since 1.0
-     */
-    Result override(const char* slot) noexcept;
-
-    /**
     * @brief Specifies a segment by marker. 
     * 
     * Markers are used to control animation playback by specifying start and end points, 
@@ -109,6 +98,56 @@ public:
      * @note Experimental API
      */
     Result assign(const char* layer, uint32_t ix, const char* var, float val);
+
+    /**
+     * @brief Creates a new slot based on the given Lottie slot data.
+     *
+     * This function parses the provided JSON-formatted slot data and generates
+     * a new slot for animation control. The returned slot ID can be used to apply
+     * or delete the slot later.
+     *
+     * @param[in] slot A JSON string representing the Lottie slot data.
+     *
+     * @return A unique, non-zero slot ID on success. Returns @c 0 if the slot generation fails.
+     *
+     * @see apply(uint32_t id)
+     * @see del(uint32_t id)
+     *
+     * @since 1.0
+     */
+    uint32_t gen(const char* slot) noexcept;
+
+    /**
+     * @brief Applies a previously generated slot to the animation.
+     *
+     * This function applies the animation parameters defined by a slot.
+     * If the provided slot ID is 0, all previously applied slots will be reset.
+     *
+     * @param[in] id The ID of the slot to apply. Use 0 to reset all slots.
+     *
+     * @retval Result::InvalidArguments If the animation is not loaded or the slot ID is invalid.
+     *
+     * @see gen(const char* slot)
+     *
+     * @since 1.0
+     */
+    Result apply(uint32_t id) noexcept;
+
+    /**
+     * @brief Deletes a previously generated slot.
+     *
+     * This function removes a slot by its ID.
+     *
+     * @param[in] id The ID of the slot to delete. Retrieve the ID from gen().
+     *
+     * @retval Result::InvalidArguments If the animation is not loaded or the slot ID is invalid.
+     *
+     * @note This function should be paired with gen.
+     * @see gen(const char* slot)
+     *
+     * @since 1.0
+     */
+    Result del(uint32_t id) noexcept;
 
     /**
      * @brief Creates a new LottieAnimation object.
