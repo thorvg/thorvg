@@ -25,10 +25,19 @@
 #include "tvgLottieModel.h"
 #include "tvgLottieParser.h"
 #include "tvgLottieBuilder.h"
+#include "tvgCompressor.h"
 
 /************************************************************************/
 /* Internal Class Implementation                                        */
 /************************************************************************/
+
+LottieCustomSlot::~LottieCustomSlot()
+{
+    ARRAY_FOREACH(p, props) {
+        delete(p->prop);
+    }
+}
+
 
 void LottieLoader::run(unsigned tid)
 {
@@ -44,7 +53,9 @@ void LottieLoader::run(unsigned tid)
             comp = parser.comp;
         }
         if (parser.slots) {
-            override(parser.slots, true);
+            auto slotcode = gen(parser.slots, true);
+            apply(slotcode, true);
+            del(slotcode, true);
             parser.slots = nullptr;
         }
         builder->build(comp);
@@ -288,42 +299,88 @@ Paint* LottieLoader::paint()
 }
 
 
-bool LottieLoader::override(const char* slots, bool byDefault)
+bool LottieLoader::apply(uint32_t slotcode, bool byDefault)
 {
     if (!ready() || comp->slots.count == 0) return false;
 
-    //override slots
-    if (slots) {
-        //Copy the input data because the JSON parser will encode the data immediately.
-        auto temp = byDefault ? slots : duplicate(slots);
+    auto applied = false;
 
-        //parsing slot json
-        LottieParser parser(temp, dirName, builder->expressions());
-        parser.comp = comp;
-
-        auto idx = 0;
-        auto succeed = false;
-        while (auto sid = parser.sid(idx == 0)) {
-            auto applied = false;
-            ARRAY_FOREACH(p, comp->slots) {
-                if (strcmp((*p)->sid, sid)) continue;
-                if (parser.apply(*p, byDefault)) succeed = applied = true;
-                break;
-            }
-            if (!applied) parser.skip();
-            ++idx;
+    // Reset all slots if slotcode is 0
+    if (slotcode == 0) {
+        ARRAY_FOREACH(p, comp->slots) {
+            (*p)->reset();
         }
-        tvg::free((char*)temp);
-        rebuild = succeed;
-        overridden |= succeed;
-        return rebuild;
-    //reset slots
-    } else if (overridden) {
-        ARRAY_FOREACH(p, comp->slots) (*p)->reset();
-        overridden = false;
-        rebuild = true;
+        applied = true;
+    } else {
+        INLIST_FOREACH(this->slots, slot) {
+            if (slot->code != slotcode) continue;
+            ARRAY_FOREACH(p, slot->props) {
+                p->target->apply(p->prop, byDefault);
+            }
+            applied = true;
+            break;
+        }
+    }
+    overridden = (slotcode != 0);
+    if (applied) rebuild = true;
+
+    return applied;
+}
+
+
+bool LottieLoader::del(uint32_t slotcode, bool byDefault)
+{
+    if (comp->slots.empty() || slotcode == 0 || !ready()) return false;
+
+    // Search matching value and remove
+    INLIST_SAFE_FOREACH(this->slots, slot) {
+        if (slot->code != slotcode) continue;
+        if (!byDefault) {
+            ARRAY_FOREACH(p, slot->props) {
+                p->target->reset();
+            }
+            rebuild = true;
+        }
+        this->slots.remove(slot);
+        delete(slot);
+        break;
     }
     return true;
+}
+
+
+uint32_t LottieLoader::gen(const char* slots, bool byDefault)
+{
+    if (!slots || !ready() || comp->slots.empty()) return 0;
+
+    //parsing slot json
+    auto temp = byDefault ? slots : duplicate(slots);
+    LottieParser parser(temp, dirName, builder->expressions());
+    parser.comp = comp;
+    
+    auto idx = 0;
+    auto custom = new LottieCustomSlot(djb2Encode(slots));
+
+    while (auto sid = parser.sid(idx == 0)) {
+        ARRAY_FOREACH(p, comp->slots) {
+            if (strcmp((*p)->sid, sid)) continue;  //find target
+            if (auto prop = parser.parse(*p)) {
+                custom->props.push({prop, *p});
+            }
+            break;
+        }
+        ++idx;
+    }
+
+    tvg::free((char*)temp);
+
+    if (custom->props.count > 0) {
+        this->slots.back(custom);
+        return custom->code;
+    }
+
+    delete(custom);
+    return 0;
 }
 
 

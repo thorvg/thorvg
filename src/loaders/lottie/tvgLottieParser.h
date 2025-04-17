@@ -37,10 +37,8 @@ public:
     }
 
     bool parse();
-    bool apply(LottieSlot* slot, bool byDefault);
     const char* sid(bool first = false);
-    void captureSlots(const char* key);
-    void registerSlot(LottieObject* obj, const char* sid, LottieProperty::Type type);
+    LottieProperty* parse(LottieSlot* slot);
 
     LottieComposition* comp = nullptr;
     const char* dirName = nullptr;       //base resource directory
@@ -128,6 +126,9 @@ private:
     void parseMarkers();
     bool parseEffect(LottieEffect* effect);
     void postProcess(Array<LottieGlyph*>& glyphs);
+
+    void captureSlots(const char* key);
+    void registerSlot(LottieObject* obj, const char* sid, LottieProperty::Type type);
 
     //Current parsing context
     struct Context {
