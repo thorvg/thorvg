@@ -128,7 +128,7 @@ struct Scene::Impl : Paint::Impl
     bool render(RenderMethod* renderer)
     {
         RenderCompositor* cmp = nullptr;
-        auto ret = true;
+        auto ret = false;
 
         renderer->blend(blendMethod);
 
@@ -138,7 +138,7 @@ struct Scene::Impl : Paint::Impl
         }
 
         for (auto paint : paints) {
-            ret &= paint->pImpl->render(renderer);
+            ret |= paint->pImpl->render(renderer);
         }
 
         if (cmp) {
