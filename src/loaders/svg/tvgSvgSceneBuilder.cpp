@@ -807,12 +807,22 @@ static Scene* _useBuildHelper(SvgLoaderData& loaderData, const SvgNode* node, co
             }
             viewBoxClip->transform(mClipTransform);
 
-            scene->clip(viewBoxClip);
+            auto clippingLayer = Scene::gen();
+            clippingLayer->clip(viewBoxClip);
+            clippingLayer->push(scene);
+            return clippingLayer;
         }
-    } else {
-        scene->transform(mUseTransform);
+        return scene;
     }
 
+    if (auto clipper = PAINT(scene)->clipper) {
+        auto& clipTransform = clipper->transform();
+        Matrix inv;
+        if (node->transform && inverse(node->transform, &inv)) clipTransform = inv * clipTransform;
+        clipTransform = mUseTransform * clipTransform ;
+    }
+
+    scene->transform(mUseTransform);
     return scene;
 }
 
@@ -888,7 +898,9 @@ static Scene* _sceneBuildHelper(SvgLoaderData& loaderData, const SvgNode* node, 
 
     auto scene = Scene::gen();
     // For a Symbol node, the viewBox transformation has to be applied first - see _useBuildHelper()
-    if (!mask && node->transform && node->type != SvgNodeType::Symbol) scene->transform(*node->transform);
+    if (!mask && node->transform && node->type != SvgNodeType::Symbol && node->type != SvgNodeType::Use) {
+        scene->transform(*node->transform);
+    }
 
     if (!node->style->display || node->style->opacity == 0) return scene;
 
