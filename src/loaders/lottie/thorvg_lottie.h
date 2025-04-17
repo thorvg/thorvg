@@ -20,6 +20,8 @@ namespace tvg
 class TVG_API LottieAnimation final : public Animation
 {
 public:
+    ~LottieAnimation() override;
+
     /**
      * @brief Override Lottie properties using slot data.
      *
