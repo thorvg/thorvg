@@ -30,15 +30,39 @@ LottieAnimation::LottieAnimation() = default;
 LottieAnimation::~LottieAnimation() = default;
 
 
-Result LottieAnimation::override(const char* slot) noexcept
+uint32_t LottieAnimation::genSlot(const char* slot) noexcept
+{
+    auto loader = PICTURE(pImpl->picture)->loader;
+    if (!loader) return 0;
+
+    return static_cast<LottieLoader*>(loader)->genSlot(slot);
+}
+
+
+Result LottieAnimation::applySlot(uint32_t sid) noexcept
 {
     auto loader = PICTURE(pImpl->picture)->loader;
     if (!loader) return Result::InsufficientCondition;
 
-    if (static_cast<LottieLoader*>(loader)->override(slot)) {
+    if (static_cast<LottieLoader*>(loader)->applySlot(sid)) {
         PAINT(pImpl->picture)->mark(RenderUpdateFlag::All);
         return Result::Success;
     }
+
+    return Result::InvalidArguments;
+}
+
+
+Result LottieAnimation::delSlot(uint32_t sid) noexcept
+{
+    auto loader = PICTURE(pImpl->picture)->loader;
+    if (!loader) return Result::InsufficientCondition;
+
+    if (static_cast<LottieLoader*>(loader)->delSlot(sid)) {
+        PAINT(pImpl->picture)->mark(RenderUpdateFlag::All);
+        return Result::Success;
+    }
+
     return Result::InvalidArguments;
 }
 
