@@ -26,9 +26,8 @@
 #include "tvgAnimation.h"
 
 
-LottieAnimation::LottieAnimation()
-{
-}
+LottieAnimation::LottieAnimation() = default;
+LottieAnimation::~LottieAnimation() = default;
 
 
 Result LottieAnimation::override(const char* slot) noexcept
