@@ -24,11 +24,32 @@
 #define _TVG_LOTTIE_LOADER_H_
 
 #include "tvgCommon.h"
+#include "tvgInlist.h"
 #include "tvgFrameModule.h"
 #include "tvgTaskScheduler.h"
 
 struct LottieComposition;
 struct LottieBuilder;
+struct LottieProperty;
+struct LottieSlot;
+
+
+struct LottieCustomSlot
+{
+    INLIST_ITEM(LottieCustomSlot);
+
+    struct Override
+    {
+        LottieProperty* prop;
+        LottieSlot* target;
+    };
+    Array<Override> props;
+    uint32_t code;
+
+    LottieCustomSlot(uint32_t code) : code(code) {}
+    ~LottieCustomSlot();
+};
+
 
 class LottieLoader : public FrameModule, public Task
 {
@@ -41,9 +62,11 @@ public:
 
     LottieBuilder* builder;
     LottieComposition* comp = nullptr;
+    Inlist<LottieCustomSlot> slots;     //user custom slot list
 
     Key key;
     char* dirName = nullptr;            //base resource directory
+
     bool copy = false;                  //"content" is owned by this loader
     bool overridden = false;            //overridden properties with slots
     bool rebuild = false;               //require building the lottie scene
@@ -56,7 +79,11 @@ public:
     bool resize(Paint* paint, float w, float h) override;
     bool read() override;
     Paint* paint() override;
-    bool override(const char* slot, bool byDefault = false);
+
+    //Slot Methods
+    uint32_t gen(const char* slot, bool byDefault = false);
+    bool apply(uint32_t slotcode, bool byDefault = false);
+    bool del(uint32_t slotcode, bool byDefault = false);
 
     //Frame Controls
     bool frame(float no) override;
