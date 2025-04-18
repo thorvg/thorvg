@@ -255,6 +255,8 @@ const char* xmlNodeTypeToString(TVG_UNUSED SvgNodeType type)
         "ClipPath",
         "Mask",
         "Symbol",
+        "Filter",
+        "GaussianBlur",
         "Unknown",
     };
     return TYPE_NAMES[(int) type];
