@@ -29,10 +29,12 @@
 #include "tvgFill.h"
 #include "tvgLoader.h"
 
-#define TEXT(A) PIMPL(A, Text)
+#define TEXT(A) static_cast<TextImpl*>(A)
+#define CONST_TEXT(A) static_cast<const TextImpl*>(A)
 
-struct Text::Impl : Paint::Impl
+struct TextImpl : Text
 {
+    Paint::Impl impl;
     Shape* shape;   //text shape
     FontLoader* loader = nullptr;
     FontMetrics metrics;
@@ -41,13 +43,13 @@ struct Text::Impl : Paint::Impl
     bool italic = false;
     bool changed = false;
 
-    Impl(Text* p) : Paint::Impl(p), shape(Shape::gen())
+    TextImpl() : impl(Paint::Impl(this)), shape(Shape::gen())
     {
-        PAINT(shape)->parent = p;
+        PAINT(shape)->parent = this;
         shape->fill(FillRule::EvenOdd);
     }
 
-    ~Impl()
+    ~TextImpl()
     {
         tvg::free(utf8);
         LoaderMgr::retrieve(loader);
@@ -95,7 +97,7 @@ struct Text::Impl : Paint::Impl
     bool render(RenderMethod* renderer)
     {
         if (!loader) return true;
-        renderer->blend(blendMethod);
+        renderer->blend(impl.blendMethod);
         return PAINT(shape)->render(renderer);
     }
 
@@ -118,7 +120,7 @@ struct Text::Impl : Paint::Impl
 
         //transform the gradient coordinates based on the final scaled font.
         auto fill = SHAPE(shape)->rs.fill;
-        if (fill && SHAPE(shape)->renderFlag & RenderUpdateFlag::Gradient) {
+        if (fill && SHAPE(shape)->impl.renderFlag & RenderUpdateFlag::Gradient) {
             if (fill->type() == Type::LinearGradient) {
                 LINEAR(fill)->x1 *= scale;
                 LINEAR(fill)->y1 *= scale;
@@ -171,7 +173,5 @@ struct Text::Impl : Paint::Impl
         return nullptr;
     }
 };
-
-
 
 #endif //_TVG_TEXT_H

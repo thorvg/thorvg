@@ -481,7 +481,7 @@ void LottieBuilder::updatePath(LottieGroup* parent, LottieObject** child, float 
     if (ctx->repeaters.empty()) {
         _draw(parent, path, ctx);
         if (path->pathset(frameNo, SHAPE(ctx->merging)->rs.path, ctx->transform, tween, exps, ctx->modifier)) {
-            PAINT(ctx->merging)->update(RenderUpdateFlag::Path);
+            PAINT(ctx->merging)->mark(RenderUpdateFlag::Path);
         }
     } else {
         auto shape = path->pooling();
@@ -695,7 +695,7 @@ void LottieBuilder::updatePolystar(LottieGroup* parent, LottieObject** child, fl
         _draw(parent, star, ctx);
         if (star->type == LottiePolyStar::Star) updateStar(star, frameNo, (identity ? nullptr : &matrix), ctx->merging, ctx, tween, exps);
         else updatePolygon(parent, star, frameNo, (identity  ? nullptr : &matrix), ctx->merging, ctx, tween, exps);
-        PAINT(ctx->merging)->update(RenderUpdateFlag::Path);
+        PAINT(ctx->merging)->mark(RenderUpdateFlag::Path);
     } else {
         auto shape = star->pooling();
         shape->reset();
@@ -1037,7 +1037,7 @@ void LottieBuilder::updateText(LottieLayer* layer, float frameNo)
                     auto group = static_cast<LottieGroup*>(*p);
                     ARRAY_FOREACH(p, group->children) {
                         if (static_cast<LottiePath*>(*p)->pathset(frameNo, SHAPE(shape)->rs.path, nullptr, tween, exps)) {
-                            PAINT(shape)->update(RenderUpdateFlag::Path);
+                            PAINT(shape)->mark(RenderUpdateFlag::Path);
                         }
                     }
                 }

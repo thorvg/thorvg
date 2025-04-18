@@ -26,8 +26,11 @@
 #include "tvgCommon.h"
 #include "tvgMath.h"
 
-#define LINEAR(A) PIMPL(A, LinearGradient)
-#define RADIAL(A) PIMPL(A, RadialGradient)
+#define LINEAR(A) static_cast<LinearGradientImpl*>(A)
+#define CONST_LINEAR(A) static_cast<const LinearGradientImpl*>(A)
+
+#define RADIAL(A) static_cast<RadialGradientImpl*>(A)
+#define CONST_RADIAL(A) static_cast<const RadialGradientImpl*>(A)
 
 struct Fill::Impl
 {
@@ -41,13 +44,13 @@ struct Fill::Impl
         tvg::free(colorStops);
     }
 
-    void copy(Fill::Impl* dup)
+    void copy(const Fill::Impl& dup)
     {
-        cnt = dup->cnt;
-        spread = dup->spread;
-        colorStops = tvg::malloc<ColorStop*>(sizeof(ColorStop) * dup->cnt);
-        if (dup->cnt > 0) memcpy(colorStops, dup->colorStops, sizeof(ColorStop) * dup->cnt);
-        transform = dup->transform;
+        cnt = dup.cnt;
+        spread = dup.spread;
+        colorStops = tvg::malloc<ColorStop*>(sizeof(ColorStop) * dup.cnt);
+        if (dup.cnt > 0) memcpy(colorStops, dup.colorStops, sizeof(ColorStop) * dup.cnt);
+        transform = dup.transform;
     }
 
     Result update(const ColorStop* colorStops, uint32_t cnt)
@@ -72,21 +75,26 @@ struct Fill::Impl
 
         return Result::Success;
     }
-
-    virtual Fill* duplicate() = 0;
 };
 
 
-struct RadialGradient::Impl : Fill::Impl
+struct RadialGradientImpl : RadialGradient
 {
+    Fill::Impl impl;
+
     float cx = 0.0f, cy = 0.0f;
     float fx = 0.0f, fy = 0.0f;
     float r = 0.0f, fr = 0.0f;
 
-    Fill* duplicate() override
+    RadialGradientImpl()
+    {
+        Fill::pImpl = &impl;
+    }
+
+    Fill* duplicate() const
     {
         auto ret = RadialGradient::gen();
-        RADIAL(ret)->copy(this);
+        RADIAL(ret)->impl.copy(this->impl);
         RADIAL(ret)->cx = cx;
         RADIAL(ret)->cy = cy;
         RADIAL(ret)->r = r;
@@ -125,17 +133,24 @@ struct RadialGradient::Impl : Fill::Impl
 };
 
 
-struct LinearGradient::Impl : Fill::Impl
+struct LinearGradientImpl :  LinearGradient
 {
+    Fill::Impl impl;
+
     float x1 = 0.0f;
     float y1 = 0.0f;
     float x2 = 0.0f;
     float y2 = 0.0f;
 
-    Fill* duplicate() override
+    LinearGradientImpl()
+    {
+        Fill::pImpl = &impl;
+    }
+
+    Fill* duplicate() const
     {
         auto ret = LinearGradient::gen();
-        LINEAR(ret)->copy(this);
+        LINEAR(ret)->impl.copy(this->impl);
         LINEAR(ret)->x1 = x1;
         LINEAR(ret)->y1 = y1;
         LINEAR(ret)->x2 = x2;

@@ -163,7 +163,7 @@ Paint* Paint::Impl::duplicate(Paint* ret)
 
     //duplicate Transform
     ret->pImpl->tr = tr;
-    ret->pImpl->renderFlag |= RenderUpdateFlag::Transform;
+    ret->pImpl->mark(RenderUpdateFlag::Transform);
 
     ret->pImpl->opacity = opacity;
 
@@ -247,7 +247,7 @@ RenderData Paint::Impl::update(RenderMethod* renderer, const Matrix& pm, Array<R
     /* 2. Clipping */
     if (this->clipper) {
         auto pclip = PAINT(this->clipper);
-        if (pclip->renderFlag) renderFlag |= RenderUpdateFlag::Clip;
+        if (pclip->renderFlag) mark(RenderUpdateFlag::Clip);
         pclip->ctxFlag &= ~ContextFlag::FastTrack;   //reset
         viewport = renderer->viewport();
         /* TODO: Intersect the clipper's clipper, if both are FastTrack.
@@ -263,7 +263,7 @@ RenderData Paint::Impl::update(RenderMethod* renderer, const Matrix& pm, Array<R
     }
 
     /* 3. Main Update */
-    auto newFlag = static_cast<RenderUpdateFlag>(pFlag | renderFlag);
+    auto newFlag = pFlag | renderFlag;
     renderFlag = RenderUpdateFlag::None;
     opacity = MULTIPLY(opacity, this->opacity);
 
@@ -317,15 +317,8 @@ Result Paint::Impl::bounds(Point* pt4, Matrix* pm, bool obb, bool stroking)
 /* External Class Implementation                                        */
 /************************************************************************/
 
-Paint :: Paint()
-{
-}
-
-
-Paint :: ~Paint()
-{
-    delete(pImpl);
-}
+Paint :: Paint() = default;
+Paint :: ~Paint() = default;
 
 
 Result Paint::rotate(float degree) noexcept
@@ -410,7 +403,7 @@ Result Paint::opacity(uint8_t o) noexcept
     if (pImpl->opacity == o) return Result::Success;
 
     pImpl->opacity = o;
-    pImpl->renderFlag |= RenderUpdateFlag::Color;
+    pImpl->mark(RenderUpdateFlag::Color);
 
     return Result::Success;
 }
