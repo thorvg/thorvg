@@ -1285,6 +1285,7 @@ static void _buildMath(jerry_value_t context)
 
 void LottieExpressions::buildGlobal(float frameNo, LottieExpression* exp)
 {
+    free(jerry_object_get_native_ptr(comp, &freeCb));
     jerry_object_set_native_ptr(comp, &freeCb, _expcontent(exp, frameNo, exp->layer));
 
     auto index = jerry_number(exp->layer->idx);
