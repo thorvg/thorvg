@@ -27,7 +27,8 @@
 #include "tvgRender.h"
 #include "tvgMath.h"
 
-#define PAINT(A) PIMPL(A, Paint)
+
+#define PAINT(A) ((Paint::Impl*)A->pImpl)
 
 namespace tvg
 {
@@ -85,6 +86,7 @@ namespace tvg
 
         Impl(Paint* pnt) : paint(pnt)
         {
+            pnt->pImpl = this;
             reset();
         }
 
@@ -129,7 +131,7 @@ namespace tvg
             return refCnt;
         }
 
-        void update(RenderUpdateFlag flag)
+        void mark(RenderUpdateFlag flag)
         {
             renderFlag |= flag;
         }
@@ -138,7 +140,7 @@ namespace tvg
         {
             if (&tr.m != &m) tr.m = m;
             tr.overriding = true;
-            renderFlag |= RenderUpdateFlag::Transform;
+            mark(RenderUpdateFlag::Transform);
 
             return true;
         }
@@ -236,7 +238,7 @@ namespace tvg
             if (tr.overriding) return false;
             if (tvg::equal(degree, tr.degree)) return true;
             tr.degree = degree;
-            renderFlag |= RenderUpdateFlag::Transform;
+            mark(RenderUpdateFlag::Transform);
 
             return true;
         }
@@ -246,7 +248,7 @@ namespace tvg
             if (tr.overriding) return false;
             if (tvg::equal(factor, tr.scale)) return true;
             tr.scale = factor;
-            renderFlag |= RenderUpdateFlag::Transform;
+            mark(RenderUpdateFlag::Transform);
 
             return true;
         }
@@ -257,7 +259,7 @@ namespace tvg
             if (tvg::equal(x, tr.m.e13) && tvg::equal(y, tr.m.e23)) return true;
             tr.m.e13 = x;
             tr.m.e23 = y;
-            renderFlag |= RenderUpdateFlag::Transform;
+            mark(RenderUpdateFlag::Transform);
 
             return true;
         }
@@ -266,7 +268,7 @@ namespace tvg
         {
             if (blendMethod != method) {
                 blendMethod = method;
-                renderFlag |= RenderUpdateFlag::Blend;
+                mark(RenderUpdateFlag::Blend);
             }
         }
 

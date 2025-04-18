@@ -28,7 +28,8 @@
 #include "tvgMath.h"
 #include "tvgPaint.h"
 
-#define SCENE(A) PIMPL(A, Scene)
+#define SCENE(A) static_cast<SceneImpl*>(A)
+#define CONST_SCENE(A) static_cast<const SceneImpl*>(A)
 
 struct SceneIterator : Iterator
 {
@@ -59,22 +60,22 @@ struct SceneIterator : Iterator
     }
 };
 
-struct Scene::Impl : Paint::Impl
+struct SceneImpl : Scene
 {
+    Paint::Impl impl;
     list<Paint*> paints;     //children list
     RenderRegion vport = {0, 0, INT32_MAX, INT32_MAX};
     Array<RenderEffect*>* effects = nullptr;
     uint8_t compFlag = CompositionFlag::Invalid;
     uint8_t opacity;         //for composition
 
-    Impl(Scene* s) : Paint::Impl(s)
+    SceneImpl() : impl(Paint::Impl(this))
     {
     }
 
-    ~Impl()
+    ~SceneImpl()
     {
         resetEffects();
-
         clearPaints();
     }
 
@@ -86,8 +87,8 @@ struct Scene::Impl : Paint::Impl
 
         //post effects, masking, blending may require composition
         if (effects) compFlag |= CompositionFlag::PostProcessing;
-        if (paint->mask(nullptr) != MaskMethod::None) compFlag |= CompositionFlag::Masking;
-        if (blendMethod != BlendMethod::Normal) compFlag |= CompositionFlag::Blending;
+        if (PAINT(this)->mask(nullptr) != MaskMethod::None) compFlag |= CompositionFlag::Masking;
+        if (impl.blendMethod != BlendMethod::Normal) compFlag |= CompositionFlag::Blending;
 
         //Half translucent requires intermediate composition.
         if (opacity == 255) return compFlag;
@@ -130,7 +131,7 @@ struct Scene::Impl : Paint::Impl
         RenderCompositor* cmp = nullptr;
         auto ret = true;
 
-        renderer->blend(blendMethod);
+        renderer->blend(impl.blendMethod);
 
         if (compFlag) {
             cmp = renderer->target(bounds(renderer), renderer->colorSpace(), static_cast<CompositionFlag>(compFlag));
@@ -258,7 +259,7 @@ struct Scene::Impl : Paint::Impl
 
     Result remove(Paint* paint)
     {
-        if (PAINT(paint)->parent != this->paint) return Result::InsufficientCondition;
+        if (PAINT(paint)->parent != this) return Result::InsufficientCondition;
         PAINT(paint)->unref();
         paints.remove(paint);
         return Result::Success;
@@ -273,7 +274,7 @@ struct Scene::Impl : Paint::Impl
         target->ref();
 
         //Relocated the paint to the current scene space
-        timpl->renderFlag |= RenderUpdateFlag::Transform;
+        timpl->mark(RenderUpdateFlag::Transform);
 
         if (!at) {
             paints.push_back(target);
@@ -283,9 +284,9 @@ struct Scene::Impl : Paint::Impl
             if (itr == paints.end()) return Result::InvalidArguments;
             paints.insert(itr, target);
         }
-        timpl->parent = paint;
-        if (timpl->clipper) PAINT(timpl->clipper)->parent = paint;
-        if (timpl->maskData) PAINT(timpl->maskData->target)->parent = paint;
+        timpl->parent = this;
+        if (timpl->clipper) PAINT(timpl->clipper)->parent = this;
+        if (timpl->maskData) PAINT(timpl->maskData->target)->parent = this;
         return Result::Success;
     }
 
@@ -298,7 +299,7 @@ struct Scene::Impl : Paint::Impl
     {
         if (effects) {
             ARRAY_FOREACH(p, *effects) {
-                renderer->dispose(*p);
+                impl.renderer->dispose(*p);
                 delete(*p);
             }
             delete(effects);

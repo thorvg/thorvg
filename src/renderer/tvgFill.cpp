@@ -27,16 +27,8 @@
 /* Fill Class Implementation                                            */
 /************************************************************************/
 
-Fill::Fill()
-{
-}
-
-
-Fill::~Fill()
-{
-    delete(pImpl);
-}
-
+Fill::Fill() = default;
+Fill::~Fill() = default;
 
 Result Fill::colorStops(const ColorStop* colorStops, uint32_t cnt) noexcept
 {
@@ -79,7 +71,9 @@ Matrix& Fill::transform() const noexcept
 
 Fill* Fill::duplicate() const noexcept
 {
-    return pImpl->duplicate();
+    if (type() == Type::LinearGradient) return CONST_LINEAR(this)->duplicate();
+    else if (type() == Type::RadialGradient) return CONST_RADIAL(this)->duplicate();
+    return nullptr;
 }
 
 
@@ -87,11 +81,7 @@ Fill* Fill::duplicate() const noexcept
 /* RadialGradient Class Implementation                                  */
 /************************************************************************/
 
-
-RadialGradient::RadialGradient()
-{
-    Fill::pImpl = new Impl;
-}
+RadialGradient::RadialGradient() = default;
 
 
 Result RadialGradient::radial(float cx, float cy, float r, float fx, float fy, float fr) noexcept
@@ -102,13 +92,13 @@ Result RadialGradient::radial(float cx, float cy, float r, float fx, float fy, f
 
 Result RadialGradient::radial(float* cx, float* cy, float* r, float* fx, float* fy, float* fr) const noexcept
 {
-    return RADIAL(this)->radial(cx, cy, r, fx, fy, fr);
+    return CONST_RADIAL(this)->radial(cx, cy, r, fx, fy, fr);
 }
 
 
 RadialGradient* RadialGradient::gen() noexcept
 {
-    return new RadialGradient;
+    return new RadialGradientImpl;
 }
 
 
@@ -122,11 +112,7 @@ Type RadialGradient::type() const noexcept
 /* LinearGradient Class Implementation                                  */
 /************************************************************************/
 
-
-LinearGradient::LinearGradient()
-{
-    Fill::pImpl = new Impl;
-}
+LinearGradient::LinearGradient() = default;
 
 
 Result LinearGradient::linear(float x1, float y1, float x2, float y2) noexcept
@@ -137,13 +123,13 @@ Result LinearGradient::linear(float x1, float y1, float x2, float y2) noexcept
 
 Result LinearGradient::linear(float* x1, float* y1, float* x2, float* y2) const noexcept
 {
-    return LINEAR(this)->linear(x1, y1, x2, y2);
+    return CONST_LINEAR(this)->linear(x1, y1, x2, y2);
 }
 
 
 LinearGradient* LinearGradient::gen() noexcept
 {
-    return new LinearGradient;
+    return new LinearGradientImpl;
 }
 
 

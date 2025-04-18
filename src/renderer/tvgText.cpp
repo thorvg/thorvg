@@ -24,10 +24,7 @@
 #include "tvgText.h"
 
 
-Text::Text()
-{
-    pImpl = new Impl(this);
-}
+Text::Text() = default;
 
 
 Result Text::text(const char* text) noexcept
@@ -102,7 +99,7 @@ Result Text::fill(Fill* f) noexcept
 
 Text* Text::gen() noexcept
 {
-    return new Text;
+    return new TextImpl;
 }
 
 

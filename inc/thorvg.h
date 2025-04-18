@@ -801,8 +801,10 @@ public:
  *
  * Besides the APIs inherited from the Fill class, it enables setting and getting the linear gradient bounds.
  * The behavior outside the gradient bounds depends on the value specified in the spread API.
+ *
+ * @warning This class is not designed for inheritance.
  */
-class TVG_API LinearGradient final : public Fill
+class TVG_API LinearGradient : public Fill
 {
 public:
     /**
@@ -863,8 +865,9 @@ public:
  *
  * @brief A class representing the radial gradient fill of the Shape object.
  *
+ * @warning This class is not designed for inheritance.
  */
-class TVG_API RadialGradient final : public Fill
+class TVG_API RadialGradient : public Fill
 {
 public:
     /**
@@ -939,8 +942,10 @@ public:
  *
  * The stroke of Shape is an optional property in case the Shape needs to be represented with/without the outline borders.
  * It's efficient since the shape path and the stroking path can be shared with each other. It's also convenient when controlling both in one context.
+ *
+ * @warning This class is not designed for inheritance.
  */
-class TVG_API Shape final : public Paint
+class TVG_API Shape : public Paint
 {
 public:
     /**
@@ -1319,8 +1324,10 @@ public:
  *
  * @note Supported formats are depended on the available TVG loaders.
  * @note See Animation class if the picture data is animatable.
+ *
+ * @warning This class is not designed for inheritance.
  */
-class TVG_API Picture final : public Paint
+class TVG_API Picture : public Paint
 {
 public:
     /**
@@ -1450,8 +1457,10 @@ public:
  *
  * As a group, the scene can be transformed, made translucent and composited with other target paints,
  * its children will be affected by the scene world.
+ *
+ * @warning This class is not designed for inheritance.
  */
-class TVG_API Scene final : public Paint
+class TVG_API Scene : public Paint
 {
 public:
     /**
@@ -1546,9 +1555,11 @@ public:
  *
  * @brief A class to represent text objects in a graphical context, allowing for rendering and manipulation of unicode text.
  *
+ * @warning This class is not designed for inheritance.
+ *
  * @since 0.15
  */
-class TVG_API Text final : public Paint
+class TVG_API Text : public Paint
 {
 public:
     /**

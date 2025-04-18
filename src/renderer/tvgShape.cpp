@@ -24,15 +24,12 @@
 #include "tvgShape.h"
 
 
-Shape :: Shape()
-{
-    pImpl = new Impl(this);
-}
+Shape :: Shape() = default;
 
 
 Shape* Shape::gen() noexcept
 {
-    return new Shape;
+    return new ShapeImpl;
 }
 
 
@@ -51,11 +48,11 @@ Result Shape::reset() noexcept
 
 Result Shape::path(const PathCommand** cmds, uint32_t* cmdsCnt, const Point** pts, uint32_t* ptsCnt) const noexcept
 {
-    if (cmds) *cmds = SHAPE(this)->rs.path.cmds.data;
-    if (cmdsCnt) *cmdsCnt = SHAPE(this)->rs.path.cmds.count;
+    if (cmds) *cmds = CONST_SHAPE(this)->rs.path.cmds.data;
+    if (cmdsCnt) *cmdsCnt = CONST_SHAPE(this)->rs.path.cmds.count;
 
-    if (pts) *pts = SHAPE(this)->rs.path.pts.data;
-    if (ptsCnt) *ptsCnt = SHAPE(this)->rs.path.pts.count;
+    if (pts) *pts = CONST_SHAPE(this)->rs.path.pts.data;
+    if (ptsCnt) *ptsCnt = CONST_SHAPE(this)->rs.path.pts.count;
 
     return Result::Success;
 }
@@ -124,14 +121,14 @@ Result Shape::fill(Fill* f) noexcept
 
 Result Shape::fill(uint8_t* r, uint8_t* g, uint8_t* b, uint8_t* a) const noexcept
 {
-    SHAPE(this)->rs.fillColor(r, g, b, a);
+    CONST_SHAPE(this)->rs.fillColor(r, g, b, a);
     return Result::Success;
 }
 
 
 const Fill* Shape::fill() const noexcept
 {
-    return SHAPE(this)->rs.fill;
+    return CONST_SHAPE(this)->rs.fill;
 }
 
 
@@ -151,7 +148,7 @@ Result Shape::strokeWidth(float width) noexcept
 
 float Shape::strokeWidth() const noexcept
 {
-    return SHAPE(this)->rs.strokeWidth();
+    return CONST_SHAPE(this)->rs.strokeWidth();
 }
 
 
@@ -164,7 +161,7 @@ Result Shape::strokeFill(uint8_t r, uint8_t g, uint8_t b, uint8_t a) noexcept
 
 Result Shape::strokeFill(uint8_t* r, uint8_t* g, uint8_t* b, uint8_t* a) const noexcept
 {
-    if (!SHAPE(this)->rs.strokeFill(r, g, b, a)) return Result::InsufficientCondition;
+    if (!CONST_SHAPE(this)->rs.strokeFill(r, g, b, a)) return Result::InsufficientCondition;
     return Result::Success;
 }
 
@@ -177,7 +174,7 @@ Result Shape::strokeFill(Fill* f) noexcept
 
 const Fill* Shape::strokeFill() const noexcept
 {
-    return SHAPE(this)->rs.strokeFill();
+    return CONST_SHAPE(this)->rs.strokeFill();
 }
 
 
@@ -189,7 +186,7 @@ Result Shape::strokeDash(const float* dashPattern, uint32_t cnt, float offset) n
 
 uint32_t Shape::strokeDash(const float** dashPattern, float* offset) const noexcept
 {
-    return SHAPE(this)->rs.strokeDash(dashPattern, offset);
+    return CONST_SHAPE(this)->rs.strokeDash(dashPattern, offset);
 }
 
 
@@ -215,19 +212,19 @@ Result Shape::strokeMiterlimit(float miterlimit) noexcept
 
 StrokeCap Shape::strokeCap() const noexcept
 {
-    return SHAPE(this)->rs.strokeCap();
+    return CONST_SHAPE(this)->rs.strokeCap();
 }
 
 
 StrokeJoin Shape::strokeJoin() const noexcept
 {
-    return SHAPE(this)->rs.strokeJoin();
+    return CONST_SHAPE(this)->rs.strokeJoin();
 }
 
 
 float Shape::strokeMiterlimit() const noexcept
 {
-    return SHAPE(this)->rs.strokeMiterlimit();
+    return CONST_SHAPE(this)->rs.strokeMiterlimit();
 }
 
 
@@ -247,5 +244,5 @@ Result Shape::fill(FillRule r) noexcept
 
 FillRule Shape::fillRule() const noexcept
 {
-    return SHAPE(this)->rs.rule;
+    return CONST_SHAPE(this)->rs.rule;
 }

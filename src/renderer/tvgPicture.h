@@ -26,7 +26,8 @@
 #include "tvgPaint.h"
 #include "tvgLoader.h"
 
-#define PICTURE(A) PIMPL(A, Picture)
+#define PICTURE(A) static_cast<PictureImpl*>(A)
+#define CONST_PICTURE(A) static_cast<const PictureImpl*>(A)
 
 struct PictureIterator : Iterator
 {
@@ -55,8 +56,9 @@ struct PictureIterator : Iterator
 };
 
 
-struct Picture::Impl : Paint::Impl
+struct PictureImpl : Picture
 {
+    Paint::Impl impl;
     ImageLoader* loader = nullptr;
     Paint* vector = nullptr;          //vector picture uses
     RenderSurface* bitmap = nullptr;  //bitmap picture uses
@@ -64,11 +66,11 @@ struct Picture::Impl : Paint::Impl
     uint8_t compFlag = CompositionFlag::Invalid;
     bool resizing = false;
 
-    Impl(Picture* p) : Paint::Impl(p)
+    PictureImpl() : impl(Paint::Impl(this))
     {
     }
 
-    ~Impl()
+    ~PictureImpl()
     {
         LoaderMgr::retrieve(loader);
         delete(vector);
@@ -76,10 +78,10 @@ struct Picture::Impl : Paint::Impl
 
     RenderData update(RenderMethod* renderer, const Matrix& transform, Array<RenderData>& clips, uint8_t opacity, RenderUpdateFlag pFlag, TVG_UNUSED bool clipper)
     {
-        auto flag = static_cast<RenderUpdateFlag>(pFlag | load());
+        auto flag = (pFlag | load());
 
         if (bitmap) {
-            if (flag == RenderUpdateFlag::None) return rd;
+            if (flag == RenderUpdateFlag::None) return impl.rd;
 
             //Overriding Transformation by the desired image size
             auto sx = w / loader->w;
@@ -87,7 +89,7 @@ struct Picture::Impl : Paint::Impl
             auto scale = sx < sy ? sx : sy;
             auto m = transform * Matrix{scale, 0, 0, 0, scale, 0, 0, 0, 1};
 
-            rd = renderer->prepare(bitmap, rd, m, clips, opacity, flag);
+            impl.rd = renderer->prepare(bitmap, impl.rd, m, clips, opacity, flag);
         } else if (vector) {
             if (resizing) {
                 loader->resize(vector, w, h);
@@ -96,7 +98,7 @@ struct Picture::Impl : Paint::Impl
             queryComposition(opacity);
             return vector->pImpl->update(renderer, transform, clips, opacity, flag, false);
         }
-        return rd;
+        return impl.rd;
     }
 
     void size(float w, float h)
@@ -173,7 +175,7 @@ struct Picture::Impl : Paint::Impl
         if (loader) {
             dup->loader = loader;
             ++dup->loader->sharing;
-            PAINT(picture)->renderFlag |= RenderUpdateFlag::Image;
+            PAINT(picture)->mark(RenderUpdateFlag::Image);
         }
 
         dup->bitmap = bitmap;
@@ -214,7 +216,7 @@ struct Picture::Impl : Paint::Impl
             } else {
                 vector = loader->paint();
                 if (vector) {
-                    PAINT(vector)->parent = paint;
+                    PAINT(vector)->parent = this;
                     if (w != loader->w || h != loader->h) {
                         if (!resizing) {
                             w = loader->w;
@@ -244,7 +246,7 @@ struct Picture::Impl : Paint::Impl
 
         //Composition test
         const Paint* target;
-        paint->mask(&target);
+        PAINT(this)->mask(&target);
         if (!target || target->pImpl->opacity == 255 || target->pImpl->opacity == 0) return;
         compFlag = CompositionFlag::Opacity;
     }
@@ -252,9 +254,9 @@ struct Picture::Impl : Paint::Impl
     bool render(RenderMethod* renderer)
     {
         bool ret = false;
-        renderer->blend(blendMethod);
+        renderer->blend(impl.blendMethod);
 
-        if (bitmap) return renderer->renderImage(rd);
+        if (bitmap) return renderer->renderImage(impl.rd);
         else if (vector) {
             RenderCompositor* cmp = nullptr;
             if (compFlag) {
@@ -269,7 +271,7 @@ struct Picture::Impl : Paint::Impl
 
     RenderRegion bounds(RenderMethod* renderer)
     {
-        if (rd) return renderer->region(rd);
+        if (impl.rd) return renderer->region(impl.rd);
         if (vector) return vector->pImpl->bounds(renderer);
         return {0, 0, 0, 0};
     }

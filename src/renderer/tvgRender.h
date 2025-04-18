@@ -45,6 +45,12 @@ static inline void operator|=(RenderUpdateFlag& a, const RenderUpdateFlag b)
     a = RenderUpdateFlag(uint16_t(a) | uint16_t(b));
 }
 
+static inline RenderUpdateFlag operator|(const RenderUpdateFlag a, const RenderUpdateFlag b)
+{
+    return RenderUpdateFlag(uint16_t(a) | uint16_t(b));
+}
+
+
 struct RenderSurface
 {
     union {

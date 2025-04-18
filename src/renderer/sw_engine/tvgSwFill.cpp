@@ -67,10 +67,10 @@ static uint32_t _estimateAAMargin(const Fill* fdata)
     constexpr float marginScalingFactor = 800.0f;
 
     if (fdata->type() == Type::RadialGradient) {
-        auto radius = RADIAL(fdata)->r;
+        auto radius = CONST_RADIAL(fdata)->r;
         return tvg::zero(radius) ? 0 : static_cast<uint32_t>(marginScalingFactor / radius);
     } else {
-        auto grad = LINEAR(fdata);
+        auto grad = CONST_LINEAR(fdata);
         Point p1 {grad->x1, grad->y1};
         Point p2 {grad->x2, grad->y2};
         auto len = length(&p1, &p2);
@@ -226,7 +226,7 @@ bool _prepareLinear(SwFill* fill, const LinearGradient* linear, const Matrix& pT
     fill->linear.dy /= len;
     fill->linear.offset = -fill->linear.dx * x1 - fill->linear.dy * y1;
 
-    auto transform = pTransform * linear->transform();
+    const auto& transform = pTransform * linear->transform();
 
     Matrix itransform;
     if (!inverse(&transform, &itransform)) return false;
@@ -279,7 +279,7 @@ bool _prepareRadial(SwFill* fill, const RadialGradient* radial, const Matrix& pT
 
     if (fill->radial.a > 0) fill->radial.invA = 1.0f / fill->radial.a;
 
-    auto transform = pTransform * radial->transform();
+    const auto& transform = pTransform * radial->transform();
 
     Matrix itransform;
     if (!inverse(&transform, &itransform)) return false;

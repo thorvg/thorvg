@@ -1469,10 +1469,10 @@ RenderData GlRenderer::prepare(const RenderShape& rshape, RenderData data, const
     if (clipper) {
         sdata->updateFlag = (rshape.stroke && (rshape.stroke->width > 0)) ? RenderUpdateFlag::Stroke : RenderUpdateFlag::Path;
     } else {
-        if (alphaF) sdata->updateFlag = static_cast<RenderUpdateFlag>(RenderUpdateFlag::Color | sdata->updateFlag);
-        if (rshape.fill) sdata->updateFlag = static_cast<RenderUpdateFlag>(RenderUpdateFlag::Gradient | sdata->updateFlag);
-        if (alphaS) sdata->updateFlag = static_cast<RenderUpdateFlag>(RenderUpdateFlag::Stroke | sdata->updateFlag);
-        if (rshape.strokeFill()) sdata->updateFlag = static_cast<RenderUpdateFlag>(RenderUpdateFlag::GradientStroke | sdata->updateFlag);
+        if (alphaF) sdata->updateFlag = (RenderUpdateFlag::Color | sdata->updateFlag);
+        if (rshape.fill) sdata->updateFlag = (RenderUpdateFlag::Gradient | sdata->updateFlag);
+        if (alphaS) sdata->updateFlag = (RenderUpdateFlag::Stroke | sdata->updateFlag);
+        if (rshape.strokeFill()) sdata->updateFlag = (RenderUpdateFlag::GradientStroke | sdata->updateFlag);
     }
 
     if (sdata->updateFlag == RenderUpdateFlag::None) return sdata;

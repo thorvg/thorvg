@@ -23,15 +23,12 @@
 #include "tvgPaint.h"
 #include "tvgPicture.h"
 
-Picture::Picture()
-{
-    pImpl = new Impl(this);
-}
+Picture::Picture() = default;
 
 
 Picture* Picture::gen() noexcept
 {
-    return new Picture;
+    return new PictureImpl;
 }
 
 
@@ -74,7 +71,7 @@ Result Picture::size(float w, float h) noexcept
 
 Result Picture::size(float* w, float* h) const noexcept
 {
-    return PICTURE(this)->size(w, h);
+    return CONST_PICTURE(this)->size(w, h);
 }
 
 
