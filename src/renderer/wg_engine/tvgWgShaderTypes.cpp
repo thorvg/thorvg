@@ -152,7 +152,8 @@ void WgShaderTypeGradient::update(const RadialGradient* radialGradient)
 
 void WgShaderTypeGradient::updateTexData(const Fill::ColorStop* stops, uint32_t stopCnt)
 {
-    assert(stops);
+    if (stopCnt == 0) return;
+
     static Array<Fill::ColorStop> sstops(stopCnt);
     sstops.clear();
     sstops.push(stops[0]);
