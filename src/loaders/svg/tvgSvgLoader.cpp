@@ -323,6 +323,23 @@ static constexpr struct
 _PARSE_TAG(FillRule, fillRule, FillRule, fillRuleTags, FillRule::NonZero)
 
 
+/* parse the shape rendering method used during stroking a path.
+ * Value:   auto | optimizeSpeed |  crispEdges | geometricPrecision
+ * Initial:    auto
+ * https://www.w3.org/TR/SVG/painting.html
+ */
+static constexpr struct
+{
+    ShapeRendering shapeRendering;
+    const char* tag;
+} shapeRenderingTags[] = {
+    { ShapeRendering::CrispEdges, "crispEdges" }
+};
+
+
+_PARSE_TAG(ShapeRendering, shapeRendering, ShapeRendering, shapeRenderingTags, ShapeRendering::AntiAliased)
+
+
 /* parse the dash pattern used during stroking a path.
  * Value:   none | <dasharray> | inherit
  * Initial:    none
@@ -1016,6 +1033,12 @@ static void _handleStrokeDashOffsetAttr(SvgLoaderData* loader, SvgNode* node, co
     node->style->stroke.dash.offset = _toFloat(loader->svgParse, value, SvgParserLengthType::Horizontal);
 }
 
+static void _handleShapeRenderingAttr(SvgLoaderData* loader, SvgNode* node, const char* value)
+{
+    node->style->stroke.flags = (node->style->stroke.flags | SvgStrokeFlags::AntiAliasing);
+    node->style->stroke.antiAlias = _toShapeRendering(value);
+}
+
 static void _handleStrokeWidthAttr(SvgLoaderData* loader, SvgNode* node, const char* value)
 {
     node->style->stroke.flags = (node->style->stroke.flags | SvgStrokeFlags::Width);
@@ -1185,6 +1208,7 @@ static constexpr struct
     STYLE_DEF(stroke-opacity, StrokeOpacity, SvgStyleFlags::StrokeOpacity),
     STYLE_DEF(stroke-dasharray, StrokeDashArray, SvgStyleFlags::StrokeDashArray),
     STYLE_DEF(stroke-dashoffset, StrokeDashOffset, SvgStyleFlags::StrokeDashOffset),
+    STYLE_DEF(shape-rendering, ShapeRendering, SvgStyleFlags::ShapeRendering),
     STYLE_DEF(transform, Transform, SvgStyleFlags::Transform),
     STYLE_DEF(clip-path, ClipPath, SvgStyleFlags::ClipPath),
     STYLE_DEF(mask, Mask, SvgStyleFlags::Mask),
@@ -1488,6 +1512,8 @@ static SvgNode* _createNode(SvgNode* parent, SvgNodeType type)
     node->style->stroke.join = StrokeJoin::Miter;
     node->style->stroke.miterlimit = 4.0f;
     node->style->stroke.scale = 1.0;
+    node->style->stroke.antiAlias = ShapeRendering::AntiAliased;
+
     node->style->paintOrder = _toPaintOrder("fill stroke");
     node->style->display = true;
     node->parent = parent;

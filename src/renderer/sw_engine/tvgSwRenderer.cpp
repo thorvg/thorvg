@@ -85,6 +85,7 @@ struct SwShapeTask : SwTask
        Additionally, the stroke style should not be dashed. */
     bool antialiasing(float strokeWidth)
     {
+        if (rshape->stroke && rshape->stroke->antiAlias == ShapeRendering::CrispEdges) return false;
         return strokeWidth < 2.0f || rshape->stroke->dash.count > 0 || rshape->stroke->strokeFirst || rshape->trimpath() || rshape->stroke->color.a < 255;
     }
 

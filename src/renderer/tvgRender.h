@@ -144,6 +144,7 @@ struct RenderStroke
     RenderTrimPath trim;
     StrokeCap cap = StrokeCap::Square;
     StrokeJoin join = StrokeJoin::Bevel;
+    ShapeRendering antiAlias = ShapeRendering::AntiAliased;
     bool strokeFirst = false;
 
     void operator=(const RenderStroke& rhs)
