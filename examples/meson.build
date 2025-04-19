@@ -8,10 +8,12 @@ if target_opengles
     examples_compiler_flags += '-DTHORVG_GL_TARGET_GLES=1'
 endif
 
-examples_dep = [dependency('sdl2')]
+# dependencies for sdl2 for windows are described in the corresponding cross file
+examples_dep = [dependency('sdl2', required : host_machine.system() not in ['emscripten', 'windows'])]
 
 if all_engines or get_option('engines').contains('wg')
-    examples_dep += dependency('wgpu_native')
+    # dependencies for webgpu for windows are described in the corresponding cross file
+    examples_dep += dependency('wgpu_native', required : host_machine.system() not in ['emscripten', 'windows'])
     if host_machine.system() == 'darwin'
         add_languages('objcpp')
         examples_dep += declare_dependency(link_args: ['-lobjc', '-framework', 'Cocoa', '-framework', 'CoreVideo', '-framework', 'IOKit', '-framework', 'QuartzCore'])
