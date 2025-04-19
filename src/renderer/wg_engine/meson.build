@@ -21,10 +21,8 @@ source_file = [
     'tvgWgShaderTypes.cpp'
 ]
 
-wgpu_dep = []
-if host_machine.system() != 'emscripten'
-    wgpu_dep = dependency('wgpu_native')
-endif
+# dependencies for webgpu for windows are described in the corresponding cross file
+wgpu_dep = dependency('wgpu_native', required : host_machine.system() not in ['emscripten', 'windows'])
 
 engine_dep += [declare_dependency(
     dependencies        : wgpu_dep,

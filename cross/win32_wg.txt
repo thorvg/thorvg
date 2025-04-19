@@ -1,0 +1,15 @@
+[binaries]
+c     = 'gcc'
+cpp   = 'g++'
+ar    = 'ar'
+strip = 'strip'
+
+[built-in options]
+cpp_args      = ['-I../build/include']
+cpp_link_args = ['-L../build/lib', '-lwgpu_native.dll', '-lSDL2main', '-lSDL2.dll', '-lmingw32']
+
+[host_machine]
+system     = 'windows'
+cpu_family = 'x86_64'
+cpu        = 'x86_64'
+endian     = 'little'
