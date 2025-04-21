@@ -320,13 +320,13 @@ struct ShapeImpl : Shape
     bool strokeFirst()
     {
         if (!rs.stroke) return true;
-        return rs.stroke->strokeFirst;
+        return rs.stroke->first;
     }
 
-    void strokeFirst(bool strokeFirst)
+    void strokeFirst(bool first)
     {
         if (!rs.stroke) rs.stroke = new RenderStroke();
-        rs.stroke->strokeFirst = strokeFirst;
+        rs.stroke->first = first;
         impl.mark(RenderUpdateFlag::Stroke);
     }
 

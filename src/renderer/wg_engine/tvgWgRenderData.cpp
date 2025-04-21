@@ -366,7 +366,7 @@ void WgRenderDataShape::updateAABB(const Matrix& tr) {
 void WgRenderDataShape::updateMeshes(WgContext& context, const RenderShape &rshape, const Matrix& tr, WgGeometryBufferPool* pool)
 {
     releaseMeshes(context);
-    strokeFirst = rshape.stroke ? rshape.stroke->strokeFirst : false;
+    strokeFirst = rshape.strokeFirst();
 
     // get object scale
     float scale = std::max(std::min(length(Point{tr.e11 + tr.e12,tr.e21 + tr.e22}), 8.0f), 1.0f);

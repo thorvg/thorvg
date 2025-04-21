@@ -1357,7 +1357,7 @@ bool GlRenderer::renderShape(RenderData data)
         }
     };
 
-    if (sdata->rshape->stroke && sdata->rshape->stroke->strokeFirst) {
+    if (sdata->rshape->strokeFirst()) {
         processStroke();
         processFill();
     } else {

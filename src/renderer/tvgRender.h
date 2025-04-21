@@ -150,7 +150,7 @@ struct RenderStroke
     RenderTrimPath trim;
     StrokeCap cap = StrokeCap::Square;
     StrokeJoin join = StrokeJoin::Bevel;
-    bool strokeFirst = false;
+    bool first = false;
 
     void operator=(const RenderStroke& rhs)
     {
@@ -174,7 +174,7 @@ struct RenderStroke
         miterlimit = rhs.miterlimit;
         cap = rhs.cap;
         join = rhs.join;
-        strokeFirst = rhs.strokeFirst;
+        first = rhs.first;
         trim = rhs.trim;
     }
 
@@ -211,6 +211,11 @@ struct RenderShape
     {
         if (!stroke) return false;
         return stroke->trim.valid();
+    }
+
+    bool strokeFirst() const
+    {
+        return (stroke && stroke->first) ? true : false;
     }
 
     float strokeWidth() const

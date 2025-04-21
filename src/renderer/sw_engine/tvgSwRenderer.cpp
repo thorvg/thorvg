@@ -85,7 +85,7 @@ struct SwShapeTask : SwTask
        Additionally, the stroke style should not be dashed. */
     bool antialiasing(float strokeWidth)
     {
-        return strokeWidth < 2.0f || rshape->stroke->dash.count > 0 || rshape->stroke->strokeFirst || rshape->trimpath() || rshape->stroke->color.a < 255;
+        return strokeWidth < 2.0f || rshape->stroke->dash.count > 0 || rshape->stroke->first || rshape->trimpath() || rshape->stroke->color.a < 255;
     }
 
     float validStrokeWidth(bool clipper)
@@ -418,7 +418,7 @@ bool SwRenderer::renderShape(RenderData data)
     if (task->opacity == 0) return true;
 
     //Main raster stage
-    if (task->rshape->stroke && task->rshape->stroke->strokeFirst) {
+    if (task->rshape->strokeFirst()) {
         _renderStroke(task, surface, task->opacity);
         _renderFill(task, surface, task->opacity);
     } else {
