@@ -196,7 +196,7 @@
 /************************************************************************/
 
 constexpr auto PIXEL_BITS = 8;   //must be at least 6 bits!
-constexpr auto ONE_PIXEL = (1L << PIXEL_BITS);
+constexpr auto ONE_PIXEL = (1 << PIXEL_BITS);
 
 using Area = long;
 
