@@ -1,4 +1,5 @@
 source_file = [
+   'tvgGl.h',
    'tvgGlCommon.h',
    'tvgGlGpuBuffer.h',
    'tvgGlList.h',
@@ -9,6 +10,7 @@ source_file = [
    'tvgGlRenderTask.h',
    'tvgGlShader.h',
    'tvgGlShaderSrc.h',
+   'tvgGl.cpp',
    'tvgGlGeometry.cpp',
    'tvgGlGpuBuffer.cpp',
    'tvgGlProgram.cpp',
@@ -27,9 +29,9 @@ if host_machine.system() == 'darwin'
     compiler_flags += ['-Wno-deprecated']     #for deprecated opengl
 elif cc.get_id() == 'emscripten'
     target_opengles = true
-    gl_dep = dependency('GLESv3', required: false)
+    gl_dep = dependency('GLESv2', required: false)
 else
-    #find a opengl library with fallbacks
+    # find a opengl library with fallbacks
     gl_dep = dependency('GL', required: false)
 
     if not gl_dep.found()
@@ -37,12 +39,12 @@ else
     endif
 
     if not gl_dep.found()
-        gl_dep = dependency('GLESv3', required: false)
+        gl_dep = dependency('GLESv2', required: false)
         target_opengles = true
     endif
 
     if not gl_dep.found()
-        gl_dep = meson.get_compiler('cpp').find_library('GLESv3')
+        gl_dep = meson.get_compiler('cpp').find_library('GLESv2')
         target_opengles = true
     endif
 endif
@@ -55,7 +57,6 @@ endif
 
 engine_dep += [declare_dependency(
     compile_args        : gl_target_profile,
-    dependencies        : gl_dep,
     include_directories : include_directories('.'),
     sources             : source_file,
 )]

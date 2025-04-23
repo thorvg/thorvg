@@ -24,40 +24,9 @@
 #define _TVG_GL_COMMON_H_
 
 #include <assert.h>
-
-#if defined (THORVG_GL_TARGET_GLES)
-    #include <GLES3/gl3.h>
-    #define TVG_REQUIRE_GL_MAJOR_VER 3
-    #define TVG_REQUIRE_GL_MINOR_VER 0
-#else
-    #if defined(__APPLE__) || defined(__MACH__)
-        #include <OpenGL/gl3.h>
-    #else
-        #define GL_GLEXT_PROTOTYPES 1
-        #include <GL/gl.h>
-    #endif
-    #define TVG_REQUIRE_GL_MAJOR_VER 3
-    #define TVG_REQUIRE_GL_MINOR_VER 3
-#endif
-#include "tvgCommon.h"
+#include "tvgGl.h"
 #include "tvgRender.h"
 #include "tvgMath.h"
-
-#ifdef __EMSCRIPTEN__
-    #include <emscripten/html5_webgl.h>
-    // query GL Error on WebGL is very slow, so disable it on WebGL
-    #define GL_CHECK(x) x
-#else
-    #define GL_CHECK(x) \
-        x; \
-        do { \
-          GLenum glError = glGetError(); \
-          if(glError != GL_NO_ERROR) { \
-            TVGERR("GL_ENGINE", "glGetError() = %i (0x%.8x)", glError, glError); \
-            assert(0); \
-          } \
-        } while(0)
-#endif
 
 #define MIN_GL_STROKE_WIDTH 1.0f
 

@@ -327,6 +327,7 @@ struct GlWindow : Window
         if (!initialized) return;
 
 #ifdef THORVG_GL_TARGET_GLES
+        SDL_SetHint(SDL_HINT_OPENGL_ES_DRIVER, "1"); // important for windows
         SDL_GL_SetAttribute(SDL_GL_CONTEXT_PROFILE_MASK, SDL_GL_CONTEXT_PROFILE_ES);
         SDL_GL_SetAttribute(SDL_GL_CONTEXT_MAJOR_VERSION, 3);
         SDL_GL_SetAttribute(SDL_GL_CONTEXT_MINOR_VERSION, 0);
@@ -353,7 +354,6 @@ struct GlWindow : Window
         //Free in the reverse order of their creation.
         delete(canvas);
         canvas = nullptr;
-
         SDL_GL_DeleteContext(context);
     }
 

@@ -1527,15 +1527,10 @@ GlRenderer* GlRenderer::gen(TVG_UNUSED uint32_t threads)
 {
     //initialize engine
     if (rendererCnt == -1) {
-        //TODO: GL minimum version check, should be replaced with the runtime linking in GlRenderer::init()
-        GLint vMajor, vMinor;
-        glGetIntegerv(GL_MAJOR_VERSION, &vMajor);
-        glGetIntegerv(GL_MINOR_VERSION, &vMinor);
-        if (vMajor < TVG_REQUIRE_GL_MAJOR_VER || (vMajor ==  TVG_REQUIRE_GL_MAJOR_VER && vMinor <  TVG_REQUIRE_GL_MINOR_VER)) {
-            TVGERR("GL_ENGINE", "OpenGL/ES version is not satisfied. Current: v%d.%d, Required: v%d.%d", vMajor, vMinor, TVG_REQUIRE_GL_MAJOR_VER, TVG_REQUIRE_GL_MINOR_VER);
+        if (!initOpenGL()) {
+            TVGERR("GL_ENGINE", "initOpenGL() failed");
             return nullptr;
-        }
-        TVGLOG("GL_ENGINE", "OpenGL/ES version = v%d.%d", vMajor, vMinor);
+        }    
         rendererCnt = 0;
     }
 
