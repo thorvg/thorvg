@@ -66,9 +66,7 @@ public:
     bool render(RenderCompositor* cmp, const RenderEffect* effect, bool direct) override;
     void dispose(RenderEffect* effect) override;
 
-    static SwRenderer* gen();
-    static bool init(uint32_t threads);
-    static int32_t init();
+    static SwRenderer* gen(uint32_t threads);
     static bool term();
 
 private:

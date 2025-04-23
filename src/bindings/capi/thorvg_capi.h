@@ -108,18 +108,6 @@ typedef struct _Tvg_Accessor Tvg_Accessor;
 
 
 /**
-* @brief Enumeration specifying the engine type used for the graphics backend. For multiple backends bitwise operation is allowed.
-*
-* @ingroup ThorVGCapi_Initializer
-*/
-typedef enum {
-    TVG_ENGINE_SW = (1 << 1),   ///< CPU rasterizer
-    TVG_ENGINE_GL = (1 << 2),   ///< OpenGL rasterizer
-    TVG_ENGINE_WG = (1 << 3)    ///< WebGPU rasterizer
-} Tvg_Engine;
-
-
-/**
  * @brief Enumeration specifying the result from the APIs.
  *
  * All ThorVG APIs could potentially return one of the values in the list.
@@ -342,43 +330,36 @@ typedef struct
 /* Engine API                                                           */
 /************************************************************************/
 /*!
-* @brief Initializes TVG engines.
+* @brief Initializes the ThorVG engine.
 *
-* TVG requires the running-engine environment.
-* TVG runs its own task-scheduler for parallelizing rendering tasks efficiently.
-* You can indicate the number of threads, the count of which is designated @p threads.
-* In the initialization step, TVG will generate/spawn the threads as set by @p threads count.
+* ThorVG requires an active runtime environment to operate.
+* Internally, it utilizes a task scheduler to efficiently parallelize rendering operations.
+* You can specify the number of worker threads using the @p threads parameter.
+* During initialization, ThorVG will spawn the specified number of threads.
 *
-* @param[in] engine_method The engine types to initialize. This is relative to the Canvas types, in which it will be used. For multiple backends bitwise operation is allowed.
-* @param[in] threads The number of additional threads used to perform rendering. Zero indicates only the main thread is to be used.
+* @param[in] threads The number of worker threads to create. A value of zero indicates that only the main thread will be used.
 *
 * @return Tvg_Result enumeration.
-* @retval TVG_RESULT_INVALID_ARGUMENT Unknown engine type.
-* @retval TVG_RESULT_NOT_SUPPORTED Unsupported engine type.
 *
-* @note The Initializer keeps track of the number of times it was called. Threads count is fixed at the first init() call.
+* @note The initializer uses internal reference counting to track multiple calls.
+*       The number of threads is fixed on the first call to tvg_engine_init() and cannot be changed in subsequent calls.
 * @see tvg_engine_term()
-* @see Tvg_Engine
 */
-TVG_API Tvg_Result tvg_engine_init(Tvg_Engine engine_method, unsigned threads);
+TVG_API Tvg_Result tvg_engine_init(unsigned threads);
 
 
 /*!
-* @brief Terminates TVG engines.
+* @brief Terminates the ThorVG engine.
 *
-* It should be called in case of termination of the TVG client with the same engine types as were passed when tvg_engine_init() was called.
-*
-* @param engine_method The engine types to terminate. This is relative to the Canvas types, in which it will be used. For multiple backends bitwise operation is allowed
+* Cleans up resources and stops any internal threads initialized by tvg_engine_init().
 *
 * @return Tvg_Result enumeration.
-* @retval TVG_RESULT_INSUFFICIENT_CONDITION Nothing to be terminated.
-* @retval TVG_RESULT_INVALID_ARGUMENT Unknown engine type.
-* @retval TVG_RESULT_NOT_SUPPORTED Unsupported engine type.
+* @retval TVG_RESULT_INSUFFICIENT_CONDITION Returned if there is nothing to terminate (e.g., tvg_engine_init() was not called).
 *
+* @note The initializer maintains a reference count for safe repeated use. Only the final call to tvg_engine_term() will fully shut down the engine.
 * @see tvg_engine_init()
-* @see Tvg_Engine
 */
-TVG_API Tvg_Result tvg_engine_term(Tvg_Engine engine_method);
+TVG_API Tvg_Result tvg_engine_term();
 
 
 /**

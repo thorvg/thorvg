@@ -116,6 +116,8 @@ namespace tvg {
     {
         std::free(ptr);
     }
+
+    extern int engineInit;
 }
 
 #endif //_TVG_COMMON_H_

@@ -21,6 +21,7 @@
  */
 
 #include "tvgCanvas.h"
+#include "tvgTaskScheduler.h"
 #include "tvgLoadModule.h"
 
 #ifdef THORVG_SW_RASTER_SUPPORT
@@ -28,18 +29,13 @@
 #endif
 
 
-SwCanvas::SwCanvas()
-{
-#ifdef THORVG_SW_RASTER_SUPPORT
-    pImpl->renderer = SwRenderer::gen();
-    pImpl->renderer->ref();
-#endif
-}
-
+SwCanvas::SwCanvas() = default;
 
 SwCanvas::~SwCanvas()
 {
-    //TODO:
+#ifdef THORVG_SW_RASTER_SUPPORT
+    SwRenderer::term();
+#endif
 }
 
 
@@ -76,8 +72,13 @@ Result SwCanvas::target(uint32_t* buffer, uint32_t stride, uint32_t w, uint32_t 
 SwCanvas* SwCanvas::gen() noexcept
 {
 #ifdef THORVG_SW_RASTER_SUPPORT
-    if (SwRenderer::init() <= 0) return nullptr;
-    return new SwCanvas;
+    if (engineInit > 0) {
+        auto renderer = SwRenderer::gen(TaskScheduler::threads());
+        renderer->ref();
+        auto ret = new SwCanvas;
+        ret->pImpl->renderer = renderer;
+        return ret;
+    }
 #endif
     return nullptr;
 }
