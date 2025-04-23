@@ -507,9 +507,10 @@ private:
 int init()
 {
 #ifdef THORVG_WG_RASTER_SUPPORT
-    TvgWgEngine::init();
-#endif
+    return TvgWgEngine::init();
+#else
     return 0;
+#endif
 }
 
 
