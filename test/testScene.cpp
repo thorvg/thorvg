@@ -78,27 +78,27 @@ TEST_CASE("Scene Clear", "[tvgScene]")
 TEST_CASE("Scene Clear And Reuse Shape", "[tvgScene]")
 {
     REQUIRE(Initializer::init(0) == Result::Success);
+    {
+        auto canvas = unique_ptr<SwCanvas>(SwCanvas::gen());
+        REQUIRE(canvas);
 
-    auto canvas = unique_ptr<SwCanvas>(SwCanvas::gen());
-    REQUIRE(canvas);
+        auto scene = Scene::gen();
+        REQUIRE(scene);
 
-    auto scene = Scene::gen();
-    REQUIRE(scene);
+        auto shape = Shape::gen();
+        REQUIRE(shape);
+        REQUIRE(shape->ref() == 1);
 
-    auto shape = Shape::gen();
-    REQUIRE(shape);
-    REQUIRE(shape->ref() == 1);
+        REQUIRE(scene->push(shape) == Result::Success);
+        REQUIRE(canvas->push(scene) == Result::Success);
+        REQUIRE(canvas->update() == Result::Success);
 
-    REQUIRE(scene->push(shape) == Result::Success);
-    REQUIRE(canvas->push(scene) == Result::Success);
-    REQUIRE(canvas->update() == Result::Success);
+        //No deallocate shape.
+        REQUIRE(scene->remove() == Result::Success);
 
-    //No deallocate shape.
-    REQUIRE(scene->remove() == Result::Success);
-
-    //Reuse shape.
-    REQUIRE(scene->push(shape) == Result::Success);
-    REQUIRE(shape->unref() == 1); //The scene still holds 1.
-
+        //Reuse shape.
+        REQUIRE(scene->push(shape) == Result::Success);
+        REQUIRE(shape->unref() == 1); //The scene still holds 1.
+    }
     REQUIRE(Initializer::term() == Result::Success);
 }

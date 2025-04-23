@@ -71,30 +71,30 @@ TEST_CASE("Load RAW Data", "[tvgPicture]")
 TEST_CASE("Load RAW file and render", "[tvgPicture]")
 {
     REQUIRE(Initializer::init(0) == Result::Success);
+    {
+        auto canvas = unique_ptr<SwCanvas>(SwCanvas::gen());
+        REQUIRE(canvas);
 
-    auto canvas = unique_ptr<SwCanvas>(SwCanvas::gen());
-    REQUIRE(canvas);
+        uint32_t buffer[100*100];
+        REQUIRE(canvas->target(buffer, 100, 100, 100, ColorSpace::ABGR8888) == Result::Success);
 
-    uint32_t buffer[100*100];
-    REQUIRE(canvas->target(buffer, 100, 100, 100, ColorSpace::ABGR8888) == Result::Success);
+        ifstream file(TEST_DIR"/rawimage_200x300.raw");
+        if (!file.is_open()) return;
+        auto data = (uint32_t*)malloc(sizeof(uint32_t) * (200*300));
+        file.read(reinterpret_cast<char *>(data), sizeof (uint32_t) * 200 * 300);
+        file.close();
 
-    ifstream file(TEST_DIR"/rawimage_200x300.raw");
-    if (!file.is_open()) return;
-    auto data = (uint32_t*)malloc(sizeof(uint32_t) * (200*300));
-    file.read(reinterpret_cast<char *>(data), sizeof (uint32_t) * 200 * 300);
-    file.close();
+        auto picture = Picture::gen();
+        REQUIRE(picture);
 
-    auto picture = Picture::gen();
-    REQUIRE(picture);
+        REQUIRE(picture->load(data, 200, 300, ColorSpace::ARGB8888, false) == Result::Success);
+        REQUIRE(picture->size(100, 150) == Result::Success);
 
-    REQUIRE(picture->load(data, 200, 300, ColorSpace::ARGB8888, false) == Result::Success);
-    REQUIRE(picture->size(100, 150) == Result::Success);
+        REQUIRE(canvas->push(picture) == Result::Success);
 
-    REQUIRE(canvas->push(picture) == Result::Success);
-
+        free(data);
+    }
     REQUIRE(Initializer::term() == Result::Success);
-
-    free(data);
 }
 
 TEST_CASE("Picture Size", "[tvgPicture]")
@@ -203,28 +203,28 @@ TEST_CASE("Load SVG Data", "[tvgPicture]")
 TEST_CASE("Load SVG file and render", "[tvgPicture]")
 {
     REQUIRE(Initializer::init(0) == Result::Success);
+    {
+        auto canvas = unique_ptr<SwCanvas>(SwCanvas::gen());
+        REQUIRE(canvas);
 
-    auto canvas = unique_ptr<SwCanvas>(SwCanvas::gen());
-    REQUIRE(canvas);
+        auto buffer = new uint32_t[1000*1000];
+        if (!buffer) return;
 
-    auto buffer = new uint32_t[1000*1000];
-    if (!buffer) return;
+        REQUIRE(canvas->target(buffer, 1000, 1000, 1000, ColorSpace::ABGR8888) == Result::Success);
 
-    REQUIRE(canvas->target(buffer, 1000, 1000, 1000, ColorSpace::ABGR8888) == Result::Success);
+        auto picture = Picture::gen();
+        REQUIRE(picture);
 
-    auto picture = Picture::gen();
-    REQUIRE(picture);
+        REQUIRE(picture->load(TEST_DIR"/tag.svg") == Result::Success);
+        REQUIRE(picture->size(100, 100) == Result::Success);
 
-    REQUIRE(picture->load(TEST_DIR"/tag.svg") == Result::Success);
-    REQUIRE(picture->size(100, 100) == Result::Success);
+        REQUIRE(canvas->push(picture) == Result::Success);
+        REQUIRE(canvas->draw() == Result::Success);
+        REQUIRE(canvas->sync() == Result::Success);
 
-    REQUIRE(canvas->push(picture) == Result::Success);
-    REQUIRE(canvas->draw() == Result::Success);
-    REQUIRE(canvas->sync() == Result::Success);
-
+        delete[] buffer;
+    }
     REQUIRE(Initializer::term() == Result::Success);
-
-    delete[] buffer;
 }
 
 #endif
@@ -275,22 +275,22 @@ TEST_CASE("Load PNG file from data", "[tvgPicture]")
 TEST_CASE("Load PNG file and render", "[tvgPicture]")
 {
     REQUIRE(Initializer::init(0) == Result::Success);
+    {
+        auto canvas = unique_ptr<SwCanvas>(SwCanvas::gen());
+        REQUIRE(canvas);
 
-    auto canvas = unique_ptr<SwCanvas>(SwCanvas::gen());
-    REQUIRE(canvas);
+        uint32_t buffer[100*100];
+        REQUIRE(canvas->target(buffer, 100, 100, 100, ColorSpace::ABGR8888) == Result::Success);
 
-    uint32_t buffer[100*100];
-    REQUIRE(canvas->target(buffer, 100, 100, 100, ColorSpace::ABGR8888) == Result::Success);
+        auto picture = Picture::gen();
+        REQUIRE(picture);
 
-    auto picture = Picture::gen();
-    REQUIRE(picture);
+        REQUIRE(picture->load(TEST_DIR"/test.png") == Result::Success);
+        REQUIRE(picture->opacity(192) == Result::Success);
+        REQUIRE(picture->scale(5.0) == Result::Success);
 
-    REQUIRE(picture->load(TEST_DIR"/test.png") == Result::Success);
-    REQUIRE(picture->opacity(192) == Result::Success);
-    REQUIRE(picture->scale(5.0) == Result::Success);
-
-    REQUIRE(canvas->push(picture) == Result::Success);
-
+        REQUIRE(canvas->push(picture) == Result::Success);
+    }
     REQUIRE(Initializer::term() == Result::Success);
 }
 
@@ -345,20 +345,21 @@ TEST_CASE("Load JPG file from data", "[tvgPicture]")
 TEST_CASE("Load JPG file and render", "[tvgPicture]")
 {
     REQUIRE(Initializer::init(0) == Result::Success);
+    {
 
-    auto canvas = unique_ptr<SwCanvas>(SwCanvas::gen());
-    REQUIRE(canvas);
+        auto canvas = unique_ptr<SwCanvas>(SwCanvas::gen());
+        REQUIRE(canvas);
 
-    uint32_t buffer[100*100];
-    REQUIRE(canvas->target(buffer, 100, 100, 100, ColorSpace::ABGR8888) == Result::Success);
+        uint32_t buffer[100*100];
+        REQUIRE(canvas->target(buffer, 100, 100, 100, ColorSpace::ABGR8888) == Result::Success);
 
-    auto picture = Picture::gen();
-    REQUIRE(picture);
+        auto picture = Picture::gen();
+        REQUIRE(picture);
 
-    REQUIRE(picture->load(TEST_DIR"/test.jpg") == Result::Success);
+        REQUIRE(picture->load(TEST_DIR"/test.jpg") == Result::Success);
 
-    REQUIRE(canvas->push(picture) == Result::Success);
-
+        REQUIRE(canvas->push(picture) == Result::Success);
+    }
     REQUIRE(Initializer::term() == Result::Success);
 }
 
@@ -410,22 +411,22 @@ TEST_CASE("Load WEBP file from data", "[tvgPicture]")
 TEST_CASE("Load WEBP file and render", "[tvgPicture]")
 {
     REQUIRE(Initializer::init(0) == Result::Success);
+    {
+        auto canvas = unique_ptr<SwCanvas>(SwCanvas::gen());
+        REQUIRE(canvas);
 
-    auto canvas = unique_ptr<SwCanvas>(SwCanvas::gen());
-    REQUIRE(canvas);
+        uint32_t buffer[100*100];
+        REQUIRE(canvas->target(buffer, 100, 100, 100, ColorSpace::ABGR8888) == Result::Success);
 
-    uint32_t buffer[100*100];
-    REQUIRE(canvas->target(buffer, 100, 100, 100, ColorSpace::ABGR8888) == Result::Success);
+        auto picture = Picture::gen();
+        REQUIRE(picture);
 
-    auto picture = Picture::gen();
-    REQUIRE(picture);
+        REQUIRE(picture->load(TEST_DIR"/test.webp") == Result::Success);
+        REQUIRE(picture->opacity(192) == Result::Success);
+        REQUIRE(picture->scale(5.0) == Result::Success);
 
-    REQUIRE(picture->load(TEST_DIR"/test.webp") == Result::Success);
-    REQUIRE(picture->opacity(192) == Result::Success);
-    REQUIRE(picture->scale(5.0) == Result::Success);
-
-    REQUIRE(canvas->push(picture) == Result::Success);
-
+        REQUIRE(canvas->push(picture) == Result::Success);
+    }
     REQUIRE(Initializer::term() == Result::Success);
 }
 

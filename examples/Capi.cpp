@@ -268,7 +268,7 @@ float progress(uint32_t elapsed, float durationInSec)
 
 int main(int argc, char **argv)
 {
-    tvg_engine_init(Tvg_Engine(TVG_ENGINE_SW), 0);
+    tvg_engine_init(4);
 
     SDL_Init(SDL_INIT_VIDEO);
 
@@ -333,7 +333,7 @@ int main(int argc, char **argv)
 
     SDL_Quit();
 
-    tvg_engine_term(Tvg_Engine(TVG_ENGINE_SW));
+    tvg_engine_term();
     
     return 0;
 }

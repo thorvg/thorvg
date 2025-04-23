@@ -34,17 +34,7 @@
 
 #define NOISE_LEVEL 0.5f
 
-static atomic<int32_t> initEngineCnt{};
-static atomic<int32_t> rendererCnt{};
-
-
-static void _termEngine()
-{
-    if (rendererCnt > 0) return;
-
-    //TODO: Clean up global resources
-}
-
+static atomic<int32_t> rendererCnt{-1};
 
 void GlRenderer::clearDisposes()
 {
@@ -88,6 +78,7 @@ void GlRenderer::currentContext()
 
 GlRenderer::GlRenderer()
 {
+    ++rendererCnt;
 }
 
 
@@ -99,7 +90,7 @@ GlRenderer::~GlRenderer()
 
     ARRAY_FOREACH(p, mPrograms) delete(*p);
 
-    if (rendererCnt == 0 && initEngineCnt == 0) _termEngine();
+
 }
 
 
@@ -1520,45 +1511,33 @@ bool GlRenderer::postUpdate()
 }
 
 
-bool GlRenderer::init(uint32_t threads)
-{
-    if ((initEngineCnt++) > 0) return true;
-
-    //TODO: runtime linking?
-
-    return true;
-}
-
-
-int32_t GlRenderer::init()
-{
-    return initEngineCnt;
-}
-
-
 bool GlRenderer::term()
 {
-    if ((--initEngineCnt) > 0) return true;
+    if (rendererCnt > 0) return false;
 
-    initEngineCnt = 0;
+    //TODO: clean up global resources
 
-   _termEngine();
+    rendererCnt = -1;
 
     return true;
 }
 
 
-GlRenderer* GlRenderer::gen()
+GlRenderer* GlRenderer::gen(TVG_UNUSED uint32_t threads)
 {
-    //TODO: GL minimum version check, should be replaced with the runtime linking in GlRenderer::init()
-    GLint vMajor, vMinor;
-    glGetIntegerv(GL_MAJOR_VERSION, &vMajor);
-    glGetIntegerv(GL_MINOR_VERSION, &vMinor);
-    if (vMajor < TVG_REQUIRE_GL_MAJOR_VER || (vMajor ==  TVG_REQUIRE_GL_MAJOR_VER && vMinor <  TVG_REQUIRE_GL_MINOR_VER)) {
-        TVGERR("GL_ENGINE", "OpenGL/ES version is not satisfied. Current: v%d.%d, Required: v%d.%d", vMajor, vMinor, TVG_REQUIRE_GL_MAJOR_VER, TVG_REQUIRE_GL_MINOR_VER);
-        return nullptr;
+    //initialize engine
+    if (rendererCnt == -1) {
+        //TODO: GL minimum version check, should be replaced with the runtime linking in GlRenderer::init()
+        GLint vMajor, vMinor;
+        glGetIntegerv(GL_MAJOR_VERSION, &vMajor);
+        glGetIntegerv(GL_MINOR_VERSION, &vMinor);
+        if (vMajor < TVG_REQUIRE_GL_MAJOR_VER || (vMajor ==  TVG_REQUIRE_GL_MAJOR_VER && vMinor <  TVG_REQUIRE_GL_MINOR_VER)) {
+            TVGERR("GL_ENGINE", "OpenGL/ES version is not satisfied. Current: v%d.%d, Required: v%d.%d", vMajor, vMinor, TVG_REQUIRE_GL_MAJOR_VER, TVG_REQUIRE_GL_MINOR_VER);
+            return nullptr;
+        }
+        TVGLOG("GL_ENGINE", "OpenGL/ES version = v%d.%d", vMajor, vMinor);
+        rendererCnt = 0;
     }
-    TVGLOG("GL_ENGINE", "OpenGL/ES version = v%d.%d", vMajor, vMinor);
 
-    return new GlRenderer();
+    return new GlRenderer;
 }

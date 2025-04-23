@@ -40,15 +40,15 @@ extern "C" {
 /* Engine API                                                           */
 /************************************************************************/
 
-TVG_API Tvg_Result tvg_engine_init(Tvg_Engine engine_method, unsigned threads)
+TVG_API Tvg_Result tvg_engine_init(unsigned threads)
 {
-    return (Tvg_Result) Initializer::init(threads, CanvasEngine(engine_method));
+    return (Tvg_Result) Initializer::init(threads);
 }
 
 
-TVG_API Tvg_Result tvg_engine_term(Tvg_Engine engine_method)
+TVG_API Tvg_Result tvg_engine_term()
 {
-    return (Tvg_Result) Initializer::term(CanvasEngine(engine_method));
+    return (Tvg_Result) Initializer::term();
 }
 
 

@@ -29,16 +29,7 @@
 /* Internal Class Implementation                                        */
 /************************************************************************/
 
-static atomic<int32_t> initEngineCnt{};
-static atomic<int32_t> rendererCnt{};
-
-
-static void _termEngine()
-{
-    if (rendererCnt > 0) return;
-
-    //TODO:
-}
+static atomic<int32_t> rendererCnt{-1};
 
 
 void WgRenderer::release()
@@ -426,6 +417,8 @@ WgRenderer::WgRenderer()
     } else {
         mBufferPool.pool = WgGeometryBufferPool::instance();
     }
+
+    ++rendererCnt;
 }
 
 
@@ -436,8 +429,6 @@ WgRenderer::~WgRenderer()
     if (mBufferPool.individual) delete(mBufferPool.pool);
 
     --rendererCnt;
-
-    if (rendererCnt == 0 && initEngineCnt == 0) _termEngine();
 }
 
 
@@ -648,36 +639,24 @@ bool WgRenderer::postUpdate()
 }
 
 
-bool WgRenderer::init(TVG_UNUSED uint32_t threads)
-{
-    if ((initEngineCnt++) > 0) return true;
-
-    //TODO: global engine init
-
-    return true;
-}
-
-
-int32_t WgRenderer::init()
-{
-    return initEngineCnt;
-}
-
-
 bool WgRenderer::term()
 {
-    if ((--initEngineCnt) > 0) return true;
+    if (rendererCnt > 0) return false;
 
-    initEngineCnt = 0;
+    //TODO: clean up global resources
 
-    _termEngine();
+    rendererCnt = -1;
 
     return true;
 }
 
 
-WgRenderer* WgRenderer::gen()
+WgRenderer* WgRenderer::gen(TVG_UNUSED uint32_t threads)
 {
-    ++rendererCnt;
-    return new WgRenderer();
+    //initialize engine
+    if (rendererCnt == -1) {
+        //TODO:
+    }
+
+    return new WgRenderer;
 }

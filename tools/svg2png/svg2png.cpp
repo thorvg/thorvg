@@ -172,7 +172,7 @@ private:
         if (threads > 0) --threads; 
 
         //Initialize ThorVG Engine
-        if (tvg::Initializer::init(threads, tvg::CanvasEngine::Sw) != tvg::Result::Success) {
+        if (tvg::Initializer::init(threads) != tvg::Result::Success) {
             cout << "Error: Engine is not supported" << endl;
         }
 

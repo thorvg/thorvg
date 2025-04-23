@@ -362,7 +362,7 @@ static bool _rasterMaskedRect(SwSurface* surface, const SwBBox& region, const Re
     //8bit masking channels composition
     if (surface->channelSize != sizeof(uint8_t)) return false;
 
-    TVGLOG("SW_ENGINE", "Masked(%d) Rect [Region: %lu %lu %lu %lu]", (int)surface->compositor->method, region.min.x, region.min.y, region.max.x - region.min.x, region.max.y - region.min.y);
+    TVGLOG("SW_ENGINE", "Masked(%d) Rect [Region: %d %d %d %d]", (int)surface->compositor->method, region.min.x, region.min.y, region.max.x - region.min.x, region.max.y - region.min.y);
 
     auto maskOp = _getMaskOp(surface->compositor->method);
     if (_direct(surface->compositor->method)) return _rasterDirectMaskedRect(surface, region, maskOp, c.a);
@@ -379,7 +379,7 @@ static bool _rasterMattedRect(SwSurface* surface, const SwBBox& region, const Re
     auto cbuffer = surface->compositor->image.buf8 + ((region.min.y * surface->compositor->image.stride + region.min.x) * csize);   //compositor buffer
     auto alpha = surface->alpha(surface->compositor->method);
 
-    TVGLOG("SW_ENGINE", "Matted(%d) Rect [Region: %lu %lu %u %u]", (int)surface->compositor->method, region.min.x, region.min.y, w, h);
+    TVGLOG("SW_ENGINE", "Matted(%d) Rect [Region: %d %d %u %u]", (int)surface->compositor->method, region.min.x, region.min.y, w, h);
     
     //32bits channels
     if (surface->channelSize == sizeof(uint32_t)) {
@@ -917,7 +917,7 @@ static bool _rasterScaledMattedImage(SwSurface* surface, const SwImage* image, c
     auto cbuffer = surface->compositor->image.buf8 + (region.min.y * surface->compositor->image.stride + region.min.x) * csize;
     auto alpha = surface->alpha(surface->compositor->method);
 
-    TVGLOG("SW_ENGINE", "Scaled Matted(%d) Image [Region: %lu %lu %lu %lu]", (int)surface->compositor->method, region.min.x, region.min.y, region.max.x - region.min.x, region.max.y - region.min.y);
+    TVGLOG("SW_ENGINE", "Scaled Matted(%d) Image [Region: %d %d %d %d]", (int)surface->compositor->method, region.min.x, region.min.y, region.max.x - region.min.x, region.max.y - region.min.y);
 
     auto scaleMethod = image->scale < DOWN_SCALE_TOLERANCE ? _interpDownScaler : _interpUpScaler;
     auto sampleSize = _sampleSize(image->scale);
@@ -1039,7 +1039,7 @@ static bool _rasterDirectMattedImage(SwSurface* surface, const SwImage* image, c
     auto sbuffer = image->buf32 + (region.min.y + image->oy) * image->stride + (region.min.x + image->ox);
     auto cbuffer = surface->compositor->image.buf8 + (region.min.y * surface->compositor->image.stride + region.min.x) * csize; //compositor buffer
 
-    TVGLOG("SW_ENGINE", "Direct Matted(%d) Image  [Region: %lu %lu %u %u]", (int)surface->compositor->method, region.min.x, region.min.y, w, h);
+    TVGLOG("SW_ENGINE", "Direct Matted(%d) Image  [Region: %d %d %u %u]", (int)surface->compositor->method, region.min.x, region.min.y, w, h);
 
     //32 bits
     if (surface->channelSize == sizeof(uint32_t)) {
@@ -1269,7 +1269,7 @@ static bool _rasterGradientMaskedRect(SwSurface* surface, const SwBBox& region, 
 {
     auto method = surface->compositor->method;
 
-    TVGLOG("SW_ENGINE", "Masked(%d) Gradient [Region: %lu %lu %lu %lu]", (int)method, region.min.x, region.min.y, region.max.x - region.min.x, region.max.y - region.min.y);
+    TVGLOG("SW_ENGINE", "Masked(%d) Gradient [Region: %d %d %d %d]", (int)method, region.min.x, region.min.y, region.max.x - region.min.x, region.max.y - region.min.y);
 
     auto maskOp = _getMaskOp(method);
 
@@ -1290,7 +1290,7 @@ static bool _rasterGradientMattedRect(SwSurface* surface, const SwBBox& region, 
     auto cbuffer = surface->compositor->image.buf8 + (region.min.y * surface->compositor->image.stride + region.min.x) * csize;
     auto alpha = surface->alpha(surface->compositor->method);
 
-    TVGLOG("SW_ENGINE", "Matted(%d) Gradient [Region: %lu %lu %u %u]", (int)surface->compositor->method, region.min.x, region.min.y, w, h);
+    TVGLOG("SW_ENGINE", "Matted(%d) Gradient [Region: %d %d %u %u]", (int)surface->compositor->method, region.min.x, region.min.y, w, h);
 
     for (uint32_t y = 0; y < h; ++y) {
         fillMethod()(fill, buffer, region.min.y + y, region.min.x, w, cbuffer, alpha, csize, 255);

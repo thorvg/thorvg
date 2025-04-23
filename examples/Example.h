@@ -148,10 +148,9 @@ struct Window
     bool clearBuffer = false;
     bool print = false;
 
-    Window(tvg::CanvasEngine engine, Example* example, uint32_t width, uint32_t height, uint32_t threadsCnt)
+    Window(Example* example, uint32_t width, uint32_t height, uint32_t threadsCnt)
     {
-        //Initialize ThorVG Engine (engine: raster method)
-        if (!verify(tvg::Initializer::init(threadsCnt, engine), "Failed to init ThorVG engine!")) return;
+        if (!verify(tvg::Initializer::init(threadsCnt), "Failed to init ThorVG engine!")) return;
 
         //Initialize the SDL
         SDL_Init(SDL_INIT_VIDEO);
@@ -284,7 +283,7 @@ struct Window
 
 struct SwWindow : Window
 {
-    SwWindow(Example* example, uint32_t width, uint32_t height, uint32_t threadsCnt) : Window(tvg::CanvasEngine::Sw, example, width, height, threadsCnt)
+    SwWindow(Example* example, uint32_t width, uint32_t height, uint32_t threadsCnt) : Window(example, width, height, threadsCnt)
     {
         if (!initialized) return;
 
@@ -323,7 +322,7 @@ struct GlWindow : Window
 {
     SDL_GLContext context;
 
-    GlWindow(Example* example, uint32_t width, uint32_t height, uint32_t threadsCnt) : Window(tvg::CanvasEngine::Gl, example, width, height, threadsCnt)
+    GlWindow(Example* example, uint32_t width, uint32_t height, uint32_t threadsCnt) : Window(example, width, height, threadsCnt)
     {
         if (!initialized) return;
 
@@ -383,7 +382,7 @@ struct WgWindow : Window
     WGPUAdapter adapter;
     WGPUDevice device;
 
-    WgWindow(Example* example, uint32_t width, uint32_t height, uint32_t threadsCnt) : Window(tvg::CanvasEngine::Wg, example, width, height, threadsCnt)
+    WgWindow(Example* example, uint32_t width, uint32_t height, uint32_t threadsCnt) : Window(example, width, height, threadsCnt)
     {
         if (!initialized) return;
 
@@ -484,7 +483,7 @@ struct WgWindow : Window
 #else
 struct WgWindow : Window
 {
-    WgWindow(Example* example, uint32_t width, uint32_t height, uint32_t threadsCnt) : Window(tvg::CanvasEngine::Wg, example, width, height, threadsCnt)
+    WgWindow(Example* example, uint32_t width, uint32_t height, uint32_t threadsCnt) : Window(example, width, height, threadsCnt)
     {
         cout << "webgpu driver is not detected!" << endl;
     }
@@ -540,20 +539,20 @@ bool verify(tvg::Result result, string failMsg)
 
 int main(Example* example, int argc, char **argv, bool clearBuffer = false, uint32_t width = 800, uint32_t height = 800, uint32_t threadsCnt = 4, bool print = false)
 {
-    auto engine = tvg::CanvasEngine::Sw;
+    auto engine = 0; //0: sw, 1: gl, 2: wg
 
     if (argc > 1) {
-        if (!strcmp(argv[1], "gl")) engine = tvg::CanvasEngine::Gl;
-        if (!strcmp(argv[1], "wg")) engine = tvg::CanvasEngine::Wg;
+        if (!strcmp(argv[1], "gl")) engine = 1;
+        if (!strcmp(argv[1], "wg")) engine = 2;
     }
 
     unique_ptr<Window> window;
 
-    if (engine == tvg::CanvasEngine::Sw) {
+    if (engine == 0) {
         window = unique_ptr<Window>(new SwWindow(example, width, height, threadsCnt));
-    } else if (engine == tvg::CanvasEngine::Gl) {
+    } else if (engine == 1) {
         window = unique_ptr<Window>(new GlWindow(example, width, height, threadsCnt));
-    } else if (engine == tvg::CanvasEngine::Wg) {
+    } else if (engine == 2) {
         window = unique_ptr<Window>(new WgWindow(example, width, height, threadsCnt));
     }
 

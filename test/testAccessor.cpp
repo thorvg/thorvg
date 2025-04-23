@@ -41,46 +41,46 @@ TEST_CASE("Accessor Creation", "[tvgAccessor]")
 TEST_CASE("Set", "[tvgAccessor]")
 {
     REQUIRE(Initializer::init(0) == Result::Success);
-
-    auto canvas = unique_ptr<SwCanvas>(SwCanvas::gen());
-    REQUIRE(canvas);
-
-    uint32_t buffer[100*100];
-    REQUIRE(canvas->target(buffer, 100, 100, 100, ColorSpace::ABGR8888) == Result::Success);
-
-    auto picture = unique_ptr<Picture>(Picture::gen());
-    REQUIRE(picture);
-    REQUIRE(picture->load(TEST_DIR"/logo.svg") == Result::Success);
-
-    auto accessor = unique_ptr<Accessor>(Accessor::gen());
-    REQUIRE(accessor);
-
-    //Case 1
-    REQUIRE(accessor->set(picture.get(), nullptr, nullptr) == Result::InvalidArguments);
-
-    //Case 2
-    Shape* ret = nullptr;
-
-    auto f = [](const tvg::Paint* paint, void* data) -> bool
     {
-        if (paint->type() == Type::Shape) {
-            auto shape = (tvg::Shape*) paint;
-            uint8_t r, g, b;
-            shape->fill(&r, &g, &b);
-            if (r == 37 && g == 47 && b == 53) {
-                shape->fill(0, 0, 255);
-                shape->id = Accessor::id("TestAccessor");
-                *static_cast<Shape**>(data) = shape;
-                return false;
+        auto canvas = unique_ptr<SwCanvas>(SwCanvas::gen());
+        REQUIRE(canvas);
+
+        uint32_t buffer[100*100];
+        REQUIRE(canvas->target(buffer, 100, 100, 100, ColorSpace::ABGR8888) == Result::Success);
+
+        auto picture = unique_ptr<Picture>(Picture::gen());
+        REQUIRE(picture);
+        REQUIRE(picture->load(TEST_DIR"/logo.svg") == Result::Success);
+
+        auto accessor = unique_ptr<Accessor>(Accessor::gen());
+        REQUIRE(accessor);
+
+        //Case 1
+        REQUIRE(accessor->set(picture.get(), nullptr, nullptr) == Result::InvalidArguments);
+
+        //Case 2
+        Shape* ret = nullptr;
+
+        auto f = [](const tvg::Paint* paint, void* data) -> bool
+        {
+            if (paint->type() == Type::Shape) {
+                auto shape = (tvg::Shape*) paint;
+                uint8_t r, g, b;
+                shape->fill(&r, &g, &b);
+                if (r == 37 && g == 47 && b == 53) {
+                    shape->fill(0, 0, 255);
+                    shape->id = Accessor::id("TestAccessor");
+                    *static_cast<Shape**>(data) = shape;
+                    return false;
+                }
             }
-        }
-        return true;
-    };
+            return true;
+        };
 
-    REQUIRE(accessor->set(picture.get(), f, &ret) == Result::Success);
+        REQUIRE(accessor->set(picture.get(), f, &ret) == Result::Success);
 
-    REQUIRE((ret && ret->id == Accessor::id("TestAccessor")));
-
+        REQUIRE((ret && ret->id == Accessor::id("TestAccessor")));
+    }
     REQUIRE(Initializer::term() == Result::Success);
 }
 

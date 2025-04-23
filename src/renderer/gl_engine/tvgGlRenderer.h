@@ -99,9 +99,7 @@ public:
     bool render(RenderCompositor* cmp, const RenderEffect* effect, bool direct) override;
     void dispose(RenderEffect* effect) override;
 
-    static GlRenderer* gen();
-    static bool init(TVG_UNUSED uint32_t threads);
-    static int32_t init();
+    static GlRenderer* gen(uint32_t threads);
     static bool term();
 
 private:

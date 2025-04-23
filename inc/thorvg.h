@@ -238,18 +238,6 @@ enum class SceneEffect : uint8_t
 
 
 /**
- * @brief Enumeration specifying the engine type used for the graphics backend. For multiple backends bitwise operation is allowed.
- */
-enum class CanvasEngine : uint8_t
-{
-    All = 0,       ///< All feasible rasterizers. @since 1.0
-    Sw = (1 << 1), ///< CPU rasterizer.
-    Gl = (1 << 2), ///< OpenGL rasterizer.
-    Wg = (1 << 3), ///< WebGPU rasterizer. @since 0.15
-};
-
-
-/**
  * @brief Enumeration specifying the ThorVG class type value.
  *
  * ThorVG's drawing objects can return class type values, allowing you to identify the specific class of each object.
@@ -1850,35 +1838,33 @@ class TVG_API Initializer final
 {
 public:
     /**
-     * @brief Initializes TVG engines.
+     * @brief Initializes the ThorVG engine.
      *
-     * TVG requires the running-engine environment.
-     * TVG runs its own task-scheduler for parallelizing rendering tasks efficiently.
-     * You can indicate the number of threads, the count of which is designated @p threads.
-     * In the initialization step, TVG will generate/spawn the threads as set by @p threads count.
+     * ThorVG requires an active runtime environment to operate.
+     * Internally, it utilizes a task scheduler to efficiently parallelize rendering operations.
+     * You can specify the number of worker threads using the @p threads parameter.
+     * During initialization, ThorVG will spawn the specified number of threads.
      *
-     * @param[in] threads The number of additional threads. Zero indicates only the main thread is to be used.
-     * @param[in] engine The engine types to initialize. This is relative to the Canvas types, in which it will be used. For multiple backends bitwise operation is allowed.
+     * @param[in] threads The number of worker threads to create. A value of zero indicates that only the main thread will be used.
      *
-     * @retval Result::NonSupport In case the engine type is not supported on the system.
-     *
-     * @note The Initializer keeps track of the number of times it was called. Threads count is fixed at the first init() call.
+     * @note The initializer uses internal reference counting to track multiple calls.
+     *       The number of threads is fixed on the first call to init() and cannot be changed in subsequent calls.
      * @see Initializer::term()
      */
-    static Result init(uint32_t threads, CanvasEngine engine = tvg::CanvasEngine::All) noexcept;
+    static Result init(uint32_t threads) noexcept;
 
     /**
-     * @brief Terminates TVG engines.
+     * @brief Terminates the ThorVG engine.
      *
-     * @param[in] engine The engine types to terminate. This is relative to the Canvas types, in which it will be used. For multiple backends bitwise operation is allowed
+     * Cleans up resources and stops any internal threads initialized by init().
      *
-     * @retval Result::InsufficientCondition In case there is nothing to be terminated.
-     * @retval Result::NonSupport In case the engine type is not supported on the system.
+     * @retval Result::InsufficientCondition Returned if there is nothing to terminate (e.g., init() was not called).
      *
-     * @note Initializer does own reference counting for multiple calls.
+     * @note The initializer maintains a reference count for safe repeated use.
+     *       Only the final call to term() will fully shut down the engine.
      * @see Initializer::init()
      */
-    static Result term(CanvasEngine engine = tvg::CanvasEngine::All) noexcept;
+    static Result term() noexcept;
 
     /**
      * @brief Retrieves the version of the TVG engine.

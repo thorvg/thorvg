@@ -41,14 +41,12 @@
 /* Internal Class Implementation                                        */
 /************************************************************************/
 
-static int _initCnt = 0;
+namespace tvg {
+    int engineInit = 0;
+}
+
 static uint16_t _version = 0;
 
-//enum class operation helper
-static constexpr bool operator &(CanvasEngine a, CanvasEngine b)
-{
-    return int(a) & int(b);
-}
 
 static bool _buildVersionInfo(uint32_t* major, uint32_t* minor, uint32_t* micro)
 {
@@ -82,34 +80,9 @@ static bool _buildVersionInfo(uint32_t* major, uint32_t* minor, uint32_t* micro)
 /* External Class Implementation                                        */
 /************************************************************************/
 
-Result Initializer::init(uint32_t threads, CanvasEngine engine) noexcept
+Result Initializer::init(uint32_t threads) noexcept
 {
-    auto nonSupport = true;
-
-    if (engine == CanvasEngine::All || engine & CanvasEngine::Sw) {
-        #ifdef THORVG_SW_RASTER_SUPPORT
-            if (!SwRenderer::init(threads)) return Result::FailedAllocation;
-            nonSupport = false;
-        #endif
-    }
-
-    if (engine == CanvasEngine::All || engine & CanvasEngine::Gl) {
-        #ifdef THORVG_GL_RASTER_SUPPORT
-            if (!GlRenderer::init(threads)) return Result::FailedAllocation;
-            nonSupport = false;
-        #endif
-    }
-
-    if (engine == CanvasEngine::All || engine & CanvasEngine::Wg) {
-        #ifdef THORVG_WG_RASTER_SUPPORT
-            if (!WgRenderer::init(threads)) return Result::FailedAllocation;
-            nonSupport = false;
-        #endif
-    }
-
-    if (nonSupport) return Result::NonSupport;
-
-    if (_initCnt++ > 0) return Result::Success;
+    if (engineInit++ > 0) return Result::Success;
 
     if (!_buildVersionInfo(nullptr, nullptr, nullptr)) return Result::Unknown;
 
@@ -121,36 +94,23 @@ Result Initializer::init(uint32_t threads, CanvasEngine engine) noexcept
 }
 
 
-Result Initializer::term(CanvasEngine engine) noexcept
+Result Initializer::term() noexcept
 {
-    if (_initCnt == 0) return Result::InsufficientCondition;
+    if (engineInit == 0) return Result::InsufficientCondition;
 
-    auto nonSupport = true;
+    if (--engineInit > 0) return Result::Success;
 
-    if (engine == CanvasEngine::All || engine & CanvasEngine::Sw) {
-        #ifdef THORVG_SW_RASTER_SUPPORT
-            if (!SwRenderer::term()) return Result::InsufficientCondition;
-            nonSupport = false;
-        #endif
-    }
+    #ifdef THORVG_SW_RASTER_SUPPORT
+        if (!SwRenderer::term()) return Result::InsufficientCondition;
+    #endif
 
-    if (engine == CanvasEngine::All || engine & CanvasEngine::Gl) {
-        #ifdef THORVG_GL_RASTER_SUPPORT
-            if (!GlRenderer::term()) return Result::InsufficientCondition;
-            nonSupport = false;
-        #endif
-    }
+    #ifdef THORVG_GL_RASTER_SUPPORT
+        if (!GlRenderer::term()) return Result::InsufficientCondition;
+    #endif
 
-    if (engine == CanvasEngine::All || engine & CanvasEngine::Wg) {
-        #ifdef THORVG_WG_RASTER_SUPPORT
-            if (!WgRenderer::term()) return Result::InsufficientCondition;
-            nonSupport = false;
-        #endif
-    }
-
-    if (nonSupport) return Result::NonSupport;
-
-    if (--_initCnt > 0) return Result::Success;
+    #ifdef THORVG_WG_RASTER_SUPPORT
+        if (!WgRenderer::term()) return Result::InsufficientCondition;
+    #endif
 
     TaskScheduler::term();
 

@@ -32,8 +32,7 @@
 /************************************************************************/
 /* Internal Class Implementation                                        */
 /************************************************************************/
-static atomic<int32_t> initEngineCnt{};
-static atomic<int32_t> rendererCnt{};
+static atomic<int32_t> rendererCnt{-1};
 static SwMpool* globalMpool = nullptr;
 static uint32_t threadsCnt = 0;
 
@@ -242,15 +241,6 @@ struct SwImageTask : SwTask
 };
 
 
-static void _termEngine()
-{
-    if (rendererCnt > 0) return;
-
-    mpoolTerm(globalMpool);
-    globalMpool = nullptr;
-}
-
-
 static void _renderFill(SwShapeTask* task, SwSurface* surface, uint8_t opacity)
 {
     if (auto fill = task->rshape->fill) {
@@ -280,6 +270,21 @@ static void _renderStroke(SwShapeTask* task, SwSurface* surface, uint8_t opacity
 /* External Class Implementation                                        */
 /************************************************************************/
 
+SwRenderer::SwRenderer()
+{
+    if (TaskScheduler::onthread()) {
+        TVGLOG("SW_RENDERER", "Running on a non-dominant thread!, Renderer(%p)", this);
+        mpool = mpoolInit(threadsCnt);
+        sharedMpool = false;
+    } else {
+        mpool = globalMpool;
+        sharedMpool = true;
+    }
+
+    ++rendererCnt;
+}
+
+
 SwRenderer::~SwRenderer()
 {
     clearCompositors();
@@ -289,8 +294,6 @@ SwRenderer::~SwRenderer()
     if (!sharedMpool) mpoolTerm(mpool);
 
     --rendererCnt;
-
-    if (rendererCnt == 0 && initEngineCnt == 0) _termEngine();
 }
 
 
@@ -777,59 +780,30 @@ RenderData SwRenderer::prepare(const RenderShape& rshape, RenderData data, const
 }
 
 
-SwRenderer::SwRenderer()
-{
-    if (TaskScheduler::onthread()) {
-        TVGLOG("SW_RENDERER", "Running on a non-dominant thread!, Renderer(%p)", this);
-        mpool = mpoolInit(threadsCnt);
-        sharedMpool = false;
-    } else {
-        mpool = globalMpool;
-        sharedMpool = true;
-    }
-}
-
-
-bool SwRenderer::init(uint32_t threads)
-{
-    if ((initEngineCnt++) > 0) return true;
-
-    threadsCnt = threads;
-
-    //Share the memory pool among the renderer
-    globalMpool = mpoolInit(threads);
-    if (!globalMpool) {
-        --initEngineCnt;
-        return false;
-    }
-
-    return true;
-}
-
-
-int32_t SwRenderer::init()
-{
-#ifdef THORVG_SW_OPENMP_SUPPORT
-    omp_set_num_threads(TaskScheduler::threads());
-#endif
-
-    return initEngineCnt;
-}
-
-
 bool SwRenderer::term()
 {
-    if ((--initEngineCnt) > 0) return true;
+    if (rendererCnt > 0) return false;
 
-    initEngineCnt = 0;
-
-   _termEngine();
+    mpoolTerm(globalMpool);
+    globalMpool = nullptr;
+    rendererCnt = -1;
 
     return true;
 }
 
-SwRenderer* SwRenderer::gen()
+
+SwRenderer* SwRenderer::gen(uint32_t threads)
 {
-    ++rendererCnt;
-    return new SwRenderer();
+    //initialize engine
+    if (rendererCnt == -1) {
+#ifdef THORVG_SW_OPENMP_SUPPORT
+        omp_set_num_threads(threads);
+#endif
+        //Share the memory pool among the renderer
+        globalMpool = mpoolInit(threads);
+        threadsCnt = threads;
+        rendererCnt = 0;
+    }
+
+    return new SwRenderer;
 }

@@ -401,20 +401,20 @@ void runWg()
 
 int main(int argc, char **argv)
 {
-    auto engine = tvg::CanvasEngine::Sw;
+    auto engine = 0; //0: sw, 1: gl, 2: wg
 
     if (argc > 1) {
-        if (!strcmp(argv[1], "gl")) engine = tvg::CanvasEngine::Gl;
-        if (!strcmp(argv[1], "wg")) engine = tvg::CanvasEngine::Wg;
+        if (!strcmp(argv[1], "gl")) engine = 1;
+        if (!strcmp(argv[1], "wg")) engine = 2;
     }
 
-    if (tvgexam::verify(tvg::Initializer::init(4, engine))) {
+    if (tvgexam::verify(tvg::Initializer::init(4))) {
 
         SDL_Init(SDL_INIT_VIDEO);
 
-        if (engine == tvg::CanvasEngine::Sw) runSw();
-        else if (engine == tvg::CanvasEngine::Gl) runGl();
-        else if (engine == tvg::CanvasEngine::Wg) runWg();
+        if (engine == 0) runSw();
+        else if (engine == 1) runGl();
+        else if (engine == 2) runWg();
 
         SDL_Quit();
 
