@@ -54,13 +54,13 @@ struct TvgSwEngine : TvgEngineMethod
     ~TvgSwEngine()
     {
         std::free(buffer);
-        Initializer::term(tvg::CanvasEngine::Sw);
+        Initializer::term();
         retrieveFont();
     }
 
     Canvas* init(string&) override
     {
-        Initializer::init(0, tvg::CanvasEngine::Sw);
+        Initializer::init(0);
         loadFont();
         return SwCanvas::gen();
     }
@@ -97,7 +97,7 @@ struct TvgWgEngine : TvgEngineMethod
     ~TvgWgEngine()
     {
         wgpuSurfaceRelease(surface);
-        Initializer::term(tvg::CanvasEngine::Wg);
+        Initializer::term();
         retrieveFont();
     }
 
@@ -112,7 +112,7 @@ struct TvgWgEngine : TvgEngineMethod
         surfaceDesc.nextInChain = &canvasDesc.chain;
         surface = wgpuInstanceCreateSurface(instance, &surfaceDesc);
 
-        Initializer::init(0, tvg::CanvasEngine::Wg);
+        Initializer::init(0);
         loadFont();
         return WgCanvas::gen();
     }
@@ -191,7 +191,7 @@ struct TvgGLEngine : TvgEngineMethod
     ~TvgGLEngine()
     {
         if (context) {
-            Initializer::term(tvg::CanvasEngine::Gl);
+            Initializer::term();
             emscripten_webgl_destroy_context(context);
             context = 0;
         }
@@ -215,7 +215,7 @@ struct TvgGLEngine : TvgEngineMethod
 
         emscripten_webgl_make_context_current(context);
 
-        if (Initializer::init(0, tvg::CanvasEngine::Gl) != Result::Success) return nullptr;
+        if (Initializer::init(0) != Result::Success) return nullptr;
         loadFont();
 
         return GlCanvas::gen();
