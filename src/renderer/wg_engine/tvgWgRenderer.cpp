@@ -383,8 +383,8 @@ bool WgRenderer::target(WGPUDevice device, WGPUInstance instance, void* target, 
         return true;
     }
 
-    // update retnder targets dimentions
-    if ((mTargetSurface.w != width) || (mTargetSurface.h != height)) {
+    // update render targets dimentions
+    if ((mTargetSurface.w != width) || (mTargetSurface.h != height) || (targetTexture != (WGPUTexture)target)) {
         // release render tagets
         mRenderStoragePool.release(mContext);
         mRenderStorageRoot.release(mContext);
