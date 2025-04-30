@@ -1,0 +1,20 @@
+name: Release
+on:
+  release:
+    types: [published]
+jobs:
+  release:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          path: "thorvg"
+      - name: Create source archive
+        run: |
+          rm -rf ./thorvg/.git* ./thorvg/res
+          tar -I "gzip -9" -cf thorvg.tar.gz thorvg
+      - name: Upload to release
+        uses: softprops/action-gh-release@v2
+        with:
+          files: thorvg.tar.gz
