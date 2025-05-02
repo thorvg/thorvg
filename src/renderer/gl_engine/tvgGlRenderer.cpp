@@ -98,9 +98,36 @@ void GlRenderer::initShaders()
 {
     mPrograms.reserve((int)RT_None);
 
+#define COMMON_TOTAL_LENGTH strlen(STR_GRADIENT_FRAG_COMMON_VARIABLES) + \
+                            strlen(STR_GRADIENT_FRAG_COMMON_FUNCTIONS)
+
+#define LINEAR_TOTAL_LENGTH strlen(STR_LINEAR_GRADIENT_VARIABLES) + \
+                            strlen(STR_LINEAR_GRADIENT_MAIN) + \
+                            COMMON_TOTAL_LENGTH + 1
+
+#define RADIAL_TOTAL_LENGTH strlen(STR_RADIAL_GRADIENT_VARIABLES) + \
+                            strlen(STR_RADIAL_GRADIENT_MAIN) + \
+                            COMMON_TOTAL_LENGTH + 1
+
+    char linearGradientFragShader[LINEAR_TOTAL_LENGTH];
+    snprintf(linearGradientFragShader, LINEAR_TOTAL_LENGTH, "%s%s%s%s",
+        STR_GRADIENT_FRAG_COMMON_VARIABLES,
+        STR_LINEAR_GRADIENT_VARIABLES,
+        STR_GRADIENT_FRAG_COMMON_FUNCTIONS,
+        STR_LINEAR_GRADIENT_MAIN
+    );
+
+    char radialGradientFragShader[RADIAL_TOTAL_LENGTH];
+    snprintf(radialGradientFragShader, RADIAL_TOTAL_LENGTH, "%s%s%s%s",
+        STR_GRADIENT_FRAG_COMMON_VARIABLES,
+        STR_RADIAL_GRADIENT_VARIABLES,
+        STR_GRADIENT_FRAG_COMMON_FUNCTIONS,
+        STR_RADIAL_GRADIENT_MAIN
+    );
+
     mPrograms.push(new GlProgram(COLOR_VERT_SHADER, COLOR_FRAG_SHADER));
-    mPrograms.push(new GlProgram(GRADIENT_VERT_SHADER, LINEAR_GRADIENT_FRAG_SHADER));
-    mPrograms.push(new GlProgram(GRADIENT_VERT_SHADER, RADIAL_GRADIENT_FRAG_SHADER));
+    mPrograms.push(new GlProgram(GRADIENT_VERT_SHADER, linearGradientFragShader));
+    mPrograms.push(new GlProgram(GRADIENT_VERT_SHADER, radialGradientFragShader));
     mPrograms.push(new GlProgram(IMAGE_VERT_SHADER, IMAGE_FRAG_SHADER));
 
     // compose Renderer
