@@ -840,7 +840,7 @@ LottieOffsetPath* LottieParser::parseOffsetPath()
     while (auto key = nextObjectKey()) {
         if (parseCommon(offsetPath, key)) continue;
         else if (KEY_AS("a")) parseProperty(offsetPath->offset);
-        else if (KEY_AS("lj")) offsetPath->join = (StrokeJoin) getInt();
+        else if (KEY_AS("lj")) offsetPath->join = (StrokeJoin) (getInt() - 1);
         else if (KEY_AS("ml")) parseProperty(offsetPath->miterLimit);
         else skip();
     }
