@@ -57,8 +57,8 @@ struct UserExample : tvgexam::Example
         tvg::Matrix m = {1.0f, 0.0f, 0.0f, 0.0f, 0.1f, 0.0f, 0.0f, 0.0f, 1.0f};
 
         //center pivoting
-        m.e13 += 400;
-        m.e23 += 400;
+        m.e13 += 480;
+        m.e23 += 480;
 
         //rotation
         auto degree = tvgexam::progress(elapsed, 4.0f) * 360.0f;
@@ -69,10 +69,10 @@ struct UserExample : tvgexam::Example
         m.e22 = cosf(radian);
 
         //scaling
-        m.e11 *= 0.75f;
-        m.e21 *= 0.75f;
-        m.e22 *= 0.75f;
-        m.e12 *= 0.75f;
+        m.e11 *= 0.8f;
+        m.e21 *= 0.8f;
+        m.e22 *= 0.8f;
+        m.e12 *= 0.8f;
 
         //center pivoting
         m.e13 += (-400 * m.e11 + -400 * m.e12);
@@ -93,5 +93,5 @@ struct UserExample : tvgexam::Example
 
 int main(int argc, char **argv)
 {
-    return tvgexam::main(new UserExample, argc, argv, true);
+    return tvgexam::main(new UserExample, argc, argv, true, 960 ,960);
 }

@@ -64,8 +64,8 @@ struct UserExample : tvgexam::Example
         shape3->fill(0, 255, 255);                     //r, g, b
         scene->push(shape3);
 
-        scene->translate(350, 350);
-        scene->scale(0.5);
+        scene->translate(430, 430);
+        scene->scale(0.7f);
         scene->rotate(360 * progress);
 
         //Create Scene2
@@ -129,5 +129,5 @@ struct UserExample : tvgexam::Example
 
 int main(int argc, char **argv)
 {
-    return tvgexam::main(new UserExample, argc, argv, true);
+    return tvgexam::main(new UserExample, argc, argv, true, 960, 960);
 }

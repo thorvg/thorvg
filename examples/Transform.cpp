@@ -43,12 +43,12 @@ struct UserExample : tvgexam::Example
 
         //Shape1
         auto shape = tvg::Shape::gen();
-        shape->appendRect(-285, -300, 200, 200);
-        shape->appendRect(-185, -200, 300, 300, 100, 100);
-        shape->appendCircle(115, 100, 100, 100);
-        shape->appendCircle(115, 200, 170, 100);
+        shape->appendRect(-285, -300, 280, 280);
+        shape->appendRect(-145, -160, 380, 380, 100, 100);
+        shape->appendCircle(155, 140, 140, 140);
+        shape->appendCircle(235, 320, 210, 140);
         shape->fill(255, 255, 255);
-        shape->translate(385, 400);
+        shape->translate(425, 480);
         shape->scale(1.0f - 0.75f * progress);
         shape->rotate(360 * progress);
 
@@ -56,9 +56,9 @@ struct UserExample : tvgexam::Example
 
         //Shape2
         auto shape2 = tvg::Shape::gen();
-        shape2->appendRect(-50, -50, 100, 100);
+        shape2->appendRect(-50, -50, 180, 180);
         shape2->fill(0, 255, 255);
-        shape2->translate(400, 400);
+        shape2->translate(480, 480);
         shape2->rotate(360 * progress);
         shape2->translate(400 + progress * 300, 400);
         canvas->push(shape2);
@@ -68,9 +68,9 @@ struct UserExample : tvgexam::Example
 
         /* Look, how shape3's origin is different with shape2
         The center of the shape is the anchor point for transformation. */
-        shape3->appendRect(100, 100, 150, 50, 20, 20);
+        shape3->appendRect(100, 100, 230, 130, 20, 20);
         shape3->fill(255, 0, 255);
-        shape3->translate(400, 400);
+        shape3->translate(560, 560);
         shape3->rotate(-360.0f * progress);
         shape3->scale(0.5f + progress);
         canvas->push(shape3);
@@ -86,5 +86,5 @@ struct UserExample : tvgexam::Example
 
 int main(int argc, char **argv)
 {
-    return tvgexam::main(new UserExample, argc, argv, true);
+    return tvgexam::main(new UserExample, argc, argv, true, 960, 960);
 }
