@@ -90,8 +90,8 @@ struct UserExample : tvgexam::Example
         m.e23 = t23;
 
         //translate
-        m.e13 = progress * 300.0f + 300.0f;
-        m.e23 = progress * -100.0f + 300.0f;
+        m.e13 = progress * 500.0f + 300.0f;
+        m.e23 = progress * -100.0f + 380.0f;
 
         shape->transform(m);
 
@@ -108,5 +108,5 @@ struct UserExample : tvgexam::Example
 
 int main(int argc, char **argv)
 {
-    return tvgexam::main(new UserExample, argc, argv, true);
+    return tvgexam::main(new UserExample, argc, argv, true, 960, 960);
 }

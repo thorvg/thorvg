@@ -43,10 +43,10 @@ struct UserExample : tvgexam::Example
 
         //Shape1
         auto shape = tvg::Shape::gen();
-        shape->appendRect(-285, -300, 200, 200);
-        shape->appendRect(-185, -200, 300, 300, 100, 100);
-        shape->appendCircle(115, 100, 100, 100);
-        shape->appendCircle(115, 200, 170, 100);
+        shape->appendRect(-285, -300, 280, 280);
+        shape->appendRect(-145, -160, 380, 380, 100, 100);
+        shape->appendCircle(195, 180, 140, 140);
+        shape->appendCircle(235, 320, 210, 140);
 
         //LinearGradient
         auto fill = tvg::LinearGradient::gen();
@@ -70,12 +70,12 @@ struct UserExample : tvgexam::Example
 
         //Shape2
         auto shape2 = tvg::Shape::gen();
-        shape2->appendRect(-50, -50, 100, 100);
-        shape2->translate(400, 400);
+        shape2->appendRect(-50, -50, 180, 180);
+        shape2->translate(480, 480);
 
         //LinearGradient
         auto fill2 = tvg::LinearGradient::gen();
-        fill2->linear(-50, -50, 50, 50);
+        fill2->linear(-50, -50, 130, 130);
 
         //Gradient Color Stops
         tvg::Fill::ColorStop colorStops2[2];
@@ -86,7 +86,7 @@ struct UserExample : tvgexam::Example
         shape2->fill(fill2);
 
         shape2->rotate(360 * progress);
-        shape2->translate(400 + progress * 300, 400);
+        shape2->translate(480 + progress * 300, 480);
 
         canvas->push(shape2);
 
@@ -110,7 +110,7 @@ struct UserExample : tvgexam::Example
         fill3->colorStops(colorStops3, 4);
 
         shape3->fill(fill3);
-        shape3->translate(400, 400);
+        shape3->translate(480, 480);
 
         //Update Shape3
         shape3->rotate(-360.0f * progress);
@@ -129,5 +129,5 @@ struct UserExample : tvgexam::Example
 
 int main(int argc, char **argv)
 {
-    return tvgexam::main(new UserExample, argc, argv, true);
+    return tvgexam::main(new UserExample, argc, argv, true, 960, 960);
 }

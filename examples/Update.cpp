@@ -51,9 +51,9 @@ struct UserExample : tvgexam::Example
 
         //Shape
         auto shape = tvg::Shape::gen();
-        shape->appendRect(-100, -100, 200, 200, (100 * progress), (100 * progress));
+        shape->appendRect(-100, -100, 280, 280, (100 * progress), (100 * progress));
         shape->fill(rand() % 255, rand() % 255, rand() % 255);
-        shape->translate(800 * progress, 800 * progress);
+        shape->translate(960 * progress, 960 * progress);
         shape->scale(1.0f - 0.75f * progress);
         shape->rotate(360.0f * progress);
 
@@ -70,5 +70,5 @@ struct UserExample : tvgexam::Example
 
 int main(int argc, char **argv)
 {
-    return tvgexam::main(new UserExample, argc, argv, true);
+    return tvgexam::main(new UserExample, argc, argv, true, 960, 960);
 }
