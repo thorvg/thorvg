@@ -39,7 +39,7 @@ if all_engines or get_option('engines').contains('wg')
     config_h.set10('THORVG_WG_RASTER_SUPPORT', true)
 endif
 
-if !get_option('emscripten')
+if not get_option('emscripten')
     config_h.set10('THORVG_USE_EMSCRIPTEN', false)
 endif
 
