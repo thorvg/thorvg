@@ -39,6 +39,10 @@ if all_engines or get_option('engines').contains('wg')
     config_h.set10('THORVG_WG_RASTER_SUPPORT', true)
 endif
 
+if !get_option('emscripten')
+    config_h.set10('THORVG_USE_EMSCRIPTEN', false)
+endif
+
 #Tools
 all_tools = get_option('tools').contains('all')
 lottie2gif = all_tools or get_option('tools').contains('lottie2gif')

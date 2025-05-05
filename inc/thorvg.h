@@ -60,6 +60,10 @@ public: \
 #define _TVG_DECLARE_ACCESSOR(A) \
     friend A
 
+#if !defined(THORVG_USE_EMSCRIPTEN) && defined(__EMSCRIPTEN__)
+    #define THORVG_USE_EMSCRIPTEN 1
+#endif
+
 namespace tvg
 {
 

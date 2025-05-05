@@ -21,6 +21,11 @@ option('threads',
    value: true,
    description: 'Enable the multi-threading task scheduler in thorvg')
 
+option('emscripten',
+   type: 'boolean',
+   value: true,
+   description: 'Use emscripten when available')
+
 option('simd',
    type: 'boolean',
    value: false,

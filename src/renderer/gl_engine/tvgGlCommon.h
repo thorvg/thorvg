@@ -43,7 +43,7 @@
 #include "tvgRender.h"
 #include "tvgMath.h"
 
-#ifdef __EMSCRIPTEN__
+#if THORVG_USE_EMSCRIPTEN
     #include <emscripten/html5_webgl.h>
     // query GL Error on WebGL is very slow, so disable it on WebGL
     #define GL_CHECK(x) x

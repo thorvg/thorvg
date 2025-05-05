@@ -65,7 +65,7 @@ void GlRenderer::flush()
 
 void GlRenderer::currentContext()
 {
-#ifdef __EMSCRIPTEN__
+#if THORVG_USE_EMSCRIPTEN
     auto targetContext = (EMSCRIPTEN_WEBGL_CONTEXT_HANDLE)mContext;
     if (emscripten_webgl_get_current_context() != targetContext) {
         emscripten_webgl_make_context_current(targetContext);

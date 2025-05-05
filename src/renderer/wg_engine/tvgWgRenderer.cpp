@@ -111,12 +111,12 @@ bool WgRenderer::surfaceConfigure(WGPUSurface surface, WgContext& context, uint3
         .device = context.device,
         .format = context.preferredFormat,
         .usage = WGPUTextureUsage_RenderAttachment,
-    #ifdef __EMSCRIPTEN__
+    #if THORVG_USE_EMSCRIPTEN
         .alphaMode = WGPUCompositeAlphaMode_Premultiplied,
     #endif
         .width = width,
         .height = height,
-    #ifdef __EMSCRIPTEN__
+    #if THORVG_USE_EMSCRIPTEN
         .presentMode = WGPUPresentMode_Fifo
     #elif __linux__
     #else
