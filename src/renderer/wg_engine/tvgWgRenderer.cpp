@@ -347,14 +347,14 @@ bool WgRenderer::sync()
 bool WgRenderer::target(WGPUDevice device, WGPUInstance instance, void* target, uint32_t width, uint32_t height, int type)
 {
     // release all existing handles
-    if (!device) {
+    if (!instance || !device || !target) {
         // release all handles
         release();
         return true;
     }
 
     // can not initialize renderer, give up
-    if (!device || !width || !height)
+    if (!instance || !device || !target || !width || !height)
         return false;
 
     // device or instance was changed, need to recreate all instances
