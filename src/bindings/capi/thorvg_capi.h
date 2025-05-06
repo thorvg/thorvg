@@ -147,7 +147,13 @@ typedef enum {
     TVG_MASK_METHOD_ALPHA,         ///< The pixels of the source and the target are alpha blended. As a result, only the part of the source, which intersects with the target is visible.
     TVG_MASK_METHOD_INVERSE_ALPHA, ///< The pixels of the source and the complement to the target's pixels are alpha blended. As a result, only the part of the source which is not covered by the target is visible.
     TVG_MASK_METHOD_LUMA,          ///< The source pixels are converted to grayscale (luma value) and alpha blended with the target. As a result, only the part of the source which intersects with the target is visible. @since 0.9
-    TVG_MASK_METHOD_INVERSE_LUMA   ///< The source pixels are converted to grayscale (luma value) and complement to the target's pixels are alpha blended. As a result, only the part of the source which is not covered by the target is visible. @since 0.14
+    TVG_MASK_METHOD_INVERSE_LUMA,  ///< The source pixels are converted to grayscale (luma value) and complement to the target's pixels are alpha blended. As a result, only the part of the source which is not covered by the target is visible. @since 0.14
+    TVG_MASK_METHOD_ADD,           ///< Combines the target and source objects pixels using target alpha. (T * TA) + (S * (255 - TA)) (Experimental API)
+    TVG_MASK_METHOD_SUBTRACT,      ///< Subtracts the source color from the target color while considering their respective target alpha. (T * TA) - (S * (255 - TA)) (Experimental API)
+    TVG_MASK_METHOD_INTERSECT,     ///< Computes the result by taking the minimum value between the target alpha and the source alpha and multiplies it with the target color. (T * min(TA, SA)) (Experimental API)
+    TVG_MASK_METHOD_DIFFERENCE,    ///< Calculates the absolute difference between the target color and the source color multiplied by the complement of the target alpha. abs(T - S * (255 - TA)) (Experimental API)
+    TVG_MASK_METHOD_LIGHTEN,       ///< Where multiple masks intersect, the highest transparency value is used. (Experimental API)
+    TVG_MASK_METHOD_DARKEN         ///< Where multiple masks intersect, the lowest transparency value is used. (Experimental API)
 } Tvg_Mask_Method;
 
 /**
