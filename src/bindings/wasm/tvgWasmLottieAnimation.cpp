@@ -223,6 +223,10 @@ struct TvgGLEngine : TvgEngineMethod
 
     void resize(Canvas* canvas, int w, int h) override
     {
+        auto targetContext = (EMSCRIPTEN_WEBGL_CONTEXT_HANDLE)context;
+        if (emscripten_webgl_get_current_context() != targetContext) {
+            emscripten_webgl_make_context_current(targetContext);
+        }
         if (canvas) static_cast<GlCanvas*>(canvas)->target((void*)context, 0, w, h, ColorSpace::ABGR8888S);
     }
 };

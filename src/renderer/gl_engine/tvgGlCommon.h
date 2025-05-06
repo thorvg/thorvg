@@ -44,7 +44,6 @@
 #include "tvgMath.h"
 
 #ifdef __EMSCRIPTEN__
-    #include <emscripten/html5_webgl.h>
     // query GL Error on WebGL is very slow, so disable it on WebGL
     #define GL_CHECK(x) x
 #else
