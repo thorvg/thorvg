@@ -57,55 +57,52 @@ bool GlGeometry::tesselate(const RenderShape& rshape, RenderUpdateFlag flag)
 
 bool GlGeometry::tesselate(const RenderSurface* image, RenderUpdateFlag flag)
 {
-    if (flag & RenderUpdateFlag::Image) {
-        fill.clear();
+    if (!(flag & RenderUpdateFlag::Image)) return true;
 
-        fill.vertex.reserve(5 * 4);
-        fill.index.reserve(6);
+    fill.clear();
 
-        float left = 0.f;
-        float top = 0.f;
-        float right = image->w;
-        float bottom = image->h;
+    fill.vertex.reserve(5 * 4);
+    fill.index.reserve(6);
 
-        // left top point
-        fill.vertex.push(left);
-        fill.vertex.push(top);
+    auto left = 0.f;
+    auto top = 0.f;
+    auto right = float(image->w);
+    auto bottom = float(image->h);
 
-        fill.vertex.push(0.f);
-        fill.vertex.push(1.f);
-        // left bottom point
-        fill.vertex.push(left);
-        fill.vertex.push(bottom);
+    // left top point
+    fill.vertex.push(left);
+    fill.vertex.push(top);
 
-        fill.vertex.push(0.f);
-        fill.vertex.push(0.f);
-        // right top point
-        fill.vertex.push(right);
-        fill.vertex.push(top);
+    fill.vertex.push(0.f);
+    fill.vertex.push(1.f);
+    // left bottom point
+    fill.vertex.push(left);
+    fill.vertex.push(bottom);
 
-        fill.vertex.push(1.f);
-        fill.vertex.push(1.f);
-        // right bottom point
-        fill.vertex.push(right);
-        fill.vertex.push(bottom);
+    fill.vertex.push(0.f);
+    fill.vertex.push(0.f);
+    // right top point
+    fill.vertex.push(right);
+    fill.vertex.push(top);
 
-        fill.vertex.push(1.f);
-        fill.vertex.push(0.f);
+    fill.vertex.push(1.f);
+    fill.vertex.push(1.f);
+    // right bottom point
+    fill.vertex.push(right);
+    fill.vertex.push(bottom);
 
-        fill.index.push(0);
-        fill.index.push(1);
-        fill.index.push(2);
+    fill.vertex.push(1.f);
+    fill.vertex.push(0.f);
 
-        fill.index.push(2);
-        fill.index.push(1);
-        fill.index.push(3);
+    fill.index.push(0);
+    fill.index.push(1);
+    fill.index.push(2);
 
-        bounds.x = 0;
-        bounds.y = 0;
-        bounds.w = image->w;
-        bounds.h = image->h;
-    }
+    fill.index.push(2);
+    fill.index.push(1);
+    fill.index.push(3);
+
+    bounds = {{0, 0}, {int32_t(image->w), int32_t(image->h)}};
 
     return true;
 }
@@ -155,31 +152,20 @@ GlStencilMode GlGeometry::getStencilMode(RenderUpdateFlag flag)
 
 RenderRegion GlGeometry::getBounds() const
 {
-    if (tvg::identity(&matrix)) {
-        return bounds;
-    } else {
-        Point lt{static_cast<float>(bounds.x), static_cast<float>(bounds.y)};
-        Point lb{static_cast<float>(bounds.x), static_cast<float>(bounds.y + bounds.h)};
-        Point rt{static_cast<float>(bounds.x + bounds.w), static_cast<float>(bounds.y)};
-        Point rb{static_cast<float>(bounds.x + bounds.w), static_cast<float>(bounds.y + bounds.h)};
+    if (tvg::identity(&matrix)) return bounds;
 
-        lt *= matrix;
-        lb *= matrix;
-        rt *= matrix;
-        rb *= matrix;
+    auto lt = Point{float(bounds.min.x), float(bounds.min.y)} * matrix;
+    auto lb = Point{float(bounds.min.x), float(bounds.max.y)} * matrix;
+    auto rt = Point{float(bounds.max.x), float(bounds.min.y)} * matrix;
+    auto rb = Point{float(bounds.max.x), float(bounds.max.y)} * matrix;
 
-        float left = min(min(lt.x, lb.x), min(rt.x, rb.x));
-        float top = min(min(lt.y, lb.y), min(rt.y, rb.y));
-        float right = max(max(lt.x, lb.x), max(rt.x, rb.x));
-        float bottom = max(max(lt.y, lb.y), max(rt.y, rb.y));
+    auto left = min(min(lt.x, lb.x), min(rt.x, rb.x));
+    auto top = min(min(lt.y, lb.y), min(rt.y, rb.y));
+    auto right = max(max(lt.x, lb.x), max(rt.x, rb.x));
+    auto bottom = max(max(lt.y, lb.y), max(rt.y, rb.y));
 
-        auto bounds = RenderRegion {
-            static_cast<int32_t>(floor(left)),
-            static_cast<int32_t>(floor(top)),
-            static_cast<int32_t>(ceil(right - floor(left))),
-            static_cast<int32_t>(ceil(bottom - floor(top))),
-        };
-        if (bounds.w < 0 || bounds.h < 0) return this->bounds;
-        else return bounds;
-    }
+    auto bounds = RenderRegion {{int32_t(floor(left)), int32_t(floor(top))}, {int32_t(ceil(right)), int32_t(ceil(bottom))}};
+    if (bounds.valid()) return bounds;
+    return this->bounds;
+
 }

@@ -94,16 +94,47 @@ struct RenderCompositor
 
 struct RenderRegion
 {
-    int32_t x, y, w, h;
+    struct {
+        int32_t x, y;
+    } min;
+
+    struct {
+        int32_t x, y;
+    } max;
+
+    static constexpr RenderRegion intersect(const RenderRegion& lhs, const RenderRegion& rhs)
+    {
+        return {{std::max(lhs.min.x, rhs.min.x), std::max(lhs.min.y, rhs.min.y)}, {std::min(lhs.max.x, rhs.max.x), std::min(lhs.max.y, rhs.max.y)}};
+    }
 
     void intersect(const RenderRegion& rhs);
-    void add(const RenderRegion& rhs);
+
+    void add(const RenderRegion& rhs)
+    {
+        if (rhs.min.x < min.x) min.x = rhs.min.x;
+        if (rhs.min.y < min.y) min.y = rhs.min.y;
+        if (rhs.max.x > max.x) max.x = rhs.max.x;
+        if (rhs.max.y > max.y) max.y = rhs.max.y;
+    }
 
     bool operator==(const RenderRegion& rhs) const
     {
-        if (x == rhs.x && y == rhs.y && w == rhs.w && h == rhs.h) return true;
-        return false;
+        return (min.x == rhs.min.x && min.y == rhs.min.y && max.x == rhs.max.x && max.y == rhs.max.y);
     }
+
+    void reset() { min.x = min.y = max.x = max.y = 0; }
+    bool valid() const { return (max.x > min.x && max.y > min.y); }
+    bool invalid() const { return !valid(); }
+
+    int32_t sx() const { return min.x; }
+    int32_t sy() const { return min.y; }
+    int32_t sw() const { return max.x - min.x; }
+    int32_t sh() const { return max.y - min.y; }
+
+    uint32_t x() const { return (uint32_t) sx(); }
+    uint32_t y() const { return (uint32_t) sy(); }
+    uint32_t w() const { return (uint32_t) sw(); }
+    uint32_t h() const { return (uint32_t) sh(); }
 };
 
 struct RenderPath
@@ -272,7 +303,7 @@ struct RenderShape
 struct RenderEffect
 {
     RenderData rd = nullptr;
-    RenderRegion extend = {0, 0, 0, 0};
+    RenderRegion extend{};
     SceneEffect type;
     bool valid = false;
 

@@ -141,12 +141,12 @@ bool effectGaussianBlurRegion(RenderEffectGaussianBlur* params)
     auto extra = static_cast<SwGaussianBlur*>(params->rd)->extends;
 
     if (params->direction != 2) {
-        region.x = -extra;
-        region.w = extra * 2;
+        region.min.x = -extra;
+        region.max.x = extra;
     }
     if (params->direction != 1) {
-        region.y = -extra;
-        region.h = extra * 2;
+        region.min.y = -extra;
+        region.max.y = extra;
     }
 
     return true;
@@ -299,15 +299,14 @@ bool effectDropShadowRegion(RenderEffectDropShadow* params)
     auto& offset = static_cast<SwDropShadow*>(params->rd)->offset;
     auto extra = static_cast<SwDropShadow*>(params->rd)->extends;
 
-    region.x = -extra;
-    region.w = extra * 2;
-    region.y = -extra;
-    region.h = extra * 2;
+    region.min = {-extra, -extra};
+    region.max = {extra, extra};
 
-    region.x = std::min(region.x + (int32_t)offset.x, region.x);
-    region.y = std::min(region.y + (int32_t)offset.y, region.y);
-    region.w += abs(offset.x);
-    region.h += abs(offset.y);
+    if (offset.x < 0) region.min.x += (int32_t) offset.x;
+    else region.max.x += offset.x;
+
+    if (offset.y < 0) region.min.y += (int32_t) offset.y;
+    else region.max.y += offset.y;
 
     return true;
 }

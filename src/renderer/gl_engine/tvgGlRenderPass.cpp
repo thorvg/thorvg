@@ -52,17 +52,17 @@ void GlRenderPass::addRenderTask(GlRenderTask* task)
 
 void GlRenderPass::getMatrix(float *dst, const Matrix &matrix) const
 {
-    const auto& vp = getViewport();
-
     Matrix postMatrix{};
     tvg::identity(&postMatrix);
-    translate(&postMatrix, {(float)-vp.x, (float)-vp.y});
+
+    const auto& vp = getViewport();
+    translate(&postMatrix, {(float)-vp.sx(), (float)-vp.sy()});
 
     auto m = postMatrix * matrix;
 
     float modelMatrix[16];
     GET_MATRIX44(m, modelMatrix);
-    MVP_MATRIX(vp.w, vp.h);
+    MVP_MATRIX(vp.w(), vp.h());
 
     MULTIPLY_MATRIX(mvp, modelMatrix, dst);
 }

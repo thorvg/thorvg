@@ -51,7 +51,7 @@ Result GlCanvas::target(void* context, int32_t id, uint32_t w, uint32_t h, Color
     if (!renderer) return Result::MemoryCorruption;
 
     if (!renderer->target(context, id, w, h)) return Result::Unknown;
-    pImpl->vport = {0, 0, (int32_t)w, (int32_t)h};
+    pImpl->vport = {{0, 0}, {(int32_t)w, (int32_t)h}};
     renderer->viewport(pImpl->vport);
 
     //Paints must be updated again with this new target.

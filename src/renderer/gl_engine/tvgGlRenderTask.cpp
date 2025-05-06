@@ -24,6 +24,9 @@
 #include "tvgGlProgram.h"
 #include "tvgGlRenderPass.h"
 
+/************************************************************************/
+/* GlRenderTask Class Implementation                                    */
+/************************************************************************/
 
 GlRenderTask::GlRenderTask(GlProgram* program, GlRenderTask* other): mProgram(program)
 {
@@ -32,6 +35,7 @@ GlRenderTask::GlRenderTask(GlProgram* program, GlRenderTask* other): mProgram(pr
     mIndexOffset = other->mIndexOffset;
     mIndexCount = other->mIndexCount;
 }
+
 
 void GlRenderTask::run()
 {
@@ -45,7 +49,7 @@ void GlRenderTask::run()
     }
 
     // setup scissor rect
-    GL_CHECK(glScissor(mViewport.x, mViewport.y, mViewport.w, mViewport.h));
+    GL_CHECK(glScissor(mViewport.sx(), mViewport.sy(), mViewport.sw(), mViewport.sh()));
 
     // setup attribute layout
     for (uint32_t i = 0; i < mVertexLayout.count; i++) {
@@ -81,15 +85,18 @@ void GlRenderTask::run()
     }
 }
 
+
 void GlRenderTask::addVertexLayout(const GlVertexLayout &layout)
 {
     mVertexLayout.push(layout);
 }
 
+
 void GlRenderTask::addBindResource(const GlBindingResource &binding)
 {
     mBindingResources.push(binding);
 }
+
 
 void GlRenderTask::setDrawRange(uint32_t offset, uint32_t count)
 {
@@ -97,26 +104,32 @@ void GlRenderTask::setDrawRange(uint32_t offset, uint32_t count)
     mIndexCount = count;
 }
 
+
 void GlRenderTask::setViewport(const RenderRegion &viewport)
 {
     mViewport = viewport;
-    if (mViewport.w < 0) {
-        mViewport.w = 0;
-    }
-
-    if (mViewport.h < 0) {
-        mViewport.h = 0;
-    }
+    if (mViewport.max.x < mViewport.min.x) mViewport.max.x = mViewport.min.x;
+    if (mViewport.max.y < mViewport.min.y) mViewport.max.y = mViewport.min.y;
 }
 
+
+/************************************************************************/
+/* GlStencilCoverTask Class Implementation                              */
+/************************************************************************/
+
 GlStencilCoverTask::GlStencilCoverTask(GlRenderTask* stencil, GlRenderTask* cover, GlStencilMode mode)
- :GlRenderTask(nullptr), mStencilTask(stencil), mCoverTask(cover), mStencilMode(mode) {}
+ :GlRenderTask(nullptr), mStencilTask(stencil), mCoverTask(cover), mStencilMode(mode)
+ {
+
+ }
+
 
 GlStencilCoverTask::~GlStencilCoverTask()
 {
     delete mStencilTask;
     delete mCoverTask;
 }
+
 
 void GlStencilCoverTask::run()
 {
@@ -151,11 +164,17 @@ void GlStencilCoverTask::run()
     GL_CHECK(glDisable(GL_STENCIL_TEST));
 }
 
+
 void GlStencilCoverTask::normalizeDrawDepth(int32_t maxDepth)
 {
     mCoverTask->normalizeDrawDepth(maxDepth);
     mStencilTask->normalizeDrawDepth(maxDepth);
 }
+
+
+/************************************************************************/
+/* GlComposeTask Class Implementation                                   */
+/************************************************************************/
 
 GlComposeTask::GlComposeTask(GlProgram* program, GLuint target, GlRenderTarget* fbo, Array<GlRenderTask*>&& tasks)
  :GlRenderTask(program) ,mTargetFbo(target), mFbo(fbo), mTasks()
@@ -164,11 +183,13 @@ GlComposeTask::GlComposeTask(GlProgram* program, GLuint target, GlRenderTarget* 
     tasks.clear();
 }
 
+
 GlComposeTask::~GlComposeTask()
 {
     ARRAY_FOREACH(p, mTasks) delete(*p);
     mTasks.clear();
 }
+
 
 void GlComposeTask::run()
 {
@@ -209,29 +230,43 @@ void GlComposeTask::run()
     onResolve();
 }
 
-GLuint GlComposeTask::getSelfFbo() { return mFbo->getFboId(); }
 
-GLuint GlComposeTask::getResolveFboId() { return mFbo->getResolveFboId(); }
+GLuint GlComposeTask::getSelfFbo()
+{
+    return mFbo->getFboId();
+}
 
-void GlComposeTask::onResolve() {
+
+GLuint GlComposeTask::getResolveFboId()
+{
+    return mFbo->getResolveFboId();
+}
+
+
+void GlComposeTask::onResolve()
+{
     GL_CHECK(glBindFramebuffer(GL_READ_FRAMEBUFFER, getSelfFbo()));
     GL_CHECK(glBindFramebuffer(GL_DRAW_FRAMEBUFFER, getResolveFboId()));
-
-
     GL_CHECK(glBlitFramebuffer(0, 0, mRenderWidth, mRenderHeight, 0, 0, mRenderWidth, mRenderHeight, GL_COLOR_BUFFER_BIT, GL_NEAREST));
 }
+
+
+/************************************************************************/
+/* GlBlitTask Class Implementation                                      */
+/************************************************************************/
 
 GlBlitTask::GlBlitTask(GlProgram* program, GLuint target, GlRenderTarget* fbo, Array<GlRenderTask*>&& tasks)
  : GlComposeTask(program, target, fbo, std::move(tasks)), mColorTex(fbo->getColorTexture())
 {
 }
 
+
 void GlBlitTask::run()
 {
     GlComposeTask::run();
 
     GL_CHECK(glBindFramebuffer(GL_FRAMEBUFFER, getTargetFbo()));
-    GL_CHECK(glViewport(mTargetViewport.x, mTargetViewport.y, mTargetViewport.w, mTargetViewport.h));
+    GL_CHECK(glViewport(mTargetViewport.x(), mTargetViewport.y(), mTargetViewport.w(), mTargetViewport.h()));
 
     if (mClearBuffer) {
         GL_CHECK(glClearColor(0, 0, 0, 0));
@@ -246,15 +281,23 @@ void GlBlitTask::run()
     GlRenderTask::run();
 }
 
+
+/************************************************************************/
+/* GlDrawBlitTask Class Implementation                                  */
+/************************************************************************/
+
+
 GlDrawBlitTask::GlDrawBlitTask(GlProgram* program, GLuint target, GlRenderTarget* fbo, Array<GlRenderTask*>&& tasks)
  : GlComposeTask(program, target, fbo, std::move(tasks))
 {
 }
 
+
 GlDrawBlitTask::~GlDrawBlitTask()
 {
     if (mPrevTask) delete mPrevTask;
 }
+
 
 void GlDrawBlitTask::run()
 {
@@ -269,14 +312,21 @@ void GlDrawBlitTask::run()
     GlRenderTask::run();
 }
 
+
+/************************************************************************/
+/* GlClipTask Class Implementation                                      */
+/************************************************************************/
+
 GlClipTask::GlClipTask(GlRenderTask* clip, GlRenderTask* mask)
  :GlRenderTask(nullptr), mClipTask(clip), mMaskTask(mask) {}
+
 
 GlClipTask::~GlClipTask()
 {
     delete mClipTask;
     delete mMaskTask;
 }
+
 
 void GlClipTask::run()
 {
@@ -304,14 +354,22 @@ void GlClipTask::run()
     GL_CHECK(glDisable(GL_STENCIL_TEST));
 }
 
+
 void GlClipTask::normalizeDrawDepth(int32_t maxDepth)
 {
     mClipTask->normalizeDrawDepth(maxDepth);
     mMaskTask->normalizeDrawDepth(maxDepth);
 }
 
+/************************************************************************/
+/* GlSimpleBlendTask Class Implementation                               */
+/************************************************************************/
+
 GlSimpleBlendTask::GlSimpleBlendTask(BlendMethod method, GlProgram* program)
- : GlRenderTask(program), mBlendMethod(method) {}
+ : GlRenderTask(program), mBlendMethod(method)
+ {
+ }
+
 
 void GlSimpleBlendTask::run()
 {
@@ -332,14 +390,24 @@ void GlSimpleBlendTask::run()
     glBlendFunc(GL_ONE, GL_ONE_MINUS_SRC_ALPHA);
 }
 
+
+/************************************************************************/
+/* GlComplexBlendTask Class Implementation                              */
+/************************************************************************/
+
+
 GlComplexBlendTask::GlComplexBlendTask(GlProgram* program, GlRenderTarget* dstFbo, GlRenderTarget* dstCopyFbo, GlRenderTask* stencilTask, GlComposeTask* composeTask)
- : GlRenderTask(program), mDstFbo(dstFbo), mDstCopyFbo(dstCopyFbo), mStencilTask(stencilTask), mComposeTask(composeTask) {}
+ : GlRenderTask(program), mDstFbo(dstFbo), mDstCopyFbo(dstCopyFbo), mStencilTask(stencilTask), mComposeTask(composeTask)
+ {
+ }
+
 
 GlComplexBlendTask::~GlComplexBlendTask()
 {
     delete mStencilTask;
     delete mComposeTask;
 }
+
 
 void GlComplexBlendTask::run()
 {
@@ -349,12 +417,11 @@ void GlComplexBlendTask::run()
     GL_CHECK(glBindFramebuffer(GL_READ_FRAMEBUFFER, mDstFbo->getFboId()));
     GL_CHECK(glBindFramebuffer(GL_DRAW_FRAMEBUFFER, mDstCopyFbo->getResolveFboId()));
 
-    GL_CHECK(glViewport(0, 0, mDstFbo->getViewport().w, mDstFbo->getViewport().h));
-    GL_CHECK(glScissor(0, 0, mDstFbo->getViewport().w, mDstFbo->getViewport().h));
+    GL_CHECK(glViewport(0, 0, mDstFbo->getViewport().w(), mDstFbo->getViewport().h()));
+    GL_CHECK(glScissor(0, 0, mDstFbo->getViewport().w(), mDstFbo->getViewport().h()));
     
     const auto& vp = getViewport();
-
-    GL_CHECK(glBlitFramebuffer(vp.x, vp.y, vp.x + vp.w, vp.y + vp.h, 0, 0, vp.w, vp.h, GL_COLOR_BUFFER_BIT, GL_LINEAR));
+    GL_CHECK(glBlitFramebuffer(vp.min.x, vp.min.y, vp.max.x, vp.max.y, 0, 0, vp.w(), vp.h(), GL_COLOR_BUFFER_BIT, GL_LINEAR));
 
     GL_CHECK(glBindFramebuffer(GL_FRAMEBUFFER, mDstFbo->getFboId()));
 
@@ -381,11 +448,16 @@ void GlComplexBlendTask::run()
     GL_CHECK(glBlendFunc(GL_ONE, GL_ONE_MINUS_SRC_ALPHA));
 }
 
+
 void GlComplexBlendTask::normalizeDrawDepth(int32_t maxDepth)
 {
     mStencilTask->normalizeDrawDepth(maxDepth);
     GlRenderTask::normalizeDrawDepth(maxDepth);
 }
+
+/************************************************************************/
+/* GlGaussianBlurTask Class Implementation                              */
+/************************************************************************/
 
 void GlGaussianBlurTask::run()
 {
@@ -439,6 +511,9 @@ void GlGaussianBlurTask::run()
     GL_CHECK(glEnable(GL_BLEND));
 }
 
+/************************************************************************/
+/* GlEffectDropShadowTask Class Implementation                          */
+/************************************************************************/
 
 void GlEffectDropShadowTask::run()
 {
@@ -492,6 +567,9 @@ void GlEffectDropShadowTask::run()
     GL_CHECK(glEnable(GL_BLEND));
 }
 
+/************************************************************************/
+/* GlEffectColorTransformTask Class Implementation                      */
+/************************************************************************/
 
 void GlEffectColorTransformTask::run()
 {

@@ -58,7 +58,7 @@ static Result _clipRect(RenderMethod* renderer, const Point* pts, const Matrix& 
         if (tmp[i].y > max.y) max.y = tmp[i].y;
     }
 
-    float region[4] = {float(before.x), float(before.x + before.w), float(before.y), float(before.y + before.h)};
+    float region[4] = {float(before.min.x), float(before.max.x), float(before.min.y), float(before.max.y)};
 
     //figure out if the clipper is a superset of the current viewport(before) region
     if (min.x <= region[0] && max.x >= region[1] && min.y <= region[2] && max.y >= region[3]) {
@@ -66,7 +66,7 @@ static Result _clipRect(RenderMethod* renderer, const Point* pts, const Matrix& 
         return Result::Success;
     //figure out if the clipper is totally outside of the viewport
     } else if (max.x <= region[0] || min.x >= region[1] || max.y <= region[2] || min.y >= region[3]) {
-        renderer->viewport({0, 0, 0, 0});
+        renderer->viewport({});
         return Result::Success;
     }
     return Result::InsufficientCondition;
@@ -122,13 +122,13 @@ static Result _compFastTrack(RenderMethod* renderer, Paint* cmpTarget, const Mat
         if (v1.x > v2.x) std::swap(v1.x, v2.x);
         if (v1.y > v2.y) std::swap(v1.y, v2.y);
 
-        after.x = static_cast<int32_t>(nearbyint(v1.x));
-        after.y = static_cast<int32_t>(nearbyint(v1.y));
-        after.w = static_cast<int32_t>(nearbyint(v2.x)) - after.x;
-        after.h = static_cast<int32_t>(nearbyint(v2.y)) - after.y;
+        after.min.x = static_cast<int32_t>(nearbyint(v1.x));
+        after.min.y = static_cast<int32_t>(nearbyint(v1.y));
+        after.max.x = static_cast<int32_t>(nearbyint(v2.x));
+        after.max.y = static_cast<int32_t>(nearbyint(v2.y));
 
-        if (after.w < 0) after.w = 0;
-        if (after.h < 0) after.h = 0;
+        if (after.max.x < after.min.x) after.max.x = after.min.x;
+        if (after.max.y < after.min.y) after.max.y = after.min.y;
 
         after.intersect(before);
         renderer->viewport(after);
@@ -185,7 +185,7 @@ bool Paint::Impl::render(RenderMethod* renderer)
         PAINT_METHOD(region, bounds(renderer));
 
         if (MASK_REGION_MERGING(maskData->method)) region.add(PAINT(maskData->target)->bounds(renderer));
-        if (region.w == 0 || region.h == 0) return true;
+        if (region.invalid()) return true;
         cmp = renderer->target(region, MASK_TO_COLORSPACE(renderer, maskData->method), CompositionFlag::Masking);
         if (renderer->beginComposite(cmp, MaskMethod::None, 255)) {
             maskData->target->pImpl->render(renderer);

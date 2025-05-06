@@ -156,7 +156,7 @@ private:
     void pushTriangle(uint32_t a, uint32_t b, uint32_t c);
 
     GlGeometryBuffer* mBuffer;
-    BBox bbox = {{}, {}};
+    BBox bbox = {};
 };
 
 }  // namespace tvg

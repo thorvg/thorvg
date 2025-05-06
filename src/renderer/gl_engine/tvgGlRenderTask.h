@@ -130,12 +130,10 @@ public:
 
 protected:
     GLuint getTargetFbo() { return mTargetFbo; }
-
     GLuint getSelfFbo();
-
     GLuint getResolveFboId();
-
     void onResolve();
+
 private:
     GLuint mTargetFbo;
     GlRenderTarget* mFbo;

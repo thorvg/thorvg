@@ -54,7 +54,7 @@ Result SwCanvas::target(uint32_t* buffer, uint32_t stride, uint32_t w, uint32_t 
     if (!renderer) return Result::MemoryCorruption;
 
     if (!renderer->target(buffer, stride, w, h, cs)) return Result::InvalidArguments;
-    pImpl->vport = {0, 0, (int32_t)w, (int32_t)h};
+    pImpl->vport = {{0, 0}, {(int32_t)w, (int32_t)h}};
     renderer->viewport(pImpl->vport);
 
     //FIXME: The value must be associated with an individual canvas instance.
