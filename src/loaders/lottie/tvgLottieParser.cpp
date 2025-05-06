@@ -566,11 +566,14 @@ LottieTransform* LottieParser::parseTransform(bool ddd)
             enterObject();
             while (auto key = nextObjectKey()) {
                 if (KEY_AS("k")) parsePropertyInternal(transform->position);
-                else if (KEY_AS("s") && getBool()) transform->coords = new LottieTransform::SeparateCoord;
-                //check separateCoord to figure out whether "x(expression)" / "x(coord)"
-                else if (transform->coords && KEY_AS("x")) parseProperty(transform->coords->x);
-                else if (transform->coords && KEY_AS("y")) parseProperty(transform->coords->y);
-                else if (KEY_AS("x") && expressions) transform->position.exp = getExpression(getStringCopy(), comp, context.layer, context.parent, &transform->position);
+                else if (KEY_AS("x")) {
+                    //check separateCoord to figure out whether "x(expression)" / "x(coord)"
+                    if (peekType() == kStringType) {
+                        if (expressions) transform->position.exp = getExpression(getStringCopy(), comp, context.layer, context.parent, &transform->position);
+                        else skip();
+                    } else parseProperty(transform->separateCoord()->x);
+                }
+                else if (KEY_AS("y")) parseProperty(transform->separateCoord()->y);
                 else if (KEY_AS("sid")) registerSlot(transform, getString(), LottieProperty::Type::Vector);
                 else if (KEY_AS("ix")) transform->position.ix = getInt();
                 else skip();

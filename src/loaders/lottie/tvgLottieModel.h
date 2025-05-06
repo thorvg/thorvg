@@ -639,6 +639,12 @@ struct LottieTransform : LottieObject
         LottieFloat y = 0.0f;
     };
 
+    SeparateCoord* separateCoord()
+    {
+        if (!coords) coords = new SeparateCoord;
+        return coords;
+    }
+
     struct RotationEx
     {
         LottieFloat x = 0.0f;
