@@ -119,7 +119,7 @@ struct Canvas::Impl
     {
         if (status != Status::Damaged && status != Status::Synced) return Result::InsufficientCondition;
 
-        RenderRegion val = {x, y, w, h};
+        RenderRegion val = {x, y, x + w, y + h};
         //intersect if the target buffer is already set.
         auto surface = renderer->mainSurface();
         if (surface && surface->w > 0 && surface->h > 0) {

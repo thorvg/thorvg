@@ -94,14 +94,26 @@ struct RenderCompositor
 
 struct RenderRegion
 {
-    int32_t x, y, w, h;
+    struct {
+        int32_t x, y;
+    } min;
+
+    struct {
+        int32_t x, y;
+    } max;
 
     void intersect(const RenderRegion& rhs);
     void add(const RenderRegion& rhs);
 
     bool operator==(const RenderRegion& rhs) const
     {
-        if (x == rhs.x && y == rhs.y && w == rhs.w && h == rhs.h) return true;
+        if (min.x == rhs.min.x && min.y == rhs.min.y && max.x == rhs.max.x && max.y == rhs.max.y) return true;
+        return false;
+    }
+
+    bool invalid() const
+    {
+        if (max.x <= min.x || max.y <= min.y) return true;
         return false;
     }
 };
