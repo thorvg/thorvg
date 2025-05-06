@@ -896,7 +896,7 @@ void LottieBuilder::updateImage(LottieGroup* layer)
 //TODO: unify with the updateText() building logic
 static void _fontText(TextDocument& doc, Scene* scene)
 {
-    auto delim = "\r\n";
+    auto delim = "\r\n\3";
     auto size = doc.size * 75.0f; //1 pt = 1/72; 1 in = 96 px; -> 72/96 = 0.75
     auto lineHeight = doc.size * 100.0f;
 
