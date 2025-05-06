@@ -55,7 +55,7 @@ Result WgCanvas::target(void* device, void* instance, void* target, uint32_t w, 
     if (!renderer) return Result::MemoryCorruption;
 
     if (!renderer->target((WGPUDevice)device, (WGPUInstance)instance, target, w, h, type)) return Result::Unknown;
-    pImpl->vport = {0, 0, (int32_t)w, (int32_t)h};
+    pImpl->vport = {{0, 0}, {(int32_t)w, (int32_t)h}};
     renderer->viewport(pImpl->vport);
 
     //Paints must be updated again with this new target.

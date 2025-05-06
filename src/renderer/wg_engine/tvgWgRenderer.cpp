@@ -259,14 +259,9 @@ RenderRegion WgRenderer::region(RenderData data)
     if (renderData->type() == Type::Shape) {
         auto& v1 = renderData->aabb.min;
         auto& v2 = renderData->aabb.max;
-        RenderRegion renderRegion;
-        renderRegion.x = static_cast<int32_t>(nearbyint(v1.x));
-        renderRegion.y = static_cast<int32_t>(nearbyint(v1.y));
-        renderRegion.w = static_cast<int32_t>(nearbyint(v2.x)) - renderRegion.x;
-        renderRegion.h = static_cast<int32_t>(nearbyint(v2.y)) - renderRegion.y;
-        return renderRegion;
+        return {{int32_t(nearbyint(v1.x)), int32_t(nearbyint(v1.y))}, {int32_t(nearbyint(v2.x)), int32_t(nearbyint(v2.y))}};
     }
-    return { 0, 0, (int32_t)mTargetSurface.w, (int32_t)mTargetSurface.h };
+    return {{0, 0}, {(int32_t)mTargetSurface.w, (int32_t)mTargetSurface.h}};
 }
 
 
@@ -586,12 +581,12 @@ bool WgRenderer::region(RenderEffect* effect)
         auto gaussian = (RenderEffectGaussianBlur*)effect;
         auto renderData = (WgRenderDataEffectParams*)gaussian->rd;
         if (gaussian->direction != 2) {
-            gaussian->extend.x = -renderData->extend;
-            gaussian->extend.w = +renderData->extend * 2;
+            gaussian->extend.min.x = -renderData->extend;
+            gaussian->extend.max.x = +renderData->extend;
         }
         if (gaussian->direction != 1) {
-            gaussian->extend.y = -renderData->extend;
-            gaussian->extend.h = +renderData->extend * 2;
+            gaussian->extend.min.y = -renderData->extend;
+            gaussian->extend.max.y = +renderData->extend;
         }
         return true;
     } else
@@ -599,10 +594,10 @@ bool WgRenderer::region(RenderEffect* effect)
     if (effect->type == SceneEffect::DropShadow) {
         auto dropShadow = (RenderEffectDropShadow*)effect;
         auto renderData = (WgRenderDataEffectParams*)dropShadow->rd;
-        dropShadow->extend.x = -(renderData->extend + std::abs(renderData->offset.x));
-        dropShadow->extend.w = +(renderData->extend + std::abs(renderData->offset.x)) * 2;
-        dropShadow->extend.y = -(renderData->extend + std::abs(renderData->offset.y));
-        dropShadow->extend.h = +(renderData->extend + std::abs(renderData->offset.y)) * 2;
+        dropShadow->extend.min.x = -(renderData->extend + std::abs(renderData->offset.x));
+        dropShadow->extend.max.x = +(renderData->extend + std::abs(renderData->offset.x));
+        dropShadow->extend.min.y = -(renderData->extend + std::abs(renderData->offset.y));
+        dropShadow->extend.max.y = +(renderData->extend + std::abs(renderData->offset.y));
         return true;
     }
     return false;

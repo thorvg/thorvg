@@ -118,10 +118,10 @@ void WgShaderTypeVec4f::update(const RenderColor& c)
 
 void WgShaderTypeVec4f::update(const RenderRegion& r)
 {
-    vec[0] = r.x; // left
-    vec[1] = r.y; // top
-    vec[2] = r.x + r.w - 1; // right
-    vec[3] = r.y + r.h - 1; // bottom
+    vec[0] = r.min.x;
+    vec[1] = r.min.y;
+    vec[2] = r.max.x - 1;
+    vec[3] = r.max.y - 1;
 }
 
 //************************************************************************

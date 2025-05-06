@@ -1516,12 +1516,7 @@ void Stroker::stroke(const RenderShape *rshape, const RenderPath& path)
 
 RenderRegion Stroker::bounds() const
 {
-    return RenderRegion {
-        static_cast<int32_t>(floor(mLeftTop.x)),
-        static_cast<int32_t>(floor(mLeftTop.y)),
-        static_cast<int32_t>(ceil(mRightBottom.x - floor(mLeftTop.x))),
-        static_cast<int32_t>(ceil(mRightBottom.y - floor(mLeftTop.y))),
-    };
+    return {{int32_t(floor(mLeftTop.x)), int32_t(floor(mLeftTop.y))}, {int32_t(ceil(mRightBottom.x)), int32_t(ceil(mRightBottom.y))}};
 }
 
 
@@ -2197,26 +2192,15 @@ void BWTessellator::tessellate(const RenderPath& path, const Matrix& matrix)
 
 RenderRegion BWTessellator::bounds() const
 {
-    return RenderRegion {
-        static_cast<int32_t>(floor(bbox.min.x)),
-        static_cast<int32_t>(floor(bbox.min.y)),
-        static_cast<int32_t>(ceil(bbox.max.x - floor(bbox.min.x))),
-        static_cast<int32_t>(ceil(bbox.max.y - floor(bbox.min.y))),
-    };
+    return {{int32_t(floor(bbox.min.x)), int32_t(floor(bbox.min.y))}, {int32_t(ceil(bbox.max.x)), int32_t(ceil(bbox.max.y))}};
 }
 
 
 uint32_t BWTessellator::pushVertex(float x, float y)
 {
     auto index = _pushVertex(mBuffer->vertex, x, y);
-
-    if (index == 0) {
-        bbox.max = bbox.min = {x, y};
-    } else {
-        bbox.min = {std::min(bbox.min.x, x), std::min(bbox.min.y, y)};
-        bbox.max = {std::max(bbox.max.x, x), std::max(bbox.max.y, y)};
-    }
-
+    if (index == 0) bbox.max = bbox.min = {x, y};
+    else bbox = {{std::min(bbox.min.x, x), std::min(bbox.min.y, y)}, {std::max(bbox.max.x, x), std::max(bbox.max.y, y)}};
     return index;
 }
 

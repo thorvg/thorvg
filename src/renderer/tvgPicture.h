@@ -273,7 +273,7 @@ struct PictureImpl : Picture
     {
         if (impl.rd) return renderer->region(impl.rd);
         if (vector) return vector->pImpl->bounds(renderer);
-        return {0, 0, 0, 0};
+        return {};
     }
 
     Result load(ImageLoader* loader)

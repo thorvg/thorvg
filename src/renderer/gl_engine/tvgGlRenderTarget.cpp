@@ -107,23 +107,20 @@ uint32_t alignPow2(uint32_t value)
 
 GlRenderTarget* GlRenderTargetPool::getRenderTarget(const RenderRegion& vp, GLuint resolveId)
 {
-    uint32_t width = static_cast<uint32_t>(vp.w);
-    uint32_t height = static_cast<uint32_t>(vp.h);
+    auto width = vp.w();
+    auto height = vp.h();
 
     // pow2 align width and height
     if (width >= mMaxWidth) width = mMaxWidth;
     else width = alignPow2(width);
-
     if (width >= mMaxWidth) width = mMaxWidth;
 
     if (height >= mMaxHeight) height = mMaxHeight;
     else height = alignPow2(height);
-
     if (height >= mMaxHeight) height = mMaxHeight;
 
     for (uint32_t i = 0; i < mPool.count; i++) {
         auto rt = mPool[i];
-
         if (rt->getWidth() == width && rt->getHeight() == height) {
             rt->setViewport(vp);
             return rt;

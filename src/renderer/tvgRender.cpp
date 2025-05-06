@@ -106,33 +106,14 @@ bool RenderPath::bounds(Matrix* m, float* x, float* y, float* w, float* h)
 
 void RenderRegion::intersect(const RenderRegion& rhs)
 {
-    auto x1 = x + w;
-    auto y1 = y + h;
-    auto x2 = rhs.x + rhs.w;
-    auto y2 = rhs.y + rhs.h;
+    if (min.x < rhs.min.x) min.x = rhs.min.x;
+    if (min.y < rhs.min.y) min.y = rhs.min.y;
+    if (max.x > rhs.max.x) max.x = rhs.max.x;
+    if (max.y > rhs.max.y) max.y = rhs.max.y;
 
-    x = (x > rhs.x) ? x : rhs.x;
-    y = (y > rhs.y) ? y : rhs.y;
-    w = ((x1 < x2) ? x1 : x2) - x;
-    h = ((y1 < y2) ? y1 : y2) - y;
-
-    if (w < 0) w = 0;
-    if (h < 0) h = 0;
-}
-
-
-void RenderRegion::add(const RenderRegion& rhs)
-{
-    if (rhs.x < x) {
-        w += (x - rhs.x);
-        x = rhs.x;
-    }
-    if (rhs.y < y) {
-        h += (y - rhs.y);
-        y = rhs.y;
-    }
-    if (rhs.x + rhs.w > x + w) w = (rhs.x + rhs.w) - x;
-    if (rhs.y + rhs.h > y + h) h = (rhs.y + rhs.h) - y;
+    // Not intersected: collapse to zero-area region
+    if (max.x < min.x) max.x = min.x;
+    if (max.y < min.y) max.y = min.y;
 }
 
 /************************************************************************/

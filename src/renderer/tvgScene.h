@@ -64,7 +64,7 @@ struct SceneImpl : Scene
 {
     Paint::Impl impl;
     list<Paint*> paints;     //children list
-    RenderRegion vport = {0, 0, INT32_MAX, INT32_MAX};
+    RenderRegion vport = {};
     Array<RenderEffect*>* effects = nullptr;
     uint8_t compFlag = CompositionFlag::Invalid;
     uint8_t opacity;         //for composition
@@ -159,40 +159,34 @@ struct SceneImpl : Scene
 
     RenderRegion bounds(RenderMethod* renderer) const
     {
-        if (paints.empty()) return {0, 0, 0, 0};
+        if (paints.empty()) return {};
 
-        int32_t x1 = INT32_MAX;
-        int32_t y1 = INT32_MAX;
-        int32_t x2 = 0;
-        int32_t y2 = 0;
-
+        //Merge regions
+        RenderRegion pRegion = {{INT32_MAX, INT32_MAX}, {0, 0}};
         for (auto paint : paints) {
             auto region = paint->pImpl->bounds(renderer);
-
-            //Merge regions
-            if (region.x < x1) x1 = region.x;
-            if (x2 < region.x + region.w) x2 = (region.x + region.w);
-            if (region.y < y1) y1 = region.y;
-            if (y2 < region.y + region.h) y2 = (region.y + region.h);
+            if (region.min.x < pRegion.min.x) pRegion.min.x = region.min.x;
+            if (pRegion.max.x < region.max.x) pRegion.max.x = region.max.x;
+            if (region.min.y < pRegion.min.y) pRegion.min.y = region.min.y;
+            if (pRegion.max.y < region.max.y) pRegion.max.y = region.max.y;
         }
 
         //Extends the render region if post effects require
-        int32_t ex = 0, ey = 0, ew = 0, eh = 0;
+        RenderRegion eRegion{};
         if (effects) {
             ARRAY_FOREACH(p, *effects) {
                 auto effect = *p;
-                if (effect->valid && renderer->region(effect)) {
-                    ex = std::min(ex, effect->extend.x);
-                    ey = std::min(ey, effect->extend.y);
-                    ew = std::max(ew, effect->extend.w);
-                    eh = std::max(eh, effect->extend.h);
-                }
+                if (effect->valid && renderer->region(effect)) eRegion.add(effect->extend);
             }
         }
 
-        auto ret = RenderRegion{x1 + ex, y1 + ey, (x2 - x1) + ew, (y2 - y1) + eh};
-        ret.intersect(this->vport);
-        return ret;
+        pRegion.min.x += eRegion.min.x;
+        pRegion.min.y += eRegion.min.y;
+        pRegion.max.x += eRegion.max.x;
+        pRegion.max.y += eRegion.max.y;
+
+        pRegion.intersect(this->vport);
+        return pRegion;
     }
 
     Result bounds(Point* pt4, Matrix& m, bool obb, bool stroking)
