@@ -283,8 +283,6 @@ struct Window
 
 struct SwWindow : Window
 {
-    SDL_Renderer* renderer = nullptr;
-
     SwWindow(Example* example, uint32_t width, uint32_t height, uint32_t threadsCnt) : Window(example, width, height, threadsCnt)
     {
         if (!initialized) return;
@@ -298,15 +296,7 @@ struct SwWindow : Window
             return;
         }
 
-        //VSync has been disabled. Remove this line if you need VSync enabled.
-        renderer = SDL_CreateRenderer(window, -1, SDL_RENDERER_PRESENTVSYNC);
-
         resize();
-    }
-
-    ~SwWindow()
-    {
-        if (renderer) SDL_DestroyRenderer(renderer);
     }
 
     void resize() override
