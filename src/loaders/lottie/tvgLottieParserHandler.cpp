@@ -100,7 +100,8 @@ int LookaheadParserHandler::getInt()
 float LookaheadParserHandler::getFloat()
 {
     if (state != kHasNumber) {
-        Error();
+        if (state == kHasNull) parseNext();  //interpret null as 0
+        else Error();
         return 0;
     }
     auto result = val.GetFloat();
