@@ -46,25 +46,18 @@
 
 
 /************************************************************************/
-/* Internal Class Implementation                                        */
-/************************************************************************/
-
-static const int PARSE_FLAGS = kParseDefaultFlags | kParseInsituFlag;
-
-
-/************************************************************************/
 /* External Class Implementation                                        */
 /************************************************************************/
 
 
 bool LookaheadParserHandler::enterArray()
 {
-    if (state != kEnteringArray) {
-        Error();
-        return false;
+    if (state == kEnteringArray) {
+        parseNext();
+        return true;
     }
-    parseNext();
-    return true;
+    Error();
+    return false;
 }
 
 
@@ -86,37 +79,37 @@ bool LookaheadParserHandler::nextArrayValue()
 
 int LookaheadParserHandler::getInt()
 {
-    if (state != kHasNumber) {
-        Error();
-        return 0;
+    if (state == kHasNumber) {
+        auto result = val.GetInt();
+        parseNext();
+        return result;
     }
-    auto result = val.GetInt();
-    parseNext();
-    return result;
+    Error();
+    return 0;
 }
 
 
 float LookaheadParserHandler::getFloat()
 {
-    if (state != kHasNumber) {
-        Error();
-        return 0;
+    if (state == kHasNumber) {
+        auto result = val.GetFloat();
+        parseNext();
+        return result;
     }
-    auto result = val.GetFloat();
-    parseNext();
-    return result;
+    Error();
+    return 0;
 }
 
 
 const char* LookaheadParserHandler::getString()
 {
-    if (state != kHasString) {
-        Error();
-        return nullptr;
+    if (state == kHasString) {
+        auto result = val.GetString();
+        parseNext();
+        return result;
     }
-    auto result = val.GetString();
-    parseNext();
-    return result;
+    Error();
+    return nullptr;
 }
 
 
@@ -130,33 +123,29 @@ char* LookaheadParserHandler::getStringCopy()
 
 bool LookaheadParserHandler::getBool()
 {
-    if (state != kHasBool) {
-        Error();
-        return false;
+    if (state == kHasBool) {
+        auto result = val.GetBool();
+        parseNext();
+        return result;
     }
-    auto result = val.GetBool();
-    parseNext();
-    return result;
+    Error();
+    return false;
 }
 
 
 void LookaheadParserHandler::getNull()
 {
-    if (state != kHasNull) {
-        Error();
+    if (state == kHasNull) {
+        parseNext();
         return;
     }
-    parseNext();
+    Error();
 }
 
 
 bool LookaheadParserHandler::parseNext()
 {
-    if (reader.HasParseError()) {
-        Error();
-        return false;
-    }
-    if (!reader.IterativeParseNext<PARSE_FLAGS>(iss, *this)) {
+    if (reader.HasParseError() || !reader.IterativeParseNext<PARSE_FLAGS>(iss, *this)) {
         Error();
         return false;
     }
@@ -166,12 +155,12 @@ bool LookaheadParserHandler::parseNext()
 
 bool LookaheadParserHandler::enterObject()
 {
-    if (state != kEnteringObject) {
-        Error();
-        return false;
+    if (state == kEnteringObject) {
+        parseNext();
+        return true;
     }
-    parseNext();
-    return true;
+    Error();
+    return false;
 }
 
 

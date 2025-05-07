@@ -51,6 +51,7 @@
 
 using namespace rapidjson;
 
+#define PARSE_FLAGS (kParseDefaultFlags | kParseInsituFlag)
 
 struct LookaheadParserHandler
 {
@@ -172,8 +173,9 @@ struct LookaheadParserHandler
 
     void Error()
     {
-        TVGERR("LOTTIE", "Parsing Error!");
+        TVGERR("LOTTIE", "Invalid JSON: unexpected or misaligned data fields.");
         state = kError;
+        reader.IterativeParseNext<PARSE_FLAGS>(iss, *this);   //something wrong but try advancement.
     }
 
     bool Invalid()
