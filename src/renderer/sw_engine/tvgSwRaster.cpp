@@ -1706,7 +1706,7 @@ void rasterPremultiply(RenderSurface* surface)
         for (uint32_t x = 0; x < surface->w; ++x, ++dst) {
             auto c = *dst;
             auto a = (c >> 24);
-            if (a == 255 || a == 0) continue;
+            if (a == 255) continue;
             *dst = (c & 0xff000000) + ((((c >> 8) & 0xff) * a) & 0xff00) + ((((c & 0x00ff00ff) * a) >> 8) & 0x00ff00ff);
         }
     }
