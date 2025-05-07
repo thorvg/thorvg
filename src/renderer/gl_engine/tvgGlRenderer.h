@@ -132,7 +132,6 @@ private:
 
     void flush();
     void clearDisposes();
-    void currentContext();
 
     void* mContext = nullptr;
     RenderSurface surface;

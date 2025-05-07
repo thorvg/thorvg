@@ -63,19 +63,6 @@ void GlRenderer::flush()
 }
 
 
-void GlRenderer::currentContext()
-{
-#ifdef __EMSCRIPTEN__
-    auto targetContext = (EMSCRIPTEN_WEBGL_CONTEXT_HANDLE)mContext;
-    if (emscripten_webgl_get_current_context() != targetContext) {
-        emscripten_webgl_make_context_current(targetContext);
-    }
-#else
-    TVGERR("GL_ENGINE", "Maybe missing MakeCurrent() Call?");
-#endif
-}
-
-
 GlRenderer::GlRenderer()
 {
     ++rendererCnt;
@@ -821,8 +808,6 @@ bool GlRenderer::target(void* context, int32_t id, uint32_t w, uint32_t h)
     //assume the context zero is invalid
     if (!context || id == GL_INVALID_VALUE || w == 0 || h == 0) return false;
 
-    if (mContext) currentContext();
-
     flush();
 
     surface.stride = w;
@@ -831,8 +816,6 @@ bool GlRenderer::target(void* context, int32_t id, uint32_t w, uint32_t h)
 
     mContext = context;
     mTargetFboId = static_cast<GLint>(id);
-
-    currentContext();
 
     mRootTarget = GlRenderTarget(surface.w, surface.h);
     mRootTarget.setViewport({0, 0, static_cast<int32_t>(surface.w), static_cast<int32_t>(surface.h)});
@@ -846,8 +829,6 @@ bool GlRenderer::sync()
 {
     //nothing to be done.
     if (mRenderPassStack.empty()) return true;
-
-    currentContext();
 
     // Blend function for straight alpha
     GL_CHECK(glBlendFunc(GL_ONE, GL_ONE_MINUS_SRC_ALPHA));
@@ -898,7 +879,6 @@ RenderRegion GlRenderer::region(RenderData data)
 
 bool GlRenderer::preRender()
 {
-    currentContext();
     if (mPrograms.empty()) initShaders();
     mRenderPassStack.push(new GlRenderPass(&mRootTarget));
 
@@ -1527,7 +1507,6 @@ bool GlRenderer::viewport(const RenderRegion& vp)
 
 bool GlRenderer::preUpdate()
 {
-    currentContext();
     return true;
 }
 
