@@ -118,7 +118,7 @@ struct SwShapeTask : SwTask
 
         auto strokeWidth = validStrokeWidth();
         SwBBox renderRegion{};
-        auto updateShape = (RenderUpdateFlag::Path | RenderUpdateFlag::Transform | RenderUpdateFlag::Clip);
+        auto updateShape = flags & (RenderUpdateFlag::Path | RenderUpdateFlag::Transform | RenderUpdateFlag::Clip);
         auto updateFill = false;
 
         //Shape
@@ -145,13 +145,17 @@ struct SwShapeTask : SwTask
             }
         }
         //Stroke
-        if ((updateShape || flags & RenderUpdateFlag::Stroke) && (strokeWidth > 0.0f)) {
-            shapeResetStroke(&shape, rshape, transform);
-            if (!shapeGenStrokeRle(&shape, rshape, transform, bbox, renderRegion, mpool, tid)) goto err;
-            if (auto fill = rshape->strokeFill()) {
-                auto ctable = (flags & RenderUpdateFlag::GradientStroke) ? true : false;
-                if (ctable) shapeResetStrokeFill(&shape);
-                if (!shapeGenStrokeFillColors(&shape, fill, transform, surface, opacity, ctable)) goto err;
+        if (updateShape || flags & RenderUpdateFlag::Stroke) {
+            if (strokeWidth > 0.0f) {
+                shapeResetStroke(&shape, rshape, transform);
+                if (!shapeGenStrokeRle(&shape, rshape, transform, bbox, renderRegion, mpool, tid)) goto err;
+                if (auto fill = rshape->strokeFill()) {
+                    auto ctable = (flags & RenderUpdateFlag::GradientStroke) ? true : false;
+                    if (ctable) shapeResetStrokeFill(&shape);
+                    if (!shapeGenStrokeFillColors(&shape, fill, transform, surface, opacity, ctable)) goto err;
+                }
+            } else {
+                shapeDelStroke(&shape);
             }
         }
 
