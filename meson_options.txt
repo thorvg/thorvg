@@ -65,6 +65,6 @@ option('file',
 
 option('extra',
    type: 'array',
-   choices: ['', 'lottie_expressions'],
+   choices: ['', 'opengl_es', 'lottie_expressions'],
    value: ['lottie_expressions'],
-   description: '"Enable support for exceptionally advanced features')
+   description: '"Enable support for extra options')
