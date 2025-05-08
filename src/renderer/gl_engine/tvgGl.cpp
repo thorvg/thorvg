@@ -40,14 +40,16 @@ bool glTerm()
 
 #if defined(_WIN32) && !defined(__CYGWIN__) && !defined(__SCITECH_SNAP__)
 
-typedef PROC(WINAPI *PFNGLGETPROCADDRESSPROC)(LPCSTR);
+#ifdef THORVG_GL_TARGET_GL
+    typedef PROC(WINAPI *PFNGLGETPROCADDRESSPROC)(LPCSTR);
+    static PFNGLGETPROCADDRESSPROC glGetProcAddress = NULL;
+#endif
 
 static HMODULE _libGL = NULL;
-static PFNGLGETPROCADDRESSPROC glGetProcAddress = NULL;
 
 static bool _glLoad()
 {
-#ifndef THORVG_GL_TARGET_GLES
+#ifdef THORVG_GL_TARGET_GL
     _libGL = LoadLibraryW(L"opengl32.dll");
     if (!_libGL) {
         TVGERR("GL_ENGINE", "Cannot find the gl library.");
@@ -70,24 +72,27 @@ static bool _glLoad()
 // load opengl proc address from dll or from wglGetProcAddress
 static PROC _getProcAddress(const char* procName)
 {
-    PROC procHandle = GetProcAddress(_libGL, procName);
-    #ifndef THORVG_GL_TARGET_GLES
-        if (!procHandle) procHandle = glGetProcAddress(procName);
-    #endif
+    auto procHandle = GetProcAddress(_libGL, procName);
+#ifdef THORVG_GL_TARGET_GL
+    if (!procHandle) procHandle = glGetProcAddress(procName);
+#endif
     return procHandle;
 }
 
 #elif defined(__linux__)
 
 #include <dlfcn.h>
-typedef void* (*PFNGLGETPROCADDRESSPROC)(const char*);
+
+#ifdef THORVG_GL_TARGET_GL
+    typedef void* (*PFNGLGETPROCADDRESSPROC)(const char*);
+    static PFNGLGETPROCADDRESSPROC glGetProcAddress = nullptr;
+#endif
 
 static void* _libGL = nullptr;
-static PFNGLGETPROCADDRESSPROC glGetProcAddress = nullptr;
 
 static bool _glLoad()
 {
-#ifndef THORVG_GL_TARGET_GLES
+#ifdef THORVG_GL_TARGET_GL
     _libGL = dlopen("libGL.so", RTLD_LAZY);
     if (!_libGL) _libGL = dlopen("libGL.so.4", RTLD_LAZY);
     if (!_libGL) _libGL = dlopen("libGL.so.3", RTLD_LAZY);
@@ -109,19 +114,21 @@ static bool _glLoad()
 #endif
     return true;
 }
-// load opengl proc address from glXGetProcAddress
+
+
 static void* _getProcAddress(const char* procName)
 {
-    #ifndef THORVG_GL_TARGET_GLES
+#ifdef THORVG_GL_TARGET_GL
     return glGetProcAddress(procName);
-    #else
+#else
     return dlsym(_libGL, procName);
-    #endif
+#endif
 }
 
 #elif defined(__APPLE__) || defined(__MACH__)
 
 #include <dlfcn.h>
+
 static void* _libGL = nullptr;
 
 static bool _glLoad() {
