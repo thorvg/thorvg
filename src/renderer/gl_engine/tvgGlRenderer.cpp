@@ -98,16 +98,14 @@ void GlRenderer::initShaders()
 {
     mPrograms.reserve((int)RT_None);
 
-#define COMMON_TOTAL_LENGTH strlen(STR_GRADIENT_FRAG_COMMON_VARIABLES) + \
-                            strlen(STR_GRADIENT_FRAG_COMMON_FUNCTIONS)
-
-#define LINEAR_TOTAL_LENGTH strlen(STR_LINEAR_GRADIENT_VARIABLES) + \
-                            strlen(STR_LINEAR_GRADIENT_MAIN) + \
-                            COMMON_TOTAL_LENGTH + 1
-
-#define RADIAL_TOTAL_LENGTH strlen(STR_RADIAL_GRADIENT_VARIABLES) + \
-                            strlen(STR_RADIAL_GRADIENT_MAIN) + \
-                            COMMON_TOTAL_LENGTH + 1
+#if 1  //for optimization
+    #define LINEAR_TOTAL_LENGTH 2770
+    #define RADIAL_TOTAL_LENGTH 5272
+#else
+    #define COMMON_TOTAL_LENGTH strlen(STR_GRADIENT_FRAG_COMMON_VARIABLES) + strlen(STR_GRADIENT_FRAG_COMMON_FUNCTIONS) + 1
+    #define LINEAR_TOTAL_LENGTH strlen(STR_LINEAR_GRADIENT_VARIABLES) + strlen(STR_LINEAR_GRADIENT_MAIN) + COMMON_TOTAL_LENGTH
+    #define RADIAL_TOTAL_LENGTH strlen(STR_RADIAL_GRADIENT_VARIABLES) + strlen(STR_RADIAL_GRADIENT_MAIN) + COMMON_TOTAL_LENGTH
+#endif
 
     char linearGradientFragShader[LINEAR_TOTAL_LENGTH];
     snprintf(linearGradientFragShader, LINEAR_TOTAL_LENGTH, "%s%s%s%s",
