@@ -132,6 +132,18 @@ if lottie_expressions
     config_h.set10('THORVG_LOTTIE_EXPRESSIONS_SUPPORT', true)
 endif
 
+gl_variant = ''
+
+if gl_engine
+    if get_option('extra').contains('opengl_es')
+        gl_variant = 'OpenGL ES'
+    else
+        gl_variant = 'OpenGL'
+    endif
+else
+    gl_variant = 'None'
+endif
+
 #Miscellaneous
 config_h.set10('WIN32_LEAN_AND_MEAN', true)
 
@@ -141,9 +153,6 @@ configure_file(
 )
 
 headers = [include_directories('inc'), include_directories('.')]
-
-#OpenGL profile: OpenGLES(true) or OpenGL(false), confirmed by gl_engine
-target_opengles = false
 
 subdir('inc')
 subdir('src')
@@ -183,6 +192,7 @@ Summary:
     Tool (Svg2Png):             @20@
     Tool (Lottie2Gif):          @21@
     Extra (Lottie Expressions): @22@
+    Extra (OpenGL Variant):     @23@
 
 '''.format(
         meson.project_version(),
@@ -207,7 +217,8 @@ Summary:
         get_option('examples'),
         svg2png,
         lottie2gif,
-        lottie_expressions
+        lottie_expressions,
+        gl_variant
     )
 
 message(summary)
