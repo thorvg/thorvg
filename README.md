@@ -529,14 +529,16 @@ meson setup builddir -Dbindings="capi"
 <br />
 <br />
 ## Dependencies
-ThorVG offers versatile support for image loading, accommodating both static and external loaders. This flexibility ensures that, even in environments without external libraries, users can still leverage static loaders as a reliable alternative. At its foundation, the ThorVG core library is engineered to function autonomously, free from external dependencies. However, it is important to note that ThorVG also encompasses a range of optional feature extensions, each with its specific set of dependencies. The dependencies associated with these selective features are outlined as follows:
+ThorVG provides flexible image loading capabilities, supporting both static and external loaders. This design ensures that even in environments lacking external libraries, users can rely on built-in static loaders for core functionality. At its core, the ThorVG library is fully self-contained and operates without mandatory external dependencies. However, several optional feature extensions are available, each with its own set of dependencies.
 
-* GL engine: [OpenGL v3.3](https://www.khronos.org/opengl/) or [GLES v3.0](https://www.khronos.org/opengles/)
-* WG engine: [webgpu-native](https://github.com/gfx-rs/wgpu-native)
-* External PNG support: [libpng](https://github.com/glennrp/libpng)
-* External JPG support: [turbojpeg](https://github.com/libjpeg-turbo/libjpeg-turbo)
-* External WebP support: [libwebp](https://developers.google.com/speed/webp/download)
-* Examples: [SDL2](https://www.libsdl.org/)
+The following outlines the dependencies for these optional features:
+
+* **GL Engine**: [OpenGL 3.3](https://www.khronos.org/opengl/), [OpenGL ES 3.0](https://www.khronos.org/opengles/), or a browser with [WebGL2](https://www.khronos.org/webgl/) support.
+* **WG Engine**: [webgpu-native v0.22](https://github.com/gfx-rs/wgpu-native) or a browser with [WebGPU](https://www.w3.org/TR/webgpu/) support.
+* **PNG Loader** (external): [libpng](https://github.com/pnggroup/libpng)
+* **JPEG Loader** (external): [libjpeg-turbo](https://github.com/libjpeg-turbo/libjpeg-turbo)
+* **WebP Loader** (external): [libwebp](https://developers.google.com/speed/webp/download)
+* **Examples**: [SDL2](https://www.libsdl.org/)
 
 [Back to contents](#contents)
 <br />
