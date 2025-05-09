@@ -72,7 +72,7 @@ static bool _genOutline(SwImage* image, const Matrix& transform, SwMpool* mpool,
 /* External Class Implementation                                        */
 /************************************************************************/
 
-bool imagePrepare(SwImage* image, const Matrix& transform, const SwBBox& clipRegion, SwBBox& renderRegion, SwMpool* mpool, unsigned tid)
+bool imagePrepare(SwImage* image, const Matrix& transform, const RenderRegion& clipRegion, RenderRegion& renderRegion, SwMpool* mpool, unsigned tid)
 {
     image->direct = _onlyShifted(transform);
 
@@ -95,7 +95,7 @@ bool imagePrepare(SwImage* image, const Matrix& transform, const SwBBox& clipReg
 }
 
 
-bool imageGenRle(SwImage* image, const SwBBox& renderRegion, bool antiAlias)
+bool imageGenRle(SwImage* image, const RenderRegion& renderRegion, bool antiAlias)
 {
     if ((image->rle = rleRender(image->rle, image->outline, renderRegion, antiAlias))) return true;
 

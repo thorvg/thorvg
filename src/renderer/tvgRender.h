@@ -112,6 +112,11 @@ struct RenderRegion
         if (rhs.max.y > max.y) max.y = rhs.max.y;
     }
 
+    void reset()
+    {
+        min.x = min.y = max.x = max.y = 0;
+    }
+
     bool operator==(const RenderRegion& rhs) const
     {
         return (min.x == rhs.min.x && min.y == rhs.min.y && max.x == rhs.max.x && max.y == rhs.max.y);
@@ -120,6 +125,16 @@ struct RenderRegion
     bool invalid() const
     {
         return (max.x <= min.x || max.y <= min.y);
+    }
+
+    uint32_t w() const
+    {
+        return (uint32_t)max.x - min.x;
+    }
+
+    uint32_t h() const
+    {
+        return (uint32_t)max.y - min.y;
     }
 };
 

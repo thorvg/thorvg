@@ -146,10 +146,10 @@ static bool neonRasterTranslucentRle(SwSurface* surface, const SwRle* rle, const
 }
 
 
-static bool neonRasterTranslucentRect(SwSurface* surface, const SwBBox& region, const RenderColor& c)
+static bool neonRasterTranslucentRect(SwSurface* surface, const RenderRegion& region, const RenderColor& c)
 {
-    auto h = static_cast<uint32_t>(region.max.y - region.min.y);
-    auto w = static_cast<uint32_t>(region.max.x - region.min.x);
+    auto h = region.h();
+    auto w = region.w();
 
     //32bits channels
     if (surface->channelSize == sizeof(uint32_t)) {
