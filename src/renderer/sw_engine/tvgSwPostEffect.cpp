@@ -61,7 +61,7 @@ static inline int _gaussianRemap(int end, int idx)
 
 //TODO: SIMD OPTIMIZATION?
 template<int border = 0>
-static void _gaussianFilter(uint8_t* dst, uint8_t* src, int32_t stride, int32_t w, int32_t h, const SwBBox& bbox, int32_t dimension, bool flipped)
+static void _gaussianFilter(uint8_t* dst, uint8_t* src, int32_t stride, int32_t w, int32_t h, const RenderRegion& bbox, int32_t dimension, bool flipped)
 {
     if (flipped) {
         src += (bbox.min.x * stride + bbox.min.y) << 2;
@@ -230,7 +230,7 @@ struct SwDropShadow : SwGaussianBlur
 
 
 //TODO: SIMD OPTIMIZATION?
-static void _dropShadowFilter(uint32_t* dst, uint32_t* src, int stride, int w, int h, const SwBBox& bbox, int32_t dimension, uint32_t color, bool flipped)
+static void _dropShadowFilter(uint32_t* dst, uint32_t* src, int stride, int w, int h, const RenderRegion& bbox, int32_t dimension, uint32_t color, bool flipped)
 {
     if (flipped) {
         src += (bbox.min.x * stride + bbox.min.y);
@@ -267,7 +267,7 @@ static void _dropShadowFilter(uint32_t* dst, uint32_t* src, int stride, int w, i
 }
 
 
-static void _dropShadowShift(uint32_t* dst, uint32_t* src, int dstride, int sstride, SwBBox& region, SwPoint& offset, uint8_t opacity, bool direct)
+static void _dropShadowShift(uint32_t* dst, uint32_t* src, int dstride, int sstride, RenderRegion& region, SwPoint& offset, uint8_t opacity, bool direct)
 {
     src += (region.min.y * sstride + region.min.x);
     dst += (region.min.y * dstride + region.min.x);

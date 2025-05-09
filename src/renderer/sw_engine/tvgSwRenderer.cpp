@@ -40,7 +40,7 @@ struct SwTask : Task
 {
     SwSurface* surface = nullptr;
     SwMpool* mpool = nullptr;
-    SwBBox bbox;                          //Rendering Region
+    RenderRegion bbox;                          //Rendering Region
     Matrix transform;
     Array<RenderData> clips;
     RenderUpdateFlag flags = RenderUpdateFlag::None;
@@ -113,7 +113,7 @@ struct SwShapeTask : SwTask
         }
 
         auto strokeWidth = validStrokeWidth(clipper);
-        SwBBox renderRegion{};
+        RenderRegion renderRegion{};
         auto updateShape = flags & (RenderUpdateFlag::Path | RenderUpdateFlag::Transform | RenderUpdateFlag::Clip);
         auto updateFill = false;
 

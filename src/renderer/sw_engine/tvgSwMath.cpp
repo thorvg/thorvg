@@ -271,7 +271,7 @@ SwPoint mathTransform(const Point* to, const Matrix& transform)
 }
 
 
-bool mathClipBBox(const SwBBox& clipper, SwBBox& clippee)
+bool mathClipBBox(const RenderRegion& clipper, RenderRegion& clippee)
 {
     clippee.max.x = (clippee.max.x < clipper.max.x) ? clippee.max.x : clipper.max.x;
     clippee.max.y = (clippee.max.y < clipper.max.y) ? clippee.max.y : clipper.max.y;
@@ -286,7 +286,7 @@ bool mathClipBBox(const SwBBox& clipper, SwBBox& clippee)
 }
 
 
-bool mathUpdateOutlineBBox(const SwOutline* outline, const SwBBox& clipRegion, SwBBox& renderRegion, bool fastTrack)
+bool mathUpdateOutlineBBox(const SwOutline* outline, const RenderRegion& clipRegion, RenderRegion& renderRegion, bool fastTrack)
 {
     if (!outline) return false;
 
