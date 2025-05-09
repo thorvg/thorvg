@@ -25,6 +25,9 @@
 
 #include "tvgGlShader.h"
 
+#include <unordered_map>
+#include <string>
+
 class GlProgram
 {
 public:
@@ -49,6 +52,8 @@ public:
 
 private:
     uint32_t mProgramObj;
+    std::unordered_map<std::string, int32_t> mUniformLocation;
+    std::unordered_map<std::string, int32_t> mUniformBlock;
     static uint32_t mCurrentProgram;
 };
 
