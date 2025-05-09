@@ -105,6 +105,11 @@ struct RenderRegion
     void intersect(const RenderRegion& rhs);
     void add(const RenderRegion& rhs);
 
+    void reset()
+    {
+        min.x = min.y = max.x = max.y = 0;
+    }
+
     bool operator==(const RenderRegion& rhs) const
     {
         if (min.x == rhs.min.x && min.y == rhs.min.y && max.x == rhs.max.x && max.y == rhs.max.y) return true;
@@ -115,6 +120,16 @@ struct RenderRegion
     {
         if (max.x <= min.x || max.y <= min.y) return true;
         return false;
+    }
+
+    uint32_t w() const
+    {
+        return (uint32_t)max.x - min.x;
+    }
+
+    uint32_t h() const
+    {
+        return (uint32_t)max.y - min.y;
     }
 };
 
