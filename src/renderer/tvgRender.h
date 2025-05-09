@@ -25,6 +25,9 @@
 
 #include <math.h>
 #include <cstdarg>
+#include <vector>
+#include <unordered_map>
+#include <algorithm>
 #include "tvgCommon.h"
 #include "tvgArray.h"
 #include "tvgLock.h"
@@ -49,7 +52,6 @@ static inline RenderUpdateFlag operator|(const RenderUpdateFlag a, const RenderU
 {
     return RenderUpdateFlag(uint16_t(a) | uint16_t(b));
 }
-
 
 struct RenderSurface
 {
@@ -102,8 +104,14 @@ struct RenderRegion
         int32_t x, y;
     } max;
 
-    void intersect(const RenderRegion& rhs);
+    bool intersect(const RenderRegion& rhs);
     void add(const RenderRegion& rhs);
+
+    bool intersected(const RenderRegion& rhs) const
+    {
+        if (rhs.max.x < min.x || rhs.min.x > max.x || rhs.max.y < min.y || rhs.min.y > max.y) return false;
+        return true;
+    }
 
     void reset()
     {
@@ -131,6 +139,79 @@ struct RenderRegion
     {
         return (uint32_t)max.y - min.y;
     }
+};
+
+struct RenderDirtyRegion
+{
+    const unordered_map<int, RenderRegion*>& get() const
+    {
+        return merged;
+    }
+
+    void add(const RenderRegion& region)
+    {
+        regions.push_back(region);
+    }
+
+    void prepare()
+    {
+        regions.clear();
+    }
+
+    void commit()
+    {
+        if (regions.empty()) return;
+
+        const auto count = regions.size();
+
+        //merging scattered render regions.
+        //the main idea is to use line sweeping along with union-find grouping and merging.
+        //Time Complexity: O(2N) + O(NlogN) + O(N x K)
+
+        //sorting by x coord. guarantee the stable performance: O(NlogN)
+        stable_sort(regions.begin(), regions.end(),[](const RenderRegion& a, const RenderRegion& b) -> bool {
+            return a.min.x < b.min.x;
+        });
+
+        //initialize union: O(N)
+        parent.reserve(count);
+        for (size_t i = 0; i < count; ++i) {
+            parent[i] = (uint16_t) i;
+        }
+
+        //grouping for merging overlaps: O(N x K) ~ O(N^2)
+        for (size_t i = 0; i < count; ++i) {
+            const auto& a = regions[i];
+            auto root = find(i);
+            for (size_t j = i + 1; j < count; ++j) {
+                const auto& b = regions[j];
+                if (a.max.x < b.min.x) break;
+                if (a.max.y >= b.min.y && a.min.y <= b.max.y) {
+                    parent[find(j)] = root;
+                }
+            }
+        }
+
+        //merge regions: O(N) in average
+        merged.clear();
+
+        for (size_t i = 0; i < count; ++i) {
+            auto root = find(i);
+            if (merged.find(root) == merged.end()) merged[root] = &regions[i];
+            else merged[root]->add(regions[i]);
+        }
+    }
+
+private:
+    uint16_t find(int i)
+    {
+        if (parent[i] != i) parent[i] = find(parent[i]);
+        return parent[i];
+    }
+
+    vector<RenderRegion> regions;
+    Array<uint16_t> parent;
+    unordered_map<int, RenderRegion*> merged;
 };
 
 struct RenderPath
@@ -380,7 +461,7 @@ struct RenderEffectTint : RenderEffect
         inst->white[0] = va_arg(args, int);
         inst->white[1] = va_arg(args, int);
         inst->white[2] = va_arg(args, int);
-        inst->intensity = (uint8_t)(va_arg(args, double) * 2.55);
+        inst->intensity = (uint8_t)(static_cast<float>(va_arg(args, double)) * 2.55f);
         inst->type = SceneEffect::Tint;
         return inst;
     }
@@ -411,8 +492,9 @@ struct RenderEffectTritone : RenderEffect
 
 class RenderMethod
 {
-private:
-    uint32_t refCnt = 0;        //reference count
+protected:
+    RenderDirtyRegion dirtyRegion;
+    uint32_t refCnt = 0;
     Key key;
 
 public:

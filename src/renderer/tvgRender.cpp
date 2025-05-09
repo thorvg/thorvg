@@ -104,16 +104,18 @@ bool RenderPath::bounds(Matrix* m, float* x, float* y, float* w, float* h)
 /************************************************************************/
 
 
-void RenderRegion::intersect(const RenderRegion& rhs)
+bool RenderRegion::intersect(const RenderRegion& rhs)
 {
-    min.x = (min.x > rhs.min.x) ? min.x : rhs.min.x;
-    min.y = (min.y > rhs.min.y) ? min.y : rhs.min.y;
-    max.x = (max.x < rhs.max.x) ? max.x : rhs.max.x;
-    max.y = (max.y < rhs.max.y) ? max.y : rhs.max.y;
-
-    //not intersected.
-    if (max.x < min.x) max.x = min.x;
-    if (max.y < min.y) max.y = min.y;
+    if (intersected(rhs)) {
+        min.x = (min.x > rhs.min.x) ? min.x : rhs.min.x;
+        min.y = (min.y > rhs.min.y) ? min.y : rhs.min.y;
+        max.x = (max.x < rhs.max.x) ? max.x : rhs.max.x;
+        max.y = (max.y < rhs.max.y) ? max.y : rhs.max.y;
+        return true;
+    }
+    max.x = min.x;
+    max.y = min.y;
+    return false;
 }
 
 

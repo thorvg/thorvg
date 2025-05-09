@@ -40,7 +40,7 @@ struct SwTask : Task
 {
     SwSurface* surface = nullptr;
     SwMpool* mpool = nullptr;
-    RenderRegion bbox;                          //Rendering Region
+    RenderRegion bbox[2];                 //Rendering Region 0:current, 1:prevous
     Matrix transform;
     Array<RenderData> clips;
     RenderUpdateFlag flags = RenderUpdateFlag::None;
@@ -54,10 +54,10 @@ struct SwTask : Task
         done();
 
         RenderRegion region;
-        region.min.x = bbox.min.x > 0 ? bbox.min.x : 0;
-        region.min.y = bbox.min.y > 0 ? bbox.min.y : 0;
-        region.max.x = bbox.max.x > bbox.min.x ? bbox.max.x : bbox.min.x;
-        region.max.y = bbox.max.y > bbox.min.y ? bbox.max.y : bbox.min.y;
+        region.min.x = bbox[0].min.x > 0 ? bbox[0].min.x : 0;
+        region.min.y = bbox[0].min.y > 0 ? bbox[0].min.y : 0;
+        region.max.x = bbox[0].max.x > bbox[0].min.x ? bbox[0].max.x : bbox[0].min.x;
+        region.max.y = bbox[0].max.y > bbox[0].min.y ? bbox[0].max.y : bbox[0].min.y;
 
         return region;
     }
@@ -99,7 +99,7 @@ struct SwShapeTask : SwTask
     bool clip(SwRle* target) override
     {
         if (shape.strokeRle) return rleClip(target, shape.strokeRle);
-        if (shape.fastTrack) return rleClip(target, &bbox);
+        if (shape.fastTrack) return rleClip(target, &bbox[0]);
         if (shape.rle) return rleClip(target, shape.rle);
         return false;
     }
@@ -108,7 +108,7 @@ struct SwShapeTask : SwTask
     {
         //Invisible
         if (opacity == 0 && !clipper) {
-            bbox.reset();
+            bbox[0].reset();
             return;
         }
 
@@ -122,7 +122,7 @@ struct SwShapeTask : SwTask
             updateFill = (MULTIPLY(rshape->color.a, opacity) || rshape->fill);
             if (updateShape) shapeReset(&shape);
             if (updateFill || clipper) {
-                if (shapePrepare(&shape, rshape, transform, bbox, renderRegion, mpool, tid, clips.count > 0 ? true : false)) {
+                if (shapePrepare(&shape, rshape, transform, bbox[0], renderRegion, mpool, tid, clips.count > 0 ? true : false)) {
                     if (!shapeGenRle(&shape, rshape, antialiasing(strokeWidth))) goto err;
                 } else {
                     updateFill = false;
@@ -142,7 +142,7 @@ struct SwShapeTask : SwTask
         if (updateShape || flags & RenderUpdateFlag::Stroke) {
             if (strokeWidth > 0.0f) {
                 shapeResetStroke(&shape, rshape, transform);
-                if (!shapeGenStrokeRle(&shape, rshape, transform, bbox, renderRegion, mpool, tid)) goto err;
+                if (!shapeGenStrokeRle(&shape, rshape, transform, bbox[0], renderRegion, mpool, tid)) goto err;
                 if (auto fill = rshape->strokeFill()) {
                     auto ctable = (flags & RenderUpdateFlag::GradientStroke) ? true : false;
                     if (ctable) shapeResetStrokeFill(&shape);
@@ -164,12 +164,12 @@ struct SwShapeTask : SwTask
             if (!clipShapeRle && !clipStrokeRle) goto err;
         }
 
-        bbox = renderRegion; //sync
+        bbox[0] = renderRegion; //sync
 
         return;
 
     err:
-        bbox.reset();
+        bbox[0].reset();
         shapeReset(&shape);
         rleReset(shape.strokeRle);
         shapeDelOutline(&shape, mpool, tid);
@@ -195,7 +195,7 @@ struct SwImageTask : SwTask
 
     void run(unsigned tid) override
     {
-        auto clipRegion = bbox;
+        auto clipRegion = bbox[0];
 
         //Convert colorspace if it's not aligned.
         rasterConvertCS(source, surface->cs);
@@ -212,10 +212,10 @@ struct SwImageTask : SwTask
             imageReset(&image);
             if (!image.data || image.w == 0 || image.h == 0) goto end;
 
-            if (!imagePrepare(&image, transform, clipRegion, bbox, mpool, tid)) goto end;
+            if (!imagePrepare(&image, transform, clipRegion, bbox[0], mpool, tid)) goto end;
 
             if (clips.count > 0) {
-                if (!imageGenRle(&image, bbox, false)) goto end;
+                if (!imageGenRle(&image, bbox[0], false)) goto end;
                 if (image.rle) {
                     //Clear current task memorypool here if the clippers would use the same memory pool
                     imageDelOutline(&image, mpool, tid);
@@ -299,7 +299,10 @@ SwRenderer::~SwRenderer()
 
 bool SwRenderer::clear()
 {
-    if (surface) return rasterClear(surface, 0, 0, surface->w, surface->h);
+    if (surface) {
+        cleared = true;
+        return rasterClear(surface, 0, 0, surface->w, surface->h);
+    }
     return false;
 }
 
@@ -367,6 +370,26 @@ bool SwRenderer::postUpdate()
 
 bool SwRenderer::preRender()
 {
+    printf("pre render ----------------------------------------\n");
+
+    if (cleared) return true;  //need a full scene rendering
+
+    dirtyRegion.prepare();
+
+    //collect the old and new dirtry regions
+    ARRAY_FOREACH(p, tasks) {
+        auto task = *p;
+        task->done();
+        dirtyRegion.add(task->bbox[0]);
+        printf("d: (%d %d) (%d %d)\n", task->bbox[0].min.x, task->bbox[0].min.y, task->bbox[0].max.x, task->bbox[0].max.y);
+        if (task->bbox[0] == task->bbox[1]) continue;  //TODO: confirm
+        dirtyRegion.add(task->bbox[1]);
+        printf("d: (%d %d) (%d %d)\n", task->bbox[1].min.x, task->bbox[1].min.y, task->bbox[1].max.x, task->bbox[1].max.y);
+        task->bbox[1] = task->bbox[0];
+    }
+
+    dirtyRegion.commit();
+
     return true;
 }
 
@@ -396,6 +419,8 @@ bool SwRenderer::postRender()
     }
     tasks.clear();
 
+    cleared = false;
+
     return true;
 }
 
@@ -407,7 +432,7 @@ bool SwRenderer::renderImage(RenderData data)
 
     if (task->opacity == 0) return true;
 
-    return rasterImage(surface, &task->image, task->transform, task->bbox, task->opacity);
+    return rasterImage(surface, &task->image, task->transform, task->bbox[0], task->opacity);
 }
 
 
@@ -420,15 +445,33 @@ bool SwRenderer::renderShape(RenderData data)
 
     if (task->opacity == 0) return true;
 
-    //Main raster stage
-    if (task->rshape->strokeFirst()) {
-        _renderStroke(task, surface, task->opacity);
-        _renderFill(task, surface, task->opacity);
-    } else {
-        _renderFill(task, surface, task->opacity);
-        _renderStroke(task, surface, task->opacity);
-    }
+    auto core = [&]() -> void {
+        if (task->rshape->strokeFirst()) {
+            _renderStroke(task, surface, task->opacity);
+            _renderFill(task, surface, task->opacity);
+        } else {
+            _renderFill(task, surface, task->opacity);
+            _renderStroke(task, surface, task->opacity);
+        }
+    };
 
+    //full scene or partial rendering
+    if (cleared) {
+        core();
+    } else {
+        auto& regions = dirtyRegion.get();
+        for (auto& p : regions) {
+            auto bbox = task->shape.bbox;
+            //printf("p: (%d %d), (%d %d)\n", p.second->min.x, p.second->min.y, p.second->max.x, p.second->max.y);
+            if (bbox.intersect(*p.second)) {
+                //TODO:
+                auto bkg = task->shape.bbox;
+                task->shape.bbox = bbox;
+                core();
+                task->shape.bbox = bkg;
+            }
+        }
+    }
     return true;
 }
 
@@ -739,10 +782,10 @@ void* SwRenderer::prepareCommon(SwTask* task, const Matrix& transform, const Arr
     task->surface = surface;
     task->mpool = mpool;
     task->flags = flags;
-    task->bbox.min.x = std::max(static_cast<SwCoord>(0), static_cast<SwCoord>(vport.min.x));
-    task->bbox.min.y = std::max(static_cast<SwCoord>(0), static_cast<SwCoord>(vport.min.y));
-    task->bbox.max.x = std::min(static_cast<SwCoord>(surface->w), static_cast<SwCoord>(vport.max.x));
-    task->bbox.max.y = std::min(static_cast<SwCoord>(surface->h), static_cast<SwCoord>(vport.max.y));
+
+    //TODO:remove?
+    task->bbox[0].min = {std::max(0, vport.min.x), std::max(0, vport.min.y)};
+    task->bbox[0].max = {std::min(int32_t(surface->w), vport.max.x), std::min(int32_t(surface->h), vport.max.y)};
 
     if (!task->pushed) {
         task->pushed = true;
