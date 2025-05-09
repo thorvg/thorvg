@@ -26,6 +26,7 @@
 #include "tvgCommon.h"
 #include "tvgStr.h"
 #include "tvgCompressor.h"
+#include "tvgInlist.h"
 #include "tvgRender.h"
 #include "tvgLottieProperty.h"
 #include "tvgLottieRenderPooler.h"
@@ -1050,6 +1051,30 @@ struct LottieLayer : LottieGroup
 };
 
 
+struct LottieSlotData
+{
+    INLIST_ITEM(LottieSlotData);
+
+    struct SlotData {
+        char* sid;
+        LottieProperty* prop;
+    };
+
+    LottieSlotData(uint32_t id) : id(id) {}
+
+    ~LottieSlotData()
+    {
+        ARRAY_FOREACH(p, datas) {
+            delete(p->prop);
+            tvg::free(p->sid);
+        }
+    }
+
+    uint32_t id;
+    Array<SlotData> datas;
+};
+
+
 struct LottieSlot
 {
     struct Pair {
@@ -1057,7 +1082,8 @@ struct LottieSlot
         LottieProperty* prop;
     };
 
-    void assign(LottieObject* target, bool byDefault);
+    LottieProperty* data(LottieObject* target);
+    void apply(LottieProperty* prop, bool byDefault = false);
     void reset();
 
     LottieSlot(LottieLayer* layer, LottieObject* parent, char* sid, LottieObject* obj, LottieProperty::Type type) : context{layer, parent}, sid(sid), type(type)
@@ -1137,6 +1163,7 @@ struct LottieComposition
     Array<LottieFont*> fonts;
     Array<LottieSlot*> slots;
     Array<LottieMarker*> markers;
+    Inlist<LottieSlotData> slotDatas;
     bool expressions = false;
     bool initiated = false;
 };

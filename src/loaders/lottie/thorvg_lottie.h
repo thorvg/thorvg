@@ -23,17 +23,6 @@ public:
     ~LottieAnimation() override;
 
     /**
-     * @brief Override Lottie properties using slot data.
-     *
-     * @param[in] slot The Lottie slot data in JSON format to override, or @c nullptr to reset.
-     *
-     * @retval Result::InsufficientCondition In case the animation is not loaded.
-     *
-     * @since 1.0
-     */
-    Result override(const char* slot) noexcept;
-
-    /**
     * @brief Specifies a segment by marker. 
     * 
     * Markers are used to control animation playback by specifying start and end points, 
@@ -109,6 +98,39 @@ public:
      * @note Experimental API
      */
     Result assign(const char* layer, uint32_t ix, const char* var, float val);
+
+    /**
+     * @brief Generates a new slot from the given slot data.
+     *
+     * @param[in] slot The Lottie slot data in JSON format.
+     *
+     * @retval The generated slot ID when successful, 0 otherwise.
+     *
+     * @since 1.0
+     */
+    uint32_t genSlot(const char* slot) noexcept;
+
+    /**
+     * @brief Applies a previously generated slot to the animation.
+     *
+     * @param[in] slotId The ID of the slot to apply, or 0 to reset all slots.
+     *
+     * @retval Result::InsufficientCondition In case the animation is not loaded or the slot ID is invalid.
+     *
+     * @since 1.0
+     */
+    Result applySlot(uint32_t slotId) noexcept;
+
+    /**
+     * @brief Deletes a previously generated slot.
+     *
+     * @param[in] slotId The ID of the slot to delete, or 0 to delete all slots.
+     *
+     * @retval Result::InsufficientCondition In case the animation is not loaded or the slot ID is invalid.
+     *
+     * @since 1.0
+     */
+    Result delSlot(uint32_t slotId) noexcept;
 
     /**
      * @brief Creates a new LottieAnimation object.
