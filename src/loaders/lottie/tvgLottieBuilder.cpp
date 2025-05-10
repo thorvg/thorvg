@@ -397,7 +397,7 @@ static void _repeat(LottieGroup* parent, Shape* path, RenderContext* ctx)
 
 void LottieBuilder::appendRect(Shape* shape, Point& pos, Point& size, float r, bool clockwise, RenderContext* ctx)
 {
-    auto temp = (ctx->offset) ? Shape::gen() : shape;
+    auto temp = (ctx->offset || ctx->puckerBloat) ? Shape::gen() : shape;
     auto cnt = SHAPE(temp)->rs.path.pts.count;
 
     temp->appendRect(pos.x, pos.y, size.x, size.y, r, r, clockwise);
@@ -410,6 +410,12 @@ void LottieBuilder::appendRect(Shape* shape, Point& pos, Point& size, float r, b
 
     if (ctx->offset) {
         ctx->offset->modifyRect(SHAPE(temp)->rs.path, SHAPE(shape)->rs.path);
+        if (ctx->puckerBloat) {
+            //TODO: properly applied chaining
+        }
+        delete(temp);
+    } else if (ctx->puckerBloat) {
+        ctx->puckerBloat->modifyRect(SHAPE(temp)->rs.path, SHAPE(shape)->rs.path);
         delete(temp);
     }
 }
@@ -453,6 +459,8 @@ static void _appendCircle(Shape* shape, Point& center, Point& radius, bool clock
             SHAPE(shape)->rs.path.pts[i] *= *ctx->transform;
         }
     }
+
+    if (ctx->puckerBloat) ctx->puckerBloat->modifyEllipse(SHAPE(shape)->rs.path);
 }
 
 
@@ -514,7 +522,7 @@ void LottieBuilder::updateStar(LottiePolyStar* star, float frameNo, Matrix* tran
     bool roundedCorner = ctx->roundness && (tvg::zero(innerRoundness) || tvg::zero(outerRoundness));
 
     Shape* shape;
-    if (roundedCorner || ctx->offset) {
+    if (roundedCorner || ctx->offset || ctx->puckerBloat) {
         shape = star->pooling();
         shape->reset();
     } else {
@@ -624,7 +632,7 @@ void LottieBuilder::updatePolygon(LottieGroup* parent, LottiePolyStar* star, flo
     angle += anglePerPoint * direction;
 
     Shape* shape;
-    if (roundedCorner || ctx->offset) {
+    if (roundedCorner || ctx->offset || ctx->puckerBloat) {
         shape = star->pooling();
         shape->reset();
     } else {
@@ -725,6 +733,15 @@ void LottieBuilder::updateOffsetPath(TVG_UNUSED LottieGroup* parent, LottieObjec
     if (!ctx->offset) ctx->offset = new LottieOffsetModifier(offset->offset(frameNo, tween, exps), offset->miterLimit(frameNo, tween, exps), offset->join);
 
     ctx->update(ctx->offset);
+}
+
+
+void LottieBuilder::updatePuckerBloat(TVG_UNUSED LottieGroup* parent, LottieObject** child, float frameNo, TVG_UNUSED Inlist<RenderContext>& contexts, RenderContext* ctx)
+{
+    auto puckerBloat = static_cast<LottiePuckerBloat*>(*child);
+    if (!ctx->puckerBloat) ctx->puckerBloat = new LottiePuckerBloatModifier(puckerBloat->amount(frameNo, tween, exps));
+
+    ctx->update(ctx->puckerBloat);
 }
 
 
@@ -835,6 +852,10 @@ void LottieBuilder::updateChildren(LottieGroup* parent, float frameNo, Inlist<Re
                 }
                 case LottieObject::OffsetPath: {
                     updateOffsetPath(parent, child, frameNo, contexts, ctx);
+                    break;
+                }
+                case LottieObject::PuckerBloat: {
+                    updatePuckerBloat(parent, child, frameNo, contexts, ctx);
                     break;
                 }
                 default: break;
