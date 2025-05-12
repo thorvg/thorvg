@@ -195,6 +195,8 @@ RenderData WgRenderer::prepare(RenderSurface* surface, RenderData data, const Ma
 
 bool WgRenderer::preRender()
 {
+    if (mContext.invalid()) return false;
+
     // push rot render storage to the render tree stack
     assert(mRenderStorageStack.count == 0);
     mRenderStorageStack.push(&mRenderStorageRoot);
@@ -301,6 +303,8 @@ const RenderSurface* WgRenderer::mainSurface()
 
 bool WgRenderer::clear()
 {
+    if (mContext.invalid()) return false;
+
     //TODO: clear the current target buffer only if clear() is called
     return true;
 }
@@ -632,6 +636,8 @@ void WgRenderer::dispose(RenderEffect* effect)
 
 bool WgRenderer::preUpdate()
 {
+    if (mContext.invalid()) return false;
+
     return true;
 }
 
