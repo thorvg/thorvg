@@ -113,8 +113,8 @@ static void _rasterBlendingPolygonImageSegment(SwSurface* surface, const SwImage
     y = yStart;
 
     while (y < yEnd) {
-        x1 = (int32_t)_xa;
-        x2 = (int32_t)_xb;
+        x1 = nearbyint(_xa);
+        x2 = nearbyint(_xb);
 
         if (!region) {
             minx = INT32_MAX;
@@ -246,8 +246,8 @@ static void _rasterPolygonImageSegment(SwSurface* surface, const SwImage* image,
     y = yStart;
 
     while (y < yEnd) {
-        x1 = (int32_t)_xa;
-        x2 = (int32_t)_xb;
+        x1 = nearbyint(_xa);
+        x2 = nearbyint(_xb);
 
         if (!region) {
             minx = INT32_MAX;
