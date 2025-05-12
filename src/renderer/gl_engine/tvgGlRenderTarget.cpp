@@ -40,8 +40,9 @@ GlRenderTarget::~GlRenderTarget()
 
 void GlRenderTarget::init(GLint resolveId)
 {
-    if (mFbo != 0 || mWidth == 0 || mHeight == 0) return;
+    if (mFbo != GL_INVALID_VALUE || mWidth == 0 || mHeight == 0) return;
 
+    //TODO: fbo is used. maybe we can consider the direct rendering with resolveId as well.
     GL_CHECK(glGenFramebuffers(1, &mFbo));
 
     GL_CHECK(glBindFramebuffer(GL_FRAMEBUFFER, mFbo));

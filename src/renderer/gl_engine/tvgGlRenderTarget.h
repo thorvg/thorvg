@@ -44,12 +44,13 @@ public:
     void setViewport(const RenderRegion& vp) { mViewport = vp; }
     const RenderRegion& getViewport() const { return mViewport; }
 
+    bool invalid() const { return mFbo == GL_INVALID_VALUE; }
 
 private:
     uint32_t mWidth = 0;
     uint32_t mHeight = 0;
     RenderRegion mViewport{};
-    GLuint mFbo = 0;
+    GLuint mFbo = GL_INVALID_VALUE;
     GLuint mColorBuffer = 0;
     GLuint mDepthStencilBuffer = 0;
     GLuint mResolveFbo = 0;

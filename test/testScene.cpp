@@ -80,7 +80,8 @@ TEST_CASE("Scene Clear And Reuse Shape", "[tvgScene]")
     REQUIRE(Initializer::init(0) == Result::Success);
     {
         auto canvas = unique_ptr<SwCanvas>(SwCanvas::gen());
-        REQUIRE(canvas);
+        uint32_t buffer[100*100];
+        canvas->target(buffer, 100, 100, 100, ColorSpace::ABGR8888);
 
         auto scene = Scene::gen();
         REQUIRE(scene);

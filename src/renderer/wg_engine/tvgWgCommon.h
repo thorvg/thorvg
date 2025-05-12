@@ -70,6 +70,11 @@ struct WgContext {
 
     // release buffer objects
     void releaseBuffer(WGPUBuffer& buffer);
+
+    bool invalid()
+    {
+        return !instance || !device;
+    }
 };
 
 #endif // _TVG_WG_COMMON_H_

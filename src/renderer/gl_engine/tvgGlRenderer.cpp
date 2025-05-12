@@ -809,6 +809,8 @@ void GlRenderer::endRenderPass(RenderCompositor* cmp)
 
 bool GlRenderer::clear()
 {
+    if (mRootTarget.invalid()) return false;
+
     mClearBuffer = true;
     return true;
 }
@@ -896,6 +898,8 @@ RenderRegion GlRenderer::region(RenderData data)
 
 bool GlRenderer::preRender()
 {
+    if (mRootTarget.invalid()) return false;
+
     currentContext();
     if (mPrograms.empty()) initShaders();
     mRenderPassStack.push(new GlRenderPass(&mRootTarget));
@@ -1525,6 +1529,8 @@ bool GlRenderer::viewport(const RenderRegion& vp)
 
 bool GlRenderer::preUpdate()
 {
+    if (mRootTarget.invalid()) return false;
+
     currentContext();
     return true;
 }
