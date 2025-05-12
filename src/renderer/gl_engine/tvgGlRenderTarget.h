@@ -45,16 +45,19 @@ public:
     const RenderRegion& getViewport() const { return mViewport; }
 
     bool invalid() const { return mFbo == GL_INVALID_VALUE; }
+    bool isInUse() const { return mInUse; }
+    void setInUse(bool inUse) { mInUse = inUse; }
 
 private:
-    uint32_t mWidth = 0;
-    uint32_t mHeight = 0;
+    uint32_t mWidth;
+    uint32_t mHeight;
     RenderRegion mViewport{};
     GLuint mFbo = GL_INVALID_VALUE;
     GLuint mColorBuffer = 0;
     GLuint mDepthStencilBuffer = 0;
     GLuint mResolveFbo = 0;
     GLuint mColorTex = 0;
+    bool mInUse = false;
 };
 
 class GlRenderTargetPool {
