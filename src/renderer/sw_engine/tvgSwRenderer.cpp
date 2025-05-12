@@ -245,26 +245,26 @@ struct SwImageTask : SwTask
 };
 
 
-static void _renderFill(SwShapeTask* task, SwSurface* surface, uint8_t opacity)
+static void _renderFill(SwShapeTask* task, SwSurface* surface)
 {
     if (auto fill = task->rshape->fill) {
-        rasterGradientShape(surface, &task->shape, fill, opacity);
+        rasterGradientShape(surface, &task->shape, fill, task->opacity);
     } else {
         RenderColor c;
         task->rshape->fillColor(&c.r, &c.g, &c.b, &c.a);
-        c.a = MULTIPLY(opacity, c.a);
+        c.a = MULTIPLY(task->opacity, c.a);
         if (c.a > 0) rasterShape(surface, &task->shape, c);
     }
 }
 
-static void _renderStroke(SwShapeTask* task, SwSurface* surface, uint8_t opacity)
+static void _renderStroke(SwShapeTask* task, SwSurface* surface)
 {
     if (auto strokeFill = task->rshape->strokeFill()) {
-        rasterGradientStroke(surface, &task->shape, strokeFill, opacity);
+        rasterGradientStroke(surface, &task->shape, strokeFill, task->opacity);
     } else {
         RenderColor c;
         if (task->rshape->strokeFill(&c.r, &c.g, &c.b, &c.a)) {
-            c.a = MULTIPLY(opacity, c.a);
+            c.a = MULTIPLY(task->opacity, c.a);
             if (c.a > 0) rasterStroke(surface, &task->shape, c);
         }
     }
@@ -426,11 +426,11 @@ bool SwRenderer::renderShape(RenderData data)
 
     //Main raster stage
     if (task->rshape->strokeFirst()) {
-        _renderStroke(task, surface, task->opacity);
-        _renderFill(task, surface, task->opacity);
+        _renderStroke(task, surface);
+        _renderFill(task, surface);
     } else {
-        _renderFill(task, surface, task->opacity);
-        _renderStroke(task, surface, task->opacity);
+        _renderFill(task, surface);
+        _renderStroke(task, surface);
     }
 
     return true;
