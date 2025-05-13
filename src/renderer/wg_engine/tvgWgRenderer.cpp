@@ -312,6 +312,8 @@ bool WgRenderer::clear()
 
 bool WgRenderer::sync()
 {
+    if (mContext.invalid()) return false;
+
     disposeObjects();
 
     // if texture buffer used
