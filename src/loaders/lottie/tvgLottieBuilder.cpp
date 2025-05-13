@@ -641,6 +641,7 @@ void LottieBuilder::updatePolygon(LottieGroup* parent, LottiePolyStar* star, flo
     auto in = Point{x, y} * transform;
     shape->moveTo(in.x, in.y);
 
+    auto coeff = anglePerPoint * radius * outerRoundness * POLYGON_MAGIC_NUMBER;
     for (size_t i = 0; i < ptsCnt; i++) {
         auto previousX = x;
         auto previousY = y;
@@ -649,16 +650,11 @@ void LottieBuilder::updatePolygon(LottieGroup* parent, LottiePolyStar* star, flo
 
         if (hasRoundness) {
             auto cp1Theta = tvg::atan2(previousY, previousX) - MATH_PI2 * direction;
-            auto cp1Dx = cosf(cp1Theta);
-            auto cp1Dy = sinf(cp1Theta);
+            auto cp1x = coeff * cosf(cp1Theta);
+            auto cp1y = coeff * sinf(cp1Theta);
             auto cp2Theta = tvg::atan2(y, x) - MATH_PI2 * direction;
-            auto cp2Dx = cosf(cp2Theta);
-            auto cp2Dy = sinf(cp2Theta);
-
-            auto cp1x = anglePerPoint * radius * outerRoundness * POLYGON_MAGIC_NUMBER * cp1Dx;
-            auto cp1y = anglePerPoint * radius * outerRoundness * POLYGON_MAGIC_NUMBER * cp1Dy;
-            auto cp2x = anglePerPoint * radius * outerRoundness * POLYGON_MAGIC_NUMBER * cp2Dx;
-            auto cp2y = anglePerPoint * radius * outerRoundness * POLYGON_MAGIC_NUMBER * cp2Dy;
+            auto cp2x = coeff * cosf(cp2Theta);
+            auto cp2y = coeff * sinf(cp2Theta);
 
             auto in2 = Point{previousX - cp1x, previousY - cp1y} * transform;
             auto in3 = Point{x + cp2x, y + cp2y} * transform;
