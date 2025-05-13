@@ -613,7 +613,7 @@ void LottieBuilder::updatePolygon(LottieGroup* parent, LottiePolyStar* star, flo
     auto radius = star->outerRadius(frameNo, tween, exps);
     auto outerRoundness = star->outerRoundness(frameNo, tween, exps) * 0.01f;
 
-    auto angle = deg2rad(-90.0f);
+    auto angle = -MATH_PI2;
     auto anglePerPoint = 2.0f * MATH_PI / float(ptsCnt);
     auto direction = star->clockwise ? 1.0f : -1.0f;
     auto hasRoundness = !tvg::zero(outerRoundness);
@@ -655,10 +655,10 @@ void LottieBuilder::updatePolygon(LottieGroup* parent, LottiePolyStar* star, flo
             auto cp2Dx = cosf(cp2Theta);
             auto cp2Dy = sinf(cp2Theta);
 
-            auto cp1x = radius * outerRoundness * POLYGON_MAGIC_NUMBER * cp1Dx;
-            auto cp1y = radius * outerRoundness * POLYGON_MAGIC_NUMBER * cp1Dy;
-            auto cp2x = radius * outerRoundness * POLYGON_MAGIC_NUMBER * cp2Dx;
-            auto cp2y = radius * outerRoundness * POLYGON_MAGIC_NUMBER * cp2Dy;
+            auto cp1x = anglePerPoint * radius * outerRoundness * POLYGON_MAGIC_NUMBER * cp1Dx;
+            auto cp1y = anglePerPoint * radius * outerRoundness * POLYGON_MAGIC_NUMBER * cp1Dy;
+            auto cp2x = anglePerPoint * radius * outerRoundness * POLYGON_MAGIC_NUMBER * cp2Dx;
+            auto cp2y = anglePerPoint * radius * outerRoundness * POLYGON_MAGIC_NUMBER * cp2Dy;
 
             auto in2 = Point{previousX - cp1x, previousY - cp1y} * transform;
             auto in3 = Point{x + cp2x, y + cp2y} * transform;
