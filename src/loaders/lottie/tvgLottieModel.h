@@ -980,7 +980,7 @@ struct LottieLayer : LottieGroup
 
     char* name = nullptr;
     LottieLayer* parent = nullptr;
-    LottieFloat timeRemap = 0.0f;
+    LottieFloat timeRemap = -1.0f;
     LottieLayer* comp = nullptr;  //Precompositor, current layer is belonges.
     LottieTransform* transform = nullptr;
     Array<LottieMask*> masks;
