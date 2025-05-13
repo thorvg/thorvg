@@ -95,6 +95,13 @@ struct Array
         return data[idx];
     }
 
+    void operator=(const Array& rhs)
+    {
+        reserve(rhs.count);
+        if (rhs.count > 0) memcpy(data, rhs.data, sizeof(T) * rhs.count);
+        count = rhs.count;
+    }
+
     const T* begin() const
     {
         return data;
@@ -157,17 +164,9 @@ struct Array
         return count == 0;
     }
 
-    template<class COMPARE>
-    void sort()
+    template<class COMPARE> void sort()
     {
-        qsort<COMPARE>(data, 0, static_cast<int32_t>(count) - 1);
-    }
-
-    void operator=(const Array& rhs)
-    {
-        reserve(rhs.count);
-        if (rhs.count > 0) memcpy(data, rhs.data, sizeof(T) * rhs.count);
-        count = rhs.count;
+        qsort<COMPARE>(data, 0, count - 1);
     }
 
     ~Array()
@@ -177,23 +176,17 @@ struct Array
 
 private:
     template<class COMPARE>
-    void qsort(T* arr, int32_t low, int32_t high)
+    void qsort(T* arr, uint32_t low, uint32_t high)
     {
         if (low < high) {
-            int32_t i = low;
-            int32_t j = high;
-            T tmp = arr[low];
+            auto i = low;
+            auto j = high;
+            auto tmp = arr[low];
             while (i < j) {
                 while (i < j && !COMPARE{}(arr[j], tmp)) --j;
-                if (i < j) {
-                    arr[i] = arr[j];
-                    ++i;
-                }
+                if (i < j) arr[i++] = arr[j];
                 while (i < j && COMPARE{}(arr[i], tmp)) ++i;
-                if (i < j) {
-                    arr[j] = arr[i];
-                    --j;
-                }
+                if (i < j) arr[j--] = arr[i];
             }
             arr[i] = tmp;
             qsort<COMPARE>(arr, low, i - 1);
