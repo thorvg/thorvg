@@ -358,8 +358,8 @@ void WgRenderDataShape::updateAABB(const Matrix& tr) {
     auto p1 = Point{pMax.x, pMin.y} * tr;
     auto p2 = Point{pMin.x, pMax.y} * tr;
     auto p3 = Point{pMax.x, pMax.y} * tr;
-    aabb.min = {std::min({p0.x, p1.x, p2.x, p3.x}), std::min({p0.y, p1.y, p2.y, p3.y})};
-    aabb.max = {std::max({p0.x, p1.x, p2.x, p3.x}), std::max({p0.y, p1.y, p2.y, p3.y})};
+    aabb.min = {std::min(std::min(p0.x, p1.x), std::min(p2.x, p3.x)), std::min(std::min(p0.y, p1.y), std::min(p2.y, p3.y))};
+    aabb.max = {std::max(std::max(p0.x, p1.x), std::max(p2.x, p3.x)), std::max(std::max(p0.y, p1.y), std::max(p2.y, p3.y))};
 }
 
 
