@@ -693,7 +693,7 @@ void LottieLayer::prepare(RGB24* color)
 
 float LottieLayer::remap(LottieComposition* comp, float frameNo, LottieExpressions* exp)
 {
-    if (timeRemap.frames || timeRemap.value) {
+    if (timeRemap.frames || timeRemap.value >= 0.0f) {
         frameNo = comp->frameAtTime(timeRemap(frameNo, exp));
     } else {
         frameNo -= startFrame;
