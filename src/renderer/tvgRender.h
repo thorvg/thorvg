@@ -25,6 +25,7 @@
 
 #include <math.h>
 #include <cstdarg>
+#include <vector>
 #include "tvgCommon.h"
 #include "tvgArray.h"
 #include "tvgLock.h"
@@ -49,7 +50,6 @@ static inline RenderUpdateFlag operator|(const RenderUpdateFlag a, const RenderU
 {
     return RenderUpdateFlag(uint16_t(a) | uint16_t(b));
 }
-
 
 struct RenderSurface
 {
@@ -102,6 +102,11 @@ struct RenderRegion
         int32_t x, y;
     } max;
 
+    static constexpr RenderRegion intersect(const RenderRegion& lhs, const RenderRegion& rhs)
+    {
+        return {{std::max(lhs.min.x, rhs.min.x), std::max(lhs.min.y, rhs.min.y)}, {std::min(lhs.max.x, rhs.max.x), std::min(lhs.max.y, rhs.max.y)}};
+    }
+
     void intersect(const RenderRegion& rhs);
 
     void add(const RenderRegion& rhs)
@@ -110,6 +115,16 @@ struct RenderRegion
         if (rhs.min.y < min.y) min.y = rhs.min.y;
         if (rhs.max.x > max.x) max.x = rhs.max.x;
         if (rhs.max.y > max.y) max.y = rhs.max.y;
+    }
+
+    bool contained(const RenderRegion& rhs)
+    {
+        return (min.x <= rhs.min.x && max.x >= rhs.max.x && min.y <= rhs.min.y && max.y >= rhs.max.y);
+    }
+
+    bool intersected(const RenderRegion& rhs) const
+    {
+        return (rhs.min.x < max.x && rhs.max.x > min.x && rhs.min.y < max.y && rhs.max.y > min.y);
     }
 
     void reset()
@@ -122,9 +137,19 @@ struct RenderRegion
         return (min.x == rhs.min.x && min.y == rhs.min.y && max.x == rhs.max.x && max.y == rhs.max.y);
     }
 
+    bool operator!=(const RenderRegion& rhs) const
+    {
+        return !(*this == rhs);
+    }
+
+    bool valid() const
+    {
+        return (max.x > min.x || max.y > min.y);
+    }
+
     bool invalid() const
     {
-        return (max.x <= min.x || max.y <= min.y);
+        return !valid();
     }
 
     uint32_t w() const
@@ -136,6 +161,40 @@ struct RenderRegion
     {
         return (uint32_t)max.y - min.y;
     }
+};
+
+struct RenderDirtyRegion
+{
+    bool disabled = false;
+
+    void add(const RenderRegion& region)
+    {
+        if (disabled) return;
+        list[current].push(region);
+    }
+
+    void prepare(uint32_t count)
+    {
+        if (disabled) return;
+
+        list[0].clear();
+        list[0].reserve(count * 2);
+        list[1].clear();
+        list[1].reserve(count * 2);
+    }
+
+    const Array<RenderRegion>& get()
+    {
+        return list[current];
+    }
+
+    void commit();
+
+private:
+    void subdivide(Array<RenderRegion>& targets, uint32_t idx, RenderRegion lhs, RenderRegion rhs);
+
+    Array<RenderRegion> list[2];  //double buffer swapping
+    uint8_t current = 0;          //list index. 0 or 1
 };
 
 struct RenderPath
@@ -385,7 +444,7 @@ struct RenderEffectTint : RenderEffect
         inst->white[0] = va_arg(args, int);
         inst->white[1] = va_arg(args, int);
         inst->white[2] = va_arg(args, int);
-        inst->intensity = (uint8_t)(va_arg(args, double) * 2.55);
+        inst->intensity = (uint8_t)(static_cast<float>(va_arg(args, double)) * 2.55f);
         inst->type = SceneEffect::Tint;
         return inst;
     }
@@ -416,8 +475,9 @@ struct RenderEffectTritone : RenderEffect
 
 class RenderMethod
 {
-private:
-    uint32_t refCnt = 0;        //reference count
+protected:
+    RenderDirtyRegion dirtyRegion;
+    uint32_t refCnt = 0;
     Key key;
 
 public:
