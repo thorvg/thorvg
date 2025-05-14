@@ -23,7 +23,7 @@
 #ifndef _TVG_WG_RENDERER_H_
 #define _TVG_WG_RENDERER_H_
 
-#include "tvgWgCompositor.h"
+#include "tvgWgRenderTask.h"
 
 class WgRenderer : public RenderMethod
 {
@@ -72,13 +72,15 @@ private:
     bool surfaceConfigure(WGPUSurface surface, WgContext& context, uint32_t width, uint32_t height);
 
     // render tree stacks
-    WgRenderStorage mRenderStorageRoot;
-    Array<WgCompose*> mCompositorStack;
-    Array<WgRenderStorage*> mRenderStorageStack;
+    WgRenderTarget mRenderTargetRoot;
+    Array<WgCompose*> mCompositorList;
+    Array<WgRenderTarget*> mRenderTargetStack;
     Array<WgRenderDataViewport*> mRenderDataViewportList;
+    Array<WgSceneTask*> mSceneTaskStack;
+    Array<WgRenderTask*> mRenderTaskList;
 
-    // render storage pool
-    WgRenderStoragePool mRenderStoragePool;
+    // render target pool
+    WgRenderTargetPool mRenderTargetPool;
 
     // render data paint pools
     WgRenderDataShapePool mRenderDataShapePool;
@@ -100,7 +102,6 @@ private:
     Key mDisposeKey{};
 
     // gpu handles
-    WGPUCommandEncoder mCommandEncoder{};
     WGPUTexture targetTexture{}; // external handle
     WGPUSurfaceTexture surfaceTexture{};
     WGPUSurface surface{};  // external handle

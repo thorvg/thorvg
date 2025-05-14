@@ -47,13 +47,13 @@ void WgRenderer::release()
     mRenderDataEffectParamsPool.release(mContext);
     WgMeshDataPool::gMeshDataPool->release(mContext);
 
-    // clear render storage pool
-    mRenderStoragePool.release(mContext);
+    // clear render  pool
+    mRenderTargetPool.release(mContext);
 
     // clear rendering tree stacks
-    mCompositorStack.clear();
-    mRenderStorageStack.clear();
-    mRenderStorageRoot.release(mContext);
+    mCompositorList.clear();
+    mRenderTargetStack.clear();
+    mRenderTargetRoot.release(mContext);
 
     // release context handles
     mCompositor.release(mContext);
@@ -195,49 +195,74 @@ RenderData WgRenderer::prepare(RenderSurface* surface, RenderData data, const Ma
 
 bool WgRenderer::preRender()
 {
+    // invalidate context
     if (mContext.invalid()) return false;
-
-    // push rot render storage to the render tree stack
-    assert(mRenderStorageStack.count == 0);
-    mRenderStorageStack.push(&mRenderStorageRoot);
-    // create command encoder for drawing
-    WGPUCommandEncoderDescriptor commandEncoderDesc{};
-    mCommandEncoder = wgpuDeviceCreateCommandEncoder(mContext.device, &commandEncoderDesc);
-    // start root render pass
-    mCompositor.beginRenderPass(mCommandEncoder, mRenderStorageStack.last(), true);
+    // push rot render target to the render tree stack
+    assert(mRenderTargetStack.count == 0);
+    mRenderTargetStack.push(&mRenderTargetRoot);
+    // create root compose settings
+    WgCompose* compose = new WgCompose();
+    compose->aabb = {0, 0, (int32_t)mTargetSurface.w, (int32_t)mTargetSurface.h };
+    compose->blend = BlendMethod::Normal;
+    compose->method = MaskMethod::None;
+    compose->opacity = 255;
+    mCompositorList.push(compose);
+    // create root scene scene
+    WgSceneTask* sceneTask = new WgSceneTask(&mRenderTargetRoot, compose, nullptr);
+    mRenderTaskList.push(sceneTask);
+    mSceneTaskStack.push(sceneTask);
     return true;
 }
 
 
 bool WgRenderer::renderShape(RenderData data)
 {
-    // temporary simple render data to the current render target
-    mCompositor.renderShape(mContext, (WgRenderDataShape*)data, mBlendMethod);
+    // create new paint task
+    WgPaintTask* paintTask = new WgPaintTask((WgRenderDataPaint*)data, mBlendMethod);
+    // append shape task to current scene task
+    WgSceneTask* sceneTask = mSceneTaskStack.last();
+    sceneTask->children.push(paintTask);
+    // append shape task to tasks list
+    mRenderTaskList.push(paintTask);
     return true;
 }
 
 
 bool WgRenderer::renderImage(RenderData data)
 {
-    // temporary simple render data to the current render target
-    mCompositor.renderImage(mContext, (WgRenderDataPicture*)data, mBlendMethod);
+        // create new paint task
+    WgPaintTask* paintTask = new WgPaintTask((WgRenderDataPaint*)data, mBlendMethod);
+    // append shape task to current scene task
+    WgSceneTask* sceneTask = mSceneTaskStack.last();
+    sceneTask->children.push(paintTask);
+    // append shape task to tasks list
+    mRenderTaskList.push(paintTask);
     return true;
 }
 
 
 bool WgRenderer::postRender()
 {
-    // end root render pass
-    mCompositor.endRenderPass();
-    // release command encoder
-    const WGPUCommandBufferDescriptor commandBufferDesc{};
-    WGPUCommandBuffer commandsBuffer = wgpuCommandEncoderFinish(mCommandEncoder, &commandBufferDesc);
-    wgpuQueueSubmit(mContext.queue, 1, &commandsBuffer);
-    wgpuCommandBufferRelease(commandsBuffer);
-    wgpuCommandEncoderRelease(mCommandEncoder);
-    // pop root render storage to the render tree stack
-    mRenderStorageStack.pop();
-    assert(mRenderStorageStack.count == 0);
+    // create command encoder for drawing
+    WGPUCommandEncoder commandEncoder = mContext.createCommandEncoder();
+    // execure rendering (all the fun is here)
+    WgSceneTask* sceneTaskRoot = mSceneTaskStack.last();
+    sceneTaskRoot->run(mContext, mCompositor, commandEncoder);
+    // execute and release command encoder
+    mContext.submitCommandEncoder(commandEncoder);
+    mContext.releaseCommandEncoder(commandEncoder);
+    // pop root scene task
+    mSceneTaskStack.pop();
+    assert(mSceneTaskStack.count == 0);
+    // pop root render target from the render tree stack
+    mRenderTargetStack.pop();
+    assert(mRenderTargetStack.count == 0);
+    // delete all tasks
+    ARRAY_FOREACH(p, mRenderTaskList) { delete (*p); };
+    mRenderTaskList.clear();
+    // delete all compositions
+    ARRAY_FOREACH(p, mCompositorList) { delete (*p); };
+    mCompositorList.clear();
     // clear viewport list and store allocated handles to pool
     ARRAY_FOREACH(p, mRenderDataViewportList)
         mRenderDataViewportPool.free(mContext, *p);
@@ -330,18 +355,12 @@ bool WgRenderer::sync()
     WGPUTextureView dstTextureView = mContext.createTextureView(dstTexture);
 
     // create command encoder
-    const WGPUCommandEncoderDescriptor commandEncoderDesc{};
-    WGPUCommandEncoder commandEncoder = wgpuDeviceCreateCommandEncoder(mContext.device, &commandEncoderDesc);
-
+    WGPUCommandEncoder commandEncoder = mContext.createCommandEncoder();
     // show root offscreen buffer
-    mCompositor.blit(mContext, commandEncoder, &mRenderStorageRoot, dstTextureView);
-
-    // release command encoder
-    const WGPUCommandBufferDescriptor commandBufferDesc{};
-    WGPUCommandBuffer commandsBuffer = wgpuCommandEncoderFinish(commandEncoder, &commandBufferDesc);
-    wgpuQueueSubmit(mContext.queue, 1, &commandsBuffer);
-    wgpuCommandBufferRelease(commandsBuffer);
-    wgpuCommandEncoderRelease(commandEncoder);
+    mCompositor.blit(mContext, commandEncoder, &mRenderTargetRoot, dstTextureView);
+    // execute and release command encoder
+    mContext.submitCommandEncoder(commandEncoder);
+    mContext.releaseCommandEncoder(commandEncoder);
 
     // release dest buffer view
     mContext.releaseTextureView(dstTextureView);
@@ -372,8 +391,8 @@ bool WgRenderer::target(WGPUDevice device, WGPUInstance instance, void* target, 
         mContext.initialize(instance, device);
 
         // initialize render tree instances
-        mRenderStoragePool.initialize(mContext, width, height);
-        mRenderStorageRoot.initialize(mContext, width, height);
+        mRenderTargetPool.initialize(mContext, width, height);
+        mRenderTargetRoot.initialize(mContext, width, height);
         mCompositor.initialize(mContext, width, height);
 
         // store target properties
@@ -392,12 +411,12 @@ bool WgRenderer::target(WGPUDevice device, WGPUInstance instance, void* target, 
     // update render targets dimentions
     if ((mTargetSurface.w != width) || (mTargetSurface.h != height) || (type == 0 ? (surface != (WGPUSurface)target) : (targetTexture != (WGPUTexture)target))) {
         // release render tagets
-        mRenderStoragePool.release(mContext);
-        mRenderStorageRoot.release(mContext);
+        mRenderTargetPool.release(mContext);
+        mRenderTargetRoot.release(mContext);
         clearTargets();
 
-        mRenderStoragePool.initialize(mContext, width, height);
-        mRenderStorageRoot.initialize(mContext, width, height);
+        mRenderTargetPool.initialize(mContext, width, height);
+        mRenderTargetRoot.initialize(mContext, width, height);
         mCompositor.resize(mContext, width, height);
 
         // store target properties
@@ -452,7 +471,7 @@ RenderCompositor* WgRenderer::target(const RenderRegion& region, TVG_UNUSED Colo
         compose->rdViewport->update(mContext, region);
         mRenderDataViewportList.push(compose->rdViewport);
     }
-    mCompositorStack.push(compose);
+    mCompositorList.push(compose);
     return compose;
 }
 
@@ -464,57 +483,52 @@ bool WgRenderer::beginComposite(RenderCompositor* cmp, MaskMethod method, uint8_
     compose->method = method;
     compose->opacity = opacity;
     compose->blend = mBlendMethod;
-    // end current render pass
-    mCompositor.endRenderPass();
-    // allocate new render storage and push to the render tree stack
-    WgRenderStorage* storage = mRenderStoragePool.allocate(mContext);
-    mRenderStorageStack.push(storage);
-    // begin newly added render pass
-    WGPUColor color{};
-    if ((compose->method == MaskMethod::None) && (compose->blend != BlendMethod::Normal)) color = { 1.0, 1.0, 1.0, 0.0 };
-    mCompositor.beginRenderPass(mCommandEncoder, mRenderStorageStack.last(), true, color);
+    WgSceneTask* sceneTaskCurrent = mSceneTaskStack.last();
+    // allocate new render target and push to the render tree stack
+    WgRenderTarget* renderTarget = mRenderTargetPool.allocate(mContext);
+    mRenderTargetStack.push(renderTarget);
+    // create and setup new scene task
+    WgSceneTask* sceneTask = new WgSceneTask(renderTarget, compose, sceneTaskCurrent);
+    sceneTaskCurrent->children.push(sceneTask);
+    mRenderTaskList.push(sceneTask);
+    mSceneTaskStack.push(sceneTask);
     return true;
 }
 
 
 bool WgRenderer::endComposite(RenderCompositor* cmp)
 {
-    // get current composition settings
-    WgCompose* comp = (WgCompose*)cmp;
-    // we must to end current render pass to run blend/composition mechanics
-    mCompositor.endRenderPass();
     // finish scene blending
-    if (comp->method == MaskMethod::None) {
-        // get source and destination render storages
-        WgRenderStorage* src = mRenderStorageStack.last();
-        mRenderStorageStack.pop();
-        WgRenderStorage* dst = mRenderStorageStack.last();
-        // begin previous render pass
-        mCompositor.beginRenderPass(mCommandEncoder, dst, false);
-        // apply composition
-        mCompositor.renderScene(mContext, src, comp);
+    if (cmp->method == MaskMethod::None) {
+        // get source and destination render targets
+        WgRenderTarget* src = mRenderTargetStack.last();
+        mRenderTargetStack.pop();
+        // pop source scene
+        WgSceneTask* srcScene = mSceneTaskStack.last();
+        mSceneTaskStack.pop();
+        // setup render target compose destitations
+        srcScene->renderTargetDst = mSceneTaskStack.last()->renderTarget;
+        srcScene->renderTargetMsk =  nullptr;
         // back render targets to the pool
-        mRenderStoragePool.free(mContext, src);
-    } else { // finish composition
-        // get source, mask and destination render storages
-        WgRenderStorage* src = mRenderStorageStack.last();
-        mRenderStorageStack.pop();
-        WgRenderStorage* msk = mRenderStorageStack.last();
-        mRenderStorageStack.pop();
-        WgRenderStorage* dst = mRenderStorageStack.last();
-        // begin previous render pass
-        mCompositor.beginRenderPass(mCommandEncoder, dst, false);
-        // apply composition
-        mCompositor.composeScene(mContext, src, msk, comp);
+        mRenderTargetPool.free(mContext, src);
+    } else { // finish scene composition
+        // get source, mask and destination render targets
+        WgRenderTarget* src = mRenderTargetStack.last();
+        mRenderTargetStack.pop();
+        WgRenderTarget* msk = mRenderTargetStack.last();
+        mRenderTargetStack.pop();
+        // get source and mask scenes
+        WgSceneTask* srcScene = mSceneTaskStack.last();
+        mSceneTaskStack.pop();
+        WgSceneTask* mskScene = mSceneTaskStack.last();
+        mSceneTaskStack.pop();
+        // setup render target compose destitations
+        srcScene->renderTargetDst = mSceneTaskStack.last()->renderTarget;
+        srcScene->renderTargetMsk = mskScene->renderTarget;
         // back render targets to the pool
-        mRenderStoragePool.free(mContext, src);
-        mRenderStoragePool.free(mContext, msk);
+        mRenderTargetPool.free(mContext, src);
+        mRenderTargetPool.free(mContext, msk);
     }
-
-    // delete current compositor settings
-    delete mCompositorStack.last();
-    mCompositorStack.pop();
-
     return true;
 }
 
@@ -611,20 +625,8 @@ bool WgRenderer::region(RenderEffect* effect)
 
 bool WgRenderer::render(RenderCompositor* cmp, const RenderEffect* effect, TVG_UNUSED bool direct)
 {
-    // we must to end current render pass to resolve ms texture before effect
-    mCompositor.endRenderPass();
-    WgCompose* comp = (WgCompose*)cmp;
-    WgRenderStorage* dst = mRenderStorageStack.last();
-
-    switch (effect->type) {
-        case SceneEffect::GaussianBlur: return mCompositor.gaussianBlur(mContext, dst, (RenderEffectGaussianBlur*)effect, comp);
-        case SceneEffect::DropShadow: return mCompositor.dropShadow(mContext, dst, (RenderEffectDropShadow*)effect, comp);
-        case SceneEffect::Fill: return mCompositor.fillEffect(mContext, dst, (RenderEffectFill*)effect, comp);
-        case SceneEffect::Tint: return mCompositor.tintEffect(mContext, dst, (RenderEffectTint*)effect, comp);
-        case SceneEffect::Tritone : return mCompositor.tritoneEffect(mContext, dst, (RenderEffectTritone*)effect, comp);
-        default: return false;
-    }
-    return false;
+    mSceneTaskStack.last()->effect = effect;
+    return true;
 }
 
 

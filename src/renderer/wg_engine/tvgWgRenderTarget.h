@@ -26,7 +26,7 @@
 #include "tvgWgPipelines.h"
 #include "tvgRender.h"
 
-struct WgRenderStorage {
+struct WgRenderTarget {
     WGPUTexture texture{};
     WGPUTexture textureMS{};
     WGPUTextureView texView{};
@@ -42,15 +42,15 @@ struct WgRenderStorage {
 };
 
 
-class WgRenderStoragePool {
+class WgRenderTargetPool {
 private:
-    Array<WgRenderStorage*> list;
-    Array<WgRenderStorage*> pool;
+    Array<WgRenderTarget*> list;
+    Array<WgRenderTarget*> pool;
     uint32_t width{};
     uint32_t height{};
 public:
-    WgRenderStorage* allocate(WgContext& context);
-    void free(WgContext& context, WgRenderStorage* renderTarget);
+    WgRenderTarget* allocate(WgContext& context);
+    void free(WgContext& context, WgRenderTarget* renderTarget);
 
     void initialize(WgContext& context, uint32_t width, uint32_t height);
     void release(WgContext& context);
