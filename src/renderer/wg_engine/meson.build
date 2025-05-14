@@ -7,6 +7,7 @@ source_file = [
     'tvgWgRenderData.h',
     'tvgWgRenderer.h',
     'tvgWgRenderTarget.h',
+    'tvgWgRenderTask.h',
     'tvgWgShaderSrc.h',
     'tvgWgShaderTypes.h',
     'tvgWgBindGroups.cpp',
@@ -17,6 +18,7 @@ source_file = [
     'tvgWgRenderData.cpp',
     'tvgWgRenderer.cpp',
     'tvgWgRenderTarget.cpp',
+    'tvgWgRenderTask.cpp',
     'tvgWgShaderSrc.cpp',
     'tvgWgShaderTypes.cpp'
 ]
