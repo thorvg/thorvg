@@ -719,7 +719,7 @@ static void _updatePolygon(LottieGroup* parent, LottiePolyStar* star, Matrix* tr
     auto radius = star->outerRadius(frameNo, exps);
     auto outerRoundness = star->outerRoundness(frameNo, exps) * 0.01f;
 
-    auto angle = deg2rad(-90.0f);
+    auto angle = -MATH_PI2;
     auto anglePerPoint = 2.0f * MATH_PI / float(ptsCnt);
     auto direction = star->clockwise ? 1.0f : -1.0f;
     auto hasRoundness = !tvg::zero(outerRoundness);
@@ -748,6 +748,7 @@ static void _updatePolygon(LottieGroup* parent, LottiePolyStar* star, Matrix* tr
     if (transform) in *= *transform;
     shape->moveTo(in.x, in.y);
 
+    auto coeff = anglePerPoint * radius * outerRoundness * POLYGON_MAGIC_NUMBER;
     for (size_t i = 0; i < ptsCnt; i++) {
         auto previousX = x;
         auto previousY = y;
@@ -756,16 +757,11 @@ static void _updatePolygon(LottieGroup* parent, LottiePolyStar* star, Matrix* tr
 
         if (hasRoundness) {
             auto cp1Theta = tvg::atan2(previousY, previousX) - MATH_PI2 * direction;
-            auto cp1Dx = cosf(cp1Theta);
-            auto cp1Dy = sinf(cp1Theta);
+            auto cp1x = coeff * cosf(cp1Theta);
+            auto cp1y = coeff * sinf(cp1Theta);
             auto cp2Theta = tvg::atan2(y, x) - MATH_PI2 * direction;
-            auto cp2Dx = cosf(cp2Theta);
-            auto cp2Dy = sinf(cp2Theta);
-
-            auto cp1x = radius * outerRoundness * POLYGON_MAGIC_NUMBER * cp1Dx;
-            auto cp1y = radius * outerRoundness * POLYGON_MAGIC_NUMBER * cp1Dy;
-            auto cp2x = radius * outerRoundness * POLYGON_MAGIC_NUMBER * cp2Dx;
-            auto cp2y = radius * outerRoundness * POLYGON_MAGIC_NUMBER * cp2Dy;
+            auto cp2x = coeff * cosf(cp2Theta);
+            auto cp2y = coeff * sinf(cp2Theta);
 
             Point in2 = {previousX - cp1x, previousY - cp1y};
             Point in3 = {x + cp2x, y + cp2y};
