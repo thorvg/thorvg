@@ -934,7 +934,7 @@ void LottieBuilder::updateText(LottieLayer* layer, float frameNo)
 
     if (!p || !text->font) return;
 
-    if (text->font->origin != LottieFont::Origin::Embedded) {
+    if (text->font->origin != LottieFont::Origin::Embedded || text->font->chars.empty()) {
         _fontText(doc, layer->scene);
         return;
     }
