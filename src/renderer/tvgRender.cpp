@@ -20,6 +20,7 @@
  * SOFTWARE.
  */
 
+#include <algorithm>
 #include "tvgMath.h"
 #include "tvgRender.h"
 
@@ -114,6 +115,147 @@ void RenderRegion::intersect(const RenderRegion& rhs)
     // Not intersected: collapse to zero-area region
     if (max.x < min.x) max.x = min.x;
     if (max.y < min.y) max.y = min.y;
+}
+
+
+void RenderDirtyRegion::subdivide(list<RenderRegion>& targets, list<RenderRegion>::iterator itr, RenderRegion& lhs, RenderRegion& rhs)
+{
+    auto common = RenderRegion::intersect(lhs, rhs);
+    auto p = itr;
+    auto maxx = std::min(lhs.max.x, rhs.max.x);
+
+    auto div = [&](RenderRegion& lhs, RenderRegion& rhs) {
+        //left
+        if (rhs.min.x < lhs.min.x) {
+            RenderRegion r = {{rhs.min.x, rhs.min.y}, {lhs.min.x, rhs.max.y}};
+            targets.insert(std::next(p), r);
+            ++p;
+            rhs.min.x = lhs.min.x;
+        }
+        //top
+        if (rhs.min.y < lhs.min.y) {
+            RenderRegion r = {{rhs.min.x, rhs.min.y}, {rhs.max.x, lhs.min.y}};
+            targets.insert(std::next(p), r);
+            ++p;
+            rhs.min.y = lhs.min.y;
+        }
+        //bottom
+        if (rhs.max.y > lhs.max.y) {
+            RenderRegion r = {{rhs.min.x, lhs.max.y}, {rhs.max.x, rhs.max.y}};
+            targets.insert(std::next(p), r);
+            ++p;
+            rhs.max.y = lhs.max.y;
+        }
+        //right
+        if (rhs.max.x > lhs.max.x) {
+            RenderRegion r = {{lhs.max.x, rhs.min.y}, {rhs.max.x, rhs.max.y}};
+            targets.insert(std::next(p), r);
+            ++p;
+            //rhs.min.x = lhs.max.x;
+        }
+    };
+
+    //TODO: probably we can add them in x order.
+    div(common, lhs);
+    div(common, rhs);
+    rhs = common;  //replaced with the common region for memory efficiency
+
+    //sorting by x coord again, only for the updated region
+    auto end = std::next(p);
+    while (end != targets.end() && end->min.x < maxx) ++end;
+
+    for (auto i = itr; i != std::prev(end); ++i) {
+        for (auto j = std::next(i); j != end; ++j) {
+            if (j->min.x < i->min.x) std::swap(*i, *j);
+        }
+    }
+}
+
+
+void RenderDirtyRegion::commit()
+{
+    auto& targets = buffer[current];
+    if (targets.empty()) return;
+
+    auto before = THORVG_TIMESTAMP();
+
+    current = !current;  //swapping buffers
+
+    auto& output = buffer[current];
+    auto damaged = true;
+
+    //sorting by x coord. guarantee the stable performance: O(NlogN)
+    targets.sort([](const RenderRegion& a, const RenderRegion& b) {
+        return a.min.x < b.min.x;
+    });
+
+  //  printf("-----------------------------\n");
+
+    //O(N^2) ~ O(N^3)
+    while (damaged) {
+        damaged = false;
+        auto i = targets.begin();
+        while (i != targets.end()) {
+            auto& lhs = *i;
+            auto j = std::next(i);
+            auto merged = false;
+            while (j != targets.end()) {
+                auto& rhs = *j;
+
+                //line-sweeping
+                if (lhs.max.x < rhs.min.x) break;
+
+                //TODO: generous merge for preventing too much fragmentation
+
+                //fully overlapped. drop lhs
+                if (rhs.contained(lhs)) {
+                    merged = true;
+                    break;
+                }
+                //fully overlapped. replace the lhs with rhs
+                if (lhs.contained(rhs)) {
+                    j = targets.erase(j);
+                    continue;
+                }
+                //just merge & expand on x axis
+                if (lhs.min.y == rhs.min.y && lhs.max.y == rhs.max.y) {
+                    if (lhs.min.x <= rhs.max.x && rhs.min.x <= lhs.max.x) {
+                        rhs.min.x = std::min(lhs.min.x, rhs.min.x);
+                        rhs.max.x = std::max(lhs.max.x, rhs.max.x);
+                        merged = true;
+                        break;
+                    }
+                }
+                //just merge & expand on y axis
+                if (lhs.min.x == rhs.min.x && lhs.max.x == rhs.max.x) {
+                    if (lhs.min.y <= rhs.max.y && rhs.min.y < lhs.max.y) {
+                        rhs.min.y = std::min(lhs.min.y, rhs.min.y);
+                        rhs.max.y = std::max(lhs.max.y, rhs.max.y);
+                        merged = true;
+                        break;
+                    }
+                }
+                //subdivide regions
+                if (lhs.intersected(rhs)) {
+                    subdivide(targets, j, lhs, rhs);
+                    merged = true;
+                    break;
+                }
+                ++j;
+            }
+            if (merged) damaged = true;  //regions are damaged, inspect again
+            else output.push_back(lhs);  //this region is complete isolated
+            i = targets.erase(i);
+        }
+    }
+
+    //printf("output: %d, time = %f\n", output.size(), THORVG_TIMESTAMP() - before);
+
+#if 0
+    for(auto& p : output) {
+        printf("p: %d %d %d %d\n", p.min.x, p.min.y, p.max.x - p.min.x, p.max.y - p.min.y);
+    }
+#endif
 }
 
 /************************************************************************/

@@ -62,7 +62,7 @@ struct UserExample : tvgexam::Example
         canvas->push(obstacle2);
 
         //rects
-        auto cnt = 120;
+        auto cnt = 1200;
         auto size = w / cnt;
 
         for (int i = 0; i < cnt; ++i) {
@@ -89,7 +89,7 @@ struct UserExample : tvgexam::Example
         obstacle2->translate((w/2) - (w/2) * progress , (h/2));
 
         int i = 0;
-        auto size = w / 120;
+        auto size = w / 1200;
         for (auto p : rects) {
             p->reset();
             p->appendRect(size * i++, rand() % (h - size), size, size);
