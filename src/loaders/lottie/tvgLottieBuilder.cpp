@@ -900,7 +900,7 @@ static void _fontText(TextDocument& doc, Scene* scene)
     strcpy(buf, doc.text);
     auto token = std::strtok(buf, delim);
 
-    auto cnt = 0;
+    auto cursorY = 0.0f;
     while (token) {
         auto txt = Text::gen();
         if (txt->font(doc.name, size) != Result::Success) {
@@ -913,14 +913,12 @@ static void _fontText(TextDocument& doc, Scene* scene)
 
         float width;
         txt->bounds(nullptr, nullptr, &width, nullptr);
+        txt->translate(width * doc.justify, cursorY);
 
-        auto cursorX = width * doc.justify;
-        auto cursorY = lineHeight * cnt;
-        txt->translate(cursorX, -lineHeight + cursorY);
+        scene->push(txt);
 
         token = std::strtok(nullptr, delim);
-        scene->push(txt);
-        cnt++;
+        cursorY += lineHeight;
     }
 }
 

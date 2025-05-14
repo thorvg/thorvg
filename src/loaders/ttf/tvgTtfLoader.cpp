@@ -288,7 +288,7 @@ bool TtfLoader::read(Shape* shape, char* text, FontMetrics& out)
 
     //TODO: optimize with the texture-atlas?
     TtfGlyphMetrics gmetrics;
-    Point offset = {0.0f, reader.metrics.hhea.ascent};
+    Point offset = {0.0f, 0.0f};
     Point kerning = {0.0f, 0.0f};
     auto lglyph = INVALID_GLYPH;
     auto loadMinw = true;
