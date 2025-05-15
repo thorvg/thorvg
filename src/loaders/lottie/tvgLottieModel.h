@@ -386,7 +386,7 @@ struct LottieTextRange
 
 struct LottieFont
 {
-    enum Origin : uint8_t { Local = 0, CssURL, ScriptURL, FontURL, Embedded };
+    enum Origin : uint8_t {Local = 0, CssURL, ScriptURL, FontURL};
 
     ~LottieFont()
     {
@@ -408,7 +408,7 @@ struct LottieFont
     char* style = nullptr;
     size_t dataSize = 0;
     float ascent = 0.0f;
-    Origin origin = Embedded;
+    Origin origin = Local;
 
     void prepare();
 };
