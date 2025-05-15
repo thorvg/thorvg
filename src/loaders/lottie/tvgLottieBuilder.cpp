@@ -1015,7 +1015,7 @@ void LottieBuilder::updateText(LottieLayer* layer, float frameNo)
 
     if (!p || !text->font) return;
 
-    if (text->font->origin == LottieFont::Origin::FontURL) {
+    if (text->font->origin != LottieFont::Origin::Local || text->font->chars.empty()) {
         _fontURLText(text, layer->scene, frameNo, exps);
         return;
     }
