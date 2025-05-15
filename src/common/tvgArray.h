@@ -166,7 +166,7 @@ struct Array
 
     template<class COMPARE> void sort()
     {
-        qsort<COMPARE>(data, 0, count - 1);
+        qsort<COMPARE>(data, 0, (int32_t)(count - 1));
     }
 
     ~Array()
@@ -176,7 +176,7 @@ struct Array
 
 private:
     template<class COMPARE>
-    void qsort(T* arr, uint32_t low, uint32_t high)
+    void qsort(T* arr, int32_t low, int32_t high)
     {
         if (low < high) {
             auto i = low;
