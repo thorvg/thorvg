@@ -1,5 +1,6 @@
 [![Discord](https://img.shields.io/badge/Community-5865f2?style=flat&logo=discord&logoColor=white)](https://discord.gg/n25xj6J6HM)
 [![ThorVGPT](https://img.shields.io/badge/ThorVGPT-76A99C?style=flat&logo=openai&logoColor=white)](https://chat.openai.com/g/g-Ht3dYIwLO-thorvgpt)
+[![DeepWiki](https://deepwiki.com/badge.svg)](https://deepwiki.com/thorvg/thorvg)
 [![OpenCollective](https://img.shields.io/badge/OpenCollective-84B5FC?style=flat&logo=opencollective&logoColor=white)](https://opencollective.com/thorvg)
 [![License](https://img.shields.io/badge/licence-MIT-green.svg?style=flat)](LICENSE)
 ![BinarySize](https://img.shields.io/badge/Size->150kb-black)
@@ -98,7 +99,7 @@ ThorVG is actively under development, continuously expanding its support for ess
     - [LVGL](#lvgl)
     - [Tizen](#tizen)
   - [References](#references)
-  - [APIs](#apis)
+  - [Documentation](#documentation)
   - [Examples](#examples)    
   - [Tools](#tools)
     - [ThorVG Viewer](#thorvg-viewer)
@@ -420,8 +421,10 @@ ThorVG has been integrated into the [Tizen](https://www.tizen.org) platform as t
 [Back to contents](#contents)
 <br />
 <br />
-## APIs
-The ThorVG API documentation can be accessed at [thorvg.org/apis](https://www.thorvg.org/apis), and is also available in the [C++ API](https://github.com/thorvg/thorvg/blob/main/inc/thorvg.h), [C API](https://github.com/thorvg/thorvg/blob/main/src/bindings/capi/thorvg_capi.h) within this repository.
+## Documentation
+The ThorVG API documentation is available at [thorvg.org/apis](https://www.thorvg.org/apis), and can also be found directly in this repository via the [C++ API](https://github.com/thorvg/thorvg/blob/main/inc/thorvg.h) and [C API](https://github.com/thorvg/thorvg/blob/main/src/bindings/capi/thorvg_capi.h). 
+
+For comprehensive and well-structured technical information, please visit the [DeepWiki](https://deepwiki.com/thorvg/thorvg), which offers in-depth guidance on ThorVG's architecture, features, and usage.
 
 [Back to contents](#contents)
 <br />
