@@ -284,6 +284,23 @@ struct Matrix
 
 
 /**
+ * @brief A data structure representing metrics for a single glyph.
+ *
+ * @since Experimental API
+ */
+struct GlyphMetrics
+{
+    Point kerning = {0.0f, 0.0f};
+
+    float advanceWidth;
+    float leftSideBearing;
+    float yOffset;
+    float minw;
+    float minh;
+};
+
+
+/**
  * @class Paint
  *
  * @brief An abstract class for managing graphical elements.
@@ -1667,6 +1684,23 @@ public:
      * @since 0.15
      */
     static Result unload(const char* filename) noexcept;
+
+     /**
+     * @brief Gets the detailed metrics for each glyph in the current text object.
+     *
+     * This function allocates memory internally to hold an array of glyph metrics corresponding to the currently set text and font.
+     *
+     * @param[out] metrics Pointer to an array of glyph metrics. Valid until the text is modified.
+     * @param[out] size The number of glyphs returned in the metrics array.
+     *
+     * @retval Result::InsufficientCondition If font or text was not set, a @c nullptr is passed as @p metrics, or font data loading/reading failed.
+     *
+     * @note The caller is responsible for freeing the allocated memory by calling this function again with the same @p metrics pointer and a @c nullptr @p size pointer.
+     * @note Must be called after setting both font() and text().
+     *
+     * @since Experimental API
+     */
+    Result metrics(GlyphMetrics** metrics, uint32_t* size) noexcept;
 
     /**
      * @brief Creates a new Text object.

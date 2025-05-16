@@ -24,6 +24,8 @@
 #include "tvgStr.h"
 #include "tvgTtfLoader.h"
 
+#define PX_PER_PT 1.333333f //1 pt = 1/72 in; 1 in = 96 px; -> 96/72
+
 #if defined(_WIN32) && (WINAPI_FAMILY == WINAPI_FAMILY_DESKTOP_APP)
     #include <windows.h>
 #elif defined(__linux__)
@@ -196,6 +198,18 @@ static uint32_t* _codepoints(const char* text, size_t n)
 }
 
 
+static void _scale(GlyphMetrics& gmetric, float scale)
+{
+    gmetric.kerning.x *= scale;
+    gmetric.kerning.y *= scale;
+    gmetric.advanceWidth *= scale;
+    gmetric.leftSideBearing *= scale;
+    gmetric.yOffset *= scale;
+    gmetric.minw *= scale;
+    gmetric.minh *= scale;
+}
+
+
 void TtfLoader::clear()
 {
     if (nomap) {
@@ -224,8 +238,7 @@ void TtfLoader::clear()
 float TtfLoader::transform(Paint* paint, FontMetrics& metrics, float fontSize, bool italic)
 {
     auto shift = 0.0f;
-    auto dpi = 96.0f / 72.0f;   //dpi base?
-    auto scale = fontSize * dpi / reader.metrics.unitsPerEm;
+    auto scale = fontSize * PX_PER_PT / reader.metrics.unitsPerEm;
     if (italic) shift = -scale * 0.18f;  //experimental decision.
     Matrix m = {scale, shift, -(shift * metrics.minw), 0, scale, 0, 0, 0, 1};
     paint->transform(m);
@@ -289,21 +302,20 @@ bool TtfLoader::read(Shape* shape, char* text, FontMetrics& out)
     //TODO: optimize with the texture-atlas?
     TtfGlyphMetrics gmetrics;
     Point offset = {0.0f, reader.metrics.hhea.ascent};
-    Point kerning = {0.0f, 0.0f};
     auto lglyph = INVALID_GLYPH;
     auto loadMinw = true;
 
     size_t idx = 0;
     while (code[idx] && idx < n) {
-        auto rglyph = reader.glyph(code[idx], gmetrics);
+        auto rglyph = reader.glyph(code[idx], gmetrics.metrics, &gmetrics.outline);
         if (rglyph != INVALID_GLYPH) {
-            if (lglyph != INVALID_GLYPH) reader.kerning(lglyph, rglyph, kerning);
-            if (!reader.convert(shape, gmetrics, offset, kerning, 1U)) break;
-            offset.x += (gmetrics.advanceWidth + kerning.x);
+            if (lglyph != INVALID_GLYPH) reader.kerning(lglyph, rglyph, gmetrics.metrics.kerning);
+            if (!reader.convert(shape, gmetrics, offset, 1U)) break;
+            offset.x += (gmetrics.metrics.advanceWidth + gmetrics.metrics.kerning.x);
             lglyph = rglyph;
             //store the first glyph with outline min size for italic transform.
             if (loadMinw && gmetrics.outline) {
-                out.minw = gmetrics.minw;
+                out.minw = gmetrics.metrics.minw;
                 loadMinw = false;
             }
         }
@@ -311,6 +323,39 @@ bool TtfLoader::read(Shape* shape, char* text, FontMetrics& out)
     }
 
     tvg::free(code);
+
+    return true;
+}
+
+
+bool TtfLoader::metrics(char* text, float fontSize, GlyphMetrics** metrics, uint32_t* size)
+{
+    auto n = strlen(text);
+    auto code = _codepoints(text, n);
+    if (!code) return false;
+
+    GlyphMetrics gmetrics;
+    auto lglyph = INVALID_GLYPH, rglyph = INVALID_GLYPH;
+    Array<GlyphMetrics> out(n);
+
+    auto scale = fontSize * PX_PER_PT / reader.metrics.unitsPerEm;
+
+    size_t idx = 0;
+    while (code[idx] && idx < n) {
+        if ((rglyph = reader.glyph(code[idx], gmetrics, nullptr)) != INVALID_GLYPH) {
+            if (lglyph != INVALID_GLYPH) reader.kerning(lglyph, rglyph, gmetrics.kerning);
+            _scale(gmetrics, scale);
+            out.push(gmetrics);
+            lglyph = rglyph;
+        }
+        ++idx;
+    }
+
+    tvg::free(code);
+
+    *metrics = out.data;
+    out.data = nullptr;
+    *size = out.count;
 
     return true;
 }
