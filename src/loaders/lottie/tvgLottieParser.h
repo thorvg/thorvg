@@ -37,8 +37,8 @@ public:
     }
 
     bool parse();
-    bool apply(LottieSlot* slot, bool byDefault);
     const char* sid(bool first = false);
+    LottieProperty* slotData(LottieSlot* slot);
     void captureSlots(const char* key);
     void registerSlot(LottieObject* obj, const char* sid, LottieProperty::Type type);
 
