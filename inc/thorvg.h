@@ -1576,6 +1576,8 @@ public:
      *
      * @param[in] text The multi-byte text encoded with utf8 string to be rendered.
      *
+     * @note The reference point for text is the left edge of the baseline. Unless the text is explicitly translated,
+     * this point will be placed at (0, 0) of the canvas — which, by default, lies outside the visible rendering area.
      * @since 1.0
      */
     Result text(const char* text) noexcept;
