@@ -297,6 +297,8 @@ struct GlyphMetrics
     float yOffset;
     float minw;
     float minh;
+    //for glyph<->text mapping:
+    uint32_t length;
 };
 
 

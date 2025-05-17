@@ -198,6 +198,35 @@ static uint32_t* _codepoints(const char* text, size_t n)
 }
 
 
+static uint32_t* _codepointsLength(const char* text, size_t n) {
+    auto length = tvg::malloc<uint32_t*>(sizeof(uint32_t) * (n + 1));
+
+    size_t i = 0;
+    auto p = text;
+    while(*p) {
+        if (!(*p & 0x80U)) {
+            length[i++] = 1;
+            ++p;
+        } else if ((*p & 0xe0U) == 0xc0U) {
+            length[i++] = 2;
+            p += 2;
+        } else if ((*p & 0xf0U) == 0xe0U) {
+            length[i++] = 3;
+            p += 3;
+        } else if ((*p & 0xf8U) == 0xf0U) {
+            length[i++] = 4;
+            p += 4;
+        } else {
+            tvg::free(length);
+            return nullptr;
+        }
+    }
+    length[i] = 0;
+
+    return length;
+}
+
+
 static void _scale(GlyphMetrics& gmetric, float scale)
 {
     gmetric.kerning.x *= scale;
@@ -333,6 +362,8 @@ bool TtfLoader::metrics(char* text, float fontSize, GlyphMetrics** metrics, uint
     auto n = strlen(text);
     auto code = _codepoints(text, n);
     if (!code) return false;
+    auto length = _codepointsLength(text, n);
+    if (!length) return false;
 
     GlyphMetrics gmetrics;
     auto lglyph = INVALID_GLYPH, rglyph = INVALID_GLYPH;
@@ -345,6 +376,7 @@ bool TtfLoader::metrics(char* text, float fontSize, GlyphMetrics** metrics, uint
         if ((rglyph = reader.glyph(code[idx], gmetrics, nullptr)) != INVALID_GLYPH) {
             if (lglyph != INVALID_GLYPH) reader.kerning(lglyph, rglyph, gmetrics.kerning);
             _scale(gmetrics, scale);
+            gmetrics.length = length[idx];
             out.push(gmetrics);
             lglyph = rglyph;
         }
@@ -352,6 +384,7 @@ bool TtfLoader::metrics(char* text, float fontSize, GlyphMetrics** metrics, uint
     }
 
     tvg::free(code);
+    tvg::free(length);
 
     *metrics = out.data;
     out.data = nullptr;
