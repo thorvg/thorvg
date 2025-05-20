@@ -1174,13 +1174,6 @@ void LottieBuilder::updateMasks(LottieLayer* layer, float frameNo)
 {
     if (layer->masks.count == 0) return;
 
-    //Introduce an intermediate scene for embracing the matte + masking
-    if (layer->matteTarget) {
-        auto scene = Scene::gen();
-        scene->push(layer->scene);
-        layer->scene = scene;
-    }
-
     Shape* pShape = nullptr;
     MaskMethod pMethod;
     uint8_t pOpacity;
@@ -1202,9 +1195,21 @@ void LottieBuilder::updateMasks(LottieLayer* layer, float frameNo)
             //Cheaper. Replace the masking with a clipper
             if (layer->masks.count == 1 && compMethod == MaskMethod::Alpha) {
                 layer->scene->opacity(MULTIPLY(layer->scene->opacity(), opacity));
+                //Introduce an intermediate scene for embracing the precomp clipping + masking replaced by clipping
+                if (layer->type == LottieLayer::Precomp) {
+                    auto scene = Scene::gen();
+                    scene->push(layer->scene);
+                    layer->scene = scene;
+                }
                 layer->scene->clip(pShape);
                 fastTrack = true;
             } else {
+                //Introduce an intermediate scene for embracing the matte + masking
+                if (layer->matteTarget) {
+                    auto scene = Scene::gen();
+                    scene->push(layer->scene);
+                    layer->scene = scene;
+                }
                 layer->scene->mask(pShape, compMethod);
             }
         //Chain mask composition
