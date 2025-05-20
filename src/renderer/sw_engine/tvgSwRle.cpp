@@ -737,8 +737,9 @@ static bool _genRle(RleWorker& rw)
 }
 
 
-static SwSpan* _intersectSpansRegion(const SwRle *clip, const SwRle *target, SwSpan *outSpans, uint32_t outSpansCnt)
+static uint32_t _intersectSpansRegion(const SwRle *clip, const SwRle *target, SwSpan *&outSpans, uint32_t outSpansAlloc)
 {
+    auto outSpansCnt = 0;
     auto out = outSpans;
     auto spans = target->spans;
     auto end = target->spans + target->size;
@@ -758,7 +759,7 @@ static SwSpan* _intersectSpansRegion(const SwRle *clip, const SwRle *target, SwS
 
         //Try clipping with all clip spans which have a same y-coordinate.
         auto temp = clipSpans;
-        while(temp < clipEnd && outSpansCnt > 0 && temp->y == clipSpans->y) {
+        while(temp < clipEnd && temp->y == clipSpans->y) {
             auto sx1 = spans->x;
             auto sx2 = sx1 + spans->len;
             auto cx1 = temp->x;
@@ -774,22 +775,27 @@ static SwSpan* _intersectSpansRegion(const SwRle *clip, const SwRle *target, SwS
             auto x = sx1 > cx1 ? sx1 : cx1;
             auto len = (sx2 < cx2 ? sx2 : cx2) - x;
             if (len > 0) {
+                if (outSpansCnt == outSpansAlloc) {
+                    outSpansAlloc *= 2;
+                    outSpans = tvg::realloc<SwSpan*>(outSpans, sizeof(SwSpan) * outSpansAlloc);
+                    out = outSpans + outSpansCnt;
+                }
                 out->x = x;
                 out->y = temp->y;
                 out->len = len;
                 out->coverage = (uint8_t)(((spans->coverage * temp->coverage) + 0xff) >> 8);
                 ++out;
-                --outSpansCnt;
+                ++outSpansCnt;
             }
             ++temp;
         }
         ++spans;
     }
-    return out;
+    return outSpansCnt;
 }
 
 
-static SwSpan* _intersectSpansRect(const SwBBox *bbox, const SwRle *targetRle, SwSpan *outSpans, uint32_t outSpansCnt)
+static uint32_t _intersectSpansRect(const SwBBox *bbox, const SwRle *targetRle, SwSpan *outSpans, uint32_t outSpansCnt)
 {
     auto out = outSpans;
     auto spans = targetRle->spans;
@@ -824,7 +830,7 @@ static SwSpan* _intersectSpansRect(const SwBBox *bbox, const SwRle *targetRle, S
         }
         ++spans;
     }
-    return out;
+    return out - outSpans;
 }
 
 
@@ -997,11 +1003,11 @@ void rleFree(SwRle* rle)
 bool rleClip(SwRle *rle, const SwRle *clip)
 {
     if (rle->size == 0 || clip->size == 0) return false;
-    auto spanCnt = rle->size > clip->size ? rle->size : clip->size;
-    auto spans = tvg::malloc<SwSpan*>(sizeof(SwSpan) * (spanCnt));
-    auto spansEnd = _intersectSpansRegion(clip, rle, spans, spanCnt);
+    auto spanAlloc = rle->size > clip->size ? rle->size : clip->size;
+    auto spans = tvg::malloc<SwSpan*>(sizeof(SwSpan) * spanAlloc);
+    auto spanCnt = _intersectSpansRegion(clip, rle, spans, spanAlloc);
 
-    _replaceClipSpan(rle, spans, spansEnd - spans);
+    _replaceClipSpan(rle, spans, spanCnt);
 
     TVGLOG("SW_ENGINE", "Using Path Clipping!");
 
@@ -1013,9 +1019,9 @@ bool rleClip(SwRle *rle, const SwBBox* clip)
 {
     if (rle->size == 0) return false;
     auto spans = tvg::malloc<SwSpan*>(sizeof(SwSpan) * (rle->size));
-    auto spansEnd = _intersectSpansRect(clip, rle, spans, rle->size);
+    auto spanCnt = _intersectSpansRect(clip, rle, spans, rle->size);
 
-    _replaceClipSpan(rle, spans, spansEnd - spans);
+    _replaceClipSpan(rle, spans, spanCnt);
 
     TVGLOG("SW_ENGINE", "Using Box Clipping!");
 
