@@ -1174,8 +1174,8 @@ void LottieBuilder::updateMasks(LottieLayer* layer, float frameNo)
 {
     if (layer->masks.count == 0) return;
 
-    //Introduce an intermediate scene for embracing the matte + masking
-    if (layer->matteTarget) {
+    //Introduce an intermediate scene for embracing matte + masking or precomp clipping + masking replaced by clipping
+    if (layer->matteTarget || layer->type == LottieLayer::Precomp) {
         auto scene = Scene::gen();
         scene->push(layer->scene);
         layer->scene = scene;
