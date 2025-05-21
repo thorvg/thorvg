@@ -76,6 +76,7 @@ private:
     SwMpool*             mpool;                       //private memory pool
     RenderRegion         vport;                       //viewport
     bool                 sharedMpool;                 //memory-pool behavior policy
+    bool                 fulldraw = true;             //buffer is cleared (need to redraw full screen)
 
     SwRenderer();
     ~SwRenderer();

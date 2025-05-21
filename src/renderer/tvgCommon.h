@@ -89,6 +89,16 @@ namespace tvg {
 
     uint16_t THORVG_VERSION_NUMBER();
 
+#if 1  //for debugging
+    #include <sys/time.h>
+    static inline double THORVG_TIMESTAMP()
+    {
+        struct timeval tv;
+        gettimeofday(&tv, NULL);
+        return (tv.tv_sec + tv.tv_usec / 1000000.0);
+    }
+#endif
+
     #define TVG_DELETE(PAINT) \
     if (PAINT->refCnt() == 0) delete(PAINT)
 
