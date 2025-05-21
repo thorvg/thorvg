@@ -106,6 +106,11 @@ struct RenderRegion
         return {{std::max(lhs.min.x, rhs.min.x), std::max(lhs.min.y, rhs.min.y)}, {std::min(lhs.max.x, rhs.max.x), std::min(lhs.max.y, rhs.max.y)}};
     }
 
+    static constexpr RenderRegion add(const RenderRegion& lhs, const RenderRegion& rhs)
+    {
+        return {{std::min(lhs.min.x, rhs.min.x), std::min(lhs.min.y, rhs.min.y)}, {std::max(lhs.max.x, rhs.max.x), std::max(lhs.max.y, rhs.max.y)}};
+    }
+
     void intersect(const RenderRegion& rhs);
 
     void add(const RenderRegion& rhs)
@@ -114,6 +119,16 @@ struct RenderRegion
         if (rhs.min.y < min.y) min.y = rhs.min.y;
         if (rhs.max.x > max.x) max.x = rhs.max.x;
         if (rhs.max.y > max.y) max.y = rhs.max.y;
+    }
+
+    bool contained(const RenderRegion& rhs)
+    {
+        return (min.x <= rhs.min.x && max.x >= rhs.max.x && min.y <= rhs.min.y && max.y >= rhs.max.y);
+    }
+
+    bool intersected(const RenderRegion& rhs) const
+    {
+        return (rhs.min.x < max.x && rhs.max.x > min.x && rhs.min.y < max.y && rhs.max.y > min.y);
     }
 
     bool operator==(const RenderRegion& rhs) const
@@ -477,7 +492,7 @@ struct RenderEffectTritone : RenderEffect
 class RenderMethod
 {
 private:
-    uint32_t refCnt = 0;        //reference count
+    uint32_t refCnt = 0;
     Key key;
 
 public:
