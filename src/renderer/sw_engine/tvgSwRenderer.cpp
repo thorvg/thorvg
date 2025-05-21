@@ -722,6 +722,7 @@ void* SwRenderer::prepareCommon(SwTask* task, const Matrix& transform, const Arr
 {
     if (!surface) return task;
     if (flags == RenderUpdateFlag::None) return task;
+    if ((transform.e11 == 0.0f && transform.e12 == 0.0f) || (transform.e21 == 0.0f && transform.e22 == 0.0f)) return task;  //zero size?
 
     //TODO: Failed threading them. It would be better if it's possible.
     //See: https://github.com/thorvg/thorvg/issues/1409
@@ -732,11 +733,6 @@ void* SwRenderer::prepareCommon(SwTask* task, const Matrix& transform, const Arr
 
     task->clips = clips;
     task->transform = transform;
-    
-    //zero size?
-    if (task->transform.e11 == 0.0f && task->transform.e12 == 0.0f) return task; //zero width
-    if (task->transform.e21 == 0.0f && task->transform.e22 == 0.0f) return task; //zero height
-
     task->opacity = opacity;
     task->surface = surface;
     task->mpool = mpool;
