@@ -237,7 +237,6 @@ static bool _compositeMaskImage(SwSurface* surface, const SwImage* image, const 
     return true;
 }
 
-
 #include "tvgSwRasterTexmap.h"
 #include "tvgSwRasterC.h"
 #include "tvgSwRasterAvx.h"

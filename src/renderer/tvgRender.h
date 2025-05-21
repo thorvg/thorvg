@@ -25,6 +25,7 @@
 
 #include <math.h>
 #include <cstdarg>
+#include <vector>
 #include "tvgCommon.h"
 #include "tvgArray.h"
 #include "tvgLock.h"
@@ -49,7 +50,6 @@ static inline RenderUpdateFlag operator|(const RenderUpdateFlag a, const RenderU
 {
     return RenderUpdateFlag(uint16_t(a) | uint16_t(b));
 }
-
 
 struct RenderSurface
 {
@@ -107,6 +107,11 @@ struct RenderRegion
         return {{std::max(lhs.min.x, rhs.min.x), std::max(lhs.min.y, rhs.min.y)}, {std::min(lhs.max.x, rhs.max.x), std::min(lhs.max.y, rhs.max.y)}};
     }
 
+    static constexpr RenderRegion add(const RenderRegion& lhs, const RenderRegion& rhs)
+    {
+        return {{std::min(lhs.min.x, rhs.min.x), std::min(lhs.min.y, rhs.min.y)}, {std::max(lhs.max.x, rhs.max.x), std::max(lhs.max.y, rhs.max.y)}};
+    }
+
     void intersect(const RenderRegion& rhs);
 
     void add(const RenderRegion& rhs)
@@ -115,6 +120,16 @@ struct RenderRegion
         if (rhs.min.y < min.y) min.y = rhs.min.y;
         if (rhs.max.x > max.x) max.x = rhs.max.x;
         if (rhs.max.y > max.y) max.y = rhs.max.y;
+    }
+
+    bool contained(const RenderRegion& rhs)
+    {
+        return (min.x <= rhs.min.x && max.x >= rhs.max.x && min.y <= rhs.min.y && max.y >= rhs.max.y);
+    }
+
+    bool intersected(const RenderRegion& rhs) const
+    {
+        return (rhs.min.x < max.x && rhs.max.x > min.x && rhs.min.y < max.y && rhs.max.y > min.y);
     }
 
     bool operator==(const RenderRegion& rhs) const
@@ -135,6 +150,68 @@ struct RenderRegion
     uint32_t y() const { return (uint32_t) sy(); }
     uint32_t w() const { return (uint32_t) sw(); }
     uint32_t h() const { return (uint32_t) sh(); }
+};
+
+struct RenderDirtyRegion
+{
+    void add(const RenderRegion& region)
+    {
+        if (!disabled && region.valid()) {
+            list[current].push(region);
+        }
+    }
+
+    bool prepare(uint32_t count = 0)
+    {
+        if (disabled) return false;
+
+        if (count > THREASHOLD) {
+            skip = true;
+            return false;
+        }
+
+        count *= 120;   //FIXME: enough?
+
+        list[0].reserve(count);
+        list[1].reserve(count);
+
+        return true;
+    }
+
+    bool deactivated()
+    {
+        if (disabled || skip) return true;
+        return false;
+    }
+
+    void clear()
+    {
+        list[0].clear();
+        list[1].clear();
+        skip = false;
+    }
+
+    const Array<RenderRegion>& get()
+    {
+        return list[current];
+    }
+
+    void commit();
+
+private:
+    void subdivide(Array<RenderRegion>& targets, uint32_t idx, RenderRegion& lhs, RenderRegion& rhs);
+
+    /* We deactivate partial rendering if there are more than N moving elements.
+       Imagine thousands of moving objects covering the entire screen, That case partial rendering will lose any benefits.
+       Even if they don't, the overhead of subdividing and merging partial regions
+       could be more expensive than simply rendering the full screen.
+       The number is experimentally confirmed and we are open to improve this. */
+    static constexpr const uint32_t THREASHOLD = 1000;
+
+    Array<RenderRegion> list[2];  //double buffer swapping
+    uint8_t current = 0;          //list index. 0 or 1
+    bool disabled = false;
+    bool skip = false;
 };
 
 struct RenderPath
@@ -415,8 +492,9 @@ struct RenderEffectTritone : RenderEffect
 
 class RenderMethod
 {
-private:
-    uint32_t refCnt = 0;        //reference count
+protected:
+    RenderDirtyRegion dirtyRegion;
+    uint32_t refCnt = 0;
     Key key;
 
 public:
@@ -433,6 +511,7 @@ public:
     virtual bool renderImage(RenderData data) = 0;
     virtual bool postRender() = 0;
     virtual void dispose(RenderData data) = 0;
+    virtual void damage(const RenderRegion& region) = 0;
     virtual RenderRegion region(RenderData data) = 0;
     virtual RenderRegion viewport() = 0;
     virtual bool viewport(const RenderRegion& vp) = 0;

@@ -94,9 +94,7 @@ struct Canvas::Impl
 
         if (status == Status::Damaged) update(nullptr, false);
 
-        if (!renderer->preRender()) return Result::InsufficientCondition;
-
-        if (!PAINT(scene)->render(renderer) || !renderer->postRender()) return Result::InsufficientCondition;
+        if (!renderer->preRender() || !PAINT(scene)->render(renderer) || !renderer->postRender()) return Result::InsufficientCondition;
 
         status = Status::Drawing;
 

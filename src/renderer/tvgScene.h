@@ -105,7 +105,7 @@ struct SceneImpl : Scene
 
     RenderData update(RenderMethod* renderer, const Matrix& transform, Array<RenderData>& clips, uint8_t opacity, RenderUpdateFlag flag, TVG_UNUSED bool clipper)
     {
-        this->vport = renderer->viewport();
+        vport = renderer->viewport();
 
         if (needComposition(opacity)) {
             /* Overriding opacity value. If this scene is half-translucent,
@@ -123,6 +123,11 @@ struct SceneImpl : Scene
             }
         }
 
+        if (compFlag) vport = bounds(renderer);
+
+        //TODO: apply only for blur style effects
+        if (effects) renderer->damage(vport);
+
         return nullptr;
     }
 
@@ -134,7 +139,7 @@ struct SceneImpl : Scene
         renderer->blend(impl.blendMethod);
 
         if (compFlag) {
-            cmp = renderer->target(bounds(renderer), renderer->colorSpace(), static_cast<CompositionFlag>(compFlag));
+            cmp = renderer->target(vport, renderer->colorSpace(), static_cast<CompositionFlag>(compFlag));
             renderer->beginComposite(cmp, MaskMethod::None, opacity);
         }
 
@@ -157,7 +162,7 @@ struct SceneImpl : Scene
         return ret;
     }
 
-    RenderRegion bounds(RenderMethod* renderer) const
+    RenderRegion bounds(RenderMethod* renderer)
     {
         if (paints.empty()) return {};
 
@@ -185,8 +190,8 @@ struct SceneImpl : Scene
         pRegion.max.x += eRegion.max.x;
         pRegion.max.y += eRegion.max.y;
 
-        pRegion.intersect(this->vport);
-        return pRegion;
+        vport = RenderRegion::intersect(renderer->viewport(), pRegion);
+        return vport;
     }
 
     Result bounds(Point* pt4, Matrix& m, bool obb, bool stroking)
@@ -298,6 +303,7 @@ struct SceneImpl : Scene
             }
             delete(effects);
             effects = nullptr;
+            impl.renderer->damage(vport);
         }
         return Result::Success;
     }

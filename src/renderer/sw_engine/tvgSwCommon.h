@@ -147,10 +147,10 @@ struct SwRle
             begin = lower_bound(spans.begin(), spans.end(), min, comp);
         }
         if (end) {
-            if (max >= spans.last().y) {
+            if (max > spans.last().y) {
                 *end = spans.end();
             } else {
-                auto comp = [](int y, const SwSpan& span) { return y < span.y; };
+                auto comp = [](int y, const SwSpan& span) { return y <= span.y; };
                 *end = upper_bound(spans.begin(), spans.end(), max, comp);
             }
         }

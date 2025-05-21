@@ -80,6 +80,7 @@ public:
     bool postRender() override;
     void dispose(RenderData data) override;;
     RenderRegion region(RenderData data) override;
+    void damage(const RenderRegion& region) override;
     RenderRegion viewport() override;
     bool viewport(const RenderRegion& vp) override;
     bool blend(BlendMethod method) override;
