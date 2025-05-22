@@ -758,7 +758,11 @@ static SwSpan* _intersectSpansRegion(const SwRle *clip, const SwRle *target, SwS
 
         //Try clipping with all clip spans which have a same y-coordinate.
         auto temp = clipSpans;
-        while(temp < clipEnd && outSpansCnt > 0 && temp->y == clipSpans->y) {
+        while(temp < clipEnd && temp->y == clipSpans->y) {
+            if (outSpansCnt == 0) {
+                TVGERR("SW_ENGINE", "span buffer is over.");
+                break;
+            }
             auto sx1 = spans->x;
             auto sx2 = sx1 + spans->len;
             auto cx1 = temp->x;
