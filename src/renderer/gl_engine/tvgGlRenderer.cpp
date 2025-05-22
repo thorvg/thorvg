@@ -52,6 +52,8 @@ void GlRenderer::flush()
 {
     clearDisposes();
 
+    mRootTarget.reset();
+
     ARRAY_FOREACH(p, mComposePool) delete(*p);
     mComposePool.clear();
 
@@ -834,9 +836,8 @@ bool GlRenderer::target(void* context, int32_t id, uint32_t w, uint32_t h)
 
     currentContext();
 
-    mRootTarget = GlRenderTarget(surface.w, surface.h);
     mRootTarget.setViewport({0, 0, static_cast<int32_t>(surface.w), static_cast<int32_t>(surface.h)});
-    mRootTarget.init(mTargetFboId);
+    mRootTarget.init(surface.w, surface.h, mTargetFboId);
 
     return true;
 }
