@@ -81,9 +81,9 @@ void WgCompositor::resize(WgContext& context, uint32_t width, uint32_t height) {
     // release existig handles
     if ((this->width != width) || (this->height != height)) {
         context.layouts.releaseBindGroup(bindGroupStorageTemp);
-        // release intermediate render storages
-        storageTemp1.release(context);
-        storageTemp0.release(context);
+        // release intermediate render target
+        targetTemp1.release(context);
+        targetTemp0.release(context);
         // release global stencil buffer handles
         context.releaseTextureView(texViewDepthStencilMS);
         context.releaseTexture(texDepthStencilMS);
@@ -107,10 +107,10 @@ void WgCompositor::resize(WgContext& context, uint32_t width, uint32_t height) {
         texViewDepthStencil = context.createTextureView(texDepthStencil);
         texDepthStencilMS = context.createTexAttachement(width, height, WGPUTextureFormat_Depth24PlusStencil8, 4);
         texViewDepthStencilMS = context.createTextureView(texDepthStencilMS);
-        // initialize intermediate render storages
-        storageTemp0.initialize(context, width, height);
-        storageTemp1.initialize(context, width, height);
-        bindGroupStorageTemp = context.layouts.createBindGroupStrorage2RO(storageTemp0.texView, storageTemp1.texView);
+        // initialize intermediate render targets
+        targetTemp0.initialize(context, width, height);
+        targetTemp1.initialize(context, width, height);
+        bindGroupStorageTemp = context.layouts.createBindGroupStrorage2RO(targetTemp0.texView, targetTemp1.texView);
     }
 }
 
@@ -126,14 +126,14 @@ RenderRegion WgCompositor::shrinkRenderRegion(RenderRegion& rect)
 }
 
 
-void WgCompositor::copyTexture(const WgRenderStorage* dst, const WgRenderStorage* src)
+void WgCompositor::copyTexture(const WgRenderTarget* dst, const WgRenderTarget* src)
 {
     const RenderRegion region = { 0, 0, (int32_t)src->width, (int32_t)src->height };
     copyTexture(dst, src, region);
 }
 
 
-void WgCompositor::copyTexture(const WgRenderStorage* dst, const WgRenderStorage* src, const RenderRegion& region)
+void WgCompositor::copyTexture(const WgRenderTarget* dst, const WgRenderTarget* src, const RenderRegion& region)
 {
     assert(dst);
     assert(src);
@@ -145,16 +145,25 @@ void WgCompositor::copyTexture(const WgRenderStorage* dst, const WgRenderStorage
 }
 
 
-void WgCompositor::beginRenderPass(WGPUCommandEncoder commandEncoder, WgRenderStorage* target, bool clear, WGPUColor clearColor)
+void WgCompositor::beginRenderPass(WGPUCommandEncoder commandEncoder, WgRenderTarget* target, bool clear, WGPUColor clearColor)
 {
-    assert(commandEncoder);
     assert(target);
+    assert(commandEncoder);
+    // do not start same render bass
+    if (target == currentTarget) return;
+    // we must to end render pass first
+    endRenderPass();
     this->currentTarget = target;
+    // start new render pass
     this->commandEncoder = commandEncoder;
     const WGPURenderPassDepthStencilAttachment depthStencilAttachment{ 
         .view = texViewDepthStencilMS,
-        .depthLoadOp = WGPULoadOp_Clear, .depthStoreOp = WGPUStoreOp_Discard, .depthClearValue = 1.0f,
-        .stencilLoadOp = WGPULoadOp_Clear, .stencilStoreOp = WGPUStoreOp_Discard, .stencilClearValue = 0
+        .depthLoadOp = WGPULoadOp_Clear,
+        .depthStoreOp = WGPUStoreOp_Discard,
+        .depthClearValue = 1.0f,
+        .stencilLoadOp = WGPULoadOp_Clear,
+        .stencilStoreOp = WGPUStoreOp_Discard,
+        .stencilClearValue = 0
     };
     const WGPURenderPassColorAttachment colorAttachment{
         .view = target->texViewMS,
@@ -163,7 +172,6 @@ void WgCompositor::beginRenderPass(WGPUCommandEncoder commandEncoder, WgRenderSt
         .loadOp = clear ? WGPULoadOp_Clear : WGPULoadOp_Load,
         .storeOp = WGPUStoreOp_Store,
         .clearValue = clearColor
-        
     };
     WGPURenderPassDescriptor renderPassDesc{ .colorAttachmentCount = 1, .colorAttachments = &colorAttachment, .depthStencilAttachment = &depthStencilAttachment };
     renderPassEncoder = wgpuCommandEncoderBeginRenderPass(commandEncoder, &renderPassDesc);
@@ -177,8 +185,8 @@ void WgCompositor::endRenderPass()
         assert(renderPassEncoder);
         wgpuRenderPassEncoderEnd(renderPassEncoder);
         wgpuRenderPassEncoderRelease(renderPassEncoder);
-        this->renderPassEncoder = nullptr;
-        this->currentTarget = nullptr;
+        renderPassEncoder = nullptr;
+        currentTarget = nullptr;
     }
 }
 
@@ -237,7 +245,7 @@ void WgCompositor::renderImage(WgContext& context, WgRenderDataPicture* renderDa
 }
 
 
-void WgCompositor::renderScene(WgContext& context, WgRenderStorage* scene, WgCompose* compose)
+void WgCompositor::renderScene(WgContext& context, WgRenderTarget* scene, WgCompose* compose)
 {
     assert(scene);
     assert(compose);
@@ -250,7 +258,7 @@ void WgCompositor::renderScene(WgContext& context, WgRenderStorage* scene, WgCom
 }
 
 
-void WgCompositor::composeScene(WgContext& context, WgRenderStorage* src, WgRenderStorage* mask, WgCompose* cmp)
+void WgCompositor::composeScene(WgContext& context, WgRenderTarget* src, WgRenderTarget* mask, WgCompose* cmp)
 {
     assert(cmp);
     assert(src);
@@ -266,11 +274,13 @@ void WgCompositor::composeScene(WgContext& context, WgRenderStorage* src, WgRend
 }
 
 
-void WgCompositor::blit(WgContext& context, WGPUCommandEncoder encoder, WgRenderStorage* src, WGPUTextureView dstView) {
+void WgCompositor::blit(WgContext& context, WGPUCommandEncoder encoder, WgRenderTarget* src, WGPUTextureView dstView) {
     const WGPURenderPassDepthStencilAttachment depthStencilAttachment{ 
         .view = texViewDepthStencil,
-        .depthLoadOp = WGPULoadOp_Load, .depthStoreOp = WGPUStoreOp_Discard,
-        .stencilLoadOp = WGPULoadOp_Load, .stencilStoreOp = WGPUStoreOp_Discard
+        .depthLoadOp = WGPULoadOp_Load,
+        .depthStoreOp = WGPUStoreOp_Discard,
+        .stencilLoadOp = WGPULoadOp_Load,
+        .stencilStoreOp = WGPUStoreOp_Discard
     };
     const WGPURenderPassColorAttachment colorAttachment { 
         .view = dstView,
@@ -334,10 +344,10 @@ void WgCompositor::blendShape(WgContext& context, WgRenderDataShape* renderData,
     if (renderData->renderSettingsShape.skip) return;
     if (renderData->meshGroupShapes.meshes.count == 0) return;
     if ((renderData->viewport.w <= 0) || (renderData->viewport.h <= 0)) return;
-    // copy current render target data to dst storage
-    WgRenderStorage *target = currentTarget;
+    // copy current render target data to dst target
+    WgRenderTarget *target = currentTarget;
     endRenderPass();
-    copyTexture(&storageTemp0, target);
+    copyTexture(&targetTemp0, target);
     beginRenderPass(commandEncoder, target, false);
     // render shape with blend settings
     wgpuRenderPassEncoderSetScissorRect(renderPassEncoder, renderData->viewport.x, renderData->viewport.y, renderData->viewport.w, renderData->viewport.h);
@@ -354,7 +364,7 @@ void WgCompositor::blendShape(WgContext& context, WgRenderDataShape* renderData,
     wgpuRenderPassEncoderSetStencilReference(renderPassEncoder, 0);
     wgpuRenderPassEncoderSetBindGroup(renderPassEncoder, 0, bindGroupViewMat, 0, nullptr);
     wgpuRenderPassEncoderSetBindGroup(renderPassEncoder, 1, renderData->bindGroupPaint, 0, nullptr);
-    wgpuRenderPassEncoderSetBindGroup(renderPassEncoder, 3, storageTemp0.bindGroupTexure, 0, nullptr);
+    wgpuRenderPassEncoderSetBindGroup(renderPassEncoder, 3, targetTemp0.bindGroupTexure, 0, nullptr);
     uint32_t blendMethodInd = (uint32_t)blendMethod;
     WgRenderSettings& settings = renderData->renderSettingsShape;
     if (settings.fillType == WgRenderSettingsType::Solid) {
@@ -462,10 +472,10 @@ void WgCompositor::blendStrokes(WgContext& context, WgRenderDataShape* renderDat
     if (renderData->renderSettingsStroke.skip) return;
     if (renderData->meshGroupStrokes.meshes.count == 0) return;
     if ((renderData->viewport.w <= 0) || (renderData->viewport.h <= 0)) return;
-    // copy current render target data to dst storage
-    WgRenderStorage *target = currentTarget;
+    // copy current render target data to dst target
+    WgRenderTarget *target = currentTarget;
     endRenderPass();
-    copyTexture(&storageTemp0, target);
+    copyTexture(&targetTemp0, target);
     beginRenderPass(commandEncoder, target, false);
     wgpuRenderPassEncoderSetScissorRect(renderPassEncoder, renderData->viewport.x, renderData->viewport.y, renderData->viewport.w, renderData->viewport.h);
     // draw strokes to stencil (first pass)
@@ -481,7 +491,7 @@ void WgCompositor::blendStrokes(WgContext& context, WgRenderDataShape* renderDat
         wgpuRenderPassEncoderSetStencilReference(renderPassEncoder, 0);
         wgpuRenderPassEncoderSetBindGroup(renderPassEncoder, 0, bindGroupViewMat, 0, nullptr);
         wgpuRenderPassEncoderSetBindGroup(renderPassEncoder, 1, renderData->bindGroupPaint, 0, nullptr);
-        wgpuRenderPassEncoderSetBindGroup(renderPassEncoder, 3, storageTemp0.bindGroupTexure, 0, nullptr);
+        wgpuRenderPassEncoderSetBindGroup(renderPassEncoder, 3, targetTemp0.bindGroupTexure, 0, nullptr);
         uint32_t blendMethodInd = (uint32_t)blendMethod;
         WgRenderSettings& settings = renderData->renderSettingsStroke;
         if (settings.fillType == WgRenderSettingsType::Solid) {
@@ -572,10 +582,10 @@ void WgCompositor::blendImage(WgContext& context, WgRenderDataPicture* renderDat
     assert(renderPassEncoder);
     if ((renderData->viewport.w <= 0) || (renderData->viewport.h <= 0)) return;
     wgpuRenderPassEncoderSetScissorRect(renderPassEncoder, renderData->viewport.x, renderData->viewport.y, renderData->viewport.w, renderData->viewport.h);
-    // copy current render target data to dst storage
-    WgRenderStorage *target = currentTarget;
+    // copy current render target data to dst target
+    WgRenderTarget *target = currentTarget;
     endRenderPass();
-    copyTexture(&storageTemp0, target);
+    copyTexture(&targetTemp0, target);
     beginRenderPass(commandEncoder, target, false);
     // setup stencil rules
     wgpuRenderPassEncoderSetStencilReference(renderPassEncoder, 255);
@@ -589,7 +599,7 @@ void WgCompositor::blendImage(WgContext& context, WgRenderDataPicture* renderDat
     wgpuRenderPassEncoderSetBindGroup(renderPassEncoder, 0, bindGroupViewMat, 0, nullptr);
     wgpuRenderPassEncoderSetBindGroup(renderPassEncoder, 1, renderData->bindGroupPaint, 0, nullptr);
     wgpuRenderPassEncoderSetBindGroup(renderPassEncoder, 2, renderData->bindGroupPicture, 0, nullptr);
-    wgpuRenderPassEncoderSetBindGroup(renderPassEncoder, 3, storageTemp0.bindGroupTexure, 0, nullptr);
+    wgpuRenderPassEncoderSetBindGroup(renderPassEncoder, 3, targetTemp0.bindGroupTexure, 0, nullptr);
     wgpuRenderPassEncoderSetPipeline(renderPassEncoder, pipelines.image_blend[blendMethodInd]);
     renderData->meshData.drawImage(context, renderPassEncoder);
 };
@@ -622,7 +632,7 @@ void WgCompositor::clipImage(WgContext& context, WgRenderDataPicture* renderData
 }
 
 
-void WgCompositor::drawScene(WgContext& context, WgRenderStorage* scene, WgCompose* compose)
+void WgCompositor::drawScene(WgContext& context, WgRenderTarget* scene, WgCompose* compose)
 {
     assert(scene);
     assert(compose);
@@ -638,15 +648,15 @@ void WgCompositor::drawScene(WgContext& context, WgRenderStorage* scene, WgCompo
 }
 
 
-void WgCompositor::blendScene(WgContext& context, WgRenderStorage* scene, WgCompose* compose)
+void WgCompositor::blendScene(WgContext& context, WgRenderTarget* scene, WgCompose* compose)
 {
     assert(scene);
     assert(compose);
     assert(currentTarget);
-    // copy current render target data to dst storage
-    WgRenderStorage *target = currentTarget;
+    // copy current render target data to dst target
+    WgRenderTarget *target = currentTarget;
     endRenderPass();
-    copyTexture(&storageTemp0, target);
+    copyTexture(&targetTemp0, target);
     beginRenderPass(commandEncoder, target, false);
     // blend scene
     uint32_t blendMethodInd = (uint32_t)compose->blend;
@@ -654,7 +664,7 @@ void WgCompositor::blendScene(WgContext& context, WgRenderStorage* scene, WgComp
     wgpuRenderPassEncoderSetScissorRect(renderPassEncoder, rect.x, rect.y, rect.w, rect.h);
     wgpuRenderPassEncoderSetStencilReference(renderPassEncoder, 0);
     wgpuRenderPassEncoderSetBindGroup(renderPassEncoder, 0, scene->bindGroupTexure, 0, nullptr);
-    wgpuRenderPassEncoderSetBindGroup(renderPassEncoder, 1, storageTemp0.bindGroupTexure, 0, nullptr);
+    wgpuRenderPassEncoderSetBindGroup(renderPassEncoder, 1, targetTemp0.bindGroupTexure, 0, nullptr);
     wgpuRenderPassEncoderSetBindGroup(renderPassEncoder, 2, bindGroupOpacities[compose->opacity], 0, nullptr);
     wgpuRenderPassEncoderSetPipeline(renderPassEncoder, pipelines.scene_blend[blendMethodInd]);
     meshData.drawImage(context, renderPassEncoder);
@@ -760,7 +770,7 @@ void WgCompositor::clearClipPath(WgContext& context, WgRenderDataPaint* paint)
 }
 
 
-bool WgCompositor::gaussianBlur(WgContext& context, WgRenderStorage* dst, const RenderEffectGaussianBlur* params, const WgCompose* compose)
+bool WgCompositor::gaussianBlur(WgContext& context, WgRenderTarget* dst, const RenderEffectGaussianBlur* params, const WgCompose* compose)
 {
     assert(dst);
     assert(params);
@@ -770,8 +780,8 @@ bool WgCompositor::gaussianBlur(WgContext& context, WgRenderStorage* dst, const 
     auto renderData = (WgRenderDataEffectParams*)params->rd;
     auto aabb = compose->aabb;
     auto viewport = compose->rdViewport;
-    WgRenderStorage* sbuff = dst;
-    WgRenderStorage* dbuff = &storageTemp0;
+    WgRenderTarget* sbuff = dst;
+    WgRenderTarget* dbuff = &targetTemp0;
 
     // begin compute pass
     WGPUComputePassDescriptor computePassDesc{ .label = "Compute pass gaussian blur" };
@@ -803,14 +813,14 @@ bool WgCompositor::gaussianBlur(WgContext& context, WgRenderStorage* dst, const 
     wgpuComputePassEncoderRelease(computePassEncoder);
 
     // if final result stored in intermidiate buffer we must copy result to destination buffer
-    if (sbuff == &storageTemp0) 
+    if (sbuff == &targetTemp0) 
         copyTexture(sbuff, dbuff, aabb);
 
     return true;
 }
 
 
-bool WgCompositor::dropShadow(WgContext& context, WgRenderStorage* dst, const RenderEffectDropShadow* params, const WgCompose* compose)
+bool WgCompositor::dropShadow(WgContext& context, WgRenderTarget* dst, const RenderEffectDropShadow* params, const WgCompose* compose)
 {
     assert(dst);
     assert(params);
@@ -823,9 +833,9 @@ bool WgCompositor::dropShadow(WgContext& context, WgRenderStorage* dst, const Re
     auto viewport = compose->rdViewport;
 
     { // apply blur
-        copyTexture(&storageTemp1, dst, aabb);
-        WgRenderStorage* sbuff = &storageTemp1;
-        WgRenderStorage* dbuff = &storageTemp0;
+        copyTexture(&targetTemp1, dst, aabb);
+        WgRenderTarget* sbuff = &targetTemp1;
+        WgRenderTarget* dbuff = &targetTemp0;
         WGPUComputePassDescriptor computePassDesc{ .label = "Compute pass drop shadow blur" };
         WGPUComputePassEncoder computePassEncoder = wgpuCommandEncoderBeginComputePass(commandEncoder, &computePassDesc);
         // horizontal blur
@@ -849,7 +859,7 @@ bool WgCompositor::dropShadow(WgContext& context, WgRenderStorage* dst, const Re
     }
     
     { // blend origin (temp0), shadow (temp1) to destination
-        copyTexture(&storageTemp0, dst, aabb);
+        copyTexture(&targetTemp0, dst, aabb);
         WGPUComputePassDescriptor computePassDesc{ .label = "Compute pass drop shadow blend" };
         WGPUComputePassEncoder computePassEncoder = wgpuCommandEncoderBeginComputePass(commandEncoder, &computePassDesc);
         wgpuComputePassEncoderSetBindGroup(computePassEncoder, 0, bindGroupStorageTemp, 0, nullptr);
@@ -866,7 +876,7 @@ bool WgCompositor::dropShadow(WgContext& context, WgRenderStorage* dst, const Re
 }
 
 
-bool WgCompositor::fillEffect(WgContext& context, WgRenderStorage* dst, const RenderEffectFill* params, const WgCompose* compose)
+bool WgCompositor::fillEffect(WgContext& context, WgRenderTarget* dst, const RenderEffectFill* params, const WgCompose* compose)
 {
     assert(dst);
     assert(params);
@@ -874,7 +884,7 @@ bool WgCompositor::fillEffect(WgContext& context, WgRenderStorage* dst, const Re
     assert(compose->rdViewport);
     assert(!renderPassEncoder);
 
-    copyTexture(&storageTemp0, dst, compose->aabb);
+    copyTexture(&targetTemp0, dst, compose->aabb);
     WGPUComputePassDescriptor computePassDesc{ .label = "Compute pass fill" };
     WGPUComputePassEncoder computePassEncoder = wgpuCommandEncoderBeginComputePass(commandEncoder, &computePassDesc);
     wgpuComputePassEncoderSetBindGroup(computePassEncoder, 0, bindGroupStorageTemp, 0, nullptr);
@@ -890,7 +900,7 @@ bool WgCompositor::fillEffect(WgContext& context, WgRenderStorage* dst, const Re
 }
 
 
-bool WgCompositor::tintEffect(WgContext& context, WgRenderStorage* dst, const RenderEffectTint* params, const WgCompose* compose)
+bool WgCompositor::tintEffect(WgContext& context, WgRenderTarget* dst, const RenderEffectTint* params, const WgCompose* compose)
 {
     assert(dst);
     assert(params);
@@ -898,7 +908,7 @@ bool WgCompositor::tintEffect(WgContext& context, WgRenderStorage* dst, const Re
     assert(compose->rdViewport);
     assert(!renderPassEncoder);
 
-    copyTexture(&storageTemp0, dst, compose->aabb);
+    copyTexture(&targetTemp0, dst, compose->aabb);
     WGPUComputePassDescriptor computePassDesc{ .label = "Compute pass tint" };
     WGPUComputePassEncoder computePassEncoder = wgpuCommandEncoderBeginComputePass(commandEncoder, &computePassDesc);
     wgpuComputePassEncoderSetBindGroup(computePassEncoder, 0, bindGroupStorageTemp, 0, nullptr);
@@ -913,7 +923,7 @@ bool WgCompositor::tintEffect(WgContext& context, WgRenderStorage* dst, const Re
     return true;
 }
 
-bool WgCompositor::tritoneEffect(WgContext& context, WgRenderStorage* dst, const RenderEffectTritone* params, const WgCompose* compose)
+bool WgCompositor::tritoneEffect(WgContext& context, WgRenderTarget* dst, const RenderEffectTritone* params, const WgCompose* compose)
 {
     assert(dst);
     assert(params);
@@ -921,7 +931,7 @@ bool WgCompositor::tritoneEffect(WgContext& context, WgRenderStorage* dst, const
     assert(compose->rdViewport);
     assert(!renderPassEncoder);
 
-    copyTexture(&storageTemp0, dst, compose->aabb);
+    copyTexture(&targetTemp0, dst, compose->aabb);
     WGPUComputePassDescriptor computePassDesc{ .label = "Compute pass tritone" };
     WGPUComputePassEncoder computePassEncoder = wgpuCommandEncoderBeginComputePass(commandEncoder, &computePassDesc);
     wgpuComputePassEncoderSetBindGroup(computePassEncoder, 0, bindGroupStorageTemp, 0, nullptr);

@@ -269,3 +269,34 @@ void WgContext::releaseQueue(WGPUQueue& queue)
         queue = nullptr;
     }
 }
+
+
+WGPUCommandEncoder WgContext::createCommandEncoder()
+{
+    WGPUCommandEncoderDescriptor commandEncoderDesc{};
+    return wgpuDeviceCreateCommandEncoder(device, &commandEncoderDesc);
+}
+
+
+void WgContext::submitCommandEncoder(WGPUCommandEncoder commandEncoder)
+{
+    const WGPUCommandBufferDescriptor commandBufferDesc{};
+    WGPUCommandBuffer commandsBuffer = wgpuCommandEncoderFinish(commandEncoder, &commandBufferDesc);
+    wgpuQueueSubmit(queue, 1, &commandsBuffer);
+    wgpuCommandBufferRelease(commandsBuffer);
+}
+
+
+void WgContext::releaseCommandEncoder(WGPUCommandEncoder& commandEncoder)
+{
+    if (commandEncoder) {
+        wgpuCommandEncoderRelease(commandEncoder);
+        commandEncoder = nullptr;
+    }
+}
+
+
+bool WgContext::invalid()
+{
+    return !instance || !device;
+}
