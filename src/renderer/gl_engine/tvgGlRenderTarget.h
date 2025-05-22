@@ -28,11 +28,11 @@
 class GlRenderTarget
 {
 public:
-    GlRenderTarget() = default;
-    GlRenderTarget(uint32_t width, uint32_t height);
+    GlRenderTarget();
     ~GlRenderTarget();
 
-    void init(GLint resolveId);
+    void init(uint32_t width, uint32_t height, GLint resolveId);
+    void reset();
 
     GLuint getFboId() { return mFbo; }
     GLuint getResolveFboId() { return mResolveFbo; }
