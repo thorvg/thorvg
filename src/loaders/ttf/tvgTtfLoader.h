@@ -49,6 +49,7 @@ struct TtfLoader : public FontLoader
     bool open(const char *data, uint32_t size, const char* rpath, bool copy) override;
     float transform(Paint* paint, FontMetrics& metrices, float fontSize, bool italic) override;
     bool read(Shape* shape, char* text, FontMetrics& out) override;
+    bool metrics(char* text, float fontSize, GlyphMetrics** metrics, uint32_t* size) override;
     void clear();
 };
 

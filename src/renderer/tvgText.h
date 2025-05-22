@@ -37,9 +37,9 @@ struct TextImpl : Text
     Paint::Impl impl;
     Shape* shape;   //text shape
     FontLoader* loader = nullptr;
-    FontMetrics metrics;
+    FontMetrics fmetrics;
     char* utf8 = nullptr;
-    float fontSize;
+    float fontSize = 0.0f;
     bool italic = false;
     bool changed = false;
 
@@ -107,10 +107,10 @@ struct TextImpl : Text
 
         //reload
         if (changed) {
-            loader->read(shape, utf8, metrics);
+            loader->read(shape, utf8, fmetrics);
             changed = false;
         }
-        return loader->transform(shape, metrics, fontSize, italic);
+        return loader->transform(shape, fmetrics, fontSize, italic);
     }
 
     RenderData update(RenderMethod* renderer, const Matrix& transform, Array<RenderData>& clips, uint8_t opacity, RenderUpdateFlag pFlag, TVG_UNUSED bool clipper)
@@ -171,6 +171,25 @@ struct TextImpl : Text
     Iterator* iterator()
     {
         return nullptr;
+    }
+
+    Result metrics(GlyphMetrics** metrics, uint32_t* size)
+    {
+        if (!metrics) return Result::InsufficientCondition;
+
+        //free allocated memory
+        if (*metrics && !size) {
+            tvg::free(*metrics);
+            *metrics = nullptr;
+            return Result::Success;
+        }
+
+        if (!utf8 || tvg::zero(fontSize)) return Result::InsufficientCondition;
+        if (load() == 0.0f) return Result::InsufficientCondition;
+
+        if (!loader->metrics(utf8, fontSize, metrics, size)) return Result::InsufficientCondition;
+
+        return Result::Success;
     }
 };
 
