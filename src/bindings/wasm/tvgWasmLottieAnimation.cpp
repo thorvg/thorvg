@@ -47,6 +47,8 @@ struct TvgEngineMethod
     }
 };
 
+#ifdef THORVG_SW_RASTER_SUPPORT
+
 struct TvgSwEngine : TvgEngineMethod
 {
     uint8_t* buffer = nullptr;
@@ -77,6 +79,8 @@ struct TvgSwEngine : TvgEngineMethod
         return val(typed_memory_view(w * h * 4, buffer));
     }
 };
+
+#endif
 
 
 #ifdef THORVG_WG_RASTER_SUPPORT
@@ -243,12 +247,14 @@ public:
     {
         errorMsg = NoError;
 
+#ifdef THORVG_SW_RASTER_SUPPORT
         if (engine == "sw") this->engine = new TvgSwEngine;
+#endif
 #ifdef THORVG_GL_RASTER_SUPPORT
-        else if (engine == "gl") this->engine = new TvgGLEngine;
+        if (engine == "gl") this->engine = new TvgGLEngine;
 #endif
 #ifdef THORVG_WG_RASTER_SUPPORT
-        else if (engine == "wg") this->engine = new TvgWgEngine;
+        if (engine == "wg") this->engine = new TvgWgEngine;
 #endif
 
         if (!this->engine) {
