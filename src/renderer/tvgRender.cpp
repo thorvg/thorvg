@@ -44,6 +44,56 @@ uint32_t RenderMethod::unref()
 /* RenderPath Class Implementation                                      */
 /************************************************************************/
 
+Point RenderPath::point(float progress)
+{
+    if (progress <= 0.0f) return pts.first();
+    if (progress >= 1.0f) return pts.last();
+
+    auto p = pts.data;
+    auto c = cmds.data;
+    auto pleng = tvg::length(cmds.data, cmds.count, pts.data, pts.count) * progress;
+    auto cleng = 0.0f;
+    Point curr{}, start{}, next{};
+
+    while (c < cmds.data + cmds.count) {
+        switch (*c) {
+            case PathCommand::MoveTo: {
+                curr = start = *p;
+                ++p;
+                ++c;
+                break;
+            }
+            case PathCommand::LineTo: {
+                next = *p;
+                float segLen = tvg::length(&curr, &next);
+                if (cleng + segLen >= pleng) return lerp(curr, next, (pleng - cleng) / segLen);
+                cleng += segLen;
+                curr = next;
+                ++p;
+                break;
+            }
+            case PathCommand::CubicTo: {
+                Bezier bz = {curr, *p++, *p++, *p++};
+                auto segLen = bz.length();
+                if (cleng + segLen >= pleng) return bz.at((pleng - cleng) / segLen);
+                cleng += segLen;
+                curr = bz.end;
+                break;
+            }
+            case PathCommand::Close: {
+                auto segLen = tvg::length(&curr, &start);
+                if (cleng + segLen >= pleng) return (curr + (start - curr)) * ((pleng - cleng) / segLen);
+                cleng += segLen;
+                curr = start;
+                break;
+            }
+        }
+        ++c;
+    }
+    return {};
+}
+
+
 bool RenderPath::bounds(Matrix* m, float* x, float* y, float* w, float* h)
 {
     //unexpected
