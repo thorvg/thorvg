@@ -126,16 +126,6 @@ struct SwRle
     uint32_t size;
 };
 
-struct SwBBox
-{
-    SwPoint min, max;
-
-    void reset()
-    {
-        min.x = min.y = max.x = max.y = 0;
-    }
-};
-
 struct SwFill
 {
     struct SwLinear {
@@ -210,14 +200,14 @@ struct SwDashStroke
 
 struct SwShape
 {
-    SwOutline*   outline = nullptr;
-    SwStroke*    stroke = nullptr;
-    SwFill*      fill = nullptr;
-    SwRle*   rle = nullptr;
-    SwRle*   strokeRle = nullptr;
-    SwBBox       bbox;           //Keep it boundary without stroke region. Using for optimal filling.
+    SwOutline* outline = nullptr;
+    SwStroke* stroke = nullptr;
+    SwFill* fill = nullptr;
+    SwRle* rle = nullptr;
+    SwRle* strokeRle = nullptr;
+    RenderRegion bbox;           //Keep it boundary without stroke region. Using for optimal filling.
 
-    bool         fastTrack = false;   //Fast Track: axis-aligned rectangle without any clips?
+    bool fastTrack = false;   //Fast Track: axis-aligned rectangle without any clips?
 };
 
 struct SwImage
@@ -279,7 +269,7 @@ struct SwCompositor : RenderCompositor
     SwSurface* recoverSfc;                  //Recover surface when composition is started
     SwCompositor* recoverCmp;               //Recover compositor when composition is done
     SwImage image;
-    SwBBox bbox;
+    RenderRegion bbox;
     bool valid;
 };
 
@@ -499,16 +489,15 @@ SwFixed mathLength(const SwPoint& pt);
 int mathCubicAngle(const SwPoint* base, SwFixed& angleIn, SwFixed& angleMid, SwFixed& angleOut);
 SwFixed mathMean(SwFixed angle1, SwFixed angle2);
 SwPoint mathTransform(const Point* to, const Matrix& transform);
-bool mathUpdateOutlineBBox(const SwOutline* outline, const SwBBox& clipRegion, SwBBox& renderRegion, bool fastTrack);
-bool mathClipBBox(const SwBBox& clipper, SwBBox& clippee);
+bool mathUpdateOutlineBBox(const SwOutline* outline, const RenderRegion& clipRegion, RenderRegion& renderRegion, bool fastTrack);
 
 void shapeReset(SwShape* shape);
-bool shapePrepare(SwShape* shape, const RenderShape* rshape, const Matrix& transform, const SwBBox& clipRegion, SwBBox& renderRegion, SwMpool* mpool, unsigned tid, bool hasComposite);
+bool shapePrepare(SwShape* shape, const RenderShape* rshape, const Matrix& transform, const RenderRegion& clipRegion, RenderRegion& renderRegion, SwMpool* mpool, unsigned tid, bool hasComposite);
 bool shapePrepared(const SwShape* shape);
 bool shapeGenRle(SwShape* shape, const RenderShape* rshape, bool antiAlias);
 void shapeDelOutline(SwShape* shape, SwMpool* mpool, uint32_t tid);
 void shapeResetStroke(SwShape* shape, const RenderShape* rshape, const Matrix& transform);
-bool shapeGenStrokeRle(SwShape* shape, const RenderShape* rshape, const Matrix& transform, const SwBBox& clipRegion, SwBBox& renderRegion, SwMpool* mpool, unsigned tid);
+bool shapeGenStrokeRle(SwShape* shape, const RenderShape* rshape, const Matrix& transform, const RenderRegion& clipRegion, RenderRegion& renderRegion, SwMpool* mpool, unsigned tid);
 void shapeFree(SwShape* shape);
 void shapeDelStroke(SwShape* shape);
 bool shapeGenFillColors(SwShape* shape, const Fill* fill, const Matrix& transform, SwSurface* surface, uint8_t opacity, bool ctable);
@@ -523,8 +512,8 @@ bool strokeParseOutline(SwStroke* stroke, const SwOutline& outline);
 SwOutline* strokeExportOutline(SwStroke* stroke, SwMpool* mpool, unsigned tid);
 void strokeFree(SwStroke* stroke);
 
-bool imagePrepare(SwImage* image, const Matrix& transform, const SwBBox& clipRegion, SwBBox& renderRegion, SwMpool* mpool, unsigned tid);
-bool imageGenRle(SwImage* image, const SwBBox& renderRegion, bool antiAlias);
+bool imagePrepare(SwImage* image, const Matrix& transform, const RenderRegion& clipRegion, RenderRegion& renderRegion, SwMpool* mpool, unsigned tid);
+bool imageGenRle(SwImage* image, const RenderRegion& renderRegion, bool antiAlias);
 void imageDelOutline(SwImage* image, SwMpool* mpool, uint32_t tid);
 void imageReset(SwImage* image);
 void imageFree(SwImage* image);
@@ -547,13 +536,13 @@ void fillRadial(const SwFill* fill, uint32_t* dst, uint32_t y, uint32_t x, uint3
 void fillRadial(const SwFill* fill, uint32_t* dst, uint32_t y, uint32_t x, uint32_t len, SwBlender op, SwBlender op2, uint8_t a);                          //blending + BlendingMethod(op2) ver.
 void fillRadial(const SwFill* fill, uint32_t* dst, uint32_t y, uint32_t x, uint32_t len, uint8_t* cmp, SwAlpha alpha, uint8_t csize, uint8_t opacity);     //matting ver.
 
-SwRle* rleRender(SwRle* rle, const SwOutline* outline, const SwBBox& renderRegion, bool antiAlias);
-SwRle* rleRender(const SwBBox* bbox);
+SwRle* rleRender(SwRle* rle, const SwOutline* outline, const RenderRegion& renderRegion, bool antiAlias);
+SwRle* rleRender(const RenderRegion* bbox);
 void rleFree(SwRle* rle);
 void rleReset(SwRle* rle);
 void rleMerge(SwRle* rle, SwRle* clip1, SwRle* clip2);
 bool rleClip(SwRle* rle, const SwRle* clip);
-bool rleClip(SwRle* rle, const SwBBox* clip);
+bool rleClip(SwRle* rle, const RenderRegion* clip);
 
 SwMpool* mpoolInit(uint32_t threads);
 bool mpoolTerm(SwMpool* mpool);
@@ -568,7 +557,7 @@ void mpoolRetDashOutline(SwMpool* mpool, unsigned idx);
 bool rasterCompositor(SwSurface* surface);
 bool rasterGradientShape(SwSurface* surface, SwShape* shape, const Fill* fdata, uint8_t opacity);
 bool rasterShape(SwSurface* surface, SwShape* shape, RenderColor& c);
-bool rasterImage(SwSurface* surface, SwImage* image, const Matrix& transform, const SwBBox& bbox, uint8_t opacity);
+bool rasterImage(SwSurface* surface, SwImage* image, const Matrix& transform, const RenderRegion& bbox, uint8_t opacity);
 bool rasterStroke(SwSurface* surface, SwShape* shape, RenderColor& c);
 bool rasterGradientStroke(SwSurface* surface, SwShape* shape, const Fill* fdata, uint8_t opacity);
 bool rasterClear(SwSurface* surface, uint32_t x, uint32_t y, uint32_t w, uint32_t h, pixel_t val = 0);
@@ -576,7 +565,7 @@ void rasterPixel32(uint32_t *dst, uint32_t val, uint32_t offset, int32_t len);
 void rasterTranslucentPixel32(uint32_t* dst, uint32_t* src, uint32_t len, uint8_t opacity);
 void rasterPixel32(uint32_t* dst, uint32_t* src, uint32_t len, uint8_t opacity);
 void rasterGrayscale8(uint8_t *dst, uint8_t val, uint32_t offset, int32_t len);
-void rasterXYFlip(uint32_t* src, uint32_t* dst, int32_t stride, int32_t w, int32_t h, const SwBBox& bbox, bool flipped);
+void rasterXYFlip(uint32_t* src, uint32_t* dst, int32_t stride, int32_t w, int32_t h, const RenderRegion& bbox, bool flipped);
 void rasterUnpremultiply(RenderSurface* surface);
 void rasterPremultiply(RenderSurface* surface);
 bool rasterConvertCS(RenderSurface* surface, ColorSpace to);

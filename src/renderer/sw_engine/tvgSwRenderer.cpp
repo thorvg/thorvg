@@ -40,7 +40,7 @@ struct SwTask : Task
 {
     SwSurface* surface = nullptr;
     SwMpool* mpool = nullptr;
-    SwBBox bbox;                          //Rendering Region
+    RenderRegion bbox;                          //Rendering Region
     Matrix transform;
     Array<RenderData> clips;
     RenderUpdateFlag flags = RenderUpdateFlag::None;
@@ -48,18 +48,11 @@ struct SwTask : Task
     bool pushed = false;                  //Pushed into task list?
     bool disposed = false;                //Disposed task?
 
-    RenderRegion bounds()
+    const RenderRegion& bounds()
     {
         //Can we skip the synchronization?
         done();
-
-        RenderRegion region;
-        region.min.x = bbox.min.x > 0 ? bbox.min.x : 0;
-        region.min.y = bbox.min.y > 0 ? bbox.min.y : 0;
-        region.max.x = bbox.max.x > bbox.min.x ? bbox.max.x : bbox.min.x;
-        region.max.y = bbox.max.y > bbox.min.y ? bbox.max.y : bbox.min.y;
-
-        return region;
+        return bbox;
     }
 
     virtual void dispose() = 0;
@@ -113,7 +106,7 @@ struct SwShapeTask : SwTask
         }
 
         auto strokeWidth = validStrokeWidth(clipper);
-        SwBBox renderRegion{};
+        RenderRegion renderRegion{};
         auto updateShape = flags & (RenderUpdateFlag::Path | RenderUpdateFlag::Transform | RenderUpdateFlag::Clip);
         auto updateFill = false;
 
@@ -566,40 +559,19 @@ SwSurface* SwRenderer::request(int channelSize, bool square)
 
 RenderCompositor* SwRenderer::target(const RenderRegion& region, ColorSpace cs, CompositionFlag flags)
 {
-    auto min = region.min;
-    auto max = region.max;
-
-    auto sw = static_cast<int32_t>(surface->w);
-    auto sh = static_cast<int32_t>(surface->h);
-
-    //Out of boundary
-    if (min.x >= sw || min.y >= sh || max.x < 0 || max.y < 0) return nullptr;
+    auto bbox = RenderRegion::intersect(region, {{0, 0}, {int32_t(surface->w), int32_t(surface->h)}});
+    if (bbox.invalid()) return nullptr;
 
     auto cmp = request(CHANNEL_SIZE(cs), (flags & CompositionFlag::PostProcessing));
-
-    //Boundary Check
-    if (min.x < 0) min.x = 0;
-    if (min.y < 0) min.y = 0;
-    if (max.x > sw) max.x = (sw - min.x);
-    if (max.y > sh) max.y = (sh - min.y);
-
-    auto w = max.x - min.x;
-    auto h = max.y - min.y;
-
-    if (w == 0 || h == 0) return nullptr;
-
     cmp->compositor->recoverSfc = surface;
     cmp->compositor->recoverCmp = surface->compositor;
     cmp->compositor->valid = false;
-    cmp->compositor->bbox.min.x = min.x;
-    cmp->compositor->bbox.min.y = min.y;
-    cmp->compositor->bbox.max.x = max.x;
-    cmp->compositor->bbox.max.y = max.y;
+    cmp->compositor->bbox = bbox;
 
     /* TODO: Currently, only blending might work.
        Blending and composition must be handled together. */
     auto color = (surface->blender && !surface->compositor) ? 0x00ffffff : 0x00000000;
-    rasterClear(cmp, min.x, min.y, w, h, color);
+    rasterClear(cmp, bbox.x(), bbox.y(), bbox.w(), bbox.h(), color);
 
     //Switch render target
     surface = cmp;
@@ -729,16 +701,13 @@ void* SwRenderer::prepareCommon(SwTask* task, const Matrix& transform, const Arr
         static_cast<SwTask*>(*p)->done();
     }
 
-    task->clips = clips;
-    task->transform = transform;
-    task->opacity = opacity;
     task->surface = surface;
     task->mpool = mpool;
+    task->bbox = RenderRegion::intersect(vport, {{0, 0}, {int32_t(surface->w), int32_t(surface->h)}});
+    task->transform = transform;
+    task->clips = clips;
+    task->opacity = opacity;
     task->flags = flags;
-    task->bbox.min.x = std::max(static_cast<SwCoord>(0), static_cast<SwCoord>(vport.min.x));
-    task->bbox.min.y = std::max(static_cast<SwCoord>(0), static_cast<SwCoord>(vport.min.y));
-    task->bbox.max.x = std::min(static_cast<SwCoord>(surface->w), static_cast<SwCoord>(vport.max.x));
-    task->bbox.max.y = std::min(static_cast<SwCoord>(surface->h), static_cast<SwCoord>(vport.max.y));
 
     if (!task->pushed) {
         task->pushed = true;
