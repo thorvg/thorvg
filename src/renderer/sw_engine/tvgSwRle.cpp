@@ -793,7 +793,7 @@ static SwSpan* _intersectSpansRegion(const SwRle *clip, const SwRle *target, SwS
 }
 
 
-static SwSpan* _intersectSpansRect(const SwBBox *bbox, const SwRle *targetRle, SwSpan *outSpans, uint32_t outSpansCnt)
+static SwSpan* _intersectSpansRect(const RenderRegion *bbox, const SwRle *targetRle, SwSpan *outSpans, uint32_t outSpansCnt)
 {
     auto out = outSpans;
     auto spans = targetRle->spans;
@@ -844,7 +844,7 @@ void _replaceClipSpan(SwRle *rle, SwSpan* clippedSpans, uint32_t size)
 /* External Class Implementation                                        */
 /************************************************************************/
 
-SwRle* rleRender(SwRle* rle, const SwOutline* outline, const SwBBox& renderRegion, bool antiAlias)
+SwRle* rleRender(SwRle* rle, const SwOutline* outline, const RenderRegion& renderRegion, bool antiAlias)
 {
     if (!outline) return nullptr;
 
@@ -865,8 +865,8 @@ SwRle* rleRender(SwRle* rle, const SwOutline* outline, const SwBBox& renderRegio
     rw.area = 0;
     rw.cover = 0;
     rw.invalid = true;
-    rw.cellMin = renderRegion.min;
-    rw.cellMax = renderRegion.max;
+    rw.cellMin = {renderRegion.min.x, renderRegion.min.y};
+    rw.cellMax = {renderRegion.max.x, renderRegion.max.y};
     rw.cellXCnt = rw.cellMax.x - rw.cellMin.x;
     rw.cellYCnt = rw.cellMax.y - rw.cellMin.y;
     rw.outline = const_cast<SwOutline*>(outline);
@@ -961,10 +961,10 @@ error:
 }
 
 
-SwRle* rleRender(const SwBBox* bbox)
+SwRle* rleRender(const RenderRegion* bbox)
 {
-    auto width = static_cast<uint16_t>(bbox->max.x - bbox->min.x);
-    auto height = static_cast<uint16_t>(bbox->max.y - bbox->min.y);
+    auto width = static_cast<uint16_t>(bbox->w());
+    auto height = static_cast<uint16_t>(bbox->h());
 
     auto rle = tvg::malloc<SwRle*>(sizeof(SwRle));
     rle->spans = tvg::malloc<SwSpan*>(sizeof(SwSpan) * height);
@@ -1013,7 +1013,7 @@ bool rleClip(SwRle *rle, const SwRle *clip)
 }
 
 
-bool rleClip(SwRle *rle, const SwBBox* clip)
+bool rleClip(SwRle *rle, const RenderRegion* clip)
 {
     if (rle->size == 0) return false;
     auto spans = tvg::malloc<SwSpan*>(sizeof(SwSpan) * (rle->size));

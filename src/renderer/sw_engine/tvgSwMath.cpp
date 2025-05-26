@@ -271,22 +271,7 @@ SwPoint mathTransform(const Point* to, const Matrix& transform)
 }
 
 
-bool mathClipBBox(const SwBBox& clipper, SwBBox& clippee)
-{
-    clippee.max.x = (clippee.max.x < clipper.max.x) ? clippee.max.x : clipper.max.x;
-    clippee.max.y = (clippee.max.y < clipper.max.y) ? clippee.max.y : clipper.max.y;
-    clippee.min.x = (clippee.min.x > clipper.min.x) ? clippee.min.x : clipper.min.x;
-    clippee.min.y = (clippee.min.y > clipper.min.y) ? clippee.min.y : clipper.min.y;
-
-    //Check boundary
-    if (clippee.min.x >= clipper.max.x || clippee.min.y >= clipper.max.y ||
-        clippee.max.x <= clipper.min.x || clippee.max.y <= clipper.min.y) return false;
-
-    return true;
-}
-
-
-bool mathUpdateOutlineBBox(const SwOutline* outline, const SwBBox& clipRegion, SwBBox& renderRegion, bool fastTrack)
+bool mathUpdateOutlineBBox(const SwOutline* outline, const RenderRegion& clipRegion, RenderRegion& renderRegion, bool fastTrack)
 {
     if (!outline) return false;
 
@@ -310,16 +295,13 @@ bool mathUpdateOutlineBBox(const SwOutline* outline, const SwBBox& clipRegion, S
     }
 
     if (fastTrack) {
-        renderRegion.min.x = static_cast<SwCoord>(round(xMin / 64.0f));
-        renderRegion.max.x = static_cast<SwCoord>(round(xMax / 64.0f));
-        renderRegion.min.y = static_cast<SwCoord>(round(yMin / 64.0f));
-        renderRegion.max.y = static_cast<SwCoord>(round(yMax / 64.0f));
+        renderRegion.min = {int32_t(round(xMin / 64.0f)), int32_t(round(yMin / 64.0f))};
+        renderRegion.max = {int32_t(round(xMax / 64.0f)), int32_t(round(yMax / 64.0f))};
     } else {
-        renderRegion.min.x = xMin >> 6;
-        renderRegion.max.x = (xMax + 63) >> 6;
-        renderRegion.min.y = yMin >> 6;
-        renderRegion.max.y = (yMax + 63) >> 6;
+        renderRegion.min = {xMin >> 6, yMin >> 6};
+        renderRegion.max = {(xMax + 63) >> 6, (yMax + 63) >> 6};
     }
 
-    return mathClipBBox(clipRegion, renderRegion);
+    renderRegion.intersect(clipRegion);
+    return renderRegion.valid();
 }
