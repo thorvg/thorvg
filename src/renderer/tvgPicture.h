@@ -253,7 +253,7 @@ struct PictureImpl : Picture
 
     bool render(RenderMethod* renderer)
     {
-        bool ret = false;
+        auto ret = true;
         renderer->blend(impl.blendMethod);
 
         if (bitmap) return renderer->renderImage(impl.rd);
