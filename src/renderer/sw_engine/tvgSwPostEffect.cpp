@@ -136,17 +136,17 @@ static int _gaussianInit(SwGaussianBlur* data, float sigma, int quality)
 
 bool effectGaussianBlurRegion(RenderEffectGaussianBlur* params)
 {
-    //bbox region expansion for feathering
-    auto& region = params->extend;
+    //region expansion for feathering
+    auto& bbox = params->extend;
     auto extra = static_cast<SwGaussianBlur*>(params->rd)->extends;
 
     if (params->direction != 2) {
-        region.min.x = -extra;
-        region.max.x = extra;
+        bbox.min.x = -extra;
+        bbox.max.x = extra;
     }
     if (params->direction != 1) {
-        region.min.y = -extra;
-        region.max.y = extra;
+        bbox.min.y = -extra;
+        bbox.max.y = extra;
     }
 
     return true;
@@ -267,20 +267,20 @@ static void _dropShadowFilter(uint32_t* dst, uint32_t* src, int stride, int w, i
 }
 
 
-static void _dropShadowShift(uint32_t* dst, uint32_t* src, int dstride, int sstride, RenderRegion& region, SwPoint& offset, uint8_t opacity, bool direct)
+static void _dropShadowShift(uint32_t* dst, uint32_t* src, int dstride, int sstride, RenderRegion& bbox, SwPoint& offset, uint8_t opacity, bool direct)
 {
-    src += (region.min.y * sstride + region.min.x);
-    dst += (region.min.y * dstride + region.min.x);
+    src += (bbox.min.y * sstride + bbox.min.x);
+    dst += (bbox.min.y * dstride + bbox.min.x);
 
-    auto w = region.max.x - region.min.x;
-    auto h = region.max.y - region.min.y;
+    auto w = bbox.max.x - bbox.min.x;
+    auto h = bbox.max.y - bbox.min.y;
     auto translucent = (direct || opacity < 255);
 
     //shift offset
-    if (region.min.x + offset.x < 0) src -= offset.x;
+    if (bbox.min.x + offset.x < 0) src -= offset.x;
     else dst += offset.x;
 
-    if (region.min.y + offset.y < 0) src -= (offset.y * sstride);
+    if (bbox.min.y + offset.y < 0) src -= (offset.y * sstride);
     else dst += (offset.y * dstride);
 
     for (auto y = 0; y < h; ++y) {
@@ -294,19 +294,19 @@ static void _dropShadowShift(uint32_t* dst, uint32_t* src, int dstride, int sstr
 
 bool effectDropShadowRegion(RenderEffectDropShadow* params)
 {
-    //bbox region expansion for feathering
-    auto& region = params->extend;
+    //region expansion for feathering
+    auto& bbox = params->extend;
     auto& offset = static_cast<SwDropShadow*>(params->rd)->offset;
     auto extra = static_cast<SwDropShadow*>(params->rd)->extends;
 
-    region.min = {-extra, -extra};
-    region.max = {extra, extra};
+    bbox.min = {-extra, -extra};
+    bbox.max = {extra, extra};
 
-    if (offset.x < 0) region.min.x += (int32_t) offset.x;
-    else region.max.x += offset.x;
+    if (offset.x < 0) bbox.min.x += (int32_t) offset.x;
+    else bbox.max.x += offset.x;
 
-    if (offset.y < 0) region.min.y += (int32_t) offset.y;
-    else region.max.y += offset.y;
+    if (offset.y < 0) bbox.min.y += (int32_t) offset.y;
+    else bbox.max.y += offset.y;
 
     return true;
 }

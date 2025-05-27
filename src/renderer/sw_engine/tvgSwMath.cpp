@@ -271,12 +271,12 @@ SwPoint mathTransform(const Point* to, const Matrix& transform)
 }
 
 
-bool mathUpdateOutlineBBox(const SwOutline* outline, const RenderRegion& clipRegion, RenderRegion& renderRegion, bool fastTrack)
+bool mathUpdateOutlineBBox(const SwOutline* outline, const RenderRegion& clipBox, RenderRegion& renderBox, bool fastTrack)
 {
     if (!outline) return false;
 
     if (outline->pts.empty() || outline->cntrs.empty()) {
-        renderRegion.reset();
+        renderBox.reset();
         return false;
     }
 
@@ -295,13 +295,13 @@ bool mathUpdateOutlineBBox(const SwOutline* outline, const RenderRegion& clipReg
     }
 
     if (fastTrack) {
-        renderRegion.min = {int32_t(round(xMin / 64.0f)), int32_t(round(yMin / 64.0f))};
-        renderRegion.max = {int32_t(round(xMax / 64.0f)), int32_t(round(yMax / 64.0f))};
+        renderBox.min = {int32_t(round(xMin / 64.0f)), int32_t(round(yMin / 64.0f))};
+        renderBox.max = {int32_t(round(xMax / 64.0f)), int32_t(round(yMax / 64.0f))};
     } else {
-        renderRegion.min = {xMin >> 6, yMin >> 6};
-        renderRegion.max = {(xMax + 63) >> 6, (yMax + 63) >> 6};
+        renderBox.min = {xMin >> 6, yMin >> 6};
+        renderBox.max = {(xMax + 63) >> 6, (yMax + 63) >> 6};
     }
 
-    renderRegion.intersect(clipRegion);
-    return renderRegion.valid();
+    renderBox.intersect(clipBox);
+    return renderBox.valid();
 }

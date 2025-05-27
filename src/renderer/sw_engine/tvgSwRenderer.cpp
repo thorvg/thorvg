@@ -106,7 +106,7 @@ struct SwShapeTask : SwTask
         }
 
         auto strokeWidth = validStrokeWidth(clipper);
-        RenderRegion renderRegion{};
+        RenderRegion renderBox{};
         auto updateShape = flags & (RenderUpdateFlag::Path | RenderUpdateFlag::Transform | RenderUpdateFlag::Clip);
         auto updateFill = false;
 
@@ -115,11 +115,11 @@ struct SwShapeTask : SwTask
             updateFill = (MULTIPLY(rshape->color.a, opacity) || rshape->fill);
             if (updateShape) shapeReset(&shape);
             if (updateFill || clipper) {
-                if (shapePrepare(&shape, rshape, transform, bbox, renderRegion, mpool, tid, clips.count > 0 ? true : false)) {
+                if (shapePrepare(&shape, rshape, transform, bbox, renderBox, mpool, tid, clips.count > 0 ? true : false)) {
                     if (!shapeGenRle(&shape, rshape, antialiasing(strokeWidth))) goto err;
                 } else {
                     updateFill = false;
-                    renderRegion.reset();
+                    renderBox.reset();
                 }
             }
         }
@@ -135,7 +135,7 @@ struct SwShapeTask : SwTask
         if (updateShape || flags & RenderUpdateFlag::Stroke) {
             if (strokeWidth > 0.0f) {
                 shapeResetStroke(&shape, rshape, transform);
-                if (!shapeGenStrokeRle(&shape, rshape, transform, bbox, renderRegion, mpool, tid)) goto err;
+                if (!shapeGenStrokeRle(&shape, rshape, transform, bbox, renderBox, mpool, tid)) goto err;
                 if (auto fill = rshape->strokeFill()) {
                     auto ctable = (flags & RenderUpdateFlag::GradientStroke) ? true : false;
                     if (ctable) shapeResetStrokeFill(&shape);
@@ -157,7 +157,7 @@ struct SwShapeTask : SwTask
             if (!clipShapeRle && !clipStrokeRle) goto err;
         }
 
-        bbox = renderRegion; //sync
+        bbox = renderBox; //sync
 
         return;
 
@@ -188,7 +188,7 @@ struct SwImageTask : SwTask
 
     void run(unsigned tid) override
     {
-        auto clipRegion = bbox;
+        auto clipBox = bbox;
 
         //Convert colorspace if it's not aligned.
         rasterConvertCS(source, surface->cs);
@@ -205,7 +205,7 @@ struct SwImageTask : SwTask
             imageReset(&image);
             if (!image.data || image.w == 0 || image.h == 0) goto end;
 
-            if (!imagePrepare(&image, transform, clipRegion, bbox, mpool, tid)) goto end;
+            if (!imagePrepare(&image, transform, clipBox, bbox, mpool, tid)) goto end;
 
             if (clips.count > 0) {
                 if (!imageGenRle(&image, bbox, false)) goto end;
