@@ -114,14 +114,16 @@ struct SwOutline
 
 struct SwSpan
 {
-    uint16_t x, y;
+    uint16_t x;
     uint16_t len;
     uint8_t coverage;
 };
 
 struct SwRle
 {
-    SwSpan *spans;
+    SwSpan* spans;
+    uint16_t* ypos;     //spans index for each line
+    uint16_t ybegin;    //begin of the  y coordiate
     uint32_t alloc;
     uint32_t size;
 };
