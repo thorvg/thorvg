@@ -102,6 +102,17 @@ struct Array
         count = rhs.count;
     }
 
+    void move(Array& to)
+    {
+        to.reset();
+        to.data = data;
+        to.count = count;
+        to.reserved = reserved;
+
+        data = nullptr;
+        count = reserved = 0;
+    }
+
     const T* begin() const
     {
         return data;
@@ -137,6 +148,12 @@ struct Array
         return data[count - 1];
     }
 
+    T& next()
+    {
+        if (full()) grow(count + 1);
+        return data[count++];
+    }
+
     T& first()
     {
         return data[0];
@@ -162,6 +179,12 @@ struct Array
     bool empty() const
     {
         return count == 0;
+    }
+
+
+    bool full()
+    {
+        return count == reserved;
     }
 
     template<class COMPARE> void sort()
