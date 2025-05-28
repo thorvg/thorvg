@@ -30,93 +30,86 @@
 // WgMeshData
 //***********************************************************************
 
-void WgMeshData::draw(WgContext& context, WGPURenderPassEncoder renderPassEncoder)
-{
-    wgpuRenderPassEncoderSetVertexBuffer(renderPassEncoder, 0, bufferPosition, 0, vertexCount * sizeof(float) * 2);
-    wgpuRenderPassEncoderSetIndexBuffer(renderPassEncoder, bufferIndex, WGPUIndexFormat_Uint32, 0, indexCount * sizeof(uint32_t));
-    wgpuRenderPassEncoderDrawIndexed(renderPassEncoder, indexCount, 1, 0, 0, 0);
-}
-
-
-void WgMeshData::drawFan(WgContext& context, WGPURenderPassEncoder renderPassEncoder)
-{
-    wgpuRenderPassEncoderSetVertexBuffer(renderPassEncoder, 0, bufferPosition, 0, vertexCount * sizeof(float) * 2);
-    wgpuRenderPassEncoderSetIndexBuffer(renderPassEncoder, context.bufferIndexFan, WGPUIndexFormat_Uint32, 0, indexCount * sizeof(uint32_t));
-    wgpuRenderPassEncoderDrawIndexed(renderPassEncoder, indexCount, 1, 0, 0, 0);
-}
-
-
-void WgMeshData::drawImage(WgContext& context, WGPURenderPassEncoder renderPassEncoder)
-{
-    wgpuRenderPassEncoderSetVertexBuffer(renderPassEncoder, 0, bufferPosition, 0, vertexCount * sizeof(float) * 2);
-    wgpuRenderPassEncoderSetVertexBuffer(renderPassEncoder, 1, bufferTexCoord, 0, vertexCount * sizeof(float) * 2);
-    wgpuRenderPassEncoderSetIndexBuffer(renderPassEncoder, bufferIndex, WGPUIndexFormat_Uint32, 0, indexCount * sizeof(uint32_t));
-    wgpuRenderPassEncoderDrawIndexed(renderPassEncoder, indexCount, 1, 0, 0, 0);
-};
-
-
 void WgMeshData::update(WgContext& context, const WgVertexBuffer& vertexBuffer)
 {
     assert(vertexBuffer.count > 2);
-    vertexCount = vertexBuffer.count;
-    indexCount = (vertexBuffer.count - 2) * 3;
-    context.allocateBufferVertex(bufferPosition, (float*)vertexBuffer.data, vertexCount * sizeof(float) * 2);
-    context.allocateBufferIndexFan(vertexCount);
+    // setup vertex data
+    vbuffer.reserve(vertexBuffer.count);
+    vbuffer.count = vertexBuffer.count;
+    memcpy(vbuffer.data, vertexBuffer.data, sizeof(vertexBuffer.data[0])*vertexBuffer.count);
+    // setup tex coords data
+    tbuffer.clear();
+    context.allocateBufferIndexFan(vbuffer.count);
 }
 
 
 void WgMeshData::update(WgContext& context, const WgIndexedVertexBuffer& vertexBufferInd)
 {
     assert(vertexBufferInd.vcount > 2);
-    vertexCount = vertexBufferInd.vcount;
-    indexCount = vertexBufferInd.icount;
-    if (vertexCount > 0) context.allocateBufferVertex(bufferPosition, (float*)vertexBufferInd.vbuff, vertexCount * sizeof(float) * 2);
-    if (indexCount > 0) context.allocateBufferIndex(bufferIndex, vertexBufferInd.ibuff, indexCount * sizeof(uint32_t));
+    // setup vertex data
+    vbuffer.reserve(vertexBufferInd.vcount);
+    vbuffer.count = vertexBufferInd.vcount;
+    memcpy(vbuffer.data, vertexBufferInd.vbuff, sizeof(vertexBufferInd.vbuff[0])*vertexBufferInd.vcount);
+    // setup tex coords data
+    tbuffer.clear();
+    // copy index data
+    ibuffer.reserve(vertexBufferInd.icount);
+    ibuffer.count = vertexBufferInd.icount;
+    memcpy(ibuffer.data, vertexBufferInd.ibuff, sizeof(vertexBufferInd.ibuff[0])*vertexBufferInd.icount);
 };
 
 
 void WgMeshData::bbox(WgContext& context, const Point pmin, const Point pmax)
 {
-    vertexCount = 4;
-    indexCount = 6;
     const float data[] = {pmin.x, pmin.y, pmax.x, pmin.y, pmax.x, pmax.y, pmin.x, pmax.y};
-    context.allocateBufferVertex(bufferPosition, data, sizeof(data));
-    context.allocateBufferIndexFan(vertexCount);
+    // setup vertex data
+    vbuffer.reserve(4);
+    vbuffer.count = 4;
+    memcpy(vbuffer.data, data, sizeof(data));
+    // setup tex coords data
+    tbuffer.clear();
+    context.allocateBufferIndexFan(vbuffer.count);
 }
 
 
 void WgMeshData::imageBox(WgContext& context, float w, float h)
 {
-    vertexCount = 4;
-    indexCount = 6;
     const float vdata[] = {0.0f, 0.0f, w, 0.0f, w, h, 0.0f, h};
     const float tdata[] = {0.0f, 0.0f, 1.0f, 0.0f, 1.0f, 1.0f, 0.0f, 1.0f};
     const uint32_t idata[] = {0, 1, 2, 0, 2, 3};
-    context.allocateBufferVertex(bufferPosition, vdata, sizeof(vdata));
-    context.allocateBufferVertex(bufferTexCoord, tdata, sizeof(tdata));
-    context.allocateBufferIndex(bufferIndex, idata, sizeof(idata));
+    // setup vertex data
+    vbuffer.reserve(4);
+    vbuffer.count = 4;
+    memcpy(vbuffer.data, vdata, sizeof(vdata));
+    // setup tex coords data
+    tbuffer.reserve(4);
+    tbuffer.count = 4;
+    memcpy(tbuffer.data, tdata, sizeof(tdata));
+    // setup indexes data
+    ibuffer.reserve(6);
+    ibuffer.count = 6;
+    memcpy(ibuffer.data, idata, sizeof(idata));
 }
 
 
 void WgMeshData::blitBox(WgContext& context)
 {
-    vertexCount = 4;
-    indexCount = 6;
     const float vdata[] = {-1.0f, +1.0f, +1.0f, +1.0f, +1.0f, -1.0f, -1.0f, -1.0f};
     const float tdata[] = {+0.0f, +0.0f, +1.0f, +0.0f, +1.0f, +1.0f, +0.0f, +1.0f};
     const uint32_t idata[] = { 0, 1, 2, 0, 2, 3 };
-    context.allocateBufferVertex(bufferPosition, vdata, sizeof(vdata));
-    context.allocateBufferVertex(bufferTexCoord, tdata, sizeof(tdata));
-    context.allocateBufferIndex(bufferIndex, idata, sizeof(idata));
+    // setup vertex data
+    vbuffer.reserve(4);
+    vbuffer.count = 4;
+    memcpy(vbuffer.data, vdata, sizeof(vdata));
+    // setup tex coords data
+    tbuffer.reserve(4);
+    tbuffer.count = 4;
+    memcpy(tbuffer.data, tdata, sizeof(tdata));
+    // setup indexes data
+    ibuffer.reserve(6);
+    ibuffer.count = 6;
+    memcpy(ibuffer.data, idata, sizeof(idata));
 }
-
-
-void WgMeshData::release(WgContext& context)
-{
-    context.releaseBuffer(bufferIndex);
-    context.releaseBuffer(bufferTexCoord);
-    context.releaseBuffer(bufferPosition);
-};
 
 
 //***********************************************************************
@@ -680,4 +673,95 @@ void WgRenderDataEffectParamsPool::release(WgContext& context)
     }
     mPool.clear();
     mList.clear();
+}
+
+//***********************************************************************
+// WgRenderDataStageBuffer
+//***********************************************************************
+
+void WgRenderDataStageBuffer::append(WgMeshData* meshData)
+{
+    assert(meshData);
+    uint32_t vsize = meshData->vbuffer.count * sizeof(meshData->vbuffer[0]);
+    uint32_t tsize = meshData->tbuffer.count * sizeof(meshData->tbuffer[0]);
+    uint32_t isize = meshData->ibuffer.count * sizeof(meshData->ibuffer[0]);
+    // append vertex data
+    if (vbuffer.reserved < vbuffer.count + vsize)
+        vbuffer.grow(std::max(vsize, vbuffer.reserved));
+    if (meshData->vbuffer.count > 0) {
+        meshData->voffset = vbuffer.count;
+        memcpy(vbuffer.data + vbuffer.count, meshData->vbuffer.data, vsize);
+        vbuffer.count += vsize;
+    }
+    // append tex coords data
+    if (vbuffer.reserved < vbuffer.count + tsize)
+        vbuffer.grow(std::max(tsize, vbuffer.reserved));
+    if (meshData->tbuffer.count > 0) {
+        meshData->toffset = vbuffer.count;
+        memcpy(vbuffer.data + vbuffer.count, meshData->tbuffer.data, tsize);
+        vbuffer.count += tsize;
+    }
+    // append index data
+    if (ibuffer.reserved < ibuffer.count + isize)
+        ibuffer.grow(std::max(isize, ibuffer.reserved));
+    if (meshData->ibuffer.count > 0) {
+        meshData->ioffset = ibuffer.count;
+        memcpy(ibuffer.data + ibuffer.count, meshData->ibuffer.data, isize);
+        ibuffer.count += isize;
+    }
+}
+
+
+void WgRenderDataStageBuffer::append(WgMeshDataGroup* meshDataGroup)
+{
+    ARRAY_FOREACH(p, meshDataGroup->meshes) append(*p);
+}
+
+
+void WgRenderDataStageBuffer::append(WgRenderDataShape* renderDataShape)
+{
+    append(&renderDataShape->meshGroupShapes);
+    append(&renderDataShape->meshGroupShapesBBox);
+    append(&renderDataShape->meshGroupStrokes);
+    append(&renderDataShape->meshGroupStrokesBBox);
+    append(&renderDataShape->meshDataBBox);
+    ARRAY_FOREACH(p, renderDataShape->clips)
+        append((WgRenderDataShape* )(*p));
+}
+
+
+void WgRenderDataStageBuffer::append(WgRenderDataPicture* renderDataPicture)
+{
+    append(&renderDataPicture->meshData);
+    ARRAY_FOREACH(p, renderDataPicture->clips)
+        append((WgRenderDataShape* )(*p));
+}
+
+
+void WgRenderDataStageBuffer::release(WgContext& context)
+{
+    context.releaseBuffer(vbuffer_gpu);
+    context.releaseBuffer(ibuffer_gpu);
+}
+
+
+void WgRenderDataStageBuffer::clear()
+{
+    vbuffer.clear();
+    ibuffer.clear();
+}
+
+
+void WgRenderDataStageBuffer::flush(WgContext& context) 
+{
+    context.allocateBufferVertex(vbuffer_gpu, (float *)vbuffer.data, vbuffer.count);
+    context.allocateBufferIndex(ibuffer_gpu, (uint32_t *)ibuffer.data, ibuffer.count);
+}
+
+
+void WgRenderDataStageBuffer::bind(WGPURenderPassEncoder renderPass, size_t voffset, size_t toffset)
+{
+    wgpuRenderPassEncoderSetVertexBuffer(renderPass, 0, vbuffer_gpu, voffset, vbuffer.count - voffset);
+    wgpuRenderPassEncoderSetVertexBuffer(renderPass, 1, vbuffer_gpu, toffset, vbuffer.count - toffset);
+    wgpuRenderPassEncoderSetIndexBuffer(renderPass, ibuffer_gpu, WGPUIndexFormat_Uint32, 0, ibuffer.count);
 }

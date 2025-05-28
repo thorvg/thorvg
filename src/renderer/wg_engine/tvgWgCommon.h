@@ -71,10 +71,12 @@ struct WgContext {
     // release buffer objects
     void releaseBuffer(WGPUBuffer& buffer);
 
-    bool invalid()
-    {
-        return !instance || !device;
-    }
+    // command encoder
+    WGPUCommandEncoder createCommandEncoder();
+    void submitCommandEncoder(WGPUCommandEncoder encoder);
+    void releaseCommandEncoder(WGPUCommandEncoder& encoder);
+
+    bool invalid();
 };
 
 #endif // _TVG_WG_COMMON_H_
