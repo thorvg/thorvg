@@ -28,22 +28,19 @@
 #include "tvgWgShaderTypes.h"
 
 struct WgMeshData {
-    WGPUBuffer bufferPosition{};
-    WGPUBuffer bufferTexCoord{};
-    WGPUBuffer bufferIndex{};
-    size_t vertexCount{};
-    size_t indexCount{};
-
-    void draw(WgContext& context, WGPURenderPassEncoder renderPassEncoder);
-    void drawFan(WgContext& context, WGPURenderPassEncoder renderPassEncoder);
-    void drawImage(WgContext& context, WGPURenderPassEncoder renderPassEncoder);
+    Array<Point> vbuffer;
+    Array<Point> tbuffer;
+    Array<uint32_t> ibuffer;
+    size_t voffset{};
+    size_t toffset{};
+    size_t ioffset{};
 
     void update(WgContext& context, const WgVertexBuffer& vertexBuffer);
     void update(WgContext& context, const WgIndexedVertexBuffer& vertexBufferInd);
     void bbox(WgContext& context, const Point pmin, const Point pmax);
     void imageBox(WgContext& context, float w, float h);
     void blitBox(WgContext& context);
-    void release(WgContext& context);
+    void release(WgContext& context) {};
 };
 
 class WgMeshDataPool {
@@ -222,6 +219,25 @@ public:
     WgRenderDataEffectParams* allocate(WgContext& context);
     void free(WgContext& context, WgRenderDataEffectParams* renderData);
     void release(WgContext& context);
+};
+
+class WgRenderDataStageBuffer {
+private:
+    Array<uint8_t> vbuffer;
+    Array<uint8_t> ibuffer;
+public:
+    WGPUBuffer vbuffer_gpu{};
+    WGPUBuffer ibuffer_gpu{};
+
+    void append(WgMeshData* meshData);
+    void append(WgMeshDataGroup* meshDataGroup);
+    void append(WgRenderDataShape* renderDataShape);
+    void append(WgRenderDataPicture* renderDataPicture);
+    void initialize(WgContext& context){};
+    void release(WgContext& context);
+    void clear();
+    void flush(WgContext& context);
+    void bind(WGPURenderPassEncoder renderPass, size_t voffset, size_t toffset);
 };
 
 #endif // _TVG_WG_RENDER_DATA_H_
