@@ -60,8 +60,8 @@ static bool _arrange(const SwImage* image, const RenderRegion* bbox, int& yStart
         bboxTop = bbox->min.y;
         bboxBottom = bbox->max.y;
     } else {
-        bboxTop = image->rle->spans->y;
-        bboxBottom = image->rle->spans[image->rle->size - 1].y;
+        bboxTop = image->rle->spans.first().y;
+        bboxBottom = image->rle->spans.last().y;
     }
 
     if (yStart < bboxTop) yStart = bboxTop;
@@ -103,7 +103,7 @@ static void _rasterBlendingPolygonImageSegment(SwSurface* surface, const SwImage
         minx = bbox->min.x;
         maxx = bbox->max.x;
     } else {
-        span = image->rle->spans;
+        span = image->rle->data();
         while (span->y < yStart) {
             ++span;
             ++spanIdx;
@@ -120,7 +120,7 @@ static void _rasterBlendingPolygonImageSegment(SwSurface* surface, const SwImage
             minx = INT32_MAX;
             maxx = 0;
             //one single row, could be consisted of multiple spans.
-            while (span->y == y && spanIdx < image->rle->size) {
+            while (span->y == y && spanIdx < image->rle->size()) {
                 if (minx > span->x) minx = span->x;
                 if (maxx < span->x + span->len) maxx = span->x + span->len;
                 ++span;
@@ -195,7 +195,7 @@ static void _rasterBlendingPolygonImageSegment(SwSurface* surface, const SwImage
         _ua += _dudya;
         _va += _dvdya;
 
-        if (!bbox && spanIdx >= image->rle->size) break;
+        if (!bbox && spanIdx >= image->rle->size()) break;
 
         ++y;
     }
@@ -236,7 +236,7 @@ static void _rasterPolygonImageSegment(SwSurface* surface, const SwImage* image,
         minx = bbox->min.x;
         maxx = bbox->max.x;
     } else {
-        span = image->rle->spans;
+        span = image->rle->data();
         while (span->y < yStart) {
             ++span;
             ++spanIdx;
@@ -253,7 +253,7 @@ static void _rasterPolygonImageSegment(SwSurface* surface, const SwImage* image,
             minx = INT32_MAX;
             maxx = 0;
             //one single row, could be consisted of multiple spans.
-            while (span->y == y && spanIdx < image->rle->size) {
+            while (span->y == y && spanIdx < image->rle->size()) {
                 if (minx > span->x) minx = span->x;
                 if (maxx < span->x + span->len) maxx = span->x + span->len;
                 ++span;
@@ -387,7 +387,7 @@ static void _rasterPolygonImageSegment(SwSurface* surface, const SwImage* image,
         _ua += _dudya;
         _va += _dvdya;
 
-        if (!bbox && spanIdx >= image->rle->size) break;
+        if (!bbox && spanIdx >= image->rle->size()) break;
 
         ++y;
     }
@@ -460,7 +460,7 @@ static void _rasterPolygonImage(SwSurface* surface, const SwImage* image, const 
     if (tvg::equal(y[0], y[1])) side = x[0] > x[1];
     if (tvg::equal(y[1], y[2])) side = x[2] > x[1];
 
-    auto bboxTop = bbox ? bbox->min.y : image->rle->spans->y;  //Normal Image or Rle Image?
+    auto bboxTop = bbox ? bbox->min.y : image->rle->data()->y;  //Normal Image or Rle Image?
     auto compositing = _compositing(surface);   //Composition required
     auto blending = _blending(surface);         //Blending required
 
@@ -871,7 +871,7 @@ static bool _rasterTexmapPolygon(SwSurface* surface, const SwImage* image, const
     }
 
     //Exceptions: No dedicated drawing area?
-    if ((!image->rle && !bbox) || (image->rle && image->rle->size == 0)) return true;
+    if ((!image->rle && !bbox) || (image->rle && image->rle->size() == 0)) return true;
 
    /* Prepare vertices.
       shift XY coordinates to match the sub-pixeling technique. */

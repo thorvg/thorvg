@@ -121,9 +121,10 @@ struct SwSpan
 
 struct SwRle
 {
-    SwSpan *spans;
-    uint32_t alloc;
-    uint32_t size;
+    Array<SwSpan> spans;
+
+    uint32_t size() const { return spans.count; }
+    SwSpan* data() const { return spans.data; }
 };
 
 struct SwFill

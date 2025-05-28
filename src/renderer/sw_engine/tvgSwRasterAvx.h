@@ -160,14 +160,14 @@ static bool avxRasterTranslucentRect(SwSurface* surface, const RenderRegion& bbo
 
 static bool avxRasterTranslucentRle(SwSurface* surface, const SwRle* rle, const RenderColor& c)
 {
-    auto span = rle->spans;
+    auto span = rle->data();
 
     //32bit channels
     if (surface->channelSize == sizeof(uint32_t)) {
         auto color = surface->join(c.r, c.g, c.b, c.a);
         uint32_t src;
 
-        for (uint32_t i = 0; i < rle->size; ++i) {
+        for (uint32_t i = 0; i < rle->size(); ++i) {
             auto dst = &surface->buf32[span->y * surface->stride + span->x];
 
             if (span->coverage < 255) src = ALPHA_BLEND(color, span->coverage);
@@ -213,7 +213,7 @@ static bool avxRasterTranslucentRle(SwSurface* surface, const SwRle* rle, const 
     } else if (surface->channelSize == sizeof(uint8_t)) {
         TVGLOG("SW_ENGINE", "Require AVX Optimization, Channel Size = %d", surface->channelSize);
         uint8_t src;
-        for (uint32_t i = 0; i < rle->size; ++i, ++span) {
+        for (uint32_t i = 0; i < rle->size(); ++i, ++span) {
             auto dst = &surface->buf8[span->y * surface->stride + span->x];
             if (span->coverage < 255) src = MULTIPLY(span->coverage, c.a);
             else src = c.a;
