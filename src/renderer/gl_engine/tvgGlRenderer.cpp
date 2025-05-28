@@ -985,7 +985,7 @@ bool GlRenderer::sync()
 
 RenderRegion GlRenderer::region(RenderData data)
 {
-    if (currentPass()->isEmpty()) return RenderRegion{0, 0, 0, 0};
+    if (currentPass()->isEmpty()) return {};
 
     auto shape = reinterpret_cast<GlShape*>(data);
     auto bounds = shape->geometry->getBounds();
