@@ -54,7 +54,7 @@ namespace tvg
         Paint* paint = nullptr;
         Paint* parent = nullptr;
         Mask* maskData = nullptr;
-        Paint* clipper = nullptr;
+        Shape* clipper = nullptr;
         RenderMethod* renderer = nullptr;
         RenderData rd = nullptr;
 
@@ -163,7 +163,7 @@ namespace tvg
             return tm;
         }
 
-        Result clip(Paint* clp)
+        Result clip(Shape* clp)
         {
             if (clp && PAINT(clp)->parent) return Result::InsufficientCondition;
             if (clipper) PAINT(clipper)->unref(clipper != clp);

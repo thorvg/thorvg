@@ -972,7 +972,7 @@ TVG_API Tvg_Result tvg_paint_set_mask_method(Tvg_Paint* paint, Tvg_Paint* target
 TVG_API Tvg_Result tvg_paint_get_mask_method(const Tvg_Paint* paint, const Tvg_Paint** target, Tvg_Mask_Method* method);
 
 
-/*!
+/**
 * @brief Clip the drawing region of the paint object.
 *
 * This function restricts the drawing area of the paint object to the specified shape's paths.
@@ -985,10 +985,24 @@ TVG_API Tvg_Result tvg_paint_get_mask_method(const Tvg_Paint* paint, const Tvg_P
 * @retval TVG_RESULT_INSUFFICIENT_CONDITION if the target has already belonged to another paint.
 * @retval TVG_RESULT_NOT_SUPPORTED If the @p clipper type is not Shape.
 *
+* @see tvg_paint_get_clip()
+
 * @since 1.0
 */
-TVG_API Tvg_Result tvg_paint_clip(Tvg_Paint* paint, Tvg_Paint* clipper);
+TVG_API Tvg_Result tvg_paint_set_clip(Tvg_Paint* paint, Tvg_Paint* clipper);
 
+/**
+ * @brief Get the clipper shape of the paint object.
+ *
+ * This function returns the clipper that has been previously set to this paint object.
+ *
+ * @return The shape object used as the clipper, or @c nullptr if no clipper is set.
+ *
+ * @see tvg_paint_set_clip()
+ *
+ * @since 1.0
+ */
+TVG_API Tvg_Paint* tvg_paint_get_clip(const Tvg_Paint* paint);
 
 /**
  * @brief Retrieves the parent paint object.

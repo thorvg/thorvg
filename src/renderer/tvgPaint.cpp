@@ -168,7 +168,7 @@ Paint* Paint::Impl::duplicate(Paint* ret)
     ret->pImpl->opacity = opacity;
 
     if (maskData) ret->mask(maskData->target->duplicate(), maskData->method);
-    if (clipper) ret->clip(clipper->duplicate());
+    if (clipper) ret->clip(static_cast<Shape*>(clipper->duplicate()));
 
     return ret;
 }
@@ -376,13 +376,15 @@ Paint* Paint::duplicate() const noexcept
 }
 
 
-Result Paint::clip(Paint* clipper) noexcept
+Result Paint::clip(Shape* clipper) noexcept
 {
-    if (clipper && clipper->type() != Type::Shape) {
-        TVGERR("RENDERER", "Clipping only supports the Shape!");
-        return Result::NonSupport;
-    }
     return pImpl->clip(clipper);
+}
+
+
+Shape* Paint::clip() const noexcept
+{
+    return pImpl->clipper;
 }
 
 
