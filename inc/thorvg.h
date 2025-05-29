@@ -65,6 +65,7 @@ namespace tvg
 
 class RenderMethod;
 class Animation;
+class Shape;
 
 /**
  * @defgroup ThorVG ThorVG
@@ -396,13 +397,13 @@ public:
      *
      * @param[in] clipper The shape object as the clipper.
      *
-     * @retval Result::NonSupport If the @p clipper type is not Shape.
-     * @retval Result::InsufficientCondition if the target has already belonged to another paint.
+     * @retval Result::InsufficientCondition if the @p clipper has already belonged to another paint.
      *
-     * @note @p clipper only supports the Shape type.
+     * @see Paint::clip()
+     *
      * @since 1.0
      */
-    Result clip(Paint* clipper) noexcept;
+    Result clip(Shape* clipper) noexcept;
 
     /**
      * @brief Sets the blending method for the paint object.
@@ -477,6 +478,19 @@ public:
      * @since 0.5
      */
     MaskMethod mask(const Paint** target) const noexcept;
+
+    /**
+     * @brief Get the clipper shape of the paint object.
+     *
+     * This function returns the clipper that has been previously set to this paint object.
+     *
+     * @return The shape object used as the clipper, or @c nullptr if no clipper is set.
+     *
+     * @see Paint::clip(Shape* clipper)
+     *
+     * @since 1.0
+     */
+    Shape* clip() const noexcept;
 
     /**
      * @brief Increment the reference count for the Paint instance.

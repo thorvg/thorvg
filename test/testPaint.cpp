@@ -223,7 +223,9 @@ TEST_CASE("Composition", "[tvgPaint]")
 
     //Clipping
     auto comp = Shape::gen();
+    REQUIRE(shape->clip() == nullptr);
     REQUIRE(shape->clip(comp) == Result::Success);
+    REQUIRE(shape->clip() == comp);
 
     //AlphaMask
     comp = Shape::gen();
