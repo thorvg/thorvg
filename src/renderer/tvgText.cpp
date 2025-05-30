@@ -107,3 +107,9 @@ Type Text::type() const noexcept
 {
     return Type::Text;
 }
+
+
+Result Text::metrics(GlyphMetrics** metrics, uint32_t* size) noexcept
+{
+    return TEXT(this)->metrics(metrics, size);
+}
