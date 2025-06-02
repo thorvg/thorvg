@@ -181,7 +181,6 @@ struct Array
         return count == 0;
     }
 
-
     bool full()
     {
         return count == reserved;

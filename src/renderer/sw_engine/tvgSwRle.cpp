@@ -902,7 +902,7 @@ bool rleClip(SwRle *rle, const SwRle *clip)
         }
         //try clipping with all clip spans which have a same y-coordinate.
         auto temp = cspans;
-        while(temp->y == cspans->y && temp < cend) {
+        while(temp < cend && temp->y == cspans->y) {
             //span must be left(x1) to right(x2) direction. Not intersected.
             if ((spans->x + spans->len) < spans->x || (temp->x + temp->len) < temp->x) {
                 ++temp;
