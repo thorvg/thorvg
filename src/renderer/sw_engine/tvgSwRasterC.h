@@ -92,30 +92,35 @@ static void inline cRasterPixels(PIXEL_T* dst, PIXEL_T val, uint32_t offset, int
 }
 
 
-static bool inline cRasterTranslucentRle(SwSurface* surface, const SwRle* rle, const RenderColor& c)
+static bool inline cRasterTranslucentRle(SwSurface* surface, const SwRle* rle, const RenderRegion& bbox, const RenderColor& c)
 {
+    const SwSpan* end;
+    int32_t x, len;
+
     //32bit channels
     if (surface->channelSize == sizeof(uint32_t)) {
         auto color = surface->join(c.r, c.g, c.b, c.a);
         uint32_t src;
-        ARRAY_FOREACH(span, rle->spans) {
-            auto dst = &surface->buf32[span->y * surface->stride + span->x];
+        for (auto span = rle->fetch(bbox, &end); span < end; ++span) {
+            span->fetch(bbox, x, len);
+            auto dst = &surface->buf32[span->y * surface->stride + x];
             if (span->coverage < 255) src = ALPHA_BLEND(color, span->coverage);
             else src = color;
             auto ialpha = IA(src);
-            for (uint32_t x = 0; x < span->len; ++x, ++dst) {
+            for (auto x = 0; x < len; ++x, ++dst) {
                 *dst = src + ALPHA_BLEND(*dst, ialpha);
             }
         }
     //8bit grayscale
     } else if (surface->channelSize == sizeof(uint8_t)) {
         uint8_t src;
-        ARRAY_FOREACH(span, rle->spans) {
-            auto dst = &surface->buf8[span->y * surface->stride + span->x];
+        for (auto span = rle->fetch(bbox, &end); span < end; ++span) {
+            span->fetch(bbox, x, len);
+            auto dst = &surface->buf8[span->y * surface->stride + x];
             if (span->coverage < 255) src = MULTIPLY(span->coverage, c.a);
             else src = c.a;
             auto ialpha = ~c.a;
-            for (uint32_t x = 0; x < span->len; ++x, ++dst) {
+            for (auto x = 0; x < len; ++x, ++dst) {
                 *dst = src + MULTIPLY(*dst, ialpha);
             }
         }

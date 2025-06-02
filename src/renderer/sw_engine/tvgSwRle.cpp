@@ -881,10 +881,10 @@ bool rleClip(SwRle *rle, const SwRle *clip)
     Array<SwSpan> out;
     out.reserve(std::max(rle->spans.count, clip->spans.count));
 
-    auto spans = rle->data();
-    auto end = rle->spans.end();
-    auto cspans = clip->data();
-    auto cend = clip->spans.end();
+    const SwSpan *end;
+    auto spans = rle->fetch(clip->spans.first().y, clip->spans.last().y, &end);
+    const SwSpan *cend;
+    auto cspans = clip->fetch(rle->spans.first().y, rle->spans.last().y, &cend);
 
     while(spans < end && cspans < cend) {
         //align y-coordinates.
@@ -928,9 +928,10 @@ bool rleClip(SwRle *rle, const RenderRegion* clip)
     Array<SwSpan> out;
     out.reserve(rle->spans.count);
     auto data = out.data;
+    const SwSpan* end;
     uint16_t x, len;
 
-    ARRAY_FOREACH(p, rle->spans) {
+    for (auto p = rle->fetch(*clip, &end); p < end; ++p) {
         if (p->y >= max.y) break;
         if (p->y < min.y || p->x >= max.x || (p->x + p->len) <= min.x) continue;
         if (p->x < min.x) {
