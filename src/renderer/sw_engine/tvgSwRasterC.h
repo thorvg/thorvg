@@ -94,13 +94,11 @@ static void inline cRasterPixels(PIXEL_T* dst, PIXEL_T val, uint32_t offset, int
 
 static bool inline cRasterTranslucentRle(SwSurface* surface, const SwRle* rle, const RenderColor& c)
 {
-    auto span = rle->data();
-
     //32bit channels
     if (surface->channelSize == sizeof(uint32_t)) {
         auto color = surface->join(c.r, c.g, c.b, c.a);
         uint32_t src;
-        for (uint32_t i = 0; i < rle->size(); ++i, ++span) {
+        ARRAY_FOREACH(span, rle->spans) {
             auto dst = &surface->buf32[span->y * surface->stride + span->x];
             if (span->coverage < 255) src = ALPHA_BLEND(color, span->coverage);
             else src = color;
@@ -112,7 +110,7 @@ static bool inline cRasterTranslucentRle(SwSurface* surface, const SwRle* rle, c
     //8bit grayscale
     } else if (surface->channelSize == sizeof(uint8_t)) {
         uint8_t src;
-        for (uint32_t i = 0; i < rle->size(); ++i, ++span) {
+        ARRAY_FOREACH(span, rle->spans) {
             auto dst = &surface->buf8[span->y * surface->stride + span->x];
             if (span->coverage < 255) src = MULTIPLY(span->coverage, c.a);
             else src = c.a;
