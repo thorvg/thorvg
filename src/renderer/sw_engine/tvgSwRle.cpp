@@ -757,7 +757,7 @@ SwRle* rleRender(SwRle* rle, const SwOutline* outline, const RenderRegion& bbox,
     rw.bandShoot = 0;
     rw.antiAlias = antiAlias;
 
-    if (!rle) rw.rle = tvg::calloc<SwRle*>(1, sizeof(SwRle));
+    if (!rle) rw.rle = new SwRle;
     else rw.rle = rle;
     rw.rle->spans.reserve(256);
 
@@ -822,7 +822,10 @@ SwRle* rleRender(SwRle* rle, const SwOutline* outline, const RenderRegion& bbox,
 
             /* This is too complex for a single scanline; there must
                be some problems */
-            if (middle == bottom) goto error;
+            if (middle == bottom) {
+                rleFree(rw.rle);
+                return nullptr;
+            }
 
             if (bottom - top >= rw.bandSize) ++rw.bandShoot;
 
@@ -833,15 +836,10 @@ SwRle* rleRender(SwRle* rle, const SwOutline* outline, const RenderRegion& bbox,
             ++band;
         }
     }
-
-    if (rw.bandShoot > 8 && rw.bandSize > 16)
+    if (rw.bandShoot > 8 && rw.bandSize > 16) {
         rw.bandSize = (rw.bandSize >> 1);
-
+    }
     return rw.rle;
-
-error:
-    tvg::free(rw.rle);
-    return nullptr;
 }
 
 
@@ -872,9 +870,7 @@ void rleReset(SwRle* rle)
 
 void rleFree(SwRle* rle)
 {
-    if (!rle) return;
-    rle->spans.reset();
-    tvg::free(rle);
+    delete(rle);
 }
 
 
@@ -921,6 +917,7 @@ bool rleClip(SwRle *rle, const SwRle *clip)
 }
 
 
+//Need to confirm: dead code?
 bool rleClip(SwRle *rle, const RenderRegion* clip)
 {
     if (rle->spans.empty() || clip->invalid()) return false;

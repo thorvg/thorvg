@@ -123,6 +123,16 @@ struct SwRle
 {
     Array<SwSpan> spans;
 
+    bool invalid() const
+    {
+        return spans.empty();
+    }
+
+    bool valid() const
+    {
+        return !invalid();
+    }
+
     uint32_t size() const { return spans.count; }
     SwSpan* data() const { return spans.data; }
 };
