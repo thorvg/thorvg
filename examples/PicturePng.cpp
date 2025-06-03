@@ -65,7 +65,7 @@ struct UserExample : tvgexam::Example
         auto picture = tvg::Picture::gen();
         if (!tvgexam::verify(picture->load(data, size, "png", true))) return false;
         free(data);
-        picture->translate(400, 0);
+        picture->translate(380, 0);
         picture->scale(0.8);
         canvas->push(std::move(picture));
 
