@@ -284,23 +284,14 @@ void WgRenderSettings::release(WgContext& context)
 
 void WgRenderDataPaint::release(WgContext& context)
 {
-    context.layouts.releaseBindGroup(bindGroupPaint);
-    context.releaseBuffer(bufferModelMat);
-    context.releaseBuffer(bufferBlendSettings);
     clips.clear();
 };
 
 
 void WgRenderDataPaint::update(WgContext& context, const tvg::Matrix& transform, tvg::ColorSpace cs, uint8_t opacity)
 {
-    WgShaderTypeMat4x4f modelMat(transform);
-    WgShaderTypeVec4f blendSettings(cs, opacity);
-    bool bufferModelMatChanged = context.allocateBufferUniform(bufferModelMat, &modelMat, sizeof(modelMat));
-    bool bufferBlendSettingsChanged = context.allocateBufferUniform(bufferBlendSettings, &blendSettings, sizeof(blendSettings));
-    if (bufferModelMatChanged || bufferBlendSettingsChanged) {
-        context.layouts.releaseBindGroup(bindGroupPaint);
-        bindGroupPaint = context.layouts.createBindGroupBuffer2Un(bufferModelMat, bufferBlendSettings);
-    }
+    paintSettings.modelMat.update(transform);
+    paintSettings.blendSettings.update(cs, opacity);
 }
 
 
@@ -676,10 +667,10 @@ void WgRenderDataEffectParamsPool::release(WgContext& context)
 }
 
 //***********************************************************************
-// WgRenderDataStageBuffer
+// WgStageBufferGeometry
 //***********************************************************************
 
-void WgRenderDataStageBuffer::append(WgMeshData* meshData)
+void WgStageBufferGeometry::append(WgMeshData* meshData)
 {
     assert(meshData);
     uint32_t vsize = meshData->vbuffer.count * sizeof(meshData->vbuffer[0]);
@@ -712,13 +703,13 @@ void WgRenderDataStageBuffer::append(WgMeshData* meshData)
 }
 
 
-void WgRenderDataStageBuffer::append(WgMeshDataGroup* meshDataGroup)
+void WgStageBufferGeometry::append(WgMeshDataGroup* meshDataGroup)
 {
     ARRAY_FOREACH(p, meshDataGroup->meshes) append(*p);
 }
 
 
-void WgRenderDataStageBuffer::append(WgRenderDataShape* renderDataShape)
+void WgStageBufferGeometry::append(WgRenderDataShape* renderDataShape)
 {
     append(&renderDataShape->meshGroupShapes);
     append(&renderDataShape->meshGroupShapesBBox);
@@ -730,7 +721,7 @@ void WgRenderDataStageBuffer::append(WgRenderDataShape* renderDataShape)
 }
 
 
-void WgRenderDataStageBuffer::append(WgRenderDataPicture* renderDataPicture)
+void WgStageBufferGeometry::append(WgRenderDataPicture* renderDataPicture)
 {
     append(&renderDataPicture->meshData);
     ARRAY_FOREACH(p, renderDataPicture->clips)
@@ -738,28 +729,28 @@ void WgRenderDataStageBuffer::append(WgRenderDataPicture* renderDataPicture)
 }
 
 
-void WgRenderDataStageBuffer::release(WgContext& context)
+void WgStageBufferGeometry::release(WgContext& context)
 {
     context.releaseBuffer(vbuffer_gpu);
     context.releaseBuffer(ibuffer_gpu);
 }
 
 
-void WgRenderDataStageBuffer::clear()
+void WgStageBufferGeometry::clear()
 {
     vbuffer.clear();
     ibuffer.clear();
 }
 
 
-void WgRenderDataStageBuffer::flush(WgContext& context) 
+void WgStageBufferGeometry::flush(WgContext& context) 
 {
     context.allocateBufferVertex(vbuffer_gpu, (float *)vbuffer.data, vbuffer.count);
     context.allocateBufferIndex(ibuffer_gpu, (uint32_t *)ibuffer.data, ibuffer.count);
 }
 
 
-void WgRenderDataStageBuffer::bind(WGPURenderPassEncoder renderPass, size_t voffset, size_t toffset)
+void WgStageBufferGeometry::bind(WGPURenderPassEncoder renderPass, size_t voffset, size_t toffset)
 {
     wgpuRenderPassEncoderSetVertexBuffer(renderPass, 0, vbuffer_gpu, voffset, vbuffer.count - voffset);
     wgpuRenderPassEncoderSetVertexBuffer(renderPass, 1, vbuffer_gpu, toffset, vbuffer.count - toffset);

@@ -94,9 +94,8 @@ struct WgRenderSettings
 
 struct WgRenderDataPaint
 {
-    WGPUBuffer bufferModelMat{};
-    WGPUBuffer bufferBlendSettings{};
-    WGPUBindGroup bindGroupPaint{};
+    WgShaderTypePaintSettings paintSettings;
+    uint32_t bindGroupPaintInd{};
     RenderRegion viewport{};
     BBox aabb{{},{}};
     float opacity{};
@@ -221,7 +220,7 @@ public:
     void release(WgContext& context);
 };
 
-class WgRenderDataStageBuffer {
+class WgStageBufferGeometry {
 private:
     Array<uint8_t> vbuffer;
     Array<uint8_t> ibuffer;
@@ -238,6 +237,52 @@ public:
     void clear();
     void flush(WgContext& context);
     void bind(WGPURenderPassEncoder renderPass, size_t voffset, size_t toffset);
+};
+
+// typed uniform stage buffer with related bind groups handling
+template<typename T>
+class WgStageBufferUniform {
+private:
+    Array<T> ubuffer;
+    WGPUBuffer ubuffer_gpu{};
+    Array<WGPUBindGroup> bbuffer;
+public:
+    // append uniform data to cpu staged buffer and return related bind group index
+    uint32_t append(const T& value) {
+        ubuffer.push(value);
+        return ubuffer.count - 1;
+    }
+
+    void flush(WgContext& context) {
+        // flush data to gpu buffer from cpu memory including reserved data to prevent future gpu buffer reallocations
+        bool bufferChanged = context.allocateBufferUniform(ubuffer_gpu, (void*)ubuffer.data, ubuffer.reserved*sizeof(T));
+        // if gpu buffer handle was changed we must to remove all created binding groups
+        if (bufferChanged) releaseBindGroups(context);
+        // allocate bind groups for all new data items
+        for (uint32_t i = bbuffer.count; i < ubuffer.count; i++)
+            bbuffer.push(context.layouts.createBindGroupBuffer1Un(ubuffer_gpu, i*sizeof(T), sizeof(T)));
+        assert(bbuffer.count >= ubuffer.count);
+    }
+
+    // please, use index that was returned from append method
+    WGPUBindGroup operator[](const uint32_t index) const {
+        return bbuffer[index];
+    }
+
+    void clear() {
+        ubuffer.clear();
+    }
+
+    void release(WgContext& context) {
+        context.releaseBuffer(ubuffer_gpu);
+        releaseBindGroups(context);
+    }
+
+    void releaseBindGroups(WgContext& context) {
+        ARRAY_FOREACH(p, bbuffer)
+            context.layouts.releaseBindGroup(*p);
+        bbuffer.clear();
+    }
 };
 
 #endif // _TVG_WG_RENDER_DATA_H_
