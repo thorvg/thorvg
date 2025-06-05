@@ -862,6 +862,12 @@ bool GlRenderer::sync()
 }
 
 
+void GlRenderer::damage(TVG_UNUSED const RenderRegion& region)
+{
+    //TODO:
+}
+
+
 RenderRegion GlRenderer::region(RenderData data)
 {
     if (currentPass()->isEmpty()) return {};

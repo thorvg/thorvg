@@ -50,7 +50,6 @@ static inline RenderUpdateFlag operator|(const RenderUpdateFlag a, const RenderU
     return RenderUpdateFlag(uint16_t(a) | uint16_t(b));
 }
 
-
 struct RenderSurface
 {
     union {
@@ -135,6 +134,68 @@ struct RenderRegion
     uint32_t y() const { return (uint32_t) sy(); }
     uint32_t w() const { return (uint32_t) sw(); }
     uint32_t h() const { return (uint32_t) sh(); }
+};
+
+struct RenderDirtyRegion
+{
+    void add(const RenderRegion& region)
+    {
+        if (!disabled && region.valid()) {
+            list[current].push(region);
+        }
+    }
+
+    bool prepare(uint32_t count = 0)
+    {
+        if (disabled) return false;
+
+        if (count > THRESHOLD) {
+            skip = true;
+            return false;
+        }
+
+        count *= 120;   //FIXME: enough?
+
+        list[0].reserve(count);
+        list[1].reserve(count);
+
+        return true;
+    }
+
+    bool deactivated()
+    {
+        if (disabled || skip) return true;
+        return false;
+    }
+
+    void clear()
+    {
+        list[0].clear();
+        list[1].clear();
+        skip = false;
+    }
+
+    const Array<RenderRegion>& get()
+    {
+        return list[current];
+    }
+
+    void commit();
+
+private:
+    void subdivide(Array<RenderRegion>& targets, uint32_t idx, RenderRegion& lhs, RenderRegion& rhs);
+
+    /* We deactivate partial rendering if there are more than N moving elements.
+       Imagine thousands of moving objects covering the entire screen, That case partial rendering will lose any benefits.
+       Even if they don't, the overhead of subdividing and merging partial regions
+       could be more expensive than simply rendering the full screen.
+       The number is experimentally confirmed and we are open to improve this. */
+    static constexpr const uint32_t THRESHOLD = 5000;
+
+    Array<RenderRegion> list[2];  //double buffer swapping
+    uint8_t current = 0;          //list index. 0 or 1
+    bool disabled = false;
+    bool skip = false;
 };
 
 struct RenderPath
@@ -433,6 +494,7 @@ public:
     virtual bool renderImage(RenderData data) = 0;
     virtual bool postRender() = 0;
     virtual void dispose(RenderData data) = 0;
+    virtual void damage(const RenderRegion& region) = 0;
     virtual RenderRegion region(RenderData data) = 0;
     virtual RenderRegion viewport() = 0;
     virtual bool viewport(const RenderRegion& vp) = 0;
