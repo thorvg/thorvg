@@ -839,7 +839,7 @@ bool GlRenderer::sync()
 
     prepareBlitTask(task);
 
-    task->mClearBuffer = mClearBuffer;
+    task->setClearBuffer(mClearBuffer);
     task->setTargetViewport({{0, 0}, {int32_t(surface.w), int32_t(surface.h)}});
 
     if (mGpuBuffer.flushToGPU()) {
@@ -852,6 +852,9 @@ bool GlRenderer::sync()
     GL_CHECK(glDisable(GL_SCISSOR_TEST));
 
     clearDisposes();
+
+    // Reset clear buffer flag to default (false) after use.    
+    mClearBuffer = false; 
 
     delete task;
 
