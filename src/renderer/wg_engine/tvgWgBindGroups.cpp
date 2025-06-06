@@ -104,8 +104,14 @@ WGPUBindGroup WgBindGroupLayouts::createBindGroupStrorage3RO(WGPUTextureView tex
 
 WGPUBindGroup WgBindGroupLayouts::createBindGroupBuffer1Un(WGPUBuffer buff)
 {
+    return createBindGroupBuffer1Un(buff, 0, wgpuBufferGetSize(buff));
+}
+
+
+WGPUBindGroup WgBindGroupLayouts::createBindGroupBuffer1Un(WGPUBuffer buff, uint64_t offset, uint64_t size)
+{
     const WGPUBindGroupEntry bindGroupEntrys[] = {
-        { .binding = 0, .buffer = buff, .size = wgpuBufferGetSize(buff) }
+        { .binding = 0, .buffer = buff, .offset = offset, .size = size }
     };
     const WGPUBindGroupDescriptor bindGroupDesc { .layout = layoutBuffer1Un, .entryCount = 1, .entries = bindGroupEntrys };
     return wgpuDeviceCreateBindGroup(device, &bindGroupDesc);

@@ -55,6 +55,16 @@ struct WgShaderTypeVec4f
     void update(const RenderRegion& r);
 };
 
+// base paint settings - transform and blend settings (alligned to 256 bytes)
+struct WgShaderTypePaintSettings
+{
+    WgShaderTypeMat4x4f modelMat;
+    WgShaderTypeVec4f blendSettings;
+    uint8_t _padding[256 - sizeof(modelMat) - sizeof(blendSettings)];
+};
+// must be alligned with in-shader data type
+static_assert(sizeof(WgShaderTypePaintSettings) == 256);
+
 // sampler, texture, vec4f
 #define WG_TEXTURE_GRADIENT_SIZE 512
 struct WgShaderTypeGradient
