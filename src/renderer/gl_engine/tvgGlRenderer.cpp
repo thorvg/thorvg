@@ -853,6 +853,9 @@ bool GlRenderer::sync()
 
     clearDisposes();
 
+    // Reset clear buffer flag to default (false) after use.    
+    mClearBuffer = false; 
+
     delete task;
 
     return true;
