@@ -2063,7 +2063,10 @@ TVG_API Tvg_Result tvg_scene_remove(Tvg_Paint* scene, Tvg_Paint* paint);
  *
  * @since 1.0
  */
-TVG_API Tvg_Result tvg_scene_push_effect(Tvg_Paint* scene, Tvg_Scene_Effect effect, ...);
+
+TVG_API Tvg_Result tvg_scene_reset_effects(Tvg_Paint* scene);
+
+TVG_API Tvg_Result tvg_scene_push_drop_shadow(Tvg_Paint* scene, int r, int g, int b, int a, double angle, double distance, double sigma, int quality);
 
 /** \} */   // end defgroup ThorVGCapi_Scene
 

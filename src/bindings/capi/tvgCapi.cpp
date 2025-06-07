@@ -29,6 +29,8 @@
 #include <thorvg_lottie.h>
 #endif
 
+#include <iostream>
+
 using namespace std;
 using namespace tvg;
 
@@ -785,14 +787,21 @@ TVG_API Tvg_Result tvg_scene_remove(Tvg_Paint* scene, Tvg_Paint* paint)
     return TVG_RESULT_INVALID_ARGUMENT;
 }
 
-
-TVG_API Tvg_Result tvg_scene_push_effect(Tvg_Paint* scene, Tvg_Scene_Effect effect, ...)
+TVG_API Tvg_Result tvg_scene_reset_effects(Tvg_Paint* scene)
 {
     if (scene) {
-        va_list args;
-        va_start(args, effect);
-        Tvg_Result result = (Tvg_Result) reinterpret_cast<Scene*>(scene)->push(static_cast<SceneEffect>(effect), args);
-        va_end(args);
+        std::cout << "reset:scene:effects:reset" << std::endl;
+        Tvg_Result result = (Tvg_Result) reinterpret_cast<Scene*>(scene)->push(SceneEffect::ClearAll);
+        std::cout << "reset:scene:effects:reset:result:" << result << std::endl;
+        return result;
+    }
+    return TVG_RESULT_INVALID_ARGUMENT;
+}
+
+TVG_API Tvg_Result tvg_scene_push_drop_shadow(Tvg_Paint* scene, int r, int g, int b, int a, double angle, double distance, double sigma, int quality)
+{
+    if (scene) {
+        Tvg_Result result = (Tvg_Result) reinterpret_cast<Scene*>(scene)->push(static_cast<SceneEffect>(SceneEffect::DropShadow), r, g, b, a, angle, distance, sigma, quality);
         return result;
     }
     return TVG_RESULT_INVALID_ARGUMENT;

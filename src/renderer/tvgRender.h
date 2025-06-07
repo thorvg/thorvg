@@ -28,6 +28,7 @@
 #include "tvgCommon.h"
 #include "tvgArray.h"
 #include "tvgLock.h"
+#include <iostream>
 
 namespace tvg
 {
@@ -339,6 +340,7 @@ struct RenderEffectDropShadow : RenderEffect
 
     static RenderEffectDropShadow* gen(va_list& args)
     {
+        std::cout << "gen:drop shadow" << std::endl;
         auto inst = new RenderEffectDropShadow;
         inst->color[0] = va_arg(args, int);
         inst->color[1] = va_arg(args, int);
@@ -349,6 +351,12 @@ struct RenderEffectDropShadow : RenderEffect
         inst->sigma = std::max((float) va_arg(args, double), 0.0f);
         inst->quality = std::min(va_arg(args, int), 100);
         inst->type = SceneEffect::DropShadow;
+        std::cout << "gen:drop shadow:color:" << (int)inst->color[0] << "," << (int)inst->color[1] << "," << (int)inst->color[2] << "," << (int)inst->color[3] << std::endl;
+        std::cout << "gen:drop shadow:angle:" << inst->angle << std::endl;
+        std::cout << "gen:drop shadow:distance:" << inst->distance << std::endl;
+        std::cout << "gen:drop shadow:sigma:" << inst->sigma << std::endl;
+        std::cout << "gen:drop shadow:quality:" << (int)inst->quality << std::endl;
+        std::cout << "gen:drop shadow:end" << std::endl;
         return inst;
     }
 };
