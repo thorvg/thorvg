@@ -22,6 +22,7 @@
 
 #include "config.h"
 #include <string>
+#include <cstdarg>
 #include <thorvg.h>
 #include "thorvg_capi.h"
 #ifdef THORVG_LOTTIE_LOADER_SUPPORT
@@ -781,6 +782,19 @@ TVG_API Tvg_Result tvg_scene_push_at(Tvg_Paint* scene, Tvg_Paint* paint, Tvg_Pai
 TVG_API Tvg_Result tvg_scene_remove(Tvg_Paint* scene, Tvg_Paint* paint)
 {
     if (scene) return (Tvg_Result) reinterpret_cast<Scene*>(scene)->remove((Paint*)paint);
+    return TVG_RESULT_INVALID_ARGUMENT;
+}
+
+
+TVG_API Tvg_Result tvg_scene_push_effect(Tvg_Paint* scene, Tvg_Scene_Effect effect, ...)
+{
+    if (scene) {
+        va_list args;
+        va_start(args, effect);
+        Tvg_Result result = (Tvg_Result) reinterpret_cast<Scene*>(scene)->push(static_cast<SceneEffect>(effect), args);
+        va_end(args);
+        return result;
+    }
     return TVG_RESULT_INVALID_ARGUMENT;
 }
 

@@ -186,6 +186,26 @@ typedef enum {
 
 
 /**
+ * @brief Enumeration that defines methods used for Scene Effects.
+ *
+ * This enum provides options to apply various post-processing effects to a scene.
+ * Scene effects are typically applied to modify the final appearance of a rendered scene, such as blurring.
+ *
+ * @ingroup ThorVGCapi_Scene
+ *
+ * @since 1.0
+ */
+typedef enum {
+    TVG_SCENE_EFFECT_CLEAR_ALL = 0,      ///< Reset all previously applied scene effects, restoring the scene to its original state.
+    TVG_SCENE_EFFECT_GAUSSIAN_BLUR,      ///< Apply a blur effect with a Gaussian filter. Param(3) = {sigma(float)[> 0], direction(int)[both: 0 / horizontal: 1 / vertical: 2], border(int)[duplicate: 0 / wrap: 1], quality(int)[0 - 100]}
+    TVG_SCENE_EFFECT_DROP_SHADOW,        ///< Apply a drop shadow effect with a Gaussian Blur filter. Param(8) = {color_R(int)[0 - 255], color_G(int)[0 - 255], color_B(int)[0 - 255], opacity(int)[0 - 255], angle(double)[0 - 360], distance(double), blur_sigma(double)[> 0], quality(int)[0 - 100]}
+    TVG_SCENE_EFFECT_FILL,               ///< Override the scene content color with a given fill information (Experimental API). Param(5) = {color_R(int)[0 - 255], color_G(int)[0 - 255], color_B(int)[0 - 255], opacity(int)[0 - 255]}
+    TVG_SCENE_EFFECT_TINT,               ///< Tinting the current scene color with a given black, white color paramters (Experimental API). Param(7) = {black_R(int)[0 - 255], black_G(int)[0 - 255], black_B(int)[0 - 255], white_R(int)[0 - 255], white_G(int)[0 - 255], white_B(int)[0 - 255], intensity(float)[0 - 100]}
+    TVG_SCENE_EFFECT_TRITONE              ///< Apply a tritone color effect to the scene using three color parameters for shadows, midtones, and highlights (Experimental API). Param(9) = {Shadow_R(int)[0 - 255], Shadow_G(int)[0 - 255], Shadow_B(int)[0 - 255], Midtone_R(int)[0 - 255], Midtone_G(int)[0 - 255], Midtone_B(int)[0 - 255], Highlight_R(int)[0 - 255], Highlight_G(int)[0 - 255], Highlight_B(int)[0 - 255]}
+} Tvg_Scene_Effect;
+
+
+/**
  * @see Tvg_Type
  * @deprecated
  */
@@ -2026,6 +2046,24 @@ TVG_API Tvg_Result tvg_scene_push_at(Tvg_Paint* scene, Tvg_Paint* target, Tvg_Pa
  * @since 1.0
  */
 TVG_API Tvg_Result tvg_scene_remove(Tvg_Paint* scene, Tvg_Paint* paint);
+
+/**
+ * @brief Apply a post-processing effect to the scene.
+ *
+ * This function adds a specified scene effect, such as clearing all effects or applying a Gaussian blur,
+ * to the scene after it has been rendered. Multiple effects can be applied in sequence.
+ *
+ * @param[in] scene A Tvg_Paint pointer to the scene object.
+ * @param[in] effect The scene effect to apply. Options are defined in the Tvg_Scene_Effect enum.
+ *                   For example, use TVG_SCENE_EFFECT_GAUSSIAN_BLUR to apply a blur with specific parameters.
+ * @param[in] ... Additional variadic parameters required for certain effects (e.g., sigma and direction for GaussianBlur).
+ *
+ * @return Tvg_Result enumeration.
+ * @retval TVG_RESULT_INVALID_ARGUMENT A @c nullptr passed as the @p scene argument.
+ *
+ * @since 1.0
+ */
+TVG_API Tvg_Result tvg_scene_push_effect(Tvg_Paint* scene, Tvg_Scene_Effect effect, ...);
 
 /** \} */   // end defgroup ThorVGCapi_Scene
 
