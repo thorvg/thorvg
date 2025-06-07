@@ -1949,6 +1949,7 @@ TVG_API Tvg_Paint* tvg_scene_new(void);
  */
 TVG_API Tvg_Result tvg_scene_push(Tvg_Paint* scene, Tvg_Paint* paint);
 
+
 /**
  * @brief Adds a paint object to the scene.
  *
@@ -1968,6 +1969,7 @@ TVG_API Tvg_Result tvg_scene_push(Tvg_Paint* scene, Tvg_Paint* paint);
  */
 TVG_API Tvg_Result tvg_scene_push_at(Tvg_Paint* scene, Tvg_Paint* target, Tvg_Paint* at);
 
+
 /**
  * @brief Removes a paint object from the scene.
  *
@@ -1983,6 +1985,116 @@ TVG_API Tvg_Result tvg_scene_push_at(Tvg_Paint* scene, Tvg_Paint* target, Tvg_Pa
  * @since 1.0
  */
 TVG_API Tvg_Result tvg_scene_remove(Tvg_Paint* scene, Tvg_Paint* paint);
+
+
+/**
+ * @brief Resets all previously applied scene effects.
+ *
+ * This function clears all effects that have been applied to the scene,
+ * restoring it to its original state without any post-processing.
+ *
+ * @param[in] scene A pointer to the Tvg_Paint scene object.
+ *
+ * @since 1.0
+ */
+TVG_API Tvg_Result tvg_scene_reset_effects(Tvg_Paint* scene);
+
+
+/**
+ * @brief Applies a Gaussian blur effect to the scene.
+ *
+ * This function applies a Gaussian blur filter to the scene as a post-processing effect.
+ * The blur can be applied in different directions with configurable border handling and quality settings.
+ *
+ * @param[in] scene A pointer to the Tvg_Paint scene object.
+ * @param[in] sigma The blur radius (sigma) value. Must be greater than 0.
+ * @param[in] direction Blur direction: 0 = both directions, 1 = horizontal only, 2 = vertical only.
+ * @param[in] border Border handling method: 0 = duplicate, 1 = wrap.
+ * @param[in] quality Blur quality level [0 - 100].
+ *
+ * @since 1.0
+ */
+TVG_API Tvg_Result tvg_scene_push_effect_gaussian_blur(Tvg_Paint* scene, double sigma, int direction, int border, int quality);
+
+
+/**
+ * @brief Applies a drop shadow effect to the scene.
+ *
+ * This function applies a drop shadow with a Gaussian blur to the scene. The shadow 
+ * can be customized using color, opacity, angle, distance, blur radius (sigma), 
+ * and quality parameters.
+ *
+ * @param[in] scene A pointer to the Tvg_Paint scene object.
+ * @param[in] r Red channel value of the shadow color [0 - 255].
+ * @param[in] g Green channel value of the shadow color [0 - 255].
+ * @param[in] b Blue channel value of the shadow color [0 - 255].
+ * @param[in] a Alpha (opacity) channel value of the shadow [0 - 255].
+ * @param[in] angle Shadow direction in degrees [0 - 360].
+ * @param[in] distance Distance of the shadow from the original object.
+ * @param[in] sigma Gaussian blur sigma value for the shadow. Must be > 0.
+ * @param[in] quality Blur quality level [0 - 100].
+ *
+ * @since 1.0
+ */
+TVG_API Tvg_Result tvg_scene_push_effect_drop_shadow(Tvg_Paint* scene, int r, int g, int b, int a, double angle, double distance, double sigma, int quality);
+
+
+/**
+ * @brief Applies a fill color effect to the scene.
+ *
+ * This function overrides the scene's content colors with the specified fill color.
+ *
+ * @param[in] scene A pointer to the Tvg_Paint scene object.
+ * @param[in] r Red color channel value [0 - 255].
+ * @param[in] g Green color channel value [0 - 255].
+ * @param[in] b Blue color channel value [0 - 255].
+ * @param[in] a Alpha (opacity) channel value [0 - 255].
+ *
+ * @since 1.0
+ */
+TVG_API Tvg_Result tvg_scene_push_effect_fill(Tvg_Paint* scene, int r, int g, int b, int a);
+
+
+/**
+ * @brief Applies a tint effect to the scene.
+ *
+ * This function tints the current scene using specified black and white color values,
+ * modulated by a given intensity.
+ *
+ * @param[in] scene A pointer to the Tvg_Paint scene object.
+ * @param[in] black_r Red component of the black color [0 - 255].
+ * @param[in] black_g Green component of the black color [0 - 255].
+ * @param[in] black_b Blue component of the black color [0 - 255].
+ * @param[in] white_r Red component of the white color [0 - 255].
+ * @param[in] white_g Green component of the white color [0 - 255].
+ * @param[in] white_b Blue component of the white color [0 - 255].
+ * @param[in] intensity Tint intensity value [0 - 100].
+ *
+ * @since 1.0
+ */
+TVG_API Tvg_Result tvg_scene_push_effect_tint(Tvg_Paint* scene, int black_r, int black_g, int black_b, int white_r, int white_g, int white_b, double intensity);
+
+
+/**
+ * @brief Applies a tritone color effect to the scene.
+ *
+ * This function applies a tritone color effect to the given scene using three sets of RGB values 
+ * representing shadow, midtone, and highlight colors.
+ *
+ * @param[in] scene A pointer to the Tvg_Paint scene object.
+ * @param[in] shadow_r Red component of the shadow color [0 - 255].
+ * @param[in] shadow_g Green component of the shadow color [0 - 255].
+ * @param[in] shadow_b Blue component of the shadow color [0 - 255].
+ * @param[in] midtone_r Red component of the midtone color [0 - 255].
+ * @param[in] midtone_g Green component of the midtone color [0 - 255].
+ * @param[in] midtone_b Blue component of the midtone color [0 - 255].
+ * @param[in] highlight_r Red component of the highlight color [0 - 255].
+ * @param[in] highlight_g Green component of the highlight color [0 - 255].
+ * @param[in] highlight_b Blue component of the highlight color [0 - 255].
+ *
+ * @since 1.0
+ */
+TVG_API Tvg_Result tvg_scene_push_effect_tritone(Tvg_Paint* scene, int shadow_r, int shadow_g, int shadow_b, int midtone_r, int midtone_g, int midtone_b, int highlight_r, int highlight_g, int highlight_b);
 
 /** \} */   // end defgroup ThorVGCapi_Scene
 

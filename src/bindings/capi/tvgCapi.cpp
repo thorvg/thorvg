@@ -778,6 +778,48 @@ TVG_API Tvg_Result tvg_scene_remove(Tvg_Paint* scene, Tvg_Paint* paint)
 }
 
 
+TVG_API Tvg_Result tvg_scene_reset_effects(Tvg_Paint* scene)
+{
+    if (scene) return (Tvg_Result) reinterpret_cast<Scene*>(scene)->push(SceneEffect::ClearAll);
+    return TVG_RESULT_INVALID_ARGUMENT;
+}
+
+
+TVG_API Tvg_Result tvg_scene_push_effect_drop_shadow(Tvg_Paint* scene, int r, int g, int b, int a, double angle, double distance, double sigma, int quality)
+{
+    if (scene) return (Tvg_Result) reinterpret_cast<Scene*>(scene)->push(SceneEffect::DropShadow, r, g, b, a, angle, distance, sigma, quality);
+    return TVG_RESULT_INVALID_ARGUMENT;
+}
+
+
+TVG_API Tvg_Result tvg_scene_push_effect_gaussian_blur(Tvg_Paint* scene, double sigma, int direction, int border, int quality)
+{
+    if (scene) return (Tvg_Result) reinterpret_cast<Scene*>(scene)->push(SceneEffect::GaussianBlur, sigma, direction, border, quality);
+    return TVG_RESULT_INVALID_ARGUMENT;
+}
+
+
+TVG_API Tvg_Result tvg_scene_push_effect_fill(Tvg_Paint* scene, int r, int g, int b, int a)
+{
+    if (scene) return (Tvg_Result) reinterpret_cast<Scene*>(scene)->push(SceneEffect::Fill, r, g, b, a);
+    return TVG_RESULT_INVALID_ARGUMENT;
+}
+
+
+TVG_API Tvg_Result tvg_scene_push_effect_tint(Tvg_Paint* scene, int black_r, int black_g, int black_b, int white_r, int white_g, int white_b, double intensity)
+{
+    if (scene) return (Tvg_Result) reinterpret_cast<Scene*>(scene)->push(SceneEffect::Tint, black_r, black_g, black_b, white_r, white_g, white_b, intensity);
+    return TVG_RESULT_INVALID_ARGUMENT;
+}
+
+
+TVG_API Tvg_Result tvg_scene_push_effect_tritone(Tvg_Paint* scene, int shadow_r, int shadow_g, int shadow_b, int midtone_r, int midtone_g, int midtone_b, int highlight_r, int highlight_g, int highlight_b)
+{
+    if (scene) return (Tvg_Result) reinterpret_cast<Scene*>(scene)->push(SceneEffect::Tritone, shadow_r, shadow_g, shadow_b, midtone_r, midtone_g, midtone_b, highlight_r, highlight_g, highlight_b);
+    return TVG_RESULT_INVALID_ARGUMENT;
+}
+
+
 /************************************************************************/
 /* Text API                                                            */
 /************************************************************************/
