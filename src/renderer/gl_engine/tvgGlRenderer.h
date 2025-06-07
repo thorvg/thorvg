@@ -153,7 +153,7 @@ private:
     } mDisposed;
 
     BlendMethod mBlendMethod = BlendMethod::Normal;
-    bool mClearBuffer = true;  //FIXME: clear buffer should be optional (default is false)
+    bool mClearBuffer = false;
 };
 
 #endif /* _TVG_GL_RENDERER_H_ */

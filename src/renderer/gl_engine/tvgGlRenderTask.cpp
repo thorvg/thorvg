@@ -195,23 +195,20 @@ void GlComposeTask::run()
 {
     GL_CHECK(glBindFramebuffer(GL_FRAMEBUFFER, getSelfFbo()));
 
-    // clear this fbo
-    if (mClearBuffer) {
-        // we must clear all area of fbo
-        GL_CHECK(glViewport(0, 0, mFbo->getWidth(), mFbo->getHeight()));
-        GL_CHECK(glScissor(0, 0, mFbo->getWidth(), mFbo->getHeight()));
-        GL_CHECK(glClearColor(0, 0, 0, 0));
-        GL_CHECK(glClearStencil(0));
-    #ifdef THORVG_GL_TARGET_GLES
-        GL_CHECK(glClearDepthf(0.0));
-    #else
-        GL_CHECK(glClearDepth(0.0));
-    #endif
-        GL_CHECK(glDepthMask(1));
+    // we must clear all area of fbo
+    GL_CHECK(glViewport(0, 0, mFbo->getWidth(), mFbo->getHeight()));
+    GL_CHECK(glScissor(0, 0, mFbo->getWidth(), mFbo->getHeight()));
+    GL_CHECK(glClearColor(0, 0, 0, 0));
+    GL_CHECK(glClearStencil(0));
+#ifdef THORVG_GL_TARGET_GLES
+    GL_CHECK(glClearDepthf(0.0));
+#else
+    GL_CHECK(glClearDepth(0.0));
+#endif
+    GL_CHECK(glDepthMask(1));
 
-        GL_CHECK(glClear(GL_COLOR_BUFFER_BIT | GL_STENCIL_BUFFER_BIT | GL_DEPTH_BUFFER_BIT));
-        GL_CHECK(glDepthMask(0));
-    }
+    GL_CHECK(glClear(GL_COLOR_BUFFER_BIT | GL_STENCIL_BUFFER_BIT | GL_DEPTH_BUFFER_BIT));
+    GL_CHECK(glDepthMask(0));
 
     GL_CHECK(glViewport(0, 0, mRenderWidth, mRenderHeight));
     GL_CHECK(glScissor(0, 0, mRenderWidth, mRenderHeight));

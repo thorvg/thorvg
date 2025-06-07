@@ -125,14 +125,16 @@ public:
     void run() override;
 
     void setRenderSize(uint32_t width, uint32_t height) { mRenderWidth = width; mRenderHeight = height; }
+    void setClearBuffer(bool clearBuffer) { mClearBuffer = clearBuffer; }
 
-    bool mClearBuffer = true;
 
 protected:
     GLuint getTargetFbo() { return mTargetFbo; }
     GLuint getSelfFbo();
     GLuint getResolveFboId();
     void onResolve();
+
+    bool mClearBuffer = false;
 
 private:
     GLuint mTargetFbo;
