@@ -186,26 +186,6 @@ typedef enum {
 
 
 /**
- * @brief Enumeration that defines methods used for Scene Effects.
- *
- * This enum provides options to apply various post-processing effects to a scene.
- * Scene effects are typically applied to modify the final appearance of a rendered scene, such as blurring.
- *
- * @ingroup ThorVGCapi_Scene
- *
- * @since 1.0
- */
-typedef enum {
-    TVG_SCENE_EFFECT_CLEAR_ALL = 0,      ///< Reset all previously applied scene effects, restoring the scene to its original state.
-    TVG_SCENE_EFFECT_GAUSSIAN_BLUR,      ///< Apply a blur effect with a Gaussian filter. Param(3) = {sigma(float)[> 0], direction(int)[both: 0 / horizontal: 1 / vertical: 2], border(int)[duplicate: 0 / wrap: 1], quality(int)[0 - 100]}
-    TVG_SCENE_EFFECT_DROP_SHADOW,        ///< Apply a drop shadow effect with a Gaussian Blur filter. Param(8) = {color_R(int)[0 - 255], color_G(int)[0 - 255], color_B(int)[0 - 255], opacity(int)[0 - 255], angle(double)[0 - 360], distance(double), blur_sigma(double)[> 0], quality(int)[0 - 100]}
-    TVG_SCENE_EFFECT_FILL,               ///< Override the scene content color with a given fill information (Experimental API). Param(5) = {color_R(int)[0 - 255], color_G(int)[0 - 255], color_B(int)[0 - 255], opacity(int)[0 - 255]}
-    TVG_SCENE_EFFECT_TINT,               ///< Tinting the current scene color with a given black, white color paramters (Experimental API). Param(7) = {black_R(int)[0 - 255], black_G(int)[0 - 255], black_B(int)[0 - 255], white_R(int)[0 - 255], white_G(int)[0 - 255], white_B(int)[0 - 255], intensity(float)[0 - 100]}
-    TVG_SCENE_EFFECT_TRITONE              ///< Apply a tritone color effect to the scene using three color parameters for shadows, midtones, and highlights (Experimental API). Param(9) = {Shadow_R(int)[0 - 255], Shadow_G(int)[0 - 255], Shadow_B(int)[0 - 255], Midtone_R(int)[0 - 255], Midtone_G(int)[0 - 255], Midtone_B(int)[0 - 255], Highlight_R(int)[0 - 255], Highlight_G(int)[0 - 255], Highlight_B(int)[0 - 255]}
-} Tvg_Scene_Effect;
-
-
-/**
  * @see Tvg_Type
  * @deprecated
  */
@@ -2048,25 +2028,129 @@ TVG_API Tvg_Result tvg_scene_push_at(Tvg_Paint* scene, Tvg_Paint* target, Tvg_Pa
 TVG_API Tvg_Result tvg_scene_remove(Tvg_Paint* scene, Tvg_Paint* paint);
 
 /**
- * @brief Apply a post-processing effect to the scene.
+ * @brief Reset all previously applied scene effects.
  *
- * This function adds a specified scene effect, such as clearing all effects or applying a Gaussian blur,
- * to the scene after it has been rendered. Multiple effects can be applied in sequence.
+ * This function clears all scene effects that have been previously applied to the scene,
+ * restoring it to its original state without any post-processing effects.
  *
  * @param[in] scene A Tvg_Paint pointer to the scene object.
- * @param[in] effect The scene effect to apply. Options are defined in the Tvg_Scene_Effect enum.
- *                   For example, use TVG_SCENE_EFFECT_GAUSSIAN_BLUR to apply a blur with specific parameters.
- * @param[in] ... Additional variadic parameters required for certain effects (e.g., sigma and direction for GaussianBlur).
  *
  * @return Tvg_Result enumeration.
  * @retval TVG_RESULT_INVALID_ARGUMENT A @c nullptr passed as the @p scene argument.
  *
  * @since 1.0
  */
-
 TVG_API Tvg_Result tvg_scene_reset_effects(Tvg_Paint* scene);
 
+/**
+ * @brief Apply a Gaussian blur effect to the scene.
+ *
+ * This function applies a Gaussian blur filter to the scene as a post-processing effect.
+ * The blur can be applied in different directions and with various quality settings.
+ *
+ * @param[in] scene A Tvg_Paint pointer to the scene object.
+ * @param[in] sigma The blur radius/sigma value. Must be greater than 0.
+ * @param[in] direction The blur direction: 0 for both directions, 1 for horizontal only, 2 for vertical only.
+ * @param[in] border The border handling method: 0 for duplicate, 1 for wrap.
+ * @param[in] quality The blur quality level in the range [0 - 100].
+ *
+ * @return Tvg_Result enumeration.
+ * @retval TVG_RESULT_INVALID_ARGUMENT A @c nullptr passed as the @p scene argument.
+ *
+ * @since 1.0
+ */
+TVG_API Tvg_Result tvg_scene_push_gaussian_blur(Tvg_Paint* scene, float sigma, int direction, int border, int quality);
+
+/**
+ * @brief Apply a drop shadow effect to the scene.
+ *
+ * This function applies a drop shadow effect with a Gaussian blur filter to the scene.
+ * The shadow can be customized with color, opacity, position, and blur parameters.
+ *
+ * @param[in] scene A Tvg_Paint pointer to the scene object.
+ * @param[in] r The red color channel value in the range [0 - 255].
+ * @param[in] g The green color channel value in the range [0 - 255].
+ * @param[in] b The blue color channel value in the range [0 - 255].
+ * @param[in] a The opacity/alpha channel value in the range [0 - 255].
+ * @param[in] angle The shadow angle in degrees [0 - 360].
+ * @param[in] distance The shadow distance from the original object.
+ * @param[in] sigma The blur sigma value for the shadow. Must be greater than 0.
+ * @param[in] quality The blur quality level in the range [0 - 100].
+ *
+ * @return Tvg_Result enumeration.
+ * @retval TVG_RESULT_INVALID_ARGUMENT A @c nullptr passed as the @p scene argument.
+ *
+ * @since 1.0
+ */
 TVG_API Tvg_Result tvg_scene_push_drop_shadow(Tvg_Paint* scene, int r, int g, int b, int a, double angle, double distance, double sigma, int quality);
+
+/**
+ * @brief Apply a fill color effect to the scene.
+ *
+ * This function overrides the scene content color with the specified fill information.
+ * This is an experimental API.
+ *
+ * @param[in] scene A Tvg_Paint pointer to the scene object.
+ * @param[in] r The red color channel value in the range [0 - 255].
+ * @param[in] g The green color channel value in the range [0 - 255].
+ * @param[in] b The blue color channel value in the range [0 - 255].
+ * @param[in] a The opacity/alpha channel value in the range [0 - 255].
+ *
+ * @return Tvg_Result enumeration.
+ * @retval TVG_RESULT_INVALID_ARGUMENT A @c nullptr passed as the @p scene argument.
+ *
+ * @note This is an experimental API.
+ * @since 1.0
+ */
+TVG_API Tvg_Result tvg_scene_push_fill(Tvg_Paint* scene, int r, int g, int b, int a);
+
+/**
+ * @brief Apply a tint effect to the scene.
+ *
+ * This function tints the current scene color using black and white color parameters
+ * with a specified intensity. This is an experimental API.
+ *
+ * @param[in] scene A Tvg_Paint pointer to the scene object.
+ * @param[in] black_r The red channel value for black color in the range [0 - 255].
+ * @param[in] black_g The green channel value for black color in the range [0 - 255].
+ * @param[in] black_b The blue channel value for black color in the range [0 - 255].
+ * @param[in] white_r The red channel value for white color in the range [0 - 255].
+ * @param[in] white_g The green channel value for white color in the range [0 - 255].
+ * @param[in] white_b The blue channel value for white color in the range [0 - 255].
+ * @param[in] intensity The tint intensity in the range [0 - 100].
+ *
+ * @return Tvg_Result enumeration.
+ * @retval TVG_RESULT_INVALID_ARGUMENT A @c nullptr passed as the @p scene argument.
+ *
+ * @note This is an experimental API.
+ * @since 1.0
+ */
+TVG_API Tvg_Result tvg_scene_push_tint(Tvg_Paint* scene, int black_r, int black_g, int black_b, int white_r, int white_g, int white_b, float intensity);
+
+/**
+ * @brief Apply a tritone color effect to the scene.
+ *
+ * This function applies a tritone color effect using three color parameters for shadows,
+ * midtones, and highlights. This is an experimental API.
+ *
+ * @param[in] scene A Tvg_Paint pointer to the scene object.
+ * @param[in] shadow_r The red channel value for shadow color in the range [0 - 255].
+ * @param[in] shadow_g The green channel value for shadow color in the range [0 - 255].
+ * @param[in] shadow_b The blue channel value for shadow color in the range [0 - 255].
+ * @param[in] midtone_r The red channel value for midtone color in the range [0 - 255].
+ * @param[in] midtone_g The green channel value for midtone color in the range [0 - 255].
+ * @param[in] midtone_b The blue channel value for midtone color in the range [0 - 255].
+ * @param[in] highlight_r The red channel value for highlight color in the range [0 - 255].
+ * @param[in] highlight_g The green channel value for highlight color in the range [0 - 255].
+ * @param[in] highlight_b The blue channel value for highlight color in the range [0 - 255].
+ *
+ * @return Tvg_Result enumeration.
+ * @retval TVG_RESULT_INVALID_ARGUMENT A @c nullptr passed as the @p scene argument.
+ *
+ * @note This is an experimental API.
+ * @since 1.0
+ */
+TVG_API Tvg_Result tvg_scene_push_tritone(Tvg_Paint* scene, int shadow_r, int shadow_g, int shadow_b, int midtone_r, int midtone_g, int midtone_b, int highlight_r, int highlight_g, int highlight_b);
 
 /** \} */   // end defgroup ThorVGCapi_Scene
 
