@@ -28,7 +28,6 @@
 #include "tvgCommon.h"
 #include "tvgArray.h"
 #include "tvgLock.h"
-#include <iostream>
 
 namespace tvg
 {
