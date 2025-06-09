@@ -133,9 +133,11 @@ static void _rasterBlendingPolygonImageSegment(SwSurface* surface, const SwImage
         if (x2 > maxx) x2 = maxx;
 
         //Anti-Aliasing frames
-        ay = y - aaSpans->yStart;
-        if (aaSpans->lines[ay].x[0] > x1) aaSpans->lines[ay].x[0] = x1;
-        if (aaSpans->lines[ay].x[1] < x2) aaSpans->lines[ay].x[1] = x2;
+        if (aaSpans) {
+            ay = y - aaSpans->yStart;
+            if (aaSpans->lines[ay].x[0] > x1) aaSpans->lines[ay].x[0] = x1;
+            if (aaSpans->lines[ay].x[1] < x2) aaSpans->lines[ay].x[1] = x2;
+        }
 
         //Range allowed
         if ((x2 - x1) >= 1 && (x1 < maxx) && (x2 > minx)) {
@@ -310,9 +312,11 @@ static void _rasterPolygonImageSegment(SwSurface* surface, const SwImage* image,
         if (x2 > maxx) x2 = maxx;
 
         //Anti-Aliasing frames
-        ay = y - aaSpans->yStart;
-        if (aaSpans->lines[ay].x[0] > x1) aaSpans->lines[ay].x[0] = x1;
-        if (aaSpans->lines[ay].x[1] < x2) aaSpans->lines[ay].x[1] = x2;
+        if (aaSpans) {
+            ay = y - aaSpans->yStart;
+            if (aaSpans->lines[ay].x[0] > x1) aaSpans->lines[ay].x[0] = x1;
+            if (aaSpans->lines[ay].x[1] < x2) aaSpans->lines[ay].x[1] = x2;
+        }
 
         //Range allowed
         if ((x2 - x1) >= 1 && (x1 < maxx) && (x2 > minx)) {
@@ -622,13 +626,8 @@ static void _rasterPolygonImage(SwSurface* surface, const SwImage* image, const 
 }
 
 
-static AASpans* _AASpans(float ymin, float ymax, const SwImage* image, const SwBBox* region)
+static AASpans* _AASpans(int yStart, int yEnd)
 {
-    auto yStart = static_cast<int>(ymin);
-    auto yEnd = static_cast<int>(ymax);
-
-    if (!_arrange(image, region, yStart, yEnd)) return nullptr;
-
     auto aaSpans = static_cast<AASpans*>(malloc(sizeof(AASpans)));
     aaSpans->yStart = yStart;
     aaSpans->yEnd = yEnd;
@@ -837,7 +836,7 @@ static void _calcAAEdge(AASpans *aaSpans, int32_t eidx)
 }
 
 
-static bool _apply(SwSurface* surface, AASpans* aaSpans)
+static void _apply(SwSurface* surface, AASpans* aaSpans)
 {
     auto end = surface->buf32 + surface->h * surface->stride;
     auto y = aaSpans->yStart;
@@ -894,8 +893,6 @@ static bool _apply(SwSurface* surface, AASpans* aaSpans)
 
     free(aaSpans->lines);
     free(aaSpans);
-
-    return true;
 }
 
 
@@ -919,8 +916,7 @@ static bool _rasterTexmapPolygon(SwSurface* surface, const SwImage* image, const
     //Exceptions: No dedicated drawing area?
     if ((!image->rle && !region) || (image->rle && image->rle->size == 0)) return true;
 
-   /* Prepare vertices.
-      shift XY coordinates to match the sub-pixeling technique. */
+    //Prepare vertices. Shift XY coordinates to match the sub-pixeling technique.
     Vertex vertices[4];
     vertices[0] = {{0.0f, 0.0f}, {0.0f, 0.0f}};
     vertices[1] = {{float(image->w), 0.0f}, {float(image->w), 0.0f}};
@@ -934,8 +930,11 @@ static bool _rasterTexmapPolygon(SwSurface* surface, const SwImage* image, const
         if (vertices[i].pt.y > ye) ye = vertices[i].pt.y;
     }
 
-    auto aaSpans = _AASpans(ys, ye, image, region);
-    if (!aaSpans) return true;
+    auto yStart = static_cast<int>(ys);
+    auto yEnd = static_cast<int>(ye);
+
+    if (!_arrange(image, region, yStart, yEnd)) return true;
+    auto aaSpans = rightAngle(transform) ?  nullptr : _AASpans(yStart, yEnd);
 
     Polygon polygon;
 
@@ -958,5 +957,6 @@ static bool _rasterTexmapPolygon(SwSurface* surface, const SwImage* image, const
         _compositeMaskImage(surface, &surface->compositor->image, surface->compositor->bbox);
     }
 #endif
-    return _apply(surface, aaSpans);
+    if (aaSpans) _apply(surface, aaSpans);
+    return true;
 }
