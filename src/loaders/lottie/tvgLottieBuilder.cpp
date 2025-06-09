@@ -352,13 +352,11 @@ static void _repeat(LottieGroup* parent, Shape* path, RenderContext* ctx)
 
         for (int i = 0; i < repeater->cnt; ++i) {
             auto multiplier = repeater->offset + static_cast<float>(i);
-
             ARRAY_FOREACH(p, propagators) {
                 auto shape = static_cast<Shape*>((*p)->duplicate());
                 SHAPE(shape)->rs.path = SHAPE(path)->rs.path;
-
-                auto opacity = repeater->interpOpacity ? tvg::lerp<uint8_t>(repeater->startOpacity, repeater->endOpacity, static_cast<float>(i + 1) / repeater->cnt) : repeater->startOpacity;
-                shape->opacity(opacity);
+                auto opacity = tvg::lerp<uint8_t>(repeater->startOpacity, repeater->endOpacity, static_cast<float>(i + 1) / repeater->cnt);
+                shape->opacity(MULTIPLY((*p)->opacity(), opacity));
 
                 Matrix m;
                 tvg::identity(&m);
@@ -366,11 +364,10 @@ static void _repeat(LottieGroup* parent, Shape* path, RenderContext* ctx)
                 scale(&m, {powf(repeater->scale.x * 0.01f, multiplier), powf(repeater->scale.y * 0.01f, multiplier)});
                 rotate(&m, repeater->rotation * multiplier);
                 translateR(&m, -repeater->anchor);
-                m = repeater->transform * m;
 
                 Matrix inv;
                 inverse(&repeater->transform, &inv);
-                shape->transform(m * (inv * shape->transform()));
+                shape->transform((repeater->transform * m) * (inv * shape->transform()));
                 shapes.push(shape);
             }
         }
@@ -739,7 +736,6 @@ void LottieBuilder::updateRepeater(TVG_UNUSED LottieGroup* parent, LottieObject*
     r.startOpacity = repeater->startOpacity(frameNo, tween, exps);
     r.endOpacity = repeater->endOpacity(frameNo, tween, exps);
     r.inorder = repeater->inorder;
-    r.interpOpacity = (r.startOpacity == r.endOpacity) ? false : true;
     ctx->repeaters.push(r);
 
     ctx->merging = nullptr;
