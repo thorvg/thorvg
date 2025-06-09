@@ -1237,7 +1237,7 @@ void LottieBuilder::updateMasks(LottieLayer* layer, float frameNo)
 bool LottieBuilder::updateMatte(LottieComposition* comp, float frameNo, Scene* scene, LottieLayer* layer)
 {
     auto target = layer->matteTarget;
-    if (!target) return true;
+    if (!target || target->type == LottieLayer::Null) return true;
 
     updateLayer(comp, scene, target, frameNo);
 
