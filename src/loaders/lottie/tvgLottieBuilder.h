@@ -42,7 +42,6 @@ struct RenderRepeater
     float rotation;
     uint8_t startOpacity;
     uint8_t endOpacity;
-    bool interpOpacity;
     bool inorder;
 };
 
