@@ -657,14 +657,9 @@ static void _calcAAEdge(AASpans *aaSpans, int32_t eidx)
         ptx[1] = tx[1]; \
     } while (0)
 
-    struct Point
-    {
-        int32_t x, y;
-    };
-
     int32_t y = 0;
-    Point pEdge = {-1, -1};       //previous edge point
-    Point edgeDiff = {0, 0};      //temporary used for point distance
+    SwPoint pEdge = {-1, -1};       //previous edge point
+    SwPoint edgeDiff = {0, 0};      //temporary used for point distance
 
     /* store bigger to tx[0] between prev and current edge's x positions. */
     int32_t tx[2] = {0, 0};
@@ -791,8 +786,7 @@ static void _apply(SwSurface* surface, AASpans* aaSpans)
 {
     auto end = surface->buf32 + surface->h * surface->stride;
     auto y = aaSpans->yStart;
-    uint32_t pixel;
-    uint32_t* dst;
+    pixel_t* dst;
     int32_t pos;
 
    //left side
@@ -808,8 +802,6 @@ static void _apply(SwSurface* surface, AASpans* aaSpans)
 
             //Left edge
             dst = surface->buf32 + (offset + line->x[0]);
-            if (line->x[0] > 1) pixel = *(dst - 1);
-            else pixel = *dst;
             pos = 1;
 
             //exceptional handling. out of memory bound.
@@ -818,25 +810,20 @@ static void _apply(SwSurface* surface, AASpans* aaSpans)
             }
 
             while (pos <= line->length[0]) {
-                *dst = INTERPOLATE(*dst, pixel, line->coverage[0] * pos);
+                *dst = INTERPOLATE(*dst, *dst, line->coverage[0] * pos++);
                 ++dst;
-                ++pos;
             }
 
             //Right edge
             dst = surface->buf32 + offset + line->x[1] - 1;
-
-            if (line->x[1] < (int32_t)(surface->w - 1)) pixel = *(dst + 1);
-            else pixel = *dst;
             pos = line->length[1];
 
             //exceptional handling. out of memory bound.
             if (dst - pos < surface->buf32) --pos;
 
             while (pos > 0) {
-                *dst = INTERPOLATE(*dst, pixel, 255 - (line->coverage[1] * pos));
+                *dst = INTERPOLATE(*dst, *dst, 255 - (line->coverage[1] * pos--));
                 --dst;
-                --pos;
             }
         }
         y++;
