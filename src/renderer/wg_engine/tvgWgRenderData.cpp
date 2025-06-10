@@ -202,12 +202,38 @@ void WgImageData::update(WgContext& context, const RenderSurface* surface)
     if (texHandleChanged) {
         context.releaseTextureView(textureView);
         textureView = context.createTextureView(texture);
+        // update bind group
+        context.layouts.releaseBindGroup(bindGroup);
+        bindGroup = context.layouts.createBindGroupTexSampled(context.samplerLinearRepeat, textureView);
+    }
+};
+
+
+void WgImageData::update(WgContext& context, const Fill* fill)
+{
+    // compute gradient data
+    WgShaderTypeGradientData gradientData;
+    gradientData.update(fill);
+    // allocate new texture handle
+    bool texHandleChanged = context.allocateTexture(texture, WG_TEXTURE_GRADIENT_SIZE, 1, WGPUTextureFormat_RGBA8Unorm, gradientData.data);
+    // update texture view of texture handle was changed
+    if (texHandleChanged) {
+        context.releaseTextureView(textureView);
+        textureView = context.createTextureView(texture);
+        // get sampler by spread type
+        WGPUSampler sampler = context.samplerLinearClamp;
+        if (fill->spread() == FillSpread::Reflect) sampler = context.samplerLinearMirror;
+        if (fill->spread() == FillSpread::Repeat) sampler = context.samplerLinearRepeat;
+        // update bind group
+        context.layouts.releaseBindGroup(bindGroup);
+        bindGroup = context.layouts.createBindGroupTexSampled(sampler, textureView);
     }
 };
 
 
 void WgImageData::release(WgContext& context)
 {
+    context.layouts.releaseBindGroup(bindGroup);
     context.releaseTextureView(textureView);
     context.releaseTexture(texture);
 };
@@ -216,52 +242,31 @@ void WgImageData::release(WgContext& context)
 // WgRenderSettings
 //***********************************************************************
 
-void WgRenderSettings::updateFill(WgContext& context, const Fill* fill)
+void WgRenderSettings::update(WgContext& context, const tvg::Matrix& transform, tvg::ColorSpace cs, uint8_t opacity)
 {
-    rasterType = WgRenderRasterType::Gradient;
-    // get gradient transfrom matrix
-    Matrix invFillTransform;
-    WgShaderTypeMat4x4f gradientTrans; // identity by default
-    if (inverse(&fill->transform(), &invFillTransform))
-        gradientTrans.update(invFillTransform);
+    settings.transform.update(transform);
+    settings.options.update(cs, opacity);
+}
+
+void WgRenderSettings::update(WgContext& context, const Fill* fill)
+{
+    assert(fill);
+    settings.gradient.update(fill);
+    gradientData.update(context, fill);
     // get gradient rasterisation settings
-    WgShaderTypeGradient gradient;
-    if (fill->type() == Type::LinearGradient) {
-        gradient.update((LinearGradient*)fill);
+    rasterType = WgRenderRasterType::Gradient;
+    if (fill->type() == Type::LinearGradient)
         fillType = WgRenderSettingsType::Linear;
-    } else if (fill->type() == Type::RadialGradient) {
-        gradient.update((RadialGradient*)fill);
+    else if (fill->type() == Type::RadialGradient)
         fillType = WgRenderSettingsType::Radial;
-    }
-    // update gpu assets
-    bool bufferGradientSettingsChanged = context.allocateBufferUniform(bufferGroupGradient, &gradient.settings, sizeof(gradient.settings));
-    bool bufferGradientTransformChanged = context.allocateBufferUniform(bufferGroupTransfromGrad, &gradientTrans.mat, sizeof(gradientTrans.mat));
-    bool textureGradientChanged = context.allocateTexture(texGradient, WG_TEXTURE_GRADIENT_SIZE, 1, WGPUTextureFormat_RGBA8Unorm, gradient.texData);
-    if (bufferGradientSettingsChanged || textureGradientChanged || bufferGradientTransformChanged) {
-        // update texture view
-        context.releaseTextureView(texViewGradient);
-        texViewGradient = context.createTextureView(texGradient);
-        // get sampler by spread type
-        WGPUSampler sampler = context.samplerLinearClamp;
-        if (fill->spread() == FillSpread::Reflect) sampler = context.samplerLinearMirror;
-        if (fill->spread() == FillSpread::Repeat) sampler = context.samplerLinearRepeat;
-        // update bind group
-        context.layouts.releaseBindGroup(bindGroupGradient);
-        bindGroupGradient = context.layouts.createBindGroupTexSampledBuff2Un(
-            sampler, texViewGradient, bufferGroupGradient, bufferGroupTransfromGrad);
-    }
     skip = false;
 };
 
 
-void WgRenderSettings::updateColor(WgContext& context, const RenderColor& c)
+void WgRenderSettings::update(WgContext& context, const RenderColor& c)
 {
+    settings.color.update(c);
     rasterType = WgRenderRasterType::Solid;
-    WgShaderTypeVec4f solidColor(c);
-    if (context.allocateBufferUniform(bufferGroupSolid, &solidColor, sizeof(solidColor))) {
-        context.layouts.releaseBindGroup(bindGroupSolid);
-        bindGroupSolid = context.layouts.createBindGroupBuffer1Un(bufferGroupSolid);
-    }
     fillType = WgRenderSettingsType::Solid;
     skip = (c.a == 0);
 };
@@ -269,13 +274,7 @@ void WgRenderSettings::updateColor(WgContext& context, const RenderColor& c)
 
 void WgRenderSettings::release(WgContext& context)
 {
-    context.layouts.releaseBindGroup(bindGroupSolid);
-    context.layouts.releaseBindGroup(bindGroupGradient);
-    context.releaseBuffer(bufferGroupSolid);
-    context.releaseBuffer(bufferGroupGradient);
-    context.releaseBuffer(bufferGroupTransfromGrad);
-    context.releaseTexture(texGradient);
-    context.releaseTextureView(texViewGradient);
+    gradientData.release(context);
 };
 
 //***********************************************************************
@@ -284,24 +283,8 @@ void WgRenderSettings::release(WgContext& context)
 
 void WgRenderDataPaint::release(WgContext& context)
 {
-    context.layouts.releaseBindGroup(bindGroupPaint);
-    context.releaseBuffer(bufferModelMat);
-    context.releaseBuffer(bufferBlendSettings);
     clips.clear();
 };
-
-
-void WgRenderDataPaint::update(WgContext& context, const tvg::Matrix& transform, tvg::ColorSpace cs, uint8_t opacity)
-{
-    WgShaderTypeMat4x4f modelMat(transform);
-    WgShaderTypeVec4f blendSettings(cs, opacity);
-    bool bufferModelMatChanged = context.allocateBufferUniform(bufferModelMat, &modelMat, sizeof(modelMat));
-    bool bufferBlendSettingsChanged = context.allocateBufferUniform(bufferBlendSettings, &blendSettings, sizeof(blendSettings));
-    if (bufferModelMatChanged || bufferBlendSettingsChanged) {
-        context.layouts.releaseBindGroup(bindGroupPaint);
-        bindGroupPaint = context.layouts.createBindGroupBuffer2Un(bufferModelMat, bufferBlendSettings);
-    }
-}
 
 
 void WgRenderDataPaint::updateClips(tvg::Array<tvg::RenderData> &clips) {
@@ -467,17 +450,12 @@ void WgRenderDataPicture::updateSurface(WgContext& context, const RenderSurface*
     meshData.imageBox(context, surface->w, surface->h);
     // update texture data
     imageData.update(context, surface);
-    // update texture bind group
-    context.layouts.releaseBindGroup(bindGroupPicture);
-    bindGroupPicture = context.layouts.createBindGroupTexSampled(
-        context.samplerLinearRepeat, imageData.textureView
-    );
 }
 
 
 void WgRenderDataPicture::release(WgContext& context)
 {
-    context.layouts.releaseBindGroup(bindGroupPicture);
+    renderSettings.release(context);
     imageData.release(context);
     meshData.release(context);
     WgRenderDataPaint::release(context);
@@ -676,10 +654,10 @@ void WgRenderDataEffectParamsPool::release(WgContext& context)
 }
 
 //***********************************************************************
-// WgRenderDataStageBuffer
+// WgStageBufferGeometry
 //***********************************************************************
 
-void WgRenderDataStageBuffer::append(WgMeshData* meshData)
+void WgStageBufferGeometry::append(WgMeshData* meshData)
 {
     assert(meshData);
     uint32_t vsize = meshData->vbuffer.count * sizeof(meshData->vbuffer[0]);
@@ -712,54 +690,50 @@ void WgRenderDataStageBuffer::append(WgMeshData* meshData)
 }
 
 
-void WgRenderDataStageBuffer::append(WgMeshDataGroup* meshDataGroup)
+void WgStageBufferGeometry::append(WgMeshDataGroup* meshDataGroup)
 {
     ARRAY_FOREACH(p, meshDataGroup->meshes) append(*p);
 }
 
 
-void WgRenderDataStageBuffer::append(WgRenderDataShape* renderDataShape)
+void WgStageBufferGeometry::append(WgRenderDataShape* renderDataShape)
 {
     append(&renderDataShape->meshGroupShapes);
     append(&renderDataShape->meshGroupShapesBBox);
     append(&renderDataShape->meshGroupStrokes);
     append(&renderDataShape->meshGroupStrokesBBox);
     append(&renderDataShape->meshDataBBox);
-    ARRAY_FOREACH(p, renderDataShape->clips)
-        append((WgRenderDataShape* )(*p));
 }
 
 
-void WgRenderDataStageBuffer::append(WgRenderDataPicture* renderDataPicture)
+void WgStageBufferGeometry::append(WgRenderDataPicture* renderDataPicture)
 {
     append(&renderDataPicture->meshData);
-    ARRAY_FOREACH(p, renderDataPicture->clips)
-        append((WgRenderDataShape* )(*p));
 }
 
 
-void WgRenderDataStageBuffer::release(WgContext& context)
+void WgStageBufferGeometry::release(WgContext& context)
 {
     context.releaseBuffer(vbuffer_gpu);
     context.releaseBuffer(ibuffer_gpu);
 }
 
 
-void WgRenderDataStageBuffer::clear()
+void WgStageBufferGeometry::clear()
 {
     vbuffer.clear();
     ibuffer.clear();
 }
 
 
-void WgRenderDataStageBuffer::flush(WgContext& context) 
+void WgStageBufferGeometry::flush(WgContext& context) 
 {
     context.allocateBufferVertex(vbuffer_gpu, (float *)vbuffer.data, vbuffer.count);
     context.allocateBufferIndex(ibuffer_gpu, (uint32_t *)ibuffer.data, ibuffer.count);
 }
 
 
-void WgRenderDataStageBuffer::bind(WGPURenderPassEncoder renderPass, size_t voffset, size_t toffset)
+void WgStageBufferGeometry::bind(WGPURenderPassEncoder renderPass, size_t voffset, size_t toffset)
 {
     wgpuRenderPassEncoderSetVertexBuffer(renderPass, 0, vbuffer_gpu, voffset, vbuffer.count - voffset);
     wgpuRenderPassEncoderSetVertexBuffer(renderPass, 1, vbuffer_gpu, toffset, vbuffer.count - toffset);

@@ -125,35 +125,34 @@ void WgShaderTypeVec4f::update(const RenderRegion& r)
 }
 
 //************************************************************************
-// WgShaderTypeGradient
+// WgShaderTypeGradSettings
 //************************************************************************
 
-void WgShaderTypeGradient::update(const LinearGradient* linearGradient)
+void WgShaderTypeGradSettings::update(const Fill* fill)
 {
-    // update gradient data
+    assert(fill);
+    // update transform matrix
+    Matrix invTransform;
+    if (inverse(&fill->transform(), &invTransform))
+        transform.update(invTransform);
+    else transform.identity();
+    // update gradient base points
+    if (fill->type() == Type::LinearGradient)
+        ((LinearGradient*)fill)->linear(&coords.vec[0], &coords.vec[1], &coords.vec[2], &coords.vec[3]);
+    else if (fill->type() == Type::RadialGradient)
+        ((RadialGradient*)fill)->radial(&coords.vec[0], &coords.vec[1], &coords.vec[2], &focal.vec[0], &focal.vec[1], &focal.vec[2]);
+}
+
+//************************************************************************
+// WgShaderTypeGradientData
+//************************************************************************
+
+void WgShaderTypeGradientData::update(const Fill* fill)
+{
+    if (!fill) return;
     const Fill::ColorStop* stops = nullptr;
-    auto stopCnt = linearGradient->colorStops(&stops);
-    updateTexData(stops, stopCnt);
-    // update base points
-    linearGradient->linear(&settings[0], &settings[1], &settings[2], &settings[3]);
-};
-
-
-void WgShaderTypeGradient::update(const RadialGradient* radialGradient)
-{
-    // update gradient data
-    const Fill::ColorStop* stops = nullptr;
-    auto stopCnt = radialGradient->colorStops(&stops);
-    updateTexData(stops, stopCnt);
-    // update base points
-    radialGradient->radial(&settings[0], &settings[1], &settings[2], &settings[4], &settings[5], &settings[6]);
-};
-
-
-void WgShaderTypeGradient::updateTexData(const Fill::ColorStop* stops, uint32_t stopCnt)
-{
+    auto stopCnt = fill->colorStops(&stops);
     if (stopCnt == 0) return;
-
     static Array<Fill::ColorStop> sstops(stopCnt);
     sstops.clear();
     sstops.push(stops[0]);
@@ -167,10 +166,10 @@ void WgShaderTypeGradient::updateTexData(const Fill::ColorStop* stops, uint32_t 
     uint32_t range_s = 0;
     uint32_t range_e = uint32_t(sstops[0].offset * (WG_TEXTURE_GRADIENT_SIZE-1));
     for (uint32_t ti = range_s; (ti < range_e) && (ti < WG_TEXTURE_GRADIENT_SIZE); ti++) {
-        texData[ti * 4 + 0] = sstops[0].r;
-        texData[ti * 4 + 1] = sstops[0].g;
-        texData[ti * 4 + 2] = sstops[0].b;
-        texData[ti * 4 + 3] = sstops[0].a;
+        data[ti * 4 + 0] = sstops[0].r;
+        data[ti * 4 + 1] = sstops[0].g;
+        data[ti * 4 + 2] = sstops[0].b;
+        data[ti * 4 + 3] = sstops[0].a;
     }
     // body
     for (uint32_t di = 1; di < sstops.count; di++) {
@@ -179,10 +178,10 @@ void WgShaderTypeGradient::updateTexData(const Fill::ColorStop* stops, uint32_t 
         float delta = 1.0f/(range_e - range_s);
         for (uint32_t ti = range_s; (ti < range_e) && (ti < WG_TEXTURE_GRADIENT_SIZE); ti++) {
             float t = (ti - range_s) * delta;
-            texData[ti * 4 + 0] = tvg::lerp(sstops[di-1].r, sstops[di].r, t);
-            texData[ti * 4 + 1] = tvg::lerp(sstops[di-1].g, sstops[di].g, t);
-            texData[ti * 4 + 2] = tvg::lerp(sstops[di-1].b, sstops[di].b, t);
-            texData[ti * 4 + 3] = tvg::lerp(sstops[di-1].a, sstops[di].a, t);
+            data[ti * 4 + 0] = tvg::lerp(sstops[di-1].r, sstops[di].r, t);
+            data[ti * 4 + 1] = tvg::lerp(sstops[di-1].g, sstops[di].g, t);
+            data[ti * 4 + 2] = tvg::lerp(sstops[di-1].b, sstops[di].b, t);
+            data[ti * 4 + 3] = tvg::lerp(sstops[di-1].a, sstops[di].a, t);
         }
     }
     // tail
@@ -190,10 +189,10 @@ void WgShaderTypeGradient::updateTexData(const Fill::ColorStop* stops, uint32_t 
     range_s = uint32_t(colorStopLast.offset * (WG_TEXTURE_GRADIENT_SIZE-1));
     range_e = WG_TEXTURE_GRADIENT_SIZE;
     for (uint32_t ti = range_s; ti < range_e; ti++) {
-        texData[ti * 4 + 0] = colorStopLast.r;
-        texData[ti * 4 + 1] = colorStopLast.g;
-        texData[ti * 4 + 2] = colorStopLast.b;
-        texData[ti * 4 + 3] = colorStopLast.a;
+        data[ti * 4 + 0] = colorStopLast.r;
+        data[ti * 4 + 1] = colorStopLast.g;
+        data[ti * 4 + 2] = colorStopLast.b;
+        data[ti * 4 + 3] = colorStopLast.a;
     }
 }
 

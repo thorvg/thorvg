@@ -147,18 +147,18 @@ RenderData WgRenderer::prepare(const RenderShape& rshape, RenderData data, const
 
     // update paint settings
     if ((!data) || (flags & (RenderUpdateFlag::Transform | RenderUpdateFlag::Blend))) {
-        renderDataShape->update(mContext, transform, mTargetSurface.cs, opacity);
+        renderDataShape->renderSettingsShape.update(mContext, transform, mTargetSurface.cs, opacity);
+        renderDataShape->renderSettingsStroke.update(mContext, transform, mTargetSurface.cs, opacity);
         renderDataShape->fillRule = rshape.rule;
     }
 
     // setup fill settings
     renderDataShape->viewport = mViewport;
-    renderDataShape->opacity = opacity;
-    if (flags & RenderUpdateFlag::Gradient && rshape.fill) renderDataShape->renderSettingsShape.updateFill(mContext, rshape.fill);
-    else if (flags & RenderUpdateFlag::Color) renderDataShape->renderSettingsShape.updateColor(mContext, rshape.color);
+    if (flags & RenderUpdateFlag::Gradient && rshape.fill) renderDataShape->renderSettingsShape.update(mContext, rshape.fill);
+    else if (flags & RenderUpdateFlag::Color) renderDataShape->renderSettingsShape.update(mContext, rshape.color);
     if (rshape.stroke) {
-        if (flags & RenderUpdateFlag::GradientStroke && rshape.stroke->fill) renderDataShape->renderSettingsStroke.updateFill(mContext, rshape.stroke->fill);
-        else if (flags & RenderUpdateFlag::Stroke) renderDataShape->renderSettingsStroke.updateColor(mContext, rshape.stroke->color);
+        if (flags & RenderUpdateFlag::GradientStroke && rshape.stroke->fill) renderDataShape->renderSettingsStroke.update(mContext, rshape.stroke->fill);
+        else if (flags & RenderUpdateFlag::Stroke) renderDataShape->renderSettingsStroke.update(mContext, rshape.stroke->color);
     }
 
     // store clips data
@@ -177,9 +177,8 @@ RenderData WgRenderer::prepare(RenderSurface* surface, RenderData data, const Ma
 
     // update paint settings
     renderDataPicture->viewport = mViewport;
-    renderDataPicture->opacity = opacity;
     if (flags & (RenderUpdateFlag::Transform | RenderUpdateFlag::Blend)) {
-        renderDataPicture->update(mContext, transform, surface->cs, opacity);
+        renderDataPicture->renderSettings.update(mContext, transform, surface->cs, opacity);
     }
 
     // update image data
@@ -192,6 +191,7 @@ RenderData WgRenderer::prepare(RenderSurface* surface, RenderData data, const Ma
 
     return renderDataPicture;
 }
+
 
 bool WgRenderer::preRender()
 {
