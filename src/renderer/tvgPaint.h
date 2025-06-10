@@ -95,9 +95,7 @@ namespace tvg
 
         uint8_t ref()
         {
-            if (refCnt == UINT16_MAX) TVGERR("RENDERER", "Reference Count Overflow!");
-            else ++refCnt;
-            return refCnt;
+            return ++refCnt;
         }
 
         uint8_t unref()
