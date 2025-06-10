@@ -33,9 +33,7 @@ struct Polygon
 
 struct AALine
 {
-   int32_t x[2];
-   int32_t coverage[2];
-   int32_t length[2];
+   uint16_t x[2];
 };
 
 struct AASpans
@@ -138,8 +136,8 @@ static void _rasterBlendingPolygonImageSegment(SwSurface* surface, const SwImage
         //Anti-Aliasing frames
         if (aaSpans) {
             ay = y - aaSpans->yStart;
-            if (aaSpans->lines[ay].x[0] > x1) aaSpans->lines[ay].x[0] = x1;
-            if (aaSpans->lines[ay].x[1] < x2) aaSpans->lines[ay].x[1] = x2;
+            if (aaSpans->lines[ay].x[0] > x1) aaSpans->lines[ay].x[0] = static_cast<uint16_t>(x1);
+            if (aaSpans->lines[ay].x[1] < x2) aaSpans->lines[ay].x[1] = static_cast<uint16_t>(x2);
         }
 
         //Range allowed
@@ -149,9 +147,7 @@ static void _rasterBlendingPolygonImageSegment(SwSurface* surface, const SwImage
             dx = 1 - (_xa - x1);
             u = _ua + dx * _dudx;
             v = _va + dx * _dvdx;
-
             buf = dbuf + ((y * surface->stride) + x1);
-
             x = x1;
 
             //Draw horizontal line
@@ -273,12 +269,13 @@ static void _rasterPolygonImageSegment(SwSurface* surface, const SwImage* image,
         //Anti-Aliasing frames
         if (aaSpans) {
             ay = y - aaSpans->yStart;
-            if (aaSpans->lines[ay].x[0] > x1) aaSpans->lines[ay].x[0] = x1;
-            if (aaSpans->lines[ay].x[1] < x2) aaSpans->lines[ay].x[1] = x2;
+            if (aaSpans->lines[ay].x[0] > x1) aaSpans->lines[ay].x[0] = static_cast<uint16_t>(x1);
+            if (aaSpans->lines[ay].x[1] < x2) aaSpans->lines[ay].x[1] = static_cast<uint16_t>(x2);
         }
 
         //Range allowed
         if ((x2 - x1) >= 1 && (x1 < maxx) && (x2 > minx)) {
+
             //Perform subtexel pre-stepping on UV
             dx = 1 - (_xa - x1);
             u = _ua + dx * _dudx;
@@ -299,6 +296,7 @@ static void _rasterPolygonImageSegment(SwSurface* surface, const SwImage* image,
 
                 ar = _modf(u);
                 ab = _modf(v);
+
                 iru = uu + 1;
                 irv = vv + 1;
 
@@ -547,243 +545,40 @@ static AASpans* _AASpans(int yStart, int yEnd)
     aaSpans->lines = tvg::malloc<AALine*>(height * sizeof(AALine));
 
     for (int32_t i = 0; i < height; i++) {
-        aaSpans->lines[i].x[0] = INT32_MAX;
+        aaSpans->lines[i].x[0] = UINT16_MAX;
         aaSpans->lines[i].x[1] = 0;
-        aaSpans->lines[i].length[0] = 0;
-        aaSpans->lines[i].length[1] = 0;
     }
     return aaSpans;
 }
 
 
-static void _calcIrregularCoverage(AALine* lines, int32_t eidx, int32_t y, int32_t diagonal, int32_t edgeDist, bool reverse)
-{
-    if (eidx == 1) reverse = !reverse;
-    int32_t coverage = (255 / (diagonal + 2));
-    int32_t tmp;
-    for (int32_t ry = 0; ry < (diagonal + 2); ry++) {
-        tmp = y - ry - edgeDist;
-        if (tmp < 0) return;
-        lines[tmp].length[eidx] = 1;
-        if (reverse) lines[tmp].coverage[eidx] = 255 - (coverage * ry);
-        else lines[tmp].coverage[eidx] = (coverage * ry);
-    }
-}
-
-
-static void _calcVertCoverage(AALine *lines, int32_t eidx, int32_t y, int32_t rewind, bool reverse)
-{
-    if (eidx == 1) reverse = !reverse;
-    int32_t coverage = (255 / (rewind + 1));
-    int32_t tmp;
-    for (int ry = 1; ry < (rewind + 1); ry++) {
-        tmp = y - ry;
-        if (tmp < 0) return;
-        lines[tmp].length[eidx] = 1;
-        if (reverse) lines[tmp].coverage[eidx] = (255 - (coverage * ry));
-        else lines[tmp].coverage[eidx] = (coverage * ry);
-    }
-}
-
-
-static void _calcHorizCoverage(AALine *lines, int32_t eidx, int32_t y, int32_t x, int32_t x2)
-{
-    lines[y].length[eidx] = abs(x - x2);
-    lines[y].coverage[eidx] = (255 / (lines[y].length[eidx] + 1));
-}
-
-
-/*
- * This Anti-Aliasing mechanism is originated from Hermet Park's idea.
- * To understand this AA logic, you can refer this page:
- * https://uigraphics.tistory.com/1
-*/
-static void _calcAAEdge(AASpans *aaSpans, int32_t eidx)
-{
-//Previous edge direction:
-#define DirOutHor 0x0011
-#define DirOutVer 0x0001
-#define DirInHor  0x0010
-#define DirInVer  0x0000
-#define DirNone   0x1000
-
-#define PUSH_VERTEX() \
-    do { \
-        pEdge.x = lines[y].x[eidx]; \
-        pEdge.y = y; \
-        ptx[0] = tx[0]; \
-        ptx[1] = tx[1]; \
-    } while (0)
-
-    int32_t y = 0;
-    SwPoint pEdge = {-1, -1};       //previous edge point
-    SwPoint edgeDiff = {0, 0};      //temporary used for point distance
-
-    /* store bigger to tx[0] between prev and current edge's x positions. */
-    int32_t tx[2] = {0, 0};
-    /* back up prev tx values */
-    int32_t ptx[2] = {0, 0};
-    int32_t diagonal = 0;           //straight diagonal pixels count
-
-    auto yStart = aaSpans->yStart;
-    auto yEnd = aaSpans->yEnd;
-    auto lines = aaSpans->lines;
-
-    int32_t prevDir = DirNone;
-    int32_t curDir = DirNone;
-
-    yEnd -= yStart;
-
-    //Start Edge
-    if (y < yEnd) {
-        pEdge.x = lines[y].x[eidx];
-        pEdge.y = y;
-    }
-
-    //Calculates AA Edges
-    for (y++; y < yEnd; y++) {
-
-        if (lines[y].x[0] == INT32_MAX) continue;
-
-        //Ready tx
-        if (eidx == 0) {
-            tx[0] = pEdge.x;
-            tx[1] = lines[y].x[0];
-        } else {
-            tx[0] = lines[y].x[1];
-            tx[1] = pEdge.x;
-        }
-        edgeDiff.x = (tx[0] - tx[1]);
-        edgeDiff.y = (y - pEdge.y);
-
-        //Confirm current edge direction
-        if (edgeDiff.x > 0) {
-            if (edgeDiff.y == 1) curDir = DirOutHor;
-            else curDir = DirOutVer;
-        } else if (edgeDiff.x < 0) {
-            if (edgeDiff.y == 1) curDir = DirInHor;
-            else curDir = DirInVer;
-        } else curDir = DirNone;
-
-        //straight diagonal increase
-        if ((curDir == prevDir) && (y < yEnd)) {
-            if ((abs(edgeDiff.x) == 1) && (edgeDiff.y == 1)) {
-                ++diagonal;
-                PUSH_VERTEX();
-                continue;
-            }
-        }
-
-        switch (curDir) {
-            case DirOutHor: {
-                _calcHorizCoverage(lines, eidx, y, tx[0], tx[1]);
-                if (diagonal > 0) {
-                    _calcIrregularCoverage(lines, eidx, y, diagonal, 0, true);
-                    diagonal = 0;
-                }
-               /* Increment direction is changed: Outside Vertical -> Outside Horizontal */
-               if (prevDir == DirOutVer) _calcHorizCoverage(lines, eidx, pEdge.y, ptx[0], ptx[1]);
-
-               //Trick, but fine-tunning!
-               if (y == 1) _calcHorizCoverage(lines, eidx, pEdge.y, tx[0], tx[1]);
-               PUSH_VERTEX();
-            }
-            break;
-            case DirOutVer: {
-                _calcVertCoverage(lines, eidx, y, edgeDiff.y, true);
-                if (diagonal > 0) {
-                    _calcIrregularCoverage(lines, eidx, y, diagonal, edgeDiff.y, false);
-                    diagonal = 0;
-                }
-               /* Increment direction is changed: Outside Horizontal -> Outside Vertical */
-               if (prevDir == DirOutHor) _calcHorizCoverage(lines, eidx, pEdge.y, ptx[0], ptx[1]);
-               PUSH_VERTEX();
-            }
-            break;
-            case DirInHor: {
-                _calcHorizCoverage(lines, eidx, (y - 1), tx[0], tx[1]);
-                if (diagonal > 0) {
-                    _calcIrregularCoverage(lines, eidx, y, diagonal, 0, false);
-                    diagonal = 0;
-                }
-                /* Increment direction is changed: Outside Horizontal -> Inside Horizontal */
-               if (prevDir == DirOutHor) _calcHorizCoverage(lines, eidx, pEdge.y, ptx[0], ptx[1]);
-               PUSH_VERTEX();
-            }
-            break;
-            case DirInVer: {
-                _calcVertCoverage(lines, eidx, y, edgeDiff.y, false);
-                if (prevDir == DirOutHor) edgeDiff.y -= 1;      //Weird, fine tuning?????????????????????
-                if (diagonal > 0) {
-                    _calcIrregularCoverage(lines, eidx, y, diagonal, edgeDiff.y, true);
-                    diagonal = 0;
-                }
-                /* Increment direction is changed: Outside Horizontal -> Inside Vertical */
-                if (prevDir == DirOutHor) _calcHorizCoverage(lines, eidx, pEdge.y, ptx[0], ptx[1]);
-                PUSH_VERTEX();
-            }
-            break;
-        }
-        if (curDir != DirNone) prevDir = curDir;
-    }
-
-    //leftovers...?
-    if ((edgeDiff.y == 1) && (edgeDiff.x != 0)) {
-        if (y >= yEnd) y = (yEnd - 1);
-        _calcHorizCoverage(lines, eidx, y - 1, ptx[0], ptx[1]);
-        _calcHorizCoverage(lines, eidx, y, tx[0], tx[1]);
-    } else {
-        ++y;
-        if (y > yEnd) y = yEnd;
-        _calcVertCoverage(lines, eidx, y, (edgeDiff.y + 1), (prevDir & 0x00000001));
-    }
-}
-
-
 static void _apply(SwSurface* surface, AASpans* aaSpans)
 {
-    auto end = surface->buf32 + surface->h * surface->stride;
     auto buf = surface->buf32 + surface->stride * aaSpans->yStart;
+    auto w = int32_t(surface->w - 1);
+    auto h = int32_t(surface->h - 1);
     auto y = aaSpans->yStart;
     auto line = aaSpans->lines;
-    uint32_t pix;
-    uint32_t* dst;
-    int32_t pos;
 
-   _calcAAEdge(aaSpans, 0);    //left side
-   _calcAAEdge(aaSpans, 1);    //right side
+    constexpr int WEIGHT = 190;
+
+    auto feathering = [&](pixel_t* dst, int32_t x) {
+        if (y > 0) {
+            auto top = dst - surface->stride;
+            if (x < w) *dst = INTERPOLATE(*dst, *(top + 1), WEIGHT);
+            if (x > 0) *dst = INTERPOLATE(*dst, *(top - 1), WEIGHT);
+        }
+        if (y < h) {
+            auto bottom = dst + surface->stride;
+            if (x < w) *dst = INTERPOLATE(*dst, *(bottom + 1), WEIGHT);
+            if (x > 0) *dst = INTERPOLATE(*dst, *(bottom - 1), WEIGHT);
+        }
+    };
 
     while (y < aaSpans->yEnd) {
         if (line->x[1] - line->x[0] > 0) {
-            //Left edge
-            dst = buf + line->x[0];
-            pix = *(dst - ((line->x[0] > 1) ? 1 : 0));
-            pos = 1;
-
-            //exceptional handling. out of memory bound.
-            if (dst + line->length[0] >= end) {
-                pos += (dst + line->length[0] - end);
-            }
-
-            while (pos <= line->length[0]) {
-                *dst = INTERPOLATE(*dst, pix, line->coverage[0] * pos);
-                ++dst;
-                ++pos;
-            }
-
-            //Right edge
-            dst = buf + line->x[1] - 1;
-            pix = *(dst + (line->x[1] < (int32_t)(surface->w - 1) ? 1 : 0));
-            pos = line->length[1];
-
-            //exceptional handling. out of memory bound.
-            if (dst - pos < surface->buf32) --pos;
-
-            while (pos > 0) {
-                *dst = INTERPOLATE(*dst, pix, 255 - (line->coverage[1] * pos));
-                --dst;
-                --pos;
-            }
+            feathering(buf + line->x[0], line->x[0]);  //left
+            feathering(buf + line->x[1] - 1, line->x[1] - 1);  //right
         }
         buf += surface->stride;
         ++line;
