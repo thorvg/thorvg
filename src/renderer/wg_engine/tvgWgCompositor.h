@@ -39,7 +39,8 @@ private:
     // pipelines
     WgPipelines pipelines{};
     // stage buffers
-    WgRenderDataStageBuffer stageBuffer{};
+    WgStageBufferGeometry stageBufferGeometry{};
+    WgStageBufferUniform<WgShaderTypePaintSettings> stageBufferPaint;
     // global stencil/depth buffer handles
     WGPUTexture texDepthStencil{};
     WGPUTextureView texViewDepthStencil{};

@@ -49,6 +49,7 @@ public:
     WGPUBindGroup createBindGroupStrorage2RO(WGPUTextureView texView0, WGPUTextureView texView1);
     WGPUBindGroup createBindGroupStrorage3RO(WGPUTextureView texView0, WGPUTextureView texView1, WGPUTextureView texView2);
     WGPUBindGroup createBindGroupBuffer1Un(WGPUBuffer buff);
+    WGPUBindGroup createBindGroupBuffer1Un(WGPUBuffer buff, uint64_t offset, uint64_t size);
     WGPUBindGroup createBindGroupBuffer2Un(WGPUBuffer buff0, WGPUBuffer buff1);
     WGPUBindGroup createBindGroupBuffer3Un(WGPUBuffer buff0, WGPUBuffer buff1, WGPUBuffer buff2);
     void releaseBindGroup(WGPUBindGroup& bindGroup);
