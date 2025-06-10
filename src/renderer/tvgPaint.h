@@ -74,9 +74,9 @@ namespace tvg
         } tr;
         RenderUpdateFlag renderFlag = RenderUpdateFlag::None;
         BlendMethod blendMethod;
+        uint16_t refCnt = 0;       //reference count
         uint8_t ctxFlag;
         uint8_t opacity;
-        uint8_t refCnt = 0;                              //reference count
 
         Impl(Paint* pnt) : paint(pnt)
         {
@@ -95,8 +95,9 @@ namespace tvg
 
         uint8_t ref()
         {
-            if (refCnt == 255) TVGERR("RENDERER", "Corrupted reference count!");
-            return ++refCnt;
+            if (refCnt == UINT16_MAX) TVGERR("RENDERER", "Reference Count Overflow!");
+            else ++refCnt;
+            return refCnt;
         }
 
         uint8_t unref()
