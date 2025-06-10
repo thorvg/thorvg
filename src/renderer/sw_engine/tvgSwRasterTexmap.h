@@ -70,6 +70,11 @@ static bool _arrange(const SwImage* image, const RenderRegion* bbox, int& yStart
     return yEnd > yStart;
 }
 
+static inline int32_t _modf(float v)
+{
+    return 255 - ((int(v * 256.0f)) & 255);
+}
+
 
 static bool _rasterMaskedPolygonImageSegment(SwSurface* surface, const SwImage* image, const RenderRegion* bbox, int yStart, int yEnd, AASpans* aaSpans, uint8_t opacity, uint8_t dirFlag = 0)
 {
@@ -90,7 +95,7 @@ static void _rasterBlendingPolygonImageSegment(SwSurface* surface, const SwImage
     int32_t x1, x2, x, y, ar, ab, iru, irv, px, ay;
     int32_t vv = 0, uu = 0;
     int32_t minx = INT32_MAX, maxx = 0;
-    float dx, u, v, iptr;
+    float dx, u, v;
     uint32_t* buf;
     SwSpan* span = nullptr;         //used only when rle based.
 
@@ -156,8 +161,8 @@ static void _rasterBlendingPolygonImageSegment(SwSurface* surface, const SwImage
 
                 if ((uint32_t) uu >= image->w || (uint32_t) vv >= image->h) continue;
 
-                ar = (int)(255 * (1 - modff(u, &iptr)));
-                ab = (int)(255 * (1 - modff(v, &iptr)));
+                ar = _modf(u);
+                ab = _modf(v);
                 iru = uu + 1;
                 irv = vv + 1;
 
@@ -220,7 +225,7 @@ static void _rasterPolygonImageSegment(SwSurface* surface, const SwImage* image,
     int32_t x1, x2, x, y, ar, ab, iru, irv, px, ay;
     int32_t vv = 0, uu = 0;
     int32_t minx = INT32_MAX, maxx = 0;
-    float dx, u, v, iptr;
+    float dx, u, v;
     uint32_t* buf;
     SwSpan* span = nullptr;         //used only when rle based.
 
@@ -283,102 +288,55 @@ static void _rasterPolygonImageSegment(SwSurface* surface, const SwImage* image,
 
             if (matting) cmp = &surface->compositor->image.buf8[(y * surface->compositor->image.stride + x1) * csize];
 
-            if (opacity == 255) {
-                //Draw horizontal line
-                while (x++ < x2) {
-                    uu = (int) u;
-                    vv = (int) v;
+            const auto fullOpacity = (opacity == 255);
 
-                    if ((uint32_t) uu >= image->w || (uint32_t) vv >= image->h) continue;
+            //Draw horizontal line
+            while (x++ < x2) {
+                uu = (int) u;
+                vv = (int) v;
 
-                    ar = (int)(255.0f * (1.0f - modff(u, &iptr)));
-                    ab = (int)(255.0f * (1.0f - modff(v, &iptr)));
-                    iru = uu + 1;
-                    irv = vv + 1;
+                if ((uint32_t) uu >= image->w || (uint32_t) vv >= image->h) continue;
 
-                    px = *(sbuf + (vv * image->stride) + uu);
+                ar = _modf(u);
+                ab = _modf(v);
+                iru = uu + 1;
+                irv = vv + 1;
+
+                px = *(sbuf + (vv * image->stride) + uu);
+
+                /* horizontal interpolate */
+                if (iru < sw) {
+                    /* right pixel */
+                    int px2 = *(sbuf + (vv * image->stride) + iru);
+                    px = INTERPOLATE(px, px2, ar);
+                }
+                /* vertical interpolate */
+                if (irv < sh) {
+                    /* bottom pixel */
+                    int px2 = *(sbuf + (irv * image->stride) + uu);
 
                     /* horizontal interpolate */
                     if (iru < sw) {
-                        /* right pixel */
-                        int px2 = *(sbuf + (vv * image->stride) + iru);
-                        px = INTERPOLATE(px, px2, ar);
+                        /* bottom right pixel */
+                        int px3 = *(sbuf + (irv * image->stride) + iru);
+                        px2 = INTERPOLATE(px2, px3, ar);
                     }
-                    /* vertical interpolate */
-                    if (irv < sh) {
-                        /* bottom pixel */
-                        int px2 = *(sbuf + (irv * image->stride) + uu);
-
-                        /* horizontal interpolate */
-                        if (iru < sw) {
-                            /* bottom right pixel */
-                            int px3 = *(sbuf + (irv * image->stride) + iru);
-                            px2 = INTERPOLATE(px2, px3, ar);
-                        }
-                        px = INTERPOLATE(px, px2, ab);
-                    }
-                    uint32_t src;
-                    if (matting) {
-                        src = ALPHA_BLEND(px, alpha(cmp));
-                        cmp += csize;
-                    } else {
-                        src = px;
-                    }
-                    *buf = src + ALPHA_BLEND(*buf, IA(src));
-                    ++buf;
-
-                    //Step UV horizontally
-                    u += _dudx;
-                    v += _dvdx;
+                    px = INTERPOLATE(px, px2, ab);
                 }
-            } else {
-                //Draw horizontal line
-                while (x++ < x2) {
-                    uu = (int) u;
-                    vv = (int) v;
-
-                    if ((uint32_t) uu >= image->w || (uint32_t) vv >= image->h) continue;
-
-                    ar = (int)(255.0f * (1.0f - modff(u, &iptr)));
-                    ab = (int)(255.0f * (1.0f - modff(v, &iptr)));
-                    iru = uu + 1;
-                    irv = vv + 1;
-
-                    px = *(sbuf + (vv * sw) + uu);
-
-                    /* horizontal interpolate */
-                    if (iru < sw) {
-                        /* right pixel */
-                        int px2 = *(sbuf + (vv * image->stride) + iru);
-                        px = INTERPOLATE(px, px2, ar);
-                    }
-                    /* vertical interpolate */
-                    if (irv < sh) {
-                        /* bottom pixel */
-                        int px2 = *(sbuf + (irv * image->stride) + uu);
-
-                        /* horizontal interpolate */
-                        if (iru < sw) {
-                            /* bottom right pixel */
-                            int px3 = *(sbuf + (irv * image->stride) + iru);
-                            px2 = INTERPOLATE(px2, px3, ar);
-                        }
-                        px = INTERPOLATE(px, px2, ab);
-                    }
-                    uint32_t src;
-                    if (matting) {
-                        src = ALPHA_BLEND(px, MULTIPLY(opacity, alpha(cmp)));
-                        cmp += csize;
-                    } else {
-                        src = ALPHA_BLEND(px, opacity);
-                    }
-                    *buf = src + ALPHA_BLEND(*buf, IA(src));
-                    ++buf;
-
-                    //Step UV horizontally
-                    u += _dudx;
-                    v += _dvdx;
+                uint32_t src;
+                if (matting) {
+                    auto a = alpha(cmp);
+                    src = fullOpacity ? ALPHA_BLEND(px, a) : ALPHA_BLEND(px, MULTIPLY(opacity, a));
+                    cmp += csize;
+                } else {
+                    src = fullOpacity ? px : ALPHA_BLEND(px, opacity);
                 }
+                *buf = src + ALPHA_BLEND(*buf, IA(src));
+                ++buf;
+
+                //Step UV horizontally
+                u += _dudx;
+                v += _dvdx;
             }
         }
 
@@ -657,14 +615,9 @@ static void _calcAAEdge(AASpans *aaSpans, int32_t eidx)
         ptx[1] = tx[1]; \
     } while (0)
 
-    struct Point
-    {
-        int32_t x, y;
-    };
-
     int32_t y = 0;
-    Point pEdge = {-1, -1};       //previous edge point
-    Point edgeDiff = {0, 0};      //temporary used for point distance
+    SwPoint pEdge = {-1, -1};       //previous edge point
+    SwPoint edgeDiff = {0, 0};      //temporary used for point distance
 
     /* store bigger to tx[0] between prev and current edge's x positions. */
     int32_t tx[2] = {0, 0};
@@ -790,26 +743,21 @@ static void _calcAAEdge(AASpans *aaSpans, int32_t eidx)
 static void _apply(SwSurface* surface, AASpans* aaSpans)
 {
     auto end = surface->buf32 + surface->h * surface->stride;
+    auto buf = surface->buf32 + surface->stride * aaSpans->yStart;
     auto y = aaSpans->yStart;
-    uint32_t pixel;
+    auto line = aaSpans->lines;
+    uint32_t pix;
     uint32_t* dst;
     int32_t pos;
 
-   //left side
-   _calcAAEdge(aaSpans, 0);
-   //right side
-   _calcAAEdge(aaSpans, 1);
+   _calcAAEdge(aaSpans, 0);    //left side
+   _calcAAEdge(aaSpans, 1);    //right side
 
     while (y < aaSpans->yEnd) {
-        auto line = &aaSpans->lines[y - aaSpans->yStart];
-        auto width = line->x[1] - line->x[0];
-        if (width > 0) {
-            auto offset = y * surface->stride;
-
+        if (line->x[1] - line->x[0] > 0) {
             //Left edge
-            dst = surface->buf32 + (offset + line->x[0]);
-            if (line->x[0] > 1) pixel = *(dst - 1);
-            else pixel = *dst;
+            dst = buf + line->x[0];
+            pix = *(dst - ((line->x[0] > 1) ? 1 : 0));
             pos = 1;
 
             //exceptional handling. out of memory bound.
@@ -818,30 +766,29 @@ static void _apply(SwSurface* surface, AASpans* aaSpans)
             }
 
             while (pos <= line->length[0]) {
-                *dst = INTERPOLATE(*dst, pixel, line->coverage[0] * pos);
+                *dst = INTERPOLATE(*dst, pix, line->coverage[0] * pos);
                 ++dst;
                 ++pos;
             }
 
             //Right edge
-            dst = surface->buf32 + offset + line->x[1] - 1;
-
-            if (line->x[1] < (int32_t)(surface->w - 1)) pixel = *(dst + 1);
-            else pixel = *dst;
+            dst = buf + line->x[1] - 1;
+            pix = *(dst + (line->x[1] < (int32_t)(surface->w - 1) ? 1 : 0));
             pos = line->length[1];
 
             //exceptional handling. out of memory bound.
             if (dst - pos < surface->buf32) --pos;
 
             while (pos > 0) {
-                *dst = INTERPOLATE(*dst, pixel, 255 - (line->coverage[1] * pos));
+                *dst = INTERPOLATE(*dst, pix, 255 - (line->coverage[1] * pos));
                 --dst;
                 --pos;
             }
         }
-        y++;
+        buf += surface->stride;
+        ++line;
+        ++y;
     }
-
     tvg::free(aaSpans->lines);
     tvg::free(aaSpans);
 }
