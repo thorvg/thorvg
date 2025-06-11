@@ -26,6 +26,12 @@
 /* LottieModifier                                                       */
 /************************************************************************/
 
+static bool _colinear(const Point* p)
+{
+    return tvg::zero(*p - *(p + 1)) && tvg::zero(*(p + 2) - *(p + 3));
+}
+
+
 LottieModifier* LottieModifier::decorate(LottieModifier* next)
 {
     // let the offset modifer to the end in this chain
@@ -66,10 +72,6 @@ Point LottieRoundnessModifier::rounding(RenderPath& out, Point& prev, Point& cur
 
 RenderPath& LottieRoundnessModifier::modify(PathCommand* inCmds, uint32_t inCmdsCnt, Point* inPts, uint32_t inPtsCnt, Matrix* transform, RenderPath& out)
 {
-    auto colinear = [](const Point* p) {
-        return tvg::zero(*p - *(p + 1)) && tvg::zero(*(p + 2) - *(p + 3));
-    };
-
     buffer->clear();
 
     auto& path = (next) ? *buffer : out;
@@ -90,10 +92,10 @@ RenderPath& LottieRoundnessModifier::modify(PathCommand* inCmds, uint32_t inCmds
                 break;
             }
             case PathCommand::CubicTo: {
-                if (iCmds < inCmdsCnt - 1 && colinear(inPts + iPts - 1)) {
+                if (iCmds < inCmdsCnt - 1 && _colinear(inPts + iPts - 1)) {
                     auto& prev = inPts[iPts - 1];
                     auto& curr = inPts[iPts + 2];
-                    if (inCmds[iCmds + 1] == PathCommand::CubicTo && colinear(inPts + iPts + 2)) {
+                    if (inCmds[iCmds + 1] == PathCommand::CubicTo && _colinear(inPts + iPts + 2)) {
                         roundTo = rounding(path, prev, curr, inPts[iPts + 5], r);
                         iPts += 3;
                         rounded = true;
@@ -316,6 +318,63 @@ void LottieOffsetModifier::line(RenderPath& out, PathCommand* inCmds, uint32_t i
     ++curPt;
 }
 
+void LottieOffsetModifier::cubic(RenderPath& path, Point* pts, State& state, float offset, float threshold, bool& degeneratedLine3)
+{
+    Point intersect{};
+    Array<Bezier> stack{5};
+    bool degeneratedLine1{};
+    bool inside{};
+    stack.push({pts[0], pts[1], pts[2], pts[3]});
+
+    while (!stack.empty()) {
+        auto& bezier = stack.last();
+        auto len = tvg::length(bezier.start - bezier.ctrl1) + tvg::length(bezier.ctrl1 - bezier.ctrl2) + tvg::length(bezier.ctrl2 - bezier.end);
+
+        if (len > threshold * bezier.length() && len > 1.0f) {
+            Bezier next;
+            bezier.split(0.5f, next);
+            stack.push(next);
+            continue;
+        }
+        stack.pop();
+
+        degeneratedLine1 = tvg::zero(bezier.start - bezier.ctrl1);
+        auto line1 = degeneratedLine1 ? state.line : shift(bezier.start, bezier.ctrl1, offset);
+        auto line2 = shift(bezier.ctrl1, bezier.ctrl2, offset);
+
+        //line3 from the previous iteration was degenerated to a point - calculate intersection with the last valid line (state.line)
+        if (degeneratedLine3) {
+            intersected(degeneratedLine1 ? line2 : line1, state.line, intersect, inside);
+            path.pts.push(intersect);
+            path.pts.push(intersect);
+        }
+
+        degeneratedLine3 = tvg::zero(bezier.ctrl2 - bezier.end);
+        auto& line3 = state.line = degeneratedLine3 ? line2 : shift(bezier.ctrl2, bezier.end, offset);
+
+        if (state.moveto) {
+            state.movetoOutIndex = path.pts.count;
+            path.moveTo(line1.pt1);
+            state.firstLine = line1;
+            state.moveto = false;
+        }
+
+        if (degeneratedLine1) path.pts.push(path.pts.last());
+        else {
+            intersected(line1, line2, intersect, inside);
+            path.pts.push(intersect);
+        }
+
+        if (!degeneratedLine3) {
+            intersected(line2, line3, intersect, inside);
+            path.pts.push(intersect);
+            path.pts.push(line3.pt2);
+        }
+        path.cmds.push(PathCommand::CubicTo);
+    }
+}
+
+
 RenderPath& LottieOffsetModifier::modify(PathCommand* inCmds, uint32_t inCmdsCnt, Point* inPts, uint32_t inPtsCnt, TVG_UNUSED Matrix* transform, RenderPath& out)
 {
     auto clockwise = [](Point* pts, uint32_t n) {
@@ -330,71 +389,44 @@ RenderPath& LottieOffsetModifier::modify(PathCommand* inCmds, uint32_t inCmdsCnt
     buffer->clear();
 
     auto& path = (next) ? *buffer : out;
-
     path.cmds.reserve(inCmdsCnt * 2);
     path.pts.reserve(inPtsCnt * (join == StrokeJoin::Round ? 4 : 2));
 
-    Array<Bezier> stack{5};
     State state;
     auto offset = clockwise(inPts, inPtsCnt) ? this->offset : -this->offset;
     auto threshold = 1.0f / fabsf(offset) + 1.0f;
+    bool degeneratedLine3{};
 
     for (uint32_t iCmd = 0, iPt = 0; iCmd < inCmdsCnt; ++iCmd) {
-        if (inCmds[iCmd] == PathCommand::MoveTo) {
-            state.moveto = true;
-            state.movetoInIndex = iPt++;
-        } else if (inCmds[iCmd] == PathCommand::LineTo) {
-            line(out, inCmds, inCmdsCnt, inPts, iPt, iCmd, state, offset, false);
-        } else if (inCmds[iCmd] == PathCommand::CubicTo) {
-            //cubic degenerated to a line
-            if (tvg::zero(inPts[iPt - 1] - inPts[iPt]) || tvg::zero(inPts[iPt + 1] - inPts[iPt + 2])) {
-                ++iPt;
-                line(out, inCmds, inCmdsCnt, inPts, iPt, iCmd, state, offset, true);
-                ++iPt;
-                continue;
+        switch (inCmds[iCmd]) {
+            case PathCommand::MoveTo: {
+                state.moveto = true;
+                state.movetoInIndex = iPt++;
+                break;
             }
-
-            stack.push({inPts[iPt - 1], inPts[iPt], inPts[iPt + 1], inPts[iPt + 2]});
-            while (!stack.empty()) {
-                auto& bezier = stack.last();
-                auto len = tvg::length(bezier.start - bezier.ctrl1) + tvg::length(bezier.ctrl1 - bezier.ctrl2) + tvg::length(bezier.ctrl2 - bezier.end);
-
-                if (len >  threshold * bezier.length()) {
-                    Bezier next;
-                    bezier.split(0.5f, next);
-                    stack.push(next);
+            case PathCommand::LineTo: {
+                line(out, inCmds, inCmdsCnt, inPts, iPt, iCmd, state, offset, false);
+                break;
+            }
+            case PathCommand::CubicTo: {
+                //cubic degenerated to a line
+                if (_colinear(inPts + iPt - 1)) {
+                    ++iPt;
+                    line(out, inCmds, inCmdsCnt, inPts, iPt, iCmd, state, offset, true);
+                    ++iPt;
                     continue;
                 }
-                stack.pop();
-
-                auto line1 = shift(bezier.start, bezier.ctrl1, offset);
-                auto line2 = shift(bezier.ctrl1, bezier.ctrl2, offset);
-                auto line3 = shift(bezier.ctrl2, bezier.end, offset);
-
-                if (state.moveto) {
-                    state.movetoOutIndex = path.pts.count;
-                    path.moveTo(line1.pt1);
-                    state.firstLine = line1;
-                    state.moveto = false;
+                cubic(path, inPts + iPt - 1, state, offset, threshold, degeneratedLine3);
+                iPt += 3;
+                break;
+            }
+            default: {
+                if (!tvg::zero(inPts[iPt - 1] - inPts[state.movetoInIndex])) {
+                    path.cmds.push(PathCommand::LineTo);
+                    corner(out, state.line, state.firstLine, state.movetoOutIndex, true);
                 }
-
-                bool inside{};
-                Point intersect{};
-                intersected(line1, line2, intersect, inside);
-                path.pts.push(intersect);
-                intersected(line2, line3, intersect, inside);
-                path.pts.push(intersect);
-                path.pts.push(line3.pt2);
-                path.cmds.push(PathCommand::CubicTo);
+                path.cmds.push(PathCommand::Close);
             }
-
-            iPt += 3;
-        } else {
-            if (!tvg::zero(inPts[iPt - 1] - inPts[state.movetoInIndex])) {
-                path.cmds.push(PathCommand::LineTo);
-                corner(out, state.line, state.firstLine, state.movetoOutIndex, true);
-            }
-            path.cmds.push(PathCommand::Close);
         }
     }
     return path;
