@@ -403,7 +403,32 @@ bool SwRenderer::renderImage(RenderData data)
 
     if (task->opacity == 0) return true;
 
-    return rasterImage(surface, &task->image, task->transform, task->bbox, task->opacity);
+    //Outside of the viewport, skip the rendering
+    auto& bbox = task->bbox;
+    if (bbox.max.x <= bbox.min.x || bbox.max.y <= bbox.min.y || bbox.min.x >= surface->w || bbox.min.y >= surface->h) return true;
+
+    auto& image = task->image;
+
+    //RLE Image
+    if (image.rle) {
+        if (image.direct) return rasterDirectRleImage(surface, image, task->opacity);
+        else if (image.scaled) return rasterScaledRleImage(surface, image, task->transform, bbox, task->opacity);
+        else {
+            //create a intermediate buffer for rle clipping
+            auto cmp = request(sizeof(pixel_t), false);
+            cmp->compositor->method = CompositeMethod::None;
+            cmp->compositor->valid = true;
+            cmp->compositor->image.rle = image.rle;
+            rasterClear(cmp, (uint32_t)bbox.min.x, (uint32_t)bbox.min.y, (uint32_t)(bbox.max.x - bbox.min.x), (uint32_t)(bbox.max.y - bbox.min.y), 0);
+            rasterTexmapPolygon(cmp, image, task->transform, bbox, 255);
+            return rasterDirectRleImage(surface, cmp->compositor->image, task->opacity);
+        }
+    //Whole Image
+    } else {
+        if (image.direct) return rasterDirectImage(surface, image, bbox, task->opacity);
+        else if (image.scaled) return rasterScaledImage(surface, image, task->transform, bbox, task->opacity);
+        else return rasterTexmapPolygon(surface, image, task->transform, bbox, task->opacity);
+    }
 }
 
 
@@ -638,8 +663,7 @@ bool SwRenderer::endComposite(RenderCompositor* cmp)
 
     //Default is alpha blending
     if (p->method == CompositeMethod::None) {
-        Matrix m = {1, 0, 0, 0, 1, 0, 0, 0, 1};
-        return rasterImage(surface, &p->image, m, p->bbox, p->opacity);
+        return rasterDirectImage(surface, p->image, p->bbox, p->opacity);
     }
 
     return true;
@@ -738,7 +762,7 @@ void* SwRenderer::prepareCommon(SwTask* task, const Matrix& transform, const Arr
 
     task->clips = clips;
     task->transform = transform;
-    
+
     //zero size?
     if (task->transform.e11 == 0.0f && task->transform.e12 == 0.0f) return task; //zero width
     if (task->transform.e21 == 0.0f && task->transform.e22 == 0.0f) return task; //zero height

@@ -1263,7 +1263,6 @@ void LottieBuilder::updateMasks(LottieLayer* layer, float frameNo)
         auto method = mask->method;
         auto opacity = mask->opacity(frameNo);
         auto expand = mask->expand(frameNo);
-        auto fastTrack = false;  //single clipping
 
         //the first mask
         if (!pShape) {
@@ -1276,7 +1275,6 @@ void LottieBuilder::updateMasks(LottieLayer* layer, float frameNo)
             if (layer->masks.count == 1 && compMethod == CompositeMethod::AlphaMask) {
                 layer->scene->opacity(MULTIPLY(layer->scene->opacity(), opacity));
                 layer->scene->clip(cast(pShape));
-                fastTrack = true;
             } else {
                 layer->scene->composite(cast(pShape), compMethod);
             }
@@ -1299,9 +1297,6 @@ void LottieBuilder::updateMasks(LottieLayer* layer, float frameNo)
             auto offset = LottieOffsetModifier(expand);
             mask->pathset(frameNo, P(pShape)->rs.path.cmds, P(pShape)->rs.path.pts, nullptr, nullptr, &offset, exps);
         }
-
-        if (fastTrack) return;
-
         pOpacity = opacity;
         pMethod = method;
     }
