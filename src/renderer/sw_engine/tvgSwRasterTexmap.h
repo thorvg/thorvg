@@ -49,89 +49,41 @@ static float dxdya, dxdyb, dudya, dvdya;
 static float xa, xb, ua, va;
 
 
-//Y Range exception handling
-static bool _arrange(const SwImage* image, const RenderRegion* bbox, int& yStart, int& yEnd)
-{
-    int32_t bboxTop, bboxBottom;
-
-    if (bbox) {
-        bboxTop = bbox->min.y;
-        bboxBottom = bbox->max.y;
-    } else {
-        bboxTop = image->rle->spans.first().y;
-        bboxBottom = image->rle->spans.last().y;
-    }
-
-    if (yStart < bboxTop) yStart = bboxTop;
-    if (yEnd > bboxBottom) yEnd = bboxBottom;
-
-    return yEnd > yStart;
-}
-
 static inline int32_t _modf(float v)
 {
     return 255 - ((int(v * 256.0f)) & 255);
 }
 
 
-static bool _rasterMaskedPolygonImageSegment(SwSurface* surface, const SwImage* image, const RenderRegion* bbox, int yStart, int yEnd, AASpans* aaSpans, uint8_t opacity, uint8_t dirFlag = 0)
+static bool _rasterMaskedPolygonImageSegment(SwSurface* surface, const SwImage& image, const RenderRegion& bbox, int yStart, int yEnd, AASpans* aaSpans, uint8_t opacity, uint8_t dirFlag = 0)
 {
     TVGERR("SW_ENGINE", "TODO: _rasterMaskedPolygonImageSegment()");
     return false;
 }
 
 
-static void _rasterBlendingPolygonImageSegment(SwSurface* surface, const SwImage* image, const RenderRegion* bbox, int yStart, int yEnd, AASpans* aaSpans, uint8_t opacity)
+static void _rasterBlendingPolygonImageSegment(SwSurface* surface, const SwImage& image, const RenderRegion& bbox, int yStart, int yEnd, AASpans* aaSpans, uint8_t opacity)
 {
     float _dudx = dudx, _dvdx = dvdx;
     float _dxdya = dxdya, _dxdyb = dxdyb, _dudya = dudya, _dvdya = dvdya;
     float _xa = xa, _xb = xb, _ua = ua, _va = va;
-    auto sbuf = image->buf32;
+    auto sbuf = image.buf32;
     auto dbuf = surface->buf32;
-    int32_t sw = static_cast<int32_t>(image->w);
-    int32_t sh = static_cast<int32_t>(image->h);
+    int32_t sw = static_cast<int32_t>(image.w);
+    int32_t sh = static_cast<int32_t>(image.h);
     int32_t x1, x2, x, y, ar, ab, iru, irv, px, ay;
     int32_t vv = 0, uu = 0;
-    int32_t minx = INT32_MAX, maxx = 0;
     float dx, u, v;
     uint32_t* buf;
-    SwSpan* span = nullptr;         //used only when rle based.
 
-    if (!_arrange(image, bbox, yStart, yEnd)) return;
-
-    //Loop through all lines in the segment
-    uint32_t spanIdx = 0;
-
-    if (bbox) {
-        minx = bbox->min.x;
-        maxx = bbox->max.x;
-    } else {
-        span = image->rle->data();
-        while (span->y < yStart) {
-            ++span;
-            ++spanIdx;
-        }
-    }
+    if (yStart < bbox.min.y) yStart = bbox.min.y;
+    if (yEnd > bbox.max.y) yEnd = bbox.max.y;
 
     y = yStart;
 
     while (y < yEnd) {
-        x1 = (int32_t)_xa;
-        x2 = (int32_t)_xb;
-
-        if (!bbox) {
-            minx = INT32_MAX;
-            maxx = 0;
-            //one single row, could be consisted of multiple spans.
-            while (span->y == y && spanIdx < image->rle->size()) {
-                if (minx > span->x) minx = span->x;
-                if (maxx < span->x + span->len) maxx = span->x + span->len;
-                ++span;
-                ++spanIdx;
-            }
-        }
-        if (x1 < minx) x1 = minx;
-        if (x2 > maxx) x2 = maxx;
+        x1 = std::max((int32_t)_xa, bbox.min.x);
+        x2 = std::min((int32_t)_xb, bbox.max.x);
 
         //Anti-Aliasing frames
         if (aaSpans) {
@@ -141,7 +93,7 @@ static void _rasterBlendingPolygonImageSegment(SwSurface* surface, const SwImage
         }
 
         //Range allowed
-        if ((x2 - x1) >= 1 && (x1 < maxx) && (x2 > minx)) {
+        if ((x2 - x1) >= 1 && (x1 < bbox.max.x) && (x2 > bbox.min.x)) {
 
             //Perform subtexel pre-stepping on UV
             dx = 1 - (_xa - x1);
@@ -155,29 +107,29 @@ static void _rasterBlendingPolygonImageSegment(SwSurface* surface, const SwImage
                 uu = (int) u;
                 vv = (int) v;
 
-                if ((uint32_t) uu >= image->w || (uint32_t) vv >= image->h) continue;
+                if ((uint32_t) uu >= image.w || (uint32_t) vv >= image.h) continue;
 
                 ar = _modf(u);
                 ab = _modf(v);
                 iru = uu + 1;
                 irv = vv + 1;
 
-                px = *(sbuf + (vv * image->stride) + uu);
+                px = *(sbuf + (vv * image.stride) + uu);
 
                 /* horizontal interpolate */
                 if (iru < sw) {
                     /* right pixel */
-                    int px2 = *(sbuf + (vv * image->stride) + iru);
+                    int px2 = *(sbuf + (vv * image.stride) + iru);
                     px = INTERPOLATE(px, px2, ar);
                 }
                 /* vertical interpolate */
                 if (irv < sh) {
                     /* bottom pixel */
-                    int px2 = *(sbuf + (irv * image->stride) + uu);
+                    int px2 = *(sbuf + (irv * image.stride) + uu);
                     /* horizontal interpolate */
                     if (iru < sw) {
                         /* bottom right pixel */
-                        int px3 = *(sbuf + (irv * image->stride) + iru);
+                        int px3 = *(sbuf + (irv * image.stride) + iru);
                         px2 = INTERPOLATE(px2, px3, ar);
                     }
                     px = INTERPOLATE(px, px2, ab);
@@ -198,8 +150,6 @@ static void _rasterBlendingPolygonImageSegment(SwSurface* surface, const SwImage
         _ua += _dudya;
         _va += _dvdya;
 
-        if (!bbox && spanIdx >= image->rle->size()) break;
-
         ++y;
     }
     xa = _xa;
@@ -209,62 +159,33 @@ static void _rasterBlendingPolygonImageSegment(SwSurface* surface, const SwImage
 }
 
 
-static void _rasterPolygonImageSegment(SwSurface* surface, const SwImage* image, const RenderRegion* bbox, int yStart, int yEnd, AASpans* aaSpans, uint8_t opacity, bool matting)
+static void _rasterPolygonImageSegment(SwSurface* surface, const SwImage& image, const RenderRegion& bbox, int yStart, int yEnd, AASpans* aaSpans, uint8_t opacity, bool matting)
 {
     float _dudx = dudx, _dvdx = dvdx;
     float _dxdya = dxdya, _dxdyb = dxdyb, _dudya = dudya, _dvdya = dvdya;
     float _xa = xa, _xb = xb, _ua = ua, _va = va;
-    auto sbuf = image->buf32;
+    auto sbuf = image.buf32;
     auto dbuf = surface->buf32;
-    int32_t sw = static_cast<int32_t>(image->w);
-    int32_t sh = static_cast<int32_t>(image->h);
+    int32_t sw = static_cast<int32_t>(image.w);
+    int32_t sh = static_cast<int32_t>(image.h);
     int32_t x1, x2, x, y, ar, ab, iru, irv, px, ay;
     int32_t vv = 0, uu = 0;
-    int32_t minx = INT32_MAX, maxx = 0;
     float dx, u, v;
     uint32_t* buf;
-    SwSpan* span = nullptr;         //used only when rle based.
 
     //for matting(composition)
     auto csize = matting ? surface->compositor->image.channelSize: 0;
     auto alpha = matting ? surface->alpha(surface->compositor->method) : nullptr;
     uint8_t* cmp = nullptr;
 
-    if (!_arrange(image, bbox, yStart, yEnd)) return;
-
-    //Loop through all lines in the segment
-    uint32_t spanIdx = 0;
-
-    if (bbox) {
-        minx = bbox->min.x;
-        maxx = bbox->max.x;
-    } else {
-        span = image->rle->data();
-        while (span->y < yStart) {
-            ++span;
-            ++spanIdx;
-        }
-    }
+    if (yStart < bbox.min.y) yStart = bbox.min.y;
+    if (yEnd > bbox.max.y) yEnd = bbox.max.y;
 
     y = yStart;
 
     while (y < yEnd) {
-        x1 = (int32_t)_xa;
-        x2 = (int32_t)_xb;
-
-        if (!bbox) {
-            minx = INT32_MAX;
-            maxx = 0;
-            //one single row, could be consisted of multiple spans.
-            while (span->y == y && spanIdx < image->rle->size()) {
-                if (minx > span->x) minx = span->x;
-                if (maxx < span->x + span->len) maxx = span->x + span->len;
-                ++span;
-                ++spanIdx;
-            }
-        }
-        if (x1 < minx) x1 = minx;
-        if (x2 > maxx) x2 = maxx;
+        x1 = std::max((int32_t)_xa, bbox.min.x);
+        x2 = std::min((int32_t)_xb, bbox.max.x);
 
         //Anti-Aliasing frames
         if (aaSpans) {
@@ -274,7 +195,7 @@ static void _rasterPolygonImageSegment(SwSurface* surface, const SwImage* image,
         }
 
         //Range allowed
-        if ((x2 - x1) >= 1 && (x1 < maxx) && (x2 > minx)) {
+        if ((x2 - x1) >= 1 && (x1 < bbox.max.x) && (x2 > bbox.min.x)) {
 
             //Perform subtexel pre-stepping on UV
             dx = 1 - (_xa - x1);
@@ -292,7 +213,7 @@ static void _rasterPolygonImageSegment(SwSurface* surface, const SwImage* image,
                 uu = (int) u;
                 vv = (int) v;
 
-                if ((uint32_t) uu >= image->w || (uint32_t) vv >= image->h) continue;
+                if ((uint32_t) uu >= image.w || (uint32_t) vv >= image.h) continue;
 
                 ar = _modf(u);
                 ab = _modf(v);
@@ -300,23 +221,23 @@ static void _rasterPolygonImageSegment(SwSurface* surface, const SwImage* image,
                 iru = uu + 1;
                 irv = vv + 1;
 
-                px = *(sbuf + (vv * image->stride) + uu);
+                px = *(sbuf + (vv * image.stride) + uu);
 
                 /* horizontal interpolate */
                 if (iru < sw) {
                     /* right pixel */
-                    int px2 = *(sbuf + (vv * image->stride) + iru);
+                    int px2 = *(sbuf + (vv * image.stride) + iru);
                     px = INTERPOLATE(px, px2, ar);
                 }
                 /* vertical interpolate */
                 if (irv < sh) {
                     /* bottom pixel */
-                    int px2 = *(sbuf + (irv * image->stride) + uu);
+                    int px2 = *(sbuf + (irv * image.stride) + uu);
 
                     /* horizontal interpolate */
                     if (iru < sw) {
                         /* bottom right pixel */
-                        int px3 = *(sbuf + (irv * image->stride) + iru);
+                        int px3 = *(sbuf + (irv * image.stride) + iru);
                         px2 = INTERPOLATE(px2, px3, ar);
                     }
                     px = INTERPOLATE(px, px2, ab);
@@ -344,8 +265,6 @@ static void _rasterPolygonImageSegment(SwSurface* surface, const SwImage* image,
         _ua += _dudya;
         _va += _dvdya;
 
-        if (!bbox && spanIdx >= image->rle->size()) break;
-
         ++y;
     }
     xa = _xa;
@@ -356,7 +275,7 @@ static void _rasterPolygonImageSegment(SwSurface* surface, const SwImage* image,
 
 
 /* This mapping algorithm is based on Mikael Kalms's. */
-static void _rasterPolygonImage(SwSurface* surface, const SwImage* image, const RenderRegion* bbox, Polygon& polygon, AASpans* aaSpans, uint8_t opacity)
+static void _rasterPolygonImage(SwSurface* surface, const SwImage& image, const RenderRegion& bbox, Polygon& polygon, AASpans* aaSpans, uint8_t opacity)
 {
     float x[3] = {polygon.vertex[0].pt.x, polygon.vertex[1].pt.x, polygon.vertex[2].pt.x};
     float y[3] = {polygon.vertex[0].pt.y, polygon.vertex[1].pt.y, polygon.vertex[2].pt.y};
@@ -417,7 +336,6 @@ static void _rasterPolygonImage(SwSurface* surface, const SwImage* image, const 
     if (tvg::equal(y[0], y[1])) side = x[0] > x[1];
     if (tvg::equal(y[1], y[2])) side = x[2] > x[1];
 
-    auto bboxTop = bbox ? bbox->min.y : image->rle->data()->y;  //Normal Image or Rle Image?
     auto compositing = _compositing(surface);   //Composition required
     auto blending = _blending(surface);         //Blending required
 
@@ -436,7 +354,7 @@ static void _rasterPolygonImage(SwSurface* surface, const SwImage* image, const 
 
         //Draw upper segment if possibly visible
         if (yi[0] < yi[1]) {
-            off_y = y[0] < bboxTop ? (bboxTop - y[0]) : 0;
+            off_y = y[0] < bbox.min.y ? (bbox.min.y - y[0]) : 0;
             xa += (off_y * dxdya);
             ua += (off_y * dudya);
             va += (off_y * dvdya);
@@ -457,7 +375,7 @@ static void _rasterPolygonImage(SwSurface* surface, const SwImage* image, const 
         }
         //Draw lower segment if possibly visible
         if (yi[1] < yi[2]) {
-            off_y = y[1] < bboxTop ? (bboxTop - y[1]) : 0;
+            off_y = y[1] < bbox.min.y ? (bbox.min.y - y[1]) : 0;
             if (!upper) {
                 xa += (off_y * dxdya);
                 ua += (off_y * dudya);
@@ -484,7 +402,7 @@ static void _rasterPolygonImage(SwSurface* surface, const SwImage* image, const 
 
         //Draw upper segment if possibly visible
         if (yi[0] < yi[1]) {
-            off_y = y[0] < bboxTop ? (bboxTop - y[0]) : 0;
+            off_y = y[0] < bbox.min.y ? (bbox.min.y - y[0]) : 0;
             xb += (off_y *dxdyb);
 
             // Set slopes along left edge and perform subpixel pre-stepping
@@ -508,7 +426,7 @@ static void _rasterPolygonImage(SwSurface* surface, const SwImage* image, const 
         }
         //Draw lower segment if possibly visible
         if (yi[1] < yi[2]) {
-            off_y = y[1] < bboxTop ? (bboxTop - y[1]) : 0;
+            off_y = y[1] < bbox.min.y ? (bbox.min.y - y[1]) : 0;
             if (!upper) xb += (off_y *dxdyb);
 
             // Set slopes along left edge and perform subpixel pre-stepping
@@ -599,22 +517,19 @@ static void _apply(SwSurface* surface, AASpans* aaSpans)
     | /  |
     3 -- 2
 */
-static bool _rasterTexmapPolygon(SwSurface* surface, const SwImage* image, const Matrix& transform, const RenderRegion* bbox, uint8_t opacity)
+bool rasterTexmapPolygon(SwSurface* surface, const SwImage& image, const Matrix& transform, const RenderRegion& bbox, uint8_t opacity)
 {
     if (surface->channelSize == sizeof(uint8_t)) {
         TVGERR("SW_ENGINE", "Not supported grayscale Textmap polygon!");
         return false;
     }
 
-    //Exceptions: No dedicated drawing area?
-    if ((!image->rle && !bbox) || (image->rle && image->rle->size() == 0)) return true;
-
     //Prepare vertices. Shift XY coordinates to match the sub-pixeling technique.
     Vertex vertices[4];
     vertices[0] = {{0.0f, 0.0f}, {0.0f, 0.0f}};
-    vertices[1] = {{float(image->w), 0.0f}, {float(image->w), 0.0f}};
-    vertices[2] = {{float(image->w), float(image->h)}, {float(image->w), float(image->h)}};
-    vertices[3] = {{0.0f, float(image->h)}, {0.0f, float(image->h)}};
+    vertices[1] = {{float(image.w), 0.0f}, {float(image.w), 0.0f}};
+    vertices[2] = {{float(image.w), float(image.h)}, {float(image.w), float(image.h)}};
+    vertices[3] = {{0.0f, float(image.h)}, {0.0f, float(image.h)}};
 
     float ys = FLT_MAX, ye = -1.0f;
     for (int i = 0; i < 4; i++) {
@@ -623,10 +538,8 @@ static bool _rasterTexmapPolygon(SwSurface* surface, const SwImage* image, const
         if (vertices[i].pt.y > ye) ye = vertices[i].pt.y;
     }
 
-    auto yStart = static_cast<int>(ys);
-    auto yEnd = static_cast<int>(ye);
-
-    if (!_arrange(image, bbox, yStart, yEnd)) return true;
+    auto yStart = std::max(static_cast<int>(ys), bbox.min.y);
+    auto yEnd = std::min(static_cast<int>(ye), bbox.max.y);
     auto aaSpans = rightAngle(transform) ?  nullptr : _AASpans(yStart, yEnd);
 
     Polygon polygon;
