@@ -204,9 +204,7 @@ struct SwImageTask : SwTask
         if ((flags & (RenderUpdateFlag::Image | RenderUpdateFlag::Transform | RenderUpdateFlag::Color)) && (opacity > 0)) {
             imageReset(&image);
             if (!image.data || image.w == 0 || image.h == 0) goto end;
-
-            if (!imagePrepare(&image, transform, clipBox, bbox, mpool, tid)) goto end;
-
+            if (!imagePrepare(&image, transform, clipBox,  bbox, mpool, tid)) goto end;
             if (clips.count > 0) {
                 if (!imageGenRle(&image, bbox, false)) goto end;
                 if (image.rle) {
@@ -222,6 +220,7 @@ struct SwImageTask : SwTask
         }
         goto end;
     err:
+        bbox.reset();
         rleReset(image.rle);
     end:
         imageDelOutline(&image, mpool, tid);
@@ -233,31 +232,6 @@ struct SwImageTask : SwTask
     }
 };
 
-
-static void _renderFill(SwShapeTask* task, SwSurface* surface)
-{
-    if (auto fill = task->rshape->fill) {
-        rasterGradientShape(surface, &task->shape, fill, task->opacity);
-    } else {
-        RenderColor c;
-        task->rshape->fillColor(&c.r, &c.g, &c.b, &c.a);
-        c.a = MULTIPLY(task->opacity, c.a);
-        if (c.a > 0) rasterShape(surface, &task->shape, c);
-    }
-}
-
-static void _renderStroke(SwShapeTask* task, SwSurface* surface)
-{
-    if (auto strokeFill = task->rshape->strokeFill()) {
-        rasterGradientStroke(surface, &task->shape, strokeFill, task->opacity);
-    } else {
-        RenderColor c;
-        if (task->rshape->strokeFill(&c.r, &c.g, &c.b, &c.a)) {
-            c.a = MULTIPLY(task->opacity, c.a);
-            if (c.a > 0) rasterStroke(surface, &task->shape, c);
-        }
-    }
-}
 
 /************************************************************************/
 /* External Class Implementation                                        */
@@ -299,10 +273,10 @@ bool SwRenderer::clear()
 
 bool SwRenderer::sync()
 {
+    //clear if the rendering was not triggered.
     ARRAY_FOREACH(p, tasks) {
-        if ((*p)->disposed) {
-            delete(*p);
-        } else {
+        if ((*p)->disposed) delete(*p);
+        else {
             (*p)->done();
             (*p)->pushed = false;
         }
@@ -402,7 +376,7 @@ bool SwRenderer::renderImage(RenderData data)
 
     //RLE Image
     if (image.rle) {
-        if (image.direct) return rasterDirectRleImage(surface, image, task->opacity);
+        if (image.direct) return rasterDirectRleImage(surface, image, bbox, task->opacity);
         else if (image.scaled) return rasterScaledRleImage(surface, image, task->transform, bbox, task->opacity);
         else {
             //create a intermediate buffer for rle clipping
@@ -412,7 +386,7 @@ bool SwRenderer::renderImage(RenderData data)
             cmp->compositor->image.rle = image.rle;
             rasterClear(cmp, bbox.x(), bbox.y(), bbox.w(), bbox.h(), 0);
             rasterTexmapPolygon(cmp, image, task->transform, bbox, 255);
-            return rasterDirectRleImage(surface, cmp->compositor->image, task->opacity);
+            return rasterDirectRleImage(surface, cmp->compositor->image, bbox, task->opacity);
         }
     //Whole Image
     } else {
@@ -432,13 +406,35 @@ bool SwRenderer::renderShape(RenderData data)
 
     if (task->opacity == 0) return true;
 
-    //Main raster stage
+    auto fill = [](SwShapeTask* task, SwSurface* surface, const RenderRegion& bbox) {
+        if (auto fill = task->rshape->fill) {
+            rasterGradientShape(surface, &task->shape, bbox, fill, task->opacity);
+        } else {
+            RenderColor c;
+            task->rshape->fillColor(&c.r, &c.g, &c.b, &c.a);
+            c.a = MULTIPLY(task->opacity, c.a);
+            if (c.a > 0) rasterShape(surface, &task->shape, bbox, c);
+        }
+    };
+
+    auto stroke = [](SwShapeTask* task, SwSurface* surface, const RenderRegion& bbox) {
+        if (auto strokeFill = task->rshape->strokeFill()) {
+            rasterGradientStroke(surface, &task->shape, bbox, strokeFill, task->opacity);
+        } else {
+            RenderColor c;
+            if (task->rshape->strokeFill(&c.r, &c.g, &c.b, &c.a)) {
+                c.a = MULTIPLY(task->opacity, c.a);
+                if (c.a > 0) rasterStroke(surface, &task->shape, bbox, c);
+            }
+        }
+    };
+
     if (task->rshape->strokeFirst()) {
-        _renderStroke(task, surface);
-        _renderFill(task, surface);
+        stroke(task, surface, task->bbox);
+        fill(task, surface, task->shape.bbox);
     } else {
-        _renderFill(task, surface);
-        _renderStroke(task, surface);
+        fill(task, surface, task->shape.bbox);
+        stroke(task, surface, task->bbox);
     }
 
     return true;
