@@ -92,4 +92,17 @@ private:
     void corner(RenderPath& out, Line& line, Line& nextLine, uint32_t movetoIndex, bool nextClose);
 };
 
+
+struct LottiePuckerBloatModifier : LottieModifier
+{
+    float amount;
+
+    LottiePuckerBloatModifier(RenderPath* buffer, float a) : LottieModifier(buffer), amount(a) {}
+
+    bool modifyPath(PathCommand* inCmds, uint32_t inCmdsCnt, Point* inPts, uint32_t inPtsCnt, Matrix* transform, RenderPath& out) override;
+    bool modifyPolystar(RenderPath& in, RenderPath& out, float outerRoundness, bool hasRoundness) override;
+    bool modifyEllipse(RenderPath& path);
+    bool modifyRect(const RenderPath& in, RenderPath& out);
+};
+
 #endif
