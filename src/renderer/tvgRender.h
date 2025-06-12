@@ -104,7 +104,11 @@ struct RenderRegion
 
     static constexpr RenderRegion intersect(const RenderRegion& lhs, const RenderRegion& rhs)
     {
-        return {{std::max(lhs.min.x, rhs.min.x), std::max(lhs.min.y, rhs.min.y)}, {std::min(lhs.max.x, rhs.max.x), std::min(lhs.max.y, rhs.max.y)}};
+        RenderRegion ret = {{std::max(lhs.min.x, rhs.min.x), std::max(lhs.min.y, rhs.min.y)}, {std::min(lhs.max.x, rhs.max.x), std::min(lhs.max.y, rhs.max.y)}};
+        // Not intersected: collapse to zero-area region
+        if (ret.min.x > ret.max.x) ret.max.x = ret.min.x;
+        if (ret.min.y > ret.max.y) ret.max.y = ret.min.y;
+        return ret;
     }
 
     void intersect(const RenderRegion& rhs);
