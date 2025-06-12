@@ -495,6 +495,12 @@ bool SwRenderer::blend(BlendMethod method)
 }
 
 
+void SwRenderer::damage(TVG_UNUSED const RenderRegion& region)
+{
+    //TODO:
+}
+
+
 RenderRegion SwRenderer::region(RenderData data)
 {
     return static_cast<SwTask*>(data)->bounds();

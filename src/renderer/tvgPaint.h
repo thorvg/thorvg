@@ -119,7 +119,6 @@ namespace tvg
         uint8_t unrefx(bool free)
         {
             if (refCnt > 0) --refCnt;
-            else TVGERR("RENDERER", "Corrupted Reference Count!");
 
             if (free && refCnt == 0) {
                 delete(paint);
@@ -127,6 +126,11 @@ namespace tvg
             }
 
             return refCnt;
+        }
+
+        void damage()
+        {
+            if (renderer) renderer->damage(bounds(renderer));
         }
 
         void mark(RenderUpdateFlag flag)
