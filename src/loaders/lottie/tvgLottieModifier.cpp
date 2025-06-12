@@ -121,9 +121,12 @@ void LottieOffsetModifier::corner(RenderPath& out, Line& line, Line& nextLine, u
                 auto norm = normal(line.pt1, line.pt2);
                 auto nextNorm = normal(nextLine.pt1, nextLine.pt2);
                 auto miterDirection = (norm + nextNorm) / length(norm + nextNorm);
+                if (1.0f <= miterLimit * fabsf(miterDirection.x * norm.x + miterDirection.y * norm.y)) {
+                    out.cmds.push(PathCommand::LineTo);
+                    out.pts.push(intersect);
+                }
                 out.cmds.push(PathCommand::LineTo);
-                if (1.0f <= miterLimit * fabsf(miterDirection.x * norm.x + miterDirection.y * norm.y)) out.pts.push(intersect);
-                else out.pts.push(nextLine.pt1);
+                out.pts.push(nextLine.pt1);
             } else {
                 out.cmds.push(PathCommand::LineTo);
                 out.pts.push(nextLine.pt1);
