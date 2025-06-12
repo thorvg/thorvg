@@ -68,6 +68,7 @@ struct SceneImpl : Scene
     Array<RenderEffect*>* effects = nullptr;
     uint8_t compFlag = CompositionFlag::Invalid;
     uint8_t opacity;         //for composition
+    bool vdirty = false;
 
     SceneImpl() : impl(Paint::Impl(this))
     {
@@ -105,7 +106,7 @@ struct SceneImpl : Scene
 
     RenderData update(RenderMethod* renderer, const Matrix& transform, Array<RenderData>& clips, uint8_t opacity, RenderUpdateFlag flag, TVG_UNUSED bool clipper)
     {
-        this->vport = renderer->viewport();
+        if (paints.empty()) return nullptr;
 
         if (needComposition(opacity)) {
             /* Overriding opacity value. If this scene is half-translucent,
@@ -123,11 +124,17 @@ struct SceneImpl : Scene
             }
         }
 
+        //this viewport update is more performant than in bounds()?
+        vport = renderer->viewport();
+        vdirty = true;
+
         return nullptr;
     }
 
     bool render(RenderMethod* renderer)
     {
+        if (paints.empty()) return true;
+
         RenderCompositor* cmp = nullptr;
         auto ret = true;
 
@@ -157,9 +164,11 @@ struct SceneImpl : Scene
         return ret;
     }
 
-    RenderRegion bounds(RenderMethod* renderer) const
+    RenderRegion bounds(RenderMethod* renderer)
     {
         if (paints.empty()) return {};
+        if (!vdirty) return vport;
+        vdirty = false;
 
         //Merge regions
         RenderRegion pRegion = {{INT32_MAX, INT32_MAX}, {0, 0}};
@@ -185,8 +194,8 @@ struct SceneImpl : Scene
         pRegion.max.x += eRegion.max.x;
         pRegion.max.y += eRegion.max.y;
 
-        pRegion.intersect(this->vport);
-        return pRegion;
+        vport = RenderRegion::intersect(vport, pRegion);
+        return vport;
     }
 
     Result bounds(Point* pt4, Matrix& m, bool obb, bool stroking)
