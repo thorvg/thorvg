@@ -38,7 +38,7 @@ void WgCompositor::initialize(WgContext& context, uint32_t width, uint32_t heigh
     // create render targets handles
     resize(context, width, height);
     // composition and blend geometries
-    meshDataBlit.blitBox(context);
+    meshDataBlit.blitBox();
 }
 
 
@@ -54,8 +54,6 @@ void WgCompositor::initPools(WgContext& context)
 
 void WgCompositor::release(WgContext& context)
 {
-    // composition and blend geometries
-    meshDataBlit.release(context);
     // release render targets habdles
     resize(context, 0, 0);
     // release opacity pool

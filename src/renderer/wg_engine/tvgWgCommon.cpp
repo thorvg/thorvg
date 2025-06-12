@@ -200,10 +200,7 @@ bool WgContext::allocateBufferVertex(WGPUBuffer& buffer, const float* data, uint
         wgpuQueueWriteBuffer(queue, buffer, 0, data, size);
     else {
         releaseBuffer(buffer);
-        const WGPUBufferDescriptor bufferDesc {
-            .usage = WGPUBufferUsage_CopyDst | WGPUBufferUsage_Vertex,
-            .size = size > WG_VERTEX_BUFFER_MIN_SIZE ? size : WG_VERTEX_BUFFER_MIN_SIZE
-        };
+        const WGPUBufferDescriptor bufferDesc { .usage = WGPUBufferUsage_CopyDst | WGPUBufferUsage_Vertex, .size = size };
         buffer = wgpuDeviceCreateBuffer(device, &bufferDesc);
         wgpuQueueWriteBuffer(queue, buffer, 0, data, size);
         return true;
@@ -218,10 +215,7 @@ bool WgContext::allocateBufferIndex(WGPUBuffer& buffer, const uint32_t* data, ui
         wgpuQueueWriteBuffer(queue, buffer, 0, data, size);
     else {
         releaseBuffer(buffer);
-        const WGPUBufferDescriptor bufferDesc {
-            .usage = WGPUBufferUsage_CopyDst | WGPUBufferUsage_Index,
-            .size = size > WG_INDEX_BUFFER_MIN_SIZE ? size : WG_INDEX_BUFFER_MIN_SIZE
-        };
+        const WGPUBufferDescriptor bufferDesc { .usage = WGPUBufferUsage_CopyDst | WGPUBufferUsage_Index, .size = size };
         buffer = wgpuDeviceCreateBuffer(device, &bufferDesc);
         wgpuQueueWriteBuffer(queue, buffer, 0, data, size);
         return true;
@@ -241,10 +235,7 @@ bool WgContext::allocateBufferIndexFan(uint64_t vertexCount)
             indexes.push(i + 2);
         }
         releaseBuffer(bufferIndexFan);
-        WGPUBufferDescriptor bufferDesc{
-            .usage = WGPUBufferUsage_CopyDst | WGPUBufferUsage_Index,
-            .size = indexCount * sizeof(uint32_t)
-        };
+        WGPUBufferDescriptor bufferDesc{ .usage = WGPUBufferUsage_CopyDst | WGPUBufferUsage_Index, .size = indexCount * sizeof(uint32_t) };
         bufferIndexFan = wgpuDeviceCreateBuffer(device, &bufferDesc);
         wgpuQueueWriteBuffer(queue, bufferIndexFan, 0, &indexes[0], indexCount * sizeof(uint32_t));
         return true;

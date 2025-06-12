@@ -25,9 +25,6 @@
 
 #include "tvgWgBindGroups.h"
 
-#define WG_VERTEX_BUFFER_MIN_SIZE 2048
-#define WG_INDEX_BUFFER_MIN_SIZE 2048
-
 struct WgContext {
     // external webgpu handles
     WGPUInstance instance{};
