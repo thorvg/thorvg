@@ -45,7 +45,6 @@ void WgRenderer::release()
     mRenderDataPicturePool.release(mContext);
     mRenderDataViewportPool.release(mContext);
     mRenderDataEffectParamsPool.release(mContext);
-    WgMeshDataPool::gMeshDataPool->release(mContext);
 
     // clear render  pool
     mRenderTargetPool.release(mContext);
@@ -142,7 +141,7 @@ RenderData WgRenderer::prepare(const RenderShape& rshape, RenderData data, const
 
     // update geometry
     if ((!data) || (flags & (RenderUpdateFlag::Path | RenderUpdateFlag::Stroke))) {
-        renderDataShape->updateMeshes(mContext, rshape, transform, mBufferPool.pool);
+        renderDataShape->updateMeshes(rshape, transform, mBufferPool.pool);
     }
 
     // update paint settings

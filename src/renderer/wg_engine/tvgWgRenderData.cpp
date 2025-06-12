@@ -30,7 +30,7 @@
 // WgMeshData
 //***********************************************************************
 
-void WgMeshData::update(WgContext& context, const WgVertexBuffer& vertexBuffer)
+void WgMeshData::update(const WgVertexBuffer& vertexBuffer)
 {
     assert(vertexBuffer.count > 2);
     // setup vertex data
@@ -39,11 +39,10 @@ void WgMeshData::update(WgContext& context, const WgVertexBuffer& vertexBuffer)
     memcpy(vbuffer.data, vertexBuffer.data, sizeof(vertexBuffer.data[0])*vertexBuffer.count);
     // setup tex coords data
     tbuffer.clear();
-    context.allocateBufferIndexFan(vbuffer.count);
 }
 
 
-void WgMeshData::update(WgContext& context, const WgIndexedVertexBuffer& vertexBufferInd)
+void WgMeshData::update(const WgIndexedVertexBuffer& vertexBufferInd)
 {
     assert(vertexBufferInd.vcount > 2);
     // setup vertex data
@@ -59,7 +58,7 @@ void WgMeshData::update(WgContext& context, const WgIndexedVertexBuffer& vertexB
 };
 
 
-void WgMeshData::bbox(WgContext& context, const Point pmin, const Point pmax)
+void WgMeshData::bbox(const Point pmin, const Point pmax)
 {
     const float data[] = {pmin.x, pmin.y, pmax.x, pmin.y, pmax.x, pmax.y, pmin.x, pmax.y};
     // setup vertex data
@@ -68,11 +67,10 @@ void WgMeshData::bbox(WgContext& context, const Point pmin, const Point pmax)
     memcpy(vbuffer.data, data, sizeof(data));
     // setup tex coords data
     tbuffer.clear();
-    context.allocateBufferIndexFan(vbuffer.count);
 }
 
 
-void WgMeshData::imageBox(WgContext& context, float w, float h)
+void WgMeshData::imageBox(float w, float h)
 {
     const float vdata[] = {0.0f, 0.0f, w, 0.0f, w, h, 0.0f, h};
     const float tdata[] = {0.0f, 0.0f, 1.0f, 0.0f, 1.0f, 1.0f, 0.0f, 1.0f};
@@ -92,7 +90,7 @@ void WgMeshData::imageBox(WgContext& context, float w, float h)
 }
 
 
-void WgMeshData::blitBox(WgContext& context)
+void WgMeshData::blitBox()
 {
     const float vdata[] = {-1.0f, +1.0f, +1.0f, +1.0f, +1.0f, -1.0f, -1.0f, -1.0f};
     const float tdata[] = {+0.0f, +0.0f, +1.0f, +0.0f, +1.0f, +1.0f, +0.0f, +1.0f};
@@ -111,75 +109,36 @@ void WgMeshData::blitBox(WgContext& context)
     memcpy(ibuffer.data, idata, sizeof(idata));
 }
 
-
-//***********************************************************************
-// WgMeshDataPool
-//***********************************************************************
-
-WgMeshData* WgMeshDataPool::allocate(WgContext& context)
-{
-    WgMeshData* meshData{};
-    if (mPool.count > 0) {
-        meshData = mPool.last();
-        mPool.pop();
-    } else {
-        meshData = new WgMeshData();
-        mList.push(meshData);
-    }
-    return meshData;
-}
-
-
-void WgMeshDataPool::free(WgContext& context, WgMeshData* meshData)
-{
-    mPool.push(meshData);
-}
-
-
-void WgMeshDataPool::release(WgContext& context)
-{
-    ARRAY_FOREACH(p, mList) {
-        (*p)->release(context);
-        delete(*p);
-    }
-    mPool.clear();
-    mList.clear();
-}
-
-WgMeshDataPool gMeshDataPoolInstance;
-WgMeshDataPool* WgMeshDataPool::gMeshDataPool = &gMeshDataPoolInstance;
-
 //***********************************************************************
 // WgMeshDataGroup
 //***********************************************************************
 
-void WgMeshDataGroup::append(WgContext& context, const WgVertexBuffer& vertexBuffer)
+void WgMeshDataGroup::append(const WgVertexBuffer& vertexBuffer)
 {
     assert(vertexBuffer.count >= 3);
-    meshes.push(WgMeshDataPool::gMeshDataPool->allocate(context));
-    meshes.last()->update(context, vertexBuffer);
+    meshes.push(new WgMeshData());
+    meshes.last()->update(vertexBuffer);
 }
 
 
-void WgMeshDataGroup::append(WgContext& context, const WgIndexedVertexBuffer& vertexBufferInd)
+void WgMeshDataGroup::append(const WgIndexedVertexBuffer& vertexBufferInd)
 {
     assert(vertexBufferInd.vcount >= 3);
-    meshes.push(WgMeshDataPool::gMeshDataPool->allocate(context));
-    meshes.last()->update(context, vertexBufferInd);
+    meshes.push(new WgMeshData());
+    meshes.last()->update(vertexBufferInd);
 }
 
 
-void WgMeshDataGroup::append(WgContext& context, const Point pmin, const Point pmax)
+void WgMeshDataGroup::append(const Point pmin, const Point pmax)
 {
-    meshes.push(WgMeshDataPool::gMeshDataPool->allocate(context));
-    meshes.last()->bbox(context, pmin, pmax);
+    meshes.push(new WgMeshData());
+    meshes.last()->bbox(pmin, pmax);
 }
 
 
-void WgMeshDataGroup::release(WgContext& context)
+void WgMeshDataGroup::release()
 {
-    ARRAY_FOREACH(p, meshes)
-        WgMeshDataPool::gMeshDataPool->free(context, *p);
+    ARRAY_FOREACH(p, meshes) delete *p;
     meshes.clear();
 };
 
@@ -298,24 +257,24 @@ void WgRenderDataPaint::updateClips(tvg::Array<tvg::RenderData> &clips) {
 // WgRenderDataShape
 //***********************************************************************
 
-void WgRenderDataShape::appendShape(WgContext& context, const WgVertexBuffer& vertexBuffer)
+void WgRenderDataShape::appendShape(const WgVertexBuffer& vertexBuffer)
 {
     if (vertexBuffer.count < 3) return;
     Point pmin{}, pmax{};
     vertexBuffer.getMinMax(pmin, pmax);
-    meshGroupShapes.append(context, vertexBuffer);
-    meshGroupShapesBBox.append(context, pmin, pmax);
+    meshGroupShapes.append(vertexBuffer);
+    meshGroupShapesBBox.append(pmin, pmax);
     updateBBox(pmin, pmax);
 }
 
 
-void WgRenderDataShape::appendStroke(WgContext& context, const WgIndexedVertexBuffer& vertexBufferInd)
+void WgRenderDataShape::appendStroke(const WgIndexedVertexBuffer& vertexBufferInd)
 {
     if (vertexBufferInd.vcount < 3) return;
     Point pmin{}, pmax{};
     vertexBufferInd.getMinMax(pmin, pmax);
-    meshGroupStrokes.append(context, vertexBufferInd);
-    meshGroupStrokesBBox.append(context, pmin, pmax);
+    meshGroupStrokes.append(vertexBufferInd);
+    meshGroupStrokesBBox.append(pmin, pmax);
     updateBBox(pmin, pmax);
 }
 
@@ -339,9 +298,9 @@ void WgRenderDataShape::updateAABB(const Matrix& tr) {
 }
 
 
-void WgRenderDataShape::updateMeshes(WgContext& context, const RenderShape &rshape, const Matrix& tr, WgGeometryBufferPool* pool)
+void WgRenderDataShape::updateMeshes(const RenderShape &rshape, const Matrix& tr, WgGeometryBufferPool* pool)
 {
-    releaseMeshes(context);
+    releaseMeshes();
     strokeFirst = rshape.strokeFirst();
 
     // get object scale
@@ -351,8 +310,8 @@ void WgRenderDataShape::updateMeshes(WgContext& context, const RenderShape &rsha
     auto pbuff = pool->reqVertexBuffer(scale);
 
     pbuff->decodePath(rshape, true, [&](const WgVertexBuffer& path_buff) {
-        appendShape(context, path_buff);
-        if ((rshape.stroke) && (rshape.stroke->width > 0)) proceedStrokes(context, rshape.stroke, path_buff, pool);
+        appendShape(path_buff);
+        if ((rshape.stroke) && (rshape.stroke->width > 0)) proceedStrokes(rshape.stroke, path_buff, pool);
     }, rshape.trimpath());
 
     // update shapes bbox (with empty path handling)
@@ -360,31 +319,31 @@ void WgRenderDataShape::updateMeshes(WgContext& context, const RenderShape &rsha
         (this->meshGroupStrokesBBox.meshes.count > 0)) {
         updateAABB(tr);
     } else aabb = {{0, 0}, {0, 0}};
-    meshDataBBox.bbox(context, pMin, pMax);
+    meshDataBBox.bbox(pMin, pMax);
 
     pool->retVertexBuffer(pbuff);
 }
 
 
-void WgRenderDataShape::proceedStrokes(WgContext& context, const RenderStroke* rstroke, const WgVertexBuffer& buff, WgGeometryBufferPool* pool)
+void WgRenderDataShape::proceedStrokes(const RenderStroke* rstroke, const WgVertexBuffer& buff, WgGeometryBufferPool* pool)
 {
     assert(rstroke);
     auto strokesGenerator = pool->reqIndexedVertexBuffer(buff.scale);
     if (rstroke->dash.count == 0) strokesGenerator->appendStrokes(buff, rstroke);
     else strokesGenerator->appendStrokesDashed(buff, rstroke);
 
-    appendStroke(context, *strokesGenerator);
+    appendStroke(*strokesGenerator);
 
     pool->retIndexedVertexBuffer(strokesGenerator);
 }
 
 
-void WgRenderDataShape::releaseMeshes(WgContext& context)
+void WgRenderDataShape::releaseMeshes()
 {
-    meshGroupStrokesBBox.release(context);
-    meshGroupStrokes.release(context);
-    meshGroupShapesBBox.release(context);
-    meshGroupShapes.release(context);
+    meshGroupStrokesBBox.release();
+    meshGroupStrokes.release();
+    meshGroupShapesBBox.release();
+    meshGroupShapes.release();
     pMin = {FLT_MAX, FLT_MAX};
     pMax = {0.0f, 0.0f};
     aabb = {{0, 0}, {0, 0}};
@@ -394,8 +353,7 @@ void WgRenderDataShape::releaseMeshes(WgContext& context)
 
 void WgRenderDataShape::release(WgContext& context)
 {
-    releaseMeshes(context);
-    meshDataBBox.release(context);
+    releaseMeshes();
     renderSettingsStroke.release(context);
     renderSettingsShape.release(context);
     WgRenderDataPaint::release(context);
@@ -421,10 +379,10 @@ WgRenderDataShape* WgRenderDataShapePool::allocate(WgContext& context)
 
 void WgRenderDataShapePool::free(WgContext& context, WgRenderDataShape* renderData)
 {
-    renderData->meshGroupShapes.release(context);
-    renderData->meshGroupShapesBBox.release(context);
-    renderData->meshGroupStrokes.release(context);
-    renderData->meshGroupStrokesBBox.release(context);
+    renderData->meshGroupShapes.release();
+    renderData->meshGroupShapesBBox.release();
+    renderData->meshGroupStrokes.release();
+    renderData->meshGroupStrokesBBox.release();
     renderData->clips.clear();
     mPool.push(renderData);
 }
@@ -447,7 +405,7 @@ void WgRenderDataShapePool::release(WgContext& context)
 void WgRenderDataPicture::updateSurface(WgContext& context, const RenderSurface* surface)
 {
     // upoate mesh data
-    meshData.imageBox(context, surface->w, surface->h);
+    meshData.imageBox(surface->w, surface->h);
     // update texture data
     imageData.update(context, surface);
 }
@@ -457,7 +415,6 @@ void WgRenderDataPicture::release(WgContext& context)
 {
     renderSettings.release(context);
     imageData.release(context);
-    meshData.release(context);
     WgRenderDataPaint::release(context);
 }
 
@@ -663,6 +620,7 @@ void WgStageBufferGeometry::append(WgMeshData* meshData)
     uint32_t vsize = meshData->vbuffer.count * sizeof(meshData->vbuffer[0]);
     uint32_t tsize = meshData->tbuffer.count * sizeof(meshData->tbuffer[0]);
     uint32_t isize = meshData->ibuffer.count * sizeof(meshData->ibuffer[0]);
+    vmaxcount = std::max(vmaxcount, meshData->vbuffer.count);
     // append vertex data
     if (vbuffer.reserved < vbuffer.count + vsize)
         vbuffer.grow(std::max(vsize, vbuffer.reserved));
@@ -723,6 +681,7 @@ void WgStageBufferGeometry::clear()
 {
     vbuffer.clear();
     ibuffer.clear();
+    vmaxcount = 0;
 }
 
 
@@ -730,12 +689,5 @@ void WgStageBufferGeometry::flush(WgContext& context)
 {
     context.allocateBufferVertex(vbuffer_gpu, (float *)vbuffer.data, vbuffer.count);
     context.allocateBufferIndex(ibuffer_gpu, (uint32_t *)ibuffer.data, ibuffer.count);
-}
-
-
-void WgStageBufferGeometry::bind(WGPURenderPassEncoder renderPass, size_t voffset, size_t toffset)
-{
-    wgpuRenderPassEncoderSetVertexBuffer(renderPass, 0, vbuffer_gpu, voffset, vbuffer.count - voffset);
-    wgpuRenderPassEncoderSetVertexBuffer(renderPass, 1, vbuffer_gpu, toffset, vbuffer.count - toffset);
-    wgpuRenderPassEncoderSetIndexBuffer(renderPass, ibuffer_gpu, WGPUIndexFormat_Uint32, 0, ibuffer.count);
+    context.allocateBufferIndexFan(vmaxcount);
 }
