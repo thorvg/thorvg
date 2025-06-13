@@ -111,11 +111,11 @@ public:
     void beginRenderPass(WGPUCommandEncoder encoder, WgRenderTarget* target, bool clear, WGPUColor clearColor = { 0.0, 0.0, 0.0, 0.0 });
     void endRenderPass();
 
-    // request shapes for drawing (staging)
-        // stage data
+    // stage buffers operations
     void reset(WgContext& context);
     void flush(WgContext& context);
 
+    // request shapes for drawing (staging)
     void requestShape(WgRenderDataShape* renderData);
     void requestImage(WgRenderDataPicture* renderData);
 
