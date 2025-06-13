@@ -383,12 +383,6 @@ bool SwRenderer::postRender()
         rasterUnpremultiply(surface);
     }
 
-    ARRAY_FOREACH(p, tasks) {
-        if ((*p)->disposed) delete(*p);
-        else (*p)->pushed = false;
-    }
-    tasks.clear();
-
     return true;
 }
 
@@ -718,13 +712,6 @@ void* SwRenderer::prepareCommon(SwTask* task, const Matrix& transform, const Arr
     if (flags == RenderUpdateFlag::None) return task;
     if ((transform.e11 == 0.0f && transform.e12 == 0.0f) || (transform.e21 == 0.0f && transform.e22 == 0.0f)) return task;  //zero size?
 
-    //TODO: Failed threading them. It would be better if it's possible.
-    //See: https://github.com/thorvg/thorvg/issues/1409
-    //Guarantee composition targets get ready.
-    ARRAY_FOREACH(p, clips) {
-        static_cast<SwTask*>(*p)->done();
-    }
-
     task->surface = surface;
     task->mpool = mpool;
     task->bbox = RenderRegion::intersect(vport, {{0, 0}, {int32_t(surface->w), int32_t(surface->h)}});
@@ -736,6 +723,13 @@ void* SwRenderer::prepareCommon(SwTask* task, const Matrix& transform, const Arr
     if (!task->pushed) {
         task->pushed = true;
         tasks.push(task);
+    }
+
+    //TODO: Failed threading them. It would be better if it's possible.
+    //See: https://github.com/thorvg/thorvg/issues/1409
+    //Guarantee composition targets get ready.
+    ARRAY_FOREACH(p, clips) {
+        static_cast<SwTask*>(*p)->done();
     }
 
     TaskScheduler::request(task);
