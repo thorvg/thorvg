@@ -73,12 +73,14 @@ public:
     static bool term();
 
 private:
+    RenderDirtyRegion    dirtyRegion;
     SwSurface*           surface = nullptr;           //active surface
     Array<SwTask*>       tasks;                       //async task list
     Array<SwSurface*>    compositors;                 //render targets cache list
     SwMpool*             mpool;                       //private memory pool
     RenderRegion         vport;                       //viewport
     bool                 sharedMpool;                 //memory-pool behavior policy
+    bool                 fulldraw = true;             //buffer is cleared (need to redraw full screen)
 
     SwRenderer();
     ~SwRenderer();
