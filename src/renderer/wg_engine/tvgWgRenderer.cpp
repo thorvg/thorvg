@@ -368,8 +368,7 @@ bool WgRenderer::target(WGPUDevice device, WGPUInstance instance, void* target, 
     }
 
     // can not initialize renderer, give up
-    if (!instance || !device || !target || !width || !height)
-        return false;
+    if (!width || !height) return false;
 
     // device or instance was changed, need to recreate all instances
     if ((mContext.device != device) || (mContext.instance != instance)) {
