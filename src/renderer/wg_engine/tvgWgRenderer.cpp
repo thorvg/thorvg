@@ -330,6 +330,7 @@ bool WgRenderer::sync()
     if (mContext.invalid()) return false;
 
     disposeObjects();
+    mCompositor.prepareRenderPass();
 
     // if texture buffer used
     WGPUTexture dstTexture = targetTexture;

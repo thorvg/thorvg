@@ -39,6 +39,8 @@ void WgCompositor::initialize(WgContext& context, uint32_t width, uint32_t heigh
     resize(context, width, height);
     // composition and blend geometries
     meshDataBlit.blitBox();
+
+    flush(context);
 }
 
 
@@ -186,6 +188,13 @@ void WgCompositor::endRenderPass()
         currentTarget = nullptr;
     }
 }
+
+
+void WgCompositor::prepareRenderPass()
+{
+    if (renderPassEncoder) endRenderPass();
+}
+
 
 void WgCompositor::reset(WgContext& context)
 {

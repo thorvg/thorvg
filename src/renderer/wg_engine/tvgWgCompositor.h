@@ -110,6 +110,7 @@ public:
     // render passes workflow
     void beginRenderPass(WGPUCommandEncoder encoder, WgRenderTarget* target, bool clear, WGPUColor clearColor = { 0.0, 0.0, 0.0, 0.0 });
     void endRenderPass();
+    void prepareRenderPass();
 
     // request shapes for drawing (staging)
         // stage data
