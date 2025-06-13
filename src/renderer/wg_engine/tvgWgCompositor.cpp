@@ -199,6 +199,7 @@ void WgCompositor::flush(WgContext& context)
     stageBufferGeometry.append(&meshDataBlit);
     stageBufferGeometry.flush(context);
     stageBufferPaint.flush(context);
+    context.submit();
 }
 
 
