@@ -273,6 +273,12 @@ void WgRenderer::dispose(RenderData data) {
 }
 
 
+void WgRenderer::damage(TVG_UNUSED const RenderRegion& region)
+{
+    //TODO:
+}
+
+
 RenderRegion WgRenderer::region(RenderData data)
 {
     auto renderData = (WgRenderDataPaint*)data;

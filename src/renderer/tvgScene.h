@@ -128,6 +128,9 @@ struct SceneImpl : Scene
         vport = renderer->viewport();
         vdirty = true;
 
+        //bounds(renderer) here hinders parallelization.
+        if (effects) renderer->damage(vport);
+
         return nullptr;
     }
 
@@ -254,7 +257,10 @@ struct SceneImpl : Scene
     {
         auto itr = paints.begin();
         while (itr != paints.end()) {
-            PAINT((*itr))->unref();
+            auto paint = PAINT((*itr));
+            //when the paint is destroyed damage will be triggered
+            if (paint->refCnt > 1) paint->damage();
+            paint->unref();
             paints.erase(itr++);
         }
         return Result::Success;
@@ -263,6 +269,8 @@ struct SceneImpl : Scene
     Result remove(Paint* paint)
     {
         if (PAINT(paint)->parent != this) return Result::InsufficientCondition;
+        //when the paint is destroyed damage will be triggered
+        if (PAINT(paint)->refCnt > 1) PAINT(paint)->damage();
         PAINT(paint)->unref();
         paints.remove(paint);
         return Result::Success;
@@ -307,6 +315,7 @@ struct SceneImpl : Scene
             }
             delete(effects);
             effects = nullptr;
+            impl.renderer->damage(vport);
         }
         return Result::Success;
     }
