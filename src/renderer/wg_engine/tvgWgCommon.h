@@ -73,6 +73,7 @@ struct WgContext {
     void submitCommandEncoder(WGPUCommandEncoder encoder);
     void releaseCommandEncoder(WGPUCommandEncoder& encoder);
 
+    void submit();
     bool invalid();
 };
 

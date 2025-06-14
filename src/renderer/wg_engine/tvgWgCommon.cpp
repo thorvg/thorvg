@@ -85,7 +85,6 @@ bool WgContext::allocateTexture(WGPUTexture& texture, uint32_t width, uint32_t h
         const WGPUTextureDataLayout textureDataLayout{ .bytesPerRow = 4 * width, .rowsPerImage = height };
         const WGPUExtent3D writeSize{ .width = width, .height = height, .depthOrArrayLayers = 1 };
         wgpuQueueWriteTexture(queue, &imageCopyTexture, data, 4 * width * height, &textureDataLayout, &writeSize);
-        wgpuQueueSubmit(queue, 0, nullptr);
     } else {
         releaseTexture(texture);
         texture = createTexture(width, height, format);
@@ -94,7 +93,6 @@ bool WgContext::allocateTexture(WGPUTexture& texture, uint32_t width, uint32_t h
         const WGPUTextureDataLayout textureDataLayout{ .bytesPerRow = 4 * width, .rowsPerImage = height };
         const WGPUExtent3D writeSize{ .width = width, .height = height, .depthOrArrayLayers = 1 };
         wgpuQueueWriteTexture(queue, &imageCopyTexture, data, 4 * width * height, &textureDataLayout, &writeSize);
-        wgpuQueueSubmit(queue, 0, nullptr);
         return true;
     }
     return false;
@@ -284,6 +282,12 @@ void WgContext::releaseCommandEncoder(WGPUCommandEncoder& commandEncoder)
         wgpuCommandEncoderRelease(commandEncoder);
         commandEncoder = nullptr;
     }
+}
+
+
+void WgContext::submit()
+{
+    wgpuQueueSubmit(queue, 0, nullptr);
 }
 
 
