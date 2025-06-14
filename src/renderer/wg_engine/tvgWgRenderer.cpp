@@ -34,10 +34,8 @@ static atomic<int32_t> rendererCnt{-1};
 
 void WgRenderer::release()
 {
-    // check for general context availability
     if (!mContext.queue) return;
 
-    // dispose stored objects
     disposeObjects();
 
     // clear render data paint pools
@@ -101,7 +99,6 @@ void WgRenderer::clearTargets()
 
 bool WgRenderer::surfaceConfigure(WGPUSurface surface, WgContext& context, uint32_t width, uint32_t height)
 {
-    // store target surface properties
     this->surface = surface;
     if (width == 0 || height == 0 || !surface) return false;
 
@@ -134,10 +131,7 @@ bool WgRenderer::surfaceConfigure(WGPUSurface surface, WgContext& context, uint3
 
 RenderData WgRenderer::prepare(const RenderShape& rshape, RenderData data, const Matrix& transform, Array<RenderData>& clips, uint8_t opacity, RenderUpdateFlag flags, bool clipper)
 {
-    // get or create render data shape
-    auto renderDataShape = (WgRenderDataShape*)data;
-    if (!renderDataShape)
-        renderDataShape = mRenderDataShapePool.allocate(mContext);
+    auto renderDataShape = data ? (WgRenderDataShape*)data : mRenderDataShapePool.allocate(mContext);
 
     // update geometry
     if ((!data) || (flags & (RenderUpdateFlag::Path | RenderUpdateFlag::Stroke))) {
@@ -160,7 +154,6 @@ RenderData WgRenderer::prepare(const RenderShape& rshape, RenderData data, const
         else if (flags & RenderUpdateFlag::Stroke) renderDataShape->renderSettingsStroke.update(mContext, rshape.stroke->color);
     }
 
-    // store clips data
     renderDataShape->updateClips(clips);
 
     return renderDataShape;
@@ -169,10 +162,7 @@ RenderData WgRenderer::prepare(const RenderShape& rshape, RenderData data, const
 
 RenderData WgRenderer::prepare(RenderSurface* surface, RenderData data, const Matrix& transform, Array<RenderData>& clips, uint8_t opacity, RenderUpdateFlag flags)
 {
-    // get or create render data shape
-    auto renderDataPicture = (WgRenderDataPicture*)data;
-    if (!renderDataPicture)
-        renderDataPicture = mRenderDataPicturePool.allocate(mContext);
+    auto renderDataPicture = data ? (WgRenderDataPicture*)data : mRenderDataPicturePool.allocate(mContext);
 
     // update paint settings
     renderDataPicture->viewport = mViewport;
@@ -185,7 +175,6 @@ RenderData WgRenderer::prepare(RenderSurface* surface, RenderData data, const Ma
         renderDataPicture->updateSurface(mContext, surface);
     }
 
-    // store clips data
     renderDataPicture->updateClips(clips);
 
     return renderDataPicture;
@@ -194,13 +183,13 @@ RenderData WgRenderer::prepare(RenderSurface* surface, RenderData data, const Ma
 
 bool WgRenderer::preRender()
 {
-    // invalidate context
     if (mContext.invalid()) return false;
-    // reset stage data
+
     mCompositor.reset(mContext);
-    // push root render target to the render tree stack
+
     assert(mRenderTargetStack.count == 0);
     mRenderTargetStack.push(&mRenderTargetRoot);
+
     // create root compose settings
     WgCompose* compose = new WgCompose();
     compose->aabb = { { 0, 0 }, { (int32_t)mTargetSurface.w, (int32_t)mTargetSurface.h } };
@@ -208,6 +197,7 @@ bool WgRenderer::preRender()
     compose->method = MaskMethod::None;
     compose->opacity = 255;
     mCompositorList.push(compose);
+
     // create root scene
     WgSceneTask* sceneTask = new WgSceneTask(&mRenderTargetRoot, compose, nullptr);
     mRenderTaskList.push(sceneTask);
@@ -242,14 +232,18 @@ bool WgRenderer::postRender()
 {
     // flush stage data to gpu
     mCompositor.flush(mContext);
+
     // create command encoder for drawing
     WGPUCommandEncoder commandEncoder = mContext.createCommandEncoder();
+
     // run rendering (all the fun is here)
     WgSceneTask* sceneTaskRoot = mSceneTaskStack.last();
     sceneTaskRoot->run(mContext, mCompositor, commandEncoder);
+
     // execute and release command encoder
     mContext.submitCommandEncoder(commandEncoder);
     mContext.releaseCommandEncoder(commandEncoder);
+
     // clear the render tasks tree
     mSceneTaskStack.pop();
     assert(mSceneTaskStack.count == 0);
@@ -259,8 +253,9 @@ bool WgRenderer::postRender()
     mRenderTaskList.clear();
     ARRAY_FOREACH(p, mCompositorList) { delete (*p); };
     mCompositorList.clear();
-    ARRAY_FOREACH(p, mRenderDataViewportList)
+    ARRAY_FOREACH(p, mRenderDataViewportList) {
         mRenderDataViewportPool.free(mContext, *p);
+    }
     mRenderDataViewportList.clear();
     return true;
 }
@@ -338,43 +333,37 @@ bool WgRenderer::sync()
         wgpuSurfaceGetCurrentTexture(surface, &surfaceTexture);
         dstTexture = surfaceTexture.texture;
     }
-    // there is no external dest buffer
+
     if (!dstTexture) return false;
 
     // insure that surface and offscreen target have the same size
     if ((wgpuTextureGetWidth(dstTexture) == mRenderTargetRoot.width) && 
         (wgpuTextureGetHeight(dstTexture) == mRenderTargetRoot.height)) {
-        // get external dest buffer
         WGPUTextureView dstTextureView = mContext.createTextureView(dstTexture);
-        // create command encoder
         WGPUCommandEncoder commandEncoder = mContext.createCommandEncoder();
         // show root offscreen buffer
         mCompositor.blit(mContext, commandEncoder, &mRenderTargetRoot, dstTextureView);
         mContext.submitCommandEncoder(commandEncoder);
         mContext.releaseCommandEncoder(commandEncoder);
-        // release dest buffer view
         mContext.releaseTextureView(dstTextureView);
     }
 
     return true;
 }
 
-// render target handle
+
 bool WgRenderer::target(WGPUDevice device, WGPUInstance instance, void* target, uint32_t width, uint32_t height, int type)
 {
     // release all existing handles
     if (!instance || !device || !target) {
-        // release all handles
         release();
         return true;
     }
 
-    // can not initialize renderer, give up
     if (!width || !height) return false;
 
     // device or instance was changed, need to recreate all instances
     if ((mContext.device != device) || (mContext.instance != instance)) {
-        // release all handles
         release();
 
         // initialize base rendering handles
@@ -493,7 +482,7 @@ bool WgRenderer::endComposite(RenderCompositor* cmp)
         // get source and destination render targets
         WgRenderTarget* src = mRenderTargetStack.last();
         mRenderTargetStack.pop();
-        // pop source scene
+
         WgSceneTask* srcScene = mSceneTaskStack.last();
         mSceneTaskStack.pop();
         // setup render target compose destitations
@@ -525,67 +514,30 @@ bool WgRenderer::endComposite(RenderCompositor* cmp)
 
 void WgRenderer::prepare(RenderEffect* effect, const Matrix& transform)
 {
-    // prepare gaussian blur data
+    if (!effect->rd) effect->rd = mRenderDataEffectParamsPool.allocate(mContext);
+    auto renderData = (WgRenderDataEffectParams*)effect->rd;
+
     if (effect->type == SceneEffect::GaussianBlur) {
-        auto renderEffect = (RenderEffectGaussianBlur*)effect;
-        auto renderData = (WgRenderDataEffectParams*)renderEffect->rd;
-        if (!renderData) {
-            renderData = mRenderDataEffectParamsPool.allocate(mContext);
-            renderEffect->rd = renderData;
-        }
-        renderData->update(mContext, renderEffect, transform);
-        effect->valid = true;
-    } else
-    // prepare drop shadow data
-    if (effect->type == SceneEffect::DropShadow) {
-        auto renderEffect = (RenderEffectDropShadow*)effect;
-        auto renderData = (WgRenderDataEffectParams*)renderEffect->rd;
-        if (!renderData) {
-            renderData = mRenderDataEffectParamsPool.allocate(mContext);
-            renderEffect->rd = renderData;
-        }
-        renderData->update(mContext, renderEffect, transform);
-        effect->valid = true;
-    } else
-    // prepare fill
-    if (effect->type == SceneEffect::Fill) {
-        auto renderEffect = (RenderEffectFill*)effect;
-        auto renderData = (WgRenderDataEffectParams*)renderEffect->rd;
-        if (!renderData) {
-            renderData = mRenderDataEffectParamsPool.allocate(mContext);
-            renderEffect->rd = renderData;
-        }
-        renderData->update(mContext, renderEffect);
-        effect->valid = true;
-    } else
-    // prepare tint
-    if (effect->type == SceneEffect::Tint) {
-        auto renderEffect = (RenderEffectTint*)effect;
-        auto renderData = (WgRenderDataEffectParams*)renderEffect->rd;
-        if (!renderData) {
-            renderData = mRenderDataEffectParamsPool.allocate(mContext);
-            renderEffect->rd = renderData;
-        }
-        renderData->update(mContext, renderEffect);
-        effect->valid = true;
-    } else
-    // prepare tritone
-    if (effect->type == SceneEffect::Tritone) {
-        auto renderEffect = (RenderEffectTritone*)effect;
-        auto renderData = (WgRenderDataEffectParams*)renderEffect->rd;
-        if (!renderData) {
-            renderData = mRenderDataEffectParamsPool.allocate(mContext);
-            renderEffect->rd = renderData;
-        }
-        renderData->update(mContext, renderEffect);
-        effect->valid = true;
+        renderData->update(mContext, (RenderEffectGaussianBlur*)effect, transform);
+    } else if (effect->type == SceneEffect::DropShadow) {
+        renderData->update(mContext, (RenderEffectDropShadow*)effect, transform);
+    } else if (effect->type == SceneEffect::Fill) {
+        renderData->update(mContext, (RenderEffectFill*)effect);
+    } else if (effect->type == SceneEffect::Tint) {
+        renderData->update(mContext, (RenderEffectTint*)effect);
+    } else if (effect->type == SceneEffect::Tritone) {
+        renderData->update(mContext, (RenderEffectTritone*)effect);
+    } else {
+        TVGERR("WG_ENGINE", "Missing effect type? = %d", (int) effect->type);
+        return;
     }
+
+    effect->valid = true;
 }
 
 
 bool WgRenderer::region(RenderEffect* effect)
 {
-    // update gaussian blur region
     if (effect->type == SceneEffect::GaussianBlur) {
         auto gaussian = (RenderEffectGaussianBlur*)effect;
         auto renderData = (WgRenderDataEffectParams*)gaussian->rd;
@@ -598,9 +550,7 @@ bool WgRenderer::region(RenderEffect* effect)
             gaussian->extend.max.y = +renderData->extend;
         }
         return true;
-    } else
-    // update drop shadow region
-    if (effect->type == SceneEffect::DropShadow) {
+    } else if (effect->type == SceneEffect::DropShadow) {
         auto dropShadow = (RenderEffectDropShadow*)effect;
         auto renderData = (WgRenderDataEffectParams*)dropShadow->rd;
         dropShadow->extend.min.x = -(renderData->extend + std::abs(renderData->offset.x));
