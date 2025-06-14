@@ -341,21 +341,23 @@ bool WgRenderer::sync()
     // there is no external dest buffer
     if (!dstTexture) return false;
 
-    // get external dest buffer
-    WGPUTextureView dstTextureView = mContext.createTextureView(dstTexture);
+    // insure that surface and offscreen target have the same size
+    if ((wgpuTextureGetWidth(dstTexture) == mRenderTargetRoot.width) && 
+        (wgpuTextureGetHeight(dstTexture) == mRenderTargetRoot.height)) {
+        // get external dest buffer
+        WGPUTextureView dstTextureView = mContext.createTextureView(dstTexture);
+        // create command encoder
+        WGPUCommandEncoder commandEncoder = mContext.createCommandEncoder();
+        // show root offscreen buffer
+        mCompositor.blit(mContext, commandEncoder, &mRenderTargetRoot, dstTextureView);
+        mContext.submitCommandEncoder(commandEncoder);
+        mContext.releaseCommandEncoder(commandEncoder);
+        // release dest buffer view
+        mContext.releaseTextureView(dstTextureView);
+    }
 
-    // create command encoder
-    WGPUCommandEncoder commandEncoder = mContext.createCommandEncoder();
-    // show root offscreen buffer
-    mCompositor.blit(mContext, commandEncoder, &mRenderTargetRoot, dstTextureView);
-    mContext.submitCommandEncoder(commandEncoder);
-    mContext.releaseCommandEncoder(commandEncoder);
-
-    // release dest buffer view
-    mContext.releaseTextureView(dstTextureView);
     return true;
 }
-
 
 // render target handle
 bool WgRenderer::target(WGPUDevice device, WGPUInstance instance, void* target, uint32_t width, uint32_t height, int type)
