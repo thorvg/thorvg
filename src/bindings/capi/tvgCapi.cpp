@@ -134,14 +134,7 @@ TVG_API Tvg_Result tvg_canvas_remove(Tvg_Canvas* canvas, Tvg_Paint* paint)
 
 TVG_API Tvg_Result tvg_canvas_update(Tvg_Canvas* canvas)
 {
-    if (canvas) return (Tvg_Result) reinterpret_cast<Canvas*>(canvas)->update(nullptr);
-    return TVG_RESULT_INVALID_ARGUMENT;
-}
-
-
-TVG_API Tvg_Result tvg_canvas_update_paint(Tvg_Canvas* canvas, Tvg_Paint* paint)
-{
-    if (canvas && paint) return (Tvg_Result) reinterpret_cast<Canvas*>(canvas)->update((Paint*) paint);
+    if (canvas) return (Tvg_Result) reinterpret_cast<Canvas*>(canvas)->update();
     return TVG_RESULT_INVALID_ARGUMENT;
 }
 

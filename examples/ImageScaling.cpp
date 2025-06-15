@@ -54,7 +54,7 @@ struct UserExample : tvgexam::Example
 
         picture->scale((1.0f - progress) * 1.5f);
 
-        canvas->update(picture);
+        canvas->update();
 
         return true;
     }

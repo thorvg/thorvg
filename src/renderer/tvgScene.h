@@ -116,7 +116,7 @@ struct SceneImpl : Scene
             opacity = 255;
         }
         for (auto paint : paints) {
-            paint->pImpl->update(renderer, transform, clips, opacity, flag, false);
+            PAINT(paint)->update(renderer, transform, clips, opacity, flag, false);
         }
 
         if (effects) {

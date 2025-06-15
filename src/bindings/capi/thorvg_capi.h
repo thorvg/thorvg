@@ -631,23 +631,6 @@ TVG_API Tvg_Result tvg_canvas_update(Tvg_Canvas* canvas);
 
 
 /*!
-* @brief Updates the given Tvg_Paint object from the canvas before the rendering.
-*
-* If a client application using the TVG library does not update the entire canvas with tvg_canvas_update() in the frame
-* rendering process, Tvg_Paint objects previously added to the canvas should be updated manually with this function.
-*
-* @param[in] canvas The Tvg_Canvas object to which the @p paint belongs.
-* @param[in] paint The Tvg_Paint object to be updated.
-*
-* @return Tvg_Result enumeration.
-* @retval TVG_RESULT_INVALID_ARGUMENT In case a @c nullptr is passed as the argument.
-*
-* @see tvg_canvas_update()
-*/
-TVG_API Tvg_Result tvg_canvas_update_paint(Tvg_Canvas* canvas, Tvg_Paint* paint);
-
-
-/*!
 * @brief Requests the canvas to draw the Tvg_Paint objects.
 *
 * All paints from the given canvas will be rasterized to the buffer.
