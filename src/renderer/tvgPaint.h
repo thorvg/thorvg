@@ -129,6 +129,11 @@ namespace tvg
             return refCnt;
         }
 
+        bool marked(RenderUpdateFlag flag)
+        {
+            return (renderFlag & flag) ? true : false;
+        }
+
         void mark(RenderUpdateFlag flag)
         {
             renderFlag |= flag;

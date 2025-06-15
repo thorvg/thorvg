@@ -99,7 +99,7 @@ struct ShapeImpl : Shape
 
     RenderData update(RenderMethod* renderer, const Matrix& transform, Array<RenderData>& clips, uint8_t opacity, RenderUpdateFlag pFlag, bool clipper)
     {
-        if ((pFlag | impl.renderFlag) == RenderUpdateFlag::None) return impl.rd;
+        if (pFlag == RenderUpdateFlag::None) return impl.rd;
 
         if (needComposition(opacity)) {
             /* Overriding opacity value. If this scene is half-translucent,

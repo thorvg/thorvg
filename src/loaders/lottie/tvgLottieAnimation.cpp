@@ -35,8 +35,10 @@ Result LottieAnimation::override(const char* slot) noexcept
     auto loader = PICTURE(pImpl->picture)->loader;
     if (!loader) return Result::InsufficientCondition;
 
-    if (static_cast<LottieLoader*>(loader)->override(slot)) return Result::Success;
-
+    if (static_cast<LottieLoader*>(loader)->override(slot)) {
+        PAINT(pImpl->picture)->mark(RenderUpdateFlag::All);
+        return Result::Success;
+    }
     return Result::InvalidArguments;
 }
 
@@ -53,8 +55,7 @@ Result LottieAnimation::segment(const char* marker) noexcept
     
     float begin, end;
     if (!static_cast<LottieLoader*>(loader)->segment(marker, begin, end)) return Result::InvalidArguments;
-
-    return static_cast<LottieLoader*>(loader)->segment(begin, end);
+    return Animation::segment(begin, end);
 }
 
 
@@ -63,6 +64,7 @@ Result LottieAnimation::tween(float from, float to, float progress) noexcept
     auto loader = PICTURE(pImpl->picture)->loader;
     if (!loader) return Result::InsufficientCondition;
     if (!static_cast<LottieLoader*>(loader)->tween(from, to, progress)) return Result::InsufficientCondition;
+    PAINT(pImpl->picture)->mark(RenderUpdateFlag::All);
     return Result::Success;
 }
 
@@ -89,7 +91,10 @@ Result LottieAnimation::assign(const char* layer, uint32_t ix, const char* var, 
 
     auto loader = PICTURE(pImpl->picture)->loader;
     if (!loader) return Result::InsufficientCondition;
-    if (static_cast<LottieLoader*>(loader)->assign(layer, ix, var, val)) return Result::Success;
+    if (static_cast<LottieLoader*>(loader)->assign(layer, ix, var, val)) {
+        PAINT(pImpl->picture)->mark(RenderUpdateFlag::All);
+        return Result::Success;
+    }
 
     return Result::NonSupport;
 }

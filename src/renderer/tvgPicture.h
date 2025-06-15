@@ -78,25 +78,24 @@ struct PictureImpl : Picture
 
     RenderData update(RenderMethod* renderer, const Matrix& transform, Array<RenderData>& clips, uint8_t opacity, RenderUpdateFlag pFlag, TVG_UNUSED bool clipper)
     {
-        auto flag = (pFlag | load());
+        if (pFlag == RenderUpdateFlag::None) return impl.rd;
+
+        load();
 
         if (bitmap) {
-            if (flag == RenderUpdateFlag::None) return impl.rd;
-
             //Overriding Transformation by the desired image size
             auto sx = w / loader->w;
             auto sy = h / loader->h;
             auto scale = sx < sy ? sx : sy;
             auto m = transform * Matrix{scale, 0, 0, 0, scale, 0, 0, 0, 1};
-
-            impl.rd = renderer->prepare(bitmap, impl.rd, m, clips, opacity, flag);
+            impl.rd = renderer->prepare(bitmap, impl.rd, m, clips, opacity, pFlag);
         } else if (vector) {
             if (resizing) {
                 loader->resize(vector, w, h);
                 resizing = false;
             }
             queryComposition(opacity);
-            return vector->pImpl->update(renderer, transform, clips, opacity, flag, false);
+            return vector->pImpl->update(renderer, transform, clips, opacity, pFlag, false);
         }
         return impl.rd;
     }
@@ -116,7 +115,7 @@ struct PictureImpl : Picture
         return Result::Success;
     }
 
-    Result bounds(Point* pt4, Matrix& m, TVG_UNUSED bool obb, TVG_UNUSED bool stroking)
+    Result bounds(Point* pt4, Matrix& m, TVG_UNUSED bool obb, TVG_UNUSED bool stroking) const
     {
         pt4[0] = Point{0.0f, 0.0f} * m;
         pt4[1] = Point{w, 0.0f} * m;
@@ -208,33 +207,25 @@ struct PictureImpl : Picture
         else return nullptr;
     }
 
-    RenderUpdateFlag load()
+    void load()
     {
         if (loader) {
             if (vector) {
                 loader->sync();
-            } else {
-                vector = loader->paint();
-                if (vector) {
-                    PAINT(vector)->parent = this;
-                    if (w != loader->w || h != loader->h) {
-                        if (!resizing) {
-                            w = loader->w;
-                            h = loader->h;
-                        }
-                        loader->resize(vector, w, h);
-                        resizing = false;
+            } else if ((vector = loader->paint())) {
+                PAINT(vector)->parent = this;
+                if (w != loader->w || h != loader->h) {
+                    if (!resizing) {
+                        w = loader->w;
+                        h = loader->h;
                     }
-                    return RenderUpdateFlag::None;
+                    loader->resize(vector, w, h);
+                    resizing = false;
                 }
-            }
-            if (!bitmap) {
-                if ((bitmap = loader->bitmap())) {
-                    return RenderUpdateFlag::Image;
-                }
+            } else if (!bitmap) {
+                bitmap = loader->bitmap();
             }
         }
-        return RenderUpdateFlag::None;
     }
 
     void queryComposition(uint8_t opacity)
@@ -292,6 +283,8 @@ struct PictureImpl : Picture
 
         this->w = loader->w;
         this->h = loader->h;
+
+        impl.mark(RenderUpdateFlag::All);
 
         return Result::Success;
     }

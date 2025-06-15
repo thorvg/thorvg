@@ -264,16 +264,16 @@ RenderData Paint::Impl::update(RenderMethod* renderer, const Matrix& pm, Array<R
 
     /* 3. Main Update */
     auto newFlag = pFlag | renderFlag;
-    renderFlag = RenderUpdateFlag::None;
     opacity = MULTIPLY(opacity, this->opacity);
 
     RenderData rd = nullptr;
-
     PAINT_METHOD(rd, update(renderer, pm * tr.m, clips, opacity, newFlag, clipper));
 
     /* 4. Composition Post Processing */
     if (compFastTrack == Result::Success) renderer->viewport(viewport);
     else if (this->clipper) clips.pop();
+
+    renderFlag = RenderUpdateFlag::None;
 
     return rd;
 }
