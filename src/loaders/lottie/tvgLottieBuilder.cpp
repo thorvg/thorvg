@@ -358,8 +358,7 @@ static void _repeat(LottieGroup* parent, Shape* path, RenderContext* ctx)
                 auto opacity = tvg::lerp<uint8_t>(repeater->startOpacity, repeater->endOpacity, static_cast<float>(i + 1) / repeater->cnt);
                 shape->opacity(MULTIPLY((*p)->opacity(), opacity));
 
-                Matrix m;
-                tvg::identity(&m);
+                auto m = tvg::identity();
                 translate(&m, repeater->position * multiplier + repeater->anchor);
                 scale(&m, {powf(repeater->scale.x * 0.01f, multiplier), powf(repeater->scale.y * 0.01f, multiplier)});
                 rotate(&m, repeater->rotation * multiplier);
@@ -675,8 +674,7 @@ void LottieBuilder::updatePolystar(LottieGroup* parent, LottieObject** child, fl
     auto star = static_cast<LottiePolyStar*>(*child);
 
     //Optimize: Can we skip the individual coords transform?
-    Matrix matrix;
-    tvg::identity(&matrix);
+    auto matrix = tvg::identity();
     translate(&matrix, star->position(frameNo, tween, exps));
     rotate(&matrix, star->rotation(frameNo, tween, exps));
 
