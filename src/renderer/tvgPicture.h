@@ -63,7 +63,6 @@ struct PictureImpl : Picture
     Paint* vector = nullptr;          //vector picture uses
     RenderSurface* bitmap = nullptr;  //bitmap picture uses
     float w = 0, h = 0;
-    uint8_t compFlag = CompositionFlag::Invalid;
     bool resizing = false;
 
     PictureImpl() : impl(Paint::Impl(this))
@@ -76,29 +75,32 @@ struct PictureImpl : Picture
         delete(vector);
     }
 
-    RenderData update(RenderMethod* renderer, const Matrix& transform, Array<RenderData>& clips, uint8_t opacity, RenderUpdateFlag pFlag, TVG_UNUSED bool clipper)
+    bool skip(RenderUpdateFlag flag)
     {
-        auto flag = (pFlag | load());
+        if (flag == RenderUpdateFlag::None) return true;
+        return false;
+    }
+
+    bool update(RenderMethod* renderer, const Matrix& transform, Array<RenderData>& clips, uint8_t opacity, RenderUpdateFlag flag, TVG_UNUSED bool clipper)
+    {
+        load();
 
         if (bitmap) {
-            if (flag == RenderUpdateFlag::None) return impl.rd;
-
             //Overriding Transformation by the desired image size
             auto sx = w / loader->w;
             auto sy = h / loader->h;
             auto scale = sx < sy ? sx : sy;
             auto m = transform * Matrix{scale, 0, 0, 0, scale, 0, 0, 0, 1};
-
             impl.rd = renderer->prepare(bitmap, impl.rd, m, clips, opacity, flag);
         } else if (vector) {
             if (resizing) {
                 loader->resize(vector, w, h);
                 resizing = false;
             }
-            queryComposition(opacity);
+            needComposition(opacity);
             return vector->pImpl->update(renderer, transform, clips, opacity, flag, false);
         }
-        return impl.rd;
+        return true;
     }
 
     void size(float w, float h)
@@ -208,38 +210,30 @@ struct PictureImpl : Picture
         else return nullptr;
     }
 
-    RenderUpdateFlag load()
+    void load()
     {
         if (loader) {
             if (vector) {
                 loader->sync();
-            } else {
-                vector = loader->paint();
-                if (vector) {
-                    PAINT(vector)->parent = this;
-                    if (w != loader->w || h != loader->h) {
-                        if (!resizing) {
-                            w = loader->w;
-                            h = loader->h;
-                        }
-                        loader->resize(vector, w, h);
-                        resizing = false;
+            } else if ((vector = loader->paint())) {
+                PAINT(vector)->parent = this;
+                if (w != loader->w || h != loader->h) {
+                    if (!resizing) {
+                        w = loader->w;
+                        h = loader->h;
                     }
-                    return RenderUpdateFlag::None;
+                    loader->resize(vector, w, h);
+                    resizing = false;
                 }
-            }
-            if (!bitmap) {
-                if ((bitmap = loader->bitmap())) {
-                    return RenderUpdateFlag::Image;
-                }
+            } else if (!bitmap) {
+                bitmap = loader->bitmap();
             }
         }
-        return RenderUpdateFlag::None;
     }
 
-    void queryComposition(uint8_t opacity)
+    void needComposition(uint8_t opacity)
     {
-        compFlag = CompositionFlag::Invalid;
+        impl.cmpFlag = CompositionFlag::Invalid;  //must clear after the rendering
 
         //In this case, paint(scene) would try composition itself.
         if (opacity < 255) return;
@@ -248,7 +242,7 @@ struct PictureImpl : Picture
         const Paint* target;
         PAINT(this)->mask(&target);
         if (!target || target->pImpl->opacity == 255 || target->pImpl->opacity == 0) return;
-        compFlag = CompositionFlag::Opacity;
+        impl.mark(CompositionFlag::Opacity);
     }
 
     bool render(RenderMethod* renderer)
@@ -259,8 +253,8 @@ struct PictureImpl : Picture
         if (bitmap) return renderer->renderImage(impl.rd);
         else if (vector) {
             RenderCompositor* cmp = nullptr;
-            if (compFlag) {
-                cmp = renderer->target(bounds(renderer), renderer->colorSpace(), static_cast<CompositionFlag>(compFlag));
+            if (impl.cmpFlag) {
+                cmp = renderer->target(bounds(renderer), renderer->colorSpace(), impl.cmpFlag);
                 renderer->beginComposite(cmp, MaskMethod::None, 255);
             }
             ret = vector->pImpl->render(renderer);
@@ -292,6 +286,8 @@ struct PictureImpl : Picture
 
         this->w = loader->w;
         this->h = loader->h;
+
+        impl.mark(RenderUpdateFlag::All);
 
         return Result::Success;
     }

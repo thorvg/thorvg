@@ -41,7 +41,6 @@ struct TextImpl : Text
     char* utf8 = nullptr;
     float fontSize;
     bool italic = false;
-    bool changed = false;
 
     TextImpl() : impl(Paint::Impl(this)), shape(Shape::gen())
     {
@@ -61,7 +60,8 @@ struct TextImpl : Text
         tvg::free(this->utf8);
         if (utf8) this->utf8 = tvg::duplicate(utf8);
         else this->utf8 = nullptr;
-        changed = true;
+
+        impl.mark(RenderUpdateFlag::Path);
 
         return Result::Success;
     }
@@ -85,11 +85,12 @@ struct TextImpl : Text
         }
         this->loader = static_cast<FontLoader*>(loader);
 
-        changed = true;
+        impl.mark(RenderUpdateFlag::Path);
+
         return Result::Success;
     }
 
-    RenderRegion bounds(RenderMethod* renderer)
+    RenderRegion bounds(RenderMethod* renderer) const
     {
         return SHAPE(shape)->bounds(renderer);
     }
@@ -106,17 +107,21 @@ struct TextImpl : Text
         if (!loader) return 0.0f;
 
         //reload
-        if (changed) {
-            loader->read(shape, utf8, metrics);
-            changed = false;
-        }
+        if (impl.marked(RenderUpdateFlag::Path)) loader->read(shape, utf8, metrics);
+
         return loader->transform(shape, metrics, fontSize, italic);
     }
 
-    RenderData update(RenderMethod* renderer, const Matrix& transform, Array<RenderData>& clips, uint8_t opacity, RenderUpdateFlag pFlag, TVG_UNUSED bool clipper)
+    bool skip(RenderUpdateFlag flag)
+    {
+        if (flag == RenderUpdateFlag::None) return true;
+        return false;
+    }
+
+    bool update(RenderMethod* renderer, const Matrix& transform, Array<RenderData>& clips, uint8_t opacity, RenderUpdateFlag flag, TVG_UNUSED bool clipper)
     {
         auto scale = 1.0f / load();
-        if (tvg::zero(scale)) return nullptr;
+        if (tvg::zero(scale)) return false;
 
         //transform the gradient coordinates based on the final scaled font.
         auto fill = SHAPE(shape)->rs.fill;
@@ -135,8 +140,8 @@ struct TextImpl : Text
                 RADIAL(fill)->fr *= scale;
             }
         }
-
-        return PAINT(shape)->update(renderer, transform, clips, opacity, pFlag, false);
+        PAINT(shape)->update(renderer, transform, clips, opacity, flag, false);
+        return true;
     }
 
     Result bounds(Point* pt4, Matrix& m, bool obb, TVG_UNUSED bool stroking)

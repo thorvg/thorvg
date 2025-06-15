@@ -203,8 +203,15 @@ bool Paint::Impl::render(RenderMethod* renderer)
 }
 
 
-RenderData Paint::Impl::update(RenderMethod* renderer, const Matrix& pm, Array<RenderData>& clips, uint8_t opacity, RenderUpdateFlag pFlag, bool clipper)
+RenderData Paint::Impl::update(RenderMethod* renderer, const Matrix& pm, Array<RenderData>& clips, uint8_t opacity, RenderUpdateFlag flag, bool clipper)
 {
+    bool ret;
+    PAINT_METHOD(ret, skip((flag | renderFlag)));
+
+    if (ret) return rd;
+
+    cmpFlag = CompositionFlag::Invalid;  //must clear after the rendering
+
     if (this->renderer != renderer) {
         if (this->renderer) TVGERR("RENDERER", "paint's renderer has been changed!");
         renderer->ref();
@@ -240,7 +247,7 @@ RenderData Paint::Impl::update(RenderMethod* renderer, const Matrix& pm, Array<R
             }
         }
         if (compFastTrack == Result::InsufficientCondition) {
-            trd = PAINT(target)->update(renderer, pm, clips, 255, pFlag, false);
+            trd = PAINT(target)->update(renderer, pm, clips, 255, flag, false);
         }
     }
 
@@ -256,24 +263,21 @@ RenderData Paint::Impl::update(RenderMethod* renderer, const Matrix& pm, Array<R
             pclip->ctxFlag |= ContextFlag::FastTrack;
             compFastTrack = Result::Success;
         } else {
-            trd = pclip->update(renderer, pm, clips, 255, pFlag, true);
+            trd = pclip->update(renderer, pm, clips, 255, flag, true);
             clips.push(trd);
             compFastTrack = Result::InsufficientCondition;
         }
     }
 
     /* 3. Main Update */
-    auto newFlag = pFlag | renderFlag;
-    renderFlag = RenderUpdateFlag::None;
     opacity = MULTIPLY(opacity, this->opacity);
-
-    RenderData rd = nullptr;
-
-    PAINT_METHOD(rd, update(renderer, pm * tr.m, clips, opacity, newFlag, clipper));
+    PAINT_METHOD(ret, update(renderer, pm * tr.m, clips, opacity, (flag | renderFlag), clipper));
 
     /* 4. Composition Post Processing */
     if (compFastTrack == Result::Success) renderer->viewport(viewport);
     else if (this->clipper) clips.pop();
+
+    renderFlag = RenderUpdateFlag::None;
 
     return rd;
 }

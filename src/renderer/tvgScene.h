@@ -66,7 +66,6 @@ struct SceneImpl : Scene
     list<Paint*> paints;     //children list
     RenderRegion vport = {};
     Array<RenderEffect*>* effects = nullptr;
-    uint8_t compFlag = CompositionFlag::Invalid;
     uint8_t opacity;         //for composition
     bool vdirty = false;
 
@@ -82,32 +81,35 @@ struct SceneImpl : Scene
 
     uint8_t needComposition(uint8_t opacity)
     {
-        compFlag = CompositionFlag::Invalid;
-
         if (opacity == 0 || paints.empty()) return 0;
 
         //post effects, masking, blending may require composition
-        if (effects) compFlag |= CompositionFlag::PostProcessing;
-        if (PAINT(this)->mask(nullptr) != MaskMethod::None) compFlag |= CompositionFlag::Masking;
-        if (impl.blendMethod != BlendMethod::Normal) compFlag |= CompositionFlag::Blending;
+        if (effects) impl.mark(CompositionFlag::PostProcessing);
+        if (PAINT(this)->mask(nullptr) != MaskMethod::None) impl.mark(CompositionFlag::Masking);
+        if (impl.blendMethod != BlendMethod::Normal) impl.mark(CompositionFlag::Blending);
 
         //Half translucent requires intermediate composition.
-        if (opacity == 255) return compFlag;
+        if (opacity == 255) return impl.cmpFlag;
 
         //Only shape or picture may not require composition.
         if (paints.size() == 1) {
             auto type = paints.front()->type();
-            if (type == Type::Shape || type == Type::Picture) return compFlag;
+            if (type == Type::Shape || type == Type::Picture) return impl.cmpFlag;
         }
 
-        compFlag |= CompositionFlag::Opacity;
+        impl.mark(CompositionFlag::Opacity);
 
         return 1;
     }
 
-    RenderData update(RenderMethod* renderer, const Matrix& transform, Array<RenderData>& clips, uint8_t opacity, RenderUpdateFlag flag, TVG_UNUSED bool clipper)
+    bool skip(RenderUpdateFlag flag)
     {
-        if (paints.empty()) return nullptr;
+        return false;
+    }
+
+    bool update(RenderMethod* renderer, const Matrix& transform, Array<RenderData>& clips, uint8_t opacity, RenderUpdateFlag flag, TVG_UNUSED bool clipper)
+    {
+        if (paints.empty()) return true;
 
         if (needComposition(opacity)) {
             /* Overriding opacity value. If this scene is half-translucent,
@@ -129,7 +131,7 @@ struct SceneImpl : Scene
         vport = renderer->viewport();
         vdirty = true;
 
-        return nullptr;
+        return true;
     }
 
     bool render(RenderMethod* renderer)
@@ -141,8 +143,8 @@ struct SceneImpl : Scene
 
         renderer->blend(impl.blendMethod);
 
-        if (compFlag) {
-            cmp = renderer->target(bounds(renderer), renderer->colorSpace(), static_cast<CompositionFlag>(compFlag));
+        if (impl.cmpFlag) {
+            cmp = renderer->target(bounds(renderer), renderer->colorSpace(), impl.cmpFlag);
             renderer->beginComposite(cmp, MaskMethod::None, opacity);
         }
 
@@ -154,7 +156,7 @@ struct SceneImpl : Scene
             //Apply post effects if any.
             if (effects) {
                 //Notify the possiblity of the direct composition of the effect result to the origin surface.
-                auto direct = (effects->count == 1) & (compFlag == CompositionFlag::PostProcessing);
+                auto direct = (effects->count == 1) & (impl.marked(CompositionFlag::PostProcessing));
                 ARRAY_FOREACH(p, *effects) {
                     if ((*p)->valid) renderer->render(cmp, *p, direct);
                 }

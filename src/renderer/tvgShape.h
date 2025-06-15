@@ -34,7 +34,6 @@ struct ShapeImpl : Shape
 {
     Paint::Impl impl;
     RenderShape rs;
-    uint8_t compFlag = CompositionFlag::Invalid;
     uint8_t opacity;    //for composition
 
     ShapeImpl() : impl(Paint::Impl(this))
@@ -49,8 +48,8 @@ struct ShapeImpl : Shape
 
         renderer->blend(impl.blendMethod);
 
-        if (compFlag) {
-            cmp = renderer->target(bounds(renderer), renderer->colorSpace(), static_cast<CompositionFlag>(compFlag));
+        if (impl.cmpFlag) {
+            cmp = renderer->target(bounds(renderer), renderer->colorSpace(), impl.cmpFlag);
             renderer->beginComposite(cmp, MaskMethod::None, opacity);
         }
 
@@ -61,8 +60,6 @@ struct ShapeImpl : Shape
 
     bool needComposition(uint8_t opacity)
     {
-        compFlag = CompositionFlag::Invalid;
-
         if (opacity == 0) return false;
 
         //Shape composition is only necessary when stroking & fill are valid.
@@ -71,7 +68,7 @@ struct ShapeImpl : Shape
 
         //translucent fill & stroke
         if (opacity < 255) {
-            compFlag = CompositionFlag::Opacity;
+            impl.mark(CompositionFlag::Opacity);
             return true;
         }
 
@@ -93,14 +90,18 @@ struct ShapeImpl : Shape
             }
         }
 
-        compFlag = CompositionFlag::Masking;
+        impl.mark(CompositionFlag::Masking);
         return true;
     }
 
-    RenderData update(RenderMethod* renderer, const Matrix& transform, Array<RenderData>& clips, uint8_t opacity, RenderUpdateFlag pFlag, bool clipper)
+    bool skip(RenderUpdateFlag flag)
     {
-        if ((pFlag | impl.renderFlag) == RenderUpdateFlag::None) return impl.rd;
+        if (flag == RenderUpdateFlag::None) return true;
+        return false;
+    }
 
+    bool update(RenderMethod* renderer, const Matrix& transform, Array<RenderData>& clips, uint8_t opacity, RenderUpdateFlag flag, bool clipper)
+    {
         if (needComposition(opacity)) {
             /* Overriding opacity value. If this scene is half-translucent,
                It must do intermediate composition with that opacity value. */ 
@@ -108,8 +109,8 @@ struct ShapeImpl : Shape
             opacity = 255;
         }
 
-        impl.rd = renderer->prepare(rs, impl.rd, transform, clips, opacity, (pFlag | impl.renderFlag), clipper);
-        return impl.rd;
+        impl.rd = renderer->prepare(rs, impl.rd, transform, clips, opacity, flag, clipper);
+        return true;
     }
 
     RenderRegion bounds(RenderMethod* renderer)

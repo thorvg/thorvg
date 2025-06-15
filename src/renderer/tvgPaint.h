@@ -79,9 +79,10 @@ namespace tvg
             }
         } tr;
         RenderUpdateFlag renderFlag = RenderUpdateFlag::None;
+        CompositionFlag cmpFlag = CompositionFlag::Invalid;
         BlendMethod blendMethod;
         uint16_t refCnt = 0;       //reference count
-        uint8_t ctxFlag;
+        uint8_t ctxFlag;           //See enum ContextFlag
         uint8_t opacity;
 
         Impl(Paint* pnt) : paint(pnt)
@@ -127,6 +128,21 @@ namespace tvg
             }
 
             return refCnt;
+        }
+
+        void mark(CompositionFlag flag)
+        {
+            cmpFlag = CompositionFlag(uint8_t(cmpFlag) | uint8_t(flag));
+        }
+
+        bool marked(CompositionFlag flag)
+        {
+            return (uint8_t(cmpFlag) & uint8_t(flag)) ? true : false;
+        }
+
+        bool marked(RenderUpdateFlag flag)
+        {
+            return (renderFlag & flag) ? true : false;
         }
 
         void mark(RenderUpdateFlag flag)
