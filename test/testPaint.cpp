@@ -141,7 +141,7 @@ TEST_CASE("Bounding Box", "[tvgPaint]")
     REQUIRE(w == 20.0f);
     REQUIRE(h == 100.0f);
 
-    REQUIRE(canvas->update(shape) == Result::Success);
+    REQUIRE(canvas->update() == Result::Success);
     Point pts[4];
     REQUIRE(shape->bounds(pts) == Result::Success);
     REQUIRE(pts[0].x == 100.0f);
@@ -165,7 +165,7 @@ TEST_CASE("Bounding Box", "[tvgPaint]")
     REQUIRE(w == 20.0f);
     REQUIRE(h == 200.0f);
 
-    REQUIRE(canvas->update(shape) == Result::Success);
+    REQUIRE(canvas->update() == Result::Success);
     REQUIRE(shape->bounds(pts) == Result::Success);
     REQUIRE(pts[0].x == 0.0f);
     REQUIRE(pts[3].x == 0.0f);

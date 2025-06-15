@@ -733,16 +733,12 @@ public:
     Result remove(Paint* paint = nullptr) noexcept;
 
     /**
-     * @brief Request the canvas to update the paint objects.
+     * @brief Requests the canvas to update the paint for up-to-date render preparation.
      *
-     * If a @c nullptr is passed all paint objects retained by the Canvas are updated,
-     * otherwise only the paint to which the given @p paint points.
-     *
-     * @param[in] paint A pointer to the Paint object or @c nullptr.
-     *
-     * @note The Update behavior can be asynchronous if the assigned thread number is greater than zero.
+     * @note Only modified paint instances will undergo the internal update process.
+     * @note The update operation may be asynchronous if the assigned thread count is greater than zero.
      */
-    Result update(Paint* paint = nullptr) noexcept;
+    Result update() noexcept;
 
     /**
      * @brief Requests the canvas to render Paint objects.

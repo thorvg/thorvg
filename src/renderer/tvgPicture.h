@@ -116,7 +116,7 @@ struct PictureImpl : Picture
         return Result::Success;
     }
 
-    Result bounds(Point* pt4, Matrix& m, TVG_UNUSED bool obb, TVG_UNUSED bool stroking)
+    Result bounds(Point* pt4, Matrix& m, TVG_UNUSED bool obb, TVG_UNUSED bool stroking) const
     {
         pt4[0] = Point{0.0f, 0.0f} * m;
         pt4[1] = Point{w, 0.0f} * m;
