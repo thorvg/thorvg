@@ -40,6 +40,20 @@ uint32_t RenderMethod::unref()
     return (--refCnt);
 }
 
+
+RenderRegion RenderMethod::viewport()
+{
+    return vport;
+}
+
+
+bool RenderMethod::viewport(const RenderRegion& vp)
+{
+    vport = vp;
+    return true;
+}
+
+
 /************************************************************************/
 /* RenderPath Class Implementation                                      */
 /************************************************************************/

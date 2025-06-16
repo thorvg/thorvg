@@ -423,10 +423,17 @@ private:
     uint32_t refCnt = 0;        //reference count
     Key key;
 
+protected:
+    RenderRegion vport;         //viewport
+
 public:
+    //common implementation
     uint32_t ref();
     uint32_t unref();
+    RenderRegion viewport();
+    bool viewport(const RenderRegion& vp);
 
+    //main features
     virtual ~RenderMethod() {}
     virtual bool preUpdate() = 0;
     virtual RenderData prepare(const RenderShape& rshape, RenderData data, const Matrix& transform, Array<RenderData>& clips, uint8_t opacity, RenderUpdateFlag flags, bool clipper) = 0;
@@ -438,8 +445,6 @@ public:
     virtual bool postRender() = 0;
     virtual void dispose(RenderData data) = 0;
     virtual RenderRegion region(RenderData data) = 0;
-    virtual RenderRegion viewport() = 0;
-    virtual bool viewport(const RenderRegion& vp) = 0;
     virtual bool blend(BlendMethod method) = 0;
     virtual ColorSpace colorSpace() = 0;
     virtual const RenderSurface* mainSurface() = 0;
@@ -447,10 +452,12 @@ public:
     virtual bool clear() = 0;
     virtual bool sync() = 0;
 
+    //compositions
     virtual RenderCompositor* target(const RenderRegion& region, ColorSpace cs, CompositionFlag flags) = 0;
     virtual bool beginComposite(RenderCompositor* cmp, MaskMethod method, uint8_t opacity) = 0;
     virtual bool endComposite(RenderCompositor* cmp) = 0;
 
+    //post effects
     virtual void prepare(RenderEffect* effect, const Matrix& transform) = 0;
     virtual bool region(RenderEffect* effect) = 0;
     virtual bool render(RenderCompositor* cmp, const RenderEffect* effect, bool direct) = 0;

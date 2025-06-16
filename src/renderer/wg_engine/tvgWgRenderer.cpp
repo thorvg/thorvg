@@ -146,7 +146,7 @@ RenderData WgRenderer::prepare(const RenderShape& rshape, RenderData data, const
     }
 
     // setup fill settings
-    renderDataShape->viewport = mViewport;
+    renderDataShape->viewport = vport;
     if (flags & RenderUpdateFlag::Gradient && rshape.fill) renderDataShape->renderSettingsShape.update(mContext, rshape.fill);
     else if (flags & RenderUpdateFlag::Color) renderDataShape->renderSettingsShape.update(mContext, rshape.color);
     if (rshape.stroke) {
@@ -165,7 +165,7 @@ RenderData WgRenderer::prepare(RenderSurface* surface, RenderData data, const Ma
     auto renderDataPicture = data ? (WgRenderDataPicture*)data : mRenderDataPicturePool.allocate(mContext);
 
     // update paint settings
-    renderDataPicture->viewport = mViewport;
+    renderDataPicture->viewport = vport;
     if (flags & (RenderUpdateFlag::Transform | RenderUpdateFlag::Blend)) {
         renderDataPicture->renderSettings.update(mContext, transform, surface->cs, opacity);
     }
@@ -277,18 +277,6 @@ RenderRegion WgRenderer::region(RenderData data)
         return {{int32_t(nearbyint(v1.x)), int32_t(nearbyint(v1.y))}, {int32_t(nearbyint(v2.x)), int32_t(nearbyint(v2.y))}};
     }
     return {{0, 0}, {(int32_t)mTargetSurface.w, (int32_t)mTargetSurface.h}};
-}
-
-
-RenderRegion WgRenderer::viewport() {
-    return mViewport;
-}
-
-
-bool WgRenderer::viewport(const RenderRegion& vp)
-{
-    mViewport = vp;
-    return true;
 }
 
 
