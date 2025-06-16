@@ -38,8 +38,6 @@ public:
     bool postRender() override;
     void dispose(RenderData data) override;
     RenderRegion region(RenderData data) override;
-    RenderRegion viewport() override;
-    bool viewport(const RenderRegion& vp) override;
     bool blend(BlendMethod method) override;
     ColorSpace colorSpace() override;
     const RenderSurface* mainSurface() override;
@@ -95,7 +93,6 @@ private:
     // rendering states
     RenderSurface mTargetSurface;
     BlendMethod mBlendMethod{};
-    RenderRegion mViewport{};
 
     // disposable data list
     Array<RenderData> mDisposeRenderDatas{};

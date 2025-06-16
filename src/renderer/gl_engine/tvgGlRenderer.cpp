@@ -1399,7 +1399,7 @@ RenderData GlRenderer::prepare(RenderSurface* image, RenderData data, const Matr
     }
 
     sdata->geometry.matrix = transform;
-    sdata->geometry.viewport = mViewport;
+    sdata->geometry.viewport = vport;
 
     sdata->geometry.tesselate(image, flags);
 
@@ -1454,7 +1454,7 @@ RenderData GlRenderer::prepare(const RenderShape& rshape, RenderData data, const
     if (sdata->updateFlag == RenderUpdateFlag::None) return sdata;
 
     sdata->geometry.matrix = transform;
-    sdata->geometry.viewport = mViewport;
+    sdata->geometry.viewport = vport;
 
     if (sdata->updateFlag & (RenderUpdateFlag::Color | RenderUpdateFlag::Stroke | RenderUpdateFlag::Gradient | RenderUpdateFlag::GradientStroke | RenderUpdateFlag::Transform | RenderUpdateFlag::Path))
     {
@@ -1467,19 +1467,6 @@ RenderData GlRenderer::prepare(const RenderShape& rshape, RenderData data, const
     }
 
     return sdata;
-}
-
-
-RenderRegion GlRenderer::viewport()
-{
-    return mViewport;
-}
-
-
-bool GlRenderer::viewport(const RenderRegion& vp)
-{
-    mViewport = vp;
-    return true;
 }
 
 

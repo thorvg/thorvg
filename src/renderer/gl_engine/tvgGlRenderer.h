@@ -80,8 +80,6 @@ public:
     bool postRender() override;
     void dispose(RenderData data) override;;
     RenderRegion region(RenderData data) override;
-    RenderRegion viewport() override;
-    bool viewport(const RenderRegion& vp) override;
     bool blend(BlendMethod method) override;
     ColorSpace colorSpace() override;
     const RenderSurface* mainSurface() override;
@@ -137,7 +135,6 @@ private:
     void* mContext = nullptr;
     RenderSurface surface;
     GLint mTargetFboId = 0;
-    RenderRegion mViewport;
     GlStageBuffer mGpuBuffer;
     GlRenderTarget mRootTarget;
     Array<GlProgram*> mPrograms;
