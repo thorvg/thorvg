@@ -389,11 +389,3 @@ bool LottieOffsetModifier::modifyPolystar(RenderPath& in, RenderPath& out, TVG_U
 {
     return modifyPath(in.cmds.data, in.cmds.count, in.pts.data, in.pts.count, nullptr, out);
 }
-
-
-bool LottieOffsetModifier::modifyEllipse(Point& radius)
-{
-    radius.x += offset;
-    radius.y += offset;
-    return true;
-}
