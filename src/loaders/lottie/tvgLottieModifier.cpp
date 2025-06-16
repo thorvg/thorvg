@@ -305,13 +305,6 @@ bool LottieRoundnessModifier::modifyPolystar(RenderPath& in, RenderPath& out, fl
 }
 
 
-bool LottieRoundnessModifier::modifyRect(Point& size, float& r)
-{
-    r = std::min(this->r, std::max(size.x, size.y) * 0.5f);
-    return true;
-}
-
-
 bool LottieOffsetModifier::modifyPath(PathCommand* inCmds, uint32_t inCmdsCnt, Point* inPts, uint32_t inPtsCnt, TVG_UNUSED Matrix* transform, RenderPath& out)
 {
     auto& path = next ? (inCmds == buffer[0].cmds.data ? buffer[1] : buffer[0]) : out;
@@ -393,12 +386,6 @@ bool LottieOffsetModifier::modifyPath(PathCommand* inCmds, uint32_t inCmdsCnt, P
 
 
 bool LottieOffsetModifier::modifyPolystar(RenderPath& in, RenderPath& out, TVG_UNUSED float, TVG_UNUSED bool)
-{
-    return modifyPath(in.cmds.data, in.cmds.count, in.pts.data, in.pts.count, nullptr, out);
-}
-
-
-bool LottieOffsetModifier::modifyRect(RenderPath& in, RenderPath& out)
 {
     return modifyPath(in.cmds.data, in.cmds.count, in.pts.data, in.pts.count, nullptr, out);
 }
