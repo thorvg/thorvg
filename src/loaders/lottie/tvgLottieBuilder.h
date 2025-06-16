@@ -142,7 +142,7 @@ struct LottieBuilder
     void build(LottieComposition* comp);
 
 private:
-    void appendRect(Shape* shape, Point& pos, Point& size, float r, bool clockwise, RenderContext* ctx);
+    void appendRect(Shape* shape, Point& pos, Point& size, float r, bool clockwise, RenderContext* ctx, LottieModifier* modifier);
     bool fragmented(LottieGroup* parent, LottieObject** child, Inlist<RenderContext>& contexts, RenderContext* ctx, RenderFragment fragment);
 
     void updateStrokeEffect(LottieLayer* layer, LottieFxStroke* effect, float frameNo);

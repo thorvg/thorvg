@@ -391,9 +391,9 @@ static void _repeat(LottieGroup* parent, Shape* path, RenderContext* ctx)
 }
 
 
-void LottieBuilder::appendRect(Shape* shape, Point& pos, Point& size, float r, bool clockwise, RenderContext* ctx)
+void LottieBuilder::appendRect(Shape* shape, Point& pos, Point& size, float r, bool clockwise, RenderContext* ctx, LottieModifier* modifier)
 {
-    auto temp = (ctx->offset) ? Shape::gen() : shape;
+    auto temp = modifier ? Shape::gen() : shape;
     auto cnt = SHAPE(temp)->rs.path.pts.count;
 
     temp->appendRect(pos.x, pos.y, size.x, size.y, r, r, clockwise);
@@ -404,8 +404,9 @@ void LottieBuilder::appendRect(Shape* shape, Point& pos, Point& size, float r, b
         }
     }
 
-    if (ctx->offset) {
-        ctx->offset->modifyRect(SHAPE(temp)->rs.path, SHAPE(shape)->rs.path);
+    if (modifier) {
+        auto& path = SHAPE(temp)->rs.path;
+        modifier->modifyPath(path.cmds.data, path.cmds.count, path.pts.data, path.pts.count, nullptr, SHAPE(shape)->rs.path);
         delete(temp);
     }
 }
@@ -417,20 +418,25 @@ void LottieBuilder::updateRect(LottieGroup* parent, LottieObject** child, float 
     auto size = rect->size(frameNo, tween, exps);
     auto pos = rect->position(frameNo, tween, exps) - size * 0.5f;
     auto r = rect->radius(frameNo, tween, exps);
+    auto modifier = ctx->modifier;
 
     if (r == 0.0f)  {
-        if (ctx->roundness) ctx->roundness->modifyRect(size, r);
+        //roundness is the first modifier -> it can be applied before the shape's path is established
+        if (modifier && modifier->type == LottieModifier::Type::Roundness) {
+            modifier = modifier->next;
+            ctx->roundness->modifyRect(size, r);
+        }
     } else {
         r = std::min({r, size.x * 0.5f, size.y * 0.5f});
     }
 
     if (ctx->repeaters.empty()) {
         _draw(parent, rect, ctx);
-        appendRect(ctx->merging, pos, size, r, rect->clockwise, ctx);
+        appendRect(ctx->merging, pos, size, r, rect->clockwise, ctx, modifier);
     } else {
         auto shape = rect->pooling();
         shape->reset();
-        appendRect(shape, pos, size, r, rect->clockwise, ctx);
+        appendRect(shape, pos, size, r, rect->clockwise, ctx, modifier);
         _repeat(parent, shape, ctx);
     }
 }

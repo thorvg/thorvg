@@ -91,7 +91,6 @@ struct LottieOffsetModifier : LottieModifier
 
     bool modifyPath(PathCommand* inCmds, uint32_t inCmdsCnt, Point* inPts, uint32_t inPtsCnt, Matrix* transform, RenderPath& out) override;
     bool modifyPolystar(RenderPath& in, RenderPath& out, float outerRoundness, bool hasRoundness) override;
-    bool modifyRect(RenderPath& in, RenderPath& out);
     bool modifyEllipse(Point& radius);
 
 private:

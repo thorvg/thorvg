@@ -405,12 +405,6 @@ bool LottieOffsetModifier::modifyPolystar(RenderPath& in, RenderPath& out, TVG_U
 }
 
 
-bool LottieOffsetModifier::modifyRect(RenderPath& in, RenderPath& out)
-{
-    return modifyPath(in.cmds.data, in.cmds.count, in.pts.data, in.pts.count, nullptr, out);
-}
-
-
 bool LottieOffsetModifier::modifyEllipse(Point& radius)
 {
     radius.x += offset;
