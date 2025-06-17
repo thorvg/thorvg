@@ -204,8 +204,6 @@ static bool avxRasterTranslucentRle(SwSurface* surface, const SwRle* rle, const 
                 *dst = src + ALPHA_BLEND(*dst, ialpha);
                 dst++;
             }
-
-            ++span;
         }
     //8bit grayscale
     } else if (surface->channelSize == sizeof(uint8_t)) {

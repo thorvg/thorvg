@@ -123,8 +123,6 @@ static bool neonRasterTranslucentRle(SwSurface* surface, const SwRle* rle, const
 
             auto leftovers = (span->len - align) % 2;
             if (leftovers > 0) dst[span->len - 1] = src + ALPHA_BLEND(dst[span->len - 1], ialpha);
-
-            ++span;
         }
     //8bit grayscale
     } else if (surface->channelSize == sizeof(uint8_t)) {
