@@ -519,7 +519,7 @@ Fill* LottieGradient::fill(float frameNo, uint8_t opacity, Tween& tween, LottieE
         if (tvg::zero(progress)) {
             static_cast<RadialGradient*>(fill)->radial(s.x, s.y, r, s.x, s.y, 0.0f);
         } else {
-            if (tvg::equal(progress, 1.0f)) progress = 0.99f;
+            progress = tvg::clamp(progress, -0.99f, 0.99f);
             auto startAngle = rad2deg(tvg::atan2(e.y - s.y, e.x - s.x));
             auto angle = deg2rad((startAngle + this->angle(frameNo, tween, exps)));
             auto fx = s.x + cos(angle) * progress * r;
