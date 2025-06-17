@@ -1329,7 +1329,7 @@ RenderData GlRenderer::prepare(RenderSurface* image, RenderData data, const Matr
 
     sdata->geometry->tesselate(image, flags);
 
-    if (!clips.empty()) {
+    if (flags & RenderUpdateFlag::Clip) {
         sdata->clips.clear();
         sdata->clips.push(clips);
     }
@@ -1340,6 +1340,8 @@ RenderData GlRenderer::prepare(RenderSurface* image, RenderData data, const Matr
 
 RenderData GlRenderer::prepare(const RenderShape& rshape, RenderData data, const Matrix& transform, Array<RenderData>& clips, uint8_t opacity, RenderUpdateFlag flags, bool clipper)
 {
+    if (flags == RenderUpdateFlag::None) return data;
+
     // If prepare for clip, only path is meaningful.
     if (clipper) flags = RenderUpdateFlag::Path;
 
@@ -1353,7 +1355,6 @@ RenderData GlRenderer::prepare(const RenderShape& rshape, RenderData data, const
     sdata->viewWd = static_cast<float>(surface.w);
     sdata->viewHt = static_cast<float>(surface.h);
     sdata->updateFlag = RenderUpdateFlag::None;
-
     sdata->geometry = make_unique<GlGeometry>();
     sdata->opacity = opacity;
 
@@ -1362,10 +1363,7 @@ RenderData GlRenderer::prepare(const RenderShape& rshape, RenderData data, const
     rshape.fillColor(nullptr, nullptr, nullptr, &alphaF);
     rshape.strokeColor(nullptr, nullptr, nullptr, &alphaS);
 
-    if ( ((flags & RenderUpdateFlag::Gradient) == 0) &&
-         ((flags & RenderUpdateFlag::Color) && alphaF == 0) &&
-         ((flags & RenderUpdateFlag::Stroke) && alphaS == 0) )
-    {
+    if ((flags & RenderUpdateFlag::Gradient) == 0 && ((flags & RenderUpdateFlag::Color) && alphaF == 0) && ((flags & RenderUpdateFlag::Stroke) && alphaS == 0)) {
         return sdata;
     }
 
@@ -1383,12 +1381,11 @@ RenderData GlRenderer::prepare(const RenderShape& rshape, RenderData data, const
     sdata->geometry->updateTransform(transform);
     sdata->geometry->setViewport(mViewport);
 
-    if (sdata->updateFlag & (RenderUpdateFlag::Color | RenderUpdateFlag::Stroke | RenderUpdateFlag::Gradient | RenderUpdateFlag::GradientStroke | RenderUpdateFlag::Transform | RenderUpdateFlag::Path))
-    {
+    if (sdata->updateFlag & (RenderUpdateFlag::Color | RenderUpdateFlag::Stroke | RenderUpdateFlag::Gradient | RenderUpdateFlag::GradientStroke | RenderUpdateFlag::Transform | RenderUpdateFlag::Path)) {
         if (!sdata->geometry->tesselate(rshape, sdata->updateFlag)) return sdata;
     }
 
-    if (!clipper && !clips.empty()) {
+    if (flags & RenderUpdateFlag::Clip) {
         sdata->clips.clear();
         sdata->clips.push(clips);
     }

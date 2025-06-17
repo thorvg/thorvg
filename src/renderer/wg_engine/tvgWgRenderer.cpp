@@ -82,13 +82,14 @@ void WgRenderer::disposeObjects()
 
 RenderData WgRenderer::prepare(const RenderShape& rshape, RenderData data, const Matrix& transform, Array<RenderData>& clips, uint8_t opacity, RenderUpdateFlag flags, bool clipper)
 {
-    // get or create render data shape
+    if (flags == RenderUpdateFlag::None) return data;
+
     auto renderDataShape = (WgRenderDataShape*)data;
     if (!renderDataShape)
         renderDataShape = mRenderDataShapePool.allocate(mContext);
 
     // update geometry
-    if ((!data) || (flags & (RenderUpdateFlag::Path | RenderUpdateFlag::Stroke))) {
+    if (!data || (flags & (RenderUpdateFlag::Path | RenderUpdateFlag::Stroke))) {
         renderDataShape->updateMeshes(mContext, rshape, transform);
     }
 
@@ -106,7 +107,7 @@ RenderData WgRenderer::prepare(const RenderShape& rshape, RenderData data, const
         renderDataShape->renderSettingsStroke.update(mContext, rshape.stroke->fill, rshape.stroke->color, flags);
 
     // store clips data
-    renderDataShape->updateClips(clips);
+    if (flags & RenderUpdateFlag::Clip) renderDataShape->updateClips(clips);
 
     return renderDataShape;
 }
@@ -114,6 +115,8 @@ RenderData WgRenderer::prepare(const RenderShape& rshape, RenderData data, const
 
 RenderData WgRenderer::prepare(RenderSurface* surface, RenderData data, const Matrix& transform, Array<RenderData>& clips, uint8_t opacity, RenderUpdateFlag flags)
 {
+    if (flags == RenderUpdateFlag::None) return data;
+
     // get or create render data shape
     auto renderDataPicture = (WgRenderDataPicture*)data;
     if (!renderDataPicture)
@@ -139,8 +142,7 @@ RenderData WgRenderer::prepare(RenderSurface* surface, RenderData data, const Ma
         );
     }
 
-    // store clips data
-    renderDataPicture->updateClips(clips);
+    if (flags & RenderUpdateFlag::Clip) renderDataPicture->updateClips(clips);
 
     return renderDataPicture;
 }
