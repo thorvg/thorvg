@@ -129,6 +129,16 @@ namespace tvg
             return refCnt;
         }
 
+        void damage(const RenderRegion& vport)
+        {
+            if (renderer) renderer->damage(vport);
+        }
+
+        void damage()
+        {
+            if (renderer) renderer->damage(bounds(renderer));
+        }
+
         void mark(CompositionFlag flag)
         {
             cmpFlag = CompositionFlag(uint8_t(cmpFlag) | uint8_t(flag));
