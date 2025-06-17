@@ -270,6 +270,7 @@ void WgRenderer::dispose(RenderData data) {
 
 RenderRegion WgRenderer::region(RenderData data)
 {
+    if (!data) return {};
     auto renderData = (WgRenderDataPaint*)data;
     if (renderData->type() == Type::Shape) {
         auto& v1 = renderData->aabb.min;
