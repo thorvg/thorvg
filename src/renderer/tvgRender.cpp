@@ -20,6 +20,7 @@
  * SOFTWARE.
  */
 
+#include <algorithm>
 #include "tvgMath.h"
 #include "tvgRender.h"
 
@@ -128,6 +129,185 @@ void RenderRegion::intersect(const RenderRegion& rhs)
     // Not intersected: collapse to zero-area region
     if (max.x < min.x) max.x = min.x;
     if (max.y < min.y) max.y = min.y;
+}
+
+
+void RenderDirtyRegion::init(uint32_t w, uint32_t h)
+{
+    auto cnt = int(sqrt(PARTITIONING));
+    auto px = int32_t(w / cnt);
+    auto py = int32_t(h / cnt);
+    auto lx = int32_t(w % cnt);
+    auto ly = int32_t(h % cnt);
+
+    //space partitioning
+    for (int y = 0; y < cnt; ++y) {
+        for (int x = 0; x < cnt; ++x) {
+            auto& partition = partitions[y * cnt + x];
+            partition.list[0].reserve(64);
+            auto& region = partition.region;
+            region.min = {x * px, y * py};
+            region.max = {region.min.x + px, region.min.y + py};
+            //leftovers
+            if (x == cnt -1) region.max.x += lx;
+            if (y == cnt -1) region.max.y += ly;
+        }
+    }
+}
+
+
+void RenderDirtyRegion::add(const RenderRegion* prv, const RenderRegion* cur)
+{
+    if (disabled) return;
+
+    auto pvalid = prv ? prv->valid() : false;
+    auto cvalid = cur ? cur->valid() : false;
+    if (!pvalid && !cvalid) return;
+    for (int idx = 0; idx < PARTITIONING; ++idx) {
+        auto& partition = partitions[idx];
+        if (pvalid && prv->intersected(partition.region)) {
+            ScopedLock lock(key);
+            partition.list[partition.current].push(RenderRegion::intersect(*prv, partition.region));
+        }
+        if (cvalid && cur->intersected(partition.region)) {
+            ScopedLock lock(key);
+            partition.list[partition.current].push(RenderRegion::intersect(*cur, partition.region));
+        }
+    }
+}
+
+
+void RenderDirtyRegion::clear()
+{
+    for (int idx = 0; idx < PARTITIONING; ++idx) {
+        partitions[idx].list[0].clear();
+        partitions[idx].list[1].clear();
+    }
+}
+
+
+void RenderDirtyRegion::subdivide(Array<RenderRegion>& targets, uint32_t idx, RenderRegion& lhs, RenderRegion& rhs)
+{
+    RenderRegion temp[5];
+    int cnt = 0;
+    temp[cnt++] = RenderRegion::intersect(lhs, rhs);
+    auto max = std::min(lhs.max.x, rhs.max.x);
+
+    auto subtract = [&](RenderRegion& lhs, RenderRegion& rhs) {
+        //top
+        if (rhs.min.y < lhs.min.y) {
+            temp[cnt++] = {{rhs.min.x, rhs.min.y}, {rhs.max.x, lhs.min.y}};
+            rhs.min.y = lhs.min.y;
+        }
+        //bottom
+        if (rhs.max.y > lhs.max.y) {
+            temp[cnt++] = {{rhs.min.x, lhs.max.y}, {rhs.max.x, rhs.max.y}};
+            rhs.max.y = lhs.max.y;
+        }
+        //left
+        if (rhs.min.x < lhs.min.x) {
+            temp[cnt++] = {{rhs.min.x, rhs.min.y}, {lhs.min.x, rhs.max.y}};
+            rhs.min.x = lhs.min.x;
+        }
+        //right
+        if (rhs.max.x > lhs.max.x) {
+            temp[cnt++] = {{lhs.max.x, rhs.min.y}, {rhs.max.x, rhs.max.y}};
+            //rhs.max.x = lhs.max.x;
+        }
+    };
+
+    subtract(temp[0], lhs);
+    subtract(temp[0], rhs);
+
+    /* Considered using a list to avoid memory shifting,
+       but ultimately, the array outperformed the list due to better cache locality. */
+
+    //shift data
+    auto dst = &targets[idx + cnt];
+    memmove(dst, &targets[idx + 1], sizeof(RenderRegion) * (targets.count - idx - 1));
+    memcpy(&targets[idx], temp, sizeof(RenderRegion) * cnt);
+    targets.count += (cnt - 1);
+
+    //sorting by x coord again, only for the updated region
+    while (dst < targets.end() && dst->min.x < max) ++dst;
+    stable_sort(&targets[idx], dst, [](const RenderRegion& a, const RenderRegion& b) -> bool {
+        return a.min.x < b.min.x;
+    });
+}
+
+
+void RenderDirtyRegion::commit()
+{
+    if (disabled) return;
+
+    for (int idx = 0; idx < PARTITIONING; ++idx) {
+        auto current = partitions[idx].current;
+        auto& targets = partitions[idx].list[current];
+        if (targets.empty()) return;
+
+        current = !current; //swapping buffers
+        auto& output = partitions[idx].list[current];
+
+        targets.reserve(targets.count * 5);  //one intersection can be divided up to 5
+        output.reserve(targets.count);
+
+        partitions[idx].current = current;
+
+        //sorting by x coord. guarantee the stable performance: O(NlogN)
+        stable_sort(targets.begin(), targets.end(), [](const RenderRegion& a, const RenderRegion& b) -> bool {
+            return a.min.x < b.min.x;
+        });
+
+        //Optimized using sweep-line algorithm: O(NlogN)
+        for (uint32_t i = 0; i < targets.count; ++i) {
+            auto& lhs = targets[i];
+            if (lhs.invalid()) continue;
+            auto merged = false;
+
+            for (uint32_t j = i + 1; j < targets.count; ++j) {
+                auto& rhs = targets[j];
+                if (rhs.invalid()) continue;
+                if (lhs.max.x < rhs.min.x) break;   //line sweeping
+
+                //fully overlapped. drop lhs
+                if (rhs.contained(lhs)) {
+                    merged = true;
+                    break;
+                }
+                //fully overlapped. replace the lhs with rhs
+                if (lhs.contained(rhs)) {
+                    rhs = {};
+                    continue;
+                }
+                //just merge & expand on x axis
+                if (lhs.min.y == rhs.min.y && lhs.max.y == rhs.max.y) {
+                    if (lhs.min.x <= rhs.max.x && rhs.min.x <= lhs.max.x) {
+                        rhs.min.x = std::min(lhs.min.x, rhs.min.x);
+                        rhs.max.x = std::max(lhs.max.x, rhs.max.x);
+                        merged = true;
+                        break;
+                    }
+                }
+                //just merge & expand on y axis
+                if (lhs.min.x == rhs.min.x && lhs.max.x == rhs.max.x) {
+                    if (lhs.min.y <= rhs.max.y && rhs.min.y < lhs.max.y) {
+                        rhs.min.y = std::min(lhs.min.y, rhs.min.y);
+                        rhs.max.y = std::max(lhs.max.y, rhs.max.y);
+                        merged = true;
+                        break;
+                    }
+                }
+                //subdivide regions
+                if (lhs.intersected(rhs)) {
+                    subdivide(targets, j, lhs, rhs);
+                    merged = true;
+                    break;
+                }
+            }
+            if (!merged) output.push(lhs);  //this region is complete isolated
+            lhs = {};
+        }
+    }
 }
 
 /************************************************************************/

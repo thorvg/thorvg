@@ -1479,6 +1479,19 @@ bool GlRenderer::postUpdate()
 }
 
 
+void GlRenderer::damage(const RenderRegion& region)
+{
+    //TODO
+}
+
+
+bool GlRenderer::partial(bool disable)
+{
+    //TODO
+    return false;
+}
+
+
 bool GlRenderer::term()
 {
     if (rendererCnt > 0) return false;

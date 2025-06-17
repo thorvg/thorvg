@@ -70,6 +70,7 @@ public:
         RT_None,
     };
 
+    //main features
     bool preUpdate() override;
     RenderData prepare(const RenderShape& rshape, RenderData data, const Matrix& transform, Array<RenderData>& clips, uint8_t opacity, RenderUpdateFlag flags, bool clipper) override;
     RenderData prepare(RenderSurface* surface, RenderData data, const Matrix& transform, Array<RenderData>& clips, uint8_t opacity, RenderUpdateFlag flags) override;
@@ -83,19 +84,24 @@ public:
     bool blend(BlendMethod method) override;
     ColorSpace colorSpace() override;
     const RenderSurface* mainSurface() override;
-
     bool target(void* context, int32_t id, uint32_t w, uint32_t h);
     bool sync() override;
     bool clear() override;
 
+    //composition
     RenderCompositor* target(const RenderRegion& region, ColorSpace cs, CompositionFlag flags) override;
     bool beginComposite(RenderCompositor* cmp, MaskMethod method, uint8_t opacity) override;
     bool endComposite(RenderCompositor* cmp) override;
 
+    //post effects
     void prepare(RenderEffect* effect, const Matrix& transform) override;
     bool region(RenderEffect* effect) override;
     bool render(RenderCompositor* cmp, const RenderEffect* effect, bool direct) override;
     void dispose(RenderEffect* effect) override;
+
+    //partial rendering
+    void damage(const RenderRegion& region) override;
+    bool partial(bool disable) override;
 
     static GlRenderer* gen(uint32_t threads);
     static bool term();

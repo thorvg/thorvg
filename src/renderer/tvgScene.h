@@ -127,9 +127,12 @@ struct SceneImpl : Scene
             }
         }
 
-        //this viewport update is more performant than in bounds()?
+        //this viewport update is more performant than in bounds(). No idea.
         vport = renderer->viewport();
         vdirty = true;
+
+        //bounds(renderer) here hinders parallelization.
+        if (effects) impl.damage(vport);
 
         return true;
     }
@@ -257,7 +260,8 @@ struct SceneImpl : Scene
     {
         auto itr = paints.begin();
         while (itr != paints.end()) {
-            PAINT((*itr))->unref();
+            auto paint = PAINT((*itr));
+            paint->unref();
             paints.erase(itr++);
         }
         return Result::Success;
@@ -310,6 +314,7 @@ struct SceneImpl : Scene
             }
             delete(effects);
             effects = nullptr;
+            impl.damage(vport);
         }
         return Result::Success;
     }
