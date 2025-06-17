@@ -985,12 +985,13 @@ bool GlRenderer::sync()
 
 RenderRegion GlRenderer::region(RenderData data)
 {
-    if (currentPass()->isEmpty()) return {};
+    auto pass = currentPass();
+    if (!data || !pass || pass->isEmpty()) return {};
 
     auto shape = reinterpret_cast<GlShape*>(data);
     auto bounds = shape->geometry->getBounds();
 
-    auto const& vp = currentPass()->getViewport();
+    auto const& vp = pass->getViewport();
     bounds.intersect(vp);
 
     return bounds;
