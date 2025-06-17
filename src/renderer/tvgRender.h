@@ -50,7 +50,6 @@ static inline RenderUpdateFlag operator|(const RenderUpdateFlag a, const RenderU
     return RenderUpdateFlag(uint16_t(a) | uint16_t(b));
 }
 
-
 struct RenderSurface
 {
     union {
@@ -111,6 +110,11 @@ struct RenderRegion
         return ret;
     }
 
+    static constexpr RenderRegion add(const RenderRegion& lhs, const RenderRegion& rhs)
+    {
+        return {{std::min(lhs.min.x, rhs.min.x), std::min(lhs.min.y, rhs.min.y)}, {std::max(lhs.max.x, rhs.max.x), std::max(lhs.max.y, rhs.max.y)}};
+    }
+
     void intersect(const RenderRegion& rhs);
 
     void add(const RenderRegion& rhs)
@@ -119,6 +123,16 @@ struct RenderRegion
         if (rhs.min.y < min.y) min.y = rhs.min.y;
         if (rhs.max.x > max.x) max.x = rhs.max.x;
         if (rhs.max.y > max.y) max.y = rhs.max.y;
+    }
+
+    bool contained(const RenderRegion& rhs)
+    {
+        return (min.x <= rhs.min.x && max.x >= rhs.max.x && min.y <= rhs.min.y && max.y >= rhs.max.y);
+    }
+
+    bool intersected(const RenderRegion& rhs) const
+    {
+        return (rhs.min.x < max.x && rhs.max.x > min.x && rhs.min.y < max.y && rhs.max.y > min.y);
     }
 
     bool operator==(const RenderRegion& rhs) const
@@ -139,6 +153,52 @@ struct RenderRegion
     uint32_t y() const { return (uint32_t) sy(); }
     uint32_t w() const { return (uint32_t) sw(); }
     uint32_t h() const { return (uint32_t) sh(); }
+};
+
+struct RenderDirtyRegion
+{
+public:
+    static constexpr const int PARTITIONING = 16;   //must be N*N
+
+    void init(uint32_t w, uint32_t h);
+    void commit();
+    void add(const RenderRegion* prv, const RenderRegion* cur);  //collect the old and new dirty regions together
+    void clear();
+
+    bool deactivate(bool on)
+    {
+        std::swap(on, disabled);
+        return on;
+    }
+
+    bool deactivated()
+    {
+        return disabled;
+    }
+
+    const RenderRegion& partition(int idx)
+    {
+        return partitions[idx].region;
+    }
+
+    const Array<RenderRegion>& get(int idx)
+    {
+        return partitions[idx].list[partitions[idx].current];
+    }
+
+private:
+    void subdivide(Array<RenderRegion>& targets, uint32_t idx, RenderRegion& lhs, RenderRegion& rhs);
+
+    struct Partition
+    {
+        RenderRegion region;
+        Array<RenderRegion> list[2];  //double buffer swapping
+        uint8_t current = 0;  //double buffer swapping list index. 0 or 1
+    };
+
+    Key key;
+    Partition partitions[PARTITIONING];
+    bool disabled = false;
 };
 
 struct RenderPath
@@ -420,7 +480,7 @@ struct RenderEffectTritone : RenderEffect
 class RenderMethod
 {
 private:
-    uint32_t refCnt = 0;        //reference count
+    uint32_t refCnt = 0;
     Key key;
 
 protected:
@@ -448,11 +508,10 @@ public:
     virtual bool blend(BlendMethod method) = 0;
     virtual ColorSpace colorSpace() = 0;
     virtual const RenderSurface* mainSurface() = 0;
-
     virtual bool clear() = 0;
     virtual bool sync() = 0;
 
-    //compositions
+    //composition
     virtual RenderCompositor* target(const RenderRegion& region, ColorSpace cs, CompositionFlag flags) = 0;
     virtual bool beginComposite(RenderCompositor* cmp, MaskMethod method, uint8_t opacity) = 0;
     virtual bool endComposite(RenderCompositor* cmp) = 0;
@@ -462,6 +521,10 @@ public:
     virtual bool region(RenderEffect* effect) = 0;
     virtual bool render(RenderCompositor* cmp, const RenderEffect* effect, bool direct) = 0;
     virtual void dispose(RenderEffect* effect) = 0;
+
+    //partial rendering
+    virtual void damage(const RenderRegion& region) = 0;
+    virtual bool partial(bool disable) = 0;
 };
 
 static inline bool MASK_REGION_MERGING(MaskMethod method)

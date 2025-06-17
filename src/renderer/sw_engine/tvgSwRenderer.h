@@ -36,6 +36,7 @@ namespace tvg
 class SwRenderer : public RenderMethod
 {
 public:
+    //main features
     bool preUpdate() override;
     RenderData prepare(const RenderShape& rshape, RenderData data, const Matrix& transform, Array<RenderData>& clips, uint8_t opacity, RenderUpdateFlag flags, bool clipper) override;
     RenderData prepare(RenderSurface* surface, RenderData data, const Matrix& transform, Array<RenderData>& clips, uint8_t opacity, RenderUpdateFlag flags) override;
@@ -49,22 +50,26 @@ public:
     bool blend(BlendMethod method) override;
     ColorSpace colorSpace() override;
     const RenderSurface* mainSurface() override;
-
     bool clear() override;
     bool sync() override;
     bool target(pixel_t* data, uint32_t stride, uint32_t w, uint32_t h, ColorSpace cs);
 
+    //composition
     SwSurface* request(int channelSize, bool square);
-
     RenderCompositor* target(const RenderRegion& region, ColorSpace cs, CompositionFlag flags) override;
     bool beginComposite(RenderCompositor* cmp, MaskMethod method, uint8_t opacity) override;
     bool endComposite(RenderCompositor* cmp) override;
     void clearCompositors();
 
+    //post effects
     void prepare(RenderEffect* effect, const Matrix& transform) override;
     bool region(RenderEffect* effect) override;
     bool render(RenderCompositor* cmp, const RenderEffect* effect, bool direct) override;
     void dispose(RenderEffect* effect) override;
+
+    //partial rendering
+    void damage(const RenderRegion& region) override;
+    bool partial(bool disable) override;
 
     static SwRenderer* gen(uint32_t threads);
     static bool term();

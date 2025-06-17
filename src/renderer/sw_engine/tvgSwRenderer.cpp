@@ -347,6 +347,19 @@ bool SwRenderer::postRender()
 }
 
 
+void SwRenderer::damage(const RenderRegion& region)
+{
+    //TODO
+}
+
+
+bool SwRenderer::partial(bool disable)
+{
+    //TODO
+    return false;
+}
+
+
 bool SwRenderer::renderImage(RenderData data)
 {
     auto task = static_cast<SwImageTask*>(data);

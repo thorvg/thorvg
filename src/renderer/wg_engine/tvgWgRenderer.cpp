@@ -581,6 +581,19 @@ bool WgRenderer::postUpdate()
 }
 
 
+void WgRenderer::damage(const RenderRegion& region)
+{
+    //TODO
+}
+
+
+bool WgRenderer::partial(bool disable)
+{
+    //TODO
+    return false;
+}
+
+
 bool WgRenderer::term()
 {
     if (rendererCnt > 0) return false;
