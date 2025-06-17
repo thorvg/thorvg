@@ -131,10 +131,12 @@ bool WgRenderer::surfaceConfigure(WGPUSurface surface, WgContext& context, uint3
 
 RenderData WgRenderer::prepare(const RenderShape& rshape, RenderData data, const Matrix& transform, Array<RenderData>& clips, uint8_t opacity, RenderUpdateFlag flags, bool clipper)
 {
+    if (flags == RenderUpdateFlag::None) return data;
+
     auto renderDataShape = data ? (WgRenderDataShape*)data : mRenderDataShapePool.allocate(mContext);
 
     // update geometry
-    if ((!data) || (flags & (RenderUpdateFlag::Path | RenderUpdateFlag::Stroke))) {
+    if (!data || (flags & (RenderUpdateFlag::Path | RenderUpdateFlag::Stroke))) {
         renderDataShape->updateMeshes(rshape, transform, mBufferPool.pool);
     }
 
@@ -154,7 +156,7 @@ RenderData WgRenderer::prepare(const RenderShape& rshape, RenderData data, const
         else if (flags & RenderUpdateFlag::Stroke) renderDataShape->renderSettingsStroke.update(mContext, rshape.stroke->color);
     }
 
-    renderDataShape->updateClips(clips);
+    if (flags & RenderUpdateFlag::Clip) renderDataShape->updateClips(clips);
 
     return renderDataShape;
 }
@@ -162,6 +164,8 @@ RenderData WgRenderer::prepare(const RenderShape& rshape, RenderData data, const
 
 RenderData WgRenderer::prepare(RenderSurface* surface, RenderData data, const Matrix& transform, Array<RenderData>& clips, uint8_t opacity, RenderUpdateFlag flags)
 {
+    if (flags == RenderUpdateFlag::None) return data;
+
     auto renderDataPicture = data ? (WgRenderDataPicture*)data : mRenderDataPicturePool.allocate(mContext);
 
     // update paint settings
@@ -175,7 +179,7 @@ RenderData WgRenderer::prepare(RenderSurface* surface, RenderData data, const Ma
         renderDataPicture->updateSurface(mContext, surface);
     }
 
-    renderDataPicture->updateClips(clips);
+    if (flags & RenderUpdateFlag::Clip) renderDataPicture->updateClips(clips);
 
     return renderDataPicture;
 }

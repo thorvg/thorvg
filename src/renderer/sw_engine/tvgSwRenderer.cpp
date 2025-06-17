@@ -695,9 +695,7 @@ void SwRenderer::dispose(RenderData data)
 
 void* SwRenderer::prepareCommon(SwTask* task, const Matrix& transform, const Array<RenderData>& clips, uint8_t opacity, RenderUpdateFlag flags)
 {
-    if (!surface) return task;
-    if (flags == RenderUpdateFlag::None) return task;
-    if ((transform.e11 == 0.0f && transform.e12 == 0.0f) || (transform.e21 == 0.0f && transform.e22 == 0.0f)) return task;  //zero size?
+    if (!surface || (transform.e11 == 0.0f && transform.e12 == 0.0f) || (transform.e21 == 0.0f && transform.e22 == 0.0f)) return task;  //invalid
 
     task->surface = surface;
     task->mpool = mpool;
@@ -715,11 +713,13 @@ void* SwRenderer::prepareCommon(SwTask* task, const Matrix& transform, const Arr
     //TODO: Failed threading them. It would be better if it's possible.
     //See: https://github.com/thorvg/thorvg/issues/1409
     //Guarantee composition targets get ready.
-    ARRAY_FOREACH(p, clips) {
-        static_cast<SwTask*>(*p)->done();
+    if (flags & RenderUpdateFlag::Clip) {
+        ARRAY_FOREACH(p, clips) {
+            static_cast<SwTask*>(*p)->done();
+        }
     }
 
-    TaskScheduler::request(task);
+    if (flags) TaskScheduler::request(task);
 
     return task;
 }
@@ -729,10 +729,11 @@ RenderData SwRenderer::prepare(RenderSurface* surface, RenderData data, const Ma
 {
     //prepare task
     auto task = static_cast<SwImageTask*>(data);
-    if (!task) task = new SwImageTask;
-    else task->done();
-
-    task->source = surface;
+    if (task) task->done();
+    else {
+        task = new SwImageTask;
+        task->source = surface;
+    }
 
     return prepareCommon(task, transform, clips, opacity, flags);
 }
@@ -742,10 +743,12 @@ RenderData SwRenderer::prepare(const RenderShape& rshape, RenderData data, const
 {
     //prepare task
     auto task = static_cast<SwShapeTask*>(data);
-    if (!task) task = new SwShapeTask;
-    else task->done();
+    if (task) task->done();
+    else {
+        task = new SwShapeTask;
+        task->rshape = &rshape;
+    }
 
-    task->rshape = &rshape;
     task->clipper = clipper;
 
     return prepareCommon(task, transform, clips, opacity, flags);
