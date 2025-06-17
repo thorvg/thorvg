@@ -1125,7 +1125,7 @@ void LottieBuilder::updateText(LottieLayer* layer, float frameNo)
                     auto& matrix = shape->transform();
 
                     if (followPath) {
-                        identity(&matrix);
+                        tvg::identity(&matrix);
                         auto angle = 0.0f;
                         auto halfGlyphWidth = glyph->width * 0.5f;
                         auto position = followPath->position(cursor.x + halfGlyphWidth + firstMargin, angle);
