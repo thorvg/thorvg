@@ -56,7 +56,7 @@ struct Canvas::Impl
         auto ret = scene->push(target, at);
         if (ret != Result::Success) return ret;
 
-        return update(true);
+        return update(target, true);
     }
 
     Result remove(Paint* paint)
@@ -65,7 +65,7 @@ struct Canvas::Impl
         return scene->remove(paint);
     }
 
-    Result update(bool force)
+    Result update(Paint* paint, bool force)
     {
         Array<RenderData> clips;
         auto flag = RenderUpdateFlag::None;
@@ -74,7 +74,8 @@ struct Canvas::Impl
         if (!renderer->preUpdate()) return Result::InsufficientCondition;
 
         auto m = tvg::identity();
-        PAINT(scene)->update(renderer, m, clips, 255, flag);
+        if (paint) PAINT(paint)->update(renderer, m, clips, 255, flag);
+        else PAINT(scene)->update(renderer, m, clips, 255, flag);
 
         if (!renderer->postUpdate()) return Result::InsufficientCondition;
 
@@ -87,7 +88,7 @@ struct Canvas::Impl
         if (status == Status::Drawing) return Result::InsufficientCondition;
         if (clear && !renderer->clear()) return Result::InsufficientCondition;
         if (scene->paints().empty()) return Result::InsufficientCondition;
-        if (status == Status::Damaged) update(false);
+        if (status == Status::Damaged) update(nullptr, false);
         if (!renderer->preRender()) return Result::InsufficientCondition;
 
         if (!PAINT(scene)->render(renderer) || !renderer->postRender()) return Result::InsufficientCondition;
