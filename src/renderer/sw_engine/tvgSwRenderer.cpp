@@ -50,7 +50,6 @@ struct SwTask : Task
 
     const RenderRegion& bounds()
     {
-        //Can we skip the synchronization?
         done();
         return bbox;
     }
@@ -488,7 +487,8 @@ bool SwRenderer::blend(BlendMethod method)
 
 RenderRegion SwRenderer::region(RenderData data)
 {
-    return static_cast<SwTask*>(data)->bounds();
+    if (data) return static_cast<SwTask*>(data)->bounds();
+    return {};
 }
 
 

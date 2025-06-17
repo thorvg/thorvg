@@ -115,7 +115,6 @@ struct ShapeImpl : Shape
 
     RenderRegion bounds(RenderMethod* renderer)
     {
-        if (!impl.rd) return {};
         return renderer->region(impl.rd);
     }
 

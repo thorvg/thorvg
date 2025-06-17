@@ -120,7 +120,6 @@ namespace tvg
         uint8_t unrefx(bool free)
         {
             if (refCnt > 0) --refCnt;
-            else TVGERR("RENDERER", "Corrupted Reference Count!");
 
             if (free && refCnt == 0) {
                 delete(paint);
