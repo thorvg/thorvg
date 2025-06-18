@@ -391,12 +391,71 @@ static void _repeat(LottieGroup* parent, Shape* path, RenderContext* ctx)
 }
 
 
+static void _appendRect(RenderPath& path, float x, float y, float w, float h, float r, bool cw)
+{
+    //sharp rect
+    if (tvg::zero(r)) {
+        path.cmds.grow(6);
+        path.cmds.push(PathCommand::MoveTo);
+        for (auto i = 0; i < 4; ++i) path.cmds.push(PathCommand::CubicTo);
+        path.cmds.push(PathCommand::Close);
+
+        path.pts.grow(13);
+        path.pts.push({x + w, y});
+        if (cw) {
+            path.pts.push({x + w, y}); path.pts.push({x + w, y + h}); path.pts.push({x + w, y + h});
+            path.pts.push({x + w, y + h}); path.pts.push({x, y + h}); path.pts.push({x, y + h});
+            path.pts.push({x, y + h}); path.pts.push({x, y}); path.pts.push({x, y});
+            path.pts.push({x, y}); path.pts.push({x + w, y}); path.pts.push({x + w, y});
+        } else {
+            path.pts.push({x + w, y}); path.pts.push({x, y}); path.pts.push({x, y});
+            path.pts.push({x, y}); path.pts.push({x, y + h}); path.pts.push({x, y + h});
+            path.pts.push({x, y + h}); path.pts.push({x + w, y + h}); path.pts.push({x + w, y + h});
+            path.pts.push({x + w, y + h}); path.pts.push({x + w, y}); path.pts.push({x + w, y});
+        }
+    //round rect
+    } else {
+        auto hsize = Point{w * 0.5f, h * 0.5f};
+        auto rx = (r > hsize.x) ? hsize.x : r;
+        auto ry = (r > hsize.y) ? hsize.y : r;
+        auto hr = Point{rx * PATH_KAPPA, ry * PATH_KAPPA};
+
+        path.cmds.grow(10);
+        path.cmds.push(PathCommand::MoveTo);
+        for (auto i = 0; i < 8; ++i) path.cmds.push(PathCommand::CubicTo);
+        path.cmds.push(PathCommand::Close);
+
+        path.pts.grow(25);
+        path.pts.push({x + w, y + ry});
+        if (cw) {
+            path.pts.push({x + w, y + ry}); path.pts.push({x + w, y + h - ry}); path.pts.push({x + w, y + h - ry});
+            path.pts.push({x + w, y + h - ry + hr.y}); path.pts.push({x + w - rx + hr.x, y + h}); path.pts.push({x + w - rx, y + h});
+            path.pts.push({x + w - rx, y + h}); path.pts.push({x + rx, y + h}); path.pts.push({x + rx, y + h});
+            path.pts.push({x + rx - hr.x, y + h}); path.pts.push({x, y + h - ry + hr.y}); path.pts.push({x, y + h - ry});
+            path.pts.push({x, y + h - ry}); path.pts.push({x, y + ry}); path.pts.push({x, y + ry});
+            path.pts.push({x, y + ry - hr.y}); path.pts.push({x + rx - hr.x, y}); path.pts.push({x + rx, y});
+            path.pts.push({x + rx, y}); path.pts.push({x + w - rx, y}); path.pts.push({x + w - rx, y});
+            path.pts.push({x + w - rx + hr.x, y}); path.pts.push({x + w, y + ry - hr.y}); path.pts.push({x + w, y + ry});
+        } else {
+            path.pts.push({x + w, y + ry - hr.y}); path.pts.push({x + w - rx + hr.x, y}); path.pts.push({x + w - rx, y});
+            path.pts.push({x + w - rx, y}); path.pts.push({x + rx, y}); path.pts.push({x + rx, y});
+            path.pts.push({x + rx, y}); path.pts.push({x, y + ry - hr.y}); path.pts.push({x, y + ry});
+            path.pts.push({x, y + ry}); path.pts.push({x, y + h - ry}); path.pts.push({x, y + h - ry});
+            path.pts.push({x, y + h - ry + hr.y}); path.pts.push({x + rx - hr.x, y + h}); path.pts.push({x + rx, y + h});
+            path.pts.push({x + rx, y + h}); path.pts.push({x + w - rx, y + h}); path.pts.push({x + w - rx, y + h});
+            path.pts.push({x + w - rx + hr.x, y + h}); path.pts.push({x + w, y + h - ry + hr.y}); path.pts.push({x + w, y + h - ry});
+            path.pts.push({x + w, y + h - ry}); path.pts.push({x + w, y + ry}); path.pts.push({x + w, y + ry});
+        }
+    }
+}
+
+
 void LottieBuilder::appendRect(Shape* shape, Point& pos, Point& size, float r, bool clockwise, RenderContext* ctx)
 {
     auto temp = (ctx->offset) ? Shape::gen() : shape;
     auto cnt = SHAPE(temp)->rs.path.pts.count;
 
-    temp->appendRect(pos.x, pos.y, size.x, size.y, r, r, clockwise);
+    _appendRect(SHAPE(temp)->rs.path, pos.x, pos.y, size.x, size.y, r, clockwise);
 
     if (ctx->transform) {
         for (auto i = cnt; i < SHAPE(temp)->rs.path.pts.count; ++i) {
@@ -506,7 +565,7 @@ void LottieBuilder::updateStar(LottiePolyStar* star, float frameNo, Matrix* tran
     auto longSegment = false;
     auto numPoints = size_t(ceilf(ptsCnt) * 2);
     auto direction = star->clockwise ? 1.0f : -1.0f;
-    auto hasRoundness = false;
+    auto hasRoundness = !tvg::zero(innerRoundness) || !tvg::zero(outerRoundness);
     bool roundedCorner = ctx->roundness && (tvg::zero(innerRoundness) || tvg::zero(outerRoundness));
 
     Shape* shape;
@@ -534,14 +593,8 @@ void LottieBuilder::updateStar(LottiePolyStar* star, float frameNo, Matrix* tran
         angle += halfAnglePerPoint * direction;
     }
 
-    if (tvg::zero(innerRoundness) && tvg::zero(outerRoundness)) {
-        SHAPE(shape)->rs.path.pts.reserve(numPoints + 2);
-        SHAPE(shape)->rs.path.cmds.reserve(numPoints + 3);
-    } else {
-        SHAPE(shape)->rs.path.pts.reserve(numPoints * 3 + 2);
-        SHAPE(shape)->rs.path.cmds.reserve(numPoints + 3);
-        hasRoundness = true;
-    }
+    SHAPE(shape)->rs.path.pts.reserve(numPoints * 3 + 2);
+    SHAPE(shape)->rs.path.cmds.reserve(numPoints + 3);
 
     auto in = Point{x, y} * transform;
     shape->moveTo(in.x, in.y);
@@ -590,7 +643,7 @@ void LottieBuilder::updateStar(LottiePolyStar* star, float frameNo, Matrix* tran
             shape->cubicTo(in2.x, in2.y, in3.x, in3.y, in4.x, in4.y);
         } else {
             auto in = Point{x, y} * transform;
-            shape->lineTo(in.x, in.y);
+            shape->cubicTo(SHAPE(shape)->rs.path.pts.last().x, SHAPE(shape)->rs.path.pts.last().y, in.x, in.y, in.x, in.y);
         }
         angle += dTheta * direction;
         longSegment = !longSegment;
@@ -659,7 +712,7 @@ void LottieBuilder::updatePolygon(LottieGroup* parent, LottiePolyStar* star, flo
         } else {
             Point in = {x, y};
             if (transform) in *= *transform;
-            shape->lineTo(in.x, in.y);
+            shape->cubicTo(SHAPE(shape)->rs.path.pts.last().x, SHAPE(shape)->rs.path.pts.last().y, in.x, in.y, in.x, in.y);
         }
         angle += anglePerPoint * direction;
     }
