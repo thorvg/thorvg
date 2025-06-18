@@ -638,6 +638,7 @@ inline uint32_t jpeg_decoder::get_char()
 // Same as previous method, except can indicate if the character is a pad character or not.
 inline uint32_t jpeg_decoder::get_char(bool *pPadding_flag)
 {
+    *pPadding_flag = false;
     if (!m_in_buf_left) {
         if (!prep_in_buffer()) return 0xFF;
         if (!m_in_buf_left) {
