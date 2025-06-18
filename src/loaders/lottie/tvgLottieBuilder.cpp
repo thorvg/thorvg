@@ -535,11 +535,11 @@ void LottieBuilder::updateStar(LottiePolyStar* star, float frameNo, Matrix* tran
     }
 
     if (tvg::zero(innerRoundness) && tvg::zero(outerRoundness)) {
-        SHAPE(shape)->rs.path.pts.reserve(numPoints + 2);
-        SHAPE(shape)->rs.path.cmds.reserve(numPoints + 3);
+        SHAPE(shape)->rs.path.pts.grow(numPoints + 2);
+        SHAPE(shape)->rs.path.cmds.grow(numPoints + 3);
     } else {
-        SHAPE(shape)->rs.path.pts.reserve(numPoints * 3 + 2);
-        SHAPE(shape)->rs.path.cmds.reserve(numPoints + 3);
+        SHAPE(shape)->rs.path.pts.grow(numPoints * 3 + 2);
+        SHAPE(shape)->rs.path.cmds.grow(numPoints + 3);
         hasRoundness = true;
     }
 
@@ -626,11 +626,11 @@ void LottieBuilder::updatePolygon(LottieGroup* parent, LottiePolyStar* star, flo
     } else {
         shape = merging;
         if (hasRoundness) {
-            SHAPE(shape)->rs.path.pts.reserve(ptsCnt * 3 + 2);
-            SHAPE(shape)->rs.path.cmds.reserve(ptsCnt + 3);
+            SHAPE(shape)->rs.path.pts.grow(ptsCnt * 3 + 2);
+            SHAPE(shape)->rs.path.cmds.grow(ptsCnt + 3);
         } else {
-            SHAPE(shape)->rs.path.pts.reserve(ptsCnt + 2);
-            SHAPE(shape)->rs.path.cmds.reserve(ptsCnt + 3);
+            SHAPE(shape)->rs.path.pts.grow(ptsCnt + 2);
+            SHAPE(shape)->rs.path.cmds.grow(ptsCnt + 3);
         }
     }
 

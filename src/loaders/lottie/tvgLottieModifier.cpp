@@ -187,8 +187,8 @@ bool LottieRoundnessModifier::modifyPath(PathCommand* inCmds, uint32_t inCmdsCnt
 
     auto& path = (next) ? *buffer : out;
 
-    path.cmds.reserve(inCmdsCnt * 2);
-    path.pts.reserve((uint32_t)(inPtsCnt * 1.5));
+    path.cmds.grow(inCmdsCnt * 2);
+    path.pts.grow((uint32_t)(inPtsCnt * 1.5));
     auto pivot = path.pts.count;
 
     uint32_t startIndex = 0;
@@ -325,8 +325,8 @@ bool LottieOffsetModifier::modifyPath(PathCommand* inCmds, uint32_t inCmdsCnt, P
 {
     if (next) TVGERR("LOTTIE", "Offset has a next modifier?");
 
-    out.cmds.reserve(inCmdsCnt * 2);
-    out.pts.reserve(inPtsCnt * (join == StrokeJoin::Round ? 4 : 2));
+    out.cmds.grow(inCmdsCnt * 2);
+    out.pts.grow(inPtsCnt * (join == StrokeJoin::Round ? 4 : 2));
 
     Array<Bezier> stack{5};
     State state;
