@@ -23,50 +23,10 @@
 #ifndef _TVG_GL_TESSELLATOR_H_
 #define _TVG_GL_TESSELLATOR_H_
 
-#include <cstdint>
 #include "tvgGlCommon.h"
 
 namespace tvg
 {
-
-class ObjectHeap;
-struct Vertex;
-struct Edge;
-struct Polygon;
-struct MonotonePolygon;
-struct VertexList;
-struct ActiveEdgeList;
-struct RenderShape;
-
-class Tessellator final
-{
-public:
-    Tessellator(GlGeometryBuffer* buffer);
-    ~Tessellator();
-    void tessellate(const Array<const RenderShape*> &shapes);
-
-private:
-    void visitShape(const RenderPath& path);
-    void buildMesh();
-    void mergeVertices();
-    bool simplifyMesh();
-    bool tessMesh();
-    bool matchFillRule(int32_t winding);
-    Edge *makeEdge(Vertex* p1, Vertex* p2);
-    bool checkIntersection(Edge* left, Edge* right, ActiveEdgeList* ael, Vertex** current);
-    bool splitEdge(Edge* edge, Vertex* v, ActiveEdgeList* ael, Vertex** current);
-    bool intersectPairEdge(Edge* left, Edge* right, ActiveEdgeList* ael, Vertex** current);
-    Polygon *makePoly(Vertex* v, int32_t winding);
-    void emitPoly(MonotonePolygon* poly);
-    void emitTriangle(Vertex* p1, Vertex* p2, Vertex* p3);
-
-    FillRule fillRule = FillRule::NonZero;
-    ObjectHeap* pHeap;
-    Array<VertexList*> outlines;
-    VertexList* pMesh;
-    Polygon* pPolygon;
-    GlGeometryBuffer* buffer;
-};
 
 class Stroker
 {
@@ -79,7 +39,6 @@ class Stroker
     };
 public:
     Stroker(GlGeometryBuffer* buffer, const Matrix& matrix);
-    ~Stroker() = default;
     void stroke(const RenderShape *rshape, const RenderPath& path);
     RenderRegion bounds() const;
 
@@ -147,7 +106,6 @@ class BWTessellator
 {
 public:
     BWTessellator(GlGeometryBuffer* buffer);
-    ~BWTessellator() = default;
     void tessellate(const RenderPath& path, const Matrix& matrix);
     RenderRegion bounds() const;
 

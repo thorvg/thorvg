@@ -108,12 +108,6 @@ bool GlGeometry::tesselate(const RenderSurface* image, RenderUpdateFlag flag)
 }
 
 
-void GlGeometry::disableVertex(uint32_t location)
-{
-    GL_CHECK(glDisableVertexAttribArray(location));
-}
-
-
 bool GlGeometry::draw(GlRenderTask* task, GlStageBuffer* gpuBuffer, RenderUpdateFlag flag)
 {
     if (flag == RenderUpdateFlag::None) return false;
