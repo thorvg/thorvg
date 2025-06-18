@@ -75,6 +75,7 @@ private:
     Array<SwSurface*>    compositors;                 //render targets cache list
     SwMpool*             mpool;                       //private memory pool
     bool                 sharedMpool;                 //memory-pool behavior policy
+    bool                 fulldraw = true;             //buffer is cleared (need to redraw full screen)
 
     SwRenderer();
     ~SwRenderer();
