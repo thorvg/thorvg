@@ -581,6 +581,13 @@ void LottieBuilder::updatePath(LottieGroup* parent, LottieObject** child, float 
 }
 
 
+static void _close(Array<Point>& pts, const Point& p, bool round)
+{
+    if (round && tvg::zero(pts.last() - pts[pts.count - 2])) pts[pts.count - 2] = p;
+    pts.last() = p;
+}
+
+
 static void _updateStar(TVG_UNUSED LottieGroup* parent, LottiePolyStar* star, Matrix* transform, const LottieRoundnessModifier* roundness, const LottieOffsetModifier* offsetPath, float frameNo, Shape* merging, LottieExpressions* exps)
 {
     static constexpr auto POLYSTAR_MAGIC_NUMBER = 0.47829f / 0.28f;
@@ -695,6 +702,8 @@ static void _updateStar(TVG_UNUSED LottieGroup* parent, LottiePolyStar* star, Ma
         angle += dTheta * direction;
         longSegment = !longSegment;
     }
+    //ensure proper shape closure - important for modifiers that behave differently for degenerate (linear) vs curved cubics
+    _close(P(shape)->rs.path.pts, in, hasRoundness);
     shape->close();
 
     if (roundedCorner) {
@@ -777,6 +786,8 @@ static void _updatePolygon(LottieGroup* parent, LottiePolyStar* star, Matrix* tr
         }
         angle += anglePerPoint * direction;
     }
+    //ensure proper shape closure - important for modifiers that behave differently for degenerate (linear) vs curved cubics
+    _close(P(shape)->rs.path.pts, in, hasRoundness);
     shape->close();
 
     if (roundedCorner) {
