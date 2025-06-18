@@ -2,7 +2,6 @@ source_file = [
    'tvgGl.h',
    'tvgGlCommon.h',
    'tvgGlGpuBuffer.h',
-   'tvgGlList.h',
    'tvgGlProgram.h',
    'tvgGlRenderer.h',
    'tvgGlRenderPass.h',

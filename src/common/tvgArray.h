@@ -186,34 +186,9 @@ struct Array
         return count == reserved;
     }
 
-    template<class COMPARE> void sort()
-    {
-        qsort<COMPARE>(data, 0, (int32_t)(count - 1));
-    }
-
     ~Array()
     {
         tvg::free(data);
-    }
-
-private:
-    template<class COMPARE>
-    void qsort(T* arr, int32_t low, int32_t high)
-    {
-        if (low < high) {
-            auto i = low;
-            auto j = high;
-            auto tmp = arr[low];
-            while (i < j) {
-                while (i < j && !COMPARE{}(arr[j], tmp)) --j;
-                if (i < j) arr[i++] = arr[j];
-                while (i < j && COMPARE{}(arr[i], tmp)) ++i;
-                if (i < j) arr[j--] = arr[i];
-            }
-            arr[i] = tmp;
-            qsort<COMPARE>(arr, low, i - 1);
-            qsort<COMPARE>(arr, i + 1, high);
-        }
     }
 };
 

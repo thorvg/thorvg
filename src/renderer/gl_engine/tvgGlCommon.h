@@ -23,31 +23,29 @@
 #ifndef _TVG_GL_COMMON_H_
 #define _TVG_GL_COMMON_H_
 
-#include <assert.h>
+#include <cassert>
 #include "tvgGl.h"
 #include "tvgRender.h"
 #include "tvgMath.h"
 
 #define MIN_GL_STROKE_WIDTH 1.0f
 
-#define MVP_MATRIX(w, h) \
-    float mvp[4*4] = { \
-        2.f / w, 0.0, 0.0f, 0.0f, \
-        0.0, -2.f / h, 0.0f, 0.0f, \
-        0.0f, 0.0f, -1.f, 0.0f, \
-        -1.f, 1.f, 0.0f, 1.0f \
+#define MVP_MATRIX(w, h)                \
+    float mvp[4*4] = {                  \
+        2.f / w,      0.0,  0.0f, 0.0f, \
+        0.0,     -2.f / h,  0.0f, 0.0f, \
+        0.0f,        0.0f, -1.0f, 0.0f, \
+        -1.f,         1.f,  0.0f, 1.0f  \
     };
 
-#define MULTIPLY_MATRIX(A, B, transform) \
-    for(auto i = 0; i < 4; ++i) \
-    { \
-        for(auto j = 0; j < 4; ++j) \
-        { \
-            float sum = 0.0; \
-            for (auto k = 0; k < 4; ++k) \
+#define MULTIPLY_MATRIX(A, B, transform)    \
+    for(auto i = 0; i < 4; ++i) {           \
+        for(auto j = 0; j < 4; ++j) {       \
+            float sum = 0.0;                \
+            for (auto k = 0; k < 4; ++k)    \
                 sum += A[k*4+i] * B[j*4+k]; \
-            transform[j*4+i] = sum; \
-        } \
+            transform[j*4+i] = sum;         \
+        }                                   \
     }
 
 /**
@@ -61,24 +59,24 @@
  */
 
 // All GPU use 4x4 matrix with column major order
-#define GET_MATRIX44(mat3, mat4)    \
-    do {                            \
-        mat4[0] = mat3.e11;         \
-        mat4[1] = mat3.e21;         \
-        mat4[2] = 0;                \
-        mat4[3] = mat3.e31;         \
-        mat4[4] = mat3.e12;         \
-        mat4[5] = mat3.e22;         \
-        mat4[6] = 0;                \
-        mat4[7] = mat3.e32;         \
-        mat4[8] = 0;                \
-        mat4[9] = 0;                \
-        mat4[10] = 1;               \
-        mat4[11] = 0;               \
-        mat4[12] = mat3.e13;        \
-        mat4[13] = mat3.e23;        \
-        mat4[14] = 0;               \
-        mat4[15] = mat3.e33;        \
+#define GET_MATRIX44(mat3, mat4) \
+    do {                         \
+        mat4[0] = mat3.e11;      \
+        mat4[1] = mat3.e21;      \
+        mat4[2] = 0;             \
+        mat4[3] = mat3.e31;      \
+        mat4[4] = mat3.e12;      \
+        mat4[5] = mat3.e22;      \
+        mat4[6] = 0;             \
+        mat4[7] = mat3.e32;      \
+        mat4[8] = 0;             \
+        mat4[9] = 0;             \
+        mat4[10] = 1;            \
+        mat4[11] = 0;            \
+        mat4[12] = mat3.e13;     \
+        mat4[13] = mat3.e23;     \
+        mat4[14] = 0;            \
+        mat4[15] = mat3.e33;     \
     } while (false)
 
 
@@ -115,7 +113,6 @@ struct GlGeometry
 {
     bool tesselate(const RenderShape& rshape, RenderUpdateFlag flag);
     bool tesselate(const RenderSurface* image, RenderUpdateFlag flag);
-    void disableVertex(uint32_t location);
     bool draw(GlRenderTask* task, GlStageBuffer* gpuBuffer, RenderUpdateFlag flag);
     GlStencilMode getStencilMode(RenderUpdateFlag flag);
     RenderRegion getBounds() const;
