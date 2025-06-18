@@ -715,7 +715,7 @@ void LottieBuilder::updateRoundedCorner(TVG_UNUSED LottieGroup* parent, LottieOb
     auto r = roundedCorner->radius(frameNo, tween, exps);
     if (r < LottieRoundnessModifier::ROUNDNESS_EPSILON) return;
 
-    if (!ctx->roundness) ctx->roundness = new LottieRoundnessModifier(&buffer, r);
+    if (!ctx->roundness) ctx->roundness = new LottieRoundnessModifier(buffer, r);
     else if (ctx->roundness->r < r) ctx->roundness->r = r;
 
     ctx->update(ctx->roundness);
@@ -725,7 +725,7 @@ void LottieBuilder::updateRoundedCorner(TVG_UNUSED LottieGroup* parent, LottieOb
 void LottieBuilder::updateOffsetPath(TVG_UNUSED LottieGroup* parent, LottieObject** child, float frameNo, TVG_UNUSED Inlist<RenderContext>& contexts, RenderContext* ctx)
 {
     auto offset = static_cast<LottieOffsetPath*>(*child);
-    if (!ctx->offset) ctx->offset = new LottieOffsetModifier(offset->offset(frameNo, tween, exps), offset->miterLimit(frameNo, tween, exps), offset->join);
+    if (!ctx->offset) ctx->offset = new LottieOffsetModifier(buffer, offset->offset(frameNo, tween, exps), offset->miterLimit(frameNo, tween, exps), offset->join);
 
     ctx->update(ctx->offset);
 }
@@ -1230,7 +1230,7 @@ void LottieBuilder::updateMasks(LottieLayer* layer, float frameNo)
         //Masking with Expansion (Offset)
         } else {
             //TODO: Once path direction support is implemented, ensure that the direction is ignored here
-            auto offset = LottieOffsetModifier(expand);
+            auto offset = LottieOffsetModifier(buffer, expand);
             mask->pathset(frameNo, SHAPE(pShape)->rs.path, nullptr, tween, exps, &offset);
         }
         pOpacity = opacity;
