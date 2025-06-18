@@ -1381,8 +1381,6 @@ static GLuint _genTexture(RenderSurface* image)
 
 RenderData GlRenderer::prepare(RenderSurface* image, RenderData data, const Matrix& transform, Array<RenderData>& clips, uint8_t opacity, RenderUpdateFlag flags)
 {
-    if (flags == RenderUpdateFlag::None) return data;
-
     auto sdata = static_cast<GlShape*>(data);
 
     if (!sdata) sdata = new GlShape;
@@ -1415,8 +1413,6 @@ RenderData GlRenderer::prepare(RenderSurface* image, RenderData data, const Matr
 
 RenderData GlRenderer::prepare(const RenderShape& rshape, RenderData data, const Matrix& transform, Array<RenderData>& clips, uint8_t opacity, RenderUpdateFlag flags, bool clipper)
 {
-    if (flags == RenderUpdateFlag::None) return data;
-
     // If prepare for clip, only path is meaningful.
     if (clipper) flags = RenderUpdateFlag::Path;
 

@@ -131,8 +131,6 @@ bool WgRenderer::surfaceConfigure(WGPUSurface surface, WgContext& context, uint3
 
 RenderData WgRenderer::prepare(const RenderShape& rshape, RenderData data, const Matrix& transform, Array<RenderData>& clips, uint8_t opacity, RenderUpdateFlag flags, bool clipper)
 {
-    if (flags == RenderUpdateFlag::None) return data;
-
     auto renderDataShape = data ? (WgRenderDataShape*)data : mRenderDataShapePool.allocate(mContext);
 
     // update geometry
@@ -164,8 +162,6 @@ RenderData WgRenderer::prepare(const RenderShape& rshape, RenderData data, const
 
 RenderData WgRenderer::prepare(RenderSurface* surface, RenderData data, const Matrix& transform, Array<RenderData>& clips, uint8_t opacity, RenderUpdateFlag flags)
 {
-    if (flags == RenderUpdateFlag::None) return data;
-
     auto renderDataPicture = data ? (WgRenderDataPicture*)data : mRenderDataPicturePool.allocate(mContext);
 
     // update paint settings

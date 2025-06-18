@@ -43,7 +43,7 @@ Result Animation::frame(float no) noexcept
     if (!loader->animatable()) return Result::NonSupport;
 
     if (static_cast<FrameModule*>(loader)->frame(no)) {
-        PAINT(pImpl->picture)->mark(RenderUpdateFlag::Image);
+        PAINT(pImpl->picture)->mark(RenderUpdateFlag::All);
         return Result::Success;
     }
     return Result::InsufficientCondition;

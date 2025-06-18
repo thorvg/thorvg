@@ -727,7 +727,6 @@ void* SwRenderer::prepareCommon(SwTask* task, const Matrix& transform, const Arr
 
 RenderData SwRenderer::prepare(RenderSurface* surface, RenderData data, const Matrix& transform, Array<RenderData>& clips, uint8_t opacity, RenderUpdateFlag flags)
 {
-    //prepare task
     auto task = static_cast<SwImageTask*>(data);
     if (task) task->done();
     else {
@@ -741,7 +740,6 @@ RenderData SwRenderer::prepare(RenderSurface* surface, RenderData data, const Ma
 
 RenderData SwRenderer::prepare(const RenderShape& rshape, RenderData data, const Matrix& transform, Array<RenderData>& clips, uint8_t opacity, RenderUpdateFlag flags, bool clipper)
 {
-    //prepare task
     auto task = static_cast<SwShapeTask*>(data);
     if (task) task->done();
     else {
