@@ -52,16 +52,9 @@ static void _roundCorner(Array<PathCommand>& cmds, Array<Point>& pts, Point& pre
 }
 
 
-static bool _zero(Point& p1, Point& p2)
-{
-    constexpr float epsilon = 1e-3f;
-    return fabsf(p1.x / p2.x - 1.0f) < epsilon && fabsf(p1.y / p2.y - 1.0f) < epsilon;
-}
-
-
 static bool _intersect(Line& line1, Line& line2, Point& intersection, bool& inside)
 {
-    if (_zero(line1.pt2, line2.pt1)) {
+    if (tvg::zero(line1.pt2 - line2.pt1)) {
         intersection = line1.pt2;
         inside = true;
         return true;
@@ -168,7 +161,7 @@ void LottieOffsetModifier::line(RenderPath& out, PathCommand* inCmds, uint32_t i
     Line nextLine = state.firstLine;
     if (inCmds[curCmd + 1] == PathCommand::LineTo) nextLine = _offset(inPts[curPt + degenerated], inPts[curPt + 1 + degenerated], offset);
     else if (inCmds[curCmd + 1] == PathCommand::CubicTo) nextLine = _offset(inPts[curPt + 1 + degenerated], inPts[curPt + 2 + degenerated], offset);
-    else if (inCmds[curCmd + 1] == PathCommand::Close && !_zero(inPts[curPt + degenerated], inPts[state.movetoInIndex + degenerated]))
+    else if (inCmds[curCmd + 1] == PathCommand::Close && !tvg::zero(inPts[curPt + degenerated] - inPts[state.movetoInIndex + degenerated]))
         nextLine = _offset(inPts[curPt + degenerated], inPts[state.movetoInIndex + degenerated], offset);
 
     corner(out, state.line, nextLine, state.movetoOutIndex, inCmds[curCmd + 1] == PathCommand::Close);
@@ -386,7 +379,7 @@ bool LottieOffsetModifier::modifyPath(PathCommand* inCmds, uint32_t inCmdsCnt, P
             iPt += 3;
         }
         else {
-            if (!_zero(inPts[iPt - 1], inPts[state.movetoInIndex])) {
+            if (!tvg::zero(inPts[iPt - 1] - inPts[state.movetoInIndex])) {
                 out.cmds.push(PathCommand::LineTo);
                 corner(out, state.line, state.firstLine, state.movetoOutIndex, true);
             }
