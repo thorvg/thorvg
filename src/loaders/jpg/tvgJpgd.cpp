@@ -639,7 +639,10 @@ inline uint32_t jpeg_decoder::get_char()
 inline uint32_t jpeg_decoder::get_char(bool *pPadding_flag)
 {
     if (!m_in_buf_left) {
-        if (!prep_in_buffer()) return 0xFF;
+        if (!prep_in_buffer()) {
+            *pPadding_flag = false;
+            return 0xFF;
+        }
         if (!m_in_buf_left) {
             *pPadding_flag = true;
             int t = m_tem_flag;
