@@ -139,8 +139,20 @@ void WgShaderTypeGradSettings::update(const Fill* fill)
     // update gradient base points
     if (fill->type() == Type::LinearGradient)
         ((LinearGradient*)fill)->linear(&coords.vec[0], &coords.vec[1], &coords.vec[2], &coords.vec[3]);
-    else if (fill->type() == Type::RadialGradient)
+    else if (fill->type() == Type::RadialGradient) {
         ((RadialGradient*)fill)->radial(&coords.vec[0], &coords.vec[1], &coords.vec[2], &focal.vec[0], &focal.vec[1], &focal.vec[2]);
+        auto dx = coords.vec[0] - focal.vec[0]; //cx - fx
+        auto dy = coords.vec[1] - focal.vec[1]; //cy - fy
+        auto dr = coords.vec[2] - focal.vec[2]; //r - fr
+        auto dd = dx * dx + dy * dy;
+        auto a = dr * dr - dd;
+        constexpr float precision = 0.01f; //retract focal point slightly from edge to avoid numerical errors
+        if (a <= precision) {
+            auto dist = sqrtf(dd);
+            focal.vec[0] = coords.vec[0] - coords.vec[2] * (1.0f - precision) * dx / dist;
+            focal.vec[1] = coords.vec[1] - coords.vec[2] * (1.0f - precision) * dy / dist;
+        }
+    }
 }
 
 //************************************************************************
