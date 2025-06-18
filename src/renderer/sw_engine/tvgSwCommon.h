@@ -23,6 +23,7 @@
 #ifndef _TVG_SW_COMMON_H_
 #define _TVG_SW_COMMON_H_
 
+#include <algorithm>
 #include "tvgCommon.h"
 #include "tvgMath.h"
 #include "tvgRender.h"
@@ -117,22 +118,48 @@ struct SwSpan
     uint16_t x, y;
     uint16_t len;
     uint8_t coverage;
+
+    bool fetch(const RenderRegion& bbox, int32_t& x, int32_t& len) const
+    {
+        x = std::max((int32_t)this->x, bbox.min.x);
+        len = std::min((int32_t)(this->x + this->len), bbox.max.x) - x;
+        return (len > 0) ? true : false;
+    }
 };
+
 
 struct SwRle
 {
     Array<SwSpan> spans;
 
-    bool invalid() const
+    const SwSpan* fetch(const RenderRegion& bbox, const SwSpan** end) const
     {
-        return spans.empty();
+        return fetch(bbox.min.y, bbox.max.y - 1, end);
     }
 
-    bool valid() const
+    const SwSpan* fetch(int32_t min, uint32_t max, const SwSpan** end) const
     {
-        return !invalid();
+        const SwSpan* begin;
+
+        if (min <= spans.first().y) {
+            begin = spans.begin();
+        } else {
+            auto comp = [](const SwSpan& span, int y) { return span.y < y; };
+            begin = lower_bound(spans.begin(), spans.end(), min, comp);
+        }
+        if (end) {
+            if (max >= spans.last().y) {
+                *end = spans.end();
+            } else {
+                auto comp = [](int y, const SwSpan& span) { return y < span.y; };
+                *end = upper_bound(spans.begin(), spans.end(), max, comp);
+            }
+        }
+        return begin;
     }
 
+    bool invalid() const { return spans.empty(); }
+    bool valid() const { return !invalid(); }
     uint32_t size() const { return spans.count; }
     SwSpan* data() const { return spans.data; }
 };
@@ -566,15 +593,15 @@ SwOutline* mpoolReqDashOutline(SwMpool* mpool, unsigned idx);
 void mpoolRetDashOutline(SwMpool* mpool, unsigned idx);
 
 bool rasterCompositor(SwSurface* surface);
-bool rasterGradientShape(SwSurface* surface, SwShape* shape, const Fill* fdata, uint8_t opacity);
-bool rasterShape(SwSurface* surface, SwShape* shape, RenderColor& c);
+bool rasterShape(SwSurface* surface, SwShape* shape, const RenderRegion& bbox, RenderColor& c);
 bool rasterTexmapPolygon(SwSurface* surface, const SwImage& image, const Matrix& transform, const RenderRegion& bbox, uint8_t opacity);
 bool rasterScaledImage(SwSurface* surface, const SwImage& image, const Matrix& transform, const RenderRegion& bbox, uint8_t opacity);
 bool rasterDirectImage(SwSurface* surface, const SwImage& image, const RenderRegion& bbox, uint8_t opacity);
 bool rasterScaledRleImage(SwSurface* surface, const SwImage& image, const Matrix& transform, const RenderRegion& bbox, uint8_t opacity);
-bool rasterDirectRleImage(SwSurface* surface, const SwImage& image, uint8_t opacity);
-bool rasterStroke(SwSurface* surface, SwShape* shape, RenderColor& c);
-bool rasterGradientStroke(SwSurface* surface, SwShape* shape, const Fill* fdata, uint8_t opacity);
+bool rasterDirectRleImage(SwSurface* surface, const SwImage& image, const RenderRegion& bbox, uint8_t opacity);
+bool rasterStroke(SwSurface* surface, SwShape* shape, const RenderRegion& bbox, RenderColor& c);
+bool rasterGradientShape(SwSurface* surface, SwShape* shape, const RenderRegion& bbox, const Fill* fdata, uint8_t opacity);
+bool rasterGradientStroke(SwSurface* surface, SwShape* shape, const RenderRegion& bbox, const Fill* fdata, uint8_t opacity);
 bool rasterClear(SwSurface* surface, uint32_t x, uint32_t y, uint32_t w, uint32_t h, pixel_t val = 0);
 void rasterPixel32(uint32_t *dst, uint32_t val, uint32_t offset, int32_t len);
 void rasterTranslucentPixel32(uint32_t* dst, uint32_t* src, uint32_t len, uint8_t opacity);
