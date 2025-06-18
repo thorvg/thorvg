@@ -262,10 +262,11 @@ bool _prepareRadial(SwFill* fill, const RadialGradient* radial, const Matrix& pT
     //This condition fulfills the SVG 1.1 std:
     //the focal point, if outside the end circle, is moved to be on the end circle
     //See: the SVG 2 std requirements: https://www.w3.org/TR/SVG2/pservers.html#RadialGradientNotes
-    if (fill->radial.a < 0) {
+    if (fill->radial.a <= FLOAT_EPSILON) {
         auto dist = sqrtf(fill->radial.dx * fill->radial.dx + fill->radial.dy * fill->radial.dy);
-        fill->radial.fx = cx + r * (fx - cx) / dist;
-        fill->radial.fy = cy + r * (fy - cy) / dist;
+        constexpr const float precision = 0.99f; //retract focal point slightly from edge to avoid numerical errors
+        fill->radial.fx = cx + r * precision * (fx - cx) / dist;
+        fill->radial.fy = cy + r * precision * (fy - cy) / dist;
         fill->radial.dx = cx - fill->radial.fx;
         fill->radial.dy = cy - fill->radial.fy;
         // Prevent loss of precision on Apple Silicon when dr=dy and dx=0 due to FMA
