@@ -208,7 +208,13 @@ bool LottieRoundnessModifier::modifyPath(PathCommand* inCmds, uint32_t inCmdsCnt
                         _roundCorner(path.cmds, path.pts, prev, curr, inPts[iPts + 5], r);
                         iPts += 3;
                         break;
-                    } else if (inCmds[iCmds + 1] == PathCommand::Close) {
+                    }
+                    if (inCmds[iCmds + 1] == PathCommand::LineTo) {
+                        _roundCorner(path.cmds, path.pts, prev, curr, inPts[iPts + 3], r);
+                        iPts += 3;
+                        break;
+                    }
+                    if (inCmds[iCmds + 1] == PathCommand::Close) {
                         _roundCorner(path.cmds, path.pts, prev, curr, inPts[2], r);
                         path.pts[startIndex] = path.pts.last();
                         iPts += 3;
@@ -218,6 +224,31 @@ bool LottieRoundnessModifier::modifyPath(PathCommand* inCmds, uint32_t inCmdsCnt
                 path.cmds.push(PathCommand::CubicTo);
                 path.pts.push(inPts[iPts++]);
                 path.pts.push(inPts[iPts++]);
+                path.pts.push(inPts[iPts++]);
+                break;
+            }
+            case PathCommand::LineTo: {
+                if (iCmds < inCmdsCnt - 1) {
+                    auto& prev = inPts[iPts - 1];
+                    auto& curr = inPts[iPts];
+                    if (inCmds[iCmds + 1] == PathCommand::CubicTo && _colinear(inPts + iPts)) {
+                        _roundCorner(path.cmds, path.pts, prev, curr, inPts[iPts + 3], r);
+                        ++iPts;
+                        break;
+                    }
+                    if (inCmds[iCmds + 1] == PathCommand::LineTo) {
+                        _roundCorner(path.cmds, path.pts, prev, curr, inPts[iPts + 1], r);
+                        ++iPts;
+                        break;
+                    }
+                    if (inCmds[iCmds + 1] == PathCommand::Close) {
+                        _roundCorner(path.cmds, path.pts, prev, curr, inPts[1], r);
+                        path.pts[startIndex] = path.pts.last();
+                        ++iPts;
+                        break;
+                    }
+                }
+                path.cmds.push(PathCommand::LineTo);
                 path.pts.push(inPts[iPts++]);
                 break;
             }
