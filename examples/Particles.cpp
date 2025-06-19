@@ -29,13 +29,15 @@
 struct UserExample : tvgexam::Example
 {
     struct Particle {
-        tvg::Shape* shape;
+        tvg::Paint* obj;
         float x, y;
         float speed;
+        float size;
     };
 
     const float COUNT = 1200.0f;
-    std::vector<Particle> rects;
+    std::vector<Particle> raindrops;
+    std::vector<Particle> clouds;
 
     uint32_t w, h;
 
@@ -49,19 +51,42 @@ struct UserExample : tvgexam::Example
         city->load(EXAMPLE_DIR"/image/particle.jpg");
         canvas->push(city);
 
-        auto night = tvg::Shape::gen();
-        night->appendRect(0, 0, w, h);
-        night->fill(0, 0, 0, 220);
-        canvas->push(night);
+        auto cloud1 = tvg::Picture::gen();
+        cloud1->load(EXAMPLE_DIR"/image/clouds.png");
+        cloud1->opacity(60);
+        canvas->push(cloud1);
+
+        float size;
+        cloud1->size(&size, nullptr);
+        clouds.push_back({cloud1, 0, 0, 0.25f, size});
+
+        auto cloud2 = cloud1->duplicate();
+        cloud2->opacity(30);
+        cloud2->translate(400, 100);
+        canvas->push(cloud2);
+
+        clouds.push_back({cloud2, 400, 100, 0.125f, size});
+
+        auto cloud3 = cloud1->duplicate();
+        cloud3->opacity(20);
+        cloud3->translate(1200, 200);
+        canvas->push(cloud3);
+
+        clouds.push_back({cloud3, 1200, 200, 0.075f, size});
+
+        auto darkness = tvg::Shape::gen();
+        darkness->appendRect(0, 0, w, h);
+        darkness->fill(0, 0, 0, 150);
+        canvas->push(darkness);
 
         //rain drops
-        auto size = w / COUNT;
-        rects.reserve(COUNT);
+        size = w / COUNT;
+        raindrops.reserve(COUNT);
 
         for (int i = 0; i < COUNT; ++i) {
             auto shape = tvg::Shape::gen();
             float x = size * i;
-            rects.push_back({shape, x, float(rand()%h), 10 + float(rand() % 100) * 0.1f});
+            raindrops.push_back({shape, x, float(rand()%h), 10 + float(rand() % 100) * 0.1f, 0 /* unused */});
             shape->appendRect(0, 0, 1, rand() % 15 + size);
             shape->fill(255, 255, 255, 55 + rand() % 100);
             canvas->push(shape);
@@ -76,13 +101,22 @@ struct UserExample : tvgexam::Example
     bool update(tvg::Canvas* canvas, uint32_t elapsed) override
     {
         if (!canvas) return false;
-        for (auto& p : rects) {
+        for (auto& p : raindrops) {
             p.y += p.speed;
             if (p.y > h) {
                 p.y -= h;
             }
-            p.shape->translate(p.x, p.y);
+            p.obj->translate(p.x, p.y);
         }
+
+        for (auto& p : clouds) {
+            p.x -= p.speed;
+            if (p.x + p.size < 0) {
+                p.x = w;
+            }
+            p.obj->translate(p.x, p.y);
+        }
+
         canvas->update();
         return true;
     }
