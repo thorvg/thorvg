@@ -333,6 +333,10 @@ bool LottieOffsetModifier::modifyPath(PathCommand* inCmds, uint32_t inCmdsCnt, P
     auto offset = _clockwise(inPts, inPtsCnt) ? this->offset : -this->offset;
     auto threshold = 1.0f / fabsf(offset) + 1.0f;
 
+    bool inside{};
+    Point intersect{};
+    bool degeneratedLine1{}, degeneratedLine3{};
+
     for (uint32_t iCmd = 0, iPt = 0; iCmd < inCmdsCnt; ++iCmd) {
         if (inCmds[iCmd] == PathCommand::MoveTo) {
             state.moveto = true;
@@ -341,7 +345,7 @@ bool LottieOffsetModifier::modifyPath(PathCommand* inCmds, uint32_t inCmdsCnt, P
             line(out, inCmds, inCmdsCnt, inPts, iPt, iCmd, state, offset, false);
         } else if (inCmds[iCmd] == PathCommand::CubicTo) {
             //cubic degenerated to a line
-            if (tvg::zero(inPts[iPt - 1] - inPts[iPt]) || tvg::zero(inPts[iPt + 1] - inPts[iPt + 2])) {
+            if (_colinear(inPts + iPt - 1)) {
                 ++iPt;
                 line(out, inCmds, inCmdsCnt, inPts, iPt, iCmd, state, offset, true);
                 ++iPt;
@@ -353,7 +357,7 @@ bool LottieOffsetModifier::modifyPath(PathCommand* inCmds, uint32_t inCmdsCnt, P
                 auto& bezier = stack.last();
                 auto len = tvg::length(bezier.start - bezier.ctrl1) + tvg::length(bezier.ctrl1 - bezier.ctrl2) + tvg::length(bezier.ctrl2 - bezier.end);
 
-                if (len >  threshold * bezier.length()) {
+                if (len >  threshold * bezier.length() && len > 1.0f) {
                     Bezier next;
                     bezier.split(0.5f, next);
                     stack.push(next);
@@ -361,9 +365,19 @@ bool LottieOffsetModifier::modifyPath(PathCommand* inCmds, uint32_t inCmdsCnt, P
                 }
                 stack.pop();
 
-                auto line1 = _offset(bezier.start, bezier.ctrl1, offset);
+                degeneratedLine1 = _zero(bezier.start, bezier.ctrl1);
+                auto line1 = degeneratedLine1 ? state.line : _offset(bezier.start, bezier.ctrl1, offset);
                 auto line2 = _offset(bezier.ctrl1, bezier.ctrl2, offset);
-                auto line3 = _offset(bezier.ctrl2, bezier.end, offset);
+
+                //line3 from the previous iteration was degenerated to a point - calculate intersection with the last valid line (state.line)
+                if (degeneratedLine3) {
+                    _intersect(degeneratedLine1 ? line2 : line1, state.line, intersect, inside);
+                    out.pts.push(intersect);
+                    out.pts.push(intersect);
+                }
+
+                degeneratedLine3 = _zero(bezier.ctrl2, bezier.end);
+                auto& line3 = state.line = degeneratedLine3 ? line2 : _offset(bezier.ctrl2, bezier.end, offset);
 
                 if (state.moveto) {
                     out.cmds.push(PathCommand::MoveTo);
@@ -373,19 +387,22 @@ bool LottieOffsetModifier::modifyPath(PathCommand* inCmds, uint32_t inCmdsCnt, P
                     state.moveto = false;
                 }
 
-                bool inside{};
-                Point intersect{};
-                _intersect(line1, line2, intersect, inside);
-                out.pts.push(intersect);
-                _intersect(line2, line3, intersect, inside);
-                out.pts.push(intersect);
-                out.pts.push(line3.pt2);
+                if (degeneratedLine1) out.pts.push(out.pts.last());
+                else {
+                    _intersect(line1, line2, intersect, inside);
+                    out.pts.push(intersect);
+                } 
+
+                if (!degeneratedLine3) {
+                    _intersect(line2, line3, intersect, inside);
+                    out.pts.push(intersect);
+                    out.pts.push(line3.pt2);
+                }
                 out.cmds.push(PathCommand::CubicTo);
             }
 
             iPt += 3;
-        }
-        else {
+        } else {
             if (!_zero(inPts[iPt - 1], inPts[state.movetoInIndex])) {
                 out.cmds.push(PathCommand::LineTo);
                 corner(out, state.line, state.firstLine, state.movetoOutIndex, true);
