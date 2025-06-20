@@ -217,7 +217,7 @@ bool _prepareLinear(SwFill* fill, const LinearGradient* linear, const Matrix& pT
 
     if (len < FLOAT_EPSILON) {
         if (tvg::zero(fill->linear.dx) && tvg::zero(fill->linear.dy)) {
-            fill->solid = true;
+            fill->solid = 1;
         }
         return true;
     }
@@ -247,7 +247,7 @@ bool _prepareRadial(SwFill* fill, const RadialGradient* radial, const Matrix& pT
     radial->radial(&cx, &cy, &r, &fx, &fy, &fr);
 
     if (tvg::zero(r)) {
-        fill->solid = true;
+        fill->solid = 1;
         return true;
     }
 
@@ -265,6 +265,10 @@ bool _prepareRadial(SwFill* fill, const RadialGradient* radial, const Matrix& pT
     constexpr float precision = 0.01f;
     if (fill->radial.a <= precision) {
         auto dist = sqrtf(fill->radial.dx * fill->radial.dx + fill->radial.dy * fill->radial.dy);
+        if (dist < precision) {
+            fill->solid = 2;
+            return true;
+        }
         //retract focal point slightly from edge to avoid numerical errors:
         fill->radial.fx = cx + r * (1.0f - precision) * (fx - cx) / dist;
         fill->radial.fy = cy + r * (1.0f - precision) * (fy - cy) / dist;
@@ -824,7 +828,7 @@ const Fill::ColorStop* fillFetchSolid(const SwFill* fill, const Fill* fdata)
     auto cnt = fdata->colorStops(&colors);
     if (cnt == 0 || !colors) return nullptr;
 
-    return colors + cnt - 1;
+    return fill->solid == 1 ? colors + cnt - 1 : colors;
 }
 
 
@@ -835,7 +839,7 @@ void fillReset(SwFill* fill)
         fill->ctable = nullptr;
     }
     fill->translucent = false;
-    fill->solid = false;
+    fill->solid = 0;
 }
 
 
