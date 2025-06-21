@@ -66,8 +66,10 @@ struct SceneImpl : Scene
     list<Paint*> paints;     //children list
     RenderRegion vport = {};
     Array<RenderEffect*>* effects = nullptr;
-    uint8_t opacity;         //for composition
+    Point fsize;          //fixed scene size
+    bool fixed = false;   //true: fixed scene size, false: dynamic size
     bool vdirty = false;
+    uint8_t opacity;      //for composition
 
     SceneImpl() : impl(Paint::Impl(this))
     {
@@ -75,8 +77,14 @@ struct SceneImpl : Scene
 
     ~SceneImpl()
     {
-        resetEffects();
         clearPaints();
+        resetEffects();
+    }
+
+    void size(const Point& size)
+    {
+        this->fsize = size;
+        fixed = (size.x > 0 && size.y > 0) ? true : false;
     }
 
     uint8_t needComposition(uint8_t opacity)
@@ -117,9 +125,16 @@ struct SceneImpl : Scene
             this->opacity = opacity;
             opacity = 255;
         }
+
+        //allow partial rendering?
+        auto recover = fixed ? renderer->partial(true) : false;
+
         for (auto paint : paints) {
             PAINT(paint)->update(renderer, transform, clips, opacity, flag, false);
         }
+
+        //recover the condition
+        if (fixed) renderer->partial(recover);
 
         if (effects) {
             ARRAY_FOREACH(p, *effects) {
@@ -129,10 +144,17 @@ struct SceneImpl : Scene
 
         //this viewport update is more performant than in bounds(). No idea.
         vport = renderer->viewport();
-        vdirty = true;
 
-        //bounds(renderer) here hinders parallelization.
-        if (effects) impl.damage(vport);
+        if (fixed) {
+            auto pt = fsize * transform;
+            vport.intersect({int32_t(round(transform.e13)), int32_t(round(transform.e23))}, {int32_t(round(pt.x)), int32_t(round(pt.y))});
+        } else {
+            vdirty = true;
+        }
+
+        //bounds(renderer) here hinders parallelization
+        //TODO: we can bring the precise effects region here
+        if (fixed || effects) impl.damage(vport);
 
         return true;
     }
@@ -264,6 +286,7 @@ struct SceneImpl : Scene
             paint->unref();
             paints.erase(itr++);
         }
+
         return Result::Success;
     }
 
@@ -314,7 +337,6 @@ struct SceneImpl : Scene
             }
             delete(effects);
             effects = nullptr;
-            impl.damage(vport);
         }
         return Result::Success;
     }
