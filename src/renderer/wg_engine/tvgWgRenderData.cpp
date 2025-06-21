@@ -329,7 +329,7 @@ void WgRenderDataShape::proceedStrokes(const RenderStroke* rstroke, const WgVert
 {
     assert(rstroke);
     auto strokesGenerator = pool->reqIndexedVertexBuffer(buff.scale);
-    if (rstroke->dash.count == 0) strokesGenerator->appendStrokes(buff, rstroke);
+    if (rstroke->dash.length < DASH_PATTERN_THRESHOLD) strokesGenerator->appendStrokes(buff, rstroke);
     else strokesGenerator->appendStrokesDashed(buff, rstroke);
 
     appendStroke(*strokesGenerator);
