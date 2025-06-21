@@ -160,7 +160,7 @@ struct SwFill
     uint32_t* ctable;
     FillSpread spread;
 
-    bool solid = false; //solid color fill with the last color from colorStops
+    uint8_t solid = 0; //solid fill: 1: use the last colorStop (r == 0); 2: use the first colorStop (r == fr)
     bool translucent;
 };
 
