@@ -23,6 +23,7 @@
 #include <algorithm>
 #include "tvgCommon.h"
 #include "tvgMath.h"
+#include "tvgScene.h"
 #include "tvgLottieModel.h"
 #include "tvgLottieBuilder.h"
 #include "tvgLottieExpressions.h"
@@ -1571,4 +1572,7 @@ void LottieBuilder::build(LottieComposition* comp)
     auto clip = Shape::gen();
     clip->appendRect(0, 0, comp->w, comp->h);
     comp->root->scene->clip(clip);
+
+    //turn off partial rendering for children
+    SCENE(comp->root->scene)->size({comp->w, comp->h});
 }
