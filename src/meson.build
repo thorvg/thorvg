@@ -74,6 +74,7 @@ thorvg_lib = library(
 )
 
 thorvg_dep = declare_dependency(
+  compile_args: (lib_type == 'static') ? ['-DTVG_STATIC'] : [],
   include_directories: thorvg_inc,
   link_with: thorvg_lib,
 )
