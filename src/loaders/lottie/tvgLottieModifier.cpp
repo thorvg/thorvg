@@ -377,12 +377,7 @@ bool LottieOffsetModifier::modifyPath(PathCommand* inCmds, uint32_t inCmdsCnt, P
             }
 
             iPt += 3;
-        }
-        else {
-            if (!tvg::zero(inPts[iPt - 1] - inPts[state.movetoInIndex])) {
-                out.cmds.push(PathCommand::LineTo);
-                corner(out, state.line, state.firstLine, state.movetoOutIndex, true);
-            }
+        } else {
             out.cmds.push(PathCommand::Close);
         }
     }
