@@ -130,6 +130,42 @@ struct RadialGradientImpl : RadialGradient
 
         return Result::Success;
     }
+
+    //TODO: remove this logic once SVG 2.0 is adopted by sw and wg engines (gl already supports it); lottie-specific handling will then be delegated entirely to the loader
+    //clamp focal point and shrink start circle if needed to avoid invalid gradient setup
+    bool correct(float& fx, float& fy, float& fr) const
+    {
+        constexpr float precision = 0.01f;
+
+        //a solid fill case. It can be handled by engine.
+        if (this->r < precision) return false;
+
+        fx = this->fx;
+        fy = this->fy;
+        fr = this->fr;
+
+        auto dx = this->cx - this->fx;
+        auto dy = this->cy - this->fy;
+        auto dist = sqrtf(dx * dx + dy * dy);
+
+        //move the focal point to the edge (just inside) if it's outside the end circle
+        if (this->r - dist <  precision) {
+            //handle special case: small radius and small distance -> shift focal point to avoid div-by-zero
+            if (dist < precision) dist = dx = precision;
+            auto scale = this->r * (1.0f - precision) / dist;
+            fx = this->cx - dx * scale;
+            fy = this->cy - dy * scale;
+            dx = this->cx - fx;
+            dy = this->cy - fy;
+            dist = sqrtf(dx * dx + dy * dy);
+        }
+
+        //if the start circle doesn't fit entirely within the end circle, shrink it (with epsilon margin)
+        auto maxFr = (this->r - dist) * (1.0f - precision);
+        if (this->fr > maxFr) fr = std::max(0.0f, maxFr);
+
+        return true;
+    }
 };
 
 

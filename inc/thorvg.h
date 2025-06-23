@@ -886,6 +886,8 @@ public:
      * @retval Result::InvalidArguments in case the radius @p r or @p fr value is negative.
      *
      * @note In case the radius @p r is zero, an object is filled with a single color using the last color specified in the colorStops().
+     * @note In case the focal point (@p fx and @p fy) lies outside the end circle, it is projected onto the edge of the end circle.
+     * @note If the start circle doesn't fully fit inside the end circle (after possible repositioning), the @p fr is reduced accordingly.
      * @note By manipulating the position and size of the focal point, a wide range of visual effects can be achieved, such as directing
      * the gradient focus towards a specific edge or enhancing the depth and complexity of shading patterns.
      * If a focal effect is not desired, simply align the focal point (@p fx and @p fy) with the center of the end circle (@p cx and @p cy)
