@@ -27,6 +27,7 @@
 #include "tvgGlRenderTask.h"
 #include "tvgGlProgram.h"
 #include "tvgGlShaderSrc.h"
+#include "tvgFill.h"
 
 /************************************************************************/
 /* Internal Class Implementation                                        */
@@ -412,6 +413,7 @@ void GlRenderer::drawPrimitive(GlShape& sdata, const Fill* fill, RenderUpdateFla
 
         float x, y, r, fx, fy, fr;
         radialFill->radial(&x, &y, &r, &fx, &fy, &fr);
+        CONST_RADIAL(radialFill)->correct(fx, fy, fr);
 
         gradientBlock.centerPos[0] = fx;
         gradientBlock.centerPos[1] = fy;
