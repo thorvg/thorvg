@@ -163,6 +163,7 @@ void RenderDirtyRegion::add(const RenderRegion* prv, const RenderRegion* cur)
     auto pvalid = prv ? prv->valid() : false;
     auto cvalid = cur ? cur->valid() : false;
     if (!pvalid && !cvalid) return;
+
     for (int idx = 0; idx < PARTITIONING; ++idx) {
         auto& partition = partitions[idx];
         if (pvalid && prv->intersected(partition.region)) {

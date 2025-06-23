@@ -40,18 +40,23 @@ struct SwTask : Task
 {
     SwSurface* surface = nullptr;
     SwMpool* mpool = nullptr;
-    RenderRegion bbox;                          //Rendering Region
+    RenderRegion curBox = {};  //current rendering region
+    RenderRegion prvBox = {};  //previous rendering region
     Matrix transform;
     Array<RenderData> clips;
+    RenderDirtyRegion* dirtyRegion;
     RenderUpdateFlag flags = RenderUpdateFlag::None;
     uint8_t opacity;
-    bool pushed = false;                  //Pushed into task list?
-    bool disposed = false;                //Disposed task?
+    bool pushed : 1;                  //Pushed into task list?
+    bool disposed : 1;                //Disposed task?
+    bool nodirty : 1;                 //target for partial rendering?
+
+    SwTask() : pushed(false), disposed(false) {}
 
     const RenderRegion& bounds()
     {
         done();
-        return bbox;
+        return curBox;
     }
 
     virtual void dispose() = 0;
@@ -91,7 +96,7 @@ struct SwShapeTask : SwTask
     bool clip(SwRle* target) override
     {
         if (shape.strokeRle) return rleClip(target, shape.strokeRle);
-        if (shape.fastTrack) return rleClip(target, &bbox);
+        if (shape.fastTrack) return rleClip(target, &curBox);
         if (shape.rle) return rleClip(target, shape.rle);
         return false;
     }
@@ -100,7 +105,7 @@ struct SwShapeTask : SwTask
     {
         //Invisible
         if (opacity == 0 && !clipper) {
-            bbox.reset();
+            curBox.reset();
             return;
         }
 
@@ -114,7 +119,7 @@ struct SwShapeTask : SwTask
             updateFill = (MULTIPLY(rshape->color.a, opacity) || rshape->fill);
             if (updateShape) shapeReset(&shape);
             if (updateFill || clipper) {
-                if (shapePrepare(&shape, rshape, transform, bbox, renderBox, mpool, tid, clips.count > 0 ? true : false)) {
+                if (shapePrepare(&shape, rshape, transform, curBox, renderBox, mpool, tid, clips.count > 0 ? true : false)) {
                     if (!shapeGenRle(&shape, rshape, antialiasing(strokeWidth))) goto err;
                 } else {
                     updateFill = false;
@@ -134,7 +139,7 @@ struct SwShapeTask : SwTask
         if (updateShape || flags & RenderUpdateFlag::Stroke) {
             if (strokeWidth > 0.0f) {
                 shapeResetStroke(&shape, rshape, transform);
-                if (!shapeGenStrokeRle(&shape, rshape, transform, bbox, renderBox, mpool, tid)) goto err;
+                if (!shapeGenStrokeRle(&shape, rshape, transform, curBox, renderBox, mpool, tid)) goto err;
                 if (auto fill = rshape->strokeFill()) {
                     auto ctable = (flags & RenderUpdateFlag::GradientStroke) ? true : false;
                     if (ctable) shapeResetStrokeFill(&shape);
@@ -156,15 +161,16 @@ struct SwShapeTask : SwTask
             if (!clipShapeRle && !clipStrokeRle) goto err;
         }
 
-        bbox = renderBox; //sync
-
+        curBox = renderBox; //sync
+        if (!nodirty) dirtyRegion->add(&prvBox, &curBox);
         return;
 
     err:
-        bbox.reset();
+        curBox.reset();
         shapeReset(&shape);
         rleReset(shape.strokeRle);
         shapeDelOutline(&shape, mpool, tid);
+        if (!nodirty) dirtyRegion->add(&prvBox, &curBox);
     }
 
     void dispose() override
@@ -187,7 +193,7 @@ struct SwImageTask : SwTask
 
     void run(unsigned tid) override
     {
-        auto clipBox = bbox;
+        auto clipBox = curBox;
 
         //Convert colorspace if it's not aligned.
         rasterConvertCS(source, surface->cs);
@@ -203,9 +209,11 @@ struct SwImageTask : SwTask
         if ((flags & (RenderUpdateFlag::Image | RenderUpdateFlag::Transform | RenderUpdateFlag::Color)) && (opacity > 0)) {
             imageReset(&image);
             if (!image.data || image.w == 0 || image.h == 0) goto end;
-            if (!imagePrepare(&image, transform, clipBox,  bbox, mpool, tid)) goto end;
+
+            if (!imagePrepare(&image, transform, clipBox, curBox, mpool, tid)) goto end;
+
             if (clips.count > 0) {
-                if (!imageGenRle(&image, bbox, false)) goto end;
+                if (!imageGenRle(&image, curBox, false)) goto end;
                 if (image.rle) {
                     //Clear current task memorypool here if the clippers would use the same memory pool
                     imageDelOutline(&image, mpool, tid);
@@ -213,16 +221,18 @@ struct SwImageTask : SwTask
                         auto clipper = static_cast<SwTask*>(*p);
                         if (!clipper->clip(image.rle)) goto err;
                     }
+                    if (!nodirty) dirtyRegion->add(&prvBox, &curBox);
                     return;
                 }
             }
         }
         goto end;
     err:
-        bbox.reset();
+        curBox.reset();
         rleReset(image.rle);
     end:
         imageDelOutline(&image, mpool, tid);
+        if (!nodirty) dirtyRegion->add(&prvBox, &curBox);
     }
 
     void dispose() override
@@ -265,7 +275,10 @@ SwRenderer::~SwRenderer()
 
 bool SwRenderer::clear()
 {
-    if (surface) return rasterClear(surface, 0, 0, surface->w, surface->h);
+    if (surface) {
+        fulldraw = true;
+        return rasterClear(surface, 0, 0, surface->w, surface->h);
+    }
     return false;
 }
 
@@ -302,6 +315,10 @@ bool SwRenderer::target(pixel_t* data, uint32_t stride, uint32_t w, uint32_t h, 
     surface->channelSize = CHANNEL_SIZE(cs);
     surface->premultiplied = true;
 
+    dirtyRegion.init(w, h);
+
+    fulldraw = true;  //reset the screen
+
     return rasterCompositor(surface);
 }
 
@@ -320,7 +337,21 @@ bool SwRenderer::postUpdate()
 
 bool SwRenderer::preRender()
 {
-    return surface != nullptr;
+    if (!surface) return false;
+    if (fulldraw || dirtyRegion.deactivated()) return true;
+
+    ARRAY_FOREACH(p, tasks) (*p)->done();
+
+    dirtyRegion.commit();
+
+    //clear buffer for partial regions
+    for (int idx = 0; idx < RenderDirtyRegion::PARTITIONING; ++idx) {
+        ARRAY_FOREACH(p, dirtyRegion.get(idx)) {
+            rasterClear(surface, p->x(), p->y(), p->w(), p->h());
+        }
+    }
+
+    return true;
 }
 
 
@@ -343,20 +374,22 @@ bool SwRenderer::postRender()
         rasterUnpremultiply(surface);
     }
 
+    dirtyRegion.clear();
+    fulldraw = false;
+
     return true;
 }
 
 
 void SwRenderer::damage(const RenderRegion& region)
 {
-    //TODO
+    dirtyRegion.add(&region, nullptr);
 }
 
 
 bool SwRenderer::partial(bool disable)
 {
-    //TODO
-    return false;
+    return dirtyRegion.deactivate(disable);
 }
 
 
@@ -367,32 +400,50 @@ bool SwRenderer::renderImage(RenderData data)
 
     if (task->opacity == 0) return true;
 
-    //Outside of the viewport, skip the rendering
-    auto& bbox = task->bbox;
-    if (bbox.invalid() || bbox.x() >= surface->w || bbox.y() >= surface->h) return true;
+    auto raster = [&](SwSurface* surface, const SwImage& image, const Matrix& transform, const RenderRegion& bbox, uint8_t opacity) {
+        if (bbox.invalid() || bbox.x() >= surface->w || bbox.y() >= surface->h) return true;
 
-    auto& image = task->image;
-
-    //RLE Image
-    if (image.rle) {
-        if (image.direct) return rasterDirectRleImage(surface, image, bbox, task->opacity);
-        else if (image.scaled) return rasterScaledRleImage(surface, image, task->transform, bbox, task->opacity);
-        else {
-            //create a intermediate buffer for rle clipping
-            auto cmp = request(sizeof(pixel_t), false);
-            cmp->compositor->method = MaskMethod::None;
-            cmp->compositor->valid = true;
-            cmp->compositor->image.rle = image.rle;
-            rasterClear(cmp, bbox.x(), bbox.y(), bbox.w(), bbox.h(), 0);
-            rasterTexmapPolygon(cmp, image, task->transform, bbox, 255);
-            return rasterDirectRleImage(surface, cmp->compositor->image, bbox, task->opacity);
+        //RLE Image
+        if (image.rle) {
+            if (image.direct) return rasterDirectRleImage(surface, image, bbox, opacity);
+            else if (image.scaled) return rasterScaledRleImage(surface, image, transform, bbox, opacity);
+            else {
+                //create a intermediate buffer for rle clipping
+                auto cmp = request(sizeof(pixel_t), false);
+                cmp->compositor->method = MaskMethod::None;
+                cmp->compositor->valid = true;
+                cmp->compositor->image.rle = image.rle;
+                rasterClear(cmp, bbox.x(), bbox.y(), bbox.w(), bbox.h(), 0);
+                rasterTexmapPolygon(cmp, image, transform, bbox, 255);
+                return rasterDirectRleImage(surface, cmp->compositor->image, bbox, opacity);
+            }
+        //Whole Image
+        } else {
+            if (image.direct) return rasterDirectImage(surface, image, bbox, opacity);
+            else if (image.scaled) return rasterScaledImage(surface, image, transform, bbox, opacity);
+            else return rasterTexmapPolygon(surface, image, transform, bbox, opacity);
         }
-    //Whole Image
+    };
+
+    //full scene or partial rendering
+    if (fulldraw || task->nodirty || task->pushed || dirtyRegion.deactivated()) {
+        raster(surface, task->image, task->transform, task->curBox, task->opacity);
     } else {
-        if (image.direct) return rasterDirectImage(surface, image, bbox, task->opacity);
-        else if (image.scaled) return rasterScaledImage(surface, image, task->transform, bbox, task->opacity);
-        else return rasterTexmapPolygon(surface, image, task->transform, bbox, task->opacity);
+        for (int idx = 0; idx < RenderDirtyRegion::PARTITIONING; ++idx) {
+            if (!dirtyRegion.partition(idx).intersected(task->curBox)) continue;
+            ARRAY_FOREACH(p, dirtyRegion.get(idx)) {
+                if (task->curBox.min.x >= p->max.x) break;  //dirtyRegion is sorted in x order
+                if (task->curBox.intersected(*p)) {
+                    auto bbox = RenderRegion::intersect(task->curBox, *p);
+                    raster(surface, task->image, task->transform, bbox, task->opacity);
+                }
+            }
+        }
     }
+
+    task->prvBox = task->curBox;
+
+    return true;
 }
 
 
@@ -428,13 +479,32 @@ bool SwRenderer::renderShape(RenderData data)
         }
     };
 
-    if (task->rshape->strokeFirst()) {
-        stroke(task, surface, task->bbox);
-        fill(task, surface, task->shape.bbox);
+    //full scene or partial rendering
+    if (fulldraw || task->nodirty || task->pushed || dirtyRegion.deactivated()) {
+        if (task->rshape->strokeFirst()) {
+            stroke(task, surface, task->curBox);
+            fill(task, surface, task->shape.bbox);
+        } else {
+            fill(task, surface, task->shape.bbox);
+            stroke(task, surface, task->curBox);
+        }
     } else {
-        fill(task, surface, task->shape.bbox);
-        stroke(task, surface, task->bbox);
+        for (int idx = 0; idx < RenderDirtyRegion::PARTITIONING; ++idx) {
+            if (!dirtyRegion.partition(idx).intersected(task->curBox)) continue;
+            ARRAY_FOREACH(p, dirtyRegion.get(idx)) {
+                if (task->curBox.min.x >= p->max.x) break;   //dirtyRegion is sorted in x order
+                if (task->rshape->strokeFirst()) {
+                    if (task->rshape->stroke && task->curBox.intersected(*p)) stroke(task, surface, RenderRegion::intersect(task->curBox, *p));
+                    if (task->shape.bbox.intersected(*p)) fill(task, surface, RenderRegion::intersect(task->shape.bbox, *p));
+                } else {
+                    if (task->shape.bbox.intersected(*p)) fill(task, surface, RenderRegion::intersect(task->shape.bbox, *p));
+                    if (task->rshape->stroke && task->curBox.intersected(*p)) stroke(task, surface, RenderRegion::intersect(task->curBox, *p));
+                }
+            }
+        }
     }
+
+    task->prvBox = task->curBox;
 
     return true;
 }
@@ -708,10 +778,12 @@ void* SwRenderer::prepareCommon(SwTask* task, const Matrix& transform, const Arr
 
     task->surface = surface;
     task->mpool = mpool;
-    task->bbox = RenderRegion::intersect(vport, {{0, 0}, {int32_t(surface->w), int32_t(surface->h)}});
+    task->curBox = RenderRegion::intersect(vport, {{0, 0}, {int32_t(surface->w), int32_t(surface->h)}});
     task->transform = transform;
     task->clips = clips;
+    task->dirtyRegion = &dirtyRegion;
     task->opacity = opacity;
+    task->nodirty = dirtyRegion.deactivated();
     task->flags = flags;
 
     if (!task->pushed) {
