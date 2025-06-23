@@ -4,6 +4,11 @@ option('engines',
    value: ['sw'],
    description: 'Enable Rasterizer Engine in thorvg')
 
+option('partial',
+   type: 'boolean',
+   value: true,
+   description: 'Enable Partial Rendering in thorvg')
+
 option('loaders',
    type: 'array',
    choices: ['', 'svg', 'png', 'jpg', 'lottie', 'ttf', 'webp', 'all'],
@@ -65,6 +70,6 @@ option('file',
 
 option('extra',
    type: 'array',
-   choices: ['', 'partial_render', 'opengl_es', 'lottie_expressions'],
-   value: ['partial_render', 'lottie_expressions'],
-   description: '"Enable support for extra options')
+   choices: ['', 'opengl_es', 'lottie_expressions'],
+   value: ['lottie_expressions'],
+   description: 'Enable support for extra options')
