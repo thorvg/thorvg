@@ -58,13 +58,8 @@ option('static',
    value: false,
    description: 'Force to use static linking modules in thorvg')
 
-option('file',
-   type: 'boolean',
-   value: true,
-   description: 'Enable File IO calls in thorvg')
-
 option('extra',
    type: 'array',
-   choices: ['', 'partial_render', 'opengl_es', 'lottie_expressions'],
-   value: ['partial_render', 'lottie_expressions'],
-   description: '"Enable support for extra options')
+   choices: ['', 'file_io', 'partial_render', 'opengl_es', 'lottie_expressions'],
+   value: ['file_io', 'partial_render', 'lottie_expressions'],
+   description: 'Enable support for extra options')

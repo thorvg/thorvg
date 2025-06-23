@@ -119,13 +119,13 @@ if logging
     config_h.set10('THORVG_LOG_ENABLED', true)
 endif
 
-#File IO
-if get_option('file') == true
+#Extra
+file_io = get_option('extra').contains('file_io')
+
+if file_io
     config_h.set10('THORVG_FILE_IO_SUPPORT', true)
 endif
 
-
-#Extra
 partial_render = get_option('extra').contains('partial_render')
 
 if partial_render
@@ -236,6 +236,7 @@ summary(
 
 summary(
   {
+    'File I/O': file_io,
     'Partial Rendering': partial_render,
     'Lottie Expressions': lottie_expressions,
     'OpenGL Variant': gl_variant,
