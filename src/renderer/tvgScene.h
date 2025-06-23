@@ -147,7 +147,7 @@ struct SceneImpl : Scene
 
         if (fixed) {
             auto pt = fsize * transform;
-            vport.intersect({int32_t(round(transform.e13)), int32_t(round(transform.e23))}, {int32_t(round(pt.x)), int32_t(round(pt.y))});
+            vport.intersect({{int32_t(round(transform.e13)), int32_t(round(transform.e23))}, {int32_t(round(pt.x)), int32_t(round(pt.y))}});
         } else {
             vdirty = true;
         }
