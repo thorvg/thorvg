@@ -155,51 +155,69 @@ struct RenderRegion
     uint32_t h() const { return (uint32_t) sh(); }
 };
 
-struct RenderDirtyRegion
-{
-public:
-    static constexpr const int PARTITIONING = 16;   //must be N*N
 
-    void init(uint32_t w, uint32_t h);
-    void commit();
-    void add(const RenderRegion* prv, const RenderRegion* cur);  //collect the old and new dirty regions together
-    void clear();
-
-    bool deactivate(bool on)
+#ifdef THORVG_PARTIAL_RENDER_SUPPORT
+    struct RenderDirtyRegion
     {
-        std::swap(on, disabled);
-        return on;
-    }
+    public:
+        static constexpr const int PARTITIONING = 16;   //must be N*N
 
-    bool deactivated()
-    {
-        return disabled;
-    }
+        void init(uint32_t w, uint32_t h);
+        void commit();
+        void add(const RenderRegion* prv, const RenderRegion* cur);  //collect the old and new dirty regions together
+        void clear();
 
-    const RenderRegion& partition(int idx)
-    {
-        return partitions[idx].region;
-    }
+        bool deactivate(bool on)
+        {
+            std::swap(on, disabled);
+            return on;
+        }
 
-    const Array<RenderRegion>& get(int idx)
-    {
-        return partitions[idx].list[partitions[idx].current];
-    }
+        bool deactivated()
+        {
+            return disabled;
+        }
 
-private:
-    void subdivide(Array<RenderRegion>& targets, uint32_t idx, RenderRegion& lhs, RenderRegion& rhs);
+        const RenderRegion& partition(int idx)
+        {
+            return partitions[idx].region;
+        }
 
-    struct Partition
-    {
-        RenderRegion region;
-        Array<RenderRegion> list[2];  //double buffer swapping
-        uint8_t current = 0;  //double buffer swapping list index. 0 or 1
+        const Array<RenderRegion>& get(int idx)
+        {
+            return partitions[idx].list[partitions[idx].current];
+        }
+
+    private:
+        void subdivide(Array<RenderRegion>& targets, uint32_t idx, RenderRegion& lhs, RenderRegion& rhs);
+
+        struct Partition
+        {
+            RenderRegion region;
+            Array<RenderRegion> list[2];  //double buffer swapping
+            uint8_t current = 0;  //double buffer swapping list index. 0 or 1
+        };
+
+        Key key;
+        Partition partitions[PARTITIONING];
+        bool disabled = false;
     };
+#else
+    struct RenderDirtyRegion
+    {
+        static constexpr const int PARTITIONING = 16;   //must be N*N
 
-    Key key;
-    Partition partitions[PARTITIONING];
-    bool disabled = false;
-};
+        void init(uint32_t w, uint32_t h) {}
+        void commit() {}
+        void add(TVG_UNUSED const RenderRegion* prv, TVG_UNUSED const RenderRegion* cur) {}
+        void clear() {}
+        bool deactivate(TVG_UNUSED bool on) { return true; }
+        bool deactivated() { return true; }
+        const RenderRegion& partition(TVG_UNUSED int idx) { static RenderRegion tmp{}; return tmp; }
+        const Array<RenderRegion>& get(TVG_UNUSED int idx) { static Array<RenderRegion> tmp; return tmp; }
+    };
+#endif
+
 
 struct RenderPath
 {

@@ -126,6 +126,12 @@ endif
 
 
 #Extra
+partial_render = get_option('extra').contains('partial_render')
+
+if partial_render
+    config_h.set10('THORVG_PARTIAL_RENDER_SUPPORT', true)
+endif
+
 lottie_expressions = lottie_loader and get_option('extra').contains('lottie_expressions')
 
 if lottie_expressions
@@ -230,6 +236,7 @@ summary(
 
 summary(
   {
+    'Partial Rendering': partial_render,
     'Lottie Expressions': lottie_expressions,
     'OpenGL Variant': gl_variant,
   },
