@@ -39,6 +39,11 @@ if all_engines or get_option('engines').contains('wg')
     config_h.set10('THORVG_WG_RASTER_SUPPORT', true)
 endif
 
+#Partial Rendering
+if get_option('partial')
+  config_h.set10('THORVG_PARTIAL_RENDER_SUPPORT', true)
+endif
+
 #Tools
 all_tools = get_option('tools').contains('all')
 lottie2gif = all_tools or get_option('tools').contains('lottie2gif')
@@ -126,12 +131,6 @@ endif
 
 
 #Extra
-partial_render = get_option('extra').contains('partial_render')
-
-if partial_render
-    config_h.set10('THORVG_PARTIAL_RENDER_SUPPORT', true)
-endif
-
 lottie_expressions = lottie_loader and get_option('extra').contains('lottie_expressions')
 
 if lottie_expressions
@@ -176,7 +175,9 @@ summary(
   {
     'Build Type': get_option('buildtype'),
     'Prefix': get_option('prefix'),
+    'File I/O': get_option('file'),
     'Multi-Tasking': get_option('threads'),
+    'Partial Rendering': get_option('partial'),
     'SIMD Instruction': simd_type,
     'Log Message': get_option('log'),
     'Tests': get_option('tests'),
@@ -236,7 +237,6 @@ summary(
 
 summary(
   {
-    'Partial Rendering': partial_render,
     'Lottie Expressions': lottie_expressions,
     'OpenGL Variant': gl_variant,
   },
