@@ -20,7 +20,6 @@
  * SOFTWARE.
  */
 
-#include <algorithm>
 #include "tvgMath.h"
 #include "tvgRender.h"
 
@@ -131,6 +130,9 @@ void RenderRegion::intersect(const RenderRegion& rhs)
     if (max.y < min.y) max.y = min.y;
 }
 
+#ifdef THORVG_PARTIAL_RENDER_SUPPORT
+
+#include <algorithm>
 
 void RenderDirtyRegion::init(uint32_t w, uint32_t h)
 {
@@ -310,6 +312,8 @@ void RenderDirtyRegion::commit()
         }
     }
 }
+
+#endif
 
 /************************************************************************/
 /* RenderTrimPath Class Implementation                                  */
