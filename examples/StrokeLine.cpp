@@ -32,7 +32,7 @@ struct UserExample : tvgexam::Example
     {
         if (!canvas) return false;
 
-        //Test for StrokeJoin & StrokeCap
+        //StrokeJoin & StrokeCap
         auto shape1 = tvg::Shape::gen();
         shape1->moveTo( 20, 50);
         shape1->lineTo(250, 50);
@@ -69,7 +69,7 @@ struct UserExample : tvgexam::Example
         shape3->strokeCap(tvg::StrokeCap::Butt);
         canvas->push(shape3);
 
-        //Test for Stroke Dash
+        //Stroke Dash
         auto shape4 = tvg::Shape::gen();
         shape4->moveTo( 20, 230);
         shape4->lineTo(250, 230);
@@ -115,7 +115,7 @@ struct UserExample : tvgexam::Example
         shape6->strokeDash(dashPattern3, 6);
         canvas->push(shape6);
 
-        //For a comparison with shapes 10-12
+        //Closed Shape Stroke
         auto shape7 = tvg::Shape::gen();
         shape7->moveTo(70, 440);
         shape7->lineTo(230, 440);
@@ -149,7 +149,7 @@ struct UserExample : tvgexam::Example
         shape9->strokeCap(tvg::StrokeCap::Butt);
         canvas->push(shape9);
 
-        //Test for Stroke Dash for Circle and Rect
+        //Stroke Dash for Circle and Rect
         auto shape10 = tvg::Shape::gen();
         shape10->appendCircle(70, 700, 20, 60);
         shape10->appendRect(130, 650, 100, 80);
@@ -180,6 +180,39 @@ struct UserExample : tvgexam::Example
         shape12->strokeDash(dashPattern3, 6);
         canvas->push(shape12);
 
+        //Zero length Dashes
+        float dashPattern[] = {0, 20};
+
+        auto shape13 = tvg::Shape::gen();
+        shape13->appendCircle(70, 850, 20, 60);
+        shape13->appendRect(130, 800, 100, 80);
+        shape13->strokeFill(255, 0, 0);
+        shape13->strokeWidth(5);
+        shape13->strokeDash(dashPattern, 2);
+        shape13->strokeJoin(tvg::StrokeJoin::Round);
+        shape13->strokeCap(tvg::StrokeCap::Round);
+        canvas->push(shape13);
+
+        auto shape14 = tvg::Shape::gen();
+        shape14->appendCircle(320, 850, 20, 60);
+        shape14->appendRect(380, 800, 100, 80);
+        shape14->strokeFill(255, 255, 0);
+        shape14->strokeWidth(5);
+        shape14->strokeDash(dashPattern, 2);
+        shape14->strokeJoin(tvg::StrokeJoin::Bevel);
+        shape14->strokeCap(tvg::StrokeCap::Square);
+        canvas->push(shape14);
+
+        auto shape15 = tvg::Shape::gen();
+        shape15->appendCircle(570, 850, 20, 60);
+        shape15->appendRect(630, 800, 100, 80);
+        shape15->strokeFill(0, 255, 0);
+        shape15->strokeWidth(5);
+        shape15->strokeDash(dashPattern, 2);
+        shape15->strokeJoin(tvg::StrokeJoin::Miter);
+        shape15->strokeCap(tvg::StrokeCap::Butt);  //butt has no cap expansions, so no visible
+        canvas->push(shape15);
+
         return true;
     }
 };
@@ -191,5 +224,5 @@ struct UserExample : tvgexam::Example
 
 int main(int argc, char **argv)
 {
-    return tvgexam::main(new UserExample, argc, argv);
+    return tvgexam::main(new UserExample, argc, argv, false, 800, 960);
 }
