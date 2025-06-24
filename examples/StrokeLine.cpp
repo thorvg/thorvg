@@ -180,6 +180,40 @@ struct UserExample : tvgexam::Example
         shape12->strokeDash(dashPattern3, 6);
         canvas->push(shape12);
 
+        //Test for epsilon/zero length dashes
+        float dashPatternEps[3][2] = {{30, FLT_EPSILON}, {FLT_EPSILON, 30}, {FLT_EPSILON, FLT_EPSILON}};
+        float dashPatternZero[3][2] = {{30, 0}, {0, 30}, {0, 0}};
+        const struct {
+            const float (*dashPattern)[2];
+            float dy;
+        } dashSets[] = {{dashPatternEps, 0.0f}, {dashPatternZero, 110.0f}};
+
+        float color[3][3] = {{255, 0, 0}, {255, 255, 0}, {0, 255, 0}};
+        tvg::StrokeCap caps[3] = {tvg::StrokeCap::Round, tvg::StrokeCap::Square, tvg::StrokeCap::Butt};
+
+        for (auto& dash: dashSets) {
+            auto dy = dash.dy;
+            for (int p = 0; p < 3; ++p) {
+                auto& pattern = dash.dashPattern[p];
+                auto dx = 0.0f;
+                auto i = 0;
+                for (auto& cap: caps) {
+                    auto shape13 = tvg::Shape::gen();
+                    shape13->moveTo(40 + dx, 800 + dy);
+                    shape13->lineTo(260 + dx, 900 + dy);
+                    shape13->strokeFill(color[i][0], color[i][1], color[i][2]);
+                    shape13->strokeWidth(15);
+                    shape13->strokeCap(cap);
+                    shape13->strokeDash(pattern, 2);
+                    canvas->push(shape13);
+
+                    dx += 260;
+                    ++i;
+                }
+                dy += 25;
+            }
+        }
+
         return true;
     }
 };
@@ -191,5 +225,5 @@ struct UserExample : tvgexam::Example
 
 int main(int argc, char **argv)
 {
-    return tvgexam::main(new UserExample, argc, argv);
+    return tvgexam::main(new UserExample, argc, argv, false, 800, 1080);
 }
