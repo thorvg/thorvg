@@ -27,5 +27,4 @@ if [ ! -d "./build_wasm" ]; then
 fi
 
 ninja -C build_wasm/
-wasm-opt build_wasm/src/bindings/wasm/thorvg-wasm.wasm -Oz --converge -all -o build_wasm/src/bindings/wasm/thorvg-wasm.wasm
 ls -lrt build_wasm/src/bindings/wasm/*.{js,wasm}
