@@ -1364,7 +1364,7 @@ void LottieBuilder::updateLayer(LottieComposition* comp, Scene* scene, LottieLay
     layer->scene = nullptr;
 
     //visibility
-    if (frameNo < layer->inFrame || frameNo >= layer->outFrame) return;
+    if (frameNo < layer->inFrame || frameNo > layer->outFrame) return;
 
     updateTransform(layer, frameNo);
 
