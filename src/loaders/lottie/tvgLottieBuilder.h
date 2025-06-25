@@ -58,6 +58,7 @@ struct RenderContext
     Matrix* transform = nullptr;
     LottieRoundnessModifier* roundness = nullptr;
     LottieOffsetModifier* offset = nullptr;
+    LottiePuckerBloatModifier* puckerBloat = nullptr;
     LottieModifier* modifier = nullptr;
     RenderFragment fragment = ByNone;  //render context has been fragmented
     bool reqFragment = false;  //requirement to fragment the render context
@@ -75,6 +76,7 @@ struct RenderContext
         delete(transform);
         delete(roundness);
         delete(offset);
+        delete(puckerBloat);
     }
 
     RenderContext(const RenderContext& rhs, Shape* propagator, bool mergeable = false) : propagator(propagator)
@@ -90,6 +92,10 @@ struct RenderContext
         if (rhs.offset) {
             offset = new LottieOffsetModifier(rhs.offset->offset, rhs.offset->miterLimit, rhs.offset->join);
             update(offset);
+        }
+        if (rhs.puckerBloat) {
+            puckerBloat = new LottiePuckerBloatModifier(rhs.puckerBloat->buffer, rhs.puckerBloat->amount);
+            update(puckerBloat);
         }
         if (rhs.transform) {
             transform = new Matrix;
@@ -173,6 +179,7 @@ private:
     void updateRepeater(LottieGroup* parent, LottieObject** child, float frameNo, Inlist<RenderContext>& contexts, RenderContext* ctx);
     void updateRoundedCorner(LottieGroup* parent, LottieObject** child, float frameNo, Inlist<RenderContext>& contexts, RenderContext* ctx);
     void updateOffsetPath(LottieGroup* parent, LottieObject** child, float frameNo, Inlist<RenderContext>& contexts, RenderContext* ctx);
+    void updatePuckerBloat(LottieGroup* parent, LottieObject** child, float frameNo, Inlist<RenderContext>& contexts, RenderContext* ctx);
 
     RenderPath buffer;   //resusable path
     LottieExpressions* exps;
