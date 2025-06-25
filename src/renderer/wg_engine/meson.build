@@ -10,6 +10,7 @@ source_file = [
     'tvgWgRenderTask.h',
     'tvgWgShaderSrc.h',
     'tvgWgShaderTypes.h',
+    'tvgWgTessellator.h',
     'tvgWgBindGroups.cpp',
     'tvgWgCommon.cpp',
     'tvgWgCompositor.cpp',
@@ -20,7 +21,8 @@ source_file = [
     'tvgWgRenderTarget.cpp',
     'tvgWgRenderTask.cpp',
     'tvgWgShaderSrc.cpp',
-    'tvgWgShaderTypes.cpp'
+    'tvgWgShaderTypes.cpp',
+    'tvgWgTessellator.cpp',
 ]
 
 wgpu_dep = []

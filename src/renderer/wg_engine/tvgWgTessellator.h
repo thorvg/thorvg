@@ -1,0 +1,121 @@
+/*
+ * Copyright (c) 2023 - 2025 the ThorVG project. All rights reserved.
+
+ * Permission is hereby granted, free of charge, to any person obtaining a copy
+ * of this software and associated documentation files (the "Software"), to deal
+ * in the Software without restriction, including without limitation the rights
+ * to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+ * copies of the Software, and to permit persons to whom the Software is
+ * furnished to do so, subject to the following conditions:
+
+ * The above copyright notice and this permission notice shall be included in all
+ * copies or substantial portions of the Software.
+
+ * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+ * IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+ * FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+ * AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+ * LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+ * OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
+ * SOFTWARE.
+ */
+
+#ifndef _TVG_GL_TESSELLATOR_H_
+#define _TVG_GL_TESSELLATOR_H_
+
+#include "tvgRender.h"
+#include "tvgWgGeometry.h"
+
+#define MIN_WG_STROKE_WIDTH 1.0f
+
+class WgStroker
+{
+    struct State
+    {
+        Point firstPt;
+        Point firstPtDir;
+        Point prevPt;
+        Point prevPtDir;
+    };
+public:
+    WgStroker(WgMeshData* buffer, const Matrix& matrix);
+    void stroke(const RenderShape *rshape, const RenderPath& path);
+    RenderRegion bounds() const;
+
+private:
+    void doStroke(const RenderPath& path);
+    void doDashStroke(const RenderPath& path, const float* patterns, uint32_t patternCnt, float offset, float length);
+
+    float strokeRadius() const
+    {
+        return mStrokeWidth * 0.5f;
+    }
+
+    void strokeCap();
+    void strokeLineTo(const Point& curr);
+    void strokeCubicTo(const Point& cnt1, const Point& cnt2, const Point& end);
+    void strokeClose();
+    void strokeJoin(const Point& dir);
+    void strokeRound(const Point& prev, const Point& curr, const Point& center);
+    void strokeMiter(const Point& prev, const Point& curr, const Point& center);
+    void strokeBevel(const Point& prev, const Point& curr, const Point& center);
+    void strokeSquare(const Point& p, const Point& outDir);
+    void strokeSquarePoint(const Point& p);
+    void strokeRound(const Point& p, const Point& outDir);
+    void strokeRoundPoint(const Point& p);
+
+    WgMeshData* mBuffer;
+    Matrix mMatrix;
+    float mStrokeWidth = MIN_WG_STROKE_WIDTH;
+    float mMiterLimit = 4.f;
+    StrokeCap mStrokeCap = StrokeCap::Square;
+    StrokeJoin mStrokeJoin = StrokeJoin::Bevel;
+    State mStrokeState = {};
+    Point mLeftTop = {0.0f, 0.0f};
+    Point mRightBottom = {0.0f, 0.0f};
+};
+
+class WgDashStroke
+{
+public:
+    WgDashStroke(Array<PathCommand>* cmds, Array<Point>* pts, const float* patterns, uint32_t patternCnt, float offset, float length);
+    void doStroke(const RenderPath& path, bool drawPoint);
+
+private:
+    void drawPoint(const Point& p);
+    void dashLineTo(const Point& pt, bool drawPoint);
+    void dashCubicTo(const Point& pt1, const Point& pt2, const Point& pt3, bool drawPoint);
+    void moveTo(const Point& pt);
+    void lineTo(const Point& pt);
+    void cubicTo(const Point& pt1, const Point& pt2, const Point& pt3);
+
+    Array<PathCommand>* mCmds;
+    Array<Point>* mPts;
+    const float* mDashPattern;
+    uint32_t mDashCount;
+    float mDashOffset;
+    float mDashLength;
+    float mCurrLen = 0.0f;
+    int32_t mCurrIdx = 0;
+    bool mCurOpGap = false;
+    bool mMove = true;
+    Point mPtStart = {};
+    Point mPtCur = {};
+};
+
+class WgBWTessellator
+{
+public:
+    WgBWTessellator(WgMeshData* buffer);
+    void tessellate(const RenderPath& path, const Matrix& matrix);
+    RenderRegion bounds() const;
+
+private:
+    uint32_t pushVertex(float x, float y);
+    void pushTriangle(uint32_t a, uint32_t b, uint32_t c);
+
+    WgMeshData* mBuffer;
+    BBox bbox = {};
+};
+
+#endif /* _TVG_GL_TESSELLATOR_H_ */

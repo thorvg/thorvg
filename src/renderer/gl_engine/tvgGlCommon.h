@@ -79,13 +79,6 @@
         mat4[15] = mat3.e33;     \
     } while (false)
 
-
-
-static inline float getScaleFactor(const Matrix& m)
-{
-    return sqrtf(m.e11 * m.e11 + m.e21 * m.e21);
-}
-
 enum class GlStencilMode {
     None,
     FillNonZero,

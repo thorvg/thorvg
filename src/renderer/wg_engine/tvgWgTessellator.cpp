@@ -20,25 +20,15 @@
  * SOFTWARE.
  */
 
-#include "tvgGlTessellator.h"
+#include "tvgWgTessellator.h"
+#include "tvgMath.h"
 
-namespace tvg
-{
-
-static uint32_t _pushVertex(Array<float>& array, float x, float y)
-{
-    array.push(x);
-    array.push(y);
-    return (array.count - 2) / 2;
-}
-
-
-Stroker::Stroker(GlGeometryBuffer* buffer, const Matrix& matrix) : mBuffer(buffer), mMatrix(matrix)
+WgStroker::WgStroker(WgMeshData* buffer, const Matrix& matrix) : mBuffer(buffer), mMatrix(matrix)
 {
 }
 
 
-void Stroker::stroke(const RenderShape *rshape, const RenderPath& path)
+void WgStroker::stroke(const RenderShape *rshape, const RenderPath& path)
 {
     mMiterLimit = rshape->strokeMiterlimit();
     mStrokeCap = rshape->strokeCap();
@@ -47,7 +37,7 @@ void Stroker::stroke(const RenderShape *rshape, const RenderPath& path)
 
     if (isinf(mMatrix.e11)) {
         auto strokeWidth = rshape->strokeWidth() * scaling(mMatrix);
-        if (strokeWidth <= MIN_GL_STROKE_WIDTH) strokeWidth = MIN_GL_STROKE_WIDTH;
+        if (strokeWidth <= MIN_WG_STROKE_WIDTH) strokeWidth = MIN_WG_STROKE_WIDTH;
         mStrokeWidth = strokeWidth / mMatrix.e11;
     }
 
@@ -57,16 +47,16 @@ void Stroker::stroke(const RenderShape *rshape, const RenderPath& path)
 }
 
 
-RenderRegion Stroker::bounds() const
+RenderRegion WgStroker::bounds() const
 {
     return {{int32_t(floor(mLeftTop.x)), int32_t(floor(mLeftTop.y))}, {int32_t(ceil(mRightBottom.x)), int32_t(ceil(mRightBottom.y))}};
 }
 
 
-void Stroker::doStroke(const RenderPath& path)
+void WgStroker::doStroke(const RenderPath& path)
 {
-    mBuffer->vertex.reserve(path.pts.count * 4 + 16);
-    mBuffer->index.reserve(path.pts.count * 3);
+    mBuffer->vbuffer.reserve(path.pts.count * 4 + 16);
+    mBuffer->ibuffer.reserve(path.pts.count * 3);
 
     auto validStrokeCap = false;
     auto pts = path.pts.data;
@@ -108,20 +98,20 @@ void Stroker::doStroke(const RenderPath& path)
 }
 
 
-void Stroker::doDashStroke(const RenderPath& path, const float *patterns, uint32_t patternCnt, float offset, float length)
+void WgStroker::doDashStroke(const RenderPath& path, const float *patterns, uint32_t patternCnt, float offset, float length)
 {
     RenderPath dpath;
 
     dpath.cmds.reserve(20 * path.cmds.count);
     dpath.pts.reserve(20 * path.pts.count);
 
-    DashStroke dash(&dpath.cmds, &dpath.pts, patterns, patternCnt, offset, length);
+    WgDashStroke dash(&dpath.cmds, &dpath.pts, patterns, patternCnt, offset, length);
     dash.doStroke(path, mStrokeCap != StrokeCap::Butt);
     doStroke(dpath);
 }
 
 
-void Stroker::strokeCap()
+void WgStroker::strokeCap()
 {
     if (mStrokeCap == StrokeCap::Butt) return;
 
@@ -141,7 +131,7 @@ void Stroker::strokeCap()
 }
 
 
-void Stroker::strokeLineTo(const Point& curr)
+void WgStroker::strokeLineTo(const Point& curr)
 {
     auto dir = (curr - mStrokeState.prevPt);
     normalize(dir);
@@ -154,10 +144,10 @@ void Stroker::strokeLineTo(const Point& curr)
     auto c = curr + normal * strokeRadius();
     auto d = curr - normal * strokeRadius();
 
-    auto ia = _pushVertex(mBuffer->vertex, a.x, a.y);
-    auto ib = _pushVertex(mBuffer->vertex, b.x, b.y);
-    auto ic = _pushVertex(mBuffer->vertex, c.x, c.y);
-    auto id = _pushVertex(mBuffer->vertex, d.x, d.y);
+    auto ia = mBuffer->vbuffer.count; mBuffer->vbuffer.push(a);
+    auto ib = mBuffer->vbuffer.count; mBuffer->vbuffer.push(b);
+    auto ic = mBuffer->vbuffer.count; mBuffer->vbuffer.push(c);
+    auto id = mBuffer->vbuffer.count; mBuffer->vbuffer.push(d);
 
     /**
      *   a --------- c
@@ -166,13 +156,12 @@ void Stroker::strokeLineTo(const Point& curr)
      *   b-----------d
      */
 
-    this->mBuffer->index.push(ia);
-    this->mBuffer->index.push(ib);
-    this->mBuffer->index.push(ic);
-
-    this->mBuffer->index.push(ib);
-    this->mBuffer->index.push(id);
-    this->mBuffer->index.push(ic);
+    mBuffer->ibuffer.push(ia);
+    mBuffer->ibuffer.push(ib);
+    mBuffer->ibuffer.push(ic);
+    mBuffer->ibuffer.push(ib);
+    mBuffer->ibuffer.push(id);
+    mBuffer->ibuffer.push(ic);
 
     if (mStrokeState.prevPt == mStrokeState.firstPt) {
         // first point after moveTo
@@ -197,7 +186,7 @@ void Stroker::strokeLineTo(const Point& curr)
 }
 
 
-void Stroker::strokeCubicTo(const Point& cnt1, const Point& cnt2, const Point& end)
+void WgStroker::strokeCubicTo(const Point& cnt1, const Point& cnt2, const Point& end)
 {
     Bezier curve{};
     curve.start = {mStrokeState.prevPt.x, mStrokeState.prevPt.y};
@@ -220,7 +209,7 @@ void Stroker::strokeCubicTo(const Point& cnt1, const Point& cnt2, const Point& e
 }
 
 
-void Stroker::strokeClose()
+void WgStroker::strokeClose()
 {
     if (length(mStrokeState.prevPt - mStrokeState.firstPt) > 0.015625f) {
         this->strokeLineTo(mStrokeState.firstPt);
@@ -231,7 +220,7 @@ void Stroker::strokeClose()
 }
 
 
-void Stroker::strokeJoin(const Point& dir)
+void WgStroker::strokeJoin(const Point& dir)
 {
     auto orient = orientation(mStrokeState.prevPt - mStrokeState.prevPtDir, mStrokeState.prevPt, mStrokeState.prevPt + dir);
 
@@ -267,7 +256,7 @@ void Stroker::strokeJoin(const Point& dir)
 }
 
 
-void Stroker::strokeRound(const Point &prev, const Point& curr, const Point& center)
+void WgStroker::strokeRound(const Point &prev, const Point& curr, const Point& center)
 {
     if (orientation(prev, center, curr) == Orientation::Linear) return;
 
@@ -278,8 +267,8 @@ void Stroker::strokeRound(const Point &prev, const Point& curr, const Point& cen
 
     // Fixme: just use bezier curve to calculate step count
     auto count = tvg::bezierFromArc(prev, curr, strokeRadius()).curveCount();
-    auto c = _pushVertex(mBuffer->vertex, center.x, center.y);
-    auto pi = _pushVertex(mBuffer->vertex, prev.x, prev.y);
+    auto c = mBuffer->ibuffer.count;  mBuffer->vbuffer.push(center);
+    auto pi = mBuffer->ibuffer.count; mBuffer->vbuffer.push(prev);
     auto step = 1.f / (count - 1);
     auto dir = curr - prev;
 
@@ -290,11 +279,11 @@ void Stroker::strokeRound(const Point &prev, const Point& curr, const Point& cen
         normalize(o_dir);
 
         auto out = center + o_dir * strokeRadius();
-        auto oi = _pushVertex(mBuffer->vertex, out.x, out.y);
+        auto oi = mBuffer->ibuffer.count; mBuffer->vbuffer.push(out);
 
-        mBuffer->index.push(c);
-        mBuffer->index.push(pi);
-        mBuffer->index.push(oi);
+        mBuffer->ibuffer.push(c);
+        mBuffer->ibuffer.push(pi);
+        mBuffer->ibuffer.push(oi);
 
         pi = oi;
 
@@ -306,23 +295,23 @@ void Stroker::strokeRound(const Point &prev, const Point& curr, const Point& cen
 }
 
 
-void Stroker::strokeRoundPoint(const Point &p)
+void WgStroker::strokeRoundPoint(const Point &p)
 {
     // Fixme: just use bezier curve to calculate step count
     auto count = tvg::bezierFromArc(p, p, strokeRadius()).curveCount() * 2;
-    auto c = _pushVertex(mBuffer->vertex, p.x, p.y);
+    auto c = mBuffer->vbuffer.count; mBuffer->vbuffer.push(p);
     auto step = 2 * MATH_PI / (count - 1);
 
     for (uint32_t i = 1; i <= static_cast<uint32_t>(count); i++) {
         float angle = i * step;
         Point dir = {cos(angle), sin(angle)};
         Point out = p + dir * strokeRadius();
-        auto oi = _pushVertex(mBuffer->vertex, out.x, out.y);
+        auto oi = mBuffer->vbuffer.count; mBuffer->vbuffer.push(out);
 
         if (oi > 1) {
-            mBuffer->index.push(c);
-            mBuffer->index.push(oi);
-            mBuffer->index.push(oi - 1);
+            mBuffer->ibuffer.push(c);
+            mBuffer->ibuffer.push(oi);
+            mBuffer->ibuffer.push(oi - 1);
         }
     }
 
@@ -333,7 +322,7 @@ void Stroker::strokeRoundPoint(const Point &p)
 }
 
 
-void Stroker::strokeMiter(const Point& prev, const Point& curr, const Point& center)
+void WgStroker::strokeMiter(const Point& prev, const Point& curr, const Point& center)
 {
     auto pp1 = prev - center;
     auto pp2 = curr - center;
@@ -347,18 +336,18 @@ void Stroker::strokeMiter(const Point& prev, const Point& curr, const Point& cen
     }
 
     auto join = center + pe;
-    auto c = _pushVertex(mBuffer->vertex, center.x, center.y);
-    auto cp1 = _pushVertex(mBuffer->vertex, prev.x, prev.y);
-    auto cp2 = _pushVertex(mBuffer->vertex, curr.x, curr.y);
-    auto e = _pushVertex(mBuffer->vertex, join.x, join.y);
+    auto c   = mBuffer->vbuffer.count; mBuffer->vbuffer.push(center);
+    auto cp1 = mBuffer->vbuffer.count; mBuffer->vbuffer.push(prev);
+    auto cp2 = mBuffer->vbuffer.count; mBuffer->vbuffer.push(curr);
+    auto e   = mBuffer->vbuffer.count; mBuffer->vbuffer.push(join);
 
-    mBuffer->index.push(c);
-    mBuffer->index.push(cp1);
-    mBuffer->index.push(e);
+    mBuffer->ibuffer.push(c);
+    mBuffer->ibuffer.push(cp1);
+    mBuffer->ibuffer.push(e);
 
-    mBuffer->index.push(e);
-    mBuffer->index.push(cp2);
-    mBuffer->index.push(c);
+    mBuffer->ibuffer.push(e);
+    mBuffer->ibuffer.push(cp2);
+    mBuffer->ibuffer.push(c);
 
     mLeftTop.x = std::min(mLeftTop.x, join.x);
     mLeftTop.y = std::min(mLeftTop.y, join.y);
@@ -368,19 +357,19 @@ void Stroker::strokeMiter(const Point& prev, const Point& curr, const Point& cen
 }
 
 
-void Stroker::strokeBevel(const Point& prev, const Point& curr, const Point& center)
+void WgStroker::strokeBevel(const Point& prev, const Point& curr, const Point& center)
 {
-    auto a = _pushVertex(mBuffer->vertex, prev.x, prev.y);
-    auto b = _pushVertex(mBuffer->vertex, curr.x, curr.y);
-    auto c = _pushVertex(mBuffer->vertex, center.x, center.y);
+    auto a = mBuffer->vbuffer.count; mBuffer->vbuffer.push(prev);
+    auto b = mBuffer->vbuffer.count; mBuffer->vbuffer.push(curr);
+    auto c = mBuffer->vbuffer.count; mBuffer->vbuffer.push(center);
 
-    mBuffer->index.push(a);
-    mBuffer->index.push(b);
-    mBuffer->index.push(c);
+    mBuffer->ibuffer.push(a);
+    mBuffer->ibuffer.push(b);
+    mBuffer->ibuffer.push(c);
 }
 
 
-void Stroker::strokeSquare(const Point& p, const Point& outDir)
+void WgStroker::strokeSquare(const Point& p, const Point& outDir)
 {
     auto normal = Point{-outDir.y, outDir.x};
 
@@ -389,18 +378,18 @@ void Stroker::strokeSquare(const Point& p, const Point& outDir)
     auto c = a + outDir * strokeRadius();
     auto d = b + outDir * strokeRadius();
 
-    auto ai = _pushVertex(mBuffer->vertex, a.x, a.y);
-    auto bi = _pushVertex(mBuffer->vertex, b.x, b.y);
-    auto ci = _pushVertex(mBuffer->vertex, c.x, c.y);
-    auto di = _pushVertex(mBuffer->vertex, d.x, d.y);
+    auto ai = mBuffer->vbuffer.count; mBuffer->vbuffer.push(a);
+    auto bi = mBuffer->vbuffer.count; mBuffer->vbuffer.push(b);
+    auto ci = mBuffer->vbuffer.count; mBuffer->vbuffer.push(c);
+    auto di = mBuffer->vbuffer.count; mBuffer->vbuffer.push(d);
 
-    mBuffer->index.push(ai);
-    mBuffer->index.push(bi);
-    mBuffer->index.push(ci);
+    mBuffer->ibuffer.push(ai);
+    mBuffer->ibuffer.push(bi);
+    mBuffer->ibuffer.push(ci);
 
-    mBuffer->index.push(ci);
-    mBuffer->index.push(bi);
-    mBuffer->index.push(di);
+    mBuffer->ibuffer.push(ci);
+    mBuffer->ibuffer.push(bi);
+    mBuffer->ibuffer.push(di);
 
     mLeftTop.x = std::min(mLeftTop.x, std::min(std::min(a.x, b.x), std::min(c.x, d.x)));
     mLeftTop.y = std::min(mLeftTop.y, std::min(std::min(a.y, b.y), std::min(c.y, d.y)));
@@ -409,7 +398,7 @@ void Stroker::strokeSquare(const Point& p, const Point& outDir)
 }
 
 
-void Stroker::strokeSquarePoint(const Point& p)
+void WgStroker::strokeSquarePoint(const Point& p)
 {
     auto offsetX = Point{strokeRadius(), 0.0f};
     auto offsetY = Point{0.0f, strokeRadius()};
@@ -419,18 +408,18 @@ void Stroker::strokeSquarePoint(const Point& p)
     auto c = p - offsetX - offsetY;
     auto d = p + offsetX - offsetY;
 
-    auto ai = _pushVertex(mBuffer->vertex, a.x, a.y);
-    auto bi = _pushVertex(mBuffer->vertex, b.x, b.y);
-    auto ci = _pushVertex(mBuffer->vertex, c.x, c.y);
-    auto di = _pushVertex(mBuffer->vertex, d.x, d.y);
+    auto ai = mBuffer->vbuffer.count; mBuffer->vbuffer.push(a);
+    auto bi = mBuffer->vbuffer.count; mBuffer->vbuffer.push(b);
+    auto ci = mBuffer->vbuffer.count; mBuffer->vbuffer.push(c);
+    auto di = mBuffer->vbuffer.count; mBuffer->vbuffer.push(d);
 
-    mBuffer->index.push(ai);
-    mBuffer->index.push(bi);
-    mBuffer->index.push(ci);
+    mBuffer->ibuffer.push(ai);
+    mBuffer->ibuffer.push(bi);
+    mBuffer->ibuffer.push(ci);
 
-    mBuffer->index.push(ci);
-    mBuffer->index.push(di);
-    mBuffer->index.push(ai);
+    mBuffer->ibuffer.push(ci);
+    mBuffer->ibuffer.push(di);
+    mBuffer->ibuffer.push(ai);
 
     mLeftTop.x = std::min(mLeftTop.x, std::min(std::min(a.x, b.x), std::min(c.x, d.x)));
     mLeftTop.y = std::min(mLeftTop.y, std::min(std::min(a.y, b.y), std::min(c.y, d.y)));
@@ -439,7 +428,7 @@ void Stroker::strokeSquarePoint(const Point& p)
 }
 
 
-void Stroker::strokeRound(const Point& p, const Point& outDir)
+void WgStroker::strokeRound(const Point& p, const Point& outDir)
 {
     auto normal = Point{-outDir.y, outDir.x};
     auto a = p + normal * strokeRadius();
@@ -451,7 +440,7 @@ void Stroker::strokeRound(const Point& p, const Point& outDir)
 }
 
 
-DashStroke::DashStroke(Array<PathCommand> *cmds, Array<Point> *pts, const float *patterns, uint32_t patternCnt, float offset, float length)
+WgDashStroke::WgDashStroke(Array<PathCommand> *cmds, Array<Point> *pts, const float *patterns, uint32_t patternCnt, float offset, float length)
     : mCmds(cmds),
       mPts(pts),
       mDashPattern(patterns),
@@ -462,7 +451,7 @@ DashStroke::DashStroke(Array<PathCommand> *cmds, Array<Point> *pts, const float 
 }
 
 
-void DashStroke::doStroke(const RenderPath& path, bool validPoint)
+void WgDashStroke::doStroke(const RenderPath& path, bool validPoint)
 {
     //validPoint: zero length segment with non-butt cap still should be rendered as a point - only the caps are visible
     int32_t idx = 0;
@@ -515,7 +504,7 @@ void DashStroke::doStroke(const RenderPath& path, bool validPoint)
 }
 
 
-void DashStroke::drawPoint(const Point& p)
+void WgDashStroke::drawPoint(const Point& p)
 {
     if (mMove || mDashPattern[mCurrIdx] < FLOAT_EPSILON) {
         this->moveTo(p);
@@ -525,7 +514,7 @@ void DashStroke::drawPoint(const Point& p)
 }
 
 
-void DashStroke::dashLineTo(const Point& to, bool validPoint)
+void WgDashStroke::dashLineTo(const Point& to, bool validPoint)
 {
     auto len = length(mPtCur - to);
 
@@ -587,7 +576,7 @@ void DashStroke::dashLineTo(const Point& to, bool validPoint)
 }
 
 
-void DashStroke::dashCubicTo(const Point& cnt1, const Point& cnt2, const Point& end, bool validPoint)
+void WgDashStroke::dashCubicTo(const Point& cnt1, const Point& cnt2, const Point& end, bool validPoint)
 {
     Bezier cur;
     cur.start = {mPtCur.x, mPtCur.y};
@@ -653,21 +642,21 @@ void DashStroke::dashCubicTo(const Point& cnt1, const Point& cnt2, const Point& 
 }
 
 
-void DashStroke::moveTo(const Point& pt)
+void WgDashStroke::moveTo(const Point& pt)
 {
     mPts->push(Point{pt.x, pt.y});
     mCmds->push(PathCommand::MoveTo);
 }
 
 
-void DashStroke::lineTo(const Point& pt)
+void WgDashStroke::lineTo(const Point& pt)
 {
     mPts->push(Point{pt.x, pt.y});
     mCmds->push(PathCommand::LineTo);
 }
 
 
-void DashStroke::cubicTo(const Point& cnt1, const Point& cnt2, const Point& end)
+void WgDashStroke::cubicTo(const Point& cnt1, const Point& cnt2, const Point& end)
 {
     mPts->push({cnt1.x, cnt1.y});
     mPts->push({cnt2.x, cnt2.y});
@@ -676,12 +665,12 @@ void DashStroke::cubicTo(const Point& cnt1, const Point& cnt2, const Point& end)
 }
 
 
-BWTessellator::BWTessellator(GlGeometryBuffer* buffer): mBuffer(buffer)
+WgBWTessellator::WgBWTessellator(WgMeshData* buffer): mBuffer(buffer)
 {
 }
 
 
-void BWTessellator::tessellate(const RenderPath& path, const Matrix& matrix)
+void WgBWTessellator::tessellate(const RenderPath& path, const Matrix& matrix)
 {
     auto cmds = path.cmds.data;
     auto cmdCnt = path.cmds.count;
@@ -693,8 +682,8 @@ void BWTessellator::tessellate(const RenderPath& path, const Matrix& matrix)
     uint32_t firstIndex = 0;
     uint32_t prevIndex = 0;
 
-    mBuffer->vertex.reserve(ptsCnt * 2);
-    mBuffer->index.reserve((ptsCnt - 2) * 3);
+    mBuffer->vbuffer.reserve(ptsCnt * 2);
+    mBuffer->ibuffer.reserve((ptsCnt - 2) * 3);
 
     for (uint32_t i = 0; i < cmdCnt; i++) {
         switch(cmds[i]) {
@@ -750,26 +739,25 @@ void BWTessellator::tessellate(const RenderPath& path, const Matrix& matrix)
 }
 
 
-RenderRegion BWTessellator::bounds() const
+RenderRegion WgBWTessellator::bounds() const
 {
     return {{int32_t(floor(bbox.min.x)), int32_t(floor(bbox.min.y))}, {int32_t(ceil(bbox.max.x)), int32_t(ceil(bbox.max.y))}};
 }
 
 
-uint32_t BWTessellator::pushVertex(float x, float y)
+uint32_t WgBWTessellator::pushVertex(float x, float y)
 {
-    auto index = _pushVertex(mBuffer->vertex, x, y);
+    auto index = mBuffer->vbuffer.count;
+    mBuffer->vbuffer.push({x, y});
     if (index == 0) bbox.max = bbox.min = {x, y};
     else bbox = {{std::min(bbox.min.x, x), std::min(bbox.min.y, y)}, {std::max(bbox.max.x, x), std::max(bbox.max.y, y)}};
     return index;
 }
 
 
-void BWTessellator::pushTriangle(uint32_t a, uint32_t b, uint32_t c)
+void WgBWTessellator::pushTriangle(uint32_t a, uint32_t b, uint32_t c)
 {
-    mBuffer->index.push(a);
-    mBuffer->index.push(b);
-    mBuffer->index.push(c);
+    mBuffer->ibuffer.push(a);
+    mBuffer->ibuffer.push(b);
+    mBuffer->ibuffer.push(c);
 }
-
-}  // namespace tvg

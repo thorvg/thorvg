@@ -27,30 +27,6 @@
 #include "tvgWgGeometry.h"
 #include "tvgWgShaderTypes.h"
 
-struct WgMeshData {
-    Array<Point> vbuffer;
-    Array<Point> tbuffer;
-    Array<uint32_t> ibuffer;
-    size_t voffset{};
-    size_t toffset{};
-    size_t ioffset{};
-
-    void update(const WgVertexBuffer& vertexBuffer);
-    void update(const WgIndexedVertexBuffer& vertexBufferInd);
-    void bbox(const Point pmin, const Point pmax);
-    void imageBox(float w, float h);
-    void blitBox();
-};
-
-struct WgMeshDataGroup {
-    Array<WgMeshData*> meshes{};
-    
-    void append(const WgVertexBuffer& vertexBuffer);
-    void append(const WgIndexedVertexBuffer& vertexBufferInd);
-    void append(const Point pmin, const Point pmax);
-    void release();
-};
-
 struct WgImageData {
     WGPUTexture texture{};
     WGPUTextureView textureView{};
@@ -96,22 +72,19 @@ struct WgRenderDataShape: public WgRenderDataPaint
 {
     WgRenderSettings renderSettingsShape{};
     WgRenderSettings renderSettingsStroke{};
-    WgMeshDataGroup meshGroupShapes{};
-    WgMeshDataGroup meshGroupShapesBBox{};
-    WgMeshData meshDataBBox{};
-    WgMeshDataGroup meshGroupStrokes{};
-    WgMeshDataGroup meshGroupStrokesBBox{};
+    WgMeshData meshBBox{};
+    WgMeshData meshShape{};
+    WgMeshData meshShapeBBox{};
+    WgMeshData meshStrokes{};
+    WgMeshData meshStrokesBBox{};
     Point pMin{};
     Point pMax{};
     bool strokeFirst{};
     FillRule fillRule{};
 
-    void appendShape(const WgVertexBuffer& vertexBuffer);
-    void appendStroke(const WgIndexedVertexBuffer& vertexBufferInd);
     void updateBBox(Point pmin, Point pmax);
     void updateAABB(const Matrix& tr);
-    void updateMeshes(const RenderShape& rshape, const Matrix& tr, WgGeometryBufferPool* pool);
-    void proceedStrokes(const RenderStroke* rstroke, const WgVertexBuffer& buff, WgGeometryBufferPool* pool);
+    void updateMeshes(const RenderShape& rshape, const Matrix& tr);
     void releaseMeshes();
     void release(WgContext& context) override;
     Type type() override { return Type::Shape; };
@@ -207,13 +180,11 @@ class WgStageBufferGeometry {
 private:
     Array<uint8_t> vbuffer;
     Array<uint8_t> ibuffer;
-    uint32_t vmaxcount{};
 public:
     WGPUBuffer vbuffer_gpu{};
     WGPUBuffer ibuffer_gpu{};
 
     void append(WgMeshData* meshData);
-    void append(WgMeshDataGroup* meshDataGroup);
     void append(WgRenderDataShape* renderDataShape);
     void append(WgRenderDataPicture* renderDataPicture);
     void initialize(WgContext& context){};
