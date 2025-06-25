@@ -1108,7 +1108,7 @@ struct LottieComposition
 
     float frameCnt() const
     {
-        return root->outFrame - root->inFrame;
+        return root->outFrame - root->inFrame + 1;
     }
 
     LottieLayer* asset(unsigned long id)
@@ -1124,7 +1124,7 @@ struct LottieComposition
     {
         frameNo += root->inFrame;
         if (frameNo < root->inFrame) frameNo = root->inFrame;
-        if (frameNo >= root->outFrame) frameNo = root->outFrame - 1;
+        if (frameNo > root->outFrame) frameNo = root->outFrame;
     }
 
     LottieLayer* root = nullptr;
