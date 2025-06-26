@@ -1481,7 +1481,7 @@ bool GlRenderer::postUpdate()
 }
 
 
-void GlRenderer::damage(const RenderRegion& region)
+void GlRenderer::damage(TVG_UNUSED RenderData rd, TVG_UNUSED const RenderRegion& region)
 {
     //TODO
 }

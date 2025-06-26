@@ -58,7 +58,7 @@ public:
     void dispose(RenderEffect* effect) override;
 
     //partial rendering
-    void damage(const RenderRegion& region) override;
+    void damage(RenderData rd, const RenderRegion& region) override;
     bool partial(bool disable) override;
 
     static WgRenderer* gen(uint32_t threads);

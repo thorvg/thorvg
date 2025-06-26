@@ -164,7 +164,8 @@ struct RenderRegion
 
         void init(uint32_t w, uint32_t h);
         void commit();
-        void add(const RenderRegion* prv, const RenderRegion* cur);  //collect the old and new dirty regions together
+        bool add(const RenderRegion& bbox);
+        bool add(const RenderRegion& prv, const RenderRegion& cur);  //collect the old and new dirty regions together
         void clear();
 
         bool deactivate(bool on)
@@ -541,7 +542,7 @@ public:
     virtual void dispose(RenderEffect* effect) = 0;
 
     //partial rendering
-    virtual void damage(const RenderRegion& region) = 0;
+    virtual void damage(RenderData rd, const RenderRegion& region) = 0;
     virtual bool partial(bool disable) = 0;
 };
 

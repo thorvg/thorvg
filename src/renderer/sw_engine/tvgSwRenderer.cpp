@@ -162,7 +162,7 @@ struct SwShapeTask : SwTask
         }
 
         curBox = renderBox; //sync
-        if (!nodirty) dirtyRegion->add(&prvBox, &curBox);
+        if (!nodirty) dirtyRegion->add(prvBox, curBox);
         return;
 
     err:
@@ -170,7 +170,7 @@ struct SwShapeTask : SwTask
         shapeReset(&shape);
         rleReset(shape.strokeRle);
         shapeDelOutline(&shape, mpool, tid);
-        if (!nodirty) dirtyRegion->add(&prvBox, &curBox);
+        if (!nodirty) dirtyRegion->add(prvBox, curBox);
     }
 
     void dispose() override
@@ -221,7 +221,7 @@ struct SwImageTask : SwTask
                         auto clipper = static_cast<SwTask*>(*p);
                         if (!clipper->clip(image.rle)) goto err;
                     }
-                    if (!nodirty) dirtyRegion->add(&prvBox, &curBox);
+                    if (!nodirty) dirtyRegion->add(prvBox, curBox);
                     return;
                 }
             }
@@ -232,7 +232,7 @@ struct SwImageTask : SwTask
         rleReset(image.rle);
     end:
         imageDelOutline(&image, mpool, tid);
-        if (!nodirty) dirtyRegion->add(&prvBox, &curBox);
+        if (!nodirty) dirtyRegion->add(prvBox, curBox);
     }
 
     void dispose() override
@@ -381,9 +381,11 @@ bool SwRenderer::postRender()
 }
 
 
-void SwRenderer::damage(const RenderRegion& region)
+void SwRenderer::damage(RenderData rd, const RenderRegion& region)
 {
-    dirtyRegion.add(&region, nullptr);
+    SwTask* task = static_cast<SwTask*>(rd);
+    if (task && task->opacity == 0) return;
+    dirtyRegion.add(region);
 }
 
 
