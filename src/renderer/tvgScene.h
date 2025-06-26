@@ -280,12 +280,23 @@ struct SceneImpl : Scene
 
     Result clearPaints()
     {
+        if (paints.empty()) return Result::Success;
+
+        //Don't need to damage for children
+        auto recover = (fixed && impl.renderer) ? impl.renderer->partial(true) : false;
+        auto partialDmg = !(effects || fixed || recover);
+
         auto itr = paints.begin();
         while (itr != paints.end()) {
             auto paint = PAINT((*itr));
+            //when the paint is destroyed damage will be triggered
+            if (paint->refCnt > 1 && partialDmg) paint->damage();
             paint->unref();
             paints.erase(itr++);
         }
+
+        if (effects || fixed) impl.damage(vport);  //redraw scene full region
+        if (fixed && impl.renderer) impl.renderer->partial(recover);
 
         return Result::Success;
     }
@@ -293,6 +304,8 @@ struct SceneImpl : Scene
     Result remove(Paint* paint)
     {
         if (PAINT(paint)->parent != this) return Result::InsufficientCondition;
+        //when the paint is destroyed damage will be triggered
+        if (PAINT(paint)->refCnt > 1) PAINT(paint)->damage();
         PAINT(paint)->unref();
         paints.remove(paint);
         return Result::Success;

@@ -131,7 +131,12 @@ namespace tvg
 
         void damage(const RenderRegion& vport)
         {
-            if (renderer) renderer->damage(vport);
+            if (renderer) renderer->damage(rd, vport);
+        }
+
+        void damage()
+        {
+            if (renderer) renderer->damage(rd, bounds(renderer));
         }
 
         void mark(CompositionFlag flag)

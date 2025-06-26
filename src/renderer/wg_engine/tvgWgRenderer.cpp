@@ -581,7 +581,7 @@ bool WgRenderer::postUpdate()
 }
 
 
-void WgRenderer::damage(const RenderRegion& region)
+void WgRenderer::damage(TVG_UNUSED RenderData rd, TVG_UNUSED const RenderRegion& region)
 {
     //TODO
 }

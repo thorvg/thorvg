@@ -158,25 +158,39 @@ void RenderDirtyRegion::init(uint32_t w, uint32_t h)
 }
 
 
-void RenderDirtyRegion::add(const RenderRegion* prv, const RenderRegion* cur)
+bool RenderDirtyRegion::add(const RenderRegion& bbox)
 {
-    if (disabled) return;
-
-    auto pvalid = prv ? prv->valid() : false;
-    auto cvalid = cur ? cur->valid() : false;
-    if (!pvalid && !cvalid) return;
+    if (disabled) return false;
 
     for (int idx = 0; idx < PARTITIONING; ++idx) {
         auto& partition = partitions[idx];
-        if (pvalid && prv->intersected(partition.region)) {
+        if (bbox.max.y <= partition.region.min.y) break;
+        if (bbox.intersected(partition.region)) {
             ScopedLock lock(key);
-            partition.list[partition.current].push(RenderRegion::intersect(*prv, partition.region));
-        }
-        if (cvalid && cur->intersected(partition.region)) {
-            ScopedLock lock(key);
-            partition.list[partition.current].push(RenderRegion::intersect(*cur, partition.region));
+            partition.list[partition.current].push(RenderRegion::intersect(bbox, partition.region));
         }
     }
+    return true;
+}
+
+
+bool RenderDirtyRegion::add(const RenderRegion& prv, const RenderRegion& cur)
+{
+    if (disabled) return false;
+    if (prv == cur) return add(prv);
+
+    for (int idx = 0; idx < PARTITIONING; ++idx) {
+        auto& partition = partitions[idx];
+        if (prv.intersected(partition.region)) {
+            ScopedLock lock(key);
+            partition.list[partition.current].push(RenderRegion::intersect(prv, partition.region));
+        }
+        if (cur.intersected(partition.region)) {
+            ScopedLock lock(key);
+            partition.list[partition.current].push(RenderRegion::intersect(cur, partition.region));
+        }
+    }
+    return true;
 }
 
 
@@ -222,6 +236,12 @@ void RenderDirtyRegion::subdivide(Array<RenderRegion>& targets, uint32_t idx, Re
     subtract(temp[0], lhs);
     subtract(temp[0], rhs);
 
+    //Please reserve memory enough with targets.reserve()
+    if (targets.count + cnt - 1 > targets.reserved) {
+        TVGERR("RENDERER", "reserved(%d), required(%d)", targets.reserved, targets.count + cnt - 1);
+        return;
+    }
+
     /* Considered using a list to avoid memory shifting,
        but ultimately, the array outperformed the list due to better cache locality. */
 
@@ -246,12 +266,12 @@ void RenderDirtyRegion::commit()
     for (int idx = 0; idx < PARTITIONING; ++idx) {
         auto current = partitions[idx].current;
         auto& targets = partitions[idx].list[current];
-        if (targets.empty()) return;
+        if (targets.empty()) continue;
 
         current = !current; //swapping buffers
         auto& output = partitions[idx].list[current];
 
-        targets.reserve(targets.count * 5);  //one intersection can be divided up to 5
+        targets.reserve(targets.count * 10);  //one intersection can be divided up to 5
         output.reserve(targets.count);
 
         partitions[idx].current = current;
