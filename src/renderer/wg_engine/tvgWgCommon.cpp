@@ -39,7 +39,6 @@ void WgContext::initialize(WGPUInstance instance, WGPUDevice device)
     assert(queue);
 
     // create shared webgpu assets
-    allocateBufferIndexFan(32768);
     samplerNearestRepeat = createSampler(WGPUFilterMode_Nearest, WGPUMipmapFilterMode_Nearest, WGPUAddressMode_Repeat);
     samplerLinearRepeat = createSampler(WGPUFilterMode_Linear, WGPUMipmapFilterMode_Linear, WGPUAddressMode_Repeat, 4);
     samplerLinearMirror = createSampler(WGPUFilterMode_Linear, WGPUMipmapFilterMode_Linear, WGPUAddressMode_MirrorRepeat, 4);
@@ -61,7 +60,6 @@ void WgContext::release()
     releaseSampler(samplerLinearMirror);
     releaseSampler(samplerLinearRepeat);
     releaseSampler(samplerNearestRepeat);
-    releaseBuffer(bufferIndexFan);
     releaseQueue(queue);
 }
 
@@ -216,26 +214,6 @@ bool WgContext::allocateBufferIndex(WGPUBuffer& buffer, const uint32_t* data, ui
         const WGPUBufferDescriptor bufferDesc { .usage = WGPUBufferUsage_CopyDst | WGPUBufferUsage_Index, .size = size };
         buffer = wgpuDeviceCreateBuffer(device, &bufferDesc);
         wgpuQueueWriteBuffer(queue, buffer, 0, data, size);
-        return true;
-    }
-    return false;
-}
-
-
-bool WgContext::allocateBufferIndexFan(uint64_t vertexCount)
-{
-    uint64_t indexCount = (vertexCount - 2) * 3;
-    if ((!bufferIndexFan) || (wgpuBufferGetSize(bufferIndexFan) < indexCount * sizeof(uint32_t))) {
-        tvg::Array<uint32_t> indexes(indexCount);
-        for (size_t i = 0; i < vertexCount - 2; i++) {
-            indexes.push(0);
-            indexes.push(i + 1);
-            indexes.push(i + 2);
-        }
-        releaseBuffer(bufferIndexFan);
-        WGPUBufferDescriptor bufferDesc{ .usage = WGPUBufferUsage_CopyDst | WGPUBufferUsage_Index, .size = indexCount * sizeof(uint32_t) };
-        bufferIndexFan = wgpuDeviceCreateBuffer(device, &bufferDesc);
-        wgpuQueueWriteBuffer(queue, bufferIndexFan, 0, &indexes[0], indexCount * sizeof(uint32_t));
         return true;
     }
     return false;

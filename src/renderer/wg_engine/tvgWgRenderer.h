@@ -107,11 +107,6 @@ private:
     WGPUTexture targetTexture{}; // external handle
     WGPUSurfaceTexture surfaceTexture{};
     WGPUSurface surface{};  // external handle
-
-    struct {
-        WgGeometryBufferPool* pool;   //private buffer pool
-        bool individual = false;      //buffer-pool sharing policy
-    } mBufferPool;
 };
 
 #endif /* _TVG_WG_RENDERER_H_ */

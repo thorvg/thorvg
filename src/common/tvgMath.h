@@ -121,6 +121,12 @@ static inline constexpr const Matrix identity()
 }
 
 
+static inline float scaling(const Matrix& m)
+{
+    return sqrt(m.e11 * m.e11 + m.e21 * m.e21);
+}
+
+
 static inline void scale(Matrix* m, const Point& p)
 {
     m->e11 *= p.x;
@@ -331,6 +337,17 @@ static inline Point operator-(const Point& a)
 }
 
 
+enum class Orientation { Linear, Clockwise, CounterClockwise };
+
+
+static inline Orientation orientation(const Point& p1, const Point& p2, const Point& p3)
+{
+    auto val = (p2.x - p1.x) * (p3.y - p1.y) - (p2.y - p1.y) * (p3.x - p1.x);
+    if (std::abs(val) < 0.0001f) return Orientation::Linear;
+    else return val > 0 ? Orientation::Clockwise : Orientation::CounterClockwise;
+}
+
+
 static inline void log(const Point& pt)
 {
     TVGLOG("COMMON", "Point: [%f %f]", pt.x, pt.y);
@@ -372,8 +389,26 @@ struct Bezier
     Point at(float t) const;
     float angle(float t) const;
     void bounds(Point& min, Point& max) const;
+    bool isFlatten() const;
+    int32_t curveCount() const;
 };
 
+static inline Bezier bezierFromArc(const Point& start, const Point& end, float radius)
+{
+    // Calculate the angle between the start and end points
+    auto angle = tvg::atan2(end.y - start.y, end.x - start.x);
+
+    // Calculate the control points of the cubic bezier curve
+    auto c = radius * 0.552284749831f;  // c = radius * (4/3) * tan(pi/8)
+
+    Bezier bz;
+    bz.start = {start.x, start.y};
+    bz.ctrl1 = {start.x + radius * cos(angle), start.y + radius * sin(angle)};
+    bz.ctrl2 = {end.x - c * cosf(angle), end.y - c * sinf(angle)};
+    bz.end = {end.x, end.y};
+
+    return bz;
+}
 
 /************************************************************************/
 /* Geometry functions                                                   */

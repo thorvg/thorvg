@@ -449,5 +449,34 @@ void Bezier::bounds(Point& min, Point& max) const
     findMinMax(start.y, ctrl1.y, ctrl2.y, end.y, min.y, max.y);
 }
 
+bool Bezier::isFlatten() const
+{
+    float diff1_x = fabs((ctrl1.x * 3.f) - (start.x * 2.f) - end.x);
+    float diff1_y = fabs((ctrl1.y * 3.f) - (start.y * 2.f) - end.y);
+    float diff2_x = fabs((ctrl2.x * 3.f) - (end.x * 2.f) - start.x);
+    float diff2_y = fabs((ctrl2.y * 3.f) - (end.y * 2.f) - start.y);
+
+    if (diff1_x < diff2_x) diff1_x = diff2_x;
+    if (diff1_y < diff2_y) diff1_y = diff2_y;
+
+    if (diff1_x + diff1_y <= 0.5f) return true;
+
+    return false;
+}
+
+int32_t Bezier::curveCount() const
+{
+    if (isFlatten()) {
+        return 1;
+    }
+
+    Bezier left{};
+    Bezier right{};
+
+    split(left, right);
+
+    return left.curveCount() + right.curveCount();
+}
+
 }
 

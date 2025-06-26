@@ -34,7 +34,6 @@ struct WgContext {
     WGPUQueue queue{};
     WGPUTextureFormat preferredFormat{};
     // shared webgpu assets
-    WGPUBuffer bufferIndexFan{};
     WGPUSampler samplerNearestRepeat{};
     WGPUSampler samplerLinearRepeat{};
     WGPUSampler samplerLinearMirror{};
@@ -63,7 +62,6 @@ struct WgContext {
     bool allocateBufferUniform(WGPUBuffer& buffer, const void* data, uint64_t size);
     bool allocateBufferVertex(WGPUBuffer& buffer, const float* data, uint64_t size);
     bool allocateBufferIndex(WGPUBuffer& buffer, const uint32_t* data, uint64_t size);
-    bool allocateBufferIndexFan(uint64_t vertexCount);
 
     // release buffer objects
     void releaseBuffer(WGPUBuffer& buffer);
