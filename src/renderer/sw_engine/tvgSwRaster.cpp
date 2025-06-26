@@ -965,14 +965,14 @@ static bool _rasterScaledImage(SwSurface* surface, const SwImage& image, const M
 /* Direct Image                                                         */
 /************************************************************************/
 
-static bool _rasterDirectMaskedImage(SwSurface* surface, const SwImage& image, const RenderRegion& bbox, uint8_t opacity)
+static bool _rasterDirectMaskedImage(SwSurface* surface, const SwImage& image, const RenderRegion& bbox, int32_t w, int32_t h, uint8_t opacity)
 {
     TVGERR("SW_ENGINE", "Not Supported: Direct Masked Image");
     return false;
 }
 
 
-static bool _rasterDirectMattedImage(SwSurface* surface, const SwImage& image, const RenderRegion& bbox, uint8_t opacity)
+static bool _rasterDirectMattedImage(SwSurface* surface, const SwImage& image, const RenderRegion& bbox, int32_t w, int32_t h, uint8_t opacity)
 {
     auto csize = surface->compositor->image.channelSize;
     auto alpha = surface->alpha(surface->compositor->method);
@@ -983,54 +983,48 @@ static bool _rasterDirectMattedImage(SwSurface* surface, const SwImage& image, c
 
     //32 bits
     if (surface->channelSize == sizeof(uint32_t)) {
-        auto buffer = surface->buf32 + (bbox.min.y * surface->stride) + bbox.min.x;
-        for (uint32_t y = 0; y < bbox.h(); ++y) {
-            auto dst = buffer;
+        auto dbuffer = surface->buf32 + (bbox.min.y * surface->stride) + bbox.min.x;
+        for (auto y = 0; y < h; ++y, dbuffer += surface->stride, sbuffer += image.stride) {
             auto cmp = cbuffer;
             auto src = sbuffer;
             if (opacity == 255) {
-                for (uint32_t x = 0; x < bbox.w(); ++x, ++dst, ++src, cmp += csize) {
+                for (auto dst = dbuffer; dst < dbuffer + w; ++dst, ++src, cmp += csize) {
                     auto tmp = ALPHA_BLEND(*src, alpha(cmp));
                     *dst = tmp + ALPHA_BLEND(*dst, IA(tmp));
                 }
             } else {
-                for (uint32_t x = 0; x < bbox.w(); ++x, ++dst, ++src, cmp += csize) {
+                for (auto dst = dbuffer; dst < dbuffer + w; ++dst, ++src, cmp += csize) {
                     auto tmp = ALPHA_BLEND(*src, MULTIPLY(opacity, alpha(cmp)));
                     *dst = tmp + ALPHA_BLEND(*dst, IA(tmp));
                 }
             }
-            buffer += surface->stride;
             cbuffer += surface->compositor->image.stride * csize;
-            sbuffer += image.stride;
         }
     //8 bits
     } else if (surface->channelSize == sizeof(uint8_t)) {
-        auto buffer = surface->buf8 + (bbox.min.y * surface->stride) + bbox.min.x;
-        for (uint32_t y = 0; y < bbox.h(); ++y) {
-            auto dst = buffer;
+        auto dbuffer = surface->buf8 + (bbox.min.y * surface->stride) + bbox.min.x;
+        for (auto y = 0; y < h; ++y, dbuffer += surface->stride, sbuffer += image.stride) {
             auto cmp = cbuffer;
             auto src = sbuffer;
             if (opacity == 255) {
-                for (uint32_t x = 0; x < bbox.w(); ++x, ++dst, ++src, cmp += csize) {
+                for (auto dst = dbuffer; dst < dbuffer + w; ++dst, ++src, cmp += csize) {
                     auto tmp = MULTIPLY(A(*src), alpha(cmp));
                     *dst = tmp + MULTIPLY(*dst, 255 - tmp);
                 }
             } else {
-                for (uint32_t x = 0; x < bbox.w(); ++x, ++dst, ++src, cmp += csize) {
+                for (auto dst = dbuffer; dst < dbuffer + w; ++dst, ++src, cmp += csize) {
                     auto tmp = MULTIPLY(A(*src), MULTIPLY(opacity, alpha(cmp)));
                     *dst = tmp + MULTIPLY(*dst, 255 - tmp);
                 }
             }
-            buffer += surface->stride;
             cbuffer += surface->compositor->image.stride * csize;
-            sbuffer += image.stride;
         }
     }
     return true;
 }
 
 
-static bool _rasterDirectBlendingImage(SwSurface* surface, const SwImage& image, const RenderRegion& bbox, uint8_t opacity)
+static bool _rasterDirectBlendingImage(SwSurface* surface, const SwImage& image, const RenderRegion& bbox, int32_t w, int32_t h, uint8_t opacity)
 {
     if (surface->channelSize == sizeof(uint8_t)) {
         TVGERR("SW_ENGINE", "Not supported grayscale image!");
@@ -1040,51 +1034,43 @@ static bool _rasterDirectBlendingImage(SwSurface* surface, const SwImage& image,
     auto dbuffer = &surface->buf32[bbox.min.y * surface->stride + bbox.min.x];
     auto sbuffer = image.buf32 + (bbox.min.y + image.oy) * image.stride + (bbox.min.x + image.ox);
 
-    for (auto y = bbox.min.y; y < bbox.max.y; ++y) {
-        auto dst = dbuffer;
+    for (auto y = 0; y < h; ++y, dbuffer += surface->stride, sbuffer += image.stride) {
         auto src = sbuffer;
         if (opacity == 255) {
-            for (auto x = bbox.min.x; x < bbox.max.x; x++, dst++, src++) {
-                auto tmp = surface->blender(*src, *dst, 255);
-                *dst = INTERPOLATE(tmp, *dst, A(*src));
+            for (auto dst = dbuffer; dst < dbuffer + w; dst++, src++) {
+                *dst = INTERPOLATE(surface->blender(*src, *dst, 255), *dst, A(*src));
             }
         } else {
-            for (auto x = bbox.min.x; x < bbox.max.x; x++, dst++, src++) {
-                auto tmp = surface->blender(*src, *dst, 255);
-                *dst = INTERPOLATE(tmp, *dst, MULTIPLY(opacity, A(*src)));
+            for (auto dst = dbuffer; dst < dbuffer + w; dst++, src++) {
+                *dst = INTERPOLATE(surface->blender(*src, *dst, 255), *dst, MULTIPLY(opacity, A(*src)));
             }
         }
-        dbuffer += surface->stride;
-        sbuffer += image.stride;
     }
     return true;
 }
 
 
-static bool _rasterDirectImage(SwSurface* surface, const SwImage& image, const RenderRegion& bbox, uint8_t opacity)
+static bool _rasterDirectImage(SwSurface* surface, const SwImage& image, const RenderRegion& bbox, int32_t w, int32_t h, uint8_t opacity)
 {
     auto sbuffer = image.buf32 + (bbox.min.y + image.oy) * image.stride + (bbox.min.x + image.ox);
 
     //32bits channels
     if (surface->channelSize == sizeof(uint32_t)) {
         auto dbuffer = &surface->buf32[bbox.min.y * surface->stride + bbox.min.x];
-        for (auto y = bbox.min.y; y < bbox.max.y; ++y) {
-            rasterTranslucentPixel32(dbuffer, sbuffer, bbox.max.x - bbox.min.x, opacity);
-            dbuffer += surface->stride;
-            sbuffer += image.stride;
+        for (auto y = 0; y < h; ++y, dbuffer += surface->stride, sbuffer += image.stride) {
+            rasterTranslucentPixel32(dbuffer, sbuffer, w, opacity);
         }
     //8bits grayscale
     } else if (surface->channelSize == sizeof(uint8_t)) {
         auto dbuffer = &surface->buf8[bbox.min.y * surface->stride + bbox.min.x];
-        for (auto y = bbox.min.y; y < bbox.max.y; ++y, dbuffer += surface->stride, sbuffer += image.stride) {
-            auto dst = dbuffer;
+        for (auto y = 0; y < h; ++y, dbuffer += surface->stride, sbuffer += image.stride) {
             auto src = sbuffer;
             if (opacity == 255) {
-                for (auto x = bbox.min.x; x < bbox.max.x; ++x, ++dst, ++src) {
+                for (auto dst = dbuffer; dst < dbuffer + w; dst++, src++) {
                     *dst = *src + MULTIPLY(*dst, IA(*src));
                 }
             } else {
-                for (auto x = bbox.min.x; x < bbox.max.x; ++x, ++dst, ++src) {
+                for (auto dst = dbuffer; dst < dbuffer + w; dst++, src++) {
                     *dst = INTERPOLATE8(A(*src), *dst, opacity);
                 }
             }
@@ -1094,7 +1080,7 @@ static bool _rasterDirectImage(SwSurface* surface, const SwImage& image, const R
 }
 
 
-static bool _rasterDirectMattedBlendingImage(SwSurface* surface, const SwImage& image, const RenderRegion& bbox, uint8_t opacity)
+static bool _rasterDirectMattedBlendingImage(SwSurface* surface, const SwImage& image, const RenderRegion& bbox, int32_t w, int32_t h, uint8_t opacity)
 {
     if (surface->channelSize == sizeof(uint8_t)) {
         TVGERR("SW_ENGINE", "Not supported grayscale image!");
@@ -1105,26 +1091,23 @@ static bool _rasterDirectMattedBlendingImage(SwSurface* surface, const SwImage& 
     auto alpha = surface->alpha(surface->compositor->method);
     auto sbuffer = image.buf32 + (bbox.min.y + image.oy) * image.stride + (bbox.min.x + image.ox);
     auto cbuffer = surface->compositor->image.buf8 + (bbox.min.y * surface->compositor->image.stride + bbox.min.x) * csize; //compositor buffer
-    auto buffer = surface->buf32 + (bbox.min.y * surface->stride) + bbox.min.x;
+    auto dbuffer = surface->buf32 + (bbox.min.y * surface->stride) + bbox.min.x;
 
-    for (uint32_t y = 0; y < bbox.h(); ++y) {
-        auto dst = buffer;
+    for (auto y = 0; y < h; ++y, dbuffer += surface->stride, sbuffer += image.stride) {
         auto cmp = cbuffer;
         auto src = sbuffer;
         if (opacity == 255) {
-            for (uint32_t x = 0; x < bbox.w(); ++x, ++dst, ++src, cmp += csize) {
+            for (auto dst = dbuffer; dst < dbuffer + w; ++dst, ++src, cmp += csize) {
                 auto tmp = ALPHA_BLEND(*src, alpha(cmp));
                 *dst = INTERPOLATE(surface->blender(tmp, *dst, 255), *dst, A(tmp));
             }
         } else {
-            for (uint32_t x = 0; x < bbox.w(); ++x, ++dst, ++src, cmp += csize) {
+            for (auto dst = dbuffer; dst < dbuffer + w; ++dst, ++src, cmp += csize) {
                 auto tmp = ALPHA_BLEND(*src, alpha(cmp));
                 *dst = INTERPOLATE(surface->blender(tmp, *dst, 255), *dst, MULTIPLY(opacity, A(tmp)));
             }
         }
-        buffer += surface->stride;
         cbuffer += surface->compositor->image.stride * csize;
-        sbuffer += image.stride;
     }
     return true;
 }
@@ -1619,15 +1602,19 @@ bool rasterScaledImage(SwSurface* surface, const SwImage& image, const Matrix& t
 
 bool rasterDirectImage(SwSurface* surface, const SwImage& image, const RenderRegion& bbox, uint8_t opacity)
 {
+    //calculate an actual drawing image size
+    auto w = std::min(bbox.max.x - bbox.min.x, int32_t(image.w) - (bbox.min.x + image.ox));
+    auto h = std::min(bbox.max.y - bbox.min.y, int32_t(image.h) - (bbox.min.y + image.oy));
+
     if (_compositing(surface)) {
         if (_matting(surface)) {
-            if (_blending(surface)) return _rasterDirectMattedBlendingImage(surface, image, bbox, opacity);
-            else return _rasterDirectMattedImage(surface, image, bbox, opacity);
-        } else return _rasterDirectMaskedImage(surface, image, bbox, opacity);
+            if (_blending(surface)) return _rasterDirectMattedBlendingImage(surface, image, bbox, w, h, opacity);
+            else return _rasterDirectMattedImage(surface, image, bbox, w, h, opacity);
+        } else return _rasterDirectMaskedImage(surface, image, bbox, w, h, opacity);
     } else if (_blending(surface)) {
-        return _rasterDirectBlendingImage(surface, image, bbox, opacity);
+        return _rasterDirectBlendingImage(surface, image, bbox, w, h, opacity);
     } else {
-        return _rasterDirectImage(surface, image, bbox, opacity);
+        return _rasterDirectImage(surface, image, bbox, w, h, opacity);
     }
     return false;
 }
