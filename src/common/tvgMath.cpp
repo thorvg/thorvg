@@ -293,6 +293,21 @@ void Line::split(float at, Line& left, Line& right) const
 }
 
 
+Bezier::Bezier(const Point& st, const Point& ed, float radius)
+{
+    // Calculate the angle between the start and end points
+    auto angle = tvg::atan2(ed.y - st.y, ed.x - st.x);
+
+    // Calculate the control points of the cubic bezier curve
+    auto c = radius * PATH_KAPPA;  // c = radius * (4/3) * tan(pi/8)
+ 
+    start = {st.x, st.y};
+    ctrl1 = {st.x + radius * cos(angle), st.y + radius * sin(angle)};
+    ctrl2 = {ed.x - c * cos(angle), ed.y - c * sin(angle)};
+    end = {ed.x, ed.y};
+}
+
+
 void Bezier::split(Bezier& left, Bezier& right) const
 {
     auto c = (ctrl1.x + ctrl2.x) * 0.5f;
@@ -447,6 +462,32 @@ void Bezier::bounds(Point& min, Point& max) const
 
     findMinMax(start.x, ctrl1.x, ctrl2.x, end.x, min.x, max.x);
     findMinMax(start.y, ctrl1.y, ctrl2.y, end.y, min.y, max.y);
+}
+
+bool Bezier::flatten() const
+{
+    float diff1_x = fabsf((ctrl1.x * 3.f) - (start.x * 2.f) - end.x);
+    float diff1_y = fabsf((ctrl1.y * 3.f) - (start.y * 2.f) - end.y);
+    float diff2_x = fabsf((ctrl2.x * 3.f) - (end.x * 2.f) - start.x);
+    float diff2_y = fabsf((ctrl2.y * 3.f) - (end.y * 2.f) - start.y);
+    if (diff1_x < diff2_x) diff1_x = diff2_x;
+    if (diff1_y < diff2_y) diff1_y = diff2_y;
+    return (diff1_x + diff1_y <= 0.5f);
+}
+
+
+uint32_t Bezier::segments() const
+{
+    if (flatten()) return 1;
+    Bezier left, right;
+    split(left, right);
+    return left.segments() + right.segments();
+}
+
+
+Bezier Bezier::operator*(const Matrix& m)
+{
+    return Bezier{start * m, ctrl1* m, ctrl2 * m, end * m};
 }
 
 }

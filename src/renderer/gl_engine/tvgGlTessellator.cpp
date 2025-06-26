@@ -25,77 +25,12 @@
 namespace tvg
 {
 
-static bool _bezIsFlatten(const Bezier& bz)
-{
-    float diff1_x = fabs((bz.ctrl1.x * 3.f) - (bz.start.x * 2.f) - bz.end.x);
-    float diff1_y = fabs((bz.ctrl1.y * 3.f) - (bz.start.y * 2.f) - bz.end.y);
-    float diff2_x = fabs((bz.ctrl2.x * 3.f) - (bz.end.x * 2.f) - bz.start.x);
-    float diff2_y = fabs((bz.ctrl2.y * 3.f) - (bz.end.y * 2.f) - bz.start.y);
-
-    if (diff1_x < diff2_x) diff1_x = diff2_x;
-    if (diff1_y < diff2_y) diff1_y = diff2_y;
-
-    if (diff1_x + diff1_y <= 0.5f) return true;
-
-    return false;
-}
-
-
-static int32_t _bezierCurveCount(const Bezier &curve)
-{
-
-    if (_bezIsFlatten(curve)) {
-        return 1;
-    }
-
-    Bezier left{};
-    Bezier right{};
-
-    curve.split(left, right);
-
-    return _bezierCurveCount(left) + _bezierCurveCount(right);
-}
-
-
-static Bezier _bezFromArc(const Point& start, const Point& end, float radius)
-{
-    // Calculate the angle between the start and end points
-    auto angle = tvg::atan2(end.y - start.y, end.x - start.x);
-
-    // Calculate the control points of the cubic bezier curve
-    auto c = radius * 0.552284749831f;  // c = radius * (4/3) * tan(pi/8)
-
-    Bezier bz;
-    bz.start = {start.x, start.y};
-    bz.ctrl1 = {start.x + radius * cos(angle), start.y + radius * sin(angle)};
-    bz.ctrl2 = {end.x - c * cosf(angle), end.y - c * sinf(angle)};
-    bz.end = {end.x, end.y};
-
-    return bz;
-}
-
 
 static uint32_t _pushVertex(Array<float>& array, float x, float y)
 {
     array.push(x);
     array.push(y);
     return (array.count - 2) / 2;
-}
-
-
-enum class Orientation
-{
-    Linear,
-    Clockwise,
-    CounterClockwise,
-};
-
-
-static Orientation _calcOrientation(const Point& p1, const Point& p2, const Point& p3)
-{
-    auto val = (p2.x - p1.x) * (p3.y - p1.y) - (p2.y - p1.y) * (p3.x - p1.x);
-    if (std::abs(val) < 0.0001f) return Orientation::Linear;
-    else return val > 0 ? Orientation::Clockwise : Orientation::CounterClockwise;
 }
 
 
@@ -112,7 +47,7 @@ void Stroker::stroke(const RenderShape *rshape, const RenderPath& path)
     mStrokeWidth = rshape->strokeWidth();
 
     if (isinf(mMatrix.e11)) {
-        auto strokeWidth = rshape->strokeWidth() * getScaleFactor(mMatrix);
+        auto strokeWidth = rshape->strokeWidth() * scaling(mMatrix);
         if (strokeWidth <= MIN_GL_STROKE_WIDTH) strokeWidth = MIN_GL_STROKE_WIDTH;
         mStrokeWidth = strokeWidth / mMatrix.e11;
     }
@@ -265,22 +200,12 @@ void Stroker::strokeLineTo(const Point& curr)
 
 void Stroker::strokeCubicTo(const Point& cnt1, const Point& cnt2, const Point& end)
 {
-    Bezier curve{};
-    curve.start = {mStrokeState.prevPt.x, mStrokeState.prevPt.y};
-    curve.ctrl1 = {cnt1.x, cnt1.y};
-    curve.ctrl2 = {cnt2.x, cnt2.y};
-    curve.end = {end.x, end.y};
+    Bezier curve{ mStrokeState.prevPt, cnt1, cnt2, end };
 
-    Bezier relCurve {curve.start, curve.ctrl1, curve.ctrl2, curve.end};
-    relCurve.start *= mMatrix;
-    relCurve.ctrl1 *= mMatrix;
-    relCurve.ctrl2 *= mMatrix;
-    relCurve.end *= mMatrix;
-
-    auto count = _bezierCurveCount(relCurve);
+    auto count = (curve * mMatrix).segments();
     auto step = 1.f / count;
 
-    for (int32_t i = 0; i <= count; i++) {
+    for (uint32_t i = 0; i <= count; i++) {
         strokeLineTo(curve.at(step * i));
     }
 }
@@ -299,9 +224,9 @@ void Stroker::strokeClose()
 
 void Stroker::strokeJoin(const Point& dir)
 {
-    auto orientation = _calcOrientation(mStrokeState.prevPt - mStrokeState.prevPtDir, mStrokeState.prevPt, mStrokeState.prevPt + dir);
+    auto orient = orientation(mStrokeState.prevPt - mStrokeState.prevPtDir, mStrokeState.prevPt, mStrokeState.prevPt + dir);
 
-    if (orientation == Orientation::Linear) {
+    if (orient == Orientation::Linear) {
         if (mStrokeState.prevPtDir == dir) return;      // check is same direction
         if (mStrokeJoin != StrokeJoin::Round) return;   // opposite direction
 
@@ -318,7 +243,7 @@ void Stroker::strokeJoin(const Point& dir)
         auto prevNormal = Point{-mStrokeState.prevPtDir.y, mStrokeState.prevPtDir.x};
         Point prevJoin, currJoin;
 
-        if (orientation == Orientation::CounterClockwise) {
+        if (orient == Orientation::CounterClockwise) {
             prevJoin = mStrokeState.prevPt + prevNormal * strokeRadius();
             currJoin = mStrokeState.prevPt + normal * strokeRadius();
         } else {
@@ -335,7 +260,7 @@ void Stroker::strokeJoin(const Point& dir)
 
 void Stroker::strokeRound(const Point &prev, const Point& curr, const Point& center)
 {
-    if (_calcOrientation(prev, center, curr) == Orientation::Linear) return;
+    if (orientation(prev, center, curr) == Orientation::Linear) return;
 
     mLeftTop.x = std::min(mLeftTop.x, std::min(center.x, std::min(prev.x, curr.x)));
     mLeftTop.y = std::min(mLeftTop.y, std::min(center.y, std::min(prev.y, curr.y)));
@@ -343,7 +268,7 @@ void Stroker::strokeRound(const Point &prev, const Point& curr, const Point& cen
     mRightBottom.y = std::max(mRightBottom.y, std::max(center.y, std::max(prev.y, curr.y)));
 
     // Fixme: just use bezier curve to calculate step count
-    auto count = _bezierCurveCount(_bezFromArc(prev, curr, strokeRadius()));
+    auto count = Bezier(prev, curr, strokeRadius()).segments();
     auto c = _pushVertex(mBuffer->vertex, center.x, center.y);
     auto pi = _pushVertex(mBuffer->vertex, prev.x, prev.y);
     auto step = 1.f / (count - 1);
@@ -375,7 +300,7 @@ void Stroker::strokeRound(const Point &prev, const Point& curr, const Point& cen
 void Stroker::strokeRoundPoint(const Point &p)
 {
     // Fixme: just use bezier curve to calculate step count
-    auto count = _bezierCurveCount(_bezFromArc(p, p, strokeRadius())) * 2;
+    auto count = Bezier(p, p, strokeRadius()).segments() * 2;
     auto c = _pushVertex(mBuffer->vertex, p.x, p.y);
     auto step = 2 * MATH_PI / (count - 1);
 
@@ -655,11 +580,7 @@ void DashStroke::dashLineTo(const Point& to, bool validPoint)
 
 void DashStroke::dashCubicTo(const Point& cnt1, const Point& cnt2, const Point& end, bool validPoint)
 {
-    Bezier cur;
-    cur.start = {mPtCur.x, mPtCur.y};
-    cur.ctrl1 = {cnt1.x, cnt1.y};
-    cur.ctrl2 = {cnt2.x, cnt2.y};
-    cur.end = {end.x, end.y};
+    Bezier cur{ mPtCur, cnt1, cnt2, end };
 
     auto len = cur.length();
 
@@ -721,23 +642,23 @@ void DashStroke::dashCubicTo(const Point& cnt1, const Point& cnt2, const Point& 
 
 void DashStroke::moveTo(const Point& pt)
 {
-    mPts->push(Point{pt.x, pt.y});
+    mPts->push(pt);
     mCmds->push(PathCommand::MoveTo);
 }
 
 
 void DashStroke::lineTo(const Point& pt)
 {
-    mPts->push(Point{pt.x, pt.y});
+    mPts->push(pt);
     mCmds->push(PathCommand::LineTo);
 }
 
 
 void DashStroke::cubicTo(const Point& cnt1, const Point& cnt2, const Point& end)
 {
-    mPts->push({cnt1.x, cnt1.y});
-    mPts->push({cnt2.x, cnt2.y});
-    mPts->push({end.x, end.y});
+    mPts->push(cnt1);
+    mPts->push(cnt2);
+    mPts->push(end);
     mCmds->push(PathCommand::CubicTo);
 }
 
@@ -782,13 +703,8 @@ void BWTessellator::tessellate(const RenderPath& path, const Matrix& matrix)
             } break;
             case PathCommand::CubicTo: {
                 Bezier curve{pts[-1], pts[0], pts[1], pts[2]};
-                Bezier relCurve {pts[-1], pts[0], pts[1], pts[2]};
-                relCurve.start *= matrix;
-                relCurve.ctrl1 *= matrix;
-                relCurve.ctrl2 *= matrix;
-                relCurve.end *= matrix;
 
-                auto stepCount = _bezierCurveCount(relCurve);
+                auto stepCount = (curve * matrix).segments();
                 if (stepCount <= 1) stepCount = 2;
 
                 float step = 1.f / stepCount;

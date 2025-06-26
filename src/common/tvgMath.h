@@ -121,6 +121,12 @@ static inline constexpr const Matrix identity()
 }
 
 
+static inline float scaling(const Matrix& m)
+{
+    return sqrtf(m.e11 * m.e11 + m.e21 * m.e21);
+}
+
+
 static inline void scale(Matrix* m, const Point& p)
 {
     m->e11 *= p.x;
@@ -330,6 +336,21 @@ static inline Point operator-(const Point& a)
     return {-a.x, -a.y};
 }
 
+enum class Orientation
+{
+    Linear = 0,
+    Clockwise,
+    CounterClockwise,
+};
+
+
+static inline Orientation orientation(const Point& p1, const Point& p2, const Point& p3)
+{
+    auto val = cross(p2 - p1, p3 - p1);
+    if (zero(val)) return Orientation::Linear;
+    else return val > 0 ? Orientation::Clockwise : Orientation::CounterClockwise;
+}
+
 
 static inline void log(const Point& pt)
 {
@@ -362,6 +383,13 @@ struct Bezier
     Point ctrl2;
     Point end;
 
+    Bezier() {}
+    Bezier(const Point& p0, const Point& p1, const Point& p2, const Point& p3):
+        start(p0), ctrl1(p1), ctrl2(p2), end(p3) {}
+    // Constructor that approximates a quarter-circle segment of arc between 'start' and 'end' points 
+    // using a cubic Bezier curve with a given 'radius'.
+    Bezier(const Point& start, const Point& end, float radius);
+
     void split(float t, Bezier& left);
     void split(Bezier& left, Bezier& right) const;
     void split(float at, Bezier& left, Bezier& right) const;
@@ -372,8 +400,11 @@ struct Bezier
     Point at(float t) const;
     float angle(float t) const;
     void bounds(Point& min, Point& max) const;
-};
+    bool flatten() const;
+    uint32_t segments() const;
 
+    Bezier operator*(const Matrix& m);
+};
 
 /************************************************************************/
 /* Geometry functions                                                   */
