@@ -476,6 +476,7 @@ bool Bezier::flatten() const
 }
 
 
+//TODO: Consider to use while() instead of recursive stack calls
 uint32_t Bezier::segments() const
 {
     if (flatten()) return 1;
