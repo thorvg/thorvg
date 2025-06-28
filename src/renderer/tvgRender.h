@@ -364,6 +364,8 @@ struct RenderShape
         return stroke->dash.count;
     }
 
+    bool strokeDash(RenderPath& out) const;
+
     StrokeCap strokeCap() const
     {
         if (!stroke) return StrokeCap::Square;
