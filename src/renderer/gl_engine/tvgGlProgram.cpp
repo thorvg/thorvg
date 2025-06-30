@@ -101,13 +101,17 @@ int32_t GlProgram::getAttributeLocation(const char* name)
 
 int32_t GlProgram::getUniformLocation(const char* name)
 {
+    if (mUniformLocation.count(name)) return mUniformLocation[name];
     GL_CHECK(int32_t location = glGetUniformLocation(mProgramObj, name));
+    mUniformLocation[name] = location;
     return location;
 }
 
 int32_t GlProgram::getUniformBlockIndex(const char* name)
 {
+    if (mUniformBlock.count(name)) return mUniformBlock[name];
     GL_CHECK(int32_t index = glGetUniformBlockIndex(mProgramObj, name));
+    mUniformBlock[name] = index;
     return index;
 }
 

@@ -25,9 +25,9 @@
 #include "tvgGlRenderPass.h"
 #include "tvgGlRenderTask.h"
 
-GlRenderPass::GlRenderPass(GlRenderTarget* fbo): mFbo(fbo), mTasks(), mDrawDepth(0) {}
+GlRenderPass::GlRenderPass(GlRenderTarget* fbo, RenderRegion viewport): mFbo(fbo), mViewport(viewport), mTasks(), mDrawDepth(0) {}
 
-GlRenderPass::GlRenderPass(GlRenderPass&& other): mFbo(other.mFbo), mTasks(), mDrawDepth(0)
+GlRenderPass::GlRenderPass(GlRenderPass&& other): mFbo(other.mFbo), mViewport(other.mViewport), mTasks(), mDrawDepth(0)
 {
     mTasks.push(other.mTasks);
 

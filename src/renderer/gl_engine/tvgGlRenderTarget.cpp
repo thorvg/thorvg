@@ -121,8 +121,8 @@ GlRenderTarget* GlRenderTargetPool::getRenderTarget(const RenderRegion& vp, GLui
 
     for (uint32_t i = 0; i < mPool.count; i++) {
         auto rt = mPool[i];
-        if (rt->getWidth() == width && rt->getHeight() == height) {
-            rt->setViewport(vp);
+        if (!rt->isInUse() && rt->getWidth() == width && rt->getHeight() == height) {
+            rt->setInUse(true);
             return rt;
         }
     }
@@ -130,6 +130,7 @@ GlRenderTarget* GlRenderTargetPool::getRenderTarget(const RenderRegion& vp, GLui
     auto rt = new GlRenderTarget();
     rt->init(width, height, resolveId);
     rt->setViewport(vp);
+    rt->setInUse(true);
     mPool.push(rt);
     return rt;
 }
