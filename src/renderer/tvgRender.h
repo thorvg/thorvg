@@ -210,7 +210,8 @@ struct RenderRegion
 
         void init(uint32_t w, uint32_t h) {}
         void commit() {}
-        void add(TVG_UNUSED const RenderRegion* prv, TVG_UNUSED const RenderRegion* cur) {}
+        bool add(TVG_UNUSED const RenderRegion& bbox) { return true; }
+        bool add(TVG_UNUSED const RenderRegion& prv, TVG_UNUSED const RenderRegion& cur) { return true; }
         void clear() {}
         bool deactivate(TVG_UNUSED bool on) { return true; }
         bool deactivated() { return true; }
