@@ -198,11 +198,18 @@ void LottieBuilder::updateGroup(LottieGroup* parent, LottieObject** child, float
     if (!group->visible) return;
 
     //Prepare render data
-    group->scene = parent->scene;
+    if (group->blendMethod == parent->blendMethod) {
+        group->scene = parent->scene;
+    } else {
+        group->scene = tvg::Scene::gen();
+        group->scene->blend(group->blendMethod);
+        parent->scene->push(group->scene);
+    }
+
     group->reqFragment |= ctx->reqFragment;
 
     //generate a merging shape to consolidate partial shapes into a single entity
-    if (group->mergeable()) _draw(parent, nullptr, ctx);
+    if (group->mergeable()) _draw(group, nullptr, ctx);
 
     Inlist<RenderContext> contexts;
     auto propagator = group->mergeable() ? ctx->propagator : static_cast<Shape*>(PAINT(ctx->propagator)->duplicate(group->pooling()));

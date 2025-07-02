@@ -1079,6 +1079,8 @@ LottieObject* LottieParser::parseGroup()
         else if (KEY_AS("it")) {
             enterArray();
             while (nextArrayValue()) parseObject(group->children);
+        } else if (KEY_AS("bm")) {
+            group->blendMethod = (BlendMethod) getInt();
         } else skip();
     }
     group->prepare();
