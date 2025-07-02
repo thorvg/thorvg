@@ -373,6 +373,18 @@ static inline uint8_t C3(uint32_t c)
     return (c);
 }
 
+static inline bool UNPREMULTIPLY(uint32_t color, RenderColor& out)
+{
+    out.a = A(color);
+    if (out.a == 0) return false;
+
+    out.r = C1(color) * 255 / out.a;
+    out.g = C2(color) * 255 / out.a;
+    out.b = C3(color) * 255 / out.a;
+
+    return true;
+}
+
 static inline uint32_t opBlendInterp(uint32_t s, uint32_t d, uint8_t a)
 {
     return INTERPOLATE(s, d, a);
@@ -397,6 +409,8 @@ static inline uint32_t opBlendSrcOver(uint32_t s, TVG_UNUSED uint32_t d, TVG_UNU
 //TODO: BlendMethod could remove the alpha parameter.
 static inline uint32_t opBlendDifference(uint32_t s, uint32_t d, TVG_UNUSED uint8_t a)
 {
+    if (d == 0) return s;
+
     //if (s > d) => s - d
     //else => d - s
     auto c1 = (C1(s) > C1(d)) ? (C1(s) - C1(d)) : (C1(d) - C1(s));
@@ -407,6 +421,8 @@ static inline uint32_t opBlendDifference(uint32_t s, uint32_t d, TVG_UNUSED uint
 
 static inline uint32_t opBlendExclusion(uint32_t s, uint32_t d, TVG_UNUSED uint8_t a)
 {
+    if (d == 0) return s;
+
     // (s + d) - (2 * s * d)
     auto c1 = tvg::clamp(C1(s) + C1(d) - 2 * MULTIPLY(C1(s), C1(d)), 0, 255);
     auto c2 = tvg::clamp(C2(s) + C2(d) - 2 * MULTIPLY(C2(s), C2(d)), 0, 255);
@@ -416,6 +432,8 @@ static inline uint32_t opBlendExclusion(uint32_t s, uint32_t d, TVG_UNUSED uint8
 
 static inline uint32_t opBlendAdd(uint32_t s, uint32_t d, TVG_UNUSED uint8_t a)
 {
+    if (d == 0) return s;
+
     // s + d
     auto c1 = std::min(C1(s) + C1(d), 255);
     auto c2 = std::min(C2(s) + C2(d), 255);
@@ -425,6 +443,8 @@ static inline uint32_t opBlendAdd(uint32_t s, uint32_t d, TVG_UNUSED uint8_t a)
 
 static inline uint32_t opBlendScreen(uint32_t s, uint32_t d, TVG_UNUSED uint8_t a)
 {
+    if (d == 0) return s;
+
     // s + d - s * d
     auto c1 = C1(s) + C1(d) - MULTIPLY(C1(s), C1(d));
     auto c2 = C2(s) + C2(d) - MULTIPLY(C2(s), C2(d));
@@ -434,34 +454,52 @@ static inline uint32_t opBlendScreen(uint32_t s, uint32_t d, TVG_UNUSED uint8_t 
 
 static inline uint32_t opBlendMultiply(uint32_t s, uint32_t d, TVG_UNUSED uint8_t a)
 {
+    if (d == 0) return s;
+
+    RenderColor o;
+    if (!UNPREMULTIPLY(d, o)) return 0;
+
     // s * d
-    auto c1 = MULTIPLY(C1(s), C1(d));
-    auto c2 = MULTIPLY(C2(s), C2(d));
-    auto c3 = MULTIPLY(C3(s), C3(d));
+    auto c1 = MULTIPLY(C1(s), o.r);
+    auto c2 = MULTIPLY(C2(s), o.g);
+    auto c3 = MULTIPLY(C3(s), o.b);
     return JOIN(255, c1, c2, c3);
 }
 
+
 static inline uint32_t opBlendOverlay(uint32_t s, uint32_t d, TVG_UNUSED uint8_t a)
 {
+    if (d == 0) return s;
+
+    RenderColor o;
+    if (!UNPREMULTIPLY(d, o)) return 0;
+
     // if (2 * d < da) => 2 * s * d,
     // else => 1 - 2 * (1 - s) * (1 - d)
-    auto c1 = (C1(d) < 128) ? std::min(255, 2 * MULTIPLY(C1(s), C1(d))) : (255 - std::min(255, 2 * MULTIPLY(255 - C1(s), 255 - C1(d))));
-    auto c2 = (C2(d) < 128) ? std::min(255, 2 * MULTIPLY(C2(s), C2(d))) : (255 - std::min(255, 2 * MULTIPLY(255 - C2(s), 255 - C2(d))));
-    auto c3 = (C3(d) < 128) ? std::min(255, 2 * MULTIPLY(C3(s), C3(d))) : (255 - std::min(255, 2 * MULTIPLY(255 - C3(s), 255 - C3(d))));
+    auto c1 = (o.r < 128) ? std::min(255, 2 * MULTIPLY(C1(s), o.r)) : (255 - std::min(255, 2 * MULTIPLY(255 - C1(s), 255 - o.r)));
+    auto c2 = (o.g < 128) ? std::min(255, 2 * MULTIPLY(C2(s), o.g)) : (255 - std::min(255, 2 * MULTIPLY(255 - C2(s), 255 - o.g)));
+    auto c3 = (o.b < 128) ? std::min(255, 2 * MULTIPLY(C3(s), o.b)) : (255 - std::min(255, 2 * MULTIPLY(255 - C3(s), 255 - o.b)));
     return JOIN(255, c1, c2, c3);
 }
 
 static inline uint32_t opBlendDarken(uint32_t s, uint32_t d, TVG_UNUSED uint8_t a)
 {
+    if (d == 0) return s;
+
+    RenderColor o;
+    if (!UNPREMULTIPLY(d, o)) return 0;
+
     // min(s, d)
-    auto c1 = std::min(C1(s), C1(d));
-    auto c2 = std::min(C2(s), C2(d));
-    auto c3 = std::min(C3(s), C3(d));
+    auto c1 = std::min(C1(s), o.r);
+    auto c2 = std::min(C2(s), o.g);
+    auto c3 = std::min(C3(s), o.b);
     return JOIN(255, c1, c2, c3);
 }
 
 static inline uint32_t opBlendLighten(uint32_t s, uint32_t d, TVG_UNUSED uint8_t a)
 {
+    if (d == 0) return s;
+
     // max(s, d)
     auto c1 = std::max(C1(s), C1(d));
     auto c2 = std::max(C2(s), C2(d));
@@ -471,6 +509,8 @@ static inline uint32_t opBlendLighten(uint32_t s, uint32_t d, TVG_UNUSED uint8_t
 
 static inline uint32_t opBlendColorDodge(uint32_t s, uint32_t d, TVG_UNUSED uint8_t a)
 {
+    if (d == 0) return s;
+
     // d / (1 - s)
     s = 0xffffffff - s;
     auto c1 = C1(d) == 0 ? 0 : (C1(s) == 0 ? 255 : std::min(C1(d) * 255 / C1(s), 255));
@@ -481,31 +521,49 @@ static inline uint32_t opBlendColorDodge(uint32_t s, uint32_t d, TVG_UNUSED uint
 
 static inline uint32_t opBlendColorBurn(uint32_t s, uint32_t d, TVG_UNUSED uint8_t a)
 {
+    if (d == 0) return s;
+
+    RenderColor o;
+    if (!UNPREMULTIPLY(d, o)) o.r = o.g = o.b = 0;
+
     // 1 - (1 - d) / s
-    auto id = 0xffffffff - d;
-    auto c1 = C1(d) == 255 ? 255 : (C1(s) == 0 ? 0 : 255 - std::min(C1(id) * 255 / C1(s), 255));
-    auto c2 = C2(d) == 255 ? 255 : (C2(s) == 0 ? 0 : 255 - std::min(C2(id) * 255 / C2(s), 255));
-    auto c3 = C3(d) == 255 ? 255 : (C3(s) == 0 ? 0 : 255 - std::min(C3(id) * 255 / C3(s), 255));
+    auto ir = 255 - o.r;
+    auto ig = 255 - o.g;
+    auto ib = 255 - o.b;
+
+    auto c1 = o.r == 255 ? 255 : (C1(s) == 0 ? 0 : 255 - std::min(ir * 255 / C1(s), 255));
+    auto c2 = o.g == 255 ? 255 : (C2(s) == 0 ? 0 : 255 - std::min(ig * 255 / C2(s), 255));
+    auto c3 = o.b == 255 ? 255 : (C3(s) == 0 ? 0 : 255 - std::min(ib * 255 / C3(s), 255));
 
     return JOIN(255, c1, c2, c3);
 }
 
 static inline uint32_t opBlendHardLight(uint32_t s, uint32_t d, TVG_UNUSED uint8_t a)
 {
+    if (d == 0) return s;
+
+    RenderColor o;
+    if (!UNPREMULTIPLY(d, o)) o.r = o.g = o.b = 0;
+
     // if (s < sa), (2 * s * d)
     // else (sa * da) - 2 * (da - s) * (sa - d)
-    auto c1 = (C1(s) < 128) ? std::min(255, 2 * MULTIPLY(C1(s), C1(d))) : (255 - std::min(255, 2 * MULTIPLY(255 - C1(s), 255 - C1(d))));
-    auto c2 = (C2(s) < 128) ? std::min(255, 2 * MULTIPLY(C2(s), C2(d))) : (255 - std::min(255, 2 * MULTIPLY(255 - C2(s), 255 - C2(d))));
-    auto c3 = (C3(s) < 128) ? std::min(255, 2 * MULTIPLY(C3(s), C3(d))) : (255 - std::min(255, 2 * MULTIPLY(255 - C3(s), 255 - C3(d))));
+    auto c1 = (C1(s) < 128) ? std::min(255, 2 * MULTIPLY(C1(s), o.r)) : (255 - std::min(255, 2 * MULTIPLY(255 - C1(s), 255 - o.r)));
+    auto c2 = (C2(s) < 128) ? std::min(255, 2 * MULTIPLY(C2(s), o.g)) : (255 - std::min(255, 2 * MULTIPLY(255 - C2(s), 255 - o.g)));
+    auto c3 = (C3(s) < 128) ? std::min(255, 2 * MULTIPLY(C3(s), o.b)) : (255 - std::min(255, 2 * MULTIPLY(255 - C3(s), 255 - o.b)));
     return JOIN(255, c1, c2, c3);
 }
 
 static inline uint32_t opBlendSoftLight(uint32_t s, uint32_t d, TVG_UNUSED uint8_t a)
 {
+    if (d == 0) return s;
+
+    RenderColor o;
+    if (!UNPREMULTIPLY(d, o)) o.r = o.g = o.b = 0;
+
     //(255 - 2 * s) * (d * d) + (2 * s * b)
-    auto c1 = MULTIPLY(255 - std::min(255, 2 * C1(s)), MULTIPLY(C1(d), C1(d))) + MULTIPLY(std::min(255, 2 * C1(s)), C1(d));
-    auto c2 = MULTIPLY(255 - std::min(255, 2 * C2(s)), MULTIPLY(C2(d), C2(d))) + MULTIPLY(std::min(255, 2 * C2(s)), C2(d));
-    auto c3 = MULTIPLY(255 - std::min(255, 2 * C3(s)), MULTIPLY(C3(d), C3(d))) + MULTIPLY(std::min(255, 2 * C3(s)), C3(d));
+    auto c1 = MULTIPLY(255 - std::min(255, 2 * C1(s)), MULTIPLY(o.r, o.r)) + MULTIPLY(std::min(255, 2 * C1(s)), o.r);
+    auto c2 = MULTIPLY(255 - std::min(255, 2 * C2(s)), MULTIPLY(o.g, o.g)) + MULTIPLY(std::min(255, 2 * C2(s)), o.g);
+    auto c3 = MULTIPLY(255 - std::min(255, 2 * C3(s)), MULTIPLY(o.b, o.b)) + MULTIPLY(std::min(255, 2 * C3(s)), o.b);
     return JOIN(255, c1, c2, c3);
 }
 
