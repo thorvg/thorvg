@@ -729,7 +729,7 @@ TVG_API Tvg_Result tvg_paint_del(Tvg_Paint* paint);
  *
  * @since 1.0
  */
-TVG_API uint8_t tvg_paint_ref(Tvg_Paint* paint);
+TVG_API uint16_t tvg_paint_ref(Tvg_Paint* paint);
 
 
 /**
@@ -748,7 +748,7 @@ TVG_API uint8_t tvg_paint_ref(Tvg_Paint* paint);
  *
  * @since 1.0
  */
-TVG_API uint8_t tvg_paint_unref(Tvg_Paint* paint, bool free);
+TVG_API uint16_t tvg_paint_unref(Tvg_Paint* paint, bool free);
 
 
 /**
@@ -765,7 +765,7 @@ TVG_API uint8_t tvg_paint_unref(Tvg_Paint* paint, bool free);
  *
  * @since 1.0
  */
-TVG_API uint8_t tvg_paint_get_ref(const Tvg_Paint* paint);
+TVG_API uint16_t tvg_paint_get_ref(const Tvg_Paint* paint);
 
 
 /*!
