@@ -1203,7 +1203,7 @@ void LottieBuilder::updateMasks(LottieLayer* layer, float frameNo)
         //the first mask
         if (!pShape) {
             pShape = layer->pooling();
-            pShape->reset();
+            SHAPE(pShape)->reset();
             auto compMethod = (method == MaskMethod::Subtract || method == MaskMethod::InvAlpha) ? MaskMethod::InvAlpha : MaskMethod::Alpha;
             //Cheaper. Replace the masking with a clipper
             if (layer->masks.count == 1 && compMethod == MaskMethod::Alpha) {
@@ -1215,13 +1215,11 @@ void LottieBuilder::updateMasks(LottieLayer* layer, float frameNo)
         //Chain mask composition
         } else if (pMethod != method || pOpacity != opacity || (method != MaskMethod::Subtract && method != MaskMethod::Difference)) {
             auto shape = layer->pooling();
-            shape->reset();
+            SHAPE(shape)->reset();
             pShape->mask(shape, method);
             pShape = shape;
         }
 
-        pShape->trimpath(0.0f, 1.0f);
-        pShape->strokeWidth(0.0f);
         pShape->fill(255, 255, 255, opacity);
         pShape->transform(layer->cache.matrix);
 
