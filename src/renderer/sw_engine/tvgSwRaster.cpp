@@ -1531,15 +1531,12 @@ bool rasterClear(SwSurface* surface, uint32_t x, uint32_t y, uint32_t w, uint32_
 
 uint32_t rasterUnpremultiply(uint32_t data)
 {
-    uint8_t a = data >> 24;
+    auto a = A(data);
     if (a == 255 || a == 0) return data;
-    uint16_t r = ((data >> 8) & 0xff00) / a;
-    uint16_t g = ((data) & 0xff00) / a;
-    uint16_t b = ((data << 8) & 0xff00) / a;
-    if (r > 0xff) r = 0xff;
-    if (g > 0xff) g = 0xff;
-    if (b > 0xff) b = 0xff;
-    return (a << 24) | (r << 16) | (g << 8) | (b);
+    auto r = C1(data) * 255 / a;
+    auto g = C2(data) * 255 / a;
+    auto b = C3(data) * 255 / a;
+    return JOIN(a, r, g, b);
 }
 
 
