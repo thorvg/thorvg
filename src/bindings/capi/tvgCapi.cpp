@@ -180,24 +180,24 @@ TVG_API Tvg_Result tvg_paint_del(Tvg_Paint* paint)
 }
 
 
-TVG_API uint8_t tvg_paint_ref(Tvg_Paint* paint)
+TVG_API uint16_t tvg_paint_ref(Tvg_Paint* paint)
 {
-    if (paint) return (Tvg_Result) reinterpret_cast<Paint*>(paint)->ref();
-    return TVG_RESULT_INVALID_ARGUMENT;
+    if (paint) return reinterpret_cast<Paint*>(paint)->ref();
+    return 0;
 }
 
 
-TVG_API uint8_t tvg_paint_unref(Tvg_Paint* paint, bool free)
+TVG_API uint16_t tvg_paint_unref(Tvg_Paint* paint, bool free)
 {
-    if (paint) return (Tvg_Result) reinterpret_cast<Paint*>(paint)->unref(free);
-    return TVG_RESULT_INVALID_ARGUMENT;
+    if (paint) return reinterpret_cast<Paint*>(paint)->unref(free);
+    return 0;
 }
 
 
-TVG_API uint8_t tvg_paint_get_ref(const Tvg_Paint* paint)
+TVG_API uint16_t tvg_paint_get_ref(const Tvg_Paint* paint)
 {
-    if (paint) return (Tvg_Result) reinterpret_cast<const Paint*>(paint)->refCnt();
-    return TVG_RESULT_INVALID_ARGUMENT;
+    if (paint) return reinterpret_cast<const Paint*>(paint)->refCnt();
+    return 0;
 }
 
 

@@ -506,7 +506,7 @@ public:
      *
      * @since 1.0
      */
-    uint8_t ref() noexcept;
+    uint16_t ref() noexcept;
 
     /**
      * @brief Decrement the reference count for the Paint instance.
@@ -523,7 +523,7 @@ public:
      *
      * @since 1.0
      */
-    uint8_t unref(bool free = true) noexcept;
+    uint16_t unref(bool free = true) noexcept;
 
     /**
      * @brief Retrieve the current reference count of the Paint instance.
@@ -537,7 +537,7 @@ public:
      *
      * @since 1.0
      */
-    uint8_t refCnt() const noexcept;
+    uint16_t refCnt() const noexcept;
 
     /**
      * @brief Returns the ID value of this class.

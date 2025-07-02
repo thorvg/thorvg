@@ -106,18 +106,18 @@ namespace tvg
             }
         }
 
-        uint8_t ref()
+        uint16_t ref()
         {
             return ++refCnt;
         }
 
-        uint8_t unref(bool free = true)
+        uint16_t unref(bool free = true)
         {
             parent = nullptr;
             return unrefx(free);
         }
 
-        uint8_t unrefx(bool free)
+        uint16_t unrefx(bool free)
         {
             if (refCnt > 0) --refCnt;
 

@@ -430,19 +430,19 @@ Result Paint::blend(BlendMethod method) noexcept
 }
 
 
-uint8_t Paint::ref() noexcept
+uint16_t Paint::ref() noexcept
 {
     return pImpl->ref();
 }
 
 
-uint8_t Paint::unref(bool free) noexcept
+uint16_t Paint::unref(bool free) noexcept
 {
     return pImpl->unrefx(free);
 }
 
 
-uint8_t Paint::refCnt() const noexcept
+uint16_t Paint::refCnt() const noexcept
 {
     return pImpl->refCnt;
 }
