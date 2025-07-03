@@ -1089,6 +1089,11 @@ struct LottieComposition
 {
     ~LottieComposition();
 
+    void clear()
+    {
+        if (root && root->scene) root->scene->remove();
+    }
+
     float duration() const
     {
         return frameCnt() / frameRate;  // in second

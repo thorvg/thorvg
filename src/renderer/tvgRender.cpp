@@ -160,8 +160,6 @@ void RenderDirtyRegion::init(uint32_t w, uint32_t h)
 
 bool RenderDirtyRegion::add(const RenderRegion& bbox)
 {
-    if (disabled) return false;
-
     for (int idx = 0; idx < PARTITIONING; ++idx) {
         auto& partition = partitions[idx];
         if (bbox.max.y <= partition.region.min.y) break;
@@ -176,7 +174,6 @@ bool RenderDirtyRegion::add(const RenderRegion& bbox)
 
 bool RenderDirtyRegion::add(const RenderRegion& prv, const RenderRegion& cur)
 {
-    if (disabled) return false;
     if (prv == cur) return add(prv);
 
     for (int idx = 0; idx < PARTITIONING; ++idx) {
