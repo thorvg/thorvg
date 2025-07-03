@@ -1542,15 +1542,12 @@ bool LottieBuilder::update(LottieComposition* comp, float frameNo)
         if (equal(frameNo, tween.frameNo)) offTween();
     }
 
-    //update children layers
-    auto root = comp->root;
-    root->scene->remove();
-
     if (exps && comp->expressions) exps->update(comp->timeAtFrame(frameNo));
 
-    ARRAY_REVERSE_FOREACH(child, root->children) {
+    //update children layers
+    ARRAY_REVERSE_FOREACH(child, comp->root->children) {
         auto layer = static_cast<LottieLayer*>(*child);
-        if (!layer->matteSrc) updateLayer(comp, root->scene, layer, frameNo);
+        if (!layer->matteSrc) updateLayer(comp, comp->root->scene, layer, frameNo);
     }
 
     return true;

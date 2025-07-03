@@ -384,7 +384,7 @@ bool SwRenderer::postRender()
 void SwRenderer::damage(RenderData rd, const RenderRegion& region)
 {
     SwTask* task = static_cast<SwTask*>(rd);
-    if (task && task->opacity == 0) return;
+    if (dirtyRegion.deactivated() || (task && task->opacity == 0)) return;
     dirtyRegion.add(region);
 }
 
