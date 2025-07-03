@@ -34,17 +34,15 @@
 #define SW_ANGLE_2PI (SW_ANGLE_PI << 1)
 #define SW_ANGLE_PI2 (SW_ANGLE_PI >> 1)
 
-using SwCoord = int32_t;
-using SwFixed = int64_t;
 
-static inline float TO_FLOAT(SwCoord val)
+static inline float TO_FLOAT(int32_t val)
 {
     return static_cast<float>(val) / 64.0f;
 }
 
 struct SwPoint
 {
-    SwCoord x, y;
+    int32_t x, y;
 
     SwPoint& operator-=(const SwPoint& rhs)
     {
@@ -101,7 +99,7 @@ struct SwPoint
 
 struct SwSize
 {
-    SwCoord w, h;
+    int32_t w, h;
 };
 
 struct SwOutline
@@ -203,15 +201,15 @@ struct SwStrokeBorder
 
 struct SwStroke
 {
-    SwFixed angleIn;
-    SwFixed angleOut;
+    int64_t angleIn;
+    int64_t angleOut;
     SwPoint center;
-    SwFixed lineLength;
-    SwFixed subPathAngle;
+    int64_t lineLength;
+    int64_t subPathAngle;
     SwPoint ptStartSubPath;
-    SwFixed subPathLineLength;
-    SwFixed width;
-    SwFixed miterlimit;
+    int64_t subPathLineLength;
+    int64_t width;
+    int64_t miterlimit;
     SwFill* fill = nullptr;
     SwStrokeBorder borders[2];
     float sx, sy;
@@ -319,9 +317,9 @@ struct SwMpool
     unsigned allocSize;
 };
 
-static inline SwCoord TO_SWCOORD(float val)
+static inline int32_t TO_SWCOORD(float val)
 {
-    return SwCoord(val * 64.0f);
+    return int32_t(val * 64.0f);
 }
 
 static inline uint32_t JOIN(uint8_t c0, uint8_t c1, uint8_t c2, uint8_t c3)
@@ -345,7 +343,7 @@ static inline uint8_t INTERPOLATE8(uint8_t s, uint8_t d, uint8_t a)
     return (((s) * (a) + 0xff) >> 8) + (((d) * ~(a) + 0xff) >> 8);
 }
 
-static inline SwCoord HALF_STROKE(float width)
+static inline int32_t HALF_STROKE(float width)
 {
     return TO_SWCOORD(width * 0.5f);
 }
@@ -515,17 +513,17 @@ static inline uint32_t opBlendSoftLight(uint32_t s, uint32_t d, TVG_UNUSED uint8
 int64_t mathMultiply(int64_t a, int64_t b);
 int64_t mathDivide(int64_t a, int64_t b);
 int64_t mathMulDiv(int64_t a, int64_t b, int64_t c);
-void mathRotate(SwPoint& pt, SwFixed angle);
-SwFixed mathTan(SwFixed angle);
-SwFixed mathAtan(const SwPoint& pt);
-SwFixed mathCos(SwFixed angle);
-SwFixed mathSin(SwFixed angle);
+void mathRotate(SwPoint& pt, int64_t angle);
+int64_t mathTan(int64_t angle);
+int64_t mathAtan(const SwPoint& pt);
+int64_t mathCos(int64_t angle);
+int64_t mathSin(int64_t angle);
 void mathSplitCubic(SwPoint* base);
 void mathSplitLine(SwPoint* base);
-SwFixed mathDiff(SwFixed angle1, SwFixed angle2);
-SwFixed mathLength(const SwPoint& pt);
-int mathCubicAngle(const SwPoint* base, SwFixed& angleIn, SwFixed& angleMid, SwFixed& angleOut);
-SwFixed mathMean(SwFixed angle1, SwFixed angle2);
+int64_t mathDiff(int64_t angle1, int64_t angle2);
+int64_t mathLength(const SwPoint& pt);
+int mathCubicAngle(const SwPoint* base, int64_t& angleIn, int64_t& angleMid, int64_t& angleOut);
+int64_t mathMean(int64_t angle1, int64_t angle2);
 SwPoint mathTransform(const Point* to, const Matrix& transform);
 bool mathUpdateOutlineBBox(const SwOutline* outline, const RenderRegion& clipBox, RenderRegion& renderBox, bool fastTrack);
 
