@@ -202,13 +202,13 @@ using Area = long;
 
 struct Band
 {
-    SwCoord min, max;
+    int32_t min, max;
 };
 
 struct Cell
 {
-    SwCoord x;
-    SwCoord cover;
+    int32_t x;
+    int32_t cover;
     Area area;
     Cell *next;
 };
@@ -220,11 +220,11 @@ struct RleWorker
     SwPoint cellPos;
     SwPoint cellMin;
     SwPoint cellMax;
-    SwCoord cellXCnt;
-    SwCoord cellYCnt;
+    int32_t cellXCnt;
+    int32_t cellYCnt;
 
     Area area;
-    SwCoord cover;
+    int32_t cover;
 
     Cell* cells;
     ptrdiff_t maxCells;
@@ -245,7 +245,7 @@ struct RleWorker
     long bufferSize;
 
     Cell** yCells;
-    SwCoord yCnt;
+    int32_t yCnt;
 
     bool invalid;
     bool antiAlias;
@@ -254,11 +254,11 @@ struct RleWorker
 
 static inline SwPoint UPSCALE(const SwPoint& pt)
 {
-    return {SwCoord(((unsigned long) pt.x) << (PIXEL_BITS - 6)), SwCoord(((unsigned long) pt.y) << (PIXEL_BITS - 6))};
+    return {int32_t(((unsigned long) pt.x) << (PIXEL_BITS - 6)), int32_t(((unsigned long) pt.y) << (PIXEL_BITS - 6))};
 }
 
 
-static inline SwCoord TRUNC(const SwCoord x)
+static inline int32_t TRUNC(const int32_t x)
 {
     return  x >> PIXEL_BITS;
 }
@@ -282,7 +282,7 @@ static inline SwPoint FRACT(const SwPoint& pt)
  *  algorithm.  We use alpha = 1, beta = 3/8, giving us results with a
  *  largest error less than 7% compared to the exact value.
  */
-static inline SwCoord HYPOT(SwPoint pt)
+static inline int32_t HYPOT(SwPoint pt)
 {
     if (pt.x < 0) pt.x = -pt.x;
     if (pt.y < 0) pt.y = -pt.y;
@@ -290,7 +290,7 @@ static inline SwCoord HYPOT(SwPoint pt)
 }
 
 
-static void _horizLine(RleWorker& rw, SwCoord x, SwCoord y, SwCoord area, SwCoord aCount)
+static void _horizLine(RleWorker& rw, int32_t x, int32_t y, int32_t area, int32_t aCount)
 {
     x += rw.cellMin.x;
     y += rw.cellMin.y;
@@ -328,7 +328,7 @@ static void _horizLine(RleWorker& rw, SwCoord x, SwCoord y, SwCoord area, SwCoor
         auto& span = rle->spans.last();
         if ((span.coverage == coverage) && (span.y == y) && (span.x + span.len == x)) {
             //Clip x range
-            SwCoord xOver = 0;
+            int32_t xOver = 0;
             if (x + aCount >= rw.cellMax.x) xOver -= (x + aCount - rw.cellMax.x);
             if (x < rw.cellMin.x) xOver -= (rw.cellMin.x - x);
             span.len += (aCount + xOver);
@@ -337,7 +337,7 @@ static void _horizLine(RleWorker& rw, SwCoord x, SwCoord y, SwCoord area, SwCoor
     }
 
     //Clip x range
-    SwCoord xOver = 0;
+    int32_t xOver = 0;
     if (x + aCount >= rw.cellMax.x) xOver -= (x + aCount - rw.cellMax.x);
     if (x < rw.cellMin.x) {
         xOver -= (rw.cellMin.x - x);
@@ -537,7 +537,7 @@ static bool _lineTo(RleWorker& rw, const SwPoint& to)
             }
         //any other line
         } else {
-            #define SW_UDIV(a, b) (SwCoord)((uint64_t(a) * uint64_t(b)) >> 32)
+            #define SW_UDIV(a, b) (int32_t)((uint64_t(a) * uint64_t(b)) >> 32)
 
             Area prod = diff.x * f1.y - diff.y * f1.x;
 
@@ -614,7 +614,7 @@ static bool _cubicTo(RleWorker& rw, const SwPoint& ctrl1, const SwPoint& ctrl2, 
     auto min = arc[0].y;
     auto max = arc[0].y;
 
-    SwCoord y;
+    int32_t y;
     for (auto i = 1; i < 4; ++i) {
         y = arc[i].y;
         if (y < min) min = y;
@@ -772,7 +772,7 @@ SwRle* rleRender(SwRle* rle, const SwOutline* outline, const RenderRegion& bbox,
 
     auto min = rw.cellMin.y;
     auto yMax = rw.cellMax.y;
-    SwCoord max;
+    int32_t max;
 
     for (int n = 0; n < bandCnt; ++n, min = max) {
         max = min + rw.bandSize;
