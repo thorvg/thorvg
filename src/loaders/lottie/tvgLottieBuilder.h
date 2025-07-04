@@ -88,7 +88,7 @@ struct RenderContext
             update(roundness);
         }
         if (rhs.offset) {
-            offset = new LottieOffsetModifier(rhs.offset->offset, rhs.offset->miterLimit, rhs.offset->join);
+            offset = new LottieOffsetModifier(rhs.offset->buffer, rhs.offset->offset, rhs.offset->miterLimit, rhs.offset->join);
             update(offset);
         }
         if (rhs.transform) {
@@ -174,7 +174,7 @@ private:
     void updateRoundedCorner(LottieGroup* parent, LottieObject** child, float frameNo, Inlist<RenderContext>& contexts, RenderContext* ctx);
     void updateOffsetPath(LottieGroup* parent, LottieObject** child, float frameNo, Inlist<RenderContext>& contexts, RenderContext* ctx);
 
-    RenderPath buffer;   //resusable path
+    RenderPath buffer[2]; //alternating buffers used when chaining multiple modifiers; for a single modifier only buffer[0] is used
     LottieExpressions* exps;
     Tween tween;
 };
