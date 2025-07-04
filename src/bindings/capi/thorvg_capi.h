@@ -1,20 +1,3 @@
-/*!
-* @file thorvg_capi.h
-*
-* @brief The module provides C bindings for the ThorVG library.
-* Please refer to src/examples/Capi.cpp to find the thorvg_capi usage examples.
-*
-* The thorvg_capi module allows to implement the ThorVG client and provides
-* the following functionalities:
-* - drawing shapes: line, curve, polygon, circle, user-defined, ...
-* - filling: solid, linear and radial gradient
-* - scene graph & affine transformation (translation, rotation, scale, ...)
-* - stroking: width, join, cap, dash
-* - composition: blending, masking, path clipping
-* - pictures: SVG, PNG, JPG, bitmap
-*
-*/
-
 #ifndef __THORVG_CAPI_H__
 #define __THORVG_CAPI_H__
 
@@ -183,21 +166,6 @@ typedef enum {
     TVG_BLEND_METHOD_ADD,               ///< Simply adds pixel values of one layer with the other. (S + D)
     TVG_BLEND_METHOD_HARDMIX            ///< Reserved. Not supported.
 } Tvg_Blend_Method;
-
-
-/**
- * @see Tvg_Type
- * @deprecated
- */
-typedef enum {
-    TVG_IDENTIFIER_UNDEF = 0,   ///< Undefined type.
-    TVG_IDENTIFIER_SHAPE,       ///< A shape type paint.
-    TVG_IDENTIFIER_SCENE,       ///< A scene type paint.
-    TVG_IDENTIFIER_PICTURE,     ///< A picture type paint.
-    TVG_IDENTIFIER_LINEAR_GRAD, ///< A linear gradient type.
-    TVG_IDENTIFIER_RADIAL_GRAD, ///< A radial gradient type.
-    TVG_IDENTIFIER_TEXT         ///< A text type paint.
-} Tvg_Identifier;
 
 
 /**
