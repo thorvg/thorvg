@@ -214,14 +214,16 @@ void contents()
 
         Tvg_Paint *text = tvg_text_new();
         tvg_text_set_font(text, "SentyCloud", 25.0f, "");
-        tvg_text_set_fill_color(text, 0, 0, 255);
+        tvg_text_set_fill_color(text, 200, 200, 255);
         tvg_text_set_text(text, "\xE7\xB4\xA2\xE5\xB0\x94\x56\x47\x20\xE6\x98\xAF\xE6\x9C\x80\xE5\xA5\xBD\xE7\x9A\x84");
         tvg_paint_translate(text, 50.0f, 380.0f);
         tvg_canvas_push(canvas, text);
     }
 
-    //Text 2
+    //Text 2 with Scene effect
     {
+        Tvg_Paint* scene = tvg_scene_new();
+
         //load from a memory
         FILE* file = fopen(EXAMPLE_DIR"/font/Arial.ttf", "rb");
         if (file) {
@@ -240,16 +242,21 @@ void contents()
 
         Tvg_Gradient* grad = tvg_radial_gradient_new();
         tvg_radial_gradient_set(grad, 200.0f, 200.0f, 20.0f, 200.0f, 200.0f, 0.0f);
-        Tvg_Color_Stop color_stops[2] = {{0.0f, 255, 0, 255, 255}, {1.0f, 0, 0, 255, 255}};
+        Tvg_Color_Stop color_stops[2] = {{0.0f, 255, 255, 255, 255}, {1.0f, 0, 0, 255, 255}};
         tvg_gradient_set_color_stops(grad, color_stops, 2);
         tvg_gradient_set_spread(grad, TVG_STROKE_FILL_REFLECT);
 
         Tvg_Paint *text = tvg_text_new();
-        tvg_text_set_font(text, "Arial", 20.0f, "italic");
+        tvg_text_set_font(text, "Arial", 40.0f, "italic");
         tvg_text_set_gradient(text, grad);
         tvg_text_set_text(text, "ThorVG is the best");
-        tvg_paint_translate(text, 70.0f, 420.0f);
-        tvg_canvas_push(canvas, text);
+        tvg_paint_translate(text, 20.0f, 420.0f);
+
+        //Apply GaussianBlur post effect (sigma, direction, border option, quality)
+        tvg_scene_push_effect_gaussian_blur(scene, 2.5, 0, 0, 100);
+        tvg_scene_push(scene, text);
+
+        tvg_canvas_push(canvas, scene);
     }
 }
 
