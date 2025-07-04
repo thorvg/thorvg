@@ -24,7 +24,6 @@
 #define _TVG_SCENE_H_
 
 #include <algorithm>
-#include <cstdarg>
 #include "tvgMath.h"
 #include "tvgPaint.h"
 

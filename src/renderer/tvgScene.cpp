@@ -61,6 +61,7 @@ Result Scene::push(SceneEffect effect, ...) noexcept
 {
     va_list args;
     va_start(args, effect);
-
-    return SCENE(this)->push(effect, args);
+    auto ret = SCENE(this)->push(effect, args);
+    va_end(args);
+    return ret;
 }

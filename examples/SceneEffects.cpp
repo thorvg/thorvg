@@ -104,7 +104,7 @@ struct UserExample : tvgexam::Example
         //Apply GaussianBlur post effect (sigma, direction, border option, quality)
         for (int i = 0; i < 3; ++i) {
             blur[i]->push(tvg::SceneEffect::ClearAll);
-            blur[i]->push(tvg::SceneEffect::GaussianBlur, (double)(10.0f * progress), i, 0, 100);
+            blur[i]->push(tvg::SceneEffect::GaussianBlur, 10.0 * double(progress), i, 0, 100);
         }
 
         //Apply Fill post effect (rgba)
