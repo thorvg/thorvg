@@ -540,7 +540,7 @@ static uint32_t _trintone(uint32_t s, uint32_t m, uint32_t h, int l)
 
 void effectTritoneUpdate(RenderEffectTritone* params)
 {
-    params->valid = true;
+    params->valid = (params->blender < 255);
 }
 
 
@@ -555,7 +555,7 @@ bool effectTritone(SwCompositor* cmp, const RenderEffectTritone* params, bool di
     auto opacity = cmp->opacity;
     auto luma = cmp->recoverSfc->alphas[2];  //luma function
 
-    TVGLOG("SW_ENGINE", "Tritone region(%d, %d, %d, %d), param(%d %d %d, %d %d %d, %d %d %d)", bbox.min.x, bbox.min.y, bbox.max.x, bbox.max.y, params->shadow[0], params->shadow[1], params->shadow[2], params->midtone[0], params->midtone[1], params->midtone[2], params->highlight[0], params->highlight[1], params->highlight[2]);
+    TVGLOG("SW_ENGINE", "Tritone region(%d, %d, %d, %d), param(%d %d %d, %d %d %d, %d %d %d, %d)", bbox.min.x, bbox.min.y, bbox.max.x, bbox.max.y, params->shadow[0], params->shadow[1], params->shadow[2], params->midtone[0], params->midtone[1], params->midtone[2], params->highlight[0], params->highlight[1], params->highlight[2], params->blender);
 
     if (direct) {
         auto dbuffer = cmp->recoverSfc->buf32 + (bbox.min.y * cmp->recoverSfc->stride + bbox.min.x);
@@ -563,9 +563,14 @@ bool effectTritone(SwCompositor* cmp, const RenderEffectTritone* params, bool di
         for (size_t y = 0; y < h; ++y) {
             auto dst = dbuffer;
             auto src = sbuffer;
-            for (size_t x = 0; x < w; ++x, ++dst, ++src) {
-                auto tmp = rasterUnpremultiply(*src);
-                *dst = INTERPOLATE(_trintone(shadow, midtone, highlight, luma((uint8_t*)&tmp)), *dst, MULTIPLY(opacity, A(tmp)));
+            if (params->blender == 0) {
+                for (size_t x = 0; x < w; ++x, ++dst, ++src) {
+                    *dst = INTERPOLATE(_trintone(shadow, midtone, highlight, luma((uint8_t*)src)), *dst, MULTIPLY(opacity, A(*src)));
+                }
+            } else {
+                for (size_t x = 0; x < w; ++x, ++dst, ++src) {
+                    *dst = INTERPOLATE(INTERPOLATE(*src, _trintone(shadow, midtone, highlight, luma((uint8_t*)src)), params->blender), *dst, MULTIPLY(opacity, A(*src)));
+                }
             }
             dbuffer += cmp->image.stride;
             sbuffer += cmp->recoverSfc->stride;
@@ -575,9 +580,14 @@ bool effectTritone(SwCompositor* cmp, const RenderEffectTritone* params, bool di
         auto dbuffer = cmp->image.buf32 + (bbox.min.y * cmp->image.stride + bbox.min.x);
         for (size_t y = 0; y < h; ++y) {
             auto dst = dbuffer;
-            for (size_t x = 0; x < w; ++x, ++dst) {
-                auto tmp = rasterUnpremultiply(*dst);
-                *dst = ALPHA_BLEND(_trintone(shadow, midtone, highlight, luma((uint8_t*)&tmp)), A(tmp));
+            if (params->blender == 0) {
+                for (size_t x = 0; x < w; ++x, ++dst) {
+                    *dst = ALPHA_BLEND(_trintone(shadow, midtone, highlight, luma((uint8_t*)dst)), MULTIPLY(A(*dst), opacity));
+                }
+            } else {
+                for (size_t x = 0; x < w; ++x, ++dst) {
+                    *dst = ALPHA_BLEND(INTERPOLATE(*dst, _trintone(shadow, midtone, highlight, luma((uint8_t*)dst)), params->blender), MULTIPLY(A(*dst), opacity));
+                }
             }
             dbuffer += cmp->image.stride;
         }

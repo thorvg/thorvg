@@ -1001,6 +1001,9 @@ void GlRenderer::effectFillUpdate(RenderEffectFill* effect, const Matrix& transf
 
 void GlRenderer::effectTintUpdate(RenderEffectTint* effect, const Matrix& transform)
 {
+    effect->valid = (effect->intensity > 0);
+    if (!effect->valid) return;
+
     auto params = (GlEffectParams*)effect->rd;
     if (!params) params = tvg::malloc<GlEffectParams*>(sizeof(GlEffectParams));
     params->params[0] = effect->black[0] / 255.0f;
@@ -1013,12 +1016,14 @@ void GlRenderer::effectTintUpdate(RenderEffectTint* effect, const Matrix& transf
     params->params[7] = 0.0f;
     params->params[8] = effect->intensity / 255.0f;
     effect->rd = params;
-    effect->valid = (effect->intensity > 0);
 }
 
 
 void GlRenderer::effectTritoneUpdate(RenderEffectTritone* effect, const Matrix& transform)
 {
+    effect->valid = (effect->blender < 255);
+    if (!effect->valid) return;
+
     auto params = (GlEffectParams*)effect->rd;
     if (!params) params = tvg::malloc<GlEffectParams*>(sizeof(GlEffectParams));
     params->params[0] = effect->shadow[0] / 255.0f;
@@ -1032,9 +1037,8 @@ void GlRenderer::effectTritoneUpdate(RenderEffectTritone* effect, const Matrix& 
     params->params[8] = effect->highlight[0] / 255.0f;
     params->params[9] = effect->highlight[1] / 255.0f;
     params->params[10] = effect->highlight[2] / 255.0f;
-    params->params[11] = 0.0f;
+    params->params[11] = effect->blender / 255.0f;
     effect->rd = params;
-    effect->valid = true;
 }
 
 

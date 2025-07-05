@@ -889,11 +889,15 @@ void main()
     vec4 midtone = uParams.params[1];
     vec4 highlight = uParams.params[2];
 
-    FragColor = vec4(
+    vec4 tmp = vec4(
         luma >= 0.5f ? mix(midtone.r, highlight.r, (luma - 0.5f)*2.0f) : mix(shadow.r, midtone.r, luma * 2.0f),
         luma >= 0.5f ? mix(midtone.g, highlight.g, (luma - 0.5f)*2.0f) : mix(shadow.g, midtone.g, luma * 2.0f),
         luma >= 0.5f ? mix(midtone.b, highlight.b, (luma - 0.5f)*2.0f) : mix(shadow.b, midtone.b, luma * 2.0f),
         luma >= 0.5f ? mix(midtone.a, highlight.a, (luma - 0.5f)*2.0f) : mix(shadow.a, midtone.a, luma * 2.0f)
-    ) * orig.a;
+    );
+
+    //blender
+    if (highlight.a > 0.0f) tmp = mix(tmp, orig, highlight.a);
+    FragColor = tmp * orig.a;
 } 
 )";

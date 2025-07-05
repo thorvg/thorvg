@@ -294,8 +294,8 @@ bool WgShaderTypeEffectParams::update(RenderEffectTritone* tritone)
     params[8] = tritone->highlight[0] / 255.0f;
     params[9] = tritone->highlight[1] / 255.0f;
     params[10] = tritone->highlight[2] / 255.0f;
-    params[11] = 0.0f;
+    params[11] = tritone->blender / 255.0f;
 
-    tritone->valid = true;
+    tritone->valid = tritone->blender < 255;
     return true;
 }
