@@ -1312,7 +1312,7 @@ void LottieBuilder::updateStrokeEffect(LottieLayer* layer, LottieFxStroke* effec
 
 void LottieBuilder::updateEffect(LottieLayer* layer, float frameNo)
 {
-    constexpr int QUALITY = 25;
+    constexpr int QUALITY = 35;
     constexpr float BLUR_TO_SIGMA = 0.3f;
 
     if (layer->effects.count == 0) return;
