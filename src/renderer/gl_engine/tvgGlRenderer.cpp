@@ -953,7 +953,6 @@ void GlRenderer::effectGaussianBlurUpdate(RenderEffectGaussianBlur* effect, cons
     blur->sigma = effect->sigma;
     blur->scale = std::sqrt(transform.e11 * transform.e11 + transform.e12 * transform.e12);
     blur->extend = 2 * blur->sigma * blur->scale;
-    blur->level = int(GL_GAUSSIAN_MAX_LEVEL * ((effect->quality - 1) * 0.01f)) + 1;
     effect->rd = blur;
     effect->valid = true;
 }
@@ -972,7 +971,6 @@ void GlRenderer::effectDropShadowUpdate(RenderEffectDropShadow* effect, const Ma
     };
     dropShadow->sigma = sigma;
     dropShadow->scale = scale;
-    dropShadow->level = int(GL_GAUSSIAN_MAX_LEVEL * ((effect->quality - 1) * 0.01f)) + 1;
     dropShadow->color[3] = effect->color[3] / 255.0f;
     //Drop shadow effect applies blending in the shader (GL_BLEND disabled), so the color should be premultiplied:
     dropShadow->color[0] = effect->color[0] / 255.0f * dropShadow->color[3];
@@ -1189,8 +1187,8 @@ bool GlRenderer::render(TVG_UNUSED RenderCompositor* cmp, const RenderEffect* ef
         task->setDrawRange(ioffset, 6);
         // add task to render pipeline
         pass->addRenderTask(task);
-    }
-    return false;
+    } else return false;
+    return true;
 }
 
 
