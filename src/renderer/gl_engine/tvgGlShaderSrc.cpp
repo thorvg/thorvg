@@ -861,11 +861,11 @@ out vec4 FragColor;
 void main()
 {
     vec4 orig = texture(uSrcTexture, vUV);
-    float luma = dot(orig.rgb, vec3(0.2125, 0.7154, 0.0721));
+    float luma = dot(orig.rgb, vec3(0.2126, 0.7152, 0.0722));
     vec4 black = uParams.params[0];
     vec4 white = uParams.params[1];
     float intens = uParams.params[2].r;
-    FragColor = mix(orig, mix(white, black, luma), intens) * orig.a;
+    FragColor = mix(orig, mix(black, white, luma), intens) * orig.a;
 } 
 )";
 
@@ -881,7 +881,7 @@ out vec4 FragColor;
 void main()
 {
     vec4 orig = texture(uSrcTexture, vUV);
-    float luma = dot(orig.rgb, vec3(0.2125, 0.7154, 0.0721));
+    float luma = dot(orig.rgb, vec3(0.2126, 0.7152, 0.0722));
     vec4 shadow = uParams.params[0];
     vec4 midtone = uParams.params[1];
     vec4 highlight = uParams.params[2];

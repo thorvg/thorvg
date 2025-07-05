@@ -852,11 +852,11 @@ fn cs_main_tint(@builtin(global_invocation_id) gid: vec3u) {
     let uid = min(gid.xy + vmin, vmax);
 
     let orig = textureLoad(imageSrc, uid, 0);
-    let luma: f32 = dot(orig.rgb, vec3f(0.2125, 0.7154, 0.0721));
+    let luma: f32 = dot(orig.rgb, vec3f(0.2126, 0.7152, 0.0722));
     let black = settings[0];
     let white = settings[1];
     let intens = settings[2].r;
-    let color = mix(orig, mix(white, black, luma), intens) * orig.a;
+    let color = mix(orig, mix(black, white, luma), intens) * orig.a;
     textureStore(imageTrg, uid.xy, color);
 }
 
@@ -870,7 +870,7 @@ fn cs_main_tritone(@builtin(global_invocation_id) gid: vec3u) {
     let uid = min(gid.xy + vmin, vmax);
 
     let orig = textureLoad(imageSrc, uid, 0);
-    let luma: f32 = dot(orig.rgb, vec3f(0.2125, 0.7154, 0.0721));
+    let luma: f32 = dot(orig.rgb, vec3f(0.2126, 0.7152, 0.0722));
     let shadow = settings[0];
     let midtone = settings[1];
     let highlight = settings[2];

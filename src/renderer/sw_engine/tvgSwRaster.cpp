@@ -103,14 +103,14 @@ static inline uint8_t _ialpha(uint8_t* a)
 static inline uint8_t _abgrLuma(uint8_t* c)
 {
     auto v = *(uint32_t*)c;
-    return ((((v&0xff)*54) + (((v>>8)&0xff)*183) + (((v>>16)&0xff)*19))) >> 8; //0.2125*R + 0.7154*G + 0.0721*B
+    return ((((v&0xff)*54) + (((v>>8)&0xff)*182) + (((v>>16)&0xff)*19))) >> 8; //0.2126*R + 0.7152*G + 0.0722*B
 }
 
 
 static inline uint8_t _argbLuma(uint8_t* c)
 {
     auto v = *(uint32_t*)c;
-    return ((((v&0xff)*19) + (((v>>8)&0xff)*183) + (((v>>16)&0xff)*54))) >> 8; //0.0721*B + 0.7154*G + 0.2125*R
+    return ((((v&0xff)*19) + (((v>>8)&0xff)*182) + (((v>>16)&0xff)*54))) >> 8; //0.0722*B + 0.7152*G + 0.2126*R
 }
 
 

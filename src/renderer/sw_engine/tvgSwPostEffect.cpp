@@ -494,9 +494,8 @@ bool effectTint(SwCompositor* cmp, const RenderEffectTint* params, bool direct)
             auto dst = dbuffer;
             auto src = sbuffer;
             for (size_t x = 0; x < w; ++x, ++dst, ++src) {
-                auto tmp = rasterUnpremultiply(*src);
-                auto val = INTERPOLATE(INTERPOLATE(black, white, luma((uint8_t*)&tmp)), tmp, params->intensity);
-                *dst = INTERPOLATE(val, *dst, MULTIPLY(opacity, A(tmp)));
+                auto val = INTERPOLATE(INTERPOLATE(white, black, luma((uint8_t*)src)), *src, params->intensity);
+                *dst = INTERPOLATE(val, *dst, MULTIPLY(opacity, A(*src)));
             }
             dbuffer += cmp->image.stride;
             sbuffer += cmp->recoverSfc->stride;
@@ -507,9 +506,8 @@ bool effectTint(SwCompositor* cmp, const RenderEffectTint* params, bool direct)
         for (size_t y = 0; y < h; ++y) {
             auto dst = dbuffer;
             for (size_t x = 0; x < w; ++x, ++dst) {
-                auto tmp = rasterUnpremultiply(*dst);
-                auto val = INTERPOLATE(INTERPOLATE(black, white, luma((uint8_t*)&tmp)), tmp, params->intensity);
-                *dst = ALPHA_BLEND(val, A(tmp));
+                auto val = INTERPOLATE(INTERPOLATE(white, black, luma((uint8_t*)&dst)), *dst, params->intensity);
+                *dst = ALPHA_BLEND(val, MULTIPLY(opacity, A(*dst)));
             }
             dbuffer += cmp->image.stride;
         }
