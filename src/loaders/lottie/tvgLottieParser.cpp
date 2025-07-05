@@ -1338,6 +1338,7 @@ void LottieParser::parseTritone(LottieEffect* effect, int idx)
     if (idx == 0) parsePropertyInternal(tritone->bright);
     else if (idx == 1) parsePropertyInternal(tritone->midtone);
     else if (idx == 2) parsePropertyInternal(tritone->dark);
+    else if (idx == 3) parsePropertyInternal(tritone->blend);
     else skip();
 }
 

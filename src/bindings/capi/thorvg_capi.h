@@ -2091,10 +2091,11 @@ TVG_API Tvg_Result tvg_scene_push_effect_tint(Tvg_Paint* scene, int black_r, int
  * @param[in] highlight_r Red component of the highlight color [0 - 255].
  * @param[in] highlight_g Green component of the highlight color [0 - 255].
  * @param[in] highlight_b Blue component of the highlight color [0 - 255].
+ * @param[in] blend A blending factor that determines the mix between the original color and the tritone colors [0 - 255].
  *
  * @since 1.0
  */
-TVG_API Tvg_Result tvg_scene_push_effect_tritone(Tvg_Paint* scene, int shadow_r, int shadow_g, int shadow_b, int midtone_r, int midtone_g, int midtone_b, int highlight_r, int highlight_g, int highlight_b);
+TVG_API Tvg_Result tvg_scene_push_effect_tritone(Tvg_Paint* scene, int shadow_r, int shadow_g, int shadow_b, int midtone_r, int midtone_g, int midtone_b, int highlight_r, int highlight_g, int highlight_b, int blend);
 
 /** \} */   // end defgroup ThorVGCapi_Scene
 

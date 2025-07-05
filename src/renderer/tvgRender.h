@@ -479,6 +479,7 @@ struct RenderEffectTritone : RenderEffect
     uint8_t shadow[3];       //rgb
     uint8_t midtone[3];      //rgb
     uint8_t highlight[3];    //rgb
+    uint8_t blender = 0;     //0 ~ 255
 
     static RenderEffectTritone* gen(va_list& args)
     {
@@ -492,6 +493,7 @@ struct RenderEffectTritone : RenderEffect
         inst->highlight[0] = va_arg(args, int);
         inst->highlight[1] = va_arg(args, int);
         inst->highlight[2] = va_arg(args, int);
+        inst->blender = va_arg(args, int);
         inst->type = SceneEffect::Tritone;
         return inst;
     }
