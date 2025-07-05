@@ -204,6 +204,7 @@ struct LottieFxTritone : LottieEffect
     LottieColor bright;
     LottieColor midtone;
     LottieColor dark;
+    LottieOpacity blend;
 
     LottieFxTritone()
     {

@@ -1343,7 +1343,7 @@ void LottieBuilder::updateEffect(LottieLayer* layer, float frameNo)
                 auto dark = effect->dark(frameNo);
                 auto midtone = effect->midtone(frameNo);
                 auto bright = effect->bright(frameNo);
-                layer->scene->push(SceneEffect::Tritone, dark.rgb[0], dark.rgb[1], dark.rgb[2], midtone.rgb[0], midtone.rgb[1], midtone.rgb[2], bright.rgb[0], bright.rgb[1], bright.rgb[2]);
+                layer->scene->push(SceneEffect::Tritone, dark.rgb[0], dark.rgb[1], dark.rgb[2], midtone.rgb[0], midtone.rgb[1], midtone.rgb[2], bright.rgb[0], bright.rgb[1], bright.rgb[2], (int)effect->blend(frameNo));
                 break;
             }
             case LottieEffect::DropShadow: {

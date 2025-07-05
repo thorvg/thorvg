@@ -874,11 +874,14 @@ fn cs_main_tritone(@builtin(global_invocation_id) gid: vec3u) {
     let shadow = settings[0];
     let midtone = settings[1];
     let highlight = settings[2];
-    let color = select(
-        mix(shadow, midtone, luma * 2.0f),
-        mix(midtone, highlight, (luma - 0.5f)*2.0f),
-        luma >= 0.5f
-    ) * orig.a;
-    textureStore(imageTrg, uid.xy, color);
+
+    var color = select(mix(shadow, midtone, luma * 2.0f), mix(midtone, highlight, (luma - 0.5f)*2.0f), luma >= 0.5f);
+
+    // blending
+    if (highlight.a > 0.0f) {
+        color = mix(color, orig, highlight.a);
+    }
+
+    textureStore(imageTrg, uid.xy, color * orig.a);
 }
 )";

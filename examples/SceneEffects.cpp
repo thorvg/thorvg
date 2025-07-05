@@ -115,9 +115,9 @@ struct UserExample : tvgexam::Example
         tint->push(tvg::SceneEffect::ClearAll);
         tint->push(tvg::SceneEffect::Tint, 0, 0, 0, 0, (int)(progress * 255), 0, (double)(progress * 100.0f));
 
-        //Apply Trintone post effect (shadow:rgb, midtone:rgb, highlight:rgb)
+        //Apply Tritone post effect (shadow:rgb, midtone:rgb, highlight:rgb, blending with original)
         trintone->push(tvg::SceneEffect::ClearAll);
-        trintone->push(tvg::SceneEffect::Tritone, 0, (int)(progress * 255), 0, 199, 110, 36, 255, 255, 255);
+        trintone->push(tvg::SceneEffect::Tritone, 0, (int)(progress * 255), 0, 199, 110, 36, 255, 255, 255, 0);
 
         canvas->update();
 
