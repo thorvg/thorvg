@@ -1298,7 +1298,7 @@ void LottieParser::parseEffect(LottieEffect* effect, void(LottieParser::*func)(L
                         else skip(key);
                     }
                     ++idx;
-                } else skip();
+                } else (this->*func)(effect, idx++);
             } else skip();
         }
     }
