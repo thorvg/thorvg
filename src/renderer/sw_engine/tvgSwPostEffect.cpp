@@ -266,14 +266,14 @@ static void _dropShadowFilter(uint32_t* dst, uint32_t* src, int stride, int w, i
 }
 
 
-static void _dropShadowShift(uint32_t* dst, uint32_t* src, int dstride, int sstride, SwBBox& region, SwPoint& offset, uint8_t opacity, bool direct)
+static void _dropShadowShift(uint32_t* dst, uint32_t* src, int dstride, int sstride, SwBBox& region, SwPoint& offset, uint8_t opacity)
 {
     src += (region.min.y * sstride + region.min.x);
     dst += (region.min.y * dstride + region.min.x);
 
     auto w = region.max.x - region.min.x;
     auto h = region.max.y - region.min.y;
-    auto translucent = (direct || opacity < 255);
+    auto translucent = opacity < 255;
 
     //shift offset
     if (region.min.x + offset.x < 0) src -= offset.x;
@@ -342,7 +342,7 @@ void effectDropShadowUpdate(RenderEffectDropShadow* params, const Matrix& transf
 //A quite same integration with effectGaussianBlur(). See it for detailed comments.
 //surface[0]: the original image, to overlay it into the filtered image.
 //surface[1]: temporary buffer for generating the filtered image.
-bool effectDropShadow(SwCompositor* cmp, SwSurface* surface[2], const RenderEffectDropShadow* params, bool direct)
+bool effectDropShadow(SwCompositor* cmp, SwSurface* surface[2], const RenderEffectDropShadow* params)
 {
     //FIXME: if the body is partially visible due to clipping, the shadow also becomes partially visible.
 
@@ -359,8 +359,6 @@ bool effectDropShadow(SwCompositor* cmp, SwSurface* surface[2], const RenderEffe
     auto stride = cmp->image.stride;
     auto front = cmp->image.buf32;
     auto back = buffer[1]->buf32;
-
-    auto opacity = direct ? MULTIPLY(params->color[3], cmp->opacity) : params->color[3];
 
     TVGLOG("SW_ENGINE", "DropShadow region(%ld, %ld, %ld, %ld) params(%f %f %f), level(%d)", bbox.min.x, bbox.min.y, bbox.max.x, bbox.max.y, params->angle, params->distance, params->sigma, data->level);
 
@@ -386,17 +384,9 @@ bool effectDropShadow(SwCompositor* cmp, SwSurface* surface[2], const RenderEffe
 
     rasterXYFlip(front, back, stride, h, w, bbox, true);
     std::swap(cmp->image.buf32, back);
-
-    //draw to the main surface directly
-    if (direct) {
-        _dropShadowShift(cmp->recoverSfc->buf32, cmp->image.buf32, cmp->recoverSfc->stride, stride, bbox, data->offset, opacity, direct);
-        std::swap(cmp->image.buf32, buffer[0]->buf32);
-        return true;
-    }
-
     //draw to the intermediate surface
     rasterClear(surface[1], bbox.min.x, bbox.min.y, w, h);
-    _dropShadowShift(buffer[1]->buf32, cmp->image.buf32, stride, stride, bbox, data->offset, opacity, direct);
+    _dropShadowShift(buffer[1]->buf32, cmp->image.buf32, stride, stride, bbox, data->offset, params->color[3]);
     std::swap(cmp->image.buf32, buffer[1]->buf32);
 
     //compositing shadow and body
