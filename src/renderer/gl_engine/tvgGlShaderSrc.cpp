@@ -740,6 +740,7 @@ void main()
 const char* GAUSSIAN_VERTICAL = R"(
 uniform sampler2D uSrcTexture;
 layout(std140) uniform Gaussian {
+    int level;
     float sigma;
     float scale;
     float extend;
@@ -775,6 +776,7 @@ void main()
 const char* GAUSSIAN_HORIZONTAL = R"(
 uniform sampler2D uSrcTexture;
 layout(std140) uniform Gaussian {
+    int level;
     float sigma;
     float scale;
     float extend;
@@ -811,6 +813,7 @@ const char* EFFECT_DROPSHADOW = R"(
 uniform sampler2D uSrcTexture;
 uniform sampler2D uBlrTexture;
 layout(std140) uniform DropShadow {
+    int level;
     float sigma;
     float scale;
     float extend;

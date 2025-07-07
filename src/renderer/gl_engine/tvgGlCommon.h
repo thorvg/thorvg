@@ -161,7 +161,9 @@ struct GlCompositor : RenderCompositor
     GlCompositor(const RenderRegion& box) : bbox(box) {}
 };
 
+#define GL_GAUSSIAN_MAX_LEVEL 3
 struct GlGaussianBlur {
+    int level{};
     float sigma{};
     float scale{};
     float extend{};
