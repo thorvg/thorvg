@@ -954,7 +954,7 @@ void GlRenderer::effectGaussianBlurUpdate(RenderEffectGaussianBlur* effect, cons
     blur->scale = std::sqrt(transform.e11 * transform.e11 + transform.e12 * transform.e12);
     blur->extend = 2 * blur->sigma * blur->scale;
     effect->rd = blur;
-    effect->valid = true;
+    effect->valid = (blur->extend > 0);
 }
 
 
@@ -980,7 +980,7 @@ void GlRenderer::effectDropShadowUpdate(RenderEffectDropShadow* effect, const Ma
     dropShadow->offset[1] = offset.y;
     dropShadow->extend = 2 * std::max(sigma * scale + std::abs(offset.x), sigma * scale + std::abs(offset.y));
     effect->rd = dropShadow;
-    effect->valid = true;
+    effect->valid = (dropShadow->extend > 0);
 }
 
 
@@ -1011,7 +1011,7 @@ void GlRenderer::effectTintUpdate(RenderEffectTint* effect, const Matrix& transf
     params->params[7] = 0.0f;
     params->params[8] = effect->intensity / 255.0f;
     effect->rd = params;
-    effect->valid = true;
+    effect->valid = (effect->intensity > 0);
 }
 
 
@@ -1076,7 +1076,6 @@ void GlRenderer::prepare(RenderEffect* effect, const Matrix& transform)
         case SceneEffect::Tritone: effectTritoneUpdate(static_cast<RenderEffectTritone*>(effect), transform); break;
         default: break;
     }
-    effect->valid = true;
 }
 
 

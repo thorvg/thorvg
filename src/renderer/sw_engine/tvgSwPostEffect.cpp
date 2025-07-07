@@ -469,7 +469,7 @@ bool effectFill(SwCompositor* cmp, const RenderEffectFill* params, bool direct)
 
 void effectTintUpdate(RenderEffectTint* params)
 {
-    params->valid = true;
+    params->valid = (params->intensity > 0);
 }
 
 

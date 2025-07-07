@@ -180,12 +180,12 @@ struct WgRenderDataEffectParams
     uint32_t level{};
     Point offset{};
 
-    void update(WgContext& context, const WgShaderTypeEffectParams& effectParams);
-    void update(WgContext& context, const RenderEffectGaussianBlur* gaussian, const Matrix& transform);
-    void update(WgContext& context, const RenderEffectDropShadow* dropShadow, const Matrix& transform);
-    void update(WgContext& context, const RenderEffectFill* fill);
-    void update(WgContext& context, const RenderEffectTint* tint);
-    void update(WgContext& context, const RenderEffectTritone* tritone);
+    void update(WgContext& context, WgShaderTypeEffectParams& effectParams);
+    void update(WgContext& context, RenderEffectGaussianBlur* gaussian, const Matrix& transform);
+    void update(WgContext& context, RenderEffectDropShadow* dropShadow, const Matrix& transform);
+    void update(WgContext& context, RenderEffectFill* fill);
+    void update(WgContext& context, RenderEffectTint* tint);
+    void update(WgContext& context, RenderEffectTritone* tritone);
     void release(WgContext& context);
 };
 

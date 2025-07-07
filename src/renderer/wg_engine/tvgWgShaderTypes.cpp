@@ -203,7 +203,7 @@ void WgShaderTypeGradientData::update(const Fill* fill)
 // WgShaderTypeEffectParams
 //************************************************************************
 
-void WgShaderTypeEffectParams::update(const RenderEffectGaussianBlur* gaussian, const Matrix& transform)
+bool WgShaderTypeEffectParams::update(RenderEffectGaussianBlur* gaussian, const Matrix& transform)
 {
     assert(gaussian);
     const float sigma = gaussian->sigma;
@@ -214,10 +214,13 @@ void WgShaderTypeEffectParams::update(const RenderEffectGaussianBlur* gaussian, 
     params[2] = kernel;
     params[3] = 0.0f;
     extend = params[2] * 2; // kernel
+
+    gaussian->valid = (extend > 0);
+    return gaussian->valid;
 }
 
 
-void WgShaderTypeEffectParams::update(const RenderEffectDropShadow* dropShadow, const Matrix& transform)
+bool WgShaderTypeEffectParams::update(RenderEffectDropShadow* dropShadow, const Matrix& transform)
 {
     assert(dropShadow);
     const float radian = tvg::deg2rad(90.0f - dropShadow->angle);
@@ -243,19 +246,25 @@ void WgShaderTypeEffectParams::update(const RenderEffectDropShadow* dropShadow, 
     params[8] = offset.x;
     params[9] = offset.y;
     extend = params[2] * 2; // kernel
+
+    dropShadow->valid = (extend > 0);
+    return dropShadow->valid;
 }
 
 
-void WgShaderTypeEffectParams::update(const RenderEffectFill* fill)
+bool WgShaderTypeEffectParams::update(RenderEffectFill* fill)
 {
     params[0] = fill->color[0] / 255.0f;
     params[1] = fill->color[1] / 255.0f;
     params[2] = fill->color[2] / 255.0f;
     params[3] = fill->color[3] / 255.0f;
+
+    fill->valid = true;
+    return true;
 }
 
 
-void WgShaderTypeEffectParams::update(const RenderEffectTint* tint) 
+bool WgShaderTypeEffectParams::update(RenderEffectTint* tint)
 {
     params[0] = tint->black[0] / 255.0f;
     params[1] = tint->black[1] / 255.0f;
@@ -266,10 +275,13 @@ void WgShaderTypeEffectParams::update(const RenderEffectTint* tint)
     params[6] = tint->white[2] / 255.0f;
     params[7] = 0.0f;
     params[8] = tint->intensity / 255.0f;
+
+    tint->valid = (tint->intensity > 0);
+    return tint->valid;
 }
 
 
-void WgShaderTypeEffectParams::update(const RenderEffectTritone* tritone)
+bool WgShaderTypeEffectParams::update(RenderEffectTritone* tritone)
 {
     params[0] = tritone->shadow[0] / 255.0f;
     params[1] = tritone->shadow[1] / 255.0f;
@@ -283,4 +295,7 @@ void WgShaderTypeEffectParams::update(const RenderEffectTritone* tritone)
     params[9] = tritone->highlight[1] / 255.0f;
     params[10] = tritone->highlight[2] / 255.0f;
     params[11] = 0.0f;
+
+    tritone->valid = true;
+    return true;
 }

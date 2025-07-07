@@ -520,8 +520,6 @@ void WgRenderer::prepare(RenderEffect* effect, const Matrix& transform)
         TVGERR("WG_ENGINE", "Missing effect type? = %d", (int) effect->type);
         return;
     }
-
-    effect->valid = true;
 }
 
 
