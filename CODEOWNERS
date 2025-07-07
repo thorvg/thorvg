@@ -4,7 +4,7 @@
 
 * @hermet
 /src/renderer/sw_engine @mgrudzinska
-/src/renderer/gl_engine @SergeyLebedkin @RuiwenTang
+/src/renderer/gl_engine @SergeyLebedkin
 /src/renderer/wg_engine @SergeyLebedkin
 /src/loaders/svg @mgrudzinska @JSUYA
 /src/loaders/lottie @mgrudzinska
