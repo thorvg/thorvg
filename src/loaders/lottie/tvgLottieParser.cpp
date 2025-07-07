@@ -1282,7 +1282,7 @@ bool LottieParser::parseEffect(LottieEffect* effect, void(LottieParser::*func)(L
                         if (KEY_AS("k")) (this->*func)(effect, idx++);
                         else skip();
                     }
-                } else skip();
+                } else (this->*func)(effect, idx++);
             }
             else if (property && KEY_AS("nm")) property->nm = djb2Encode(getString());
             else if (property && KEY_AS("mn")) property->mn = djb2Encode(getString());
@@ -1297,6 +1297,7 @@ void LottieParser::parseCustom(LottieEffect* effect, int idx)
 {
     if ((uint32_t)idx >= static_cast<LottieFxCustom*>(effect)->props.count) {
         TVGERR("LOTTIE", "Parsing error in Custom effect!");
+        skip();
         return;
     }
 
@@ -1315,7 +1316,10 @@ void LottieParser::parseCustom(LottieEffect* effect, int idx)
         case LottieProperty::Type::Color: {
             parsePropertyInternal(*static_cast<LottieColor*>(prop)); break;
         }
-        default: TVGLOG("LOTTIE", "Missing Property Type? = %d", (int) prop->type); break;
+        default: {
+            TVGLOG("LOTTIE", "Missing Property Type? = %d", (int) prop->type);
+            skip();
+        }
     }
 }
 
