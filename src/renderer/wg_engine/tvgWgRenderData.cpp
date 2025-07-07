@@ -511,7 +511,7 @@ void WgRenderDataViewportPool::release(WgContext& context)
 // WgRenderDataEffectParams
 //***********************************************************************
 
-void WgRenderDataEffectParams::update(WgContext& context, const WgShaderTypeEffectParams& effectParams)
+void WgRenderDataEffectParams::update(WgContext& context, WgShaderTypeEffectParams& effectParams)
 {
     if (context.allocateBufferUniform(bufferParams, &effectParams.params, sizeof(effectParams.params))) {
         context.layouts.releaseBindGroup(bindGroupParams);
@@ -520,22 +520,22 @@ void WgRenderDataEffectParams::update(WgContext& context, const WgShaderTypeEffe
 }
 
 
-void WgRenderDataEffectParams::update(WgContext& context, const RenderEffectGaussianBlur* gaussian, const Matrix& transform)
+void WgRenderDataEffectParams::update(WgContext& context, RenderEffectGaussianBlur* gaussian, const Matrix& transform)
 {
     assert(gaussian);
     WgShaderTypeEffectParams effectParams;
-    effectParams.update(gaussian, transform);
+    if (!effectParams.update(gaussian, transform)) return;
     update(context, effectParams);
     level = int(WG_GAUSSIAN_MAX_LEVEL * ((gaussian->quality - 1) * 0.01f)) + 1;
     extend = effectParams.extend;
 }
 
 
-void WgRenderDataEffectParams::update(WgContext& context, const RenderEffectDropShadow* dropShadow, const Matrix& transform)
+void WgRenderDataEffectParams::update(WgContext& context, RenderEffectDropShadow* dropShadow, const Matrix& transform)
 {
     assert(dropShadow);
     WgShaderTypeEffectParams effectParams;
-    effectParams.update(dropShadow, transform);
+    if (!effectParams.update(dropShadow, transform)) return;
     update(context, effectParams);
     level = int(WG_GAUSSIAN_MAX_LEVEL * ((dropShadow->quality - 1) * 0.01f)) + 1;
     extend = effectParams.extend;
@@ -543,29 +543,29 @@ void WgRenderDataEffectParams::update(WgContext& context, const RenderEffectDrop
 }
 
 
-void WgRenderDataEffectParams::update(WgContext& context, const RenderEffectFill* fill)
+void WgRenderDataEffectParams::update(WgContext& context, RenderEffectFill* fill)
 {
     assert(fill);
     WgShaderTypeEffectParams effectParams;
-    effectParams.update(fill);
+    if (!effectParams.update(fill)) return;
     update(context, effectParams);
 }
 
 
-void WgRenderDataEffectParams::update(WgContext& context, const RenderEffectTint* tint)
+void WgRenderDataEffectParams::update(WgContext& context, RenderEffectTint* tint)
 {
     assert(tint);
     WgShaderTypeEffectParams effectParams;
-    effectParams.update(tint);
+    if (!effectParams.update(tint)) return;
     update(context, effectParams);
 }
 
 
-void WgRenderDataEffectParams::update(WgContext& context, const RenderEffectTritone* tritone)
+void WgRenderDataEffectParams::update(WgContext& context, RenderEffectTritone* tritone)
 {
     assert(tritone);
     WgShaderTypeEffectParams effectParams;
-    effectParams.update(tritone);
+    if (!effectParams.update(tritone)) return;
     update(context, effectParams);
 }
 

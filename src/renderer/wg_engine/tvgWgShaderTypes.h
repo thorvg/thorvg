@@ -109,11 +109,11 @@ struct WgShaderTypeEffectParams
     uint32_t extend{};     // gaussian blur extend
     Point offset{};        // drop shadow offset
 
-    void update(const RenderEffectGaussianBlur* gaussian, const Matrix& transform);
-    void update(const RenderEffectDropShadow* dropShadow, const Matrix& transform);
-    void update(const RenderEffectFill* fill);
-    void update(const RenderEffectTint* tint);
-    void update(const RenderEffectTritone* tritone);
+    bool update(RenderEffectGaussianBlur* gaussian, const Matrix& transform);
+    bool update(RenderEffectDropShadow* dropShadow, const Matrix& transform);
+    bool update(RenderEffectFill* fill);
+    bool update(RenderEffectTint* tint);
+    bool update(RenderEffectTritone* tritone);
 };
 
 #endif // _TVG_WG_SHADER_TYPES_H_
