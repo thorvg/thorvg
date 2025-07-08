@@ -844,44 +844,28 @@ fn cs_main_fill(@builtin(global_invocation_id) gid: vec3u) {
 
 @compute @workgroup_size(128, 1)
 fn cs_main_tint(@builtin(global_invocation_id) gid: vec3u) {
-    // decode viewport and settings
     let vmin = vec2u(viewport.xy);
     let vmax = vec2u(viewport.zw);
-
-    // tex coord
     let uid = min(gid.xy + vmin, vmax);
-
     let orig = textureLoad(imageSrc, uid, 0);
     let luma: f32 = dot(orig.rgb, vec3f(0.2126, 0.7152, 0.0722));
-    let black = settings[0];
-    let white = settings[1];
-    let intens = settings[2].r;
-    let color = mix(orig, mix(black, white, luma), intens) * orig.a;
+    let color = vec4f(mix(orig.rgb, mix(settings[0].rgb, settings[1].rgb, luma), settings[2].r) * orig.a, orig.a);
     textureStore(imageTrg, uid.xy, color);
 }
 
 @compute @workgroup_size(128, 1)
 fn cs_main_tritone(@builtin(global_invocation_id) gid: vec3u) {
-    // decode viewport and settings
     let vmin = vec2u(viewport.xy);
     let vmax = vec2u(viewport.zw);
-
-    // tex coord
     let uid = min(gid.xy + vmin, vmax);
-
     let orig = textureLoad(imageSrc, uid, 0);
     let luma: f32 = dot(orig.rgb, vec3f(0.2126, 0.7152, 0.0722));
-    let shadow = settings[0];
-    let midtone = settings[1];
-    let highlight = settings[2];
-
-    var color = select(mix(shadow, midtone, luma * 2.0f), mix(midtone, highlight, (luma - 0.5f)*2.0f), luma >= 0.5f);
-
-    // blending
-    if (highlight.a > 0.0f) {
-        color = mix(color, orig, highlight.a);
+    let is_bright: bool = luma >= 0.5f;
+    let t = select(luma * 2.0f, (luma - 0.5) * 2.0f, is_bright);
+    var tmp = vec4f(mix(select(settings[0].rgb, settings[1].rgb, is_bright), select(settings[1].rgb, settings[2].rgb, is_bright), t), 1.0f);
+    if (settings[2].a > 0.0f) {
+        tmp = mix(tmp, orig, settings[2].a);
     }
-
-    textureStore(imageTrg, uid.xy, color * orig.a);
+    textureStore(imageTrg, uid.xy, tmp * orig.a);
 }
 )";
