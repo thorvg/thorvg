@@ -184,8 +184,12 @@ bool Paint::Impl::render(RenderMethod* renderer)
         RenderRegion region;
         PAINT_METHOD(region, bounds(renderer));
 
-        if (MASK_REGION_MERGING(maskData->method)) region.add(PAINT(maskData->target)->bounds(renderer));
-        if (region.invalid()) return true;
+        auto mData = maskData;
+        while (mData) {
+            if (MASK_REGION_MERGING(mData->method)) region.add(PAINT(mData->target)->bounds(renderer));
+            if (region.invalid()) return true;
+            mData = PAINT(mData->target)->maskData;
+        }
         cmp = renderer->target(region, MASK_TO_COLORSPACE(renderer, maskData->method), CompositionFlag::Masking);
         if (renderer->beginComposite(cmp, MaskMethod::None, 255)) {
             maskData->target->pImpl->render(renderer);
