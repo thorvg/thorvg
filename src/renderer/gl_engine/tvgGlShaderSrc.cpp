@@ -865,10 +865,7 @@ void main()
 {
     vec4 orig = texture(uSrcTexture, vUV);
     float luma = dot(orig.rgb, vec3(0.2126, 0.7152, 0.0722));
-    vec4 black = uParams.params[0];
-    vec4 white = uParams.params[1];
-    float intens = uParams.params[2].r;
-    FragColor = mix(orig, mix(black, white, luma), intens) * orig.a;
+    FragColor = vec4(mix(orig.rgb, mix(uParams.params[0].rgb, uParams.params[1].rgb, luma), uParams.params[2].r) * orig.a, orig.a);
 } 
 )";
 
@@ -885,19 +882,13 @@ void main()
 {
     vec4 orig = texture(uSrcTexture, vUV);
     float luma = dot(orig.rgb, vec3(0.2126, 0.7152, 0.0722));
-    vec4 shadow = uParams.params[0];
-    vec4 midtone = uParams.params[1];
-    vec4 highlight = uParams.params[2];
+    bool isBright = luma >= 0.5f;
+    float t = isBright ? (luma - 0.5f) * 2.0f : luma * 2.0f;
+    vec3 from = isBright ? uParams.params[1].rgb : uParams.params[0].rgb;
+    vec3 to = isBright ? uParams.params[2].rgb : uParams.params[1].rgb;
+    vec4 tmp = vec4(mix(from, to, t), 1.0f);
 
-    vec4 tmp = vec4(
-        luma >= 0.5f ? mix(midtone.r, highlight.r, (luma - 0.5f)*2.0f) : mix(shadow.r, midtone.r, luma * 2.0f),
-        luma >= 0.5f ? mix(midtone.g, highlight.g, (luma - 0.5f)*2.0f) : mix(shadow.g, midtone.g, luma * 2.0f),
-        luma >= 0.5f ? mix(midtone.b, highlight.b, (luma - 0.5f)*2.0f) : mix(shadow.b, midtone.b, luma * 2.0f),
-        luma >= 0.5f ? mix(midtone.a, highlight.a, (luma - 0.5f)*2.0f) : mix(shadow.a, midtone.a, luma * 2.0f)
-    );
-
-    //blender
-    if (highlight.a > 0.0f) tmp = mix(tmp, orig, highlight.a);
+    if (uParams.params[2].a > 0.0f) tmp = mix(tmp, orig, uParams.params[2].a);
     FragColor = tmp * orig.a;
 } 
 )";
