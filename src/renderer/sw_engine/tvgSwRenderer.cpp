@@ -59,6 +59,12 @@ struct SwTask : Task
         return curBox;
     }
 
+    void invisible()
+    {
+        curBox.reset();
+        if (!nodirty) dirtyRegion->add(prvBox, curBox);
+    }
+
     virtual void dispose() = 0;
     virtual bool clip(SwRle* target) = 0;
     virtual ~SwTask() {}
@@ -103,9 +109,9 @@ struct SwShapeTask : SwTask
 
     void run(unsigned tid) override
     {
-        //Invisible
+        //invisible
         if (opacity == 0 && !clipper) {
-            curBox.reset();
+            if (flags & RenderUpdateFlag::Color) invisible();
             return;
         }
 
@@ -166,11 +172,10 @@ struct SwShapeTask : SwTask
         return;
 
     err:
-        curBox.reset();
         shapeReset(&shape);
         rleReset(shape.strokeRle);
         shapeDelOutline(&shape, mpool, tid);
-        if (!nodirty) dirtyRegion->add(prvBox, curBox);
+        invisible();
     }
 
     void dispose() override
@@ -193,6 +198,12 @@ struct SwImageTask : SwTask
 
     void run(unsigned tid) override
     {
+        //invisible
+        if (opacity == 0) {
+            if (flags & RenderUpdateFlag::Color) invisible();
+            return;
+        }
+
         auto clipBox = curBox;
 
         //Convert colorspace if it's not aligned.
@@ -209,9 +220,7 @@ struct SwImageTask : SwTask
         if ((flags & (RenderUpdateFlag::Image | RenderUpdateFlag::Transform | RenderUpdateFlag::Color)) && (opacity > 0)) {
             imageReset(&image);
             if (!image.data || image.w == 0 || image.h == 0) goto end;
-
             if (!imagePrepare(&image, transform, clipBox, curBox, mpool, tid)) goto end;
-
             if (clips.count > 0) {
                 if (!imageGenRle(&image, curBox, false)) goto end;
                 if (image.rle) {
