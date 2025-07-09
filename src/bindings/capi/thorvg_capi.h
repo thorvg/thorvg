@@ -2179,16 +2179,25 @@ TVG_API Tvg_Paint* tvg_text_new(void);
 * This function allows you to define the font characteristics used for text rendering.
 * It sets the font name, size and optionally the style.
 *
-* \param[in] paint A Tvg_Paint pointer to the text object.
-* \param[in] name The name of the font. This should correspond to a font available in the canvas.
-* \param[in] size The size of the font in points.
-* \param[in] style The style of the font. If empty, the default style is used. Currently only 'italic' style is supported.
+* @param[in] paint A Tvg_Paint pointer to the text object.
+* @param[in] name The name of the font. This should correspond to a font available in the canvas.
+*                 If set to @c nullptr, ThorVG will attempt to select a fallback font available on the system.
+* @param[in] size The size of the font in points.
+* @param[in] style The style of the font. If empty, the default style is used. Currently only 'italic' style is supported.
 *
 * \return Tvg_Result enumeration.
 * \retval TVG_RESULT_INVALID_ARGUMENT A \c nullptr passed as the \p paint argument.
 * \retval TVG_RESULT_INSUFFICIENT_CONDITION  The specified \p name cannot be found.
 *
-* \note Experimental API
+* @note If the @p name is not specified, ThorVG will select any available font candidate.
+* @since 1.0
+*
+* @code
+* // Fallback example: Try a specific font, then fallback to any available one.
+* if (tvg_text_set_font(text, "Arial", 24, nullptr) != TVG_RESULT_SUCCESS) {
+*     tvg_text_set_font(text, nullptr, 24, nullptr);
+* }
+* @endcode
 */
 TVG_API Tvg_Result tvg_text_set_font(Tvg_Paint* paint, const char* name, float size, const char* style);
 
