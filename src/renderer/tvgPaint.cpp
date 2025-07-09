@@ -180,6 +180,7 @@ bool Paint::Impl::render(RenderMethod* renderer)
 
     RenderCompositor* cmp = nullptr;
 
+    //OPTIMIZE: bounds(renderer) calls could dismiss the parallelization
     if (maskData && !(maskData->target->pImpl->ctxFlag & ContextFlag::FastTrack)) {
         RenderRegion region;
         PAINT_METHOD(region, bounds(renderer));
