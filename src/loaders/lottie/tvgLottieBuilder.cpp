@@ -1366,19 +1366,23 @@ void LottieBuilder::updateEffect(LottieLayer* layer, float frameNo)
 
 void LottieBuilder::updateLayer(LottieComposition* comp, Scene* scene, LottieLayer* layer, float frameNo)
 {
-    layer->scene = nullptr;
+    //Prepare render data
+    layer->scene = Scene::gen();
+    layer->scene->id = layer->id;
 
     //visibility
-    if (frameNo < layer->inFrame || frameNo >= layer->outFrame) return;
+    if (frameNo < layer->inFrame || frameNo >= layer->outFrame) {
+        scene->push(layer->scene);
+        return;
+    }
 
     updateTransform(layer, frameNo);
 
     //full transparent scene. no need to perform
-    if (layer->type != LottieLayer::Null && layer->cache.opacity == 0) return;
-
-    //Prepare render data
-    layer->scene = Scene::gen();
-    layer->scene->id = layer->id;
+    if (layer->type != LottieLayer::Null && layer->cache.opacity == 0) {
+        scene->push(layer->scene);
+        return;
+    }
 
     //ignore opacity when Null layer?
     if (layer->type != LottieLayer::Null) layer->scene->opacity(layer->cache.opacity);
