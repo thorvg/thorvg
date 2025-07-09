@@ -139,8 +139,6 @@ struct UserExample : tvgexam::Example
 
     bool content(tvg::Canvas* canvas, uint32_t w, uint32_t h) override
     {
-        if (!canvas) return false;
-
         if (!tvgexam::verify(tvg::Text::load(EXAMPLE_DIR"/font/Arial.ttf"))) return false;
 
         //Prepare Image

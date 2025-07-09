@@ -30,8 +30,6 @@ struct UserExample : tvgexam::Example
 {
     bool content(tvg::Canvas* canvas, uint32_t w, uint32_t h) override
     {
-        if (!canvas) return false;
-
         //Image source
         ifstream file(EXAMPLE_DIR"/image/rawimage_200x300.raw", ios::binary);
         if (!file.is_open()) return false;

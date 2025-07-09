@@ -37,8 +37,6 @@ struct UserExample : tvgexam::Example
 
     bool content(tvg::Canvas* canvas, uint32_t w, uint32_t h) override
     {
-        if (!canvas) return false;
-
         //blur scene
         for (int i = 0; i < 3; ++i) {
             blur[i] = tvg::Scene::gen();
@@ -97,8 +95,6 @@ struct UserExample : tvgexam::Example
 
     bool update(tvg::Canvas* canvas, uint32_t elapsed) override
     {
-        if (!canvas) return false;
-
         auto progress = tvgexam::progress(elapsed, 2.5f, true);   //2.5 seconds
 
         //Apply GaussianBlur post effect (sigma, direction, border option, quality)

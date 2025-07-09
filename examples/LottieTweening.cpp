@@ -200,8 +200,6 @@ struct UserExample : tvgexam::Example
 
     bool update(tvg::Canvas* canvas, uint32_t elapsed) override
     {
-        if (!canvas) return false;
-
         //on state tweening
         if (tween.active) return tweening(canvas);
 

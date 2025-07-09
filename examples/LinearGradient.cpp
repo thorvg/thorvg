@@ -30,8 +30,6 @@ struct UserExample : tvgexam::Example
 {
     bool content(tvg::Canvas* canvas, uint32_t w, uint32_t h) override
     {
-        if (!canvas) return false;
-
         //Prepare Round Rectangle
         auto shape1 = tvg::Shape::gen();
         shape1->appendRect(0, 0, 400, 400);    //x, y, w, h

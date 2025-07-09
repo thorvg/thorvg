@@ -30,8 +30,6 @@ struct UserExample : tvgexam::Example
 {
     bool content(tvg::Canvas* canvas, uint32_t w, uint32_t h) override
     {
-        if (!canvas) return false;
-
         tvg::Fill::ColorStop colorStops1[3];
         colorStops1[0] = {0, 255, 0, 0, 150};
         colorStops1[1] = {0.5, 0, 0, 255, 150};

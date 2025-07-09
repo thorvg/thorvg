@@ -72,8 +72,6 @@ struct UserExample : tvgexam::Example
 
     bool update(tvg::Canvas* canvas, uint32_t elapsed) override
     {
-        if (!canvas) return false;
-
         auto progress = tvgexam::progress(elapsed, animation->duration());
 
         //Update animation frame only when it's changed

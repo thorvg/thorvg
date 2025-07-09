@@ -30,8 +30,6 @@ struct UserExample : tvgexam::Example
 {
     bool content(tvg::Canvas* canvas, uint32_t w, uint32_t h) override
     {
-        if (!canvas) return false;
-
         //load the tvg file
         auto picture = tvg::Picture::gen();
         auto result = picture->load(EXAMPLE_DIR"/svg/favorite_on.svg");
