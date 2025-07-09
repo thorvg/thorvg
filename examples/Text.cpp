@@ -41,6 +41,7 @@ struct UserExample : tvgexam::Example
         //Otherwise, you can immediately unload the font data.
         //Please check Text::unload() APIs.
         if (!tvgexam::verify(tvg::Text::load(EXAMPLE_DIR"/font/Arial.ttf"))) return false;
+        if (!tvgexam::verify(tvg::Text::load(EXAMPLE_DIR"/font/NOTO-SANS-KR.ttf"))) return false;
         if (!tvgexam::verify(tvg::Text::load(EXAMPLE_DIR"/font/NanumGothicCoding.ttf"))) return false;
 
         //Load from memory
@@ -98,7 +99,7 @@ struct UserExample : tvgexam::Example
         canvas->push(text6);
 
         auto text7 = tvg::Text::gen();
-        text7->font("Arial", 15);
+        text7->font("NOTO-SANS-KR", 15);
         text7->text("Transformed Text - 30'");
         text7->fill(0, 0, 0);
         text7->translate(600, 400);
@@ -106,7 +107,7 @@ struct UserExample : tvgexam::Example
         canvas->push(text7);
 
         auto text8 = tvg::Text::gen();
-        text8->font("Arial", 15);
+        text8->font("NOTO-SANS-KR", 15);
         text8->fill(0, 0, 0);
         text8->text("Transformed Text - 90'");
         text8->translate(600, 400);
@@ -114,7 +115,7 @@ struct UserExample : tvgexam::Example
         canvas->push(text8);
 
         auto text9 = tvg::Text::gen();
-        text9->font("Arial", 15);
+        text9->font("NOTO-SANS-KR", 15);
         text9->fill(0, 0, 0);
         text9->text("Transformed Text - 180'");
         text9->translate(800, 400);
@@ -125,7 +126,7 @@ struct UserExample : tvgexam::Example
         float x, y, w2, h2;
 
         auto text10 = tvg::Text::gen();
-        text10->font("Arial", 50);
+        text10->font("NOTO-SANS-KR", 50);
         text10->text("Linear Text");
         text10->bounds(&x, &y, &w2, &h2);
 
