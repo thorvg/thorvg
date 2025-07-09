@@ -45,7 +45,7 @@ struct TextImpl : Text
     TextImpl() : impl(Paint::Impl(this)), shape(Shape::gen())
     {
         PAINT(shape)->parent = this;
-        shape->fill(FillRule::EvenOdd);
+        shape->fillRule(FillRule::EvenOdd);
     }
 
     ~TextImpl()

@@ -229,6 +229,6 @@ TEST_CASE("Shape Filling", "[tvgShape]")
 
     //Fill Rule
     REQUIRE(shape->fillRule() == FillRule::NonZero);
-    REQUIRE(shape->fill(FillRule::EvenOdd) == Result::Success);
+    REQUIRE(shape->fillRule(FillRule::EvenOdd) == Result::Success);
     REQUIRE(shape->fillRule() == FillRule::EvenOdd);
 }

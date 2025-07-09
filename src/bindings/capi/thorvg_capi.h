@@ -1468,10 +1468,13 @@ TVG_API Tvg_Result tvg_shape_get_fill_color(const Tvg_Paint* paint, uint8_t* r, 
 
 
 /*!
-* @brief Sets the shape's fill rule.
+* @brief Sets the fill rule for the shape.
+*
+* Specifies how the interior of the shape is determined when its path intersects itself.
+* The default fill rule is @c TVG_FILL_RULE_NON_ZERO.
 *
 * @param[in] paint A Tvg_Paint pointer to the shape object.
-* @param[in] rule The fill rule value. The default value is @c TVG_FILL_RULE_NON_ZERO.
+* @param[in] rule The fill rule to apply to the shape.
 *
 * @return Tvg_Result enumeration.
 * @retval TVG_RESULT_INVALID_ARGUMENT An invalid Tvg_Paint pointer.
@@ -1480,10 +1483,13 @@ TVG_API Tvg_Result tvg_shape_set_fill_rule(Tvg_Paint* paint, Tvg_Fill_Rule rule)
 
 
 /*!
-* @brief Gets the shape's fill rule.
+* @brief Retrieves the current fill rule used by the shape.
+*
+* This function returns the fill rule, which determines how the interior 
+* regions of the shape are calculated when it overlaps itself.
 *
 * @param[in] paint A Tvg_Paint pointer to the shape object.
-* @param[out] rule shape's fill rule
+* @param[out] rule The current Tvg_Fill_Rule value of the shape.
 *
 * @return Tvg_Result enumeration.
 * @retval TVG_RESULT_INVALID_ARGUMENT An invalid pointer passed as an argument.

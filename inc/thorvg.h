@@ -1181,11 +1181,14 @@ public:
     Result fill(Fill* f) noexcept;
 
     /**
-     * @brief Sets the fill rule for the Shape object.
+     * @brief Sets the fill rule for the shape.
      *
-     * @param[in] r The fill rule value. The default value is @c FillRule::NonZero.
+     * Specifies how the interior of the shape is determined when its path intersects itself.
+     * The default fill rule is @c FillRule::NonZero.
+     *
+     * @param[in] r The fill rule to apply to the shape.
      */
-    Result fill(FillRule r) noexcept;
+    Result fillRule(FillRule r) noexcept;
 
     /**
      * @brief Sets the rendering order of the stroke and the fill.
@@ -1232,9 +1235,13 @@ public:
     Result fill(uint8_t* r, uint8_t* g, uint8_t* b, uint8_t* a = nullptr) const noexcept;
 
     /**
-     * @brief Gets the fill rule value.
+     * @brief Retrieves the current fill rule used by the shape.
      *
-     * @return The fill rule value of the shape.
+     * This function returns the fill rule, which determines how the interior 
+     * regions of the shape are calculated when it overlaps itself.
+     *
+     * @see Shape::fillRule(FillRule r)
+     * @return The current FillRule value of the shape.
      */
     FillRule fillRule() const noexcept;
 
