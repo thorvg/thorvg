@@ -399,6 +399,7 @@ Shape* Paint::clip() const noexcept
 
 Result Paint::mask(Paint* target, MaskMethod method) noexcept
 {
+    if (method > MaskMethod::Darken) return Result::InvalidArguments;
     return pImpl->mask(target, method);
 }
 
@@ -428,6 +429,7 @@ uint8_t Paint::opacity() const noexcept
 
 Result Paint::blend(BlendMethod method) noexcept
 {
+    if (method > BlendMethod::HardMix) return Result::InvalidArguments;
     //TODO: Remove later
     if (method == BlendMethod::Hue || method == BlendMethod::Saturation || method == BlendMethod::Color || method == BlendMethod::Luminosity || method == BlendMethod::HardMix) return Result::NonSupport;
     pImpl->blend(method);
