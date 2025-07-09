@@ -293,9 +293,8 @@ struct SceneImpl : Scene
             paint->unref();
             paints.erase(itr++);
         }
-
-        if (effects || fixed) impl.damage(vport);  //redraw scene full region
         if (fixed && impl.renderer) impl.renderer->partial(recover);
+        if (effects || fixed) impl.damage(vport);  //redraw scene full region
 
         return Result::Success;
     }
