@@ -235,7 +235,7 @@ Result Shape::trimpath(float begin, float end, bool simultaneous) noexcept
 }
 
 
-Result Shape::fill(FillRule r) noexcept
+Result Shape::fillRule(FillRule r) noexcept
 {
     SHAPE(this)->rs.rule = r;
     return Result::Success;

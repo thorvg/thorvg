@@ -535,7 +535,7 @@ TVG_API Tvg_Result tvg_shape_get_fill_color(const Tvg_Paint* paint, uint8_t* r, 
 
 TVG_API Tvg_Result tvg_shape_set_fill_rule(Tvg_Paint* paint, Tvg_Fill_Rule rule)
 {
-    if (paint) return (Tvg_Result) reinterpret_cast<Shape*>(paint)->fill((FillRule)rule);
+    if (paint) return (Tvg_Result) reinterpret_cast<Shape*>(paint)->fillRule((FillRule)rule);
     return TVG_RESULT_INVALID_ARGUMENT;
 }
 

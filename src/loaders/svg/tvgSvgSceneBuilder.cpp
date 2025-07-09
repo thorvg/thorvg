@@ -409,7 +409,7 @@ static Paint* _applyProperty(SvgLoaderData& loaderData, SvgNode* node, Shape* vg
         vg->fill(style->fill.paint.color.r, style->fill.paint.color.g, style->fill.paint.color.b, style->fill.opacity);
     }
 
-    vg->fill(style->fill.fillRule);
+    vg->fillRule(style->fill.fillRule);
     vg->order(!style->paintOrder);
     vg->opacity(style->opacity);
 

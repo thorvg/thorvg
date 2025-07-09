@@ -297,7 +297,7 @@ bool LottieBuilder::updateSolidFill(LottieGroup* parent, LottieObject** child, f
     ctx->merging = nullptr;
     auto color = fill->color(frameNo, tween, exps);
     ctx->propagator->fill(color.rgb[0], color.rgb[1], color.rgb[2], opacity);
-    ctx->propagator->fill(fill->rule);
+    ctx->propagator->fillRule(fill->rule);
 
     if (ctx->propagator->strokeWidth() > 0) ctx->propagator->order(true);
 
@@ -318,7 +318,7 @@ bool LottieBuilder::updateGradientFill(LottieGroup* parent, LottieObject** child
     ctx->merging = nullptr;
 
     if (auto val = fill->fill(frameNo, opacity, tween, exps)) ctx->propagator->fill(val);
-    ctx->propagator->fill(fill->rule);
+    ctx->propagator->fillRule(fill->rule);
 
     if (ctx->propagator->strokeWidth() > 0) ctx->propagator->order(true);
 
