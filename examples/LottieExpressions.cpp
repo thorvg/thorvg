@@ -77,8 +77,6 @@ struct UserExample : tvgexam::Example
 
     bool update(tvg::Canvas* canvas, uint32_t elapsed) override
     {
-        if (!canvas) return false;
-
         for (auto& animation : animations) {
             auto progress = tvgexam::progress(elapsed, animation->duration());
             animation->frame(animation->totalFrame() * progress);
@@ -91,8 +89,6 @@ struct UserExample : tvgexam::Example
 
     bool content(tvg::Canvas* canvas, uint32_t w, uint32_t h) override
     {
-        if (!canvas) return false;
-
         //The default font for fallback in case
         tvg::Text::load(EXAMPLE_DIR"/font/Arial.ttf");
 

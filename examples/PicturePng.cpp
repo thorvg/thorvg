@@ -30,12 +30,10 @@ struct UserExample : tvgexam::Example
 {
     bool content(tvg::Canvas* canvas, uint32_t w, uint32_t h) override
     {
-        if (!canvas) return false;
-
         //Background
         auto bg = tvg::Shape::gen();
         bg->appendRect(0, 0, w, h);    //x, y, w, h
-        bg->fill(255, 255, 255);                //r, g, b
+        bg->fill(255, 255, 255);       //r, g, b
         canvas->push(bg);
 
         //Load png file from path

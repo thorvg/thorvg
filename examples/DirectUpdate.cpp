@@ -35,8 +35,6 @@ struct UserExample : tvgexam::Example
 
     bool content(tvg::Canvas* canvas, uint32_t w, uint32_t h) override
     {
-        if (!canvas) return false;
-
         //Shape (for BG)
         auto bg = tvg::Shape::gen();
         bg->appendRect(0, 0, w, h);
@@ -85,8 +83,6 @@ struct UserExample : tvgexam::Example
 
     bool update(tvg::Canvas* canvas, uint32_t elapsed) override
     {
-        if (!canvas) return false;
-
         auto progress = tvgexam::progress(elapsed, 2.0f, true);  //play time 2 sec.
 
         //Reset Shape

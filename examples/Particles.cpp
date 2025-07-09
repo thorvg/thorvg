@@ -43,8 +43,6 @@ struct UserExample : tvgexam::Example
 
     bool content(tvg::Canvas* canvas, uint32_t w, uint32_t h) override
     {
-        if (!canvas) return false;
-
         srand(100);
 
         auto city = tvg::Picture::gen();
@@ -100,7 +98,6 @@ struct UserExample : tvgexam::Example
 
     bool update(tvg::Canvas* canvas, uint32_t elapsed) override
     {
-        if (!canvas) return false;
         for (auto& p : raindrops) {
             p.y += p.speed;
             if (p.y > h) {

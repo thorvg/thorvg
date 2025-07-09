@@ -66,8 +66,6 @@ struct UserExample : tvgexam::Example
 
     bool update(tvg::Canvas* canvas, uint32_t elapsed) override
     {
-        if (!canvas) return false;
-
         //default slot
         {
             auto progress = tvgexam::progress(elapsed, slot0->duration());
@@ -147,8 +145,6 @@ struct UserExample : tvgexam::Example
 
     bool content(tvg::Canvas* canvas, uint32_t w, uint32_t h) override
     {
-        if (!canvas) return false;
-
         //Background
         auto bg = tvg::Shape::gen();
         bg->appendRect(0, 0, w, h);

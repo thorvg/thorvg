@@ -32,8 +32,6 @@ struct UserExample : tvgexam::Example
 
     bool content(tvg::Canvas* canvas, uint32_t w, uint32_t h) override
     {
-        if (!canvas) return false;
-
         //Original
         picture = tvg::Picture::gen();
 
@@ -48,8 +46,6 @@ struct UserExample : tvgexam::Example
 
     bool update(tvg::Canvas* canvas, uint32_t elapsed) override
     {
-        if (!canvas) return false;
-
         auto progress = tvgexam::progress(elapsed, 3.0f, true);  //play time 3 secs.
 
         picture->scale((1.0f - progress) * 1.5f);

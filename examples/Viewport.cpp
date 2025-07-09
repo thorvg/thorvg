@@ -34,8 +34,6 @@ struct UserExample : tvgexam::Example
 
     bool content(tvg::Canvas* canvas, uint32_t w, uint32_t h) override
     {
-        if (!canvas) return false;
-
         //set viewport before canvas become dirty.
         if (!tvgexam::verify(canvas->viewport(0, 0, VPORT_SIZE, VPORT_SIZE))) return false;
 
@@ -59,8 +57,6 @@ struct UserExample : tvgexam::Example
 
     bool update(tvg::Canvas* canvas, uint32_t elapsed) override
     {
-        if (!canvas) return false;
-
         auto progress = tvgexam::progress(elapsed, 2.0f, true);  //play time 2 sec.
 
         if (!tvgexam::verify(canvas->viewport((w - VPORT_SIZE) * progress, (h - VPORT_SIZE) * progress, VPORT_SIZE, VPORT_SIZE))) return false;

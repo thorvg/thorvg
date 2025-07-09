@@ -74,8 +74,6 @@ struct UserExample : tvgexam::Example
 
     bool update(tvg::Canvas* canvas, uint32_t elapsed) override
     {
-        if (!canvas) return false;
-
         //update per every 250ms
         //reorder with a circular list
         if (elapsed - last > 250) {
