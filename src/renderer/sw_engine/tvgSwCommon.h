@@ -560,10 +560,10 @@ static inline uint32_t opBlendSoftLight(uint32_t s, uint32_t d, TVG_UNUSED uint8
     RenderColor o;
     if (!UNPREMULTIPLY(d, o)) o.r = o.g = o.b = 0;
 
-    //(255 - 2 * s) * (d * d) + (2 * s * b)
-    auto c1 = MULTIPLY(255 - std::min(255, 2 * C1(s)), MULTIPLY(o.r, o.r)) + MULTIPLY(std::min(255, 2 * C1(s)), o.r);
-    auto c2 = MULTIPLY(255 - std::min(255, 2 * C2(s)), MULTIPLY(o.g, o.g)) + MULTIPLY(std::min(255, 2 * C2(s)), o.g);
-    auto c3 = MULTIPLY(255 - std::min(255, 2 * C3(s)), MULTIPLY(o.b, o.b)) + MULTIPLY(std::min(255, 2 * C3(s)), o.b);
+    //(255 - 2 * s) * (d * d) + (2 * s * d)
+    auto c1 = MULTIPLY(255 - std::min(255, 2 * C1(s)), MULTIPLY(o.r, o.r)) + std::min(255, 2 * MULTIPLY(C1(s), o.r));
+    auto c2 = MULTIPLY(255 - std::min(255, 2 * C2(s)), MULTIPLY(o.g, o.g)) + std::min(255, 2 * MULTIPLY(C2(s), o.g));
+    auto c3 = MULTIPLY(255 - std::min(255, 2 * C3(s)), MULTIPLY(o.b, o.b)) + std::min(255, 2 * MULTIPLY(C3(s), o.b));
     return JOIN(255, c1, c2, c3);
 }
 
