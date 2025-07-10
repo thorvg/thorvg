@@ -478,9 +478,9 @@ static inline uint32_t opBlendHardLight(uint32_t s, uint32_t d, TVG_UNUSED uint8
 static inline uint32_t opBlendSoftLight(uint32_t s, uint32_t d, TVG_UNUSED uint8_t a)
 {
     //(255 - 2 * s) * (d * d) + (2 * s * b)
-    auto c1 = MULTIPLY(255 - std::min(255, 2 * C1(s)), MULTIPLY(C1(d), C1(d))) + MULTIPLY(std::min(255, 2 * C1(s)), C1(d));
-    auto c2 = MULTIPLY(255 - std::min(255, 2 * C2(s)), MULTIPLY(C2(d), C2(d))) + MULTIPLY(std::min(255, 2 * C2(s)), C2(d));
-    auto c3 = MULTIPLY(255 - std::min(255, 2 * C3(s)), MULTIPLY(C3(d), C3(d))) + MULTIPLY(std::min(255, 2 * C3(s)), C3(d));
+    auto c1 = MULTIPLY(255 - std::min(255, 2 * C1(s)), MULTIPLY(C1(d), C1(d))) + std::min(255, 2 * MULTIPLY(C1(s), C1(d)));
+    auto c2 = MULTIPLY(255 - std::min(255, 2 * C2(s)), MULTIPLY(C2(d), C2(d))) + std::min(255, 2 * MULTIPLY(C2(s), C2(d)));
+    auto c3 = MULTIPLY(255 - std::min(255, 2 * C3(s)), MULTIPLY(C3(d), C3(d))) + std::min(255, 2 * MULTIPLY(C3(s), C3(d)));
     return JOIN(255, c1, c2, c3);
 }
 
