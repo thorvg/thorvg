@@ -176,9 +176,8 @@ void LottieOffsetModifier::line(RenderPath& out, PathCommand* inCmds, uint32_t i
 
 bool LottieRoundnessModifier::modifyPath(PathCommand* inCmds, uint32_t inCmdsCnt, Point* inPts, uint32_t inPtsCnt, Matrix* transform, RenderPath& out)
 {
-    buffer->clear();
-
-    auto& path = (next) ? *buffer : out;
+    auto& path = next ? (inCmds == buffer[0].cmds.data ? buffer[1] : buffer[0]) : out;
+    if (next) path.clear();
 
     path.cmds.reserve(inCmdsCnt * 2);
     path.pts.reserve((uint32_t)(inPtsCnt * 1.5));
@@ -237,9 +236,8 @@ bool LottieRoundnessModifier::modifyPolystar(RenderPath& in, RenderPath& out, fl
 {
     constexpr auto ROUNDED_POLYSTAR_MAGIC_NUMBER = 0.47829f;
 
-    buffer->clear();
-
-    auto& path = (next) ? *buffer : out;
+    auto& path = next ? (&in == &buffer[0] ? buffer[1] : buffer[0]) : out;
+    if (next) path.clear();
 
     auto len = length(in.pts[1] - in.pts[2]);
     auto r = len > 0.0f ? ROUNDED_POLYSTAR_MAGIC_NUMBER * std::min(len * 0.5f, this->r) / len : 0.0f;
@@ -307,19 +305,13 @@ bool LottieRoundnessModifier::modifyPolystar(RenderPath& in, RenderPath& out, fl
 }
 
 
-bool LottieRoundnessModifier::modifyRect(Point& size, float& r)
-{
-    r = std::min(this->r, std::max(size.x, size.y) * 0.5f);
-    return true;
-}
-
-
 bool LottieOffsetModifier::modifyPath(PathCommand* inCmds, uint32_t inCmdsCnt, Point* inPts, uint32_t inPtsCnt, TVG_UNUSED Matrix* transform, RenderPath& out)
 {
-    if (next) TVGERR("LOTTIE", "Offset has a next modifier?");
+    auto& path = next ? (inCmds == buffer[0].cmds.data ? buffer[1] : buffer[0]) : out;
+    if (next) path.clear();
 
-    out.cmds.reserve(inCmdsCnt * 2);
-    out.pts.reserve(inPtsCnt * (join == StrokeJoin::Round ? 4 : 2));
+    path.cmds.reserve(inCmdsCnt * 2);
+    path.pts.reserve(inPtsCnt * (join == StrokeJoin::Round ? 4 : 2));
 
     Array<Bezier> stack{5};
     State state;
@@ -331,12 +323,12 @@ bool LottieOffsetModifier::modifyPath(PathCommand* inCmds, uint32_t inCmdsCnt, P
             state.moveto = true;
             state.movetoInIndex = iPt++;
         } else if (inCmds[iCmd] == PathCommand::LineTo) {
-            line(out, inCmds, inCmdsCnt, inPts, iPt, iCmd, state, offset, false);
+            line(path, inCmds, inCmdsCnt, inPts, iPt, iCmd, state, offset, false);
         } else if (inCmds[iCmd] == PathCommand::CubicTo) {
             //cubic degenerated to a line
             if (tvg::zero(inPts[iPt - 1] - inPts[iPt]) || tvg::zero(inPts[iPt + 1] - inPts[iPt + 2])) {
                 ++iPt;
-                line(out, inCmds, inCmdsCnt, inPts, iPt, iCmd, state, offset, true);
+                line(path, inCmds, inCmdsCnt, inPts, iPt, iCmd, state, offset, true);
                 ++iPt;
                 continue;
             }
@@ -359,9 +351,9 @@ bool LottieOffsetModifier::modifyPath(PathCommand* inCmds, uint32_t inCmdsCnt, P
                 auto line3 = _offset(bezier.ctrl2, bezier.end, offset);
 
                 if (state.moveto) {
-                    out.cmds.push(PathCommand::MoveTo);
-                    state.movetoOutIndex = out.pts.count;
-                    out.pts.push(line1.pt1);
+                    path.cmds.push(PathCommand::MoveTo);
+                    state.movetoOutIndex = path.pts.count;
+                    path.pts.push(line1.pt1);
                     state.firstLine = line1;
                     state.moveto = false;
                 }
@@ -369,23 +361,26 @@ bool LottieOffsetModifier::modifyPath(PathCommand* inCmds, uint32_t inCmdsCnt, P
                 bool inside{};
                 Point intersect{};
                 _intersect(line1, line2, intersect, inside);
-                out.pts.push(intersect);
+                path.pts.push(intersect);
                 _intersect(line2, line3, intersect, inside);
-                out.pts.push(intersect);
-                out.pts.push(line3.pt2);
-                out.cmds.push(PathCommand::CubicTo);
+                path.pts.push(intersect);
+                path.pts.push(line3.pt2);
+                path.cmds.push(PathCommand::CubicTo);
             }
 
             iPt += 3;
         }
         else {
             if (!tvg::zero(inPts[iPt - 1] - inPts[state.movetoInIndex])) {
-                out.cmds.push(PathCommand::LineTo);
-                corner(out, state.line, state.firstLine, state.movetoOutIndex, true);
+                path.cmds.push(PathCommand::LineTo);
+                corner(path, state.line, state.firstLine, state.movetoOutIndex, true);
             }
-            out.cmds.push(PathCommand::Close);
+            path.cmds.push(PathCommand::Close);
         }
     }
+
+    if (next) return next->modifyPath(path.cmds.data, path.cmds.count, path.pts.data, path.pts.count, transform, out);
+
     return true;
 }
 
@@ -393,18 +388,4 @@ bool LottieOffsetModifier::modifyPath(PathCommand* inCmds, uint32_t inCmdsCnt, P
 bool LottieOffsetModifier::modifyPolystar(RenderPath& in, RenderPath& out, TVG_UNUSED float, TVG_UNUSED bool)
 {
     return modifyPath(in.cmds.data, in.cmds.count, in.pts.data, in.pts.count, nullptr, out);
-}
-
-
-bool LottieOffsetModifier::modifyRect(RenderPath& in, RenderPath& out)
-{
-    return modifyPath(in.cmds.data, in.cmds.count, in.pts.data, in.pts.count, nullptr, out);
-}
-
-
-bool LottieOffsetModifier::modifyEllipse(Point& radius)
-{
-    radius.x += offset;
-    radius.y += offset;
-    return true;
 }
