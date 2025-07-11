@@ -42,7 +42,7 @@ struct FillLinear
         fillLinear(fill, dst, y, x, len, cmp, op, a);
     }
 
-    void operator()(const SwFill* fill, uint32_t* dst, uint32_t y, uint32_t x, uint32_t len, SwBlender op, uint8_t a)
+    void operator()(const SwFill* fill, uint32_t* dst, uint32_t y, uint32_t x, uint32_t len, SwBlenderA op, uint8_t a)
     {
         fillLinear(fill, dst, y, x, len, op, a);
     }
@@ -52,7 +52,7 @@ struct FillLinear
         fillLinear(fill, dst, y, x, len, cmp, alpha, csize, opacity);
     }
 
-    void operator()(const SwFill* fill, uint32_t* dst, uint32_t y, uint32_t x, uint32_t len, SwBlender op, SwBlender op2, uint8_t a)
+    void operator()(const SwFill* fill, uint32_t* dst, uint32_t y, uint32_t x, uint32_t len, SwBlenderA op, SwBlender op2, uint8_t a)
     {
         fillLinear(fill, dst, y, x, len, op, op2, a);
     }
@@ -71,7 +71,7 @@ struct FillRadial
         fillRadial(fill, dst, y, x, len, cmp, op, a);
     }
 
-    void operator()(const SwFill* fill, uint32_t* dst, uint32_t y, uint32_t x, uint32_t len, SwBlender op, uint8_t a)
+    void operator()(const SwFill* fill, uint32_t* dst, uint32_t y, uint32_t x, uint32_t len, SwBlenderA op, uint8_t a)
     {
         fillRadial(fill, dst, y, x, len, op, a);
     }
@@ -81,7 +81,7 @@ struct FillRadial
         fillRadial(fill, dst, y, x, len, cmp, alpha, csize, opacity);
     }
 
-    void operator()(const SwFill* fill, uint32_t* dst, uint32_t y, uint32_t x, uint32_t len, SwBlender op, SwBlender op2, uint8_t a)
+    void operator()(const SwFill* fill, uint32_t* dst, uint32_t y, uint32_t x, uint32_t len, SwBlenderA op, SwBlender op2, uint8_t a)
     {
         fillRadial(fill, dst, y, x, len, op, op2, a);
     }
@@ -412,7 +412,7 @@ static bool _rasterBlendingRect(SwSurface* surface, const RenderRegion& bbox, co
     for (uint32_t y = 0; y < bbox.h(); ++y) {
         auto dst = &buffer[y * surface->stride];
         for (uint32_t x = 0; x < bbox.w(); ++x, ++dst) {
-            *dst = surface->blender(color, *dst, 255);
+            *dst = surface->blender(color, *dst);
         }
     }
     return true;
@@ -587,11 +587,11 @@ static bool _rasterBlendingRle(SwSurface* surface, const SwRle* rle, const Rende
         auto dst = &surface->buf32[span->y * surface->stride + x];
         if (span->coverage == 255) {
             for (auto x = 0; x < len; ++x, ++dst) {
-                *dst = surface->blender(color, *dst, 255);
+                *dst = surface->blender(color, *dst);
             }
         } else {
             for (auto x = 0; x < len; ++x, ++dst) {
-                auto tmp = surface->blender(color, *dst, 255);
+                auto tmp = surface->blender(color, *dst);
                 *dst = INTERPOLATE(tmp, *dst, span->coverage);
             }
         }
@@ -733,14 +733,14 @@ static bool _rasterScaledBlendingRleImage(SwSurface* surface, const SwImage& ima
             for (uint32_t x = static_cast<uint32_t>(span->x); x < static_cast<uint32_t>(span->x) + span->len; ++x, ++dst) {
                 SCALED_IMAGE_RANGE_X
                 auto src = scaleMethod(image.buf32, image.stride, image.w, image.h, sx, sy, miny, maxy, sampleSize);
-                auto tmp = surface->blender(src, *dst, 255);
+                auto tmp = surface->blender(src, *dst);
                 *dst = INTERPOLATE(tmp, *dst, A(src));
             }
         } else {
             for (uint32_t x = static_cast<uint32_t>(span->x); x < static_cast<uint32_t>(span->x) + span->len; ++x, ++dst) {
                 SCALED_IMAGE_RANGE_X
                 auto src = scaleMethod(image.buf32, image.stride, image.w, image.h, sx, sy, miny, maxy, sampleSize);
-                auto tmp = surface->blender(src, *dst, 255);
+                auto tmp = surface->blender(src, *dst);
                 *dst = INTERPOLATE(tmp, *dst, MULTIPLY(alpha, A(src)));
             }
         }
@@ -818,11 +818,11 @@ static bool _rasterDirectBlendingRleImage(SwSurface* surface, const SwImage& ima
         auto alpha = MULTIPLY(span->coverage, opacity);
         if (alpha == 255) {
             for (auto x = 0; x < len; ++x, ++dst, ++img) {
-                *dst = surface->blender(*img, *dst, 255);
+                *dst = surface->blender(*img, *dst);
             }
         } else {
             for (auto x = 0; x < len; ++x, ++dst, ++img) {
-                auto tmp = surface->blender(*img, *dst, 255);
+                auto tmp = surface->blender(*img, *dst);
                 *dst = INTERPOLATE(tmp, *dst, MULTIPLY(alpha, A(*img)));
             }
         }
@@ -918,7 +918,7 @@ static bool _rasterScaledBlendingImage(SwSurface* surface, const SwImage& image,
         for (auto x = bbox.min.x; x < bbox.max.x; ++x, ++dst) {
             SCALED_IMAGE_RANGE_X
             auto src = scaleMethod(image.buf32, image.stride, image.w, image.h, sx, sy, miny, maxy, sampleSize);
-            auto tmp = surface->blender(src, *dst, 255);
+            auto tmp = surface->blender(src, *dst);
             *dst = INTERPOLATE(tmp, *dst, MULTIPLY(opacity, A(src)));
         }
     }
@@ -1038,11 +1038,11 @@ static bool _rasterDirectBlendingImage(SwSurface* surface, const SwImage& image,
         auto src = sbuffer;
         if (opacity == 255) {
             for (auto dst = dbuffer; dst < dbuffer + w; dst++, src++) {
-                *dst = INTERPOLATE(surface->blender(*src, *dst, 255), *dst, A(*src));
+                *dst = INTERPOLATE(surface->blender(*src, *dst), *dst, A(*src));
             }
         } else {
             for (auto dst = dbuffer; dst < dbuffer + w; dst++, src++) {
-                *dst = INTERPOLATE(surface->blender(*src, *dst, 255), *dst, MULTIPLY(opacity, A(*src)));
+                *dst = INTERPOLATE(surface->blender(*src, *dst), *dst, MULTIPLY(opacity, A(*src)));
             }
         }
     }
@@ -1099,12 +1099,12 @@ static bool _rasterDirectMattedBlendingImage(SwSurface* surface, const SwImage& 
         if (opacity == 255) {
             for (auto dst = dbuffer; dst < dbuffer + w; ++dst, ++src, cmp += csize) {
                 auto tmp = ALPHA_BLEND(*src, alpha(cmp));
-                *dst = INTERPOLATE(surface->blender(tmp, *dst, 255), *dst, A(tmp));
+                *dst = INTERPOLATE(surface->blender(tmp, *dst), *dst, A(tmp));
             }
         } else {
             for (auto dst = dbuffer; dst < dbuffer + w; ++dst, ++src, cmp += csize) {
                 auto tmp = ALPHA_BLEND(*src, alpha(cmp));
-                *dst = INTERPOLATE(surface->blender(tmp, *dst, 255), *dst, MULTIPLY(opacity, A(tmp)));
+                *dst = INTERPOLATE(surface->blender(tmp, *dst), *dst, MULTIPLY(opacity, A(tmp)));
             }
         }
         cbuffer += surface->compositor->image.stride * csize;
