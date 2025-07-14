@@ -485,7 +485,8 @@ bool effectTint(SwCompositor* cmp, const RenderEffectTint* params, bool direct)
             auto dst = dbuffer;
             auto src = sbuffer;
             for (size_t x = 0; x < w; ++x, ++dst, ++src) {
-                auto val = INTERPOLATE(INTERPOLATE(white, black, luma((uint8_t*)src)), *src, params->intensity);
+                auto val = INTERPOLATE(white, black, luma((uint8_t*)src));
+                if (params->intensity < 255) val = INTERPOLATE(val, *src, params->intensity);
                 *dst = INTERPOLATE(val, *dst, MULTIPLY(opacity, A(*src)));
             }
             dbuffer += cmp->image.stride;
@@ -497,7 +498,8 @@ bool effectTint(SwCompositor* cmp, const RenderEffectTint* params, bool direct)
         for (size_t y = 0; y < h; ++y) {
             auto dst = dbuffer;
             for (size_t x = 0; x < w; ++x, ++dst) {
-                auto val = INTERPOLATE(INTERPOLATE(white, black, luma((uint8_t*)&dst)), *dst, params->intensity);
+                auto val = INTERPOLATE(white, black, luma((uint8_t*)&dst));
+                if (params->intensity < 255) val = INTERPOLATE(val, *dst, params->intensity);
                 *dst = ALPHA_BLEND(val, MULTIPLY(opacity, A(*dst)));
             }
             dbuffer += cmp->image.stride;
