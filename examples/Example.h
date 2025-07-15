@@ -90,6 +90,8 @@ struct Example
         auto rpath = realpath(path, buf);
     #endif
 
+        if (!rpath) return;
+
         //open directory
     #ifdef _WIN32
         WIN32_FIND_DATA fd;
