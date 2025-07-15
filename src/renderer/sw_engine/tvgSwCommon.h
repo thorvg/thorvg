@@ -398,6 +398,7 @@ static inline bool BLEND_UPRE(uint32_t c, RenderColor& o)
 
 static inline uint32_t BLEND_PRE(uint32_t c1, uint32_t c2, uint8_t a)
 {
+    if (a == 255) return c1;
     return ALPHA_BLEND(c1, a) + ALPHA_BLEND(c2, 255 - a);
 }
 
@@ -654,7 +655,7 @@ bool rasterDirectRleImage(SwSurface* surface, const SwImage& image, const Render
 bool rasterStroke(SwSurface* surface, SwShape* shape, const RenderRegion& bbox, RenderColor& c);
 bool rasterGradientShape(SwSurface* surface, SwShape* shape, const RenderRegion& bbox, const Fill* fdata, uint8_t opacity);
 bool rasterGradientStroke(SwSurface* surface, SwShape* shape, const RenderRegion& bbox, const Fill* fdata, uint8_t opacity);
-bool rasterClear(SwSurface* surface, uint32_t x, uint32_t y, uint32_t w, uint32_t h, pixel_t val = 0);
+bool rasterClear(SwSurface* surface, uint32_t x, uint32_t y, uint32_t w, uint32_t h);
 void rasterPixel32(uint32_t *dst, uint32_t val, uint32_t offset, int32_t len);
 void rasterTranslucentPixel32(uint32_t* dst, uint32_t* src, uint32_t len, uint8_t opacity);
 void rasterPixel32(uint32_t* dst, uint32_t* src, uint32_t len, uint8_t opacity);

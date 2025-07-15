@@ -424,7 +424,7 @@ bool SwRenderer::renderImage(RenderData data)
                 cmp->compositor->method = MaskMethod::None;
                 cmp->compositor->valid = true;
                 cmp->compositor->image.rle = image.rle;
-                rasterClear(cmp, bbox.x(), bbox.y(), bbox.w(), bbox.h(), 0);
+                rasterClear(cmp, bbox.x(), bbox.y(), bbox.w(), bbox.h());
                 rasterTexmapPolygon(cmp, image, transform, bbox, 255);
                 return rasterDirectRleImage(surface, cmp->compositor->image, bbox, opacity);
             }
@@ -666,8 +666,7 @@ RenderCompositor* SwRenderer::target(const RenderRegion& region, ColorSpace cs, 
 
     /* TODO: Currently, only blending might work.
        Blending and composition must be handled together. */
-    auto color = (surface->blender && !surface->compositor) ? 0x00ffffff : 0x00000000;
-    rasterClear(cmp, bbox.x(), bbox.y(), bbox.w(), bbox.h(), color);
+    rasterClear(cmp, bbox.x(), bbox.y(), bbox.w(), bbox.h());
 
     //Switch render target
     surface = cmp;
