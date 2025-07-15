@@ -136,7 +136,7 @@ static void _rasterBlendingPolygonImageSegment(SwSurface* surface, const SwImage
                     }
                     px = INTERPOLATE(px, px2, ab);
                 }
-                auto tmp = surface->blender(px, *buf, 255);
+                auto tmp = surface->blender(rasterUnpremultiply(px), *buf, 255);
                 *buf = INTERPOLATE(tmp, *buf, MULTIPLY(opacity, A(px)));
                 ++buf;
 
