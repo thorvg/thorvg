@@ -90,6 +90,11 @@ struct Example
         auto rpath = realpath(path, buf);
     #endif
 
+        if (!rpath) {
+            cout << "Couldn't open directory \"" << path << "\"." << endl;
+            return;
+        }
+
         //open directory
     #ifdef _WIN32
         WIN32_FIND_DATA fd;
