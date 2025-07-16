@@ -297,7 +297,7 @@ struct SwSurface : RenderSurface
         blender = rhs->blender;
         compositor = rhs->compositor;
         blendMethod = rhs->blendMethod;
-     }
+    }
 };
 
 struct SwCompositor : RenderCompositor
@@ -669,7 +669,7 @@ uint32_t rasterUnpremultiply(uint32_t data);
 bool effectGaussianBlur(SwCompositor* cmp, SwSurface* surface, const RenderEffectGaussianBlur* params);
 bool effectGaussianBlurRegion(RenderEffectGaussianBlur* effect);
 void effectGaussianBlurUpdate(RenderEffectGaussianBlur* effect, const Matrix& transform);
-bool effectDropShadow(SwCompositor* cmp, SwSurface* surfaces[2], const RenderEffectDropShadow* params);
+bool effectDropShadow(SwCompositor* cmp, SwSurface* surfaces[2], const RenderEffectDropShadow* params, bool direct);
 bool effectDropShadowRegion(RenderEffectDropShadow* effect);
 void effectDropShadowUpdate(RenderEffectDropShadow* effect, const Matrix& transform);
 void effectFillUpdate(RenderEffectFill* effect);
