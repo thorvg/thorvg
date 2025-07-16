@@ -282,33 +282,40 @@ static void _shift(uint32_t** dst, uint32_t** src, int dstride, int sstride, int
 }
 
 
+static void _dropShadowNoFilter(uint32_t* dst, uint32_t* src, int dstride, int sstride, int dw, int dh, const SwBBox& bbox, const SwPoint& offset, uint32_t color, uint8_t opacity, bool direct)
+{
+    src += (bbox.min.y * sstride + bbox.min.x);
+    dst += (bbox.min.y * dstride + bbox.min.x);
+
+    SwSize size;
+    _shift(&dst, &src, dstride, sstride, dw, dh, bbox, offset, size);
+
+    for (auto y = 0; y < size.h; ++y) {
+        auto s2 = src;
+        auto d2 = dst;
+        for (int x = 0; x < size.w; ++x, ++d2, ++s2) {
+            auto a = MULTIPLY(opacity, A(*s2));
+            if (!direct || a == 255) *d2 = ALPHA_BLEND(color, a);
+            else *d2 = INTERPOLATE(color, *d2, a);
+        }
+        src += sstride;
+        dst += dstride;
+    }
+}
+
+
 static void _dropShadowNoFilter(SwImage* dimg, SwImage* simg, const SwBBox& bbox, const SwPoint& offset, uint32_t color)
 {
     int dstride = dimg->stride;
     int sstride = simg->stride;
 
+    //shadow image
+    _dropShadowNoFilter(dimg->buf32, simg->buf32, dstride, sstride, dimg->w, dimg->h, bbox, offset, color, 255, false);
+
+    //original image
     auto src = simg->buf32 + (bbox.min.y * sstride + bbox.min.x);
     auto dst = dimg->buf32 + (bbox.min.y * dstride + bbox.min.x);
 
-    //for shadow
-    auto src2 = src;
-    auto dst2 = dst;
-
-    SwSize size;
-    _shift(&dst2, &src2, dimg->stride, simg->stride, dimg->w, dimg->h, bbox, offset, size);
-
-    //shadow
-    for (auto y = 0; y < size.h; ++y) {
-        auto s2 = src2;
-        auto d2 = dst2;
-        for (int x = 0; x < size.w; ++x, ++d2, ++s2) {
-            *d2 = ALPHA_BLEND(color, A(*s2));
-        }
-        src2 += sstride;
-        dst2 += dstride;
-    }
-
-    //original
     for (auto y = 0; y < (bbox.max.y - bbox.min.y); ++y) {
         auto s = src;
         auto d = dst;
@@ -321,21 +328,16 @@ static void _dropShadowNoFilter(SwImage* dimg, SwImage* simg, const SwBBox& bbox
 }
 
 
-static void _dropShadowShift(SwImage* dimg, SwImage* simg, SwBBox& bbox, const SwPoint& offset, uint8_t opacity)
+static void _dropShadowShift(uint32_t* dst, uint32_t* src, int dstride, int sstride, int dw, int dh, const SwBBox& bbox, const SwPoint& offset, uint8_t opacity, bool direct)
 {
-    int dstride = dimg->stride;
-    int sstride = simg->stride;
-
-    auto src = simg->buf32 + (bbox.min.y * sstride + bbox.min.x);
-    auto dst = dimg->buf32 + (bbox.min.y * dstride + bbox.min.x);
-
-    auto translucent = (opacity < 255);
+    src += (bbox.min.y * sstride + bbox.min.x);
+    dst += (bbox.min.y * dstride + bbox.min.x);
 
     SwSize size;
-    _shift(&dst, &src, dimg->stride, simg->stride, dimg->w, dimg->h, bbox, offset, size);
+    _shift(&dst, &src, dstride, sstride, dw, dh, bbox, offset, size);
 
     for (auto y = 0; y < size.h; ++y) {
-        if (translucent) rasterTranslucentPixel32(dst, src, size.w, opacity);
+        if (direct) rasterTranslucentPixel32(dst, src, size.w, opacity);
         else rasterPixel32(dst, src, size.w, opacity);
         src += sstride;
         dst += dstride;
@@ -394,7 +396,7 @@ void effectDropShadowUpdate(RenderEffectDropShadow* params, const Matrix& transf
 //A quite same integration with effectGaussianBlur(). See it for detailed comments.
 //surface[0]: the original image, to overlay it into the filtered image.
 //surface[1]: temporary buffer for generating the filtered image.
-bool effectDropShadow(SwCompositor* cmp, SwSurface* surface[2], const RenderEffectDropShadow* params)
+bool effectDropShadow(SwCompositor* cmp, SwSurface* surface[2], const RenderEffectDropShadow* params, bool direct)
 {
     //FIXME: if the body is partially visible due to clipping, the shadow also becomes partially visible.
 
@@ -412,14 +414,21 @@ bool effectDropShadow(SwCompositor* cmp, SwSurface* surface[2], const RenderEffe
     auto front = cmp->image.buf32;
     auto back = buffer[1]->buf32;
 
+    auto opacity = direct ? MULTIPLY(params->color[3], cmp->opacity) : params->color[3];
+
     TVGLOG("SW_ENGINE", "DropShadow region(%ld, %ld, %ld, %ld) params(%f %f %f), level(%d)", bbox.min.x, bbox.min.y, bbox.max.x, bbox.max.y, params->angle, params->distance, params->sigma, data->level);
 
     //no filter required
     if (params->sigma == 0.0f)  {
-        _dropShadowNoFilter(buffer[1], &cmp->image, bbox, data->offset, color);
-        std::swap(cmp->image.buf32, buffer[1]->buf32);
+        if (direct) {
+            _dropShadowNoFilter(cmp->recoverSfc->buf32, cmp->image.buf32, cmp->recoverSfc->stride, cmp->image.stride, cmp->recoverSfc->w, cmp->recoverSfc->h, bbox, data->offset, color, opacity, direct);
+        } else {
+            _dropShadowNoFilter(buffer[1], &cmp->image, bbox, data->offset, color);
+            std::swap(cmp->image.buf32, buffer[1]->buf32);
+        }
         return true;
     }
+
     //saving the original image in order to overlay it into the filtered image.
     _dropShadowFilter(back, front, stride, w, h, bbox, data->kernel[0], color, false);
     std::swap(front, buffer[0]->buf32);
@@ -442,10 +451,17 @@ bool effectDropShadow(SwCompositor* cmp, SwSurface* surface[2], const RenderEffe
 
     rasterXYFlip(front, back, stride, h, w, bbox, true);
     std::swap(cmp->image.buf32, back);
+
+    //draw to the main surface directly
+    if (direct) {
+        _dropShadowShift(cmp->recoverSfc->buf32, cmp->image.buf32, cmp->recoverSfc->stride, cmp->image.stride, cmp->recoverSfc->w, cmp->recoverSfc->h, bbox, data->offset, opacity, direct);
+        std::swap(cmp->image.buf32, buffer[0]->buf32);
+        return true;
+    }
+
     //draw to the intermediate surface
     rasterClear(surface[1], bbox.min.x, bbox.min.y, w, h);
-    _dropShadowShift(buffer[1], &cmp->image, bbox, data->offset, params->color[3]);
-    std::swap(cmp->image.buf32, buffer[1]->buf32);
+    _dropShadowShift(buffer[1]->buf32, cmp->image.buf32, buffer[1]->stride, cmp->image.stride, buffer[1]->w, buffer[1]->h, bbox, data->offset, opacity, direct);
 
     //compositing shadow and body
     auto s = buffer[0]->buf32 + (bbox.min.y * buffer[0]->stride + bbox.min.x);

@@ -711,7 +711,7 @@ bool SwRenderer::render(RenderCompositor* cmp, const RenderEffect* effect, bool 
             cmp1->compositor->valid = false;
             auto cmp2 = request(surface->channelSize, true);
             SwSurface* surfaces[] = {cmp1, cmp2};
-            auto ret = effectDropShadow(p, surfaces, static_cast<const RenderEffectDropShadow*>(effect));
+            auto ret = effectDropShadow(p, surfaces, static_cast<const RenderEffectDropShadow*>(effect), direct);
             cmp1->compositor->valid = true;
             return ret;
         }
