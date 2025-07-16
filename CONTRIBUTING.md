@@ -8,7 +8,7 @@ ThorVG uses GitHub infrastructure to automatically assign code reviewers for you
 After updating the ThorVG code, please ensure your changes don't break the library. We recommend conducting unit tests. You can easily run them using the following build commands:
 <br/>
 `
-$meson . build -Dtests=true -Dloaders="all" -Dsavers="all" -Dbindings="capi" -Dtools="all" -Dlog=true
+$meson setup build -Dtests=true -Dloaders="all" -Dsavers="all" -Dbindings="capi" -Dtools="all" -Dlog=true
 `
 <br />
 `
