@@ -266,7 +266,8 @@ struct SwImage
 };
 
 typedef uint8_t(*SwMask)(uint8_t s, uint8_t d, uint8_t a);                  //src, dst, alpha
-typedef uint32_t(*SwBlender)(uint32_t s, uint32_t d, uint8_t a);            //src, dst, alpha
+typedef uint32_t(*SwBlender)(uint32_t s, uint32_t d);                       //src, dst
+typedef uint32_t(*SwBlenderA)(uint32_t s, uint32_t d, uint8_t a);           //src, dst, alpha
 typedef uint32_t(*SwJoin)(uint8_t r, uint8_t g, uint8_t b, uint8_t a);      //color channel join
 typedef uint8_t(*SwAlpha)(uint8_t*);                                        //blending alpha
 
@@ -423,8 +424,7 @@ static inline uint32_t opBlendSrcOver(uint32_t s, TVG_UNUSED uint32_t d, TVG_UNU
     return s;
 }
 
-//TODO: BlendMethod could remove the alpha parameter.
-static inline uint32_t opBlendDifference(uint32_t s, uint32_t d, TVG_UNUSED uint8_t a)
+static inline uint32_t opBlendDifference(uint32_t s, uint32_t d)
 {
     if (d == 0) return s;
 
@@ -435,7 +435,7 @@ static inline uint32_t opBlendDifference(uint32_t s, uint32_t d, TVG_UNUSED uint
     return JOIN(255, f(C1(s), C1(d)), f(C2(s), C2(d)), f(C3(s), C3(d)));
 }
 
-static inline uint32_t opBlendExclusion(uint32_t s, uint32_t d, TVG_UNUSED uint8_t a)
+static inline uint32_t opBlendExclusion(uint32_t s, uint32_t d)
 {
     if (d == 0) return s;
 
@@ -446,7 +446,7 @@ static inline uint32_t opBlendExclusion(uint32_t s, uint32_t d, TVG_UNUSED uint8
     return JOIN(255, f(C1(s), C1(d)), f(C2(s), C2(d)), f(C3(s), C3(d)));
 }
 
-static inline uint32_t opBlendAdd(uint32_t s, uint32_t d, TVG_UNUSED uint8_t a)
+static inline uint32_t opBlendAdd(uint32_t s, uint32_t d)
 {
     if (d == 0) return s;
 
@@ -457,7 +457,7 @@ static inline uint32_t opBlendAdd(uint32_t s, uint32_t d, TVG_UNUSED uint8_t a)
     return JOIN(255, f(C1(s), C1(d)), f(C2(s), C2(d)), f(C3(s), C3(d)));
 }
 
-static inline uint32_t opBlendScreen(uint32_t s, uint32_t d, TVG_UNUSED uint8_t a)
+static inline uint32_t opBlendScreen(uint32_t s, uint32_t d)
 {
     if (d == 0) return s;
 
@@ -468,7 +468,7 @@ static inline uint32_t opBlendScreen(uint32_t s, uint32_t d, TVG_UNUSED uint8_t 
     return JOIN(255, f(C1(s), C1(d)), f(C2(s), C2(d)), f(C3(s), C3(d)));
 }
 
-static inline uint32_t opBlendMultiply(uint32_t s, uint32_t d, TVG_UNUSED uint8_t a)
+static inline uint32_t opBlendMultiply(uint32_t s, uint32_t d)
 {
     RenderColor o;
     if (!BLEND_UPRE(d, o)) return s;
@@ -481,7 +481,7 @@ static inline uint32_t opBlendMultiply(uint32_t s, uint32_t d, TVG_UNUSED uint8_
 }
 
 
-static inline uint32_t opBlendOverlay(uint32_t s, uint32_t d, TVG_UNUSED uint8_t a)
+static inline uint32_t opBlendOverlay(uint32_t s, uint32_t d)
 {
     RenderColor o;
     if (!BLEND_UPRE(d, o)) return s;
@@ -493,7 +493,7 @@ static inline uint32_t opBlendOverlay(uint32_t s, uint32_t d, TVG_UNUSED uint8_t
     return BLEND_PRE(JOIN(255, f(C1(s), o.r), f(C2(s), o.g), f(C3(s), o.b)), s, o.a);
 }
 
-static inline uint32_t opBlendDarken(uint32_t s, uint32_t d, TVG_UNUSED uint8_t a)
+static inline uint32_t opBlendDarken(uint32_t s, uint32_t d)
 {
     RenderColor o;
     if (!BLEND_UPRE(d, o)) return s;
@@ -505,7 +505,7 @@ static inline uint32_t opBlendDarken(uint32_t s, uint32_t d, TVG_UNUSED uint8_t 
     return BLEND_PRE(JOIN(255, f(C1(s), o.r), f(C2(s), o.g), f(C3(s), o.b)), s, o.a);
 }
 
-static inline uint32_t opBlendLighten(uint32_t s, uint32_t d, TVG_UNUSED uint8_t a)
+static inline uint32_t opBlendLighten(uint32_t s, uint32_t d)
 {
     if (d == 0) return s;
 
@@ -516,7 +516,7 @@ static inline uint32_t opBlendLighten(uint32_t s, uint32_t d, TVG_UNUSED uint8_t
     return JOIN(255, f(C1(s), C1(d)), f(C2(s), C2(d)), f(C3(s), C3(d)));
 }
 
-static inline uint32_t opBlendColorDodge(uint32_t s, uint32_t d, TVG_UNUSED uint8_t a)
+static inline uint32_t opBlendColorDodge(uint32_t s, uint32_t d)
 {
     RenderColor o;
     if (!BLEND_UPRE(d, o)) return s;
@@ -528,7 +528,7 @@ static inline uint32_t opBlendColorDodge(uint32_t s, uint32_t d, TVG_UNUSED uint
     return BLEND_PRE(JOIN(255, f(C1(s), o.r), f(C2(s), o.g), f(C3(s), o.b)), s, o.a);
 }
 
-static inline uint32_t opBlendColorBurn(uint32_t s, uint32_t d, TVG_UNUSED uint8_t a)
+static inline uint32_t opBlendColorBurn(uint32_t s, uint32_t d)
 {
     RenderColor o;
     if (!BLEND_UPRE(d, o)) return s;
@@ -540,7 +540,7 @@ static inline uint32_t opBlendColorBurn(uint32_t s, uint32_t d, TVG_UNUSED uint8
     return BLEND_PRE(JOIN(255, f(C1(s), o.r), f(C2(s), o.g), f(C3(s), o.b)), s, o.a);
 }
 
-static inline uint32_t opBlendHardLight(uint32_t s, uint32_t d, TVG_UNUSED uint8_t a)
+static inline uint32_t opBlendHardLight(uint32_t s, uint32_t d)
 {
     RenderColor o;
     if (!BLEND_UPRE(d, o)) return s;
@@ -552,7 +552,7 @@ static inline uint32_t opBlendHardLight(uint32_t s, uint32_t d, TVG_UNUSED uint8
     return BLEND_PRE(JOIN(255, f(C1(s), o.r), f(C2(s), o.g), f(C3(s), o.b)), s, o.a);
 }
 
-static inline uint32_t opBlendSoftLight(uint32_t s, uint32_t d, TVG_UNUSED uint8_t a)
+static inline uint32_t opBlendSoftLight(uint32_t s, uint32_t d)
 {
     RenderColor o;
     if (!BLEND_UPRE(d, o)) return s;
@@ -617,14 +617,14 @@ void fillFree(SwFill* fill);
 //OPTIMIZE_ME: Skip the function pointer access
 void fillLinear(const SwFill* fill, uint8_t* dst, uint32_t y, uint32_t x, uint32_t len, SwMask maskOp, uint8_t opacity);                                   //composite masking ver.
 void fillLinear(const SwFill* fill, uint8_t* dst, uint32_t y, uint32_t x, uint32_t len, uint8_t* cmp, SwMask maskOp, uint8_t opacity);                     //direct masking ver.
-void fillLinear(const SwFill* fill, uint32_t* dst, uint32_t y, uint32_t x, uint32_t len, SwBlender op, uint8_t a);                                         //blending ver.
-void fillLinear(const SwFill* fill, uint32_t* dst, uint32_t y, uint32_t x, uint32_t len, SwBlender op, SwBlender op2, uint8_t a);                          //blending + BlendingMethod(op2) ver.
+void fillLinear(const SwFill* fill, uint32_t* dst, uint32_t y, uint32_t x, uint32_t len, SwBlenderA op, uint8_t a);                                        //blending ver.
+void fillLinear(const SwFill* fill, uint32_t* dst, uint32_t y, uint32_t x, uint32_t len, SwBlenderA op, SwBlender op2, uint8_t a);                         //blending + BlendingMethod(op2) ver.
 void fillLinear(const SwFill* fill, uint32_t* dst, uint32_t y, uint32_t x, uint32_t len, uint8_t* cmp, SwAlpha alpha, uint8_t csize, uint8_t opacity);     //matting ver.
 
 void fillRadial(const SwFill* fill, uint8_t* dst, uint32_t y, uint32_t x, uint32_t len, SwMask op, uint8_t a);                                             //composite masking ver.
 void fillRadial(const SwFill* fill, uint8_t* dst, uint32_t y, uint32_t x, uint32_t len, uint8_t* cmp, SwMask op, uint8_t a) ;                              //direct masking ver.
-void fillRadial(const SwFill* fill, uint32_t* dst, uint32_t y, uint32_t x, uint32_t len, SwBlender op, uint8_t a);                                         //blending ver.
-void fillRadial(const SwFill* fill, uint32_t* dst, uint32_t y, uint32_t x, uint32_t len, SwBlender op, SwBlender op2, uint8_t a);                          //blending + BlendingMethod(op2) ver.
+void fillRadial(const SwFill* fill, uint32_t* dst, uint32_t y, uint32_t x, uint32_t len, SwBlenderA op, uint8_t a);                                        //blending ver.
+void fillRadial(const SwFill* fill, uint32_t* dst, uint32_t y, uint32_t x, uint32_t len, SwBlenderA op, SwBlender op2, uint8_t a);                         //blending + BlendingMethod(op2) ver.
 void fillRadial(const SwFill* fill, uint32_t* dst, uint32_t y, uint32_t x, uint32_t len, uint8_t* cmp, SwAlpha alpha, uint8_t csize, uint8_t opacity);     //matting ver.
 
 SwRle* rleRender(SwRle* rle, const SwOutline* outline, const RenderRegion& bbox, bool antiAlias);
