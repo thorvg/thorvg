@@ -228,7 +228,7 @@ void WgCompositor::renderShape(WgContext& context, WgRenderDataShape* renderData
 {
     assert(renderData);
     assert(renderPassEncoder);
-    // apply clip path if neccessary
+    // apply clip path if necessary
     if (renderData->clips.count != 0) {
         renderClipPath(context, renderData);
         if (renderData->strokeFirst) {
@@ -265,7 +265,7 @@ void WgCompositor::renderImage(WgContext& context, WgRenderDataPicture* renderDa
 {
     assert(renderData);
     assert(renderPassEncoder);
-    // apply clip path if neccessary
+    // apply clip path if necessary
     if (renderData->clips.count != 0) {
         renderClipPath(context, renderData);
         clipImage(context, renderData);
