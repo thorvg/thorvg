@@ -588,3 +588,209 @@ bool RenderTrimPath::trim(const RenderPath& in, RenderPath& out) const
 
     return out.pts.count >= 2;
 }
+
+/************************************************************************/
+/* StrokeDashPath Class Implementation                                  */
+/************************************************************************/
+
+//TODO: use this common function from all engines
+#ifdef THORVG_GL_RASTER_SUPPORT
+
+struct StrokeDashPath
+{
+public:
+    StrokeDashPath(RenderStroke::Dash dash) : dash(dash) {}
+    bool gen(const RenderPath& in, RenderPath& out, bool drawPoint);
+
+private:
+    void lineTo(RenderPath& out, const Point& pt, bool drawPoint);
+    void cubicTo(RenderPath& out, const Point& pt1, const Point& pt2, const Point& pt3, bool drawPoint);
+    void point(RenderPath& out, const Point& p);
+
+    template<typename Segment, typename LengthFn, typename SplitFn, typename DrawFn, typename PointFn>
+    void segment(Segment seg, float len, RenderPath& out, bool allowDot, LengthFn lengthFn, SplitFn splitFn, DrawFn drawFn, PointFn getStartPt, const Point& endPos);
+
+    RenderStroke::Dash dash;
+    float curLen = 0.0f;
+    int32_t curIdx = 0;
+    Point curPos{};
+    bool opGap = false;
+    bool move = true;
+};
+
+
+template<typename Segment, typename LengthFn, typename SplitFn, typename DrawFn, typename PointFn>
+void StrokeDashPath::segment(Segment seg, float len, RenderPath& out, bool allowDot, LengthFn lengthFn, SplitFn splitFn, DrawFn drawFn, PointFn getStartPt, const Point& end)
+{
+    #define MIN_CURR_LEN_THRESHOLD 0.1f
+
+    if (tvg::zero(len)) {
+        out.moveTo(curPos);
+    } else if (len <= curLen) {
+        curLen -= len;
+        if (!opGap) {
+            if (move) {
+                out.moveTo(curPos);
+                move = false;
+            }
+            drawFn(seg);
+        }
+    } else {
+        Segment left, right;
+        while (len - curLen > DASH_PATTERN_THRESHOLD) {
+            if (curLen > 0.0f) {
+                splitFn(seg, curLen, left, right);
+                len -= curLen;
+                if (!opGap) {
+                    if (move || dash.pattern[curIdx] - curLen < FLOAT_EPSILON) {
+                        out.moveTo(getStartPt(left));
+                        move = false;
+                    }
+                    drawFn(left);
+                }
+            } else {
+                if (allowDot && !opGap) point(out, getStartPt(seg));
+                right = seg;
+            }
+
+            curIdx = (curIdx + 1) % dash.count;
+            curLen = dash.pattern[curIdx];
+            opGap = !opGap;
+            seg = right;
+            curPos = getStartPt(seg);
+            move = true;
+        }
+        curLen -= len;
+        if (!opGap) {
+            if (move) {
+                out.moveTo(getStartPt(seg));
+                move = false;
+            }
+            drawFn(seg);
+        }
+        if (curLen < MIN_CURR_LEN_THRESHOLD) {
+            curIdx = (curIdx + 1) % dash.count;
+            curLen = dash.pattern[curIdx];
+            opGap = !opGap;
+        }
+    }
+    curPos = end;
+}
+
+
+//allowDot: zero length segment with non-butt cap still should be rendered as a point - only the caps are visible
+bool StrokeDashPath::gen(const RenderPath& in, RenderPath& out, bool allowDot)
+{
+    int32_t idx = 0;
+    auto offset = dash.offset;
+    auto gap = false;
+    if (!tvg::zero(dash.offset)) {
+        auto length = (dash.count % 2) ? dash.length * 2 : dash.length;
+        offset = fmodf(offset, length);
+        if (offset < 0) offset += length;
+
+        for (uint32_t i = 0; i < dash.count * (dash.count % 2 + 1); ++i, ++idx) {
+            auto curPattern = dash.pattern[i % dash.count];
+            if (offset < curPattern) break;
+            offset -= curPattern;
+            gap = !gap;
+        }
+        idx = idx % dash.count;
+    }
+
+    auto pts = in.pts.data;
+    Point start{};
+
+    ARRAY_FOREACH(cmd, in.cmds) {
+        switch (*cmd) {
+            case PathCommand::Close: {
+                lineTo(out, start, allowDot);
+                break;
+            }
+            case PathCommand::MoveTo: {
+                // reset the dash state
+                curIdx = idx;
+                curLen = dash.pattern[idx] - offset;
+                opGap = gap;
+                move = true;
+                start = curPos = *pts;
+                pts++;
+                break;
+            }
+            case PathCommand::LineTo: {
+                lineTo(out, *pts, allowDot);
+                pts++;
+                break;
+            }
+            case PathCommand::CubicTo: {
+                cubicTo(out, pts[0], pts[1], pts[2], allowDot);
+                pts += 3;
+                break;
+            }
+            default: break;
+        }
+    }
+    return true;
+}
+
+
+void StrokeDashPath::point(RenderPath& out, const Point& p)
+{
+    if (move || dash.pattern[curIdx] < FLOAT_EPSILON) {
+        out.moveTo(p);
+        move = false;
+    }
+    out.lineTo(p);
+}
+
+
+void StrokeDashPath::lineTo(RenderPath& out, const Point& to, bool allowDot)
+{
+    Line line = {curPos, to};
+    auto len = length(to - curPos);
+    segment<Line>(line, len, out, allowDot,
+        [](const Line& l) { return length(l.pt2 - l.pt1); },
+        [](const Line& l, float len, Line& left, Line& right) { l.split(len, left, right); },
+        [&](const Line& l) { out.lineTo(l.pt2); },
+        [](const Line& l) { return l.pt1; },
+        to
+    );
+}
+
+
+void StrokeDashPath::cubicTo(RenderPath& out, const Point& cnt1, const Point& cnt2, const Point& end, bool allowDot)
+{
+    Bezier curve = {curPos, cnt1, cnt2, end};
+    auto len = curve.length();
+    segment<Bezier>(curve, len, out, allowDot,
+        [](const Bezier& b) { return b.length(); },
+        [](const Bezier& b, float len, Bezier& left, Bezier& right) { b.split(len, left, right); },
+        [&](const Bezier& b) { out.cubicTo(b.ctrl1, b.ctrl2, b.end); },
+        [](const Bezier& b) { return b.start; },
+        end
+    );
+}
+#endif
+
+bool RenderShape::strokeDash(RenderPath& out) const
+{
+    if (!stroke || stroke->dash.count == 0 || stroke->dash.length < DASH_PATTERN_THRESHOLD) return false;
+
+//TODO: use this common function from all engines
+#ifdef THORVG_GL_RASTER_SUPPORT
+    out.cmds.reserve(20 * path.cmds.count);
+    out.pts.reserve(20 * path.pts.count);
+
+    StrokeDashPath dash(stroke->dash);
+    auto allowDot = stroke->cap != StrokeCap::Butt;
+
+    if (trimpath()) {
+        RenderPath tpath;
+        if (stroke->trim.trim(path, tpath)) return dash.gen(tpath, out, allowDot);
+        else return false;
+    }
+    return dash.gen(path, out, allowDot);
+#else
+    return false;
+#endif
+}
