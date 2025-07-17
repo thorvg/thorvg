@@ -233,6 +233,31 @@ struct RenderPath
         cmds.clear();
     }
 
+    void close()
+    {
+        cmds.push(PathCommand::Close);
+    }
+
+    void moveTo(const Point& pt)
+    {
+        pts.push(pt);
+        cmds.push(PathCommand::MoveTo);
+    }
+
+    void lineTo(const Point& pt)
+    {
+        pts.push(pt);
+        cmds.push(PathCommand::LineTo);
+    }
+
+    void cubicTo(const Point& cnt1, const Point& cnt2, const Point& end)
+    {
+        pts.push(cnt1);
+        pts.push(cnt2);
+        pts.push(end);
+        cmds.push(PathCommand::CubicTo);
+    }
+
     bool bounds(Matrix* m, float* x, float* y, float* w, float* h);
 };
 
@@ -256,7 +281,7 @@ struct RenderStroke
     float width = 0.0f;
     RenderColor color{};
     Fill *fill = nullptr;
-    struct {
+    struct Dash {
         float* pattern = nullptr;
         uint32_t count = 0;
         float offset = 0.0f;
@@ -383,6 +408,8 @@ struct RenderShape
         if (!stroke) return 4.0f;
         return stroke->miterlimit;;
     }
+
+    bool strokeDash(RenderPath& out) const;
 };
 
 struct RenderEffect

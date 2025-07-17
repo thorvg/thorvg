@@ -39,12 +39,11 @@ class Stroker
     };
 public:
     Stroker(GlGeometryBuffer* buffer, const Matrix& matrix);
-    void stroke(const RenderShape *rshape, const RenderPath& path);
+    void stroke(const RenderShape *rshape);
     RenderRegion bounds() const;
 
 private:
     void doStroke(const RenderPath& path);
-    void doDashStroke(const RenderPath& path, const float* patterns, uint32_t patternCnt, float offset, float length);
 
     float strokeRadius() const
     {
@@ -73,34 +72,6 @@ private:
     State mStrokeState = {};
     Point mLeftTop = {0.0f, 0.0f};
     Point mRightBottom = {0.0f, 0.0f};
-};
-
-class DashStroke
-{
-public:
-    DashStroke(Array<PathCommand>* cmds, Array<Point>* pts, const float* patterns, uint32_t patternCnt, float offset, float length);
-    void doStroke(const RenderPath& path, bool drawPoint);
-
-private:
-    void drawPoint(const Point& p);
-    void dashLineTo(const Point& pt, bool drawPoint);
-    void dashCubicTo(const Point& pt1, const Point& pt2, const Point& pt3, bool drawPoint);
-    void moveTo(const Point& pt);
-    void lineTo(const Point& pt);
-    void cubicTo(const Point& pt1, const Point& pt2, const Point& pt3);
-
-    Array<PathCommand>* mCmds;
-    Array<Point>* mPts;
-    const float* mDashPattern;
-    uint32_t mDashCount;
-    float mDashOffset;
-    float mDashLength;
-    float mCurrLen = 0.0f;
-    int32_t mCurrIdx = 0;
-    bool mCurOpGap = false;
-    bool mMove = true;
-    Point mPtStart = {};
-    Point mPtCur = {};
 };
 
 class BWTessellator
