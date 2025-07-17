@@ -98,6 +98,7 @@ struct PictureImpl : Picture
                 resizing = false;
             }
             needComposition(opacity);
+            vector->blend(pImpl->blendMethod); //propagate blend method to nested vector scene
             return vector->pImpl->update(renderer, transform, clips, opacity, flag, false);
         }
         return true;
@@ -248,10 +249,11 @@ struct PictureImpl : Picture
     bool render(RenderMethod* renderer)
     {
         auto ret = true;
-        renderer->blend(impl.blendMethod);
 
-        if (bitmap) return renderer->renderImage(impl.rd);
-        else if (vector) {
+        if (bitmap) {
+            renderer->blend(impl.blendMethod);
+            return renderer->renderImage(impl.rd);
+        } else if (vector) {
             RenderCompositor* cmp = nullptr;
             if (impl.cmpFlag) {
                 cmp = renderer->target(bounds(renderer), renderer->colorSpace(), impl.cmpFlag);
