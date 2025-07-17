@@ -1,6 +1,7 @@
 source_file = [
    'tvgGl.h',
    'tvgGlCommon.h',
+   'tvgGlEffect.h',
    'tvgGlGpuBuffer.h',
    'tvgGlProgram.h',
    'tvgGlRenderer.h',
@@ -10,6 +11,7 @@ source_file = [
    'tvgGlShader.h',
    'tvgGlShaderSrc.h',
    'tvgGl.cpp',
+   'tvgGlEffect.cpp',
    'tvgGlGeometry.cpp',
    'tvgGlGpuBuffer.cpp',
    'tvgGlProgram.cpp',

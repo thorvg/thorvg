@@ -28,6 +28,7 @@
 #include "tvgGlRenderTask.h"
 #include "tvgGlGpuBuffer.h"
 #include "tvgGlRenderPass.h"
+#include "tvgGlEffect.h"
 
 class GlRenderer : public RenderMethod
 {
@@ -59,13 +60,6 @@ public:
         RT_SoftLightBlend,
         RT_DifferenceBlend,
         RT_ExclusionBlend,
-
-        RT_GaussianVert,
-        RT_GaussianHorz,
-        RT_DropShadow,
-        RT_EffectFill,
-        RT_EffectTint,
-        RT_EffectTritone,
 
         RT_None,
     };
@@ -125,15 +119,6 @@ private:
     void prepareCmpTask(GlRenderTask* task, const RenderRegion& vp, uint32_t cmpWidth, uint32_t cmpHeight);
     void endRenderPass(RenderCompositor* cmp);
 
-    void effectGaussianBlurUpdate(RenderEffectGaussianBlur* effect, const Matrix& transform);
-    void effectDropShadowUpdate(RenderEffectDropShadow* effect, const Matrix& transform);
-    void effectFillUpdate(RenderEffectFill* effect, const Matrix& transform);
-    void effectTintUpdate(RenderEffectTint* effect, const Matrix& transform);
-    void effectTritoneUpdate(RenderEffectTritone* effect, const Matrix& transform);
-
-    bool effectGaussianBlurRegion(RenderEffectGaussianBlur* effect);
-    bool effectDropShadowRegion(RenderEffectDropShadow* effect);
-
     void flush();
     void clearDisposes();
     void currentContext();
@@ -143,6 +128,7 @@ private:
     GLint mTargetFboId = 0;
     GlStageBuffer mGpuBuffer;
     GlRenderTarget mRootTarget;
+    GlEffect mEffect;
     Array<GlProgram*> mPrograms;
     Array<GlRenderTargetPool*> mComposePool;
     Array<GlRenderTargetPool*> mBlendPool;
