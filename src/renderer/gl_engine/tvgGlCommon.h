@@ -161,24 +161,5 @@ struct GlCompositor : RenderCompositor
     GlCompositor(const RenderRegion& box) : bbox(box) {}
 };
 
-#define GL_GAUSSIAN_MAX_LEVEL 3
-struct GlGaussianBlur {
-    int level{};
-    float sigma{};
-    float scale{};
-    float extend{};
-};
-
-struct GlDropShadow: GlGaussianBlur {
-    float color[4];
-    float offset[2];
-};
-
-struct GlEffectParams {
-    // fill:          [0..3]: color
-    // tint:          [0..2]: black,  [4..6]: white,   [8]: intensity
-    // tritone:       [0..2]: shadow, [4..6]: midtone, [8..10]: highlight [11]: blender
-    float params[4+4+4];
-};
 
 #endif /* _TVG_GL_COMMON_H_ */

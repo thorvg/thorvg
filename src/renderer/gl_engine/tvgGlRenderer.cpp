@@ -21,13 +21,14 @@
  */
 
 #include <atomic>
+#include "tvgFill.h"
 #include "tvgGlCommon.h"
 #include "tvgGlRenderer.h"
 #include "tvgGlGpuBuffer.h"
 #include "tvgGlRenderTask.h"
 #include "tvgGlProgram.h"
 #include "tvgGlShaderSrc.h"
-#include "tvgFill.h"
+
 
 /************************************************************************/
 /* Internal Class Implementation                                        */
@@ -79,7 +80,7 @@ void GlRenderer::currentContext()
 }
 
 
-GlRenderer::GlRenderer()
+GlRenderer::GlRenderer() : mEffect(GlEffect(&mGpuBuffer))
 {
     ++rendererCnt;
 }
@@ -92,8 +93,6 @@ GlRenderer::~GlRenderer()
     flush();
 
     ARRAY_FOREACH(p, mPrograms) delete(*p);
-
-
 }
 
 
@@ -159,14 +158,6 @@ void GlRenderer::initShaders()
     mPrograms.push(new GlProgram(MASK_VERT_SHADER, SOFT_LIGHT_BLEND_FRAG));
     mPrograms.push(new GlProgram(MASK_VERT_SHADER, DIFFERENCE_BLEND_FRAG));
     mPrograms.push(new GlProgram(MASK_VERT_SHADER, EXCLUSION_BLEND_FRAG));
-
-    // effects
-    mPrograms.push(new GlProgram(EFFECT_VERTEX, GAUSSIAN_VERTICAL));
-    mPrograms.push(new GlProgram(EFFECT_VERTEX, GAUSSIAN_HORIZONTAL));
-    mPrograms.push(new GlProgram(EFFECT_VERTEX, EFFECT_DROPSHADOW));
-    mPrograms.push(new GlProgram(EFFECT_VERTEX, EFFECT_FILL));
-    mPrograms.push(new GlProgram(EFFECT_VERTEX, EFFECT_TINT));
-    mPrograms.push(new GlProgram(EFFECT_VERTEX, EFFECT_TRITONE));
 }
 
 
@@ -946,254 +937,25 @@ bool GlRenderer::endComposite(RenderCompositor* cmp)
 }
 
 
-void GlRenderer::effectGaussianBlurUpdate(RenderEffectGaussianBlur* effect, const Matrix& transform)
-{
-    GlGaussianBlur* blur = (GlGaussianBlur*)effect->rd;
-    if (!blur) blur = tvg::malloc<GlGaussianBlur*>(sizeof(GlGaussianBlur));
-    blur->sigma = effect->sigma;
-    blur->scale = std::sqrt(transform.e11 * transform.e11 + transform.e12 * transform.e12);
-    blur->extend = 2 * blur->sigma * blur->scale;
-    blur->level = int(GL_GAUSSIAN_MAX_LEVEL * ((effect->quality - 1) * 0.01f)) + 1;
-    effect->rd = blur;
-    effect->valid = (blur->extend > 0);
-}
-
-
-void GlRenderer::effectDropShadowUpdate(RenderEffectDropShadow* effect, const Matrix& transform)
-{
-    GlDropShadow* dropShadow = (GlDropShadow*)effect->rd;
-    if (!dropShadow) dropShadow = tvg::malloc<GlDropShadow*>(sizeof(GlDropShadow));
-    const float sigma = effect->sigma;
-    const float scale = std::sqrt(transform.e11 * transform.e11 + transform.e12 * transform.e12);
-    const float radian = tvg::deg2rad(90.0f - effect->angle);
-    const Point offset = {
-        -effect->distance * cosf(radian) * scale,
-        -effect->distance * sinf(radian) * scale
-    };
-    dropShadow->sigma = sigma;
-    dropShadow->scale = scale;
-    dropShadow->level = int(GL_GAUSSIAN_MAX_LEVEL * ((effect->quality - 1) * 0.01f)) + 1;
-    dropShadow->color[3] = effect->color[3] / 255.0f;
-    //Drop shadow effect applies blending in the shader (GL_BLEND disabled), so the color should be premultiplied:
-    dropShadow->color[0] = effect->color[0] / 255.0f * dropShadow->color[3];
-    dropShadow->color[1] = effect->color[1] / 255.0f * dropShadow->color[3];
-    dropShadow->color[2] = effect->color[2] / 255.0f * dropShadow->color[3];
-    dropShadow->offset[0] = offset.x;
-    dropShadow->offset[1] = offset.y;
-    dropShadow->extend = 2 * std::max(sigma * scale + std::abs(offset.x), sigma * scale + std::abs(offset.y));
-    effect->rd = dropShadow;
-    effect->valid = (dropShadow->extend > 0);
-}
-
-
-void GlRenderer::effectFillUpdate(RenderEffectFill* effect, const Matrix& transform)
-{
-    auto params = (GlEffectParams*)effect->rd;
-    if (!params) params = tvg::malloc<GlEffectParams*>(sizeof(GlEffectParams));
-    params->params[0] = effect->color[0] / 255.0f;
-    params->params[1] = effect->color[1] / 255.0f;
-    params->params[2] = effect->color[2] / 255.0f;
-    params->params[3] = effect->color[3] / 255.0f;
-    effect->rd = params;
-    effect->valid = true;
-}
-
-
-void GlRenderer::effectTintUpdate(RenderEffectTint* effect, const Matrix& transform)
-{
-    effect->valid = (effect->intensity > 0);
-    if (!effect->valid) return;
-
-    auto params = (GlEffectParams*)effect->rd;
-    if (!params) params = tvg::malloc<GlEffectParams*>(sizeof(GlEffectParams));
-    params->params[0] = effect->black[0] / 255.0f;
-    params->params[1] = effect->black[1] / 255.0f;
-    params->params[2] = effect->black[2] / 255.0f;
-    params->params[3] = 0.0f;
-    params->params[4] = effect->white[0] / 255.0f;
-    params->params[5] = effect->white[1] / 255.0f;
-    params->params[6] = effect->white[2] / 255.0f;
-    params->params[7] = 0.0f;
-    params->params[8] = effect->intensity / 255.0f;
-    effect->rd = params;
-}
-
-
-void GlRenderer::effectTritoneUpdate(RenderEffectTritone* effect, const Matrix& transform)
-{
-    effect->valid = (effect->blender < 255);
-    if (!effect->valid) return;
-
-    auto params = (GlEffectParams*)effect->rd;
-    if (!params) params = tvg::malloc<GlEffectParams*>(sizeof(GlEffectParams));
-    params->params[0] = effect->shadow[0] / 255.0f;
-    params->params[1] = effect->shadow[1] / 255.0f;
-    params->params[2] = effect->shadow[2] / 255.0f;
-    params->params[3] = 0.0f;
-    params->params[4] = effect->midtone[0] / 255.0f;
-    params->params[5] = effect->midtone[1] / 255.0f;
-    params->params[6] = effect->midtone[2] / 255.0f;
-    params->params[7] = 0.0f;
-    params->params[8] = effect->highlight[0] / 255.0f;
-    params->params[9] = effect->highlight[1] / 255.0f;
-    params->params[10] = effect->highlight[2] / 255.0f;
-    params->params[11] = effect->blender / 255.0f;
-    effect->rd = params;
-}
-
-
-bool GlRenderer::effectGaussianBlurRegion(RenderEffectGaussianBlur* effect)
-{
-    auto gaussianBlur = (GlGaussianBlur*)effect->rd;
-    if (effect->direction != 2) {
-        effect->extend.min.x = -gaussianBlur->extend;
-        effect->extend.max.x = +gaussianBlur->extend;
-    }
-    if (effect->direction != 1) {
-        effect->extend.min.y = -gaussianBlur->extend;
-        effect->extend.max.y = +gaussianBlur->extend;
-    }
-    return true;
-};
-
-
-bool GlRenderer::effectDropShadowRegion(RenderEffectDropShadow* effect)
-{
-    auto gaussianBlur = (GlDropShadow*)effect->rd;
-    effect->extend.min.x = -gaussianBlur->extend;
-    effect->extend.max.x = +gaussianBlur->extend;
-    effect->extend.min.y = -gaussianBlur->extend;
-    effect->extend.max.y = +gaussianBlur->extend;
-    return true;
-};
-
-
 void GlRenderer::prepare(RenderEffect* effect, const Matrix& transform)
 {
     // we must be sure, that we have intermidiate FBOs
     if (mBlendPool.count < 1) mBlendPool.push(new GlRenderTargetPool(surface.w, surface.h));
     if (mBlendPool.count < 2) mBlendPool.push(new GlRenderTargetPool(surface.w, surface.h));
-    
-    switch (effect->type) {
-        case SceneEffect::GaussianBlur: effectGaussianBlurUpdate(static_cast<RenderEffectGaussianBlur*>(effect), transform); break;
-        case SceneEffect::DropShadow : effectDropShadowUpdate(static_cast<RenderEffectDropShadow*>(effect), transform); break;
-        case SceneEffect::Fill: effectFillUpdate(static_cast<RenderEffectFill*>(effect), transform); break;
-        case SceneEffect::Tint: effectTintUpdate(static_cast<RenderEffectTint*>(effect), transform); break;
-        case SceneEffect::Tritone: effectTritoneUpdate(static_cast<RenderEffectTritone*>(effect), transform); break;
-        default: break;
-    }
+
+    mEffect.update(effect, transform);
 }
 
 
 bool GlRenderer::region(RenderEffect* effect)
 {
-    switch (effect->type) {
-        case SceneEffect::GaussianBlur: return effectGaussianBlurRegion(static_cast<RenderEffectGaussianBlur*>(effect));
-        case SceneEffect::DropShadow : return effectDropShadowRegion(static_cast<RenderEffectDropShadow*>(effect));
-        case SceneEffect::Fill:
-        case SceneEffect::Tint:
-        case SceneEffect::Tritone: return true;
-        default: return false;
-    }
-    return false;
+    return mEffect.region(effect);
 }
 
 
-bool GlRenderer::render(TVG_UNUSED RenderCompositor* cmp, const RenderEffect* effect, bool direct)
+bool GlRenderer::render(TVG_UNUSED RenderCompositor* cmp, const RenderEffect* effect, TVG_UNUSED bool direct)
 {
-    // get current pass and properties
-    auto pass = currentPass();
-    if (pass->isEmpty()) return false;
-    auto vp = pass->getViewport();
-
-    // add render geometry
-    const float vdata[] = {-1.0f, +1.0f, +1.0f, +1.0f, +1.0f, -1.0f, -1.0f, -1.0f};
-    const uint32_t idata[] = { 0, 1, 2, 0, 2, 3 };
-    auto voffset = mGpuBuffer.push((void*)vdata, sizeof(vdata));
-    auto ioffset = mGpuBuffer.pushIndex((void*)idata, sizeof(idata));
-
-    if (effect->type == SceneEffect::GaussianBlur) {
-        // get gaussian programs
-        GlProgram* programHorz = mPrograms[RT_GaussianHorz];
-        GlProgram* programVert = mPrograms[RT_GaussianVert];
-        // get current and intermidiate framebuffers
-        auto dstFbo = pass->getFbo();
-        auto dstCopyFbo0 = mBlendPool[0]->getRenderTarget(vp);
-        auto dstCopyFbo1 = mBlendPool[1]->getRenderTarget(vp);
-        // add uniform data
-        GlGaussianBlur* blur = (GlGaussianBlur*)(effect->rd);
-        auto blurOffset = mGpuBuffer.push(blur, sizeof(GlGaussianBlur), true);
-   
-        // create gaussian blur tasks
-        auto gaussianTask = new GlGaussianBlurTask(dstFbo, dstCopyFbo0, dstCopyFbo1);
-        gaussianTask->effect = (RenderEffectGaussianBlur*)effect;
-        gaussianTask->setViewport({{0, 0}, {vp.sw(), vp.sh()}});
-        // horizontal blur task and geometry
-        gaussianTask->horzTask = new GlRenderTask(programHorz);
-        gaussianTask->horzTask->addBindResource(GlBindingResource{0, programHorz->getUniformBlockIndex("Gaussian"), mGpuBuffer.getBufferId(), blurOffset, sizeof(GlGaussianBlur)});
-        gaussianTask->horzTask->addVertexLayout(GlVertexLayout{0, 2, 2 * sizeof(float), voffset});
-        gaussianTask->horzTask->setDrawRange(ioffset, 6);
-        // vertical blur task and geometry
-        gaussianTask->vertTask = new GlRenderTask(programVert);
-        gaussianTask->vertTask->addBindResource(GlBindingResource{0, programVert->getUniformBlockIndex("Gaussian"), mGpuBuffer.getBufferId(), blurOffset, sizeof(GlGaussianBlur)});
-        gaussianTask->vertTask->addVertexLayout(GlVertexLayout{0, 2, 2 * sizeof(float), voffset});
-        gaussianTask->vertTask->setDrawRange(ioffset, 6);
-        // add task to render pipeline
-        pass->addRenderTask(gaussianTask);
-    } else if (effect->type == SceneEffect::DropShadow) {
-        // get programs
-        GlProgram* program = mPrograms[RT_DropShadow];
-        GlProgram* programHorz = mPrograms[RT_GaussianHorz];
-        GlProgram* programVert = mPrograms[RT_GaussianVert];
-        // get current and intermidiate framebuffers
-        auto dstFbo = pass->getFbo();
-        auto dstCopyFbo0 = mBlendPool[0]->getRenderTarget(vp);
-        auto dstCopyFbo1 = mBlendPool[1]->getRenderTarget(vp);
-        // add uniform data
-        GlDropShadow* params = (GlDropShadow*)(effect->rd);
-        auto paramsOffset = mGpuBuffer.push(params, sizeof(GlDropShadow), true);
-   
-        // create gaussian blur tasks
-        auto task = new GlEffectDropShadowTask(program, dstFbo, dstCopyFbo0, dstCopyFbo1);
-        task->effect = (RenderEffectDropShadow*)effect;
-        task->setViewport({{0, 0}, {vp.sw(), vp.sh()}});
-        task->addBindResource(GlBindingResource{0, program->getUniformBlockIndex("DropShadow"), mGpuBuffer.getBufferId(), paramsOffset, sizeof(GlDropShadow)});
-        task->addVertexLayout(GlVertexLayout{0, 2, 2 * sizeof(float), voffset});
-        task->setDrawRange(ioffset, 6);
-        // horizontal blur task and geometry
-        task->horzTask = new GlRenderTask(programHorz);
-        task->horzTask->addBindResource(GlBindingResource{0, programHorz->getUniformBlockIndex("Gaussian"), mGpuBuffer.getBufferId(), paramsOffset, sizeof(GlGaussianBlur)});
-        task->horzTask->addVertexLayout(GlVertexLayout{0, 2, 2 * sizeof(float), voffset});
-        task->horzTask->setDrawRange(ioffset, 6);
-        // vertical blur task and geometry
-        task->vertTask = new GlRenderTask(programVert);
-        task->vertTask->addBindResource(GlBindingResource{0, programVert->getUniformBlockIndex("Gaussian"), mGpuBuffer.getBufferId(), paramsOffset, sizeof(GlGaussianBlur)});
-        task->vertTask->addVertexLayout(GlVertexLayout{0, 2, 2 * sizeof(float), voffset});
-        task->vertTask->setDrawRange(ioffset, 6);
-        // add task to render pipeline
-        pass->addRenderTask(task);
-    } else if ((effect->type == SceneEffect::Fill) || (effect->type == SceneEffect::Tint) || (effect->type == SceneEffect::Tritone)) {
-        GlProgram* program{};
-        if (effect->type == SceneEffect::Fill) program = mPrograms[RT_EffectFill];
-        else if (effect->type == SceneEffect::Tint) program = mPrograms[RT_EffectTint];
-        else if (effect->type == SceneEffect::Tritone) program = mPrograms[RT_EffectTritone];
-        else return false;
-        // get current and intermidiate framebuffers
-        auto dstFbo = pass->getFbo();
-        auto dstCopyFbo = mBlendPool[0]->getRenderTarget(vp);
-        // add uniform data
-        auto params = (GlEffectParams*)(effect->rd);
-        auto paramsOffset = mGpuBuffer.push(params, sizeof(GlEffectParams), true);
-        // create and setup task
-        auto task = new GlEffectColorTransformTask(program, dstFbo, dstCopyFbo);
-        task->setViewport({{0, 0}, {vp.sw(), vp.sh()}});
-        task->addBindResource(GlBindingResource{0, program->getUniformBlockIndex("Params"), mGpuBuffer.getBufferId(), paramsOffset, sizeof(GlEffectParams)});
-        task->addVertexLayout(GlVertexLayout{0, 2, 2 * sizeof(float), voffset});
-        task->setDrawRange(ioffset, 6);
-        // add task to render pipeline
-        pass->addRenderTask(task);
-    }
-    return false;
+    return mEffect.render(const_cast<RenderEffect*>(effect), currentPass(), mBlendPool);
 }
 
 
