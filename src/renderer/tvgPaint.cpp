@@ -429,11 +429,14 @@ uint8_t Paint::opacity() const noexcept
 
 Result Paint::blend(BlendMethod method) noexcept
 {
-    if (method > BlendMethod::HardMix) return Result::InvalidArguments;
     //TODO: Remove later
     if (method == BlendMethod::Hue || method == BlendMethod::Saturation || method == BlendMethod::Color || method == BlendMethod::Luminosity || method == BlendMethod::HardMix) return Result::NonSupport;
-    pImpl->blend(method);
-    return Result::Success;
+
+    if (method == BlendMethod::Composition || method <= BlendMethod::HardMix) {
+        pImpl->blend(method);
+        return Result::Success;
+    }
+    return Result::InvalidArguments;
 }
 
 

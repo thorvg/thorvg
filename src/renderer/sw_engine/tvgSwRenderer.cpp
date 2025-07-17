@@ -528,6 +528,7 @@ bool SwRenderer::blend(BlendMethod method)
 
     switch (method) {
         case BlendMethod::Normal:
+        case BlendMethod::Composition:
             surface->blender = nullptr;
             break;
         case BlendMethod::Multiply:
