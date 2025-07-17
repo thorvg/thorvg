@@ -32,13 +32,11 @@
 /* Gaussian Blur                                                        */
 /************************************************************************/
 
-#define GL_GAUSSIAN_MAX_LEVEL 3
-
 struct GlGaussianBlur {
-    int level{};
     float sigma{};
     float scale{};
     float extend{};
+    float dummy0{};
 };
 
 
@@ -64,7 +62,6 @@ void GlEffect::update(RenderEffectGaussianBlur* effect, const Matrix& transform)
     blur->sigma = effect->sigma;
     blur->scale = std::sqrt(transform.e11 * transform.e11 + transform.e12 * transform.e12);
     blur->extend = 2 * blur->sigma * blur->scale;
-    blur->level = int(GL_GAUSSIAN_MAX_LEVEL * ((effect->quality - 1) * 0.01f)) + 1;
     effect->rd = blur;
     effect->valid = (blur->extend > 0);
 }
@@ -135,7 +132,6 @@ void GlEffect::update(RenderEffectDropShadow* effect, const Matrix& transform)
     };
     dropShadow->sigma = sigma;
     dropShadow->scale = scale;
-    dropShadow->level = int(GL_GAUSSIAN_MAX_LEVEL * ((effect->quality - 1) * 0.01f)) + 1;
     dropShadow->color[3] = effect->color[3] / 255.0f;
     //Drop shadow effect applies blending in the shader (GL_BLEND disabled), so the color should be premultiplied:
     dropShadow->color[0] = effect->color[0] / 255.0f * dropShadow->color[3];
