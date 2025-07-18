@@ -181,44 +181,36 @@ bool LottieParser::getValue(PathSet& path)
     auto pt = pts.begin();
 
     //Store manipulated results
-    Array<Point> outPts;
-    Array<PathCommand> outCmds;
+    RenderPath temp;
 
     //Reuse the buffers
-    outPts.data = path.pts;
-    outPts.reserved = path.ptsCnt;
-    outCmds.data = path.cmds;
-    outCmds.reserved = path.cmdsCnt;
+    temp.pts.data = path.pts;
+    temp.pts.reserved = path.ptsCnt;
+    temp.cmds.data = path.cmds;
+    temp.cmds.reserved = path.cmdsCnt;
 
     size_t extra = closed ? 3 : 0;
-    outPts.reserve(pts.count * 3 + 1 + extra);
-    outCmds.reserve(pts.count + 2);
+    temp.pts.reserve(pts.count * 3 + 1 + extra);
+    temp.cmds.reserve(pts.count + 2);
 
-    outCmds.push(PathCommand::MoveTo);
-    outPts.push(*pt);
+    temp.moveTo(*pt);
 
     for (++pt, ++out, ++in; pt < pts.end(); ++pt, ++out, ++in) {
-        outCmds.push(PathCommand::CubicTo);
-        outPts.push(*(pt - 1) + *(out - 1));
-        outPts.push(*pt + *in);
-        outPts.push(*pt);
+        temp.cubicTo(*(pt - 1) + *(out - 1), *pt + *in, *pt);
     }
 
     if (closed) {
-        outPts.push(pts.last() + outs.last());
-        outPts.push(pts.first() + ins.first());
-        outPts.push(pts.first());
-        outCmds.push(PathCommand::CubicTo);
-        outCmds.push(PathCommand::Close);
+        temp.cubicTo(pts.last() + outs.last(), pts.first() + ins.first(), pts.first());
+        temp.close();
     }
 
-    path.pts = outPts.data;
-    path.cmds = outCmds.data;
-    path.ptsCnt = outPts.count;
-    path.cmdsCnt = outCmds.count;
+    path.pts = temp.pts.data;
+    path.cmds = temp.cmds.data;
+    path.ptsCnt = temp.pts.count;
+    path.cmdsCnt = temp.cmds.count;
 
-    outPts.data = nullptr;
-    outCmds.data = nullptr;
+    temp.pts.data = nullptr;
+    temp.cmds.data = nullptr;
 
     return false;
 }

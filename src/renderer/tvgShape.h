@@ -170,37 +170,6 @@ struct ShapeImpl : Shape
         rs.path.pts.count += ptsCnt;
     }
 
-    void moveTo(float x, float y)
-    {
-        rs.path.cmds.push(PathCommand::MoveTo);
-        rs.path.pts.push({x, y});
-    }
-
-    void lineTo(float x, float y)
-    {
-        rs.path.cmds.push(PathCommand::LineTo);
-        rs.path.pts.push({x, y});
-        impl.mark(RenderUpdateFlag::Path);
-    }
-
-    void cubicTo(float cx1, float cy1, float cx2, float cy2, float x, float y)
-    {
-        rs.path.cmds.push(PathCommand::CubicTo);
-        rs.path.pts.push({cx1, cy1});
-        rs.path.pts.push({cx2, cy2});
-        rs.path.pts.push({x, y});
-
-        impl.mark(RenderUpdateFlag::Path);
-    }
-
-    void close()
-    {
-        //Don't close multiple times.
-        if (rs.path.cmds.count > 0 && rs.path.cmds.last() == PathCommand::Close) return;
-        rs.path.cmds.push(PathCommand::Close);
-        impl.mark(RenderUpdateFlag::Path);
-    }
-
     void strokeWidth(float width)
     {
         if (!rs.stroke) rs.stroke = new RenderStroke();

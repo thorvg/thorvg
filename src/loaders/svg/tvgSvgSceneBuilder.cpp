@@ -25,6 +25,7 @@
 #include "tvgCompressor.h"
 #include "tvgFill.h"
 #include "tvgStr.h"
+#include "tvgShape.h"
 #include "tvgSvgLoaderCommon.h"
 #include "tvgSvgSceneBuilder.h"
 #include "tvgSvgPath.h"
@@ -454,7 +455,7 @@ static bool _recognizeShape(SvgNode* node, Shape* shape)
     switch (node->type) {
         case SvgNodeType::Path: {
             if (node->node.path.path) {
-                if (!svgPathToShape(node->node.path.path, shape)) {
+                if (!svgPathToShape(node->node.path.path, SHAPE(shape)->rs.path)) {
                     TVGERR("SVG", "Invalid path information.");
                     return false;
                 }

@@ -189,7 +189,6 @@ Point operator*(const Point& pt, const Matrix& m);
 Point normal(const Point& p1, const Point& p2);
 void normalize(Point& pt);
 
-
 static inline constexpr const Point operator*=(Point& pt, const Matrix* m)
 {
     if (m) pt *= *m;
@@ -310,6 +309,13 @@ static inline Point operator*(const Point& lhs, const Point& rhs)
 static inline Point operator*(const Point& lhs, const float rhs)
 {
     return {lhs.x * rhs, lhs.y * rhs};
+}
+
+
+static inline void operator*=(Point& lhs, const float rhs)
+{
+    lhs.x *= rhs;
+    lhs.y *= rhs;
 }
 
 
