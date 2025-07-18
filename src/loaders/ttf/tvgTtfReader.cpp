@@ -474,10 +474,9 @@ bool TtfReader::convert(Shape* shape, TtfGlyphMetrics& gmetrics, const Point& of
     if (!this->points(outline, flags, pts, ptsCnt, offset + kerning)) return false;
 
     //generate tvg paths.
-    auto& pathCmds = SHAPE(shape)->rs.path.cmds;
-    auto& pathPts = SHAPE(shape)->rs.path.pts;
-    pathCmds.reserve(ptsCnt);
-    pathPts.reserve(ptsCnt);
+    auto& path = SHAPE(shape)->rs.path;
+    path.cmds.reserve(ptsCnt);
+    path.pts.reserve(ptsCnt);
 
     uint32_t begin = 0;
 
@@ -485,42 +484,31 @@ bool TtfReader::convert(Shape* shape, TtfGlyphMetrics& gmetrics, const Point& of
         //contour must start with move to
         bool offCurve = !(flags[begin] & ON_CURVE);
         Point ptsBegin = offCurve ? (pts[begin] + pts[endPts[i]]) * 0.5f : pts[begin];
-        pathCmds.push(PathCommand::MoveTo);
-        pathPts.push(ptsBegin);
+        path.moveTo(ptsBegin);
 
         auto cnt = endPts[i] - begin + 1;
         for (uint32_t x = 1; x < cnt; ++x) {
             if (flags[begin + x] & ON_CURVE) {
                 if (offCurve) {
-                    pathCmds.push(PathCommand::CubicTo);
-                    pathPts.push(pathPts.last() + (2.0f/3.0f) * (pts[begin + x - 1] - pathPts.last()));
-                    pathPts.push(pts[begin + x] + (2.0f/3.0f) * (pts[begin + x - 1] - pts[begin + x]));
-                    pathPts.push(pts[begin + x]);
+                    path.cubicTo(path.pts.last() + (2.0f/3.0f) * (pts[begin + x - 1] - path.pts.last()), pts[begin + x] + (2.0f/3.0f) * (pts[begin + x - 1] - pts[begin + x]), pts[begin + x]);
                     offCurve = false;
                 } else {
-                    pathCmds.push(PathCommand::LineTo);
-                    pathPts.push(pts[begin + x]);
+                    path.lineTo(pts[begin + x]);
                 }
             } else {
                 if (offCurve) {
-                    pathCmds.push(PathCommand::CubicTo);
                     auto end = (pts[begin + x] + pts[begin + x - 1]) * 0.5f;
-                    pathPts.push(pathPts.last() + (2.0f/3.0f) * (pts[begin + x - 1] - pathPts.last()));
-                    pathPts.push(end + (2.0f/3.0f) * (pts[begin + x - 1] - end));
-                    pathPts.push(end);
+                    path.cubicTo(path.pts.last() + (2.0f/3.0f) * (pts[begin + x - 1] - path.pts.last()), end + (2.0f/3.0f) * (pts[begin + x - 1] - end), end);
                 } else {
                     offCurve = true;
                 }
             }
         }
         if (offCurve) {
-            pathCmds.push(PathCommand::CubicTo);
-            pathPts.push(pathPts.last() + (2.0f/3.0f) * (pts[begin + cnt - 1] - pathPts.last()));
-            pathPts.push(ptsBegin + (2.0f/3.0f) * (pts[begin + cnt - 1] - ptsBegin));
-            pathPts.push(ptsBegin);
+            path.cubicTo(path.pts.last() + (2.0f/3.0f) * (pts[begin + cnt - 1] - path.pts.last()), ptsBegin + (2.0f/3.0f) * (pts[begin + cnt - 1] - ptsBegin), ptsBegin);
         }
         //contour must end with close
-        pathCmds.push(PathCommand::Close);
+        path.close();
         begin = endPts[i] + 1;
     }
     return true;

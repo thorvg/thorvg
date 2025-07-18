@@ -235,6 +235,8 @@ struct RenderPath
 
     void close()
     {
+        //Don't close multiple times.
+        if (cmds.count > 0 && cmds.last() == PathCommand::Close) return;
         cmds.push(PathCommand::Close);
     }
 

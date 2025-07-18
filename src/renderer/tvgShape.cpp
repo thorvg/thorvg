@@ -66,28 +66,31 @@ Result Shape::appendPath(const PathCommand *cmds, uint32_t cmdCnt, const Point* 
 
 Result Shape::moveTo(float x, float y) noexcept
 {
-    SHAPE(this)->moveTo(x, y);
+    SHAPE(this)->rs.path.moveTo({x, y});
     return Result::Success;
 }
 
 
 Result Shape::lineTo(float x, float y) noexcept
 {
-    SHAPE(this)->lineTo(x, y);
+    SHAPE(this)->rs.path.lineTo({x, y});
+    SHAPE(this)->impl.mark(RenderUpdateFlag::Path);
     return Result::Success;
 }
 
 
 Result Shape::cubicTo(float cx1, float cy1, float cx2, float cy2, float x, float y) noexcept
 {
-    SHAPE(this)->cubicTo(cx1, cy1, cx2, cy2, x, y);
+    SHAPE(this)->rs.path.cubicTo({cx1, cy1}, {cx2, cy2}, {x, y});
+    SHAPE(this)->impl.mark(RenderUpdateFlag::Path);
     return Result::Success;
 }
 
 
 Result Shape::close() noexcept
 {
-    SHAPE(this)->close();
+    SHAPE(this)->rs.path.close();
+    SHAPE(this)->impl.mark(RenderUpdateFlag::Path);
     return Result::Success;
 }
 
