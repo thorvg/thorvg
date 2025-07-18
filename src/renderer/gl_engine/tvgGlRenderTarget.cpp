@@ -77,7 +77,7 @@ void GlRenderTarget::init(uint32_t width, uint32_t height, GLint resolveId)
 
 void GlRenderTarget::reset()
 {
-    if (mFbo == 0) return;
+    if (mFbo == 0 || mFbo == GL_INVALID_VALUE) return;
     GL_CHECK(glBindFramebuffer(GL_FRAMEBUFFER, 0));
     GL_CHECK(glDeleteFramebuffers(1, &mFbo));
     GL_CHECK(glDeleteRenderbuffers(1, &mColorBuffer));
