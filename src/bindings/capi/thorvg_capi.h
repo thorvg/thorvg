@@ -164,7 +164,8 @@ typedef enum {
     TVG_BLEND_METHOD_COLOR,             ///< Reserved. Not supported.
     TVG_BLEND_METHOD_LUMINOSITY,        ///< Reserved. Not supported.
     TVG_BLEND_METHOD_ADD,               ///< Simply adds pixel values of one layer with the other. (S + D)
-    TVG_BLEND_METHOD_HARDMIX            ///< Reserved. Not supported.
+    TVG_BLEND_METHOD_HARDMIX,           ///< Reserved. Not supported.
+    TVG_BLEND_METHOD_COMPOSITION = 255  ///< Used for intermediate composition. @since 1.0
 } Tvg_Blend_Method;
 
 

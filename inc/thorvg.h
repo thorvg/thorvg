@@ -214,7 +214,8 @@ enum class BlendMethod : uint8_t
     Color,             ///< Reserved. Not supported.
     Luminosity,        ///< Reserved. Not supported.
     Add,               ///< Simply adds pixel values of one layer with the other. (S + D)
-    HardMix            ///< Reserved. Not supported.
+    HardMix,           ///< Reserved. Not supported.
+    Composition = 255  ///< Used for intermediate composition. @since 1.0
 };
 
 
