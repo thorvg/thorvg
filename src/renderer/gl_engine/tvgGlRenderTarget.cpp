@@ -31,7 +31,7 @@ GlRenderTarget::~GlRenderTarget()
 
 void GlRenderTarget::init(uint32_t width, uint32_t height, GLint resolveId)
 {
-    if (mFbo != GL_INVALID_VALUE || width == 0 || height == 0) return;
+    if (mFbo != 0 || width == 0 || height == 0) return;
     mWidth = width;
     mHeight = height;
 
@@ -84,7 +84,11 @@ void GlRenderTarget::reset()
     GL_CHECK(glDeleteRenderbuffers(1, &mDepthStencilBuffer));
     GL_CHECK(glDeleteFramebuffers(1, &mResolveFbo));
     GL_CHECK(glDeleteTextures(1, &mColorTex));
-    mFbo = GL_INVALID_VALUE;
+    mFbo = 0;
+    mColorBuffer = 0;
+    mDepthStencilBuffer = 0;
+    mResolveFbo = 0;
+    mColorTex = 0;
 }
 
 GlRenderTargetPool::GlRenderTargetPool(uint32_t maxWidth, uint32_t maxHeight): mMaxWidth(maxWidth), mMaxHeight(maxHeight), mPool() {}
