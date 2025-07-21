@@ -22,62 +22,73 @@
 
 #include "tvgWgGeometry.h"
 
+//***********************************************************************
+// WgMeshData
+//***********************************************************************
 
-/************************************************************************/
-/* Internal Class Implementation                                        */
-/************************************************************************/
-
-static WgGeometryBufferPool _pool;
-
-/************************************************************************/
-/* External Class Implementation                                        */
-/************************************************************************/
-
-WgVertexBuffer* WgGeometryBufferPool::reqVertexBuffer(float scale)
+void WgMeshData::bbox(const Point pmin, const Point pmax)
 {
-    ARRAY_FOREACH(p, vbuffers) {
-        if ((*p)->count == 0) {
-            (*p)->scale = scale;
-            return (*p);
-        }
-    }
-    vbuffers.push(new WgVertexBuffer(scale));
-    return vbuffers.last();
-}
-
-void WgGeometryBufferPool::retVertexBuffer(WgVertexBuffer* buffer)
-{
-    buffer->reset(1.0f);
-}
-
-WgIndexedVertexBuffer* WgGeometryBufferPool::reqIndexedVertexBuffer(float scale)
-{
-    ARRAY_FOREACH(p, ibuffers) {
-        if ((*p)->vcount == 0) {
-            (*p)->scale = scale;
-            return (*p);
-        }
-    }
-    ibuffers.push(new WgIndexedVertexBuffer(this, scale));
-    return ibuffers.last();
-}
-
-void WgGeometryBufferPool::retIndexedVertexBuffer(WgIndexedVertexBuffer* buffer)
-{
-    buffer->reset(1.0f);
+    const float vdata[] = {pmin.x, pmin.y, pmax.x, pmin.y, pmax.x, pmax.y, pmin.x, pmax.y};
+    const uint32_t idata[] = {0, 1, 2, 0, 2, 3};
+    // setup vertex data
+    vbuffer.reserve(4);
+    vbuffer.count = 4;
+    memcpy(vbuffer.data, vdata, sizeof(vdata));
+    // setup tex coords data
+    tbuffer.clear();
+    // setup indexes data
+    ibuffer.reserve(6);
+    ibuffer.count = 6;
+    memcpy(ibuffer.data, idata, sizeof(idata));
 }
 
 
-WgGeometryBufferPool* WgGeometryBufferPool::instance()
+void WgMeshData::imageBox(float w, float h)
 {
-    /* TODO: These could be easily addressed per threads. i.e _pool[thread_cnt]; */
-    return &_pool;
+    const float vdata[] = {0.0f, 0.0f, w, 0.0f, w, h, 0.0f, h};
+    const float tdata[] = {0.0f, 0.0f, 1.0f, 0.0f, 1.0f, 1.0f, 0.0f, 1.0f};
+    const uint32_t idata[] = {0, 1, 2, 0, 2, 3};
+    // setup vertex data
+    vbuffer.reserve(4);
+    vbuffer.count = 4;
+    memcpy(vbuffer.data, vdata, sizeof(vdata));
+    // setup tex coords data
+    tbuffer.reserve(4);
+    tbuffer.count = 4;
+    memcpy(tbuffer.data, tdata, sizeof(tdata));
+    // setup indexes data
+    ibuffer.reserve(6);
+    ibuffer.count = 6;
+    memcpy(ibuffer.data, idata, sizeof(idata));
 }
 
 
-WgGeometryBufferPool::~WgGeometryBufferPool()
+void WgMeshData::blitBox()
 {
-    //The indexed buffer may contain the vertex buffer, so free the memory in reverse order.
-    ARRAY_FOREACH(p, ibuffers) delete(*p);
-    ARRAY_FOREACH(p, vbuffers) delete(*p);
+    const float vdata[] = {-1.0f, +1.0f, +1.0f, +1.0f, +1.0f, -1.0f, -1.0f, -1.0f};
+    const float tdata[] = {+0.0f, +0.0f, +1.0f, +0.0f, +1.0f, +1.0f, +0.0f, +1.0f};
+    const uint32_t idata[] = { 0, 1, 2, 0, 2, 3 };
+    // setup vertex data
+    vbuffer.reserve(4);
+    vbuffer.count = 4;
+    memcpy(vbuffer.data, vdata, sizeof(vdata));
+    // setup tex coords data
+    tbuffer.reserve(4);
+    tbuffer.count = 4;
+    memcpy(tbuffer.data, tdata, sizeof(tdata));
+    // setup indexes data
+    ibuffer.reserve(6);
+    ibuffer.count = 6;
+    memcpy(ibuffer.data, idata, sizeof(idata));
+}
+
+
+void WgMeshData::clear()
+{
+    vbuffer.clear();
+    tbuffer.clear();
+    ibuffer.clear();
+    voffset = 0;
+    toffset = 0;
+    ioffset = 0;
 }
