@@ -135,7 +135,7 @@ RenderData WgRenderer::prepare(const RenderShape& rshape, RenderData data, const
 
     // update geometry
     if (!data || (flags & (RenderUpdateFlag::Path | RenderUpdateFlag::Stroke))) {
-        renderDataShape->updateMeshes(rshape, transform, mBufferPool.pool);
+        renderDataShape->updateMeshes(rshape, flags, transform);
     }
 
     // update paint settings
@@ -408,10 +408,6 @@ WgRenderer::WgRenderer()
 {
     if (TaskScheduler::onthread()) {
         TVGLOG("WG_RENDERER", "Running on a non-dominant thread!, Renderer(%p)", this);
-        mBufferPool.pool = new WgGeometryBufferPool;
-        mBufferPool.individual = true;
-    } else {
-        mBufferPool.pool = WgGeometryBufferPool::instance();
     }
 
     ++rendererCnt;
@@ -421,8 +417,6 @@ WgRenderer::WgRenderer()
 WgRenderer::~WgRenderer()
 {
     release();
-
-    if (mBufferPool.individual) delete(mBufferPool.pool);
 
     --rendererCnt;
 }

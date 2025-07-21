@@ -73,7 +73,6 @@ private:
 
     // base meshes draw
     void drawMesh(WgContext& context, WgMeshData* meshData);
-    void drawMeshFan(WgContext& context, WgMeshData* meshData);
     void drawMeshImage(WgContext& context, WgMeshData* meshData);
 
     // shapes
