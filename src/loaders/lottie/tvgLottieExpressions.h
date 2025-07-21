@@ -70,7 +70,7 @@ public:
     }
 
     template<typename Property>
-    bool result(float frameNo, RGB24& out, LottieExpression* exp)
+    bool result(float frameNo, RGB32& out, LottieExpression* exp)
     {
         auto bm_rt = evaluate(frameNo, exp);
         if (jerry_value_is_undefined(bm_rt)) return false;
@@ -144,7 +144,7 @@ private:
     void buildWritables(LottieExpression* exp);
 
     Point toPoint2d(jerry_value_t obj);
-    RGB24 toColor(jerry_value_t obj);
+    RGB32 toColor(jerry_value_t obj);
 
     //global object, attributes, methods
     jerry_value_t global;
@@ -160,7 +160,7 @@ struct LottieExpressions
 {
     template<typename Property, typename NumType> bool result(TVG_UNUSED float, TVG_UNUSED NumType&, TVG_UNUSED LottieExpression*) { return false; }
     template<typename Property> bool result(TVG_UNUSED float, TVG_UNUSED Point&, LottieExpression*) { return false; }
-    template<typename Property> bool result(TVG_UNUSED float, TVG_UNUSED RGB24&, TVG_UNUSED LottieExpression*) { return false; }
+    template<typename Property> bool result(TVG_UNUSED float, TVG_UNUSED RGB32&, TVG_UNUSED LottieExpression*) { return false; }
     template<typename Property> bool result(TVG_UNUSED float, TVG_UNUSED Fill*, TVG_UNUSED LottieExpression*) { return false; }
     template<typename Property> bool result(TVG_UNUSED float, TVG_UNUSED RenderPath&, TVG_UNUSED Matrix*, TVG_UNUSED LottieModifier*, TVG_UNUSED LottieExpression*) { return false; }
     bool result(TVG_UNUSED float, TVG_UNUSED TextDocument& doc, TVG_UNUSED LottieExpression*) { return false; }

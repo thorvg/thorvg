@@ -260,7 +260,7 @@ bool LottieBuilder::updateSolidStroke(LottieGroup* parent, LottieObject** child,
 
     ctx->merging = nullptr;
     auto color = stroke->color(frameNo, tween, exps);
-    ctx->propagator->strokeFill(color.rgb[0], color.rgb[1], color.rgb[2], opacity);
+    ctx->propagator->strokeFill(color.r, color.g, color.b, opacity);
     _updateStroke(static_cast<LottieStroke*>(stroke), frameNo, ctx, tween, exps);
 
     return false;
@@ -296,7 +296,7 @@ bool LottieBuilder::updateSolidFill(LottieGroup* parent, LottieObject** child, f
 
     ctx->merging = nullptr;
     auto color = fill->color(frameNo, tween, exps);
-    ctx->propagator->fill(color.rgb[0], color.rgb[1], color.rgb[2], opacity);
+    ctx->propagator->fill(color.r, color.g, color.b, opacity);
     ctx->propagator->fillRule(fill->rule);
 
     if (ctx->propagator->strokeWidth() > 0) ctx->propagator->order(true);
@@ -916,7 +916,7 @@ static void _fontText(TextDocument& doc, Scene* scene)
         }
 
         txt->text(token);
-        txt->fill(doc.color.rgb[0], doc.color.rgb[1], doc.color.rgb[2]);
+        txt->fill(doc.color.r, doc.color.g, doc.color.b);
 
         float width;
         txt->bounds(nullptr, nullptr, &width, nullptr);
@@ -1044,14 +1044,14 @@ void LottieBuilder::updateText(LottieLayer* layer, float frameNo)
                         }
                     }
                 }
-                shape->fill(doc.color.rgb[0], doc.color.rgb[1], doc.color.rgb[2]);
+                shape->fill(doc.color.r, doc.color.g, doc.color.b);
                 shape->translate(cursor.x - textGroupMatrix.e13, cursor.y - textGroupMatrix.e23);
                 shape->opacity(255);
 
                 if (doc.stroke.width > 0.0f) {
                     shape->strokeJoin(StrokeJoin::Round);
                     shape->strokeWidth(doc.stroke.width / scale);
-                    shape->strokeFill(doc.stroke.color.rgb[0], doc.stroke.color.rgb[1], doc.stroke.color.rgb[2]);
+                    shape->strokeFill(doc.stroke.color.r, doc.stroke.color.g, doc.stroke.color.b);
                     shape->order(doc.stroke.below);
                 }
 
@@ -1088,12 +1088,12 @@ void LottieBuilder::updateText(LottieLayer* layer, float frameNo)
                         range->color(frameNo, color, strokeColor, f, tween, exps);
 
                         fillOpacity = (uint8_t)(fillOpacity - f * (fillOpacity - range->style.fillOpacity(frameNo, tween, exps)));
-                        shape->fill(color.rgb[0], color.rgb[1], color.rgb[2], fillOpacity);
+                        shape->fill(color.r, color.g, color.b, fillOpacity);
 
                         if (range->style.flags.strokeWidth) shape->strokeWidth(f * range->style.strokeWidth(frameNo, tween, exps) / scale);
                         if (shape->strokeWidth() > 0.0f) {
                             strokeOpacity = (uint8_t)(strokeOpacity - f * (strokeOpacity - range->style.strokeOpacity(frameNo, tween, exps)));
-                            shape->strokeFill(strokeColor.rgb[0], strokeColor.rgb[1], strokeColor.rgb[2], strokeOpacity);
+                            shape->strokeFill(strokeColor.r, strokeColor.g, strokeColor.b, strokeOpacity);
                             shape->order(doc.stroke.below);
                         }
                         cursor.x += f * range->style.letterSpacing(frameNo, tween, exps);
@@ -1287,7 +1287,7 @@ void LottieBuilder::updateStrokeEffect(LottieLayer* layer, LottieFxStroke* effec
 
     //fill the color to the layer shapes if any
     auto color = effect->color(frameNo);
-    if (color.rgb[0] != 255 || color.rgb[1] != 255 || color.rgb[2] != 255) {
+    if (color.r != 255 || color.g != 255 || color.b != 255) {
         auto accessor = tvg::Accessor::gen();
         auto stroke = (layer->type == LottieLayer::Type::Shape) ? true : false;
         auto f = [color, size, stroke](const tvg::Paint* paint, void* data) -> bool {
@@ -1296,9 +1296,9 @@ void LottieBuilder::updateStrokeEffect(LottieLayer* layer, LottieFxStroke* effec
                 //expand shape to fill the stroke region
                 if (stroke) {
                     shape->strokeWidth(size);
-                    shape->strokeFill(color.rgb[0], color.rgb[1], color.rgb[2], 255);
+                    shape->strokeFill(color.r, color.g, color.b, 255);
                 }
-                shape->fill(color.rgb[0], color.rgb[1], color.rgb[2], 255);
+                shape->fill(color.r, color.g, color.b, 255);
             }
             return true;
         };
@@ -1324,13 +1324,13 @@ void LottieBuilder::updateEffect(LottieLayer* layer, float frameNo)
                 auto effect = static_cast<LottieFxTint*>(*p);
                 auto black = effect->black(frameNo);
                 auto white = effect->white(frameNo);
-                layer->scene->push(SceneEffect::Tint, black.rgb[0], black.rgb[1], black.rgb[2], white.rgb[0], white.rgb[1], white.rgb[2], (double)effect->intensity(frameNo));
+                layer->scene->push(SceneEffect::Tint, black.r, black.g, black.b, white.r, white.g, white.b, (double)effect->intensity(frameNo));
                 break;
             }
             case LottieEffect::Fill: {
                 auto effect = static_cast<LottieFxFill*>(*p);
                 auto color = effect->color(frameNo);
-                layer->scene->push(SceneEffect::Fill, color.rgb[0], color.rgb[1], color.rgb[2], (int)(255.0f * effect->opacity(frameNo)));
+                layer->scene->push(SceneEffect::Fill, color.r, color.g, color.b, (int)(255.0f * effect->opacity(frameNo)));
                 break;
             }
             case LottieEffect::Stroke: {
@@ -1343,14 +1343,14 @@ void LottieBuilder::updateEffect(LottieLayer* layer, float frameNo)
                 auto dark = effect->dark(frameNo);
                 auto midtone = effect->midtone(frameNo);
                 auto bright = effect->bright(frameNo);
-                layer->scene->push(SceneEffect::Tritone, dark.rgb[0], dark.rgb[1], dark.rgb[2], midtone.rgb[0], midtone.rgb[1], midtone.rgb[2], bright.rgb[0], bright.rgb[1], bright.rgb[2], (int)effect->blend(frameNo));
+                layer->scene->push(SceneEffect::Tritone, dark.r, dark.g, dark.b, midtone.r, midtone.g, midtone.b, bright.r, bright.g, bright.b, (int)effect->blend(frameNo));
                 break;
             }
             case LottieEffect::DropShadow: {
                 auto effect = static_cast<LottieFxDropShadow*>(*p);
                 auto color = effect->color(frameNo);
                 //seems the opacity range in dropshadow is 0 ~ 256
-                layer->scene->push(SceneEffect::DropShadow, color.rgb[0], color.rgb[1], color.rgb[2], std::min(255, (int)effect->opacity(frameNo)), (double)effect->angle(frameNo), double(effect->distance(frameNo) * 0.5f), (double)(effect->blurness(frameNo) * BLUR_TO_SIGMA), QUALITY);
+                layer->scene->push(SceneEffect::DropShadow, color.r, color.g, color.b, std::min(255, (int)effect->opacity(frameNo)), (double)effect->angle(frameNo), double(effect->distance(frameNo) * 0.5f), (double)(effect->blurness(frameNo) * BLUR_TO_SIGMA), QUALITY);
                 break;
             }
             case LottieEffect::GaussianBlur: {

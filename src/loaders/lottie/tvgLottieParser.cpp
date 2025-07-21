@@ -92,9 +92,9 @@ MaskMethod LottieParser::getMaskMethod(bool inversed)
 }
 
 
-RGB24 LottieParser::getColor(const char *str)
+RGB32 LottieParser::getColor(const char *str)
 {
-    RGB24 color = {0, 0, 0};
+    RGB32 color = {0, 0, 0};
 
     if (!str) return color;
 
@@ -106,15 +106,15 @@ RGB24 LottieParser::getColor(const char *str)
     char tmp[3] = {'\0', '\0', '\0'};
     tmp[0] = str[1];
     tmp[1] = str[2];
-    color.rgb[0] = uint8_t(strtol(tmp, nullptr, 16));
+    color.r = uint8_t(strtol(tmp, nullptr, 16));
 
     tmp[0] = str[3];
     tmp[1] = str[4];
-    color.rgb[1] = uint8_t(strtol(tmp, nullptr, 16));
+    color.g = uint8_t(strtol(tmp, nullptr, 16));
 
     tmp[0] = str[5];
     tmp[1] = str[6];
-    color.rgb[2] = uint8_t(strtol(tmp, nullptr, 16));
+    color.b = uint8_t(strtol(tmp, nullptr, 16));
 
     return color;
 }
@@ -305,16 +305,16 @@ bool LottieParser::getValue(Point& pt)
 }
 
 
-bool LottieParser::getValue(RGB24& color)
+bool LottieParser::getValue(RGB32& color)
 {
     if (peekType() == kArrayType) {
         enterArray();
         if (!nextArrayValue()) return false;
     }
 
-    color.rgb[0] = REMAP255(getFloat());
-    color.rgb[1] = REMAP255(getFloat());
-    color.rgb[2] = REMAP255(getFloat());
+    color.r = REMAP255(getFloat());
+    color.g = REMAP255(getFloat());
+    color.b = REMAP255(getFloat());
 
     while (nextArrayValue()) getFloat(); //drop
 
@@ -1442,7 +1442,7 @@ LottieLayer* LottieParser::parseLayer(LottieLayer* precomp)
     context.layer = layer;
 
     auto ddd = false;
-    RGB24 color;
+    RGB32 color;
 
     enterObject();
 

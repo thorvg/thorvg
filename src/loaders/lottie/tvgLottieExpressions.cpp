@@ -99,12 +99,12 @@ static jerry_value_t _point2d(const Point& pt)
 }
 
 
-static jerry_value_t _color(RGB24 rgb)
+static jerry_value_t _color(RGB32 rgb)
 {
     auto value = jerry_object();
-    auto r = jerry_number((float)rgb.rgb[0]);
-    auto g = jerry_number((float)rgb.rgb[1]);
-    auto b = jerry_number((float)rgb.rgb[2]);
+    auto r = jerry_number((float)rgb.r);
+    auto g = jerry_number((float)rgb.g);
+    auto b = jerry_number((float)rgb.b);
     jerry_object_set_index(value, 0, r);
     jerry_object_set_index(value, 1, g);
     jerry_object_set_index(value, 2, b);
@@ -125,15 +125,13 @@ static Point _point2d(jerry_value_t obj)
     return pt;
 }
 
-static RGB24 _color(jerry_value_t obj)
+static RGB32 _color(jerry_value_t obj)
 {
-    RGB24 out;
+    RGB32 out;
     auto r = jerry_object_get_index(obj, 0);
     auto g = jerry_object_get_index(obj, 1);
     auto b = jerry_object_get_index(obj, 2);
-    out.rgb[0] = jerry_value_as_int32(r);
-    out.rgb[1] = jerry_value_as_int32(g);
-    out.rgb[2] = jerry_value_as_int32(b);
+    out = {jerry_value_as_int32(r), jerry_value_as_int32(g), jerry_value_as_int32(b)};
     jerry_value_free(r);
     jerry_value_free(g);
     jerry_value_free(b);
@@ -1486,7 +1484,7 @@ Point LottieExpressions::toPoint2d(jerry_value_t obj)
 }
 
 
-RGB24 LottieExpressions::toColor(jerry_value_t obj)
+RGB32 LottieExpressions::toColor(jerry_value_t obj)
 {
     return _color(obj);
 }
