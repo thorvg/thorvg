@@ -26,6 +26,9 @@
 #include "tvgCommon.h"
 #include "tvgArray.h"
 #include "tvgInlist.h"
+#include "tvgColor.h"
+
+using SvgColor = tvg::RGB;
 
 struct Box
 {
@@ -426,11 +429,6 @@ struct SvgComposite
     char *url;
     SvgNode* node;
     bool applying;              //flag for checking circular dependency.
-};
-
-struct SvgColor
-{
-    uint8_t r, g, b;
 };
 
 struct SvgPaint
