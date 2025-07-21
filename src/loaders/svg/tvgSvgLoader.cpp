@@ -23,6 +23,7 @@
 #include <fstream>
 #include "tvgStr.h"
 #include "tvgMath.h"
+#include "tvgColor.h"
 #include "tvgLoader.h"
 #include "tvgXmlParser.h"
 #include "tvgSvgLoader.h"
@@ -573,85 +574,7 @@ static constexpr struct
 };
 
 
-static bool _hslToRgb(float hue, float saturation, float brightness, uint8_t* red, uint8_t* green, uint8_t* blue)
-{
-    auto r = 0.0f, g = 0.0f, b = 0.0f;
-    auto i = 0;
-
-    while (hue < 0) hue += 360.0f;
-    hue = fmod(hue, 360.0f);
-    saturation = saturation > 0 ? std::min(saturation, 1.0f) : 0.0f;
-    brightness = brightness > 0 ? std::min(brightness, 1.0f) : 0.0f;
-
-    if (tvg::zero(saturation))  r = g = b = brightness;
-    else {
-        if (tvg::equal(hue, 360.0)) hue = 0.0f;
-        hue /= 60.0f;
-
-        auto v = (brightness <= 0.5f) ? (brightness * (1.0f + saturation)) : (brightness + saturation - (brightness * saturation));
-        auto p = brightness + brightness - v;
-
-        float sv;
-        if (!tvg::zero(v)) sv = (v - p) / v;
-        else sv = 0.0f;
-
-        i = static_cast<uint8_t>(hue);
-        auto f = hue - i;
-
-        auto vsf = v * sv * f;
-
-        auto t = p + vsf;
-        auto q = v - vsf;
-
-        switch (i) {
-            case 0: {
-                r = v;
-                g = t;
-                b = p;
-                break;
-            }
-            case 1: {
-                r = q;
-                g = v;
-                b = p;
-                break;
-            }
-            case 2: {
-                r = p;
-                g = v;
-                b = t;
-                break;
-            }
-            case 3: {
-                r = p;
-                g = q;
-                b = v;
-                break;
-            }
-            case 4: {
-                r = t;
-                g = p;
-                b = v;
-                break;
-            }
-            case 5: {
-                r = v;
-                g = p;
-                b = q;
-                break;
-            }
-        }
-    }
-
-    *red = (uint8_t)nearbyint(r * 255.0f);
-    *green = (uint8_t)nearbyint(g * 255.0f);
-    *blue = (uint8_t)nearbyint(b * 255.0f);
-
-    return true;
-}
-
-
-static bool _toColor(const char* str, uint8_t* r, uint8_t* g, uint8_t* b, char** ref)
+static bool _toColor(const char* str, uint8_t& r, uint8_t&g, uint8_t& b, char** ref)
 {
     auto len = strlen(str);
 
@@ -661,13 +584,13 @@ static bool _toColor(const char* str, uint8_t* r, uint8_t* g, uint8_t* b, char**
             char tmp[3] = { '\0', '\0', '\0' };
             tmp[0] = str[1];
             tmp[1] = str[1];
-            *r = strtol(tmp, nullptr, 16);
+            r = strtol(tmp, nullptr, 16);
             tmp[0] = str[2];
             tmp[1] = str[2];
-            *g = strtol(tmp, nullptr, 16);
+            g = strtol(tmp, nullptr, 16);
             tmp[0] = str[3];
             tmp[1] = str[3];
-            *b = strtol(tmp, nullptr, 16);
+            b = strtol(tmp, nullptr, 16);
         }
         return true;
     } else if (len == 7 && str[0] == '#') {
@@ -675,13 +598,13 @@ static bool _toColor(const char* str, uint8_t* r, uint8_t* g, uint8_t* b, char**
             char tmp[3] = { '\0', '\0', '\0' };
             tmp[0] = str[1];
             tmp[1] = str[2];
-            *r = strtol(tmp, nullptr, 16);
+            r = strtol(tmp, nullptr, 16);
             tmp[0] = str[3];
             tmp[1] = str[4];
-            *g = strtol(tmp, nullptr, 16);
+            g = strtol(tmp, nullptr, 16);
             tmp[0] = str[5];
             tmp[1] = str[6];
-            *b = strtol(tmp, nullptr, 16);
+            b = strtol(tmp, nullptr, 16);
         }
         return true;
     } else if (len >= 10 && (str[0] == 'r' || str[0] == 'R') && (str[1] == 'g' || str[1] == 'G') && (str[2] == 'b' || str[2] == 'B') && str[3] == '(' && str[len - 1] == ')') {
@@ -692,9 +615,9 @@ static bool _toColor(const char* str, uint8_t* r, uint8_t* g, uint8_t* b, char**
             if (green && *green == ',') {
                 auto tb = _parseColor(green + 1, &blue);
                 if (blue && blue[0] == ')' && blue[1] == '\0') {
-                    *r = tr;
-                    *g = tg;
-                    *b = tb;
+                    r = tr;
+                    g = tg;
+                    b = tb;
                 }
             }
         }
@@ -704,25 +627,26 @@ static bool _toColor(const char* str, uint8_t* r, uint8_t* g, uint8_t* b, char**
         *ref = _idFromUrl((const char*)(str + 3));
         return true;
     } else if (len >= 10 && (str[0] == 'h' || str[0] == 'H') && (str[1] == 's' || str[1] == 'S') && (str[2] == 'l' || str[2] == 'L') && str[3] == '(' && str[len - 1] == ')') {
-        float th, ts, tb;
+        tvg::HSL hsl;
         const char* content = _skipSpace(str + 4, nullptr);
         const char* hue = nullptr;
-        if (_parseNumber(&content, &hue, &th) && hue) {
+        if (_parseNumber(&content, &hue, &hsl.h) && hue) {
             const char* saturation = nullptr;
             hue = _skipSpace(hue, nullptr);
             hue = (char*)_skipComma(hue);
             hue = _skipSpace(hue, nullptr);
-            if (_parseNumber(&hue, &saturation, &ts) && saturation && *saturation == '%') {
+            if (_parseNumber(&hue, &saturation, &hsl.s) && saturation && *saturation == '%') {
                 const char* brightness = nullptr;
-                ts /= 100.0f;
+                hsl.s /= 100.0f;
                 saturation = _skipSpace(saturation + 1, nullptr);
                 saturation = (char*)_skipComma(saturation);
                 saturation = _skipSpace(saturation, nullptr);
-                if (_parseNumber(&saturation, &brightness, &tb) && brightness && *brightness == '%') {
-                    tb /= 100.0f;
+                if (_parseNumber(&saturation, &brightness, &hsl.l) && brightness && *brightness == '%') {
+                    hsl.l /= 100.0f;
                     brightness = _skipSpace(brightness + 1, nullptr);
                     if (brightness && brightness[0] == ')' && brightness[1] == '\0') {
-                       return _hslToRgb(th, ts, tb, r, g, b);
+                       hsl2rgb(hsl.h, hsl.s, hsl.l, r, g, b);
+                       return true;
                     }
                 }
             }
@@ -731,9 +655,9 @@ static bool _toColor(const char* str, uint8_t* r, uint8_t* g, uint8_t* b, char**
         //Handle named color
         for (unsigned int i = 0; i < (sizeof(colors) / sizeof(colors[0])); i++) {
             if (!strcasecmp(colors[i].name, str)) {
-                *r = (((uint8_t*)(&(colors[i].value)))[2]);
-                *g = (((uint8_t*)(&(colors[i].value)))[1]);
-                *b = (((uint8_t*)(&(colors[i].value)))[0]);
+                r = ((uint8_t*)(&(colors[i].value)))[2];
+                g = ((uint8_t*)(&(colors[i].value)))[1];
+                b = ((uint8_t*)(&(colors[i].value)))[0];
                 return true;
             }
         }
@@ -964,14 +888,14 @@ static void _handlePaintAttr(SvgPaint* paint, const char* value)
         paint->none = false;
         return;
     }
-    if (_toColor(value, &paint->color.r, &paint->color.g, &paint->color.b, &paint->url)) paint->none = false;
+    if (_toColor(value, paint->color.r, paint->color.g, paint->color.b, &paint->url)) paint->none = false;
 }
 
 
 static void _handleColorAttr(TVG_UNUSED SvgLoaderData* loader, SvgNode* node, const char* value)
 {
     SvgStyleProperty* style = node->style;
-    if (_toColor(value, &style->color.r, &style->color.g, &style->color.b, nullptr)) {
+    if (_toColor(value, style->color.r, style->color.g, style->color.b, nullptr)) {
         style->curColorSet = true;
     }
 }
@@ -2710,7 +2634,7 @@ static bool _attrParseStopsStyle(void* data, const char* key, const char* value)
                 stop->g = latestColor->g;
                 stop->b = latestColor->b;
             }
-        } else if (_toColor(value, &stop->r, &stop->g, &stop->b, nullptr)) {
+        } else if (_toColor(value, stop->r, stop->g, stop->b, nullptr)) {
             loader->svgParse->flags = (loader->svgParse->flags | SvgStopStyleFlags::StopColor);
         }
     } else {
@@ -2740,7 +2664,7 @@ static bool _attrParseStops(void* data, const char* key, const char* value)
                 stop->b = latestColor->b;
             }
         } else if (!(loader->svgParse->flags & SvgStopStyleFlags::StopColor)) {
-            _toColor(value, &stop->r, &stop->g, &stop->b, nullptr);
+            _toColor(value, stop->r, stop->g, stop->b, nullptr);
         }
     } else if (STR_AS(key, "style")) {
         xmlParseW3CAttribute(value, strlen(value), _attrParseStopsStyle, data);

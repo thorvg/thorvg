@@ -28,11 +28,13 @@
 #include "tvgCommon.h"
 #include "tvgArray.h"
 #include "tvgLock.h"
+#include "tvgColor.h"
 
 namespace tvg
 {
 
 using RenderData = void*;
+using RenderColor = tvg::RGBA;
 using pixel_t = uint32_t;
 
 #define DASH_PATTERN_THRESHOLD 0.001f
@@ -79,11 +81,6 @@ struct RenderSurface
         channelSize = rhs->channelSize;
         premultiplied = rhs->premultiplied;
     }
-};
-
-struct RenderColor
-{
-    uint8_t r, g, b, a;
 };
 
 struct RenderCompositor
