@@ -1058,7 +1058,7 @@ struct LottieSlot
         LottieProperty* prop;
     };
 
-    void assign(LottieObject* target, bool byDefault);
+    void assign(LottieProperty* target, bool byDefault);
     void reset();
 
     LottieSlot(LottieLayer* layer, LottieObject* parent, char* sid, LottieObject* obj, LottieProperty::Type type) : context{layer, parent}, sid(sid), type(type)
