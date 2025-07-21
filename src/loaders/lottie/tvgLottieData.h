@@ -36,9 +36,9 @@ struct PathSet
 };
 
 
-struct RGB24
+struct RGB32
 {
-    int32_t rgb[3];
+    int32_t r, g, b;
 };
 
 
@@ -54,13 +54,13 @@ struct TextDocument
     char* text = nullptr;
     float height;
     float shift;
-    RGB24 color;
+    RGB32 color;
     struct {
         Point pos;
         Point size;
     } bbox;
     struct {
-        RGB24 color;
+        RGB32 color;
         float width;
         bool below = false;
     } stroke;
@@ -86,21 +86,21 @@ static inline int32_t REMAP255(float val)
 }
 
 
-static inline RGB24 operator-(const RGB24& lhs, const RGB24& rhs)
+static inline RGB32 operator-(const RGB32& lhs, const RGB32& rhs)
 {
-    return {lhs.rgb[0] - rhs.rgb[0], lhs.rgb[1] - rhs.rgb[1], lhs.rgb[2] - rhs.rgb[2]};
+    return {lhs.r - rhs.r, lhs.g - rhs.g, lhs.b - rhs.b};
 }
 
 
-static inline RGB24 operator+(const RGB24& lhs, const RGB24& rhs)
+static inline RGB32 operator+(const RGB32& lhs, const RGB32& rhs)
 {
-    return {lhs.rgb[0] + rhs.rgb[0], lhs.rgb[1] + rhs.rgb[1], lhs.rgb[2] + rhs.rgb[2]};
+    return {lhs.r + rhs.r, lhs.g + rhs.g, lhs.b + rhs.b};
 }
 
 
-static inline RGB24 operator*(const RGB24& lhs, float rhs)
+static inline RGB32 operator*(const RGB32& lhs, float rhs)
 {
-    return {(int32_t)nearbyintf(lhs.rgb[0] * rhs), (int32_t)nearbyintf(lhs.rgb[1] * rhs), (int32_t)nearbyintf(lhs.rgb[2] * rhs)};
+    return {(int32_t)nearbyintf(lhs.r * rhs), (int32_t)nearbyintf(lhs.g * rhs), (int32_t)nearbyintf(lhs.b * rhs)};
 }
 
 

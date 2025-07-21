@@ -48,7 +48,7 @@ public:
     bool expressions = false;            //support expressions?
 
 private:
-    RGB24 getColor(const char *str);
+    RGB32 getColor(const char *str);
     FillRule getFillRule();
     MaskMethod getMaskMethod(bool inversed);
     LottieInterpolator* getInterpolator(const char* key, Point& in, Point& out);
@@ -65,7 +65,7 @@ private:
     bool getValue(float& val);
     bool getValue(uint8_t& val);
     bool getValue(int8_t& val);
-    bool getValue(RGB24& color);
+    bool getValue(RGB32& color);
     bool getValue(Point& pt);
 
     template<typename T> bool parseTangent(const char *key, LottieVectorFrame<T>& value);

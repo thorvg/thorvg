@@ -1006,7 +1006,7 @@ using LottieFloat = LottieGenericProperty<LottieScalarFrame<float>, float, Lotti
 using LottieInteger = LottieGenericProperty<LottieScalarFrame<int8_t>, int8_t, LottieProperty::Type::Integer>;
 using LottieScalar = LottieGenericProperty<LottieScalarFrame<Point>, Point, LottieProperty::Type::Scalar>;
 using LottieVector = LottieGenericProperty<LottieVectorFrame<Point>, Point, LottieProperty::Type::Vector, 0>;
-using LottieColor = LottieGenericProperty<LottieScalarFrame<RGB24>, RGB24, LottieProperty::Type::Color>;
+using LottieColor = LottieGenericProperty<LottieScalarFrame<RGB32>, RGB32, LottieProperty::Type::Color>;
 using LottieOpacity = LottieGenericProperty<LottieScalarFrame<uint8_t>, uint8_t, LottieProperty::Type::Opacity>;
 
 #endif //_TVG_LOTTIE_PROPERTY_H_

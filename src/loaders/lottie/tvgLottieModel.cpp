@@ -660,7 +660,7 @@ LottieProperty* LottieLayer::property(uint16_t ix)
 }
 
 
-void LottieLayer::prepare(RGB24* color)
+void LottieLayer::prepare(RGB32* color)
 {
     /* if layer is hidden, only useful data is its transform matrix.
        so force it to be a Null Layer and release all resource. */
@@ -681,7 +681,7 @@ void LottieLayer::prepare(RGB24* color)
     } else if (color && type == LottieLayer::Solid) {
         auto solidFill = Shape::gen();
         solidFill->appendRect(0, 0, static_cast<float>(w), static_cast<float>(h));
-        solidFill->fill(color->rgb[0], color->rgb[1], color->rgb[2]);
+        solidFill->fill(color->r, color->g, color->b);
         solidFill->ref();
         statical.pooler.push(solidFill);
     }

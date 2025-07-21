@@ -333,8 +333,8 @@ struct LottieTextRange
     }
 
     struct {
-        LottieColor fillColor = RGB24{255, 255, 255};
-        LottieColor strokeColor = RGB24{255, 255, 255};
+        LottieColor fillColor = RGB32{255, 255, 255};
+        LottieColor strokeColor = RGB32{255, 255, 255};
         LottieVector position = Point{0, 0};
         LottieScalar scale = Point{100, 100};
         LottieFloat letterSpacing = 0.0f;
@@ -367,19 +367,19 @@ struct LottieTextRange
 
     float factor(float frameNo, float totalLen, float idx);
 
-    void color(float frameNo, RGB24& fillColor, RGB24& strokeColor, float factor, Tween& tween, LottieExpressions* exps)
+    void color(float frameNo, RGB32& fillColor, RGB32& strokeColor, float factor, Tween& tween, LottieExpressions* exps)
     {
         if (style.flags.fillColor) {
             auto color = style.fillColor(frameNo, tween, exps);
-            fillColor.rgb[0] = tvg::lerp<uint8_t>(fillColor.rgb[0], color.rgb[0], factor);
-            fillColor.rgb[1] = tvg::lerp<uint8_t>(fillColor.rgb[1], color.rgb[1], factor);
-            fillColor.rgb[2] = tvg::lerp<uint8_t>(fillColor.rgb[2], color.rgb[2], factor);
+            fillColor.r = tvg::lerp<uint8_t>(fillColor.r, color.r, factor);
+            fillColor.g = tvg::lerp<uint8_t>(fillColor.g, color.g, factor);
+            fillColor.b = tvg::lerp<uint8_t>(fillColor.b, color.b, factor);
         }
         if (style.flags.strokeColor) {
             auto color = style.strokeColor(frameNo, tween, exps);
-            strokeColor.rgb[0] = tvg::lerp<uint8_t>(strokeColor.rgb[0], color.rgb[0], factor);
-            strokeColor.rgb[1] = tvg::lerp<uint8_t>(strokeColor.rgb[1], color.rgb[1], factor);
-            strokeColor.rgb[2] = tvg::lerp<uint8_t>(strokeColor.rgb[2], color.rgb[2], factor);
+            strokeColor.r = tvg::lerp<uint8_t>(strokeColor.r, color.r, factor);
+            strokeColor.g = tvg::lerp<uint8_t>(strokeColor.g, color.g, factor);
+            strokeColor.b = tvg::lerp<uint8_t>(strokeColor.b, color.b, factor);
         }
     }
 };
@@ -726,7 +726,7 @@ struct LottieTransform : LottieObject
 
 struct LottieSolid : LottieObject 
 {
-    LottieColor color = RGB24{255, 255, 255};
+    LottieColor color = RGB32{255, 255, 255};
     LottieOpacity opacity = 255;
 
     LottieProperty* property(uint16_t ix) override
@@ -975,7 +975,7 @@ struct LottieLayer : LottieGroup
     ~LottieLayer();
 
     bool mergeable() override { return false; }
-    void prepare(RGB24* color = nullptr);
+    void prepare(RGB32* color = nullptr);
     float remap(LottieComposition* comp, float frameNo, LottieExpressions* exp);
     LottieProperty* property(uint16_t ix) override;
     bool assign(const char* layer, uint32_t ix, const char* var, float val);
