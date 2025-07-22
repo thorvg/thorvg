@@ -27,11 +27,6 @@ namespace tvg
 
 void hsl2rgb(float h, float s, float l, uint8_t& r, uint8_t& g, uint8_t& b)
 {
-    s = tvg::clamp(s, 0.0f, 1.0f);
-    l = tvg::clamp(l, 0.0f, 1.0f);
-
-    auto tr = 0.0f, tg = 0.0f, tb = 0.0f;
-
     if (tvg::zero(s))  {
         r = g = b = (uint8_t)nearbyint(l * 255.0f);
         return;
@@ -53,6 +48,7 @@ void hsl2rgb(float h, float s, float l, uint8_t& r, uint8_t& g, uint8_t& b)
     auto vsf = v * sv * f;
     auto t = p + vsf;
     auto q = v - vsf;
+    float tr, tg, tb;
 
     switch (i) {
         case 0: tr = v; tg = t; tb = p; break;
@@ -61,7 +57,7 @@ void hsl2rgb(float h, float s, float l, uint8_t& r, uint8_t& g, uint8_t& b)
         case 3: tr = p; tg = q; tb = v; break;
         case 4: tr = t; tg = p; tb = v; break;
         case 5: tr = v; tg = p; tb = q; break;
-        default: break;
+        default: tr = tg = tb = 0.0f; break;
     }
     r = (uint8_t)nearbyint(tr * 255.0f);
     g = (uint8_t)nearbyint(tg * 255.0f);

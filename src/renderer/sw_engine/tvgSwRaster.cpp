@@ -1770,3 +1770,39 @@ void rasterXYFlip(uint32_t* src, uint32_t* dst, int32_t stride, int32_t w, int32
         }
     }
 }
+
+
+//TODO: can be moved in tvgColor
+void rasterRGB2HSL(uint8_t r, uint8_t g, uint8_t b, float* h, float* s, float* l)
+{
+    auto rf = r / 255.0f;
+    auto gf = g / 255.0f;
+    auto bf = b / 255.0f;
+    auto maxVal = std::max(std::max(rf, gf), bf);
+    auto minVal = std::min(std::min(rf, gf), bf);
+    auto delta = maxVal - minVal;
+
+    //lightness
+    float t;
+    if (l || s) {
+        t = (maxVal + minVal) * 0.5f;
+        if (l) *l = t;
+    }
+
+    if (tvg::zero(delta)) {
+        if (h) *h = 0.0f;
+        if (s) *s = 0.0f;
+    } else {
+        //saturation
+        if (s) {
+            *s = (t < 0.5f) ? (delta / (maxVal + minVal)) : (delta / (2.0f - maxVal - minVal));
+        }
+        //hue
+        if (h) {
+            if (maxVal == rf) *h = (gf - bf) / delta + (gf < bf ? 6.0f : 0.0f);
+            else if (maxVal == gf) *h = (bf - rf) / delta + 2.0f;
+            else *h = (rf - gf) / delta + 4.0f;
+            *h *= 60.0f; //directly convert to degrees
+        }
+    }
+}

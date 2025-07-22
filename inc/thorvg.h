@@ -209,12 +209,12 @@ enum class BlendMethod : uint8_t
     SoftLight,         ///< The same as Overlay but with applying pure black or white does not result in pure black or white. (255 - 2 * S) * (D * D) + (2 * S * D)
     Difference,        ///< Subtracts the bottom layer from the top layer or the other way around, to always get a non-negative value. (S - D) if (S > D), otherwise (D - S)
     Exclusion,         ///< The result is twice the product of the top and bottom layers, subtracted from their sum. S + D - (2 * S * D)
-    Hue,               ///< Reserved. Not supported.
-    Saturation,        ///< Reserved. Not supported.
-    Color,             ///< Reserved. Not supported.
-    Luminosity,        ///< Reserved. Not supported.
+    Hue,               ///< Combine with HSL(Sh + Ds + Dl) then convert it to RGB.
+    Saturation,        ///< Combine with HSL(Dh + Ss + Dl) then convert it to RGB.
+    Color,             ///< Combine with HSL(Sh + Ss + Dl) then convert it to RGB.
+    Luminosity,        ///< Combine with HSL(Dh + Ds + Sl) then convert it to RGB.
     Add,               ///< Simply adds pixel values of one layer with the other. (S + D)
-    HardMix,           ///< Reserved. Not supported.
+    HardMix,           ///< Adds S and D; result is 255 if the sum is greater than or equal to 255, otherwise 0.
     Composition = 255  ///< Used for intermediate composition. @since 1.0
 };
 
