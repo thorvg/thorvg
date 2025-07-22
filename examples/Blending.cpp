@@ -162,12 +162,12 @@ struct UserExample : tvgexam::Example
         blender(canvas, "SoftLight", tvg::BlendMethod::SoftLight, 900.0f, 0.0f, data);
         blender(canvas, "Difference", tvg::BlendMethod::Difference, 900.0f, 150.0f, data);
         blender(canvas, "Exclusion", tvg::BlendMethod::Exclusion, 900.0f, 300.0f, data);
-        blender(canvas, "Hue (Not Supported)", tvg::BlendMethod::Hue, 900.0f, 450.0f, data);
-        blender(canvas, "Saturation (Not Supported)", tvg::BlendMethod::Saturation, 900.0f, 600.0f, data);
-        blender(canvas, "Color (Not Supported)", tvg::BlendMethod::Color, 900.0f, 750.0f, data);
-        blender(canvas, "Luminosity (Not Supported)", tvg::BlendMethod::Luminosity, 900.0f, 900.0f, data);
+        blender(canvas, "Hue", tvg::BlendMethod::Hue, 900.0f, 450.0f, data);
+        blender(canvas, "Saturation", tvg::BlendMethod::Saturation, 900.0f, 600.0f, data);
+        blender(canvas, "Color", tvg::BlendMethod::Color, 900.0f, 750.0f, data);
+        blender(canvas, "Luminosity", tvg::BlendMethod::Luminosity, 900.0f, 900.0f, data);
         blender(canvas, "Add", tvg::BlendMethod::Add, 900.0f, 1050.0f, data);
-        blender(canvas, "HardMix (Not Supported)", tvg::BlendMethod::HardMix, 900.0f, 1200.0f, data);
+        blender(canvas, "HardMix", tvg::BlendMethod::HardMix, 900.0f, 1200.0f, data);
 
         free(data);
 

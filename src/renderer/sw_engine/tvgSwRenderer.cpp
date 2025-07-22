@@ -564,8 +564,23 @@ bool SwRenderer::blend(BlendMethod method)
         case BlendMethod::Exclusion:
             surface->blender = opBlendExclusion;
             break;
+        case BlendMethod::Hue:
+            surface->blender = opBlendHue;
+            break;
+        case BlendMethod::Saturation:
+            surface->blender = opBlendSaturation;
+            break;
+        case BlendMethod::Color:
+            surface->blender = opBlendColor;
+            break;
+        case BlendMethod::Luminosity:
+            surface->blender = opBlendLuminosity;
+            break;
         case BlendMethod::Add:
             surface->blender = opBlendAdd;
+            break;
+        case BlendMethod::HardMix:
+            surface->blender = opBlendHardMix;
             break;
         default:
             TVGLOG("SW_ENGINE", "Non supported blending option = %d", (int) method);

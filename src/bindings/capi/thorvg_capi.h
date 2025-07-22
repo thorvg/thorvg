@@ -159,12 +159,12 @@ typedef enum {
     TVG_BLEND_METHOD_SOFTLIGHT,         ///< The same as Overlay but with applying pure black or white does not result in pure black or white. (1 - 2 * S) * (D ^ 2) + (2 * S * D)
     TVG_BLEND_METHOD_DIFFERENCE,        ///< Subtracts the bottom layer from the top layer or the other way around, to always get a non-negative value. (S - D) if (S > D), otherwise (D - S)
     TVG_BLEND_METHOD_EXCLUSION,         ///< The result is twice the product of the top and bottom layers, subtracted from their sum. s + d - (2 * s * d)
-    TVG_BLEND_METHOD_HUE,               ///< Reserved. Not supported.
-    TVG_BLEND_METHOD_SATURATION,        ///< Reserved. Not supported.
-    TVG_BLEND_METHOD_COLOR,             ///< Reserved. Not supported.
-    TVG_BLEND_METHOD_LUMINOSITY,        ///< Reserved. Not supported.
+    TVG_BLEND_METHOD_HUE,               ///< Combine with HSL(Sh + Ds + Dl) then convert it to RGB.
+    TVG_BLEND_METHOD_SATURATION,        ///< Combine with HSL(Dh + Ss + Dl) then convert it to RGB.
+    TVG_BLEND_METHOD_COLOR,             ///< Combine with HSL(Sh + Ss + Dl) then convert it to RGB.
+    TVG_BLEND_METHOD_LUMINOSITY,        ///< Combine with HSL(Dh + Ds + Sl) then convert it to RGB.
     TVG_BLEND_METHOD_ADD,               ///< Simply adds pixel values of one layer with the other. (S + D)
-    TVG_BLEND_METHOD_HARDMIX,           ///< Reserved. Not supported.
+    TVG_BLEND_METHOD_HARDMIX,           ///< Adds S and D; result is 255 if the sum is greater than or equal to 255, otherwise 0.
     TVG_BLEND_METHOD_COMPOSITION = 255  ///< Used for intermediate composition. @since 1.0
 } Tvg_Blend_Method;
 

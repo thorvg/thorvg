@@ -26,6 +26,7 @@
 #include <algorithm>
 #include "tvgCommon.h"
 #include "tvgMath.h"
+#include "tvgColor.h"
 #include "tvgRender.h"
 
 #define SW_CURVE_TYPE_POINT 0
@@ -559,6 +560,80 @@ static inline uint32_t opBlendSoftLight(uint32_t s, uint32_t d)
 
     auto f = [](uint8_t s, uint8_t d) {
         return MULTIPLY(255 - std::min(255, 2 * s), MULTIPLY(d, d)) + std::min(255, 2 * MULTIPLY(s, d));
+    };
+
+    return BLEND_PRE(JOIN(255, f(C1(s), o.r), f(C2(s), o.g), f(C3(s), o.b)), s, o.a);
+}
+
+void rasterRGB2HSL(uint8_t r, uint8_t g, uint8_t b, float* h, float* s, float* l);
+
+static inline uint32_t opBlendHue(uint32_t s, uint32_t d)
+{
+    RenderColor o;
+    if (!BLEND_UPRE(d, o)) return s;
+
+    float sh, ds, dl;
+    rasterRGB2HSL(C1(s), C2(s), C3(s), &sh, 0, 0);
+    rasterRGB2HSL(o.r, o.g, o.b, 0, &ds, &dl);
+
+    uint8_t r, g, b;
+    hsl2rgb(sh, ds, dl, r, g, b);
+
+    return BLEND_PRE(JOIN(255, r, g, b), s, o.a);
+}
+
+static inline uint32_t opBlendSaturation(uint32_t s, uint32_t d)
+{
+    RenderColor o;
+    if (!BLEND_UPRE(d, o)) return s;
+
+    float dh, ss, dl;
+    rasterRGB2HSL(C1(s), C2(s), C3(s), 0, &ss, 0);
+    rasterRGB2HSL(o.r, o.g, o.b, &dh, 0, &dl);
+
+    uint8_t r, g, b;
+    hsl2rgb(dh, ss, dl, r, g, b);
+
+    return BLEND_PRE(JOIN(255, r, g, b), s, o.a);
+}
+
+static inline uint32_t opBlendColor(uint32_t s, uint32_t d)
+{
+    RenderColor o;
+    if (!BLEND_UPRE(d, o)) return s;
+
+    float sh, ss, dl;
+    rasterRGB2HSL(C1(s), C2(s), C3(s), &sh, &ss, 0);
+    rasterRGB2HSL(o.r, o.g, o.b, 0, 0, &dl);
+
+    uint8_t r, g, b;
+    hsl2rgb(sh, ss, dl, r, g, b);
+
+    return BLEND_PRE(JOIN(255, r, g, b), s, o.a);
+}
+
+static inline uint32_t opBlendLuminosity(uint32_t s, uint32_t d)
+{
+    RenderColor o;
+    if (!BLEND_UPRE(d, o)) return s;
+
+    float dh, ds, sl;
+    rasterRGB2HSL(C1(s), C2(s), C3(s), 0, 0, &sl);
+    rasterRGB2HSL(o.r, o.g, o.b, &dh, &ds, 0);
+
+    uint8_t r, g, b;
+    hsl2rgb(dh, ds, sl, r, g, b);
+
+    return BLEND_PRE(JOIN(255, r, g, b), s, o.a);
+}
+
+static inline uint32_t opBlendHardMix(uint32_t s, uint32_t d)
+{
+    RenderColor o;
+    if (!BLEND_UPRE(d, o)) return s;
+
+    auto f = [](uint8_t s, uint8_t d) {
+        return (s + d >= 255) ? 255 : 0;
     };
 
     return BLEND_PRE(JOIN(255, f(C1(s), o.r), f(C2(s), o.g), f(C3(s), o.b)), s, o.a);
