@@ -272,7 +272,40 @@ struct SceneImpl : Scene
             dup->paints.push_back(cdup);
         }
 
-        if (effects) TVGERR("RENDERER", "TODO: Duplicate Effects?");
+        if (effects) {
+            dup->effects = new Array<RenderEffect*>;
+            ARRAY_FOREACH(p, *effects) {
+                RenderEffect* ret = nullptr;
+                switch ((*p)->type) {
+                    case SceneEffect::GaussianBlur: {
+                        ret = new RenderEffectGaussianBlur(*(RenderEffectGaussianBlur*)(*p));
+                        break;
+                    }
+                    case SceneEffect::DropShadow: {
+                        ret = new RenderEffectDropShadow(*(RenderEffectDropShadow*)(*p));
+                        break;
+                    }
+                    case SceneEffect::Fill: {
+                        ret = new RenderEffectFill(*(RenderEffectFill*)(*p));
+                        break;
+                    }
+                    case SceneEffect::Tint: {
+                        ret = new RenderEffectTint(*(RenderEffectTint*)(*p));
+                        break;
+                    }
+                    case SceneEffect::Tritone: {
+                        ret = new RenderEffectTritone(*(RenderEffectTritone*)(*p));
+                        break;
+                    }
+                    default: break;
+                }
+                if (ret) {
+                    ret->rd = nullptr;
+                    ret->valid = false;
+                    dup->effects->push(ret);
+                }
+            }
+        }
 
         return scene;
     }
