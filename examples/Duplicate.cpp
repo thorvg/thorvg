@@ -103,9 +103,9 @@ struct UserExample : tvgexam::Example
         //Duplicate Picture - svg
         {
             auto picture1 = tvg::Picture::gen();
-            if (!tvgexam::verify(picture1->load(EXAMPLE_DIR"/svg/tiger.svg"))) return false;
+            if (!tvgexam::verify(picture1->load(EXAMPLE_DIR"/svg/2684.svg"))) return false;
             picture1->translate(350, 200);
-            picture1->scale(0.25);
+            picture1->scale(4);
 
             auto picture2 = picture1->duplicate();
             picture2->translate(550, 250);
