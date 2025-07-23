@@ -103,7 +103,7 @@ struct UserExample : tvgexam::Example
         scene2->push(tvg::SceneEffect::DropShadow, 65, 143, 222, (int)(255.0f * progress), 135.0, 10.0, 3.0, 100);
 
         scene3->push(tvg::SceneEffect::ClearAll);
-        scene3->push(tvg::SceneEffect::DropShadow, 0, 0, 0, 125, (double)(360.0f * progress), 20.0, 3.0, 100);
+        scene3->push(tvg::SceneEffect::DropShadow, 0, 0, 0, 125, (double)(360.0f * progress), 20.0, 0.0, 100);
 
         canvas->update();
 
