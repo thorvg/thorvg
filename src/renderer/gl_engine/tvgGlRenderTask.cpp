@@ -544,20 +544,23 @@ void GlEffectDropShadowTask::run()
     GL_CHECK(glBlitFramebuffer(0, 0, width, height, 0, 0, width, height, GL_COLOR_BUFFER_BIT, GL_NEAREST));
     
     GL_CHECK(glDisable(GL_BLEND));
-    // horizontal blur
-    GL_CHECK(glBindFramebuffer(GL_FRAMEBUFFER, mDstCopyFbo0->getResolveFboId()));
-    horzTask->setViewport(vp);
-    horzTask->addBindResource({ 0, dstCopyTexId1, horzSrcTextureLoc });
-    horzTask->run();
-    // vertical blur
-    GL_CHECK(glBindFramebuffer(GL_FRAMEBUFFER, mDstCopyFbo1->getResolveFboId()));
-    vertTask->setViewport(vp);
-    vertTask->addBindResource({ 0, dstCopyTexId0, vertSrcTextureLoc });
-    vertTask->run();
-    // copy original image to intermediate buffer
-    GL_CHECK(glBindFramebuffer(GL_READ_FRAMEBUFFER, mDstFbo->getFboId()));
-    GL_CHECK(glBindFramebuffer(GL_DRAW_FRAMEBUFFER, mDstCopyFbo0->getResolveFboId()));
-    GL_CHECK(glBlitFramebuffer(0, 0, width, height, 0, 0, width, height, GL_COLOR_BUFFER_BIT, GL_NEAREST));
+    // when sigma is 0, no blur is applied, and the original image is used directly as the shadow.
+    if (!tvg::zero(effect->sigma)) {
+        // horizontal blur
+        GL_CHECK(glBindFramebuffer(GL_FRAMEBUFFER, mDstCopyFbo0->getResolveFboId()));
+        horzTask->setViewport(vp);
+        horzTask->addBindResource({ 0, dstCopyTexId1, horzSrcTextureLoc });
+        horzTask->run();
+        // vertical blur
+        GL_CHECK(glBindFramebuffer(GL_FRAMEBUFFER, mDstCopyFbo1->getResolveFboId()));
+        vertTask->setViewport(vp);
+        vertTask->addBindResource({ 0, dstCopyTexId0, vertSrcTextureLoc });
+        vertTask->run();
+        // copy original image to intermediate buffer
+        GL_CHECK(glBindFramebuffer(GL_READ_FRAMEBUFFER, mDstFbo->getFboId()));
+        GL_CHECK(glBindFramebuffer(GL_DRAW_FRAMEBUFFER, mDstCopyFbo0->getResolveFboId()));
+        GL_CHECK(glBlitFramebuffer(0, 0, width, height, 0, 0, width, height, GL_COLOR_BUFFER_BIT, GL_NEAREST));
+    }
     // run drop shadow effect
     GL_CHECK(glBindFramebuffer(GL_FRAMEBUFFER, mDstFbo->getFboId()));
     GlRenderTask::run();

@@ -875,8 +875,9 @@ bool WgCompositor::dropShadow(WgContext& context, WgRenderTarget* dst, const Ren
     auto aabb = compose->aabb;
     auto viewport = compose->rdViewport;
 
-    { // apply blur
-        copyTexture(&targetTemp1, dst, aabb);
+    copyTexture(&targetTemp1, dst, aabb);
+     // when sigma is 0, no blur is applied, and the original image is used directly as the shadow.
+    if (!tvg::zero(params->sigma)) {
         WgRenderTarget* sbuff = &targetTemp1;
         WgRenderTarget* dbuff = &targetTemp0;
         WGPUComputePassDescriptor computePassDesc{ .label = "Compute pass drop shadow blur" };

@@ -538,10 +538,10 @@ bool WgRenderer::region(RenderEffect* effect)
     } else if (effect->type == SceneEffect::DropShadow) {
         auto dropShadow = (RenderEffectDropShadow*)effect;
         auto renderData = (WgRenderDataEffectParams*)dropShadow->rd;
-        dropShadow->extend.min.x = -(renderData->extend + std::abs(renderData->offset.x));
-        dropShadow->extend.max.x = +(renderData->extend + std::abs(renderData->offset.x));
-        dropShadow->extend.min.y = -(renderData->extend + std::abs(renderData->offset.y));
-        dropShadow->extend.max.y = +(renderData->extend + std::abs(renderData->offset.y));
+        dropShadow->extend.min.x = -std::ceil(renderData->extend + std::abs(renderData->offset.x));
+        dropShadow->extend.min.y = -std::ceil(renderData->extend + std::abs(renderData->offset.y));
+        dropShadow->extend.max.x = +std::floor(renderData->extend + std::abs(renderData->offset.x));
+        dropShadow->extend.max.y = +std::floor(renderData->extend + std::abs(renderData->offset.y));
         return true;
     }
     return false;

@@ -247,7 +247,7 @@ bool WgShaderTypeEffectParams::update(RenderEffectDropShadow* dropShadow, const 
     params[9] = offset.y;
     extend = params[2] * 2; // kernel
 
-    dropShadow->valid = (extend > 0);
+    dropShadow->valid = (extend >= 0);
     return dropShadow->valid;
 }
 

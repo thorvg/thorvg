@@ -141,7 +141,7 @@ void GlEffect::update(RenderEffectDropShadow* effect, const Matrix& transform)
     dropShadow->offset[1] = offset.y;
     dropShadow->extend = 2 * std::max(sigma * scale + std::abs(offset.x), sigma * scale + std::abs(offset.y));
     effect->rd = dropShadow;
-    effect->valid = (dropShadow->extend > 0);
+    effect->valid = (dropShadow->extend >= 0);
 }
 
 
