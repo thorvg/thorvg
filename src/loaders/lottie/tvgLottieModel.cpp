@@ -697,7 +697,10 @@ float LottieLayer::remap(LottieComposition* comp, float frameNo, LottieExpressio
     } else {
         frameNo -= startFrame;
     }
-    return (frameNo / timeStretch);
+    frameNo /= timeStretch;
+
+    if (frameNo >= comp->frameCnt()) return cache.frameNo;
+    return frameNo;
 }
 
 
