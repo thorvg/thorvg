@@ -593,8 +593,8 @@ bool RenderTrimPath::trim(const RenderPath& in, RenderPath& out) const
 /* StrokeDashPath Class Implementation                                  */
 /************************************************************************/
 
-//TODO: use this common function from all engines
-#ifdef THORVG_GL_RASTER_SUPPORT
+//TODO: use this common function from sw engine
+#if defined(THORVG_GL_RASTER_SUPPORT) || defined(THORVG_WG_RASTER_SUPPORT)
 
 struct StrokeDashPath
 {
@@ -770,14 +770,12 @@ void StrokeDashPath::cubicTo(RenderPath& out, const Point& cnt1, const Point& cn
         end
     );
 }
-#endif
+
 
 bool RenderShape::strokeDash(RenderPath& out) const
 {
     if (!stroke || stroke->dash.count == 0 || stroke->dash.length < DASH_PATTERN_THRESHOLD) return false;
 
-//TODO: use this common function from all engines
-#ifdef THORVG_GL_RASTER_SUPPORT
     out.cmds.reserve(20 * path.cmds.count);
     out.pts.reserve(20 * path.pts.count);
 
@@ -790,7 +788,10 @@ bool RenderShape::strokeDash(RenderPath& out) const
         else return false;
     }
     return dash.gen(path, out, allowDot);
-#else
-    return false;
-#endif
 }
+#else
+bool RenderShape::strokeDash(RenderPath& out) const
+{
+    return false;
+}
+#endif
