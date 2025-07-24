@@ -256,10 +256,11 @@ struct UserExample : tvgexam::Example
             shape->moveTo(0, 0);
             shape->lineTo(150, 100);
             shape->lineTo(0, 100);
+            shape->close();
             shape->fill(255, 0, 255);
             shape->strokeWidth(30);
             shape->strokeFill(0, 255, 255);
-            shape->close();
+            shape->strokeJoin(tvg::StrokeJoin::Round);
 
             tvg::Matrix m = {1.8794f, -0.6840f, 0.0f, 0.6840f,  1.8794f, 0.0f, 0.0f, 0.0f, 1.0f};
             shape->transform(m);
