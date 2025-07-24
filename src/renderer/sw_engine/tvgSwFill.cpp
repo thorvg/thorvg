@@ -308,6 +308,7 @@ static inline uint32_t _fixedPixel(const SwFill* fill, int32_t pos)
 
 static inline uint32_t _pixel(const SwFill* fill, float pos)
 {
+    if (!std::isfinite(pos)) pos = 0;
     auto i = static_cast<int32_t>(pos * (GRADIENT_STOP_SIZE - 1) + 0.5f);
     return fill->ctable[_clamp(fill, i)];
 }
