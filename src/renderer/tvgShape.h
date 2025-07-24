@@ -125,10 +125,15 @@ struct ShapeImpl : Shape
 
         //Stroke feathering
         if (stroking && rs.stroke) {
-            x -= rs.stroke->width * 0.5f;
-            y -= rs.stroke->width * 0.5f;
-            w += rs.stroke->width;
-            h += rs.stroke->width;
+            //Use geometric mean for feathering.
+            //Join, Cap wouldn't be considered. Generate stroke outline and compute bbox for accurate size?
+            auto sx = sqrt(m.e11 * m.e11 + m.e21 * m.e21);
+            auto sy = sqrt(m.e12 * m.e12 + m.e22 * m.e22);
+            auto feather = rs.stroke->width * sqrt(sx * sy);
+            x -= feather * 0.5f;
+            y -= feather * 0.5f;
+            w += feather;
+            h += feather;
         }
 
         pt4[0] = {x, y};
