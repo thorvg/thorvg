@@ -343,7 +343,7 @@ struct SceneImpl : Scene
     {
         if (effects) {
             ARRAY_FOREACH(p, *effects) {
-                impl.renderer->dispose(*p);
+                if (impl.renderer) impl.renderer->dispose(*p);
                 delete(*p);
             }
             delete(effects);
