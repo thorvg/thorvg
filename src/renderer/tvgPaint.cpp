@@ -429,7 +429,8 @@ uint8_t Paint::opacity() const noexcept
 
 Result Paint::blend(BlendMethod method) noexcept
 {
-    if (method <= BlendMethod::HardMix || method == BlendMethod::Composition) {
+    //Composition is only allowed to Scene.
+    if (method <= BlendMethod::HardMix || (method == BlendMethod::Composition && type() == Type::Scene)) {
         pImpl->blend(method);
         return Result::Success;
     }
