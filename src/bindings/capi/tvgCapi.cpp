@@ -1035,10 +1035,29 @@ TVG_API Tvg_Animation* tvg_lottie_animation_new()
 }
 
 
-TVG_API Tvg_Result tvg_lottie_animation_override(Tvg_Animation* animation, const char* slot)
+TVG_API uint32_t tvg_lottie_animation_gen_slot(Tvg_Animation* animation, const char* slot)
 {
 #ifdef THORVG_LOTTIE_LOADER_SUPPORT
-    if (animation) return (Tvg_Result) reinterpret_cast<LottieAnimation*>(animation)->override(slot);
+    if (animation) return reinterpret_cast<LottieAnimation*>(animation)->gen(slot);
+#endif
+    return 0;
+}
+
+
+TVG_API Tvg_Result tvg_lottie_animation_apply_slot(Tvg_Animation* animation, uint32_t id)
+{
+#ifdef THORVG_LOTTIE_LOADER_SUPPORT
+    if (animation) return (Tvg_Result) reinterpret_cast<LottieAnimation*>(animation)->apply(id);
+    return TVG_RESULT_INVALID_ARGUMENT;
+#endif
+    return TVG_RESULT_NOT_SUPPORTED;
+}
+
+
+TVG_API Tvg_Result tvg_lottie_animation_del_slot(Tvg_Animation* animation, uint32_t id)
+{
+#ifdef THORVG_LOTTIE_LOADER_SUPPORT
+    if (animation) return (Tvg_Result) reinterpret_cast<LottieAnimation*>(animation)->del(id);
     return TVG_RESULT_INVALID_ARGUMENT;
 #endif
     return TVG_RESULT_NOT_SUPPORTED;
