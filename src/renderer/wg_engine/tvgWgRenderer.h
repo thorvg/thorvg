@@ -78,7 +78,6 @@ private:
     WgRenderTarget mRenderTargetRoot;
     Array<WgCompose*> mCompositorList;
     Array<WgRenderTarget*> mRenderTargetStack;
-    Array<WgRenderDataViewport*> mRenderDataViewportList;
     Array<WgSceneTask*> mSceneTaskStack;
     Array<WgRenderTask*> mRenderTaskList;
 
@@ -88,7 +87,6 @@ private:
     // render data paint pools
     WgRenderDataShapePool mRenderDataShapePool;
     WgRenderDataPicturePool mRenderDataPicturePool;
-    WgRenderDataViewportPool mRenderDataViewportPool;
     WgRenderDataEffectParamsPool mRenderDataEffectParamsPool;
 
     // rendering context

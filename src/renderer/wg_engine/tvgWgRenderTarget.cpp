@@ -32,13 +32,13 @@ void WgRenderTarget::initialize(WgContext& context, uint32_t width, uint32_t hei
     texViewMS = context.createTextureView(textureMS);
     bindGroupRead = context.layouts.createBindGroupStrorage1RO(texView);
     bindGroupWrite = context.layouts.createBindGroupStrorage1WO(texView);
-    bindGroupTexure = context.layouts.createBindGroupTexSampled(context.samplerNearestRepeat, texView);
+    bindGroupTexture = context.layouts.createBindGroupTexSampled(context.samplerNearestRepeat, texView);
 }
 
 
 void WgRenderTarget::release(WgContext& context)
 {
-    context.layouts.releaseBindGroup(bindGroupTexure);
+    context.layouts.releaseBindGroup(bindGroupTexture);
     context.layouts.releaseBindGroup(bindGroupWrite);
     context.layouts.releaseBindGroup(bindGroupRead);
     context.releaseTextureView(texViewMS);
