@@ -314,60 +314,6 @@ void WgRenderDataPicturePool::release(WgContext& context)
 }
 
 //***********************************************************************
-// WgRenderDataGaussian
-//***********************************************************************
-
-void WgRenderDataViewport::update(WgContext& context, const RenderRegion& region) {
-    WgShaderTypeVec4f viewport;
-    viewport.update(region);
-    bool bufferViewportChanged = context.allocateBufferUniform(bufferViewport, &viewport, sizeof(viewport));
-    if (bufferViewportChanged) {
-        context.layouts.releaseBindGroup(bindGroupViewport);
-        bindGroupViewport = context.layouts.createBindGroupBuffer1Un(bufferViewport);
-    }
-}
-
-
-void WgRenderDataViewport::release(WgContext& context) {
-    context.releaseBuffer(bufferViewport);
-    context.layouts.releaseBindGroup(bindGroupViewport);
-}
-
-//***********************************************************************
-// WgRenderDataViewportPool
-//***********************************************************************
-
-WgRenderDataViewport* WgRenderDataViewportPool::allocate(WgContext& context)
-{
-    WgRenderDataViewport* renderData{};
-    if (mPool.count > 0) {
-        renderData = mPool.last();
-        mPool.pop();
-    } else {
-        renderData = new WgRenderDataViewport();
-        mList.push(renderData);
-    }
-    return renderData;
-}
-
-
-void WgRenderDataViewportPool::free(WgContext& context, WgRenderDataViewport* renderData)
-{
-    if (renderData) mPool.push(renderData);
-}
-
-
-void WgRenderDataViewportPool::release(WgContext& context)
-{
-    ARRAY_FOREACH(p, mList) {
-        (*p)->release(context);
-        delete(*p);
-    }
-    mPool.clear();
-    mList.clear();
-}
-
-//***********************************************************************
 // WgRenderDataEffectParams
 //***********************************************************************
 
@@ -386,7 +332,6 @@ void WgRenderDataEffectParams::update(WgContext& context, RenderEffectGaussianBl
     WgShaderTypeEffectParams effectParams;
     if (!effectParams.update(gaussian, transform)) return;
     update(context, effectParams);
-    level = int(WG_GAUSSIAN_MAX_LEVEL * ((gaussian->quality - 1) * 0.01f)) + 1;
     extend = effectParams.extend;
 }
 
@@ -397,7 +342,6 @@ void WgRenderDataEffectParams::update(WgContext& context, RenderEffectDropShadow
     WgShaderTypeEffectParams effectParams;
     if (!effectParams.update(dropShadow, transform)) return;
     update(context, effectParams);
-    level = int(WG_GAUSSIAN_MAX_LEVEL * ((dropShadow->quality - 1) * 0.01f)) + 1;
     extend = effectParams.extend;
     offset = effectParams.offset;
 }

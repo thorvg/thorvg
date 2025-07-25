@@ -33,7 +33,7 @@ struct WgRenderTarget {
     WGPUTextureView texViewMS{};
     WGPUBindGroup bindGroupRead{};
     WGPUBindGroup bindGroupWrite{};
-    WGPUBindGroup bindGroupTexure{};
+    WGPUBindGroup bindGroupTexture{};
     uint32_t width{};
     uint32_t height{};
 

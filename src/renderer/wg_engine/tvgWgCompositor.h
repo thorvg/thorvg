@@ -30,7 +30,6 @@ struct WgCompose: RenderCompositor
 {
     BlendMethod blend{};
     RenderRegion aabb{};
-    WgRenderDataViewport* rdViewport;
 };
 
 class WgCompositor
@@ -98,7 +97,6 @@ private:
     void markupClipPath(WgContext& context, WgRenderDataShape* renderData);
     void renderClipPath(WgContext& context, WgRenderDataPaint* paint);
     void clearClipPath(WgContext& context, WgRenderDataPaint* paint);
-
 public:
     void initialize(WgContext& context, uint32_t width, uint32_t height);
     void initPools(WgContext& context);
@@ -107,7 +105,8 @@ public:
     void resize(WgContext& context, uint32_t width, uint32_t height);
 
     // render passes workflow
-    void beginRenderPass(WGPUCommandEncoder encoder, WgRenderTarget* target, bool clear, WGPUColor clearColor = { 0.0, 0.0, 0.0, 0.0 });
+    void beginRenderPassMS(WGPUCommandEncoder encoder, WgRenderTarget* target, bool clear, WGPUColor clearColor = { 0.0, 0.0, 0.0, 0.0 });
+    void beginRenderPass(WGPUCommandEncoder encoder, WgRenderTarget* target);
     void endRenderPass();
 
     // stage buffers operations
