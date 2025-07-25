@@ -177,11 +177,12 @@ struct Window
         tvg::Initializer::term();
     }
 
-    bool draw()
+    bool draw(bool clearBuffer)
     {
         //Draw the contents to the Canvas
         if (verify(canvas->draw(clearBuffer))) {
             verify(canvas->sync());
+            refresh();
             return true;
         }
 
@@ -195,15 +196,16 @@ struct Window
         if (!example->content(canvas, width, height)) return false;
 
         //initiate the first rendering before window pop-up.
-        if (!verify(canvas->draw())) return false;
-        if (!verify(canvas->sync())) return false;
-
-        return true;
+        return draw(true);
     }
 
     void show()
     {
         SDL_ShowWindow(window);
+
+        // Refresh the canvas to ensure the first frame is rendered correctly.
+        // This prevents a "black first frame issue" that can occur if the window
+        // is shown before the canvas is fully prepared.
         refresh();
 
         //Mainloop
@@ -262,7 +264,7 @@ struct Window
             }
 
             if (needDraw) {
-                if (draw()) refresh();
+                draw(clearBuffer);
                 needDraw = false;
             }
 
