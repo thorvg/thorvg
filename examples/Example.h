@@ -198,13 +198,14 @@ struct Window
         if (!verify(canvas->draw())) return false;
         if (!verify(canvas->sync())) return false;
 
+        refresh();
+
         return true;
     }
 
     void show()
     {
         SDL_ShowWindow(window);
-        refresh();
 
         //Mainloop
         SDL_Event event;
