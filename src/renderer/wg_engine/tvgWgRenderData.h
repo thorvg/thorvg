@@ -120,28 +120,6 @@ public:
     void release(WgContext& context);
 };
 
-struct WgRenderDataViewport
-{
-    WGPUBindGroup bindGroupViewport{};
-    WGPUBuffer bufferViewport{};
-
-    void update(WgContext& context, const RenderRegion& region);
-    void release(WgContext& context);
-};
-
-class WgRenderDataViewportPool {
-private:
-    // pool contains all created but unused render data for viewport
-    Array<WgRenderDataViewport*> mPool;
-    // list contains all created render data for viewport
-    // to ensure that all created instances will be released
-    Array<WgRenderDataViewport*> mList;
-public:
-    WgRenderDataViewport* allocate(WgContext& context);
-    void free(WgContext& context, WgRenderDataViewport* renderData);
-    void release(WgContext& context);
-};
-
 // gaussian blur, drop shadow, fill, tint, tritone
 #define WG_GAUSSIAN_MAX_LEVEL 3
 struct WgRenderDataEffectParams
@@ -149,7 +127,6 @@ struct WgRenderDataEffectParams
     WGPUBindGroup bindGroupParams{};
     WGPUBuffer bufferParams{};
     uint32_t extend{};
-    uint32_t level{};
     Point offset{};
 
     void update(WgContext& context, WgShaderTypeEffectParams& effectParams);

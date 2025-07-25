@@ -41,7 +41,6 @@ void WgRenderer::release()
     // clear render data paint pools
     mRenderDataShapePool.release(mContext);
     mRenderDataPicturePool.release(mContext);
-    mRenderDataViewportPool.release(mContext);
     mRenderDataEffectParamsPool.release(mContext);
 
     // clear render  pool
@@ -253,10 +252,6 @@ bool WgRenderer::postRender()
     mRenderTaskList.clear();
     ARRAY_FOREACH(p, mCompositorList) { delete (*p); };
     mCompositorList.clear();
-    ARRAY_FOREACH(p, mRenderDataViewportList) {
-        mRenderDataViewportPool.free(mContext, *p);
-    }
-    mRenderDataViewportList.clear();
     return true;
 }
 
@@ -431,12 +426,6 @@ RenderCompositor* WgRenderer::target(const RenderRegion& region, TVG_UNUSED Colo
     // create and setup compose data
     WgCompose* compose = new WgCompose();
     compose->aabb = region;
-    if (flags & PostProcessing) {
-        compose->aabb = region;
-        compose->rdViewport = mRenderDataViewportPool.allocate(mContext);
-        compose->rdViewport->update(mContext, region);
-        mRenderDataViewportList.push(compose->rdViewport);
-    }
     mCompositorList.push(compose);
     return compose;
 }
