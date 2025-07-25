@@ -985,7 +985,7 @@ bool GlRenderer::blend(BlendMethod method)
 
     if (method == mBlendMethod) return true;
 
-    mBlendMethod = method;
+    mBlendMethod = (method == BlendMethod::Composition ? BlendMethod::Normal : method);
 
     return true;
 }

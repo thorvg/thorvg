@@ -286,7 +286,8 @@ bool WgRenderer::blend(BlendMethod method)
     //TODO: support
     if (method == BlendMethod::Hue || method == BlendMethod::Saturation || method == BlendMethod::Color || method == BlendMethod::Luminosity || method == BlendMethod::HardMix) return false;
 
-    mBlendMethod = method;
+    mBlendMethod = (method == BlendMethod::Composition ? BlendMethod::Normal : method);
+
     return true;
 }
 
