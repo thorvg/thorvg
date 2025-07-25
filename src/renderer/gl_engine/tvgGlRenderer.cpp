@@ -980,6 +980,9 @@ const RenderSurface* GlRenderer::mainSurface()
 
 bool GlRenderer::blend(BlendMethod method)
 {
+    //TODO: support
+    if (method == BlendMethod::Hue || method == BlendMethod::Saturation || method == BlendMethod::Color || method == BlendMethod::Luminosity || method == BlendMethod::HardMix) return false;
+
     if (method == mBlendMethod) return true;
 
     mBlendMethod = method;

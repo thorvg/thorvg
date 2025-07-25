@@ -283,6 +283,9 @@ RenderRegion WgRenderer::region(RenderData data)
 
 bool WgRenderer::blend(BlendMethod method)
 {
+    //TODO: support
+    if (method == BlendMethod::Hue || method == BlendMethod::Saturation || method == BlendMethod::Color || method == BlendMethod::Luminosity || method == BlendMethod::HardMix) return false;
+
     mBlendMethod = method;
     return true;
 }
