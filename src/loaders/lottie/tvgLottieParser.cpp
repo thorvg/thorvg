@@ -264,11 +264,11 @@ bool LottieParser::getValue(uint8_t& val)
 {
     if (peekType() == kArrayType) {
         enterArray();
-        if (nextArrayValue()) val = (uint8_t)(getFloat() * 2.55f);
+        if (nextArrayValue()) val = (uint8_t)(tvg::clamp(getFloat() * 2.55f, 0.0f, 255.0f));
         //discard rest
         while (nextArrayValue()) getFloat();
     } else {
-        val = (uint8_t)(getFloat() * 2.55f);
+        val = (uint8_t)(tvg::clamp(getFloat() * 2.55f, 0.0f, 255.0f));
     }
     return false;
 }
