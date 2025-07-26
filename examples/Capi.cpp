@@ -32,29 +32,29 @@
 /* Capi Test Code                                                       */
 /************************************************************************/
 
-static Tvg_Canvas* canvas = NULL;
-static Tvg_Animation* animation = NULL;
+static Tvg_Canvas canvas = NULL;
+static Tvg_Animation animation = NULL;
 
 void contents()
 {
     //Linear gradient shape with a linear gradient stroke
     {
         //Set a shape
-        Tvg_Paint* shape1 = tvg_shape_new();
+        Tvg_Paint shape1 = tvg_shape_new();
         tvg_shape_move_to(shape1, 25.0f, 25.0f);
         tvg_shape_line_to(shape1, 375.0f, 25.0f);
         tvg_shape_cubic_to(shape1, 500.0f, 100.0f, -500.0f, 200.0f, 375.0f, 375.0f);
         tvg_shape_close(shape1);
 
         //Prepare a gradient for the fill
-        Tvg_Gradient* grad = tvg_linear_gradient_new();
+        Tvg_Gradient grad = tvg_linear_gradient_new();
         tvg_linear_gradient_set(grad, 25.0f, 25.0f, 200.0f, 200.0f);
         Tvg_Color_Stop color_stops[4] = {{0.00f, 255, 0, 0, 155}, {0.33f, 0, 255, 0, 100}, {0.66f, 255, 0, 255, 100}, {1.00f, 0, 0, 255, 155}};
         tvg_gradient_set_color_stops(grad, color_stops, 4);
         tvg_gradient_set_spread(grad, TVG_STROKE_FILL_REFLECT);
 
         //Prepare a gradient for the stroke
-        Tvg_Gradient* grad_stroke = tvg_gradient_duplicate(grad);
+        Tvg_Gradient grad_stroke = tvg_gradient_duplicate(grad);
 
         //Set a gradient fill
         tvg_shape_set_gradient(shape1, grad);
@@ -70,7 +70,7 @@ void contents()
     //Solid transformed shape
     {
         //Set a shape
-        Tvg_Paint* shape = tvg_shape_new();
+        Tvg_Paint shape = tvg_shape_new();
         tvg_shape_move_to(shape, 25.0f, 25.0f);
         tvg_shape_line_to(shape, 375.0f, 25.0f);
         tvg_shape_cubic_to(shape, 500.0f, 100.0f, -500.0f, 200.0f, 375.0f, 375.0f);
@@ -88,13 +88,13 @@ void contents()
     //Radial gradient shape with a radial dashed stroke
     {
         //Set a shape
-        Tvg_Paint* shape = tvg_shape_new();
+        Tvg_Paint shape = tvg_shape_new();
         tvg_shape_append_rect(shape, 550.0f, 20.0f, 100.0f, 50.0f, 0.0f, 0.0f, true);
         tvg_shape_append_circle(shape, 600.0f, 150.0f, 100.0f, 50.0f, true);
         tvg_shape_append_rect(shape, 550.0f, 230.0f, 100.0f, 100.0f, 20.0f, 40.0f, true);
 
         //Prepare a radial gradient for the fill
-        Tvg_Gradient* grad = tvg_radial_gradient_new();
+        Tvg_Gradient grad = tvg_radial_gradient_new();
         tvg_radial_gradient_set(grad, 600.0f, 180.0f, 50.0f, 640.0f, 180.0f, 0.0f);
         Tvg_Color_Stop color_stops2[3] = {{0.0f, 255, 0, 255, 255}, {0.5f, 0, 0, 255, 255}, {1.0f,  50,  55, 155, 255}};
         tvg_gradient_set_color_stops(grad, color_stops2, 3);
@@ -111,7 +111,7 @@ void contents()
         float cx, cy, r, fx, fy, fr;
         tvg_radial_gradient_get(grad, &cx, &cy, &r, &fx, &fy, &fr);
 
-        Tvg_Gradient* grad_stroke = tvg_radial_gradient_new();
+        Tvg_Gradient grad_stroke = tvg_radial_gradient_new();
         tvg_radial_gradient_set(grad_stroke, cx, cy, r, fx, fy, fr);
         tvg_gradient_set_color_stops(grad_stroke, color_stops2_get, cnt);
         tvg_gradient_set_spread(grad_stroke, TVG_STROKE_FILL_REPEAT);
@@ -129,10 +129,10 @@ void contents()
     //Scene
     {
         //Set a scene
-        Tvg_Paint* scene = tvg_scene_new();
+        Tvg_Paint scene = tvg_scene_new();
 
         //Set circles
-        Tvg_Paint* scene_shape1 = tvg_shape_new();
+        Tvg_Paint scene_shape1 = tvg_shape_new();
         tvg_shape_append_circle(scene_shape1, 80.0f, 650.f, 40.0f, 140.0f, true);
         tvg_shape_append_circle(scene_shape1, 180.0f, 600.f, 40.0f, 60.0f, true);
         tvg_shape_set_fill_color(scene_shape1, 0, 0, 255, 150);
@@ -143,7 +143,7 @@ void contents()
         tvg_shape_set_trimpath(scene_shape1, 0.25f, 0.75f, true);
 
         //Set circles with a dashed stroke
-        Tvg_Paint* scene_shape2 = tvg_paint_duplicate(scene_shape1);
+        Tvg_Paint scene_shape2 = tvg_paint_duplicate(scene_shape1);
         tvg_shape_set_fill_color(scene_shape2, 75, 25, 155, 200);
 
         //Prapare a dash for the stroke
@@ -169,7 +169,7 @@ void contents()
     //Masked picture
     {
         //Set a scene
-        Tvg_Paint* pict = tvg_picture_new();
+        Tvg_Paint pict = tvg_picture_new();
         if (tvg_picture_load(pict, EXAMPLE_DIR"/svg/tiger.svg") != TVG_RESULT_SUCCESS) {
             printf("Problem with loading an svg file\n");
             tvg_paint_del(pict);
@@ -181,7 +181,7 @@ void contents()
             tvg_paint_set_transform(pict, &m);
 
             // Set a composite shape
-            Tvg_Paint* comp = tvg_shape_new();
+            Tvg_Paint comp = tvg_shape_new();
             tvg_shape_append_circle(comp, 600.0f, 600.0f, 100.0f, 100.0f, true);
             tvg_shape_set_fill_color(comp, 0, 0, 0, 200);
             tvg_paint_set_mask_method(pict, comp, TVG_MASK_METHOD_INVERSE_ALPHA);
@@ -194,7 +194,7 @@ void contents()
     //Animation with a picture
     {
         animation = tvg_animation_new();
-        Tvg_Paint* pict_lottie = tvg_animation_get_picture(animation);
+        Tvg_Paint pict_lottie = tvg_animation_get_picture(animation);
         if (tvg_picture_load(pict_lottie, EXAMPLE_DIR"/lottie/sample.json") != TVG_RESULT_SUCCESS) {
             printf("Problem with loading a lottie file\n");
             tvg_animation_del(animation);
@@ -212,7 +212,7 @@ void contents()
             printf("Problem with loading the font from the file. Did you enable TTF Loader?\n");
         }
 
-        Tvg_Paint *text = tvg_text_new();
+        Tvg_Paint text = tvg_text_new();
         tvg_text_set_font(text, "SentyCloud", 25.0f, "");
         tvg_text_set_fill_color(text, 200, 200, 255);
         tvg_text_set_text(text, "\xE7\xB4\xA2\xE5\xB0\x94\x56\x47\x20\xE6\x98\xAF\xE6\x9C\x80\xE5\xA5\xBD\xE7\x9A\x84");
@@ -222,7 +222,7 @@ void contents()
 
     //Text 2 with Scene effect
     {
-        Tvg_Paint* scene = tvg_scene_new();
+        Tvg_Paint scene = tvg_scene_new();
 
         //load from a memory
         FILE* file = fopen(EXAMPLE_DIR"/font/Arial.ttf", "rb");
@@ -240,13 +240,13 @@ void contents()
             fclose(file);
         }
 
-        Tvg_Gradient* grad = tvg_radial_gradient_new();
+        Tvg_Gradient grad = tvg_radial_gradient_new();
         tvg_radial_gradient_set(grad, 200.0f, 200.0f, 20.0f, 200.0f, 200.0f, 0.0f);
         Tvg_Color_Stop color_stops[2] = {{0.0f, 255, 255, 255, 255}, {1.0f, 0, 0, 255, 255}};
         tvg_gradient_set_color_stops(grad, color_stops, 2);
         tvg_gradient_set_spread(grad, TVG_STROKE_FILL_REFLECT);
 
-        Tvg_Paint *text = tvg_text_new();
+        Tvg_Paint text = tvg_text_new();
         tvg_text_set_font(text, "Arial", 40.0f, "italic");
         tvg_text_set_gradient(text, grad);
         tvg_text_set_text(text, "ThorVG is the best");
