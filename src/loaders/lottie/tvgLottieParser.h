@@ -89,6 +89,7 @@ private:
     LottiePath* parsePath();
     LottiePolyStar* parsePolyStar();
     LottieRoundedCorner* parseRoundedCorner();
+    LottiePuckerBloat* parsePuckerBloat();
     LottieGradientFill* parseGradientFill();
     LottieLayer* parseLayers(LottieLayer* root);
     LottieMask* parseMask();

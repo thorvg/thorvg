@@ -31,7 +31,7 @@
 
 struct LottieModifier
 {
-    enum Type : uint8_t {Roundness = 0, Offset};
+    enum Type : uint8_t {Roundness = 0, Offset, PuckerBloat};
 
     LottieModifier* next = nullptr;
     Type type;
@@ -104,6 +104,20 @@ private:
 
     void line(RenderPath& out, PathCommand* inCmds, uint32_t inCmdsCnt, Point* inPts, uint32_t& curPt, uint32_t curCmd, State& state, float offset, bool degenerated);
     void corner(RenderPath& out, Line& line, Line& nextLine, uint32_t movetoIndex, bool nextClose);
+};
+
+
+struct LottiePuckerBloatModifier : LottieModifier
+{
+    float amount;
+
+    LottiePuckerBloatModifier(RenderPath* buffer, float a) : LottieModifier(buffer), amount(a)
+    {
+        type = PuckerBloat;
+    }
+
+    bool modifyPath(PathCommand* inCmds, uint32_t inCmdsCnt, Point* inPts, uint32_t inPtsCnt, Matrix* transform, RenderPath& out) override;
+    bool modifyPolystar(RenderPath& in, RenderPath& out, float outerRoundness, bool hasRoundness) override;
 };
 
 #endif

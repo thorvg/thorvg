@@ -270,7 +270,8 @@ struct LottieObject
         Text,
         Repeater,
         RoundedCorner,
-        OffsetPath
+        OffsetPath,
+        PuckerBloat
     };
 
     virtual ~LottieObject()
@@ -552,6 +553,23 @@ struct LottieRoundedCorner : LottieObject
     }
 
     LottieFloat radius = 0.0f;
+};
+
+
+struct LottiePuckerBloat : LottieObject
+{
+    LottiePuckerBloat()
+    {
+        LottieObject::type = LottieObject::PuckerBloat;
+    }
+
+    LottieProperty* property(uint16_t ix) override
+    {
+        if (amount.ix == ix) return &amount;
+        return nullptr;
+    }
+
+    LottieFloat amount = 0.0f;
 };
 
 

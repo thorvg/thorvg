@@ -715,6 +715,21 @@ LottieRoundedCorner* LottieParser::parseRoundedCorner()
 }
 
 
+LottiePuckerBloat* LottieParser::parsePuckerBloat()
+{
+    auto puckerBloat = new LottiePuckerBloat;
+
+    context.parent = puckerBloat;
+
+    while (auto key = nextObjectKey()) {
+        if (parseCommon(puckerBloat, key)) continue;
+        if (KEY_AS("a")) parseProperty(puckerBloat->amount);
+        else skip();
+    }
+    return puckerBloat;
+}
+
+
 void LottieParser::parseColorStop(LottieGradient* gradient)
 {
     enterObject();
@@ -863,7 +878,7 @@ LottieObject* LottieParser::parseObject()
     else if (!strcmp(type, "tm")) return parseTrimpath();
     else if (!strcmp(type, "rp")) return parseRepeater();
     else if (!strcmp(type, "mm")) TVGLOG("LOTTIE", "MergePath(mm) is not supported yet");
-    else if (!strcmp(type, "pb")) TVGLOG("LOTTIE", "Puker/Bloat(pb) is not supported yet");
+    else if (!strcmp(type, "pb")) return parsePuckerBloat();
     else if (!strcmp(type, "tw")) TVGLOG("LOTTIE", "Twist(tw) is not supported yet");
     else if (!strcmp(type, "op")) return parseOffsetPath();
     else if (!strcmp(type, "zz")) TVGLOG("LOTTIE", "ZigZag(zz) is not supported yet");
