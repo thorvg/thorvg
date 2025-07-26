@@ -696,176 +696,120 @@ fn fs_main(in: VertexOutput) -> @location(0) vec4f {
 )";
 
 //************************************************************************
-// compute shader source: merge clip path masks
+// shader source: effects
 //************************************************************************
 
-const char* cShaderSrc_GaussianBlur = R"(
-@group(0) @binding(0) var imageSrc : texture_2d<f32>;
-@group(1) @binding(0) var imageDst : texture_storage_2d<rgba8unorm, write>;
+const char* cShaderSrc_Shadow = R"(
+struct VertexInput { @location(0) position: vec2f, @location(1) texCoord: vec2f };
+struct VertexOutput { @builtin(position) position: vec4f, @location(0) texCoord: vec2f };
+
+@group(0) @binding(0) var uSamplerSrc : sampler;
+@group(0) @binding(1) var uTextureSrc : texture_2d<f32>;
+@group(1) @binding(0) var uSamplerSdw : sampler;
+@group(1) @binding(1) var uTextureSdw : texture_2d<f32>;
 @group(2) @binding(0) var<uniform> settings: array<vec4f, 3>;
-@group(3) @binding(0) var<uniform> viewport: vec4f;
 
-const N: u32 = 128;
-const M: u32 = N * 3;
-var<workgroup> buff: array<vec4f, M>;
-
-fn gaussian(x: f32, sigma: f32) -> f32 {
-    let a = 0.39894f / sigma;
-    let b = -(x * x) / (2.0 * sigma * sigma);
-    return a * exp(b);
+@vertex
+fn vs_main(in: VertexInput) -> VertexOutput {
+    var out: VertexOutput;
+    out.position = vec4f(in.position.xy, 0.0, 1.0);
+    out.texCoord = in.texCoord;
+    return out;
 }
 
-@compute @workgroup_size(N, 1)
-fn cs_main_horz(@builtin(global_invocation_id) gid: vec3u,
-                @builtin(local_invocation_id)  lid: vec3u) {
-    // settings decode
-    let sigma = settings[0].x;
-    let scale = settings[0].y;
-    let size = i32(settings[0].z);
-
-    // viewport decode
-    let xmin = i32(viewport.x);
-    let ymin = i32(viewport.y);
-    let xmax = i32(viewport.z);
-    let ymax = i32(viewport.w);
-
-    // tex coord
-    let uid = vec2u(gid.x + u32(xmin), gid.y + u32(ymin));
-    let iid = vec2i(uid);
-
-    // load source to local workgroup memory
-    buff[lid.x + N*0] = textureLoad(imageSrc, uid - vec2u(N, 0), 0);
-    buff[lid.x + N*1] = textureLoad(imageSrc, uid + vec2u(0, 0), 0);
-    buff[lid.x + N*2] = textureLoad(imageSrc, uid + vec2u(N, 0), 0);
-    workgroupBarrier();
-
-    // apply filter
-    var weight = gaussian(0.0, sigma);
-    var color = weight * buff[lid.x + N];
-    var sum = weight;
-
-    for (var i: i32 = 1; i < size; i++) {
-        let ii = i32(f32(i) * scale);
-        weight = gaussian(f32(i) * scale, sigma);
-        let poffset = min(iid.x + ii, xmax) - iid.x;
-        let noffset = max(iid.x - ii, xmin) - iid.x;
-        color += (weight * buff[i32(lid.x + N) + poffset]);
-        color += (weight * buff[i32(lid.x + N) + noffset]);
-        sum += (2.0 * weight);
-    }
-
-    // store result
-    textureStore(imageDst, uid, color / sum);
-}
-
-@compute @workgroup_size(1, N)
-fn cs_main_vert(@builtin(global_invocation_id) gid: vec3u,
-                @builtin(local_invocation_id)  lid: vec3u) {
-    // settings decode
-    let sigma = settings[0].x;
-    let scale = settings[0].y;
-    let size = i32(settings[0].z);
-
-    // viewport decode
-    let xmin = i32(viewport.x);
-    let ymin = i32(viewport.y);
-    let xmax = i32(viewport.z);
-    let ymax = i32(viewport.w);
-
-    // tex coord
-    let uid = vec2u(gid.x + u32(xmin), gid.y + u32(ymin));
-    let iid = vec2i(uid);
-
-    // load source to local workgroup memory
-    buff[lid.y + N*0] = textureLoad(imageSrc, uid - vec2u(0, N), 0);
-    buff[lid.y + N*1] = textureLoad(imageSrc, uid + vec2u(0, 0), 0);
-    buff[lid.y + N*2] = textureLoad(imageSrc, uid + vec2u(0, N), 0);
-    workgroupBarrier();
-
-    // apply filter
-    var weight = gaussian(0.0, sigma);
-    var color = weight * buff[lid.y + N];
-    var sum = weight;
-
-    for (var i: i32 = 1; i < size; i++) {
-        let ii = i32(f32(i) * scale);
-        weight = gaussian(f32(i) * scale, sigma);
-        let poffset = min(iid.y + ii, ymax) - iid.y;
-        let noffset = max(iid.y - ii, ymin) - iid.y;
-        color += (weight * buff[i32(lid.y + N) + poffset]);
-        color += (weight * buff[i32(lid.y + N) + noffset]);
-        sum += (2.0 * weight);
-    }
-
-    // store result
-    textureStore(imageDst, uid, color / sum);
-}
+@fragment
+fn fs_main_shadow(in: VertexOutput) -> @location(0) vec4f {
+    let texelSize: vec2f = 1.0 / vec2f(textureDimensions(uTextureSrc));
+    let offset: vec2f = settings[2].xy * texelSize;
+    let orig: vec4f = textureSample(uTextureSrc, uSamplerSrc, in.texCoord.xy);
+    let blur: vec4f = textureSample(uTextureSdw, uSamplerSdw, in.texCoord.xy - offset);
+    let shad: vec4f = settings[1] * blur.a;
+    return orig + shad * (1.0 - orig.a);
+};
 )";
 
 const char* cShaderSrc_Effects = R"(
-@group(0) @binding(0) var imageSrc : texture_2d<f32>;
-@group(0) @binding(1) var imageSdw : texture_2d<f32>;
-@group(1) @binding(0) var imageTrg : texture_storage_2d<rgba8unorm, write>;
-@group(2) @binding(0) var<uniform> settings: array<vec4f, 3>;
-@group(3) @binding(0) var<uniform> viewport: vec4f;
+struct VertexInput { @location(0) position: vec2f, @location(1) texCoord: vec2f };
+struct VertexOutput { @builtin(position) position: vec4f, @location(0) texCoord: vec2f };
 
-@compute @workgroup_size(128, 1)
-fn cs_main_drop_shadow(@builtin(global_invocation_id) gid: vec3u) {
-    // decode viewport and settings
-    let vmin = vec2u(viewport.xy);
-    let vmax = vec2u(viewport.zw);
-    let voff = vec2i(settings[2].xy);
+@group(0) @binding(0) var uSamplerSrc : sampler;
+@group(0) @binding(1) var uTextureSrc : texture_2d<f32>;
+@group(1) @binding(0) var<uniform> settings: array<vec4f, 3>;
 
-    // tex coord
-    let uid = gid.xy + vmin;
-    let oid = clamp(vec2u(vec2i(uid) - voff), vmin, vmax);
-
-    let orig = textureLoad(imageSrc, uid, 0);
-    let blur = textureLoad(imageSdw, oid, 0);
-    let shad = settings[1] * blur.a;
-    let color = orig + shad * (1.0 - orig.a);
-    textureStore(imageTrg, uid.xy, color);
-}
-    
-@compute @workgroup_size(128, 1)
-fn cs_main_fill(@builtin(global_invocation_id) gid: vec3u) {
-    // decode viewport and settings
-    let vmin = vec2u(viewport.xy);
-    let vmax = vec2u(viewport.zw);
-
-    // tex coord
-    let uid = min(gid.xy + vmin, vmax);
-
-    let orig = textureLoad(imageSrc, uid, 0);
-    let fill = settings[0];
-    let color = fill * orig.a * fill.a;
-    textureStore(imageTrg, uid.xy, color);
+@vertex
+fn vs_main(in: VertexInput) -> VertexOutput {
+    var out: VertexOutput;
+    out.position = vec4f(in.position.xy, 0.0, 1.0);
+    out.texCoord = in.texCoord;
+    return out;
 }
 
-@compute @workgroup_size(128, 1)
-fn cs_main_tint(@builtin(global_invocation_id) gid: vec3u) {
-    let vmin = vec2u(viewport.xy);
-    let vmax = vec2u(viewport.zw);
-    let uid = min(gid.xy + vmin, vmax);
-    let orig = textureLoad(imageSrc, uid, 0);
-    let luma: f32 = dot(orig.rgb, vec3f(0.2126, 0.7152, 0.0722));
-    let color = vec4f(mix(orig.rgb, mix(settings[0].rgb, settings[1].rgb, luma), settings[2].r) * orig.a, orig.a);
-    textureStore(imageTrg, uid.xy, color);
+fn gaussian(x: f32, sigma: f32) -> f32 {
+    let exponent: f32 = -x * x / (2.0 * sigma * sigma);
+    return exp(exponent) * 0.39894f / sigma;
 }
 
-@compute @workgroup_size(128, 1)
-fn cs_main_tritone(@builtin(global_invocation_id) gid: vec3u) {
-    let vmin = vec2u(viewport.xy);
-    let vmax = vec2u(viewport.zw);
-    let uid = min(gid.xy + vmin, vmax);
-    let orig = textureLoad(imageSrc, uid, 0);
-    let luma: f32 = dot(orig.rgb, vec3f(0.2126, 0.7152, 0.0722));
-    let is_bright: bool = luma >= 0.5f;
-    let t = select(luma * 2.0f, (luma - 0.5) * 2.0f, is_bright);
-    var tmp = vec4f(mix(select(settings[0].rgb, settings[1].rgb, is_bright), select(settings[1].rgb, settings[2].rgb, is_bright), t), 1.0f);
-    if (settings[2].a > 0.0f) {
-        tmp = mix(tmp, orig, settings[2].a);
+@fragment
+fn fs_main_vert(in: VertexOutput) -> @location(0) vec4f {
+    let texelSize: vec2f = 1.0 / vec2f(textureDimensions(uTextureSrc));
+    var colorSum: vec4f = vec4(0.0);
+    let sigma: f32 = settings[0].x * settings[0].y;
+    var weightSum: f32 = 0.0;
+    let radius: i32 = i32(settings[0].z);
+
+    for (var y: i32 = -radius; y <= radius; y++) {
+        let weight: f32 = gaussian(f32(y), sigma);
+        let offset: vec2f = vec2f(0.0, f32(y) * texelSize.y);
+        colorSum += textureSample(uTextureSrc, uSamplerSrc, in.texCoord.xy + offset) * weight;
+        weightSum += weight;
     }
-    textureStore(imageTrg, uid.xy, tmp * orig.a);
-}
+
+    return colorSum / weightSum;
+};
+
+@fragment
+fn fs_main_horz(in: VertexOutput) -> @location(0) vec4f {
+    let texelSize: vec2f = 1.0 / vec2f(textureDimensions(uTextureSrc));
+    var colorSum: vec4f = vec4(0.0);
+    let sigma: f32 = settings[0].x * settings[0].y;
+    var weightSum: f32 = 0.0;
+    let radius: i32 = i32(settings[0].z);
+
+    for (var y: i32 = -radius; y <= radius; y++) {
+        let weight: f32 = gaussian(f32(y), sigma);
+        let offset: vec2f = vec2f(f32(y) * texelSize.x, 0.0);
+        colorSum += textureSample(uTextureSrc, uSamplerSrc, in.texCoord.xy + offset) * weight;
+        weightSum += weight;
+    }
+
+    return colorSum / weightSum;
+};
+
+@fragment
+fn fs_main_fill(in: VertexOutput) -> @location(0) vec4f {
+    let orig = textureSample(uTextureSrc, uSamplerSrc, in.texCoord.xy);
+    let fill = settings[0];
+    return fill * orig.a * fill.a;
+};
+
+@fragment
+fn fs_main_tint(in: VertexOutput) -> @location(0) vec4f {
+    let orig = textureSample(uTextureSrc, uSamplerSrc, in.texCoord.xy);
+    let luma: f32 = dot(orig.rgb, vec3f(0.2126, 0.7152, 0.0722));
+    return vec4f(mix(orig.rgb, mix(settings[0].rgb, settings[1].rgb, luma), settings[2].r) * orig.a, orig.a);
+};
+
+@fragment
+fn fs_main_tritone(in: VertexOutput) -> @location(0) vec4f {
+    let orig = textureSample(uTextureSrc, uSamplerSrc, in.texCoord.xy);
+    let luma: f32 = dot(orig.rgb, vec3f(0.2126, 0.7152, 0.0722));
+    let isBright: bool = luma >= 0.5f;
+    let t = select(luma * 2.0f, (luma - 0.5) * 2.0f, isBright);
+    let frm: vec3f = select(settings[0].rgb, settings[1].rgb, isBright);
+    let to:  vec3f = select(settings[1].rgb, settings[2].rgb, isBright);
+    var tmp: vec4f = vec4f(mix(frm, to, t), 1.0f);
+
+    if (settings[2].a > 0.0f) { tmp = mix(tmp, orig, settings[2].a); }
+    return tmp * orig.a;
+};
 )";

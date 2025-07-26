@@ -45,7 +45,7 @@ void WgSceneTask::run(WgContext& context, WgCompositor& compositor, WGPUCommandE
     // begin the render pass for the current scene and clear the target content
     WGPUColor color{};
     if ((compose->method == MaskMethod::None) && (compose->blend != BlendMethod::Normal)) color = { 1.0, 1.0, 1.0, 0.0 };
-    compositor.beginRenderPass(encoder, renderTarget, true, color);
+    compositor.beginRenderPassMS(encoder, renderTarget, true, color);
     // run all childs (scenes and shapes)
     runChildren(context, compositor, encoder);
     // we must to end current render pass for current scene
@@ -57,11 +57,11 @@ void WgSceneTask::run(WgContext& context, WgCompositor& compositor, WGPUCommandE
     if (!renderTargetDst) return;
     // apply scene blending
     if (compose->method == MaskMethod::None) {
-        compositor.beginRenderPass(encoder, renderTargetDst, false);
+        compositor.beginRenderPassMS(encoder, renderTargetDst, false);
         compositor.renderScene(context, renderTarget, compose);
     // apply scene composition (for scenes, that have a handle to mask)
     } else if (renderTargetMsk) {
-        compositor.beginRenderPass(encoder, renderTargetDst, false);
+        compositor.beginRenderPassMS(encoder, renderTargetDst, false);
         compositor.composeScene(context, renderTarget, renderTargetMsk, compose);
     }
 }
@@ -72,7 +72,7 @@ void WgSceneTask::runChildren(WgContext& context, WgCompositor& compositor, WGPU
     ARRAY_FOREACH(task, children) {
         WgRenderTask* renderTask = *task;
         // we need to restore current render pass without clear
-        compositor.beginRenderPass(encoder, renderTarget, false);
+        compositor.beginRenderPassMS(encoder, renderTarget, false);
         // run children (shape or scene)
         renderTask->run(context, compositor, encoder);
     }

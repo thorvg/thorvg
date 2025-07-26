@@ -206,15 +206,10 @@ void WgShaderTypeGradientData::update(const Fill* fill)
 bool WgShaderTypeEffectParams::update(RenderEffectGaussianBlur* gaussian, const Matrix& transform)
 {
     assert(gaussian);
-    const float sigma = gaussian->sigma;
-    const float scale = std::sqrt(transform.e11 * transform.e11 + transform.e12 * transform.e12);
-    const float kernel = std::min(WG_GAUSSIAN_KERNEL_SIZE_MAX, 2 * sigma * scale); // kernel size
-    params[0] = sigma;
-    params[1] = std::min(WG_GAUSSIAN_KERNEL_SIZE_MAX / kernel, scale);
-    params[2] = kernel;
-    params[3] = 0.0f;
+    params[0] = gaussian->sigma;
+    params[1] = std::sqrt(transform.e11 * transform.e11 + transform.e12 * transform.e12);
+    params[2] = 2 * gaussian->sigma * params[1];
     extend = params[2] * 2; // kernel
-
     gaussian->valid = (extend > 0);
     return gaussian->valid;
 }
@@ -223,29 +218,26 @@ bool WgShaderTypeEffectParams::update(RenderEffectGaussianBlur* gaussian, const 
 bool WgShaderTypeEffectParams::update(RenderEffectDropShadow* dropShadow, const Matrix& transform)
 {
     assert(dropShadow);
-    const float radian = tvg::deg2rad(90.0f - dropShadow->angle);
     const float sigma = dropShadow->sigma;
     const float scale = std::sqrt(transform.e11 * transform.e11 + transform.e12 * transform.e12);
-    const float kernel = std::min(WG_GAUSSIAN_KERNEL_SIZE_MAX, 2 * sigma * scale); // kernel size
-    offset = {0, 0};
-    if (dropShadow->distance > 0.0f) offset = {
+    const float kernel = 2 * sigma * scale;
+    const float radian = tvg::deg2rad(90.0f - dropShadow->angle);
+    const Point offset = {
         +1.0f * dropShadow->distance * cosf(radian) * scale,
         -1.0f * dropShadow->distance * sinf(radian) * scale
     };
     params[0] = sigma;
-    params[1] = std::min(WG_GAUSSIAN_KERNEL_SIZE_MAX / kernel, scale);
+    params[1] = scale;
     params[2] = kernel;
     params[3] = 0.0f;
-
     params[7] = dropShadow->color[3] / 255.0f; // alpha
     //Color is premultiplied to avoid multiplication in the fragment shader:
     params[4] = dropShadow->color[0] / 255.0f * params[7]; // red
     params[5] = dropShadow->color[1] / 255.0f * params[7]; // green
     params[6] = dropShadow->color[2] / 255.0f * params[7]; // blue
-
     params[8] = offset.x;
     params[9] = offset.y;
-    extend = params[2] * 2; // kernel
+    extend = 2 * std::max(sigma * scale + std::abs(offset.x), sigma * scale + std::abs(offset.y));
 
     dropShadow->valid = (extend >= 0);
     return dropShadow->valid;
