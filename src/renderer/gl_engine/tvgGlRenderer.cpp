@@ -1262,6 +1262,22 @@ bool GlRenderer::partial(bool disable)
 }
 
 
+bool GlRenderer::intersectsShape(RenderData data, TVG_UNUSED const RenderRegion& region)
+{
+    if (!data) return false;
+    TVGLOG("GL_ENGINE", "Paint::intersect() is not supported!");
+    return false;
+}
+
+
+bool GlRenderer::intersectsImage(RenderData data, TVG_UNUSED const RenderRegion& region)
+{
+    if (!data) return false;
+    TVGLOG("GL_ENGINE", "Paint::intersect() is not supported!");
+    return false;
+}
+
+
 bool GlRenderer::term()
 {
     if (rendererCnt > 0) return false;

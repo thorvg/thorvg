@@ -696,6 +696,7 @@ void rleReset(SwRle* rle);
 void rleMerge(SwRle* rle, SwRle* clip1, SwRle* clip2);
 bool rleClip(SwRle* rle, const SwRle* clip);
 bool rleClip(SwRle* rle, const RenderRegion* clip);
+bool rleIntersect(const SwRle* rle, const RenderRegion& region);
 
 SwMpool* mpoolInit(uint32_t threads);
 bool mpoolTerm(SwMpool* mpool);

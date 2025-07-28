@@ -719,6 +719,61 @@ void SwRenderer::prepare(RenderEffect* effect, const Matrix& transform)
 }
 
 
+bool SwRenderer::intersectsShape(RenderData data, const RenderRegion& region)
+{
+    auto task = static_cast<SwShapeTask*>(data);
+    task->done();
+
+    if (!task->bounds().intersected(region)) return false;
+    if (rleIntersect(task->shape.strokeRle, region)) return true;
+    return task->shape.rle ? rleIntersect(task->shape.rle, region): task->shape.fastTrack;
+}
+
+
+bool SwRenderer::intersectsImage(RenderData data, const RenderRegion& region)
+{
+    auto task = static_cast<SwImageTask*>(data);
+    task->done();
+
+    if (!task->bounds().intersected(region)) return false;
+
+    //aabb & obb transformed image intersection
+    auto rad = tvg::radian(task->transform);
+    if (rad > 0.0f && rad < MATH_PI) {
+        Point aabb[4];
+        aabb[0] = {(float)region.min.x, (float)region.min.y};
+        aabb[1] = {(float)region.max.x, (float)region.min.y};
+        aabb[2] = {(float)region.max.x, (float)region.max.y};
+        aabb[3] = {(float)region.min.x, (float)region.max.y};
+
+        Point obb[4];
+        obb[0] = Point{0.0f, 0.0f} * task->transform;
+        obb[1] = Point{(float)task->image.w, 0.0f} * task->transform;
+        obb[2] = Point{(float)task->image.w, (float)task->image.h} * task->transform;
+        obb[3] = Point{0.0f, (float)task->image.h} * task->transform;
+
+        auto project = [](const Point* poly, const Point& axis, float& min, float& max) {
+            min = max = dot(poly[0], axis);
+            for (int i = 1; i < 4; ++i) {
+                float projection = dot(poly[i], axis);
+                if (projection < min) min = projection;
+                if (projection > max) max = projection;
+            }
+        };
+
+        for (int i = 0; i < 4; ++i) {
+            auto edge = (i < 2) ? (aabb[(i+1)%4] - aabb[i]) : (obb[(i-2+1)%4] - obb[i-2]);
+            tvg::normalize(edge);
+            float minA, maxA, minB, maxB;
+            project(aabb, edge, minA, maxA);
+            project(obb, edge, minB, maxB);
+            if (maxA < minB || maxB < minA) return false;
+        }
+    }
+    return task->image.rle ? rleIntersect(task->image.rle, region) : true;
+}
+
+
 bool SwRenderer::region(RenderEffect* effect)
 {
     switch (effect->type) {

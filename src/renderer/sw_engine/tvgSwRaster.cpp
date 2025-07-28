@@ -1783,7 +1783,7 @@ void rasterRGB2HSL(uint8_t r, uint8_t g, uint8_t b, float* h, float* s, float* l
     auto delta = maxVal - minVal;
 
     //lightness
-    float t;
+    float t = 0.0f;
     if (l || s) {
         t = (maxVal + minVal) * 0.5f;
         if (l) *l = t;

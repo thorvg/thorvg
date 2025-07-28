@@ -123,7 +123,7 @@ struct RenderRegion
         if (rhs.max.y > max.y) max.y = rhs.max.y;
     }
 
-    bool contained(const RenderRegion& rhs)
+    bool contained(const RenderRegion& rhs) const
     {
         return (min.x <= rhs.min.x && max.x >= rhs.max.x && min.y <= rhs.min.y && max.y >= rhs.max.y);
     }
@@ -223,6 +223,11 @@ struct RenderPath
 {
     Array<PathCommand> cmds;
     Array<Point> pts;
+
+    bool empty()
+    {
+        return pts.empty();
+    }
 
     void clear()
     {
@@ -559,6 +564,8 @@ public:
     virtual const RenderSurface* mainSurface() = 0;
     virtual bool clear() = 0;
     virtual bool sync() = 0;
+    virtual bool intersectsShape(RenderData data, const RenderRegion& region) = 0;
+    virtual bool intersectsImage(RenderData data, const RenderRegion& region) = 0;
 
     //composition
     virtual RenderCompositor* target(const RenderRegion& region, ColorSpace cs, CompositionFlag flags) = 0;

@@ -579,6 +579,22 @@ bool WgRenderer::partial(bool disable)
 }
 
 
+bool WgRenderer::intersectsShape(RenderData data, TVG_UNUSED const RenderRegion& region)
+{
+    if (!data) return false;
+    TVGLOG("WG_ENGINE", "Paint::intersect() is not supported!");
+    return false;
+}
+
+
+bool WgRenderer::intersectsImage(RenderData data, TVG_UNUSED const RenderRegion& region)
+{
+    if (!data) return false;
+    TVGLOG("WG_ENGINE", "Paint::intersect() is not supported!");
+    return false;
+}
+
+
 bool WgRenderer::term()
 {
     if (rendererCnt > 0) return false;

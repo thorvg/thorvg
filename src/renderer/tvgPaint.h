@@ -295,6 +295,7 @@ namespace tvg
             }
         }
 
+        bool intersects(const RenderRegion& region);
         RenderRegion bounds(RenderMethod* renderer) const;
         Iterator* iterator();
         Result bounds(float* x, float* y, float* w, float* h, Matrix* pm, bool stroking);
