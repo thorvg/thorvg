@@ -874,7 +874,7 @@ void rleFree(SwRle* rle)
 }
 
 
-bool rleClip(SwRle *rle, const SwRle *clip)
+bool rleClip(SwRle* rle, const SwRle *clip)
 {
     if (rle->spans.empty() || clip->spans.empty()) return false;
 
@@ -955,4 +955,21 @@ bool rleClip(SwRle *rle, const RenderRegion* clip)
     }
     out.move(rle->spans);
     return true;
+}
+
+
+bool rleIntersect(const SwRle* rle, const RenderRegion& region)
+{
+    if (!rle || rle->spans.empty()) return false;
+
+    auto& min = region.min;
+    auto& max = region.max;
+
+    const SwSpan* end;
+    for (auto p = rle->fetch(region, &end); p < end; ++p) {
+        if (p->y >= max.y) break;
+        if (p->y < min.y || p->x >= max.x || (p->x + p->len) <= min.x) continue;
+        return true;
+    }
+    return false;
 }

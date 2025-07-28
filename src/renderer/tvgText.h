@@ -143,6 +143,13 @@ struct TextImpl : Text
         return true;
     }
 
+    bool intersects(const RenderRegion& region)
+    {
+        if (load() == 0.0f) return false;
+        return SHAPE(shape)->intersects(region);
+    }
+
+
     Result bounds(Point* pt4, Matrix& m, bool obb, TVG_UNUSED bool stroking)
     {
         if (load() == 0.0f) return Result::InsufficientCondition;

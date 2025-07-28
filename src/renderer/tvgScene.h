@@ -258,6 +258,19 @@ struct SceneImpl : Scene
         return Result::Success;
     }
 
+    bool intersects(const RenderRegion& region)
+    {
+        if (!impl.renderer) return false;
+
+        if (this->bounds(impl.renderer).intersected(region)) {
+            for (auto paint : paints) {
+                if (PAINT(paint)->intersects(region)) return true;
+            }
+        }
+
+        return false;
+    }
+
     Paint* duplicate(Paint* ret)
     {
         if (ret) TVGERR("RENDERER", "TODO: duplicate()");

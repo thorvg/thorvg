@@ -24,6 +24,7 @@
 #define _TVG_PICTURE_H_
 
 #include "tvgPaint.h"
+#include "tvgScene.h"
 #include "tvgLoader.h"
 
 #define PICTURE(A) static_cast<PictureImpl*>(A)
@@ -117,6 +118,15 @@ struct PictureImpl : Picture
         if (w) *w = this->w;
         if (h) *h = this->h;
         return Result::Success;
+    }
+
+    bool intersects(const RenderRegion& region)
+    {
+        if (!impl.renderer) return false;
+        load();
+        if (impl.rd) return impl.renderer->intersectsImage(impl.rd, region);
+        else if (vector) return SCENE(vector)->intersects(region);
+        return false;
     }
 
     Result bounds(Point* pt4, Matrix& m, TVG_UNUSED bool obb, TVG_UNUSED bool stroking) const

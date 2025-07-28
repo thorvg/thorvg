@@ -78,9 +78,11 @@ public:
     bool blend(BlendMethod method) override;
     ColorSpace colorSpace() override;
     const RenderSurface* mainSurface() override;
-    bool target(void* context, int32_t id, uint32_t w, uint32_t h);
     bool sync() override;
     bool clear() override;
+    bool intersectsShape(RenderData data, const RenderRegion& region) override;
+    bool intersectsImage(RenderData data, const RenderRegion& region) override;
+    bool target(void* context, int32_t id, uint32_t w, uint32_t h);
 
     //composition
     RenderCompositor* target(const RenderRegion& region, ColorSpace cs, CompositionFlag flags) override;

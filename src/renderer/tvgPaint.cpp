@@ -322,6 +322,15 @@ Result Paint::Impl::bounds(Point* pt4, Matrix* pm, bool obb, bool stroking)
 }
 
 
+bool Paint::Impl::intersects(const RenderRegion& region)
+{
+    if (!renderer) return false;
+    bool ret;
+    PAINT_METHOD(ret, intersects(region));
+    return ret;
+}
+
+
 /************************************************************************/
 /* External Class Implementation                                        */
 /************************************************************************/
@@ -376,6 +385,13 @@ Result Paint::bounds(Point* pt4) const noexcept
     if (!pt4) return Result::InvalidArguments;
     auto pm = pImpl->ptransform();
     return pImpl->bounds(pt4, &pm, true, true);
+}
+
+
+bool Paint::intersects(int32_t x, int32_t y, int32_t w, int32_t h) noexcept
+{
+    if (w <= 0 || h <= 0) return false;
+    return pImpl->intersects({x, y, x + w, y + h});
 }
 
 

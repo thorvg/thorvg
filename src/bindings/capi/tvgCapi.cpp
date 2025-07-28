@@ -246,6 +246,13 @@ TVG_API Tvg_Paint* tvg_paint_duplicate(Tvg_Paint* paint)
 }
 
 
+TVG_API bool tvg_paint_intersects(Tvg_Paint* paint, int32_t x, int32_t y, int32_t w, int32_t h)
+{
+    if (paint) return reinterpret_cast<Paint*>(paint)->intersects(x, y, w, h);
+    return false;
+}
+
+
 TVG_API Tvg_Result tvg_paint_set_opacity(Tvg_Paint* paint, uint8_t opacity)
 {
     if (paint) return (Tvg_Result) reinterpret_cast<Paint*>(paint)->opacity(opacity);
@@ -572,6 +579,7 @@ TVG_API Tvg_Result tvg_shape_get_gradient(const Tvg_Paint* paint, Tvg_Gradient**
     }
     return TVG_RESULT_INVALID_ARGUMENT;
 }
+
 
 /************************************************************************/
 /* Picture API                                                          */
