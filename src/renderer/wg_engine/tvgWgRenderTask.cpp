@@ -43,9 +43,7 @@ void WgPaintTask::run(WgContext& context, WgCompositor& compositor, WGPUCommandE
 void WgSceneTask::run(WgContext& context, WgCompositor& compositor, WGPUCommandEncoder encoder)
 {
     // begin the render pass for the current scene and clear the target content
-    WGPUColor color{};
-    if ((compose->method == MaskMethod::None) && (compose->blend != BlendMethod::Normal)) color = { 1.0, 1.0, 1.0, 0.0 };
-    compositor.beginRenderPassMS(encoder, renderTarget, true, color);
+    compositor.beginRenderPassMS(encoder, renderTarget, true);
     // run all childs (scenes and shapes)
     runChildren(context, compositor, encoder);
     // we must to end current render pass for current scene
