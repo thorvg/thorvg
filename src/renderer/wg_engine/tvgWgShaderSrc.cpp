@@ -445,7 +445,7 @@ fn getFragData(in: VertexOutput) -> FragData {
     let colorDst = textureSample(uTextureDst, uSamplerDst, in.vScrCoord.xy);
     // fill fragment data
     var data: FragData;
-    data.Sc = colorSrc.rgb;
+    data.Sc = min(vec3f(1.0, 1.0, 1.0), colorSrc.rgb / select(colorSrc.a, 1.0, (colorSrc.a == 0.0) || (colorSrc.a == 1.0)));
     data.Sa = colorSrc.a;
     data.Dc = colorDst.rgb;
     data.Da = colorDst.a;
@@ -456,6 +456,8 @@ fn postProcess(d: FragData, R: vec4f) -> vec4f { return mix(vec4(d.Dc, d.Da), R,
 )";
 
 const char* cShaderSrc_BlendFuncs = R"(
+const One = vec3f(1.0, 1.0, 1.0);
+
 @fragment
 fn fs_main_Normal(in: VertexOutput) -> @location(0) vec4f {
     // used as debug blend method
@@ -465,9 +467,14 @@ fn fs_main_Normal(in: VertexOutput) -> @location(0) vec4f {
 @fragment
 fn fs_main_Multiply(in: VertexOutput) -> @location(0) vec4f {
     let d: FragData = getFragData(in);
-    let Rc = d.Sc * d.Dc;
+    var Rc = d.Sc;
+    if (d.Da > 0.0) {
+        Rc = d.Sc * min(One, d.Dc / d.Da);
+        Rc = mix(d.Sc, Rc, d.Da);
+    };
     return postProcess(d, vec4f(Rc, 1.0));
 }
+
 
 @fragment
 fn fs_main_Screen(in: VertexOutput) -> @location(0) vec4f {
@@ -479,19 +486,26 @@ fn fs_main_Screen(in: VertexOutput) -> @location(0) vec4f {
 @fragment
 fn fs_main_Overlay(in: VertexOutput) -> @location(0) vec4f {
     let d: FragData = getFragData(in);
-    var Rc: vec3f;
-    Rc.r = select(1.0 - min(1.0, 2 * (1 - d.Sc.r) * (1 - d.Dc.r)), min(1.0, 2 * d.Sc.r * d.Dc.r), (d.Dc.r < 0.5));
-    Rc.g = select(1.0 - min(1.0, 2 * (1 - d.Sc.g) * (1 - d.Dc.g)), min(1.0, 2 * d.Sc.g * d.Dc.g), (d.Dc.g < 0.5));
-    Rc.b = select(1.0 - min(1.0, 2 * (1 - d.Sc.b) * (1 - d.Dc.b)), min(1.0, 2 * d.Sc.b * d.Dc.b), (d.Dc.b < 0.5));
+    var Rc = d.Sc;
+    if (d.Da > 0.0) {
+        let Dc = min(One, d.Dc / d.Da);
+        Rc.r = select(1.0 - min(1.0, 2 * (1 - d.Sc.r) * (1 - Dc.r)), min(1.0, 2 * d.Sc.r * Dc.r), (Dc.r < 0.5));
+        Rc.g = select(1.0 - min(1.0, 2 * (1 - d.Sc.g) * (1 - Dc.g)), min(1.0, 2 * d.Sc.g * Dc.g), (Dc.g < 0.5));
+        Rc.b = select(1.0 - min(1.0, 2 * (1 - d.Sc.b) * (1 - Dc.b)), min(1.0, 2 * d.Sc.b * Dc.b), (Dc.b < 0.5));
+        Rc = mix(d.Sc, Rc, d.Da);
+    }
     return postProcess(d, vec4f(Rc, 1.0));
 }
 
 @fragment
 fn fs_main_Darken(in: VertexOutput) -> @location(0) vec4f {
     let d: FragData = getFragData(in);
-    let Rc = min(d.Sc, d.Dc);
+    var Rc = d.Sc;
+    if (d.Da > 0.0) {
+        Rc = min(d.Sc, min(One, d.Dc / d.Da));
+        Rc = mix(d.Sc, Rc, d.Da);
+    };
     return postProcess(d, vec4f(Rc, 1.0));
-
 }
 
 @fragment
@@ -504,45 +518,60 @@ fn fs_main_Lighten(in: VertexOutput) -> @location(0) vec4f {
 @fragment
 fn fs_main_ColorDodge(in: VertexOutput) -> @location(0) vec4f {
     let d: FragData = getFragData(in);
-    var Rc: vec3f;
-    Rc.r = select(select(0.0, 1.0, d.Dc.r > 0), d.Dc.r / (1 - d.Sc.r), d.Sc.r < 1);
-    Rc.g = select(select(0.0, 1.0, d.Dc.g > 0), d.Dc.g / (1 - d.Sc.g), d.Sc.g < 1);
-    Rc.b = select(select(0.0, 1.0, d.Dc.b > 0), d.Dc.b / (1 - d.Sc.b), d.Sc.b < 1);
+    var Rc = d.Sc;
+    if (d.Da > 0.0) {
+        let Dc = min(One, d.Dc / d.Da);
+        Rc.r = select(0.0, select(1.0, min(1.0, Dc.r / (1.0 - d.Sc.r)), d.Sc.r < 1.0), Dc.r > 0.0);
+        Rc.g = select(0.0, select(1.0, min(1.0, Dc.g / (1.0 - d.Sc.g)), d.Sc.g < 1.0), Dc.g > 0.0);
+        Rc.b = select(0.0, select(1.0, min(1.0, Dc.b / (1.0 - d.Sc.b)), d.Sc.b < 1.0), Dc.b > 0.0);
+        Rc = mix(d.Sc, Rc, d.Da);
+    }
     return postProcess(d, vec4f(Rc, 1.0));
 }
 
 @fragment
 fn fs_main_ColorBurn(in: VertexOutput) -> @location(0) vec4f {
     let d: FragData = getFragData(in);
-    var Rc: vec3f;
-    Rc.r = select(select(1.0, 0.0, d.Dc.r < 1), 1 - (1 - d.Dc.r) / d.Sc.r, d.Sc.r > 0);
-    Rc.g = select(select(1.0, 0.0, d.Dc.g < 1), 1 - (1 - d.Dc.g) / d.Sc.g, d.Sc.g > 0);
-    Rc.b = select(select(1.0, 0.0, d.Dc.b < 1), 1 - (1 - d.Dc.b) / d.Sc.b, d.Sc.b > 0);
+    var Rc = d.Sc;
+    if (d.Da > 0.0) {
+        let Dc = min(One, d.Dc / d.Da);
+        Rc.r = select(select(1.0, 0.0, Dc.r < 1), 1.0 - min(1.0, (1.0 - Dc.r) / d.Sc.r), d.Sc.r > 0);
+        Rc.g = select(select(1.0, 0.0, Dc.g < 1), 1.0 - min(1.0, (1.0 - Dc.g) / d.Sc.g), d.Sc.g > 0);
+        Rc.b = select(select(1.0, 0.0, Dc.b < 1), 1.0 - min(1.0, (1.0 - Dc.b) / d.Sc.b), d.Sc.b > 0);
+        Rc = mix(d.Sc, Rc, d.Da);
+    }
     return postProcess(d, vec4f(Rc, 1.0));
 }
 
 @fragment
 fn fs_main_HardLight(in: VertexOutput) -> @location(0) vec4f {
     let d: FragData = getFragData(in);
-    var Rc: vec3f;
-    Rc.r = select(1.0 - min(1.0, 2 * (1 - d.Sc.r) * (1 - d.Dc.r)), min(1.0, 2 * d.Sc.r * d.Dc.r), (d.Sc.r < 0.5));
-    Rc.g = select(1.0 - min(1.0, 2 * (1 - d.Sc.g) * (1 - d.Dc.g)), min(1.0, 2 * d.Sc.g * d.Dc.g), (d.Sc.g < 0.5));
-    Rc.b = select(1.0 - min(1.0, 2 * (1 - d.Sc.b) * (1 - d.Dc.b)), min(1.0, 2 * d.Sc.b * d.Dc.b), (d.Sc.b < 0.5));
+    var Rc = d.Sc;
+    if (d.Da > 0.0) {
+        let Dc = min(One, d.Dc / d.Da);
+        Rc.r = select(1.0 - min(1.0, 2 * (1 - d.Sc.r) * (1 - Dc.r)), min(1.0, 2 * d.Sc.r * Dc.r), (d.Sc.r < 0.5));
+        Rc.g = select(1.0 - min(1.0, 2 * (1 - d.Sc.g) * (1 - Dc.g)), min(1.0, 2 * d.Sc.g * Dc.g), (d.Sc.g < 0.5));
+        Rc.b = select(1.0 - min(1.0, 2 * (1 - d.Sc.b) * (1 - Dc.b)), min(1.0, 2 * d.Sc.b * Dc.b), (d.Sc.b < 0.5));
+        Rc = mix(d.Sc, Rc, d.Da);
+    }
     return postProcess(d, vec4f(Rc, 1.0));
 }
 
 @fragment
 fn fs_main_SoftLight(in: VertexOutput) -> @location(0) vec4f {
     let d: FragData = getFragData(in);
-    let One = vec3f(1.0, 1.0, 1.0);
-    let Rc = min(One, (One - 2 * d.Sc) * d.Dc * d.Dc + 2.0 * d.Sc * d.Dc);
+    var Rc = d.Sc;
+    if (d.Da > 0.0) {
+        let Dc = min(One, d.Dc / d.Da);
+        Rc = min(One, (One - 2 * d.Sc) * Dc * Dc + 2.0 * d.Sc * Dc);
+        Rc = mix(d.Sc, Rc, d.Da);
+    };
     return postProcess(d, vec4f(Rc, 1.0));
 }
 
 @fragment
 fn fs_main_Difference(in: VertexOutput) -> @location(0) vec4f {
     let d: FragData = getFragData(in);
-    let One = vec3f(1.0, 1.0, 1.0);
     let Rc = abs(d.Dc - d.Sc);
     return postProcess(d, vec4f(Rc, 1.0));
 }
@@ -550,7 +579,6 @@ fn fs_main_Difference(in: VertexOutput) -> @location(0) vec4f {
 @fragment
 fn fs_main_Exclusion(in: VertexOutput) -> @location(0) vec4f {
     let d: FragData = getFragData(in);
-    let One = vec3f(1.0, 1.0, 1.0);
     let Rc = d.Sc + d.Dc - 2 * d.Sc * d.Dc;
     return postProcess(d, vec4f(Rc, 1.0));
 }
