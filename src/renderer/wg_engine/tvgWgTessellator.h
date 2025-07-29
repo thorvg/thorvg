@@ -38,38 +38,37 @@ class WgStroker
         Point prevPtDir;
     };
 public:
-    WgStroker(WgMeshData* buffer, const Matrix& matrix);
-    void stroke(const RenderShape *rshape);
+    WgStroker(WgMeshData* buffer, float width);
+    void run(const RenderShape& rshape, const Matrix& m);
     RenderRegion bounds() const;
     BBox getBBox() const;
 private:
-    void doStroke(const RenderPath& path);
+    void run(const RenderPath& path, const Matrix& m);
 
-    float strokeRadius() const
+    float radius() const
     {
-        return mStrokeWidth * 0.5f;
+        return mWidth * 0.5f;
     }
 
-    void strokeCap();
-    void strokeLineTo(const Point& curr);
-    void strokeCubicTo(const Point& cnt1, const Point& cnt2, const Point& end);
-    void strokeClose();
-    void strokeJoin(const Point& dir);
-    void strokeRound(const Point& prev, const Point& curr, const Point& center);
-    void strokeMiter(const Point& prev, const Point& curr, const Point& center);
-    void strokeBevel(const Point& prev, const Point& curr, const Point& center);
-    void strokeSquare(const Point& p, const Point& outDir);
-    void strokeSquarePoint(const Point& p);
-    void strokeRound(const Point& p, const Point& outDir);
-    void strokeRoundPoint(const Point& p);
+    void cap();
+    void lineTo(const Point& curr);
+    void cubicTo(const Point& cnt1, const Point& cnt2, const Point& end, const Matrix& m);
+    void close();
+    void join(const Point& dir);
+    void round(const Point& prev, const Point& curr, const Point& center);
+    void miter(const Point& prev, const Point& curr, const Point& center);
+    void bevel(const Point& prev, const Point& curr, const Point& center);
+    void square(const Point& p, const Point& outDir);
+    void squarePoint(const Point& p);
+    void round(const Point& p, const Point& outDir);
+    void roundPoint(const Point& p);
 
     WgMeshData* mBuffer;
-    Matrix mMatrix;
-    float mStrokeWidth = 0.0f;
+    float mWidth = 0.0f;
     float mMiterLimit = 4.f;
-    StrokeCap mStrokeCap = StrokeCap::Square;
-    StrokeJoin mStrokeJoin = StrokeJoin::Bevel;
-    State mStrokeState = {};
+    StrokeCap mCap = StrokeCap::Square;
+    StrokeJoin mJoin = StrokeJoin::Bevel;
+    State mState = {};
     Point mLeftTop = {0.0f, 0.0f};
     Point mRightBottom = {0.0f, 0.0f};
 };
