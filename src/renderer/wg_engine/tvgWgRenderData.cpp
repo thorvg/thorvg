@@ -184,15 +184,24 @@ void WgRenderDataShape::updateMeshes(const RenderShape &rshape, RenderUpdateFlag
     // update strokes shapes
     if (rshape.stroke && (flag & (RenderUpdateFlag::Stroke | RenderUpdateFlag::GradientStroke | RenderUpdateFlag::Transform))) {
         meshStrokes.clear();
-
-        WgStroker stroker{&meshStrokes, matrix};
-        stroker.stroke(&rshape);
-        
-        if (meshStrokes.ibuffer.count > 0) {
-            auto bbox = stroker.getBBox();
-            meshStrokesBBox.bbox(bbox.min, bbox.max);
-            updateBBox(bbox);
-        } else meshStrokes.clear();
+        auto strokeWidth = 0.0f;
+        if (isinf(matrix.e11)) {
+            strokeWidth = rshape.strokeWidth() * scaling(matrix);
+            if (strokeWidth <= MIN_WG_STROKE_WIDTH) strokeWidth = MIN_WG_STROKE_WIDTH;
+            strokeWidth = strokeWidth / matrix.e11;
+        } else {
+            strokeWidth = rshape.strokeWidth();
+        }
+        //run stroking only if it's valid
+        if (!tvg::zero(strokeWidth)) {
+            WgStroker stroker(&meshStrokes, strokeWidth);
+            stroker.run(rshape, matrix);
+            if (meshStrokes.ibuffer.count > 0) {
+                auto bbox = stroker.getBBox();
+                meshStrokesBBox.bbox(bbox.min, bbox.max);
+                updateBBox(bbox);
+            } else meshStrokes.clear();
+        }
     }
 
     // update shapes bbox (with empty path handling)
