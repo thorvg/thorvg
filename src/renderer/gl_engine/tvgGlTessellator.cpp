@@ -25,7 +25,6 @@
 namespace tvg
 {
 
-
 static uint32_t _pushVertex(Array<float>& array, float x, float y)
 {
     array.push(x);
@@ -34,33 +33,25 @@ static uint32_t _pushVertex(Array<float>& array, float x, float y)
 }
 
 
-Stroker::Stroker(GlGeometryBuffer* buffer, const Matrix& matrix) : mBuffer(buffer), mMatrix(matrix)
+Stroker::Stroker(GlGeometryBuffer* buffer, float width) : mBuffer(buffer), mWidth(width)
 {
 }
 
 
-void Stroker::stroke(const RenderShape *rshape)
+void Stroker::run(const RenderShape& rshape, const Matrix& m)
 {
-    if (isinf(mMatrix.e11)) {
-        auto strokeWidth = rshape->strokeWidth() * scaling(mMatrix);
-        if (strokeWidth <= MIN_GL_STROKE_WIDTH) strokeWidth = MIN_GL_STROKE_WIDTH;
-        mStrokeWidth = strokeWidth / mMatrix.e11;
-    } else {
-        mStrokeWidth = rshape->strokeWidth();
-    }
-
-    if (tvg::zero(mStrokeWidth)) return;  //invalid stroke
-
-    mMiterLimit = rshape->strokeMiterlimit();
-    mStrokeCap = rshape->strokeCap();
-    mStrokeJoin = rshape->strokeJoin();
+    mMiterLimit = rshape.strokeMiterlimit();
+    mCap = rshape.strokeCap();
+    mJoin = rshape.strokeJoin();
 
     RenderPath dashed;
-    if (rshape->strokeDash(dashed)) doStroke(dashed);
-    else if (rshape->trimpath()) {
+    if (rshape.strokeDash(dashed)) run(dashed, m);
+    else if (rshape.trimpath()) {
         RenderPath trimmedPath;
-        if (rshape->stroke->trim.trim(rshape->path, trimmedPath)) doStroke(trimmedPath);
-    } else doStroke(rshape->path);
+        if (rshape.stroke->trim.trim(rshape.path, trimmedPath)) {
+            run(trimmedPath, m);
+        }
+    } else run(rshape.path, m);
 }
 
 
@@ -70,7 +61,7 @@ RenderRegion Stroker::bounds() const
 }
 
 
-void Stroker::doStroke(const RenderPath& path)
+void Stroker::run(const RenderPath& path, const Matrix& m)
 {
     mBuffer->vertex.reserve(path.pts.count * 4 + 16);
     mBuffer->index.reserve(path.pts.count * 3);
@@ -82,71 +73,70 @@ void Stroker::doStroke(const RenderPath& path)
         switch (*cmd) {
             case PathCommand::MoveTo: {
                 if (validStrokeCap) { // check this, so we can skip if path only contains move instruction
-                    strokeCap();
+                    cap();
                     validStrokeCap = false;
                 }
-                mStrokeState.firstPt = *pts;
-                mStrokeState.firstPtDir = {0.0f, 0.0f};
-                mStrokeState.prevPt = *pts;
-                mStrokeState.prevPtDir = {0.0f, 0.0f};
+                mState.firstPt = *pts;
+                mState.firstPtDir = {0.0f, 0.0f};
+                mState.prevPt = *pts;
+                mState.prevPtDir = {0.0f, 0.0f};
                 pts++;
                 validStrokeCap = false;
             } break;
             case PathCommand::LineTo: {
                 validStrokeCap = true;
-                this->strokeLineTo(*pts);
+                lineTo(*pts);
                 pts++;
             } break;
             case PathCommand::CubicTo: {
                 validStrokeCap = true;
-                this->strokeCubicTo(pts[0], pts[1], pts[2]);
+                cubicTo(pts[0], pts[1], pts[2], m);
                 pts += 3;
             } break;
             case PathCommand::Close: {
-                this->strokeClose();
-
+                close();
                 validStrokeCap = false;
             } break;
             default:
                 break;
         }
     }
-    if (validStrokeCap) strokeCap();
+    if (validStrokeCap) cap();
 }
 
 
-void Stroker::strokeCap()
+void Stroker::cap()
 {
-    if (mStrokeCap == StrokeCap::Butt) return;
+    if (mCap == StrokeCap::Butt) return;
 
-    if (mStrokeCap == StrokeCap::Square) {
-        if (mStrokeState.firstPt == mStrokeState.prevPt) strokeSquarePoint(mStrokeState.firstPt);
+    if (mCap == StrokeCap::Square) {
+        if (mState.firstPt == mState.prevPt) squarePoint(mState.firstPt);
         else {
-            strokeSquare(mStrokeState.firstPt, {-mStrokeState.firstPtDir.x, -mStrokeState.firstPtDir.y});
-            strokeSquare(mStrokeState.prevPt, mStrokeState.prevPtDir);
+            square(mState.firstPt, {-mState.firstPtDir.x, -mState.firstPtDir.y});
+            square(mState.prevPt, mState.prevPtDir);
         }
-    } else if (mStrokeCap == StrokeCap::Round) {
-        if (mStrokeState.firstPt == mStrokeState.prevPt) strokeRoundPoint(mStrokeState.firstPt);
+    } else if (mCap == StrokeCap::Round) {
+        if (mState.firstPt == mState.prevPt) roundPoint(mState.firstPt);
         else {
-            strokeRound(mStrokeState.firstPt, {-mStrokeState.firstPtDir.x, -mStrokeState.firstPtDir.y});
-            strokeRound(mStrokeState.prevPt, mStrokeState.prevPtDir);
+            round(mState.firstPt, {-mState.firstPtDir.x, -mState.firstPtDir.y});
+            round(mState.prevPt, mState.prevPtDir);
         }
     }
 }
 
 
-void Stroker::strokeLineTo(const Point& curr)
+void Stroker::lineTo(const Point& curr)
 {
-    auto dir = (curr - mStrokeState.prevPt);
+    auto dir = (curr - mState.prevPt);
     normalize(dir);
 
     if (dir.x == 0.f && dir.y == 0.f) return;  //same point
 
     auto normal = Point{-dir.y, dir.x};
-    auto a = mStrokeState.prevPt + normal * strokeRadius();
-    auto b = mStrokeState.prevPt - normal * strokeRadius();
-    auto c = curr + normal * strokeRadius();
-    auto d = curr - normal * strokeRadius();
+    auto a = mState.prevPt + normal * radius();
+    auto b = mState.prevPt - normal * radius();
+    auto c = curr + normal * radius();
+    auto d = curr - normal * radius();
 
     auto ia = _pushVertex(mBuffer->vertex, a.x, a.y);
     auto ib = _pushVertex(mBuffer->vertex, b.x, b.y);
@@ -160,23 +150,23 @@ void Stroker::strokeLineTo(const Point& curr)
      *   b-----------d
      */
 
-    this->mBuffer->index.push(ia);
-    this->mBuffer->index.push(ib);
-    this->mBuffer->index.push(ic);
+    mBuffer->index.push(ia);
+    mBuffer->index.push(ib);
+    mBuffer->index.push(ic);
 
-    this->mBuffer->index.push(ib);
-    this->mBuffer->index.push(id);
-    this->mBuffer->index.push(ic);
+    mBuffer->index.push(ib);
+    mBuffer->index.push(id);
+    mBuffer->index.push(ic);
 
-    if (mStrokeState.prevPt == mStrokeState.firstPt) {
+    if (mState.prevPt == mState.firstPt) {
         // first point after moveTo
-        mStrokeState.prevPt = curr;
-        mStrokeState.prevPtDir = dir;
-        mStrokeState.firstPtDir = dir;
+        mState.prevPt = curr;
+        mState.prevPtDir = dir;
+        mState.firstPtDir = dir;
     } else {
-        this->strokeJoin(dir);
-        mStrokeState.prevPtDir = dir;
-        mStrokeState.prevPt = curr;
+        join(dir);
+        mState.prevPtDir = dir;
+        mState.prevPt = curr;
     }
 
     if (ia == 0) {
@@ -191,67 +181,67 @@ void Stroker::strokeLineTo(const Point& curr)
 }
 
 
-void Stroker::strokeCubicTo(const Point& cnt1, const Point& cnt2, const Point& end)
+void Stroker::cubicTo(const Point& cnt1, const Point& cnt2, const Point& end, const Matrix& m)
 {
-    Bezier curve{ mStrokeState.prevPt, cnt1, cnt2, end };
+    Bezier curve{ mState.prevPt, cnt1, cnt2, end };
 
-    auto count = (curve * mMatrix).segments();
+    auto count = (curve * m).segments();
     auto step = 1.f / count;
 
     for (uint32_t i = 0; i <= count; i++) {
-        strokeLineTo(curve.at(step * i));
+        lineTo(curve.at(step * i));
     }
 }
 
 
-void Stroker::strokeClose()
+void Stroker::close()
 {
-    if (length(mStrokeState.prevPt - mStrokeState.firstPt) > 0.015625f) {
-        this->strokeLineTo(mStrokeState.firstPt);
+    if (length(mState.prevPt - mState.firstPt) > 0.015625f) {
+        lineTo(mState.firstPt);
     }
 
     // join firstPt with prevPt
-    this->strokeJoin(mStrokeState.firstPtDir);
+    join(mState.firstPtDir);
 }
 
 
-void Stroker::strokeJoin(const Point& dir)
+void Stroker::join(const Point& dir)
 {
-    auto orient = orientation(mStrokeState.prevPt - mStrokeState.prevPtDir, mStrokeState.prevPt, mStrokeState.prevPt + dir);
+    auto orient = orientation(mState.prevPt - mState.prevPtDir, mState.prevPt, mState.prevPt + dir);
 
     if (orient == Orientation::Linear) {
-        if (mStrokeState.prevPtDir == dir) return;      // check is same direction
-        if (mStrokeJoin != StrokeJoin::Round) return;   // opposite direction
+        if (mState.prevPtDir == dir) return;      // check is same direction
+        if (mJoin != StrokeJoin::Round) return;   // opposite direction
 
         auto normal = Point{-dir.y, dir.x};
-        auto p1 = mStrokeState.prevPt + normal * strokeRadius();
-        auto p2 = mStrokeState.prevPt - normal * strokeRadius();
-        auto oc = mStrokeState.prevPt + dir * strokeRadius();
+        auto p1 = mState.prevPt + normal * radius();
+        auto p2 = mState.prevPt - normal * radius();
+        auto oc = mState.prevPt + dir * radius();
 
-        this->strokeRound(p1, oc, mStrokeState.prevPt);
-        this->strokeRound(oc, p2, mStrokeState.prevPt);
+        round(p1, oc, mState.prevPt);
+        round(oc, p2, mState.prevPt);
 
     } else {
         auto normal = Point{-dir.y, dir.x};
-        auto prevNormal = Point{-mStrokeState.prevPtDir.y, mStrokeState.prevPtDir.x};
+        auto prevNormal = Point{-mState.prevPtDir.y, mState.prevPtDir.x};
         Point prevJoin, currJoin;
 
         if (orient == Orientation::CounterClockwise) {
-            prevJoin = mStrokeState.prevPt + prevNormal * strokeRadius();
-            currJoin = mStrokeState.prevPt + normal * strokeRadius();
+            prevJoin = mState.prevPt + prevNormal * radius();
+            currJoin = mState.prevPt + normal * radius();
         } else {
-            prevJoin = mStrokeState.prevPt - prevNormal * strokeRadius();
-            currJoin = mStrokeState.prevPt - normal * strokeRadius();
+            prevJoin = mState.prevPt - prevNormal * radius();
+            currJoin = mState.prevPt - normal * radius();
         }
 
-        if (mStrokeJoin == StrokeJoin::Miter) strokeMiter(prevJoin, currJoin, mStrokeState.prevPt);
-        else if (mStrokeJoin == StrokeJoin::Bevel) strokeBevel(prevJoin, currJoin, mStrokeState.prevPt);
-        else this->strokeRound(prevJoin, currJoin, mStrokeState.prevPt);
+        if (mJoin == StrokeJoin::Miter) miter(prevJoin, currJoin, mState.prevPt);
+        else if (mJoin == StrokeJoin::Bevel) bevel(prevJoin, currJoin, mState.prevPt);
+        else round(prevJoin, currJoin, mState.prevPt);
     }
 }
 
 
-void Stroker::strokeRound(const Point &prev, const Point& curr, const Point& center)
+void Stroker::round(const Point &prev, const Point& curr, const Point& center)
 {
     if (orientation(prev, center, curr) == Orientation::Linear) return;
 
@@ -261,7 +251,7 @@ void Stroker::strokeRound(const Point &prev, const Point& curr, const Point& cen
     mRightBottom.y = std::max(mRightBottom.y, std::max(center.y, std::max(prev.y, curr.y)));
 
     // Fixme: just use bezier curve to calculate step count
-    auto count = Bezier(prev, curr, strokeRadius()).segments();
+    auto count = Bezier(prev, curr, radius()).segments();
     auto c = _pushVertex(mBuffer->vertex, center.x, center.y);
     auto pi = _pushVertex(mBuffer->vertex, prev.x, prev.y);
     auto step = 1.f / (count - 1);
@@ -273,7 +263,7 @@ void Stroker::strokeRound(const Point &prev, const Point& curr, const Point& cen
         auto o_dir = p - center;
         normalize(o_dir);
 
-        auto out = center + o_dir * strokeRadius();
+        auto out = center + o_dir * radius();
         auto oi = _pushVertex(mBuffer->vertex, out.x, out.y);
 
         mBuffer->index.push(c);
@@ -290,17 +280,17 @@ void Stroker::strokeRound(const Point &prev, const Point& curr, const Point& cen
 }
 
 
-void Stroker::strokeRoundPoint(const Point &p)
+void Stroker::roundPoint(const Point &p)
 {
     // Fixme: just use bezier curve to calculate step count
-    auto count = Bezier(p, p, strokeRadius()).segments() * 2;
+    auto count = Bezier(p, p, radius()).segments() * 2;
     auto c = _pushVertex(mBuffer->vertex, p.x, p.y);
     auto step = 2 * MATH_PI / (count - 1);
 
     for (uint32_t i = 1; i <= static_cast<uint32_t>(count); i++) {
         float angle = i * step;
         Point dir = {cos(angle), sin(angle)};
-        Point out = p + dir * strokeRadius();
+        Point out = p + dir * radius();
         auto oi = _pushVertex(mBuffer->vertex, out.x, out.y);
 
         if (oi > 1) {
@@ -310,23 +300,23 @@ void Stroker::strokeRoundPoint(const Point &p)
         }
     }
 
-    mLeftTop.x = std::min(mLeftTop.x, p.x - strokeRadius());
-    mLeftTop.y = std::min(mLeftTop.y, p.y - strokeRadius());
-    mRightBottom.x = std::max(mRightBottom.x, p.x + strokeRadius());
-    mRightBottom.y = std::max(mRightBottom.y, p.y + strokeRadius());
+    mLeftTop.x = std::min(mLeftTop.x, p.x - radius());
+    mLeftTop.y = std::min(mLeftTop.y, p.y - radius());
+    mRightBottom.x = std::max(mRightBottom.x, p.x + radius());
+    mRightBottom.y = std::max(mRightBottom.y, p.y + radius());
 }
 
 
-void Stroker::strokeMiter(const Point& prev, const Point& curr, const Point& center)
+void Stroker::miter(const Point& prev, const Point& curr, const Point& center)
 {
     auto pp1 = prev - center;
     auto pp2 = curr - center;
     auto out = pp1 + pp2;
-    auto k = 2.f * strokeRadius() * strokeRadius() / (out.x * out.x + out.y * out.y);
+    auto k = 2.f * radius() * radius() / (out.x * out.x + out.y * out.y);
     auto pe = out * k;
 
-    if (length(pe) >= mMiterLimit * strokeRadius()) {
-        this->strokeBevel(prev, curr, center);
+    if (length(pe) >= mMiterLimit * radius()) {
+        bevel(prev, curr, center);
         return;
     }
 
@@ -352,7 +342,7 @@ void Stroker::strokeMiter(const Point& prev, const Point& curr, const Point& cen
 }
 
 
-void Stroker::strokeBevel(const Point& prev, const Point& curr, const Point& center)
+void Stroker::bevel(const Point& prev, const Point& curr, const Point& center)
 {
     auto a = _pushVertex(mBuffer->vertex, prev.x, prev.y);
     auto b = _pushVertex(mBuffer->vertex, curr.x, curr.y);
@@ -364,14 +354,14 @@ void Stroker::strokeBevel(const Point& prev, const Point& curr, const Point& cen
 }
 
 
-void Stroker::strokeSquare(const Point& p, const Point& outDir)
+void Stroker::square(const Point& p, const Point& outDir)
 {
     auto normal = Point{-outDir.y, outDir.x};
 
-    auto a = p + normal * strokeRadius();
-    auto b = p - normal * strokeRadius();
-    auto c = a + outDir * strokeRadius();
-    auto d = b + outDir * strokeRadius();
+    auto a = p + normal * radius();
+    auto b = p - normal * radius();
+    auto c = a + outDir * radius();
+    auto d = b + outDir * radius();
 
     auto ai = _pushVertex(mBuffer->vertex, a.x, a.y);
     auto bi = _pushVertex(mBuffer->vertex, b.x, b.y);
@@ -393,10 +383,10 @@ void Stroker::strokeSquare(const Point& p, const Point& outDir)
 }
 
 
-void Stroker::strokeSquarePoint(const Point& p)
+void Stroker::squarePoint(const Point& p)
 {
-    auto offsetX = Point{strokeRadius(), 0.0f};
-    auto offsetY = Point{0.0f, strokeRadius()};
+    auto offsetX = Point{radius(), 0.0f};
+    auto offsetY = Point{0.0f, radius()};
 
     auto a = p + offsetX + offsetY;
     auto b = p - offsetX + offsetY;
@@ -423,15 +413,15 @@ void Stroker::strokeSquarePoint(const Point& p)
 }
 
 
-void Stroker::strokeRound(const Point& p, const Point& outDir)
+void Stroker::round(const Point& p, const Point& outDir)
 {
     auto normal = Point{-outDir.y, outDir.x};
-    auto a = p + normal * strokeRadius();
-    auto b = p - normal * strokeRadius();
-    auto c = p + outDir * strokeRadius();
+    auto a = p + normal * radius();
+    auto b = p - normal * radius();
+    auto c = p + outDir * radius();
 
-    strokeRound(a, c, p);
-    strokeRound(c, b, p);
+    round(a, c, p);
+    round(c, b, p);
 }
 
 

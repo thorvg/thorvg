@@ -30,13 +30,14 @@ bool GlGeometry::tesselate(const RenderShape& rshape, RenderUpdateFlag flag)
 {
     if (flag & (RenderUpdateFlag::Color | RenderUpdateFlag::Gradient | RenderUpdateFlag::Transform | RenderUpdateFlag::Path)) {
         fill.clear();
-
         BWTessellator bwTess{&fill};
         if (rshape.trimpath()) {
             RenderPath trimmedPath;
             if (rshape.stroke->trim.trim(rshape.path, trimmedPath)) bwTess.tessellate(trimmedPath, matrix);
             else return true;
-        } else bwTess.tessellate(rshape.path, matrix);
+        } else {
+            bwTess.tessellate(rshape.path, matrix);
+        }
 
         fillRule = rshape.rule;
         bounds = bwTess.bounds();
@@ -44,11 +45,21 @@ bool GlGeometry::tesselate(const RenderShape& rshape, RenderUpdateFlag flag)
 
     if (flag & (RenderUpdateFlag::Stroke | RenderUpdateFlag::GradientStroke | RenderUpdateFlag::Transform)) {
         stroke.clear();
-        Stroker stroker{&stroke, matrix};
-        stroker.stroke(&rshape);
-        bounds = stroker.bounds();
+        auto strokeWidth = 0.0f;
+        if (isinf(matrix.e11)) {
+            strokeWidth = rshape.strokeWidth() * scaling(matrix);
+            if (strokeWidth <= MIN_GL_STROKE_WIDTH) strokeWidth = MIN_GL_STROKE_WIDTH;
+            strokeWidth = strokeWidth / matrix.e11;
+        } else {
+            strokeWidth = rshape.strokeWidth();
+        }
+        //run stroking only if it's valid
+        if (!tvg::zero(strokeWidth)) {
+            Stroker stroker(&stroke, strokeWidth);
+            stroker.run(rshape, matrix);
+            bounds = stroker.bounds();
+        }
     }
-
     return true;
 }
 
