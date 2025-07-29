@@ -44,7 +44,6 @@ bool GlGeometry::tesselate(const RenderShape& rshape, RenderUpdateFlag flag)
 
     if (flag & (RenderUpdateFlag::Stroke | RenderUpdateFlag::GradientStroke | RenderUpdateFlag::Transform)) {
         stroke.clear();
-
         Stroker stroker{&stroke, matrix};
         stroker.stroke(&rshape);
         bounds = stroker.bounds();

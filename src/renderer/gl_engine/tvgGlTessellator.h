@@ -65,7 +65,7 @@ private:
 
     GlGeometryBuffer* mBuffer;
     Matrix mMatrix;
-    float mStrokeWidth = MIN_GL_STROKE_WIDTH;
+    float mStrokeWidth = 0.0f;
     float mMiterLimit = 4.f;
     StrokeCap mStrokeCap = StrokeCap::Square;
     StrokeJoin mStrokeJoin = StrokeJoin::Bevel;
