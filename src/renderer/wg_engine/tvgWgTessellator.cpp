@@ -31,16 +31,19 @@ WgStroker::WgStroker(WgMeshData* buffer, const Matrix& matrix) : mBuffer(buffer)
 
 void WgStroker::stroke(const RenderShape *rshape)
 {
-    mMiterLimit = rshape->strokeMiterlimit();
-    mStrokeCap = rshape->strokeCap();
-    mStrokeJoin = rshape->strokeJoin();
-    mStrokeWidth = rshape->strokeWidth();
-
     if (isinf(mMatrix.e11)) {
         auto strokeWidth = rshape->strokeWidth() * scaling(mMatrix);
         if (strokeWidth <= MIN_WG_STROKE_WIDTH) strokeWidth = MIN_WG_STROKE_WIDTH;
         mStrokeWidth = strokeWidth / mMatrix.e11;
+    } else {
+        mStrokeWidth = rshape->strokeWidth();
     }
+
+    if (tvg::zero(mStrokeWidth)) return;  //invalid stroke
+
+    mMiterLimit = rshape->strokeMiterlimit();
+    mStrokeCap = rshape->strokeCap();
+    mStrokeJoin = rshape->strokeJoin();
 
     RenderPath dashed;
     if (rshape->strokeDash(dashed)) doStroke(dashed);
