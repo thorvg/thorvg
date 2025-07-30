@@ -124,8 +124,8 @@ void LottieOffsetModifier::line(RenderPath& out, PathCommand* inCmds, uint32_t i
     if (inCmds[curCmd - 1] != PathCommand::LineTo) state.line = _offset(inPts[curPt - 1], inPts[curPt], offset);
 
     if (state.moveto) {
-        out.moveTo(state.line.pt1);
         state.movetoOutIndex = out.pts.count;
+        out.moveTo(state.line.pt1);
         state.firstLine = state.line;
         state.moveto = false;
     }
@@ -332,8 +332,8 @@ bool LottieOffsetModifier::modifyPath(PathCommand* inCmds, uint32_t inCmdsCnt, P
                 auto line3 = _offset(bezier.ctrl2, bezier.end, offset);
 
                 if (state.moveto) {
-                    out.moveTo(line1.pt1);
                     state.movetoOutIndex = out.pts.count;
+                    out.moveTo(line1.pt1);
                     state.firstLine = line1;
                     state.moveto = false;
                 }
