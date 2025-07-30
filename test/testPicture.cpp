@@ -76,7 +76,7 @@ TEST_CASE("Load RAW file and render", "[tvgPicture]")
         REQUIRE(canvas);
 
         uint32_t buffer[100*100];
-        REQUIRE(canvas->target(buffer, 100, 100, 100, ColorSpace::ABGR8888) == Result::Success);
+        REQUIRE(canvas->target(buffer, 100, 100, 100, ColorSpace::ARGB8888) == Result::Success);
 
         ifstream file(TEST_DIR"/rawimage_200x300.raw");
         if (!file.is_open()) return;
@@ -210,7 +210,7 @@ TEST_CASE("Load SVG file and render", "[tvgPicture]")
         auto buffer = new uint32_t[1000*1000];
         if (!buffer) return;
 
-        REQUIRE(canvas->target(buffer, 1000, 1000, 1000, ColorSpace::ABGR8888) == Result::Success);
+        REQUIRE(canvas->target(buffer, 1000, 1000, 1000, ColorSpace::ARGB8888) == Result::Success);
 
         auto picture = Picture::gen();
         REQUIRE(picture);
@@ -280,7 +280,7 @@ TEST_CASE("Load PNG file and render", "[tvgPicture]")
         REQUIRE(canvas);
 
         uint32_t buffer[100*100];
-        REQUIRE(canvas->target(buffer, 100, 100, 100, ColorSpace::ABGR8888) == Result::Success);
+        REQUIRE(canvas->target(buffer, 100, 100, 100, ColorSpace::ARGB8888) == Result::Success);
 
         auto picture = Picture::gen();
         REQUIRE(picture);
@@ -351,7 +351,7 @@ TEST_CASE("Load JPG file and render", "[tvgPicture]")
         REQUIRE(canvas);
 
         uint32_t buffer[100*100];
-        REQUIRE(canvas->target(buffer, 100, 100, 100, ColorSpace::ABGR8888) == Result::Success);
+        REQUIRE(canvas->target(buffer, 100, 100, 100, ColorSpace::ARGB8888) == Result::Success);
 
         auto picture = Picture::gen();
         REQUIRE(picture);
@@ -416,7 +416,7 @@ TEST_CASE("Load WEBP file and render", "[tvgPicture]")
         REQUIRE(canvas);
 
         uint32_t buffer[100*100];
-        REQUIRE(canvas->target(buffer, 100, 100, 100, ColorSpace::ABGR8888) == Result::Success);
+        REQUIRE(canvas->target(buffer, 100, 100, 100, ColorSpace::ARGB8888) == Result::Success);
 
         auto picture = Picture::gen();
         REQUIRE(picture);

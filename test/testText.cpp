@@ -121,7 +121,7 @@ TEST_CASE("Text Basic", "[tvgText]")
 
     auto canvas = unique_ptr<SwCanvas>(SwCanvas::gen());
     uint32_t buffer[100*100];
-    canvas->target(buffer, 100, 100, 100, ColorSpace::ABGR8888);
+    canvas->target(buffer, 100, 100, 100, ColorSpace::ARGB8888);
 
     auto text = Text::gen();
     REQUIRE(text);
@@ -147,7 +147,7 @@ TEST_CASE("Text with composite glyphs", "[tvgText]")
 
     auto canvas = unique_ptr<SwCanvas>(SwCanvas::gen());
     uint32_t buffer[100*100];
-    canvas->target(buffer, 100, 100, 100, ColorSpace::ABGR8888);
+    canvas->target(buffer, 100, 100, 100, ColorSpace::ARGB8888);
 
     auto text = Text::gen();
     REQUIRE(text);
