@@ -260,10 +260,14 @@ enum class Type : uint8_t
 
 /**
  * @brief A data structure representing a point in two-dimensional space.
+ *
+ * This structure defines a single point using Cartesian coordinates.
+ * It is typically used for specifying positions or coordinates in 2D graphics.
  */
 struct Point
 {
-    float x, y;
+    float x;  ///< The x-coordinate of the point.
+    float y;  ///< The y-coordinate of the point.
 };
 
 
@@ -453,7 +457,7 @@ public:
      *
      * @return The class type ID of the Paint instance.
      *
-     * @since Experimental API
+     * @note Experimental API
      */
     virtual Type type() const noexcept = 0;
 
@@ -462,7 +466,7 @@ public:
      *
      * This is reserved to specify an paint instance in a scene.
      *
-     * @since Experimental API
+     * @note Experimental API
      */
     uint32_t id = 0;
 
@@ -568,7 +572,7 @@ public:
      *
      * @return The class type ID of the Fill instance.
      *
-     * @since Experimental API
+     * @note Experimental API
      */
     virtual Type type() const noexcept = 0;
 
@@ -758,7 +762,7 @@ public:
      *
      * @return The class type ID of the LinearGradient instance.
      *
-     * @since Experimental API
+     * @note Experimental API
      */
     Type type() const noexcept override;
 
@@ -823,7 +827,7 @@ public:
      *
      * @return The class type ID of the LinearGradient instance.
      *
-     * @since Experimental API
+     * @note Experimental API
      */
     Type type() const noexcept override;
 
@@ -1223,7 +1227,7 @@ public:
      *
      * @return The class type ID of the Shape instance.
      *
-     * @since Experimental API
+     * @note Experimental API
      */
     Type type() const noexcept override;
 
@@ -1361,7 +1365,7 @@ public:
      *
      * @return The class type ID of the Picture instance.
      *
-     * @since Experimental API
+     * @note Experimental API
      */
     Type type() const noexcept override;
 
@@ -1461,7 +1465,7 @@ public:
      *
      * @return The class type ID of the Scene instance.
      *
-     * @since Experimental API
+     * @note Experimental API
      */
     Type type() const noexcept override;
 
@@ -1628,7 +1632,7 @@ public:
      *
      * @return The class type ID of the Text instance.
      *
-     * @since Experimental API
+     * @note Experimental API
      */
     Type type() const noexcept override;
 
