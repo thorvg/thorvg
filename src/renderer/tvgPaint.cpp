@@ -391,7 +391,7 @@ Result Paint::bounds(Point* pt4) const noexcept
 bool Paint::intersects(int32_t x, int32_t y, int32_t w, int32_t h) noexcept
 {
     if (w <= 0 || h <= 0) return false;
-    return pImpl->intersects({x, y, x + w, y + h});
+    return pImpl->intersects({{x, y}, {x + w, y + h}});
 }
 
 
