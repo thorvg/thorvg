@@ -207,7 +207,7 @@ ThorVG renders vector shapes to a given canvas buffer. The following is a quick 
 First, you should initialize the ThorVG engine:
 
 ```cpp
-tvg::Initializer::init(0);   //thread count
+tvg::Initializer::init(4);   //4 threads
 ```
 
 Then it would be best if you prepared an empty canvas for drawing on it:
@@ -225,7 +225,7 @@ Next you can draw multiple shapes on the canvas:
 auto rect = tvg::Shape::gen();               //generate a shape
 rect->appendRect(50, 50, 200, 200, 20, 20);  //define it as a rounded rectangle (x, y, w, h, rx, ry)
 rect->fill(100, 100, 100);                   //set its color (r, g, b)
-canvas->push(rect);                         //push the rectangle into the canvas
+canvas->push(rect);                          //push the rectangle into the canvas
 
 auto circle = tvg::Shape::gen();             //generate a shape
 circle->appendCircle(400, 400, 100, 100);    //define it as a circle (cx, cy, rx, ry)

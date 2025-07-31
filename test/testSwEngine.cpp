@@ -32,7 +32,7 @@ using namespace std;
 
 TEST_CASE("Basic draw", "[tvgSwEngine]")
 {
-    REQUIRE(Initializer::init(0) == Result::Success);
+    REQUIRE(Initializer::init() == Result::Success);
     {
         auto canvas = unique_ptr<SwCanvas>(SwCanvas::gen());
         REQUIRE(canvas);
@@ -94,7 +94,7 @@ TEST_CASE("Basic draw", "[tvgSwEngine]")
 
 TEST_CASE("Image Draw", "[tvgSwEngine]")
 {
-    REQUIRE(Initializer::init(0) == Result::Success);
+    REQUIRE(Initializer::init() == Result::Success);
     {
         auto canvas = unique_ptr<SwCanvas>(SwCanvas::gen());
         REQUIRE(canvas);
@@ -379,7 +379,7 @@ TEST_CASE("Image Draw", "[tvgSwEngine]")
 }
 TEST_CASE("Rect Draw", "[tvgSwEngine]")
 {
-    REQUIRE(Initializer::init(0) == Result::Success);
+    REQUIRE(Initializer::init() == Result::Success);
     {
         auto canvas = unique_ptr<SwCanvas>(SwCanvas::gen());
         REQUIRE(canvas);
@@ -437,7 +437,7 @@ TEST_CASE("Rect Draw", "[tvgSwEngine]")
 
 TEST_CASE("RLE Draw", "[tvgSwEngine]")
 {
-    REQUIRE(Initializer::init(0) == Result::Success);
+    REQUIRE(Initializer::init() == Result::Success);
     {
         auto canvas = unique_ptr<SwCanvas>(SwCanvas::gen());
         REQUIRE(canvas);
@@ -495,7 +495,7 @@ TEST_CASE("RLE Draw", "[tvgSwEngine]")
 
 TEST_CASE("Filling Draw", "[tvgSwEngine]")
 {
-    REQUIRE(Initializer::init(0) == Result::Success);
+    REQUIRE(Initializer::init() == Result::Success);
     {
         auto canvas = unique_ptr<SwCanvas>(SwCanvas::gen());
         REQUIRE(canvas);
@@ -546,7 +546,7 @@ TEST_CASE("Filling Draw", "[tvgSwEngine]")
 
 TEST_CASE("Filling Opaque Draw", "[tvgSwEngine]")
 {
-    REQUIRE(Initializer::init(0) == Result::Success);
+    REQUIRE(Initializer::init() == Result::Success);
     {
         auto canvas = unique_ptr<SwCanvas>(SwCanvas::gen());
         REQUIRE(canvas);
@@ -595,7 +595,7 @@ TEST_CASE("Filling Opaque Draw", "[tvgSwEngine]")
 
 TEST_CASE("Filling AlphaMask", "[tvgSwEngine]")
 {
-    REQUIRE(Initializer::init(0) == Result::Success);
+    REQUIRE(Initializer::init() == Result::Success);
     {
         auto canvas = unique_ptr<SwCanvas>(SwCanvas::gen());
         REQUIRE(canvas);
@@ -654,7 +654,7 @@ TEST_CASE("Filling AlphaMask", "[tvgSwEngine]")
 
 TEST_CASE("Filling InvAlphaMask", "[tvgSwEngine]")
 {
-    REQUIRE(Initializer::init(0) == Result::Success);
+    REQUIRE(Initializer::init() == Result::Success);
     {
         auto canvas = unique_ptr<SwCanvas>(SwCanvas::gen());
         REQUIRE(canvas);
@@ -713,7 +713,7 @@ TEST_CASE("Filling InvAlphaMask", "[tvgSwEngine]")
 
 TEST_CASE("Filling LumaMask", "[tvgSwEngine]")
 {
-    REQUIRE(Initializer::init(0) == Result::Success);
+    REQUIRE(Initializer::init() == Result::Success);
     {
         auto canvas = unique_ptr<SwCanvas>(SwCanvas::gen());
         REQUIRE(canvas);
@@ -772,7 +772,7 @@ TEST_CASE("Filling LumaMask", "[tvgSwEngine]")
 
 TEST_CASE("Filling Clipping", "[tvgSwEngine]")
 {
-    REQUIRE(Initializer::init(0) == Result::Success);
+    REQUIRE(Initializer::init() == Result::Success);
     {
         auto canvas = unique_ptr<SwCanvas>(SwCanvas::gen());
         REQUIRE(canvas);
@@ -831,7 +831,7 @@ TEST_CASE("Filling Clipping", "[tvgSwEngine]")
 
 TEST_CASE("RLE Filling Draw", "[tvgSwEngine]")
 {
-    REQUIRE(Initializer::init(0) == Result::Success);
+    REQUIRE(Initializer::init() == Result::Success);
     {
         auto canvas = unique_ptr<SwCanvas>(SwCanvas::gen());
         REQUIRE(canvas);
@@ -880,7 +880,7 @@ TEST_CASE("RLE Filling Draw", "[tvgSwEngine]")
 
 TEST_CASE("RLE Filling Opaque Draw", "[tvgSwEngine]")
 {
-    REQUIRE(Initializer::init(0) == Result::Success);
+    REQUIRE(Initializer::init() == Result::Success);
     {
         auto canvas = unique_ptr<SwCanvas>(SwCanvas::gen());
         REQUIRE(canvas);
@@ -929,7 +929,7 @@ TEST_CASE("RLE Filling Opaque Draw", "[tvgSwEngine]")
 
 TEST_CASE("RLE Filling AlphaMask", "[tvgSwEngine]")
 {
-    REQUIRE(Initializer::init(0) == Result::Success);
+    REQUIRE(Initializer::init() == Result::Success);
     {
         auto canvas = unique_ptr<SwCanvas>(SwCanvas::gen());
         REQUIRE(canvas);
@@ -988,7 +988,7 @@ TEST_CASE("RLE Filling AlphaMask", "[tvgSwEngine]")
 
 TEST_CASE("RLE Filling InvAlphaMask", "[tvgSwEngine]")
 {
-    REQUIRE(Initializer::init(0) == Result::Success);
+    REQUIRE(Initializer::init() == Result::Success);
     {
         auto canvas = unique_ptr<SwCanvas>(SwCanvas::gen());
         REQUIRE(canvas);
@@ -1047,7 +1047,7 @@ TEST_CASE("RLE Filling InvAlphaMask", "[tvgSwEngine]")
 
 TEST_CASE("RLE Filling LumaMask", "[tvgSwEngine]")
 {
-    REQUIRE(Initializer::init(0) == Result::Success);
+    REQUIRE(Initializer::init() == Result::Success);
     {
         auto canvas = unique_ptr<SwCanvas>(SwCanvas::gen());
         REQUIRE(canvas);
@@ -1106,7 +1106,7 @@ TEST_CASE("RLE Filling LumaMask", "[tvgSwEngine]")
 
 TEST_CASE("RLE Filling InvLumaMask", "[tvgSwEngine]")
 {
-    REQUIRE(Initializer::init(0) == Result::Success);
+    REQUIRE(Initializer::init() == Result::Success);
     {
         auto canvas = unique_ptr<SwCanvas>(SwCanvas::gen());
         REQUIRE(canvas);
@@ -1165,7 +1165,7 @@ TEST_CASE("RLE Filling InvLumaMask", "[tvgSwEngine]")
 
 TEST_CASE("RLE Filling Clipping", "[tvgSwEngine]")
 {
-    REQUIRE(Initializer::init(0) == Result::Success);
+    REQUIRE(Initializer::init() == Result::Success);
     {
         auto canvas = unique_ptr<SwCanvas>(SwCanvas::gen());
         REQUIRE(canvas);
@@ -1224,7 +1224,7 @@ TEST_CASE("RLE Filling Clipping", "[tvgSwEngine]")
 
 TEST_CASE("Blending Shapes", "[tvgSwEngine]")
 {
-    REQUIRE(Initializer::init(0) == Result::Success);
+    REQUIRE(Initializer::init() == Result::Success);
     {
         auto canvas = unique_ptr<SwCanvas>(SwCanvas::gen());
         REQUIRE(canvas);
@@ -1271,7 +1271,7 @@ TEST_CASE("Blending Shapes", "[tvgSwEngine]")
 
 TEST_CASE("Blending Images", "[tvgSwEngine]")
 {
-    REQUIRE(Initializer::init(0) == Result::Success);
+    REQUIRE(Initializer::init() == Result::Success);
     {
         auto canvas = unique_ptr<SwCanvas>(SwCanvas::gen());
         REQUIRE(canvas);
@@ -1354,7 +1354,7 @@ TEST_CASE("Blending Images", "[tvgSwEngine]")
 
 TEST_CASE("Blending with Gradient Filling", "[tvgSwEngine]")
 {
-    REQUIRE(Initializer::init(0) == Result::Success);
+    REQUIRE(Initializer::init() == Result::Success);
     {
         auto canvas = unique_ptr<SwCanvas>(SwCanvas::gen());
         REQUIRE(canvas);

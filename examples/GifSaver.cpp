@@ -51,7 +51,7 @@ void exportGif()
 
 int main(int argc, char **argv)
 {
-    if (tvgexam::verify(tvg::Initializer::init(0))) {
+    if (tvgexam::verify(tvg::Initializer::init())) {
 
         exportGif();
 

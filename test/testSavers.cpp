@@ -38,7 +38,7 @@ TEST_CASE("Saver Creation", "[tvgSavers]")
 
 TEST_CASE("Save a lottie into gif", "[tvgSavers]")
 {
-    REQUIRE(Initializer::init(0) == Result::Success);
+    REQUIRE(Initializer::init() == Result::Success);
 
     auto animation = Animation::gen();
     REQUIRE(animation);

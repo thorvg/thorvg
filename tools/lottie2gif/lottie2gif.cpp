@@ -70,7 +70,7 @@ private:
 
    bool convert(string& in, string& out)
    {
-      if (Initializer::init(0) != Result::Success) return false;
+      if (Initializer::init() != Result::Success) return false;
 
       auto animation = Animation::gen();
       auto picture = animation->picture();

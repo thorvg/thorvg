@@ -70,7 +70,7 @@ TEST_CASE("Load RAW Data", "[tvgPicture]")
 
 TEST_CASE("Load RAW file and render", "[tvgPicture]")
 {
-    REQUIRE(Initializer::init(0) == Result::Success);
+    REQUIRE(Initializer::init() == Result::Success);
     {
         auto canvas = unique_ptr<SwCanvas>(SwCanvas::gen());
         REQUIRE(canvas);
@@ -202,7 +202,7 @@ TEST_CASE("Load SVG Data", "[tvgPicture]")
 
 TEST_CASE("Load SVG file and render", "[tvgPicture]")
 {
-    REQUIRE(Initializer::init(0) == Result::Success);
+    REQUIRE(Initializer::init() == Result::Success);
     {
         auto canvas = unique_ptr<SwCanvas>(SwCanvas::gen());
         REQUIRE(canvas);
@@ -274,7 +274,7 @@ TEST_CASE("Load PNG file from data", "[tvgPicture]")
 
 TEST_CASE("Load PNG file and render", "[tvgPicture]")
 {
-    REQUIRE(Initializer::init(0) == Result::Success);
+    REQUIRE(Initializer::init() == Result::Success);
     {
         auto canvas = unique_ptr<SwCanvas>(SwCanvas::gen());
         REQUIRE(canvas);
@@ -344,7 +344,7 @@ TEST_CASE("Load JPG file from data", "[tvgPicture]")
 
 TEST_CASE("Load JPG file and render", "[tvgPicture]")
 {
-    REQUIRE(Initializer::init(0) == Result::Success);
+    REQUIRE(Initializer::init() == Result::Success);
     {
 
         auto canvas = unique_ptr<SwCanvas>(SwCanvas::gen());
@@ -410,7 +410,7 @@ TEST_CASE("Load WEBP file from data", "[tvgPicture]")
 
 TEST_CASE("Load WEBP file and render", "[tvgPicture]")
 {
-    REQUIRE(Initializer::init(0) == Result::Success);
+    REQUIRE(Initializer::init() == Result::Success);
     {
         auto canvas = unique_ptr<SwCanvas>(SwCanvas::gen());
         REQUIRE(canvas);

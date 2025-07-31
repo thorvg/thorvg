@@ -37,7 +37,7 @@ TEST_CASE("Missing Initialization", "[tvgSwCanvas]")
 
 TEST_CASE("Basic Creation", "[tvgSwCanvas]")
 {
-    REQUIRE(Initializer::init(0) == Result::Success);
+    REQUIRE(Initializer::init() == Result::Success);
     {
         auto canvas = unique_ptr<SwCanvas>(SwCanvas::gen());
         REQUIRE(canvas);
@@ -54,7 +54,7 @@ TEST_CASE("Basic Creation", "[tvgSwCanvas]")
 
 TEST_CASE("Target Buffer", "[tvgSwCanvas]")
 {
-    REQUIRE(Initializer::init(0) == Result::Success);
+    REQUIRE(Initializer::init() == Result::Success);
     {
         auto canvas = unique_ptr<SwCanvas>(SwCanvas::gen());
         REQUIRE(canvas);
@@ -74,7 +74,7 @@ TEST_CASE("Target Buffer", "[tvgSwCanvas]")
 
 TEST_CASE("Pushing Paints", "[tvgSwCanvas]")
 {
-    REQUIRE(Initializer::init(0) == Result::Success);
+    REQUIRE(Initializer::init() == Result::Success);
     {
         auto canvas = unique_ptr<SwCanvas>(SwCanvas::gen());
         REQUIRE(canvas);
@@ -121,7 +121,7 @@ TEST_CASE("Pushing Paints", "[tvgSwCanvas]")
 
 TEST_CASE("Update", "[tvgSwCanvas]")
 {
-    REQUIRE(Initializer::init(0) == Result::Success);
+    REQUIRE(Initializer::init() == Result::Success);
     {
         auto canvas = unique_ptr<SwCanvas>(SwCanvas::gen());
         REQUIRE(canvas);
@@ -150,7 +150,7 @@ TEST_CASE("Update", "[tvgSwCanvas]")
 
 TEST_CASE("Synchronized Drawing", "[tvgSwCanvas]")
 {
-    REQUIRE(Initializer::init(0) == Result::Success);
+    REQUIRE(Initializer::init() == Result::Success);
     {
         auto canvas = unique_ptr<SwCanvas>(SwCanvas::gen());
         REQUIRE(canvas);
@@ -211,7 +211,7 @@ TEST_CASE("Asynchronous Drawing", "[tvgSwCanvas]")
 
 TEST_CASE("Viewport", "[tvgSwCanvas]")
 {
-    REQUIRE(Initializer::init(0) == Result::Success);
+    REQUIRE(Initializer::init() == Result::Success);
     {
         auto canvas = unique_ptr<SwCanvas>(SwCanvas::gen());
         REQUIRE(canvas);
