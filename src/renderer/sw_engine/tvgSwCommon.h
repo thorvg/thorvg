@@ -627,19 +627,6 @@ static inline uint32_t opBlendLuminosity(uint32_t s, uint32_t d)
     return BLEND_PRE(JOIN(255, r, g, b), s, o.a);
 }
 
-static inline uint32_t opBlendHardMix(uint32_t s, uint32_t d)
-{
-    RenderColor o;
-    if (!BLEND_UPRE(d, o)) return s;
-
-    auto f = [](uint8_t s, uint8_t d) {
-        return (s + d >= 255) ? 255 : 0;
-    };
-
-    return BLEND_PRE(JOIN(255, f(C1(s), o.r), f(C2(s), o.g), f(C3(s), o.b)), s, o.a);
-}
-
-
 int64_t mathMultiply(int64_t a, int64_t b);
 int64_t mathDivide(int64_t a, int64_t b);
 int64_t mathMulDiv(int64_t a, int64_t b, int64_t c);
