@@ -97,30 +97,11 @@ struct UserExample : tvgexam::Example
 
     bool clickdown(tvg::Canvas* canvas, int32_t x, int32_t y) override
     {
-        auto intersect = [&](float x, float y, tvg::Point* obb) -> bool {
-            //compute edge vectors
-            tvg::Point e1 = {obb[1].x - obb[0].x, obb[1].y - obb[0].y};  // Edge from obb[0] to obb[1]
-            tvg::Point e2 = {obb[3].x - obb[0].x, obb[3].y - obb[0].y};  // Edge from obb[0] to obb[3]
-
-            //compute vectors from obb[0] to the test point
-            tvg::Point o = {x - obb[0].x, y - obb[0].y};
-
-            /* compute dot products to express `o` in terms of edge1 and edge2
-               and then compute barycentric coordinates (u, v) within the box space */
-            auto u = (o.x * e1.x + o.y * e1.y) / (e1.x * e1.x + e1.y * e1.y);
-            auto v = (o.x * e2.x + o.y * e2.y) / (e2.x * e2.x + e2.y * e2.y);
-
-            // Check if point is inside the OBB
-            return (u >= 0.0f && u <= 1.0f && v >= 0.0f && v <= 1.0f);
-        };
-
         int i = 0;
         for (auto& state : states) {
             if (auto paint = lottie->picture()->paint(tvg::Accessor::id(state.name.c_str()))) {
-                tvg::Point obb[4];
-                paint->bounds(obb);
                 //hit a emoji layer!
-                if (intersect(x, y, obb)) {
+                if (const_cast<tvg::Paint*>(paint)->intersects(x, y, 1, 1)) {
                     tweening(i);
                     return true;
                 }
