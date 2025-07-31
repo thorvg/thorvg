@@ -36,7 +36,7 @@ using namespace std;
 
 TEST_CASE("Lottie Slot", "[tvgLottie]")
 {
-    REQUIRE(Initializer::init(0) == Result::Success);
+    REQUIRE(Initializer::init() == Result::Success);
 
     auto animation = unique_ptr<LottieAnimation>(LottieAnimation::gen());
     REQUIRE(animation);
@@ -72,7 +72,7 @@ TEST_CASE("Lottie Slot", "[tvgLottie]")
 
 TEST_CASE("Lottie Slot 2", "[tvgLottie]")
 {
-    REQUIRE(Initializer::init(0) == Result::Success);
+    REQUIRE(Initializer::init() == Result::Success);
 
     auto animation = unique_ptr<LottieAnimation>(LottieAnimation::gen());
     REQUIRE(animation);
@@ -98,7 +98,7 @@ TEST_CASE("Lottie Slot 2", "[tvgLottie]")
 
 TEST_CASE("Lottie Marker", "[tvgLottie]")
 {
-    REQUIRE(Initializer::init(0) == Result::Success);
+    REQUIRE(Initializer::init() == Result::Success);
 
     auto animation = unique_ptr<LottieAnimation>(LottieAnimation::gen());
     REQUIRE(animation);

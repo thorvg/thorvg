@@ -41,7 +41,7 @@ TEST_CASE("Text Creation", "[tvgText]")
 
 TEST_CASE("Load TTF Data from a file", "[tvgText]")
 {
-    Initializer::init(0);
+    Initializer::init();
 
     auto text = unique_ptr<Text>(Text::gen());
     REQUIRE(text);
@@ -59,7 +59,7 @@ TEST_CASE("Load TTF Data from a file", "[tvgText]")
 
 TEST_CASE("Load TTF Data from a memory", "[tvgText]")
 {
-    Initializer::init(0);
+    Initializer::init();
 
     ifstream file(TEST_DIR"/Arial.ttf", ios::binary);
     REQUIRE(file.is_open());
@@ -98,7 +98,7 @@ TEST_CASE("Load TTF Data from a memory", "[tvgText]")
 
 TEST_CASE("Text Font", "[tvgText]")
 {
-    Initializer::init(0);
+    Initializer::init();
 
     auto text = unique_ptr<Text>(Text::gen());
     REQUIRE(text);
@@ -117,7 +117,7 @@ TEST_CASE("Text Font", "[tvgText]")
 
 TEST_CASE("Text Basic", "[tvgText]")
 {
-    Initializer::init(0);
+    Initializer::init();
 
     auto canvas = unique_ptr<SwCanvas>(SwCanvas::gen());
     uint32_t buffer[100*100];
@@ -143,7 +143,7 @@ TEST_CASE("Text Basic", "[tvgText]")
 
 TEST_CASE("Text with composite glyphs", "[tvgText]")
 {
-    Initializer::init(0);
+    Initializer::init();
 
     auto canvas = unique_ptr<SwCanvas>(SwCanvas::gen());
     uint32_t buffer[100*100];

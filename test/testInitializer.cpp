@@ -30,17 +30,17 @@ using namespace tvg;
 
 TEST_CASE("Basic initialization", "[tvgInitializer]")
 {
-    REQUIRE(Initializer::init(0) == Result::Success);
+    REQUIRE(Initializer::init() == Result::Success);
     REQUIRE(Initializer::term() == Result::Success);
 }
 
 TEST_CASE("Multiple initialization", "[tvgInitializer]")
 {
-    REQUIRE(Initializer::init(0) == Result::Success);
-    REQUIRE(Initializer::init(0) == Result::Success);
+    REQUIRE(Initializer::init() == Result::Success);
+    REQUIRE(Initializer::init() == Result::Success);
     REQUIRE(Initializer::term() == Result::Success);
 
-    REQUIRE(Initializer::init(0) == Result::Success);
+    REQUIRE(Initializer::init() == Result::Success);
     REQUIRE(Initializer::term() == Result::Success);
     REQUIRE(Initializer::term() == Result::Success);
 }

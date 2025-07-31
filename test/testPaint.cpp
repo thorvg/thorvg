@@ -118,7 +118,7 @@ TEST_CASE("Opacity", "[tvgPaint]")
 
 TEST_CASE("Bounding Box", "[tvgPaint]")
 {
-    Initializer::init(0);
+    Initializer::init();
 
     auto canvas = unique_ptr<SwCanvas>(SwCanvas::gen());
     uint32_t buffer[100*100];
@@ -311,7 +311,7 @@ TEST_CASE("Refernce Count", "[tvgPaint]")
     REQUIRE(shape->unref() == 1);
     REQUIRE(shape->unref() == 0);
 
-    Initializer::init(0);
+    Initializer::init();
 
     auto canvas = unique_ptr<SwCanvas>(SwCanvas::gen());
 

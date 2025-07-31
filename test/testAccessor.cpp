@@ -40,7 +40,7 @@ TEST_CASE("Accessor Creation", "[tvgAccessor]")
 
 TEST_CASE("Set", "[tvgAccessor]")
 {
-    REQUIRE(Initializer::init(0) == Result::Success);
+    REQUIRE(Initializer::init() == Result::Success);
     {
         auto canvas = unique_ptr<SwCanvas>(SwCanvas::gen());
         REQUIRE(canvas);

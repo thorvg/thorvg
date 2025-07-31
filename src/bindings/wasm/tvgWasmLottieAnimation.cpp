@@ -62,7 +62,7 @@ struct TvgSwEngine : TvgEngineMethod
 
     Canvas* init(string&) override
     {
-        Initializer::init(0);
+        Initializer::init();
         loadFont();
         return SwCanvas::gen();
     }
@@ -116,7 +116,7 @@ struct TvgWgEngine : TvgEngineMethod
         surfaceDesc.nextInChain = &canvasDesc.chain;
         surface = wgpuInstanceCreateSurface(instance, &surfaceDesc);
 
-        Initializer::init(0);
+        Initializer::init();
         loadFont();
         return WgCanvas::gen();
     }
@@ -219,7 +219,7 @@ struct TvgGLEngine : TvgEngineMethod
 
         emscripten_webgl_make_context_current(context);
 
-        if (Initializer::init(0) != Result::Success) return nullptr;
+        if (Initializer::init() != Result::Success) return nullptr;
         loadFont();
 
         return GlCanvas::gen();

@@ -1874,20 +1874,24 @@ class TVG_API Initializer final
 {
 public:
     /**
-     * @brief Initializes the ThorVG engine.
+     * @brief Initializes the ThorVG engine runtime.
      *
-     * ThorVG requires an active runtime environment to operate.
-     * Internally, it utilizes a task scheduler to efficiently parallelize rendering operations.
-     * You can specify the number of worker threads using the @p threads parameter.
-     * During initialization, ThorVG will spawn the specified number of threads.
+     * ThorVG requires an active runtime environment for rendering operations.
+     * This function sets up an internal task scheduler and creates a specified number
+     * of worker threads to enable parallel rendering.
      *
-     * @param[in] threads The number of worker threads to create. A value of zero indicates that only the main thread will be used.
+     * @param[in] threads The number of worker threads to launch.
+     *                    A value of 0 indicates that only the main thread will be used.
      *
-     * @note The initializer uses internal reference counting to track multiple calls.
-     *       The number of threads is fixed on the first call to init() and cannot be changed in subsequent calls.
+     * @return Result indicating success or failure of initialization.
+     *
+     * @note This function uses internal reference counting to allow multiple init() calls.
+     *       However, the number of threads is fixed during the first successful initialization
+     *       and cannot be changed in subsequent calls.
+     *
      * @see Initializer::term()
      */
-    static Result init(uint32_t threads) noexcept;
+    static Result init(uint32_t threads = 0) noexcept;
 
     /**
      * @brief Terminates the ThorVG engine.

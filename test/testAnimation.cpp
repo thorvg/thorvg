@@ -106,7 +106,7 @@ TEST_CASE("Animation Lottie", "[tvgAnimation]")
 
 TEST_CASE("Animation Lottie2", "[tvgAnimation]")
 {
-    REQUIRE(Initializer::init(0) == Result::Success);
+    REQUIRE(Initializer::init() == Result::Success);
 
     auto animation = unique_ptr<Animation>(Animation::gen());
     REQUIRE(animation);
@@ -129,7 +129,7 @@ TEST_CASE("Animation Lottie2", "[tvgAnimation]")
 
 TEST_CASE("Animation Lottie3", "[tvgAnimation]")
 {
-    REQUIRE(Initializer::init(0) == Result::Success);
+    REQUIRE(Initializer::init() == Result::Success);
 
     auto animation = unique_ptr<Animation>(Animation::gen());
     REQUIRE(animation);
@@ -143,7 +143,7 @@ TEST_CASE("Animation Lottie3", "[tvgAnimation]")
 
 TEST_CASE("Animation Lottie4", "[tvgAnimation]")
 {
-    REQUIRE(Initializer::init(0) == Result::Success);
+    REQUIRE(Initializer::init() == Result::Success);
 
     auto animation = unique_ptr<Animation>(Animation::gen());
     REQUIRE(animation);
@@ -157,7 +157,7 @@ TEST_CASE("Animation Lottie4", "[tvgAnimation]")
 
 TEST_CASE("Animation Lottie5", "[tvgAnimation]")
 {
-    REQUIRE(Initializer::init(0) == Result::Success);
+    REQUIRE(Initializer::init() == Result::Success);
 
     auto animation = unique_ptr<Animation>(Animation::gen());
     REQUIRE(animation);
@@ -171,7 +171,7 @@ TEST_CASE("Animation Lottie5", "[tvgAnimation]")
 
 TEST_CASE("Animation Lottie6", "[tvgAnimation]")
 {
-    REQUIRE(Initializer::init(0) == Result::Success);
+    REQUIRE(Initializer::init() == Result::Success);
 
     auto animation = unique_ptr<Animation>(Animation::gen());
     REQUIRE(animation);
@@ -185,7 +185,7 @@ TEST_CASE("Animation Lottie6", "[tvgAnimation]")
 
 TEST_CASE("Animation Lottie7", "[tvgAnimation]")
 {
-    REQUIRE(Initializer::init(0) == Result::Success);
+    REQUIRE(Initializer::init() == Result::Success);
 
     auto animation = unique_ptr<Animation>(Animation::gen());
     REQUIRE(animation);
@@ -199,7 +199,7 @@ TEST_CASE("Animation Lottie7", "[tvgAnimation]")
 
 TEST_CASE("Animation Lottie8", "[tvgAnimation]")
 {
-    REQUIRE(Initializer::init(0) == Result::Success);
+    REQUIRE(Initializer::init() == Result::Success);
 
     auto animation = unique_ptr<Animation>(Animation::gen());
     REQUIRE(animation);
@@ -213,7 +213,7 @@ TEST_CASE("Animation Lottie8", "[tvgAnimation]")
 
 TEST_CASE("Animation Lottie9", "[tvgAnimation]")
 {
-    REQUIRE(Initializer::init(0) == Result::Success);
+    REQUIRE(Initializer::init() == Result::Success);
 
     auto animation = unique_ptr<Animation>(Animation::gen());
     REQUIRE(animation);
@@ -227,7 +227,7 @@ TEST_CASE("Animation Lottie9", "[tvgAnimation]")
 
 TEST_CASE("Animation Lottie10", "[tvgAnimation]")
 {
-    REQUIRE(Initializer::init(0) == Result::Success);
+    REQUIRE(Initializer::init() == Result::Success);
 
     auto animation = unique_ptr<Animation>(Animation::gen());
     REQUIRE(animation);
@@ -241,7 +241,7 @@ TEST_CASE("Animation Lottie10", "[tvgAnimation]")
 
 TEST_CASE("Animation Lottie11", "[tvgAnimation]")
 {
-    REQUIRE(Initializer::init(0) == Result::Success);
+    REQUIRE(Initializer::init() == Result::Success);
 
     auto animation = unique_ptr<Animation>(Animation::gen());
     REQUIRE(animation);
@@ -266,7 +266,7 @@ TEST_CASE("Animation Lottie11", "[tvgAnimation]")
 
 TEST_CASE("Animation Lottie12", "[tvgAnimation]")
 {
-    REQUIRE(Initializer::init(0) == Result::Success);
+    REQUIRE(Initializer::init() == Result::Success);
 
     auto animation = unique_ptr<Animation>(Animation::gen());
     REQUIRE(animation);
@@ -280,7 +280,7 @@ TEST_CASE("Animation Lottie12", "[tvgAnimation]")
 
 TEST_CASE("Animation Segment", "[tvgAnimation]")
 {
-    REQUIRE(Initializer::init(0) == Result::Success);
+    REQUIRE(Initializer::init() == Result::Success);
 
     auto animation = unique_ptr<Animation>(Animation::gen());
     REQUIRE(animation);
