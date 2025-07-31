@@ -167,7 +167,6 @@ struct UserExample : tvgexam::Example
         blender(canvas, "Color", tvg::BlendMethod::Color, 900.0f, 750.0f, data);
         blender(canvas, "Luminosity", tvg::BlendMethod::Luminosity, 900.0f, 900.0f, data);
         blender(canvas, "Add", tvg::BlendMethod::Add, 900.0f, 1050.0f, data);
-        blender(canvas, "HardMix", tvg::BlendMethod::HardMix, 900.0f, 1200.0f, data);
 
         free(data);
 

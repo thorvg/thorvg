@@ -527,10 +527,6 @@ bool SwRenderer::blend(BlendMethod method)
     surface->blendMethod = method;
 
     switch (method) {
-        case BlendMethod::Normal:
-        case BlendMethod::Composition:
-            surface->blender = nullptr;
-            break;
         case BlendMethod::Multiply:
             surface->blender = opBlendMultiply;
             break;
@@ -579,15 +575,11 @@ bool SwRenderer::blend(BlendMethod method)
         case BlendMethod::Add:
             surface->blender = opBlendAdd;
             break;
-        case BlendMethod::HardMix:
-            surface->blender = opBlendHardMix;
-            break;
         default:
-            TVGLOG("SW_ENGINE", "Non supported blending option = %d", (int) method);
             surface->blender = nullptr;
             break;
     }
-    return false;
+    return true;
 }
 
 

@@ -164,7 +164,6 @@ typedef enum {
     TVG_BLEND_METHOD_COLOR,             ///< Combine with HSL(Sh + Ss + Dl) then convert it to RGB.
     TVG_BLEND_METHOD_LUMINOSITY,        ///< Combine with HSL(Dh + Ds + Sl) then convert it to RGB.
     TVG_BLEND_METHOD_ADD,               ///< Simply adds pixel values of one layer with the other. (S + D)
-    TVG_BLEND_METHOD_HARDMIX,           ///< Adds S and D; result is 255 if the sum is greater than or equal to 255, otherwise 0.
     TVG_BLEND_METHOD_COMPOSITION = 255  ///< Used for intermediate composition. @since 1.0
 } Tvg_Blend_Method;
 
