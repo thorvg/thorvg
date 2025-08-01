@@ -77,7 +77,7 @@ struct SceneImpl : Scene
     ~SceneImpl()
     {
         clearPaints();
-        resetEffects();
+        resetEffects(false);
     }
 
     void size(const Point& size)
@@ -385,7 +385,7 @@ struct SceneImpl : Scene
         return new SceneIterator(&paints);
     }
 
-    Result resetEffects()
+    Result resetEffects(bool damage = true)
     {
         if (effects) {
             ARRAY_FOREACH(p, *effects) {
@@ -394,6 +394,7 @@ struct SceneImpl : Scene
             }
             delete(effects);
             effects = nullptr;
+            if (damage) impl.damage(vport);
         }
         return Result::Success;
     }
