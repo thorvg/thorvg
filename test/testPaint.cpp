@@ -128,13 +128,14 @@ TEST_CASE("Bounding Box", "[tvgPaint]")
     canvas->push(shape);
     canvas->sync();
 
-    //Negative
+    //Case 0
     float x = 0, y = 0, w = 0, h = 0;
-    REQUIRE(shape->bounds(&x, &y, &w, &h) == Result::InsufficientCondition);
+    REQUIRE(shape->bounds(&x, &y, &w, &h) == Result::Success);
 
     //Case 1
     REQUIRE(shape->appendRect(0.0f, 10.0f, 20.0f, 100.0f, 50.0f, 50.0f) == Result::Success);
     REQUIRE(shape->translate(100.0f, 111.0f) == Result::Success);
+
     REQUIRE(shape->bounds(&x, &y, &w, &h) == Result::Success);
     REQUIRE(x == 100.0f);
     REQUIRE(y == 121.0f);

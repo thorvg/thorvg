@@ -290,6 +290,16 @@ RenderData Paint::Impl::update(RenderMethod* renderer, const Matrix& pm, Array<R
 
 Result Paint::Impl::bounds(float* x, float* y, float* w, float* h, Matrix* pm, bool stroking)
 {
+    //FIXME: actual rendered result of the engine. all engines should support this.
+    if (stroking && renderer && renderFlag == RenderUpdateFlag::None) {
+        auto r = this->bounds(renderer);
+        if (x) *x = r.min.x;
+        if (y) *y = r.min.y;
+        if (w) *w = r.max.x - r.min.x;
+        if (h) *h = r.max.y - r.min.y;
+        return Result::Success;
+    }
+
     Point pts[4];
     if (bounds(pts, pm, false, stroking) != Result::Success) return Result::InsufficientCondition;
 
