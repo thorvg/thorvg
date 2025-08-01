@@ -38,6 +38,7 @@ source_file = [
     'GradientTransform.cpp',
     'ImageRotation.cpp',
     'ImageScaling.cpp',
+    'Intersects.cpp',
     'LinearGradient.cpp',
     'Lottie.cpp',
     'LumaMasking.cpp',
