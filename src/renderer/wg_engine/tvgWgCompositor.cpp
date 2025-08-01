@@ -121,7 +121,10 @@ void WgCompositor::resize(WgContext& context, uint32_t width, uint32_t height) {
 
 RenderRegion WgCompositor::shrinkRenderRegion(RenderRegion& rect)
 {
-    return RenderRegion::intersect(rect, {{0, 0}, {(int32_t)width, (int32_t)height}});
+    return {
+        {std::max(0, std::min((int32_t)width, rect.min.x)), std::max(0, std::min((int32_t)height, rect.min.y))},
+        {std::max(0, std::min((int32_t)width, rect.max.x)), std::max(0, std::min((int32_t)height, rect.max.y))}
+    };
 }
 
 
