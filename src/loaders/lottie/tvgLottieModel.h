@@ -26,6 +26,7 @@
 #include "tvgCommon.h"
 #include "tvgStr.h"
 #include "tvgCompressor.h"
+#include "tvgInlist.h"
 #include "tvgRender.h"
 #include "tvgLottieProperty.h"
 #include "tvgLottieRenderPooler.h"
@@ -1058,7 +1059,21 @@ struct LottieSlot
         LottieProperty* prop;
     };
 
-    void assign(LottieObject* target, bool byDefault);
+    struct Value {
+        INLIST_ITEM(Value);
+
+        uint32_t slotcode;
+        LottieProperty* prop;
+
+        ~Value()
+        {
+            delete(prop);
+        }
+    };
+
+    LottieProperty* property(LottieObject* target);
+    void add(uint32_t slotcode, LottieProperty* prop);
+    void apply(LottieProperty* prop, bool byDefault = false);
     void reset();
 
     LottieSlot(LottieLayer* layer, LottieObject* parent, char* sid, LottieObject* obj, LottieProperty::Type type) : context{layer, parent}, sid(sid), type(type)
@@ -1069,6 +1084,7 @@ struct LottieSlot
     ~LottieSlot()
     {
         tvg::free(sid);
+        values.free();
         if (!overridden) return;
         ARRAY_FOREACH(pair, pairs) delete(pair->prop);
     }
@@ -1079,7 +1095,8 @@ struct LottieSlot
     } context;
 
     char* sid;
-    Array<Pair> pairs;
+    Array<Pair> pairs;    // Object-property pairs that can be overridden by this slot
+    Inlist<Value> values; // Available slot values for property overrides
     LottieProperty::Type type;
 
     bool overridden = false;
