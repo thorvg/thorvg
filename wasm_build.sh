@@ -27,4 +27,4 @@ if [ ! -d "./build_wasm" ]; then
 fi
 
 ninja -C build_wasm/
-ls -lrt build_wasm/src/bindings/wasm/*.{js,wasm}
+ls -lrt build_wasm/src/bindings/wasm/*.{js,wasm,d.ts}
