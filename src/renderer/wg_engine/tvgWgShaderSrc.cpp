@@ -786,9 +786,10 @@ fn fs_main_vert(in: VertexOutput) -> @location(0) vec4f {
     let radius: i32 = i32(settings[0].z);
 
     for (var y: i32 = -radius; y <= radius; y++) {
-        let weight: f32 = gaussian(f32(y), sigma);
         let offset: vec2f = vec2f(0.0, f32(y) * texelSize.y);
-        colorSum += textureSample(uTextureSrc, uSamplerSrc, in.texCoord.xy + offset) * weight;
+        let coord = in.texCoord.xy + offset;
+        let weight: f32 = select(0.0, gaussian(f32(y), sigma), saturate(coord.y) == coord.y);
+        colorSum += textureSample(uTextureSrc, uSamplerSrc, coord) * weight;
         weightSum += weight;
     }
 
@@ -804,9 +805,10 @@ fn fs_main_horz(in: VertexOutput) -> @location(0) vec4f {
     let radius: i32 = i32(settings[0].z);
 
     for (var y: i32 = -radius; y <= radius; y++) {
-        let weight: f32 = gaussian(f32(y), sigma);
         let offset: vec2f = vec2f(f32(y) * texelSize.x, 0.0);
-        colorSum += textureSample(uTextureSrc, uSamplerSrc, in.texCoord.xy + offset) * weight;
+        let coord = in.texCoord.xy + offset;
+        let weight: f32 = select(0.0, gaussian(f32(y), sigma), saturate(coord.x) == coord.x);
+        colorSum += textureSample(uTextureSrc, uSamplerSrc, coord) * weight;
         weightSum += weight;
     }
 
