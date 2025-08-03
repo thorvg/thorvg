@@ -458,6 +458,49 @@ fn postProcess(d: FragData, R: vec4f) -> vec4f { return mix(vec4(d.Dc, d.Da), R,
 const char* cShaderSrc_BlendFuncs = R"(
 const One = vec3f(1.0, 1.0, 1.0);
 
+// RGB to HSL conversion
+fn rgbToHsl(color: vec3f) -> vec3f {
+    let minVal = min(color.r, min(color.g, color.b));
+    let maxVal = max(color.r, max(color.g, color.b));
+    let delta = maxVal - minVal;
+
+    var h = 0.0;
+    if (delta > 0.0) {
+             if (maxVal == color.r) { h = (color.g - color.b) / delta - trunc(h / 6.0) * 6.0; }
+        else if (maxVal == color.g) { h = (color.b - color.r) / delta + 2.0;
+        } else                      { h = (color.r - color.g) / delta + 4.0; }
+        h = h * 60.0;
+        if (h < 0.0) { h += 360.0; }
+    }
+
+    let l = (maxVal + minVal) * 0.5;
+    var s = select(0.0, delta / (1.0 - abs(2.0 * l - 1.0)), delta > 0.0);
+    
+    return vec3f(h, s, l);
+};
+
+// HSL to RGB conversion
+fn hslToRgb(color: vec3f) -> vec3f {
+    let h = color.x;
+    let s = color.y;
+    let l = color.z;
+
+    let C = (1.0 - abs(2.0 * l - 1.0)) * s;
+    let h_prime = h / 60.0;
+    let X = C * (1.0 - abs(h_prime - 2.0 * trunc(h_prime / 2.0) - 1.0));
+    let m = l - C / 2.0;
+
+    var rgb = vec3f(0.0);
+         if (h_prime >= 0.0 && h_prime < 1.0) { rgb = vec3f(C, X, 0.0); }
+    else if (h_prime >= 1.0 && h_prime < 2.0) { rgb = vec3f(X, C, 0.0); }
+    else if (h_prime >= 2.0 && h_prime < 3.0) { rgb = vec3f(0.0, C, X); }
+    else if (h_prime >= 3.0 && h_prime < 4.0) { rgb = vec3f(0.0, X, C); }
+    else if (h_prime >= 4.0 && h_prime < 5.0) { rgb = vec3f(X, 0.0, C); }
+    else                                      { rgb = vec3f(C, 0.0, X); }
+
+    return rgb + vec3f(m);
+};
+
 @fragment
 fn fs_main_Normal(in: VertexOutput) -> @location(0) vec4f {
     // used as debug blend method
@@ -584,9 +627,77 @@ fn fs_main_Exclusion(in: VertexOutput) -> @location(0) vec4f {
 }
 
 @fragment
+fn fs_main_Hue(in: VertexOutput) -> @location(0) vec4f {
+    let d: FragData = getFragData(in);
+    var Rc = d.Sc;
+    if (d.Da > 0.0) {
+        let Dc = min(One, d.Dc / d.Da);
+        let Sc = d.Sc;
+
+        let Shsl = rgbToHsl(Sc);
+        let Dhsl = rgbToHsl(Dc);
+        Rc = hslToRgb(vec3(Shsl.r, Dhsl.g, Dhsl.b)); // sh, ds, dl
+
+        Rc = mix(d.Sc, Rc, d.Da);
+    };
+    return postProcess(d, vec4f(Rc, 1.0));
+}
+
+@fragment
+fn fs_main_Saturation(in: VertexOutput) -> @location(0) vec4f {
+    let d: FragData = getFragData(in);
+    var Rc = d.Sc;
+    if (d.Da > 0.0) {
+        let Dc = min(One, d.Dc / d.Da);
+        let Sc = d.Sc;
+
+        let Shsl = rgbToHsl(Sc);
+        let Dhsl = rgbToHsl(Dc);
+        Rc = hslToRgb(vec3(Dhsl.r, Shsl.g, Dhsl.b)); // dh, ss, dl
+
+        Rc = mix(d.Sc, Rc, d.Da);
+    };
+    return postProcess(d, vec4f(Rc, 1.0));
+}
+
+@fragment
+fn fs_main_Color(in: VertexOutput) -> @location(0) vec4f {
+    let d: FragData = getFragData(in);
+    var Rc = d.Sc;
+    if (d.Da > 0.0) {
+        let Dc = min(One, d.Dc / d.Da);
+        let Sc = d.Sc;
+
+        let Shsl = rgbToHsl(Sc);
+        let Dhsl = rgbToHsl(Dc);
+        Rc = hslToRgb(vec3(Shsl.r, Shsl.g, Dhsl.b)); // sh, ss, dl
+
+        Rc = mix(d.Sc, Rc, d.Da);
+    };
+    return postProcess(d, vec4f(Rc, 1.0));
+}
+
+@fragment
+fn fs_main_Luminosity(in: VertexOutput) -> @location(0) vec4f {
+    let d: FragData = getFragData(in);
+    var Rc = d.Sc;
+    if (d.Da > 0.0) {
+        let Dc = min(One, d.Dc / d.Da);
+        let Sc = d.Sc;
+
+        let Shsl = rgbToHsl(Sc);
+        let Dhsl = rgbToHsl(Dc);
+        Rc = hslToRgb(vec3(Dhsl.r, Dhsl.g, Shsl.b)); // dh, ds, sl
+
+        Rc = mix(d.Sc, Rc, d.Da);
+    };
+    return postProcess(d, vec4f(Rc, 1.0));
+}
+
+@fragment
 fn fs_main_Add(in: VertexOutput) -> @location(0) vec4f {
     let d: FragData = getFragData(in);
-    let Rc = d.Sc + d.Dc;
+    let Rc = min(One, d.Sc + d.Dc);
     return postProcess(d, vec4f(Rc, 1.0));
 }
 )";

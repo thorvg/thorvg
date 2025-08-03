@@ -20,8 +20,8 @@
  * SOFTWARE.
  */
 
-#include "tvgWgPipelines.h"
 #include "tvgWgShaderSrc.h"
+#include "tvgWgPipelines.h"
 #include <cstring>
 #include <cassert>
 
@@ -354,10 +354,10 @@ void WgPipelines::initialize(WgContext& context)
         "fs_main_SoftLight",
         "fs_main_Difference",
         "fs_main_Exclusion",
-        "fs_main_Normal", //TODO: a padding for reserved Hue.
-        "fs_main_Normal", //TODO: a padding for reserved Saturation.
-        "fs_main_Normal", //TODO: a padding for reserved Color.
-        "fs_main_Normal", //TODO: a padding for reserved Luminosity.
+        "fs_main_Hue",
+        "fs_main_Saturation",
+        "fs_main_Color",
+        "fs_main_Luminosity",
         "fs_main_Add",
         "fs_main_Normal"  //TODO: a padding for reserved Hardmix.
     };
