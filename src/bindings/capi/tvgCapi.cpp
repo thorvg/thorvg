@@ -180,6 +180,20 @@ TVG_API Tvg_Result tvg_paint_del(Tvg_Paint* paint)
 }
 
 
+TVG_API Tvg_Result tvg_paint_set_visible(Tvg_Paint* paint, bool visible)
+{
+    if (paint) return (Tvg_Result) reinterpret_cast<Paint*>(paint)->visible(visible);
+    return TVG_RESULT_INVALID_ARGUMENT;
+}
+
+
+TVG_API bool tvg_paint_get_visible(const Tvg_Paint* paint)
+{
+    if (paint) return reinterpret_cast<const Paint*>(paint)->visible();
+    return false;
+}
+
+
 TVG_API uint16_t tvg_paint_ref(Tvg_Paint* paint)
 {
     if (paint) return reinterpret_cast<Paint*>(paint)->ref();

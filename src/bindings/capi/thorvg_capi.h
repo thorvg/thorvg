@@ -736,6 +736,44 @@ TVG_API uint16_t tvg_paint_unref(Tvg_Paint* paint, bool free);
 TVG_API uint16_t tvg_paint_get_ref(const Tvg_Paint* paint);
 
 
+/**
+ * @brief Sets the visibility of the Paint object.
+ *
+ * This is useful for selectively excluding paint objects during rendering.
+ *
+ * @param[in] paint The Tvg_Paint object to set the visibility status.
+ * @param[in] on A boolean flag indicating visibility. The default is @c true.
+ *               @c true, the object will be rendered by the engine.
+ *               @c false, the object will be excluded from the drawing process.
+ *
+ * @note An invisible object is not considered inactive—it may still participate
+ *       in internal update processing if its properties are updated, but it will not
+ *       be taken into account for the final drawing output. To completely deactivate
+ *       a paint object, remove it from the canvas.
+ *
+ * @see tvg_paint_get_visible()
+ * @see tvg_canvas_remove()
+ *
+ * @since 1.0
+ */
+TVG_API Tvg_Result tvg_paint_set_visible(Tvg_Paint* paint, bool visible);
+
+
+/**
+ * @brief Gets the current visibility status of the Paint object.
+ *
+ * @param[in] paint The Tvg_Paint object to return the visibility status.
+ *
+ * @return true if the object is visible and will be rendered.
+ *         false if the object is hidden and will not be rendered.
+ *
+ * @see tvg_paint_set_visible()
+ *
+ * @since 1.0
+ */
+TVG_API bool tvg_paint_get_visible(const Tvg_Paint* paint);
+
+
 /*!
 * @brief Scales the given Tvg_Paint object by the given factor.
 *
@@ -861,7 +899,7 @@ TVG_API Tvg_Paint* tvg_paint_duplicate(Tvg_Paint* paint);
  * intersects the geometric fill region of the paint object.
  *
  * This is useful for hit-testing purposes, such as detecting whether a user interaction (e.g., touch or click)
- * occurs within a visible painted region.
+ * occurs within a painted region.
  *
  * The paint must be updated in a Canvas beforehand—typically after the Canvas has been
  * drawn and synchronized.
@@ -877,7 +915,8 @@ TVG_API Tvg_Paint* tvg_paint_duplicate(Tvg_Paint* paint);
  * @note To test a single point, set the region size to w = 1, h = 1.
  * @note For efficiency, an AABB (axis-aligned bounding box) test is performed internally before precise hit detection.
  * @note This test does not take into account the results of blending or masking.
- * @note Experimental API.
+ * @note This test does take into account the the hidden paints as well. @see tvg_paint_set_visible().
+ * @note Experimental API
  */
 TVG_API bool tvg_paint_intersects(Tvg_Paint* paint, int32_t x, int32_t y, int32_t w, int32_t h);
 

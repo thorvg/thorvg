@@ -319,6 +319,27 @@ public:
     const Paint* parent() const noexcept;
 
     /**
+     * @brief Sets the visibility of the Paint object.
+     *
+     * This is useful for selectively excluding paint objects during rendering.
+     *
+     * @param[in] on A boolean flag indicating visibility. The default is @c true.
+     *               @c true, the object will be rendered by the engine.
+     *               @c false, the object will be excluded from the drawing process.
+     *
+     * @note An invisible object is not considered inactive—it may still participate
+     *       in internal update processing if its properties are updated, but it will not
+     *       be taken into account for the final drawing output. To completely deactivate
+     *       a paint object, remove it from the canvas.
+     *
+     * @see Paint::visible() const
+     * @see Result Canvas::remove(Paint* paint)
+     *
+     * @since 1.0
+     */
+    Result visible(bool on) noexcept;
+
+    /**
      * @brief Sets the angle by which the object is rotated.
      *
      * The angle in measured clockwise from the horizontal axis.
@@ -464,7 +485,7 @@ public:
      * intersects the geometric fill region of the paint object.
      *
      * This is useful for hit-testing purposes, such as detecting whether a user interaction (e.g., touch or click)
-     * occurs within a visible painted region.
+     * occurs within a painted region.
      *
      * The paint must be updated in a Canvas beforehand—typically after the Canvas has been
      * drawn and synchronized.
@@ -479,7 +500,8 @@ public:
      * @note To test a single point, set the region size to w = 1, h = 1.
      * @note For efficiency, an AABB (axis-aligned bounding box) test is performed internally before precise hit detection.
      * @note This test does not take into account the results of blending or masking.
-     * @note Experimental API.
+     * @note This test does take into account the the hidden paints as well. @see Paint::visible()
+     * @note Experimental API
      */
     bool intersects(int32_t x, int32_t y, int32_t w = 1, int32_t h = 1) noexcept;
 
@@ -522,6 +544,18 @@ public:
      * @since 1.0
      */
     Shape* clip() const noexcept;
+
+    /**
+     * @brief Gets the current visibility status of the Paint object.
+     *
+     * @return true if the object is visible and will be rendered.
+     *         false if the object is hidden and will not be rendered.
+     *
+     * @see Paint::visible(bool on)
+     *
+     * @since 1.0
+     */
+    bool visible() const noexcept;
 
     /**
      * @brief Increment the reference count for the Paint instance.

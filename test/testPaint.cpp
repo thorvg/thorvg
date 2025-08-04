@@ -116,6 +116,23 @@ TEST_CASE("Opacity", "[tvgPaint]")
     REQUIRE(shape->opacity() == 0);
 }
 
+TEST_CASE("Visibility", "[tvgPaint]")
+{
+    auto shape = unique_ptr<Shape>(Shape::gen());
+    REQUIRE(shape);
+
+    REQUIRE(shape->visible() == true);
+
+    REQUIRE(shape->visible(false) == Result::Success);
+    REQUIRE(shape->visible() == false);
+
+    REQUIRE(shape->visible(false) == Result::Success);
+    REQUIRE(shape->visible() == false);
+
+    REQUIRE(shape->visible(true) == Result::Success);
+    REQUIRE(shape->visible() == true);
+}
+
 TEST_CASE("Bounding Box", "[tvgPaint]")
 {
     Initializer::init();
