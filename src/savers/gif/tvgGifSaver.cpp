@@ -44,8 +44,8 @@ void GifSaver::run(unsigned tid)
 
     if (bg) {
         bg->unref();
+        bg = nullptr;
     }
-    bg = nullptr;
 
     canvas->push(animation->picture());
 
