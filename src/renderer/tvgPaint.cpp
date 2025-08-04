@@ -176,7 +176,7 @@ Paint* Paint::Impl::duplicate(Paint* ret)
 
 bool Paint::Impl::render(RenderMethod* renderer)
 {
-    if (opacity == 0) return true;
+    if (hidden || opacity == 0) return true;
 
     RenderCompositor* cmp = nullptr;
 
@@ -428,11 +428,10 @@ MaskMethod Paint::mask(const Paint** target) const noexcept
 
 Result Paint::opacity(uint8_t o) noexcept
 {
-    if (pImpl->opacity == o) return Result::Success;
-
-    pImpl->opacity = o;
-    pImpl->mark(RenderUpdateFlag::Color);
-
+    if (pImpl->opacity != o) {
+        pImpl->opacity = o;
+        pImpl->mark(RenderUpdateFlag::Color);
+    }
     return Result::Success;
 }
 
@@ -475,4 +474,16 @@ uint16_t Paint::refCnt() const noexcept
 const Paint* Paint::parent() const noexcept
 {
     return pImpl->parent;
+}
+
+
+Result Paint::visible(bool on) noexcept
+{
+    return pImpl->visible(!on);
+}
+
+
+bool Paint::visible() const noexcept
+{
+    return !pImpl->hidden;
 }

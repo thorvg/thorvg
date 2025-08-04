@@ -84,10 +84,12 @@ namespace tvg
         uint16_t refCnt = 0;       //reference count
         uint8_t ctxFlag;           //See enum ContextFlag
         uint8_t opacity;
+        bool hidden : 1;
 
         Impl(Paint* pnt) : paint(pnt)
         {
             pnt->pImpl = this;
+            hidden = false;
             reset();
         }
 
@@ -293,6 +295,15 @@ namespace tvg
                 blendMethod = method;
                 mark(RenderUpdateFlag::Blend);
             }
+        }
+
+        Result visible(bool hidden)
+        {
+            if (this->hidden != hidden) {
+                this->hidden = hidden;
+                damage();
+            }
+            return Result::Success;
         }
 
         bool intersects(const RenderRegion& region);
