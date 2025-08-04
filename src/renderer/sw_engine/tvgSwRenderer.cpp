@@ -443,7 +443,7 @@ bool SwRenderer::renderImage(RenderData data)
         for (int idx = 0; idx < RenderDirtyRegion::PARTITIONING; ++idx) {
             if (!dirtyRegion.partition(idx).intersected(task->curBox)) continue;
             ARRAY_FOREACH(p, dirtyRegion.get(idx)) {
-                if (task->curBox.min.x >= p->max.x) break;  //dirtyRegion is sorted in x order
+                if (task->curBox.max.x <= p->min.x) break;   //dirtyRegion is sorted in x order
                 if (task->curBox.intersected(*p)) {
                     auto bbox = RenderRegion::intersect(task->curBox, *p);
                     raster(surface, task->image, task->transform, bbox, task->opacity);
@@ -503,7 +503,7 @@ bool SwRenderer::renderShape(RenderData data)
         for (int idx = 0; idx < RenderDirtyRegion::PARTITIONING; ++idx) {
             if (!dirtyRegion.partition(idx).intersected(task->curBox)) continue;
             ARRAY_FOREACH(p, dirtyRegion.get(idx)) {
-                if (task->curBox.min.x >= p->max.x) break;   //dirtyRegion is sorted in x order
+                if (task->curBox.max.x <= p->min.x) break;   //dirtyRegion is sorted in x order
                 if (task->rshape->strokeFirst()) {
                     if (task->rshape->stroke && task->curBox.intersected(*p)) stroke(task, surface, RenderRegion::intersect(task->curBox, *p));
                     if (task->shape.bbox.intersected(*p)) fill(task, surface, RenderRegion::intersect(task->shape.bbox, *p));
