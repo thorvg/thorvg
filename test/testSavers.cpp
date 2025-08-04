@@ -27,7 +27,7 @@
 
 using namespace tvg;
 using namespace std;
-#if 0
+
 TEST_CASE("Saver Creation", "[tvgSavers]")
 {
     auto saver = unique_ptr<Saver>(Saver::gen());
@@ -36,41 +36,39 @@ TEST_CASE("Saver Creation", "[tvgSavers]")
 
 #if defined(THORVG_GIF_SAVER_SUPPORT) && defined(THORVG_LOTTIE_LOADER_SUPPORT)
 
-TEST_CASE("Save a lottie into gif", "[tvgSavers]")
-{
+TEST_CASE("Save a lottie into gif", "[tvgSavers]") {
     REQUIRE(Initializer::init() == Result::Success);
+    {
+        auto animation = Animation::gen();
+        REQUIRE(animation);
 
-    auto animation = Animation::gen();
-    REQUIRE(animation);
+        auto picture = animation->picture();
+        REQUIRE(picture);
+        REQUIRE(picture->load(TEST_DIR"/test.json") == Result::Success);
+        REQUIRE(picture->size(100, 100) == Result::Success);
 
-    auto picture = animation->picture();
-    REQUIRE(picture);
-    REQUIRE(picture->load(TEST_DIR"/test.json") == Result::Success);
-    REQUIRE(picture->size(100, 100) == Result::Success);
+        auto saver =  unique_ptr<Saver>(Saver::gen());
+        REQUIRE(saver);
+        REQUIRE(saver->save(animation, TEST_DIR"/test.gif") == Result::Success);
+        REQUIRE(saver->sync() == Result::Success);
 
-    auto saver =  unique_ptr<Saver>(Saver::gen());
-    REQUIRE(saver);
-    REQUIRE(saver->save(animation, TEST_DIR"/test.gif") == Result::Success);
-    REQUIRE(saver->sync() == Result::Success);
+        //with a background
+        auto animation2 = Animation::gen();
+        REQUIRE(animation2);
 
-    //with a background
-    auto animation2 = Animation::gen();
-    REQUIRE(animation2);
+        auto picture2 = animation2->picture();
+        REQUIRE(picture2);
+        REQUIRE(picture2->load(TEST_DIR"/test.json") == Result::Success);
+        REQUIRE(picture2->size(100, 100) == Result::Success);
 
-    auto picture2 = animation2->picture();
-    REQUIRE(picture2);
-    REQUIRE(picture2->load(TEST_DIR"/test.json") == Result::Success);
-    REQUIRE(picture2->size(100, 100) == Result::Success);
+        auto bg = Shape::gen();
+        REQUIRE(bg->fill(255, 255, 255) == Result::Success);
+        REQUIRE(bg->appendRect(0, 0, 100, 100) == Result::Success);
 
-    auto bg = Shape::gen();
-    REQUIRE(bg->fill(255, 255, 255) == Result::Success);
-    REQUIRE(bg->appendRect(0, 0, 100, 100) == Result::Success);
-
-    REQUIRE(saver->background(bg) == Result::Success);
-    REQUIRE(saver->save(animation2, TEST_DIR"/test.gif") == Result::Success);
-    REQUIRE(saver->sync() == Result::Success);
-
+        REQUIRE(saver->background(bg) == Result::Success);
+        REQUIRE(saver->save(animation2, TEST_DIR"/test.gif") == Result::Success);
+        REQUIRE(saver->sync() == Result::Success);
+    }
     REQUIRE(Initializer::term() == Result::Success);
 }
-#endif
 #endif
