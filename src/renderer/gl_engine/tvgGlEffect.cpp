@@ -77,7 +77,9 @@ GlRenderTask* GlEffect::render(RenderEffectGaussianBlur* effect, GlRenderTarget*
     auto dstCopyFbo1 = blendPool[1]->getRenderTarget(vp);
 
     // add uniform data
+    float viewport[4] {(float)vp.min.x, (float)vp.min.y, (float)vp.max.x, (float)vp.max.y};
     auto blurOffset = gpuBuffer->push((GlGaussianBlur*)(effect->rd), sizeof(GlGaussianBlur), true);
+    auto viewportOffset = gpuBuffer->push(viewport, sizeof(viewport), true);
 
     // create gaussian blur tasks
     auto task = new GlGaussianBlurTask(dstFbo, dstCopyFbo0, dstCopyFbo1);
@@ -86,11 +88,13 @@ GlRenderTask* GlEffect::render(RenderEffectGaussianBlur* effect, GlRenderTarget*
     // horizontal blur task and geometry
     task->horzTask = new GlRenderTask(pBlurH);
     task->horzTask->addBindResource(GlBindingResource{0, pBlurH->getUniformBlockIndex("Gaussian"), gpuBuffer->getBufferId(), blurOffset, sizeof(GlGaussianBlur)});
+    task->horzTask->addBindResource(GlBindingResource{1, pBlurH->getUniformBlockIndex("Viewport"), gpuBuffer->getBufferId(), viewportOffset, sizeof(viewport)});
     task->horzTask->addVertexLayout(GlVertexLayout{0, 2, 2 * sizeof(float), voffset});
     task->horzTask->setDrawRange(ioffset, 6);
     // vertical blur task and geometry
     task->vertTask = new GlRenderTask(pBlurV);
     task->vertTask->addBindResource(GlBindingResource{0, pBlurV->getUniformBlockIndex("Gaussian"), gpuBuffer->getBufferId(), blurOffset, sizeof(GlGaussianBlur)});
+    task->vertTask->addBindResource(GlBindingResource{1, pBlurV->getUniformBlockIndex("Viewport"), gpuBuffer->getBufferId(), viewportOffset, sizeof(viewport)});
     task->vertTask->addVertexLayout(GlVertexLayout{0, 2, 2 * sizeof(float), voffset});
     task->vertTask->setDrawRange(ioffset, 6);
 
@@ -156,8 +160,10 @@ GlRenderTask* GlEffect::render(RenderEffectDropShadow* effect, GlRenderTarget* d
     auto dstCopyFbo1 = blendPool[1]->getRenderTarget(vp);
 
     // add uniform data
+    float viewport[4] {(float)vp.min.x, (float)vp.min.y, (float)vp.max.x, (float)vp.max.y};
     GlDropShadow* params = (GlDropShadow*)(effect->rd);
     auto paramsOffset = gpuBuffer->push(params, sizeof(GlDropShadow), true);
+    auto viewportOffset = gpuBuffer->push(viewport, sizeof(viewport), true);
 
     // create gaussian blur tasks
     auto task = new GlEffectDropShadowTask(pDropShadow, dstFbo, dstCopyFbo0, dstCopyFbo1);
@@ -170,12 +176,14 @@ GlRenderTask* GlEffect::render(RenderEffectDropShadow* effect, GlRenderTarget* d
     // horizontal blur task and geometry
     task->horzTask = new GlRenderTask(pBlurH);
     task->horzTask->addBindResource(GlBindingResource{0, pBlurH->getUniformBlockIndex("Gaussian"), gpuBuffer->getBufferId(), paramsOffset, sizeof(GlGaussianBlur)});
+    task->horzTask->addBindResource(GlBindingResource{1, pBlurH->getUniformBlockIndex("Viewport"), gpuBuffer->getBufferId(), viewportOffset, sizeof(viewport)});
     task->horzTask->addVertexLayout(GlVertexLayout{0, 2, 2 * sizeof(float), voffset});
     task->horzTask->setDrawRange(ioffset, 6);
 
     // vertical blur task and geometry
     task->vertTask = new GlRenderTask(pBlurV);
     task->vertTask->addBindResource(GlBindingResource{0, pBlurV->getUniformBlockIndex("Gaussian"), gpuBuffer->getBufferId(), paramsOffset, sizeof(GlGaussianBlur)});
+    task->vertTask->addBindResource(GlBindingResource{1, pBlurV->getUniformBlockIndex("Viewport"), gpuBuffer->getBufferId(), viewportOffset, sizeof(viewport)});
     task->vertTask->addVertexLayout(GlVertexLayout{0, 2, 2 * sizeof(float), voffset});
     task->vertTask->setDrawRange(ioffset, 6);
 
