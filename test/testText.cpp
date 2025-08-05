@@ -165,4 +165,47 @@ TEST_CASE("Text with composite glyphs", "[tvgText]")
     Initializer::term();
 }
 
+TEST_CASE("Text Duplication", "[tvgText]")
+{
+    REQUIRE(Initializer::init() == Result::Success);
+    {
+        REQUIRE(Text::load(TEST_DIR"/Arial.ttf") == Result::Success);
+
+        auto text = Text::gen();
+        REQUIRE(text);
+        REQUIRE(text->font("Arial", 32) == Result::Success);
+        REQUIRE(text->text("Original Text") == Result::Success);
+        REQUIRE(text->fill(255, 0, 0) == Result::Success);
+
+        REQUIRE(text->opacity(0) == Result::Success);
+        REQUIRE(text->translate(200.0f, 100.0f) == Result::Success);
+        REQUIRE(text->scale(2.2f) == Result::Success);
+        REQUIRE(text->rotate(90.0f) == Result::Success);
+
+        auto comp = Shape::gen();
+        REQUIRE(comp);
+        REQUIRE(text->clip(comp) == Result::Success);
+
+        //Duplication
+        auto dup = unique_ptr<Paint>(text->duplicate());
+        REQUIRE(dup);
+
+        //Compare properties
+        REQUIRE(dup->type() == Type::Text);
+        REQUIRE(dup->opacity() == 0);
+
+        auto m = text->transform();
+        REQUIRE(m.e11 == Approx(0.0f).margin(0.000001));
+        REQUIRE(m.e12 == Approx(-2.2f).margin(0.000001));
+        REQUIRE(m.e13 == Approx(200.0f).margin(0.000001));
+        REQUIRE(m.e21 == Approx(2.2f).margin(0.000001));
+        REQUIRE(m.e22 == Approx(0.0f).margin(0.000001));
+        REQUIRE(m.e23 == Approx(100.0f).margin(0.000001));
+        REQUIRE(m.e31 == Approx(0.0f).margin(0.000001));
+        REQUIRE(m.e32 == Approx(0.0f).margin(0.000001));
+        REQUIRE(m.e33 == Approx(1.0f).margin(0.000001));
+    }
+    REQUIRE(Initializer::term() == Result::Success);
+}
+
 #endif
