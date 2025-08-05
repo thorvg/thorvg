@@ -51,17 +51,7 @@ public:
         RT_MaskDarken,
         RT_Stencil,
         RT_Blit,
-        RT_MultiplyBlend,
-        RT_ScreenBlend,
-        RT_OverlayBlend,
-        RT_ColorDodgeBlend,
-        RT_ColorBurnBlend,
-        RT_HardLightBlend,
-        RT_SoftLightBlend,
-        RT_DifferenceBlend,
-        RT_ExclusionBlend,
-
-        RT_None,
+        RT_None
     };
 
     //main features
@@ -114,8 +104,7 @@ private:
     GlRenderPass* currentPass();
 
     bool beginComplexBlending(const RenderRegion& vp, RenderRegion bounds);
-    void endBlendingCompose(GlRenderTask* stencilTask, const Matrix& matrix);
-    GlProgram* getBlendProgram();
+    void endBlendingCompose(GlRenderTask* stencilTask, const Matrix& matrix, bool gradient);
 
     void prepareBlitTask(GlBlitTask* task);
     void prepareCmpTask(GlRenderTask* task, const RenderRegion& vp, uint32_t cmpWidth, uint32_t cmpHeight);
@@ -132,6 +121,9 @@ private:
     GlRenderTarget mRootTarget;
     GlEffect mEffect;
     Array<GlProgram*> mPrograms;
+    Array<GlProgram*> mProgramsSolidBlend;
+    Array<GlProgram*> mProgramsGradBlend;
+
     Array<GlRenderTargetPool*> mComposePool;
     Array<GlRenderTargetPool*> mBlendPool;
     Array<GlRenderPass*> mRenderPassStack;
