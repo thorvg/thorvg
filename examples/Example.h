@@ -500,7 +500,7 @@ float progress(uint32_t elapsed, float durationInSec, bool rewind = false)
     auto duration = uint32_t(durationInSec * 1000.0f); //sec -> millisec.
     if (elapsed == 0 || duration == 0) return 0.0f;
     auto forward = ((elapsed / duration) % 2 == 0) ? true : false;
-    if (elapsed % duration == 0) return 1.0f;
+    if (elapsed % duration == 0) return forward ? 0.0f : 1.0f;
     auto progress = (float(elapsed % duration) / (float)duration);
     if (rewind) return forward ? progress : (1 - progress);
     return progress;
