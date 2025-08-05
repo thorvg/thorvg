@@ -202,6 +202,41 @@ TEST_CASE("Bounding Box", "[tvgPaint]")
     Initializer::term();
 }
 
+TEST_CASE("Intersection", "[tvgPaint]")
+{
+    REQUIRE(Initializer::init() == Result::Success);
+    {
+        auto canvas = unique_ptr<SwCanvas>(SwCanvas::gen());
+
+        uint32_t buffer[200 * 200];
+        canvas->target(buffer, 200, 200, 200, ColorSpace::ARGB8888);
+
+        auto shape = Shape::gen();
+        REQUIRE(shape);
+        REQUIRE(shape->appendRect(50, 50, 100, 100) == Result::Success);
+        REQUIRE(shape->fill(255, 0, 0, 255) == Result::Success);
+
+        REQUIRE(canvas->push(shape) == Result::Success);
+        REQUIRE(canvas->draw() == Result::Success);
+
+        // Case1. Fully contained
+        REQUIRE(shape->intersects(0, 0, 200, 200) == true);
+
+        // Case2. Partially overlapping
+        REQUIRE(shape->intersects(25, 25, 50, 50) == true);
+        REQUIRE(shape->intersects(125, 125, 50, 50) == true);
+
+        // Case3. Edge-touching
+        REQUIRE(shape->intersects(49, 49, 2, 2) == true);
+        REQUIRE(shape->intersects(149, 149, 2, 2) == true);
+
+        // Case4. Fully separated
+        REQUIRE(shape->intersects(0, 0, 25, 25) == false);
+        REQUIRE(shape->intersects(175, 175, 25, 25) == false);
+    }
+    REQUIRE(Initializer::term() == Result::Success);
+}
+
 TEST_CASE("Duplication", "[tvgPaint]")
 {
     auto shape = unique_ptr<Shape>(Shape::gen());
