@@ -103,10 +103,12 @@ void GlRenderer::initShaders()
 #if 1  //for optimization
     #define LINEAR_TOTAL_LENGTH 2770
     #define RADIAL_TOTAL_LENGTH 5272
+    #define BLEND_TOTAL_LENGTH 8192
 #else
     #define COMMON_TOTAL_LENGTH strlen(STR_GRADIENT_FRAG_COMMON_VARIABLES) + strlen(STR_GRADIENT_FRAG_COMMON_FUNCTIONS) + 1
     #define LINEAR_TOTAL_LENGTH strlen(STR_LINEAR_GRADIENT_VARIABLES) + strlen(STR_LINEAR_GRADIENT_MAIN) + COMMON_TOTAL_LENGTH
     #define RADIAL_TOTAL_LENGTH strlen(STR_RADIAL_GRADIENT_VARIABLES) + strlen(STR_RADIAL_GRADIENT_MAIN) + COMMON_TOTAL_LENGTH
+    #define BLEND_TOTAL_LENGTH strlen(BLEND_SOLID_FRAG_HEADER) + strlen(COLOR_BURN_BLEND_FRAG) + COMMON_TOTAL_LENGTH
 #endif
 
     char linearGradientFragShader[LINEAR_TOTAL_LENGTH];
@@ -148,16 +150,10 @@ void GlRenderer::initShaders()
     // blit Renderer
     mPrograms.push(new GlProgram(BLIT_VERT_SHADER, BLIT_FRAG_SHADER));
 
-    // complex blending Renderer
-    mPrograms.push(new GlProgram(MASK_VERT_SHADER, MULTIPLY_BLEND_FRAG));
-    mPrograms.push(new GlProgram(MASK_VERT_SHADER, SCREEN_BLEND_FRAG));
-    mPrograms.push(new GlProgram(MASK_VERT_SHADER, OVERLAY_BLEND_FRAG));
-    mPrograms.push(new GlProgram(MASK_VERT_SHADER, COLOR_DODGE_BLEND_FRAG));
-    mPrograms.push(new GlProgram(MASK_VERT_SHADER, COLOR_BURN_BLEND_FRAG));
-    mPrograms.push(new GlProgram(MASK_VERT_SHADER, HARD_LIGHT_BLEND_FRAG));
-    mPrograms.push(new GlProgram(MASK_VERT_SHADER, SOFT_LIGHT_BLEND_FRAG));
-    mPrograms.push(new GlProgram(MASK_VERT_SHADER, DIFFERENCE_BLEND_FRAG));
-    mPrograms.push(new GlProgram(MASK_VERT_SHADER, EXCLUSION_BLEND_FRAG));
+    for (uint32_t i = 0; i < 17; i++) {
+        mPrograms.push(nullptr); // slot for blend
+        mPrograms.push(nullptr); // slot for gradient blend
+    }
 }
 
 
@@ -252,7 +248,7 @@ void GlRenderer::drawPrimitive(GlShape& sdata, const RenderColor& c, RenderUpdat
     if (complexBlend) {
         auto task = new GlRenderTask(mPrograms[RT_Stencil]);
         sdata.geometry.draw(task, &mGpuBuffer, flag);
-        endBlendingCompose(task, sdata.geometry.matrix);
+        endBlendingCompose(task, sdata.geometry.matrix, false);
     }
 }
 
@@ -433,7 +429,7 @@ void GlRenderer::drawPrimitive(GlShape& sdata, const Fill* fill, RenderUpdateFla
     if (complexBlend) {
         auto task = new GlRenderTask(mPrograms[RT_Stencil]);
         sdata.geometry.draw(task, &mGpuBuffer, flag);
-        endBlendingCompose(task, sdata.geometry.matrix);
+        endBlendingCompose(task, sdata.geometry.matrix, true);
     }
 }
 
@@ -531,7 +527,7 @@ bool GlRenderer::beginComplexBlending(const RenderRegion& vp, RenderRegion bound
     bounds.intersect(vp);
     if (bounds.invalid()) return false;
 
-    if (mBlendMethod == BlendMethod::Normal || mBlendMethod == BlendMethod::Add || mBlendMethod == BlendMethod::Darken || mBlendMethod == BlendMethod::Lighten) return false;
+    if (mBlendMethod == BlendMethod::Normal) return false;
 
     if (mBlendPool.empty()) mBlendPool.push(new GlRenderTargetPool(surface.w, surface.h));
 
@@ -542,7 +538,7 @@ bool GlRenderer::beginComplexBlending(const RenderRegion& vp, RenderRegion bound
     return true;
 }
 
-void GlRenderer::endBlendingCompose(GlRenderTask* stencilTask, const Matrix& matrix)
+void GlRenderer::endBlendingCompose(GlRenderTask* stencilTask, const Matrix& matrix, bool gradient)
 {
     auto blendPass = mRenderPassStack.last();
     mRenderPassStack.pop();
@@ -572,8 +568,9 @@ void GlRenderer::endBlendingCompose(GlRenderTask* stencilTask, const Matrix& mat
         viewOffset,
         16 * sizeof(float),
     });
-
-    auto task = new GlComplexBlendTask(getBlendProgram(), currentPass()->getFbo(), dstCopyFbo, stencilTask, composeTask);
+    
+    auto program = getBlendProgram(mBlendMethod, gradient);
+    auto task = new GlComplexBlendTask(program, currentPass()->getFbo(), dstCopyFbo, stencilTask, composeTask);
     prepareCmpTask(task, vp, blendPass->getFboWidth(), blendPass->getFboHeight());
     task->setDrawDepth(currentPass()->nextDrawDepth());
 
@@ -586,20 +583,44 @@ void GlRenderer::endBlendingCompose(GlRenderTask* stencilTask, const Matrix& mat
     delete(blendPass);
 }
 
-GlProgram* GlRenderer::getBlendProgram()
-{
-    switch (mBlendMethod) {
-        case BlendMethod::Multiply: return mPrograms[RT_MultiplyBlend];
-        case BlendMethod::Screen: return mPrograms[RT_ScreenBlend];
-        case BlendMethod::Overlay: return mPrograms[RT_OverlayBlend];
-        case BlendMethod::ColorDodge: return mPrograms[RT_ColorDodgeBlend];
-        case BlendMethod::ColorBurn: return mPrograms[RT_ColorBurnBlend];
-        case BlendMethod::HardLight: return mPrograms[RT_HardLightBlend];
-        case BlendMethod::SoftLight: return mPrograms[RT_SoftLightBlend];
-        case BlendMethod::Difference: return mPrograms[RT_DifferenceBlend];
-        case BlendMethod::Exclusion: return mPrograms[RT_ExclusionBlend];
-        default: return nullptr;
+GlProgram* GlRenderer::getBlendProgram(BlendMethod method, bool gradient) {
+    // custom blend shaders
+    static const char* shaderFunc[17] {
+        NORMAL_BLEND_FRAG,
+        MULTIPLY_BLEND_FRAG,
+        SCREEN_BLEND_FRAG,
+        OVERLAY_BLEND_FRAG,
+        DARKEN_BLEND_FRAG,
+        LIGHTEN_BLEND_FRAG,
+        COLOR_DODGE_BLEND_FRAG,
+        COLOR_BURN_BLEND_FRAG,
+        HARD_LIGHT_BLEND_FRAG,
+        SOFT_LIGHT_BLEND_FRAG,
+        DIFFERENCE_BLEND_FRAG,
+        EXCLUSION_BLEND_FRAG,
+        NORMAL_BLEND_FRAG,
+        NORMAL_BLEND_FRAG,
+        NORMAL_BLEND_FRAG,
+        NORMAL_BLEND_FRAG,
+        ADD_BLEND_FRAG
+    };
+    
+    uint32_t methodInd = (uint32_t)method;
+    uint32_t startInd = (uint32_t)RenderTypes::RT_Blend_Normal;
+    uint32_t shaderInd = methodInd + startInd;
+
+    char shaderSourceBuff[BLEND_TOTAL_LENGTH];
+    if (gradient) {
+        startInd = (uint32_t)RenderTypes::RT_Blend_Gradient_Normal;
+        shaderInd = methodInd + startInd;
+        strcat(strcpy(shaderSourceBuff, BLEND_GRADIENT_FRAG_HEADER), shaderFunc[methodInd]);
+    } else {
+        strcat(strcpy(shaderSourceBuff, BLEND_SOLID_FRAG_HEADER), shaderFunc[methodInd]);
     }
+
+    if (!mPrograms[shaderInd])
+        mPrograms[shaderInd] = new GlProgram(BLIT_VERT_SHADER, shaderSourceBuff);
+    return mPrograms[shaderInd];
 }
 
 
@@ -980,9 +1001,6 @@ const RenderSurface* GlRenderer::mainSurface()
 
 bool GlRenderer::blend(BlendMethod method)
 {
-    //TODO: support
-    if (method == BlendMethod::Hue || method == BlendMethod::Saturation || method == BlendMethod::Color || method == BlendMethod::Luminosity) return false;
-
     if (method == mBlendMethod) return true;
 
     mBlendMethod = (method == BlendMethod::Composition ? BlendMethod::Normal : method);
@@ -1057,7 +1075,7 @@ bool GlRenderer::renderImage(void* data)
     if (complexBlend) {
         auto task = new GlRenderTask(mPrograms[RT_Stencil]);
         sdata->geometry.draw(task, &mGpuBuffer, RenderUpdateFlag::Image);
-        endBlendingCompose(task, sdata->geometry.matrix);
+        endBlendingCompose(task, sdata->geometry.matrix, false);
     }
 
     return true;
