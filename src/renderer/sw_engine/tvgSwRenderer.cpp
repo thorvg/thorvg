@@ -867,10 +867,8 @@ void* SwRenderer::prepareCommon(SwTask* task, const Matrix& transform, const Arr
     //TODO: Failed threading them. It would be better if it's possible.
     //See: https://github.com/thorvg/thorvg/issues/1409
     //Guarantee composition targets get ready.
-    if (flags & RenderUpdateFlag::Clip) {
-        ARRAY_FOREACH(p, clips) {
-            static_cast<SwTask*>(*p)->done();
-        }
+    ARRAY_FOREACH(p, clips) {
+        static_cast<SwTask*>(*p)->done();
     }
 
     if (flags) TaskScheduler::request(task);
