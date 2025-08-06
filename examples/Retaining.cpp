@@ -76,22 +76,24 @@ struct UserExample : tvgexam::Example
     {
         //update per every 250ms
         //reorder with a circular list
-        if (elapsed - last > 250) {
-            //Acquire the first paint from the root scene
-            auto paint = *canvas->paints().begin();
+        if (elapsed - last < 250) return false;
 
-            //Prevent deleting from canvas->remove()
-            paint->ref();
+        //Acquire the first paint from the root scene
+        auto paint = *canvas->paints().begin();
 
-            //Re-push the front paint to the end of the root scene
-            tvgexam::verify(canvas->remove(paint));
-            tvgexam::verify(canvas->push(paint));
+        //Prevent deleting from canvas->remove()
+        paint->ref();
 
-            //Make it pair ref() - unref()
-            paint->unref();
+        //Re-push the front paint to the end of the root scene
+        tvgexam::verify(canvas->remove(paint));
+        tvgexam::verify(canvas->push(paint));
 
-            last = elapsed;
-        }
+        //Make it pair ref() - unref()
+        paint->unref();
+
+        last = elapsed;
+
+        canvas->update();
 
         return true;
     }
