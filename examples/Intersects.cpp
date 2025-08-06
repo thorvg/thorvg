@@ -29,20 +29,19 @@
 struct UserExample : tvgexam::Example
 {
     //Use a scene for selection effect
-    tvg::Scene* shape;
-    tvg::Scene* picture;
-    tvg::Scene* text;
-    tvg::Scene* tiger;
+    tvg::Shape* shape;
+    tvg::Picture* picture;
+    tvg::Text* text;
+    tvg::Picture* tiger;
 
     tvg::Shape* marquee;
     int mx = 0, my = 0, mw = 20, mh = 20;
-    bool updated = false;
 
     bool content(tvg::Canvas* canvas, uint32_t w, uint32_t h) override
     {
         //dash stroke filled shape
         {
-            auto shape = tvg::Shape::gen();
+            shape = tvg::Shape::gen();
             shape->moveTo(255, 85);
             shape->lineTo(380, 405);
             shape->lineTo(75, 200);
@@ -60,17 +59,12 @@ struct UserExample : tvgexam::Example
 
             shape->scale(1.25f);
 
-            auto scene = tvg::Scene::gen();
-            scene->push(shape);
-
-            canvas->push(scene);
-
-            this->shape = scene;
+            canvas->push(shape);
         }
 
         //clipped, rotated image
         {
-            auto picture = tvg::Picture::gen();
+            picture = tvg::Picture::gen();
             if (!tvgexam::verify(picture->load(EXAMPLE_DIR"/image/test.jpg"))) return false;
 
             picture->translate(800, 100);
@@ -80,47 +74,29 @@ struct UserExample : tvgexam::Example
             clip->appendCircle(900, 350, 200, 200);
             picture->clip(clip);
 
-            //Use a scene for selection effect
-            auto scene = tvg::Scene::gen();
-            scene->push(picture);
-
-            canvas->push(scene);
-
-            this->picture = scene;
+            canvas->push(picture);
         }
 
         //normal text
         {
             if (!tvgexam::verify(tvg::Text::load(EXAMPLE_DIR"/font/Arial.ttf"))) return false;
-            auto text = tvg::Text::gen();
+            text = tvg::Text::gen();
             text->font("Arial", 100);
             text->text("Intersect?!");
             text->translate(25, 800);
             text->fill(255, 255, 255);
 
-            //Use a scene for selection effect
-            auto scene = tvg::Scene::gen();
-            scene->push(text);
-
-            canvas->push(scene);
-
-            this->text = scene;
+            canvas->push(text);
         }
 
         //vector scene
         {
-            auto tiger = tvg::Picture::gen();
+            tiger = tvg::Picture::gen();
             if (!tvgexam::verify(tiger->load(EXAMPLE_DIR"/svg/tiger.svg"))) return false;
             tiger->translate(700, 640);
             tiger->scale(0.5f);
 
-            //Use a scene for selection effect
-            auto scene = tvg::Scene::gen();
-            scene->push(tiger);
-
-            canvas->push(scene);
-
-            this->tiger = scene;
+            canvas->push(tiger);
         }
 
         //marquee
@@ -147,27 +123,20 @@ struct UserExample : tvgexam::Example
 
     bool update(tvg::Canvas* canvas, uint32_t elapsed) override
     {
-        //reset
-        shape->push(tvg::SceneEffect::ClearAll);
-        picture->push(tvg::SceneEffect::ClearAll);
-        text->push(tvg::SceneEffect::ClearAll);
-        tiger->push(tvg::SceneEffect::ClearAll);
-
         marquee->translate(mx, my);
 
-        if (shape->intersects(mx, my, mw, mh)) {
-            shape->push(tvg::SceneEffect::Fill, 255, 255, 0, 255);
-        } else if (picture->intersects(mx, my, mw, mh)) {
-            picture->push(tvg::SceneEffect::Fill, 255, 255, 0, 255);
-        } else if (text->intersects(mx, my, mw, mh)) {
-            text->push(tvg::SceneEffect::Fill, 255, 255, 0, 255);
-        } else if (tiger->intersects(mx, my, mw, mh)) {
-            tiger->push(tvg::SceneEffect::Fill, 255, 255, 0, 255);
-        }
+        //reset
+        shape->opacity(255);
+        picture->opacity(255);
+        text->opacity(255);
+        tiger->opacity(255);
+
+        if (shape->intersects(mx, my, mw, mh)) shape->opacity(127);
+        else if (picture->intersects(mx, my, mw, mh)) picture->opacity(127);
+        else if (text->intersects(mx, my, mw, mh)) text->opacity(127);
+        else if (tiger->intersects(mx, my, mw, mh)) tiger->opacity(127);
 
         canvas->update();
-
-        updated = false;
 
         return true;
     }
