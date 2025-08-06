@@ -1,5 +1,0 @@
-<map id="Fill" name="Fill">
-<area shape="rect" id="node1" title="An abstract class representing the gradient fill of the Shape object." alt="" coords="115,5,156,32"/>
-<area shape="rect" id="node2" href="$classtvg_1_1LinearGradient.html" title="A class representing the linear gradient fill of the Shape object." alt="" coords="5,80,124,107"/>
-<area shape="rect" id="node3" href="$classtvg_1_1RadialGradient.html" title="A class representing the radial gradient fill of the Shape object." alt="" coords="148,80,267,107"/>
-</map>

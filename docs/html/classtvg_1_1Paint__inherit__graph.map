@@ -1,7 +1,0 @@
-<map id="Paint" name="Paint">
-<area shape="rect" id="node1" title="An abstract class for managing graphical elements." alt="" coords="142,5,197,32"/>
-<area shape="rect" id="node2" href="$classtvg_1_1Picture.html" title="A class representing an image read in one of the supported formats: raw, svg, png,..." alt="" coords="5,80,72,107"/>
-<area shape="rect" id="node3" href="$classtvg_1_1Scene.html" title="A class to composite children paints." alt="" coords="96,80,157,107"/>
-<area shape="rect" id="node4" href="$classtvg_1_1Shape.html" title="A class representing two&#45;dimensional figures and their properties." alt="" coords="182,80,245,107"/>
-<area shape="rect" id="node5" href="$classtvg_1_1Text.html" title="A class to represent text objects in a graphical context, allowing for rendering and manipulation of ..." alt="" coords="269,80,318,107"/>
-</map>

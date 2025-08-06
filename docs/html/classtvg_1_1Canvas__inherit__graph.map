@@ -1,6 +1,0 @@
-<map id="Canvas" name="Canvas">
-<area shape="rect" id="node1" title="An abstract class for drawing graphical elements." alt="" coords="123,5,193,32"/>
-<area shape="rect" id="node2" href="$classtvg_1_1GlCanvas.html" title="A class for the rendering graphic elements with a GL raster engine." alt="" coords="5,80,89,107"/>
-<area shape="rect" id="node3" href="$classtvg_1_1SwCanvas.html" title="A class for the rendering graphical elements with a software raster engine." alt="" coords="113,80,203,107"/>
-<area shape="rect" id="node4" href="$classtvg_1_1WgCanvas.html" title="A class for the rendering graphic elements with a WebGPU raster engine." alt="" coords="227,80,318,107"/>
-</map>

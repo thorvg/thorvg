@@ -5,7 +5,6 @@
   - src/bindings/**/*
 
 "documentation":
-  - docs/**/*
   - README.md
 
 "example":
