@@ -117,15 +117,14 @@ struct SwShapeTask : SwTask
         }
 
         auto strokeWidth = validStrokeWidth(clipper);
-        RenderRegion renderBox{};
+        auto renderBox = curBox;
         auto updateShape = flags & (RenderUpdateFlag::Path | RenderUpdateFlag::Transform | RenderUpdateFlag::Clip);
-        auto updateFill = false;
+        auto updateFill = flags & (RenderUpdateFlag::Color | RenderUpdateFlag::Gradient);
 
         //Shape
-        if (updateShape || flags & (RenderUpdateFlag::Color | RenderUpdateFlag::Gradient)) {
-            updateFill = (MULTIPLY(rshape->color.a, opacity) || rshape->fill);
+        if (updateShape || updateFill) {
             if (updateShape) shapeReset(&shape);
-            if (updateFill || clipper) {
+            if (!shape.rle || shape.rle->invalid()) {
                 if (shapePrepare(&shape, rshape, transform, curBox, renderBox, mpool, tid, clips.count > 0 ? true : false)) {
                     if (!shapeGenRle(&shape, rshape, antialiasing(strokeWidth))) goto err;
                 } else {
@@ -218,14 +217,17 @@ struct SwImageTask : SwTask
         image.stride = source->stride;
         image.channelSize = source->channelSize;
 
+        auto updateImage = flags & (RenderUpdateFlag::Image | RenderUpdateFlag::Clip | RenderUpdateFlag::Transform);
+        auto updateColor = flags & (RenderUpdateFlag::Color);
+
         //Invisible shape turned to visible by alpha.
-        if ((flags & (RenderUpdateFlag::Image | RenderUpdateFlag::Clip | RenderUpdateFlag::Transform | RenderUpdateFlag::Color)) && (opacity > 0)) {
-            imageReset(&image);
-            if (!image.data || image.w == 0 || image.h == 0) goto end;
-            if (!imagePrepare(&image, transform, clipBox, curBox, mpool, tid)) goto end;
+        if ((updateImage || updateColor) && (opacity > 0)) {
+            if (updateImage) imageReset(&image);
+            if (!image.data || image.w == 0 || image.h == 0) goto err;
+            if (!imagePrepare(&image, transform, clipBox, curBox, mpool, tid)) goto err;
             valid = true;
             if (clips.count > 0) {
-                if (!imageGenRle(&image, curBox, false)) goto end;
+                if (!imageGenRle(&image, curBox, false)) goto err;
                 if (image.rle) {
                     //Clear current task memorypool here if the clippers would use the same memory pool
                     imageDelOutline(&image, mpool, tid);
