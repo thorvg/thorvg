@@ -672,10 +672,21 @@ struct LottieColorStop : LottieProperty
             value.data = nullptr;
         }
 
+        if (value.input) {
+            value.input->reset();
+            delete(value.input);
+            value.input = nullptr;
+        }
+
         if (!frames) return;
 
         ARRAY_FOREACH(p, *frames) {
             tvg::free((*p).value.data);
+            if ((*p).value.input) {
+                (*p).value.input->reset();
+                delete((*p).value.input);
+                (*p).value.input = nullptr;
+            }
         }
         tvg::free(frames->data);
         tvg::free(frames);
@@ -807,13 +818,28 @@ struct LottieColorStop : LottieProperty
                 frames = rhs.frames;
                 rhs.frames = nullptr;
             } else {
-                frames = new Array<LottieScalarFrame<ColorStop>>;
+                frames = tvg::calloc<Array<LottieScalarFrame<ColorStop>>*>(1, sizeof(Array<LottieScalarFrame<ColorStop>>));
                 *frames = *rhs.frames;
+
+                // Used for deep copying reusable slot properties.
+                for (uint32_t i = 0; i < rhs.frames->count; ++i) {
+                    if ((*rhs.frames)[i].value.input) {
+                        (*frames)[i].value.input = new Array<float>;
+                        *(*frames)[i].value.input = *(*rhs.frames)[i].value.input;
+                    }
+                }
             }
         } else {
             frames = nullptr;
             value = rhs.value;
-            rhs.value = ColorStop();
+            if (shallow) rhs.value = ColorStop();
+            else {
+                // Used for deep copying reusable slot properties.
+                if (rhs.value.input) {
+                    value.input = new Array<float>;
+                    *value.input = *rhs.value.input;
+                }
+            }
         }
         populated = rhs.populated;
         count = rhs.count;

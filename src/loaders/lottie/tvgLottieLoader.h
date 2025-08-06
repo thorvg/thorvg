@@ -56,7 +56,11 @@ public:
     bool resize(Paint* paint, float w, float h) override;
     bool read() override;
     Paint* paint() override;
-    bool override(const char* slot, bool byDefault = false);
+
+    //Slot APIs
+    uint32_t gen(const char* slot, bool byDefault = false);
+    bool apply(uint32_t slotcode, bool byDefault = false);
+    bool del(uint32_t slotcode, bool byDefault = false);
 
     //Frame Controls
     bool frame(float no) override;
