@@ -95,6 +95,8 @@
 #ifndef _TVG_WASM_DEFAULT_FONT_H_
 #define _TVG_WASM_DEFAULT_FONT_H_
 
+#ifdef THORVG_TTF_LOADER_SUPPORT
+
 #include <cstddef>
 #include <atomic>
 
@@ -143,5 +145,14 @@ inline const char* requestFont() {
 
     return reinterpret_cast<const char*>(_fontData);
 }
+
+#else
+
+constexpr size_t DEFAULT_FONT_SIZE = 0;
+
+inline void retrieveFont() {}
+inline const char* requestFont() { return nullptr; }
+
+#endif
 
 #endif //_TVG_WASM_DEFAULT_FONT_H_
