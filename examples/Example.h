@@ -188,14 +188,14 @@ struct Window
         return false;
     }
 
-    bool ready()
+    virtual bool ready()
     {
         if (!canvas) return false;
 
         if (!example->content(canvas, width, height)) return false;
 
         //initiate the first rendering before window pop-up.
-        if (!verify(canvas->draw())) return false;
+        if (!verify(canvas->draw(true))) return false;  //Force clear buffer on initial render
         if (!verify(canvas->sync())) return false;
 
         return true;
@@ -204,8 +204,7 @@ struct Window
     void show()
     {
         SDL_ShowWindow(window);
-        refresh();
-
+        
         //Mainloop
         SDL_Event event;
         auto running = true;
@@ -338,6 +337,7 @@ struct GlWindow : Window
         SDL_GL_SetAttribute(SDL_GL_CONTEXT_MAJOR_VERSION, 3);
         SDL_GL_SetAttribute(SDL_GL_CONTEXT_MINOR_VERSION, 3);
 #endif
+        SDL_GL_SetAttribute(SDL_GL_DOUBLEBUFFER, 1);  //Ensure double buffering
         window = SDL_CreateWindow("ThorVG Example (OpenGL/ES)", SDL_WINDOWPOS_UNDEFINED, SDL_WINDOWPOS_UNDEFINED, width, height, SDL_WINDOW_OPENGL | SDL_WINDOW_HIDDEN | SDL_WINDOW_RESIZABLE);
         context = SDL_GL_CreateContext(window);
 
@@ -358,6 +358,17 @@ struct GlWindow : Window
         canvas = nullptr;
 
         SDL_GL_DeleteContext(context);
+    }
+
+    bool ready() override
+    {
+        if (!Window::ready()) return false;
+        
+        //For OpenGL double buffering: swap buffers after initial render
+        //This ensures both front and back buffers have the same content
+        SDL_GL_SwapWindow(window);
+        
+        return true;
     }
 
     void resize() override
