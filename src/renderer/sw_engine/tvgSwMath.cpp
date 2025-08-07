@@ -273,9 +273,7 @@ SwPoint mathTransform(const Point* to, const Matrix& transform)
 
 bool mathUpdateOutlineBBox(const SwOutline* outline, const RenderRegion& clipBox, RenderRegion& renderBox, bool fastTrack)
 {
-    if (!outline) return false;
-
-    if (outline->pts.empty() || outline->cntrs.empty()) {
+    if (!outline || outline->pts.empty() || outline->cntrs.empty()) {
         renderBox.reset();
         return false;
     }

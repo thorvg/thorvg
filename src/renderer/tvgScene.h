@@ -225,37 +225,19 @@ struct SceneImpl : Scene
         return vport;
     }
 
-    Result bounds(Point* pt4, Matrix& m, bool obb, bool stroking)
+    Result bounds(const Matrix& m, BBox& box)
     {
-        if (paints.empty()) return Result::InsufficientCondition;
-
-        Point min = {FLT_MAX, FLT_MAX};
-        Point max = {-FLT_MAX, -FLT_MAX};
-
+        auto ret = Result::InsufficientCondition;
         for (auto paint : paints) {
-            Point tmp[4];
-            if (PAINT(paint)->bounds(tmp, obb ? nullptr : &m, false, stroking) != Result::Success) continue;
-            //Merge regions
-            for (int i = 0; i < 4; ++i) {
-                if (tmp[i].x < min.x) min.x = tmp[i].x;
-                if (tmp[i].x > max.x) max.x = tmp[i].x;
-                if (tmp[i].y < min.y) min.y = tmp[i].y;
-                if (tmp[i].y > max.y) max.y = tmp[i].y;
-            }
+            BBox box2 = {{FLT_MAX, FLT_MAX}, {-FLT_MAX, -FLT_MAX}};
+            if (PAINT(paint)->bounds(m, box2) != Result::Success) continue;
+            if (box2.min.x < box.min.x) box.min.x = box2.min.x;
+            if (box2.min.y < box.min.y) box.min.y = box2.min.y;
+            if (box2.max.x > box.max.x) box.max.x = box2.max.x;
+            if (box2.max.y > box.max.y) box.max.y = box2.max.y;
+            if (ret != Result::Success) ret = Result::Success;
         }
-        pt4[0] = min;
-        pt4[1] = Point{max.x, min.y};
-        pt4[2] = max;
-        pt4[3] = Point{min.x, max.y};
-
-        if (obb) {
-            pt4[0] *= m;
-            pt4[1] *= m;
-            pt4[2] *= m;
-            pt4[3] *= m;
-        }
-
-        return Result::Success;
+        return ret;
     }
 
     bool intersects(const RenderRegion& region)

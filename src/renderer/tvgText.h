@@ -150,11 +150,12 @@ struct TextImpl : Text
     }
 
 
-    Result bounds(Point* pt4, Matrix& m, bool obb, TVG_UNUSED bool stroking)
+    Result bounds(const Matrix& m, BBox& box)
     {
         if (load() == 0.0f) return Result::InsufficientCondition;
-        return PAINT(shape)->bounds(pt4, &m, obb, true);
+        return PAINT(shape)->bounds(m, box);
     }
+
 
     Paint* duplicate(Paint* ret)
     {

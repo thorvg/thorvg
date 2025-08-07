@@ -308,9 +308,8 @@ namespace tvg
 
         bool intersects(const RenderRegion& region);
         RenderRegion bounds(RenderMethod* renderer) const;
+        Result bounds(const Matrix& pm, BBox& box);
         Iterator* iterator();
-        Result bounds(float* x, float* y, float* w, float* h, Matrix* pm, bool stroking);
-        Result bounds(Point* pt4, Matrix* pm, bool obb, bool stroking);
         RenderData update(RenderMethod* renderer, const Matrix& pm, Array<RenderData>& clips, uint8_t opacity, RenderUpdateFlag pFlag, bool clipper = false);
         bool render(RenderMethod* renderer);
         Paint* duplicate(Paint* ret = nullptr);

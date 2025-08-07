@@ -918,8 +918,9 @@ static void _fontText(TextDocument& doc, Scene* scene)
         txt->text(token);
         txt->fill(doc.color.r, doc.color.g, doc.color.b);
 
-        float width;
-        txt->bounds(nullptr, nullptr, &width, nullptr);
+        BBox box = {{FLT_MAX, FLT_MAX}, {-FLT_MAX, -FLT_MAX}};
+        PAINT(txt)->bounds(tvg::identity(), box);
+        auto width = box.max.x - box.min.x;
 
         auto cursorX = width * doc.justify;
         auto cursorY = lineHeight * cnt;

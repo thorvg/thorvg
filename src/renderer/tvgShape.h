@@ -118,37 +118,9 @@ struct ShapeImpl : Shape
         return renderer->region(impl.rd);
     }
 
-    Result bounds(Point* pt4, Matrix& m, bool obb, bool stroking)
+    Result bounds(const Matrix& m, BBox& box)
     {
-        float x, y, w, h;
-        if (!rs.path.bounds(obb ? nullptr : &m, &x, &y, &w, &h)) return Result::InsufficientCondition;
-
-        //Stroke feathering
-        if (stroking && rs.stroke) {
-            //Use geometric mean for feathering.
-            //Join, Cap wouldn't be considered. Generate stroke outline and compute bbox for accurate size?
-            auto sx = sqrt(m.e11 * m.e11 + m.e21 * m.e21);
-            auto sy = sqrt(m.e12 * m.e12 + m.e22 * m.e22);
-            auto feather = rs.stroke->width * sqrt(sx * sy);
-            x -= feather * 0.5f;
-            y -= feather * 0.5f;
-            w += feather;
-            h += feather;
-        }
-
-        pt4[0] = {x, y};
-        pt4[1] = {x + w, y};
-        pt4[2] = {x + w, y + h};
-        pt4[3] = {x, y + h};
-
-        if (obb) {
-            pt4[0] *= m;
-            pt4[1] *= m;
-            pt4[2] *= m;
-            pt4[3] *= m;
-        }
-
-        return Result::Success;
+        return rs.path.bounds(m, box);
     }
 
     void reserveCmd(uint32_t cmdCnt)

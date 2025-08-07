@@ -29,6 +29,7 @@
 #include "tvgArray.h"
 #include "tvgLock.h"
 #include "tvgColor.h"
+#include "tvgMath.h"
 
 namespace tvg
 {
@@ -262,7 +263,7 @@ struct RenderPath
         cmds.push(PathCommand::CubicTo);
     }
 
-    bool bounds(Matrix* m, float* x, float* y, float* w, float* h);
+    Result bounds(const Matrix& m, BBox& box);
 };
 
 struct RenderTrimPath

@@ -273,36 +273,11 @@ RenderData Paint::Impl::update(RenderMethod* renderer, const Matrix& pm, Array<R
 }
 
 
-Result Paint::Impl::bounds(float* x, float* y, float* w, float* h, Matrix* pm, bool stroking)
+Result Paint::Impl::bounds(const Matrix& pm, BBox& box)
 {
-    Point pts[4];
-    if (bounds(pts, pm, false, stroking) != Result::Success) return Result::InsufficientCondition;
-
-    Point min = {FLT_MAX, FLT_MAX};
-    Point max = {-FLT_MAX, -FLT_MAX};
-
-    for (int i = 0; i < 4; ++i) {
-        if (pts[i].x < min.x) min.x = pts[i].x;
-        if (pts[i].x > max.x) max.x = pts[i].x;
-        if (pts[i].y < min.y) min.y = pts[i].y;
-        if (pts[i].y > max.y) max.y = pts[i].y;
-    }
-
-    if (x) *x = min.x;
-    if (y) *y = min.y;
-    if (w) *w = max.x - min.x;
-    if (h) *h = max.y - min.y;
-    return Result::Success;
-}
-
-
-Result Paint::Impl::bounds(Point* pt4, Matrix* pm, bool obb, bool stroking)
-{
-    auto m = this->transform();
-    if (pm) m = *pm * m;
-
     Result ret;
-    PAINT_METHOD(ret, bounds(pt4, m, obb, stroking));
+    auto m = pm * this->transform();
+    PAINT_METHOD(ret, bounds(m, box));
     return ret;
 }
 
@@ -360,16 +335,24 @@ Matrix& Paint::transform() noexcept
 
 Result Paint::bounds(float* x, float* y, float* w, float* h) const noexcept
 {
-    auto pm = pImpl->ptransform();
-    return pImpl->bounds(x, y, w, h, &pm, true);
+    if (pImpl->renderer) {
+        auto region = pImpl->bounds(pImpl->renderer);
+        if (x) *x = float(region.min.x);
+        if (y) *y = float(region.min.y);
+        if (w) *w = float(region.max.x - region.min.x);
+        if (h) *h = float(region.max.y - region.min.y);
+        return Result::Success;
+    }
+    return Result::InsufficientCondition;
 }
 
 
 Result Paint::bounds(Point* pt4) const noexcept
 {
-    if (!pt4) return Result::InvalidArguments;
-    auto pm = pImpl->ptransform();
-    return pImpl->bounds(pt4, &pm, true, true);
+    if (pImpl->renderer) {
+        //TODO:
+    }
+    return Result::InsufficientCondition;
 }
 
 

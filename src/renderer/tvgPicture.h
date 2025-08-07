@@ -129,12 +129,18 @@ struct PictureImpl : Picture
         return false;
     }
 
-    Result bounds(Point* pt4, Matrix& m, TVG_UNUSED bool obb, TVG_UNUSED bool stroking) const
+    Result bounds(Matrix& m, BBox& box) const
     {
-        pt4[0] = Point{0.0f, 0.0f} * m;
-        pt4[1] = Point{w, 0.0f} * m;
-        pt4[2] = Point{w, h} * m;
-        pt4[3] = Point{0.0f, h} * m;
+        if (!loader) return Result::InsufficientCondition;
+
+        Point pt4[] = {Point{0.0f, 0.0f} * m, Point{w, 0.0f} * m, Point{w, h} * m, Point{0.0f, h} * m};
+
+        for (int i = 0; i < 4; ++i) {
+            if (pt4[i].x < box.min.x) box.min.x = pt4[i].x;
+            if (pt4[i].x > box.max.x) box.max.x = pt4[i].x;
+            if (pt4[i].y < box.min.y) box.min.y = pt4[i].y;
+            if (pt4[i].y > box.max.y) box.max.y = pt4[i].y;
+        }
         return Result::Success;
     }
 

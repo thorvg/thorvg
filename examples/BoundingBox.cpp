@@ -30,6 +30,13 @@ struct UserExample : tvgexam::Example
 {
     void bbox(tvg::Canvas* canvas, tvg::Paint* paint)
     {
+        // Ensure the paint is updated.
+        // In this example, we call update() on the paint directly,
+        // but instead of calling update multiple times,
+        // you can call Canvas::update() once and then retrieve the bounding boxes
+        // for all required paints.
+        canvas->update();
+
         //aabb
         {
             float x, y, w, h;
@@ -46,7 +53,7 @@ struct UserExample : tvgexam::Example
 
             canvas->push(bound);
         }
-
+#if 0
         //obb
         {
             tvg::Point pts[4];
@@ -65,6 +72,7 @@ struct UserExample : tvgexam::Example
 
             canvas->push(bound);
         }
+#endif
     }
 
     bool content(tvg::Canvas* canvas, uint32_t w, uint32_t h) override
@@ -213,7 +221,7 @@ struct UserExample : tvgexam::Example
 
         {
             auto scene = tvg::Scene::gen();
-            scene->translate(350, 590);
+            scene->translate(330, 640);
             scene->scale(0.7f);
 
             auto shape = tvg::Shape::gen();
@@ -222,6 +230,11 @@ struct UserExample : tvgexam::Example
             shape->lineTo(0, 200);
             shape->fill(0, 255, 0);
             shape->close();
+
+            shape->strokeWidth(30);
+            shape->strokeFill(255, 255, 255);
+            shape->strokeJoin(tvg::StrokeJoin::Bevel);
+
             scene->push(shape);
 
             canvas->push(scene);
@@ -230,7 +243,7 @@ struct UserExample : tvgexam::Example
 
         {
             auto scene = tvg::Scene::gen();
-            scene->translate(650, 590);
+            scene->translate(650, 650);
             scene->scale(0.7f);
             scene->rotate(20);
 
@@ -240,6 +253,10 @@ struct UserExample : tvgexam::Example
             shape->lineTo(0, 200);
             shape->fill(0, 255, 255);
             shape->close();
+
+            shape->strokeWidth(20);
+            shape->strokeFill(0, 0, 255);
+
             scene->push(shape);
 
             canvas->push(scene);
@@ -248,7 +265,7 @@ struct UserExample : tvgexam::Example
 
         {
             auto scene = tvg::Scene::gen();
-            scene->translate(790, 390);
+            scene->translate(800, 420);
             scene->scale(0.5f);
             scene->rotate(20);
 
@@ -260,7 +277,7 @@ struct UserExample : tvgexam::Example
             shape->fill(255, 0, 255);
             shape->strokeWidth(30);
             shape->strokeFill(0, 255, 255);
-            shape->strokeJoin(tvg::StrokeJoin::Round);
+            shape->strokeJoin(tvg::StrokeJoin::Miter);
 
             tvg::Matrix m = {1.8794f, -0.6840f, 0.0f, 0.6840f,  1.8794f, 0.0f, 0.0f, 0.0f, 1.0f};
             shape->transform(m);
