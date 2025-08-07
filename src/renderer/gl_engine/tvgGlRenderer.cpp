@@ -92,8 +92,6 @@ GlRenderer::~GlRenderer()
 
     flush();
 
-    ARRAY_FOREACH(p, mProgramsGradBlend) delete(*p);
-    ARRAY_FOREACH(p, mProgramsSolidBlend) delete(*p);
     ARRAY_FOREACH(p, mPrograms) delete(*p);
 }
 
@@ -110,6 +108,7 @@ void GlRenderer::initShaders()
     #define COMMON_TOTAL_LENGTH strlen(STR_GRADIENT_FRAG_COMMON_VARIABLES) + strlen(STR_GRADIENT_FRAG_COMMON_FUNCTIONS) + 1
     #define LINEAR_TOTAL_LENGTH strlen(STR_LINEAR_GRADIENT_VARIABLES) + strlen(STR_LINEAR_GRADIENT_MAIN) + COMMON_TOTAL_LENGTH
     #define RADIAL_TOTAL_LENGTH strlen(STR_RADIAL_GRADIENT_VARIABLES) + strlen(STR_RADIAL_GRADIENT_MAIN) + COMMON_TOTAL_LENGTH
+    #define BLEND_TOTAL_LENGTH strlen(BLEND_SOLID_FRAG_HEADER) + strlen(COLOR_BURN_BLEND_FRAG) + COMMON_TOTAL_LENGTH
 #endif
 
     char linearGradientFragShader[LINEAR_TOTAL_LENGTH];
@@ -151,32 +150,9 @@ void GlRenderer::initShaders()
     // blit Renderer
     mPrograms.push(new GlProgram(BLIT_VERT_SHADER, BLIT_FRAG_SHADER));
 
-        // custom blend shaders
-    const char* customBlendShaders[17] {
-        NORMAL_BLEND_FRAG,
-        MULTIPLY_BLEND_FRAG,
-        SCREEN_BLEND_FRAG,
-        OVERLAY_BLEND_FRAG,
-        DARKEN_BLEND_FRAG,
-        LIGHTEN_BLEND_FRAG,
-        COLOR_DODGE_BLEND_FRAG,
-        COLOR_BURN_BLEND_FRAG,
-        HARD_LIGHT_BLEND_FRAG,
-        SOFT_LIGHT_BLEND_FRAG,
-        DIFFERENCE_BLEND_FRAG,
-        EXCLUSION_BLEND_FRAG,
-        NORMAL_BLEND_FRAG, // reserved for Hue
-        NORMAL_BLEND_FRAG, // reserved for Saturation
-        NORMAL_BLEND_FRAG, // reserved for Color
-        NORMAL_BLEND_FRAG, // reserved for Luminosity
-        ADD_BLEND_FRAG
-    };
-
-    // complex blend func
-    char shaderSourceBuff[BLEND_TOTAL_LENGTH];
     for (uint32_t i = 0; i < 17; i++) {
-        mProgramsSolidBlend.push(new GlProgram(BLIT_VERT_SHADER, strcat(strcpy(shaderSourceBuff, BLEND_SOLID_FRAG_HEADER), customBlendShaders[i])));
-        mProgramsGradBlend.push(new GlProgram(BLIT_VERT_SHADER, strcat(strcpy(shaderSourceBuff, BLEND_GRADIENT_FRAG_HEADER), customBlendShaders[i])));
+        mPrograms.push(nullptr); // slot for blend
+        mPrograms.push(nullptr); // slot for gradient blend
     }
 }
 
@@ -593,7 +569,7 @@ void GlRenderer::endBlendingCompose(GlRenderTask* stencilTask, const Matrix& mat
         16 * sizeof(float),
     });
     
-    auto program = gradient ? mProgramsGradBlend[(uint32_t)mBlendMethod] : mProgramsSolidBlend[(uint32_t)mBlendMethod];
+    auto program = getBlendProgram(mBlendMethod, gradient);
     auto task = new GlComplexBlendTask(program, currentPass()->getFbo(), dstCopyFbo, stencilTask, composeTask);
     prepareCmpTask(task, vp, blendPass->getFboWidth(), blendPass->getFboHeight());
     task->setDrawDepth(currentPass()->nextDrawDepth());
@@ -605,6 +581,55 @@ void GlRenderer::endBlendingCompose(GlRenderTask* stencilTask, const Matrix& mat
     currentPass()->addRenderTask(task);
 
     delete(blendPass);
+}
+
+GlProgram* GlRenderer::getBlendProgram(BlendMethod method, bool gradient) {
+    // custom blend shaders
+    static const char* customBlendShaders[17] {
+        NORMAL_BLEND_FRAG,
+        MULTIPLY_BLEND_FRAG,
+        SCREEN_BLEND_FRAG,
+        OVERLAY_BLEND_FRAG,
+        DARKEN_BLEND_FRAG,
+        LIGHTEN_BLEND_FRAG,
+        COLOR_DODGE_BLEND_FRAG,
+        COLOR_BURN_BLEND_FRAG,
+        HARD_LIGHT_BLEND_FRAG,
+        SOFT_LIGHT_BLEND_FRAG,
+        DIFFERENCE_BLEND_FRAG,
+        EXCLUSION_BLEND_FRAG,
+        HUE_BLEND_FRAG,
+        SATURATION_BLEND_FRAG,
+        COLOR_BLEND_FRAG,
+        LUMINOSITY_BLEND_FRAG,
+        ADD_BLEND_FRAG
+    };
+    // custom blend shaders helpers
+    static const char* customBlendHelpers[17] {
+        "", "", "", "", "", "", "", "", "", "", "", "",
+        BLEND_FRAG_HSL,
+        BLEND_FRAG_HSL,
+        BLEND_FRAG_HSL,
+        BLEND_FRAG_HSL,
+        "",
+    };
+
+    uint32_t methodInd = (uint32_t)method;
+    uint32_t startInd = (uint32_t)RenderTypes::RT_Blend_Normal;
+    uint32_t shaderInd = methodInd + startInd;
+
+    char shaderSourceBuff[BLEND_TOTAL_LENGTH];
+    if (gradient) {
+        startInd = (uint32_t)RenderTypes::RT_Blend_Gradient_Normal;
+        shaderInd = methodInd + startInd;
+        strcat(strcat(strcpy(shaderSourceBuff, BLEND_GRADIENT_FRAG_HEADER), customBlendHelpers[methodInd]), customBlendShaders[methodInd]);
+    } else {
+        strcat(strcat(strcpy(shaderSourceBuff, BLEND_SOLID_FRAG_HEADER), customBlendHelpers[methodInd]), customBlendShaders[methodInd]);
+    }
+
+    if (!mPrograms[shaderInd])
+        mPrograms[shaderInd] = new GlProgram(BLIT_VERT_SHADER, shaderSourceBuff);
+    return mPrograms[shaderInd];
 }
 
 

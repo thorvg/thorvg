@@ -647,6 +647,50 @@ void getFragData() {
 vec4 postProcess(vec4 R) { return R; };
 )";
 
+const char* BLEND_FRAG_HSL = R"(
+// RGB to HSL conversion
+vec3 rgbToHsl(vec3 color) {
+    float minVal = min(color.r, min(color.g, color.b));
+    float maxVal = max(color.r, max(color.g, color.b));
+    float delta = maxVal - minVal;
+
+    float h = 0.0;
+    if (delta > 0.0) {
+             if (maxVal == color.r) { h = (color.g - color.b) / delta - trunc(h / 6.0) * 6.0; }
+        else if (maxVal == color.g) { h = (color.b - color.r) / delta + 2.0;
+        } else                      { h = (color.r - color.g) / delta + 4.0; }
+        h = h * 60.0;
+        if (h < 0.0) { h += 360.0; }
+    }
+
+    float l = (maxVal + minVal) * 0.5;
+    float s = delta > 0.0 ? delta / (1.0 - abs(2.0 * l - 1.0)) : 0.0;
+    
+    return vec3(h, s, l);
+};
+
+// HSL to RGB conversion
+vec3 hslToRgb(vec3 color) {
+    float h = color.x;
+    float s = color.y;
+    float l = color.z;
+
+    float C = (1.0 - abs(2.0 * l - 1.0)) * s;
+    float h_prime = h / 60.0;
+    float X = C * (1.0 - abs(h_prime - 2.0 * trunc(h_prime / 2.0) - 1.0));
+    float m = l - C / 2.0;
+
+    vec3 rgb = vec3(0.0);
+         if (h_prime >= 0.0 && h_prime < 1.0) { rgb = vec3(C, X, 0.0); }
+    else if (h_prime >= 1.0 && h_prime < 2.0) { rgb = vec3(X, C, 0.0); }
+    else if (h_prime >= 2.0 && h_prime < 3.0) { rgb = vec3(0.0, C, X); }
+    else if (h_prime >= 3.0 && h_prime < 4.0) { rgb = vec3(0.0, X, C); }
+    else if (h_prime >= 4.0 && h_prime < 5.0) { rgb = vec3(X, 0.0, C); }
+    else                                      { rgb = vec3(C, 0.0, X); }
+
+    return rgb + vec3(m);
+};
+)";
 
 const char* NORMAL_BLEND_FRAG = R"(
 void main()
@@ -785,6 +829,79 @@ const char* EXCLUSION_BLEND_FRAG = R"(
 void main() {
     getFragData();
     vec3 Rc = d.Sc + d.Dc - 2 * d.Sc * d.Dc;
+    FragColor = postProcess(vec4(Rc, 1.0));
+}
+)";
+
+const char* HUE_BLEND_FRAG = R"(
+void main()
+{
+    getFragData();
+    vec3 Rc = d.Sc;
+    if (d.Da > 0.0) {
+        vec3 Dc = min(One, d.Dc / d.Da);
+        vec3 Sc = d.Sc;
+
+        vec3 Shsl = rgbToHsl(Sc);
+        vec3 Dhsl = rgbToHsl(Dc);
+        Rc = hslToRgb(vec3(Shsl.r, Dhsl.g, Dhsl.b)); // sh, ds, dl
+        
+        Rc = mix(d.Sc, Rc, d.Da);
+    };
+    FragColor = postProcess(vec4(Rc, 1.0));
+}
+)";
+
+const char* SATURATION_BLEND_FRAG = R"(
+void main() {
+    getFragData();
+    vec3 Rc = d.Sc;
+    if (d.Da > 0.0) {
+        vec3 Dc = min(One, d.Dc / d.Da);
+        vec3 Sc = d.Sc;
+
+        vec3 Shsl = rgbToHsl(Sc);
+        vec3 Dhsl = rgbToHsl(Dc);
+        Rc = hslToRgb(vec3(Dhsl.r, Shsl.g, Dhsl.b)); // dh, ss, dl
+        
+        Rc = mix(d.Sc, Rc, d.Da);
+    };
+    FragColor = postProcess(vec4(Rc, 1.0));
+}
+)";
+
+const char* COLOR_BLEND_FRAG = R"(
+void main() {
+    getFragData();
+    vec3 Rc = d.Sc;
+    if (d.Da > 0.0) {
+        vec3 Dc = min(One, d.Dc / d.Da);
+        vec3 Sc = d.Sc;
+
+        vec3 Shsl = rgbToHsl(Sc);
+        vec3 Dhsl = rgbToHsl(Dc);
+        Rc = hslToRgb(vec3(Shsl.r, Shsl.g, Dhsl.b)); // sh, ss, dl
+        
+        Rc = mix(d.Sc, Rc, d.Da);
+    };
+    FragColor = postProcess(vec4(Rc, 1.0));
+}
+)";
+
+const char* LUMINOSITY_BLEND_FRAG = R"(
+void main() {
+    getFragData();
+    vec3 Rc = d.Sc;
+    if (d.Da > 0.0) {
+        vec3 Dc = min(One, d.Dc / d.Da);
+        vec3 Sc = d.Sc;
+
+        vec3 Shsl = rgbToHsl(Sc);
+        vec3 Dhsl = rgbToHsl(Dc);
+        Rc = hslToRgb(vec3(Dhsl.r, Dhsl.g, Shsl.b)); // dh, ds, sl
+        
+        Rc = mix(d.Sc, Rc, d.Da);
+    };
     FragColor = postProcess(vec4(Rc, 1.0));
 }
 )";
