@@ -1543,68 +1543,78 @@ bool LottieParser::apply(LottieSlot* slot, bool byDefault)
 {
     enterObject();
 
-    //OPTIMIZE: we can create the property directly, without object
-    LottieObject* obj = nullptr;  //slot object
+    LottieProperty* prop = nullptr;
     context = {slot->context.layer, slot->context.parent};
 
     switch (slot->type) {
         case LottieProperty::Type::Float: {
-            obj = new LottieTransform;
-            parseSlotProperty(static_cast<LottieTransform*>(obj)->rotation);
+            prop = new LottieFloat;
+            parseSlotProperty(*static_cast<LottieFloat*>(prop));
             break;
         }
         case LottieProperty::Type::Scalar: {
-            obj = new LottieTransform;
-            parseSlotProperty(static_cast<LottieTransform*>(obj)->scale);
+            prop = new LottieScalar;
+            parseSlotProperty(*static_cast<LottieScalar*>(prop));
             break;
         }
         case LottieProperty::Type::Vector: {
-            obj = new LottieTransform;
-            parseSlotProperty(static_cast<LottieTransform*>(obj)->position);
+            prop = new LottieVector;
+            parseSlotProperty(*static_cast<LottieVector*>(prop));
             break;
         }
         case LottieProperty::Type::Opacity: {
-            obj = new LottieSolid;
-            parseSlotProperty(static_cast<LottieSolid*>(obj)->opacity);
+            prop = new LottieOpacity;
+            parseSlotProperty(*static_cast<LottieOpacity*>(prop));
             break;
         }
         case LottieProperty::Type::Color: {
-            obj = new LottieSolid;
-            parseSlotProperty(static_cast<LottieSolid*>(obj)->color);
+            prop = new LottieColor;
+            parseSlotProperty(*static_cast<LottieColor*>(prop));
             break;
         }
         case LottieProperty::Type::ColorStop: {
-            obj = new LottieGradient;
+            auto obj = new LottieGradient;
             while (auto key = nextObjectKey()) {
-                if (KEY_AS("p")) parseColorStop(static_cast<LottieGradient*>(obj));
+                if (KEY_AS("p")) parseColorStop(obj);
                 else skip();
             }
+            if (!obj) {
+                delete(obj);
+                return false;
+            }
+            prop = new LottieColorStop(obj->colorStops);
+            delete(obj);
             break;
         }
         case LottieProperty::Type::TextDoc: {
-            obj = new LottieText;
-            parseSlotProperty(static_cast<LottieText*>(obj)->doc);
+            prop = new LottieTextDoc;
+            parseSlotProperty(*static_cast<LottieTextDoc*>(prop));
             break;
         }
         case LottieProperty::Type::Image: {
+            auto obj = new LottieObject;
             while (auto key = nextObjectKey()) {
                 if (KEY_AS("p")) obj = parseAsset();
                 else skip();
             }
+            if (!obj) {
+                delete(obj);
+                return false;
+            }
+            prop = new LottieBitmap(static_cast<LottieImage*>(obj)->data);
+            delete(obj);
             break;
         }
         default: break;
     }
 
-    if (!obj || Invalid()) {
-        delete(obj);
+    if (!prop || Invalid()) {
+        delete(prop);
         return false;
     }
 
-    slot->assign(obj, byDefault);
-
-    delete(obj);
-
+    slot->assign(prop, byDefault);
+    delete(prop);
     return true;
 }
 
