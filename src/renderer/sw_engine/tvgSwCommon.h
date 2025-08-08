@@ -192,12 +192,17 @@ struct SwFill
 
 struct SwStrokeBorder
 {
-    uint32_t ptsCnt;
-    uint32_t maxPts;
-    SwPoint* pts;
-    uint8_t* tags;
+    Array<SwPoint> pts;
+    Array<uint8_t> tags;
     int32_t start;     //index of current sub-path start point
     bool movable;      //true: for ends of lineto borders
+
+    void reset()
+    {
+        pts.clear();
+        tags.clear();
+        start = -1;
+    }
 };
 
 struct SwStroke
