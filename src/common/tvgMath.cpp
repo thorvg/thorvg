@@ -432,6 +432,12 @@ float Bezier::angle(float t) const
 
 void Bezier::bounds(BBox& box) const
 {
+    bounds(box, start, ctrl1, ctrl2, end);
+}
+
+
+void Bezier::bounds(BBox& box, const Point& start, const Point& ctrl1, const Point& ctrl2, const Point& end)
+{
     if (box.min.x > start.x) box.min.x = start.x;
     if (box.min.y > start.y) box.min.y = start.y;
     if (box.min.x > end.x) box.min.x = end.x;
@@ -463,6 +469,7 @@ void Bezier::bounds(BBox& box) const
     findMinMax(start.x, ctrl1.x, ctrl2.x, end.x, box.min.x, box.max.x);
     findMinMax(start.y, ctrl1.y, ctrl2.y, end.y, box.min.y, box.max.y);
 }
+
 
 bool Bezier::flatten() const
 {

@@ -392,6 +392,12 @@ struct Line
 struct BBox
 {
     Point min, max;
+
+    void init()
+    {
+        min = {FLT_MAX, FLT_MAX};
+        max = {-FLT_MAX, -FLT_MAX};
+    }
 };
 
 
@@ -427,6 +433,8 @@ struct Bezier
     uint32_t segments() const;
 
     Bezier operator*(const Matrix& m);
+
+    static void bounds(BBox& box, const Point& start, const Point& ctrl1, const Point& ctrl2, const Point& end);
 };
 
 

@@ -91,8 +91,7 @@ Result RenderPath::bounds(const Matrix& m, BBox& box)
                 break;
             }
             case PathCommand::CubicTo: {
-                Bezier bz = {pt[-1] * m, pt[0] * m, pt[1] * m, pt[2] * m};
-                bz.bounds(box);
+                Bezier::bounds(box, pt[-1] * m, pt[0] * m, pt[1] * m, pt[2] * m);
                 pt += 3;
                 break;
             }
