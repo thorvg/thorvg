@@ -114,7 +114,6 @@ TEST_CASE("Text Font", "[tvgText]")
     Initializer::term();
 }
 
-
 TEST_CASE("Text Basic", "[tvgText]")
 {
     Initializer::init();
