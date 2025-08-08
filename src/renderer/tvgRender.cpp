@@ -63,17 +63,15 @@ bool RenderPath::bounds(Matrix* m, float* x, float* y, float* w, float* h)
     //unexpected
     if (cmds.empty() || cmds.first() == PathCommand::CubicTo) return false;
 
-    auto min = Point{FLT_MAX, FLT_MAX};
-    auto max = Point{-FLT_MAX, -FLT_MAX};
-
+    BBox box = {{FLT_MAX, FLT_MAX}, {-FLT_MAX, -FLT_MAX}};
     auto pt = pts.begin();
     auto cmd = cmds.begin();
 
-    auto assign = [&](const Point& pt, Point& min, Point& max) -> void {
-        if (pt.x < min.x) min.x = pt.x;
-        if (pt.y < min.y) min.y = pt.y;
-        if (pt.x > max.x) max.x = pt.x;
-        if (pt.y > max.y) max.y = pt.y;
+    auto assign = [&](const Point& pt, BBox& box) -> void {
+        if (pt.x < box.min.x) box.min.x = pt.x;
+        if (pt.y < box.min.y) box.min.y = pt.y;
+        if (pt.x > box.max.x) box.max.x = pt.x;
+        if (pt.y > box.max.y) box.max.y = pt.y;
     };
 
     while (cmd < cmds.end()) {
@@ -83,20 +81,19 @@ bool RenderPath::bounds(Matrix* m, float* x, float* y, float* w, float* h)
                 if (cmd + 1 < cmds.end()) {
                     auto next = *(cmd + 1);
                     if (next == PathCommand::LineTo || next == PathCommand::CubicTo) {
-                        assign(*pt * m, min, max);
+                        assign(*pt * m, box);
                     }
                 }
                 ++pt;
                 break;
             }
             case PathCommand::LineTo: {
-                assign(*pt * m, min, max);
+                assign(*pt * m, box);
                 ++pt;
                 break;
             }
             case PathCommand::CubicTo: {
-                Bezier bz = {pt[-1] * m, pt[0] * m, pt[1] * m, pt[2] * m};
-                bz.bounds(min, max);
+                Bezier::bounds(box, pt[-1] * m, pt[0] * m, pt[1] * m, pt[2] * m);
                 pt += 3;
                 break;
             }
@@ -105,10 +102,10 @@ bool RenderPath::bounds(Matrix* m, float* x, float* y, float* w, float* h)
         ++cmd;
     }
 
-    if (x) *x = min.x;
-    if (y) *y = min.y;
-    if (w) *w = max.x - min.x;
-    if (h) *h = max.y - min.y;
+    if (x) *x = box.min.x;
+    if (y) *y = box.min.y;
+    if (w) *w = box.max.x - box.min.x;
+    if (h) *h = box.max.y - box.min.y;
 
     return true;
 }

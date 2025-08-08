@@ -386,6 +386,16 @@ struct Line
 
 
 /************************************************************************/
+/* Geometry functions                                                   */
+/************************************************************************/
+
+struct BBox
+{
+    Point min, max;
+};
+
+
+/************************************************************************/
 /* Bezier functions                                                     */
 /************************************************************************/
 
@@ -412,22 +422,13 @@ struct Bezier
     float atApprox(float at, float length) const;
     Point at(float t) const;
     float angle(float t) const;
-    void bounds(Point& min, Point& max) const;
     bool flatten() const;
     uint32_t segments() const;
 
     Bezier operator*(const Matrix& m);
+
+    static void bounds(BBox& box, const Point& start, const Point& ctrl1, const Point& ctrl2, const Point& end);
 };
-
-/************************************************************************/
-/* Geometry functions                                                   */
-/************************************************************************/
-
-struct BBox
-{
-    Point min, max;
-};
-
 
 
 /************************************************************************/

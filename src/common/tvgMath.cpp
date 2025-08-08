@@ -430,17 +430,17 @@ float Bezier::angle(float t) const
 }
 
 
-void Bezier::bounds(Point& min, Point& max) const
+void Bezier::bounds(BBox& box, const Point& start, const Point& ctrl1, const Point& ctrl2, const Point& end)
 {
-    if (min.x > start.x) min.x = start.x;
-    if (min.y > start.y) min.y = start.y;
-    if (min.x > end.x) min.x = end.x;
-    if (min.y > end.y) min.y = end.y;
+    if (box.min.x > start.x) box.min.x = start.x;
+    if (box.min.y > start.y) box.min.y = start.y;
+    if (box.min.x > end.x) box.min.x = end.x;
+    if (box.min.y > end.y) box.min.y = end.y;
 
-    if (max.x < start.x) max.x = start.x;
-    if (max.y < start.y) max.y = start.y;
-    if (max.x < end.x) max.x = end.x;
-    if (max.y < end.y) max.y = end.y;
+    if (box.max.x < start.x) box.max.x = start.x;
+    if (box.max.y < start.y) box.max.y = start.y;
+    if (box.max.x < end.x) box.max.x = end.x;
+    if (box.max.y < end.y) box.max.y = end.y;
 
     //find x/y-direction extrema (solving derivative of Bezier curve)
     auto findMinMax = [&](float start, float ctrl1, float ctrl2, float end, float& min, float& max) -> void {
@@ -460,9 +460,10 @@ void Bezier::bounds(Point& min, Point& max) const
         }
     };
 
-    findMinMax(start.x, ctrl1.x, ctrl2.x, end.x, min.x, max.x);
-    findMinMax(start.y, ctrl1.y, ctrl2.y, end.y, min.y, max.y);
+    findMinMax(start.x, ctrl1.x, ctrl2.x, end.x, box.min.x, box.max.x);
+    findMinMax(start.y, ctrl1.y, ctrl2.y, end.y, box.min.y, box.max.y);
 }
+
 
 bool Bezier::flatten() const
 {
@@ -492,4 +493,3 @@ Bezier Bezier::operator*(const Matrix& m)
 }
 
 }
-
