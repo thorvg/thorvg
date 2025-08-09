@@ -298,20 +298,20 @@ void RenderDirtyRegion::commit()
                 }
                 //just merge & expand on x axis
                 if (lhs.min.y == rhs.min.y && lhs.max.y == rhs.max.y) {
-                    if (lhs.min.x <= rhs.max.x && rhs.min.x <= lhs.max.x) {
-                        rhs.min.x = std::min(lhs.min.x, rhs.min.x);
-                        rhs.max.x = std::max(lhs.max.x, rhs.max.x);
-                        merged = true;
-                        break;
+                    if (lhs.max.x >= rhs.min.x) {
+                        lhs.min.x = std::min(lhs.min.x, rhs.min.x);
+                        lhs.max.x = std::max(lhs.max.x, rhs.max.x);
+                        rhs = {};
+                        continue;
                     }
                 }
                 //just merge & expand on y axis
                 if (lhs.min.x == rhs.min.x && lhs.max.x == rhs.max.x) {
-                    if (lhs.min.y <= rhs.max.y && rhs.min.y < lhs.max.y) {
-                        rhs.min.y = std::min(lhs.min.y, rhs.min.y);
-                        rhs.max.y = std::max(lhs.max.y, rhs.max.y);
-                        merged = true;
-                        break;
+                    if (lhs.min.y <= rhs.max.y && rhs.min.y <= lhs.max.y) {
+                        lhs.min.y = std::min(lhs.min.y, rhs.min.y);
+                        lhs.max.y = std::max(lhs.max.y, rhs.max.y);
+                        rhs = {};
+                        continue;
                     }
                 }
                 //subdivide regions
