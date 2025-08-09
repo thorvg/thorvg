@@ -125,7 +125,7 @@ struct SwShapeTask : SwTask
         if (updateShape || updateFill) {
             if (updateShape) shapeReset(&shape);
             if (!shape.rle || shape.rle->invalid()) {
-                if (shapePrepare(&shape, rshape, transform, curBox, renderBox, mpool, tid, clips.count > 0 ? true : false)) {
+                if (shapePrepare(&shape, rshape, transform, curBox, renderBox, mpool, tid, (clips.count > 0 ? true : false))) {
                     if (!shapeGenRle(&shape, rshape, antialiasing(strokeWidth))) goto err;
                 } else {
                     updateFill = false;
