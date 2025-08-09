@@ -30,6 +30,9 @@ using namespace emscripten;
 using namespace std;
 using namespace tvg;
 
+EMSCRIPTEN_DECLARE_VAL_TYPE(Uint8Array);
+EMSCRIPTEN_DECLARE_VAL_TYPE(Float32Array);
+
 static const char* NoError = "None";
 
 struct TvgEngineMethod
@@ -37,9 +40,9 @@ struct TvgEngineMethod
     virtual ~TvgEngineMethod() {}
     virtual Canvas* init(string&) = 0;
     virtual void resize(Canvas* canvas, int w, int h) = 0;
-    virtual val output(int w, int h)
+    virtual Uint8Array output(int w, int h)
     {
-        return val(typed_memory_view<uint8_t>(0, nullptr));
+        return Uint8Array(val(typed_memory_view<uint8_t>(0, nullptr)));
     }
 
     void loadFont() {
@@ -74,9 +77,9 @@ struct TvgSwEngine : TvgEngineMethod
         static_cast<SwCanvas*>(canvas)->target((uint32_t *)buffer, w, w, h, ColorSpace::ABGR8888S);
     }
 
-    val output(int w, int h) override
+    Uint8Array output(int w, int h) override
     {
-        return val(typed_memory_view(w * h * 4, buffer));
+        return Uint8Array(val(typed_memory_view(w * h * 4, buffer)));
     }
 };
 
@@ -278,9 +281,9 @@ public:
         return errorMsg;
     }
 
-    val size()
+    Float32Array size()
     {
-        return val(typed_memory_view(2, psize));
+        return Float32Array(val(typed_memory_view(2, psize)));
     }
 
     float duration()
@@ -345,17 +348,17 @@ public:
         return true;
     }
 
-    val render()
+    Uint8Array render()
     {
         errorMsg = NoError;
 
-        if (!canvas || !animation) return val(typed_memory_view<uint8_t>(0, nullptr));
+        if (!canvas || !animation) return Uint8Array(val(typed_memory_view<uint8_t>(0, nullptr)));
 
         if (!updated) return engine->output(width, height);
 
         if (canvas->draw(true) != Result::Success) {
             errorMsg = "draw() fail";
-            return val(typed_memory_view<uint8_t>(0, nullptr));
+            return Uint8Array(val(typed_memory_view<uint8_t>(0, nullptr)));
         }
 
         canvas->sync();
@@ -530,6 +533,8 @@ void term()
 
 EMSCRIPTEN_BINDINGS(thorvg_bindings)
 {
+    register_type<Uint8Array>("Uint8Array");
+    register_type<Float32Array>("Float32Array");
     emscripten::function("init", &init);
     emscripten::function("term", &term);
 
