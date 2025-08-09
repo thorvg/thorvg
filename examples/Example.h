@@ -188,24 +188,24 @@ struct Window
         return false;
     }
 
-    bool ready()
+    virtual bool ready()
     {
         if (!canvas) return false;
 
         if (!example->content(canvas, width, height)) return false;
 
         //initiate the first rendering before window pop-up.
-        if (!verify(canvas->draw())) return false;
+        if (!verify(canvas->draw(true))) return false;  //Force clear buffer on initial render
         if (!verify(canvas->sync())) return false;
 
         return true;
     }
 
-    void show()
+    virtual void show()
     {
         SDL_ShowWindow(window);
         refresh();
-
+        
         //Mainloop
         SDL_Event event;
         auto running = true;
@@ -300,6 +300,24 @@ struct SwWindow : Window
 
         resize();
     }
+    
+    bool ready() override
+    {
+        //For SW renderer: ensure surface is initialized before content()
+        auto surface = SDL_GetWindowSurface(window);
+        if (surface) {
+            //Clear the surface to avoid garbage pixels
+            SDL_FillRect(surface, NULL, SDL_MapRGB(surface->format, 0, 0, 0));
+            SDL_UpdateWindowSurface(window);
+        }
+        
+        if (!Window::ready()) return false;
+        
+        //Update the window surface after initial render
+        SDL_UpdateWindowSurface(window);
+        
+        return true;
+    }
 
     void resize() override
     {
@@ -338,6 +356,7 @@ struct GlWindow : Window
         SDL_GL_SetAttribute(SDL_GL_CONTEXT_MAJOR_VERSION, 3);
         SDL_GL_SetAttribute(SDL_GL_CONTEXT_MINOR_VERSION, 3);
 #endif
+        SDL_GL_SetAttribute(SDL_GL_DOUBLEBUFFER, 1);  //Ensure double buffering
         window = SDL_CreateWindow("ThorVG Example (OpenGL/ES)", SDL_WINDOWPOS_UNDEFINED, SDL_WINDOWPOS_UNDEFINED, width, height, SDL_WINDOW_OPENGL | SDL_WINDOW_HIDDEN | SDL_WINDOW_RESIZABLE);
         context = SDL_GL_CreateContext(window);
 
@@ -358,6 +377,90 @@ struct GlWindow : Window
         canvas = nullptr;
 
         SDL_GL_DeleteContext(context);
+    }
+
+    bool ready() override
+    {
+        if (!Window::ready()) return false;
+        
+        //For OpenGL double buffering: swap buffers after initial render
+        //This ensures both front and back buffers have the same content
+        SDL_GL_SwapWindow(window);
+        
+        return true;
+    }
+
+    void show() override
+    {
+        SDL_ShowWindow(window);
+        //Skip initial refresh for GL - already swapped in ready()
+        
+        //Mainloop
+        SDL_Event event;
+        auto running = true;
+
+        auto ptime = SDL_GetTicks();
+        example->elapsed = 0;
+        uint32_t tickCnt = 0;
+
+        while (running) {
+
+            //SDL Event handling
+            while (SDL_PollEvent(&event)) {
+                switch (event.type) {
+                    case SDL_QUIT: {
+                        running = false;
+                        break;
+                    }
+                    case SDL_KEYUP: {
+                        if (event.key.keysym.sym == SDLK_ESCAPE) {
+                            running = false;
+                        }
+                        break;
+                    }
+                    case SDL_MOUSEBUTTONDOWN: {
+                        needDraw |= example->clickdown(canvas, event.button.x, event.button.y);
+                        break;
+                    }
+                    case SDL_MOUSEBUTTONUP: {
+                        needDraw |= example->clickup(canvas, event.button.x, event.button.y);
+                        break;
+                    }
+                    case SDL_MOUSEMOTION: {
+                        needDraw |= example->motion(canvas, event.button.x, event.button.y);
+                        break;
+                    }
+                    case SDL_WINDOWEVENT: {
+                        if (event.window.event == SDL_WINDOWEVENT_RESIZED) {
+                            width = event.window.data1;
+                            height = event.window.data2;
+                            needResize = true;
+                            needDraw = true;
+                        }
+                    }
+                }
+            }
+
+            if (needResize) {
+                resize();
+                needResize = false;
+            }
+
+            if (tickCnt > 0) {
+                needDraw |= example->update(canvas, example->elapsed);
+            }
+
+            if (needDraw) {
+                if (draw()) refresh();
+                needDraw = false;
+            }
+
+            auto ctime = SDL_GetTicks();
+            example->elapsed += (ctime - ptime);
+            tickCnt++;
+            if (print) printf("[%5d]: elapsed time = %dms (%dms)\n", tickCnt, (ctime - ptime), (example->elapsed / tickCnt));
+            ptime = ctime;
+        }
     }
 
     void resize() override
