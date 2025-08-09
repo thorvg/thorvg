@@ -51,17 +51,43 @@ public:
         RT_MaskDarken,
         RT_Stencil,
         RT_Blit,
-        RT_MultiplyBlend,
-        RT_ScreenBlend,
-        RT_OverlayBlend,
-        RT_ColorDodgeBlend,
-        RT_ColorBurnBlend,
-        RT_HardLightBlend,
-        RT_SoftLightBlend,
-        RT_DifferenceBlend,
-        RT_ExclusionBlend,
-
-        RT_None,
+        // blends
+        RT_Blend_Normal,
+        RT_Blend_Multiply,
+        RT_Blend_Screen,
+        RT_Blend_Overlay,
+        RT_Blend_Darken,
+        RT_Blend_Lighten,
+        RT_Blend_ColorDodge,
+        RT_Blend_ColorBurn,
+        RT_Blend_HardLight,
+        RT_Blend_SoftLight,
+        RT_Blend_Difference,
+        RT_Blend_Exclusion,
+        RT_Blend_Hue,
+        RT_Blend_Saturation,
+        RT_Blend_Color,
+        RT_Blend_Luminosity,
+        RT_Blend_Add,
+        // blends (gradients)
+        RT_Blend_Gradient_Normal,
+        RT_Blend_Gradient_Multiply,
+        RT_Blend_Gradient_Screen,
+        RT_Blend_Gradient_Overlay,
+        RT_Blend_Gradient_Darken,
+        RT_Blend_Gradient_Lighten,
+        RT_Blend_Gradient_ColorDodge,
+        RT_Blend_Gradient_ColorBurn,
+        RT_Blend_Gradient_HardLight,
+        RT_Blend_Gradient_SoftLight,
+        RT_Blend_Gradient_Difference,
+        RT_Blend_Gradient_Exclusion,
+        RT_Blend_Gradient_Hue,
+        RT_Blend_Gradient_Saturation,
+        RT_Blend_Gradient_Color,
+        RT_Blend_Gradient_Luminosity,
+        RT_Blend_Gradient_Add,
+        RT_None
     };
 
     //main features
@@ -114,8 +140,8 @@ private:
     GlRenderPass* currentPass();
 
     bool beginComplexBlending(const RenderRegion& vp, RenderRegion bounds);
-    void endBlendingCompose(GlRenderTask* stencilTask, const Matrix& matrix);
-    GlProgram* getBlendProgram();
+    void endBlendingCompose(GlRenderTask* stencilTask, const Matrix& matrix, bool gradient);
+    GlProgram* getBlendProgram(BlendMethod method, bool gradient);
 
     void prepareBlitTask(GlBlitTask* task);
     void prepareCmpTask(GlRenderTask* task, const RenderRegion& vp, uint32_t cmpWidth, uint32_t cmpHeight);
@@ -132,6 +158,7 @@ private:
     GlRenderTarget mRootTarget;
     GlEffect mEffect;
     Array<GlProgram*> mPrograms;
+
     Array<GlRenderTargetPool*> mComposePool;
     Array<GlRenderTargetPool*> mBlendPool;
     Array<GlRenderPass*> mRenderPassStack;
