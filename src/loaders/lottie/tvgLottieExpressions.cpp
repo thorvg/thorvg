@@ -843,107 +843,61 @@ static jerry_value_t _temporalWiggle(const jerry_call_info_t* info, const jerry_
 }
 
 
-
-static bool _loopOutCommon(LottieExpression* exp, const jerry_value_t args[], const jerry_length_t argsCnt)
+static LottieProperty::Loop _loopCommon(const jerry_value_t args[], const jerry_length_t argsCnt)
 {
-    exp->loop.mode = LottieExpression::LoopMode::OutCycle;
+    auto mode = LottieProperty::Loop::InCycle;
 
     if (argsCnt > 0) {
         auto name = _name(args[0]);
-        if (!strcmp(name, EXP_CYCLE)) exp->loop.mode = LottieExpression::LoopMode::OutCycle;
-        else if (!strcmp(name, EXP_PINGPONG)) exp->loop.mode = LottieExpression::LoopMode::OutPingPong;
-        else if (!strcmp(name, EXP_OFFSET)) exp->loop.mode = LottieExpression::LoopMode::OutOffset;
-        else if (!strcmp(name, EXP_CONTINUE)) exp->loop.mode = LottieExpression::LoopMode::OutContinue;
+        if (!strcmp(name, EXP_CYCLE)) mode = LottieProperty::Loop::InCycle;
+        else if (!strcmp(name, EXP_PINGPONG)) mode = LottieProperty::Loop::InPingPong;
+        else if (!strcmp(name, EXP_OFFSET)) mode = LottieProperty::Loop::InOffset;
+        else if (!strcmp(name, EXP_CONTINUE)) mode = LottieProperty::Loop::InContinue;
         tvg::free(name);
     }
 
-    if (exp->loop.mode != LottieExpression::LoopMode::OutCycle && exp->loop.mode != LottieExpression::LoopMode::OutPingPong) {
-        TVGLOG("LOTTIE", "Not supported loopOut type = %d", exp->loop.mode);
-        return false;
+    if (mode != LottieProperty::Loop::InCycle && mode != LottieProperty::Loop::InPingPong) {
+        TVGLOG("LOTTIE", "Not supported loopIn type = %d", mode);
     }
-
-    return true;
+    return mode;
 }
 
 
+#define LOOP_OUT_OFFSET 4
+
 static jerry_value_t _loopOut(const jerry_call_info_t* info, const jerry_value_t args[], const jerry_length_t argsCnt)
 {
-    auto exp = static_cast<LottieExpression*>(jerry_object_get_native_ptr(info->function, nullptr));
-
-    if (!_loopOutCommon(exp, args, argsCnt)) return jerry_undefined();
-
-    if (argsCnt > 1) exp->loop.key = jerry_value_as_int32(args[1]);
-
-    auto obj = jerry_object();
-    jerry_object_set_native_ptr(obj, nullptr, exp->property);
-    return obj;
+    auto data = static_cast<ExpContent*>(jerry_object_get_native_ptr(info->function, &freeCb));
+    auto mode = static_cast<LottieProperty::Loop>((int) _loopCommon(args, argsCnt) + LOOP_OUT_OFFSET);
+    auto key = (argsCnt > 1) ? jerry_value_as_int32(args[1]) : 0;
+    return _value(data->exp->property->loop(data->frameNo, key, mode, data->exp->layer->outFrame), data->exp->property);
 }
 
 
 static jerry_value_t _loopOutDuration(const jerry_call_info_t* info, const jerry_value_t args[], const jerry_length_t argsCnt)
 {
-    auto exp = static_cast<LottieExpression*>(jerry_object_get_native_ptr(info->function, nullptr));
-
-    if (!_loopOutCommon(exp, args, argsCnt)) return jerry_undefined();
-
-    if (argsCnt > 1) {
-        exp->loop.in = exp->comp->frameAtTime(jerry_value_as_number(args[1]));
-    }
-
-    auto obj = jerry_object();
-    jerry_object_set_native_ptr(obj, nullptr, exp->property);
-    return obj;
+    auto data = static_cast<ExpContent*>(jerry_object_get_native_ptr(info->function, &freeCb));
+    auto mode = static_cast<LottieProperty::Loop>((int) _loopCommon(args, argsCnt) + LOOP_OUT_OFFSET);
+    auto out = (argsCnt > 1) ? data->exp->comp->frameAtTime(jerry_value_as_number(args[1])) : FLT_MAX;
+    return _value(data->exp->property->loop(data->frameNo, 0, mode, out), data->exp->property);
 }
 
-
-static bool _loopInCommon(LottieExpression* exp, const jerry_value_t args[], const jerry_length_t argsCnt)
-{
-    exp->loop.mode = LottieExpression::LoopMode::InCycle;
-
-    if (argsCnt > 0) {
-        auto name = _name(args[0]);
-        if (!strcmp(name, EXP_CYCLE)) exp->loop.mode = LottieExpression::LoopMode::InCycle;
-        else if (!strcmp(name, EXP_PINGPONG)) exp->loop.mode = LottieExpression::LoopMode::InPingPong;
-        else if (!strcmp(name, EXP_OFFSET)) exp->loop.mode = LottieExpression::LoopMode::InOffset;
-        else if (!strcmp(name, EXP_CONTINUE)) exp->loop.mode = LottieExpression::LoopMode::InContinue;
-        tvg::free(name);
-    }
-
-    if (exp->loop.mode != LottieExpression::LoopMode::InCycle && exp->loop.mode != LottieExpression::LoopMode::InPingPong) {
-        TVGLOG("LOTTIE", "Not supported loopIn type = %d", exp->loop.mode);
-        return false;
-    }
-
-    return true;
-}
 
 static jerry_value_t _loopIn(const jerry_call_info_t* info, const jerry_value_t args[], const jerry_length_t argsCnt)
 {
-    auto exp = static_cast<LottieExpression*>(jerry_object_get_native_ptr(info->function, nullptr));
-
-    if (!_loopInCommon(exp, args, argsCnt)) return jerry_undefined();
-
-    if (argsCnt > 1) exp->loop.key = jerry_value_as_int32(args[1]);
-
-    auto obj = jerry_object();
-    jerry_object_set_native_ptr(obj, nullptr, exp->property);
-    return obj;
+    auto data = static_cast<ExpContent*>(jerry_object_get_native_ptr(info->function, &freeCb));
+    auto mode = _loopCommon(args, argsCnt);
+    auto key = (argsCnt > 1) ? jerry_value_as_int32(args[1]) : 0;
+    return _value(data->exp->property->loop(data->frameNo, key, mode, data->exp->layer->outFrame), data->exp->property);
 }
 
 
 static jerry_value_t _loopInDuration(const jerry_call_info_t* info, const jerry_value_t args[], const jerry_length_t argsCnt)
 {
-    auto exp = static_cast<LottieExpression*>(jerry_object_get_native_ptr(info->function, nullptr));
-
-    if (argsCnt > 1) {
-        exp->loop.in = exp->comp->frameAtTime(jerry_value_as_number(args[1]));
-    }
-
-    if (!_loopInCommon(exp, args, argsCnt)) return jerry_undefined();
-
-    auto obj = jerry_object();
-    jerry_object_set_native_ptr(obj, nullptr, exp->property);
-    return obj;
+    auto data = static_cast<ExpContent*>(jerry_object_get_native_ptr(info->function, &freeCb));
+    auto mode = _loopCommon(args, argsCnt);
+    auto in = (argsCnt > 1) ? data->exp->comp->frameAtTime(jerry_value_as_number(args[1])) : FLT_MAX;
+    return _value(data->exp->property->loop(data->frameNo, 0, mode, in), data->exp->property);
 }
 
 
@@ -1067,7 +1021,7 @@ static void _buildProperty(float frameNo, jerry_value_t context, LottieExpressio
     jerry_value_free(speedAtTime);
 
     {
-        auto data =  _expcontent(exp, frameNo, exp->object, 3);
+        auto data =  _expcontent(exp, frameNo, exp->object, 7);
 
         auto wiggle = jerry_function_external(_wiggle);
         jerry_object_set_sz(context, "wiggle", wiggle);
@@ -1085,29 +1039,30 @@ static void _buildProperty(float frameNo, jerry_value_t context, LottieExpressio
         jerry_value_free(propertyGroup);
 
         //propertyIndex
+
+        auto loopIn = jerry_function_external(_loopIn);
+        jerry_object_set_sz(context, "loopIn", loopIn);
+        jerry_object_set_native_ptr(loopIn, &freeCb, data);
+        jerry_value_free(loopIn);
+
+        auto loopOut = jerry_function_external(_loopOut);
+        jerry_object_set_sz(context, "loopOut", loopOut);
+        jerry_object_set_native_ptr(loopOut, &freeCb, data);
+        jerry_value_free(loopOut);
+
+        auto loopInDuration = jerry_function_external(_loopInDuration);
+        jerry_object_set_sz(context, "loopInDuration", loopInDuration);
+        jerry_object_set_native_ptr(loopInDuration, &freeCb, data);
+        jerry_value_free(loopInDuration);
+
+        auto loopOutDuration = jerry_function_external(_loopOutDuration);
+        jerry_object_set_sz(context, "loopOutDuration", loopOutDuration);
+        jerry_object_set_native_ptr(loopOutDuration, &freeCb, data);
+        jerry_value_free(loopOutDuration);
+
     }
 
     //smooth(width=.2, samples=5, t=time)
-
-    auto loopIn = jerry_function_external(_loopIn);
-    jerry_object_set_sz(context, "loopIn", loopIn);
-    jerry_object_set_native_ptr(loopIn, nullptr, exp);
-    jerry_value_free(loopIn);
-
-    auto loopOut = jerry_function_external(_loopOut);
-    jerry_object_set_sz(context, "loopOut", loopOut);
-    jerry_object_set_native_ptr(loopOut, nullptr, exp);
-    jerry_value_free(loopOut);
-
-    auto loopInDuration = jerry_function_external(_loopInDuration);
-    jerry_object_set_sz(context, "loopInDuration", loopInDuration);
-    jerry_object_set_native_ptr(loopInDuration, nullptr, exp);
-    jerry_value_free(loopInDuration);
-
-    auto loopOutDuration = jerry_function_external(_loopOutDuration);
-    jerry_object_set_sz(context, "loopOutDuration", loopOutDuration);
-    jerry_object_set_native_ptr(loopOutDuration, nullptr, exp);
-    jerry_value_free(loopOutDuration);
 
     auto key = jerry_function_external(_key);
     jerry_object_set_sz(context, "key", key);
