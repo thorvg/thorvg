@@ -112,20 +112,12 @@ struct LottieVectorFrame
 
 struct LottieExpression
 {
-    enum LoopMode : uint8_t { None = 0, InCycle = 1, InPingPong, InOffset, InContinue, OutCycle, OutPingPong, OutOffset, OutContinue };
-
     char* code;
     LottieComposition* comp;
     LottieLayer* layer;
     LottieObject* object;
     LottieProperty* property;
     bool disabled = false;
-
-    struct {
-        uint32_t key = 0;      //the keyframe number repeating to
-        float in = FLT_MAX;    //looping duration in frame number
-        LoopMode mode = None;
-    } loop;
 
     LottieExpression() {}
 
@@ -150,6 +142,7 @@ struct LottieExpression
 struct LottieProperty
 {
     enum class Type : uint8_t { Point = 0, Float, Opacity, Color, PathSet, ColorStop, Position, TextDoc, Image, Invalid };
+    enum class Loop : uint8_t {None = 0, InCycle = 1, InPingPong, InOffset, InContinue, OutCycle, OutPingPong, OutOffset, OutContinue};
 
     LottieExpression* exp = nullptr;
     Type type;
@@ -160,6 +153,7 @@ struct LottieProperty
     virtual uint32_t frameCnt() = 0;
     virtual uint32_t nearest(float time) = 0;
     virtual float frameNo(int32_t key) = 0;
+    virtual float loop(float frameNo, uint32_t key, Loop mode, float inout) = 0;
 
     bool copy(LottieProperty* rhs, bool shallow)
     {
@@ -248,29 +242,29 @@ float _frameNo(T* frames, int32_t key)
 }
 
 
+//TODO: good abstract "frames" interface to remove the template method.
 template<typename T>
-float _loop(T* frames, float frameNo, LottieExpression* exp)
+float _loop(T* frames, float frameNo, uint32_t key, LottieProperty::Loop mode, float inout)
 {
     if (!frames) return frameNo;
-    if (frameNo >= exp->loop.in || frameNo < frames->first().no || frameNo < frames->last().no) return frameNo;
-
+    if (mode == LottieProperty::Loop::None) return frameNo;
     frameNo -= frames->first().no;
 
-    switch (exp->loop.mode) {
-        case LottieExpression::LoopMode::InCycle: {
-            return fmodf(frameNo, frames->last().no - frames->first().no) + (*frames)[exp->loop.key].no;
+    switch (mode) {
+        case LottieProperty::Loop::InCycle: {
+            return fmodf(frameNo, inout - frames->first().no) + (*frames)[key].no;
         }
-        case LottieExpression::LoopMode::InPingPong: {
-            auto range = frames->last().no - (*frames)[exp->loop.key].no;
+        case LottieProperty::Loop::InPingPong: {
+            auto range = inout - (*frames)[key].no;
             auto forward = (static_cast<int>(frameNo / range) % 2) == 0 ? true : false;
             frameNo = fmodf(frameNo, range);
-            return (forward ? frameNo : (range - frameNo)) + (*frames)[exp->loop.key].no;
+            return (forward ? frameNo : (range - frameNo)) + (*frames)[key].no;
         }
-        case LottieExpression::LoopMode::OutCycle: {
-            return fmodf(frameNo, (*frames)[frames->count - 1 - exp->loop.key].no - frames->first().no) + frames->first().no;
+        case LottieProperty::Loop::OutCycle: {
+            return fmodf(frameNo, (*frames)[frames->count - 1 - key].no - frames->first().no) + frames->first().no;
         }
-        case LottieExpression::LoopMode::OutPingPong: {
-            auto range = (*frames)[frames->count - 1 - exp->loop.key].no - frames->first().no;
+        case LottieProperty::Loop::OutPingPong: {
+            auto range = (*frames)[frames->count - 1 - key].no - frames->first().no;
             auto forward = (static_cast<int>(frameNo / range) % 2) == 0 ? true : false;
             frameNo = fmodf(frameNo, range);
             return (forward ? frameNo : (range - frameNo)) + frames->first().no;
@@ -326,6 +320,11 @@ struct LottieGenericProperty : LottieProperty
         return _frameNo(frames, key);
     }
 
+    float loop(float frameNo, uint32_t key, Loop mode, float inout) override
+    {
+        return _loop(frames, frameNo, key, mode, inout);
+    }
+
     LottieScalarFrame<T>& newFrame()
     {
         if (!frames) frames = new Array<LottieScalarFrame<T>>;
@@ -358,7 +357,6 @@ struct LottieGenericProperty : LottieProperty
     {
         if (exps && exp) {
             T out{};
-            if (exp->loop.mode != LottieExpression::LoopMode::None) frameNo = _loop(frames, frameNo, exp);
             if (exps->result<LottieGenericProperty<T>>(frameNo, out, exp)) return out;
         }
         return operator()(frameNo);
@@ -428,6 +426,11 @@ struct LottiePathSet : LottieProperty
     float frameNo(int32_t key) override
     {
         return _frameNo(frames, key);
+    }
+
+    float loop(float frameNo, uint32_t key, Loop mode, float inout) override
+    {
+        return _loop(frames, frameNo, key, mode, inout);
     }
 
     LottieScalarFrame<PathSet>& newFrame()
@@ -528,7 +531,6 @@ struct LottiePathSet : LottieProperty
     bool operator()(float frameNo, Array<PathCommand>& cmds, Array<Point>& pts, Matrix* transform, const LottieRoundnessModifier* roundness, const LottieOffsetModifier* offsetPath, LottieExpressions* exps)
     {
         if (exps && exp) {
-            if (exp->loop.mode != LottieExpression::LoopMode::None) frameNo = _loop(frames, frameNo, exp);
             if (exps->result<LottiePathSet>(frameNo, cmds, pts, transform, roundness, offsetPath, exp)) return true;
         }
         return operator()(frameNo, cmds, pts, transform, roundness, offsetPath);
@@ -594,6 +596,11 @@ struct LottieColorStop : LottieProperty
         return _frameNo(frames, key);
     }
 
+    float loop(float frameNo, uint32_t key, Loop mode, float inout) override
+    {
+        return _loop(frames, frameNo, key, mode, inout);
+    }
+
     LottieScalarFrame<ColorStop>& newFrame()
     {
         if (!frames) {
@@ -616,7 +623,6 @@ struct LottieColorStop : LottieProperty
     Result operator()(float frameNo, Fill* fill, LottieExpressions* exps)
     {
         if (exps && exp) {
-            if (exp->loop.mode != LottieExpression::LoopMode::None) frameNo = _loop(frames, frameNo, exp);
             if (exps->result<LottieColorStop>(frameNo, fill, exp)) return Result::Success;
         }
 
@@ -722,6 +728,11 @@ struct LottiePosition : LottieProperty
         return _frameNo(frames, key);
     }
 
+    float loop(float frameNo, uint32_t key, Loop mode, float inout) override
+    {
+        return _loop(frames, frameNo, key, mode, inout);
+    }
+
     LottieVectorFrame<Point>& newFrame()
     {
         if (!frames) frames = new Array<LottieVectorFrame<Point>>;
@@ -754,7 +765,6 @@ struct LottiePosition : LottieProperty
     {
         Point out{};
         if (exps && exp) {
-            if (exp->loop.mode != LottieExpression::LoopMode::None) frameNo = _loop(frames, frameNo, exp);
             if (exps->result<LottiePosition>(frameNo, out, exp)) return out;
         }
         return operator()(frameNo);
@@ -855,6 +865,11 @@ struct LottieTextDoc : LottieProperty
         return _frameNo(frames, key);
     }
 
+    float loop(float frameNo, uint32_t key, Loop mode, float inout) override
+    {
+        return _loop(frames, frameNo, key, mode, inout);
+    }
+
     LottieScalarFrame<TextDocument>& newFrame()
     {
         if (!frames) frames = new Array<LottieScalarFrame<TextDocument>>;
@@ -940,6 +955,7 @@ struct LottieBitmap : LottieProperty
     uint32_t frameCnt() override { return 0; }
     uint32_t nearest(float time) override { return 0; }
     float frameNo(int32_t key) override { return 0; }
+    float loop(float frameNo, TVG_UNUSED uint32_t key, TVG_UNUSED Loop mode, TVG_UNUSED float inout) override { return frameNo; }
 
     void copy(LottieBitmap& rhs, bool shallow = true)
     {

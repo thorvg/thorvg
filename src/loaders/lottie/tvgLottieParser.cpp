@@ -281,7 +281,7 @@ bool LottieParser::getValue(Array<Point>& pts)
     enterArray();
     while (nextArrayValue()) {
         enterArray();
-        Point pt;
+        Point pt{};
         getValue(pt);
         pts.push(pt);
     }
