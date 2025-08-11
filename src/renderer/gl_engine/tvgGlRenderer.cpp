@@ -55,12 +55,7 @@ void GlRenderer::flush()
     clearDisposes();
 
     mRootTarget.reset();
-
-    ARRAY_FOREACH(p, mComposePool) delete(*p);
-    mComposePool.clear();
-
-    ARRAY_FOREACH(p, mBlendPool) delete(*p);
-    mBlendPool.clear();
+    mRenderTargetPool.reset();
 
     ARRAY_FOREACH(p, mComposeStack) delete(*p);
     mComposeStack.clear();
@@ -533,10 +528,7 @@ bool GlRenderer::beginComplexBlending(const RenderRegion& vp, RenderRegion bound
 
     if (mBlendMethod == BlendMethod::Normal || mBlendMethod == BlendMethod::Add || mBlendMethod == BlendMethod::Darken || mBlendMethod == BlendMethod::Lighten) return false;
 
-    if (mBlendPool.empty()) mBlendPool.push(new GlRenderTargetPool(surface.w, surface.h));
-
-    auto blendFbo = mBlendPool[0]->getRenderTarget(bounds);
-
+    auto blendFbo = mRenderTargetPool.getRenderTarget(mTargetFboId);
     mRenderPassStack.push(new GlRenderPass(blendFbo));
 
     return true;
@@ -552,24 +544,21 @@ void GlRenderer::endBlendingCompose(GlRenderTask* stencilTask, const Matrix& mat
     auto composeTask = blendPass->endRenderPass<GlComposeTask>(nullptr, currentPass()->getFboId());
 
     const auto& vp = blendPass->getViewport();
-    if (mBlendPool.count < 2) mBlendPool.push(new GlRenderTargetPool(surface.w, surface.h));
-    auto dstCopyFbo = mBlendPool[1]->getRenderTarget(vp);
+    auto dstCopyFbo = mRenderTargetPool.getRenderTarget(mTargetFboId);
 
     auto x = vp.sx();
     auto y = currentPass()->getViewport().sh() - vp.sy() - vp.sh();
     stencilTask->setViewport({{x, y}, {x + vp.sw(), y + vp.sh()}});
-
     stencilTask->setDrawDepth(currentPass()->nextDrawDepth());
 
     // set view matrix
     float matrix44[16];
     currentPass()->getMatrix(matrix44, matrix);
-    uint32_t viewOffset = mGpuBuffer.push(matrix44, 16 * sizeof(float), true);
     stencilTask->addBindResource(GlBindingResource{
         0,
         stencilTask->getProgram()->getUniformBlockIndex("Matrix"),
         mGpuBuffer.getBufferId(),
-        viewOffset,
+        mGpuBuffer.push(matrix44, 16 * sizeof(float), true),
         16 * sizeof(float),
     });
 
@@ -583,6 +572,8 @@ void GlRenderer::endBlendingCompose(GlRenderTask* stencilTask, const Matrix& mat
 
     currentPass()->addRenderTask(task);
 
+    mRenderTargetPool.freeRenderTarget(dstCopyFbo);
+    mRenderTargetPool.freeRenderTarget(blendPass->getFbo());
     delete(blendPass);
 }
 
@@ -612,9 +603,6 @@ void GlRenderer::prepareBlitTask(GlBlitTask* task)
 
 void GlRenderer::prepareCmpTask(GlRenderTask* task, const RenderRegion& vp, uint32_t cmpWidth, uint32_t cmpHeight)
 {
-    // we use 1:1 blit mapping since compositor fbo is same size as root fbo
-    Array<float> vertices(4 * 4);
-
     const auto& passVp = currentPass()->getViewport();
     
     auto taskVp = vp;
@@ -625,59 +613,19 @@ void GlRenderer::prepareCmpTask(GlRenderTask* task, const RenderRegion& vp, uint
     auto w = taskVp.sw();
     auto h = taskVp.sh();
 
-    float rw = static_cast<float>(passVp.w());
-    float rh = static_cast<float>(passVp.h());
-
-    float l = static_cast<float>(x);
-    float t = static_cast<float>(rh - y);
-    float r = static_cast<float>(x + w);
-    float b = static_cast<float>(rh - y - h);
-
-    // map vp ltrp to -1:1
-    float left = (l / rw) * 2.f - 1.f;
-    float top = (t / rh) * 2.f - 1.f;
-    float right = (r / rw) * 2.f - 1.f;
-    float bottom = (b / rh) * 2.f - 1.f;
-
-    float uw = static_cast<float>(w) / static_cast<float>(cmpWidth);
-    float uh = static_cast<float>(h) / static_cast<float>(cmpHeight);
-
-    // left top point
-    vertices.push(left);
-    vertices.push(top);
-    vertices.push(0.f);
-    vertices.push(uh);
-    // left bottom point
-    vertices.push(left);
-    vertices.push(bottom);
-    vertices.push(0.f);
-    vertices.push(0.f);
-    // right top point
-    vertices.push(right);
-    vertices.push(top);
-    vertices.push(uw);
-    vertices.push(uh);
-    // right bottom point
-    vertices.push(right);
-    vertices.push(bottom);
-    vertices.push(uw);
-    vertices.push(0.f);
-
-    Array<uint32_t> indices(6);
-
-    indices.push(0);
-    indices.push(1);
-    indices.push(2);
-    indices.push(2);
-    indices.push(1);
-    indices.push(3);
-
-    uint32_t vertexOffset = mGpuBuffer.push(vertices.data, vertices.count * sizeof(float));
-    uint32_t indexOffset = mGpuBuffer.pushIndex(indices.data, indices.count * sizeof(uint32_t));
+    float vertices[4*4] {
+        -1.0f, +1.0f, 0.0f, 1.0f, // left top point
+        -1.0f, -1.0f, 0.0f, 0.0f, // left bottom point
+        +1.0f, +1.0f, 1.0f, 1.0f, // right top point
+        +1.0f, -1.0f, 1.0f, 0.0f  // right bottom point
+    };
+    uint32_t indices[6] {0, 1, 2, 2, 1, 3};
+    uint32_t vertexOffset = mGpuBuffer.push(vertices, sizeof(vertices));
+    uint32_t indexOffset = mGpuBuffer.pushIndex(indices, sizeof(indices));
 
     task->addVertexLayout(GlVertexLayout{0, 2, 4 * sizeof(float), vertexOffset});
     task->addVertexLayout(GlVertexLayout{1, 2, 4 * sizeof(float), vertexOffset + 2 * sizeof(float)});
-    task->setDrawRange(indexOffset, indices.count);
+    task->setDrawRange(indexOffset, 6);
     y = (passVp.sh() - y - h);
     task->setViewport({{x, y}, {x + w, y + h}});
 }
@@ -689,8 +637,6 @@ void GlRenderer::endRenderPass(RenderCompositor* cmp)
     if (cmp->method != MaskMethod::None) {
         auto selfPass = mRenderPassStack.last();
         mRenderPassStack.pop();
-
-        // mask is pushed first
         auto maskPass = mRenderPassStack.last();
         mRenderPassStack.pop();
 
@@ -729,10 +675,11 @@ void GlRenderer::endRenderPass(RenderCompositor* cmp)
             currentPass()->addRenderTask(compose_task);
         }
 
+        mRenderTargetPool.freeRenderTarget(maskPass->getFbo());
+        mRenderTargetPool.freeRenderTarget(selfPass->getFbo());
         delete(selfPass);
         delete(maskPass);
     } else {
-
         auto renderPass = mRenderPassStack.last();
         mRenderPassStack.pop();
 
@@ -769,6 +716,8 @@ void GlRenderer::endRenderPass(RenderCompositor* cmp)
             task->setParentSize(currentPass()->getViewport().w(), currentPass()->getViewport().h());
             currentPass()->addRenderTask(std::move(task));
         }
+
+        mRenderTargetPool.freeRenderTarget(renderPass->getFbo());
         delete(renderPass);
     }
 }
@@ -805,6 +754,7 @@ bool GlRenderer::target(void* context, int32_t id, uint32_t w, uint32_t h)
 
     currentContext();
 
+    mRenderTargetPool.init(surface.w, surface.h);
     mRootTarget.setViewport({{0, 0}, {int32_t(surface.w), int32_t(surface.h)}});
     mRootTarget.init(surface.w, surface.h, mTargetFboId);
 
@@ -904,14 +854,12 @@ bool GlRenderer::beginComposite(RenderCompositor* cmp, MaskMethod method, uint8_
 {
     if (!cmp) return false;
 
-    cmp->method = method;
-    cmp->opacity = opacity;
-
-    uint32_t index = mRenderPassStack.count - 1;
-    if (index >= mComposePool.count) mComposePool.push( new GlRenderTargetPool(surface.w, surface.h));
-
     auto glCmp = static_cast<GlCompositor*>(cmp);
-    if (glCmp->bbox.valid()) mRenderPassStack.push(new GlRenderPass(mComposePool[index]->getRenderTarget(glCmp->bbox)));
+    glCmp->method = method;
+    glCmp->opacity = opacity;
+
+    if (glCmp->bbox.valid()) 
+        mRenderPassStack.push(new GlRenderPass(mRenderTargetPool.getRenderTarget(mTargetFboId)));
     else mRenderPassStack.push(new GlRenderPass(nullptr));
 
     return true;
@@ -939,10 +887,6 @@ bool GlRenderer::endComposite(RenderCompositor* cmp)
 
 void GlRenderer::prepare(RenderEffect* effect, const Matrix& transform)
 {
-    // we must be sure, that we have intermidiate FBOs
-    if (mBlendPool.count < 1) mBlendPool.push(new GlRenderTargetPool(surface.w, surface.h));
-    if (mBlendPool.count < 2) mBlendPool.push(new GlRenderTargetPool(surface.w, surface.h));
-
     mEffect.update(effect, transform);
 }
 
@@ -955,7 +899,8 @@ bool GlRenderer::region(RenderEffect* effect)
 
 bool GlRenderer::render(TVG_UNUSED RenderCompositor* cmp, const RenderEffect* effect, TVG_UNUSED bool direct)
 {
-    return mEffect.render(const_cast<RenderEffect*>(effect), currentPass(), mBlendPool);
+    return mEffect.render(const_cast<RenderEffect*>(effect), currentPass(), mRenderTargetPool);
+    return false;
 }
 
 

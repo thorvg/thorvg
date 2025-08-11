@@ -210,9 +210,6 @@ void GlComposeTask::run()
     GL_CHECK(glClear(GL_COLOR_BUFFER_BIT | GL_STENCIL_BUFFER_BIT | GL_DEPTH_BUFFER_BIT));
     GL_CHECK(glDepthMask(0));
 
-    GL_CHECK(glViewport(0, 0, mRenderWidth, mRenderHeight));
-    GL_CHECK(glScissor(0, 0, mRenderWidth, mRenderHeight));
-
     ARRAY_FOREACH(p, mTasks) {
         (*p)->run();
     }
@@ -244,7 +241,7 @@ void GlComposeTask::onResolve()
 {
     GL_CHECK(glBindFramebuffer(GL_READ_FRAMEBUFFER, getSelfFbo()));
     GL_CHECK(glBindFramebuffer(GL_DRAW_FRAMEBUFFER, getResolveFboId()));
-    GL_CHECK(glBlitFramebuffer(0, 0, mRenderWidth, mRenderHeight, 0, 0, mRenderWidth, mRenderHeight, GL_COLOR_BUFFER_BIT, GL_NEAREST));
+    GL_CHECK(glBlitFramebuffer(0, 0, mFbo->getWidth(), mFbo->getHeight(), 0, 0, mFbo->getWidth(), mFbo->getHeight(), GL_COLOR_BUFFER_BIT, GL_NEAREST));
 }
 
 
@@ -305,7 +302,7 @@ void GlDrawBlitTask::run()
     GL_CHECK(glBindFramebuffer(GL_FRAMEBUFFER, getTargetFbo()));
 
     GL_CHECK(glViewport(0, 0, mParentWidth, mParentHeight));
-    GL_CHECK(glScissor(0, 0, mParentWidth, mParentWidth));
+    GL_CHECK(glScissor(0, 0, mParentWidth, mParentHeight));
     GlRenderTask::run();
 }
 

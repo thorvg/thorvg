@@ -132,10 +132,9 @@ private:
     GlRenderTarget mRootTarget;
     GlEffect mEffect;
     Array<GlProgram*> mPrograms;
-    Array<GlRenderTargetPool*> mComposePool;
-    Array<GlRenderTargetPool*> mBlendPool;
     Array<GlRenderPass*> mRenderPassStack;
     Array<GlCompositor*> mComposeStack;
+    GlRenderTargetPool mRenderTargetPool;
 
     //Disposed resources. They should be released on synced call.
     struct {

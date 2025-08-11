@@ -746,10 +746,6 @@ layout(std140) uniform Gaussian {
     float dummy0;
 } uGaussian;
 
-layout(std140) uniform Viewport {
-    vec4 vp;
-} uViewport;
-
 in vec2 vUV;
 out vec4 FragColor;
 
@@ -769,8 +765,7 @@ void main()
     for (int y = -radius; y <= radius; ++y) {
         vec2 offset = vec2(0.0, float(y) * texelSize.y);
         vec2 coord = vUV + offset;
-        float pixCoord = uViewport.vp.y - coord.y / texelSize.y;
-        float weight = pixCoord < uViewport.vp.w ? gaussian(float(y), sigma) : 0.0;
+        float weight = clamp(coord.y, 0.0, 1.0) == coord.y ? gaussian(float(y), sigma) : 0.0;
         colorSum += texture(uSrcTexture, coord) * weight;
         weightSum += weight;
     }
@@ -787,10 +782,6 @@ layout(std140) uniform Gaussian {
     float extend;
     float dummy0;
 } uGaussian;
-
-layout(std140) uniform Viewport {
-    vec4 vp;
-} uViewport;
 
 in vec2 vUV;
 out vec4 FragColor;
@@ -811,8 +802,7 @@ void main()
     for (int y = -radius; y <= radius; ++y) {
         vec2 offset = vec2(float(y) * texelSize.x, 0.0);
         vec2 coord = vUV + offset;
-        float pixCoord = uViewport.vp.x + coord.x / texelSize.x;
-        float weight = pixCoord < uViewport.vp.z ? gaussian(float(y), sigma) : 0.0;
+        float weight = clamp(coord.x, 0.0, 1.0) == coord.x ? gaussian(float(y), sigma) : 0.0;
         colorSum += texture(uSrcTexture, coord) * weight;
         weightSum += weight;
     }
