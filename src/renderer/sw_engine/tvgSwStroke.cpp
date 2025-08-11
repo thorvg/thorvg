@@ -768,13 +768,14 @@ fail:
 }
 
 
-static void _exportBorderOutline(const SwStroke& stroke, SwOutline* outline, uint32_t side)
+static void _exportBorderOutline(const SwStroke& stroke, SwOutline* outline, uint32_t side, BBox& aabb)
 {
     auto border = stroke.borders + side;
     if (border->ptsCnt == 0) return;
 
     memcpy(outline->pts.data + outline->pts.count, border->pts, border->ptsCnt * sizeof(SwPoint));
 
+    auto pts = border->pts;
     auto cnt = border->ptsCnt;
     auto src = border->tags;
     auto tags = outline->types.data + outline->types.count;
@@ -789,6 +790,13 @@ static void _exportBorderOutline(const SwStroke& stroke, SwOutline* outline, uin
         ++tags;
         ++idx;
         --cnt;
+
+        auto p = pts->toPoint();
+        if (p.x < aabb.min.x) aabb.min.x = p.x;
+        if (p.x > aabb.max.x) aabb.max.x = p.x;
+        if (p.y < aabb.min.y) aabb.min.y = p.y;
+        if (p.y > aabb.max.y) aabb.max.y = p.y;
+        ++pts;
     }
     outline->pts.count += border->ptsCnt;
     outline->types.count += border->ptsCnt;
@@ -886,7 +894,7 @@ bool strokeParseOutline(SwStroke* stroke, const SwOutline& outline)
 }
 
 
-SwOutline* strokeExportOutline(SwStroke* stroke, SwMpool* mpool, unsigned tid)
+SwOutline* strokeExportOutline(SwStroke* stroke, BBox& aabb, const Matrix& transform, SwMpool* mpool, unsigned tid)
 {
     uint32_t count1, count2, count3, count4;
 
@@ -901,8 +909,10 @@ SwOutline* strokeExportOutline(SwStroke* stroke, SwMpool* mpool, unsigned tid)
     outline->types.reserve(ptsCnt);
     outline->cntrs.reserve(cntrsCnt);
 
-    _exportBorderOutline(*stroke, outline, 0);  //left
-    _exportBorderOutline(*stroke, outline, 1);  //right
+    aabb.init();
+
+    _exportBorderOutline(*stroke, outline, 0, aabb);  //left
+    _exportBorderOutline(*stroke, outline, 1, aabb);  //right
 
     return outline;
 }

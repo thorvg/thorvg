@@ -242,13 +242,15 @@ struct SwShape
     SwFill* fill = nullptr;
     SwRle* rle = nullptr;
     SwRle* strokeRle = nullptr;
+    BBox aabb;                //outline aabb bbox
+
     bool fastTrack = false;   //Fast Track: axis-aligned rectangle without any clips?
 };
 
 struct SwImage
 {
-    SwOutline*   outline = nullptr;
-    SwRle*   rle = nullptr;
+    SwOutline* outline = nullptr;
+    SwRle* rle = nullptr;
     union {
         pixel_t*  data;      //system based data pointer
         uint32_t* buf32;     //for explicit 32bits channels
@@ -258,6 +260,7 @@ struct SwImage
     int32_t      ox = 0;         //offset x
     int32_t      oy = 0;         //offset y
     float        scale;
+    BBox aabb;                   //original aabb bbox
     uint8_t      channelSize;
 
     bool         direct = false;  //draw image directly (with offset)
@@ -320,6 +323,11 @@ struct SwMpool
 static inline int32_t TO_SWCOORD(float val)
 {
     return int32_t(val * 64.0f);
+}
+
+static inline SwPoint TO_SWPOINT(const Point& pt)
+{
+    return {TO_SWCOORD(pt.x), TO_SWCOORD(pt.y)};
 }
 
 static inline uint32_t JOIN(uint8_t c0, uint8_t c1, uint8_t c2, uint8_t c3)
@@ -639,16 +647,16 @@ int64_t mathDiff(int64_t angle1, int64_t angle2);
 int64_t mathLength(const SwPoint& pt);
 int mathCubicAngle(const SwPoint* base, int64_t& angleIn, int64_t& angleMid, int64_t& angleOut);
 int64_t mathMean(int64_t angle1, int64_t angle2);
-SwPoint mathTransform(const Point* to, const Matrix& transform);
-bool mathUpdateOutlineBBox(const SwOutline* outline, const RenderRegion& clipBox, RenderRegion& renderBox, bool fastTrack);
+bool mathUpdateBBox(const BBox& aabb, const RenderRegion& clipBox, RenderRegion& renderBox, bool fastTrack);
 
 void shapeReset(SwShape* shape);
-bool shapePrepare(SwShape* shape, const RenderShape* rshape, const Matrix& transform, const RenderRegion& clipBox, RenderRegion& renderBox, SwMpool* mpool, unsigned tid, bool hasComposite);
+bool shapePrepare(SwShape& shape, const RenderShape* rshape, const Matrix& transform, const RenderRegion& clipBox, RenderRegion& renderBox, SwMpool* mpool, unsigned tid, bool hasComposite, bool aabb);
 bool shapePrepared(const SwShape* shape);
 bool shapeGenRle(SwShape* shape, const RenderRegion& bbox, bool antiAlias);
 void shapeDelOutline(SwShape* shape, SwMpool* mpool, uint32_t tid);
 void shapeResetStroke(SwShape* shape, const RenderShape* rshape, const Matrix& transform);
-bool shapeGenStrokeRle(SwShape* shape, const RenderShape* rshape, const Matrix& transform, const RenderRegion& clipBox, RenderRegion& renderBox, SwMpool* mpool, unsigned tid);
+bool shapePrepareStroke(SwShape& shape, const RenderShape* rshape, const Matrix& transform, SwMpool* mpool, unsigned tid);
+bool shapeGenStrokeRle(SwShape& shape, const RenderShape* rshape, const Matrix& transform, const RenderRegion& clipBox, RenderRegion& renderBox, SwMpool* mpool, unsigned tid);
 void shapeFree(SwShape* shape);
 void shapeDelStroke(SwShape* shape);
 bool shapeGenFillColors(SwShape* shape, const Fill* fill, const Matrix& transform, SwSurface* surface, uint8_t opacity, bool ctable);
@@ -660,7 +668,7 @@ void shapeDelStrokeFill(SwShape* shape);
 
 void strokeReset(SwStroke* stroke, const RenderShape* shape, const Matrix& transform);
 bool strokeParseOutline(SwStroke* stroke, const SwOutline& outline);
-SwOutline* strokeExportOutline(SwStroke* stroke, SwMpool* mpool, unsigned tid);
+SwOutline* strokeExportOutline(SwStroke* stroke, BBox& aabb, const Matrix& transform, SwMpool* mpool, unsigned tid);
 void strokeFree(SwStroke* stroke);
 
 bool imagePrepare(SwImage* image, const Matrix& transform, const RenderRegion& clipBox, RenderRegion& renderBox, SwMpool* mpool, unsigned tid);

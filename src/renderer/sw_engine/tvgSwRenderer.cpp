@@ -120,12 +120,13 @@ struct SwShapeTask : SwTask
         auto renderBox = curBox;
         auto updateShape = flags & (RenderUpdateFlag::Path | RenderUpdateFlag::Transform | RenderUpdateFlag::Clip);
         auto updateFill = flags & (RenderUpdateFlag::Color | RenderUpdateFlag::Gradient);
+        auto invalidStroke = !(strokeWidth > 0.0f && (updateShape || flags & RenderUpdateFlag::Stroke));
 
         //Shape
         if (updateShape || updateFill) {
             if (updateShape) shapeReset(&shape);
             if (!shape.rle || shape.rle->invalid()) {
-                if (shapePrepare(&shape, rshape, transform, curBox, renderBox, mpool, tid, clips.count > 0 ? true : false)) {
+                if (shapePrepare(shape, rshape, transform, curBox, renderBox, mpool, tid, (clips.count > 0 ? true : false), invalidStroke)) {
                     if (!shapeGenRle(&shape, renderBox, antialiasing(strokeWidth))) goto err;
                 } else {
                     updateFill = false;
@@ -145,7 +146,7 @@ struct SwShapeTask : SwTask
         if (updateShape || flags & RenderUpdateFlag::Stroke) {
             if (strokeWidth > 0.0f) {
                 shapeResetStroke(&shape, rshape, transform);
-                if (!shapeGenStrokeRle(&shape, rshape, transform, curBox, renderBox, mpool, tid)) goto err;
+                if (!shapeGenStrokeRle(shape, rshape, transform, curBox, renderBox, mpool, tid)) goto err;
                 if (auto fill = rshape->strokeFill()) {
                     auto ctable = (flags & RenderUpdateFlag::GradientStroke) ? true : false;
                     if (ctable) shapeResetStrokeFill(&shape);

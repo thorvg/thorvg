@@ -262,46 +262,20 @@ int64_t mathDiff(int64_t angle1, int64_t angle2)
 }
 
 
-SwPoint mathTransform(const Point* to, const Matrix& transform)
+bool mathUpdateBBox(const BBox& aabb, const RenderRegion& clipBox, RenderRegion& renderBox, bool fastTrack)
 {
-    auto tx = to->x * transform.e11 + to->y * transform.e12 + transform.e13;
-    auto ty = to->x * transform.e21 + to->y * transform.e22 + transform.e23;
-
-    return {TO_SWCOORD(tx), TO_SWCOORD(ty)};
-}
-
-
-bool mathUpdateOutlineBBox(const SwOutline* outline, const RenderRegion& clipBox, RenderRegion& renderBox, bool fastTrack)
-{
-    if (!outline) return false;
-
-    if (outline->pts.empty() || outline->cntrs.empty()) {
-        renderBox.reset();
-        return false;
-    }
-
-    auto pt = outline->pts.begin();
-
-    auto xMin = pt->x;
-    auto xMax = pt->x;
-    auto yMin = pt->y;
-    auto yMax = pt->y;
-
-    for (++pt; pt < outline->pts.end(); ++pt) {
-        if (xMin > pt->x) xMin = pt->x;
-        if (xMax < pt->x) xMax = pt->x;
-        if (yMin > pt->y) yMin = pt->y;
-        if (yMax < pt->y) yMax = pt->y;
-    }
-
-    if (fastTrack) {
-        renderBox.min = {int32_t(round(xMin / 64.0f)), int32_t(round(yMin / 64.0f))};
-        renderBox.max = {int32_t(round(xMax / 64.0f)), int32_t(round(yMax / 64.0f))};
+    if (aabb.valid()) {
+        if (fastTrack) {
+            renderBox.min = {int32_t(nearbyint(aabb.min.x)), int32_t(nearbyint(aabb.min.y))};
+            renderBox.max = {int32_t(nearbyint(aabb.max.x)), int32_t(nearbyint(aabb.max.y))};
+        } else {
+            renderBox.min = {int32_t(floor(aabb.min.x)), int32_t(floor(aabb.min.y))};
+            renderBox.max = {int32_t(ceil(aabb.max.x)), int32_t(ceil(aabb.max.y))};
+        }
+        renderBox.intersect(clipBox);
     } else {
-        renderBox.min = {xMin >> 6, yMin >> 6};
-        renderBox.max = {(xMax + 63) >> 6, (yMax + 63) >> 6};
+        renderBox = clipBox;
     }
 
-    renderBox.intersect(clipBox);
     return renderBox.valid();
 }

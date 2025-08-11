@@ -392,6 +392,14 @@ struct Line
 struct BBox
 {
     Point min, max;
+
+    void init()
+    {
+        min = {FLT_MAX, FLT_MAX};
+        max = {-FLT_MAX, -FLT_MAX};
+    }
+
+    bool valid() const { return (max.x > min.x && max.y > min.y); }
 };
 
 
