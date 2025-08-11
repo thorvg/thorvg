@@ -25,6 +25,10 @@
 
 #include "tvgGlCommon.h"
 
+/************************************************************************/
+/* GlRenderTarget Class Implementation                              */
+/************************************************************************/
+
 class GlRenderTarget
 {
 public:
@@ -41,7 +45,9 @@ public:
     uint32_t getWidth() const { return mWidth; }
     uint32_t getHeight() const { return mHeight; }
 
-    void setViewport(const RenderRegion& vp) { mViewport = vp; }
+    void setViewport(const RenderRegion& vp) { 
+        mViewport = vp;
+    }
     const RenderRegion& getViewport() const { return mViewport; }
 
     bool invalid() const { return mFbo == 0; }
@@ -57,15 +63,23 @@ private:
     GLuint mColorTex = 0;
 };
 
+/************************************************************************/
+/* GlRenderTargetPool Class Implementation                              */
+/************************************************************************/
+
 class GlRenderTargetPool {
 public:
-    GlRenderTargetPool(uint32_t maxWidth, uint32_t maxHeight);
+    GlRenderTargetPool();
     ~GlRenderTargetPool();
 
-    GlRenderTarget* getRenderTarget(const RenderRegion& vp, GLuint resolveId = 0);
+    void init(uint32_t width, uint32_t height);
+    void reset();
+
+    GlRenderTarget* getRenderTarget(GLuint resolveId = 0);
+    void freeRenderTarget(GlRenderTarget* renderTarget);
 private:
-    uint32_t mMaxWidth = 0;
-    uint32_t mMaxHeight = 0;
+    uint32_t mWidth = 0;
+    uint32_t mHeight = 0;
     Array<GlRenderTarget*> mPool;
 };
 

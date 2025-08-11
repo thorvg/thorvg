@@ -48,9 +48,9 @@ private:
     bool region(RenderEffectGaussianBlur* effect);
     bool region(RenderEffectDropShadow* effect);
 
-    GlRenderTask* render(RenderEffectGaussianBlur* effect, GlRenderTarget* dstFbo, Array<GlRenderTargetPool*>& blendPool, const RenderRegion& vp, uint32_t voffset, uint32_t ioffset);
-    GlRenderTask* render(RenderEffectDropShadow* effect, GlRenderTarget* dstFbo, Array<GlRenderTargetPool*>& blendPool, const RenderRegion& vp, uint32_t voffset, uint32_t ioffset);
-    GlRenderTask* render(RenderEffect* effect, GlRenderTarget* dstFbo, Array<GlRenderTargetPool*>& blendPool, const RenderRegion& vp, uint32_t voffset, uint32_t ioffset);
+    GlRenderTask* render(RenderEffectGaussianBlur* effect, GlRenderTarget* dstFbo, GlRenderTargetPool& pool, const RenderRegion& vp, uint32_t voffset, uint32_t ioffset);
+    GlRenderTask* render(RenderEffectDropShadow* effect, GlRenderTarget* dstFbo, GlRenderTargetPool& pool, const RenderRegion& vp, uint32_t voffset, uint32_t ioffset);
+    GlRenderTask* render(RenderEffect* effect, GlRenderTarget* dstFbo, GlRenderTargetPool& pool, const RenderRegion& vp, uint32_t voffset, uint32_t ioffset);
 
 public:
     GlEffect(GlStageBuffer* buffer);
@@ -58,7 +58,7 @@ public:
 
     void update(RenderEffect* effect, const Matrix& transform);
     bool region(RenderEffect* effect);
-    bool render(RenderEffect* effect, GlRenderPass* pass, Array<GlRenderTargetPool*>& blendPool);
+    bool render(RenderEffect* effect, GlRenderPass* pass, GlRenderTargetPool& pool);
 };
 
 #endif /* _TVG_GL_EFFECT_H_ */

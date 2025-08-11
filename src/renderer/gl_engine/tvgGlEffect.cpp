@@ -67,14 +67,14 @@ void GlEffect::update(RenderEffectGaussianBlur* effect, const Matrix& transform)
 }
 
 
-GlRenderTask* GlEffect::render(RenderEffectGaussianBlur* effect, GlRenderTarget* dstFbo, Array<GlRenderTargetPool*>& blendPool, const RenderRegion& vp, uint32_t voffset, uint32_t ioffset)
+GlRenderTask* GlEffect::render(RenderEffectGaussianBlur* effect, GlRenderTarget* dstFbo, GlRenderTargetPool& pool, const RenderRegion& vp, uint32_t voffset, uint32_t ioffset)
 {
     if (!pBlurV) pBlurV = new GlProgram(EFFECT_VERTEX, GAUSSIAN_VERTICAL);
     if (!pBlurH) pBlurH = new GlProgram(EFFECT_VERTEX, GAUSSIAN_HORIZONTAL);
 
     // get current and intermidiate framebuffers
-    auto dstCopyFbo0 = blendPool[0]->getRenderTarget(vp);
-    auto dstCopyFbo1 = blendPool[1]->getRenderTarget(vp);
+    auto dstCopyFbo0 = pool.getRenderTarget();
+    auto dstCopyFbo1 = pool.getRenderTarget();
 
     // add uniform data
     float viewport[4] {(float)vp.min.x, (float)vp.min.y, (float)vp.max.x, (float)vp.max.y};
@@ -97,6 +97,8 @@ GlRenderTask* GlEffect::render(RenderEffectGaussianBlur* effect, GlRenderTarget*
     task->vertTask->addBindResource(GlBindingResource{1, pBlurV->getUniformBlockIndex("Viewport"), gpuBuffer->getBufferId(), viewportOffset, sizeof(viewport)});
     task->vertTask->addVertexLayout(GlVertexLayout{0, 2, 2 * sizeof(float), voffset});
     task->vertTask->setDrawRange(ioffset, 6);
+    pool.freeRenderTarget(dstCopyFbo1);
+    pool.freeRenderTarget(dstCopyFbo0);
 
     return task;
 }
@@ -149,21 +151,19 @@ void GlEffect::update(RenderEffectDropShadow* effect, const Matrix& transform)
 }
 
 
-GlRenderTask* GlEffect::render(RenderEffectDropShadow* effect, GlRenderTarget* dstFbo, Array<GlRenderTargetPool*>& blendPool, const RenderRegion& vp, uint32_t voffset, uint32_t ioffset)
+GlRenderTask* GlEffect::render(RenderEffectDropShadow* effect, GlRenderTarget* dstFbo, GlRenderTargetPool& pool, const RenderRegion& vp, uint32_t voffset, uint32_t ioffset)
 {
     if (!pBlurV) pBlurV = new GlProgram(EFFECT_VERTEX, GAUSSIAN_VERTICAL);
     if (!pBlurH) pBlurH = new GlProgram(EFFECT_VERTEX, GAUSSIAN_HORIZONTAL);
     if (!pDropShadow) pDropShadow = new GlProgram(EFFECT_VERTEX, EFFECT_DROPSHADOW);
 
     // get current and intermidiate framebuffers
-    auto dstCopyFbo0 = blendPool[0]->getRenderTarget(vp);
-    auto dstCopyFbo1 = blendPool[1]->getRenderTarget(vp);
+    auto dstCopyFbo0 = pool.getRenderTarget();
+    auto dstCopyFbo1 = pool.getRenderTarget();
 
     // add uniform data
-    float viewport[4] {(float)vp.min.x, (float)vp.min.y, (float)vp.max.x, (float)vp.max.y};
     GlDropShadow* params = (GlDropShadow*)(effect->rd);
     auto paramsOffset = gpuBuffer->push(params, sizeof(GlDropShadow), true);
-    auto viewportOffset = gpuBuffer->push(viewport, sizeof(viewport), true);
 
     // create gaussian blur tasks
     auto task = new GlEffectDropShadowTask(pDropShadow, dstFbo, dstCopyFbo0, dstCopyFbo1);
@@ -176,16 +176,16 @@ GlRenderTask* GlEffect::render(RenderEffectDropShadow* effect, GlRenderTarget* d
     // horizontal blur task and geometry
     task->horzTask = new GlRenderTask(pBlurH);
     task->horzTask->addBindResource(GlBindingResource{0, pBlurH->getUniformBlockIndex("Gaussian"), gpuBuffer->getBufferId(), paramsOffset, sizeof(GlGaussianBlur)});
-    task->horzTask->addBindResource(GlBindingResource{1, pBlurH->getUniformBlockIndex("Viewport"), gpuBuffer->getBufferId(), viewportOffset, sizeof(viewport)});
     task->horzTask->addVertexLayout(GlVertexLayout{0, 2, 2 * sizeof(float), voffset});
     task->horzTask->setDrawRange(ioffset, 6);
 
     // vertical blur task and geometry
     task->vertTask = new GlRenderTask(pBlurV);
     task->vertTask->addBindResource(GlBindingResource{0, pBlurV->getUniformBlockIndex("Gaussian"), gpuBuffer->getBufferId(), paramsOffset, sizeof(GlGaussianBlur)});
-    task->vertTask->addBindResource(GlBindingResource{1, pBlurV->getUniformBlockIndex("Viewport"), gpuBuffer->getBufferId(), viewportOffset, sizeof(viewport)});
     task->vertTask->addVertexLayout(GlVertexLayout{0, 2, 2 * sizeof(float), voffset});
     task->vertTask->setDrawRange(ioffset, 6);
+    pool.freeRenderTarget(dstCopyFbo1);
+    pool.freeRenderTarget(dstCopyFbo0);
 
     return task;
 }
@@ -259,7 +259,7 @@ void GlEffect::update(RenderEffectTritone* effect, const Matrix& transform)
 }
 
 
-GlRenderTask* GlEffect::render(RenderEffect* effect, GlRenderTarget* dstFbo, Array<GlRenderTargetPool*>& blendPool, const RenderRegion& vp, uint32_t voffset, uint32_t ioffset)
+GlRenderTask* GlEffect::render(RenderEffect* effect, GlRenderTarget* dstFbo, GlRenderTargetPool& pool, const RenderRegion& vp, uint32_t voffset, uint32_t ioffset)
 {
     //common color replacement effects
     GlProgram* program = nullptr;
@@ -275,7 +275,8 @@ GlRenderTask* GlEffect::render(RenderEffect* effect, GlRenderTarget* dstFbo, Arr
     } else return nullptr;
 
     // get current and intermidiate framebuffers
-    auto dstCopyFbo = blendPool[0]->getRenderTarget(vp);
+    auto dstCopyFbo = pool.getRenderTarget();
+
 
     // add uniform data
     auto params = (GlEffectParams*)(effect->rd);
@@ -287,6 +288,7 @@ GlRenderTask* GlEffect::render(RenderEffect* effect, GlRenderTarget* dstFbo, Arr
     task->addBindResource(GlBindingResource{0, program->getUniformBlockIndex("Params"), gpuBuffer->getBufferId(), paramsOffset, sizeof(GlEffectParams)});
     task->addVertexLayout(GlVertexLayout{0, 2, 2 * sizeof(float), voffset});
     task->setDrawRange(ioffset, 6);
+    pool.freeRenderTarget(dstCopyFbo);
 
     return task;
 }
@@ -319,7 +321,7 @@ bool GlEffect::region(RenderEffect* effect)
 }
 
 
-bool GlEffect::render(RenderEffect* effect, GlRenderPass* pass, Array<GlRenderTargetPool*>& blendPool)
+bool GlEffect::render(RenderEffect* effect, GlRenderPass* pass, GlRenderTargetPool& pool)
 {
     if (pass->isEmpty()) return false;
     auto vp = pass->getViewport();
@@ -332,11 +334,11 @@ bool GlEffect::render(RenderEffect* effect, GlRenderPass* pass, Array<GlRenderTa
     GlRenderTask* output = nullptr;
 
     if (effect->type == SceneEffect::GaussianBlur) {
-        output = render(static_cast<RenderEffectGaussianBlur*>(effect), pass->getFbo(), blendPool, vp, voffset, ioffset);
+        output = render(static_cast<RenderEffectGaussianBlur*>(effect), pass->getFbo(), pool, vp, voffset, ioffset);
     } else if (effect->type == SceneEffect::DropShadow) {
-        output = render(static_cast<RenderEffectDropShadow*>(effect), pass->getFbo(), blendPool, vp, voffset, ioffset);
+        output = render(static_cast<RenderEffectDropShadow*>(effect), pass->getFbo(), pool, vp, voffset, ioffset);
     } else {
-        output = render(effect, pass->getFbo(), blendPool, vp, voffset, ioffset);
+        output = render(effect, pass->getFbo(), pool, vp, voffset, ioffset);
     }
 
     if (!output) return false;
