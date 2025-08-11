@@ -598,10 +598,10 @@ GlProgram* GlRenderer::getBlendProgram(BlendMethod method, bool gradient) {
         SOFT_LIGHT_BLEND_FRAG,
         DIFFERENCE_BLEND_FRAG,
         EXCLUSION_BLEND_FRAG,
-        NORMAL_BLEND_FRAG,
-        NORMAL_BLEND_FRAG,
-        NORMAL_BLEND_FRAG,
-        NORMAL_BLEND_FRAG,
+        HUE_BLEND_FRAG,
+        SATURATION_BLEND_FRAG,
+        COLOR_BLEND_FRAG,
+        LUMINOSITY_BLEND_FRAG,
         ADD_BLEND_FRAG
     };
     
@@ -609,13 +609,20 @@ GlProgram* GlRenderer::getBlendProgram(BlendMethod method, bool gradient) {
     uint32_t startInd = (uint32_t)RenderTypes::RT_Blend_Normal;
     uint32_t shaderInd = methodInd + startInd;
 
+    const char* helpers = "";
+    if ((method == BlendMethod::Hue) ||
+        (method == BlendMethod::Saturation) ||
+        (method == BlendMethod::Color) ||
+        (method == BlendMethod::Luminosity))
+        helpers = BLEND_FRAG_HSL;
+
     char shaderSourceBuff[BLEND_TOTAL_LENGTH];
     if (gradient) {
         startInd = (uint32_t)RenderTypes::RT_Blend_Gradient_Normal;
         shaderInd = methodInd + startInd;
-        strcat(strcpy(shaderSourceBuff, BLEND_GRADIENT_FRAG_HEADER), shaderFunc[methodInd]);
+        strcat(strcat(strcpy(shaderSourceBuff, BLEND_GRADIENT_FRAG_HEADER), helpers), shaderFunc[methodInd]);
     } else {
-        strcat(strcpy(shaderSourceBuff, BLEND_SOLID_FRAG_HEADER), shaderFunc[methodInd]);
+        strcat(strcat(strcpy(shaderSourceBuff, BLEND_SOLID_FRAG_HEADER), helpers), shaderFunc[methodInd]);
     }
 
     if (!mPrograms[shaderInd])
