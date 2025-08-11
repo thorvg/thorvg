@@ -42,75 +42,76 @@ TEST_CASE("Text Creation", "[tvgText]")
 TEST_CASE("Load TTF Data from a file", "[tvgText]")
 {
     Initializer::init();
+    {
+        auto text = unique_ptr<Text>(Text::gen());
+        REQUIRE(text);
 
-    auto text = unique_ptr<Text>(Text::gen());
-    REQUIRE(text);
+        REQUIRE(Text::unload(TEST_DIR"/invalid.ttf") == tvg::Result::InsufficientCondition);
 
-    REQUIRE(Text::unload(TEST_DIR"/invalid.ttf") == tvg::Result::InsufficientCondition);
-
-    REQUIRE(Text::load(TEST_DIR"/Arial.ttf") == tvg::Result::Success);
-    REQUIRE(Text::load(TEST_DIR"/invalid.ttf") == tvg::Result::InvalidArguments);
-    REQUIRE(Text::unload(TEST_DIR"/Arial.ttf") == tvg::Result::Success);
-    REQUIRE(Text::load("") == tvg::Result::InvalidArguments);
-    REQUIRE(Text::load(TEST_DIR"/NanumGothicCoding.ttf") == tvg::Result::Success);
-
+        REQUIRE(Text::load(TEST_DIR"/Arial.ttf") == tvg::Result::Success);
+        REQUIRE(Text::load(TEST_DIR"/invalid.ttf") == tvg::Result::InvalidArguments);
+        REQUIRE(Text::unload(TEST_DIR"/Arial.ttf") == tvg::Result::Success);
+        REQUIRE(Text::load("") == tvg::Result::InvalidArguments);
+        REQUIRE(Text::load(TEST_DIR"/NanumGothicCoding.ttf") == tvg::Result::Success);
+    }
     Initializer::term();
 }
 
 TEST_CASE("Load TTF Data from a memory", "[tvgText]")
 {
     Initializer::init();
+    {
+        ifstream file(TEST_DIR"/Arial.ttf", ios::binary);
+        REQUIRE(file.is_open());
+        file.seekg(0, std::ios::end);
+        auto size = file.tellg();
+        file.seekg(0, std::ios::beg);
+        auto data = (char*)malloc(size);
+        REQUIRE(data);
+        file.read(data, size);
+        file.close();
 
-    ifstream file(TEST_DIR"/Arial.ttf", ios::binary);
-    REQUIRE(file.is_open());
-    file.seekg(0, std::ios::end);
-    auto size = file.tellg();
-    file.seekg(0, std::ios::beg);
-    auto data = (char*)malloc(size);
-    REQUIRE(data);
-    file.read(data, size);
-    file.close();
+        auto text = unique_ptr<Text>(Text::gen());
+        REQUIRE(text);
 
-    auto text = unique_ptr<Text>(Text::gen());
-    REQUIRE(text);
+        static const char* svg = "<svg height=\"1000\" viewBox=\"0 0 600 600\" ></svg>";
 
-    static const char* svg = "<svg height=\"1000\" viewBox=\"0 0 600 600\" ></svg>";
+        //load
+        REQUIRE(Text::load(nullptr, data, size) == Result::InvalidArguments);
+        REQUIRE(Text::load("Arial", data, 0) == Result::InvalidArguments);
+        REQUIRE(Text::load("Arial", data, 0) == Result::InvalidArguments);
+        REQUIRE(Text::load("ArialSvg", svg, strlen(svg), "unknown") == Result::NonSupport);
+        REQUIRE(Text::load("ArialUnknown", data, size, "unknown") == Result::Success);
+        REQUIRE(Text::load("ArialTtf", data, size, "ttf", true) == Result::Success);
+        REQUIRE(Text::load("Arial", data, size, "") == Result::Success);
 
-    //load
-    REQUIRE(Text::load(nullptr, data, size) == Result::InvalidArguments);
-    REQUIRE(Text::load("Arial", data, 0) == Result::InvalidArguments);
-    REQUIRE(Text::load("Arial", data, 0) == Result::InvalidArguments);
-    REQUIRE(Text::load("ArialSvg", svg, strlen(svg), "unknown") == Result::NonSupport);
-    REQUIRE(Text::load("ArialUnknown", data, size, "unknown") == Result::Success);
-    REQUIRE(Text::load("ArialTtf", data, size, "ttf", true) == Result::Success);
-    REQUIRE(Text::load("Arial", data, size, "") == Result::Success);
+        //unload
+        REQUIRE(Text::load("invalid", nullptr, 0) == Result::InsufficientCondition);
+        REQUIRE(Text::load("ArialSvg", nullptr, 0) == Result::InsufficientCondition);
+        REQUIRE(Text::load("ArialUnknown", nullptr, 0) == Result::Success);
+        REQUIRE(Text::load("ArialTtf", nullptr, 0) == Result::Success);
+        REQUIRE(Text::load("Arial", nullptr, 111) == Result::Success);
 
-    //unload
-    REQUIRE(Text::load("invalid", nullptr, 0) == Result::InsufficientCondition);
-    REQUIRE(Text::load("ArialSvg", nullptr, 0) == Result::InsufficientCondition);
-    REQUIRE(Text::load("ArialUnknown", nullptr, 0) == Result::Success);
-    REQUIRE(Text::load("ArialTtf", nullptr, 0) == Result::Success);
-    REQUIRE(Text::load("Arial", nullptr, 111) == Result::Success);
-
-    free(data);
+        free(data);
+    }
     Initializer::term();
 }
 
 TEST_CASE("Text Font", "[tvgText]")
 {
     Initializer::init();
+    {
+        auto text = unique_ptr<Text>(Text::gen());
+        REQUIRE(text);
 
-    auto text = unique_ptr<Text>(Text::gen());
-    REQUIRE(text);
+        REQUIRE(Text::load(TEST_DIR"/Arial.ttf") == tvg::Result::Success);
 
-    REQUIRE(Text::load(TEST_DIR"/Arial.ttf") == tvg::Result::Success);
-
-    REQUIRE(text->font("Arial", 80) == tvg::Result::Success);
-    REQUIRE(text->font("Arial", 1) == tvg::Result::Success);
-    REQUIRE(text->font("Arial", 50) == tvg::Result::Success);
-    REQUIRE(text->font(nullptr, 50) == tvg::Result::Success);
-    REQUIRE(text->font("InvalidFont", 80) == tvg::Result::InsufficientCondition);
-
+        REQUIRE(text->font("Arial", 80) == tvg::Result::Success);
+        REQUIRE(text->font("Arial", 1) == tvg::Result::Success);
+        REQUIRE(text->font("Arial", 50) == tvg::Result::Success);
+        REQUIRE(text->font(nullptr, 50) == tvg::Result::Success);
+        REQUIRE(text->font("InvalidFont", 80) == tvg::Result::InsufficientCondition);
+    }
     Initializer::term();
 }
 
@@ -118,49 +119,49 @@ TEST_CASE("Text Font", "[tvgText]")
 TEST_CASE("Text Basic", "[tvgText]")
 {
     Initializer::init();
+    {
+        auto canvas = unique_ptr<SwCanvas>(SwCanvas::gen());
+        uint32_t buffer[100*100];
+        canvas->target(buffer, 100, 100, 100, ColorSpace::ARGB8888);
 
-    auto canvas = unique_ptr<SwCanvas>(SwCanvas::gen());
-    uint32_t buffer[100*100];
-    canvas->target(buffer, 100, 100, 100, ColorSpace::ARGB8888);
+        auto text = Text::gen();
+        REQUIRE(text);
 
-    auto text = Text::gen();
-    REQUIRE(text);
+        REQUIRE(Text::load(TEST_DIR"/Arial.ttf") == tvg::Result::Success);
+        REQUIRE(text->font("Arial", 80) == tvg::Result::Success);
 
-    REQUIRE(Text::load(TEST_DIR"/Arial.ttf") == tvg::Result::Success);
-    REQUIRE(text->font("Arial", 80) == tvg::Result::Success);
+        REQUIRE(text->text(nullptr) == tvg::Result::Success);
+        REQUIRE(text->text("") == tvg::Result::Success);
+        REQUIRE(text->text("ABCDEFGHIJIKLMOPQRSTUVWXYZ") == tvg::Result::Success);
+        REQUIRE(text->text("THORVG Text") == tvg::Result::Success);
 
-    REQUIRE(text->text(nullptr) == tvg::Result::Success);
-    REQUIRE(text->text("") == tvg::Result::Success);
-    REQUIRE(text->text("ABCDEFGHIJIKLMOPQRSTUVWXYZ") == tvg::Result::Success);
-    REQUIRE(text->text("THORVG Text") == tvg::Result::Success);
+        REQUIRE(text->fill(255, 255, 255) == tvg::Result::Success);
 
-    REQUIRE(text->fill(255, 255, 255) == tvg::Result::Success);
-
-    REQUIRE(canvas->push(text) == Result::Success);
-
+        REQUIRE(canvas->push(text) == Result::Success);
+    }
     Initializer::term();
 }
 
 TEST_CASE("Text with composite glyphs", "[tvgText]")
 {
     Initializer::init();
+    {
+        auto canvas = unique_ptr<SwCanvas>(SwCanvas::gen());
+        uint32_t buffer[100*100];
+        canvas->target(buffer, 100, 100, 100, ColorSpace::ARGB8888);
 
-    auto canvas = unique_ptr<SwCanvas>(SwCanvas::gen());
-    uint32_t buffer[100*100];
-    canvas->target(buffer, 100, 100, 100, ColorSpace::ARGB8888);
+        auto text = Text::gen();
+        REQUIRE(text);
 
-    auto text = Text::gen();
-    REQUIRE(text);
+        REQUIRE(Text::load(TEST_DIR"/Arial.ttf") == tvg::Result::Success);
+        REQUIRE(text->font("Arial", 80) == tvg::Result::Success);
 
-    REQUIRE(Text::load(TEST_DIR"/Arial.ttf") == tvg::Result::Success);
-    REQUIRE(text->font("Arial", 80) == tvg::Result::Success);
+        REQUIRE(text->text("\xc5\xbb\x6f\xc5\x82\xc4\x85\x64\xc5\xba \xc8\xab") == tvg::Result::Success);
 
-    REQUIRE(text->text("\xc5\xbb\x6f\xc5\x82\xc4\x85\x64\xc5\xba \xc8\xab") == tvg::Result::Success);
+        REQUIRE(text->fill(255, 255, 255) == tvg::Result::Success);
 
-    REQUIRE(text->fill(255, 255, 255) == tvg::Result::Success);
-
-    REQUIRE(canvas->push(text) == Result::Success);
-
+        REQUIRE(canvas->push(text) == Result::Success);
+    }
     Initializer::term();
 }
 
