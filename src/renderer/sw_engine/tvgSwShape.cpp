@@ -435,12 +435,11 @@ static SwOutline* _genOutline(SwShape* shape, const RenderShape* rshape, const M
 
 bool shapePrepare(SwShape* shape, const RenderShape* rshape, const Matrix& transform, const RenderRegion& clipBox, RenderRegion& renderBox, SwMpool* mpool, unsigned tid, bool hasComposite)
 {
-    if (auto out = _genOutline(shape, rshape, transform, mpool, tid, hasComposite, rshape->trimpath())) shape->outline = out;
-    else return false;
-    if (!mathUpdateOutlineBBox(shape->outline, clipBox, renderBox, shape->fastTrack)) return false;
+    if (shape->outline = _genOutline(shape, rshape, transform, mpool, tid, hasComposite, rshape->trimpath())) {
+        return mathUpdateOutlineBBox(shape->outline, clipBox, renderBox, shape->fastTrack);
+    }
+    return false;
 
-    shape->bbox = renderBox;
-    return true;
 }
 
 
@@ -450,13 +449,13 @@ bool shapePrepared(const SwShape* shape)
 }
 
 
-bool shapeGenRle(SwShape* shape, TVG_UNUSED const RenderShape* rshape, bool antiAlias)
+bool shapeGenRle(SwShape* shape, const RenderRegion& bbox, bool antiAlias)
 {
     //Case A: Fast Track Rectangle Drawing
     if (shape->fastTrack) return true;
 
     //Case B: Normal Shape RLE Drawing
-    if ((shape->rle = rleRender(shape->rle, shape->outline, shape->bbox, antiAlias))) return true;
+    if ((shape->rle = rleRender(shape->rle, shape->outline, bbox, antiAlias))) return true;
 
     return false;
 }
@@ -473,7 +472,6 @@ void shapeReset(SwShape* shape)
 {
     rleReset(shape->rle);
     shape->fastTrack = false;
-    shape->bbox.reset();
 }
 
 

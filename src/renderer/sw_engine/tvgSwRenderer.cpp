@@ -126,7 +126,7 @@ struct SwShapeTask : SwTask
             if (updateShape) shapeReset(&shape);
             if (!shape.rle || shape.rle->invalid()) {
                 if (shapePrepare(&shape, rshape, transform, curBox, renderBox, mpool, tid, clips.count > 0 ? true : false)) {
-                    if (!shapeGenRle(&shape, rshape, antialiasing(strokeWidth))) goto err;
+                    if (!shapeGenRle(&shape, renderBox, antialiasing(strokeWidth))) goto err;
                 } else {
                     updateFill = false;
                     renderBox.reset();
@@ -496,9 +496,9 @@ bool SwRenderer::renderShape(RenderData data)
         if (fulldraw || task->nodirty || task->pushed || dirtyRegion.deactivated()) {
             if (task->rshape->strokeFirst()) {
                 stroke(task, surface, task->curBox);
-                fill(task, surface, task->shape.bbox);
+                fill(task, surface, task->curBox);
             } else {
-                fill(task, surface, task->shape.bbox);
+                fill(task, surface, task->curBox);
                 stroke(task, surface, task->curBox);
             }
         } else if (task->curBox.valid()) {
@@ -506,12 +506,14 @@ bool SwRenderer::renderShape(RenderData data)
                 if (!dirtyRegion.partition(idx).intersected(task->curBox)) continue;
                 ARRAY_FOREACH(p, dirtyRegion.get(idx)) {
                     if (task->curBox.max.x <= p->min.x) break;   //dirtyRegion is sorted in x order
+                    if (!task->curBox.intersected(*p)) continue;
+                    auto bbox = RenderRegion::intersect(task->curBox, *p);
                     if (task->rshape->strokeFirst()) {
-                        if (task->rshape->stroke && task->curBox.intersected(*p)) stroke(task, surface, RenderRegion::intersect(task->curBox, *p));
-                        if (task->shape.bbox.intersected(*p)) fill(task, surface, RenderRegion::intersect(task->shape.bbox, *p));
+                        if (task->rshape->stroke) stroke(task, surface, bbox);
+                        fill(task, surface, bbox);
                     } else {
-                        if (task->shape.bbox.intersected(*p)) fill(task, surface, RenderRegion::intersect(task->shape.bbox, *p));
-                        if (task->rshape->stroke && task->curBox.intersected(*p)) stroke(task, surface, RenderRegion::intersect(task->curBox, *p));
+                        fill(task, surface, bbox);
+                        if (task->rshape->stroke) stroke(task, surface, bbox);
                     }
                 }
             }

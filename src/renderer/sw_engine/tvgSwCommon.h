@@ -242,8 +242,6 @@ struct SwShape
     SwFill* fill = nullptr;
     SwRle* rle = nullptr;
     SwRle* strokeRle = nullptr;
-    RenderRegion bbox;           //Keep it boundary without stroke region. Using for optimal filling.
-
     bool fastTrack = false;   //Fast Track: axis-aligned rectangle without any clips?
 };
 
@@ -647,7 +645,7 @@ bool mathUpdateOutlineBBox(const SwOutline* outline, const RenderRegion& clipBox
 void shapeReset(SwShape* shape);
 bool shapePrepare(SwShape* shape, const RenderShape* rshape, const Matrix& transform, const RenderRegion& clipBox, RenderRegion& renderBox, SwMpool* mpool, unsigned tid, bool hasComposite);
 bool shapePrepared(const SwShape* shape);
-bool shapeGenRle(SwShape* shape, const RenderShape* rshape, bool antiAlias);
+bool shapeGenRle(SwShape* shape, const RenderRegion& bbox, bool antiAlias);
 void shapeDelOutline(SwShape* shape, SwMpool* mpool, uint32_t tid);
 void shapeResetStroke(SwShape* shape, const RenderShape* rshape, const Matrix& transform);
 bool shapeGenStrokeRle(SwShape* shape, const RenderShape* rshape, const Matrix& transform, const RenderRegion& clipBox, RenderRegion& renderBox, SwMpool* mpool, unsigned tid);
