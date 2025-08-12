@@ -103,7 +103,7 @@ struct UserExample : tvgexam::Example
                 //hit a emoji layer!
                 if (const_cast<tvg::Paint*>(paint)->intersects(x, y, 1, 1)) {
                     tweening(i);
-                    return true;
+                    return false;
                 }
             }
             ++i;
