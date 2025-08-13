@@ -127,10 +127,10 @@ static bool _compFastTrack(RenderMethod* renderer, Paint* cmpTarget, const Matri
 }
 
 
-RenderRegion Paint::Impl::bounds(RenderMethod* renderer) const
+RenderRegion Paint::Impl::bounds()
 {
     RenderRegion ret;
-    PAINT_METHOD(ret, bounds(renderer));
+    PAINT_METHOD(ret, bounds());
     return ret;
 }
 
@@ -171,11 +171,11 @@ bool Paint::Impl::render(RenderMethod* renderer)
     //OPTIMIZE: bounds(renderer) calls could dismiss the parallelization
     if (maskData && !(maskData->target->pImpl->ctxFlag & ContextFlag::FastTrack)) {
         RenderRegion region;
-        PAINT_METHOD(region, bounds(renderer));
+        PAINT_METHOD(region, bounds());
 
         auto mData = maskData;
         while (mData) {
-            if (MASK_REGION_MERGING(mData->method)) region.add(PAINT(mData->target)->bounds(renderer));
+            if (MASK_REGION_MERGING(mData->method)) region.add(PAINT(mData->target)->bounds());
             if (region.invalid()) return true;
             mData = PAINT(mData->target)->maskData;
         }

@@ -49,7 +49,7 @@ struct ShapeImpl : Shape
         renderer->blend(impl.blendMethod);
 
         if (impl.cmpFlag) {
-            cmp = renderer->target(bounds(renderer), renderer->colorSpace(), impl.cmpFlag);
+            cmp = renderer->target(bounds(), renderer->colorSpace(), impl.cmpFlag);
             renderer->beginComposite(cmp, MaskMethod::None, opacity);
         }
 
@@ -113,9 +113,9 @@ struct ShapeImpl : Shape
         return true;
     }
 
-    RenderRegion bounds(RenderMethod* renderer)
+    RenderRegion bounds()
     {
-        return renderer->region(impl.rd);
+        return impl.renderer->region(impl.rd);
     }
 
     Result bounds(Point* pt4, Matrix& m, bool obb, bool stroking)

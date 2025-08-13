@@ -89,9 +89,9 @@ struct TextImpl : Text
         return Result::Success;
     }
 
-    RenderRegion bounds(RenderMethod* renderer) const
+    RenderRegion bounds()
     {
-        return SHAPE(shape)->bounds(renderer);
+        return SHAPE(shape)->bounds();
     }
 
     bool render(RenderMethod* renderer)

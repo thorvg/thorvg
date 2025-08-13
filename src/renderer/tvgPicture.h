@@ -266,7 +266,7 @@ struct PictureImpl : Picture
         } else if (vector) {
             RenderCompositor* cmp = nullptr;
             if (impl.cmpFlag) {
-                cmp = renderer->target(bounds(renderer), renderer->colorSpace(), impl.cmpFlag);
+                cmp = renderer->target(bounds(), renderer->colorSpace(), impl.cmpFlag);
                 renderer->beginComposite(cmp, MaskMethod::None, 255);
             }
             ret = vector->pImpl->render(renderer);
@@ -275,10 +275,10 @@ struct PictureImpl : Picture
         return ret;
     }
 
-    RenderRegion bounds(RenderMethod* renderer)
+    RenderRegion bounds()
     {
-        if (vector) return vector->pImpl->bounds(renderer);
-        return renderer->region(impl.rd);
+        if (vector) return vector->pImpl->bounds();
+        return impl.renderer->region(impl.rd);
     }
 
     Result load(ImageLoader* loader)

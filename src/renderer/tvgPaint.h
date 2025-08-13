@@ -138,7 +138,7 @@ namespace tvg
 
         void damage()
         {
-            if (renderer) renderer->damage(rd, bounds(renderer));
+            if (renderer) renderer->damage(rd, bounds());
         }
 
         void mark(CompositionFlag flag)
@@ -307,7 +307,7 @@ namespace tvg
         }
 
         bool intersects(const RenderRegion& region);
-        RenderRegion bounds(RenderMethod* renderer) const;
+        RenderRegion bounds();
         Iterator* iterator();
         Result bounds(float* x, float* y, float* w, float* h, Matrix* pm, bool stroking);
         Result bounds(Point* pt4, Matrix* pm, bool obb, bool stroking);

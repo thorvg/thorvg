@@ -168,7 +168,7 @@ struct SceneImpl : Scene
         renderer->blend(impl.blendMethod);
 
         if (impl.cmpFlag) {
-            cmp = renderer->target(bounds(renderer), renderer->colorSpace(), impl.cmpFlag);
+            cmp = renderer->target(bounds(), renderer->colorSpace(), impl.cmpFlag);
             renderer->beginComposite(cmp, MaskMethod::None, opacity);
         }
 
@@ -191,7 +191,7 @@ struct SceneImpl : Scene
         return ret;
     }
 
-    RenderRegion bounds(RenderMethod* renderer)
+    RenderRegion bounds()
     {
         if (paints.empty()) return {};
         if (!vdirty) return vport;
@@ -200,7 +200,7 @@ struct SceneImpl : Scene
         //Merge regions
         RenderRegion pRegion = {{INT32_MAX, INT32_MAX}, {0, 0}};
         for (auto paint : paints) {
-            auto region = paint->pImpl->bounds(renderer);
+            auto region = paint->pImpl->bounds();
             if (region.min.x < pRegion.min.x) pRegion.min.x = region.min.x;
             if (pRegion.max.x < region.max.x) pRegion.max.x = region.max.x;
             if (region.min.y < pRegion.min.y) pRegion.min.y = region.min.y;
@@ -212,7 +212,7 @@ struct SceneImpl : Scene
         if (effects) {
             ARRAY_FOREACH(p, *effects) {
                 auto effect = *p;
-                if (effect->valid && renderer->region(effect)) eRegion.add(effect->extend);
+                if (effect->valid && impl.renderer->region(effect)) eRegion.add(effect->extend);
             }
         }
 
@@ -262,7 +262,7 @@ struct SceneImpl : Scene
     {
         if (!impl.renderer) return false;
 
-        if (this->bounds(impl.renderer).intersected(region)) {
+        if (this->bounds().intersected(region)) {
             for (auto paint : paints) {
                 if (PAINT(paint)->intersects(region)) return true;
             }
