@@ -446,37 +446,45 @@ public:
 
     /**
      * @brief Retrieves the object-oriented bounding box (OBB) of the paint object in canvas space.
-     * 
+     *
      * This function returns the bounding box of the paint, as an oriented bounding box (OBB) after transformations are applied.
+     * The returned values @p pt4 may have invalid if the operation fails. Thus, please check the retval.
+     *
+     * This bounding box can be used to obtain the transformed bounding region in canvas space
+     * by taking the geometry's axis-aligned bounding box (AABB) in the object's local coordinate space
+     * and applying the object's transformations.
      *
      * @param[out] pt4 An array of four points representing the bounding box. The array size must be 4.
      *
-     * @retval Result::InvalidArguments @p pt4 is @c nullptr.
-     * @retval Result::InsufficientCondition If it failed to compute the bounding box (mostly due to invalid path information).
+     * @retval Result::InsufficientCondition If the paint has not been updated by the canvas.
      * 
-     * @see Paint::bounds(float* x, float* y, folat* w, float* h)
+     * @see Paint::bounds(float* x, float* y, float* w, float* h)
      * @see Canvas::update()
      *
      * @since 1.0
      */
-    Result bounds(Point* pt4) const noexcept;
+    Result bounds(Point* pt4) noexcept;
 
     /**
      * @brief Retrieves the axis-aligned bounding box (AABB) of the paint object in canvas space.
      *
-     * This function returns the bounding box of the paint, as an axis-aligned bounding box (AABB) after transformations are applied.
+     * Returns the bounding box of the paint as an axis-aligned bounding box (AABB), with all relevant transformations applied.
+     * The returned values @p x, @p y, @p w, @p h, may have invalid if the operation fails. Thus, please check the retval.
+     *
+     * This bounding box can be used to determine the actual rendered area of the object on the canvas,
+     * for purposes such as hit-testing, culling, or layout calculations.
      *
      * @param[out] x The x-coordinate of the upper-left corner of the bounding box.
      * @param[out] y The y-coordinate of the upper-left corner of the bounding box.
      * @param[out] w The width of the bounding box.
      * @param[out] h The height of the bounding box.
      *
-     * @retval Result::InsufficientCondition If it failed to compute the bounding box (mostly due to invalid path information).
+     * @retval Result::InsufficientCondition If the paint has not been updated by the canvas.
      *
      * @see Paint::bounds(Point* pt4)
      * @see Canvas::update()
      */
-    Result bounds(float* x, float* y, float* w, float* h) const noexcept;
+    Result bounds(float* x, float* y, float* w, float* h) noexcept;
 
     /**
      * @brief Checks whether a given region intersects the filled area of the paint.

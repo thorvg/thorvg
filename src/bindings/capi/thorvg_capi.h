@@ -924,7 +924,11 @@ TVG_API bool tvg_paint_intersects(Tvg_Paint* paint, int32_t x, int32_t y, int32_
 /**
  * @brief Retrieves the axis-aligned bounding box (AABB) of the paint object in canvas space.
  *
- * This function returns the bounding box of the paint, as an axis-aligned bounding box (AABB) after transformations are applied.
+ * Returns the bounding box of the paint as an axis-aligned bounding box (AABB), with all relevant transformations applied.
+ * The returned values @p x, @p y, @p w, @p h, may have invalid if the operation fails. Thus, please check the retval.
+ *
+ * This bounding box can be used to determine the actual rendered area of the object on the canvas,
+ * for purposes such as hit-testing, culling, or layout calculations.
  *
  * @param[in] paint The Tvg_Paint object of which to get the bounds.
  * @param[out] x The x-coordinate of the upper-left corner of the bounding box.
@@ -936,15 +940,20 @@ TVG_API bool tvg_paint_intersects(Tvg_Paint* paint, int32_t x, int32_t y, int32_
  * @retval TVG_RESULT_INSUFFICIENT_CONDITION If it failed to compute the bounding box (mostly due to invalid path information).
  *
  * @see tvg_paint_get_obb()
- * @see tvg_canvas_update_paint()
+ * @see tvg_canvas_update()
  */
-TVG_API Tvg_Result tvg_paint_get_aabb(const Tvg_Paint* paint, float* x, float* y, float* w, float* h);
+TVG_API Tvg_Result tvg_paint_get_aabb(Tvg_Paint* paint, float* x, float* y, float* w, float* h);
 
 
 /**
  * @brief Retrieves the object-oriented bounding box (OBB) of the paint object in canvas space.
  *
  * This function returns the bounding box of the paint, as an oriented bounding box (OBB) after transformations are applied.
+ * The returned values @p pt4 may have invalid if the operation fails. Thus, please check the retval.
+ *
+ * This bounding box can be used to obtain the transformed bounding region in canvas space
+ * by taking the geometry's axis-aligned bounding box (AABB) in the object's local coordinate space
+ * and applying the object's transformations.
  *
  * @param[in] paint The Tvg_Paint object of which to get the bounds.
  * @param[out] pt4 An array of four points representing the bounding box. The array size must be 4.
@@ -953,11 +962,11 @@ TVG_API Tvg_Result tvg_paint_get_aabb(const Tvg_Paint* paint, float* x, float* y
  * @retval TVG_RESULT_INSUFFICIENT_CONDITION If it failed to compute the bounding box (mostly due to invalid path information).
  *
  * @see tvg_paint_get_aabb()
- * @see tvg_canvas_update_paint()
+ * @see tvg_canvas_update()
  *
  * @since 1.0
  */
-TVG_API Tvg_Result tvg_paint_get_obb(const Tvg_Paint* paint, Tvg_Point* pt4);
+TVG_API Tvg_Result tvg_paint_get_obb(Tvg_Paint* paint, Tvg_Point* pt4);
 
 
 /*!

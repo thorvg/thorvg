@@ -601,3 +601,41 @@ void shapeDelStrokeFill(SwShape* shape)
     fillFree(shape->stroke->fill);
     shape->stroke->fill = nullptr;
 }
+
+
+bool shapeStrokeBBox(SwShape& shape, const RenderShape* rshape, Point* pt4, const Matrix& m, SwMpool* mpool)
+{
+    auto outline = _genOutline(&shape, rshape, m, mpool, 0, false, rshape->trimpath());
+    if (!outline) return false;
+
+    strokeReset(shape.stroke, rshape, m);
+    strokeParseOutline(shape.stroke, *outline);
+
+    auto func = [](SwStrokeBorder& border, SwPoint& min, SwPoint& max) {
+        if (border.ptsCnt == 0) return;
+        auto pts = border.pts;
+        auto cnt = border.ptsCnt;
+        while (cnt-- > 0) {
+            if (pts->x < min.x) min.x = pts->x;
+            if (pts->x > max.x) max.x = pts->x;
+            if (pts->y < min.y) min.y = pts->y;
+            if (pts->y > max.y) max.y = pts->y;
+            ++pts;
+        }
+    };
+
+    SwPoint min = {INT32_MAX, INT32_MAX};
+    SwPoint max = {-INT32_MAX, -INT32_MAX};
+    func(shape.stroke->borders[0], min, max);
+    func(shape.stroke->borders[1], min, max);
+
+    pt4[0] = min.toPoint();
+    pt4[1] = SwPoint{max.x, min.y}.toPoint();
+    pt4[2] = max.toPoint();
+    pt4[3] = SwPoint{min.x, max.y}.toPoint();
+
+    mpoolRetStrokeOutline(mpool, 0);
+    shapeDelOutline(&shape, mpool, 0);
+
+    return true;
+}

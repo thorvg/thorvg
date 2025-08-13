@@ -273,46 +273,22 @@ RenderData Paint::Impl::update(RenderMethod* renderer, const Matrix& pm, Array<R
 }
 
 
-Result Paint::Impl::bounds(float* x, float* y, float* w, float* h, Matrix* pm, bool stroking)
+bool Paint::Impl::bounds(Point* pt4, const Matrix* pm, bool obb)
 {
-    Point pts[4];
-    if (bounds(pts, pm, false, stroking) != Result::Success) return Result::InsufficientCondition;
-
-    Point min = {FLT_MAX, FLT_MAX};
-    Point max = {-FLT_MAX, -FLT_MAX};
-
-    for (int i = 0; i < 4; ++i) {
-        if (pts[i].x < min.x) min.x = pts[i].x;
-        if (pts[i].x > max.x) max.x = pts[i].x;
-        if (pts[i].y < min.y) min.y = pts[i].y;
-        if (pts[i].y > max.y) max.y = pts[i].y;
-    }
-
-    if (x) *x = min.x;
-    if (y) *y = min.y;
-    if (w) *w = max.x - min.x;
-    if (h) *h = max.y - min.y;
-    return Result::Success;
-}
-
-
-Result Paint::Impl::bounds(Point* pt4, Matrix* pm, bool obb, bool stroking)
-{
-    auto m = this->transform();
-    if (pm) m = *pm * m;
-
-    Result ret;
-    PAINT_METHOD(ret, bounds(pt4, m, obb, stroking));
+    bool ret;
+    PAINT_METHOD(ret, bounds(pt4, pm * transform(), obb));
     return ret;
 }
 
 
 bool Paint::Impl::intersects(const RenderRegion& region)
 {
-    if (!renderer) return false;
-    bool ret;
-    PAINT_METHOD(ret, intersects(region));
-    return ret;
+    if (renderer) {
+        bool ret;
+        PAINT_METHOD(ret, intersects(region));
+        return ret;
+    }
+    return false;
 }
 
 
@@ -358,18 +334,34 @@ Matrix& Paint::transform() noexcept
 }
 
 
-Result Paint::bounds(float* x, float* y, float* w, float* h) const noexcept
+Result Paint::bounds(float* x, float* y, float* w, float* h) noexcept
 {
-    auto pm = pImpl->ptransform();
-    return pImpl->bounds(x, y, w, h, &pm, true);
+    Point pt4[4];
+    const auto pm = pImpl->ptransform();
+    if (pImpl->bounds(pt4, &pm, false)) {
+        BBox box = {{FLT_MAX, FLT_MAX}, {-FLT_MAX, -FLT_MAX}};
+        for (int i = 0; i < 4; ++i) {
+            if (pt4[i].x < box.min.x) box.min.x = pt4[i].x;
+            if (pt4[i].x > box.max.x) box.max.x = pt4[i].x;
+            if (pt4[i].y < box.min.y) box.min.y = pt4[i].y;
+            if (pt4[i].y > box.max.y) box.max.y = pt4[i].y;
+        }
+        if (x) *x = box.min.x;
+        if (y) *y = box.min.y;
+        if (w) *w = box.max.x - box.min.x;
+        if (h) *h = box.max.y - box.min.y;
+        return Result::Success;
+    }
+    return Result::InsufficientCondition;
 }
 
 
-Result Paint::bounds(Point* pt4) const noexcept
+Result Paint::bounds(Point* pt4) noexcept
 {
     if (!pt4) return Result::InvalidArguments;
     auto pm = pImpl->ptransform();
-    return pImpl->bounds(pt4, &pm, true, true);
+    if (pImpl->bounds(pt4, &pm, true)) return Result::Success;
+    return Result::InsufficientCondition;
 }
 
 

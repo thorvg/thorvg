@@ -137,13 +137,12 @@ TEST_CASE("Bounding Box", "[tvgPaint]")
 {
     Initializer::init();
     {
+        auto buffer = unique_ptr<uint32_t[]>(new uint32_t[500*500]);
         auto canvas = unique_ptr<SwCanvas>(SwCanvas::gen());
-        uint32_t buffer[100*100];
-        canvas->target(buffer, 100, 100, 100, ColorSpace::ARGB8888);
+        canvas->target(buffer.get(), 500, 500, 500, ColorSpace::ARGB8888);
 
         auto shape = Shape::gen();
         canvas->push(shape);
-        canvas->sync();
 
         //Negative
         float x = 0, y = 0, w = 0, h = 0;
@@ -152,13 +151,16 @@ TEST_CASE("Bounding Box", "[tvgPaint]")
         //Case 1
         REQUIRE(shape->appendRect(0.0f, 10.0f, 20.0f, 100.0f, 50.0f, 50.0f) == Result::Success);
         REQUIRE(shape->translate(100.0f, 111.0f) == Result::Success);
+
+        canvas->update();
+
+        //Positive
         REQUIRE(shape->bounds(&x, &y, &w, &h) == Result::Success);
         REQUIRE(x == 100.0f);
         REQUIRE(y == 121.0f);
         REQUIRE(w == 20.0f);
         REQUIRE(h == 100.0f);
 
-        REQUIRE(canvas->update() == Result::Success);
         Point pts[4];
         REQUIRE(shape->bounds(pts) == Result::Success);
         REQUIRE(pts[0].x == 100.0f);
@@ -170,19 +172,23 @@ TEST_CASE("Bounding Box", "[tvgPaint]")
         REQUIRE(pts[2].y == 221.0f);
         REQUIRE(pts[3].y == 221.0f);
 
+        REQUIRE(canvas->sync() == Result::Success);
+
         //Case 2
         REQUIRE(shape->reset() == Result::Success);
         REQUIRE(shape->moveTo(0.0f, 10.0f) == Result::Success);
         REQUIRE(shape->lineTo(20.0f, 210.0f) == Result::Success);
         auto identity = Matrix{1.0f, 0.0f, 0.0f, 0.0f, 1.0f, 0.0f, 0.0f, 0.0f, 1.0f};
         REQUIRE(shape->transform(identity) == Result::Success);
+
+        REQUIRE(canvas->update() == Result::Success);
+
         REQUIRE(shape->bounds(&x, &y, &w, &h) == Result::Success);
         REQUIRE(x == 0.0f);
         REQUIRE(y == 10.0f);
         REQUIRE(w == 20.0f);
         REQUIRE(h == 200.0f);
 
-        REQUIRE(canvas->update() == Result::Success);
         REQUIRE(shape->bounds(pts) == Result::Success);
         REQUIRE(pts[0].x == 0.0f);
         REQUIRE(pts[3].x == 0.0f);

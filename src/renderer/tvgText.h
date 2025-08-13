@@ -149,11 +149,10 @@ struct TextImpl : Text
         return SHAPE(shape)->intersects(region);
     }
 
-
-    Result bounds(Point* pt4, Matrix& m, bool obb, TVG_UNUSED bool stroking)
+    bool bounds(Point* pt4, const Matrix& m, bool obb)
     {
-        if (load() == 0.0f) return Result::InsufficientCondition;
-        return PAINT(shape)->bounds(pt4, &m, obb, true);
+        if (load() == 0.0f) return false;
+        return PAINT(shape)->bounds(pt4, &m, obb);
     }
 
     Paint* duplicate(Paint* ret)

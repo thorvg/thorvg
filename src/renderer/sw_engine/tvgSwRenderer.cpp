@@ -722,12 +722,23 @@ void SwRenderer::prepare(RenderEffect* effect, const Matrix& transform)
 }
 
 
+bool SwRenderer::bounds(RenderData data, Point* pt4, const Matrix& m)
+{
+    if (!data) return false;
+
+    auto task = static_cast<SwShapeTask*>(data);
+    task->done();
+
+    return shapeStrokeBBox(task->shape, task->rshape, pt4, m, task->mpool);
+}
+
+
 bool SwRenderer::intersectsShape(RenderData data, const RenderRegion& region)
 {
     auto task = static_cast<SwShapeTask*>(data);
     task->done();
 
-    if (!task->bounds().intersected(region)) return false;
+    if (!task->valid || !task->bounds().intersected(region)) return false;
     if (rleIntersect(task->shape.strokeRle, region)) return true;
     return task->shape.rle ? rleIntersect(task->shape.rle, region): task->shape.fastTrack;
 }
@@ -738,7 +749,7 @@ bool SwRenderer::intersectsImage(RenderData data, const RenderRegion& region)
     auto task = static_cast<SwImageTask*>(data);
     task->done();
 
-    if (!task->bounds().intersected(region)) return false;
+    if (!task->valid || !task->bounds().intersected(region)) return false;
 
     //aabb & obb transformed image intersection
     auto rad = tvg::radian(task->transform);

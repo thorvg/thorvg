@@ -129,13 +129,13 @@ struct PictureImpl : Picture
         return false;
     }
 
-    Result bounds(Point* pt4, Matrix& m, TVG_UNUSED bool obb, TVG_UNUSED bool stroking) const
+    bool bounds(Point* pt4, const Matrix& m, TVG_UNUSED bool obb)
     {
         pt4[0] = Point{0.0f, 0.0f} * m;
         pt4[1] = Point{w, 0.0f} * m;
         pt4[2] = Point{w, h} * m;
         pt4[3] = Point{0.0f, h} * m;
-        return Result::Success;
+        return true;
     }
 
     Result load(const char* filename)

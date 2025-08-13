@@ -47,6 +47,7 @@ public:
     bool postRender() override;
     void dispose(RenderData data) override;
     RenderRegion region(RenderData data) override;
+    bool bounds(RenderData data, Point* pt4, const Matrix& m) override;
     bool blend(BlendMethod method) override;
     ColorSpace colorSpace() override;
     const RenderSurface* mainSurface() override;
