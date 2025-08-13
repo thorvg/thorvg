@@ -48,10 +48,10 @@ static inline bool _isGroupType(SvgNodeType type)
 
 //According to: https://www.w3.org/TR/SVG11/coords.html#ObjectBoundingBoxUnits (the last paragraph)
 //a stroke width should be ignored for bounding box calculations
-static Box _boundingBox(Paint* shape)
+static Box _bounds(Paint* paint)
 {
     float x, y, w, h;
-    PAINT(shape)->bounds(&x, &y, &w, &h, nullptr, false);
+    paint->bounds(&x, &y, &w, &h);
     return {x, y, w, h};
 }
 
@@ -244,9 +244,8 @@ static Matrix _compositionTransform(Paint* paint, const SvgNode* node, const Svg
         m *= *compNode->transform;
     }
     if (!compNode->node.clip.userSpace) {
-        float x, y, w, h;
-        PAINT(paint)->bounds(&x, &y, &w, &h, nullptr, false);
-        m *= {w, 0, x, 0, h, y, 0, 0, 1};
+        auto bbox = _bounds(paint);
+        m *= {bbox.w, 0, bbox.x, 0, bbox.h, bbox.y, 0, 0, 1};
     }
     return m;
 }
@@ -330,8 +329,7 @@ static Paint* _applyFilter(SvgLoaderData& loaderData, Paint* paint, const SvgNod
 
     auto scene = Scene::gen();
 
-    Box bbox{};
-    paint->bounds(&bbox.x, &bbox.y, &bbox.w, &bbox.h);
+    auto bbox = _bounds(paint);
     Box clipBox = filter.filterUserSpace ? filter.box : Box{bbox.x + filter.box.x * bbox.w, bbox.y + filter.box.y * bbox.h, filter.box.w * bbox.w, filter.box.h * bbox.h};
     auto primitiveUserSpace = filter.primitiveUserSpace;
     auto sx = paint->transform().e11;
@@ -393,8 +391,7 @@ static Paint* _applyProperty(SvgLoaderData& loaderData, SvgNode* node, Shape* vg
     if (style->fill.paint.none) {
         //Do nothing
     } else if (style->fill.paint.gradient) {
-        auto bBox = vBox;
-        if (!style->fill.paint.gradient->userSpace) bBox = _boundingBox(vg);
+        auto bBox = style->fill.paint.gradient->userSpace ? vBox : _bounds(vg);
         if (style->fill.paint.gradient->type == SvgGradientType::Linear) {
             vg->fill(_applyLinearGradientProperty(style->fill.paint.gradient, bBox, style->fill.opacity));
         } else if (style->fill.paint.gradient->type == SvgGradientType::Radial) {
@@ -427,8 +424,7 @@ static Paint* _applyProperty(SvgLoaderData& loaderData, SvgNode* node, Shape* vg
     if (style->stroke.paint.none) {
         vg->strokeWidth(0.0f);
     } else if (style->stroke.paint.gradient) {
-        auto bBox = vBox;
-        if (!style->stroke.paint.gradient->userSpace) bBox = _boundingBox(vg);
+        auto bBox = style->stroke.paint.gradient->userSpace ? vBox : _bounds(vg);
         if (style->stroke.paint.gradient->type == SvgGradientType::Linear) {
              vg->strokeFill(_applyLinearGradientProperty(style->stroke.paint.gradient, bBox, style->stroke.opacity));
         } else if (style->stroke.paint.gradient->type == SvgGradientType::Radial) {
@@ -834,9 +830,7 @@ static void _applyTextFill(SvgStyleProperty* style, Text* text, const Box& vBox)
     if (style->fill.paint.none) {
         //Do nothing
     } else if (style->fill.paint.gradient) {
-        Box bBox = vBox;
-        if (!style->fill.paint.gradient->userSpace) bBox = _boundingBox(text);
-
+        auto bBox = style->fill.paint.gradient->userSpace ? vBox : _bounds(text);
         if (style->fill.paint.gradient->type == SvgGradientType::Linear) {
             text->fill(_applyLinearGradientProperty(style->fill.paint.gradient, bBox, style->fill.opacity));
         } else if (style->fill.paint.gradient->type == SvgGradientType::Radial) {
@@ -933,22 +927,20 @@ static Scene* _sceneBuildHelper(SvgLoaderData& loaderData, const SvgNode* node, 
 
 static void _updateInvalidViewSize(Scene* scene, Box& vBox, float& w, float& h, SvgViewFlag viewFlag)
 {
-    bool validWidth = (viewFlag & SvgViewFlag::Width);
-    bool validHeight = (viewFlag & SvgViewFlag::Height);
+    auto useW = (viewFlag & SvgViewFlag::Width);
+    auto useH = (viewFlag & SvgViewFlag::Height);
+    auto bbox = _bounds(scene);
 
-    float x, y;
-    scene->bounds(&x, &y, &vBox.w, &vBox.h);
-    if (!validWidth && !validHeight) {
-        vBox.x = x;
-        vBox.y = y;
+    if (!useW && !useH) {
+        vBox = bbox;
     } else {
-        if (validWidth) vBox.w = w;
-        if (validHeight) vBox.h = h;
+        vBox.w = useW ? w : bbox.w;
+        vBox.h = useH ? h : bbox.h;
     }
 
     //the size would have 1x1 or percentage values.
-    if (!validWidth) w *= vBox.w;
-    if (!validHeight) h *= vBox.h;
+    if (!useW) w *= vBox.w;
+    if (!useH) h *= vBox.h;
 }
 
 

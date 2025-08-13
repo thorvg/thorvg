@@ -181,6 +181,13 @@ static inline void operator*=(Matrix& lhs, const Matrix& rhs)
 }
 
 
+static inline Matrix operator*(const Matrix* lhs, const Matrix& rhs)
+{
+    if (lhs) return *lhs * rhs;
+    return rhs;
+}
+
+
 static inline void log(const Matrix& m)
 {
     TVGLOG("COMMON", "Matrix: [%f %f %f] [%f %f %f] [%f %f %f]", m.e11, m.e12, m.e13, m.e21, m.e22, m.e23, m.e31, m.e32, m.e33);
@@ -205,8 +212,8 @@ static inline constexpr const Point operator*=(Point& pt, const Matrix* m)
 
 static inline Point operator*(const Point& pt, const Matrix* m)
 {
-    if (!m) return pt;
-    return pt * *m;
+    if (m) return pt * *m;
+    return pt;
 }
 
 
@@ -392,6 +399,12 @@ struct Line
 struct BBox
 {
     Point min, max;
+
+    void init()
+    {
+        min = {FLT_MAX, FLT_MAX};
+        max = {-FLT_MAX, -FLT_MAX};
+    }
 };
 
 

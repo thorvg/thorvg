@@ -118,28 +118,31 @@ struct ShapeImpl : Shape
         return impl.renderer->region(impl.rd);
     }
 
-    Result bounds(Point* pt4, Matrix& m, bool obb, bool stroking)
+    bool bounds(Point* pt4, const Matrix& m, bool obb)
     {
-        float x, y, w, h;
-        if (!rs.path.bounds(obb ? nullptr : &m, &x, &y, &w, &h)) return Result::InsufficientCondition;
+        if (impl.renderer && rs.strokeWidth() > 0.0f) {
+            if (!impl.renderer->bounds(impl.rd, pt4, obb ? tvg::identity() : m)) return false;
 
-        //Stroke feathering
-        if (stroking && rs.stroke) {
-            //Use geometric mean for feathering.
-            //Join, Cap wouldn't be considered. Generate stroke outline and compute bbox for accurate size?
-            auto sx = sqrt(m.e11 * m.e11 + m.e21 * m.e21);
-            auto sy = sqrt(m.e12 * m.e12 + m.e22 * m.e22);
-            auto feather = rs.stroke->width * sqrt(sx * sy);
-            x -= feather * 0.5f;
-            y -= feather * 0.5f;
-            w += feather;
-            h += feather;
+        //Keep this for legacy. loaders still depend on this logic, remove it if possible.
+        } else {
+            BBox box = {{FLT_MAX, FLT_MAX}, {-FLT_MAX, -FLT_MAX}};
+            if (!rs.path.bounds(obb ? nullptr : &m, box)) return false;
+            if (rs.stroke) {
+                //Use geometric mean for feathering.
+                //Join, Cap wouldn't be considered. Generate stroke outline and compute bbox for accurate size?
+                auto sx = sqrt(m.e11 * m.e11 + m.e21 * m.e21);
+                auto sy = sqrt(m.e12 * m.e12 + m.e22 * m.e22);
+                auto feather = rs.stroke->width * sqrt(sx * sy);
+                box.min.x -= feather * 0.5f;
+                box.min.y -= feather * 0.5f;
+                box.max.x += feather * 0.5f;
+                box.max.y += feather * 0.5f;
+            }
+            pt4[0] = box.min;
+            pt4[1] = {box.max.x, box.min.y};
+            pt4[2] = box.max;
+            pt4[3] = {box.min.x, box.max.y};
         }
-
-        pt4[0] = {x, y};
-        pt4[1] = {x + w, y};
-        pt4[2] = {x + w, y + h};
-        pt4[3] = {x, y + h};
 
         if (obb) {
             pt4[0] *= m;
@@ -148,7 +151,7 @@ struct ShapeImpl : Shape
             pt4[3] *= m;
         }
 
-        return Result::Success;
+        return true;
     }
 
     void reserveCmd(uint32_t cmdCnt)

@@ -284,15 +284,15 @@ TVG_API Tvg_Result tvg_paint_get_opacity(const Tvg_Paint* paint, uint8_t* opacit
 }
 
 
-TVG_API Tvg_Result tvg_paint_get_aabb(const Tvg_Paint* paint, float* x, float* y, float* w, float* h)
+TVG_API Tvg_Result tvg_paint_get_aabb(Tvg_Paint* paint, float* x, float* y, float* w, float* h)
 {
-    if (paint) return (Tvg_Result) reinterpret_cast<const Paint*>(paint)->bounds(x, y, w, h);
+    if (paint) return (Tvg_Result) reinterpret_cast<Paint*>(paint)->bounds(x, y, w, h);
     return TVG_RESULT_INVALID_ARGUMENT;
 }
 
-TVG_API Tvg_Result tvg_paint_get_obb(const Tvg_Paint* paint, Tvg_Point* pt4)
+TVG_API Tvg_Result tvg_paint_get_obb(Tvg_Paint* paint, Tvg_Point* pt4)
 {
-    if (paint) return (Tvg_Result) reinterpret_cast<const Paint*>(paint)->bounds((Point*)pt4);
+    if (paint) return (Tvg_Result) reinterpret_cast<Paint*>(paint)->bounds((Point*)pt4);
     return TVG_RESULT_INVALID_ARGUMENT;
 }
 

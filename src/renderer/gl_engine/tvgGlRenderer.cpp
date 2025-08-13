@@ -883,6 +883,16 @@ bool GlRenderer::sync()
 }
 
 
+bool GlRenderer::bounds(RenderData data, TVG_UNUSED Point* pt4, TVG_UNUSED const Matrix& m)
+{
+    if (data) {
+        //TODO: stroking bounding box is required
+        TVGLOG("GL_ENGINE", "bounds() is not supported!");
+    }
+    return false;
+}
+
+
 RenderRegion GlRenderer::region(RenderData data)
 {
     auto pass = currentPass();

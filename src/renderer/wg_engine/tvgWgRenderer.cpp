@@ -263,6 +263,15 @@ void WgRenderer::dispose(RenderData data) {
 }
 
 
+bool WgRenderer::bounds(RenderData data, Point* pt4, TVG_UNUSED const Matrix& m)
+{
+    if (data) {
+        //TODO: stroking bounding box is required
+        TVGLOG("WG_ENGINE", "bounds() is not supported!");
+    }
+    return false;
+}
+
 RenderRegion WgRenderer::region(RenderData data)
 {
     if (!data) return {};

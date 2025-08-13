@@ -58,12 +58,10 @@ bool RenderMethod::viewport(const RenderRegion& vp)
 /* RenderPath Class Implementation                                      */
 /************************************************************************/
 
-bool RenderPath::bounds(Matrix* m, float* x, float* y, float* w, float* h)
+bool RenderPath::bounds(const Matrix* m, BBox& box)
 {
-    //unexpected
     if (cmds.empty() || cmds.first() == PathCommand::CubicTo) return false;
 
-    BBox box = {{FLT_MAX, FLT_MAX}, {-FLT_MAX, -FLT_MAX}};
     auto pt = pts.begin();
     auto cmd = cmds.begin();
 
@@ -101,12 +99,6 @@ bool RenderPath::bounds(Matrix* m, float* x, float* y, float* w, float* h)
         }
         ++cmd;
     }
-
-    if (x) *x = box.min.x;
-    if (y) *y = box.min.y;
-    if (w) *w = box.max.x - box.min.x;
-    if (h) *h = box.max.y - box.min.y;
-
     return true;
 }
 

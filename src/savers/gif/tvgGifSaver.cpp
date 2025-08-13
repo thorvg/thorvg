@@ -125,8 +125,7 @@ bool GifSaver::save(Animation* animation, Paint* bg, const char* filename, TVG_U
     close();
 
     auto picture = animation->picture();
-    float x, y;
-    x = y = 0;
+    auto x = 0.0f, y = 0.0f;
     picture->bounds(&x, &y, &vsize[0], &vsize[1]);
 
     //cut off the negative space
