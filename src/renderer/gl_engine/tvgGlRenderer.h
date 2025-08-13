@@ -87,6 +87,42 @@ public:
         RT_Blend_Gradient_Color,
         RT_Blend_Gradient_Luminosity,
         RT_Blend_Gradient_Add,
+        // blends (gradients)
+        RT_Blend_Image_Normal,
+        RT_Blend_Image_Multiply,
+        RT_Blend_Image_Screen,
+        RT_Blend_Image_Overlay,
+        RT_Blend_Image_Darken,
+        RT_Blend_Image_Lighten,
+        RT_Blend_Image_ColorDodge,
+        RT_Blend_Image_ColorBurn,
+        RT_Blend_Image_HardLight,
+        RT_Blend_Image_SoftLight,
+        RT_Blend_Image_Difference,
+        RT_Blend_Image_Exclusion,
+        RT_Blend_Image_Hue,
+        RT_Blend_Image_Saturation,
+        RT_Blend_Image_Color,
+        RT_Blend_Image_Luminosity,
+        RT_Blend_Image_Add,
+        // blends (scene)
+        RT_Blend_Scene_Normal,
+        RT_Blend_Scene_Multiply,
+        RT_Blend_Scene_Screen,
+        RT_Blend_Scene_Overlay,
+        RT_Blend_Scene_Darken,
+        RT_Blend_Scene_Lighten,
+        RT_Blend_Scene_ColorDodge,
+        RT_Blend_Scene_ColorBurn,
+        RT_Blend_Scene_HardLight,
+        RT_Blend_Scene_SoftLight,
+        RT_Blend_Scene_Difference,
+        RT_Blend_Scene_Exclusion,
+        RT_Blend_Scene_Hue,
+        RT_Blend_Scene_Saturation,
+        RT_Blend_Scene_Color,
+        RT_Blend_Scene_Luminosity,
+        RT_Blend_Scene_Add,
         RT_None
     };
 
@@ -141,8 +177,8 @@ private:
     GlRenderPass* currentPass();
 
     bool beginComplexBlending(const RenderRegion& vp, RenderRegion bounds);
-    void endBlendingCompose(GlRenderTask* stencilTask, const Matrix& matrix, bool gradient);
-    GlProgram* getBlendProgram(BlendMethod method, bool gradient);
+    void endBlendingCompose(GlRenderTask* stencilTask, const Matrix& matrix, bool gradient, bool image);
+    GlProgram* getBlendProgram(BlendMethod method, bool gradient, bool image, bool scene);
 
     void prepareBlitTask(GlBlitTask* task);
     void prepareCmpTask(GlRenderTask* task, const RenderRegion& vp, uint32_t cmpWidth, uint32_t cmpHeight);
