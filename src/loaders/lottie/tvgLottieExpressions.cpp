@@ -857,7 +857,7 @@ static LottieProperty::Loop _loopCommon(const jerry_value_t args[], const jerry_
     }
 
     if (mode != LottieProperty::Loop::InCycle && mode != LottieProperty::Loop::InPingPong) {
-        TVGLOG("LOTTIE", "Not supported loopIn type = %d", mode);
+        TVGLOG("LOTTIE", "Not supported loopIn type = %d", (int) mode);
     }
     return mode;
 }
