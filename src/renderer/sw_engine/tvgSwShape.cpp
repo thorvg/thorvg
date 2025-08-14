@@ -436,10 +436,12 @@ static SwOutline* _genOutline(SwShape& shape, const RenderShape* rshape, const M
 bool shapePrepare(SwShape& shape, const RenderShape* rshape, const Matrix& transform, const RenderRegion& clipBox, RenderRegion& renderBox, SwMpool* mpool, unsigned tid, bool hasComposite)
 {
     if ((shape.outline = _genOutline(shape, rshape, transform, mpool, tid, hasComposite, rshape->trimpath()))) {
-        return mathUpdateOutlineBBox(shape.outline, clipBox, renderBox, shape.fastTrack);
+        if (mathUpdateOutlineBBox(shape.outline, clipBox, renderBox, shape.fastTrack)) {
+            shape.bbox = renderBox;
+            return true;
+        }
     }
     return false;
-
 }
 
 
@@ -465,6 +467,7 @@ void shapeDelOutline(SwShape& shape, SwMpool* mpool, uint32_t tid)
 void shapeReset(SwShape& shape)
 {
     rleReset(shape.rle);
+    shape.bbox.reset();
     shape.fastTrack = false;
 }
 

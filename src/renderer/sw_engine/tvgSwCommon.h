@@ -242,6 +242,7 @@ struct SwShape
     SwFill* fill = nullptr;
     SwRle* rle = nullptr;
     SwRle* strokeRle = nullptr;
+    RenderRegion bbox;        //Keep it boundary without stroke region. Using for optimal filling.
     bool fastTrack = false;   //Fast Track: axis-aligned rectangle without any clips?
 };
 
