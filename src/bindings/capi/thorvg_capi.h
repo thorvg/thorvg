@@ -575,77 +575,93 @@ TVG_API Tvg_Result tvg_canvas_push_at(Tvg_Canvas* canvas, Tvg_Paint* target, Tvg
 TVG_API Tvg_Result tvg_canvas_remove(Tvg_Canvas* canvas, Tvg_Paint* paint);
 
 
-/*!
-* @brief Updates all paints in a canvas.
-*
-* Should be called before drawing in order to prepare paints for the rendering.
-*
-* @param[in] canvas The Tvg_Canvas object to be updated.
-*
-* @return Tvg_Result enumeration.
-* @retval TVG_RESULT_INVALID_ARGUMENT An invalid Tvg_Canvas pointer.
-*
-* @see tvg_canvas_update_paint()
-*/
+/**
+ * @brief Requests the canvas to update modified paint objects in preparation for rendering.
+ *
+ * This function triggers an internal update for all paint instances that have been modified
+ * since the last update. It ensures that the canvas state is ready for accurate rendering.
+ *
+ * @param[in] canvas The Tvg_Canvas object to be updated.
+ *
+ * @retval TVG_RESULT_INVALID_ARGUMENT An invalid Tvg_Canvas pointer.
+ * @retval TVG_RESULT_INSUFFICIENT_CONDITION The canvas is not properly prepared.
+ *         This may occur if the canvas target has not been set or if the update is called during drawing.
+ *         Call tvg_canvas_sync() before trying.
+ *
+ * @note Only paint objects that have been changed will be processed.
+ * @note If the canvas is configured with multiple threads, the update may be performed asynchronously.
+ *
+ * @see tvg_canvas_sync()
+ */
 TVG_API Tvg_Result tvg_canvas_update(Tvg_Canvas* canvas);
 
 
-/*!
-* @brief Requests the canvas to draw the Tvg_Paint objects.
-*
-* All paints from the given canvas will be rasterized to the buffer.
-*
-* @param[in] canvas The Tvg_Canvas object containing elements to be drawn.
-* @param[in] clear If @c true, clears the target buffer to zero before drawing.
-*
-* @return Tvg_Result enumeration.
-* @retval TVG_RESULT_INVALID_ARGUMENT An invalid Tvg_Canvas pointer.
-*
-* @note Clearing the buffer is unnecessary if the canvas will be fully covered
-*       with opaque content, which can improve performance.
-* @note Drawing may be asynchronous if the thread count is greater than zero.
-*       To ensure drawing is complete, call tvg_canvas_sync() afterwards.
-* @see tvg_canvas_sync()
-*/
+/**
+ * @brief Requests the canvas to render the Paint objects.
+ *
+ * @param[in] canvas The Tvg_Canvas object containing elements to be drawn.
+ * @param[in] clear If @c true, clears the target buffer to zero before drawing.
+ *
+ * @retval TVG_RESULT_INVALID_ARGUMENT An invalid Tvg_Canvas pointer.
+ * @retval TVG_RESULT_INSUFFICIENT_CONDITION The canvas is not properly prepared.
+ *         This may occur if the canvas target has not been set or if the update is called during drawing.
+ *         without calling tvg_canvas_sync() in between.
+ *
+ * @note Clearing the buffer is unnecessary if the canvas will be fully covered
+ *       with opaque content. Skipping the clear can improve performance.
+ * @note Drawing may be performed asynchronously if the thread count is greater than zero.
+ *       To ensure the drawing process is complete, call sync() afterwards.
+ * @note If the canvas has not been updated prior to tvg_canvas_draw(), it may implicitly perform tvg_canvas_update()
+ *
+ * @see tvg_canvas_sync()
+ * @see tvg_canvas_update()
+ */
 TVG_API Tvg_Result tvg_canvas_draw(Tvg_Canvas* canvas, bool clear);
 
 
-/*!
-* @brief Guarantees that the drawing process is finished.
-*
-* Since the canvas rendering can be performed asynchronously, it should be called after the tvg_canvas_draw().
-*
-* @param[in] canvas The Tvg_Canvas object containing elements which were drawn.
-*
-* @return Tvg_Result enumeration.
-* @retval TVG_RESULT_INVALID_ARGUMENT An invalid Tvg_Canvas pointer.
-* @retval TVG_RESULT_INSUFFICIENT_CONDITION @p canvas is either already in sync condition or in a damaged condition (a draw is required before syncing).
-*
-* @see tvg_canvas_draw()
-*/
+/**
+ * @brief Guarantees that drawing task is finished.
+ *
+ * @param[in] canvas The Tvg_Canvas object containing elements which were drawn.
+ *
+ * The Canvas rendering can be performed asynchronously. To make sure that rendering is finished,
+ * the tvg_canvas_sync() must be called after the tvg_canvas_draw() regardless of threading.
+ *
+ * @retval TVG_RESULT_INVALID_ARGUMENT An invalid Tvg_Canvas pointer.
+ *
+ * @see tvg_canvas_draw()
+ */
 TVG_API Tvg_Result tvg_canvas_sync(Tvg_Canvas* canvas);
 
 
-/*!
-* @brief Sets the drawing region in the canvas.
-*
-* This function defines the rectangular area of the canvas that will be used for drawing operations.
-* The specified viewport is used to clip the rendering output to the boundaries of the rectangle.
-*
-* @param[in] canvas The Tvg_Canvas object containing elements which were drawn.
-* @param[in] x The x-coordinate of the upper-left corner of the rectangle.
-* @param[in] y The y-coordinate of the upper-left corner of the rectangle.
-* @param[in] w The width of the rectangle.
-* @param[in] h The height of the rectangle.
-*
-* @return Tvg_Result enumeration.
-*
-* @warning It's not allowed to change the viewport during tvg_canvas_update() - tvg_canvas_sync() or tvg_canvas_push() - tvg_canvas_sync().
-*
-* @note When resetting the target, the viewport will also be reset to the target size.
-* @see tvg_swcanvas_set_target()
-* @since 0.15
-*/
+/**
+ * @brief Sets the drawing region of the canvas.
+ *
+ * This function defines a rectangular area of the canvas to be used for drawing operations.
+ * The specified viewport clips rendering output to the boundaries of that rectangle.
+ *
+ * Please note that changing the viewport is only allowed at the beginning of the rendering sequence—that is, after calling tvg_canvas_sync().
+ *
+ * @param[in] canvas The Tvg_Canvas object containing elements which were drawn.
+ * @param[in] x The x-coordinate of the upper-left corner of the rectangle.
+ * @param[in] y The y-coordinate of the upper-left corner of the rectangle.
+ * @param[in] w The width of the rectangle.
+ * @param[in] h The height of the rectangle.
+ *
+ * @retval TVG_RESULT_INVALID_ARGUMENT An invalid Tvg_Canvas pointer.
+ * @retval TVG_RESULT_INSUFFICIENT_CONDITION If the canvas is not in a synced state.
+ *
+ * @see tvg_canvas_sync()
+ * @see tvg_swcanvas_set_target()
+ * @see tvg_glcanvas_set_target()
+ * @see tvg_wgcanvas_set_target()
+ *
+ * @warning Changing the viewport is not allowed after calling tvg_canvas_push(),
+ *          tvg_canvas_remove(), tvg_canvas_update(), or tvg_canvas_draw().
+ *
+ * @note When the target is reset, the viewport will also be reset to match the target size.
+ * @since 0.15
+ */
 TVG_API Tvg_Result tvg_canvas_set_viewport(Tvg_Canvas* canvas, int32_t x, int32_t y, int32_t w, int32_t h);
 
 /** \} */   // end defgroup ThorVGCapi_Canvas

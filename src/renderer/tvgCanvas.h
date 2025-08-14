@@ -25,7 +25,7 @@
 
 #include "tvgPaint.h"
 
-enum Status : uint8_t {Synced = 0, Updating, Drawing, Damaged};
+enum Status : uint8_t {Synced = 0, Painting, Updating, Drawing, Damaged};
 
 struct Canvas::Impl
 {
@@ -43,7 +43,6 @@ struct Canvas::Impl
     {
         //make it sure any deferred jobs
         renderer->sync();
-
         scene->unref();
         if (renderer->unref() == 0) delete(renderer);
     }
@@ -51,31 +50,43 @@ struct Canvas::Impl
     Result push(Paint* target, Paint* at)
     {
         //You cannot push paints during rendering.
-        if (status == Status::Drawing) return Result::InsufficientCondition;
-
-        auto ret = scene->push(target, at);
-        if (ret != Result::Success) return ret;
-
-        return update(target, true);
+        if (status == Status::Drawing) {
+            TVGLOG("RENDERER", "push() was called during drawing.");
+            return Result::InsufficientCondition;
+        }
+        status = Status::Painting;
+        return scene->push(target, at);
     }
 
     Result remove(Paint* paint)
     {
-        if (status == Status::Drawing) return Result::InsufficientCondition;
+        if (status == Status::Drawing) {
+            TVGLOG("RENDERER", "remove() was called during drawing.");
+            return Result::InsufficientCondition;
+        }
+        status = Status::Painting;
         return scene->remove(paint);
     }
 
-    Result update(Paint* paint, bool force)
+    Result update()
     {
+        if (status == Status::Updating) return Result::Success;
+
+        if (status == Status::Drawing) {
+            TVGLOG("RENDERER", "update() was called during drawing.");
+            return Result::InsufficientCondition;
+        }
+
         Array<RenderData> clips;
         auto flag = RenderUpdateFlag::None;
-        if (status == Status::Damaged || force) flag = RenderUpdateFlag::All;
+
+        //TODO: All is too harsh, can be optimized.
+        if (status == Status::Damaged) flag = RenderUpdateFlag::All;
 
         if (!renderer->preUpdate()) return Result::InsufficientCondition;
 
         auto m = tvg::identity();
-        if (paint) PAINT(paint)->update(renderer, m, clips, 255, flag);
-        else PAINT(scene)->update(renderer, m, clips, 255, flag);
+        PAINT(scene)->update(renderer, m, clips, 255, flag);
 
         if (!renderer->postUpdate()) return Result::InsufficientCondition;
 
@@ -85,12 +96,14 @@ struct Canvas::Impl
 
     Result draw(bool clear)
     {
-        if (status == Status::Drawing) return Result::InsufficientCondition;
+        if (status == Status::Drawing) {
+            TVGLOG("RENDERER", "draw() was called multiple times.");
+            return Result::InsufficientCondition;
+        }
+        if (status == Status::Painting || status == Status::Damaged) update();
+        if (status != Status::Updating) return Result::InsufficientCondition;
         if (clear && !renderer->clear()) return Result::InsufficientCondition;
-        if (scene->paints().empty()) return Result::InsufficientCondition;
-        if (status == Status::Damaged) update(nullptr, false);
         if (!renderer->preRender()) return Result::InsufficientCondition;
-
         if (!PAINT(scene)->render(renderer) || !renderer->postRender()) return Result::InsufficientCondition;
 
         status = Status::Drawing;
@@ -100,31 +113,31 @@ struct Canvas::Impl
 
     Result sync()
     {
-        if (status == Status::Synced || status == Status::Damaged) return Result::InsufficientCondition;
-
+        if (status == Status::Synced) return Result::Success;
         if (renderer->sync()) {
             status = Status::Synced;
             return Result::Success;
         }
-
         return Result::Unknown;
     }
 
     Result viewport(int32_t x, int32_t y, int32_t w, int32_t h)
     {
-        if (status != Status::Damaged && status != Status::Synced) return Result::InsufficientCondition;
-
-        RenderRegion val = {{x, y}, {x + w, y + h}};
-        //intersect if the target buffer is already set.
-        auto surface = renderer->mainSurface();
-        if (surface && surface->w > 0 && surface->h > 0) {
-            val.intersect({{0, 0}, {(int32_t)surface->w, (int32_t)surface->h}});
+        if (status == Status::Synced || status == Status::Damaged) {
+            RenderRegion val = {{x, y}, {x + w, y + h}};
+            //intersect if the target buffer is already set.
+            auto surface = renderer->mainSurface();
+            if (surface && surface->w > 0 && surface->h > 0) {
+                val.intersect({{0, 0}, {(int32_t)surface->w, (int32_t)surface->h}});
+            }
+            if (vport == val) return Result::Success;
+            renderer->viewport(val);
+            vport = val;
+            status = Status::Damaged;
+            return Result::Success;
         }
-        if (vport == val) return Result::Success;
-        renderer->viewport(val);
-        vport = val;
-        status = Status::Damaged;
-        return Result::Success;
+        TVGLOG("RENDERER", "viewport() is only allowed after sync.");
+        return Result::InsufficientCondition;
     }
 };
 
