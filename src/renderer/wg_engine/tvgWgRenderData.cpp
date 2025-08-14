@@ -101,7 +101,6 @@ void WgRenderSettings::update(WgContext& context, const Fill* fill)
         fillType = WgRenderSettingsType::Linear;
     else if (fill->type() == Type::RadialGradient)
         fillType = WgRenderSettingsType::Radial;
-    skip = false;
 };
 
 
@@ -110,7 +109,6 @@ void WgRenderSettings::update(WgContext& context, const RenderColor& c)
     settings.color.update(c);
     rasterType = WgRenderRasterType::Solid;
     fillType = WgRenderSettingsType::Solid;
-    skip = (c.a == 0);
 };
 
 
@@ -155,6 +153,13 @@ void WgRenderDataShape::updateAABB(const Matrix& matrix)
     auto p3 = Point{bbox.max.x, bbox.max.y} * matrix;
     aabb.min = {std::min(std::min(p0.x, p1.x), std::min(p2.x, p3.x)), std::min(std::min(p0.y, p1.y), std::min(p2.y, p3.y))};
     aabb.max = {std::max(std::max(p0.x, p1.x), std::max(p2.x, p3.x)), std::max(std::max(p0.y, p1.y), std::max(p2.y, p3.y))};
+}
+
+
+void WgRenderDataShape::updateVisibility(const RenderShape& rshape, uint8_t opacity)
+{
+    renderSettingsShape.skip = (rshape.color.a * opacity == 0) && (!rshape.fill);
+    renderSettingsStroke.skip = rshape.stroke ? (rshape.stroke->color.a * opacity == 0) && (!rshape.stroke->fill) : true;
 }
 
 

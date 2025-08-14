@@ -83,6 +83,7 @@ struct WgRenderDataShape: public WgRenderDataPaint
 
     void updateBBox(BBox bb);
     void updateAABB(const Matrix& matrix);
+    void updateVisibility(const RenderShape& rshape, uint8_t opacity);
     void updateMeshes(const RenderShape& rshape, RenderUpdateFlag flag, const Matrix& matrix);
     void releaseMeshes();
     void release(WgContext& context) override;

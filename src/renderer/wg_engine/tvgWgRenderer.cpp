@@ -146,9 +146,14 @@ RenderData WgRenderer::prepare(const RenderShape& rshape, RenderData data, const
 
     // setup fill settings
     renderDataShape->viewport = vport;
-    if (flags & RenderUpdateFlag::Gradient && rshape.fill) renderDataShape->renderSettingsShape.update(mContext, rshape.fill);
-    else if (flags & RenderUpdateFlag::Color) renderDataShape->renderSettingsShape.update(mContext, rshape.color);
-    if (rshape.stroke) {
+    renderDataShape->updateVisibility(rshape, opacity);
+    // update shape render settings
+    if (!renderDataShape->renderSettingsShape.skip) {
+        if (flags & RenderUpdateFlag::Gradient && rshape.fill) renderDataShape->renderSettingsShape.update(mContext, rshape.fill);
+        else if (flags & RenderUpdateFlag::Color) renderDataShape->renderSettingsShape.update(mContext, rshape.color);
+    }
+    // update strokes render settings
+    if ((rshape.stroke) && (!renderDataShape->renderSettingsStroke.skip)) {
         if (flags & RenderUpdateFlag::GradientStroke && rshape.stroke->fill) renderDataShape->renderSettingsStroke.update(mContext, rshape.stroke->fill);
         else if (flags & RenderUpdateFlag::Stroke) renderDataShape->renderSettingsStroke.update(mContext, rshape.stroke->color);
     }
