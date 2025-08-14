@@ -120,11 +120,15 @@ struct ShapeImpl : Shape
 
     bool bounds(Point* pt4, const Matrix& m, bool obb)
     {
-        if (impl.renderer && rs.strokeWidth() > 0.0f) {
-            if (!impl.renderer->bounds(impl.rd, pt4, obb ? tvg::identity() : m)) return false;
+        auto fallback = true;  //TODO: remove this when all backend engines suppport bounds()
 
+        if (impl.renderer && rs.strokeWidth() > 0.0f) {
+            if (impl.renderer->bounds(impl.rd, pt4, obb ? tvg::identity() : m)) {
+                fallback = false;
+            }
+        }
         //Keep this for legacy. loaders still depend on this logic, remove it if possible.
-        } else {
+        if (fallback) {
             BBox box = {{FLT_MAX, FLT_MAX}, {-FLT_MAX, -FLT_MAX}};
             if (!rs.path.bounds(obb ? nullptr : &m, box)) return false;
             if (rs.stroke) {
