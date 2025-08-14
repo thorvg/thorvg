@@ -62,21 +62,6 @@ void mpoolRetStrokeOutline(SwMpool* mpool, unsigned idx)
 }
 
 
-SwOutline* mpoolReqDashOutline(SwMpool* mpool, unsigned idx)
-{
-    return &mpool->dashOutline[idx];
-}
-
-
-void mpoolRetDashOutline(SwMpool* mpool, unsigned idx)
-{
-    mpool->dashOutline[idx].pts.clear();
-    mpool->dashOutline[idx].cntrs.clear();
-    mpool->dashOutline[idx].types.clear();
-    mpool->dashOutline[idx].closed.clear();
-}
-
-
 SwMpool* mpoolInit(uint32_t threads)
 {
     auto allocSize = threads + 1;
@@ -84,7 +69,6 @@ SwMpool* mpoolInit(uint32_t threads)
     auto mpool = tvg::calloc<SwMpool*>(1, sizeof(SwMpool));
     mpool->outline = tvg::calloc<SwOutline*>(1, sizeof(SwOutline) * allocSize);
     mpool->strokeOutline = tvg::calloc<SwOutline*>(1, sizeof(SwOutline) * allocSize);
-    mpool->dashOutline = tvg::calloc<SwOutline*>(1, sizeof(SwOutline) * allocSize);
     mpool->allocSize = allocSize;
 
     return mpool;
@@ -103,11 +87,6 @@ bool mpoolClear(SwMpool* mpool)
         mpool->strokeOutline[i].cntrs.reset();
         mpool->strokeOutline[i].types.reset();
         mpool->strokeOutline[i].closed.reset();
-
-        mpool->dashOutline[i].pts.reset();
-        mpool->dashOutline[i].cntrs.reset();
-        mpool->dashOutline[i].types.reset();
-        mpool->dashOutline[i].closed.reset();
     }
 
     return true;
@@ -122,7 +101,6 @@ bool mpoolTerm(SwMpool* mpool)
 
     tvg::free(mpool->outline);
     tvg::free(mpool->strokeOutline);
-    tvg::free(mpool->dashOutline);
     tvg::free(mpool);
 
     return true;
