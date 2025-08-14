@@ -123,10 +123,10 @@ struct SwShapeTask : SwTask
 
         //Shape
         if (updateShape || updateFill) {
-            if (updateShape) shapeReset(&shape);
+            if (updateShape) shapeReset(shape);
             if (!shape.rle || shape.rle->invalid()) {
-                if (shapePrepare(&shape, rshape, transform, curBox, renderBox, mpool, tid, clips.count > 0 ? true : false)) {
-                    if (!shapeGenRle(&shape, renderBox, antialiasing(strokeWidth))) goto err;
+                if (shapePrepare(shape, rshape, transform, curBox, renderBox, mpool, tid, clips.count > 0 ? true : false)) {
+                    if (!shapeGenRle(shape, renderBox, antialiasing(strokeWidth))) goto err;
                 } else {
                     updateFill = false;
                     renderBox.reset();
@@ -137,27 +137,27 @@ struct SwShapeTask : SwTask
         if (updateFill) {
             if (auto fill = rshape->fill) {
                 auto ctable = (flags & RenderUpdateFlag::Gradient) ? true : false;
-                if (ctable) shapeResetFill(&shape);
-                if (!shapeGenFillColors(&shape, fill, transform, surface, opacity, ctable)) goto err;
+                if (ctable) shapeResetFill(shape);
+                if (!shapeGenFillColors(shape, fill, transform, surface, opacity, ctable)) goto err;
             }
         }
         //Stroke
         if (updateShape || flags & RenderUpdateFlag::Stroke) {
             if (strokeWidth > 0.0f) {
-                shapeResetStroke(&shape, rshape, transform);
-                if (!shapeGenStrokeRle(&shape, rshape, transform, curBox, renderBox, mpool, tid)) goto err;
+                shapeResetStroke(shape, rshape, transform);
+                if (!shapeGenStrokeRle(shape, rshape, transform, curBox, renderBox, mpool, tid)) goto err;
                 if (auto fill = rshape->strokeFill()) {
                     auto ctable = (flags & RenderUpdateFlag::GradientStroke) ? true : false;
-                    if (ctable) shapeResetStrokeFill(&shape);
-                    if (!shapeGenStrokeFillColors(&shape, fill, transform, surface, opacity, ctable)) goto err;
+                    if (ctable) shapeResetStrokeFill(shape);
+                    if (!shapeGenStrokeFillColors(shape, fill, transform, surface, opacity, ctable)) goto err;
                 }
             } else {
-                shapeDelStroke(&shape);
+                shapeDelStroke(shape);
             }
         }
 
         //Clear current task memorypool here if the clippers would use the same memory pool
-        shapeDelOutline(&shape, mpool, tid);
+        shapeDelOutline(shape, mpool, tid);
 
         //Clip Path
         ARRAY_FOREACH(p, clips) {
@@ -173,15 +173,15 @@ struct SwShapeTask : SwTask
         return;
 
     err:
-        shapeReset(&shape);
+        shapeReset(shape);
         rleReset(shape.strokeRle);
-        shapeDelOutline(&shape, mpool, tid);
+        shapeDelOutline(shape, mpool, tid);
         invisible();
     }
 
     void dispose() override
     {
-       shapeFree(&shape);
+       shapeFree(shape);
     }
 };
 
@@ -222,15 +222,15 @@ struct SwImageTask : SwTask
 
         //Invisible shape turned to visible by alpha.
         if ((updateImage || updateColor) && (opacity > 0)) {
-            if (updateImage) imageReset(&image);
+            if (updateImage) imageReset(image);
             if (!image.data || image.w == 0 || image.h == 0) goto err;
-            if (!imagePrepare(&image, transform, clipBox, curBox, mpool, tid)) goto err;
+            if (!imagePrepare(image, transform, clipBox, curBox, mpool, tid)) goto err;
             valid = true;
             if (clips.count > 0) {
-                if (!imageGenRle(&image, curBox, false)) goto err;
+                if (!imageGenRle(image, curBox, false)) goto err;
                 if (image.rle) {
                     //Clear current task memorypool here if the clippers would use the same memory pool
-                    imageDelOutline(&image, mpool, tid);
+                    imageDelOutline(image, mpool, tid);
                     ARRAY_FOREACH(p, clips) {
                         auto clipper = static_cast<SwTask*>(*p);
                         if (!clipper->clip(image.rle)) goto err;
@@ -245,13 +245,13 @@ struct SwImageTask : SwTask
         curBox.reset();
         rleReset(image.rle);
     end:
-        imageDelOutline(&image, mpool, tid);
+        imageDelOutline(image, mpool, tid);
         if (!nodirty) dirtyRegion->add(prvBox, curBox);
     }
 
     void dispose() override
     {
-       imageFree(&image);
+       imageFree(image);
     }
 };
 
