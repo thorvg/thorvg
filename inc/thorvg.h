@@ -806,66 +806,45 @@ public:
     Result remove(Paint* paint = nullptr) noexcept;
 
     /**
-     * @brief Requests the canvas to update modified paint objects in preparation for rendering.
+     * @brief Requests the canvas to update the paint for up-to-date render preparation.
      *
-     * This function triggers an internal update for all paint instances that have been modified
-     * since the last update. It ensures that the canvas state is ready for accurate rendering.
-     *
-     * @retval Result::InsufficientCondition The canvas is not properly prepared.
-     *         This may occur if the canvas target has not been set or if the update is called during drawing.
-     *         Call Canvas::sync() before trying.
-     *
-     * @note Only paint objects that have been changed will be processed.
-     * @note If the canvas is configured with multiple threads, the update may be performed asynchronously.
-     *
-     * @see Canvas::sync()
+     * @note Only modified paint instances will undergo the internal update process.
+     * @note The update operation may be asynchronous if the assigned thread count is greater than zero.
      */
     Result update() noexcept;
 
     /**
-     * @brief Requests the canvas to render the Paint objects.
+     * @brief Requests the canvas to render Paint objects.
      *
      * @param[in] clear If @c true, clears the target buffer to zero before drawing.
      *
-     * @retval Result::InsufficientCondition The canvas is not properly prepared.
-     *         This may occur if Canvas::target() has not been set or if draw() is called multiple times
-     *         without calling Canvas::sync() in between.
-     *
      * @note Clearing the buffer is unnecessary if the canvas will be fully covered 
-     *       with opaque content. Skipping the clear can improve performance.
-     * @note Drawing may be performed asynchronously if the thread count is greater than zero.
-     *       To ensure the drawing process is complete, call sync() afterwards.
-     * @note If the canvas has not been updated prior to Canvas::draw(), it may implicitly perform Canvas::update().
+     *       with opaque content, which can improve performance.
+     * @note Drawing may be asynchronous if the thread count is greater than zero. 
+     *       To ensure drawing is complete, call sync() afterwards.
      *
      * @see Canvas::sync()
-     * @see Canvas::update()
      */
     Result draw(bool clear = false) noexcept;
 
     /**
-     * @brief Sets the drawing region of the canvas.
+     * @brief Sets the drawing region in the canvas.
      *
-     * This function defines a rectangular area of the canvas to be used for drawing operations.
-     * The specified viewport clips rendering output to the boundaries of that rectangle.
-     *
-     * Please note that changing the viewport is only allowed at the beginning of the rendering sequence—that is, after calling Canvas::sync().
+     * This function defines the rectangular area of the canvas that will be used for drawing operations.
+     * The specified viewport is used to clip the rendering output to the boundaries of the rectangle.
      *
      * @param[in] x The x-coordinate of the upper-left corner of the rectangle.
      * @param[in] y The y-coordinate of the upper-left corner of the rectangle.
      * @param[in] w The width of the rectangle.
      * @param[in] h The height of the rectangle.
      *
-     * @retval Result::InsufficientCondition If the canvas is not in a synced state.
-     *
-     * @see Canvas::sync()
      * @see SwCanvas::target()
      * @see GlCanvas::target()
      * @see WgCanvas::target()
      *
-     * @warning Changing the viewport is not allowed after calling Canvas::push(),
-     *          Canvas::remove(), Canvas::update(), or Canvas::draw().
+     * @warning It's not allowed to change the viewport during Canvas::push() - Canvas::sync() or Canvas::update() - Canvas::sync().
      *
-     * @note When the target is reset, the viewport will also be reset to match the target size.
+     * @note When resetting the target, the viewport will also be reset to the target size.
      * @since 0.15
      */
     Result viewport(int32_t x, int32_t y, int32_t w, int32_t h) noexcept;
@@ -875,6 +854,8 @@ public:
      *
      * The Canvas rendering can be performed asynchronously. To make sure that rendering is finished,
      * the sync() must be called after the draw() regardless of threading.
+     *
+     * @retval Result::InsufficientCondition: The canvas is either already in sync condition or in a damaged condition (a draw is required before syncing).
      *
      * @see Canvas::draw()
      */

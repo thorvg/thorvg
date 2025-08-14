@@ -129,7 +129,7 @@ TEST_CASE("Update", "[tvgSwCanvas]")
         uint32_t buffer[100*100];
         REQUIRE(canvas->target(buffer, 100, 100, 100, ColorSpace::ARGB8888) == Result::Success);
 
-        REQUIRE(canvas->update() == Result::Success);
+        REQUIRE(canvas->update() == Result::InsufficientCondition);
 
         REQUIRE(canvas->push(Shape::gen()) == Result::Success);
 
@@ -155,14 +155,14 @@ TEST_CASE("Synchronized Drawing", "[tvgSwCanvas]")
         auto canvas = unique_ptr<SwCanvas>(SwCanvas::gen());
         REQUIRE(canvas);
 
-        REQUIRE(canvas->sync() == Result::Success);
+        REQUIRE(canvas->sync() == Result::InsufficientCondition);
         REQUIRE(canvas->draw() == Result::InsufficientCondition);
 
         uint32_t buffer[100*100];
         REQUIRE(canvas->target(buffer, 100, 100, 100, ColorSpace::ARGB8888) == Result::Success);
 
-        REQUIRE(canvas->draw() == Result::Success);
-        REQUIRE(canvas->sync() == Result::Success);
+        REQUIRE(canvas->draw() == Result::InsufficientCondition);
+        REQUIRE(canvas->sync() == Result::InsufficientCondition);
 
         //Invalid Shape
         auto shape = Shape::gen();
