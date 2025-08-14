@@ -313,7 +313,6 @@ struct SwMpool
 {
     SwOutline* outline;
     SwOutline* strokeOutline;
-    SwOutline* dashOutline;
     unsigned allocSize;
 };
 

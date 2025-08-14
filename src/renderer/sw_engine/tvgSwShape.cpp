@@ -312,7 +312,8 @@ static SwOutline* _genDashOutline(const RenderShape* rshape, const Matrix& trans
         }
     }
 
-    dash.outline = mpoolReqDashOutline(mpool, tid);
+    mpoolRetOutline(mpool, tid);
+    dash.outline = mpoolReqOutline(mpool, tid);
 
     //must begin with moveTo
     if (cmds[0] == PathCommand::MoveTo) {
@@ -552,15 +553,11 @@ void shapeResetStroke(SwShape& shape, const RenderShape* rshape, const Matrix& t
 bool shapeGenStrokeRle(SwShape& shape, const RenderShape* rshape, const Matrix& transform, const RenderRegion& clipBox, RenderRegion& renderBox, SwMpool* mpool, unsigned tid)
 {
     SwOutline* shapeOutline = nullptr;
-    SwOutline* strokeOutline = nullptr;
-    auto dashStroking = false;
-    auto ret = true;
 
     //Dash style with/without trimming
     if (rshape->stroke->dash.length > DASH_PATTERN_THRESHOLD) {
         shapeOutline = _genDashOutline(rshape, transform, mpool, tid, rshape->trimpath());
         if (!shapeOutline) return false;
-        dashStroking = true;
     //Trimming & Normal style
     } else {
         if (!shape.outline) {
@@ -570,24 +567,16 @@ bool shapeGenStrokeRle(SwShape& shape, const RenderShape* rshape, const Matrix& 
         shapeOutline = shape.outline;
     }
 
-    if (!strokeParseOutline(shape.stroke, *shapeOutline)) {
-        ret = false;
-        goto clear;
-    }
+    if (!strokeParseOutline(shape.stroke, *shapeOutline)) return false;
 
-    if ((strokeOutline = strokeExportOutline(shape.stroke, renderBox, transform, mpool, tid))) {
-        if (!mathUpdateBBox(clipBox, renderBox, false)) {
-            ret = false;
-            goto clear;
+    auto strokeOutline = strokeExportOutline(shape.stroke, renderBox, transform, mpool, tid);
+    if (strokeOutline) {
+        if (mathUpdateBBox(clipBox, renderBox, false)) {
+            shape.strokeRle = rleRender(shape.strokeRle, strokeOutline, renderBox, true);
         }
-        shape.strokeRle = rleRender(shape.strokeRle, strokeOutline, renderBox, true);
+        mpoolRetStrokeOutline(mpool, tid);
     }
-
-clear:
-    if (dashStroking) mpoolRetDashOutline(mpool, tid);
-    mpoolRetStrokeOutline(mpool, tid);
-
-    return ret;
+    return true;
 }
 
 
