@@ -192,12 +192,15 @@ struct SwFill
 
 struct SwStrokeBorder
 {
-    uint32_t ptsCnt;
-    uint32_t maxPts;
-    SwPoint* pts;
-    uint8_t* tags;
-    int32_t start;     //index of current sub-path start point
-    bool movable;      //true: for ends of lineto borders
+    Array<SwPoint> pts;
+    uint8_t* tags = nullptr;
+    int32_t start = 0;        //index of current sub-path start point
+    bool movable = false;      //true: for ends of lineto borders
+
+    ~SwStrokeBorder()
+    {
+        free(tags);
+    }
 };
 
 struct SwStroke
@@ -212,7 +215,7 @@ struct SwStroke
     int64_t width;
     int64_t miterlimit;
     SwFill* fill = nullptr;
-    SwStrokeBorder borders[2];
+    SwStrokeBorder* borders[2];
     float sx, sy;
     StrokeCap cap;
     StrokeJoin join;
@@ -313,6 +316,8 @@ struct SwMpool
 {
     SwOutline* outline;
     SwOutline* strokeOutline;
+    SwStrokeBorder* leftBorder;
+    SwStrokeBorder* rightBorder;
     unsigned allocSize;
 };
 
@@ -649,7 +654,7 @@ void shapeReset(SwShape& shape);
 bool shapePrepare(SwShape& shape, const RenderShape* rshape, const Matrix& transform, const RenderRegion& clipBox, RenderRegion& renderBox, SwMpool* mpool, unsigned tid, bool hasComposite);
 bool shapeGenRle(SwShape& shape, const RenderRegion& bbox, bool antiAlias);
 void shapeDelOutline(SwShape& shape, SwMpool* mpool, uint32_t tid);
-void shapeResetStroke(SwShape& shape, const RenderShape* rshape, const Matrix& transform);
+void shapeResetStroke(SwShape& shape, const RenderShape* rshape, const Matrix& transform, SwMpool* mpool, unsigned tid);
 bool shapeGenStrokeRle(SwShape& shape, const RenderShape* rshape, const Matrix& transform, const RenderRegion& clipBox, RenderRegion& renderBox, SwMpool* mpool, unsigned tid);
 void shapeFree(SwShape& shape);
 void shapeDelStroke(SwShape& shape);
@@ -660,8 +665,8 @@ void shapeResetStrokeFill(SwShape& shape);
 bool shapeStrokeBBox(SwShape& shape, const RenderShape* rshape, Point* pt4, const Matrix& m, SwMpool* mpool);
 void shapeDelFill(SwShape& shape);
 
-void strokeReset(SwStroke* stroke, const RenderShape* shape, const Matrix& transform);
-bool strokeParseOutline(SwStroke* stroke, const SwOutline& outline);
+void strokeReset(SwStroke* stroke, const RenderShape* shape, const Matrix& transform, SwMpool* mpool, unsigned tid);
+bool strokeParseOutline(SwStroke* stroke, const SwOutline& outline, SwMpool* mpool, unsigned tid);
 SwOutline* strokeExportOutline(SwStroke* stroke, RenderRegion& aabb, const Matrix& transform, SwMpool* mpool, unsigned tid);
 void strokeFree(SwStroke* stroke);
 
@@ -700,13 +705,15 @@ bool rleIntersect(const SwRle* rle, const RenderRegion& region);
 
 SwMpool* mpoolInit(uint32_t threads);
 bool mpoolTerm(SwMpool* mpool);
-bool mpoolClear(SwMpool* mpool);
 SwOutline* mpoolReqOutline(SwMpool* mpool, unsigned idx);
 void mpoolRetOutline(SwMpool* mpool, unsigned idx);
 SwOutline* mpoolReqStrokeOutline(SwMpool* mpool, unsigned idx);
 void mpoolRetStrokeOutline(SwMpool* mpool, unsigned idx);
 SwOutline* mpoolReqDashOutline(SwMpool* mpool, unsigned idx);
 void mpoolRetDashOutline(SwMpool* mpool, unsigned idx);
+SwStrokeBorder* mpoolReqStrokeLBorder(SwMpool* mpool, unsigned idx);
+SwStrokeBorder* mpoolReqStrokeRBorder(SwMpool* mpool, unsigned idx);
+void mpoolRetStrokeBorders(SwMpool* mpool, unsigned idx);
 
 bool rasterCompositor(SwSurface* surface);
 bool rasterShape(SwSurface* surface, SwShape* shape, const RenderRegion& bbox, RenderColor& c);

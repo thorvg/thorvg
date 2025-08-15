@@ -539,13 +539,11 @@ void shapeDelStroke(SwShape& shape)
 }
 
 
-void shapeResetStroke(SwShape& shape, const RenderShape* rshape, const Matrix& transform)
+void shapeResetStroke(SwShape& shape, const RenderShape* rshape, const Matrix& transform, SwMpool* mpool, unsigned tid)
 {
     if (!shape.stroke) shape.stroke = tvg::calloc<SwStroke*>(1, sizeof(SwStroke));
     auto stroke = shape.stroke;
-    if (!stroke) return;
-
-    strokeReset(stroke, rshape, transform);
+    strokeReset(stroke, rshape, transform, mpool, tid);
     rleReset(shape.strokeRle);
 }
 
@@ -567,15 +565,15 @@ bool shapeGenStrokeRle(SwShape& shape, const RenderShape* rshape, const Matrix& 
         shapeOutline = shape.outline;
     }
 
-    if (!strokeParseOutline(shape.stroke, *shapeOutline)) return false;
+    if (!strokeParseOutline(shape.stroke, *shapeOutline, mpool, tid)) return false;
 
     auto strokeOutline = strokeExportOutline(shape.stroke, renderBox, transform, mpool, tid);
     if (strokeOutline) {
         if (mathUpdateBBox(clipBox, renderBox, false)) {
             shape.strokeRle = rleRender(shape.strokeRle, strokeOutline, renderBox, true);
         }
-        mpoolRetStrokeOutline(mpool, tid);
     }
+    mpoolRetStrokeOutline(mpool, tid);
     return true;
 }
 
@@ -628,25 +626,21 @@ bool shapeStrokeBBox(SwShape& shape, const RenderShape* rshape, Point* pt4, cons
     if (!outline) return false;
 
     if (rshape->strokeWidth() > 0.0f) {
-        strokeReset(shape.stroke, rshape, m);
-        strokeParseOutline(shape.stroke, *outline);
+        strokeReset(shape.stroke, rshape, m, mpool, 0);
+        strokeParseOutline(shape.stroke, *outline, mpool, 0);
 
         auto func = [](SwStrokeBorder& border, RenderRegion& renderBox) {
-            if (border.ptsCnt == 0) return;
-            auto pts = border.pts;
-            auto cnt = border.ptsCnt;
-            while (cnt-- > 0) {
+            ARRAY_FOREACH(pts, border.pts) {
                 if (pts->x < renderBox.min.x) renderBox.min.x = pts->x;
                 if (pts->x > renderBox.max.x) renderBox.max.x = pts->x;
                 if (pts->y < renderBox.min.y) renderBox.min.y = pts->y;
                 if (pts->y > renderBox.max.y) renderBox.max.y = pts->y;
-                ++pts;
             }
         };
 
         renderBox = {{INT32_MAX, INT32_MAX}, {-INT32_MAX, -INT32_MAX}};
-        func(shape.stroke->borders[0], renderBox);
-        func(shape.stroke->borders[1], renderBox);
+        func(*shape.stroke->borders[0], renderBox);
+        func(*shape.stroke->borders[1], renderBox);
 
         mpoolRetStrokeOutline(mpool, 0);
     }
@@ -655,7 +649,6 @@ bool shapeStrokeBBox(SwShape& shape, const RenderShape* rshape, Point* pt4, cons
     pt4[1] = SwPoint{renderBox.max.x, renderBox.min.y}.toPoint();
     pt4[2] = SwPoint{renderBox.max.x, renderBox.max.y}.toPoint();
     pt4[3] = SwPoint{renderBox.min.x, renderBox.max.y}.toPoint();
-
 
     shapeDelOutline(shape, mpool, 0);
 
