@@ -40,8 +40,9 @@ struct SwTask : Task
 {
     SwSurface* surface = nullptr;
     SwMpool* mpool = nullptr;
-    RenderRegion curBox = {};  //current rendering region
-    RenderRegion prvBox = {};  //previous rendering region
+    RenderRegion clipBox;      //clipping region applied to the task, may differ from curBox which is the actual rendering region
+    RenderRegion curBox{};     //current rendering region
+    RenderRegion prvBox{};     //previous rendering region
     Matrix transform;
     Array<RenderData> clips;
     RenderDirtyRegion* dirtyRegion;
@@ -89,15 +90,10 @@ struct SwShapeTask : SwTask
 
     float validStrokeWidth(bool clipper)
     {
-        if (!rshape->stroke) return 0.0f;
-
-        auto width = rshape->stroke->width;
-        if (tvg::zero(width)) return 0.0f;
-
-        if (!clipper && (!rshape->stroke->fill && (MULTIPLY(rshape->stroke->color.a, opacity) == 0))) return 0.0f;
+        if (!rshape->stroke || tvg::zero(rshape->stroke->width)) return 0.0f;
+        if (!clipper && (!rshape->stroke->fill && (rshape->stroke->color.a == 0))) return 0.0f;
         if (tvg::zero(rshape->stroke->trim.begin - rshape->stroke->trim.end)) return 0.0f;
-
-        return (width * sqrt(transform.e11 * transform.e11 + transform.e12 * transform.e12));
+        return (rshape->stroke->width * sqrt(transform.e11 * transform.e11 + transform.e12 * transform.e12));
     }
 
     bool clip(SwRle* target) override
@@ -117,19 +113,18 @@ struct SwShapeTask : SwTask
         }
 
         auto strokeWidth = validStrokeWidth(clipper);
-        auto renderBox = curBox;
         auto updateShape = flags & (RenderUpdateFlag::Path | RenderUpdateFlag::Transform | RenderUpdateFlag::Clip);
-        auto updateFill = flags & (RenderUpdateFlag::Color | RenderUpdateFlag::Gradient);
+        auto updateFill = (flags & (RenderUpdateFlag::Color | RenderUpdateFlag::Gradient));
 
         //Shape
-        if (updateShape || updateFill) {
-            if (updateShape) shapeReset(shape);
-            if (!shape.rle || shape.rle->invalid()) {
-                if (shapePrepare(shape, rshape, transform, curBox, renderBox, mpool, tid, clips.count > 0 ? true : false)) {
-                    if (!shapeGenRle(shape, renderBox, antialiasing(strokeWidth))) goto err;
+        if (updateShape) {
+            shapeReset(shape);
+            if (rshape->fill || rshape->color.a > 0 || clipper) {
+                if (shapePrepare(shape, rshape, transform, clipBox, curBox, mpool, tid, clips.count > 0 ? true : false)) {
+                    if (!shapeGenRle(shape, curBox, antialiasing(strokeWidth))) goto err;
                 } else {
                     updateFill = false;
-                    renderBox.reset();
+                    curBox.reset();
                 }
             }
         }
@@ -145,7 +140,7 @@ struct SwShapeTask : SwTask
         if (updateShape || flags & RenderUpdateFlag::Stroke) {
             if (strokeWidth > 0.0f) {
                 shapeResetStroke(shape, rshape, transform);
-                if (!shapeGenStrokeRle(shape, rshape, transform, curBox, renderBox, mpool, tid)) goto err;
+                if (!shapeGenStrokeRle(shape, rshape, transform, clipBox, curBox, mpool, tid)) goto err;
                 if (auto fill = rshape->strokeFill()) {
                     auto ctable = (flags & RenderUpdateFlag::GradientStroke) ? true : false;
                     if (ctable) shapeResetStrokeFill(shape);
@@ -168,7 +163,6 @@ struct SwShapeTask : SwTask
         }
 
         valid = true;
-        curBox = renderBox; //sync
         if (!nodirty) dirtyRegion->add(prvBox, curBox);
         return;
 
@@ -204,8 +198,6 @@ struct SwImageTask : SwTask
             if (flags & RenderUpdateFlag::Color) invisible();
             return;
         }
-
-        auto clipBox = curBox;
 
         //Convert colorspace if it's not aligned.
         rasterConvertCS(source, surface->cs);
@@ -859,11 +851,9 @@ void SwRenderer::dispose(RenderData data)
 
 void* SwRenderer::prepareCommon(SwTask* task, const Matrix& transform, const Array<RenderData>& clips, uint8_t opacity, RenderUpdateFlag flags)
 {
-    if (!surface || (transform.e11 == 0.0f && transform.e12 == 0.0f) || (transform.e21 == 0.0f && transform.e22 == 0.0f)) return task;  //invalid
-
     task->surface = surface;
     task->mpool = mpool;
-    task->curBox = RenderRegion::intersect(vport, {{0, 0}, {int32_t(surface->w), int32_t(surface->h)}});
+    task->clipBox = RenderRegion::intersect(vport, {{0, 0}, {int32_t(surface->w), int32_t(surface->h)}});
     task->transform = transform;
     task->clips = clips;
     task->dirtyRegion = &dirtyRegion;
