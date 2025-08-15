@@ -34,7 +34,7 @@ static inline bool _onlyShifted(const Matrix& m)
 }
 
 
-static bool _genOutline(SwImage& image, const Matrix& transform, SwMpool* mpool, unsigned tid)
+static void  _genOutline(SwImage& image, const Matrix& transform, RenderRegion& aabb, SwMpool* mpool, unsigned tid)
 {
     image.outline = mpoolReqOutline(mpool, tid);
     auto outline = image.outline;
@@ -44,17 +44,26 @@ static bool _genOutline(SwImage& image, const Matrix& transform, SwMpool* mpool,
     outline->cntrs.reserve(1);
     outline->closed.reserve(1);
 
+    aabb = {{INT32_MAX, INT32_MAX}, {-INT32_MAX, -INT32_MAX}};
+
     Point to[4];
-    auto w = static_cast<float>(image.w);
-    auto h = static_cast<float>(image.h);
-    to[0] = {0, 0};
-    to[1] = {w, 0};
-    to[2] = {w, h};
-    to[3] = {0, h};
+    to[0] = Point{0, 0} * transform;
+    to[1] = Point{float(image.w), 0} * transform;
+    to[2] = Point{float(image.w), float(image.h)} * transform;
+    to[3] = Point{0, float(image.h)} * transform;
+
+    auto capture = [](RenderRegion& bbox, const SwPoint& pts) {
+        if (pts.x < bbox.min.x) bbox.min.x = pts.x;
+        if (pts.x > bbox.max.x) bbox.max.x = pts.x;
+        if (pts.y < bbox.min.y) bbox.min.y = pts.y;
+        if (pts.y > bbox.max.y) bbox.max.y = pts.y;
+    };
 
     for (int i = 0; i < 4; i++) {
-        outline->pts.push(mathTransform(&to[i], transform));
+        auto pt = TO_SWPOINT(to[i]);
+        outline->pts.push(pt);
         outline->types.push(SW_CURVE_TYPE_POINT);
+        capture(aabb, pt);
     }
 
     outline->pts.push(outline->pts[0]);
@@ -63,8 +72,6 @@ static bool _genOutline(SwImage& image, const Matrix& transform, SwMpool* mpool,
     outline->closed.push(true);
 
     image.outline = outline;
-
-    return true;
 }
 
 
@@ -85,13 +92,11 @@ bool imagePrepare(SwImage& image, const Matrix& transform, const RenderRegion& c
         auto scaleX = sqrtf((transform.e11 * transform.e11) + (transform.e21 * transform.e21));
         auto scaleY = sqrtf((transform.e22 * transform.e22) + (transform.e12 * transform.e12));
         image.scale = (fabsf(scaleX - scaleY) > 0.01f) ? 1.0f : scaleX;
-
         if (tvg::zero(transform.e12) && tvg::zero(transform.e21)) image.scaled = true;
         else image.scaled = false;
     }
-
-    if (!_genOutline(image, transform, mpool, tid)) return false;
-    return mathUpdateOutlineBBox(image.outline, clipBox, renderBox, image.direct);
+    _genOutline(image, transform, renderBox, mpool, tid);
+    return mathUpdateBBox(clipBox, renderBox, image.direct);
 }
 
 

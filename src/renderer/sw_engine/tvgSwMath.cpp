@@ -262,44 +262,16 @@ int64_t mathDiff(int64_t angle1, int64_t angle2)
 }
 
 
-SwPoint mathTransform(const Point* to, const Matrix& transform)
+bool mathUpdateBBox(const RenderRegion& clipBox, RenderRegion& renderBox, bool fastTrack)
 {
-    auto tx = to->x * transform.e11 + to->y * transform.e12 + transform.e13;
-    auto ty = to->x * transform.e21 + to->y * transform.e22 + transform.e23;
-
-    return {TO_SWCOORD(tx), TO_SWCOORD(ty)};
-}
-
-
-bool mathUpdateOutlineBBox(const SwOutline* outline, const RenderRegion& clipBox, RenderRegion& renderBox, bool fastTrack)
-{
-    if (!outline || outline->pts.empty() || outline->cntrs.empty()) {
-        renderBox.reset();
-        return false;
-    }
-
-    auto pt = outline->pts.begin();
-
-    auto xMin = pt->x;
-    auto xMax = pt->x;
-    auto yMin = pt->y;
-    auto yMax = pt->y;
-
-    for (++pt; pt < outline->pts.end(); ++pt) {
-        if (xMin > pt->x) xMin = pt->x;
-        if (xMax < pt->x) xMax = pt->x;
-        if (yMin > pt->y) yMin = pt->y;
-        if (yMax < pt->y) yMax = pt->y;
-    }
-
     if (fastTrack) {
-        renderBox.min = {int32_t(round(xMin / 64.0f)), int32_t(round(yMin / 64.0f))};
-        renderBox.max = {int32_t(round(xMax / 64.0f)), int32_t(round(yMax / 64.0f))};
+        renderBox.min = {int32_t(nearbyint(renderBox.min.x / 64.0f)), int32_t(nearbyint(renderBox.min.y / 64.0f))};
+        renderBox.max = {int32_t(nearbyint(renderBox.max.x / 64.0f)), int32_t(nearbyint(renderBox.max.y / 64.0f))};
     } else {
-        renderBox.min = {xMin >> 6, yMin >> 6};
-        renderBox.max = {(xMax + 63) >> 6, (yMax + 63) >> 6};
+        renderBox.min = {renderBox.min.x >> 6, renderBox.min.y >> 6};
+        renderBox.max = {(renderBox.max.x + 63) >> 6, (renderBox.max.y + 63) >> 6};
     }
-
     renderBox.intersect(clipBox);
+
     return renderBox.valid();
 }
