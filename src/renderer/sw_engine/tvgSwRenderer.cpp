@@ -139,7 +139,7 @@ struct SwShapeTask : SwTask
         //Stroke
         if (updateShape || flags & RenderUpdateFlag::Stroke) {
             if (strokeWidth > 0.0f) {
-                shapeResetStroke(shape, rshape, transform);
+                shapeResetStroke(shape, rshape, transform, mpool, tid);
                 if (!shapeGenStrokeRle(shape, rshape, transform, clipBox, curBox, mpool, tid)) goto err;
                 if (auto fill = rshape->strokeFill()) {
                     auto ctable = (flags & RenderUpdateFlag::GradientStroke) ? true : false;
