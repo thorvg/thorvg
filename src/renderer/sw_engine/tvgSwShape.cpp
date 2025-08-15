@@ -331,10 +331,12 @@ static SwOutline* _genDashOutline(const RenderShape* rshape, const Matrix& trans
         ++cmds;
     }
 
+    _outlineEnd(*dash.outline);
+
+    dash.outline->fillRule = rshape->rule;
+
     tvg::free(trimmedCmds);
     tvg::free(trimmedPts);
-
-    _outlineEnd(*dash.outline);
 
     return dash.outline;
 }
@@ -369,7 +371,6 @@ static SwOutline* _genOutline(SwShape& shape, const RenderShape* rshape, const M
     if (trimmed) {
         RenderPath trimmedPath;
         if (!rshape->stroke->trim.trim(rshape->path, trimmedPath)) return nullptr;
-
         cmds = trimmedCmds = trimmedPath.cmds.data;
         cmdCnt = trimmedPath.cmds.count;
         pts = trimmedPts = trimmedPath.pts.data;
@@ -499,13 +500,11 @@ void shapeDelStroke(SwShape& shape)
 }
 
 
-void shapeResetStroke(SwShape& shape, const RenderShape* rshape, const Matrix& transform)
+void shapeResetStroke(SwShape& shape, const RenderShape* rshape, const Matrix& transform, SwMpool* mpool, unsigned tid)
 {
     if (!shape.stroke) shape.stroke = tvg::calloc<SwStroke*>(1, sizeof(SwStroke));
     auto stroke = shape.stroke;
-    if (!stroke) return;
-
-    strokeReset(stroke, rshape, transform);
+    strokeReset(stroke, rshape, transform, mpool, tid);
     rleReset(shape.strokeRle);
 }
 
@@ -527,9 +526,10 @@ bool shapeGenStrokeRle(SwShape& shape, const RenderShape* rshape, const Matrix& 
         shapeOutline = shape.outline;
     }
 
-    if (!strokeParseOutline(shape.stroke, *shapeOutline)) return false;
+    if (!strokeParseOutline(shape.stroke, *shapeOutline, mpool, tid)) return false;
 
     auto strokeOutline = strokeExportOutline(shape.stroke, mpool, tid);
+
     auto ret = mathUpdateOutlineBBox(strokeOutline, clipBox, renderBox, false);
     if (ret) shape.strokeRle = rleRender(shape.strokeRle, strokeOutline, renderBox, true);
     mpoolRetStrokeOutline(mpool, tid);
@@ -582,33 +582,32 @@ bool shapeStrokeBBox(SwShape& shape, const RenderShape* rshape, Point* pt4, cons
     auto outline = _genOutline(shape, rshape, m, mpool, 0, false, rshape->trimpath());
     if (!outline) return false;
 
-    strokeReset(shape.stroke, rshape, m);
-    strokeParseOutline(shape.stroke, *outline);
+    if (rshape->strokeWidth() > 0.0f) {
+        strokeReset(shape.stroke, rshape, m, mpool, 0);
+        strokeParseOutline(shape.stroke, *outline, mpool, 0);
 
-    auto func = [](SwStrokeBorder& border, SwPoint& min, SwPoint& max) {
-        if (border.ptsCnt == 0) return;
-        auto pts = border.pts;
-        auto cnt = border.ptsCnt;
-        while (cnt-- > 0) {
-            if (pts->x < min.x) min.x = pts->x;
-            if (pts->x > max.x) max.x = pts->x;
-            if (pts->y < min.y) min.y = pts->y;
-            if (pts->y > max.y) max.y = pts->y;
-            ++pts;
-        }
-    };
+        auto func = [](SwStrokeBorder* border, SwPoint& min, SwPoint& max) {
+            ARRAY_FOREACH(pts, border->pts) {
+                if (pts->x < min.x) min.x = pts->x;
+                if (pts->x > max.x) max.x = pts->x;
+                if (pts->y < min.y) min.y = pts->y;
+                if (pts->y > max.y) max.y = pts->y;
+            }
+        };
 
-    SwPoint min = {INT32_MAX, INT32_MAX};
-    SwPoint max = {-INT32_MAX, -INT32_MAX};
-    func(shape.stroke->borders[0], min, max);
-    func(shape.stroke->borders[1], min, max);
+        SwPoint min = {INT32_MAX, INT32_MAX};
+        SwPoint max = {-INT32_MAX, -INT32_MAX};
+        func(shape.stroke->borders[0], min, max);
+        func(shape.stroke->borders[1], min, max);
 
-    pt4[0] = min.toPoint();
-    pt4[1] = SwPoint{max.x, min.y}.toPoint();
-    pt4[2] = max.toPoint();
-    pt4[3] = SwPoint{min.x, max.y}.toPoint();
+        pt4[0] = min.toPoint();
+        pt4[1] = SwPoint{max.x, min.y}.toPoint();
+        pt4[2] = max.toPoint();
+        pt4[3] = SwPoint{min.x, max.y}.toPoint();
 
-    mpoolRetStrokeOutline(mpool, 0);
+        mpoolRetStrokeOutline(mpool, 0);
+    }
+
     shapeDelOutline(shape, mpool, 0);
 
     return true;

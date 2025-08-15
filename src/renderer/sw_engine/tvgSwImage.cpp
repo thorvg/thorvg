@@ -63,6 +63,7 @@ static bool _genOutline(SwImage& image, const Matrix& transform, SwMpool* mpool,
     outline->closed.push(true);
 
     image.outline = outline;
+    image.outline->fillRule = FillRule::NonZero;
 
     return true;
 }
