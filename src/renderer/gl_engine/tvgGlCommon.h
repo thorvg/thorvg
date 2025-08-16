@@ -157,6 +157,7 @@ struct GlRadialGradientBlock
 struct GlCompositor : RenderCompositor
 {
     RenderRegion bbox = {};
+    BlendMethod blendMethod = {};
 
     GlCompositor(const RenderRegion& box) : bbox(box) {}
 };

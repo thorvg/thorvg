@@ -592,6 +592,20 @@ const char* BLIT_FRAG_SHADER = TVG_COMPOSE_SHADER(
     }
 );
 
+const char* BLEND_SCENE_VERT_SHADER = R"(
+    layout(location = 0) in vec2 aLocation;
+    layout(location = 1) in vec2 aUV;
+    out vec2 vUV;
+    out vec2 vUVDst;
+
+    void main()
+    {
+        vUV = aUV;
+        vUVDst = aLocation * 0.5 + 0.5;
+        gl_Position = vec4(aLocation, 0.0, 1.0);
+    }
+)";
+
 const char* BLEND_SOLID_FRAG_HEADER = R"(
 uniform sampler2D uSrcTexture;
 uniform sampler2D uDstTexture;
@@ -618,7 +632,7 @@ void getFragData() {
 vec4 postProcess(vec4 R) { return R; };
 )";
 
-const char* BLEND_GRADIENT_FRAG_HEADER  = R"(
+const char* BLEND_GRADIENT_FRAG_HEADER = R"(
 uniform sampler2D uSrcTexture;
 uniform sampler2D uDstTexture;
 
@@ -645,6 +659,67 @@ void getFragData() {
 }
 
 vec4 postProcess(vec4 R) { return R; };
+)";
+
+const char* BLEND_IMAGE_FRAG_HEADER = R"(
+uniform sampler2D uSrcTexture;
+uniform sampler2D uDstTexture;
+
+in vec2 vUV;
+out vec4 FragColor;
+
+vec3 One = vec3(1.0, 1.0, 1.0);
+struct FragData { vec3 Sc; float Sa; float So; vec3 Dc; float Da; };
+FragData d;
+
+void getFragData() {
+    // get source data
+    vec4 colorSrc = texture(uSrcTexture, vUV);
+    vec4 colorDst = texture(uDstTexture, vUV);
+    // fill fragment data
+    d.Sc = colorSrc.rgb;
+    d.Sa = colorSrc.a;
+    d.So = 1.0;
+    d.Dc = colorDst.rgb;
+    d.Da = colorDst.a;
+    if (d.Sa > 0) {d.Sc = d.Sc / d.Sa; }
+}
+
+vec4 postProcess(vec4 R) { return R; };
+)";
+
+const char* BLEND_SCENE_FRAG_HEADER = R"(
+layout(std140) uniform ColorInfo {
+    int format;
+    int flipY;
+    int opacity;
+    int dummy;
+} uColorInfo;
+uniform sampler2D uSrcTexture;
+uniform sampler2D uDstTexture;
+
+in vec2 vUV;
+in vec2 vUVDst;
+out vec4 FragColor;
+
+vec3 One = vec3(1.0, 1.0, 1.0);
+struct FragData { vec3 Sc; float Sa; float So; vec3 Dc; float Da; };
+FragData d;
+
+void getFragData() {
+    // get source data
+    vec4 colorSrc = texture(uSrcTexture, vUV);
+    vec4 colorDst = texture(uDstTexture, vUVDst);
+    // fill fragment data
+    d.Sc = colorSrc.rgb;
+    d.Sa = colorSrc.a;
+    d.So = uColorInfo.opacity / 255.0;
+    d.Dc = colorDst.rgb;
+    d.Da = colorDst.a;
+    if (d.Sa > 0) {d.Sc = d.Sc / d.Sa; }
+}
+
+vec4 postProcess(vec4 R) { return mix(vec4(d.Dc, d.Da), R, d.Sa * d.So); };
 )";
 
 const char* BLEND_FRAG_HSL = R"(
@@ -782,7 +857,7 @@ void main() {
         vec3 Dc = min(One, d.Dc / d.Da);
         Rc.r = d.Sc.r > 0 ? 1.0 - min(1.0, (1.0 - Dc.r) / d.Sc.r) : Dc.r < 1 ? 0.0 : 1.0;
         Rc.g = d.Sc.g > 0 ? 1.0 - min(1.0, (1.0 - Dc.g) / d.Sc.g) : Dc.g < 1 ? 0.0 : 1.0;
-        Rc.b = d.Sc.b > 0 ? 1.0 - min(1.0, (1.0 - Dc.b) / d.Sc.r) : Dc.b < 1 ? 0.0 : 1.0;
+        Rc.b = d.Sc.b > 0 ? 1.0 - min(1.0, (1.0 - Dc.b) / d.Sc.b) : Dc.b < 1 ? 0.0 : 1.0;
         Rc = mix(d.Sc, Rc, d.Da);
     }
     FragColor = postProcess(vec4(Rc, 1.0));
