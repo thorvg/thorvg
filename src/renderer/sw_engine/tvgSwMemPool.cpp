@@ -53,12 +53,35 @@ SwOutline* mpoolReqStrokeOutline(SwMpool* mpool, unsigned idx)
 }
 
 
+SwStrokeBorder* mpoolReqStrokeLBorder(SwMpool* mpool, unsigned idx)
+{
+    return &mpool->leftBorder[idx];
+}
+
+
+SwStrokeBorder* mpoolReqStrokeRBorder(SwMpool* mpool, unsigned idx)
+{
+    return &mpool->rightBorder[idx];
+}
+
+
+void mpoolRetStrokeBorders(SwMpool* mpool, unsigned idx)
+{
+    mpool->leftBorder[idx].pts.clear();
+    mpool->leftBorder[idx].start = -1;
+    mpool->rightBorder[idx].pts.clear();
+    mpool->rightBorder[idx].start = -1;
+}
+
+
 void mpoolRetStrokeOutline(SwMpool* mpool, unsigned idx)
 {
     mpool->strokeOutline[idx].pts.clear();
     mpool->strokeOutline[idx].cntrs.clear();
     mpool->strokeOutline[idx].types.clear();
     mpool->strokeOutline[idx].closed.clear();
+
+    mpoolRetStrokeBorders(mpool, idx);
 }
 
 
@@ -66,30 +89,14 @@ SwMpool* mpoolInit(uint32_t threads)
 {
     auto allocSize = threads + 1;
 
-    auto mpool = tvg::calloc<SwMpool*>(1, sizeof(SwMpool));
-    mpool->outline = tvg::calloc<SwOutline*>(1, sizeof(SwOutline) * allocSize);
-    mpool->strokeOutline = tvg::calloc<SwOutline*>(1, sizeof(SwOutline) * allocSize);
+    auto mpool = tvg::malloc<SwMpool*>(sizeof(SwMpool));
+    mpool->outline = new SwOutline[allocSize];
+    mpool->strokeOutline = new SwOutline[allocSize];
+    mpool->leftBorder = new SwStrokeBorder[allocSize];
+    mpool->rightBorder = new SwStrokeBorder[allocSize];
     mpool->allocSize = allocSize;
 
     return mpool;
-}
-
-
-bool mpoolClear(SwMpool* mpool)
-{
-    for (unsigned i = 0; i < mpool->allocSize; ++i) {
-        mpool->outline[i].pts.reset();
-        mpool->outline[i].cntrs.reset();
-        mpool->outline[i].types.reset();
-        mpool->outline[i].closed.reset();
-
-        mpool->strokeOutline[i].pts.reset();
-        mpool->strokeOutline[i].cntrs.reset();
-        mpool->strokeOutline[i].types.reset();
-        mpool->strokeOutline[i].closed.reset();
-    }
-
-    return true;
 }
 
 
@@ -97,10 +104,10 @@ bool mpoolTerm(SwMpool* mpool)
 {
     if (!mpool) return false;
 
-    mpoolClear(mpool);
-
-    tvg::free(mpool->outline);
-    tvg::free(mpool->strokeOutline);
+    delete[](mpool->outline);
+    delete[](mpool->strokeOutline);
+    delete[](mpool->leftBorder);
+    delete[](mpool->rightBorder);
     tvg::free(mpool);
 
     return true;
