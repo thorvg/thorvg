@@ -346,9 +346,11 @@ void GlSceneBlendTask::run()
     GL_CHECK(glViewport(0, 0, mParentWidth, mParentHeight));
     GL_CHECK(glScissor(0, 0, mParentWidth, mParentHeight));
 
+    GL_CHECK(glDisable(GL_DEPTH_TEST));
     GL_CHECK(glBlendFunc(GL_ONE, GL_ZERO));
     GlRenderTask::run();
     GL_CHECK(glBlendFunc(GL_ONE, GL_ONE_MINUS_SRC_ALPHA));
+    GL_CHECK(glEnable(GL_DEPTH_TEST));
 }
 
 
