@@ -693,7 +693,7 @@ static void _endSubPath(SwStroke& stroke)
 }
 
 
-static void _exportBorderOutline(const SwStroke& stroke, SwOutline* outline, uint32_t side)
+static void _exportBorderOutline(const SwStroke& stroke, SwOutline* outline, uint32_t side, RenderRegion& renderBox)
 {
     auto border = stroke.borders[side];
     if (border->pts.empty()) return;
@@ -707,6 +707,10 @@ static void _exportBorderOutline(const SwStroke& stroke, SwOutline* outline, uin
         if (*src & SW_STROKE_TAG_END) outline->cntrs.push(idx);
         ++src;
         ++idx;
+        if (pts->x < renderBox.min.x) renderBox.min.x = pts->x;
+        if (pts->x > renderBox.max.x) renderBox.max.x = pts->x;
+        if (pts->y < renderBox.min.y) renderBox.min.y = pts->y;
+        if (pts->y > renderBox.max.y) renderBox.max.y = pts->y;
     }
     outline->pts.push(border->pts);
 }
@@ -795,7 +799,7 @@ bool strokeParseOutline(SwStroke* stroke, const SwOutline& outline, SwMpool* mpo
 }
 
 
-SwOutline* strokeExportOutline(SwStroke* stroke, SwMpool* mpool, unsigned tid)
+SwOutline* strokeExportOutline(SwStroke* stroke, RenderRegion& aabb, const Matrix& transform, SwMpool* mpool, unsigned tid)
 {
     auto reserve = stroke->borders[0]->pts.count + stroke->borders[1]->pts.count;
     auto outline = mpoolReqStrokeOutline(mpool, tid);
@@ -803,8 +807,9 @@ SwOutline* strokeExportOutline(SwStroke* stroke, SwMpool* mpool, unsigned tid)
     outline->types.reserve(reserve);
     outline->fillRule = FillRule::NonZero;
 
-    _exportBorderOutline(*stroke, outline, 0);  //left
-    _exportBorderOutline(*stroke, outline, 1);  //right
+    aabb = {{INT32_MAX, INT32_MAX}, {-INT32_MAX, -INT32_MAX}};
+    _exportBorderOutline(*stroke, outline, 0, aabb);  //left
+    _exportBorderOutline(*stroke, outline, 1, aabb);  //right
 
     return outline;
 }

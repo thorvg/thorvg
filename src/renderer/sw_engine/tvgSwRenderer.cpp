@@ -114,7 +114,7 @@ struct SwShapeTask : SwTask
 
         auto strokeWidth = validStrokeWidth(clipper);
         auto updateShape = flags & (RenderUpdateFlag::Path | RenderUpdateFlag::Transform | RenderUpdateFlag::Clip);
-        auto updateFill = (flags & (RenderUpdateFlag::Color | RenderUpdateFlag::Gradient));
+        auto updateFill = flags & (RenderUpdateFlag::Color | RenderUpdateFlag::Gradient);
 
         //Shape
         if (updateShape) {
@@ -175,7 +175,7 @@ struct SwShapeTask : SwTask
 
     void dispose() override
     {
-       shapeFree(shape);
+        shapeFree(shape);
     }
 };
 
