@@ -35,6 +35,7 @@
 
 using SwCoord = signed long;
 using SwFixed = signed long long;
+#define SW_COLOR_TABLE 1024
 
 
 static inline float TO_FLOAT(SwCoord val)
@@ -150,7 +151,7 @@ struct SwFill
         SwRadial radial;
     };
 
-    uint32_t* ctable;
+    uint32_t ctable[SW_COLOR_TABLE];
     FillSpread spread;
 
     bool solid = false; //solid color fill with the last color from colorStops
