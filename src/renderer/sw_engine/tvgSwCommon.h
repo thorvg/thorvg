@@ -34,7 +34,7 @@
 #define SW_ANGLE_PI (180L << 16)
 #define SW_ANGLE_2PI (SW_ANGLE_PI << 1)
 #define SW_ANGLE_PI2 (SW_ANGLE_PI >> 1)
-
+#define SW_COLOR_TABLE 1024
 
 static inline float TO_FLOAT(int32_t val)
 {
@@ -183,7 +183,7 @@ struct SwFill
         SwRadial radial;
     };
 
-    uint32_t* ctable;
+    uint32_t ctable[SW_COLOR_TABLE];
     FillSpread spread;
 
     bool solid = false; //solid color fill with the last color from colorStops
