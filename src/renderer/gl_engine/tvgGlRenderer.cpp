@@ -1047,7 +1047,7 @@ bool GlRenderer::renderImage(void* data)
     auto sdata = static_cast<GlShape*>(data);
     if (!sdata) return false;
 
-    if (currentPass()->isEmpty() || !(sdata->updateFlag & RenderUpdateFlag::Image)) return true;
+    if (currentPass()->isEmpty() || !sdata->validFill) return true;
 
     auto vp = currentPass()->getViewport();
     auto bbox = sdata->geometry.viewport;
@@ -1117,25 +1117,21 @@ bool GlRenderer::renderImage(void* data)
 
 bool GlRenderer::renderShape(RenderData data)
 {
-    if (currentPass()->isEmpty()) return true;
-
     auto sdata = static_cast<GlShape*>(data);
-    if (sdata->updateFlag == RenderUpdateFlag::None) return true;
+    if (currentPass()->isEmpty() || (!sdata->validFill && !sdata->validStroke)) return true;
 
     auto bbox = sdata->geometry.viewport;
     bbox.intersect(currentPass()->getViewport());
     if (bbox.invalid()) return true;
 
     int32_t drawDepth1 = 0, drawDepth2 = 0;
-
-    if (sdata->updateFlag == RenderUpdateFlag::None) return false;
-    if (sdata->updateFlag & (RenderUpdateFlag::Gradient | RenderUpdateFlag::Color)) drawDepth1 = currentPass()->nextDrawDepth();
-    if (sdata->updateFlag & (RenderUpdateFlag::Stroke | RenderUpdateFlag::GradientStroke)) drawDepth2 = currentPass()->nextDrawDepth();
+    if (sdata->validFill) drawDepth1 = currentPass()->nextDrawDepth();
+    if (sdata->validStroke) drawDepth2 = currentPass()->nextDrawDepth();
 
     if (!sdata->clips.empty()) drawClip(sdata->clips);
 
     auto processFill = [&]() {
-        if (sdata->updateFlag & (RenderUpdateFlag::Color | RenderUpdateFlag::Gradient)) {
+        if (sdata->validFill) {
             if (const auto& gradient = sdata->rshape->fill) {
                 drawPrimitive(*sdata, gradient, RenderUpdateFlag::Gradient, drawDepth1);
             } else if (sdata->rshape->color.a > 0) {
@@ -1145,8 +1141,7 @@ bool GlRenderer::renderShape(RenderData data)
     };
 
     auto processStroke = [&]() {
-        if (!sdata->rshape->stroke) return;
-        if (sdata->updateFlag & (RenderUpdateFlag::Stroke | RenderUpdateFlag::GradientStroke)) {
+        if (sdata->validStroke) {
             if (const auto& gradient = sdata->rshape->strokeFill()) {
                 drawPrimitive(*sdata, gradient, RenderUpdateFlag::GradientStroke, drawDepth2);
             } else if (sdata->rshape->stroke->color.a > 0) {
@@ -1202,13 +1197,15 @@ static GLuint _genTexture(RenderSurface* image)
 
 RenderData GlRenderer::prepare(RenderSurface* image, RenderData data, const Matrix& transform, Array<RenderData>& clips, uint8_t opacity, RenderUpdateFlag flags)
 {
+    //TODO: redefine GlImage.
     auto sdata = static_cast<GlShape*>(data);
-
     if (!sdata) sdata = new GlShape;
+    sdata->validFill = false;
+
+    if (opacity == 0 || flags == RenderUpdateFlag::None) return data;
 
     sdata->viewWd = static_cast<float>(surface.w);
     sdata->viewHt = static_cast<float>(surface.h);
-    sdata->updateFlag = RenderUpdateFlag::Image;
 
     if (sdata->texId == 0) {
         sdata->texId = _genTexture(image);
@@ -1220,8 +1217,8 @@ RenderData GlRenderer::prepare(RenderSurface* image, RenderData data, const Matr
 
     sdata->geometry.matrix = transform;
     sdata->geometry.viewport = vport;
-
-    sdata->geometry.tesselate(image, flags);
+    sdata->geometry.tesselateImage(image);
+    sdata->validFill = true;
 
     if (flags & RenderUpdateFlag::Clip) {
         sdata->clips.clear();
@@ -1234,46 +1231,29 @@ RenderData GlRenderer::prepare(RenderSurface* image, RenderData data, const Matr
 
 RenderData GlRenderer::prepare(const RenderShape& rshape, RenderData data, const Matrix& transform, Array<RenderData>& clips, uint8_t opacity, RenderUpdateFlag flags, bool clipper)
 {
-    // If prepare for clip, only path is meaningful.
-    if (clipper) flags = RenderUpdateFlag::Path;
-
-    //prepare shape data
-    GlShape* sdata = static_cast<GlShape*>(data);
+    auto sdata = static_cast<GlShape*>(data);
     if (!sdata) {
         sdata = new GlShape;
         sdata->rshape = &rshape;
     }
+    sdata->validStroke = sdata->validFill = false;
+
+    if ((opacity == 0 && !clipper) || flags == RenderUpdateFlag::None) return sdata;
 
     sdata->viewWd = static_cast<float>(surface.w);
     sdata->viewHt = static_cast<float>(surface.h);
-    sdata->updateFlag = RenderUpdateFlag::None;
+
     sdata->geometry = GlGeometry();
     sdata->opacity = opacity;
-
-    //invisible?
-    auto alphaF = rshape.color.a;
-    auto alphaS = rshape.stroke ? rshape.stroke->color.a : 0;
-
-    if ((flags & RenderUpdateFlag::Gradient) == 0 && ((flags & RenderUpdateFlag::Color) && alphaF == 0) && ((flags & RenderUpdateFlag::Stroke) && alphaS == 0)) {
-        return sdata;
-    }
-
-    if (clipper) {
-        sdata->updateFlag = (rshape.stroke && (rshape.stroke->width > 0)) ? RenderUpdateFlag::Stroke : RenderUpdateFlag::Path;
-    } else {
-        if (alphaF) sdata->updateFlag = (RenderUpdateFlag::Color | sdata->updateFlag);
-        if (rshape.fill) sdata->updateFlag = (RenderUpdateFlag::Gradient | sdata->updateFlag);
-        if (alphaS) sdata->updateFlag = (RenderUpdateFlag::Stroke | sdata->updateFlag);
-        if (rshape.strokeFill()) sdata->updateFlag = (RenderUpdateFlag::GradientStroke | sdata->updateFlag);
-    }
-
-    if (sdata->updateFlag == RenderUpdateFlag::None) return sdata;
-
     sdata->geometry.matrix = transform;
     sdata->geometry.viewport = vport;
 
-    if (sdata->updateFlag & (RenderUpdateFlag::Color | RenderUpdateFlag::Stroke | RenderUpdateFlag::Gradient | RenderUpdateFlag::GradientStroke | RenderUpdateFlag::Transform | RenderUpdateFlag::Path)) {
-        if (!sdata->geometry.tesselate(rshape, sdata->updateFlag)) return sdata;
+    if (flags & (RenderUpdateFlag::Color | RenderUpdateFlag::Gradient | RenderUpdateFlag::Transform | RenderUpdateFlag::Path)) {
+        if (sdata->geometry.tesselateShape(rshape)) sdata->validFill = true;
+    }
+
+    if (flags & (RenderUpdateFlag::Stroke | RenderUpdateFlag::GradientStroke | RenderUpdateFlag::Transform | RenderUpdateFlag::Path)) {
+        if (sdata->geometry.tesselateStroke(rshape)) sdata->validStroke = true;
     }
 
     if (flags & RenderUpdateFlag::Clip) {

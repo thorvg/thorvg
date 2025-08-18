@@ -106,8 +106,9 @@ struct GlGeometryBuffer {
 
 struct GlGeometry
 {
-    bool tesselate(const RenderShape& rshape, RenderUpdateFlag flag);
-    bool tesselate(const RenderSurface* image, RenderUpdateFlag flag);
+    bool tesselateShape(const RenderShape& rshape);
+    bool tesselateStroke(const RenderShape& rshape);
+    void tesselateImage(const RenderSurface* image);
     bool draw(GlRenderTask* task, GlStageBuffer* gpuBuffer, RenderUpdateFlag flag);
     GlStencilMode getStencilMode(RenderUpdateFlag flag);
     RenderRegion getBounds() const;
@@ -129,9 +130,10 @@ struct GlShape
   GLuint texId = 0;
   uint32_t texFlipY = 0;
   ColorSpace texColorSpace = ColorSpace::ABGR8888;
-  RenderUpdateFlag updateFlag = None;
   GlGeometry geometry;
   Array<RenderData> clips;
+  bool validFill;
+  bool validStroke;
 };
 
 #define MAX_GRADIENT_STOPS 16
