@@ -450,6 +450,11 @@ static inline uint32_t opBlendExclusion(uint32_t s, uint32_t d)
     return JOIN(255, f(C1(s), C1(d)), f(C2(s), C2(d)), f(C3(s), C3(d)));
 }
 
+static inline uint32_t opBlendComposition(uint32_t s, uint32_t d)
+{
+    return s;
+}
+
 static inline uint32_t opBlendAdd(uint32_t s, uint32_t d)
 {
     if (d == 0) return s;

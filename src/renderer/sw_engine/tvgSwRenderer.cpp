@@ -568,6 +568,9 @@ bool SwRenderer::blend(BlendMethod method)
         case BlendMethod::Add:
             surface->blender = opBlendAdd;
             break;
+        case BlendMethod::Composition:
+            surface->blender = opBlendComposition;
+            break;
         default:
             surface->blender = nullptr;
             break;
