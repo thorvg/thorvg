@@ -6,7 +6,7 @@ if cc.get_id() == 'emscripten'
     thorvg_wasm_dep = declare_dependency(include_directories
                                          : include_directories('.'), sources
                                          : source_file)
-    executable('thorvg-wasm',
+    executable('thorvg',
         [],
         include_directories : headers,
         dependencies : [thorvg_lib_dep, thorvg_wasm_dep],
