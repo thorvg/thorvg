@@ -50,7 +50,6 @@ extern const char* STENCIL_FRAG_SHADER;
 extern const char* BLIT_VERT_SHADER;
 extern const char* BLIT_FRAG_SHADER;
 
-extern const char* BLEND_SCENE_VERT_SHADER;
 extern const char* BLEND_SOLID_FRAG_HEADER;
 extern const char* BLEND_GRADIENT_FRAG_HEADER;
 extern const char* BLEND_IMAGE_FRAG_HEADER;

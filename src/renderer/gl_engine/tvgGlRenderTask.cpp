@@ -330,17 +330,12 @@ void GlSceneBlendTask::run()
 {
     GlComposeTask::run();
     // copy the current fbo to the dstCopyFbo
-    RenderRegion vp = getViewport();
-    uint32_t dw = mDstCopyFbo->getViewport().w();
-    uint32_t dh = mDstCopyFbo->getViewport().h();
+    const auto& vp = getViewport();
     GL_CHECK(glBindFramebuffer(GL_READ_FRAMEBUFFER, getTargetFbo()));
     GL_CHECK(glBindFramebuffer(GL_DRAW_FRAMEBUFFER, mDstCopyFbo->getResolveFboId()));
-    GL_CHECK(glViewport(0, 0, dw, dh));
-    GL_CHECK(glScissor(0, 0, dw, dh));
-    GL_CHECK(glBlitFramebuffer(
-        vp.min.x, vp.min.y, vp.max.x, vp.max.y,
-        vp.min.x, vp.min.y, vp.max.x, vp.max.y,
-        GL_COLOR_BUFFER_BIT, GL_LINEAR));
+    GL_CHECK(glViewport(0, 0, mDstCopyFbo->getWidth(), mDstCopyFbo->getHeight()));
+    GL_CHECK(glScissor(0, 0, mDstCopyFbo->getWidth(), mDstCopyFbo->getHeight()));
+    GL_CHECK(glBlitFramebuffer(vp.min.x, vp.min.y, vp.max.x, vp.max.y, 0, 0, vp.w(), vp.h(), GL_COLOR_BUFFER_BIT, GL_LINEAR));
 
     GL_CHECK(glBindFramebuffer(GL_FRAMEBUFFER, getTargetFbo()));
     GL_CHECK(glViewport(0, 0, mParentWidth, mParentHeight));
