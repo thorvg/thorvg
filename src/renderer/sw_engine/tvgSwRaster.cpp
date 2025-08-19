@@ -720,8 +720,7 @@ static bool _rasterScaledMattedRleImage(SwSurface* surface, const SwImage& image
         for (uint32_t x = static_cast<uint32_t>(span->x); x < static_cast<uint32_t>(span->x) + span->len; ++x, ++dst, cmp += csize) {
             SCALED_IMAGE_RANGE_X
             auto src = scaleMethod(image.buf32, image.stride, image.w, image.h, sx, sy, miny, maxy, sampleSize);
-            src = ALPHA_BLEND(src, (a == 255) ? alpha(cmp) : MULTIPLY(alpha(cmp), a));
-            *dst = src + ALPHA_BLEND(*dst, IA(src));
+            *dst = INTERPOLATE(src, *dst, MULTIPLY(A(src), ((a == 255) ? alpha(cmp) : MULTIPLY(alpha(cmp), a))));
         }
     }
     return true;
@@ -800,14 +799,12 @@ static bool _rasterDirectMattedRleImage(SwSurface* surface, const SwImage& image
         auto img = image.buf32 + (span->y + image.oy) * image.stride + (span->x + image.ox);
         auto a = MULTIPLY(span->coverage, opacity);
         if (a == 255) {
-            for (uint32_t x = 0; x < span->len; ++x, ++dst, ++img, cmp += csize) {
-                auto tmp = ALPHA_BLEND(*img, alpha(cmp));
-                *dst = tmp + ALPHA_BLEND(*dst, IA(tmp));
+            for (auto x = 0; x < span->len; ++x, ++dst, ++img, cmp += csize) {
+                *dst = INTERPOLATE(*img, *dst, MULTIPLY(A(*img), alpha(cmp)));
             }
         } else {
-            for (uint32_t x = 0; x < span->len; ++x, ++dst, ++img, cmp += csize) {
-                auto tmp = ALPHA_BLEND(*img, MULTIPLY(a, alpha(cmp)));
-                *dst = tmp + ALPHA_BLEND(*dst, IA(tmp));
+            for (auto x = 0; x < span->len; ++x, ++dst, ++img, cmp += csize) {
+                *dst = INTERPOLATE(*img, *dst, MULTIPLY(A(*img), MULTIPLY(a, alpha(cmp))));
             }
         }
     }
@@ -895,8 +892,7 @@ static bool _rasterScaledMattedImage(SwSurface* surface, const SwImage& image, c
         for (auto x = region.min.x; x < region.max.x; ++x, ++dst, cmp += csize) {
             SCALED_IMAGE_RANGE_X
             auto src = scaleMethod(image.buf32, image.stride, image.w, image.h, sx, sy, miny, maxy, sampleSize);
-            auto tmp = ALPHA_BLEND(src, opacity == 255 ? alpha(cmp) : MULTIPLY(opacity, alpha(cmp)));
-            *dst = tmp + ALPHA_BLEND(*dst, IA(tmp));
+            *dst = INTERPOLATE(src, *dst, MULTIPLY(A(src), (opacity == 255 ? alpha(cmp) : MULTIPLY(opacity, alpha(cmp)))));
         }
         dbuffer += surface->stride;
         cbuffer += surface->compositor->image.stride * csize;
@@ -997,13 +993,11 @@ static bool _rasterDirectMattedImage(SwSurface* surface, const SwImage& image, c
             auto src = sbuffer;
             if (opacity == 255) {
                 for (uint32_t x = 0; x < w; ++x, ++dst, ++src, cmp += csize) {
-                    auto tmp = ALPHA_BLEND(*src, alpha(cmp));
-                    *dst = tmp + ALPHA_BLEND(*dst, IA(tmp));
+                    *dst = INTERPOLATE(*src, *dst, MULTIPLY(A(*src), alpha(cmp)));
                 }
             } else {
                 for (uint32_t x = 0; x < w; ++x, ++dst, ++src, cmp += csize) {
-                    auto tmp = ALPHA_BLEND(*src, MULTIPLY(opacity, alpha(cmp)));
-                    *dst = tmp + ALPHA_BLEND(*dst, IA(tmp));
+                    *dst = INTERPOLATE(*src, *dst, MULTIPLY(A(*src), MULTIPLY(opacity, alpha(cmp))));
                 }
             }
             buffer += surface->stride;
@@ -1019,13 +1013,11 @@ static bool _rasterDirectMattedImage(SwSurface* surface, const SwImage& image, c
             auto src = sbuffer;
             if (opacity == 255) {
                 for (uint32_t x = 0; x < w; ++x, ++dst, ++src, cmp += csize) {
-                    auto tmp = MULTIPLY(A(*src), alpha(cmp));
-                    *dst = tmp + MULTIPLY(*dst, 255 - tmp);
+                    *dst = INTERPOLATE8(*src, *dst, MULTIPLY(A(*src), alpha(cmp)));
                 }
             } else {
                 for (uint32_t x = 0; x < w; ++x, ++dst, ++src, cmp += csize) {
-                    auto tmp = MULTIPLY(A(*src), MULTIPLY(opacity, alpha(cmp)));
-                    *dst = tmp + MULTIPLY(*dst, 255 - tmp);
+                    *dst = INTERPOLATE8(*src, *dst, MULTIPLY(A(*src), MULTIPLY(opacity, alpha(cmp))));
                 }
             }
             buffer += surface->stride;
