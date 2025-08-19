@@ -592,20 +592,6 @@ const char* BLIT_FRAG_SHADER = TVG_COMPOSE_SHADER(
     }
 );
 
-const char* BLEND_SCENE_VERT_SHADER = R"(
-    layout(location = 0) in vec2 aLocation;
-    layout(location = 1) in vec2 aUV;
-    out vec2 vUV;
-    out vec2 vUVDst;
-
-    void main()
-    {
-        vUV = aUV;
-        vUVDst = aLocation * 0.5 + 0.5;
-        gl_Position = vec4(aLocation, 0.0, 1.0);
-    }
-)";
-
 const char* BLEND_SOLID_FRAG_HEADER = R"(
 uniform sampler2D uSrcTexture;
 uniform sampler2D uDstTexture;
@@ -699,7 +685,6 @@ uniform sampler2D uSrcTexture;
 uniform sampler2D uDstTexture;
 
 in vec2 vUV;
-in vec2 vUVDst;
 out vec4 FragColor;
 
 vec3 One = vec3(1.0, 1.0, 1.0);
@@ -709,7 +694,7 @@ FragData d;
 void getFragData() {
     // get source data
     vec4 colorSrc = texture(uSrcTexture, vUV);
-    vec4 colorDst = texture(uDstTexture, vUVDst);
+    vec4 colorDst = texture(uDstTexture, vUV);
     // fill fragment data
     d.Sc = colorSrc.rgb;
     d.Sa = colorSrc.a;

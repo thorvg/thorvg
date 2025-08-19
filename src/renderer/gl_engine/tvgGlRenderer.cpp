@@ -629,7 +629,6 @@ GlProgram* GlRenderer::getBlendProgram(BlendMethod method, bool gradient, bool i
         shaderInd = methodInd + startInd;
         strcat(strcat(strcpy(fragShader, BLEND_IMAGE_FRAG_HEADER), helpers), shaderFunc[methodInd]);
     } else if (scene) {
-        vertShader = BLEND_SCENE_VERT_SHADER;
         startInd = (uint32_t)RenderTypes::RT_Blend_Scene_Normal;
         shaderInd = methodInd + startInd;
         strcat(strcat(strcpy(fragShader, BLEND_SCENE_FRAG_HEADER), helpers), shaderFunc[methodInd]);
@@ -751,7 +750,7 @@ void GlRenderer::endRenderPass(RenderCompositor* cmp)
         mRenderPassStack.pop();
 
         if (!renderPass->isEmpty()) {
-            const auto& vp = currentPass()->getViewport();
+            const auto& vp = renderPass->getViewport();
             if (mBlendPool.count < 1) mBlendPool.push(new GlRenderTargetPool(surface.w, surface.h));
             if (mBlendPool.count < 2) mBlendPool.push(new GlRenderTargetPool(surface.w, surface.h));
             auto dstCopyFbo = mBlendPool[1]->getRenderTarget(vp);
