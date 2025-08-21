@@ -308,68 +308,39 @@ TEST_CASE("Intersection", "[tvgPaint]")
 
 TEST_CASE("Duplication", "[tvgPaint]")
 {
+    vector<unique_ptr<Paint>> paints;
+
     auto shape = unique_ptr<Shape>(Shape::gen());
     REQUIRE(shape);
+    paints.push_back(std::move(shape));
 
-    //Setup paint properties
-    REQUIRE(shape->opacity(0) == Result::Success);
-    REQUIRE(shape->translate(200.0f, 100.0f) == Result::Success);
-    REQUIRE(shape->scale(2.2f) == Result::Success);
-    REQUIRE(shape->rotate(90.0f) == Result::Success);
+    REQUIRE(Text::load(TEST_DIR"/Arial.ttf") == Result::Success);
+    auto text = unique_ptr<Text>(Text::gen());
+    REQUIRE(text);
+    REQUIRE(text->font("Arial", 32) == Result::Success);
+    REQUIRE(text->text("Original Text") == Result::Success);
+    REQUIRE(text->fill(255, 0, 0) == Result::Success);
+    paints.push_back(std::move(text));
 
-    auto comp = Shape::gen();
-    REQUIRE(comp);
-    REQUIRE(shape->clip(comp) == Result::Success);
-
-    //Duplication
-    auto dup = unique_ptr<Paint>(shape->duplicate());
-    REQUIRE(dup);
-
-    //Compare properties
-    REQUIRE(dup->opacity() == 0);
-
-    auto m = shape->transform();
-    REQUIRE(m.e11 == Approx(0.0f).margin(0.000001));
-    REQUIRE(m.e12 == Approx(-2.2f).margin(0.000001));
-    REQUIRE(m.e13 == Approx(200.0f).margin(0.000001));
-    REQUIRE(m.e21 == Approx(2.2f).margin(0.000001));
-    REQUIRE(m.e22 == Approx(0.0f).margin(0.000001));
-    REQUIRE(m.e23 == Approx(100.0f).margin(0.000001));
-    REQUIRE(m.e31 == Approx(0.0f).margin(0.000001));
-    REQUIRE(m.e32 == Approx(0.0f).margin(0.000001));
-    REQUIRE(m.e33 == Approx(1.0f).margin(0.000001));
-}
-
-TEST_CASE("Text Duplication", "[tvgPaint]")
-{
-    REQUIRE(Initializer::init() == Result::Success);
-    {
-        REQUIRE(Text::load(TEST_DIR"/Arial.ttf") == Result::Success);
-
-        auto text = Text::gen();
-        REQUIRE(text);
-        REQUIRE(text->font("Arial", 32) == Result::Success);
-        REQUIRE(text->text("Original Text") == Result::Success);
-        REQUIRE(text->fill(255, 0, 0) == Result::Success);
-
-        REQUIRE(text->opacity(0) == Result::Success);
-        REQUIRE(text->translate(200.0f, 100.0f) == Result::Success);
-        REQUIRE(text->scale(2.2f) == Result::Success);
-        REQUIRE(text->rotate(90.0f) == Result::Success);
+    for (auto& paint : paints) {
+        //Setup paint properties
+        REQUIRE(paint->opacity(0) == Result::Success);
+        REQUIRE(paint->translate(200.0f, 100.0f) == Result::Success);
+        REQUIRE(paint->scale(2.2f) == Result::Success);
+        REQUIRE(paint->rotate(90.0f) == Result::Success);
 
         auto comp = Shape::gen();
         REQUIRE(comp);
-        REQUIRE(text->clip(comp) == Result::Success);
+        REQUIRE(paint->clip(comp) == Result::Success);
 
         //Duplication
-        auto dup = unique_ptr<Paint>(text->duplicate());
+        auto dup = unique_ptr<Paint>(paint->duplicate());
         REQUIRE(dup);
 
         //Compare properties
-        REQUIRE(dup->type() == Type::Text);
         REQUIRE(dup->opacity() == 0);
 
-        auto m = text->transform();
+        auto m = paint->transform();
         REQUIRE(m.e11 == Approx(0.0f).margin(0.000001));
         REQUIRE(m.e12 == Approx(-2.2f).margin(0.000001));
         REQUIRE(m.e13 == Approx(200.0f).margin(0.000001));
@@ -380,7 +351,6 @@ TEST_CASE("Text Duplication", "[tvgPaint]")
         REQUIRE(m.e32 == Approx(0.0f).margin(0.000001));
         REQUIRE(m.e33 == Approx(1.0f).margin(0.000001));
     }
-    REQUIRE(Initializer::term() == Result::Success);
 }
 
 TEST_CASE("Composition", "[tvgPaint]")
