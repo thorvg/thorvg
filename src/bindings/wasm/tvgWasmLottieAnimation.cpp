@@ -438,6 +438,7 @@ public:
 
     bool save2Gif(string data)
     {
+#ifdef THORVG_GIF_SAVER_SUPPORT
         errorMsg = NoError;
 
         if (data.empty()) {
@@ -496,6 +497,10 @@ public:
         saver->sync();
 
         return true;
+#else
+        errorMsg = "GIF saver is not supported";
+        return false;
+#endif
     }
 
     // TODO: Advanced APIs wrt Interactivity & theme methods...
