@@ -48,6 +48,7 @@ source_file = [
     'Opacity.cpp',
     'Path.cpp',
     'Particles.cpp',
+    'Performance.cpp',
     'PictureJpg.cpp',
     'PicturePng.cpp',
     'PictureRaw.cpp',

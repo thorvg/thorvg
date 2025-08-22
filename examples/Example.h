@@ -62,9 +62,12 @@ namespace tvgexam
 
 bool verify(tvg::Result result, string failMsg = "");
 
+uint32_t ttt = 0;
+
 struct Example
 {
     uint32_t elapsed = 0;
+
 
     virtual bool content(tvg::Canvas* canvas, uint32_t w, uint32_t h) = 0;
     virtual bool update(tvg::Canvas* canvas, uint32_t elapsed) { return false; }
@@ -154,6 +157,8 @@ struct Window
     {
         if (!verify(tvg::Initializer::init(threadsCnt), "Failed to init ThorVG engine!")) return;
 
+        SDL_SetHint(SDL_HINT_WINDOWS_DPI_AWARENESS, "system");  //disable High DPI (for windows)
+
         //Initialize the SDL
         SDL_Init(SDL_INIT_VIDEO);
 
@@ -195,9 +200,14 @@ struct Window
         if (!example->content(canvas, width, height)) return false;
 
         //initiate the first rendering before window pop-up.
+        auto b = SDL_GetTicks();
+
         if (!verify(canvas->draw())) return false;
         if (!verify(canvas->sync())) return false;
 
+
+
+        printf("=> %d (r = %d)ms\n", SDL_GetTicks() - ttt, SDL_GetTicks() - b);
         return true;
     }
 
