@@ -79,7 +79,11 @@ if lottie_loader
 endif
 
 if lottie_expressions
+<<<<<<< HEAD
     source_file += ['LottieExpressions.cpp', 'LottieInteraction.cpp']
+=======
+    source_file += 'LottieExpressions.cpp'
+>>>>>>> c9c1c324 (examples: chores++)
 endif
 
 foreach current_file : source_file
