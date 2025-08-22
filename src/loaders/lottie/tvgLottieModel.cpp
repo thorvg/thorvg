@@ -192,10 +192,8 @@ void LottieSlot::reset()
 {
     if (!overridden) return;
 
-    auto shallow = pairs.count == 1 ? true : false;
-
     ARRAY_FOREACH(pair, pairs) {
-        pair->obj->override(pair->prop, shallow, true);
+        pair->obj->override(pair->prop, true);
         delete(pair->prop);
         pair->prop = nullptr;
     }
@@ -206,7 +204,6 @@ void LottieSlot::reset()
 void LottieSlot::apply(LottieProperty* prop, bool byDefault)
 {
     auto copy = !overridden && !byDefault;
-    auto shallow = pairs.count == 1 ? true : false;
 
     //apply slot object to all targets
     ARRAY_FOREACH(pair, pairs) {
@@ -214,22 +211,30 @@ void LottieSlot::apply(LottieProperty* prop, bool byDefault)
         switch (type) {
             case LottieProperty::Type::Float: {
                 if (copy) pair->prop = new LottieFloat(static_cast<LottieTransform*>(pair->obj)->rotation);
-                pair->obj->override(prop, shallow, !copy);
+                LottieFloat targetProp;
+                targetProp.copy(*static_cast<LottieFloat*>(prop), false);
+                pair->obj->override(&targetProp, !copy);
                 break;
             }
             case LottieProperty::Type::Scalar: {
                 if (copy) pair->prop = new LottieScalar(static_cast<LottieTransform*>(pair->obj)->scale);
-                pair->obj->override(prop, shallow, !copy);
+                LottieScalar targetProp;
+                targetProp.copy(*static_cast<LottieScalar*>(prop), false);
+                pair->obj->override(&targetProp, !copy);
                 break;
             }
             case LottieProperty::Type::Vector: {
                 if (copy) pair->prop = new LottieVector(static_cast<LottieTransform*>(pair->obj)->position);
-                pair->obj->override(prop, shallow, !copy);
+                LottieVector targetProp;
+                targetProp.copy(*static_cast<LottieVector*>(prop), false);
+                pair->obj->override(&targetProp, !copy);
                 break;
             }
             case LottieProperty::Type::Color: {
                 if (copy) pair->prop = new LottieColor(static_cast<LottieSolid*>(pair->obj)->color);
-                pair->obj->override(prop, shallow, !copy);
+                LottieColor targetProp;
+                targetProp.copy(*static_cast<LottieColor*>(prop), false);
+                pair->obj->override(&targetProp, !copy);
                 break;
             }
             case LottieProperty::Type::Opacity: {
@@ -237,22 +242,30 @@ void LottieSlot::apply(LottieProperty* prop, bool byDefault)
                     if (pair->obj->type == LottieObject::Type::Transform) pair->prop = new LottieOpacity(static_cast<LottieTransform*>(pair->obj)->opacity);
                     else pair->prop = new LottieOpacity(static_cast<LottieSolid*>(pair->obj)->opacity);
                 }
-                pair->obj->override(prop, shallow, !copy);
+                LottieOpacity targetProp;
+                targetProp.copy(*static_cast<LottieOpacity*>(prop), false);
+                pair->obj->override(&targetProp, !copy);
                 break;
             }
             case LottieProperty::Type::ColorStop: {
                 if (copy) pair->prop = new LottieColorStop(static_cast<LottieGradient*>(pair->obj)->colorStops);
-                pair->obj->override(prop, shallow, !copy);
+                LottieColorStop targetProp;
+                targetProp.copy(*static_cast<LottieColorStop*>(prop), false);
+                pair->obj->override(&targetProp, !copy);
                 break;
             }
             case LottieProperty::Type::TextDoc: {
                 if (copy) pair->prop = new LottieTextDoc(static_cast<LottieText*>(pair->obj)->doc);
-                pair->obj->override(prop, shallow, !copy);
+                LottieTextDoc targetProp;
+                targetProp.copy(*static_cast<LottieTextDoc*>(prop), false);
+                pair->obj->override(&targetProp, !copy);
                 break;
             }
             case LottieProperty::Type::Image: {
                 if (copy) pair->prop = new LottieBitmap(static_cast<LottieImage*>(pair->obj)->data);
-                pair->obj->override(prop, shallow, !copy);
+                LottieBitmap targetProp;
+                targetProp.copy(*static_cast<LottieBitmap*>(prop), false);
+                pair->obj->override(&targetProp, !copy);
                 break;
             }
             default: break;
@@ -492,6 +505,7 @@ uint32_t LottieGradient::populate(ColorStop& color, size_t count)
 
     color.input->reset();
     delete(color.input);
+    color.input = nullptr;
 
     return output.count;
 }
