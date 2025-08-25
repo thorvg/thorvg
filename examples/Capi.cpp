@@ -215,7 +215,7 @@ void contents()
         Tvg_Paint *text = tvg_text_new();
         tvg_text_set_font(text, "SentyCloud");
         tvg_text_set_size(text, 25.0f);
-        tvg_text_set_fill_color(text, 200, 200, 255);
+        tvg_text_set_color(text, 200, 200, 255);
         tvg_text_set_text(text, "\xE7\xB4\xA2\xE5\xB0\x94\x56\x47\x20\xE6\x98\xAF\xE6\x9C\x80\xE5\xA5\xBD\xE7\x9A\x84");
         tvg_paint_translate(text, 50.0f, 380.0f);
         tvg_canvas_push(canvas, text);
