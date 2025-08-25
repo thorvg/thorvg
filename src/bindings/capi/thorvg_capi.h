@@ -2149,31 +2149,49 @@ TVG_API Tvg_Paint* tvg_text_new(void);
 
 
 /**
-* @brief Sets the font properties for the text.
-*
-* This function allows you to define the font characteristics used for text rendering.
-* It sets the font name, size and optionally the style.
-*
-* @param[in] paint A Tvg_Paint pointer to the text object.
-* @param[in] name The name of the font. This should correspond to a font available in the canvas.
-*                 If set to @c nullptr, ThorVG will attempt to select a fallback font available on the system.
-* @param[in] size The size of the font in points.
-* @param[in] style The style of the font. If empty, the default style is used. Currently only 'italic' style is supported.
-*
-* @retval TVG_RESULT_INVALID_ARGUMENT A @c nullptr passed as the @p paint argument.
-* @retval TVG_RESULT_INSUFFICIENT_CONDITION  The specified @p name cannot be found.
-*
-* @note If the @p name is not specified, ThorVG will select any available font candidate.
-* @since 1.0
-*
-* @code
-* // Fallback example: Try a specific font, then fallback to any available one.
-* if (tvg_text_set_font(text, "Arial", 24, nullptr) != TVG_RESULT_SUCCESS) {
-*     tvg_text_set_font(text, nullptr, 24, nullptr);
-* }
-* @endcode
-*/
-TVG_API Tvg_Result tvg_text_set_font(Tvg_Paint* paint, const char* name, float size, const char* style);
+ * @brief Sets the font family for the text.
+ *
+ * This function specifies the name of the font to be used when rendering text.
+ *
+ * @param[in] paint A Tvg_Paint pointer to the text object.
+ * @param[in] name The name of the font. This should match a font available through the canvas backend.
+ *                 If set to @c nullptr, ThorVG will attempt to select a fallback font available on the engine.
+ *
+ * @retval TVG_RESULT_INVALID_ARGUMENT A @c nullptr passed as the @p paint argument.
+ * @retval TVG_RESULT_INSUFFICIENT_CONDITION  The specified @p name cannot be found.
+ *
+ * @note This function only sets the font family name. Use @ref size() to define the font size.
+ * @note If the @p name is not specified, ThorVG will select an available fallback font.
+ *
+ * @see tvg_text_set_size()
+ * @see tvg_font_load()
+ *
+ * @since 1.0
+ */
+TVG_API Tvg_Result tvg_text_set_font(Tvg_Paint* paint, const char* name);
+
+
+/**
+ * @brief Sets the font size for the text.
+ *
+ * This function sets the font size used during text rendering.
+ * The size is specified in point units, and supports floating-point precision
+ * for smooth scaling and animation effects.
+ *
+ * @param[in] paint A Tvg_Paint pointer to the text object.
+ * @param[in] size The font size in points. Must be greater than 0.0.
+ *
+ * @retval TVG_RESULT_INVALID_ARGUMENT A @c nullptr passed as the @p paint argument.
+ * @retval TVG_RESULT_INVALID_ARGUMENT if the @p size is less than or equal to 0.
+ *
+ * @note Use this function in combination with @ref font() to fully define text appearance.
+ * @note Fractional sizes (e.g., 12.5) are supported for sub-pixel rendering and animations.
+ *
+ * @see tvg_text_set_font()
+ *
+ * @since 1.0
+ */
+TVG_API Tvg_Result tvg_text_set_size(Tvg_Paint* paint, float size);
 
 
 /**
@@ -2185,11 +2203,35 @@ TVG_API Tvg_Result tvg_text_set_font(Tvg_Paint* paint, const char* name, float s
 * @param[in] paint A Tvg_Paint pointer to the text object.
 * @param[in] text The multi-byte text encoded with utf8 string to be rendered.
 *
-* @retval TVG_RESULT_INVALID_ARGUMENT A @c nullptr passed as the @p paint argument.
-*
 * @since 1.0
 */
 TVG_API Tvg_Result tvg_text_set_text(Tvg_Paint* paint, const char* text);
+
+
+/**
+ * @brief Apply an italic (slant) transformation to the text.
+ *
+ * This function applies a shear transformation to simulate an italic (oblique) style
+ * for the current text object. The shear factor determines the degree of slant
+ * applied along the X-axis.
+ *
+ * @param[in] paint A Tvg_Paint pointer to the text object.
+ * @param[in] shear The shear factor to apply. A value of 0.0 applies no slant, while values around 0.5 result in a strong slant.
+ *                  Must be in the range [0.0, 0.5]. Recommended value is 0.18.
+ *
+ * @note The @p shear factor will be clamped to the valid range if it exceeds the limits.
+ * @note This does not require the font itself to be italic.
+ *       It visually simulates the effect by applying a transformation matrix.
+ *
+ * @warning Excessive slanting may cause visual distortion depending on the font and size.
+ *
+ * @see tvg_text_set_font()
+ *
+ * @retval TVG_RESULT_INVALID_ARGUMENT A @c nullptr passed as the @p paint argument.
+ *
+ * @since 1.0
+ */
+TVG_API Tvg_Result tvg_text_set_italic(Tvg_Paint* paint, float shear);
 
 
 /**

@@ -31,7 +31,8 @@ struct UserExample : tvgexam::Example
     void blender(tvg::Canvas* canvas, const char* name, tvg::BlendMethod method, float x, float y, uint32_t* data)
     {
         auto text = tvg::Text::gen();
-        text->font("Arial", 15);
+        text->font("Arial");
+        text->size(15);
         text->text(name);
         text->fill(255, 255, 255);
         text->translate(x + 20, y);

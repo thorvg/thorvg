@@ -209,7 +209,8 @@ TEST_CASE("Bounding Box", "[tvgPaint]")
         REQUIRE(text->bounds(&x, &y, &w, &h) == Result::InsufficientCondition);
 
         //Case 1
-        REQUIRE(text->font("Arial", 32) == Result::Success);
+        REQUIRE(text->font("Arial") == Result::Success);
+        REQUIRE(text->size(32) == Result::Success);
         REQUIRE(text->text("TEST") == Result::Success);
         REQUIRE(text->translate(100.0f, 111.0f) == Result::Success);
         REQUIRE(text->bounds(&x, &y, &w, &h) == Result::Success);
@@ -302,7 +303,8 @@ TEST_CASE("Duplication", "[tvgPaint]")
     REQUIRE(Text::load(TEST_DIR"/Arial.ttf") == Result::Success);
     auto text = unique_ptr<Text>(Text::gen());
     REQUIRE(text);
-    REQUIRE(text->font("Arial", 32) == Result::Success);
+    REQUIRE(text->font("Arial") == Result::Success);
+    REQUIRE(text->size(32) == Result::Success);
     REQUIRE(text->text("Original Text") == Result::Success);
     REQUIRE(text->fill(255, 0, 0) == Result::Success);
     paints.push_back(std::move(text));

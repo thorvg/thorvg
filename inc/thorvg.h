@@ -1666,30 +1666,44 @@ class TVG_API Text : public Paint
 {
 public:
     /**
-     * @brief Sets the font properties for the text.
+     * @brief Sets the font family for the text.
      *
-     * This function allows you to define the font characteristics used for text rendering.
-     * It sets the font name, size and optionally the style.
+     * This function specifies the name of the font to be used when rendering text.
      *
-     * @param[in] name The name of the font. This should correspond to a font available in the canvas.
-     *                 If set to @c nullptr, ThorVG will attempt to select a fallback font available on the system.
-     * @param[in] size The size of the font in points. This determines how large the text will appear.
-     * @param[in] style The style of the font. It can be used to set the font to 'italic'.
-     *                  If not specified, the default style is used. Only 'italic' style is supported currently.
+     * @param[in] name The name of the font. This should match a font available through the canvas backend.
+     *                 If set to @c nullptr, ThorVG will attempt to select a fallback font available on the engine.
      *
      * @retval Result::InsufficientCondition when the specified @p name cannot be found.
      *
-     * @note If the @p name is not specified, ThorVG will select any available font candidate.
-     * @since 1.0
+     * @note This function only sets the font family name. Use @ref size() to define the font size.
+     * @note If the @p name is not specified, ThorVG will select an available fallback font.
      *
-     * @code
-     * // Tip for fallback support to use any available font.
-     * if (text->font("Arial", 24) != tvg::Result::Success) {
-     *     text->font(nullptr, 24);
-     * }
-     * @endcode
+     * @see Text::size()
+     * @see Text::load()
+     *
+     * @since 1.0
      */
-    Result font(const char* name, float size, const char* style = nullptr) noexcept;
+    Result font(const char* name) noexcept;
+
+    /**
+     * @brief Sets the font size for the text.
+     *
+     * This function sets the font size used during text rendering.
+     * The size is specified in point units, and supports floating-point precision
+     * for smooth scaling and animation effects.
+     *
+     * @param[in] size The font size in points. Must be greater than 0.0.
+     *
+     * @retval Result::InvalidArguments if the @p size is less than or equal to 0.
+     *
+     * @note Use this function in combination with @ref font() to fully define text appearance.
+     * @note Fractional sizes (e.g., 12.5) are supported for sub-pixel rendering and animations.
+     *
+     * @see Text::font()
+     *
+     * @since 1.0
+     */
+    Result size(float size) noexcept;
 
     /**
      * @brief Assigns the given unicode text to be rendered.
@@ -1702,6 +1716,28 @@ public:
      * @since 1.0
      */
     Result text(const char* text) noexcept;
+
+    /**
+     * @brief Apply an italic (slant) transformation to the text.
+     *
+     * This function applies a shear transformation to simulate an italic (oblique) style
+     * for the current text object. The shear factor determines the degree of slant
+     * applied along the X-axis.
+     *
+     * @param[in] shear The shear factor to apply. A value of 0.0 applies no slant, while values around 0.5 result in a strong slant.
+     *                  Must be in the range [0.0, 0.5]. Default value is 0.18.
+     *
+     * @note The @p shear factor will be clamped to the valid range if it exceeds the limits.
+     * @note This does not require the font itself to be italic.
+     *       It visually simulates the effect by applying a transformation matrix.
+     *
+     * @warning Excessive slanting may cause visual distortion depending on the font and size.
+     *
+     * @see Text::font()
+     *
+     * @since 1.0
+     */
+    Result italic(float shear = 0.18f) noexcept;
 
     /**
      * @brief Sets the text color.

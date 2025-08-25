@@ -81,7 +81,8 @@ struct UserExample : tvgexam::Example
         {
             if (!tvgexam::verify(tvg::Text::load(EXAMPLE_DIR"/font/Arial.ttf"))) return false;
             text = tvg::Text::gen();
-            text->font("Arial", 100);
+            text->font("Arial");
+            text->size(100);
             text->text("Intersect?!");
             text->translate(25, 800);
             text->fill(255, 255, 255);

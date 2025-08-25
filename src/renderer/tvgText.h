@@ -40,7 +40,7 @@ struct TextImpl : Text
     FontMetrics metrics;
     char* utf8 = nullptr;
     float fontSize;
-    bool italic = false;
+    float italicShear = 0.0f;
 
     TextImpl() : impl(Paint::Impl(this)), shape(Shape::gen())
     {
@@ -65,15 +65,10 @@ struct TextImpl : Text
         return Result::Success;
     }
 
-    Result font(const char* name, float size, const char* style)
+    Result font(const char* name)
     {
         auto loader = name ? LoaderMgr::font(name) : LoaderMgr::anyfont();
         if (!loader) return Result::InsufficientCondition;
-
-        if (style && strstr(style, "italic")) italic = true;
-        else italic = false;
-
-        fontSize = size;
 
         //Same resource has been loaded.
         if (this->loader == loader) {
@@ -108,7 +103,7 @@ struct TextImpl : Text
         //reload
         if (impl.marked(RenderUpdateFlag::Path)) loader->read(shape, utf8, metrics);
 
-        return loader->transform(shape, metrics, fontSize, italic);
+        return loader->transform(shape, metrics, fontSize, italicShear);
     }
 
     bool skip(RenderUpdateFlag flag)
@@ -172,7 +167,7 @@ struct TextImpl : Text
         }
 
         dup->utf8 = tvg::duplicate(utf8);
-        dup->italic = italic;
+        dup->italicShear = italicShear;
         dup->fontSize = fontSize;
 
         return text;
