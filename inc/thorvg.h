@@ -1157,21 +1157,37 @@ public:
     Result appendPath(const PathCommand* cmds, uint32_t cmdCnt, const Point* pts, uint32_t ptsCnt) noexcept;
 
     /**
-     * @brief Sets the stroke width for all of the figures from the path.
+     * @brief Sets the stroke width for the path.
      *
-     * @param[in] width The width of the stroke. The default value is 0.
+     * This function defines the thickness of the stroke applied to all figures
+     * in the path object. A stroke is the outline drawn along the edges of the
+     * path's geometry.
      *
+     * @param[in] width The width of the stroke in pixels. Must be positive value. (The default is 0)
+     *
+     * @note A value of @p width 0 disables the stroke.
+     *
+     * @see strokeFill()
      */
     Result strokeWidth(float width) noexcept;
 
     /**
-     * @brief Sets the color of the stroke for all of the figures from the path.
+     * @brief Sets the stroke color for the path.
+     *
+     * This function defines the RGBA color of the stroke applied to all figures
+     * in the path object. The stroke color is used when rendering the outline
+     * of the path geometry.
      *
      * @param[in] r The red color channel value in the range [0 ~ 255]. The default value is 0.
      * @param[in] g The green color channel value in the range [0 ~ 255]. The default value is 0.
      * @param[in] b The blue color channel value in the range [0 ~ 255]. The default value is 0.
      * @param[in] a The alpha channel value in the range [0 ~ 255], where 0 is completely transparent and 255 is opaque. The default value is 0.
      *
+     * @note If the stroke width is 0 (default), the stroke will not be visible regardless of the color.
+     * @note Either a solid color or a gradient fill is applied, depending on what was set as last.
+     *
+     * @see strokeWidth()
+     * @see strokeFill(Fill* f)
      */
     Result strokeFill(uint8_t r, uint8_t g, uint8_t b, uint8_t a = 255) noexcept;
 
@@ -1180,7 +1196,12 @@ public:
      *
      * @param[in] f The gradient fill.
      *
-     * @retval Result::MemoryCorruption In case a @c nullptr is passed as the argument.
+     * @retval Result::InvalidArgument In case a @c nullptr is passed as the argument.
+     *
+     * @note If the stroke width is 0 (default), the stroke will not be visible regardless of the color.
+     * @note Either a solid color or a gradient fill is applied, depending on what was set as last.
+     *
+     * @see strokeFill(uint8_t r, uint8_t g, uint8_t b, uint8_t a)
      */
     Result strokeFill(Fill* f) noexcept;
 
@@ -1740,6 +1761,24 @@ public:
     Result italic(float shear = 0.18f) noexcept;
 
     /**
+     * @brief Sets an outline (stroke) around the text object.
+     *
+     * This function adds an outline to the text with the specified width and RGB color.
+     * The outline enhances the visibility of the text by rendering a stroke around its glyphs.
+     *
+     * @param width The width of the outline. Must be positive value. (The default is 0)
+     * @param r     Red component of the outline color (0–255).
+     * @param g     Green component of the outline color (0–255).
+     * @param b     Blue component of the outline color (0–255).
+     *
+     * @note To disable the outline, set @p width to 0.
+     * @see Text::fill() to set the main text fill color.
+     *
+     * @since 1.0
+     */
+    Result outline(float width, uint8_t r, uint8_t g, uint8_t b) noexcept;
+
+    /**
      * @brief Sets the text color.
      *
      * @param[in] r The red color channel value in the range [0 ~ 255]. The default value is 0.
@@ -1747,6 +1786,7 @@ public:
      * @param[in] b The blue color channel value in the range [0 ~ 255]. The default value is 0.
      *
      * @see Text::font()
+     * @see Text::outline()
      *
      * @since 0.15
      */

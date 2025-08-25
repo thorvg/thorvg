@@ -168,4 +168,38 @@ TEST_CASE("Text with composite glyphs", "[tvgText]")
     Initializer::term();
 }
 
+
+TEST_CASE("Text Styles", "[tvgText]")
+{
+    Initializer::init();
+    {
+        auto canvas = unique_ptr<SwCanvas>(SwCanvas::gen());
+        uint32_t buffer[100*100];
+        canvas->target(buffer, 100, 100, 100, ColorSpace::ARGB8888);
+
+        auto text = Text::gen();
+        REQUIRE(text);
+
+        REQUIRE(Text::load(TEST_DIR"/Arial.ttf") == tvg::Result::Success);
+        REQUIRE(text->font("Arial") == tvg::Result::Success);
+        REQUIRE(text->size(80) == tvg::Result::Success);
+
+        REQUIRE(text->text("\xc5\xbb\x6f\xc5\x82\xc4\x85\x64\xc5\xba \xc8\xab") == tvg::Result::Success);
+
+        REQUIRE(text->fill(255, 255, 255) == tvg::Result::Success);
+
+        REQUIRE(text->outline(0, 0, 0, 0) == tvg::Result::Success);
+        REQUIRE(text->outline(3, 255, 255, 255) == tvg::Result::Success);
+        REQUIRE(text->outline(0, 0, 0, 0) == tvg::Result::Success);
+
+        REQUIRE(text->italic(-10.0f) == tvg::Result::Success);
+        REQUIRE(text->italic(10000.0f) == tvg::Result::Success);
+        REQUIRE(text->italic(0.0) == tvg::Result::Success);
+        REQUIRE(text->italic(0.18f) == tvg::Result::Success);
+
+        REQUIRE(canvas->push(text) == Result::Success);
+    }
+    Initializer::term();
+}
+
 #endif

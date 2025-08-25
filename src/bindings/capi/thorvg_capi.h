@@ -1271,12 +1271,20 @@ TVG_API Tvg_Result tvg_shape_get_path(const Tvg_Paint* paint, const Tvg_Path_Com
 
 
 /*!
-* @brief Sets the stroke width for all of the figures from the @p paint.
+* @brief Sets the stroke width for the path.
+*
+* This function defines the thickness of the stroke applied to all figures
+* in the path object. A stroke is the outline drawn along the edges of the
+* path's geometry.
 *
 * @param[in] paint A Tvg_Paint pointer to the shape object.
-* @param[in] width The width of the stroke. The default value is 0.
+* @param[in] width The width of the stroke in pixels. Must be positive value. (The default is 0)
 *
 * @retval TVG_RESULT_INVALID_ARGUMENT An invalid Tvg_Paint pointer.
+*
+* @note A value of @p width 0 disables the stroke.
+*
+* @see tvg_shape_set_stroke_color()
 */
 TVG_API Tvg_Result tvg_shape_set_stroke_width(Tvg_Paint* paint, float width);
 
@@ -1303,7 +1311,11 @@ TVG_API Tvg_Result tvg_shape_get_stroke_width(const Tvg_Paint* paint, float* wid
 *
 * @retval TVG_RESULT_INVALID_ARGUMENT An invalid Tvg_Paint pointer.
 *
+* @note If the stroke width is 0 (default), the stroke will not be visible regardless of the color.
 * @note Either a solid color or a gradient fill is applied, depending on what was set as last.
+*
+* @see tvg_shape_set_stroke_width()
+* @see tvg_shape_set_stroke_gradient()
 */
 TVG_API Tvg_Result tvg_shape_set_stroke_color(Tvg_Paint* paint, uint8_t r, uint8_t g, uint8_t b, uint8_t a);
 
@@ -1333,6 +1345,8 @@ TVG_API Tvg_Result tvg_shape_get_stroke_color(const Tvg_Paint* paint, uint8_t* r
 * @retval TVG_RESULT_MEMORY_CORRUPTION An invalid Tvg_Gradient pointer or an error with accessing it.
 *
 * @note Either a solid color or a gradient fill is applied, depending on what was set as last.
+*
+* @see tvg_shape_set_stroke_color()
 */
 TVG_API Tvg_Result tvg_shape_set_stroke_gradient(Tvg_Paint* paint, Tvg_Gradient* grad);
 
@@ -2235,6 +2249,26 @@ TVG_API Tvg_Result tvg_text_set_italic(Tvg_Paint* paint, float shear);
 
 
 /**
+ * @brief Sets an outline (stroke) around the text object.
+ *
+ * This function adds an outline to the text with the specified width and RGB color.
+ * The outline enhances the visibility of the text by rendering a stroke around its glyphs.
+ *
+ * @param[in] paint A Tvg_Paint pointer to the text object.
+ * @param width The width of the outline. Must be positive value. (The default is 0)
+ * @param r     Red component of the outline color (0–255).
+ * @param g     Green component of the outline color (0–255).
+ * @param b     Blue component of the outline color (0–255).
+ *
+ * @note To disable the outline, set @p width to 0.
+ * @see tvg_text_set_fill_color() to set the main text fill color.
+ *
+ * @since 1.0
+ */
+TVG_API Tvg_Result tvg_text_set_outline(Tvg_Paint* paint, float width, uint8_t r, uint8_t g, uint8_t b);
+
+
+/**
 * @brief Sets the text solid color.
 *
 * @param[in] paint A Tvg_Paint pointer to the text object.
@@ -2245,7 +2279,9 @@ TVG_API Tvg_Result tvg_text_set_italic(Tvg_Paint* paint, float shear);
 * @retval TVG_RESULT_INVALID_ARGUMENT A @c nullptr passed as the @p paint argument.
 *
 * @note Either a solid color or a gradient fill is applied, depending on what was set as last.
+*
 * @see tvg_text_set_font()
+* @see tvg_text_set_outline()
 *
 * @since 0.15
 */

@@ -101,6 +101,14 @@ Result Text::fill(uint8_t r, uint8_t g, uint8_t b) noexcept
 }
 
 
+Result Text::outline(float width, uint8_t r, uint8_t g, uint8_t b) noexcept
+{
+    TEXT(this)->outlineWidth = width;
+    TEXT(this)->shape->strokeFill(r, g, b);
+    return Result::Success;
+}
+
+
 Result Text::fill(Fill* f) noexcept
 {
     return TEXT(this)->shape->fill(f);

@@ -40,6 +40,7 @@ struct TextImpl : Text
     FontMetrics metrics;
     char* utf8 = nullptr;
     float fontSize;
+    float outlineWidth = 0.0f;
     float italicShear = 0.0f;
 
     TextImpl() : impl(Paint::Impl(this)), shape(Shape::gen())
@@ -134,6 +135,9 @@ struct TextImpl : Text
                 RADIAL(fill)->fr *= scale;
             }
         }
+
+        if (outlineWidth > 0.0f) shape->strokeWidth(outlineWidth * scale);
+
         PAINT(shape)->update(renderer, transform, clips, opacity, flag, false);
         return true;
     }

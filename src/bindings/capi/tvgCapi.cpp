@@ -873,6 +873,13 @@ TVG_API Tvg_Result tvg_text_set_text(Tvg_Paint* paint, const char* text)
 }
 
 
+TVG_API Tvg_Result tvg_text_set_outline(Tvg_Paint* paint, float width, uint8_t r, uint8_t g, uint8_t b)
+{
+    if (paint) return (Tvg_Result) reinterpret_cast<Text*>(paint)->outline(width, r, g, b);
+    return TVG_RESULT_INVALID_ARGUMENT;
+}
+
+
 TVG_API Tvg_Result tvg_text_set_fill_color(Tvg_Paint* paint, uint8_t r, uint8_t g, uint8_t b)
 {
     if (paint) return (Tvg_Result) reinterpret_cast<Text*>(paint)->fill(r, g, b);

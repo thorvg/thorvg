@@ -250,6 +250,7 @@ void contents()
         Tvg_Paint *text = tvg_text_new();
         tvg_text_set_font(text, "Arial");
         tvg_text_set_size(text, 40.0f);
+        tvg_text_set_outline(text, 2, 255, 0, 0);
         tvg_text_set_italic(text, 0.18f);
         tvg_text_set_gradient(text, grad);
         tvg_text_set_text(text, "ThorVG is the best");
