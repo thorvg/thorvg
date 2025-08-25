@@ -143,7 +143,8 @@ struct UserExample : tvgexam::Example
         {
             auto text = tvg::Text::gen();
             if (!tvgexam::verify(text->load(EXAMPLE_DIR"/font/Arial.ttf"))) return false;
-            text->font("Arial", 50);
+            text->font("Arial");
+            text->size(50);
             text->translate(0, 650);
             text->text("ThorVG Text");
             text->fill(100, 100, 255);

@@ -1500,7 +1500,8 @@ TEST_CASE("Text draw", "[tvgSwEngine]")
 
         auto text = Text::gen();
         REQUIRE(text);
-        REQUIRE(text->font("Arial", 32) == Result::Success);
+        REQUIRE(text->font("Arial") == Result::Success);
+        REQUIRE(text->size(32) == Result::Success);
         REQUIRE(text->text("TEST") == Result::Success);
         REQUIRE(text->fill(255, 0, 0) == Result::Success);
         REQUIRE(canvas->push(text) == Result::Success);

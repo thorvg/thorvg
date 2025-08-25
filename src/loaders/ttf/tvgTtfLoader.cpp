@@ -221,13 +221,11 @@ void TtfLoader::clear()
 /************************************************************************/
 
 
-float TtfLoader::transform(Paint* paint, FontMetrics& metrics, float fontSize, bool italic)
+float TtfLoader::transform(Paint* paint, FontMetrics& metrics, float fontSize, float italicShear)
 {
-    auto shift = 0.0f;
     auto dpi = 96.0f / 72.0f;   //dpi base?
     auto scale = fontSize * dpi / reader.metrics.unitsPerEm;
-    if (italic) shift = -scale * 0.18f;  //experimental decision.
-    Matrix m = {scale, shift, -(shift * metrics.minw), 0, scale, 0, 0, 0, 1};
+    Matrix m = {scale, -italicShear * scale, italicShear * metrics.minw * scale, 0, scale, 0, 0, 0, 1};
     paint->transform(m);
 
     return scale;

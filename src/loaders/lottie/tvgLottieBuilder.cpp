@@ -910,11 +910,10 @@ static void _fontText(TextDocument& doc, Scene* scene)
     auto cnt = 0;
     while (token) {
         auto txt = Text::gen();
-        if (txt->font(doc.name, size) != Result::Success) {
-            //fallback to any available font
-            txt->font(nullptr, size);
+        if (txt->font(doc.name) != Result::Success) {
+            txt->font(nullptr);  //fallback to any available font
         }
-
+        txt->size(size);
         txt->text(token);
         txt->fill(doc.color.r, doc.color.g, doc.color.b);
 

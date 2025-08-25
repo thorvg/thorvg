@@ -33,9 +33,19 @@ Result Text::text(const char* text) noexcept
 }
 
 
-Result Text::font(const char* name, float size, const char* style) noexcept
+Result Text::font(const char* name) noexcept
 {
-    return TEXT(this)->font(name, size, style);
+    return TEXT(this)->font(name);
+}
+
+
+Result Text::size(float size) noexcept
+{
+    if (size > 0.0f) {
+        TEXT(this)->fontSize = size;
+        return Result::Success;
+    }
+    return Result::InvalidArguments;
 }
 
 
@@ -94,6 +104,15 @@ Result Text::fill(uint8_t r, uint8_t g, uint8_t b) noexcept
 Result Text::fill(Fill* f) noexcept
 {
     return TEXT(this)->shape->fill(f);
+}
+
+
+Result Text::italic(float shear) noexcept
+{
+    if (shear < 0.0f) shear = 0.0f;
+    else if (shear > 0.5f) shear = 0.5f;
+    TEXT(this)->italicShear = shear;
+    return Result::Success;
 }
 
 

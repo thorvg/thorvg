@@ -106,11 +106,13 @@ TEST_CASE("Text Font", "[tvgText]")
 
         REQUIRE(Text::load(TEST_DIR"/Arial.ttf") == tvg::Result::Success);
 
-        REQUIRE(text->font("Arial", 80) == tvg::Result::Success);
-        REQUIRE(text->font("Arial", 1) == tvg::Result::Success);
-        REQUIRE(text->font("Arial", 50) == tvg::Result::Success);
-        REQUIRE(text->font(nullptr, 50) == tvg::Result::Success);
-        REQUIRE(text->font("InvalidFont", 80) == tvg::Result::InsufficientCondition);
+        REQUIRE(text->font("Arial") == tvg::Result::Success);
+        REQUIRE(text->size(80) == tvg::Result::Success);
+        REQUIRE(text->font("Arial") == tvg::Result::Success);
+        REQUIRE(text->size(1) == tvg::Result::Success);
+        REQUIRE(text->size(50) == tvg::Result::Success);
+        REQUIRE(text->font(nullptr) == tvg::Result::Success);
+        REQUIRE(text->font("InvalidFont") == tvg::Result::InsufficientCondition);
     }
     Initializer::term();
 }
@@ -127,7 +129,8 @@ TEST_CASE("Text Basic", "[tvgText]")
         REQUIRE(text);
 
         REQUIRE(Text::load(TEST_DIR"/Arial.ttf") == tvg::Result::Success);
-        REQUIRE(text->font("Arial", 80) == tvg::Result::Success);
+        REQUIRE(text->font("Arial") == tvg::Result::Success);
+        REQUIRE(text->size(80) == tvg::Result::Success);
 
         REQUIRE(text->text(nullptr) == tvg::Result::Success);
         REQUIRE(text->text("") == tvg::Result::Success);
@@ -153,7 +156,8 @@ TEST_CASE("Text with composite glyphs", "[tvgText]")
         REQUIRE(text);
 
         REQUIRE(Text::load(TEST_DIR"/Arial.ttf") == tvg::Result::Success);
-        REQUIRE(text->font("Arial", 80) == tvg::Result::Success);
+        REQUIRE(text->font("Arial") == tvg::Result::Success);
+        REQUIRE(text->size(80) == tvg::Result::Success);
 
         REQUIRE(text->text("\xc5\xbb\x6f\xc5\x82\xc4\x85\x64\xc5\xba \xc8\xab") == tvg::Result::Success);
 

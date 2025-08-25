@@ -852,9 +852,16 @@ TVG_API Tvg_Paint* tvg_text_new()
 }
 
 
-TVG_API Tvg_Result tvg_text_set_font(Tvg_Paint* paint, const char* name, float size, const char* style)
+TVG_API Tvg_Result tvg_text_set_font(Tvg_Paint* paint, const char* name)
 {
-    if (paint) return (Tvg_Result) reinterpret_cast<Text*>(paint)->font(name, size, style);
+    if (paint) return (Tvg_Result) reinterpret_cast<Text*>(paint)->font(name);
+    return TVG_RESULT_INVALID_ARGUMENT;
+}
+
+
+TVG_API Tvg_Result tvg_text_set_size(Tvg_Paint* paint, float size)
+{
+    if (paint) return (Tvg_Result) reinterpret_cast<Text*>(paint)->size(size);
     return TVG_RESULT_INVALID_ARGUMENT;
 }
 
@@ -872,6 +879,11 @@ TVG_API Tvg_Result tvg_text_set_fill_color(Tvg_Paint* paint, uint8_t r, uint8_t 
     return TVG_RESULT_INVALID_ARGUMENT;
 }
 
+TVG_API Tvg_Result tvg_text_set_italic(Tvg_Paint* paint, float shear)
+{
+    if (paint) return (Tvg_Result) reinterpret_cast<Text*>(paint)->italic(shear);
+    return TVG_RESULT_INVALID_ARGUMENT;
+}
 
 TVG_API Tvg_Result tvg_text_set_gradient(Tvg_Paint* paint, Tvg_Gradient* gradient)
 {
