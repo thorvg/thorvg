@@ -185,6 +185,7 @@ struct UserExample : tvgexam::Example
         text12->font("SentyCloud");
         text12->size(50);
         text12->fill(255, 25, 25);
+        text12->outline(3, 255, 200, 200);
         text12->text("\xe4\xb8\x8d\xe5\x88\xb0\xe9\x95\xbf\xe5\x9f\x8e\xe9\x9d\x9e\xe5\xa5\xbd\xe6\xb1\x89\xef\xbc\x81");
         text12->translate(0, 525);
         canvas->push(text12);

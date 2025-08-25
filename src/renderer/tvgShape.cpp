@@ -144,6 +144,7 @@ Result Shape::order(bool strokeFirst) noexcept
 
 Result Shape::strokeWidth(float width) noexcept
 {
+    if (width < 0.0f) width = 0.0f;
     SHAPE(this)->strokeWidth(width);
     return Result::Success;
 }
