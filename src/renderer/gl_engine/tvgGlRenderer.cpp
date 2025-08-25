@@ -897,11 +897,25 @@ bool GlRenderer::sync()
 }
 
 
-bool GlRenderer::bounds(RenderData data, TVG_UNUSED Point* pt4, TVG_UNUSED const Matrix& m)
+bool GlRenderer::bounds(RenderData data, Point* pt4, const Matrix& m)
 {
     if (data) {
-        //TODO: stroking bounding box is required
-        TVGLOG("GL_ENGINE", "bounds() is not supported!");
+        auto sdata = static_cast<GlShape*>(data);
+        if (sdata->validStroke) {
+            tvg::BBox bbox;
+            bbox.init();
+            auto& vertexes = sdata->geometry.stroke.vertex;
+            for (uint32_t i = 0; i < vertexes.count / 2; i++) {
+                Point vert = Point{vertexes[i*2+0], vertexes[i*2+1]} * m;
+                bbox.min = min(bbox.min, vert);
+                bbox.max = max(bbox.max, vert);
+            }
+            pt4[0] = bbox.min;
+            pt4[1] = {bbox.max.x, bbox.min.y};
+            pt4[2] = bbox.max;
+            pt4[3] = {bbox.min.x, bbox.max.y};
+            return true;
+        }
     }
     return false;
 }
