@@ -199,6 +199,33 @@ TEST_CASE("Bounding Box", "[tvgPaint]")
         REQUIRE(pts[2].y == 210.0f);
         REQUIRE(pts[3].y == 210.0f);
 
+        REQUIRE(canvas->sync() == Result::Success);
+
+        //Case3
+        REQUIRE(shape->reset() == Result::Success);
+        REQUIRE(shape->moveTo(10, 10) == Result::Success);
+        REQUIRE(shape->lineTo(190, 10) == Result::Success);
+        REQUIRE(shape->strokeWidth(12.0f) == Result::Success);
+        REQUIRE(shape->strokeFill(255, 0, 0, 255) == Result::Success);
+
+        REQUIRE(canvas->update() == Result::Success);
+
+        REQUIRE(shape->bounds(&x, &y, &w, &h) == Result::Success);
+        REQUIRE(x == 4.0f);
+        REQUIRE(y == 4.0f);
+        REQUIRE(h == 12.0f);
+        REQUIRE(w == 192.0f);
+
+        REQUIRE(shape->bounds(pts) == Result::Success);
+        REQUIRE(pts[0].x == 4.0f);
+        REQUIRE(pts[3].x == 4.0f);
+        REQUIRE(pts[0].y == 4.0f);
+        REQUIRE(pts[1].y == 4.0f);
+        REQUIRE(pts[1].x == 196.0f);
+        REQUIRE(pts[2].x == 196.0f);
+        REQUIRE(pts[2].y == 16.0f);
+        REQUIRE(pts[3].y == 16.0f);
+
         //Text
         REQUIRE(Text::load(TEST_DIR"/Arial.ttf") == Result::Success);
         auto text = Text::gen();
