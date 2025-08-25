@@ -122,16 +122,12 @@ struct TextImpl : Text
         auto fill = SHAPE(shape)->rs.fill;
         if (fill && SHAPE(shape)->impl.renderFlag & RenderUpdateFlag::Gradient) {
             if (fill->type() == Type::LinearGradient) {
-                LINEAR(fill)->x1 *= scale;
-                LINEAR(fill)->y1 *= scale;
-                LINEAR(fill)->x2 *= scale;
-                LINEAR(fill)->y2 *= scale;
+                LINEAR(fill)->p1 *= scale;
+                LINEAR(fill)->p2 *= scale;
             } else {
-                RADIAL(fill)->cx *= scale;
-                RADIAL(fill)->cy *= scale;
+                RADIAL(fill)->center *= scale;
                 RADIAL(fill)->r *= scale;
-                RADIAL(fill)->fx *= scale;
-                RADIAL(fill)->fy *= scale;
+                RADIAL(fill)->focal *= scale;
                 RADIAL(fill)->fr *= scale;
             }
         }

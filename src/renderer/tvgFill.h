@@ -81,9 +81,7 @@ struct Fill::Impl
 struct RadialGradientImpl : RadialGradient
 {
     Fill::Impl impl;
-
-    float cx = 0.0f, cy = 0.0f;
-    float fx = 0.0f, fy = 0.0f;
+    Point center{}, focal{};
     float r = 0.0f, fr = 0.0f;
 
     RadialGradientImpl()
@@ -95,11 +93,9 @@ struct RadialGradientImpl : RadialGradient
     {
         auto ret = RadialGradient::gen();
         RADIAL(ret)->impl.copy(this->impl);
-        RADIAL(ret)->cx = cx;
-        RADIAL(ret)->cy = cy;
+        RADIAL(ret)->center = center;
         RADIAL(ret)->r = r;
-        RADIAL(ret)->fx = fx;
-        RADIAL(ret)->fy = fy;
+        RADIAL(ret)->focal = focal;
         RADIAL(ret)->fr = fr;
 
         return ret;
@@ -109,11 +105,9 @@ struct RadialGradientImpl : RadialGradient
     {
         if (r < 0 || fr < 0) return Result::InvalidArguments;
 
-        this->cx = cx;
-        this->cy = cy;
+        this->center = {cx, cy};
         this->r = r;
-        this->fx = fx;
-        this->fy = fy;
+        this->focal = {fx, fy};
         this->fr = fr;
 
         return Result::Success;
@@ -121,11 +115,11 @@ struct RadialGradientImpl : RadialGradient
 
     Result radial(float* cx, float* cy, float* r, float* fx, float* fy, float* fr) const
     {
-        if (cx) *cx = this->cx;
-        if (cy) *cy = this->cy;
+        if (cx) *cx = center.x;
+        if (cy) *cy = center.y;
         if (r) *r = this->r;
-        if (fx) *fx = this->fx;
-        if (fy) *fy = this->fy;
+        if (fx) *fx = focal.x;
+        if (fy) *fy = focal.y;
         if (fr) *fr = this->fr;
 
         return Result::Success;
@@ -140,29 +134,27 @@ struct RadialGradientImpl : RadialGradient
         //a solid fill case. It can be handled by engine.
         if (this->r < precision) return false;
 
-        fx = this->fx;
-        fy = this->fy;
-        fr = this->fr;
-
-        auto dx = this->cx - this->fx;
-        auto dy = this->cy - this->fy;
-        auto dist = sqrtf(dx * dx + dy * dy);
+        auto focal = this->focal;
+        auto diff = center - focal;
+        auto dist = tvg::length(&center, &focal);
 
         //move the focal point to the edge (just inside) if it's outside the end circle
         if (this->r - dist <  precision) {
             //handle special case: small radius and small distance -> shift focal point to avoid div-by-zero
-            if (dist < precision) dist = dx = precision;
+            if (dist < precision) dist = diff.x = precision;
             auto scale = this->r * (1.0f - precision) / dist;
-            fx = this->cx - dx * scale;
-            fy = this->cy - dy * scale;
-            dx = this->cx - fx;
-            dy = this->cy - fy;
-            dist = sqrtf(dx * dx + dy * dy);
+            focal = center - diff * scale;
+            diff = center - focal;
+            dist = tvg::length(diff);
         }
+
+        fx = focal.x;
+        fy = focal.y;
 
         //if the start circle doesn't fit entirely within the end circle, shrink it (with epsilon margin)
         auto maxFr = (this->r - dist) * (1.0f - precision);
         if (this->fr > maxFr) fr = std::max(0.0f, maxFr);
+        else fr = this->fr;
 
         return true;
     }
@@ -172,11 +164,7 @@ struct RadialGradientImpl : RadialGradient
 struct LinearGradientImpl :  LinearGradient
 {
     Fill::Impl impl;
-
-    float x1 = 0.0f;
-    float y1 = 0.0f;
-    float x2 = 0.0f;
-    float y2 = 0.0f;
+    Point p1{}, p2{};
 
     LinearGradientImpl()
     {
@@ -187,30 +175,26 @@ struct LinearGradientImpl :  LinearGradient
     {
         auto ret = LinearGradient::gen();
         LINEAR(ret)->impl.copy(this->impl);
-        LINEAR(ret)->x1 = x1;
-        LINEAR(ret)->y1 = y1;
-        LINEAR(ret)->x2 = x2;
-        LINEAR(ret)->y2 = y2;
+        LINEAR(ret)->p1 = p1;
+        LINEAR(ret)->p2 = p2;
 
         return ret;
     }
 
     Result linear(float x1, float y1, float x2, float y2) noexcept
     {
-        this->x1 = x1;
-        this->y1 = y1;
-        this->x2 = x2;
-        this->y2 = y2;
+        p1 = {x1, y1};
+        p2 = {x2, y2};
 
         return Result::Success;
     }
 
     Result linear(float* x1, float* y1, float* x2, float* y2) const noexcept
     {
-        if (x1) *x1 = this->x1;
-        if (x2) *x2 = this->x2;
-        if (y1) *y1 = this->y1;
-        if (y2) *y2 = this->y2;
+        if (x1) *x1 = p1.x;
+        if (x2) *x2 = p2.x;
+        if (y1) *y1 = p1.y;
+        if (y2) *y2 = p2.y;
 
         return Result::Success;
     }
