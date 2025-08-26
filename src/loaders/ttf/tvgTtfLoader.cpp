@@ -308,6 +308,10 @@ bool TtfLoader::read(Shape* shape, char* text, FontMetrics& out)
         ++idx;
     }
 
+    out.width = offset.x;
+    out.ascent = reader.metrics.hhea.ascent;
+    out.descent = reader.metrics.hhea.descent;
+
     tvg::free(code);
 
     return true;

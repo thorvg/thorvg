@@ -95,6 +95,21 @@ Result Text::unload(const char* filename) noexcept
 }
 
 
+Result Text::align(float x, float y) noexcept
+{
+    TEXT(this)->align = {x, y};
+    PAINT(this)->mark(RenderUpdateFlag::Transform);
+    return Result::Success;
+}
+
+
+Result Text::layout(float w, float h) noexcept
+{
+    TEXT(this)->layout(w, h);
+    return Result::Success;
+}
+
+
 Result Text::fill(uint8_t r, uint8_t g, uint8_t b) noexcept
 {
     return TEXT(this)->shape->fill(r, g, b);
@@ -105,6 +120,7 @@ Result Text::outline(float width, uint8_t r, uint8_t g, uint8_t b) noexcept
 {
     TEXT(this)->outlineWidth = width;
     TEXT(this)->shape->strokeFill(r, g, b);
+    PAINT(this)->mark(RenderUpdateFlag::Stroke);
     return Result::Success;
 }
 

@@ -2223,6 +2223,43 @@ TVG_API Tvg_Result tvg_text_set_text(Tvg_Paint* paint, const char* text);
 
 
 /**
+ * @brief Sets text alignment or anchor per axis.
+ *
+ * If layout width/height is set on an axis, align within the layout box.
+ * Otherwise, treat it as an anchor within the text bounds which point of
+ * the text box is pinned to the paint position.
+ *
+ * @param[in] paint A Tvg_Paint pointer to the text object.
+ * @param[in] x Horizontal alignment/anchor in [0..1]: 0=left/start, 0.5=center, 1=right/end. (Default is 0)
+ * @param[in] y Vertical alignment/anchor in [0..1]: 0=top, 0.5=middle, 1=bottom. (Default is 0)
+ *
+ * @note Experimental API
+ *
+ * @see tvg_text_layout()
+ */
+TVG_API Tvg_Result tvg_text_align(Tvg_Paint* paint, float x, float y);
+
+
+/**
+ * @brief Sets the virtual layout box (constraints) for the text.
+ *
+ * If width/height is set on an axis, that axis is constrained by a virtual layout box and
+ * the text may wrap/align inside it. If width/height == 0, the axis is
+ * unconstrained and @ref tvg_text_align() acts as an anchor on that axis.
+ *
+ * @param[in] paint A Tvg_Paint pointer to the text object.
+ * @param[in] w Layout width in user space. Use 0 for no horizontal constraint. (Default is 0)
+ * @param[in] h Layout height in user space. Use 0 for no vertical constraint. (Default is 0)
+ *
+ * @note This defines constraints only; alignment/anchoring is controlled by @ref align().
+ * @note Experimental API
+ *
+ * @see tvg_text_align()
+ */
+TVG_API Tvg_Result tvg_text_layout(Tvg_Paint* paint, float w, float h);
+
+
+/**
  * @brief Apply an italic (slant) transformation to the text.
  *
  * This function applies a shear transformation to simulate an italic (oblique) style
@@ -2303,6 +2340,7 @@ TVG_API Tvg_Result tvg_text_set_color(Tvg_Paint* paint, uint8_t r, uint8_t g, ui
 * @since 0.15
 */
 TVG_API Tvg_Result tvg_text_set_gradient(Tvg_Paint* paint, Tvg_Gradient* gradient);
+
 
 /**
 * @brief Loads a scalable font data from a file.
