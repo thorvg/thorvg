@@ -916,13 +916,8 @@ static void _fontText(TextDocument& doc, Scene* scene)
         txt->size(size);
         txt->text(token);
         txt->fill(doc.color.r, doc.color.g, doc.color.b);
-
-        float width;
-        txt->bounds(nullptr, nullptr, &width, nullptr);
-
-        auto cursorX = width * doc.justify;
-        auto cursorY = lineHeight * cnt;
-        txt->translate(cursorX, -lineHeight + cursorY);
+        txt->align(-doc.justify, 0.0f);
+        txt->translate(0.0f, lineHeight * cnt - lineHeight);
 
         token = std::strtok(nullptr, delim);
         scene->push(txt);
