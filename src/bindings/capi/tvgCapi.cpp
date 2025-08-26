@@ -873,6 +873,20 @@ TVG_API Tvg_Result tvg_text_set_text(Tvg_Paint* paint, const char* text)
 }
 
 
+TVG_API Tvg_Result tvg_text_align(Tvg_Paint* paint, float x, float y)
+{
+    if (paint) return (Tvg_Result) reinterpret_cast<Text*>(paint)->align(x, y);
+    return TVG_RESULT_INVALID_ARGUMENT;
+}
+
+
+TVG_API Tvg_Result tvg_text_layout(Tvg_Paint* paint, float w, float h)
+{
+    if (paint) return (Tvg_Result) reinterpret_cast<Text*>(paint)->layout(w, h);
+    return TVG_RESULT_INVALID_ARGUMENT;
+}
+
+
 TVG_API Tvg_Result tvg_text_set_outline(Tvg_Paint* paint, float width, uint8_t r, uint8_t g, uint8_t b)
 {
     if (paint) return (Tvg_Result) reinterpret_cast<Text*>(paint)->outline(width, r, g, b);

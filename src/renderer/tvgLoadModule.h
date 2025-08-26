@@ -103,8 +103,14 @@ struct ImageLoader : LoadModule
 
 struct FontMetrics
 {
-    //TODO: add necessary metrics
     float minw;
+
+    float hadvance;  //height advacnce
+    float width;
+    float ascent;
+    float descent;
+
+    //TODO: add necessary metrics
 };
 
 

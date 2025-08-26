@@ -32,6 +32,11 @@
 #define TEXT(A) static_cast<TextImpl*>(A)
 #define CONST_TEXT(A) static_cast<const TextImpl*>(A)
 
+struct TextBox {
+    Point size;
+};
+
+
 struct TextImpl : Text
 {
     Paint::Impl impl;
@@ -42,6 +47,9 @@ struct TextImpl : Text
     float fontSize;
     float outlineWidth = 0.0f;
     float italicShear = 0.0f;
+    Point align{};
+
+    TextBox* box = nullptr;
 
     TextImpl() : impl(Paint::Impl(this)), shape(Shape::gen())
     {
@@ -51,6 +59,7 @@ struct TextImpl : Text
     ~TextImpl()
     {
         tvg::free(utf8);
+        tvg::free(box);
         LoaderMgr::retrieve(loader);
         delete(shape);
     }
@@ -113,14 +122,31 @@ struct TextImpl : Text
         return false;
     }
 
+    void layout(float w, float h)
+    {
+        if (!box) box = tvg::calloc<TextBox*>(1, sizeof(TextBox));
+        box->size = {w, h};
+        impl.mark(RenderUpdateFlag::Transform);
+    }
+
     bool update(RenderMethod* renderer, const Matrix& transform, Array<RenderData>& clips, uint8_t opacity, RenderUpdateFlag flag, TVG_UNUSED bool clipper)
     {
         auto scale = 1.0f / load();
         if (tvg::zero(scale)) return false;
 
+        //alignment
+        shape->transform().e13 -= (metrics.width / scale) * align.x;
+        shape->transform().e23 -= ((metrics.ascent - metrics.descent) / scale) * align.y;
+
+        //layouting
+        if (box) {
+            shape->transform().e13 += box->size.x * align.x;
+            shape->transform().e23 += box->size.y * align.y;
+        }
+
         //transform the gradient coordinates based on the final scaled font.
         auto fill = SHAPE(shape)->rs.fill;
-        if (fill && SHAPE(shape)->impl.renderFlag & RenderUpdateFlag::Gradient) {
+        if (fill && SHAPE(shape)->impl.marked(RenderUpdateFlag::Gradient)) {
             if (fill->type() == Type::LinearGradient) {
                 LINEAR(fill)->p1 *= scale;
                 LINEAR(fill)->p2 *= scale;
@@ -132,7 +158,7 @@ struct TextImpl : Text
             }
         }
 
-        if (outlineWidth > 0.0f) shape->strokeWidth(outlineWidth * scale);
+        if (outlineWidth > 0.0f && impl.marked(RenderUpdateFlag::Stroke)) shape->strokeWidth(outlineWidth * scale);
 
         PAINT(shape)->update(renderer, transform, clips, opacity, flag, false);
         return true;
