@@ -226,7 +226,6 @@ TEST_CASE("Bounding Box", "[tvgPaint]")
         REQUIRE(pts[2].y == 16.0f);
         REQUIRE(pts[3].y == 16.0f);
 
-
         //Text
         REQUIRE(Text::load(TEST_DIR"/Arial.ttf") == Result::Success);
         auto text = Text::gen();
