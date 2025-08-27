@@ -66,13 +66,15 @@ The task scheduler has been meticulously crafted to conceal complexity, streamli
 </p>
 
 ### Smart Rendering
-ThorVG supports smart partial rendering, enabling more efficient rendering workflows by updating only the portions of a vector scene that have changed. By internally tracking modified regions, it minimizes unnecessary redraws and optimizes overall performance. This feature delivers significant performance benefits, especially in animations and interactive graphics where only part of the scene changes between frames. By avoiding full-scene rendering, it can reduce computational workload—making it particularly well-suited for mobile and embedded systems where energy efficiency is essential. It also help to ensure smoother visual updates, especially for dynamic UIs and real-time animations, where rendering responsiveness is critical.<br/>
+ThorVG supports smart partial rendering, which enables more efficient rendering workflows by updating only the portions of a vector scene that have changed. By internally tracking modified regions, it minimizes unnecessary redraws and optimizes overall performance. This feature provides significant benefits in scenarios such as UI rendering, design tools, or applications where large parts of the scene remain static and only small elements update between frames. In such cases, avoiding full-scene rendering can greatly reduce computational workload and improve energy efficiency—making it particularly valuable on mobile and embedded systems.<br/>
 <br/>
+The following figure illustrates the geometry changes and highlights the minimal redraw region (outlined in red) that needs to be updated. Only the modified area between the previous and current frames is selectively redrawn, significantly improving performance.</br>
+<br />
 <p align="center">
   <img width="700" height="auto" src="https://github.com/thorvg/thorvg/blob/main/res/example_partial.png">
 </p>
 
-The figure above illustrates geometry changes and highlights the minimal redraw region (outlined in red) that needs to be updated. Only the modified area between the previous and current frames is selectively redrawn, significantly enhancing performance. For a showcase, please visit [this page](https://hermet.github.io/partial-test/), which demonstrates a partial rendering performance comparison using ThorVG's software renderer. <br/>
+Please note that in highly dynamic content—such as fast-paced games or full-screen animations where nearly all objects change every frame—partial rendering provides little to no benefit and may even introduce minor overhead. In these scenarios, full-scene rendering is typically the better choice. For a practical showcase, visit [this page](https://hermet.github.io/partial-test/) demonstrating a performance comparison of partial rendering using ThorVG's software renderer.<br />
 <br />
 
 ### Render Backends
