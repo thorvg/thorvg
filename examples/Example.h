@@ -22,11 +22,11 @@
 #include "config.h"
 
 #include <memory>
-#include <cmath>
 #include <vector>
 #include <fstream>
 #include <iostream>
 #include <cstring>
+#include <chrono>
 #include <thorvg.h>
 #include <SDL2/SDL.h>
 #include <SDL2/SDL_syswm.h>
@@ -141,6 +141,7 @@ struct Window
     tvg::Canvas* canvas = nullptr;
     uint32_t width;
     uint32_t height;
+    double mfps = 0;   //mean fps
 
     Example* example = nullptr;
 
@@ -199,6 +200,33 @@ struct Window
         if (!verify(canvas->sync())) return false;
 
         return true;
+    }
+
+    void fps(uint32_t tickCnt)
+    {
+        using clock = std::chrono::steady_clock;
+
+        static double ema_dt = 1 / 60;             // Initial value assuming 60fps (seconds)
+        static const double half_life = 0.25;      // Half-life of 0.25 seconds (lightly tuned)
+        static auto prev = clock::now();
+
+        auto now = clock::now();
+        auto dt = std::chrono::duration<double>(now - prev).count();   // Time elapsed in seconds
+        prev = now;
+
+        // Clamp abnormally large dt (e.g., during tab switching or pausing in debugger)
+        if (dt > 0.25) dt = 0.25;  // Cap at 250ms
+
+        // Continuous time-based alpha: maintains responsiveness regardless of framerate
+        auto alpha = 1 - std::exp(-std::log(2) * dt / half_life);
+        ema_dt += alpha * (dt - ema_dt);
+
+        // Skip the unstable first 60 frames, also no need to print every frame.
+        if (tickCnt > 59) {
+            auto result = 1 / ema_dt;
+            mfps += result;
+            if (tickCnt % 10 == 0) printf("[%5d]: %0.2f / %0.2f fps\n", tickCnt, result, mfps / (tickCnt - 59));
+        }
     }
 
     void show()
@@ -268,9 +296,10 @@ struct Window
 
             auto ctime = SDL_GetTicks();
             example->elapsed += (ctime - ptime);
-            tickCnt++;
-            if (print) printf("[%5d]: elapsed time = %dms (%dms)\n", tickCnt, (ctime - ptime), (example->elapsed / tickCnt));
             ptime = ctime;
+            ++tickCnt;
+
+            if (print) fps(tickCnt);
         }
     }
 
