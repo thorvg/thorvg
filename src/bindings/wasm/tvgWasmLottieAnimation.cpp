@@ -274,7 +274,6 @@ public:
 
         animation = Animation::gen();
         if (!animation) errorMsg = "Invalid animation";
-        animation->picture()->origin(0.5f, 0.5f);  //center-aligned
     }
 
     string error()
@@ -320,6 +319,7 @@ public:
 
         delete(animation);
         animation = Animation::gen();
+        animation->picture()->origin(0.5f, 0.5f);  //center-aligned
 
         string filetype = mimetype;
         if (filetype == "json") {
