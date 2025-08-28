@@ -75,6 +75,22 @@ Result Picture::size(float* w, float* h) const noexcept
 }
 
 
+Result Picture::origin(float x, float y) noexcept
+{
+    PICTURE(this)->origin = {x, y};
+    PAINT(this)->mark(RenderUpdateFlag::Transform);
+    return Result::Success;
+}
+
+
+Result Picture::origin(float* x, float* y) const noexcept
+{
+    if (x) *x = CONST_PICTURE(this)->origin.x;
+    if (y) *y = CONST_PICTURE(this)->origin.y;
+    return Result::Success;
+}
+
+
 const Paint* Picture::paint(uint32_t id) noexcept
 {
     struct Value

@@ -46,25 +46,15 @@ struct UserExample : tvgexam::Example
         if (strcmp(ext, "svg")) return;
 
         auto picture = tvg::Picture::gen();
+        picture->origin(0.5f, 0.5f);
 
         if (!tvgexam::verify(picture->load(path))) return;
 
         //image scaling preserving its aspect ratio
-        float scale;
-        float shiftX = 0.0f, shiftY = 0.0f;
         float w, h;
         picture->size(&w, &h);
-
-        if (w > h) {
-            scale = size / w;
-            shiftY = (size - h * scale) * 0.5f;
-        } else {
-            scale = size / h;
-            shiftX = (size - w * scale) * 0.5f;
-        }
-
-        picture->scale(scale);
-        picture->translate((counter % NUM_PER_ROW) * size + shiftX, (counter / NUM_PER_ROW) * (this->h / NUM_PER_COL) + shiftY);
+        picture->scale((w > h) ? size / w : size / h);
+        picture->translate((counter % NUM_PER_ROW) * size + size / 2, (counter / NUM_PER_ROW) * (this->h / NUM_PER_COL) + size / 2);
 
         pictures.push_back(picture);
 

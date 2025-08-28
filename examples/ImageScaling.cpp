@@ -37,6 +37,8 @@ struct UserExample : tvgexam::Example
 
         if (!tvgexam::verify(picture->load(EXAMPLE_DIR"/image/scale.jpg"))) return false;
 
+        picture->origin(0.5f, 0.5f);  //center origin
+        picture->translate(w/2, h/2);
         picture->scale(1.5f);
 
         canvas->push(picture);

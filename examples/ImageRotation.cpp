@@ -40,6 +40,8 @@ struct UserExample : tvgexam::Example
     bool content(tvg::Canvas* canvas, uint32_t w, uint32_t h) override
     {
         picture = tvg::Picture::gen();
+        picture->origin(0.5f, 0.5f);  //center origin
+        picture->translate(w/2, h/2);
 
         if (!tvgexam::verify(picture->load(EXAMPLE_DIR"/image/scale.jpg"))) return false;
 
@@ -50,31 +52,8 @@ struct UserExample : tvgexam::Example
 
     bool update(tvg::Canvas* canvas, uint32_t elapsed) override
     {
-        tvg::Matrix m = {1.0f, 0.0f, 0.0f, 0.0f, 0.1f, 0.0f, 0.0f, 0.0f, 1.0f};
-
-        //center pivoting
-        m.e13 += 480;
-        m.e23 += 480;
-
-        //rotation
-        auto degree = tvgexam::progress(elapsed, 4.0f) * 360.0f;
-        auto radian = deg2rad(degree);
-        m.e11 = cosf(radian);
-        m.e12 = -sinf(radian);
-        m.e21 = sinf(radian);
-        m.e22 = cosf(radian);
-
-        //scaling
-        m.e11 *= 0.8f;
-        m.e21 *= 0.8f;
-        m.e22 *= 0.8f;
-        m.e12 *= 0.8f;
-
-        //center pivoting
-        m.e13 += (-400 * m.e11 + -400 * m.e12);
-        m.e23 += (-400 * m.e21 + -400 * m.e22);
-
-        picture->transform(m);
+        picture->scale(0.8f);
+        picture->rotate(tvgexam::progress(elapsed, 4.0f) * 360.0f);
 
         canvas->update();
 

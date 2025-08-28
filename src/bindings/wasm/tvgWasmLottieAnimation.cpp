@@ -274,6 +274,7 @@ public:
 
         animation = Animation::gen();
         if (!animation) errorMsg = "Invalid animation";
+        animation->picture()->origin(0.5f, 0.5f);  //center-aligned
     }
 
     string error()
@@ -414,17 +415,10 @@ public:
 
         engine->resize(canvas, width, height);
 
-        float scale;
-        float shiftX = 0.0f, shiftY = 0.0f;
-        if (psize[0] > psize[1]) {
-            scale = width / psize[0];
-            shiftY = (height - psize[1] * scale) * 0.5f;
-        } else {
-            scale = height / psize[1];
-            shiftX = (width - psize[0] * scale) * 0.5f;
-        }
+        auto scale = (psize[0] > psize[1]) ? width / psize[0] : height / psize[1];
         animation->picture()->scale(scale);
-        animation->picture()->translate(shiftX, shiftY);
+        animation->picture()->translate(width * 0.5f, height * 0.5f);
+
 
         updated = true;
     }

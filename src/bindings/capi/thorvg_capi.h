@@ -1853,13 +1853,13 @@ TVG_API Tvg_Paint* tvg_picture_new(void);
 * This means that loading the same file again will not result in duplicate operations;
 * instead, ThorVG will reuse the previously loaded picture data.
 *
-* @param[in] paint A Tvg_Paint pointer to the picture object.
+* @param[in] picture A Tvg_Paint pointer to the picture object.
 * @param[in] path The absolute path to the image file.
 *
 * @retval TVG_RESULT_INVALID_ARGUMENT An invalid Tvg_Paint pointer or an empty @p path.
 * @retval TVG_RESULT_NOT_SUPPORTED A file with an unknown extension.
 */
-TVG_API Tvg_Result tvg_picture_load(Tvg_Paint* paint, const char* path);
+TVG_API Tvg_Result tvg_picture_load(Tvg_Paint* picture, const char* path);
 
 
 /*!
@@ -1870,6 +1870,7 @@ TVG_API Tvg_Result tvg_picture_load(Tvg_Paint* paint, const char* path);
  * by reusing the previously loaded picture data for the same sharable @p data,
  * rather than duplicating the load process.
  *
+ * @param[in] picture A Tvg_Paint pointer to the picture object.
  * @param[in] data A pointer to the memory block where the raw image data is stored.
  * @param[in] w The width of the image in pixels.
  * @param[in] h The height of the image in pixels.
@@ -1880,7 +1881,7 @@ TVG_API Tvg_Result tvg_picture_load(Tvg_Paint* paint, const char* path);
 *
 * @since 0.9
 */
-TVG_API Tvg_Result tvg_picture_load_raw(Tvg_Paint* paint, uint32_t *data, uint32_t w, uint32_t h, Tvg_Colorspace cs, bool copy);
+TVG_API Tvg_Result tvg_picture_load_raw(Tvg_Paint* picture, uint32_t *data, uint32_t w, uint32_t h, Tvg_Colorspace cs, bool copy);
 
 
 /*!
@@ -1890,7 +1891,7 @@ TVG_API Tvg_Result tvg_picture_load_raw(Tvg_Paint* paint, uint32_t *data, uint32
 * when the @p copy has @c false. This means that loading the same data again will not result in duplicate operations
 * for the sharable @p data. Instead, ThorVG will reuse the previously loaded picture data.
 *
-* @param[in] paint A Tvg_Paint pointer to the picture object.
+* @param[in] picture A Tvg_Paint pointer to the picture object.
 * @param[in] data A pointer to a memory location where the content of the picture file is stored. A null-terminated string is expected for non-binary data if @p copy is @c false
 * @param[in] size The size in bytes of the memory occupied by the @p data.
 * @param[in] mimetype Mimetype or extension of data such as "jpg", "jpeg", "svg", "svg+xml", "lot", "lottie+json", "png", etc. In case an empty string or an unknown type is provided, the loaders will be tried one by one.
@@ -1902,7 +1903,7 @@ TVG_API Tvg_Result tvg_picture_load_raw(Tvg_Paint* paint, uint32_t *data, uint32
 *
 * @warning: It's the user responsibility to release the @p data memory if the @p copy is @c true.
 */
-TVG_API Tvg_Result tvg_picture_load_data(Tvg_Paint* paint, const char *data, uint32_t size, const char *mimetype, const char* rpath, bool copy);
+TVG_API Tvg_Result tvg_picture_load_data(Tvg_Paint* picture, const char *data, uint32_t size, const char *mimetype, const char* rpath, bool copy);
 
 
 /*!
@@ -1911,33 +1912,86 @@ TVG_API Tvg_Result tvg_picture_load_data(Tvg_Paint* paint, const char *data, uin
 * The picture content is resized while keeping the default size aspect ratio.
 * The scaling factor is established for each of dimensions and the smaller value is applied to both of them.
 *
-* @param[in] paint A Tvg_Paint pointer to the picture object.
+* @param[in] picture A Tvg_Paint pointer to the picture object.
 * @param[in] w A new width of the image in pixels.
 * @param[in] h A new height of the image in pixels.
 *
 * @retval TVG_RESULT_INVALID_ARGUMENT An invalid Tvg_Paint pointer.
 */
-TVG_API Tvg_Result tvg_picture_set_size(Tvg_Paint* paint, float w, float h);
+TVG_API Tvg_Result tvg_picture_set_size(Tvg_Paint* picture, float w, float h);
 
 
 /*!
 * @brief Gets the size of the loaded picture.
 *
-* @param[in] paint A Tvg_Paint pointer to the picture object.
+* @param[in] picture A Tvg_Paint pointer to the picture object.
 * @param[out] w A width of the image in pixels.
 * @param[out] h A height of the image in pixels.
 *
 * @retval TVG_RESULT_INVALID_ARGUMENT An invalid Tvg_Paint pointer.
 */
-TVG_API Tvg_Result tvg_picture_get_size(const Tvg_Paint* paint, float* w, float* h);
+TVG_API Tvg_Result tvg_picture_get_size(const Tvg_Paint* picture, float* w, float* h);
 
+
+/**
+ * @brief Sets the normalized origin point of the Picture object.
+ *
+ * This method defines the origin point of the Picture using normalized coordinates.
+ * Unlike a typical pivot point used only for transformations, this origin affects both
+ * the transformation behavior and the actual rendering position of the Picture.
+ *
+ * The specified origin becomes the reference point for positioning the Picture on the canvas.
+ * For example, setting the origin to (0.5f, 0.5f) moves the visual center of the picture
+ * to the position specified by Paint::translate().
+ *
+ * The coordinates are given in a normalized range relative to the picture's bounds:
+ * - (0.0f, 0.0f): top-left corner
+ * - (0.5f, 0.5f): center
+ * - (1.0f, 1.0f): bottom-right corner
+ *
+ * @param[in] picture A Tvg_Paint pointer to the picture object.
+ * @param[in] x The normalized x-coordinate of the origin point (range: 0.0f to 1.0f).
+ * @param[in] y The normalized y-coordinate of the origin point (range: 0.0f to 1.0f).
+ *
+ * @retval TVG_RESULT_INVALID_ARGUMENT An invalid Tvg_Paint pointer.
+ *
+ * @note This origin directly affects how the Picture is placed on the canvas when using
+ *       transformations such as translate(), rotate(), or scale().
+ *
+ * @see tvg_paint_translate()
+ * @see tvg_paint_rotate()
+ * @see tvg_paint_scale()
+ * @see tvg_paint_set_transform()
+ * @see tvg_picture_get_origin()
+ *
+ * @since 1.0
+ */
+TVG_API Tvg_Result tvg_picture_set_origin(Tvg_Paint* picture, float x, float y);
+
+
+/**
+ * @brief Gets the normalized origin point of the Picture object.
+ *
+ * This method retrieves the current origin point of the Picture, expressed
+ * in normalized coordinates relative to the picture’s bounds.
+ *
+ * @param[in] picture A Tvg_Paint pointer to the picture object.
+ * @param[out] x The normalized x-coordinate of the origin (range: 0.0f to 1.0f).
+ * @param[out] y The normalized y-coordinate of the origin (range: 0.0f to 1.0f).
+ *
+ * @retval TVG_RESULT_INVALID_ARGUMENT An invalid Tvg_Paint pointer.
+ *
+ * @see tvg_picture_set_origin()
+ * @since 1.0
+ */
+TVG_API Tvg_Result tvg_picture_get_origin(const Tvg_Paint* picture, float* x, float* y);
 
 /*!
 * @brief Retrieve a paint object from the Picture scene by its Unique ID.
 *
 * This function searches for a paint object within the Picture scene that matches the provided @p id.
 *
-* @param[in] paint A Tvg_Paint pointer to the picture object.
+* @param[in] picture A Tvg_Paint pointer to the picture object.
 * @param[in] id The Unique ID of the paint object.
 
 * @return A pointer to the paint object that matches the given identifier, or @c nullptr if no matching paint object is found.
@@ -1945,7 +1999,7 @@ TVG_API Tvg_Result tvg_picture_get_size(const Tvg_Paint* paint, float* w, float*
 * @see tvg_accessor_generate_id()
 * @note Experimental API
 */
-TVG_API const Tvg_Paint* tvg_picture_get_paint(Tvg_Paint* paint, uint32_t id);
+TVG_API const Tvg_Paint* tvg_picture_get_paint(Tvg_Paint* picture, uint32_t id);
 
 
 /** \} */   // end defgroup ThorVGCapi_Picture

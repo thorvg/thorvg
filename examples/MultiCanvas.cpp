@@ -44,21 +44,14 @@ void content(tvg::Canvas* canvas)
     canvas->push(bg);
 
     auto picture = tvg::Picture::gen();
+    picture->origin(0.5f, 0.5f);
     if (!tvgexam::verify(picture->load(EXAMPLE_DIR"/svg/logo.svg"))) return;
 
-    float scale;
-    float shiftX = 0.0f, shiftY = 0.0f;
     float w2, h2;
     picture->size(&w2, &h2);
-    if (w2 > h2) {
-        scale = SIZE / w2;
-        shiftY = (SIZE - h2 * scale) * 0.5f;
-    } else {
-        scale = SIZE / h2;
-        shiftX = (SIZE - w2 * scale) * 0.5f;
-    }
-    picture->translate(shiftX, shiftY);
+    auto scale = (w2 > h2) ? SIZE / w2 : SIZE / h2;
     picture->scale(scale);
+    picture->translate(SIZE * 0.5f, SIZE * 0.5f);
 
     canvas->push(picture);
 }
