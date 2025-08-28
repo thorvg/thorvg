@@ -307,13 +307,13 @@ bool LottieLoader::apply(uint32_t slotcode, bool byDefault)
 
     // Reset all slots if slotcode is 0
     if (slotcode == 0) {
-        ARRAY_FOREACH(p, comp->slots) {
-            (*p)->reset();
-        }
+        ARRAY_FOREACH(p, comp->slots) (*p)->reset();
         applied = true;
     } else {
+        //Find the custom slot with the slotcode
         INLIST_FOREACH(this->slots, slot) {
             if (slot->code != slotcode) continue;
+            //apply the custom slot property to the targets.
             ARRAY_FOREACH(p, slot->props) {
                 p->target->apply(p->prop, byDefault);
             }
@@ -323,7 +323,6 @@ bool LottieLoader::apply(uint32_t slotcode, bool byDefault)
     }
     overridden = (slotcode != 0);
     if (applied) rebuild = true;
-
     return applied;
 }
 
@@ -361,12 +360,12 @@ uint32_t LottieLoader::gen(const char* slots, bool byDefault)
     auto idx = 0;
     auto custom = new LottieCustomSlot(djb2Encode(slots));
 
+    //Generates list of the custom slot overriding
     while (auto sid = djb2Encode(parser.sid(idx == 0))) {
+        //Associates the overrding target to apply for the current custom slot
         ARRAY_FOREACH(p, comp->slots) {
             if ((*p)->sid != sid) continue;  //find target
-            if (auto prop = parser.parse(*p)) {
-                custom->props.push({prop, *p});
-            }
+            if (auto prop = parser.parse(*p)) custom->props.push({prop, *p});
             break;
         }
         ++idx;
@@ -374,6 +373,7 @@ uint32_t LottieLoader::gen(const char* slots, bool byDefault)
 
     tvg::free((char*)temp);
 
+    //Success, valid custom slot.
     if (custom->props.count > 0) {
         this->slots.back(custom);
         return custom->code;
