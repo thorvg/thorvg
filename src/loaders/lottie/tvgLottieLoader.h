@@ -38,13 +38,13 @@ struct LottieCustomSlot
 {
     INLIST_ITEM(LottieCustomSlot);
 
-    struct Override
+    struct Pair
     {
-        LottieProperty* prop;
-        LottieSlot* target;
+        LottieProperty* prop;  // New overriding property
+        LottieSlot* target;    // Overriding target
     };
-    Array<Override> props;
-    uint32_t code;
+    Array<Pair> props;      // This has a list of the overriding target(LottieSlot) with a property to apply.
+    uint32_t code;          // Slot source-code key
 
     LottieCustomSlot(uint32_t code) : code(code) {}
     ~LottieCustomSlot();

@@ -278,7 +278,7 @@ struct LottieObject
     {
     }
 
-    virtual void override(LottieProperty* prop, bool shallow, bool release)
+    virtual void override(LottieProperty* prop, bool release)
     {
         TVGERR("LOTTIE", "Unsupported slot type");
     }
@@ -464,10 +464,10 @@ struct LottieText : LottieObject, LottieRenderPooler<tvg::Shape>
         LottieObject::type = LottieObject::Text;
     }
 
-    void override(LottieProperty* prop, bool shallow, bool release = false) override
+    void override(LottieProperty* prop, bool release = false) override
     {
         if (release) doc.release();
-        doc.copy(*static_cast<LottieTextDoc*>(prop), shallow);
+        doc.copy(*static_cast<LottieTextDoc*>(prop), false);
     }
 
     LottieProperty* property(uint16_t ix) override
@@ -685,27 +685,27 @@ struct LottieTransform : LottieObject
         return nullptr;
     }
 
-    void override(LottieProperty* prop, bool shallow, bool release) override
+    void override(LottieProperty* prop, bool release) override
     {
         switch (prop->type) {
             case LottieProperty::Type::Float: {
                 if (release) rotation.release();
-                rotation.copy(*static_cast<LottieFloat*>(prop), shallow);
+                rotation.copy(*static_cast<LottieFloat*>(prop), false);
                 break;
             }
             case LottieProperty::Type::Scalar: {
                 if (release) scale.release();
-                scale.copy(*static_cast<LottieScalar*>(prop), shallow);
+                scale.copy(*static_cast<LottieScalar*>(prop), false);
                 break;
             }
             case LottieProperty::Type::Vector: {
                 if (release) position.release();
-                position.copy(*static_cast<LottieVector*>(prop), shallow);
+                position.copy(*static_cast<LottieVector*>(prop), false);
                 break;
             }
             case LottieProperty::Type::Opacity: {
                 if (release) opacity.release();
-                opacity.copy(*static_cast<LottieOpacity*>(prop), shallow);
+                opacity.copy(*static_cast<LottieOpacity*>(prop), false);
                 break;
             }
             default: break;
@@ -756,10 +756,10 @@ struct LottieSolidStroke : LottieSolid, LottieStroke
         return LottieSolid::property(ix);
     }
 
-    void override(LottieProperty* prop, bool shallow, bool release) override
+    void override(LottieProperty* prop, bool release) override
     {
         if (release) color.release();
-        color.copy(*static_cast<LottieColor*>(prop), shallow);
+        color.copy(*static_cast<LottieColor*>(prop), false);
     }
 };
 
@@ -771,14 +771,14 @@ struct LottieSolidFill : LottieSolid
         LottieObject::type = LottieObject::SolidFill;
     }
 
-    void override(LottieProperty* prop, bool shallow, bool release) override
+    void override(LottieProperty* prop, bool release) override
     {
         if (prop->type == LottieProperty::Type::Color) {
             if (release) color.release();
-            color.copy(*static_cast<LottieColor*>(prop), shallow);
+            color.copy(*static_cast<LottieColor*>(prop), false);
         } else if (prop->type == LottieProperty::Type::Opacity) {
             if (release) opacity.release();
-            opacity.copy(*static_cast<LottieOpacity*>(prop), shallow);
+            opacity.copy(*static_cast<LottieOpacity*>(prop), false);
         }
     }
 
@@ -816,10 +816,10 @@ struct LottieGradient : LottieObject
         return nullptr;
     }
 
-    void override(LottieProperty* prop, bool shallow, bool release = false) override
+    void override(LottieProperty* prop, bool release = false) override
     {
         if (release) colorStops.release();
-        colorStops.copy(*static_cast<LottieColorStop*>(prop), shallow);
+        colorStops.copy(*static_cast<LottieColorStop*>(prop), false);
         prepare();
     }
 
@@ -871,10 +871,10 @@ struct LottieImage : LottieObject, LottieRenderPooler<tvg::Picture>
 {
     LottieBitmap data;
 
-    void override(LottieProperty* prop, bool shallow, bool release = false) override
+    void override(LottieProperty* prop, bool release = false) override
     {
         if (release) data.release();
-        data.copy(*static_cast<LottieBitmap*>(prop), shallow);
+        data.copy(*static_cast<LottieBitmap*>(prop), false);
         update();
     }
 
