@@ -457,13 +457,15 @@ void LottieParser::parsePropertyInternal(T& prop)
 
 void LottieParser::registerSlot(LottieObject* obj, const char* sid, LottieProperty::Type type)
 {
+    auto val = djb2Encode(sid);
+
     //append object if the slot already exists.
     ARRAY_FOREACH(p, comp->slots) {
-        if (strcmp((*p)->sid, sid)) continue;
+        if ((*p)->sid != val) continue;
         (*p)->pairs.push({obj});
         return;
     }
-    comp->slots.push(new LottieSlot(context.layer, context.parent, duplicate(sid), obj, type));
+    comp->slots.push(new LottieSlot(context.layer, context.parent, val, obj, type));
 }
 
 
