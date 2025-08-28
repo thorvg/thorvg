@@ -489,6 +489,7 @@ uint32_t LottieGradient::populate(ColorStop& color, size_t count)
 
     color.input->reset();
     delete(color.input);
+    color.input = nullptr;
 
     return output.count;
 }
