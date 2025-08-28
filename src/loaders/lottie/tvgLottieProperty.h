@@ -561,15 +561,14 @@ struct LottieColorStop : LottieProperty
 
     void release()
     {
-        if (exp) {
-            delete(exp);
-            exp = nullptr;
-        }
+        delete(exp);
+        exp = nullptr;
 
-        if (value.data) {
-            free(value.data);
-            value.data = nullptr;
-        }
+        free(value.data);
+        value.data = nullptr;
+
+        delete(value.input);
+        value.input = nullptr;
 
         if (!frames) return;
 
@@ -673,15 +672,27 @@ struct LottieColorStop : LottieProperty
                 frames = rhs.frames;
                 rhs.frames = nullptr;
             } else {
-                frames = new Array<LottieScalarFrame<ColorStop>>;
+                frames = (Array<LottieScalarFrame<ColorStop>>*)calloc(1, sizeof(Array<LottieScalarFrame<ColorStop>>));
                 *frames = *rhs.frames;
             }
         } else {
-            value = rhs.value;
-            rhs.value = ColorStop();
+            frames = nullptr;
+            if (shallow) {
+                value = rhs.value;
+                rhs.value = ColorStop();
+            } else {
+                if (rhs.value.data) {
+                    value.data = (Fill::ColorStop*)malloc(sizeof(Fill::ColorStop) * rhs.count);
+                    memcpy(value.data, rhs.value.data, sizeof(Fill::ColorStop) * rhs.count);
+                }
+                if (rhs.value.input) {
+                    value.input = new Array<float>;
+                    *value.input = *rhs.value.input;
+                }
+            }
+            populated = rhs.populated;
+            count = rhs.count;
         }
-        populated = rhs.populated;
-        count = rhs.count;
     }
 
     void prepare() {}
