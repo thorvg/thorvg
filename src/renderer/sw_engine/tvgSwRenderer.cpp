@@ -46,7 +46,7 @@ struct SwTask : Task
     Matrix transform;
     Array<RenderData> clips;
     RenderDirtyRegion* dirtyRegion;
-    RenderUpdateFlag flags = RenderUpdateFlag::None;
+    RenderUpdateFlag flags[2] = {RenderUpdateFlag::None, RenderUpdateFlag::None};  //cur&prv
     uint8_t opacity;
     bool pushed : 1;                  //Pushed into task list?
     bool disposed : 1;                //Disposed task?
@@ -65,6 +65,19 @@ struct SwTask : Task
     {
         curBox.reset();
         if (!nodirty) dirtyRegion->add(prvBox, curBox);
+    }
+
+    bool ready(bool condition)
+    {
+        //invisible
+        if (condition) {
+            if (flags[0] & RenderUpdateFlag::Color) invisible();
+            flags[1] = flags[0]; //backup
+            return true;
+        }
+        flags[0] |= flags[1];  //applied the previous flags if it's skipped before
+        flags[1] = RenderUpdateFlag::None;  //reset
+        return false;
     }
 
     virtual void dispose() = 0;
@@ -106,15 +119,11 @@ struct SwShapeTask : SwTask
 
     void run(unsigned tid) override
     {
-        //invisible
-        if (opacity == 0 && !clipper) {
-            if (flags & RenderUpdateFlag::Color) invisible();
-            return;
-        }
+        if (ready(opacity == 0 && !clipper)) return;
 
         auto strokeWidth = validStrokeWidth(clipper);
-        auto updateShape = flags & (RenderUpdateFlag::Path | RenderUpdateFlag::Transform | RenderUpdateFlag::Clip);
-        auto updateFill = (flags & (RenderUpdateFlag::Color | RenderUpdateFlag::Gradient));
+        auto updateShape = flags[0] & (RenderUpdateFlag::Path | RenderUpdateFlag::Transform | RenderUpdateFlag::Clip);
+        auto updateFill = (flags[0] & (RenderUpdateFlag::Color | RenderUpdateFlag::Gradient));
 
         //Shape
         if (updateShape) {
@@ -131,18 +140,18 @@ struct SwShapeTask : SwTask
         //Fill
         if (updateFill) {
             if (auto fill = rshape->fill) {
-                auto ctable = (flags & RenderUpdateFlag::Gradient) ? true : false;
+                auto ctable = (flags[0] & RenderUpdateFlag::Gradient) ? true : false;
                 if (ctable) shapeResetFill(shape);
                 if (!shapeGenFillColors(shape, fill, transform, surface, opacity, ctable)) goto err;
             }
         }
         //Stroke
-        if (updateShape || flags & RenderUpdateFlag::Stroke) {
+        if (updateShape || flags[0] & RenderUpdateFlag::Stroke) {
             if (strokeWidth > 0.0f) {
                 shapeResetStroke(shape, rshape, transform, mpool, tid);
                 if (!shapeGenStrokeRle(shape, rshape, transform, clipBox, curBox, mpool, tid)) goto err;
                 if (auto fill = rshape->strokeFill()) {
-                    auto ctable = (flags & RenderUpdateFlag::GradientStroke) ? true : false;
+                    auto ctable = (flags[0] & RenderUpdateFlag::GradientStroke) ? true : false;
                     if (ctable) shapeResetStrokeFill(shape);
                     if (!shapeGenStrokeFillColors(shape, fill, transform, surface, opacity, ctable)) goto err;
                 }
@@ -193,11 +202,7 @@ struct SwImageTask : SwTask
 
     void run(unsigned tid) override
     {
-        //invisible
-        if (opacity == 0) {
-            if (flags & RenderUpdateFlag::Color) invisible();
-            return;
-        }
+        if (ready(opacity == 0)) return;
 
         //Convert colorspace if it's not aligned.
         rasterConvertCS(source, surface->cs);
@@ -209,8 +214,8 @@ struct SwImageTask : SwTask
         image.stride = source->stride;
         image.channelSize = source->channelSize;
 
-        auto updateImage = flags & (RenderUpdateFlag::Image | RenderUpdateFlag::Clip | RenderUpdateFlag::Transform);
-        auto updateColor = flags & (RenderUpdateFlag::Color);
+        auto updateImage = flags[0] & (RenderUpdateFlag::Image | RenderUpdateFlag::Clip | RenderUpdateFlag::Transform);
+        auto updateColor = flags[0] & (RenderUpdateFlag::Color);
 
         //Invisible shape turned to visible by alpha.
         if ((updateImage || updateColor) && (opacity > 0)) {
@@ -859,7 +864,7 @@ void* SwRenderer::prepareCommon(SwTask* task, const Matrix& transform, const Arr
     task->dirtyRegion = &dirtyRegion;
     task->opacity = opacity;
     task->nodirty = dirtyRegion.deactivated();
-    task->flags = flags;
+    task->flags[0] = flags;
     task->valid = false;
 
     if (!task->pushed) {
