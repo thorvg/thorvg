@@ -361,9 +361,9 @@ uint32_t LottieLoader::gen(const char* slots, bool byDefault)
     auto idx = 0;
     auto custom = new LottieCustomSlot(djb2Encode(slots));
 
-    while (auto sid = parser.sid(idx == 0)) {
+    while (auto sid = djb2Encode(parser.sid(idx == 0))) {
         ARRAY_FOREACH(p, comp->slots) {
-            if (strcmp((*p)->sid, sid)) continue;  //find target
+            if ((*p)->sid != sid) continue;  //find target
             if (auto prop = parser.parse(*p)) {
                 custom->props.push({prop, *p});
             }

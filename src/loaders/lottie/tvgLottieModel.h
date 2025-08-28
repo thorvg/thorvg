@@ -1054,7 +1054,8 @@ struct LottieLayer : LottieGroup
 
 struct LottieSlot
 {
-    struct Pair {
+    struct Pair
+    {
         LottieObject* obj;
         LottieProperty* prop;
     };
@@ -1063,14 +1064,13 @@ struct LottieSlot
     void apply(LottieProperty* prop, bool byDefault = false);
     void reset();
 
-    LottieSlot(LottieLayer* layer, LottieObject* parent, char* sid, LottieObject* obj, LottieProperty::Type type) : context{layer, parent}, sid(sid), type(type)
+    LottieSlot(LottieLayer* layer, LottieObject* parent, unsigned long sid, LottieObject* obj, LottieProperty::Type type) : context{layer, parent}, sid(sid), type(type)
     {
-        pairs.push({obj});
+        pairs.push({obj, nullptr});
     }
 
     ~LottieSlot()
     {
-        tvg::free(sid);
         if (!overridden) return;
         ARRAY_FOREACH(pair, pairs) delete(pair->prop);
     }
@@ -1080,8 +1080,8 @@ struct LottieSlot
         LottieObject* parent;
     } context;
 
-    char* sid;
-    Array<Pair> pairs;    // Object-property pairs that can be overridden by this slot
+    unsigned long sid;    // djb2 encoded
+    Array<Pair> pairs;    // object-property pairs that can be overridden by this slot
     LottieProperty::Type type;
 
     bool overridden = false;
