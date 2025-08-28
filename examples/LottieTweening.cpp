@@ -116,6 +116,7 @@ struct UserExample : tvgexam::Example
         //Animation Controller
         lottie = tvg::LottieAnimation::gen();
         auto picture = lottie->picture();
+        picture->origin(0.5f, 0.5f);  //center origin
 
         //Background
         auto shape = tvg::Shape::gen();
@@ -127,21 +128,12 @@ struct UserExample : tvgexam::Example
         if (!tvgexam::verify(picture->load(EXAMPLE_DIR"/lottie/emoji.json"))) return false;
 
         //image scaling preserving its aspect ratio
-        float scale;
-        float shiftX = 0.0f, shiftY = 0.0f;
         float w2, h2;
         picture->size(&w2, &h2);
-
-        if (w2 > h2) {
-            scale = w / w2;
-            shiftY = (h - h2 * scale) * 0.5f;
-        } else {
-            scale = h / h2;
-            shiftX = (w - w2 * scale) * 0.5f;
-        }
-
+        auto scale = (w2 > h2) ? w / w2 : h / h2;
         picture->scale(scale);
-        picture->translate(shiftX, shiftY);
+        picture->translate(float(w) * 0.5f, float(h) * 0.5f);
+
 
         canvas->push(picture);
 

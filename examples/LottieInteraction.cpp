@@ -114,14 +114,7 @@ struct UserExample : tvgexam::Example
         //LottieAnimation Controller
         lottie = unique_ptr<tvg::LottieAnimation>(tvg::LottieAnimation::gen());
         auto picture = lottie->picture();
-
-        //Background
-        {
-            auto shape = tvg::Shape::gen();
-            shape->appendRect(0, 0, w, h);
-            shape->fill(0, 0, 0);
-            canvas->push(std::move(shape));
-        }
+        picture->origin(0.5f, 0.5f);
 
         //Lottie Boundary
         {
@@ -134,23 +127,11 @@ struct UserExample : tvgexam::Example
         if (!tvgexam::verify(picture->load(EXAMPLE_DIR"/lottie/extensions/spin.json"))) return false;
 
         //image scaling preserving its aspect ratio
-        float scale;
-        float shiftX = 0.0f, shiftY = 0.0f;
         float w2, h2;
         picture->size(&w2, &h2);
-
-        if (w2 > h2) {
-            scale = w / w2 * 0.8f;
-            shiftX = w2 * 0.2f;
-            shiftY = (h - h2 * scale) * 0.5f;
-        } else {
-            scale = h / h2 * 0.8f;
-            shiftX = (w - w2 * scale) * 0.5f;
-            shiftY = h2 * 0.2f;
-        }
-
+        auto scale = ((w2 > h2) ? w / w2 : h / h2) * 0.8f;
         picture->scale(scale);
-        picture->translate(shiftX, shiftY);
+        picture->translate(float(w) * 0.5f, float(h) * 0.5f);
 
         canvas->push(picture);
 

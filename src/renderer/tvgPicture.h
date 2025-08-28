@@ -63,6 +63,7 @@ struct PictureImpl : Picture
     ImageLoader* loader = nullptr;
     Paint* vector = nullptr;          //vector picture uses
     RenderSurface* bitmap = nullptr;  //bitmap picture uses
+    Point origin = {};
     float w = 0, h = 0;
     bool resizing = false;
 
@@ -86,12 +87,14 @@ struct PictureImpl : Picture
     {
         load();
 
+        auto pivot = Point{-origin.x * float(w), -origin.y * float(h)};
+
         if (bitmap) {
             //Overriding Transformation by the desired image size
             auto sx = w / loader->w;
             auto sy = h / loader->h;
             auto scale = sx < sy ? sx : sy;
-            auto m = transform * Matrix{scale, 0, 0, 0, scale, 0, 0, 0, 1};
+            auto m = transform * Matrix{scale, 0, pivot.x, 0, scale, pivot.y, 0, 0, 1};
             impl.rd = renderer->prepare(bitmap, impl.rd, m, clips, opacity, flag);
         } else if (vector) {
             if (resizing) {
@@ -100,6 +103,7 @@ struct PictureImpl : Picture
             }
             needComposition(opacity);
             vector->blend(pImpl->blendMethod); //propagate blend method to nested vector scene
+            translateR(const_cast<Matrix*>(&transform), pivot);
             return vector->pImpl->update(renderer, transform, clips, opacity, flag, false);
         }
         return true;

@@ -1515,6 +1515,50 @@ public:
     Result size(float* w, float* h) const noexcept;
 
     /**
+     * @brief Sets the normalized origin point of the Picture object.
+     *
+     * This method defines the origin point of the Picture using normalized coordinates.
+     * Unlike a typical pivot point used only for transformations, this origin affects both
+     * the transformation behavior and the actual rendering position of the Picture.
+     *
+     * The specified origin becomes the reference point for positioning the Picture on the canvas.
+     * For example, setting the origin to (0.5f, 0.5f) moves the visual center of the picture
+     * to the position specified by Paint::translate().
+     *
+     * The coordinates are given in a normalized range relative to the picture's bounds:
+     * - (0.0f, 0.0f): top-left corner
+     * - (0.5f, 0.5f): center
+     * - (1.0f, 1.0f): bottom-right corner
+     *
+     * @param[in] x The normalized x-coordinate of the origin point (range: 0.0f to 1.0f).
+     * @param[in] y The normalized y-coordinate of the origin point (range: 0.0f to 1.0f).
+     *
+     * @note This origin directly affects how the Picture is placed on the canvas when using
+     *       transformations such as translate(), rotate(), or scale().
+     *
+     * @see Paint::translate()
+     * @see Paint::rotate()
+     * @see Paint::scale()
+     *
+     * @since 1.0
+     */
+    Result origin(float x, float y) noexcept;
+
+    /**
+     * @brief Gets the normalized origin point of the Picture object.
+     *
+     * This method retrieves the current origin point of the Picture, expressed
+     * in normalized coordinates relative to the picture’s bounds.
+     *
+     * @param[out] x The normalized x-coordinate of the origin (range: 0.0f to 1.0f).
+     * @param[out] y The normalized y-coordinate of the origin (range: 0.0f to 1.0f).
+     *
+     * @see origin()
+     * @since 1.0
+     */
+    Result origin(float* x, float* y) const noexcept;
+
+    /**
      * @brief Loads raw image data in a specific format from a memory block of the given size.
      *
      * ThorVG efficiently caches the loaded data, using the provided @p data address as a key

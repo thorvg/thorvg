@@ -42,19 +42,11 @@ struct UserExample : tvgexam::Example
         auto picture = tvg::Picture::gen();
         if (!tvgexam::verify(picture->load(EXAMPLE_DIR"/svg/logo.svg"))) return false;
 
-        float scale;
-        float shiftX = 0.0f, shiftY = 0.0f;
         float w2, h2;
         picture->size(&w2, &h2);
-        if (w2 > h2) {
-            scale = w / w2;
-            shiftY = (h - h2 * scale) * 0.5f;
-        } else {
-            scale = h / h2;
-            shiftX = (w - w2 * scale) * 0.5f;
-        }
-        picture->translate(shiftX, shiftY);
-        picture->scale(scale);
+        picture->origin(0.5f, 0.5f);
+        picture->scale((w2 > h2) ? w / w2 : h / h2);
+        picture->translate(w / 2, h / 2);
 
         canvas->push(picture);
 
