@@ -103,3 +103,61 @@ TEST_CASE("Scene Clear And Reuse Shape", "[tvgScene]")
     }
     REQUIRE(Initializer::term() == Result::Success);
 }
+
+TEST_CASE("Scene Effects", "[tvgScene]")
+{
+    REQUIRE(Initializer::init() == Result::Success);
+    {
+        auto canvas = unique_ptr<SwCanvas>(SwCanvas::gen());
+        REQUIRE(canvas);
+
+        uint32_t buffer[100*100];
+        REQUIRE(canvas->target(buffer, 100, 100, 100, ColorSpace::ARGB8888) == Result::Success);
+
+        auto shape = Shape::gen();
+        REQUIRE(shape);
+        REQUIRE(shape->appendCircle(50, 50, 30, 30) == Result::Success);
+        REQUIRE(shape->fill(0, 255, 0, 255) == Result::Success);
+
+        auto scene = Scene::gen();
+        REQUIRE(scene);
+        REQUIRE(scene->push(shape) == Result::Success);
+
+        auto picture = tvg::Picture::gen();
+        picture->load(TEST_DIR"/tiger.svg");
+
+        scene->push(picture);
+        REQUIRE(canvas->push(scene) == Result::Success);
+
+        REQUIRE(scene->push(SceneEffect::ClearAll) == Result::Success);
+        REQUIRE(scene->push(SceneEffect::GaussianBlur, 1.5, 0, 0, 75) == Result::Success);
+        REQUIRE(canvas->update() == Result::Success);
+        REQUIRE(canvas->draw() == Result::Success);
+        REQUIRE(canvas->sync() == Result::Success);
+
+        REQUIRE(scene->push(SceneEffect::ClearAll) == Result::Success);
+        REQUIRE(scene->push(SceneEffect::DropShadow, 128, 128, 128, 200, 45.0, 5.0, 2.0, 60) == Result::Success);
+        REQUIRE(canvas->update() == Result::Success);
+        REQUIRE(canvas->draw() == Result::Success);
+        REQUIRE(canvas->sync() == Result::Success);
+
+        REQUIRE(scene->push(SceneEffect::ClearAll) == Result::Success);
+        REQUIRE(scene->push(SceneEffect::Fill, 255, 0, 0, 128) == Result::Success);
+        REQUIRE(canvas->update() == Result::Success);
+        REQUIRE(canvas->draw() == Result::Success);
+        REQUIRE(canvas->sync() == Result::Success);
+
+        REQUIRE(scene->push(SceneEffect::ClearAll) == Result::Success);
+        REQUIRE(scene->push(SceneEffect::Tint, 0, 0, 0, 255, 255, 255, 50.0) == Result::Success);
+        REQUIRE(canvas->update() == Result::Success);
+        REQUIRE(canvas->draw() == Result::Success);
+        REQUIRE(canvas->sync() == Result::Success);
+
+        REQUIRE(scene->push(SceneEffect::ClearAll) == Result::Success);
+        REQUIRE(scene->push(SceneEffect::Tritone, 0, 0, 0, 128, 128, 128, 255, 255, 255, 128) == Result::Success);
+        REQUIRE(canvas->update() == Result::Success);
+        REQUIRE(canvas->draw() == Result::Success);
+        REQUIRE(canvas->sync() == Result::Success);
+    }
+    REQUIRE(Initializer::term() == Result::Success);
+}
