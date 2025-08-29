@@ -338,7 +338,10 @@ bool WgRenderer::clear()
 
 bool WgRenderer::sync()
 {
-    if (mContext.invalid()) return false;
+    if (mContext.invalid()) {
+        TVGLOG("WG_RENDERER", "WebGPU context not ready during sync");
+        return true;
+    }
 
     disposeObjects();
 
