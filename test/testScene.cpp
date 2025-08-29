@@ -129,15 +129,33 @@ TEST_CASE("Scene Effects", "[tvgScene]")
         scene->push(picture);
         REQUIRE(canvas->push(scene) == Result::Success);
 
-        REQUIRE(scene->push(SceneEffect::Tint, 255, 255, 255, 0, 0, 0, 50.0) == Result::Success);
-
         REQUIRE(scene->push(SceneEffect::ClearAll) == Result::Success);
         REQUIRE(scene->push(SceneEffect::GaussianBlur, 1.5, 0, 0, 75) == Result::Success);
-        REQUIRE(scene->push(SceneEffect::DropShadow, 128, 128, 128, 200, 45.0, 5.0, 2.0, 60) == Result::Success);
-        REQUIRE(scene->push(SceneEffect::Fill, 255, 0, 0, 128) == Result::Success);
-        REQUIRE(scene->push(SceneEffect::Tint, 0, 0, 0, 255, 255, 255, 50.0) == Result::Success);
-        REQUIRE(scene->push(SceneEffect::Tritone, 0, 0, 0, 128, 128, 128, 255, 255, 255, 128) == Result::Success);
+        REQUIRE(canvas->update() == Result::Success);
+        REQUIRE(canvas->draw() == Result::Success);
+        REQUIRE(canvas->sync() == Result::Success);
 
+        REQUIRE(scene->push(SceneEffect::ClearAll) == Result::Success);
+        REQUIRE(scene->push(SceneEffect::DropShadow, 128, 128, 128, 200, 45.0, 5.0, 2.0, 60) == Result::Success);
+        REQUIRE(canvas->update() == Result::Success);
+        REQUIRE(canvas->draw() == Result::Success);
+        REQUIRE(canvas->sync() == Result::Success);
+
+        REQUIRE(scene->push(SceneEffect::ClearAll) == Result::Success);
+        REQUIRE(scene->push(SceneEffect::Fill, 255, 0, 0, 128) == Result::Success);
+        REQUIRE(canvas->update() == Result::Success);
+        REQUIRE(canvas->draw() == Result::Success);
+        REQUIRE(canvas->sync() == Result::Success);
+
+        REQUIRE(scene->push(SceneEffect::ClearAll) == Result::Success);
+        REQUIRE(scene->push(SceneEffect::Tint, 0, 0, 0, 255, 255, 255, 50.0) == Result::Success);
+        REQUIRE(canvas->update() == Result::Success);
+        REQUIRE(canvas->draw() == Result::Success);
+        REQUIRE(canvas->sync() == Result::Success);
+
+        REQUIRE(scene->push(SceneEffect::ClearAll) == Result::Success);
+        REQUIRE(scene->push(SceneEffect::Tritone, 0, 0, 0, 128, 128, 128, 255, 255, 255, 128) == Result::Success);
+        REQUIRE(canvas->update() == Result::Success);
         REQUIRE(canvas->draw() == Result::Success);
         REQUIRE(canvas->sync() == Result::Success);
     }
