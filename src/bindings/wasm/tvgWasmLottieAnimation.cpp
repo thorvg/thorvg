@@ -304,7 +304,7 @@ public:
         return animation->curFrame();
     }
 
-    bool load(string data, string mimetype, int width, int height, string rpath = "")
+    bool load(string data, string mimetype, int width, int height)
     {
         errorMsg = NoError;
 
@@ -326,7 +326,7 @@ public:
             filetype = "lottie+json";
         }
 
-        if (animation->picture()->load(data.c_str(), data.size(), filetype.c_str(), rpath.c_str(), false) != Result::Success) {
+        if (animation->picture()->load(data.c_str(), data.size(), filetype.c_str()) != Result::Success) {
             errorMsg = "load() fail";
             return false;
         }
