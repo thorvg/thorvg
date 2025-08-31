@@ -1574,7 +1574,7 @@ public:
      *
      * @since 0.9
      */
-    Result load(uint32_t* data, uint32_t w, uint32_t h, ColorSpace cs, bool copy = false) noexcept;
+    Result load(const uint32_t* data, uint32_t w, uint32_t h, ColorSpace cs, bool copy = false) noexcept;
 
     /**
      * @brief Retrieve a paint object from the Picture scene by its Unique ID.
