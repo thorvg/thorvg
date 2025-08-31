@@ -56,7 +56,7 @@ Result Picture::load(const char* data, uint32_t size, const char* mimeType, cons
 }
 
 
-Result Picture::load(uint32_t* data, uint32_t w, uint32_t h, ColorSpace cs, bool copy) noexcept
+Result Picture::load(const uint32_t* data, uint32_t w, uint32_t h, ColorSpace cs, bool copy) noexcept
 {
     return PICTURE(this)->load(data, w, h, cs, copy);
 }
