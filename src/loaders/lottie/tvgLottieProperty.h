@@ -828,9 +828,9 @@ struct LottieColorStop : LottieProperty
                     *value.input = *rhs.value.input;
                 }
             }
-            populated = rhs.populated;
-            count = rhs.count;
         }
+        populated = rhs.populated;
+        count = rhs.count;
     }
 
     void prepare() {}
