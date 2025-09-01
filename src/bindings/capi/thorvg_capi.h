@@ -121,6 +121,27 @@ typedef enum {
 
 
 /**
+ * @brief Enumeration to specify rendering engine behavior.
+ *
+ * @note The availability or behavior of @c TVG_ENGINE_OPTION_SMART_RENDER may vary depending on platform or backend support.
+ *       It attempts to optimize rendering performance by updating only the regions  of the canvas that have
+ *       changed between frames (partial redraw). This can be highly effective in scenarios  where most of the
+ *       canvas remains static and only small portions are updated—such as simple animations or GUI interactions.
+ *       However, in complex scenes where a large portion of the canvas changes frequently (e.g., full-screen animations
+ *       or heavy object movements), the overhead of tracking changes and managing update regions may outweigh the benefits,
+ *       resulting in decreased performance compared to the default rendering mode. Thus, it is recommended to benchmark
+ *       both modes in your specific use case to determine the optimal setting.
+ *
+ * @note Experimental API
+ */
+typedef enum {
+    TVG_ENGINE_OPTION_NONE = 0,                   /**< No engine options are enabled. This may be used to explicitly disable all optional behaviors. */
+    TVG_ENGINE_OPTION_DEFAULT = 1 << 0,           /**< Uses the default rendering mode. */
+    TVG_ENGINE_OPTION_SMART_RENDER = 1 << 1       /**< Enables automatic partial (smart) rendering optimizations. */
+} Tvg_Engine_Option;
+
+
+/**
  * @brief Enumeration indicating the method used in the masking of two objects - the target and the source.
  *
  * @ingroup ThorVGCapi_Paint
@@ -330,7 +351,7 @@ TVG_API Tvg_Result tvg_engine_init(unsigned threads);
 * @note The initializer maintains a reference count for safe repeated use. Only the final call to tvg_engine_term() will fully shut down the engine.
 * @see tvg_engine_init()
 */
-TVG_API Tvg_Result tvg_engine_term();
+TVG_API Tvg_Result tvg_engine_term(void);
 
 
 /**
@@ -375,12 +396,19 @@ TVG_API Tvg_Result tvg_engine_version(uint32_t* major, uint32_t* minor, uint32_t
 /* SwCanvas API                                                         */
 /************************************************************************/
 
-/*!
-* @brief Creates a Canvas object.
-*
-* @return A new Tvg_Canvas object.
-*/
-TVG_API Tvg_Canvas* tvg_swcanvas_create(void);
+/**
+ * @brief Creates a new SwCanvas object with optional rendering engine settings.
+ *
+ * This method generates a software canvas instance that can be used for drawing vector graphics.
+ * It accepts an optional parameter @p op to choose between different rendering engine behaviors.
+ *
+ * @param[in] op The rendering engine option.
+ *
+ * @return A new Tvg_Canvas object.
+ *
+ * @see enum Tvg_Engine_Option
+ */
+TVG_API Tvg_Canvas* tvg_swcanvas_create(Tvg_Engine_Option op);
 
 
 /*!
@@ -2718,7 +2746,7 @@ TVG_API Tvg_Result tvg_animation_del(Tvg_Animation* animation);
 *
 * @note Experimental API
 */
-TVG_API Tvg_Accessor* tvg_accessor_new();
+TVG_API Tvg_Accessor* tvg_accessor_new(void);
 
 
 /*!

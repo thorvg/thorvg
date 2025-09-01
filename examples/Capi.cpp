@@ -287,7 +287,7 @@ int main(int argc, char **argv)
     SDL_Surface* surface = SDL_GetWindowSurface(window);
 
     //create the canvas
-    canvas = tvg_swcanvas_create();
+    canvas = tvg_swcanvas_create(TVG_ENGINE_OPTION_DEFAULT);
     tvg_swcanvas_set_target(canvas, (uint32_t*)surface->pixels, surface->w, surface->pitch / 4, surface->h, TVG_COLORSPACE_ARGB8888);
 
     contents();

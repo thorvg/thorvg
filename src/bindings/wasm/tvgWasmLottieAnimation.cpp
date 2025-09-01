@@ -67,7 +67,7 @@ struct TvgSwEngine : TvgEngineMethod
     {
         Initializer::init();
         loadFont();
-        return SwCanvas::gen();
+        return SwCanvas::gen(EngineOption::None);
     }
 
     void resize(Canvas* canvas, int w, int h) override

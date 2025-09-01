@@ -321,7 +321,7 @@ struct SwWindow : Window
 
         window = SDL_CreateWindow("ThorVG Example (Software)", SDL_WINDOWPOS_UNDEFINED, SDL_WINDOWPOS_UNDEFINED, width, height, SDL_WINDOW_HIDDEN | SDL_WINDOW_RESIZABLE);
 
-        //Create a Canvas
+        //Create a Canvas. Use Smart Rendering by default.
         canvas = tvg::SwCanvas::gen();
         if (!canvas) {
             cout << "SwCanvas is not supported. Did you enable the SwEngine?" << endl;

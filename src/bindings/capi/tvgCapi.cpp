@@ -62,9 +62,9 @@ TVG_API Tvg_Result tvg_engine_version(uint32_t* major, uint32_t* minor, uint32_t
 /* Canvas API                                                           */
 /************************************************************************/
 
-TVG_API Tvg_Canvas* tvg_swcanvas_create()
+TVG_API Tvg_Canvas* tvg_swcanvas_create(Tvg_Engine_Option op)
 {
-    return (Tvg_Canvas*) SwCanvas::gen();
+    return (Tvg_Canvas*) SwCanvas::gen(static_cast<EngineOption>(op));
 }
 
 

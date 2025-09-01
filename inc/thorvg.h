@@ -109,6 +109,28 @@ enum class ColorSpace : uint8_t
 
 
 /**
+ * @brief Enumeration to specify rendering engine behavior.
+ *
+ * @note The availability or behavior of @c SmartRender may vary depending on platform or backend support.
+ *       It attempts to optimize rendering performance by updating only the regions  of the canvas that have
+ *       changed between frames (partial redraw). This can be highly effective in scenarios  where most of the
+ *       canvas remains static and only small portions are updated—such as simple animations or GUI interactions.
+ *       However, in complex scenes where a large portion of the canvas changes frequently (e.g., full-screen animations
+ *       or heavy object movements), the overhead of tracking changes and managing update regions may outweigh the benefits,
+ *       resulting in decreased performance compared to the default rendering mode. Thus, it is recommended to benchmark
+ *       both modes in your specific use case to determine the optimal setting.
+ *
+ * @note Experimental API
+ */
+enum class EngineOption : uint8_t
+{
+    None = 0,                   /**< No engine options are enabled. This may be used to explicitly disable all optional behaviors. */
+    Default = 1 << 0,           /**< Uses the default rendering mode. */
+    SmartRender = 1 << 1        /**< Enables automatic partial (smart) rendering optimizations. */
+};
+
+
+/**
  * @brief Enumeration specifying the values of the path commands accepted by ThorVG.
  */
 enum class PathCommand : uint8_t
@@ -2001,10 +2023,18 @@ public:
     Result target(uint32_t* buffer, uint32_t stride, uint32_t w, uint32_t h, ColorSpace cs) noexcept;
 
     /**
-     * @brief Creates a new SwCanvas object.
+     * @brief Creates a new SwCanvas object with optional rendering engine settings.
+     *
+     * This method generates a software canvas instance that can be used for drawing vector graphics.
+     * It accepts an optional parameter @p op to choose between different rendering engine behaviors.
+     *
+     * @param[in] op The rendering engine option. Default is @c EngineOption::Default.
+     *
      * @return A new SwCanvas object.
+     *
+     * @see enum EngineOption
      */
-    static SwCanvas* gen() noexcept;
+    static SwCanvas* gen(EngineOption op = EngineOption::Default) noexcept;
 
     _TVG_DECLARE_PRIVATE(SwCanvas);
 };
