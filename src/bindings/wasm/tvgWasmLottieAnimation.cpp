@@ -271,9 +271,6 @@ public:
             errorMsg = "Unsupported!";
             return;
         }
-
-        animation = Animation::gen();
-        if (!animation) errorMsg = "Invalid animation";
     }
 
     string error()
@@ -315,10 +312,17 @@ public:
             return false;
         }
 
-        canvas->remove();
+        if (animation) {
+            canvas->remove();
+            delete(animation);
+        }
 
-        delete(animation);
         animation = Animation::gen();
+        if (!animation) {
+            errorMsg = "Invalid animation";
+            return false;
+        }
+
         animation->picture()->origin(0.5f, 0.5f);  //center-aligned
 
         string filetype = mimetype;
