@@ -118,6 +118,7 @@ ThorVG is actively under development, continuously expanding its support for ess
     - [Lottie Creator](#lottie-creator)
     - [LVGL](#lvgl)
     - [Tizen](#tizen)
+  - [Interactive App](#interactive-app)
   - [References](#references)
   - [Documentation](#documentation)
   - [Examples](#examples)    
@@ -429,6 +430,20 @@ ThorVG has been integrated into the [Tizen](https://www.tizen.org) platform as t
 
 <p align="center">
   <img width="798" height="auto" src="https://github.com/thorvg/thorvg/blob/main/res/example_tizen.png">
+</p>
+
+[Back to contents](#contents)
+<br />
+<br />
+## Interactive App
+Check out [Thor Janitor](https://github.com/thorvg/thorvg.janitor), an interactive demo game fully rendered using ThorVG. It renders tens of thousands of objects in real-time with effects like DropShadow and Blur, running stably at 120+ FPS on CPU software rendering.
+
+<p align="center">
+  <img width="800" height="auto" src="https://github.com/user-attachments/assets/8a4bd16a-bb72-4b41-b007-eadc2220d1eb"/>
+</p>
+
+<p align="center">
+  <strong><a href="https://youtu.be/jdnnzmtHy9k">Watch the full video!</a></strong>
 </p>
 
 [Back to contents](#contents)
