@@ -21,6 +21,25 @@
  */
 
 #include "tvgCanvas.h"
+#include "tvgTaskScheduler.h"
+#include "tvgLoadModule.h"
+
+#ifdef THORVG_SW_RASTER_SUPPORT
+    #include "tvgSwRenderer.h"
+#endif
+
+#ifdef THORVG_GL_RASTER_SUPPORT
+    #include "tvgGlRenderer.h"
+#endif
+
+#ifdef THORVG_WG_RASTER_SUPPORT
+    #include "tvgWgRenderer.h"
+#endif
+
+
+/************************************************************************/
+/* Canvas Class Implementation                                          */
+/************************************************************************/
 
 Canvas::Canvas():pImpl(new Impl)
 {
@@ -80,4 +99,177 @@ Result Canvas::viewport(int32_t x, int32_t y, int32_t w, int32_t h) noexcept
 Result Canvas::sync() noexcept
 {
     return pImpl->sync();
+}
+
+
+/************************************************************************/
+/* SwCanvas Class Implementation                                        */
+/************************************************************************/
+
+SwCanvas::SwCanvas() = default;
+
+SwCanvas::~SwCanvas()
+{
+#ifdef THORVG_SW_RASTER_SUPPORT
+    SwRenderer::term();
+#endif
+}
+
+
+Result SwCanvas::target(uint32_t* buffer, uint32_t stride, uint32_t w, uint32_t h, ColorSpace cs) noexcept
+{
+#ifdef THORVG_SW_RASTER_SUPPORT
+    if (cs == ColorSpace::Unknown) return Result::InvalidArguments;
+    if (cs == ColorSpace::Grayscale8) return Result::NonSupport;
+
+    if (pImpl->status != Status::Damaged && pImpl->status != Status::Synced) {
+        return Result::InsufficientCondition;
+    }
+
+    //We know renderer type, avoid dynamic_cast for performance.
+    auto renderer = static_cast<SwRenderer*>(pImpl->renderer);
+    if (!renderer) return Result::MemoryCorruption;
+
+    if (!renderer->target(buffer, stride, w, h, cs)) return Result::InvalidArguments;
+    pImpl->vport = {{0, 0}, {(int32_t)w, (int32_t)h}};
+    renderer->viewport(pImpl->vport);
+
+    //FIXME: The value must be associated with an individual canvas instance.
+    ImageLoader::cs = static_cast<ColorSpace>(cs);
+
+    //Paints must be updated again with this new target.
+    pImpl->status = Status::Damaged;
+
+    return Result::Success;
+#endif
+    return Result::NonSupport;
+}
+
+
+SwCanvas* SwCanvas::gen(EngineOption op) noexcept
+{
+#ifdef THORVG_SW_RASTER_SUPPORT
+    if (engineInit > 0) {
+        auto renderer = new SwRenderer(TaskScheduler::threads(), op);
+        renderer->ref();
+        auto ret = new SwCanvas;
+        ret->pImpl->renderer = renderer;
+        return ret;
+    }
+#endif
+    return nullptr;
+}
+
+
+/************************************************************************/
+/* GlCanvas Class Implementation                                        */
+/************************************************************************/
+
+GlCanvas::GlCanvas() = default;
+
+GlCanvas::~GlCanvas()
+{
+#ifdef THORVG_GL_RASTER_SUPPORT
+    GlRenderer::term();
+#endif
+}
+
+
+Result GlCanvas::target(void* context, int32_t id, uint32_t w, uint32_t h, ColorSpace cs) noexcept
+{
+#ifdef THORVG_GL_RASTER_SUPPORT
+    if (cs != ColorSpace::ABGR8888S) return Result::NonSupport;
+
+    if (pImpl->status != Status::Damaged && pImpl->status != Status::Synced) {
+        return Result::InsufficientCondition;
+    }
+
+    //We know renderer type, avoid dynamic_cast for performance.
+    auto renderer = static_cast<GlRenderer*>(pImpl->renderer);
+    if (!renderer) return Result::MemoryCorruption;
+
+    if (!renderer->target(context, id, w, h)) return Result::Unknown;
+    pImpl->vport = {{0, 0}, {(int32_t)w, (int32_t)h}};
+    renderer->viewport(pImpl->vport);
+
+    //Paints must be updated again with this new target.
+    pImpl->status = Status::Damaged;
+
+    return Result::Success;
+#endif
+    return Result::NonSupport;
+}
+
+
+GlCanvas* GlCanvas::gen() noexcept
+{
+#ifdef THORVG_GL_RASTER_SUPPORT
+    if (engineInit > 0) {
+        auto renderer = GlRenderer::gen(TaskScheduler::threads());
+        if (!renderer) return nullptr;
+        renderer->ref();
+        auto ret = new GlCanvas;
+        ret->pImpl->renderer = renderer;
+        return ret;
+    }
+#endif
+    return nullptr;
+}
+
+
+/************************************************************************/
+/* WgCanvas Class Implementation                                        */
+/************************************************************************/
+
+WgCanvas::WgCanvas() = default;
+
+WgCanvas::~WgCanvas()
+{
+#ifdef THORVG_WG_RASTER_SUPPORT
+    auto renderer = static_cast<WgRenderer*>(pImpl->renderer);
+    renderer->target(nullptr, nullptr, nullptr, 0, 0);
+
+    WgRenderer::term();
+#endif
+}
+
+
+Result WgCanvas::target(void* device, void* instance, void* target, uint32_t w, uint32_t h, ColorSpace cs, int type) noexcept
+{
+#ifdef THORVG_WG_RASTER_SUPPORT
+    if (cs != ColorSpace::ABGR8888S) return Result::NonSupport;
+
+    if (pImpl->status != Status::Damaged && pImpl->status != Status::Synced) {
+        return Result::InsufficientCondition;
+    }
+
+    //We know renderer type, avoid dynamic_cast for performance.
+    auto renderer = static_cast<WgRenderer*>(pImpl->renderer);
+    if (!renderer) return Result::MemoryCorruption;
+
+    if (!renderer->target((WGPUDevice)device, (WGPUInstance)instance, target, w, h, type)) return Result::Unknown;
+    pImpl->vport = {{0, 0}, {(int32_t)w, (int32_t)h}};
+    renderer->viewport(pImpl->vport);
+
+    //Paints must be updated again with this new target.
+    pImpl->status = Status::Damaged;
+
+    return Result::Success;
+#endif
+    return Result::NonSupport;
+}
+
+
+WgCanvas* WgCanvas::gen() noexcept
+{
+#ifdef THORVG_WG_RASTER_SUPPORT
+    if (engineInit > 0) {
+        auto renderer = WgRenderer::gen(TaskScheduler::threads());
+        renderer->ref();
+        auto ret = new WgCanvas;
+        ret->pImpl->renderer = renderer;
+        return ret;
+    }
+#endif
+    return nullptr;
 }
