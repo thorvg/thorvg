@@ -257,21 +257,6 @@ struct SwImageTask : SwTask
 /* External Class Implementation                                        */
 /************************************************************************/
 
-SwRenderer::SwRenderer()
-{
-    if (TaskScheduler::onthread()) {
-        TVGLOG("SW_RENDERER", "Running on a non-dominant thread!, Renderer(%p)", this);
-        mpool = mpoolInit(threadsCnt);
-        sharedMpool = false;
-    } else {
-        mpool = globalMpool;
-        sharedMpool = true;
-    }
-
-    ++rendererCnt;
-}
-
-
 SwRenderer::~SwRenderer()
 {
     clearCompositors();
@@ -925,7 +910,7 @@ bool SwRenderer::term()
 }
 
 
-SwRenderer* SwRenderer::gen(uint32_t threads)
+SwRenderer::SwRenderer(uint32_t threads, EngineOption op)
 {
     //initialize engine
     if (rendererCnt == -1) {
@@ -938,5 +923,16 @@ SwRenderer* SwRenderer::gen(uint32_t threads)
         rendererCnt = 0;
     }
 
-    return new SwRenderer;
+    if (TaskScheduler::onthread()) {
+        TVGLOG("SW_RENDERER", "Running on a non-dominant thread!, Renderer(%p)", this);
+        mpool = mpoolInit(threadsCnt);
+        sharedMpool = false;
+    } else {
+        mpool = globalMpool;
+        sharedMpool = true;
+    }
+
+    if (op == EngineOption::None) dirtyRegion.support = false;
+
+    ++rendererCnt;
 }

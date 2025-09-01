@@ -160,6 +160,7 @@ struct RenderRegion
     {
     public:
         static constexpr const int PARTITIONING = 16;   //must be N*N
+        bool support = true;
 
         void init(uint32_t w, uint32_t h);
         void commit();
@@ -175,7 +176,7 @@ struct RenderRegion
 
         bool deactivated()
         {
-            return disabled;
+            return (!support || disabled);
         }
 
         const RenderRegion& partition(int idx)
@@ -206,6 +207,7 @@ struct RenderRegion
     struct RenderDirtyRegion
     {
         static constexpr const int PARTITIONING = 16;   //must be N*N
+        bool support = true;
 
         void init(uint32_t w, uint32_t h) {}
         void commit() {}

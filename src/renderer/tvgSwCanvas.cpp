@@ -69,11 +69,11 @@ Result SwCanvas::target(uint32_t* buffer, uint32_t stride, uint32_t w, uint32_t 
 }
 
 
-SwCanvas* SwCanvas::gen() noexcept
+SwCanvas* SwCanvas::gen(EngineOption op) noexcept
 {
 #ifdef THORVG_SW_RASTER_SUPPORT
     if (engineInit > 0) {
-        auto renderer = SwRenderer::gen(TaskScheduler::threads());
+        auto renderer = new SwRenderer(TaskScheduler::threads(), op);
         renderer->ref();
         auto ret = new SwCanvas;
         ret->pImpl->renderer = renderer;
