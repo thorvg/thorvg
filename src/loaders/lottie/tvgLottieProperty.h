@@ -675,6 +675,8 @@ struct LottieColorStop : LottieProperty
 
         ARRAY_FOREACH(p, *frames) {
             tvg::free((*p).value.data);
+            delete((*p).value.input);
+            (*p).value.input = nullptr;
         }
         tvg::free(frames->data);
         tvg::free(frames);
@@ -812,6 +814,14 @@ struct LottieColorStop : LottieProperty
             } else {
                 frames = tvg::calloc<Array<LottieScalarFrame<ColorStop>>*>(1, sizeof(Array<LottieScalarFrame<ColorStop>>));
                 *frames = *rhs.frames;
+
+                for (uint32_t i = 0; i < rhs.frames->count; ++i) {
+                    auto& srcInput = (*rhs.frames)[i].value.input;
+                    if (srcInput) {
+                        auto& dstInput = (*frames)[i].value.input;
+                        dstInput = new Array<float>(*srcInput);
+                    }
+                }
             }
         } else {
             frames = nullptr;
