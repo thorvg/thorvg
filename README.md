@@ -104,6 +104,7 @@ ThorVG is actively under development, continuously expanding its support for ess
   - [Installation](#installation)
     - [Build and Install](#build-and-install)
     - [Build with Visual Studio](#build-with-visual-studio)
+    - [Build with Xcode](#build-with-xcode)
     - [Install with vcpkg](#install-with-vcpkg)
     - [Install with Conan](#install-with-conan)
     - [Install with MSYS2](#install-with-msys2)
@@ -154,9 +155,15 @@ Regardless of the installation, all build results (symbols, executable) are gene
 Note that some systems might include ThorVG package as a default component. In that case, you can skip this manual installation.</br>
 
 ### Build with Visual Studio
-If you want to create Visual Studio project files, use the command --backend=vs. The resulting solution file (thorvg.sln) will be located in the build folder.
+If you want to create Visual Studio project files, use the command `--backend=vs`. The resulting solution file `thorvg.sln` will be located in the build folder.
 ```
 meson setup builddir --backend=vs
+```
+
+### Build with Xcode
+If you want to create Xcode project files, use the command `--backend=xcode`. The resulting solution file `thorvg.xcodeproj` will be located in the build folder.
+```
+meson setup builddir --backend=xcode
 ```
 
 ### Install with vcpkg
