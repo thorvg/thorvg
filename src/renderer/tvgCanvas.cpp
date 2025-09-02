@@ -122,7 +122,7 @@ Result SwCanvas::target(uint32_t* buffer, uint32_t stride, uint32_t w, uint32_t 
     if (cs == ColorSpace::Unknown) return Result::InvalidArguments;
     if (cs == ColorSpace::Grayscale8) return Result::NonSupport;
 
-    if (pImpl->status != Status::Damaged && pImpl->status != Status::Synced) {
+    if (pImpl->status == Status::Updating || pImpl->status == Status::Drawing) {
         return Result::InsufficientCondition;
     }
 
@@ -180,7 +180,7 @@ Result GlCanvas::target(void* context, int32_t id, uint32_t w, uint32_t h, Color
 #ifdef THORVG_GL_RASTER_SUPPORT
     if (cs != ColorSpace::ABGR8888S) return Result::NonSupport;
 
-    if (pImpl->status != Status::Damaged && pImpl->status != Status::Synced) {
+    if (pImpl->status == Status::Updating || pImpl->status == Status::Drawing) {
         return Result::InsufficientCondition;
     }
 
@@ -239,7 +239,7 @@ Result WgCanvas::target(void* device, void* instance, void* target, uint32_t w, 
 #ifdef THORVG_WG_RASTER_SUPPORT
     if (cs != ColorSpace::ABGR8888S) return Result::NonSupport;
 
-    if (pImpl->status != Status::Damaged && pImpl->status != Status::Synced) {
+    if (pImpl->status == Status::Updating || pImpl->status == Status::Drawing) {
         return Result::InsufficientCondition;
     }
 
