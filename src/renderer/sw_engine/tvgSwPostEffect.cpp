@@ -266,17 +266,25 @@ static void _dropShadowFilter(uint32_t* dst, uint32_t* src, int stride, int w, i
     }
 }
 
-static void _shift(uint32_t** dst, uint32_t** src, int dstride, int sstride, int wmax, int hmax, const RenderRegion& bbox, const SwPoint& offset, SwSize& size)
+static void _shift(uint32_t** dst, uint32_t** src, int dstride, int sstride, int wmax, int hmax, const RenderRegion& bbox, SwPoint offset, SwSize& size)
 {
     size.w = bbox.max.x - bbox.min.x;
     size.h = bbox.max.y - bbox.min.y;
 
     //shift
-    if (bbox.min.x + offset.x < 0) *src -= offset.x;
-    else *dst += offset.x;
+    if (bbox.min.x + offset.x < 0) {
+        offset.x *= -1;
+        *src += offset.x;
+    } else {
+        *dst += offset.x;
+    }
 
-    if (bbox.min.y + offset.y < 0) *src -= (offset.y * sstride);
-    else *dst += (offset.y * dstride);
+    if (bbox.min.y + offset.y < 0) {
+        offset.y *= -1;
+        *src += (offset.y * sstride);
+    } else {
+        *dst += (offset.y * dstride);
+    }
 
     if (size.w + bbox.min.x + offset.x > wmax) size.w -= (size.w + bbox.min.x + offset.x - wmax);
     if (size.h + bbox.min.y + offset.y > hmax) size.h -= (size.h + bbox.min.y + offset.y - hmax);
