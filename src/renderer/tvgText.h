@@ -122,6 +122,19 @@ struct TextImpl : Text
         return false;
     }
 
+    void arrange(Matrix& m, float scale)
+    {
+        //alignment
+        m.e13 -= (metrics.width / scale) * align.x;
+        m.e23 -= ((metrics.ascent - metrics.descent) / scale) * align.y;
+
+        //layouting
+        if (box) {
+            m.e13 += box->size.x * align.x;
+            m.e23 += box->size.y * align.y;
+        }
+    }
+
     void layout(float w, float h)
     {
         if (!box) box = tvg::calloc<TextBox*>(1, sizeof(TextBox));
@@ -134,15 +147,7 @@ struct TextImpl : Text
         auto scale = 1.0f / load();
         if (tvg::zero(scale)) return false;
 
-        //alignment
-        shape->transform().e13 -= (metrics.width / scale) * align.x;
-        shape->transform().e23 -= ((metrics.ascent - metrics.descent) / scale) * align.y;
-
-        //layouting
-        if (box) {
-            shape->transform().e13 += box->size.x * align.x;
-            shape->transform().e23 += box->size.y * align.y;
-        }
+        arrange(const_cast<Matrix&>(transform), scale);
 
         //transform the gradient coordinates based on the final scaled font.
         auto fill = SHAPE(shape)->rs.fill;
@@ -172,8 +177,10 @@ struct TextImpl : Text
 
     bool bounds(Point* pt4, const Matrix& m, bool obb)
     {
-        if (load() == 0.0f) return false;
-        return PAINT(shape)->bounds(pt4, &m, obb);
+        auto scale = 1.0f / load();
+        if (tvg::zero(scale)) return false;
+        arrange(const_cast<Matrix&>(m), scale);
+        return PAINT(shape)->bounds(pt4, &const_cast<Matrix&>(m), obb);
     }
 
     Paint* duplicate(Paint* ret)
