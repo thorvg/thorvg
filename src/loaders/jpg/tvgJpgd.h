@@ -29,7 +29,7 @@ class jpeg_decoder;
 
 jpeg_decoder* jpgdHeader(const char* data, int size, int* width, int* height);
 jpeg_decoder* jpgdHeader(const char* filename, int* width, int* height);
-unsigned char* jpgdDecompress(jpeg_decoder* decoder);
+unsigned char* jpgdDecompress(jpeg_decoder* decoder, ColorSpace cs);
 void jpgdDelete(jpeg_decoder* decoder);
 
 #endif //_TVG_JPGD_H_
