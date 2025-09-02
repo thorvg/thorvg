@@ -19,18 +19,6 @@
  * OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
  * SOFTWARE.
  */
-
-// jpgd.cpp - C++ class for JPEG decompression.
-// Public domain, Rich Geldreich <richgel99@gmail.com>
-// Alex Evans: Linear memory allocator (taken from jpge.h).
-// v1.04, May. 19, 2012: Code tweaks to fix VS2008 static code analysis warnings (all looked harmless)
-//
-// Supports progressive and baseline sequential JPEG image files, and the most common chroma subsampling factors: Y, H1V1, H2V1, H1V2, and H2V2.
-//
-// Chroma upsampling quality: H2V2 is upsampled in the frequency domain, H2V1 and H1V2 are upsampled using point sampling.
-// Chroma upsampling reference: "Fast Scheme for Image Size Change in the Compressed Domain"
-// http://vision.ai.uiuc.edu/~dugad/research/dct/index.html
-
 #include <stdlib.h>
 #include <stdio.h>
 #include <stdint.h>
@@ -147,7 +135,7 @@ public:
     // Returns JPGD_SUCCESS if a scan line has been returned.
     // Returns JPGD_DONE if all scan lines have been returned.
     // Returns JPGD_FAILED if an error occurred. Call get_error_code() for a more info.
-    int decode(const void** pScan_line, uint32_t* pScan_line_len);
+    int decode(const void** pScan_line);
     inline jpgd_status get_error_code() const { return m_error_code; }
     inline int get_width() const { return m_image_x_size; }
     inline int get_height() const { return m_image_y_size; }
@@ -2173,7 +2161,7 @@ void jpeg_decoder::find_eoi()
 }
 
 
-int jpeg_decoder::decode(const void** pScan_line, uint32_t* pScan_line_len)
+int jpeg_decoder::decode(const void** pScan_line)
 {
     if ((m_error_code) || (!m_ready_flag)) return JPGD_FAILED;
     if (m_total_lines_left == 0) return JPGD_DONE;
@@ -2223,7 +2211,6 @@ int jpeg_decoder::decode(const void** pScan_line, uint32_t* pScan_line_len)
         }
     }
 
-    *pScan_line_len = m_real_dest_bytes_per_scan_line;
     m_mcu_lines_left--;
     m_total_lines_left--;
 
@@ -2957,81 +2944,45 @@ void jpgdDelete(jpeg_decoder* decoder)
 }
 
 
-unsigned char* jpgdDecompress(jpeg_decoder* decoder)
+unsigned char* jpgdDecompress(jpeg_decoder* decoder, ColorSpace cs)
 {
-    if (!decoder) return nullptr;
+    if (!decoder || decoder->begin_decoding() != JPGD_SUCCESS) return nullptr;
 
-    int req_comps = 4;  //TODO: fixed 4 channel components now?
-    if ((req_comps != 1) && (req_comps != 3) && (req_comps != 4)) return nullptr;
-
-    auto image_width = decoder->get_width();
-    auto image_height = decoder->get_height();
+    auto bgra = (cs == ColorSpace::ABGR8888S || cs == ColorSpace::ABGR8888);
+    auto channel = 4; //OPTIMIZE: jpg is 3 channel format, not really need 4 channel components.
+    auto width = decoder->get_width();
+    auto height = decoder->get_height();
     //auto actual_comps = decoder->get_num_components();
+    const auto stride = width * channel;
+    auto ret = tvg::malloc<uint8_t*>(stride * height);
+    auto dst = ret;
 
-    if (decoder->begin_decoding() != JPGD_SUCCESS) return nullptr;
-
-    const int dst_bpl = image_width * req_comps;
-    uint8_t *pImage_data = tvg::malloc<uint8_t*>(dst_bpl * image_height);
-    if (!pImage_data) return nullptr;
-
-    for (int y = 0; y < image_height; y++) {
-        const uint8_t* pScan_line = nullptr;
-        uint32_t scan_line_len;
-        if (decoder->decode((const void**)&pScan_line, &scan_line_len) != JPGD_SUCCESS) {
-            tvg::free(pImage_data);
+    for (int y = 0; y < height; y++) {
+        uint8_t* src = nullptr;
+        if (decoder->decode((const void**)&src) != JPGD_SUCCESS) {
+            tvg::free(ret);
             return nullptr;
         }
-
-        uint8_t *pDst = pImage_data + y * dst_bpl;
-
-        //Return as BGRA
-        if ((req_comps == 4) && (decoder->get_num_components() == 3)) {
-            for (int x = 0; x < image_width; x++) {
-                pDst[0] = pScan_line[x*4+2];
-                pDst[1] = pScan_line[x*4+1];
-                pDst[2] = pScan_line[x*4+0];
-                pDst[3] = 255;
-                pDst += 4;
+        if (decoder->get_num_components() == 3) {
+            if (bgra) {
+                memcpy(dst, src, stride);
+                dst += stride;
+            } else {
+                for (int x = 0; x < width; x++, src += 4, dst += 4) {
+                    dst[0] = src[2];
+                    dst[1] = src[1];
+                    dst[2] = src[0];
+                    dst[3] = 255;
+                }
             }
-        } else if (((req_comps == 1) && (decoder->get_num_components() == 1)) || ((req_comps == 4) && (decoder->get_num_components() == 3))) {
-            memcpy(pDst, pScan_line, dst_bpl);
         } else if (decoder->get_num_components() == 1) {
-            if (req_comps == 3) {
-                for (int x = 0; x < image_width; x++) {
-                    uint8_t luma = pScan_line[x];
-                    pDst[0] = luma;
-                    pDst[1] = luma;
-                    pDst[2] = luma;
-                    pDst += 3;
-                }
-            } else {
-                for (int x = 0; x < image_width; x++) {
-                    uint8_t luma = pScan_line[x];
-                    pDst[0] = luma;
-                    pDst[1] = luma;
-                    pDst[2] = luma;
-                    pDst[3] = 255;
-                    pDst += 4;
-                }
-            }
-        } else if (decoder->get_num_components() == 3) {
-            if (req_comps == 1) {
-                const int YR = 19595, YG = 38470, YB = 7471;
-                for (int x = 0; x < image_width; x++) {
-                    int r = pScan_line[x*4+0];
-                    int g = pScan_line[x*4+1];
-                    int b = pScan_line[x*4+2];
-                    *pDst++ = static_cast<uint8_t>((r * YR + g * YG + b * YB + 32768) >> 16);
-                }
-            } else {
-                for (int x = 0; x < image_width; x++) {
-                    pDst[0] = pScan_line[x*4+0];
-                    pDst[1] = pScan_line[x*4+1];
-                    pDst[2] = pScan_line[x*4+2];
-                    pDst += 3;
-                }
+            for (int x = 0; x < width; x++, src++, dst += 4) {
+                dst[0] = *src;
+                dst[1] = *src;
+                dst[2] = *src;
+                dst[3] = 255;
             }
         }
     }
-    return pImage_data;
+    return ret;
 }
