@@ -165,7 +165,7 @@ struct UserExample : tvgexam::Example
         }
 
         {
-            auto line = tvg::Shape::gen();            
+            auto line = tvg::Shape::gen();
             line->moveTo(470, 350);
             line->lineTo(770, 350);
             line->strokeWidth(20);
@@ -175,7 +175,7 @@ struct UserExample : tvgexam::Example
         }
 
         {
-            auto curve = tvg::Shape::gen();            
+            auto curve = tvg::Shape::gen();
             curve->moveTo(0, 0);
             curve->cubicTo(40.0f, -10.0f, 120.0f, -150.0f, 80.0f, 0.0f);
             curve->translate(50, 770);
@@ -186,7 +186,7 @@ struct UserExample : tvgexam::Example
         }
 
         {
-            auto curve = tvg::Shape::gen();            
+            auto curve = tvg::Shape::gen();
             curve->moveTo(0, 0);
             curve->cubicTo(40.0f, -10.0f, 120.0f, -150.0f, 80.0f, 0.0f);
             curve->translate(150, 750);
