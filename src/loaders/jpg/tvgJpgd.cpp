@@ -1396,10 +1396,12 @@ void jpeg_decoder::load_next_row()
 
             if (m_comps_in_scan == 1) block_x_mcu[component_id]++;
             else {
-                if (++block_x_mcu_ofs == m_comp_h_samp[component_id]) block_x_mcu_ofs = 0;
-                if (++block_y_mcu_ofs == m_comp_v_samp[component_id]) {
-                    block_y_mcu_ofs = 0;
-                    block_x_mcu[component_id] += m_comp_h_samp[component_id];
+                if (++block_x_mcu_ofs == m_comp_h_samp[component_id]) {
+                    block_x_mcu_ofs = 0;
+                    if (++block_y_mcu_ofs == m_comp_v_samp[component_id]) {
+                        block_y_mcu_ofs = 0;
+                        block_x_mcu[component_id] += m_comp_h_samp[component_id];
+                    }
                 }
             }
         }
