@@ -675,6 +675,7 @@ struct LottieColorStop : LottieProperty
 
         ARRAY_FOREACH(p, *frames) {
             tvg::free((*p).value.data);
+            delete((*p).value.input);
         }
         tvg::free(frames->data);
         tvg::free(frames);
@@ -805,6 +806,8 @@ struct LottieColorStop : LottieProperty
     {
         if (LottieProperty::copy(&rhs, shallow)) return;
 
+        //the rhs colorstop is supposed be populated already.
+
         if (rhs.frames) {
             if (shallow) {
                 frames = rhs.frames;
@@ -812,6 +815,9 @@ struct LottieColorStop : LottieProperty
             } else {
                 frames = tvg::calloc<Array<LottieScalarFrame<ColorStop>>*>(1, sizeof(Array<LottieScalarFrame<ColorStop>>));
                 *frames = *rhs.frames;
+                for (uint32_t i = 0; i < (*rhs.frames).count; ++i) {
+                    (*frames)[i].value.copy((*rhs.frames)[i].value, rhs.count);
+                }
             }
         } else {
             frames = nullptr;
@@ -819,14 +825,7 @@ struct LottieColorStop : LottieProperty
                 value = rhs.value;
                 rhs.value = ColorStop();
             } else {
-                if (rhs.value.data) {
-                    value.data = tvg::malloc<Fill::ColorStop*>(sizeof(Fill::ColorStop) * rhs.count);
-                    memcpy(value.data, rhs.value.data, sizeof(Fill::ColorStop) * rhs.count);
-                }
-                if (rhs.value.input) {
-                    value.input = new Array<float>;
-                    *value.input = *rhs.value.input;
-                }
+                value.copy(rhs.value, rhs.count);
             }
         }
         populated = rhs.populated;
