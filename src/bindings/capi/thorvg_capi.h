@@ -57,7 +57,7 @@ extern "C" {
 *
 * It sets up the target buffer, which can be drawn on the screen. It stores the Tvg_Paint objects (Shape, Scene, Picture).
 */
-typedef struct _Tvg_Canvas Tvg_Canvas;
+typedef struct _Tvg_Canvas* Tvg_Canvas;
 
 
 /**
@@ -65,29 +65,29 @@ typedef struct _Tvg_Canvas Tvg_Canvas;
 *
 * @warning The TvgPaint objects cannot be shared between Canvases.
 */
-typedef struct _Tvg_Paint Tvg_Paint;
+typedef struct _Tvg_Paint* Tvg_Paint;
 
 
 /**
 * @brief A structure representing a gradient fill of a Tvg_Paint object.
 */
-typedef struct _Tvg_Gradient Tvg_Gradient;
+typedef struct _Tvg_Gradient* Tvg_Gradient;
 
 
 /**
 * @brief A structure representing an object that enables to save a Tvg_Paint object into a file.
 */
-typedef struct _Tvg_Saver Tvg_Saver;
+typedef struct _Tvg_Saver* Tvg_Saver;
 
 /**
 * @brief A structure representing an animation controller object.
 */
-typedef struct _Tvg_Animation Tvg_Animation;
+typedef struct _Tvg_Animation* Tvg_Animation;
 
 /**
 * @brief A structure representing an object that enables iterating through a scene's descendents.
 */
-typedef struct _Tvg_Accessor Tvg_Accessor;
+typedef struct _Tvg_Accessor* Tvg_Accessor;
 
 
 /**
@@ -408,7 +408,7 @@ TVG_API Tvg_Result tvg_engine_version(uint32_t* major, uint32_t* minor, uint32_t
  *
  * @see enum Tvg_Engine_Option
  */
-TVG_API Tvg_Canvas* tvg_swcanvas_create(Tvg_Engine_Option op);
+TVG_API Tvg_Canvas tvg_swcanvas_create(Tvg_Engine_Option op);
 
 
 /*!
@@ -432,7 +432,7 @@ TVG_API Tvg_Canvas* tvg_swcanvas_create(Tvg_Engine_Option op);
 *
 * @see Tvg_Colorspace
 */
-TVG_API Tvg_Result tvg_swcanvas_set_target(Tvg_Canvas* canvas, uint32_t* buffer, uint32_t stride, uint32_t w, uint32_t h, Tvg_Colorspace cs);
+TVG_API Tvg_Result tvg_swcanvas_set_target(Tvg_Canvas canvas, uint32_t* buffer, uint32_t stride, uint32_t w, uint32_t h, Tvg_Colorspace cs);
 
 
 /** \} */   // end defgroup ThorVGCapi_SwCanvas
@@ -458,7 +458,7 @@ TVG_API Tvg_Result tvg_swcanvas_set_target(Tvg_Canvas* canvas, uint32_t* buffer,
 *
 * @since 1.0.0
 */
-TVG_API Tvg_Canvas* tvg_glcanvas_create(void);
+TVG_API Tvg_Canvas tvg_glcanvas_create(void);
 
 
 /*!
@@ -478,7 +478,7 @@ TVG_API Tvg_Canvas* tvg_glcanvas_create(void);
 *
 * @note Experimental API
 */
-TVG_API Tvg_Result tvg_glcanvas_set_target(Tvg_Canvas* canvas, void* context, int32_t id, uint32_t w, uint32_t h, Tvg_Colorspace cs);
+TVG_API Tvg_Result tvg_glcanvas_set_target(Tvg_Canvas canvas, void* context, int32_t id, uint32_t w, uint32_t h, Tvg_Colorspace cs);
 
 /** \} */   // end defgroup ThorVGCapi_GlCanvas
 
@@ -503,7 +503,7 @@ TVG_API Tvg_Result tvg_glcanvas_set_target(Tvg_Canvas* canvas, void* context, in
 *
 * @since 1.0.0
 */
-TVG_API Tvg_Canvas* tvg_wgcanvas_create(void);
+TVG_API Tvg_Canvas tvg_wgcanvas_create(void);
 
 /*!
 * @brief Sets the drawing target for the rasterization.
@@ -521,7 +521,7 @@ TVG_API Tvg_Canvas* tvg_wgcanvas_create(void);
 *
 * @note Experimental API
 */
-TVG_API Tvg_Result tvg_wgcanvas_set_target(Tvg_Canvas* canvas, void* device, void* instance, void* target, uint32_t w, uint32_t h, Tvg_Colorspace cs, int type);
+TVG_API Tvg_Result tvg_wgcanvas_set_target(Tvg_Canvas canvas, void* device, void* instance, void* target, uint32_t w, uint32_t h, Tvg_Colorspace cs, int type);
 
 /** \} */   // end defgroup ThorVGCapi_WgCanvas
 
@@ -536,7 +536,7 @@ TVG_API Tvg_Result tvg_wgcanvas_set_target(Tvg_Canvas* canvas, void* device, voi
 *
 * @retval TVG_RESULT_INVALID_ARGUMENT An invalid pointer to the Tvg_Canvas object is passed.
 */
-TVG_API Tvg_Result tvg_canvas_destroy(Tvg_Canvas* canvas);
+TVG_API Tvg_Result tvg_canvas_destroy(Tvg_Canvas canvas);
 
 
 /*!
@@ -556,7 +556,7 @@ TVG_API Tvg_Result tvg_canvas_destroy(Tvg_Canvas* canvas);
 * @see tvg_canvas_push_at()
 * @see tvg_canvas_remove()
 */
-TVG_API Tvg_Result tvg_canvas_push(Tvg_Canvas* canvas, Tvg_Paint* paint);
+TVG_API Tvg_Result tvg_canvas_push(Tvg_Canvas canvas, Tvg_Paint paint);
 
 
 /**
@@ -582,7 +582,7 @@ TVG_API Tvg_Result tvg_canvas_push(Tvg_Canvas* canvas, Tvg_Paint* paint);
  * @see tvg_canvas_remove()
  * @since 1.0
  */
-TVG_API Tvg_Result tvg_canvas_push_at(Tvg_Canvas* canvas, Tvg_Paint* target, Tvg_Paint* at);
+TVG_API Tvg_Result tvg_canvas_push_at(Tvg_Canvas canvas, Tvg_Paint target, Tvg_Paint at);
 
 
 /**
@@ -600,7 +600,7 @@ TVG_API Tvg_Result tvg_canvas_push_at(Tvg_Canvas* canvas, Tvg_Paint* target, Tvg
  * @see tvg_canvas_push_at()
  * @since 1.0
  */
-TVG_API Tvg_Result tvg_canvas_remove(Tvg_Canvas* canvas, Tvg_Paint* paint);
+TVG_API Tvg_Result tvg_canvas_remove(Tvg_Canvas canvas, Tvg_Paint paint);
 
 
 /**
@@ -621,7 +621,7 @@ TVG_API Tvg_Result tvg_canvas_remove(Tvg_Canvas* canvas, Tvg_Paint* paint);
  *
  * @see tvg_canvas_sync()
  */
-TVG_API Tvg_Result tvg_canvas_update(Tvg_Canvas* canvas);
+TVG_API Tvg_Result tvg_canvas_update(Tvg_Canvas canvas);
 
 
 /**
@@ -644,7 +644,7 @@ TVG_API Tvg_Result tvg_canvas_update(Tvg_Canvas* canvas);
  * @see tvg_canvas_sync()
  * @see tvg_canvas_update()
  */
-TVG_API Tvg_Result tvg_canvas_draw(Tvg_Canvas* canvas, bool clear);
+TVG_API Tvg_Result tvg_canvas_draw(Tvg_Canvas canvas, bool clear);
 
 
 /**
@@ -659,7 +659,7 @@ TVG_API Tvg_Result tvg_canvas_draw(Tvg_Canvas* canvas, bool clear);
  *
  * @see tvg_canvas_draw()
  */
-TVG_API Tvg_Result tvg_canvas_sync(Tvg_Canvas* canvas);
+TVG_API Tvg_Result tvg_canvas_sync(Tvg_Canvas canvas);
 
 
 /**
@@ -690,7 +690,7 @@ TVG_API Tvg_Result tvg_canvas_sync(Tvg_Canvas* canvas);
  * @note When the target is reset, the viewport will also be reset to match the target size.
  * @since 0.15
  */
-TVG_API Tvg_Result tvg_canvas_set_viewport(Tvg_Canvas* canvas, int32_t x, int32_t y, int32_t w, int32_t h);
+TVG_API Tvg_Result tvg_canvas_set_viewport(Tvg_Canvas canvas, int32_t x, int32_t y, int32_t w, int32_t h);
 
 /** \} */   // end defgroup ThorVGCapi_Canvas
 
@@ -713,7 +713,7 @@ TVG_API Tvg_Result tvg_canvas_set_viewport(Tvg_Canvas* canvas, int32_t x, int32_
 *
 * @see tvg_canvas_remove()
 */
-TVG_API Tvg_Result tvg_paint_del(Tvg_Paint* paint);
+TVG_API Tvg_Result tvg_paint_del(Tvg_Paint paint);
 
 
 /**
@@ -732,7 +732,7 @@ TVG_API Tvg_Result tvg_paint_del(Tvg_Paint* paint);
  *
  * @since 1.0
  */
-TVG_API uint16_t tvg_paint_ref(Tvg_Paint* paint);
+TVG_API uint16_t tvg_paint_ref(Tvg_Paint paint);
 
 
 /**
@@ -751,7 +751,7 @@ TVG_API uint16_t tvg_paint_ref(Tvg_Paint* paint);
  *
  * @since 1.0
  */
-TVG_API uint16_t tvg_paint_unref(Tvg_Paint* paint, bool free);
+TVG_API uint16_t tvg_paint_unref(Tvg_Paint paint, bool free);
 
 
 /**
@@ -768,7 +768,7 @@ TVG_API uint16_t tvg_paint_unref(Tvg_Paint* paint, bool free);
  *
  * @since 1.0
  */
-TVG_API uint16_t tvg_paint_get_ref(const Tvg_Paint* paint);
+TVG_API uint16_t tvg_paint_get_ref(const Tvg_Paint paint);
 
 
 /**
@@ -791,7 +791,7 @@ TVG_API uint16_t tvg_paint_get_ref(const Tvg_Paint* paint);
  *
  * @since 1.0
  */
-TVG_API Tvg_Result tvg_paint_set_visible(Tvg_Paint* paint, bool visible);
+TVG_API Tvg_Result tvg_paint_set_visible(Tvg_Paint paint, bool visible);
 
 
 /**
@@ -806,7 +806,7 @@ TVG_API Tvg_Result tvg_paint_set_visible(Tvg_Paint* paint, bool visible);
  *
  * @since 1.0
  */
-TVG_API bool tvg_paint_get_visible(const Tvg_Paint* paint);
+TVG_API bool tvg_paint_get_visible(const Tvg_Paint paint);
 
 
 /*!
@@ -820,7 +820,7 @@ TVG_API bool tvg_paint_get_visible(const Tvg_Paint* paint);
 *
 * @see tvg_paint_set_transform()
 */
-TVG_API Tvg_Result tvg_paint_scale(Tvg_Paint* paint, float factor);
+TVG_API Tvg_Result tvg_paint_scale(Tvg_Paint paint, float factor);
 
 
 /*!
@@ -837,7 +837,7 @@ TVG_API Tvg_Result tvg_paint_scale(Tvg_Paint* paint, float factor);
 *
 * @see tvg_paint_set_transform()
 */
-TVG_API Tvg_Result tvg_paint_rotate(Tvg_Paint* paint, float degree);
+TVG_API Tvg_Result tvg_paint_rotate(Tvg_Paint paint, float degree);
 
 
 /*!
@@ -855,7 +855,7 @@ TVG_API Tvg_Result tvg_paint_rotate(Tvg_Paint* paint, float degree);
 *
 * @see tvg_paint_set_transform()
 */
-TVG_API Tvg_Result tvg_paint_translate(Tvg_Paint* paint, float x, float y);
+TVG_API Tvg_Result tvg_paint_translate(Tvg_Paint paint, float x, float y);
 
 
 /*!
@@ -868,7 +868,7 @@ TVG_API Tvg_Result tvg_paint_translate(Tvg_Paint* paint, float x, float y);
 *
 * @retval TVG_RESULT_INVALID_ARGUMENT A @c nullptr is passed as the argument.
 */
-TVG_API Tvg_Result tvg_paint_set_transform(Tvg_Paint* paint, const Tvg_Matrix* m);
+TVG_API Tvg_Result tvg_paint_set_transform(Tvg_Paint paint, const Tvg_Matrix* m);
 
 
 /*!
@@ -881,7 +881,7 @@ TVG_API Tvg_Result tvg_paint_set_transform(Tvg_Paint* paint, const Tvg_Matrix* m
 *
 * @retval TVG_RESULT_INVALID_ARGUMENT A @c nullptr is passed as the argument.
 */
-TVG_API Tvg_Result tvg_paint_get_transform(Tvg_Paint* paint, Tvg_Matrix* m);
+TVG_API Tvg_Result tvg_paint_get_transform(Tvg_Paint paint, Tvg_Matrix* m);
 
 
 /*!
@@ -894,7 +894,7 @@ TVG_API Tvg_Result tvg_paint_get_transform(Tvg_Paint* paint, Tvg_Matrix* m);
 *
 * @note Setting the opacity with this API may require multiple renderings using a composition. It is recommended to avoid changing the opacity if possible.
 */
-TVG_API Tvg_Result tvg_paint_set_opacity(Tvg_Paint* paint, uint8_t opacity);
+TVG_API Tvg_Result tvg_paint_set_opacity(Tvg_Paint paint, uint8_t opacity);
 
 
 /*!
@@ -905,7 +905,7 @@ TVG_API Tvg_Result tvg_paint_set_opacity(Tvg_Paint* paint, uint8_t opacity);
 *
 * @retval TVG_RESULT_INVALID_ARGUMENT In case a @c nullptr is passed as the argument.
 */
-TVG_API Tvg_Result tvg_paint_get_opacity(const Tvg_Paint* paint, uint8_t* opacity);
+TVG_API Tvg_Result tvg_paint_get_opacity(const Tvg_Paint paint, uint8_t* opacity);
 
 
 /*!
@@ -917,7 +917,7 @@ TVG_API Tvg_Result tvg_paint_get_opacity(const Tvg_Paint* paint, uint8_t* opacit
 *
 * @return A copied Tvg_Paint object if succeed, @c nullptr otherwise.
 */
-TVG_API Tvg_Paint* tvg_paint_duplicate(Tvg_Paint* paint);
+TVG_API Tvg_Paint tvg_paint_duplicate(Tvg_Paint paint);
 
 
 /**
@@ -946,7 +946,7 @@ TVG_API Tvg_Paint* tvg_paint_duplicate(Tvg_Paint* paint);
  * @note This test does take into account the the hidden paints as well. @see tvg_paint_set_visible().
  * @note Experimental API
  */
-TVG_API bool tvg_paint_intersects(Tvg_Paint* paint, int32_t x, int32_t y, int32_t w, int32_t h);
+TVG_API bool tvg_paint_intersects(Tvg_Paint paint, int32_t x, int32_t y, int32_t w, int32_t h);
 
 
 /**
@@ -970,7 +970,7 @@ TVG_API bool tvg_paint_intersects(Tvg_Paint* paint, int32_t x, int32_t y, int32_
  * @see tvg_paint_get_obb()
  * @see tvg_canvas_update()
  */
-TVG_API Tvg_Result tvg_paint_get_aabb(Tvg_Paint* paint, float* x, float* y, float* w, float* h);
+TVG_API Tvg_Result tvg_paint_get_aabb(Tvg_Paint paint, float* x, float* y, float* w, float* h);
 
 
 /**
@@ -994,7 +994,7 @@ TVG_API Tvg_Result tvg_paint_get_aabb(Tvg_Paint* paint, float* x, float* y, floa
  *
  * @since 1.0
  */
-TVG_API Tvg_Result tvg_paint_get_obb(Tvg_Paint* paint, Tvg_Point* pt4);
+TVG_API Tvg_Result tvg_paint_get_obb(Tvg_Paint paint, Tvg_Point* pt4);
 
 
 /*!
@@ -1007,7 +1007,7 @@ TVG_API Tvg_Result tvg_paint_get_obb(Tvg_Paint* paint, Tvg_Point* pt4);
 * @retval TVG_RESULT_INSUFFICIENT_CONDITION if the target has already belonged to another paint.
 *
 */
-TVG_API Tvg_Result tvg_paint_set_mask_method(Tvg_Paint* paint, Tvg_Paint* target, Tvg_Mask_Method method);
+TVG_API Tvg_Result tvg_paint_set_mask_method(Tvg_Paint paint, Tvg_Paint target, Tvg_Mask_Method method);
 
 
 /**
@@ -1019,7 +1019,7 @@ TVG_API Tvg_Result tvg_paint_set_mask_method(Tvg_Paint* paint, Tvg_Paint* target
 *
 * @retval TVG_RESULT_INVALID_ARGUMENT A @c nullptr is passed as the argument.
 */
-TVG_API Tvg_Result tvg_paint_get_mask_method(const Tvg_Paint* paint, const Tvg_Paint** target, Tvg_Mask_Method* method);
+TVG_API Tvg_Result tvg_paint_get_mask_method(const Tvg_Paint paint, const Tvg_Paint target, Tvg_Mask_Method* method);
 
 
 /**
@@ -1038,7 +1038,7 @@ TVG_API Tvg_Result tvg_paint_get_mask_method(const Tvg_Paint* paint, const Tvg_P
 
 * @since 1.0
 */
-TVG_API Tvg_Result tvg_paint_set_clip(Tvg_Paint* paint, Tvg_Paint* clipper);
+TVG_API Tvg_Result tvg_paint_set_clip(Tvg_Paint paint, Tvg_Paint clipper);
 
 /**
  * @brief Get the clipper shape of the paint object.
@@ -1051,7 +1051,7 @@ TVG_API Tvg_Result tvg_paint_set_clip(Tvg_Paint* paint, Tvg_Paint* clipper);
  *
  * @since 1.0
  */
-TVG_API Tvg_Paint* tvg_paint_get_clip(const Tvg_Paint* paint);
+TVG_API Tvg_Paint tvg_paint_get_clip(const Tvg_Paint paint);
 
 /**
  * @brief Retrieves the parent paint object.
@@ -1068,7 +1068,7 @@ TVG_API Tvg_Paint* tvg_paint_get_clip(const Tvg_Paint* paint);
  *
  * @since 1.0
 */
-TVG_API const Tvg_Paint* tvg_paint_get_parent(const Tvg_Paint* paint);
+TVG_API const Tvg_Paint tvg_paint_get_parent(const Tvg_Paint paint);
 
 
 /**
@@ -1081,7 +1081,7 @@ TVG_API const Tvg_Paint* tvg_paint_get_parent(const Tvg_Paint* paint);
 *
 * @since 1.0
 */
-TVG_API Tvg_Result tvg_paint_get_type(const Tvg_Paint* paint, Tvg_Type* type);
+TVG_API Tvg_Result tvg_paint_get_type(const Tvg_Paint paint, Tvg_Type* type);
 
 
 /**
@@ -1098,7 +1098,7 @@ TVG_API Tvg_Result tvg_paint_get_type(const Tvg_Paint* paint, Tvg_Type* type);
  *
  * @since 0.15
  */
-TVG_API Tvg_Result tvg_paint_set_blend_method(Tvg_Paint* paint, Tvg_Blend_Method method);
+TVG_API Tvg_Result tvg_paint_set_blend_method(Tvg_Paint paint, Tvg_Blend_Method method);
 
 
 /** \} */   // end defgroup ThorVGCapi_Paint
@@ -1126,7 +1126,7 @@ TVG_API Tvg_Result tvg_paint_set_blend_method(Tvg_Paint* paint, Tvg_Blend_Method
 *
 * @return A new shape object.
 */
-TVG_API Tvg_Paint* tvg_shape_new(void);
+TVG_API Tvg_Paint tvg_shape_new(void);
 
 
 /*!
@@ -1140,7 +1140,7 @@ TVG_API Tvg_Paint* tvg_shape_new(void);
 *
 * @note The memory, where the path data is stored, is not deallocated at this stage for caching effect.
 */
-TVG_API Tvg_Result tvg_shape_reset(Tvg_Paint* paint);
+TVG_API Tvg_Result tvg_shape_reset(Tvg_Paint paint);
 
 
 /*!
@@ -1154,7 +1154,7 @@ TVG_API Tvg_Result tvg_shape_reset(Tvg_Paint* paint);
 *
 * @retval TVG_RESULT_INVALID_ARGUMENT An invalid Tvg_Paint pointer.
 */
-TVG_API Tvg_Result tvg_shape_move_to(Tvg_Paint* paint, float x, float y);
+TVG_API Tvg_Result tvg_shape_move_to(Tvg_Paint paint, float x, float y);
 
 
 /*!
@@ -1170,7 +1170,7 @@ TVG_API Tvg_Result tvg_shape_move_to(Tvg_Paint* paint, float x, float y);
 *
 * @note In case this is the first command in the path, it corresponds to the tvg_shape_move_to() call.
 */
-TVG_API Tvg_Result tvg_shape_line_to(Tvg_Paint* paint, float x, float y);
+TVG_API Tvg_Result tvg_shape_line_to(Tvg_Paint paint, float x, float y);
 
 
 /*!
@@ -1191,7 +1191,7 @@ TVG_API Tvg_Result tvg_shape_line_to(Tvg_Paint* paint, float x, float y);
 *
 * @note In case this is the first command in the path, no data from the path are rendered.
 */
-TVG_API Tvg_Result tvg_shape_cubic_to(Tvg_Paint* paint, float cx1, float cy1, float cx2, float cy2, float x, float y);
+TVG_API Tvg_Result tvg_shape_cubic_to(Tvg_Paint paint, float cx1, float cy1, float cx2, float cy2, float x, float y);
 
 
 /*!
@@ -1205,7 +1205,7 @@ TVG_API Tvg_Result tvg_shape_cubic_to(Tvg_Paint* paint, float cx1, float cy1, fl
 *
 * @note In case the sub-path does not contain any points, this function has no effect.
 */
-TVG_API Tvg_Result tvg_shape_close(Tvg_Paint* paint);
+TVG_API Tvg_Result tvg_shape_close(Tvg_Paint paint);
 
 
 /*!
@@ -1234,7 +1234,7 @@ TVG_API Tvg_Result tvg_shape_close(Tvg_Paint* paint);
 *
 & @note For @p rx and @p ry greater than or equal to the half of @p w and the half of @p h, respectively, the shape become an ellipse.
 */
-TVG_API Tvg_Result tvg_shape_append_rect(Tvg_Paint* paint, float x, float y, float w, float h, float rx, float ry, bool cw);
+TVG_API Tvg_Result tvg_shape_append_rect(Tvg_Paint paint, float x, float y, float w, float h, float rx, float ry, bool cw);
 
 
 /*!
@@ -1255,7 +1255,7 @@ TVG_API Tvg_Result tvg_shape_append_rect(Tvg_Paint* paint, float x, float y, flo
 *
 * @retval TVG_RESULT_INVALID_ARGUMENT An invalid Tvg_Paint pointer.
 */
-TVG_API Tvg_Result tvg_shape_append_circle(Tvg_Paint* paint, float cx, float cy, float rx, float ry, bool cw);
+TVG_API Tvg_Result tvg_shape_append_circle(Tvg_Paint paint, float cx, float cy, float rx, float ry, bool cw);
 
 
 /*!
@@ -1273,7 +1273,7 @@ TVG_API Tvg_Result tvg_shape_append_circle(Tvg_Paint* paint, float cx, float cy,
 *
 * @retval TVG_RESULT_INVALID_ARGUMENT A @c nullptr passed as the argument or @p cmdCnt or @p ptsCnt equal to zero.
 */
-TVG_API Tvg_Result tvg_shape_append_path(Tvg_Paint* paint, const Tvg_Path_Command* cmds, uint32_t cmdCnt, const Tvg_Point* pts, uint32_t ptsCnt);
+TVG_API Tvg_Result tvg_shape_append_path(Tvg_Paint paint, const Tvg_Path_Command* cmds, uint32_t cmdCnt, const Tvg_Point* pts, uint32_t ptsCnt);
 
 
 /*!
@@ -1295,7 +1295,7 @@ TVG_API Tvg_Result tvg_shape_append_path(Tvg_Paint* paint, const Tvg_Path_Comman
 *
 * @note If any of the arguments are @c nullptr, that value will be ignored.
 */
-TVG_API Tvg_Result tvg_shape_get_path(const Tvg_Paint* paint, const Tvg_Path_Command** cmds, uint32_t* cmdsCnt, const Tvg_Point** pts, uint32_t* ptsCnt);
+TVG_API Tvg_Result tvg_shape_get_path(const Tvg_Paint paint, const Tvg_Path_Command** cmds, uint32_t* cmdsCnt, const Tvg_Point** pts, uint32_t* ptsCnt);
 
 
 /*!
@@ -1314,7 +1314,7 @@ TVG_API Tvg_Result tvg_shape_get_path(const Tvg_Paint* paint, const Tvg_Path_Com
 *
 * @see tvg_shape_set_stroke_color()
 */
-TVG_API Tvg_Result tvg_shape_set_stroke_width(Tvg_Paint* paint, float width);
+TVG_API Tvg_Result tvg_shape_set_stroke_width(Tvg_Paint paint, float width);
 
 
 /*!
@@ -1325,7 +1325,7 @@ TVG_API Tvg_Result tvg_shape_set_stroke_width(Tvg_Paint* paint, float width);
 *
 * @retval TVG_RESULT_INVALID_ARGUMENT An invalid pointer passed as an argument.
 */
-TVG_API Tvg_Result tvg_shape_get_stroke_width(const Tvg_Paint* paint, float* width);
+TVG_API Tvg_Result tvg_shape_get_stroke_width(const Tvg_Paint paint, float* width);
 
 
 /*!
@@ -1345,7 +1345,7 @@ TVG_API Tvg_Result tvg_shape_get_stroke_width(const Tvg_Paint* paint, float* wid
 * @see tvg_shape_set_stroke_width()
 * @see tvg_shape_set_stroke_gradient()
 */
-TVG_API Tvg_Result tvg_shape_set_stroke_color(Tvg_Paint* paint, uint8_t r, uint8_t g, uint8_t b, uint8_t a);
+TVG_API Tvg_Result tvg_shape_set_stroke_color(Tvg_Paint paint, uint8_t r, uint8_t g, uint8_t b, uint8_t a);
 
 
 /*!
@@ -1360,7 +1360,7 @@ TVG_API Tvg_Result tvg_shape_set_stroke_color(Tvg_Paint* paint, uint8_t r, uint8
 * @retval TVG_RESULT_INVALID_ARGUMENT An invalid Tvg_Paint pointer.
 * @retval TVG_RESULT_INSUFFICIENT_CONDITION No stroke was set.
 */
-TVG_API Tvg_Result tvg_shape_get_stroke_color(const Tvg_Paint* paint, uint8_t* r, uint8_t* g, uint8_t* b, uint8_t* a);
+TVG_API Tvg_Result tvg_shape_get_stroke_color(const Tvg_Paint paint, uint8_t* r, uint8_t* g, uint8_t* b, uint8_t* a);
 
 
 /*!
@@ -1376,7 +1376,7 @@ TVG_API Tvg_Result tvg_shape_get_stroke_color(const Tvg_Paint* paint, uint8_t* r
 *
 * @see tvg_shape_set_stroke_color()
 */
-TVG_API Tvg_Result tvg_shape_set_stroke_gradient(Tvg_Paint* paint, Tvg_Gradient* grad);
+TVG_API Tvg_Result tvg_shape_set_stroke_gradient(Tvg_Paint paint, Tvg_Gradient grad);
 
 
 /*!
@@ -1389,7 +1389,7 @@ TVG_API Tvg_Result tvg_shape_set_stroke_gradient(Tvg_Paint* paint, Tvg_Gradient*
 *
 * @retval TVG_RESULT_INVALID_ARGUMENT An invalid pointer passed as an argument.
 */
-TVG_API Tvg_Result tvg_shape_get_stroke_gradient(const Tvg_Paint* paint, Tvg_Gradient** grad);
+TVG_API Tvg_Result tvg_shape_get_stroke_gradient(const Tvg_Paint paint, Tvg_Gradient* grad);
 
 
 /*!
@@ -1409,7 +1409,7 @@ TVG_API Tvg_Result tvg_shape_get_stroke_gradient(const Tvg_Paint* paint, Tvg_Gra
 * order to form an even-length pattern, preserving the alternation of dashes and gaps.
 * @since 1.0
 */
-TVG_API Tvg_Result tvg_shape_set_stroke_dash(Tvg_Paint* paint, const float* dashPattern, uint32_t cnt, float offset);
+TVG_API Tvg_Result tvg_shape_set_stroke_dash(Tvg_Paint paint, const float* dashPattern, uint32_t cnt, float offset);
 
 
 /*!
@@ -1425,7 +1425,7 @@ TVG_API Tvg_Result tvg_shape_set_stroke_dash(Tvg_Paint* paint, const float* dash
 * @retval TVG_RESULT_INVALID_ARGUMENT An invalid pointer passed as an argument.
 * @since 1.0
 */
-TVG_API Tvg_Result tvg_shape_get_stroke_dash(const Tvg_Paint* paint, const float** dashPattern, uint32_t* cnt, float* offset);
+TVG_API Tvg_Result tvg_shape_get_stroke_dash(const Tvg_Paint paint, const float** dashPattern, uint32_t* cnt, float* offset);
 
 
 /*!
@@ -1438,7 +1438,7 @@ TVG_API Tvg_Result tvg_shape_get_stroke_dash(const Tvg_Paint* paint, const float
 *
 * @retval TVG_RESULT_INVALID_ARGUMENT An invalid Tvg_Paint pointer.
 */
-TVG_API Tvg_Result tvg_shape_set_stroke_cap(Tvg_Paint* paint, Tvg_Stroke_Cap cap);
+TVG_API Tvg_Result tvg_shape_set_stroke_cap(Tvg_Paint paint, Tvg_Stroke_Cap cap);
 
 
 /*!
@@ -1449,7 +1449,7 @@ TVG_API Tvg_Result tvg_shape_set_stroke_cap(Tvg_Paint* paint, Tvg_Stroke_Cap cap
 *
 * @retval TVG_RESULT_INVALID_ARGUMENT An invalid pointer passed as an argument.
 */
-TVG_API Tvg_Result tvg_shape_get_stroke_cap(const Tvg_Paint* paint, Tvg_Stroke_Cap* cap);
+TVG_API Tvg_Result tvg_shape_get_stroke_cap(const Tvg_Paint paint, Tvg_Stroke_Cap* cap);
 
 
 /*!
@@ -1460,7 +1460,7 @@ TVG_API Tvg_Result tvg_shape_get_stroke_cap(const Tvg_Paint* paint, Tvg_Stroke_C
 *
 * @retval TVG_RESULT_INVALID_ARGUMENT An invalid Tvg_Paint pointer.
 */
-TVG_API Tvg_Result tvg_shape_set_stroke_join(Tvg_Paint* paint, Tvg_Stroke_Join join);
+TVG_API Tvg_Result tvg_shape_set_stroke_join(Tvg_Paint paint, Tvg_Stroke_Join join);
 
 
 /*!
@@ -1471,7 +1471,7 @@ TVG_API Tvg_Result tvg_shape_set_stroke_join(Tvg_Paint* paint, Tvg_Stroke_Join j
 *
 * @retval TVG_RESULT_INVALID_ARGUMENT An invalid pointer passed as an argument.
 */
-TVG_API Tvg_Result tvg_shape_get_stroke_join(const Tvg_Paint* paint, Tvg_Stroke_Join* join);
+TVG_API Tvg_Result tvg_shape_get_stroke_join(const Tvg_Paint paint, Tvg_Stroke_Join* join);
 
 
 /*!
@@ -1484,7 +1484,7 @@ TVG_API Tvg_Result tvg_shape_get_stroke_join(const Tvg_Paint* paint, Tvg_Stroke_
 *
 * @since 0.11
 */
-TVG_API Tvg_Result tvg_shape_set_stroke_miterlimit(Tvg_Paint* paint, float miterlimit);
+TVG_API Tvg_Result tvg_shape_set_stroke_miterlimit(Tvg_Paint paint, float miterlimit);
 
 
 /*!
@@ -1497,7 +1497,7 @@ TVG_API Tvg_Result tvg_shape_set_stroke_miterlimit(Tvg_Paint* paint, float miter
 *
 * @since 0.11
 */
-TVG_API Tvg_Result tvg_shape_get_stroke_miterlimit(const Tvg_Paint* paint, float* miterlimit);
+TVG_API Tvg_Result tvg_shape_get_stroke_miterlimit(const Tvg_Paint paint, float* miterlimit);
 
 
 /*!
@@ -1515,7 +1515,7 @@ TVG_API Tvg_Result tvg_shape_get_stroke_miterlimit(const Tvg_Paint* paint, float
 *
 * @since 1.0
 */
-TVG_API Tvg_Result tvg_shape_set_trimpath(Tvg_Paint* paint, float begin, float end, bool simultaneous);
+TVG_API Tvg_Result tvg_shape_set_trimpath(Tvg_Paint paint, float begin, float end, bool simultaneous);
 
 
 /*!
@@ -1534,7 +1534,7 @@ TVG_API Tvg_Result tvg_shape_set_trimpath(Tvg_Paint* paint, float begin, float e
 * @note Either a solid color or a gradient fill is applied, depending on what was set as last.
 * @see tvg_shape_set_fill_rule()
 */
-TVG_API Tvg_Result tvg_shape_set_fill_color(Tvg_Paint* paint, uint8_t r, uint8_t g, uint8_t b, uint8_t a);
+TVG_API Tvg_Result tvg_shape_set_fill_color(Tvg_Paint paint, uint8_t r, uint8_t g, uint8_t b, uint8_t a);
 
 
 /*!
@@ -1548,7 +1548,7 @@ TVG_API Tvg_Result tvg_shape_set_fill_color(Tvg_Paint* paint, uint8_t r, uint8_t
 *
 * @retval TVG_RESULT_INVALID_ARGUMENT An invalid Tvg_Paint pointer.
 */
-TVG_API Tvg_Result tvg_shape_get_fill_color(const Tvg_Paint* paint, uint8_t* r, uint8_t* g, uint8_t* b, uint8_t* a);
+TVG_API Tvg_Result tvg_shape_get_fill_color(const Tvg_Paint paint, uint8_t* r, uint8_t* g, uint8_t* b, uint8_t* a);
 
 
 /*!
@@ -1562,7 +1562,7 @@ TVG_API Tvg_Result tvg_shape_get_fill_color(const Tvg_Paint* paint, uint8_t* r, 
 *
 * @retval TVG_RESULT_INVALID_ARGUMENT An invalid Tvg_Paint pointer.
 */
-TVG_API Tvg_Result tvg_shape_set_fill_rule(Tvg_Paint* paint, Tvg_Fill_Rule rule);
+TVG_API Tvg_Result tvg_shape_set_fill_rule(Tvg_Paint paint, Tvg_Fill_Rule rule);
 
 
 /*!
@@ -1576,7 +1576,7 @@ TVG_API Tvg_Result tvg_shape_set_fill_rule(Tvg_Paint* paint, Tvg_Fill_Rule rule)
 *
 * @retval TVG_RESULT_INVALID_ARGUMENT An invalid pointer passed as an argument.
 */
-TVG_API Tvg_Result tvg_shape_get_fill_rule(const Tvg_Paint* paint, Tvg_Fill_Rule* rule);
+TVG_API Tvg_Result tvg_shape_get_fill_rule(const Tvg_Paint paint, Tvg_Fill_Rule* rule);
 
 
 /*!
@@ -1589,7 +1589,7 @@ TVG_API Tvg_Result tvg_shape_get_fill_rule(const Tvg_Paint* paint, Tvg_Fill_Rule
 *
 * @since 0.10
 */
-TVG_API Tvg_Result tvg_shape_set_paint_order(Tvg_Paint* paint, bool strokeFirst);
+TVG_API Tvg_Result tvg_shape_set_paint_order(Tvg_Paint paint, bool strokeFirst);
 
 
 /*!
@@ -1606,7 +1606,7 @@ TVG_API Tvg_Result tvg_shape_set_paint_order(Tvg_Paint* paint, bool strokeFirst)
 * @note Either a solid color or a gradient fill is applied, depending on what was set as last.
 * @see tvg_shape_set_fill_rule()
 */
-TVG_API Tvg_Result tvg_shape_set_gradient(Tvg_Paint* paint, Tvg_Gradient* grad);
+TVG_API Tvg_Result tvg_shape_set_gradient(Tvg_Paint paint, Tvg_Gradient grad);
 
 
 /*!
@@ -1619,7 +1619,7 @@ TVG_API Tvg_Result tvg_shape_set_gradient(Tvg_Paint* paint, Tvg_Gradient* grad);
 *
 * @retval TVG_RESULT_INVALID_ARGUMENT An invalid pointer passed as an argument.
 */
-TVG_API Tvg_Result tvg_shape_get_gradient(const Tvg_Paint* paint, Tvg_Gradient** grad);
+TVG_API Tvg_Result tvg_shape_get_gradient(const Tvg_Paint paint, Tvg_Gradient* grad);
 
 
 /** \} */   // end defgroup ThorVGCapi_Shape
@@ -1644,7 +1644,7 @@ TVG_API Tvg_Result tvg_shape_get_gradient(const Tvg_Paint* paint, Tvg_Gradient**
 *
 * @return A new linear gradient object.
 */
-TVG_API Tvg_Gradient* tvg_linear_gradient_new(void);
+TVG_API Tvg_Gradient tvg_linear_gradient_new(void);
 
 
 /*!
@@ -1652,7 +1652,7 @@ TVG_API Tvg_Gradient* tvg_linear_gradient_new(void);
 *
 * @return A new radial gradient object.
 */
-TVG_API Tvg_Gradient* tvg_radial_gradient_new(void);
+TVG_API Tvg_Gradient tvg_radial_gradient_new(void);
 
 
 /*!
@@ -1673,7 +1673,7 @@ TVG_API Tvg_Gradient* tvg_radial_gradient_new(void);
 * @note In case the first and the second points are equal, an object is filled with a single color using the last color specified in the tvg_gradient_set_color_stops().
 * @see tvg_gradient_set_color_stops()
 */
-TVG_API Tvg_Result tvg_linear_gradient_set(Tvg_Gradient* grad, float x1, float y1, float x2, float y2);
+TVG_API Tvg_Result tvg_linear_gradient_set(Tvg_Gradient grad, float x1, float y1, float x2, float y2);
 
 
 /*!
@@ -1691,7 +1691,7 @@ TVG_API Tvg_Result tvg_linear_gradient_set(Tvg_Gradient* grad, float x1, float y
 *
 * @retval TVG_RESULT_INVALID_ARGUMENT An invalid Tvg_Gradient pointer.
 */
-TVG_API Tvg_Result tvg_linear_gradient_get(Tvg_Gradient* grad, float* x1, float* y1, float* x2, float* y2);
+TVG_API Tvg_Result tvg_linear_gradient_get(Tvg_Gradient grad, float* x1, float* y1, float* x2, float* y2);
 
 
 /*!
@@ -1722,7 +1722,7 @@ TVG_API Tvg_Result tvg_linear_gradient_get(Tvg_Gradient* grad, float* x1, float*
 *
 * @see tvg_gradient_set_color_stops()
 */
-TVG_API Tvg_Result tvg_radial_gradient_set(Tvg_Gradient* grad, float cx, float cy, float r, float fx, float fy, float fr);
+TVG_API Tvg_Result tvg_radial_gradient_set(Tvg_Gradient grad, float cx, float cy, float r, float fx, float fy, float fr);
 
 
 /*!
@@ -1740,7 +1740,7 @@ TVG_API Tvg_Result tvg_radial_gradient_set(Tvg_Gradient* grad, float cx, float c
 *
 * @see tvg_radial_gradient_set()
 */
-TVG_API Tvg_Result tvg_radial_gradient_get(Tvg_Gradient* grad, float* cx, float* cy, float* r, float* fx, float* fy, float* fr);
+TVG_API Tvg_Result tvg_radial_gradient_get(Tvg_Gradient grad, float* cx, float* cy, float* r, float* fx, float* fy, float* fr);
 
 
 /*!
@@ -1752,7 +1752,7 @@ TVG_API Tvg_Result tvg_radial_gradient_get(Tvg_Gradient* grad, float* cx, float*
 *
 * @retval TVG_RESULT_INVALID_ARGUMENT An invalid Tvg_Gradient pointer.
 */
-TVG_API Tvg_Result tvg_gradient_set_color_stops(Tvg_Gradient* grad, const Tvg_Color_Stop* color_stop, uint32_t cnt);
+TVG_API Tvg_Result tvg_gradient_set_color_stops(Tvg_Gradient grad, const Tvg_Color_Stop* color_stop, uint32_t cnt);
 
 
 /*!
@@ -1766,7 +1766,7 @@ TVG_API Tvg_Result tvg_gradient_set_color_stops(Tvg_Gradient* grad, const Tvg_Co
 *
 * @retval TVG_RESULT_INVALID_ARGUMENT A @c nullptr passed as the argument.
 */
-TVG_API Tvg_Result tvg_gradient_get_color_stops(const Tvg_Gradient* grad, const Tvg_Color_Stop** color_stop, uint32_t* cnt);
+TVG_API Tvg_Result tvg_gradient_get_color_stops(const Tvg_Gradient grad, const Tvg_Color_Stop** color_stop, uint32_t* cnt);
 
 
 /*!
@@ -1777,7 +1777,7 @@ TVG_API Tvg_Result tvg_gradient_get_color_stops(const Tvg_Gradient* grad, const 
 *
 * @retval TVG_RESULT_INVALID_ARGUMENT An invalid Tvg_Gradient pointer.
 */
-TVG_API Tvg_Result tvg_gradient_set_spread(Tvg_Gradient* grad, const Tvg_Stroke_Fill spread);
+TVG_API Tvg_Result tvg_gradient_set_spread(Tvg_Gradient grad, const Tvg_Stroke_Fill spread);
 
 
 /*!
@@ -1788,7 +1788,7 @@ TVG_API Tvg_Result tvg_gradient_set_spread(Tvg_Gradient* grad, const Tvg_Stroke_
 *
 * @retval TVG_RESULT_INVALID_ARGUMENT A @c nullptr passed as the argument.
 */
-TVG_API Tvg_Result tvg_gradient_get_spread(const Tvg_Gradient* grad, Tvg_Stroke_Fill* spread);
+TVG_API Tvg_Result tvg_gradient_get_spread(const Tvg_Gradient grad, Tvg_Stroke_Fill* spread);
 
 
 /*!
@@ -1801,7 +1801,7 @@ TVG_API Tvg_Result tvg_gradient_get_spread(const Tvg_Gradient* grad, Tvg_Stroke_
 *
 * @retval TVG_RESULT_INVALID_ARGUMENT A @c nullptr is passed as the argument.
 */
-TVG_API Tvg_Result tvg_gradient_set_transform(Tvg_Gradient* grad, const Tvg_Matrix* m);
+TVG_API Tvg_Result tvg_gradient_set_transform(Tvg_Gradient grad, const Tvg_Matrix* m);
 
 
 /*!
@@ -1814,7 +1814,7 @@ TVG_API Tvg_Result tvg_gradient_set_transform(Tvg_Gradient* grad, const Tvg_Matr
 *
 * @retval TVG_RESULT_INVALID_ARGUMENT A @c nullptr is passed as the argument.
 */
-TVG_API Tvg_Result tvg_gradient_get_transform(const Tvg_Gradient* grad, Tvg_Matrix* m);
+TVG_API Tvg_Result tvg_gradient_get_transform(const Tvg_Gradient grad, Tvg_Matrix* m);
 
 /**
 * @brief Gets the unique value of the gradient instance indicating the instance type.
@@ -1826,7 +1826,7 @@ TVG_API Tvg_Result tvg_gradient_get_transform(const Tvg_Gradient* grad, Tvg_Matr
 *
 * @since 1.0
 */
-TVG_API Tvg_Result tvg_gradient_get_type(const Tvg_Gradient* grad, Tvg_Type* type);
+TVG_API Tvg_Result tvg_gradient_get_type(const Tvg_Gradient grad, Tvg_Type* type);
 
 
 /*!
@@ -1838,7 +1838,7 @@ TVG_API Tvg_Result tvg_gradient_get_type(const Tvg_Gradient* grad, Tvg_Type* typ
 *
 * @return A copied Tvg_Gradient object if succeed, @c nullptr otherwise.
 */
-TVG_API Tvg_Gradient* tvg_gradient_duplicate(Tvg_Gradient* grad);
+TVG_API Tvg_Gradient tvg_gradient_duplicate(Tvg_Gradient grad);
 
 
 /*!
@@ -1848,7 +1848,7 @@ TVG_API Tvg_Gradient* tvg_gradient_duplicate(Tvg_Gradient* grad);
 *
 * @retval TVG_RESULT_INVALID_ARGUMENT An invalid Tvg_Gradient pointer.
 */
-TVG_API Tvg_Result tvg_gradient_del(Tvg_Gradient* grad);
+TVG_API Tvg_Result tvg_gradient_del(Tvg_Gradient grad);
 
 
 /** \} */   // end defgroup ThorVGCapi_Gradient
@@ -1871,7 +1871,7 @@ TVG_API Tvg_Result tvg_gradient_del(Tvg_Gradient* grad);
 *
 * @return A new picture object.
 */
-TVG_API Tvg_Paint* tvg_picture_new(void);
+TVG_API Tvg_Paint tvg_picture_new(void);
 
 
 /*!
@@ -1887,7 +1887,7 @@ TVG_API Tvg_Paint* tvg_picture_new(void);
 * @retval TVG_RESULT_INVALID_ARGUMENT An invalid Tvg_Paint pointer or an empty @p path.
 * @retval TVG_RESULT_NOT_SUPPORTED A file with an unknown extension.
 */
-TVG_API Tvg_Result tvg_picture_load(Tvg_Paint* picture, const char* path);
+TVG_API Tvg_Result tvg_picture_load(Tvg_Paint picture, const char* path);
 
 
 /*!
@@ -1909,7 +1909,7 @@ TVG_API Tvg_Result tvg_picture_load(Tvg_Paint* picture, const char* path);
 *
 * @since 0.9
 */
-TVG_API Tvg_Result tvg_picture_load_raw(Tvg_Paint* picture, const uint32_t *data, uint32_t w, uint32_t h, Tvg_Colorspace cs, bool copy);
+TVG_API Tvg_Result tvg_picture_load_raw(Tvg_Paint picture, const uint32_t *data, uint32_t w, uint32_t h, Tvg_Colorspace cs, bool copy);
 
 
 /*!
@@ -1931,7 +1931,7 @@ TVG_API Tvg_Result tvg_picture_load_raw(Tvg_Paint* picture, const uint32_t *data
 *
 * @warning: It's the user responsibility to release the @p data memory if the @p copy is @c true.
 */
-TVG_API Tvg_Result tvg_picture_load_data(Tvg_Paint* picture, const char *data, uint32_t size, const char *mimetype, const char* rpath, bool copy);
+TVG_API Tvg_Result tvg_picture_load_data(Tvg_Paint picture, const char *data, uint32_t size, const char *mimetype, const char* rpath, bool copy);
 
 
 /*!
@@ -1946,7 +1946,7 @@ TVG_API Tvg_Result tvg_picture_load_data(Tvg_Paint* picture, const char *data, u
 *
 * @retval TVG_RESULT_INVALID_ARGUMENT An invalid Tvg_Paint pointer.
 */
-TVG_API Tvg_Result tvg_picture_set_size(Tvg_Paint* picture, float w, float h);
+TVG_API Tvg_Result tvg_picture_set_size(Tvg_Paint picture, float w, float h);
 
 
 /*!
@@ -1958,7 +1958,7 @@ TVG_API Tvg_Result tvg_picture_set_size(Tvg_Paint* picture, float w, float h);
 *
 * @retval TVG_RESULT_INVALID_ARGUMENT An invalid Tvg_Paint pointer.
 */
-TVG_API Tvg_Result tvg_picture_get_size(const Tvg_Paint* picture, float* w, float* h);
+TVG_API Tvg_Result tvg_picture_get_size(const Tvg_Paint picture, float* w, float* h);
 
 
 /**
@@ -1994,7 +1994,7 @@ TVG_API Tvg_Result tvg_picture_get_size(const Tvg_Paint* picture, float* w, floa
  *
  * @since 1.0
  */
-TVG_API Tvg_Result tvg_picture_set_origin(Tvg_Paint* picture, float x, float y);
+TVG_API Tvg_Result tvg_picture_set_origin(Tvg_Paint picture, float x, float y);
 
 
 /**
@@ -2012,7 +2012,8 @@ TVG_API Tvg_Result tvg_picture_set_origin(Tvg_Paint* picture, float x, float y);
  * @see tvg_picture_set_origin()
  * @since 1.0
  */
-TVG_API Tvg_Result tvg_picture_get_origin(const Tvg_Paint* picture, float* x, float* y);
+TVG_API Tvg_Result tvg_picture_get_origin(const Tvg_Paint picture, float* x, float* y);
+
 
 /*!
 * @brief Retrieve a paint object from the Picture scene by its Unique ID.
@@ -2027,7 +2028,7 @@ TVG_API Tvg_Result tvg_picture_get_origin(const Tvg_Paint* picture, float* x, fl
 * @see tvg_accessor_generate_id()
 * @note Experimental API
 */
-TVG_API const Tvg_Paint* tvg_picture_get_paint(Tvg_Paint* picture, uint32_t id);
+TVG_API const Tvg_Paint tvg_picture_get_paint(Tvg_Paint picture, uint32_t id);
 
 
 /** \} */   // end defgroup ThorVGCapi_Picture
@@ -2053,7 +2054,7 @@ TVG_API const Tvg_Paint* tvg_picture_get_paint(Tvg_Paint* picture, uint32_t id);
 *
 * @return A new scene object.
 */
-TVG_API Tvg_Paint* tvg_scene_new(void);
+TVG_API Tvg_Paint tvg_scene_new(void);
 
 
 /**
@@ -2069,7 +2070,7 @@ TVG_API Tvg_Paint* tvg_scene_new(void);
  * @see tvg_scene_remove()
  * @see tvg_scene_push_at()
  */
-TVG_API Tvg_Result tvg_scene_push(Tvg_Paint* scene, Tvg_Paint* paint);
+TVG_API Tvg_Result tvg_scene_push(Tvg_Paint scene, Tvg_Paint paint);
 
 
 /**
@@ -2089,7 +2090,7 @@ TVG_API Tvg_Result tvg_scene_push(Tvg_Paint* scene, Tvg_Paint* paint);
  * @see tvg_scene_push()
  * @since 1.0
  */
-TVG_API Tvg_Result tvg_scene_push_at(Tvg_Paint* scene, Tvg_Paint* target, Tvg_Paint* at);
+TVG_API Tvg_Result tvg_scene_push_at(Tvg_Paint scene, Tvg_Paint target, Tvg_Paint at);
 
 
 /**
@@ -2106,7 +2107,7 @@ TVG_API Tvg_Result tvg_scene_push_at(Tvg_Paint* scene, Tvg_Paint* target, Tvg_Pa
  * @see tvg_scene_push()
  * @since 1.0
  */
-TVG_API Tvg_Result tvg_scene_remove(Tvg_Paint* scene, Tvg_Paint* paint);
+TVG_API Tvg_Result tvg_scene_remove(Tvg_Paint scene, Tvg_Paint paint);
 
 
 /**
@@ -2119,7 +2120,7 @@ TVG_API Tvg_Result tvg_scene_remove(Tvg_Paint* scene, Tvg_Paint* paint);
  *
  * @since 1.0
  */
-TVG_API Tvg_Result tvg_scene_reset_effects(Tvg_Paint* scene);
+TVG_API Tvg_Result tvg_scene_reset_effects(Tvg_Paint scene);
 
 
 /**
@@ -2136,7 +2137,7 @@ TVG_API Tvg_Result tvg_scene_reset_effects(Tvg_Paint* scene);
  *
  * @since 1.0
  */
-TVG_API Tvg_Result tvg_scene_push_effect_gaussian_blur(Tvg_Paint* scene, double sigma, int direction, int border, int quality);
+TVG_API Tvg_Result tvg_scene_push_effect_gaussian_blur(Tvg_Paint scene, double sigma, int direction, int border, int quality);
 
 
 /**
@@ -2158,7 +2159,7 @@ TVG_API Tvg_Result tvg_scene_push_effect_gaussian_blur(Tvg_Paint* scene, double 
  *
  * @since 1.0
  */
-TVG_API Tvg_Result tvg_scene_push_effect_drop_shadow(Tvg_Paint* scene, int r, int g, int b, int a, double angle, double distance, double sigma, int quality);
+TVG_API Tvg_Result tvg_scene_push_effect_drop_shadow(Tvg_Paint scene, int r, int g, int b, int a, double angle, double distance, double sigma, int quality);
 
 
 /**
@@ -2174,7 +2175,7 @@ TVG_API Tvg_Result tvg_scene_push_effect_drop_shadow(Tvg_Paint* scene, int r, in
  *
  * @since 1.0
  */
-TVG_API Tvg_Result tvg_scene_push_effect_fill(Tvg_Paint* scene, int r, int g, int b, int a);
+TVG_API Tvg_Result tvg_scene_push_effect_fill(Tvg_Paint scene, int r, int g, int b, int a);
 
 
 /**
@@ -2194,7 +2195,7 @@ TVG_API Tvg_Result tvg_scene_push_effect_fill(Tvg_Paint* scene, int r, int g, in
  *
  * @since 1.0
  */
-TVG_API Tvg_Result tvg_scene_push_effect_tint(Tvg_Paint* scene, int black_r, int black_g, int black_b, int white_r, int white_g, int white_b, double intensity);
+TVG_API Tvg_Result tvg_scene_push_effect_tint(Tvg_Paint scene, int black_r, int black_g, int black_b, int white_r, int white_g, int white_b, double intensity);
 
 
 /**
@@ -2217,7 +2218,7 @@ TVG_API Tvg_Result tvg_scene_push_effect_tint(Tvg_Paint* scene, int black_r, int
  *
  * @since 1.0
  */
-TVG_API Tvg_Result tvg_scene_push_effect_tritone(Tvg_Paint* scene, int shadow_r, int shadow_g, int shadow_b, int midtone_r, int midtone_g, int midtone_b, int highlight_r, int highlight_g, int highlight_b, int blend);
+TVG_API Tvg_Result tvg_scene_push_effect_tritone(Tvg_Paint scene, int shadow_r, int shadow_g, int shadow_b, int midtone_r, int midtone_g, int midtone_b, int highlight_r, int highlight_g, int highlight_b, int blend);
 
 /** \} */   // end defgroup ThorVGCapi_Scene
 
@@ -2241,7 +2242,7 @@ TVG_API Tvg_Result tvg_scene_push_effect_tritone(Tvg_Paint* scene, int shadow_r,
 *
 * @since 0.15
 */
-TVG_API Tvg_Paint* tvg_text_new(void);
+TVG_API Tvg_Paint tvg_text_new(void);
 
 
 /**
@@ -2249,7 +2250,7 @@ TVG_API Tvg_Paint* tvg_text_new(void);
  *
  * This function specifies the name of the font to be used when rendering text.
  *
- * @param[in] paint A Tvg_Paint pointer to the text object.
+ * @param[in] text A Tvg_Paint pointer to the text object.
  * @param[in] name The name of the font. This should match a font available through the canvas backend.
  *                 If set to @c nullptr, ThorVG will attempt to select a fallback font available on the engine.
  *
@@ -2264,7 +2265,7 @@ TVG_API Tvg_Paint* tvg_text_new(void);
  *
  * @since 1.0
  */
-TVG_API Tvg_Result tvg_text_set_font(Tvg_Paint* paint, const char* name);
+TVG_API Tvg_Result tvg_text_set_font(Tvg_Paint text, const char* name);
 
 
 /**
@@ -2274,7 +2275,7 @@ TVG_API Tvg_Result tvg_text_set_font(Tvg_Paint* paint, const char* name);
  * The size is specified in point units, and supports floating-point precision
  * for smooth scaling and animation effects.
  *
- * @param[in] paint A Tvg_Paint pointer to the text object.
+ * @param[in] text A Tvg_Paint pointer to the text object.
  * @param[in] size The font size in points. Must be greater than 0.0.
  *
  * @retval TVG_RESULT_INVALID_ARGUMENT A @c nullptr passed as the @p paint argument.
@@ -2287,7 +2288,7 @@ TVG_API Tvg_Result tvg_text_set_font(Tvg_Paint* paint, const char* name);
  *
  * @since 1.0
  */
-TVG_API Tvg_Result tvg_text_set_size(Tvg_Paint* paint, float size);
+TVG_API Tvg_Result tvg_text_set_size(Tvg_Paint text, float size);
 
 
 /**
@@ -2296,12 +2297,12 @@ TVG_API Tvg_Result tvg_text_set_size(Tvg_Paint* paint, float size);
 * This function sets the unicode text that will be displayed by the rendering system.
 * The text is set according to the specified UTF encoding method, which defaults to UTF-8.
 *
-* @param[in] paint A Tvg_Paint pointer to the text object.
-* @param[in] text The multi-byte text encoded with utf8 string to be rendered.
+* @param[in] text A Tvg_Paint pointer to the text object.
+* @param[in] utf8 The multi-byte text encoded with utf8 string to be rendered.
 *
 * @since 1.0
 */
-TVG_API Tvg_Result tvg_text_set_text(Tvg_Paint* paint, const char* text);
+TVG_API Tvg_Result tvg_text_set_text(Tvg_Paint text, const char* utf8);
 
 
 /**
@@ -2311,7 +2312,7 @@ TVG_API Tvg_Result tvg_text_set_text(Tvg_Paint* paint, const char* text);
  * Otherwise, treat it as an anchor within the text bounds which point of
  * the text box is pinned to the paint position.
  *
- * @param[in] paint A Tvg_Paint pointer to the text object.
+ * @param[in] text A Tvg_Paint pointer to the text object.
  * @param[in] x Horizontal alignment/anchor in [0..1]: 0=left/start, 0.5=center, 1=right/end. (Default is 0)
  * @param[in] y Vertical alignment/anchor in [0..1]: 0=top, 0.5=middle, 1=bottom. (Default is 0)
  *
@@ -2319,7 +2320,7 @@ TVG_API Tvg_Result tvg_text_set_text(Tvg_Paint* paint, const char* text);
  *
  * @see tvg_text_layout()
  */
-TVG_API Tvg_Result tvg_text_align(Tvg_Paint* paint, float x, float y);
+TVG_API Tvg_Result tvg_text_align(Tvg_Paint text, float x, float y);
 
 
 /**
@@ -2329,7 +2330,7 @@ TVG_API Tvg_Result tvg_text_align(Tvg_Paint* paint, float x, float y);
  * the text may wrap/align inside it. If width/height == 0, the axis is
  * unconstrained and @ref tvg_text_align() acts as an anchor on that axis.
  *
- * @param[in] paint A Tvg_Paint pointer to the text object.
+ * @param[in] text A Tvg_Paint pointer to the text object.
  * @param[in] w Layout width in user space. Use 0 for no horizontal constraint. (Default is 0)
  * @param[in] h Layout height in user space. Use 0 for no vertical constraint. (Default is 0)
  *
@@ -2338,7 +2339,7 @@ TVG_API Tvg_Result tvg_text_align(Tvg_Paint* paint, float x, float y);
  *
  * @see tvg_text_align()
  */
-TVG_API Tvg_Result tvg_text_layout(Tvg_Paint* paint, float w, float h);
+TVG_API Tvg_Result tvg_text_layout(Tvg_Paint text, float w, float h);
 
 
 /**
@@ -2348,7 +2349,7 @@ TVG_API Tvg_Result tvg_text_layout(Tvg_Paint* paint, float w, float h);
  * for the current text object. The shear factor determines the degree of slant
  * applied along the X-axis.
  *
- * @param[in] paint A Tvg_Paint pointer to the text object.
+ * @param[in] text A Tvg_Paint pointer to the text object.
  * @param[in] shear The shear factor to apply. A value of 0.0 applies no slant, while values around 0.5 result in a strong slant.
  *                  Must be in the range [0.0, 0.5]. Recommended value is 0.18.
  *
@@ -2364,7 +2365,7 @@ TVG_API Tvg_Result tvg_text_layout(Tvg_Paint* paint, float w, float h);
  *
  * @since 1.0
  */
-TVG_API Tvg_Result tvg_text_set_italic(Tvg_Paint* paint, float shear);
+TVG_API Tvg_Result tvg_text_set_italic(Tvg_Paint text, float shear);
 
 
 /**
@@ -2373,7 +2374,7 @@ TVG_API Tvg_Result tvg_text_set_italic(Tvg_Paint* paint, float shear);
  * This function adds an outline to the text with the specified width and RGB color.
  * The outline enhances the visibility of the text by rendering a stroke around its glyphs.
  *
- * @param[in] paint A Tvg_Paint pointer to the text object.
+ * @param[in] text A Tvg_Paint pointer to the text object.
  * @param width The width of the outline. Must be positive value. (The default is 0)
  * @param r     Red component of the outline color (0–255).
  * @param g     Green component of the outline color (0–255).
@@ -2384,7 +2385,7 @@ TVG_API Tvg_Result tvg_text_set_italic(Tvg_Paint* paint, float shear);
  *
  * @since 1.0
  */
-TVG_API Tvg_Result tvg_text_set_outline(Tvg_Paint* paint, float width, uint8_t r, uint8_t g, uint8_t b);
+TVG_API Tvg_Result tvg_text_set_outline(Tvg_Paint text, float width, uint8_t r, uint8_t g, uint8_t b);
 
 
 /**
@@ -2404,13 +2405,13 @@ TVG_API Tvg_Result tvg_text_set_outline(Tvg_Paint* paint, float width, uint8_t r
 *
 * @since 0.15
 */
-TVG_API Tvg_Result tvg_text_set_color(Tvg_Paint* paint, uint8_t r, uint8_t g, uint8_t b);
+TVG_API Tvg_Result tvg_text_set_color(Tvg_Paint text, uint8_t r, uint8_t g, uint8_t b);
 
 
 /**
 * @brief Sets the gradient fill for the text.
 *
-* @param[in] paint A Tvg_Paint pointer to the text object.
+* @param[in] text A Tvg_Paint pointer to the text object.
 * @param[in] grad The linear or radial gradient fill
 *
 * @retval TVG_RESULT_INVALID_ARGUMENT A @c nullptr passed as the @p paint argument.
@@ -2421,7 +2422,7 @@ TVG_API Tvg_Result tvg_text_set_color(Tvg_Paint* paint, uint8_t r, uint8_t g, ui
 *
 * @since 0.15
 */
-TVG_API Tvg_Result tvg_text_set_gradient(Tvg_Paint* paint, Tvg_Gradient* gradient);
+TVG_API Tvg_Result tvg_text_set_gradient(Tvg_Paint text, Tvg_Gradient gradient);
 
 
 /**
@@ -2507,7 +2508,7 @@ TVG_API Tvg_Result tvg_font_unload(const char* path);
 *
 * @return A new Tvg_Saver object.
 */
-TVG_API Tvg_Saver* tvg_saver_new(void);
+TVG_API Tvg_Saver tvg_saver_new(void);
 
 
 /*!
@@ -2530,7 +2531,7 @@ TVG_API Tvg_Saver* tvg_saver_new(void);
 * @note Saving can be asynchronous if the assigned thread number is greater than zero. To guarantee the saving is done, call tvg_saver_sync() afterwards.
 * @see tvg_saver_sync()
 */
-TVG_API Tvg_Result tvg_saver_save(Tvg_Saver* saver, Tvg_Paint* paint, const char* path, uint32_t quality);
+TVG_API Tvg_Result tvg_saver_save(Tvg_Saver saver, Tvg_Paint paint, const char* path, uint32_t quality);
 
 
 /*!
@@ -2548,7 +2549,7 @@ TVG_API Tvg_Result tvg_saver_save(Tvg_Saver* saver, Tvg_Paint* paint, const char
 * @note The asynchronous tasking is dependent on the Saver module implementation.
 * @see tvg_saver_save()
 */
-TVG_API Tvg_Result tvg_saver_sync(Tvg_Saver* saver);
+TVG_API Tvg_Result tvg_saver_sync(Tvg_Saver saver);
 
 
 /*!
@@ -2558,7 +2559,7 @@ TVG_API Tvg_Result tvg_saver_sync(Tvg_Saver* saver);
 *
 * @retval TVG_RESULT_INVALID_ARGUMENT An invalid Tvg_Saver pointer.
 */
-TVG_API Tvg_Result tvg_saver_del(Tvg_Saver* saver);
+TVG_API Tvg_Result tvg_saver_del(Tvg_Saver saver);
 
 
 /** \} */   // end defgroup ThorVGCapi_Saver
@@ -2584,7 +2585,7 @@ TVG_API Tvg_Result tvg_saver_del(Tvg_Saver* saver);
 *
 * @since 0.13
 */
-TVG_API Tvg_Animation* tvg_animation_new(void);
+TVG_API Tvg_Animation tvg_animation_new(void);
 
 
 /*!
@@ -2604,7 +2605,7 @@ TVG_API Tvg_Animation* tvg_animation_new(void);
 *
 * @since 0.13
 */
-TVG_API Tvg_Result tvg_animation_set_frame(Tvg_Animation* animation, float no);
+TVG_API Tvg_Result tvg_animation_set_frame(Tvg_Animation animation, float no);
 
 
 /*!
@@ -2622,7 +2623,7 @@ TVG_API Tvg_Result tvg_animation_set_frame(Tvg_Animation* animation, float no);
 *
 * @since 0.13
 */
-TVG_API Tvg_Paint* tvg_animation_get_picture(Tvg_Animation* animation);
+TVG_API Tvg_Paint tvg_animation_get_picture(Tvg_Animation animation);
 
 
 /*!
@@ -2638,7 +2639,7 @@ TVG_API Tvg_Paint* tvg_animation_get_picture(Tvg_Animation* animation);
 *
 * @since 0.13
 */
-TVG_API Tvg_Result tvg_animation_get_frame(Tvg_Animation* animation, float* no);
+TVG_API Tvg_Result tvg_animation_get_frame(Tvg_Animation animation, float* no);
 
 
 /*!
@@ -2654,7 +2655,7 @@ TVG_API Tvg_Result tvg_animation_get_frame(Tvg_Animation* animation, float* no);
 *
 * @since 0.13
 */
-TVG_API Tvg_Result tvg_animation_get_total_frame(Tvg_Animation* animation, float* cnt);
+TVG_API Tvg_Result tvg_animation_get_total_frame(Tvg_Animation animation, float* cnt);
 
 
 /*!
@@ -2669,7 +2670,7 @@ TVG_API Tvg_Result tvg_animation_get_total_frame(Tvg_Animation* animation, float
 *
 * @since 0.13
 */
-TVG_API Tvg_Result tvg_animation_get_duration(Tvg_Animation* animation, float* duration);
+TVG_API Tvg_Result tvg_animation_get_duration(Tvg_Animation animation, float* duration);
 
 
 /*!
@@ -2695,7 +2696,7 @@ TVG_API Tvg_Result tvg_animation_get_duration(Tvg_Animation* animation, float* d
 
 * @since 1.0
 */
-TVG_API Tvg_Result tvg_animation_set_segment(Tvg_Animation* animation, float begin, float end);
+TVG_API Tvg_Result tvg_animation_set_segment(Tvg_Animation animation, float begin, float end);
 
 
 /*!
@@ -2710,7 +2711,7 @@ TVG_API Tvg_Result tvg_animation_set_segment(Tvg_Animation* animation, float beg
 *
 * @since 1.0
 */
-TVG_API Tvg_Result tvg_animation_get_segment(Tvg_Animation* animation, float* begin, float* end);
+TVG_API Tvg_Result tvg_animation_get_segment(Tvg_Animation animation, float* begin, float* end);
 
 
 /*!
@@ -2722,7 +2723,7 @@ TVG_API Tvg_Result tvg_animation_get_segment(Tvg_Animation* animation, float* be
 *
 * @since 0.13
 */
-TVG_API Tvg_Result tvg_animation_del(Tvg_Animation* animation);
+TVG_API Tvg_Result tvg_animation_del(Tvg_Animation animation);
 
 
 /** \} */   // end defgroup ThorVGCapi_Animation
@@ -2746,7 +2747,7 @@ TVG_API Tvg_Result tvg_animation_del(Tvg_Animation* animation);
 *
 * @note Experimental API
 */
-TVG_API Tvg_Accessor* tvg_accessor_new(void);
+TVG_API Tvg_Accessor tvg_accessor_new(void);
 
 
 /*!
@@ -2758,7 +2759,7 @@ TVG_API Tvg_Accessor* tvg_accessor_new(void);
 *
 * @note Experimental API
 */
-TVG_API Tvg_Result tvg_accessor_del(Tvg_Accessor* accessor);
+TVG_API Tvg_Result tvg_accessor_del(Tvg_Accessor accessor);
 
 
 /*!
@@ -2777,7 +2778,7 @@ TVG_API Tvg_Result tvg_accessor_del(Tvg_Accessor* accessor);
 *
 * @note Experimental API
 */
-TVG_API Tvg_Result tvg_accessor_set(Tvg_Accessor* accessor, Tvg_Paint* paint, bool (*func)(Tvg_Paint* paint, void* data), void* data);
+TVG_API Tvg_Result tvg_accessor_set(Tvg_Accessor accessor, Tvg_Paint paint, bool (*func)(Tvg_Paint paint, void* data), void* data);
 
 
 /*!
@@ -2817,7 +2818,7 @@ TVG_API uint32_t tvg_accessor_generate_id(const char* name);
 *
 * @since 0.15
 */
-TVG_API Tvg_Animation* tvg_lottie_animation_new(void);
+TVG_API Tvg_Animation tvg_lottie_animation_new(void);
 
 
 /*!
@@ -2830,7 +2831,7 @@ TVG_API Tvg_Animation* tvg_lottie_animation_new(void);
 *
 * @since 1.0
 */
-TVG_API uint32_t tvg_lottie_animation_gen_slot(Tvg_Animation* animation, const char* slot);
+TVG_API uint32_t tvg_lottie_animation_gen_slot(Tvg_Animation animation, const char* slot);
 
 
 /*!
@@ -2845,7 +2846,7 @@ TVG_API uint32_t tvg_lottie_animation_gen_slot(Tvg_Animation* animation, const c
 *
 * @since 1.0
 */
-TVG_API Tvg_Result tvg_lottie_animation_apply_slot(Tvg_Animation* animation, uint32_t id);
+TVG_API Tvg_Result tvg_lottie_animation_apply_slot(Tvg_Animation animation, uint32_t id);
 
 
 /*!
@@ -2862,8 +2863,7 @@ TVG_API Tvg_Result tvg_lottie_animation_apply_slot(Tvg_Animation* animation, uin
 * @see tvg_lottie_animation_gen_slot()
 * @since 1.0
 */
-TVG_API Tvg_Result tvg_lottie_animation_del_slot(Tvg_Animation* animation, uint32_t id);
-
+TVG_API Tvg_Result tvg_lottie_animation_del_slot(Tvg_Animation animation, uint32_t id);
 
 
 /*!
@@ -2878,7 +2878,7 @@ TVG_API Tvg_Result tvg_lottie_animation_del_slot(Tvg_Animation* animation, uint3
 *
 * @since 1.0
 */
-TVG_API Tvg_Result tvg_lottie_animation_set_marker(Tvg_Animation* animation, const char* marker);
+TVG_API Tvg_Result tvg_lottie_animation_set_marker(Tvg_Animation animation, const char* marker);
 
 
 /*!
@@ -2891,7 +2891,7 @@ TVG_API Tvg_Result tvg_lottie_animation_set_marker(Tvg_Animation* animation, con
 *
 * @since 1.0
 */
-TVG_API Tvg_Result tvg_lottie_animation_get_markers_cnt(Tvg_Animation* animation, uint32_t* cnt);
+TVG_API Tvg_Result tvg_lottie_animation_get_markers_cnt(Tvg_Animation animation, uint32_t* cnt);
 
 
 /*!
@@ -2905,7 +2905,7 @@ TVG_API Tvg_Result tvg_lottie_animation_get_markers_cnt(Tvg_Animation* animation
 *
 * @since 1.0
 */
-TVG_API Tvg_Result tvg_lottie_animation_get_marker(Tvg_Animation* animation, uint32_t idx, const char** name);
+TVG_API Tvg_Result tvg_lottie_animation_get_marker(Tvg_Animation animation, uint32_t idx, const char** name);
 
 
 /**
@@ -2923,7 +2923,7 @@ TVG_API Tvg_Result tvg_lottie_animation_get_marker(Tvg_Animation* animation, uin
  *
  * @since 1.0
  */
-TVG_API Tvg_Result tvg_lottie_animation_tween(Tvg_Animation* animation, float from, float to, float progress);
+TVG_API Tvg_Result tvg_lottie_animation_tween(Tvg_Animation animation, float from, float to, float progress);
 
 
 /*!
@@ -2941,7 +2941,7 @@ TVG_API Tvg_Result tvg_lottie_animation_tween(Tvg_Animation* animation, float fr
 *
 * @note Experimental API
 */
-TVG_API Tvg_Result tvg_lottie_animation_assign(Tvg_Animation* animation, const char* layer, uint32_t ix, const char* var, float val);
+TVG_API Tvg_Result tvg_lottie_animation_assign(Tvg_Animation animation, const char* layer, uint32_t ix, const char* var, float val);
 
 /** \} */   // end addtogroup ThorVGCapi_LottieAnimation
 
