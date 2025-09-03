@@ -1581,6 +1581,7 @@ bool LottieParser::apply(LottieSlot* slot, bool byDefault)
                 if (KEY_AS("p")) parseColorStop(static_cast<LottieGradient*>(obj));
                 else skip(key);
             }
+            static_cast<LottieGradient*>(obj)->prepare();
             break;
         }
         case LottieProperty::Type::TextDoc: {
