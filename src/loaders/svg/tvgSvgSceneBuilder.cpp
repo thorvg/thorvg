@@ -576,8 +576,8 @@ static constexpr struct
 
 
 static bool _isValidImageMimeTypeAndEncoding(const char** href, const char** mimetype, imageMimeTypeEncoding* encoding) {
-    if (strncmp(*href, "image/", sizeof("image/") - 1)) return false; //not allowed mime type
-    *href += sizeof("image/") - 1;
+    if (strncmp(*href, "image/", sizeof("image/") - 1) && strncmp(*href, "img/", sizeof("img/") - 1)) return false; //not allowed mime type
+    *href += (((*href)[3] == '/') ? sizeof("img/") : sizeof("image/")) - 1;
 
     //RFC2397 data:[<mediatype>][;base64],<data>
     //mediatype  := [ type "/" subtype ] *( ";" parameter )
