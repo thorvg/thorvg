@@ -24,11 +24,6 @@
 
 
 /************************************************************************/
-/* Internal Class Implementation                                        */
-/************************************************************************/
-
-
-/************************************************************************/
 /* External Class Implementation                                        */
 /************************************************************************/
 
@@ -53,6 +48,17 @@ SwOutline* mpoolReqStrokeOutline(SwMpool* mpool, unsigned idx)
 }
 
 
+void mpoolRetStrokeOutline(SwMpool* mpool, unsigned idx)
+{
+    mpool->strokeOutline[idx].pts.clear();
+    mpool->strokeOutline[idx].cntrs.clear();
+    mpool->strokeOutline[idx].types.clear();
+    mpool->strokeOutline[idx].closed.clear();
+
+    mpoolRetStrokeBorders(mpool, idx);
+}
+
+
 SwStrokeBorder* mpoolReqStrokeLBorder(SwMpool* mpool, unsigned idx)
 {
     return &mpool->leftBorder[idx];
@@ -74,14 +80,9 @@ void mpoolRetStrokeBorders(SwMpool* mpool, unsigned idx)
 }
 
 
-void mpoolRetStrokeOutline(SwMpool* mpool, unsigned idx)
+SwCellPool* mpoolReqCellPool(SwMpool* mpool, unsigned idx)
 {
-    mpool->strokeOutline[idx].pts.clear();
-    mpool->strokeOutline[idx].cntrs.clear();
-    mpool->strokeOutline[idx].types.clear();
-    mpool->strokeOutline[idx].closed.clear();
-
-    mpoolRetStrokeBorders(mpool, idx);
+    return &mpool->cellPool[idx];
 }
 
 
@@ -94,6 +95,8 @@ SwMpool* mpoolInit(uint32_t threads)
     mpool->strokeOutline = new SwOutline[allocSize];
     mpool->leftBorder = new SwStrokeBorder[allocSize];
     mpool->rightBorder = new SwStrokeBorder[allocSize];
+    mpool->cellPool = new SwCellPool[allocSize];
+
     mpool->allocSize = allocSize;
 
     return mpool;
@@ -108,6 +111,8 @@ bool mpoolTerm(SwMpool* mpool)
     delete[](mpool->strokeOutline);
     delete[](mpool->leftBorder);
     delete[](mpool->rightBorder);
+    delete[](mpool->cellPool);
+
     tvg::free(mpool);
 
     return true;

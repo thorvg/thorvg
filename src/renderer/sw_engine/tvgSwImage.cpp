@@ -96,9 +96,9 @@ bool imagePrepare(SwImage& image, const Matrix& transform, const RenderRegion& c
 }
 
 
-bool imageGenRle(SwImage& image, const RenderRegion& renderBox, bool antiAlias)
+bool imageGenRle(SwImage& image, const RenderRegion& renderBox, SwMpool* mpool, unsigned tid, bool antiAlias)
 {
-    if ((image.rle = rleRender(image.rle, image.outline, renderBox, antiAlias))) return true;
+    if ((image.rle = rleRender(image.rle, image.outline, renderBox, mpool, tid, antiAlias))) return true;
 
     return false;
 }

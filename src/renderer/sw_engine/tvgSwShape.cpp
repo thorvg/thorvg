@@ -447,13 +447,13 @@ bool shapePrepare(SwShape& shape, const RenderShape* rshape, const Matrix& trans
 }
 
 
-bool shapeGenRle(SwShape& shape, const RenderRegion& bbox, bool antiAlias)
+bool shapeGenRle(SwShape& shape, const RenderRegion& bbox, SwMpool* mpool, unsigned tid, bool antiAlias)
 {
     //Case A: Fast Track Rectangle Drawing
     if (shape.fastTrack) return true;
 
     //Case B: Normal Shape RLE Drawing
-    if ((shape.rle = rleRender(shape.rle, shape.outline, bbox, antiAlias))) return true;
+    if ((shape.rle = rleRender(shape.rle, shape.outline, bbox, mpool, tid, antiAlias))) return true;
 
     return false;
 }
@@ -531,7 +531,7 @@ bool shapeGenStrokeRle(SwShape& shape, const RenderShape* rshape, const Matrix& 
     auto strokeOutline = strokeExportOutline(shape.stroke, mpool, tid);
 
     auto ret = mathUpdateOutlineBBox(strokeOutline, clipBox, renderBox, false);
-    if (ret) shape.strokeRle = rleRender(shape.strokeRle, strokeOutline, renderBox, true);
+    if (ret) shape.strokeRle = rleRender(shape.strokeRle, strokeOutline, renderBox, mpool, tid, true);
     mpoolRetStrokeOutline(mpool, tid);
     return ret;
 }
