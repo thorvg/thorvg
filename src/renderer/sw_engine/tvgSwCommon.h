@@ -129,6 +129,19 @@ struct SwBBox
     {
         min.x = min.y = max.x = max.y = 0;
     }
+
+    int32_t w() const { return max.x - min.x; }
+    int32_t h() const { return max.y - min.y; }
+};
+
+using Area = long;
+
+struct SwCell
+{
+    int32_t x;
+    int32_t cover;
+    Area area;
+    SwCell *next;
 };
 
 struct SwFill
@@ -282,10 +295,22 @@ struct SwCompositor : RenderCompositor
     bool valid;
 };
 
+struct SwCellPool
+{
+    #define DEFAULT_POOL_SIZE 16368
+
+    uint32_t size;
+    SwCell* buffer;
+
+    SwCellPool() : size(DEFAULT_POOL_SIZE), buffer((SwCell*)malloc(DEFAULT_POOL_SIZE)) {}
+    ~SwCellPool() { free(buffer); }
+};
+
 struct SwMpool
 {
     SwOutline* outline;
     SwOutline* strokeOutline;
+    SwCellPool* cellPool;
     unsigned allocSize;
 };
 
@@ -506,7 +531,7 @@ bool mathClipBBox(const SwBBox& clipper, SwBBox& clippee);
 void shapeReset(SwShape* shape);
 bool shapePrepare(SwShape* shape, const RenderShape* rshape, const Matrix& transform, const SwBBox& clipRegion, SwBBox& renderRegion, SwMpool* mpool, unsigned tid, bool hasComposite);
 bool shapePrepared(const SwShape* shape);
-bool shapeGenRle(SwShape* shape, const RenderShape* rshape, bool antiAlias);
+bool shapeGenRle(SwShape* shape, const RenderShape* rshape, SwMpool* mpool, unsigned tid, bool antiAlias);
 void shapeDelOutline(SwShape* shape, SwMpool* mpool, uint32_t tid);
 void shapeResetStroke(SwShape* shape, const RenderShape* rshape, const Matrix& transform);
 bool shapeGenStrokeRle(SwShape* shape, const RenderShape* rshape, const Matrix& transform, const SwBBox& clipRegion, SwBBox& renderRegion, SwMpool* mpool, unsigned tid);
@@ -525,7 +550,7 @@ SwOutline* strokeExportOutline(SwStroke* stroke, SwMpool* mpool, unsigned tid);
 void strokeFree(SwStroke* stroke);
 
 bool imagePrepare(SwImage* image, const Matrix& transform, const SwBBox& clipRegion, SwBBox& renderRegion, SwMpool* mpool, unsigned tid);
-bool imageGenRle(SwImage* image, const SwBBox& renderRegion, bool antiAlias);
+bool imageGenRle(SwImage* image, const SwBBox& renderRegion, SwMpool* mpool, unsigned tid, bool antiAlias);
 void imageDelOutline(SwImage* image, SwMpool* mpool, uint32_t tid);
 void imageReset(SwImage* image);
 void imageFree(SwImage* image);
@@ -548,7 +573,7 @@ void fillRadial(const SwFill* fill, uint32_t* dst, uint32_t y, uint32_t x, uint3
 void fillRadial(const SwFill* fill, uint32_t* dst, uint32_t y, uint32_t x, uint32_t len, SwBlender op, SwBlender op2, uint8_t a);                          //blending + BlendingMethod(op2) ver.
 void fillRadial(const SwFill* fill, uint32_t* dst, uint32_t y, uint32_t x, uint32_t len, uint8_t* cmp, SwAlpha alpha, uint8_t csize, uint8_t opacity);     //matting ver.
 
-SwRle* rleRender(SwRle* rle, const SwOutline* outline, const SwBBox& renderRegion, bool antiAlias);
+SwRle* rleRender(SwRle* rle, const SwOutline* outline, const SwBBox& renderRegion, SwMpool* mpool, unsigned tid, bool antiAlias);
 SwRle* rleRender(const SwBBox* bbox);
 void rleFree(SwRle* rle);
 void rleReset(SwRle* rle);
@@ -565,6 +590,7 @@ SwOutline* mpoolReqStrokeOutline(SwMpool* mpool, unsigned idx);
 void mpoolRetStrokeOutline(SwMpool* mpool, unsigned idx);
 SwOutline* mpoolReqDashOutline(SwMpool* mpool, unsigned idx);
 void mpoolRetDashOutline(SwMpool* mpool, unsigned idx);
+SwCellPool* mpoolReqCellPool(SwMpool* mpool, unsigned idx);
 
 bool rasterCompositor(SwSurface* surface);
 bool rasterGradientShape(SwSurface* surface, SwShape* shape, const Fill* fdata, uint8_t opacity);

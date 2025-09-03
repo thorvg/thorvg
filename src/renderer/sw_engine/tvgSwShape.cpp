@@ -517,7 +517,7 @@ bool shapePrepared(const SwShape* shape)
 }
 
 
-bool shapeGenRle(SwShape* shape, TVG_UNUSED const RenderShape* rshape, bool antiAlias)
+bool shapeGenRle(SwShape* shape, TVG_UNUSED const RenderShape* rshape, SwMpool* mpool, unsigned tid, bool antiAlias)
 {
     //FIXME: Should we draw it?
     //Case: Stroke Line
@@ -527,7 +527,7 @@ bool shapeGenRle(SwShape* shape, TVG_UNUSED const RenderShape* rshape, bool anti
     if (shape->fastTrack) return true;
 
     //Case B: Normal Shape RLE Drawing
-    if ((shape->rle = rleRender(shape->rle, shape->outline, shape->bbox, antiAlias))) return true;
+    if ((shape->rle = rleRender(shape->rle, shape->outline, shape->bbox, mpool, tid, antiAlias))) return true;
 
     return false;
 }
@@ -605,7 +605,7 @@ bool shapeGenStrokeRle(SwShape* shape, const RenderShape* rshape, const Matrix& 
     if (!strokeParseOutline(shape->stroke, *shapeOutline)) return false;
     auto strokeOutline = strokeExportOutline(shape->stroke, mpool, tid);
     auto ret = mathUpdateOutlineBBox(strokeOutline, clipRegion, renderRegion, false);
-    shape->strokeRle = rleRender(shape->strokeRle, strokeOutline, renderRegion, true);
+    shape->strokeRle = rleRender(shape->strokeRle, strokeOutline, renderRegion, mpool, tid, true);
     mpoolRetStrokeOutline(mpool, tid);
     return ret;
 }

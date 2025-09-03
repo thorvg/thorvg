@@ -24,11 +24,6 @@
 
 
 /************************************************************************/
-/* Internal Class Implementation                                        */
-/************************************************************************/
-
-
-/************************************************************************/
 /* External Class Implementation                                        */
 /************************************************************************/
 
@@ -62,6 +57,12 @@ void mpoolRetStrokeOutline(SwMpool* mpool, unsigned idx)
 }
 
 
+SwCellPool* mpoolReqCellPool(SwMpool* mpool, unsigned idx)
+{
+    return &mpool->cellPool[idx];
+}
+
+
 SwMpool* mpoolInit(uint32_t threads)
 {
     auto allocSize = threads + 1;
@@ -69,6 +70,8 @@ SwMpool* mpoolInit(uint32_t threads)
     auto mpool = static_cast<SwMpool*>(calloc(1, sizeof(SwMpool)));
     mpool->outline = static_cast<SwOutline*>(calloc(1, sizeof(SwOutline) * allocSize));
     mpool->strokeOutline = static_cast<SwOutline*>(calloc(1, sizeof(SwOutline) * allocSize));
+    mpool->cellPool = new SwCellPool[allocSize];
+
     mpool->allocSize = allocSize;
 
     return mpool;
@@ -101,6 +104,7 @@ bool mpoolTerm(SwMpool* mpool)
 
     free(mpool->outline);
     free(mpool->strokeOutline);
+    delete[](mpool->cellPool);
     free(mpool);
 
     return true;

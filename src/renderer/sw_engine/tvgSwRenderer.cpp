@@ -129,7 +129,7 @@ struct SwShapeTask : SwTask
             if (updateShape) shapeReset(&shape);
             if (updateFill || clipper) {
                 if (shapePrepare(&shape, rshape, transform, bbox, renderRegion, mpool, tid, clips.count > 0 ? true : false)) {
-                    if (!shapeGenRle(&shape, rshape, antialiasing(strokeWidth))) goto err;
+                    if (!shapeGenRle(&shape, rshape, mpool, tid, antialiasing(strokeWidth))) goto err;
                 } else {
                     updateFill = false;
                     renderRegion.reset();
@@ -220,7 +220,7 @@ struct SwImageTask : SwTask
             if (!imagePrepare(&image, transform, clipRegion, bbox, mpool, tid)) goto end;
 
             if (clips.count > 0) {
-                if (!imageGenRle(&image, bbox, false)) goto end;
+                if (!imageGenRle(&image, bbox, mpool, tid, false)) goto end;
                 if (image.rle) {
                     //Clear current task memorypool here if the clippers would use the same memory pool
                     imageDelOutline(&image, mpool, tid);
