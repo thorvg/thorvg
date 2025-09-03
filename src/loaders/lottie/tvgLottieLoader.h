@@ -63,12 +63,12 @@ public:
     LottieBuilder* builder;
     LottieComposition* comp = nullptr;
     Inlist<LottieCustomSlot> slots;     //user custom slot list
+    uint32_t curSlot = 0;               //current applied slotcode
 
     Key key;
     char* dirName = nullptr;            //base resource directory
 
     bool copy = false;                  //"content" is owned by this loader
-    bool overridden = false;            //overridden properties with slots
     bool rebuild = false;               //require building the lottie scene
 
     LottieLoader();
