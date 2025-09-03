@@ -92,7 +92,9 @@ ThorVG is ahead of the curve, particularly in the web ecosystem. WebGPU introduc
 <p align="center">
   <img width="700" height="auto" src="https://github.com/thorvg/thorvg.site/blob/main/readme/example_webgpu.png">
 </p>
-ThorVG is actively under development, continuously expanding its support for essential platforms as needed. The major platforms currently supported include: <br />
+
+### Supported Platforms
+ThorVG is designed to be portable across a wide range of devices, including small IoT devices, embedded systems, mobile platforms, desktop environments, and the web. It is actively under development, with ongoing efforts to expand support for essential platforms as needed. Currently, major supported platforms include: <br />
 <br />
 <p align="center">
   <img width="600" height="auto" src="https://github.com/thorvg/thorvg.site/blob/main/readme/example_platforms.png">
@@ -442,7 +444,7 @@ ThorVG has been integrated into the [Tizen](https://www.tizen.org) platform as t
 <br />
 <br />
 ## Interactive App
-Check out [Thor Janitor](https://github.com/thorvg/thorvg.janitor), an interactive demo game fully rendered using ThorVG. It renders tens of thousands of objects in real-time with effects like DropShadow and Blur, running stably at 120+ FPS on CPU software rendering.
+Check out [Thor Janitor](https://github.com/thorvg/thorvg.janitor), an interactive demo game fully rendered using ThorVG. It renders tens of thousands of objects in real-time with effects like DropShadow and Blur, running stably at 120+ FPS!
 
 <p align="center">
   <img width="700" height="auto" src="https://github.com/user-attachments/assets/8a4bd16a-bb72-4b41-b007-eadc2220d1eb"/>
