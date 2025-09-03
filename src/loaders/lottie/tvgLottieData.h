@@ -46,6 +46,15 @@ struct ColorStop
 {
     Fill::ColorStop* data = nullptr;
     Array<float>* input = nullptr;
+
+    void copy(const ColorStop& rhs, uint32_t cnt)
+    {
+        if (rhs.data) {
+            data = tvg::malloc<Fill::ColorStop*>(sizeof(Fill::ColorStop) * cnt);
+            memcpy(data, rhs.data, sizeof(Fill::ColorStop) * cnt);
+        }
+        if (rhs.input) TVGERR("LOTTIE", "Must be populated!");
+    }
 };
 
 

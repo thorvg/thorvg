@@ -1580,6 +1580,7 @@ LottieProperty* LottieParser::parse(LottieSlot* slot)
                 if (KEY_AS("p")) parseColorStop(obj);
                 else skip();
             }
+            obj->prepare();
             prop = new LottieColorStop(obj->colorStops);
             delete(obj);
             break;
