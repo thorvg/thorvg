@@ -12,7 +12,7 @@ jobs:
           path: "thorvg"
       - name: Create source archive
         run: |
-          rm -rf ./thorvg/.git* ./thorvg/res
+          rm -rf ./thorvg/.git*
           tar -I "gzip -9" -cf thorvg.tar.gz thorvg
       - name: Upload to release
         uses: softprops/action-gh-release@v2
