@@ -301,6 +301,8 @@ Paint* LottieLoader::paint()
 
 bool LottieLoader::apply(uint32_t slotcode, bool byDefault)
 {
+    if (curSlot == slotcode) return true;
+
     if (!ready() || comp->slots.count == 0) return false;
 
     auto applied = false;
@@ -321,7 +323,7 @@ bool LottieLoader::apply(uint32_t slotcode, bool byDefault)
             break;
         }
     }
-    overridden = (slotcode != 0);
+    curSlot = slotcode;
     if (applied) rebuild = true;
     return applied;
 }
