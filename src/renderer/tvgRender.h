@@ -310,20 +310,17 @@ struct RenderStroke
         else fill = nullptr;
 
         tvg::free(dash.pattern);
+        dash = rhs.dash;
         if (rhs.dash.count > 0) {
             dash.pattern = tvg::malloc<float*>(sizeof(float) * rhs.dash.count);
             memcpy(dash.pattern, rhs.dash.pattern, sizeof(float) * rhs.dash.count);
-        } else {
-            dash.pattern = nullptr;
         }
-        dash.count = rhs.dash.count;
-        dash.offset = rhs.dash.offset;
-        dash.length = rhs.dash.length;
+
         miterlimit = rhs.miterlimit;
+        trim = rhs.trim;
         cap = rhs.cap;
         join = rhs.join;
         first = rhs.first;
-        trim = rhs.trim;
     }
 
     ~RenderStroke()
