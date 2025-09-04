@@ -196,6 +196,7 @@ struct PictureImpl : Picture
         }
 
         dup->bitmap = bitmap;
+        dup->origin = origin;
         dup->w = w;
         dup->h = h;
         dup->resizing = resizing;

@@ -468,20 +468,18 @@ struct ShapeImpl : Shape
     Paint* duplicate(Paint* ret)
     {
         auto shape = static_cast<Shape*>(ret);
-        if (shape) shape->reset();
-        else shape = Shape::gen();
-
+        if (!shape) shape = Shape::gen();
         auto dup = SHAPE(shape);
-        delete(dup->rs.fill);
-
-        //Default Properties
-        dup->impl.mark(RenderUpdateFlag::All);
-        dup->rs.rule = rs.rule;
-        dup->rs.color = rs.color;
 
         //Path
+        dup->rs.path.clear();
         dup->rs.path.cmds.push(rs.path.cmds);
         dup->rs.path.pts.push(rs.path.pts);
+
+        //Fill
+        delete(dup->rs.fill);
+        if (rs.fill) dup->rs.fill = rs.fill->duplicate();
+        else dup->rs.fill = nullptr;
 
         //Stroke
         if (rs.stroke) {
@@ -492,9 +490,8 @@ struct ShapeImpl : Shape
             dup->rs.stroke = nullptr;
         }
 
-        //Fill
-        if (rs.fill) dup->rs.fill = rs.fill->duplicate();
-        else dup->rs.fill = nullptr;
+        dup->rs.color = rs.color;
+        dup->rs.rule = rs.rule;
 
         return shape;
     }

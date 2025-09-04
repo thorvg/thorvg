@@ -199,9 +199,14 @@ struct TextImpl : Text
             ++dup->loader->sharing;
         }
 
+        dup->metrics = metrics;
         dup->utf8 = tvg::duplicate(utf8);
-        dup->italicShear = italicShear;
         dup->fontSize = fontSize;
+        dup->italicShear = italicShear;
+        dup->outlineWidth = outlineWidth;
+        dup->align = align;
+
+        if (box) dup->layout(box->size.x, box->size.y);
 
         return text;
     }

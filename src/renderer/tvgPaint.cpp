@@ -145,18 +145,16 @@ Iterator* Paint::Impl::iterator()
 
 Paint* Paint::Impl::duplicate(Paint* ret)
 {
-    if (ret) ret->mask(nullptr, MaskMethod::None);
-
     PAINT_METHOD(ret, duplicate(ret));
-
-    //duplicate Transform
-    ret->pImpl->tr = tr;
-    ret->pImpl->mark(RenderUpdateFlag::Transform);
-
-    ret->pImpl->opacity = opacity;
 
     if (maskData) ret->mask(maskData->target->duplicate(), maskData->method);
     if (clipper) ret->clip(static_cast<Shape*>(clipper->duplicate()));
+
+    ret->pImpl->tr = tr;
+    ret->pImpl->blendMethod = blendMethod;
+    ret->pImpl->opacity = opacity;
+    ret->pImpl->hidden = hidden;
+    ret->pImpl->mark(RenderUpdateFlag::All);
 
     return ret;
 }

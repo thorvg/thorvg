@@ -323,6 +323,8 @@ struct SceneImpl : Scene
             }
         }
 
+        if (fixed) dup->size(fsize);
+
         return scene;
     }
 
