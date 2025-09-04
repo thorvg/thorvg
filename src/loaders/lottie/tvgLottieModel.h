@@ -521,7 +521,7 @@ struct LottieTrimpath : LottieObject
 };
 
 
-struct LottieShape : LottieObject, LottieRenderPooler<tvg::Shape>
+struct LottieShape : LottieObject, LottieRenderPooler<Shape>
 {
     bool clockwise = true;   //clockwise or counter-clockwise
 
