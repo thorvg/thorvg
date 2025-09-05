@@ -400,12 +400,29 @@ static void _repeat(LottieGroup* parent, Shape* path, LottieRenderPooler<Shape>*
 }
 
 
+static void _close(RenderPath& path, const Point& p, bool round, bool rect = false)
+{
+    //the only case where the shape was truly closed via a 'close' command - change important for modifiers to ensure consistency with other cases
+    if (rect) {
+        if (!round) {
+            path.pts.push(p);
+            path.cmds.last() = PathCommand::LineTo;
+            path.cmds.push(PathCommand::Close);
+        }
+        return;
+    }
+    if (round && tvg::zero(path.pts.last() - path.pts[path.pts.count - 2])) path.pts[path.pts.count - 2] = p;
+    path.pts.last() = p;
+}
+
+
 void LottieBuilder::appendRect(Shape* shape, Point& pos, Point& size, float r, bool clockwise, RenderContext* ctx)
 {
     auto temp = (ctx->offset) ? Shape::gen() : shape;
     auto cnt = SHAPE(temp)->rs.path.pts.count;
 
     temp->appendRect(pos.x, pos.y, size.x, size.y, r, r, clockwise);
+    _close(SHAPE(temp)->rs.path, SHAPE(temp)->rs.path.pts[cnt], r > 0.0f, true);
 
     if (ctx->transform) {
         for (auto i = cnt; i < SHAPE(temp)->rs.path.pts.count; ++i) {
@@ -494,13 +511,6 @@ void LottieBuilder::updatePath(LottieGroup* parent, LottieObject** child, float 
         path->pathset(frameNo, SHAPE(shape)->rs.path, ctx->transform, tween, exps, ctx->modifier);
         _repeat(parent, shape, path, ctx);
     }
-}
-
-
-static void _close(Array<Point>& pts, const Point& p, bool round)
-{
-    if (round && tvg::zero(pts.last() - pts[pts.count - 2])) pts[pts.count - 2] = p;
-    pts.last() = p;
 }
 
 
@@ -612,7 +622,7 @@ void LottieBuilder::updateStar(LottiePolyStar* star, float frameNo, Matrix* tran
         longSegment = !longSegment;
     }
     //ensure proper shape closure - important for modifiers that behave differently for degenerate (linear) vs curved cubics
-    _close(SHAPE(shape)->rs.path.pts, in, hasRoundness);
+    _close(SHAPE(shape)->rs.path, in, hasRoundness);
     shape->close();
 
     if (ctx->modifier) ctx->modifier->modifyPolystar(SHAPE(shape)->rs.path, SHAPE(merging)->rs.path, outerRoundness, hasRoundness);
@@ -682,7 +692,7 @@ void LottieBuilder::updatePolygon(LottieGroup* parent, LottiePolyStar* star, flo
         angle += anglePerPoint * direction;
     }
     //ensure proper shape closure - important for modifiers that behave differently for degenerate (linear) vs curved cubics
-    _close(SHAPE(shape)->rs.path.pts, in, hasRoundness);
+    _close(SHAPE(shape)->rs.path, in, hasRoundness);
     shape->close();
 
     if (ctx->modifier) ctx->modifier->modifyPolystar(SHAPE(shape)->rs.path, SHAPE(merging)->rs.path, 0.0f, false);
