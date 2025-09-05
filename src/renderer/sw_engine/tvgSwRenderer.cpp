@@ -406,7 +406,7 @@ bool SwRenderer::renderImage(RenderData data)
 
     //Outside of the viewport, skip the rendering
     auto& bbox = task->bbox;
-    if (bbox.max.x <= bbox.min.x || bbox.max.y <= bbox.min.y || bbox.min.x >= surface->w || bbox.min.y >= surface->h) return true;
+    if (bbox.max.x <= bbox.min.x || bbox.max.y <= bbox.min.y || bbox.min.x >= int32_t(surface->w) || bbox.min.y >= int32_t(surface->h)) return true;
 
     auto& image = task->image;
 
