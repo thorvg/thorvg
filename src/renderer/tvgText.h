@@ -48,8 +48,8 @@ struct TextImpl : Text
     float outlineWidth = 0.0f;
     float italicShear = 0.0f;
     Point align{};
-
     TextBox* box = nullptr;
+    TextWrap wrap = TextWrap::None;
 
     TextImpl() : impl(Paint::Impl(this)), shape(Shape::gen())
     {
@@ -130,10 +130,20 @@ struct TextImpl : Text
         m.e13 -= (metrics->w / scale) * align.x;
         m.e23 -= (metrics->h / scale) * align.y;
 
+        if (!box) return;
+
         //layouting
-        if (box) {
-            m.e13 += box->size.x * align.x;
-            m.e23 += box->size.y * align.y;
+        m.e13 += box->size.x * align.x;
+        m.e23 += box->size.y * align.y;
+
+        if (wrap == TextWrap::None) return;
+
+        if (wrap == TextWrap::Character) {
+            //1. get size
+            //2. check layout
+            //3. sub-division
+        } else {
+            TVGLOG("RENDERER", "TODO: Implement LineWrapp mode = %d", (int)wrap);
         }
     }
 
