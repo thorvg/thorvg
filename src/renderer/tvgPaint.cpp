@@ -145,6 +145,8 @@ Iterator* Paint::Impl::iterator()
 
 Paint* Paint::Impl::duplicate(Paint* ret)
 {
+    if (ret) ret->mask(nullptr, MaskMethod::None);
+
     PAINT_METHOD(ret, duplicate(ret));
 
     if (maskData) ret->mask(maskData->target->duplicate(), maskData->method);
