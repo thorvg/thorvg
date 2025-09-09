@@ -1461,7 +1461,7 @@ void LottieBuilder::updateLayer(LottieComposition* comp, Scene* scene, LottieLay
 
     layer->scene->transform(layer->cache.matrix);
 
-    if (!updateMatte(comp, frameNo, scene, layer)) return;
+    if (!layer->matteSrc && !updateMatte(comp, frameNo, scene, layer)) return;
 
     switch (layer->type) {
         case LottieLayer::Precomp: {
