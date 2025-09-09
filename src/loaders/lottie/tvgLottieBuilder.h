@@ -152,7 +152,7 @@ private:
     void updatePrecomp(LottieComposition* comp, LottieLayer* precomp, float frameNo);
     void updatePrecomp(LottieComposition* comp, LottieLayer* precomp, float frameNo, Tween& tween);
     void updateSolid(LottieLayer* layer);
-    void updateImage(LottieGroup* layer);
+    void updateImage(LottieComposition* comp, LottieGroup* layer);
     void updateText(LottieLayer* layer, float frameNo);
     void updateMasks(LottieLayer* layer, float frameNo);
     void updateTransform(LottieLayer* layer, float frameNo);

@@ -895,11 +895,20 @@ void LottieBuilder::updateSolid(LottieLayer* layer)
     layer->scene->push(solidFill);
 }
 
-
-void LottieBuilder::updateImage(LottieGroup* layer)
+void LottieBuilder::updateImage(LottieComposition* comp, LottieGroup* layer)
 {
     auto image = static_cast<LottieImage*>(layer->children.first());
-    layer->scene->push(image->pooling(true));
+    auto picture = image->pooling(true);
+    layer->scene->push(picture);
+    if (image->loaded) return;
+
+    if (image->data.size > 0) {
+        auto ret = picture->load((const char*)image->data.b64Data, image->data.size, image->data.mimeType);
+        image->loaded = ret == Result::Success;
+    } else {
+        auto ret = picture->load(image->data.path);
+        image->loaded = ret == Result::Success;
+    }
 }
 
 
@@ -1399,7 +1408,7 @@ void LottieBuilder::updateLayer(LottieComposition* comp, Scene* scene, LottieLay
             break;
         }
         case LottieLayer::Image: {
-            updateImage(layer);
+            updateImage(comp, layer);
             break;
         }
         case LottieLayer::Text: {

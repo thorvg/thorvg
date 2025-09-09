@@ -355,14 +355,8 @@ void LottieImage::prepare()
     LottieObject::type = LottieObject::Image;
 
     auto picture = Picture::gen();
-
-    //force to load a picture on the same thread
-    if (data.size > 0) picture->load((const char*)data.b64Data, data.size, data.mimeType);
-    else picture->load(data.path);
-
     picture->size(data.width, data.height);
     picture->ref();
-
     pooler.push(picture);
 }
 
