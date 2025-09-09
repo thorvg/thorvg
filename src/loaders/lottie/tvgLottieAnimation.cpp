@@ -124,6 +124,17 @@ Result LottieAnimation::assign(const char* layer, uint32_t ix, const char* var, 
 }
 
 
+Result LottieAnimation::resolver(std::function<bool(Paint* paint, const char* src, void* data)> cb, void* data) noexcept
+{
+    auto loader = PICTURE(pImpl->picture)->loader;
+    if (!loader) return Result::InsufficientCondition;
+    if (static_cast<LottieLoader*>(loader)->resolver(cb, data)) {
+        return Result::Success;
+    }
+    return Result::InsufficientCondition;
+}
+
+
 LottieAnimation* LottieAnimation::gen() noexcept
 {
     return new LottieAnimation;

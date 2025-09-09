@@ -895,7 +895,7 @@ void LottieBuilder::updateSolid(LottieLayer* layer)
     layer->scene->push(solidFill);
 }
 
-void LottieBuilder::updateImage(LottieComposition* comp, LottieGroup* layer)
+void LottieBuilder::updateImage(LottieGroup* layer, LottieAssetResolver* resolver)
 {
     auto image = static_cast<LottieImage*>(layer->children.first());
     auto picture = image->pooling(true);
@@ -905,10 +905,16 @@ void LottieBuilder::updateImage(LottieComposition* comp, LottieGroup* layer)
     if (image->data.size > 0) {
         auto ret = picture->load((const char*)image->data.b64Data, image->data.size, image->data.mimeType);
         image->loaded = ret == Result::Success;
-    } else {
-        auto ret = picture->load(image->data.path);
-        image->loaded = ret == Result::Success;
+        return;
     }
+
+    if (resolver && resolver->cb(picture, image->data.path, resolver->data)) {
+        image->loaded = true;
+        return;
+    }
+
+    auto ret = picture->load(image->data.path);
+    image->loaded = ret == Result::Success;
 }
 
 
@@ -1408,7 +1414,7 @@ void LottieBuilder::updateLayer(LottieComposition* comp, Scene* scene, LottieLay
             break;
         }
         case LottieLayer::Image: {
-            updateImage(comp, layer);
+            updateImage(layer, comp->resolver);
             break;
         }
         case LottieLayer::Text: {

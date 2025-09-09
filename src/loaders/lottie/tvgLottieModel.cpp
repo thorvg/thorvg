@@ -713,6 +713,7 @@ LottieComposition::~LottieComposition()
     delete(root);
     tvg::free(version);
     tvg::free(name);
+    tvg::free(resolver);
 
     ARRAY_FOREACH(p, interpolators) {
         tvg::free((*p)->key);
