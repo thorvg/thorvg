@@ -160,38 +160,23 @@ static void _unmap(TtfLoader* loader)
 #endif //THORVG_FILE_IO_SUPPORT
 
 
-static uint32_t* _codepoints(const char* text, size_t n)
+static size_t _codepoints(char* utf8, uint32_t& code)
 {
-    uint32_t c;
-    size_t i = 0;
-
-    auto utf8 = text;
-    //preserve approximate enough space.
-    auto utf32 = (uint32_t*) malloc(sizeof(uint32_t) * (n + 1));
-
-    while(*utf8) {
-        if (!(*utf8 & 0x80U)) {
-            utf32[i++] = *utf8++;
-        } else if ((*utf8 & 0xe0U) == 0xc0U) {
-            c = (*utf8++ & 0x1fU) << 6;
-            utf32[i++] = c + (*utf8++ & 0x3fU);
-        } else if ((*utf8 & 0xf0U) == 0xe0U) {
-            c = (*utf8++ & 0x0fU) << 12;
-            c += (*utf8++ & 0x3fU) << 6;
-            utf32[i++] = c + (*utf8++ & 0x3fU);
-        } else if ((*utf8 & 0xf8U) == 0xf0U) {
-            c = (*utf8++ & 0x07U) << 18;
-            c += (*utf8++ & 0x3fU) << 12;
-            c += (*utf8++ & 0x3fU) << 6;
-            c += (*utf8++ & 0x3fU);
-            utf32[i++] = c;
-        } else {
-            free(utf32);
-            return nullptr;
-        }
+    if (!(*utf8 & 0x80U)) {
+        code = *utf8;
+        return 1;
+    } else if ((*utf8 & 0xe0U) == 0xc0U) {
+        code = ((*utf8 & 0x1fU) << 6) + (*(utf8 + 1) & 0x3fU);
+        return 2;
+    } else if ((*utf8 & 0xf0U) == 0xe0U) {
+        code = ((*utf8 & 0x0fU) << 12) + ((*(utf8 + 1) & 0x3fU) << 6) + (*(utf8 + 2) & 0x3fU);
+        return 3;
+    } else if ((*utf8 & 0xf8U) == 0xf0U) {
+        code = ((*utf8 & 0x07U) << 18) + ((*(utf8 + 1) & 0x3fU) << 12) + ((*(utf8 + 2) & 0x3fU) << 6) + (*(utf8 + 3) & 0x3fU);
+        return 4;
     }
-    utf32[i] = 0;   //end of the unicode
-    return utf32;
+    code = 0;
+    return 0;
 }
 
 
@@ -271,39 +256,33 @@ bool TtfLoader::open(const char* data, uint32_t size, bool copy)
 
 bool TtfLoader::read(Shape* shape, char* text, FontMetrics& out)
 {
-    if (!text) return false;
-
     shape->reset();
 
-    auto n = strlen(text);
-    auto code = _codepoints(text, n);
-    if (!code) return false;
+    if (!text) return true;
 
-    //TODO: optimize with the texture-atlas?
+    auto utf8 = text;  //supposed to be valid utf8
     TtfGlyphMetrics gmetrics;
+    uint32_t code;
     Point offset = {0.0f, reader.metrics.hhea.ascent};
     Point kerning = {0.0f, 0.0f};
     auto lglyph = INVALID_GLYPH;
-    auto loadMinw = true;
+    auto baseWidth = true;
 
-    size_t idx = 0;
-    while (code[idx] && idx < n) {
-        auto rglyph = reader.glyph(code[idx], gmetrics);
-        if (rglyph != INVALID_GLYPH) {
-            if (lglyph != INVALID_GLYPH) reader.kerning(lglyph, rglyph, kerning);
-            if (!reader.convert(shape, gmetrics, offset, kerning, 1U)) break;
-            offset.x += (gmetrics.advanceWidth + kerning.x);
-            lglyph = rglyph;
-            //store the first glyph with outline min size for italic transform.
-            if (loadMinw && gmetrics.outline) {
-                out.minw = gmetrics.minw;
-                loadMinw = false;
-            }
+    while (*utf8) {
+        utf8 += _codepoints(utf8, code);
+        if (code == 0) break;
+        auto rglyph = reader.glyph(code, gmetrics);
+        if (rglyph == INVALID_GLYPH) continue;
+        if (lglyph != INVALID_GLYPH) reader.kerning(lglyph, rglyph, kerning);
+        if (!reader.convert(shape, gmetrics, offset, kerning, 1U)) break;
+        offset.x += (gmetrics.advanceWidth + kerning.x);
+        lglyph = rglyph;
+        //store the first glyph with outline min size for italic transform.
+        if (baseWidth && gmetrics.outline) {
+            out.minw = gmetrics.minw;
+            baseWidth = false;
         }
-        ++idx;
     }
-
-    free(code);
 
     return true;
 }
