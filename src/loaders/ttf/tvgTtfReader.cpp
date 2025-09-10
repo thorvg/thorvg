@@ -377,28 +377,29 @@ uint32_t TtfReader::glyph(uint32_t codepoint)
 }
 
 
-uint32_t TtfReader::glyph(uint32_t codepoint, TtfGlyphMetrics& gmetrics)
+uint32_t TtfReader::glyph(uint32_t codepoint, TtfGlyph& glyph)
 {
-    auto glyph = this->glyph(codepoint);
-    if (glyph == INVALID_GLYPH || !glyphMetrics(glyph, gmetrics)) {
+    auto glyphIdx = this->glyph(codepoint);
+    if (glyphIdx == INVALID_GLYPH || !glyphMetrics(glyphIdx, glyph)) {
         TVGERR("TTF", "invalid glyph id, codepoint(0x%x)", codepoint);
         return INVALID_GLYPH;
     }
-    return glyph;
+    return glyphIdx;
 }
 
-bool TtfReader::glyphMetrics(uint32_t glyphIndex, TtfGlyphMetrics& gmetrics)
+
+bool TtfReader::glyphMetrics(uint32_t glyphIdx, TtfGlyph& glyph)
 {
     //horizontal metrics
     auto hmtx = this->hmtx.load();
     if (hmtx == 0) this->hmtx = hmtx = table("hmtx");
 
     //glyph is inside long metrics segment.
-    if (glyphIndex < metrics.numHmtx) {
-        auto offset = hmtx + 4 * glyphIndex;
+    if (glyphIdx < metrics.numHmtx) {
+        auto offset = hmtx + 4 * glyphIdx;
         if (!validate(offset, 4)) return false;
-        gmetrics.advanceWidth = _u16(data, offset);
-        gmetrics.leftSideBearing = _i16(data, offset + 2);
+        glyph.advance = _u16(data, offset);
+        glyph.lsb = _i16(data, offset + 2);
     /* glyph is inside short metrics segment. */
     } else {
         auto boundary = hmtx + 4U * (uint32_t) metrics.numHmtx;
@@ -406,42 +407,42 @@ bool TtfReader::glyphMetrics(uint32_t glyphIndex, TtfGlyphMetrics& gmetrics)
 
         auto offset = boundary - 4;
         if (!validate(offset, 4)) return false;
-        gmetrics.advanceWidth = _u16(data, offset);
-        offset = boundary + 2 * (glyphIndex - metrics.numHmtx);
+        glyph.advance = _u16(data, offset);
+        offset = boundary + 2 * (glyphIdx - metrics.numHmtx);
         if (!validate(offset, 2)) return false;
-        gmetrics.leftSideBearing = _i16(data, offset);
+        glyph.lsb = _i16(data, offset);
     }
 
-    gmetrics.outline = outlineOffset(glyphIndex);
+    glyph.offset = outlineOffset(glyphIdx);
     // glyph without outline
-    if (gmetrics.outline == 0) {
-        gmetrics.minw = gmetrics.minh = gmetrics.yOffset = 0;
+    if (glyph.offset == 0) {
+        glyph.w = glyph.h = glyph.yOffset = 0;
         return true;
     }
-    if (!validate(gmetrics.outline, 10)) return false;
+    if (!validate(glyph.offset, 10)) return false;
 
     //read the bounding box from the font file verbatim.
     float bbox[4];
-    bbox[0] = static_cast<float>(_i16(data, gmetrics.outline + 2));
-    bbox[1] = static_cast<float>(_i16(data, gmetrics.outline + 4));
-    bbox[2] = static_cast<float>(_i16(data, gmetrics.outline + 6));
-    bbox[3] = static_cast<float>(_i16(data, gmetrics.outline + 8));
+    bbox[0] = static_cast<float>(_i16(data, glyph.offset + 2));
+    bbox[1] = static_cast<float>(_i16(data, glyph.offset + 4));
+    bbox[2] = static_cast<float>(_i16(data, glyph.offset + 6));
+    bbox[3] = static_cast<float>(_i16(data, glyph.offset + 8));
 
     if (bbox[2] <= bbox[0] || bbox[3] <= bbox[1]) return false;
 
-    gmetrics.minw = bbox[2] - bbox[0] + 1;
-    gmetrics.minh = bbox[3] - bbox[1] + 1;
-    gmetrics.yOffset = bbox[3];
+    glyph.w = bbox[2] - bbox[0] + 1;
+    glyph.h = bbox[3] - bbox[1] + 1;
+    glyph.yOffset = bbox[3];
 
     return true;
 }
 
-bool TtfReader::convert(Shape* shape, TtfGlyphMetrics& gmetrics, const Point& offset, const Point& kerning, uint16_t componentDepth)
+bool TtfReader::convert(Shape* shape, TtfGlyph& glyph, const Point& offset, const Point& kerning, uint16_t componentDepth)
 {
     #define ON_CURVE 0x01
 
-    if (!gmetrics.outline) return true;
-    auto outlineCnt = _i16(data, gmetrics.outline);
+    if (!glyph.offset) return true;
+    auto outlineCnt = _i16(data, glyph.offset);
     if (outlineCnt == 0) return false;
     if (outlineCnt < 0) {
         uint16_t maxComponentDepth = 1U;
@@ -451,11 +452,11 @@ bool TtfReader::convert(Shape* shape, TtfGlyphMetrics& gmetrics, const Point& of
             maxComponentDepth = _u16(data, maxp + 30);
         }
         if (componentDepth > maxComponentDepth) return false;
-        return convertComposite(shape, gmetrics, offset, kerning, componentDepth + 1);
+        return convertComposite(shape, glyph, offset, kerning, componentDepth + 1);
     }
     auto cntrsCnt = (uint32_t) outlineCnt;
 
-    auto outline = gmetrics.outline + 10;
+    auto outline = glyph.offset + 10;
     if (!validate(outline, cntrsCnt * 2 + 2)) return false;
 
     auto ptsCnt = _u16(data, outline + (cntrsCnt - 1) * 2) + 1;
@@ -514,7 +515,7 @@ bool TtfReader::convert(Shape* shape, TtfGlyphMetrics& gmetrics, const Point& of
     return true;
 }
 
-bool TtfReader::convertComposite(Shape* shape, TtfGlyphMetrics& gmetrics, const Point& offset, const Point& kerning, uint16_t componentDepth)
+bool TtfReader::convertComposite(Shape* shape, TtfGlyph& glyph, const Point& offset, const Point& kerning, uint16_t componentDepth)
 {
     #define ARG_1_AND_2_ARE_WORDS 0x0001
     #define ARGS_ARE_XY_VALUES 0x0002
@@ -523,14 +524,14 @@ bool TtfReader::convertComposite(Shape* shape, TtfGlyphMetrics& gmetrics, const 
     #define WE_HAVE_AN_X_AND_Y_SCALE 0x0040
     #define WE_HAVE_A_TWO_BY_TWO 0x0080
 
-    TtfGlyphMetrics componentGmetrics;
+    TtfGlyph componentGmetrics;
     Point componentOffset;
-    uint16_t flags, glyphIndex;
-    uint32_t pointer = gmetrics.outline + 10;
+    uint16_t flags, glyphIdx;
+    uint32_t pointer = glyph.offset + 10;
     do {
         if (!validate(pointer, 4)) return false;
         flags = _u16(data, pointer);
-        glyphIndex = _u16(data, pointer + 2U);
+        glyphIdx = _u16(data, pointer + 2U);
         pointer += 4U;
         if (flags & ARG_1_AND_2_ARE_WORDS) {
             if (!validate(pointer, 4)) return false;
@@ -575,7 +576,7 @@ bool TtfReader::convertComposite(Shape* shape, TtfGlyphMetrics& gmetrics, const 
             // F2DOT14  yscale;    /* Format 2.14 */
             pointer += 8U;
         }
-        if (!glyphMetrics(glyphIndex, componentGmetrics)) return false;
+        if (!glyphMetrics(glyphIdx, componentGmetrics)) return false;
         if (!convert(shape, componentGmetrics, offset + componentOffset, kerning, componentDepth)) return false;
     } while (flags & MORE_COMPONENTS);
     return true;
