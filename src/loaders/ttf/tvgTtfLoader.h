@@ -28,6 +28,14 @@
 #include "tvgTtfReader.h"
 
 
+struct TtfMetrics : FontMetrics
+{
+    float baseWidth;  //Use as the reference glyph width for italic transform
+
+    FontMetrics* duplicate() override { return new TtfMetrics(*this); }
+};
+
+
 struct TtfLoader : public FontLoader
 {
 #if defined(_WIN32) && (WINAPI_FAMILY == WINAPI_FAMILY_DESKTOP_APP)
@@ -35,7 +43,6 @@ struct TtfLoader : public FontLoader
 #endif
     TtfReader reader;
     char* text = nullptr;
-    Shape* shape = nullptr;
     bool nomap = false;
     bool freeData = false;
 
@@ -47,8 +54,9 @@ struct TtfLoader : public FontLoader
 
     bool open(const char* path) override;
     bool open(const char *data, uint32_t size, const char* rpath, bool copy) override;
-    float transform(Paint* paint, FontMetrics& metrices, float fontSize, float italicShear) override;
-    bool read(Shape* shape, char* text, FontMetrics& out) override;
+    float transform(Paint* paint, FontMetrics* metrices, float fontSize, float italicShear) override;
+    bool read(RenderPath& path, char* text, FontMetrics* out) override;
+    FontMetrics* metrics() override { return new TtfMetrics; }
     void clear();
 };
 

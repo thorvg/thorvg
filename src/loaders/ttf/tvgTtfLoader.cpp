@@ -197,7 +197,6 @@ void TtfLoader::clear()
 
     tvg::free(name);
     name = nullptr;
-    shape = nullptr;
 }
 
 
@@ -206,11 +205,11 @@ void TtfLoader::clear()
 /************************************************************************/
 
 
-float TtfLoader::transform(Paint* paint, FontMetrics& metrics, float fontSize, float italicShear)
+float TtfLoader::transform(Paint* paint, FontMetrics* metrics, float fontSize, float italicShear)
 {
     auto dpi = 96.0f / 72.0f;   //dpi base?
     auto scale = fontSize * dpi / reader.metrics.unitsPerEm;
-    Matrix m = {scale, -italicShear * scale, italicShear * metrics.minw * scale, 0, scale, 0, 0, 0, 1};
+    Matrix m = {scale, -italicShear * scale, italicShear * static_cast<TtfMetrics*>(metrics)->baseWidth * scale, 0, scale, 0, 0, 0, 1};
     paint->transform(m);
 
     return scale;
@@ -259,39 +258,35 @@ bool TtfLoader::open(const char* data, uint32_t size, TVG_UNUSED const char* rpa
 }
 
 
-bool TtfLoader::read(Shape* shape, char* text, FontMetrics& out)
+bool TtfLoader::read(RenderPath& path, char* text, FontMetrics* out)
 {
-    shape->reset();
+    path.clear();
 
-    if (!text) return true;
+    if (!text) return false;
 
     auto utf8 = text;  //supposed to be valid utf8
-    TtfGlyphMetrics gmetrics;
-    uint32_t code;
+    auto metrics = static_cast<TtfMetrics*>(out);
     Point offset = {0.0f, reader.metrics.hhea.ascent};
     Point kerning = {0.0f, 0.0f};
     auto lglyph = INVALID_GLYPH;
-    auto baseWidth = true;
+    TtfGlyph glyph;
+    uint32_t code;
 
     while (*utf8) {
         utf8 += _codepoints(utf8, code);
         if (code == 0) break;
-        auto rglyph = reader.glyph(code, gmetrics);
+        auto rglyph = reader.glyph(code, glyph);
         if (rglyph == INVALID_GLYPH) continue;
         if (lglyph != INVALID_GLYPH) reader.kerning(lglyph, rglyph, kerning);
-        if (!reader.convert(shape, gmetrics, offset, kerning, 1U)) break;
-        offset.x += (gmetrics.advanceWidth + kerning.x);
-        lglyph = rglyph;
+        if (!reader.convert(path, glyph, offset, kerning, 1U)) break;
+        offset.x += (glyph.advance + kerning.x);
         //store the first glyph with outline min size for italic transform.
-        if (baseWidth && gmetrics.outline) {
-            out.minw = gmetrics.minw;
-            baseWidth = false;
-        }
+        if (lglyph == INVALID_GLYPH && glyph.offset) metrics->baseWidth = glyph.w;
+        lglyph = rglyph;
     }
 
-    out.width = offset.x;
-    out.ascent = reader.metrics.hhea.ascent;
-    out.descent = reader.metrics.hhea.descent;
+    metrics->w = offset.x;
+    metrics->h = reader.metrics.hhea.ascent - reader.metrics.hhea.descent;
 
     return true;
 }
