@@ -103,12 +103,10 @@ struct ImageLoader : LoadModule
 
 struct FontMetrics
 {
-    float minw;
-    float width;
-    float ascent;
-    float descent;
+    float w, h;  //text width, height
 
-    //TODO: add necessary metrics
+    virtual ~FontMetrics() {}
+    virtual FontMetrics* duplicate() = 0;
 };
 
 
@@ -120,8 +118,9 @@ struct FontLoader : LoadModule
 
     using LoadModule::read;
 
-    virtual bool read(Shape* shape, char* text, FontMetrics& out) = 0;
-    virtual float transform(Paint* paint, FontMetrics& mertrics, float fontSize, float italicShear) = 0;
+    virtual bool read(RenderPath& path, char* text, FontMetrics* out) = 0;
+    virtual float transform(Paint* paint, FontMetrics* mertrics, float fontSize, float italicShear) = 0;
+    virtual FontMetrics* metrics() = 0;
 };
 
 #endif //_TVG_LOAD_MODULE_H_

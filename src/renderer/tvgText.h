@@ -42,7 +42,7 @@ struct TextImpl : Text
     Paint::Impl impl;
     Shape* shape;   //text shape
     FontLoader* loader = nullptr;
-    FontMetrics metrics;
+    FontMetrics* metrics = nullptr;
     char* utf8 = nullptr;
     float fontSize;
     float outlineWidth = 0.0f;
@@ -60,6 +60,7 @@ struct TextImpl : Text
     {
         tvg::free(utf8);
         tvg::free(box);
+        delete(metrics);
         LoaderMgr::retrieve(loader);
         delete(shape);
     }
@@ -88,6 +89,7 @@ struct TextImpl : Text
             LoaderMgr::retrieve(this->loader);
         }
         this->loader = static_cast<FontLoader*>(loader);
+        metrics = static_cast<FontLoader*>(loader)->metrics();
 
         impl.mark(RenderUpdateFlag::Path);
 
@@ -111,7 +113,7 @@ struct TextImpl : Text
         if (!loader) return 0.0f;
 
         //reload
-        if (impl.marked(RenderUpdateFlag::Path)) loader->read(shape, utf8, metrics);
+        if (impl.marked(RenderUpdateFlag::Path)) loader->read(SHAPE(shape)->rs.path, utf8, metrics);
 
         return loader->transform(shape, metrics, fontSize, italicShear);
     }
@@ -125,8 +127,8 @@ struct TextImpl : Text
     void arrange(Matrix& m, float scale)
     {
         //alignment
-        m.e13 -= (metrics.width / scale) * align.x;
-        m.e23 -= ((metrics.ascent - metrics.descent) / scale) * align.y;
+        m.e13 -= (metrics->w / scale) * align.x;
+        m.e23 -= (metrics->h / scale) * align.y;
 
         //layouting
         if (box) {
@@ -144,6 +146,8 @@ struct TextImpl : Text
 
     bool update(RenderMethod* renderer, const Matrix& transform, Array<RenderData>& clips, uint8_t opacity, RenderUpdateFlag flag, TVG_UNUSED bool clipper)
     {
+        if (!loader) return true;
+
         auto scale = 1.0f / load();
         if (tvg::zero(scale)) return false;
 
@@ -177,8 +181,9 @@ struct TextImpl : Text
 
     bool bounds(Point* pt4, const Matrix& m, bool obb)
     {
+        if (!loader) return true;
         auto scale = 1.0f / load();
-        if (tvg::zero(scale)) return false;
+        if (tvg::zero(scale)) return true;
         arrange(const_cast<Matrix&>(m), scale);
         return PAINT(shape)->bounds(pt4, &const_cast<Matrix&>(m), obb);
     }
@@ -197,9 +202,9 @@ struct TextImpl : Text
         if (loader) {
             dup->loader = loader;
             ++dup->loader->sharing;
+            dup->metrics = metrics->duplicate();
         }
 
-        dup->metrics = metrics;
         dup->utf8 = tvg::duplicate(utf8);
         dup->fontSize = fontSize;
         dup->italicShear = italicShear;
