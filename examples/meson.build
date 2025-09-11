@@ -13,7 +13,7 @@ examples_dep = [dependency('sdl2')]
 if all_engines or get_option('engines').contains('wg')
     examples_dep += dependency('wgpu_native')
     if host_machine.system() == 'darwin'
-        add_languages('objcpp')
+        add_languages('objcpp', native: false)
         examples_dep += declare_dependency(link_args: ['-lobjc', '-framework', 'Cocoa', '-framework', 'CoreVideo', '-framework', 'IOKit', '-framework', 'QuartzCore'])
         examples_compiler_flags += ['-x', 'objective-c++']
     endif
