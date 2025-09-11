@@ -65,6 +65,7 @@ source_file = [
     'Svg.cpp',
     'Text.cpp',
     'TextLayout.cpp',
+    'TextLineWrap.cpp',
     'Transform.cpp',
     'TrimPath.cpp',
     'Update.cpp',
