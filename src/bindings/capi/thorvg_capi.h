@@ -2807,6 +2807,23 @@ TVG_API uint32_t tvg_accessor_generate_id(const char* name);
 * \{
 */
 
+/**
+* @brief Callback function type for resolving external assets in a Lottie animation.
+*
+* This callback is invoked when a Lottie animation requires an external asset
+* (such as an image or another resource). Implementations should load the asset
+* into the given @p paint object.
+*
+* @param[in] paint The target paint object where the resolved asset will be loaded.
+* @param[in] src   The source path, identifier, or URI of the asset to be resolved.
+* @param[in] data  User-provided custom data passed to the callback for context.
+*
+* @return @c true if the asset was successfully resolved and loaded into @p paint, otherwise @c false.
+*
+* @since Experimental API
+*/
+typedef bool (*Tvg_Lottie_Asset_Resolver)(Tvg_Paint paint, const char* src, void* data);
+
 /************************************************************************/
 /* LottieAnimation Extension API                                        */
 /************************************************************************/
@@ -2942,6 +2959,36 @@ TVG_API Tvg_Result tvg_lottie_animation_tween(Tvg_Animation animation, float fro
 * @note Experimental API
 */
 TVG_API Tvg_Result tvg_lottie_animation_assign(Tvg_Animation animation, const char* layer, uint32_t ix, const char* var, float val);
+
+
+/**
+ * @brief Sets the asset resolver callback for handling external resources (e.g., images and fonts).
+ *
+ * This callback is invoked when an external asset reference (such as an image source or file path)
+ * is encountered in a Paint object. It allows the user to provide a custom mechanism for loading
+ * or substituting assets, such as loading from an external source or a virtual filesystem.
+ *
+ * @param[in] resolver A user-defined function that handles the resolution of asset paths.
+ *                     The function should return @c true if the asset was successfully resolved by the user, or @c false if it was not.
+ *
+ *                     **Callback signature:**  
+ *                     bool(Paint* paint, const char* src, void* data)
+ *                     - @p paint: The Paint object requesting the asset.
+ *                     - @p src: The source path or identifier of the asset to resolve.
+ *                     - @p data: User-defined data passed from the @p data parameter below.
+ *
+ * @param[in] data A pointer to user-defined data that will be passed to the callback each time it is invoked.
+ *                 This can be used to maintain context or access external resources.
+ *
+ * @retval TVG_RESULT_INSUFFICIENT_CONDITION If the animation is not loaded.
+ * @retval TVG_RESULT_INVALID_ARGUMENT A @c nullptr passed as the @p animation argument.
+ * @retval TVG_RESULT_NOT_SUPPORTED  The picture data does not support animations.
+ *
+ * @note If @c false is returned by @p resolver, ThorVG will attempt to resolve the resource using its internal resolution mechanism as a fallback.
+ * @note To unset the resolver, pass @c nullptr as the @p resolver parameter.
+ * @note Experimental API
+ */
+TVG_API Tvg_Result tvg_lottie_animation_set_asset_resolver(Tvg_Animation animation, Tvg_Lottie_Asset_Resolver resolver, void* data);
 
 /** \} */   // end addtogroup ThorVGCapi_LottieAnimation
 
