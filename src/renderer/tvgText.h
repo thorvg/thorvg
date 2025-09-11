@@ -147,7 +147,7 @@ struct TextImpl : Text
         auto scale = 1.0f / load();
         if (tvg::zero(scale)) return false;
 
-        arrange(const_cast<Matrix&>(transform), scale);
+        arrange(const_cast<Matrix&>(shape->transform()), scale);
 
         //transform the gradient coordinates based on the final scaled font.
         auto fill = SHAPE(shape)->rs.fill;
