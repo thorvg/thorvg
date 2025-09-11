@@ -24,7 +24,9 @@ if cc.get_id() == 'clang-cl'
                            '/clang:-fno-stack-protector', '/clang:-fno-unwind-tables' ,
                            '/clang:-fno-asynchronous-unwind-tables']
     endif
-elif (cc.get_id() != 'msvc')
+elif (cc.get_id() == 'msvc')
+    compiler_flags += ['-DNOMINMAX']
+else
     if simd_type == 'avx'
         compiler_flags += ['-mavx']
     endif
