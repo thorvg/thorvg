@@ -149,6 +149,34 @@ public:
      */
     Result del(uint32_t id) noexcept;
 
+
+    /**
+     * @brief Sets the asset resolver callback for handling external resources (e.g., images and fonts).
+     *
+     * This callback is invoked when an external asset reference (such as an image source or file path)
+     * is encountered in a Paint object. It allows the user to provide a custom mechanism for loading
+     * or substituting assets, such as loading from an external source or a virtual filesystem.
+     *
+     * @param[in] func A user-defined function that handles the resolution of asset paths.
+     *                 The function should return @c true if the asset was successfully resolved by the user, or @c false if it was not.
+     *
+     *                 **Callback signature:**  
+     *                 bool(Painter* paint, const char* src, void* data)
+     *                 - @p paint: The Paint object requesting the asset.
+     *                 - @p src: The source path or identifier of the asset to resolve.
+     *                 - @p data: User-defined data passed from the @p data parameter below.
+     *
+     * @param[in] data A pointer to user-defined data that will be passed to the callback each time it is invoked.
+     *                 This can be used to maintain context or access external resources.
+     *
+     * @retval Result::InsufficientCondition If the animation is not loaded.
+     *
+     * @note If @c false is returned by @p func, ThorVG will attempt to resolve the resource using its internal resolution mechanism as a fallback.
+     * @note To unset the resolver, pass @c nullptr as the @p func parameter.
+     * @note Experimental API
+     */
+    Result resolver(std::function<bool(Paint* paint, const char* src, void* data)> callback, void* data) noexcept;
+
     /**
      * @brief Creates a new LottieAnimation object.
      *

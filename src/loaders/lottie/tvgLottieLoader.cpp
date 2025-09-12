@@ -528,3 +528,14 @@ bool LottieLoader::assign(const char* layer, uint32_t ix, const char* var, float
 
     return true;
 }
+
+
+bool LottieLoader::resolver(std::function<bool(Paint* paint, const char* src, void* data)> cb, void* data)
+{
+    if (!ready()) return false;
+
+    if (!comp->resolver) comp->resolver = static_cast<LottieAssetResolver*>(tvg::calloc(1, sizeof(LottieAssetResolver)));
+    comp->resolver->cb = cb;
+    comp->resolver->data = data;
+    return true;
+}

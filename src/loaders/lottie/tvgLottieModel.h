@@ -870,6 +870,7 @@ struct LottieGradientStroke : LottieGradient, LottieStroke
 struct LottieImage : LottieObject, LottieRenderPooler<tvg::Picture>
 {
     LottieBitmap data;
+    bool loaded = false;
 
     void override(LottieProperty* prop, bool release = false) override
     {
@@ -1088,6 +1089,13 @@ struct LottieSlot
 };
 
 
+struct LottieAssetResolver
+{
+    std::function<bool(Paint* paint, const char* src, void* data)> cb;
+    void* data;
+};
+
+
 struct LottieComposition
 {
     ~LottieComposition();
@@ -1145,6 +1153,7 @@ struct LottieComposition
     Array<LottieFont*> fonts;
     Array<LottieSlot*> slots;
     Array<LottieMarker*> markers;
+    LottieAssetResolver* resolver = nullptr;
     bool expressions = false;
     bool initiated = false;
 };
