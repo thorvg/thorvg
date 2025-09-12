@@ -269,21 +269,29 @@ bool TtfLoader::read(Shape* shape, char* text, FontMetrics* out)
     auto metrics = static_cast<TtfMetrics*>(out);
     Point offset = {0.0f, reader.metrics.hhea.ascent};
     Point kerning = {0.0f, 0.0f};
-    auto lglyph = INVALID_GLYPH;
-    TtfGlyph glyph;
+    TtfGlyphMetrics *lgm = nullptr;
+    TtfGlyphMetrics* rgm = nullptr;
     uint32_t code;
 
     while (*utf8) {
         utf8 += _codepoints(utf8, code);
         if (code == 0) break;
-        auto rglyph = reader.glyph(code, glyph);
-        if (rglyph == INVALID_GLYPH) continue;
-        if (lglyph != INVALID_GLYPH) reader.kerning(lglyph, rglyph, kerning);
-        if (!reader.convert(shape, glyph, offset, kerning, 1U)) break;
-        offset.x += (glyph.advance + kerning.x);
-        //store the first glyph with outline min size for italic transform.
-        if (lglyph == INVALID_GLYPH && glyph.offset) metrics->w = glyph.w;
-        lglyph = rglyph;
+        //use the glyph cache
+        auto it = metrics->glyphs.find(code);
+        if (it == metrics->glyphs.end()) {
+            TtfGlyph glyph;
+            auto idx = reader.glyph(code, glyph);
+            if (idx == INVALID_GLYPH) continue;
+            rgm = &metrics->glyphs.emplace(code, TtfGlyphMetrics{idx, glyph}).first->second;
+        } else {
+            rgm = &metrics->glyphs[code];
+        }
+        if (lgm) reader.kerning(lgm->idx, rgm->idx, kerning);
+        if (!reader.convert(shape, rgm->glyph, offset, kerning, 1U)) break;
+        offset.x += (rgm->glyph.advance + kerning.x);
+        //store the base glyph width for italic transform
+        if (!lgm && rgm->glyph.offset) metrics->w = rgm->glyph.w;
+        lgm = rgm;
     }
 
     metrics->w = offset.x;

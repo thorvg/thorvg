@@ -23,13 +23,25 @@
 #ifndef _TVG_TTF_LOADER_H_
 #define _TVG_TTF_LOADER_H_
 
+#include <unordered_map>
 #include "tvgLoader.h"
 #include "tvgTaskScheduler.h"
 #include "tvgTtfReader.h"
 
+using namespace std;
+
+
+struct TtfGlyphMetrics
+{
+    uint32_t idx;
+    TtfGlyph glyph;
+    RenderPath path;
+};
+
 
 struct TtfMetrics : FontMetrics
 {
+    unordered_map<uint32_t, TtfGlyphMetrics> glyphs;  //key: codepoint
     float baseWidth;  //Use as the reference glyph width for italic transform
 
     FontMetrics* duplicate() override { return new TtfMetrics(*this); }
