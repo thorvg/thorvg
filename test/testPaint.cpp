@@ -232,8 +232,8 @@ TEST_CASE("Bounding Box", "[tvgPaint]")
         REQUIRE(canvas->push(text) == Result::Success);
         REQUIRE(canvas->sync() == Result::Success);
 
-        //Negative
-        REQUIRE(text->bounds(&x, &y, &w, &h) == Result::InsufficientCondition);
+        //Empty Size
+        REQUIRE(text->bounds(&x, &y, &w, &h) == Result::Success);
 
         //Case 1
         REQUIRE(text->font("Arial") == Result::Success);
@@ -242,22 +242,22 @@ TEST_CASE("Bounding Box", "[tvgPaint]")
         REQUIRE(text->translate(100.0f, 111.0f) == Result::Success);
         REQUIRE(text->bounds(&x, &y, &w, &h) == Result::Success);
 
-        REQUIRE(x == 101.0f);
-        REQUIRE(y == 118.5625f);
-        REQUIRE(w == 107.1875f);
+        REQUIRE(x == Approx(101.0f).margin(0.000001));
+        REQUIRE(y == Approx(118.5625f).margin(0.000001));
+        REQUIRE(w == Approx(107.1875f).margin(0.000001));
         REQUIRE(h == Approx(31.58334f).margin(0.001f));
 
         REQUIRE(canvas->update() == Result::Success);
 
         REQUIRE(text->bounds(pts) == Result::Success);
-        REQUIRE(pts[0].x == 101.0f);
-        REQUIRE(pts[3].x == 101.0f);
-        REQUIRE(pts[1].x == 208.1875f);
-        REQUIRE(pts[2].x == 208.1875f);
-        REQUIRE(pts[0].y == 118.5625f);
-        REQUIRE(pts[1].y == 118.5625f);
-        REQUIRE(pts[2].y == 150.14584f);
-        REQUIRE(pts[3].y == 150.14584f);
+        REQUIRE(pts[0].x == Approx(101.0f).margin(0.000001));
+        REQUIRE(pts[3].x == Approx(101.0f).margin(0.000001));
+        REQUIRE(pts[1].x == Approx(208.1875f).margin(0.000001));
+        REQUIRE(pts[2].x == Approx(208.1875f).margin(0.000001));
+        REQUIRE(pts[0].y == Approx(118.5625f).margin(0.000001));
+        REQUIRE(pts[1].y == Approx(118.5625f).margin(0.000001));
+        REQUIRE(pts[2].y == Approx(150.14584f).margin(0.000001));
+        REQUIRE(pts[3].y == Approx(150.14584f).margin(0.000001));
 
         //Case 2
         REQUIRE(text->text("BOUNDS") == Result::Success);
@@ -265,21 +265,21 @@ TEST_CASE("Bounding Box", "[tvgPaint]")
         REQUIRE(text->transform(identity) == Result::Success);
         REQUIRE(text->bounds(&x, &y, &w, &h) == Result::Success);
 
-        REQUIRE(x == 3.125f);
-        REQUIRE(y == Approx(7.54167f).margin(0.001f));
-        REQUIRE(w == 177.1875f);
-        REQUIRE(h == Approx(31.60417f).margin(0.001f));
+        REQUIRE(x == Approx(3.125f).margin(0.000001));
+        REQUIRE(y == Approx(7.54167f).margin(0.000001));
+        REQUIRE(w == Approx(177.1875f).margin(0.000001));
+        REQUIRE(h == Approx(31.60417f).margin(0.000001));
 
         REQUIRE(canvas->update() == Result::Success);
         REQUIRE(text->bounds(pts) == Result::Success);
-        REQUIRE(pts[0].x == 3.125f);
-        REQUIRE(pts[3].x == 3.125f);
-        REQUIRE(pts[1].x == 180.3125f);
-        REQUIRE(pts[2].x == 180.3125f);
-        REQUIRE(pts[0].y == Approx(7.54167f).margin(0.001f));
-        REQUIRE(pts[1].y == Approx(7.54167f).margin(0.001f));
-        REQUIRE(pts[2].y == Approx(39.14584f).margin(0.001f));
-        REQUIRE(pts[3].y == Approx(39.14584f).margin(0.001f));
+        REQUIRE(pts[0].x == Approx(3.125f).margin(0.000001));
+        REQUIRE(pts[3].x == Approx(3.125f).margin(0.000001));
+        REQUIRE(pts[1].x == Approx(180.3125f).margin(0.000001));
+        REQUIRE(pts[2].x == Approx(180.3125f).margin(0.000001));
+        REQUIRE(pts[0].y == Approx(7.54167f).margin(0.000001));
+        REQUIRE(pts[1].y == Approx(7.54167f).margin(0.000001));
+        REQUIRE(pts[2].y == Approx(39.14584f).margin(0.000001));
+        REQUIRE(pts[3].y == Approx(39.14584f).margin(0.000001));
     }
     REQUIRE(Initializer::term() == Result::Success);
 }

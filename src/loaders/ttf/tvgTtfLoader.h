@@ -23,9 +23,12 @@
 #ifndef _TVG_TTF_LOADER_H_
 #define _TVG_TTF_LOADER_H_
 
+#include <unordered_map>
 #include "tvgLoader.h"
 #include "tvgTaskScheduler.h"
 #include "tvgTtfReader.h"
+
+using namespace std;
 
 
 struct TtfMetrics : FontMetrics
@@ -42,6 +45,7 @@ struct TtfLoader : public FontLoader
     void* mapping = nullptr;
 #endif
     TtfReader reader;
+    unordered_map<uint32_t, TtfGlyphMetrics> glyphs;  //glypha cache. key: codepoint
     char* text = nullptr;
     bool nomap = false;
     bool freeData = false;

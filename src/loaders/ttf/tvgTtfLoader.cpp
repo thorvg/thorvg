@@ -209,7 +209,7 @@ float TtfLoader::transform(Paint* paint, FontMetrics* metrics, float fontSize, f
 {
     auto dpi = 96.0f / 72.0f;   //dpi base?
     auto scale = fontSize * dpi / reader.metrics.unitsPerEm;
-    Matrix m = {scale, -italicShear * scale, italicShear * static_cast<TtfMetrics*>(metrics)->baseWidth * scale, 0, scale, 0, 0, 0, 1};
+    Matrix m = {scale, -italicShear * scale, italicShear * static_cast<TtfMetrics*>(metrics)->baseWidth * scale, 0, scale, reader.metrics.hhea.ascent * scale, 0, 0, 1};
     paint->transform(m);
 
     return scale;
@@ -266,27 +266,43 @@ bool TtfLoader::read(RenderPath& path, char* text, FontMetrics* out)
 
     auto utf8 = text;  //supposed to be valid utf8
     auto metrics = static_cast<TtfMetrics*>(out);
-    Point offset = {0.0f, reader.metrics.hhea.ascent};
-    Point kerning = {0.0f, 0.0f};
-    auto lglyph = INVALID_GLYPH;
-    TtfGlyph glyph;
+    metrics->w = 0.0f;
+    metrics->h = reader.metrics.hhea.ascent - reader.metrics.hhea.descent;
+
+    TtfGlyphMetrics* ltgm = nullptr;
+    TtfGlyphMetrics* rtgm = nullptr;
+    Point kerning;
     uint32_t code;
 
     while (*utf8) {
         utf8 += _codepoints(utf8, code);
         if (code == 0) break;
-        auto rglyph = reader.glyph(code, glyph);
-        if (rglyph == INVALID_GLYPH) continue;
-        if (lglyph != INVALID_GLYPH) reader.kerning(lglyph, rglyph, kerning);
-        if (!reader.convert(path, glyph, offset, kerning, 1U)) break;
-        offset.x += (glyph.advance + kerning.x);
-        //store the first glyph with outline min size for italic transform.
-        if (lglyph == INVALID_GLYPH && glyph.offset) metrics->baseWidth = glyph.w;
-        lglyph = rglyph;
+        //use the glyph cache
+        auto it = glyphs.find(code);
+        if (it == glyphs.end()) {
+            auto it = glyphs.emplace(code, TtfGlyphMetrics{}).first;
+            rtgm = &it->second;
+            if (!reader.convert(rtgm->path, *rtgm, reader.glyph(code, rtgm), {0.0f, 0.0f}, 1U)) {
+                TVGERR("TTF", "invalid glyph id, codepoint(0x%x)", code);
+                glyphs.erase(it);
+                continue;
+            }
+        } else {
+            rtgm = &it->second;
+        }
+        if (ltgm && reader.kerning(ltgm->idx, rtgm->idx, kerning)) {
+            metrics->w += kerning.x;
+        }
+        //append the glyph path
+        path.cmds.push(rtgm->path.cmds);
+        path.pts.grow(rtgm->path.pts.count);
+        ARRAY_FOREACH(p, rtgm->path.pts) {
+            path.pts.push({p->x + metrics->w, p->y});
+        }
+        //store the base glyph width for italic transform
+        if (!ltgm && rtgm->w > 0.0f) metrics->baseWidth = rtgm->w;
+        metrics->w += rtgm->advance;
+        ltgm = rtgm;
     }
-
-    metrics->w = offset.x;
-    metrics->h = reader.metrics.hhea.ascent - reader.metrics.hhea.descent;
-
     return true;
 }
