@@ -336,7 +336,7 @@ Matrix& Paint::transform() noexcept
 
 Result Paint::bounds(float* x, float* y, float* w, float* h) noexcept
 {
-    Point pt4[4];
+    Point pt4[4] = {};
     const auto pm = pImpl->ptransform();
     if (pImpl->bounds(pt4, &pm, false)) {
         BBox box = {{FLT_MAX, FLT_MAX}, {-FLT_MAX, -FLT_MAX}};
