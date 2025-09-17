@@ -93,7 +93,7 @@ Result Text::unload(const char* filename) noexcept
 
 Result Text::align(float x, float y) noexcept
 {
-    TEXT(this)->align = {x, y};
+    TEXT(this)->fm.align = {x, y};
     PAINT(this)->mark(RenderUpdateFlag::Transform);
     return Result::Success;
 }
@@ -133,6 +133,13 @@ Result Text::italic(float shear) noexcept
     else if (shear > 0.5f) shear = 0.5f;
     TEXT(this)->italicShear = shear;
     TEXT(this)->updated = true;
+    return Result::Success;
+}
+
+
+Result Text::wrap(TextWrap mode) noexcept
+{
+    TEXT(this)->wrapping(mode);
     return Result::Success;
 }
 

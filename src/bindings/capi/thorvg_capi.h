@@ -278,8 +278,7 @@ typedef enum {
 /*!
 * @brief A data structure storing the information about the color and its relative position inside the gradient bounds.
 */
-typedef struct
-{
+typedef struct {
     float offset; /**< The relative position of the color. */
     uint8_t r;    /**< The red color channel value in the range [0 ~ 255]. */
     uint8_t g;    /**< The green color channel value in the range [0 ~ 255]. */
@@ -290,11 +289,29 @@ typedef struct
 /** \} */   // end addtogroup ThorVGCapi_Gradient
 
 
+/*!
+* @addtogroup ThorVGCapi_Text
+* \{
+*/
+
+/*!
+* @brief A data structure storing the information about the color and its relative position inside the gradient bounds.
+*/
+typedef enum {
+    TVG_TEXT_WRAP_NONE = 0,      ///< Do not wrap text. Text is rendered on a single line and may overflow the bounding area.
+    TVG_TEXT_WRAP_CHARACTER,     ///< Wrap at the character level. If a word cannot fit, it is broken into individual characters to fit the line.
+    TVG_TEXT_WRAP_WORD,          ///< Wrap at the word level. Words that do not fit are moved to the next line.
+    TVG_TEXT_WRAP_SMART,         ///< Smart choose wrapping method: word wrap first, falling back to character wrap if a word does not fit.
+    TVG_TEXT_WRAP_ELLIPSIS,      ///< Truncate overflowing text and append an ellipsis ("...") at the end. Typically used for single-line labels.
+    TVG_TEXT_WRAP_HYPHENATION    ///< Reserved. No Support.
+} Tvg_Text_Wrap;
+
+/** \} */  // end addtogroup ThorVGCapi_Text
+
 /**
  * @brief A data structure representing a point in two-dimensional space.
  */
-typedef struct
-{
+typedef struct {
     float x, y;
 } Tvg_Point;
 
@@ -306,8 +323,7 @@ typedef struct
  * The elements e13 and e23 determine the translation of the object along the x and y-axis, respectively.
  * The elements e31 and e32 are set to 0, e33 is set to 1.
  */
-typedef struct
-{
+typedef struct {
     float e11, e12, e13;
     float e21, e22, e23;
     float e31, e32, e33;
@@ -2386,6 +2402,21 @@ TVG_API Tvg_Result tvg_text_align(Tvg_Paint text, float x, float y);
  * @see tvg_text_align()
  */
 TVG_API Tvg_Result tvg_text_layout(Tvg_Paint text, float w, float h);
+
+/**
+ * @brief Sets the text wrapping mode for this text object.
+ *
+ * This method controls how the text is laid out when it exceeds the available space.
+ * The wrapping mode determines whether text is truncated, wrapped by character or word,
+ * or adjusted automatically. An ellipsis mode is also available for truncation with "...".
+ *
+ * @param[in] text A Tvg_Paint pointer to the text object.
+ * @param[in] mode The wrapping strategy to apply. Default is @c TVG_TEXT_WRAP_NONE.
+ *
+ * @see Tvg_Text_Wrap
+ * @note Experimental API
+ */
+TVG_API Tvg_Result tvg_text_wrap_mode(Tvg_Paint text, Tvg_Text_Wrap mode);
 
 
 /**

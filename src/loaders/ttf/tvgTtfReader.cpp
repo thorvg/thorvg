@@ -314,6 +314,7 @@ bool TtfReader::header()
     metrics.hhea.ascent = _i16(data, hhea + 4);
     metrics.hhea.descent = _i16(data, hhea + 6);
     metrics.hhea.lineGap = _i16(data, hhea + 8);
+    metrics.hhea.advance = metrics.hhea.ascent - metrics.hhea.descent + metrics.hhea.lineGap;
     metrics.numHmtx = _u16(data, hhea + 34);
 
     //kerning
@@ -573,8 +574,6 @@ bool TtfReader::kerning(uint32_t lglyph, uint32_t rglyph, Point& out)
     if (!kern) return false;
 
     auto kern = this->kern.load();
-
-    out.x = out.y = 0.0f;
 
     //kern tables
     auto tableCnt = _u16(data, kern + 2);

@@ -19,7 +19,6 @@
  * OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
  * SOFTWARE.
  */
-
 #ifndef _TVG_TTF_LOADER_H_
 #define _TVG_TTF_LOADER_H_
 
@@ -34,8 +33,6 @@ using namespace std;
 struct TtfMetrics : FontMetrics
 {
     float baseWidth;  //Use as the reference glyph width for italic transform
-
-    FontMetrics* duplicate() override { return new TtfMetrics(*this); }
 };
 
 
@@ -58,9 +55,22 @@ struct TtfLoader : public FontLoader
 
     bool open(const char* path) override;
     bool open(const char *data, uint32_t size, const char* rpath, bool copy) override;
-    void transform(Paint* paint, FontMetrics* metrices, float fontSize, float italicShear) override;
-    bool read(RenderPath& path, char* text, FontMetrics* out) override;
-    FontMetrics* metrics() override { return new TtfMetrics; }
+    void transform(Paint* paint, FontMetrics& fm, float italicShear) override;
+    bool get(FontMetrics& fm, char* text, RenderPath& out) override;
+    void copy(const FontMetrics& in, FontMetrics& out) override;
+    void release(FontMetrics& fm) override;
+
+private:
+    float height(uint32_t loc)
+    {
+        return reader.metrics.hhea.advance * loc - reader.metrics.hhea.lineGap;
+    }
+
+    void wrapNone(FontMetrics& fm, const Point& box, char* utf8, RenderPath& out);
+    void wrapChar(FontMetrics& fm, const Point& box, char* utf8, RenderPath& out);
+    void wrapWord(FontMetrics& fm, const Point& box, char* utf8, RenderPath& out, bool smart);
+    void wrapEllipsis(FontMetrics& fm, const Point& box, char* utf8, RenderPath& out);
+    TtfGlyphMetrics* request(uint32_t code);
     void clear();
 };
 
