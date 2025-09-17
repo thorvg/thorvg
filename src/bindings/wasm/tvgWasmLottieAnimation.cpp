@@ -498,6 +498,20 @@ public:
     }
 
     // TODO: Advanced APIs wrt Interactivity & theme methods...
+    bool quality(uint8_t value)
+    {
+        errorMsg = NoError;
+
+        if (!canvas || !animation) return false;
+
+        if (animation->quality(value) != Result::Success) {
+            errorMsg = "quality() fail";
+            return false;
+        }
+
+        updated = true;
+        return true;
+    }
 
 private:
     string                 errorMsg;
@@ -550,5 +564,6 @@ EMSCRIPTEN_BINDINGS(thorvg_bindings)
         .function("frame", &TvgLottieAnimation ::frame)
         .function("viewport", &TvgLottieAnimation ::viewport)
         .function("resize", &TvgLottieAnimation ::resize)
-        .function("save", &TvgLottieAnimation ::save);
+        .function("save", &TvgLottieAnimation ::save)
+        .function("quality", &TvgLottieAnimation ::quality);
 }
