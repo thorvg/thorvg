@@ -20,7 +20,7 @@
  * SOFTWARE.
  */
 
-#include <thorvg.h>
+#include <thorvg_lottie.h>
 #include <emscripten.h>
 #include <emscripten/bind.h>
 #include "tvgPicture.h"
@@ -272,7 +272,7 @@ public:
             return;
         }
 
-        animation = Animation::gen();
+        animation = LottieAnimation::gen();
         if (!animation) errorMsg = "Invalid animation";
     }
 
@@ -318,7 +318,7 @@ public:
         canvas->remove();
 
         delete(animation);
-        animation = Animation::gen();
+        animation = LottieAnimation::gen();
         animation->picture()->origin(0.5f, 0.5f);  //center-aligned
 
         string filetype = mimetype;
@@ -498,11 +498,25 @@ public:
     }
 
     // TODO: Advanced APIs wrt Interactivity & theme methods...
+    bool quality(uint8_t value)
+    {
+        errorMsg = NoError;
+
+        if (!canvas || !animation) return false;
+
+        if (animation->quality(value) != Result::Success) {
+            errorMsg = "quality() fail";
+            return false;
+        }
+
+        updated = true;
+        return true;
+    }
 
 private:
     string                 errorMsg;
     Canvas*                canvas = nullptr;
-    Animation*             animation = nullptr;
+    LottieAnimation*       animation = nullptr;
     TvgEngineMethod*       engine = nullptr;
     uint32_t               width = 0;
     uint32_t               height = 0;
@@ -550,5 +564,6 @@ EMSCRIPTEN_BINDINGS(thorvg_bindings)
         .function("frame", &TvgLottieAnimation ::frame)
         .function("viewport", &TvgLottieAnimation ::viewport)
         .function("resize", &TvgLottieAnimation ::resize)
-        .function("save", &TvgLottieAnimation ::save);
+        .function("save", &TvgLottieAnimation ::save)
+        .function("quality", &TvgLottieAnimation ::quality);
 }
