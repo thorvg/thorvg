@@ -262,6 +262,27 @@ enum class SceneEffect : uint8_t
 
 
 /**
+ * @brief Enumeration that defines methods used for wrapping text.
+ *
+ * This enum provides options to control how text is wrapped when it exceeds the available space.
+ * Wrapping affects the layout and flow of text in the rendering area.
+ *
+ * @see Text::wrap(TextWrap mode)
+ *
+ * @note Experimental API
+ */
+enum class TextWrap : uint8_t
+{
+    None = 0,      ///< Do not wrap text. Text is rendered on a single line and may overflow the bounding area.
+    Character,     ///< Wrap at the character level. If a word cannot fit, it is broken into individual characters to fit the line.
+    Word,          ///< Wrap at the word level. Words that do not fit are moved to the next line.
+    Smart,         ///< Smart choose wrapping method: word wrap first, falling back to character wrap if a word does not fit.
+    Ellipsis,      ///< Truncate overflowing text and append an ellipsis ("...") at the end. Typically used for single-line labels.
+    Hyphenation    ///< Reserved. No Support.
+};
+
+
+/**
  * @brief Enumeration specifying the ThorVG class type value.
  *
  * ThorVG's drawing objects can return class type values, allowing you to identify the specific class of each object.
@@ -1858,6 +1879,20 @@ public:
      * @see align()
      */
     Result layout(float w, float h) noexcept;
+
+    /**
+     * @brief Sets the text wrapping mode for this text object.
+     *
+     * This method controls how the text is laid out when it exceeds the available space.
+     * The wrapping mode determines whether text is truncated, wrapped by character or word,
+     * or adjusted automatically. An ellipsis mode is also available for truncation with "...".
+     *
+     * @param[in] mode The wrapping strategy to apply. Default is @c TextWrap::None
+     *
+     * @see TextWrap
+     * @note Experimental API
+     */
+    Result wrap(TextWrap mode) noexcept;
 
     /**
      * @brief Apply an italic (slant) transformation to the text.

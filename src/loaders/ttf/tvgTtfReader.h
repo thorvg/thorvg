@@ -52,9 +52,9 @@ public:
     {
         //horizontal header info
         struct {
-            float ascent;
-            float descent;
+            float ascent, descent;
             float lineGap;
+            float advance;
         } hhea;
 
         uint16_t unitsPerEm;

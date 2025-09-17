@@ -32,23 +32,15 @@
 #define TEXT(A) static_cast<TextImpl*>(A)
 #define CONST_TEXT(A) static_cast<const TextImpl*>(A)
 
-struct TextBox {
-    Point size;
-};
-
-
 struct TextImpl : Text
 {
     Paint::Impl impl;
     Shape* shape;   //text shape
     FontLoader* loader = nullptr;
-    FontMetrics* metrics = nullptr;
+    FontMetrics fm;
     char* utf8 = nullptr;
-    float fontSize = 0.0f;
     float outlineWidth = 0.0f;
     float italicShear = 0.0f;
-    Point align{};
-    TextBox* box = nullptr;
     bool updated = false;
 
     TextImpl() : impl(Paint::Impl(this)), shape(Shape::gen())
@@ -59,9 +51,10 @@ struct TextImpl : Text
     ~TextImpl()
     {
         tvg::free(utf8);
-        tvg::free(box);
-        delete(metrics);
-        LoaderMgr::retrieve(loader);
+        if (loader) {
+            loader->release(fm);
+            LoaderMgr::retrieve(loader);
+        }
         delete(shape);
     }
 
@@ -77,7 +70,7 @@ struct TextImpl : Text
 
     Result font(const char* name)
     {
-        auto loader = name ? LoaderMgr::font(name) : LoaderMgr::anyfont();
+        auto loader = static_cast<FontLoader*>(name ? LoaderMgr::font(name) : LoaderMgr::anyfont());
         if (!loader) return Result::InsufficientCondition;
 
         //Same resource has been loaded.
@@ -85,10 +78,10 @@ struct TextImpl : Text
             this->loader->sharing--;  //make it sure the reference counting.
             return Result::Success;
         } else if (this->loader) {
+            this->loader->release(fm);
             LoaderMgr::retrieve(this->loader);
         }
-        this->loader = static_cast<FontLoader*>(loader);
-        metrics = static_cast<FontLoader*>(loader)->metrics();
+        this->loader = loader;
         updated = true;
 
         return Result::Success;
@@ -97,8 +90,8 @@ struct TextImpl : Text
     Result size(float fontSize)
     {
         if (fontSize > 0.0f) {
-            if (this->fontSize != fontSize) {
-                this->fontSize = fontSize;
+            if (fm.fontSize != fontSize) {
+                fm.fontSize = fontSize;
                 updated = true;
             }
             return Result::Success;
@@ -122,8 +115,8 @@ struct TextImpl : Text
     {
         if (!loader) return false;
         if (updated) {
-            loader->read(SHAPE(shape)->rs.path, utf8, metrics);
-            loader->transform(shape, metrics, fontSize, italicShear);
+            loader->get(fm, utf8, SHAPE(shape)->rs.path);
+            loader->transform(shape, fm, italicShear);
             updated = false;
         }
         return true;
@@ -135,23 +128,16 @@ struct TextImpl : Text
         return false;
     }
 
-    void arrange(Matrix& m)
+    void wrapping(TextWrap mode)
     {
-        //alignment
-        m.e13 -= (metrics->w / metrics->scale) * align.x;
-        m.e23 -= (metrics->h / metrics->scale) * align.y;
-
-        //layouting
-        if (box) {
-            m.e13 += box->size.x * align.x;
-            m.e23 += box->size.y * align.y;
-        }
+        if (fm.wrap == mode) return;
+        fm.wrap = mode;
+        impl.mark(RenderUpdateFlag::Path);
     }
 
     void layout(float w, float h)
     {
-        if (!box) box = tvg::calloc<TextBox*>(1, sizeof(TextBox));
-        box->size = {w, h};
+        fm.box = {w, h};
         updated = true;
     }
 
@@ -159,10 +145,8 @@ struct TextImpl : Text
     {
         if (!load()) return true;
 
-        auto scale = metrics->scale;
+        auto scale = fm.scale;
         if (tvg::zero(scale)) return false;
-
-        arrange(const_cast<Matrix&>(shape->transform()));
 
         //transform the gradient coordinates based on the final scaled font.
         auto fill = SHAPE(shape)->rs.fill;
@@ -193,7 +177,6 @@ struct TextImpl : Text
     bool bounds(Point* pt4, const Matrix& m, bool obb)
     {
         if (!load()) return true;
-        arrange(const_cast<Matrix&>(m));
         return PAINT(shape)->bounds(pt4, &const_cast<Matrix&>(m), obb);
     }
 
@@ -211,17 +194,13 @@ struct TextImpl : Text
         if (loader) {
             dup->loader = loader;
             ++dup->loader->sharing;
-            dup->metrics = metrics->duplicate();
+            loader->copy(fm, dup->fm);
         }
 
         dup->utf8 = tvg::duplicate(utf8);
-        dup->fontSize = fontSize;
         dup->italicShear = italicShear;
         dup->outlineWidth = outlineWidth;
-        dup->align = align;
         dup->updated = true;
-
-        if (box) dup->layout(box->size.x, box->size.y);
 
         return text;
     }

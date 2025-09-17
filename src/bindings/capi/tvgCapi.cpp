@@ -925,15 +925,24 @@ TVG_API Tvg_Result tvg_text_set_color(Tvg_Paint text, uint8_t r, uint8_t g, uint
     return TVG_RESULT_INVALID_ARGUMENT;
 }
 
+
 TVG_API Tvg_Result tvg_text_set_italic(Tvg_Paint text, float shear)
 {
     if (text) return (Tvg_Result) reinterpret_cast<Text*>(text)->italic(shear);
     return TVG_RESULT_INVALID_ARGUMENT;
 }
 
+
 TVG_API Tvg_Result tvg_text_set_gradient(Tvg_Paint text, Tvg_Gradient gradient)
 {
     if (text) return (Tvg_Result) reinterpret_cast<Text*>(text)->fill((Fill*)(gradient));
+    return TVG_RESULT_INVALID_ARGUMENT;
+}
+
+
+TVG_API Tvg_Result tvg_text_wrap_mode(Tvg_Paint text, Tvg_Text_Wrap mode)
+{
+    if (text) return (Tvg_Result) reinterpret_cast<Text*>(text)->wrap(TextWrap(mode));
     return TVG_RESULT_INVALID_ARGUMENT;
 }
 
