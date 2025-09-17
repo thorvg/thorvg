@@ -44,12 +44,12 @@ struct TextImpl : Text
     FontLoader* loader = nullptr;
     FontMetrics* metrics = nullptr;
     char* utf8 = nullptr;
-    float fontSize;
+    float fontSize = 0.0f;
     float outlineWidth = 0.0f;
     float italicShear = 0.0f;
     Point align{};
-
     TextBox* box = nullptr;
+    bool updated = false;
 
     TextImpl() : impl(Paint::Impl(this)), shape(Shape::gen())
     {
@@ -70,8 +70,7 @@ struct TextImpl : Text
         tvg::free(this->utf8);
         if (utf8) this->utf8 = tvg::duplicate(utf8);
         else this->utf8 = nullptr;
-
-        impl.mark(RenderUpdateFlag::Path);
+        updated = true;
 
         return Result::Success;
     }
@@ -90,10 +89,21 @@ struct TextImpl : Text
         }
         this->loader = static_cast<FontLoader*>(loader);
         metrics = static_cast<FontLoader*>(loader)->metrics();
-
-        impl.mark(RenderUpdateFlag::Path);
+        updated = true;
 
         return Result::Success;
+    }
+
+    Result size(float fontSize)
+    {
+        if (fontSize > 0.0f) {
+            if (this->fontSize != fontSize) {
+                this->fontSize = fontSize;
+                updated = true;
+            }
+            return Result::Success;
+        }
+        return Result::InvalidArguments;
     }
 
     RenderRegion bounds()
@@ -108,14 +118,15 @@ struct TextImpl : Text
         return PAINT(shape)->render(renderer);
     }
 
-    float load()
+    bool load()
     {
-        if (!loader) return 0.0f;
-
-        //reload
-        if (impl.marked(RenderUpdateFlag::Path)) loader->read(SHAPE(shape)->rs.path, utf8, metrics);
-
-        return loader->transform(shape, metrics, fontSize, italicShear);
+        if (!loader) return false;
+        if (updated) {
+            loader->read(SHAPE(shape)->rs.path, utf8, metrics);
+            loader->transform(shape, metrics, fontSize, italicShear);
+            updated = false;
+        }
+        return true;
     }
 
     bool skip(RenderUpdateFlag flag)
@@ -124,11 +135,11 @@ struct TextImpl : Text
         return false;
     }
 
-    void arrange(Matrix& m, float scale)
+    void arrange(Matrix& m)
     {
         //alignment
-        m.e13 -= (metrics->w / scale) * align.x;
-        m.e23 -= (metrics->h / scale) * align.y;
+        m.e13 -= (metrics->w / metrics->scale) * align.x;
+        m.e23 -= (metrics->h / metrics->scale) * align.y;
 
         //layouting
         if (box) {
@@ -141,17 +152,17 @@ struct TextImpl : Text
     {
         if (!box) box = tvg::calloc<TextBox*>(1, sizeof(TextBox));
         box->size = {w, h};
-        impl.mark(RenderUpdateFlag::Transform);
+        updated = true;
     }
 
     bool update(RenderMethod* renderer, const Matrix& transform, Array<RenderData>& clips, uint8_t opacity, RenderUpdateFlag flag, TVG_UNUSED bool clipper)
     {
-        if (!loader) return true;
+        if (!load()) return true;
 
-        auto scale = 1.0f / load();
+        auto scale = metrics->scale;
         if (tvg::zero(scale)) return false;
 
-        arrange(const_cast<Matrix&>(shape->transform()), scale);
+        arrange(const_cast<Matrix&>(shape->transform()));
 
         //transform the gradient coordinates based on the final scaled font.
         auto fill = SHAPE(shape)->rs.fill;
@@ -175,16 +186,14 @@ struct TextImpl : Text
 
     bool intersects(const RenderRegion& region)
     {
-        if (load() == 0.0f) return false;
+        if (!load()) return false;
         return SHAPE(shape)->intersects(region);
     }
 
     bool bounds(Point* pt4, const Matrix& m, bool obb)
     {
-        if (!loader) return true;
-        auto scale = 1.0f / load();
-        if (tvg::zero(scale)) return true;
-        arrange(const_cast<Matrix&>(m), scale);
+        if (!load()) return true;
+        arrange(const_cast<Matrix&>(m));
         return PAINT(shape)->bounds(pt4, &const_cast<Matrix&>(m), obb);
     }
 
@@ -210,6 +219,7 @@ struct TextImpl : Text
         dup->italicShear = italicShear;
         dup->outlineWidth = outlineWidth;
         dup->align = align;
+        dup->updated = true;
 
         if (box) dup->layout(box->size.x, box->size.y);
 

@@ -205,14 +205,14 @@ void TtfLoader::clear()
 /************************************************************************/
 
 
-float TtfLoader::transform(Paint* paint, FontMetrics* metrics, float fontSize, float italicShear)
+void TtfLoader::transform(Paint* paint, FontMetrics* metrics, float fontSize, float italicShear)
 {
     auto dpi = 96.0f / 72.0f;   //dpi base?
     auto scale = fontSize * dpi / reader.metrics.unitsPerEm;
     Matrix m = {scale, -italicShear * scale, italicShear * static_cast<TtfMetrics*>(metrics)->baseWidth * scale, 0, scale, reader.metrics.hhea.ascent * scale, 0, 0, 1};
     paint->transform(m);
 
-    return scale;
+    metrics->scale = scale / 1.0f;
 }
 
 

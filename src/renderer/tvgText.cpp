@@ -41,11 +41,7 @@ Result Text::font(const char* name) noexcept
 
 Result Text::size(float size) noexcept
 {
-    if (size > 0.0f) {
-        TEXT(this)->fontSize = size;
-        return Result::Success;
-    }
-    return Result::InvalidArguments;
+    return TEXT(this)->size(size);
 }
 
 
@@ -136,6 +132,7 @@ Result Text::italic(float shear) noexcept
     if (shear < 0.0f) shear = 0.0f;
     else if (shear > 0.5f) shear = 0.5f;
     TEXT(this)->italicShear = shear;
+    TEXT(this)->updated = true;
     return Result::Success;
 }
 
