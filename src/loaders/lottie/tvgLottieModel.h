@@ -1147,6 +1147,7 @@ struct LottieComposition
     Array<LottieMarker*> markers;
     bool expressions = false;
     bool initiated = false;
+    uint8_t quality = 50;
 };
 
 #endif //_TVG_LOTTIE_MODEL_H_

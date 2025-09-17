@@ -124,6 +124,16 @@ Result LottieAnimation::assign(const char* layer, uint32_t ix, const char* var, 
 }
 
 
+Result LottieAnimation::quality(uint8_t value) noexcept
+{
+    if (value > 100) return Result::InvalidArguments;
+    auto loader = PICTURE(pImpl->picture)->loader;
+    if (!loader) return Result::InsufficientCondition;
+    if (!static_cast<LottieLoader*>(loader)->quality(value)) return Result::InsufficientCondition;
+    return Result::Success;
+}
+
+
 LottieAnimation* LottieAnimation::gen() noexcept
 {
     return new LottieAnimation;

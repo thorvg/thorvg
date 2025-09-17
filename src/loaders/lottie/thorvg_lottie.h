@@ -150,6 +150,21 @@ public:
     Result del(uint32_t id) noexcept;
 
     /**
+     * @brief Sets the quality level for Lottie effects.
+     *
+     * This function controls the rendering quality of effects like blur, shadows, etc.
+     * Lower values prioritize performance while higher values prioritize quality.
+     *
+     * @param[in] value The quality level (0-100). 0 represents lowest quality/best performance,
+     *                  100 represents highest quality/lowest performance, default is 50.
+     *
+     * @retval Result::InsufficientCondition If the animation is not loaded.
+     *
+     * @since 1.0
+     */
+    Result quality(uint8_t value) noexcept;
+
+    /**
      * @brief Creates a new LottieAnimation object.
      *
      * @return A new LottieAnimation object.

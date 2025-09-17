@@ -2943,6 +2943,26 @@ TVG_API Tvg_Result tvg_lottie_animation_tween(Tvg_Animation animation, float fro
 */
 TVG_API Tvg_Result tvg_lottie_animation_assign(Tvg_Animation animation, const char* layer, uint32_t ix, const char* var, float val);
 
+
+/*!
+* @brief Sets the quality level for Lottie effects.
+*
+* This function controls the rendering quality of effects like blur, shadows, etc.
+* Lower values prioritize performance while higher values prioritize quality.
+*
+* @param[in] animation The Tvg_Animation pointer to the Lottie animation object.
+* @param[in] value The quality level (0-100). 0 represents lowest quality/best performance,
+*                  100 represents highest quality/lowest performance, default is 50.
+*
+* @retval TVG_RESULT_INSUFFICIENT_CONDITION If the animation is not loaded.
+* @retval TVG_RESULT_INVALID_ARGUMENT An invalid Tvg_Animation pointer.
+*
+* @note This option is used as a hint; its behavior heavily depends on the render backend.
+*
+* @since 1.0
+*/
+TVG_API Tvg_Result tvg_lottie_animation_set_quality(Tvg_Animation animation, uint8_t value);
+
 /** \} */   // end addtogroup ThorVGCapi_LottieAnimation
 
 

@@ -528,3 +528,14 @@ bool LottieLoader::assign(const char* layer, uint32_t ix, const char* var, float
 
     return true;
 }
+
+
+bool LottieLoader::quality(uint8_t value)
+{
+    if (!ready()) return false;
+    if (comp->quality != value) {
+        comp->quality = value;
+        rebuild = true;
+    }
+    return true;
+}
