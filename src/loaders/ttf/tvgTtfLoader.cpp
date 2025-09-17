@@ -258,20 +258,46 @@ bool TtfLoader::open(const char* data, uint32_t size, TVG_UNUSED const char* rpa
 }
 
 
-bool TtfLoader::read(RenderPath& path, char* text, FontMetrics* out)
+void TtfLoader::wrapping(const Point& box, Point& cursor, const Point& advance, TextWrap wrap)
 {
-    path.clear();
+    if (cursor.x + advance.x < box.x) return;
+
+    switch (wrap) {
+        case TextWrap::Character: {
+            cursor.x = 0.0f;
+            cursor.y += advance.y;
+            break;
+        }
+        case TextWrap::Word: {
+            //TODO:
+            break;
+        }
+        case TextWrap::Auto: {
+            //TODO:
+            break;
+        }
+        case TextWrap::Ellipsis: {
+            //TODO:
+            break;
+        }
+        default: break;
+    }
+}
+
+
+bool TtfLoader::get(FontMetrics* fm, const Point& box, TextWrap wrap, char* text, RenderPath& out)
+{
+    out.clear();
 
     if (!text) return false;
 
     auto utf8 = text;  //supposed to be valid utf8
-    auto metrics = static_cast<TtfMetrics*>(out);
-    metrics->w = 0.0f;
-    metrics->h = reader.metrics.hhea.ascent - reader.metrics.hhea.descent;
-
+    auto metrics = static_cast<TtfMetrics*>(fm);
+    metrics->size = {0.0f, reader.metrics.hhea.ascent - reader.metrics.hhea.descent};
+    auto vadvance = metrics->size.y + reader.metrics.hhea.lineGap;  //vertical advance
     TtfGlyphMetrics* ltgm = nullptr;
     TtfGlyphMetrics* rtgm = nullptr;
-    Point kerning;
+    Point cursor = {};
     uint32_t code;
 
     while (*utf8) {
@@ -290,18 +316,27 @@ bool TtfLoader::read(RenderPath& path, char* text, FontMetrics* out)
         } else {
             rtgm = &it->second;
         }
-        if (ltgm && reader.kerning(ltgm->idx, rtgm->idx, kerning)) {
-            metrics->w += kerning.x;
-        }
+
+        Point kerning{};
+        if (ltgm) reader.kerning(ltgm->idx, rtgm->idx, kerning);
+
+        //text wrapping
+        if (wrap != TextWrap::None && box.x > 0.0f) wrapping(box, cursor, {rtgm->advance + kerning.x, vadvance}, wrap);
+
         //append the glyph path
-        path.cmds.push(rtgm->path.cmds);
-        path.pts.grow(rtgm->path.pts.count);
+        out.cmds.push(rtgm->path.cmds);
+        out.pts.grow(rtgm->path.pts.count);
         ARRAY_FOREACH(p, rtgm->path.pts) {
-            path.pts.push({p->x + metrics->w, p->y});
+            out.pts.push(*p + cursor);
         }
+
+        cursor.x += rtgm->advance + kerning.x;
+
+        //text horizontal size
+        if (cursor.x > metrics->size.x) metrics->size.x = cursor.x;
+
         //store the base glyph width for italic transform
         if (!ltgm && rtgm->w > 0.0f) metrics->baseWidth = rtgm->w;
-        metrics->w += rtgm->advance;
         ltgm = rtgm;
     }
     return true;

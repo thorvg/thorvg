@@ -574,8 +574,6 @@ bool TtfReader::kerning(uint32_t lglyph, uint32_t rglyph, Point& out)
 
     auto kern = this->kern.load();
 
-    out.x = out.y = 0.0f;
-
     //kern tables
     auto tableCnt = _u16(data, kern + 2);
     kern += 4;

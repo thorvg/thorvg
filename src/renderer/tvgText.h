@@ -32,11 +32,6 @@
 #define TEXT(A) static_cast<TextImpl*>(A)
 #define CONST_TEXT(A) static_cast<const TextImpl*>(A)
 
-struct TextBox {
-    Point size;
-};
-
-
 struct TextImpl : Text
 {
     Paint::Impl impl;
@@ -47,8 +42,8 @@ struct TextImpl : Text
     float fontSize = 0.0f;
     float outlineWidth = 0.0f;
     float italicShear = 0.0f;
-    Point align{};
-    TextBox* box = nullptr;
+    Point align{}, box{};
+    TextWrap wrap = TextWrap::None;
     bool updated = false;
 
     TextImpl() : impl(Paint::Impl(this)), shape(Shape::gen())
@@ -59,7 +54,6 @@ struct TextImpl : Text
     ~TextImpl()
     {
         tvg::free(utf8);
-        tvg::free(box);
         delete(metrics);
         LoaderMgr::retrieve(loader);
         delete(shape);
@@ -122,9 +116,8 @@ struct TextImpl : Text
     {
         if (!loader) return false;
         if (updated) {
-            loader->read(SHAPE(shape)->rs.path, utf8, metrics);
             loader->transform(shape, metrics, fontSize, italicShear);
-            updated = false;
+            loader->get(metrics, box * metrics->scale, wrap, utf8, SHAPE(shape)->rs.path);
         }
         return true;
     }
@@ -138,20 +131,24 @@ struct TextImpl : Text
     void arrange(Matrix& m)
     {
         //alignment
-        m.e13 -= (metrics->w / metrics->scale) * align.x;
-        m.e23 -= (metrics->h / metrics->scale) * align.y;
+        m.e13 -= (metrics->size.x / metrics->scale) * align.x;
+        m.e23 -= (metrics->size.y / metrics->scale) * align.y;
 
         //layouting
-        if (box) {
-            m.e13 += box->size.x * align.x;
-            m.e23 += box->size.y * align.y;
-        }
+        m.e13 += box.x * align.x;
+        m.e23 += box.y * align.y;
+    }
+
+    void wrapping(TextWrap mode)
+    {
+        if (wrap == mode) return;
+        wrap = mode;
+        impl.mark(RenderUpdateFlag::Path);
     }
 
     void layout(float w, float h)
     {
-        if (!box) box = tvg::calloc<TextBox*>(1, sizeof(TextBox));
-        box->size = {w, h};
+        box = {w, h};
         updated = true;
     }
 
@@ -219,9 +216,9 @@ struct TextImpl : Text
         dup->italicShear = italicShear;
         dup->outlineWidth = outlineWidth;
         dup->align = align;
+        dup->box = box;
+        dup->wrap = wrap;
         dup->updated = true;
-
-        if (box) dup->layout(box->size.x, box->size.y);
 
         return text;
     }

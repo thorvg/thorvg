@@ -52,8 +52,7 @@ public:
     {
         //horizontal header info
         struct {
-            float ascent;
-            float descent;
+            float ascent, descent;
             float lineGap;
         } hhea;
 

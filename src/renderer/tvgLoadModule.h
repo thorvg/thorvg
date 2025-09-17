@@ -103,7 +103,7 @@ struct ImageLoader : LoadModule
 
 struct FontMetrics
 {
-    float w, h;  //text width, height
+    Point size;     //text width, height
     float scale;
 
     virtual ~FontMetrics() {}
@@ -119,7 +119,7 @@ struct FontLoader : LoadModule
 
     using LoadModule::read;
 
-    virtual bool read(RenderPath& path, char* text, FontMetrics* out) = 0;
+    virtual bool get(FontMetrics* fm, const Point& box, TextWrap wrap, char* text, RenderPath& out) = 0;
     virtual void transform(Paint* paint, FontMetrics* mertrics, float fontSize, float italicShear) = 0;
     virtual FontMetrics* metrics() = 0;
 };

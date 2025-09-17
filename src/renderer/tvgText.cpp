@@ -137,6 +137,13 @@ Result Text::italic(float shear) noexcept
 }
 
 
+Result Text::wrap(TextWrap mode) noexcept
+{
+    TEXT(this)->wrapping(mode);
+    return Result::Success;
+}
+
+
 Text* Text::gen() noexcept
 {
     return new TextImpl;
