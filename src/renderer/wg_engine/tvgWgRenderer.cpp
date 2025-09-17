@@ -138,7 +138,7 @@ RenderData WgRenderer::prepare(const RenderShape& rshape, RenderData data, const
     }
 
     // update paint settings
-    if ((!data) || (flags & (RenderUpdateFlag::Transform | RenderUpdateFlag::Blend))) {
+    if ((!data) || (flags & (RenderUpdateFlag::Transform | RenderUpdateFlag::Blend | RenderUpdateFlag::Color))) {
         renderDataShape->renderSettingsShape.update(mContext, transform, mTargetSurface.cs, opacity);
         renderDataShape->renderSettingsStroke.update(mContext, transform, mTargetSurface.cs, opacity);
         renderDataShape->fillRule = rshape.rule;
@@ -146,6 +146,7 @@ RenderData WgRenderer::prepare(const RenderShape& rshape, RenderData data, const
 
     // setup fill settings
     renderDataShape->viewport = vport;
+    renderDataShape->transform = transform;
     renderDataShape->updateVisibility(rshape, opacity);
     // update shape render settings
     if (!renderDataShape->renderSettingsShape.skip) {
@@ -170,7 +171,8 @@ RenderData WgRenderer::prepare(RenderSurface* surface, RenderData data, const Ma
 
     // update paint settings
     renderDataPicture->viewport = vport;
-    if (flags & (RenderUpdateFlag::Transform | RenderUpdateFlag::Blend)) {
+    renderDataPicture->transform = transform;
+    if (flags & (RenderUpdateFlag::Transform | RenderUpdateFlag::Blend | RenderUpdateFlag::Color)) {
         renderDataPicture->renderSettings.update(mContext, transform, surface->cs, opacity);
     }
 
@@ -610,7 +612,16 @@ bool WgRenderer::partial(bool disable)
 bool WgRenderer::intersectsShape(RenderData data, TVG_UNUSED const RenderRegion& region)
 {
     if (!data) return false;
-    TVGLOG("WG_ENGINE", "Paint::intersect() is not supported!");
+    auto shape = (WgRenderDataShape*)data;
+    RenderRegion bbox = {
+        {(int32_t)shape->aabb.min.x, (int32_t)shape->aabb.min.y},
+        {(int32_t)shape->aabb.max.x, (int32_t)shape->aabb.max.y}
+    };
+    if (region.intersected(bbox)) {
+        if (region.contained(bbox)) return true;
+        WgIntersector intersector;
+        return intersector.intersectShape(RenderRegion::intersect(region, bbox), shape);
+    }
     return false;
 }
 
@@ -618,7 +629,9 @@ bool WgRenderer::intersectsShape(RenderData data, TVG_UNUSED const RenderRegion&
 bool WgRenderer::intersectsImage(RenderData data, TVG_UNUSED const RenderRegion& region)
 {
     if (!data) return false;
-    TVGLOG("WG_ENGINE", "Paint::intersect() is not supported!");
+    auto picture = (WgRenderDataPicture*)data;
+    WgIntersector intersector;
+    if (intersector.intersectImage(region, picture)) return true;
     return false;
 }
 

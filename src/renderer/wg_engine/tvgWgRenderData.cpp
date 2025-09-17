@@ -86,6 +86,7 @@ void WgImageData::release(WgContext& context)
 
 void WgRenderSettings::update(WgContext& context, const tvg::Matrix& transform, tvg::ColorSpace cs, uint8_t opacity)
 {
+    //TODO: Update separtely according to the RenderUpdateFlag
     settings.transform.update(transform);
     settings.options.update(cs, opacity);
 }
@@ -499,4 +500,103 @@ void WgStageBufferGeometry::flush(WgContext& context)
 {
     context.allocateBufferVertex(vbuffer_gpu, (float *)vbuffer.data, vbuffer.count);
     context.allocateBufferIndex(ibuffer_gpu, (uint32_t *)ibuffer.data, ibuffer.count);
+}
+
+//***********************************************************************
+// WgIntersector
+//***********************************************************************
+
+bool WgIntersector::isPointInTriangle(const Point& p, const Point& a, const Point& b, const Point& c)
+{
+    auto d1 = tvg::cross(p - a, p - b);
+    auto d2 = tvg::cross(p - b, p - c);
+    auto d3 = tvg::cross(p - c, p - a);
+    auto has_neg = (d1 < 0) || (d2 < 0) || (d3 < 0);
+    auto has_pos = (d1 > 0) || (d2 > 0) || (d3 > 0);
+    return !(has_neg && has_pos);
+}
+
+
+// triangle list
+bool WgIntersector::isPointInTris(const Point& p, const WgMeshData& mesh, const Matrix& tr)
+{
+    for (uint32_t i = 0; i < mesh.ibuffer.count; i += 3) {
+        auto p0 = mesh.vbuffer[mesh.ibuffer[i+0]] * tr;
+        auto p1 = mesh.vbuffer[mesh.ibuffer[i+1]] * tr;
+        auto p2 = mesh.vbuffer[mesh.ibuffer[i+2]] * tr;
+        if (isPointInTriangle(p, p0, p1, p2)) return true;
+    }
+    return false;
+}
+
+
+// even-odd triangle list
+bool WgIntersector::isPointInMesh(const Point& p, const WgMeshData& mesh, const Matrix& tr)
+{
+    uint32_t crossings = 0;
+    for (uint32_t i = 0; i < mesh.ibuffer.count; i += 3) {
+        Point triangle[3] = {
+            mesh.vbuffer[mesh.ibuffer[i+0]] * tr,
+            mesh.vbuffer[mesh.ibuffer[i+1]] * tr,
+            mesh.vbuffer[mesh.ibuffer[i+2]] * tr
+        };
+        for (uint32_t j = 0; j < 3; j++) {
+            auto p1 = triangle[j];
+            auto p2 = triangle[(j + 1) % 3];
+            if (p1.y == p2.y) continue;
+            if (p1.y > p2.y) std::swap(p1, p2);
+            if ((p.y > p1.y) && (p.y <= p2.y)) {
+                auto intersectionX = (p2.x - p1.x) * (p.y - p1.y) / (p2.y - p1.y) + p1.x;
+                if (intersectionX > p.x) crossings++;
+            }
+        }
+    }
+    return (crossings % 2) == 1;
+}
+
+
+bool WgIntersector::intersectClips(const Point& pt, const Array<WgRenderDataPaint*>& clips)
+{
+    for (uint32_t i = 0; i < clips.count; i++) {
+        auto clip = (WgRenderDataShape*)clips[i];
+        if (!isPointInMesh(pt, clip->meshShape, clip->transform)) return false;
+    }
+    return true;
+}
+
+
+bool WgIntersector::intersectShape(const RenderRegion region, const WgRenderDataShape* shape)
+{
+    if (!shape || ((shape->meshShape.ibuffer.count == 0) && (shape->meshStrokes.ibuffer.count == 0))) return false;
+    auto sizeX = region.sw();
+    auto sizeY = region.sh();
+    for (int32_t y = 0; y <= sizeY; y++) {
+        for (int32_t x = 0; x <= sizeX; x++) {
+            Point pt{(float)x + region.min.x, (float)y + region.min.y};
+            if (y % 2 == 1) pt.y = (float) sizeY - y - sizeY % 2 + region.min.y;
+            if (intersectClips(pt, shape->clips)) {
+                if (!shape->renderSettingsShape.skip && isPointInMesh(pt, shape->meshShape, shape->transform)) return true;
+                if (!shape->renderSettingsStroke.skip && isPointInTris(pt, shape->meshStrokes, shape->transform)) return true;
+            }
+        }
+    }
+    return false;
+}
+
+
+bool WgIntersector::intersectImage(const RenderRegion region, const WgRenderDataPicture* image)
+{
+    if (!image) return false;
+    auto sizeX = region.sw();
+    auto sizeY = region.sh();
+    for (int32_t y = 0; y <= sizeY; y++) {
+        for (int32_t x = 0; x <= sizeX; x++) {
+            Point pt{(float)x + region.min.x, (float)y + region.min.y};
+            if (y % 2 == 1) pt.y = (float) sizeY - y - sizeY % 2 + region.min.y;
+            if (intersectClips(pt, image->clips)) {
+                if (isPointInTris(pt, image->meshData, image->transform)) return true;
+            }
+        }
+    }
+    return false;
 }

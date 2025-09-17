@@ -60,6 +60,7 @@ struct WgRenderDataPaint
     BBox aabb{{},{}};
     RenderRegion viewport{};
     Array<WgRenderDataPaint*> clips;
+    Matrix transform;
 
     virtual ~WgRenderDataPaint() {};
     virtual void release(WgContext& context);
@@ -214,6 +215,17 @@ public:
             context.layouts.releaseBindGroup(*p);
         bbuffer.clear();
     }
+};
+
+
+struct WgIntersector
+{
+    bool isPointInTriangle(const Point& p, const Point& a, const Point& b, const Point& c);
+    bool isPointInTris(const Point& p, const WgMeshData& mesh, const Matrix& tr);
+    bool isPointInMesh(const Point& p, const WgMeshData& mesh, const Matrix& tr);
+    bool intersectClips(const Point& pt, const Array<WgRenderDataPaint*>& clips);
+    bool intersectShape(const RenderRegion region, const WgRenderDataShape* shape);
+    bool intersectImage(const RenderRegion region, const WgRenderDataPicture* image);
 };
 
 #endif // _TVG_WG_RENDER_DATA_H_
