@@ -24,6 +24,7 @@
 #include "tvgCommon.h"
 #include "tvgMath.h"
 #include "tvgScene.h"
+#include "tvgLoadModule.h"
 #include "tvgLottieModel.h"
 #include "tvgLottieBuilder.h"
 #include "tvgLottieExpressions.h"
@@ -899,7 +900,15 @@ void LottieBuilder::updateSolid(LottieLayer* layer)
 void LottieBuilder::updateImage(LottieGroup* layer)
 {
     auto image = static_cast<LottieImage*>(layer->children.first());
-    layer->scene->push(image->pooling(true));
+    auto picture = image->pooling(true);
+    layer->scene->push(picture);
+    if (image->updated) return;
+
+    if (image->data.size > 0) picture->load((const char*)image->data.b64Data, image->data.size, image->data.mimeType);
+    else if (resolver && resolver->func(picture, image->data.path, resolver->data)) {}
+    else picture->load(image->data.path);
+
+    image->updated = true;
 }
 
 

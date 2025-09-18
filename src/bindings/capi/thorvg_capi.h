@@ -315,6 +315,26 @@ typedef struct
 
 
 /**
+* @brief Callback function type for resolving external assets.
+*
+* This callback is invoked when a Picture requires an external asset
+* (such as an image or font resource). Implementations should load the asset
+* into the given @p paint object.
+*
+* @param[in] paint The target paint object where the resolved asset will be loaded.
+* @param[in] src   The source path, identifier, or URI of the asset to be resolved.
+* @param[in] data  User-provided custom data passed to the callback for context.
+*
+* @return @c true if the asset was successfully resolved and loaded into @p paint, otherwise @c false.
+*
+* @see tvg_picture_set_asset_resolver()
+*
+* @since Experimental API
+*/
+typedef bool (*Tvg_Picture_Asset_Resolver)(Tvg_Paint paint, const char* src, void* data);
+
+
+/**
 * @defgroup ThorVGCapi_Initializer Initializer
 * @brief A module enabling initialization and termination of the TVG engines.
 *
@@ -1932,6 +1952,32 @@ TVG_API Tvg_Result tvg_picture_load_raw(Tvg_Paint picture, const uint32_t *data,
 * @warning: It's the user responsibility to release the @p data memory if the @p copy is @c true.
 */
 TVG_API Tvg_Result tvg_picture_load_data(Tvg_Paint picture, const char *data, uint32_t size, const char *mimetype, const char* rpath, bool copy);
+
+
+/**
+ * @brief Sets the asset resolver callback for handling external resources (e.g., images and fonts).
+ *
+ * This callback is invoked when an external asset reference (such as an image source or file path)
+ * is encountered in a Picture object. It allows the user to provide a custom mechanism for loading
+ * or substituting assets, such as loading from an external source or a virtual filesystem.
+ *
+ * @param[in] resolver A user-defined function that handles the resolution of asset paths.
+ *                     The function should return @c true if the asset was successfully resolved by the user, or @c false if it was not.
+ * @param[in] data A pointer to user-defined data that will be passed to the callback each time it is invoked.
+ *                 This can be used to maintain context or access external resources.
+ *
+ * @retval TVG_RESULT_INVALID_ARGUMENT A @c nullptr passed as the @p picture argument.
+ * @retval TVG_RESULT_INSUFFICIENT_CONDITION If the @p picture is already loaded.
+ *
+ * @note This function must be called before @ref tvg_picture_load()
+ *       Setting the resolver after loading will have no effect on asset resolution for that asset.
+ * @note If @c false is returned by @p resolver, ThorVG will attempt to resolve the resource using its internal resolution mechanism as a fallback.
+ * @note To unset the resolver, pass @c nullptr as the @p resolver parameter.
+ * @note Experimental API
+ *
+ * @see Tvg_Picture_Asset_Resolver
+ */
+TVG_API Tvg_Result tvg_picture_set_asset_resolver(Tvg_Paint picture, Tvg_Picture_Asset_Resolver resolver, void* data);
 
 
 /*!
