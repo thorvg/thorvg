@@ -136,6 +136,17 @@ struct GlShape
   bool validStroke;
 };
 
+struct GlIntersector
+{
+    bool isPointInTriangle(const Point& p, const Point& a, const Point& b, const Point& c);
+    bool isPointInImage(const Point& p, const GlGeometryBuffer& mesh, const Matrix& tr);
+    bool isPointInTris(const Point& p, const GlGeometryBuffer& mesh, const Matrix& tr);
+    bool isPointInMesh(const Point& p, const GlGeometryBuffer& mesh, const Matrix& tr);
+    bool intersectClips(const Point& pt, const tvg::Array<tvg::RenderData>& clips);
+    bool intersectShape(const RenderRegion region, const GlShape* shape);
+    bool intersectImage(const RenderRegion region, const GlShape* image);
+};
+
 #define MAX_GRADIENT_STOPS 16
 
 struct GlLinearGradientBlock

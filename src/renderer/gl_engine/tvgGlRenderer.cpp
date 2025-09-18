@@ -923,16 +923,9 @@ bool GlRenderer::bounds(RenderData data, Point* pt4, const Matrix& m)
 
 RenderRegion GlRenderer::region(RenderData data)
 {
-    auto pass = currentPass();
-    if (!data || !pass || pass->isEmpty()) return {};
-
+    if (!data) return {};
     auto shape = reinterpret_cast<GlShape*>(data);
-    auto bounds = shape->geometry.getBounds();
-
-    auto const& vp = pass->getViewport();
-    bounds.intersect(vp);
-
-    return bounds;
+    return shape->geometry.getBounds();
 }
 
 
@@ -1222,12 +1215,12 @@ RenderData GlRenderer::prepare(RenderSurface* image, RenderData data, const Matr
 
     if (sdata->texId == 0) {
         sdata->texId = _genTexture(image);
-        sdata->opacity = opacity;
         sdata->texColorSpace = image->cs;
         sdata->texFlipY = 1;
         sdata->geometry = GlGeometry();
     }
 
+    sdata->opacity = opacity;
     sdata->geometry.matrix = transform;
     sdata->geometry.viewport = vport;
     sdata->geometry.tesselateImage(image);
@@ -1261,11 +1254,13 @@ RenderData GlRenderer::prepare(const RenderShape& rshape, RenderData data, const
     sdata->geometry.matrix = transform;
     sdata->geometry.viewport = vport;
 
+    //TODO: Please precisely update tessellation not to update only if the color is changed.
     if (flags & (RenderUpdateFlag::Color | RenderUpdateFlag::Gradient | RenderUpdateFlag::Transform | RenderUpdateFlag::Path)) {
         if (sdata->geometry.tesselateShape(rshape)) sdata->validFill = true;
     }
 
-    if (flags & (RenderUpdateFlag::Stroke | RenderUpdateFlag::GradientStroke | RenderUpdateFlag::Transform | RenderUpdateFlag::Path)) {
+    //TODO: Please precisely update tessellation not to update only if the color is changed.
+    if (flags & (RenderUpdateFlag::Color | RenderUpdateFlag::Stroke | RenderUpdateFlag::GradientStroke | RenderUpdateFlag::Transform | RenderUpdateFlag::Path)) {
         if (sdata->geometry.tesselateStroke(rshape)) sdata->validStroke = true;
     }
 
@@ -1309,7 +1304,13 @@ bool GlRenderer::partial(bool disable)
 bool GlRenderer::intersectsShape(RenderData data, TVG_UNUSED const RenderRegion& region)
 {
     if (!data) return false;
-    TVGLOG("GL_ENGINE", "Paint::intersect() is not supported!");
+    auto shape = (GlShape*)data;
+    const auto& bbox = shape->geometry.getBounds();
+    if (region.intersected(bbox)) {
+        if (region.contained(bbox)) return true;
+        GlIntersector intersector;
+        return intersector.intersectShape(RenderRegion::intersect(region, bbox), shape);
+    }
     return false;
 }
 
@@ -1317,7 +1318,13 @@ bool GlRenderer::intersectsShape(RenderData data, TVG_UNUSED const RenderRegion&
 bool GlRenderer::intersectsImage(RenderData data, TVG_UNUSED const RenderRegion& region)
 {
     if (!data) return false;
-    TVGLOG("GL_ENGINE", "Paint::intersect() is not supported!");
+    auto shape = (GlShape*)data;
+    const auto& bbox = shape->geometry.getBounds();
+    if (region.intersected(bbox)) {
+        if (region.contained(bbox)) return true;
+        GlIntersector intersector;
+        if (intersector.intersectImage(RenderRegion::intersect(region, bbox), shape)) return true;
+    }
     return false;
 }
 
