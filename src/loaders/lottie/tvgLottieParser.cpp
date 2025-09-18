@@ -81,9 +81,18 @@ CompositeMethod LottieParser::getMaskMethod(bool inversed)
             if (inversed) return CompositeMethod::InvAlphaMask;
             else return CompositeMethod::AddMask;
         }
-        case 's': return CompositeMethod::SubtractMask;
-        case 'i': return CompositeMethod::IntersectMask;
-        case 'f': return CompositeMethod::DifferenceMask;
+        case 's': {
+            if (inversed) return CompositeMethod::IntersectMask;
+            return CompositeMethod::SubtractMask;
+        }
+        case 'i': {
+            if (inversed) return CompositeMethod::DifferenceMask;
+            return CompositeMethod::IntersectMask;
+        }
+        case 'f': {
+            if (inversed) return CompositeMethod::IntersectMask;
+            return CompositeMethod::DifferenceMask;
+        }
         case 'l': return CompositeMethod::LightenMask;
         case 'd': return CompositeMethod::DarkenMask;
         default: return CompositeMethod::None;
