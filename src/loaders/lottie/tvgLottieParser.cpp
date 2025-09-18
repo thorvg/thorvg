@@ -82,9 +82,18 @@ MaskMethod LottieParser::getMaskMethod(bool inversed)
             if (inversed) return MaskMethod::InvAlpha;
             else return MaskMethod::Add;
         }
-        case 's': return MaskMethod::Subtract;
-        case 'i': return MaskMethod::Intersect;
-        case 'f': return MaskMethod::Difference;
+        case 's': {
+            if (inversed) return MaskMethod::Intersect;
+            return MaskMethod::Subtract;
+        }
+        case 'i': {
+            if (inversed) return MaskMethod::Difference;
+            return MaskMethod::Intersect;
+        }
+        case 'f': {
+            if (inversed) return MaskMethod::Intersect;
+            return MaskMethod::Difference;
+        }
         case 'l': return MaskMethod::Lighten;
         case 'd': return MaskMethod::Darken;
         default: return MaskMethod::None;
