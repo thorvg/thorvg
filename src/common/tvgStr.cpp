@@ -231,8 +231,8 @@ char* strDirname(const char* path)
 {
     auto ptr = strrchr(path, '/');
 #ifdef _WIN32
-    auto backslash = strrchr(ptr ? ptr : path, '\\');
-    if (backslash > ptr) ptr = backslash;
+    auto ptr2 = strrchr(ptr ? ptr : path, '\\');
+    if (ptr2) ptr = ptr2;
 #endif
     auto len = ptr ? size_t(ptr - path + 1) : SIZE_MAX;
     return strDuplicate(path, len);
