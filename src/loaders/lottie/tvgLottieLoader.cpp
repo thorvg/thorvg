@@ -539,3 +539,9 @@ bool LottieLoader::quality(uint8_t value)
     }
     return true;
 }
+
+
+void LottieLoader::set(const AssetResolver* resolver)
+{
+    builder->resolver = resolver;
+}

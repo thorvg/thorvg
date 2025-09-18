@@ -29,6 +29,13 @@
 #include "tvgInlist.h"
 
 
+struct AssetResolver
+{
+    std::function<bool(Paint* paint, const char* src, void* data)> func;
+    void* data;
+};
+
+
 struct LoadModule
 {
     INLIST_ITEM(LoadModule);
@@ -92,6 +99,7 @@ struct ImageLoader : LoadModule
 
     virtual bool animatable() { return false; }  //true if this loader supports animation.
     virtual Paint* paint() { return nullptr; }
+    virtual void set(const AssetResolver* resolver) {}
 
     virtual RenderSurface* bitmap()
     {

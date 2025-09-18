@@ -30,6 +30,7 @@
 #include "tvgLottieModifier.h"
 
 struct LottieComposition;
+struct AssetResolver;
 
 struct RenderRepeater
 {
@@ -140,6 +141,8 @@ struct LottieBuilder
 
     bool update(LottieComposition* comp, float progress);
     void build(LottieComposition* comp);
+
+    const AssetResolver* resolver = nullptr;  //do not free this
 
 private:
     void appendRect(Shape* shape, Point& pos, Point& size, float r, bool clockwise, RenderContext* ctx);
