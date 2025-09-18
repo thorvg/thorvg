@@ -95,10 +95,7 @@ bool PngLoader::open(const char* path)
 
     w = static_cast<float>(width);
     h = static_cast<float>(height);
-
     ret = true;
-
-    goto finalize;
 
 finalize:
     fclose(pngFile);
