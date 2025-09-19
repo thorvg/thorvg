@@ -402,7 +402,8 @@ bool SwRenderer::renderImage(RenderData data)
             if (bbox.invalid() || bbox.x() >= surface->w || bbox.y() >= surface->h) return true;
 
             //RLE Image
-            if (image.rle && image.rle->valid()) {
+            if (image.rle) {
+                if (image.rle->invalid()) return true;
                 if (image.direct) return rasterDirectRleImage(surface, image, bbox, opacity);
                 else if (image.scaled) return rasterScaledRleImage(surface, image, transform, bbox, opacity);
                 else {
