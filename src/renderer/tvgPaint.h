@@ -180,7 +180,7 @@ namespace tvg
         Matrix ptransform()
         {
             auto p = this;
-            auto tm = identity();
+            auto tm = tvg::identity();
             while (p->parent) {
                 p = PAINT(p->parent);
                 tm = p->transform() * tm;
