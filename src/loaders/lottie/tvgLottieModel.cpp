@@ -355,7 +355,6 @@ void LottieImage::prepare()
     LottieObject::type = LottieObject::Image;
 
     auto picture = Picture::gen();
-    picture->size(data.width, data.height);
     picture->ref();
     pooler.push(picture);
 }

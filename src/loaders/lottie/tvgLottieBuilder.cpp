@@ -908,6 +908,7 @@ void LottieBuilder::updateImage(LottieGroup* layer)
     else if (resolver && resolver->func(picture, image->data.path, resolver->data)) {}
     else picture->load(image->data.path);
 
+    picture->size(image->data.width, image->data.height);
     image->updated = true;
 }
 
