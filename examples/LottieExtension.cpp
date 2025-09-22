@@ -160,7 +160,7 @@ struct UserExample : tvgexam::Example
         {
             slot0 = std::unique_ptr<tvg::LottieAnimation>(tvg::LottieAnimation::gen());
             auto picture = slot0->picture();
-            if (!tvgexam::verify(picture->load(EXAMPLE_DIR"/lottie/extensions/slotsample0.json"))) return false;
+            if (!tvgexam::verify(picture->load(EXAMPLE_DIR"/lottie/extensions/slot0.json"))) return false;
 
             sizing(picture, 0);
 
@@ -171,7 +171,7 @@ struct UserExample : tvgexam::Example
         {
             slot1 = std::unique_ptr<tvg::LottieAnimation>(tvg::LottieAnimation::gen());
             auto picture = slot1->picture();
-            if (!tvgexam::verify(picture->load(EXAMPLE_DIR"/lottie/extensions/slotsample1.json"))) return false;
+            if (!tvgexam::verify(picture->load(EXAMPLE_DIR"/lottie/extensions/slot1.json"))) return false;
 
             const char* slotJson = R"({"gradient_fill":{"p":{"p":2,"k":{"k":[0,0.1,0.1,0.2,1,1,0.1,0.2,0,0,1,1]}}}})";
             slotId1 = slot1->gen(slotJson);
@@ -186,7 +186,7 @@ struct UserExample : tvgexam::Example
         {
             slot2 = std::unique_ptr<tvg::LottieAnimation>(tvg::LottieAnimation::gen());
             auto picture = slot2->picture();
-            if (!tvgexam::verify(picture->load(EXAMPLE_DIR"/lottie/extensions/slotsample2.json"))) return false;
+            if (!tvgexam::verify(picture->load(EXAMPLE_DIR"/lottie/extensions/slot2.json"))) return false;
 
             const char* slotJson = R"({"ball_color":{"p":{"a":1,"k":[{"i":{"x":[0.833],"y":[0.833]},"o":{"x":[0.167],"y":[0.167]},"t":7,"s":[0,0.176,0.867]},{"i":{"x":[0.833],"y":[0.833]},"o":{"x":[0.167],"y":[0.167]},"t":22,"s":[0.867,0,0.533]},{"i":{"x":[0.833],"y":[0.833]},"o":{"x":[0.167],"y":[0.167]},"t":37,"s":[0.867,0,0.533]},{"t":51,"s":[0,0.867,0.255]}]}}})";
             slotId2 = slot2->gen(slotJson);
@@ -201,7 +201,7 @@ struct UserExample : tvgexam::Example
         {
             slot3 = std::unique_ptr<tvg::LottieAnimation>(tvg::LottieAnimation::gen());
             auto picture = slot3->picture();
-            if (!tvgexam::verify(picture->load(EXAMPLE_DIR"/lottie/extensions/slotsample3.json"))) return false;
+            if (!tvgexam::verify(picture->load(EXAMPLE_DIR"/lottie/extensions/slot3.json"))) return false;
 
             const char* slotJson = R"({"path_img":{"p":{"id":"image_0","w":200,"h":300,"u":"images/","p":"logo.png","e":0}}})";
             slotId3 = slot3->gen(slotJson);
@@ -216,7 +216,7 @@ struct UserExample : tvgexam::Example
         {
             slot4 = std::unique_ptr<tvg::LottieAnimation>(tvg::LottieAnimation::gen());
             auto picture = slot4->picture();
-            if (!tvgexam::verify(picture->load(EXAMPLE_DIR"/lottie/extensions/slotsample4.json"))) return false;
+            if (!tvgexam::verify(picture->load(EXAMPLE_DIR"/lottie/extensions/slot4.json"))) return false;
 
             const char* slotJson = R"({"bg_color":{"p":{"a":0,"k":[1,0.8196,0.2275]}},"check_color":{"p":{"a":0,"k":[0.0078,0.0078,0.0078]}}})";
             slotId4 = slot4->gen(slotJson);
@@ -231,7 +231,7 @@ struct UserExample : tvgexam::Example
         {
             slot5 = std::unique_ptr<tvg::LottieAnimation>(tvg::LottieAnimation::gen());
             auto picture = slot5->picture();
-            if (!tvgexam::verify(picture->load(EXAMPLE_DIR"/lottie/extensions/slotsample5.json"))) return false;
+            if (!tvgexam::verify(picture->load(EXAMPLE_DIR"/lottie/extensions/slot5.json"))) return false;
 
             sizing(picture, 5);
 
@@ -242,7 +242,7 @@ struct UserExample : tvgexam::Example
         {
             slot6 = std::unique_ptr<tvg::LottieAnimation>(tvg::LottieAnimation::gen());
             auto picture = slot6->picture();
-            if (!tvgexam::verify(picture->load(EXAMPLE_DIR"/lottie/extensions/slotsample6.json"))) return false;
+            if (!tvgexam::verify(picture->load(EXAMPLE_DIR"/lottie/extensions/slot6.json"))) return false;
 
             const char* slotJson = R"({"position_id":{"p":{"a":1,"k":[{"i":{"x":0.833,"y":0.833},"o":{"x":0.167,"y":0.167},"s":[100,100],"t":0},{"s":[200,300],"t":100}]}}})";
             slotId6 = slot6->gen(slotJson);
@@ -257,7 +257,7 @@ struct UserExample : tvgexam::Example
         {
             slot7 = std::unique_ptr<tvg::LottieAnimation>(tvg::LottieAnimation::gen());
             auto picture = slot7->picture();
-            if (!tvgexam::verify(picture->load(EXAMPLE_DIR"/lottie/extensions/slotsample7.json"))) return false;
+            if (!tvgexam::verify(picture->load(EXAMPLE_DIR"/lottie/extensions/slot7.json"))) return false;
 
             const char* slotJson = R"({"scale_id":{"p":{"a":1,"k":[{"i":{"x":0.833,"y":0.833},"o":{"x":0.167,"y":0.167},"s":[0,0],"t":0},{"s":[100,100],"t":100}]}}})";
             slotId7 = slot7->gen(slotJson);
@@ -272,7 +272,7 @@ struct UserExample : tvgexam::Example
         {
             slot8 = std::unique_ptr<tvg::LottieAnimation>(tvg::LottieAnimation::gen());
             auto picture = slot8->picture();
-            if (!tvgexam::verify(picture->load(EXAMPLE_DIR"/lottie/extensions/slotsample8.json"))) return false;
+            if (!tvgexam::verify(picture->load(EXAMPLE_DIR"/lottie/extensions/slot8.json"))) return false;
 
             const char* slotJson = R"({"rotation_id":{"p":{"a":1,"k":[{"i":{"x":0.833,"y":0.833},"o":{"x":0.167,"y":0.167},"s":[0],"t":0},{"s":[180],"t":100}]}}})";
             slotId8 = slot8->gen(slotJson);
@@ -287,7 +287,7 @@ struct UserExample : tvgexam::Example
         {
             slot9 = std::unique_ptr<tvg::LottieAnimation>(tvg::LottieAnimation::gen());
             auto picture = slot9->picture();
-            if (!tvgexam::verify(picture->load(EXAMPLE_DIR"/lottie/extensions/slotsample9.json"))) return false;
+            if (!tvgexam::verify(picture->load(EXAMPLE_DIR"/lottie/extensions/slot9.json"))) return false;
 
             const char* slotJson = R"({"opacity_id":{"p":{"a":1,"k":[{"i":{"x":0.833,"y":0.833},"o":{"x":0.167,"y":0.167},"s":[0],"t":0},{"s":[100],"t":100}]}}})";
             slotId9 = slot9->gen(slotJson);
@@ -302,7 +302,7 @@ struct UserExample : tvgexam::Example
         {
             slot10 = std::unique_ptr<tvg::LottieAnimation>(tvg::LottieAnimation::gen());
             auto picture = slot10->picture();
-            if (!tvgexam::verify(picture->load(EXAMPLE_DIR"/lottie/extensions/slotsample10.json"))) return false;
+            if (!tvgexam::verify(picture->load(EXAMPLE_DIR"/lottie/extensions/slot10.json"))) return false;
 
             const char* slotJson = R"({"rect_rotation":{"p":{"x":"var $bm_rt = time * 360;"}},"rect_scale":{"p":{"x":"var $bm_rt = [];$bm_rt[0] = value[0] + Math.cos(2 * Math.PI * time) * 100;$bm_rt[1] = value[1];"}},"rect_position":{"p":{"x":"var $bm_rt = [];$bm_rt[0] = value[0] + Math.cos(2 * Math.PI * time) * 100;$bm_rt[1] = value[1];"}}})";
             slotId10 = slot10->gen(slotJson);
@@ -317,7 +317,7 @@ struct UserExample : tvgexam::Example
         {
             marker = std::unique_ptr<tvg::LottieAnimation>(tvg::LottieAnimation::gen());
             auto picture = marker->picture();
-            if (!tvgexam::verify(picture->load(EXAMPLE_DIR"/lottie/extensions/marker_sample.json"))) return false;
+            if (!tvgexam::verify(picture->load(EXAMPLE_DIR"/lottie/extensions/marker.json"))) return false;
             if (!tvgexam::verify(marker->segment("sectionC"))) return false;
 
             sizing(picture, 11);
