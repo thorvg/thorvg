@@ -25,7 +25,7 @@
 /************************************************************************/
 
 #define NUM_PER_ROW 4
-#define NUM_PER_COL 3
+#define NUM_PER_COL 4
 
 struct UserExample : tvgexam::Example
 {
@@ -41,103 +41,62 @@ struct UserExample : tvgexam::Example
     unique_ptr<tvg::LottieAnimation> slot9;
     unique_ptr<tvg::LottieAnimation> slot10;
     unique_ptr<tvg::LottieAnimation> marker;
+    unique_ptr<tvg::LottieAnimation> resolver;
     uint32_t slotId1, slotId2, slotId3, slotId4, slotId6, slotId7, slotId8, slotId9, slotId10;
     uint32_t w, h;
     uint32_t size;
 
     void sizing(tvg::Picture* picture, uint32_t counter)
     {
+        picture->origin(0.5f, 0.5f);
+
         //image scaling preserving its aspect ratio
-        float scale;
-        float shiftX = 0.0f, shiftY = 0.0f;
         float w, h;
         picture->size(&w, &h);
-
-        if (w > h) {
-            scale = size / w;
-            shiftY = (size - h * scale) * 0.5f;
-        } else {
-            scale = size / h;
-            shiftX = (size - w * scale) * 0.5f;
-        }
-
-        picture->scale(scale);
-        picture->translate((counter % NUM_PER_ROW) * size + shiftX, (counter / NUM_PER_ROW) * (this->h / NUM_PER_COL) + shiftY);
+        picture->scale((w > h) ? size / w : size / h);
+        picture->translate((counter % NUM_PER_ROW) * size + size / 2, (counter / NUM_PER_ROW) * (this->h / NUM_PER_COL) + size / 2);
     }
 
     bool update(tvg::Canvas* canvas, uint32_t elapsed) override
     {
         //default slot
-        {
-            auto progress = tvgexam::progress(elapsed, slot0->duration());
-            slot0->frame(slot0->totalFrame() * progress);
-        }
+        slot0->frame(slot0->totalFrame() * tvgexam::progress(elapsed, slot0->duration()));
 
         //gradient slot
-        {
-            auto progress = tvgexam::progress(elapsed, slot1->duration());
-            slot1->frame(slot1->totalFrame() * progress);
-        }
+        slot1->frame(slot1->totalFrame() * tvgexam::progress(elapsed, slot1->duration()));
 
         //solid fill slot
-        {
-            auto progress = tvgexam::progress(elapsed, slot2->duration());
-            slot2->frame(slot2->totalFrame() * progress);
-        }
+        slot2->frame(slot2->totalFrame() * tvgexam::progress(elapsed, slot2->duration()));
 
         //image slot
-        {
-            auto progress = tvgexam::progress(elapsed, slot3->duration());
-            slot3->frame(slot3->totalFrame() * progress);
-        }
+        slot3->frame(slot3->totalFrame() * tvgexam::progress(elapsed, slot3->duration()));
 
         //overriden default slot
-        {
-            auto progress = tvgexam::progress(elapsed, slot4->duration());
-            slot4->frame(slot4->totalFrame() * progress);
-        }
+        slot4->frame(slot4->totalFrame() * tvgexam::progress(elapsed, slot4->duration()));
 
         //duplicate slot
-        {
-            auto progress = tvgexam::progress(elapsed, slot5->duration());
-            slot5->frame(slot5->totalFrame() * progress);
-        }
+        slot5->frame(slot5->totalFrame() * tvgexam::progress(elapsed, slot5->duration()));
 
         //position slot
-        {
-            auto progress = tvgexam::progress(elapsed, slot6->duration());
-            slot6->frame(slot6->totalFrame() * progress);
-        }
+        slot6->frame(slot6->totalFrame() * tvgexam::progress(elapsed, slot6->duration()));
 
         //scale slot
-        {
-            auto progress = tvgexam::progress(elapsed, slot7->duration());
-            slot7->frame(slot7->totalFrame() * progress);
-        }
+        slot7->frame(slot7->totalFrame() * tvgexam::progress(elapsed, slot7->duration()));
 
         //rotation slot
-        {
-            auto progress = tvgexam::progress(elapsed, slot8->duration());
-            slot8->frame(slot8->totalFrame() * progress);
-        }
+        slot8->frame(slot8->totalFrame() * tvgexam::progress(elapsed, slot8->duration()));
 
         //opacity slot
-        {
-            auto progress = tvgexam::progress(elapsed, slot9->duration());
-            slot9->frame(slot9->totalFrame() * progress);
-        }
+        slot9->frame(slot9->totalFrame() * tvgexam::progress(elapsed, slot9->duration()));
 
         //expression slot
-        {
-            auto progress = tvgexam::progress(elapsed, slot10->duration());
-            slot10->frame(slot10->totalFrame() * progress);
-        }
+        slot10->frame(slot10->totalFrame() * tvgexam::progress(elapsed, slot10->duration()));
 
         //marker
-        {
-            auto progress = tvgexam::progress(elapsed, marker->duration());
-            marker->frame(marker->totalFrame() * progress);
-        }
+        marker->frame(marker->totalFrame() * tvgexam::progress(elapsed, marker->duration()));
+
+        //asset resolver
+        resolver->frame(resolver->totalFrame() * tvgexam::progress(elapsed, resolver->duration()));
 
         canvas->update();
 
@@ -163,7 +122,6 @@ struct UserExample : tvgexam::Example
             if (!tvgexam::verify(picture->load(EXAMPLE_DIR"/lottie/extensions/slot0.json"))) return false;
 
             sizing(picture, 0);
-
             canvas->push(picture);
         }
 
@@ -178,7 +136,6 @@ struct UserExample : tvgexam::Example
             if (!tvgexam::verify(slot1->apply(slotId1))) return false;
 
             sizing(picture, 1);
-
             canvas->push(picture);
         }
 
@@ -193,7 +150,6 @@ struct UserExample : tvgexam::Example
             if (!tvgexam::verify(slot2->apply(slotId2))) return false;
 
             sizing(picture, 2);
-
             canvas->push(picture);
         }
 
@@ -208,7 +164,6 @@ struct UserExample : tvgexam::Example
             if (!tvgexam::verify(slot3->apply(slotId3))) return false;
 
             sizing(picture, 3);
-
             canvas->push(picture);
         }
 
@@ -223,7 +178,6 @@ struct UserExample : tvgexam::Example
             if (!tvgexam::verify(slot4->apply(slotId4))) return false;
 
             sizing(picture, 4);
-
             canvas->push(picture);
         }
 
@@ -234,7 +188,6 @@ struct UserExample : tvgexam::Example
             if (!tvgexam::verify(picture->load(EXAMPLE_DIR"/lottie/extensions/slot5.json"))) return false;
 
             sizing(picture, 5);
-
             canvas->push(picture);
         }
 
@@ -249,7 +202,6 @@ struct UserExample : tvgexam::Example
             if (!tvgexam::verify(slot6->apply(slotId6))) return false;
 
             sizing(picture, 6);
-
             canvas->push(picture);
         }
 
@@ -264,7 +216,6 @@ struct UserExample : tvgexam::Example
             if (!tvgexam::verify(slot7->apply(slotId7))) return false;
 
             sizing(picture, 7);
-
             canvas->push(picture);
         }
 
@@ -279,7 +230,6 @@ struct UserExample : tvgexam::Example
             if (!tvgexam::verify(slot8->apply(slotId8))) return false;
 
             sizing(picture, 8);
-
             canvas->push(picture);
         }
 
@@ -309,7 +259,6 @@ struct UserExample : tvgexam::Example
             if (!tvgexam::verify(slot10->apply(slotId10))) return false;
 
             sizing(picture, 10);
-
             canvas->push(picture);
         }
 
@@ -321,7 +270,23 @@ struct UserExample : tvgexam::Example
             if (!tvgexam::verify(marker->segment("sectionC"))) return false;
 
             sizing(picture, 11);
+            canvas->push(picture);
+        }
 
+        //asset resolver
+        {
+            resolver = std::unique_ptr<tvg::LottieAnimation>(tvg::LottieAnimation::gen());
+            auto picture = resolver->picture();
+
+            if (!tvgexam::verify(picture->resolver([](tvg::Paint* p, const char* src, void* data) {
+                if (p->type() != tvg::Type::Picture) return false;     //supposed to be a picture object
+                auto ret = static_cast<tvg::Picture*>(p)->load(src);   //load picture resources as demand
+                return (ret == (tvg::Result) 0) ? true : false;        //return true if resolving is successful
+            }, nullptr))) return false;
+
+            if (!tvgexam::verify(picture->load(EXAMPLE_DIR"/lottie/extensions/resolver.json"))) return false;
+
+            sizing(picture, 12);
             canvas->push(picture);
         }
 
