@@ -137,6 +137,12 @@ RenderData WgRenderer::prepare(const RenderShape& rshape, RenderData data, const
         renderDataShape->updateMeshes(rshape, flags, transform);
     }
 
+    // update transform
+    if ((!data) || (flags & RenderUpdateFlag::Transform)) {
+        renderDataShape->transform = transform;
+        renderDataShape->updateAABB(transform);
+    }
+
     // update paint settings
     if ((!data) || (flags & (RenderUpdateFlag::Transform | RenderUpdateFlag::Blend | RenderUpdateFlag::Color))) {
         renderDataShape->renderSettingsShape.update(mContext, transform, mTargetSurface.cs, opacity);
@@ -146,7 +152,6 @@ RenderData WgRenderer::prepare(const RenderShape& rshape, RenderData data, const
 
     // setup fill settings
     renderDataShape->viewport = vport;
-    renderDataShape->transform = transform;
     renderDataShape->updateVisibility(rshape, opacity);
     // update shape render settings
     if (!renderDataShape->renderSettingsShape.skip) {
