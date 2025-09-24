@@ -40,9 +40,10 @@ struct UserExample : tvgexam::Example
     unique_ptr<tvg::LottieAnimation> slot8;
     unique_ptr<tvg::LottieAnimation> slot9;
     unique_ptr<tvg::LottieAnimation> slot10;
+    unique_ptr<tvg::LottieAnimation> slot11;
     unique_ptr<tvg::LottieAnimation> marker;
     unique_ptr<tvg::LottieAnimation> resolver;
-    uint32_t slotId1, slotId2, slotId3, slotId4, slotId6, slotId7, slotId8, slotId9, slotId10;
+    uint32_t slotId1, slotId2, slotId3, slotId4, slotId6, slotId7, slotId8, slotId9, slotId10, slotId11;
     uint32_t w, h;
     uint32_t size;
 
@@ -92,6 +93,9 @@ struct UserExample : tvgexam::Example
         //expression slot
         slot10->frame(slot10->totalFrame() * tvgexam::progress(elapsed, slot10->duration()));
 
+        //text slot
+        slot11->frame(slot11->totalFrame() * tvgexam::progress(elapsed, slot11->duration()));
+
         //marker
         marker->frame(marker->totalFrame() * tvgexam::progress(elapsed, marker->duration()));
 
@@ -105,6 +109,9 @@ struct UserExample : tvgexam::Example
 
     bool content(tvg::Canvas* canvas, uint32_t w, uint32_t h) override
     {
+        //The default font for fallback in case
+        tvg::Text::load(EXAMPLE_DIR"/font/Arial.ttf");
+
         //Background
         auto bg = tvg::Shape::gen();
         bg->appendRect(0, 0, w, h);
@@ -262,6 +269,20 @@ struct UserExample : tvgexam::Example
             canvas->push(picture);
         }
 
+        //slot (text)
+        {
+            slot11 = std::unique_ptr<tvg::LottieAnimation>(tvg::LottieAnimation::gen());
+            auto picture = slot11->picture();
+            if (!tvgexam::verify(picture->load(EXAMPLE_DIR"/lottie/extensions/slot11.json"))) return false;
+
+            const char* slotJson = R"({"text_doc":{"p":{"k":[{"s":{"f":"Ubuntu Light Italic","t":"ThorVG!","j":0,"s":48,"fc":[1,1,1]},"t":0}]}}})";
+            slotId11 = slot11->gen(slotJson);
+            if (!tvgexam::verify(slot11->apply(slotId11))) return false;
+
+            sizing(picture, 11);
+            canvas->push(picture);
+        }
+
         //marker
         {
             marker = std::unique_ptr<tvg::LottieAnimation>(tvg::LottieAnimation::gen());
@@ -269,7 +290,7 @@ struct UserExample : tvgexam::Example
             if (!tvgexam::verify(picture->load(EXAMPLE_DIR"/lottie/extensions/marker.json"))) return false;
             if (!tvgexam::verify(marker->segment("sectionC"))) return false;
 
-            sizing(picture, 11);
+            sizing(picture, 12);
             canvas->push(picture);
         }
 
@@ -286,7 +307,7 @@ struct UserExample : tvgexam::Example
 
             if (!tvgexam::verify(picture->load(EXAMPLE_DIR"/lottie/extensions/resolver.json"))) return false;
 
-            sizing(picture, 12);
+            sizing(picture, 13);
             canvas->push(picture);
         }
 
@@ -304,6 +325,7 @@ struct UserExample : tvgexam::Example
         slot8->del(slotId8);
         slot9->del(slotId9);
         slot10->del(slotId10);
+        slot11->del(slotId11);
     }
 };
 
