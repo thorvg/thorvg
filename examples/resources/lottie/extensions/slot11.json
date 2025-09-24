@@ -1,0 +1,51 @@
+{
+  "v": "5.5.2",
+  "fr": 60,
+  "ip": 0,
+  "op": 120,
+  "w": 300,
+  "h": 100,
+  "assets": [],
+  "fonts": {
+    "list": [
+      {
+        "fPath": "",
+        "fFamily": "Ubuntu",
+        "fStyle": "Light Italic",
+        "fName": "Ubuntu Light Italic",
+        "origin": 3
+      }
+    ]
+  },
+  "layers": [
+    {
+      "nm": "T",
+      "ty": 5,
+      "sr": 1,
+      "ks": { "p": { "k": [5, 80], "a": 0 } },
+      "ip": 0,
+      "op": 120,
+      "st": 0,
+      "t": {
+        "a": [],
+        "d": {
+          "k": [
+            {
+              "s": {
+                "f": "Ubuntu Light Italic",
+                "fc": [0, 0, 0],
+                "s": 100,
+                "t": "Hello",
+                "j": 0
+              },
+              "t": 0
+            }
+          ],
+          "sid": "text_doc"
+        },
+        "m": { "a": { "k": [0, 0], "a": 0 }, "sid": "text_alignment" },
+        "p": {}
+      }
+    }
+  ]
+}
