@@ -393,8 +393,8 @@ static char* _idFromUrl(const char* url)
     ++open;
     --close;
 
-    //trim the rest of the spaces if any
-    while (open < close && *close == ' ') --close;
+    //trim the rest of the spaces and the quote marks if any
+    while (open < close && (*close == ' ' || *close == '\'' || *close == '\"')) --close;
 
     //quick verification
     for (auto id = open; id < close; id++) {
