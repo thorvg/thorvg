@@ -78,6 +78,12 @@ struct TextDocument
     float tracking = 0.0f;
     float justify = 0.0f;    //horizontal alignment
     uint8_t caps = 0;        //0: Regular, 1: AllCaps, 2: SmallCaps
+
+    void copy(const TextDocument& rhs)
+    {
+        text = duplicate(rhs.text);
+        name = duplicate(rhs.name);
+    }
 };
 
 

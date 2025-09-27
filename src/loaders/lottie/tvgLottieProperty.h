@@ -947,12 +947,19 @@ struct LottieTextDoc : LottieProperty
             } else {
                 frames = new Array<LottieScalarFrame<TextDocument>>;
                 *frames = *rhs.frames;
+                for (uint32_t i = 0; i < (*rhs.frames).count; ++i) {
+                    (*frames)[i].value.copy((*rhs.frames)[i].value);
+                }
             }
         } else {
             frames = nullptr;
-            value = rhs.value;
-            rhs.value.text = nullptr;
-            rhs.value.name = nullptr;
+            if (shallow) {
+                value = rhs.value;
+                rhs.value.text = nullptr;
+                rhs.value.name = nullptr;
+            } else {
+                value.copy(rhs.value);
+            }
         }
     }
 
