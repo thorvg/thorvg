@@ -53,7 +53,6 @@
 #define TRANSPARENT_THRESHOLD 127
 #define BIT_DEPTH 8
 
-
 // Simple structure to write out the LZW-compressed portion of the image
 // one bit at a time
 typedef struct
@@ -149,14 +148,12 @@ static void _swapPixels(uint8_t* image, int pixA, int pixB)
 
 
 // just the partition operation from quicksort
-static int _partition(uint8_t* image, const int left, const int right, const int elt, int pivotIndex)
+static int _partition(uint8_t* image, const int left, const int right, const int elt, int pivotValue)
 {
-    const int pivotValue = image[(pivotIndex)*4+elt];
-    _swapPixels(image, pivotIndex, right-1);
     int storeIndex = left;
     bool split = 0;
 
-    for (int ii = left; ii < right - 1; ++ii) {
+    for (int ii = left; ii < right; ++ii) {
         int arrayVal = image[ii*4+elt];
         if(arrayVal < pivotValue) {
             _swapPixels(image, ii, storeIndex);
@@ -169,7 +166,6 @@ static int _partition(uint8_t* image, const int left, const int right, const int
             split = !split;
         }
     }
-    _swapPixels(image, storeIndex, right-1);
     return storeIndex;
 }
 
@@ -178,8 +174,11 @@ static int _partition(uint8_t* image, const int left, const int right, const int
 static void _partitionByMedian(uint8_t* image, int left, int right, int com, int neededCenter)
 {
     if (left < right-1) {
-        int pivotIndex = left + (right-left)/2;
-        pivotIndex = _partition(image, left, right, com, pivotIndex);
+        const int pivotValue = image[(neededCenter)*4+com];
+        _swapPixels(image, neededCenter, right-1);
+
+        const int pivotIndex = _partition(image, left, right-1, com, pivotValue);
+        _swapPixels(image, pivotIndex, right-1);
 
         // Only "sort" the section of the array that contains the median
         if(pivotIndex > neededCenter) _partitionByMedian(image, left, pivotIndex, com, neededCenter);
@@ -187,14 +186,26 @@ static void _partitionByMedian(uint8_t* image, int left, int right, int com, int
     }
 }
 
+// Just partition around a given pivot, returning the split point
+int _partitionByMean(uint8_t* image, int left, int right, int com, int neededMean)
+{
+    if(left < right-1) {
+        return _partition(image, left, right-1, com, neededMean);
+    }
+    return left;
+}
 
 // Builds a palette by creating a balanced k-d tree of all pixels in the image
-static void _splitPalette(uint8_t* image, int numPixels, int firstElt, int lastElt, int splitElt, int splitDist, int treeNode, GifPalette* pal)
+static void _splitPalette(uint8_t* image, int numPixels, int treeNode, int treeLevel, GifPalette* pal)
 {
-    if(lastElt <= firstElt || numPixels == 0) return;
+    if (numPixels == 0) return;
+
+    int numColors = (1 << BIT_DEPTH);
 
     // base case, bottom of the tree
-    if (lastElt == firstElt + 1) {
+    if (treeNode >= numColors) {
+        int entry = treeNode - numColors;
+
         // otherwise, take the average of all colors in this subcube
         uint64_t r=0, g=0, b=0;
         for(int ii=0; ii<numPixels; ++ii) {
@@ -211,9 +222,9 @@ static void _splitPalette(uint8_t* image, int numPixels, int firstElt, int lastE
         g /= (uint64_t)numPixels;
         b /= (uint64_t)numPixels;
 
-        pal->r[firstElt] = (uint8_t)r;
-        pal->g[firstElt] = (uint8_t)g;
-        pal->b[firstElt] = (uint8_t)b;
+        pal->r[entry] = (uint8_t)r;
+        pal->g[entry] = (uint8_t)g;
+        pal->b[entry] = (uint8_t)b;
         return;
     }
 
@@ -221,7 +232,6 @@ static void _splitPalette(uint8_t* image, int numPixels, int firstElt, int lastE
     int minR = 255, maxR = 0;
     int minG = 255, maxG = 0;
     int minB = 255, maxB = 0;
-
     for (int ii=0; ii<numPixels; ++ii) {
         int r = image[ii*4+0];
         int g = image[ii*4+1];
@@ -242,20 +252,36 @@ static void _splitPalette(uint8_t* image, int numPixels, int firstElt, int lastE
     int bRange = maxB - minB;
 
     // and split along that axis. (incidentally, this means this isn't a "proper" k-d tree but I don't know what else to call it)
-    int splitCom = 1;
-    if (bRange > gRange) splitCom = 2;
-    if (rRange > bRange && rRange > gRange) splitCom = 0;
+    int splitCom = 1; 
+    int rangeMin = minG;
+    int rangeMax = maxG;
+    if (bRange > gRange) { splitCom = 2; rangeMin = minB; rangeMax = maxB; }
+    if (rRange > bRange && rRange > gRange) { splitCom = 0; rangeMin = minR; rangeMax = maxR; }
 
-    int subPixelsA = numPixels * (splitElt - firstElt) / (lastElt - firstElt);
-    int subPixelsB = numPixels-subPixelsA;
+    int subPixelsA = numPixels / 2;
 
     _partitionByMedian(image, 0, numPixels, splitCom, subPixelsA);
+    int splitValue = image[subPixelsA*4+splitCom];
 
+    // if the split is very unbalanced, split at the mean instead of the median to preserve rare colors
+    int splitUnbalance = abs((splitValue - rangeMin) - (rangeMax - splitValue));
+    if( splitUnbalance > (1536 >> treeLevel) ) {
+        splitValue = rangeMin + (rangeMax-rangeMin) / 2;
+        subPixelsA = _partitionByMean(image, 0, numPixels, splitCom, splitValue);
+    }
+
+    // add the bottom node for the transparency index
+    if( treeNode == numColors/2 ) {
+        subPixelsA = 0;
+        splitValue = 0;
+    }
+
+    int subPixelsB = numPixels-subPixelsA;
     pal->treeSplitElt[treeNode] = (uint8_t)splitCom;
-    pal->treeSplit[treeNode] = image[subPixelsA*4+splitCom];
+    pal->treeSplit[treeNode] = (uint8_t)splitValue;
 
-    _splitPalette(image, subPixelsA, firstElt, splitElt, splitElt-splitDist, splitDist/2, treeNode*2, pal);
-    _splitPalette(image+subPixelsA*4, subPixelsB, splitElt, lastElt,  splitElt+splitDist, splitDist/2, treeNode*2+1, pal);
+    _splitPalette(image, subPixelsA, treeNode*2, treeLevel+1, pal);
+    _splitPalette(image+subPixelsA*4, subPixelsB, treeNode*2+1, treeLevel+1, pal);
 }
 
 
@@ -298,11 +324,7 @@ static void _makePalette(GifWriter* writer, const uint8_t* lastFrame, const uint
     int numPixels = (int)(width * height);
     if (lastFrame) numPixels = _pickChangedPixels(lastFrame, writer->tmpImage, numPixels, transparent);
 
-    const int lastElt = 1 << bitDepth;
-    const int splitElt = lastElt/2;
-    const int splitDist = splitElt/2;
-
-    _splitPalette(writer->tmpImage, numPixels, 1, lastElt, splitElt, splitDist, 1, &pal);
+    _splitPalette(writer->tmpImage, numPixels, 1, 0, &pal);
 
     // add the bottom node for the transparency index
     pal.treeSplit[1 << (bitDepth-1)] = 0;
