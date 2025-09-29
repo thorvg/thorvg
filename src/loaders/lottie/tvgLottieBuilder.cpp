@@ -879,11 +879,10 @@ void LottieBuilder::updateTrimpath(TVG_UNUSED LottieGroup* parent, LottieObject*
     trimpath->segment(frameNo, begin, end, exps);
 
     if (P(ctx->propagator)->rs.stroke) {
-        auto pbegin = P(ctx->propagator)->rs.stroke->trim.begin;
-        auto pend = P(ctx->propagator)->rs.stroke->trim.end;
-        auto length = fabsf(pend - pbegin);
-        begin = (length * begin) + pbegin;
-        end = (length * end) + pbegin;
+        auto length = fabsf(begin - end);
+        auto tmp = begin;
+        begin = (length * P(ctx->propagator)->rs.stroke->trim.begin) + tmp;
+        end = (length * P(ctx->propagator)->rs.stroke->trim.end) + tmp;
     }
 
     P(ctx->propagator)->strokeTrim(begin, end, trimpath->type == LottieTrimpath::Type::Simultaneous);
