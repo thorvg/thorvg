@@ -5,5 +5,5 @@
 * @hermet
 /src/renderer/gl_engine @SergeyLebedkin
 /src/renderer/wg_engine @SergeyLebedkin
-/src/loaders/svg @mgrudzinska @JSUYA
+/src/loaders/svg @JSUYA
 /src/bindings/wasm @tinyjin
