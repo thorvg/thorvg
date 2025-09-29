@@ -190,6 +190,14 @@ struct UserExample : tvgexam::Example
         text12->translate(0, 525);
         canvas->push(text12);
 
+        auto text13 = tvg::Text::gen();
+        text13->font("NOTO-SANS-KR");
+        text13->size(20);
+        text13->fill(255, 255, 255);
+        text13->text("Line-Feed Test. This is the first line - \nThis is the second line.");
+        text13->translate(0, 625);
+        canvas->push(text13);
+
         return true;
     }
 };
