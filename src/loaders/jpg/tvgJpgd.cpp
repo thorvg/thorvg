@@ -30,7 +30,6 @@
 /* Internal Class Implementation                                        */
 /************************************************************************/
 
-#define JPGD_ASSERT(x)
 #define JPGD_MAX(a,b) (((a)>(b)) ? (a) : (b))
 #define JPGD_MIN(a,b) (((a)<(b)) ? (a) : (b))
 
@@ -514,9 +513,6 @@ static const uint8_t s_idct_col_table[] = { 1, 1, 2, 3, 3, 3, 3, 3, 3, 4, 5, 5, 
 
 void idct(const jpgd_block_t* pSrc_ptr, uint8_t* pDst_ptr, int block_max_zag)
 {
-    JPGD_ASSERT(block_max_zag >= 1);
-    JPGD_ASSERT(block_max_zag <= 64);
-
     if (block_max_zag <= 1) {
         int k = ((pSrc_ptr[0] + 4) >> 3) + 128;
         k = CLAMP(k);
@@ -664,7 +660,6 @@ inline uint32_t jpeg_decoder::get_bits(int num_bits)
         m_bit_buf = (m_bit_buf & 0xFFFF0000) | (c1 << 8) | c2;
         m_bit_buf <<= -m_bits_left;
         m_bits_left += 16;
-        JPGD_ASSERT(m_bits_left >= 0);
     }
     else m_bit_buf <<= num_bits;
 
@@ -692,7 +687,6 @@ inline uint32_t jpeg_decoder::get_bits_no_markers(int num_bits)
         }
         m_bit_buf <<= -m_bits_left;
         m_bits_left += 16;
-        JPGD_ASSERT(m_bits_left >= 0);
     } else m_bit_buf <<= num_bits;
 
     return i;
@@ -736,8 +730,6 @@ inline int jpeg_decoder::huff_decode(huff_tables *pH, int& extra_bits)
         get_bits_no_markers(8 + (23 - ofs));
         extra_bits = get_bits_no_markers(symbol & 0xF);
     } else {
-        JPGD_ASSERT(((symbol >> 8) & 31) == pH->code_size[symbol & 255] + ((symbol & 0x8000) ? (symbol & 15) : 0));
-
         if (symbol & 0x8000) {
             get_bits_no_markers((symbol >> 8) & 31);
             extra_bits = symbol >> 16;
@@ -803,6 +795,7 @@ bool jpeg_decoder::stop_decoding(jpgd_status status)
 void *jpeg_decoder::alloc(size_t nSize, bool zero)
 {
     nSize = (JPGD_MAX(nSize, 1) + 3) & ~3;
+
     char *rv = nullptr;
     for (mem_block *b = m_pMem_blocks; b; b = b->m_pNext) {
         if ((b->m_used_count + nSize) <= b->m_size) {
@@ -1308,9 +1301,6 @@ void jpeg_decoder::create_look_ups()
 // into the bit buffer during initial marker scanning.
 void jpeg_decoder::fix_in_buffer()
 {
-    // In case any 0xFF's where pulled into the buffer during marker scanning.
-    JPGD_ASSERT((m_bits_left & 7) == 0);
-
     if (m_bits_left == 16) stuff_char( (uint8_t)(m_bit_buf & 0xFF));
     if (m_bits_left >= 8) stuff_char( (uint8_t)((m_bit_buf >> 8) & 0xFF));
 
@@ -1495,7 +1485,6 @@ bool jpeg_decoder::decode_next_row()
                         k += r;
                     }
                     s = JPGD_HUFF_EXTEND(extra_bits, s);
-                    JPGD_ASSERT(k < 64);
                     p[g_ZAG[k]] = static_cast<jpgd_block_t>(dequantize_ac(s, q[k])); //s * q[k];
                 } else {
                     if (r == 15) {
@@ -1504,12 +1493,10 @@ bool jpeg_decoder::decode_next_row()
                             int n = JPGD_MIN(16, prev_num_set - k);
                             int kt = k;
                             while (n--) {
-                                JPGD_ASSERT(kt <= 63);
                                 p[g_ZAG[kt++]] = 0;
                             }
                         }
                         k += 16 - 1; // - 1 because the loop counter is k
-                        JPGD_ASSERT(p[g_ZAG[k]] == 0);
                     } else  break;
                 }
             }
@@ -1838,7 +1825,6 @@ void jpeg_decoder::make_huff_table(int index, huff_tables *pH)
         if (code_size <= 8) {
             code <<= (8 - code_size);
             for (l = 1 << (8 - code_size); l > 0; l--) {
-                JPGD_ASSERT(i < 256);
                 pH->look_up[code] = i;
                 bool has_extrabits = false;
                 int extra_bits = 0;
@@ -1850,7 +1836,6 @@ void jpeg_decoder::make_huff_table(int index, huff_tables *pH)
                     if (total_codesize <= 8) {
                         has_extrabits = true;
                         extra_bits = ((1 << num_extra_bits) - 1) & (code >> (8 - total_codesize));
-                        JPGD_ASSERT(extra_bits <= 0x7FFF);
                         bits_to_fetch += num_extra_bits;
                     }
                 }
@@ -2083,7 +2068,6 @@ jpeg_decoder::coeff_buf* jpeg_decoder::coeff_buf_open(int block_num_x, int block
 
 inline jpgd_block_t *jpeg_decoder::coeff_buf_getp(coeff_buf *cb, int block_x, int block_y)
 {
-    JPGD_ASSERT((block_x < cb->block_num_x) && (block_y < cb->block_num_y));
     return (jpgd_block_t *)(cb->pData + block_x * cb->block_size + block_y * (cb->block_size * cb->block_num_x));
 }
 
@@ -2156,8 +2140,6 @@ bool jpeg_decoder::decode_block_ac_refine(jpeg_decoder *pD, int component_id, in
     int p1 = 1 << pD->m_successive_low;
     int m1 = static_cast<unsigned int>(-1) << pD->m_successive_low;
     jpgd_block_t *p = pD->coeff_buf_getp(pD->m_ac_coeffs[component_id], block_x, block_y);
-
-    JPGD_ASSERT(pD->m_spectral_end <= 63);
 
     k = pD->m_spectral_start;
 
