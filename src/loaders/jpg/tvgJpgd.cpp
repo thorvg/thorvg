@@ -801,7 +801,9 @@ JPGD_NORETURN void jpeg_decoder::stop_decoding(jpgd_status status)
 
 void *jpeg_decoder::alloc(size_t nSize, bool zero)
 {
-    nSize = (JPGD_MAX(nSize, 1) + 3) & ~3;
+    //align the coeff_buf with the current platform architecture
+    constexpr auto cbSize = alignof(coeff_buf);
+    nSize = (nSize + cbSize - 1) & ~(cbSize - 1);
 
     char *rv = nullptr;
     for (mem_block *b = m_pMem_blocks; b; b = b->m_pNext) {
