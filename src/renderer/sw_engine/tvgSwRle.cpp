@@ -272,12 +272,11 @@ static inline SwCoord SUBPIXELS(const SwCoord x)
     return SwCoord(((unsigned long) x) << PIXEL_BITS);
 }
 
-/*
- *  Approximate sqrt(x*x+y*y) using the `alpha max plus beta min'
- *  algorithm.  We use alpha = 1, beta = 3/8, giving us results with a
- *  largest error less than 7% compared to the exact value.
- */
-static inline SwCoord HYPOT(SwPoint pt)
+
+// Approximate sqrt(x*x+y*y) using the `alpha max plus beta min' algorithm.
+// We use alpha = 1, beta = 3/8, giving us results with a largest error
+// less than 7% compared to the exact value.
+static inline int32_t HYPOT(SwPoint pt)
 {
     if (pt.x < 0) pt.x = -pt.x;
     if (pt.y < 0) pt.y = -pt.y;
@@ -285,7 +284,17 @@ static inline SwCoord HYPOT(SwPoint pt)
 }
 
 
-static void _horizLine(RleWorker& rw, SwCoord x, SwCoord y, SwCoord area, SwCoord aCount)
+// Used to prevent integer overflow when calculating the distance between points.
+// This function uses 64-bit arithmetic to safely compute the difference between coordinates.
+static inline uint32_t SAFE_HYPOT(SwPoint& pt1, SwPoint& pt2)
+{
+    auto x = uint32_t(abs(int64_t(pt1.x) - int64_t(pt2.x)));
+    auto y = uint32_t(abs(int64_t(pt1.y) - int64_t(pt2.y)));
+    return (x > y) ? (x + (3 * y >> 3)) : (y + (3 * x >> 3));
+}
+
+
+static void _horizLine(RleWorker& rw, int32_t x, int32_t y, int32_t area, int32_t aCount)
 {
     x += rw.cellMin.x;
     y += rw.cellMin.y;
@@ -519,14 +528,12 @@ static bool _lineTo(RleWorker& rw, const SwPoint& to)
     line[1] = rw.pos;
 
     while (true) {
-        auto diff = line[0] - line[1];
-        auto L = HYPOT(diff);
-
-        if (L > SHRT_MAX) {
+        if (SAFE_HYPOT(line[0], line[1]) > SHRT_MAX) {
             mathSplitLine(line);
             ++line;
             continue;
         }
+        auto diff = line[0] - line[1];
         e1 = TRUNC(line[1]);
         e2 = TRUNC(line[0]);
 
