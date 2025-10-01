@@ -36,6 +36,7 @@
 #include <cstring>
 #include "config.h"
 #include "thorvg.h"
+#include "tvgAllocator.h"
 
 using namespace std;
 using namespace tvg;
@@ -94,25 +95,25 @@ namespace tvg {
     template<typename T = void*>
     static inline T malloc(size_t size)
     {
-        return static_cast<T>(std::malloc(size));
+        return static_cast<T>(TVG_MALLOC(size));
     }
 
     template<typename T = void*>
     static inline T calloc(size_t nmem, size_t size)
     {
-        return static_cast<T>(std::calloc(nmem, size));
+        return static_cast<T>(TVG_CALLOC(nmem, size));
     }
 
     template<typename T = void*>
     static inline T realloc(void* ptr, size_t size)
     {
-        return static_cast<T>(std::realloc(ptr, size));
+        return static_cast<T>(TVG_REALLOC(ptr, size));
     }
 
     template<typename T = void*>
     static inline void free(void* ptr)
     {
-        std::free(ptr);
+        TVG_FREE(ptr);
     }
 
     extern int engineInit;
