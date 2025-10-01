@@ -250,8 +250,8 @@ void wgCopyTextureToTexture(WGPUDevice device, WGPUTexture src, WGPUTexture dst,
     WGPUCommandEncoder commandEncoder = wgpuDeviceCreateCommandEncoder(device, &commandEncoderDesc);
 
     // copy canvas data to surface
-    const WGPUImageCopyTexture texSrc { .texture = src };
-    const WGPUImageCopyTexture texDst { .texture = dst, .origin = { .x = posX, .y = posY } };
+    const WGPUTexelCopyTextureInfo texSrc { .texture = src };
+    const WGPUTexelCopyTextureInfo texDst { .texture = dst, .origin = { .x = posX, .y = posY } };
     const WGPUExtent3D copySize { .width = width, .height = height, .depthOrArrayLayers = 1 };
     wgpuCommandEncoderCopyTextureToTexture(commandEncoder, &texSrc, &texDst, &copySize);
 
@@ -278,58 +278,58 @@ void runWg()
     SDL_GetWindowWMInfo(window, &windowWMInfo);
 
     //Init WebGPU
-	WGPUInstanceDescriptor desc = {.nextInChain = nullptr};
-	auto instance = wgpuCreateInstance(&desc);
+    WGPUInstanceDescriptor desc{};
+    auto instance = wgpuCreateInstance(&desc);
 
     #if defined(SDL_VIDEO_DRIVER_COCOA)
         [windowWMInfo.info.cocoa.window.contentView setWantsLayer:YES];
         auto layer = [CAMetalLayer layer];
         [windowWMInfo.info.cocoa.window.contentView setLayer:layer];
-
-        WGPUSurfaceDescriptorFromMetalLayer surfaceNativeDesc = {
-            .chain = {nullptr, WGPUSType_SurfaceDescriptorFromMetalLayer},
+        WGPUSurfaceSourceMetalLayer surfaceNativeDesc = {
+            .chain = {nullptr, WGPUSType_SurfaceSourceMetalLayer},
             .layer = layer
         };
     #elif defined(SDL_VIDEO_DRIVER_X11)
-        WGPUSurfaceDescriptorFromXlibWindow surfaceNativeDesc = {
-            .chain = {nullptr, WGPUSType_SurfaceDescriptorFromXlibWindow},
+        WGPUSurfaceSourceXlibWindow surfaceNativeDesc = {
+            .chain = {nullptr, WGPUSType_SurfaceSourceXlibWindow},
             .display = windowWMInfo.info.x11.display,
             .window = windowWMInfo.info.x11.window
         };
     #elif defined(SDL_VIDEO_DRIVER_WAYLAND)
-        WGPUSurfaceDescriptorFromWaylandSurface surfaceNativeDesc = {
-            .chain = {nullptr, WGPUSType_SurfaceDescriptorFromWaylandSurface},
+        WGPUSurfaceSourceWaylandSurface surfaceNativeDesc = {
+            .chain = {nullptr, WGPUSType_SurfaceSourceWaylandSurface},
             .display = windowWMInfo.info.wl.display,
             .surface = windowWMInfo.info.wl.surface
         };
     #elif defined(SDL_VIDEO_DRIVER_WINDOWS)
-        WGPUSurfaceDescriptorFromWindowsHWND surfaceNativeDesc = {
-            .chain = {nullptr, WGPUSType_SurfaceDescriptorFromWindowsHWND},
+        WGPUSurfaceSourceWindowsHWND surfaceNativeDesc = {
+            .chain = {nullptr, WGPUSType_SurfaceSourceWindowsHWND},
             .hinstance = GetModuleHandle(nullptr),
             .hwnd = windowWMInfo.info.win.window
         };
     #endif
 
+    // create surface
     WGPUSurfaceDescriptor surfaceDesc{};
     surfaceDesc.nextInChain = (const WGPUChainedStruct*)&surfaceNativeDesc;
-    surfaceDesc.label = "The surface";
+    surfaceDesc.label.data = "The surface";
+    surfaceDesc.label.length = WGPU_STRLEN;
     auto surface = wgpuInstanceCreateSurface(instance, &surfaceDesc);
 
     // request adapter
     WGPUAdapter adapter{};
-    const WGPURequestAdapterOptions requestAdapterOptions { .compatibleSurface = surface, .powerPreference = WGPUPowerPreference_HighPerformance };
-    auto onAdapterRequestEnded = [](WGPURequestAdapterStatus status, WGPUAdapter adapter, char const * message, void * pUserData) { *((WGPUAdapter*)pUserData) = adapter; };
-    wgpuInstanceRequestAdapter(instance, &requestAdapterOptions, onAdapterRequestEnded, &adapter);
-
-    // get adapter and surface properties
-    WGPUFeatureName featureNames[32]{};
-    size_t featuresCount = wgpuAdapterEnumerateFeatures(adapter, featureNames);
+    auto onAdapterRequestEnded = [](WGPURequestAdapterStatus status, WGPUAdapter adapter, WGPUStringView message, WGPU_NULLABLE void* userdata1, WGPU_NULLABLE void* userdata2) { *((WGPUAdapter*)userdata1) = adapter; };
+    const WGPURequestAdapterOptions requestAdapterOptions { .powerPreference = WGPUPowerPreference_HighPerformance, .compatibleSurface = surface };
+    const WGPURequestAdapterCallbackInfo requestAdapterCallback{ .mode = WGPUCallbackMode_WaitAnyOnly, .callback = onAdapterRequestEnded, .userdata1 = &adapter };
+    wgpuInstanceRequestAdapter(instance, &requestAdapterOptions, requestAdapterCallback);
 
     // request device
     WGPUDevice device{};
-    const WGPUDeviceDescriptor deviceDesc { .label = "The shared device", .requiredFeatureCount = featuresCount, .requiredFeatures = featureNames };
-    auto onDeviceRequestEnded = [](WGPURequestDeviceStatus status, WGPUDevice device, char const * message, void * pUserData) { *((WGPUDevice*)pUserData) = device; };
-    wgpuAdapterRequestDevice(adapter, &deviceDesc, onDeviceRequestEnded, &device);
+    auto onDeviceError = [](WGPUDevice const * device, WGPUErrorType type, WGPUStringView message, void* userdata1, void* userdata2) { std::cout << message.data << std::endl; };
+    auto onDeviceRequestEnded = [](WGPURequestDeviceStatus status, WGPUDevice device, WGPUStringView message, void* userdata1, void* userdata2) { *((WGPUDevice*)userdata1) = device; };
+    const WGPUDeviceDescriptor deviceDesc { .label = { "The device", WGPU_STRLEN }, .uncapturedErrorCallbackInfo = { .callback = onDeviceError } };
+    const WGPURequestDeviceCallbackInfo requestDeviceCallback { .callback = onDeviceRequestEnded, .userdata1 = &device };
+    wgpuAdapterRequestDevice(adapter, &deviceDesc, requestDeviceCallback);
 
     // setup surface configuration
     WGPUSurfaceConfiguration surfaceConfiguration {
