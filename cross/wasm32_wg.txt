@@ -11,8 +11,8 @@ shared_module_suffix = 'js'
 exe_suffix = 'js'
 
 [built-in options]
-cpp_args = ['-Wshift-negative-value', '-flto', '-Oz', '-fno-exceptions']
-cpp_link_args = ['-Wshift-negative-value', '-flto', '-Oz', '-fno-exceptions', '--bind', '--closure=1', '-sWASM=1', '-sALLOW_MEMORY_GROWTH=1', '-sEXPORT_ES6=1', '-sFORCE_FILESYSTEM=1', '-sMODULARIZE=1', '-sEXPORTED_RUNTIME_METHODS=FS', '-sUSE_WEBGPU=1']
+cpp_args = ['-Wshift-negative-value', '-flto', '-Oz', '-fno-exceptions', '--use-port=emdawnwebgpu']
+cpp_link_args = ['-Wshift-negative-value', '-flto', '-Oz', '-fno-exceptions', '--bind', '--closure=1', '-sWASM=1', '-sALLOW_MEMORY_GROWTH=1', '-sEXPORT_ES6=1', '-sFORCE_FILESYSTEM=1', '-sMODULARIZE=1', '-sEXPORTED_RUNTIME_METHODS=FS', '--use-port=emdawnwebgpu']
 
 [host_machine]
 system = 'emscripten'

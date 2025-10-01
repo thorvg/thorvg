@@ -162,8 +162,8 @@ void WgBindGroupLayouts::initialize(WGPUDevice device)
     this->device = device;
 
     // common bind group settings
-    const WGPUShaderStageFlags visibility_vert = WGPUShaderStage_Vertex | WGPUShaderStage_Fragment | WGPUShaderStage_Compute;
-    const WGPUShaderStageFlags visibility_frag = WGPUShaderStage_Fragment | WGPUShaderStage_Compute;
+    const WGPUShaderStage visibility_vert = WGPUShaderStage_Vertex | WGPUShaderStage_Fragment | WGPUShaderStage_Compute;
+    const WGPUShaderStage visibility_frag = WGPUShaderStage_Fragment | WGPUShaderStage_Compute;
     const WGPUSamplerBindingLayout sampler = { .type = WGPUSamplerBindingType_Filtering };
     const WGPUTextureBindingLayout texture = { .sampleType = WGPUTextureSampleType_Float, .viewDimension = WGPUTextureViewDimension_2D };
     const WGPUStorageTextureBindingLayout storageTextureWO { .access = WGPUStorageTextureAccess_WriteOnly, .format = WGPUTextureFormat_RGBA8Unorm, .viewDimension = WGPUTextureViewDimension_2D };

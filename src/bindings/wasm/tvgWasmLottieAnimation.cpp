@@ -88,7 +88,7 @@ struct TvgSwEngine : TvgEngineMethod
 
 #ifdef THORVG_WG_RASTER_SUPPORT
 
-#include <emscripten/html5_webgpu.h>
+#include <webgpu/webgpu.h>
 
 static WGPUInstance instance{};
 static WGPUAdapter adapter{};
@@ -110,10 +110,11 @@ struct TvgWgEngine : TvgEngineMethod
 
     Canvas* init(string& selector) override
     {
-        WGPUSurfaceDescriptorFromCanvasHTMLSelector canvasDesc{};
+        WGPUEmscriptenSurfaceSourceCanvasHTMLSelector canvasDesc{};
         canvasDesc.chain.next = nullptr;
-        canvasDesc.chain.sType = WGPUSType_SurfaceDescriptorFromCanvasHTMLSelector;
-        canvasDesc.selector = selector.c_str();
+        canvasDesc.chain.sType = WGPUSType_EmscriptenSurfaceSourceCanvasHTMLSelector;
+        canvasDesc.selector.data = selector.c_str();
+        canvasDesc.selector.length = WGPU_STRLEN;
 
         WGPUSurfaceDescriptor surfaceDesc{};
         surfaceDesc.nextInChain = &canvasDesc.chain;
@@ -135,20 +136,18 @@ struct TvgWgEngine : TvgEngineMethod
 
         //Init WebGPU
         if (!instance) instance = wgpuCreateInstance(nullptr);
-
+        
         // request adapter
         if (!adapter) {
             if (adapterRequested) return 2;
-
-            const WGPURequestAdapterOptions requestAdapterOptions { .nextInChain = nullptr, .powerPreference = WGPUPowerPreference_HighPerformance, .forceFallbackAdapter = false };
-            auto onAdapterRequestEnded = [](WGPURequestAdapterStatus status, WGPUAdapter adapter, char const* message, void* pUserData) {
-                if (status != WGPURequestAdapterStatus_Success) {
-                    initializationFailed = true;
-                    return;
-                }
-                *((WGPUAdapter*)pUserData) = adapter;
+            
+            auto onAdapterRequestEnded = [](WGPURequestAdapterStatus status, WGPUAdapter adapter, WGPUStringView message, WGPU_NULLABLE void* userdata1, WGPU_NULLABLE void* userdata2) { 
+                if (status != WGPURequestAdapterStatus_Success) { initializationFailed = true; return; }
+                *((WGPUAdapter*)userdata1) = adapter;
             };
-            wgpuInstanceRequestAdapter(instance, &requestAdapterOptions, onAdapterRequestEnded, &adapter);
+            const WGPURequestAdapterOptions requestAdapterOptions{ .powerPreference = WGPUPowerPreference_HighPerformance };
+            const WGPURequestAdapterCallbackInfo requestAdapterCallback{ .mode = WGPUCallbackMode_AllowSpontaneous, .callback = onAdapterRequestEnded, .userdata1 = &adapter };
+            wgpuInstanceRequestAdapter(instance, &requestAdapterOptions, requestAdapterCallback);
 
             adapterRequested = true;
             return 2;
@@ -157,18 +156,15 @@ struct TvgWgEngine : TvgEngineMethod
         // request device
         if (deviceRequested) return device == nullptr ? 2 : 0;
 
-        WGPUFeatureName featureNames[32]{};
-        size_t featuresCount = wgpuAdapterEnumerateFeatures(adapter, featureNames);
         if (!device) {
-            const WGPUDeviceDescriptor deviceDesc { .nextInChain = nullptr, .label = "The device", .requiredFeatureCount = featuresCount, .requiredFeatures = featureNames };
-            auto onDeviceRequestEnded = [](WGPURequestDeviceStatus status, WGPUDevice device, char const* message, void* pUserData) {
-                if (status != WGPURequestDeviceStatus_Success) {
-                    initializationFailed = true;
-                    return;
-                }
-                *((WGPUDevice*)pUserData) = device;
+            auto onDeviceError = [](WGPUDevice const * device, WGPUErrorType type, WGPUStringView message, void* userdata1, void* userdata2) {};
+            auto onDeviceRequestEnded = [](WGPURequestDeviceStatus status, WGPUDevice device, WGPUStringView message, void* userdata1, void* userdata2) { 
+                if (status != WGPURequestDeviceStatus_Success) { initializationFailed = true; return; }
+                *((WGPUDevice*)userdata1) = device;
             };
-            wgpuAdapterRequestDevice(adapter, &deviceDesc, onDeviceRequestEnded, &device);
+            const WGPUDeviceDescriptor deviceDesc { .label = { "The device", WGPU_STRLEN }, .uncapturedErrorCallbackInfo = { .callback = onDeviceError } };
+            const WGPURequestDeviceCallbackInfo requestDeviceCallback { .mode = WGPUCallbackMode_AllowSpontaneous, .callback = onDeviceRequestEnded, .userdata1 = &device };
+            wgpuAdapterRequestDevice(adapter, &deviceDesc, requestDeviceCallback);
 
             deviceRequested = true;
             return 2;
