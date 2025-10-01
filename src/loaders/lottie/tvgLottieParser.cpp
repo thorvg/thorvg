@@ -72,17 +72,19 @@ LottieEffect* LottieParser::getEffect(int type)
 }
 
 
-MaskMethod LottieParser::getMaskMethod(bool inversed)
+MaskMethod LottieParser::getMaskMethod(bool inversed, bool inversedRoot)
 {
     auto mode = getString();
     if (!mode) return MaskMethod::None;
 
     switch (mode[0]) {
         case 'a': {
+            if (inversedRoot) return MaskMethod::Subtract;
             if (inversed) return MaskMethod::InvAlpha;
             else return MaskMethod::Add;
         }
         case 's': {
+            if (inversedRoot) return MaskMethod::Add;
             if (inversed) return MaskMethod::Intersect;
             return MaskMethod::Subtract;
         }
@@ -1263,13 +1265,13 @@ void LottieParser::getLayerSize(float& val)
     }
 }
 
-LottieMask* LottieParser::parseMask()
+LottieMask* LottieParser::parseMask(bool inversedRoot)
 {
     auto mask = new LottieMask;
     enterObject();
     while (auto key = nextObjectKey()) {
         if (KEY_AS("inv")) mask->inverse = getBool();
-        else if (KEY_AS("mode")) mask->method = getMaskMethod(mask->inverse);
+        else if (KEY_AS("mode")) mask->method = getMaskMethod(mask->inverse, inversedRoot);
         else if (KEY_AS("pt")) getPathSet(mask->pathset);
         else if (KEY_AS("o")) parseProperty(mask->opacity);
         else if (KEY_AS("x")) parseProperty(mask->expand);
@@ -1281,9 +1283,12 @@ LottieMask* LottieParser::parseMask()
 
 void LottieParser::parseMasks(LottieLayer* layer)
 {
+    bool inversedRoot = false;
     enterArray();
+
     while (nextArrayValue()) {
-        if (auto mask = parseMask()) {
+        if (auto mask = parseMask(inversedRoot)) {
+            if (layer->masks.count == 0 && mask->inverse) inversedRoot = true;
             layer->masks.push(mask);
         }
     }
