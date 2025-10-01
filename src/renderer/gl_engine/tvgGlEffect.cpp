@@ -127,14 +127,11 @@ void GlEffect::update(RenderEffectDropShadow* effect, const Matrix& transform)
 {
     GlDropShadow* dropShadow = (GlDropShadow*)effect->rd;
     if (!dropShadow) dropShadow = tvg::malloc<GlDropShadow*>(sizeof(GlDropShadow));
-    const float sigma = effect->sigma;
-    const float scale = std::sqrt(transform.e11 * transform.e11 + transform.e12 * transform.e12);
-    const float radian = tvg::deg2rad(90.0f - effect->angle);
-    const Point offset = {
-        -effect->distance * cosf(radian) * scale,
-        -effect->distance * sinf(radian) * scale
-    };
-    dropShadow->sigma = sigma;
+    const auto scale = std::sqrt(transform.e11 * transform.e11 + transform.e12 * transform.e12);
+    const auto radian = tvg::deg2rad(90.0f - effect->angle) - tvg::radian(transform);
+    const Point offset = {-effect->distance * cosf(radian) * scale, -effect->distance * sinf(radian) * scale};
+
+    dropShadow->sigma = effect->sigma;
     dropShadow->scale = scale;
     dropShadow->color[3] = effect->color[3] / 255.0f;
     //Drop shadow effect applies blending in the shader (GL_BLEND disabled), so the color should be premultiplied:
@@ -143,7 +140,7 @@ void GlEffect::update(RenderEffectDropShadow* effect, const Matrix& transform)
     dropShadow->color[2] = effect->color[2] / 255.0f * dropShadow->color[3];
     dropShadow->offset[0] = offset.x;
     dropShadow->offset[1] = offset.y;
-    dropShadow->extend = 2 * std::max(sigma * scale + std::abs(offset.x), sigma * scale + std::abs(offset.y));
+    dropShadow->extend = 2 * std::max(effect->sigma * scale + std::abs(offset.x), effect->sigma * scale + std::abs(offset.y));
     effect->rd = dropShadow;
     effect->valid = (dropShadow->extend >= 0);
 }

@@ -421,7 +421,7 @@ uint8_t Paint::opacity() const noexcept
 
 Result Paint::blend(BlendMethod method) noexcept
 {
-    if (method <= tvg::BlendMethod::Composition) {
+    if (method <= BlendMethod::Add || method == BlendMethod::Composition) {
         pImpl->blend(method);
         return Result::Success;
     }

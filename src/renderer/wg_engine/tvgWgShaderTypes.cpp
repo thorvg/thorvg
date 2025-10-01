@@ -218,15 +218,11 @@ bool WgShaderTypeEffectParams::update(RenderEffectGaussianBlur* gaussian, const 
 bool WgShaderTypeEffectParams::update(RenderEffectDropShadow* dropShadow, const Matrix& transform)
 {
     assert(dropShadow);
-    const float sigma = dropShadow->sigma;
-    const float scale = std::sqrt(transform.e11 * transform.e11 + transform.e12 * transform.e12);
-    const float kernel = 2 * sigma * scale;
-    const float radian = tvg::deg2rad(90.0f - dropShadow->angle);
-    const Point offset = {
-        +1.0f * dropShadow->distance * cosf(radian) * scale,
-        -1.0f * dropShadow->distance * sinf(radian) * scale
-    };
-    params[0] = sigma;
+    const auto scale = std::sqrt(transform.e11 * transform.e11 + transform.e12 * transform.e12);
+    const auto kernel = 2 * dropShadow->sigma * scale;
+    const auto radian = tvg::deg2rad(90.0f - dropShadow->angle) - tvg::radian(transform);
+    const Point offset = {dropShadow->distance * cosf(radian) * scale, -dropShadow->distance * sinf(radian) * scale};
+    params[0] = dropShadow->sigma;
     params[1] = scale;
     params[2] = kernel;
     params[3] = 0.0f;
@@ -237,7 +233,7 @@ bool WgShaderTypeEffectParams::update(RenderEffectDropShadow* dropShadow, const 
     params[6] = dropShadow->color[2] / 255.0f * params[7]; // blue
     params[8] = offset.x;
     params[9] = offset.y;
-    extend = 2 * std::max(sigma * scale + std::abs(offset.x), sigma * scale + std::abs(offset.y));
+    extend = 2 * std::max(dropShadow->sigma * scale + std::abs(offset.x), dropShadow->sigma * scale + std::abs(offset.y));
 
     dropShadow->valid = (extend >= 0);
     return dropShadow->valid;
