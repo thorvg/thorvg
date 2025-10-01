@@ -391,12 +391,8 @@ void effectDropShadowUpdate(RenderEffectDropShadow* params, const Matrix& transf
     }
 
     //offset
-    if (params->distance > 0.0f) {
-        auto radian = tvg::deg2rad(90.0f - params->angle);
-        rd->offset = {(int32_t)((params->distance * scale) * cosf(radian)), (int32_t)(-1.0f * (params->distance * scale) * sinf(radian))};
-    } else {
-        rd->offset = {0, 0};
-    }
+    auto radian = tvg::deg2rad(90.0f - params->angle);
+    rd->offset = {(int32_t)((params->distance * scale) * cosf(radian)), (int32_t)(-1.0f * (params->distance * scale) * sinf(radian))};
 
     params->valid = true;
 }
