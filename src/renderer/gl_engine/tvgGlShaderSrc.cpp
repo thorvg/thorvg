@@ -615,7 +615,7 @@ void getFragData() {
     d.Da = colorDst.a;
 }
 
-vec4 postProcess(vec4 R) { return R; };
+vec4 postProcess(vec4 R) { return R; }
 )";
 
 const char* BLEND_GRADIENT_FRAG_HEADER = R"(
@@ -639,12 +639,12 @@ void getFragData() {
     d.So = 1.0;
     d.Dc = colorDst.rgb;
     d.Da = colorDst.a;
-    if (d.Sa > 0) {d.Sc = d.Sc / d.Sa; }
+    if (d.Sa > 0.0) {d.Sc = d.Sc / d.Sa; }
     d.Sc = mix(d.Dc, d.Sc, d.Sa * d.So);
     d.Sa = mix(d.Da,  1.0, d.Sa * d.So);
 }
 
-vec4 postProcess(vec4 R) { return R; };
+vec4 postProcess(vec4 R) { return R; }
 )";
 
 const char* BLEND_IMAGE_FRAG_HEADER = R"(
@@ -668,10 +668,10 @@ void getFragData() {
     d.So = 1.0;
     d.Dc = colorDst.rgb;
     d.Da = colorDst.a;
-    if (d.Sa > 0) {d.Sc = d.Sc / d.Sa; }
+    if (d.Sa > 0.0) { d.Sc = d.Sc / d.Sa; }
 }
 
-vec4 postProcess(vec4 R) { return R; };
+vec4 postProcess(vec4 R) { return R; }
 )";
 
 const char* BLEND_SCENE_FRAG_HEADER = R"(
@@ -698,13 +698,13 @@ void getFragData() {
     // fill fragment data
     d.Sc = colorSrc.rgb;
     d.Sa = colorSrc.a;
-    d.So = uColorInfo.opacity / 255.0;
+    d.So = float(uColorInfo.opacity) / 255.0;
     d.Dc = colorDst.rgb;
     d.Da = colorDst.a;
-    if (d.Sa > 0) {d.Sc = d.Sc / d.Sa; }
+    if (d.Sa > 0.0) {d.Sc = d.Sc / d.Sa; }
 }
 
-vec4 postProcess(vec4 R) { return mix(vec4(d.Dc, d.Da), R, d.Sa * d.So); };
+vec4 postProcess(vec4 R) { return mix(vec4(d.Dc, d.Da), R, d.Sa * d.So); }
 )";
 
 const char* BLEND_FRAG_HSL = R"(
@@ -727,7 +727,7 @@ vec3 rgbToHsl(vec3 color) {
     float s = delta > 0.0 ? delta / (1.0 - abs(2.0 * l - 1.0)) : 0.0;
     
     return vec3(h, s, l);
-};
+}
 
 // HSL to RGB conversion
 vec3 hslToRgb(vec3 color) {
@@ -749,7 +749,7 @@ vec3 hslToRgb(vec3 color) {
     else                                      { rgb = vec3(C, 0.0, X); }
 
     return rgb + vec3(m);
-};
+}
 )";
 
 const char* NORMAL_BLEND_FRAG = R"(
@@ -767,7 +767,7 @@ void main()
     if (d.Da > 0.0) {
         Rc = d.Sc * min(One, d.Dc / d.Da);
         Rc = mix(d.Sc, Rc, d.Da);
-    };
+    }
     FragColor = postProcess(vec4(Rc, 1.0));
 }
 )";
@@ -788,9 +788,9 @@ void main()
     vec3 Rc = d.Sc;
     if (d.Da > 0.0) {
         vec3 Dc = min(One, d.Dc / d.Da);
-        Rc.r = Dc.r < 0.5 ? min(1.0, 2 * d.Sc.r * Dc.r) : 1.0 - min(1.0, 2 * (1 - d.Sc.r) * (1 - Dc.r));
-        Rc.g = Dc.g < 0.5 ? min(1.0, 2 * d.Sc.g * Dc.g) : 1.0 - min(1.0, 2 * (1 - d.Sc.g) * (1 - Dc.g));
-        Rc.b = Dc.b < 0.5 ? min(1.0, 2 * d.Sc.b * Dc.b) : 1.0 - min(1.0, 2 * (1 - d.Sc.b) * (1 - Dc.b));
+        Rc.r = Dc.r < 0.5 ? min(1.0, 2.0 * d.Sc.r * Dc.r) : 1.0 - min(1.0, 2.0 * (1.0 - d.Sc.r) * (1.0 - Dc.r));
+        Rc.g = Dc.g < 0.5 ? min(1.0, 2.0 * d.Sc.g * Dc.g) : 1.0 - min(1.0, 2.0 * (1.0 - d.Sc.g) * (1.0 - Dc.g));
+        Rc.b = Dc.b < 0.5 ? min(1.0, 2.0 * d.Sc.b * Dc.b) : 1.0 - min(1.0, 2.0 * (1.0 - d.Sc.b) * (1.0 - Dc.b));
         Rc = mix(d.Sc, Rc, d.Da);
     }
     FragColor = postProcess(vec4(Rc, 1.0));
@@ -805,7 +805,7 @@ void main()
     if (d.Da > 0.0) {
         Rc = min(d.Sc, min(One, d.Dc / d.Da));
         Rc = mix(d.Sc, Rc, d.Da);
-    };
+    }
     FragColor = postProcess(vec4(Rc, 1.0));
 }
 )";
@@ -840,9 +840,9 @@ void main() {
     vec3 Rc = d.Sc;
     if (d.Da > 0.0) {
         vec3 Dc = min(One, d.Dc / d.Da);
-        Rc.r = d.Sc.r > 0 ? 1.0 - min(1.0, (1.0 - Dc.r) / d.Sc.r) : Dc.r < 1 ? 0.0 : 1.0;
-        Rc.g = d.Sc.g > 0 ? 1.0 - min(1.0, (1.0 - Dc.g) / d.Sc.g) : Dc.g < 1 ? 0.0 : 1.0;
-        Rc.b = d.Sc.b > 0 ? 1.0 - min(1.0, (1.0 - Dc.b) / d.Sc.b) : Dc.b < 1 ? 0.0 : 1.0;
+        Rc.r = d.Sc.r > 0.0 ? 1.0 - min(1.0, (1.0 - Dc.r) / d.Sc.r) : Dc.r < 1.0 ? 0.0 : 1.0;
+        Rc.g = d.Sc.g > 0.0 ? 1.0 - min(1.0, (1.0 - Dc.g) / d.Sc.g) : Dc.g < 1.0 ? 0.0 : 1.0;
+        Rc.b = d.Sc.b > 0.0 ? 1.0 - min(1.0, (1.0 - Dc.b) / d.Sc.b) : Dc.b < 1.0 ? 0.0 : 1.0;
         Rc = mix(d.Sc, Rc, d.Da);
     }
     FragColor = postProcess(vec4(Rc, 1.0));
@@ -855,9 +855,9 @@ void main() {
     vec3 Rc = d.Sc;
     if (d.Da > 0.0) {
         vec3 Dc = min(One, d.Dc / d.Da);
-        Rc.r = d.Sc.r < 0.5 ? min(1.0, 2 * d.Sc.r * Dc.r) : 1.0 - min(1.0, 2 * (1 - d.Sc.r) * (1 - Dc.r));
-        Rc.g = d.Sc.g < 0.5 ? min(1.0, 2 * d.Sc.g * Dc.g) : 1.0 - min(1.0, 2 * (1 - d.Sc.g) * (1 - Dc.g));
-        Rc.b = d.Sc.b < 0.5 ? min(1.0, 2 * d.Sc.b * Dc.b) : 1.0 - min(1.0, 2 * (1 - d.Sc.b) * (1 - Dc.b));
+        Rc.r = d.Sc.r < 0.5 ? min(1.0, 2.0 * d.Sc.r * Dc.r) : 1.0 - min(1.0, 2.0 * (1.0 - d.Sc.r) * (1.0 - Dc.r));
+        Rc.g = d.Sc.g < 0.5 ? min(1.0, 2.0 * d.Sc.g * Dc.g) : 1.0 - min(1.0, 2.0 * (1.0 - d.Sc.g) * (1.0 - Dc.g));
+        Rc.b = d.Sc.b < 0.5 ? min(1.0, 2.0 * d.Sc.b * Dc.b) : 1.0 - min(1.0, 2.0 * (1.0 - d.Sc.b) * (1.0 - Dc.b));
         Rc = mix(d.Sc, Rc, d.Da);
     }
     FragColor = postProcess(vec4(Rc, 1.0));
@@ -870,9 +870,9 @@ void main() {
     vec3 Rc = d.Sc;
     if (d.Da > 0.0) {
         vec3 Dc = min(One, d.Dc / d.Da);
-        Rc = min(One, (One - 2 * d.Sc) * Dc * Dc + 2.0 * d.Sc * Dc);
+        Rc = min(One, (One - 2.0 * d.Sc) * Dc * Dc + 2.0 * d.Sc * Dc);
         Rc = mix(d.Sc, Rc, d.Da);
-    };
+    }
     FragColor = postProcess(vec4(Rc, 1.0));
 }
 )";
@@ -888,7 +888,7 @@ void main() {
 const char* EXCLUSION_BLEND_FRAG = R"(
 void main() {
     getFragData();
-    vec3 Rc = d.Sc + d.Dc - 2 * d.Sc * d.Dc;
+    vec3 Rc = d.Sc + d.Dc - 2.0 * d.Sc * d.Dc;
     FragColor = postProcess(vec4(Rc, 1.0));
 }
 )";
@@ -907,7 +907,7 @@ void main()
         Rc = hslToRgb(vec3(Shsl.r, Dhsl.g, Dhsl.b)); // sh, ds, dl
         
         Rc = mix(d.Sc, Rc, d.Da);
-    };
+    }
     FragColor = postProcess(vec4(Rc, 1.0));
 }
 )";
@@ -925,7 +925,7 @@ void main() {
         Rc = hslToRgb(vec3(Dhsl.r, Shsl.g, Dhsl.b)); // dh, ss, dl
         
         Rc = mix(d.Sc, Rc, d.Da);
-    };
+    }
     FragColor = postProcess(vec4(Rc, 1.0));
 }
 )";
@@ -943,7 +943,7 @@ void main() {
         Rc = hslToRgb(vec3(Shsl.r, Shsl.g, Dhsl.b)); // sh, ss, dl
         
         Rc = mix(d.Sc, Rc, d.Da);
-    };
+    }
     FragColor = postProcess(vec4(Rc, 1.0));
 }
 )";
@@ -961,7 +961,7 @@ void main() {
         Rc = hslToRgb(vec3(Dhsl.r, Dhsl.g, Shsl.b)); // dh, ds, sl
         
         Rc = mix(d.Sc, Rc, d.Da);
-    };
+    }
     FragColor = postProcess(vec4(Rc, 1.0));
 }
 )";
