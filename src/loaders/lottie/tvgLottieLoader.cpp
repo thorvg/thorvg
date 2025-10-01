@@ -365,11 +365,15 @@ uint32_t LottieLoader::gen(const char* slots, bool byDefault)
     //Generates list of the custom slot overriding
     while (auto sid = djb2Encode(parser.sid(idx == 0))) {
         //Associates the overrding target to apply for the current custom slot
+        auto found = false;
         ARRAY_FOREACH(p, comp->slots) {
             if ((*p)->sid != sid) continue;  //find target
             if (auto prop = parser.parse(*p)) custom->props.push({prop, *p});
+            found = true;
             break;
         }
+
+        if (!found) parser.skip(); //skip the value if the target slot is not found
         ++idx;
     }
 
