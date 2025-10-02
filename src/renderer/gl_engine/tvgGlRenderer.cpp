@@ -760,6 +760,7 @@ void GlRenderer::endRenderPass(RenderCompositor* cmp)
 
             auto program = getBlendProgram(glCmp->blendMethod, false, false, true);
             auto task = renderPass->endRenderPass<GlSceneBlendTask>(program, currentPass()->getFboId());
+            task->setSrcTarget(currentPass()->getFbo());
             task->setDstCopy(dstCopyFbo);
             task->setRenderSize(glCmp->bbox.w(), glCmp->bbox.h());
             prepareCmpTask(task, glCmp->bbox, renderPass->getFboWidth(), renderPass->getFboHeight());
