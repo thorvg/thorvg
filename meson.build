@@ -130,6 +130,14 @@ if get_option('file') == true
 endif
 
 
+#Custom Allocator
+custom_allocator_header = get_option('custom_allocator_header')
+if custom_allocator_header != ''
+    config_h.set10('THORVG_CUSTOM_ALLOCATOR', true)
+    config_h.set_quoted('TVG_CUSTOM_ALLOCATOR_HEADER', custom_allocator_header)
+endif
+
+
 #Extra
 lottie_expressions = lottie_loader and get_option('extra').contains('lottie_expressions')
 
@@ -182,6 +190,7 @@ summary(
     'Log Message': get_option('log'),
     'Tests': get_option('tests'),
     'Examples': get_option('examples'),
+    'Custom Allocator': get_option('custom_allocator_header'),
   },
   bool_yn: true,
 )

@@ -73,3 +73,8 @@ option('extra',
    choices: ['', 'opengl_es', 'lottie_expressions'],
    value: ['lottie_expressions'],
    description: 'Enable support for extra options')
+
+option('custom_allocator_header',
+   type: 'string',
+   value: '',
+   description: 'Path to a header file that overrides malloc/free for ThorVG')
