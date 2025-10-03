@@ -329,9 +329,28 @@ GlSceneBlendTask::~GlSceneBlendTask()
 void GlSceneBlendTask::run()
 {
     GlComposeTask::run();
-    // copy the current fbo to the dstCopyFbo
+
     const auto& vp = getViewport();
+
+    // For EMSCRIPTEN: perform an intermediate blit from multisampled FBO to resolve FBO
+    // Then perform a final blit to destination framebuffer.
+    // For other platforms: direct blit from target FBO to destination resolve FBO.
+
+    // Platform-specific source framebuffer binding
+#ifdef __EMSCRIPTEN__
+    GL_CHECK(glBindFramebuffer(GL_READ_FRAMEBUFFER, mSrcFbo->getFboId()));
+    GL_CHECK(glBindFramebuffer(GL_DRAW_FRAMEBUFFER, mSrcFbo->getResolveFboId()));
+    GL_CHECK(glViewport(vp.x(), vp.y(), vp.w(), vp.h()));
+    GL_CHECK(glScissor(vp.x(), vp.y(), vp.w(), vp.h()));
+    GL_CHECK(glBlitFramebuffer(vp.min.x, vp.min.y, vp.max.x, vp.max.y, vp.min.x, vp.min.y, vp.max.x, vp.max.y, GL_COLOR_BUFFER_BIT, GL_LINEAR));
+
+    // Prepare for second blit to destination framebuffer
+    GL_CHECK(glBindFramebuffer(GL_READ_FRAMEBUFFER, mSrcFbo->getResolveFboId()));
+#else
     GL_CHECK(glBindFramebuffer(GL_READ_FRAMEBUFFER, getTargetFbo()));
+#endif
+
+    // Common: bind destination framebuffer and blit
     GL_CHECK(glBindFramebuffer(GL_DRAW_FRAMEBUFFER, mDstCopyFbo->getResolveFboId()));
     GL_CHECK(glViewport(0, 0, mDstCopyFbo->getWidth(), mDstCopyFbo->getHeight()));
     GL_CHECK(glScissor(0, 0, mDstCopyFbo->getWidth(), mDstCopyFbo->getHeight()));
