@@ -1571,8 +1571,6 @@ void LottieBuilder::build(LottieComposition* comp)
 
     _buildComposition(comp, comp->root);
 
-    if (!update(comp, 0)) return;
-
     //viewport clip
     auto clip = Shape::gen();
     clip->appendRect(0, 0, comp->w, comp->h);

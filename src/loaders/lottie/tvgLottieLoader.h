@@ -111,6 +111,7 @@ private:
     float startFrame();
     void run(unsigned tid) override;
     void release();
+    bool prepare();
 };
 
 
