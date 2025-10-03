@@ -115,14 +115,15 @@ TEST_CASE("Animation Lottie2", "[tvgAnimation]")
 
         REQUIRE(picture->load(TEST_DIR"/test2.json") == Result::Success);
 
+        //specify the lottie scene first
+        REQUIRE(animation->frame(20.0f) == Result::Success);
+
         //Find specific paint nodes
         REQUIRE(!picture->paint(Accessor::id("test1")));
         REQUIRE(!picture->paint(Accessor::id("abcd")));
         REQUIRE(!picture->paint(Accessor::id("abcd")));
         REQUIRE(picture->paint(Accessor::id("bar")));
         REQUIRE(picture->paint(Accessor::id("pad1")));
-
-        REQUIRE(animation->frame(20.0f) == Result::Success);
     }
     REQUIRE(Initializer::term() == Result::Success);
 }

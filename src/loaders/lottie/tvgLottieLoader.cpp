@@ -39,29 +39,31 @@ LottieCustomSlot::~LottieCustomSlot()
 }
 
 
+bool LottieLoader::prepare()
+{
+    LottieParser parser(content, dirName, builder->expressions());
+    if (!parser.parse()) return false;
+    {
+        ScopedLock lock(key);
+        comp = parser.comp;
+    }
+    if (!comp) return false;
+    if (parser.slots) {
+        auto slotcode = gen(parser.slots, true);
+        apply(slotcode, true);
+        del(slotcode, true);
+        parser.slots = nullptr;
+    }
+    builder->build(comp);
+    release();
+    return true;
+}
+
+
 void LottieLoader::run(unsigned tid)
 {
-    //update frame
-    if (comp) {
-        builder->update(comp, frameNo);
-    //initial loading
-    } else {
-        LottieParser parser(content, dirName, builder->expressions());
-        if (!parser.parse()) return;
-        {
-            ScopedLock lock(key);
-            comp = parser.comp;
-        }
-        if (parser.slots) {
-            auto slotcode = gen(parser.slots, true);
-            apply(slotcode, true);
-            del(slotcode, true);
-            parser.slots = nullptr;
-        }
-        builder->build(comp);
-
-        release();
-    }
+    if (comp) builder->update(comp, frameNo);      //update frame
+    else if (prepare()) builder->update(comp, 0);  //initial loading
     rebuild = false;
 }
 
@@ -104,16 +106,14 @@ bool LottieLoader::header()
     //A single thread doesn't need to perform intensive tasks.
     if (TaskScheduler::threads() == 0) {
         LoadModule::read();
-        run(0);
-        if (comp) {
+        if (prepare()) {
             w = static_cast<float>(comp->w);
             h = static_cast<float>(comp->h);
             segmentEnd = frameCnt = comp->frameCnt();
             frameRate = comp->frameRate;
             return true;
-        } else {
-            return false;
         }
+        return false;
     }
 
     //Quickly validate the given Lottie file without parsing in order to get the animation info.
