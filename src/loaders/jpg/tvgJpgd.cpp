@@ -768,8 +768,11 @@ inline uint8_t jpeg_decoder::clamp(int i)
 // Unconditionally frees all allocated m_blocks.
 void jpeg_decoder::free_all_blocks()
 {
-    delete(m_pStream);
-    m_pStream = nullptr;
+    if (m_pStream)
+    {
+        delete(m_pStream);
+        m_pStream = nullptr;
+    }
 
     for (mem_block *b = m_pMem_blocks; b; ) {
         mem_block *n = b->m_pNext;
@@ -2468,7 +2471,6 @@ jpeg_decoder* jpgdHeader(const char* filename, int* width, int* height)
 
     auto decoder = new jpeg_decoder(fileStream);
     if (decoder->get_error_code() != JPGD_SUCCESS) {
-        delete(fileStream);
         delete(decoder);
         return nullptr;
     }
