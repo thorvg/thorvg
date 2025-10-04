@@ -2468,7 +2468,6 @@ jpeg_decoder* jpgdHeader(const char* filename, int* width, int* height)
 
     auto decoder = new jpeg_decoder(fileStream);
     if (decoder->get_error_code() != JPGD_SUCCESS) {
-        delete(fileStream);
         delete(decoder);
         return nullptr;
     }
