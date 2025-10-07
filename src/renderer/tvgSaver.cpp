@@ -130,7 +130,7 @@ Result Saver::background(Paint* paint) noexcept
 {
     if (!paint) return Result::InvalidArguments;
 
-    if (pImpl->bg) TVG_DELETE(pImpl->bg);
+    if (pImpl->bg) pImpl->bg->unref();
     paint->ref();
     pImpl->bg = paint;
 
