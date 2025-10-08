@@ -183,11 +183,13 @@ public:
     ~GlSceneBlendTask() override;
 
     void setParentSize(uint32_t width, uint32_t height) { mParentWidth = width; mParentHeight = height; }
-    void setDstCopy(GlRenderTarget* dstCopyFbo){ mDstCopyFbo = dstCopyFbo; }
+    void setSrcTarget(GlRenderTarget* srcFbo) { mSrcFbo = srcFbo; }
+    void setDstCopy(GlRenderTarget* dstCopyFbo) { mDstCopyFbo = dstCopyFbo; }
 
     void run() override;
 
 private:
+    GlRenderTarget* mSrcFbo = nullptr;
     GlRenderTarget* mDstCopyFbo = nullptr;
     uint32_t mParentWidth = 0;
     uint32_t mParentHeight = 0;
