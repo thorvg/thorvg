@@ -64,7 +64,7 @@ void LottieLoader::run(unsigned tid)
 {
     if (comp) builder->update(comp, frameNo);      //update frame
     else if (prepare()) builder->update(comp, 0);  //initial loading
-    rebuild = false;
+    build = false;
 }
 
 
@@ -291,7 +291,7 @@ bool LottieLoader::read()
 
 Paint* LottieLoader::paint()
 {
-    done();
+    sync();
 
     if (!comp) return nullptr;
     comp->initiated = true;
@@ -324,7 +324,7 @@ bool LottieLoader::apply(uint32_t slotcode, bool byDefault)
         }
     }
     curSlot = slotcode;
-    if (applied) rebuild = true;
+    if (applied) build = true;
     return applied;
 }
 
@@ -340,7 +340,7 @@ bool LottieLoader::del(uint32_t slotcode, bool byDefault)
             ARRAY_FOREACH(p, slot->props) {
                 p->target->reset();
             }
-            rebuild = true;
+            build = true;
         }
         this->slots.remove(slot);
         delete(slot);
@@ -446,7 +446,7 @@ void LottieLoader::sync()
 {
     done();
 
-    if (rebuild) run(0);
+    if (build) run(0);
 }
 
 
@@ -539,7 +539,7 @@ bool LottieLoader::quality(uint8_t value)
     if (!ready()) return false;
     if (comp->quality != value) {
         comp->quality = value;
-        rebuild = true;
+        build = true;
     }
     return true;
 }
