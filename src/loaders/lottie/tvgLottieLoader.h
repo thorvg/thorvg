@@ -69,7 +69,7 @@ public:
     char* dirName = nullptr;            //base resource directory
 
     bool copy = false;                  //"content" is owned by this loader
-    bool rebuild = false;               //require building the lottie scene
+    bool build = true;                  //require building the lottie scene
 
     LottieLoader();
     ~LottieLoader();
