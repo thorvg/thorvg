@@ -272,22 +272,21 @@ static void _shift(uint32_t** dst, uint32_t** src, int dstride, int sstride, int
     size.h = bbox.max.y - bbox.min.y;
 
     //shift
-    if (bbox.min.x + offset.x < 0) {
-        offset.x *= -1;
-        *src += offset.x;
+    if (offset.x < 0) {
+        *src -= offset.x;
+        size.w += offset.x;
     } else {
         *dst += offset.x;
+        size.w -= offset.x;
     }
 
-    if (bbox.min.y + offset.y < 0) {
-        offset.y *= -1;
-        *src += (offset.y * sstride);
+    if (offset.y < 0) {
+        *src -= (offset.y * sstride);
+        size.h += offset.y;
     } else {
         *dst += (offset.y * dstride);
+        size.h -= offset.y;
     }
-
-    if (size.w + bbox.min.x + offset.x > wmax) size.w -= (size.w + bbox.min.x + offset.x - wmax);
-    if (size.h + bbox.min.y + offset.y > hmax) size.h -= (size.h + bbox.min.y + offset.y - hmax);
 }
 
 
