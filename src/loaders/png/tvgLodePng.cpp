@@ -2664,21 +2664,6 @@ void lodepng_state_cleanup(LodePNGState* state)
 }
 
 #ifdef THORVG_PNG_SAVER_SUPPORT
-static void* lodepng_malloc(size_t size)
-{
-    return malloc(size);
-}
-
-/* NOTE: when realloc returns NULL, it leaves the original memory untouched */
-static void* lodepng_realloc(void* ptr, size_t new_size)
-{
-    return realloc(ptr, new_size);
-}
-
-static void lodepng_free(void* ptr)
-{
-    free(ptr);
-}
 
 /*calculate bits per pixel out of colortype and bitdepth*/
 unsigned lodepng_get_bpp(const LodePNGColorMode* info)
@@ -3110,7 +3095,7 @@ static BPMNode* bpmnode_create(BPMLists* lists, int weight, unsigned index, BPMN
 /*sort the leaves with stable mergesort*/
 static void bpmnode_sort(BPMNode* leaves, size_t num)
 {
-    BPMNode* mem = (BPMNode*)lodepng_malloc(sizeof(*leaves) * num);
+    BPMNode* mem = tvg::malloc<BPMNode*>(sizeof(*leaves) * num);
     size_t width, counter = 0;
     for (width = 1; width < num; width *= 2) {
         BPMNode* a = (counter & 1) ? mem : leaves;
@@ -3131,7 +3116,7 @@ static void bpmnode_sort(BPMNode* leaves, size_t num)
     }
     if (counter & 1)
         lodepng_memcpy(leaves, mem, sizeof(*leaves) * num);
-    lodepng_free(mem);
+    tvg::free(mem);
 }
 
 /*Boundary Package Merge step, numpresent is the amount of leaves, and c is the current chain.*/
@@ -3174,7 +3159,7 @@ unsigned lodepng_huffman_code_lengths(unsigned* lengths, const unsigned* frequen
     if ((1u << maxbitlen) < (unsigned)numcodes)
         return 80; /*error: represent all symbols*/
 
-    leaves = (BPMNode*)lodepng_malloc(numcodes * sizeof(*leaves));
+    leaves = tvg::malloc<BPMNode*>(numcodes * sizeof(*leaves));
     if (!leaves)
         return 83; /*alloc fail*/
 
@@ -3208,10 +3193,10 @@ unsigned lodepng_huffman_code_lengths(unsigned* lengths, const unsigned* frequen
         lists.memsize = 2 * maxbitlen * (maxbitlen + 1);
         lists.nextfree = 0;
         lists.numfree = lists.memsize;
-        lists.memory = (BPMNode*)lodepng_malloc(lists.memsize * sizeof(*lists.memory));
-        lists.freelist = (BPMNode**)lodepng_malloc(lists.memsize * sizeof(BPMNode*));
-        lists.chains0 = (BPMNode**)lodepng_malloc(lists.listsize * sizeof(BPMNode*));
-        lists.chains1 = (BPMNode**)lodepng_malloc(lists.listsize * sizeof(BPMNode*));
+        lists.memory = tvg::malloc<BPMNode*>(lists.memsize * sizeof(*lists.memory));
+        lists.freelist = tvg::malloc<BPMNode**>(lists.memsize * sizeof(BPMNode*));
+        lists.chains0 = tvg::malloc<BPMNode**>(lists.listsize * sizeof(BPMNode*));
+        lists.chains1 = tvg::malloc<BPMNode**>(lists.listsize * sizeof(BPMNode*));
         if (!lists.memory || !lists.freelist || !lists.chains0 || !lists.chains1)
             error = 83; /*alloc fail*/
 
@@ -3237,13 +3222,13 @@ unsigned lodepng_huffman_code_lengths(unsigned* lengths, const unsigned* frequen
             }
         }
 
-        lodepng_free(lists.memory);
-        lodepng_free(lists.freelist);
-        lodepng_free(lists.chains0);
-        lodepng_free(lists.chains1);
+        tvg::free(lists.memory);
+        tvg::free(lists.freelist);
+        tvg::free(lists.chains0);
+        tvg::free(lists.chains1);
     }
 
-    lodepng_free(leaves);
+    tvg::free(leaves);
     return error;
 }
 
@@ -3253,7 +3238,7 @@ static unsigned HuffmanTree_makeFromFrequencies(HuffmanTree* tree, const unsigne
     unsigned error = 0;
     while (!frequencies[numcodes - 1] && numcodes > mincodes)
         --numcodes; /*trim zeroes*/
-    tree->lengths = (unsigned*)lodepng_malloc(numcodes * sizeof(unsigned));
+    tree->lengths = tvg::malloc<unsigned*>(numcodes * sizeof(unsigned));
     if (!tree->lengths)
         return 83; /*alloc fail*/
     tree->maxbitlen = maxbitlen;
@@ -3331,7 +3316,7 @@ typedef struct uivector
 static void uivector_cleanup(void* p)
 {
     ((uivector*)p)->size = ((uivector*)p)->allocsize = 0;
-    lodepng_free(((uivector*)p)->data);
+    tvg::free(((uivector*)p)->data);
     ((uivector*)p)->data = NULL;
 }
 
@@ -3341,7 +3326,7 @@ static unsigned uivector_resize(uivector* p, size_t size)
     size_t allocsize = size * sizeof(unsigned);
     if (allocsize > p->allocsize) {
         size_t newsize = allocsize + (p->allocsize >> 1u);
-        void* data = lodepng_realloc(p->data, newsize);
+        void* data = tvg::realloc(p->data, newsize);
         if (data) {
             p->allocsize = newsize;
             p->data = (unsigned*)data;
@@ -3439,13 +3424,13 @@ typedef struct Hash
 static unsigned hash_init(Hash* hash, unsigned windowsize)
 {
     unsigned i;
-    hash->head = (int*)lodepng_malloc(sizeof(int) * HASH_NUM_VALUES);
-    hash->val = (int*)lodepng_malloc(sizeof(int) * windowsize);
-    hash->chain = (unsigned short*)lodepng_malloc(sizeof(unsigned short) * windowsize);
+    hash->head = tvg::malloc<int*>(sizeof(int) * HASH_NUM_VALUES);
+    hash->val = tvg::malloc<int*>(sizeof(int) * windowsize);
+    hash->chain = tvg::malloc<unsigned short*>(sizeof(unsigned short) * windowsize);
 
-    hash->zeros = (unsigned short*)lodepng_malloc(sizeof(unsigned short) * windowsize);
-    hash->headz = (int*)lodepng_malloc(sizeof(int) * (MAX_SUPPORTED_DEFLATE_LENGTH + 1));
-    hash->chainz = (unsigned short*)lodepng_malloc(sizeof(unsigned short) * windowsize);
+    hash->zeros = tvg::malloc<unsigned short*>(sizeof(unsigned short) * windowsize);
+    hash->headz = tvg::malloc<int*>(sizeof(int) * (MAX_SUPPORTED_DEFLATE_LENGTH + 1));
+    hash->chainz = tvg::malloc<unsigned short*>(sizeof(unsigned short) * windowsize);
 
     if (!hash->head || !hash->chain || !hash->val || !hash->headz || !hash->chainz || !hash->zeros) {
         return 83; /*alloc fail*/
@@ -3469,13 +3454,13 @@ static unsigned hash_init(Hash* hash, unsigned windowsize)
 
 static void hash_cleanup(Hash* hash)
 {
-    lodepng_free(hash->head);
-    lodepng_free(hash->val);
-    lodepng_free(hash->chain);
+    tvg::free(hash->head);
+    tvg::free(hash->val);
+    tvg::free(hash->chain);
 
-    lodepng_free(hash->zeros);
-    lodepng_free(hash->headz);
-    lodepng_free(hash->chainz);
+    tvg::free(hash->zeros);
+    tvg::free(hash->headz);
+    tvg::free(hash->chainz);
 }
 
 static unsigned getHash(const unsigned char* data, size_t size, size_t pos)
@@ -3867,9 +3852,9 @@ static unsigned deflateDynamic(LodePNGBitWriter* writer, Hash* hash, const unsig
     HuffmanTree_init(&tree_d);
     HuffmanTree_init(&tree_cl);
     /* could fit on stack, but >1KB is on the larger side so allocate instead */
-    frequencies_ll = (unsigned*)lodepng_malloc(286 * sizeof(*frequencies_ll));
-    frequencies_d = (unsigned*)lodepng_malloc(30 * sizeof(*frequencies_d));
-    frequencies_cl = (unsigned*)lodepng_malloc(NUM_CODE_LENGTH_CODES * sizeof(*frequencies_cl));
+    frequencies_ll = tvg::malloc<unsigned*>(286 * sizeof(*frequencies_ll));
+    frequencies_d = tvg::malloc<unsigned*>(30 * sizeof(*frequencies_d));
+    frequencies_cl = tvg::malloc<unsigned*>(NUM_CODE_LENGTH_CODES * sizeof(*frequencies_cl));
 
     if (!frequencies_ll || !frequencies_d || !frequencies_cl)
         error = 83; /*alloc fail*/
@@ -3917,9 +3902,9 @@ static unsigned deflateDynamic(LodePNGBitWriter* writer, Hash* hash, const unsig
         numcodes_d = LODEPNG_MIN(tree_d.numcodes, 30);
         /*store the code lengths of both generated trees in bitlen_lld*/
         numcodes_lld = numcodes_ll + numcodes_d;
-        bitlen_lld = (unsigned*)lodepng_malloc(numcodes_lld * sizeof(*bitlen_lld));
+        bitlen_lld = tvg::malloc<unsigned*>(numcodes_lld * sizeof(*bitlen_lld));
         /*numcodes_lld_e never needs more size than bitlen_lld*/
-        bitlen_lld_e = (unsigned*)lodepng_malloc(numcodes_lld * sizeof(*bitlen_lld_e));
+        bitlen_lld_e = tvg::malloc<unsigned*>(numcodes_lld * sizeof(*bitlen_lld_e));
         if (!bitlen_lld || !bitlen_lld_e)
             ERROR_BREAK(83); /*alloc fail*/
         numcodes_lld_e = 0;
@@ -4054,11 +4039,11 @@ static unsigned deflateDynamic(LodePNGBitWriter* writer, Hash* hash, const unsig
     HuffmanTree_cleanup(&tree_ll);
     HuffmanTree_cleanup(&tree_d);
     HuffmanTree_cleanup(&tree_cl);
-    lodepng_free(frequencies_ll);
-    lodepng_free(frequencies_d);
-    lodepng_free(frequencies_cl);
-    lodepng_free(bitlen_lld);
-    lodepng_free(bitlen_lld_e);
+    tvg::free(frequencies_ll);
+    tvg::free(frequencies_d);
+    tvg::free(frequencies_cl);
+    tvg::free(bitlen_lld);
+    tvg::free(bitlen_lld_e);
 
     return error;
 }
@@ -4192,7 +4177,7 @@ unsigned lodepng_zlib_compress(unsigned char** out, size_t* outsize, const unsig
     *outsize = 0;
     if (!error) {
         *outsize = deflatesize + 6;
-        *out = (unsigned char*)lodepng_malloc(*outsize);
+        *out = tvg::malloc<unsigned char*>(*outsize);
         if (!*out)
             error = 83; /*alloc fail*/
     }
@@ -4214,7 +4199,7 @@ unsigned lodepng_zlib_compress(unsigned char** out, size_t* outsize, const unsig
         lodepng_set32bitInt(&(*out)[*outsize - 4], ADLER32);
     }
 
-    lodepng_free(deflatedata);
+    tvg::free(deflatedata);
     return error;
 }
 
@@ -4334,7 +4319,7 @@ static unsigned addChunk_IDAT(ucvector* out, const unsigned char* data, size_t d
     if (!error) {
         error = lodepng_chunk_createv(out, zlibsize, "IDAT", zlib);
     }
-    lodepng_free(zlib);
+    tvg::free(zlib);
     return error;
 }
 
@@ -4492,7 +4477,7 @@ static unsigned filter(unsigned char* out, const unsigned char* in, unsigned w, 
         unsigned char type, bestType = 0;
 
         for (type = 0; type != 5; ++type) {
-            attempt[type] = (unsigned char*)lodepng_malloc(linebytes);
+            attempt[type] = tvg::malloc<unsigned char*>(linebytes);
             if (!attempt[type])
                 error = 83; /*alloc fail*/
         }
@@ -4535,7 +4520,7 @@ static unsigned filter(unsigned char* out, const unsigned char* in, unsigned w, 
         }
 
         for (type = 0; type != 5; ++type)
-            lodepng_free(attempt[type]);
+            tvg::free(attempt[type]);
     } else if (strategy == LFS_ENTROPY) {
         unsigned char* attempt[5]; /*five filtering attempts, one for each filter type*/
         size_t bestSum = 0;
@@ -4543,7 +4528,7 @@ static unsigned filter(unsigned char* out, const unsigned char* in, unsigned w, 
         unsigned count[256];
 
         for (type = 0; type != 5; ++type) {
-            attempt[type] = (unsigned char*)lodepng_malloc(linebytes);
+            attempt[type] = tvg::malloc<unsigned char*>(linebytes);
             if (!attempt[type])
                 error = 83; /*alloc fail*/
         }
@@ -4578,7 +4563,7 @@ static unsigned filter(unsigned char* out, const unsigned char* in, unsigned w, 
         }
 
         for (type = 0; type != 5; ++type)
-            lodepng_free(attempt[type]);
+            tvg::free(attempt[type]);
     } else if (strategy == LFS_PREDEFINED) {
         for (y = 0; y != h; ++y) {
             size_t outindex = (1 + linebytes) * y; /*the extra filterbyte added to each row*/
@@ -4609,7 +4594,7 @@ static unsigned filter(unsigned char* out, const unsigned char* in, unsigned w, 
         zlibsettings.custom_zlib = 0;
         zlibsettings.custom_deflate = 0;
         for (type = 0; type != 5; ++type) {
-            attempt[type] = (unsigned char*)lodepng_malloc(linebytes);
+            attempt[type] = tvg::malloc<unsigned char*>(linebytes);
             if (!attempt[type])
                 error = 83; /*alloc fail*/
         }
@@ -4624,7 +4609,7 @@ static unsigned filter(unsigned char* out, const unsigned char* in, unsigned w, 
                     size[type] = 0;
                     dummy = 0;
                     zlib_compress(&dummy, &size[type], attempt[type], testsize, &zlibsettings);
-                    lodepng_free(dummy);
+                    tvg::free(dummy);
                     /*check if this is smallest size (or if type == 0 it's the first case so always store the values)*/
                     if (type == 0 || size[type] < smallest) {
                         bestType = type;
@@ -4638,7 +4623,7 @@ static unsigned filter(unsigned char* out, const unsigned char* in, unsigned w, 
             }
         }
         for (type = 0; type != 5; ++type)
-            lodepng_free(attempt[type]);
+            tvg::free(attempt[type]);
     } else
         return 88; /* unknown filter strategy */
 
@@ -4731,21 +4716,21 @@ static unsigned preProcessScanlines(unsigned char** out, size_t* outsize, const 
 
     if (info_png->interlace_method == 0) {
         *outsize = h + (h * ((w * bpp + 7u) / 8u)); /*image size plus an extra byte per scanline + possible padding bits*/
-        *out = (unsigned char*)lodepng_malloc(*outsize);
+        *out = tvg::malloc<unsigned char*>(*outsize);
         if (!(*out) && (*outsize))
             error = 83; /*alloc fail*/
 
         if (!error) {
             /*non multiple of 8 bits per scanline, padding bits needed per scanline*/
             if (bpp < 8 && w * bpp != ((w * bpp + 7u) / 8u) * 8u) {
-                unsigned char* padded = (unsigned char*)lodepng_malloc(h * ((w * bpp + 7u) / 8u));
+                unsigned char* padded = tvg::malloc<unsigned char*>(h * ((w * bpp + 7u) / 8u));
                 if (!padded)
                     error = 83; /*alloc fail*/
                 if (!error) {
                     addPaddingBits(padded, in, ((w * bpp + 7u) / 8u) * 8u, w * bpp, h);
                     error = filter(*out, padded, w, h, &info_png->color, settings);
                 }
-                lodepng_free(padded);
+                tvg::free(padded);
             } else {
                 /*we can immediately filter into the out buffer, no other steps needed*/
                 error = filter(*out, in, w, h, &info_png->color, settings);
@@ -4760,11 +4745,11 @@ static unsigned preProcessScanlines(unsigned char** out, size_t* outsize, const 
         Adam7_getpassvalues(passw, passh, filter_passstart, padded_passstart, passstart, w, h, bpp);
 
         *outsize = filter_passstart[7]; /*image size plus an extra byte per scanline + possible padding bits*/
-        *out = (unsigned char*)lodepng_malloc(*outsize);
+        *out = tvg::malloc<unsigned char*>(*outsize);
         if (!(*out))
             error = 83; /*alloc fail*/
 
-        adam7 = (unsigned char*)lodepng_malloc(passstart[7]);
+        adam7 = tvg::malloc<unsigned char*>(passstart[7]);
         if (!adam7 && passstart[7])
             error = 83; /*alloc fail*/
 
@@ -4774,12 +4759,12 @@ static unsigned preProcessScanlines(unsigned char** out, size_t* outsize, const 
             Adam7_interlace(adam7, in, w, h, bpp);
             for (i = 0; i != 7; ++i) {
                 if (bpp < 8) {
-                    unsigned char* padded = (unsigned char*)lodepng_malloc(padded_passstart[i + 1] - padded_passstart[i]);
+                    unsigned char* padded = tvg::malloc<unsigned char*>(padded_passstart[i + 1] - padded_passstart[i]);
                     if (!padded)
                         ERROR_BREAK(83); /*alloc fail*/
                     addPaddingBits(padded, &adam7[passstart[i]], ((passw[i] * bpp + 7u) / 8u) * 8u, passw[i] * bpp, passh[i]);
                     error = filter(&(*out)[filter_passstart[i]], padded, passw[i], passh[i], &info_png->color, settings);
-                    lodepng_free(padded);
+                    tvg::free(padded);
                 } else {
                     error = filter(&(*out)[filter_passstart[i]], &adam7[padded_passstart[i]], passw[i], passh[i], &info_png->color, settings);
                 }
@@ -4789,7 +4774,7 @@ static unsigned preProcessScanlines(unsigned char** out, size_t* outsize, const 
             }
         }
 
-        lodepng_free(adam7);
+        tvg::free(adam7);
     }
 
     return error;
@@ -4849,7 +4834,7 @@ unsigned lodepng_encode(unsigned char** out, size_t* outsize, const unsigned cha
         unsigned char* converted;
         size_t size = ((size_t)w * (size_t)h * (size_t)lodepng_get_bpp(&info.color) + 7u) / 8u;
 
-        converted = (unsigned char*)lodepng_malloc(size);
+        converted = tvg::malloc<unsigned char*>(size);
         if (!converted && size)
             state->error = 83; /*alloc fail*/
         if (!state->error) {
@@ -4858,7 +4843,7 @@ unsigned lodepng_encode(unsigned char** out, size_t* outsize, const unsigned cha
         if (!state->error) {
             state->error = preProcessScanlines(&data, &datasize, converted, w, h, &info, &state->encoder);
         }
-        lodepng_free(converted);
+        tvg::free(converted);
         if (state->error)
             goto cleanup;
     } else {
@@ -4906,7 +4891,7 @@ unsigned lodepng_encode(unsigned char** out, size_t* outsize, const unsigned cha
 
 cleanup:
     lodepng_info_cleanup(&info);
-    lodepng_free(data);
+    tvg::free(data);
 
     /*instead of cleaning the vector up, give it to the output*/
     *out = outv.data;
@@ -4948,7 +4933,7 @@ unsigned lodepng_encode_file(const char* filename, const unsigned char* image, u
     unsigned error = lodepng_encode_memory(&buffer, &buffersize, image, w, h, colortype, bitdepth);
     if (!error)
         error = lodepng_save_file(buffer, buffersize, filename);
-    lodepng_free(buffer);
+    tvg::free(buffer);
     return error;
 }
 #endif  // THORVG_PNG_SAVER_SUPPORT
