@@ -746,7 +746,7 @@ static void _apply(SwSurface* surface, AASpans* aaSpans)
 
             //exceptional handling. out of memory bound.
             if (dst + line->length[0] >= end) {
-                pos += (dst + line->length[0] - end);
+                pos += static_cast<int32_t>(dst + line->length[0] - end);
             }
 
             while (pos <= line->length[0]) {
@@ -761,7 +761,7 @@ static void _apply(SwSurface* surface, AASpans* aaSpans)
             pos = line->length[1];
 
             //exceptional handling. out of memory bound.
-            if (dst - pos < surface->buf32) --pos;
+            if (dst - pos < surface->buf32) pos = static_cast<int32_t>(dst - surface->buf32);
 
             while (pos > 0) {
                 *dst = INTERPOLATE(*dst, pix, 255 - (line->coverage[1] * pos));
