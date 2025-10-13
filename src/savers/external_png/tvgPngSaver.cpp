@@ -40,21 +40,6 @@ namespace tvg
 
 void _buildPng(const string& fileName, const uint32_t width, const uint32_t height, uint32_t* buffer)
 {
-	// Used ARGB8888 so have to move pixels now
-	std::vector<unsigned char> image;
-	image.resize(width * height * 4);
-	for (unsigned y = 0; y < height; y++)
-	{
-		for (unsigned x = 0; x < width; x++)
-		{
-			uint32_t n = buffer[y * width + x];
-			image[4 * width * y + 4 * x + 0] = (n >> 16) & 0xff;
-			image[4 * width * y + 4 * x + 1] = (n >> 8) & 0xff;
-			image[4 * width * y + 4 * x + 2] = n & 0xff;
-			image[4 * width * y + 4 * x + 3] = (n >> 24) & 0xff;
-		}
-	}
-
 #ifdef THORVG_FILE_IO_SUPPORT
 	png_image pngimg;
     memset(&pngimg, 0, sizeof(pngimg));
@@ -66,8 +51,7 @@ void _buildPng(const string& fileName, const uint32_t width, const uint32_t heig
 
 	const png_int_32 row_stride = static_cast<png_int_32>(width) * 4;
 
-    if (!png_image_write_to_file(&pngimg, fileName.c_str(), 0, image.data(), row_stride, nullptr))
-	{
+    if (!png_image_write_to_file(&pngimg, fileName.c_str(), 0, static_cast<const void*>(buffer), row_stride, nullptr)) {
 		TVGERR("PNG_SAVER", "encoder error %s", pngimg.message);
 	}
 	png_image_free(&pngimg);

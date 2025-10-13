@@ -40,23 +40,8 @@ namespace tvg
 
 void _buildPng(const string& fileName, const uint32_t width, const uint32_t height, uint32_t* buffer)
 {
-	// Used ARGB8888 so have to move pixels now
-	std::vector<unsigned char> image;
-	image.resize(width * height * 4);
-	for (unsigned y = 0; y < height; y++)
-	{
-		for (unsigned x = 0; x < width; x++)
-		{
-			uint32_t n = buffer[y * width + x];
-			image[4 * width * y + 4 * x + 0] = (n >> 16) & 0xff;
-			image[4 * width * y + 4 * x + 1] = (n >> 8) & 0xff;
-			image[4 * width * y + 4 * x + 2] = n & 0xff;
-			image[4 * width * y + 4 * x + 3] = (n >> 24) & 0xff;
-		}
-	}
-
 #ifdef THORVG_FILE_IO_SUPPORT
-	unsigned error = lodepng_encode_file(fileName.c_str(), image.data(), width, height, LCT_RGBA, 8);
+	unsigned error = lodepng_encode_file(fileName.c_str(), reinterpret_cast<const unsigned char*>(buffer), width, height, LCT_RGBA, 8);
 
 	if (error) {
 		TVGERR("PNG_SAVER", "encoder error %d", error);
