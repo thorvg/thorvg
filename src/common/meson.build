@@ -1,5 +1,6 @@
 source_file = [
    'tvgArray.h',
+   'tvgCommon.h',
    'tvgColor.h',
    'tvgCompressor.h',
    'tvgInlist.h',
