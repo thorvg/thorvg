@@ -1512,4 +1512,34 @@ TEST_CASE("Text draw", "[tvgSwEngine]")
     REQUIRE(Initializer::term() == Result::Success);
 }
 
+TEST_CASE("Texmap Transform", "[tvgSwEngine]")
+{
+    REQUIRE(Initializer::init() == Result::Success);
+    {
+        auto canvas = unique_ptr<SwCanvas>(SwCanvas::gen());
+        REQUIRE(canvas);
+
+        const uint32_t cw = 960;
+        const uint32_t ch = 960;
+        std::vector<uint32_t> buffer(static_cast<size_t>(cw) * ch);
+        REQUIRE(canvas->target(buffer.data(), cw, ch, cw, ColorSpace::ARGB8888) == Result::Success);
+
+        auto picture = Picture::gen();
+        REQUIRE(picture);
+        REQUIRE(picture->load(TEST_DIR "/test.png") == Result::Success);
+        REQUIRE(picture->size(240, 240) == Result::Success);
+        // Apply the exact matrix
+        tvg::Matrix m { 0.572866f, -4.431353f, 336.605835f,
+            5.198910f, -0.386219f, 30.710693f,
+            0.0f, 0.0f, 1.0f };
+        REQUIRE(picture->transform(m) == Result::Success);
+        REQUIRE(canvas->push(picture) == Result::Success);
+
+        // Verify that draw() and sync() both succeed without crash
+        REQUIRE(canvas->draw(true) == Result::Success);
+        REQUIRE(canvas->sync() == Result::Success);
+    }
+    REQUIRE(Initializer::term() == Result::Success);
+}
+
 #endif
