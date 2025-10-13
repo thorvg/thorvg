@@ -15,7 +15,6 @@ endif
 source_file = [
    'tvgAnimation.h',
    'tvgCanvas.h',
-   'tvgCommon.h',
    'tvgFill.h',
    'tvgFrameModule.h',
    'tvgLoader.h',
