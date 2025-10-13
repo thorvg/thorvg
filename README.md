@@ -115,6 +115,7 @@ ThorVG is designed to be portable across a wide range of devices, including smal
   - [In Practice](#in-practice)
     - [Canva iOS](#canva-ios)
     - [dotLottie](#dotlottie)
+    - [Espressif](#espressif)
     - [Flux Audio](#flux-audio)
     - [Godot](#godot)
     - [Lottie Creator](#lottie-creator)
@@ -402,6 +403,12 @@ Please check out the [ThorVG Test App](https://thorvg-perf-test.vercel.app/) to 
 [dotLottie](https://dotlottie.io/) is an open-source file format that aggregates one or more Lottie files and their associated resources, such as images and fonts, into a single file. This enables an efficient and easy distribution of animations. dotLottie files are ZIP archives compressed with the Deflate compression method and carry the file extension of “.lottie”. Think of it as a superset of Lottie. [LottieFiles](https://lottiefiles.com/) aims to achieve just that. [dotLottie player](https://github.com/LottieFiles/dotlottie-rs) by LottieFiles is now powered by ThorVG.
 <p align="center">
   <img width="700" height="auto" src="https://github.com/thorvg/thorvg.site/blob/main/readme/example_dotlottie.png">
+</p>
+
+### Espressif
+[Espressif Systems](https://www.espressif.com/en) provides [ThorVG as an official component](https://docs.espressif.com/projects/esp-iot-solution/en/latest/display/lcd/gui_solution.html#thorvg-component) within its ESP-IDF (IoT Development Framework), simplifying integration into ESP-IDF projects. This allows developers to easily incorporate ThorVG's rendering capabilities into their applications, particularly on IoT devices powered by Espressif’s ESP32 and ESP32-P4 microcontrollers.
+<p align="center">
+  <img width="700" height="auto" src="https://github.com/thorvg/thorvg.site/blob/main/readme/example_espressif.png">
 </p>
 
 ### Flux Audio
