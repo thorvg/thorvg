@@ -30,7 +30,7 @@ using namespace emscripten;
 using namespace std;
 using namespace tvg;
 
-EMSCRIPTEN_DECLARE_VAL_TYPE(Uint8Array);
+EMSCRIPTEN_DECLARE_VAL_TYPE(ArrayBuffer);
 EMSCRIPTEN_DECLARE_VAL_TYPE(Float32Array);
 
 static const char* NoError = "None";
@@ -40,9 +40,9 @@ struct TvgEngineMethod
     virtual ~TvgEngineMethod() {}
     virtual Canvas* init(string&) = 0;
     virtual void resize(Canvas* canvas, int w, int h) = 0;
-    virtual Uint8Array output(int w, int h)
+    virtual ArrayBuffer output(int w, int h)
     {
-        return Uint8Array(val(typed_memory_view<uint8_t>(0, nullptr)));
+        return ArrayBuffer(val(typed_memory_view<uint8_t>(0, nullptr)));
     }
 
     void loadFont() {
@@ -77,9 +77,9 @@ struct TvgSwEngine : TvgEngineMethod
         static_cast<SwCanvas*>(canvas)->target((uint32_t *)buffer, w, w, h, ColorSpace::ABGR8888S);
     }
 
-    Uint8Array output(int w, int h) override
+    ArrayBuffer output(int w, int h) override
     {
-        return Uint8Array(val(typed_memory_view(w * h * 4, buffer)));
+        return ArrayBuffer(val(typed_memory_view(w * h * 4, buffer)));
     }
 };
 
@@ -345,17 +345,17 @@ public:
         return true;
     }
 
-    Uint8Array render()
+    ArrayBuffer render()
     {
         errorMsg = NoError;
 
-        if (!canvas || !animation) return Uint8Array(val(typed_memory_view<uint8_t>(0, nullptr)));
+        if (!canvas || !animation) return ArrayBuffer(val(typed_memory_view<uint8_t>(0, nullptr)));
 
         if (!updated) return engine->output(width, height);
 
         if (canvas->draw(true) != Result::Success) {
             errorMsg = "draw() fail";
-            return Uint8Array(val(typed_memory_view<uint8_t>(0, nullptr)));
+            return ArrayBuffer(val(typed_memory_view<uint8_t>(0, nullptr)));
         }
 
         canvas->sync();
@@ -542,7 +542,7 @@ void term()
 
 EMSCRIPTEN_BINDINGS(thorvg_bindings)
 {
-    register_type<Uint8Array>("Uint8Array");
+    register_type<ArrayBuffer>("ArrayBuffer");
     register_type<Float32Array>("Float32Array");
     emscripten::function("init", &init);
     emscripten::function("term", &term);
