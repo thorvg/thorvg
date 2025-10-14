@@ -71,31 +71,29 @@ private:
    bool convert(string& in, string& out)
    {
       if (Initializer::init() != Result::Success) return false;
+      {
+         auto animation = Animation::gen();
+         auto picture = animation->picture();
+         if (picture->load(in.c_str()) != Result::Success) return false;
 
-      auto animation = Animation::gen();
-      auto picture = animation->picture();
-      if (picture->load(in.c_str()) != Result::Success) return false;
+         float width, height;
+         picture->size(&width, &height);
+         float scale =  static_cast<float>(this->width) / width;
+         picture->size(width * scale, height * scale);
 
-      float width, height;
-      picture->size(&width, &height);
-      float scale =  static_cast<float>(this->width) / width;
-      picture->size(width * scale, height * scale);
+         auto saver = unique_ptr<Saver>(Saver::gen());
 
-      auto saver = unique_ptr<Saver>(Saver::gen());
-
-      //set a background color
-      if (background) {
-         auto bg = Shape::gen();
-         bg->fill(r, g, b);
-         bg->appendRect(0, 0, width * scale, height * scale);
-         saver->background(bg);
+         //set a background color
+         if (background) {
+            auto bg = Shape::gen();
+            bg->fill(r, g, b);
+            bg->appendRect(0, 0, width * scale, height * scale);
+            saver->background(bg);
+         }
+         if (saver->save(animation, out.c_str(), 100, fps) != Result::Success) return false;
+         if (saver->sync() != Result::Success) return false;
       }
-      if (saver->save(animation, out.c_str(), 100, fps) != Result::Success) return false;
-      if (saver->sync() != Result::Success) return false;
-
-      if (Initializer::term() != Result::Success) return false;
-
-      return true;
+      return Initializer::term() == Result::Success;
    }
 
    void convert(string& lottieName)
