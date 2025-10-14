@@ -21,7 +21,6 @@
  */
 
 #include "tvgGlRenderTask.h"
-#include "tvgGlProgram.h"
 #include "tvgGlRenderPass.h"
 
 /************************************************************************/
@@ -66,11 +65,9 @@ void GlRenderTask::run()
         if (binding.type == GlBindingType::kTexture) {
             GL_CHECK(glActiveTexture(GL_TEXTURE0 + binding.bindPoint));
             GL_CHECK(glBindTexture(GL_TEXTURE_2D, binding.gBufferId));
-
-            mProgram->setUniform1Value(binding.location, 1, (int32_t*)&binding.bindPoint);
+            GL_CHECK(glUniform1iv(binding.location, 1, (int32_t*)&binding.bindPoint));
         } else if (binding.type == GlBindingType::kUniformBuffer) {
-
-            GL_CHECK(glUniformBlockBinding(mProgram->getProgramId(), binding.location, binding.bindPoint));
+            GL_CHECK(glUniformBlockBinding(mProgram->prog, binding.location, binding.bindPoint));
             GL_CHECK(glBindBufferRange(GL_UNIFORM_BUFFER, binding.bindPoint, binding.gBufferId,
                                        binding.bufferOffset, binding.bufferRange));
         }

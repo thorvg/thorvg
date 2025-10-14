@@ -23,6 +23,12 @@
 #ifndef _TVG_GL_SHADERSRC_H_
 #define _TVG_GL_SHADERSRC_H_
 
+// service shaders
+extern const char* STENCIL_VERT_SHADER;
+extern const char* STENCIL_FRAG_SHADER;
+extern const char* BLIT_VERT_SHADER;
+extern const char* BLIT_FRAG_SHADER;
+
 extern const char* COLOR_VERT_SHADER;
 extern const char* COLOR_FRAG_SHADER;
 extern const char* GRADIENT_VERT_SHADER;
@@ -45,10 +51,6 @@ extern const char* MASK_INTERSECT_FRAG_SHADER;
 extern const char* MASK_DIFF_FRAG_SHADER;
 extern const char* MASK_DARKEN_FRAG_SHADER;
 extern const char* MASK_LIGHTEN_FRAG_SHADER;
-extern const char* STENCIL_VERT_SHADER;
-extern const char* STENCIL_FRAG_SHADER;
-extern const char* BLIT_VERT_SHADER;
-extern const char* BLIT_FRAG_SHADER;
 
 extern const char* BLEND_SOLID_FRAG_HEADER;
 extern const char* BLEND_GRADIENT_FRAG_HEADER;
