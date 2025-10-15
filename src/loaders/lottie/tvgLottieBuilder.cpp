@@ -1280,7 +1280,7 @@ void LottieBuilder::updateMasks(LottieLayer* layer, float frameNo)
             P(pShape)->reset();
             auto compMethod = (method == CompositeMethod::SubtractMask || method == CompositeMethod::InvAlphaMask) ? CompositeMethod::InvAlphaMask : CompositeMethod::AlphaMask;
             //Cheaper. Replace the masking with a clipper
-            if (layer->masks.count == 1 && compMethod == CompositeMethod::AlphaMask) {
+            if (layer->effects.empty() && layer->masks.count == 1 && compMethod == CompositeMethod::AlphaMask) {
                 layer->scene->opacity(MULTIPLY(layer->scene->opacity(), opacity));
                 layer->scene->clip(cast(pShape));
             } else {
