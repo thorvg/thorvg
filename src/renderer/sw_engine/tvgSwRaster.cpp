@@ -1081,6 +1081,7 @@ static bool _rasterDirectImage(SwSurface* surface, const SwImage& image, const S
             sbuffer += image.stride;
         }
     //8bits grayscale
+    //32 -> 8 direct converting seems an avoidable stage. maybe draw to a masking image after an intermediate scene. Can get rid of this?
     } else if (surface->channelSize == sizeof(uint8_t)) {
         auto dbuffer = &surface->buf8[region.min.y * surface->stride + region.min.x];
         for (auto y = region.min.y; y < region.max.y; ++y, dbuffer += surface->stride, sbuffer += image.stride) {
@@ -1088,7 +1089,7 @@ static bool _rasterDirectImage(SwSurface* surface, const SwImage& image, const S
             auto src = sbuffer;
             if (opacity == 255) {
                 for (auto x = region.min.x; x < region.max.x; ++x, ++dst, ++src) {
-                    *dst = *src + MULTIPLY(*dst, IA(*src));
+                    *dst = A(*src) + MULTIPLY(*dst, IA(*src));
                 }
             } else {
                 for (auto x = region.min.x; x < region.max.x; ++x, ++dst, ++src) {
