@@ -25,32 +25,50 @@
 
 #include <cstdlib>
 #include <cstddef>
+#include <thorvg.h>
 
-//separate memory alloators for clean customization
+//separate memory allocators for clean customization
 namespace tvg
 {
+    thread_local static Initializer::HeapAllocator _heapAllocator = {};
+
     template<typename T = void*>
     static inline T malloc(size_t size)
     {
+        if (_heapAllocator.alloc) {
+            return static_cast<T>(_heapAllocator.alloc(size));
+        }
+
         return static_cast<T>(std::malloc(size));
     }
 
     template<typename T = void*>
     static inline T calloc(size_t nmem, size_t size)
     {
+        if (_heapAllocator.calloc) {
+            return static_cast<T>(_heapAllocator.calloc(nmem, size));
+        }
+
         return static_cast<T>(std::calloc(nmem, size));
     }
 
     template<typename T = void*>
     static inline T realloc(void* ptr, size_t size)
     {
+        if (_heapAllocator.realloc) {
+            return static_cast<T>(_heapAllocator.realloc(ptr, size));
+        }
+
         return static_cast<T>(std::realloc(ptr, size));
     }
 
-    template<typename T = void*>
     static inline void free(void* ptr)
     {
-        std::free(ptr);
+        if (_heapAllocator.free) {
+            return _heapAllocator.free(ptr);
+        }
+
+        return std::free(ptr);
     }
 }
 
