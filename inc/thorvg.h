@@ -5,6 +5,8 @@
 #include <functional>
 #include <list>
 #include <cstdarg>
+#include <cstddef>
+#include <cstdlib>
 
 #define TVG_VERSION_MAJOR 1  // for compile-time checks
 #define TVG_VERSION_MINOR 0  // for compile-time checks
@@ -2335,6 +2337,20 @@ struct TVG_API WgCanvas final : Canvas
 struct TVG_API Initializer final
 {
     /**
+     * @brief Heap allocator callbacks
+     *
+     * The default heap allocator points to std::malloc, std::calloc, std::realloc and std::free.
+     * Change to equivalent heap allocator functions when necessary.
+     */
+    struct HeapAllocator
+    {
+        void* (*alloc)(size_t);
+        void* (*calloc)(size_t, size_t);
+        void* (*realloc)(void*, size_t);
+        void (*free)(void*);
+    };
+
+    /**
      * @brief Initializes the ThorVG engine runtime.
      *
      * ThorVG requires an active runtime environment for rendering operations.
@@ -2344,6 +2360,9 @@ struct TVG_API Initializer final
      * @param[in] threads The number of worker threads to launch.
      *                    A value of 0 indicates that only the main thread will be used.
      *
+     * @param[in] allocator The custom allocator callback struct
+     *                      Leave it default to use std::malloc/std::calloc/std::realloc/std::free
+     *
      * @return Result indicating success or failure of initialization.
      *
      * @note This function uses internal reference counting to allow multiple init() calls.
@@ -2352,7 +2371,7 @@ struct TVG_API Initializer final
      *
      * @see Initializer::term()
      */
-    static Result init(uint32_t threads = 0) noexcept;
+    static Result init(uint32_t threads = 0, const HeapAllocator &allocator = {}) noexcept;
 
     /**
      * @brief Terminates the ThorVG engine.
