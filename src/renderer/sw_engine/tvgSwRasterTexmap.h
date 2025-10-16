@@ -804,8 +804,8 @@ bool rasterTexmapPolygon(SwSurface* surface, const SwImage& image, const Matrix&
         if (vertices[i].pt.y > ye) ye = vertices[i].pt.y;
     }
 
-    auto yStart = std::max(static_cast<int>(ys), bbox.min.y);
-    auto yEnd = std::min(static_cast<int>(ye), bbox.max.y);
+    auto yStart = std::max(static_cast<int32_t>(ys), bbox.min.y);
+    auto yEnd = std::min(static_cast<int32_t>(ye), bbox.max.y);
     auto aaSpans = rightAngle(transform) ?  nullptr : _AASpans(yStart, yEnd);
 
     Polygon polygon;
