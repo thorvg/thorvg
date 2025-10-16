@@ -25,7 +25,7 @@
 #include <vector>
 #include "tvgStr.h"
 #include "tvgPngSaver.h"
-#include "tvgLodePng.h"
+#include "tvgPngEncoder.h"
 
 
 #define WIDTH_8K 7680

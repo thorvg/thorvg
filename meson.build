@@ -62,7 +62,6 @@ webp_loader = all_loaders or get_option('loaders').contains('webp')
 all_savers = get_option('savers').contains('all')
 gif_saver = all_savers or get_option('savers').contains('gif') or lottie2gif
 png_saver = all_savers or get_option('savers').contains('png')
-png_loader = png_loader or png_saver
 
 #logging
 logging = get_option('log')
