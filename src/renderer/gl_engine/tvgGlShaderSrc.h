@@ -23,6 +23,13 @@
 #ifndef _TVG_GL_SHADERSRC_H_
 #define _TVG_GL_SHADERSRC_H_
 
+// service shaders
+extern const char* STENCIL_VERT_SHADER;
+extern const char* STENCIL_FRAG_SHADER;
+extern const char* BLIT_VERT_SHADER;
+extern const char* BLIT_FRAG_SHADER;
+
+// fill shaders
 extern const char* COLOR_VERT_SHADER;
 extern const char* COLOR_FRAG_SHADER;
 extern const char* GRADIENT_VERT_SHADER;
@@ -34,6 +41,8 @@ extern const char* STR_RADIAL_GRADIENT_VARIABLES;
 extern const char* STR_RADIAL_GRADIENT_MAIN;
 extern const char* IMAGE_VERT_SHADER;
 extern const char* IMAGE_FRAG_SHADER;
+
+// composition shaders
 extern const char* MASK_VERT_SHADER;
 extern const char* MASK_ALPHA_FRAG_SHADER;
 extern const char* MASK_INV_ALPHA_FRAG_SHADER;
@@ -45,18 +54,13 @@ extern const char* MASK_INTERSECT_FRAG_SHADER;
 extern const char* MASK_DIFF_FRAG_SHADER;
 extern const char* MASK_DARKEN_FRAG_SHADER;
 extern const char* MASK_LIGHTEN_FRAG_SHADER;
-extern const char* STENCIL_VERT_SHADER;
-extern const char* STENCIL_FRAG_SHADER;
-extern const char* BLIT_VERT_SHADER;
-extern const char* BLIT_FRAG_SHADER;
 
+// blending shaders
 extern const char* BLEND_SOLID_FRAG_HEADER;
 extern const char* BLEND_GRADIENT_FRAG_HEADER;
 extern const char* BLEND_IMAGE_FRAG_HEADER;
 extern const char* BLEND_SCENE_FRAG_HEADER;
-
 extern const char* BLEND_FRAG_HSL;
-
 extern const char* NORMAL_BLEND_FRAG;
 extern const char* MULTIPLY_BLEND_FRAG;
 extern const char* SCREEN_BLEND_FRAG;
@@ -75,6 +79,7 @@ extern const char* COLOR_BLEND_FRAG;
 extern const char* LUMINOSITY_BLEND_FRAG;
 extern const char* ADD_BLEND_FRAG;
 
+// effect shaders
 extern const char* EFFECT_VERTEX;
 extern const char* GAUSSIAN_VERTICAL;
 extern const char* GAUSSIAN_HORIZONTAL;
