@@ -794,7 +794,7 @@ bool SwRenderer::render(RenderCompositor* cmp, const RenderEffect* effect, bool 
         }
         case SceneEffect::DropShadow: {
             auto cmp1 = request(surface->channelSize, true);
-            cmp1->compositor->valid = false;
+            cmp1->compositor->valid = false;   //prevent a conflict with cmp2 request.
             auto cmp2 = request(surface->channelSize, true);
             SwSurface* surfaces[] = {cmp1, cmp2};
             auto ret = effectDropShadow(p, surfaces, static_cast<const RenderEffectDropShadow*>(effect), direct);

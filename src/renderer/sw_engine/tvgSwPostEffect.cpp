@@ -465,6 +465,7 @@ bool effectDropShadow(SwCompositor* cmp, SwSurface* surface[2], const RenderEffe
     //draw to the intermediate surface
     rasterClear(surface[1], bbox.min.x, bbox.min.y, w, h);
     _dropShadowShift(buffer[1]->buf32, cmp->image.buf32, buffer[1]->stride, cmp->image.stride, buffer[1]->w, buffer[1]->h, bbox, data->offset, opacity, direct);
+    std::swap(cmp->image.buf32, buffer[1]->buf32);
 
     //compositing shadow and body
     auto s = buffer[0]->buf32 + (bbox.min.y * buffer[0]->stride + bbox.min.x);
