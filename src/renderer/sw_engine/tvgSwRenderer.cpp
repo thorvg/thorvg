@@ -703,13 +703,16 @@ bool SwRenderer::render(RenderCompositor* cmp, const RenderEffect* effect, bool 
         return false;
     }
 
+    //TODO: Support grayscale effects.
+    if (p->recoverSfc->channelSize != sizeof(uint32_t)) direct = false;
+    
     switch (effect->type) {
         case SceneEffect::GaussianBlur: {
             return effectGaussianBlur(p, request(surface->channelSize, true), static_cast<const RenderEffectGaussianBlur*>(effect));
         }
         case SceneEffect::DropShadow: {
             auto cmp1 = request(surface->channelSize, true);
-            cmp1->compositor->valid = false;
+            cmp1->compositor->valid = false;   //prevent a conflict with cmp2 request.
             auto cmp2 = request(surface->channelSize, true);
             SwSurface* surfaces[] = {cmp1, cmp2};
             auto ret = effectDropShadow(p, surfaces, static_cast<const RenderEffectDropShadow*>(effect), direct);
