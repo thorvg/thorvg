@@ -1,6 +1,8 @@
 source_file = [
   'tvgPngSaver.cpp', 
-  'tvgPngSaver.h'
+  'tvgPngSaver.h',
+  'tvgPngEncoder.h',
+  'tvgPngEncoder.cpp'
 ]
 
 subsaver_dep += [declare_dependency(

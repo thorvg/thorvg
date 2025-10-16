@@ -23,7 +23,7 @@
 #ifndef _TVG_PNG_LOADER_H_
 #define _TVG_PNG_LOADER_H_
 
-#include "tvgLodePng.h"
+#include "tvgPngDecoder.h"
 #include "tvgTaskScheduler.h"
 
 

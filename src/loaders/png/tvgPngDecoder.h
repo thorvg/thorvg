@@ -45,8 +45,8 @@
       distribution.
 */
 
-#ifndef _TVG_LODEPNG_H_
-#define _TVG_LODEPNG_H_
+#ifndef _TVG_PNGDECODER_H_
+#define _TVG_PNGDECODER_H_
 
 #include <stddef.h>
 
@@ -157,110 +157,10 @@ struct LodePNGDecoderSettings
     unsigned color_convert; /*whether to convert the PNG to the color type you want. Default: yes*/
 };
 
-#ifdef THORVG_PNG_SAVER_SUPPORT
-/*Gives characteristics about the integer RGBA colors of the image (count, alpha channel usage, bit depth, ...),
-which helps decide which color model to use for encoding.
-Used internally by default if "auto_convert" is enabled. Public because it's useful for custom algorithms.*/
-typedef struct LodePNGColorStats 
-{
-  unsigned colored; /*not grayscale*/
-  unsigned key; /*image is not opaque and color key is possible instead of full alpha*/
-  unsigned short key_r; /*key values, always as 16-bit, in 8-bit case the byte is duplicated, e.g. 65535 means 255*/
-  unsigned short key_g;
-  unsigned short key_b;
-  unsigned alpha; /*image is not opaque and alpha channel or alpha palette required*/
-  unsigned numcolors; /*amount of colors, up to 257. Not valid if bits == 16 or allow_palette is disabled.*/
-  unsigned char palette[1024]; /*Remembers up to the first 256 RGBA colors, in no particular order, only valid when numcolors is valid*/
-  unsigned bits; /*bits per channel (not for palette). 1,2 or 4 for grayscale only. 16 if 16-bit per channel required.*/
-  size_t numpixels;
-
-  /*user settings for computing/using the stats*/
-  unsigned allow_palette; /*default 1. if 0, disallow choosing palette colortype in auto_choose_color, and don't count numcolors*/
-  unsigned allow_greyscale; /*default 1. if 0, choose RGB or RGBA even if the image only has gray colors*/
-} LodePNGColorStats;
-
-typedef struct LodePNGCompressSettings LodePNGCompressSettings;
-struct LodePNGCompressSettings /*deflate = compress*/ 
-{
-  /*LZ77 related settings*/
-  unsigned btype; /*the block type for LZ (0, 1, 2 or 3, see zlib standard). Should be 2 for proper compression.*/
-  unsigned use_lz77; /*whether or not to use LZ77. Should be 1 for proper compression.*/
-  unsigned windowsize; /*must be a power of two <= 32768. higher compresses more but is slower. Default value: 2048.*/
-  unsigned minmatch; /*minimum lz77 length. 3 is normally best, 6 can be better for some PNGs. Default: 0*/
-  unsigned nicematch; /*stop searching if >= this length found. Set to 258 for best compression. Default: 128*/
-  unsigned lazymatching; /*use lazy matching: better compression but a bit slower. Default: true*/
-
-  /*use custom zlib encoder instead of built in one (default: null)*/
-  unsigned (*custom_zlib)(unsigned char**, size_t*,
-                          const unsigned char*, size_t,
-                          const LodePNGCompressSettings*);
-  /*use custom deflate encoder instead of built in one (default: null)
-  if custom_zlib is used, custom_deflate is ignored since only the built in
-  zlib function will call custom_deflate*/
-  unsigned (*custom_deflate)(unsigned char**, size_t*,
-                             const unsigned char*, size_t,
-                             const LodePNGCompressSettings*);
-
-  const void* custom_context; /*optional custom settings for custom functions*/
-};
-/*automatically use color type with less bits per pixel if losslessly possible. Default: AUTO*/
-typedef enum LodePNGFilterStrategy 
-{
-  /*every filter at zero*/
-  LFS_ZERO = 0,
-  /*every filter at 1, 2, 3 or 4 (paeth), unlike LFS_ZERO not a good choice, but for testing*/
-  LFS_ONE = 1,
-  LFS_TWO = 2,
-  LFS_THREE = 3,
-  LFS_FOUR = 4,
-  /*Use filter that gives minimum sum, as described in the official PNG filter heuristic.*/
-  LFS_MINSUM,
-  /*Use the filter type that gives smallest Shannon entropy for this scanline. Depending
-  on the image, this is better or worse than minsum.*/
-  LFS_ENTROPY,
-  /*
-  Brute-force-search PNG filters by compressing each filter for each scanline.
-  Experimental, very slow, and only rarely gives better compression than MINSUM.
-  */
-  LFS_BRUTE_FORCE,
-  /*use predefined_filters buffer: you specify the filter type for each scanline*/
-  LFS_PREDEFINED
-} LodePNGFilterStrategy;
-
-/*Settings for the encoder.*/
-typedef struct LodePNGEncoderSettings 
-{
-  LodePNGCompressSettings zlibsettings; /*settings for the zlib encoder, such as window size, ...*/
-
-  unsigned auto_convert; /*automatically choose output PNG color type. Default: true*/
-
-  /*If true, follows the official PNG heuristic: if the PNG uses a palette or lower than
-  8 bit depth, set all filters to zero. Otherwise use the filter_strategy. Note that to
-  completely follow the official PNG heuristic, filter_palette_zero must be true and
-  filter_strategy must be LFS_MINSUM*/
-  unsigned filter_palette_zero;
-  /*Which filter strategy to use when not using zeroes due to filter_palette_zero.
-  Set filter_palette_zero to 0 to ensure always using your chosen strategy. Default: LFS_MINSUM*/
-  LodePNGFilterStrategy filter_strategy;
-  /*used if filter_strategy is LFS_PREDEFINED. In that case, this must point to a buffer with
-  the same length as the amount of scanlines in the image, and each value must <= 5. You
-  have to cleanup this buffer, LodePNG will never free it. Don't forget that filter_palette_zero
-  must be set to 0 to ensure this is also used on palette or low bitdepth images.*/
-  const unsigned char* predefined_filters;
-
-  /*force creating a PLTE chunk if colortype is 2 or 6 (= a suggested palette).
-  If colortype is 3, PLTE is _always_ created.*/
-  unsigned force_palette;
-} LodePNGEncoderSettings;
-#endif  // THORVG_PNG_SAVER_SUPPORT
-
 /*The settings, state and information for extended encoding and decoding.*/
 struct LodePNGState
 {
     LodePNGDecoderSettings decoder; /*the decoding settings*/
-#ifdef THORVG_PNG_SAVER_SUPPORT
-    LodePNGEncoderSettings encoder;
-#endif // THORVG_PNG_SAVER_SUPPORT
     LodePNGColorMode info_raw; /*specifies the format in which you would like to get the raw pixel buffer*/
     LodePNGInfo info_png; /*info of the PNG image obtained after decoding*/
     unsigned error;
@@ -271,9 +171,5 @@ void lodepng_state_cleanup(LodePNGState* state);
 unsigned lodepng_decode(unsigned char** out, unsigned* w, unsigned* h, LodePNGState* state, const unsigned char* in, size_t insize);
 unsigned lodepng_inspect(unsigned* w, unsigned* h, LodePNGState* state, const unsigned char* in, size_t insize);
 
-#ifdef THORVG_PNG_SAVER_SUPPORT
-unsigned lodepng_encode_memory(unsigned char** out, size_t* outsize, const unsigned char* image, unsigned w, unsigned h, LodePNGColorType colortype, unsigned bitdepth);
-unsigned lodepng_encode_file(const char* filename, const unsigned char* image, unsigned w, unsigned h, LodePNGColorType colortype, unsigned bitdepth);
-#endif  // THORVG_PNG_SAVER_SUPPORT
 
-#endif //_TVG_LODEPNG_H_
+#endif //_TVG_PNGDECODER_H_
