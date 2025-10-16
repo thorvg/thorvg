@@ -944,7 +944,7 @@ bool rleClip(SwRle *rle, const RenderRegion* clip)
         if (p->y < min.y || p->x >= max.x || (p->x + p->len) <= min.x) continue;
         if (p->x < min.x) {
             x = min.x;
-            len = std::min((p->len - (x - p->x)), (max.x - x));
+            len = std::min(uint16_t(p->len - (x - p->x)), uint16_t(max.x - x));
         } else {
             x = p->x;
             len = std::min(p->len, uint16_t(max.x - x));
