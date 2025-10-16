@@ -45,8 +45,8 @@
       distribution.
 */
 
-#ifndef _TVG_LODEPNG_H_
-#define _TVG_LODEPNG_H_
+#ifndef _TVG_PNGDECODER_H_
+#define _TVG_PNGDECODER_H_
 
 #include <stddef.h>
 
@@ -171,4 +171,5 @@ void lodepng_state_cleanup(LodePNGState* state);
 unsigned lodepng_decode(unsigned char** out, unsigned* w, unsigned* h, LodePNGState* state, const unsigned char* in, size_t insize);
 unsigned lodepng_inspect(unsigned* w, unsigned* h, LodePNGState* state, const unsigned char* in, size_t insize);
 
-#endif //_TVG_LODEPNG_H_
+
+#endif //_TVG_PNGDECODER_H_
