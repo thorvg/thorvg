@@ -707,7 +707,7 @@ bool LottieLayer::assign(const char* layer, uint32_t ix, const char* var, float 
 
 LottieComposition::~LottieComposition()
 {
-    if (!initiated && root) delete(root->scene);
+    if (!initiated && root) Paint::rel(root->scene);
 
     delete(root);
     tvg::free(version);

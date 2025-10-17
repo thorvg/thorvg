@@ -3824,7 +3824,7 @@ void SvgLoader::clear(bool all)
 
     if (copy) tvg::free((char*)content);
 
-    delete(root);
+    Paint::rel(root);
     root = nullptr;
 
     size = 0;

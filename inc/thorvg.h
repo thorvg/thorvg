@@ -343,9 +343,10 @@ struct Matrix
  */
 class TVG_API Paint
 {
-public:
+protected:
     virtual ~Paint();
 
+public:
     /**
      * @brief Retrieves the parent paint object.
      *
@@ -674,6 +675,18 @@ public:
      * @note Experimental API
      */
     uint32_t id = 0;
+
+    /**
+     * @brief Safely releases a Paint object.
+     *
+     * This is the counterpart to the `gen()` API, and releases the given Paint object safely, 
+     * handling @c nullptr and managing ownership properly.
+     *
+     * @param[in] paint A Paint object to release.
+     *
+     * @since 1.0
+     */
+    static void rel(Paint* paint) noexcept;
 
     _TVG_DECLARE_PRIVATE_BASE(Paint);
 };
@@ -1463,7 +1476,12 @@ public:
     /**
      * @brief Creates a new Shape object.
      *
-     * @return A new Shape object.
+     * This function allocates and returns a new Shape instance.
+     * To properly destroy the Shape object, use @ref Paint::rel().
+     *
+     * @return A pointer to the newly created Shape object.
+     *
+     * @see Paint::rel()
      */
     static Shape* gen() noexcept;
 
@@ -1659,7 +1677,12 @@ public:
     /**
      * @brief Creates a new Picture object.
      *
-     * @return A new Picture object.
+     * This function allocates and returns a new Picture instance.
+     * To properly destroy the Picture object, use @ref Paint::rel().
+     *
+     * @return A pointer to the newly created Picture object.
+     *
+     * @see Paint::rel()
      */
     static Picture* gen() noexcept;
 
@@ -1764,7 +1787,12 @@ public:
     /**
      * @brief Creates a new Scene object.
      *
-     * @return A new Scene object.
+     * This function allocates and returns a new Scene instance.
+     * To properly destroy the Scene object, use @ref Paint::rel().
+     *
+     * @return A pointer to the newly created Scene object.
+     *
+     * @see Paint::rel()
      */
     static Scene* gen() noexcept;
 
@@ -2026,7 +2054,12 @@ public:
     /**
      * @brief Creates a new Text object.
      *
-     * @return A new Text object.
+     * This function allocates and returns a new Text instance.
+     * To properly destroy the Text object, use @ref Paint::rel().
+     *
+     * @return A pointer to the newly created Text object.
+     *
+     * @see Paint::rel()
      *
      * @since 0.15
      */

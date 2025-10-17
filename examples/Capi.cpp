@@ -172,7 +172,7 @@ void contents()
         Tvg_Paint pict = tvg_picture_new();
         if (tvg_picture_load(pict, EXAMPLE_DIR"/svg/tiger.svg") != TVG_RESULT_SUCCESS) {
             printf("Problem with loading an svg file\n");
-            tvg_paint_del(pict);
+            tvg_paint_rel(pict);
         } else {
             float w, h;
             tvg_picture_get_size(pict, &w, &h);
