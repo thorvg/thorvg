@@ -300,6 +300,12 @@ Paint :: Paint() = default;
 Paint :: ~Paint() = default;
 
 
+void Paint::rel(Paint* paint) noexcept
+{
+    if (paint && paint->refCnt() <= 0) delete(paint);
+}
+
+
 Result Paint::rotate(float degree) noexcept
 {
     if (pImpl->rotate(degree)) return Result::Success;

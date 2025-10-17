@@ -266,7 +266,7 @@ static bool _applyClip(SvgLoaderData& loaderData, Paint* paint, const SvgNode* n
         clipper->transform(finalTransform);
         paint->clip(clipper);
     } else {
-        delete(clipper);
+        Paint::rel(clipper);
     }
 
     node->style->clipPath.applying = false;
@@ -286,7 +286,7 @@ static Paint* _applyComposition(SvgLoaderData& loaderData, Paint* paint, const S
 
     if (!clipNode && !maskNode) return paint;
     if ((clipNode && clipNode->child.empty()) || (maskNode && maskNode->child.empty())) {
-        delete(paint);
+        Paint::rel(paint);
         return nullptr;
     }
 
@@ -295,7 +295,7 @@ static Paint* _applyComposition(SvgLoaderData& loaderData, Paint* paint, const S
 
     if (clipNode) {
         if (!_applyClip(loaderData, scene, node, clipNode, vBox, svgPath)) {
-            delete(scene);
+            Paint::rel(scene);
             return nullptr;
         }
     }

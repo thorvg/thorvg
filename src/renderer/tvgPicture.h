@@ -76,7 +76,7 @@ struct PictureImpl : Picture
     {
         LoaderMgr::retrieve(loader);
         tvg::free(resolver);
-        delete(vector);
+        Paint::rel(vector);
     }
 
     bool skip(RenderUpdateFlag flag)

@@ -55,7 +55,7 @@ struct TextImpl : Text
             loader->release(fm);
             LoaderMgr::retrieve(loader);
         }
-        delete(shape);
+        Paint::rel(shape);
     }
 
     Result text(const char* utf8)

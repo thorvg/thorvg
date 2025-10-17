@@ -321,20 +321,20 @@ TEST_CASE("Intersection", "[tvgPaint]")
 
 TEST_CASE("Duplication", "[tvgPaint]")
 {
-    vector<unique_ptr<Paint>> paints;
+    vector<Paint*> paints;
 
-    auto shape = unique_ptr<Shape>(Shape::gen());
+    auto shape = Shape::gen();
     REQUIRE(shape);
-    paints.push_back(std::move(shape));
+    paints.push_back(shape);
 
     REQUIRE(Text::load(TEST_DIR"/Arial.ttf") == Result::Success);
-    auto text = unique_ptr<Text>(Text::gen());
+    auto text = Text::gen();
     REQUIRE(text);
     REQUIRE(text->font("Arial") == Result::Success);
     REQUIRE(text->size(32) == Result::Success);
     REQUIRE(text->text("Original Text") == Result::Success);
     REQUIRE(text->fill(255, 0, 0) == Result::Success);
-    paints.push_back(std::move(text));
+    paints.push_back(text);
 
     for (auto& paint : paints) {
         //Setup paint properties
@@ -348,7 +348,7 @@ TEST_CASE("Duplication", "[tvgPaint]")
         REQUIRE(paint->clip(comp) == Result::Success);
 
         //Duplication
-        auto dup = unique_ptr<Paint>(paint->duplicate());
+        auto dup = paint->duplicate();
         REQUIRE(dup);
 
         //Compare properties
@@ -364,6 +364,13 @@ TEST_CASE("Duplication", "[tvgPaint]")
         REQUIRE(m.e31 == Approx(0.0f).margin(0.000001));
         REQUIRE(m.e32 == Approx(0.0f).margin(0.000001));
         REQUIRE(m.e33 == Approx(1.0f).margin(0.000001));
+
+        Paint::rel(dup);
+    }
+
+    //release
+    for (auto p : paints) {
+        Paint::rel(p);
     }
 }
 

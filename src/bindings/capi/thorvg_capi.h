@@ -740,16 +740,16 @@ TVG_API Tvg_Result tvg_canvas_set_viewport(Tvg_Canvas canvas, int32_t x, int32_t
 /************************************************************************/
 /* Paint API                                                            */
 /************************************************************************/
-/*!
-* @brief Releases the given Tvg_Paint object.
-*
-* @param[in] paint The Tvg_Paint object to be released.
-*
-* @retval TVG_RESULT_INVALID_ARGUMENT An invalid Tvg_Paint pointer.
-*
-* @see tvg_canvas_remove()
-*/
-TVG_API Tvg_Result tvg_paint_del(Tvg_Paint paint);
+
+/**
+ * @brief Safely releases a Tv_Paint object.
+ *
+ * This is the counterpart to the `new()` API, and releases the given Paint object safely, 
+ * handling @c nullptr and managing ownership properly.
+ *
+ * @param[in] paint A Tvg_Paint object to release.
+ */
+TVG_API Tvg_Result tvg_paint_rel(Tvg_Paint paint);
 
 
 /**
@@ -1157,11 +1157,17 @@ TVG_API Tvg_Result tvg_paint_set_blend_method(Tvg_Paint paint, Tvg_Blend_Method 
 /************************************************************************/
 /* Shape API                                                            */
 /************************************************************************/
-/*!
-* @brief Creates a new shape object.
-*
-* @return A new shape object.
-*/
+
+/**
+ * @brief Creates a new Shape object.
+ *
+ * This function allocates and returns a new Shape instance.
+ * To properly destroy the Shape object, use @ref tvg_paint_rel().
+ *
+ * @return A pointer to the newly created Shape object.
+ *
+ * @see tvg_paint_rel()
+ */
 TVG_API Tvg_Paint tvg_shape_new(void);
 
 
@@ -1902,11 +1908,17 @@ TVG_API Tvg_Result tvg_gradient_del(Tvg_Gradient grad);
 /************************************************************************/
 /* Picture API                                                          */
 /************************************************************************/
-/*!
-* @brief Creates a new picture object.
-*
-* @return A new picture object.
-*/
+
+/**
+ * @brief Creates a new Picture object.
+ *
+ * This function allocates and returns a new Picture instance.
+ * To properly destroy the Picture object, use @ref tvg_paint_rel().
+ *
+ * @return A pointer to the newly created Picture object.
+ *
+ * @see tvg_paint_rel()
+ */
 TVG_API Tvg_Paint tvg_picture_new(void);
 
 
@@ -2109,13 +2121,17 @@ TVG_API const Tvg_Paint tvg_picture_get_paint(Tvg_Paint picture, uint32_t id);
 /************************************************************************/
 /* Scene API                                                            */
 /************************************************************************/
-/*!
-* @brief Creates a new scene object.
-*
-* A scene object is used to group many paints into one object, which can be manipulated using TVG APIs.
-*
-* @return A new scene object.
-*/
+
+/**
+ * @brief Creates a new Scene object.
+ *
+ * This function allocates and returns a new Scene instance.
+ * To properly destroy the Scene object, use @ref tvg_paint_rel().
+ *
+ * @return A pointer to the newly created Scene object.
+ *
+ * @see tvg_paint_rel()
+ */
 TVG_API Tvg_Paint tvg_scene_new(void);
 
 
@@ -2297,13 +2313,19 @@ TVG_API Tvg_Result tvg_scene_push_effect_tritone(Tvg_Paint scene, int shadow_r, 
 /************************************************************************/
 /* Text API                                                            */
 /************************************************************************/
-/*!
-* @brief Creates a new text object.
-*
-* @return A new text object.
-*
-* @since 0.15
-*/
+
+/**
+ * @brief Creates a new Text object.
+ *
+ * This function allocates and returns a new Text instance.
+ * To properly destroy the Text object, use @ref tvg_paint_rel().
+ *
+ * @return A pointer to the newly created Text object.
+ *
+ * @see tvg_paint_rel()
+ *
+ * @since 0.15
+ */
 TVG_API Tvg_Paint tvg_text_new(void);
 
 
