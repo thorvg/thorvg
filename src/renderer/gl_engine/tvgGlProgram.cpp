@@ -21,6 +21,7 @@
  */
 
 #include "tvgGlProgram.h"
+#include "tvgGlShaderCache.h"
 
 /************************************************************************/
 /* Internal Class Implementation                                        */
@@ -28,17 +29,28 @@
 
 uint32_t GlProgram::mCurrentProgram = 0;
 
-
 /************************************************************************/
 /* External Class Implementation                                        */
 /************************************************************************/
 
-GlProgram::GlProgram(const char* vertSrc, const char* fragSrc)
+GlProgram::GlProgram(const char *vertSrc, const char *fragSrc)
 {
+    uint32_t progObj = 0;
+
+#ifndef __EMSCRIPTEN__
+    progObj = GlShaderCache::read(vertSrc, fragSrc);
+
+    if (0 != progObj)
+    {
+        mProgramObj = progObj;
+        return;
+    }
+#endif
+
     auto shader = GlShader(vertSrc, fragSrc);
 
     // Create the program object
-    uint32_t progObj = glCreateProgram();
+    progObj = glCreateProgram();
     assert(progObj);
 
     glAttachShader(progObj, shader.getVertexShader());
@@ -51,61 +63,61 @@ GlProgram::GlProgram(const char* vertSrc, const char* fragSrc)
     GLint linked;
     glGetProgramiv(progObj, GL_LINK_STATUS, &linked);
 
-    if (!linked) {
+    if (!linked)
+    {
         GLint infoLen = 0;
         glGetProgramiv(progObj, GL_INFO_LOG_LENGTH, &infoLen);
         if (infoLen > 0)
         {
-            auto infoLog = tvg::malloc<char*>(sizeof(char) * infoLen);
+            auto infoLog = tvg::malloc<char *>(sizeof(char) * infoLen);
             glGetProgramInfoLog(progObj, infoLen, NULL, infoLog);
             TVGERR("GL_ENGINE", "Error linking shader: %s", infoLog);
             tvg::free(infoLog);
-
         }
         glDeleteProgram(progObj);
         progObj = 0;
         assert(0);
     }
-    mProgramObj = progObj;
-}
 
+    mProgramObj = progObj;
+#ifndef __EMSCRIPTEN__
+    GlShaderCache::write(progObj, vertSrc, fragSrc);
+#endif
+}
 
 GlProgram::~GlProgram()
 {
-    if (mCurrentProgram == mProgramObj) unload();
+    if (mCurrentProgram == mProgramObj)
+        unload();
     glDeleteProgram(mProgramObj);
 }
 
-
 void GlProgram::load()
 {
-    if (mCurrentProgram == mProgramObj) return;
+    if (mCurrentProgram == mProgramObj)
+        return;
     mCurrentProgram = mProgramObj;
     GL_CHECK(glUseProgram(mProgramObj));
-
 }
-
 
 void GlProgram::unload()
 {
     mCurrentProgram = 0;
 }
 
-
-int32_t GlProgram::getAttributeLocation(const char* name)
+int32_t GlProgram::getAttributeLocation(const char *name)
 {
     GL_CHECK(int32_t location = glGetAttribLocation(mCurrentProgram, name));
     return location;
 }
 
-
-int32_t GlProgram::getUniformLocation(const char* name)
+int32_t GlProgram::getUniformLocation(const char *name)
 {
     GL_CHECK(int32_t location = glGetUniformLocation(mProgramObj, name));
     return location;
 }
 
-int32_t GlProgram::getUniformBlockIndex(const char* name)
+int32_t GlProgram::getUniformBlockIndex(const char *name)
 {
     GL_CHECK(int32_t index = glGetUniformBlockIndex(mProgramObj, name));
     return index;
@@ -116,54 +128,47 @@ uint32_t GlProgram::getProgramId()
     return mProgramObj;
 }
 
-void GlProgram::setUniform1Value(int32_t location, int count, const int* values)
+void GlProgram::setUniform1Value(int32_t location, int count, const int *values)
 {
     GL_CHECK(glUniform1iv(location, count, values));
 }
 
-
-void GlProgram::setUniform2Value(int32_t location, int count, const int* values)
+void GlProgram::setUniform2Value(int32_t location, int count, const int *values)
 {
     GL_CHECK(glUniform2iv(location, count, values));
 }
 
-
-void GlProgram::setUniform3Value(int32_t location, int count, const int* values)
+void GlProgram::setUniform3Value(int32_t location, int count, const int *values)
 {
     GL_CHECK(glUniform3iv(location, count, values));
 }
 
-
-void GlProgram::setUniform4Value(int32_t location, int count, const int* values)
+void GlProgram::setUniform4Value(int32_t location, int count, const int *values)
 {
     GL_CHECK(glUniform4iv(location, count, values));
 }
 
-
-void GlProgram::setUniform1Value(int32_t location, int count, const float* values)
+void GlProgram::setUniform1Value(int32_t location, int count, const float *values)
 {
     GL_CHECK(glUniform1fv(location, count, values));
 }
 
-
-void GlProgram::setUniform2Value(int32_t location, int count, const float* values)
+void GlProgram::setUniform2Value(int32_t location, int count, const float *values)
 {
     GL_CHECK(glUniform2fv(location, count, values));
 }
 
-
-void GlProgram::setUniform3Value(int32_t location, int count, const float* values)
+void GlProgram::setUniform3Value(int32_t location, int count, const float *values)
 {
     GL_CHECK(glUniform3fv(location, count, values));
 }
 
-
-void GlProgram::setUniform4Value(int32_t location, int count, const float* values)
+void GlProgram::setUniform4Value(int32_t location, int count, const float *values)
 {
     GL_CHECK(glUniform4fv(location, count, values));
 }
 
-void GlProgram::setUniform4x4Value(int32_t location, int count, const float* values)
+void GlProgram::setUniform4x4Value(int32_t location, int count, const float *values)
 {
     GL_CHECK(glUniformMatrix4fv(location, count, GL_FALSE, &values[0]));
 }

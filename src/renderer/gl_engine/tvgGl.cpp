@@ -465,6 +465,7 @@ PFNGLGENVERTEXARRAYSPROC                     glGenVertexArrays;
 //GL_VERSION_3_1
 PFNGLGETUNIFORMBLOCKINDEXPROC      glGetUniformBlockIndex;
 PFNGLUNIFORMBLOCKBINDINGPROC       glUniformBlockBinding;
+
 //PFNGLDRAWARRAYSINSTANCEDPROC       glDrawArraysInstanced;
 //PFNGLDRAWELEMENTSINSTANCEDPROC     glDrawElementsInstanced;
 //PFNGLTEXBUFFERPROC                 glTexBuffer;
@@ -475,6 +476,10 @@ PFNGLUNIFORMBLOCKBINDINGPROC       glUniformBlockBinding;
 //PFNGLGETACTIVEUNIFORMNAMEPROC      glGetActiveUniformName;
 //PFNGLGETACTIVEUNIFORMBLOCKIVPROC   glGetActiveUniformBlockiv;
 //PFNGLGETACTIVEUNIFORMBLOCKNAMEPROC glGetActiveUniformBlockName;
+
+// GL_VERSION_4_1
+PFNGLGETPROGRAMBINARYPROC glGetProgramBinary;
+PFNGLPROGRAMBINARYPROC glProgramBinary;
 
 bool glInit()
 {
@@ -809,6 +814,10 @@ bool glInit()
     // GL_FUNCTION_FETCH(glGetActiveUniformBlockName, PFNGLGETACTIVEUNIFORMBLOCKNAMEPROC);
     GL_FUNCTION_FETCH(glUniformBlockBinding, PFNGLUNIFORMBLOCKBINDINGPROC);
 
+    // GL_ARB_get_program_binary (optional, may not be available on all platforms)
+    glGetProgramBinary = (PFNGLGETPROGRAMBINARYPROC)_getProcAddress("glGetProgramBinary");
+    glProgramBinary = (PFNGLPROGRAMBINARYPROC)_getProcAddress("glProgramBinary");
+
     //Confirm the version
     GLint vMajor, vMinor;
     glGetIntegerv(GL_MAJOR_VERSION, &vMajor);
@@ -819,6 +828,22 @@ bool glInit()
     }
 
     TVGLOG("GL_ENGINE", "OpenGL/ES version = v%d.%d", vMajor, vMinor);
+
+    glGetProgramBinary = nullptr;
+    glProgramBinary = nullptr;
+#if defined(THORVG_GL_TARGET_GLES)
+    // OpenGL ES 3.0+ has these functions in core
+    if (vMajor >= 3) {
+        GL_FUNCTION_FETCH(glGetProgramBinary, PFNGLGETPROGRAMBINARYPROC);
+        GL_FUNCTION_FETCH(glProgramBinary, PFNGLPROGRAMBINARYPROC);
+    }
+#else
+    // OpenGL 4.1+ has these functions in core
+    if (vMajor > 4 || (vMajor == 4 && vMinor >= 1)) {
+        GL_FUNCTION_FETCH(glGetProgramBinary, PFNGLGETPROGRAMBINARYPROC);
+        GL_FUNCTION_FETCH(glProgramBinary, PFNGLPROGRAMBINARYPROC);
+    }
+#endif
 
     return true;
 };

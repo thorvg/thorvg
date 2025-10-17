@@ -1170,6 +1170,16 @@
         //typedef void (*PFNGLGETACTIVEUNIFORMBLOCKNAMEPROC)(GLuint program, GLuint uniformBlockIndex, GLsizei bufSize, GLsizei *length, GLchar *uniformBlockName);
     #endif /* GL_VERSION_3_1 */
 
+    #ifndef GL_VERSION_4_1
+        #define GL_VERSION_4_1 1
+        #define GL_MAX_ELEMENT_INDEX            0x8D6B
+        #define GL_NUM_PROGRAM_BINARY_FORMATS 0x87FE
+        #define GL_PROGRAM_BINARY_FORMATS 0x87FF
+        #define GL_PROGRAM_BINARY_LENGTH 0x8741
+        typedef void (*PFNGLGETPROGRAMBINARYPROC)(GLuint program, GLsizei bufSize, GLsizei *length, GLenum *binaryFormat, void *binary);
+        typedef void (*PFNGLPROGRAMBINARYPROC)(GLuint program, GLenum binaryFormat, const void *binary, GLsizei length);
+    #endif
+
     //GL_VERSION_1_0
     extern PFNGLCULLFACEPROC               glCullFace;
     extern PFNGLFRONTFACEPROC              glFrontFace;
@@ -1490,6 +1500,10 @@
     //extern PFNGLGETACTIVEUNIFORMNAMEPROC      glGetActiveUniformName;
     //extern PFNGLGETACTIVEUNIFORMBLOCKIVPROC   glGetActiveUniformBlockiv;
     //extern PFNGLGETACTIVEUNIFORMBLOCKNAMEPROC glGetActiveUniformBlockName;
+
+    //GL_ARB_get_program_binary
+    extern PFNGLGETPROGRAMBINARYPROC          glGetProgramBinary;
+    extern PFNGLPROGRAMBINARYPROC             glProgramBinary;
 #endif // __EMSCRIPTEN__
 
 bool glInit();
