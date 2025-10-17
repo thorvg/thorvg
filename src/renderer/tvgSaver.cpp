@@ -107,7 +107,7 @@ Result Saver::save(Paint* paint, const char* filename, uint32_t quality) noexcep
 
     //Already on saving another resource.
     if (pImpl->saveModule) {
-        TVG_DELETE(paint);
+        Paint::rel(paint);
         return Result::InsufficientCondition;
     }
 
@@ -116,12 +116,12 @@ Result Saver::save(Paint* paint, const char* filename, uint32_t quality) noexcep
             pImpl->saveModule = saveModule;
             return Result::Success;
         } else {
-            TVG_DELETE(paint);
+            Paint::rel(paint);
             delete(saveModule);
             return Result::Unknown;
         }
     }
-    TVG_DELETE(paint);
+    Paint::rel(paint);
     return Result::NonSupport;
 }
 

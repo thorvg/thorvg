@@ -416,7 +416,7 @@ void LottieBuilder::appendRect(Shape* shape, Point& pos, Point& size, float r, b
 
     if (ctx->offset) {
         ctx->offset->modifyRect(SHAPE(temp)->rs.path, SHAPE(shape)->rs.path);
-        delete(temp);
+        Paint::rel(temp);
     }
 }
 
@@ -1182,8 +1182,8 @@ void LottieBuilder::updateText(LottieLayer* layer, float frameNo)
         }
     }
 
-    delete(scene);
-    delete(textGroup);
+    Paint::rel(scene);
+    Paint::rel(textGroup);
 }
 
 
@@ -1259,7 +1259,7 @@ bool LottieBuilder::updateMatte(LottieComposition* comp, float frameNo, Scene* s
         layer->scene->mask(target->scene, layer->matteType);
     } else if (layer->matteType == MaskMethod::Alpha || layer->matteType == MaskMethod::Luma) {
         //matte target is not exist. alpha blending definitely bring an invisible result
-        delete(layer->scene);
+        Paint::rel(layer->scene);
         layer->scene = nullptr;
         return false;
     }

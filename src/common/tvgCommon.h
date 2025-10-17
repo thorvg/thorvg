@@ -87,9 +87,6 @@ namespace tvg {
 
     uint16_t THORVG_VERSION_NUMBER();
 
-    #define TVG_DELETE(PAINT) \
-    if (PAINT->refCnt() == 0) delete(PAINT)
-
     extern int engineInit;
 }
 

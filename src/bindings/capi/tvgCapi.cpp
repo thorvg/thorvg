@@ -170,13 +170,10 @@ TVG_API const Tvg_Paint tvg_paint_get_parent(const Tvg_Paint paint)
 }
 
 
-TVG_API Tvg_Result tvg_paint_del(Tvg_Paint paint)
+TVG_API Tvg_Result tvg_paint_rel(Tvg_Paint paint)
 {
-    if (paint) {
-        delete(reinterpret_cast<Paint*>(paint));
-        return TVG_RESULT_SUCCESS;
-    }
-    return TVG_RESULT_INVALID_ARGUMENT;
+    Paint::rel(reinterpret_cast<Paint*>(paint));
+    return TVG_RESULT_SUCCESS;
 }
 
 
