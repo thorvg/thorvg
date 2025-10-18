@@ -1,0 +1,22 @@
+# build for macOS Apple Silicon
+
+[binaries]
+cpp = ['clang++', '-arch', 'arm64', '-isysroot', '/Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX.sdk']
+ar = 'ar'
+strip = 'strip'
+
+[properties]
+root = '/Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer'
+has_function_printf = true
+
+[built-in options]
+cpp_args = ['-mmacosx-version-min=10.14']
+cpp_link_args = ['-mmacosx-version-min=10.14']
+
+[host_machine]
+system = 'darwin'
+subsystem = 'macos'
+kernel = 'xnu'
+cpu_family = 'aarch64'
+cpu = 'aarch64'
+endian = 'little'

@@ -1,0 +1,22 @@
+# build for macOS Intel
+
+[binaries]
+cpp = ['clang++', '-arch', 'x86_64', '-isysroot', '/Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX.sdk']
+ar = 'ar'
+strip = 'strip'
+
+[properties]
+root = '/Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer'
+has_function_printf = true
+
+[built-in options]
+cpp_args = ['-mmacosx-version-min=10.14']
+cpp_link_args = ['-mmacosx-version-min=10.14']
+
+[host_machine]
+system = 'darwin'
+subsystem = 'macos'
+kernel = 'xnu'
+cpu_family = 'x86_64'
+cpu = 'x86_64'
+endian = 'little'
