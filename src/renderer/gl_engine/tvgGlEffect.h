@@ -24,7 +24,7 @@
 #define _TVG_GL_EFFECT_H_
 
 #include "tvgRender.h"
-#include "tvgGlProgram.h"
+#include "tvgGlPrograms.h"
 
 
 class GlEffect

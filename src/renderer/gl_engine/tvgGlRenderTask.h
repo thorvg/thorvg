@@ -24,7 +24,7 @@
 #define _TVG_GL_RENDER_TASK_H_
 
 #include "tvgGlCommon.h"
-#include "tvgGlProgram.h"
+#include "tvgGlPrograms.h"
 
 
 struct GlVertexLayout

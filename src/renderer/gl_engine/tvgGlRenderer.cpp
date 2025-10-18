@@ -22,13 +22,8 @@
 
 #include <atomic>
 #include "tvgFill.h"
-#include "tvgGlCommon.h"
 #include "tvgGlRenderer.h"
-#include "tvgGlGpuBuffer.h"
 #include "tvgGlRenderTask.h"
-#include "tvgGlProgram.h"
-#include "tvgGlShaderSrc.h"
-
 
 /************************************************************************/
 /* Internal Class Implementation                                        */
@@ -92,70 +87,7 @@ GlRenderer::~GlRenderer()
 
     flush();
 
-    ARRAY_FOREACH(p, mPrograms) delete(*p);
-}
-
-
-void GlRenderer::initShaders()
-{
-    mPrograms.reserve((int)RT_None);
-
-#if 1  //for optimization
-    #define LINEAR_TOTAL_LENGTH 2770
-    #define RADIAL_TOTAL_LENGTH 5272
-    #define BLEND_TOTAL_LENGTH 8192
-#else
-    #define COMMON_TOTAL_LENGTH strlen(STR_GRADIENT_FRAG_COMMON_VARIABLES) + strlen(STR_GRADIENT_FRAG_COMMON_FUNCTIONS) + 1
-    #define LINEAR_TOTAL_LENGTH strlen(STR_LINEAR_GRADIENT_VARIABLES) + strlen(STR_LINEAR_GRADIENT_MAIN) + COMMON_TOTAL_LENGTH
-    #define RADIAL_TOTAL_LENGTH strlen(STR_RADIAL_GRADIENT_VARIABLES) + strlen(STR_RADIAL_GRADIENT_MAIN) + COMMON_TOTAL_LENGTH
-    #define BLEND_TOTAL_LENGTH strlen(BLEND_SOLID_FRAG_HEADER) + strlen(COLOR_BURN_BLEND_FRAG) + COMMON_TOTAL_LENGTH
-#endif
-
-    char linearGradientFragShader[LINEAR_TOTAL_LENGTH];
-    snprintf(linearGradientFragShader, LINEAR_TOTAL_LENGTH, "%s%s%s%s",
-        STR_GRADIENT_FRAG_COMMON_VARIABLES,
-        STR_LINEAR_GRADIENT_VARIABLES,
-        STR_GRADIENT_FRAG_COMMON_FUNCTIONS,
-        STR_LINEAR_GRADIENT_MAIN
-    );
-
-    char radialGradientFragShader[RADIAL_TOTAL_LENGTH];
-    snprintf(radialGradientFragShader, RADIAL_TOTAL_LENGTH, "%s%s%s%s",
-        STR_GRADIENT_FRAG_COMMON_VARIABLES,
-        STR_RADIAL_GRADIENT_VARIABLES,
-        STR_GRADIENT_FRAG_COMMON_FUNCTIONS,
-        STR_RADIAL_GRADIENT_MAIN
-    );
-
-    mPrograms.push(new GlProgram(COLOR_VERT_SHADER, COLOR_FRAG_SHADER));
-    mPrograms.push(new GlProgram(GRADIENT_VERT_SHADER, linearGradientFragShader));
-    mPrograms.push(new GlProgram(GRADIENT_VERT_SHADER, radialGradientFragShader));
-    mPrograms.push(new GlProgram(IMAGE_VERT_SHADER, IMAGE_FRAG_SHADER));
-
-    // compose Renderer
-    mPrograms.push(new GlProgram(MASK_VERT_SHADER, MASK_ALPHA_FRAG_SHADER));
-    mPrograms.push(new GlProgram(MASK_VERT_SHADER, MASK_INV_ALPHA_FRAG_SHADER));
-    mPrograms.push(new GlProgram(MASK_VERT_SHADER, MASK_LUMA_FRAG_SHADER));
-    mPrograms.push(new GlProgram(MASK_VERT_SHADER, MASK_INV_LUMA_FRAG_SHADER));
-    mPrograms.push(new GlProgram(MASK_VERT_SHADER, MASK_ADD_FRAG_SHADER));
-    mPrograms.push(new GlProgram(MASK_VERT_SHADER, MASK_SUB_FRAG_SHADER));
-    mPrograms.push(new GlProgram(MASK_VERT_SHADER, MASK_INTERSECT_FRAG_SHADER));
-    mPrograms.push(new GlProgram(MASK_VERT_SHADER, MASK_DIFF_FRAG_SHADER));
-    mPrograms.push(new GlProgram(MASK_VERT_SHADER, MASK_LIGHTEN_FRAG_SHADER));
-    mPrograms.push(new GlProgram(MASK_VERT_SHADER, MASK_DARKEN_FRAG_SHADER));
-
-    // stencil Renderer
-    mPrograms.push(new GlProgram(STENCIL_VERT_SHADER, STENCIL_FRAG_SHADER));
-
-    // blit Renderer
-    mPrograms.push(new GlProgram(BLIT_VERT_SHADER, BLIT_FRAG_SHADER));
-
-    for (uint32_t i = 0; i < 17; i++) {
-        mPrograms.push(nullptr); // slot for blend
-        mPrograms.push(nullptr); // slot for gradient blend
-        mPrograms.push(nullptr); // slot for image blend
-        mPrograms.push(nullptr); // slot for scene blend
-    }
+    mPrograms.term();
 }
 
 
@@ -179,8 +111,8 @@ void GlRenderer::drawPrimitive(GlShape& sdata, const RenderColor& c, RenderUpdat
     auto h = bbox.sh();
 
     GlRenderTask* task = nullptr;
-    if (mBlendMethod != BlendMethod::Normal && !complexBlend) task = new GlSimpleBlendTask(mBlendMethod, mPrograms[RT_Color]);
-    else task = new GlRenderTask(mPrograms[RT_Color]);
+    if (mBlendMethod != BlendMethod::Normal && !complexBlend) task = new GlSimpleBlendTask(mBlendMethod, mPrograms.color);
+    else task = new GlRenderTask(mPrograms.color);
 
     task->setDrawDepth(depth);
 
@@ -196,7 +128,7 @@ void GlRenderer::drawPrimitive(GlShape& sdata, const RenderColor& c, RenderUpdat
 
     GlStencilMode stencilMode = sdata.geometry.getStencilMode(flag);
     if (stencilMode != GlStencilMode::None) {
-        stencilTask = new GlRenderTask(mPrograms[RT_Stencil], task);
+        stencilTask = new GlRenderTask(mPrograms.stencil, task);
         stencilTask->setDrawDepth(depth);
     }
 
@@ -248,7 +180,7 @@ void GlRenderer::drawPrimitive(GlShape& sdata, const RenderColor& c, RenderUpdat
     else currentPass()->addRenderTask(task);
 
     if (complexBlend) {
-        auto task = new GlRenderTask(mPrograms[RT_Stencil]);
+        auto task = new GlRenderTask(mPrograms.stencil);
         sdata.geometry.draw(task, &mGpuBuffer, flag);
         endBlendingCompose(task, sdata.geometry.matrix, false, false);
     }
@@ -267,8 +199,8 @@ void GlRenderer::drawPrimitive(GlShape& sdata, const Fill* fill, RenderUpdateFla
 
     GlRenderTask* task = nullptr;
 
-    if (fill->type() == Type::LinearGradient) task = new GlRenderTask(mPrograms[RT_LinGradient]);
-    else if (fill->type() == Type::RadialGradient) task = new GlRenderTask(mPrograms[RT_RadGradient]);
+    if (fill->type() == Type::LinearGradient) task = new GlRenderTask(mPrograms.linear);
+    else if (fill->type() == Type::RadialGradient) task = new GlRenderTask(mPrograms.radial);
     else return;
 
     task->setDrawDepth(depth);
@@ -288,7 +220,7 @@ void GlRenderer::drawPrimitive(GlShape& sdata, const Fill* fill, RenderUpdateFla
     GlRenderTask* stencilTask = nullptr;
     GlStencilMode stencilMode = sdata.geometry.getStencilMode(flag);
     if (stencilMode != GlStencilMode::None) {
-        stencilTask = new GlRenderTask(mPrograms[RT_Stencil], task);
+        stencilTask = new GlRenderTask(mPrograms.stencil, task);
         stencilTask->setDrawDepth(depth);
     }
 
@@ -429,7 +361,7 @@ void GlRenderer::drawPrimitive(GlShape& sdata, const Fill* fill, RenderUpdateFla
     }
 
     if (complexBlend) {
-        auto task = new GlRenderTask(mPrograms[RT_Stencil]);
+        auto task = new GlRenderTask(mPrograms.stencil);
         sdata.geometry.draw(task, &mGpuBuffer, flag);
         endBlendingCompose(task, sdata.geometry.matrix, true, false);
     }
@@ -483,7 +415,7 @@ void GlRenderer::drawClip(Array<RenderData>& clips)
 
     for (uint32_t i = 0; i < clips.count; ++i) {
         auto sdata = static_cast<GlShape*>(clips[i]);
-        auto clipTask = new GlRenderTask(mPrograms[RT_Stencil]);
+        auto clipTask = new GlRenderTask(mPrograms.stencil);
         clipTask->setDrawDepth(clipDepths[i]);
 
         auto flag = (sdata->geometry.stroke.vertex.count > 0) ? RenderUpdateFlag::Stroke : RenderUpdateFlag::Path;
@@ -504,7 +436,7 @@ void GlRenderer::drawClip(Array<RenderData>& clips)
 
         clipTask->addBindResource(GlBindingResource{0, loc, mGpuBuffer.getBufferId(), viewOffset, 16 * sizeof(float), });
 
-        auto maskTask = new GlRenderTask(mPrograms[RT_Stencil]);
+        auto maskTask = new GlRenderTask(mPrograms.stencil);
 
         maskTask->setDrawDepth(clipDepths[i]);
         maskTask->addVertexLayout(GlVertexLayout{0, 2, 2 * sizeof(float), identityVertexOffset});
@@ -571,7 +503,11 @@ void GlRenderer::endBlendingCompose(GlRenderTask* stencilTask, const Matrix& mat
         16 * sizeof(float),
     });
     
-    auto program = getBlendProgram(mBlendMethod, gradient, image, false);
+    GlProgram* program = nullptr;
+    if (gradient) program = mPrograms.getBlendGrad(mBlendMethod);
+    else if (image) program = mPrograms.getBlendImage(mBlendMethod);
+    else program = mPrograms.getBlendColor(mBlendMethod);
+    
     auto task = new GlComplexBlendTask(program, currentPass()->getFbo(), dstCopyFbo, stencilTask, composeTask);
     prepareCmpTask(task, vp, blendPass->getFboWidth(), blendPass->getFboHeight());
     task->setDrawDepth(currentPass()->nextDrawDepth());
@@ -583,62 +519,6 @@ void GlRenderer::endBlendingCompose(GlRenderTask* stencilTask, const Matrix& mat
     currentPass()->addRenderTask(task);
 
     delete(blendPass);
-}
-
-GlProgram* GlRenderer::getBlendProgram(BlendMethod method, bool gradient, bool image, bool scene) {
-    // custom blend shaders
-    static const char* shaderFunc[17] {
-        NORMAL_BLEND_FRAG,
-        MULTIPLY_BLEND_FRAG,
-        SCREEN_BLEND_FRAG,
-        OVERLAY_BLEND_FRAG,
-        DARKEN_BLEND_FRAG,
-        LIGHTEN_BLEND_FRAG,
-        COLOR_DODGE_BLEND_FRAG,
-        COLOR_BURN_BLEND_FRAG,
-        HARD_LIGHT_BLEND_FRAG,
-        SOFT_LIGHT_BLEND_FRAG,
-        DIFFERENCE_BLEND_FRAG,
-        EXCLUSION_BLEND_FRAG,
-        HUE_BLEND_FRAG,
-        SATURATION_BLEND_FRAG,
-        COLOR_BLEND_FRAG,
-        LUMINOSITY_BLEND_FRAG,
-        ADD_BLEND_FRAG
-    };
-    
-    uint32_t methodInd = (uint32_t)method;
-    uint32_t startInd = (uint32_t)RenderTypes::RT_Blend_Normal;
-    uint32_t shaderInd = methodInd + startInd;
-
-    const char* helpers = "";
-    if ((method == BlendMethod::Hue) ||
-        (method == BlendMethod::Saturation) ||
-        (method == BlendMethod::Color) ||
-        (method == BlendMethod::Luminosity))
-        helpers = BLEND_FRAG_HSL;
-
-    const char* vertShader = BLIT_VERT_SHADER;
-    char fragShader[BLEND_TOTAL_LENGTH];
-    if (gradient) {
-        startInd = (uint32_t)RenderTypes::RT_Blend_Gradient_Normal;
-        shaderInd = methodInd + startInd;
-        strcat(strcat(strcpy(fragShader, BLEND_GRADIENT_FRAG_HEADER), helpers), shaderFunc[methodInd]);
-    } else if (image) {
-        startInd = (uint32_t)RenderTypes::RT_Blend_Image_Normal;
-        shaderInd = methodInd + startInd;
-        strcat(strcat(strcpy(fragShader, BLEND_IMAGE_FRAG_HEADER), helpers), shaderFunc[methodInd]);
-    } else if (scene) {
-        startInd = (uint32_t)RenderTypes::RT_Blend_Scene_Normal;
-        shaderInd = methodInd + startInd;
-        strcat(strcat(strcpy(fragShader, BLEND_SCENE_FRAG_HEADER), helpers), shaderFunc[methodInd]);
-    } else {
-        strcat(strcat(strcpy(fragShader, BLEND_SOLID_FRAG_HEADER), helpers), shaderFunc[methodInd]);
-    }
-
-    if (!mPrograms[shaderInd])
-        mPrograms[shaderInd] = new GlProgram(vertShader, fragShader);
-    return mPrograms[shaderInd];
 }
 
 
@@ -707,21 +587,7 @@ void GlRenderer::endRenderPass(RenderCompositor* cmp)
         auto maskPass = mRenderPassStack.last();
         mRenderPassStack.pop();
 
-        GlProgram* program = nullptr;
-        switch(cmp->method) {
-            case MaskMethod::Alpha: program = mPrograms[RT_MaskAlpha]; break;
-            case MaskMethod::InvAlpha: program = mPrograms[RT_MaskAlphaInv]; break;
-            case MaskMethod::Luma: program = mPrograms[RT_MaskLuma]; break;
-            case MaskMethod::InvLuma: program = mPrograms[RT_MaskLumaInv]; break;
-            case MaskMethod::Add: program = mPrograms[RT_MaskAdd]; break;
-            case MaskMethod::Subtract: program = mPrograms[RT_MaskSub]; break;
-            case MaskMethod::Intersect: program = mPrograms[RT_MaskIntersect]; break;
-            case MaskMethod::Difference: program = mPrograms[RT_MaskDifference]; break;
-            case MaskMethod::Lighten: program = mPrograms[RT_MaskLighten]; break;
-            case MaskMethod::Darken: program = mPrograms[RT_MaskDarken]; break;
-            default: break;
-        }
-
+        auto program = mPrograms.getCompose(cmp->method);
         if (program && !selfPass->isEmpty() && !maskPass->isEmpty()) {
             auto prev_task = maskPass->endRenderPass<GlComposeTask>(nullptr, currentPass()->getFboId());
             prev_task->setDrawDepth(currentPass()->nextDrawDepth());
@@ -758,7 +624,7 @@ void GlRenderer::endRenderPass(RenderCompositor* cmp)
             // image info
             uint32_t info[4] = {(uint32_t)ColorSpace::ABGR8888, 0, cmp->opacity, 0};
 
-            auto program = getBlendProgram(glCmp->blendMethod, false, false, true);
+            auto program = mPrograms.getBlendScene(glCmp->blendMethod);
             auto task = renderPass->endRenderPass<GlSceneBlendTask>(program, currentPass()->getFboId());
             task->setSrcTarget(currentPass()->getFbo());
             task->setDstCopy(dstCopyFbo);
@@ -780,7 +646,7 @@ void GlRenderer::endRenderPass(RenderCompositor* cmp)
         mRenderPassStack.pop();
 
         if (!renderPass->isEmpty()) {
-            auto task = renderPass->endRenderPass<GlDrawBlitTask>(mPrograms[RT_Image], currentPass()->getFboId());
+            auto task = renderPass->endRenderPass<GlDrawBlitTask>(mPrograms.image, currentPass()->getFboId());
             task->setRenderSize(glCmp->bbox.w(), glCmp->bbox.h());
             prepareCmpTask(task, glCmp->bbox, renderPass->getFboWidth(), renderPass->getFboHeight());
             task->setDrawDepth(currentPass()->nextDrawDepth());
@@ -871,7 +737,7 @@ bool GlRenderer::sync()
     GL_CHECK(glEnable(GL_DEPTH_TEST));
     GL_CHECK(glDepthFunc(GL_GREATER));
 
-    auto task = mRenderPassStack.first()->endRenderPass<GlBlitTask>(mPrograms[RT_Blit], mTargetFboId);
+    auto task = mRenderPassStack.first()->endRenderPass<GlBlitTask>(mPrograms.blit, mTargetFboId);
 
     prepareBlitTask(task);
 
@@ -935,7 +801,7 @@ bool GlRenderer::preRender()
     if (mRootTarget.invalid()) return false;
 
     currentContext();
-    if (mPrograms.empty()) initShaders();
+    if (!mPrograms.inited) mPrograms.init();
     mRenderPassStack.push(new GlRenderPass(&mRootTarget));
 
     return true;
@@ -1067,7 +933,7 @@ bool GlRenderer::renderImage(void* data)
 
     if (!sdata->clips.empty()) drawClip(sdata->clips);
 
-    auto task = new GlRenderTask(mPrograms[RT_Image]);
+    auto task = new GlRenderTask(mPrograms.image);
     task->setDrawDepth(drawDepth);
 
     if (!sdata->geometry.draw(task, &mGpuBuffer, RenderUpdateFlag::Image)) {
@@ -1113,7 +979,7 @@ bool GlRenderer::renderImage(void* data)
     currentPass()->addRenderTask(task);
 
     if (complexBlend) {
-        auto task = new GlRenderTask(mPrograms[RT_Stencil]);
+        auto task = new GlRenderTask(mPrograms.stencil);
         sdata->geometry.draw(task, &mGpuBuffer, RenderUpdateFlag::Image);
         endBlendingCompose(task, sdata->geometry.matrix, false, true);
     }

@@ -25,7 +25,6 @@
 
 #include "tvgArray.h"
 #include "tvgGlRenderTarget.h"
-#include "tvgGlRenderTask.h"
 #include "tvgGlGpuBuffer.h"
 #include "tvgGlRenderPass.h"
 #include "tvgGlEffect.h"
@@ -33,99 +32,6 @@
 class GlRenderer : public RenderMethod
 {
 public:
-    enum RenderTypes
-    {
-        RT_Color = 0,
-        RT_LinGradient,
-        RT_RadGradient,
-        RT_Image,
-        RT_MaskAlpha,
-        RT_MaskAlphaInv,
-        RT_MaskLuma,
-        RT_MaskLumaInv,
-        RT_MaskAdd,
-        RT_MaskSub,
-        RT_MaskIntersect,
-        RT_MaskDifference,
-        RT_MaskLighten,
-        RT_MaskDarken,
-        RT_Stencil,
-        RT_Blit,
-        // blends
-        RT_Blend_Normal,
-        RT_Blend_Multiply,
-        RT_Blend_Screen,
-        RT_Blend_Overlay,
-        RT_Blend_Darken,
-        RT_Blend_Lighten,
-        RT_Blend_ColorDodge,
-        RT_Blend_ColorBurn,
-        RT_Blend_HardLight,
-        RT_Blend_SoftLight,
-        RT_Blend_Difference,
-        RT_Blend_Exclusion,
-        RT_Blend_Hue,
-        RT_Blend_Saturation,
-        RT_Blend_Color,
-        RT_Blend_Luminosity,
-        RT_Blend_Add,
-        // blends (gradients)
-        RT_Blend_Gradient_Normal,
-        RT_Blend_Gradient_Multiply,
-        RT_Blend_Gradient_Screen,
-        RT_Blend_Gradient_Overlay,
-        RT_Blend_Gradient_Darken,
-        RT_Blend_Gradient_Lighten,
-        RT_Blend_Gradient_ColorDodge,
-        RT_Blend_Gradient_ColorBurn,
-        RT_Blend_Gradient_HardLight,
-        RT_Blend_Gradient_SoftLight,
-        RT_Blend_Gradient_Difference,
-        RT_Blend_Gradient_Exclusion,
-        RT_Blend_Gradient_Hue,
-        RT_Blend_Gradient_Saturation,
-        RT_Blend_Gradient_Color,
-        RT_Blend_Gradient_Luminosity,
-        RT_Blend_Gradient_Add,
-        // blends (gradients)
-        RT_Blend_Image_Normal,
-        RT_Blend_Image_Multiply,
-        RT_Blend_Image_Screen,
-        RT_Blend_Image_Overlay,
-        RT_Blend_Image_Darken,
-        RT_Blend_Image_Lighten,
-        RT_Blend_Image_ColorDodge,
-        RT_Blend_Image_ColorBurn,
-        RT_Blend_Image_HardLight,
-        RT_Blend_Image_SoftLight,
-        RT_Blend_Image_Difference,
-        RT_Blend_Image_Exclusion,
-        RT_Blend_Image_Hue,
-        RT_Blend_Image_Saturation,
-        RT_Blend_Image_Color,
-        RT_Blend_Image_Luminosity,
-        RT_Blend_Image_Add,
-        // blends (scene)
-        RT_Blend_Scene_Normal,
-        RT_Blend_Scene_Multiply,
-        RT_Blend_Scene_Screen,
-        RT_Blend_Scene_Overlay,
-        RT_Blend_Scene_Darken,
-        RT_Blend_Scene_Lighten,
-        RT_Blend_Scene_ColorDodge,
-        RT_Blend_Scene_ColorBurn,
-        RT_Blend_Scene_HardLight,
-        RT_Blend_Scene_SoftLight,
-        RT_Blend_Scene_Difference,
-        RT_Blend_Scene_Exclusion,
-        RT_Blend_Scene_Hue,
-        RT_Blend_Scene_Saturation,
-        RT_Blend_Scene_Color,
-        RT_Blend_Scene_Luminosity,
-        RT_Blend_Scene_Add,
-        RT_None
-    };
-
     //main features
     bool preUpdate() override;
     RenderData prepare(const RenderShape& rshape, RenderData data, const Matrix& transform, Array<RenderData>& clips, uint8_t opacity, RenderUpdateFlag flags, bool clipper) override;
@@ -169,7 +75,6 @@ private:
     GlRenderer(); 
     ~GlRenderer();
 
-    void initShaders();
     void drawPrimitive(GlShape& sdata, const RenderColor& c, RenderUpdateFlag flag, int32_t depth);
     void drawPrimitive(GlShape& sdata, const Fill* fill, RenderUpdateFlag flag, int32_t depth);
     void drawClip(Array<RenderData>& clips);
@@ -178,7 +83,6 @@ private:
 
     bool beginComplexBlending(const RenderRegion& vp, RenderRegion bounds);
     void endBlendingCompose(GlRenderTask* stencilTask, const Matrix& matrix, bool gradient, bool image);
-    GlProgram* getBlendProgram(BlendMethod method, bool gradient, bool image, bool scene);
 
     void prepareBlitTask(GlBlitTask* task);
     void prepareCmpTask(GlRenderTask* task, const RenderRegion& vp, uint32_t cmpWidth, uint32_t cmpHeight);
@@ -194,7 +98,7 @@ private:
     GlStageBuffer mGpuBuffer;
     GlRenderTarget mRootTarget;
     GlEffect mEffect;
-    Array<GlProgram*> mPrograms;
+    GlPrograms mPrograms;
 
     Array<GlRenderTargetPool*> mComposePool;
     Array<GlRenderTargetPool*> mBlendPool;
