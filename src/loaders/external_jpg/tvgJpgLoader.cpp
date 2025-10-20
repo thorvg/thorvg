@@ -58,41 +58,14 @@ JpgLoader::~JpgLoader()
 bool JpgLoader::open(const char* path)
 {
 #ifdef THORVG_FILE_IO_SUPPORT
-    auto jpegFile = fopen(path, "rb");
-    if (!jpegFile) return false;
-
-    auto ret = false;
-
-    //determine size
-    if (fseek(jpegFile, 0, SEEK_END) < 0) goto finalize;
-    if (((size = ftell(jpegFile)) < 1)) goto finalize;
-    if (fseek(jpegFile, 0, SEEK_SET)) goto finalize;
-
-    data = tvg::malloc<unsigned char*>(size);
-    if (!data) goto finalize;
-
-    freeData = true;
-
-    if (fread(data, size, 1, jpegFile) < 1) goto failure;
+    if (!(data = (unsigned char*) LoadModule::open(path, size))) return false;
 
     int width, height, subSample, colorSpace;
-    if (tjDecompressHeader3(jpegDecompressor, data, size, &width, &height, &subSample, &colorSpace) < 0) {
-        TVGERR("JPG LOADER", "%s", tjGetErrorStr());
-        goto failure;
-    }
-
+    if (tjDecompressHeader3(jpegDecompressor, data, size, &width, &height, &subSample, &colorSpace) < 0) return false;
     w = static_cast<float>(width);
     h = static_cast<float>(height);
-    ret = true;
-
-    goto finalize;
-
-failure:
-    clear();
-
-finalize:
-    fclose(jpegFile);
-    return ret;
+    freeData = true;
+    return true;
 #else
     return false;
 #endif

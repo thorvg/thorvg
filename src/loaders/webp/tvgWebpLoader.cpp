@@ -73,35 +73,13 @@ WebpLoader::~WebpLoader()
 bool WebpLoader::open(const char* path)
 {
 #ifdef THORVG_FILE_IO_SUPPORT
-    auto f = fopen(path, "rb");
-    if (!f) return false;
-
-    fseek(f, 0, SEEK_END);
-
-    size = ftell(f);
-    if (size == 0) {
-        fclose(f);
-        return false;
-    }
-
-    data = tvg::malloc<uint8_t*>(size);
-
-    fseek(f, 0, SEEK_SET);
-    auto ret = fread(data, sizeof(char), size, f);
-    if (ret < size) {
-        fclose(f);
-        return false;
-    }
-
-    fclose(f);
+    if (!(data = (uint8_t*)LoadModule::open(path, size))) return false;
 
     int width, height;
     if (!WebPGetInfo(data, size, &width, &height)) return false;
-
     w = static_cast<float>(width);
     h = static_cast<float>(height);
     freeData = true;
-
     return true;
 #else
     return false;

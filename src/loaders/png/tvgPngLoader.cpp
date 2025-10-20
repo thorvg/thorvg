@@ -71,35 +71,16 @@ PngLoader::~PngLoader()
 bool PngLoader::open(const char* path)
 {
 #ifdef THORVG_FILE_IO_SUPPORT
-    auto pngFile = fopen(path, "rb");
-    if (!pngFile) return false;
-
-    auto ret = false;
-
-    //determine size
-    if (fseek(pngFile, 0, SEEK_END) < 0) goto finalize;
-    if (((size = ftell(pngFile)) < 1)) goto finalize;
-    if (fseek(pngFile, 0, SEEK_SET)) goto finalize;
-
-    data = tvg::malloc<unsigned char*>(size);
-    if (!data) goto finalize;
-
-    freeData = true;
-
-    if (fread(data, size, 1, pngFile) < 1) goto finalize;
+    if (!(data = (unsigned char*)LoadModule::open(path, size))) return false;
 
     lodepng_state_init(&state);
 
     unsigned int width, height;
-    if (lodepng_inspect(&width, &height, &state, data, size) > 0) goto finalize;
-
+    if (lodepng_inspect(&width, &height, &state, data, size) > 0) return false;
     w = static_cast<float>(width);
     h = static_cast<float>(height);
-    ret = true;
-
-finalize:
-    fclose(pngFile);
-    return ret;
+    freeData = true;
+    return true;
 #else
     return false;
 #endif
