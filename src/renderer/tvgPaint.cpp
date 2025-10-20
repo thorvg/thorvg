@@ -205,12 +205,6 @@ RenderData Paint::Impl::update(RenderMethod* renderer, const Matrix& pm, Array<R
 
     cmpFlag = CompositionFlag::Invalid;  //must clear after the rendering
 
-    if (this->renderer != renderer) {
-        if (this->renderer) TVGERR("RENDERER", "paint's renderer has been changed!");
-        renderer->ref();
-        this->renderer = renderer;
-    }
-
     if (renderFlag & RenderUpdateFlag::Transform) tr.update();
 
     /* 1. Composition Pre Processing */

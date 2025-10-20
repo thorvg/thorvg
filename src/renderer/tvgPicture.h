@@ -147,21 +147,18 @@ struct PictureImpl : Picture
     Result load(const char* filename)
     {
         if (vector || bitmap) return Result::InsufficientCondition;
-
-        bool invalid;  //Invalid Path
-        auto loader = static_cast<ImageLoader*>(LoaderMgr::loader(filename, &invalid));
-        if (!loader) {
-            if (invalid) return Result::InvalidArguments;
-            return Result::NonSupport;
-        }
-        return load(loader);
+#ifdef THORVG_FILE_IO_SUPPORT
+        auto loader = static_cast<ImageLoader*>(LoaderMgr::loader(filename, impl.renderer->colorSpace()));
+        if (loader) return load(loader);
+#endif
+        return Result::NonSupport;
     }
 
     Result load(const char* data, uint32_t size, const char* mimeType, const char* rpath, bool copy)
     {
         if (!data || size <= 0) return Result::InvalidArguments;
         if (vector || bitmap) return Result::InsufficientCondition;
-        auto loader = static_cast<ImageLoader*>(LoaderMgr::loader(data, size, mimeType, rpath, copy));
+        auto loader = static_cast<ImageLoader*>(LoaderMgr::loader(data, size, mimeType, rpath, impl.renderer->colorSpace(), copy));
         if (!loader) return Result::NonSupport;
         return load(loader);
     }
@@ -171,7 +168,7 @@ struct PictureImpl : Picture
         if (!data || w <= 0 || h <= 0 || cs == ColorSpace::Unknown)  return Result::InvalidArguments;
         if (vector || bitmap) return Result::InsufficientCondition;
 
-        auto loader = static_cast<ImageLoader*>(LoaderMgr::loader(data, w, h, cs, copy));
+        auto loader = static_cast<ImageLoader*>(LoaderMgr::loader(data, w, h, cs, impl.renderer->colorSpace(), copy));
         if (!loader) return Result::FailedAllocation;
 
         return load(loader);

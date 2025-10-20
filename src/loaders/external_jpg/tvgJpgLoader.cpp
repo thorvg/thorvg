@@ -39,7 +39,7 @@ void JpgLoader::clear()
 /* External Class Implementation                                        */
 /************************************************************************/
 
-JpgLoader::JpgLoader() : ImageLoader(FileType::Jpg)
+JpgLoader::JpgLoader(ColorSpace cs) : ImageLoader(FileType::Jpg, cs)
 {
     jpegDecompressor = tjInitDecompress();
 }

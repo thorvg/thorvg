@@ -29,7 +29,7 @@
 class WebpLoader : public ImageLoader, public Task
 {
 public:
-    WebpLoader();
+    WebpLoader(ColorSpace cs);
     ~WebpLoader();
 
     bool open(const char* path) override;

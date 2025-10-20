@@ -38,7 +38,7 @@ private:
     void run(unsigned tid) override;
 
 public:
-    PngLoader();
+    PngLoader(ColorSpace cs);
     ~PngLoader();
 
     bool open(const char* path) override;

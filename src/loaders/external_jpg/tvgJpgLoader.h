@@ -31,7 +31,7 @@ using tjhandle = void*;
 class JpgLoader : public ImageLoader
 {
 public:
-    JpgLoader();
+    JpgLoader(ColorSpace cs);
     ~JpgLoader();
 
     bool open(const char* path) override;

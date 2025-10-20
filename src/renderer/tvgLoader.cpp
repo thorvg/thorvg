@@ -62,31 +62,28 @@ uintptr_t HASH_KEY(const char* data)
 /* Internal Class Implementation                                        */
 /************************************************************************/
 
-//TODO: remove it.
-atomic<ColorSpace> ImageLoader::cs{ColorSpace::ARGB8888};
-
 static Key _key;
 static Inlist<LoadModule> _activeLoaders;
 
 
-static LoadModule* _find(FileType type)
+static LoadModule* _find(FileType type, ColorSpace cs = ColorSpace::Unknown)
 {
     switch(type) {
         case FileType::Png: {
 #ifdef THORVG_PNG_LOADER_SUPPORT
-            return new PngLoader;
+            return new PngLoader(cs);
 #endif
             break;
         }
         case FileType::Jpg: {
 #ifdef THORVG_JPG_LOADER_SUPPORT
-            return new JpgLoader;
+            return new JpgLoader(cs);
 #endif
             break;
         }
         case FileType::Webp: {
 #ifdef THORVG_WEBP_LOADER_SUPPORT
-            return new WebpLoader;
+            return new WebpLoader(cs);
 #endif
             break;
         }
@@ -109,7 +106,7 @@ static LoadModule* _find(FileType type)
             break;
         }
         case FileType::Raw: {
-            return new RawLoader;
+            return new RawLoader(cs);
             break;
         }
         default: {
@@ -160,16 +157,16 @@ static LoadModule* _find(FileType type)
 
 
 #ifdef THORVG_FILE_IO_SUPPORT
-static LoadModule* _findByPath(const char* filename)
+static LoadModule* _findByPath(const char* filename, ColorSpace cs)
 {
     auto ext = fileext(filename);
     if (!ext) return nullptr;
 
     if (!strcmp(ext, "svg")) return _find(FileType::Svg);
     if (!strcmp(ext, "lot") || !strcmp(ext, "json")) return _find(FileType::Lot);
-    if (!strcmp(ext, "png")) return _find(FileType::Png);
-    if (!strcmp(ext, "jpg")) return _find(FileType::Jpg);
-    if (!strcmp(ext, "webp")) return _find(FileType::Webp);
+    if (!strcmp(ext, "png")) return _find(FileType::Png, cs);
+    if (!strcmp(ext, "jpg")) return _find(FileType::Jpg, cs);
+    if (!strcmp(ext, "webp")) return _find(FileType::Webp, cs);
     if (!strcmp(ext, "ttf") || !strcmp(ext, "ttc")) return _find(FileType::Ttf);
     if (!strcmp(ext, "otf") || !strcmp(ext, "otc")) return _find(FileType::Ttf);
     return nullptr;
@@ -196,9 +193,9 @@ static FileType _convert(const char* mimeType)
 }
 
 
-static LoadModule* _findByType(const char* mimeType)
+static LoadModule* _findByType(const char* mimeType, ColorSpace cs)
 {
-    return _find(_convert(mimeType));
+    return _find(_convert(mimeType), cs);
 }
 
 
@@ -272,11 +269,9 @@ bool LoaderMgr::retrieve(LoadModule* loader)
 }
 
 
-LoadModule* LoaderMgr::loader(const char* filename, bool* invalid)
+LoadModule* LoaderMgr::loader(const char* filename, ColorSpace cs)
 {
 #ifdef THORVG_FILE_IO_SUPPORT
-    *invalid = false;
-
     //TODO: svg & lottie is not sharable.
     auto allowCache = true;
     auto ext = fileext(filename);
@@ -286,7 +281,7 @@ LoadModule* LoaderMgr::loader(const char* filename, bool* invalid)
         if (auto loader = _findFromCache(filename)) return loader;
     }
 
-    if (auto loader = _findByPath(filename)) {
+    if (auto loader = _findByPath(filename, cs)) {
         if (loader->open(filename)) {
             if (allowCache) {
                 loader->cache(duplicate(filename));
@@ -301,7 +296,7 @@ LoadModule* LoaderMgr::loader(const char* filename, bool* invalid)
     }
     //Unknown MimeType. Try with the candidates in the order
     for (int i = 0; i < static_cast<int>(FileType::Raw); i++) {
-        if (auto loader = _find(static_cast<FileType>(i))) {
+        if (auto loader = _find(static_cast<FileType>(i), cs)) {
             if (loader->open(filename)) {
                 if (allowCache) {
                     loader->cache(duplicate(filename));
@@ -315,8 +310,8 @@ LoadModule* LoaderMgr::loader(const char* filename, bool* invalid)
             delete(loader);
         }
     }
-    *invalid = true;
 #endif
+    TVGLOG("RENDERER", "FILE IO is disabled!");
     return nullptr;
 }
 
@@ -327,7 +322,7 @@ bool LoaderMgr::retrieve(const char* filename)
 }
 
 
-LoadModule* LoaderMgr::loader(const char* data, uint32_t size, const char* mimeType, const char* rpath, bool copy)
+LoadModule* LoaderMgr::loader(const char* data, uint32_t size, const char* mimeType, const char* rpath, ColorSpace cs, bool copy)
 {
     //Note that users could use the same data pointer with the different content.
     //Thus caching is only valid for shareable.
@@ -345,7 +340,7 @@ LoadModule* LoaderMgr::loader(const char* data, uint32_t size, const char* mimeT
 
     //Try with the given MimeType
     if (mimeType) {
-        if (auto loader = _findByType(mimeType)) {
+        if (auto loader = _findByType(mimeType, cs)) {
             if (loader->open(data, size, rpath, copy)) {
                 if (allowCache) {
                     loader->cache(HASH_KEY(data));
@@ -361,7 +356,7 @@ LoadModule* LoaderMgr::loader(const char* data, uint32_t size, const char* mimeT
     }
     //Unknown MimeType. Try with the candidates in the order
     for (int i = 0; i < static_cast<int>(FileType::Raw); i++) {
-        auto loader = _find(static_cast<FileType>(i));
+        auto loader = _find(static_cast<FileType>(i), cs);
         if (loader) {
             if (loader->open(data, size, rpath, copy)) {
                 if (allowCache) {
@@ -378,7 +373,7 @@ LoadModule* LoaderMgr::loader(const char* data, uint32_t size, const char* mimeT
 }
 
 
-LoadModule* LoaderMgr::loader(const uint32_t *data, uint32_t w, uint32_t h, ColorSpace cs, bool copy)
+LoadModule* LoaderMgr::loader(const uint32_t *data, uint32_t w, uint32_t h, ColorSpace src, ColorSpace dst, bool copy)
 {
     //Note that users could use the same data pointer with the different content.
     //Thus caching is only valid for shareable.
@@ -388,8 +383,8 @@ LoadModule* LoaderMgr::loader(const uint32_t *data, uint32_t w, uint32_t h, Colo
     }
 
     //function is dedicated for raw images only
-    auto loader = new RawLoader;
-    if (loader->open(data, w, h, cs, copy)) {
+    auto loader = new RawLoader(dst);
+    if (loader->open(data, w, h, src, copy)) {
         if (!copy) {
             loader->cache(HASH_KEY((const char*)data));
             ScopedLock lock(_key);

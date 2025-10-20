@@ -116,12 +116,11 @@ struct LoadModule
 
 struct ImageLoader : LoadModule
 {
-    static atomic<ColorSpace> cs;                   //desired value
-
-    float w = 0, h = 0;                             //default image size
     RenderSurface surface;
+    float w = 0, h = 0;                        //default image size
+    ColorSpace cs;                             //desired value
 
-    ImageLoader(FileType type) : LoadModule(type) {}
+    ImageLoader(FileType type, ColorSpace cs = ColorSpace::Unknown) : LoadModule(type), cs(cs) {}
 
     virtual bool animatable() { return false; }  //true if this loader supports animation.
     virtual Paint* paint() { return nullptr; }

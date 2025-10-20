@@ -48,7 +48,7 @@ void WebpLoader::run(unsigned tid)
 /* External Class Implementation                                        */
 /************************************************************************/
 
-WebpLoader::WebpLoader() : ImageLoader(FileType::Webp)
+WebpLoader::WebpLoader(ColorSpace cs) : ImageLoader(FileType::Webp, cs)
 {
 }
 

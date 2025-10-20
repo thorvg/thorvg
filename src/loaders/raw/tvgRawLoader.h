@@ -28,7 +28,7 @@ class RawLoader : public ImageLoader
 public:
     bool copy = false;
 
-    RawLoader();
+    RawLoader(ColorSpace cs);
     ~RawLoader();
 
     using LoadModule::open;

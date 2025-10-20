@@ -29,7 +29,7 @@
 class PngLoader : public ImageLoader
 {
 public:
-    PngLoader();
+    PngLoader(ColorSpace cs);
     ~PngLoader();
 
     bool open(const char* path) override;

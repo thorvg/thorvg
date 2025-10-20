@@ -38,7 +38,7 @@ private:
     void run(unsigned tid) override;
 
 public:
-    JpgLoader();
+    JpgLoader(ColorSpace cs);
     ~JpgLoader();
 
     bool open(const char* path) override;

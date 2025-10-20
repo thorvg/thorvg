@@ -34,7 +34,7 @@ private:
     void run(unsigned tid) override;
 
 public:
-    WebpLoader();
+    WebpLoader(ColorSpace cs);
     ~WebpLoader();
 
     bool open(const char* path) override;

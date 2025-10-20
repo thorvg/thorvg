@@ -54,7 +54,7 @@ void JpgLoader::run(unsigned tid)
 /* External Class Implementation                                        */
 /************************************************************************/
 
-JpgLoader::JpgLoader() : ImageLoader(FileType::Jpg)
+JpgLoader::JpgLoader(ColorSpace cs) : ImageLoader(FileType::Jpg, cs)
 {
 
 }

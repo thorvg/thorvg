@@ -40,13 +40,8 @@ Type Picture::type() const noexcept
 
 Result Picture::load(const char* filename) noexcept
 {
-#ifdef THORVG_FILE_IO_SUPPORT
     if (!filename) return Result::InvalidArguments;
     return PICTURE(this)->load(filename);
-#else
-    TVGLOG("RENDERER", "FILE IO is disabled!");
-    return Result::NonSupport;
-#endif
 }
 
 

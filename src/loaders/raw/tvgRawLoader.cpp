@@ -25,7 +25,7 @@
 #include "tvgRawLoader.h"
 
 
-RawLoader::RawLoader() : ImageLoader(FileType::Raw)
+RawLoader::RawLoader(ColorSpace cs) : ImageLoader(FileType::Raw, cs)
 {
 }
 

@@ -134,9 +134,6 @@ Result SwCanvas::target(uint32_t* buffer, uint32_t stride, uint32_t w, uint32_t 
     pImpl->vport = {{0, 0}, {(int32_t)w, (int32_t)h}};
     renderer->viewport(pImpl->vport);
 
-    //FIXME: The value must be associated with an individual canvas instance.
-    ImageLoader::cs = static_cast<ColorSpace>(cs);
-
     //Paints must be updated again with this new target.
     pImpl->status = Status::Damaged;
 

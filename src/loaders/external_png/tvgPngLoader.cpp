@@ -37,7 +37,7 @@ void PngLoader::clear()
 /* External Class Implementation                                        */
 /************************************************************************/
 
-PngLoader::PngLoader() : ImageLoader(FileType::Png)
+PngLoader::PngLoader(ColorSpace cs) : ImageLoader(FileType::Png, cs)
 {
     image = tvg::calloc<png_imagep>(1, sizeof(png_image));
     image->version = PNG_IMAGE_VERSION;
