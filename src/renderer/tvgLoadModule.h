@@ -85,6 +85,32 @@ struct LoadModule
         --sharing;
         return false;
     }
+
+    char* open(const char* path, uint32_t& size, bool text = false)
+    {
+#ifdef THORVG_FILE_IO_SUPPORT
+        auto f = fopen(path, text ? "r" : "rb");
+        if (!f) return nullptr;
+
+        fseek(f, 0, SEEK_END);
+
+        size = ftell(f);
+        if (size == 0) {
+            fclose(f);
+            return nullptr;
+        }
+
+        auto content = tvg::malloc<char*>(sizeof(char) * (text ? size + 1 : size));
+        fseek(f, 0, SEEK_SET);
+        size = fread(content, sizeof(char), size, f);
+        if (text) content[size] = '\0';
+
+        fclose(f);
+
+        return content;
+#endif
+        return nullptr;
+    }
 };
 
 

@@ -230,32 +230,13 @@ bool LottieLoader::open(const char* data, uint32_t size, const char* rpath, bool
 bool LottieLoader::open(const char* path)
 {
 #ifdef THORVG_FILE_IO_SUPPORT
-    auto f = fopen(path, "r");
-    if (!f) return false;
-
-    fseek(f, 0, SEEK_END);
-
-    size = ftell(f);
-    if (size == 0) {
-        fclose(f);
-        return false;
+    if ((content = LoadModule::open(path, size, true))) {
+        dirName = tvg::dirname(path);
+        copy = true;
+        return header();
     }
-
-    auto content = tvg::malloc<char*>(sizeof(char) * size + 1);
-    fseek(f, 0, SEEK_SET);
-    size = fread(content, sizeof(char), size, f);
-    content[size] = '\0';
-
-    fclose(f);
-
-    this->dirName = tvg::dirname(path);
-    this->content = content;
-    this->copy = true;
-
-    return header();
-#else
-    return false;
 #endif
+    return false;
 }
 
 

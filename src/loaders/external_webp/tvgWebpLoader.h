@@ -42,7 +42,7 @@ private:
     void run(unsigned tid) override;
 
     unsigned char* data = nullptr;
-    unsigned long size = 0;
+    uint32_t size = 0;
     bool freeData = false;
 };
 

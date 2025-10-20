@@ -29,7 +29,6 @@
 class SvgLoader : public ImageLoader, public Task
 {
 public:
-    string filePath;
     string svgPath = "";
     char* content = nullptr;
     uint32_t size = 0;

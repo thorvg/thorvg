@@ -32,7 +32,7 @@ class PngLoader : public ImageLoader, public Task
 private:
     LodePNGState state;
     unsigned char* data = nullptr;
-    unsigned long size = 0;
+    uint32_t size = 0;
     bool freeData = false;
 
     void run(unsigned tid) override;

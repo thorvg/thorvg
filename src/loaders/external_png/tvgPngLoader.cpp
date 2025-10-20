@@ -41,7 +41,7 @@ PngLoader::PngLoader() : ImageLoader(FileType::Png)
 {
     image = tvg::calloc<png_imagep>(1, sizeof(png_image));
     image->version = PNG_IMAGE_VERSION;
-    image->opaque = NULL;
+    image->opaque = nullptr;
 }
 
 PngLoader::~PngLoader()
@@ -53,7 +53,7 @@ PngLoader::~PngLoader()
 
 bool PngLoader::open(const char* path)
 {
-    image->opaque = NULL;
+    image->opaque = nullptr;
 
     if (!png_image_begin_read_from_file(image, path)) return false;
 
@@ -67,7 +67,7 @@ bool PngLoader::open(const char* path)
 bool PngLoader::open(const char* data, uint32_t size, TVG_UNUSED const char* rpath, bool copy)
 {
 #ifdef THORVG_FILE_IO_SUPPORT
-    image->opaque = NULL;
+    image->opaque = nullptr;
 
     if (!png_image_begin_read_from_memory(image, data, size)) return false;
 

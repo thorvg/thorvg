@@ -3968,8 +3968,6 @@ bool SvgLoader::header()
 
 bool SvgLoader::open(const char* data, uint32_t size, TVG_UNUSED const char* rpath, bool copy)
 {
-    clear();
-
     if (copy) {
         content = tvg::malloc<char*>(size + 1);
         if (!content) return false;
@@ -3987,26 +3985,12 @@ bool SvgLoader::open(const char* data, uint32_t size, TVG_UNUSED const char* rpa
 bool SvgLoader::open(const char* path)
 {
 #ifdef THORVG_FILE_IO_SUPPORT
-    clear();
-
-    ifstream f;
-    f.open(path);
-
-    if (!f.is_open()) return false;
-
-    svgPath = path;
-    getline(f, filePath, '\0');
-    f.close();
-
-    if (filePath.empty()) return false;
-
-    content = (char*)filePath.c_str();
-    size = filePath.size();
-
-    return header();
-#else
-    return false;
+    if ((content = LoadModule::open(path, size, true))) {
+        copy = true;
+        return header();
+    }
 #endif
+    return false;
 }
 
 
