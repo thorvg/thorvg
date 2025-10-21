@@ -188,7 +188,7 @@ Result GlCanvas::target(void* context, int32_t id, uint32_t w, uint32_t h, Color
     auto renderer = static_cast<GlRenderer*>(pImpl->renderer);
     if (!renderer) return Result::MemoryCorruption;
 
-    if (!renderer->target(context, id, w, h)) return Result::Unknown;
+    if (!renderer->target(context, id, w, h, cs)) return Result::Unknown;
     pImpl->vport = {{0, 0}, {(int32_t)w, (int32_t)h}};
     renderer->viewport(pImpl->vport);
 
@@ -227,7 +227,7 @@ WgCanvas::~WgCanvas()
 {
 #ifdef THORVG_WG_RASTER_SUPPORT
     auto renderer = static_cast<WgRenderer*>(pImpl->renderer);
-    renderer->target(nullptr, nullptr, nullptr, 0, 0);
+    renderer->target(nullptr, nullptr, nullptr, 0, 0, ColorSpace::Unknown);
 
     WgRenderer::term();
 #endif
@@ -247,7 +247,7 @@ Result WgCanvas::target(void* device, void* instance, void* target, uint32_t w, 
     auto renderer = static_cast<WgRenderer*>(pImpl->renderer);
     if (!renderer) return Result::MemoryCorruption;
 
-    if (!renderer->target((WGPUDevice)device, (WGPUInstance)instance, target, w, h, type)) return Result::Unknown;
+    if (!renderer->target((WGPUDevice)device, (WGPUInstance)instance, target, w, h, cs, type)) return Result::Unknown;
     pImpl->vport = {{0, 0}, {(int32_t)w, (int32_t)h}};
     renderer->viewport(pImpl->vport);
 
