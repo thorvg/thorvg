@@ -47,7 +47,7 @@ public:
     bool sync() override;
     bool intersectsImage(RenderData data, const RenderRegion& region) override;
     bool intersectsShape(RenderData data, const RenderRegion& region) override;
-    bool target(WGPUDevice device, WGPUInstance instance, void* target, uint32_t width, uint32_t height, int type = 0);
+    bool target(WGPUDevice device, WGPUInstance instance, void* target, uint32_t w, uint32_t h, ColorSpace cs, int type = 0);
 
     //composition
     RenderCompositor* target(const RenderRegion& region, ColorSpace cs, CompositionFlag flags) override;

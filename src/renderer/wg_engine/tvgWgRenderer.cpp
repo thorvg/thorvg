@@ -322,7 +322,7 @@ bool WgRenderer::blend(BlendMethod method)
 
 ColorSpace WgRenderer::colorSpace()
 {
-    return ColorSpace::Unknown;
+    return mTargetSurface.cs;
 }
 
 
@@ -373,64 +373,45 @@ bool WgRenderer::sync()
 }
 
 
-bool WgRenderer::target(WGPUDevice device, WGPUInstance instance, void* target, uint32_t width, uint32_t height, int type)
+bool WgRenderer::target(WGPUDevice device, WGPUInstance instance, void* target, uint32_t w, uint32_t h, ColorSpace cs, int type)
 {
-    // release all existing handles
     if (!instance || !device || !target) {
         release();
         return true;
     }
 
-    if (!width || !height) return false;
+    if (w == 0 || h == 0) return false;
 
     // device or instance was changed, need to recreate all instances
     if ((mContext.device != device) || (mContext.instance != instance)) {
         release();
-
-        // initialize base rendering handles
         mContext.initialize(instance, device);
-
-        // initialize render tree instances
-        mRenderTargetPool.initialize(mContext, width, height);
-        mRenderTargetRoot.initialize(mContext, width, height);
-        mCompositor.initialize(mContext, width, height);
-
-        // store target properties
-        mTargetSurface.stride = width;
-        mTargetSurface.w = width;
-        mTargetSurface.h = height;
-
-        // configure surface (must be called after context creation)
-        if (type == 0) {
-            surface = (WGPUSurface)target;
-            surfaceConfigure(surface, mContext, width, height);
-        } else targetTexture = (WGPUTexture)target;
-        return true;
-    }
+        mRenderTargetPool.initialize(mContext, w, h);
+        mRenderTargetRoot.initialize(mContext, w, h);
+        mCompositor.initialize(mContext, w, h);
 
     // update render targets dimentions
-    if ((mTargetSurface.w != width) || (mTargetSurface.h != height) || (type == 0 ? (surface != (WGPUSurface)target) : (targetTexture != (WGPUTexture)target))) {
-        // release render tagets
+    } else if ((mTargetSurface.w != w) || (mTargetSurface.h != h) || (type == 0 ? (surface != (WGPUSurface)target) : (targetTexture != (WGPUTexture)target))) {
         mRenderTargetPool.release(mContext);
         mRenderTargetRoot.release(mContext);
         clearTargets();
-
-        mRenderTargetPool.initialize(mContext, width, height);
-        mRenderTargetRoot.initialize(mContext, width, height);
-        mCompositor.resize(mContext, width, height);
-
-        // store target properties
-        mTargetSurface.stride = width;
-        mTargetSurface.w = width;
-        mTargetSurface.h = height;
-
-        // configure surface (must be called after context creation)
-        if (type == 0) {
-            surface = (WGPUSurface)target;
-            surfaceConfigure(surface, mContext, width, height);
-        } else targetTexture = (WGPUTexture)target;
-        return true;
+        mRenderTargetPool.initialize(mContext, w, h);
+        mRenderTargetRoot.initialize(mContext, w, h);
+        mCompositor.resize(mContext, w, h);
     }
+
+    // configure surface (must be called after context creation)
+    if (type == 0) {
+        surface = (WGPUSurface)target;
+        surfaceConfigure(surface, mContext, w, h);
+    } else {
+        targetTexture = (WGPUTexture)target;
+    }
+
+    mTargetSurface.stride = w;
+    mTargetSurface.w = w;
+    mTargetSurface.h = h;
+    mTargetSurface.cs = cs;
 
     return true;
 }

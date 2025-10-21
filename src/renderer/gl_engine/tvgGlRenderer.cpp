@@ -721,7 +721,6 @@ void GlRenderer::endRenderPass(RenderCompositor* cmp)
             case MaskMethod::Darken: program = mPrograms[RT_MaskDarken]; break;
             default: break;
         }
-
         if (program && !selfPass->isEmpty() && !maskPass->isEmpty()) {
             auto prev_task = maskPass->endRenderPass<GlComposeTask>(nullptr, currentPass()->getFboId());
             prev_task->setDrawDepth(currentPass()->nextDrawDepth());
@@ -741,11 +740,9 @@ void GlRenderer::endRenderPass(RenderCompositor* cmp)
             compose_task->setParentSize(currentPass()->getViewport().w(), currentPass()->getViewport().h());
             currentPass()->addRenderTask(compose_task);
         }
-
         delete(selfPass);
         delete(maskPass);
-    } else
-    if (glCmp->blendMethod != BlendMethod::Normal) {
+    } else if (glCmp->blendMethod != BlendMethod::Normal) {
         auto renderPass = mRenderPassStack.last();
         mRenderPassStack.pop();
 
@@ -774,8 +771,7 @@ void GlRenderer::endRenderPass(RenderCompositor* cmp)
             currentPass()->addRenderTask(std::move(task));
         }
         delete(renderPass);
-    } else
-    {
+    } else {
         auto renderPass = mRenderPassStack.last();
         mRenderPassStack.pop();
 
@@ -830,7 +826,7 @@ bool GlRenderer::clear()
 }
 
 
-bool GlRenderer::target(void* context, int32_t id, uint32_t w, uint32_t h)
+bool GlRenderer::target(void* context, int32_t id, uint32_t w, uint32_t h, ColorSpace cs)
 {
     //assume the context zero is invalid
     if (!context || w == 0 || h == 0) return false;
@@ -842,6 +838,7 @@ bool GlRenderer::target(void* context, int32_t id, uint32_t w, uint32_t h)
     surface.stride = w;
     surface.w = w;
     surface.h = h;
+    surface.cs = cs;
 
     mContext = context;
     mTargetFboId = static_cast<GLint>(id);
@@ -1029,7 +1026,7 @@ void GlRenderer::dispose(RenderEffect* effect)
 
 ColorSpace GlRenderer::colorSpace()
 {
-    return ColorSpace::Unknown;
+    return surface.cs;
 }
 
 
