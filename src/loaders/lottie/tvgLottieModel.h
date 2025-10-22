@@ -872,9 +872,9 @@ struct LottieImage : LottieObject, LottieRenderPooler<tvg::Picture>
     LottieBitmap data;
     bool updated = false;
 
-    void override(LottieProperty* prop, bool release = false) override
+    void override(LottieProperty* prop, bool release) override
     {
-        if (release) data.release();
+        //Skip release here, copy() handles it.
         data.copy(*static_cast<LottieBitmap*>(prop), false);
         update();
     }

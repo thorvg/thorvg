@@ -95,6 +95,34 @@ struct Tween
 };
 
 
+struct BitmapData  
+{
+    union {
+        char* b64Data = nullptr;
+        char* path;
+    };
+
+    char* mimeType = nullptr;
+    uint32_t size = 0;
+    size_t refCnt = 1;
+
+    BitmapData() = default;
+
+    BitmapData(char* data, char* mimeType, uint32_t size)
+        : b64Data(data), mimeType(mimeType), size(size), refCnt(1) {}
+
+    void ref() { ++refCnt; }
+
+    void unref() {
+        if (--refCnt == 0) {
+            tvg::free(b64Data);
+            tvg::free(mimeType);
+            delete this;
+        }
+    }
+};
+
+
 static inline int32_t REMAP255(float val)
 {
     return (int32_t)nearbyintf(val * 255.0f);
