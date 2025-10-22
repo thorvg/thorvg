@@ -24,6 +24,7 @@
 #include "tvgCommon.h"
 #include "tvgMath.h"
 #include "tvgScene.h"
+#include "tvgFactory.h"
 #include "tvgLoadModule.h"
 #include "tvgLottieModel.h"
 #include "tvgLottieBuilder.h"
@@ -202,7 +203,7 @@ void LottieBuilder::updateGroup(LottieGroup* parent, LottieObject** child, float
     if (group->blendMethod == parent->blendMethod) {
         group->scene = parent->scene;
     } else {
-        group->scene = tvg::Scene::gen();
+        group->scene = tvg::Factory::scene(nullptr);
         group->scene->blend(group->blendMethod);
         parent->scene->push(group->scene);
     }
@@ -403,7 +404,7 @@ static void _repeat(LottieGroup* parent, Shape* path, LottieRenderPooler<Shape>*
 
 void LottieBuilder::appendRect(Shape* shape, Point& pos, Point& size, float r, bool clockwise, RenderContext* ctx)
 {
-    auto temp = (ctx->offset) ? Shape::gen() : shape;
+    auto temp = (ctx->offset) ? Factory::shape(nullptr) : shape;
     auto cnt = SHAPE(temp)->rs.path.pts.count;
 
     temp->appendRect(pos.x, pos.y, size.x, size.y, r, r, clockwise);
@@ -925,7 +926,7 @@ static void _fontText(TextDocument& doc, Scene* scene)
 
     auto cnt = 0;
     while (token) {
-        auto txt = Text::gen();
+        auto txt = Factory::text(nullptr);
         if (txt->font(doc.name) != Result::Success) {
             txt->font(nullptr);  //fallback to any available font
         }
@@ -959,8 +960,8 @@ void LottieBuilder::updateText(LottieLayer* layer, float frameNo)
     auto scale = doc.size;
     Point cursor{};
     //TODO: Need to revise to alloc scene / textgroup when they are really necessary
-    auto scene = Scene::gen();
-    Scene* textGroup = Scene::gen();
+    auto scene = Factory::scene(nullptr);
+    Scene* textGroup = Factory::scene(nullptr);
     int line = 0;
     int space = 0;
     auto lineSpacing = 0.0f;
@@ -985,7 +986,7 @@ void LottieBuilder::updateText(LottieLayer* layer, float frameNo)
 
             //new text group, single scene based on text-grouping
             scene->push(textGroup);
-            textGroup = Scene::gen();
+            textGroup = Factory::scene(nullptr);
             textGroup->translate(cursor.x, cursor.y);
 
             scene->translate(layout.x, layout.y);
@@ -1001,7 +1002,7 @@ void LottieBuilder::updateText(LottieLayer* layer, float frameNo)
             lineSpacing = 0.0f;
 
             //new text group, single scene for each line
-            scene = Scene::gen();
+            scene = Factory::scene(nullptr);
             cursor.x = 0.0f;
             cursor.y = (++line * doc.height + totalLineSpacing) / scale;
             continue;
@@ -1012,7 +1013,7 @@ void LottieBuilder::updateText(LottieLayer* layer, float frameNo)
             if (textGrouping == LottieText::AlignOption::Group::Word) {
                 //new text group, single scene for each word
                 scene->push(textGroup);
-                textGroup = Scene::gen();
+                textGroup = Factory::scene(nullptr);
                 textGroup->translate(cursor.x, cursor.y);
             }
         }
@@ -1039,7 +1040,7 @@ void LottieBuilder::updateText(LottieLayer* layer, float frameNo)
                 if (textGrouping == LottieText::AlignOption::Group::Chars || textGrouping == LottieText::AlignOption::Group::All) {
                     //new text group, single scene for each characters
                     scene->push(textGroup);
-                    textGroup = Scene::gen();
+                    textGroup = Factory::scene(nullptr);
                     textGroup->translate(cursor.x, cursor.y);
                 }
 
@@ -1193,7 +1194,7 @@ void LottieBuilder::updateMasks(LottieLayer* layer, float frameNo)
 
     //Introduce an intermediate scene for embracing matte + masking or precomp clipping + masking replaced by clipping
     if (layer->matteTarget || layer->type == LottieLayer::Precomp) {
-        auto scene = Scene::gen();
+        auto scene = Factory::scene(nullptr);
         scene->push(layer->scene);
         layer->scene = scene;
     }
@@ -1386,7 +1387,7 @@ void LottieBuilder::updateLayer(LottieComposition* comp, Scene* scene, LottieLay
     if (layer->type != LottieLayer::Null && layer->cache.opacity == 0) return;
 
     //Prepare render data
-    layer->scene = Scene::gen();
+    layer->scene = Factory::scene(nullptr);
     layer->scene->id = layer->id;
 
     //ignore opacity when Null layer?
@@ -1567,12 +1568,12 @@ void LottieBuilder::build(LottieComposition* comp)
 {
     if (!comp) return;
 
-    comp->root->scene = Scene::gen();
+    comp->root->scene = Factory::scene(nullptr);
 
     _buildComposition(comp, comp->root);
 
     //viewport clip
-    auto clip = Shape::gen();
+    auto clip = Factory::shape(nullptr);
     clip->appendRect(0, 0, comp->w, comp->h);
     comp->root->scene->clip(clip);
 

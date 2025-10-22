@@ -27,6 +27,7 @@
 #include "tvgMath.h"
 #include "tvgShape.h"
 #include "tvgFill.h"
+#include "tvgFactory.h"
 #include "tvgLoader.h"
 
 #define TEXT(A) static_cast<TextImpl*>(A)
@@ -43,10 +44,7 @@ struct TextImpl : Text
     float italicShear = 0.0f;
     bool updated = false;
 
-    TextImpl() : impl(Paint::Impl(this)), shape(Shape::gen())
-    {
-        PAINT(shape)->parent = this;
-    }
+    TextImpl();
 
     ~TextImpl()
     {
@@ -186,7 +184,7 @@ struct TextImpl : Text
 
         load();
 
-        auto text = Text::gen();
+        auto text = Factory::text(nullptr);
         auto dup = TEXT(text);
 
         SHAPE(shape)->duplicate(dup->shape);

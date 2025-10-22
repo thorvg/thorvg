@@ -23,6 +23,18 @@
 
 #include "tvgText.h"
 
+/************************************************************************/
+/* Internal Class Implementation                                        */
+/************************************************************************/
+
+TextImpl::TextImpl() : impl(Paint::Impl(this)), shape(Factory::shape(impl.renderer))
+{
+    PAINT(shape)->parent = this;
+}
+
+/************************************************************************/
+/* External Class Implementation                                        */
+/************************************************************************/
 
 Text::Text() = default;
 

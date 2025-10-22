@@ -26,6 +26,7 @@
 #include "tvgCommon.h"
 #include "tvgMath.h"
 #include "tvgPaint.h"
+#include "tvgFactory.h"
 
 #define SHAPE(A) static_cast<ShapeImpl*>(A)
 #define CONST_SHAPE(A) static_cast<const ShapeImpl*>(A)
@@ -36,9 +37,7 @@ struct ShapeImpl : Shape
     RenderShape rs;
     uint8_t opacity;    //for composition
 
-    ShapeImpl() : impl(Paint::Impl(this))
-    {
-    }
+    ShapeImpl();
 
     bool render(RenderMethod* renderer)
     {
@@ -468,7 +467,7 @@ struct ShapeImpl : Shape
     Paint* duplicate(Paint* ret)
     {
         auto shape = static_cast<Shape*>(ret);
-        if (!shape) shape = Shape::gen();
+        if (!shape) shape = Factory::shape(nullptr);
         auto dup = SHAPE(shape);
 
         //Path

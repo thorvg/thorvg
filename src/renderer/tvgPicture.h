@@ -26,6 +26,7 @@
 #include "tvgPaint.h"
 #include "tvgScene.h"
 #include "tvgLoader.h"
+#include "tvgFactory.h"
 
 #define PICTURE(A) static_cast<PictureImpl*>(A)
 #define CONST_PICTURE(A) static_cast<const PictureImpl*>(A)
@@ -68,9 +69,7 @@ struct PictureImpl : Picture
     float w = 0, h = 0;
     bool resizing = false;
 
-    PictureImpl() : impl(Paint::Impl(this))
-    {
-    }
+    PictureImpl();
 
     ~PictureImpl()
     {
@@ -195,7 +194,7 @@ struct PictureImpl : Picture
 
         load();
 
-        auto picture = Picture::gen();
+        auto picture = Factory::picture(nullptr);
         auto dup = PICTURE(picture);
 
         if (vector) {

@@ -22,9 +22,9 @@
 
 #include "tvgMath.h"
 #include "tvgTaskScheduler.h"
-#include "tvgLottieModel.h"
 #include "tvgCompressor.h"
-
+#include "tvgFactory.h"
+#include "tvgLottieModel.h"
 
 /************************************************************************/
 /* Internal Class Implementation                                        */
@@ -354,7 +354,7 @@ void LottieImage::prepare()
 {
     LottieObject::type = LottieObject::Image;
 
-    auto picture = Picture::gen();
+    auto picture = Factory::picture(nullptr);
     picture->ref();
     pooler.push(picture);
 }
@@ -665,13 +665,13 @@ void LottieLayer::prepare(RGB32* color)
 
     //prepare the viewport clipper
     if (type == LottieLayer::Precomp) {
-        auto clipper = Shape::gen();
+        auto clipper = Factory::shape(nullptr);
         clipper->appendRect(0.0f, 0.0f, w, h);
         clipper->ref();
         statical.pooler.push(clipper);
     //prepare solid fill in advance if it is a layer type.
     } else if (color && type == LottieLayer::Solid) {
-        auto solidFill = Shape::gen();
+        auto solidFill = Factory::shape(nullptr);
         solidFill->appendRect(0, 0, static_cast<float>(w), static_cast<float>(h));
         solidFill->fill(color->r, color->g, color->b);
         solidFill->ref();

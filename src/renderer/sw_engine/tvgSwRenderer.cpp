@@ -32,6 +32,7 @@
 /************************************************************************/
 /* Internal Class Implementation                                        */
 /************************************************************************/
+
 static atomic<int32_t> rendererCnt{-1};
 static SwMpool* globalMpool = nullptr;
 static uint32_t threadsCnt = 0;

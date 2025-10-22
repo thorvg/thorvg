@@ -26,6 +26,7 @@
 #include "tvgFill.h"
 #include "tvgStr.h"
 #include "tvgShape.h"
+#include "tvgFactory.h"
 #include "tvgSvgLoaderCommon.h"
 #include "tvgSvgSceneBuilder.h"
 #include "tvgSvgPath.h"
@@ -254,7 +255,7 @@ static bool _applyClip(SvgLoaderData& loaderData, Paint* paint, const SvgNode* n
 {
     node->style->clipPath.applying = true;
 
-    auto clipper = Shape::gen();
+    auto clipper = Factory::shape(nullptr);
     auto valid = false; //Composite only when valid shapes exist
 
     ARRAY_FOREACH(p, clipNode->child) {
@@ -290,7 +291,7 @@ static Paint* _applyComposition(SvgLoaderData& loaderData, Paint* paint, const S
         return nullptr;
     }
 
-    auto scene = Scene::gen();
+    auto scene = Factory::scene(nullptr);
     scene->push(paint);
 
     if (clipNode) {
@@ -327,7 +328,7 @@ static Paint* _applyFilter(SvgLoaderData& loaderData, Paint* paint, const SvgNod
     if (!filterNode || filterNode->child.count == 0) return paint;
     auto& filter = filterNode->node.filter;
 
-    auto scene = Scene::gen();
+    auto scene = Factory::scene(nullptr);
 
     auto bbox = _bounds(paint);
     Box clipBox = filter.filterUserSpace ? filter.box : Box{bbox.x + filter.box.x * bbox.w, bbox.y + filter.box.y * bbox.h, filter.box.w * bbox.w, filter.box.h * bbox.h};
@@ -372,7 +373,7 @@ static Paint* _applyFilter(SvgLoaderData& loaderData, Paint* paint, const SvgNod
 
     scene->push(paint);
 
-    auto clip = Shape::gen();
+    auto clip = Factory::shape(nullptr);
     clip->appendRect(clipBox.x, clipBox.y, clipBox.w, clipBox.h);
     scene->clip(clip);
 
@@ -504,7 +505,7 @@ static bool _recognizeShape(SvgNode* node, Shape* shape)
 
 static Paint* _shapeBuildHelper(SvgLoaderData& loaderData, SvgNode* node, const Box& vBox, const string& svgPath)
 {
-    auto shape = Shape::gen();
+    auto shape = Factory::shape(nullptr);
     if (!_recognizeShape(node, shape)) return nullptr;
     return _applyProperty(loaderData, node, shape, vBox, svgPath, false);
 }
@@ -618,13 +619,12 @@ static bool _isValidImageMimeTypeAndEncoding(const char** href, const char** mim
     return false;
 }
 
-#include "tvgTaskScheduler.h"
 
 static Paint* _imageBuildHelper(SvgLoaderData& loaderData, SvgNode* node, const Box& vBox, const string& svgPath)
 {
     if (!node->node.image.href || !strlen(node->node.image.href)) return nullptr;
 
-    auto picture = Picture::gen();
+    auto picture = Factory::picture(nullptr);
 
     const char* href = node->node.image.href;
     if (!strncmp(href, "data:", sizeof("data:") - 1)) {
@@ -794,7 +794,7 @@ static Scene* _useBuildHelper(SvgLoaderData& loaderData, const SvgNode* node, co
         scene->transform(mSceneTransform);
 
         if (!node->node.use.symbol->node.symbol.overflowVisible) {
-            auto viewBoxClip = Shape::gen();
+            auto viewBoxClip = Factory::shape(nullptr);
             viewBoxClip->appendRect(0, 0, width, height);
 
             // mClipTransform = mUseTransform * mSymbolTransform
@@ -804,7 +804,7 @@ static Scene* _useBuildHelper(SvgLoaderData& loaderData, const SvgNode* node, co
             }
             viewBoxClip->transform(mClipTransform);
 
-            auto clippingLayer = Scene::gen();
+            auto clippingLayer = Factory::scene(nullptr);
             clippingLayer->clip(viewBoxClip);
             clippingLayer->push(scene);
             return clippingLayer;
@@ -856,7 +856,7 @@ static Paint* _textBuildHelper(SvgLoaderData& loaderData, const SvgNode* node, c
     auto textNode = &node->node.text;
     if (!textNode->text) return nullptr;
 
-    auto text = Text::gen();
+    auto text = Factory::text(nullptr);
 
     Matrix textTransform;
     if (node->transform) textTransform = *node->transform;
@@ -891,7 +891,7 @@ static Scene* _sceneBuildHelper(SvgLoaderData& loaderData, const SvgNode* node, 
 
     if (!_isGroupType(node->type) && !mask) return nullptr;
 
-    auto scene = Scene::gen();
+    auto scene = Factory::scene(nullptr);
     // For a Symbol node, the viewBox transformation has to be applied first - see _useBuildHelper()
     if (!mask && node->transform && node->type != SvgNodeType::Symbol && node->type != SvgNodeType::Use) {
         scene->transform(*node->transform);
@@ -1001,10 +1001,10 @@ Scene* svgSceneBuild(SvgLoaderData& loaderData, Box vBox, float w, float h, Aspe
         docNode->translate(-vBox.x, -vBox.y);
     }
 
-    auto viewBoxClip = Shape::gen();
+    auto viewBoxClip = Factory::shape(nullptr);
     viewBoxClip->appendRect(0, 0, w, h);
 
-    auto clippingLayer = Scene::gen();
+    auto clippingLayer = Factory::scene(nullptr);
     clippingLayer->clip(viewBoxClip);
     clippingLayer->push(docNode);
 
@@ -1012,7 +1012,7 @@ Scene* svgSceneBuild(SvgLoaderData& loaderData, Box vBox, float w, float h, Aspe
     loaderData.doc->node.doc.w = w;
     loaderData.doc->node.doc.h = h;
 
-    auto root = Scene::gen();
+    auto root = Factory::scene(nullptr);
     root->push(clippingLayer);
 
     return root;

@@ -15,6 +15,7 @@ endif
 source_file = [
    'tvgAnimation.h',
    'tvgCanvas.h',
+   'tvgFactory.h',
    'tvgFill.h',
    'tvgFrameModule.h',
    'tvgLoader.h',
@@ -30,6 +31,7 @@ source_file = [
    'tvgAccessor.cpp',
    'tvgAnimation.cpp',
    'tvgCanvas.cpp',
+   'tvgFactory.cpp',
    'tvgFill.cpp',
    'tvgInitializer.cpp',
    'tvgLoader.cpp',

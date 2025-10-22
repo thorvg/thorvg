@@ -26,6 +26,7 @@
 #include <algorithm>
 #include "tvgMath.h"
 #include "tvgPaint.h"
+#include "tvgFactory.h"
 
 #define SCENE(A) static_cast<SceneImpl*>(A)
 #define CONST_SCENE(A) static_cast<const SceneImpl*>(A)
@@ -70,9 +71,7 @@ struct SceneImpl : Scene
     bool vdirty = false;
     uint8_t opacity;      //for composition
 
-    SceneImpl() : impl(Paint::Impl(this))
-    {
-    }
+    SceneImpl();
 
     ~SceneImpl()
     {
@@ -278,7 +277,7 @@ struct SceneImpl : Scene
     {
         if (ret) TVGERR("RENDERER", "TODO: duplicate()");
 
-        auto scene = Scene::gen();
+        auto scene = Factory::scene(nullptr);
         auto dup = SCENE(scene);
 
         for (auto paint : paints) {

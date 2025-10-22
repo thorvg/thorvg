@@ -25,6 +25,7 @@
 #include "tvgMath.h"
 #include "tvgColor.h"
 #include "tvgLoader.h"
+#include "tvgFactory.h"
 #include "tvgXmlParser.h"
 #include "tvgSvgLoader.h"
 #include "tvgSvgSceneBuilder.h"
@@ -3854,7 +3855,7 @@ void SvgLoader::run(unsigned tid)
     //According to the SVG standard the value of the width/height of the viewbox set to 0 disables rendering
     if ((viewFlag & SvgViewFlag::Viewbox) && (fabsf(vbox.w) <= FLOAT_EPSILON || fabsf(vbox.h) <= FLOAT_EPSILON)) {
         TVGLOG("SVG", "The <viewBox> width and/or height set to 0 - rendering disabled.");
-        root = Scene::gen();
+        root = Factory::scene(nullptr);
         return;
     }
 
