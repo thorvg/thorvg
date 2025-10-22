@@ -65,6 +65,7 @@ void Stroker::run(const RenderPath& path, const Matrix& m)
 {
     mBuffer->vertex.reserve(path.pts.count * 4 + 16);
     mBuffer->index.reserve(path.pts.count * 3);
+    mScale = tvg::scaling2D(m);
 
     auto validStrokeCap = false;
     auto pts = path.pts.data;
@@ -251,7 +252,7 @@ void Stroker::round(const Point &prev, const Point& curr, const Point& center)
     mRightBottom.y = std::max(mRightBottom.y, std::max(center.y, std::max(prev.y, curr.y)));
 
     // Fixme: just use bezier curve to calculate step count
-    auto count = Bezier(prev, curr, radius()).segments();
+    auto count = Bezier(prev * mScale, curr * mScale, radius() * length(mScale)).segments();
     auto c = _pushVertex(mBuffer->vertex, center.x, center.y);
     auto pi = _pushVertex(mBuffer->vertex, prev.x, prev.y);
     auto step = 1.f / (count - 1);

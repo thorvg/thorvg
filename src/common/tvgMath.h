@@ -134,6 +134,14 @@ static inline float scaling(const Matrix& m)
 }
 
 
+static inline Point scaling2D(const Matrix& m)
+{
+    auto sx = sqrtf(m.e11 * m.e11 + m.e21 * m.e21);
+    auto sy = sqrtf(m.e12 * m.e12 + m.e22 * m.e22);
+    return {sx, sy};
+}
+
+
 static inline void scale(Matrix* m, const Point& p)
 {
     m->e11 *= p.x;
