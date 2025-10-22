@@ -308,7 +308,8 @@ static jerry_value_t _effectProperty(const jerry_call_info_t* info, const jerry_
 {
     auto data = static_cast<ExpContent*>(jerry_object_get_native_ptr(info->function, &freeCb));
     auto name = _name(args[0]);
-    auto property = static_cast<LottieFxCustom*>(data->effect)->property(name);
+    auto id = djb2Encode(name);
+    auto property = static_cast<LottieFxCustom*>(data->effect)->propertyById(id);
     tvg::free(name);
 
     if (!property) return jerry_undefined();
