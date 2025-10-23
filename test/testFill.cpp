@@ -83,11 +83,13 @@ TEST_CASE("Common Filling", "[tvgFill]")
     REQUIRE(fill->colorStops(&cs) == 0);
 
     //Set to Shape
-    auto shape = unique_ptr<Shape>(Shape::gen());
+    auto shape = Shape::gen();
     REQUIRE(shape);
 
     REQUIRE(shape->fill(fill) == Result::Success);
     REQUIRE(shape->fill() == fill);
+
+    Paint::rel(shape);
 }
 
 TEST_CASE("Fill Transformation", "[tvgFill]")

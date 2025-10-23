@@ -29,15 +29,17 @@ using namespace std;
 
 TEST_CASE("Scene Creation", "[tvgScene]")
 {
-    auto scene = unique_ptr<Scene>(Scene::gen());
+    auto scene = Scene::gen();
     REQUIRE(scene);
 
     REQUIRE(scene->type() == Type::Scene);
+
+    Paint::rel(scene);
 }
 
 TEST_CASE("Pushing Paints Into Scene", "[tvgScene]")
 {
-    auto scene = unique_ptr<Scene>(Scene::gen());
+    auto scene = Scene::gen();
     REQUIRE(scene);
     REQUIRE(scene->parent() == nullptr);
 
@@ -47,32 +49,36 @@ TEST_CASE("Pushing Paints Into Scene", "[tvgScene]")
     paints[0] = Shape::gen();
     REQUIRE(paints[0]->parent() == nullptr);
     REQUIRE(scene->push(paints[0]) == Result::Success);
-    REQUIRE(paints[0]->parent() == scene.get());
+    REQUIRE(paints[0]->parent() == scene);
 
     paints[1] = Picture::gen();
     REQUIRE(paints[1]->parent() == nullptr);
     REQUIRE(scene->push(paints[1]) == Result::Success);
-    REQUIRE(paints[1]->parent() == scene.get());
+    REQUIRE(paints[1]->parent() == scene);
 
     paints[2] = Picture::gen();
     REQUIRE(paints[2]->parent() == nullptr);
     REQUIRE(scene->push(paints[2]) == Result::Success);
-    REQUIRE(paints[2]->parent() == scene.get());
+    REQUIRE(paints[2]->parent() == scene);
 
     //Pushing Null Pointer
     REQUIRE(scene->push(nullptr) == Result::InvalidArguments);
 
     //Pushing Invalid Paint
     REQUIRE(scene->push(nullptr) == Result::InvalidArguments);
+
+    Paint::rel(scene);
 }
 
 TEST_CASE("Scene Clear", "[tvgScene]")
 {
-    auto scene = unique_ptr<Scene>(Scene::gen());
+    auto scene = Scene::gen();
     REQUIRE(scene);
 
     REQUIRE(scene->push(Shape::gen()) == Result::Success);
     REQUIRE(scene->remove() == Result::Success);
+
+    Paint::rel(scene);
 }
 
 TEST_CASE("Scene Clear And Reuse Shape", "[tvgScene]")

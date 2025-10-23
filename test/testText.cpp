@@ -33,17 +33,19 @@ using namespace std;
 
 TEST_CASE("Text Creation", "[tvgText]")
 {
-    auto text = unique_ptr<Text>(Text::gen());
+    auto text = Text::gen();
     REQUIRE(text);
 
     REQUIRE(text->type() == Type::Text);
+
+    Paint::rel(text);
 }
 
 TEST_CASE("Load TTF Data from a file", "[tvgText]")
 {
     Initializer::init();
     {
-        auto text = unique_ptr<Text>(Text::gen());
+        auto text = Text::gen();
         REQUIRE(text);
 
         REQUIRE(Text::unload(TEST_DIR"/invalid.ttf") == tvg::Result::InsufficientCondition);
@@ -53,6 +55,8 @@ TEST_CASE("Load TTF Data from a file", "[tvgText]")
         REQUIRE(Text::unload(TEST_DIR"/Arial.ttf") == tvg::Result::Success);
         REQUIRE(Text::load("") == tvg::Result::InvalidArguments);
         REQUIRE(Text::load(TEST_DIR"/NanumGothicCoding.ttf") == tvg::Result::Success);
+
+        Paint::rel(text);
     }
     Initializer::term();
 }
@@ -71,7 +75,7 @@ TEST_CASE("Load TTF Data from a memory", "[tvgText]")
         file.read(data, size);
         file.close();
 
-        auto text = unique_ptr<Text>(Text::gen());
+        auto text = Text::gen();
         REQUIRE(text);
 
         static const char* svg = "<svg height=\"1000\" viewBox=\"0 0 600 600\" ></svg>";
@@ -93,6 +97,8 @@ TEST_CASE("Load TTF Data from a memory", "[tvgText]")
         REQUIRE(Text::load("Arial", nullptr, 111) == Result::Success);
 
         free(data);
+
+        Paint::rel(text);
     }
     Initializer::term();
 }
@@ -101,7 +107,7 @@ TEST_CASE("Text Font", "[tvgText]")
 {
     Initializer::init();
     {
-        auto text = unique_ptr<Text>(Text::gen());
+        auto text = Text::gen();
         REQUIRE(text);
 
         REQUIRE(Text::load(TEST_DIR"/Arial.ttf") == tvg::Result::Success);
@@ -113,6 +119,8 @@ TEST_CASE("Text Font", "[tvgText]")
         REQUIRE(text->size(50) == tvg::Result::Success);
         REQUIRE(text->font(nullptr) == tvg::Result::Success);
         REQUIRE(text->font("InvalidFont") == tvg::Result::InsufficientCondition);
+
+        Paint::rel(text);
     }
     Initializer::term();
 }
