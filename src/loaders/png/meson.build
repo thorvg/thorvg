@@ -1,7 +1,7 @@
 source_file = [
-   'tvgLodePng.h',
+   'tvgPngDecoder.h',
    'tvgPngLoader.h',
-   'tvgLodePng.cpp',
+   'tvgPngDecoder.cpp',
    'tvgPngLoader.cpp',
 ]
 

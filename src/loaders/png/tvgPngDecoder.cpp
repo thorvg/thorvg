@@ -45,7 +45,7 @@
 */
 
 #include "tvgCommon.h"
-#include "tvgLodePng.h"
+#include "tvgPngDecoder.h"
 
 
 /************************************************************************/
@@ -1129,7 +1129,7 @@ static void lodepng_decompress_settings_init(LodePNGDecompressSettings* settings
 /* ////////////////////////////////////////////////////////////////////////// */
 
 
-#if 0 //thorvg don't use crc
+#if 0 // thorvg don't use crc
 /* CRC polynomial: 0xedb88320 */
 static unsigned lodepng_crc32_table[256] = {
             0u, 1996959894u, 3993919788u, 2567524794u,  124634137u, 1886057615u, 3915621685u, 2657392035u,
@@ -1178,7 +1178,7 @@ static unsigned lodepng_crc32(const unsigned char* data, size_t length)
     }
     return r ^ 0xffffffffu;
 }
-#endif
+#endif // THORVG_PNG_SAVER_SUPPORT
 
 /* ////////////////////////////////////////////////////////////////////////// */
 /* / Reading and writing PNG color channel bits                             / */
@@ -2505,7 +2505,6 @@ static void lodepng_decoder_settings_init(LodePNGDecoderSettings* settings)
     settings->ignore_end = 0;
     lodepng_decompress_settings_init(&settings->zlibsettings);
 }
-
 
 /************************************************************************/
 /* External Class Implementation                                        */

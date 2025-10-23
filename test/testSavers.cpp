@@ -22,6 +22,7 @@
 
 #include <thorvg.h>
 #include <fstream>
+#include <sstream>
 #include "config.h"
 #include "catch.hpp"
 
@@ -49,7 +50,7 @@ TEST_CASE("Save a lottie into gif", "[tvgSavers]") {
 
         auto saver =  unique_ptr<Saver>(Saver::gen());
         REQUIRE(saver);
-        REQUIRE(saver->save(animation, TEST_DIR"/test.gif") == Result::Success);
+        REQUIRE(saver->save(animation, TEST_DIR"/saver_test.gif") == Result::Success);
         REQUIRE(saver->sync() == Result::Success);
 
         //with a background
@@ -66,8 +67,52 @@ TEST_CASE("Save a lottie into gif", "[tvgSavers]") {
         REQUIRE(bg->appendRect(0, 0, 100, 100) == Result::Success);
 
         REQUIRE(saver->background(bg) == Result::Success);
-        REQUIRE(saver->save(animation2, TEST_DIR"/test.gif") == Result::Success);
+        REQUIRE(saver->save(animation2, TEST_DIR"/saver_test_with_bg.gif") == Result::Success);
         REQUIRE(saver->sync() == Result::Success);
+    }
+    REQUIRE(Initializer::term() == Result::Success);
+}
+#endif
+
+#if defined(THORVG_PNG_SAVER_SUPPORT)
+
+TEST_CASE("Save a paint into png", "[tvgSavers]")
+{
+    REQUIRE(Initializer::init() == Result::Success);
+    {
+        auto animation = Animation::gen();
+        REQUIRE(animation);
+
+        auto picture = animation->picture();
+        REQUIRE(picture);
+        REQUIRE(picture->load(TEST_DIR "/test.json") == Result::Success);
+        REQUIRE(picture->size(100, 100) == Result::Success);
+
+        auto saver = unique_ptr<Saver>(Saver::gen());
+        REQUIRE(saver);
+        animation->frame(120.0f);
+        picture = animation->picture();
+        REQUIRE(saver->save(picture->duplicate(), TEST_DIR "/saver_test.png") == Result::Success);
+        REQUIRE(saver->sync() == Result::Success);
+
+        // with a background
+        for (int i = 0; i < animation->totalFrame(); i += 24) {
+            std::ostringstream oss;
+            oss << TEST_DIR << "/saver_test_with_bg_frame_" << i << ".png";
+            auto path = oss.str();
+
+            auto bg = Shape::gen();
+            REQUIRE(bg->fill(255, 255, 255) == Result::Success);
+            REQUIRE(bg->appendRect(0, 0, 100, 100) == Result::Success);
+            REQUIRE(saver->background(bg) == Result::Success);
+
+            animation->frame(i);
+            picture = animation->picture();
+            REQUIRE(saver->save(picture->duplicate(), path.c_str()) == Result::Success);
+            REQUIRE(saver->sync() == Result::Success);
+        }
+
+        delete (animation);
     }
     REQUIRE(Initializer::term() == Result::Success);
 }
