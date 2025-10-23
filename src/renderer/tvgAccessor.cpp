@@ -60,7 +60,7 @@ Result Accessor::set(Paint* paint, function<bool(const Paint* paint, void* data)
 
     //Root
     if (!func(paint, data)) {
-        paint->unref();
+        paint->unref(false);
         return Result::Success;
     }
 

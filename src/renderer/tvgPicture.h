@@ -76,7 +76,7 @@ struct PictureImpl : Picture
     {
         LoaderMgr::retrieve(loader);
         tvg::free(resolver);
-        Paint::rel(vector);
+        if (vector) vector->unref();
     }
 
     bool skip(RenderUpdateFlag flag)
@@ -249,6 +249,7 @@ struct PictureImpl : Picture
             if (vector) {
                 loader->sync();
             } else if ((vector = loader->paint())) {
+                vector->ref();
                 PAINT(vector)->parent = this;
                 if (w != loader->w || h != loader->h) {
                     if (!resizing) {

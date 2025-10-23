@@ -257,7 +257,7 @@ TEST_CASE("Animation Lottie11", "[tvgAnimation]")
         file.seekg(0, ios::beg);
         file.read(data, size);
         file.close();
-        REQUIRE(picture->load(data, size, "json", "", true) == Result::Success);
+        REQUIRE(picture->load(data, size, "lot", "", true) == Result::Success);
 
         free(data);
     }

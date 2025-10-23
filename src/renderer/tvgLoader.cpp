@@ -277,10 +277,10 @@ LoadModule* LoaderMgr::loader(const char* filename, bool* invalid)
 #ifdef THORVG_FILE_IO_SUPPORT
     *invalid = false;
 
-    //TODO: svg & lottie is not sharable.
+    //TODO: make lottie sharable.
     auto allowCache = true;
     auto ext = fileext(filename);
-    if (ext && (!strcmp(ext, "svg") || !strcmp(ext, "json") || !strcmp(ext, "lot"))) allowCache = false;
+    if (ext && (!strcmp(ext, "json") || !strcmp(ext, "lot"))) allowCache = false;
 
     if (allowCache) {
         if (auto loader = _findFromCache(filename)) return loader;
@@ -333,7 +333,7 @@ LoadModule* LoaderMgr::loader(const char* data, uint32_t size, const char* mimeT
     //Thus caching is only valid for shareable.
     auto allowCache = !copy;
 
-    //TODO: lottie is not sharable.
+    //TODO: make lottie shareable.
     if (allowCache) {
         auto type = _convert(mimeType);
         if (type == FileType::Lot) allowCache = false;
