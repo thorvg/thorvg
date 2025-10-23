@@ -48,7 +48,7 @@ TEST_CASE("Set", "[tvgAccessor]")
         uint32_t buffer[100*100];
         REQUIRE(canvas->target(buffer, 100, 100, 100, ColorSpace::ARGB8888) == Result::Success);
 
-        auto picture = unique_ptr<Picture>(Picture::gen());
+        auto picture = Picture::gen();
         REQUIRE(picture);
         REQUIRE(picture->load(TEST_DIR"/logo.svg") == Result::Success);
 
@@ -56,7 +56,7 @@ TEST_CASE("Set", "[tvgAccessor]")
         REQUIRE(accessor);
 
         //Case 1
-        REQUIRE(accessor->set(picture.get(), nullptr, nullptr) == Result::InvalidArguments);
+        REQUIRE(accessor->set(picture, nullptr, nullptr) == Result::InvalidArguments);
 
         //Case 2
         Shape* ret = nullptr;
@@ -77,9 +77,10 @@ TEST_CASE("Set", "[tvgAccessor]")
             return true;
         };
 
-        REQUIRE(accessor->set(picture.get(), f, &ret) == Result::Success);
-
+        REQUIRE(accessor->set(picture, f, &ret) == Result::Success);
         REQUIRE((ret && ret->id == Accessor::id("TestAccessor")));
+
+        Picture::rel(picture);
     }
     REQUIRE(Initializer::term() == Result::Success);
 }
