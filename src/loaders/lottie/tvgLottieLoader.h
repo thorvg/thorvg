@@ -71,7 +71,7 @@ public:
     bool copy = false;                  //"content" is owned by this loader
     bool build = true;                  //require building the lottie scene
 
-    LottieLoader();
+    LottieLoader(RenderMethod* renderer);
     ~LottieLoader();
 
     bool open(const char* path) override;

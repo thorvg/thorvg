@@ -66,47 +66,47 @@ static Key _key;
 static Inlist<LoadModule> _activeLoaders;
 
 
-static LoadModule* _find(FileType type, ColorSpace cs = ColorSpace::Unknown)
+static LoadModule* _find(RenderMethod* renderer, FileType type)
 {
     switch(type) {
         case FileType::Png: {
 #ifdef THORVG_PNG_LOADER_SUPPORT
-            return new PngLoader(cs);
+            return new PngLoader(renderer->colorSpace());
 #endif
             break;
         }
         case FileType::Jpg: {
 #ifdef THORVG_JPG_LOADER_SUPPORT
-            return new JpgLoader(cs);
+            return new JpgLoader(renderer->colorSpace());
 #endif
             break;
         }
         case FileType::Webp: {
 #ifdef THORVG_WEBP_LOADER_SUPPORT
-            return new WebpLoader(cs);
+            return new WebpLoader(renderer->colorSpace());
 #endif
             break;
         }
         case FileType::Svg: {
 #ifdef THORVG_SVG_LOADER_SUPPORT
-            return new SvgLoader;
+            return new SvgLoader(renderer);
 #endif
             break;
         }
         case FileType::Ttf: {
 #ifdef THORVG_TTF_LOADER_SUPPORT
-            return new TtfLoader;
+            return new TtfLoader(renderer);
 #endif
             break;
         }
         case FileType::Lot: {
 #ifdef THORVG_LOTTIE_LOADER_SUPPORT
-            return new LottieLoader;
+            return new LottieLoader(renderer);
 #endif
             break;
         }
         case FileType::Raw: {
-            return new RawLoader(cs);
+            return new RawLoader(renderer->colorSpace());
             break;
         }
         default: {
@@ -157,18 +157,18 @@ static LoadModule* _find(FileType type, ColorSpace cs = ColorSpace::Unknown)
 
 
 #ifdef THORVG_FILE_IO_SUPPORT
-static LoadModule* _findByPath(const char* filename, ColorSpace cs)
+static LoadModule* _findByPath(RenderMethod* renderer, const char* filename)
 {
     auto ext = fileext(filename);
     if (!ext) return nullptr;
 
-    if (!strcmp(ext, "svg")) return _find(FileType::Svg);
-    if (!strcmp(ext, "lot") || !strcmp(ext, "json")) return _find(FileType::Lot);
-    if (!strcmp(ext, "png")) return _find(FileType::Png, cs);
-    if (!strcmp(ext, "jpg")) return _find(FileType::Jpg, cs);
-    if (!strcmp(ext, "webp")) return _find(FileType::Webp, cs);
-    if (!strcmp(ext, "ttf") || !strcmp(ext, "ttc")) return _find(FileType::Ttf);
-    if (!strcmp(ext, "otf") || !strcmp(ext, "otc")) return _find(FileType::Ttf);
+    if (!strcmp(ext, "svg")) return _find(renderer, FileType::Svg);
+    if (!strcmp(ext, "lot") || !strcmp(ext, "json")) return _find(renderer, FileType::Lot);
+    if (!strcmp(ext, "png")) return _find(renderer, FileType::Png);
+    if (!strcmp(ext, "jpg")) return _find(renderer, FileType::Jpg);
+    if (!strcmp(ext, "webp")) return _find(renderer, FileType::Webp);
+    if (!strcmp(ext, "ttf") || !strcmp(ext, "ttc")) return _find(renderer, FileType::Ttf);
+    if (!strcmp(ext, "otf") || !strcmp(ext, "otc")) return _find(renderer, FileType::Ttf);
     return nullptr;
 }
 #endif
@@ -193,9 +193,9 @@ static FileType _convert(const char* mimeType)
 }
 
 
-static LoadModule* _findByType(const char* mimeType, ColorSpace cs)
+static LoadModule* _findByType(RenderMethod* renderer, const char* mimeType)
 {
-    return _find(_convert(mimeType), cs);
+    return _find(renderer, _convert(mimeType));
 }
 
 
@@ -269,7 +269,7 @@ bool LoaderMgr::retrieve(LoadModule* loader)
 }
 
 
-LoadModule* LoaderMgr::loader(const char* filename, ColorSpace cs)
+LoadModule* LoaderMgr::loader(RenderMethod* renderer, const char* filename)
 {
 #ifdef THORVG_FILE_IO_SUPPORT
     //TODO: svg & lottie is not sharable.
@@ -281,7 +281,7 @@ LoadModule* LoaderMgr::loader(const char* filename, ColorSpace cs)
         if (auto loader = _findFromCache(filename)) return loader;
     }
 
-    if (auto loader = _findByPath(filename, cs)) {
+    if (auto loader = _findByPath(renderer, filename)) {
         if (loader->open(filename)) {
             if (allowCache) {
                 loader->cache(duplicate(filename));
@@ -296,7 +296,7 @@ LoadModule* LoaderMgr::loader(const char* filename, ColorSpace cs)
     }
     //Unknown MimeType. Try with the candidates in the order
     for (int i = 0; i < static_cast<int>(FileType::Raw); i++) {
-        if (auto loader = _find(static_cast<FileType>(i), cs)) {
+        if (auto loader = _find(renderer, static_cast<FileType>(i))) {
             if (loader->open(filename)) {
                 if (allowCache) {
                     loader->cache(duplicate(filename));
@@ -322,7 +322,7 @@ bool LoaderMgr::retrieve(const char* filename)
 }
 
 
-LoadModule* LoaderMgr::loader(const char* data, uint32_t size, const char* mimeType, const char* rpath, ColorSpace cs, bool copy)
+LoadModule* LoaderMgr::loader(RenderMethod* renderer, const char* data, uint32_t size, const char* mimeType, const char* rpath, bool copy)
 {
     //Note that users could use the same data pointer with the different content.
     //Thus caching is only valid for shareable.
@@ -340,7 +340,7 @@ LoadModule* LoaderMgr::loader(const char* data, uint32_t size, const char* mimeT
 
     //Try with the given MimeType
     if (mimeType) {
-        if (auto loader = _findByType(mimeType, cs)) {
+        if (auto loader = _findByType(renderer, mimeType)) {
             if (loader->open(data, size, rpath, copy)) {
                 if (allowCache) {
                     loader->cache(HASH_KEY(data));
@@ -356,7 +356,7 @@ LoadModule* LoaderMgr::loader(const char* data, uint32_t size, const char* mimeT
     }
     //Unknown MimeType. Try with the candidates in the order
     for (int i = 0; i < static_cast<int>(FileType::Raw); i++) {
-        auto loader = _find(static_cast<FileType>(i), cs);
+        auto loader = _find(renderer, static_cast<FileType>(i));
         if (loader) {
             if (loader->open(data, size, rpath, copy)) {
                 if (allowCache) {
@@ -373,7 +373,7 @@ LoadModule* LoaderMgr::loader(const char* data, uint32_t size, const char* mimeT
 }
 
 
-LoadModule* LoaderMgr::loader(const uint32_t *data, uint32_t w, uint32_t h, ColorSpace src, ColorSpace dst, bool copy)
+LoadModule* LoaderMgr::loader(RenderMethod* renderer, const uint32_t *data, uint32_t w, uint32_t h, ColorSpace cs, bool copy)
 {
     //Note that users could use the same data pointer with the different content.
     //Thus caching is only valid for shareable.
@@ -383,8 +383,8 @@ LoadModule* LoaderMgr::loader(const uint32_t *data, uint32_t w, uint32_t h, Colo
     }
 
     //function is dedicated for raw images only
-    auto loader = new RawLoader(dst);
-    if (loader->open(data, w, h, src, copy)) {
+    auto loader = new RawLoader(renderer);
+    if (loader->open(data, w, h, cs, copy)) {
         if (!copy) {
             loader->cache(HASH_KEY((const char*)data));
             ScopedLock lock(_key);
@@ -398,14 +398,14 @@ LoadModule* LoaderMgr::loader(const uint32_t *data, uint32_t w, uint32_t h, Colo
 
 
 //loads fonts from memory - loader is cached (regardless of copy value) in order to access it while setting font
-LoadModule* LoaderMgr::loader(const char* name, const char* data, uint32_t size, TVG_UNUSED const char* mimeType, bool copy)
+LoadModule* LoaderMgr::loader(RenderMethod* renderer, const char* name, const char* data, uint32_t size, TVG_UNUSED const char* mimeType, bool copy)
 {
 #ifdef THORVG_TTF_LOADER_SUPPORT
     //TODO: add check for mimetype ?
     if (auto loader = font(name)) return loader;
 
     //function is dedicated for ttf loader (the only supported font loader)
-    auto loader = new TtfLoader;
+    auto loader = new TtfLoader(renderer);
     if (loader->open(data, size, "", copy)) {
         loader->name = duplicate(name);
         loader->cached = true;  //force it.

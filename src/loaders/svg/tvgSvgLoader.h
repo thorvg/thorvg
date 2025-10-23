@@ -29,6 +29,7 @@
 class SvgLoader : public ImageLoader, public Task
 {
 public:
+    RenderMethod* renderer;
     string svgPath = "";
     char* content = nullptr;
     uint32_t size = 0;
@@ -38,7 +39,7 @@ public:
 
     bool copy = false;
 
-    SvgLoader();
+    SvgLoader(RenderMethod* renderer);
     ~SvgLoader();
 
     bool open(const char* path) override;

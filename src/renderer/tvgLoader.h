@@ -29,10 +29,10 @@ struct LoaderMgr
 {
     static bool init();
     static bool term();
-    static LoadModule* loader(const char* filename, ColorSpace cs = ColorSpace::Unknown);
-    static LoadModule* loader(const char* data, uint32_t size, const char* mimeType, const char* rpath, ColorSpace cs, bool copy);
-    static LoadModule* loader(const uint32_t* data, uint32_t w, uint32_t h, ColorSpace src, ColorSpace dst, bool copy);
-    static LoadModule* loader(const char* name, const char* data, uint32_t size, const char* mimeType, bool copy);  //for font
+    static LoadModule* loader(RenderMethod* renderer, const char* filename);
+    static LoadModule* loader(RenderMethod* renderer, const char* data, uint32_t size, const char* mimeType, const char* rpath, bool copy);
+    static LoadModule* loader(RenderMethod* renderer, const uint32_t* data, uint32_t w, uint32_t h, ColorSpace cs, bool copy);
+    static LoadModule* loader(RenderMethod* renderer, const char* name, const char* data, uint32_t size, const char* mimeType, bool copy);  //for font
     static LoadModule* font(const char* name);
     static LoadModule* anyfont();
     static bool retrieve(const char* filename);
