@@ -29,7 +29,7 @@ using namespace std;
 
 TEST_CASE("Custom Transformation", "[tvgPaint]")
 {
-    auto shape = unique_ptr<Shape>(Shape::gen());
+    auto shape = Shape::gen();
     REQUIRE(shape);
 
     //Verify default transform
@@ -75,12 +75,14 @@ TEST_CASE("Custom Transformation", "[tvgPaint]")
     REQUIRE(m2.e31 == Approx(m4.e31).margin(0.000001));
     REQUIRE(m2.e32 == Approx(m4.e32).margin(0.000001));
     REQUIRE(m2.e33 == Approx(m4.e33).margin(0.000001));
+
+    Paint::rel(shape);
 }
 
 
 TEST_CASE("Basic Transformation", "[tvgPaint]")
 {
-    auto shape = unique_ptr<Shape>(Shape::gen());
+    auto shape = Shape::gen();
     REQUIRE(shape);
 
     REQUIRE(shape->translate(155.0f, -155.0f) == Result::Success);
@@ -97,11 +99,13 @@ TEST_CASE("Basic Transformation", "[tvgPaint]")
     REQUIRE(m.e31 == Approx(0).margin(0.000001));
     REQUIRE(m.e32 == Approx(0).margin(0.000001));
     REQUIRE(m.e33 == Approx(1).margin(0.000001));
+
+    Paint::rel(shape);
 }
 
 TEST_CASE("Opacity", "[tvgPaint]")
 {
-    auto shape = unique_ptr<Shape>(Shape::gen());
+    auto shape = Shape::gen();
     REQUIRE(shape);
 
     REQUIRE(shape->opacity() == 255);
@@ -114,11 +118,13 @@ TEST_CASE("Opacity", "[tvgPaint]")
 
     REQUIRE(shape->opacity(0) == Result::Success);
     REQUIRE(shape->opacity() == 0);
+
+    Paint::rel(shape);
 }
 
 TEST_CASE("Visibility", "[tvgPaint]")
 {
-    auto shape = unique_ptr<Shape>(Shape::gen());
+    auto shape = Shape::gen();
     REQUIRE(shape);
 
     REQUIRE(shape->visible() == true);
@@ -131,6 +137,8 @@ TEST_CASE("Visibility", "[tvgPaint]")
 
     REQUIRE(shape->visible(true) == Result::Success);
     REQUIRE(shape->visible() == true);
+
+    Paint::rel(shape);
 }
 
 TEST_CASE("Bounding Box", "[tvgPaint]")
@@ -376,7 +384,7 @@ TEST_CASE("Duplication", "[tvgPaint]")
 
 TEST_CASE("Composition", "[tvgPaint]")
 {
-    auto shape = unique_ptr<Shape>(Shape::gen());
+    auto shape = Shape::gen();
     REQUIRE(shape);
 
     //Negative
@@ -416,11 +424,13 @@ TEST_CASE("Composition", "[tvgPaint]")
 
     REQUIRE(shape->mask(&comp2) == MaskMethod::InvLuma);
     REQUIRE(comp == comp2);
+
+    Paint::rel(shape);
 }
 
 TEST_CASE("Blending", "[tvgPaint]")
 {
-    auto shape = unique_ptr<Shape>(Shape::gen());
+    auto shape = Shape::gen();
     REQUIRE(shape);
 
     //Add
@@ -458,6 +468,8 @@ TEST_CASE("Blending", "[tvgPaint]")
 
     //SoftLight
     REQUIRE(shape->blend(BlendMethod::SoftLight) == Result::Success);
+
+    Paint::rel(shape);
 }
 
 TEST_CASE("Refernce Count", "[tvgPaint]")

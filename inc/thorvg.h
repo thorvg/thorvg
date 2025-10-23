@@ -54,6 +54,11 @@ protected: \
 public: \
     Impl* pImpl
 
+#define _TVG_DECLARE_PRIVATE_DERIVE(A) \
+    _TVG_DECLARE_PRIVATE(A); \
+protected: \
+    ~A() {}
+
 #define _TVG_DISABLE_CTOR(A) \
     A() = delete; \
     ~A() = delete
@@ -1496,7 +1501,7 @@ public:
      */
     Type type() const noexcept override;
 
-    _TVG_DECLARE_PRIVATE(Shape);
+    _TVG_DECLARE_PRIVATE_DERIVE(Shape);
 };
 
 
@@ -1698,7 +1703,7 @@ public:
     Type type() const noexcept override;
 
     _TVG_DECLARE_ACCESSOR(Animation);
-    _TVG_DECLARE_PRIVATE(Picture);
+    _TVG_DECLARE_PRIVATE_DERIVE(Picture);
 };
 
 
@@ -1807,7 +1812,7 @@ public:
      */
     Type type() const noexcept override;
 
-    _TVG_DECLARE_PRIVATE(Scene);
+    _TVG_DECLARE_PRIVATE_DERIVE(Scene);
 };
 
 
@@ -2076,7 +2081,7 @@ public:
      */
     Type type() const noexcept override;
 
-    _TVG_DECLARE_PRIVATE(Text);
+    _TVG_DECLARE_PRIVATE_DERIVE(Text);
 };
 
 

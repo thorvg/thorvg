@@ -29,15 +29,17 @@ using namespace std;
 
 TEST_CASE("Shape Creation", "[tvgShape]")
 {
-    auto shape = unique_ptr<Shape>(Shape::gen());
+    auto shape = Shape::gen();
     REQUIRE(shape);
 
     REQUIRE(shape->type() == Type::Shape);
+
+    Paint::rel(shape);
 }
 
 TEST_CASE("Appending Commands", "[tvgShape]")
 {
-    auto shape = unique_ptr<Shape>(Shape::gen());
+    auto shape = Shape::gen();
     REQUIRE(shape);
 
     REQUIRE(shape->close() == Result::Success);
@@ -59,11 +61,13 @@ TEST_CASE("Appending Commands", "[tvgShape]")
 
     REQUIRE(shape->reset() == Result::Success);
     REQUIRE(shape->reset() == Result::Success);
+
+    Paint::rel(shape);
 }
 
 TEST_CASE("Appending Shapes", "[tvgShape]")
 {
-    auto shape = unique_ptr<Shape>(Shape::gen());
+    auto shape = Shape::gen();
     REQUIRE(shape);
 
     REQUIRE(shape->moveTo(100, 100) == Result::Success);
@@ -78,11 +82,13 @@ TEST_CASE("Appending Shapes", "[tvgShape]")
     REQUIRE(shape->appendCircle(0, 0, 0, 0) == Result::Success);
     REQUIRE(shape->appendCircle(-99999999.0f, 99999999.0f, 0, 0, true) == Result::Success);
     REQUIRE(shape->appendCircle(-99999999.0f, 99999999.0f, -99999999.0f, 99999999.0f, false) == Result::Success);
+
+    Paint::rel(shape);
 }
 
 TEST_CASE("Appending Paths", "[tvgShape]")
 {
-    auto shape = unique_ptr<Shape>(Shape::gen());
+    auto shape = Shape::gen();
     REQUIRE(shape);
 
     //Negative cases
@@ -127,11 +133,13 @@ TEST_CASE("Appending Paths", "[tvgShape]")
     REQUIRE(shape->path(nullptr, &cmds2Cnt, nullptr, &pts2Cnt) == Result::Success);
     REQUIRE(cmds2Cnt == 0);
     REQUIRE(pts2Cnt == 0);
+
+    Paint::rel(shape);
 }
 
 TEST_CASE("Stroking", "[tvgShape]")
 {
-    auto shape = unique_ptr<Shape>(Shape::gen());
+    auto shape = Shape::gen();
     REQUIRE(shape);
 
     //Stroke Order Before Stroke Setting
@@ -210,11 +218,13 @@ TEST_CASE("Stroking", "[tvgShape]")
     //Stroke Order After Stroke Setting
     REQUIRE(shape->order(true) == Result::Success);
     REQUIRE(shape->order(false) == Result::Success);
+
+    Paint::rel(shape);
 }
 
 TEST_CASE("Shape Filling", "[tvgShape]")
 {
-    auto shape = unique_ptr<Shape>(Shape::gen());
+    auto shape = Shape::gen();
     REQUIRE(shape);
 
     //Fill Color
@@ -231,4 +241,6 @@ TEST_CASE("Shape Filling", "[tvgShape]")
     REQUIRE(shape->fillRule() == FillRule::NonZero);
     REQUIRE(shape->fillRule(FillRule::EvenOdd) == Result::Success);
     REQUIRE(shape->fillRule() == FillRule::EvenOdd);
+
+    Paint::rel(shape);
 }
