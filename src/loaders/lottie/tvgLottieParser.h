@@ -129,7 +129,7 @@ private:
 
     char* captureType();
     void captureSlots(const char* key);
-    void registerSlot(LottieObject* obj, const char* sid, LottieProperty::Type type);
+    void registerSlot(LottieObject* obj, const char* sid, LottieProperty::Type type, uint8_t ix = 0);
 
     //Current parsing context
     struct Context {
