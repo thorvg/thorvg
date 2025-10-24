@@ -969,12 +969,7 @@ struct LottieTextDoc : LottieProperty
 
 struct LottieBitmap : LottieProperty
 {
-    union {
-        char* b64Data = nullptr;
-        char* path;
-    };
-    char* mimeType = nullptr;
-    uint32_t size = 0;
+    BitmapData* bitmapData = nullptr;
     float width = 0.0f;
     float height = 0.0f;
 
@@ -992,11 +987,10 @@ struct LottieBitmap : LottieProperty
 
     void release()
     {
-        tvg::free(b64Data);
-        tvg::free(mimeType);
-
-        b64Data = nullptr;
-        mimeType = nullptr;
+        if (bitmapData) {  
+            bitmapData->unref();  
+            bitmapData = nullptr;  
+        }  
     }
 
     uint32_t frameCnt() override { return 0; }
@@ -1008,18 +1002,12 @@ struct LottieBitmap : LottieProperty
     {
         if (LottieProperty::copy(&rhs, shallow)) return;
 
-        if (shallow) {
-            b64Data = rhs.b64Data;
-            mimeType = rhs.mimeType;
-            rhs.b64Data = nullptr;
-            rhs.mimeType = nullptr;
-        } else {
-            //TODO: optimize here by avoiding data copy
-            TVGLOG("LOTTIE", "Shallow copy of the image data!");
-            b64Data = duplicate(rhs.b64Data);
-            if (rhs.mimeType) mimeType = duplicate(rhs.mimeType);
-        }
-        size = rhs.size;
+        release();
+
+        //even if deep copy at property level, bitmap data is shared.
+        bitmapData = rhs.bitmapData;
+        if (bitmapData) bitmapData->ref();  
+
         width = rhs.width;
         height = rhs.height;
     }

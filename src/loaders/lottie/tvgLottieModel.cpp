@@ -362,10 +362,11 @@ void LottieImage::prepare()
 
 void LottieImage::update()
 {
+    if (!data.bitmapData) return;
     //Update the picture data
     ARRAY_FOREACH(p, pooler) {
-        if (data.size > 0) (*p)->load((const char*)data.b64Data, data.size, data.mimeType);
-        else (*p)->load(data.path);
+        if (data.bitmapData->size > 0) (*p)->load((const char*)data.bitmapData->b64Data, data.bitmapData->size, data.bitmapData->mimeType);
+        else (*p)->load(data.bitmapData->path);
         (*p)->size(data.width, data.height);
     }
 }

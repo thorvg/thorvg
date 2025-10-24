@@ -903,9 +903,12 @@ void LottieBuilder::updateImage(LottieGroup* layer)
     layer->scene->push(picture);
     if (image->updated) return;
 
-    if (image->data.size > 0) picture->load((const char*)image->data.b64Data, image->data.size, image->data.mimeType);
-    else if (resolver && resolver->func(picture, image->data.path, resolver->data)) {}
-    else picture->load(image->data.path);
+    auto bitmapData = image->data.bitmapData;
+    if (!bitmapData) return;
+
+    if (bitmapData->size > 0) picture->load((const char*)bitmapData->b64Data, bitmapData->size, bitmapData->mimeType);
+    else if (resolver && resolver->func(picture, bitmapData->path, resolver->data)) {}
+    else picture->load(bitmapData->path);
 
     picture->size(image->data.width, image->data.height);
     image->updated = true;
