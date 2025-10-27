@@ -172,6 +172,56 @@ struct LottieFxCustom : LottieEffect
         ARRAY_FOREACH(p, props) delete(p->property);
     }
 
+    LottieProperty* backup(LottieProperty* prop) override
+    {
+        ARRAY_FOREACH(p, props) {
+            if (p->property->type != prop->type || p->property->ix != prop->ix) continue;
+            switch (prop->type) {
+                case LottieProperty::Type::Float: return new LottieFloat(*static_cast<LottieFloat*>(p->property));
+                case LottieProperty::Type::Color: return new LottieColor(*static_cast<LottieColor*>(p->property));
+                case LottieProperty::Type::Vector: return new LottieVector(*static_cast<LottieVector*>(p->property));
+                case LottieProperty::Type::Integer: return new LottieInteger(*static_cast<LottieInteger*>(p->property));
+                default: break;
+            }
+        }
+        return nullptr;
+    }
+
+    void override(LottieProperty* prop, bool release = false) override
+    {
+        ARRAY_FOREACH(p, props) {
+            if (p->property->type != prop->type || p->property->ix != prop->ix) continue;
+            auto target = p->property;
+            switch (prop->type) {
+                case LottieProperty::Type::Float: {
+                    auto cur = static_cast<LottieFloat*>(target);
+                    if (release) cur->release();
+                    cur->copy(*static_cast<LottieFloat*>(prop), false);
+                    break;
+                }
+                case LottieProperty::Type::Color: {
+                    auto cur = static_cast<LottieColor*>(target);
+                    if (release) cur->release();
+                    cur->copy(*static_cast<LottieColor*>(prop), false);
+                    break;
+                }
+                case LottieProperty::Type::Vector: {
+                    auto cur = static_cast<LottieVector*>(target);
+                    if (release) cur->release();
+                    cur->copy(*static_cast<LottieVector*>(prop), false);
+                    break;
+                }
+                case LottieProperty::Type::Integer: {
+                    auto cur = static_cast<LottieInteger*>(target);
+                    if (release) cur->release();
+                    cur->copy(*static_cast<LottieInteger*>(prop), false);
+                    break;
+                }
+                default: break;
+            }
+        }
+    }
+
     using LottieObject::property;
     Property* property(int type)
     {
@@ -1133,6 +1183,7 @@ struct LottieSlot
     } context;
 
     unsigned long sid;    // djb2 encoded
+    uint8_t ix;           // property index
     Array<Pair> pairs;    // object-property pairs that can be overridden by this slot
     LottieProperty::Type type;
 
