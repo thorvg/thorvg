@@ -1454,7 +1454,7 @@ void LottieParser::parseEffects(LottieLayer* layer)
                 if (!effect) break;
                 else invalid = false;
             }
-            else if (effect && KEY_AS("nm")) effect->nm = djb2Encode(getString());
+            else if (effect && parseCommon(effect, key)) continue;
             else if (effect && KEY_AS("mn")) effect->mn = djb2Encode(getString());
             else if (effect && KEY_AS("ix")) effect->ix = getInt();
             else if (effect && KEY_AS("en")) effect->enable = getInt();
