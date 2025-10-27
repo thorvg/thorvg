@@ -973,6 +973,7 @@ struct LottieBitmap : LottieProperty
         char* b64Data = nullptr;
         char* path;
     };
+    Picture *picture = nullptr;
     char* mimeType = nullptr;
     uint32_t size = 0;
     float width = 0.0f;
@@ -992,6 +993,11 @@ struct LottieBitmap : LottieProperty
 
     void release()
     {
+        if (picture) {
+            picture->unref();
+            picture = nullptr;
+        }
+
         tvg::free(b64Data);
         tvg::free(mimeType);
 
@@ -1008,18 +1014,13 @@ struct LottieBitmap : LottieProperty
     {
         if (LottieProperty::copy(&rhs, shallow)) return;
 
-        if (shallow) {
-            b64Data = rhs.b64Data;
-            mimeType = rhs.mimeType;
-            rhs.b64Data = nullptr;
-            rhs.mimeType = nullptr;
-        } else {
-            //TODO: optimize here by avoiding data copy
-            TVGLOG("LOTTIE", "Shallow copy of the image data!");
-            b64Data = duplicate(rhs.b64Data);
-            if (rhs.mimeType) mimeType = duplicate(rhs.mimeType);
+        release();
+
+        if (rhs.picture) {
+            picture = rhs.picture;
+            picture->ref();
         }
-        size = rhs.size;
+
         width = rhs.width;
         height = rhs.height;
     }

@@ -354,20 +354,13 @@ void LottieImage::prepare()
 {
     LottieObject::type = LottieObject::Image;
 
+    //Prepare the Picture image
     auto picture = Picture::gen();
+    auto result = (data.size > 0) ? picture->load((const char*)data.b64Data, data.size, data.mimeType) : picture->load(data.path);
+    if (result == Result::Success) resolved = true;
+    picture->size(data.width, data.height);
+    data.picture = picture;
     picture->ref();
-    pooler.push(picture);
-}
-
-
-void LottieImage::update()
-{
-    //Update the picture data
-    ARRAY_FOREACH(p, pooler) {
-        if (data.size > 0) (*p)->load((const char*)data.b64Data, data.size, data.mimeType);
-        else (*p)->load(data.path);
-        (*p)->size(data.width, data.height);
-    }
 }
 
 
