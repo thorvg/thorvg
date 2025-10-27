@@ -440,63 +440,77 @@ RenderCompositor* WgRenderer::target(const RenderRegion& region, TVG_UNUSED Colo
     // create and setup compose data
     WgCompose* compose = new WgCompose();
     compose->aabb = region;
+    compose->flags = flags;
     mCompositorList.push(compose);
     return compose;
 }
 
 
+// please, keep beginComposite/endComposite aligned by logic
 bool WgRenderer::beginComposite(RenderCompositor* cmp, MaskMethod method, uint8_t opacity)
 {
-    // save current composition settings
+    // current composition
     WgCompose* compose = (WgCompose*)cmp;
-    compose->method = method;
-    compose->opacity = opacity;
-    compose->blend = mBlendMethod;
-    WgSceneTask* sceneTaskCurrent = mSceneTaskStack.last();
     // allocate new render target and push to the render tree stack
-    WgRenderTarget* renderTarget = mRenderTargetPool.allocate(mContext);
-    mRenderTargetStack.push(renderTarget);
-    // create and setup new scene task
-    WgSceneTask* sceneTask = new WgSceneTask(renderTarget, compose, sceneTaskCurrent);
-    sceneTaskCurrent->children.push(sceneTask);
-    mRenderTaskList.push(sceneTask);
-    mSceneTaskStack.push(sceneTask);
+    WgRenderTarget* newRenderTarget = mRenderTargetPool.allocate(mContext);
+    mRenderTargetStack.push(newRenderTarget);
+    // current and new scenes
+    WgSceneTask* curSceneTask = mSceneTaskStack.last();
+    WgSceneTask* newSceneTask = new WgSceneTask(newRenderTarget, compose, curSceneTask);
+    // setup masking and blending scenes configuration
+    if ((compose->flags & (tvg::Blending | tvg::Masking)) == (tvg::Blending | tvg::Masking)) {
+        // new scene task must be as masked but not blended
+        newSceneTask->compose->method = curSceneTask->compose->method;
+        newSceneTask->compose->opacity = 255;
+        newSceneTask->compose->blend = BlendMethod::Normal;
+        newSceneTask->renderTargetMsk = curSceneTask->renderTargetMsk;
+        newSceneTask->renderTargetDst = curSceneTask->renderTarget;
+        // cur scene task must be blended but not masked
+        curSceneTask->compose->method = MaskMethod::None;
+        curSceneTask->compose->opacity = opacity;
+        curSceneTask->compose->blend = mBlendMethod;
+        curSceneTask->renderTargetMsk = nullptr;
+    } else // setup masking scenes configuration
+    if (method != MaskMethod::None) {
+        // new scene task must be masked
+        newSceneTask->compose->masked = true;
+        newSceneTask->compose->method = method;
+        newSceneTask->compose->opacity = opacity;
+        newSceneTask->compose->blend = BlendMethod::Normal;
+        newSceneTask->renderTargetMsk = curSceneTask->renderTarget;
+        newSceneTask->renderTargetDst = curSceneTask->renderTargetDst;
+        // cur scene task must not be blended
+        curSceneTask->renderTargetDst = nullptr;
+    } else // setup blending scenes configuration
+    if (method == MaskMethod::None) {
+        // new scene task must be blended
+        newSceneTask->compose->method = MaskMethod::None;
+        newSceneTask->compose->opacity = opacity;
+        newSceneTask->compose->blend = mBlendMethod;
+        newSceneTask->renderTargetMsk = nullptr;
+        newSceneTask->renderTargetDst = curSceneTask->renderTarget;
+    }
+    curSceneTask->children.push(newSceneTask);
+    mRenderTaskList.push(newSceneTask);
+    mSceneTaskStack.push(newSceneTask);
+
     return true;
 }
 
 
+// please, keep beginComposite/endComposite aligned by logic
 bool WgRenderer::endComposite(RenderCompositor* cmp)
 {
-    // finish scene blending
-    if (cmp->method == MaskMethod::None) {
-        // get source and destination render targets
-        WgRenderTarget* src = mRenderTargetStack.last();
-        mRenderTargetStack.pop();
-
-        WgSceneTask* srcScene = mSceneTaskStack.last();
+    // pop targets and scenes from render tree
+    mRenderTargetPool.free(mContext, mRenderTargetStack.last());
+    mSceneTaskStack.pop();
+    mRenderTargetStack.pop();
+    // in a case of masked target we must pop mask targets and scenes also
+    WgCompose* compose = (WgCompose*)cmp;
+    if (compose->masked) {
+        mRenderTargetPool.free(mContext, mRenderTargetStack.last());
         mSceneTaskStack.pop();
-        // setup render target compose destitations
-        srcScene->renderTargetDst = mSceneTaskStack.last()->renderTarget;
-        srcScene->renderTargetMsk =  nullptr;
-        // back render targets to the pool
-        mRenderTargetPool.free(mContext, src);
-    } else { // finish scene composition
-        // get source, mask and destination render targets
-        WgRenderTarget* src = mRenderTargetStack.last();
         mRenderTargetStack.pop();
-        WgRenderTarget* msk = mRenderTargetStack.last();
-        mRenderTargetStack.pop();
-        // get source and mask scenes
-        WgSceneTask* srcScene = mSceneTaskStack.last();
-        mSceneTaskStack.pop();
-        WgSceneTask* mskScene = mSceneTaskStack.last();
-        mSceneTaskStack.pop();
-        // setup render target compose destitations
-        srcScene->renderTargetDst = mSceneTaskStack.last()->renderTarget;
-        srcScene->renderTargetMsk = mskScene->renderTarget;
-        // back render targets to the pool
-        mRenderTargetPool.free(mContext, src);
-        mRenderTargetPool.free(mContext, msk);
     }
     return true;
 }
