@@ -538,7 +538,7 @@ void GlGaussianBlurTask::run()
     GL_CHECK(glBindFramebuffer(GL_FRAMEBUFFER, mDstFbo->getFboId()));
 
     GL_CHECK(glDisable(GL_BLEND));
-    if (effect->direction == 0) {
+    if ((effect->direction != 1) && (effect->direction != 2)) { // both
         GL_CHECK(glBindFramebuffer(GL_READ_FRAMEBUFFER, mDstFbo->getFboId()));
         GL_CHECK(glBindFramebuffer(GL_DRAW_FRAMEBUFFER, mDstCopyFbo1->getResolveFboId()));
         GL_CHECK(glBlitFramebuffer(0, 0, width, height, 0, 0, width, height, GL_COLOR_BUFFER_BIT, GL_NEAREST));

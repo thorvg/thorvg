@@ -849,7 +849,7 @@ bool WgCompositor::gaussianBlur(WgContext& context, WgRenderTarget* dst, const R
     auto aabb = compose->aabb;
 
     copyTexture(&targetTemp0, dst);
-    if (params->direction == 0) { // both
+    if ((params->direction != 1) && (params->direction != 2)) { // both
         beginRenderPass(commandEncoder, &targetTemp0); {
             wgpuRenderPassEncoderSetScissorRect(renderPassEncoder, aabb.x(), aabb.y(), aabb.w(), aabb.h());
             wgpuRenderPassEncoderSetBindGroup(renderPassEncoder, 0, dst->bindGroupTexture, 0, nullptr);
