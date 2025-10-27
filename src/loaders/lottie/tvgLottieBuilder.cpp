@@ -1387,7 +1387,7 @@ void LottieBuilder::updateEffect(LottieLayer* layer, float frameNo, uint8_t qual
     if (layer->effects.count == 0) return;
 
     ARRAY_FOREACH(p, layer->effects) {
-        if (!(*p)->enable) continue;
+        if ((*p)->hidden) continue;
         switch ((*p)->type) {
             case LottieEffect::Tint: {
                 auto effect = static_cast<LottieFxTint*>(*p);
