@@ -30,6 +30,8 @@ struct WgCompose: RenderCompositor
 {
     BlendMethod blend{};
     RenderRegion aabb{};
+    CompositionFlag flags{};
+    bool masked{}; // indicate if composition allocates more than one render target
 };
 
 class WgCompositor
