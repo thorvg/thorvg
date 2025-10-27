@@ -867,20 +867,18 @@ struct LottieGradientStroke : LottieGradient, LottieStroke
 };
 
 
-struct LottieImage : LottieObject, LottieRenderPooler<tvg::Picture>
+struct LottieImage : LottieObject
 {
     LottieBitmap data;
-    bool updated = false;
+    bool resolved = false;
 
     void override(LottieProperty* prop, bool release = false) override
     {
         if (release) data.release();
         data.copy(*static_cast<LottieBitmap*>(prop), false);
-        update();
     }
 
     void prepare();
-    void update();
 };
 
 

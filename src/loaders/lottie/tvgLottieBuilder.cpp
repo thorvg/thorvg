@@ -899,16 +899,15 @@ void LottieBuilder::updateSolid(LottieLayer* layer)
 void LottieBuilder::updateImage(LottieGroup* layer)
 {
     auto image = static_cast<LottieImage*>(layer->children.first());
-    auto picture = image->pooling(true);
+    auto picture = image->data.picture;
     layer->scene->push(picture);
-    if (image->updated) return;
 
-    if (image->data.size > 0) picture->load((const char*)image->data.b64Data, image->data.size, image->data.mimeType);
-    else if (resolver && resolver->func(picture, image->data.path, resolver->data)) {}
-    else picture->load(image->data.path);
-
-    picture->size(image->data.width, image->data.height);
-    image->updated = true;
+    //resolve an image asset if need
+    if (resolver && !image->resolved) {
+        resolver->func(picture, image->data.path, resolver->data);
+        picture->size(image->data.width, image->data.height);
+        image->resolved = true;
+    }
 }
 
 
