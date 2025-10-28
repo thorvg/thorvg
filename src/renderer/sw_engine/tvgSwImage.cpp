@@ -120,4 +120,5 @@ void imageReset(SwImage& image)
 void imageFree(SwImage& image)
 {
     rleFree(image.rle);
+    image.rle = nullptr;
 }
