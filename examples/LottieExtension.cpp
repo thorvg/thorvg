@@ -269,9 +269,14 @@ struct UserExample : tvgexam::Example
             auto picture = resolver->picture();
 
             if (!tvgexam::verify(picture->resolver([](tvg::Paint* p, const char* src, void* data) {
-                if (p->type() != tvg::Type::Picture) return false;     //supposed to be a picture object
-                auto ret = static_cast<tvg::Picture*>(p)->load(src);   //load picture resources as demand
-                return (ret == (tvg::Result) 0) ? true : false;        //return true if resolving is successful
+                if (p->type() != tvg::Type::Picture) return false;                               //supposed to be a picture object
+                auto assetPath = string(src).replace(
+                    0,
+                    sizeof(EXAMPLE_DIR"/lottie/extensions/") - 1,
+                    EXAMPLE_DIR"/"
+                );                                                                               //remap src to valid asset path
+                auto ret = static_cast<tvg::Picture*>(p)->load(assetPath.c_str());               //load picture resources as demanded
+                return (ret == (tvg::Result) 0) ? true : false;                                  //return true if resolving is successful
             }, nullptr))) return false;
 
             if (!tvgexam::verify(picture->load(EXAMPLE_DIR"/lottie/extensions/resolver.json"))) return false;
