@@ -235,12 +235,12 @@ struct SwImageTask : SwTask
                     if (!nodirty) dirtyRegion->add(prvBox, curBox);
                     return;
                 }
-            }
+            } else imageFree(image);
         }
         goto end;
     err:
         curBox.reset();
-        rleReset(image.rle);
+        imageReset(image);
     end:
         imageDelOutline(image, mpool, tid);
         if (!nodirty) dirtyRegion->add(prvBox, curBox);
