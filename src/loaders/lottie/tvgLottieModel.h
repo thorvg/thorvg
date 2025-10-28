@@ -408,7 +408,6 @@ struct LottieFont
     char* name = nullptr;
     char* family = nullptr;
     char* style = nullptr;
-    size_t dataSize = 0;
     float ascent = 0.0f;
     Origin origin = Local;
 
