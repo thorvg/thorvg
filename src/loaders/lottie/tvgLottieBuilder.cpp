@@ -900,7 +900,6 @@ void LottieBuilder::updateImage(LottieGroup* layer)
 {
     auto image = static_cast<LottieImage*>(layer->children.first());
     auto picture = image->data.picture;
-    layer->scene->push(picture);
 
     //resolve an image asset if need
     if (resolver && !image->resolved) {
@@ -908,6 +907,9 @@ void LottieBuilder::updateImage(LottieGroup* layer)
         picture->size(image->data.width, image->data.height);
         image->resolved = true;
     }
+
+    //LottieImage can be shared among other layers
+    layer->scene->push(picture->refCnt() == 1 ? picture : picture->duplicate());
 }
 
 
