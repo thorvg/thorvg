@@ -1007,13 +1007,22 @@ LottieObject* LottieParser::parseAsset()
 void LottieParser::parseFontData(LottieFont* font, const char* data)
 {
     if (!data) return;
-    if (strncmp(data, "data:font/ttf;base64,", sizeof("data:font/ttf;base64,") - 1) != 0) {
-        TVGLOG("LOTTIE", "Unsupported embeded font data format");
-        return;
-    }
 
-    auto ttf = data + sizeof("data:font/ttf;base64,") - 1;
-    font->data.size = b64Decode(ttf, strlen(ttf), &font->data.b64src);
+    //handle base64 font data
+    if (!strncmp(data, "data:font/", sizeof("data:font/") - 1)) {
+        data += sizeof("data:font/") - 1;
+        if (!strncmp(data, "ttf", 3)) {
+            data += 3;
+        } else {
+            TVGLOG("LOTTIE", "TODO: Support a new font type!");
+            return;
+        }
+        data += sizeof(";base64,") - 1;
+        font->size = b64Decode(data, strlen(data), &font->b64src);
+    //external font resource
+    } else {
+        font->path = duplicate(data);
+    }
 }
 
 

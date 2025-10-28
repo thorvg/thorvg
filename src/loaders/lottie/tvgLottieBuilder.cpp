@@ -914,7 +914,7 @@ void LottieBuilder::updateImage(LottieGroup* layer)
 
 
 //TODO: unify with the updateText() building logic
-static void _fontText(TextDocument& doc, Scene* scene)
+static void _fontText(LottieFont* font, TextDocument& doc, Scene* scene, const AssetResolver* resolver)
 {
     auto delim = "\r\n\3";
     auto size = doc.size * 75.0f; //1 pt = 1/72; 1 in = 96 px; -> 72/96 = 0.75
@@ -927,9 +927,10 @@ static void _fontText(TextDocument& doc, Scene* scene)
     auto cnt = 0;
     while (token) {
         auto txt = Text::gen();
-        if (txt->font(doc.name) != Result::Success) {
-            txt->font(nullptr);  //fallback to any available font
-        }
+        if (txt->font(doc.name) == Result::Success) {}
+        else if (resolver && resolver->func(txt, font->path, resolver->data)) {}
+        else txt->font(nullptr);  //fallback to any available font
+
         txt->size(size);
         txt->text(token);
         txt->fill(doc.color.r, doc.color.g, doc.color.b);
@@ -953,7 +954,7 @@ void LottieBuilder::updateText(LottieLayer* layer, float frameNo)
     if (!p || !text->font) return;
 
     if (text->font->origin != LottieFont::Origin::Local || text->font->chars.empty()) {
-        _fontText(doc, layer->scene);
+        _fontText(text->font, doc, layer->scene, resolver);
         return;
     }
 

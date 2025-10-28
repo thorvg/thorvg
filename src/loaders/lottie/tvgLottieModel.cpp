@@ -344,9 +344,9 @@ float LottieTextRange::factor(float frameNo, float totalLen, float idx)
 
 void LottieFont::prepare()
 {
-    if (!data.b64src || !name) return;
+    if (!b64src) return;
 
-    Text::load(name, data.b64src, data.size, "ttf", false);
+    Text::load(name, b64src, size, "ttf", false);
 }
 
 
