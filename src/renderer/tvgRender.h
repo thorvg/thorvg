@@ -437,7 +437,7 @@ struct RenderEffectGaussianBlur : RenderEffect
     {
         auto inst = new RenderEffectGaussianBlur;
         inst->sigma = std::max((float) va_arg(args, double), 0.0f);
-        inst->direction = std::min(va_arg(args, int), 2);
+        inst->direction = tvg::clamp(va_arg(args, int), 0, 2);
         inst->border = std::min(va_arg(args, int), 1);
         inst->quality = std::min(va_arg(args, int), 100);
         inst->type = SceneEffect::GaussianBlur;
