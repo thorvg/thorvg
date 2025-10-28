@@ -268,12 +268,16 @@ struct UserExample : tvgexam::Example
             resolver = std::unique_ptr<tvg::LottieAnimation>(tvg::LottieAnimation::gen());
             auto picture = resolver->picture();
 
-            if (!tvgexam::verify(picture->resolver([](tvg::Paint* p, const char* src, void* data) {
-                if (p->type() != tvg::Type::Picture) return false;     //supposed to be a picture object
-                auto ret = static_cast<tvg::Picture*>(p)->load(src);   //load picture resources as demand
-                return (ret == (tvg::Result) 0) ? true : false;        //return true if resolving is successful
-            }, nullptr))) return false;
+            auto func = [](tvg::Paint* p, const char* src, void* data) {
+                if (p->type() != tvg::Type::Picture) return false;
+                //The engine may fail to access the source image. This demonstrates how to resolve it using an user vaild source.
+                auto assetPath = string(src).replace(0, sizeof(EXAMPLE_DIR"/lottie/extensions/") - 1, EXAMPLE_DIR"/");
+                auto ret = static_cast<tvg::Picture*>(p)->load(assetPath.c_str());
+                return (ret == (tvg::Result) 0) ? true : false; //return true if the resolving is successful
+            };
 
+            //set a resolver prior to load a resource
+            if (!tvgexam::verify(picture->resolver(func, nullptr))) return false;
             if (!tvgexam::verify(picture->load(EXAMPLE_DIR"/lottie/extensions/resolver.json"))) return false;
 
             sizing(picture, 13);
