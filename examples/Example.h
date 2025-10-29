@@ -142,6 +142,7 @@ struct Window
     tvg::Canvas* canvas = nullptr;
     uint32_t width;
     uint32_t height;
+    uint32_t stime;    //start time tick
     double mfps = 0;   //mean fps
 
     Example* example = nullptr;
@@ -160,6 +161,7 @@ struct Window
         SDL_Init(SDL_INIT_VIDEO);
 
         //Init member variables
+        this->stime = SDL_GetTicks();
         this->width = width;
         this->height = height;
         this->example = example;
@@ -203,8 +205,10 @@ struct Window
         return true;
     }
 
-    void fps(uint32_t tickCnt)
+    void fps(uint32_t tickCnt, uint32_t ctime)
     {
+        if (tickCnt == 1) printf("[ Boot]: %u(ms)\n", ctime - stime);
+
         using clock = std::chrono::steady_clock;
 
         static double ema_dt = 1 / 60;             // Initial value assuming 60fps (seconds)
@@ -300,7 +304,7 @@ struct Window
             ptime = ctime;
             ++tickCnt;
 
-            if (print) fps(tickCnt);
+            if (print) fps(tickCnt, ctime);
         }
     }
 
