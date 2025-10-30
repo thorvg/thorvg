@@ -4012,7 +4012,7 @@ bool SvgLoader::read()
 {
     if (!content || size == 0) return false;
 
-    if (root || !LoadModule::read()) return true;
+    if (!LoadModule::read() || root) return true;
 
     TaskScheduler::request(this);
 
