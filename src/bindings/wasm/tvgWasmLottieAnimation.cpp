@@ -32,8 +32,13 @@ using namespace tvg;
 
 EMSCRIPTEN_DECLARE_VAL_TYPE(ArrayBuffer);
 EMSCRIPTEN_DECLARE_VAL_TYPE(Float32Array);
+EMSCRIPTEN_DECLARE_VAL_TYPE(AssetResolverCallback);
 
 static const char* NoError = "None";
+
+static bool isValidProperty(const val& obj, const char* propName) {
+    return obj.hasOwnProperty(propName) && !obj[propName].isUndefined() && !obj[propName].isNull();
+}
 
 struct TvgEngineMethod
 {
@@ -322,6 +327,8 @@ public:
             filetype = "lottie+json";
         }
 
+        animation->picture()->resolver(resolver.func, &resolver.data);
+
         if (animation->picture()->load(data.c_str(), data.size(), filetype.c_str()) != Result::Success) {
             errorMsg = "load() fail";
             return false;
@@ -508,6 +515,42 @@ public:
         return true;
     }
 
+    bool setAssetResolver(AssetResolverCallback callback, val data)
+    {
+        errorMsg = NoError;
+
+        if (!canvas || !animation) return false;
+
+        if (callback.isUndefined() || callback.isNull()) {
+            animation->picture()->resolver(nullptr, nullptr);
+            return true;
+        }
+
+        auto func = [callback](Paint* p, const char* src, void* data) -> bool {
+            auto& userData = *static_cast<val*>(data);
+            auto res = callback(val(src), userData);
+            if (res.isUndefined() || res.isNull()) return false;
+            if (!isValidProperty(res, "name") || !isValidProperty(res, "buffer") || !isValidProperty(res, "mimetype")) return false;
+
+            auto name = res["name"].as<string>();
+            auto buffer = vecFromJSArray<char>(res["buffer"]);
+            auto mimetype = res["mimetype"].as<string>();
+
+            if (p->type() == Type::Picture) {
+                return static_cast<Picture*>(p)->load(buffer.data(), buffer.size(), mimetype.c_str(), nullptr, false) == Result::Success;
+            } else if (p->type() == Type::Text) {
+                if (Text::load(name.c_str(), buffer.data(), buffer.size(), mimetype.c_str(), false) != Result::Success) return false;
+                return static_cast<Text*>(p)->font(name.c_str()) == Result::Success;
+            }
+
+            return false;
+        };
+
+        resolver = {func, data};
+
+        return true;
+    }
+
 private:
     string                 errorMsg;
     Canvas*                canvas = nullptr;
@@ -517,6 +560,10 @@ private:
     uint32_t               height = 0;
     float                  psize[2];         //picture size
     bool                   updated = false;
+    struct {
+        std::function<bool(Paint* paint, const char* src, void* data)> func;
+        val data; //user data for JS data type
+    } resolver;
 };
 
 
@@ -543,6 +590,8 @@ EMSCRIPTEN_BINDINGS(thorvg_bindings)
 {
     register_type<ArrayBuffer>("ArrayBuffer");
     register_type<Float32Array>("Float32Array");
+    register_type<AssetResolverCallback>("(src: string, data: unknown) => { name: string, buffer: ArrayBuffer, mimetype: string }");
+
     emscripten::function("init", &init);
     emscripten::function("term", &term);
 
@@ -560,5 +609,6 @@ EMSCRIPTEN_BINDINGS(thorvg_bindings)
         .function("viewport", &TvgLottieAnimation ::viewport)
         .function("resize", &TvgLottieAnimation ::resize)
         .function("save", &TvgLottieAnimation ::save)
-        .function("quality", &TvgLottieAnimation ::quality);
+        .function("quality", &TvgLottieAnimation ::quality)
+        .function("setAssetResolver", &TvgLottieAnimation ::setAssetResolver);
 }
