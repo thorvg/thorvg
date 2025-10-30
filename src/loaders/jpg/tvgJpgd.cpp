@@ -1328,15 +1328,6 @@ void jpeg_decoder::transform_mcu(int mcu_row)
 }
 
 
-static const uint8_t s_max_rc[64] =
-{
-    17, 18, 34, 50, 50, 51, 52, 52, 52, 68, 84, 84, 84, 84, 85, 86, 86, 86, 86, 86,
-    102, 118, 118, 118, 118, 118, 118, 119, 120, 120, 120, 120, 120, 120, 120, 136,
-    136, 136, 136, 136, 136, 136, 136, 136, 136, 136, 136, 136, 136, 136, 136, 136,
-    136, 136, 136, 136, 136, 136, 136, 136, 136, 136, 136, 136
-};
-
-
 // Loads and dequantizes the next row of (already decoded) coefficients.
 // Progressive images only.
 void jpeg_decoder::load_next_row()
