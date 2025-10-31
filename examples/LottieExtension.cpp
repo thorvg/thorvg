@@ -31,7 +31,7 @@ struct UserExample : tvgexam::Example
 {
     vector<unique_ptr<tvg::LottieAnimation>> slots;
     unique_ptr<tvg::LottieAnimation> marker;
-    unique_ptr<tvg::LottieAnimation> resolver;
+    vector<unique_ptr<tvg::LottieAnimation>> resolvers;
     uint32_t w, h;
     uint32_t size;
 
@@ -56,8 +56,10 @@ struct UserExample : tvgexam::Example
         //marker
         marker->frame(marker->totalFrame() * tvgexam::progress(elapsed, marker->duration()));
 
-        //asset resolver
-        resolver->frame(resolver->totalFrame() * tvgexam::progress(elapsed, resolver->duration()));
+        //asset resolvers
+        for (auto& resolver : resolvers) {
+            resolver->frame(resolver->totalFrame() * tvgexam::progress(elapsed, resolver->duration()));
+        }
 
         canvas->update();
 
@@ -263,21 +265,46 @@ struct UserExample : tvgexam::Example
             canvas->push(picture);
         }
 
-        //asset resolver
+        //asset resolver (image)
         {
-            resolver = std::unique_ptr<tvg::LottieAnimation>(tvg::LottieAnimation::gen());
+            auto resolver = std::unique_ptr<tvg::LottieAnimation>(tvg::LottieAnimation::gen());
             auto picture = resolver->picture();
 
             if (!tvgexam::verify(picture->resolver([](tvg::Paint* p, const char* src, void* data) {
-                if (p->type() != tvg::Type::Picture) return false;     //supposed to be a picture object
-                auto ret = static_cast<tvg::Picture*>(p)->load(src);   //load picture resources as demand
-                return (ret == (tvg::Result) 0) ? true : false;        //return true if resolving is successful
+                if (p->type() != tvg::Type::Picture) return false;                               //supposed to be a picture object
+                auto assetPath = string(src).replace(
+                    0,
+                    sizeof(EXAMPLE_DIR"/lottie/extensions/") - 1,
+                    EXAMPLE_DIR"/"
+                );                                                                               //remap src to valid asset path
+                auto ret = static_cast<tvg::Picture*>(p)->load(assetPath.c_str());               //load picture resources as demanded
+                return (ret == (tvg::Result) 0) ? true : false;                                  //return true if resolving is successful
             }, nullptr))) return false;
 
-            if (!tvgexam::verify(picture->load(EXAMPLE_DIR"/lottie/extensions/resolver.json"))) return false;
+            if (!tvgexam::verify(picture->load(EXAMPLE_DIR"/lottie/extensions/resolver1.json"))) return false;
 
             sizing(picture, 13);
             canvas->push(picture);
+            resolvers.push_back(std::move(resolver));
+        }
+
+        //asset resolver (font)
+        {
+            auto resolver = std::unique_ptr<tvg::LottieAnimation>(tvg::LottieAnimation::gen());
+            auto picture = resolver->picture();
+
+            if (!tvgexam::verify(picture->resolver([](tvg::Paint* p, const char* src, void* data) {
+                if (p->type() != tvg::Type::Text) return false;                 //supposed to be a text object
+                auto ret = tvg::Text::load(EXAMPLE_DIR"/font/SentyCloud.ttf");  //load font data
+                ret = static_cast<tvg::Text*>(p)->font("SentyCloud");           //set loaded font to the text object
+                return (ret == (tvg::Result) 0) ? true : false;                 //return true if resolving is successful
+            }, nullptr))) return false;
+
+            if (!tvgexam::verify(picture->load(EXAMPLE_DIR"/lottie/extensions/resolver2.json"))) return false;
+
+            sizing(picture, 14);
+            canvas->push(picture);
+            resolvers.push_back(std::move(resolver));
         }
 
         return true;
