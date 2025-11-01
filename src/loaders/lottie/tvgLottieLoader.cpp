@@ -349,7 +349,10 @@ uint32_t LottieLoader::gen(const char* slots, bool byDefault)
         auto found = false;
         ARRAY_FOREACH(p, comp->slots) {
             if ((*p)->sid != sid) continue;  //find target
-            if (auto prop = parser.parse(*p)) custom->props.push({prop, *p});
+            if (auto prop = parser.parse(*p)) {
+              prop->ix = (*p)->ix;
+              custom->props.push({prop, *p});
+            }
             found = true;
             break;
         }
