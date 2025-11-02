@@ -33,25 +33,23 @@ static uint32_t _pushVertex(Array<float>& array, float x, float y)
 }
 
 
-Stroker::Stroker(GlGeometryBuffer* buffer, float width) : mBuffer(buffer), mWidth(width)
+Stroker::Stroker(GlGeometryBuffer* buffer, float width, StrokeCap cap, StrokeJoin join) : mBuffer(buffer), mWidth(width), mCap(cap), mJoin(join)
 {
 }
 
 
-void Stroker::run(const RenderShape& rshape, const Matrix& m)
+void Stroker::run(const RenderShape& rshape, const RenderPath& path, const Matrix& m)
 {
     mMiterLimit = rshape.strokeMiterlimit();
-    mCap = rshape.strokeCap();
-    mJoin = rshape.strokeJoin();
 
     RenderPath dashed;
     if (rshape.strokeDash(dashed)) run(dashed, m);
     else if (rshape.trimpath()) {
         RenderPath trimmedPath;
-        if (rshape.stroke->trim.trim(rshape.path, trimmedPath)) {
+        if (rshape.stroke->trim.trim(path, trimmedPath)) {
             run(trimmedPath, m);
         }
-    } else run(rshape.path, m);
+    } else run(path, m);
 }
 
 

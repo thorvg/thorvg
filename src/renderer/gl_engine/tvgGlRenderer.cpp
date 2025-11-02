@@ -1279,14 +1279,22 @@ RenderData GlRenderer::prepare(const RenderShape& rshape, RenderData data, const
     sdata->geometry.matrix = transform;
     sdata->geometry.viewport = vport;
 
+    if (flags & (RenderUpdateFlag::Path | RenderUpdateFlag::Transform)) {
+        sdata->geometry.prepare(rshape);
+    }
+
     //TODO: Please precisely update tessellation not to update only if the color is changed.
     if (flags & (RenderUpdateFlag::Color | RenderUpdateFlag::Gradient | RenderUpdateFlag::Transform | RenderUpdateFlag::Path)) {
-        if (sdata->geometry.tesselateShape(rshape)) sdata->validFill = true;
+        float opacityMultiplier = 1.0f;
+        if (sdata->geometry.tesselateShape(*(sdata->rshape), &opacityMultiplier)) {
+            sdata->opacity *= opacityMultiplier;
+            sdata->validFill = true;
+        }
     }
 
     //TODO: Please precisely update tessellation not to update only if the color is changed.
     if (flags & (RenderUpdateFlag::Color | RenderUpdateFlag::Stroke | RenderUpdateFlag::GradientStroke | RenderUpdateFlag::Transform | RenderUpdateFlag::Path)) {
-        if (sdata->geometry.tesselateStroke(rshape)) sdata->validStroke = true;
+        if (sdata->geometry.tesselateStroke(*(sdata->rshape))) sdata->validStroke = true;
     }
 
     if (flags & RenderUpdateFlag::Clip) {
