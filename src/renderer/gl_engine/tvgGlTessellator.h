@@ -38,12 +38,12 @@ class Stroker
         Point prevPtDir;
     };
 public:
-    Stroker(GlGeometryBuffer* buffer, float strokeWidth);
-    void run(const RenderShape& rshape, const Matrix& m);
+    Stroker(GlGeometryBuffer* buffer, float strokeWidth, StrokeCap cap, StrokeJoin join);
+    void run(const RenderShape& rshape, const RenderPath& path, const Matrix& m);
+    void run(const RenderPath& path, const Matrix& m);
     RenderRegion bounds() const;
 
 private:
-    void run(const RenderPath& path, const Matrix& m);
 
     float radius() const
     {

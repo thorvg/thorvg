@@ -29,6 +29,7 @@
 #include "tvgMath.h"
 
 #define MIN_GL_STROKE_WIDTH 1.0f
+#define MIN_GL_STROKE_ALPHA 0.25f
 
 #define MVP_MATRIX(w, h)                \
     float mvp[4*4] = {                  \
@@ -106,18 +107,23 @@ struct GlGeometryBuffer {
 
 struct GlGeometry
 {
-    bool tesselateShape(const RenderShape& rshape);
+    void prepare(const RenderShape& rshape);
+    bool tesselateShape(const RenderShape& rshape, float* opacityMultiplier = nullptr);
     bool tesselateStroke(const RenderShape& rshape);
+    bool tesselateLine(const RenderPath& path);
     void tesselateImage(const RenderSurface* image);
     bool draw(GlRenderTask* task, GlStageBuffer* gpuBuffer, RenderUpdateFlag flag);
     GlStencilMode getStencilMode(RenderUpdateFlag flag);
     RenderRegion getBounds() const;
+    void optimizePath(const RenderPath& path, const Matrix& transform);
 
     GlGeometryBuffer fill, stroke;
     Matrix matrix = {};
     RenderRegion viewport = {};
     RenderRegion bounds = {};
     FillRule fillRule = FillRule::NonZero;
+    RenderPath optimizedPath;
+    bool optimized = false;
 };
 
 

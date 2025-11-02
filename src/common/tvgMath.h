@@ -393,6 +393,14 @@ static inline void log(const Point& pt)
 }
 
 
+static inline bool closed(const Point& lhs, const Point& rhs, float tolerance)
+{
+    float dx = lhs.x - rhs.x;
+    float dy = lhs.y - rhs.y;
+    return (dx * dx + dy * dy) < (tolerance * tolerance);
+}
+
+
 /************************************************************************/
 /* Line functions                                                       */
 /************************************************************************/
