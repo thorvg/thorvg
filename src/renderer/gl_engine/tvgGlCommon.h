@@ -169,10 +169,11 @@ struct GlRadialGradientBlock
 
 struct GlCompositor : RenderCompositor
 {
-    RenderRegion bbox = {};
-    BlendMethod blendMethod = {};
+    RenderRegion bbox;
+    CompositionFlag flags;
+    BlendMethod blendMethod = BlendMethod::Normal;
 
-    GlCompositor(const RenderRegion& box) : bbox(box) {}
+    GlCompositor(const RenderRegion& box, CompositionFlag flags) : bbox(box), flags(flags) {}
 };
 
 
