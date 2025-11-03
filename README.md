@@ -133,6 +133,7 @@ ThorVG is designed to be portable across a wide range of devices, including smal
   - [API Bindings](#api-bindings)
   - [Dependencies](#dependencies)
   - [Contributors](#contributors)
+  - [Partners](#partners)
   - [Sponsors](#sponsors)
   - [Communication](#communication)
 
@@ -602,19 +603,35 @@ ThorVG stands as a purely open-source initiative. We are grateful to the individ
 
 * [Individuals](https://github.com/thorvg/thorvg/blob/main/CONTRIBUTORS)
 * [Canva Pty Ltd](https://www.canva.com/)
-* [LottieFiles](https://lottiefiles.com/) by Design Barn Inc.
-* Samsung Electronics Co., Ltd
+
+[Back to contents](#contents)
+<br />
+<br />
+## Partners
+We acknowledge organizations that have supported ThorVG’s journey through development, integration, collaboration, and community involvement.
+
+<p align="center", href="https://wwww.samsung.com">
+  <a href="https://www.samsung.com">
+  <img width="250" height="auto" src="https://github.com/thorvg/thorvg.site/blob/main/readme/partner_samsung.jpg"  alt="Samsung">
+  </a>
+</p>
+
+<p align="center", href="https://www.lottiefiles.com">
+  <a href="https://www.lottiefiles.com">
+  <img width="250" height="auto" src="https://github.com/thorvg/thorvg.site/blob/main/readme/partner_lottiefiles.jpg"  alt="LottieFiles">
+  </a>
+</p>
 
 [Back to contents](#contents)
 <br />
 <br />
 ## Sponsors
-We extend our gratitude to our financial sponsors, whose generous support empowers the ThorVG project. Their funding enables us to continually enhance and expand this open-source project, making it more powerful, efficient, and accessible for the entire community.
+We sincerely thank our financial sponsors for their generous support, which drives the growth and innovation of the ThorVG project. Your contributions help us make ThorVG more powerful, efficient, and accessible for everyone.
 <br/>
 <br/>
-<p align="center", href="https://lottiefiles.com">
-  <a href="https://lottiefiles.com">
-  <img width="250" height="auto" src="https://github.com/thorvg/thorvg.site/blob/main/readme/example_lottiefiles.jpg"  alt="LottieFiles">
+<p align="center", href="https://www.lottiefiles.com">
+  <a href="https://www.lottiefiles.com">
+  <img width="250" height="auto" src="https://github.com/thorvg/thorvg.site/blob/main/readme/partner_lottiefiles.jpg"  alt="LottieFiles">
   </a>
 </p>
 <br/>
