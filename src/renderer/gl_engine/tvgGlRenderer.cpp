@@ -699,6 +699,33 @@ void GlRenderer::prepareCmpTask(GlRenderTask* task, const RenderRegion& vp, uint
 void GlRenderer::endRenderPass(RenderCompositor* cmp)
 {
     auto glCmp = static_cast<GlCompositor*>(cmp);
+    
+    // setup masking and blending render pass configurations
+    if ((glCmp->flags & (tvg::Blending | tvg::Masking)) == (tvg::Blending | tvg::Masking)) {
+        // rearrange render tree
+        auto selfPass = mRenderPassStack.last();
+        mRenderPassStack.pop();
+        auto prevPass = mRenderPassStack.last();
+        mRenderPassStack.pop();
+        auto maskPass = mRenderPassStack.last();
+        mRenderPassStack.pop();
+        mRenderPassStack.push(prevPass);
+        mRenderPassStack.push(maskPass);
+        mRenderPassStack.push(selfPass);
+        // setup composition properties
+        auto prevCompose = mComposeStack.last();
+        auto opacity = glCmp->opacity;
+        auto blendMethod = glCmp->blendMethod;
+        // self scene task must be masked but not blended
+        glCmp->method = prevCompose->method;
+        glCmp->opacity = 255;
+        glCmp->blendMethod = BlendMethod::Normal;
+        // prev scene task must be blended but not masked
+        prevCompose->method = MaskMethod::None;
+        prevCompose->opacity = opacity;
+        prevCompose->blendMethod = blendMethod;
+    };
+
     if (cmp->method != MaskMethod::None) {
         auto selfPass = mRenderPassStack.last();
         mRenderPassStack.pop();
@@ -952,7 +979,7 @@ RenderCompositor* GlRenderer::target(const RenderRegion& region, TVG_UNUSED Colo
 
     vp.intersect(currentPass()->getViewport());
 
-    mComposeStack.push(new GlCompositor(vp));
+    mComposeStack.push(new GlCompositor(vp, flags));
     return mComposeStack.last();
 }
 

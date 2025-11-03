@@ -171,8 +171,9 @@ struct GlCompositor : RenderCompositor
 {
     RenderRegion bbox = {};
     BlendMethod blendMethod = {};
+    CompositionFlag flags = {};
 
-    GlCompositor(const RenderRegion& box) : bbox(box) {}
+    GlCompositor(const RenderRegion& box, CompositionFlag flags) : bbox(box), flags(flags) {}
 };
 
 
