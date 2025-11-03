@@ -928,7 +928,7 @@ static void _fontText(LottieFont* font, TextDocument& doc, Scene* scene, const A
     while (token) {
         auto txt = Text::gen();
         if (txt->font(doc.name) == Result::Success) {}
-        else if (resolver && resolver->func(txt, font->path, resolver->data)) {}
+        else if (font && resolver && resolver->func(txt, font->path, resolver->data)) {}
         else txt->font(nullptr);  //fallback to any available font
 
         txt->size(size);
@@ -951,9 +951,9 @@ void LottieBuilder::updateText(LottieLayer* layer, float frameNo)
     auto& doc = text->doc(frameNo, exps);
     auto p = doc.text;
 
-    if (!p || !text->font) return;
+    if (!p) return;
 
-    if (text->font->origin != LottieFont::Origin::Local || text->font->chars.empty()) {
+    if (!text->font || text->font->origin != LottieFont::Origin::Local || text->font->chars.empty()) {
         _fontText(text->font, doc, layer->scene, resolver);
         return;
     }
