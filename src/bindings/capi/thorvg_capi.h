@@ -1104,7 +1104,7 @@ TVG_API Tvg_Paint tvg_paint_get_clip(const Tvg_Paint paint);
  *
  * @since 1.0
 */
-TVG_API const Tvg_Paint tvg_paint_get_parent(const Tvg_Paint paint);
+TVG_API Tvg_Paint tvg_paint_get_parent(const Tvg_Paint paint);
 
 
 /**
