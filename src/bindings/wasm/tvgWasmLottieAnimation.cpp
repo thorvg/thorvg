@@ -493,7 +493,6 @@ public:
 #endif
     }
 
-    // TODO: Advanced APIs wrt Interactivity & theme methods...
     bool quality(uint8_t value)
     {
         errorMsg = NoError;
