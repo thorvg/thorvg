@@ -46,6 +46,30 @@ struct RenderRepeater
     bool inorder;
 };
 
+struct RenderText
+{
+    Point cursor{};
+    int line = 0, space = 0, idx = 0;
+    float lineSpace = 0.0f, totalLineSpace = 0.0f;
+    char *p;  //current processing character
+    int nChars;
+    float scale;
+    Scene* textScene;
+    Scene* lineScene;
+    float capScale, firstMargin;
+    LottieTextFollowPath* follow;
+
+    RenderText(LottieText* text, const TextDocument& doc) : p(doc.text), nChars(strlen(p)), scale(doc.size), textScene(Scene::gen()), lineScene(Scene::gen())
+    {
+    }
+
+    ~RenderText()
+    {
+        Paint::rel(textScene);
+        Paint::rel(lineScene);
+    }
+};
+
 enum RenderFragment : uint8_t {ByNone = 0, ByFill, ByStroke};
 
 struct RenderContext
@@ -147,6 +171,7 @@ struct LottieBuilder
 private:
     void appendRect(Shape* shape, Point& pos, Point& size, float r, bool clockwise, RenderContext* ctx);
     bool fragmented(LottieGroup* parent, LottieObject** child, Inlist<RenderContext>& contexts, RenderContext* ctx, RenderFragment fragment);
+    Shape* textShape(LottieText* text, float frameNo, const TextDocument& doc, LottieGlyph* glyph, const RenderText& ctx);
 
     void updateStrokeEffect(LottieLayer* layer, LottieFxStroke* effect, float frameNo);
     void updateEffect(LottieLayer* layer, float frameNo, uint8_t quality);
@@ -156,6 +181,9 @@ private:
     void updatePrecomp(LottieComposition* comp, LottieLayer* precomp, float frameNo, Tween& tween);
     void updateSolid(LottieLayer* layer);
     void updateImage(LottieGroup* layer);
+    void updateURLFont(LottieLayer* layer, LottieFont* font, const TextDocument& doc);
+    void updateLocalFont(LottieLayer* layer, float frameNo, LottieText* text, const TextDocument& doc);
+    bool updateTextRange(LottieText* text, float frameNo, Shape* shape, const TextDocument& doc, RenderText& ctx);
     void updateText(LottieLayer* layer, float frameNo);
     void updateMasks(LottieLayer* layer, float frameNo);
     void updateTransform(LottieLayer* layer, float frameNo);
