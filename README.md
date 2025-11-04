@@ -608,7 +608,7 @@ ThorVG stands as a purely open-source initiative. We are grateful to the individ
 <br />
 <br />
 ## Partners
-We acknowledge organizations that have supported ThorVG’s journey through development, integration, collaboration, and community involvement.
+Partners engage in strategic collaboration with ThorVG, working together to shape the future of scalable, high-performance vector graphics. We acknowledge organizations that have supported ThorVG’s journey through development, integration, collaboration, and community involvement.
 
 <p align="center", href="https://wwww.samsung.com">
   <a href="https://www.samsung.com">
@@ -621,6 +621,9 @@ We acknowledge organizations that have supported ThorVG’s journey through deve
   <img width="250" height="auto" src="https://github.com/thorvg/thorvg.site/blob/main/readme/partner_lottiefiles.jpg"  alt="LottieFiles">
   </a>
 </p>
+<br />
+
+If you’re interested in partnering with ThorVG, we’d love to hear from you. Please reach out at thorvg@thorvg.org
 
 [Back to contents](#contents)
 <br />
