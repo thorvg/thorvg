@@ -1157,8 +1157,8 @@ void LottieParser::parseTextAlignmentOption(LottieText* text)
 {
     enterObject();
     while (auto key = nextObjectKey()) {
-        if (KEY_AS("g")) text->alignOption.grouping = (LottieText::AlignOption::Group) getInt();
-        else if (KEY_AS("a")) parseProperty(text->alignOption.anchor);
+        if (KEY_AS("g")) text->alignOp.group = (LottieText::AlignOption::Group) getInt();
+        else if (KEY_AS("a")) parseProperty(text->alignOp.anchor);
         else skip();
     }
 }
@@ -1197,8 +1197,8 @@ void LottieParser::parseTextRange(LottieText* text)
             } else if (KEY_AS("a")) { // text style
                 enterObject();
                 while (auto key = nextObjectKey()) {
-                    if (KEY_AS("t")) parseProperty(selector->style.letterSpacing);
-                    else if (KEY_AS("ls")) parseProperty(selector->style.lineSpacing);
+                    if (KEY_AS("t")) parseProperty(selector->style.letterSpace);
+                    else if (KEY_AS("ls")) parseProperty(selector->style.lineSpace);
                     else if (KEY_AS("fc"))
                     {
                         parseProperty(selector->style.fillColor);
@@ -1235,10 +1235,10 @@ void LottieParser::parseTextFollowPath(LottieText* text)
     enterObject();
     auto key = nextObjectKey();
     if (!key) return;
-    if (!text->followPath) text->followPath = new LottieTextFollowPath;
+    if (!text->follow) text->follow = new LottieTextFollowPath;
     do {
-        if (KEY_AS("m")) text->followPath->maskIdx = getInt();
-        else if (KEY_AS("f")) parseProperty(text->followPath->firstMargin);
+        if (KEY_AS("m")) text->follow->maskIdx = getInt();
+        else if (KEY_AS("f")) parseProperty(text->follow->firstMargin);
         else skip();
     } while ((key = nextObjectKey()));
 }
