@@ -328,6 +328,13 @@ static inline Point operator*(const Point& lhs, const Point& rhs)
 }
 
 
+static inline void operator*=(Point& lhs, const Point& rhs)
+{
+    lhs.x *= rhs.x;
+    lhs.y *= rhs.y;
+}
+
+
 static inline Point operator*(const Point& lhs, const float rhs)
 {
     return {lhs.x * rhs, lhs.y * rhs};

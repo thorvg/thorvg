@@ -101,7 +101,7 @@ static void _skew(Matrix* m, float angleDeg, float axisDeg)
 }
 
 
-static bool _updateTransform(LottieTransform* transform, float frameNo, Matrix& matrix, uint8_t& opacity, bool autoOrient, Tween& tween, LottieExpressions* exps)
+static bool _update(LottieTransform* transform, float frameNo, Matrix& matrix, uint8_t& opacity, bool autoOrient, Tween& tween, LottieExpressions* exps)
 {
     tvg::identity(&matrix);
 
@@ -150,7 +150,7 @@ void LottieBuilder::updateTransform(LottieLayer* layer, float frameNo)
 
     auto& matrix = layer->cache.matrix;
 
-    _updateTransform(transform, frameNo, matrix, layer->cache.opacity, layer->autoOrient, tween, exps);
+    _update(transform, frameNo, matrix, layer->cache.opacity, layer->autoOrient, tween, exps);
 
     if (parent) layer->cache.matrix = parent->cache.matrix * matrix;
 
@@ -168,18 +168,18 @@ void LottieBuilder::updateTransform(LottieGroup* parent, LottieObject** child, f
 
     if (parent->mergeable()) {
         if (ctx->transform) {
-            _updateTransform(transform, frameNo, m, opacity, false, tween, exps);
+            _update(transform, frameNo, m, opacity, false, tween, exps);
             *ctx->transform *= m;
         } else {
             ctx->transform = new Matrix;
-            _updateTransform(transform, frameNo, *ctx->transform, opacity, false, tween, exps);
+            _update(transform, frameNo, *ctx->transform, opacity, false, tween, exps);
         }
         return;
     }
 
     ctx->merging = nullptr;
 
-    if (!_updateTransform(transform, frameNo, m, opacity, false, tween, exps)) return;
+    if (!_update(transform, frameNo, m, opacity, false, tween, exps)) return;
 
     ctx->propagator->transform(ctx->propagator->transform() * m);
     ctx->propagator->opacity(MULTIPLY(opacity, PAINT(ctx->propagator)->opacity));
@@ -220,7 +220,7 @@ void LottieBuilder::updateGroup(LottieGroup* parent, LottieObject** child, float
 }
 
 
-static void _updateStroke(LottieStroke* stroke, float frameNo, RenderContext* ctx, Tween& tween, LottieExpressions* exps)
+static void _update(LottieStroke* stroke, float frameNo, RenderContext* ctx, Tween& tween, LottieExpressions* exps)
 {
     ctx->propagator->strokeWidth(stroke->width(frameNo, tween, exps));
     ctx->propagator->strokeCap(stroke->cap);
@@ -262,7 +262,7 @@ bool LottieBuilder::updateSolidStroke(LottieGroup* parent, LottieObject** child,
     ctx->merging = nullptr;
     auto color = stroke->color(frameNo, tween, exps);
     ctx->propagator->strokeFill(color.r, color.g, color.b, opacity);
-    _updateStroke(static_cast<LottieStroke*>(stroke), frameNo, ctx, tween, exps);
+    _update(static_cast<LottieStroke*>(stroke), frameNo, ctx, tween, exps);
 
     return false;
 }
@@ -278,7 +278,7 @@ bool LottieBuilder::updateGradientStroke(LottieGroup* parent, LottieObject** chi
 
     ctx->merging = nullptr;
     if (auto val = stroke->fill(frameNo, opacity, tween, exps)) ctx->propagator->strokeFill(val);
-    _updateStroke(static_cast<LottieStroke*>(stroke), frameNo, ctx, tween, exps);
+    _update(static_cast<LottieStroke*>(stroke), frameNo, ctx, tween, exps);
 
     return false;
 }
@@ -913,12 +913,11 @@ void LottieBuilder::updateImage(LottieGroup* layer)
 }
 
 
-//TODO: unify with the updateText() building logic
-static void _fontText(LottieFont* font, TextDocument& doc, Scene* scene, const AssetResolver* resolver)
+void LottieBuilder::updateURLFont(LottieLayer* layer, LottieFont* font, const TextDocument& doc)
 {
-    auto delim = "\r\n\3";
-    auto size = doc.size * 75.0f; //1 pt = 1/72; 1 in = 96 px; -> 72/96 = 0.75
-    auto lineHeight = doc.size * 100.0f;
+    const auto delim = "\r\n\3";
+    const auto size = doc.size * 75.0f; //1 pt = 1/72; 1 in = 96 px; -> 72/96 = 0.75
+    const auto lineHeight = doc.size * 100.0f;
 
     auto buf = (char*)alloca(strlen(doc.text) + 1);
     strcpy(buf, doc.text);
@@ -927,10 +926,11 @@ static void _fontText(LottieFont* font, TextDocument& doc, Scene* scene, const A
     auto cnt = 0;
     while (token) {
         auto txt = Text::gen();
-        if (txt->font(doc.name) == Result::Success) {}
-        else if (font && resolver && resolver->func(txt, font->path, resolver->data)) {}
-        else txt->font(nullptr);  //fallback to any available font
-
+        if (txt->font(doc.name) != Result::Success) {
+            if (!(font && resolver && resolver->func(txt, font->path, resolver->data))) {
+                txt->font(nullptr);  //fallback to any available font
+            }
+        }
         txt->size(size);
         txt->text(token);
         txt->fill(doc.color.r, doc.color.g, doc.color.b);
@@ -938,8 +938,233 @@ static void _fontText(LottieFont* font, TextDocument& doc, Scene* scene, const A
         txt->translate(0.0f, lineHeight * cnt - lineHeight);
 
         token = std::strtok(nullptr, delim);
-        scene->push(txt);
+        layer->scene->push(txt);
         cnt++;
+    }
+}
+
+
+Shape* LottieBuilder::textShape(LottieText* text, float frameNo, const TextDocument& doc, LottieGlyph* glyph, const RenderText& ctx)
+{
+    auto& transform = ctx.lineScene->transform();
+    auto shape = text->pooling();
+    shape->reset();
+
+    ARRAY_FOREACH(p, glyph->children) {
+        auto group = static_cast<LottieGroup*>(*p);
+        ARRAY_FOREACH(p, group->children) {
+            if (static_cast<LottiePath*>(*p)->pathset(frameNo, SHAPE(shape)->rs.path, nullptr, tween, exps)) {
+                PAINT(shape)->mark(RenderUpdateFlag::Path);
+            }
+        }
+    }
+    shape->fill(doc.color.r, doc.color.g, doc.color.b);
+    shape->translate(ctx.cursor.x - transform.e13, ctx.cursor.y - transform.e23);
+    shape->opacity(255);
+
+    if (doc.stroke.width > 0.0f) {
+        shape->strokeJoin(StrokeJoin::Round);
+        shape->strokeWidth(doc.stroke.width / ctx.scale);
+        shape->strokeFill(doc.stroke.color.r, doc.stroke.color.g, doc.stroke.color.b);
+        shape->order(doc.stroke.below);
+    }
+    return shape;
+}
+
+
+bool LottieBuilder::updateTextRange(LottieText* text, float frameNo, Shape* shape, const TextDocument& doc, RenderText& ctx)
+{
+    if (text->ranges.empty()) return false;
+
+    auto& transform = ctx.lineScene->transform();
+    Point scaling = {1.0f, 1.0f};
+    Point translation = {};
+    auto rotation = 0.0f;
+    auto color = doc.color;
+    auto strokeColor = doc.stroke.color;
+    uint8_t opacity = 255, fillOpacity = 255, strokeOpacity = 255;
+    auto needGroup = false;
+
+    ARRAY_FOREACH(p, text->ranges) {
+        auto range = *p;
+        auto basedIdx = ctx.idx;
+
+        if (range->based == LottieTextRange::Based::CharsExcludingSpaces) basedIdx = ctx.idx - ctx.space;
+        else if (range->based == LottieTextRange::Based::Words) basedIdx = ctx.line + ctx.space;
+        else if (range->based == LottieTextRange::Based::Lines) basedIdx = ctx.line;
+
+        auto f = range->factor(frameNo, float(ctx.nChars), (float)basedIdx);
+        if (tvg::zero(f)) continue;
+
+        needGroup = true;
+
+        //transform
+        translation = translation + f * range->style.position(frameNo, tween, exps);
+        scaling *= (f * (range->style.scale(frameNo, tween, exps) * 0.01f - Point{1.0f, 1.0f}) + Point{1.0f, 1.0f});
+        rotation += f * range->style.rotation(frameNo, tween, exps);
+
+        //fill & opacity
+        opacity = (uint8_t)(opacity - f * (opacity - range->style.opacity(frameNo, tween, exps)));
+        shape->opacity(opacity);
+
+        range->color(frameNo, color, strokeColor, f, tween, exps);
+        fillOpacity = (uint8_t)(fillOpacity - f * (fillOpacity - range->style.fillOpacity(frameNo, tween, exps)));
+        shape->fill(color.r, color.g, color.b, fillOpacity);
+
+        //stroke
+        if (range->style.flags.strokeWidth) shape->strokeWidth(f * range->style.strokeWidth(frameNo, tween, exps) / ctx.scale);
+        if (shape->strokeWidth() > 0.0f) {
+            strokeOpacity = (uint8_t)(strokeOpacity - f * (strokeOpacity - range->style.strokeOpacity(frameNo, tween, exps)));
+            shape->strokeFill(strokeColor.r, strokeColor.g, strokeColor.b, strokeOpacity);
+            shape->order(doc.stroke.below);
+        }
+        ctx.cursor.x += f * range->style.letterSpace(frameNo, tween, exps);
+        auto spacing = f * range->style.lineSpace(frameNo, tween, exps);
+        if (spacing > ctx.lineSpace) ctx.lineSpace = spacing;
+    }
+    // Apply line group transformation just once
+    if (ctx.lineScene->paints().empty() && needGroup) {
+        tvg::identity(&transform);
+        translate(&transform, ctx.cursor);
+
+        // center pivoting
+        auto align = text->alignOp.anchor(frameNo, tween, exps);
+        transform.e13 += align.x;
+        transform.e23 += align.y;
+        rotate(&transform, rotation);
+
+        //center pivoting
+        auto pivot = align * -1;
+        transform.e13 += (pivot.x * transform.e11 + pivot.x * transform.e12);
+        transform.e23 += (pivot.y * transform.e21 + pivot.y * transform.e22);
+        ctx.lineScene->transform(transform);
+    }
+    auto& matrix = shape->transform();
+    tvg::identity(&matrix);
+    translate(&matrix, (translation / ctx.scale + ctx.cursor) - Point{transform.e13, transform.e23});
+    tvg::scale(&matrix, scaling * ctx.capScale);
+    shape->transform(matrix);
+
+    if (needGroup) ctx.lineScene->push(shape);
+
+    return needGroup;
+}
+
+
+static void _commit(LottieGlyph* glyph, Shape* shape, const RenderText& ctx)
+{
+    auto& matrix = shape->transform();
+
+    if (ctx.follow) {
+        tvg::identity(&matrix);
+        auto angle = 0.0f;
+        auto width = glyph->width * 0.5f;
+        auto pos = ctx.follow->position(ctx.cursor.x + width + ctx.firstMargin, angle);
+        matrix.e11 = matrix.e22 = ctx.capScale;
+        matrix.e13 = pos.x - width * matrix.e11;
+        matrix.e23 = pos.y - width * matrix.e21;
+    } else {
+        matrix.e11 = matrix.e22 = ctx.capScale;
+        matrix.e13 = ctx.cursor.x;
+        matrix.e23 = ctx.cursor.y;
+    }
+    shape->transform(matrix);
+    ctx.textScene->push(shape);
+}
+
+
+void LottieBuilder::updateLocalFont(LottieLayer* layer, float frameNo, LottieText* text, const TextDocument& doc)
+{
+    RenderText ctx(text, doc);
+    ctx.follow = (text->follow && ((uint32_t)text->follow->maskIdx < layer->masks.count)) ? text->follow : nullptr;
+    ctx.firstMargin = ctx.follow ? ctx.follow->prepare(layer->masks[ctx.follow->maskIdx], frameNo, ctx.scale, tween, exps) : 0.0f;
+
+    //text string
+    while (true) {
+        //end of text, new line of the cursor position
+        if (*ctx.p == 13 || *ctx.p == 3 || *ctx.p == '\0') {
+            //text layout position
+            auto ascent = text->font->ascent * ctx.scale;
+            if (ascent > doc.bbox.size.y) ascent = doc.bbox.size.y;
+            Point layout = {doc.bbox.pos.x, doc.bbox.pos.y + ascent - doc.shift};
+
+            //horizontal alignment
+            layout.x += doc.justify * (-1.0f * doc.bbox.size.x + ctx.cursor.x * ctx.scale);
+
+            //new text group, single scene based on text-grouping
+            ctx.textScene->push(ctx.lineScene);
+            ctx.textScene->translate(layout.x, layout.y);
+            ctx.textScene->scale(ctx.scale);
+            layer->scene->push(ctx.textScene);
+
+            ctx.lineScene = Scene::gen();
+            ctx.lineScene->translate(ctx.cursor.x, ctx.cursor.y);
+
+            if (*ctx.p == '\0') {
+                ctx.textScene = nullptr;
+                break;
+            }
+            ++ctx.p;
+
+            ctx.totalLineSpace += ctx.lineSpace;
+            ctx.lineSpace = 0.0f;
+
+            //new text group, single scene for each line
+            ctx.textScene = Scene::gen();
+            ctx.cursor = {0.0f, (++ctx.line * doc.height + ctx.totalLineSpace) / ctx.scale};
+            continue;
+        }
+
+        if (*ctx.p == ' ') {
+            ++ctx.space;
+            //new text group, single scene for each word
+            if (text->alignOp.group == LottieText::AlignOption::Group::Word) {
+                ctx.textScene->push(ctx.lineScene);
+                ctx.lineScene = Scene::gen();
+                ctx.lineScene->translate(ctx.cursor.x, ctx.cursor.y);
+            }
+        }
+
+        /* all lowercase letters are converted to uppercase in the "t" text field, making the "ca" value irrelevant, thus AllCaps is nothing to do.
+           So only convert lowercase letters to uppercase (for 'SmallCaps' an extra scaling factor applied) */
+        ctx.capScale = 1.0f;
+        auto code = ctx.p;
+        char capCode;
+        if ((unsigned char)(ctx.p[0]) < 0x80 && doc.caps) {
+            if (*ctx.p >= 'a' && *ctx.p <= 'z') {
+                capCode = *ctx.p + 'A' - 'a';
+                code = &capCode;
+                if (doc.caps == 2) ctx.capScale = 0.7f;
+            }
+        }
+
+        // text building
+        auto found = false;
+        ARRAY_FOREACH(g, text->font->chars) {
+            auto glyph = *g;
+            //draw matched glyphs
+            if (!strncmp(glyph->code, code, glyph->len)) {
+                //new text group, single scene for each characters
+                if (text->alignOp.group == LottieText::AlignOption::Group::Chars || text->alignOp.group == LottieText::AlignOption::Group::All) {
+                    ctx.textScene->push(ctx.lineScene);
+                    ctx.lineScene = Scene::gen();
+                    ctx.lineScene->translate(ctx.cursor.x, ctx.cursor.y);
+                }
+                auto shape = textShape(text, frameNo, doc, glyph, ctx);
+                if (!updateTextRange(text, frameNo, shape, doc, ctx)) {
+                    _commit(glyph, shape, ctx);
+                }
+                ctx.cursor.x += (glyph->width + doc.tracking) * ctx.capScale;    //advance the cursor position horizontally
+                ctx.p += glyph->len;
+                ctx.idx += glyph->len;
+                found = true;
+                break;
+            }
+        }
+        if (!found) {
+            ++ctx.p;
+            ++ctx.idx;
+        }
     }
 }
 
@@ -947,245 +1172,10 @@ static void _fontText(LottieFont* font, TextDocument& doc, Scene* scene, const A
 void LottieBuilder::updateText(LottieLayer* layer, float frameNo)
 {
     auto text = static_cast<LottieText*>(layer->children.first());
-    auto textGrouping = text->alignOption.grouping;
     auto& doc = text->doc(frameNo, exps);
-    auto p = doc.text;
 
-    if (!p) return;
-
-    if (!text->font || text->font->origin != LottieFont::Origin::Local || text->font->chars.empty()) {
-        _fontText(text->font, doc, layer->scene, resolver);
-        return;
-    }
-
-    auto scale = doc.size;
-    Point cursor{};
-    //TODO: Need to revise to alloc scene / textgroup when they are really necessary
-    auto scene = Scene::gen();
-    Scene* textGroup = Scene::gen();
-    int line = 0;
-    int space = 0;
-    auto lineSpacing = 0.0f;
-    auto totalLineSpacing = 0.0f;
-    auto followPath = (text->followPath && ((uint32_t)text->followPath->maskIdx < layer->masks.count)) ? text->followPath : nullptr;
-    auto firstMargin = followPath ? followPath->prepare(layer->masks[followPath->maskIdx], frameNo, scale, tween, exps) : 0.0f;
-
-    //text string
-    int idx = 0;
-    auto totalChars = strlen(p);
-    while (true) {
-        //TODO: remove nested scenes.
-        //end of text, new line of the cursor position
-        if (*p == 13 || *p == 3 || *p == '\0') {
-            //text layout position
-            auto ascent = text->font->ascent * scale;
-            if (ascent > doc.bbox.size.y) ascent = doc.bbox.size.y;
-            Point layout = {doc.bbox.pos.x, doc.bbox.pos.y + ascent - doc.shift};
-
-            //horizontal alignment
-            layout.x += doc.justify * (-1.0f * doc.bbox.size.x + cursor.x * scale);
-
-            //new text group, single scene based on text-grouping
-            scene->push(textGroup);
-            textGroup = Scene::gen();
-            textGroup->translate(cursor.x, cursor.y);
-
-            scene->translate(layout.x, layout.y);
-            scene->scale(scale);
-
-            layer->scene->push(scene);
-            scene = nullptr;
-
-            if (*p == '\0') break;
-            ++p;
-
-            totalLineSpacing += lineSpacing;
-            lineSpacing = 0.0f;
-
-            //new text group, single scene for each line
-            scene = Scene::gen();
-            cursor.x = 0.0f;
-            cursor.y = (++line * doc.height + totalLineSpacing) / scale;
-            continue;
-        }
-
-        if (*p == ' ') {
-            ++space;
-            if (textGrouping == LottieText::AlignOption::Group::Word) {
-                //new text group, single scene for each word
-                scene->push(textGroup);
-                textGroup = Scene::gen();
-                textGroup->translate(cursor.x, cursor.y);
-            }
-        }
-
-        /* all lowercase letters are converted to uppercase in the "t" text field, making the "ca" value irrelevant, thus AllCaps is nothing to do.
-           So only convert lowercase letters to uppercase (for 'SmallCaps' an extra scaling factor applied) */
-        auto code = p;
-        auto capScale = 1.0f;
-        char capCode;
-        if ((unsigned char)(p[0]) < 0x80 && doc.caps) {
-            if (*p >= 'a' && *p <= 'z') {
-                capCode = *p + 'A' - 'a';
-                code = &capCode;
-                if (doc.caps == 2) capScale = 0.7f;
-            }
-        }
-
-        //find the glyph
-        bool found = false;
-        ARRAY_FOREACH(g, text->font->chars) {
-            auto glyph = *g;
-            //draw matched glyphs
-            if (!strncmp(glyph->code, code, glyph->len)) {
-                if (textGrouping == LottieText::AlignOption::Group::Chars || textGrouping == LottieText::AlignOption::Group::All) {
-                    //new text group, single scene for each characters
-                    scene->push(textGroup);
-                    textGroup = Scene::gen();
-                    textGroup->translate(cursor.x, cursor.y);
-                }
-
-                auto& textGroupMatrix = textGroup->transform();
-                auto shape = text->pooling();
-                shape->reset();
-                ARRAY_FOREACH(p, glyph->children) {
-                    auto group = static_cast<LottieGroup*>(*p);
-                    ARRAY_FOREACH(p, group->children) {
-                        if (static_cast<LottiePath*>(*p)->pathset(frameNo, SHAPE(shape)->rs.path, nullptr, tween, exps)) {
-                            PAINT(shape)->mark(RenderUpdateFlag::Path);
-                        }
-                    }
-                }
-                shape->fill(doc.color.r, doc.color.g, doc.color.b);
-                shape->translate(cursor.x - textGroupMatrix.e13, cursor.y - textGroupMatrix.e23);
-                shape->opacity(255);
-
-                if (doc.stroke.width > 0.0f) {
-                    shape->strokeJoin(StrokeJoin::Round);
-                    shape->strokeWidth(doc.stroke.width / scale);
-                    shape->strokeFill(doc.stroke.color.r, doc.stroke.color.g, doc.stroke.color.b);
-                    shape->order(doc.stroke.below);
-                }
-
-                auto needGroup = false;
-                //text range process
-                if (!text->ranges.empty()) {
-                    Point scaling = {1.0f, 1.0f};
-                    auto rotation = 0.0f;
-                    Point translation = {0.0f, 0.0f};
-                    auto color = doc.color;
-                    auto strokeColor = doc.stroke.color;
-                    uint8_t opacity = 255;
-                    uint8_t fillOpacity = 255;
-                    uint8_t strokeOpacity = 255;
-
-                    ARRAY_FOREACH(p, text->ranges) {
-                        auto range = *p;
-                        auto basedIdx = idx;
-                        if (range->based == LottieTextRange::Based::CharsExcludingSpaces) basedIdx = idx - space;
-                        else if (range->based == LottieTextRange::Based::Words) basedIdx = line + space;
-                        else if (range->based == LottieTextRange::Based::Lines) basedIdx = line;
-
-                        auto f = range->factor(frameNo, float(totalChars), (float)basedIdx);
-                        if (tvg::zero(f)) continue;
-                        needGroup = true;
-
-                        translation = translation + f * range->style.position(frameNo, tween, exps);
-                        scaling = scaling * (f * (range->style.scale(frameNo, tween, exps) * 0.01f - Point{1.0f, 1.0f}) + Point{1.0f, 1.0f});
-                        rotation += f * range->style.rotation(frameNo, tween, exps);
-
-                        opacity = (uint8_t)(opacity - f * (opacity - range->style.opacity(frameNo, tween, exps)));
-                        shape->opacity(opacity);
-
-                        range->color(frameNo, color, strokeColor, f, tween, exps);
-
-                        fillOpacity = (uint8_t)(fillOpacity - f * (fillOpacity - range->style.fillOpacity(frameNo, tween, exps)));
-                        shape->fill(color.r, color.g, color.b, fillOpacity);
-
-                        if (range->style.flags.strokeWidth) shape->strokeWidth(f * range->style.strokeWidth(frameNo, tween, exps) / scale);
-                        if (shape->strokeWidth() > 0.0f) {
-                            strokeOpacity = (uint8_t)(strokeOpacity - f * (strokeOpacity - range->style.strokeOpacity(frameNo, tween, exps)));
-                            shape->strokeFill(strokeColor.r, strokeColor.g, strokeColor.b, strokeOpacity);
-                            shape->order(doc.stroke.below);
-                        }
-                        cursor.x += f * range->style.letterSpacing(frameNo, tween, exps);
-
-                        auto spacing = f * range->style.lineSpacing(frameNo, tween, exps);
-                        if (spacing > lineSpacing) lineSpacing = spacing;
-                    }
-
-                    // TextGroup transformation is performed once
-                    if (textGroup->paints().size() == 0 && needGroup) {
-                        tvg::identity(&textGroupMatrix);
-                        translate(&textGroupMatrix, cursor);
-
-                        auto alignment = text->alignOption.anchor(frameNo, tween, exps);
-
-                        // center pivoting
-                        textGroupMatrix.e13 += alignment.x;
-                        textGroupMatrix.e23 += alignment.y;
-
-                        rotate(&textGroupMatrix, rotation);
-
-                        //center pivoting
-                        auto pivot = alignment * -1;
-                        textGroupMatrix.e13 += (pivot.x * textGroupMatrix.e11 + pivot.x * textGroupMatrix.e12);
-                        textGroupMatrix.e23 += (pivot.y * textGroupMatrix.e21 + pivot.y * textGroupMatrix.e22);
-
-                        textGroup->transform(textGroupMatrix);
-                    }
-
-                    auto& matrix = shape->transform();
-                    tvg::identity(&matrix);
-                    translate(&matrix, (translation / scale + cursor) - Point{textGroupMatrix.e13, textGroupMatrix.e23});
-                    tvg::scale(&matrix, scaling * capScale);
-                    shape->transform(matrix);
-                }
-
-                if (needGroup) {
-                    textGroup->push(shape);
-                } else {
-                    // When text isn't selected, exclude the shape from the text group
-                    // Cases with matrix scaling factors =! 1 handled in the 'needGroup' scenario
-                    auto& matrix = shape->transform();
-
-                    if (followPath) {
-                        tvg::identity(&matrix);
-                        auto angle = 0.0f;
-                        auto halfGlyphWidth = glyph->width * 0.5f;
-                        auto position = followPath->position(cursor.x + halfGlyphWidth + firstMargin, angle);
-                        matrix.e11 = matrix.e22 = capScale;
-                        matrix.e13 = position.x - halfGlyphWidth * matrix.e11;
-                        matrix.e23 = position.y - halfGlyphWidth * matrix.e21;
-                    } else {
-                        matrix.e11 = matrix.e22 = capScale;
-                        matrix.e13 = cursor.x;
-                        matrix.e23 = cursor.y;
-                    }
-
-                    shape->transform(matrix);
-                    scene->push(shape);
-                }
-
-                p += glyph->len;
-                idx += glyph->len;
-
-                //advance the cursor position horizontally
-                cursor.x += (glyph->width + doc.tracking) * capScale;
-
-                found = true;
-                break;
-            }
-        }
-
-        if (!found) {
-            ++p;
-            ++idx;
-        }
-    }
-
-    Paint::rel(scene);
-    Paint::rel(textGroup);
+    if (text->font && text->font->origin == LottieFont::Origin::Local) updateLocalFont(layer, frameNo, text, doc);
+    else updateURLFont(layer, text->font, doc);
 }
 
 
