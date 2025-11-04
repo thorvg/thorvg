@@ -169,18 +169,20 @@ void WgRenderDataShape::updateMeshes(const RenderShape &rshape, RenderUpdateFlag
     releaseMeshes();
     strokeFirst = rshape.strokeFirst();
 
+    // trim path if necessary
+    const RenderPath* path = &rshape.path;
+    RenderPath trimmedPath;
+    if (rshape.trimpath() && rshape.stroke->trim.trim(rshape.path, trimmedPath))
+        path = &trimmedPath;
+
     // update fill shapes
     if (flag & (RenderUpdateFlag::Color | RenderUpdateFlag::Gradient | RenderUpdateFlag::Transform | RenderUpdateFlag::Path)) {
         meshShape.clear();
 
         WgBWTessellator bwTess{&meshShape};
-        if (rshape.trimpath()) {
-            RenderPath trimmedPath;
-            if (rshape.stroke->trim.trim(rshape.path, trimmedPath))
-                bwTess.tessellate(trimmedPath, matrix);
-        } else bwTess.tessellate(rshape.path, matrix);
+        bwTess.tessellate(path, matrix);
 
-        if (meshShape.ibuffer.count > 0) {;
+        if (meshShape.ibuffer.count > 0) {
             auto bbox = bwTess.getBBox();
             meshShapeBBox.bbox(bbox.min, bbox.max);
             updateBBox(bbox);
@@ -201,7 +203,7 @@ void WgRenderDataShape::updateMeshes(const RenderShape &rshape, RenderUpdateFlag
         //run stroking only if it's valid
         if (!tvg::zero(strokeWidth)) {
             WgStroker stroker(&meshStrokes, strokeWidth);
-            stroker.run(rshape, matrix);
+            stroker.run(rshape, path, matrix);
             if (meshStrokes.ibuffer.count > 0) {
                 auto bbox = stroker.getBBox();
                 meshStrokesBBox.bbox(bbox.min, bbox.max);

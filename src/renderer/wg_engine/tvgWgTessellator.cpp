@@ -29,22 +29,15 @@ WgStroker::WgStroker(WgMeshData* buffer, float width) : mBuffer(buffer), mWidth(
 }
 
 
-void WgStroker::run(const RenderShape& rshape, const Matrix& m)
+void WgStroker::run(const RenderShape& rshape, const RenderPath* path, const Matrix& m)
 {
     mMiterLimit = rshape.strokeMiterlimit();
     mCap = rshape.strokeCap();
     mJoin = rshape.strokeJoin();
 
     RenderPath dashed;
-    if (rshape.strokeDash(dashed)) run(dashed, m);
-    else if (rshape.trimpath()) {
-        RenderPath trimmedPath;
-        if (rshape.stroke->trim.trim(rshape.path, trimmedPath)) {
-            run(trimmedPath, m);
-        }
-    } else {
-        run(rshape.path, m);
-    }
+    if (rshape.strokeDash(dashed)) run(&dashed, m);
+    else run(path, m);
 }
 
 
@@ -59,15 +52,16 @@ BBox WgStroker::getBBox() const
     return {mLeftTop, mRightBottom};
 }
 
-void WgStroker::run(const RenderPath& path, const Matrix& m)
+void WgStroker::run(const RenderPath* path, const Matrix& m)
 {
-    mBuffer->vbuffer.reserve(path.pts.count * 4 + 16);
-    mBuffer->ibuffer.reserve(path.pts.count * 3);
+    assert(path);
+    mBuffer->vbuffer.reserve(path->pts.count * 4 + 16);
+    mBuffer->ibuffer.reserve(path->pts.count * 3);
 
     auto validStrokeCap = false;
-    auto pts = path.pts.data;
+    auto pts = path->pts.data;
 
-    ARRAY_FOREACH(cmd, path.cmds) {
+    ARRAY_FOREACH(cmd, path->cmds) {
         switch (*cmd) {
             case PathCommand::MoveTo: {
                 if (validStrokeCap) { // check this, so we can skip if path only contains move instruction
@@ -434,14 +428,15 @@ WgBWTessellator::WgBWTessellator(WgMeshData* buffer): mBuffer(buffer)
 }
 
 
-void WgBWTessellator::tessellate(const RenderPath& path, const Matrix& matrix)
+void WgBWTessellator::tessellate(const RenderPath* path, const Matrix& matrix)
 {
-    if (path.pts.count <= 2) return;
+    assert(path);
+    if (path->pts.count <= 2) return;
 
-    auto cmds = path.cmds.data;
-    auto cmdCnt = path.cmds.count;
-    auto pts = path.pts.data;
-    auto ptsCnt = path.pts.count;
+    auto cmds = path->cmds.data;
+    auto cmdCnt = path->cmds.count;
+    auto pts = path->pts.data;
+    auto ptsCnt = path->pts.count;
 
     uint32_t firstIndex = 0;
     uint32_t prevIndex = 0;

@@ -39,11 +39,11 @@ class WgStroker
     };
 public:
     WgStroker(WgMeshData* buffer, float width);
-    void run(const RenderShape& rshape, const Matrix& m);
+    void run(const RenderShape& rshape, const RenderPath* path, const Matrix& m);
     RenderRegion bounds() const;
     BBox getBBox() const;
 private:
-    void run(const RenderPath& path, const Matrix& m);
+    void run(const RenderPath* path, const Matrix& m);
 
     float radius() const
     {
@@ -77,7 +77,7 @@ class WgBWTessellator
 {
 public:
     WgBWTessellator(WgMeshData* buffer);
-    void tessellate(const RenderPath& path, const Matrix& matrix);
+    void tessellate(const RenderPath* path, const Matrix& matrix);
     RenderRegion bounds() const;
     BBox getBBox() const;
 private:
