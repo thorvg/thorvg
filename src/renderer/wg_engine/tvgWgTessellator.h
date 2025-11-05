@@ -39,7 +39,7 @@ class WgStroker
     };
 public:
     WgStroker(WgMeshData* buffer, float width);
-    void run(const RenderShape& rshape, const Matrix& m);
+    void run(const RenderShape& rshape, const RenderPath& path, const Matrix& m);
     RenderRegion bounds() const;
     BBox getBBox() const;
 private:
