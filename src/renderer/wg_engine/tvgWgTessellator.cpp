@@ -29,7 +29,7 @@ WgStroker::WgStroker(WgMeshData* buffer, float width) : mBuffer(buffer), mWidth(
 }
 
 
-void WgStroker::run(const RenderShape& rshape, const Matrix& m)
+void WgStroker::run(const RenderShape& rshape, const RenderPath& path, const Matrix& m)
 {
     mMiterLimit = rshape.strokeMiterlimit();
     mCap = rshape.strokeCap();
@@ -37,14 +37,7 @@ void WgStroker::run(const RenderShape& rshape, const Matrix& m)
 
     RenderPath dashed;
     if (rshape.strokeDash(dashed)) run(dashed, m);
-    else if (rshape.trimpath()) {
-        RenderPath trimmedPath;
-        if (rshape.stroke->trim.trim(rshape.path, trimmedPath)) {
-            run(trimmedPath, m);
-        }
-    } else {
-        run(rshape.path, m);
-    }
+    else run(path, m);
 }
 
 
