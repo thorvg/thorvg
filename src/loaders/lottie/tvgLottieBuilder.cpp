@@ -915,32 +915,34 @@ void LottieBuilder::updateImage(LottieGroup* layer)
 
 void LottieBuilder::updateURLFont(LottieLayer* layer, LottieFont* font, const TextDocument& doc)
 {
-    const auto delim = "\r\n\3";
-    const auto size = doc.size * 75.0f; //1 pt = 1/72; 1 in = 96 px; -> 72/96 = 0.75
-    const auto lineHeight = doc.size * 100.0f;
-
-    auto buf = (char*)alloca(strlen(doc.text) + 1);
-    strcpy(buf, doc.text);
-    auto token = std::strtok(buf, delim);
-
-    auto cnt = 0;
-    while (token) {
-        auto txt = Text::gen();
-        if (txt->font(doc.name) != Result::Success) {
-            if (!(font && resolver && resolver->func(txt, font->path, resolver->data))) {
-                txt->font(nullptr);  //fallback to any available font
-            }
+    auto txt = Text::gen();
+    if (txt->font(doc.name) != Result::Success) {
+        if (!(font && resolver && resolver->func(txt, font->path, resolver->data))) {
+            txt->font(nullptr);  //fallback to any available font
         }
-        txt->size(size);
-        txt->text(token);
-        txt->fill(doc.color.r, doc.color.g, doc.color.b);
-        txt->align(-doc.justify, 0.0f);
-        txt->translate(0.0f, lineHeight * cnt - lineHeight);
-
-        token = std::strtok(nullptr, delim);
-        layer->scene->push(txt);
-        cnt++;
     }
+    auto len = strlen(doc.text);
+    auto buf = (char*)alloca(strlen(doc.text) + 1);
+
+    // preprocessing text for modern systems: handle carriage return ('\r') and end-of-text ('\3')
+    // as line feed ('\n') only when they appear independently.
+    auto p = buf;
+    auto feed = false;
+    for (size_t i = 0; i < len; ++i) {
+        //replace the carriage return and end of text with line feed.
+        if (doc.text[i] == '\r' || doc.text[i] == '\3') {
+            if (!feed) *p = '\n';
+            else continue;
+        } else *p = doc.text[i];
+        feed = (*p == '\n') ? true : false;
+        ++p;
+    }
+
+    txt->size(doc.size * 75.0f); //1 pt = 1/72; 1 in = 96 px; -> 72/96 = 0.75
+    txt->text(buf);
+    txt->fill(doc.color.r, doc.color.g, doc.color.b);
+    txt->align(-doc.justify, 0.5f);
+    layer->scene->push(txt);
 }
 
 
@@ -1174,8 +1176,11 @@ void LottieBuilder::updateText(LottieLayer* layer, float frameNo)
     auto text = static_cast<LottieText*>(layer->children.first());
     auto& doc = text->doc(frameNo, exps);
 
-    if (text->font && text->font->origin == LottieFont::Origin::Local) updateLocalFont(layer, frameNo, text, doc);
-    else updateURLFont(layer, text->font, doc);
+    if (text->font && text->font->origin == LottieFont::Origin::Local && !text->font->chars.empty()) {
+        updateLocalFont(layer, frameNo, text, doc);
+    } else {
+        updateURLFont(layer, text->font, doc);
+    }
 }
 
 
