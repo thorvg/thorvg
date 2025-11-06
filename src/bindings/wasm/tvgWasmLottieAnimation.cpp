@@ -413,8 +413,8 @@ public:
 
         canvas->sync();
 
-        auto wsign = (width < 0.0f) ? -1.0f : 1.0f;
-        auto hsign = (height < 0.0f) ? -1.0f : 1.0f;
+        auto wsign = (width < 0) ? -1.0f : 1.0f;
+        auto hsign = (height < 0) ? -1.0f : 1.0f;
         width = std::abs(width);
         height = std::abs(height);
 
