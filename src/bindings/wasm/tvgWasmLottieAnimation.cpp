@@ -44,8 +44,8 @@ struct TvgEngineMethod
 {
     virtual ~TvgEngineMethod() {}
     virtual Canvas* init(string&) = 0;
-    virtual void resize(Canvas* canvas, int w, int h) = 0;
-    virtual ArrayBuffer output(int w, int h)
+    virtual void resize(Canvas* canvas, uint32_t w, uint32_t h) = 0;
+    virtual ArrayBuffer output(uint32_t w, uint32_t h)
     {
         return ArrayBuffer(val(typed_memory_view<uint8_t>(0, nullptr)));
     }
@@ -75,14 +75,14 @@ struct TvgSwEngine : TvgEngineMethod
         return SwCanvas::gen(EngineOption::None);
     }
 
-    void resize(Canvas* canvas, int w, int h) override
+    void resize(Canvas* canvas, uint32_t w, uint32_t h) override
     {
         std::free(buffer);
         buffer = (uint8_t*)std::malloc(w * h * sizeof(uint32_t));
         static_cast<SwCanvas*>(canvas)->target((uint32_t *)buffer, w, w, h, ColorSpace::ABGR8888S);
     }
 
-    ArrayBuffer output(int w, int h) override
+    ArrayBuffer output(uint32_t w, uint32_t h) override
     {
         return ArrayBuffer(val(typed_memory_view(w * h * 4, buffer)));
     }
@@ -130,7 +130,7 @@ struct TvgWgEngine : TvgEngineMethod
         return WgCanvas::gen();
     }
 
-    void resize(Canvas* canvas, int w, int h) override
+    void resize(Canvas* canvas, uint32_t w, uint32_t h) override
     {
         if (canvas) static_cast<WgCanvas*>(canvas)->target(device, instance, surface, w, h, ColorSpace::ABGR8888S);
     }
@@ -229,7 +229,7 @@ struct TvgGLEngine : TvgEngineMethod
         return GlCanvas::gen();
     }
 
-    void resize(Canvas* canvas, int w, int h) override
+    void resize(Canvas* canvas, uint32_t w, uint32_t h) override
     {
         if (canvas) static_cast<GlCanvas*>(canvas)->target((void*)context, 0, w, h, ColorSpace::ABGR8888S);
     }
@@ -305,7 +305,7 @@ public:
         return animation->curFrame();
     }
 
-    bool load(string data, string mimetype, int width, int height)
+    bool load(string data, string mimetype, uint32_t width, uint32_t height)
     {
         errorMsg = NoError;
 
@@ -406,7 +406,7 @@ public:
         return true;
     }
 
-    void resize(int width, int height)
+    void resize(uint32_t width, uint32_t height)
     {
         if (!canvas || !animation) return;
         if (this->width == width && this->height == height) return;
