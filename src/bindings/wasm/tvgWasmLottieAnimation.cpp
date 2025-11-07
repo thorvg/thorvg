@@ -358,7 +358,9 @@ public:
 
         if (!canvas || !animation) return ArrayBuffer(val(typed_memory_view<uint8_t>(0, nullptr)));
 
-        if (!updated) return engine->output(width, height);
+        int absWidth = std::abs(width);
+        int absHeight = std::abs(height);
+        if (!updated) return engine->output(absWidth, absHeight);
 
         if (canvas->draw(true) != Result::Success) {
             errorMsg = "draw() fail";
@@ -369,7 +371,7 @@ public:
 
         updated = false;
 
-        return engine->output(width, height);
+        return engine->output(absWidth, absHeight);
     }
 
     bool update()
@@ -410,19 +412,19 @@ public:
     {
         if (!canvas || !animation) return;
 
-        auto absWidth = std::abs(width);
-        auto absHeight = std::abs(height);
-        if (this->width == absWidth && this->height == absHeight) return;
+        if (this->width == width && this->height == height) return;
 
         canvas->sync();
 
-        this->width = absWidth;
-        this->height = absHeight;
+        this->width = width;
+        this->height = height;
 
-        engine->resize(canvas, absWidth, absHeight);
-
+        auto absWidth = std::abs(width);
+        auto absHeight = std::abs(height);
         auto wsign = (width < 0) ? -1.0f : 1.0f;
         auto hsign = (height < 0) ? -1.0f : 1.0f;
+
+        engine->resize(canvas, absWidth, absHeight);
 
         auto scale = (psize[0] > psize[1]) ? absWidth / psize[0] : absHeight / psize[1];
         animation->picture()->size(psize[0] * scale * wsign, psize[1] * scale * hsign);
@@ -562,8 +564,8 @@ private:
     Canvas*                canvas = nullptr;
     LottieAnimation*       animation = nullptr;
     TvgEngineMethod*       engine = nullptr;
-    uint32_t               width = 0;
-    uint32_t               height = 0;
+    int32_t                width = 0;
+    int32_t                height = 0;
     float                  psize[2];         //picture size
     bool                   updated = false;
     struct {
