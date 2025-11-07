@@ -339,6 +339,8 @@ public:
         /* need to reset size to calculate scale in Picture.size internally before calling resize() */
         this->width = 0;
         this->height = 0;
+        this->canvasWidth = 0;
+        this->canvasHeight = 0;
 
         resize(width, height);
 
@@ -358,9 +360,7 @@ public:
 
         if (!canvas || !animation) return ArrayBuffer(val(typed_memory_view<uint8_t>(0, nullptr)));
 
-        int absWidth = std::abs(width);
-        int absHeight = std::abs(height);
-        if (!updated) return engine->output(absWidth, absHeight);
+        if (!updated) return engine->output(canvasWidth, canvasHeight);
 
         if (canvas->draw(true) != Result::Success) {
             errorMsg = "draw() fail";
@@ -371,7 +371,7 @@ public:
 
         updated = false;
 
-        return engine->output(absWidth, absHeight);
+        return engine->output(canvasWidth, canvasHeight);
     }
 
     bool update()
@@ -418,17 +418,17 @@ public:
 
         this->width = width;
         this->height = height;
+        canvasWidth = std::abs(width);
+        canvasHeight = std::abs(height);
 
-        auto absWidth = std::abs(width);
-        auto absHeight = std::abs(height);
         auto wsign = (width < 0) ? -1.0f : 1.0f;
         auto hsign = (height < 0) ? -1.0f : 1.0f;
 
-        engine->resize(canvas, absWidth, absHeight);
+        engine->resize(canvas, canvasWidth, canvasHeight);
 
-        auto scale = (psize[0] > psize[1]) ? absWidth / psize[0] : absHeight / psize[1];
+        auto scale = (psize[0] > psize[1]) ? canvasWidth / psize[0] : canvasHeight / psize[1];
         animation->picture()->size(psize[0] * scale * wsign, psize[1] * scale * hsign);
-        animation->picture()->translate(absWidth * 0.5f, absHeight * 0.5f);
+        animation->picture()->translate(canvasWidth * 0.5f, canvasHeight * 0.5f);
 
 
         updated = true;
@@ -566,6 +566,8 @@ private:
     TvgEngineMethod*       engine = nullptr;
     int32_t                width = 0;
     int32_t                height = 0;
+    uint32_t               canvasWidth = 0;
+    uint32_t               canvasHeight = 0;
     float                  psize[2];         //picture size
     bool                   updated = false;
     struct {
