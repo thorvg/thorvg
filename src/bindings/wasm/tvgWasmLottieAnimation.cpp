@@ -409,24 +409,23 @@ public:
     void resize(int width, int height)
     {
         if (!canvas || !animation) return;
-        if (this->width == width && this->height == height) return;
+
+        auto absWidth = std::abs(width);
+        auto absHeight = std::abs(height);
+        if (this->width == absWidth && this->height == absHeight) return;
 
         canvas->sync();
 
-        this->width = width;
-        this->height = height;
+        this->width = absWidth;
+        this->height = absHeight;
 
-        engine->resize(canvas, width, height);
+        engine->resize(canvas, absWidth, absHeight);
 
         auto wsign = (width < 0) ? -1.0f : 1.0f;
         auto hsign = (height < 0) ? -1.0f : 1.0f;
-        auto absWidth = std::abs(width);
-        auto absHeight = std::abs(height);
 
         auto scale = (psize[0] > psize[1]) ? absWidth / psize[0] : absHeight / psize[1];
-        animation->picture()->size(
-            psize[0] * scale * wsign,
-            psize[1] * scale * hsign);
+        animation->picture()->size(psize[0] * scale * wsign, psize[1] * scale * hsign);
         animation->picture()->translate(absWidth * 0.5f, absHeight * 0.5f);
 
 
