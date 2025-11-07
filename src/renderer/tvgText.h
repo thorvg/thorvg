@@ -46,6 +46,7 @@ struct TextImpl : Text
     TextImpl() : impl(Paint::Impl(this)), shape(Shape::gen())
     {
         PAINT(shape)->parent = this;
+        shape->strokeJoin(StrokeJoin::Round);
     }
 
     ~TextImpl()
