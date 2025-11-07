@@ -913,16 +913,19 @@ void LottieBuilder::updateImage(LottieGroup* layer)
 }
 
 
-void LottieBuilder::updateURLFont(LottieLayer* layer, LottieFont* font, const TextDocument& doc)
+void LottieBuilder::updateURLFont( LottieLayer* layer, float frameNo, LottieText* text, const TextDocument& doc)
 {
-    auto txt = Text::gen();
-    if (txt->font(doc.name) != Result::Success) {
-        if (!(font && resolver && resolver->func(txt, font->path, resolver->data))) {
-            txt->font(nullptr);  //fallback to any available font
+    //text load
+    auto paint = Text::gen();
+    if (paint->font(doc.name) != Result::Success) {
+        if (!(text->font && resolver && resolver->func(paint, text->font->path, resolver->data))) {
+            paint->font(nullptr);  //fallback to any available font
         }
     }
+
+    //text build
     auto len = strlen(doc.text);
-    auto buf = (char*)alloca(strlen(doc.text) + 1);
+    auto buf = (char*)alloca(len + 1);
 
     // preprocessing text for modern systems: handle carriage return ('\r') and end-of-text ('\3')
     // as line feed ('\n') only when they appear independently.
@@ -939,11 +942,36 @@ void LottieBuilder::updateURLFont(LottieLayer* layer, LottieFont* font, const Te
     }
     *p = '\0';
 
-    txt->size(doc.size * 75.0f); //1 pt = 1/72; 1 in = 96 px; -> 72/96 = 0.75
-    txt->text(buf);
-    txt->fill(doc.color.r, doc.color.g, doc.color.b);
-    txt->align(-doc.justify, 0.5f);
-    layer->scene->push(txt);
+    auto color = doc.color;
+    paint->fill(color.r, color.g, color.b);
+    paint->size(doc.size * 75.0f); //1 pt = 1/72; 1 in = 96 px; -> 72/96 = 0.75
+    paint->text(buf);
+    paint->align(-doc.justify, 0.5f);
+    layer->scene->push(paint);
+
+    //outline
+    auto strkColor = doc.stroke.color;
+    if (doc.stroke.width > 0.0f) paint->outline(doc.stroke.width, strkColor.r, strkColor.g, strkColor.b);
+
+    //text range
+    if (text->ranges.empty()) return;
+
+    //FIXME: it only considers a single text-range.
+    ARRAY_FOREACH(p, text->ranges) {
+        auto range = *p;
+        auto f = range->factor(frameNo, float(len), 0.0f);
+        if (tvg::zero(f)) continue;
+
+        //fill & opacity
+        range->color(frameNo, color, strkColor, f, tween, exps);
+        paint->fill(color.r, color.g, color.b);
+        paint->opacity(range->style.opacity(frameNo, tween, exps));
+
+        //stroke
+        if (range->style.flags.strokeWidth) {
+            paint->outline(f * range->style.strokeWidth(frameNo, tween, exps), strkColor.r, strkColor.g, strkColor.b);
+        }
+    }
 }
 
 
@@ -1089,9 +1117,9 @@ void LottieBuilder::updateLocalFont(LottieLayer* layer, float frameNo, LottieTex
             //text layout position
             auto ascent = text->font->ascent * ctx.scale;
             if (ascent > doc.bbox.size.y) ascent = doc.bbox.size.y;
-            Point layout = {doc.bbox.pos.x, doc.bbox.pos.y + ascent - doc.shift};
 
             //horizontal alignment
+            Point layout = {doc.bbox.pos.x, doc.bbox.pos.y + ascent - doc.shift};
             layout.x += doc.justify * (-1.0f * doc.bbox.size.x + ctx.cursor.x * ctx.scale);
 
             //new text group, single scene based on text-grouping
@@ -1108,7 +1136,6 @@ void LottieBuilder::updateLocalFont(LottieLayer* layer, float frameNo, LottieTex
                 break;
             }
             ++ctx.p;
-
             ctx.totalLineSpace += ctx.lineSpace;
             ctx.lineSpace = 0.0f;
 
@@ -1117,7 +1144,6 @@ void LottieBuilder::updateLocalFont(LottieLayer* layer, float frameNo, LottieTex
             ctx.cursor = {0.0f, (++ctx.line * doc.height + ctx.totalLineSpace) / ctx.scale};
             continue;
         }
-
         if (*ctx.p == ' ') {
             ++ctx.space;
             //new text group, single scene for each word
@@ -1127,7 +1153,6 @@ void LottieBuilder::updateLocalFont(LottieLayer* layer, float frameNo, LottieTex
                 ctx.lineScene->translate(ctx.cursor.x, ctx.cursor.y);
             }
         }
-
         /* all lowercase letters are converted to uppercase in the "t" text field, making the "ca" value irrelevant, thus AllCaps is nothing to do.
            So only convert lowercase letters to uppercase (for 'SmallCaps' an extra scaling factor applied) */
         ctx.capScale = 1.0f;
@@ -1140,7 +1165,6 @@ void LottieBuilder::updateLocalFont(LottieLayer* layer, float frameNo, LottieTex
                 if (doc.caps == 2) ctx.capScale = 0.7f;
             }
         }
-
         // text building
         auto found = false;
         ARRAY_FOREACH(g, text->font->chars) {
@@ -1154,9 +1178,7 @@ void LottieBuilder::updateLocalFont(LottieLayer* layer, float frameNo, LottieTex
                     ctx.lineScene->translate(ctx.cursor.x, ctx.cursor.y);
                 }
                 auto shape = textShape(text, frameNo, doc, glyph, ctx);
-                if (!updateTextRange(text, frameNo, shape, doc, ctx)) {
-                    _commit(glyph, shape, ctx);
-                }
+                if (!updateTextRange(text, frameNo, shape, doc, ctx)) _commit(glyph, shape, ctx);
                 ctx.cursor.x += (glyph->width + doc.tracking) * ctx.capScale;    //advance the cursor position horizontally
                 ctx.p += glyph->len;
                 ctx.idx += glyph->len;
@@ -1176,11 +1198,10 @@ void LottieBuilder::updateText(LottieLayer* layer, float frameNo)
 {
     auto text = static_cast<LottieText*>(layer->children.first());
     auto& doc = text->doc(frameNo, exps);
-
     if (text->font && text->font->origin == LottieFont::Origin::Local && !text->font->chars.empty()) {
         updateLocalFont(layer, frameNo, text, doc);
     } else {
-        updateURLFont(layer, text->font, doc);
+        updateURLFont(layer, frameNo, text, doc);
     }
 }
 
