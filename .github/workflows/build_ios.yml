@@ -33,7 +33,7 @@ jobs:
 
     - name: Build
       run: |
-        meson setup build -Dlog=true -Dloaders=all -Dsavers=all -Dbindings=capi -Dstatic=true --cross-file ./cross/ios_x86_64.txt
+        meson setup build -Dlog=true -Dloaders=all -Dsavers=all -Dbindings=capi -Dstatic=true --cross-file ./cross/ios_simulator_x86_64.txt
         ninja -C build install
 
     - uses: actions/upload-artifact@v4

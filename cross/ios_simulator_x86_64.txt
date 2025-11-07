@@ -1,4 +1,4 @@
-# build for the ios simulator(Intel)
+# build for the ios simulator (Intel)
 
 [binaries]
 cpp = ['clang++', '-arch', 'x86_64', '-isysroot', '/Applications/Xcode.app/Contents/Developer/Platforms/iPhoneSimulator.platform/Developer/SDKs/iPhoneSimulator.sdk']
@@ -6,12 +6,12 @@ ar = 'ar'
 strip = 'strip'
 
 [properties]
-root = '/Applications/Xcode.app/Contents/Developer/Platforms/iPhoneOS.platform/Developer'
+root = '/Applications/Xcode.app/Contents/Developer/Platforms/iPhoneSimulator.platform/Developer'
 has_function_printf = true
 
 [built-in options]
-cpp_args = ['-miphoneos-version-min=11.0']
-cpp_link_args = ['-miphoneos-version-min=11.0']
+cpp_args = ['-mios-simulator-version-min=11.0']
+cpp_link_args = ['-mios-simulator-version-min=11.0']
 
 [host_machine]
 system = 'darwin'
