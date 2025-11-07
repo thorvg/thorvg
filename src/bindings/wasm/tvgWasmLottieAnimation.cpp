@@ -416,12 +416,12 @@ public:
         this->width = width;
         this->height = height;
 
+        engine->resize(canvas, width, height);
+
         auto wsign = (width < 0) ? -1.0f : 1.0f;
         auto hsign = (height < 0) ? -1.0f : 1.0f;
         auto absWidth = std::abs(width);
         auto absHeight = std::abs(height);
-
-        engine->resize(canvas, width, height);
 
         auto scale = (psize[0] > psize[1]) ? absWidth / psize[0] : absHeight / psize[1];
         animation->picture()->size(
