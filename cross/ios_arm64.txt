@@ -1,4 +1,4 @@
-# build for the ios simulator(Mac) & iphone devices
+# build for iphone devices (arm64)
 
 [binaries]
 cpp = ['clang++', '-arch', 'arm64', '-isysroot', '/Applications/Xcode.app/Contents/Developer/Platforms/iPhoneOS.platform/Developer/SDKs/iPhoneOS.sdk']
