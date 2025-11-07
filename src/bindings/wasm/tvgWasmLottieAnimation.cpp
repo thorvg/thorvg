@@ -413,21 +413,21 @@ public:
 
         canvas->sync();
 
-        auto wsign = (width < 0) ? -1.0f : 1.0f;
-        auto hsign = (height < 0) ? -1.0f : 1.0f;
-        width = std::abs(width);
-        height = std::abs(height);
-
         this->width = width;
         this->height = height;
 
+        auto wsign = (width < 0) ? -1.0f : 1.0f;
+        auto hsign = (height < 0) ? -1.0f : 1.0f;
+        auto absWidth = std::abs(width);
+        auto absHeight = std::abs(height);
+
         engine->resize(canvas, width, height);
 
-        auto scale = (psize[0] > psize[1]) ? width / psize[0] : height / psize[1];
+        auto scale = (psize[0] > psize[1]) ? absWidth / psize[0] : absHeight / psize[1];
         animation->picture()->size(
             psize[0] * scale * wsign,
             psize[1] * scale * hsign);
-        animation->picture()->translate(width * 0.5f, height * 0.5f);
+        animation->picture()->translate(absWidth * 0.5f, absHeight * 0.5f);
 
 
         updated = true;
