@@ -1,6 +1,5 @@
-# ThorVG uses the CODEOWNERS file to automatically assign reviewers in the GitHub system. 
-# However, the presence of a CODEOWNER does not necessarily imply that they are the sole copyright owners of the code. 
-# For more information, please consult the AUTHORS file.
+# ThorVG uses the CODEOWNERS file to automatically assign active reviewers within the GitHub system.
+# Being listed as a code owner does not necessarily indicate copyright ownership of the code.
 
 * @hermet
 /src/renderer/gl_engine @SergeyLebedkin
