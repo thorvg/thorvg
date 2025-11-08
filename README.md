@@ -601,7 +601,7 @@ The following outlines the dependencies for these optional features:
 ## Contributors
 ThorVG stands as a purely open-source initiative. We are grateful to the individuals, organizations, and companies that have contributed to the development of the ThorVG project. The dedicated efforts of the individuals and entities listed below have enabled ThorVG to reach its current state.
 
-* [Individuals](https://github.com/thorvg/thorvg/blob/main/CONTRIBUTORS)
+* [Individuals](https://github.com/thorvg/thorvg/blob/main/CONTRIBUTORS.md)
 * [Godot](https://godotengine.org/)
 * [LVGL](https://lvgl.io/)
 * [Canva Pty Ltd](https://www.canva.com/)
