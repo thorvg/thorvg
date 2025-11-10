@@ -54,3 +54,4 @@
 - Wang SiMiao 王思淼 <wangsimiao1@xiaomi.com>
 - Jackson Hu <huming2207@gmail.com>
 - Jay WenJie <jay@lottiefiles.com>
+- Andy French <andyf@canva.com>
