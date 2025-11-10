@@ -449,6 +449,9 @@ ThorVG has been integrated into the [Tizen](https://www.tizen.org) platform as t
 <p align="center">
   <img width="700" height="auto" src="https://github.com/thorvg/thorvg.site/blob/main/readme/example_tizen.png">
 </p>
+</br>
+
+Would you like us to showcase your project with ThorVG? Feel free to [open an issue](https://github.com/thorvg/thorvg/issues) or submit a pull request!
 
 [Back to contents](#contents)
 <br />
