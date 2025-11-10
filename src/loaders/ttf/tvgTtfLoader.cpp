@@ -555,7 +555,7 @@ bool TtfLoader::get(FontMetrics& fm, char* text, RenderPath& out)
 
     out.clear();
 
-    if (!text) return false;
+    if (!text || fm.fontSize == 0.0f) return false;
 
     fm.scale = reader.metrics.unitsPerEm / (fm.fontSize * DPI);
     fm.size = {};

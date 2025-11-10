@@ -65,6 +65,7 @@ struct TextImpl : Text
         if (utf8) this->utf8 = tvg::duplicate(utf8);
         else this->utf8 = nullptr;
         updated = true;
+        impl.mark(RenderUpdateFlag::Path);
 
         return Result::Success;
     }
@@ -107,7 +108,7 @@ struct TextImpl : Text
 
     bool render(RenderMethod* renderer)
     {
-        if (!loader) return true;
+        if (!loader || !fm.engine) return true;
         renderer->blend(impl.blendMethod);
         return PAINT(shape)->render(renderer);
     }
@@ -116,8 +117,9 @@ struct TextImpl : Text
     {
         if (!loader) return false;
         if (updated) {
-            loader->get(fm, utf8, SHAPE(shape)->rs.path);
-            loader->transform(shape, fm, italicShear);
+            if (loader->get(fm, utf8, SHAPE(shape)->rs.path)) {
+                loader->transform(shape, fm, italicShear);
+            }
             updated = false;
         }
         return true;
@@ -147,7 +149,7 @@ struct TextImpl : Text
         if (!load()) return true;
 
         auto scale = fm.scale;
-        if (tvg::zero(scale)) return false;
+        if (tvg::zero(scale)) return true;
 
         //transform the gradient coordinates based on the final scaled font.
         auto fill = SHAPE(shape)->rs.fill;
