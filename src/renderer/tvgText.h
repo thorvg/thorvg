@@ -103,6 +103,7 @@ struct TextImpl : Text
 
     RenderRegion bounds()
     {
+        if (!load()) return {};
         return SHAPE(shape)->bounds();
     }
 
@@ -149,7 +150,6 @@ struct TextImpl : Text
         if (!load()) return true;
 
         auto scale = fm.scale;
-        if (tvg::zero(scale)) return true;
 
         //transform the gradient coordinates based on the final scaled font.
         auto fill = SHAPE(shape)->rs.fill;
