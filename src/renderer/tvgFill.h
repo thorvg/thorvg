@@ -129,33 +129,27 @@ struct RadialGradientImpl : RadialGradient
     //clamp focal point and shrink start circle if needed to avoid invalid gradient setup
     bool correct(float& fx, float& fy, float& fr) const
     {
-        constexpr float precision = 0.01f;
+        constexpr float PRECISION = 0.01f;
+        if (r < PRECISION) return false;  // too small, treated as solid fill
 
-        //a solid fill case. It can be handled by engine.
-        if (this->r < precision) return false;
-
-        auto focal = this->focal;
-        auto diff = center - focal;
         auto dist = tvg::length(center, focal);
 
-        //move the focal point to the edge (just inside) if it's outside the end circle
-        if (this->r - dist <  precision) {
-            //handle special case: small radius and small distance -> shift focal point to avoid div-by-zero
-            if (dist < precision) dist = diff.x = precision;
-            auto scale = this->r * (1.0f - precision) / dist;
-            focal = center - diff * scale;
-            diff = center - focal;
-            dist = tvg::length(diff);
+        // clamp focal point to inside end circle if outside
+        if (this->r - dist <  PRECISION) {
+            auto diff = center - focal;
+            if (dist < PRECISION) dist = diff.x = PRECISION;
+            auto scale = this->r * (1.0f - PRECISION) / dist;
+            diff *= scale;
+            dist *= scale;  // update effective dist after scaling
+            fx = center.x - diff.x;
+            fy = center.y - diff.y;
+        } else {
+            fx = focal.x;
+            fy = focal.y;
         }
-
-        fx = focal.x;
-        fy = focal.y;
-
-        //if the start circle doesn't fit entirely within the end circle, shrink it (with epsilon margin)
-        auto maxFr = (this->r - dist) * (1.0f - precision);
-        if (this->fr > maxFr) fr = std::max(0.0f, maxFr);
-        else fr = this->fr;
-
+        // ensure start circle radius fr doesn't exceed the difference
+        auto maxFr = (r - dist) * (1.0f - PRECISION);
+        fr = (this->fr > maxFr) ? std::max(0.0f, maxFr) : this->fr;
         return true;
     }
 };
