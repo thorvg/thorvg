@@ -117,7 +117,7 @@ float length(const PathCommand* cmds, uint32_t cmdsCnt, const Point* pts, uint32
     while (cmdsCnt-- > 0) {
         switch (*cmds) {
             case PathCommand::Close: {
-                length += tvg::length(pts - 1, start);
+                length += tvg::length(*(pts - 1), *start);
                 break;
             }
             case PathCommand::MoveTo: {
@@ -126,7 +126,7 @@ float length(const PathCommand* cmds, uint32_t cmdsCnt, const Point* pts, uint32
                 break;
             }
             case PathCommand::LineTo: {
-                length += tvg::length(pts - 1, pts);
+                length += tvg::length(*(pts - 1), *pts);
                 ++pts;
                 break;
             }
