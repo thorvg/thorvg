@@ -2630,14 +2630,42 @@ TVG_API Tvg_Saver tvg_saver_new(void);
 * @note Saving can be asynchronous if the assigned thread number is greater than zero. To guarantee the saving is done, call tvg_saver_sync() afterwards.
 * @see tvg_saver_sync()
 */
-TVG_API Tvg_Result tvg_saver_save(Tvg_Saver saver, Tvg_Paint paint, const char* path, uint32_t quality);
+TVG_API Tvg_Result tvg_saver_save_paint(Tvg_Saver saver, Tvg_Paint paint, const char* path, uint32_t quality);
+
+
+/*!
+* @brief Exports the given @p animation data to the given @p path
+*
+* If the saver module supports any compression mechanism, it will optimize the data size.
+* This might affect the encoding/decoding time in some cases. You can turn off the compression
+* if you wish to optimize for speed.
+*
+* @param[in] saver The Tvg_Saver object connected with the saving task.
+* @param[in] animation The animation to be saved with all its associated properties.
+* @param[in] path A path to the file, in which the animation data is to be saved.
+* @param[in] quality The encoded quality level. @c 0 is the minimum, @c 100 is the maximum value(recommended).
+* @param[in] fps The frames per second for the animation. If @c 0, the default fps is used.
+*
+* @retval TVG_RESULT_INVALID_ARGUMENT A @c nullptr passed as the argument.
+* @retval TVG_RESULT_INSUFFICIENT_CONDITION Currently saving other resources or animation has no frames.
+* @retval TVG_RESULT_NOT_SUPPORTED Trying to save a file with an unknown extension or in an unsupported format.
+* @retval TVG_RESULT_UNKNOWN Unknown if attempting to save an empty paint.
+*
+* @note A higher frames per second (FPS) would result in a larger file size. It is recommended to use the default value.
+* @note Saving can be asynchronous if the assigned thread number is greater than zero. To guarantee the saving is done, call tvg_saver_sync() afterwards.
+*
+* @see tvg_saver_sync()
+*
+* @note Experimental API
+*/
+TVG_API Tvg_Result tvg_saver_save_animation(Tvg_Saver saver, Tvg_Animation animation, const char* path, uint32_t quality, uint32_t fps);
 
 
 /*!
 * @brief Guarantees that the saving task is finished.
 *
 * The behavior of the Saver module works on a sync/async basis, depending on the threading setting of the Initializer.
-* Thus, if you wish to have a benefit of it, you must call tvg_saver_sync() after the tvg_saver_save() in the proper delayed time.
+* Thus, if you wish to have a benefit of it, you must call tvg_saver_sync() after the tvg_saver_save_paint() in the proper delayed time.
 * Otherwise, you can call tvg_saver_sync() immediately.
 *
 * @param[in] saver The Tvg_Saver object connected with the saving task.
@@ -2646,7 +2674,7 @@ TVG_API Tvg_Result tvg_saver_save(Tvg_Saver saver, Tvg_Paint paint, const char* 
 * @retval TVG_RESULT_INSUFFICIENT_CONDITION No saving task is running.
 *
 * @note The asynchronous tasking is dependent on the Saver module implementation.
-* @see tvg_saver_save()
+* @see tvg_saver_save_paint()
 */
 TVG_API Tvg_Result tvg_saver_sync(Tvg_Saver saver);
 

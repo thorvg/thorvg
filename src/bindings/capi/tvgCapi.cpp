@@ -972,9 +972,16 @@ TVG_API Tvg_Saver tvg_saver_new()
 }
 
 
-TVG_API Tvg_Result tvg_saver_save(Tvg_Saver saver, Tvg_Paint paint, const char* path, uint32_t quality)
+TVG_API Tvg_Result tvg_saver_save_paint(Tvg_Saver saver, Tvg_Paint paint, const char* path, uint32_t quality)
 {
     if (saver && paint && path) return (Tvg_Result) reinterpret_cast<Saver*>(saver)->save((Paint*)paint, path, quality);
+    return TVG_RESULT_INVALID_ARGUMENT;
+}
+
+
+TVG_API Tvg_Result tvg_saver_save_animation(Tvg_Saver saver, Tvg_Animation animation, const char* path, uint32_t quality, uint32_t fps)
+{
+    if (saver) return (Tvg_Result) reinterpret_cast<Saver*>(saver)->save((Animation*)animation, path, quality, fps);
     return TVG_RESULT_INVALID_ARGUMENT;
 }
 
