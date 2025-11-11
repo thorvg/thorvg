@@ -255,10 +255,10 @@ static inline bool zero(const Point& p)
 }
 
 
-static inline float length(const Point* a, const Point* b)
+static inline float length(const Point& a, const Point& b)
 {
-    auto x = b->x - a->x;
-    auto y = b->y - a->y;
+    auto x = b.x - a.x;
+    auto y = b.y - a.y;
 
     if (x < 0) x = -x;
     if (y < 0) y = -y;

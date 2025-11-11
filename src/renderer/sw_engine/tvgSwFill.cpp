@@ -70,7 +70,7 @@ static uint32_t _estimateAAMargin(const Fill* fdata)
         return tvg::zero(radius) ? 0 : static_cast<uint32_t>(marginScalingFactor / radius);
     } else {
         auto grad = CONST_LINEAR(fdata);
-        auto len = length(&grad->p1, &grad->p2);
+        auto len = length(grad->p1, grad->p2);
         return tvg::zero(len) ? 0 : static_cast<uint32_t>(marginScalingFactor / len);
     }
 }

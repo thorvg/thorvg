@@ -419,9 +419,9 @@ static void _trimPath(const PathCommand* inCmds, uint32_t inCmdsCnt, const Point
     auto _length = [&]() -> float {
         switch (*cmds) {
             case PathCommand::MoveTo: return 0.0f;
-            case PathCommand::LineTo: return tvg::length(pts - 1, pts);
+            case PathCommand::LineTo: return tvg::length(*(pts - 1), *pts);
             case PathCommand::CubicTo: return Bezier{*(pts - 1), *pts, *(pts + 1), *(pts + 2)}.length();
-            case PathCommand::Close: return tvg::length(pts - 1, &moveTo);
+            case PathCommand::Close: return tvg::length(*(pts - 1), moveTo);
         }
         return 0.0f;
     };

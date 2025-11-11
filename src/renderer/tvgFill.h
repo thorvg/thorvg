@@ -136,7 +136,7 @@ struct RadialGradientImpl : RadialGradient
 
         auto focal = this->focal;
         auto diff = center - focal;
-        auto dist = tvg::length(&center, &focal);
+        auto dist = tvg::length(center, focal);
 
         //move the focal point to the edge (just inside) if it's outside the end circle
         if (this->r - dist <  precision) {
