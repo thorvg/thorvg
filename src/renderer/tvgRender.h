@@ -266,6 +266,7 @@ struct RenderPath
     }
 
     bool bounds(const Matrix* m, BBox& box);
+    Point point(float progress);
 };
 
 struct RenderTrimPath
