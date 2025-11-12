@@ -38,7 +38,6 @@ struct LottieModifier;
 
 struct LottieExpressions
 {
-public:
     template<typename Property, typename NumType>
     bool result(float frameNo, NumType& out, LottieExpression* exp)
     {
