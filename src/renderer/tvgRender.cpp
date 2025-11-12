@@ -58,6 +58,54 @@ bool RenderMethod::viewport(const RenderRegion& vp)
 /* RenderPath Class Implementation                                      */
 /************************************************************************/
 
+Point RenderPath::point(float progress)
+{
+    if (progress <= 0.0f) return pts.first();
+    else if (progress >= 1.0f) return pts.last();
+
+    auto pleng = tvg::length(cmds.data, cmds.count, pts.data, pts.count) * progress;
+    auto cleng = 0.0f;
+    auto p = pts.data;
+    auto c = cmds.data;
+    Point curr{}, start{}, next{};
+
+    while (c < cmds.data + cmds.count) {
+        switch (*c) {
+            case PathCommand::MoveTo: {
+                curr = start = *p++;
+                break;
+            }
+            case PathCommand::LineTo: {
+                next = *p;
+                auto segLen = tvg::length(curr, next);
+                if (cleng + segLen >= pleng) return lerp(curr, next, (pleng - cleng) / segLen);
+                cleng += segLen;
+                curr = *p++;
+                break;
+            }
+            case PathCommand::CubicTo: {
+                Bezier bz = {curr, *p, *(p + 1), *(p + 2)};
+                auto segLen = bz.length();
+                if (cleng + segLen >= pleng) return bz.at((pleng - cleng) / segLen);
+                cleng += segLen;
+                curr = *(p + 2);
+                p += 3;
+                break;
+            }
+            case PathCommand::Close: {
+                auto segLen = tvg::length(curr, start);
+                if (cleng + segLen >= pleng) return lerp(curr, start, (pleng - cleng) / segLen);
+                cleng += segLen;
+                curr = start;
+                break;
+            }
+        }
+        ++c;
+    }
+    return curr;
+}
+
+
 bool RenderPath::bounds(const Matrix* m, BBox& box)
 {
     if (cmds.empty() || cmds.first() == PathCommand::CubicTo) return false;
