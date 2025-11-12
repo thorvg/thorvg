@@ -974,7 +974,7 @@ TVG_API Tvg_Saver tvg_saver_new()
 
 TVG_API Tvg_Result tvg_saver_save_paint(Tvg_Saver saver, Tvg_Paint paint, const char* path, uint32_t quality)
 {
-    if (saver && paint && path) return (Tvg_Result) reinterpret_cast<Saver*>(saver)->save((Paint*)paint, path, quality);
+    if (saver) return (Tvg_Result) reinterpret_cast<Saver*>(saver)->save((Paint*)paint, path, quality);
     return TVG_RESULT_INVALID_ARGUMENT;
 }
 
