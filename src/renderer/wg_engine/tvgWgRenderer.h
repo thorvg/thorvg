@@ -25,9 +25,8 @@
 
 #include "tvgWgRenderTask.h"
 
-class WgRenderer : public RenderMethod
+struct WgRenderer : RenderMethod
 {
-public:
     //main features
     bool preUpdate() override;
     RenderData prepare(const RenderShape& rshape, RenderData data, const Matrix& transform, Array<RenderData>& clips, uint8_t opacity, RenderUpdateFlag flags, bool clipper) override;

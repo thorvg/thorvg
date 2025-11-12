@@ -30,9 +30,8 @@
 #include "tvgGlRenderPass.h"
 #include "tvgGlEffect.h"
 
-class GlRenderer : public RenderMethod
+struct GlRenderer : RenderMethod
 {
-public:
     enum RenderTypes
     {
         RT_Color = 0,
