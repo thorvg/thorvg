@@ -2,6 +2,7 @@
 - Hermet Park <hermetpark@gmail.com>
 
 ## Core Contributors
+- Pranay Samanta <pranay.ks@samsung.com>
 - Junsu Choi <jsuya.choi@samsung.com>
 - Mira Grudzinska <veleveta@gmail.com>
 - Ruiwen Tang <tangruiwen1989@gmail.com>
@@ -10,7 +11,6 @@
 
 ## Contributors
 - Prudhvi Raj Vasireddi <prudhvi.raj@samsung.com>
-- Pranay Samanta <pranay.ks@samsung.com>
 - Mateusz Palkowski <m.palkowski@samsung.com>
 - Subhransu Mohanty <sub.mohanty@samsung.com>
 - Michal Szczecinski <m.szczecinsk@partner.samsung.com>
