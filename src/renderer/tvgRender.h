@@ -531,7 +531,7 @@ struct RenderEffectTritone : RenderEffect
     }
 };
 
-class RenderMethod
+struct RenderMethod
 {
 private:
     uint32_t refCnt = 0;
