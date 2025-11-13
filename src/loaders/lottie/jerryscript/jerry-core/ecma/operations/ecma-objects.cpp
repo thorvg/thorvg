@@ -2656,80 +2656,6 @@ ecma_builtin_is (ecma_object_t *object_p, /**< pointer to an object */
 #endif /* !JERRY_NDEBUG */
 
 /**
- * The function is used in the assert of ecma_object_get_class_name
- *
- * @return true  - if class name is an object
- *         false - otherwise
- */
-static inline bool
-ecma_object_check_class_name_is_object (ecma_object_t *obj_p) /**< object */
-{
-#ifndef JERRY_NDEBUG
-  return (ecma_builtin_is_global (obj_p)
-#if JERRY_BUILTIN_TYPEDARRAY
-          || ecma_builtin_is (obj_p, ECMA_BUILTIN_ID_ARRAYBUFFER_PROTOTYPE)
-#if JERRY_BUILTIN_SHAREDARRAYBUFFER
-          || ecma_builtin_is (obj_p, ECMA_BUILTIN_ID_SHARED_ARRAYBUFFER_PROTOTYPE)
-#endif /* JERRY_BUILTIN_SHAREDARRAYBUFFER */
-          || ecma_builtin_is (obj_p, ECMA_BUILTIN_ID_TYPEDARRAY_PROTOTYPE)
-          || ecma_builtin_is (obj_p, ECMA_BUILTIN_ID_INT8ARRAY_PROTOTYPE)
-          || ecma_builtin_is (obj_p, ECMA_BUILTIN_ID_UINT8ARRAY_PROTOTYPE)
-          || ecma_builtin_is (obj_p, ECMA_BUILTIN_ID_INT16ARRAY_PROTOTYPE)
-          || ecma_builtin_is (obj_p, ECMA_BUILTIN_ID_UINT16ARRAY_PROTOTYPE)
-          || ecma_builtin_is (obj_p, ECMA_BUILTIN_ID_INT32ARRAY_PROTOTYPE)
-          || ecma_builtin_is (obj_p, ECMA_BUILTIN_ID_UINT32ARRAY_PROTOTYPE)
-          || ecma_builtin_is (obj_p, ECMA_BUILTIN_ID_FLOAT32ARRAY_PROTOTYPE)
-          || ecma_builtin_is (obj_p, ECMA_BUILTIN_ID_UINT8CLAMPEDARRAY_PROTOTYPE)
-#if JERRY_NUMBER_TYPE_FLOAT64
-          || ecma_builtin_is (obj_p, ECMA_BUILTIN_ID_FLOAT64ARRAY_PROTOTYPE)
-#endif /* JERRY_NUMBER_TYPE_FLOAT64 */
-#if JERRY_BUILTIN_BIGINT
-          || ecma_builtin_is (obj_p, ECMA_BUILTIN_ID_BIGINT_PROTOTYPE)
-          || ecma_builtin_is (obj_p, ECMA_BUILTIN_ID_BIGINT64ARRAY_PROTOTYPE)
-          || ecma_builtin_is (obj_p, ECMA_BUILTIN_ID_BIGUINT64ARRAY_PROTOTYPE)
-#endif /* JERRY_BUILTIN_BIGINT */
-#endif /* JERRY_BUILTIN_TYPEDARRAY */
-          || ecma_builtin_is (obj_p, ECMA_BUILTIN_ID_ARRAY_PROTOTYPE_UNSCOPABLES)
-          || ecma_builtin_is (obj_p, ECMA_BUILTIN_ID_ARRAY_ITERATOR_PROTOTYPE)
-          || ecma_builtin_is (obj_p, ECMA_BUILTIN_ID_ITERATOR_PROTOTYPE)
-          || ecma_builtin_is (obj_p, ECMA_BUILTIN_ID_STRING_ITERATOR_PROTOTYPE)
-          || ecma_builtin_is (obj_p, ECMA_BUILTIN_ID_REGEXP_STRING_ITERATOR_PROTOTYPE)
-          || ecma_builtin_is (obj_p, ECMA_BUILTIN_ID_GENERATOR_PROTOTYPE)
-#if JERRY_BUILTIN_ERRORS
-          || ecma_builtin_is (obj_p, ECMA_BUILTIN_ID_TYPE_ERROR_PROTOTYPE)
-          || ecma_builtin_is (obj_p, ECMA_BUILTIN_ID_AGGREGATE_ERROR_PROTOTYPE)
-          || ecma_builtin_is (obj_p, ECMA_BUILTIN_ID_URI_ERROR_PROTOTYPE)
-          || ecma_builtin_is (obj_p, ECMA_BUILTIN_ID_ERROR_PROTOTYPE)
-#endif
-
-#if JERRY_BUILTIN_REGEXP
-          || ecma_builtin_is (obj_p, ECMA_BUILTIN_ID_REGEXP_PROTOTYPE)
-#endif /* JERRY_BUILTIN_REGEXP */
-          || ecma_builtin_is (obj_p, ECMA_BUILTIN_ID_SYMBOL_PROTOTYPE)
-          || ecma_builtin_is (obj_p, ECMA_BUILTIN_ID_ASYNC_FUNCTION_PROTOTYPE)
-          || ecma_builtin_is (obj_p, ECMA_BUILTIN_ID_PROMISE_PROTOTYPE)
-#if JERRY_BUILTIN_CONTAINER
-          || ecma_builtin_is (obj_p, ECMA_BUILTIN_ID_MAP_PROTOTYPE)
-          || ecma_builtin_is (obj_p, ECMA_BUILTIN_ID_SET_PROTOTYPE)
-          || ecma_builtin_is (obj_p, ECMA_BUILTIN_ID_WEAKMAP_PROTOTYPE)
-          || ecma_builtin_is (obj_p, ECMA_BUILTIN_ID_WEAKSET_PROTOTYPE)
-          || ecma_builtin_is (obj_p, ECMA_BUILTIN_ID_MAP_ITERATOR_PROTOTYPE)
-          || ecma_builtin_is (obj_p, ECMA_BUILTIN_ID_SET_ITERATOR_PROTOTYPE)
-#endif /* JERRY_BUILTIN_CONTAINER */
-#if JERRY_BUILTIN_WEAKREF
-          || ecma_builtin_is (obj_p, ECMA_BUILTIN_ID_WEAKREF_PROTOTYPE)
-#endif /* JERRY_BUILTIN_WEAKREF */
-#if JERRY_BUILTIN_DATAVIEW
-          || ecma_builtin_is (obj_p, ECMA_BUILTIN_ID_DATAVIEW_PROTOTYPE)
-#endif /* JERRY_BUILTIN_DATAVIEW */
-          || ecma_builtin_is (obj_p, ECMA_BUILTIN_ID_OBJECT_PROTOTYPE));
-#else /* JERRY_NDEBUG */
-  JERRY_UNUSED (obj_p);
-  return true;
-#endif /* !JERRY_NDEBUG */
-} /* ecma_object_check_class_name_is_object */
-
-/**
  * Used by ecma_object_get_class_name to get the magic string id of class objects
  */
 static const uint16_t ecma_class_object_magic_string_id[] = {
@@ -2904,7 +2830,6 @@ ecma_object_get_class_name (ecma_object_t *obj_p) /**< object */
         }
       }
 
-      JERRY_ASSERT (ecma_object_check_class_name_is_object (obj_p));
       return LIT_MAGIC_STRING_OBJECT_UL;
     }
     default:

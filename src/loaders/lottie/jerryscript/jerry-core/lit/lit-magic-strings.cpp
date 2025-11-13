@@ -418,13 +418,9 @@ lit_copy_magic_string_to_buffer (lit_magic_string_id_t id, /**< magic string id 
 
   const lit_utf8_byte_t *str_iter_p = magic_string_bytes_p;
   lit_utf8_byte_t *buf_iter_p = buffer_p;
-  lit_utf8_size_t bytes_copied = 0;
 
   while (magic_string_bytes_count--)
   {
-    bytes_copied++;
-    JERRY_ASSERT (bytes_copied <= buffer_size);
-
     *buf_iter_p++ = *str_iter_p++;
   }
 
