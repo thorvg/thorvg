@@ -904,7 +904,6 @@ ecma_builtin_string_prototype_object_split (ecma_value_t this_value, /**< this a
 
   ecma_value_t result = ECMA_VALUE_ERROR;
   ecma_string_t *end_substr_p;    
-  ecma_value_t put_result;
 
   lit_utf8_size_t string_size;
   uint8_t string_flags;
@@ -969,11 +968,7 @@ ecma_builtin_string_prototype_object_split (ecma_value_t this_value, /**< this a
   /* 15. */
   if (ecma_is_value_undefined (separator_value))
   {
-    ecma_value_t put_result = ecma_builtin_helper_def_prop_by_index (array_p,
-                                                                     array_length,
-                                                                     ecma_make_string_value (string_p),
-                                                                     ECMA_PROPERTY_CONFIGURABLE_ENUMERABLE_WRITABLE);
-    JERRY_ASSERT (put_result == ECMA_VALUE_TRUE);
+    ecma_builtin_helper_def_prop_by_index (array_p, array_length, ecma_make_string_value (string_p), ECMA_PROPERTY_CONFIGURABLE_ENUMERABLE_WRITABLE);
     goto cleanup_separator;
   }
 
@@ -982,13 +977,8 @@ ecma_builtin_string_prototype_object_split (ecma_value_t this_value, /**< this a
   {
     if (!ecma_string_is_empty (separator_p))
     {
-      ecma_value_t put_result = ecma_builtin_helper_def_prop_by_index (array_p,
-                                                                       array_length,
-                                                                       ecma_make_string_value (string_p),
-                                                                       ECMA_PROPERTY_CONFIGURABLE_ENUMERABLE_WRITABLE);
-      JERRY_ASSERT (put_result == ECMA_VALUE_TRUE);
+      ecma_builtin_helper_def_prop_by_index (array_p, array_length, ecma_make_string_value (string_p), ECMA_PROPERTY_CONFIGURABLE_ENUMERABLE_WRITABLE);
     }
-
     goto cleanup_separator;
   }
 
@@ -1006,13 +996,8 @@ ecma_builtin_string_prototype_object_split (ecma_value_t this_value, /**< this a
   {
     if (!memcmp (current_p, separator_buffer_p, separator_size) && (last_str_begin_p != current_p + separator_size))
     {
-      ecma_string_t *substr_p =
-        ecma_new_ecma_string_from_utf8 (last_str_begin_p, (lit_utf8_size_t) (current_p - last_str_begin_p));
-      ecma_value_t put_result = ecma_builtin_helper_def_prop_by_index (array_p,
-                                                                       array_length++,
-                                                                       ecma_make_string_value (substr_p),
-                                                                       ECMA_PROPERTY_CONFIGURABLE_ENUMERABLE_WRITABLE);
-      JERRY_ASSERT (put_result == ECMA_VALUE_TRUE);
+      auto substr_p = ecma_new_ecma_string_from_utf8 (last_str_begin_p, (lit_utf8_size_t) (current_p - last_str_begin_p));
+      ecma_builtin_helper_def_prop_by_index (array_p, array_length++, ecma_make_string_value (substr_p), ECMA_PROPERTY_CONFIGURABLE_ENUMERABLE_WRITABLE);
       ecma_deref_ecma_string (substr_p);
 
       if (array_length >= limit)
@@ -1029,11 +1014,7 @@ ecma_builtin_string_prototype_object_split (ecma_value_t this_value, /**< this a
   }
 
   end_substr_p = ecma_new_ecma_string_from_utf8 (last_str_begin_p, (lit_utf8_size_t) (string_end_p - last_str_begin_p));
-  put_result = ecma_builtin_helper_def_prop_by_index (array_p,
-                                                      array_length,
-                                                      ecma_make_string_value (end_substr_p),
-                                                      ECMA_PROPERTY_CONFIGURABLE_ENUMERABLE_WRITABLE);
-  JERRY_ASSERT (put_result == ECMA_VALUE_TRUE);
+  ecma_builtin_helper_def_prop_by_index (array_p, array_length, ecma_make_string_value (end_substr_p), ECMA_PROPERTY_CONFIGURABLE_ENUMERABLE_WRITABLE);
   ecma_deref_ecma_string (end_substr_p);
 
 cleanup_buffers:

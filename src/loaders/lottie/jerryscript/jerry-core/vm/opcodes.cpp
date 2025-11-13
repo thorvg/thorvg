@@ -349,13 +349,7 @@ opfunc_append_to_spread_array (ecma_value_t *stack_top_p, /**< current stack top
             break;
           }
 
-          ecma_value_t put_comp;
-          put_comp = ecma_builtin_helper_def_prop_by_index (array_obj_p,
-                                                            idx++,
-                                                            value,
-                                                            ECMA_PROPERTY_CONFIGURABLE_ENUMERABLE_WRITABLE);
-
-          JERRY_ASSERT (ecma_is_value_true (put_comp));
+          ecma_builtin_helper_def_prop_by_index (array_obj_p, idx++, value, ECMA_PROPERTY_CONFIGURABLE_ENUMERABLE_WRITABLE);
           ecma_free_value (value);
         }
       }
@@ -376,11 +370,7 @@ opfunc_append_to_spread_array (ecma_value_t *stack_top_p, /**< current stack top
     }
     else
     {
-      ecma_value_t put_comp = ecma_builtin_helper_def_prop_by_index (array_obj_p,
-                                                                     idx,
-                                                                     stack_top_p[i],
-                                                                     ECMA_PROPERTY_CONFIGURABLE_ENUMERABLE_WRITABLE);
-      JERRY_ASSERT (ecma_is_value_true (put_comp));
+      ecma_builtin_helper_def_prop_by_index (array_obj_p, idx, stack_top_p[i], ECMA_PROPERTY_CONFIGURABLE_ENUMERABLE_WRITABLE);
       ecma_free_value (stack_top_p[i]);
     }
   }
@@ -1936,8 +1926,7 @@ opfunc_finalize_class (vm_frame_ctx_t *frame_ctx_p, /**< frame context */
     opfunc_pop_lexical_environment (frame_ctx_p);
   }
 
-  ecma_value_t result = opfunc_private_method_or_accessor_add (ctor_p, ctor_p, ECMA_PRIVATE_PROPERTY_STATIC_FLAG);
-  JERRY_ASSERT (ecma_is_value_undefined (result));
+  opfunc_private_method_or_accessor_add (ctor_p, ctor_p, ECMA_PRIVATE_PROPERTY_STATIC_FLAG);
 
   stack_top_p[-3] = stack_top_p[-2];
   *vm_stack_top_p -= 2;

@@ -1168,7 +1168,6 @@ parser_post_processing (parser_context_t *context_p) /**< context */
   {
     parser_list_iterator_t literal_iterator;
     uint16_t argument_count = 0;
-    uint16_t register_count = context_p->register_count;
     base_p -= context_p->argument_count;
 
     parser_list_iterator_init (&context_p->literal_pool, &literal_iterator);
@@ -1176,8 +1175,6 @@ parser_post_processing (parser_context_t *context_p) /**< context */
     {
       lexer_literal_t *literal_p;
       literal_p = (lexer_literal_t *) parser_list_iterator_next (&literal_iterator);
-
-      JERRY_ASSERT (literal_p != NULL);
 
       if (!(literal_p->status_flags & LEXER_FLAG_FUNCTION_ARGUMENT))
       {
@@ -1191,11 +1188,6 @@ parser_post_processing (parser_context_t *context_p) /**< context */
         argument_count++;
         continue;
       }
-
-      JERRY_ASSERT (literal_p->type == LEXER_IDENT_LITERAL);
-
-      JERRY_ASSERT (literal_p->prop.index >= register_count);
-
       base_p[argument_count] = literal_pool_p[literal_p->prop.index];
       argument_count++;
     }
