@@ -1588,6 +1588,7 @@ void LottieBuilder::build(LottieComposition* comp)
     if (!comp) return;
 
     comp->root->scene = Scene::gen();
+    exps->temp = comp->root->scene;
 
     _buildComposition(comp, comp->root);
 

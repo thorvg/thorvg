@@ -176,7 +176,7 @@ static unsigned long _idByName(jerry_value_t args)
 static jerry_value_t _toComp(const jerry_call_info_t* info, const jerry_value_t args[], const jerry_length_t argsCnt)
 {
     auto layer = static_cast<LottieLayer*>(jerry_object_get_native_ptr(info->function, nullptr));
-    return _point2d(_point2d(args[0]) * layer->cache.matrix);
+    return _point2d(_point2d(args[0]));
 }
 
 
@@ -685,14 +685,24 @@ static jerry_value_t _points(const jerry_call_info_t* info, const jerry_value_t 
     return obj;
 }
 
+#include "tvgShape.h"
 
 static jerry_value_t _pointOnPath(const jerry_call_info_t* info, const jerry_value_t args[], const jerry_length_t argsCnt)
 {
     auto data = static_cast<ExpContent*>(jerry_object_get_native_ptr(info->function, &freeCb));
     auto pathset = static_cast<LottiePathSet*>(data->property);
     auto progress = jerry_value_as_number(args[0]);
+
     RenderPath out;
     (*pathset)(data->frameNo, out, nullptr, nullptr);
+#if 0
+    auto tt = Shape::gen();
+    SHAPE(tt)->rs.path.cmds.push(out.cmds);
+    SHAPE(tt)->rs.path.pts.push(out.pts);
+    tt->strokeFill(255, 0, 0);
+    tt->strokeWidth(10);
+    exps->temp->push(tt);
+#endif
     return _point2d(out.point(progress));
 }
 
