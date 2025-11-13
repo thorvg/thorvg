@@ -845,6 +845,8 @@ void SwRenderer::dispose(RenderData data)
 
 void* SwRenderer::prepareCommon(SwTask* task, const Matrix& transform, const Array<RenderData>& clips, uint8_t opacity, RenderUpdateFlag flags)
 {
+    if (task->disposed) return task;
+
     task->surface = surface;
     task->mpool = mpool;
     task->clipBox = RenderRegion::intersect(vport, {{0, 0}, {int32_t(surface->w), int32_t(surface->h)}});
