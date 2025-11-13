@@ -1423,7 +1423,7 @@ void LottieExpressions::update(float curTime)
 LottieExpressions* LottieExpressions::instance()
 {
     //FIXME: Threads support
-    if (TaskScheduler::threads() > 1) {
+    if (TaskScheduler::threads() > 0) {
         TVGLOG("LOTTIE", "Lottie Expressions are not supported with tvg threads");
         return nullptr;
     }
