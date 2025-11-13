@@ -317,5 +317,5 @@ struct UserExample : tvgexam::Example
 
 int main(int argc, char **argv)
 {
-    return tvgexam::main(new UserExample, argc, argv, false, 1024, 1024, 1);
+    return tvgexam::main(new UserExample, argc, argv, false, 1024, 1024, 0 /* turn off for expressions */);
 }
