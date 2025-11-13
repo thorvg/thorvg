@@ -54,7 +54,7 @@ private:
 
     void getExpression(char* code, LottieComposition* comp, LottieLayer* layer, LottieObject* object, LottieProperty* property);
     void getInterpolatorPoint(Point& pt);
-    void getPathSet(LottiePathSet& path);
+    void getPathSet(LottiePath* obj, LottiePathSet& path);
     void getLayerSize(float& val);
     bool getValue(TextDocument& doc);
     bool getValue(PathSet& path);
@@ -108,6 +108,7 @@ private:
 
     bool parseDirection(LottieShape* shape, const char* key);
     bool parseCommon(LottieObject* obj, const char* key);
+    bool parseCommon(LottieObject* obj, LottieProperty& prop, const char* key);
     void parseObject(Array<LottieObject*>& parent);
     void parseShapes(Array<LottieObject*>& parent);
     void parseText(Array<LottieObject*>& parent);
