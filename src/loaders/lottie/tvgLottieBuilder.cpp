@@ -946,7 +946,7 @@ void LottieBuilder::updateURLFont( LottieLayer* layer, float frameNo, LottieText
     paint->fill(color.r, color.g, color.b);
     paint->size(doc.size * 75.0f); //1 pt = 1/72; 1 in = 96 px; -> 72/96 = 0.75
     paint->text(buf);
-    paint->align(-doc.justify, 0.5f);
+    paint->align(-doc.justify, -doc.justify);
     layer->scene->push(paint);
 
     //outline
