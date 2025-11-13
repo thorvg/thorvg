@@ -308,12 +308,11 @@ void ecma_destroy_ecma_string (ecma_string_t *string_p);
 ecma_number_t ecma_string_to_number (const ecma_string_t *str_p);
 uint32_t ecma_string_get_array_index (const ecma_string_t *str_p);
 
-lit_utf8_size_t JERRY_ATTR_WARN_UNUSED_RESULT ecma_string_copy_to_buffer (const ecma_string_t *string_desc_p,
-                                                                          lit_utf8_byte_t *buffer_p,
-                                                                          lit_utf8_size_t buffer_size,
-                                                                          jerry_encoding_t encoding);
-void
-ecma_string_to_cesu8_bytes (const ecma_string_t *string_desc_p, lit_utf8_byte_t *buffer_p, lit_utf8_size_t buffer_size);
+lit_utf8_size_t ecma_string_copy_to_buffer (const ecma_string_t *string_desc_p,
+                                            lit_utf8_byte_t *buffer_p,
+                                            lit_utf8_size_t buffer_size,
+                                            jerry_encoding_t encoding);
+void ecma_string_to_cesu8_bytes (const ecma_string_t *string_desc_p, lit_utf8_byte_t *buffer_p, lit_utf8_size_t buffer_size);
 const lit_utf8_byte_t *ecma_string_get_chars (const ecma_string_t *string_p,
                                               lit_utf8_size_t *size_p,
                                               lit_utf8_size_t *length_p,

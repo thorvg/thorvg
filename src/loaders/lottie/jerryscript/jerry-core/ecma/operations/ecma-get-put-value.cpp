@@ -309,10 +309,7 @@ ecma_op_put_value_lex_env_base (ecma_object_t *lex_env_p, /**< lexical environme
 #endif /* JERRY_ERROR_MESSAGES */
   }
 
-  ecma_value_t completion = ecma_op_object_put (ecma_get_lex_env_binding_object (lex_env_p), name_p, value, false);
-
-  JERRY_ASSERT (ecma_is_value_boolean (completion));
-
+  ecma_op_object_put (ecma_get_lex_env_binding_object (lex_env_p), name_p, value, false);
   return ECMA_VALUE_EMPTY;
 } /* ecma_op_put_value_lex_env_base */
 

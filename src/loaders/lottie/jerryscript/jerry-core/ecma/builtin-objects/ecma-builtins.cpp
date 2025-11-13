@@ -478,20 +478,7 @@ ecma_builtin_create_global_object (void)
   ecma_builtin_descriptor_t builtin_desc = ecma_builtin_descriptors[ECMA_BUILTIN_ID_GLOBAL];
   ecma_builtin_id_t prototype_builtin_id = (ecma_builtin_id_t) (builtin_desc >> ECMA_BUILTIN_PROTOTYPE_ID_SHIFT);
   ecma_object_type_t obj_type = (ecma_object_type_t) (builtin_desc & ECMA_BUILTIN_OBJECT_TYPE_MASK);
-  size_t property_count = ecma_builtin_get_property_count (ECMA_BUILTIN_ID_GLOBAL);
-
-  JERRY_ASSERT (prototype_builtin_id != ECMA_BUILTIN_ID__COUNT);
-  JERRY_ASSERT (obj_type == ECMA_OBJECT_TYPE_BUILT_IN_GENERAL);
-
-  /* Whenever this assertion fails, the size of extra_instantiated_bitset in ecma_global_object_t
-   * must be increased and 32 must be added to these constants. Furthermore the new uint32 item
-   * must be set to zero. */
-#if JERRY_BUILTIN_REALMS
-  JERRY_ASSERT (property_count <= ECMA_BUILTIN_INSTANTIATED_BITSET_MIN_SIZE + 64);
-#else /* !JERRY_BUILTIN_REALMS */
-  JERRY_ASSERT (property_count <= ECMA_BUILTIN_INSTANTIATED_BITSET_MIN_SIZE + 32);
-#endif /* JERRY_BUILTIN_REALMS */
-
+  ecma_builtin_get_property_count (ECMA_BUILTIN_ID_GLOBAL);
   ecma_object_t *object_p = ecma_create_object (NULL, sizeof (ecma_global_object_t), obj_type);
 
   ecma_op_ordinary_object_set_extensible (object_p);

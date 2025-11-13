@@ -197,10 +197,7 @@ ecma_op_arguments_object_define_own_property (ecma_object_t *object_p, /**< the 
   {
     ecma_string_t *name_p = ecma_op_arguments_object_get_formal_parameter (mapped_arguments_p, index);
     ecma_object_t *lex_env_p = ECMA_GET_INTERNAL_VALUE_POINTER (ecma_object_t, mapped_arguments_p->lex_env);
-
-    ecma_value_t completion = ecma_op_set_mutable_binding (lex_env_p, name_p, property_desc_p->value, true);
-
-    JERRY_ASSERT (ecma_is_value_empty (completion));
+    ecma_op_set_mutable_binding (lex_env_p, name_p, property_desc_p->value, true);
   }
 
   if ((property_desc_p->flags & JERRY_PROP_IS_WRITABLE_DEFINED) && !(property_desc_p->flags & JERRY_PROP_IS_WRITABLE))

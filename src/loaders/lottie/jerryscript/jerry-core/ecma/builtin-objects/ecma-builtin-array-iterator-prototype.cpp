@@ -128,10 +128,7 @@ ecma_builtin_array_iterator_prototype_object_next (ecma_value_t this_val) /**< t
       index = (ecma_length_t) (ecma_get_number_from_value (index_value) + 1);
     }
 
-    ecma_value_t put_result = ecma_op_object_put (obj_p, prop_name_p, ecma_make_length_value (index), true);
-
-    JERRY_ASSERT (ecma_is_value_true (put_result));
-
+    ecma_op_object_put (obj_p, prop_name_p, ecma_make_length_value (index), true);
     ecma_free_value (index_value);
   }
   else

@@ -2451,8 +2451,7 @@ vm_loop (vm_frame_ctx_t *frame_ctx_p) /**< frame context */
               goto error;
             }
 
-            bool set_result = ecma_fast_array_set_property (array_p, index++, value);
-            JERRY_ASSERT (set_result);
+            ecma_fast_array_set_property (array_p, index++, value);
             ecma_free_value (value);
           }
 

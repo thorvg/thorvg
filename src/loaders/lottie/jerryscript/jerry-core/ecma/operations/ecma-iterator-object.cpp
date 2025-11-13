@@ -51,24 +51,11 @@ ecma_value_t
 ecma_create_array_from_iter_element (ecma_value_t value, /**< value */
                                      ecma_value_t index_value) /**< iterator index */
 {
-  /* 2. */
-  ecma_object_t *new_array_p = ecma_op_new_array_object (0);
-
-  /* 3-4. */
-  ecma_value_t completion;
-  completion =
-    ecma_builtin_helper_def_prop_by_index (new_array_p, 0, index_value, ECMA_PROPERTY_CONFIGURABLE_ENUMERABLE_WRITABLE);
-
-  /* 4.b */
-  JERRY_ASSERT (ecma_is_value_true (completion));
-
-  completion =
-    ecma_builtin_helper_def_prop_by_index (new_array_p, 1, value, ECMA_PROPERTY_CONFIGURABLE_ENUMERABLE_WRITABLE);
-  JERRY_ASSERT (ecma_is_value_true (completion));
-
-  /* 5. */
+  auto new_array_p = ecma_op_new_array_object (0);
+  ecma_builtin_helper_def_prop_by_index (new_array_p, 0, index_value, ECMA_PROPERTY_CONFIGURABLE_ENUMERABLE_WRITABLE);
+  ecma_builtin_helper_def_prop_by_index (new_array_p, 1, value, ECMA_PROPERTY_CONFIGURABLE_ENUMERABLE_WRITABLE);
   return ecma_make_object_value (new_array_p);
-} /* ecma_create_array_from_iter_element */
+}
 
 /**
  * CreateIterResultObject operation
