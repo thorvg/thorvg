@@ -33,7 +33,7 @@ option('simd',
 
 option('bindings',
    type: 'array',
-   choices: ['', 'capi', 'wasm_beta'],
+   choices: ['', 'capi'],
    value: [''],
    description: 'Enable API bindings')
 
