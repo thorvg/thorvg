@@ -114,10 +114,6 @@ if get_option('bindings').contains('capi')
     config_h.set10('THORVG_CAPI_BINDING_SUPPORT', true)
 endif
 
-if get_option('bindings').contains('wasm_beta')
-    config_h.set10('THORVG_WASM_BINDING_SUPPORT', true)
-endif
-
 #Log
 if logging
     config_h.set10('THORVG_LOG_ENABLED', true)
@@ -214,7 +210,6 @@ summary(
 summary(
   {
     'CAPI': get_option('bindings').contains('capi'),
-    'WASM_BETA': get_option('bindings').contains('wasm_beta'),
   },
   section: 'Binding',
   bool_yn: true,
