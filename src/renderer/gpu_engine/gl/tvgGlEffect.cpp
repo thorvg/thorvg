@@ -69,8 +69,8 @@ void GlEffect::update(RenderEffectGaussianBlur* effect, const Matrix& transform)
 
 GlRenderTask* GlEffect::render(RenderEffectGaussianBlur* effect, GlRenderTarget* dstFbo, Array<GlRenderTargetPool*>& blendPool, const RenderRegion& vp, uint32_t voffset, uint32_t ioffset)
 {
-    if (!pBlurV) pBlurV = new GlProgram(EFFECT_VERTEX, GAUSSIAN_VERTICAL);
-    if (!pBlurH) pBlurH = new GlProgram(EFFECT_VERTEX, GAUSSIAN_HORIZONTAL);
+    if (!pBlurV) pBlurV = new GlProgram(EFFECT_VERTEX, GAUSSIAN_VERTICAL, RT_Effect_GaussianBlurV);
+    if (!pBlurH) pBlurH = new GlProgram(EFFECT_VERTEX, GAUSSIAN_HORIZONTAL, RT_Effect_GaussianBlurH);
 
     // get current and intermediate framebuffers
     auto dstCopyFbo0 = blendPool[0]->getRenderTarget(vp);
@@ -148,9 +148,9 @@ void GlEffect::update(RenderEffectDropShadow* effect, const Matrix& transform)
 
 GlRenderTask* GlEffect::render(RenderEffectDropShadow* effect, GlRenderTarget* dstFbo, Array<GlRenderTargetPool*>& blendPool, const RenderRegion& vp, uint32_t voffset, uint32_t ioffset)
 {
-    if (!pBlurV) pBlurV = new GlProgram(EFFECT_VERTEX, GAUSSIAN_VERTICAL);
-    if (!pBlurH) pBlurH = new GlProgram(EFFECT_VERTEX, GAUSSIAN_HORIZONTAL);
-    if (!pDropShadow) pDropShadow = new GlProgram(EFFECT_VERTEX, EFFECT_DROPSHADOW);
+    if (!pBlurV) pBlurV = new GlProgram(EFFECT_VERTEX, GAUSSIAN_VERTICAL, RT_Effect_GaussianBlurV);
+    if (!pBlurH) pBlurH = new GlProgram(EFFECT_VERTEX, GAUSSIAN_HORIZONTAL, RT_Effect_GaussianBlurH);
+    if (!pDropShadow) pDropShadow = new GlProgram(EFFECT_VERTEX, EFFECT_DROPSHADOW, RT_Effect_DropShadow);
 
     // get current and intermediate framebuffers
     auto dstCopyFbo0 = blendPool[0]->getRenderTarget(vp);
@@ -261,13 +261,13 @@ GlRenderTask* GlEffect::render(RenderEffect* effect, GlRenderTarget* dstFbo, Arr
     //common color replacement effects
     GlProgram* program = nullptr;
     if (effect->type == SceneEffect::Fill) {
-        if (!pFill) pFill = new GlProgram(EFFECT_VERTEX, EFFECT_FILL);
+        if (!pFill) pFill = new GlProgram(EFFECT_VERTEX, EFFECT_FILL, RT_Effect_Fill);
         program = pFill;
     } else if (effect->type == SceneEffect::Tint) {
-        if (!pTint) pTint = new GlProgram(EFFECT_VERTEX, EFFECT_TINT);
+        if (!pTint) pTint = new GlProgram(EFFECT_VERTEX, EFFECT_TINT, RT_Effect_Tint);
         program = pTint;
     } else if (effect->type == SceneEffect::Tritone) {
-        if (!pTritone) pTritone = new GlProgram(EFFECT_VERTEX, EFFECT_TRITONE);
+        if (!pTritone) pTritone = new GlProgram(EFFECT_VERTEX, EFFECT_TRITONE, RT_Effect_Tritone);
         program = pTritone;
     } else return nullptr;
 
