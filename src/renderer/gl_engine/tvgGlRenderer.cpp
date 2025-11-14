@@ -135,28 +135,28 @@ void GlRenderer::initShaders()
         STR_RADIAL_GRADIENT_MAIN
     );
 
-    mPrograms.push(new GlProgram(COLOR_VERT_SHADER, COLOR_FRAG_SHADER));
-    mPrograms.push(new GlProgram(GRADIENT_VERT_SHADER, linearGradientFragShader));
-    mPrograms.push(new GlProgram(GRADIENT_VERT_SHADER, radialGradientFragShader));
-    mPrograms.push(new GlProgram(IMAGE_VERT_SHADER, IMAGE_FRAG_SHADER));
+    mPrograms.push(new GlProgram(COLOR_VERT_SHADER, COLOR_FRAG_SHADER, RT_Color));
+    mPrograms.push(new GlProgram(GRADIENT_VERT_SHADER, linearGradientFragShader, RT_LinGradient));
+    mPrograms.push(new GlProgram(GRADIENT_VERT_SHADER, radialGradientFragShader, RT_RadGradient));
+    mPrograms.push(new GlProgram(IMAGE_VERT_SHADER, IMAGE_FRAG_SHADER, RT_Image));
 
     // compose Renderer
-    mPrograms.push(new GlProgram(MASK_VERT_SHADER, MASK_ALPHA_FRAG_SHADER));
-    mPrograms.push(new GlProgram(MASK_VERT_SHADER, MASK_INV_ALPHA_FRAG_SHADER));
-    mPrograms.push(new GlProgram(MASK_VERT_SHADER, MASK_LUMA_FRAG_SHADER));
-    mPrograms.push(new GlProgram(MASK_VERT_SHADER, MASK_INV_LUMA_FRAG_SHADER));
-    mPrograms.push(new GlProgram(MASK_VERT_SHADER, MASK_ADD_FRAG_SHADER));
-    mPrograms.push(new GlProgram(MASK_VERT_SHADER, MASK_SUB_FRAG_SHADER));
-    mPrograms.push(new GlProgram(MASK_VERT_SHADER, MASK_INTERSECT_FRAG_SHADER));
-    mPrograms.push(new GlProgram(MASK_VERT_SHADER, MASK_DIFF_FRAG_SHADER));
-    mPrograms.push(new GlProgram(MASK_VERT_SHADER, MASK_LIGHTEN_FRAG_SHADER));
-    mPrograms.push(new GlProgram(MASK_VERT_SHADER, MASK_DARKEN_FRAG_SHADER));
+    mPrograms.push(new GlProgram(MASK_VERT_SHADER, MASK_ALPHA_FRAG_SHADER, RT_MaskAlpha));
+    mPrograms.push(new GlProgram(MASK_VERT_SHADER, MASK_INV_ALPHA_FRAG_SHADER, RT_MaskAlphaInv));
+    mPrograms.push(new GlProgram(MASK_VERT_SHADER, MASK_LUMA_FRAG_SHADER, RT_MaskLuma));
+    mPrograms.push(new GlProgram(MASK_VERT_SHADER, MASK_INV_LUMA_FRAG_SHADER, RT_MaskLumaInv));
+    mPrograms.push(new GlProgram(MASK_VERT_SHADER, MASK_ADD_FRAG_SHADER, RT_MaskAdd));
+    mPrograms.push(new GlProgram(MASK_VERT_SHADER, MASK_SUB_FRAG_SHADER, RT_MaskSub));
+    mPrograms.push(new GlProgram(MASK_VERT_SHADER, MASK_INTERSECT_FRAG_SHADER, RT_MaskIntersect));
+    mPrograms.push(new GlProgram(MASK_VERT_SHADER, MASK_DIFF_FRAG_SHADER, RT_MaskDifference));
+    mPrograms.push(new GlProgram(MASK_VERT_SHADER, MASK_LIGHTEN_FRAG_SHADER, RT_MaskLighten));
+    mPrograms.push(new GlProgram(MASK_VERT_SHADER, MASK_DARKEN_FRAG_SHADER, RT_MaskDarken));
 
     // stencil Renderer
-    mPrograms.push(new GlProgram(STENCIL_VERT_SHADER, STENCIL_FRAG_SHADER));
+    mPrograms.push(new GlProgram(STENCIL_VERT_SHADER, STENCIL_FRAG_SHADER, RT_Stencil));
 
     // blit Renderer
-    mPrograms.push(new GlProgram(BLIT_VERT_SHADER, BLIT_FRAG_SHADER));
+    mPrograms.push(new GlProgram(BLIT_VERT_SHADER, BLIT_FRAG_SHADER, RT_Blit));
 
     // blend programs: image (17) + scene (17) + shape solid (17) + shape linear (17) + shape radial (17)
     for (uint32_t i = 0; i < 85; ++i) mPrograms.push(nullptr);
@@ -637,12 +637,11 @@ GlProgram* GlRenderer::getBlendProgram(BlendMethod method, BlendSource source)
 
     const char* vertShader;
     char fragShader[BLEND_TOTAL_LENGTH];
-
     if (source == BlendSource::Scene || source == BlendSource::Image) {
         vertShader = BLIT_VERT_SHADER;
         const char* header = (source == BlendSource::Scene) ? BLEND_SCENE_FRAG_HEADER : BLEND_IMAGE_FRAG_HEADER;
         snprintf(fragShader, BLEND_TOTAL_LENGTH, "%s%s%s", header, helpers, shaderFunc[methodInd]);
-        mPrograms[shaderInd] = new GlProgram(vertShader, fragShader);
+        mPrograms[shaderInd] = new GlProgram(vertShader, fragShader, shaderInd);
         return mPrograms[shaderInd];
     }
 
@@ -679,7 +678,7 @@ GlProgram* GlRenderer::getBlendProgram(BlendMethod method, BlendSource source)
             break;
     }
 
-    mPrograms[shaderInd] = new GlProgram(vertShader, fragShader);
+    mPrograms[shaderInd] = new GlProgram(vertShader, fragShader, shaderInd);
     return mPrograms[shaderInd];
 }
 

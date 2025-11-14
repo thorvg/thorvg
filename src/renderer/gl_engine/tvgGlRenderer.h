@@ -142,7 +142,6 @@ struct GlRenderer : RenderMethod
         RT_ShapeBlend_Radial_Add,
         RT_None
     };
-
     //main features
     bool preUpdate() override;
     RenderData prepare(const RenderShape& rshape, RenderData data, const Matrix& transform, Array<RenderData>& clips, uint8_t opacity, RenderUpdateFlag flags, bool clipper) override;
