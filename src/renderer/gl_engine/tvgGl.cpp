@@ -22,6 +22,7 @@
 
 #include "tvgGl.h"
 #include "tvgCommon.h"
+#include "tvgGlShaderCache.h"
 
 #ifdef __EMSCRIPTEN__
 
@@ -163,6 +164,19 @@ static void* _getProcAddress(const char* procName)
         TVGERR("GL_ENGINE", "%s is not supported.", #procName); \
         return false;                                           \
     }
+
+
+static bool _isExtensionSupported(const char* extension)
+{
+    GLint count = 0;
+    glGetIntegerv(GL_NUM_EXTENSIONS, &count);
+
+    for (GLint i = 0; i < count; ++i) {
+        auto* ext = (const char*)glGetStringi(GL_EXTENSIONS, i);
+        if (ext && strcmp(ext, extension) == 0) return true;
+    }
+    return false;
+}
 
 /************************************************************************/
 /* External Class Implementation                                        */
@@ -459,7 +473,7 @@ PFNGLGENVERTEXARRAYSPROC                     glGenVertexArrays;
 //PFNGLCLEARBUFFERUIVPROC                      glClearBufferuiv;
 //PFNGLCLEARBUFFERFVPROC                       glClearBufferfv;
 //PFNGLCLEARBUFFERFIPROC                       glClearBufferfi;
-//PFNGLGETSTRINGIPROC                          glGetStringi;
+PFNGLGETSTRINGIPROC                          glGetStringi;
 //PFNGLISRENDERBUFFERPROC                      glIsRenderbuffer;
 //PFNGLRENDERBUFFERSTORAGEPROC                 glRenderbufferStorage;
 //PFNGLGETRENDERBUFFERPARAMETERIVPROC          glGetRenderbufferParameteriv;
@@ -497,6 +511,10 @@ PFNGLUNIFORMBLOCKBINDINGPROC       glUniformBlockBinding;
     PFNEGLGETCURRENTCONTEXTPROC  tvgEglGetCurrentContext;
     PFNEGLMAKECURRENTPROC        tvgEglMakeCurrent;
 #endif
+
+// GL_VERSION_4_1
+PFNGLGETPROGRAMBINARYPROC glGetProgramBinary;
+PFNGLPROGRAMBINARYPROC glProgramBinary;
 
 bool glInit()
 {
@@ -786,7 +804,7 @@ bool glInit()
     // GL_FUNCTION_FETCH(glClearBufferuiv, PFNGLCLEARBUFFERUIVPROC);
     // GL_FUNCTION_FETCH(glClearBufferfv, PFNGLCLEARBUFFERFVPROC);
     // GL_FUNCTION_FETCH(glClearBufferfi, PFNGLCLEARBUFFERFIPROC);
-    // GL_FUNCTION_FETCH(glGetStringi, PFNGLGETSTRINGIPROC);
+    GL_FUNCTION_FETCH(glGetStringi, PFNGLGETSTRINGIPROC);
     // GL_FUNCTION_FETCH(glIsRenderbuffer, PFNGLISRENDERBUFFERPROC);
     GL_FUNCTION_FETCH(glBindRenderbuffer, PFNGLBINDRENDERBUFFERPROC);
     GL_FUNCTION_FETCH(glDeleteRenderbuffers, PFNGLDELETERENDERBUFFERSPROC);
@@ -877,13 +895,34 @@ bool glInit()
 
     TVGLOG("GL_ENGINE", "OpenGL/ES version = v%d.%d", vMajor, vMinor);
 
+#if !defined(THORVG_GL_TARGET_GLES)
+    // This extension is available in the core in OpenGL 4.1+,
+    // and in ARB extension in OpenGL 3.0+ but we need to check for it explicitly
+    if ((vMajor > 4) || (vMajor == 4 && vMinor >= 1) || (vMajor == 3 && _isExtensionSupported("GL_ARB_get_program_binary"))) {
+        GLint numFormats = 0;
+        glGetIntegerv(GL_NUM_PROGRAM_BINARY_FORMATS, &numFormats);
+        if (numFormats)
+        {
+            GL_FUNCTION_FETCH(glGetProgramBinary, PFNGLGETPROGRAMBINARYPROC);
+            GL_FUNCTION_FETCH(glProgramBinary, PFNGLPROGRAMBINARYPROC);
+            GlShaderCache::support = true;
+            TVGLOG("GL_ENGINE", " Program binary support enabled ");
+        } else TVGLOG("GL_ENGINE", "This GPU does not support any program binary formats");
+    } else {
+        TVGLOG("GL_ENGINE", "Program binary support not available");
+    }
+
+#endif
+
     return true;
 };
 
 
 bool glTerm()
 {
-#if defined(_WIN32) && !defined(__CYGWIN__)
+    GlShaderCache::cleanup();
+
+#if defined(_WIN32) && !defined(__CYGWIN__) 
     if (_libGL) FreeLibrary(_libGL);
     #if defined(THORVG_GL_TARGET_GLES)
         if (_libEGL) FreeLibrary(_libEGL);
