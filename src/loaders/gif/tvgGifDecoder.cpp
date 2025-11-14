@@ -322,10 +322,10 @@ void GifDecoder::compositeFrame(uint32_t frameIndex)
     uint32_t* framePixels32 = (uint32_t*)frame.pixels;
     
     // Pre-calculate valid bounds once
-    uint32_t startY = (frame.top >= height) ? 0 : 0;
+    uint32_t startY = 0;
     uint32_t endY = (frame.top + frame.height > height) ? 
                      height - frame.top : frame.height;
-    uint32_t startX = (frame.left >= width) ? 0 : 0;
+    uint32_t startX = 0;
     uint32_t endX = (frame.left + frame.width > width) ? 
                      width - frame.left : frame.width;
     
