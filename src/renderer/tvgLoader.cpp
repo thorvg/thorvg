@@ -50,6 +50,10 @@
     #include "tvgLottieLoader.h"
 #endif
 
+#ifdef THORVG_GIF_LOADER_SUPPORT
+    #include "tvgGifLoader.h"
+#endif
+
 #include "tvgRawLoader.h"
 
 
@@ -108,6 +112,12 @@ static LoadModule* _find(FileType type)
 #endif
             break;
         }
+        case FileType::Gif: {
+#ifdef THORVG_GIF_LOADER_SUPPORT
+            return new GifLoader;
+#endif
+            break;
+        }
         case FileType::Raw: {
             return new RawLoader;
             break;
@@ -148,6 +158,10 @@ static LoadModule* _find(FileType type)
             format = "WEBP";
             break;
         }
+        case FileType::Gif: {
+            format = "GIF";
+            break;
+        }
         default: {
             format = "???";
             break;
@@ -170,6 +184,7 @@ static LoadModule* _findByPath(const char* filename)
     if (!strcmp(ext, "png")) return _find(FileType::Png);
     if (!strcmp(ext, "jpg")) return _find(FileType::Jpg);
     if (!strcmp(ext, "webp")) return _find(FileType::Webp);
+    if (!strcmp(ext, "gif")) return _find(FileType::Gif);
     if (!strcmp(ext, "ttf") || !strcmp(ext, "ttc")) return _find(FileType::Ttf);
     if (!strcmp(ext, "otf") || !strcmp(ext, "otc")) return _find(FileType::Ttf);
     return nullptr;
@@ -190,6 +205,7 @@ static FileType _convert(const char* mimeType)
     else if (!strcmp(mimeType, "png")) type = FileType::Png;
     else if (!strcmp(mimeType, "jpg") || !strcmp(mimeType, "jpeg")) type = FileType::Jpg;
     else if (!strcmp(mimeType, "webp")) type = FileType::Webp;
+    else if (!strcmp(mimeType, "gif")) type = FileType::Gif;
     else TVGLOG("RENDERER", "Given mimetype is unknown = \"%s\".", mimeType);
 
     return type;

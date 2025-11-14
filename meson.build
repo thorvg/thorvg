@@ -54,6 +54,7 @@ all_loaders = get_option('loaders').contains('all')
 svg_loader = all_loaders or get_option('loaders').contains('svg') or svg2png
 png_loader = all_loaders or get_option('loaders').contains('png')
 jpg_loader = all_loaders or get_option('loaders').contains('jpg')
+gif_loader = all_loaders or get_option('loaders').contains('gif')
 lottie_loader = all_loaders or get_option('loaders').contains('lottie') or lottie2gif
 ttf_loader = all_loaders or get_option('loaders').contains('ttf')
 webp_loader = all_loaders or get_option('loaders').contains('webp')
@@ -76,6 +77,10 @@ endif
 
 if jpg_loader
     config_h.set10('THORVG_JPG_LOADER_SUPPORT', true)
+endif
+
+if gif_loader
+    config_h.set10('THORVG_GIF_LOADER_SUPPORT', true)
 endif
 
 if lottie_loader
@@ -204,6 +209,7 @@ summary(
     'PNG': png_loader,
     'JPG': jpg_loader,
     'WEBP': webp_loader,
+    'GIF': gif_loader,
   },
   section: 'Loader',
   bool_yn: true,
