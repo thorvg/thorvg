@@ -623,14 +623,6 @@ static jerry_value_t _rad2deg(const jerry_call_info_t* info, const jerry_value_t
 }
 
 
-static jerry_value_t _fromCompToSurface(const jerry_call_info_t* info, const jerry_value_t args[], const jerry_length_t argsCnt)
-{
-    TVGLOG("LOTTIE", "fromCompToSurface is not supported in expressions!");
-
-    return jerry_undefined();
-}
-
-
 static jerry_value_t _content(const jerry_call_info_t* info, const jerry_value_t args[], const jerry_length_t argsCnt)
 {
     auto data = static_cast<ExpContent*>(jerry_object_get_native_ptr(info->function, &freeCb));
@@ -1030,6 +1022,10 @@ static void _buildProperty(float frameNo, jerry_value_t context, LottieExpressio
     jerry_object_set_native_ptr(speedAtTime, nullptr, exp);
     jerry_value_free(speedAtTime);
 
+    auto propertyIndex = jerry_number(exp->property->ix);
+    jerry_object_set_sz(context, "propertyIndex", propertyIndex);
+    jerry_value_free(propertyIndex);
+
     {
         auto data =  _expcontent(exp, frameNo, exp->object, 7);
 
@@ -1047,8 +1043,6 @@ static void _buildProperty(float frameNo, jerry_value_t context, LottieExpressio
         jerry_object_set_native_ptr(propertyGroup, &freeCb, data);
         jerry_object_set_sz(context, "propertyGroup", propertyGroup);
         jerry_value_free(propertyGroup);
-
-        //propertyIndex
 
         auto loopIn = jerry_function_external(_loopIn);
         jerry_object_set_sz(context, "loopIn", loopIn);
@@ -1316,9 +1310,7 @@ jerry_value_t LottieExpressions::buildGlobal()
     thisProperty = jerry_object();
     jerry_object_set_sz(global, "thisProperty", thisProperty);
 
-    auto fromCompToSurface = jerry_function_external(_fromCompToSurface);
-    jerry_object_set_sz(global, "fromCompToSurface", fromCompToSurface);
-    jerry_value_free(fromCompToSurface);
+    //fromCompToSurface
 
     auto createPath = jerry_function_external(_createPath);
     jerry_object_set_sz(global, "createPath", createPath);
