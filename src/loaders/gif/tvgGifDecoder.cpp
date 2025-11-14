@@ -521,7 +521,7 @@ bool GifDecoder::load(const uint8_t* data, uint32_t size)
                     return false;
                 }
                 
-                uint32_t* pixels32 = static_cast<uint32_t*>(frame.pixels);
+                auto pixels32 = reinterpret_cast<uint32_t*>(frame.pixels);
                 uint8_t transIdx = frame.transparentIndex;
                 bool hasTrans = frame.transparent;
                 
