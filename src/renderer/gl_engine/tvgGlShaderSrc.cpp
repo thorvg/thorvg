@@ -209,6 +209,7 @@ const char* STR_RADIAL_GRADIENT_VARIABLES = TVG_COMPOSE_SHADER(
     } uGradientInfo ;                                                                                       \n
 );
 
+// TODO: Precompute radial_matrix, f, r1n, inv_r1, d_radius_sign, is_focal_on_circle, is_well_behaved, is_swapped in CPU as a uniform
 //See: GlRenderer::initShaders()
 const char* STR_RADIAL_GRADIENT_MAIN = TVG_COMPOSE_SHADER(
     out vec4 FragColor;                                                                                     \n
@@ -222,7 +223,7 @@ const char* STR_RADIAL_GRADIENT_MAIN = TVG_COMPOSE_SHADER(
                                                                                                             \n
     vec2 compute_radial_t(vec2 c0, float r0, vec2 c1, float r1, vec2 pos)                                   \n
     {                                                                                                       \n
-        const float scalar_nearly_zero = 1.0 / float(1 << 12);                                              \n
+        const float scalar_nearly_zero = 2.44140625e-4;                                                     \n
         float d_center = distance(c0, c1);                                                                  \n
         float d_radius = r1 - r0;                                                                           \n
         bool radial = d_center < scalar_nearly_zero;                                                        \n
@@ -251,51 +252,42 @@ const char* STR_RADIAL_GRADIENT_MAIN = TVG_COMPOSE_SHADER(
         } else {                                                                                            \n
             float f = r0 / (r0 - r1);                                                                       \n
             bool is_swapped = abs(f - 1.0) < scalar_nearly_zero;                                            \n
-            if (is_swapped) {                                                                               \n
-                vec2 c = c0;                                                                                \n
-                c0 = c1;                                                                                    \n
-                c1 = c;                                                                                     \n
-                f = 0.0;                                                                                    \n
-            }                                                                                               \n
-            vec2 cf = c0 * (1.0 - f) + c1 * f;                                                              \n
-            mat3 transform = radial_matrix(cf, c1);                                                         \n
+            vec2 c0p = is_swapped ? c1 : c0;                                                                \n
+            vec2 c1p = is_swapped ? c0 : c1;                                                                \n
+            float fp = is_swapped ? 0.0 : f;                                                                \n
+            vec2 cf = c0p * (1.0 - fp) + c1p * fp;                                                          \n
+            mat3 transform = radial_matrix(cf, c1p);                                                        \n
                                                                                                             \n
-            float scale_x = abs(1.0 - f);                                                                   \n
+            float scale_x = abs(1.0 - fp);                                                                  \n
             float scale_y = scale_x;                                                                        \n
-            float r1 = abs(r1 - r0) / d_center;                                                             \n
-            bool is_focal_on_circle = abs(r1 - 1.0) < scalar_nearly_zero;                                   \n
+            float r1n = abs(r1 - r0) / d_center;                                                            \n
+            bool is_focal_on_circle = abs(r1n - 1.0) < scalar_nearly_zero;                                  \n
             if (is_focal_on_circle) {                                                                       \n
                 scale_x *= 0.5;                                                                             \n
                 scale_y *= 0.5;                                                                             \n
             } else {                                                                                        \n
-                scale_x *= r1 / (r1 * r1 - 1.0);                                                            \n
-                scale_y /= sqrt(abs(r1 * r1 - 1.0));                                                        \n
+                float denom = r1n * r1n - 1.0;                                                              \n
+                scale_x *= r1n / denom;                                                                     \n
+                scale_y /= sqrt(abs(denom));                                                                \n
             }                                                                                               \n
             transform = mat3(scale_x, 0.0, 0.0, 0.0, scale_y, 0.0, 0.0, 0.0, 1.0) * transform;              \n
                                                                                                             \n
             vec2 pt = (transform * vec3(pos.xy, 1.0)).xy;                                                   \n
                                                                                                             \n
-            float inv_r1 = 1.0 / r1;                                                                        \n
-            float d_radius_sign = sign(1.0 - f);                                                            \n
-            bool is_well_behaved = !is_focal_on_circle && r1 > 1.0;                                         \n
+            float inv_r1 = 1.0 / r1n;                                                                       \n
+            float d_radius_sign = sign(1.0 - fp);                                                           \n
                                                                                                             \n
             float x_t = -1.0;                                                                               \n
             if (is_focal_on_circle) x_t = dot(pt, pt) / pt.x;                                               \n
-            else if (is_well_behaved) x_t = length(pt) - pt.x * inv_r1;                                     \n
+            else if (r1n > 1.0) x_t = length(pt) - pt.x * inv_r1;                                           \n
             else {                                                                                          \n
-                float temp = pt.x * pt.x - pt.y * pt.y;                                                     \n
-                if (temp >= 0.0) {                                                                          \n
-                    if (is_swapped || d_radius_sign < 0.0) {                                                \n
-                        x_t = -sqrt(temp) - pt.x * inv_r1;                                                  \n
-                    } else {                                                                                \n
-                        x_t = sqrt(temp) - pt.x * inv_r1;                                                   \n
-                    }                                                                                       \n
-                }                                                                                           \n
+                float discriminant = pt.x * pt.x - pt.y * pt.y;                                             \n
+                float root = sqrt(max(discriminant, 0.0));                                                  \n
+                float s = (is_swapped == (d_radius_sign > 0.0)) ? 1.0 : -1.0;                               \n
+                x_t = s * root - pt.x * inv_r1;                                                             \n
+                if (discriminant < 0.0 || x_t < 0.0) return vec2(is_swapped ? 0.0 : 1.0, 1.0);              \n
             }                                                                                               \n
-                                                                                                            \n
-            if (!is_well_behaved && x_t < 0.0) return vec2(0.0, -1.0);                                      \n
-                                                                                                            \n
-            float t = f + d_radius_sign * x_t;                                                              \n
+            float t = fp + d_radius_sign * x_t;                                                             \n
             if (is_swapped) t = 1.0 - t;                                                                    \n
             return vec2(t, 1.0);                                                                            \n
         }                                                                                                   \n
@@ -303,18 +295,17 @@ const char* STR_RADIAL_GRADIENT_MAIN = TVG_COMPOSE_SHADER(
                                                                                                             \n
     void main()                                                                                             \n
     {                                                                                                       \n
-        vec2 pos = vPos;                                                                                    \n
         vec2 res = compute_radial_t(uGradientInfo.centerPos.xy,                                             \n
                                     uGradientInfo.radius.x,                                                 \n
                                     uGradientInfo.centerPos.zw,                                             \n
                                     uGradientInfo.radius.y,                                                 \n
-                                    pos);                                                                   \n
+                                    vPos);                                                                  \n
         if (res.y < 0.0) {                                                                                  \n
             FragColor = vec4(0.0, 0.0, 0.0, 0.0);                                                           \n
             return;                                                                                         \n
         }                                                                                                   \n
         float t = gradientWrap(res.x);                                                                      \n
-        vec4 color = gradient(t, res.x, length(pos - uGradientInfo.centerPos.xy));                          \n
+        vec4 color = gradient(t, res.x, length(vPos - uGradientInfo.centerPos.xy));                         \n
         FragColor =  vec4(color.rgb * color.a, color.a);                                                    \n
     }
 );

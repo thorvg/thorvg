@@ -102,7 +102,7 @@ void GlRenderer::initShaders()
 
 #if 1  //for optimization
     #define LINEAR_TOTAL_LENGTH 2770
-    #define RADIAL_TOTAL_LENGTH 5272
+    #define RADIAL_TOTAL_LENGTH 5256
     #define BLEND_TOTAL_LENGTH 8192
 #else
     #define COMMON_TOTAL_LENGTH strlen(STR_GRADIENT_FRAG_COMMON_VARIABLES) + strlen(STR_GRADIENT_FRAG_COMMON_FUNCTIONS) + 1
