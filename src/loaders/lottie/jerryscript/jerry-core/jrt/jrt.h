@@ -23,8 +23,13 @@
 #include "jerryscript-port.h"
 #include "jrt-types.h"
 
-
-#define JERRY_NDEBUG
+#ifndef _MSC_VER
+  #define JERRY_NDEBUG
+#else
+  #ifdef NDEBUG
+    #define JERRY_NDEBUG
+  #endif
+#endif
 
 /*
  * Constants
@@ -93,6 +98,10 @@ void JERRY_ATTR_NORETURN jerry_unreachable (const char *file, const char *functi
 #define JERRY_ASSERT(x) \
   do                    \
   {                     \
+    if (false)          \
+    {                   \
+      JERRY_UNUSED (x); \
+    }                   \
   } while (0)
 
 #if defined(__GNUC__) || defined(__clang__)

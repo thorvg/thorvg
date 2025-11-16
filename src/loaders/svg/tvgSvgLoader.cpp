@@ -3760,7 +3760,11 @@ static bool _svgLoaderParserForValidCheckXmlOpen(SvgLoaderData* loader, const ch
 
     if (attrs) {
         sz = attrs - content;
+#ifdef _MSC_VER
+        while ((sz > 0) && (isspace((unsigned char)content[sz - 1]))) sz--;
+#else
         while ((sz > 0) && (isspace(content[sz - 1]))) sz--;
+#endif
         if ((unsigned)sz >= sizeof(tagName)) return false;
         strncpy(tagName, content, sz);
         tagName[sz] = '\0';
