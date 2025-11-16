@@ -1,0 +1,65 @@
+/*
+ * Copyright (c) 2025 the ThorVG project. All rights reserved.
+ *
+ * Permission is hereby granted, free of charge, to any person obtaining a copy
+ * of this software and associated documentation files (the "Software"), to deal
+ * in the Software without restriction, including without limitation the rights
+ * to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+ * copies of the Software, and to permit persons to whom the Software is
+ * furnished to do so, subject to the following conditions:
+ *
+ * The above copyright notice and this permission notice shall be included in all
+ * copies or substantial portions of the Software.
+ *
+ * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+ * IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+ * FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+ * AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+ * LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+ * OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
+ * SOFTWARE.
+ */
+
+#ifndef _TVG_GIF_LOADER_H_
+#define _TVG_GIF_LOADER_H_
+
+#include <gif_lib.h>
+#include "tvgFrameModule.h"
+
+class GifLoader : public FrameModule
+{
+public:
+    GifLoader();
+    ~GifLoader();
+
+    bool open(const char* path) override;
+    bool open(const char* data, uint32_t size, const char* rpath, bool copy) override;
+    bool read() override;
+    
+    RenderSurface* bitmap() override;
+    
+    // Frame controls
+    bool frame(float no) override;
+    float totalFrame() override;
+    float curFrame() override;
+    float duration() override;
+    Result segment(float begin, float end) override;
+
+private:
+    void clear();
+    bool decodeFrames();
+    void compositeFrame(uint32_t frameIndex);
+    void calculateFrameRate();
+
+    GifFileType* gifFile = nullptr;
+    uint8_t* fileData = nullptr;
+    uint32_t fileSize = 0;
+    bool freeData = false;
+    
+    uint8_t* canvas = nullptr;  // Composited frame buffer
+    uint32_t currentFrameIndex = 0;
+    uint32_t lastCompositedFrame = 0xFFFFFFFF;
+    float frameRate = 10.0f;
+};
+
+#endif //_TVG_GIF_LOADER_H_
