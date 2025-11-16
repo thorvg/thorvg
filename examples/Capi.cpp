@@ -21,6 +21,9 @@
  */
 
 #include <thorvg_capi.h>
+#ifdef _MSC_VER
+    #define SDL_MAIN_HANDLED
+#endif
 #include <SDL2/SDL.h>
 #include <SDL2/SDL_syswm.h>
 #include <stdio.h>

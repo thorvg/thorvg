@@ -109,6 +109,10 @@ if get_option('bindings').contains('capi')
     endforeach
 endif
 
-execute_all_src = join_paths(meson.project_source_root(), 'examples/all.sh')
-execute_all_dst = join_paths(meson.project_build_root(), 'examples/all.sh')
-run_command('cp', execute_all_src, execute_all_dst, check: true)
+if host_machine.system() == 'windows'
+    configure_file(input: 'all.bat', output: 'all.bat', copy: true)
+else
+    execute_all_src = join_paths(meson.project_source_root(), 'examples/all.sh')
+    execute_all_dst = join_paths(meson.project_build_root(), 'examples/all.sh')
+    run_command('cp', execute_all_src, execute_all_dst, check: true)
+endif

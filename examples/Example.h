@@ -29,6 +29,9 @@
 #include <cstring>
 #include <chrono>
 #include <thorvg.h>
+#if defined _MSC_VER
+    #define SDL_MAIN_HANDLED
+#endif
 #include <SDL2/SDL.h>
 #include <SDL2/SDL_syswm.h>
 #ifdef _WIN32
@@ -49,6 +52,12 @@
         #include <Cocoa/Cocoa.h>
         #include <QuartzCore/CAMetalLayer.h>
     #endif
+#endif
+
+#if defined _MSC_VER
+// Force to use High Performance GPU on laptops with NVIDIA Optimus or AMD Switchable Graphics
+extern "C" __declspec(dllexport) DWORD NvOptimusEnablement = 0x00000001;
+extern "C" __declspec(dllexport) int AmdPowerXpressRequestHighPerformance = 1;
 #endif
 
 
