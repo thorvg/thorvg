@@ -8,6 +8,8 @@ if gl_variant == 'OpenGL ES'
     examples_compiler_flags += '-DTHORVG_GL_TARGET_GLES=1'
 endif
 
+examples_compiler_flags += ['-DSDL_MAIN_HANDLED']
+
 examples_dep = [dependency('sdl2')]
 
 if all_engines or get_option('engines').contains('wg')
@@ -109,6 +111,8 @@ if get_option('bindings').contains('capi')
     endforeach
 endif
 
-execute_all_src = join_paths(meson.project_source_root(), 'examples/all.sh')
-execute_all_dst = join_paths(meson.project_build_root(), 'examples/all.sh')
-run_command('cp', execute_all_src, execute_all_dst, check: true)
+if cc.get_id() == 'msvc'
+    configure_file(input: 'all.bat', output: 'all.bat', copy: true)
+else
+    configure_file(input: 'all.sh', output: 'all.sh', copy: true)
+endif
