@@ -44,12 +44,7 @@ void Stroker::run(const RenderShape& rshape, const RenderPath& path, const Matri
 
     RenderPath dashed;
     if (rshape.strokeDash(dashed)) run(dashed, m);
-    else if (rshape.trimpath()) {
-        RenderPath trimmedPath;
-        if (rshape.stroke->trim.trim(path, trimmedPath)) {
-            run(trimmedPath, m);
-        }
-    } else run(path, m);
+    else run(path, m);
 }
 
 

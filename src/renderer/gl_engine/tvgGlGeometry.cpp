@@ -22,8 +22,8 @@
 
 #include "tvgGlCommon.h"
 #include "tvgGlGpuBuffer.h"
-#include "tvgGlTessellator.h"
 #include "tvgGlRenderTask.h"
+#include "tvgGlTessellator.h"
 
 // Optimize path in screen space with merging collinear lines, collapsing zero length lines, and removing unnecessary cubic beziers.
 static void _optimize(const RenderPath& in, RenderPath& out, const Matrix& matrix)
@@ -293,6 +293,13 @@ void GlGeometry::optimizePath(const RenderPath& path, const Matrix& transform)
 void GlGeometry::prepare(const RenderShape& rshape)
 {
     optimizePath(rshape.path, matrix);
+    if (rshape.trimpath()) {
+        RenderPath trimmedPath;
+        if (rshape.stroke->trim.trim(optimizedPath, trimmedPath)) {
+            trimmedPath.pts.move(optimizedPath.pts);
+            trimmedPath.cmds.move(optimizedPath.cmds);
+        }
+    }
 }
 
 
@@ -319,16 +326,7 @@ bool GlGeometry::tesselateShape(const RenderShape& rshape, float* opacityMultipl
 
     // Handle normal shapes with more than 2 points
     BWTessellator bwTess{&fill};
-
-    if (rshape.trimpath()) {
-        RenderPath trimmedPath;
-        if (rshape.stroke->trim.trim(path2Use, trimmedPath)) {
-            bwTess.tessellate(trimmedPath, matrix);
-        }
-    } else {
-        bwTess.tessellate(path2Use, matrix);
-    }
-
+    bwTess.tessellate(path2Use, matrix);
     fillRule = rshape.rule;
     bounds = bwTess.bounds();
     if (opacityMultiplier) *opacityMultiplier = 1.0f;
