@@ -168,13 +168,14 @@
             // For SW backend, copy buffer to canvas
             const backend = document.getElementById('backend').value;
             if (backend === 'sw') {
-                const buffer = engine.getBuffer();
+                const buffer = engine.render();
+                const size = engine.size();
                 const canvas = document.getElementById('canvas');
                 const ctx = canvas.getContext('2d');
                 const imageData = new ImageData(
                     new Uint8ClampedArray(buffer),
-                    engine.getWidth(),
-                    engine.getHeight()
+                    size.width,
+                    size.height
                 );
                 ctx.putImageData(imageData, 0, 0);
                 log('Buffer copied to canvas!');

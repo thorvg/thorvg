@@ -39,12 +39,12 @@ using std::string;
 #ifdef THORVG_WG_RASTER_SUPPORT
 #include <webgpu/webgpu.h>
 
-static WGPUInstance wgpu_instance{};
-static WGPUAdapter wgpu_adapter{};
-static WGPUDevice wgpu_device{};
-static bool adapter_requested = false;
-static bool device_requested = false;
-static bool initialization_failed = false;
+static WGPUInstance instance{};
+static WGPUAdapter adapter{};
+static WGPUDevice device{};
+static bool adapterRequested = false;
+static bool deviceRequested = false;
+static bool initializationFailed = false;
 #endif
 
 #ifdef THORVG_GL_RASTER_SUPPORT
@@ -59,22 +59,22 @@ static bool initialization_failed = false;
 // Returns: 0 = ready, 1 = failed, 2 = pending
 static int init() {
 #ifdef THORVG_WG_RASTER_SUPPORT
-    if (initialization_failed) return 1;
+    if (initializationFailed) return 1;
 
     // Init WebGPU instance
-    if (!wgpu_instance) {
-        wgpu_instance = wgpuCreateInstance(nullptr);
+    if (!instance) {
+        instance = wgpuCreateInstance(nullptr);
     }
 
     // Request adapter
-    if (!wgpu_adapter) {
-        if (adapter_requested) return 2;
+    if (!adapter) {
+        if (adapterRequested) return 2;
 
         auto onAdapterRequestEnded = [](WGPURequestAdapterStatus status, WGPUAdapter adapter,
                                        WGPUStringView message, WGPU_NULLABLE void* userdata1,
                                        WGPU_NULLABLE void* userdata2) {
             if (status != WGPURequestAdapterStatus_Success) {
-                initialization_failed = true;
+                initializationFailed = true;
                 return;
             }
             *((WGPUAdapter*)userdata1) = adapter;
@@ -86,24 +86,24 @@ static int init() {
         const WGPURequestAdapterCallbackInfo requestAdapterCallback{
             .mode = WGPUCallbackMode_AllowSpontaneous,
             .callback = onAdapterRequestEnded,
-            .userdata1 = &wgpu_adapter
+            .userdata1 = &adapter
         };
-        wgpuInstanceRequestAdapter(wgpu_instance, &requestAdapterOptions, requestAdapterCallback);
+        wgpuInstanceRequestAdapter(instance, &requestAdapterOptions, requestAdapterCallback);
 
-        adapter_requested = true;
+        adapterRequested = true;
         return 2;
     }
 
     // Request device
-    if (device_requested) return wgpu_device == nullptr ? 2 : 0;
+    if (deviceRequested) return device == nullptr ? 2 : 0;
 
-    if (!wgpu_device) {
+    if (!device) {
         auto onDeviceError = [](WGPUDevice const * device, WGPUErrorType type,
                                WGPUStringView message, void* userdata1, void* userdata2) {};
         auto onDeviceRequestEnded = [](WGPURequestDeviceStatus status, WGPUDevice device,
                                       WGPUStringView message, void* userdata1, void* userdata2) {
             if (status != WGPURequestDeviceStatus_Success) {
-                initialization_failed = true;
+                initializationFailed = true;
                 return;
             }
             *((WGPUDevice*)userdata1) = device;
@@ -116,11 +116,11 @@ static int init() {
         const WGPURequestDeviceCallbackInfo requestDeviceCallback {
             .mode = WGPUCallbackMode_AllowSpontaneous,
             .callback = onDeviceRequestEnded,
-            .userdata1 = &wgpu_device
+            .userdata1 = &device
         };
-        wgpuAdapterRequestDevice(wgpu_adapter, &deviceDesc, requestDeviceCallback);
+        wgpuAdapterRequestDevice(adapter, &deviceDesc, requestDeviceCallback);
 
-        device_requested = true;
+        deviceRequested = true;
         return 2;
     }
     return 0;
@@ -132,15 +132,15 @@ static int init() {
 // Term function for cleanup
 static void term() {
 #ifdef THORVG_WG_RASTER_SUPPORT
-    if (wgpu_device) wgpuDeviceRelease(wgpu_device);
-    if (wgpu_adapter) wgpuAdapterRelease(wgpu_adapter);
-    if (wgpu_instance) wgpuInstanceRelease(wgpu_instance);
-    wgpu_device = nullptr;
-    wgpu_adapter = nullptr;
-    wgpu_instance = nullptr;
-    adapter_requested = false;
-    device_requested = false;
-    initialization_failed = false;
+    if (device) wgpuDeviceRelease(device);
+    if (adapter) wgpuAdapterRelease(adapter);
+    if (instance) wgpuInstanceRelease(instance);
+    device = nullptr;
+    adapter = nullptr;
+    instance = nullptr;
+    adapterRequested = false;
+    deviceRequested = false;
+    initializationFailed = false;
 #endif
 }
 
@@ -247,7 +247,7 @@ public:
 
             WGPUSurfaceDescriptor surfaceDesc{};
             surfaceDesc.nextInChain = &canvasDesc.chain;
-            surface = wgpuInstanceCreateSurface(wgpu_instance, &surfaceDesc);
+            surface = wgpuInstanceCreateSurface(instance, &surfaceDesc);
 
             if (!surface) return 0;
 
@@ -255,7 +255,7 @@ public:
             if (!canvas) return 0;
 
             static_cast<WgCanvas*>(canvas)->target(
-                wgpu_device, wgpu_instance, surface, w, h, ColorSpace::ABGR8888S
+                device, instance, surface, w, h, ColorSpace::ABGR8888S
             );
         }
 #endif
@@ -294,7 +294,7 @@ public:
 #ifdef THORVG_WG_RASTER_SUPPORT
         else if (engine_type == "wg") {
             static_cast<WgCanvas*>(canvas)->target(
-                wgpu_device, wgpu_instance, surface, w, h, ColorSpace::ABGR8888S
+                device, instance, surface, w, h, ColorSpace::ABGR8888S
             );
         }
 #endif
@@ -302,12 +302,20 @@ public:
         return true;
     }
 
-    // Get buffer for SW engine
-    val getBuffer() {
+    // Render and get buffer (for SW backend)
+    val render() {
         if (buffer && engine_type == "sw") {
             return val(typed_memory_view(width * height * 4, buffer));
         }
         return val::undefined();
+    }
+
+    // Get canvas size as [width, height]
+    val size() {
+        val result = val::object();
+        result.set("width", width);
+        result.set("height", height);
+        return result;
     }
 
     // Get canvas pointer
@@ -315,8 +323,6 @@ public:
         return reinterpret_cast<uintptr_t>(canvas);
     }
 
-    uint32_t getWidth() { return width; }
-    uint32_t getHeight() { return height; }
     string getEngineType() { return engine_type; }
 };
 
@@ -334,10 +340,9 @@ EMSCRIPTEN_BINDINGS(thorvg_canvaskit) {
         .constructor<>()
         .function("createCanvas", &ThorVGEngine::createCanvas)
         .function("resize", &ThorVGEngine::resize)
-        .function("getBuffer", &ThorVGEngine::getBuffer)
+        .function("render", &ThorVGEngine::render)
+        .function("size", &ThorVGEngine::size)
         .function("getCanvas", &ThorVGEngine::getCanvas)
-        .function("getWidth", &ThorVGEngine::getWidth)
-        .function("getHeight", &ThorVGEngine::getHeight)
         .function("getEngineType", &ThorVGEngine::getEngineType);
 }
 
