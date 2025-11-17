@@ -1,0 +1,447 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="UTF-8">
+    <title>ThorVG Canvas Kit - Animation Example</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            margin: 20px;
+            background: #f0f0f0;
+        }
+        #canvas {
+            border: 1px solid #333;
+            background: white;
+            margin: 20px 0;
+        }
+        .controls {
+            margin: 10px 0;
+        }
+        button {
+            padding: 10px 20px;
+            margin: 5px;
+            cursor: pointer;
+        }
+        .info {
+            background: #fff;
+            padding: 15px;
+            border-radius: 5px;
+            margin: 10px 0;
+        }
+        input[type="file"] {
+            margin: 5px 0;
+        }
+        .playback-controls {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            margin: 10px 0;
+        }
+        #timeline {
+            flex: 1;
+            min-width: 300px;
+        }
+        .frame-info {
+            display: inline-block;
+            min-width: 150px;
+            font-family: monospace;
+        }
+    </style>
+</head>
+<body>
+    <h1>ThorVG Canvas Kit - Animation Example</h1>
+
+    <div class="info">
+        <h3>Animation API Features:</h3>
+        <ul>
+            <li>Load and play Lottie animations</li>
+            <li>Frame-by-frame control</li>
+            <li>Timeline scrubbing with slider</li>
+            <li>Playback speed control</li>
+            <li>Segment/marker support</li>
+        </ul>
+    </div>
+
+    <div class="controls">
+        <label>Backend:
+            <select id="backend">
+                <option value="sw">Software</option>
+                <option value="gl">WebGL</option>
+                <option value="wg">WebGPU</option>
+            </select>
+        </label>
+        <button onclick="init()">Initialize</button>
+        <br>
+        <label>Load Lottie File:
+            <input type="file" id="fileInput" accept=".json,.lottie" onchange="loadLottieFile(event)">
+        </label>
+    </div>
+
+    <canvas id="canvas" width="800" height="600"></canvas>
+
+    <div class="playback-controls">
+        <button onclick="playPause()">▶ Play</button>
+        <button onclick="stop()">⏹ Stop</button>
+        <button onclick="prevFrame()">⏮ Prev</button>
+        <button onclick="nextFrame()">⏭ Next</button>
+        <input type="range" id="timeline" min="0" max="100" value="0" oninput="seekFrame(this.value)">
+        <span class="frame-info" id="frameInfo">0 / 0</span>
+    </div>
+
+    <div class="info">
+        <h3>Status:</h3>
+        <pre id="log"></pre>
+    </div>
+
+    <script type="module">
+        import ThorVGModule from '../build_wasm_canvaskit/src/bindings/wasm/thorvg-canvaskit.js';
+
+        let TVG;
+        let engine;
+        let canvasPtr = 0;
+        let animation = 0;
+        let picture = 0;
+        let currentFrame = 0;
+        let totalFrames = 0;
+        let duration = 0;
+        let isPlaying = false;
+        let animationFrameId = null;
+        let lastTime = 0;
+
+        function log(msg) {
+            const logEl = document.getElementById('log');
+            logEl.textContent += msg + '\n';
+            console.log(msg);
+        }
+
+        async function loadModule() {
+            log('Loading ThorVG Canvas Kit module...');
+            TVG = await ThorVGModule();
+            log('Module loaded successfully!');
+        }
+
+        async function initModule(renderer) {
+            log('Initializing Canvas Kit...');
+
+            if (renderer !== 'wg') {
+                return;
+            }
+
+            let status;
+            let attempts = 0;
+            do {
+                status = TVG.init();
+                if (status === 2) {
+                    log(`  Waiting for initialization... (attempt ${++attempts})`);
+                    await new Promise(r => setTimeout(r, 100));
+                }
+            } while (status === 2 && attempts < 50);
+
+            if (status !== 0) {
+                log('ERROR: Canvas Kit initialization failed!');
+                return;
+            }
+            log('Canvas Kit initialized successfully!');
+        }
+
+        function applyRendererFromQuery() {
+            const params = new URLSearchParams(window.location.search);
+            const renderer = params.get('renderer');
+            if (!renderer) return;
+
+            const backendSelect = document.getElementById('backend');
+            if (['sw', 'gl', 'wg'].includes(renderer)) {
+                backendSelect.value = renderer;
+            }
+        }
+
+        function setupRendererChangeHandler() {
+            const backendSelect = document.getElementById('backend');
+            backendSelect.addEventListener('change', () => {
+                const renderer = backendSelect.value;
+                const url = new URL(window.location.href);
+                url.searchParams.set('renderer', renderer);
+                window.location.href = url.toString();
+            });
+        }
+
+        window.init = async function() {
+            if (!TVG) {
+                await loadModule();
+            }
+
+            const backend = document.getElementById('backend').value;
+            log(`Initializing with ${backend} backend...`);
+
+            await initModule(backend);
+
+            engine = new TVG.ThorVGEngine();
+            const selector = '#canvas';
+            canvasPtr = engine.createCanvas(backend, selector, 800, 600);
+
+            if (canvasPtr === 0) {
+                log('ERROR: Failed to create canvas!');
+                return;
+            }
+
+            log(`Canvas created successfully! (ptr: ${canvasPtr})`);
+            log('Ready to load animation!');
+        };
+
+        window.loadLottieFile = async function(event) {
+            if (canvasPtr === 0) {
+                log('ERROR: Canvas not initialized. Click Initialize first!');
+                return;
+            }
+
+            const file = event.target.files[0];
+            if (!file) return;
+
+            log(`Loading Lottie file: ${file.name}...`);
+
+            // Clear previous animation
+            if (animation) {
+                stop();
+                engine.clear();
+                TVG._tvg_animation_del(animation);
+                animation = 0;
+                picture = 0;
+            }
+
+            const arrayBuffer = await file.arrayBuffer();
+            const uint8Array = new Uint8Array(arrayBuffer);
+
+            // Create animation
+            animation = TVG._tvg_animation_new();
+            if (!animation) {
+                log('ERROR: Failed to create animation!');
+                return;
+            }
+
+            // Get picture from animation (Animation owns this)
+            picture = TVG._tvg_animation_get_picture(animation);
+            if (!picture) {
+                log('ERROR: Failed to get picture from animation!');
+                TVG._tvg_animation_del(animation);
+                animation = 0;
+                return;
+            }
+
+            // Load Lottie data into picture
+            const dataPtr = TVG._malloc(uint8Array.length);
+            TVG.HEAPU8.set(uint8Array, dataPtr);
+
+            const result = TVG._tvg_picture_load_data(picture, dataPtr, uint8Array.length, 'lottie', '', 0);
+            TVG._free(dataPtr);
+
+            if (result !== 0) {
+                log(`ERROR: Failed to load Lottie data (error code: ${result})`);
+                TVG._tvg_animation_del(animation);
+                animation = 0;
+                picture = 0;
+                return;
+            }
+
+            // Get animation info
+            const totalFramePtr = TVG._malloc(4);
+            const durationPtr = TVG._malloc(4);
+
+            TVG._tvg_animation_get_total_frame(animation, totalFramePtr);
+            TVG._tvg_animation_get_duration(animation, durationPtr);
+
+            totalFrames = new Float32Array(TVG.HEAPF32.buffer, totalFramePtr, 1)[0];
+            duration = new Float32Array(TVG.HEAPF32.buffer, durationPtr, 1)[0];
+
+            TVG._free(totalFramePtr);
+            TVG._free(durationPtr);
+
+            log(`Animation loaded: ${totalFrames.toFixed(0)} frames, ${duration.toFixed(2)}s duration`);
+
+            // Fit animation to canvas
+            const sizePtr = TVG._malloc(8);
+            TVG._tvg_picture_get_size(picture, sizePtr, sizePtr + 4);
+            const sizeView = new Float32Array(TVG.HEAPF32.buffer, sizePtr, 2);
+            const origWidth = sizeView[0];
+            const origHeight = sizeView[1];
+            TVG._free(sizePtr);
+
+            const maxWidth = 700;
+            const maxHeight = 550;
+            const scale = Math.min(maxWidth / origWidth, maxHeight / origHeight);
+            const newWidth = origWidth * scale;
+            const newHeight = origHeight * scale;
+
+            TVG._tvg_picture_set_size(picture, newWidth, newHeight);
+            TVG._tvg_paint_translate(picture, (800 - newWidth) / 2, (600 - newHeight) / 2);
+
+            // Add picture to canvas
+            TVG._tvg_canvas_push(canvasPtr, picture);
+
+            // Set initial frame
+            currentFrame = 0;
+            TVG._tvg_animation_set_frame(animation, currentFrame);
+
+            // Update timeline
+            document.getElementById('timeline').max = totalFrames - 1;
+            document.getElementById('timeline').value = 0;
+            updateFrameInfo();
+
+            // Render first frame
+            renderFrame();
+
+            log('Animation ready to play!');
+        };
+
+        function renderFrame() {
+            TVG._tvg_canvas_update(canvasPtr);
+            TVG._tvg_canvas_draw(canvasPtr, 1);
+            TVG._tvg_canvas_sync(canvasPtr);
+
+            // For SW backend, copy buffer to canvas
+            const backend = document.getElementById('backend').value;
+            if (backend === 'sw') {
+                const buffer = engine.render();
+                const size = engine.size();
+                const canvas = document.getElementById('canvas');
+                const ctx = canvas.getContext('2d');
+                const imageData = new ImageData(
+                    new Uint8ClampedArray(buffer),
+                    size.width,
+                    size.height
+                );
+                ctx.putImageData(imageData, 0, 0);
+            }
+        }
+
+        function updateFrameInfo() {
+            document.getElementById('frameInfo').textContent =
+                `${currentFrame.toFixed(1)} / ${totalFrames.toFixed(0)}`;
+            document.getElementById('timeline').value = currentFrame;
+        }
+
+        function animate(time) {
+            if (!isPlaying || !animation) return;
+
+            if (!lastTime) lastTime = time;
+            const deltaTime = (time - lastTime) / 1000; // Convert to seconds
+            lastTime = time;
+
+            // Calculate FPS from total frames and duration
+            const fps = totalFrames / duration;
+            const frameIncrement = fps * deltaTime;
+
+            currentFrame += frameIncrement;
+
+            // Loop animation
+            if (currentFrame >= totalFrames) {
+                currentFrame = 0;
+            }
+
+            // Update animation frame
+            TVG._tvg_animation_set_frame(animation, currentFrame);
+
+            // Render
+            renderFrame();
+            updateFrameInfo();
+
+            animationFrameId = requestAnimationFrame(animate);
+        }
+
+        window.playPause = function() {
+            if (!animation) {
+                log('ERROR: No animation loaded!');
+                return;
+            }
+
+            isPlaying = !isPlaying;
+
+            const button = event.target;
+            if (isPlaying) {
+                button.textContent = '⏸ Pause';
+                lastTime = 0;
+                animationFrameId = requestAnimationFrame(animate);
+                log('Playing animation...');
+            } else {
+                button.textContent = '▶ Play';
+                if (animationFrameId) {
+                    cancelAnimationFrame(animationFrameId);
+                    animationFrameId = null;
+                }
+                log('Animation paused');
+            }
+        };
+
+        window.stop = function() {
+            if (!animation) return;
+
+            isPlaying = false;
+            if (animationFrameId) {
+                cancelAnimationFrame(animationFrameId);
+                animationFrameId = null;
+            }
+
+            currentFrame = 0;
+            TVG._tvg_animation_set_frame(animation, currentFrame);
+            renderFrame();
+            updateFrameInfo();
+
+            const button = document.querySelector('button');
+            button.textContent = '▶ Play';
+
+            log('Animation stopped');
+        };
+
+        window.prevFrame = function() {
+            if (!animation) return;
+
+            isPlaying = false;
+            if (animationFrameId) {
+                cancelAnimationFrame(animationFrameId);
+                animationFrameId = null;
+            }
+
+            currentFrame = Math.max(0, currentFrame - 1);
+            TVG._tvg_animation_set_frame(animation, currentFrame);
+            renderFrame();
+            updateFrameInfo();
+        };
+
+        window.nextFrame = function() {
+            if (!animation) return;
+
+            isPlaying = false;
+            if (animationFrameId) {
+                cancelAnimationFrame(animationFrameId);
+                animationFrameId = null;
+            }
+
+            currentFrame = Math.min(totalFrames - 1, currentFrame + 1);
+            TVG._tvg_animation_set_frame(animation, currentFrame);
+            renderFrame();
+            updateFrameInfo();
+        };
+
+        window.seekFrame = function(value) {
+            if (!animation) return;
+
+            isPlaying = false;
+            if (animationFrameId) {
+                cancelAnimationFrame(animationFrameId);
+                animationFrameId = null;
+            }
+
+            currentFrame = parseFloat(value);
+            TVG._tvg_animation_set_frame(animation, currentFrame);
+            renderFrame();
+            updateFrameInfo();
+
+            const button = document.querySelector('button');
+            button.textContent = '▶ Play';
+        };
+
+        applyRendererFromQuery();
+        setupRendererChangeHandler();
+        loadModule();
+    </script>
+</body>
+</html>
