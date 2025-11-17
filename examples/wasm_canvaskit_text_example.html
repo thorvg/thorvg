@@ -87,9 +87,10 @@
         </label>
         <button onclick="init()">Initialize</button>
         <br>
-        <label>Load Font File:
+        <label>Load Custom Font (Optional):
             <input type="file" id="fontInput" accept=".ttf,.otf" onchange="loadFont(event)">
         </label>
+        <span style="color: #666; font-size: 0.9em;">Default font is pre-loaded</span>
     </div>
 
     <div class="control-group">
@@ -308,10 +309,6 @@
                 return;
             }
 
-            if (!fontLoaded) {
-                log('WARNING: No font loaded. Using default font.');
-            }
-
             // Clear previous text
             if (currentText) {
                 engine.clear();
@@ -332,14 +329,13 @@
                 return;
             }
 
-            // Set font if loaded
-            if (fontLoaded && fontName) {
-                const fontNamePtr = TVG._malloc(fontName.length + 1);
-                TVG.HEAPU8.set(new TextEncoder().encode(fontName), fontNamePtr);
-                TVG.HEAPU8[fontNamePtr + fontName.length] = 0;
-                TVG._tvg_text_set_font(currentText, fontNamePtr);
-                TVG._free(fontNamePtr);
-            }
+            // Set font (use custom font if loaded, otherwise use default)
+            const useFontName = fontLoaded && fontName ? fontName : "default";
+            const fontNamePtr = TVG._malloc(useFontName.length + 1);
+            TVG.HEAPU8.set(new TextEncoder().encode(useFontName), fontNamePtr);
+            TVG.HEAPU8[fontNamePtr + useFontName.length] = 0;
+            TVG._tvg_text_set_font(currentText, fontNamePtr);
+            TVG._free(fontNamePtr);
 
             // Set font size
             const fontSize = parseFloat(document.getElementById('fontSize').value);

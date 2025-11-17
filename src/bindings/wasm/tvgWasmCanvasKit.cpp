@@ -22,6 +22,7 @@
 
 #include "tvgCommon.h"
 #include "thorvg_capi.h"
+#include "tvgWasmDefaultFont.h"
 #include <emscripten.h>
 #include <emscripten/bind.h>
 #include <string>
@@ -169,6 +170,7 @@ public:
         if (canvas) delete canvas;
         if (buffer) free(buffer);
         Initializer::term();
+        retrieveFont();
 
 #ifdef THORVG_WG_RASTER_SUPPORT
         if (surface) wgpuSurfaceRelease(surface);
@@ -193,6 +195,9 @@ public:
         if (Initializer::init() != Result::Success) {
             return 0;
         }
+
+        // Load default font
+        Text::load("default", requestFont(), DEFAULT_FONT_SIZE, "ttf", false);
 
         if (engine == "sw") {
 #ifdef THORVG_SW_RASTER_SUPPORT
