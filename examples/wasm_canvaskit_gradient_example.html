@@ -1,0 +1,364 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="UTF-8">
+    <title>ThorVG Canvas Kit - Gradient Example</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            margin: 20px;
+            background: #f0f0f0;
+        }
+        #canvas {
+            border: 1px solid #333;
+            background: white;
+            margin: 20px 0;
+        }
+        .controls {
+            margin: 10px 0;
+        }
+        button {
+            padding: 10px 20px;
+            margin: 5px;
+            cursor: pointer;
+        }
+        .info {
+            background: #fff;
+            padding: 15px;
+            border-radius: 5px;
+            margin: 10px 0;
+        }
+    </style>
+</head>
+<body>
+    <h1>ThorVG Canvas Kit - Gradient Example</h1>
+
+    <div class="info">
+        <h3>Gradient API Features:</h3>
+        <ul>
+            <li>Linear gradients with customizable direction</li>
+            <li>Radial gradients with focal point control</li>
+            <li>Multiple color stops with alpha support</li>
+            <li>Gradient spread modes: pad, reflect, repeat</li>
+            <li>Fill and stroke gradients</li>
+        </ul>
+    </div>
+
+    <div class="controls">
+        <label>Backend:
+            <select id="backend">
+                <option value="sw">Software</option>
+                <option value="gl">WebGL</option>
+                <option value="wg">WebGPU</option>
+            </select>
+        </label>
+        <button onclick="init()">Initialize</button>
+        <button onclick="drawGradients()">Draw Gradients</button>
+        <button onclick="clearCanvas()">Clear</button>
+    </div>
+
+    <canvas id="canvas" width="800" height="600"></canvas>
+
+    <div class="info">
+        <h3>Status:</h3>
+        <pre id="log"></pre>
+    </div>
+
+    <script type="module">
+        import ThorVGModule from '../build_wasm_canvaskit/src/bindings/wasm/thorvg-canvaskit.js';
+
+        let TVG;
+        let engine;
+        let canvasPtr = 0;
+
+        function log(msg) {
+            const logEl = document.getElementById('log');
+            logEl.textContent += msg + '\n';
+            console.log(msg);
+        }
+
+        async function loadModule() {
+            log('Loading ThorVG Canvas Kit module...');
+            TVG = await ThorVGModule();
+            log('Module loaded successfully!');
+        }
+
+        async function initModule(renderer) {
+            log('Initializing Canvas Kit...');
+
+            if (renderer !== 'wg') {
+                return;
+            }
+
+            let status;
+            let attempts = 0;
+            do {
+                status = TVG.init();
+                if (status === 2) {
+                    log(`  Waiting for initialization... (attempt ${++attempts})`);
+                    await new Promise(r => setTimeout(r, 100));
+                }
+            } while (status === 2 && attempts < 50);
+
+            if (status !== 0) {
+                log('ERROR: Canvas Kit initialization failed!');
+                return;
+            }
+            log('Canvas Kit initialized successfully!');
+        }
+
+        function applyRendererFromQuery() {
+            const params = new URLSearchParams(window.location.search);
+            const renderer = params.get('renderer');
+            if (!renderer) return;
+
+            const backendSelect = document.getElementById('backend');
+            if (['sw', 'gl', 'wg'].includes(renderer)) {
+                backendSelect.value = renderer;
+            }
+        }
+
+        function setupRendererChangeHandler() {
+            const backendSelect = document.getElementById('backend');
+            backendSelect.addEventListener('change', () => {
+                const renderer = backendSelect.value;
+                const url = new URL(window.location.href);
+                url.searchParams.set('renderer', renderer);
+                window.location.href = url.toString();
+            });
+        }
+
+        // Helper function to create color stops
+        // Tvg_Color_Stop = {float offset, uint8_t r, g, b, a} = 8 bytes per stop
+        function createColorStops(stops) {
+            const ptr = TVG._malloc(stops.length * 8);
+            const dataView = new DataView(TVG.HEAPU8.buffer, ptr, stops.length * 8);
+
+            stops.forEach((stop, i) => {
+                const offset = i * 8;
+                dataView.setFloat32(offset, stop.offset, true);
+                dataView.setUint8(offset + 4, stop.r);
+                dataView.setUint8(offset + 5, stop.g);
+                dataView.setUint8(offset + 6, stop.b);
+                dataView.setUint8(offset + 7, stop.a);
+            });
+
+            return ptr;
+        }
+
+        window.init = async function() {
+            if (!TVG) {
+                await loadModule();
+            }
+
+            const backend = document.getElementById('backend').value;
+            log(`Initializing with ${backend} backend...`);
+
+            await initModule(backend);
+
+            engine = new TVG.ThorVGEngine();
+            const selector = '#canvas';
+            canvasPtr = engine.createCanvas(backend, selector, 800, 600);
+
+            if (canvasPtr === 0) {
+                log('ERROR: Failed to create canvas!');
+                return;
+            }
+
+            log(`Canvas created successfully! (ptr: ${canvasPtr})`);
+            log('Ready to draw!');
+        };
+
+        window.drawGradients = function() {
+            if (canvasPtr === 0) {
+                log('ERROR: Canvas not initialized. Click Initialize first!');
+                return;
+            }
+
+            log('Drawing gradient examples...');
+
+            // 1. Linear gradient - horizontal (Red → Yellow → Green)
+            {
+                const rect = TVG._tvg_shape_new();
+                TVG._tvg_shape_append_rect(rect, 0, 0, 200, 150, 10, 10, 1);
+
+                const grad = TVG._tvg_linear_gradient_new();
+                TVG._tvg_linear_gradient_set(grad, 0, 0, 200, 0);
+
+                const colorStopsPtr = createColorStops([
+                    {offset: 0.0, r: 255, g: 0, b: 0, a: 255},
+                    {offset: 0.5, r: 255, g: 255, b: 0, a: 255},
+                    {offset: 1.0, r: 0, g: 255, b: 0, a: 255}
+                ]);
+                TVG._tvg_gradient_set_color_stops(grad, colorStopsPtr, 3);
+                TVG._free(colorStopsPtr);
+
+                TVG._tvg_shape_set_gradient(rect, grad);
+                // Note: Don't delete gradient after setting - shape takes ownership
+                TVG._tvg_paint_translate(rect, 50, 50);
+                TVG._tvg_canvas_push(canvasPtr, rect);
+                log('1. Linear gradient (horizontal): Red → Yellow → Green');
+            }
+
+            // 2. Linear gradient - vertical (Blue → Cyan → White)
+            {
+                const rect = TVG._tvg_shape_new();
+                TVG._tvg_shape_append_rect(rect, 0, 0, 200, 150, 10, 10, 1);
+
+                const grad = TVG._tvg_linear_gradient_new();
+                TVG._tvg_linear_gradient_set(grad, 0, 0, 0, 150);
+
+                const colorStopsPtr = createColorStops([
+                    {offset: 0.0, r: 0, g: 0, b: 255, a: 255},
+                    {offset: 0.5, r: 0, g: 255, b: 255, a: 255},
+                    {offset: 1.0, r: 255, g: 255, b: 255, a: 255}
+                ]);
+                TVG._tvg_gradient_set_color_stops(grad, colorStopsPtr, 3);
+                TVG._free(colorStopsPtr);
+
+                TVG._tvg_shape_set_gradient(rect, grad);
+                TVG._tvg_paint_translate(rect, 300, 50);
+                TVG._tvg_canvas_push(canvasPtr, rect);
+                log('2. Linear gradient (vertical): Blue → Cyan → White');
+            }
+
+            // 3. Linear gradient - diagonal (Purple → Orange)
+            {
+                const rect = TVG._tvg_shape_new();
+                TVG._tvg_shape_append_rect(rect, 0, 0, 200, 150, 10, 10, 1);
+
+                const grad = TVG._tvg_linear_gradient_new();
+                TVG._tvg_linear_gradient_set(grad, 0, 0, 200, 150);
+
+                const colorStopsPtr = createColorStops([
+                    {offset: 0.0, r: 128, g: 0, b: 128, a: 255},
+                    {offset: 1.0, r: 255, g: 128, b: 0, a: 255}
+                ]);
+                TVG._tvg_gradient_set_color_stops(grad, colorStopsPtr, 2);
+                TVG._free(colorStopsPtr);
+
+                TVG._tvg_shape_set_gradient(rect, grad);
+                TVG._tvg_paint_translate(rect, 550, 50);
+                TVG._tvg_canvas_push(canvasPtr, rect);
+                log('3. Linear gradient (diagonal): Purple → Orange');
+            }
+
+            // 4. Radial gradient - centered (White → Yellow → Red)
+            {
+                const circle = TVG._tvg_shape_new();
+                TVG._tvg_shape_append_circle(circle, 100, 100, 80, 80, 1);
+
+                const grad = TVG._tvg_radial_gradient_new();
+                // radial(cx, cy, radius, fx, fy, fradius)
+                TVG._tvg_radial_gradient_set(grad, 100, 100, 80, 100, 100, 0);
+
+                const colorStopsPtr = createColorStops([
+                    {offset: 0.0, r: 255, g: 255, b: 255, a: 255},
+                    {offset: 0.5, r: 255, g: 255, b: 0, a: 255},
+                    {offset: 1.0, r: 255, g: 0, b: 0, a: 255}
+                ]);
+                TVG._tvg_gradient_set_color_stops(grad, colorStopsPtr, 3);
+                TVG._free(colorStopsPtr);
+
+                TVG._tvg_shape_set_gradient(circle, grad);
+                TVG._tvg_paint_translate(circle, 50, 250);
+                TVG._tvg_canvas_push(canvasPtr, circle);
+                log('4. Radial gradient (centered): White → Yellow → Red');
+            }
+
+            // 5. Radial gradient - offset focal (Light blue → Dark blue)
+            {
+                const circle = TVG._tvg_shape_new();
+                TVG._tvg_shape_append_circle(circle, 100, 100, 80, 80, 1);
+
+                const grad = TVG._tvg_radial_gradient_new();
+                // Offset focal point to create lighting effect
+                TVG._tvg_radial_gradient_set(grad, 100, 100, 80, 120, 80, 0);
+
+                const colorStopsPtr = createColorStops([
+                    {offset: 0.0, r: 128, g: 200, b: 255, a: 255},
+                    {offset: 1.0, r: 0, g: 0, b: 128, a: 255}
+                ]);
+                TVG._tvg_gradient_set_color_stops(grad, colorStopsPtr, 2);
+                TVG._free(colorStopsPtr);
+
+                TVG._tvg_shape_set_gradient(circle, grad);
+                TVG._tvg_paint_translate(circle, 300, 250);
+                TVG._tvg_canvas_push(canvasPtr, circle);
+                log('5. Radial gradient (offset focal): Light blue → Dark blue');
+            }
+
+            // 6. Stroke gradient - rainbow
+            {
+                const circle = TVG._tvg_shape_new();
+                TVG._tvg_shape_append_circle(circle, 100, 100, 80, 80, 1);
+                TVG._tvg_shape_set_fill_color(circle, 255, 255, 255, 255);
+                TVG._tvg_shape_set_stroke_width(circle, 20);
+
+                const grad = TVG._tvg_linear_gradient_new();
+                TVG._tvg_linear_gradient_set(grad, 0, 0, 200, 0);
+
+                const colorStopsPtr = createColorStops([
+                    {offset: 0.0, r: 255, g: 0, b: 0, a: 255},
+                    {offset: 0.33, r: 255, g: 255, b: 0, a: 255},
+                    {offset: 0.66, r: 0, g: 255, b: 0, a: 255},
+                    {offset: 1.0, r: 0, g: 0, b: 255, a: 255}
+                ]);
+                TVG._tvg_gradient_set_color_stops(grad, colorStopsPtr, 4);
+                TVG._free(colorStopsPtr);
+
+                TVG._tvg_shape_set_stroke_gradient(circle, grad);
+                TVG._tvg_paint_translate(circle, 550, 250);
+                TVG._tvg_canvas_push(canvasPtr, circle);
+                log('6. Stroke gradient (rainbow): Red → Yellow → Green → Blue');
+            }
+
+            // Render
+            TVG._tvg_canvas_draw(canvasPtr, 1);
+            TVG._tvg_canvas_sync(canvasPtr);
+
+            log('Gradient rendering complete!');
+
+            // For SW backend, copy buffer to canvas
+            const backend = document.getElementById('backend').value;
+            if (backend === 'sw') {
+                const buffer = engine.render();
+                const size = engine.size();
+                const canvas = document.getElementById('canvas');
+                const ctx = canvas.getContext('2d');
+                const imageData = new ImageData(
+                    new Uint8ClampedArray(buffer),
+                    size.width,
+                    size.height
+                );
+                ctx.putImageData(imageData, 0, 0);
+                log('Buffer copied to canvas!');
+            }
+        };
+
+        window.clearCanvas = function() {
+            if (!engine) {
+                log('ERROR: Engine not initialized!');
+                return;
+            }
+
+            engine.clear();
+            TVG._tvg_canvas_draw(canvasPtr, 1);
+            TVG._tvg_canvas_sync(canvasPtr);
+
+            const backend = document.getElementById('backend').value;
+            if (backend === 'sw') {
+                const canvas = document.getElementById('canvas');
+                const ctx = canvas.getContext('2d');
+                ctx.clearRect(0, 0, canvas.width, canvas.height);
+            }
+
+            log('Canvas cleared!');
+        };
+
+        applyRendererFromQuery();
+        setupRendererChangeHandler();
+        loadModule();
+    </script>
+</body>
+</html>
