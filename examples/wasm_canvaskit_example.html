@@ -36,10 +36,10 @@
     <div class="info">
         <h3>Canvas Kit API Features:</h3>
         <ul>
-            <li>C API functions exported directly via -sEXPORTED_FUNCTIONS (zero overhead)</li>
-            <li>No cwrap needed - use Module._tvg_shape_new(), Module._tvg_canvas_push() directly</li>
-            <li>C++ engine wrapper for WebGL/WebGPU initialization</li>
-            <li>No asyncify needed - handles async WebGPU initialization properly</li>
+            <li>C++ & CAPI Hybrid build: leverage C API for less maintenance, C++ helper handles GL/WG bring-up to cut boundary overhead</li>
+            <li>Uniform API across SW/GL/WG backends lets you ship one client code path no matter which binary you build</li>
+            <li>Strict type safety and native-side init/teardown make it feel like a native engine for JS developers</li>
+            <li>WebGPU path runs without asyncify, keeping binaries lean even with advanced GPU features enabled</li>
         </ul>
     </div>
 
