@@ -399,7 +399,7 @@ Please check out the [ThorVG Test App](https://thorvg-perf-test.vercel.app/) to 
 <br />
 ## In Practice
 ### Canva iOS
-[Canva](https://www.canva.com), a leading visual communication platform, is a household name among creators, marketers, designers, students, and more, with millions of users worldwide. It empowers users to create stunning visual content with a user-friendly interface and a vast library of templates and design elements. The Canva iOS app transitioned from the existing Lottie animation engine to ThorVG for Lottie animations, resulting in approximately an 80% improvement in rendering speed and a 70% reduction in peak memory usage.
+[Canva](https://www.canva.com), is a popular visual communication platform used by millions worldwide. Known for its intuitive interface and rich design resources, Canva empowers users to create high-quality visual content easily. The iOS app switched from its previous Lottie engine to ThorVG, achieving around 80% faster rendering and 70% lower peak memory usage.
 <p align="center">
   <img width="700" height="auto" src="https://github.com/thorvg/thorvg.site/blob/main/readme/example_canvaios.png">
 </p>
@@ -417,7 +417,7 @@ Please check out the [ThorVG Test App](https://thorvg-perf-test.vercel.app/) to 
 </p>
 
 ### Flux Audio
-[Flux Audio](https://www.flux.audio/) is a cutting-edge audio technology company specializing in high-fidelity sound systems and immersive audio experiences. With a focus on delivering precision and quality, Flux Audio leverages advanced software solutions to enhance audio processing across a wide range of devices. ThorVG is integrated into the user interface of Flux products, providing efficient and scalable vector rendering for their visual elements, ensuring a sleek and responsive user experience. This collaboration highlights ThorVG’s versatility in high-performance audio platforms.
+[Flux Audio](https://www.flux.audio/) is a high-performance audio technology company delivering premium sound systems and immersive audio experiences. To ensure precise audio processing across devices, they utilize advanced software solutions. ThorVG is integrated into their user interface, enabling efficient and scalable vector rendering for a sleek and responsive user experience. This showcases ThorVG’s versatility in cutting-edge audio platforms.
 
 <p align="center">
   <img width="700" height="auto" src="https://github.com/thorvg/thorvg.site/blob/main/readme/example_flux.jpg">
@@ -446,7 +446,7 @@ ThorVG has been integrated into the [Godot](https://www.godotengine.org) project
 </p>
 
 ### TinyPiXOS
-[TinyPiXOS](https://www.tinypixos.com/en/) is a lightweight, open-source Linux OS that replaces traditional graphics stacks like X11/Wayland with a custom-built C/C++ graphics stack. It features streamlined window management, GUI frameworks, and kernel mechanisms, all optimized for minimal resource use. ThorVG powers core graphics for its GUI rendering, offering efficient vector-based performance and high visual quality in resource-constrained environments.
+[TinyPiXOS](https://www.tinypixos.com/en/) is a lightweight, open-source Linux OS that replaces traditional graphics stacks like X11/Wayland with a custom-built C/C++ graphics stack. It features streamlined window management, GUI frameworks, and kernel mechanisms, all optimized for minimal resource use. ThorVG powers core graphics for its GUI rendering, offering efficient graphics performance and high visual quality in resource-constrained environments.
 
 <p align="center">
   <img width="700" height="auto" src="https://github.com/thorvg/thorvg.site/blob/main/readme/example_tinypixos.png">
