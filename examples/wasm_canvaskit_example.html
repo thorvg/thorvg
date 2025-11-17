@@ -115,7 +115,7 @@
             engine = new Module.ThorVGEngine();
 
             // Create canvas with engine-specific initialization
-            const selector = backend === 'sw' ? '' : '#canvas';
+            const selector = '#canvas';
             canvasPtr = engine.createCanvas(backend, selector, 800, 600);
             console.log('canvasPtr', canvasPtr);
 
