@@ -175,7 +175,7 @@ static void _borderLineTo(SwStrokeBorder* border, const SwPoint& to, bool movabl
         border->pts.last() = to;
     } else {
         //don't add zero-length line_to
-        if (!border->pts.empty() && (border->pts.last() - to).small()) return;
+        if (!border->pts.empty() && (border->pts.last() - to).tiny()) return;
         _growBorder(border, 1);
         border->tags[border->pts.count] = SW_STROKE_TAG_POINT;
         border->pts.push(to);

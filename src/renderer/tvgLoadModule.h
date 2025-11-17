@@ -36,6 +36,9 @@ struct AssetResolver
 };
 
 
+namespace tvg
+{
+
 struct LoadModule
 {
     INLIST_ITEM(LoadModule);
@@ -165,5 +168,7 @@ struct FontLoader : LoadModule
     virtual void release(FontMetrics& fm) = 0;
     virtual void copy(const FontMetrics& in, FontMetrics& out) = 0;
 };
+
+}
 
 #endif //_TVG_LOAD_MODULE_H_

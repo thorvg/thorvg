@@ -24,9 +24,7 @@
 #include "tvgStr.h"
 #include "tvgTtfLoader.h"
 
-#if defined(_WIN32) && (WINAPI_FAMILY == WINAPI_FAMILY_DESKTOP_APP)
-    #include <windows.h>
-#elif defined(__linux__)
+#if defined(__linux__)
     #include <fcntl.h>
     #include <unistd.h>
     #include <sys/mman.h>
