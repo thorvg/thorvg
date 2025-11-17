@@ -93,25 +93,23 @@
             const backend = document.getElementById('backend').value;
             log(`Initializing with ${backend} backend...`);
 
-            // Initialize WebGPU if needed (without asyncify!)
-            if (backend === 'wg') {
-                log('Initializing WebGPU (async)...');
-                let status;
-                let attempts = 0;
-                do {
-                    status = Module.ThorVGEngine.initWebGPU();
-                    if (status === 2) {
-                        log(`  Waiting for WebGPU... (attempt ${++attempts})`);
-                        await new Promise(r => setTimeout(r, 100));
-                    }
-                } while (status === 2 && attempts < 50);
-
-                if (status !== 0) {
-                    log('ERROR: WebGPU initialization failed!');
-                    return;
+            // Initialize Canvas Kit (handles WebGPU async init internally)
+            log('Initializing Canvas Kit...');
+            let status;
+            let attempts = 0;
+            do {
+                status = Module.init();
+                if (status === 2) {
+                    log(`  Waiting for initialization... (attempt ${++attempts})`);
+                    await new Promise(r => setTimeout(r, 100));
                 }
-                log('WebGPU initialized successfully!');
+            } while (status === 2 && attempts < 50);
+
+            if (status !== 0) {
+                log('ERROR: Canvas Kit initialization failed!');
+                return;
             }
+            log('Canvas Kit initialized successfully!');
 
             // Create engine wrapper
             engine = new Module.ThorVGEngine();

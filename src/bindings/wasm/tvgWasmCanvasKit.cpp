@@ -33,7 +33,7 @@ using emscripten::typed_memory_view;
 using std::string;
 
 // ============================================================
-// Engine Context Management
+// WebGPU Global State
 // ============================================================
 
 #ifdef THORVG_WG_RASTER_SUPPORT
@@ -50,6 +50,99 @@ static bool initialization_failed = false;
 #ifdef THORVG_GL_RASTER_SUPPORT
 #include <emscripten/html5_webgl.h>
 #endif
+
+// ============================================================
+// Canvas Kit Initialization Functions
+// ============================================================
+
+// Init function for all backends (WebGPU needs async, others return immediately)
+// Returns: 0 = ready, 1 = failed, 2 = pending
+static int init() {
+#ifdef THORVG_WG_RASTER_SUPPORT
+    if (initialization_failed) return 1;
+
+    // Init WebGPU instance
+    if (!wgpu_instance) {
+        wgpu_instance = wgpuCreateInstance(nullptr);
+    }
+
+    // Request adapter
+    if (!wgpu_adapter) {
+        if (adapter_requested) return 2;
+
+        auto onAdapterRequestEnded = [](WGPURequestAdapterStatus status, WGPUAdapter adapter,
+                                       WGPUStringView message, WGPU_NULLABLE void* userdata1,
+                                       WGPU_NULLABLE void* userdata2) {
+            if (status != WGPURequestAdapterStatus_Success) {
+                initialization_failed = true;
+                return;
+            }
+            *((WGPUAdapter*)userdata1) = adapter;
+        };
+
+        const WGPURequestAdapterOptions requestAdapterOptions{
+            .powerPreference = WGPUPowerPreference_HighPerformance
+        };
+        const WGPURequestAdapterCallbackInfo requestAdapterCallback{
+            .mode = WGPUCallbackMode_AllowSpontaneous,
+            .callback = onAdapterRequestEnded,
+            .userdata1 = &wgpu_adapter
+        };
+        wgpuInstanceRequestAdapter(wgpu_instance, &requestAdapterOptions, requestAdapterCallback);
+
+        adapter_requested = true;
+        return 2;
+    }
+
+    // Request device
+    if (device_requested) return wgpu_device == nullptr ? 2 : 0;
+
+    if (!wgpu_device) {
+        auto onDeviceError = [](WGPUDevice const * device, WGPUErrorType type,
+                               WGPUStringView message, void* userdata1, void* userdata2) {};
+        auto onDeviceRequestEnded = [](WGPURequestDeviceStatus status, WGPUDevice device,
+                                      WGPUStringView message, void* userdata1, void* userdata2) {
+            if (status != WGPURequestDeviceStatus_Success) {
+                initialization_failed = true;
+                return;
+            }
+            *((WGPUDevice*)userdata1) = device;
+        };
+
+        const WGPUDeviceDescriptor deviceDesc {
+            .label = { "ThorVG Device", WGPU_STRLEN },
+            .uncapturedErrorCallbackInfo = { .callback = onDeviceError }
+        };
+        const WGPURequestDeviceCallbackInfo requestDeviceCallback {
+            .mode = WGPUCallbackMode_AllowSpontaneous,
+            .callback = onDeviceRequestEnded,
+            .userdata1 = &wgpu_device
+        };
+        wgpuAdapterRequestDevice(wgpu_adapter, &deviceDesc, requestDeviceCallback);
+
+        device_requested = true;
+        return 2;
+    }
+    return 0;
+#else
+    return 0; // SW/GL don't need async init
+#endif
+}
+
+// Term function for cleanup
+static void term() {
+#ifdef THORVG_WG_RASTER_SUPPORT
+    if (wgpu_device) wgpuDeviceRelease(wgpu_device);
+    if (wgpu_adapter) wgpuAdapterRelease(wgpu_adapter);
+    if (wgpu_instance) wgpuInstanceRelease(wgpu_instance);
+    wgpu_device = nullptr;
+    wgpu_adapter = nullptr;
+    wgpu_instance = nullptr;
+    adapter_requested = false;
+    device_requested = false;
+    initialization_failed = false;
+#endif
+}
 
 // ============================================================
 // ThorVG Engine Wrapper (handles complex initialization)
@@ -86,94 +179,6 @@ public:
             emscripten_webgl_destroy_context(gl_context);
             gl_context = 0;
         }
-#endif
-    }
-
-    // WebGPU async initialization (without asyncify)
-    // Returns: 0 = ready, 1 = failed, 2 = pending
-    static int initWebGPU() {
-#ifdef THORVG_WG_RASTER_SUPPORT
-        if (initialization_failed) return 1;
-
-        // Init WebGPU instance
-        if (!wgpu_instance) {
-            wgpu_instance = wgpuCreateInstance(nullptr);
-        }
-
-        // Request adapter
-        if (!wgpu_adapter) {
-            if (adapter_requested) return 2;
-
-            auto onAdapterRequestEnded = [](WGPURequestAdapterStatus status, WGPUAdapter adapter,
-                                           WGPUStringView message, WGPU_NULLABLE void* userdata1,
-                                           WGPU_NULLABLE void* userdata2) {
-                if (status != WGPURequestAdapterStatus_Success) {
-                    initialization_failed = true;
-                    return;
-                }
-                *((WGPUAdapter*)userdata1) = adapter;
-            };
-
-            const WGPURequestAdapterOptions requestAdapterOptions{
-                .powerPreference = WGPUPowerPreference_HighPerformance
-            };
-            const WGPURequestAdapterCallbackInfo requestAdapterCallback{
-                .mode = WGPUCallbackMode_AllowSpontaneous,
-                .callback = onAdapterRequestEnded,
-                .userdata1 = &wgpu_adapter
-            };
-            wgpuInstanceRequestAdapter(wgpu_instance, &requestAdapterOptions, requestAdapterCallback);
-
-            adapter_requested = true;
-            return 2;
-        }
-
-        // Request device
-        if (device_requested) return wgpu_device == nullptr ? 2 : 0;
-
-        if (!wgpu_device) {
-            auto onDeviceError = [](WGPUDevice const * device, WGPUErrorType type,
-                                   WGPUStringView message, void* userdata1, void* userdata2) {};
-            auto onDeviceRequestEnded = [](WGPURequestDeviceStatus status, WGPUDevice device,
-                                          WGPUStringView message, void* userdata1, void* userdata2) {
-                if (status != WGPURequestDeviceStatus_Success) {
-                    initialization_failed = true;
-                    return;
-                }
-                *((WGPUDevice*)userdata1) = device;
-            };
-
-            const WGPUDeviceDescriptor deviceDesc {
-                .label = { "ThorVG Device", WGPU_STRLEN },
-                .uncapturedErrorCallbackInfo = { .callback = onDeviceError }
-            };
-            const WGPURequestDeviceCallbackInfo requestDeviceCallback {
-                .mode = WGPUCallbackMode_AllowSpontaneous,
-                .callback = onDeviceRequestEnded,
-                .userdata1 = &wgpu_device
-            };
-            wgpuAdapterRequestDevice(wgpu_adapter, &deviceDesc, requestDeviceCallback);
-
-            device_requested = true;
-            return 2;
-        }
-        return 0;
-#else
-        return 1; // Not supported
-#endif
-    }
-
-    static void termWebGPU() {
-#ifdef THORVG_WG_RASTER_SUPPORT
-        if (wgpu_device) wgpuDeviceRelease(wgpu_device);
-        if (wgpu_adapter) wgpuAdapterRelease(wgpu_adapter);
-        if (wgpu_instance) wgpuInstanceRelease(wgpu_instance);
-        wgpu_device = nullptr;
-        wgpu_adapter = nullptr;
-        wgpu_instance = nullptr;
-        adapter_requested = false;
-        device_requested = false;
-        initialization_failed = false;
 #endif
     }
 
@@ -316,14 +321,17 @@ public:
 };
 
 // ============================================================
-// Emscripten Bindings (only for engine wrapper)
+// Emscripten Bindings
 // ============================================================
 
 EMSCRIPTEN_BINDINGS(thorvg_canvaskit) {
+    // Canvas Kit initialization functions
+    emscripten::function("init", &init);
+    emscripten::function("term", &term);
+
+    // Engine wrapper class
     class_<ThorVGEngine>("ThorVGEngine")
         .constructor<>()
-        .class_function("initWebGPU", &ThorVGEngine::initWebGPU)
-        .class_function("termWebGPU", &ThorVGEngine::termWebGPU)
         .function("createCanvas", &ThorVGEngine::createCanvas)
         .function("resize", &ThorVGEngine::resize)
         .function("getBuffer", &ThorVGEngine::getBuffer)
