@@ -302,6 +302,13 @@ public:
         return true;
     }
 
+    // Clear canvas (removes all paints)
+    bool clear() {
+        if (!canvas) return false;
+        canvas->remove();
+        return true;
+    }
+
     // Render and get buffer (for SW backend)
     val render() {
         if (buffer && engine_type == "sw") {
@@ -340,6 +347,7 @@ EMSCRIPTEN_BINDINGS(thorvg_canvaskit) {
         .constructor<>()
         .function("createCanvas", &ThorVGEngine::createCanvas)
         .function("resize", &ThorVGEngine::resize)
+        .function("clear", &ThorVGEngine::clear)
         .function("render", &ThorVGEngine::render)
         .function("size", &ThorVGEngine::size)
         .function("getCanvas", &ThorVGEngine::getCanvas)

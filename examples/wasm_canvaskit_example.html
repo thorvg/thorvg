@@ -190,9 +190,24 @@
         };
 
         window.clearCanvas = function() {
-            const canvas = document.getElementById('canvas');
-            const ctx = canvas.getContext('2d');
-            ctx.clearRect(0, 0, canvas.width, canvas.height);
+            if (!engine) {
+                log('ERROR: Engine not initialized!');
+                return;
+            }
+
+            // Clear ThorVG canvas (removes all paints)
+            engine.clear();
+            TVG._tvg_canvas_draw(canvasPtr, 1);
+            TVG._tvg_canvas_sync(canvasPtr);
+
+            // For SW backend, also clear the HTML canvas
+            const backend = document.getElementById('backend').value;
+            if (backend === 'sw') {
+                const canvas = document.getElementById('canvas');
+                const ctx = canvas.getContext('2d');
+                ctx.clearRect(0, 0, canvas.width, canvas.height);
+            }
+
             log('Canvas cleared!');
         };
 
