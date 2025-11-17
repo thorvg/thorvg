@@ -79,9 +79,33 @@
         async function loadModule() {
             log('Loading ThorVG Canvas Kit module...');
             TVG = await ThorVGModule();
-
             log('Module loaded successfully!');
-            log('C API functions available as camelCase (e.g., Module.shapeNew())');
+        }
+        
+        let status;
+        let attempts = 0;
+        async function initModule(renderer) {
+          // Initialize Canvas Kit (handles WebGPU async init internally)
+          log('Initializing Canvas Kit...');
+
+          if (renderer !== 'wg') {
+            //NOTE: thorvg software/webgl renderer doesn't do anything in the module init(). Skip ASAP.
+            return;
+          }
+          
+          do {
+              status = TVG.init();
+              if (status === 2) {
+                  log(`  Waiting for initialization... (attempt ${++attempts})`);
+                  await new Promise(r => setTimeout(r, 100));
+              }
+          } while (status === 2 && attempts < 50);
+
+          if (status !== 0) {
+              log('ERROR: Canvas Kit initialization failed!');
+              return;
+          }
+          log('Canvas Kit initialized successfully!');
         }
 
         window.init = async function() {
@@ -92,23 +116,7 @@
             const backend = document.getElementById('backend').value;
             log(`Initializing with ${backend} backend...`);
 
-            // Initialize Canvas Kit (handles WebGPU async init internally)
-            log('Initializing Canvas Kit...');
-            let status;
-            let attempts = 0;
-            do {
-                status = TVG.init();
-                if (status === 2) {
-                    log(`  Waiting for initialization... (attempt ${++attempts})`);
-                    await new Promise(r => setTimeout(r, 100));
-                }
-            } while (status === 2 && attempts < 50);
-
-            if (status !== 0) {
-                log('ERROR: Canvas Kit initialization failed!');
-                return;
-            }
-            log('Canvas Kit initialized successfully!');
+            await initModule(backend);
 
             // Create engine wrapper
             engine = new TVG.ThorVGEngine();
