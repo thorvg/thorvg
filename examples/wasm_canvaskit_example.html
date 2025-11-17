@@ -64,7 +64,9 @@
     </div>
 
     <script type="module">
-        let Module;
+        import ThorVGModule from '../build_wasm_canvaskit/src/bindings/wasm/thorvg-canvaskit.js';
+
+        let TVG;
         let engine;
         let canvasPtr = 0;
 
@@ -76,17 +78,14 @@
 
         async function loadModule() {
             log('Loading ThorVG Canvas Kit module...');
-
-            // Import the WASM module
-            const ThorVGModule = await import('../build_wasm_canvaskit/src/bindings/wasm/thorvg-canvaskit.js');
-            Module = await ThorVGModule.default();
+            TVG = await ThorVGModule();
 
             log('Module loaded successfully!');
             log('C API functions available as camelCase (e.g., Module.shapeNew())');
         }
 
         window.init = async function() {
-            if (!Module) {
+            if (!TVG) {
                 await loadModule();
             }
 
@@ -98,7 +97,7 @@
             let status;
             let attempts = 0;
             do {
-                status = Module.init();
+                status = TVG.init();
                 if (status === 2) {
                     log(`  Waiting for initialization... (attempt ${++attempts})`);
                     await new Promise(r => setTimeout(r, 100));
@@ -112,7 +111,7 @@
             log('Canvas Kit initialized successfully!');
 
             // Create engine wrapper
-            engine = new Module.ThorVGEngine();
+            engine = new TVG.ThorVGEngine();
 
             // Create canvas with engine-specific initialization
             const selector = '#canvas';
@@ -137,31 +136,31 @@
             log('Drawing shapes...');
 
             // Draw a red rectangle (direct C API call)
-            const rect = Module._tvg_shape_new();
-            Module._tvg_shape_append_rect(rect, 0, 0, 200, 150, 10, 10, 1);
-            Module._tvg_shape_set_fill_color(rect, 255, 0, 0, 255);
-            Module._tvg_paint_translate(rect, 100, 100);
-            Module._tvg_canvas_push(canvasPtr, rect);
+            const rect = TVG._tvg_shape_new();
+            TVG._tvg_shape_append_rect(rect, 0, 0, 200, 150, 10, 10, 1);
+            TVG._tvg_shape_set_fill_color(rect, 255, 0, 0, 255);
+            TVG._tvg_paint_translate(rect, 100, 100);
+            TVG._tvg_canvas_push(canvasPtr, rect);
 
             // Draw a blue circle with stroke
-            const circle = Module._tvg_shape_new();
-            Module._tvg_shape_append_circle(circle, 0, 0, 80, 80, 1);
-            Module._tvg_shape_set_fill_color(circle, 0, 100, 255, 255);
-            Module._tvg_shape_set_stroke_width(circle, 5);
-            Module._tvg_shape_set_stroke_color(circle, 0, 0, 0, 255);
-            Module._tvg_paint_translate(circle, 500, 200);
-            Module._tvg_canvas_push(canvasPtr, circle);
+            const circle = TVG._tvg_shape_new();
+            TVG._tvg_shape_append_circle(circle, 0, 0, 80, 80, 1);
+            TVG._tvg_shape_set_fill_color(circle, 0, 100, 255, 255);
+            TVG._tvg_shape_set_stroke_width(circle, 5);
+            TVG._tvg_shape_set_stroke_color(circle, 0, 0, 0, 255);
+            TVG._tvg_paint_translate(circle, 500, 200);
+            TVG._tvg_canvas_push(canvasPtr, circle);
 
             // Draw a green rectangle
-            const rect2 = Module._tvg_shape_new();
-            Module._tvg_shape_append_rect(rect2, 0, 0, 150, 100, 0, 0, 1);
-            Module._tvg_shape_set_fill_color(rect2, 0, 200, 100, 255);
-            Module._tvg_paint_translate(rect2, 300, 400);
-            Module._tvg_canvas_push(canvasPtr, rect2);
+            const rect2 = TVG._tvg_shape_new();
+            TVG._tvg_shape_append_rect(rect2, 0, 0, 150, 100, 0, 0, 1);
+            TVG._tvg_shape_set_fill_color(rect2, 0, 200, 100, 255);
+            TVG._tvg_paint_translate(rect2, 300, 400);
+            TVG._tvg_canvas_push(canvasPtr, rect2);
 
             // Render
-            Module._tvg_canvas_draw(canvasPtr, 1);
-            Module._tvg_canvas_sync(canvasPtr);
+            TVG._tvg_canvas_draw(canvasPtr, 1);
+            TVG._tvg_canvas_sync(canvasPtr);
 
             log('Drawing complete!');
 
