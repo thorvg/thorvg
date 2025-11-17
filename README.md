@@ -123,6 +123,7 @@ ThorVG is designed to be portable across a wide range of devices, including smal
     - [Godot](#godot)
     - [Lottie Creator](#lottie-creator)
     - [LVGL](#lvgl)
+    - [TinyPiXOS](#tinypixos)
     - [Tizen](#tizen)
   - [Interactive App](#interactive-app)
   - [References](#references)
@@ -442,6 +443,13 @@ ThorVG has been integrated into the [Godot](https://www.godotengine.org) project
 
 <p align="center">
   <img width="700" height="auto" src="https://github.com/thorvg/thorvg.site/blob/main/readme/example_lvgl.png">
+</p>
+
+### TinyPiXOS
+[TinyPiXOS](https://www.tinypixos.com/en/) is a lightweight, open-source Linux OS that replaces traditional graphics stacks like X11/Wayland with a custom-built C/C++ graphics stack. It features streamlined window management, GUI frameworks, and kernel mechanisms, all optimized for minimal resource use. ThorVG powers core graphics for its GUI rendering, offering efficient vector-based performance and high visual quality in resource-constrained environments.
+
+<p align="center">
+  <img width="700" height="auto" src="https://github.com/thorvg/thorvg.site/blob/main/readme/example_tinypixos.png">
 </p>
 
 ### Tizen
