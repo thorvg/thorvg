@@ -85,7 +85,7 @@ struct SwPoint
         else return false;
     }
 
-    bool small() const
+    bool tiny() const
     {
         //2 is epsilon...
         if (abs(x) < 2 && abs(y) < 2) return true;

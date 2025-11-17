@@ -50,16 +50,16 @@ int mathCubicAngle(const SwPoint* base, int64_t& angleIn, int64_t& angleMid, int
     auto d2 = base[1] - base[2];
     auto d3 = base[0] - base[1];
 
-    if (d1.small()) {
-        if (d2.small()) {
-            if (d3.small()) {
+    if (d1.tiny()) {
+        if (d2.tiny()) {
+            if (d3.tiny()) {
                 angleIn = angleMid = angleOut = 0;
                 return -1;  //ignoreable
             } else {
                 angleIn = angleMid = angleOut = mathAtan(d3);
             }
         } else {
-            if (d3.small()) {
+            if (d3.tiny()) {
                 angleIn = angleMid = angleOut = mathAtan(d2);
             } else {
                 angleIn = angleMid = mathAtan(d2);
@@ -67,8 +67,8 @@ int mathCubicAngle(const SwPoint* base, int64_t& angleIn, int64_t& angleMid, int
             }
         }
     } else {
-        if (d2.small()) {
-            if (d3.small()) {
+        if (d2.tiny()) {
+            if (d3.tiny()) {
                 angleIn = angleMid = angleOut = mathAtan(d1);
             } else {
                 angleIn = mathAtan(d1);
@@ -76,7 +76,7 @@ int mathCubicAngle(const SwPoint* base, int64_t& angleIn, int64_t& angleMid, int
                 angleMid = mathMean(angleIn, angleOut);
             }
         } else {
-            if (d3.small()) {
+            if (d3.tiny()) {
                 angleIn = mathAtan(d1);
                 angleMid = angleOut = mathAtan(d2);
             } else {

@@ -25,6 +25,9 @@
 
 #include "tvgLoadModule.h"
 
+namespace tvg
+{
+
 struct LoaderMgr
 {
     static bool init();
@@ -38,5 +41,7 @@ struct LoaderMgr
     static bool retrieve(const char* filename);
     static bool retrieve(LoadModule* loader);
 };
+
+}
 
 #endif //_TVG_LOADER_H_

@@ -25,6 +25,13 @@
 
 #ifdef _WIN32
     #include <malloc.h>
+    #if defined(WINAPI_ENTRY)
+        #if (WINAPI_FAMILY == WINAPI_FAMILY_DESKTOP_APP)
+            #include <windows.h>
+        #endif
+    #elif !defined(APIENTRY) && !defined(__CYGWIN__) && !defined(__SCITECH_SNAP__)
+        #include <windows.h>
+    #endif
 #elif defined(__linux__) || defined(__ZEPHYR__)
     #include <alloca.h>
 #else
