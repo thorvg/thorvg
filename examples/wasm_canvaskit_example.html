@@ -46,7 +46,7 @@
     <div class="controls">
         <label>Backend:
             <select id="backend">
-                <option value="sw" selected>Software</option>
+                <option value="sw">Software</option>
                 <option value="gl">WebGL</option>
                 <option value="wg">WebGPU</option>
             </select>
@@ -106,6 +106,27 @@
               return;
           }
           log('Canvas Kit initialized successfully!');
+        }
+
+        function applyRendererFromQuery() {
+            const params = new URLSearchParams(window.location.search);
+            const renderer = params.get('renderer');
+            if (!renderer) return;
+
+            const backendSelect = document.getElementById('backend');
+            if (['sw', 'gl', 'wg'].includes(renderer)) {
+                backendSelect.value = renderer;
+            }
+        }
+
+        function setupRendererChangeHandler() {
+            const backendSelect = document.getElementById('backend');
+            backendSelect.addEventListener('change', () => {
+                const renderer = backendSelect.value;
+                const url = new URL(window.location.href);
+                url.searchParams.set('renderer', renderer);
+                window.location.href = url.toString();
+            });
         }
 
         window.init = async function() {
@@ -212,6 +233,8 @@
         };
 
         // Auto-load module on page load
+        applyRendererFromQuery();
+        setupRendererChangeHandler();
         loadModule();
     </script>
 </body>
