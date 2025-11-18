@@ -31,7 +31,7 @@ public:
     GlRenderTarget();
     ~GlRenderTarget();
 
-    void init(uint32_t width, uint32_t height, GLint resolveId);
+    void init(uint32_t width, uint32_t height, GLint resolveId, bool external = false);
     void reset();
 
     GLuint getFboId() { return mFbo; }
@@ -44,12 +44,15 @@ public:
     void setViewport(const RenderRegion& vp) { mViewport = vp; }
     const RenderRegion& getViewport() const { return mViewport; }
 
-    bool invalid() const { return mFbo == 0; }
+    bool invalid() const { return !mValid; }
+    bool internal() const { return !mExternal; }
 
 private:
     uint32_t mWidth = 0;
     uint32_t mHeight = 0;
     RenderRegion mViewport{};
+    bool mValid = false;
+    bool mExternal = false;
     GLuint mFbo = 0;
     GLuint mColorBuffer = 0;
     GLuint mDepthStencilBuffer = 0;
