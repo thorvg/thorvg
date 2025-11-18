@@ -400,31 +400,34 @@ Please check out the [ThorVG Test App](https://thorvg-perf-test.vercel.app/) to 
 ## In Practice
 ### Canva iOS
 [Canva](https://www.canva.com), is a popular visual communication platform used by millions worldwide. Known for its intuitive interface and rich design resources, Canva empowers users to create high-quality visual content easily. The iOS app switched from its previous Lottie engine to ThorVG, achieving around 80% faster rendering and 70% lower peak memory usage.
+
 <p align="center">
   <img width="700" height="auto" src="https://github.com/thorvg/thorvg.site/blob/main/readme/example_canvaios.png">
 </p>
 
 ### dotLottie
-[dotLottie](https://dotlottie.io/) is an open-source file format that aggregates one or more Lottie files and their associated resources, such as images and fonts, into a single file. This enables an efficient and easy distribution of animations. dotLottie files are ZIP archives compressed with the Deflate compression method and carry the file extension of “.lottie”. Think of it as a superset of Lottie. [LottieFiles](https://lottiefiles.com/) aims to achieve just that. [dotLottie player](https://github.com/LottieFiles/dotlottie-rs) by LottieFiles is now powered by ThorVG.
+[dotLottie](https://dotlottie.io/) is an open-source format that combines multiple Lottie animations, assets like images and fonts, and supports features such as state machines and interactivity. It uses ZIP compression (.lottie extension) for easy and efficient distribution. As a superset of Lottie, the [dotLottie player](https://github.com/LottieFiles/dotlottie-rs) now runs on ThorVG for rendering.
+
 <p align="center">
   <img width="700" height="auto" src="https://github.com/thorvg/thorvg.site/blob/main/readme/example_dotlottie.png">
 </p>
 
 ### Espressif
 [Espressif Systems](https://www.espressif.com/en) provides [ThorVG as an official component](https://docs.espressif.com/projects/esp-iot-solution/en/latest/display/lcd/gui_solution.html#thorvg-component) within its ESP-IDF (IoT Development Framework), simplifying integration into ESP-IDF projects. This allows developers to easily incorporate ThorVG's rendering capabilities into their applications, particularly on IoT devices powered by Espressif’s ESP32 and ESP32-P4 microcontrollers.
+
 <p align="center">
   <img width="700" height="auto" src="https://github.com/thorvg/thorvg.site/blob/main/readme/example_espressif.png">
 </p>
 
 ### Flux Audio
-[Flux Audio](https://www.flux.audio/) is a high-performance audio technology company delivering premium sound systems and immersive audio experiences. To ensure precise audio processing across devices, they utilize advanced software solutions. ThorVG is integrated into their user interface, enabling efficient and scalable vector rendering for a sleek and responsive user experience. This showcases ThorVG’s versatility in cutting-edge audio platforms.
+[Flux Audio](https://www.flux.audio/) is a high-performance audio company focused on premium sound and immersive experiences. They use advanced software for consistent audio processing across devices. ThorVG powers their UI with fast, scalable vector rendering, highlighting its flexibility in modern audio platforms.
 
 <p align="center">
   <img width="700" height="auto" src="https://github.com/thorvg/thorvg.site/blob/main/readme/example_flux.jpg">
 </p>
 
 ### Godot
-ThorVG has been integrated into the [Godot](https://www.godotengine.org) project to enable the creation of sleek and visually appealing user interfaces (UIs) and vector resources in the Godot game engine. Godot is a modern game engine that is both free and open-source, offering a comprehensive range of tools. With Godot, you can concentrate on developing your game without the need to recreate existing functionalities.
+ThorVG is integrated into the Godot game engine to support sleek, high-quality vector-based user interfaces and assets. [Godot](https://www.godotengine.org) is a modern, open-source game engine with a full suite of tools, allowing developers to focus on creating games without reinventing core functionality.
 
 <p align="center">
   <img width="700" height="auto" src="https://github.com/thorvg/thorvg.site/blob/main/readme/example_godot.png">
@@ -446,7 +449,7 @@ ThorVG has been integrated into the [Godot](https://www.godotengine.org) project
 </p>
 
 ### TinyPiXOS
-[TinyPiXOS](https://www.tinypixos.com/en/) is a lightweight, open-source Linux OS that replaces traditional graphics stacks like X11/Wayland with a custom-built C/C++ graphics stack. It features streamlined window management, GUI frameworks, and kernel mechanisms, all optimized for minimal resource use. ThorVG powers core graphics for its GUI rendering, offering efficient graphics performance and high visual quality in resource-constrained environments.
+[TinyPiXOS](https://www.tinypixos.com/en/) is a lightweight, open-source Linux OS that replaces X11/Wayland with a custom C/C++ graphics stack. It includes minimal window management and GUI tools, all optimized for low resource use. ThorVG handles core GUI rendering, delivering efficient performance and high visual quality in constrained environments.
 
 <p align="center">
   <img width="700" height="auto" src="https://github.com/thorvg/thorvg.site/blob/main/readme/example_tinypixos.png">
