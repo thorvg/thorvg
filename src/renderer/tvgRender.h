@@ -652,4 +652,6 @@ static inline uint8_t MULTIPLY(uint8_t c, uint8_t a)
 
 }
 
+void PathOptimize(const RenderPath& in, RenderPath& out, const Matrix& matrix);
+
 #endif //_TVG_RENDER_H_
