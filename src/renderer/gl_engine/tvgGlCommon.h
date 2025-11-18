@@ -30,6 +30,7 @@
 
 #define MIN_GL_STROKE_WIDTH 1.0f
 #define MIN_GL_STROKE_ALPHA 0.25f
+#define MIN_GL_MSAA_SAMPLES 4
 
 #define MVP_MATRIX(w, h)                \
     float mvp[4*4] = {                  \
