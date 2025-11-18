@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2021 - 2025 the ThorVG project. All rights reserved.
+ * Copyright (c) 2023 - 2025 the ThorVG project. All rights reserved.
 
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to deal
@@ -20,32 +20,34 @@
  * SOFTWARE.
  */
 
-#ifndef _TVG_PNG_LOADER_H_
-#define _TVG_PNG_LOADER_H_
+#ifndef _TVG_PNGSAVER_H_
+#define _TVG_PNGSAVER_H_
 
-#include "tvgPngCodec.h"
+#include "tvgSaveModule.h"
 #include "tvgTaskScheduler.h"
 
+namespace tvg
+{
 
-class PngLoader : public ImageLoader, public Task
+class PngSaver : public SaveModule, public Task
 {
 private:
-    LodePNGState state;
-    unsigned char* data = nullptr;
-    uint32_t size = 0;
-    bool freeData = false;
+    uint32_t* buffer = nullptr;
+    Paint* target = nullptr;
+    Paint* bg = nullptr;
+    char *path = nullptr;
+    float vsize[2] = {0.0f, 0.0f};
 
-    void run(unsigned tid) override;
-
+	void run(unsigned tid) override;
+ 
 public:
-    PngLoader();
-    ~PngLoader();
+    ~PngSaver();
 
-    bool open(const char* path) override;
-    bool open(const char* data, uint32_t size, const char* rpath, bool copy) override;
-    bool read() override;
-
-    RenderSurface* bitmap() override;
+    bool save(Paint* paint, Paint* bg, const char* filename, uint32_t quality) override;
+    bool save(Animation* animation, Paint* bg, const char* filename, uint32_t quality, uint32_t fps) override;
+    bool close() override;
 };
 
-#endif //_TVG_PNG_LOADER_H_
+}
+
+#endif  //_TVG_PNGSAVER_H_
