@@ -8,6 +8,7 @@
 - Ruiwen Tang <tangruiwen1989@gmail.com>
 - Sergii Liebodkin <sergii@lottiefiles.com>
 - Jinny You <jinny@lottiefiles.com>
+- Jay WenJie <jay@lottiefiles.com>
 
 ## Contributors
 - Prudhvi Raj Vasireddi <prudhvi.raj@samsung.com>
@@ -53,5 +54,4 @@
 - KunYoung Park <rjsdud3263@gmail.com>
 - Wang SiMiao 王思淼 <wangsimiao1@xiaomi.com>
 - Jackson Hu <huming2207@gmail.com>
-- Jay WenJie <jay@lottiefiles.com>
 - Andy French <andyf@canva.com>
