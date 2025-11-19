@@ -27,6 +27,7 @@
 #include "tvgWgGeometry.h"
 
 #define MIN_WG_STROKE_WIDTH 1.0f
+#define MIN_WG_STROKE_ALPHA 0.25f
 
 class WgStroker
 {
@@ -38,7 +39,7 @@ class WgStroker
         Point prevPtDir;
     };
 public:
-    WgStroker(WgMeshData* buffer, float width);
+    WgStroker(WgMeshData* buffer, float width, StrokeCap mCap, StrokeJoin mJoin = StrokeJoin::Bevel);
     void run(const RenderShape& rshape, const RenderPath& path, const Matrix& m);
     RenderRegion bounds() const;
     BBox getBBox() const;

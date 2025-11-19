@@ -88,7 +88,7 @@ void WgRenderSettings::update(WgContext& context, const tvg::Matrix& transform, 
 {
     //TODO: Update separtely according to the RenderUpdateFlag
     settings.transform.update(transform);
-    settings.options.update(cs, opacity);
+    settings.options.update(cs, opacity * opacityMultiplier);
 }
 
 void WgRenderSettings::update(WgContext& context, const Fill* fill)
@@ -169,19 +169,39 @@ void WgRenderDataShape::updateMeshes(const RenderShape &rshape, RenderUpdateFlag
     releaseMeshes();
     strokeFirst = rshape.strokeFirst();
 
+    const RenderPath* path = &rshape.path;
+
+    // optimize path
+    RenderPath optimizedPath;
+    if (flag & (RenderUpdateFlag::Transform | RenderUpdateFlag::Path)) {
+        PathOptimize(rshape.path, optimizedPath, matrix);
+        path = &optimizedPath;
+    }
+
     // trim path if necessary
     RenderPath trimmedPath;
-    auto& path = (rshape.trimpath() && rshape.stroke->trim.trim(rshape.path, trimmedPath)) ? trimmedPath : rshape.path;
+    if (rshape.trimpath() && rshape.stroke->trim.trim(*path, trimmedPath)) 
+        path = &trimmedPath;
 
     // update fill shapes
     if (flag & (RenderUpdateFlag::Color | RenderUpdateFlag::Gradient | RenderUpdateFlag::Transform | RenderUpdateFlag::Path)) {
         meshShape.clear();
 
-        WgBWTessellator bwTess{&meshShape};
-        bwTess.tessellate(path, matrix);
+        BBox bbox;
+        // in a case of single line shape we must tesselate it as a single line stroke with minimal width
+        if (path->pts.count == 2 && tvg::zero(rshape.strokeWidth())) {
+            WgStroker stroker(&meshShape, MIN_WG_STROKE_WIDTH / scaling(matrix), StrokeCap::Butt, StrokeJoin::Bevel);
+            stroker.run(rshape, *path, matrix);
+            bbox = stroker.getBBox();
+            renderSettingsShape.opacityMultiplier = MIN_WG_STROKE_ALPHA;
+        } else {
+            WgBWTessellator bwTess{&meshShape};
+            bwTess.tessellate(*path, matrix);
+            bbox = bwTess.getBBox();
+            renderSettingsShape.opacityMultiplier = 1.0f;
+        }
 
         if (meshShape.ibuffer.count > 0) {
-            auto bbox = bwTess.getBBox();
             meshShapeBBox.bbox(bbox.min, bbox.max);
             updateBBox(bbox);
         } else meshShape.clear();
@@ -200,8 +220,9 @@ void WgRenderDataShape::updateMeshes(const RenderShape &rshape, RenderUpdateFlag
         }
         //run stroking only if it's valid
         if (!tvg::zero(strokeWidth)) {
-            WgStroker stroker(&meshStrokes, strokeWidth);
-            stroker.run(rshape, path, matrix);
+            WgStroker stroker(&meshStrokes, strokeWidth, rshape.strokeCap(), rshape.strokeJoin());
+            stroker.run(rshape, *path, matrix);
+            renderSettingsStroke.opacityMultiplier = 1.0f;
             if (meshStrokes.ibuffer.count > 0) {
                 auto bbox = stroker.getBBox();
                 meshStrokesBBox.bbox(bbox.min, bbox.max);
@@ -213,7 +234,7 @@ void WgRenderDataShape::updateMeshes(const RenderShape &rshape, RenderUpdateFlag
     // update shapes bbox (with empty path handling)
     if ((meshShape.vbuffer.count > 0 ) || (meshStrokes.vbuffer.count > 0)) {
         updateAABB(matrix);
-    } else aabb = {{0, 0}, {0, 0}};
+    } else bbox = aabb = {{0, 0}, {0, 0}};
     meshBBox.bbox(bbox.min, bbox.max);
 }
 

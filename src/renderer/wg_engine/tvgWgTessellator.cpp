@@ -24,7 +24,8 @@
 #include "tvgMath.h"
 
 
-WgStroker::WgStroker(WgMeshData* buffer, float width) : mBuffer(buffer), mWidth(width)
+WgStroker::WgStroker(WgMeshData* buffer, float width, StrokeCap cap, StrokeJoin join) 
+    : mBuffer(buffer), mWidth(width), mCap(cap), mJoin(join)
 {
 }
 
@@ -32,9 +33,6 @@ WgStroker::WgStroker(WgMeshData* buffer, float width) : mBuffer(buffer), mWidth(
 void WgStroker::run(const RenderShape& rshape, const RenderPath& path, const Matrix& m)
 {
     mMiterLimit = rshape.strokeMiterlimit();
-    mCap = rshape.strokeCap();
-    mJoin = rshape.strokeJoin();
-
     RenderPath dashed;
     if (rshape.strokeDash(dashed)) run(dashed, m);
     else run(path, m);
