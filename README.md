@@ -97,10 +97,10 @@ ThorVG is ahead of the curve, particularly in the web ecosystem. WebGPU introduc
 </p>
 
 ### Supported Platforms
-ThorVG is designed to be portable across a wide range of devices, including small IoT devices, embedded systems, mobile platforms, desktop environments, and the web. It is actively under development, with ongoing efforts to expand support for essential platforms as needed. Currently, major supported platforms include: <br />
+ThorVG is designed to be portable across a wide range of devices, including small IoT devices, embedded systems, mobile platforms, game consoles, desktop environments, and the web. It is actively under development, with continuous efforts to expand support for essential platforms as needed. Currently, the major supported platforms include:<br />
 <br />
 <p align="center">
-  <img width="600" height="auto" src="https://github.com/thorvg/thorvg.site/blob/main/readme/example_platforms.png">
+  <img width="700" height="auto" src="https://github.com/thorvg/thorvg.site/blob/main/readme/example_platforms.png">
 </p>
 
 ## Contents
