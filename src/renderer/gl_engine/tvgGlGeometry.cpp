@@ -298,7 +298,7 @@ void GlGeometry::prepare(const RenderShape& rshape)
         if (rshape.stroke->trim.trim(optimizedPath, trimmedPath)) {
             trimmedPath.pts.move(optimizedPath.pts);
             trimmedPath.cmds.move(optimizedPath.cmds);
-        }
+        } else optimizedPath.clear();
     }
 }
 
