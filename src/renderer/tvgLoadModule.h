@@ -150,7 +150,7 @@ struct FontMetrics
 
     ~FontMetrics()
     {
-        free(engine);
+        tvg::free(engine);
     }
 };
 
