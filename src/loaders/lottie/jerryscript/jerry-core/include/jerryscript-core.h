@@ -32,6 +32,7 @@ bool jerry_value_is_object (const jerry_value_t value);
 bool jerry_value_is_string (const jerry_value_t value);
 bool jerry_value_is_exception (const jerry_value_t value);
 jerry_value_t jerry_value_to_object (const jerry_value_t value);
+jerry_value_t jerry_value_to_primitive (const jerry_value_t value);
 jerry_value_t jerry_value_to_string (const jerry_value_t value);
 float jerry_value_as_number (const jerry_value_t value);
 int32_t jerry_value_as_int32 (const jerry_value_t value);
