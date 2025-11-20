@@ -1070,7 +1070,7 @@
         //typedef void (*PFNGLCLEARBUFFERUIVPROC)(GLenum buffer, GLint drawbuffer, const GLuint *value);
         //typedef void (*PFNGLCLEARBUFFERFVPROC)(GLenum buffer, GLint drawbuffer, const GLfloat *value);
         //typedef void (*PFNGLCLEARBUFFERFIPROC)(GLenum buffer, GLint drawbuffer, GLfloat depth, GLint stencil);
-        //typedef const GLubyte *(*PFNGLGETSTRINGIPROC)(GLenum name, GLuint index);
+        typedef const GLubyte *(*PFNGLGETSTRINGIPROC)(GLenum name, GLuint index);
         //typedef GLboolean (*PFNGLISRENDERBUFFERPROC)(GLuint renderbuffer);
         //typedef void (*PFNGLRENDERBUFFERSTORAGEPROC)(GLenum target, GLenum internalformat, GLsizei width, GLsizei height);
         //typedef void (*PFNGLGETRENDERBUFFERPARAMETERIVPROC)(GLenum target, GLenum pname, GLint *params);
@@ -1162,6 +1162,15 @@
         //typedef void (*PFNGLGETACTIVEUNIFORMBLOCKIVPROC)(GLuint program, GLuint uniformBlockIndex, GLenum pname, GLint *params);
         //typedef void (*PFNGLGETACTIVEUNIFORMBLOCKNAMEPROC)(GLuint program, GLuint uniformBlockIndex, GLsizei bufSize, GLsizei *length, GLchar *uniformBlockName);
     #endif /* GL_VERSION_3_1 */
+
+    #ifndef GL_ARB_get_program_binary
+        #define GL_ARB_get_program_binary 1
+        #define GL_NUM_PROGRAM_BINARY_FORMATS 0x87FE
+        #define GL_PROGRAM_BINARY_FORMATS 0x87FF
+        #define GL_PROGRAM_BINARY_LENGTH 0x8741
+        typedef void (*PFNGLGETPROGRAMBINARYPROC)(GLuint program, GLsizei bufSize, GLsizei *length, GLenum *binaryFormat, void *binary);
+        typedef void (*PFNGLPROGRAMBINARYPROC)(GLuint program, GLenum binaryFormat, const void *binary, GLsizei length);
+    #endif
 
     //GL_VERSION_1_0
     extern PFNGLCULLFACEPROC               glCullFace;
@@ -1455,7 +1464,7 @@
     //extern PFNGLCLEARBUFFERUIVPROC                      glClearBufferuiv;
     //extern PFNGLCLEARBUFFERFVPROC                       glClearBufferfv;
     //extern PFNGLCLEARBUFFERFIPROC                       glClearBufferfi;
-    //extern PFNGLGETSTRINGIPROC                          glGetStringi;
+    extern PFNGLGETSTRINGIPROC                          glGetStringi;
     //extern PFNGLISRENDERBUFFERPROC                      glIsRenderbuffer;
     //extern PFNGLRENDERBUFFERSTORAGEPROC                 glRenderbufferStorage;
     //extern PFNGLGETRENDERBUFFERPARAMETERIVPROC          glGetRenderbufferParameteriv;
@@ -1483,6 +1492,11 @@
     //extern PFNGLGETACTIVEUNIFORMNAMEPROC      glGetActiveUniformName;
     //extern PFNGLGETACTIVEUNIFORMBLOCKIVPROC   glGetActiveUniformBlockiv;
     //extern PFNGLGETACTIVEUNIFORMBLOCKNAMEPROC glGetActiveUniformBlockName;
+
+    //GL_VERSION_4_1
+    extern PFNGLGETPROGRAMBINARYPROC          glGetProgramBinary;
+    extern PFNGLPROGRAMBINARYPROC             glProgramBinary;
+
 #endif // __EMSCRIPTEN__
 
 bool glInit();

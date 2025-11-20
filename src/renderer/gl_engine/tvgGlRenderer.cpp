@@ -127,28 +127,28 @@ void GlRenderer::initShaders()
         STR_RADIAL_GRADIENT_MAIN
     );
 
-    mPrograms.push(new GlProgram(COLOR_VERT_SHADER, COLOR_FRAG_SHADER));
-    mPrograms.push(new GlProgram(GRADIENT_VERT_SHADER, linearGradientFragShader));
-    mPrograms.push(new GlProgram(GRADIENT_VERT_SHADER, radialGradientFragShader));
-    mPrograms.push(new GlProgram(IMAGE_VERT_SHADER, IMAGE_FRAG_SHADER));
+    mPrograms.push(new GlProgram(COLOR_VERT_SHADER, COLOR_FRAG_SHADER, RT_Color));
+    mPrograms.push(new GlProgram(GRADIENT_VERT_SHADER, linearGradientFragShader, RT_LinGradient));
+    mPrograms.push(new GlProgram(GRADIENT_VERT_SHADER, radialGradientFragShader, RT_RadGradient));
+    mPrograms.push(new GlProgram(IMAGE_VERT_SHADER, IMAGE_FRAG_SHADER, RT_Image));
 
     // compose Renderer
-    mPrograms.push(new GlProgram(MASK_VERT_SHADER, MASK_ALPHA_FRAG_SHADER));
-    mPrograms.push(new GlProgram(MASK_VERT_SHADER, MASK_INV_ALPHA_FRAG_SHADER));
-    mPrograms.push(new GlProgram(MASK_VERT_SHADER, MASK_LUMA_FRAG_SHADER));
-    mPrograms.push(new GlProgram(MASK_VERT_SHADER, MASK_INV_LUMA_FRAG_SHADER));
-    mPrograms.push(new GlProgram(MASK_VERT_SHADER, MASK_ADD_FRAG_SHADER));
-    mPrograms.push(new GlProgram(MASK_VERT_SHADER, MASK_SUB_FRAG_SHADER));
-    mPrograms.push(new GlProgram(MASK_VERT_SHADER, MASK_INTERSECT_FRAG_SHADER));
-    mPrograms.push(new GlProgram(MASK_VERT_SHADER, MASK_DIFF_FRAG_SHADER));
-    mPrograms.push(new GlProgram(MASK_VERT_SHADER, MASK_LIGHTEN_FRAG_SHADER));
-    mPrograms.push(new GlProgram(MASK_VERT_SHADER, MASK_DARKEN_FRAG_SHADER));
+    mPrograms.push(new GlProgram(MASK_VERT_SHADER, MASK_ALPHA_FRAG_SHADER, RT_MaskAlpha));
+    mPrograms.push(new GlProgram(MASK_VERT_SHADER, MASK_INV_ALPHA_FRAG_SHADER, RT_MaskAlphaInv));
+    mPrograms.push(new GlProgram(MASK_VERT_SHADER, MASK_LUMA_FRAG_SHADER, RT_MaskLuma));
+    mPrograms.push(new GlProgram(MASK_VERT_SHADER, MASK_INV_LUMA_FRAG_SHADER, RT_MaskLumaInv));
+    mPrograms.push(new GlProgram(MASK_VERT_SHADER, MASK_ADD_FRAG_SHADER, RT_MaskAdd));
+    mPrograms.push(new GlProgram(MASK_VERT_SHADER, MASK_SUB_FRAG_SHADER, RT_MaskSub));
+    mPrograms.push(new GlProgram(MASK_VERT_SHADER, MASK_INTERSECT_FRAG_SHADER, RT_MaskIntersect));
+    mPrograms.push(new GlProgram(MASK_VERT_SHADER, MASK_DIFF_FRAG_SHADER, RT_MaskDifference));
+    mPrograms.push(new GlProgram(MASK_VERT_SHADER, MASK_LIGHTEN_FRAG_SHADER, RT_MaskLighten));
+    mPrograms.push(new GlProgram(MASK_VERT_SHADER, MASK_DARKEN_FRAG_SHADER, RT_MaskDarken));
 
     // stencil Renderer
-    mPrograms.push(new GlProgram(STENCIL_VERT_SHADER, STENCIL_FRAG_SHADER));
+    mPrograms.push(new GlProgram(STENCIL_VERT_SHADER, STENCIL_FRAG_SHADER, RT_Stencil));
 
     // blit Renderer
-    mPrograms.push(new GlProgram(BLIT_VERT_SHADER, BLIT_FRAG_SHADER));
+    mPrograms.push(new GlProgram(BLIT_VERT_SHADER, BLIT_FRAG_SHADER, RT_Blit));
 
     for (uint32_t i = 0; i < 17; i++) {
         mPrograms.push(nullptr); // slot for blend
@@ -608,7 +608,7 @@ GlProgram* GlRenderer::getBlendProgram(BlendMethod method, bool gradient, bool i
     };
     
     uint32_t methodInd = (uint32_t)method;
-    uint32_t startInd = (uint32_t)RenderTypes::RT_Blend_Normal;
+    uint32_t startInd = RT_Blend_Normal;
     uint32_t shaderInd = methodInd + startInd;
 
     const char* helpers = "";
@@ -621,15 +621,15 @@ GlProgram* GlRenderer::getBlendProgram(BlendMethod method, bool gradient, bool i
     const char* vertShader = BLIT_VERT_SHADER;
     char fragShader[BLEND_TOTAL_LENGTH];
     if (gradient) {
-        startInd = (uint32_t)RenderTypes::RT_Blend_Gradient_Normal;
+        startInd = RT_Blend_Gradient_Normal;
         shaderInd = methodInd + startInd;
         strcat(strcat(strcpy(fragShader, BLEND_GRADIENT_FRAG_HEADER), helpers), shaderFunc[methodInd]);
     } else if (image) {
-        startInd = (uint32_t)RenderTypes::RT_Blend_Image_Normal;
+        startInd = RT_Blend_Image_Normal;
         shaderInd = methodInd + startInd;
         strcat(strcat(strcpy(fragShader, BLEND_IMAGE_FRAG_HEADER), helpers), shaderFunc[methodInd]);
     } else if (scene) {
-        startInd = (uint32_t)RenderTypes::RT_Blend_Scene_Normal;
+        startInd = RT_Blend_Scene_Normal;
         shaderInd = methodInd + startInd;
         strcat(strcat(strcpy(fragShader, BLEND_SCENE_FRAG_HEADER), helpers), shaderFunc[methodInd]);
     } else {
@@ -637,7 +637,7 @@ GlProgram* GlRenderer::getBlendProgram(BlendMethod method, bool gradient, bool i
     }
 
     if (!mPrograms[shaderInd])
-        mPrograms[shaderInd] = new GlProgram(vertShader, fragShader);
+        mPrograms[shaderInd] = new GlProgram(vertShader, fragShader, shaderInd);
     return mPrograms[shaderInd];
 }
 
