@@ -108,6 +108,89 @@
         let animationFrameId = null;
         let lastTime = 0;
 
+        function buildStaticScene() {
+            if (!TVG || !canvasPtr) return;
+
+            // Background panel
+            const panelShadow = TVG._tvg_shape_new();
+            TVG._tvg_shape_append_rect(panelShadow, 0, 0, 760, 560, 38, 38, 1);
+            TVG._tvg_shape_set_fill_color(panelShadow, 180, 184, 193, 180);
+            TVG._tvg_paint_translate(panelShadow, 26, 26);
+            TVG._tvg_canvas_push(canvasPtr, panelShadow);
+
+            const panel = TVG._tvg_shape_new();
+            TVG._tvg_shape_append_rect(panel, 0, 0, 760, 560, 32, 32, 1);
+            TVG._tvg_shape_set_fill_color(panel, 255, 255, 255, 255);
+            TVG._tvg_paint_translate(panel, 20, 20);
+            TVG._tvg_canvas_push(canvasPtr, panel);
+
+            // Grid lines
+            for (let y = 120; y <= 520; y += 80) {
+                const hLine = TVG._tvg_shape_new();
+                TVG._tvg_shape_append_rect(hLine, 0, 0, 720, 1.5, 0, 0, 1);
+                TVG._tvg_shape_set_fill_color(hLine, 223, 226, 235, 255);
+                TVG._tvg_paint_translate(hLine, 40, y);
+                TVG._tvg_canvas_push(canvasPtr, hLine);
+            }
+
+            for (let x = 160; x <= 680; x += 130) {
+                const vLine = TVG._tvg_shape_new();
+                TVG._tvg_shape_append_rect(vLine, 0, 0, 2, 480, 0, 0, 1);
+                TVG._tvg_shape_set_fill_color(vLine, 230, 233, 240, 255);
+                TVG._tvg_paint_translate(vLine, x, 60);
+                TVG._tvg_canvas_push(canvasPtr, vLine);
+            }
+
+            // Accent shapes
+            const accentRect = TVG._tvg_shape_new();
+            TVG._tvg_shape_append_rect(accentRect, 0, 0, 180, 110, 18, 18, 1);
+            TVG._tvg_shape_set_fill_color(accentRect, 0, 153, 255, 200);
+            TVG._tvg_paint_translate(accentRect, 80, 80);
+            TVG._tvg_canvas_push(canvasPtr, accentRect);
+
+            const accentRect2 = TVG._tvg_shape_new();
+            TVG._tvg_shape_append_rect(accentRect2, 0, 0, 140, 70, 16, 16, 1);
+            TVG._tvg_shape_set_fill_color(accentRect2, 255, 133, 0, 200);
+            TVG._tvg_paint_translate(accentRect2, 540, 360);
+            TVG._tvg_canvas_push(canvasPtr, accentRect2);
+
+            const badge = TVG._tvg_shape_new();
+            TVG._tvg_shape_append_circle(badge, 0, 0, 60, 60, 1);
+            TVG._tvg_shape_set_fill_color(badge, 64, 64, 255, 220);
+            TVG._tvg_shape_set_stroke_width(badge, 6);
+            TVG._tvg_shape_set_stroke_color(badge, 255, 255, 255, 255);
+            TVG._tvg_paint_translate(badge, 640, 170);
+            TVG._tvg_canvas_push(canvasPtr, badge);
+
+            // Timeline overlay to hint layering
+            const timelineTrack = TVG._tvg_shape_new();
+            TVG._tvg_shape_append_rect(timelineTrack, 0, 0, 640, 14, 7, 7, 1);
+            TVG._tvg_shape_set_fill_color(timelineTrack, 210, 214, 224, 255);
+            TVG._tvg_paint_translate(timelineTrack, 80, 500);
+            TVG._tvg_canvas_push(canvasPtr, timelineTrack);
+
+            const timelineProgress = TVG._tvg_shape_new();
+            TVG._tvg_shape_append_rect(timelineProgress, 0, 0, 360, 14, 7, 7, 1);
+            TVG._tvg_shape_set_fill_color(timelineProgress, 0, 153, 255, 255);
+            TVG._tvg_paint_translate(timelineProgress, 80, 500);
+            TVG._tvg_canvas_push(canvasPtr, timelineProgress);
+
+            const timelineKnob = TVG._tvg_shape_new();
+            TVG._tvg_shape_append_circle(timelineKnob, 0, 0, 18, 18, 1);
+            TVG._tvg_shape_set_fill_color(timelineKnob, 255, 255, 255, 255);
+            TVG._tvg_shape_set_stroke_width(timelineKnob, 4);
+            TVG._tvg_shape_set_stroke_color(timelineKnob, 0, 153, 255, 255);
+            TVG._tvg_paint_translate(timelineKnob, 440, 507);
+            TVG._tvg_canvas_push(canvasPtr, timelineKnob);
+        }
+
+        function resetCanvasContents() {
+            if (!engine || !canvasPtr) return;
+            engine.clear();
+            buildStaticScene();
+            renderFrame();
+        }
+
         function log(msg) {
             const logEl = document.getElementById('log');
             logEl.textContent += msg + '\n';
@@ -185,7 +268,8 @@
             }
 
             log(`Canvas created successfully! (ptr: ${canvasPtr})`);
-            log('Ready to load animation!');
+            resetCanvasContents();
+            log('Canvas primed with static scene. Ready to load animation!');
         };
 
         window.loadLottieFile = async function(event) {
@@ -202,11 +286,12 @@
             // Clear previous animation
             if (animation) {
                 stop();
-                engine.clear();
                 TVG._tvg_animation_del(animation);
                 animation = 0;
                 picture = 0;
             }
+
+            resetCanvasContents();
 
             const arrayBuffer = await file.arrayBuffer();
             const uint8Array = new Uint8Array(arrayBuffer);
