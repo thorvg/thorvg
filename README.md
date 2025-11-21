@@ -55,16 +55,16 @@ The following primitives are supported by ThorVG: <br />
 <p align="center">
   <img width="700" height="auto" src="https://github.com/thorvg/thorvg.site/blob/main/readme/example_structure.png">
 </p>
-If your program includes the main renderer, you can seamlessly utilize ThorVG APIs by transitioning drawing contexts between the main renderer and ThorVG. Throughout these API calls, ThorVG effectively serializes drawing commands among volatile paint nodes. Subsequently, it undertakes synchronous or asynchronous rendering via its backend raster engines. Additionally, ThorVG is adept at handling vector images, including formats like SVG, and it remains adaptable for accommodating additional popular formats as needed. In the rendering process, the library may generate intermediate frame buffers for scene compositing, though only when essential. The accompanying diagram provides a concise overview of how to effectively incorporate ThorVG within your system.<br />
+If your program includes the main renderer, you can seamlessly utilize ThorVG APIs by transitioning drawing contexts between the main renderer and ThorVG. Throughout these API calls, ThorVG effectively serializes drawing commands among volatile paint nodes. Subsequently, it undertakes synchronous or asynchronous rendering via its render-backend engines. Additionally, ThorVG is adept at handling vector images, including formats like SVG and Lottie, and it remains adaptable for accommodating additional popular formats as needed. In the rendering process, the library may generate intermediate frame buffers for scene compositing, though only when essential. The accompanying diagram provides a concise overview of how to effectively incorporate ThorVG within your system.<br />
 <br />
 <p align="center">
   <img width="900" height="auto" src="https://github.com/thorvg/thorvg.site/blob/main/readme/example_flow.png">
 </p>
 
 ### Threading
-ThorVG incorporates a threading mechanism that aims to seamlessly acquire subsequent scenes without unnecessary delays. It operates using a finely-tuned task scheduler based on thread pools, encompassing various tasks such as encoding, decoding, updating, and rendering. This design ensures that all tasks can effectively leverage multi-processing capabilities.<br />
+ThorVG incorporates a threading mechanism designed to seamlessly retrieve upcoming scenes without unnecessary delays. It utilizes a finely-tuned task scheduler based on thread pools to handle a variety of tasks, including encoding, decoding, updating, and rendering. This architecture ensures efficient use of multi-core processing.<br />
 <br />
-The task scheduler has been meticulously crafted to conceal complexity, streamline integration, and enhance user convenience. Therefore, the policy it employs is optional, allowing users to select it based on their specific requirements.<br />
+The task scheduler is carefully designed to abstract complexity, simplify integration, and enhance user convenience. Its use is optional, allowing users to adopt it based on their specific needs.<br />
 <br />
 <p align="center">
   <img width="900" height="auto" src="https://github.com/thorvg/thorvg.site/blob/main/readme/example_thread.png">
@@ -83,7 +83,7 @@ Please note that in highly dynamic content—such as fast-paced games or full-sc
 <br />
 
 ### Render Backends
-Today, ThorVG provides its own implementation of multiple raster engines, allowing you to choose the one that best suits your app and system preferences.
+Today, ThorVG provides its own implementation of multiple render-backend engines, allowing you to choose the one that best suits your app and system preferences.
 <br/>
 
 - CPU/SIMD (Software)
