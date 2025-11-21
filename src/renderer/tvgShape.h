@@ -286,7 +286,7 @@ struct ShapeImpl : Shape
             dash.pattern = nullptr;
         }
         if (cnt > 0) {
-            if (!dash.pattern) dash.pattern = tvg::malloc<float*>(sizeof(float) * cnt);
+            if (!dash.pattern) dash.pattern = tvg::malloc<float>(sizeof(float) * cnt);
             dash.length = 0.0f;
             for (uint32_t i = 0; i < cnt; ++i) {
                 dash.pattern[i] = pattern[i] < 0.0f ? 0.0f : pattern[i];

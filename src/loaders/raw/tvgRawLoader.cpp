@@ -47,7 +47,7 @@ bool RawLoader::open(const uint32_t* data, uint32_t w, uint32_t h, ColorSpace cs
     this->copy = copy;
 
     if (copy) {
-        surface.buf32 = tvg::malloc<uint32_t*>(sizeof(uint32_t) * w * h);
+        surface.buf32 = tvg::malloc<uint32_t>(sizeof(uint32_t) * w * h);
         if (!surface.buf32) return false;
         memcpy((void*)surface.buf32, data, sizeof(uint32_t) * w * h);
     }

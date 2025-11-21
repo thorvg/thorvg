@@ -187,7 +187,7 @@ struct PictureImpl : Picture
             return Result::Success;
         }
 
-        if (!this->resolver) this->resolver = tvg::calloc<AssetResolver*>(1, sizeof(AssetResolver));
+        if (!this->resolver) this->resolver = tvg::calloc<AssetResolver>(1, sizeof(AssetResolver));
         *(this->resolver) = {resolver, data};
         return Result::Success;
     }

@@ -359,7 +359,7 @@ struct RenderStroke
         tvg::free(dash.pattern);
         dash = rhs.dash;
         if (rhs.dash.count > 0) {
-            dash.pattern = tvg::malloc<float*>(sizeof(float) * rhs.dash.count);
+            dash.pattern = tvg::malloc<float>(sizeof(float) * rhs.dash.count);
             memcpy(dash.pattern, rhs.dash.pattern, sizeof(float) * rhs.dash.count);
         }
 

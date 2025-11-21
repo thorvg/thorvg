@@ -45,7 +45,7 @@ int VP8InitIoInternal(VP8Io* const io, int version) {
 }
 
 VP8Decoder* VP8New(void) {
-  VP8Decoder* const dec = tvg::calloc<VP8Decoder*>(1ULL, sizeof(*dec));
+  VP8Decoder* const dec = tvg::calloc<VP8Decoder>(1ULL, sizeof(*dec));
   if (dec != NULL) {
     SetOk(dec);
     dec->ready_ = 0;

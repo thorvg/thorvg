@@ -58,7 +58,7 @@ struct Array
     {
         if (count + 1 > reserved) {
             reserved = count + (count + 2) / 2;
-            data = tvg::realloc<T*>(data, sizeof(T) * reserved);
+            data = tvg::realloc<T>(data, sizeof(T) * reserved);
         }
         data[count++] = element;
     }
@@ -75,7 +75,7 @@ struct Array
     {
         if (size > reserved) {
             reserved = size;
-            data = tvg::realloc<T*>(data, sizeof(T) * reserved);
+            data = tvg::realloc<T>(data, sizeof(T) * reserved);
         }
         return true;
     }

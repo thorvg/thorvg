@@ -735,7 +735,7 @@ SwRle* rleRender(SwRle* rle, const SwOutline* outline, const RenderRegion& bbox,
     if (reqSize > cellPool->size) {
         cellPool->size = ((reqSize + (reqSize >> 2)) / sizeof(SwCell)) * sizeof(SwCell);
         tvg::free(cellPool->buffer);
-        cellPool->buffer = tvg::malloc<SwCell*>(cellPool->size);
+        cellPool->buffer = tvg::malloc<SwCell>(cellPool->size);
     }
 
     //Init Cells
@@ -847,7 +847,7 @@ SwRle* rleRender(SwRle* rle, const SwOutline* outline, const RenderRegion& bbox,
 
 SwRle* rleRender(const RenderRegion* bbox)
 {
-    auto rle = tvg::calloc<SwRle*>(sizeof(SwRle), 1);
+    auto rle = tvg::calloc<SwRle>(sizeof(SwRle), 1);
     rle->spans.reserve(bbox->h());
     rle->spans.count = bbox->h();
 

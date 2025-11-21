@@ -22,7 +22,7 @@
 #define MAX_HTREE_GROUPS    0x10000
 
 HTreeGroup* VP8LHtreeGroupsNew(int num_htree_groups) {
-  HTreeGroup* const htree_groups = tvg::malloc<HTreeGroup*>(num_htree_groups * sizeof(*htree_groups));
+  HTreeGroup* const htree_groups = tvg::malloc<HTreeGroup>(num_htree_groups * sizeof(*htree_groups));
   if (htree_groups == NULL) {
     return NULL;
   }
@@ -112,7 +112,7 @@ int VP8LBuildHuffmanTable(HuffmanCode* const root_table, int root_bits,
     offset[len + 1] = offset[len] + count[len];
   }
 
-  sorted = tvg::malloc<int*>(code_lengths_size * sizeof(*sorted));
+  sorted = tvg::malloc<int>(code_lengths_size * sizeof(*sorted));
   if (sorted == NULL) {
     return 0;
   }

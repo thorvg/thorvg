@@ -137,7 +137,7 @@ static bool _map(TtfLoader* loader, const char* path)
         return false;
     }
 
-    reader.data = tvg::malloc<uint8_t*>(reader.size);
+    reader.data = tvg::malloc<uint8_t>(reader.size);
 
     fseek(f, 0, SEEK_SET);
     auto ret = fread(reader.data, sizeof(char), reader.size, f);
@@ -537,7 +537,7 @@ bool TtfLoader::open(const char* data, uint32_t size, TVG_UNUSED const char* rpa
     nomap = true;
 
     if (copy) {
-        reader.data = tvg::malloc<uint8_t*>(size);
+        reader.data = tvg::malloc<uint8_t>(size);
         if (!reader.data) return false;
         memcpy((char*)reader.data, data, reader.size);
         freeData = true;
@@ -557,7 +557,7 @@ bool TtfLoader::get(FontMetrics& fm, char* text, RenderPath& out)
 
     fm.scale = reader.metrics.unitsPerEm / (fm.fontSize * DPI);
     fm.size = {};
-    if (!fm.engine) fm.engine = tvg::calloc<TtfMetrics*>(1, sizeof(TtfMetrics));
+    if (!fm.engine) fm.engine = tvg::calloc<TtfMetrics>(1, sizeof(TtfMetrics));
 
     auto box = fm.box * fm.scale;
 
@@ -583,6 +583,6 @@ void TtfLoader::copy(const FontMetrics& in, FontMetrics& out)
 {
     release(out);
     out = in;
-    if (in.engine) out.engine = tvg::calloc<TtfMetrics*>(1, sizeof(TtfMetrics));
+    if (in.engine) out.engine = tvg::calloc<TtfMetrics>(1, sizeof(TtfMetrics));
     *static_cast<TtfMetrics*>(out.engine) = *static_cast<TtfMetrics*>(in.engine);
 }

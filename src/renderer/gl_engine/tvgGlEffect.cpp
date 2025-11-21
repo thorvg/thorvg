@@ -58,7 +58,7 @@ bool GlEffect::region(RenderEffectGaussianBlur* effect)
 void GlEffect::update(RenderEffectGaussianBlur* effect, const Matrix& transform)
 {
     GlGaussianBlur* blur = (GlGaussianBlur*)effect->rd;
-    if (!blur) blur = tvg::malloc<GlGaussianBlur*>(sizeof(GlGaussianBlur));
+    if (!blur) blur = tvg::malloc<GlGaussianBlur>(sizeof(GlGaussianBlur));
     blur->sigma = effect->sigma;
     blur->scale = std::sqrt(transform.e11 * transform.e11 + transform.e12 * transform.e12);
     blur->extend = 2 * blur->sigma * blur->scale;
@@ -126,7 +126,7 @@ bool GlEffect::region(RenderEffectDropShadow* effect)
 void GlEffect::update(RenderEffectDropShadow* effect, const Matrix& transform)
 {
     GlDropShadow* dropShadow = (GlDropShadow*)effect->rd;
-    if (!dropShadow) dropShadow = tvg::malloc<GlDropShadow*>(sizeof(GlDropShadow));
+    if (!dropShadow) dropShadow = tvg::malloc<GlDropShadow>(sizeof(GlDropShadow));
     const auto scale = std::sqrt(transform.e11 * transform.e11 + transform.e12 * transform.e12);
     const auto radian = tvg::deg2rad(90.0f - effect->angle) - tvg::radian(transform);
     const Point offset = {-effect->distance * cosf(radian) * scale, -effect->distance * sinf(radian) * scale};
@@ -203,7 +203,7 @@ struct GlEffectParams {
 void GlEffect::update(RenderEffectFill* effect, const Matrix& transform)
 {
     auto params = (GlEffectParams*)effect->rd;
-    if (!params) params = tvg::malloc<GlEffectParams*>(sizeof(GlEffectParams));
+    if (!params) params = tvg::malloc<GlEffectParams>(sizeof(GlEffectParams));
     params->params[0] = effect->color[0] / 255.0f;
     params->params[1] = effect->color[1] / 255.0f;
     params->params[2] = effect->color[2] / 255.0f;
@@ -219,7 +219,7 @@ void GlEffect::update(RenderEffectTint* effect, const Matrix& transform)
     if (!effect->valid) return;
 
     auto params = (GlEffectParams*)effect->rd;
-    if (!params) params = tvg::malloc<GlEffectParams*>(sizeof(GlEffectParams));
+    if (!params) params = tvg::malloc<GlEffectParams>(sizeof(GlEffectParams));
     params->params[0] = effect->black[0] / 255.0f;
     params->params[1] = effect->black[1] / 255.0f;
     params->params[2] = effect->black[2] / 255.0f;
@@ -239,7 +239,7 @@ void GlEffect::update(RenderEffectTritone* effect, const Matrix& transform)
     if (!effect->valid) return;
 
     auto params = (GlEffectParams*)effect->rd;
-    if (!params) params = tvg::malloc<GlEffectParams*>(sizeof(GlEffectParams));
+    if (!params) params = tvg::malloc<GlEffectParams>(sizeof(GlEffectParams));
     params->params[0] = effect->shadow[0] / 255.0f;
     params->params[1] = effect->shadow[1] / 255.0f;
     params->params[2] = effect->shadow[2] / 255.0f;

@@ -50,7 +50,7 @@ struct ColorStop
     void copy(const ColorStop& rhs, uint32_t cnt)
     {
         if (rhs.data) {
-            data = tvg::malloc<Fill::ColorStop*>(sizeof(Fill::ColorStop) * cnt);
+            data = tvg::malloc<Fill::ColorStop>(sizeof(Fill::ColorStop) * cnt);
             memcpy(data, rhs.data, sizeof(Fill::ColorStop) * cnt);
         }
         if (rhs.input) TVGERR("LOTTIE", "Must be populated!");

@@ -212,7 +212,7 @@ char* duplicate(const char *str, size_t n)
     auto len = strlen(str);
     if (len < n) n = len;
 
-    auto ret = tvg::malloc<char*>(n + 1);
+    auto ret = tvg::malloc<char>(n + 1);
     ret[n] = '\0';
 
     return (char*)memcpy(ret, str, n);
@@ -223,7 +223,7 @@ char* append(char* lhs, const char* rhs, size_t n)
 {
     if (!rhs) return lhs;
     if (!lhs) return duplicate(rhs, n);
-    lhs = tvg::realloc<char*>(lhs, strlen(lhs) + n + 1);
+    lhs = tvg::realloc<char>(lhs, strlen(lhs) + n + 1);
     return strncat(lhs, rhs, n);
 }
 
@@ -270,7 +270,7 @@ const char* fileext(const char* path)
 char* concat(const char* a, const char* b)
 {
     auto len = strlen(a) + strlen(b) + 1;
-    auto ret = tvg::malloc<char*>(len * sizeof(char));
+    auto ret = tvg::malloc<char>(len * sizeof(char));
     strcpy(ret, a);
     strcat(ret, b);
     return ret;

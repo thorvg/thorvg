@@ -93,7 +93,7 @@ static LinearGradient* _applyLinearGradientProperty(SvgStyleGradient* g, const B
     //Update the stops
     if (g->stops.count == 0) return fillGrad;
 
-    stops = tvg::malloc<Fill::ColorStop*>(g->stops.count * sizeof(Fill::ColorStop));
+    stops = tvg::malloc<Fill::ColorStop>(g->stops.count * sizeof(Fill::ColorStop));
     auto prevOffset = 0.0f;
     for (uint32_t i = 0; i < g->stops.count; ++i) {
         auto colorStop = &g->stops[i];
@@ -143,7 +143,7 @@ static RadialGradient* _applyRadialGradientProperty(SvgStyleGradient* g, const B
     //Update the stops
     if (g->stops.count == 0) return fillGrad;
 
-    stops = tvg::malloc<Fill::ColorStop*>(g->stops.count * sizeof(Fill::ColorStop));
+    stops = tvg::malloc<Fill::ColorStop>(g->stops.count * sizeof(Fill::ColorStop));
     auto prevOffset = 0.0f;
     for (uint32_t i = 0; i < g->stops.count; ++i) {
         auto colorStop = &g->stops[i];

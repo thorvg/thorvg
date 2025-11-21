@@ -524,14 +524,14 @@ static void _rasterPolygonImage(SwSurface* surface, const SwImage& image, const 
 
 static AASpans* _AASpans(int yStart, int yEnd)
 {
-    auto aaSpans = tvg::malloc<AASpans*>(sizeof(AASpans));
+    auto aaSpans = tvg::malloc<AASpans>(sizeof(AASpans));
     aaSpans->yStart = yStart;
     aaSpans->yEnd = yEnd;
 
     //Initialize X range
     auto height = yEnd - yStart;
 
-    aaSpans->lines = tvg::malloc<AALine*>(height * sizeof(AALine));
+    aaSpans->lines = tvg::malloc<AALine>(height * sizeof(AALine));
 
     for (int32_t i = 0; i < height; i++) {
         aaSpans->lines[i].x[0] = INT32_MAX;

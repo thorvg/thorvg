@@ -808,7 +808,7 @@ void *jpeg_decoder::alloc(size_t nSize, bool zero)
     }
     if (!rv) {
         int capacity = JPGD_MAX(32768 - 256, (nSize + 2047) & ~2047);
-        auto b = tvg::malloc<mem_block*>(sizeof(mem_block) + capacity);
+        auto b = tvg::malloc<mem_block>(sizeof(mem_block) + capacity);
         b->m_pNext = m_pMem_blocks; m_pMem_blocks = b;
         b->m_used_count = nSize;
         b->m_size = capacity;
@@ -2486,7 +2486,7 @@ unsigned char* jpgdDecompress(jpeg_decoder* decoder, ColorSpace cs)
     auto height = decoder->get_height();
     //auto actual_comps = decoder->get_num_components();
     const auto stride = width * channel;
-    auto ret = tvg::malloc<uint8_t*>(stride * height);
+    auto ret = tvg::malloc<uint8_t>(stride * height);
     auto dst = ret;
 
     for (int y = 0; y < height; y++) {

@@ -724,7 +724,7 @@ static Matrix* _parseTransformationMatrix(const char* value)
 {
     const int POINT_CNT = 8;
 
-    auto matrix = tvg::malloc<Matrix*>(sizeof(Matrix));
+    auto matrix = tvg::malloc<Matrix>(sizeof(Matrix));
     tvg::identity(matrix);
 
     float points[POINT_CNT];
@@ -1391,10 +1391,10 @@ static bool _attrParseGaussianBlurNode(void* data, const char* key, const char* 
 
 static SvgNode* _createNode(SvgNode* parent, SvgNodeType type)
 {
-    SvgNode* node = tvg::calloc<SvgNode*>(1, sizeof(SvgNode));
+    SvgNode* node = tvg::calloc<SvgNode>(1, sizeof(SvgNode));
 
     //Default fill property
-    node->style = tvg::calloc<SvgStyleProperty*>(1, sizeof(SvgStyleProperty));
+    node->style = tvg::calloc<SvgStyleProperty>(1, sizeof(SvgStyleProperty));
 
     //Set the default values other than 0/false: https://www.w3.org/TR/SVGTiny12/painting.html#SpecifyingPaint
     node->style->opacity = 255;
@@ -2136,7 +2136,7 @@ static bool _attrParseUseNode(void* data, const char* key, const char* value)
                 INLIST_FOREACH(loader->cloneNodes, pair) {
                     if (_checkPostponed(nodeFrom, pair->node, 1)) {
                         postpone = true;
-                        loader->cloneNodes.back(new(tvg::malloc<SvgNodeIdPair*>(sizeof(SvgNodeIdPair))) SvgNodeIdPair(node, id));
+                        loader->cloneNodes.back(new(tvg::malloc<SvgNodeIdPair>(sizeof(SvgNodeIdPair))) SvgNodeIdPair(node, id));
                         break;
                     }
                 }
@@ -2154,7 +2154,7 @@ static bool _attrParseUseNode(void* data, const char* key, const char* value)
             //some svg export software include <defs> element at the end of the file
             //if so the 'from' element won't be found now and we have to repeat finding
             //after the whole file is parsed
-            loader->cloneNodes.back(new(tvg::malloc<SvgNodeIdPair*>(sizeof(SvgNodeIdPair))) SvgNodeIdPair(node, id));
+            loader->cloneNodes.back(new(tvg::malloc<SvgNodeIdPair>(sizeof(SvgNodeIdPair))) SvgNodeIdPair(node, id));
         }
     } else {
         return _attrParseGNode(data, key, value);
@@ -2568,12 +2568,12 @@ static bool _attrParseRadialGradientNode(void* data, const char* key, const char
 
 static SvgStyleGradient* _createRadialGradient(SvgLoaderData* loader, const char* buf, unsigned bufLength)
 {
-    auto grad = tvg::calloc<SvgStyleGradient*>(1, sizeof(SvgStyleGradient));
+    auto grad = tvg::calloc<SvgStyleGradient>(1, sizeof(SvgStyleGradient));
     loader->svgParse->styleGrad = grad;
 
     grad->flags = SvgGradientFlags::None;
     grad->type = SvgGradientType::Radial;
-    grad->radial = tvg::calloc<SvgRadialGradient*>(1, sizeof(SvgRadialGradient));
+    grad->radial = tvg::calloc<SvgRadialGradient>(1, sizeof(SvgRadialGradient));
     if (!grad->radial) {
         grad->clear();
         tvg::free(grad);
@@ -2859,12 +2859,12 @@ static bool _attrParseLinearGradientNode(void* data, const char* key, const char
 
 static SvgStyleGradient* _createLinearGradient(SvgLoaderData* loader, const char* buf, unsigned bufLength)
 {
-    auto grad = tvg::calloc<SvgStyleGradient*>(1, sizeof(SvgStyleGradient));
+    auto grad = tvg::calloc<SvgStyleGradient>(1, sizeof(SvgStyleGradient));
     loader->svgParse->styleGrad = grad;
 
     grad->flags = SvgGradientFlags::None;
     grad->type = SvgGradientType::Linear;
-    grad->linear = tvg::calloc<SvgLinearGradient*>(1, sizeof(SvgLinearGradient));
+    grad->linear = tvg::calloc<SvgLinearGradient>(1, sizeof(SvgLinearGradient));
     if (!grad->linear) {
         grad->clear();
         tvg::free(grad);
@@ -2944,7 +2944,7 @@ static void _inheritGradient(SvgLoaderData* loader, SvgStyleGradient* to, SvgSty
     }
 
     if (!to->transform && from->transform) {
-        to->transform = tvg::malloc<Matrix*>(sizeof(Matrix));
+        to->transform = tvg::malloc<Matrix>(sizeof(Matrix));
         if (to->transform) *to->transform = *from->transform;
     }
 
@@ -2998,7 +2998,7 @@ static SvgStyleGradient* _cloneGradient(SvgStyleGradient* from)
 {
     if (!from) return nullptr;
 
-    auto grad = tvg::calloc<SvgStyleGradient*>(1, sizeof(SvgStyleGradient));
+    auto grad = tvg::calloc<SvgStyleGradient>(1, sizeof(SvgStyleGradient));
     if (!grad) return nullptr;
 
     grad->type = from->type;
@@ -3009,16 +3009,16 @@ static SvgStyleGradient* _cloneGradient(SvgStyleGradient* from)
     grad->flags = from->flags;
 
     if (from->transform) {
-        grad->transform = tvg::calloc<Matrix*>(1, sizeof(Matrix));
+        grad->transform = tvg::calloc<Matrix>(1, sizeof(Matrix));
         if (grad->transform) *grad->transform = *from->transform;
     }
 
     if (grad->type == SvgGradientType::Linear) {
-        grad->linear = tvg::calloc<SvgLinearGradient*>(1, sizeof(SvgLinearGradient));
+        grad->linear = tvg::calloc<SvgLinearGradient>(1, sizeof(SvgLinearGradient));
         if (!grad->linear) goto error_grad_alloc;
         memcpy(grad->linear, from->linear, sizeof(SvgLinearGradient));
     } else if (grad->type == SvgGradientType::Radial) {
-        grad->radial = tvg::calloc<SvgRadialGradient*>(1, sizeof(SvgRadialGradient));
+        grad->radial = tvg::calloc<SvgRadialGradient>(1, sizeof(SvgRadialGradient));
         if (!grad->radial) goto error_grad_alloc;
         memcpy(grad->radial, from->radial, sizeof(SvgRadialGradient));
     }
@@ -3182,7 +3182,7 @@ static void _copyAttr(SvgNode* to, const SvgNode* from)
 {
     //Copy matrix attribute
     if (from->transform) {
-        to->transform = tvg::malloc<Matrix*>(sizeof(Matrix));
+        to->transform = tvg::malloc<Matrix>(sizeof(Matrix));
         if (to->transform) *to->transform = *from->transform;
     }
     //Copy style attribute
@@ -3902,7 +3902,7 @@ bool SvgLoader::header()
     //For valid check, only <svg> tag is parsed first.
     //If the <svg> tag is found, the loaded file is valid and stores viewbox information.
     //After that, the remaining content data is parsed in order with async.
-    loaderData.svgParse = tvg::malloc<SvgParser*>(sizeof(SvgParser));
+    loaderData.svgParse = tvg::malloc<SvgParser>(sizeof(SvgParser));
     loaderData.svgParse->flags = SvgStopStyleFlags::StopDefault;
     viewFlag = SvgViewFlag::None;
 
@@ -3970,7 +3970,7 @@ bool SvgLoader::header()
 bool SvgLoader::open(const char* data, uint32_t size, TVG_UNUSED const char* rpath, bool copy)
 {
     if (copy) {
-        content = tvg::malloc<char*>(size + 1);
+        content = tvg::malloc<char>(size + 1);
         if (!content) return false;
         memcpy((char*)content, data, size);
         content[size] = '\0';
