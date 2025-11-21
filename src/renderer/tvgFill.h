@@ -48,7 +48,7 @@ struct Fill::Impl
     {
         cnt = dup.cnt;
         spread = dup.spread;
-        colorStops = tvg::malloc<ColorStop*>(sizeof(ColorStop) * dup.cnt);
+        colorStops = tvg::malloc<ColorStop>(sizeof(ColorStop) * dup.cnt);
         if (dup.cnt > 0) memcpy(colorStops, dup.colorStops, sizeof(ColorStop) * dup.cnt);
         transform = dup.transform;
     }
@@ -67,7 +67,7 @@ struct Fill::Impl
         }
 
         if (cnt != this->cnt) {
-            this->colorStops = tvg::realloc<ColorStop*>(this->colorStops, cnt * sizeof(ColorStop));
+            this->colorStops = tvg::realloc<ColorStop>(this->colorStops, cnt * sizeof(ColorStop));
         }
 
         this->cnt = cnt;

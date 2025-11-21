@@ -24,7 +24,7 @@
 // ALPHDecoder object.
 
 ALPHDecoder* ALPHNew(void) {
-  ALPHDecoder* const dec = tvg::calloc<ALPHDecoder*>(1ULL, sizeof(*dec));
+  ALPHDecoder* const dec = tvg::calloc<ALPHDecoder>(1ULL, sizeof(*dec));
   return dec;
 }
 

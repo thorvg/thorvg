@@ -93,7 +93,7 @@ bool PngLoader::open(const char* data, uint32_t size, TVG_UNUSED const char* rpa
     if (lodepng_inspect(&width, &height, &state, (unsigned char*)(data), size) > 0) return false;
 
     if (copy) {
-        this->data = tvg::malloc<unsigned char*>(size);
+        this->data = tvg::malloc<unsigned char>(size);
         if (!this->data) return false;
         memcpy((unsigned char *)this->data, data, size);
         freeData = true;

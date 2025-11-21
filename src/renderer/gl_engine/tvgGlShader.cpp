@@ -66,7 +66,7 @@ uint32_t GlShader::compileShader(uint32_t type, char* shaderSrc)
 
         if (infoLen > 0)
         {
-            auto infoLog = tvg::malloc<char*>(sizeof(char)*infoLen);
+            auto infoLog = tvg::malloc<char>(sizeof(char)*infoLen);
             glGetShaderInfoLog(shader, infoLen, NULL, infoLog);
             TVGERR("GL_ENGINE", "Error compiling shader: %s", infoLog);
             tvg::free(infoLog);

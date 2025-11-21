@@ -66,7 +66,7 @@ static LottieExpressions* exps = nullptr;   //singleton instance engine
 
 static ExpContent* _expcontent(LottieExpression* exp, float frameNo, void* data, size_t refCnt = 1)
 {
-    auto ret = tvg::malloc<ExpContent*>(sizeof(ExpContent));
+    auto ret = tvg::malloc<ExpContent>(sizeof(ExpContent));
     ret->exp = exp;
     ret->frameNo = frameNo;
     ret->data = data;
@@ -156,7 +156,7 @@ static char* _name(jerry_value_t args)
 {
     auto arg0 = jerry_value_to_string(args);
     auto len = jerry_string_length(arg0);
-    auto name = tvg::malloc<jerry_char_t*>(len * sizeof(jerry_char_t) + 1);
+    auto name = tvg::malloc<jerry_char_t>(len * sizeof(jerry_char_t) + 1);
     jerry_string_to_buffer(arg0, JERRY_ENCODING_UTF8, name, len);
     name[len] = '\0';
     jerry_value_free(arg0);

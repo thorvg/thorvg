@@ -329,7 +329,7 @@ struct SwCellPool
     uint32_t size;
     SwCell* buffer;
 
-    SwCellPool() : size(DEFAULT_POOL_SIZE), buffer(tvg::malloc<SwCell*>(DEFAULT_POOL_SIZE)) {}
+    SwCellPool() : size(DEFAULT_POOL_SIZE), buffer(tvg::malloc<SwCell>(DEFAULT_POOL_SIZE)) {}
     ~SwCellPool() { tvg::free(buffer); }
 };
 

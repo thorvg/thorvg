@@ -48,7 +48,7 @@ static void _growBorder(SwStrokeBorder* border, uint32_t newPts)
 {
     if (border->pts.count + newPts <= border->pts.reserved) return;
     border->pts.grow(newPts * 20);
-    border->tags = tvg::realloc<uint8_t*>(border->tags, border->pts.reserved);      //align the pts / tags memory size
+    border->tags = tvg::realloc<uint8_t>(border->tags, border->pts.reserved);      //align the pts / tags memory size
 }
 
 

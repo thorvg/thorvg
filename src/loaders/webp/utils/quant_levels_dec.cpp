@@ -213,7 +213,7 @@ static int InitParams(uint8_t* const data, int width, int height,
   const size_t size_m =  width * sizeof(*p->average_);
   const size_t size_lut = (1 + 2 * LUT_SIZE) * sizeof(*p->correction_);
   const size_t total_size = size_scratch_m + size_m + size_lut;
-  uint8_t* mem = tvg::malloc<uint8_t*>(1U * total_size);
+  uint8_t* mem = tvg::malloc<uint8_t>(1U * total_size);
 
   if (mem == NULL) return 0;
   p->mem_ = (void*)mem;

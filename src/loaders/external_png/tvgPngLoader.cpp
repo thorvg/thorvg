@@ -39,7 +39,7 @@ void PngLoader::clear()
 
 PngLoader::PngLoader() : ImageLoader(FileType::Png)
 {
-    image = tvg::calloc<png_imagep>(1, sizeof(png_image));
+    image = tvg::calloc<png_image>(1, sizeof(png_image));
     image->version = PNG_IMAGE_VERSION;
     image->opaque = nullptr;
 }
@@ -95,7 +95,7 @@ bool PngLoader::read()
         surface.cs = ColorSpace::ABGR8888S;
     }
 
-    auto buffer = tvg::malloc<png_bytep>(PNG_IMAGE_SIZE((*image)));
+    auto buffer = tvg::malloc<png_byte>(PNG_IMAGE_SIZE((*image)));
     if (!png_image_finish_read(image, NULL, buffer, 0, NULL)) {
         tvg::free(buffer);
         return false;

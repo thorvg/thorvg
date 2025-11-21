@@ -186,7 +186,7 @@ void cssCopyStyleAttr(SvgNode* to, const SvgNode* from)
 {
     //Copy matrix attribute
     if (from->transform && !(to->style->flags & SvgStyleFlags::Transform)) {
-        to->transform = tvg::malloc<Matrix*>(sizeof(Matrix));
+        to->transform = tvg::malloc<Matrix>(sizeof(Matrix));
         if (to->transform) {
             *to->transform = *from->transform;
             to->style->flags = (to->style->flags | SvgStyleFlags::Transform);

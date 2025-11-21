@@ -45,7 +45,7 @@ size_t svgUtilURLDecode(const char *src, char** dst)
     auto length = strlen(src);
     if (length == 0) return 0;
 
-    char* decoded = tvg::malloc<char*>(sizeof(char) * length + 1);
+    char* decoded = tvg::malloc<char>(sizeof(char) * length + 1);
 
     char a, b;
     int idx =0;

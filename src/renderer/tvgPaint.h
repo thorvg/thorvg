@@ -212,7 +212,7 @@ struct Paint::Impl
 
         if (!target && method == MaskMethod::None) return Result::Success;
 
-        maskData = tvg::malloc<Mask*>(sizeof(Mask));
+        maskData = tvg::malloc<Mask>(sizeof(Mask));
         target->ref();
         maskData->target = target;
         PAINT(target)->parent = parent;

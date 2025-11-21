@@ -103,7 +103,7 @@ struct LoadModule
             return nullptr;
         }
 
-        auto content = tvg::malloc<char*>(sizeof(char) * (text ? size + 1 : size));
+        auto content = tvg::malloc<char>(sizeof(char) * (text ? size + 1 : size));
         fseek(f, 0, SEEK_SET);
         size = fread(content, sizeof(char), size, f);
         if (text) content[size] = '\0';

@@ -507,7 +507,7 @@ struct LottiePathSet : LottieProperty
     LottieScalarFrame<PathSet>& newFrame()
     {
         if (!frames) {
-            frames = tvg::calloc<Array<LottieScalarFrame<PathSet>>*>(1, sizeof(Array<LottieScalarFrame<PathSet>>));
+            frames = tvg::calloc<Array<LottieScalarFrame<PathSet>>>(1, sizeof(Array<LottieScalarFrame<PathSet>>));
         }
         if (frames->count + 1 >= frames->reserved) {
             auto old = frames->reserved;
@@ -561,7 +561,7 @@ struct LottiePathSet : LottieProperty
         //interpolate 2 frames
         auto s = frame->value.pts;
         auto e = (frame + 1)->value.pts;
-        auto interpPts = tvg::malloc<Point*>(frame->value.ptsCnt * sizeof(Point));
+        auto interpPts = tvg::malloc<Point>(frame->value.ptsCnt * sizeof(Point));
         auto p = interpPts;
 
         for (auto i = 0; i < frame->value.ptsCnt; ++i, ++s, ++e, ++p) {
@@ -705,7 +705,7 @@ struct LottieColorStop : LottieProperty
     LottieScalarFrame<ColorStop>& newFrame()
     {
         if (!frames) {
-            frames = tvg::calloc<Array<LottieScalarFrame<ColorStop>>*>(1, sizeof(Array<LottieScalarFrame<ColorStop>>));
+            frames = tvg::calloc<Array<LottieScalarFrame<ColorStop>>>(1, sizeof(Array<LottieScalarFrame<ColorStop>>));
         }
         if (frames->count + 1 >= frames->reserved) {
             auto old = frames->reserved;
@@ -813,7 +813,7 @@ struct LottieColorStop : LottieProperty
                 frames = rhs.frames;
                 rhs.frames = nullptr;
             } else {
-                frames = tvg::calloc<Array<LottieScalarFrame<ColorStop>>*>(1, sizeof(Array<LottieScalarFrame<ColorStop>>));
+                frames = tvg::calloc<Array<LottieScalarFrame<ColorStop>>>(1, sizeof(Array<LottieScalarFrame<ColorStop>>));
                 *frames = *rhs.frames;
                 for (uint32_t i = 0; i < (*rhs.frames).count; ++i) {
                     (*frames)[i].value.copy((*rhs.frames)[i].value, rhs.count);

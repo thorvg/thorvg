@@ -502,7 +502,7 @@ void shapeDelStroke(SwShape& shape)
 
 void shapeResetStroke(SwShape& shape, const RenderShape* rshape, const Matrix& transform, SwMpool* mpool, unsigned tid)
 {
-    if (!shape.stroke) shape.stroke = tvg::calloc<SwStroke*>(1, sizeof(SwStroke));
+    if (!shape.stroke) shape.stroke = tvg::calloc<SwStroke>(1, sizeof(SwStroke));
     auto stroke = shape.stroke;
     strokeReset(stroke, rshape, transform, mpool, tid);
     rleReset(shape.strokeRle);
@@ -552,7 +552,7 @@ bool shapeGenStrokeFillColors(SwShape& shape, const Fill* fill, const Matrix& tr
 void shapeResetFill(SwShape& shape)
 {
     if (!shape.fill) {
-        shape.fill = tvg::calloc<SwFill*>(1, sizeof(SwFill));
+        shape.fill = tvg::calloc<SwFill>(1, sizeof(SwFill));
         if (!shape.fill) return;
     }
     fillReset(shape.fill);
@@ -562,7 +562,7 @@ void shapeResetFill(SwShape& shape)
 void shapeResetStrokeFill(SwShape& shape)
 {
     if (!shape.stroke->fill) {
-        shape.stroke->fill = tvg::calloc<SwFill*>(1, sizeof(SwFill));
+        shape.stroke->fill = tvg::calloc<SwFill>(1, sizeof(SwFill));
         if (!shape.stroke->fill) return;
     }
     fillReset(shape.stroke->fill);

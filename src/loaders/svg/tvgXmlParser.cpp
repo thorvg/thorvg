@@ -286,7 +286,7 @@ bool isIgnoreUnsupportedLogElements(TVG_UNUSED const char* tagName)
 bool xmlParseAttributes(const char* buf, unsigned bufLength, xmlAttributeCb func, const void* data)
 {
     const char *itr = buf, *itrEnd = buf + bufLength;
-    char* tmpBuf = tvg::malloc<char*>(bufLength + 1);
+    char* tmpBuf = tvg::malloc<char>(bufLength + 1);
 
     if (!buf || !func || !tmpBuf) goto error;
 
