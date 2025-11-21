@@ -89,7 +89,7 @@ struct RenderContext
 
     RenderContext(Shape* propagator)
     {
-        SHAPE(propagator)->reset();
+        to<ShapeImpl>(propagator)->reset();
         propagator->ref();
         this->propagator = propagator;
     }

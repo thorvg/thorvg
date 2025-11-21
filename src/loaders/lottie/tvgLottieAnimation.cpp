@@ -32,7 +32,7 @@ LottieAnimation::~LottieAnimation() = default;
 
 uint32_t LottieAnimation::gen(const char* slot) noexcept
 {
-    auto loader = PICTURE(pImpl->picture)->loader;
+    auto loader = to<PictureImpl>(pImpl->picture)->loader;
     if (!loader) return 0;
 
     return static_cast<LottieLoader*>(loader)->gen(slot);
@@ -41,7 +41,7 @@ uint32_t LottieAnimation::gen(const char* slot) noexcept
 
 Result LottieAnimation::apply(uint32_t id) noexcept
 {
-    auto loader = PICTURE(pImpl->picture)->loader;
+    auto loader = to<PictureImpl>(pImpl->picture)->loader;
     if (!loader) return Result::InsufficientCondition;
 
     if (static_cast<LottieLoader*>(loader)->apply(id)) {
@@ -55,7 +55,7 @@ Result LottieAnimation::apply(uint32_t id) noexcept
 
 Result LottieAnimation::del(uint32_t id) noexcept
 {
-    auto loader = PICTURE(pImpl->picture)->loader;
+    auto loader = to<PictureImpl>(pImpl->picture)->loader;
     if (!loader) return Result::InsufficientCondition;
 
     if (static_cast<LottieLoader*>(loader)->del(id)) {
@@ -69,7 +69,7 @@ Result LottieAnimation::del(uint32_t id) noexcept
 
 Result LottieAnimation::segment(const char* marker) noexcept
 {
-    auto loader = PICTURE(pImpl->picture)->loader;
+    auto loader = to<PictureImpl>(pImpl->picture)->loader;
     if (!loader) return Result::InsufficientCondition;
 
     if (!marker) {
@@ -85,7 +85,7 @@ Result LottieAnimation::segment(const char* marker) noexcept
 
 Result LottieAnimation::tween(float from, float to, float progress) noexcept
 {
-    auto loader = PICTURE(pImpl->picture)->loader;
+    auto loader = tvg::to<PictureImpl>(pImpl->picture)->loader;
     if (!loader) return Result::InsufficientCondition;
     if (!static_cast<LottieLoader*>(loader)->tween(from, to, progress)) return Result::InsufficientCondition;
     PAINT(pImpl->picture)->mark(RenderUpdateFlag::All);
@@ -95,7 +95,7 @@ Result LottieAnimation::tween(float from, float to, float progress) noexcept
 
 uint32_t LottieAnimation::markersCnt() noexcept
 {
-    auto loader = PICTURE(pImpl->picture)->loader;
+    auto loader = to<PictureImpl>(pImpl->picture)->loader;
     if (!loader) return 0;
     return static_cast<LottieLoader*>(loader)->markersCnt();
 }
@@ -103,7 +103,7 @@ uint32_t LottieAnimation::markersCnt() noexcept
 
 const char* LottieAnimation::marker(uint32_t idx) noexcept
 {
-    auto loader = PICTURE(pImpl->picture)->loader;
+    auto loader = to<PictureImpl>(pImpl->picture)->loader;
     if (!loader) return nullptr;
     return static_cast<LottieLoader*>(loader)->markers(idx);
 }
@@ -113,7 +113,7 @@ Result LottieAnimation::assign(const char* layer, uint32_t ix, const char* var, 
 {
     if (!layer || !var) return Result::InvalidArguments;
 
-    auto loader = PICTURE(pImpl->picture)->loader;
+    auto loader = to<PictureImpl>(pImpl->picture)->loader;
     if (!loader) return Result::InsufficientCondition;
     if (static_cast<LottieLoader*>(loader)->assign(layer, ix, var, val)) {
         PAINT(pImpl->picture)->mark(RenderUpdateFlag::All);
@@ -127,7 +127,7 @@ Result LottieAnimation::assign(const char* layer, uint32_t ix, const char* var, 
 Result LottieAnimation::quality(uint8_t value) noexcept
 {
     if (value > 100) return Result::InvalidArguments;
-    auto loader = PICTURE(pImpl->picture)->loader;
+    auto loader = to<PictureImpl>(pImpl->picture)->loader;
     if (!loader) return Result::InsufficientCondition;
     if (!static_cast<LottieLoader*>(loader)->quality(value)) return Result::InsufficientCondition;
     return Result::Success;

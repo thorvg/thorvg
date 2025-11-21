@@ -27,8 +27,6 @@
 #include "tvgScene.h"
 #include "tvgLoader.h"
 
-#define PICTURE(A) static_cast<PictureImpl*>(A)
-#define CONST_PICTURE(A) static_cast<const PictureImpl*>(A)
 
 struct PictureIterator : Iterator
 {
@@ -131,7 +129,7 @@ struct PictureImpl : Picture
         if (!impl.renderer) return false;
         load();
         if (impl.rd) return impl.renderer->intersectsImage(impl.rd, region);
-        else if (vector) return SCENE(vector)->intersects(region);
+        else if (vector) return to<SceneImpl>(vector)->intersects(region);
         return false;
     }
 
@@ -199,7 +197,7 @@ struct PictureImpl : Picture
         load();
 
         auto picture = Picture::gen();
-        auto dup = PICTURE(picture);
+        auto dup = to<PictureImpl>(picture);
 
         if (vector) {
             dup->vector = vector->duplicate();

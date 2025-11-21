@@ -27,8 +27,6 @@
 #include "tvgMath.h"
 #include "tvgPaint.h"
 
-#define SHAPE(A) static_cast<ShapeImpl*>(A)
-#define CONST_SHAPE(A) static_cast<const ShapeImpl*>(A)
 
 struct ShapeImpl : Shape
 {
@@ -469,7 +467,7 @@ struct ShapeImpl : Shape
     {
         auto shape = static_cast<Shape*>(ret);
         if (!shape) shape = Shape::gen();
-        auto dup = SHAPE(shape);
+        auto dup = to<ShapeImpl>(shape);
 
         //Path
         dup->rs.path.clear();
