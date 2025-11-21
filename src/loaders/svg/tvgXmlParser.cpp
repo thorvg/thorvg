@@ -453,34 +453,28 @@ bool xmlParse(const char* buf, unsigned bufLength, bool strip, xmlCb func, const
 
 bool xmlParseW3CAttribute(const char* buf, unsigned bufLength, xmlAttributeCb func, const void* data)
 {
-    const char* end;
-    char* key;
-    char* val;
-    char* next;
-
     if (!buf) return false;
 
-    end = buf + bufLength;
-    key = (char*)alloca(end - buf + 1);
-    val = (char*)alloca(end - buf + 1);
-
+    const auto end = buf + bufLength;
     if (buf == end) return true;
 
+    auto kmem = tvg::malloc<char>(end - buf + 1);
+    auto vmem = tvg::malloc<char>(end - buf + 1);
+    auto key = kmem;
+    auto val = vmem;
+
     do {
-        char* sep = (char*)strchr(buf, ':');
-        next = (char*)strchr(buf, ';');
+        auto sep = (char*)strchr(buf, ':');
+        auto next = (char*)strchr(buf, ';');
 
         if (auto src = strstr(buf, "src")) {//src tag from css font-face contains extra semicolon
             if (src < sep) {
                 if (next + 1 < end) next = (char*)strchr(next + 1, ';');
-                else return true;
+                else break;
             }
         }
 
-        if (sep >= end) {
-            next = nullptr;
-            sep = nullptr;
-        }
+        if (sep >= end) next = sep = nullptr;
         if (next >= end) next = nullptr;
 
         key[0] = '\0';
@@ -502,7 +496,6 @@ bool xmlParseW3CAttribute(const char* buf, unsigned bufLength, xmlAttributeCb fu
             memcpy(key, buf, next - buf);
             key[next - buf] = '\0';
         }
-
         if (key[0]) {
             key = const_cast<char*>(_xmlSkipWhiteSpace(key, key + strlen(key)));
             key[_xmlUnskipWhiteSpace(key + strlen(key) , key) - key] = '\0';
@@ -515,10 +508,12 @@ bool xmlParseW3CAttribute(const char* buf, unsigned bufLength, xmlAttributeCb fu
                 }
             }
         }
-
         if (!next) break;
         buf = next + 1;
     } while (true);
+
+    tvg::free(kmem);
+    tvg::free(vmem);
 
     return true;
 }
