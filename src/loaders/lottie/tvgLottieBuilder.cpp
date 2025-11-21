@@ -228,9 +228,10 @@ static void _update(LottieStroke* stroke, float frameNo, RenderContext* ctx, Twe
     ctx->propagator->strokeMiterlimit(stroke->miterLimit);
 
     if (stroke->dashattr) {
-        auto dashes = (float*)alloca(stroke->dashattr->size * sizeof(float));
+        auto dashes = tvg::malloc<float>(stroke->dashattr->size * sizeof(float));
         for (uint8_t i = 0; i < stroke->dashattr->size; ++i) dashes[i] = stroke->dashattr->values[i](frameNo, tween, exps);
         ctx->propagator->strokeDash(dashes, stroke->dashattr->size, stroke->dashattr->offset(frameNo, tween, exps));
+        tvg::free(dashes);
     } else {
         ctx->propagator->strokeDash(nullptr, 0);
     }
@@ -925,7 +926,7 @@ void LottieBuilder::updateURLFont( LottieLayer* layer, float frameNo, LottieText
 
     //text build
     auto len = strlen(doc.text);
-    auto buf = (char*)alloca(len + 1);
+    auto buf = tvg::malloc<char>(len + 1);
 
     // preprocessing text for modern systems: handle carriage return ('\r') and end-of-text ('\3')
     // as line feed ('\n') only when they appear independently.
@@ -953,6 +954,8 @@ void LottieBuilder::updateURLFont( LottieLayer* layer, float frameNo, LottieText
     //outline
     auto strkColor = doc.stroke.color;
     if (doc.stroke.width > 0.0f) paint->outline(doc.stroke.width, strkColor.r, strkColor.g, strkColor.b);
+
+    tvg::free(buf);
 
     //text range
     if (text->ranges.empty()) return;

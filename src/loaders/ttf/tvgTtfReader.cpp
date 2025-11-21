@@ -454,8 +454,9 @@ bool TtfReader::convert(RenderPath& path, TtfGlyph& glyph, uint32_t glyphOffset,
     auto outline = glyphOffset + 10;
     if (!validate(outline, cntrsCnt * 2 + 2)) return false;
 
+    auto ret = false;
     auto ptsCnt = _u16(data, outline + (cntrsCnt - 1) * 2) + 1;
-    auto endPts = (size_t*)alloca(cntrsCnt * sizeof(size_t));  //the index of the contour points.
+    auto endPts = tvg::malloc<size_t>(cntrsCnt * sizeof(size_t));  //the index of the contour points.
 
     for (uint32_t i = 0; i < cntrsCnt; ++i) {
         endPts[i] = (uint32_t) _u16(data, outline);
@@ -463,49 +464,51 @@ bool TtfReader::convert(RenderPath& path, TtfGlyph& glyph, uint32_t glyphOffset,
     }
     outline += 2U + _u16(data, outline);
 
-    auto flags = (uint8_t*)alloca(ptsCnt * sizeof(uint8_t));
-    if (!this->flags(&outline, flags, ptsCnt)) return false;
-
-    auto pts = (Point*)alloca(ptsCnt * sizeof(Point));
-    if (!this->points(outline, flags, pts, ptsCnt, offset)) return false;
-
-    //generate tvg paths
-    path.cmds.reserve(ptsCnt);
-    path.pts.reserve(ptsCnt);
-
-    uint32_t begin = 0;
-
-    for (uint32_t i = 0; i < cntrsCnt; ++i) {
-        //contour must start with move to
-        auto offCurve = !(flags[begin] & ON_CURVE);
-        auto ptsBegin = offCurve ? (pts[begin] + pts[endPts[i]]) * 0.5f : pts[begin];
-        path.moveTo(ptsBegin);
-        auto cnt = endPts[i] - begin + 1;
-        for (uint32_t x = 1; x < cnt; ++x) {
-            if (flags[begin + x] & ON_CURVE) {
-                if (offCurve) {
-                    path.cubicTo(path.pts.last() + (2.0f/3.0f) * (pts[begin + x - 1] - path.pts.last()), pts[begin + x] + (2.0f/3.0f) * (pts[begin + x - 1] - pts[begin + x]), pts[begin + x]);
-                    offCurve = false;
-                } else {
-                    path.lineTo(pts[begin + x]);
+    auto flags = tvg::malloc<uint8_t>(ptsCnt * sizeof(uint8_t));
+    if (this->flags(&outline, flags, ptsCnt)) {
+        auto pts = tvg::malloc<Point>(ptsCnt * sizeof(Point));
+        if (this->points(outline, flags, pts, ptsCnt, offset)) {
+            //generate tvg paths
+            path.cmds.reserve(ptsCnt);
+            path.pts.reserve(ptsCnt);
+            uint32_t begin = 0;
+            for (uint32_t i = 0; i < cntrsCnt; ++i) {
+                //contour must start with move to
+                auto offCurve = !(flags[begin] & ON_CURVE);
+                auto ptsBegin = offCurve ? (pts[begin] + pts[endPts[i]]) * 0.5f : pts[begin];
+                path.moveTo(ptsBegin);
+                auto cnt = endPts[i] - begin + 1;
+                for (uint32_t x = 1; x < cnt; ++x) {
+                    if (flags[begin + x] & ON_CURVE) {
+                        if (offCurve) {
+                            path.cubicTo(path.pts.last() + (2.0f/3.0f) * (pts[begin + x - 1] - path.pts.last()), pts[begin + x] + (2.0f/3.0f) * (pts[begin + x - 1] - pts[begin + x]), pts[begin + x]);
+                            offCurve = false;
+                        } else {
+                            path.lineTo(pts[begin + x]);
+                        }
+                    } else {
+                        if (offCurve) {
+                            auto end = (pts[begin + x] + pts[begin + x - 1]) * 0.5f;
+                            path.cubicTo(path.pts.last() + (2.0f/3.0f) * (pts[begin + x - 1] - path.pts.last()), end + (2.0f/3.0f) * (pts[begin + x - 1] - end), end);
+                        } else {
+                            offCurve = true;
+                        }
+                    }
                 }
-            } else {
                 if (offCurve) {
-                    auto end = (pts[begin + x] + pts[begin + x - 1]) * 0.5f;
-                    path.cubicTo(path.pts.last() + (2.0f/3.0f) * (pts[begin + x - 1] - path.pts.last()), end + (2.0f/3.0f) * (pts[begin + x - 1] - end), end);
-                } else {
-                    offCurve = true;
+                    path.cubicTo(path.pts.last() + (2.0f/3.0f) * (pts[begin + cnt - 1] - path.pts.last()), ptsBegin + (2.0f/3.0f) * (pts[begin + cnt - 1] - ptsBegin), ptsBegin);
                 }
+                //contour must end with close
+                path.close();
+                begin = endPts[i] + 1;
             }
+            ret = true;
         }
-        if (offCurve) {
-            path.cubicTo(path.pts.last() + (2.0f/3.0f) * (pts[begin + cnt - 1] - path.pts.last()), ptsBegin + (2.0f/3.0f) * (pts[begin + cnt - 1] - ptsBegin), ptsBegin);
-        }
-        //contour must end with close
-        path.close();
-        begin = endPts[i] + 1;
+        tvg::free(pts);
     }
-    return true;
+    tvg::free(flags);
+    tvg::free(endPts);
+    return ret;
 }
 
 
