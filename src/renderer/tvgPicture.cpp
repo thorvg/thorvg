@@ -42,7 +42,7 @@ Result Picture::load(const char* filename) noexcept
 {
 #ifdef THORVG_FILE_IO_SUPPORT
     if (!filename) return Result::InvalidArguments;
-    return PICTURE(this)->load(filename);
+    return to<PictureImpl>(this)->load(filename);
 #else
     TVGLOG("RENDERER", "FILE IO is disabled!");
     return Result::NonSupport;
@@ -52,38 +52,38 @@ Result Picture::load(const char* filename) noexcept
 
 Result Picture::load(const char* data, uint32_t size, const char* mimeType, const char* rpath, bool copy) noexcept
 {
-    return PICTURE(this)->load(data, size, mimeType, rpath, copy);
+    return to<PictureImpl>(this)->load(data, size, mimeType, rpath, copy);
 }
 
 
 Result Picture::load(const uint32_t* data, uint32_t w, uint32_t h, ColorSpace cs, bool copy) noexcept
 {
-    return PICTURE(this)->load(data, w, h, cs, copy);
+    return to<PictureImpl>(this)->load(data, w, h, cs, copy);
 }
 
 
 Result Picture::resolver(std::function<bool(Paint* paint, const char* src, void* data)> func, void* data) noexcept
 {
-    return PICTURE(this)->set(func, data);
+    return to<PictureImpl>(this)->set(func, data);
 }
 
 
 Result Picture::size(float w, float h) noexcept
 {
-    PICTURE(this)->size(w, h);
+    to<PictureImpl>(this)->size(w, h);
     return Result::Success;
 }
 
 
 Result Picture::size(float* w, float* h) const noexcept
 {
-    return CONST_PICTURE(this)->size(w, h);
+    return to<PictureImpl>(this)->size(w, h);
 }
 
 
 Result Picture::origin(float x, float y) noexcept
 {
-    PICTURE(this)->origin = {x, y};
+    to<PictureImpl>(this)->origin = {x, y};
     PAINT(this)->mark(RenderUpdateFlag::Transform);
     return Result::Success;
 }
@@ -91,8 +91,8 @@ Result Picture::origin(float x, float y) noexcept
 
 Result Picture::origin(float* x, float* y) const noexcept
 {
-    if (x) *x = CONST_PICTURE(this)->origin.x;
-    if (y) *y = CONST_PICTURE(this)->origin.y;
+    if (x) *x = to<PictureImpl>(this)->origin.x;
+    if (y) *y = to<PictureImpl>(this)->origin.y;
     return Result::Success;
 }
 

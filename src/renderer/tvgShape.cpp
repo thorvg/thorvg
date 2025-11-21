@@ -41,18 +41,18 @@ Type Shape::type() const noexcept
 
 Result Shape::reset() noexcept
 {
-    SHAPE(this)->resetPath();
+    to<ShapeImpl>(this)->resetPath();
     return Result::Success;
 }
 
 
 Result Shape::path(const PathCommand** cmds, uint32_t* cmdsCnt, const Point** pts, uint32_t* ptsCnt) const noexcept
 {
-    if (cmds) *cmds = CONST_SHAPE(this)->rs.path.cmds.data;
-    if (cmdsCnt) *cmdsCnt = CONST_SHAPE(this)->rs.path.cmds.count;
+    if (cmds) *cmds = to<ShapeImpl>(this)->rs.path.cmds.data;
+    if (cmdsCnt) *cmdsCnt = to<ShapeImpl>(this)->rs.path.cmds.count;
 
-    if (pts) *pts = CONST_SHAPE(this)->rs.path.pts.data;
-    if (ptsCnt) *ptsCnt = CONST_SHAPE(this)->rs.path.pts.count;
+    if (pts) *pts = to<ShapeImpl>(this)->rs.path.pts.data;
+    if (ptsCnt) *ptsCnt = to<ShapeImpl>(this)->rs.path.pts.count;
 
     return Result::Success;
 }
@@ -60,84 +60,84 @@ Result Shape::path(const PathCommand** cmds, uint32_t* cmdsCnt, const Point** pt
 
 Result Shape::appendPath(const PathCommand *cmds, uint32_t cmdCnt, const Point* pts, uint32_t ptsCnt) noexcept
 {
-    return SHAPE(this)->appendPath(cmds, cmdCnt, pts, ptsCnt);
+    return to<ShapeImpl>(this)->appendPath(cmds, cmdCnt, pts, ptsCnt);
 }
 
 
 Result Shape::moveTo(float x, float y) noexcept
 {
-    SHAPE(this)->rs.path.moveTo({x, y});
+    to<ShapeImpl>(this)->rs.path.moveTo({x, y});
     return Result::Success;
 }
 
 
 Result Shape::lineTo(float x, float y) noexcept
 {
-    SHAPE(this)->rs.path.lineTo({x, y});
-    SHAPE(this)->impl.mark(RenderUpdateFlag::Path);
+    to<ShapeImpl>(this)->rs.path.lineTo({x, y});
+    to<ShapeImpl>(this)->impl.mark(RenderUpdateFlag::Path);
     return Result::Success;
 }
 
 
 Result Shape::cubicTo(float cx1, float cy1, float cx2, float cy2, float x, float y) noexcept
 {
-    SHAPE(this)->rs.path.cubicTo({cx1, cy1}, {cx2, cy2}, {x, y});
-    SHAPE(this)->impl.mark(RenderUpdateFlag::Path);
+    to<ShapeImpl>(this)->rs.path.cubicTo({cx1, cy1}, {cx2, cy2}, {x, y});
+    to<ShapeImpl>(this)->impl.mark(RenderUpdateFlag::Path);
     return Result::Success;
 }
 
 
 Result Shape::close() noexcept
 {
-    SHAPE(this)->rs.path.close();
-    SHAPE(this)->impl.mark(RenderUpdateFlag::Path);
+    to<ShapeImpl>(this)->rs.path.close();
+    to<ShapeImpl>(this)->impl.mark(RenderUpdateFlag::Path);
     return Result::Success;
 }
 
 
 Result Shape::appendCircle(float cx, float cy, float rx, float ry, bool cw) noexcept
 {
-    SHAPE(this)->appendCircle(cx, cy, rx, ry, cw);
+    to<ShapeImpl>(this)->appendCircle(cx, cy, rx, ry, cw);
     return Result::Success;
 }
 
 
 Result Shape::appendRect(float x, float y, float w, float h, float rx, float ry, bool cw) noexcept
 {
-    SHAPE(this)->appendRect(x, y, w, h, rx, ry, cw);
+    to<ShapeImpl>(this)->appendRect(x, y, w, h, rx, ry, cw);
     return Result::Success;
 }
 
 
 Result Shape::fill(uint8_t r, uint8_t g, uint8_t b, uint8_t a) noexcept
 {
-    SHAPE(this)->fill(r, g, b, a);
+    to<ShapeImpl>(this)->fill(r, g, b, a);
     return Result::Success;
 }
 
 
 Result Shape::fill(Fill* f) noexcept
 {
-    return SHAPE(this)->fill(f);
+    return to<ShapeImpl>(this)->fill(f);
 }
 
 
 Result Shape::fill(uint8_t* r, uint8_t* g, uint8_t* b, uint8_t* a) const noexcept
 {
-    CONST_SHAPE(this)->rs.fillColor(r, g, b, a);
+    to<ShapeImpl>(this)->rs.fillColor(r, g, b, a);
     return Result::Success;
 }
 
 
 const Fill* Shape::fill() const noexcept
 {
-    return CONST_SHAPE(this)->rs.fill;
+    return to<ShapeImpl>(this)->rs.fill;
 }
 
 
 Result Shape::order(bool strokeFirst) noexcept
 {
-    SHAPE(this)->strokeFirst(strokeFirst);
+    to<ShapeImpl>(this)->strokeFirst(strokeFirst);
     return Result::Success;
 }
 
@@ -145,108 +145,108 @@ Result Shape::order(bool strokeFirst) noexcept
 Result Shape::strokeWidth(float width) noexcept
 {
     if (width < 0.0f) width = 0.0f;
-    SHAPE(this)->strokeWidth(width);
+    to<ShapeImpl>(this)->strokeWidth(width);
     return Result::Success;
 }
 
 
 float Shape::strokeWidth() const noexcept
 {
-    return CONST_SHAPE(this)->rs.strokeWidth();
+    return to<ShapeImpl>(this)->rs.strokeWidth();
 }
 
 
 Result Shape::strokeFill(uint8_t r, uint8_t g, uint8_t b, uint8_t a) noexcept
 {
-    SHAPE(this)->strokeFill(r, g, b, a);
+    to<ShapeImpl>(this)->strokeFill(r, g, b, a);
     return Result::Success;
 }
 
 
 Result Shape::strokeFill(uint8_t* r, uint8_t* g, uint8_t* b, uint8_t* a) const noexcept
 {
-    if (!CONST_SHAPE(this)->rs.strokeFill(r, g, b, a)) return Result::InsufficientCondition;
+    if (!to<ShapeImpl>(this)->rs.strokeFill(r, g, b, a)) return Result::InsufficientCondition;
     return Result::Success;
 }
 
 
 Result Shape::strokeFill(Fill* f) noexcept
 {
-    return SHAPE(this)->strokeFill(f);
+    return to<ShapeImpl>(this)->strokeFill(f);
 }
 
 
 const Fill* Shape::strokeFill() const noexcept
 {
-    return CONST_SHAPE(this)->rs.strokeFill();
+    return to<ShapeImpl>(this)->rs.strokeFill();
 }
 
 
 Result Shape::strokeDash(const float* dashPattern, uint32_t cnt, float offset) noexcept
 {
-    return SHAPE(this)->strokeDash(dashPattern, cnt, offset);
+    return to<ShapeImpl>(this)->strokeDash(dashPattern, cnt, offset);
 }
 
 
 uint32_t Shape::strokeDash(const float** dashPattern, float* offset) const noexcept
 {
-    return CONST_SHAPE(this)->rs.strokeDash(dashPattern, offset);
+    return to<ShapeImpl>(this)->rs.strokeDash(dashPattern, offset);
 }
 
 
 Result Shape::strokeCap(StrokeCap cap) noexcept
 {
-    SHAPE(this)->strokeCap(cap);
+    to<ShapeImpl>(this)->strokeCap(cap);
     return Result::Success;
 }
 
 
 Result Shape::strokeJoin(StrokeJoin join) noexcept
 {
-    SHAPE(this)->strokeJoin(join);
+    to<ShapeImpl>(this)->strokeJoin(join);
     return Result::Success;
 }
 
 
 Result Shape::strokeMiterlimit(float miterlimit) noexcept
 {
-    return SHAPE(this)->strokeMiterlimit(miterlimit);
+    return to<ShapeImpl>(this)->strokeMiterlimit(miterlimit);
 }
 
 
 StrokeCap Shape::strokeCap() const noexcept
 {
-    return CONST_SHAPE(this)->rs.strokeCap();
+    return to<ShapeImpl>(this)->rs.strokeCap();
 }
 
 
 StrokeJoin Shape::strokeJoin() const noexcept
 {
-    return CONST_SHAPE(this)->rs.strokeJoin();
+    return to<ShapeImpl>(this)->rs.strokeJoin();
 }
 
 
 float Shape::strokeMiterlimit() const noexcept
 {
-    return CONST_SHAPE(this)->rs.strokeMiterlimit();
+    return to<ShapeImpl>(this)->rs.strokeMiterlimit();
 }
 
 
 Result Shape::trimpath(float begin, float end, bool simultaneous) noexcept
 {
-    SHAPE(this)->trimpath({begin, end, simultaneous});
+    to<ShapeImpl>(this)->trimpath({begin, end, simultaneous});
     return Result::Success;
 }
 
 
 Result Shape::fillRule(FillRule r) noexcept
 {
-    SHAPE(this)->rs.rule = r;
+    to<ShapeImpl>(this)->rs.rule = r;
     return Result::Success;
 }
 
 
 FillRule Shape::fillRule() const noexcept
 {
-    return CONST_SHAPE(this)->rs.rule;
+    return to<ShapeImpl>(this)->rs.rule;
 }

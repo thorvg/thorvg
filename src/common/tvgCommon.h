@@ -92,6 +92,12 @@ namespace tvg {
         #define TVGLOG(...) do {} while(0)
     #endif
 
+    template<typename T>
+    static inline T* to(const Paint* p)
+    {
+        return static_cast<T*>(const_cast<Paint*>(p));
+    }
+
     uint16_t THORVG_VERSION_NUMBER();
 
     extern int engineInit;

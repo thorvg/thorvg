@@ -37,7 +37,7 @@ Animation::Animation() : pImpl(new Impl)
 
 Result Animation::frame(float no) noexcept
 {
-    auto loader = PICTURE(pImpl->picture)->loader;
+    auto loader = to<PictureImpl>(pImpl->picture)->loader;
 
     if (!loader) return Result::InsufficientCondition;
     if (!loader->animatable()) return Result::NonSupport;
@@ -58,7 +58,7 @@ Picture* Animation::picture() const noexcept
 
 float Animation::curFrame() const noexcept
 {
-    auto loader = PICTURE(pImpl->picture)->loader;
+    auto loader = to<PictureImpl>(pImpl->picture)->loader;
 
     if (!loader) return 0;
     if (!loader->animatable()) return 0;
@@ -69,7 +69,7 @@ float Animation::curFrame() const noexcept
 
 float Animation::totalFrame() const noexcept
 {
-    auto loader = PICTURE(pImpl->picture)->loader;
+    auto loader = to<PictureImpl>(pImpl->picture)->loader;
 
     if (!loader) return 0;
     if (!loader->animatable()) return 0;
@@ -80,7 +80,7 @@ float Animation::totalFrame() const noexcept
 
 float Animation::duration() const noexcept
 {
-    auto loader = PICTURE(pImpl->picture)->loader;
+    auto loader = to<PictureImpl>(pImpl->picture)->loader;
 
     if (!loader) return 0;
     if (!loader->animatable()) return 0;
@@ -91,7 +91,7 @@ float Animation::duration() const noexcept
 
 Result Animation::segment(float begin, float end) noexcept
 {
-    auto loader = PICTURE(pImpl->picture)->loader;
+    auto loader = to<PictureImpl>(pImpl->picture)->loader;
     if (!loader) return Result::InsufficientCondition;
     if (!loader->animatable()) return Result::NonSupport;
 
@@ -101,7 +101,7 @@ Result Animation::segment(float begin, float end) noexcept
 
 Result Animation::segment(float *begin, float *end) noexcept
 {
-    auto loader = PICTURE(pImpl->picture)->loader;
+    auto loader = to<PictureImpl>(pImpl->picture)->loader;
     if (!loader) return Result::InsufficientCondition;
     if (!loader->animatable()) return Result::NonSupport;
     if (!begin && !end) return Result::InvalidArguments;
