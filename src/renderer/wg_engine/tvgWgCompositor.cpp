@@ -745,7 +745,7 @@ void WgCompositor::markupClipPath(WgContext& context, WgRenderDataShape* renderD
         wgpuRenderPassEncoderSetBindGroup(renderPassEncoder, 1, stageBufferPaint[settings.bindGroupInd], 0, nullptr);
         wgpuRenderPassEncoderSetPipeline(renderPassEncoder, pipelines.direct);
         drawMesh(context, &renderData->meshStrokes);
-    } else {
+    } else if (renderData->meshShape.vbuffer.count > 0) {
         WGPURenderPipeline stencilPipeline = (renderData->fillRule == FillRule::NonZero) ? pipelines.nonzero : pipelines.evenodd;
         WgRenderSettings& settings = renderData->renderSettingsShape;
         wgpuRenderPassEncoderSetStencilReference(renderPassEncoder, 0);

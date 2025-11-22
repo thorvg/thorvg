@@ -47,6 +47,7 @@ struct WgRenderSettings
     WgImageData gradientData;
     WgRenderSettingsType fillType{};
     WgRenderRasterType rasterType{};
+    float opacityMultiplier = 1.0f;
     bool skip{};
 
     void update(WgContext& context, const tvg::Matrix& transform, tvg::ColorSpace cs, uint8_t opacity);
