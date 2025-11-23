@@ -123,7 +123,6 @@ struct GlGeometry
     RenderRegion bounds = {};
     FillRule fillRule = FillRule::NonZero;
     RenderPath optimizedPath;
-    bool optimized = false;
 };
 
 

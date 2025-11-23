@@ -286,34 +286,32 @@ void GlGeometry::optimizePath(const RenderPath& path, const Matrix& transform)
     optimizedPath.cmds.clear();
     optimizedPath.pts.clear();
     _optimize(path, optimizedPath, transform);
-    optimized = true;
 }
 
 
 void GlGeometry::prepare(const RenderShape& rshape)
 {
-    optimizePath(rshape.path, matrix);
     if (rshape.trimpath()) {
         RenderPath trimmedPath;
-        if (rshape.stroke->trim.trim(optimizedPath, trimmedPath)) {
-            trimmedPath.pts.move(optimizedPath.pts);
-            trimmedPath.cmds.move(optimizedPath.cmds);
-        } else optimizedPath.clear();
-    }
+        if (rshape.stroke->trim.trim(rshape.path, trimmedPath)) {
+            optimizePath(trimmedPath, matrix);
+        } else {
+            optimizedPath.clear();
+        }
+    } else optimizePath(rshape.path, matrix);
 }
 
 
 bool GlGeometry::tesselateShape(const RenderShape& rshape, float* opacityMultiplier)
 {
     fill.clear();
-    const auto& path2Use = optimized ? optimizedPath : rshape.path;
 
     // When the CTM scales a filled path so small that its device-space
     // World:  [========]     // normal-sized filled path
     // After CTM:  [.]        // thinner than 1 px in device space
     // Handling: two points   // collapse to a 2-point handle for stability
-    if (path2Use.pts.count == 2 && tvg::zero(rshape.strokeWidth())) {
-        if (tesselateLine(path2Use)) {
+    if (optimizedPath.pts.count == 2 && tvg::zero(rshape.strokeWidth())) {
+        if (tesselateLine(optimizedPath)) {
             // The time spent is similar to subtituting buffers in tessellation, so we just move the buffers to keep the code simple.
             stroke.index.move(fill.index);
             stroke.vertex.move(fill.vertex);
@@ -326,7 +324,7 @@ bool GlGeometry::tesselateShape(const RenderShape& rshape, float* opacityMultipl
 
     // Handle normal shapes with more than 2 points
     BWTessellator bwTess{&fill};
-    bwTess.tessellate(path2Use, matrix);
+    bwTess.tessellate(optimizedPath, matrix);
     fillRule = rshape.rule;
     bounds = bwTess.bounds();
     if (opacityMultiplier) *opacityMultiplier = 1.0f;
@@ -358,9 +356,8 @@ bool GlGeometry::tesselateStroke(const RenderShape& rshape)
     }
     //run stroking only if it's valid
     if (!tvg::zero(strokeWidth)) {
-        const RenderPath& pathToUse = optimized ? optimizedPath : rshape.path;
         Stroker stroker(&stroke, strokeWidth, rshape.strokeCap(), rshape.strokeJoin());
-        stroker.run(rshape, pathToUse, matrix);
+        stroker.run(rshape, optimizedPath, matrix);
         bounds = stroker.bounds();
         return true;
     }
