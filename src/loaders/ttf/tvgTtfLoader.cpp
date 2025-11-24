@@ -187,12 +187,12 @@ static size_t _codepoints(char** utf8)
 }
 
 
-static void _build(const RenderPath& in, const Point& cursor, RenderPath& out)
+static void _build(const RenderPath& in, const Point& cursor, const Point& kerning, RenderPath& out)
 {
     out.cmds.push(in.cmds);
     out.pts.grow(in.pts.count);
     ARRAY_FOREACH(p, in.pts) {
-        out.pts.push(*p + cursor);
+        out.pts.push(*p + cursor + kerning);
     }
 }
 
@@ -297,7 +297,7 @@ void TtfLoader::wrapNone(FontMetrics& fm, const Point& box, char* utf8, RenderPa
         Point kerning{};
         if (ltgm) reader.kerning(ltgm->idx, rtgm->idx, kerning);
 
-        _build(rtgm->path, cursor, out);
+        _build(rtgm->path, cursor, kerning, out);
         cursor.x +=  rtgm->advance + kerning.x;
 
         if (cursor.x > fm.size.x) fm.size.x = cursor.x;  //text horizontal size
@@ -339,11 +339,11 @@ void TtfLoader::wrapChar(FontMetrics& fm, const Point& box, char* utf8, RenderPa
             if (cursor.x + xadv > box.x) {
                 line = feedLine(fm.align.x, box.x, cursor.x, line, out.pts.count, cursor, loc, out);
             }
-            _build(rtgm->path, cursor, out);
+            _build(rtgm->path, cursor, kerning, out);
             cursor.x += xadv;
         //not enough layout space, force pushing
         } else {
-            _build(rtgm->path, cursor, out);
+            _build(rtgm->path, cursor, kerning, out);
             line = feedLine(fm.align.x, box.x, cursor.x, line, out.pts.count, cursor, loc, out);
         }
 
@@ -402,7 +402,7 @@ void TtfLoader::wrapWord(FontMetrics& fm, const Point& box, char* utf8, RenderPa
                 line = feedLine(fm.align.x, box.x, cursor.x, line, out.pts.count, cursor, loc, out);
             }
         }
-        _build(rtgm->path, cursor, out);
+        _build(rtgm->path, cursor, kerning, out);
         cursor.x += xadv;
 
         //capture the word start
@@ -453,7 +453,7 @@ void TtfLoader::wrapEllipsis(FontMetrics& fm, const Point& box, char* utf8, Rend
         //normal case
         if (cursor.x + xadv < box.x) {
             capture = {out.pts.count, out.cmds.count, xadv};
-            _build(rtgm->path, cursor, out);
+            _build(rtgm->path, cursor, kerning, out);
             cursor.x += xadv;
         //ellipsis
         } else {
@@ -472,7 +472,7 @@ void TtfLoader::wrapEllipsis(FontMetrics& fm, const Point& box, char* utf8, Rend
             }
             //append ...
             for (int i = 0; i < 3; ++i) {
-                _build(rtgm->path, cursor, out);
+                _build(rtgm->path, cursor, kerning, out);
                 cursor.x += kerning.x + rtgm->advance;
             }
             stop = true;
