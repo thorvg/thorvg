@@ -53,6 +53,12 @@ static inline uint8_t _u8(uint8_t* data, uint32_t offset)
 }
 
 
+static inline int8_t _i8(uint8_t* data, uint32_t offset)
+{
+    return (int8_t) _u8(data, offset);
+}
+
+
 static int _cmpu32(const void *a, const void *b)
 {
     return memcmp(a, b, 4);
@@ -539,7 +545,7 @@ bool TtfReader::convertComposite(RenderPath& path, TtfGlyph& glyph, uint32_t gly
         } else {
             if (!validate(pointer, 2)) return false;
             // TODO: align to parent point
-            compOffset = (flags & ARGS_ARE_XY_VALUES) ? Point{float(_u8(data, pointer)), -float(_u8(data, pointer + 1U))} : Point{0.0f, 0.0f};
+            compOffset = (flags & ARGS_ARE_XY_VALUES) ? Point{float(_i8(data, pointer)), -float(_i8(data, pointer + 1U))} : Point{0.0f, 0.0f};
             pointer += 2U;
         }
         if (flags & WE_HAVE_A_SCALE) {
