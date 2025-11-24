@@ -47,6 +47,7 @@ using namespace tvg;
     #define TVG_UNUSED
     #define strncasecmp _strnicmp
     #define strcasecmp _stricmp
+    #define strtok_r strtok_s
 #else
     #define TVG_UNUSED __attribute__ ((__unused__))
 #endif
