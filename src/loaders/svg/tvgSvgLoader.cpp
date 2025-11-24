@@ -3517,7 +3517,39 @@ static void _svgLoaderParserXmlCssStyle(SvgLoaderData* loader, const char* conte
         } else if (STR_AS(tag, "stop")) {
             TVGLOG("SVG", "Unsupported elements used in the internal CSS style sheets [Elements: %s]", tag);
         } else if (STR_AS(tag, "all")) {
-            if ((node = _createCssStyleNode(loader, loader->cssStyle, attrs, attrsLength, xmlParseW3CAttribute))) node->id = _copyId(name);
+            char* tokPtr = nullptr;
+            auto pch = strtok_r(name, ",", &tokPtr);
+            while (pch != nullptr) {
+                while (*pch && isspace(*pch)) pch++;
+
+                auto id = pch;
+                if (*id == '.') id++;
+
+                if (*id == '\0') {
+                    pch = strtok_r(nullptr, ",", &tokPtr);
+                    continue;
+                }
+
+                auto end = id + strlen(id) - 1;
+                while (end > id && isspace(*end)) *end-- = '\0';
+
+                if (*id == '\0') {
+                    pch = strtok_r(nullptr, ",", &tokPtr);
+                    continue;
+                }
+
+                if (auto cssNode = cssFindStyleNode(loader->cssStyle, id)) {
+                    auto oldNode = loader->svgParse->node;
+                    loader->svgParse->node = cssNode;
+                    xmlParseW3CAttribute(attrs, attrsLength, _attrParseCssStyleNode, loader);
+                    loader->svgParse->node = oldNode;
+                } else {
+                    if ((node = _createCssStyleNode(loader, loader->cssStyle, attrs, attrsLength, xmlParseW3CAttribute))) {
+                        node->id = _copyId(id);
+                    }
+                }
+                pch = strtok_r(nullptr, ",", &tokPtr);
+            }
         } else if (STR_AS(tag, "@font-face")) { //css at-rule specifying font
             _createFontFace(loader, attrs, attrsLength, xmlParseW3CAttribute);
         } else if (!isIgnoreUnsupportedLogElements(tag)) {
