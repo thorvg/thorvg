@@ -212,7 +212,7 @@ SvgNode* cssFindStyleNode(const SvgNode* style, const char* title, SvgNodeType t
 
     ARRAY_FOREACH(p, style->child) {
         if ((*p)->type == type) {
-            if ((!title && !(*p)->id) || (title && (*p)->id && !strcmp((*p)->id, title))) return *p;
+            if ((!title && !(*p)->id) || (title && (*p)->id && STR_AS((*p)->id, title))) return *p;
         }
     }
     return nullptr;
@@ -225,7 +225,7 @@ SvgNode* cssFindStyleNode(const SvgNode* style, const char* title)
 
     ARRAY_FOREACH(p, style->child) {
         if ((*p)->type == SvgNodeType::CssStyle) {
-            if ((*p)->id && !strcmp((*p)->id, title)) return *p;
+            if ((*p)->id && STR_AS((*p)->id, title)) return *p;
         }
     }
     return nullptr;

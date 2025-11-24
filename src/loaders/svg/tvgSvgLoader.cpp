@@ -44,8 +44,6 @@
 #define PX_PER_MM 3.779528f //1 in = 25.4 mm -> PX_PER_IN/25.4
 #define PX_PER_CM 37.79528f //1 in = 2.54 cm -> PX_PER_IN/2.54
 
-#define STR_AS(A, B) !strcmp((A), (B))
-
 typedef bool (*parseAttributes)(const char* buf, unsigned bufLength, xmlAttributeCb func, const void* data);
 typedef SvgNode* (*FactoryMethod)(SvgLoaderData* loader, SvgNode* parent, const char* buf, unsigned bufLength, parseAttributes func);
 typedef SvgStyleGradient* (*GradientFactoryMethod)(SvgLoaderData* loader, const char* buf, unsigned bufLength);

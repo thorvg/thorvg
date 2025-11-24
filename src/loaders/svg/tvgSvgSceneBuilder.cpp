@@ -652,7 +652,7 @@ static Paint* _imageBuildHelper(SvgLoaderData& loaderData, SvgNode* node, const 
         //TODO: protect against recursive svg image loading
         //Temporarily disable embedded svg:
         const char *dot = strrchr(href, '.');
-        if (dot && !strcmp(dot, ".svg")) {
+        if (dot && STR_AS(dot, ".svg")) {
             TVGLOG("SVG", "Embedded svg file is disabled.");
             return nullptr;
         }
