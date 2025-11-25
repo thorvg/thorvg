@@ -265,8 +265,6 @@ struct RenderPath
         cmds.push(PathCommand::CubicTo);
     }
 
-    bool bounds(const Matrix* m, BBox& box);
-
     Point point(float progress)
     {
         if (progress <= 0.0f) return pts.first();
@@ -313,6 +311,11 @@ struct RenderPath
         }
         return curr;
     }
+
+    /* Optimize path in screen space with merging collinear lines,
+       collapsing zero length lines, and removing unnecessary cubic beziers. */
+    void optimize(RenderPath& out, const Matrix& matrix) const;
+    bool bounds(const Matrix* m, BBox& box);
 };
 
 struct RenderTrimPath

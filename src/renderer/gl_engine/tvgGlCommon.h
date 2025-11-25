@@ -115,14 +115,13 @@ struct GlGeometry
     bool draw(GlRenderTask* task, GlStageBuffer* gpuBuffer, RenderUpdateFlag flag);
     GlStencilMode getStencilMode(RenderUpdateFlag flag);
     RenderRegion getBounds() const;
-    void optimizePath(const RenderPath& path, const Matrix& transform);
 
     GlGeometryBuffer fill, stroke;
     Matrix matrix = {};
     RenderRegion viewport = {};
     RenderRegion bounds = {};
     FillRule fillRule = FillRule::NonZero;
-    RenderPath optimizedPath;
+    RenderPath optPath;  //optimal path
 };
 
 
