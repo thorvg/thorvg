@@ -102,6 +102,162 @@ bool RenderPath::bounds(const Matrix* m, BBox& box)
     return true;
 }
 
+
+// Optimize path in screen space with merging collinear lines, collapsing zero length lines, and removing unnecessary cubic beziers.
+void RenderPath::optimize(RenderPath& out, const Matrix& matrix) const
+{
+#if defined(THORVG_GL_RASTER_SUPPORT) || defined(THORVG_WG_RASTER_SUPPORT)
+    static constexpr auto PX_TOLERANCE = 0.25f;
+
+    out.cmds.clear();
+    out.pts.clear();
+
+    out.cmds.reserve(cmds.count);
+    out.pts.reserve(pts.count);
+
+    auto cmds = this->cmds.data;
+    auto cmdCnt = this->cmds.count;
+    auto pts = this->pts.data;
+
+    uint32_t prevIdx = 0;
+    uint32_t prevPrevIdx = 0;
+    auto hasPrevPrev = false;
+
+    // The suffix "T" indicates that the point is transformed.
+    Point lastOutT, prevOutT;
+
+    auto isIdentity = tvg::identity(&matrix);
+
+    auto point2Line = [](const Point& point, const Point& start, const Point& vec, const float vecLenSq, float& maxDist, float& minT, float& maxT) {
+        Point offset = point - start;
+        auto area = tvg::cross(vec, offset);
+        auto dist = fabsf(area) / sqrtf(vecLenSq); // if lineVecLenSq == 0, mean closed() hasn't been called
+        if (dist > maxDist) maxDist = dist;
+
+        auto t = tvg::dot(offset, vec) / vecLenSq;
+        if (t < minT) minT = t;
+        if (t > maxT) maxT = t;
+    };
+
+    auto validateCubic = [&point2Line](const Point& start, const Point& ctrl1, const Point& ctrl2, const Point& end, float& maxDist, float& minT, float& maxT) {
+        maxDist = 0.0f;
+        minT = FLT_MAX;
+        maxT = FLT_MIN;
+        auto vec = end - start;
+        auto vecLenSq = vec.x * vec.x + vec.y * vec.y;
+        point2Line(ctrl1, start, vec, vecLenSq, maxDist, minT, maxT);
+        point2Line(ctrl2, start, vec, vecLenSq, maxDist, minT, maxT);
+    };
+
+    auto point2LineSimple = [](const Point& point, const Point& start, const Point& end, float& dist, float& t) {
+        auto vec = end - start;
+        auto vecLenSq = vec.x * vec.x + vec.y * vec.y;
+        Point offset = point - start;
+        auto area = tvg::cross(vec, offset);
+        dist = fabsf(area) / sqrtf(vecLenSq); // if lineVecLenSq == 0, mean closed() hasn't been called
+        t = tvg::dot(offset, vec) / vecLenSq;
+    };
+
+    auto addLineCmd = [&](const Point& pt, const Point& ptT) {
+        out.cmds.push(PathCommand::LineTo);
+        out.pts.push(pt);
+        prevOutT = lastOutT;
+        lastOutT = ptT;
+        prevPrevIdx = prevIdx;
+        prevIdx = out.pts.count - 1;
+        hasPrevPrev = true;
+    };
+
+    auto processLineCollinear = [&](const Point& startT, const Point& pt, const Point& ptT) {
+        if (!hasPrevPrev || out.pts.count <= 1) {
+            addLineCmd(pt, ptT);
+            return;
+        }
+
+        float dist, t;
+        point2LineSimple(ptT, prevOutT, startT, dist, t);
+
+        if (dist > PX_TOLERANCE) {
+            addLineCmd(pt, ptT);
+            return;
+        }
+
+        if (t < -PX_TOLERANCE) {
+            out.pts[prevPrevIdx] = pt;
+            lastOutT = ptT;
+        } else if (t > 1.0f + PX_TOLERANCE) {
+            out.pts[prevIdx] = pt;
+            lastOutT = ptT;
+        }
+    };
+
+    auto processCubicTo = [&](const Point* cubicPts, const Point& startT) {
+        auto endT = isIdentity ? cubicPts[2] : cubicPts[2] * matrix;
+        if (tvg::closed(startT, endT, PX_TOLERANCE)) return;
+        auto ctrl1T = isIdentity ? cubicPts[0] : cubicPts[0] * matrix;
+        auto ctrl2T = isIdentity ? cubicPts[1] : cubicPts[1] * matrix;
+        float maxDist, minT, maxT;
+        validateCubic(startT, ctrl1T, ctrl2T, endT, maxDist, minT, maxT);
+
+        bool flatEnough  = (maxDist <= PX_TOLERANCE);
+        bool inSpan = (minT >= -PX_TOLERANCE) && (maxT <= 1.0f + PX_TOLERANCE);
+        if (flatEnough && inSpan) {
+            processLineCollinear(startT, cubicPts[2], endT);
+        } else {
+            out.cmds.push(PathCommand::CubicTo);
+            out.pts.push(cubicPts[0]);
+            out.pts.push(cubicPts[1]);
+            out.pts.push(cubicPts[2]);
+            prevOutT = lastOutT;
+            lastOutT = endT;
+            prevPrevIdx = prevIdx;
+            prevIdx = out.pts.count - 1;
+            hasPrevPrev = true;
+        }
+    };
+
+    for (uint32_t i = 0; i < cmdCnt; i++) {
+        switch (cmds[i]) {
+            case PathCommand::MoveTo: {
+                out.cmds.push(PathCommand::MoveTo);
+                out.pts.push(*pts);
+                lastOutT = isIdentity ? *pts : *pts * matrix;
+                prevIdx = out.pts.count - 1;
+                hasPrevPrev = false;
+                pts++;
+                break;
+            }
+            case PathCommand::LineTo: {
+                auto startT = lastOutT;
+                auto ptT = isIdentity ? *pts : (*pts) * matrix;
+                if (tvg::closed(startT, ptT, PX_TOLERANCE)) {
+                    pts++;
+                    break;
+                }
+                processLineCollinear(startT, *pts, ptT);
+                pts++;
+                break;
+            }
+            case PathCommand::CubicTo: {
+                processCubicTo(pts, lastOutT);
+                pts += 3;
+                break;
+            }
+            case PathCommand::Close: {
+                out.cmds.push(PathCommand::Close);
+                hasPrevPrev = false;
+                break;
+            }
+            default:
+                break;
+            }
+    }
+#else
+    TVGLOG("RENDERER", "RenderPath Optimization is disabled");
+#endif
+}
+
+
 /************************************************************************/
 /* RenderRegion Class Implementation                                    */
 /************************************************************************/
