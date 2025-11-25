@@ -1061,19 +1061,9 @@ static void _handleCssClassAttr(SvgLoaderData* loader, SvgNode* node, const char
     if (value) tvg::free(*cssClass);
     *cssClass = _copyId(value);
 
-    bool cssClassFound = false;
-
-    //css styling: tag.name has higher priority than .name
-    if (auto cssNode = cssFindStyleNode(loader->cssStyle, *cssClass, node->type)) {
-        cssClassFound = true;
-        cssCopyStyleAttr(node, cssNode);
+    if (!cssApplyClass(node, *cssClass, loader->cssStyle)) {
+        loader->nodesToStyle.push({node, *cssClass});
     }
-    if (auto cssNode = cssFindStyleNode(loader->cssStyle, *cssClass)) {
-        cssClassFound = true;
-        cssCopyStyleAttr(node, cssNode);
-    }
-
-    if (!cssClassFound) loader->nodesToStyle.push({node, *cssClass});
 }
 
 
