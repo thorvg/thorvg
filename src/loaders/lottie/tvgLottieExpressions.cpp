@@ -339,7 +339,6 @@ static jerry_value_t _effect(const jerry_call_info_t* info, const jerry_value_t 
     //find a effect property
     auto obj = jerry_function_external(_effectProperty);
     jerry_object_set_native_ptr(obj, &freeCb, _expcontent(data->exp, data->frameNo, effect));
-    jerry_object_set_sz(obj, "", obj);
     return obj;
 }
 
@@ -414,11 +413,14 @@ static void _buildLayer(jerry_value_t context, float frameNo, LottieLayer* layer
     //marker.nearestKey(t)
     //marker.numKeys
 
+    //FIXME: This name conflicts with the function object in _layer(). No idea. Maybe jerryscript issue.
+#if 0
     if (layer->name) {
         auto name = jerry_string_sz(layer->name);
         jerry_object_set_sz(context, EXP_NAME, name);
         jerry_value_free(name);
     }
+#endif
 
     auto toComp = jerry_function_external(_toComp);
     jerry_object_set_sz(context, "toComp", toComp);
@@ -778,7 +780,6 @@ static jerry_value_t _propertyGroup(const jerry_call_info_t* info, const jerry_v
     if (level == 1) {
         auto group = jerry_function_external(_property);
         jerry_object_set_native_ptr(group, &freeCb, _expcontent(data));
-        jerry_object_set_sz(group, "", group);
         return group;
     }
 
@@ -1232,7 +1233,6 @@ static void _buildMath(jerry_value_t context)
 
 void LottieExpressions::buildGlobal(float frameNo, LottieExpression* exp)
 {
-    tvg::free(static_cast<ExpContent*>(jerry_object_get_native_ptr(comp, &freeCb)));
     jerry_object_set_native_ptr(comp, &freeCb, _expcontent(exp, frameNo, exp->layer));
 
     auto index = jerry_number(exp->layer->ix);
@@ -1293,7 +1293,7 @@ void LottieExpressions::buildComp(LottieComposition* comp, float frameNo, Lottie
     //pixelAspect
 
     if (comp->name) {
-        auto name = jerry_string((jerry_char_t*)comp->name, strlen(comp->name), JERRY_ENCODING_UTF8);
+        auto name = jerry_string_sz(comp->name);
         jerry_object_set_sz(thisComp, EXP_NAME, name);
         jerry_value_free(name);
     }
