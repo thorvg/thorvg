@@ -269,12 +269,14 @@ bool GifLoader::open(const char* data, uint32_t size, TVG_UNUSED const char* rpa
     if (DGifSlurp(gifFile) != GIF_OK) {
         TVGERR("GIF", "Failed to read GIF from memory");
         tvg::free(reader);
+        gifFile->UserData = nullptr;
         clear();
         return false;
     }
     
     // Free reader (gifFile has read all data)
     tvg::free(reader);
+    gifFile->UserData = nullptr;
     
     w = static_cast<float>(gifFile->SWidth);
     h = static_cast<float>(gifFile->SHeight);

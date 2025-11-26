@@ -60,4 +60,3 @@ public:
 };
 
 #endif //_TVG_GIF_LOADER_H_
-
