@@ -1266,25 +1266,24 @@ RenderData GlRenderer::prepare(const RenderShape& rshape, RenderData data, const
     if (!sdata) {
         sdata = new GlShape;
         sdata->rshape = &rshape;
+        flags = RenderUpdateFlag::All;
     }
-    sdata->validStroke = sdata->validFill = false;
 
     if ((opacity == 0 && !clipper) || flags == RenderUpdateFlag::None) return sdata;
 
     sdata->viewWd = static_cast<float>(surface.w);
     sdata->viewHt = static_cast<float>(surface.h);
-
-    sdata->geometry = GlGeometry();
     sdata->opacity = opacity;
+
+    if (flags & RenderUpdateFlag::Path) sdata->geometry = GlGeometry();
+    
     sdata->geometry.matrix = transform;
     sdata->geometry.viewport = vport;
-
-    if (flags & (RenderUpdateFlag::Path | RenderUpdateFlag::Transform)) {
-        sdata->geometry.prepare(rshape);
-    }
-
+    if (flags & (RenderUpdateFlag::Path | RenderUpdateFlag::Transform)) sdata->geometry.prepare(rshape);
+    
     //TODO: Please precisely update tessellation not to update only if the color is changed.
     if (flags & (RenderUpdateFlag::Color | RenderUpdateFlag::Gradient | RenderUpdateFlag::Transform | RenderUpdateFlag::Path)) {
+        sdata->validFill = false;
         float opacityMultiplier = 1.0f;
         if (sdata->geometry.tesselateShape(*(sdata->rshape), &opacityMultiplier)) {
             sdata->opacity *= opacityMultiplier;
@@ -1294,6 +1293,7 @@ RenderData GlRenderer::prepare(const RenderShape& rshape, RenderData data, const
 
     //TODO: Please precisely update tessellation not to update only if the color is changed.
     if (flags & (RenderUpdateFlag::Color | RenderUpdateFlag::Stroke | RenderUpdateFlag::GradientStroke | RenderUpdateFlag::Transform | RenderUpdateFlag::Path)) {
+        sdata->validStroke = false;
         if (sdata->geometry.tesselateStroke(*(sdata->rshape))) sdata->validStroke = true;
     }
 
