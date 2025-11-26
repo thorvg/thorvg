@@ -106,7 +106,7 @@ bool GifLoader::open(const char* path)
 bool GifLoader::open(const char* data, uint32_t size, TVG_UNUSED const char* rpath, bool copy)
 {
     if (copy) {
-        this->data = tvg::malloc<unsigned char*>(size);
+        this->data = tvg::malloc<unsigned char>(size);
         if (!this->data) return false;
         memcpy((unsigned char *)this->data, data, size);
         freeData = true;

@@ -81,7 +81,7 @@ bool GifDecoder::readLogicalScreenDescriptor()
     readByte(); // pixel aspect ratio
     
     if (globalColorTable && globalPaletteSize > 0) {
-        globalPalette = tvg::malloc<uint8_t*>(globalPaletteSize * 3);
+        globalPalette = tvg::malloc<uint8_t>(globalPaletteSize * 3);
         if (!globalPalette) return false;
         
         for (uint32_t i = 0; i < globalPaletteSize; i++) {
@@ -93,7 +93,7 @@ bool GifDecoder::readLogicalScreenDescriptor()
     
     // Initialize canvas
     uint32_t canvasSize = width * height * 4;
-    canvas = tvg::malloc<uint8_t*>(canvasSize);
+    canvas = tvg::malloc<uint8_t>(canvasSize);
     if (!canvas) return false;
     
     return true;
@@ -109,7 +109,7 @@ bool GifDecoder::readColorTable(uint8_t*& palette, uint32_t& size, uint8_t packe
     }
     
     size = 1 << ((packed & 0x07) + 1);
-    palette = tvg::malloc<uint8_t*>(size * 3);
+    palette = tvg::malloc<uint8_t>(size * 3);
     if (!palette) return false;
     
     for (uint32_t i = 0; i < size; i++) {
@@ -144,7 +144,7 @@ uint32_t GifDecoder::lzwDecode(const uint8_t* data, uint32_t dataSize, uint8_t* 
         uint8_t suffix;   // last byte
     };
     
-    DictEntry* dictionary = tvg::malloc<DictEntry*>(4096 * sizeof(DictEntry));
+    DictEntry* dictionary = tvg::malloc<DictEntry>(4096 * sizeof(DictEntry));
     if (!dictionary) return 0;
     
     // Initialize dictionary with single-byte codes
@@ -455,7 +455,7 @@ bool GifDecoder::load(const uint8_t* data, uint32_t size)
             // Read and concatenate image data sub-blocks
             uint32_t dataSize = 0;
             uint32_t capacity = 256;
-            uint8_t* imageData = tvg::malloc<uint8_t*>(capacity);
+            uint8_t* imageData = tvg::malloc<uint8_t>(capacity);
             if (!imageData) {
                 if (localPalette) tvg::free(localPalette);
                 clear();
@@ -468,7 +468,7 @@ bool GifDecoder::load(const uint8_t* data, uint32_t size)
                 
                 if (dataSize + blockSize > capacity) {
                     capacity = (dataSize + blockSize) * 2;
-                    uint8_t* newData = tvg::realloc<uint8_t*>(imageData, capacity);
+                    uint8_t* newData = tvg::realloc<uint8_t>(imageData, capacity);
                     if (!newData) {
                         tvg::free(imageData);
                         if (localPalette) tvg::free(localPalette);
@@ -493,7 +493,7 @@ bool GifDecoder::load(const uint8_t* data, uint32_t size)
             
             // Decode LZW data
             uint32_t pixelCount = width * height;
-            uint8_t* pixels = tvg::malloc<uint8_t*>(pixelCount);
+            uint8_t* pixels = tvg::malloc<uint8_t>(pixelCount);
             if (!pixels) {
                 tvg::free(imageData);
                 if (localPalette) tvg::free(localPalette);
@@ -517,7 +517,7 @@ bool GifDecoder::load(const uint8_t* data, uint32_t size)
             
             if (palette) {
                 uint32_t rgbaSize = pixelCount * 4;
-                frame.pixels = tvg::malloc<uint8_t*>(rgbaSize);
+                frame.pixels = tvg::malloc<uint8_t>(rgbaSize);
                 if (!frame.pixels) {
                     tvg::free(pixels);
                     if (localPalette) tvg::free(localPalette);
@@ -563,7 +563,7 @@ bool GifDecoder::load(const uint8_t* data, uint32_t size)
     }
     
     // Convert dynamic array to fixed array
-    frames = tvg::malloc<GifFrame*>(frameCount * sizeof(GifFrame));
+    frames = tvg::malloc<GifFrame>(frameCount * sizeof(GifFrame));
     if (!frames) {
         clear();
         return false;

@@ -194,8 +194,14 @@ bool GifLoader::open(const char* path)
     // Calculate frame rate from delays
     calculateFrameRate();
 
-    // Allocate canvas
-    canvas = tvg::malloc<uint8_t*>(gifFile->SWidth * gifFile->SHeight * 4);
+    // Allocate canvas - use size_t to prevent overflow
+    size_t canvasSize = static_cast<size_t>(gifFile->SWidth) * static_cast<size_t>(gifFile->SHeight) * 4;
+    // Sanity check: reject unreasonably large allocations (> 1GB)
+    if (canvasSize > 1024 * 1024 * 1024) {
+        clear();
+        return false;
+    }
+    canvas = tvg::malloc<uint8_t>(canvasSize);
     if (!canvas) {
         clear();
         return false;
@@ -236,7 +242,7 @@ static int memoryInputFunc(GifFileType* gif, GifByteType* buffer, int length)
 bool GifLoader::open(const char* data, uint32_t size, TVG_UNUSED const char* rpath, bool copy)
 {
     if (copy) {
-        fileData = tvg::malloc<unsigned char*>(size);
+        fileData = tvg::malloc<unsigned char>(size);
         if (!fileData) return false;
         memcpy((unsigned char *)fileData, data, size);
         freeData = true;
@@ -247,7 +253,7 @@ bool GifLoader::open(const char* data, uint32_t size, TVG_UNUSED const char* rpa
     fileSize = size;
     
     // Create memory reader context
-    MemoryReader* reader = tvg::malloc<MemoryReader*>(sizeof(MemoryReader));
+    MemoryReader* reader = tvg::malloc<MemoryReader>(sizeof(MemoryReader));
     if (!reader) {
         if (freeData) tvg::free(fileData);
         return false;
@@ -285,8 +291,14 @@ bool GifLoader::open(const char* data, uint32_t size, TVG_UNUSED const char* rpa
     // Calculate frame rate from delays
     calculateFrameRate();
     
-    // Allocate canvas
-    canvas = tvg::malloc<uint8_t*>(gifFile->SWidth * gifFile->SHeight * 4);
+    // Allocate canvas - use size_t to prevent overflow
+    size_t canvasSize = static_cast<size_t>(gifFile->SWidth) * static_cast<size_t>(gifFile->SHeight) * 4;
+    // Sanity check: reject unreasonably large allocations (> 1GB)
+    if (canvasSize > 1024 * 1024 * 1024) {
+        clear();
+        return false;
+    }
+    canvas = tvg::malloc<uint8_t>(canvasSize);
     if (!canvas) {
         clear();
         return false;
