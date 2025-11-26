@@ -1047,6 +1047,8 @@ static void _handleDisplayAttr(TVG_UNUSED SvgLoaderData* loader, SvgNode* node, 
 }
 
 
+static bool _cssApplyClass(SvgNode* node, const char* classString, SvgNode* styleRoot);
+
 static void _handlePaintOrderAttr(TVG_UNUSED SvgLoaderData* loader, SvgNode* node, const char* value)
 {
     node->style->flags = (node->style->flags | SvgStyleFlags::PaintOrder);
@@ -1061,7 +1063,7 @@ static void _handleCssClassAttr(SvgLoaderData* loader, SvgNode* node, const char
     if (value) tvg::free(*cssClass);
     *cssClass = _copyId(value);
 
-    if (!cssApplyClass(node, *cssClass, loader->cssStyle)) {
+    if (!_cssApplyClass(node, *cssClass, loader->cssStyle)) {
         loader->nodesToStyle.push({node, *cssClass});
     }
 }
@@ -3484,6 +3486,88 @@ static void _svgLoaderParserText(SvgLoaderData* loader, const char* content, uns
 }
 
 
+static char* _parseName(char* str, const char* delims, char** saveptr)
+{
+    auto pch = strtok_r(str, delims, saveptr);
+
+    while (pch) {
+        while (*pch && isspace(*pch)) pch++;
+
+        if (*pch == '\0') {
+            pch = strtok_r(nullptr, delims, saveptr);
+            continue;
+        }
+
+        auto end = pch + strlen(pch) - 1;
+        while (end > pch && isspace(*end)) *end-- = '\0';
+
+        if (*pch == '\0') {
+            pch = strtok_r(nullptr, delims, saveptr);
+            continue;
+        }
+        break;
+    }
+    return pch;
+}
+
+
+static bool _cssApplyClass(SvgNode* node, const char* classString, SvgNode* styleRoot)
+{
+    if (!classString || !styleRoot) return false;
+
+    auto classes = duplicate(classString);
+    bool allFound = true;
+
+    auto tempNode = tvg::calloc<SvgNode>(1, sizeof(SvgNode));
+    tempNode->style = tvg::calloc<SvgStyleProperty>(1, sizeof(SvgStyleProperty));
+    tempNode->type = node->type;
+    tempNode->style->opacity = 255;
+    tempNode->style->fill.opacity = 255;
+    tempNode->style->stroke.opacity = 255;
+
+    char* tokPtr = nullptr;
+    auto name = _parseName(classes, " ", &tokPtr);
+
+    while (name) {
+        bool found = false;
+        //css styling: tag.name has higher priority than .name
+        if (auto cssNode = cssFindStyleNode(styleRoot, name)) {
+            cssCopyStyleAttr(tempNode, cssNode, true);
+            found = true;
+        }
+        if (auto cssNode = cssFindStyleNode(styleRoot, name, node->type)) {
+            cssCopyStyleAttr(tempNode, cssNode, true);
+            found = true;
+        }
+        if (!found) allFound = false;
+        name = _parseName(nullptr, " ", &tokPtr);
+    }
+
+    tvg::free(classes);
+
+    //Apply the merged style to the node (without overwriting existing styles)
+    cssCopyStyleAttr(node, tempNode);
+
+    if (tempNode->style->clipPath.url) tvg::free(tempNode->style->clipPath.url);
+    if (tempNode->style->mask.url) tvg::free(tempNode->style->mask.url);
+    if (tempNode->style->stroke.dash.array.count > 0) tempNode->style->stroke.dash.array.reset();
+    tvg::free(tempNode->style);
+    tvg::free(tempNode->transform);
+    tvg::free(tempNode);
+
+    return allFound;
+}
+
+
+static void _cssApplyStyleToPostponeds(Array<SvgNodeIdPair>& postponeds, SvgNode* style)
+{
+    ARRAY_FOREACH(p, postponeds) {
+        auto nodeIdPair = *p;
+        _cssApplyClass(nodeIdPair.node, nodeIdPair.id, style);
+    }
+}
+
+
 static void _svgLoaderParserXmlCssStyle(SvgLoaderData* loader, const char* content, unsigned int length)
 {
     char* tag;
@@ -3506,25 +3590,10 @@ static void _svgLoaderParserXmlCssStyle(SvgLoaderData* loader, const char* conte
             TVGLOG("SVG", "Unsupported elements used in the internal CSS style sheets [Elements: %s]", tag);
         } else if (STR_AS(tag, "all")) {
             char* tokPtr = nullptr;
-            auto pch = strtok_r(name, ",", &tokPtr);
-            while (pch != nullptr) {
-                while (*pch && isspace(*pch)) pch++;
+            auto id = _parseName(name, ",", &tokPtr);
 
-                auto id = pch;
+            while (id) {
                 if (*id == '.') id++;
-
-                if (*id == '\0') {
-                    pch = strtok_r(nullptr, ",", &tokPtr);
-                    continue;
-                }
-
-                auto end = id + strlen(id) - 1;
-                while (end > id && isspace(*end)) *end-- = '\0';
-
-                if (*id == '\0') {
-                    pch = strtok_r(nullptr, ",", &tokPtr);
-                    continue;
-                }
 
                 if (auto cssNode = cssFindStyleNode(loader->cssStyle, id)) {
                     auto oldNode = loader->svgParse->node;
@@ -3536,7 +3605,7 @@ static void _svgLoaderParserXmlCssStyle(SvgLoaderData* loader, const char* conte
                         node->id = _copyId(id);
                     }
                 }
-                pch = strtok_r(nullptr, ",", &tokPtr);
+                id = _parseName(nullptr, ",", &tokPtr);
             }
         } else if (STR_AS(tag, "@font-face")) { //css at-rule specifying font
             _createFontFace(loader, attrs, attrsLength, xmlParseW3CAttribute);
@@ -3882,7 +3951,7 @@ void SvgLoader::run(unsigned tid)
             if (loaderData.doc) {
                 auto defs = loaderData.doc->node.doc.defs;
 
-                if (loaderData.nodesToStyle.count > 0) cssApplyStyleToPostponeds(loaderData.nodesToStyle, loaderData.cssStyle);
+                if (loaderData.nodesToStyle.count > 0) _cssApplyStyleToPostponeds(loaderData.nodesToStyle, loaderData.cssStyle);
                 if (loaderData.cssStyle) cssUpdateStyle(loaderData.doc, loaderData.cssStyle);
 
                 if (!loaderData.cloneNodes.empty()) _clonePostponedNodes(&loaderData.cloneNodes, loaderData.doc);

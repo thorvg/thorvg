@@ -177,7 +177,12 @@ static void _copyStyle(SvgStyleProperty* to, const SvgStyleProperty* from, bool 
 }
 
 
-void _cssCopyStyleAttr(SvgNode* to, const SvgNode* from, bool overwrite = false)
+/************************************************************************/
+/* External Class Implementation                                        */
+/************************************************************************/
+
+
+void cssCopyStyleAttr(SvgNode* to, const SvgNode* from, bool overwrite)
 {
     //Copy matrix attribute
     if (from->transform && (overwrite || !(to->style->flags & SvgStyleFlags::Transform))) {
@@ -200,11 +205,6 @@ void _cssCopyStyleAttr(SvgNode* to, const SvgNode* from, bool overwrite = false)
         to->style->mask.url = duplicate(from->style->mask.url);
     }
 }
-
-
-/************************************************************************/
-/* External Class Implementation                                        */
-/************************************************************************/
 
 
 SvgNode* cssFindStyleNode(const SvgNode* style, const char* title, SvgNodeType type)
@@ -238,7 +238,7 @@ void cssUpdateStyle(SvgNode* doc, SvgNode* style)
     if (doc->child.count > 0) {
         ARRAY_FOREACH(p, doc->child) {
             if (auto cssNode = cssFindStyleNode(style, nullptr, (*p)->type)) {
-                _cssCopyStyleAttr(*p, cssNode);
+                cssCopyStyleAttr(*p, cssNode);
             }
             cssUpdateStyle(*p, style);
         }
@@ -246,78 +246,4 @@ void cssUpdateStyle(SvgNode* doc, SvgNode* style)
 }
 
 
-void cssApplyStyleToPostponeds(Array<SvgNodeIdPair>& postponeds, SvgNode* style)
-{
-    ARRAY_FOREACH(p, postponeds) {
-        auto nodeIdPair = *p;
-        cssApplyClass(nodeIdPair.node, nodeIdPair.id, style);
-    }
-}
 
-
-bool cssApplyClass(SvgNode* node, const char* classString, SvgNode* styleRoot)
-{
-    if (!classString || !styleRoot) return false;
-
-    auto classes = duplicate(classString);
-    auto start = classes;
-    auto end = classes + strlen(classes);
-    auto ptr = classes;
-    bool allFound = true;
-
-    auto tempNode = tvg::calloc<SvgNode>(1, sizeof(SvgNode));
-    tempNode->style = tvg::calloc<SvgStyleProperty>(1, sizeof(SvgStyleProperty));
-    tempNode->type = node->type;
-    tempNode->style->opacity = 255;
-    tempNode->style->fill.opacity = 255;
-    tempNode->style->stroke.opacity = 255;
-
-    while (ptr < end) {
-        if (isspace(*ptr)) {
-            *ptr = '\0';
-            if (start < ptr) {
-                bool found = false;
-                //css styling: tag.name has higher priority than .name
-                if (auto cssNode = cssFindStyleNode(styleRoot, start)) {
-                    _cssCopyStyleAttr(tempNode, cssNode, true);
-                    found = true;
-                }
-                if (auto cssNode = cssFindStyleNode(styleRoot, start, node->type)) {
-                    _cssCopyStyleAttr(tempNode, cssNode, true);
-                    found = true;
-                }
-                if (!found) allFound = false;
-            }
-            start = ptr + 1;
-        }
-        ptr++;
-    }
-
-    //Last one
-    if (start < ptr) {
-        bool found = false;
-        if (auto cssNode = cssFindStyleNode(styleRoot, start)) {
-            _cssCopyStyleAttr(tempNode, cssNode, true);
-            found = true;
-        }
-        if (auto cssNode = cssFindStyleNode(styleRoot, start, node->type)) {
-            _cssCopyStyleAttr(tempNode, cssNode, true);
-            found = true;
-        }
-        if (!found) allFound = false;
-    }
-
-    tvg::free(classes);
-
-    //Apply the merged style to the node (without overwriting existing styles)
-    _cssCopyStyleAttr(node, tempNode);
-
-    if (tempNode->style->clipPath.url) tvg::free(tempNode->style->clipPath.url);
-    if (tempNode->style->mask.url) tvg::free(tempNode->style->mask.url);
-    if (tempNode->style->stroke.dash.array.count > 0) tempNode->style->stroke.dash.array.reset();
-    tvg::free(tempNode->style);
-    tvg::free(tempNode->transform);
-    tvg::free(tempNode);
-
-    return allFound;
-}

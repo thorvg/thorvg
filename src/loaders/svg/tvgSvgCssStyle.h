@@ -28,7 +28,6 @@
 SvgNode* cssFindStyleNode(const SvgNode* style, const char* title, SvgNodeType type);
 SvgNode* cssFindStyleNode(const SvgNode* style, const char* title);
 void cssUpdateStyle(SvgNode* doc, SvgNode* style);
-bool cssApplyClass(SvgNode* node, const char* classString, SvgNode* styleRoot);
-void cssApplyStyleToPostponeds(Array<SvgNodeIdPair>& postponeds, SvgNode* style);
+void cssCopyStyleAttr(SvgNode* to, const SvgNode* from, bool overwrite = false);
 
 #endif //_TVG_SVG_CSS_STYLE_H_
