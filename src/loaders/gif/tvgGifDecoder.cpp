@@ -23,6 +23,7 @@
 #include "tvgGifDecoder.h"
 #include "tvgAllocator.h"
 #include "tvgArray.h"
+#include "tvgMath.h"
 
 #define GIF_EXTENSION_INTRODUCER 0x21
 #define GIF_IMAGE_SEPARATOR 0x2C
@@ -579,7 +580,7 @@ bool GifDecoder::load(const uint8_t* data, uint32_t size)
     for (uint32_t i = 0; i < frameCount; i++) {
         totalDelay += frames[i].delay;
     }
-    if (frameCount > 0 && totalDelay > 0) {
+    if (frameCount > 0 && totalDelay > FLOAT_EPSILON) {
         frameRate = (frameCount * 100.0f) / totalDelay;
     } else {
         frameRate = 10.0f; // default
