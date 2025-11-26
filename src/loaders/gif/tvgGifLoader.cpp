@@ -231,4 +231,3 @@ Result GifLoader::segment(float begin, float end)
     
     return Result::Success;
 }
-
