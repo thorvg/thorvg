@@ -196,11 +196,6 @@ bool GifLoader::open(const char* path)
 
     // Allocate canvas - use size_t to prevent overflow
     size_t canvasSize = static_cast<size_t>(gifFile->SWidth) * static_cast<size_t>(gifFile->SHeight) * 4;
-    // Sanity check: reject unreasonably large allocations (> 1GB)
-    if (canvasSize > 1024 * 1024 * 1024) {
-        clear();
-        return false;
-    }
     canvas = tvg::malloc<uint8_t>(canvasSize);
     if (!canvas) {
         clear();
@@ -293,11 +288,6 @@ bool GifLoader::open(const char* data, uint32_t size, TVG_UNUSED const char* rpa
     
     // Allocate canvas - use size_t to prevent overflow
     size_t canvasSize = static_cast<size_t>(gifFile->SWidth) * static_cast<size_t>(gifFile->SHeight) * 4;
-    // Sanity check: reject unreasonably large allocations (> 1GB)
-    if (canvasSize > 1024 * 1024 * 1024) {
-        clear();
-        return false;
-    }
     canvas = tvg::malloc<uint8_t>(canvasSize);
     if (!canvas) {
         clear();
