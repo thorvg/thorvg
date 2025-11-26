@@ -212,7 +212,7 @@ float GifLoader::curFrame()
 
 float GifLoader::duration()
 {
-    if (decoder.frameRate > 0.0f) {
+    if (decoder.frameRate > FLOAT_EPSILON) {
         return decoder.frameCount / decoder.frameRate;
     }
     return 0.0f;
