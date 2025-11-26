@@ -227,7 +227,7 @@ struct RenderPath
     Array<PathCommand> cmds;
     Array<Point> pts;
 
-    bool empty()
+    bool empty() const
     {
         return pts.empty();
     }

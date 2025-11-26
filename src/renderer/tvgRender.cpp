@@ -103,15 +103,15 @@ bool RenderPath::bounds(const Matrix* m, BBox& box)
 }
 
 
-// Optimize path in screen space with merging collinear lines, collapsing zero length lines, and removing unnecessary cubic beziers.
 void RenderPath::optimize(RenderPath& out, const Matrix& matrix) const
 {
 #if defined(THORVG_GL_RASTER_SUPPORT) || defined(THORVG_WG_RASTER_SUPPORT)
     static constexpr auto PX_TOLERANCE = 0.25f;
 
+    if (empty()) return;
+
     out.cmds.clear();
     out.pts.clear();
-
     out.cmds.reserve(cmds.count);
     out.pts.reserve(pts.count);
 
@@ -119,21 +119,16 @@ void RenderPath::optimize(RenderPath& out, const Matrix& matrix) const
     auto cmdCnt = this->cmds.count;
     auto pts = this->pts.data;
 
+    Point lastOutT, prevOutT;   // The suffix "T" indicates that the point is transformed.
     uint32_t prevIdx = 0;
     uint32_t prevPrevIdx = 0;
     auto hasPrevPrev = false;
-
-    // The suffix "T" indicates that the point is transformed.
-    Point lastOutT, prevOutT;
-
-    auto isIdentity = tvg::identity(&matrix);
 
     auto point2Line = [](const Point& point, const Point& start, const Point& vec, const float vecLenSq, float& maxDist, float& minT, float& maxT) {
         Point offset = point - start;
         auto area = tvg::cross(vec, offset);
         auto dist = fabsf(area) / sqrtf(vecLenSq); // if lineVecLenSq == 0, mean closed() hasn't been called
         if (dist > maxDist) maxDist = dist;
-
         auto t = tvg::dot(offset, vec) / vecLenSq;
         if (t < minT) minT = t;
         if (t > maxT) maxT = t;
@@ -173,15 +168,12 @@ void RenderPath::optimize(RenderPath& out, const Matrix& matrix) const
             addLineCmd(pt, ptT);
             return;
         }
-
         float dist, t;
         point2LineSimple(ptT, prevOutT, startT, dist, t);
-
         if (dist > PX_TOLERANCE) {
             addLineCmd(pt, ptT);
             return;
         }
-
         if (t < -PX_TOLERANCE) {
             out.pts[prevPrevIdx] = pt;
             lastOutT = ptT;
@@ -192,16 +184,13 @@ void RenderPath::optimize(RenderPath& out, const Matrix& matrix) const
     };
 
     auto processCubicTo = [&](const Point* cubicPts, const Point& startT) {
-        auto endT = isIdentity ? cubicPts[2] : cubicPts[2] * matrix;
+        auto endT = cubicPts[2] * matrix;
         if (tvg::closed(startT, endT, PX_TOLERANCE)) return;
-        auto ctrl1T = isIdentity ? cubicPts[0] : cubicPts[0] * matrix;
-        auto ctrl2T = isIdentity ? cubicPts[1] : cubicPts[1] * matrix;
         float maxDist, minT, maxT;
-        validateCubic(startT, ctrl1T, ctrl2T, endT, maxDist, minT, maxT);
-
-        bool flatEnough  = (maxDist <= PX_TOLERANCE);
-        bool inSpan = (minT >= -PX_TOLERANCE) && (maxT <= 1.0f + PX_TOLERANCE);
-        if (flatEnough && inSpan) {
+        validateCubic(startT, cubicPts[0] * matrix, cubicPts[1] * matrix, endT, maxDist, minT, maxT);
+        auto flat = (maxDist <= PX_TOLERANCE);
+        auto inSpan = (minT >= -PX_TOLERANCE) && (maxT <= 1.0f + PX_TOLERANCE);
+        if (flat && inSpan) {
             processLineCollinear(startT, cubicPts[2], endT);
         } else {
             out.cmds.push(PathCommand::CubicTo);
@@ -221,7 +210,7 @@ void RenderPath::optimize(RenderPath& out, const Matrix& matrix) const
             case PathCommand::MoveTo: {
                 out.cmds.push(PathCommand::MoveTo);
                 out.pts.push(*pts);
-                lastOutT = isIdentity ? *pts : *pts * matrix;
+                lastOutT = *pts * matrix;
                 prevIdx = out.pts.count - 1;
                 hasPrevPrev = false;
                 pts++;
@@ -229,7 +218,7 @@ void RenderPath::optimize(RenderPath& out, const Matrix& matrix) const
             }
             case PathCommand::LineTo: {
                 auto startT = lastOutT;
-                auto ptT = isIdentity ? *pts : (*pts) * matrix;
+                auto ptT = (*pts) * matrix;
                 if (tvg::closed(startT, ptT, PX_TOLERANCE)) {
                     pts++;
                     break;
@@ -248,9 +237,8 @@ void RenderPath::optimize(RenderPath& out, const Matrix& matrix) const
                 hasPrevPrev = false;
                 break;
             }
-            default:
-                break;
-            }
+            default: break;
+        }
     }
 #else
     TVGLOG("RENDERER", "RenderPath Optimization is disabled");
