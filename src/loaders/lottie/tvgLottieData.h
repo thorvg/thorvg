@@ -66,7 +66,7 @@ struct TextDocument
     RGB32 color;
     struct {
         Point pos;
-        Point size;
+        Point size{};
     } bbox;
     struct {
         RGB32 color;
