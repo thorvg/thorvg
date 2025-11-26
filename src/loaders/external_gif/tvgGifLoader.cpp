@@ -22,6 +22,7 @@
 
 #include <memory.h>
 #include "tvgGifLoader.h"
+#include "tvgMath.h"
 
 /************************************************************************/
 /* Internal Class Implementation                                        */
@@ -383,7 +384,7 @@ float GifLoader::curFrame()
 
 float GifLoader::duration()
 {
-    if (frameRate > 0.0f && gifFile) {
+    if (frameRate > FLOAT_EPSILON && gifFile) {
         return gifFile->ImageCount / frameRate;
     }
     return 0.0f;
