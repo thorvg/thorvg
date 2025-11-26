@@ -332,8 +332,8 @@ void GifDecoder::compositeFrame(uint32_t frameIndex)
     // Early exit if frame is completely out of bounds
     if (frame.top >= height || frame.left >= width) return;
     
-    // Check if we can use memcpy for entire rows
-    bool canUseMemcpy = (frame.left + frame.width <= width);
+    // Check if we can use memcpy for entire rows (only if no transparency)
+    bool canUseMemcpy = !frame.transparent && (frame.left + frame.width <= width);
     
     for (uint32_t y = startY; y < endY; y++) {
         uint32_t canvasY = frame.top + y;
@@ -341,14 +341,18 @@ void GifDecoder::compositeFrame(uint32_t frameIndex)
         uint32_t canvasIdx = canvasY * width + frame.left;
         
         if (canUseMemcpy) {
-            // Fast path: copy entire row at once
+            // Fast path: copy entire row at once (no transparency)
             memcpy(&canvas32[canvasIdx], &framePixels32[frameIdx], 
                    frame.width * sizeof(uint32_t));
         } else {
-            // Slow path: copy pixel by pixel with bounds checking
+            // Slow path: copy pixel by pixel with bounds and transparency checking
             for (uint32_t x = startX; x < endX; x++) {
                 if (frame.left + x < width) {
-                    canvas32[canvasIdx + x] = framePixels32[frameIdx + x];
+                    uint32_t pixel = framePixels32[frameIdx + x];
+                    // Skip transparent pixels (alpha = 0)
+                    if ((pixel & 0xFF000000) != 0) {
+                        canvas32[canvasIdx + x] = pixel;
+                    }
                 }
             }
         }

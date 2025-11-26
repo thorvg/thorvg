@@ -49,7 +49,7 @@ void GifLoader::run(unsigned tid)
     // Initial frame setup - composite frame 0 and prepare surface
     if (currentFrameIndex < decoder.frameCount) {
         // Initialize canvas as transparent
-        memset(decoder.canvas, 0, decoder.width * decoder.height * 4);
+        memset(decoder.canvas, 0, static_cast<size_t>(decoder.width) * static_cast<size_t>(decoder.height) * 4);
         
         // Composite frame 0
         decoder.compositeFrame(0);
@@ -182,7 +182,7 @@ bool GifLoader::frame(float no)
             
             if (needReset) {
                 // Reset and composite from frame 0
-                memset(decoder.canvas, 0, decoder.width * decoder.height * 4);
+                memset(decoder.canvas, 0, static_cast<size_t>(decoder.width) * static_cast<size_t>(decoder.height) * 4);
                 for (uint32_t i = 0; i <= frameIndex; i++) {
                     decoder.compositeFrame(i);
                 }
