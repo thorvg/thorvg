@@ -30,7 +30,7 @@
 class GifLoader : public FrameModule, public Task
 {
 private:
-    uint8_t* data = nullptr;
+    unsigned char* data = nullptr;
     uint32_t size = 0;
     bool freeData = false;
     
