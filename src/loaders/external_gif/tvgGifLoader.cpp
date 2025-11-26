@@ -21,7 +21,6 @@
  */
 
 #include <memory.h>
-#include "tvgLoader.h"
 #include "tvgGifLoader.h"
 
 /************************************************************************/
@@ -169,7 +168,6 @@ GifLoader::GifLoader() : FrameModule(FileType::Gif)
 {
 }
 
-
 GifLoader::~GifLoader()
 {
     clear();
@@ -237,12 +235,12 @@ static int memoryInputFunc(GifFileType* gif, GifByteType* buffer, int length)
 bool GifLoader::open(const char* data, uint32_t size, TVG_UNUSED const char* rpath, bool copy)
 {
     if (copy) {
-        fileData = tvg::malloc<uint8_t*>(size);
+        fileData = tvg::malloc<unsigned char*>(size);
         if (!fileData) return false;
-        memcpy(fileData, data, size);
+        memcpy((unsigned char *)fileData, data, size);
         freeData = true;
     } else {
-        fileData = (uint8_t*)data;
+        fileData = (unsigned char *) data;
         freeData = false;
     }
     fileSize = size;
