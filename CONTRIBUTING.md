@@ -2,7 +2,7 @@ We always appreciate your contribution. ThorVG doesn't expect patches to be perf
 <br />
 
 ## Coding Convention
-Please read the [ThorVG Coding Convetion Guidance](https://github.com/thorvg/thorvg/wiki/ThorVG-Coding-Convention) before writing your code.
+Please read the [ThorVG Coding Convetion Guidance](https://github.com/thorvg/thorvg/wiki/Coding-Convention) before writing your code.
 
 ## Reviewers
 ThorVG uses GitHub infrastructure to automatically assign code reviewers for your changes. To see the full list of reviewers, please refer to the [CODEOWNERS](https://github.com/thorvg/thorvg/blob/main/CODEOWNERS) file.

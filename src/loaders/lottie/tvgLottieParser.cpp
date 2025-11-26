@@ -390,7 +390,7 @@ LottieInterpolator* LottieParser::getInterpolator(const char* key, Point& in, Po
 
     //new interpolator
     if (!interpolator) {
-        interpolator = tvg::malloc<LottieInterpolator*>(sizeof(LottieInterpolator));
+        interpolator = tvg::malloc<LottieInterpolator>(sizeof(LottieInterpolator));
         interpolator->set(key, in, out);
         comp->interpolators.push(interpolator);
     }
@@ -962,7 +962,7 @@ void LottieParser::parseImage(LottieImage* image, const char* data, const char* 
     //external image resource
     } else {
         auto len = strlen(dirName) + strlen(subPath) + strlen(data) + 2;
-        image->data.path = tvg::malloc<char*>(len);
+        image->data.path = tvg::malloc<char>(len);
         snprintf(image->data.path, len, "%s/%s%s", dirName, subPath, data);
     }
 
@@ -1191,7 +1191,7 @@ void LottieParser::parseTextRange(LottieText* text)
                     else if (KEY_AS("xe"))
                     {
                         parseProperty(selector->maxEase);
-                        selector->interpolator = tvg::malloc<LottieInterpolator*>(sizeof(LottieInterpolator));
+                        selector->interpolator = tvg::malloc<LottieInterpolator>(sizeof(LottieInterpolator));
                     }
                     else if (KEY_AS("ne")) parseProperty(selector->minEase);
                     else if (KEY_AS("a")) parseProperty(selector->maxAmount);
@@ -1694,7 +1694,7 @@ void LottieParser::captureSlots(const char* key)
 
     //composite '{' + slots + '}'
     auto len = (end - begin + 2);
-    slots = tvg::malloc<char*>(sizeof(char) * len + 1);
+    slots = tvg::malloc<char>(sizeof(char) * len + 1);
     slots[0] = '{';
     memcpy(slots + 1, begin, len);
     slots[len] = '\0';

@@ -20,6 +20,9 @@
  * SOFTWARE.
  */
 
+namespace tvg
+{
+
 struct Vertex
 {
    Point pt;
@@ -521,14 +524,14 @@ static void _rasterPolygonImage(SwSurface* surface, const SwImage& image, const 
 
 static AASpans* _AASpans(int yStart, int yEnd)
 {
-    auto aaSpans = tvg::malloc<AASpans*>(sizeof(AASpans));
+    auto aaSpans = tvg::malloc<AASpans>(sizeof(AASpans));
     aaSpans->yStart = yStart;
     aaSpans->yEnd = yEnd;
 
     //Initialize X range
     auto height = yEnd - yStart;
 
-    aaSpans->lines = tvg::malloc<AALine*>(height * sizeof(AALine));
+    aaSpans->lines = tvg::malloc<AALine>(height * sizeof(AALine));
 
     for (int32_t i = 0; i < height; i++) {
         aaSpans->lines[i].x[0] = INT32_MAX;
@@ -778,6 +781,9 @@ static void _apply(SwSurface* surface, AASpans* aaSpans)
 }
 
 
+} //namespace
+
+
 /*
     2 triangles constructs 1 mesh.
     below figure illustrates vert[4] index info.
@@ -808,7 +814,7 @@ bool rasterTexmapPolygon(SwSurface* surface, const SwImage& image, const Matrix&
     auto yEnd = std::min(static_cast<int32_t>(ye), bbox.max.y);
     auto aaSpans = rightAngle(transform) ?  nullptr : _AASpans(yStart, yEnd);
 
-    Polygon polygon;
+    tvg::Polygon polygon;
 
     //Draw the first polygon
     polygon.vertex[0] = vertices[0];
@@ -832,3 +838,4 @@ bool rasterTexmapPolygon(SwSurface* surface, const SwImage& image, const Matrix&
     if (aaSpans) _apply(surface, aaSpans);
     return true;
 }
+

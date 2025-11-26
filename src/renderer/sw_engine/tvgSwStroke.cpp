@@ -48,7 +48,7 @@ static void _growBorder(SwStrokeBorder* border, uint32_t newPts)
 {
     if (border->pts.count + newPts <= border->pts.reserved) return;
     border->pts.grow(newPts * 20);
-    border->tags = tvg::realloc<uint8_t*>(border->tags, border->pts.reserved);      //align the pts / tags memory size
+    border->tags = tvg::realloc<uint8_t>(border->tags, border->pts.reserved);      //align the pts / tags memory size
 }
 
 
@@ -175,7 +175,7 @@ static void _borderLineTo(SwStrokeBorder* border, const SwPoint& to, bool movabl
         border->pts.last() = to;
     } else {
         //don't add zero-length line_to
-        if (!border->pts.empty() && (border->pts.last() - to).small()) return;
+        if (!border->pts.empty() && (border->pts.last() - to).tiny()) return;
         _growBorder(border, 1);
         border->tags[border->pts.count] = SW_STROKE_TAG_POINT;
         border->pts.push(to);

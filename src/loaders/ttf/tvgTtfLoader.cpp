@@ -24,9 +24,7 @@
 #include "tvgStr.h"
 #include "tvgTtfLoader.h"
 
-#if defined(_WIN32) && (WINAPI_FAMILY == WINAPI_FAMILY_DESKTOP_APP)
-    #include <windows.h>
-#elif defined(__linux__)
+#if defined(__linux__)
     #include <fcntl.h>
     #include <unistd.h>
     #include <sys/mman.h>
@@ -139,7 +137,7 @@ static bool _map(TtfLoader* loader, const char* path)
         return false;
     }
 
-    reader.data = tvg::malloc<uint8_t*>(reader.size);
+    reader.data = tvg::malloc<uint8_t>(reader.size);
 
     fseek(f, 0, SEEK_SET);
     auto ret = fread(reader.data, sizeof(char), reader.size, f);
@@ -189,12 +187,12 @@ static size_t _codepoints(char** utf8)
 }
 
 
-static void _build(const RenderPath& in, const Point& cursor, RenderPath& out)
+static void _build(const RenderPath& in, const Point& cursor, const Point& kerning, RenderPath& out)
 {
     out.cmds.push(in.cmds);
     out.pts.grow(in.pts.count);
     ARRAY_FOREACH(p, in.pts) {
-        out.pts.push(*p + cursor);
+        out.pts.push(*p + cursor + kerning);
     }
 }
 
@@ -299,7 +297,7 @@ void TtfLoader::wrapNone(FontMetrics& fm, const Point& box, char* utf8, RenderPa
         Point kerning{};
         if (ltgm) reader.kerning(ltgm->idx, rtgm->idx, kerning);
 
-        _build(rtgm->path, cursor, out);
+        _build(rtgm->path, cursor, kerning, out);
         cursor.x +=  rtgm->advance + kerning.x;
 
         if (cursor.x > fm.size.x) fm.size.x = cursor.x;  //text horizontal size
@@ -341,11 +339,11 @@ void TtfLoader::wrapChar(FontMetrics& fm, const Point& box, char* utf8, RenderPa
             if (cursor.x + xadv > box.x) {
                 line = feedLine(fm.align.x, box.x, cursor.x, line, out.pts.count, cursor, loc, out);
             }
-            _build(rtgm->path, cursor, out);
+            _build(rtgm->path, cursor, kerning, out);
             cursor.x += xadv;
         //not enough layout space, force pushing
         } else {
-            _build(rtgm->path, cursor, out);
+            _build(rtgm->path, cursor, kerning, out);
             line = feedLine(fm.align.x, box.x, cursor.x, line, out.pts.count, cursor, loc, out);
         }
 
@@ -404,7 +402,7 @@ void TtfLoader::wrapWord(FontMetrics& fm, const Point& box, char* utf8, RenderPa
                 line = feedLine(fm.align.x, box.x, cursor.x, line, out.pts.count, cursor, loc, out);
             }
         }
-        _build(rtgm->path, cursor, out);
+        _build(rtgm->path, cursor, kerning, out);
         cursor.x += xadv;
 
         //capture the word start
@@ -455,7 +453,7 @@ void TtfLoader::wrapEllipsis(FontMetrics& fm, const Point& box, char* utf8, Rend
         //normal case
         if (cursor.x + xadv < box.x) {
             capture = {out.pts.count, out.cmds.count, xadv};
-            _build(rtgm->path, cursor, out);
+            _build(rtgm->path, cursor, kerning, out);
             cursor.x += xadv;
         //ellipsis
         } else {
@@ -474,7 +472,7 @@ void TtfLoader::wrapEllipsis(FontMetrics& fm, const Point& box, char* utf8, Rend
             }
             //append ...
             for (int i = 0; i < 3; ++i) {
-                _build(rtgm->path, cursor, out);
+                _build(rtgm->path, cursor, kerning, out);
                 cursor.x += kerning.x + rtgm->advance;
             }
             stop = true;
@@ -539,7 +537,7 @@ bool TtfLoader::open(const char* data, uint32_t size, TVG_UNUSED const char* rpa
     nomap = true;
 
     if (copy) {
-        reader.data = tvg::malloc<uint8_t*>(size);
+        reader.data = tvg::malloc<uint8_t>(size);
         if (!reader.data) return false;
         memcpy((char*)reader.data, data, reader.size);
         freeData = true;
@@ -559,7 +557,7 @@ bool TtfLoader::get(FontMetrics& fm, char* text, RenderPath& out)
 
     fm.scale = reader.metrics.unitsPerEm / (fm.fontSize * DPI);
     fm.size = {};
-    if (!fm.engine) fm.engine = tvg::calloc<TtfMetrics*>(1, sizeof(TtfMetrics));
+    if (!fm.engine) fm.engine = tvg::calloc<TtfMetrics>(1, sizeof(TtfMetrics));
 
     auto box = fm.box * fm.scale;
 
@@ -585,6 +583,6 @@ void TtfLoader::copy(const FontMetrics& in, FontMetrics& out)
 {
     release(out);
     out = in;
-    if (in.engine) out.engine = tvg::calloc<TtfMetrics*>(1, sizeof(TtfMetrics));
+    if (in.engine) out.engine = tvg::calloc<TtfMetrics>(1, sizeof(TtfMetrics));
     *static_cast<TtfMetrics*>(out.engine) = *static_cast<TtfMetrics*>(in.engine);
 }

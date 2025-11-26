@@ -48,7 +48,7 @@ size_t b64Decode(const char* encoded, const size_t len, char** decoded)
     if (!decoded || !encoded || len == 0) return 0;
 
     auto reserved = 3 * (1 + (len >> 2)) + 1;
-    auto output = tvg::malloc<char*>(reserved * sizeof(char));
+    auto output = tvg::malloc<char>(reserved * sizeof(char));
     if (!output) return 0;
     output[reserved - 1] = '\0';
 

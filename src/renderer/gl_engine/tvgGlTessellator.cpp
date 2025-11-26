@@ -44,12 +44,7 @@ void Stroker::run(const RenderShape& rshape, const RenderPath& path, const Matri
 
     RenderPath dashed;
     if (rshape.strokeDash(dashed)) run(dashed, m);
-    else if (rshape.trimpath()) {
-        RenderPath trimmedPath;
-        if (rshape.stroke->trim.trim(path, trimmedPath)) {
-            run(trimmedPath, m);
-        }
-    } else run(path, m);
+    else run(path, m);
 }
 
 
@@ -242,27 +237,34 @@ void Stroker::join(const Point& dir)
 
 void Stroker::round(const Point &prev, const Point& curr, const Point& center)
 {
-    if (orientation(prev, center, curr) == Orientation::Linear) return;
+    auto orient = orientation(prev, center, curr);
+    if (orient == Orientation::Linear) return;
 
     mLeftTop.x = std::min(mLeftTop.x, std::min(center.x, std::min(prev.x, curr.x)));
     mLeftTop.y = std::min(mLeftTop.y, std::min(center.y, std::min(prev.y, curr.y)));
     mRightBottom.x = std::max(mRightBottom.x, std::max(center.x, std::max(prev.x, curr.x)));
     mRightBottom.y = std::max(mRightBottom.y, std::max(center.y, std::max(prev.y, curr.y)));
 
+    auto startAngle = tvg::atan2(prev.y - center.y, prev.x - center.x);
+    auto endAngle = tvg::atan2(curr.y - center.y, curr.x - center.x);
+
+    if (orient == Orientation::Clockwise) {
+        if (endAngle > startAngle) endAngle -= 2 * MATH_PI;
+    } else {
+        if (endAngle < startAngle) endAngle += 2 * MATH_PI;
+    }
+
     // Fixme: just use bezier curve to calculate step count
     auto count = Bezier(prev * mScale, curr * mScale, radius() * length(mScale)).segments();
+    if (count < 2) count = 2;
+
     auto c = _pushVertex(mBuffer->vertex, center.x, center.y);
     auto pi = _pushVertex(mBuffer->vertex, prev.x, prev.y);
-    auto step = 1.f / (count - 1);
-    auto dir = curr - prev;
+    auto step = (endAngle - startAngle) / (count - 1);
 
     for (uint32_t i = 1; i < static_cast<uint32_t>(count); i++) {
-        auto t = i * step;
-        auto p = prev + dir * t;
-        auto o_dir = p - center;
-        normalize(o_dir);
-
-        auto out = center + o_dir * radius();
+        auto angle = startAngle + step * i;
+        Point out = {center.x + cos(angle) * radius(), center.y + sin(angle) * radius()};
         auto oi = _pushVertex(mBuffer->vertex, out.x, out.y);
 
         mBuffer->index.push(c);

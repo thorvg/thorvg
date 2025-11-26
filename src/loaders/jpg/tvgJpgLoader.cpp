@@ -87,7 +87,7 @@ bool JpgLoader::open(const char* path)
 bool JpgLoader::open(const char* data, uint32_t size, TVG_UNUSED const char* rpath, bool copy)
 {
     if (copy) {
-        this->data = tvg::malloc<char*>(size);
+        this->data = tvg::malloc<char>(size);
         if (!this->data) return false;
         memcpy((char *)this->data, data, size);
         freeData = true;

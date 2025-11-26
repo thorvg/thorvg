@@ -90,7 +90,7 @@ SwMpool* mpoolInit(uint32_t threads)
 {
     auto allocSize = threads + 1;
 
-    auto mpool = tvg::malloc<SwMpool*>(sizeof(SwMpool));
+    auto mpool = tvg::malloc<SwMpool>(sizeof(SwMpool));
     mpool->outline = new SwOutline[allocSize];
     mpool->strokeOutline = new SwOutline[allocSize];
     mpool->leftBorder = new SwStrokeBorder[allocSize];

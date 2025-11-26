@@ -30,6 +30,8 @@
 
 using SvgColor = tvg::RGB;
 
+#define STR_AS(A, B) !strcmp((A), (B))
+
 struct Box
 {
     float x, y, w, h;

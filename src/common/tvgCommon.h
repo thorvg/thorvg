@@ -24,11 +24,13 @@
 #define _TVG_COMMON_H_
 
 #ifdef _WIN32
-    #include <malloc.h>
-#elif defined(__linux__) || defined(__ZEPHYR__)
-    #include <alloca.h>
-#else
-    #include <stdlib.h>
+    #if defined(WINAPI_ENTRY)
+        #if (WINAPI_FAMILY == WINAPI_FAMILY_DESKTOP_APP)
+            #include <windows.h>
+        #endif
+    #elif !defined(APIENTRY) && !defined(__CYGWIN__) && !defined(__SCITECH_SNAP__)
+        #include <windows.h>
+    #endif
 #endif
 #include <string>
 #include <cstdint>
@@ -45,6 +47,7 @@ using namespace tvg;
     #define TVG_UNUSED
     #define strncasecmp _strnicmp
     #define strcasecmp _stricmp
+    #define strtok_r strtok_s
 #else
     #define TVG_UNUSED __attribute__ ((__unused__))
 #endif
@@ -84,6 +87,12 @@ namespace tvg {
         #define TVGERR(...) do {} while(0)
         #define TVGLOG(...) do {} while(0)
     #endif
+
+    template<typename T>
+    static inline T* to(const Paint* p)
+    {
+        return static_cast<T*>(const_cast<Paint*>(p));
+    }
 
     uint16_t THORVG_VERSION_NUMBER();
 

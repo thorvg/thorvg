@@ -464,7 +464,7 @@ static void _writeLzwImage(GifWriter* writer, uint32_t width, uint32_t height, u
 
     fputc(minCodeSize, f); // min code size 8 bits
 
-    GifLzwNode* codetree = tvg::malloc<GifLzwNode*>(sizeof(GifLzwNode)*4096);
+    GifLzwNode* codetree = tvg::malloc<GifLzwNode>(sizeof(GifLzwNode)*4096);
 
     memset(codetree, 0, sizeof(GifLzwNode)*4096);
     int32_t curCode = -1;
@@ -552,8 +552,8 @@ bool gifBegin(GifWriter* writer, const char* filename, uint32_t width, uint32_t 
     writer->firstFrame = true;
 
     // allocate
-    writer->oldImage = tvg::malloc<uint8_t*>(width*height*4);
-    writer->tmpImage = tvg::malloc<uint8_t*>(width*height*4);
+    writer->oldImage = tvg::malloc<uint8_t>(width*height*4);
+    writer->tmpImage = tvg::malloc<uint8_t>(width*height*4);
 
     fputs("GIF89a", writer->f);
 

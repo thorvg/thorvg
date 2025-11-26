@@ -23,7 +23,7 @@ int VP8LColorCacheInit(VP8LColorCache* const cc, int hash_bits) {
   const int hash_size = 1 << hash_bits;
   assert(cc != NULL);
   assert(hash_bits > 0);
-  cc->colors_ = tvg::calloc<uint32_t*>((uint64_t)hash_size, sizeof(*cc->colors_));
+  cc->colors_ = tvg::calloc<uint32_t>((uint64_t)hash_size, sizeof(*cc->colors_));
   if (cc->colors_ == NULL) return 0;
   cc->hash_shift_ = 32 - hash_bits;
   cc->hash_bits_ = hash_bits;

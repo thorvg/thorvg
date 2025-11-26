@@ -185,7 +185,7 @@ void LottieBuilder::updateTransform(LottieGroup* parent, LottieObject** child, f
     ctx->propagator->opacity(MULTIPLY(opacity, PAINT(ctx->propagator)->opacity));
 
     //FIXME: preserve the stroke width. too workaround, need a better design.
-    if (SHAPE(ctx->propagator)->rs.strokeWidth() > 0.0f) {
+    if (to<ShapeImpl>(ctx->propagator)->rs.strokeWidth() > 0.0f) {
         auto denominator = sqrtf(m.e11 * m.e11 + m.e12 * m.e12);
         if (denominator > 1.0f) ctx->propagator->strokeWidth(ctx->propagator->strokeWidth() / denominator);
     }
@@ -228,9 +228,10 @@ static void _update(LottieStroke* stroke, float frameNo, RenderContext* ctx, Twe
     ctx->propagator->strokeMiterlimit(stroke->miterLimit);
 
     if (stroke->dashattr) {
-        auto dashes = (float*)alloca(stroke->dashattr->size * sizeof(float));
+        auto dashes = tvg::malloc<float>(stroke->dashattr->size * sizeof(float));
         for (uint8_t i = 0; i < stroke->dashattr->size; ++i) dashes[i] = stroke->dashattr->values[i](frameNo, tween, exps);
         ctx->propagator->strokeDash(dashes, stroke->dashattr->size, stroke->dashattr->offset(frameNo, tween, exps));
+        tvg::free(dashes);
     } else {
         ctx->propagator->strokeDash(nullptr, 0);
     }
@@ -361,7 +362,7 @@ static void _repeat(LottieGroup* parent, Shape* path, LottieRenderPooler<Shape>*
                 auto shape = pooler->pooling();
                 shape->ref();   //prevent pooler returns the same shape
                 PAINT((*p))->duplicate(shape);
-                SHAPE(shape)->rs.path = SHAPE(path)->rs.path;
+                to<ShapeImpl>(shape)->rs.path = to<ShapeImpl>(path)->rs.path;
                 auto opacity = tvg::lerp<uint8_t>(repeater->startOpacity, repeater->endOpacity, static_cast<float>(i + 1) / repeater->cnt);
                 shape->opacity(MULTIPLY(shape->opacity(), opacity));
 
@@ -404,18 +405,18 @@ static void _repeat(LottieGroup* parent, Shape* path, LottieRenderPooler<Shape>*
 void LottieBuilder::appendRect(Shape* shape, Point& pos, Point& size, float r, bool clockwise, RenderContext* ctx)
 {
     auto temp = (ctx->offset) ? Shape::gen() : shape;
-    auto cnt = SHAPE(temp)->rs.path.pts.count;
+    auto cnt = to<ShapeImpl>(temp)->rs.path.pts.count;
 
     temp->appendRect(pos.x, pos.y, size.x, size.y, r, r, clockwise);
 
     if (ctx->transform) {
-        for (auto i = cnt; i < SHAPE(temp)->rs.path.pts.count; ++i) {
-            SHAPE(temp)->rs.path.pts[i] *= *ctx->transform;
+        for (auto i = cnt; i < to<ShapeImpl>(temp)->rs.path.pts.count; ++i) {
+            to<ShapeImpl>(temp)->rs.path.pts[i] *= *ctx->transform;
         }
     }
 
     if (ctx->offset) {
-        ctx->offset->modifyRect(SHAPE(temp)->rs.path, SHAPE(shape)->rs.path);
+        ctx->offset->modifyRect(to<ShapeImpl>(temp)->rs.path, to<ShapeImpl>(shape)->rs.path);
         Paint::rel(temp);
     }
 }
@@ -450,13 +451,13 @@ static void _appendCircle(Shape* shape, Point& center, Point& radius, bool clock
 {
     if (ctx->offset) ctx->offset->modifyEllipse(radius);
 
-    auto cnt = SHAPE(shape)->rs.path.pts.count;
+    auto cnt = to<ShapeImpl>(shape)->rs.path.pts.count;
 
     shape->appendCircle(center.x, center.y, radius.x, radius.y, clockwise);
 
     if (ctx->transform) {
-        for (auto i = cnt; i < SHAPE(shape)->rs.path.pts.count; ++i) {
-            SHAPE(shape)->rs.path.pts[i] *= *ctx->transform;
+        for (auto i = cnt; i < to<ShapeImpl>(shape)->rs.path.pts.count; ++i) {
+            to<ShapeImpl>(shape)->rs.path.pts[i] *= *ctx->transform;
         }
     }
 }
@@ -486,13 +487,13 @@ void LottieBuilder::updatePath(LottieGroup* parent, LottieObject** child, float 
 
     if (ctx->repeaters.empty()) {
         _draw(parent, path, ctx);
-        if (path->pathset(frameNo, SHAPE(ctx->merging)->rs.path, ctx->transform, tween, exps, ctx->modifier)) {
+        if (path->pathset(frameNo, to<ShapeImpl>(ctx->merging)->rs.path, ctx->transform, tween, exps, ctx->modifier)) {
             PAINT(ctx->merging)->mark(RenderUpdateFlag::Path);
         }
     } else {
         auto shape = path->pooling();
         shape->reset();
-        path->pathset(frameNo, SHAPE(shape)->rs.path, ctx->transform, tween, exps, ctx->modifier);
+        path->pathset(frameNo, to<ShapeImpl>(shape)->rs.path, ctx->transform, tween, exps, ctx->modifier);
         _repeat(parent, shape, path, ctx);
     }
 }
@@ -552,11 +553,11 @@ void LottieBuilder::updateStar(LottiePolyStar* star, float frameNo, Matrix* tran
     }
 
     if (tvg::zero(innerRoundness) && tvg::zero(outerRoundness)) {
-        SHAPE(shape)->rs.path.pts.reserve(numPoints + 2);
-        SHAPE(shape)->rs.path.cmds.reserve(numPoints + 3);
+        to<ShapeImpl>(shape)->rs.path.pts.reserve(numPoints + 2);
+        to<ShapeImpl>(shape)->rs.path.cmds.reserve(numPoints + 3);
     } else {
-        SHAPE(shape)->rs.path.pts.reserve(numPoints * 3 + 2);
-        SHAPE(shape)->rs.path.cmds.reserve(numPoints + 3);
+        to<ShapeImpl>(shape)->rs.path.pts.reserve(numPoints * 3 + 2);
+        to<ShapeImpl>(shape)->rs.path.cmds.reserve(numPoints + 3);
         hasRoundness = true;
     }
 
@@ -613,10 +614,10 @@ void LottieBuilder::updateStar(LottiePolyStar* star, float frameNo, Matrix* tran
         longSegment = !longSegment;
     }
     //ensure proper shape closure - important for modifiers that behave differently for degenerate (linear) vs curved cubics
-    _close(SHAPE(shape)->rs.path.pts, in, hasRoundness);
+    _close(to<ShapeImpl>(shape)->rs.path.pts, in, hasRoundness);
     shape->close();
 
-    if (ctx->modifier) ctx->modifier->modifyPolystar(SHAPE(shape)->rs.path, SHAPE(merging)->rs.path, outerRoundness, hasRoundness);
+    if (ctx->modifier) ctx->modifier->modifyPolystar(to<ShapeImpl>(shape)->rs.path, to<ShapeImpl>(merging)->rs.path, outerRoundness, hasRoundness);
 }
 
 
@@ -645,11 +646,11 @@ void LottieBuilder::updatePolygon(LottieGroup* parent, LottiePolyStar* star, flo
     } else {
         shape = merging;
         if (hasRoundness) {
-            SHAPE(shape)->rs.path.pts.reserve(ptsCnt * 3 + 2);
-            SHAPE(shape)->rs.path.cmds.reserve(ptsCnt + 3);
+            to<ShapeImpl>(shape)->rs.path.pts.reserve(ptsCnt * 3 + 2);
+            to<ShapeImpl>(shape)->rs.path.cmds.reserve(ptsCnt + 3);
         } else {
-            SHAPE(shape)->rs.path.pts.reserve(ptsCnt + 2);
-            SHAPE(shape)->rs.path.cmds.reserve(ptsCnt + 3);
+            to<ShapeImpl>(shape)->rs.path.pts.reserve(ptsCnt + 2);
+            to<ShapeImpl>(shape)->rs.path.cmds.reserve(ptsCnt + 3);
         }
     }
 
@@ -683,10 +684,10 @@ void LottieBuilder::updatePolygon(LottieGroup* parent, LottiePolyStar* star, flo
         angle += anglePerPoint * direction;
     }
     //ensure proper shape closure - important for modifiers that behave differently for degenerate (linear) vs curved cubics
-    _close(SHAPE(shape)->rs.path.pts, in, hasRoundness);
+    _close(to<ShapeImpl>(shape)->rs.path.pts, in, hasRoundness);
     shape->close();
 
-    if (ctx->modifier) ctx->modifier->modifyPolystar(SHAPE(shape)->rs.path, SHAPE(merging)->rs.path, 0.0f, false);
+    if (ctx->modifier) ctx->modifier->modifyPolystar(to<ShapeImpl>(shape)->rs.path, to<ShapeImpl>(merging)->rs.path, 0.0f, false);
 }
 
 
@@ -768,11 +769,11 @@ void LottieBuilder::updateTrimpath(TVG_UNUSED LottieGroup* parent, LottieObject*
     float begin, end;
     trimpath->segment(frameNo, begin, end, tween, exps);
 
-    if (SHAPE(ctx->propagator)->rs.stroke) {
+    if (to<ShapeImpl>(ctx->propagator)->rs.stroke) {
         auto length = fabsf(begin - end);
         auto tmp = begin;
-        begin = (length * SHAPE(ctx->propagator)->rs.stroke->trim.begin) + tmp;
-        end = (length * SHAPE(ctx->propagator)->rs.stroke->trim.end) + tmp;
+        begin = (length * to<ShapeImpl>(ctx->propagator)->rs.stroke->trim.begin) + tmp;
+        end = (length * to<ShapeImpl>(ctx->propagator)->rs.stroke->trim.end) + tmp;
     }
 
     ctx->propagator->trimpath(begin, end, trimpath->type == LottieTrimpath::Type::Simultaneous);
@@ -925,7 +926,7 @@ void LottieBuilder::updateURLFont( LottieLayer* layer, float frameNo, LottieText
 
     //text build
     auto len = strlen(doc.text);
-    auto buf = (char*)alloca(len + 1);
+    auto buf = tvg::malloc<char>(len + 1);
 
     // preprocessing text for modern systems: handle carriage return ('\r') and end-of-text ('\3')
     // as line feed ('\n') only when they appear independently.
@@ -953,6 +954,8 @@ void LottieBuilder::updateURLFont( LottieLayer* layer, float frameNo, LottieText
     //outline
     auto strkColor = doc.stroke.color;
     if (doc.stroke.width > 0.0f) paint->outline(doc.stroke.width, strkColor.r, strkColor.g, strkColor.b);
+
+    tvg::free(buf);
 
     //text range
     if (text->ranges.empty()) return;
@@ -985,7 +988,7 @@ Shape* LottieBuilder::textShape(LottieText* text, float frameNo, const TextDocum
     ARRAY_FOREACH(p, glyph->children) {
         auto group = static_cast<LottieGroup*>(*p);
         ARRAY_FOREACH(p, group->children) {
-            if (static_cast<LottiePath*>(*p)->pathset(frameNo, SHAPE(shape)->rs.path, nullptr, tween, exps)) {
+            if (static_cast<LottiePath*>(*p)->pathset(frameNo, to<ShapeImpl>(shape)->rs.path, nullptr, tween, exps)) {
                 PAINT(shape)->mark(RenderUpdateFlag::Path);
             }
         }
@@ -1233,7 +1236,7 @@ void LottieBuilder::updateMasks(LottieLayer* layer, float frameNo)
         //the first mask
         if (!pShape) {
             pShape = layer->pooling();
-            SHAPE(pShape)->reset();
+            to<ShapeImpl>(pShape)->reset();
             auto compMethod = (method == MaskMethod::Subtract || method == MaskMethod::InvAlpha) ? MaskMethod::InvAlpha : MaskMethod::Alpha;
             //Cheaper. Replace the masking with a clipper
             if (layer->effects.empty() && layer->masks.count == 1 && compMethod == MaskMethod::Alpha) {
@@ -1245,7 +1248,7 @@ void LottieBuilder::updateMasks(LottieLayer* layer, float frameNo)
         //Chain mask composition
         } else if (pMethod != method || pOpacity != opacity || (method != MaskMethod::Subtract && method != MaskMethod::Difference)) {
             auto shape = layer->pooling();
-            SHAPE(shape)->reset();
+            to<ShapeImpl>(shape)->reset();
             pShape->mask(shape, method);
             pShape = shape;
         }
@@ -1255,12 +1258,12 @@ void LottieBuilder::updateMasks(LottieLayer* layer, float frameNo)
 
         //Default Masking
         if (expand == 0.0f) {
-            mask->pathset(frameNo, SHAPE(pShape)->rs.path, nullptr, tween, exps);
+            mask->pathset(frameNo, to<ShapeImpl>(pShape)->rs.path, nullptr, tween, exps);
         //Masking with Expansion (Offset)
         } else {
             //TODO: Once path direction support is implemented, ensure that the direction is ignored here
             auto offset = LottieOffsetModifier(expand);
-            mask->pathset(frameNo, SHAPE(pShape)->rs.path, nullptr, tween, exps, &offset);
+            mask->pathset(frameNo, to<ShapeImpl>(pShape)->rs.path, nullptr, tween, exps, &offset);
         }
         pOpacity = opacity;
         pMethod = method;
@@ -1297,13 +1300,13 @@ void LottieBuilder::updateStrokeEffect(LottieLayer* layer, LottieFxStroke* effec
     //FIXME: all mask
     if (effect->allMask(frameNo)) {
         ARRAY_FOREACH(p, layer->masks) {
-            (*p)->pathset(frameNo, SHAPE(shape)->rs.path, nullptr, tween, exps);
+            (*p)->pathset(frameNo, to<ShapeImpl>(shape)->rs.path, nullptr, tween, exps);
         }
     //A specific mask
     } else {
         auto idx = static_cast<uint32_t>(effect->mask(frameNo) - 1);
         if (idx < 0 || idx >= layer->masks.count) return;
-        layer->masks[idx]->pathset(frameNo, SHAPE(shape)->rs.path, nullptr, tween, exps);
+        layer->masks[idx]->pathset(frameNo, to<ShapeImpl>(shape)->rs.path, nullptr, tween, exps);
     }
 
     shape->transform(layer->cache.matrix);
@@ -1597,5 +1600,5 @@ void LottieBuilder::build(LottieComposition* comp)
     comp->root->scene->clip(clip);
 
     //turn off partial rendering for children
-    SCENE(comp->root->scene)->size({comp->w, comp->h});
+    to<SceneImpl>(comp->root->scene)->size({comp->w, comp->h});
 }

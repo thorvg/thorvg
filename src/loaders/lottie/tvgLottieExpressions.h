@@ -38,7 +38,6 @@ struct LottieModifier;
 
 struct LottieExpressions
 {
-public:
     template<typename Property, typename NumType>
     bool result(float frameNo, NumType& out, LottieExpression* exp)
     {
@@ -117,7 +116,7 @@ public:
 
         if (jerry_value_is_string(bm_rt)) {
             auto len = jerry_string_length(bm_rt);
-            doc.text = tvg::realloc<char*>(doc.text, (len + 1) * sizeof(jerry_char_t));
+            doc.text = tvg::realloc<char>(doc.text, (len + 1) * sizeof(jerry_char_t));
             jerry_string_to_buffer(bm_rt, JERRY_ENCODING_UTF8, (jerry_char_t*)doc.text, len);
             doc.text[len] = '\0';
         }

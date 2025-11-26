@@ -33,10 +33,10 @@
 
 #define PAINT_METHOD(ret, METHOD) \
     switch (paint->type()) { \
-        case Type::Shape: ret = SHAPE(paint)->METHOD; break; \
-        case Type::Scene: ret = SCENE(paint)->METHOD; break; \
-        case Type::Picture: ret = PICTURE(paint)->METHOD; break; \
-        case Type::Text: ret = TEXT(paint)->METHOD; break; \
+        case Type::Shape: ret = to<ShapeImpl>(paint)->METHOD; break; \
+        case Type::Scene: ret = to<SceneImpl>(paint)->METHOD; break; \
+        case Type::Picture: ret = to<PictureImpl>(paint)->METHOD; break; \
+        case Type::Text: ret = to<TextImpl>(paint)->METHOD; break; \
         default: ret = {}; \
     }
 
@@ -76,7 +76,7 @@ static bool _compFastTrack(RenderMethod* renderer, Paint* cmpTarget, const Matri
     auto shape = static_cast<Shape*>(cmpTarget);
 
     //Trimming likely makes the shape non-rectangular
-    if (SHAPE(shape)->rs.trimpath()) return false;
+    if (to<ShapeImpl>(shape)->rs.trimpath()) return false;
 
     //Rectangle Candidates?
     const Point* pts;
@@ -249,7 +249,7 @@ RenderData Paint::Impl::update(RenderMethod* renderer, const Matrix& pm, Array<R
         auto pclip = PAINT(this->clipper);
         pclip->ctxFlag &= ~ContextFlag::FastTrack;   //reset
         viewport = renderer->viewport();
-        if (!pclip->clipper && SHAPE(this->clipper)->rs.strokeWidth() == 0.0f && _compFastTrack(renderer, this->clipper, pm, viewport)) {
+        if (!pclip->clipper && to<ShapeImpl>(this->clipper)->rs.strokeWidth() == 0.0f && _compFastTrack(renderer, this->clipper, pm, viewport)) {
             pclip->ctxFlag |= ContextFlag::FastTrack;
             compFastTrack = true;
         } else {

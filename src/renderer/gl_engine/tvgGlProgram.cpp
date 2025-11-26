@@ -56,7 +56,7 @@ GlProgram::GlProgram(const char* vertSrc, const char* fragSrc)
         glGetProgramiv(progObj, GL_INFO_LOG_LENGTH, &infoLen);
         if (infoLen > 0)
         {
-            auto infoLog = tvg::malloc<char*>(sizeof(char) * infoLen);
+            auto infoLog = tvg::malloc<char>(sizeof(char) * infoLen);
             glGetProgramInfoLog(progObj, infoLen, NULL, infoLog);
             TVGERR("GL_ENGINE", "Error linking shader: %s", infoLog);
             tvg::free(infoLog);

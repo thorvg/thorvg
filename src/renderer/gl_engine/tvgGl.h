@@ -42,13 +42,6 @@
         #define GL_CHECK(stmt) stmt
     #endif
 
-    #if defined(_WIN32) && !defined(APIENTRY) && !defined(__CYGWIN__) && !defined(__SCITECH_SNAP__)
-        #ifndef WIN32_LEAN_AND_MEAN
-        #define WIN32_LEAN_AND_MEAN 1
-        #endif
-        #include <windows.h>
-    #endif
-
     #ifdef _WIN64
         typedef signed long long int khronos_intptr_t;
         typedef unsigned long long int khronos_uintptr_t;

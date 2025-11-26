@@ -155,7 +155,7 @@ bool effectGaussianBlurRegion(RenderEffectGaussianBlur* params)
 
 void effectGaussianBlurUpdate(RenderEffectGaussianBlur* params, const Matrix& transform)
 {
-    if (!params->rd) params->rd = tvg::malloc<SwGaussianBlur*>(sizeof(SwGaussianBlur));
+    if (!params->rd) params->rd = tvg::malloc<SwGaussianBlur>(sizeof(SwGaussianBlur));
     auto rd = static_cast<SwGaussianBlur*>(params->rd);
 
     //compute box kernel sizes
@@ -375,7 +375,7 @@ bool effectDropShadowRegion(RenderEffectDropShadow* params)
 
 void effectDropShadowUpdate(RenderEffectDropShadow* params, const Matrix& transform)
 {
-    if (!params->rd) params->rd = tvg::malloc<SwDropShadow*>(sizeof(SwDropShadow));
+    if (!params->rd) params->rd = tvg::malloc<SwDropShadow>(sizeof(SwDropShadow));
     auto rd = static_cast<SwDropShadow*>(params->rd);
 
     //compute box kernel sizes

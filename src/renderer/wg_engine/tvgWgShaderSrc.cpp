@@ -172,7 +172,12 @@ fn fs_main(in: VertexOutput) -> @location(0) vec4f {
     let a = 1.0*dot(d1, d1) - 1.0*rd*rd;
     let b = 2.0*dot(d0, d1) - 2.0*r0*rd;
     let c = 1.0*dot(d0, d0) - 1.0*r0*r0;
-    let t = (-b + sqrt(b*b - 4*a*c))/(2*a);
+    let d = b*b - 4*a*c;
+    var t = 0.0;
+    if (d >= 0) {
+        t = (-b + sqrt(d))/(2*a);
+        if (t >= 1) { t = 0.0; }
+    }
     let Sc = textureSample(uTextureGrad, uSamplerGrad, vec2f(1.0 - t, 0.5));
     let So = uPaintSettings.options.a;
     return vec4f(Sc.rgb * Sc.a * So, Sc.a * So);
@@ -360,7 +365,12 @@ fn getFragData(in: VertexOutput) -> FragData {
     let a = 1.0*dot(d1, d1) - 1.0*rd*rd;
     let b = 2.0*dot(d0, d1) - 2.0*r0*rd;
     let c = 1.0*dot(d0, d0) - 1.0*r0*r0;
-    let t = (-b + sqrt(b*b - 4*a*c))/(2*a);
+    let d = b*b - 4*a*c;
+    var t = 0.0;
+    if (d >= 0) { 
+        t = (-b + sqrt(d))/(2*a);
+        if (t >= 1) { t = 0.0; }
+    }
     let colorSrc = textureSample(uTextureGrad, uSamplerGrad, vec2f(1.0 - t, 0.5));
     let colorDst = textureSample(uTextureDst, uSamplerDst, in.vScrCoord.xy);
     // fill fragment data

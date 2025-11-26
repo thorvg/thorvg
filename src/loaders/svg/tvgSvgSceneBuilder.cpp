@@ -93,7 +93,7 @@ static LinearGradient* _applyLinearGradientProperty(SvgStyleGradient* g, const B
     //Update the stops
     if (g->stops.count == 0) return fillGrad;
 
-    stops = tvg::malloc<Fill::ColorStop*>(g->stops.count * sizeof(Fill::ColorStop));
+    stops = tvg::malloc<Fill::ColorStop>(g->stops.count * sizeof(Fill::ColorStop));
     auto prevOffset = 0.0f;
     for (uint32_t i = 0; i < g->stops.count; ++i) {
         auto colorStop = &g->stops[i];
@@ -143,7 +143,7 @@ static RadialGradient* _applyRadialGradientProperty(SvgStyleGradient* g, const B
     //Update the stops
     if (g->stops.count == 0) return fillGrad;
 
-    stops = tvg::malloc<Fill::ColorStop*>(g->stops.count * sizeof(Fill::ColorStop));
+    stops = tvg::malloc<Fill::ColorStop>(g->stops.count * sizeof(Fill::ColorStop));
     auto prevOffset = 0.0f;
     for (uint32_t i = 0; i < g->stops.count; ++i) {
         auto colorStop = &g->stops[i];
@@ -174,7 +174,7 @@ static void _appendRect(Shape* shape, float x, float y, float w, float h, float 
     if (ry > halfH) ry = halfH;
 
     if (rx == 0 && ry == 0) {
-        SHAPE(shape)->grow(5, 4);
+        to<ShapeImpl>(shape)->grow(5, 4);
         shape->moveTo(x, y);
         shape->lineTo(x + w, y);
         shape->lineTo(x + w, y + h);
@@ -184,7 +184,7 @@ static void _appendRect(Shape* shape, float x, float y, float w, float h, float 
         auto hrx = rx * PATH_KAPPA;
         auto hry = ry * PATH_KAPPA;
 
-        SHAPE(shape)->grow(10, 17);
+        to<ShapeImpl>(shape)->grow(10, 17);
         shape->moveTo(x + rx, y);
         shape->lineTo(x + w - rx, y);
         shape->cubicTo(x + w - rx + hrx, y, x + w, y + ry - hry, x + w, y + ry);
@@ -204,7 +204,7 @@ static void _appendCircle(Shape* shape, float cx, float cy, float rx, float ry)
     auto rxKappa = rx * PATH_KAPPA;
     auto ryKappa = ry * PATH_KAPPA;
 
-    SHAPE(shape)->grow(6, 13);
+    to<ShapeImpl>(shape)->grow(6, 13);
     shape->moveTo(cx + rx, cy);
     shape->cubicTo(cx + rx, cy + ryKappa, cx + rxKappa, cy + ry, cx, cy + ry);
     shape->cubicTo(cx - rxKappa, cy + ry, cx - rx, cy + ryKappa, cx - rx, cy);
@@ -451,7 +451,7 @@ static bool _recognizeShape(SvgNode* node, Shape* shape)
     switch (node->type) {
         case SvgNodeType::Path: {
             if (node->node.path.path) {
-                if (!svgPathToShape(node->node.path.path, SHAPE(shape)->rs.path)) {
+                if (!svgPathToShape(node->node.path.path, to<ShapeImpl>(shape)->rs.path)) {
                     TVGERR("SVG", "Invalid path information.");
                     return false;
                 }
@@ -652,7 +652,7 @@ static Paint* _imageBuildHelper(SvgLoaderData& loaderData, SvgNode* node, const 
         //TODO: protect against recursive svg image loading
         //Temporarily disable embedded svg:
         const char *dot = strrchr(href, '.');
-        if (dot && !strcmp(dot, ".svg")) {
+        if (dot && STR_AS(dot, ".svg")) {
             TVGLOG("SVG", "Embedded svg file is disabled.");
             return nullptr;
         }

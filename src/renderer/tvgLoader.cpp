@@ -70,10 +70,10 @@ uintptr_t HASH_KEY(const char* data)
 atomic<ColorSpace> ImageLoader::cs{ColorSpace::ARGB8888};
 
 static Key _key;
-static Inlist<LoadModule> _activeLoaders;
+static Inlist<tvg::LoadModule> _activeLoaders;
 
 
-static LoadModule* _find(FileType type)
+static tvg::LoadModule* _find(FileType type)
 {
     switch(type) {
         case FileType::Png: {
@@ -174,7 +174,7 @@ static LoadModule* _find(FileType type)
 
 
 #ifdef THORVG_FILE_IO_SUPPORT
-static LoadModule* _findByPath(const char* filename)
+static tvg::LoadModule* _findByPath(const char* filename)
 {
     auto ext = fileext(filename);
     if (!ext) return nullptr;
@@ -212,13 +212,13 @@ static FileType _convert(const char* mimeType)
 }
 
 
-static LoadModule* _findByType(const char* mimeType)
+static tvg::LoadModule* _findByType(const char* mimeType)
 {
     return _find(_convert(mimeType));
 }
 
 
-static LoadModule* _findFromCache(const char* filename)
+static tvg::LoadModule* _findFromCache(const char* filename)
 {
     ScopedLock lock(_key);
     INLIST_FOREACH(_activeLoaders, loader) {
@@ -231,7 +231,7 @@ static LoadModule* _findFromCache(const char* filename)
 }
 
 
-static LoadModule* _findFromCache(const char* data, uint32_t size, const char* mimeType)
+static tvg::LoadModule* _findFromCache(const char* data, uint32_t size, const char* mimeType)
 {
     auto type = _convert(mimeType);
     if (type == FileType::Unknown) return nullptr;
@@ -288,7 +288,7 @@ bool LoaderMgr::retrieve(LoadModule* loader)
 }
 
 
-LoadModule* LoaderMgr::loader(const char* filename, bool* invalid)
+tvg::LoadModule* LoaderMgr::loader(const char* filename, bool* invalid)
 {
 #ifdef THORVG_FILE_IO_SUPPORT
     *invalid = false;
@@ -343,7 +343,7 @@ bool LoaderMgr::retrieve(const char* filename)
 }
 
 
-LoadModule* LoaderMgr::loader(const char* data, uint32_t size, const char* mimeType, const char* rpath, bool copy)
+tvg::LoadModule* LoaderMgr::loader(const char* data, uint32_t size, const char* mimeType, const char* rpath, bool copy)
 {
     //Note that users could use the same data pointer with the different content.
     //Thus caching is only valid for shareable.
@@ -394,7 +394,7 @@ LoadModule* LoaderMgr::loader(const char* data, uint32_t size, const char* mimeT
 }
 
 
-LoadModule* LoaderMgr::loader(const uint32_t *data, uint32_t w, uint32_t h, ColorSpace cs, bool copy)
+tvg::LoadModule* LoaderMgr::loader(const uint32_t *data, uint32_t w, uint32_t h, ColorSpace cs, bool copy)
 {
     //Note that users could use the same data pointer with the different content.
     //Thus caching is only valid for shareable.
@@ -419,7 +419,7 @@ LoadModule* LoaderMgr::loader(const uint32_t *data, uint32_t w, uint32_t h, Colo
 
 
 //loads fonts from memory - loader is cached (regardless of copy value) in order to access it while setting font
-LoadModule* LoaderMgr::loader(const char* name, const char* data, uint32_t size, TVG_UNUSED const char* mimeType, bool copy)
+tvg::LoadModule* LoaderMgr::loader(const char* name, const char* data, uint32_t size, TVG_UNUSED const char* mimeType, bool copy)
 {
 #ifdef THORVG_TTF_LOADER_SUPPORT
     //TODO: add check for mimetype ?
@@ -442,7 +442,7 @@ LoadModule* LoaderMgr::loader(const char* name, const char* data, uint32_t size,
 }
 
 
-LoadModule* LoaderMgr::font(const char* name)
+tvg::LoadModule* LoaderMgr::font(const char* name)
 {
     ScopedLock lock(_key);
     INLIST_FOREACH(_activeLoaders, loader) {
@@ -456,7 +456,7 @@ LoadModule* LoaderMgr::font(const char* name)
 }
 
 
-LoadModule* LoaderMgr::anyfont()
+tvg::LoadModule* LoaderMgr::anyfont()
 {
     ScopedLock lock(_key);
     INLIST_FOREACH(_activeLoaders, loader) {

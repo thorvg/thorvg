@@ -36,6 +36,9 @@ struct AssetResolver
 };
 
 
+namespace tvg
+{
+
 struct LoadModule
 {
     INLIST_ITEM(LoadModule);
@@ -100,7 +103,7 @@ struct LoadModule
             return nullptr;
         }
 
-        auto content = tvg::malloc<char*>(sizeof(char) * (text ? size + 1 : size));
+        auto content = tvg::malloc<char>(sizeof(char) * (text ? size + 1 : size));
         fseek(f, 0, SEEK_SET);
         size = fread(content, sizeof(char), size, f);
         if (text) content[size] = '\0';
@@ -165,5 +168,7 @@ struct FontLoader : LoadModule
     virtual void release(FontMetrics& fm) = 0;
     virtual void copy(const FontMetrics& in, FontMetrics& out) = 0;
 };
+
+}
 
 #endif //_TVG_LOAD_MODULE_H_

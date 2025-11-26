@@ -27,8 +27,6 @@
 #include "tvgMath.h"
 #include "tvgPaint.h"
 
-#define SCENE(A) static_cast<SceneImpl*>(A)
-#define CONST_SCENE(A) static_cast<const SceneImpl*>(A)
 
 struct SceneIterator : Iterator
 {
@@ -279,7 +277,7 @@ struct SceneImpl : Scene
         if (ret) TVGERR("RENDERER", "TODO: duplicate()");
 
         auto scene = Scene::gen();
-        auto dup = SCENE(scene);
+        auto dup = to<SceneImpl>(scene);
 
         for (auto paint : paints) {
             auto cdup = paint->duplicate();
