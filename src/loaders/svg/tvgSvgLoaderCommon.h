@@ -546,7 +546,6 @@ struct SvgNode
         SvgFilterNode filter;
         SvgGaussianBlurNode gaussianBlur;
     } node;
-    ~SvgNode();
 };
 
 struct SvgParser
