@@ -82,7 +82,7 @@ void GifLoader::compositeFrame(uint32_t frameIndex, bool draw)
             
             for (int y = startY; y < endY; y++)
             {
-                int canvasIdx = y * gifFile->SWidth + startX;
+                size_t canvasIdx = static_cast<size_t>(y) * gifFile->SWidth + startX;
                 int width = endX - startX;
                 // Use memset for the row
                 if (width > 0) {
@@ -121,8 +121,8 @@ void GifLoader::compositeFrame(uint32_t frameIndex, bool draw)
     for (int y = startY; y < endY; y++)
     {
         int canvasY = imageDesc->Top + y;
-        int frameIdx = y * imageDesc->Width + startX;
-        int canvasIdx = canvasY * gifFile->SWidth + imageDesc->Left + startX;
+        size_t frameIdx = static_cast<size_t>(y) * imageDesc->Width + startX;
+        size_t canvasIdx = static_cast<size_t>(canvasY) * gifFile->SWidth + imageDesc->Left + startX;
         
         for (int x = startX; x < endX; x++, frameIdx++, canvasIdx++)
         {

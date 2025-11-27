@@ -313,7 +313,7 @@ void GifDecoder::compositeFrame(uint32_t frameIndex, bool draw)
                     uint32_t canvasY = prevFrame.top + y;
                     if (canvasY >= height) break;
                     
-                    uint32_t canvasIdx = canvasY * width + prevFrame.left;
+                    size_t canvasIdx = static_cast<size_t>(canvasY) * width + prevFrame.left;
                     // Use memset for the row if it's fully within bounds
                     if (prevFrame.left + endX <= width) {
                         memset(&canvas32[canvasIdx], 0, endX * sizeof(uint32_t));
@@ -350,8 +350,8 @@ void GifDecoder::compositeFrame(uint32_t frameIndex, bool draw)
     
     for (uint32_t y = startY; y < endY; y++) {
         uint32_t canvasY = frame.top + y;
-        uint32_t frameIdx = y * frame.width;
-        uint32_t canvasIdx = canvasY * width + frame.left;
+        size_t frameIdx = static_cast<size_t>(y) * frame.width;
+        size_t canvasIdx = static_cast<size_t>(canvasY) * width + frame.left;
         
         if (canUseMemcpy) {
             // Fast path: copy entire row at once (no transparency)
