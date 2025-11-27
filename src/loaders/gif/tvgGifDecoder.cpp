@@ -92,7 +92,7 @@ bool GifDecoder::readLogicalScreenDescriptor()
     }
     
     // Initialize canvas
-    uint32_t canvasSize = width * height * 4;
+    size_t canvasSize = static_cast<size_t>(width) * static_cast<size_t>(height) * 4;
     canvas = tvg::malloc<uint8_t>(canvasSize);
     if (!canvas) return false;
     
@@ -234,7 +234,7 @@ uint32_t GifDecoder::lzwDecode(const uint8_t* data, uint32_t dataSize, uint8_t* 
                 // Special case: code not in dictionary yet
                 // Output oldCode + first byte of oldCode
                 if (!outputSequence(oldCode)) break;
-                if (outputPos >= outputSize) break;
+                if (outputPos == 0 || outputPos >= outputSize) break;
                 uint8_t firstByte = output[outputPos - 1];
                 output[outputPos++] = firstByte;
             } else {
@@ -303,10 +303,10 @@ void GifDecoder::compositeFrame(uint32_t frameIndex, bool draw)
             if (prevFrame.top >= height || prevFrame.left >= width) {
                 // Nothing to clear, previous frame was out of bounds
             } else {
-                // Calculate valid bounds once
-                uint32_t endY = (prevFrame.top + prevFrame.height > height) ? 
+                // Calculate valid bounds once (avoid overflow in addition)
+                uint32_t endY = (prevFrame.height > height - prevFrame.top) ? 
                                 height - prevFrame.top : prevFrame.height;
-                uint32_t endX = (prevFrame.left + prevFrame.width > width) ? 
+                uint32_t endX = (prevFrame.width > width - prevFrame.left) ? 
                                 width - prevFrame.left : prevFrame.width;
             
                 for (uint32_t y = 0; y < endY; y++) {
@@ -505,7 +505,7 @@ bool GifDecoder::load(const uint8_t* data, uint32_t size)
             }
             
             // Decode LZW data
-            uint32_t pixelCount = width * height;
+            size_t pixelCount = static_cast<size_t>(width) * static_cast<size_t>(height);
             uint8_t* pixels = tvg::malloc<uint8_t>(pixelCount);
             if (!pixels) {
                 tvg::free(imageData);
@@ -514,10 +514,10 @@ bool GifDecoder::load(const uint8_t* data, uint32_t size)
                 return false;
             }
             
-            uint32_t decoded = lzwDecode(imageData, dataSize, pixels, pixelCount, minCodeSize);
+            uint32_t decoded = lzwDecode(imageData, dataSize, pixels, static_cast<uint32_t>(pixelCount), minCodeSize);
             tvg::free(imageData);
             
-            if (decoded != pixelCount) {
+            if (decoded != static_cast<uint32_t>(pixelCount)) {
                 tvg::free(pixels);
                 if (localPalette) tvg::free(localPalette);
                 clear();
@@ -529,7 +529,7 @@ bool GifDecoder::load(const uint8_t* data, uint32_t size)
             uint32_t paletteSize = localPalette ? localPaletteSize : globalPaletteSize;
             
             if (palette) {
-                uint32_t rgbaSize = pixelCount * 4;
+                size_t rgbaSize = pixelCount * 4;
                 frame.pixels = tvg::malloc<uint8_t>(rgbaSize);
                 if (!frame.pixels) {
                     tvg::free(pixels);
@@ -542,7 +542,7 @@ bool GifDecoder::load(const uint8_t* data, uint32_t size)
                 uint8_t transIdx = frame.transparentIndex;
                 bool hasTrans = frame.transparent;
                 
-                for (uint32_t i = 0; i < pixelCount; i++) {
+                for (size_t i = 0; i < pixelCount; i++) {
                     uint8_t index = pixels[i];
                     if (hasTrans && index == transIdx) {
                         pixels32[i] = 0; // transparent
