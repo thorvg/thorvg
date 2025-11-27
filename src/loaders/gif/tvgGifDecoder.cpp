@@ -23,7 +23,6 @@
 #include "tvgGifDecoder.h"
 #include "tvgAllocator.h"
 #include "tvgArray.h"
-#include "tvgMath.h"
 
 #define GIF_EXTENSION_INTRODUCER 0x21
 #define GIF_IMAGE_SEPARATOR 0x2C
