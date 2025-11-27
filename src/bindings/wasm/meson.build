@@ -12,7 +12,7 @@ if cc.get_id() == 'emscripten'
             sources: source_file
         )
 
-        executable('thorvg-canvaskit',
+        executable('thorvg',
             [],
             include_directories: headers,
             dependencies: [thorvg_lib_dep, thorvg_wasm_dep],
