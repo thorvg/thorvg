@@ -306,8 +306,8 @@ bool GifLoader::read()
     
     surface.cs = ImageLoader::cs;
     
-    // Decode and composite frame 0
-    memset(canvas, 0, gifFile->SWidth * gifFile->SHeight * 4);
+    // Decode and composite frame 0 - use size_t to prevent overflow
+    memset(canvas, 0, static_cast<size_t>(gifFile->SWidth) * static_cast<size_t>(gifFile->SHeight) * 4);
     compositeFrame(0);
     lastCompositedFrame = 0;
     
@@ -358,8 +358,8 @@ bool GifLoader::frame(float no)
             }
             
             if (needReset) {
-                // Reset and composite from frame 0
-                memset(canvas, 0, gifFile->SWidth * gifFile->SHeight * 4);
+                // Reset and composite from frame 0 - use size_t to prevent overflow
+                memset(canvas, 0, static_cast<size_t>(gifFile->SWidth) * static_cast<size_t>(gifFile->SHeight) * 4);
                 for (uint32_t i = 0; i <= frameIndex; i++) {
                     bool draw = true;
                     if (i < frameIndex) {

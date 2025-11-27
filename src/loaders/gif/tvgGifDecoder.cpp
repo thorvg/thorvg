@@ -337,12 +337,12 @@ void GifDecoder::compositeFrame(uint32_t frameIndex, bool draw)
     // Early exit if frame is completely out of bounds
     if (frame.top >= height || frame.left >= width) return;
     
-    // Pre-calculate valid bounds once
+    // Pre-calculate valid bounds once (avoid overflow in addition)
     uint32_t startY = 0;
-    uint32_t endY = (frame.top + frame.height > height) ? 
+    uint32_t endY = (frame.height > height - frame.top) ? 
                      height - frame.top : frame.height;
     uint32_t startX = 0;
-    uint32_t endX = (frame.left + frame.width > width) ? 
+    uint32_t endX = (frame.width > width - frame.left) ? 
                      width - frame.left : frame.width;
     
     // Check if we can use memcpy for entire rows (only if no transparency)
