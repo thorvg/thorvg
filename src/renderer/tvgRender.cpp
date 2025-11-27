@@ -124,32 +124,32 @@ void RenderPath::optimize(RenderPath& out, const Matrix& matrix) const
     uint32_t prevPrevIdx = 0;
     auto hasPrevPrev = false;
 
-    auto point2Line = [](const Point& point, const Point& start, const Point& vec, const float vecLenSq, float& maxDist, float& minT, float& maxT) {
+    //vecLen is guaranteed to be non-zero since closed points are already merged
+    auto point2Line = [](const Point& point, const Point& start, const Point& vec, float vecLen, float& maxDist, float& minT, float& maxT) {
         Point offset = point - start;
-        auto area = tvg::cross(vec, offset);
-        auto dist = fabsf(area) / sqrtf(vecLenSq); // if lineVecLenSq == 0, mean closed() hasn't been called
+        auto dist = fabsf(tvg::cross(vec, offset)) / vecLen;
         if (dist > maxDist) maxDist = dist;
-        auto t = tvg::dot(offset, vec) / vecLenSq;
+        auto t = tvg::dot(offset, vec) / (vecLen * vecLen);
         if (t < minT) minT = t;
         if (t > maxT) maxT = t;
     };
 
-    auto validateCubic = [&point2Line](const Point& start, const Point& ctrl1, const Point& ctrl2, const Point& end, float& maxDist, float& minT, float& maxT) {
+    auto validateCubic = [&point2Line](const Point& start, const Point& ctrl1, const Point& ctrl2, const Point& end, float& maxDist, float& minT, float& maxT, float& vecLen) {
+        auto vec = end - start;
+        vecLen = sqrtf(vec.x * vec.x + vec.y * vec.y);
         maxDist = 0.0f;
         minT = FLT_MAX;
         maxT = FLT_MIN;
-        auto vec = end - start;
-        auto vecLenSq = vec.x * vec.x + vec.y * vec.y;
-        point2Line(ctrl1, start, vec, vecLenSq, maxDist, minT, maxT);
-        point2Line(ctrl2, start, vec, vecLenSq, maxDist, minT, maxT);
+        point2Line(ctrl1, start, vec, vecLen, maxDist, minT, maxT);
+        point2Line(ctrl2, start, vec, vecLen, maxDist, minT, maxT);
     };
 
-    auto point2LineSimple = [](const Point& point, const Point& start, const Point& end, float& dist, float& t) {
+    auto point2LineSimple = [](const Point& point, const Point& start, const Point& end, float& dist, float& t, float& vecLen) {
         auto vec = end - start;
         auto vecLenSq = vec.x * vec.x + vec.y * vec.y;
+        vecLen = sqrtf(vecLenSq);
         Point offset = point - start;
-        auto area = tvg::cross(vec, offset);
-        dist = fabsf(area) / sqrtf(vecLenSq); // if lineVecLenSq == 0, mean closed() hasn't been called
+        dist = fabsf(tvg::cross(vec, offset)) / vecLen;
         t = tvg::dot(offset, vec) / vecLenSq;
     };
 
@@ -168,16 +168,19 @@ void RenderPath::optimize(RenderPath& out, const Matrix& matrix) const
             addLineCmd(pt, ptT);
             return;
         }
-        float dist, t;
-        point2LineSimple(ptT, prevOutT, startT, dist, t);
+
+        float dist, t, vecLen;
+        point2LineSimple(ptT, prevOutT, startT, dist, t, vecLen);
         if (dist > PX_TOLERANCE) {
             addLineCmd(pt, ptT);
             return;
         }
-        if (t < -PX_TOLERANCE) {
+
+        auto tEps = PX_TOLERANCE / vecLen;
+        if (t <= -tEps) {
             out.pts[prevPrevIdx] = pt;
             lastOutT = ptT;
-        } else if (t > 1.0f + PX_TOLERANCE) {
+        } else if (t >= 1.0f - tEps) {
             out.pts[prevIdx] = pt;
             lastOutT = ptT;
         }
@@ -186,10 +189,11 @@ void RenderPath::optimize(RenderPath& out, const Matrix& matrix) const
     auto processCubicTo = [&](const Point* cubicPts, const Point& startT) {
         auto endT = cubicPts[2] * matrix;
         if (tvg::closed(startT, endT, PX_TOLERANCE)) return;
-        float maxDist, minT, maxT;
-        validateCubic(startT, cubicPts[0] * matrix, cubicPts[1] * matrix, endT, maxDist, minT, maxT);
+        float maxDist, minT, maxT, vecLen;
+        validateCubic(startT, cubicPts[0] * matrix, cubicPts[1] * matrix, endT, maxDist, minT, maxT, vecLen);
         auto flat = (maxDist <= PX_TOLERANCE);
-        auto inSpan = (minT >= -PX_TOLERANCE) && (maxT <= 1.0f + PX_TOLERANCE);
+        auto tEps = PX_TOLERANCE / vecLen;
+        auto inSpan = (minT >= -tEps) && (maxT <= 1.0f + tEps);
         if (flat && inSpan) {
             processLineCollinear(startT, cubicPts[2], endT);
         } else {
