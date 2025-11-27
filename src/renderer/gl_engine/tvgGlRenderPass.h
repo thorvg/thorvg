@@ -51,7 +51,7 @@ public:
 
     uint32_t getFboHeight() const { return mFbo->getHeight(); }
 
-    void getMatrix(float dst[16], const Matrix& matrix) const;
+    void getMatrix(float dst[GL_MAT3_STD140_SIZE], const Matrix& matrix) const;
 
     template <class T>
     T* endRenderPass(GlProgram* program, GLuint targetFbo) {

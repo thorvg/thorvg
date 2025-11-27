@@ -58,11 +58,15 @@ void GlRenderPass::getMatrix(float *dst, const Matrix &matrix) const
     const auto& vp = getViewport();
     translate(&postMatrix, {(float)-vp.sx(), (float)-vp.sy()});
 
-    auto m = postMatrix * matrix;
+    auto modelMatrix = postMatrix * matrix;
 
-    float modelMatrix[16];
-    GET_MATRIX44(m, modelMatrix);
-    MVP_MATRIX(vp.w(), vp.h());
+    Matrix mvp = tvg::identity();
+    mvp.e11 = 2.f / vp.w();
+    mvp.e22 = -2.f / vp.h();
+    mvp.e13 = -1.f;
+    mvp.e23 = 1.f;
 
-    MULTIPLY_MATRIX(mvp, modelMatrix, dst);
+    auto mvpModel = mvp * modelMatrix;
+
+    getMatrix3Std140(mvpModel, dst);
 }

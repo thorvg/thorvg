@@ -28,14 +28,13 @@ const char* COLOR_VERT_SHADER = TVG_COMPOSE_SHADER(
     uniform float uDepth;                                           \n
     layout(location = 0) in vec2 aLocation;                         \n
     layout(std140) uniform Matrix {                                 \n
-        mat4 transform;                                             \n
+        mat3 transform;                                             \n
     } uMatrix;                                                      \n
                                                                     \n
     void main()                                                     \n
     {                                                               \n
-        vec4 pos = uMatrix.transform * vec4(aLocation, 0.0, 1.0);   \n
-        pos.z = uDepth;                                             \n
-        gl_Position = pos;                                          \n
+        vec3 pos = uMatrix.transform * vec3(aLocation, 1.0);        \n
+        gl_Position = vec4(pos.xy, uDepth, 1.0);                    \n
     }                                                               \n
 );
 
@@ -57,19 +56,18 @@ const char* GRADIENT_VERT_SHADER = TVG_COMPOSE_SHADER(
     layout(location = 0) in vec2 aLocation;                                         \n
     out vec2 vPos;                                                                  \n
     layout(std140) uniform Matrix {                                                 \n
-        mat4 transform;                                                             \n
+        mat3 transform;                                                             \n
     } uMatrix;                                                                      \n
     layout(std140) uniform InvMatrix {                                              \n
-        mat4 transform;                                                             \n
+        mat3 transform;                                                             \n
     } uInvMatrix;                                                                   \n
                                                                                     \n
     void main()                                                                     \n
     {                                                                               \n
-        vec4 glPos = uMatrix.transform * vec4(aLocation, 0.0, 1.0);                 \n
-        glPos.z = uDepth;                                                           \n
-        gl_Position = glPos;                                                        \n
-        vec4 pos =  uInvMatrix.transform * vec4(aLocation, 0.0, 1.0);               \n
-        vPos = pos.xy / pos.w;                                                      \n
+        vec3 glPos = uMatrix.transform * vec3(aLocation, 1.0);                      \n
+        gl_Position = vec4(glPos.xy, uDepth, 1.0);                                  \n
+        vec3 pos =  uInvMatrix.transform * vec3(aLocation, 1.0);                    \n
+        vPos = pos.xy;                                                              \n
     }                                                                               \n
 );
 
@@ -315,16 +313,15 @@ const char* IMAGE_VERT_SHADER = TVG_COMPOSE_SHADER(
     layout (location = 0) in vec2 aLocation;                                                \n
     layout (location = 1) in vec2 aUV;                                                      \n
     layout (std140) uniform Matrix {                                                        \n
-        mat4 transform;                                                                     \n
+        mat3 transform;                                                                     \n
     } uMatrix;                                                                              \n
     out vec2 vUV;                                                                           \n
                                                                                             \n
     void main()                                                                             \n
     {                                                                                       \n
         vUV = aUV;                                                                          \n
-        vec4 pos = uMatrix.transform * vec4(aLocation, 0.0, 1.0);                           \n
-        pos.z = uDepth;                                                                     \n
-        gl_Position = pos;                                                                  \n
+        vec3 pos = uMatrix.transform * vec3(aLocation, 1.0);                                \n
+        gl_Position = vec4(pos.xy, uDepth, 1.0);                                            \n
     }                                                                                       \n
 );
 
@@ -541,14 +538,13 @@ const char* STENCIL_VERT_SHADER = TVG_COMPOSE_SHADER(
     uniform float uDepth;                                           \n
     layout(location = 0) in vec2 aLocation;                         \n
     layout(std140) uniform Matrix {                                 \n
-        mat4 transform;                                             \n
+        mat3 transform;                                             \n
     } uMatrix;                                                      \n
                                                                     \n
     void main()                                                     \n
     {                                                               \n
-        vec4 pos = uMatrix.transform * vec4(aLocation, 0.0, 1.0);   \n
-        pos.z = uDepth;                                             \n
-        gl_Position = pos;                                          \n
+        vec3 pos = uMatrix.transform * vec3(aLocation, 1.0);        \n
+        gl_Position = vec4(pos.xy, uDepth, 1.0);                    \n
     });
 
 const char* STENCIL_FRAG_SHADER = TVG_COMPOSE_SHADER(
