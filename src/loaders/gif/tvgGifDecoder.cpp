@@ -280,7 +280,7 @@ bool GifDecoder::decodeFrame(uint32_t frameIndex)
     return true;
 }
 
-void GifDecoder::compositeFrame(uint32_t frameIndex)
+void GifDecoder::compositeFrame(uint32_t frameIndex, bool draw)
 {
     if (frameIndex >= frameCount || !frames[frameIndex].pixels) return;
     
@@ -318,6 +318,8 @@ void GifDecoder::compositeFrame(uint32_t frameIndex)
         }
     }
     
+    if (!draw) return;
+
     // Composite current frame
     uint32_t* canvas32 = (uint32_t*)canvas;
     uint32_t* framePixels32 = (uint32_t*)frame.pixels;

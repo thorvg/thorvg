@@ -45,7 +45,7 @@ void GifLoader::clear()
     freeData = false;
 }
 
-void GifLoader::compositeFrame(uint32_t frameIndex)
+void GifLoader::compositeFrame(uint32_t frameIndex, bool draw)
 {
     if (!gifFile || frameIndex >= (uint32_t)gifFile->ImageCount) return;
     if (!canvas) return;
@@ -92,6 +92,8 @@ void GifLoader::compositeFrame(uint32_t frameIndex)
         }
     }
     
+    if (!draw) return;
+
     // Get color map
     ColorMapObject* colorMap = imageDesc->ColorMap ? imageDesc->ColorMap : gifFile->SColorMap;
     if (!colorMap) return;
@@ -350,8 +352,7 @@ bool GifLoader::frame(float no)
             if (!needReset && lastCompositedFrame < (uint32_t)gifFile->ImageCount) {
                 GraphicsControlBlock gcb;
                 DGifSavedExtensionToGCB(gifFile, lastCompositedFrame, &gcb);
-                if (gcb.DisposalMode == DISPOSE_BACKGROUND || 
-                    gcb.DisposalMode == DISPOSE_PREVIOUS) {
+                if (gcb.DisposalMode == DISPOSE_PREVIOUS) {
                     needReset = true;
                 }
             }
@@ -360,7 +361,13 @@ bool GifLoader::frame(float no)
                 // Reset and composite from frame 0
                 memset(canvas, 0, gifFile->SWidth * gifFile->SHeight * 4);
                 for (uint32_t i = 0; i <= frameIndex; i++) {
-                    compositeFrame(i);
+                    bool draw = true;
+                    if (i < frameIndex) {
+                         GraphicsControlBlock curGcb;
+                         DGifSavedExtensionToGCB(gifFile, i, &curGcb);
+                         if (curGcb.DisposalMode == DISPOSE_PREVIOUS) draw = false;
+                    }
+                    compositeFrame(i, draw);
                 }
             } else {
                 // Incremental: only composite the new frame

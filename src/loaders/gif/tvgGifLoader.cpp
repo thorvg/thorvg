@@ -172,10 +172,10 @@ bool GifLoader::frame(float no)
                 needReset = true;
             }
             
-            // Also need reset if previous frame's disposal was BACKGROUND or PREVIOUS
+            // Also need reset if previous frame's disposal was PREVIOUS
             if (!needReset && lastCompositedFrame < decoder.frameCount) {
                 uint32_t prevDisposal = decoder.frames[lastCompositedFrame].disposal;
-                if (prevDisposal == GIF_DISPOSAL_BACKGROUND || prevDisposal == GIF_DISPOSAL_PREVIOUS) {
+                if (prevDisposal == GIF_DISPOSAL_PREVIOUS) {
                     needReset = true;
                 }
             }
@@ -184,7 +184,9 @@ bool GifLoader::frame(float no)
                 // Reset and composite from frame 0
                 memset(decoder.canvas, 0, static_cast<size_t>(decoder.width) * static_cast<size_t>(decoder.height) * 4);
                 for (uint32_t i = 0; i <= frameIndex; i++) {
-                    decoder.compositeFrame(i);
+                    bool draw = true;
+                    if (i < frameIndex && decoder.frames[i].disposal == GIF_DISPOSAL_PREVIOUS) draw = false;
+                    decoder.compositeFrame(i, draw);
                 }
             } else {
                 // Incremental: only composite the new frame

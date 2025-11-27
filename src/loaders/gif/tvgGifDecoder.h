@@ -66,7 +66,7 @@ struct GifDecoder
     
     bool load(const uint8_t* data, uint32_t size);
     bool decodeFrame(uint32_t frameIndex);
-    void compositeFrame(uint32_t frameIndex);
+    void compositeFrame(uint32_t frameIndex, bool draw = true);
     void clear();
     
 private:

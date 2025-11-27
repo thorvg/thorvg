@@ -48,7 +48,7 @@ public:
 private:
     void clear();
     bool decodeFrames();
-    void compositeFrame(uint32_t frameIndex);
+    void compositeFrame(uint32_t frameIndex, bool draw = true);
     void calculateFrameRate();
 
     GifFileType* gifFile = nullptr;
