@@ -145,7 +145,7 @@ uint32_t GifDecoder::lzwDecode(const uint8_t* data, uint32_t dataSize, uint8_t* 
         uint8_t suffix;   // last byte
     };
     
-    DictEntry* dictionary = tvg::malloc<DictEntry>(4096 * sizeof(DictEntry));
+    DictEntry* dictionary = tvg::calloc<DictEntry>(4096, sizeof(DictEntry));
     if (!dictionary) return 0;
     
     // Initialize dictionary with single-byte codes
@@ -192,6 +192,12 @@ uint32_t GifDecoder::lzwDecode(const uint8_t* data, uint32_t dataSize, uint8_t* 
             }
             stack[stackPos++] = dictionary[current].suffix;
             current = dictionary[current].prefix;
+        }
+        
+        // Check if we exited due to stack overflow (incomplete chain traversal)
+        if (current != 0xFFFF && stackPos >= 4096) {
+            // Dictionary chain too long - corrupt data
+            return false;
         }
         
         // Output in reverse (stack order)
@@ -294,24 +300,29 @@ void GifDecoder::compositeFrame(uint32_t frameIndex, bool draw)
             GifFrame& prevFrame = frames[frameIndex - 1];
             uint32_t* canvas32 = (uint32_t*)canvas;
             
-            // Calculate valid bounds once
-            uint32_t endY = (prevFrame.top + prevFrame.height > height) ? 
-                            height - prevFrame.top : prevFrame.height;
-            uint32_t endX = (prevFrame.left + prevFrame.width > width) ? 
-                            width - prevFrame.left : prevFrame.width;
+            // Skip if previous frame is completely out of bounds
+            if (prevFrame.top >= height || prevFrame.left >= width) {
+                // Nothing to clear, previous frame was out of bounds
+            } else {
+                // Calculate valid bounds once
+                uint32_t endY = (prevFrame.top + prevFrame.height > height) ? 
+                                height - prevFrame.top : prevFrame.height;
+                uint32_t endX = (prevFrame.left + prevFrame.width > width) ? 
+                                width - prevFrame.left : prevFrame.width;
             
-            for (uint32_t y = 0; y < endY; y++) {
-                uint32_t canvasY = prevFrame.top + y;
-                if (canvasY >= height) break;
-                
-                uint32_t canvasIdx = canvasY * width + prevFrame.left;
-                // Use memset for the row if it's fully within bounds
-                if (prevFrame.left + endX <= width) {
-                    memset(&canvas32[canvasIdx], 0, endX * sizeof(uint32_t));
-                } else {
-                    // Handle partial row
-                    for (uint32_t x = 0; x < endX && (prevFrame.left + x) < width; x++) {
-                        canvas32[canvasIdx + x] = 0;
+                for (uint32_t y = 0; y < endY; y++) {
+                    uint32_t canvasY = prevFrame.top + y;
+                    if (canvasY >= height) break;
+                    
+                    uint32_t canvasIdx = canvasY * width + prevFrame.left;
+                    // Use memset for the row if it's fully within bounds
+                    if (prevFrame.left + endX <= width) {
+                        memset(&canvas32[canvasIdx], 0, endX * sizeof(uint32_t));
+                    } else {
+                        // Handle partial row
+                        for (uint32_t x = 0; x < endX && (prevFrame.left + x) < width; x++) {
+                            canvas32[canvasIdx + x] = 0;
+                        }
                     }
                 }
             }
@@ -324,6 +335,9 @@ void GifDecoder::compositeFrame(uint32_t frameIndex, bool draw)
     uint32_t* canvas32 = (uint32_t*)canvas;
     uint32_t* framePixels32 = (uint32_t*)frame.pixels;
     
+    // Early exit if frame is completely out of bounds
+    if (frame.top >= height || frame.left >= width) return;
+    
     // Pre-calculate valid bounds once
     uint32_t startY = 0;
     uint32_t endY = (frame.top + frame.height > height) ? 
@@ -331,9 +345,6 @@ void GifDecoder::compositeFrame(uint32_t frameIndex, bool draw)
     uint32_t startX = 0;
     uint32_t endX = (frame.left + frame.width > width) ? 
                      width - frame.left : frame.width;
-    
-    // Early exit if frame is completely out of bounds
-    if (frame.top >= height || frame.left >= width) return;
     
     // Check if we can use memcpy for entire rows (only if no transparency)
     bool canUseMemcpy = !frame.transparent && (frame.left + frame.width <= width);
@@ -566,7 +577,7 @@ bool GifDecoder::load(const uint8_t* data, uint32_t size)
     }
     
     // Convert dynamic array to fixed array
-    frames = tvg::malloc<GifFrame>(frameCount * sizeof(GifFrame));
+    frames = tvg::calloc<GifFrame>(frameCount, sizeof(GifFrame));
     if (!frames) {
         clear();
         return false;
@@ -582,7 +593,7 @@ bool GifDecoder::load(const uint8_t* data, uint32_t size)
     for (uint32_t i = 0; i < frameCount; i++) {
         totalDelay += frames[i].delay;
     }
-    if (frameCount > 0 && totalDelay > FLOAT_EPSILON) {
+    if (frameCount > 0 && totalDelay > 0) {
         frameRate = (frameCount * 100.0f) / totalDelay;
     } else {
         frameRate = 10.0f; // default
