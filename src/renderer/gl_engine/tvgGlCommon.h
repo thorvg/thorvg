@@ -136,8 +136,8 @@ struct GlShape
   ColorSpace texColorSpace = ColorSpace::ABGR8888;
   GlGeometry geometry;
   Array<RenderData> clips;
-  bool validFill;
-  bool validStroke;
+  bool validFill = false;
+  bool validStroke = false;
 };
 
 struct GlIntersector

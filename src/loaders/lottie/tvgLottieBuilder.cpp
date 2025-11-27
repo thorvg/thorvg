@@ -1113,11 +1113,12 @@ void LottieBuilder::updateLocalFont(LottieLayer* layer, float frameNo, LottieTex
     RenderText ctx(text, doc);
     ctx.follow = (text->follow && ((uint32_t)text->follow->maskIdx < layer->masks.count)) ? text->follow : nullptr;
     ctx.firstMargin = ctx.follow ? ctx.follow->prepare(layer->masks[ctx.follow->maskIdx], frameNo, ctx.scale, tween, exps) : 0.0f;
+    auto lineWrapped = false;
 
     //text string
     while (true) {
-        //end of text, new line of the cursor position
-        if (*ctx.p == 13 || *ctx.p == 3 || *ctx.p == '\0') {
+        //new line of the cursor position
+        if (lineWrapped || *ctx.p == 13 || *ctx.p == 3 || *ctx.p == '\0') {
             //text layout position
             auto ascent = text->font->ascent * ctx.scale;
             if (ascent > doc.bbox.size.y) ascent = doc.bbox.size.y;
@@ -1139,9 +1140,11 @@ void LottieBuilder::updateLocalFont(LottieLayer* layer, float frameNo, LottieTex
                 ctx.textScene = nullptr;
                 break;
             }
-            ++ctx.p;
+            if (!lineWrapped) ++ctx.p;
+
             ctx.totalLineSpace += ctx.lineSpace;
             ctx.lineSpace = 0.0f;
+            lineWrapped = false;
 
             //new text group, single scene for each line
             ctx.textScene = Scene::gen();
@@ -1183,7 +1186,8 @@ void LottieBuilder::updateLocalFont(LottieLayer* layer, float frameNo, LottieTex
                 }
                 auto shape = textShape(text, frameNo, doc, glyph, ctx);
                 if (!updateTextRange(text, frameNo, shape, doc, ctx)) _commit(glyph, shape, ctx);
-                ctx.cursor.x += (glyph->width + doc.tracking) * ctx.capScale;    //advance the cursor position horizontally
+                if (doc.bbox.size.x > 0.0f && ctx.cursor.x * ctx.scale >= doc.bbox.size.x) lineWrapped = true;
+                else ctx.cursor.x += (glyph->width + doc.tracking) * ctx.capScale;
                 ctx.p += glyph->len;
                 ctx.idx += glyph->len;
                 found = true;
