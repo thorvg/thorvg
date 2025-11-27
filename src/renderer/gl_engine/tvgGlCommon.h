@@ -28,57 +28,28 @@
 #include "tvgRender.h"
 #include "tvgMath.h"
 
-#define MIN_GL_STROKE_WIDTH 1.0f
-#define MIN_GL_STROKE_ALPHA 0.25f
+constexpr float MIN_GL_STROKE_WIDTH = 1.0f;
+constexpr float MIN_GL_STROKE_ALPHA = 0.25f;
 
-#define MVP_MATRIX(w, h)                \
-    float mvp[4*4] = {                  \
-        2.f / w,      0.0,  0.0f, 0.0f, \
-        0.0,     -2.f / h,  0.0f, 0.0f, \
-        0.0f,        0.0f, -1.0f, 0.0f, \
-        -1.f,         1.f,  0.0f, 1.0f  \
-    };
+constexpr uint32_t GL_MAT3_STD140_SIZE = 12; // mat3 is 3 vec4 columns in std140
+constexpr uint32_t GL_MAT3_STD140_BYTES = GL_MAT3_STD140_SIZE * sizeof(float);
 
-#define MULTIPLY_MATRIX(A, B, transform)    \
-    for(auto i = 0; i < 4; ++i) {           \
-        for(auto j = 0; j < 4; ++j) {       \
-            float sum = 0.0;                \
-            for (auto k = 0; k < 4; ++k)    \
-                sum += A[k*4+i] * B[j*4+k]; \
-            transform[j*4+i] = sum;         \
-        }                                   \
-    }
-
-/**
- *  mat3x3               mat4x4
- *
- * [ e11 e12 e13 ]     [ e11 e12 0 e13 ]
- * [ e21 e22 e23 ] =>  [ e21 e22 0 e23 ]
- * [ e31 e32 e33 ]     [ 0   0   1  0  ]
- *                     [ e31 e32 0 e33 ]
- *
- */
-
-// All GPU use 4x4 matrix with column major order
-#define GET_MATRIX44(mat3, mat4) \
-    do {                         \
-        mat4[0] = mat3.e11;      \
-        mat4[1] = mat3.e21;      \
-        mat4[2] = 0;             \
-        mat4[3] = mat3.e31;      \
-        mat4[4] = mat3.e12;      \
-        mat4[5] = mat3.e22;      \
-        mat4[6] = 0;             \
-        mat4[7] = mat3.e32;      \
-        mat4[8] = 0;             \
-        mat4[9] = 0;             \
-        mat4[10] = 1;            \
-        mat4[11] = 0;            \
-        mat4[12] = mat3.e13;     \
-        mat4[13] = mat3.e23;     \
-        mat4[14] = 0;            \
-        mat4[15] = mat3.e33;     \
-    } while (false)
+// All GPU matrices use column major order. std140 mat3 packs each column into a vec4 stride.
+static inline void getMatrix3Std140(const Matrix& mat3, float* matOut)
+{
+    matOut[0] = mat3.e11;
+    matOut[1] = mat3.e21;
+    matOut[2] = mat3.e31;
+    matOut[3] = 0.0f;
+    matOut[4] = mat3.e12;
+    matOut[5] = mat3.e22;
+    matOut[6] = mat3.e32;
+    matOut[7] = 0.0f;
+    matOut[8] = mat3.e13;
+    matOut[9] = mat3.e23;
+    matOut[10] = mat3.e33;
+    matOut[11] = 0.0f;
+}
 
 
 

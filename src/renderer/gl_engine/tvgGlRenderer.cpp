@@ -211,16 +211,16 @@ void GlRenderer::drawPrimitive(GlShape& sdata, const RenderColor& c, RenderUpdat
     }
 
     // matrix buffer
-    float matrix44[16];
-    currentPass()->getMatrix(matrix44, sdata.geometry.matrix);
-    auto viewOffset = mGpuBuffer.push(matrix44, 16 * sizeof(float), true);
+    float matrix3STD140[GL_MAT3_STD140_SIZE];
+    currentPass()->getMatrix(matrix3STD140, sdata.geometry.matrix);
+    auto viewOffset = mGpuBuffer.push(matrix3STD140, GL_MAT3_STD140_BYTES, true);
 
     task->addBindResource(GlBindingResource{
         0,
         task->getProgram()->getUniformBlockIndex("Matrix"),
         mGpuBuffer.getBufferId(),
         viewOffset,
-        16 * sizeof(float),
+        GL_MAT3_STD140_BYTES,
     });
 
     if (stencilTask) {
@@ -229,7 +229,7 @@ void GlRenderer::drawPrimitive(GlShape& sdata, const RenderColor& c, RenderUpdat
             stencilTask->getProgram()->getUniformBlockIndex("Matrix"),
             mGpuBuffer.getBufferId(),
             viewOffset,
-            16 * sizeof(float),
+            GL_MAT3_STD140_BYTES,
         });
     }
 
@@ -293,22 +293,22 @@ void GlRenderer::drawPrimitive(GlShape& sdata, const Fill* fill, RenderUpdateFla
     }
 
     // matrix buffer
-    float invMat4[16];
+    float invMat3[GL_MAT3_STD140_SIZE];
     Matrix inv;
     inverse(&fill->transform(), &inv);
-    GET_MATRIX44(inv, invMat4);
+    getMatrix3Std140(inv, invMat3);
 
-    float matrix44[16];
-    currentPass()->getMatrix(matrix44, sdata.geometry.matrix);
+    float matrix3STD140[GL_MAT3_STD140_SIZE];
+    currentPass()->getMatrix(matrix3STD140, sdata.geometry.matrix);
 
-    auto viewOffset = mGpuBuffer.push(matrix44, 16 * sizeof(float), true);
+    auto viewOffset = mGpuBuffer.push(matrix3STD140, GL_MAT3_STD140_BYTES, true);
 
     task->addBindResource(GlBindingResource{
         0,
         task->getProgram()->getUniformBlockIndex("Matrix"),
         mGpuBuffer.getBufferId(),
         viewOffset,
-        16 * sizeof(float),
+        GL_MAT3_STD140_BYTES,
     });
 
     if (stencilTask) {
@@ -317,18 +317,18 @@ void GlRenderer::drawPrimitive(GlShape& sdata, const Fill* fill, RenderUpdateFla
             stencilTask->getProgram()->getUniformBlockIndex("Matrix"),
             mGpuBuffer.getBufferId(),
             viewOffset,
-            16 * sizeof(float),
+            GL_MAT3_STD140_BYTES,
         });
     }
 
-    viewOffset = mGpuBuffer.push(invMat4, 16 * sizeof(float), true);
+    viewOffset = mGpuBuffer.push(invMat3, GL_MAT3_STD140_BYTES, true);
 
     task->addBindResource(GlBindingResource{
         1,
         task->getProgram()->getUniformBlockIndex("InvMatrix"),
         mGpuBuffer.getBufferId(),
         viewOffset,
-        16 * sizeof(float),
+        GL_MAT3_STD140_BYTES,
     });
 
     auto alpha = sdata.opacity / 255.f;
@@ -461,16 +461,13 @@ void GlRenderer::drawClip(Array<RenderData>& clips)
     identityIndex.push(1);
     identityIndex.push(3);
 
-    float mat4[16];
-    memset(mat4, 0, sizeof(float) * 16);
-    mat4[0] = 1.f;
-    mat4[5] = 1.f;
-    mat4[10] = 1.f;
-    mat4[15] = 1.f;
+    float mat3Identity[GL_MAT3_STD140_SIZE];
+    auto identityMatrix = tvg::identity();
+    getMatrix3Std140(identityMatrix, mat3Identity);
 
     auto identityVertexOffset = mGpuBuffer.push(identityVertex.data, 8 * sizeof(float));
     auto identityIndexOffset = mGpuBuffer.pushIndex(identityIndex.data, 6 * sizeof(uint32_t));
-    auto mat4Offset = mGpuBuffer.push(mat4, 16 * sizeof(float), true);
+    auto mat3Offset = mGpuBuffer.push(mat3Identity, GL_MAT3_STD140_BYTES, true);
 
     Array<int32_t> clipDepths(clips.count);
     clipDepths.count = clips.count;
@@ -496,19 +493,19 @@ void GlRenderer::drawClip(Array<RenderData>& clips)
         auto y = vp.sh() - (bbox.sy() - vp.sy()) - bbox.sh();
         clipTask->setViewport({{x, y}, {x + bbox.sw(), y + bbox.sh()}});
 
-        float matrix44[16];
-        currentPass()->getMatrix(matrix44, sdata->geometry.matrix);
+        float matrix3STD140[GL_MAT3_STD140_SIZE];
+        currentPass()->getMatrix(matrix3STD140, sdata->geometry.matrix);
 
         auto loc = clipTask->getProgram()->getUniformBlockIndex("Matrix");
-        auto viewOffset = mGpuBuffer.push(matrix44, 16 * sizeof(float), true);
+        auto viewOffset = mGpuBuffer.push(matrix3STD140, GL_MAT3_STD140_BYTES, true);
 
-        clipTask->addBindResource(GlBindingResource{0, loc, mGpuBuffer.getBufferId(), viewOffset, 16 * sizeof(float), });
+        clipTask->addBindResource(GlBindingResource{0, loc, mGpuBuffer.getBufferId(), viewOffset, GL_MAT3_STD140_BYTES, });
 
         auto maskTask = new GlRenderTask(mPrograms[RT_Stencil]);
 
         maskTask->setDrawDepth(clipDepths[i]);
         maskTask->addVertexLayout(GlVertexLayout{0, 2, 2 * sizeof(float), identityVertexOffset});
-        maskTask->addBindResource(GlBindingResource{0, loc, mGpuBuffer.getBufferId(), mat4Offset, 16 * sizeof(float), });
+        maskTask->addBindResource(GlBindingResource{0, loc, mGpuBuffer.getBufferId(), mat3Offset, GL_MAT3_STD140_BYTES, });
         maskTask->setDrawRange(identityIndexOffset, 6);
         maskTask->setViewport({{0, 0}, {vp.sw(), vp.sh()}});
 
@@ -560,15 +557,15 @@ void GlRenderer::endBlendingCompose(GlRenderTask* stencilTask, const Matrix& mat
     stencilTask->setDrawDepth(currentPass()->nextDrawDepth());
 
     // set view matrix
-    float matrix44[16];
-    currentPass()->getMatrix(matrix44, matrix);
-    uint32_t viewOffset = mGpuBuffer.push(matrix44, 16 * sizeof(float), true);
+    float matrix3STD140[GL_MAT3_STD140_SIZE];
+    currentPass()->getMatrix(matrix3STD140, matrix);
+    uint32_t viewOffset = mGpuBuffer.push(matrix3STD140, GL_MAT3_STD140_BYTES, true);
     stencilTask->addBindResource(GlBindingResource{
         0,
         stencilTask->getProgram()->getUniformBlockIndex("Matrix"),
         mGpuBuffer.getBufferId(),
         viewOffset,
-        16 * sizeof(float),
+        GL_MAT3_STD140_BYTES,
     });
     
     auto program = getBlendProgram(mBlendMethod, gradient, image, false);
@@ -809,14 +806,16 @@ void GlRenderer::endRenderPass(RenderCompositor* cmp)
             task->setDrawDepth(currentPass()->nextDrawDepth());
 
             // matrix buffer
-            float matrix[16] = {1, 0, 0, 0, 0, 1, 0, 0, 0, 0, 1, 0, 0, 0, 0, 1};
+            float matrix[GL_MAT3_STD140_SIZE];
+            auto identityMatrix = tvg::identity();
+            getMatrix3Std140(identityMatrix, matrix);
 
             task->addBindResource(GlBindingResource{
                 0,
                 task->getProgram()->getUniformBlockIndex("Matrix"),
                 mGpuBuffer.getBufferId(),
-                mGpuBuffer.push(matrix, 16 * sizeof(float), true),
-                16 * sizeof(float),
+                mGpuBuffer.push(matrix, GL_MAT3_STD140_BYTES, true),
+                GL_MAT3_STD140_BYTES,
             });
 
             // image info
@@ -1103,15 +1102,15 @@ bool GlRenderer::renderImage(void* data)
     if (complexBlend) vp = currentPass()->getViewport();
 
     // matrix buffer
-    float matrix44[16];
-    currentPass()->getMatrix(matrix44, sdata->geometry.matrix);
+    float matrix3STD140[GL_MAT3_STD140_SIZE];
+    currentPass()->getMatrix(matrix3STD140, sdata->geometry.matrix);
 
     task->addBindResource(GlBindingResource{
         0,
         task->getProgram()->getUniformBlockIndex("Matrix"),
         mGpuBuffer.getBufferId(),
-        mGpuBuffer.push(matrix44, 16 * sizeof(float), true),
-        16 * sizeof(float),
+        mGpuBuffer.push(matrix3STD140, GL_MAT3_STD140_BYTES, true),
+        GL_MAT3_STD140_BYTES,
     });
 
     // image info
