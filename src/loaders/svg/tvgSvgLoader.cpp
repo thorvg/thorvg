@@ -892,7 +892,7 @@ static void _handlePaintAttr(SvgPaint* paint, const char* value)
 
 static void _handleColorAttr(TVG_UNUSED SvgLoaderData* loader, SvgNode* node, const char* value)
 {
-    SvgStyleProperty* style = node->style;
+    auto style = node->style;
     if (_toColor(value, style->color.r, style->color.g, style->color.b, nullptr)) {
         style->curColorSet = true;
     }
@@ -901,7 +901,7 @@ static void _handleColorAttr(TVG_UNUSED SvgLoaderData* loader, SvgNode* node, co
 
 static void _handleFillAttr(TVG_UNUSED SvgLoaderData* loader, SvgNode* node, const char* value)
 {
-    SvgStyleProperty* style = node->style;
+    auto style = node->style;
     style->fill.flags = (style->fill.flags | SvgFillFlags::Paint);
     _handlePaintAttr(&style->fill.paint, value);
 }
@@ -909,7 +909,7 @@ static void _handleFillAttr(TVG_UNUSED SvgLoaderData* loader, SvgNode* node, con
 
 static void _handleStrokeAttr(TVG_UNUSED SvgLoaderData* loader, SvgNode* node, const char* value)
 {
-    SvgStyleProperty* style = node->style;
+    auto style = node->style;
     style->stroke.flags = (style->stroke.flags | SvgStrokeFlags::Paint);
     _handlePaintAttr(&style->stroke.paint, value);
 }
@@ -998,7 +998,7 @@ static void _handleTransformAttr(TVG_UNUSED SvgLoaderData* loader, SvgNode* node
 
 static void _handleClipPathAttr(TVG_UNUSED SvgLoaderData* loader, SvgNode* node, const char* value)
 {
-    SvgStyleProperty* style = node->style;
+    auto style = node->style;
     int len = strlen(value);
     if (len >= 3 && !strncmp(value, "url", 3)) {
         tvg::free(style->clipPath.url);
@@ -1009,7 +1009,7 @@ static void _handleClipPathAttr(TVG_UNUSED SvgLoaderData* loader, SvgNode* node,
 
 static void _handleMaskAttr(TVG_UNUSED SvgLoaderData* loader, SvgNode* node, const char* value)
 {
-    SvgStyleProperty* style = node->style;
+    auto style = node->style;
     int len = strlen(value);
     if (len >= 3 && !strncmp(value, "url", 3)) {
         tvg::free(style->mask.url);
@@ -1020,7 +1020,7 @@ static void _handleMaskAttr(TVG_UNUSED SvgLoaderData* loader, SvgNode* node, con
 
 static void _handleFilterAttr(TVG_UNUSED SvgLoaderData* loader, SvgNode* node, const char* value)
 {
-    SvgStyleProperty* style = node->style;
+    auto style = node->style;
     int len = strlen(value);
     if (len >= 3 && !strncmp(value, "url", 3)) {
         if (style->filter.url) tvg::free(style->filter.url);
@@ -3511,6 +3511,85 @@ static char* _parseName(char* str, const char* delims, char** saveptr)
 }
 
 
+
+static void _free(SvgStyleProperty* style)
+{
+    if (!style) return;
+
+    //style->clipPath.node/mask.node/filter.node has only the addresses of node. Therefore, node is released from _freeNode.
+    tvg::free(style->clipPath.url);
+    tvg::free(style->mask.url);
+    tvg::free(style->filter.url);
+    tvg::free(style->cssClass);
+
+    if (style->fill.paint.gradient) {
+        style->fill.paint.gradient->clear();
+        tvg::free(style->fill.paint.gradient);
+    }
+    if (style->stroke.paint.gradient) {
+        style->stroke.paint.gradient->clear();
+        tvg::free(style->stroke.paint.gradient);
+    }
+    tvg::free(style->fill.paint.url);
+    tvg::free(style->stroke.paint.url);
+    style->stroke.dash.array.reset();
+    tvg::free(style);
+}
+
+
+static void _free(SvgNode* node)
+{
+    if (!node) return;
+
+    ARRAY_FOREACH(p, node->child) _free(*p);
+    node->child.reset();
+
+    tvg::free(node->id);
+    tvg::free(node->transform);
+    _free(node->style);
+    switch (node->type) {
+         case SvgNodeType::Path: {
+             tvg::free(node->node.path.path);
+             break;
+         }
+         case SvgNodeType::Polygon: {
+             tvg::free(node->node.polygon.pts.data);
+             break;
+         }
+         case SvgNodeType::Polyline: {
+             tvg::free(node->node.polyline.pts.data);
+             break;
+         }
+         case SvgNodeType::Doc: {
+             _free(node->node.doc.defs);
+             _free(node->node.doc.style);
+             break;
+         }
+         case SvgNodeType::Defs: {
+            ARRAY_FOREACH(p, node->node.defs.gradients) {
+                 (*p)->clear();
+                 tvg::free(*p);
+             }
+             node->node.defs.gradients.reset();
+             break;
+         }
+         case SvgNodeType::Image: {
+             tvg::free(node->node.image.href);
+             break;
+         }
+         case SvgNodeType::Text: {
+             tvg::free(node->node.text.text);
+             tvg::free(node->node.text.fontFamily);
+             break;
+         }
+         default: {
+             break;
+         }
+    }
+    tvg::free(node);
+}
+
+
 static bool _cssApplyClass(SvgNode* node, const char* classString, SvgNode* styleRoot)
 {
     if (!classString || !styleRoot) return false;
@@ -3547,13 +3626,7 @@ static bool _cssApplyClass(SvgNode* node, const char* classString, SvgNode* styl
 
     //Apply the merged style to the node (without overwriting existing styles)
     cssCopyStyleAttr(node, tempNode);
-
-    if (tempNode->style->clipPath.url) tvg::free(tempNode->style->clipPath.url);
-    if (tempNode->style->mask.url) tvg::free(tempNode->style->mask.url);
-    if (tempNode->style->stroke.dash.array.count > 0) tempNode->style->stroke.dash.array.reset();
-    tvg::free(tempNode->style);
-    tvg::free(tempNode->transform);
-    tvg::free(tempNode);
+    _free(tempNode);
 
     return allFound;
 }
@@ -3752,84 +3825,6 @@ static void _updateFilter(SvgNode* node, SvgNode* root)
 }
 
 
-static void _freeNodeStyle(SvgStyleProperty* style)
-{
-    if (!style) return;
-
-    //style->clipPath.node/mask.node/filter.node has only the addresses of node. Therefore, node is released from _freeNode.
-    tvg::free(style->clipPath.url);
-    tvg::free(style->mask.url);
-    tvg::free(style->filter.url);
-    tvg::free(style->cssClass);
-
-    if (style->fill.paint.gradient) {
-        style->fill.paint.gradient->clear();
-        tvg::free(style->fill.paint.gradient);
-    }
-    if (style->stroke.paint.gradient) {
-        style->stroke.paint.gradient->clear();
-        tvg::free(style->stroke.paint.gradient);
-    }
-    tvg::free(style->fill.paint.url);
-    tvg::free(style->stroke.paint.url);
-    style->stroke.dash.array.reset();
-    tvg::free(style);
-}
-
-
-static void _freeNode(SvgNode* node)
-{
-    if (!node) return;
-
-    ARRAY_FOREACH(p, node->child) _freeNode(*p);
-    node->child.reset();
-
-    tvg::free(node->id);
-    tvg::free(node->transform);
-    _freeNodeStyle(node->style);
-    switch (node->type) {
-         case SvgNodeType::Path: {
-             tvg::free(node->node.path.path);
-             break;
-         }
-         case SvgNodeType::Polygon: {
-             tvg::free(node->node.polygon.pts.data);
-             break;
-         }
-         case SvgNodeType::Polyline: {
-             tvg::free(node->node.polyline.pts.data);
-             break;
-         }
-         case SvgNodeType::Doc: {
-             _freeNode(node->node.doc.defs);
-             _freeNode(node->node.doc.style);
-             break;
-         }
-         case SvgNodeType::Defs: {
-            ARRAY_FOREACH(p, node->node.defs.gradients) {
-                 (*p)->clear();
-                 tvg::free(*p);
-             }
-             node->node.defs.gradients.reset();
-             break;
-         }
-         case SvgNodeType::Image: {
-             tvg::free(node->node.image.href);
-             break;
-         }
-         case SvgNodeType::Text: {
-             tvg::free(node->node.text.text);
-             tvg::free(node->node.text.fontFamily);
-             break;
-         }
-         default: {
-             break;
-         }
-    }
-    tvg::free(node);
-}
-
-
 static bool _svgLoaderParserForValidCheckXmlOpen(SvgLoaderData* loader, const char* content, unsigned int length)
 {
     const char* attrs = nullptr;
@@ -3895,7 +3890,7 @@ void SvgLoader::clear(bool all)
     loaderData.gradients.reset();
     loaderData.gradientStack.reset();
 
-    _freeNode(loaderData.doc);
+    _free(loaderData.doc);
     loaderData.doc = nullptr;
     loaderData.stack.reset();
 
@@ -3921,22 +3916,6 @@ void SvgLoader::clear(bool all)
     size = 0;
     content = nullptr;
     copy = false;
-}
-
-
-/************************************************************************/
-/* External Class Implementation                                        */
-/************************************************************************/
-
-SvgLoader::SvgLoader() : ImageLoader(FileType::Svg)
-{
-}
-
-
-SvgLoader::~SvgLoader()
-{
-    done();
-    clear();
 }
 
 
@@ -3983,6 +3962,22 @@ void SvgLoader::run(unsigned tid)
     }
     root->ref();
     clear(false);
+}
+
+
+/************************************************************************/
+/* External Class Implementation                                        */
+/************************************************************************/
+
+SvgLoader::SvgLoader() : ImageLoader(FileType::Svg)
+{
+}
+
+
+SvgLoader::~SvgLoader()
+{
+    done();
+    clear();
 }
 
 
