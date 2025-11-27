@@ -42,12 +42,13 @@ namespace tvg
     }
 
     template<typename T = void>
-    static inline T* realloc(void* ptr, size_t size)
+    static inline T* realloc(T* ptr, size_t size)
     {
         return static_cast<T*>(std::realloc(ptr, size));
     }
 
-    static inline void free(void* ptr)
+    template<typename T = void>
+    static inline void free(T* ptr)
     {
         std::free(ptr);
     }
