@@ -58,7 +58,7 @@ void Stroker::run(const RenderPath& path, const Matrix& m)
 {
     mBuffer->vertex.reserve(path.pts.count * 4 + 16);
     mBuffer->index.reserve(path.pts.count * 3);
-    mScale = tvg::scaling2D(m);
+    mScale = tvg::scaling(m);
 
     auto validStrokeCap = false;
     auto pts = path.pts.data;
@@ -254,9 +254,8 @@ void Stroker::round(const Point &prev, const Point& curr, const Point& center)
         if (endAngle < startAngle) endAngle += 2 * MATH_PI;
     }
 
-    // Fixme: just use bezier curve to calculate step count
-    auto count = Bezier(prev * mScale, curr * mScale, radius() * length(mScale)).segments();
-    if (count < 2) count = 2;
+    auto arcAngle = endAngle - startAngle;
+    auto count = arcSegmentsCnt(arcAngle, radius() * mScale);
 
     auto c = _pushVertex(mBuffer->vertex, center.x, center.y);
     auto pi = _pushVertex(mBuffer->vertex, prev.x, prev.y);
@@ -283,10 +282,9 @@ void Stroker::round(const Point &prev, const Point& curr, const Point& center)
 
 void Stroker::roundPoint(const Point &p)
 {
-    // Fixme: just use bezier curve to calculate step count
-    auto count = Bezier(p, p, radius()).segments() * 2;
+    auto count = arcSegmentsCnt(2.0f * MATH_PI, radius() * mScale);
     auto c = _pushVertex(mBuffer->vertex, p.x, p.y);
-    auto step = 2 * MATH_PI / (count - 1);
+    auto step = 2.0f * MATH_PI / (count - 1);
 
     for (uint32_t i = 1; i <= static_cast<uint32_t>(count); i++) {
         float angle = i * step;

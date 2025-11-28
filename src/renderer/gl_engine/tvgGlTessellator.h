@@ -71,7 +71,7 @@ private:
     State mState = {};
     Point mLeftTop = {0.0f, 0.0f};
     Point mRightBottom = {0.0f, 0.0f};
-    Point mScale;
+    float mScale;
 };
 
 class BWTessellator
