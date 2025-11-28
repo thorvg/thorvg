@@ -191,12 +191,21 @@ struct UserExample : tvgexam::Example
         canvas->push(text12);
 
         auto text13 = tvg::Text::gen();
-        text13->font("NOTO-SANS-KR");
+        text13->font("Arial");
         text13->size(20);
         text13->fill(255, 255, 255);
-        text13->text("Line-Feed Test. This is the first line - \nThis is the second line.");
+        text13->text("LINE-FEED TEST. THIS IS THE FIRST LINE - \nTHIS IS THE SECOND LINE.");
         text13->translate(0, 625);
         canvas->push(text13);
+
+        auto text14 = tvg::Text::gen();
+        text14->font("Arial");
+        text14->size(20);
+        text14->fill(255, 255, 255);
+        text14->spacing(1.5f, 1.5f);
+        text14->text("1.5x SPACING TEST. THIS IS THE FIRST LINE - \nTHIS IS THE SECOND LINE.");
+        text14->translate(0, 700);
+        canvas->push(text14);
 
         return true;
     }
@@ -209,5 +218,5 @@ struct UserExample : tvgexam::Example
 
 int main(int argc, char **argv)
 {
-    return tvgexam::main(new UserExample, argc, argv);
+    return tvgexam::main(new UserExample, argc, argv, false, 1024, 1024);
 }

@@ -61,12 +61,12 @@ struct TtfLoader : public FontLoader
     void release(FontMetrics& fm) override;
 
 private:
-    float height(uint32_t loc)
+    float height(uint32_t loc, float spacing)
     {
-        return reader.metrics.hhea.advance * loc - reader.metrics.hhea.lineGap;
+        return (reader.metrics.hhea.advance * loc - reader.metrics.hhea.lineGap) * spacing;
     }
 
-    uint32_t feedLine(float align, float box, float x, uint32_t begin, uint32_t end, Point& cursor, uint32_t& loc, RenderPath& out);
+    uint32_t feedLine(FontMetrics& fm, float box, float x, uint32_t begin, uint32_t end, Point& cursor, uint32_t& loc, RenderPath& out);
     void wrapNone(FontMetrics& fm, const Point& box, char* utf8, RenderPath& out);
     void wrapChar(FontMetrics& fm, const Point& box, char* utf8, RenderPath& out);
     void wrapWord(FontMetrics& fm, const Point& box, char* utf8, RenderPath& out, bool smart);

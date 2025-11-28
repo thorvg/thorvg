@@ -142,7 +142,7 @@ struct FontMetrics
 {
     Point size;  //text width, height
     float scale;
-    Point align{}, box{};
+    Point align{}, box{}, spacing{1.0f, 1.0f};
     float fontSize = 0.0f;
     TextWrap wrap = TextWrap::None;
 
