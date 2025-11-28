@@ -137,6 +137,12 @@ Result Text::italic(float shear) noexcept
 }
 
 
+Result Text::spacing(float letter, float line) noexcept
+{
+    return to<TextImpl>(this)->spacing(letter, line);
+}
+
+
 Result Text::wrap(TextWrap mode) noexcept
 {
     to<TextImpl>(this)->wrapping(mode);
