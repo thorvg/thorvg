@@ -3606,9 +3606,23 @@ static bool _cssApplyClass(SvgNode* node, const char* classString, SvgNode* styl
 
     char* tokPtr = nullptr;
     auto name = _parseName(classes, " ", &tokPtr);
+    tvg::Array<const char*> applyClasses;
 
     while (name) {
-        bool found = false;
+        auto isDuplicate = false;
+        ARRAY_FOREACH(p, applyClasses) {
+            if (STR_AS(*p, name)) {
+                isDuplicate = true;
+                break;
+            }
+        }
+        if (isDuplicate) {
+            name = _parseName(nullptr, " ", &tokPtr);
+            continue;
+        }
+        applyClasses.push(name);
+
+        auto found = false;
         //css styling: tag.name has higher priority than .name
         if (auto cssNode = cssFindStyleNode(styleRoot, name)) {
             cssCopyStyleAttr(tempNode, cssNode, true);
