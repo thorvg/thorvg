@@ -2422,6 +2422,7 @@ TVG_API Tvg_Result tvg_text_align(Tvg_Paint text, float x, float y);
  * @note Experimental API
  *
  * @see tvg_text_align()
+ * @see tvg_text_spacing()
  */
 TVG_API Tvg_Result tvg_text_layout(Tvg_Paint text, float w, float h);
 
@@ -2439,6 +2440,30 @@ TVG_API Tvg_Result tvg_text_layout(Tvg_Paint text, float w, float h);
  * @note Experimental API
  */
 TVG_API Tvg_Result tvg_text_wrap_mode(Tvg_Paint text, Tvg_Text_Wrap mode);
+
+
+/**
+ * @brief Set the spacing scale factors for text layout.
+ *
+ * This function adjusts the letter spacing (horizontal space between glyphs) and
+ * line spacing (vertical space between lines of text) using scale factors.
+ *
+ * Both values are relative to the font's default metrics:
+ * - The letter spacing is applied as a scale factor to the glyph's advance width.
+ * - The line spacing is applied as a scale factor to the glyph's advance height.
+ *
+ * @param[in] text A Tvg_Paint pointer to the text object.
+ * @param[in] letter The scale factor for letter spacing.
+ *                   Values > 1.0 increase spacing, values < 1.0 decrease it.
+ *                   Must be greater than or equal to 0.0. (default: 1.0)
+ *
+ * @param[in] line The scale factor for line spacing.
+ *                 Values > 1.0 increase line spacing, values < 1.0 decrease it.
+ *                 Must be greater than or equal to 0.0. (default: 1.0)
+ *
+ * @note Experimental API
+ */
+TVG_API Tvg_Result tvg_text_spacing(Tvg_Paint text, float letter, float line);
 
 
 /**

@@ -944,6 +944,13 @@ TVG_API Tvg_Result tvg_text_wrap_mode(Tvg_Paint text, Tvg_Text_Wrap mode)
 }
 
 
+TVG_API Tvg_Result tvg_text_spacing(Tvg_Paint text, float letter, float line)
+{
+    if (text) return (Tvg_Result) reinterpret_cast<Text*>(text)->spacing(letter, line);
+    return TVG_RESULT_INVALID_ARGUMENT;
+}
+
+
 TVG_API Tvg_Result tvg_font_load(const char* path)
 {
     return (Tvg_Result) Text::load(path);
