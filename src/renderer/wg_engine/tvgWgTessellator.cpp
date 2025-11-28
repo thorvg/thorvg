@@ -56,7 +56,7 @@ void WgStroker::run(const RenderPath& path, const Matrix& m)
 {
     mBuffer->vbuffer.reserve(path.pts.count * 4 + 16);
     mBuffer->ibuffer.reserve(path.pts.count * 3);
-    mScale = tvg::scaling2D(m);
+    mScale = tvg::scaling(m);
 
     auto validStrokeCap = false;
     auto pts = path.pts.data;
@@ -258,9 +258,8 @@ void WgStroker::round(const Point &prev, const Point& curr, const Point& center)
         if (endAngle < startAngle) endAngle += 2 * MATH_PI;
     }
 
-    // Fixme: just use bezier curve to calculate step count
-    auto count = Bezier(prev * mScale, curr * mScale, radius() * length(mScale)).segments();
-    if (count < 2) count = 2;
+    auto arcAngle = endAngle - startAngle;
+    auto count = tvg::arcSegmentsCnt(arcAngle, radius() * mScale);
 
     auto c = mBuffer->vbuffer.count;  mBuffer->vbuffer.push(center);
     auto pi = mBuffer->vbuffer.count; mBuffer->vbuffer.push(prev);
@@ -287,10 +286,9 @@ void WgStroker::round(const Point &prev, const Point& curr, const Point& center)
 
 void WgStroker::roundPoint(const Point &p)
 {
-    // Fixme: just use bezier curve to calculate step count
-    auto count = Bezier(p, p, radius()).segments() * 2;
+    auto count = tvg::arcSegmentsCnt(2.0f * MATH_PI, radius() * mScale);
     auto c = mBuffer->vbuffer.count; mBuffer->vbuffer.push(p);
-    auto step = 2 * MATH_PI / (count - 1);
+    auto step = 2.0f * MATH_PI / (count - 1);
 
     for (uint32_t i = 1; i <= static_cast<uint32_t>(count); i++) {
         float angle = i * step;
