@@ -3606,8 +3606,22 @@ static bool _cssApplyClass(SvgNode* node, const char* classString, SvgNode* styl
 
     char* tokPtr = nullptr;
     auto name = _parseName(classes, " ", &tokPtr);
+    tvg::Array<const char*> applyClasses;
 
     while (name) {
+        bool isDuplicate = false;
+        ARRAY_FOREACH(p, applyClasses) {
+            if (STR_AS(*p, name)) {
+                isDuplicate = true;
+                break;
+            }
+        }
+        if (isDuplicate) {
+            name = _parseName(nullptr, " ", &tokPtr);
+            continue;
+        }
+        applyClasses.push(name);
+
         bool found = false;
         //css styling: tag.name has higher priority than .name
         if (auto cssNode = cssFindStyleNode(styleRoot, name)) {
@@ -3627,6 +3641,7 @@ static bool _cssApplyClass(SvgNode* node, const char* classString, SvgNode* styl
     //Apply the merged style to the node (without overwriting existing styles)
     cssCopyStyleAttr(node, tempNode);
     _free(tempNode);
+    applyClasses.reset();
 
     return allFound;
 }
