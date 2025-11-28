@@ -267,6 +267,21 @@ jerry_value_to_object (const jerry_value_t value) /**< input value */
 } /* jerry_value_to_object */
 
 /**
+ * Call ToPrimitive operation on the api value.
+ *
+ * Note:
+ *      returned value must be freed with jerry_value_free, when it is no longer needed.
+ *
+ * @return converted primitive value - if success
+ *         thrown error - otherwise
+ */
+jerry_value_t
+jerry_value_to_primitive (const jerry_value_t value) /**< input value */
+{
+  return jerry_return (ecma_op_to_primitive (value, ECMA_PREFERRED_TYPE_NO));
+} /* jerry_value_to_primitive */
+
+/**
  * Call the ToString ecma builtin operation on the api value.
  *
  * Note:
