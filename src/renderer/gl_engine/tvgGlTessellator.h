@@ -80,6 +80,7 @@ public:
     BWTessellator(GlGeometryBuffer* buffer);
     void tessellate(const RenderPath& path, const Matrix& matrix);
     RenderRegion bounds() const;
+    bool convex = true;
 
 private:
     uint32_t pushVertex(float x, float y);
@@ -87,6 +88,10 @@ private:
 
     GlGeometryBuffer* mBuffer;
     BBox bbox = {};
+    Point firstPt = {};
+    Point prevPt = {};
+    Point prevEdge = {};
+    int8_t winding = -1;   //0: unknown, 1: CW, -1: CCW
 };
 
 }  // namespace tvg

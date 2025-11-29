@@ -150,6 +150,7 @@ void GlGeometry::prepare(const RenderShape& rshape)
 bool GlGeometry::tesselateShape(const RenderShape& rshape, float* opacityMultiplier)
 {
     fill.clear();
+    convex = false;
 
     // When the CTM scales a filled path so small that its device-space
     // World:  [========]     // normal-sized filled path
@@ -172,6 +173,7 @@ bool GlGeometry::tesselateShape(const RenderShape& rshape, float* opacityMultipl
     bwTess.tessellate(optPath, matrix);
     fillRule = rshape.rule;
     bounds = bwTess.bounds();
+    convex = bwTess.convex;
     if (opacityMultiplier) *opacityMultiplier = 1.0f;
     return true;
 }
@@ -287,6 +289,7 @@ GlStencilMode GlGeometry::getStencilMode(RenderUpdateFlag flag)
     if (flag & RenderUpdateFlag::GradientStroke) return GlStencilMode::Stroke;
     if (flag & RenderUpdateFlag::Image) return GlStencilMode::None;
 
+    if (convex) return GlStencilMode::None;
     if (fillRule == FillRule::NonZero) return GlStencilMode::FillNonZero;
     if (fillRule == FillRule::EvenOdd) return GlStencilMode::FillEvenOdd;
 
