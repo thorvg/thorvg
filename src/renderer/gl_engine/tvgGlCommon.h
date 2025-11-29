@@ -122,6 +122,7 @@ struct GlGeometry
     RenderRegion bounds = {};
     FillRule fillRule = FillRule::NonZero;
     RenderPath optPath;  //optimal path
+    bool convex = false;
 };
 
 
