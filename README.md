@@ -128,9 +128,9 @@ ThorVG is designed to be portable across a wide range of devices, including smal
     - [Build and Install](#build-and-install)
     - [Build with Visual Studio](#build-with-visual-studio)
     - [Build with Xcode](#build-with-xcode)
-    - [Install with vcpkg](#install-with-vcpkg)
     - [Install with Conan](#install-with-conan)
     - [Install with MSYS2](#install-with-msys2)
+    - [Install with vcpkg](#install-with-vcpkg)
   - [Quick Start](#quick-start)
   - [SVG](#svg)
   - [Lottie](#lottie)
@@ -192,22 +192,6 @@ If you want to create Xcode project files, use the command `--backend=xcode`. Th
 meson setup builddir --backend=xcode
 ```
 
-### Install with vcpkg
-You can download and install pre-packaged ThorVG using the [vcpkg](https://vcpkg.io/en/index.html) package manager.
-
-Clone the vcpkg repo. Make sure you are in the directory you want the tool installed to before doing this.
-```
-git clone https://github.com/Microsoft/vcpkg.git
-```
-Run the bootstrap script to build the vcpkg.
-```
-./bootstrap-vcpkg.sh
-```
-Install the ThorVG package.
-```
-./vcpkg install thorvg
-```
-
 ### Install with Conan
 You can download and install pre-packaged ThorVG using the [Conan](https://conan.io/) package manager.
 
@@ -232,6 +216,22 @@ To update to a newer release (and update all the packages, which is preferable),
 
 ```
 pacman -Syu
+```
+
+### Install with vcpkg
+You can download and install pre-packaged ThorVG using the [vcpkg](https://vcpkg.io/en/index.html) package manager.
+
+Clone the vcpkg repo. Make sure you are in the directory you want the tool installed to before doing this.
+```
+git clone https://github.com/Microsoft/vcpkg.git
+```
+Run the bootstrap script to build the vcpkg.
+```
+./bootstrap-vcpkg.sh
+```
+Install the ThorVG package.
+```
+./vcpkg install thorvg
 ```
 
 [Back to contents](#contents)
