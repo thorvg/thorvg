@@ -33,7 +33,6 @@
 **Thor Vector Graphics** is an **open-source** graphics library designed for creating **vector-based scenes and animations**. It combines **high performance** with **lightweight efficiency**, as Thor embodies a dual meaning—_symbolizing both immense strength and lightning-fast agility_. Embracing the philosophy of _simplicity leads to reliability_, the ThorVG project provides **intuitive, user-friendly interfaces** while maintaining a **compact footprint** and **minimal overhead**. <br />
 <br />
 The following primitives are supported by ThorVG: <br />
-<br />
  
 - **Lines & Shapes**: rectangles, circles, and paths with coordinate control
 - **Filling**: solid colors, linear & radial gradients, and path clipping
@@ -48,18 +47,35 @@ The following primitives are supported by ThorVG: <br />
 <p align="center">
   <img width="700" height="auto" src="https://github.com/thorvg/thorvg.site/blob/main/readme/example_primitives.png">
 </p>
+<br/>
 
-### Structural Design
+### Lightweight Design
 ​ThorVG is designed for a wide range of programs, offering adaptability for integration and use in various applications and systems. It achieves this through a single binary with selectively buildable, modular components in a building block style. This ensures both optimal size and easy maintenance. <br />
 <br/>
 <p align="center">
   <img width="700" height="auto" src="https://github.com/thorvg/thorvg.site/blob/main/readme/example_structure.png">
 </p>
+
+The core library of ThorVG maintains a binary size of approximately **150KB**. This is significantly smaller compared to graphics engines designed primarily for desktop environments and offers the following advantages.<br />
+
+- **Memory Efficiency**: Thanks to its low runtime memory usage, ThorVG operates stably even on low-spec systems.
+- **Fast Boot**: The library loads and initializes quickly, improving the overall startup speed of applications.
+- **Low Size Deployment:** With its small code and resource footprint, ThorVG is well-suited for embedded systems, IoT devices, and network-constrained environments.
+<br/>
+
+### Broad Portability
+ThorVG is based on the **C++** standard and provides consistent functionality across various platforms through an abstraction layer that minimizes dependence on specific operating systems or hardware. <br />
+
+- **Extensive Platform Support**: ThorVG is compatible with desktop operating systems such as **Windows**, **macOS**, and **Linux**, as well as mobile platforms like **Android** and **iOS**, and embedded systems including **Tizen** and **RTOS**-based platforms.
+- **Ultra-Light Microcontroller Support**: ThorVG has been shown to run on microcontrollers like the **ESP32**, demonstrating its efficiency even within environments with highly limited memory and storage.
+- **Headless Rendering Support**: ThorVG can perform rendering without a display server, enabling use cases such as server-side graphics processing or offline rendering tools.
+
 If your program includes the main renderer, you can seamlessly utilize ThorVG APIs by transitioning drawing contexts between the main renderer and ThorVG. Throughout these API calls, ThorVG effectively serializes drawing commands among volatile paint nodes. Subsequently, it undertakes synchronous or asynchronous rendering via its render-backend engines. Additionally, ThorVG is adept at handling vector images, including formats like SVG and Lottie, and it remains adaptable for accommodating additional popular formats as needed. In the rendering process, the library may generate intermediate frame buffers for scene compositing, though only when essential. The accompanying diagram provides a concise overview of how to effectively incorporate ThorVG within your system.<br />
 <br />
 <p align="center">
   <img width="900" height="auto" src="https://github.com/thorvg/thorvg.site/blob/main/readme/example_flow.png">
 </p>
+<br/>
 
 ### Threading
 ThorVG incorporates a threading mechanism designed to seamlessly retrieve upcoming scenes without unnecessary delays. It utilizes a finely-tuned task scheduler based on thread pools to handle a variety of tasks, including encoding, decoding, updating, and rendering. This architecture ensures efficient use of multi-core processing.<br />
@@ -69,6 +85,7 @@ The task scheduler is carefully designed to abstract complexity, simplify integr
 <p align="center">
   <img width="900" height="auto" src="https://github.com/thorvg/thorvg.site/blob/main/readme/example_thread.png">
 </p>
+<br/>
 
 ### Smart Rendering
 ThorVG supports smart partial rendering, which enables more efficient rendering workflows by updating only the portions of a vector scene that have changed. By internally tracking modified regions, it minimizes unnecessary redraws and optimizes overall performance. This feature provides significant benefits in scenarios such as UI rendering, design tools, or applications where large parts of the scene remain static and only small elements update between frames. In such cases, avoiding full-scene rendering can greatly reduce computational workload and improve energy efficiency—making it particularly valuable on mobile and embedded systems.<br/>
