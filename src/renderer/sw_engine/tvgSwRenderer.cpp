@@ -168,7 +168,7 @@ struct SwShapeTask : SwTask
             auto clipper = static_cast<SwTask*>(*p);
             auto clipShapeRle = shape.rle ? clipper->clip(shape.rle) : true;
             auto clipStrokeRle = shape.strokeRle ? clipper->clip(shape.strokeRle) : true;
-            if (!clipShapeRle && !clipStrokeRle) goto err;
+            if (!clipShapeRle || !clipStrokeRle) goto err;
         }
 
         valid = true;
