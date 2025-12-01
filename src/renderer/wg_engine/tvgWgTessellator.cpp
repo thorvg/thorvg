@@ -24,7 +24,8 @@
 #include "tvgMath.h"
 
 
-WgStroker::WgStroker(WgMeshData* buffer, float width) : mBuffer(buffer), mWidth(width)
+WgStroker::WgStroker(WgMeshData* buffer, float width, StrokeCap cap, StrokeJoin join) 
+    : mBuffer(buffer), mWidth(width), mCap(cap), mJoin(join)
 {
 }
 
