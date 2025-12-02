@@ -234,6 +234,13 @@ enum class SvgMaskType
     Alpha
 };
 
+enum class SvgXmlSpace
+{
+    None,
+    Default,
+    Preserve
+};
+
 //Length type to recalculate %, pt, pc, mm, cm etc
 enum class SvgParserLengthType
 {
@@ -546,6 +553,7 @@ struct SvgNode
         SvgFilterNode filter;
         SvgGaussianBlurNode gaussianBlur;
     } node;
+    SvgXmlSpace xmlSpace = SvgXmlSpace::None;
     ~SvgNode();
 };
 

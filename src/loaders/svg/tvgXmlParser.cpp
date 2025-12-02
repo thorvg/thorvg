@@ -425,7 +425,7 @@ bool xmlParse(const char* buf, unsigned bufLength, bool strip, xmlCb func, const
         } else {
             const char *p, *end;
 
-            if (strip) {
+            if (strip && ((SvgLoaderData*)data)->openedTag != OpenedTagType::Text) {
                 p = itr;
                 p = _skipWhiteSpacesAndXmlEntities(p, itrEnd);
                 if (p) {
@@ -438,7 +438,7 @@ bool xmlParse(const char* buf, unsigned bufLength, bool strip, xmlCb func, const
             if (!p) p = itrEnd;
 
             end = p;
-            if (strip) end = _unskipWhiteSpacesAndXmlEntities(end, itr);
+            if (strip && ((SvgLoaderData*)data)->openedTag != OpenedTagType::Text) end = _unskipWhiteSpacesAndXmlEntities(end, itr);
 
             if (itr != end && !func((void*)data, XMLType::Data, itr, (unsigned int)(end - itr))) return false;
 
