@@ -23,6 +23,7 @@
 [![pub](https://img.shields.io/pub/v/thorvg.svg)](https://pub.dev/packages/thorvg)
 [![Nimble](https://img.shields.io/badge/nimble-Latest-FFE953?color=orange)](https://nimble.directory/pkg/thorvg)
 [![DUB](https://img.shields.io/badge/dub-latest-orange)](https://code.dlang.org/packages/bindbc-thorvg)
+[![Homebrew](https://img.shields.io/badge/homebrew-latest-orange)](https://formulae.brew.sh/formula/thorvg)
 <br>
 
 # ThorVG
