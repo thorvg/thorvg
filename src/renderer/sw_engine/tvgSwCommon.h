@@ -404,22 +404,15 @@ static inline uint32_t PREMULTIPLY(uint32_t c, uint8_t a)
     return (c & 0xff000000) + ((((c >> 8) & 0xff) * a) & 0xff00) + ((((c & 0x00ff00ff) * a) >> 8) & 0x00ff00ff);
 }
 
-static inline bool BLEND_UPRE(uint32_t c, RenderColor& o)
+static inline RenderColor BLEND_UPRE(uint32_t c)
 {
-    o.a = A(c);
-    if (o.a == 0) return false;
-
-    o.r = C1(c);
-    o.g = C2(c);
-    o.b = C3(c);
-
-    if (o.a < 255) {
+    RenderColor o = {C1(c), C2(c), C3(c), A(c)};
+    if (o.a > 0 && o.a < 255) {
         o.r = std::min(o.r * 255u / o.a, 255u);
         o.g = std::min(o.g * 255u / o.a, 255u);
         o.b = std::min(o.b * 255u / o.a, 255u);
     }
-
-    return true;
+    return o;
 }
 
 static inline uint32_t BLEND_PRE(uint32_t c1, uint32_t c2, uint8_t a)
@@ -451,8 +444,6 @@ static inline uint32_t opBlendSrcOver(uint32_t s, TVG_UNUSED uint32_t d, TVG_UNU
 
 static inline uint32_t opBlendDifference(uint32_t s, uint32_t d)
 {
-    if (d == 0) return s;
-
     auto f = [](uint8_t s, uint8_t d) {
         return (s > d) ? (s - d) : (d - s);
     };
@@ -462,8 +453,6 @@ static inline uint32_t opBlendDifference(uint32_t s, uint32_t d)
 
 static inline uint32_t opBlendExclusion(uint32_t s, uint32_t d)
 {
-    if (d == 0) return s;
-
     auto f = [](uint8_t s, uint8_t d) {
         return tvg::clamp(s + d - 2 * MULTIPLY(s, d), 0, 255);
     };
@@ -473,8 +462,6 @@ static inline uint32_t opBlendExclusion(uint32_t s, uint32_t d)
 
 static inline uint32_t opBlendAdd(uint32_t s, uint32_t d)
 {
-    if (d == 0) return s;
-
     auto f = [](uint8_t s, uint8_t d) {
         return std::min(s + d, 255);
     };
@@ -484,8 +471,6 @@ static inline uint32_t opBlendAdd(uint32_t s, uint32_t d)
 
 static inline uint32_t opBlendScreen(uint32_t s, uint32_t d)
 {
-    if (d == 0) return s;
-
     auto f = [](uint8_t s, uint8_t d) {
         return s + d - MULTIPLY(s, d);
     };
@@ -495,8 +480,7 @@ static inline uint32_t opBlendScreen(uint32_t s, uint32_t d)
 
 static inline uint32_t opBlendMultiply(uint32_t s, uint32_t d)
 {
-    RenderColor o;
-    if (!BLEND_UPRE(d, o)) return s;
+    auto o = BLEND_UPRE(d);
 
     auto f = [](uint8_t s, uint8_t d) {
         return MULTIPLY(s, d);
@@ -508,8 +492,7 @@ static inline uint32_t opBlendMultiply(uint32_t s, uint32_t d)
 
 static inline uint32_t opBlendOverlay(uint32_t s, uint32_t d)
 {
-    RenderColor o;
-    if (!BLEND_UPRE(d, o)) return s;
+    auto o = BLEND_UPRE(d);
 
     auto f = [](uint8_t s, uint8_t d) {
         return (d < 128) ? std::min(255, 2 * MULTIPLY(s, d)) : (255 - std::min(255, 2 * MULTIPLY(255 - s, 255 - d)));
@@ -520,8 +503,7 @@ static inline uint32_t opBlendOverlay(uint32_t s, uint32_t d)
 
 static inline uint32_t opBlendDarken(uint32_t s, uint32_t d)
 {
-    RenderColor o;
-    if (!BLEND_UPRE(d, o)) return s;
+    auto o = BLEND_UPRE(d);
 
     auto f = [](uint8_t s, uint8_t d) {
         return std::min(s, d);
@@ -532,8 +514,6 @@ static inline uint32_t opBlendDarken(uint32_t s, uint32_t d)
 
 static inline uint32_t opBlendLighten(uint32_t s, uint32_t d)
 {
-    if (d == 0) return s;
-
     auto f = [](uint8_t s, uint8_t d) {
         return std::max(s, d);
     };
@@ -543,8 +523,7 @@ static inline uint32_t opBlendLighten(uint32_t s, uint32_t d)
 
 static inline uint32_t opBlendColorDodge(uint32_t s, uint32_t d)
 {
-    RenderColor o;
-    if (!BLEND_UPRE(d, o)) return s;
+    auto o = BLEND_UPRE(d);
 
     auto f = [](uint8_t s, uint8_t d) {
         return d == 0 ? 0 : (s == 255 ? 255 : std::min(d * 255 / (255 - s), 255));
@@ -555,8 +534,7 @@ static inline uint32_t opBlendColorDodge(uint32_t s, uint32_t d)
 
 static inline uint32_t opBlendColorBurn(uint32_t s, uint32_t d)
 {
-    RenderColor o;
-    if (!BLEND_UPRE(d, o)) return s;
+    auto o = BLEND_UPRE(d);
 
     auto f = [](uint8_t s, uint8_t d) {
         return d == 255 ? 255 : (s == 0 ? 0 : 255 - std::min((255 - d) * 255 / s, 255));
@@ -567,8 +545,7 @@ static inline uint32_t opBlendColorBurn(uint32_t s, uint32_t d)
 
 static inline uint32_t opBlendHardLight(uint32_t s, uint32_t d)
 {
-    RenderColor o;
-    if (!BLEND_UPRE(d, o)) return s;
+    auto o = BLEND_UPRE(d);
 
     auto f = [](uint8_t s, uint8_t d) {
         return (s < 128) ? std::min(255, 2 * MULTIPLY(s, d)) : (255 - std::min(255, 2 * MULTIPLY(255 - s, 255 - d)));
@@ -579,8 +556,7 @@ static inline uint32_t opBlendHardLight(uint32_t s, uint32_t d)
 
 static inline uint32_t opBlendSoftLight(uint32_t s, uint32_t d)
 {
-    RenderColor o;
-    if (!BLEND_UPRE(d, o)) return s;
+    auto o = BLEND_UPRE(d);
 
     auto f = [](uint8_t s, uint8_t d) {
         return MULTIPLY(255 - std::min(255, 2 * s), MULTIPLY(d, d)) + std::min(255, 2 * MULTIPLY(s, d));
@@ -593,8 +569,7 @@ void rasterRGB2HSL(uint8_t r, uint8_t g, uint8_t b, float* h, float* s, float* l
 
 static inline uint32_t opBlendHue(uint32_t s, uint32_t d)
 {
-    RenderColor o;
-    if (!BLEND_UPRE(d, o)) return s;
+    auto o = BLEND_UPRE(d);
 
     float sh, ds, dl;
     rasterRGB2HSL(C1(s), C2(s), C3(s), &sh, 0, 0);
@@ -608,8 +583,7 @@ static inline uint32_t opBlendHue(uint32_t s, uint32_t d)
 
 static inline uint32_t opBlendSaturation(uint32_t s, uint32_t d)
 {
-    RenderColor o;
-    if (!BLEND_UPRE(d, o)) return s;
+    auto o = BLEND_UPRE(d);
 
     float dh, ss, dl;
     rasterRGB2HSL(C1(s), C2(s), C3(s), 0, &ss, 0);
@@ -623,8 +597,7 @@ static inline uint32_t opBlendSaturation(uint32_t s, uint32_t d)
 
 static inline uint32_t opBlendColor(uint32_t s, uint32_t d)
 {
-    RenderColor o;
-    if (!BLEND_UPRE(d, o)) return s;
+    auto o = BLEND_UPRE(d);
 
     float sh, ss, dl;
     rasterRGB2HSL(C1(s), C2(s), C3(s), &sh, &ss, 0);
@@ -638,8 +611,7 @@ static inline uint32_t opBlendColor(uint32_t s, uint32_t d)
 
 static inline uint32_t opBlendLuminosity(uint32_t s, uint32_t d)
 {
-    RenderColor o;
-    if (!BLEND_UPRE(d, o)) return s;
+    auto o = BLEND_UPRE(d);
 
     float dh, ds, sl;
     rasterRGB2HSL(C1(s), C2(s), C3(s), 0, 0, &sl);
