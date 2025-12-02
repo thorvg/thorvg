@@ -29,6 +29,7 @@
 #include "tvgSvgLoader.h"
 #include "tvgSvgSceneBuilder.h"
 #include "tvgSvgCssStyle.h"
+#include "tvgSvgUtil.h"
 
 /************************************************************************/
 /* Internal Class Implementation                                        */
@@ -51,28 +52,11 @@ static bool _parseStyleAttr(void* data, const char* key, const char* value);
 static bool _parseStyleAttr(void* data, const char* key, const char* value, bool style);
 
 
-static char* _skipSpace(const char* str, const char* end)
-{
-    while (((end && str < end) || (!end && *str != '\0')) && isspace(*str)) {
-        ++str;
-    }
-    return (char*) str;
-}
-
-
 static char* _copyId(const char* str)
 {
     if (!str) return nullptr;
     if (strlen(str) == 0) return nullptr;
     return duplicate(str);
-}
-
-
-static const char* _skipComma(const char* content)
-{
-    content = _skipSpace(content, nullptr);
-    if (*content == ',') return content + 1;
-    return content;
 }
 
 
@@ -87,7 +71,7 @@ static bool _parseNumber(const char** content, const char** end, float* number)
         return false;
     }
     //Skip comma if any
-    *content = _skipComma(_end);
+    *content = svgUtilSkipWhiteSpaceAndComma(_end);
     if (end) *end = _end;
 
     return true;
@@ -122,7 +106,7 @@ static void _parseAspectRatio(const char** content, AspectRatioAlign* align, Asp
         if (!strncmp(*content, alignTags[i].tag, 8)) {
             *align = alignTags[i].align;
             *content += 8;
-            *content = _skipSpace(*content, nullptr);
+            *content = svgUtilSkipWhiteSpace(*content, nullptr);
             break;
         }
     }
@@ -192,7 +176,7 @@ static float _toOffset(const char* str)
 
     auto parsedValue = toFloat(str, &end);
 
-    end = _skipSpace(end, nullptr);
+    end = (char*)svgUtilSkipWhiteSpace(end, nullptr);
     auto ptr = strstr(str, "%");
 
     if (ptr) {
@@ -234,7 +218,7 @@ static bool _toPaintOrder(const char* str)
     auto fillPosition = 0;
 
     while (*str != '\0') {
-        str = _skipSpace(str, nullptr);
+        str = svgUtilSkipWhiteSpace(str, nullptr);
         if (!strncmp(str, "fill", 4)) {
             fillPosition = position++;
             str += 4;
@@ -334,7 +318,7 @@ static void _parseDashArray(SvgLoaderData* loader, const char *str, SvgDash* das
     char *end = nullptr;
 
     while (*str) {
-        str = _skipComma(str);
+        str = svgUtilSkipWhiteSpaceAndComma(str);
         auto parsedValue = toFloat(str, &end);
         if (str == end) break;
         if (parsedValue < 0.0f) {
@@ -401,12 +385,12 @@ static size_t _srcFromUrl(const char* url, char*& src)
 static unsigned char _parseColor(const char* value, char** end)
 {
     auto r = toFloat(value, end);
-    *end = _skipSpace(*end, nullptr);
+    *end = (char*)svgUtilSkipWhiteSpace(*end, nullptr);
     if (**end == '%') {
         r = 255 * r / 100;
         (*end)++;
     }
-    *end = _skipSpace(*end, nullptr);
+    *end = (char*)svgUtilSkipWhiteSpace(*end, nullptr);
 
     if (r < 0 || r > 255) {
         *end = nullptr;
@@ -626,22 +610,22 @@ static bool _toColor(const char* str, uint8_t& r, uint8_t&g, uint8_t& b, char** 
         return true;
     } else if (len >= 10 && (str[0] == 'h' || str[0] == 'H') && (str[1] == 's' || str[1] == 'S') && (str[2] == 'l' || str[2] == 'L') && str[3] == '(' && str[len - 1] == ')') {
         tvg::HSL hsl;
-        const char* content = _skipSpace(str + 4, nullptr);
+        const char* content = svgUtilSkipWhiteSpace(str + 4, nullptr);
         const char* hue = nullptr;
         if (_parseNumber(&content, &hue, &hsl.h) && hue) {
             const char* saturation = nullptr;
-            hue = _skipSpace(hue, nullptr);
-            hue = (char*)_skipComma(hue);
-            hue = _skipSpace(hue, nullptr);
+            hue = svgUtilSkipWhiteSpace(hue, nullptr);
+            hue = (char*)svgUtilSkipWhiteSpaceAndComma(hue);
+            hue = svgUtilSkipWhiteSpace(hue, nullptr);
             if (_parseNumber(&hue, &saturation, &hsl.s) && saturation && *saturation == '%') {
                 const char* brightness = nullptr;
                 hsl.s /= 100.0f;
-                saturation = _skipSpace(saturation + 1, nullptr);
-                saturation = (char*)_skipComma(saturation);
-                saturation = _skipSpace(saturation, nullptr);
+                saturation = svgUtilSkipWhiteSpace(saturation + 1, nullptr);
+                saturation = (char*)svgUtilSkipWhiteSpaceAndComma(saturation);
+                saturation = svgUtilSkipWhiteSpace(saturation, nullptr);
                 if (_parseNumber(&saturation, &brightness, &hsl.l) && brightness && *brightness == '%') {
                     hsl.l /= 100.0f;
-                    brightness = _skipSpace(brightness + 1, nullptr);
+                    brightness = svgUtilSkipWhiteSpace(brightness + 1, nullptr);
                     if (brightness && brightness[0] == ')' && brightness[1] == '\0') {
                        hsl2rgb(hsl.h, tvg::clamp(hsl.s, 0.0f, 1.0f), tvg::clamp(hsl.l, 0.0f, 1.0f), r, g, b);
                        return true;
@@ -668,15 +652,14 @@ static char* _parseNumbersArray(char* str, float* points, int* ptCount, int len)
 {
     int count = 0;
 
-    str = _skipSpace(str, nullptr);
+    str = (char*)svgUtilSkipWhiteSpace(str, nullptr);
     while ((count < len) && (isdigit(*str) || *str == '-' || *str == '+' || *str == '.')) {
         char* end = nullptr;
         points[count++] = toFloat(str, &end);
         str = end;
-        str = _skipSpace(str, nullptr);
-        if (*str == ',') ++str;
+        str = (char*)svgUtilSkipWhiteSpaceAndComma(str);
         //Eat the rest of space
-        str = _skipSpace(str, nullptr);
+        str = (char*)svgUtilSkipWhiteSpace(str, nullptr);
     }
     *ptCount = count;
     return str;
@@ -746,7 +729,7 @@ static Matrix* _parseTransformationMatrix(const char* value)
         }
         if (state == MatrixState::Unknown) goto error;
 
-        str = _skipSpace(str, end);
+        str = (char*)svgUtilSkipWhiteSpace(str, end);
         if (*str != '(') goto error;
         ++str;
         str = _parseNumbersArray(str, points, &ptCount, POINT_CNT);
@@ -1120,8 +1103,8 @@ static bool _parseStyleAttr(void* data, const char* key, const char* value, bool
     if (!key || !value) return false;
 
     //Trim the white space
-    key = _skipSpace(key, nullptr);
-    value = _skipSpace(value, nullptr);
+    key = svgUtilSkipWhiteSpace(key, nullptr);
+    value = svgUtilSkipWhiteSpace(value, nullptr);
 
     if (!style && STR_AS(key, "xml:space")) {
         node->xmlSpace = _toXmlSpace(value);
@@ -1358,7 +1341,7 @@ static void _parseGaussianBlurStdDeviation(const char** content, float* x, float
     int n = 0;
 
     while (*str && n < 2) {
-        str = _skipComma(str);
+        str = svgUtilSkipWhiteSpaceAndComma(str);
         auto parsedValue = toFloat(str, &end);
         if (parsedValue < 0.0f) break;
         deviation[n++] = parsedValue;
@@ -1923,7 +1906,7 @@ static SvgNode* _createLineNode(SvgLoaderData* loader, SvgNode* parent, const ch
 
 static char* _idFromHref(const char* href)
 {
-    href = _skipSpace(href, nullptr);
+    href = svgUtilSkipWhiteSpace(href, nullptr);
     if ((*href) == '#') href++;
     return duplicate(href);
 }
@@ -2010,8 +1993,8 @@ static bool _attrParseFontFace(void* data, const char* key, const char* value)
 {
     if (!key || !value) return false;
 
-    key = _skipSpace(key, nullptr);
-    value = _skipSpace(value, nullptr);
+    key = svgUtilSkipWhiteSpace(key, nullptr);
+    value = svgUtilSkipWhiteSpace(value, nullptr);
 
     auto loader = (SvgLoaderData*)data;
     auto& font = loader->fonts.last();
@@ -3351,7 +3334,7 @@ static void _svgLoaderParserXmlClose(SvgLoaderData* loader, const char* content,
     int sz = length;
     char tagName[20] = "";
 
-    content = _skipSpace(content, nullptr);
+    content = svgUtilSkipWhiteSpace(content, nullptr);
     itr = content;
     while ((itr != nullptr) && *itr != '>') itr++;
 

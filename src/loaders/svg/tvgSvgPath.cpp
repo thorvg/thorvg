@@ -28,6 +28,7 @@
 #include "tvgSvgLoaderCommon.h"
 #include "tvgSvgPath.h"
 #include "tvgStr.h"
+#include "tvgSvgUtil.h"
 
 /************************************************************************/
 /* Internal Class Implementation                                        */
@@ -35,9 +36,7 @@
 
 static char* _skipComma(const char* content)
 {
-    while (*content && isspace(*content)) {
-        content++;
-    }
+    content = svgUtilSkipWhiteSpace(content, nullptr);
     if (*content == ',') return (char*)content + 1;
     return (char*)content;
 }

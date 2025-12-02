@@ -38,6 +38,34 @@ static uint8_t _hexCharToDec(const char c)
 /* External Class Implementation                                        */
 /************************************************************************/
 
+
+const char* svgUtilSkipWhiteSpace(const char* itr, const char* itrEnd)
+{
+    while ((itrEnd && itr < itrEnd) || (!itrEnd && *itr != '\0')) {
+        if (!isspace((unsigned char)*itr)) break;
+        itr++;
+    }
+    return itr;
+}
+
+
+const char* svgUtilUnskipWhiteSpace(const char* itr, const char* itrStart)
+{
+    for (itr--; itr > itrStart; itr--) {
+        if (!isspace((unsigned char)*itr)) break;
+    }
+    return itr + 1;
+}
+
+
+const char* svgUtilSkipWhiteSpaceAndComma(const char* content)
+{
+    content = svgUtilSkipWhiteSpace(content, nullptr);
+    if (*content == ',') return content + 1;
+    return content;
+}
+
+
 size_t svgUtilURLDecode(const char *src, char** dst)
 {
     if (!src) return 0;
