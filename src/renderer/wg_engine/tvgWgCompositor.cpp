@@ -737,6 +737,7 @@ void WgCompositor::blendScene(WgContext& context, WgRenderTarget* scene, WgCompo
 
 void WgCompositor::markupClipPath(WgContext& context, WgRenderDataShape* renderData)
 {
+    wgpuRenderPassEncoderSetScissorRect(renderPassEncoder, renderData->viewport.x(), renderData->viewport.y(), renderData->viewport.w(), renderData->viewport.h());
     wgpuRenderPassEncoderSetBindGroup(renderPassEncoder, 0, bindGroupViewMat, 0, nullptr);
     // markup stencil
     if (renderData->meshStrokes.vbuffer.count > 0) {
