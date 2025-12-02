@@ -1104,6 +1104,14 @@ static constexpr struct
 };
 
 
+static SvgXmlSpace _toXmlSpace(const char* str)
+{
+    if (STR_AS(str, "default")) return SvgXmlSpace::Default;
+    if (STR_AS(str, "preserve")) return SvgXmlSpace::Preserve;
+    return SvgXmlSpace::None;
+}
+
+
 static bool _parseStyleAttr(void* data, const char* key, const char* value, bool style)
 {
     SvgLoaderData* loader = (SvgLoaderData*)data;
@@ -1114,6 +1122,11 @@ static bool _parseStyleAttr(void* data, const char* key, const char* value, bool
     //Trim the white space
     key = _skipSpace(key, nullptr);
     value = _skipSpace(value, nullptr);
+
+    if (!style && STR_AS(key, "xml:space")) {
+        node->xmlSpace = _toXmlSpace(value);
+        return true;
+    }
 
     sz = strlen(key);
     for (unsigned int i = 0; i < sizeof(styleTags) / sizeof(styleTags[0]); i++) {
@@ -1401,6 +1414,7 @@ static SvgNode* _createNode(SvgNode* parent, SvgNodeType type)
     node->style->display = true;
     node->parent = parent;
     node->type = type;
+    node->xmlSpace = SvgXmlSpace::None;
 
     if (parent) parent->child.push(node);
     return node;

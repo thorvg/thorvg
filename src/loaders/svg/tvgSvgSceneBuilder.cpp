@@ -851,6 +851,47 @@ static void _applyTextFill(SvgStyleProperty* style, Text* text, const Box& vBox)
 }
 
 
+static char* _processText(const char* text, SvgXmlSpace space)
+{
+    if (!text) return nullptr;
+
+    auto len = strlen(text);
+    auto processed = (char*)tvg::malloc(len + 1);
+    auto dst = processed;
+    auto src = text;
+
+    if (space == SvgXmlSpace::Preserve) {
+        while (*src) {
+            if (*src == '\n' || *src == '\t' || *src == '\r') *dst++ = ' ';
+            else *dst++ = *src;
+            src++;
+        }
+        *dst = '\0';
+    } else {
+        auto spaceFound = false;
+        // Skip leading spaces
+        while (*src && isspace((unsigned char)*src)) src++;
+
+        while (*src) {
+            if (isspace((unsigned char)*src)) {
+                if (!spaceFound) {
+                    *dst++ = ' ';
+                    spaceFound = true;
+                }
+            } else {
+                *dst++ = *src;
+                spaceFound = false;
+            }
+            src++;
+        }
+        // Remove trailing space
+        if (dst > processed && isspace((unsigned char)*(dst - 1))) dst--;
+        *dst = '\0';
+    }
+    return processed;
+}
+
+
 static Paint* _textBuildHelper(SvgLoaderData& loaderData, const SvgNode* node, const Box& vBox, const string& svgPath)
 {
     auto textNode = &node->node.text;
@@ -871,7 +912,18 @@ static Paint* _textBuildHelper(SvgLoaderData& loaderData, const SvgNode* node, c
         text->font(nullptr);         //fallback to any available font
     }
     text->size(size);
-    text->text(textNode->text);
+
+    // Handle xml:space
+    auto xmlSpace = node->xmlSpace;
+    auto parent = node->parent;
+    while (xmlSpace == SvgXmlSpace::None && parent) {
+        xmlSpace = parent->xmlSpace;
+        parent = parent->parent;
+    }
+    if (xmlSpace == SvgXmlSpace::None) xmlSpace = SvgXmlSpace::Default;
+    auto processedText = _processText(textNode->text, xmlSpace);
+    text->text(processedText);
+    tvg::free(processedText);
 
     _applyTextFill(node->style, text, vBox);
 
