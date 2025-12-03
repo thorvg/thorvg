@@ -900,12 +900,12 @@ void LottieBuilder::updateSolid(LottieLayer* layer)
 void LottieBuilder::updateImage(LottieGroup* layer)
 {
     auto image = static_cast<LottieImage*>(layer->children.first());
-    auto picture = image->data.picture;
+    auto picture = image->bitmap.picture;
 
     //resolve an image asset if need
     if (resolver && !image->resolved) {
-        resolver->func(picture, image->data.path, resolver->data);
-        picture->size(image->data.width, image->data.height);
+        resolver->func(picture, image->bitmap.path, resolver->data);
+        picture->size(image->bitmap.width, image->bitmap.height);
         image->resolved = true;
     }
 

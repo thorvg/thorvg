@@ -248,7 +248,7 @@ void LottieSlot::apply(LottieProperty* prop, bool byDefault)
                 break;
             }
             case LottieProperty::Type::Image: {
-                if (copy) pair->prop = new LottieBitmap(static_cast<LottieImage*>(pair->obj)->data);
+                if (copy) pair->prop = new LottieBitmap(static_cast<LottieImage*>(pair->obj)->bitmap);
                 pair->obj->override(prop, !copy);
                 break;
             }
@@ -356,10 +356,10 @@ void LottieImage::prepare()
 
     //Prepare the Picture image
     auto picture = Picture::gen();
-    auto result = (data.size > 0) ? picture->load((const char*)data.b64Data, data.size, data.mimeType) : picture->load(data.path);
+    auto result = (bitmap.size > 0) ? picture->load((const char*)bitmap.data, bitmap.size, bitmap.mimeType) : picture->load(bitmap.path);
     if (result == Result::Success) resolved = true;
-    picture->size(data.width, data.height);
-    data.picture = picture;
+    picture->size(bitmap.width, bitmap.height);
+    bitmap.picture = picture;
     picture->ref();
 }
 

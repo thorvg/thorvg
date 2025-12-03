@@ -869,13 +869,13 @@ struct LottieGradientStroke : LottieGradient, LottieStroke
 
 struct LottieImage : LottieObject
 {
-    LottieBitmap data;
+    LottieBitmap bitmap;
     bool resolved = false;
 
     void override(LottieProperty* prop, bool release = false) override
     {
-        if (release) data.release();
-        data.copy(*static_cast<LottieBitmap*>(prop), false);
+        if (release) bitmap.release();
+        bitmap.copy(*static_cast<LottieBitmap*>(prop), false);
     }
 
     void prepare();

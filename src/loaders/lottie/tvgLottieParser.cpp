@@ -954,20 +954,20 @@ void LottieParser::parseImage(LottieImage* image, const char* data, const char* 
         //figure out the mimetype
         auto mimeType = data + 11;
         auto needle = strstr(mimeType, ";");
-        image->data.mimeType = duplicate(mimeType, needle - mimeType);
+        image->bitmap.mimeType = duplicate(mimeType, needle - mimeType);
         //b64 data
         auto b64Data = strstr(data, ",") + 1;
         size_t length = strlen(data) - (b64Data - data);
-        image->data.size = b64Decode(b64Data, length, &image->data.b64Data);
+        image->bitmap.size = b64Decode(b64Data, length, &image->bitmap.data);
     //external image resource
     } else {
         auto len = strlen(dirName) + strlen(subPath) + strlen(data) + 2;
-        image->data.path = tvg::malloc<char>(len);
-        snprintf(image->data.path, len, "%s/%s%s", dirName, subPath, data);
+        image->bitmap.path = tvg::malloc<char>(len);
+        snprintf(image->bitmap.path, len, "%s/%s%s", dirName, subPath, data);
     }
 
-    image->data.width = width;
-    image->data.height = height;
+    image->bitmap.width = width;
+    image->bitmap.height = height;
     image->prepare();
 }
 
@@ -1652,7 +1652,7 @@ LottieProperty* LottieParser::parse(LottieSlot* slot)
                 else skip();
             }
             if (!obj) return nullptr;
-            prop = new LottieBitmap(static_cast<LottieImage*>(obj)->data);
+            prop = new LottieBitmap(static_cast<LottieImage*>(obj)->bitmap);
             delete(obj);
             break;
         }
