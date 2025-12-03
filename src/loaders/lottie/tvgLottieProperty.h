@@ -970,7 +970,7 @@ struct LottieTextDoc : LottieProperty
 struct LottieBitmap : LottieProperty
 {
     union {
-        char* b64Data = nullptr;
+        char* data = nullptr;
         char* path;
     };
     Picture *picture = nullptr;
@@ -998,10 +998,10 @@ struct LottieBitmap : LottieProperty
             picture = nullptr;
         }
 
-        tvg::free(b64Data);
+        tvg::free(data);
         tvg::free(mimeType);
 
-        b64Data = nullptr;
+        data = nullptr;
         mimeType = nullptr;
     }
 
