@@ -33,7 +33,7 @@ static bool _colinear(const Point* p)
 }
 
 
-static void _roundCorner(RenderPath& out, Point& prev, Point& curr, Point& next, float r)
+static Point _roundCorner(RenderPath& out, Point& prev, Point& curr, Point& next, float r)
 {
     auto lenPrev = length(prev - curr);
     auto rPrev = lenPrev > 0.0f ? 0.5f * std::min(lenPrev * 0.5f, r) / lenPrev : 0.0f;
@@ -43,7 +43,9 @@ static void _roundCorner(RenderPath& out, Point& prev, Point& curr, Point& next,
     auto dNext = rNext * (curr - next);
 
     out.lineTo(curr - 2.0f * dPrev);
-    out.cubicTo(curr - dPrev, curr - dNext, curr - 2.0f * dNext);
+    auto ret = curr - 2.0f * dNext;
+    out.cubicTo(curr - dPrev, curr - dNext, ret);
+    return ret;
 }
 
 
@@ -166,8 +168,10 @@ bool LottieRoundnessModifier::modifyPath(PathCommand* inCmds, uint32_t inCmdsCnt
     path.cmds.reserve(inCmdsCnt * 2);
     path.pts.reserve((uint32_t)(inPtsCnt * 1.5));
     auto pivot = path.pts.count;
-
     uint32_t startIndex = 0;
+    auto rounded = false;
+    Point roundTo;
+
     for (uint32_t iCmds = 0, iPts = 0; iCmds < inCmdsCnt; ++iCmds) {
         switch (inCmds[iCmds]) {
             case PathCommand::MoveTo: {
@@ -180,17 +184,19 @@ bool LottieRoundnessModifier::modifyPath(PathCommand* inCmds, uint32_t inCmdsCnt
                     auto& prev = inPts[iPts - 1];
                     auto& curr = inPts[iPts + 2];
                     if (inCmds[iCmds + 1] == PathCommand::CubicTo && _colinear(inPts + iPts + 2)) {
-                        _roundCorner(path, prev, curr, inPts[iPts + 5], r);
+                        roundTo = _roundCorner(path, prev, curr, inPts[iPts + 5], r);
                         iPts += 3;
-                        break;
+                        rounded = true;
+                        continue;
                     } else if (inCmds[iCmds + 1] == PathCommand::Close) {
-                        _roundCorner(path, prev, curr, inPts[2], r);
+                        roundTo = _roundCorner(path, prev, curr, inPts[2], r);
                         path.pts[startIndex] = path.pts.last();
                         iPts += 3;
-                        break;
+                        rounded = true;
+                        continue;
                     }
                 }
-                path.cubicTo(inPts[iPts], inPts[iPts + 1], inPts[iPts + 2]);
+                path.cubicTo(rounded ? roundTo : inPts[iPts], inPts[iPts + 1], inPts[iPts + 2]);
                 iPts += 3;
                 break;
             }
@@ -200,6 +206,7 @@ bool LottieRoundnessModifier::modifyPath(PathCommand* inCmds, uint32_t inCmdsCnt
             }
             default: break;
         }
+        rounded = false;
     }
     if (transform) {
         for (auto i = pivot; i < path.pts.count; ++i) {
