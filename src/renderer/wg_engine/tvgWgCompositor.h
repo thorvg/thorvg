@@ -68,7 +68,7 @@ private:
     uint32_t height{};
     
     // viewport utilities
-    RenderRegion shrinkRenderRegion(RenderRegion& rect);
+    RenderRegion shrinkRenderRegion(const RenderRegion& rect);
     void copyTexture(const WgRenderTarget* dst, const WgRenderTarget* src);
     void copyTexture(const WgRenderTarget* dst, const WgRenderTarget* src, const RenderRegion& region);
 
