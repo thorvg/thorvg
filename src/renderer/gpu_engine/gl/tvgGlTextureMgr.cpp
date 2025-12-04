@@ -22,6 +22,17 @@
 
 #include "tvgGlTextureMgr.h"
 
+static inline uint32_t _premultiply(uint32_t c)
+{
+    auto a = (c >> 24);
+    return (c & 0xff000000) + ((((c >> 8) & 0xff) * a) & 0xff00) + ((((c & 0x00ff00ff) * a) >> 8) & 0x00ff00ff);
+}
+
+static inline bool _needsPremultiply(const RenderSurface* surface)
+{
+    return !surface->premultiplied && surface->channelSize == sizeof(uint32_t);
+}
+
 TextureMgr::SurfaceEntry* TextureMgr::find(const RenderSurface* surface)
 {
     INLIST_FOREACH(surfaces, entry)
@@ -34,7 +45,24 @@ TextureMgr::SurfaceEntry* TextureMgr::find(const RenderSurface* surface)
 void TextureMgr::upload(GLuint texId, const RenderSurface* surface, FilterMethod filter)
 {
     GL_CHECK(glBindTexture(GL_TEXTURE_2D, texId));
-    GL_CHECK(glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA8, surface->w, surface->h, 0, GL_RGBA, GL_UNSIGNED_BYTE, surface->data));
+    if (_needsPremultiply(surface)) {
+        auto buffer = (uint32_t*)malloc(surface->w * surface->h * sizeof(uint32_t));
+        auto h = static_cast<int32_t>(surface->h);
+        #pragma omp parallel for
+        for (int32_t y = 0; y < h; ++y) {
+            auto src = surface->buf32 + surface->stride * y;
+            auto dst = buffer + surface->w * y;
+            for (uint32_t x = 0; x < surface->w; ++x) {
+                auto c = src[x];
+                if ((c >> 24) < 255) dst[x] = _premultiply(c);
+                else dst[x] = c;
+            }
+        }
+        GL_CHECK(glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA8, surface->w, surface->h, 0, GL_RGBA, GL_UNSIGNED_BYTE, buffer));
+        free(buffer);
+    } else {
+        GL_CHECK(glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA8, surface->w, surface->h, 0, GL_RGBA, GL_UNSIGNED_BYTE, surface->data));
+    }
     GL_CHECK(glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE));
     GL_CHECK(glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE));
     GL_CHECK(glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, (filter == FilterMethod::Bilinear) ? GL_LINEAR : GL_NEAREST));

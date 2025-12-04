@@ -42,7 +42,14 @@ else
     compiler_flags += ['-DTHORVG_GL_TARGET_GL=1']
 endif
 
+omp_dep = []
+
+if openmp
+    omp_dep = dependency('openmp', required: false)
+endif
+
 engine_dep += [declare_dependency(
     include_directories : include_directories('.'),
+    dependencies        : omp_dep,
     sources             : source_file,
 )]

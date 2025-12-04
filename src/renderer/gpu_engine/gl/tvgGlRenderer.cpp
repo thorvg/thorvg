@@ -1261,6 +1261,16 @@ void GlRenderer::dispose(RenderData data)
     delete sdata;
 }
 
+static ColorSpace _textureColorSpace(const RenderSurface* image)
+{
+    if (!image->premultiplied && image->channelSize == sizeof(uint32_t)) {
+        if (image->cs == ColorSpace::ABGR8888S) return ColorSpace::ABGR8888;
+        if (image->cs == ColorSpace::ARGB8888S) return ColorSpace::ARGB8888;
+        TVGERR("GL_ENGINE", "Unsupported Colorspace(%d) is expected for GL engine!", (int) image->cs);
+    }
+    return image->cs;
+}
+
 RenderData GlRenderer::prepare(RenderSurface* image, RenderData data, const Matrix& transform, const Array<RenderData>& clips, uint8_t opacity, FilterMethod filter, RenderUpdateFlag flags)
 {
     if (opacity == 0) return data;
@@ -1288,7 +1298,7 @@ RenderData GlRenderer::prepare(RenderSurface* image, RenderData data, const Matr
         TextureMgr::upload(sdata->texId, image, filter);
     }
 
-    sdata->texColorSpace = image->cs;
+    sdata->texColorSpace = _textureColorSpace(image);
     sdata->texFlipY = 1;
     sdata->opacity = opacity;
     sdata->geometry.setMatrix(transform);
