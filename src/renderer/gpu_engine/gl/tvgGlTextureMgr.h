@@ -26,11 +26,14 @@
 #include "tvgGlCommon.h"
 #include "tvgInlist.h"
 
+class GlProgram;
+
 struct TextureMgr
 {
     GLuint retain(const RenderSurface* surface, FilterMethod filter);
     GLuint release(const RenderSurface* surface, FilterMethod filter, GLuint texId);
     void clear();
+    void upload(GLuint texId, const RenderSurface* surface, FilterMethod filter);
 
     struct Entry
     {
@@ -47,10 +50,18 @@ struct TextureMgr
     };
 
     SurfaceEntry* find(const RenderSurface* surface);
-    static void upload(GLuint texId, const RenderSurface* surface, FilterMethod filter);
+    void upload(Entry& entry, const RenderSurface* surface, FilterMethod filter);
+    void premultiply(GLuint dstTexId, const RenderSurface* surface);
+    void clearPreprocess();
 
     tvg::Inlist<SurfaceEntry> surfaces;  // Cached textures keyed by RenderSurface.
     uint16_t stamp = 1;                  // Non-zero rolling stamp for stale texture ownership checks.
+
+    GLuint preprocessSrcTex = 0;
+    GLuint preprocessFbo = 0;
+    GLuint preprocessVao = 0;
+    GLuint preprocessVbo = 0;
+    GlProgram* preprocessProgram = nullptr;
 };
 
 #endif /* _TVG_GL_TEXTURE_MGR_H_ */

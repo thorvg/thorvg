@@ -22,6 +22,7 @@
 
 #include <fstream>
 #include <thorvg.h>
+#include "tvgGl.h"
 #include "catch.hpp"
 #include "testGlEngine.h"
 
@@ -29,6 +30,13 @@ using namespace tvg;
 using namespace std;
 
 #if defined(THORVG_GL_TEST_SUPPORT)
+
+using ReadPixelsProc = void (*)(GLint, GLint, GLsizei, GLsizei, GLenum, GLenum, void*);
+
+static ReadPixelsProc readPixels()
+{
+    return reinterpret_cast<ReadPixelsProc>(eglGetProcAddress("glReadPixels"));
+}
 
 TEST_CASE("GL Basic draw", "[tvgGlEngine]")
 {
@@ -240,6 +248,57 @@ TEST_CASE("GL Image Draw", "[tvgGlEngine]")
         REQUIRE(canvas->draw() == Result::Success);
         REQUIRE(canvas->sync() == Result::Success);
         free(data);
+    }
+    REQUIRE(Initializer::term() == Result::Success);
+}
+
+TEST_CASE("GL Image Straight Alpha Upload Premultiplies Before Filtering", "[tvgGlEngine]")
+{
+    TestGLEngine engine(4, 4);
+
+    auto glReadPixels = readPixels();
+    REQUIRE(glReadPixels);
+
+    REQUIRE(Initializer::init() == Result::Success);
+    {
+        struct Case {
+            ColorSpace cs;
+            uint32_t transparentRed;
+        };
+
+        Case cases[] = {
+            {ColorSpace::ABGR8888S, 0x000000ff},
+            {ColorSpace::ARGB8888S, 0x00ff0000},
+        };
+
+        for (const auto& c : cases) {
+            auto canvas = unique_ptr<GlCanvas>(GlCanvas::gen());
+            REQUIRE(canvas);
+            engine.target(canvas.get());
+
+            uint32_t data[] = {
+                c.transparentRed, 0xff000000,
+                c.transparentRed, 0xff000000,
+            };
+
+            auto picture = Picture::gen();
+            REQUIRE(picture->load(data, 2, 2, c.cs, false) == Result::Success);
+            REQUIRE(picture->size(4, 4) == Result::Success);
+            REQUIRE(picture->filter(FilterMethod::Bilinear) == Result::Success);
+            REQUIRE(canvas->add(picture) == Result::Success);
+
+            REQUIRE(canvas->draw(true) == Result::Success);
+            REQUIRE(canvas->sync() == Result::Success);
+
+            uint8_t pixel[4] = {};
+            glReadPixels(1, 2, 1, 1, GL_RGBA, GL_UNSIGNED_BYTE, pixel);
+
+            REQUIRE(pixel[3] > 16);
+            REQUIRE(pixel[3] < 240);
+            REQUIRE(pixel[0] <= 2);
+            REQUIRE(pixel[1] <= 2);
+            REQUIRE(pixel[2] <= 2);
+        }
     }
     REQUIRE(Initializer::term() == Result::Success);
 }

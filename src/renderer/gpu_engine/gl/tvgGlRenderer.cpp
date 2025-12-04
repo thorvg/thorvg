@@ -1285,10 +1285,14 @@ RenderData GlRenderer::prepare(RenderSurface* image, RenderData data, const Matr
         sdata->texStamp = mTextures.stamp;
         sdata->geometry = GlGeometry();
     } else if (flags & RenderUpdateFlag::Image) {
-        TextureMgr::upload(sdata->texId, image, filter);
+        mTextures.upload(sdata->texId, image, filter);
     }
 
     sdata->texColorSpace = image->cs;
+    if (!image->premultiplied && image->channelSize == sizeof(uint32_t)) {
+        if (image->cs == ColorSpace::ABGR8888S) sdata->texColorSpace = ColorSpace::ABGR8888;
+        else if (image->cs == ColorSpace::ARGB8888S) sdata->texColorSpace = ColorSpace::ARGB8888;
+    }
     sdata->texFlipY = 1;
     sdata->opacity = opacity;
     sdata->geometry.setMatrix(transform);
