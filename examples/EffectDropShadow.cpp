@@ -32,13 +32,13 @@ struct UserExample : tvgexam::Example
     tvg::Scene* scene2 = nullptr;
     tvg::Scene* scene3 = nullptr;
 
-    bool content(tvg::Canvas* canvas, uint32_t w, uint32_t h) override
+    bool content(tvg::Canvas* canvas, tvg::Scene* root, uint32_t w, uint32_t h) override
     {
         //background
         auto bg = tvg::Shape::gen();
         bg->appendRect(0, 0, w, h);
         bg->fill(255, 255, 255);
-        canvas->push(bg);
+        root->push(bg);
 
         float pw, ph;
 
@@ -54,7 +54,7 @@ struct UserExample : tvgexam::Example
             picture->translate(pw * 0.175f, 0.0f);
 
             scene1->push(picture);
-            canvas->push(scene1);
+            root->push(scene1);
         }
 
         //Prepare a scene for post effects
@@ -69,7 +69,7 @@ struct UserExample : tvgexam::Example
             picture->size(pw * 0.75f, ph * 0.75f);
 
             scene2->push(picture);
-            canvas->push(scene2);
+            root->push(scene2);
         }
 
         //Prepare a scene for post effects
@@ -84,13 +84,13 @@ struct UserExample : tvgexam::Example
             picture->size(pw * 0.75f, ph * 0.75f);
 
             scene3->push(picture);
-            canvas->push(scene3);
+            root->push(scene3);
         }
 
         return true;
     }
 
-    bool update(tvg::Canvas* canvas, uint32_t elapsed) override
+    bool update(tvg::Canvas* canvas, tvg::Scene* root, uint32_t elapsed) override
     {
         auto progress = tvgexam::progress(elapsed, 2.5f, true);   //2.5 seconds
 

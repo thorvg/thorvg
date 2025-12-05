@@ -29,26 +29,30 @@
 struct UserExample : tvgexam::Example
 {
     uint32_t last = 0;
+    std::vector<tvg::Paint*> myPaints;
 
-    bool content(tvg::Canvas* canvas, uint32_t w, uint32_t h) override
+    bool content(tvg::Canvas* canvas, tvg::Scene* root, uint32_t w, uint32_t h) override
     {
         //Prepare Round Rectangle
         auto shape1 = tvg::Shape::gen();
         shape1->appendRect(0, 0, 480, 480, 50, 50);  //x, y, w, h, rx, ry
         shape1->fill(0, 255, 0);                     //r, g, b
-        canvas->push(shape1);
+        root->push(shape1);
+        myPaints.push_back(shape1);
 
         //Prepare Round Rectangle2
         auto shape2 = tvg::Shape::gen();
         shape2->appendRect(140, 140, 480, 480, 50, 50);  //x, y, w, h, rx, ry
         shape2->fill(255, 255, 0);                       //r, g, b
-        canvas->push(shape2);
+        root->push(shape2);
+        myPaints.push_back(shape2);
 
         //Prepare Round Rectangle3
         auto shape3 = tvg::Shape::gen();
         shape3->appendRect(280, 280, 480, 480, 50, 50);  //x, y, w, h, rx, ry
         shape3->fill(0, 255, 255);                       //r, g, b
-        canvas->push(shape3);
+        root->push(shape3);
+        myPaints.push_back(shape3);
 
         //Prepare Scene
         auto scene = tvg::Scene::gen();
@@ -67,31 +71,32 @@ struct UserExample : tvgexam::Example
         shape5->strokeFill(255, 255, 255);
         scene->push(shape5);
 
-        canvas->push(scene);
+        root->push(scene);
+        myPaints.push_back(scene);
 
         return true;
     }
 
-    bool update(tvg::Canvas* canvas, uint32_t elapsed) override
+    bool update(tvg::Canvas* canvas, tvg::Scene* root, uint32_t elapsed) override
     {
         //update per every 250ms
-        //reorder with a circular list
         if (elapsed - last < 250) return false;
-
-        //Acquire the first paint from the root scene
-        auto paint = *canvas->paints().begin();
-
-        //Prevent deleting from canvas->remove()
-        paint->ref();
-
-        //Re-push the front paint to the end of the root scene
-        tvgexam::verify(canvas->remove(paint));
-        tvgexam::verify(canvas->push(paint));
-
-        //Make it pair ref() - unref()
-        paint->unref();
+        if (myPaints.size() < 2) return false;
 
         last = elapsed;
+
+        //get the first paint
+        auto paint = myPaints.front();
+
+        //circular reordering
+        myPaints.erase(myPaints.begin());
+        myPaints.push_back(paint);
+
+        //reconstruct the scene
+        root->remove();
+        for (auto p : myPaints) {
+            root->push(p);
+        }
 
         canvas->update();
 

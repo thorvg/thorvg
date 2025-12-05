@@ -65,7 +65,7 @@ struct UserExample : tvgexam::Example
         counter++;
     }
 
-    bool update(tvg::Canvas* canvas, uint32_t elapsed) override
+    bool update(tvg::Canvas* canvas, tvg::Scene* root, uint32_t elapsed) override
     {
         for (auto& animation : animations) {
             auto progress = tvgexam::progress(elapsed, animation->duration());
@@ -77,7 +77,7 @@ struct UserExample : tvgexam::Example
         return true;
     }
 
-    bool content(tvg::Canvas* canvas, uint32_t w, uint32_t h) override
+    bool content(tvg::Canvas* canvas, tvg::Scene* root, uint32_t w, uint32_t h) override
     {
         //The default font for fallback in case
         tvg::Text::load(EXAMPLE_DIR"/font/Arial.ttf");
@@ -86,7 +86,7 @@ struct UserExample : tvgexam::Example
         auto shape = tvg::Shape::gen();
         shape->appendRect(0, 0, w, h);
         shape->fill(75, 75, 75);
-        canvas->push(shape);
+        root->push(shape);
 
         this->w = w;
         this->h = h;
@@ -96,7 +96,7 @@ struct UserExample : tvgexam::Example
 
         //Run animation loop
         for (auto& animation : animations) {
-            canvas->push(animation->picture());
+            root->push(animation->picture());
         }
 
         return true;

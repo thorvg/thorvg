@@ -111,7 +111,7 @@ struct UserExample : tvgexam::Example
         return false;
     }
 
-    bool content(tvg::Canvas* canvas, uint32_t w, uint32_t h) override
+    bool content(tvg::Canvas* canvas, tvg::Scene* root, uint32_t w, uint32_t h) override
     {
         //Animation Controller
         lottie = tvg::LottieAnimation::gen();
@@ -123,7 +123,7 @@ struct UserExample : tvgexam::Example
         shape->appendRect(0, 0, w, h);
         shape->fill(50, 50, 50);
 
-        canvas->push(shape);
+        root->push(shape);
 
         if (!tvgexam::verify(picture->load(EXAMPLE_DIR"/lottie/emoji.json"))) return false;
 
@@ -135,7 +135,7 @@ struct UserExample : tvgexam::Example
         picture->translate(float(w) * 0.5f, float(h) * 0.5f);
 
 
-        canvas->push(picture);
+        root->push(picture);
 
         init();
 
@@ -171,7 +171,7 @@ struct UserExample : tvgexam::Example
         return false;
     }
 
-    bool update(tvg::Canvas* canvas, uint32_t elapsed) override
+    bool update(tvg::Canvas* canvas, tvg::Scene* root, uint32_t elapsed) override
     {
         //on state tweening
         if (tween.active) return tweening(canvas);

@@ -43,13 +43,13 @@ struct UserExample : tvgexam::Example
         star->close();
     }
 
-    bool content(tvg::Canvas* canvas, uint32_t w, uint32_t h) override
+    bool content(tvg::Canvas* canvas, tvg::Scene* root, uint32_t w, uint32_t h) override
     {
         //Background
         auto shape = tvg::Shape::gen();
         shape->appendRect(0, 0, w, h);
         shape->fill(255, 255, 255);
-        canvas->push(shape);
+        root->push(shape);
 
         {
             auto scene = tvg::Scene::gen();
@@ -91,7 +91,7 @@ struct UserExample : tvgexam::Example
             //Clipping scene to shape
             scene->clip(clip);
 
-            canvas->push(scene);
+            root->push(scene);
         }
 
         {
@@ -119,7 +119,7 @@ struct UserExample : tvgexam::Example
             //Clipping scene to rect(shape)
             star3->clip(clipRect);
 
-            canvas->push(star3);
+            root->push(star3);
         }
 
         {
@@ -138,7 +138,7 @@ struct UserExample : tvgexam::Example
             //Clipping picture to path
             picture->clip(clipPath);
 
-            canvas->push(picture);
+            root->push(picture);
         }
 
         {
@@ -154,7 +154,7 @@ struct UserExample : tvgexam::Example
             //Clipping shape1 to clipShape
             shape1->clip(clipShape);
 
-            canvas->push(shape1);
+            root->push(shape1);
         }
 
         return true;

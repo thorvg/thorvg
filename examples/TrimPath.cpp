@@ -28,7 +28,7 @@
 
 struct UserExample : tvgexam::Example
 {
-    bool content(tvg::Canvas* canvas, uint32_t w, uint32_t h) override
+    bool content(tvg::Canvas* canvas, tvg::Scene* root, uint32_t w, uint32_t h) override
     {
         //Shape 1
         auto shape1 = tvg::Shape::gen();
@@ -52,8 +52,8 @@ struct UserExample : tvgexam::Example
         shape2->strokeDash(dashPatterns, 2, 10);
         shape2->trimpath(0.25f, 0.75f, true);
 
-        canvas->push(shape1);
-        canvas->push(shape2);
+        root->push(shape1);
+        root->push(shape2);
 
         return true;
     }

@@ -28,14 +28,14 @@
 
 struct UserExample : tvgexam::Example
 {
-    bool content(tvg::Canvas* canvas, uint32_t w, uint32_t h) override
+    bool content(tvg::Canvas* canvas, tvg::Scene* root, uint32_t w, uint32_t h) override
     {
-        return update(canvas, 0);
+        return update(canvas, root, 0);
     }
 
-    bool update(tvg::Canvas* canvas, uint32_t elapsed) override
+    bool update(tvg::Canvas* canvas, tvg::Scene* root, uint32_t elapsed) override
     {
-        if (!tvgexam::verify(canvas->remove())) return false;
+        root->remove();
 
         auto progress = tvgexam::progress(elapsed, 2.0f, true);  //play time 2 sec.
 
@@ -114,7 +114,7 @@ struct UserExample : tvgexam::Example
         scene->push(scene2);
 
         //Draw the Scene onto the Canvas
-        canvas->push(scene);
+        root->push(scene);
 
         return true;
     }

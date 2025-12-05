@@ -28,7 +28,7 @@
 
 struct UserExample : tvgexam::Example
 {
-    bool content(tvg::Canvas* canvas, uint32_t w, uint32_t h) override
+    bool content(tvg::Canvas* canvas, tvg::Scene* root, uint32_t w, uint32_t h) override
     {
         //Solid Rectangle
         {
@@ -49,7 +49,7 @@ struct UserExample : tvgexam::Example
             shape->fill(fill);
 
             shape->mask(mask, tvg::MaskMethod::Alpha);
-            canvas->push(shape);
+            root->push(shape);
         }
 
         //Star
@@ -81,7 +81,7 @@ struct UserExample : tvgexam::Example
             shape1->fill(fill1);
 
             shape1->mask(mask1, tvg::MaskMethod::Alpha);
-            canvas->push(shape1);
+            root->push(shape1);
         }
 
         //Solid Rectangle
@@ -103,7 +103,7 @@ struct UserExample : tvgexam::Example
             shape2->fill(fill2);
 
             shape2->mask(mask2, tvg::MaskMethod::InvAlpha);
-            canvas->push(shape2);
+            root->push(shape2);
         }
 
         // Star
@@ -135,7 +135,7 @@ struct UserExample : tvgexam::Example
             shape3->fill(fill3);
 
             shape3->mask(mask3, tvg::MaskMethod::InvAlpha);
-            canvas->push(shape3);
+            root->push(shape3);
         }
 
         return true;

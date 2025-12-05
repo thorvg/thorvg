@@ -32,7 +32,7 @@ struct UserExample : tvgexam::Example
     uint32_t w, h;
     tvg::Picture* picture = nullptr;
 
-    bool content(tvg::Canvas* canvas, uint32_t w, uint32_t h) override
+    bool content(tvg::Canvas* canvas, tvg::Scene* root, uint32_t w, uint32_t h) override
     {
         //set viewport before canvas become dirty.
         if (!tvgexam::verify(canvas->viewport(0, 0, VPORT_SIZE, VPORT_SIZE))) return false;
@@ -47,7 +47,7 @@ struct UserExample : tvgexam::Example
         if (!tvgexam::verify(picture->load(EXAMPLE_DIR"/svg/tiger.svg"))) return false;
         picture->size(w, h);
         picture->mask(mask, tvg::MaskMethod::Alpha);
-        canvas->push(picture);
+        root->push(picture);
 
         this->w = w;
         this->h = h;
@@ -55,7 +55,7 @@ struct UserExample : tvgexam::Example
         return true;
     }
 
-    bool update(tvg::Canvas* canvas, uint32_t elapsed) override
+    bool update(tvg::Canvas* canvas, tvg::Scene* root, uint32_t elapsed) override
     {
         auto progress = tvgexam::progress(elapsed, 2.0f, true);  //play time 2 sec.
 

@@ -28,7 +28,7 @@
 
 struct UserExample : tvgexam::Example
 {
-    bool content(tvg::Canvas* canvas, uint32_t w, uint32_t h) override
+    bool content(tvg::Canvas* canvas, tvg::Scene* root, uint32_t w, uint32_t h) override
     {
         tvg::Fill::ColorStop colorStops1[3];
         colorStops1[0] = {0, 255, 0, 0, 150};
@@ -75,7 +75,7 @@ struct UserExample : tvgexam::Example
         fill1->colorStops(colorStops1, 3);
         shape1->fill(fill1);
 
-        canvas->push(shape1);
+        root->push(shape1);
 
         // radial gradient stroke + duplicate
         auto shape2 = tvg::Shape::gen();
@@ -98,9 +98,9 @@ struct UserExample : tvgexam::Example
         auto shape4 = static_cast<tvg::Shape*>(shape2->duplicate());
         shape4->translate(0, 400);
 
-        canvas->push(shape2);
-        canvas->push(shape3);
-        canvas->push(shape4);
+        root->push(shape2);
+        root->push(shape3);
+        root->push(shape4);
 
         // dashed gradient stroke
         auto shape5 = tvg::Shape::gen();
@@ -120,7 +120,7 @@ struct UserExample : tvgexam::Example
         shape5->fill(fill5);
         shape5->scale(0.8);
 
-        canvas->push(shape5);
+        root->push(shape5);
 
         return true;
     }

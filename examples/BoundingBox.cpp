@@ -28,15 +28,8 @@
 
 struct UserExample : tvgexam::Example
 {
-    void bbox(tvg::Canvas* canvas, tvg::Paint* paint)
+    void bbox(tvg::Scene* root, tvg::Paint* paint)
     {
-        // Ensure the paint is updated.
-        // In this example, we call update() on the paint directly,
-        // but instead of calling update multiple times,
-        // you can call Canvas::update() once and then retrieve the bounding boxes
-        // for all required paints.
-        canvas->update();
-
         //aabb
         float x, y, w, h;
         if (tvgexam::verify(paint->bounds(&x, &y, &w, &h))) {
@@ -49,7 +42,7 @@ struct UserExample : tvgexam::Example
             bound->strokeWidth(2.0f);
             bound->strokeFill(255, 0, 0, 255);
 
-            canvas->push(bound);
+            root->push(bound);
         }
 
         //obb
@@ -66,18 +59,18 @@ struct UserExample : tvgexam::Example
             bound->strokeDash(dash, 2);
             bound->strokeFill(255, 255, 255, 255);
 
-            canvas->push(bound);
+            root->push(bound);
         }
     }
 
-    bool content(tvg::Canvas* canvas, uint32_t w, uint32_t h) override
+    bool content(tvg::Canvas* canvas, tvg::Scene* root, uint32_t w, uint32_t h) override
     {
         {
             auto shape = tvg::Shape::gen();
             shape->appendCircle(50, 100, 40, 100);
             shape->fill(0, 30, 255);
-            canvas->push(shape);
-            bbox(canvas, shape);
+            root->push(shape);
+            bbox(root, shape);
         }
 
         {
@@ -89,8 +82,8 @@ struct UserExample : tvgexam::Example
             text->fill(255, 255, 0);
             text->translate(100, 20);
             text->rotate(16.0f);
-            canvas->push(text);
-            bbox(canvas, text);
+            root->push(text);
+            bbox(root, text);
         }
 
         {
@@ -98,8 +91,8 @@ struct UserExample : tvgexam::Example
             shape->appendRect(200, 30, 100, 20);
             shape->fill(200, 150, 55);
             shape->rotate(30);
-            canvas->push(shape);
-            bbox(canvas, shape);
+            root->push(shape);
+            bbox(root, shape);
         }
 
         {
@@ -113,8 +106,8 @@ struct UserExample : tvgexam::Example
             tvg::Matrix m = {1.732f, -1.0f, 30.0f, 1.0f, 1.732f, -70.0f, 0.0f, 0.0f, 1.0f};
             shape->transform(m);
 
-            canvas->push(shape);
-            bbox(canvas, shape);
+            root->push(shape);
+            bbox(root, shape);
         }
 
         {
@@ -122,8 +115,8 @@ struct UserExample : tvgexam::Example
             svg->load(EXAMPLE_DIR"/svg/tiger.svg");
             svg->scale(0.3f);
             svg->translate(620, 50);
-            canvas->push(svg);
-            bbox(canvas, svg);
+            root->push(svg);
+            bbox(root, svg);
         }
 
         {
@@ -132,8 +125,8 @@ struct UserExample : tvgexam::Example
             svg->scale(0.2f);
             svg->translate(140, 215);
             svg->rotate(45);
-            canvas->push(svg);
-            bbox(canvas, svg);
+            root->push(svg);
+            bbox(root, svg);
 
         }
 
@@ -146,8 +139,8 @@ struct UserExample : tvgexam::Example
             img->load(EXAMPLE_DIR"/image/test.png");
             scene->push(img);
 
-            canvas->push(scene);
-            bbox(canvas, scene);
+            root->push(scene);
+            bbox(root, scene);
         }
 
         {
@@ -160,8 +153,8 @@ struct UserExample : tvgexam::Example
             img->load(EXAMPLE_DIR"/image/test.jpg");
             scene->push(img);
 
-            canvas->push(scene);
-            bbox(canvas, scene);
+            root->push(scene);
+            bbox(root, scene);
         }
 
         {
@@ -170,8 +163,8 @@ struct UserExample : tvgexam::Example
             line->lineTo(770, 350);
             line->strokeWidth(20);
             line->strokeFill(55, 55, 0);
-            canvas->push(line);
-            bbox(canvas, line);
+            root->push(line);
+            bbox(root, line);
         }
 
         {
@@ -181,8 +174,8 @@ struct UserExample : tvgexam::Example
             curve->translate(50, 770);
             curve->strokeWidth(2.0f);
             curve->strokeFill(255, 255, 255);
-            canvas->push(curve);
-            bbox(canvas, curve);
+            root->push(curve);
+            bbox(root, curve);
         }
 
         {
@@ -193,8 +186,8 @@ struct UserExample : tvgexam::Example
             curve->rotate(20.0f);
             curve->strokeWidth(2.0f);
             curve->strokeFill(255, 0, 255);
-            canvas->push(curve);
-            bbox(canvas, curve);
+            root->push(curve);
+            bbox(root, curve);
         }
 
         {
@@ -211,8 +204,8 @@ struct UserExample : tvgexam::Example
             shape->rotate(20);
             scene->push(shape);
 
-            canvas->push(scene);
-            bbox(canvas, scene);
+            root->push(scene);
+            bbox(root, scene);
         }
 
         {
@@ -233,8 +226,8 @@ struct UserExample : tvgexam::Example
 
             scene->push(shape);
 
-            canvas->push(scene);
-            bbox(canvas, scene);
+            root->push(scene);
+            bbox(root, scene);
         }
 
         {
@@ -255,8 +248,8 @@ struct UserExample : tvgexam::Example
 
             scene->push(shape);
 
-            canvas->push(scene);
-            bbox(canvas, scene);
+            root->push(scene);
+            bbox(root, scene);
         }
 
         {
@@ -280,8 +273,8 @@ struct UserExample : tvgexam::Example
 
             scene->push(shape);
 
-            canvas->push(scene);
-            bbox(canvas, scene);
+            root->push(scene);
+            bbox(root, scene);
         }
 
         {
@@ -298,8 +291,8 @@ struct UserExample : tvgexam::Example
             text->rotate(16.0f);
             scene->push(text);
 
-            canvas->push(scene);
-            bbox(canvas, scene);
+            root->push(scene);
+            bbox(root, scene);
         }
 
         return true;

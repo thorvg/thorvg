@@ -46,7 +46,7 @@ struct UserExample : tvgexam::Example
         picture->translate((counter % NUM_PER_ROW) * size + size / 2, (counter / NUM_PER_ROW) * (this->h / NUM_PER_COL) + size / 2);
     }
 
-    bool update(tvg::Canvas* canvas, uint32_t elapsed) override
+    bool update(tvg::Canvas* canvas, tvg::Scene* root, uint32_t elapsed) override
     {
         //slots
         for (auto& slot : slots) {
@@ -65,7 +65,7 @@ struct UserExample : tvgexam::Example
         return true;
     }
 
-    bool content(tvg::Canvas* canvas, uint32_t w, uint32_t h) override
+    bool content(tvg::Canvas* canvas, tvg::Scene* root, uint32_t w, uint32_t h) override
     {
         //The default font for fallback in case
         tvg::Text::load(EXAMPLE_DIR"/font/Arial.ttf");
@@ -74,7 +74,7 @@ struct UserExample : tvgexam::Example
         auto bg = tvg::Shape::gen();
         bg->appendRect(0, 0, w, h);
         bg->fill(75, 75, 75);
-        canvas->push(bg);
+        root->push(bg);
 
         this->w = w;
         this->h = h;
@@ -87,7 +87,7 @@ struct UserExample : tvgexam::Example
             if (!tvgexam::verify(picture->load(EXAMPLE_DIR"/lottie/extensions/slot0.json"))) return false;
 
             sizing(picture, 0);
-            canvas->push(picture);
+            root->push(picture);
             slots.push_back(std::move(slot));
         }
 
@@ -102,7 +102,7 @@ struct UserExample : tvgexam::Example
             if (!tvgexam::verify(slot->apply(slotId))) return false;
 
             sizing(picture, 1);
-            canvas->push(picture);
+            root->push(picture);
             slots.push_back(std::move(slot));
         }
 
@@ -117,7 +117,7 @@ struct UserExample : tvgexam::Example
             if (!tvgexam::verify(slot->apply(slotId))) return false;
 
             sizing(picture, 2);
-            canvas->push(picture);
+            root->push(picture);
             slots.push_back(std::move(slot));
         }
 
@@ -132,7 +132,7 @@ struct UserExample : tvgexam::Example
             if (!tvgexam::verify(slot->apply(slotId))) return false;
 
             sizing(picture, 3);
-            canvas->push(picture);
+            root->push(picture);
             slots.push_back(std::move(slot));
         }
 
@@ -147,7 +147,7 @@ struct UserExample : tvgexam::Example
             if (!tvgexam::verify(slot->apply(slotId))) return false;
 
             sizing(picture, 4);
-            canvas->push(picture);
+            root->push(picture);
             slots.push_back(std::move(slot));
         }
 
@@ -158,7 +158,7 @@ struct UserExample : tvgexam::Example
             if (!tvgexam::verify(picture->load(EXAMPLE_DIR"/lottie/extensions/slot5.json"))) return false;
 
             sizing(picture, 5);
-            canvas->push(picture);
+            root->push(picture);
             slots.push_back(std::move(slot));
         }
 
@@ -173,7 +173,7 @@ struct UserExample : tvgexam::Example
             if (!tvgexam::verify(slot->apply(slotId))) return false;
 
             sizing(picture, 6);
-            canvas->push(picture);
+            root->push(picture);
             slots.push_back(std::move(slot));
         }
 
@@ -188,7 +188,7 @@ struct UserExample : tvgexam::Example
             if (!tvgexam::verify(slot->apply(slotId))) return false;
 
             sizing(picture, 7);
-            canvas->push(picture);
+            root->push(picture);
             slots.push_back(std::move(slot));
         }
 
@@ -203,7 +203,7 @@ struct UserExample : tvgexam::Example
             if (!tvgexam::verify(slot->apply(slotId))) return false;
 
             sizing(picture, 8);
-            canvas->push(picture);
+            root->push(picture);
             slots.push_back(std::move(slot));
         }
 
@@ -219,7 +219,7 @@ struct UserExample : tvgexam::Example
 
             sizing(picture, 9);
 
-            canvas->push(picture);
+            root->push(picture);
             slots.push_back(std::move(slot));
         }
 
@@ -234,7 +234,7 @@ struct UserExample : tvgexam::Example
             if (!tvgexam::verify(slot->apply(slotId))) return false;
 
             sizing(picture, 10);
-            canvas->push(picture);
+            root->push(picture);
             slots.push_back(std::move(slot));
         }
 
@@ -249,7 +249,7 @@ struct UserExample : tvgexam::Example
             if (!tvgexam::verify(slot->apply(slotId))) return false;
 
             sizing(picture, 11);
-            canvas->push(picture);
+            root->push(picture);
             slots.push_back(std::move(slot));
         }
 
@@ -261,7 +261,7 @@ struct UserExample : tvgexam::Example
             if (!tvgexam::verify(marker->segment("sectionC"))) return false;
 
             sizing(picture, 12);
-            canvas->push(picture);
+            root->push(picture);
         }
 
         //asset resolver (image)
@@ -282,7 +282,7 @@ struct UserExample : tvgexam::Example
             if (!tvgexam::verify(picture->load(EXAMPLE_DIR"/lottie/extensions/resolver1.json"))) return false;
 
             sizing(picture, 13);
-            canvas->push(picture);
+            root->push(picture);
         }
 
         //asset resolver (font)
@@ -303,7 +303,7 @@ struct UserExample : tvgexam::Example
             if (!tvgexam::verify(picture->load(EXAMPLE_DIR"/lottie/extensions/resolver2.json"))) return false;
 
             sizing(picture, 14);
-            canvas->push(picture);
+            root->push(picture);
         }
 
         return true;

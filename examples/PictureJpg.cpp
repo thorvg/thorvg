@@ -28,7 +28,7 @@
 
 struct UserExample : tvgexam::Example
 {
-    bool content(tvg::Canvas* canvas, uint32_t w, uint32_t h) override
+    bool content(tvg::Canvas* canvas, tvg::Scene* root, uint32_t w, uint32_t h) override
     {
         auto opacity = 36;
 
@@ -40,7 +40,7 @@ struct UserExample : tvgexam::Example
             picture->rotate(30 * i);
             picture->size(200, 200);
             picture->opacity(opacity + opacity * i);
-            canvas->push(picture);
+            root->push(picture);
         }
 
         //Open file manually
@@ -60,7 +60,7 @@ struct UserExample : tvgexam::Example
         free(data);
         picture->translate(400, 0);
         picture->scale(0.8);
-        canvas->push(picture);
+        root->push(picture);
 
         return true;
     }

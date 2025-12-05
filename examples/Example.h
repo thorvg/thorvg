@@ -67,8 +67,8 @@ struct Example
 {
     uint32_t elapsed = 0;
 
-    virtual bool content(tvg::Canvas* canvas, uint32_t w, uint32_t h) = 0;
-    virtual bool update(tvg::Canvas* canvas, uint32_t elapsed) { return false; }
+    virtual bool content(tvg::Canvas* canvas, tvg::Scene* root, uint32_t w, uint32_t h) = 0;
+    virtual bool update(tvg::Canvas* canvas, tvg::Scene* root, uint32_t elapsed) { return false; }
     virtual bool clickdown(tvg::Canvas* canvas, int32_t x, int32_t y) { return false; }
     virtual bool clickup(tvg::Canvas* canvas, int32_t x, int32_t y) { return false; }
     virtual bool motion(tvg::Canvas* canvas, int32_t x, int32_t y) { return false; }
@@ -176,7 +176,7 @@ struct Window
         this->root = tvg::Scene::gen();
 
         this->bg = tvg::Shape::gen();
-        this->bg->fill(255, 255, 255);
+        this->bg->fill(0, 0, 0);
     }
 
     virtual ~Window()
@@ -206,11 +206,13 @@ struct Window
     bool ready()
     {
         if (!canvas) return false;
+        
+        canvas->push(bg);
+        canvas->push(root);
 
-        if (!example->content(canvas, width, height)) return false;
+        if (!example->content(canvas, root, width, height)) return false;
 
         //initiate the first rendering before window pop-up.
-        repack();
         resize();
         if (!verify(canvas->draw())) return false;
         if (!verify(canvas->sync())) return false;
@@ -304,7 +306,7 @@ struct Window
             }
 
             if (tickCnt > 0) {
-                needDraw |= example->update(canvas, example->elapsed);
+                needDraw |= example->update(canvas, root, example->elapsed);
             }
 
             if (needDraw) {
@@ -339,31 +341,6 @@ struct Window
     }
 
     virtual void refresh() {}
-
-    void repack()
-    {
-        auto& paints = canvas->paints();
-
-        if (paints.size() == 2 && paints.front() == bg && paints.back() == root) return;
-
-        std::vector<tvg::Paint*> targets;
-        for (auto paint : paints) {
-            if (paint != bg && paint != root) {
-                targets.push_back(paint);
-            }
-        }
-
-        for (auto paint : targets) {
-            paint->ref();
-        }
-        canvas->remove();
-        for (auto paint : targets) {
-            root->push(paint);
-            paint->unref();
-        }
-        canvas->push(bg);
-        canvas->push(root);
-    }
 };
 
 

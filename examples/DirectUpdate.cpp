@@ -33,13 +33,13 @@ struct UserExample : tvgexam::Example
 
     uint32_t w, h;
 
-    bool content(tvg::Canvas* canvas, uint32_t w, uint32_t h) override
+    bool content(tvg::Canvas* canvas, tvg::Scene* root, uint32_t w, uint32_t h) override
     {
         //Shape (for BG)
         auto bg = tvg::Shape::gen();
         bg->appendRect(0, 0, w, h);
         bg->fill(255, 255, 255);
-        canvas->push(bg);
+        root->push(bg);
 
         //Solid Shape
         {
@@ -51,7 +51,7 @@ struct UserExample : tvgexam::Example
             solid->strokeFill(0, 0, 255);
             solid->strokeWidth(1);
 
-            canvas->push(solid);
+            root->push(solid);
         }
 
         //Gradient Shape
@@ -72,7 +72,7 @@ struct UserExample : tvgexam::Example
             fill->colorStops(colorStops, 3);
             gradient->fill(fill);
 
-            canvas->push(gradient);
+            root->push(gradient);
         }
 
         this->w = w;
@@ -81,7 +81,7 @@ struct UserExample : tvgexam::Example
         return true;
     }
 
-    bool update(tvg::Canvas* canvas, uint32_t elapsed) override
+    bool update(tvg::Canvas* canvas, tvg::Scene* root, uint32_t elapsed) override
     {
         auto progress = tvgexam::progress(elapsed, 2.0f, true);  //play time 2 sec.
 

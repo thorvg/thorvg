@@ -109,7 +109,7 @@ struct UserExample : tvgexam::Example
         return true;
     }
 
-    bool content(tvg::Canvas* canvas, uint32_t w, uint32_t h) override
+    bool content(tvg::Canvas* canvas, tvg::Scene* root, uint32_t w, uint32_t h) override
     {
         //LottieAnimation Controller
         lottie = unique_ptr<tvg::LottieAnimation>(tvg::LottieAnimation::gen());
@@ -121,7 +121,7 @@ struct UserExample : tvgexam::Example
             auto shape = tvg::Shape::gen();
             shape->appendRect(100, 100, w - 200, h - 200);
             shape->fill(50, 50, 50);
-            canvas->push(std::move(shape));
+            root->push(std::move(shape));
         }
 
         if (!tvgexam::verify(picture->load(EXAMPLE_DIR"/lottie/extensions/spin.json"))) return false;
@@ -133,7 +133,7 @@ struct UserExample : tvgexam::Example
         picture->scale(scale);
         picture->translate(float(w) * 0.5f, float(h) * 0.5f);
 
-        canvas->push(picture);
+        root->push(picture);
 
         origin.x = float(w / 2);
         origin.y = float(h / 2);
@@ -141,7 +141,7 @@ struct UserExample : tvgexam::Example
         return true;
     }
 
-    bool update(tvg::Canvas* canvas, uint32_t elapsed) override
+    bool update(tvg::Canvas* canvas, tvg::Scene* root, uint32_t elapsed) override
     {
         //spinning effect
         if (effect.on) {

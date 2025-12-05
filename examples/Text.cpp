@@ -28,13 +28,13 @@
 
 struct UserExample : tvgexam::Example
 {
-    bool content(tvg::Canvas* canvas, uint32_t w, uint32_t h) override
+    bool content(tvg::Canvas* canvas, tvg::Scene* root, uint32_t w, uint32_t h) override
     {
         //Background
         auto shape = tvg::Shape::gen();
         shape->appendRect(0, 0, w, h);
         shape->fill(75, 75, 75);
-        canvas->push(shape);
+        root->push(shape);
 
         //Load a necessary font data.
         //The loaded font will be released when the Initializer::term() is called.
@@ -62,7 +62,7 @@ struct UserExample : tvgexam::Example
         text->size(80);
         text->text("THORVG Text");
         text->fill(255, 255, 255);
-        canvas->push(text);
+        root->push(text);
 
         auto text2 = tvg::Text::gen();
         text2->font("Arial");
@@ -71,7 +71,7 @@ struct UserExample : tvgexam::Example
         text2->text("Font = \"Arial\", Size = 40, Style = Italic");
         text2->translate(0, 150);
         text2->fill(255, 255, 255);
-        canvas->push(text2);
+        root->push(text2);
 
         auto text3 = tvg::Text::gen();
         text3->font(nullptr);  //Use any font
@@ -79,7 +79,7 @@ struct UserExample : tvgexam::Example
         text3->text("Kerning Test: VA, AV, TJ, JT");
         text3->fill(255, 255, 255);
         text3->translate(0, 225);
-        canvas->push(text3);
+        root->push(text3);
 
         auto text4 = tvg::Text::gen();
         text4->font("Arial");
@@ -87,7 +87,7 @@ struct UserExample : tvgexam::Example
         text4->text("Purple Text");
         text4->fill(255, 0, 255);
         text4->translate(0, 310);
-        canvas->push(text4);
+        root->push(text4);
 
         auto text5 = tvg::Text::gen();
         text5->font("Arial");
@@ -95,7 +95,7 @@ struct UserExample : tvgexam::Example
         text5->text("Gray Text");
         text5->fill(150, 150, 150);
         text5->translate(220, 310);
-        canvas->push(text5);
+        root->push(text5);
 
         auto text6 = tvg::Text::gen();
         text6->font("Arial");
@@ -103,7 +103,7 @@ struct UserExample : tvgexam::Example
         text6->text("Yellow Text");
         text6->fill(255, 255, 0);
         text6->translate(400, 310);
-        canvas->push(text6);
+        root->push(text6);
 
         auto text7 = tvg::Text::gen();
         text7->font("NOTO-SANS-KR");
@@ -112,7 +112,7 @@ struct UserExample : tvgexam::Example
         text7->fill(0, 0, 0);
         text7->translate(600, 400);
         text7->rotate(30);
-        canvas->push(text7);
+        root->push(text7);
 
         auto text8 = tvg::Text::gen();
         text8->font("NOTO-SANS-KR");
@@ -121,7 +121,7 @@ struct UserExample : tvgexam::Example
         text8->text("Transformed Text - 90'");
         text8->translate(600, 400);
         text8->rotate(90);
-        canvas->push(text8);
+        root->push(text8);
 
         auto text9 = tvg::Text::gen();
         text9->font("NOTO-SANS-KR");
@@ -130,7 +130,7 @@ struct UserExample : tvgexam::Example
         text9->text("Transformed Text - 180'");
         text9->translate(800, 400);
         text9->rotate(180);
-        canvas->push(text9);
+        root->push(text9);
 
         //gradient texts
         float x, y, w2, h2;
@@ -155,7 +155,7 @@ struct UserExample : tvgexam::Example
 
         text10->translate(0, 350);
 
-        canvas->push(text10);
+        root->push(text10);
 
         auto text11 = tvg::Text::gen();
         text11->font("NanumGothicCoding");
@@ -179,7 +179,7 @@ struct UserExample : tvgexam::Example
 
         text11->translate(0, 450);
 
-        canvas->push(text11);
+        root->push(text11);
 
         auto text12 = tvg::Text::gen();
         text12->font("SentyCloud");
@@ -188,7 +188,7 @@ struct UserExample : tvgexam::Example
         text12->outline(3, 255, 200, 200);
         text12->text("\xe4\xb8\x8d\xe5\x88\xb0\xe9\x95\xbf\xe5\x9f\x8e\xe9\x9d\x9e\xe5\xa5\xbd\xe6\xb1\x89\xef\xbc\x81");
         text12->translate(0, 525);
-        canvas->push(text12);
+        root->push(text12);
 
         auto text13 = tvg::Text::gen();
         text13->font("Arial");
@@ -196,7 +196,7 @@ struct UserExample : tvgexam::Example
         text13->fill(255, 255, 255);
         text13->text("LINE-FEED TEST. THIS IS THE FIRST LINE - \nTHIS IS THE SECOND LINE.");
         text13->translate(0, 625);
-        canvas->push(text13);
+        root->push(text13);
 
         auto text14 = tvg::Text::gen();
         text14->font("Arial");
@@ -205,7 +205,7 @@ struct UserExample : tvgexam::Example
         text14->spacing(1.5f, 1.5f);
         text14->text("1.5x SPACING TEST. THIS IS THE FIRST LINE - \nTHIS IS THE SECOND LINE.");
         text14->translate(0, 700);
-        canvas->push(text14);
+        root->push(text14);
 
         return true;
     }
