@@ -119,7 +119,7 @@ void WgCompositor::resize(WgContext& context, uint32_t width, uint32_t height) {
 }
 
 
-RenderRegion WgCompositor::shrinkRenderRegion(RenderRegion& rect)
+RenderRegion WgCompositor::shrinkRenderRegion(const RenderRegion& rect)
 {
     return {
         {std::max(0, std::min((int32_t)width, rect.min.x)), std::max(0, std::min((int32_t)height, rect.min.y))},
@@ -847,7 +847,7 @@ bool WgCompositor::gaussianBlur(WgContext& context, WgRenderTarget* dst, const R
     assert(!renderPassEncoder);
 
     auto renderDataParams = (WgRenderDataEffectParams*)params->rd;
-    auto aabb = compose->aabb;
+    auto aabb = shrinkRenderRegion(compose->aabb);
 
     copyTexture(&targetTemp0, dst);
     if (params->direction == 0) { // both
@@ -895,7 +895,7 @@ bool WgCompositor::dropShadow(WgContext& context, WgRenderTarget* dst, const Ren
     assert(!renderPassEncoder);
 
     auto renderDataParams = (WgRenderDataEffectParams*)params->rd;
-    auto aabb = compose->aabb;
+    auto aabb = shrinkRenderRegion(compose->aabb);
 
     copyTexture(&targetTemp0, dst);
     copyTexture(&targetTemp1, dst);
@@ -939,7 +939,7 @@ bool WgCompositor::fillEffect(WgContext& context, WgRenderTarget* dst, const Ren
     assert(!renderPassEncoder);
 
     auto renderDataParams = (WgRenderDataEffectParams*)params->rd;
-    auto aabb = compose->aabb;
+    auto aabb = shrinkRenderRegion(compose->aabb);
 
     copyTexture(&targetTemp0, dst, aabb);
     beginRenderPass(commandEncoder, dst); {
@@ -962,7 +962,7 @@ bool WgCompositor::tintEffect(WgContext& context, WgRenderTarget* dst, const Ren
     assert(!renderPassEncoder);
 
     auto renderDataParams = (WgRenderDataEffectParams*)params->rd;
-    auto aabb = compose->aabb;
+    auto aabb = shrinkRenderRegion(compose->aabb);
 
     copyTexture(&targetTemp0, dst, aabb);
     beginRenderPass(commandEncoder, dst); {
@@ -984,7 +984,7 @@ bool WgCompositor::tritoneEffect(WgContext& context, WgRenderTarget* dst, const 
     assert(!renderPassEncoder);
 
     auto renderDataParams = (WgRenderDataEffectParams*)params->rd;
-    auto aabb = compose->aabb;
+    auto aabb = shrinkRenderRegion(compose->aabb);
 
     copyTexture(&targetTemp0, dst, aabb);
     beginRenderPass(commandEncoder, dst); {
