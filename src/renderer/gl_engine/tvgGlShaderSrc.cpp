@@ -347,9 +347,9 @@ const char* IMAGE_FRAG_SHADER = TVG_COMPOSE_SHADER(
         } else if (uColorInfo.format == 1) { /* FMT_ARGB8888 */                             \n
             result = color.bgra;                                                            \n
         } else if (uColorInfo.format == 2) { /* FMT_ABGR8888S */                            \n
-            result = vec4(color.rgb * color.a, color.a);                                    \n
+            result = vec4(color.rgb * color.a, color.a); /*Forbidden in GL*/                \n
         } else if (uColorInfo.format == 3) { /* FMT_ARGB8888S */                            \n
-            result = vec4(color.bgr * color.a, color.a);                                    \n
+            result = vec4(color.bgr * color.a, color.a); /*Forbidden in GL*/                \n
         }                                                                                   \n
         FragColor = result * float(uColorInfo.opacity) / 255.0;                             \n
    }                                                                                        \n
