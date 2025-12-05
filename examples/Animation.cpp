@@ -30,7 +30,7 @@ struct UserExample : tvgexam::Example
 {
     unique_ptr<tvg::Animation> animation;
 
-    bool content(tvg::Canvas* canvas, uint32_t w, uint32_t h) override
+    bool content(tvg::Canvas* canvas, tvg::Scene* root, uint32_t w, uint32_t h) override
     {
         //The default font for fallback in case
         tvg::Text::load(EXAMPLE_DIR"/font/Arial.ttf");
@@ -45,7 +45,7 @@ struct UserExample : tvgexam::Example
         shape->appendRect(0, 0, w, h);
         shape->fill(50, 50, 50);
 
-        canvas->push(shape);
+        root->push(shape);
 
         if (!tvgexam::verify(picture->load(EXAMPLE_DIR"/lottie/sample.json"))) return false;
 
@@ -56,12 +56,12 @@ struct UserExample : tvgexam::Example
         picture->scale(scale);
         picture->translate(float(w) * 0.5f, float(h) * 0.5f);
 
-        canvas->push(picture);
+        root->push(picture);
 
         return true;
     }
 
-    bool update(tvg::Canvas* canvas, uint32_t elapsed) override
+    bool update(tvg::Canvas* canvas, tvg::Scene* root, uint32_t elapsed) override
     {
         auto progress = tvgexam::progress(elapsed, animation->duration());
 

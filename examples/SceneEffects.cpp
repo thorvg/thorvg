@@ -35,7 +35,7 @@ struct UserExample : tvgexam::Example
     tvg::Scene* tint = nullptr;
     tvg::Scene* trintone = nullptr;
 
-    bool content(tvg::Canvas* canvas, uint32_t w, uint32_t h) override
+    bool content(tvg::Canvas* canvas, tvg::Scene* root, uint32_t w, uint32_t h) override
     {
         //blur scene
         for (int i = 0; i < 3; ++i) {
@@ -47,7 +47,7 @@ struct UserExample : tvgexam::Example
             picture->translate(SIZE * i, 0);
 
             blur[i]->push(picture);
-            canvas->push(blur[i]);
+            root->push(blur[i]);
         }
 
         //fill scene
@@ -60,7 +60,7 @@ struct UserExample : tvgexam::Example
             picture->translate(0, SIZE);
 
             fill->push(picture);
-            canvas->push(fill);
+            root->push(fill);
         }
 
         //tint scene
@@ -73,7 +73,7 @@ struct UserExample : tvgexam::Example
             picture->translate(SIZE, SIZE);
 
             tint->push(picture);
-            canvas->push(tint);
+            root->push(tint);
         }
 
         //trinton scene
@@ -86,14 +86,14 @@ struct UserExample : tvgexam::Example
             picture->translate(SIZE * 2, SIZE);
 
             trintone->push(picture);
-            canvas->push(trintone);
+            root->push(trintone);
         }
 
 
         return true;
     }
 
-    bool update(tvg::Canvas* canvas, uint32_t elapsed) override
+    bool update(tvg::Canvas* canvas, tvg::Scene* root, uint32_t elapsed) override
     {
         auto progress = tvgexam::progress(elapsed, 2.5f, true);   //2.5 seconds
 

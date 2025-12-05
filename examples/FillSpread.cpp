@@ -28,7 +28,7 @@
 
 struct UserExample : tvgexam::Example
 {
-    bool content(tvg::Canvas* canvas, uint32_t w, uint32_t h) override
+    bool content(tvg::Canvas* canvas, tvg::Scene* root, uint32_t w, uint32_t h) override
     {
         const int colorCnt = 4;
         tvg::Fill::ColorStop colorStops[colorCnt];
@@ -52,7 +52,7 @@ struct UserExample : tvgexam::Example
             fill1->spread(tvg::FillSpread::Pad);
             shape1->fill(fill1);
 
-            canvas->push(shape1);
+            root->push(shape1);
 
             //Reflect
             x1 = 280.0f;
@@ -65,7 +65,7 @@ struct UserExample : tvgexam::Example
             fill2->spread(tvg::FillSpread::Reflect);
             shape2->fill(fill2);
 
-            canvas->push(shape2);
+            root->push(shape2);
 
             //Repeat
             x1 = 540.0f;
@@ -78,7 +78,7 @@ struct UserExample : tvgexam::Example
             fill3->spread(tvg::FillSpread::Repeat);
             shape3->fill(fill3);
 
-            canvas->push(shape3);
+            root->push(shape3);
         }
 
         //Linear grad
@@ -96,7 +96,7 @@ struct UserExample : tvgexam::Example
             fill1->spread(tvg::FillSpread::Pad);
             shape1->fill(fill1);
 
-            canvas->push(shape1);
+            root->push(shape1);
 
             //Reflect
             x1 = 280.0f;
@@ -109,7 +109,7 @@ struct UserExample : tvgexam::Example
             fill2->spread(tvg::FillSpread::Reflect);
             shape2->fill(fill2);
 
-            canvas->push(shape2);
+            root->push(shape2);
 
             //Repeat
             x1 = 540.0f;
@@ -122,7 +122,7 @@ struct UserExample : tvgexam::Example
             fill3->spread(tvg::FillSpread::Repeat);
             shape3->fill(fill3);
 
-            canvas->push(shape3);
+            root->push(shape3);
 
             return true;
         }

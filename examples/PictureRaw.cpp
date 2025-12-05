@@ -28,13 +28,13 @@
 
 struct UserExample : tvgexam::Example
 {
-    bool content(tvg::Canvas* canvas, uint32_t w, uint32_t h) override
+    bool content(tvg::Canvas* canvas, tvg::Scene* root, uint32_t w, uint32_t h) override
     {
         //Background
         auto bg = tvg::Shape::gen();
         bg->appendRect(0, 0, w, h);
         bg->fill(255, 255, 255);
-        canvas->push(bg);
+        root->push(bg);
 
         string path(EXAMPLE_DIR"/image/rawimage_200x300.raw");
         ifstream file(path, ios::binary);
@@ -46,7 +46,7 @@ struct UserExample : tvgexam::Example
         auto picture = tvg::Picture::gen();
         if (!tvgexam::verify(picture->load(data, 200, 300, tvg::ColorSpace::ARGB8888, true))) return false;
         picture->translate(400, 250);
-        canvas->push(picture);
+        root->push(picture);
 
         auto picture2 = tvg::Picture::gen();
         if (!tvgexam::verify(picture2->load(data, 200, 300, tvg::ColorSpace::ARGB8888, true))) return false;
@@ -61,7 +61,7 @@ struct UserExample : tvgexam::Example
 
         picture2->clip(circle);
 
-        canvas->push(picture2);
+        root->push(picture2);
 
         free(data);
 

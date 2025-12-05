@@ -28,7 +28,7 @@
 
 struct UserExample : tvgexam::Example
 {
-    bool content(tvg::Canvas* canvas, uint32_t w, uint32_t h) override
+    bool content(tvg::Canvas* canvas, tvg::Scene* root, uint32_t w, uint32_t h) override
     {
         if (!canvas) return false;
 
@@ -64,9 +64,9 @@ struct UserExample : tvgexam::Example
             auto shape3 = shape2->duplicate();
             shape3->translate(0, 440);
 
-            canvas->push(shape1);
-            canvas->push(shape2);
-            canvas->push(shape3);
+            root->push(shape1);
+            root->push(shape2);
+            root->push(shape3);
         }
 
         //Duplicate Scene
@@ -96,8 +96,8 @@ struct UserExample : tvgexam::Example
             auto scene2 = scene1->duplicate();
             scene2->translate(600, 0);
 
-            canvas->push(scene1);
-            canvas->push(scene2);
+            root->push(scene1);
+            root->push(scene2);
         }
 
         //Duplicate Picture - svg
@@ -110,8 +110,8 @@ struct UserExample : tvgexam::Example
             auto picture2 = picture1->duplicate();
             picture2->translate(550, 250);
 
-            canvas->push(picture1);
-            canvas->push(picture2);
+            root->push(picture1);
+            root->push(picture2);
         }
 
         //Duplicate Picture - raw
@@ -133,8 +133,8 @@ struct UserExample : tvgexam::Example
             picture2->scale(0.7);
             picture2->rotate(8);
 
-            canvas->push(picture1);
-            canvas->push(picture2);
+            root->push(picture1);
+            root->push(picture2);
 
             free(data);
         }
@@ -152,8 +152,8 @@ struct UserExample : tvgexam::Example
             auto text2 = text->duplicate();
             text2->translate(0, 700);
 
-            canvas->push(text);
-            canvas->push(text2);
+            root->push(text);
+            root->push(text2);
         }
 
         return true;

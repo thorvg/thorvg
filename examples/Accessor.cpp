@@ -28,7 +28,7 @@
 
 struct UserExample : tvgexam::Example
 {
-    bool content(tvg::Canvas* canvas, uint32_t w, uint32_t h) override
+    bool content(tvg::Canvas* canvas, tvg::Scene* root, uint32_t w, uint32_t h) override
     {
         //load the tvg file
         auto picture = tvg::Picture::gen();
@@ -65,7 +65,7 @@ struct UserExample : tvgexam::Example
             shape->strokeWidth(5);
         }
 
-        canvas->push(picture);
+        root->push(picture);
 
         return true;
     }

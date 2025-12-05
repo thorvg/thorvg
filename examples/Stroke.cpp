@@ -28,7 +28,7 @@
 
 struct UserExample : tvgexam::Example
 {
-    bool content(tvg::Canvas* canvas, uint32_t w, uint32_t h) override
+    bool content(tvg::Canvas* canvas, tvg::Scene* root, uint32_t w, uint32_t h) override
     {
         //Shape 1
         auto shape1 = tvg::Shape::gen();
@@ -38,7 +38,7 @@ struct UserExample : tvgexam::Example
         shape1->strokeJoin(tvg::StrokeJoin::Bevel);   //default is Bevel
         shape1->strokeWidth(10);                       //width: 10px
 
-        canvas->push(shape1);
+        root->push(shape1);
 
         //Shape 2
         auto shape2 = tvg::Shape::gen();
@@ -48,7 +48,7 @@ struct UserExample : tvgexam::Example
         shape2->strokeJoin(tvg::StrokeJoin::Round);
         shape2->strokeWidth(10);
 
-        canvas->push(shape2);
+        root->push(shape2);
 
         //Shape 3
         auto shape3 = tvg::Shape::gen();
@@ -58,7 +58,7 @@ struct UserExample : tvgexam::Example
         shape3->strokeJoin(tvg::StrokeJoin::Miter);
         shape3->strokeWidth(10);
 
-        canvas->push(shape3);
+        root->push(shape3);
 
         //Shape 4
         auto shape4 = tvg::Shape::gen();
@@ -67,7 +67,7 @@ struct UserExample : tvgexam::Example
         shape4->strokeFill(255, 255, 255);
         shape4->strokeWidth(1);
 
-        canvas->push(shape4);
+        root->push(shape4);
 
         //Shape 5
         auto shape5 = tvg::Shape::gen();
@@ -76,7 +76,7 @@ struct UserExample : tvgexam::Example
         shape5->strokeFill(255, 255, 255);
         shape5->strokeWidth(2);
 
-        canvas->push(shape5);
+        root->push(shape5);
 
         //Shape 6
         auto shape6 = tvg::Shape::gen();
@@ -85,7 +85,7 @@ struct UserExample : tvgexam::Example
         shape6->strokeFill(255, 255, 255);
         shape6->strokeWidth(4);
 
-        canvas->push(shape6);
+        root->push(shape6);
 
         //Stroke width test
         for (int i = 0; i < 10; ++i) {
@@ -95,7 +95,7 @@ struct UserExample : tvgexam::Example
             hline->strokeFill(255, 255, 255);            //color: r, g, b
             hline->strokeWidth(i + 1);                   //stroke width
             hline->strokeCap(tvg::StrokeCap::Round);     //default is Square
-            canvas->push(hline);
+            root->push(hline);
 
             auto vline = tvg::Shape::gen();
             vline->moveTo(500 + (25 * i), 550);
@@ -103,7 +103,7 @@ struct UserExample : tvgexam::Example
             vline->strokeFill(255, 255, 255);            //color: r, g, b
             vline->strokeWidth(i + 1);                   //stroke width
             vline->strokeCap(tvg::StrokeCap::Round);     //default is Square
-            canvas->push(vline);
+            root->push(vline);
         }
 
         //Stroke cap test
@@ -116,15 +116,15 @@ struct UserExample : tvgexam::Example
 
         auto line2 = static_cast<tvg::Shape*>(line1->duplicate());
         auto line3 = static_cast<tvg::Shape*>(line1->duplicate());
-        canvas->push(line1);
+        root->push(line1);
 
         line2->strokeCap(tvg::StrokeCap::Square);
         line2->translate(0, 50);
-        canvas->push(line2);
+        root->push(line2);
 
         line3->strokeCap(tvg::StrokeCap::Butt);
         line3->translate(0, 100);
-        canvas->push(line3);
+        root->push(line3);
 
         return true;
     }

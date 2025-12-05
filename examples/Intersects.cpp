@@ -37,7 +37,7 @@ struct UserExample : tvgexam::Example
     tvg::Shape* marquee;
     int mx = 0, my = 0, mw = 20, mh = 20;
 
-    bool content(tvg::Canvas* canvas, uint32_t w, uint32_t h) override
+    bool content(tvg::Canvas* canvas, tvg::Scene* root, uint32_t w, uint32_t h) override
     {
         //dash stroke filled shape
         {
@@ -59,7 +59,7 @@ struct UserExample : tvgexam::Example
 
             shape->scale(1.25f);
 
-            canvas->push(shape);
+            root->push(shape);
         }
 
         //clipped, rotated image
@@ -74,7 +74,7 @@ struct UserExample : tvgexam::Example
             clip->appendCircle(900, 350, 200, 200);
             picture->clip(clip);
 
-            canvas->push(picture);
+            root->push(picture);
         }
 
         //normal text
@@ -87,7 +87,7 @@ struct UserExample : tvgexam::Example
             text->translate(25, 800);
             text->fill(255, 255, 255);
 
-            canvas->push(text);
+            root->push(text);
         }
 
         //vector scene
@@ -97,7 +97,7 @@ struct UserExample : tvgexam::Example
             tiger->translate(700, 640);
             tiger->scale(0.5f);
 
-            canvas->push(tiger);
+            root->push(tiger);
         }
 
         //marquee
@@ -107,7 +107,7 @@ struct UserExample : tvgexam::Example
             marquee->strokeWidth(2);
             marquee->strokeFill(255, 255, 0);
             marquee->fill(255, 255, 0, 50);
-            canvas->push(marquee);
+            root->push(marquee);
         }
 
         return true;
@@ -122,7 +122,7 @@ struct UserExample : tvgexam::Example
         return false;
     }
 
-    bool update(tvg::Canvas* canvas, uint32_t elapsed) override
+    bool update(tvg::Canvas* canvas, tvg::Scene* root, uint32_t elapsed) override
     {
         marquee->translate(mx, my);
 

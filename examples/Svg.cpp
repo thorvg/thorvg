@@ -63,7 +63,7 @@ struct UserExample : tvgexam::Example
         counter++;
     }
 
-    bool content(tvg::Canvas* canvas, uint32_t w, uint32_t h) override
+    bool content(tvg::Canvas* canvas, tvg::Scene* root, uint32_t w, uint32_t h) override
     {
         //The default font for fallback in case
         tvg::Text::load(EXAMPLE_DIR"/font/Arial.ttf");
@@ -73,7 +73,7 @@ struct UserExample : tvgexam::Example
         shape->appendRect(0, 0, w, h);
         shape->fill(255, 255, 255);
 
-        canvas->push(shape);
+        root->push(shape);
 
         this->w = w;
         this->h = h;
@@ -86,7 +86,7 @@ struct UserExample : tvgexam::Example
            This allows time for the tvg resources to finish loading;
            otherwise, you can push pictures immediately. */
         for (auto& paint : pictures) {
-            canvas->push(paint);
+            root->push(paint);
         }
 
         pictures.clear();

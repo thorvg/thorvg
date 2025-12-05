@@ -37,7 +37,7 @@ struct UserExample : tvgexam::Example
         return degree * (float(M_PI) / 180.0f);
     }
 
-    bool content(tvg::Canvas* canvas, uint32_t w, uint32_t h) override
+    bool content(tvg::Canvas* canvas, tvg::Scene* root, uint32_t w, uint32_t h) override
     {
         picture = tvg::Picture::gen();
         picture->origin(0.5f, 0.5f);  //center origin
@@ -45,12 +45,12 @@ struct UserExample : tvgexam::Example
 
         if (!tvgexam::verify(picture->load(EXAMPLE_DIR"/image/scale.jpg"))) return false;
 
-        canvas->push(picture);
+        root->push(picture);
 
         return true;
     }
 
-    bool update(tvg::Canvas* canvas, uint32_t elapsed) override
+    bool update(tvg::Canvas* canvas, tvg::Scene* root, uint32_t elapsed) override
     {
         picture->scale(0.8f);
         picture->rotate(tvgexam::progress(elapsed, 4.0f) * 360.0f);

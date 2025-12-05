@@ -28,7 +28,7 @@
 
 struct UserExample : tvgexam::Example
 {
-    void blender(tvg::Canvas* canvas, const char* name, tvg::BlendMethod method, float x, float y, uint32_t* data)
+    void blender(tvg::Scene* root, const char* name, tvg::BlendMethod method, float x, float y, uint32_t* data)
     {
         auto text = tvg::Text::gen();
         text->font("Arial");
@@ -36,20 +36,20 @@ struct UserExample : tvgexam::Example
         text->text(name);
         text->fill(255, 255, 255);
         text->translate(x + 20, y);
-        canvas->push(text);
+        root->push(text);
 
         //solid
         {
             auto bottom = tvg::Shape::gen();
             bottom->appendRect(20.0f + x, 25.0f + y, 100.0f, 100.0f, 10.0f, 10.0f);
             bottom->fill(255, 255, 0);
-            canvas->push(bottom);
+            root->push(bottom);
 
             auto top = tvg::Shape::gen();
             top->appendRect(45.0f + x, 50.0f + y, 100.0f, 100.0f, 10.0f, 10.0f);
             top->fill(0, 255, 255);
             top->blend(method);
-            canvas->push(top);
+            root->push(top);
         }
 
         //solid (half transparent)
@@ -57,13 +57,13 @@ struct UserExample : tvgexam::Example
             auto bottom = tvg::Shape::gen();
             bottom->appendRect(170.0f + x, 25.0f + y, 100.0f, 100.0f, 10.0f, 10.0f);
             bottom->fill(255, 255, 0, 127);
-            canvas->push(bottom);
+            root->push(bottom);
 
             auto top = tvg::Shape::gen();
             top->appendRect(195.0f + x, 50.0f + y, 100.0f, 100.0f, 10.0f, 10.0f);
             top->fill(0, 255, 255, 127);
             top->blend(method);
-            canvas->push(top);
+            root->push(top);
         }
 
         //gradient blending
@@ -79,7 +79,7 @@ struct UserExample : tvgexam::Example
             auto bottom = tvg::Shape::gen();
             bottom->appendRect(325.0f + x, 25.0f + y, 100.0f, 100.0f, 10.0f, 10.0f);
             bottom->fill(fill);
-            canvas->push(bottom);
+            root->push(bottom);
 
             auto fill2 = tvg::LinearGradient::gen();
             fill2->linear(350.0f + x, 50.0f + y, 450.0f + x, 150.0f + y);
@@ -89,7 +89,7 @@ struct UserExample : tvgexam::Example
             top->appendRect(350.0f + x, 50.0f + y, 100.0f, 100.0f, 10.0f, 10.0f);
             top->fill(fill2);
             top->blend(method);
-            canvas->push(top);
+            root->push(top);
         }
 
         //image
@@ -98,13 +98,13 @@ struct UserExample : tvgexam::Example
             bottom->load(data, 200, 300, tvg::ColorSpace::ARGB8888, true);
             bottom->translate(475 + x, 25.0f + y);
             bottom->scale(0.35f);
-            canvas->push(bottom);
+            root->push(bottom);
 
             auto top = bottom->duplicate();
             top->translate(500.0f + x, 50.0f + y);
             top->rotate(-10.0f);
             top->blend(method);
-            canvas->push(top);
+            root->push(top);
         }
 
         //scene
@@ -113,12 +113,12 @@ struct UserExample : tvgexam::Example
             bottom->load(EXAMPLE_DIR"/svg/tiger.svg");
             bottom->translate(600.0f + x, 25.0f + y);
             bottom->scale(0.11f);
-            canvas->push(bottom);
+            root->push(bottom);
 
             auto top = bottom->duplicate();
             top->translate(625.0f + x, 50.0f + y);
             top->blend(method);
-            canvas->push(top);
+            root->push(top);
         }
 
         //scene (half transparent)
@@ -128,17 +128,17 @@ struct UserExample : tvgexam::Example
             bottom->translate(750.0f + x, 25.0f + y);
             bottom->scale(0.11f);
             bottom->opacity(127);
-            canvas->push(bottom);
+            root->push(bottom);
 
             auto top = bottom->duplicate();
             top->translate(775.0f + x, 50.0f + y);
             top->blend(method);
-            canvas->push(top);
+            root->push(top);
         }
     }
 
 
-    bool content(tvg::Canvas* canvas, uint32_t w, uint32_t h) override
+    bool content(tvg::Canvas* canvas, tvg::Scene* root, uint32_t w, uint32_t h) override
     {
         if (!tvgexam::verify(tvg::Text::load(EXAMPLE_DIR"/font/Arial.ttf"))) return false;
 
@@ -150,24 +150,24 @@ struct UserExample : tvgexam::Example
         file.read(reinterpret_cast<char *>(data), sizeof (uint32_t) * 200 * 300);
         file.close();
 
-        blender(canvas, "Normal", tvg::BlendMethod::Normal, 0.0f, 0.0f, data);
-        blender(canvas, "Multiply", tvg::BlendMethod::Multiply, 0.0f, 150.0f, data);
-        blender(canvas, "Screen", tvg::BlendMethod::Screen, 0.0f, 300.0f, data);
-        blender(canvas, "Overlay", tvg::BlendMethod::Overlay, 0.0f, 450.0f, data);
-        blender(canvas, "Darken", tvg::BlendMethod::Darken, 0.f, 600.0f, data);
-        blender(canvas, "Lighten", tvg::BlendMethod::Lighten, 0.0f, 750.0f, data);
-        blender(canvas, "ColorDodge", tvg::BlendMethod::ColorDodge, 0.0f, 900.0f, data);
-        blender(canvas, "ColorBurn", tvg::BlendMethod::ColorBurn, 0.0f, 1050.0f, data);
-        blender(canvas, "HardLight", tvg::BlendMethod::HardLight, 0.0f, 1200.0f, data);
+        blender(root, "Normal", tvg::BlendMethod::Normal, 0.0f, 0.0f, data);
+        blender(root, "Multiply", tvg::BlendMethod::Multiply, 0.0f, 150.0f, data);
+        blender(root, "Screen", tvg::BlendMethod::Screen, 0.0f, 300.0f, data);
+        blender(root, "Overlay", tvg::BlendMethod::Overlay, 0.0f, 450.0f, data);
+        blender(root, "Darken", tvg::BlendMethod::Darken, 0.f, 600.0f, data);
+        blender(root, "Lighten", tvg::BlendMethod::Lighten, 0.0f, 750.0f, data);
+        blender(root, "ColorDodge", tvg::BlendMethod::ColorDodge, 0.0f, 900.0f, data);
+        blender(root, "ColorBurn", tvg::BlendMethod::ColorBurn, 0.0f, 1050.0f, data);
+        blender(root, "HardLight", tvg::BlendMethod::HardLight, 0.0f, 1200.0f, data);
 
-        blender(canvas, "SoftLight", tvg::BlendMethod::SoftLight, 900.0f, 0.0f, data);
-        blender(canvas, "Difference", tvg::BlendMethod::Difference, 900.0f, 150.0f, data);
-        blender(canvas, "Exclusion", tvg::BlendMethod::Exclusion, 900.0f, 300.0f, data);
-        blender(canvas, "Hue", tvg::BlendMethod::Hue, 900.0f, 450.0f, data);
-        blender(canvas, "Saturation", tvg::BlendMethod::Saturation, 900.0f, 600.0f, data);
-        blender(canvas, "Color", tvg::BlendMethod::Color, 900.0f, 750.0f, data);
-        blender(canvas, "Luminosity", tvg::BlendMethod::Luminosity, 900.0f, 900.0f, data);
-        blender(canvas, "Add", tvg::BlendMethod::Add, 900.0f, 1050.0f, data);
+        blender(root, "SoftLight", tvg::BlendMethod::SoftLight, 900.0f, 0.0f, data);
+        blender(root, "Difference", tvg::BlendMethod::Difference, 900.0f, 150.0f, data);
+        blender(root, "Exclusion", tvg::BlendMethod::Exclusion, 900.0f, 300.0f, data);
+        blender(root, "Hue", tvg::BlendMethod::Hue, 900.0f, 450.0f, data);
+        blender(root, "Saturation", tvg::BlendMethod::Saturation, 900.0f, 600.0f, data);
+        blender(root, "Color", tvg::BlendMethod::Color, 900.0f, 750.0f, data);
+        blender(root, "Luminosity", tvg::BlendMethod::Luminosity, 900.0f, 900.0f, data);
+        blender(root, "Add", tvg::BlendMethod::Add, 900.0f, 1050.0f, data);
 
         free(data);
 

@@ -30,7 +30,7 @@ struct UserExample : tvgexam::Example
 {
     tvg::Picture* picture = nullptr;
 
-    bool content(tvg::Canvas* canvas, uint32_t w, uint32_t h) override
+    bool content(tvg::Canvas* canvas, tvg::Scene* root, uint32_t w, uint32_t h) override
     {
         //Original
         picture = tvg::Picture::gen();
@@ -41,12 +41,12 @@ struct UserExample : tvgexam::Example
         picture->translate(w/2, h/2);
         picture->scale(1.5f);
 
-        canvas->push(picture);
+        root->push(picture);
 
         return true;
     }
 
-    bool update(tvg::Canvas* canvas, uint32_t elapsed) override
+    bool update(tvg::Canvas* canvas, tvg::Scene* root, uint32_t elapsed) override
     {
         auto progress = tvgexam::progress(elapsed, 3.0f, true);  //play time 3 secs.
 

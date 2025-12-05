@@ -28,7 +28,7 @@
 
 struct UserExample : tvgexam::Example
 {
-    bool content(tvg::Canvas* canvas, uint32_t w, uint32_t h) override
+    bool content(tvg::Canvas* canvas, tvg::Scene* root, uint32_t w, uint32_t h) override
     {
         //Create a Scene
         auto scene = tvg::Scene::gen();
@@ -93,7 +93,7 @@ struct UserExample : tvgexam::Example
         scene->push(scene2);
 
         //Draw the Scene onto the Canvas
-        canvas->push(scene);
+        root->push(scene);
 
         return true;
     }

@@ -28,20 +28,19 @@
 
 struct UserExample : tvgexam::Example
 {
-    bool content(tvg::Canvas* canvas, uint32_t w, uint32_t h) override
+    bool content(tvg::Canvas* canvas, tvg::Scene* root, uint32_t w, uint32_t h) override
     {
         //Shape
         auto shape = tvg::Shape::gen();
         shape->appendRect(-100, -100, 200, 200);
-        shape->fill(255, 255, 255);
-        canvas->push(shape);
+        root->push(shape);
 
         return true;
     }
 
-    bool update(tvg::Canvas* canvas, uint32_t elapsed) override
+    bool update(tvg::Canvas* canvas, tvg::Scene* root, uint32_t elapsed) override
     {
-        if (!tvgexam::verify(canvas->remove())) return false;
+        root->remove();
 
         auto progress = tvgexam::progress(elapsed, 2.0f, true);  //play time 2 sec.
 
@@ -53,7 +52,7 @@ struct UserExample : tvgexam::Example
         shape->scale(1.0f - 0.75f * progress);
         shape->rotate(360.0f * progress);
 
-        canvas->push(shape);
+        root->push(shape);
 
         return true;
     }

@@ -28,7 +28,7 @@
 
 struct UserExample : tvgexam::Example
 {
-    bool content(tvg::Canvas* canvas, uint32_t w, uint32_t h) override
+    bool content(tvg::Canvas* canvas, tvg::Scene* root, uint32_t w, uint32_t h) override
     {
         //Prepare Round Rectangle
         auto shape1 = tvg::Shape::gen();
@@ -46,7 +46,7 @@ struct UserExample : tvgexam::Example
         fill->colorStops(colorStops, 2);
 
         shape1->fill(fill);
-        canvas->push(shape1);
+        root->push(shape1);
 
         //Prepare Circle
         auto shape2 = tvg::Shape::gen();
@@ -65,7 +65,7 @@ struct UserExample : tvgexam::Example
         fill2->colorStops(colorStops2, 3);
 
         shape2->fill(fill2);
-        canvas->push(shape2);
+        root->push(shape2);
 
         //Prepare Ellipse
         auto shape3 = tvg::Shape::gen();
@@ -85,7 +85,7 @@ struct UserExample : tvgexam::Example
         fill3->colorStops(colorStops3, 4);
 
         shape3->fill(fill3);
-        canvas->push(shape3);
+        root->push(shape3);
 
         return true;
     }

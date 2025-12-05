@@ -41,18 +41,18 @@ struct UserExample : tvgexam::Example
 
     uint32_t w, h;
 
-    bool content(tvg::Canvas* canvas, uint32_t w, uint32_t h) override
+    bool content(tvg::Canvas* canvas, tvg::Scene* root, uint32_t w, uint32_t h) override
     {
         srand(100);
 
         auto city = tvg::Picture::gen();
         city->load(EXAMPLE_DIR"/image/particle.jpg");
-        canvas->push(city);
+        root->push(city);
 
         auto cloud1 = tvg::Picture::gen();
         cloud1->load(EXAMPLE_DIR"/image/clouds.png");
         cloud1->opacity(60);
-        canvas->push(cloud1);
+        root->push(cloud1);
 
         float size;
         cloud1->size(&size, nullptr);
@@ -61,21 +61,21 @@ struct UserExample : tvgexam::Example
         auto cloud2 = cloud1->duplicate();
         cloud2->opacity(30);
         cloud2->translate(400, 100);
-        canvas->push(cloud2);
+        root->push(cloud2);
 
         clouds.push_back({cloud2, 400, 100, 0.125f, size});
 
         auto cloud3 = cloud1->duplicate();
         cloud3->opacity(20);
         cloud3->translate(1200, 200);
-        canvas->push(cloud3);
+        root->push(cloud3);
 
         clouds.push_back({cloud3, 1200, 200, 0.075f, size});
 
         auto darkness = tvg::Shape::gen();
         darkness->appendRect(0, 0, w, h);
         darkness->fill(0, 0, 0, 150);
-        canvas->push(darkness);
+        root->push(darkness);
 
         //rain drops
         size = w / COUNT;
@@ -87,7 +87,7 @@ struct UserExample : tvgexam::Example
             raindrops.push_back({shape, x, float(rand()%h), 10 + float(rand() % 100) * 0.1f, 0 /* unused */});
             shape->appendRect(0, 0, 1, rand() % 15 + size);
             shape->fill(255, 255, 255, 55 + rand() % 100);
-            canvas->push(shape);
+            root->push(shape);
         }
 
         this->w = w;
@@ -96,7 +96,7 @@ struct UserExample : tvgexam::Example
         return true;
     }
 
-    bool update(tvg::Canvas* canvas, uint32_t elapsed) override
+    bool update(tvg::Canvas* canvas, tvg::Scene* root, uint32_t elapsed) override
     {
         for (auto& p : raindrops) {
             p.y += p.speed;

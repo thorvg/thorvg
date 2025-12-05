@@ -30,7 +30,7 @@ struct UserExample : tvgexam::Example
 {
     tvg::Point size = {230.0f, 120.0f};
 
-    void guide(tvg::Canvas* canvas, const char* title, float x, float y)
+    void guide(tvg::Scene* root, const char* title, float x, float y)
     {
         auto txt = tvg::Text::gen();
         txt->font("NOTO-SANS-KR");
@@ -38,16 +38,16 @@ struct UserExample : tvgexam::Example
         txt->size(12);
         txt->text(title);
         txt->fill(200, 200, 200);
-        canvas->push(txt);
+        root->push(txt);
 
         auto lines = tvg::Shape::gen();
         lines->strokeFill(100, 100, 100);
         lines->strokeWidth(1);
         lines->appendRect(x, y + 30.0f, size.x, size.y);
-        canvas->push(lines);
+        root->push(lines);
     }
 
-    void text(tvg::Canvas* canvas, const char* content, const tvg::Point& pos, const tvg::Point& align, tvg::TextWrap wrapMode)
+    void text(tvg::Scene* root, const char* content, const tvg::Point& pos, const tvg::Point& align, tvg::TextWrap wrapMode)
     {
         auto txt = tvg::Text::gen();
         txt->font("NOTO-SANS-KR");
@@ -58,52 +58,52 @@ struct UserExample : tvgexam::Example
         txt->align(align.x, align.y);
         txt->wrap(wrapMode);
         txt->fill(255, 255, 255);
-        canvas->push(txt);
+        root->push(txt);
     }
 
-    bool content(tvg::Canvas* canvas, uint32_t w, uint32_t h) override
+    bool content(tvg::Canvas* canvas, tvg::Scene* root, uint32_t w, uint32_t h) override
     {
         if (!tvgexam::verify(tvg::Text::load(EXAMPLE_DIR"/font/NOTO-SANS-KR.ttf"))) return false;
 
         auto character = "TextWrap::Character";
-        guide(canvas, character, 25.0f, 25.0f);
-        text(canvas, "This is a lengthy text used to test line wrapping with top-left.", {25.0f, 25.0f}, {0.0f, 0.0f}, tvg::TextWrap::Character);
+        guide(root, character, 25.0f, 25.0f);
+        text(root, "This is a lengthy text used to test line wrapping with top-left.", {25.0f, 25.0f}, {0.0f, 0.0f}, tvg::TextWrap::Character);
 
-        guide(canvas, character, 290.0f, 25.0f);
-        text(canvas, "This is a lengthy text used to test line wrapping with middle-center.", {290.0f, 25.0f}, {0.5f, 0.5f}, tvg::TextWrap::Character);
+        guide(root, character, 290.0f, 25.0f);
+        text(root, "This is a lengthy text used to test line wrapping with middle-center.", {290.0f, 25.0f}, {0.5f, 0.5f}, tvg::TextWrap::Character);
 
-        guide(canvas, character, 550.0f, 25.0f);
-        text(canvas, "This is a lengthy text used to test line wrapping with bottom-right.", {550.0f, 25.0f}, {1.0f, 1.0f}, tvg::TextWrap::Character);
+        guide(root, character, 550.0f, 25.0f);
+        text(root, "This is a lengthy text used to test line wrapping with bottom-right.", {550.0f, 25.0f}, {1.0f, 1.0f}, tvg::TextWrap::Character);
 
         auto word = "TextWrap::Word";
-        guide(canvas, word, 25.0f, 195.0f);
-        text(canvas, "An extreame-long-length-word to test with top-left.", {25.0f, 195.0f}, {0.0f, 0.0f}, tvg::TextWrap::Word);
+        guide(root, word, 25.0f, 195.0f);
+        text(root, "An extreame-long-length-word to test with top-left.", {25.0f, 195.0f}, {0.0f, 0.0f}, tvg::TextWrap::Word);
 
-        guide(canvas, word, 290.0f, 195.0f);
-        text(canvas, "An extreame-long-length-word to test with middle-center.", {290.0f, 195.0f}, {0.5f, 0.5f}, tvg::TextWrap::Word);
+        guide(root, word, 290.0f, 195.0f);
+        text(root, "An extreame-long-length-word to test with middle-center.", {290.0f, 195.0f}, {0.5f, 0.5f}, tvg::TextWrap::Word);
 
-        guide(canvas, word, 550.0f, 195.0f);
-        text(canvas, "An extreame-long-length-word to test with bottom-right.", {550.0f, 195.0f}, {1.0f, 1.0f}, tvg::TextWrap::Word);
+        guide(root, word, 550.0f, 195.0f);
+        text(root, "An extreame-long-length-word to test with bottom-right.", {550.0f, 195.0f}, {1.0f, 1.0f}, tvg::TextWrap::Word);
 
         auto smart = "TextWrap::Smart";
-        guide(canvas, smart, 25.0f, 365.0f);
-        text(canvas, "An extreame-long-length-word to test with top-left.", {25.0f, 365.0f}, {0.0f, 0.0f}, tvg::TextWrap::Smart);
+        guide(root, smart, 25.0f, 365.0f);
+        text(root, "An extreame-long-length-word to test with top-left.", {25.0f, 365.0f}, {0.0f, 0.0f}, tvg::TextWrap::Smart);
 
-        guide(canvas, smart, 290.0f, 365.0f);
-        text(canvas, "An extreame-long-length-word to test with middle-center.", {290.0f, 365.0f}, {0.5f, 0.5f}, tvg::TextWrap::Smart);
+        guide(root, smart, 290.0f, 365.0f);
+        text(root, "An extreame-long-length-word to test with middle-center.", {290.0f, 365.0f}, {0.5f, 0.5f}, tvg::TextWrap::Smart);
 
-        guide(canvas, smart, 550.0f, 365.0f);
-        text(canvas, "An extreame-long-length-word to test with bottom-right.", {550.0f, 365.0f}, {1.0f, 1.0f}, tvg::TextWrap::Smart);
+        guide(root, smart, 550.0f, 365.0f);
+        text(root, "An extreame-long-length-word to test with bottom-right.", {550.0f, 365.0f}, {1.0f, 1.0f}, tvg::TextWrap::Smart);
 
         auto ellipsis = "TextWrap::Ellipsis";
-        guide(canvas, ellipsis, 25.0f, 535.0f);
-        text(canvas, "This is a lengthy text used to test line wrapping with top-left.", {25.0f, 535.0f}, {0.0f, 0.0f}, tvg::TextWrap::Ellipsis);
+        guide(root, ellipsis, 25.0f, 535.0f);
+        text(root, "This is a lengthy text used to test line wrapping with top-left.", {25.0f, 535.0f}, {0.0f, 0.0f}, tvg::TextWrap::Ellipsis);
 
-        guide(canvas, ellipsis, 290.0f, 535.0f);
-        text(canvas, "This is a lengthy text used to test line wrapping with middle-center.", {290.0f, 535.0f}, {0.5f, 0.5f}, tvg::TextWrap::Ellipsis);
+        guide(root, ellipsis, 290.0f, 535.0f);
+        text(root, "This is a lengthy text used to test line wrapping with middle-center.", {290.0f, 535.0f}, {0.5f, 0.5f}, tvg::TextWrap::Ellipsis);
 
-        guide(canvas, ellipsis, 550.0f, 535.0f);
-        text(canvas, "This is a lengthy text used to test line wrapping with bottom-right.", {550.0f, 535.0f}, {1.0f, 1.0f}, tvg::TextWrap::Ellipsis);
+        guide(root, ellipsis, 550.0f, 535.0f);
+        text(root, "This is a lengthy text used to test line wrapping with bottom-right.", {550.0f, 535.0f}, {1.0f, 1.0f}, tvg::TextWrap::Ellipsis);
 
         return true;
     }

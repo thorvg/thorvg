@@ -67,8 +67,8 @@ struct Example
 {
     uint32_t elapsed = 0;
 
-    virtual bool content(tvg::Canvas* canvas, uint32_t w, uint32_t h) = 0;
-    virtual bool update(tvg::Canvas* canvas, uint32_t elapsed) { return false; }
+    virtual bool content(tvg::Canvas* canvas, tvg::Scene* root, uint32_t w, uint32_t h) = 0;
+    virtual bool update(tvg::Canvas* canvas, tvg::Scene* root, uint32_t elapsed) { return false; }
     virtual bool clickdown(tvg::Canvas* canvas, int32_t x, int32_t y) { return false; }
     virtual bool clickup(tvg::Canvas* canvas, int32_t x, int32_t y) { return false; }
     virtual bool motion(tvg::Canvas* canvas, int32_t x, int32_t y) { return false; }
@@ -142,6 +142,10 @@ struct Window
     tvg::Canvas* canvas = nullptr;
     uint32_t width;
     uint32_t height;
+    uint32_t initWidth;
+    uint32_t initHeight;
+    tvg::Scene* root = nullptr;
+    tvg::Shape* bg = nullptr;
     uint32_t stime;    //start time tick
     double mfps = 0;   //mean fps
 
@@ -164,8 +168,15 @@ struct Window
         this->stime = SDL_GetTicks();
         this->width = width;
         this->height = height;
+        this->initWidth = width;
+        this->initHeight = height;
         this->example = example;
         this->initialized = true;
+
+        this->root = tvg::Scene::gen();
+
+        this->bg = tvg::Shape::gen();
+        this->bg->fill(0, 0, 0);
     }
 
     virtual ~Window()
@@ -195,10 +206,14 @@ struct Window
     bool ready()
     {
         if (!canvas) return false;
+        
+        canvas->push(bg);
+        canvas->push(root);
 
-        if (!example->content(canvas, width, height)) return false;
+        if (!example->content(canvas, root, width, height)) return false;
 
         //initiate the first rendering before window pop-up.
+        resize();
         if (!verify(canvas->draw())) return false;
         if (!verify(canvas->sync())) return false;
 
@@ -291,7 +306,7 @@ struct Window
             }
 
             if (tickCnt > 0) {
-                needDraw |= example->update(canvas, example->elapsed);
+                needDraw |= example->update(canvas, root, example->elapsed);
             }
 
             if (needDraw) {
@@ -308,7 +323,23 @@ struct Window
         }
     }
 
-    virtual void resize() {}
+    virtual void resize()
+    {
+        if (bg) {
+            bg->reset();
+            bg->appendRect(0, 0, width, height);
+        }
+
+        if (root) {
+            auto scale = 1.0f;
+            if (width > height) scale = (float)height / (float)initHeight;
+            else scale = (float)width / (float)initWidth;
+
+            root->scale(scale);
+            root->translate((width - initWidth * scale) * 0.5f, (height - initHeight * scale) * 0.5f);
+        }
+    }
+
     virtual void refresh() {}
 };
 
@@ -337,6 +368,7 @@ struct SwWindow : Window
 
     void resize() override
     {
+        Window::resize();
         auto surface = SDL_GetWindowSurface(window);
         if (!surface) return;
 
@@ -396,6 +428,7 @@ struct GlWindow : Window
 
     void resize() override
     {
+        Window::resize();
         //Set the canvas target and draw on it.
         verify(static_cast<tvg::GlCanvas*>(canvas)->target(context, 0, width, height, tvg::ColorSpace::ABGR8888S));
     }
@@ -507,6 +540,7 @@ struct WgWindow : Window
 
     void resize() override
     {
+        Window::resize();
         //Set the canvas target and draw on it.
         verify(static_cast<tvg::WgCanvas*>(canvas)->target(device, instance, surface, width, height, tvg::ColorSpace::ABGR8888S));
     }
