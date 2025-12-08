@@ -32,7 +32,7 @@ struct UserExample : tvgexam::Example
     vector<unique_ptr<tvg::LottieAnimation>> slots;
     unique_ptr<tvg::LottieAnimation> marker;
     unique_ptr<tvg::LottieAnimation> resolver[2];  //picture, text
-    uint32_t w, h;
+    uint32_t initWidth, initHeight;
     uint32_t size;
 
     void sizing(tvg::Picture* picture, uint32_t counter)
@@ -43,10 +43,10 @@ struct UserExample : tvgexam::Example
         float w, h;
         picture->size(&w, &h);
         picture->scale((w > h) ? size / w : size / h);
-        picture->translate((counter % NUM_PER_ROW) * size + size / 2, (counter / NUM_PER_ROW) * (this->h / NUM_PER_COL) + size / 2);
+        picture->translate((counter % NUM_PER_ROW) * size + size / 2, (counter / NUM_PER_ROW) * (this->initHeight / NUM_PER_COL) + size / 2);
     }
 
-    bool update(tvg::Canvas* canvas, uint32_t elapsed) override
+    bool update(tvg::Canvas* canvas, uint32_t elapsed, uint32_t width, uint32_t height) override
     {
         //slots
         for (auto& slot : slots) {
@@ -76,8 +76,8 @@ struct UserExample : tvgexam::Example
         bg->fill(75, 75, 75);
         canvas->push(bg);
 
-        this->w = w;
-        this->h = h;
+        this->initWidth = w;
+        this->initHeight = h;
         this->size = w / NUM_PER_ROW;
 
         //slot (default)

@@ -93,7 +93,7 @@ struct UserExample : tvgexam::Example
         return true;
     }
 
-    bool update(tvg::Canvas* canvas, uint32_t elapsed) override
+    bool update(tvg::Canvas* canvas, uint32_t elapsed, uint32_t width, uint32_t height) override
     {
         auto progress = tvgexam::progress(elapsed, 2.5f, true);   //2.5 seconds
 

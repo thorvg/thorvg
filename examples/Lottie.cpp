@@ -32,7 +32,7 @@
 struct UserExample : tvgexam::Example
 {
     std::vector<unique_ptr<tvg::Animation>> animations;
-    uint32_t w, h;
+    uint32_t initWidth, initHeight;
     uint32_t size;
 
     int counter = 0;
@@ -56,7 +56,7 @@ struct UserExample : tvgexam::Example
         float w, h;
         picture->size(&w, &h);
         picture->scale((w > h) ? size / w : size / h);
-        picture->translate((counter % NUM_PER_ROW) * size + size / 2, (counter / NUM_PER_ROW) * (this->h / NUM_PER_COL) + size / 2);
+        picture->translate((counter % NUM_PER_ROW) * size + size / 2, (counter / NUM_PER_ROW) * (this->initHeight / NUM_PER_COL) + size / 2);
 
         animations.push_back(unique_ptr<tvg::Animation>(animation));
 
@@ -65,7 +65,7 @@ struct UserExample : tvgexam::Example
         counter++;
     }
 
-    bool update(tvg::Canvas* canvas, uint32_t elapsed) override
+    bool update(tvg::Canvas* canvas, uint32_t elapsed, uint32_t width, uint32_t height) override
     {
         for (auto& animation : animations) {
             auto progress = tvgexam::progress(elapsed, animation->duration());
@@ -88,8 +88,8 @@ struct UserExample : tvgexam::Example
         shape->fill(75, 75, 75);
         canvas->push(shape);
 
-        this->w = w;
-        this->h = h;
+        this->initWidth = w;
+        this->initHeight = h;
         this->size = w / NUM_PER_ROW;
 
         this->scandir(EXAMPLE_DIR"/lottie");

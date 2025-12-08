@@ -68,7 +68,7 @@ struct Example
     uint32_t elapsed = 0;
 
     virtual bool content(tvg::Canvas* canvas, uint32_t w, uint32_t h) = 0;
-    virtual bool update(tvg::Canvas* canvas, uint32_t elapsed) { return false; }
+    virtual bool update(tvg::Canvas* canvas, uint32_t elapsed, uint32_t width, uint32_t height) { return false; }
     virtual bool clickdown(tvg::Canvas* canvas, int32_t x, int32_t y) { return false; }
     virtual bool clickup(tvg::Canvas* canvas, int32_t x, int32_t y) { return false; }
     virtual bool motion(tvg::Canvas* canvas, int32_t x, int32_t y) { return false; }
@@ -291,7 +291,7 @@ struct Window
             }
 
             if (tickCnt > 0) {
-                needDraw |= example->update(canvas, example->elapsed);
+                needDraw |= example->update(canvas, example->elapsed, width, height);
             }
 
             if (needDraw) {

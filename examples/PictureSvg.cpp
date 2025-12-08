@@ -28,6 +28,10 @@
 
 struct UserExample : tvgexam::Example
 {
+    tvg::Scene* root = tvg::Scene::gen();
+    uint32_t initWidth, initHeight;
+    uint32_t beforeWidth = 0, beforeHeight = 0;
+
     bool content(tvg::Canvas* canvas, uint32_t w, uint32_t h) override
     {
         //The default font for fallback in case
@@ -43,7 +47,7 @@ struct UserExample : tvgexam::Example
             picture->rotate(30 * i);
             picture->size(200, 200);
             picture->opacity(opacity + opacity * i);
-            canvas->push(picture);
+            root->push(picture);
         }
 
         //Open file manually
@@ -63,8 +67,28 @@ struct UserExample : tvgexam::Example
         free(data);
         picture->translate(400, 0);
         picture->scale(0.4);
-        canvas->push(picture);
+        root->push(picture);
 
+        canvas->push(root);
+
+        beforeWidth = initWidth = w;
+        beforeHeight = initHeight = h;
+        return true;
+    }
+
+    bool update(tvg::Canvas* canvas, uint32_t elapsed, uint32_t width, uint32_t height) override
+    {
+        if (beforeWidth == width && beforeHeight == height) return false;
+
+        auto scale = 1.0f;
+        if (width > height) scale = (float)height / (float)initHeight;
+        else scale = (float)width / (float)initWidth;
+
+        root->scale(scale);
+        root->translate((width - initWidth * scale) * 0.5f, (height - initHeight * scale) * 0.5f);
+
+        beforeWidth = width;
+        beforeHeight = height;
         return true;
     }
 };
