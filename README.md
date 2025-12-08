@@ -129,9 +129,6 @@ ThorVG is designed to be portable across a wide range of devices, including smal
     - [Build and Install](#build-and-install)
     - [Build with Visual Studio](#build-with-visual-studio)
     - [Build with Xcode](#build-with-xcode)
-    - [Install with Conan](#install-with-conan)
-    - [Install with MSYS2](#install-with-msys2)
-    - [Install with vcpkg](#install-with-vcpkg)
   - [Quick Start](#quick-start)
   - [SVG](#svg)
   - [Lottie](#lottie)
@@ -146,14 +143,15 @@ ThorVG is designed to be portable across a wide range of devices, including smal
     - [TinyPiXOS](#tinypixos)
     - [Tizen](#tizen)
   - [Interactive App](#interactive-app)
-  - [References](#references)
-  - [Documentation](#documentation)
   - [Examples](#examples)    
   - [Tools](#tools)
     - [ThorVG Viewer](#thorvg-viewer)
     - [Lottie to GIF](#lottie-to-gif)
     - [SVG to PNG](#svg-to-png)
+  - [Related Projects](#related-projects)
   - [API Bindings](#api-bindings)
+  - [Documentation](#documentation)
+  - [References](#references) 
   - [Dependencies](#dependencies)
   - [Contributors](#contributors)
   - [Partners](#partners)
@@ -191,48 +189,6 @@ meson setup builddir --backend=vs
 If you want to create Xcode project files, use the command `--backend=xcode`. The resulting solution file `thorvg.xcodeproj` will be located in the build folder.
 ```
 meson setup builddir --backend=xcode
-```
-
-### Install with Conan
-You can download and install pre-packaged ThorVG using the [Conan](https://conan.io/) package manager.
-
-Follow the instructions on [this page on how to set up Conan](https://conan.io/downloads).
-
-Install the ThorVG package:
-
-```
-conan install --requires="thorvg/[*]" --build=missing
-```
-
-### Install with MSYS2
-You can download and install pre-packaged ThorVG using the [MSYS2](https://www.msys2.org/) package manager.
-
-Download and execute the MSYS2 installer on the web page above and follow the steps. When done, just launch one of the terminals in the start menu, according to the architecture and compiler you want (either 32 or 64 bits, with MSVCRT or UCRT library). Then you can install the ThorVG package :
-
-```
-pacman -S thorvg
-```
-
-To update to a newer release (and update all the packages, which is preferable), run :
-
-```
-pacman -Syu
-```
-
-### Install with vcpkg
-You can download and install pre-packaged ThorVG using the [vcpkg](https://vcpkg.io/en/index.html) package manager.
-
-Clone the vcpkg repo. Make sure you are in the directory you want the tool installed to before doing this.
-```
-git clone https://github.com/Microsoft/vcpkg.git
-```
-Run the bootstrap script to build the vcpkg.
-```
-./bootstrap-vcpkg.sh
-```
-Install the ThorVG package.
-```
-./vcpkg install thorvg
 ```
 
 [Back to contents](#contents)
@@ -412,7 +368,7 @@ Let's suppose the progress variable determines the position of the animation, ra
   <img width="600" height="auto" src="https://github.com/thorvg/thorvg.site/blob/main/readme/example_lottie.gif">
 </p>
 
-Please check out the [ThorVG Test App](https://thorvg-perf-test.vercel.app/) to see the performance of various Lottie animations powered by ThorVG. If you're working on the frontend, you can also download the ThorVG npm package [here](https://www.npmjs.com/package/@thorvg/lottie-player). 
+Please check out the [ThorVG Test App](https://thorvg-perf-test.vercel.app/) to see the performance of various Lottie animations powered by ThorVG. If you're working on the frontend, you can also download the ThorVG npm package [here](https://www.npmjs.com/package/@thorvg/lottie-player).</br>
 
 [Back to contents](#contents)
 <br />
@@ -502,21 +458,6 @@ Check out [Thor Janitor](https://github.com/thorvg/thorvg.janitor), an interacti
 [Back to contents](#contents)
 <br />
 <br />
-## References
-- [Universal Motion Graphics across All Platforms: Unleashing Creativity with ThorVG](https://youtu.be/qhHMycRPQ9M?si=RXAag3Fxm8R7W_I0)
-- [Canva Enhances iOS Lottie Rendering: 80% Faster and 70% More Efficient with ThorVG](https://lottiefiles.com/blog/working-with-lottie-animations/canva-enhances-ios-rendering-faster-and-efficient-with-thorvg)
-
-[Back to contents](#contents)
-<br />
-<br />
-## Documentation
-The ThorVG API documentation is available at [thorvg.org/apis](https://www.thorvg.org/apis), and can also be found directly in this repository via the [C++ API](https://github.com/thorvg/thorvg/blob/main/inc/thorvg.h) and [C API](https://github.com/thorvg/thorvg/blob/main/src/bindings/capi/thorvg_capi.h). 
-
-For comprehensive and well-structured technical information, please visit the [DeepWiki](https://deepwiki.com/thorvg/thorvg), which offers in-depth guidance on ThorVG's architecture, features, and usage.
-
-[Back to contents](#contents)
-<br />
-<br />
 ## Examples
 There are plenty of sample code in `thorvg/examples` to help you in understanding the ThorVG APIs.
 
@@ -535,7 +476,7 @@ Alternatively, you can read the official guidance [here](https://wiki.libsdl.org
 <br />
 ## Tools
 ### ThorVG Viewer
-ThorVG provides the resource verification tool for the ThorVG Engine. [ThorVG viewer](https://thorvg.github.io/thorvg.viewer/) does immediate rendering via web browser running on the ThorVG web-assembly binary, allowing real-time editing of the vector elements on it. It doesn't upload your resources to any external server while allowing to export to supported formats such as GIF, so the designer resource copyright is protected.</br>
+ThorVG provides a resource verification tool for the ThorVG engine. The [ThorVG viewer](https://thorvg.github.io/thorvg.viewer/) enables instant rendering directly in the web browser using the ThorVG WebAssembly binary, allowing real-time editing of vector elements. It does not upload your resources to any external server and supports exporting to formats such as GIF, ensuring that designer copyrights remain protected.</br>
 </br>
 
 <p align="center">
@@ -609,6 +550,21 @@ Examples:
 [Back to contents](#contents)
 <br />
 <br />
+## Related Projects
+ThorVG is designed to be portable and extensible across various platforms. The following projects integrate ThorVG into specific environments or tools: </br >
+
+* [ThorVG Android](https://github.com/thorvg/thorvg.android) – Kotlin-based ThorVG support for Android.
+* [ThorVG Flutter](https://github.com/thorvg/thorvg.flutter) - A Flutter plugin for using ThorVG on Android and iOS.
+* [ThorVG Janitor](https://github.com/thorvg/thorvg.janitor) - A demo game showcasing ThorVG’s real-time rendering features.
+* [ThorVG Unity](https://github.com/thorvg/thorvg.unity) – ThorVG integration for Unity using C#.
+* [ThorVG Swift](https://github.com/thorvg/thorvg.swift) - Swift bindings for rendering vector graphics with ThorVG.
+* [ThorVG Viewer](https://github.com/thorvg/thorvg.viewer) - A browser-based viewer for ThorVG using WebAssembly.
+* [ThorVG Web](https://github.com/thorvg/thorvg.web) - WebAssembly-based integration of ThorVG for web apps.
+
+[Back to contents](#contents)
+<br />
+<br />
+
 ## API Bindings
 Our main development APIs are written in C++, but ThorVG also provides API bindings for C.
 
@@ -616,6 +572,21 @@ To enable CAPI binding, you need to activate this feature in the build options:
 ```
 meson setup builddir -Dbindings="capi"
 ```
+[Back to contents](#contents)
+<br />
+<br />
+## Documentation
+The ThorVG API documentation is available at [thorvg.org/apis](https://www.thorvg.org/apis), and can also be found directly in this repository via the [C++ API](https://github.com/thorvg/thorvg/blob/main/inc/thorvg.h) and [C API](https://github.com/thorvg/thorvg/blob/main/src/bindings/capi/thorvg_capi.h). 
+
+For comprehensive and well-structured technical information, please visit the [DeepWiki](https://deepwiki.com/thorvg/thorvg), which offers in-depth guidance on ThorVG's architecture, features, and usage.
+
+[Back to contents](#contents)
+<br />
+<br />
+## References
+- [Universal Motion Graphics across All Platforms: Unleashing Creativity with ThorVG](https://youtu.be/qhHMycRPQ9M?si=RXAag3Fxm8R7W_I0)
+- [Canva Enhances iOS Lottie Rendering: 80% Faster and 70% More Efficient with ThorVG](https://lottiefiles.com/blog/working-with-lottie-animations/canva-enhances-ios-rendering-faster-and-efficient-with-thorvg)
+
 [Back to contents](#contents)
 <br />
 <br />
