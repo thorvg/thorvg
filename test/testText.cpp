@@ -48,13 +48,13 @@ TEST_CASE("Load TTF Data from a file", "[tvgText]")
         auto text = Text::gen();
         REQUIRE(text);
 
-        REQUIRE(Text::unload(TEST_DIR"/invalid.ttf") == tvg::Result::InsufficientCondition);
+        REQUIRE(Text::unload(TEST_DIR"/invalid.ttf") == Result::InsufficientCondition);
 
-        REQUIRE(Text::load(TEST_DIR"/Arial.ttf") == tvg::Result::Success);
-        REQUIRE(Text::load(TEST_DIR"/invalid.ttf") == tvg::Result::InvalidArguments);
-        REQUIRE(Text::unload(TEST_DIR"/Arial.ttf") == tvg::Result::Success);
-        REQUIRE(Text::load("") == tvg::Result::InvalidArguments);
-        REQUIRE(Text::load(TEST_DIR"/NanumGothicCoding.ttf") == tvg::Result::Success);
+        REQUIRE(Text::load(TEST_DIR"/Arial.ttf") == Result::Success);
+        REQUIRE(Text::load(TEST_DIR"/invalid.ttf") == Result::InvalidArguments);
+        REQUIRE(Text::unload(TEST_DIR"/Arial.ttf") == Result::Success);
+        REQUIRE(Text::load("") == Result::InvalidArguments);
+        REQUIRE(Text::load(TEST_DIR"/NanumGothicCoding.ttf") == Result::Success);
 
         Paint::rel(text);
     }
@@ -110,15 +110,15 @@ TEST_CASE("Text Font", "[tvgText]")
         auto text = Text::gen();
         REQUIRE(text);
 
-        REQUIRE(Text::load(TEST_DIR"/Arial.ttf") == tvg::Result::Success);
+        REQUIRE(Text::load(TEST_DIR"/Arial.ttf") == Result::Success);
 
-        REQUIRE(text->font("Arial") == tvg::Result::Success);
-        REQUIRE(text->size(80) == tvg::Result::Success);
-        REQUIRE(text->font("Arial") == tvg::Result::Success);
-        REQUIRE(text->size(1) == tvg::Result::Success);
-        REQUIRE(text->size(50) == tvg::Result::Success);
-        REQUIRE(text->font(nullptr) == tvg::Result::Success);
-        REQUIRE(text->font("InvalidFont") == tvg::Result::InsufficientCondition);
+        REQUIRE(text->font("Arial") == Result::Success);
+        REQUIRE(text->size(80) == Result::Success);
+        REQUIRE(text->font("Arial") == Result::Success);
+        REQUIRE(text->size(1) == Result::Success);
+        REQUIRE(text->size(50) == Result::Success);
+        REQUIRE(text->font(nullptr) == Result::Success);
+        REQUIRE(text->font("InvalidFont") == Result::InsufficientCondition);
 
         Paint::rel(text);
     }
@@ -136,16 +136,16 @@ TEST_CASE("Text Basic", "[tvgText]")
         auto text = Text::gen();
         REQUIRE(text);
 
-        REQUIRE(Text::load(TEST_DIR"/Arial.ttf") == tvg::Result::Success);
-        REQUIRE(text->font("Arial") == tvg::Result::Success);
-        REQUIRE(text->size(80) == tvg::Result::Success);
+        REQUIRE(Text::load(TEST_DIR"/Arial.ttf") == Result::Success);
+        REQUIRE(text->font("Arial") == Result::Success);
+        REQUIRE(text->size(80) == Result::Success);
 
-        REQUIRE(text->text(nullptr) == tvg::Result::Success);
-        REQUIRE(text->text("") == tvg::Result::Success);
-        REQUIRE(text->text("ABCDEFGHIJIKLMOPQRSTUVWXYZ") == tvg::Result::Success);
-        REQUIRE(text->text("THORVG Text") == tvg::Result::Success);
+        REQUIRE(text->text(nullptr) == Result::Success);
+        REQUIRE(text->text("") == Result::Success);
+        REQUIRE(text->text("ABCDEFGHIJIKLMOPQRSTUVWXYZ") == Result::Success);
+        REQUIRE(text->text("THORVG Text") == Result::Success);
 
-        REQUIRE(text->fill(255, 255, 255) == tvg::Result::Success);
+        REQUIRE(text->fill(255, 255, 255) == Result::Success);
 
         REQUIRE(canvas->push(text) == Result::Success);
     }
@@ -163,19 +163,18 @@ TEST_CASE("Text with composite glyphs", "[tvgText]")
         auto text = Text::gen();
         REQUIRE(text);
 
-        REQUIRE(Text::load(TEST_DIR"/Arial.ttf") == tvg::Result::Success);
-        REQUIRE(text->font("Arial") == tvg::Result::Success);
-        REQUIRE(text->size(80) == tvg::Result::Success);
+        REQUIRE(Text::load(TEST_DIR"/Arial.ttf") == Result::Success);
+        REQUIRE(text->font("Arial") == Result::Success);
+        REQUIRE(text->size(80) == Result::Success);
 
-        REQUIRE(text->text("\xc5\xbb\x6f\xc5\x82\xc4\x85\x64\xc5\xba \xc8\xab") == tvg::Result::Success);
+        REQUIRE(text->text("\xc5\xbb\x6f\xc5\x82\xc4\x85\x64\xc5\xba \xc8\xab") == Result::Success);
 
-        REQUIRE(text->fill(255, 255, 255) == tvg::Result::Success);
+        REQUIRE(text->fill(255, 255, 255) == Result::Success);
 
         REQUIRE(canvas->push(text) == Result::Success);
     }
     Initializer::term();
 }
-
 
 TEST_CASE("Text Styles", "[tvgText]")
 {
@@ -188,22 +187,84 @@ TEST_CASE("Text Styles", "[tvgText]")
         auto text = Text::gen();
         REQUIRE(text);
 
-        REQUIRE(Text::load(TEST_DIR"/Arial.ttf") == tvg::Result::Success);
-        REQUIRE(text->font("Arial") == tvg::Result::Success);
-        REQUIRE(text->size(80) == tvg::Result::Success);
+        REQUIRE(Text::load(TEST_DIR"/Arial.ttf") == Result::Success);
+        REQUIRE(text->font("Arial") == Result::Success);
+        REQUIRE(text->size(80) == Result::Success);
 
-        REQUIRE(text->text("\xc5\xbb\x6f\xc5\x82\xc4\x85\x64\xc5\xba \xc8\xab") == tvg::Result::Success);
+        REQUIRE(text->text("\xc5\xbb\x6f\xc5\x82\xc4\x85\x64\xc5\xba \xc8\xab") == Result::Success);
 
-        REQUIRE(text->fill(255, 255, 255) == tvg::Result::Success);
+        REQUIRE(text->fill(255, 255, 255) == Result::Success);
 
-        REQUIRE(text->outline(0, 0, 0, 0) == tvg::Result::Success);
-        REQUIRE(text->outline(3, 255, 255, 255) == tvg::Result::Success);
-        REQUIRE(text->outline(0, 0, 0, 0) == tvg::Result::Success);
+        REQUIRE(text->outline(0, 0, 0, 0) == Result::Success);
+        REQUIRE(text->outline(3, 255, 255, 255) == Result::Success);
+        REQUIRE(text->outline(0, 0, 0, 0) == Result::Success);
 
-        REQUIRE(text->italic(-10.0f) == tvg::Result::Success);
-        REQUIRE(text->italic(10000.0f) == tvg::Result::Success);
-        REQUIRE(text->italic(0.0) == tvg::Result::Success);
-        REQUIRE(text->italic(0.18f) == tvg::Result::Success);
+        REQUIRE(text->italic(-10.0f) == Result::Success);
+        REQUIRE(text->italic(10000.0f) == Result::Success);
+        REQUIRE(text->italic(0.0) == Result::Success);
+        REQUIRE(text->italic(0.18f) == Result::Success);
+
+        REQUIRE(canvas->push(text) == Result::Success);
+    }
+    Initializer::term();
+}
+
+TEST_CASE("Text Layout & Align", "[tvgText]")
+{
+    Initializer::init();
+    {
+        auto canvas = unique_ptr<SwCanvas>(SwCanvas::gen());
+        uint32_t buffer[100*100];
+        canvas->target(buffer, 100, 100, 100, ColorSpace::ARGB8888);
+
+        auto text = Text::gen();
+        REQUIRE(text);
+
+        REQUIRE(Text::load(TEST_DIR"/Arial.ttf") == Result::Success);
+        REQUIRE(text->font("Arial") == Result::Success);
+        REQUIRE(text->size(80) == Result::Success);
+        REQUIRE(text->text("\xc5\xbb\x6f\xc5\x82\xc4\x85\x64\xc5\xba \xc8\xab") == Result::Success);
+
+        REQUIRE(text->align(0.0f, 0.0f) == Result::Success);
+        REQUIRE(text->align(0.5f, 0.5f) == Result::Success);
+        REQUIRE(text->align(1.0f, 1.0f) == Result::Success);
+        REQUIRE(text->align(2.0f, 2.0f) == Result::Success);
+        REQUIRE(text->align(-1.0f, -1.0f) == Result::Success);
+
+        REQUIRE(text->layout(300, 300) == Result::Success);
+        REQUIRE(text->layout(0, 0) == Result::Success);
+        REQUIRE(text->layout(-100, -100) == Result::Success);
+
+        REQUIRE(text->wrap(TextWrap::Character) == Result::Success);
+        REQUIRE(text->wrap(TextWrap::Ellipsis) == Result::Success);
+        REQUIRE(text->wrap(TextWrap::None) == Result::Success);
+        REQUIRE(text->wrap(TextWrap::Smart) == Result::Success);
+        REQUIRE(text->wrap(TextWrap::Word) == Result::Success);
+
+        REQUIRE(canvas->push(text) == Result::Success);
+    }
+    Initializer::term();
+}
+
+TEST_CASE("Text Spacing", "[tvgText]")
+{
+    Initializer::init();
+    {
+        auto canvas = unique_ptr<SwCanvas>(SwCanvas::gen());
+        uint32_t buffer[100*100];
+        canvas->target(buffer, 100, 100, 100, ColorSpace::ARGB8888);
+
+        auto text = Text::gen();
+        REQUIRE(text);
+
+        REQUIRE(Text::load(TEST_DIR"/Arial.ttf") == Result::Success);
+        REQUIRE(text->font("Arial") == Result::Success);
+        REQUIRE(text->size(80) == Result::Success);
+        REQUIRE(text->text("\xc5\xbb\x6f\xc5\x82\xc4\x85\x64\xc5\xba \xc8\xab") == Result::Success);
+        REQUIRE(text->spacing(-1.0f, -1.0f) == Result::InvalidArguments);
+        REQUIRE(text->spacing(0.0f, 0.0f) == Result::Success);
+        REQUIRE(text->spacing(1.5f, 1.5f) == Result::Success);
+        REQUIRE(text->spacing(2.0f, 2.0f) == Result::Success);
 
         REQUIRE(canvas->push(text) == Result::Success);
     }

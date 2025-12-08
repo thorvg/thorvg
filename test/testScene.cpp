@@ -47,16 +47,19 @@ TEST_CASE("Pushing Paints Into Scene", "[tvgScene]")
 
     //Pushing Paints
     paints[0] = Shape::gen();
+    paints[0]->ref();
     REQUIRE(paints[0]->parent() == nullptr);
     REQUIRE(scene->push(paints[0]) == Result::Success);
     REQUIRE(paints[0]->parent() == scene);
 
     paints[1] = Picture::gen();
+    paints[1]->ref();
     REQUIRE(paints[1]->parent() == nullptr);
     REQUIRE(scene->push(paints[1]) == Result::Success);
     REQUIRE(paints[1]->parent() == scene);
 
     paints[2] = Picture::gen();
+    paints[2]->ref();
     REQUIRE(paints[2]->parent() == nullptr);
     REQUIRE(scene->push(paints[2]) == Result::Success);
     REQUIRE(paints[2]->parent() == scene);
@@ -66,6 +69,18 @@ TEST_CASE("Pushing Paints Into Scene", "[tvgScene]")
 
     //Pushing Invalid Paint
     REQUIRE(scene->push(nullptr) == Result::InvalidArguments);
+
+    REQUIRE(scene->remove(paints[0]) == Result::Success);
+    REQUIRE(scene->remove(paints[0]) == Result::InsufficientCondition);
+    REQUIRE(scene->push(paints[0], paints[1]) == Result::Success);
+    REQUIRE(scene->remove(paints[1]) == Result::Success);
+    REQUIRE(scene->remove(paints[1]) == Result::InsufficientCondition);
+    REQUIRE(scene->remove(paints[2]) == Result::Success);
+    REQUIRE(scene->remove(paints[0]) == Result::Success);
+
+    paints[0]->unref();
+    paints[1]->unref();
+    paints[2]->unref();
 
     Paint::rel(scene);
 }
@@ -161,6 +176,14 @@ TEST_CASE("Scene Effects", "[tvgScene]")
 
         REQUIRE(scene->push(SceneEffect::ClearAll) == Result::Success);
         REQUIRE(scene->push(SceneEffect::Tritone, 0, 0, 0, 128, 128, 128, 255, 255, 255, 128) == Result::Success);
+        REQUIRE(canvas->update() == Result::Success);
+        REQUIRE(canvas->draw() == Result::Success);
+        REQUIRE(canvas->sync() == Result::Success);
+
+        REQUIRE(scene->push(SceneEffect::GaussianBlur, 1.5, 0, 0, 75) == Result::Success);
+        REQUIRE(scene->push(SceneEffect::DropShadow, 128, 128, 128, 200, 45.0, 5.0, 2.0, 60) == Result::Success);
+
+        REQUIRE(canvas->push(scene->duplicate()) == Result::Success);
         REQUIRE(canvas->update() == Result::Success);
         REQUIRE(canvas->draw() == Result::Success);
         REQUIRE(canvas->sync() == Result::Success);
