@@ -457,6 +457,7 @@ struct TVG_API Paint
      * @param[in] method The method used to mask the source object with the target.
      *
      * @retval Result::InsufficientCondition if the target has already belonged to another paint.
+     * @retval Result::InvalidArguments @p method equals @c MaskMethod::None and @p target is not @c nullptr.
      */
     Result mask(Paint* target, MaskMethod method) noexcept;
 

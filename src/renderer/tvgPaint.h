@@ -210,7 +210,7 @@ struct Paint::Impl
             maskData = nullptr;
         }
 
-        if (!target && method == MaskMethod::None) return Result::Success;
+        if (method == MaskMethod::None) return (target ? Result::InvalidArguments : Result::Success);
 
         maskData = tvg::malloc<Mask>(sizeof(Mask));
         target->ref();

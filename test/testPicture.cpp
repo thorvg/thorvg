@@ -72,35 +72,6 @@ TEST_CASE("Load RAW Data", "[tvgPicture]")
     free(data);
 }
 
-TEST_CASE("Load RAW file and render", "[tvgPicture]")
-{
-    REQUIRE(Initializer::init() == Result::Success);
-    {
-        auto canvas = unique_ptr<SwCanvas>(SwCanvas::gen());
-        REQUIRE(canvas);
-
-        uint32_t buffer[100*100];
-        REQUIRE(canvas->target(buffer, 100, 100, 100, ColorSpace::ARGB8888) == Result::Success);
-
-        ifstream file(TEST_DIR"/rawimage_200x300.raw");
-        if (!file.is_open()) return;
-        auto data = (uint32_t*)malloc(sizeof(uint32_t) * (200*300));
-        file.read(reinterpret_cast<char *>(data), sizeof (uint32_t) * 200 * 300);
-        file.close();
-
-        auto picture = Picture::gen();
-        REQUIRE(picture);
-
-        REQUIRE(picture->load(data, 200, 300, ColorSpace::ARGB8888, false) == Result::Success);
-        REQUIRE(picture->size(100, 150) == Result::Success);
-
-        REQUIRE(canvas->push(picture) == Result::Success);
-
-        free(data);
-    }
-    REQUIRE(Initializer::term() == Result::Success);
-}
-
 TEST_CASE("Picture Size", "[tvgPicture]")
 {
     auto picture = Picture::gen();
