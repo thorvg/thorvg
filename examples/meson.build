@@ -78,6 +78,10 @@ if gif_saver
     source_file += 'GifSaver.cpp'
 endif
 
+if gif_loader
+    source_file += 'GifAnimation.cpp'
+endif
+
 if lottie_loader
     source_file += ['LottieExtension.cpp', 'LottieTweening.cpp']
 endif
