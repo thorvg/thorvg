@@ -143,6 +143,61 @@ TEST_CASE("Picture Size", "[tvgPicture]")
     Paint::rel(picture);
 }
 
+TEST_CASE("Picture Origin", "[tvgPicture]")
+{
+    auto picture = Picture::gen();
+    REQUIRE(picture);
+
+    float w, h;
+    REQUIRE(picture->size(&w, &h) == Result::InsufficientCondition);
+
+    //Primary
+    ifstream file(TEST_DIR"/rawimage_200x300.raw");
+    if (!file.is_open()) return;
+    auto data = (uint32_t*)malloc(sizeof(uint32_t) * (200*300));
+    file.read(reinterpret_cast<char *>(data), sizeof (uint32_t) * 200 * 300);
+    file.close();
+
+    REQUIRE(picture->load(data, 200, 300, ColorSpace::ARGB8888, false) == Result::Success);
+    REQUIRE(picture->origin(0.0f, 0.0f) == Result::Success);
+    REQUIRE(picture->origin(0.5f, 0.5f) == Result::Success);
+    REQUIRE(picture->origin(1.0f, 1.0f) == Result::Success);
+    REQUIRE(picture->origin(-1.0f, -1.0f) == Result::Success);
+
+    free(data);
+
+    Paint::rel(picture);
+}
+
+TEST_CASE("Picture Resolver", "[tvgPicture]")
+{
+    auto picture = Picture::gen();
+    REQUIRE(picture);
+
+    float w, h;
+    REQUIRE(picture->size(&w, &h) == Result::InsufficientCondition);
+
+    //Primary
+    ifstream file(TEST_DIR"/rawimage_200x300.raw");
+    if (!file.is_open()) return;
+    auto data = (uint32_t*)malloc(sizeof(uint32_t) * (200*300));
+    file.read(reinterpret_cast<char *>(data), sizeof (uint32_t) * 200 * 300);
+    file.close();
+
+    auto resolver = [](Paint* paint, const char* src, void *data) -> bool
+    {
+        return false;
+    };
+
+    REQUIRE(picture->resolver(resolver, nullptr) == Result::Success);
+
+    REQUIRE(picture->load(data, 200, 300, ColorSpace::ARGB8888, false) == Result::Success);
+
+    free(data);
+
+    Paint::rel(picture);
+}
+
 TEST_CASE("Picture Duplication", "[tvgPicture]")
 {
     auto picture = Picture::gen();
