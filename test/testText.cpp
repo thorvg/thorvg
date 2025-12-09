@@ -49,7 +49,6 @@ TEST_CASE("Load TTF Data from a file", "[tvgText]")
         REQUIRE(text);
 
         REQUIRE(Text::unload(TEST_DIR"/invalid.ttf") == Result::InsufficientCondition);
-
         REQUIRE(Text::load(TEST_DIR"/Arial.ttf") == Result::Success);
         REQUIRE(Text::load(TEST_DIR"/invalid.ttf") == Result::InvalidArguments);
         REQUIRE(Text::unload(TEST_DIR"/Arial.ttf") == Result::Success);
@@ -111,7 +110,6 @@ TEST_CASE("Text Font", "[tvgText]")
         REQUIRE(text);
 
         REQUIRE(Text::load(TEST_DIR"/Arial.ttf") == Result::Success);
-
         REQUIRE(text->font("Arial") == Result::Success);
         REQUIRE(text->size(80) == Result::Success);
         REQUIRE(text->font("Arial") == Result::Success);
@@ -139,15 +137,14 @@ TEST_CASE("Text Basic", "[tvgText]")
         REQUIRE(Text::load(TEST_DIR"/Arial.ttf") == Result::Success);
         REQUIRE(text->font("Arial") == Result::Success);
         REQUIRE(text->size(80) == Result::Success);
-
         REQUIRE(text->text(nullptr) == Result::Success);
         REQUIRE(text->text("") == Result::Success);
         REQUIRE(text->text("ABCDEFGHIJIKLMOPQRSTUVWXYZ") == Result::Success);
         REQUIRE(text->text("THORVG Text") == Result::Success);
-
         REQUIRE(text->fill(255, 255, 255) == Result::Success);
-
         REQUIRE(canvas->push(text) == Result::Success);
+        REQUIRE(canvas->update() == Result::Success);
+        REQUIRE(canvas->sync() == Result::Success);
     }
     Initializer::term();
 }
@@ -166,12 +163,11 @@ TEST_CASE("Text with composite glyphs", "[tvgText]")
         REQUIRE(Text::load(TEST_DIR"/Arial.ttf") == Result::Success);
         REQUIRE(text->font("Arial") == Result::Success);
         REQUIRE(text->size(80) == Result::Success);
-
         REQUIRE(text->text("\xc5\xbb\x6f\xc5\x82\xc4\x85\x64\xc5\xba \xc8\xab") == Result::Success);
-
         REQUIRE(text->fill(255, 255, 255) == Result::Success);
-
         REQUIRE(canvas->push(text) == Result::Success);
+        REQUIRE(canvas->update() == Result::Success);
+        REQUIRE(canvas->sync() == Result::Success);
     }
     Initializer::term();
 }
@@ -190,9 +186,7 @@ TEST_CASE("Text Styles", "[tvgText]")
         REQUIRE(Text::load(TEST_DIR"/Arial.ttf") == Result::Success);
         REQUIRE(text->font("Arial") == Result::Success);
         REQUIRE(text->size(80) == Result::Success);
-
-        REQUIRE(text->text("\xc5\xbb\x6f\xc5\x82\xc4\x85\x64\xc5\xba \xc8\xab") == Result::Success);
-
+        REQUIRE(text->text("ThorVG Test\n Text!") == Result::Success);
         REQUIRE(text->fill(255, 255, 255) == Result::Success);
 
         REQUIRE(text->outline(0, 0, 0, 0) == Result::Success);
@@ -205,11 +199,14 @@ TEST_CASE("Text Styles", "[tvgText]")
         REQUIRE(text->italic(0.18f) == Result::Success);
 
         REQUIRE(canvas->push(text) == Result::Success);
+        REQUIRE(canvas->update() == Result::Success);
+        REQUIRE(canvas->sync() == Result::Success);
+
     }
     Initializer::term();
 }
 
-TEST_CASE("Text Layout & Align", "[tvgText]")
+TEST_CASE("Text Layout", "[tvgText]")
 {
     Initializer::init();
     {
@@ -223,7 +220,8 @@ TEST_CASE("Text Layout & Align", "[tvgText]")
         REQUIRE(Text::load(TEST_DIR"/Arial.ttf") == Result::Success);
         REQUIRE(text->font("Arial") == Result::Success);
         REQUIRE(text->size(80) == Result::Success);
-        REQUIRE(text->text("\xc5\xbb\x6f\xc5\x82\xc4\x85\x64\xc5\xba \xc8\xab") == Result::Success);
+        REQUIRE(text->fill(255, 255, 255) == Result::Success);
+        REQUIRE(text->text("ThorVG Test\n Text!") == Result::Success);
 
         REQUIRE(text->align(0.0f, 0.0f) == Result::Success);
         REQUIRE(text->align(0.5f, 0.5f) == Result::Success);
@@ -231,17 +229,52 @@ TEST_CASE("Text Layout & Align", "[tvgText]")
         REQUIRE(text->align(2.0f, 2.0f) == Result::Success);
         REQUIRE(text->align(-1.0f, -1.0f) == Result::Success);
 
-        REQUIRE(text->layout(300, 300) == Result::Success);
         REQUIRE(text->layout(0, 0) == Result::Success);
         REQUIRE(text->layout(-100, -100) == Result::Success);
-
-        REQUIRE(text->wrap(TextWrap::Character) == Result::Success);
-        REQUIRE(text->wrap(TextWrap::Ellipsis) == Result::Success);
-        REQUIRE(text->wrap(TextWrap::None) == Result::Success);
-        REQUIRE(text->wrap(TextWrap::Smart) == Result::Success);
-        REQUIRE(text->wrap(TextWrap::Word) == Result::Success);
+        REQUIRE(text->layout(100, 100) == Result::Success);
 
         REQUIRE(canvas->push(text) == Result::Success);
+        REQUIRE(canvas->update() == Result::Success);
+        REQUIRE(canvas->sync() == Result::Success);
+    }
+    Initializer::term();
+}
+
+TEST_CASE("Text Wrap Mode", "[tvgText]")
+{
+    Initializer::init();
+    {
+        auto canvas = unique_ptr<SwCanvas>(SwCanvas::gen());
+        uint32_t buffer[100*100];
+        canvas->target(buffer, 100, 100, 100, ColorSpace::ARGB8888);
+
+        auto text = Text::gen();
+        REQUIRE(text);
+
+        REQUIRE(Text::load(TEST_DIR"/Arial.ttf") == Result::Success);
+        REQUIRE(text->font("Arial") == Result::Success);
+        REQUIRE(text->size(80) == Result::Success);
+        REQUIRE(text->fill(255, 255, 255) == Result::Success);
+        REQUIRE(text->align(0.5f, 0.5f) == Result::Success);
+        REQUIRE(text->text("Very Long Long Text ThorVG Test\n ABCDEFGHIJKLMNOPRSTU!") == Result::Success);
+        REQUIRE(text->layout(100, 100) == Result::Success);
+        REQUIRE(canvas->push(text) == Result::Success);
+
+        REQUIRE(text->wrap(TextWrap::Character) == Result::Success);
+        REQUIRE(canvas->update() == Result::Success);
+        REQUIRE(canvas->sync() == Result::Success);
+
+        REQUIRE(text->wrap(TextWrap::Word) == Result::Success);
+        REQUIRE(canvas->update() == Result::Success);
+        REQUIRE(canvas->sync() == Result::Success);
+
+        REQUIRE(text->wrap(TextWrap::Smart) == Result::Success);
+        REQUIRE(canvas->update() == Result::Success);
+        REQUIRE(canvas->sync() == Result::Success);
+
+        REQUIRE(text->wrap(TextWrap::Ellipsis) == Result::Success);
+        REQUIRE(canvas->update() == Result::Success);
+        REQUIRE(canvas->sync() == Result::Success);
     }
     Initializer::term();
 }

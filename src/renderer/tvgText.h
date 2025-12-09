@@ -136,6 +136,7 @@ struct TextImpl : Text
     {
         if (fm.wrap == mode) return;
         fm.wrap = mode;
+        updated = true;
         impl.mark(RenderUpdateFlag::Path);
     }
 
