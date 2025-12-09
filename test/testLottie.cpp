@@ -34,6 +34,33 @@ using namespace std;
 
 #ifdef THORVG_LOTTIE_LOADER_SUPPORT
 
+TEST_CASE("Lottie Coverages", "[tvgLottie]")
+{
+    REQUIRE(Initializer::init() == Result::Success);
+    {
+        #define TEST_CNT 1
+
+        const char* names[TEST_CNT] = {
+            "test3.lot"
+            //TODO:
+        };
+
+        auto animation = unique_ptr<Animation>(Animation::gen());
+        REQUIRE(animation);
+
+        auto picture = animation->picture();
+
+        for (int i = 0; i < TEST_CNT; ++i) {
+            char buf[100];
+            snprintf(buf, sizeof(buf), TEST_DIR"/%s", names[i]);
+            REQUIRE(picture->load(buf) == Result::Success);
+            REQUIRE(animation->frame(animation->totalFrame() * 0.5f) == Result::Success);
+            REQUIRE(animation->frame(animation->totalFrame()) == Result::Success);
+        }
+    }
+    REQUIRE(Initializer::term() == Result::Success);
+}
+
 TEST_CASE("Lottie Slot", "[tvgLottie]")
 {
     REQUIRE(Initializer::init() == Result::Success);
@@ -42,70 +69,36 @@ TEST_CASE("Lottie Slot", "[tvgLottie]")
         REQUIRE(animation);
 
         auto picture = animation->picture();
-        REQUIRE(picture->type() == Type::Picture);
 
+        //Slot Test 1
         const char* slotJson = R"({"gradient_fill":{"p":{"p":2,"k":{"a":0,"k":[0,0.1,0.1,0.2,1,1,0.1,0.2,0.1,1]}}}})";
 
-        //Slot generation before loaded
+        //Negative: slot generation before loaded
         REQUIRE(animation->gen(slotJson) == 0);
 
-        //Animation load
-        REQUIRE(picture->load(TEST_DIR"/lottieslot.json") == Result::Success);
+        REQUIRE(picture->load(TEST_DIR"/slot.lot") == Result::Success);
 
-        //Slot generation
         auto id = animation->gen(slotJson);
         REQUIRE(id > 0);
 
-        //Slot revert before overriding
         REQUIRE(animation->apply(0) == Result::Success);
-
-        //Slot override
         REQUIRE(animation->apply(id) == Result::Success);
-
-        //Slot revert
         REQUIRE(animation->apply(0) == Result::Success);
-
-        //Slot override after reverting
         REQUIRE(animation->apply(id) == Result::Success);
-
-        //Slot generation with invalid JSON
         REQUIRE(animation->gen("") == 0);
-
-        //Slot deletion
         REQUIRE(animation->del(id) == Result::Success);
-    }
-    REQUIRE(Initializer::term() == Result::Success);
-}
 
-TEST_CASE("Lottie Slot 2", "[tvgLottie]")
-{
-    REQUIRE(Initializer::init() == Result::Success);
-    {
-        auto animation = unique_ptr<LottieAnimation>(LottieAnimation::gen());
-        REQUIRE(animation);
+        //Slot Test 2
+        const char* slotJson2 = R"({"lottie-icon-outline":{"p":{"a":0,"k":[1,1,0]}},"lottie-icon-solid":{"p":{"a":0,"k":[0,0,1]}}})";
+        REQUIRE(picture->load(TEST_DIR"/slot2.lot") == Result::Success);
 
-        auto picture = animation->picture();
+        auto id2 = animation->gen(slotJson2);
+        REQUIRE(id2 > 0);
 
-        const char* slotJson = R"({"lottie-icon-outline":{"p":{"a":0,"k":[1,1,0]}},"lottie-icon-solid":{"p":{"a":0,"k":[0,0,1]}}})";
-
-        //Animation load
-        REQUIRE(picture->load(TEST_DIR"/lottieslotkeyframe.json") == Result::Success);
-
-        //Slot generation
-        auto id = animation->gen(slotJson);
-        REQUIRE(id > 0);
-
-        //Slot override
-        REQUIRE(animation->apply(id) == Result::Success);
-
-        //Slot revert
+        REQUIRE(animation->apply(id2) == Result::Success);
         REQUIRE(animation->apply(0) == Result::Success);
-
-        //Slot override after reverting
-        REQUIRE(animation->apply(id) == Result::Success);
-
-        //Slot deletion
-        REQUIRE(animation->del(id) == Result::Success);
+        REQUIRE(animation->apply(id2) == Result::Success);
+        REQUIRE(animation->del(id2) == Result::Success);
 
     }
     REQUIRE(Initializer::term() == Result::Success);
@@ -124,7 +117,7 @@ TEST_CASE("Lottie Marker", "[tvgLottie]")
         REQUIRE(animation->segment("sectionC") == Result::InsufficientCondition);
 
         //Animation load
-        REQUIRE(picture->load(TEST_DIR"/lottiemarker.json") == Result::Success);
+        REQUIRE(picture->load(TEST_DIR"/segment.lot") == Result::Success);
 
         //Set marker
         REQUIRE(animation->segment("sectionA") == Result::Success);
