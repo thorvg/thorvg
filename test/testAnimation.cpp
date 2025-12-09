@@ -47,7 +47,32 @@ TEST_CASE("Animation Basic", "[tvgAnimation]")
 
 #ifdef THORVG_LOTTIE_LOADER_SUPPORT
 
-TEST_CASE("Animation Frames Counting", "[tvgAnimation]")
+TEST_CASE("Lottie Raw Data", "[tvgAnimation]")
+{
+    REQUIRE(Initializer::init() == Result::Success);
+    {
+        auto animation = unique_ptr<Animation>(Animation::gen());
+        REQUIRE(animation);
+
+        auto picture = animation->picture();
+
+        ifstream file(TEST_DIR"/test.lot");
+        REQUIRE(file.is_open());
+        file.seekg(0, std::ios::end);
+        auto size = file.tellg();
+        file.seekg(0, std::ios::beg);
+        auto data = (char*)malloc(size);
+        file.seekg(0, ios::beg);
+        file.read(data, size);
+        file.close();
+        REQUIRE(picture->load(data, size, "lot", "", true) == Result::Success);
+
+        free(data);
+    }
+    REQUIRE(Initializer::term() == Result::Success);
+}
+
+TEST_CASE("Lottie Frames Counting", "[tvgAnimation]")
 {
     REQUIRE(Initializer::init(1) == Result::Success);
     {
@@ -56,7 +81,13 @@ TEST_CASE("Animation Frames Counting", "[tvgAnimation]")
 
         auto picture = animation->picture();
 
-        REQUIRE(picture->load(TEST_DIR"/test.json") == Result::Success);
+        REQUIRE(picture->load(TEST_DIR"/invalid.lot") == Result::InvalidArguments);
+        REQUIRE(picture->load(TEST_DIR"/test.lot") == Result::Success);
+
+        REQUIRE(animation->totalFrame() == Approx(120).margin(0.001f));
+        REQUIRE(animation->curFrame() == 0);
+        REQUIRE(animation->duration() == Approx(4.004).margin(0.001f)); //120/29.97
+        REQUIRE(animation->frame(20.0f) == Result::Success);
 
         for (float i = 1.0f; i < 120.0f; i += 10.0f) {
             REQUIRE(animation->frame(i) == Result::Success);
@@ -84,27 +115,7 @@ TEST_CASE("Animation Frames Counting", "[tvgAnimation]")
     REQUIRE(Initializer::term() == Result::Success);
 }
 
-TEST_CASE("Animation Lottie", "[tvgAnimation]")
-{
-    REQUIRE(Initializer::init(1) == Result::Success);
-    {
-        auto animation = unique_ptr<Animation>(Animation::gen());
-        REQUIRE(animation);
-
-        auto picture = animation->picture();
-
-        REQUIRE(picture->load(TEST_DIR"/invalid.json") == Result::InvalidArguments);
-        REQUIRE(picture->load(TEST_DIR"/test.json") == Result::Success);
-
-        REQUIRE(animation->totalFrame() == Approx(120).margin(0.001f));
-        REQUIRE(animation->curFrame() == 0);
-        REQUIRE(animation->duration() == Approx(4.004).margin(0.001f)); //120/29.97
-        REQUIRE(animation->frame(20.0f) == Result::Success);
-    }
-    REQUIRE(Initializer::term() == Result::Success);
-}
-
-TEST_CASE("Animation Lottie2", "[tvgAnimation]")
+TEST_CASE("Lottie Accessor", "[tvgAnimation]")
 {
     REQUIRE(Initializer::init() == Result::Success);
     {
@@ -113,7 +124,7 @@ TEST_CASE("Animation Lottie2", "[tvgAnimation]")
 
         auto picture = animation->picture();
 
-        REQUIRE(picture->load(TEST_DIR"/test2.json") == Result::Success);
+        REQUIRE(picture->load(TEST_DIR"/test2.lot") == Result::Success);
 
         //specify the lottie scene first
         REQUIRE(animation->frame(20.0f) == Result::Success);
@@ -128,157 +139,7 @@ TEST_CASE("Animation Lottie2", "[tvgAnimation]")
     REQUIRE(Initializer::term() == Result::Success);
 }
 
-TEST_CASE("Animation Lottie3", "[tvgAnimation]")
-{
-    REQUIRE(Initializer::init() == Result::Success);
-    {
-        auto animation = unique_ptr<Animation>(Animation::gen());
-        REQUIRE(animation);
-
-        auto picture = animation->picture();
-
-        REQUIRE(picture->load(TEST_DIR"/test3.json") == Result::Success);
-    }
-    REQUIRE(Initializer::term() == Result::Success);
-}
-
-TEST_CASE("Animation Lottie4", "[tvgAnimation]")
-{
-    REQUIRE(Initializer::init() == Result::Success);
-    {
-        auto animation = unique_ptr<Animation>(Animation::gen());
-        REQUIRE(animation);
-
-        auto picture = animation->picture();
-
-        REQUIRE(picture->load(TEST_DIR"/test4.json") == Result::Success);
-    }
-    REQUIRE(Initializer::term() == Result::Success);
-}
-
-TEST_CASE("Animation Lottie5", "[tvgAnimation]")
-{
-    REQUIRE(Initializer::init() == Result::Success);
-    {
-        auto animation = unique_ptr<Animation>(Animation::gen());
-        REQUIRE(animation);
-
-        auto picture = animation->picture();
-
-        REQUIRE(picture->load(TEST_DIR"/test5.json") == Result::Success);
-    }
-    REQUIRE(Initializer::term() == Result::Success);
-}
-
-TEST_CASE("Animation Lottie6", "[tvgAnimation]")
-{
-    REQUIRE(Initializer::init() == Result::Success);
-    {
-        auto animation = unique_ptr<Animation>(Animation::gen());
-        REQUIRE(animation);
-
-        auto picture = animation->picture();
-
-        REQUIRE(picture->load(TEST_DIR"/test6.json") == Result::Success);
-    }
-    REQUIRE(Initializer::term() == Result::Success);
-}
-
-TEST_CASE("Animation Lottie7", "[tvgAnimation]")
-{
-    REQUIRE(Initializer::init() == Result::Success);
-    {
-        auto animation = unique_ptr<Animation>(Animation::gen());
-        REQUIRE(animation);
-
-        auto picture = animation->picture();
-
-        REQUIRE(picture->load(TEST_DIR"/test7.json") == Result::Success);
-    }
-    REQUIRE(Initializer::term() == Result::Success);
-}
-
-TEST_CASE("Animation Lottie8", "[tvgAnimation]")
-{
-    REQUIRE(Initializer::init() == Result::Success);
-
-    auto animation = unique_ptr<Animation>(Animation::gen());
-    REQUIRE(animation);
-
-    auto picture = animation->picture();
-
-    REQUIRE(picture->load(TEST_DIR"/test8.json") == Result::Success);
-
-    REQUIRE(Initializer::term() == Result::Success);
-}
-
-TEST_CASE("Animation Lottie9", "[tvgAnimation]")
-{
-    REQUIRE(Initializer::init() == Result::Success);
-    {
-        auto animation = unique_ptr<Animation>(Animation::gen());
-        REQUIRE(animation);
-
-        auto picture = animation->picture();
-
-        REQUIRE(picture->load(TEST_DIR"/test9.json") == Result::Success);
-    }
-    REQUIRE(Initializer::term() == Result::Success);
-}
-
-TEST_CASE("Animation Lottie10", "[tvgAnimation]")
-{
-    REQUIRE(Initializer::init() == Result::Success);
-    {
-        auto animation = unique_ptr<Animation>(Animation::gen());
-        REQUIRE(animation);
-
-        auto picture = animation->picture();
-        REQUIRE(picture->load(TEST_DIR"/test10.json") == Result::Success);
-    }
-    REQUIRE(Initializer::term() == Result::Success);
-}
-
-TEST_CASE("Animation Lottie11", "[tvgAnimation]")
-{
-    REQUIRE(Initializer::init() == Result::Success);
-    {
-        auto animation = unique_ptr<Animation>(Animation::gen());
-        REQUIRE(animation);
-
-        auto picture = animation->picture();
-
-        ifstream file(TEST_DIR"/test11.json");
-        REQUIRE(file.is_open());
-        file.seekg(0, std::ios::end);
-        auto size = file.tellg();
-        file.seekg(0, std::ios::beg);
-        auto data = (char*)malloc(size);
-        file.seekg(0, ios::beg);
-        file.read(data, size);
-        file.close();
-        REQUIRE(picture->load(data, size, "lot", "", true) == Result::Success);
-
-        free(data);
-    }
-    REQUIRE(Initializer::term() == Result::Success);
-}
-
-TEST_CASE("Animation Lottie12", "[tvgAnimation]")
-{
-    REQUIRE(Initializer::init() == Result::Success);
-    {
-        auto animation = unique_ptr<Animation>(Animation::gen());
-        REQUIRE(animation);
-
-        auto picture = animation->picture();
-
-        REQUIRE(picture->load(TEST_DIR"/test12.json") == Result::Success);
-    }
-    REQUIRE(Initializer::term() == Result::Success);
-}
-
-TEST_CASE("Animation Segment", "[tvgAnimation]")
+TEST_CASE("Lottie Segment", "[tvgAnimation]")
 {
     REQUIRE(Initializer::init() == Result::Success);
     {
@@ -296,7 +157,7 @@ TEST_CASE("Animation Segment", "[tvgAnimation]")
         REQUIRE(animation->segment(&begin, &end) == Result::InsufficientCondition);
 
         //Animation load
-        REQUIRE(picture->load(TEST_DIR"/lottiemarker.json") == Result::Success);
+        REQUIRE(picture->load(TEST_DIR"/segment.lot") == Result::Success);
 
         //Get current segment before segment
         REQUIRE(animation->segment(&begin, &end) == Result::Success);
