@@ -181,14 +181,16 @@ struct Window
         tvg::Initializer::term();
     }
 
-    bool draw()
+    bool draw(bool force = false)
     {
+        if (force) verify(canvas->update());
+
         //Draw the contents to the Canvas
         if (verify(canvas->draw(clearBuffer))) {
             verify(canvas->sync());
+            refresh();
             return true;
         }
-
         return false;
     }
 
@@ -199,10 +201,7 @@ struct Window
         if (!example->content(canvas, width, height)) return false;
 
         //initiate the first rendering before window pop-up.
-        if (!verify(canvas->draw())) return false;
-        if (!verify(canvas->sync())) return false;
-
-        return true;
+        return draw();
     }
 
     void fps(uint32_t tickCnt, uint32_t ctime)
@@ -237,7 +236,10 @@ struct Window
     void show()
     {
         SDL_ShowWindow(window);
-        refresh();
+
+        // This prevents a "black screen at the first frame" that occurs on wsl and old macos.
+        // Skip this if your system doesn't have any troubles.
+        draw(true);
 
         //Mainloop
         SDL_Event event;
@@ -295,7 +297,7 @@ struct Window
             }
 
             if (needDraw) {
-                if (draw()) refresh();
+                draw();
                 needDraw = false;
             }
 
