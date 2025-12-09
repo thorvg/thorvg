@@ -119,8 +119,28 @@ static void _parseAspectRatio(const char** content, AspectRatioAlign* align, Asp
 }
 
 
+static inline bool _isText(SvgNodeType type)
+{
+    return (type == SvgNodeType::Text || type == SvgNodeType::TextArea || type == SvgNodeType::Tspan);
+}
+
+
+static float _getFontSize(const SvgNode* node)
+{
+    auto curr = node;
+    while (curr) {
+        if (curr->style->flags & SvgStyleFlags::FontSize) {
+            if (_isText(curr->type)) return curr->node.text.fontSize;
+            return curr->style->fontSize;
+        }
+        curr = curr->parent;
+    }
+    return 10.0f; //UA default
+}
+
+
 // According to https://www.w3.org/TR/SVG/coords.html#Units
-static float _toFloat(const SvgParser* svgParse, const char* str, SvgParserLengthType type)
+static float _toFloat(const SvgParser* svgParse, const char* str, SvgParserLengthType type, bool isFontNode = false)
 {
     float parsedValue = toFloat(str, nullptr);
 
@@ -129,7 +149,15 @@ static float _toFloat(const SvgParser* svgParse, const char* str, SvgParserLengt
     else if (strstr(str, "pt")) parsedValue *= PX_PER_PT;
     else if (strstr(str, "pc")) parsedValue *= PX_PER_PC;
     else if (strstr(str, "in")) parsedValue *= PX_PER_IN;
-    else if (strstr(str, "%")) {
+    else if (strstr(str, "em")) {
+        float baseSize;
+        if (isFontNode) baseSize = _getFontSize(svgParse->node->parent);
+        else baseSize = _getFontSize(svgParse->node);
+        parsedValue *= baseSize;
+    } else if (strstr(str, "ex")) {
+        if (isFontNode) parsedValue *= (_getFontSize(svgParse->node->parent) * 0.5f);
+        else parsedValue *= (_getFontSize(svgParse->node) * 0.5f);
+    } else if (strstr(str, "%")) {
         if (type == SvgParserLengthType::Vertical) parsedValue = (parsedValue / 100.0f) * svgParse->global.h;
         else if (type == SvgParserLengthType::Horizontal) parsedValue = (parsedValue / 100.0f) * svgParse->global.w;
         else if (type == SvgParserLengthType::Diagonal) parsedValue = (sqrtf(powf(svgParse->global.w, 2) + powf(svgParse->global.h, 2)) / sqrtf(2.0f)) * (parsedValue / 100.0f);
@@ -163,7 +191,8 @@ static float _gradientToFloat(const SvgParser* svgParse, const char* str, bool& 
     else if (strstr(str, "pt")) parsedValue *= PX_PER_PT;
     else if (strstr(str, "pc")) parsedValue *= PX_PER_PC;
     else if (strstr(str, "in")) parsedValue *= PX_PER_IN;
-    //TODO: Implement 'em', 'ex' attributes
+    else if (strstr(str, "em")) parsedValue *= _getFontSize(svgParse->node);
+    else if (strstr(str, "ex")) parsedValue *= (_getFontSize(svgParse->node) * 0.5f);
 
     return parsedValue;
 }
@@ -916,6 +945,13 @@ static void _handleStrokeDashOffsetAttr(SvgLoaderData* loader, SvgNode* node, co
     node->style->stroke.dash.offset = _toFloat(loader->svgParse, value, SvgParserLengthType::Horizontal);
 }
 
+static void _handleFontSizeAttr(SvgLoaderData* loader, SvgNode* node, const char* value)
+{
+    auto fontSize = _toFloat(loader->svgParse, value, SvgParserLengthType::Vertical, true);
+    if (_isText(node->type)) node->node.text.fontSize = fontSize;
+    else node->style->fontSize = fontSize;
+    node->style->flags = (node->style->flags | SvgStyleFlags::FontSize);
+}
 static void _handleStrokeWidthAttr(SvgLoaderData* loader, SvgNode* node, const char* value)
 {
     node->style->stroke.flags = (node->style->stroke.flags | SvgStrokeFlags::Width);
@@ -1083,7 +1119,8 @@ static constexpr struct
     STYLE_DEF(mask-type, MaskType, SvgStyleFlags::MaskType),
     STYLE_DEF(display, Display, SvgStyleFlags::Display),
     STYLE_DEF(paint-order, PaintOrder, SvgStyleFlags::PaintOrder),
-    STYLE_DEF(filter, Filter, SvgStyleFlags::Filter)
+    STYLE_DEF(filter, Filter, SvgStyleFlags::Filter),
+    STYLE_DEF(font-size, FontSize, SvgStyleFlags::FontSize)
 };
 
 
@@ -1395,6 +1432,7 @@ static SvgNode* _createNode(SvgNode* parent, SvgNodeType type)
     node->style->stroke.scale = 1.0;
     node->style->paintOrder = _toPaintOrder("fill stroke");
     node->style->display = true;
+    node->style->fontSize = 10.0f;
     node->parent = parent;
     node->type = type;
     node->xmlSpace = SvgXmlSpace::None;
@@ -2187,6 +2225,7 @@ static bool _attrParseTextNode(void* data, const char* key, const char* value)
     for (unsigned int i = 0; i < sizeof(textTags) / sizeof(textTags[0]); i++) {
         if (textTags[i].sz - 1 == sz && !strncmp(textTags[i].tag, key, sz)) {
             *((float*)(array + textTags[i].offset)) = _toFloat(loader->svgParse, value, textTags[i].type);
+            node->style->flags = (node->style->flags | SvgStyleFlags::FontSize);
             return true;
         }
     }
@@ -3173,6 +3212,7 @@ static void _copyAttr(SvgNode* to, const SvgNode* from)
         if (to->transform) *to->transform = *from->transform;
     }
     //Copy style attribute
+    to->style->fontSize = from->style->fontSize;
     _styleCopy(to->style, from->style);
     to->style->flags = (to->style->flags | from->style->flags);
     if (from->style->clipPath.url) {
