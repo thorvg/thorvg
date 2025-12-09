@@ -122,7 +122,7 @@ struct UserExample : tvgexam::Example
         return false;
     }
 
-    bool update(tvg::Canvas* canvas, uint32_t elapsed) override
+    bool update(tvg::Canvas* canvas, uint32_t elapsed, uint32_t width, uint32_t height) override
     {
         marquee->translate(mx, my);
 

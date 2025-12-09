@@ -39,7 +39,7 @@ struct UserExample : tvgexam::Example
     std::vector<Particle> raindrops;
     std::vector<Particle> clouds;
 
-    uint32_t w, h;
+    uint32_t initWidth, initHeight;
 
     bool content(tvg::Canvas* canvas, uint32_t w, uint32_t h) override
     {
@@ -90,18 +90,18 @@ struct UserExample : tvgexam::Example
             canvas->push(shape);
         }
 
-        this->w = w;
-        this->h = h;
+        this->initWidth = w;
+        this->initHeight = h;
 
         return true;
     }
 
-    bool update(tvg::Canvas* canvas, uint32_t elapsed) override
+    bool update(tvg::Canvas* canvas, uint32_t elapsed, uint32_t width, uint32_t height) override
     {
         for (auto& p : raindrops) {
             p.y += p.speed;
-            if (p.y > h) {
-                p.y -= h;
+            if (p.y > initHeight) {
+                p.y -= initHeight;
             }
             p.obj->translate(p.x, p.y);
         }
@@ -109,7 +109,7 @@ struct UserExample : tvgexam::Example
         for (auto& p : clouds) {
             p.x -= p.speed;
             if (p.x + p.size < 0) {
-                p.x = w;
+                p.x = initWidth;
             }
             p.obj->translate(p.x, p.y);
         }

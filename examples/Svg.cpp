@@ -21,6 +21,7 @@
  */
 
 #include "Example.h"
+#include "thorvg.h"
 
 /************************************************************************/
 /* ThorVG Drawing Contents                                              */
@@ -31,8 +32,11 @@
 
 struct UserExample : tvgexam::Example
 {
+    tvg::Scene* root = tvg::Scene::gen();
+    tvg::Shape* bg = tvg::Shape::gen();
     std::vector<tvg::Picture*> pictures;
-    uint32_t w, h;
+    uint32_t initWidth, initHeight;
+    uint32_t beforeWidth = 0, beforeHeight = 0;
     uint32_t size;
 
     int counter = 0;
@@ -54,7 +58,7 @@ struct UserExample : tvgexam::Example
         float w, h;
         picture->size(&w, &h);
         picture->scale((w > h) ? size / w : size / h);
-        picture->translate((counter % NUM_PER_ROW) * size + size / 2, (counter / NUM_PER_ROW) * (this->h / NUM_PER_COL) + size / 2);
+        picture->translate((counter % NUM_PER_ROW) * size + size / 2, (counter / NUM_PER_ROW) * (initHeight / NUM_PER_COL) + size / 2);
 
         pictures.push_back(picture);
 
@@ -69,16 +73,15 @@ struct UserExample : tvgexam::Example
         tvg::Text::load(EXAMPLE_DIR"/font/Arial.ttf");
 
         //Background
-        auto shape = tvg::Shape::gen();
-        shape->appendRect(0, 0, w, h);
-        shape->fill(255, 255, 255);
+        bg = tvg::Shape::gen();
+        bg->appendRect(0, 0, w, h);
+        bg->fill(255, 255, 255);
 
-        canvas->push(shape);
+        canvas->push(bg);
 
-        this->w = w;
-        this->h = h;
+        beforeWidth = initWidth = w;
+        beforeHeight = initHeight = h;
         this->size = w / NUM_PER_ROW;
-
         this->scandir(EXAMPLE_DIR"/svg");
 
         /* This showcase demonstrates the asynchronous loading of tvg.
@@ -86,11 +89,31 @@ struct UserExample : tvgexam::Example
            This allows time for the tvg resources to finish loading;
            otherwise, you can push pictures immediately. */
         for (auto& paint : pictures) {
-            canvas->push(paint);
+            root->push(paint);
         }
 
-        pictures.clear();
+        canvas->push(root);
 
+        pictures.clear();
+        return true;
+    }
+
+    bool update(tvg::Canvas* canvas, uint32_t elapsed, uint32_t width, uint32_t height) override
+    {
+        if (beforeWidth == width && beforeHeight == height) return false;
+
+        bg->reset();
+        bg->appendRect(0, 0, width, height);
+
+        auto scale = 1.0f;
+        if (width > height) scale = (float)height / (float)initHeight;
+        else scale = (float)width / (float)initWidth;
+
+        root->scale(scale);
+        root->translate((width - initWidth * scale) * 0.5f, (height - initHeight * scale) * 0.5f);
+
+        beforeWidth = width;
+        beforeHeight = height;
         return true;
     }
 };
@@ -104,3 +127,4 @@ int main(int argc, char **argv)
 {
     return tvgexam::main(new UserExample, argc, argv, false, 1280, 1280);
 }
+

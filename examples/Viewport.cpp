@@ -29,7 +29,7 @@
 struct UserExample : tvgexam::Example
 {
     static constexpr uint32_t VPORT_SIZE = 300;
-    uint32_t w, h;
+    uint32_t initWidth, initHeight;
     tvg::Picture* picture = nullptr;
 
     bool content(tvg::Canvas* canvas, uint32_t w, uint32_t h) override
@@ -49,17 +49,17 @@ struct UserExample : tvgexam::Example
         picture->mask(mask, tvg::MaskMethod::Alpha);
         canvas->push(picture);
 
-        this->w = w;
-        this->h = h;
+        this->initWidth = w;
+        this->initHeight = h;
 
         return true;
     }
 
-    bool update(tvg::Canvas* canvas, uint32_t elapsed) override
+    bool update(tvg::Canvas* canvas, uint32_t elapsed, uint32_t width, uint32_t height) override
     {
         auto progress = tvgexam::progress(elapsed, 2.0f, true);  //play time 2 sec.
 
-        if (!tvgexam::verify(canvas->viewport((w - VPORT_SIZE) * progress, (h - VPORT_SIZE) * progress, VPORT_SIZE, VPORT_SIZE))) return false;
+        if (!tvgexam::verify(canvas->viewport((initWidth - VPORT_SIZE) * progress, (initHeight - VPORT_SIZE) * progress, VPORT_SIZE, VPORT_SIZE))) return false;
 
         canvas->update();
 

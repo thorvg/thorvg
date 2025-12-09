@@ -31,7 +31,7 @@ struct UserExample : tvgexam::Example
     tvg::Shape* solid = nullptr;
     tvg::Shape* gradient = nullptr;
 
-    uint32_t w, h;
+    uint32_t initWidth, initHeight;
 
     bool content(tvg::Canvas* canvas, uint32_t w, uint32_t h) override
     {
@@ -75,24 +75,24 @@ struct UserExample : tvgexam::Example
             canvas->push(gradient);
         }
 
-        this->w = w;
-        this->h = h;
+        this->initWidth = w;
+        this->initHeight = h;
 
         return true;
     }
 
-    bool update(tvg::Canvas* canvas, uint32_t elapsed) override
+    bool update(tvg::Canvas* canvas, uint32_t elapsed, uint32_t width, uint32_t height) override
     {
         auto progress = tvgexam::progress(elapsed, 2.0f, true);  //play time 2 sec.
 
         //Reset Shape
         if (tvgexam::verify(solid->reset())) {
             //Solid Shape
-            solid->appendRect(-100 + (w * progress), -100 + (h * progress), 200, 200, (100 * progress), (100 * progress));
+            solid->appendRect(-100 + (initWidth * progress), -100 + (initHeight * progress), 200, 200, (100 * progress), (100 * progress));
             solid->strokeWidth(30 * progress);
 
             //Gradient Shape
-            gradient->translate(-(w * progress), (h * progress));
+            gradient->translate(-(initWidth * progress), (initHeight * progress));
 
             canvas->update();
 
