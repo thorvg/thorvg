@@ -50,7 +50,7 @@ TEST_CASE("Set", "[tvgAccessor]")
 
         auto picture = Picture::gen();
         REQUIRE(picture);
-        REQUIRE(picture->load(TEST_DIR"/logo.svg") == Result::Success);
+        REQUIRE(picture->load(TEST_DIR"/test0.svg") == Result::Success);
 
         auto accessor = unique_ptr<Accessor>(Accessor::gen());
         REQUIRE(accessor);
@@ -67,7 +67,7 @@ TEST_CASE("Set", "[tvgAccessor]")
                 auto shape = (tvg::Shape*) paint;
                 uint8_t r, g, b;
                 shape->fill(&r, &g, &b);
-                if (r == 37 && g == 47 && b == 53) {
+                if (r == 255 && g == 255 && b == 255) {
                     shape->fill(0, 0, 255);
                     shape->id = Accessor::id("TestAccessor");
                     *static_cast<Shape**>(data) = shape;
