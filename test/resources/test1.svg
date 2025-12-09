@@ -1,0 +1,20 @@
+<svg x="0px" y="0px" width="500px" height="500px" viewbox="0 0 500 500">
+  <defs>
+    <filter id="blurry" x="0%" y="0%" height="100%" width="100%" primitiveUnits="userSpaceOnUse">
+      <feGaussianBlur x="50" y="50" width="400" height="400" stdDeviation="40" in="SourceGraphic" result="blurSquares"/>
+      <feComponentTransfer in="blurSquares" result="opaqueBlur">
+        <feFuncA type="linear" intercept="1"/>
+      </feComponentTransfer>
+      <feBlend mode="normal" in="opaqueBlur" in2="SourceGraphic"/>
+    </filter>
+  </defs>
+
+  <g id="squares" filter="url(#blurry)">
+    <rect x="10" y="10" height="235" width="235" fill="red" />
+    <rect x="255" y="10" height="235" width="235" fill="green" />
+    <rect x="10" y="255" height="235" width="235" fill="blue" />
+    <rect x="255" y="255" height="235" width="235" fill="yellow" />
+  </g>
+
+    <rect x="50" y="50" height="400" width="400" fill="rgb(255,255,255)" fill-opacity="0.8" />
+</svg>
