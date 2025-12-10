@@ -50,43 +50,7 @@ struct GlRenderer : RenderMethod
         RT_MaskDarken,
         RT_Stencil,
         RT_Blit,
-        // blends
-        RT_Blend_Normal,
-        RT_Blend_Multiply,
-        RT_Blend_Screen,
-        RT_Blend_Overlay,
-        RT_Blend_Darken,
-        RT_Blend_Lighten,
-        RT_Blend_ColorDodge,
-        RT_Blend_ColorBurn,
-        RT_Blend_HardLight,
-        RT_Blend_SoftLight,
-        RT_Blend_Difference,
-        RT_Blend_Exclusion,
-        RT_Blend_Hue,
-        RT_Blend_Saturation,
-        RT_Blend_Color,
-        RT_Blend_Luminosity,
-        RT_Blend_Add,
-        // blends (gradients)
-        RT_Blend_Gradient_Normal,
-        RT_Blend_Gradient_Multiply,
-        RT_Blend_Gradient_Screen,
-        RT_Blend_Gradient_Overlay,
-        RT_Blend_Gradient_Darken,
-        RT_Blend_Gradient_Lighten,
-        RT_Blend_Gradient_ColorDodge,
-        RT_Blend_Gradient_ColorBurn,
-        RT_Blend_Gradient_HardLight,
-        RT_Blend_Gradient_SoftLight,
-        RT_Blend_Gradient_Difference,
-        RT_Blend_Gradient_Exclusion,
-        RT_Blend_Gradient_Hue,
-        RT_Blend_Gradient_Saturation,
-        RT_Blend_Gradient_Color,
-        RT_Blend_Gradient_Luminosity,
-        RT_Blend_Gradient_Add,
-        // blends (gradients)
+        // blends (image)
         RT_Blend_Image_Normal,
         RT_Blend_Image_Multiply,
         RT_Blend_Image_Screen,
@@ -122,6 +86,60 @@ struct GlRenderer : RenderMethod
         RT_Blend_Scene_Color,
         RT_Blend_Scene_Luminosity,
         RT_Blend_Scene_Add,
+        // shape blends (solid)
+        RT_ShapeBlend_Solid_Normal,
+        RT_ShapeBlend_Solid_Multiply,
+        RT_ShapeBlend_Solid_Screen,
+        RT_ShapeBlend_Solid_Overlay,
+        RT_ShapeBlend_Solid_Darken,
+        RT_ShapeBlend_Solid_Lighten,
+        RT_ShapeBlend_Solid_ColorDodge,
+        RT_ShapeBlend_Solid_ColorBurn,
+        RT_ShapeBlend_Solid_HardLight,
+        RT_ShapeBlend_Solid_SoftLight,
+        RT_ShapeBlend_Solid_Difference,
+        RT_ShapeBlend_Solid_Exclusion,
+        RT_ShapeBlend_Solid_Hue,
+        RT_ShapeBlend_Solid_Saturation,
+        RT_ShapeBlend_Solid_Color,
+        RT_ShapeBlend_Solid_Luminosity,
+        RT_ShapeBlend_Solid_Add,
+        // shape blends (linear gradient)
+        RT_ShapeBlend_Linear_Normal,
+        RT_ShapeBlend_Linear_Multiply,
+        RT_ShapeBlend_Linear_Screen,
+        RT_ShapeBlend_Linear_Overlay,
+        RT_ShapeBlend_Linear_Darken,
+        RT_ShapeBlend_Linear_Lighten,
+        RT_ShapeBlend_Linear_ColorDodge,
+        RT_ShapeBlend_Linear_ColorBurn,
+        RT_ShapeBlend_Linear_HardLight,
+        RT_ShapeBlend_Linear_SoftLight,
+        RT_ShapeBlend_Linear_Difference,
+        RT_ShapeBlend_Linear_Exclusion,
+        RT_ShapeBlend_Linear_Hue,
+        RT_ShapeBlend_Linear_Saturation,
+        RT_ShapeBlend_Linear_Color,
+        RT_ShapeBlend_Linear_Luminosity,
+        RT_ShapeBlend_Linear_Add,
+        // shape blends (radial gradient)
+        RT_ShapeBlend_Radial_Normal,
+        RT_ShapeBlend_Radial_Multiply,
+        RT_ShapeBlend_Radial_Screen,
+        RT_ShapeBlend_Radial_Overlay,
+        RT_ShapeBlend_Radial_Darken,
+        RT_ShapeBlend_Radial_Lighten,
+        RT_ShapeBlend_Radial_ColorDodge,
+        RT_ShapeBlend_Radial_ColorBurn,
+        RT_ShapeBlend_Radial_HardLight,
+        RT_ShapeBlend_Radial_SoftLight,
+        RT_ShapeBlend_Radial_Difference,
+        RT_ShapeBlend_Radial_Exclusion,
+        RT_ShapeBlend_Radial_Hue,
+        RT_ShapeBlend_Radial_Saturation,
+        RT_ShapeBlend_Radial_Color,
+        RT_ShapeBlend_Radial_Luminosity,
+        RT_ShapeBlend_Radial_Add,
         RT_None
     };
 
@@ -165,6 +183,8 @@ struct GlRenderer : RenderMethod
     static bool term();
 
 private:
+    enum class BlendSource { Image, Scene, Solid, LinearGradient, RadialGradient };
+
     GlRenderer(); 
     ~GlRenderer();
 
@@ -176,8 +196,8 @@ private:
     GlRenderPass* currentPass();
 
     bool beginComplexBlending(const RenderRegion& vp, RenderRegion bounds);
-    void endBlendingCompose(GlRenderTask* stencilTask, const Matrix& matrix, bool gradient, bool image);
-    GlProgram* getBlendProgram(BlendMethod method, bool gradient, bool image, bool scene);
+    void endBlendingCompose(GlRenderTask* stencilTask, const Matrix& matrix);
+    GlProgram* getBlendProgram(BlendMethod method, BlendSource source);
 
     void prepareBlitTask(GlBlitTask* task);
     void prepareCmpTask(GlRenderTask* task, const RenderRegion& vp, uint32_t cmpWidth, uint32_t cmpHeight);

@@ -181,7 +181,7 @@ const char* STR_LINEAR_GRADIENT_VARIABLES = TVG_COMPOSE_SHADER(
 );
 
 //See: GlRenderer::initShaders()
-const char* STR_LINEAR_GRADIENT_MAIN = TVG_COMPOSE_SHADER(
+const char* STR_LINEAR_GRADIENT_MAIN_OLD = TVG_COMPOSE_SHADER(
     out vec4 FragColor;                                                                                     \n
     void main()                                                                                             \n
     {                                                                                                       \n
@@ -193,6 +193,29 @@ const char* STR_LINEAR_GRADIENT_MAIN = TVG_COMPOSE_SHADER(
         float t = gradientWrap(d);                                                                          \n
         vec4 color = gradient(t, d, length(pos - st));                                                      \n
         FragColor =  vec4(color.rgb * color.a, color.a);                                                    \n
+    }                                                                                                       \n
+);
+
+//See: GlRenderer::initShaders()
+const char* STR_LINEAR_GRADIENT_MAIN = TVG_COMPOSE_SHADER(
+    out vec4 FragColor;                                                                                     \n
+    void main()                                                                                             \n
+    {                                                                                                       \n
+        FragColor = linearGradientColor(vPos);                                                              \n
+    }                                                                                                       \n
+);
+
+//See: GlRenderer::initShaders()
+const char* STR_LINEAR_GRADIENT_FUNCTIONS = TVG_COMPOSE_SHADER(
+    vec4 linearGradientColor(vec2 pos)                                                                      \n
+    {                                                                                                       \n
+        vec2 st = uGradientInfo.gradStartPos;                                                               \n
+        vec2 ed = uGradientInfo.gradEndPos;                                                                 \n
+        vec2 ba = ed - st;                                                                                  \n
+        float d = dot(pos - st, ba) / dot(ba, ba);                                                          \n
+        float t = gradientWrap(d);                                                                          \n
+        vec4 color = gradient(t, d, length(pos - st));                                                      \n
+        return vec4(color.rgb * color.a, color.a);                                                          \n
     }                                                                                                       \n
 );
 
@@ -209,7 +232,7 @@ const char* STR_RADIAL_GRADIENT_VARIABLES = TVG_COMPOSE_SHADER(
 
 // TODO: Precompute radial_matrix, f, r1n, inv_r1, d_radius_sign, is_focal_on_circle, is_well_behaved, is_swapped in CPU as a uniform
 //See: GlRenderer::initShaders()
-const char* STR_RADIAL_GRADIENT_MAIN = TVG_COMPOSE_SHADER(
+const char* STR_RADIAL_GRADIENT_MAIN_OLD = TVG_COMPOSE_SHADER(
     out vec4 FragColor;                                                                                     \n
                                                                                                             \n
     mat3 radial_matrix(vec2 p0, vec2 p1)                                                                    \n
@@ -306,6 +329,113 @@ const char* STR_RADIAL_GRADIENT_MAIN = TVG_COMPOSE_SHADER(
         vec4 color = gradient(t, res.x, length(vPos - uGradientInfo.centerPos.xy));                         \n
         FragColor =  vec4(color.rgb * color.a, color.a);                                                    \n
     }
+);
+
+//See: GlRenderer::initShaders()
+const char* STR_RADIAL_GRADIENT_MAIN = TVG_COMPOSE_SHADER(
+    out vec4 FragColor;                                                                                     \n
+                                                                                                            \n
+    void main()                                                                                             \n
+    {                                                                                                       \n
+        FragColor = radialGradientColor(vPos);                                                              \n
+    }                                                                                                       \n
+);
+
+// TODO: Precompute radial_matrix, f, r1n, inv_r1, d_radius_sign, is_focal_on_circle, is_well_behaved, is_swapped in CPU as a uniform
+//See: GlRenderer::initShaders()
+const char* STR_RADIAL_GRADIENT_FUNCTIONS = TVG_COMPOSE_SHADER(
+    mat3 radial_matrix(vec2 p0, vec2 p1)                                                                    \n
+    {                                                                                                       \n
+        mat3 a = mat3(0.0, -1.0, 0.0, 1.0, 0.0, 0.0, 0.0, 0.0, 1.0);                                        \n
+        mat3 b = mat3(p1.y - p0.y, p0.x - p1.x, 0.0, p1.x - p0.x, p1.y - p0.y, 0.0, p0.x, p0.y, 1.0);       \n
+        return a * inverse(b);                                                                              \n
+    }                                                                                                       \n
+                                                                                                            \n
+    vec2 compute_radial_t(vec2 c0, float r0, vec2 c1, float r1, vec2 pos)                                   \n
+    {                                                                                                       \n
+        const float scalar_nearly_zero = 2.44140625e-4;                                                     \n
+        float d_center = distance(c0, c1);                                                                  \n
+        float d_radius = r1 - r0;                                                                           \n
+        bool radial = d_center < scalar_nearly_zero;                                                        \n
+        bool strip = abs(d_radius) < scalar_nearly_zero;                                                    \n
+                                                                                                            \n
+        if (radial) {                                                                                       \n
+            if (strip) return vec2(0.0, -1.0);                                                              \n
+                                                                                                            \n
+            float scale = 1.0 / d_radius;                                                                   \n
+            float scale_sign = sign(d_radius);                                                              \n
+            float bias = r0 / d_radius;                                                                     \n
+            vec2 pt = (pos - c0) * scale;                                                                   \n
+            float t = length(pt) * scale_sign - bias;                                                       \n
+            return vec2(t, 1.0);                                                                            \n
+        } else if (strip) {                                                                                 \n
+            mat3 transform = radial_matrix(c0, c1);                                                         \n
+            float r = r0 / d_center;                                                                        \n
+            float r_2 = r * r;                                                                              \n
+            vec2 pt = (transform * vec3(pos.xy, 1.0)).xy;                                                   \n
+            float t = r_2 - pt.y * pt.y;                                                                    \n
+                                                                                                            \n
+            if (t < 0.0) return vec2(0.0, -1.0);                                                            \n
+                                                                                                            \n
+            t = pt.x + sqrt(t);                                                                             \n
+            return vec2(t, 1.0);                                                                            \n
+        } else {                                                                                            \n
+            float f = r0 / (r0 - r1);                                                                       \n
+            bool is_swapped = abs(f - 1.0) < scalar_nearly_zero;                                            \n
+            vec2 c0p = is_swapped ? c1 : c0;                                                                \n
+            vec2 c1p = is_swapped ? c0 : c1;                                                                \n
+            float fp = is_swapped ? 0.0 : f;                                                                \n
+            vec2 cf = c0p * (1.0 - fp) + c1p * fp;                                                          \n
+            mat3 transform = radial_matrix(cf, c1p);                                                        \n
+                                                                                                            \n
+            float scale_x = abs(1.0 - fp);                                                                  \n
+            float scale_y = scale_x;                                                                        \n
+            float r1n = abs(r1 - r0) / d_center;                                                            \n
+            bool is_focal_on_circle = abs(r1n - 1.0) < scalar_nearly_zero;                                  \n
+            if (is_focal_on_circle) {                                                                       \n
+                scale_x *= 0.5;                                                                             \n
+                scale_y *= 0.5;                                                                             \n
+            } else {                                                                                        \n
+                float denom = r1n * r1n - 1.0;                                                              \n
+                scale_x *= r1n / denom;                                                                     \n
+                scale_y /= sqrt(abs(denom));                                                                \n
+            }                                                                                               \n
+            transform = mat3(scale_x, 0.0, 0.0, 0.0, scale_y, 0.0, 0.0, 0.0, 1.0) * transform;              \n
+                                                                                                            \n
+            vec2 pt = (transform * vec3(pos.xy, 1.0)).xy;                                                   \n
+                                                                                                            \n
+            float inv_r1 = 1.0 / r1n;                                                                       \n
+            float d_radius_sign = sign(1.0 - fp);                                                           \n
+                                                                                                            \n
+            float x_t = -1.0;                                                                               \n
+            if (is_focal_on_circle) x_t = dot(pt, pt) / pt.x;                                               \n
+            else if (r1n > 1.0) x_t = length(pt) - pt.x * inv_r1;                                           \n
+            else {                                                                                          \n
+                float discriminant = pt.x * pt.x - pt.y * pt.y;                                             \n
+                float root = sqrt(max(discriminant, 0.0));                                                  \n
+                float s = (is_swapped == (d_radius_sign > 0.0)) ? 1.0 : -1.0;                               \n
+                x_t = s * root - pt.x * inv_r1;                                                             \n
+                if (discriminant < 0.0 || x_t < 0.0) return vec2(is_swapped ? 0.0 : 1.0, 1.0);              \n
+            }                                                                                               \n
+            float t = fp + d_radius_sign * x_t;                                                             \n
+            if (is_swapped) t = 1.0 - t;                                                                    \n
+            return vec2(t, 1.0);                                                                            \n
+        }                                                                                                   \n
+    }                                                                                                       \n
+                                                                                                            \n
+    vec4 radialGradientColor(vec2 pos)                                                                      \n
+    {                                                                                                       \n
+        vec2 res = compute_radial_t(uGradientInfo.centerPos.xy,                                             \n
+                                    uGradientInfo.radius.x,                                                 \n
+                                    uGradientInfo.centerPos.zw,                                             \n
+                                    uGradientInfo.radius.y,                                                 \n
+                                    pos);                                                                   \n
+        if (res.y < 0.0) return vec4(0.0, 0.0, 0.0, 0.0);                                                   \n
+                                                                                                            \n
+        float t = gradientWrap(res.x);                                                                      \n
+        vec4 color = gradient(t, res.x, length(pos - uGradientInfo.centerPos.xy));                          \n
+        return vec4(color.rgb * color.a, color.a);                                                          \n
+    }                                                                                                       \n
 );
 
 const char* IMAGE_VERT_SHADER = TVG_COMPOSE_SHADER(
@@ -579,11 +709,17 @@ const char* BLIT_FRAG_SHADER = TVG_COMPOSE_SHADER(
     }
 );
 
-const char* BLEND_SOLID_FRAG_HEADER = R"(
-uniform sampler2D uSrcTexture;
+const char* BLEND_SHAPE_SOLID_FRAG_HEADER = R"(
+layout(std140) uniform ColorInfo {
+    vec4 solidColor;
+} uColorInfo;
+
+layout(std140) uniform BlendRegion {
+    vec4 region;
+} uBlendRegion;
+
 uniform sampler2D uDstTexture;
 
-in vec2 vUV;
 out vec4 FragColor;
 
 vec3 One = vec3(1.0, 1.0, 1.0);
@@ -591,10 +727,9 @@ struct FragData { vec3 Sc; float Sa; float So; vec3 Dc; float Da; };
 FragData d;
 
 void getFragData() {
-    // get source data
-    vec4 colorSrc = texture(uSrcTexture, vUV);
-    vec4 colorDst = texture(uDstTexture, vUV);
-    // fill fragment data
+    vec2 uv = (gl_FragCoord.xy - uBlendRegion.region.xy) / uBlendRegion.region.zw;
+    vec4 colorSrc = uColorInfo.solidColor;
+    vec4 colorDst = texture(uDstTexture, uv);
     d.Sc = colorSrc.rgb;
     d.Sa = colorSrc.a;
     d.So = 1.0;
@@ -602,14 +737,16 @@ void getFragData() {
     d.Da = colorDst.a;
 }
 
-vec4 postProcess(vec4 R) { return R; }
+vec4 postProcess(vec4 R) { return mix(vec4(d.Dc, d.Da), R, d.Sa * d.So); }
 )";
 
-const char* BLEND_GRADIENT_FRAG_HEADER = R"(
-uniform sampler2D uSrcTexture;
+const char* BLEND_SHAPE_LINEAR_FRAG_HEADER = R"(
+layout(std140) uniform BlendRegion {
+    vec4 region;
+} uBlendRegion;
+
 uniform sampler2D uDstTexture;
 
-in vec2 vUV;
 out vec4 FragColor;
 
 vec3 One = vec3(1.0, 1.0, 1.0);
@@ -617,21 +754,48 @@ struct FragData { vec3 Sc; float Sa; float So; vec3 Dc; float Da; };
 FragData d;
 
 void getFragData() {
-    // get source data
-    vec4 colorSrc = texture(uSrcTexture, vUV);
-    vec4 colorDst = texture(uDstTexture, vUV);
-    // fill fragment data
+    vec4 colorSrc = linearGradientColor(vPos);
+    vec2 uv = (gl_FragCoord.xy - uBlendRegion.region.xy) / uBlendRegion.region.zw;
+    vec4 colorDst = texture(uDstTexture, uv);
+
     d.Sc = colorSrc.rgb;
     d.Sa = colorSrc.a;
     d.So = 1.0;
     d.Dc = colorDst.rgb;
     d.Da = colorDst.a;
-    if (d.Sa > 0.0) {d.Sc = d.Sc / d.Sa; }
-    d.Sc = mix(d.Dc, d.Sc, d.Sa * d.So);
-    d.Sa = mix(d.Da,  1.0, d.Sa * d.So);
+    if (d.Sa > 0.0) { d.Sc = d.Sc / d.Sa; }
 }
 
-vec4 postProcess(vec4 R) { return R; }
+vec4 postProcess(vec4 R) { return mix(vec4(d.Dc, d.Da), R, d.Sa * d.So); }
+)";
+
+const char* BLEND_SHAPE_RADIAL_FRAG_HEADER = R"(
+layout(std140) uniform BlendRegion {
+    vec4 region;
+} uBlendRegion;
+
+uniform sampler2D uDstTexture;
+
+out vec4 FragColor;
+
+vec3 One = vec3(1.0, 1.0, 1.0);
+struct FragData { vec3 Sc; float Sa; float So; vec3 Dc; float Da; };
+FragData d;
+
+void getFragData() {
+    vec4 colorSrc = radialGradientColor(vPos);
+    vec2 uv = (gl_FragCoord.xy - uBlendRegion.region.xy) / uBlendRegion.region.zw;
+    vec4 colorDst = texture(uDstTexture, uv);
+
+    d.Sc = colorSrc.rgb;
+    d.Sa = colorSrc.a;
+    d.So = 1.0;
+    d.Dc = colorDst.rgb;
+    d.Da = colorDst.a;
+    if (d.Sa > 0.0) { d.Sc = d.Sc / d.Sa; }
+}
+
+vec4 postProcess(vec4 R) { return mix(vec4(d.Dc, d.Da), R, d.Sa * d.So); }
 )";
 
 const char* BLEND_IMAGE_FRAG_HEADER = R"(
@@ -658,7 +822,7 @@ void getFragData() {
     if (d.Sa > 0.0) { d.Sc = d.Sc / d.Sa; }
 }
 
-vec4 postProcess(vec4 R) { return R; }
+vec4 postProcess(vec4 R) { return mix(vec4(d.Dc, d.Da), R, d.Sa * d.So); }
 )";
 
 const char* BLEND_SCENE_FRAG_HEADER = R"(
