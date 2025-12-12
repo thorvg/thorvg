@@ -565,6 +565,14 @@ static jerry_value_t _div(const jerry_call_info_t* info, const jerry_value_t arg
 }
 
 
+static jerry_value_t _mod(const jerry_call_info_t* info, const jerry_value_t args[], const jerry_length_t argsCnt)
+{
+    auto a = jerry_value_as_number(args[0]);
+    auto b = jerry_value_as_number(args[1]);
+    return jerry_number(fmod(a, b));
+}
+
+
 static jerry_value_t _interp(float t, const jerry_value_t args[], int argsCnt)
 {
     auto tMin = 0.0f;
@@ -1226,6 +1234,10 @@ static void _buildMath(jerry_value_t context)
     jerry_object_set_sz(context, "$bm_div", bm_div);
     jerry_value_free(bm_div);
 
+    auto bm_mod = jerry_function_external(_mod);
+    jerry_object_set_sz(context, "$bm_mod", bm_mod);
+    jerry_value_free(bm_mod);
+
     auto mul = jerry_function_external(_mul);
     jerry_object_set_sz(context, "mul", mul);
     jerry_value_free(mul);
@@ -1245,6 +1257,10 @@ static void _buildMath(jerry_value_t context)
     auto div = jerry_function_external(_div);
     jerry_object_set_sz(context, "div", div);
     jerry_value_free(div);
+
+    auto mod = jerry_function_external(_mod);
+    jerry_object_set_sz(context, "mod", mod);
+    jerry_value_free(mod);
 
     auto clamp = jerry_function_external(_clamp);
     jerry_object_set_sz(context, "clamp", clamp);
