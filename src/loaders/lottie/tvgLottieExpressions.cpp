@@ -649,6 +649,33 @@ static jerry_value_t _clamp(const jerry_call_info_t* info, const jerry_value_t a
 }
 
 
+static jerry_value_t _posterizeTime(const jerry_call_info_t* info, const jerry_value_t args[], const jerry_length_t argsCnt)
+{
+    auto fps = jerry_value_as_number(args[0]);
+
+    // Get current global context
+    auto global = jerry_current_realm();
+
+    // Get current time
+    auto time_val = jerry_object_get_sz(global, EXP_TIME);
+    auto time = jerry_value_as_number(time_val);
+    jerry_value_free(time_val);
+
+    // Posterize time: quantize to fps intervals (like lottie-web)
+    auto posterized_time = (fps == 0.0f) ? 0.0f : floor(time * fps) / fps;
+
+    // Update time in global context
+    auto new_time = jerry_number(posterized_time);
+    jerry_object_set_sz(global, EXP_TIME, new_time);
+    jerry_value_free(new_time);
+
+    // Note: lottie-web also updates 'value' with valueAtTime(posterized_time)
+    // but for wiggle use case, updating time is sufficient
+
+    return jerry_undefined();
+}
+
+
 static jerry_value_t _dot(const jerry_call_info_t* info, const jerry_value_t args[], const jerry_length_t argsCnt)
 {
     return jerry_number(tvg::dot(_point2d(args[0]), _point2d(args[1])));
@@ -1411,7 +1438,11 @@ jerry_value_t LottieExpressions::buildGlobal()
 
     //fromCompToSurface
     //createPath
-    //posterizeTime(framesPerSecond)
+
+    auto posterizeTime = jerry_function_external(_posterizeTime);
+    jerry_object_set_sz(global, "posterizeTime", posterizeTime);
+    jerry_value_free(posterizeTime);
+
     //value
 
     return global;
