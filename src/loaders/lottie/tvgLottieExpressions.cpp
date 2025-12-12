@@ -875,17 +875,23 @@ static jerry_value_t _wiggle(const jerry_call_info_t* info, const jerry_value_t 
     auto freq = jerry_value_as_number(args[0]);
     auto amp = jerry_value_as_number(args[1]);
     auto octaves = (argsCnt > 2) ? jerry_value_as_int32(args[2]) : 1;
-    auto ampm = (argsCnt > 3) ? jerry_value_as_number(args[3]) : 5.0f;
+    auto ampm = (argsCnt > 3) ? jerry_value_as_number(args[3]) : 0.5f;
     auto time = (argsCnt > 4) ? jerry_value_as_number(args[4]) : data->exp->comp->timeAtFrame(data->frameNo);
 
-    Point result = {100.0f, 100.0f};
+    Point result = {0.0f, 0.0f};
+    auto property = data->exp->property;
+
+    if (property->type == LottieProperty::Type::Vector) {
+        result = (*static_cast<LottieVector*>(property))(data->frameNo);
+    } else if (property->type == LottieProperty::Type::Scalar) {
+        result = (*static_cast<LottieScalar*>(property))(data->frameNo);
+    }
 
     for (int o = 0; o < octaves; ++o) {
-        auto repeat = int(time * freq);
-        auto frac = (time * freq - float(repeat)) * 1.25f;
+        auto repeat = (int)ceil(time * freq);
         for (int i = 0; i < repeat; ++i) {
-            result.x += (_rand() * 2.0f - 1.0f) * amp * frac;
-            result.y += (_rand() * 2.0f - 1.0f) * amp * frac;
+            result.x += (_rand() * 2.0f - 1.0f) * amp;
+            result.y += (_rand() * 2.0f - 1.0f) * amp;
         }
         freq *= 2.0f;
         amp *= ampm;
