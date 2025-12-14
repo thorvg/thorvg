@@ -449,53 +449,74 @@ void WgBWTessellator::tessellate(const RenderPath& path, const Matrix& matrix)
     mBuffer->vbuffer.reserve(ptsCnt * 2);
     mBuffer->ibuffer.reserve((ptsCnt - 2) * 3);
 
+    auto updateConvexity = [&](const Point& edge) {
+        if (!convex) return;
+        if (prevEdge.x == 0.0f && prevEdge.y == 0.0f) { prevEdge = edge; return; }
+        auto c = cross(prevEdge, edge);
+        if (zero(c)) { prevEdge = edge; return; }
+        auto sign = (c > 0) ? 1 : -1;
+        if (winding == 0) winding = sign; // The default winding is CCW, but it might be otherwise once we support unordered points.Expand commentComment on line R453ResolvedCode has comments. Press enter to view.
+        else if (sign != winding) convex = false;
+        prevEdge = edge;
+    };
+
     for (uint32_t i = 0; i < cmdCnt; i++) {
         switch(cmds[i]) {
             case PathCommand::MoveTo: {
                 firstIndex = pushVertex(pts->x, pts->y);
+                firstPt = prevPt = *pts;
+                prevEdge = {};
                 prevIndex = 0;
                 pts++;
             } break;
             case PathCommand::LineTo: {
                 if (prevIndex == 0) {
                     prevIndex = pushVertex(pts->x, pts->y);
-                    pts++;
+                    prevEdge = *pts - prevPt;
+                    prevPt = *pts++;
                 } else {
+                    updateConvexity(*pts - prevPt);
                     auto currIndex = pushVertex(pts->x, pts->y);
                     pushTriangle(firstIndex, prevIndex, currIndex);
                     prevIndex = currIndex;
-                    pts++;
+                    prevPt = *pts++;
                 }
             } break;
             case PathCommand::CubicTo: {
                 Bezier curve{pts[-1], pts[0], pts[1], pts[2]};
-                Bezier relCurve {pts[-1], pts[0], pts[1], pts[2]};
-                relCurve.start *= matrix;
-                relCurve.ctrl1 *= matrix;
-                relCurve.ctrl2 *= matrix;
-                relCurve.end *= matrix;
+                if (convex) {
+                    auto e1 = curve.ctrl1 - curve.start;
+                    auto e2 = curve.ctrl2 - curve.ctrl1;
+                    auto e3 = curve.end - curve.ctrl2;
+                    if (prevIndex != 0) updateConvexity(e1);
+                    else prevEdge = e1;
+                    updateConvexity(e2);
+                    updateConvexity(e3);
+                }
 
-                auto stepCount = relCurve.segments();
+                auto stepCount = (curve * matrix).segments();
                 if (stepCount <= 1) stepCount = 2;
-
                 float step = 1.f / stepCount;
 
                 for (uint32_t s = 1; s <= static_cast<uint32_t>(stepCount); s++) {
                     auto pt = curve.at(step * s);
                     auto currIndex = pushVertex(pt.x, pt.y);
-
-                    if (prevIndex == 0) {
-                        prevIndex = currIndex;
-                        continue;
-                    }
-
+                    if (prevIndex == 0) { prevIndex = currIndex; continue; }
                     pushTriangle(firstIndex, prevIndex, currIndex);
                     prevIndex = currIndex;
                 }
-
+                prevPt = curve.end;
                 pts += 3;
             } break;
-            case PathCommand::Close:
+                case PathCommand::Close: {
+                if (convex && prevIndex != 0) {
+                    updateConvexity(firstPt - prevPt);
+                    if (convex && winding != 0) {
+                        auto secondPt = mBuffer->vbuffer[firstIndex+1];
+                        updateConvexity(secondPt - firstPt);
+                    }
+                }
+            } break;
             default:
                 break;
         }

@@ -394,29 +394,31 @@ void WgCompositor::drawShape(WgContext& context, WgRenderDataShape* renderData)
     WgRenderSettings& settings = renderData->renderSettingsShape;
     wgpuRenderPassEncoderSetScissorRect(renderPassEncoder, renderData->viewport.x(), renderData->viewport.y(), renderData->viewport.w(), renderData->viewport.h());
     // setup stencil rules
-    WGPURenderPipeline stencilPipeline = (renderData->fillRule == FillRule::NonZero) ? pipelines.nonzero : pipelines.evenodd;
-    wgpuRenderPassEncoderSetStencilReference(renderPassEncoder, 0);
-    wgpuRenderPassEncoderSetBindGroup(renderPassEncoder, 0, bindGroupViewMat, 0, nullptr);
-    wgpuRenderPassEncoderSetBindGroup(renderPassEncoder, 1, stageBufferPaint[settings.bindGroupInd], 0, nullptr);
-    wgpuRenderPassEncoderSetPipeline(renderPassEncoder, stencilPipeline);
-    // draw to stencil (first pass)
-    drawMesh(context, &renderData->meshShape);
+    if (!renderData->convex) {
+        WGPURenderPipeline stencilPipeline = (renderData->fillRule == FillRule::NonZero) ? pipelines.nonzero : pipelines.evenodd;
+        wgpuRenderPassEncoderSetStencilReference(renderPassEncoder, 0);
+        wgpuRenderPassEncoderSetBindGroup(renderPassEncoder, 0, bindGroupViewMat, 0, nullptr);
+        wgpuRenderPassEncoderSetBindGroup(renderPassEncoder, 1, stageBufferPaint[settings.bindGroupInd], 0, nullptr);
+        wgpuRenderPassEncoderSetPipeline(renderPassEncoder, stencilPipeline);
+        // draw to stencil (first pass)
+        drawMesh(context, &renderData->meshShape);
+    }
     // setup fill rules
     wgpuRenderPassEncoderSetStencilReference(renderPassEncoder, 0);
     wgpuRenderPassEncoderSetBindGroup(renderPassEncoder, 0, bindGroupViewMat, 0, nullptr);
     wgpuRenderPassEncoderSetBindGroup(renderPassEncoder, 1, stageBufferPaint[settings.bindGroupInd], 0, nullptr);
     if (settings.fillType == WgRenderSettingsType::Solid) {
         wgpuRenderPassEncoderSetBindGroup(renderPassEncoder, 2, stageBufferPaint[settings.bindGroupInd], 0, nullptr);
-        wgpuRenderPassEncoderSetPipeline(renderPassEncoder, pipelines.solid);
+        wgpuRenderPassEncoderSetPipeline(renderPassEncoder, renderData->convex ? pipelines.solid_conv : pipelines.solid);
     } else if (settings.fillType == WgRenderSettingsType::Linear) {
         wgpuRenderPassEncoderSetBindGroup(renderPassEncoder, 2, settings.gradientData.bindGroup, 0, nullptr);
-        wgpuRenderPassEncoderSetPipeline(renderPassEncoder, pipelines.linear);
+        wgpuRenderPassEncoderSetPipeline(renderPassEncoder, renderData->convex ? pipelines.linear_conv : pipelines.linear);
     } else if (settings.fillType == WgRenderSettingsType::Radial) {
         wgpuRenderPassEncoderSetBindGroup(renderPassEncoder, 2, settings.gradientData.bindGroup, 0, nullptr);
-        wgpuRenderPassEncoderSetPipeline(renderPassEncoder, pipelines.radial);
+        wgpuRenderPassEncoderSetPipeline(renderPassEncoder, renderData->convex ? pipelines.radial_conv : pipelines.radial);
     }
     // draw to color (second pass)
-    drawMesh(context, &renderData->meshBBox);
+    drawMesh(context, renderData->convex ? &renderData->meshShape : &renderData->meshBBox);
 }
 
 
