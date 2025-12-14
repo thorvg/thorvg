@@ -167,6 +167,7 @@ void WgRenderDataShape::updateVisibility(const RenderShape& rshape, uint8_t opac
 void WgRenderDataShape::updateMeshes(const RenderShape &rshape, RenderUpdateFlag flag, const Matrix& matrix)
 {
     releaseMeshes();
+    convex = false;
     strokeFirst = rshape.strokeFirst();
     renderSettingsShape.opacityMultiplier = 1.0f;
     renderSettingsStroke.opacityMultiplier = 1.0f;
@@ -196,6 +197,7 @@ void WgRenderDataShape::updateMeshes(const RenderShape &rshape, RenderUpdateFlag
         } else {
             WgBWTessellator bwTess{&meshShape};
             bwTess.tessellate(optPath, matrix);
+            convex = bwTess.convex;
             bbox = bwTess.getBBox();
         }
 

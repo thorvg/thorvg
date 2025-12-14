@@ -82,12 +82,17 @@ public:
     void tessellate(const RenderPath& path, const Matrix& matrix);
     RenderRegion bounds() const;
     BBox getBBox() const;
+    bool convex = true;
 private:
     uint32_t pushVertex(float x, float y);
     void pushTriangle(uint32_t a, uint32_t b, uint32_t c);
 
     WgMeshData* mBuffer;
     BBox bbox = {};
+    Point firstPt = {};
+    Point prevPt = {};
+    Point prevEdge = {};
+    int8_t winding = -1;   //0: unknown, 1: CW, -1: CCW
 };
 
 #endif /* _TVG_WG_TESSELLATOR_H_ */

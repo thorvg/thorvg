@@ -81,6 +81,7 @@ struct WgRenderDataShape: public WgRenderDataPaint
     WgMeshData meshStrokesBBox{};
     bool strokeFirst{};
     FillRule fillRule{};
+    bool convex{};
     BBox bbox;
 
     void updateBBox(BBox bb);

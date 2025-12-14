@@ -328,6 +328,27 @@ void WgPipelines::initialize(WgContext& context)
         layout_gradient, vertexBufferLayoutsShape, 1,
         WGPUColorWriteMask_All, offscreenTargetFormat, blendStateNrm,
         depthStencilStateShape, multisampleState);
+    // render pipeline solid (no stencil)
+    solid_conv = createRenderPipeline(
+        context.device, "The render pipeline solid",
+        shader_solid, "vs_main", "fs_main",
+        layout_solid, vertexBufferLayoutsShape, 1,
+        WGPUColorWriteMask_All, offscreenTargetFormat, blendStateNrm,
+        depthStencilStateScene, multisampleState);
+    // render pipeline radial (no stencil)
+    radial_conv = createRenderPipeline(
+        context.device, "The render pipeline radial",
+        shader_radial, "vs_main", "fs_main",
+        layout_gradient, vertexBufferLayoutsShape, 1,
+        WGPUColorWriteMask_All, offscreenTargetFormat, blendStateNrm,
+        depthStencilStateScene, multisampleState);
+    // render pipeline linear (no stencil)
+    linear_conv = createRenderPipeline(
+        context.device, "The render pipeline linear",
+        shader_linear, "vs_main", "fs_main",
+        layout_gradient, vertexBufferLayoutsShape, 1,
+        WGPUColorWriteMask_All, offscreenTargetFormat, blendStateNrm,
+        depthStencilStateScene, multisampleState);
     // render pipeline image
     image = createRenderPipeline(
         context.device, "The render pipeline image",
@@ -522,6 +543,9 @@ void WgPipelines::releaseGraphicHandles(WgContext& context)
     // pipelines normal blend
     releaseRenderPipeline(scene);
     releaseRenderPipeline(image);
+    releaseRenderPipeline(linear_conv);
+    releaseRenderPipeline(radial_conv);
+    releaseRenderPipeline(solid_conv);
     releaseRenderPipeline(linear);
     releaseRenderPipeline(radial);
     releaseRenderPipeline(solid);
