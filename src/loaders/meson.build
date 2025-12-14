@@ -45,6 +45,18 @@ if webp_loader
     endif
 endif
 
+if gif_loader
+    gif_dep_found = false
+    if not get_option('static')
+        subdir('external_gif')
+        gif_dep_found = gif_dep.found()
+    endif
+    
+    if not gif_dep_found
+        subdir('gif')
+    endif
+endif
+
 subdir('raw')
 
 loader_dep = declare_dependency(
