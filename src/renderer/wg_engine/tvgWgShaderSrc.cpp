@@ -206,8 +206,10 @@ fn vs_main(in: VertexInput) -> VertexOutput {
 
 @fragment
 fn fs_main(in: VertexOutput) -> @location(0) vec4f {
-    var Sc: vec4f = textureSample(uTextureView, uSampler, in.vTexCoord.xy);
+    let Sc: vec4f = textureSample(uTextureView, uSampler, in.vTexCoord.xy);
     let So: f32 = uPaintSettings.options.a;
+    let Cs: u32 = u32(uPaintSettings.options.x); // color space
+    if ((Cs == 2) || (Cs == 3)) { return vec4f(Sc.rgb * So, Sc.a * So); }
     return vec4f(Sc.rgb * Sc.a * So, Sc.a * So);
 };
 )";
