@@ -39,10 +39,12 @@ void WgContext::initialize(WGPUInstance instance, WGPUDevice device)
     assert(queue);
 
     // create shared webgpu assets
+    samplerImages = createSampler(WGPUFilterMode_Nearest, WGPUFilterMode_Linear, WGPUAddressMode_Repeat);
     samplerNearestRepeat = createSampler(WGPUFilterMode_Nearest, WGPUMipmapFilterMode_Nearest, WGPUAddressMode_Repeat);
     samplerLinearRepeat = createSampler(WGPUFilterMode_Linear, WGPUMipmapFilterMode_Linear, WGPUAddressMode_Repeat, 4);
     samplerLinearMirror = createSampler(WGPUFilterMode_Linear, WGPUMipmapFilterMode_Linear, WGPUAddressMode_MirrorRepeat, 4);
     samplerLinearClamp = createSampler(WGPUFilterMode_Linear, WGPUMipmapFilterMode_Linear, WGPUAddressMode_ClampToEdge, 4);
+    assert(samplerImages);
     assert(samplerNearestRepeat);
     assert(samplerLinearRepeat);
     assert(samplerLinearMirror);
@@ -60,7 +62,19 @@ void WgContext::release()
     releaseSampler(samplerLinearMirror);
     releaseSampler(samplerLinearRepeat);
     releaseSampler(samplerNearestRepeat);
+    releaseSampler(samplerImages);
     releaseQueue(queue);
+}
+
+
+WGPUSampler WgContext::createSampler(WGPUFilterMode minFilter, WGPUFilterMode magFilter, WGPUAddressMode addrMode, uint16_t anisotropy)
+{
+    const WGPUSamplerDescriptor samplerDesc {
+        .addressModeU = addrMode, .addressModeV = addrMode, .addressModeW = addrMode,
+        .magFilter = magFilter, .minFilter = minFilter, .mipmapFilter = WGPUMipmapFilterMode_Linear,
+        .lodMinClamp = 0.0f, .lodMaxClamp = 32.0f, .maxAnisotropy = anisotropy
+    };
+    return wgpuDeviceCreateSampler(device, &samplerDesc);
 }
 
 

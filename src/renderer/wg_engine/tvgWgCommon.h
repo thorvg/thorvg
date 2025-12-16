@@ -34,6 +34,7 @@ struct WgContext {
     WGPUQueue queue{};
     WGPUTextureFormat preferredFormat{};
     // shared webgpu assets
+    WGPUSampler samplerImages{};
     WGPUSampler samplerNearestRepeat{};
     WGPUSampler samplerLinearRepeat{};
     WGPUSampler samplerLinearMirror{};
@@ -45,6 +46,7 @@ struct WgContext {
     void release();
     
     // create common objects
+    WGPUSampler createSampler(WGPUFilterMode minFilter, WGPUFilterMode magFilter, WGPUAddressMode addrMode, uint16_t anisotropy = 1);
     WGPUSampler createSampler(WGPUFilterMode filter, WGPUMipmapFilterMode mipmapFilter, WGPUAddressMode addrMode, uint16_t anisotropy = 1);
     WGPUTexture createTexture(uint32_t width, uint32_t height, WGPUTextureFormat format);
     WGPUTexture createTexStorage(uint32_t width, uint32_t height, WGPUTextureFormat format);

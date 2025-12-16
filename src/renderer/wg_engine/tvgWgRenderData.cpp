@@ -46,7 +46,7 @@ void WgImageData::update(WgContext& context, const RenderSurface* surface)
         textureView = context.createTextureView(texture);
         // update bind group
         context.layouts.releaseBindGroup(bindGroup);
-        bindGroup = context.layouts.createBindGroupTexSampled(context.samplerLinearRepeat, textureView);
+        bindGroup = context.layouts.createBindGroupTexSampled(context.samplerImages, textureView);
     }
 };
 
