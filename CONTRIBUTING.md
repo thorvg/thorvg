@@ -37,7 +37,7 @@ Timeout:            0<br/>
 This also suggests who might need to review your patch.
 If your change doesn't belong to any sub-modules, you can either replace this with a suitable name or skip it.
 The name should be written entirely in lowercase letters.
-  - e.g., build, doc, infra, common, sw_engine, gl_engine, svg_loader, examples, wasm, svg2png...
+  - e.g., build, doc, infra, common, sw_engine, gl_engine, svg_loader, wasm, svg2png...
 
 - [Feature] indicates the primary function or feature you modified. Typically, this represents a class or file name.
 This is an optional.

@@ -26,7 +26,7 @@ jobs:
 
     - name: Build
       run: |
-        meson setup build -Dlog=true -Dengines="sw, gl" -Dexamples=true -Dloaders=all -Dsavers=all -Dbindings=capi -Dtools=all
+        meson setup build -Dlog=true -Dengines="sw, gl" -Dloaders=all -Dsavers=all -Dbindings=capi -Dtools=all
         sudo ninja -C build install
 
   compact_test:
