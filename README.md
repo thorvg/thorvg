@@ -459,17 +459,7 @@ Check out [Thor Janitor](https://github.com/thorvg/thorvg.janitor), an interacti
 <br />
 <br />
 ## Examples
-There are plenty of sample code in `thorvg/examples` to help you in understanding the ThorVG APIs.
-
-To execute these examples, you can build them with the following meson build option:
-```
-meson setup builddir -Dexamples=true
-```
-Note that these examples require the SDL dev package for launching. If you're using Linux-based OS, you can easily install this package from your OS distribution server. For Ubuntu, you can install it with this command.
-```
-apt-get install libsdl2-dev
-```
-Alternatively, you can read the official guidance [here](https://wiki.libsdl.org/SDL2/Installation) for other platforms. Fore more information, please visit the official [SDL](https://www.libsdl.org/) site.
+There are plenty of sample code in [thorvg.example](https://github.com/thorvg/thorvg.example) to help you in understanding the ThorVG APIs.
 
 [Back to contents](#contents)
 <br />
@@ -554,10 +544,11 @@ Examples:
 ThorVG is designed to be portable and extensible across various platforms. The following projects integrate ThorVG into specific environments or tools: </br >
 
 * [ThorVG Android](https://github.com/thorvg/thorvg.android) – Kotlin-based ThorVG support for Android.
+* [ThorVG Example](https://github.com/thorvg/thorvg.example) – An example set demonstrates how to use ThorVG's APIs.
 * [ThorVG Flutter](https://github.com/thorvg/thorvg.flutter) - A Flutter plugin for using ThorVG on Android and iOS.
 * [ThorVG Janitor](https://github.com/thorvg/thorvg.janitor) - A demo game showcasing ThorVG’s real-time rendering features.
-* [ThorVG Unity](https://github.com/thorvg/thorvg.unity) – ThorVG integration for Unity using C#.
 * [ThorVG Swift](https://github.com/thorvg/thorvg.swift) - Swift bindings for rendering vector graphics with ThorVG.
+* [ThorVG Unity](https://github.com/thorvg/thorvg.unity) – ThorVG integration for Unity using C#.
 * [ThorVG Viewer](https://github.com/thorvg/thorvg.viewer) - A browser-based viewer for ThorVG using WebAssembly.
 * [ThorVG Web](https://github.com/thorvg/thorvg.web) - WebAssembly-based integration of ThorVG for web apps.
 
@@ -600,7 +591,6 @@ The following outlines the dependencies for these optional features:
 * **PNG Loader** (external): [libpng](https://github.com/pnggroup/libpng)
 * **JPEG Loader** (external): [libjpeg-turbo](https://github.com/libjpeg-turbo/libjpeg-turbo)
 * **WebP Loader** (external): [libwebp](https://developers.google.com/speed/webp/download)
-* **Examples**: [SDL2](https://www.libsdl.org/)
 
 [Back to contents](#contents)
 <br />

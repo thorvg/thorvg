@@ -7,8 +7,7 @@ project('thorvg',
 config_h = configuration_data()
 
 src_dir = '/'.join(meson.current_source_dir().split('\\'))
-add_project_arguments('-DEXAMPLE_DIR="@0@/examples/resources"'.format(src_dir),
-                      '-DTEST_DIR="@0@/test/resources"'.format(src_dir),
+add_project_arguments('-DTEST_DIR="@0@/test/resources"'.format(src_dir),
                       language : 'cpp')
 
 config_h.set_quoted('THORVG_VERSION_STRING', meson.project_version())
@@ -163,10 +162,6 @@ subdir('inc')
 subdir('src')
 subdir('tools')
 
-if get_option('examples')
-    subdir('examples')
-endif
-
 if get_option('tests')
    subdir('test')
 endif
@@ -180,8 +175,7 @@ summary(
     'Partial Rendering': get_option('partial'),
     'SIMD Instruction': simd_type,
     'Log Message': get_option('log'),
-    'Tests': get_option('tests'),
-    'Examples': get_option('examples'),
+    'Tests': get_option('tests')
   },
   bool_yn: true,
 )

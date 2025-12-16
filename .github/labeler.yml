@@ -7,9 +7,6 @@
 "documentation":
   - README.md
 
-"example":
-  - examples/**/*
-
 "font":
   - src/loaders/ttf/**/*
 
