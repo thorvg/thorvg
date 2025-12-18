@@ -28,6 +28,10 @@
     #include <emscripten/html5_webgl.h>
     #define GL_CHECK(stmt) stmt
 #else //__EMSCRIPTEN__
+    #if defined(_WIN32) && !defined(__CYGWIN__) && !defined(__SCITECH_SNAP__)
+        #include <windows.h>
+    #endif
+
     #if defined (THORVG_GL_TARGET_GLES)
         #define TVG_REQUIRE_GL_MAJOR_VER 3
         #define TVG_REQUIRE_GL_MINOR_VER 0
@@ -1163,6 +1167,43 @@
         //typedef void (*PFNGLGETACTIVEUNIFORMBLOCKNAMEPROC)(GLuint program, GLuint uniformBlockIndex, GLsizei bufSize, GLsizei *length, GLchar *uniformBlockName);
     #endif /* GL_VERSION_3_1 */
 
+    #if defined(_WIN32) && !defined(__CYGWIN__) && !defined(__SCITECH_SNAP__) && defined(THORVG_GL_TARGET_GL)
+        typedef HDC (WINAPI *PFNWGLGETCURRENTDCPROC)(void);
+        typedef HGLRC (WINAPI *PFNWGLGETCURRENTCONTEXTPROC)(void);
+        typedef BOOL (WINAPI *PFNWGLMAKECURRENTPROC)(HDC, HGLRC);
+    #endif
+
+    #if defined(THORVG_GL_TARGET_GLES)
+        typedef void* EGLDisplay;
+        typedef void* EGLSurface;
+        typedef void* EGLContext;
+        typedef unsigned int EGLBoolean;
+        typedef int EGLint;
+        #define EGL_DRAW 0x3059
+        #define EGL_READ 0x305A
+        typedef EGLDisplay (*PFNEGLGETCURRENTDISPLAYPROC)(void);
+        typedef EGLSurface (*PFNEGLGETCURRENTSURFACEPROC)(EGLint readdraw);
+        typedef EGLContext (*PFNEGLGETCURRENTCONTEXTPROC)(void);
+        typedef EGLBoolean (*PFNEGLMAKECURRENTPROC)(EGLDisplay dpy, EGLSurface draw, EGLSurface read, EGLContext ctx);
+    #endif
+
+    #if defined(__linux__) && !defined(THORVG_GL_TARGET_GLES)
+        typedef struct _XDisplay Display;
+        typedef unsigned long GLXDrawable;
+        typedef struct __GLXcontextRec *GLXContext;
+        typedef Display* (*PFNGLXGETCURRENTDISPLAYPROC)(void);
+        typedef GLXDrawable (*PFNGLXGETCURRENTDRAWABLEPROC)(void);
+        typedef GLXContext (*PFNGLXGETCURRENTCONTEXTPROC)(void);
+        typedef int (*PFNGLXMAKECURRENTPROC)(Display* dpy, GLXDrawable drawable, GLXContext ctx);
+    #endif
+
+    #if defined(__APPLE__) || defined(__MACH__)
+        typedef void* CGLContextObj;
+        typedef int CGLError;
+        typedef CGLContextObj (*PFNCGLGETCURRENTCONTEXTPROC)(void);
+        typedef CGLError (*PFNCGLSETCURRENTCONTEXTPROC)(CGLContextObj ctx);
+    #endif
+
     //GL_VERSION_1_0
     extern PFNGLCULLFACEPROC               glCullFace;
     extern PFNGLFRONTFACEPROC              glFrontFace;
@@ -1483,6 +1524,32 @@
     //extern PFNGLGETACTIVEUNIFORMNAMEPROC      glGetActiveUniformName;
     //extern PFNGLGETACTIVEUNIFORMBLOCKIVPROC   glGetActiveUniformBlockiv;
     //extern PFNGLGETACTIVEUNIFORMBLOCKNAMEPROC glGetActiveUniformBlockName;
+
+    #if defined(_WIN32) && !defined(__CYGWIN__) && !defined(__SCITECH_SNAP__) && defined(THORVG_GL_TARGET_GL)
+        extern PFNWGLGETCURRENTDCPROC       tvgWglGetCurrentDC;
+        extern PFNWGLGETCURRENTCONTEXTPROC  tvgWglGetCurrentContext;
+        extern PFNWGLMAKECURRENTPROC        tvgWglMakeCurrent;
+    #endif
+
+    #if defined(THORVG_GL_TARGET_GLES)
+        extern PFNEGLGETCURRENTDISPLAYPROC  tvgEglGetCurrentDisplay;
+        extern PFNEGLGETCURRENTSURFACEPROC  tvgEglGetCurrentSurface;
+        extern PFNEGLGETCURRENTCONTEXTPROC  tvgEglGetCurrentContext;
+        extern PFNEGLMAKECURRENTPROC        tvgEglMakeCurrent;
+    #endif
+
+    #if defined(__linux__) && !defined(THORVG_GL_TARGET_GLES)
+        extern PFNGLXGETCURRENTDISPLAYPROC  tvgGlXGetCurrentDisplay;
+        extern PFNGLXGETCURRENTDRAWABLEPROC tvgGlXGetCurrentDrawable;
+        extern PFNGLXGETCURRENTCONTEXTPROC  tvgGlXGetCurrentContext;
+        extern PFNGLXMAKECURRENTPROC        tvgGlXMakeCurrent;
+    #endif
+
+    #if defined(__APPLE__) || defined(__MACH__)
+        extern PFNCGLGETCURRENTCONTEXTPROC  tvgCGLGetCurrentContext;
+        extern PFNCGLSETCURRENTCONTEXTPROC  tvgCGLSetCurrentContext;
+    #endif
+
 #endif // __EMSCRIPTEN__
 
 bool glInit();
