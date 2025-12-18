@@ -209,15 +209,17 @@ private:
     GlRenderTask* mMaskTask;
 };
 
-class GlSimpleBlendTask : public GlRenderTask
+class GlDirectBlendTask : public GlRenderTask
 {
 public:
-    GlSimpleBlendTask(BlendMethod method, GlProgram* program);
-    ~GlSimpleBlendTask() override = default;
+    GlDirectBlendTask(GlProgram* program, GlRenderTarget* dstFbo, GlRenderTarget* dstCopyFbo, const RenderRegion& copyRegion);
+    ~GlDirectBlendTask() override = default;
 
     void run() override;
 private:
-    BlendMethod mBlendMethod;
+    GlRenderTarget* mDstFbo = nullptr;
+    GlRenderTarget* mDstCopyFbo = nullptr;
+    RenderRegion mCopyRegion{};
 };
 
 class GlComplexBlendTask: public GlRenderTask

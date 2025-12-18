@@ -159,26 +159,31 @@ void GlRenderer::initShaders()
 
 void GlRenderer::drawPrimitive(GlShape& sdata, const RenderColor& c, RenderUpdateFlag flag, int32_t depth)
 {
+    auto blendShape = (mBlendMethod != BlendMethod::Normal);
     auto vp = currentPass()->getViewport();
-    auto bbox = sdata.geometry.viewport;
+    auto bbox = blendShape? sdata.geometry.getBounds() : sdata.geometry.viewport;
 
     bbox.intersect(vp);
-
-    auto complexBlend = beginComplexBlending(bbox, sdata.geometry.getBounds());
-
-    if (complexBlend) {
-        vp = currentPass()->getViewport();
-        bbox.intersect(vp);
-    }
+    if (bbox.invalid()) return;
 
     auto x = bbox.sx() - vp.sx();
     auto y = bbox.sy() - vp.sy();
     auto w = bbox.sw();
     auto h = bbox.sh();
+    auto yGl = vp.sh() - y - h;
+    RenderRegion viewRegion = {{x, yGl}, {x + w, yGl + h}};
 
     GlRenderTask* task = nullptr;
-    if (mBlendMethod != BlendMethod::Normal && !complexBlend) task = new GlSimpleBlendTask(mBlendMethod, mPrograms[RT_Color]);
-    else task = new GlRenderTask(mPrograms[RT_Color]);
+    GlRenderTarget* dstCopyFbo = nullptr;
+    
+    if (blendShape) {
+        if (mBlendPool.empty()) mBlendPool.push(new GlRenderTargetPool(surface.w, surface.h));
+        dstCopyFbo = mBlendPool[0]->getRenderTarget(viewRegion);
+        auto program = getBlendProgram(mBlendMethod, BlendSource::Solid);
+        task = new GlDirectBlendTask(program, currentPass()->getFbo(), dstCopyFbo, viewRegion);
+    } else {
+        task = new GlRenderTask(mPrograms[RT_Color]);
+    }
 
     task->setDrawDepth(depth);
 
@@ -187,8 +192,7 @@ void GlRenderer::drawPrimitive(GlShape& sdata, const RenderColor& c, RenderUpdat
         return;
     }
 
-    y = vp.sh() - y - h;
-    task->setViewport({{x, y}, {x + w, y + h}});
+    task->setViewport(viewRegion);
 
     GlRenderTask* stencilTask = nullptr;
 
@@ -242,30 +246,58 @@ void GlRenderer::drawPrimitive(GlShape& sdata, const RenderColor& c, RenderUpdat
          4 * sizeof(float),
     });
 
+    if (blendShape && dstCopyFbo) {
+        float region[] = {
+            static_cast<float>(viewRegion.sx()),
+            static_cast<float>(viewRegion.sy()),
+            static_cast<float>(dstCopyFbo->getWidth()),
+            static_cast<float>(dstCopyFbo->getHeight())
+        };
+        task->addBindResource(GlBindingResource{
+            2,
+            task->getProgram()->getUniformBlockIndex("BlendRegion"),
+            mGpuBuffer.getBufferId(),
+            mGpuBuffer.push(region, 4 * sizeof(float), true),
+            4 * sizeof(float),
+        });
+
+        task->addBindResource(GlBindingResource{0, dstCopyFbo->getColorTexture(), task->getProgram()->getUniformLocation("uDstTexture")});
+    }
+
     if (stencilTask) currentPass()->addRenderTask(new GlStencilCoverTask(stencilTask, task, stencilMode));
     else currentPass()->addRenderTask(task);
-
-    if (complexBlend) {
-        auto task = new GlRenderTask(mPrograms[RT_Stencil]);
-        sdata.geometry.draw(task, &mGpuBuffer, flag);
-        endBlendingCompose(task, sdata.geometry.matrix);
-    }
 }
 
 
 void GlRenderer::drawPrimitive(GlShape& sdata, const Fill* fill, RenderUpdateFlag flag, int32_t depth)
 {
+    auto blendShape = (mBlendMethod != BlendMethod::Normal);
     auto vp = currentPass()->getViewport();
-    auto bbox = sdata.geometry.viewport;
+    auto bbox = blendShape ? sdata.geometry.getBounds() : sdata.geometry.viewport;
     bbox.intersect(vp);
+    if (bbox.invalid()) return;
 
     const Fill::ColorStop* stops = nullptr;
     auto stopCnt = min(fill->colorStops(&stops), static_cast<uint32_t>(MAX_GRADIENT_STOPS));
     if (stopCnt < 2) return;
 
     GlRenderTask* task = nullptr;
+    GlRenderTarget* dstCopyFbo = nullptr;
+    auto radial = fill->type() == Type::RadialGradient;
 
-    if (fill->type() == Type::LinearGradient) task = new GlRenderTask(mPrograms[RT_LinGradient]);
+    auto x = bbox.sx() - vp.sx();
+    auto y = bbox.sy() - vp.sy();
+    auto w = bbox.sw();
+    auto h = bbox.sh();
+    auto yGl = vp.sh() - y - h;
+    RenderRegion viewRegion = {{x, yGl}, {x + w, yGl + h}};
+
+    if (blendShape) {
+        if (mBlendPool.empty()) mBlendPool.push(new GlRenderTargetPool(surface.w, surface.h));
+        dstCopyFbo = mBlendPool[0]->getRenderTarget(viewRegion);
+        auto program = getBlendProgram(mBlendMethod, radial ? BlendSource::RadialGradient : BlendSource::LinearGradient);
+        task = new GlDirectBlendTask(program, currentPass()->getFbo(), dstCopyFbo, viewRegion);
+    } else if (fill->type() == Type::LinearGradient) task = new GlRenderTask(mPrograms[RT_LinGradient]);
     else if (fill->type() == Type::RadialGradient) task = new GlRenderTask(mPrograms[RT_RadGradient]);
     else return;
 
@@ -276,12 +308,7 @@ void GlRenderer::drawPrimitive(GlShape& sdata, const Fill* fill, RenderUpdateFla
         return;
     }
 
-    auto complexBlend = beginComplexBlending(bbox, sdata.geometry.getBounds());
-    if (complexBlend) vp = currentPass()->getViewport();
-
-    auto x = bbox.sx() - vp.sx();
-    auto y = vp.sh() - (bbox.sy() - vp.sy()) - bbox.sh();
-    task->setViewport({{x, y}, {x + bbox.sw(), y + bbox.sh()}});
+    task->setViewport(viewRegion);
 
     GlRenderTask* stencilTask = nullptr;
     GlStencilMode stencilMode = sdata.geometry.getStencilMode(flag);
@@ -387,7 +414,7 @@ void GlRenderer::drawPrimitive(GlShape& sdata, const Fill* fill, RenderUpdateFla
 
         uint32_t nStops = 0;
         for (uint32_t i = 0; i < stopCnt; ++i) {
-            if (i > 0 && gradientBlock.stopPoints[nStops - 1] > stops[i].offset) continue; 
+            if (i > 0 && gradientBlock.stopPoints[nStops - 1] > stops[i].offset) continue;
 
             gradientBlock.stopPoints[i] = stops[i].offset;
             gradientBlock.stopColors[i * 4 + 0] = stops[i].r / 255.f;
@@ -420,16 +447,26 @@ void GlRenderer::drawPrimitive(GlShape& sdata, const Fill* fill, RenderUpdateFla
 
     task->addBindResource(gradientBinding);
 
+    if (blendShape && dstCopyFbo) {
+        float region[] = {
+            static_cast<float>(viewRegion.sx()),
+            static_cast<float>(viewRegion.sy()),
+            static_cast<float>(dstCopyFbo->getWidth()),
+            static_cast<float>(dstCopyFbo->getHeight())};
+        task->addBindResource(GlBindingResource{
+            3,
+            task->getProgram()->getUniformBlockIndex("BlendRegion"),
+            mGpuBuffer.getBufferId(),
+            mGpuBuffer.push(region, 4 * sizeof(float), true),
+            4 * sizeof(float),
+        });
+        task->addBindResource(GlBindingResource{0, dstCopyFbo->getColorTexture(), task->getProgram()->getUniformLocation("uDstTexture")});
+    }
+
     if (stencilTask) {
         currentPass()->addRenderTask(new GlStencilCoverTask(stencilTask, task, stencilMode));
     } else {
         currentPass()->addRenderTask(task);
-    }
-
-    if (complexBlend) {
-        auto task = new GlRenderTask(mPrograms[RT_Stencil]);
-        sdata.geometry.draw(task, &mGpuBuffer, flag);
-        endBlendingCompose(task, sdata.geometry.matrix);
     }
 }
 
@@ -579,6 +616,7 @@ void GlRenderer::endBlendingCompose(GlRenderTask* stencilTask, const Matrix& mat
 
     delete(blendPass);
 }
+
 
 GlProgram* GlRenderer::getBlendProgram(BlendMethod method, BlendSource source)
 {
