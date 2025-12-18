@@ -185,14 +185,21 @@ const char* STR_LINEAR_GRADIENT_MAIN = TVG_COMPOSE_SHADER(
     out vec4 FragColor;                                                                                     \n
     void main()                                                                                             \n
     {                                                                                                       \n
-        vec2 pos = vPos;                                                                                    \n
+        FragColor = linearGradientColor(vPos);                                                              \n
+    }                                                                                                       \n
+);
+
+//See: GlRenderer::initShaders()
+const char* STR_LINEAR_GRADIENT_FUNCTIONS = TVG_COMPOSE_SHADER(
+    vec4 linearGradientColor(vec2 pos)                                                                      \n
+    {                                                                                                       \n
         vec2 st = uGradientInfo.gradStartPos;                                                               \n
         vec2 ed = uGradientInfo.gradEndPos;                                                                 \n
         vec2 ba = ed - st;                                                                                  \n
         float d = dot(pos - st, ba) / dot(ba, ba);                                                          \n
         float t = gradientWrap(d);                                                                          \n
         vec4 color = gradient(t, d, length(pos - st));                                                      \n
-        FragColor =  vec4(color.rgb * color.a, color.a);                                                    \n
+        return vec4(color.rgb * color.a, color.a);                                                          \n
     }                                                                                                       \n
 );
 
@@ -207,11 +214,19 @@ const char* STR_RADIAL_GRADIENT_VARIABLES = TVG_COMPOSE_SHADER(
     } uGradientInfo ;                                                                                       \n
 );
 
-// TODO: Precompute radial_matrix, f, r1n, inv_r1, d_radius_sign, is_focal_on_circle, is_well_behaved, is_swapped in CPU as a uniform
 //See: GlRenderer::initShaders()
 const char* STR_RADIAL_GRADIENT_MAIN = TVG_COMPOSE_SHADER(
     out vec4 FragColor;                                                                                     \n
                                                                                                             \n
+    void main()                                                                                             \n
+    {                                                                                                       \n
+        FragColor = radialGradientColor(vPos);                                                              \n
+    }                                                                                                       \n
+);
+
+// TODO: Precompute radial_matrix, f, r1n, inv_r1, d_radius_sign, is_focal_on_circle, is_well_behaved, is_swapped in CPU as a uniform
+//See: GlRenderer::initShaders()
+const char* STR_RADIAL_GRADIENT_FUNCTIONS = TVG_COMPOSE_SHADER(
     mat3 radial_matrix(vec2 p0, vec2 p1)                                                                    \n
     {                                                                                                       \n
         mat3 a = mat3(0.0, -1.0, 0.0, 1.0, 0.0, 0.0, 0.0, 0.0, 1.0);                                        \n
@@ -291,21 +306,19 @@ const char* STR_RADIAL_GRADIENT_MAIN = TVG_COMPOSE_SHADER(
         }                                                                                                   \n
     }                                                                                                       \n
                                                                                                             \n
-    void main()                                                                                             \n
+    vec4 radialGradientColor(vec2 pos)                                                                      \n
     {                                                                                                       \n
         vec2 res = compute_radial_t(uGradientInfo.centerPos.xy,                                             \n
                                     uGradientInfo.radius.x,                                                 \n
                                     uGradientInfo.centerPos.zw,                                             \n
                                     uGradientInfo.radius.y,                                                 \n
-                                    vPos);                                                                  \n
-        if (res.y < 0.0) {                                                                                  \n
-            FragColor = vec4(0.0, 0.0, 0.0, 0.0);                                                           \n
-            return;                                                                                         \n
-        }                                                                                                   \n
+                                    pos);                                                                   \n
+        if (res.y < 0.0) return vec4(0.0, 0.0, 0.0, 0.0);                                                   \n
+                                                                                                            \n
         float t = gradientWrap(res.x);                                                                      \n
-        vec4 color = gradient(t, res.x, length(vPos - uGradientInfo.centerPos.xy));                         \n
-        FragColor =  vec4(color.rgb * color.a, color.a);                                                    \n
-    }
+        vec4 color = gradient(t, res.x, length(pos - uGradientInfo.centerPos.xy));                          \n
+        return vec4(color.rgb * color.a, color.a);                                                          \n
+    }                                                                                                       \n
 );
 
 const char* IMAGE_VERT_SHADER = TVG_COMPOSE_SHADER(
