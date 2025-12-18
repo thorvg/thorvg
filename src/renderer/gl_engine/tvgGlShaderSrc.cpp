@@ -592,11 +592,17 @@ const char* BLIT_FRAG_SHADER = TVG_COMPOSE_SHADER(
     }
 );
 
-const char* BLEND_SOLID_FRAG_HEADER = R"(
-uniform sampler2D uSrcTexture;
+const char* BLEND_SHAPE_SOLID_FRAG_HEADER = R"(
+layout(std140) uniform ColorInfo {
+    vec4 solidColor;
+} uColorInfo;
+
+layout(std140) uniform BlendRegion {
+    vec4 region;
+} uBlendRegion;
+
 uniform sampler2D uDstTexture;
 
-in vec2 vUV;
 out vec4 FragColor;
 
 vec3 One = vec3(1.0, 1.0, 1.0);
@@ -604,10 +610,9 @@ struct FragData { vec3 Sc; float Sa; float So; vec3 Dc; float Da; };
 FragData d;
 
 void getFragData() {
-    // get source data
-    vec4 colorSrc = texture(uSrcTexture, vUV);
-    vec4 colorDst = texture(uDstTexture, vUV);
-    // fill fragment data
+    vec2 uv = (gl_FragCoord.xy - uBlendRegion.region.xy) / uBlendRegion.region.zw;
+    vec4 colorSrc = uColorInfo.solidColor;
+    vec4 colorDst = texture(uDstTexture, uv);
     d.Sc = colorSrc.rgb;
     d.Sa = colorSrc.a;
     d.So = 1.0;
@@ -615,14 +620,16 @@ void getFragData() {
     d.Da = colorDst.a;
 }
 
-vec4 postProcess(vec4 R) { return R; }
+vec4 postProcess(vec4 R) { return mix(vec4(d.Dc, d.Da), R, d.Sa * d.So); }
 )";
 
-const char* BLEND_GRADIENT_FRAG_HEADER = R"(
-uniform sampler2D uSrcTexture;
+const char* BLEND_SHAPE_LINEAR_FRAG_HEADER = R"(
+layout(std140) uniform BlendRegion {
+    vec4 region;
+} uBlendRegion;
+
 uniform sampler2D uDstTexture;
 
-in vec2 vUV;
 out vec4 FragColor;
 
 vec3 One = vec3(1.0, 1.0, 1.0);
@@ -630,21 +637,48 @@ struct FragData { vec3 Sc; float Sa; float So; vec3 Dc; float Da; };
 FragData d;
 
 void getFragData() {
-    // get source data
-    vec4 colorSrc = texture(uSrcTexture, vUV);
-    vec4 colorDst = texture(uDstTexture, vUV);
-    // fill fragment data
+    vec4 colorSrc = linearGradientColor(vPos);
+    vec2 uv = (gl_FragCoord.xy - uBlendRegion.region.xy) / uBlendRegion.region.zw;
+    vec4 colorDst = texture(uDstTexture, uv);
+
     d.Sc = colorSrc.rgb;
     d.Sa = colorSrc.a;
     d.So = 1.0;
     d.Dc = colorDst.rgb;
     d.Da = colorDst.a;
-    if (d.Sa > 0.0) {d.Sc = d.Sc / d.Sa; }
-    d.Sc = mix(d.Dc, d.Sc, d.Sa * d.So);
-    d.Sa = mix(d.Da,  1.0, d.Sa * d.So);
+    if (d.Sa > 0.0) { d.Sc = d.Sc / d.Sa; }
 }
 
-vec4 postProcess(vec4 R) { return R; }
+vec4 postProcess(vec4 R) { return mix(vec4(d.Dc, d.Da), R, d.Sa * d.So); }
+)";
+
+const char* BLEND_SHAPE_RADIAL_FRAG_HEADER = R"(
+layout(std140) uniform BlendRegion {
+    vec4 region;
+} uBlendRegion;
+
+uniform sampler2D uDstTexture;
+
+out vec4 FragColor;
+
+vec3 One = vec3(1.0, 1.0, 1.0);
+struct FragData { vec3 Sc; float Sa; float So; vec3 Dc; float Da; };
+FragData d;
+
+void getFragData() {
+    vec4 colorSrc = radialGradientColor(vPos);
+    vec2 uv = (gl_FragCoord.xy - uBlendRegion.region.xy) / uBlendRegion.region.zw;
+    vec4 colorDst = texture(uDstTexture, uv);
+
+    d.Sc = colorSrc.rgb;
+    d.Sa = colorSrc.a;
+    d.So = 1.0;
+    d.Dc = colorDst.rgb;
+    d.Da = colorDst.a;
+    if (d.Sa > 0.0) { d.Sc = d.Sc / d.Sa; }
+}
+
+vec4 postProcess(vec4 R) { return mix(vec4(d.Dc, d.Da), R, d.Sa * d.So); }
 )";
 
 const char* BLEND_IMAGE_FRAG_HEADER = R"(
@@ -671,7 +705,7 @@ void getFragData() {
     if (d.Sa > 0.0) { d.Sc = d.Sc / d.Sa; }
 }
 
-vec4 postProcess(vec4 R) { return R; }
+vec4 postProcess(vec4 R) { return mix(vec4(d.Dc, d.Da), R, d.Sa * d.So); }
 )";
 
 const char* BLEND_SCENE_FRAG_HEADER = R"(
