@@ -43,11 +43,6 @@ option('tools',
    value: [''],
    description: 'Enable building thorvg tools')
 
-option('examples',
-   type: 'boolean',
-   value: false,
-   description: 'Enable building examples')
-
 option('tests',
    type: 'boolean',
    value: false,
