@@ -417,32 +417,35 @@ void GlClipTask::normalizeDrawDepth(int32_t maxDepth)
 }
 
 /************************************************************************/
-/* GlSimpleBlendTask Class Implementation                               */
+/* GlDirectBlendTask Class Implementation                               */
 /************************************************************************/
 
-GlSimpleBlendTask::GlSimpleBlendTask(BlendMethod method, GlProgram* program)
- : GlRenderTask(program), mBlendMethod(method)
- {
- }
-
-
-void GlSimpleBlendTask::run()
+GlDirectBlendTask::GlDirectBlendTask(GlProgram* program, GlRenderTarget* dstFbo, GlRenderTarget* dstCopyFbo, const RenderRegion& copyRegion)
+    : GlRenderTask(program), mDstFbo(dstFbo), mDstCopyFbo(dstCopyFbo), mCopyRegion(copyRegion)
 {
-    if (mBlendMethod == BlendMethod::Add) glBlendFunc(GL_ONE, GL_ONE);
-    else if (mBlendMethod == BlendMethod::Darken) {
-        glBlendFunc(GL_ONE, GL_ONE);
-        glBlendEquation(GL_MIN);
-    } else if (mBlendMethod == BlendMethod::Lighten) {
-        glBlendFunc(GL_ONE, GL_ONE);
-        glBlendEquation(GL_MAX);
-    }
-    else glBlendFunc(GL_ONE, GL_ONE_MINUS_SRC_ALPHA);
+}
 
+
+void GlDirectBlendTask::run()
+{
+    auto width = mCopyRegion.w();
+    auto height = mCopyRegion.h();
+    if (width <= 0 || height <= 0) return;
+    auto x = mCopyRegion.sx();
+    auto y = mCopyRegion.sy();
+
+    GL_CHECK(glBindFramebuffer(GL_READ_FRAMEBUFFER, mDstFbo->getFboId()));
+    GL_CHECK(glBindFramebuffer(GL_DRAW_FRAMEBUFFER, mDstCopyFbo->getResolveFboId()));
+    GL_CHECK(glViewport(0, 0, width, height));
+    GL_CHECK(glScissor(0, 0, width, height));
+    GL_CHECK(glBlitFramebuffer(x, y, x + width, y + height, 0, 0, width, height, GL_COLOR_BUFFER_BIT, GL_LINEAR));
+    GL_CHECK(glBindFramebuffer(GL_FRAMEBUFFER, mDstFbo->getFboId()));
+    const auto& dstVp = mDstFbo->getViewport();
+    GL_CHECK(glViewport(0, 0, dstVp.w(), dstVp.h()));
+
+    GL_CHECK(glBlendFunc(GL_ONE, GL_ZERO));
     GlRenderTask::run();
-
-    if (mBlendMethod == BlendMethod::Darken || mBlendMethod == BlendMethod::Lighten) glBlendEquation(GL_FUNC_ADD);
-
-    glBlendFunc(GL_ONE, GL_ONE_MINUS_SRC_ALPHA);
+    GL_CHECK(glBlendFunc(GL_ONE, GL_ONE_MINUS_SRC_ALPHA));
 }
 
 
