@@ -140,6 +140,7 @@ ThorVG is designed to be portable across a wide range of devices, including smal
     - [Godot](#godot)
     - [Lottie Creator](#lottie-creator)
     - [LVGL](#lvgl)
+    - [Segger](#segger)
     - [TinyPiXOS](#tinypixos)
     - [Tizen](#tizen)
   - [Interactive App](#interactive-app)
@@ -422,6 +423,13 @@ ThorVG is integrated into the Godot game engine to support sleek, high-quality 
 
 <p align="center">
   <img width="700" height="auto" src="https://github.com/thorvg/thorvg.site/blob/main/readme/example_lvgl.png">
+</p>
+
+### Segger
+[SEGGER](https://www.segger.com/) Microcontroller provides products for developing and manufacturing embedded systems, including real-time operating systems (RTOS), middleware libraries, debugging and trace probes, and programming tools. [It has adopted ThorVG](https://doc.segger.com/UM03001_emWin.html#GUI_GPU_ThorVG_ThorVG_driver) as a GPU driver to enable high-performance vector rendering for its GUI apps.
+
+<p align="center">
+  <img width="700" height="auto" src="https://github.com/thorvg/thorvg.site/blob/main/readme/example_segger.png">
 </p>
 
 ### TinyPiXOS
