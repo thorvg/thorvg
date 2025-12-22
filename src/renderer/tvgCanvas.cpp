@@ -60,7 +60,8 @@ const list<Paint*>& Canvas::paints() const noexcept
 
 Result Canvas::push(Paint* target, Paint* at) noexcept
 {
-    return pImpl->push(target, at);
+    if (target) return pImpl->push(target, at);
+    return Result::InvalidArguments;
 }
 
 

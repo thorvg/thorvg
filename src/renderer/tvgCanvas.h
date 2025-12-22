@@ -49,6 +49,11 @@ struct Canvas::Impl
 
     Result push(Paint* target, Paint* at)
     {
+        if (PAINT(target)->renderer && PAINT(target)->renderer != renderer) {
+            TVGERR("RENDERER", "Target paint(%p) is already owned by a different renderer.", target);
+            return Result::InsufficientCondition;
+        }
+
         //You cannot push paints during rendering.
         if (status == Status::Drawing) {
             TVGLOG("RENDERER", "push() was called during drawing.");
