@@ -362,7 +362,11 @@ struct SceneImpl : Scene
     {
         if (!target) return Result::InvalidArguments;
         auto timpl = PAINT(target);
-        if (timpl->parent) return Result::InsufficientCondition;
+
+        if (timpl->parent) {
+            TVGERR("RENDERER", "Target paint(%p) is already owned by a parent(%p)", target, timpl->parent);
+            return Result::InsufficientCondition;
+        }
 
         target->ref();
 
