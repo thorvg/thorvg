@@ -32,12 +32,15 @@ struct WgTextureEntry
     WGPUTexture texture{};
     WGPUTextureView textureView{};
     WGPUBindGroup bindGroup{};
+    uint8_t channelSize{};
+    bool premultiplied = true;
+    bool shuffled{};
     uint32_t refCnt = 0;
 };
 
 struct WgTextureMgr
 {
-    const WgTextureEntry* retain(WgContext& context, const RenderSurface* surface, FilterMethod filter, bool refreshTexture);
+    WgTextureEntry* retain(WgContext& context, const RenderSurface* surface, FilterMethod filter, bool refreshTexture);
     void release(WgContext& context, const RenderSurface* surface, FilterMethod filter, WGPUTexture texture);
     void clear(WgContext& context);
 
