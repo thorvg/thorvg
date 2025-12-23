@@ -208,7 +208,7 @@ fn vs_main(in: VertexInput) -> VertexOutput {
 fn fs_main(in: VertexOutput) -> @location(0) vec4f {
     var Sc: vec4f = textureSample(uTextureView, uSampler, in.vTexCoord.xy);
     let So: f32 = uPaintSettings.options.a;
-    return vec4f(Sc.rgb * Sc.a * So, Sc.a * So);
+    return vec4f(Sc.rgb * So, Sc.a * So);
 };
 )";
 
@@ -959,4 +959,34 @@ fn fs_main_tritone(in: VertexOutput) -> @location(0) vec4f {
     if (settings[2].a > 0.0f) { tmp = mix(tmp, orig, settings[2].a); }
     return tmp * orig.a;
 };
+)";
+
+// compute shaders
+const char* cShaderSrc_Texture_Preprocess = R"(
+@group(0) @binding(1) var uTextureSrc : texture_2d<f32>;
+@group(1) @binding(0) var uTextureDst : texture_storage_2d<rgba8unorm, write>;
+
+@compute @workgroup_size(16, 16, 1)
+fn cs_main_premult_shuffle(@builtin(global_invocation_id) gid: vec3<u32>) {
+    let size = textureDimensions(uTextureSrc);
+    if (gid.x >= size.x || gid.y >= size.y) { return; }
+    let Sc = textureLoad(uTextureSrc, gid.xy, 0);
+    textureStore(uTextureDst, gid.xy, vec4f(Sc.bgr * Sc.a, Sc.a));
+}
+
+@compute @workgroup_size(16, 16, 1)
+fn cs_main_premult(@builtin(global_invocation_id) gid: vec3<u32>) {
+    let size = textureDimensions(uTextureSrc);
+    if (gid.x >= size.x || gid.y >= size.y) { return; }
+    let Sc = textureLoad(uTextureSrc, gid.xy, 0);
+    textureStore(uTextureDst, gid.xy, vec4f(Sc.rgb * Sc.a, Sc.a));
+}
+
+@compute @workgroup_size(16, 16, 1)
+fn cs_main_shuffle(@builtin(global_invocation_id) gid: vec3<u32>) {
+    let size = textureDimensions(uTextureSrc);
+    if (gid.x >= size.x || gid.y >= size.y) { return; }
+    let Sc = textureLoad(uTextureSrc, gid.xy, 0);
+    textureStore(uTextureDst, gid.xy, Sc.bgra);
+}
 )";

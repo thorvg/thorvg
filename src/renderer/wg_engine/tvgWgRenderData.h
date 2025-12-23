@@ -31,6 +31,9 @@ struct WgImageData {
     WGPUTexture texture{};
     WGPUTextureView textureView{};
     WGPUBindGroup bindGroup{};
+    uint8_t channelSize{};
+    bool premultiplied{};
+    bool shuffled{};
 
     void update(WgContext& context, const RenderSurface* surface);
     void update(WgContext& context, const Fill* fill);
