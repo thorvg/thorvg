@@ -35,6 +35,10 @@
 
 void WgImageData::update(WgContext& context, const RenderSurface* surface, FilterMethod filter)
 {
+    channelSize = surface->channelSize;
+    premultiplied = (surface->channelSize != sizeof(uint32_t)) || surface->premultiplied;
+    shuffled = (surface->cs == ColorSpace::ARGB8888S);
+
     auto bytesPerRow = surface->stride * CHANNEL_SIZE(surface->cs);
     auto dataSize = static_cast<uint64_t>(bytesPerRow) * surface->h;
     // allocate new texture handle
@@ -323,13 +327,14 @@ void WgRenderDataPicture::updateSurface(const RenderSurface* surface, const Matr
     meshData.imageBox(surface->w, surface->h, transform);
 }
 
-void WgRenderDataPicture::setImage(WGPUTexture texture, WGPUBindGroup bindGroup, const RenderSurface* surface, FilterMethod filter, uint16_t stamp)
+void WgRenderDataPicture::setImage(WgTextureEntry* entry, const RenderSurface* surface, FilterMethod filter, uint16_t stamp)
 {
-    imageTexture = texture;
-    imageBindGroup = bindGroup;
-    imageSource = texture ? surface : nullptr;
+    imageEntry = entry;
+    imageTexture = entry ? entry->texture : nullptr;
+    imageBindGroup = entry ? entry->bindGroup : nullptr;
+    imageSource = entry ? surface : nullptr;
     imageFilter = filter;
-    imageStamp = texture ? stamp : 0;
+    imageStamp = entry ? stamp : 0;
 }
 
 void WgRenderDataPicture::releaseTexture(WgTextureMgr& textures, WgContext& context)
@@ -340,6 +345,7 @@ void WgRenderDataPicture::releaseTexture(WgTextureMgr& textures, WgContext& cont
 
 void WgRenderDataPicture::clearImage()
 {
+    imageEntry = nullptr;
     imageTexture = nullptr;
     imageBindGroup = nullptr;
     imageSource = nullptr;

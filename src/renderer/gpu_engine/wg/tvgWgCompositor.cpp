@@ -80,6 +80,11 @@ void WgCompositor::release(WgContext& context)
     context.releaseBuffer(bufferViewMat);
     viewMatWidth = 0;
     viewMatHeight = 0;
+    // release texture preprocess
+    context.layouts.releaseBindGroup(bindGroupTexStaging);
+    context.releaseTextureView(texViewStaging);
+    context.releaseTexture(texStaging);
+    texPreprocess.clear();
     // release stage buffer
     stageBufferSolidColor.release(context);
     stageBufferPaint.release(context);
@@ -238,6 +243,7 @@ void WgCompositor::reset(WgContext& context)
     stageBufferSolidColor.clear();
     stageBufferPaint.clear();
     stageBufferViewMat.clear();
+    texPreprocess.clear();
 }
 
 
@@ -248,6 +254,72 @@ void WgCompositor::flush(WgContext& context)
     stageBufferSolidColor.flush(context);
     stageBufferPaint.flush(context);
     stageBufferViewMat.flush(context);
+
+    // preprocess requested images
+    if (texPreprocess.count > 0) {
+        // get max width and height of requests textures
+        uint32_t maxWidth{};
+        uint32_t maxHeight{};
+        ARRAY_FOREACH(p, texPreprocess) {
+            auto* imageData = *p;
+            if (!imageData || (imageData->premultiplied && !imageData->shuffled)) continue;
+            maxWidth = std::max(wgpuTextureGetWidth(imageData->texture), maxWidth);
+            maxHeight = std::max(wgpuTextureGetHeight(imageData->texture), maxHeight);
+        }
+
+        if (maxWidth > 0 && maxHeight > 0) {
+            // update staging texture if size was changed
+            if (!texStaging || (maxWidth > wgpuTextureGetWidth(texStaging)) || (maxHeight > wgpuTextureGetHeight(texStaging))) {
+                // release tex staging handles
+                context.layouts.releaseBindGroup(bindGroupTexStaging);
+                context.releaseTextureView(texViewStaging);
+                context.releaseTexture(texStaging);
+                // create new tex staging handles
+                texStaging = context.createTexStorage(maxWidth, maxHeight, WGPUTextureFormat_RGBA8Unorm);
+                texViewStaging = context.createTextureView(texStaging);
+                bindGroupTexStaging = context.layouts.createBindGroupStrorage1WO(texViewStaging);
+            }
+            // run preprocess pipelines for requested images
+            auto encoder = context.createCommandEncoder();
+            ARRAY_FOREACH(p, texPreprocess) {
+                auto* imageData = *p;
+                if (!imageData || (imageData->premultiplied && !imageData->shuffled)) continue;
+                // call preprocessing pipeline
+                auto preprocess = [&](WGPUComputePipeline& pipeline){
+                    auto width = wgpuTextureGetWidth(imageData->texture);
+                    auto height = wgpuTextureGetHeight(imageData->texture);
+                    // run compute pass with given preprocess pipeline and write result to staged texture storage
+                    const WGPUComputePassDescriptor descriptor{};
+                    auto computePass = wgpuCommandEncoderBeginComputePass(encoder, &descriptor);
+                        wgpuComputePassEncoderSetPipeline(computePass, pipeline);
+                        wgpuComputePassEncoderSetBindGroup(computePass, 0, imageData->bindGroup, 0, nullptr);
+                        wgpuComputePassEncoderSetBindGroup(computePass, 1, bindGroupTexStaging, 0, nullptr);
+                        wgpuComputePassEncoderDispatchWorkgroups(computePass, (width + 15) / 16, (height + 15) / 16, 1);
+                    wgpuComputePassEncoderEnd(computePass);
+                    wgpuComputePassEncoderRelease(computePass);
+                    // copy staged texture with premultiplied alpha to original texture
+                    const WGPUTexelCopyTextureInfo texSrc { .texture = texStaging };
+                    const WGPUTexelCopyTextureInfo texDst { .texture = imageData->texture };
+                    const WGPUExtent3D copySize { .width = width, .height = height, .depthOrArrayLayers = 1 };
+                    wgpuCommandEncoderCopyTextureToTexture(encoder, &texSrc, &texDst, &copySize);
+                };
+                // alpha premultiply and shuffle
+                if (!imageData->premultiplied && imageData->shuffled)
+                    preprocess(pipelines.compute_alpha_premult_shuffle);
+                // just alpha premultiply
+                else if (!imageData->premultiplied)
+                    preprocess(pipelines.compute_alpha_premult);
+                // just color shuffle
+                else if (imageData->shuffled)
+                    preprocess(pipelines.compute_color_shuffle);
+                imageData->premultiplied = true;
+                imageData->shuffled = false;
+            }
+            context.submitCommandEncoder(encoder);
+            context.releaseCommandEncoder(encoder);
+        }
+        texPreprocess.clear();
+    }
     context.submit();
 }
 
@@ -282,6 +354,9 @@ void WgCompositor::requestImage(WgRenderDataPicture* renderData)
     renderData->renderSettings.bindGroupInd = stageBufferPaint.append(renderData->renderSettings.settings);
     ARRAY_FOREACH(p, renderData->clips)
         requestShape((WgRenderDataShape*)(*p));
+    // request image preprocessing
+    if (renderData->imageEntry && (!renderData->imageEntry->premultiplied || renderData->imageEntry->shuffled))
+        texPreprocess.push(renderData->imageEntry);
 }
 
 
