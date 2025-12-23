@@ -53,12 +53,17 @@ WgTextureMgr::SurfaceEntry* WgTextureMgr::find(const RenderSurface* surface)
 WGPUTextureFormat WgTextureMgr::textureFormat(const RenderSurface* surface)
 {
     if (surface->cs == ColorSpace::ABGR8888 || surface->cs == ColorSpace::ABGR8888S) return WGPUTextureFormat_RGBA8Unorm;
-    if (surface->cs == ColorSpace::ARGB8888 || surface->cs == ColorSpace::ARGB8888S) return WGPUTextureFormat_BGRA8Unorm;
+    if (surface->cs == ColorSpace::ARGB8888S) return WGPUTextureFormat_RGBA8Unorm;
+    if (surface->cs == ColorSpace::ARGB8888) return WGPUTextureFormat_BGRA8Unorm;
     return WGPUTextureFormat_R8Unorm;  // must be
 }
 
 void WgTextureMgr::upload(WgContext& context, WgTextureEntry& entry, const RenderSurface* surface, FilterMethod filter)
 {
+    entry.channelSize = surface->channelSize;
+    entry.premultiplied = (surface->channelSize != sizeof(uint32_t)) || surface->premultiplied;
+    entry.shuffled = (surface->cs == ColorSpace::ARGB8888S);
+
     auto bytesPerRow = surface->stride * CHANNEL_SIZE(surface->cs);
     auto dataSize = static_cast<uint64_t>(bytesPerRow) * surface->h;
     if (!context.allocateTexture(entry.texture, surface->w, surface->h, textureFormat(surface), surface->data, bytesPerRow, dataSize)) return;
@@ -79,7 +84,7 @@ void WgTextureMgr::releaseEntry(WgContext& context, WgTextureEntry& entry)
     entry.refCnt = 0;
 }
 
-const WgTextureEntry* WgTextureMgr::retain(WgContext& context, const RenderSurface* surface, FilterMethod filter, bool refreshTexture)
+WgTextureEntry* WgTextureMgr::retain(WgContext& context, const RenderSurface* surface, FilterMethod filter, bool refreshTexture)
 {
     auto* surfaceEntry = find(surface);
     if (!surfaceEntry) {

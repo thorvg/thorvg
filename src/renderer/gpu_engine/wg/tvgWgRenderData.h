@@ -28,11 +28,15 @@
 #include "tvgWgShaderTypes.h"
 
 struct WgTextureMgr;
+struct WgTextureEntry;
 
 struct WgImageData {
     WGPUTexture texture{};
     WGPUTextureView textureView{};
     WGPUBindGroup bindGroup{};
+    uint8_t channelSize{};
+    bool premultiplied{};
+    bool shuffled{};
 
     void update(WgContext& context, const RenderSurface* surface, FilterMethod filter);
     void update(WgContext& context, const Fill* fill);
@@ -116,13 +120,14 @@ struct WgRenderDataPicture: public WgRenderDataPaint
     WgRenderSettings renderSettings{};
     WGPUTexture imageTexture{};
     WGPUBindGroup imageBindGroup{};
+    WgTextureEntry* imageEntry{};
     const RenderSurface* imageSource = nullptr;
     FilterMethod imageFilter = FilterMethod::Bilinear;
     uint16_t imageStamp = 0;
     WgMeshData meshData{};
 
     void updateSurface(const RenderSurface* surface, const Matrix& transform);
-    void setImage(WGPUTexture texture, WGPUBindGroup bindGroup, const RenderSurface* surface, FilterMethod filter, uint16_t stamp);
+    void setImage(WgTextureEntry* entry, const RenderSurface* surface, FilterMethod filter, uint16_t stamp);
     void releaseTexture(WgTextureMgr& textures, WgContext& context);
     void clearImage();
     void release(WgContext& context) override;
