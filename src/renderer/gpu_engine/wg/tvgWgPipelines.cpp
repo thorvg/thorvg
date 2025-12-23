@@ -72,32 +72,6 @@ WGPURenderPipeline WgPipelines::createRenderPipeline(
 }
 
 
-WGPUComputePipeline WgPipelines::createComputePipeline(
-        WGPUDevice device, const char* pipelineLabel,
-        const WGPUShaderModule shaderModule, const char* entryPoint,
-        const WGPUPipelineLayout pipelineLayout)
-{
-    const WGPUComputePipelineDescriptor computePipelineDesc{
-        .label = { .data = pipelineLabel, .length = WGPU_STRLEN },
-        .layout = pipelineLayout,
-        .compute = { 
-            .module = shaderModule,
-            .entryPoint = { .data = entryPoint, .length = WGPU_STRLEN }
-        }
-    };
-    return wgpuDeviceCreateComputePipeline(device, &computePipelineDesc);
-}
-
-
-void WgPipelines::releaseComputePipeline(WGPUComputePipeline& computePipeline)
-{
-    if (computePipeline) {
-        wgpuComputePipelineRelease(computePipeline);
-        computePipeline = nullptr;
-    }
-}
-
-
 void WgPipelines::releaseRenderPipeline(WGPURenderPipeline& renderPipeline)
 {
     if (renderPipeline) {
@@ -197,7 +171,6 @@ void WgPipelines::initialize(WgContext& context)
     // bind group layouts effects
     const WGPUBindGroupLayout bindGroupLayoutsShadow[] { layouts.layoutTexSampled, layouts.layoutTexSampled, layouts.layoutBuffer1Un };
     const WGPUBindGroupLayout bindGroupLayoutsEffects[] { layouts.layoutTexSampled, layouts.layoutBuffer1Un };
-
     // depth stencil state markup
     const WGPUDepthStencilState depthStencilStateNonZero = makeDepthStencilState(WGPUCompareFunction_Always, WGPUOptionalBool_False, WGPUCompareFunction_Always, WGPUStencilOperation_IncrementWrap, WGPUCompareFunction_Always, WGPUStencilOperation_DecrementWrap);
     const WGPUDepthStencilState depthStencilStateEvenOdd = makeDepthStencilState(WGPUCompareFunction_Always, WGPUOptionalBool_False, WGPUCompareFunction_Always, WGPUStencilOperation_Invert);
@@ -255,7 +228,6 @@ void WgPipelines::initialize(WgContext& context)
     // layout effects
     layout_shadow = createPipelineLayout(context.device, bindGroupLayoutsShadow, 3);
     layout_effects = createPipelineLayout(context.device, bindGroupLayoutsEffects, 2);
-
     // render pipeline nonzero
     nonzero = createRenderPipeline(
         context.device, "The render pipeline nonzero",

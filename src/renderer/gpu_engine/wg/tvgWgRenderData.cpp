@@ -33,22 +33,6 @@
 // WgImageData
 //***********************************************************************
 
-void WgImageData::update(WgContext& context, const RenderSurface* surface, FilterMethod filter)
-{
-    auto bytesPerRow = surface->stride * CHANNEL_SIZE(surface->cs);
-    auto dataSize = static_cast<uint64_t>(bytesPerRow) * surface->h;
-    // allocate new texture handle
-    if (context.allocateTexture(texture, surface->w, surface->h, WgTextureMgr::textureFormat(surface), surface->data, bytesPerRow, dataSize)) {
-        context.releaseTextureView(textureView);
-        textureView = context.createTextureView(texture);
-        // update bind group
-        context.layouts.releaseBindGroup(bindGroup);
-        auto sampler = (filter == FilterMethod::Bilinear) ? context.samplerLinearClamp : context.samplerNearestClamp;
-        bindGroup = context.layouts.createBindGroupTexSampled(sampler, textureView);
-    }
-};
-
-
 void WgImageData::update(WgContext& context, const Fill* fill)
 {
     // compute gradient data
