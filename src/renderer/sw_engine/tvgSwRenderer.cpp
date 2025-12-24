@@ -20,14 +20,15 @@
  * SOFTWARE.
  */
 
-#ifdef THORVG_SW_OPENMP_SUPPORT
-    #include <omp.h>
-#endif
 #include <algorithm>
 #include <atomic>
 #include "tvgSwCommon.h"
 #include "tvgTaskScheduler.h"
 #include "tvgSwRenderer.h"
+
+#ifdef THORVG_OPENMP_SUPPORT
+    #include <omp.h>
+#endif
 
 /************************************************************************/
 /* Internal Class Implementation                                        */
@@ -920,7 +921,7 @@ SwRenderer::SwRenderer(uint32_t threads, EngineOption op)
 {
     //initialize engine
     if (rendererCnt == -1) {
-#ifdef THORVG_SW_OPENMP_SUPPORT
+#ifdef THORVG_OPENMP_SUPPORT
         omp_set_num_threads(threads);
 #endif
         //Share the memory pool among the renderer

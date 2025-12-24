@@ -132,6 +132,12 @@ if lottie_expressions
     config_h.set10('THORVG_LOTTIE_EXPRESSIONS_SUPPORT', true)
 endif
 
+openmp = get_option('extra').contains('openmp')
+
+if openmp
+    config_h.set10('THORVG_OPENMP_SUPPORT', true)
+endif
+
 gl_variant = ''
 
 if gl_engine
@@ -227,7 +233,8 @@ summary(
 summary(
   {
     'Lottie Expressions': lottie_expressions,
-    'OpenGL Variant': gl_variant,
+    'OpenMP': openmp,
+    'OpenGL Variant': gl_variant
   },
   section: 'Extra',
   bool_yn: true,
