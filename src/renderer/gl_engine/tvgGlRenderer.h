@@ -231,6 +231,7 @@ private:
 
     BlendMethod mBlendMethod = BlendMethod::Normal;
     bool mClearBuffer = false;
+    bool mDirectTarget = false;
 };
 
 #endif /* _TVG_GL_RENDERER_H_ */

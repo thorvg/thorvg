@@ -30,6 +30,7 @@
 
 constexpr float MIN_GL_STROKE_WIDTH = 1.0f;
 constexpr float MIN_GL_STROKE_ALPHA = 0.25f;
+constexpr GLint MIN_GL_MSAA_SAMPLES = 4;
 
 constexpr uint32_t GL_MAT3_STD140_SIZE = 12; // mat3 is 3 vec4 columns in std140
 constexpr uint32_t GL_MAT3_STD140_BYTES = GL_MAT3_STD140_SIZE * sizeof(float);
