@@ -467,7 +467,11 @@ PFNGLGENVERTEXARRAYSPROC                     glGenVertexArrays;
 //PFNGLCHECKFRAMEBUFFERSTATUSPROC              glCheckFramebufferStatus;
 //PFNGLFRAMEBUFFERTEXTURE1DPROC                glFramebufferTexture1D;
 //PFNGLFRAMEBUFFERTEXTURE3DPROC                glFramebufferTexture3D;
-//PFNGLGETFRAMEBUFFERATTACHMENTPARAMETERIVPROC glGetFramebufferAttachmentParameteriv;
+#if defined(THORVG_GL_DESKTOP_ATTACHMENT_QUERY)
+// Only non-Apple desktop GL needs this entry point. GLES uses the existing
+// glGetIntegerv path, and Apple deliberately keeps the offscreen target.
+PFNGLGETFRAMEBUFFERATTACHMENTPARAMETERIVPROC glGetFramebufferAttachmentParameteriv;
+#endif
 //PFNGLGENERATEMIPMAPPROC                      glGenerateMipmap;
 //PFNGLFRAMEBUFFERTEXTURELAYERPROC             glFramebufferTextureLayer;
 //PFNGLMAPBUFFERRANGEPROC                      glMapBufferRange;
@@ -805,7 +809,9 @@ bool glInit()
     GL_FUNCTION_FETCH(glFramebufferTexture2D, PFNGLFRAMEBUFFERTEXTURE2DPROC);
     // GL_FUNCTION_FETCH(glFramebufferTexture3D, PFNGLFRAMEBUFFERTEXTURE3DPROC);
     GL_FUNCTION_FETCH(glFramebufferRenderbuffer, PFNGLFRAMEBUFFERRENDERBUFFERPROC);
-    // GL_FUNCTION_FETCH(glGetFramebufferAttachmentParameteriv, PFNGLGETFRAMEBUFFERATTACHMENTPARAMETERIVPROC);
+#if defined(THORVG_GL_DESKTOP_ATTACHMENT_QUERY)
+    GL_FUNCTION_FETCH(glGetFramebufferAttachmentParameteriv, PFNGLGETFRAMEBUFFERATTACHMENTPARAMETERIVPROC);
+#endif
     // GL_FUNCTION_FETCH(glGenerateMipmap, PFNGLGENERATEMIPMAPPROC);
     GL_FUNCTION_FETCH(glBlitFramebuffer, PFNGLBLITFRAMEBUFFERPROC);
     GL_FUNCTION_FETCH(glRenderbufferStorageMultisample, PFNGLRENDERBUFFERSTORAGEMULTISAMPLEPROC);
