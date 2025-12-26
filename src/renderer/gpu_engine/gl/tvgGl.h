@@ -1080,7 +1080,7 @@
         //typedef GLenum (*PFNGLCHECKFRAMEBUFFERSTATUSPROC)(GLenum target);
         //typedef void (*PFNGLFRAMEBUFFERTEXTURE1DPROC)(GLenum target, GLenum attachment, GLenum textarget, GLuint texture, GLint level);
         //typedef void (*PFNGLFRAMEBUFFERTEXTURE3DPROC)(GLenum target, GLenum attachment, GLenum textarget, GLuint texture, GLint level, GLint zoffset);
-        //typedef void (*PFNGLGETFRAMEBUFFERATTACHMENTPARAMETERIVPROC)(GLenum target, GLenum attachment, GLenum pname, GLint *params);
+        typedef void (*PFNGLGETFRAMEBUFFERATTACHMENTPARAMETERIVPROC)(GLenum target, GLenum attachment, GLenum pname, GLint *params);
         //typedef void (*PFNGLGENERATEMIPMAPPROC)(GLenum target);
         //typedef void (*PFNGLFRAMEBUFFERTEXTURELAYERPROC)(GLenum target, GLenum attachment, GLuint texture, GLint level, GLint layer);
         //typedef void *(*PFNGLMAPBUFFERRANGEPROC)(GLenum target, GLintptr offset, GLsizeiptr length, GLbitfield access);
@@ -1478,7 +1478,7 @@
     //extern PFNGLCHECKFRAMEBUFFERSTATUSPROC              glCheckFramebufferStatus;
     //extern PFNGLFRAMEBUFFERTEXTURE1DPROC                glFramebufferTexture1D;
     //extern PFNGLFRAMEBUFFERTEXTURE3DPROC                glFramebufferTexture3D;
-    //extern PFNGLGETFRAMEBUFFERATTACHMENTPARAMETERIVPROC glGetFramebufferAttachmentParameteriv;
+    extern PFNGLGETFRAMEBUFFERATTACHMENTPARAMETERIVPROC glGetFramebufferAttachmentParameteriv;
     //extern PFNGLGENERATEMIPMAPPROC                      glGenerateMipmap;
     //extern PFNGLFRAMEBUFFERTEXTURELAYERPROC             glFramebufferTextureLayer;
     //extern PFNGLMAPBUFFERRANGEPROC                      glMapBufferRange;
