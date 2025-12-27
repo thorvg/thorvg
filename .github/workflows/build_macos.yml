@@ -33,7 +33,7 @@ jobs:
 
     - name: Build
       run: |
-        meson setup build -Dlog=true -Dloaders=all -Dsavers=all -Dbindings=capi -Dtools=all -Dextra="lottie_expressions"
+        meson setup build -Dlog=true -Dloaders=all -Dsavers=all -Dbindings=capi -Dtools=all -Dextra="lottie_exp"
         ninja -C build install
 
   compact_test:
@@ -56,7 +56,7 @@ jobs:
 
     - name: Build
       run: |
-        meson setup build -Dlog=true -Dloaders=all -Dsavers=all -Dstatic=true -Dthreads=false -Dextra="lottie_expressions"
+        meson setup build -Dlog=true -Dloaders=all -Dsavers=all -Dstatic=true -Dthreads=false -Dextra="lottie_exp"
         ninja -C build install
 
   unit_test:
@@ -79,7 +79,7 @@ jobs:
 
     - name: Build
       run: |
-        meson setup build -Dloaders=all -Dsavers=all -Dbindings=capi -Dtests=true -Dextra="lottie_expressions" --errorlogs
+        meson setup build -Dloaders=all -Dsavers=all -Dbindings=capi -Dtests=true -Dextra="lottie_exp" --errorlogs
         ninja -C build install test
 
     - uses: actions/upload-artifact@v4
