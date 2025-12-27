@@ -1,4 +1,4 @@
-if lottie_expressions
+if lottie_exp
     subdir('jerryscript')
 endif
 

@@ -126,9 +126,9 @@ endif
 
 
 #Extra
-lottie_expressions = lottie_loader and get_option('extra').contains('lottie_expressions')
+lottie_exp = lottie_loader and get_option('extra').contains('lottie_exp')
 
-if lottie_expressions
+if lottie_exp
     config_h.set10('THORVG_LOTTIE_EXPRESSIONS_SUPPORT', true)
 endif
 
@@ -232,7 +232,7 @@ summary(
 
 summary(
   {
-    'Lottie Expressions': lottie_expressions,
+    'Lottie Expressions': lottie_exp,
     'OpenMP': openmp,
     'OpenGL Variant': gl_variant
   },
