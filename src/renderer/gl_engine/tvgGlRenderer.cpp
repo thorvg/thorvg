@@ -69,13 +69,51 @@ void GlRenderer::flush()
 
 void GlRenderer::currentContext()
 {
+    if (!mContext) return;
+
 #ifdef __EMSCRIPTEN__
     auto targetContext = (EMSCRIPTEN_WEBGL_CONTEXT_HANDLE)mContext;
     if (emscripten_webgl_get_current_context() != targetContext) {
         emscripten_webgl_make_context_current(targetContext);
     }
+#elif defined(_WIN32) && !defined(__CYGWIN__) && !defined(__SCITECH_SNAP__) && defined(THORVG_GL_TARGET_GL)
+    auto targetContext = (HGLRC)mContext;
+    if (tvgWglGetCurrentContext() == targetContext) return;
+    if (!mWglDc) {
+        TVGERR("GL_ENGINE", "Missing WGL device context. Call GlCanvas::target() when the context is current.");
+        return;
+    }
+    if (!tvgWglMakeCurrent(mWglDc, targetContext)) {
+        TVGERR("GL_ENGINE", "wglMakeCurrent() failed.");
+    }
+#elif defined(THORVG_GL_TARGET_GLES)
+    auto targetContext = (EGLContext)mContext;
+    if (tvgEglGetCurrentContext() == targetContext) return;
+    if (!mEglDisplay) {
+        TVGERR("GL_ENGINE", "Missing EGL display. Call GlCanvas::target() when the context is current.");
+        return;
+    }
+    if (!tvgEglMakeCurrent(mEglDisplay, mEglDrawSurface, mEglReadSurface, targetContext)) {
+        TVGERR("GL_ENGINE", "eglMakeCurrent() failed.");
+    }
+#elif defined(__linux__) && defined(THORVG_GL_TARGET_GL)
+    auto targetContext = (GLXContext)mContext;
+    if (tvgGlXGetCurrentContext() == targetContext) return;
+    if (!mGlxDisplay || !mGlxDrawable) {
+        TVGERR("GL_ENGINE", "Missing GLX display/drawable. Call GlCanvas::target() when the context is current.");
+        return;
+    }
+    if (!tvgGlXMakeCurrent(mGlxDisplay, mGlxDrawable, targetContext)) {
+        TVGERR("GL_ENGINE", "glXMakeCurrent() failed.");
+    }
+#elif defined(__APPLE__) || defined(__MACH__)
+    auto targetContext = (CGLContextObj)mContext;
+    if (tvgCGLGetCurrentContext() == targetContext) return;
+    if (tvgCGLSetCurrentContext(targetContext) != 0) {
+        TVGERR("GL_ENGINE", "CGLSetCurrentContext() failed.");
+    }
 #else
-    TVGERR("GL_ENGINE", "Maybe missing MakeCurrent() Call?");
+    TVGERR("GL_ENGINE", "Unsupported platform for GL context management.");
 #endif
 }
 
@@ -927,6 +965,39 @@ bool GlRenderer::target(void* context, int32_t id, uint32_t w, uint32_t h, Color
 {
     //assume the context zero is invalid
     if (!context || w == 0 || h == 0) return false;
+
+    #ifdef __EMSCRIPTEN__
+        if (emscripten_webgl_get_current_context() != (EMSCRIPTEN_WEBGL_CONTEXT_HANDLE)context) {
+            TVGERR("GL_ENGINE", "Target context is not current. Call GlCanvas::target() when the context is current.");
+            return false;
+        }
+    #elif defined(_WIN32) && !defined(__CYGWIN__) && !defined(__SCITECH_SNAP__) && defined(THORVG_GL_TARGET_GL)
+        if (tvgWglGetCurrentContext() != (HGLRC)context) {
+            TVGERR("GL_ENGINE", "Target context is not current. Call GlCanvas::target() when the context is current.");
+            return false;
+        }
+        mWglDc = tvgWglGetCurrentDC();
+    #elif defined(THORVG_GL_TARGET_GLES)
+        if (tvgEglGetCurrentContext() != (EGLContext)context) {
+            TVGERR("GL_ENGINE", "Target context is not current. Call GlCanvas::target() when the context is current.");
+            return false;
+        }
+        mEglDisplay = tvgEglGetCurrentDisplay();
+        mEglDrawSurface = tvgEglGetCurrentSurface(EGL_DRAW);
+        mEglReadSurface = tvgEglGetCurrentSurface(EGL_READ);
+    #elif defined(__linux__) && defined(THORVG_GL_TARGET_GL)
+        if (tvgGlXGetCurrentContext() != (GLXContext)context) {
+            TVGERR("GL_ENGINE", "Target context is not current. Call GlCanvas::target() when the context is current.");
+            return false;
+        }
+        mGlxDisplay = tvgGlXGetCurrentDisplay();
+        mGlxDrawable = tvgGlXGetCurrentDrawable();
+    #elif defined(__APPLE__) || defined(__MACH__)
+        if (tvgCGLGetCurrentContext() != (CGLContextObj)context) {
+            TVGERR("GL_ENGINE", "Target context is not current. Call GlCanvas::target() when the context is current.");
+            return false;
+        }
+    #endif
 
     if (mContext) currentContext();
 

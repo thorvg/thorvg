@@ -208,6 +208,18 @@ private:
     void currentContext();
 
     void* mContext = nullptr;
+    #if defined(_WIN32) && !defined(__CYGWIN__) && !defined(__SCITECH_SNAP__) && defined(THORVG_GL_TARGET_GL)
+        HDC mWglDc = nullptr;
+    #endif
+    #if defined(THORVG_GL_TARGET_GLES) && !defined(__EMSCRIPTEN__)
+        EGLDisplay mEglDisplay = nullptr;
+        EGLSurface mEglDrawSurface = nullptr;
+        EGLSurface mEglReadSurface = nullptr;
+    #endif
+    #if defined(__linux__) && defined(THORVG_GL_TARGET_GL)
+        Display* mGlxDisplay = nullptr;
+        GLXDrawable mGlxDrawable = 0;
+    #endif
     RenderSurface surface;
     GLint mTargetFboId = 0;
     GlStageBuffer mGpuBuffer;
