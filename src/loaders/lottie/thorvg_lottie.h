@@ -1,7 +1,7 @@
 #ifndef _THORVG_LOTTIE_H_
 #define _THORVG_LOTTIE_H_
 
-#include <thorvg.h>
+#include "thorvg.h"
 
 namespace tvg
 {
