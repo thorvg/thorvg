@@ -65,7 +65,7 @@ endif
 subdir('bindings')
 
 thorvg_lib = library(
-    'thorvg',
+    'thorvg-1',
     include_directories    : headers,
     version                : meson.project_version(),
     dependencies           : thorvg_lib_dep,
@@ -80,7 +80,7 @@ thorvg_dep = declare_dependency(
   include_directories: thorvg_inc,
   link_with: thorvg_lib,
 )
-meson.override_dependency('thorvg', thorvg_dep)
+meson.override_dependency('thorvg-1', thorvg_dep)
 
 pkg_mod = import('pkgconfig')
 
@@ -88,6 +88,6 @@ pkg_mod.generate(
     libraries    : thorvg_lib,
     version      : meson.project_version(),
     name         : 'libthorvg',
-    filebase     : 'thorvg',
+    filebase     : 'thorvg-1',
     description  : 'A Thor library for rendering vector graphics'
 )

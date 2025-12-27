@@ -30,5 +30,5 @@ subloader_dep += [declare_dependency(
     sources : source_file
 )]
 
-install_headers('thorvg_lottie.h')
+install_headers('thorvg_lottie.h', subdir: 'thorvg-1')
 headers += include_directories('.')
