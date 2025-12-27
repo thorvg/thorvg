@@ -1,10 +1,10 @@
 prefix=@PREFIX@
 libdir=@LIBDIR@
-includedir=@INCDIR@/thorvg-1
+includedir=@INCDIR@/thorvg-@VMAJ@
 
 Name: Thor Vector Graphics
 Description: Thor Vector Graphics Library
 Version: @VERSION@
 Requires:
-Libs: -L${libdir} -lthorvg-1
+Libs: -L${libdir} -lthorvg-@VMAJ@
 Cflags: -I${includedir}
