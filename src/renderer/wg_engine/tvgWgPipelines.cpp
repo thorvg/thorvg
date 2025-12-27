@@ -190,6 +190,8 @@ void WgPipelines::initialize(WgContext& context)
     // bind group layouts effects
     const WGPUBindGroupLayout bindGroupLayoutsShadow[] { layouts.layoutTexSampled, layouts.layoutTexSampled, layouts.layoutBuffer1Un };
     const WGPUBindGroupLayout bindGroupLayoutsEffects[] { layouts.layoutTexSampled, layouts.layoutBuffer1Un };
+    // bind group layouts compute
+    const WGPUBindGroupLayout bindGroupTexturePreproc[] { layouts.layoutTexSampled, layouts.layoutTexStrorage1WO };
 
     // depth stencil state markup
     const WGPUDepthStencilState depthStencilStateNonZero = makeDepthStencilState(WGPUCompareFunction_Always, WGPUOptionalBool_False, WGPUCompareFunction_Always, WGPUStencilOperation_IncrementWrap, WGPUCompareFunction_Always, WGPUStencilOperation_DecrementWrap);
@@ -227,6 +229,8 @@ void WgPipelines::initialize(WgContext& context)
     // shader effects
     shader_shadow = createShaderModule(context.device, "The shader effects", cShaderSrc_Shadow);
     shader_effects = createShaderModule(context.device, "The shader effects", cShaderSrc_Effects);
+    // compute shaders
+    shader_tex_preprocess = createShaderModule(context.device, "The shader texture preprocess", cShaderSrc_Texture_Preprocess);
 
     // layouts
     layout_stencil = createPipelineLayout(context.device, bindGroupLayoutsStencil, 2);
@@ -248,6 +252,8 @@ void WgPipelines::initialize(WgContext& context)
     // layout effects
     layout_shadow = createPipelineLayout(context.device, bindGroupLayoutsShadow, 3);
     layout_effects = createPipelineLayout(context.device, bindGroupLayoutsEffects, 2);
+    // layout compute
+    layout_tex_preprocess = createPipelineLayout(context.device, bindGroupTexturePreproc, 2);
 
     // render pipeline nonzero
     nonzero = createRenderPipeline(
@@ -516,7 +522,28 @@ void WgPipelines::initialize(WgContext& context)
         WGPUColorWriteMask_All, offscreenTargetFormat, blendStateSrc,
         depthStencilStateScene, multisampleStateX1);
 
+    // compute shaders
+    compute_alpha_premult_shuffle = createComputePipeline(
+        context.device, "The compute pipeline alpha premultiply and shuffle",
+        shader_tex_preprocess, "cs_main_premult_shuffle", layout_tex_preprocess);
+    compute_alpha_premult = createComputePipeline(
+        context.device, "The compute pipeline alpha premultiply",
+        shader_tex_preprocess, "cs_main_premult", layout_tex_preprocess);
+    compute_color_shuffle = createComputePipeline(
+        context.device, "The compute pipeline texture color shuffle",
+        shader_tex_preprocess, "cs_main_shuffle", layout_tex_preprocess);
 }
+
+
+void WgPipelines::releaseComputeHandles(WgContext& context)
+{
+    releaseComputePipeline(compute_color_shuffle);
+    releaseComputePipeline(compute_alpha_premult);
+    releaseComputePipeline(compute_alpha_premult_shuffle);
+    releasePipelineLayout(layout_tex_preprocess);
+    releaseShaderModule(shader_tex_preprocess);
+}
+
 
 void WgPipelines::releaseGraphicHandles(WgContext& context)
 {
@@ -596,5 +623,6 @@ void WgPipelines::releaseGraphicHandles(WgContext& context)
 
 void WgPipelines::release(WgContext& context)
 {
+    releaseComputeHandles(context);
     releaseGraphicHandles(context);
 }
