@@ -4,6 +4,9 @@ project('thorvg',
         version : '1.0.0',
         license : 'MIT')
 
+v_array = meson.project_version().split('.')
+vmaj = v_array[0]
+
 config_h = configuration_data()
 
 src_dir = '/'.join(meson.current_source_dir().split('\\'))
