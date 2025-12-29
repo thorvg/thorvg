@@ -166,7 +166,8 @@ void WgRenderDataShape::updateVisibility(const RenderShape& rshape, uint8_t opac
 
 void WgRenderDataShape::updateMeshes(const RenderShape &rshape, RenderUpdateFlag flag, const Matrix& matrix)
 {
-    releaseMeshes();
+    releaseMeshes();  //Optimize: bad idea to reset meshes always. it could re-use the meshes if there haven't been any path changes.
+
     convex = false;
     strokeFirst = rshape.strokeFirst();
     renderSettingsShape.opacityMultiplier = 1.0f;
@@ -183,10 +184,10 @@ void WgRenderDataShape::updateMeshes(const RenderShape &rshape, RenderUpdateFlag
         }
     } else rshape.path.optimize(optPath, matrix);
 
-    // update fill shapes
-    if (flag & (RenderUpdateFlag::Color | RenderUpdateFlag::Gradient | RenderUpdateFlag::Transform | RenderUpdateFlag::Path)) {
-        meshShape.clear();
+    auto updatePath = flag & (RenderUpdateFlag::Transform | RenderUpdateFlag::Path);
 
+    // update fill shapes
+    if (updatePath || (flag & (RenderUpdateFlag::Color | RenderUpdateFlag::Gradient))) {
         BBox bbox;
         // in a case of single line shape we must tesselate it as a single line stroke with minimal width
         if (optPath.pts.count == 2 && tvg::zero(rshape.strokeWidth())) {
@@ -200,16 +201,15 @@ void WgRenderDataShape::updateMeshes(const RenderShape &rshape, RenderUpdateFlag
             convex = bwTess.convex;
             bbox = bwTess.getBBox();
         }
-
-        if (meshShape.ibuffer.count > 0) {
+        if (meshShape.ibuffer.empty()) {
+            meshShape.clear();
+        } else {
             meshShapeBBox.bbox(bbox.min, bbox.max);
             updateBBox(bbox);
-        } else meshShape.clear();
+        }
     }
-
     // update strokes shapes
-    if (rshape.stroke && (flag & (RenderUpdateFlag::Stroke | RenderUpdateFlag::GradientStroke | RenderUpdateFlag::Transform))) {
-        meshStrokes.clear();
+    if (rshape.stroke && (updatePath || (flag & (RenderUpdateFlag::Stroke | RenderUpdateFlag::GradientStroke)))) {
         auto strokeWidth = 0.0f;
         if (isinf(matrix.e11)) {
             strokeWidth = rshape.strokeWidth() * scaling(matrix);
@@ -223,18 +223,18 @@ void WgRenderDataShape::updateMeshes(const RenderShape &rshape, RenderUpdateFlag
             WgStroker stroker(&meshStrokes, strokeWidth, rshape.strokeCap(), rshape.strokeJoin());
             stroker.run(rshape, optPath, matrix);
             renderSettingsStroke.opacityMultiplier = 1.0f;
-            if (meshStrokes.ibuffer.count > 0) {
+            if (meshStrokes.ibuffer.empty()) {
+                meshStrokes.clear();
+            } else {
                 auto bbox = stroker.getBBox();
                 meshStrokesBBox.bbox(bbox.min, bbox.max);
                 updateBBox(bbox);
-            } else meshStrokes.clear();
+            }
         }
     }
-
     // update shapes bbox (with empty path handling)
-    if ((meshShape.vbuffer.count > 0 ) || (meshStrokes.vbuffer.count > 0)) {
-        updateAABB(matrix);
-    } else bbox = aabb = {{0, 0}, {0, 0}};
+    if (!meshShape.vbuffer.empty() || !meshStrokes.vbuffer.empty()) updateAABB(matrix);
+    else bbox = aabb = {{0, 0}, {0, 0}};
     meshBBox.bbox(bbox.min, bbox.max);
 }
 
