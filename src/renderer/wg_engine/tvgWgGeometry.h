@@ -39,6 +39,8 @@ struct WgMeshData {
     void imageBox(float w, float h);
     void blitBox();
     void clear();
+
+    bool invalid() { return vbuffer.empty(); }
 };
 
 #endif // _TVG_WG_GEOMETRY_H_

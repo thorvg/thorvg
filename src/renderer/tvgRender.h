@@ -404,8 +404,7 @@ struct RenderShape
 
     bool trimpath() const
     {
-        if (!stroke) return false;
-        return stroke->trim.valid();
+        return stroke ? stroke->trim.valid() : false;
     }
 
     bool strokeFirst() const
@@ -415,8 +414,7 @@ struct RenderShape
 
     float strokeWidth() const
     {
-        if (!stroke) return 0;
-        return stroke->width;
+        return stroke ? stroke->width : 0.0f;
     }
 
     bool strokeFill(uint8_t* r, uint8_t* g, uint8_t* b, uint8_t* a) const
@@ -433,8 +431,7 @@ struct RenderShape
 
     const Fill* strokeFill() const
     {
-        if (!stroke) return nullptr;
-        return stroke->fill;
+        return stroke ? stroke->fill : nullptr;
     }
 
     uint32_t strokeDash(const float** dashPattern, float* offset) const
@@ -447,20 +444,17 @@ struct RenderShape
 
     StrokeCap strokeCap() const
     {
-        if (!stroke) return StrokeCap::Square;
-        return stroke->cap;
+        return stroke ? stroke->cap : StrokeCap::Square;
     }
 
     StrokeJoin strokeJoin() const
     {
-        if (!stroke) return StrokeJoin::Bevel;
-        return stroke->join;
+        return stroke ? stroke->join : StrokeJoin::Bevel;
     }
 
     float strokeMiterlimit() const
     {
-        if (!stroke) return 4.0f;
-        return stroke->miterlimit;;
+        return stroke ? stroke->miterlimit : 4.0f;
     }
 
     bool strokeDash(RenderPath& out) const;
