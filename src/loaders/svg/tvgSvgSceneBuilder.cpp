@@ -50,9 +50,18 @@ static inline bool _isGroupType(SvgNodeType type)
 //a stroke width should be ignored for bounding box calculations
 static Box _bounds(Paint* paint)
 {
-    float x, y, w, h;
-    paint->bounds(&x, &y, &w, &h);
-    return {x, y, w, h};
+    Point pt4[4] = {};
+    if (PAINT(paint)->bounds(pt4, nullptr, true)) {
+        BBox box = {{FLT_MAX, FLT_MAX}, {-FLT_MAX, -FLT_MAX}};
+        for (int i = 0; i < 4; ++i) {
+            if (pt4[i].x < box.min.x) box.min.x = pt4[i].x;
+            if (pt4[i].x > box.max.x) box.max.x = pt4[i].x;
+            if (pt4[i].y < box.min.y) box.min.y = pt4[i].y;
+            if (pt4[i].y > box.max.y) box.max.y = pt4[i].y;
+        }
+        return {box.min.x, box.min.y, box.max.x - box.min.x, box.max.y - box.min.y};
+    }
+    return {0, 0, 0, 0};
 }
 
 

@@ -275,8 +275,9 @@ RenderData Paint::Impl::update(RenderMethod* renderer, const Matrix& pm, Array<R
 
 bool Paint::Impl::bounds(Point* pt4, const Matrix* pm, bool obb)
 {
-    bool ret;
-    PAINT_METHOD(ret, bounds(pt4, pm * transform(), obb));
+    bool ret = false;
+    if (pm) PAINT_METHOD(ret, bounds(pt4, *pm * transform(), obb))
+    else PAINT_METHOD(ret, bounds(pt4, tvg::identity(), obb))
     return ret;
 }
 
