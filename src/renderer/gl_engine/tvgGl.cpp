@@ -131,7 +131,8 @@ static void* _getProcAddress(const char* procName)
 
 static void* _libGL = nullptr;
 
-static bool _glLoad() {
+static bool _glLoad()
+{
     if (!_libGL) _libGL = dlopen("/Library/Frameworks/OpenGL.framework/OpenGL", RTLD_LAZY);
     if (!_libGL) _libGL = dlopen("/System/Library/Frameworks/OpenGL.framework/OpenGL", RTLD_LAZY);
     if (_libGL) return true;
@@ -139,7 +140,9 @@ static bool _glLoad() {
     return false;
 }
 
-static void* _getProcAddress(const char* procName) {
+
+static void* _getProcAddress(const char* procName)
+{
     return dlsym(_libGL, procName);
 }
 
