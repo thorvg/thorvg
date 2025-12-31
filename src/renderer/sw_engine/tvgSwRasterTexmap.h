@@ -34,20 +34,6 @@ struct Polygon
    Vertex vertex[3];
 };
 
-struct AALine
-{
-   int32_t x[2];
-   int32_t coverage[2];
-   int32_t length[2];
-};
-
-struct AASpans
-{
-   AALine *lines;
-   int32_t yStart;
-   int32_t yEnd;
-};
-
 //Careful! Shared resource, No support threading
 static float dudx, dvdx;
 static float dxdya, dxdyb, dudya, dvdya;
@@ -60,14 +46,32 @@ static inline int32_t _modf(float v)
 }
 
 
-static bool _rasterMaskedPolygonImageSegment(SwSurface* surface, const SwImage& image, const RenderRegion& bbox, int yStart, int yEnd, AASpans* aaSpans, uint8_t opacity, uint8_t dirFlag = 0)
+static uint8_t _feathering(int iru, int irv, int ar, int ab, int sw, int sh)
+{
+    if (irv == 1) {
+        if (iru == 1) return 255 - MULTIPLY(ar, ab);
+        else if (iru == sw) return MULTIPLY(ar, 255 - ab);
+        return 255 - ab;
+    } else if (irv == sh) {
+        if (iru == 1) return MULTIPLY(255 - ar, ab);
+        else if (iru == sw) return MULTIPLY(ar, ab);
+        return ab;
+    } else {
+        if (iru == 1) return 255 - ar;
+        else if (iru == sw) return ar;
+    }
+    return 255;
+}
+
+
+static bool _rasterMaskedPolygonImageSegment(SwSurface* surface, const SwImage& image, const RenderRegion& bbox, int yStart, int yEnd, uint8_t opacity, bool needAA)
 {
     TVGERR("SW_ENGINE", "TODO: _rasterMaskedPolygonImageSegment()");
     return false;
 }
 
 
-static void _rasterBlendingPolygonImageSegment(SwSurface* surface, const SwImage& image, const RenderRegion& bbox, int yStart, int yEnd, AASpans* aaSpans, uint8_t opacity)
+static void _rasterBlendingPolygonImageSegment(SwSurface* surface, const SwImage& image, const RenderRegion& bbox, int yStart, int yEnd, uint8_t opacity, bool needAA)
 {
     if (surface->channelSize == sizeof(uint8_t)) {
         TVGERR("SW_ENGINE", "Not supported grayscale Textmap polygon!");
@@ -81,7 +85,7 @@ static void _rasterBlendingPolygonImageSegment(SwSurface* surface, const SwImage
     auto dbuf = surface->buf32;
     auto sw = static_cast<int32_t>(image.w);
     auto sh = static_cast<int32_t>(image.h);
-    int32_t x1, x2, x, y, ar, ab, iru, irv, px, ay;
+    int32_t x1, x2, x, y, ar, ab, iru, irv, px;
     int32_t vv = 0, uu = 0;
     float dx, u, v;
     uint32_t* buf;
@@ -94,13 +98,6 @@ static void _rasterBlendingPolygonImageSegment(SwSurface* surface, const SwImage
     while (y < yEnd) {
         x1 = std::max((int32_t)_xa, bbox.min.x);
         x2 = std::min((int32_t)_xb, bbox.max.x);
-
-        //Anti-Aliasing frames
-        if (aaSpans) {
-            ay = y - aaSpans->yStart;
-            if (aaSpans->lines[ay].x[0] > x1) aaSpans->lines[ay].x[0] = x1;
-            if (aaSpans->lines[ay].x[1] < x2) aaSpans->lines[ay].x[1] = x2;
-        }
 
         //Range allowed
         if ((x2 - x1) >= 1 && (x1 < bbox.max.x) && (x2 > bbox.min.x)) {
@@ -126,24 +123,28 @@ static void _rasterBlendingPolygonImageSegment(SwSurface* surface, const SwImage
 
                 px = *(sbuf + (vv * image.stride) + uu);
 
-                /* horizontal interpolate */
+                // horizontal interpolate
                 if (iru < sw) {
-                    /* right pixel */
                     int px2 = *(sbuf + (vv * image.stride) + iru);
                     px = INTERPOLATE(px, px2, ar);
                 }
-                /* vertical interpolate */
+                // vertical interpolate
                 if (irv < sh) {
-                    /* bottom pixel */
                     int px2 = *(sbuf + (irv * image.stride) + uu);
-                    /* horizontal interpolate */
+                    // horizontal interpolate
                     if (iru < sw) {
-                        /* bottom right pixel */
                         int px3 = *(sbuf + (irv * image.stride) + iru);
                         px2 = INTERPOLATE(px2, px3, ar);
                     }
                     px = INTERPOLATE(px, px2, ab);
                 }
+
+                // anti-aliasing
+                if (needAA) {
+                    auto feather = _feathering(iru, irv, ar, ab, sw, sh);
+                    if (feather < 255) px = ALPHA_BLEND(px, feather);
+                }
+
                 *buf = INTERPOLATE(surface->blender(rasterUnpremultiply(px), *buf), *buf, MULTIPLY(opacity, A(px)));
                 ++buf;
 
@@ -168,7 +169,7 @@ static void _rasterBlendingPolygonImageSegment(SwSurface* surface, const SwImage
 }
 
 
-static void _rasterPolygonImageSegment32(SwSurface* surface, const SwImage& image, const RenderRegion& bbox, int yStart, int yEnd, AASpans* aaSpans, uint8_t opacity, bool matting)
+static void _rasterPolygonImageSegment32(SwSurface* surface, const SwImage& image, const RenderRegion& bbox, int yStart, int yEnd, uint8_t opacity, bool matting, bool needAA)
 {
     auto _dudx = dudx, _dvdx = dvdx;
     auto _dxdya = dxdya, _dxdyb = dxdyb, _dudya = dudya, _dvdya = dvdya;
@@ -177,7 +178,7 @@ static void _rasterPolygonImageSegment32(SwSurface* surface, const SwImage& imag
     auto dbuf = surface->buf32;
     auto sw = static_cast<int32_t>(image.w);
     auto sh = static_cast<int32_t>(image.h);
-    int32_t x1, x2, x, y, ar, ab, iru, irv, px, ay;
+    int32_t x1, x2, x, y, ar, ab, iru, irv, px;
     int32_t vv = 0, uu = 0;
     float dx, u, v;
     uint32_t* buf;
@@ -196,13 +197,6 @@ static void _rasterPolygonImageSegment32(SwSurface* surface, const SwImage& imag
     while (y < yEnd) {
         x1 = std::max((int32_t)_xa, bbox.min.x);
         x2 = std::min((int32_t)_xb, bbox.max.x);
-
-        //Anti-Aliasing frames
-        if (aaSpans) {
-            ay = y - aaSpans->yStart;
-            if (aaSpans->lines[ay].x[0] > x1) aaSpans->lines[ay].x[0] = x1;
-            if (aaSpans->lines[ay].x[1] < x2) aaSpans->lines[ay].x[1] = x2;
-        }
 
         //Range allowed
         if ((x2 - x1) >= 1 && (x1 < bbox.max.x) && (x2 > bbox.min.x)) {
@@ -230,20 +224,16 @@ static void _rasterPolygonImageSegment32(SwSurface* surface, const SwImage& imag
 
                 px = *(sbuf + (vv * image.stride) + uu);
 
-                /* horizontal interpolate */
+                // horizontal interpolate
                 if (iru < sw) {
-                    /* right pixel */
                     int px2 = *(sbuf + (vv * image.stride) + iru);
                     px = INTERPOLATE(px, px2, ar);
                 }
-                /* vertical interpolate */
+                // vertical interpolate
                 if (irv < sh) {
-                    /* bottom pixel */
                     int px2 = *(sbuf + (irv * image.stride) + uu);
-
-                    /* horizontal interpolate */
+                    // horizontal interpolate
                     if (iru < sw) {
-                        /* bottom right pixel */
                         int px3 = *(sbuf + (irv * image.stride) + iru);
                         px2 = INTERPOLATE(px2, px3, ar);
                     }
@@ -257,6 +247,13 @@ static void _rasterPolygonImageSegment32(SwSurface* surface, const SwImage& imag
                 } else {
                     src = fullOpacity ? px : ALPHA_BLEND(px, opacity);
                 }
+
+                // anti-aliasing
+                if (needAA) {
+                    auto feather = _feathering(iru, irv, ar, ab, sw, sh);
+                    if (feather < 255) src = ALPHA_BLEND(src, feather);
+                }
+
                 *buf = src + ALPHA_BLEND(*buf, IA(src));
                 ++buf;
 
@@ -281,7 +278,7 @@ static void _rasterPolygonImageSegment32(SwSurface* surface, const SwImage& imag
 }
 
 // no anti-aliasing, no interpolation for the fastest cheap masking
-static void _rasterPolygonImageSegment8(SwSurface* surface, const SwImage& image, const RenderRegion& bbox, int yStart, int yEnd, AASpans* aaSpans, uint8_t opacity)
+static void _rasterPolygonImageSegment8(SwSurface* surface, const SwImage& image, const RenderRegion& bbox, int yStart, int yEnd, uint8_t opacity, TVG_UNUSED bool needAA)
 {
     auto _dudx = dudx, _dvdx = dvdx;
     auto _dxdya = dxdya, _dxdyb = dxdyb, _dudya = dudya, _dvdya = dvdya;
@@ -338,15 +335,15 @@ static void _rasterPolygonImageSegment8(SwSurface* surface, const SwImage& image
 }
 
 
-static void _rasterPolygonImageSegment(SwSurface* surface, const SwImage& image, const RenderRegion& bbox, int yStart, int yEnd, AASpans* aaSpans, uint8_t opacity, bool matting)
+static void _rasterPolygonImageSegment(SwSurface* surface, const SwImage& image, const RenderRegion& bbox, int yStart, int yEnd, uint8_t opacity, bool matting, bool needAA)
 {
-    if (surface->channelSize == sizeof(uint32_t)) _rasterPolygonImageSegment32(surface, image, bbox, yStart, yEnd, aaSpans, opacity, matting);
-    else if (surface->channelSize == sizeof(uint8_t)) _rasterPolygonImageSegment8(surface, image, bbox, yStart, yEnd, aaSpans, opacity);
+    if (surface->channelSize == sizeof(uint32_t)) _rasterPolygonImageSegment32(surface, image, bbox, yStart, yEnd, opacity, matting, needAA);
+    else if (surface->channelSize == sizeof(uint8_t)) _rasterPolygonImageSegment8(surface, image, bbox, yStart, yEnd, opacity, needAA);
 }
 
 
 /* This mapping algorithm is based on Mikael Kalms's. */
-static void _rasterPolygonImage(SwSurface* surface, const SwImage& image, const RenderRegion& bbox, Polygon& polygon, AASpans* aaSpans, uint8_t opacity)
+static void _rasterPolygonImage(SwSurface* surface, const SwImage& image, const RenderRegion& bbox, Polygon& polygon, uint8_t opacity, bool needAA)
 {
     float x[3] = {polygon.vertex[0].pt.x, polygon.vertex[1].pt.x, polygon.vertex[2].pt.x};
     float y[3] = {polygon.vertex[0].pt.y, polygon.vertex[1].pt.y, polygon.vertex[2].pt.y};
@@ -435,12 +432,12 @@ static void _rasterPolygonImage(SwSurface* surface, const SwImage& image, const 
             xb = x[0] + dy * dxdyb + (off_y * dxdyb);
 
             if (compositing) {
-                if (_matting(surface)) _rasterPolygonImageSegment(surface, image, bbox, yi[0], yi[1], aaSpans, opacity, true);
-                else _rasterMaskedPolygonImageSegment(surface, image, bbox, yi[0], yi[1], aaSpans, opacity, 1);
+                if (_matting(surface)) _rasterPolygonImageSegment(surface, image, bbox, yi[0], yi[1], opacity, true, needAA);
+                else _rasterMaskedPolygonImageSegment(surface, image, bbox, yi[0], yi[1], opacity, needAA);
             } else if (blending) {
-                _rasterBlendingPolygonImageSegment(surface, image, bbox, yi[0], yi[1], aaSpans, opacity);
+                _rasterBlendingPolygonImageSegment(surface, image, bbox, yi[0], yi[1], opacity, needAA);
             } else {
-                _rasterPolygonImageSegment(surface, image, bbox, yi[0], yi[1], aaSpans, opacity, false);
+                _rasterPolygonImageSegment(surface, image, bbox, yi[0], yi[1], opacity, false, needAA);
             }
             upper = true;
         }
@@ -456,12 +453,12 @@ static void _rasterPolygonImage(SwSurface* surface, const SwImage& image, const 
             dxdyb = dxdy[2];
             xb = x[1] + (1 - (y[1] - yi[1])) * dxdyb + (off_y * dxdyb);
             if (compositing) {
-                if (_matting(surface)) _rasterPolygonImageSegment(surface, image, bbox, yi[1], yi[2], aaSpans, opacity, true);
-                else _rasterMaskedPolygonImageSegment(surface, image, bbox, yi[1], yi[2], aaSpans, opacity, 2);
+                if (_matting(surface)) _rasterPolygonImageSegment(surface, image, bbox, yi[1], yi[2], opacity, true, needAA);
+                else _rasterMaskedPolygonImageSegment(surface, image, bbox, yi[1], yi[2], opacity, needAA);
             } else if (blending) {
-                _rasterBlendingPolygonImageSegment(surface, image, bbox, yi[1], yi[2], aaSpans, opacity);
+                _rasterBlendingPolygonImageSegment(surface, image, bbox, yi[1], yi[2], opacity, needAA);
             } else {
-                _rasterPolygonImageSegment(surface, image, bbox, yi[1], yi[2], aaSpans, opacity, false);
+                _rasterPolygonImageSegment(surface, image, bbox, yi[1], yi[2], opacity, false, needAA);
             }
         }
     //Longer edge is on the right side
@@ -486,12 +483,12 @@ static void _rasterPolygonImage(SwSurface* surface, const SwImage& image, const 
             va = v[0] + dy * dvdya + (off_y * dvdya);
 
             if (compositing) {
-                if (_matting(surface)) _rasterPolygonImageSegment(surface, image, bbox, yi[0], yi[1], aaSpans, opacity, true);
-                else _rasterMaskedPolygonImageSegment(surface, image, bbox, yi[0], yi[1], aaSpans, opacity, 3);
+                if (_matting(surface)) _rasterPolygonImageSegment(surface, image, bbox, yi[0], yi[1], opacity, true, needAA);
+                else _rasterMaskedPolygonImageSegment(surface, image, bbox, yi[0], yi[1], opacity, needAA);
             } else if (blending) {
-                _rasterBlendingPolygonImageSegment(surface, image, bbox, yi[0], yi[1], aaSpans, opacity);
+                _rasterBlendingPolygonImageSegment(surface, image, bbox, yi[0], yi[1], opacity, needAA);
             } else {
-                _rasterPolygonImageSegment(surface, image, bbox, yi[0], yi[1], aaSpans, opacity, false);
+                _rasterPolygonImageSegment(surface, image, bbox, yi[0], yi[1], opacity, false, needAA);
             }
             upper = true;
         }
@@ -510,276 +507,16 @@ static void _rasterPolygonImage(SwSurface* surface, const SwImage& image, const 
             va = v[1] + dy * dvdya + (off_y * dvdya);
 
             if (compositing) {
-                if (_matting(surface)) _rasterPolygonImageSegment(surface, image, bbox, yi[1], yi[2], aaSpans, opacity, true);
-                else _rasterMaskedPolygonImageSegment(surface, image, bbox, yi[1], yi[2], aaSpans, opacity, 4);
+                if (_matting(surface)) _rasterPolygonImageSegment(surface, image, bbox, yi[1], yi[2], opacity, true, needAA);
+                else _rasterMaskedPolygonImageSegment(surface, image, bbox, yi[1], yi[2], opacity, needAA);
             } else if (blending) {
-                _rasterBlendingPolygonImageSegment(surface, image, bbox, yi[1], yi[2], aaSpans, opacity);
+                _rasterBlendingPolygonImageSegment(surface, image, bbox, yi[1], yi[2], opacity, needAA);
             } else {
-                _rasterPolygonImageSegment(surface, image, bbox, yi[1], yi[2], aaSpans, opacity, false);
+                _rasterPolygonImageSegment(surface, image, bbox, yi[1], yi[2], opacity, false, needAA);
             }
         }
     }
 }
-
-
-static AASpans* _AASpans(int yStart, int yEnd)
-{
-    auto aaSpans = tvg::malloc<AASpans>(sizeof(AASpans));
-    aaSpans->yStart = yStart;
-    aaSpans->yEnd = yEnd;
-
-    //Initialize X range
-    auto height = yEnd - yStart;
-
-    aaSpans->lines = tvg::malloc<AALine>(height * sizeof(AALine));
-
-    for (int32_t i = 0; i < height; i++) {
-        aaSpans->lines[i].x[0] = INT32_MAX;
-        aaSpans->lines[i].x[1] = 0;
-        aaSpans->lines[i].length[0] = 0;
-        aaSpans->lines[i].length[1] = 0;
-    }
-    return aaSpans;
-}
-
-
-static void _calcIrregularCoverage(AALine* lines, int32_t eidx, int32_t y, int32_t diagonal, int32_t edgeDist, bool reverse)
-{
-    if (eidx == 1) reverse = !reverse;
-    int32_t coverage = (255 / (diagonal + 2));
-    int32_t tmp;
-    for (int32_t ry = 0; ry < (diagonal + 2); ry++) {
-        tmp = y - ry - edgeDist;
-        if (tmp < 0) return;
-        lines[tmp].length[eidx] = 1;
-        if (reverse) lines[tmp].coverage[eidx] = 255 - (coverage * ry);
-        else lines[tmp].coverage[eidx] = (coverage * ry);
-    }
-}
-
-
-static void _calcVertCoverage(AALine *lines, int32_t eidx, int32_t y, int32_t rewind, bool reverse)
-{
-    if (eidx == 1) reverse = !reverse;
-    int32_t coverage = (255 / (rewind + 1));
-    int32_t tmp;
-    for (int ry = 1; ry < (rewind + 1); ry++) {
-        tmp = y - ry;
-        if (tmp < 0) return;
-        lines[tmp].length[eidx] = 1;
-        if (reverse) lines[tmp].coverage[eidx] = (255 - (coverage * ry));
-        else lines[tmp].coverage[eidx] = (coverage * ry);
-    }
-}
-
-
-static void _calcHorizCoverage(AALine *lines, int32_t eidx, int32_t y, int32_t x, int32_t x2)
-{
-    lines[y].length[eidx] = abs(x - x2);
-    lines[y].coverage[eidx] = (255 / (lines[y].length[eidx] + 1));
-}
-
-
-/*
- * This Anti-Aliasing mechanism is originated from Hermet Park's idea.
- * To understand this AA logic, you can refer this page:
- * https://uigraphics.tistory.com/1
-*/
-static void _calcAAEdge(AASpans *aaSpans, int32_t eidx)
-{
-//Previous edge direction:
-#define DirOutHor 0x0011
-#define DirOutVer 0x0001
-#define DirInHor  0x0010
-#define DirInVer  0x0000
-#define DirNone   0x1000
-
-#define PUSH_VERTEX() \
-    do { \
-        pEdge.x = lines[y].x[eidx]; \
-        pEdge.y = y; \
-        ptx[0] = tx[0]; \
-        ptx[1] = tx[1]; \
-    } while (0)
-
-    int32_t y = 0;
-    SwPoint pEdge = {-1, -1};       //previous edge point
-    SwPoint edgeDiff = {0, 0};      //temporary used for point distance
-
-    /* store bigger to tx[0] between prev and current edge's x positions. */
-    int32_t tx[2] = {0, 0};
-    /* back up prev tx values */
-    int32_t ptx[2] = {0, 0};
-    int32_t diagonal = 0;           //straight diagonal pixels count
-
-    auto yStart = aaSpans->yStart;
-    auto yEnd = aaSpans->yEnd;
-    auto lines = aaSpans->lines;
-
-    int32_t prevDir = DirNone;
-    int32_t curDir = DirNone;
-
-    yEnd -= yStart;
-
-    //Start Edge
-    if (y < yEnd) {
-        pEdge.x = lines[y].x[eidx];
-        pEdge.y = y;
-    }
-
-    //Calculates AA Edges
-    for (y++; y < yEnd; y++) {
-
-        if (lines[y].x[0] == INT32_MAX) continue;
-
-        //Ready tx
-        if (eidx == 0) {
-            tx[0] = pEdge.x;
-            tx[1] = lines[y].x[0];
-        } else {
-            tx[0] = lines[y].x[1];
-            tx[1] = pEdge.x;
-        }
-        edgeDiff.x = (tx[0] - tx[1]);
-        edgeDiff.y = (y - pEdge.y);
-
-        //Confirm current edge direction
-        if (edgeDiff.x > 0) {
-            if (edgeDiff.y == 1) curDir = DirOutHor;
-            else curDir = DirOutVer;
-        } else if (edgeDiff.x < 0) {
-            if (edgeDiff.y == 1) curDir = DirInHor;
-            else curDir = DirInVer;
-        } else curDir = DirNone;
-
-        //straight diagonal increase
-        if ((curDir == prevDir) && (y < yEnd)) {
-            if ((abs(edgeDiff.x) == 1) && (edgeDiff.y == 1)) {
-                ++diagonal;
-                PUSH_VERTEX();
-                continue;
-            }
-        }
-
-        switch (curDir) {
-            case DirOutHor: {
-                _calcHorizCoverage(lines, eidx, y, tx[0], tx[1]);
-                if (diagonal > 0) {
-                    _calcIrregularCoverage(lines, eidx, y, diagonal, 0, true);
-                    diagonal = 0;
-                }
-               /* Increment direction is changed: Outside Vertical -> Outside Horizontal */
-               if (prevDir == DirOutVer) _calcHorizCoverage(lines, eidx, pEdge.y, ptx[0], ptx[1]);
-
-               //Trick, but fine-tunning!
-               if (y == 1) _calcHorizCoverage(lines, eidx, pEdge.y, tx[0], tx[1]);
-               PUSH_VERTEX();
-            }
-            break;
-            case DirOutVer: {
-                _calcVertCoverage(lines, eidx, y, edgeDiff.y, true);
-                if (diagonal > 0) {
-                    _calcIrregularCoverage(lines, eidx, y, diagonal, edgeDiff.y, false);
-                    diagonal = 0;
-                }
-               /* Increment direction is changed: Outside Horizontal -> Outside Vertical */
-               if (prevDir == DirOutHor) _calcHorizCoverage(lines, eidx, pEdge.y, ptx[0], ptx[1]);
-               PUSH_VERTEX();
-            }
-            break;
-            case DirInHor: {
-                _calcHorizCoverage(lines, eidx, (y - 1), tx[0], tx[1]);
-                if (diagonal > 0) {
-                    _calcIrregularCoverage(lines, eidx, y, diagonal, 0, false);
-                    diagonal = 0;
-                }
-                /* Increment direction is changed: Outside Horizontal -> Inside Horizontal */
-               if (prevDir == DirOutHor) _calcHorizCoverage(lines, eidx, pEdge.y, ptx[0], ptx[1]);
-               PUSH_VERTEX();
-            }
-            break;
-            case DirInVer: {
-                _calcVertCoverage(lines, eidx, y, edgeDiff.y, false);
-                if (prevDir == DirOutHor) edgeDiff.y -= 1;      //Weird, fine tuning?????????????????????
-                if (diagonal > 0) {
-                    _calcIrregularCoverage(lines, eidx, y, diagonal, edgeDiff.y, true);
-                    diagonal = 0;
-                }
-                /* Increment direction is changed: Outside Horizontal -> Inside Vertical */
-                if (prevDir == DirOutHor) _calcHorizCoverage(lines, eidx, pEdge.y, ptx[0], ptx[1]);
-                PUSH_VERTEX();
-            }
-            break;
-        }
-        if (curDir != DirNone) prevDir = curDir;
-    }
-
-    //leftovers...?
-    if ((edgeDiff.y == 1) && (edgeDiff.x != 0)) {
-        if (y >= yEnd) y = (yEnd - 1);
-        _calcHorizCoverage(lines, eidx, y - 1, ptx[0], ptx[1]);
-        _calcHorizCoverage(lines, eidx, y, tx[0], tx[1]);
-    } else {
-        ++y;
-        if (y > yEnd) y = yEnd;
-        _calcVertCoverage(lines, eidx, y, (edgeDiff.y + 1), (prevDir & 0x00000001));
-    }
-}
-
-
-static void _apply(SwSurface* surface, AASpans* aaSpans)
-{
-    auto end = surface->buf32 + surface->h * surface->stride;
-    auto buf = surface->buf32 + surface->stride * aaSpans->yStart;
-    auto y = aaSpans->yStart;
-    auto line = aaSpans->lines;
-    uint32_t pix;
-    uint32_t* dst;
-    int32_t pos;
-
-   _calcAAEdge(aaSpans, 0);    //left side
-   _calcAAEdge(aaSpans, 1);    //right side
-
-    while (y < aaSpans->yEnd) {
-        if (line->x[1] - line->x[0] > 0) {
-            //Left edge
-            dst = buf + line->x[0];
-            pix = *(dst - ((line->x[0] > 1) ? 1 : 0));
-            pos = 1;
-
-            //exceptional handling. out of memory bound.
-            if (dst + line->length[0] >= end) {
-                pos += static_cast<int32_t>(dst + line->length[0] - end);
-            }
-
-            while (pos <= line->length[0]) {
-                *dst = INTERPOLATE(*dst, pix, line->coverage[0] * pos);
-                ++dst;
-                ++pos;
-            }
-
-            //Right edge
-            dst = buf + line->x[1] - 1;
-            pix = *(dst + (line->x[1] < (int32_t)(surface->w - 1) ? 1 : 0));
-            pos = line->length[1];
-
-            //exceptional handling. out of memory bound.
-            if (dst - pos < surface->buf32) pos = static_cast<int32_t>(dst - surface->buf32);
-
-            while (pos > 0) {
-                *dst = INTERPOLATE(*dst, pix, 255 - (line->coverage[1] * pos));
-                --dst;
-                --pos;
-            }
-        }
-        buf += surface->stride;
-        ++line;
-        ++y;
-    }
-    tvg::free(aaSpans->lines);
-    tvg::free(aaSpans);
-}
-
 
 } //namespace
 
@@ -810,9 +547,7 @@ bool rasterTexmapPolygon(SwSurface* surface, const SwImage& image, const Matrix&
         if (vertices[i].pt.y > ye) ye = vertices[i].pt.y;
     }
 
-    auto yStart = std::max(static_cast<int32_t>(ys), bbox.min.y);
-    auto yEnd = std::min(static_cast<int32_t>(ye), bbox.max.y);
-    auto aaSpans = rightAngle(transform) ?  nullptr : _AASpans(yStart, yEnd);
+    auto needAA = rightAngle(transform) ? false : true;
 
     tvg::Polygon polygon;
 
@@ -821,21 +556,20 @@ bool rasterTexmapPolygon(SwSurface* surface, const SwImage& image, const Matrix&
     polygon.vertex[1] = vertices[1];
     polygon.vertex[2] = vertices[3];
 
-    _rasterPolygonImage(surface, image, bbox, polygon, aaSpans, opacity);
+    _rasterPolygonImage(surface, image, bbox, polygon, opacity, needAA);
 
     //Draw the second polygon
     polygon.vertex[0] = vertices[1];
     polygon.vertex[1] = vertices[2];
     polygon.vertex[2] = vertices[3];
 
-    _rasterPolygonImage(surface, image, bbox, polygon, aaSpans, opacity);
+    _rasterPolygonImage(surface, image, bbox, polygon, opacity, needAA);
 
 #if 0
     if (_compositing(surface) && _masking(surface) && !_direct(surface->compositor->method)) {
         _compositeMaskImage(surface, &surface->compositor->image, surface->compositor->bbox);
     }
 #endif
-    if (aaSpans) _apply(surface, aaSpans);
     return true;
 }
 
