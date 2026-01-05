@@ -44,7 +44,7 @@ void WgSceneTask::run(WgContext& context, WgCompositor& compositor, WGPUCommandE
 {
     // begin the render pass for the current scene and clear the target content
     compositor.beginRenderPassMS(encoder, renderTarget, true);
-    // run all childs (scenes and shapes)
+    // run all children (scenes and shapes)
     runChildren(context, compositor, encoder);
     // we must to end current render pass for current scene
     compositor.endRenderPass();

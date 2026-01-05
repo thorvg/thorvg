@@ -294,7 +294,7 @@ static SwOutline* _genDashOutline(const RenderShape* rshape, const Matrix& trans
         }
     }
 
-    mpoolRetOutline(mpool, tid);  //retreive the outline cache and use it for dash outline.
+    mpoolRetOutline(mpool, tid);  //retrieve the outline cache and use it for dash outline.
     dash.outline = mpoolReqOutline(mpool, tid);
 
     //must begin with moveTo

@@ -1094,7 +1094,7 @@ bool GlRenderer::endComposite(RenderCompositor* cmp)
 
 void GlRenderer::prepare(RenderEffect* effect, const Matrix& transform)
 {
-    // we must be sure, that we have intermidiate FBOs
+    // we must be sure, that we have intermediate FBOs
     if (mBlendPool.count < 1) mBlendPool.push(new GlRenderTargetPool(surface.w, surface.h));
     if (mBlendPool.count < 2) mBlendPool.push(new GlRenderTargetPool(surface.w, surface.h));
 

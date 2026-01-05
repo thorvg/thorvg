@@ -610,7 +610,7 @@ vm_super_call (vm_frame_ctx_t *frame_ctx_p) /**< frame context */
 } /* vm_super_call */
 
 /**
- * Perform one of the following call/construct operation with spreaded argument list
+ * Perform one of the following call/construct operation with spread argument list
  *   - f(...args)
  *   - o.f(...args)
  *   - new O(...args)

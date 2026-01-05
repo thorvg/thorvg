@@ -86,7 +86,7 @@ void WgImageData::release(WgContext& context)
 
 void WgRenderSettings::update(WgContext& context, const tvg::Matrix& transform, tvg::ColorSpace cs, uint8_t opacity)
 {
-    //TODO: Update separtely according to the RenderUpdateFlag
+    //TODO: Update separately according to the RenderUpdateFlag
     settings.transform.update(transform);
     settings.options.update(cs, opacity * opacityMultiplier);
 }

@@ -168,8 +168,8 @@ bool ecma_builtin_is_regexp_exec (ecma_extended_object_t *obj_p);
  */
 typedef enum
 {
-  ECMA_DATE_UTC, /**< date vaule is in UTC */
-  ECMA_DATE_LOCAL /**< date vaule is in local time */
+  ECMA_DATE_UTC, /**< date value is in UTC */
+  ECMA_DATE_LOCAL /**< date value is in local time */
 } ecma_date_timezone_t;
 
 /* ecma-builtin-helpers-date.c */

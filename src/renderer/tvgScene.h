@@ -177,7 +177,7 @@ struct SceneImpl : Scene
         if (cmp) {
             //Apply post effects if any.
             if (effects) {
-                //Notify the possiblity of the direct composition of the effect result to the origin surface.
+                //Notify the possibility of the direct composition of the effect result to the origin surface.
                 auto direct = (effects->count == 1) & (impl.marked(CompositionFlag::PostProcessing));
                 ARRAY_FOREACH(p, *effects) {
                     if ((*p)->valid) renderer->render(cmp, *p, direct);

@@ -31,7 +31,7 @@ struct WgRenderTask {
     virtual void run(WgContext& context, WgCompositor& compositor, WGPUCommandEncoder encoder) = 0;
 };
 
-// task for sinlge shape rendering
+// task for single shape rendering
 struct WgPaintTask: public WgRenderTask {
     // shape render properties
     WgRenderDataPaint* renderData{};
@@ -48,7 +48,7 @@ struct WgSceneTask: public WgRenderTask {
 public:
     // parent scene (nullptr for root scene)
     WgSceneTask* parent{};
-    // childs can be shapes or scenes tesks
+    // children can be shapes or scenes tasks
     Array<WgRenderTask*> children;
     // scene blend/compose targets
     WgRenderTarget* renderTarget{};

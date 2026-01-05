@@ -278,9 +278,9 @@ void WgPipelines::initialize(WgContext& context)
         layout_depth, vertexBufferLayoutsShape, 1,
         WGPUColorWriteMask_None, offscreenTargetFormat, blendStateSrc,
         depthStencilStateCopyStencilToDepth , multisampleState);
-    // render pipeline copy stencil to depth (intermidiate)
+    // render pipeline copy stencil to depth (intermediate)
     copy_stencil_to_depth_interm = createRenderPipeline(
-        context.device, "The render pipeline copy stencil to depth intermidiate",
+        context.device, "The render pipeline copy stencil to depth intermediate",
         shader_depth, "vs_main", "fs_main",
         layout_depth, vertexBufferLayoutsShape, 1,
         WGPUColorWriteMask_None, offscreenTargetFormat, blendStateSrc,
