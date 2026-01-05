@@ -67,16 +67,21 @@ void GlRenderer::flush()
 }
 
 
-void GlRenderer::currentContext()
+bool GlRenderer::currentContext()
 {
-#ifdef __EMSCRIPTEN__
-    auto targetContext = (EMSCRIPTEN_WEBGL_CONTEXT_HANDLE)mContext;
-    if (emscripten_webgl_get_current_context() != targetContext) {
-        emscripten_webgl_make_context_current(targetContext);
-    }
-#else
-    TVGERR("GL_ENGINE", "Maybe missing MakeCurrent() Call?");
+#if defined(__EMSCRIPTEN__)
+    const auto targetContext = static_cast<EMSCRIPTEN_WEBGL_CONTEXT_HANDLE>(mContext);
+    if (emscripten_webgl_get_current_context() == targetContext) return true;
+    return emscripten_webgl_make_context_current(targetContext) == 0;
+#elif defined(_WIN32) && !defined(__CYGWIN__) && defined(THORVG_GL_TARGET_GL)
+    if (tvgWglGetCurrentContext() == static_cast<HGLRC>(mContext)) return true;
+    return (bool) tvgWglMakeCurrent((HDC)mSurface, static_cast<HGLRC>(mContext));
+#elif defined(THORVG_GL_TARGET_GLES)
+    if (tvgEglGetCurrentContext() == static_cast<EGLContext>(mContext)) return true;
+    if (mDisplay && mSurface) return (bool) tvgEglMakeCurrent((EGLDisplay)mDisplay, (EGLSurface)mSurface, (EGLSurface)mSurface, (EGLContext)mContext);
 #endif
+    TVGLOG("GL_ENGINE", "Maybe missing currentContext()?");
+    return true;
 }
 
 
@@ -923,7 +928,7 @@ bool GlRenderer::clear()
 }
 
 
-bool GlRenderer::target(void* context, int32_t id, uint32_t w, uint32_t h, ColorSpace cs)
+bool GlRenderer::target(void* display, void* surface, void* context, int32_t id, uint32_t w, uint32_t h, ColorSpace cs)
 {
     //assume the context zero is invalid
     if (!context || w == 0 || h == 0) return false;
@@ -932,20 +937,22 @@ bool GlRenderer::target(void* context, int32_t id, uint32_t w, uint32_t h, Color
 
     flush();
 
-    surface.stride = w;
-    surface.w = w;
-    surface.h = h;
-    surface.cs = cs;
+    this->surface.stride = w;
+    this->surface.w = w;
+    this->surface.h = h;
+    this->surface.cs = cs;
 
+    mDisplay = display;
+    mSurface = surface;
     mContext = context;
     mTargetFboId = static_cast<GLint>(id);
 
-    currentContext();
+    auto ret = currentContext();
 
-    mRootTarget.setViewport({{0, 0}, {int32_t(surface.w), int32_t(surface.h)}});
-    mRootTarget.init(surface.w, surface.h, mTargetFboId);
+    mRootTarget.setViewport({{0, 0}, {int32_t(this->surface.w), int32_t(this->surface.h)}});
+    mRootTarget.init(this->surface.w, this->surface.h, mTargetFboId);
 
-    return true;
+    return ret;
 }
 
 

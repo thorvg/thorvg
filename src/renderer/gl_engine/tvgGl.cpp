@@ -38,7 +38,7 @@ bool glTerm()
 
 #else //__EMSCRIPTEN__
 
-#if defined(_WIN32) && !defined(__CYGWIN__) && !defined(__SCITECH_SNAP__)
+#if defined(_WIN32) && !defined(__CYGWIN__)
 
 #ifdef THORVG_GL_TARGET_GL
     typedef PROC(WINAPI *PFNGLGETPROCADDRESSPROC)(LPCSTR);
@@ -46,6 +46,9 @@ bool glTerm()
 #endif
 
 static HMODULE _libGL = NULL;
+#ifdef THORVG_GL_TARGET_GLES
+    static HMODULE _libEGL = NULL;
+#endif
 
 static bool _glLoad()
 {
@@ -89,6 +92,9 @@ static PROC _getProcAddress(const char* procName)
 #endif
 
 static void* _libGL = nullptr;
+#ifdef THORVG_GL_TARGET_GLES
+    static void* _libEGL = nullptr;
+#endif
 
 static bool _glLoad()
 {
@@ -130,6 +136,9 @@ static void* _getProcAddress(const char* procName)
 #include <dlfcn.h>
 
 static void* _libGL = nullptr;
+#ifdef THORVG_GL_TARGET_GLES
+    static void* _libEGL = nullptr;
+#endif
 
 static bool _glLoad()
 {
@@ -479,6 +488,16 @@ PFNGLUNIFORMBLOCKBINDINGPROC       glUniformBlockBinding;
 //PFNGLGETACTIVEUNIFORMBLOCKIVPROC   glGetActiveUniformBlockiv;
 //PFNGLGETACTIVEUNIFORMBLOCKNAMEPROC glGetActiveUniformBlockName;
 
+#if defined(_WIN32) && !defined(__CYGWIN__) && defined(THORVG_GL_TARGET_GL)
+    PFNWGLGETCURRENTCONTEXTPROC  tvgWglGetCurrentContext;
+    PFNWGLMAKECURRENTPROC        tvgWglMakeCurrent;
+#endif
+
+#if defined(THORVG_GL_TARGET_GLES)
+    PFNEGLGETCURRENTCONTEXTPROC  tvgEglGetCurrentContext;
+    PFNEGLMAKECURRENTPROC        tvgEglMakeCurrent;
+#endif
+
 bool glInit()
 {
     if (!_glLoad()) return false;
@@ -812,6 +831,41 @@ bool glInit()
     // GL_FUNCTION_FETCH(glGetActiveUniformBlockName, PFNGLGETACTIVEUNIFORMBLOCKNAMEPROC);
     GL_FUNCTION_FETCH(glUniformBlockBinding, PFNGLUNIFORMBLOCKBINDINGPROC);
 
+#if defined(_WIN32) && !defined(__CYGWIN__) && defined(THORVG_GL_TARGET_GL)
+    tvgWglGetCurrentContext = (PFNWGLGETCURRENTCONTEXTPROC)GetProcAddress(_libGL, "wglGetCurrentContext");
+    tvgWglMakeCurrent = (PFNWGLMAKECURRENTPROC)GetProcAddress(_libGL, "wglMakeCurrent");
+    if (!tvgWglGetCurrentContext || !tvgWglMakeCurrent) {
+        TVGERR("GL_ENGINE", "Failed to load WGL context management functions.");
+        return false;
+    }
+#endif
+
+#if defined(THORVG_GL_TARGET_GLES)
+    #if defined(_WIN32) && !defined(__CYGWIN__)
+        if (!_libEGL) _libEGL = LoadLibraryW(L"libEGL.dll");
+        if (!_libEGL) _libEGL = LoadLibraryW(L"EGL.dll");
+        if (!_libEGL) {
+            TVGERR("GL_ENGINE", "Cannot find EGL library.");
+            return false;
+        }
+        tvgEglGetCurrentContext = (PFNEGLGETCURRENTCONTEXTPROC)GetProcAddress(_libEGL, "eglGetCurrentContext");
+        tvgEglMakeCurrent = (PFNEGLMAKECURRENTPROC)GetProcAddress(_libEGL, "eglMakeCurrent");
+    #else
+        if (!_libEGL) _libEGL = dlopen("libEGL.so.1", RTLD_LAZY);
+        if (!_libEGL) _libEGL = dlopen("libEGL.so", RTLD_LAZY);
+        if (!_libEGL) {
+            TVGERR("GL_ENGINE", "Cannot find EGL library.");
+            return false;
+        }
+        tvgEglGetCurrentContext = (PFNEGLGETCURRENTCONTEXTPROC)dlsym(_libEGL, "eglGetCurrentContext");
+        tvgEglMakeCurrent = (PFNEGLMAKECURRENTPROC)dlsym(_libEGL, "eglMakeCurrent");
+    #endif
+    if (!tvgEglGetCurrentContext || !tvgEglMakeCurrent) {
+        TVGERR("GL_ENGINE", "Failed to load EGL context management functions.");
+        return false;
+    }
+#endif
+
     //Confirm the version
     GLint vMajor, vMinor;
     glGetIntegerv(GL_MAJOR_VERSION, &vMajor);
@@ -829,10 +883,16 @@ bool glInit()
 
 bool glTerm()
 {
-#if defined(_WIN32) && !defined(__CYGWIN__) && !defined(__SCITECH_SNAP__)
+#if defined(_WIN32) && !defined(__CYGWIN__)
     if (_libGL) FreeLibrary(_libGL);
+    #if defined(THORVG_GL_TARGET_GLES)
+        if (_libEGL) FreeLibrary(_libEGL);
+    #endif
 #else
     if (_libGL) dlclose(_libGL);
+    #if defined(THORVG_GL_TARGET_GLES)
+        if (_libEGL) dlclose(_libEGL);
+    #endif
 #endif
 
     return true;
