@@ -351,7 +351,7 @@ jmem_heap_alloc_block_null_on_error (const size_t size) /**< required memory siz
 /**
  * Finds the block in the free block list which precedes the argument block
  *
- * @return pointer to the preceeding block
+ * @return pointer to the preceding block
  */
 static jmem_heap_free_t *
 jmem_heap_find_prev (const jmem_heap_free_t *const block_p) /**< which memory block's predecessor we're looking for */

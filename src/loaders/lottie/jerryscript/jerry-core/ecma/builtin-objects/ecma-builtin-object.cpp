@@ -1043,7 +1043,7 @@ ecma_builtin_object_object_assign (ecma_object_t *target_p, /**< target object *
 
     /* 5.b.i */
     ecma_value_t from_value = ecma_op_to_object (next_source);
-    /* null and undefied cases are handled above, so this must be a valid object */
+    /* null and undefined cases are handled above, so this must be a valid object */
     JERRY_ASSERT (!ECMA_IS_VALUE_ERROR (from_value));
 
     ecma_object_t *from_obj_p = ecma_get_object_from_value (from_value);

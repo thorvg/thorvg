@@ -298,7 +298,7 @@ enum struct TextWrap : uint8_t
  */
 enum struct Type : uint8_t
 {
-    Undefined = 0,         ///< Unkown class
+    Undefined = 0,         ///< Unknown class
     Shape,                 ///< Shape class
     Scene,                 ///< Scene class
     Picture,               ///< Picture class

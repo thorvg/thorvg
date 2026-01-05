@@ -164,7 +164,7 @@ fn vs_main(in: VertexInput) -> VertexOutput {
 
 @fragment
 fn fs_main(in: VertexOutput) -> @location(0) vec4f {
-    // orignal data
+    // original data
     let d0 = in.vGradCoord.xy - uPaintSettings.gradient.coords.xy;
     let d1 = uPaintSettings.gradient.coords.xy - uPaintSettings.gradient.focal.xy;
     let r0 = uPaintSettings.gradient.coords.z;

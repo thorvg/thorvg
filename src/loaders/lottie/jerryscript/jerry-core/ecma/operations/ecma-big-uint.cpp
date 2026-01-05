@@ -676,7 +676,7 @@ ecma_big_uint_add (ecma_extended_primitive_t *left_value_p, /**< left BigUInt va
 } /* ecma_big_uint_add */
 
 /**
- * Substract right BigUInt value from the left BigUInt value
+ * Subtract right BigUInt value from the left BigUInt value
  *
  * return new BigUInt value, NULL on error
  */

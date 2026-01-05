@@ -118,7 +118,7 @@ typedef struct {
 } VP8FilterHeader;
 
 //------------------------------------------------------------------------------
-// Informations about the macroblocks.
+// Information about the macroblocks.
 
 typedef struct {  // filter specs
   uint8_t f_limit_;      // filter limit in [3..189], or 0 if no filtering

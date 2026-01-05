@@ -172,7 +172,7 @@ ecma_op_regexp_alloc (ecma_object_t *ctr_obj_p) /**< constructor object pointer 
 } /* ecma_op_regexp_alloc */
 
 /**
- * Helper method for initializing an aready existing RegExp object.
+ * Helper method for initializing an already existing RegExp object.
  */
 static inline void 
 ecma_op_regexp_initialize (ecma_object_t *regexp_obj_p, /**< RegExp object */
