@@ -205,7 +205,7 @@ private:
     void updateRoundedCorner(LottieGroup* parent, LottieObject** child, float frameNo, Inlist<RenderContext>& contexts, RenderContext* ctx);
     void updateOffsetPath(LottieGroup* parent, LottieObject** child, float frameNo, Inlist<RenderContext>& contexts, RenderContext* ctx);
 
-    RenderPath buffer;   //resusable path
+    RenderPath buffer;   //reusable path
     LottieExpressions* exps;
     Tween tween;
 };

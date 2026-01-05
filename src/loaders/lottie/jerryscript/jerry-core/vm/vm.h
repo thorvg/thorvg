@@ -282,7 +282,7 @@ typedef enum
   VM_OC_DEFAULT_INITIALIZER, /**< default initializer inside a pattern */
   VM_OC_REST_INITIALIZER, /**< create rest object inside an array pattern */
   VM_OC_INITIALIZER_PUSH_PROP, /**< push property for object initializer */
-  VM_OC_SPREAD_ARGUMENTS, /**< perform function call/construct with spreaded arguments */
+  VM_OC_SPREAD_ARGUMENTS, /**< perform function call/construct with spread arguments */
   VM_OC_CREATE_GENERATOR, /**< create a generator object */
   VM_OC_YIELD, /**< yield operation */
   VM_OC_ASYNC_YIELD, /**< async yield operation */
@@ -397,7 +397,7 @@ typedef enum
   VM_NO_EXEC_OP, /**< do nothing */
   VM_EXEC_CALL, /**< invoke a function */
   VM_EXEC_SUPER_CALL, /**< invoke a function through 'super' keyword */
-  VM_EXEC_SPREAD_OP, /**< call/construct operation with spreaded argument list */
+  VM_EXEC_SPREAD_OP, /**< call/construct operation with spread argument list */
   VM_EXEC_RETURN, /**< return with the completion value without freeing registers */
   VM_EXEC_CONSTRUCT, /**< construct a new object */
 } vm_call_operation;

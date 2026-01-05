@@ -383,7 +383,7 @@ TEST_CASE("Duplication", "[tvgPaint]")
 }
 
 
-TEST_CASE("Refernce Count", "[tvgPaint]")
+TEST_CASE("Reference Count", "[tvgPaint]")
 {
     auto shape = Shape::gen();
     REQUIRE(shape->refCnt() == 0);

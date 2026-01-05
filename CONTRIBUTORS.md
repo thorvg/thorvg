@@ -55,3 +55,4 @@
 - Wang SiMiao 王思淼 <wangsimiao1@xiaomi.com>
 - Jackson Hu <huming2207@gmail.com>
 - Andy French <andyf@canva.com>
+- Andreas Deininger <andreas@deininger.net>

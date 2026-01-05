@@ -1050,7 +1050,7 @@ typedef struct
         ecma_value_t iterated_value; /**< for %Iterator%: [[IteratedObject]] property */
         ecma_value_t promise; /**< PromiseCapability[[Promise]] internal slot */
         ecma_value_t sync_iterator; /**< IteratorRecord [[Iterator]] internal slot for AsyncFromSyncIterator */
-        ecma_value_t spread_value; /**< for spread object: spreaded element */
+        ecma_value_t spread_value; /**< for spread object: spread element */
         int32_t tza; /**< TimeZone adjustment for date objects */
         uint32_t length; /**< length related property (e.g. length of ArrayBuffer) */
         uint32_t arguments_number; /**< for arguments: arguments number */

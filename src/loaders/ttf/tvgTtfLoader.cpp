@@ -398,7 +398,7 @@ void TtfLoader::wrapWord(FontMetrics& fm, const Point& box, char* utf8, RenderPa
                 line = word;
                 wadv = 0;
                 ++loc;
-            //not enougth space, line wrap by character
+            //not enough space, line wrap by character
             } else if (smart) {
                 line = feedLine(fm, box.x, cursor.x, line, out.pts.count, cursor, loc, out);
             }

@@ -390,7 +390,7 @@ bool WgRenderer::target(WGPUDevice device, WGPUInstance instance, void* target, 
         mRenderTargetRoot.initialize(mContext, w, h);
         mCompositor.initialize(mContext, w, h);
 
-    // update render targets dimentions
+    // update render targets dimensions
     } else if ((mTargetSurface.w != w) || (mTargetSurface.h != h) || (type == 0 ? (surface != (WGPUSurface)target) : (targetTexture != (WGPUTexture)target))) {
         mRenderTargetPool.release(mContext);
         mRenderTargetRoot.release(mContext);

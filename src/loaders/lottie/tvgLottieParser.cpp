@@ -1468,7 +1468,7 @@ void LottieParser::parseEffects(LottieLayer* layer)
         auto invalid = true;
         enterObject();
         while (auto key = nextObjectKey()) {
-            //type must be priortized.
+            //type must be prioritized.
             if (KEY_AS("ty"))
             {
                 effect = getEffect(getInt());

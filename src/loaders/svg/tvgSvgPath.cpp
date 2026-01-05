@@ -118,7 +118,7 @@ void _pathAppendArcTo(RenderPath& out, Point& cur, Point& curCtl, const Point& n
     center += (start + next) * 0.5f;
 
     //Step 4 (F6.5.4)
-    //We dont' use arccos (as per w3c doc), see
+    //We don't use arccos (as per w3c doc), see
     //http://www.euclideanspace.com/maths/algebra/vectors/angleBetween/index.htm
     //Note: atan2 (0.0, 1.0) == 0.0
     auto at = tvg::atan2(((y1p - cp.y) / radius.y), ((x1p - cp.x) / radius.x));
@@ -130,7 +130,7 @@ void _pathAppendArcTo(RenderPath& out, Point& cur, Point& curCtl, const Point& n
         //Ensure delta theta < 0 or else add 360 degrees
         if (deltaTheta < 0.0f) deltaTheta += 2.0f * MATH_PI;
     } else {
-        //Ensure delta theta > 0 or else substract 360 degrees
+        //Ensure delta theta > 0 or else subtract 360 degrees
         if (deltaTheta > 0.0f) deltaTheta -= 2.0f * MATH_PI;
     }
 

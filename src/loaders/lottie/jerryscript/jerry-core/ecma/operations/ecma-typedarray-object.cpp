@@ -2083,7 +2083,7 @@ ecma_op_create_typedarray_with_type_and_length (ecma_typedarray_type_t typedarra
 } /* ecma_op_create_typedarray_with_type_and_length */
 
 /**
- * Method for getting the additional typedArray informations.
+ * Method for getting the additional typedArray information.
  */
 ecma_typedarray_info_t
 ecma_typedarray_get_info (ecma_object_t *typedarray_p)
