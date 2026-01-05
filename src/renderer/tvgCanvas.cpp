@@ -176,7 +176,7 @@ GlCanvas::~GlCanvas()
 }
 
 
-Result GlCanvas::target(void* context, int32_t id, uint32_t w, uint32_t h, ColorSpace cs) noexcept
+Result GlCanvas::target(void* display, void* surface, void* context, int32_t id, uint32_t w, uint32_t h, ColorSpace cs) noexcept
 {
 #ifdef THORVG_GL_RASTER_SUPPORT
     if (cs != ColorSpace::ABGR8888S) return Result::NonSupport;
@@ -189,7 +189,7 @@ Result GlCanvas::target(void* context, int32_t id, uint32_t w, uint32_t h, Color
     auto renderer = static_cast<GlRenderer*>(pImpl->renderer);
     if (!renderer) return Result::MemoryCorruption;
 
-    if (!renderer->target(context, id, w, h, cs)) return Result::Unknown;
+    if (!renderer->target(display, surface, context, id, w, h, cs)) return Result::Unknown;
     pImpl->vport = {{0, 0}, {(int32_t)w, (int32_t)h}};
     renderer->viewport(pImpl->vport);
 
