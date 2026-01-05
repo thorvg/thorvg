@@ -384,7 +384,6 @@ static Paint* _applyProperty(SvgLoaderData& loaderData, SvgNode* node, Shape* vg
     SvgStyleProperty* style = node->style;
 
     //Clip transformation is applied directly to the path in the _appendClipShape function
-    if (node->transform && !clip) vg->transform(*node->transform);
     if (node->type == SvgNodeType::Doc || !node->style->display) return vg;
 
     //If fill property is nullptr then do nothing
@@ -440,6 +439,9 @@ static Paint* _applyProperty(SvgLoaderData& loaderData, SvgNode* node, Shape* vg
         //Apply the stroke color
         vg->strokeFill(style->stroke.paint.color.r, style->stroke.paint.color.g, style->stroke.paint.color.b, style->stroke.opacity);
     }
+
+    //apply transform after the local space shape bbox for gradient acquisition
+    if (node->transform && !clip) vg->transform(*node->transform);
 
     auto p = _applyFilter(loaderData, vg, node, vBox, svgPath);
     return _applyComposition(loaderData, p, node, vBox, svgPath);
