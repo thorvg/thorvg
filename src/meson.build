@@ -65,7 +65,7 @@ endif
 subdir('bindings')
 
 thorvg_lib = library(
-    'thorvg-' + vmaj,
+    thorvg_lib_name,
     include_directories    : headers,
     version                : meson.project_version(),
     dependencies           : thorvg_lib_dep,
