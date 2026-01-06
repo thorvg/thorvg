@@ -7,6 +7,9 @@ project('thorvg',
 v_array = meson.project_version().split('.')
 vmaj = v_array[0]
 
+win32 = ['windows']
+sys_windows = win32.contains(host_machine.system())
+
 config_h = configuration_data()
 
 src_dir = '/'.join(meson.current_source_dir().split('\\'))
