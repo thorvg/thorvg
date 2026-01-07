@@ -46,7 +46,7 @@
 - Marcin Baszczewski <marcin@baszczewski.pl>
 - Fabian Blatz <fabianblatz@gmail.com>
 - Jakub Marcowski <chubercikbattle@gmail.com>
-- Benjamin <benjaminhalko@hotmail.com>
+- Benjamin Halko <benjaminhalko@hotmail.com>
 - Benson Muite <benson_muite@emailplus.com>
 - kkocdko <kkocdko@gmail.com>
 - SoonGeon Noh <nors.nsg@gmail.com>
@@ -56,3 +56,4 @@
 - Jackson Hu <huming2207@gmail.com>
 - Andy French <andyf@canva.com>
 - Andreas Deininger <andreas@deininger.net>
+- Jonathan Liu <net147@gmail.com>
