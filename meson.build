@@ -7,13 +7,6 @@ project('thorvg',
 v_array = meson.project_version().split('.')
 vmaj = v_array[0]
 
-thorvg_lib_name = 'thorvg'
-
-# Prevent duplicate version addition on Windows
-if host_machine.system() != 'windows'
-  thorvg_lib_name += '-' + vmaj
-endif
-
 config_h = configuration_data()
 
 src_dir = '/'.join(meson.current_source_dir().split('\\'))
