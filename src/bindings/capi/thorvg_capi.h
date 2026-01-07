@@ -528,7 +528,7 @@ TVG_API Tvg_Result tvg_glcanvas_set_target(Tvg_Canvas canvas, void* display, voi
 
 
 /**
- * @defgroup ThorVGCapi_WgCanvas WGCanvas
+ * @defgroup ThorVGCapi_WgCanvas WgCanvas
  * @ingroup ThorVGCapi_Canvas
  *
  * @brief A module for rendering the graphical elements using the webgpu engine.
