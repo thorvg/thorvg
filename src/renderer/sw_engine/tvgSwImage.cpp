@@ -106,7 +106,6 @@ bool imageGenRle(SwImage& image, const RenderRegion& renderBox, SwMpool* mpool, 
 
 void imageDelOutline(SwImage& image, SwMpool* mpool, uint32_t tid)
 {
-    mpoolRetOutline(mpool, tid);
     image.outline = nullptr;
 }
 

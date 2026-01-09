@@ -336,7 +336,6 @@ struct SwCellPool
 struct SwMpool
 {
     SwOutline* outline;
-    SwOutline* strokeOutline;
     SwStrokeBorder* leftBorder;
     SwStrokeBorder* rightBorder;
     SwCellPool* cellPool;
@@ -694,16 +693,11 @@ bool rleClip(SwRle* rle, const RenderRegion* clip);
 bool rleIntersect(const SwRle* rle, const RenderRegion& region);
 
 SwMpool* mpoolInit(uint32_t threads);
-bool mpoolTerm(SwMpool* mpool);
+void mpoolTerm(SwMpool* mpool);
 SwOutline* mpoolReqOutline(SwMpool* mpool, unsigned idx);
-void mpoolRetOutline(SwMpool* mpool, unsigned idx);
-SwOutline* mpoolReqStrokeOutline(SwMpool* mpool, unsigned idx);
-void mpoolRetStrokeOutline(SwMpool* mpool, unsigned idx);
 SwOutline* mpoolReqDashOutline(SwMpool* mpool, unsigned idx);
-void mpoolRetDashOutline(SwMpool* mpool, unsigned idx);
 SwStrokeBorder* mpoolReqStrokeLBorder(SwMpool* mpool, unsigned idx);
 SwStrokeBorder* mpoolReqStrokeRBorder(SwMpool* mpool, unsigned idx);
-void mpoolRetStrokeBorders(SwMpool* mpool, unsigned idx);
 SwCellPool* mpoolReqCellPool(SwMpool* mpool, unsigned idx);
 
 bool rasterCompositor(SwSurface* surface);
