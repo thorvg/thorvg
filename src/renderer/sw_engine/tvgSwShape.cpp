@@ -294,7 +294,6 @@ static SwOutline* _genDashOutline(const RenderShape* rshape, const Matrix& trans
         }
     }
 
-    mpoolRetOutline(mpool, tid);  //retrieve the outline cache and use it for dash outline.
     dash.outline = mpoolReqOutline(mpool, tid);
 
     //must begin with moveTo
@@ -461,7 +460,6 @@ bool shapeGenRle(SwShape& shape, const RenderRegion& bbox, SwMpool* mpool, unsig
 
 void shapeDelOutline(SwShape& shape, SwMpool* mpool, uint32_t tid)
 {
-    mpoolRetOutline(mpool, tid);
     shape.outline = nullptr;
 }
 
@@ -516,23 +514,19 @@ bool shapeGenStrokeRle(SwShape& shape, const RenderShape* rshape, const Matrix& 
     //Dash style with/without trimming
     if (rshape->stroke->dash.length > DASH_PATTERN_THRESHOLD) {
         shapeOutline = _genDashOutline(rshape, transform, mpool, tid, rshape->trimpath());
-        if (!shapeOutline) return false;
     //Trimming & Normal style
     } else {
-        if (!shape.outline) {
-            if (auto out = _genOutline(shape, rshape, transform, mpool, tid, false, rshape->trimpath())) shape.outline = out;
-            else return false;
-        }
-        shapeOutline = shape.outline;
+        shapeOutline = shape.outline ? shape.outline : _genOutline(shape, rshape, transform, mpool, tid, false, rshape->trimpath());
     }
+
+    if (!shapeOutline) return false;
 
     if (!strokeParseOutline(shape.stroke, *shapeOutline, mpool, tid)) return false;
 
     auto strokeOutline = strokeExportOutline(shape.stroke, mpool, tid);
-
     auto ret = mathUpdateOutlineBBox(strokeOutline, clipBox, renderBox, false);
     if (ret) shape.strokeRle = rleRender(shape.strokeRle, strokeOutline, renderBox, mpool, tid, true);
-    mpoolRetStrokeOutline(mpool, tid);
+
     return ret;
 }
 
@@ -604,8 +598,6 @@ bool shapeStrokeBBox(SwShape& shape, const RenderShape* rshape, Point* pt4, cons
         pt4[1] = SwPoint{max.x, min.y}.toPoint();
         pt4[2] = max.toPoint();
         pt4[3] = SwPoint{min.x, max.y}.toPoint();
-
-        mpoolRetStrokeOutline(mpool, 0);
     }
 
     shapeDelOutline(shape, mpool, 0);

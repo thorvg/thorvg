@@ -798,7 +798,7 @@ bool strokeParseOutline(SwStroke* stroke, const SwOutline& outline, SwMpool* mpo
 SwOutline* strokeExportOutline(SwStroke* stroke, SwMpool* mpool, unsigned tid)
 {
     auto reserve = stroke->borders[0]->pts.count + stroke->borders[1]->pts.count;
-    auto outline = mpoolReqStrokeOutline(mpool, tid);
+    auto outline = mpoolReqOutline(mpool, tid);
     outline->pts.reserve(reserve);
     outline->types.reserve(reserve);
     outline->fillRule = FillRule::NonZero;
