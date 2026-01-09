@@ -205,6 +205,11 @@ static jerry_value_t _buildValue(float frameNo, LottieProperty* property)
         }
         case LottieProperty::Type::Color: return _color((*static_cast<LottieColor*>(property))(frameNo));
         case LottieProperty::Type::Opacity: return jerry_number((*static_cast<LottieOpacity*>(property))(frameNo));
+        case LottieProperty::Type::TextDoc:
+        {
+            auto& doc = (*static_cast<LottieTextDoc*>(property))(frameNo);
+            return doc.text ? jerry_string_sz(doc.text) : jerry_string_sz("");
+        }
         default: TVGERR("LOTTIE", "Non supported type for value? = %d", (int) property->type);
     }
     return jerry_undefined();
@@ -315,7 +320,13 @@ static jerry_value_t _effectProperty(const jerry_call_info_t* info, const jerry_
 
     if (!property) return jerry_undefined();
 
-    return _buildValue(data->frameNo, property);
+    auto val = _buildValue(data->frameNo, property);
+
+    //wrap in object with .value property for AE expression compatibility
+    auto obj = jerry_object();
+    jerry_object_set_sz(obj, EXP_VALUE, val);
+    jerry_value_free(val);
+    return obj;
 }
 
 
