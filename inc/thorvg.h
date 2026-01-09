@@ -42,6 +42,47 @@
     #define TVG_DEPRECATED
 #endif
 
+/**
+ * @brief ThorVG version macros for compile-time version checking.
+ *
+ * These macros allow users to conditionally compile code based on the ThorVG version.
+ *
+ * Example usage:
+ * @code
+ * #if TVG_VERSION_CHECK(1, 0, 0)
+ *     // Use features available in ThorVG 1.0.0 or later
+ * #endif
+ * @endcode
+ */
+#define TVG_VERSION_MAJOR 1
+#define TVG_VERSION_MINOR 0
+#define TVG_VERSION_MICRO 0
+
+/**
+ * @brief Encodes version components into a single integer for comparison.
+ * @param major Major version number.
+ * @param minor Minor version number.
+ * @param micro Micro (patch) version number.
+ * @return Encoded version as an integer.
+ */
+#define TVG_VERSION_ENCODE(major, minor, micro) \
+    ((major) * 10000 + (minor) * 100 + (micro))
+
+/**
+ * @brief The current ThorVG version as an encoded integer.
+ */
+#define TVG_VERSION TVG_VERSION_ENCODE(TVG_VERSION_MAJOR, TVG_VERSION_MINOR, TVG_VERSION_MICRO)
+
+/**
+ * @brief Checks if the current ThorVG version is at least the specified version.
+ * @param major Required major version.
+ * @param minor Required minor version.
+ * @param micro Required micro version.
+ * @return True if current version >= specified version.
+ */
+#define TVG_VERSION_CHECK(major, minor, micro) \
+    (TVG_VERSION >= TVG_VERSION_ENCODE(major, minor, micro))
+
 #define _TVG_DECLARE_PRIVATE(A) \
 protected: \
     A(const A&) = delete; \
