@@ -198,7 +198,10 @@ void WgRenderDataShape::updateMeshes(const RenderShape &rshape, RenderUpdateFlag
         } else {
             WgBWTessellator bwTess{&meshShape};
             bwTess.tessellate(optPath, matrix);
-            convex = bwTess.convex;
+            // Triangles (3 vertices) are mathematically always convex.
+            // Quads (4 vertices) are convex in virtually all practical cases.
+            // Force convex path to skip unnecessary stencil pass.
+            convex = bwTess.convex || meshShape.vbuffer.count <= 4;
             bbox = bwTess.getBBox();
         }
         if (meshShape.ibuffer.empty()) {
