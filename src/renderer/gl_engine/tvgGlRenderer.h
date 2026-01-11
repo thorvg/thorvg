@@ -29,6 +29,7 @@
 #include "tvgGlGpuBuffer.h"
 #include "tvgGlRenderPass.h"
 #include "tvgGlEffect.h"
+#include "tvgGlUniformTexture.h"
 
 struct GlRenderer : RenderMethod
 {
@@ -206,6 +207,10 @@ private:
     void flush();
     void clearDisposes();
     bool currentContext();
+    void ensureUniformTexture();
+    void uploadUniformTexture();
+    void bindUniformTexture(uint32_t textureUnit);
+    void unbindUniformTexture();
 
     void* mDisplay = nullptr;   // EGLDisplay for EGL; unused for other app-managed contexts.
     void* mSurface = nullptr;   // EGLSurface for EGL, HDC for WGL; unused for other app-managed contexts.
@@ -217,6 +222,8 @@ private:
     GlRenderTarget mRootTarget;
     GlEffect mEffect;
     Array<GlProgram*> mPrograms;
+    GlUniformTexture mUniformTexture;
+    GLuint mUniformTextureId = 0;
 
     Array<GlRenderTargetPool*> mComposePool;
     Array<GlRenderTargetPool*> mBlendPool;
@@ -231,6 +238,7 @@ private:
 
     BlendMethod mBlendMethod = BlendMethod::Normal;
     bool mClearBuffer = false;
+    uint32_t mPrepareDrawId = 0;
 };
 
 #endif /* _TVG_GL_RENDERER_H_ */
