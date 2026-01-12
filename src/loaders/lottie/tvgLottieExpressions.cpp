@@ -899,7 +899,6 @@ static jerry_value_t _speedAtTime(const jerry_call_info_t* info, const jerry_val
 }
 
 
-
 static jerry_value_t _wiggle(const jerry_call_info_t* info, const jerry_value_t args[], const jerry_length_t argsCnt)
 {
     auto data = static_cast<ExpContent*>(jerry_object_get_native_ptr(info->function, &freeCb));
@@ -918,15 +917,40 @@ static jerry_value_t _wiggle(const jerry_call_info_t* info, const jerry_value_t 
         result = (*static_cast<LottieScalar*>(property))(data->frameNo);
     }
 
+    auto perlin1D = [](float x, int seed) {
+        auto x0 = (int)floorf(x);
+        auto x1 = x0 + 1;
+        auto fx = x - (float)x0;
+
+        // Apply quintic fade curve for smooth interpolation
+        // Quintic fade curve for smooth interpolation (6t^5 - 15t^4 + 10t^3)
+        // Used in Perlin noise for smoother transitions than linear interpolation
+        auto u = fx * fx * fx * (fx * (fx * 6.0f - 15.0f) + 10.0f);
+
+        // Simplified gradient function for 1D Perlin noise
+        // Deterministic random generator using glibc's LCG algorithm
+        auto gradient1D = [](int seed) {
+            seed = (seed * 1103515245 + 12345) & 0x7fffffff;
+            return ((float)seed / 2147483647.0f) < 0.5f ? -1.0f : 1.0f;
+        };
+
+        // Calculate dot products (in 1D, this is just multiplication with distance)
+        auto d0 = gradient1D(x0 * 100000 + seed) * fx;
+        auto d1 = gradient1D(x1 * 100000 + seed) * (fx - 1.0f);
+
+        // Interpolate between the two gradient influences(3)
+        return tvg::lerp(d0, d1, u) * 3.0f;
+    };
+
     for (int o = 0; o < octaves; ++o) {
-        auto repeat = (int)ceil(time * freq);
-        for (int i = 0; i < repeat; ++i) {
-            result.x += (_rand() * 2.0f - 1.0f) * amp;
-            result.y += (_rand() * 2.0f - 1.0f) * amp;
-        }
+        auto repeat = time * freq;
+        // Factors (1000000, 2000000) to separate X/Y axes to prevent seed collisions across octaves.
+        result.x += perlin1D(repeat, (1000000 + o)) * amp;
+        result.y += perlin1D(repeat, (2000000 + o)) * amp;
         freq *= 2.0f;
         amp *= ampm;
     }
+
     return _point2d(result);
 }
 
