@@ -225,7 +225,6 @@ struct SwStroke
     int64_t miterlimit;
     SwFill* fill = nullptr;
     SwStrokeBorder* borders[2];
-    float sx, sy;
     StrokeCap cap;
     StrokeJoin join;
     StrokeJoin joinSaved;
@@ -636,7 +635,7 @@ int64_t mathDiff(int64_t angle1, int64_t angle2);
 int64_t mathLength(const SwPoint& pt);
 int mathCubicAngle(const SwPoint* base, int64_t& angleIn, int64_t& angleMid, int64_t& angleOut);
 int64_t mathMean(int64_t angle1, int64_t angle2);
-SwPoint mathTransform(const Point* to, const Matrix& transform);
+SwPoint mathMultiply(const Point& pt, const Matrix* m);
 bool mathUpdateOutlineBBox(const SwOutline* outline, const RenderRegion& clipBox, RenderRegion& renderBox, bool fastTrack);
 
 void shapeReset(SwShape& shape);
@@ -651,12 +650,12 @@ bool shapeGenFillColors(SwShape& shape, const Fill* fill, const Matrix& transfor
 bool shapeGenStrokeFillColors(SwShape& shape, const Fill* fill, const Matrix& transform, SwSurface* surface, uint8_t opacity, bool ctable);
 void shapeResetFill(SwShape& shape);
 void shapeResetStrokeFill(SwShape& shape);
-bool shapeStrokeBBox(SwShape& shape, const RenderShape* rshape, Point* pt4, const Matrix& m, SwMpool* mpool);
+bool shapeStrokeBBox(SwShape& shape, const RenderShape* rshape, Point* pt4, const Matrix& transform, SwMpool* mpool);
 void shapeDelFill(SwShape& shape);
 
 void strokeReset(SwStroke* stroke, const RenderShape* shape, const Matrix& transform, SwMpool* mpool, unsigned tid);
 bool strokeParseOutline(SwStroke* stroke, const SwOutline& outline, SwMpool* mpool, unsigned tid);
-SwOutline* strokeExportOutline(SwStroke* stroke, SwMpool* mpool, unsigned tid);
+SwOutline* strokeExportOutline(SwStroke* stroke, const Matrix& transform, SwMpool* mpool, unsigned tid);
 void strokeFree(SwStroke* stroke);
 
 bool imagePrepare(SwImage& image, const Matrix& transform, const RenderRegion& clipBox, RenderRegion& renderBox, SwMpool* mpool, unsigned tid);

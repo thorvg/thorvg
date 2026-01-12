@@ -261,12 +261,15 @@ int64_t mathDiff(int64_t angle1, int64_t angle2)
 }
 
 
-SwPoint mathTransform(const Point* to, const Matrix& transform)
+SwPoint mathMultiply(const Point& pt, const Matrix* m)
 {
-    auto tx = to->x * transform.e11 + to->y * transform.e12 + transform.e13;
-    auto ty = to->x * transform.e21 + to->y * transform.e22 + transform.e23;
-
-    return {TO_SWCOORD(tx), TO_SWCOORD(ty)};
+    if (m) {
+        auto tx = pt.x * m->e11 + pt.y * m->e12 + m->e13;
+        auto ty = pt.x * m->e21 + pt.y * m->e22 + m->e23;
+        return {TO_SWCOORD(tx), TO_SWCOORD(ty)};
+    } else {
+        return {TO_SWCOORD(pt.x), TO_SWCOORD(pt.y)};
+    }
 }
 
 

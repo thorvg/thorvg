@@ -37,13 +37,6 @@ static inline int64_t SIDE_TO_ROTATE(const int32_t s)
 }
 
 
-static inline void SCALE(const SwStroke& stroke, SwPoint& pt)
-{
-    pt.x = static_cast<int32_t>(pt.x * stroke.sx);
-    pt.y = static_cast<int32_t>(pt.y * stroke.sy);
-}
-
-
 static void _growBorder(SwStrokeBorder* border, uint32_t newPts)
 {
     if (border->pts.count + newPts <= border->pts.reserved) return;
@@ -120,7 +113,6 @@ static void _borderArcTo(SwStrokeBorder* border, const SwPoint& center, int64_t 
     constexpr int64_t ARC_CUBIC_ANGLE = SW_ANGLE_PI / 2;
     SwPoint a = {static_cast<int32_t>(radius), 0};
     mathRotate(a, angleStart);
-    SCALE(stroke, a);
     a += center;
 
     auto total = angleDiff;
@@ -141,7 +133,6 @@ static void _borderArcTo(SwStrokeBorder* border, const SwPoint& center, int64_t 
         //compute end point
         SwPoint b = {static_cast<int32_t>(radius), 0};
         mathRotate(b, next);
-        SCALE(stroke, b);
         b += center;
 
         //compute first and second control points
@@ -149,12 +140,10 @@ static void _borderArcTo(SwStrokeBorder* border, const SwPoint& center, int64_t 
 
         SwPoint a2 = {static_cast<int32_t>(length), 0};
         mathRotate(a2, angle + rotate);
-        SCALE(stroke, a2);
         a2 += a;
 
         SwPoint b2 = {static_cast<int32_t>(length), 0};
         mathRotate(b2, next - rotate);
-        SCALE(stroke, b2);
         b2 += b;
 
         //add cubic arc
@@ -243,7 +232,6 @@ static void _outside(SwStroke& stroke, int32_t side, int64_t lineLength)
         if (bevel) {
             SwPoint delta = {static_cast<int32_t>(stroke.width), 0};
             mathRotate(delta, stroke.angleOut + rotate);
-            SCALE(stroke, delta);
             delta += stroke.center;
             border->movable = false;
             _borderLineTo(border, delta, false);
@@ -252,7 +240,6 @@ static void _outside(SwStroke& stroke, int32_t side, int64_t lineLength)
             auto length = mathDivide(stroke.width, thcos);
             SwPoint delta = {static_cast<int32_t>(length), 0};
             mathRotate(delta, phi);
-            SCALE(stroke, delta);
             delta += stroke.center;
             _borderLineTo(border, delta, false);
 
@@ -261,7 +248,6 @@ static void _outside(SwStroke& stroke, int32_t side, int64_t lineLength)
             if (lineLength == 0) {
                 delta = {static_cast<int32_t>(stroke.width), 0};
                 mathRotate(delta, stroke.angleOut + rotate);
-                SCALE(stroke, delta);
                 delta += stroke.center;
                 _borderLineTo(border, delta, false);
             }
@@ -290,7 +276,6 @@ static void _inside(SwStroke& stroke, int32_t side, int64_t lineLength)
     if (!intersect) {
         delta = {static_cast<int32_t>(stroke.width), 0};
         mathRotate(delta, stroke.angleOut + rotate);
-        SCALE(stroke, delta);
         delta += stroke.center;
         border->movable = false;
     } else {
@@ -299,7 +284,6 @@ static void _inside(SwStroke& stroke, int32_t side, int64_t lineLength)
         auto thcos = mathCos(theta);
         delta = {static_cast<int32_t>(mathDivide(stroke.width, thcos)), 0};
         mathRotate(delta, phi + rotate);
-        SCALE(stroke, delta);
         delta += stroke.center;
     }
 
@@ -332,7 +316,6 @@ void _firstSubPath(SwStroke& stroke, int64_t startAngle, int64_t lineLength)
 {
     SwPoint delta = {static_cast<int32_t>(stroke.width), 0};
     mathRotate(delta, startAngle + SW_ANGLE_PI2);
-    SCALE(stroke, delta);
 
     auto pt = stroke.center + delta;
     _borderMoveTo(stroke.borders[0], pt);
@@ -363,14 +346,11 @@ static void _lineTo(SwStroke& stroke, const SwPoint& to)
        The scale needs to be reverted since the stroke width has not been scaled.
        An alternative option is to scale the width of the stroke properly by
        calculating the mixture of the sx/sy rating on the stroke direction. */
-    delta.x = static_cast<int32_t>(delta.x / stroke.sx);
-    delta.y = static_cast<int32_t>(delta.y / stroke.sy);
     auto lineLength = mathLength(delta);
     auto angle = mathAtan(delta);
 
     delta = {static_cast<int32_t>(stroke.width), 0};
     mathRotate(delta, angle + SW_ANGLE_PI2);
-    SCALE(stroke, delta);
 
     //process corner if necessary
     if (stroke.firstPt) {
@@ -476,18 +456,15 @@ static void _cubicTo(SwStroke& stroke, const SwPoint& ctrl1, const SwPoint& ctrl
             //compute control points
             SwPoint _ctrl1 = {static_cast<int32_t>(length1), 0};
             mathRotate(_ctrl1, phi1 + rotate);
-            SCALE(stroke, _ctrl1);
             _ctrl1 += arc[2];
 
             SwPoint _ctrl2 = {static_cast<int32_t>(length2), 0};
             mathRotate(_ctrl2, phi2 + rotate);
-            SCALE(stroke, _ctrl2);
             _ctrl2 += arc[1];
 
             //compute end point
             SwPoint end = {static_cast<int32_t>(stroke.width), 0};
             mathRotate(end, angleOut + rotate);
-            SCALE(stroke, end);
             end += arc[0];
 
             if (stroke.handleWideStrokes) {
@@ -540,22 +517,18 @@ static void _addCap(SwStroke& stroke, int64_t angle, int32_t side)
 
         SwPoint delta = {static_cast<int32_t>(stroke.width), 0};
         mathRotate(delta, angle);
-        SCALE(stroke, delta);
 
         SwPoint delta2 = {static_cast<int32_t>(stroke.width), 0};
         mathRotate(delta2, angle + rotate);
-        SCALE(stroke, delta2);
         delta += stroke.center + delta2;
 
         _borderLineTo(border, delta, false);
 
         delta = {static_cast<int32_t>(stroke.width), 0};
         mathRotate(delta, angle);
-        SCALE(stroke, delta);
 
         delta2 = {static_cast<int32_t>(stroke.width), 0};
         mathRotate(delta2, angle - rotate);
-        SCALE(stroke, delta2);
         delta += delta2 + stroke.center;
 
         _borderLineTo(border, delta, false);
@@ -569,14 +542,12 @@ static void _addCap(SwStroke& stroke, int64_t angle, int32_t side)
 
         SwPoint delta = {static_cast<int32_t>(stroke.width), 0};
         mathRotate(delta, angle + rotate);
-        SCALE(stroke, delta);
         delta += stroke.center;
 
         _borderLineTo(border, delta, false);
 
         delta = {static_cast<int32_t>(stroke.width), 0};
         mathRotate(delta, angle - rotate);
-        SCALE(stroke, delta);
         delta += stroke.center;
 
         _borderLineTo(border, delta, false);
@@ -693,7 +664,7 @@ static void _endSubPath(SwStroke& stroke)
 }
 
 
-static void _exportBorderOutline(const SwStroke& stroke, SwOutline* outline, uint32_t side)
+static void _exportBorderOutline(const SwStroke& stroke, const Matrix& transform, SwOutline* outline, uint32_t side)
 {
     auto border = stroke.borders[side];
     if (border->pts.empty()) return;
@@ -705,10 +676,10 @@ static void _exportBorderOutline(const SwStroke& stroke, SwOutline* outline, uin
         if (*src & SW_STROKE_TAG_POINT) outline->types.push(SW_CURVE_TYPE_POINT);
         else if (*src & SW_STROKE_TAG_CUBIC) outline->types.push(SW_CURVE_TYPE_CUBIC);
         if (*src & SW_STROKE_TAG_END) outline->cntrs.push(idx);
+        outline->pts.push(mathMultiply(pts->toPoint(), &transform));
         ++src;
         ++idx;
     }
-    outline->pts.push(border->pts);
 }
 
 
@@ -729,8 +700,6 @@ void strokeFree(SwStroke* stroke)
 
 void strokeReset(SwStroke* stroke, const RenderShape* rshape, const Matrix& transform, SwMpool* mpool, unsigned tid)
 {
-    stroke->sx = sqrtf(powf(transform.e11, 2.0f) + powf(transform.e21, 2.0f));
-    stroke->sy = sqrtf(powf(transform.e12, 2.0f) + powf(transform.e22, 2.0f));
     stroke->width = HALF_STROKE(rshape->strokeWidth());
     stroke->cap = rshape->strokeCap();
     stroke->miterlimit = static_cast<int64_t>(rshape->strokeMiterlimit() * 65536.0f);
@@ -795,7 +764,7 @@ bool strokeParseOutline(SwStroke* stroke, const SwOutline& outline, SwMpool* mpo
 }
 
 
-SwOutline* strokeExportOutline(SwStroke* stroke, SwMpool* mpool, unsigned tid)
+SwOutline* strokeExportOutline(SwStroke* stroke, const Matrix& transform, SwMpool* mpool, unsigned tid)
 {
     auto reserve = stroke->borders[0]->pts.count + stroke->borders[1]->pts.count;
     auto outline = mpoolReqOutline(mpool, tid);
@@ -803,8 +772,8 @@ SwOutline* strokeExportOutline(SwStroke* stroke, SwMpool* mpool, unsigned tid)
     outline->types.reserve(reserve);
     outline->fillRule = FillRule::NonZero;
 
-    _exportBorderOutline(*stroke, outline, 0);  //left
-    _exportBorderOutline(*stroke, outline, 1);  //right
+    _exportBorderOutline(*stroke, transform, outline, 0);  //left
+    _exportBorderOutline(*stroke, transform, outline, 1);  //right
 
     return outline;
 }

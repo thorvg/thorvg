@@ -53,7 +53,7 @@ static bool _genOutline(SwImage& image, const Matrix& transform, SwMpool* mpool,
     to[3] = {0, h};
 
     for (int i = 0; i < 4; i++) {
-        outline->pts.push(mathTransform(&to[i], transform));
+        outline->pts.push(mathMultiply(to[i], &transform));
         outline->types.push(SW_CURVE_TYPE_POINT);
     }
 
