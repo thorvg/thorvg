@@ -53,7 +53,7 @@ The following primitives are supported by ThorVG: <br />
 ​ThorVG is designed for a wide range of programs, offering adaptability for integration and use in various applications and systems. It achieves this through a single binary with selectively buildable, modular components in a building block style. This ensures both optimal size and easy maintenance. <br />
 
 <p align="center">
-  <img width="700" height="auto" src="https://github.com/thorvg/thorvg.site/blob/main/readme/example_structure.png">
+  <img width="750" height="auto" src="https://github.com/thorvg/thorvg.site/blob/main/readme/example_structure.png">
 </p>
 
 The core library of ThorVG maintains a binary size of approximately **150KB**. This is significantly smaller compared to graphics engines designed primarily for desktop environments and offers the following advantages.<br />
@@ -65,8 +65,8 @@ The core library of ThorVG maintains a binary size of approximately **150KB**. T
 ### Broad Portability
 ThorVG is based on the **C++** standard and provides consistent functionality across various platforms through an abstraction layer that minimizes dependence on specific operating systems or hardware. <br />
 
-- **Extensive Platform Support**: ThorVG is compatible with desktop operating systems such as **Windows**, **macOS**, and **Linux**, as well as mobile platforms like **Android** and **iOS**, and embedded systems including **Tizen** and **RTOS**-based platforms.
-- **Ultra-Light Microcontroller Support**: ThorVG has been shown to run on microcontrollers like the **ESP32**, demonstrating its efficiency even within environments with highly limited memory and storage.
+- **Extensive Platform Support**: ThorVG supports web platforms, desktop operating systems such as Windows, macOS, and Linux, mobile platforms including Android and iOS, as well as embedded systems like Tizen and RTOS-based environments.
+- **Microcontroller Support**: ThorVG has been shown to run on microcontrollers like the ESP32, demonstrating its efficiency even within environments with highly limited memory and storage.
 - **Headless Rendering Support**: ThorVG can perform rendering without a display server, enabling use cases such as server-side graphics processing or offline rendering tools.
 
 If your program includes the main renderer, you can seamlessly utilize ThorVG APIs by transitioning drawing contexts between the main renderer and ThorVG. Throughout these API calls, ThorVG effectively serializes drawing commands among volatile paint nodes. Subsequently, it undertakes synchronous or asynchronous rendering via its render-backend engines. Additionally, ThorVG is adept at handling vector images, including formats like SVG and Lottie, and it remains adaptable for accommodating additional popular formats as needed. In the rendering process, the library may generate intermediate frame buffers for scene compositing, though only when essential. The accompanying diagram provides a concise overview of how to effectively incorporate ThorVG within your system.<br />
@@ -104,7 +104,9 @@ Today, ThorVG provides its own implementation of multiple render-backend engines
 - WebGL
 - WebGPU
 
-ThorVG is ahead of the curve, particularly in the web ecosystem. WebGPU introduces next-generation APIs similar to Vulkan, leveraging compute shaders and providing low-overhead, modern GPU access for more aggressive optimization strategies and broader applications. Building on this, ThorVG fully supports vector rendering features within its specification on top of WebGPU. Additionally, by abstracting underlying hardware graphics accelerations such as Metal, Vulkan, and DirectX, ThorVG ensures seamless adoption across various systems, regardless of the installed hardware accelerations.
+ThorVG is particularly ahead of the curve in the web ecosystem. WebGPU introduces next-generation graphics APIs comparable to Vulkan, offering access to compute shaders and low-overhead GPU control. This enables more aggressive optimization strategies and broader application potential. On top of this, ThorVG fully supports all of its vector rendering features within the WebGPU backend, ensuring a complete and consistent experience across platforms.
+
+Furthermore, by abstracting underlying hardware graphics APIs such as Metal, Vulkan, and DirectX, ThorVG guarantees seamless integration across a wide range of systems, regardless of the specific hardware accelerations available.
 
 <p align="center">
   <img width="700" height="auto" src="https://github.com/thorvg/thorvg.site/blob/main/readme/example_webgpu.png">
