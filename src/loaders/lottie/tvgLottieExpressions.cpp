@@ -94,6 +94,50 @@ static inline float _seededRand(int seed)
     return (float)seed / 2147483647.0f;
 }
 
+
+// Quintic fade curve for smooth interpolation (6t^5 - 15t^4 + 10t^3)
+// Used in Perlin noise for smoother transitions than linear interpolation
+static inline float _fade(float t)
+{
+    return t * t * t * (t * (t * 6.0f - 15.0f) + 10.0f);
+}
+
+
+// Generate a deterministic gradient value for 1D Perlin noise
+// Returns a value in the range [-1, 1]
+static inline float _gradient1D(int seed)
+{
+    // Use seeded random to generate a gradient direction (-1 or 1)
+    return _seededRand(seed) < 0.5f ? -1.0f : 1.0f;
+}
+
+
+// 1D Perlin noise function
+// input: position in noise space
+// seed: deterministic seed for reproducible results
+// Returns value in approximate range [-1, 1]
+static float _perlin1D(float x, int seed)
+{
+    // Get integer and fractional parts
+    int x0 = (int)floorf(x);
+    int x1 = x0 + 1;
+    float fx = x - (float)x0;
+
+    // Apply quintic fade curve for smooth interpolation
+    float u = _fade(fx);
+
+    // Generate gradients for both integer positions
+    float g0 = _gradient1D(x0 * 374761393 + seed);
+    float g1 = _gradient1D(x1 * 374761393 + seed);
+
+    // Calculate dot products (in 1D, this is just multiplication with distance)
+    float d0 = g0 * fx;
+    float d1 = g1 * (fx - 1.0f);
+
+    // Interpolate between the two gradient influences
+    return tvg::lerp(d0, d1, u);
+}
+
 static jerry_value_t _point2d(const Point& pt)
 {
     auto obj = jerry_object();
@@ -884,37 +928,37 @@ static jerry_value_t _wiggle(const jerry_call_info_t* info, const jerry_value_t 
     auto ampm = (argsCnt > 3) ? jerry_value_as_number(args[3]) : 0.5f;
     auto time = (argsCnt > 4) ? jerry_value_as_number(args[4]) : data->exp->comp->timeAtFrame(data->frameNo);
 
-    Point result = {0.0f, 0.0f};
+    // Get base value from property
+    Point base = {0.0f, 0.0f};
     auto property = data->exp->property;
 
     if (property->type == LottieProperty::Type::Vector) {
-        result = (*static_cast<LottieVector*>(property))(data->frameNo);
+        base = (*static_cast<LottieVector*>(property))(data->frameNo);
     } else if (property->type == LottieProperty::Type::Scalar) {
-        result = (*static_cast<LottieScalar*>(property))(data->frameNo);
+        base = (*static_cast<LottieScalar*>(property))(data->frameNo);
     }
 
-    // Factors to separate X/Y axes to prevent seed collisions across octaves.
-    constexpr int SEED_SCALE_X = 1000000;
-    constexpr int SEED_SCALE_Y = 2000000;
+    // Seed offsets to separate X/Y axes and prevent correlation
+    constexpr int SEED_OFFSET_X = 1000000;
+    constexpr int SEED_OFFSET_Y = 2000000;
 
-    for (int o = 0; o < octaves; ++o) {
-        auto repeat = (int)floor(time * freq);
-        auto frac = time * freq - (float)repeat;
+    // Accumulated noise for X and Y axes (following AE wiggle pattern)
+    float totalX = 0.0f;
+    float totalY = 0.0f;
+    float curAmp = amp;
+    float curFreq = freq;
 
-        auto startX = _seededRand(repeat * SEED_SCALE_X + o);
-        auto startY = _seededRand(repeat * SEED_SCALE_Y + o);
-        auto endX = _seededRand((repeat + 1) * SEED_SCALE_X + o);
-        auto endY = _seededRand((repeat + 1) * SEED_SCALE_Y + o);
+    for (int i = 0; i < octaves; ++i) {
+        // Apply 1D Perlin noise: perlin1D(t * curFreq + seed) * curAmp
+        totalX += _perlin1D(time * curFreq, SEED_OFFSET_X + i) * curAmp;
+        totalY += _perlin1D(time * curFreq, SEED_OFFSET_Y + i) * curAmp;
 
-        auto randX = tvg::lerp(startX, endX, frac);
-        auto randY = tvg::lerp(startY, endY, frac);
-
-        result.x += (randX * 2.0f - 1.0f) * amp;
-        result.y += (randY * 2.0f - 1.0f) * amp;
-
-        freq *= 2.0f;
-        amp *= ampm;
+        curAmp *= ampm;
+        curFreq *= 2.0f;
     }
+
+    // Return base + total (following AE wiggle pattern)
+    Point result = {base.x + totalX, base.y + totalY};
     return _point2d(result);
 }
 
