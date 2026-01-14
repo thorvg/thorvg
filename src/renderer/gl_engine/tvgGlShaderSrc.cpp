@@ -31,18 +31,19 @@ const char* COLOR_VERT_SHADER = TVG_COMPOSE_SHADER(
     layout(location = 1) in uint aDrawId;                           \n
     flat out uint vDrawId;                                          \n
                                                                     \n
-                                                                    \n
-    mat3 fetchMat3(int drawId, int startOffset) {                   \n
-        vec4 c0 = texelFetch(uUniformTex, ivec2(startOffset, drawId), 0);     \n
-        vec4 c1 = texelFetch(uUniformTex, ivec2(startOffset + 1, drawId), 0); \n
-        vec4 c2 = texelFetch(uUniformTex, ivec2(startOffset + 2, drawId), 0); \n
+    mat3 fetchMat3(int row, int colOffset) {                        \n
+        vec4 c0 = texelFetch(uUniformTex, ivec2(colOffset, row), 0);     \n
+        vec4 c1 = texelFetch(uUniformTex, ivec2(colOffset + 1, row), 0); \n
+        vec4 c2 = texelFetch(uUniformTex, ivec2(colOffset + 2, row), 0); \n
         return mat3(c0.xyz, c1.xyz, c2.xyz);                        \n
     }                                                               \n
                                                                     \n
     void main()                                                     \n
     {                                                               \n
         vDrawId = aDrawId;                                          \n
-        mat3 transform = fetchMat3(int(aDrawId), 0);                \n
+        int row = int(aDrawId) >> 2;                               \n
+        int colOffset = (int(aDrawId) & 3) << 2;                    \n
+        mat3 transform = fetchMat3(row, colOffset);                 \n
         vec3 pos = transform * vec3(aLocation, 1.0);                \n
         gl_Position = vec4(pos.xy, uDepth, 1.0);                    \n
     }                                                               \n
@@ -51,14 +52,13 @@ const char* COLOR_VERT_SHADER = TVG_COMPOSE_SHADER(
 const char* COLOR_FRAG_SHADER = TVG_COMPOSE_SHADER(
     uniform sampler2D uUniformTex;                           \n
     flat in uint vDrawId;                                    \n
-    layout(std140) uniform ColorInfo {                       \n
-        vec4 solidColor;                                     \n
-    } uColorInfo;                                            \n
     out vec4 FragColor;                                      \n
                                                              \n
     void main()                                              \n
     {                                                        \n
-       vec4 uColor = texelFetch(uUniformTex, ivec2(4, int(vDrawId)), 0); \n
+       int row = int(vDrawId) >> 2;                          \n
+       int colOffset = (int(vDrawId) & 3) << 2;               \n
+       vec4 uColor = texelFetch(uUniformTex, ivec2(colOffset + 3, row), 0); \n
        FragColor =  vec4(uColor.rgb * uColor.a, uColor.a);   \n
     }                                                        \n
 );

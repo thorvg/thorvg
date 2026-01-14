@@ -94,10 +94,16 @@ void GlUniformTexture::reset()
 
 #define NOISE_LEVEL 0.5f
 
-void GlUniformTexture::stageColorUniforms(uint32_t drawId, const float* matrix, float depth, float r, float g, float b, float a)
+void GlUniformTexture::stageColorUniforms(uint32_t drawId, const float* matrix, float r, float g, float b, float a)
 {
-    uint32_t rowStartFloats = drawId * GL_UNIFORM_TEX_WIDTH * 4;
-    uint32_t floatsNeeded = rowStartFloats + 20;
+    // Pack 4 draws per row: each draw uses 4 columns (matrix[3] + color[1])
+    uint32_t drawsPerRow = GL_UNIFORM_TEX_WIDTH / 4;
+    uint32_t row = drawId / drawsPerRow;
+    uint32_t colOffset = (drawId % drawsPerRow) * 4;
+    
+    uint32_t rowStartFloats = row * GL_UNIFORM_TEX_WIDTH * 4;
+    uint32_t dataOffset = rowStartFloats + colOffset * 4;  // colOffset * 4 floats per column
+    uint32_t floatsNeeded = dataOffset + 16;
     
     if (floatsNeeded > mStagingBuffer.count) {
         uint32_t growBy = floatsNeeded - mStagingBuffer.count;
@@ -108,25 +114,20 @@ void GlUniformTexture::stageColorUniforms(uint32_t drawId, const float* matrix, 
         mStagingBuffer.count = floatsNeeded;
     }
     
-    float* row = mStagingBuffer.data + rowStartFloats;
+    float* dst = mStagingBuffer.data + dataOffset;
     
-    memcpy(row, matrix, 12 * sizeof(float));
+    memcpy(dst, matrix, 12 * sizeof(float));
     
-    row[12] = depth;
-    row[13] = 0.0f;
-    row[14] = 0.0f;
-    row[15] = 0.0f;
+    dst[12] = r;
+    dst[13] = g;
+    dst[14] = b;
+    dst[15] = a;
     
-    row[16] = r;
-    row[17] = g;
-    row[18] = b;
-    row[19] = a;
-    
-    if (drawId >= mCurrentRow) mCurrentRow = drawId + 1;
+    if (row >= mCurrentRow) mCurrentRow = row + 1;
     mNeedsUpload = true;
 }
 
-
+#ifdef __ENABLE_FULL_UNIFORM_TEX__
 void GlUniformTexture::stageLinearGradientUniforms(uint32_t drawId, const float* matrix, float depth, const float* invMatrix,
                                                         uint32_t nStops, float spread,
                                                         float x1, float y1, float x2, float y2,
@@ -239,78 +240,4 @@ void GlUniformTexture::stageRadialGradientUniforms(uint32_t drawId, const float*
     mNeedsUpload = true;
 }
 
-
-void GlUniformTexture::debugDumpStagingBuffer() const
-{
-    printf("\n========== GlUniformTexture Staging Buffer Dump ==========\n");
-    printf("Total draw calls staged: %u\n", mCurrentRow);
-    printf("Staging buffer size: %u floats (%.2f KB)\n", mStagingBuffer.count, 
-           mStagingBuffer.count * sizeof(float) / 1024.0f);
-    printf("Texture dimensions: %d x %d texels\n", GL_UNIFORM_TEX_WIDTH, GL_UNIFORM_TEX_MAX_DRAWS);
-    printf("===========================================================\n\n");
-    
-    for (uint32_t i = 0; i < mCurrentRow; ++i) {
-        debugDumpDrawCall(i);
-    }
-}
-
-
-void GlUniformTexture::debugDumpDrawCall(uint32_t drawId) const
-{
-    if (drawId >= mCurrentRow) {
-        printf("Draw call %u: NOT STAGED\n", drawId);
-        return;
-    }
-    
-    uint32_t rowStartFloats = drawId * GL_UNIFORM_TEX_WIDTH * 4;
-    const float* row = mStagingBuffer.data + rowStartFloats;
-    
-    printf("--- Draw Call %u ---\n", drawId);
-    
-    printf("  Transform Matrix:\n");
-    printf("    | %8.4f %8.4f %8.4f |\n", row[0], row[4], row[8]);
-    printf("    | %8.4f %8.4f %8.4f |\n", row[1], row[5], row[9]);
-    printf("    | %8.4f %8.4f %8.4f |\n", row[2], row[6], row[10]);
-    
-    printf("  Depth: %.4f\n", row[12]);
-    
-    printf("  Color: (%.4f, %.4f, %.4f, %.4f)\n", row[16], row[17], row[18], row[19]);
-    
-    bool hasGradient = (row[28] != 0.0f || row[29] != 0.0f || row[30] != 0.0f);
-    
-    if (hasGradient || row[28] != 0.0f) {
-        printf("  Inverse Matrix:\n");
-        printf("    | %8.4f %8.4f %8.4f |\n", row[16], row[20], row[24]);
-        printf("    | %8.4f %8.4f %8.4f |\n", row[17], row[21], row[25]);
-        printf("    | %8.4f %8.4f %8.4f |\n", row[18], row[22], row[26]);
-        
-        uint32_t nStops = static_cast<uint32_t>(row[28]);
-        float noiseLevel = row[29];
-        float spread = row[30];
-        float gradType = row[31];
-        
-        printf("  Gradient Type: %s\n", gradType == 0.0f ? "Linear" : "Radial");
-        printf("  nStops: %u, noiseLevel: %.4f, spread: %.1f\n", nStops, noiseLevel, spread);
-        
-        if (gradType == 0.0f) {
-            printf("  Start: (%.4f, %.4f), End: (%.4f, %.4f)\n", row[32], row[33], row[36], row[37]);
-        } else {
-            printf("  Focal: (%.4f, %.4f), Center: (%.4f, %.4f)\n", row[32], row[33], row[34], row[35]);
-            printf("  Focal Radius: %.4f, Outer Radius: %.4f\n", row[36], row[37]);
-        }
-        
-        if (nStops > 0 && nStops <= GL_UNIFORM_TEX_MAX_STOPS) {
-            printf("  Stops:\n");
-            for (uint32_t s = 0; s < nStops && s < 4; ++s) {
-                uint32_t posOffset = 40 + s;
-                uint32_t colorOffset = 56 + s * 4;
-                printf("    [%u] pos=%.4f color=(%.2f, %.2f, %.2f, %.2f)\n",
-                       s, row[posOffset],
-                       row[colorOffset], row[colorOffset + 1], row[colorOffset + 2], row[colorOffset + 3]);
-            }
-            if (nStops > 4) printf("    ... and %u more stops\n", nStops - 4);
-        }
-    }
-    
-    printf("\n");
-}
+#endif //__ENABLE_FULL_UNIFORM_TEX

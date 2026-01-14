@@ -25,8 +25,8 @@
 
 #include "tvgArray.h"
 
-#define GL_UNIFORM_TEX_WIDTH 80
-#define GL_UNIFORM_TEX_MAX_DRAWS 100
+#define GL_UNIFORM_TEX_WIDTH 16
+#define GL_UNIFORM_TEX_MAX_DRAWS 4096
 #define GL_UNIFORM_TEX_MAX_STOPS 16
 #define GL_UNIFORM_TEX_UNIT 7
 
@@ -34,11 +34,9 @@
 struct GlColorUniformData
 {
     float matrix[12];
-    float depth;
-    float reserved[3];
     float color[4];
 };
-
+#ifdef __ENABLE_FULL_UNIFORM_TEX__
 struct GlGradientUniformData
 {
     float matrix[12];
@@ -53,7 +51,7 @@ struct GlGradientUniformData
     float stopPoints[GL_UNIFORM_TEX_MAX_STOPS];
     float stopColors[GL_UNIFORM_TEX_MAX_STOPS * 4];
 };
-
+#endif //__ENABLE_FULL_UNIFORM_TEX__
 class GlUniformTexture
 {
 public:
@@ -76,7 +74,7 @@ public:
 
     uint32_t getWidth() const { return GL_UNIFORM_TEX_WIDTH; }
 
-    void stageColorUniforms(uint32_t drawId, const float* matrix, float depth, float r, float g, float b, float a);
+    void stageColorUniforms(uint32_t drawId, const float* matrix, float r, float g, float b, float a);
 
     void stageLinearGradientUniforms(uint32_t drawId, const float* matrix, float depth, const float* invMatrix,
                                           uint32_t nStops, float spread,
