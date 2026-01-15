@@ -307,7 +307,7 @@ TEST_CASE("Load PNG file and render", "[tvgPicture]")
         REQUIRE(picture->opacity(192) == Result::Success);
         REQUIRE(picture->scale(5.0) == Result::Success);
 
-        REQUIRE(canvas->push(picture) == Result::Success);
+        REQUIRE(canvas->add(picture) == Result::Success);
     }
     REQUIRE(Initializer::term() == Result::Success);
 }
@@ -380,7 +380,7 @@ TEST_CASE("Load JPG file and render", "[tvgPicture]")
 
         REQUIRE(picture->load(TEST_DIR"/test.jpg") == Result::Success);
 
-        REQUIRE(canvas->push(picture) == Result::Success);
+        REQUIRE(canvas->add(picture) == Result::Success);
     }
     REQUIRE(Initializer::term() == Result::Success);
 }
@@ -451,7 +451,7 @@ TEST_CASE("Load WEBP file and render", "[tvgPicture]")
         REQUIRE(picture->opacity(192) == Result::Success);
         REQUIRE(picture->scale(5.0) == Result::Success);
 
-        REQUIRE(canvas->push(picture) == Result::Success);
+        REQUIRE(canvas->add(picture) == Result::Success);
     }
     REQUIRE(Initializer::term() == Result::Success);
 }

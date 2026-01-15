@@ -83,28 +83,28 @@ TEST_CASE("Pushing Paints", "[tvgSwCanvas]")
         REQUIRE(canvas->target(buffer, 100, 100, 100, ColorSpace::ARGB8888) == Result::Success);
 
         //Try all types of paints.
-        REQUIRE(canvas->push(Shape::gen()) == Result::Success);
-        REQUIRE(canvas->push(Picture::gen()) == Result::Success);
-        REQUIRE(canvas->push(Scene::gen()) == Result::Success);
+        REQUIRE(canvas->add(Shape::gen()) == Result::Success);
+        REQUIRE(canvas->add(Picture::gen()) == Result::Success);
+        REQUIRE(canvas->add(Scene::gen()) == Result::Success);
 
         //Cases by contexts.
         REQUIRE(canvas->update() == Result::Success);
 
-        REQUIRE(canvas->push(Shape::gen()) == Result::Success);
-        REQUIRE(canvas->push(Shape::gen()) == Result::Success);
+        REQUIRE(canvas->add(Shape::gen()) == Result::Success);
+        REQUIRE(canvas->add(Shape::gen()) == Result::Success);
 
         REQUIRE(canvas->remove() == Result::Success);
 
         Paint* paints[2];
 
         paints[0] = Shape::gen();
-        REQUIRE(canvas->push(paints[0]) == Result::Success);
+        REQUIRE(canvas->add(paints[0]) == Result::Success);
 
         //Negative case 1
-        REQUIRE(canvas->push(nullptr) == Result::InvalidArguments);
+        REQUIRE(canvas->add(nullptr) == Result::InvalidArguments);
 
         paints[1] = Shape::gen();
-        REQUIRE(canvas->push(paints[1]) == Result::Success);
+        REQUIRE(canvas->add(paints[1]) == Result::Success);
         REQUIRE(canvas->draw() == Result::Success);
 
         //Check list of paints
@@ -131,13 +131,13 @@ TEST_CASE("Update", "[tvgSwCanvas]")
 
         REQUIRE(canvas->update() == Result::Success);
 
-        REQUIRE(canvas->push(Shape::gen()) == Result::Success);
+        REQUIRE(canvas->add(Shape::gen()) == Result::Success);
 
-        //No pushed shape
+        //No added shape
         auto shape = Shape::gen();
 
         //Normal case
-        REQUIRE(canvas->push(shape) == Result::Success);
+        REQUIRE(canvas->add(shape) == Result::Success);
         REQUIRE(canvas->update() == Result::Success);
         REQUIRE(canvas->draw() == Result::Success);
         REQUIRE(canvas->update() == Result::InsufficientCondition);
@@ -167,7 +167,7 @@ TEST_CASE("Synchronized Drawing", "[tvgSwCanvas]")
         //Invalid Shape
         auto shape = Shape::gen();
         REQUIRE(shape);
-        REQUIRE(canvas->push(shape) == Result::Success);
+        REQUIRE(canvas->add(shape) == Result::Success);
 
         REQUIRE(canvas->draw() == Result::Success);
         REQUIRE(canvas->sync() == Result::Success);
@@ -177,7 +177,7 @@ TEST_CASE("Synchronized Drawing", "[tvgSwCanvas]")
         REQUIRE(shape2->appendRect(0, 0, 100, 100) == Result::Success);
         REQUIRE(shape2->fill(255, 255, 255, 255) == Result::Success);
 
-        REQUIRE(canvas->push(shape2) == Result::Success);
+        REQUIRE(canvas->add(shape2) == Result::Success);
         REQUIRE(canvas->draw() == Result::Success);
         REQUIRE(canvas->sync() == Result::Success);
     }
@@ -200,7 +200,7 @@ TEST_CASE("Asynchronous Drawing", "[tvgSwCanvas]")
             REQUIRE(shape);
             REQUIRE(shape->appendRect(0, 0, 100, 100) == Result::Success);
             REQUIRE(shape->fill(255, 255, 255, 255) == Result::Success);
-            REQUIRE(canvas->push(shape) == Result::Success);
+            REQUIRE(canvas->add(shape) == Result::Success);
         }
 
         REQUIRE(canvas->draw() == Result::Success);
@@ -228,7 +228,7 @@ TEST_CASE("Viewport", "[tvgSwCanvas]")
         REQUIRE(shape->appendRect(0, 0, 100, 100) == Result::Success);
         REQUIRE(shape->fill(255, 255, 255, 255) == Result::Success);
 
-        REQUIRE(canvas->push(shape) == Result::Success);
+        REQUIRE(canvas->add(shape) == Result::Success);
 
         //Negative, not allowed
         REQUIRE(canvas->viewport(15, 25, 5, 5) == Result::InsufficientCondition);

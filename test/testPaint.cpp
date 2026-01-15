@@ -150,7 +150,7 @@ TEST_CASE("Bounding Box", "[tvgPaint]")
         canvas->target(buffer.get(), 500, 500, 500, ColorSpace::ARGB8888);
 
         auto shape = Shape::gen();
-        canvas->push(shape);
+        canvas->add(shape);
 
         //Negative
         float x = 0, y = 0, w = 0, h = 0;
@@ -234,10 +234,11 @@ TEST_CASE("Bounding Box", "[tvgPaint]")
         REQUIRE(pts[2].y == 16.0f);
         REQUIRE(pts[3].y == 16.0f);
 
+#ifdef THORVG_TTF_LOADER_SUPPORT
         //Text
         REQUIRE(Text::load(TEST_DIR"/Arial.ttf") == Result::Success);
         auto text = Text::gen();
-        REQUIRE(canvas->push(text) == Result::Success);
+        REQUIRE(canvas->add(text) == Result::Success);
         REQUIRE(canvas->sync() == Result::Success);
 
         //Empty Size
@@ -267,6 +268,7 @@ TEST_CASE("Bounding Box", "[tvgPaint]")
         REQUIRE(pts[2].y == Approx(150.14584f).margin(0.000001));
         REQUIRE(pts[3].y == Approx(150.14584f).margin(0.000001));
 
+
         //Case 2
         REQUIRE(text->text("BOUNDS") == Result::Success);
         identity = Matrix{1.0f, 0.0f, 0.0f, 0.0f, 1.0f, 0.0f, 0.0f, 0.0f, 1.0f};
@@ -288,6 +290,7 @@ TEST_CASE("Bounding Box", "[tvgPaint]")
         REQUIRE(pts[1].y == Approx(7.54167f).margin(0.000001));
         REQUIRE(pts[2].y == Approx(39.14584f).margin(0.000001));
         REQUIRE(pts[3].y == Approx(39.14584f).margin(0.000001));
+#endif
     }
     REQUIRE(Initializer::term() == Result::Success);
 }
@@ -306,7 +309,7 @@ TEST_CASE("Intersection", "[tvgPaint]")
         REQUIRE(shape->appendRect(50, 50, 100, 100) == Result::Success);
         REQUIRE(shape->fill(255, 0, 0, 255) == Result::Success);
 
-        REQUIRE(canvas->push(shape) == Result::Success);
+        REQUIRE(canvas->add(shape) == Result::Success);
         REQUIRE(canvas->draw() == Result::Success);
 
         // Case1. Fully contained
@@ -335,6 +338,7 @@ TEST_CASE("Duplication", "[tvgPaint]")
     REQUIRE(shape);
     paints.push_back(shape);
 
+#ifdef THORVG_TTF_LOADER_SUPPORT
     REQUIRE(Text::load(TEST_DIR"/Arial.ttf") == Result::Success);
     auto text = Text::gen();
     REQUIRE(text);
@@ -343,6 +347,7 @@ TEST_CASE("Duplication", "[tvgPaint]")
     REQUIRE(text->text("Original Text") == Result::Success);
     REQUIRE(text->fill(255, 0, 0) == Result::Success);
     paints.push_back(text);
+#endif
 
     for (auto& paint : paints) {
         //Setup paint properties
@@ -401,24 +406,24 @@ TEST_CASE("Reference Count", "[tvgPaint]")
 
         shape = Shape::gen();
         REQUIRE(shape->ref() == 1);
-        canvas->push(shape);
+        canvas->add(shape);
         REQUIRE(shape->refCnt() == 2);
         REQUIRE(shape->unref() == 1);
 
         shape = Shape::gen();
         REQUIRE(shape->ref() == 1);
         auto scene = Scene::gen();
-        scene->push(shape);
-        canvas->push(scene);
+        scene->add(shape);
+        canvas->add(scene);
         REQUIRE(shape->refCnt() == 2);
         REQUIRE(shape->unref() == 1);
 
         shape = Shape::gen();
         REQUIRE(shape->ref() == 1);
         scene = Scene::gen();
-        scene->push(shape);
+        scene->add(shape);
         scene->remove();
-        canvas->push(scene);
+        canvas->add(scene);
         REQUIRE(shape->unref() == 0);
     }
     Initializer::term();

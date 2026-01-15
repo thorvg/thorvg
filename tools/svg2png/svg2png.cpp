@@ -141,11 +141,11 @@ public:
             shape->appendRect(0, 0, static_cast<float>(w), static_cast<float>(h), 0, 0);
             shape->fill(r, g, b);
 
-            if (canvas->push(shape) != tvg::Result::Success) return 1;
+            if (canvas->add(shape) != tvg::Result::Success) return 1;
         }
 
         //Drawing
-        canvas->push(picture);
+        canvas->add(picture);
         canvas->draw(true);
         canvas->sync();
 

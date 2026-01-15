@@ -142,7 +142,7 @@ TEST_CASE("Text Basic", "[tvgText]")
         REQUIRE(text->text("ABCDEFGHIJIKLMOPQRSTUVWXYZ") == Result::Success);
         REQUIRE(text->text("THORVG Text") == Result::Success);
         REQUIRE(text->fill(255, 255, 255) == Result::Success);
-        REQUIRE(canvas->push(text) == Result::Success);
+        REQUIRE(canvas->add(text) == Result::Success);
         REQUIRE(canvas->update() == Result::Success);
         REQUIRE(canvas->sync() == Result::Success);
     }
@@ -165,7 +165,7 @@ TEST_CASE("Text with composite glyphs", "[tvgText]")
         REQUIRE(text->size(80) == Result::Success);
         REQUIRE(text->text("\xc5\xbb\x6f\xc5\x82\xc4\x85\x64\xc5\xba \xc8\xab") == Result::Success);
         REQUIRE(text->fill(255, 255, 255) == Result::Success);
-        REQUIRE(canvas->push(text) == Result::Success);
+        REQUIRE(canvas->add(text) == Result::Success);
         REQUIRE(canvas->update() == Result::Success);
         REQUIRE(canvas->sync() == Result::Success);
     }
@@ -198,7 +198,7 @@ TEST_CASE("Text Styles", "[tvgText]")
         REQUIRE(text->italic(0.0) == Result::Success);
         REQUIRE(text->italic(0.18f) == Result::Success);
 
-        REQUIRE(canvas->push(text) == Result::Success);
+        REQUIRE(canvas->add(text) == Result::Success);
         REQUIRE(canvas->update() == Result::Success);
         REQUIRE(canvas->sync() == Result::Success);
 
@@ -233,7 +233,7 @@ TEST_CASE("Text Layout", "[tvgText]")
         REQUIRE(text->layout(-100, -100) == Result::Success);
         REQUIRE(text->layout(100, 100) == Result::Success);
 
-        REQUIRE(canvas->push(text) == Result::Success);
+        REQUIRE(canvas->add(text) == Result::Success);
         REQUIRE(canvas->update() == Result::Success);
         REQUIRE(canvas->sync() == Result::Success);
     }
@@ -258,7 +258,7 @@ TEST_CASE("Text Wrap Mode", "[tvgText]")
         REQUIRE(text->align(0.5f, 0.5f) == Result::Success);
         REQUIRE(text->text("Very Long Long Text ThorVG Test\n ABCDEFGHIJKLMNOPRSTU!") == Result::Success);
         REQUIRE(text->layout(100, 100) == Result::Success);
-        REQUIRE(canvas->push(text) == Result::Success);
+        REQUIRE(canvas->add(text) == Result::Success);
 
         REQUIRE(text->wrap(TextWrap::Character) == Result::Success);
         REQUIRE(canvas->update() == Result::Success);
@@ -299,7 +299,7 @@ TEST_CASE("Text Spacing", "[tvgText]")
         REQUIRE(text->spacing(1.5f, 1.5f) == Result::Success);
         REQUIRE(text->spacing(2.0f, 2.0f) == Result::Success);
 
-        REQUIRE(canvas->push(text) == Result::Success);
+        REQUIRE(canvas->add(text) == Result::Success);
     }
     Initializer::term();
 }

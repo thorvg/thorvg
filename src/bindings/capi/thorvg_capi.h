@@ -588,49 +588,61 @@ TVG_API Tvg_Result tvg_canvas_destroy(Tvg_Canvas canvas);
 
 
 /**
- * @brief Inserts a drawing element into the canvas using a Tvg_Paint object.
+ * @brief Adds a paint object to the canvas for rendering.
  *
- * @param[in] canvas The Tvg_Canvas object managing the @p paint.
- * @param[in] paint The Tvg_Paint object to be drawn.
+ * Adds the specified paint into the canvas root scene. Only paints added to
+ * the canvas are considered rendering targets. The canvas retains the paint
+ * object until it is explicitly removed via tvg_canvas_remove().
  *
- * Only the paints pushed into the canvas will be drawing targets.
- * They are retained by the canvas until you call tvg_canvas_remove()
+ * @param[in] canvas A handle to the canvas that will manage the paint object.
+ * @param[in] paint  A handle to the paint object to be rendered.
  *
- * @return Tvg_Result return values:
- * @retval TVG_RESULT_INVALID_ARGUMENT In case a @c nullptr is passed as the argument.
- * @retval TVG_RESULT_INSUFFICIENT_CONDITION An internal error.
+ * @retval TVG_RESULT_INSUFFICIENT_CONDITION If the canvas is not in a valid state to accept new paints.
  *
- * @note The rendering order of the paints is the same as the order as they were pushed. Consider sorting the paints before pushing them if you intend to use layering.
- * @see tvg_canvas_push_at()
+ * @note Ownership of the @p paint object is transferred to the canvas upon
+ *       successful addition. To retain ownership, call @ref tvg_paint_ref()
+ *       before adding it to the canvas.
+ * @note The rendering order of paint objects follows the order in which they are
+ *       added to the canvas. If layering is required, ensure paints are added in
+ *       the desired order.
+ *
+ * @see tvg_canvas_insert()
  * @see tvg_canvas_remove()
+ *
+ * @since 1.0
  */
-TVG_API Tvg_Result tvg_canvas_push(Tvg_Canvas canvas, Tvg_Paint paint);
+TVG_API Tvg_Result tvg_canvas_add(Tvg_Canvas canvas, Tvg_Paint paint);
 
 
 /**
- * @brief Adds a paint object to the root scene.
+ * @brief Inserts a paint object into the canvas root scene.
  *
- * This function appends a paint object to root scene of the canvas. If the optional @p at
- * is provided, the new paint object will be inserted immediately before the specified
- * paint object in the root scene. If @p at is @c nullptr, the paint object will be added
- * to the end of the root scene.
+ * Inserts a paint object into the root scene of the specified canvas. If the
+ * @p at parameter is provided, the paint object is inserted immediately before
+ * the specified paint in the root scene. If @p at is @c nullptr, the paint object
+ * is appended to the end of the root scene.
  *
- * @param[in] canvas The Tvg_Canvas object managing the @p paint.
- * @param[in] target A pointer to the Paint object to be added into the root scene.
+ * @param[in] canvas A handle to the canvas that will manage the paint object.
+ *                   This parameter must be a valid canvas handle.
+ * @param[in] target A handle to the paint object to be inserted into the root scene.
  *                   This parameter must not be @c nullptr.
- * @param[in] at A pointer to an existing Paint object in the root scene before which
- *               the new paint object will be added. If @c nullptr, the new
- *               paint object is added to the end of the root scene. The default is @c nullptr.
+ * @param[in] at     A handle to an existing paint object in the root scene before
+ *                   which @p target will be inserted. If @c nullptr, @p target is
+ *                   appended to the end of the root scene.
  *
- * @note The ownership of the @p paint object is transferred to the canvas upon addition.
- * @note The rendering order of the paints is the same as the order as they were pushed. Consider sorting the paints before pushing them if you intend to use layering.
+ * @note Ownership of the @p target object is transferred to the canvas upon
+ *       successful addition. To retain ownership, call @ref tvg_paint_ref()
+ *       before adding it to the canvas.
+ * @note The rendering order of paint objects follows their order in the root
+ *       scene. If layering is required, ensure paints are inserted in the
+ *       desired order.
  *
- * @see tvg_canvas_push()
+ * @see tvg_canvas_add()
  * @see tvg_canvas_remove()
- * @see tvg_canvas_remove()
+ *
  * @since 1.0
  */
-TVG_API Tvg_Result tvg_canvas_push_at(Tvg_Canvas canvas, Tvg_Paint target, Tvg_Paint at);
+TVG_API Tvg_Result tvg_canvas_insert(Tvg_Canvas canvas, Tvg_Paint target, Tvg_Paint at);
 
 
 /**
@@ -644,8 +656,8 @@ TVG_API Tvg_Result tvg_canvas_push_at(Tvg_Canvas canvas, Tvg_Paint target, Tvg_P
  * @param[in] paint A pointer to the Paint object to be removed from the root scene.
  *                  If @c nullptr, remove all the paints from the root scene.
  *
- * @see tvg_canvas_push()
- * @see tvg_canvas_push_at()
+ * @see tvg_canvas_add()
+ * @see tvg_canvas_insert()
  * @since 1.0
  */
 TVG_API Tvg_Result tvg_canvas_remove(Tvg_Canvas canvas, Tvg_Paint paint);
@@ -732,7 +744,7 @@ TVG_API Tvg_Result tvg_canvas_sync(Tvg_Canvas canvas);
  * @see tvg_glcanvas_set_target()
  * @see tvg_wgcanvas_set_target()
  *
- * @warning Changing the viewport is not allowed after calling tvg_canvas_push(),
+ * @warning Changing the viewport is not allowed after calling tvg_canvas_add(),
  *          tvg_canvas_remove(), tvg_canvas_update(), or tvg_canvas_draw().
  *
  * @note When the target is reset, the viewport will also be reset to match the target size.
@@ -1111,8 +1123,8 @@ TVG_API Tvg_Paint tvg_paint_get_clip(const Tvg_Paint paint);
  *
  * @return A pointer to the parent object if available, otherwise @c nullptr.
  *
- * @see tvg_scene_push()
- * @see tvg_canvas_push()
+ * @see tvg_scene_add()
+ * @see tvg_canvas_add()
  *
  * @since 1.0
 */
@@ -2151,37 +2163,57 @@ TVG_API Tvg_Paint tvg_scene_new(void);
 /**
  * @brief Adds a paint object to the scene.
  *
- * This function appends a paint object to the scene.
+ * Appends the specified paint object to the given scene. Only paint objects
+ * added to the scene are considered rendering targets.
  *
- * @param[in] scene A Tvg_Paint pointer to the scene object.
- * @param[in] paint A pointer to the Paint object to be added into the scene.
+ * @param[in] scene A handle to the scene object.
+ *                  This parameter must not be @c nullptr.
+ * @param[in] paint A handle to the paint object to be added to the scene.
+ *                  This parameter must not be @c nullptr.
  *
- * @note The ownership of the @p paint object is transferred to the scene upon addition.
+ * @note Ownership of the @p paint object is transferred to the canvas upon
+ *       successful addition. To retain ownership, call @ref tvg_paint_ref()
+ *       before adding it to the scene.
+* @note The rendering order of paint objects follows their order in the root
+ *       scene. If layering is required, ensure the paints are added in the
+ *       desired order.
  *
+ * @see tvg_scene_insert()
  * @see tvg_scene_remove()
- * @see tvg_scene_push_at()
+ *
+ * @since 1.0
  */
-TVG_API Tvg_Result tvg_scene_push(Tvg_Paint scene, Tvg_Paint paint);
+TVG_API Tvg_Result tvg_scene_add(Tvg_Paint scene, Tvg_Paint paint);
 
 
 /**
- * @brief Adds a paint object to the scene.
+ * @brief Inserts a paint object into the scene.
  *
- * This function appends a paint object to the scene. The new paint object @p target will
- * be inserted immediately before the specified paint object @p at in the scene.
+ * Inserts the specified paint object into the scene immediately before the
+ * given paint object @p at. The @p at parameter must reference an existing
+ * paint object already added to the scene.
  *
- * @param[in] scene A Tvg_Paint pointer to the scene object.
- * @param[in] target A pointer to the Paint object to be added into the scene.
- * @param[in] at A pointer to an existing Paint object in the scene before which
- *               the new paint object will be added. This parameter must not be @c nullptr.
+ * @param[in] scene  A handle to the scene object.
+ *                   This parameter must not be @c nullptr.
+ * @param[in] target A handle to the paint object to be inserted into the scene.
+ *                   This parameter must not be @c nullptr.
+ * @param[in] at     A handle to an existing paint object in the scene before
+ *                   which @p target will be inserted.
+ *                   This parameter must not be @c nullptr.
  *
- * @note The ownership of the @p paint object is transferred to the scene upon addition.
+ * @note Ownership of the @p target object is transferred to the scene upon
+ *       successful addition. To retain ownership, call @ref tvg_paint_ref()
+ *       before adding it to the scene.
+ * @note The rendering order of paint objects follows their order in the root
+ *       scene. If layering is required, ensure the paints are added in the
+ *       desired order.
  *
+ * @see tvg_scene_add()
  * @see tvg_scene_remove()
- * @see tvg_scene_push()
+ *
  * @since 1.0
  */
-TVG_API Tvg_Result tvg_scene_push_at(Tvg_Paint scene, Tvg_Paint target, Tvg_Paint at);
+TVG_API Tvg_Result tvg_scene_insert(Tvg_Paint scene, Tvg_Paint target, Tvg_Paint at);
 
 
 /**
@@ -2195,14 +2227,14 @@ TVG_API Tvg_Result tvg_scene_push_at(Tvg_Paint scene, Tvg_Paint target, Tvg_Pain
  * @param[in] paint A pointer to the Paint object to be removed from the scene.
  *                  If @c nullptr, remove all the paints from the scene.
  *
- * @see tvg_scene_push()
+ * @see tvg_scene_add()
  * @since 1.0
  */
 TVG_API Tvg_Result tvg_scene_remove(Tvg_Paint scene, Tvg_Paint paint);
 
 
 /**
- * @brief Resets all previously applied scene effects.
+ * @brief Clears all previously applied scene effects.
  *
  * This function clears all effects that have been applied to the scene,
  * restoring it to its original state without any post-processing.
@@ -2211,13 +2243,13 @@ TVG_API Tvg_Result tvg_scene_remove(Tvg_Paint scene, Tvg_Paint paint);
  *
  * @since 1.0
  */
-TVG_API Tvg_Result tvg_scene_reset_effects(Tvg_Paint scene);
+TVG_API Tvg_Result tvg_scene_clear_effects(Tvg_Paint scene);
 
 
 /**
- * @brief Applies a Gaussian blur effect to the scene.
+ * @brief Adds a Gaussian blur effect to the scene.
  *
- * This function applies a Gaussian blur filter to the scene as a post-processing effect.
+ * This function adds a Gaussian blur filter to the scene as a post-processing effect.
  * The blur can be applied in different directions with configurable border handling and quality settings.
  *
  * @param[in] scene A pointer to the Tvg_Paint scene object.
@@ -2228,13 +2260,13 @@ TVG_API Tvg_Result tvg_scene_reset_effects(Tvg_Paint scene);
  *
  * @since 1.0
  */
-TVG_API Tvg_Result tvg_scene_push_effect_gaussian_blur(Tvg_Paint scene, double sigma, int direction, int border, int quality);
+TVG_API Tvg_Result tvg_scene_add_effect_gaussian_blur(Tvg_Paint scene, double sigma, int direction, int border, int quality);
 
 
 /**
- * @brief Applies a drop shadow effect to the scene.
+ * @brief Adds a drop shadow effect to the scene.
  *
- * This function applies a drop shadow with a Gaussian blur to the scene. The shadow 
+ * This function adds a drop shadow with a Gaussian blur to the scene. The shadow 
  * can be customized using color, opacity, angle, distance, blur radius (sigma), 
  * and quality parameters.
  *
@@ -2250,11 +2282,11 @@ TVG_API Tvg_Result tvg_scene_push_effect_gaussian_blur(Tvg_Paint scene, double s
  *
  * @since 1.0
  */
-TVG_API Tvg_Result tvg_scene_push_effect_drop_shadow(Tvg_Paint scene, int r, int g, int b, int a, double angle, double distance, double sigma, int quality);
+TVG_API Tvg_Result tvg_scene_add_effect_drop_shadow(Tvg_Paint scene, int r, int g, int b, int a, double angle, double distance, double sigma, int quality);
 
 
 /**
- * @brief Applies a fill color effect to the scene.
+ * @brief Adds a fill color effect to the scene.
  *
  * This function overrides the scene's content colors with the specified fill color.
  *
@@ -2266,11 +2298,11 @@ TVG_API Tvg_Result tvg_scene_push_effect_drop_shadow(Tvg_Paint scene, int r, int
  *
  * @since 1.0
  */
-TVG_API Tvg_Result tvg_scene_push_effect_fill(Tvg_Paint scene, int r, int g, int b, int a);
+TVG_API Tvg_Result tvg_scene_add_effect_fill(Tvg_Paint scene, int r, int g, int b, int a);
 
 
 /**
- * @brief Applies a tint effect to the scene.
+ * @brief Adds a tint effect to the scene.
  *
  * This function tints the current scene using specified black and white color values,
  * modulated by a given intensity.
@@ -2286,13 +2318,13 @@ TVG_API Tvg_Result tvg_scene_push_effect_fill(Tvg_Paint scene, int r, int g, int
  *
  * @since 1.0
  */
-TVG_API Tvg_Result tvg_scene_push_effect_tint(Tvg_Paint scene, int black_r, int black_g, int black_b, int white_r, int white_g, int white_b, double intensity);
+TVG_API Tvg_Result tvg_scene_add_effect_tint(Tvg_Paint scene, int black_r, int black_g, int black_b, int white_r, int white_g, int white_b, double intensity);
 
 
 /**
- * @brief Applies a tritone color effect to the scene.
+ * @brief Adds a tritone color effect to the scene.
  *
- * This function applies a tritone color effect to the given scene using three sets of RGB values 
+ * This function adds a tritone color effect to the given scene using three sets of RGB values 
  * representing shadow, midtone, and highlight colors.
  *
  * @param[in] scene A pointer to the Tvg_Paint scene object.
@@ -2309,7 +2341,7 @@ TVG_API Tvg_Result tvg_scene_push_effect_tint(Tvg_Paint scene, int black_r, int 
  *
  * @since 1.0
  */
-TVG_API Tvg_Result tvg_scene_push_effect_tritone(Tvg_Paint scene, int shadow_r, int shadow_g, int shadow_b, int midtone_r, int midtone_g, int midtone_b, int highlight_r, int highlight_g, int highlight_b, int blend);
+TVG_API Tvg_Result tvg_scene_add_effect_tritone(Tvg_Paint scene, int shadow_r, int shadow_g, int shadow_b, int midtone_r, int midtone_g, int midtone_b, int highlight_r, int highlight_g, int highlight_b, int blend);
 
 /** \} */   // end defgroup ThorVGCapi_Scene
 
@@ -2777,7 +2809,7 @@ TVG_API Tvg_Result tvg_animation_set_frame(Tvg_Animation animation, float no);
  * @brief Retrieves a picture instance associated with this animation instance.
  *
  * This function provides access to the picture instance that can be used to load animation formats, such as lot.
- * After setting up the picture, it can be pushed to the designated canvas, enabling control over animation frames
+ * After setting up the picture, it can be added to the designated canvas, enabling control over animation frames
  * with this Animation instance.
  *
  * @param[in] animation A Tvg_Animation pointer to the animation object.
