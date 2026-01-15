@@ -86,7 +86,7 @@ ThorVG is optimized for CPU-based rasterization, with a strong focus on vector r
 #### Test Conditions
 - Tested with 5k semi-transparent primitives, including shapes, strokes, and images, using alpha blending.
 - Image filtering was performed using bilinear interpolation.
-- Test Platform: Apple M4 (macOS 15)
+- Test Platform: Apple M1 (macOS 15)
 - Render size: 2560 × 1440 (2K) for each test case
 - Versions: ThorVG v1.0.0, Skia v144
 
