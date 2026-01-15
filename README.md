@@ -233,7 +233,7 @@ Next you can draw multiple shapes on the canvas:
 auto rect = tvg::Shape::gen();               //generate a shape
 rect->appendRect(50, 50, 200, 200, 20, 20);  //define it as a rounded rectangle (x, y, w, h, rx, ry)
 rect->fill(100, 100, 100);                   //set its color (r, g, b)
-canvas->push(rect);                          //push the rectangle into the canvas
+canvas->add(rect);                           //add the rectangle to the canvas
 
 auto circle = tvg::Shape::gen();             //generate a shape
 circle->appendCircle(400, 400, 100, 100);    //define it as a circle (cx, cy, rx, ry)
@@ -247,7 +247,7 @@ colorStops[1] = {1.0, 0, 0, 0, 255};         //2nd color values (offset, r, g, b
 fill->colorStops(colorStops, 2);             //set the gradient colors info
 
 circle->fill(fill);                          //set the circle fill
-canvas->push(circle);                        //push the circle into the canvas
+canvas->add(circle);                         //add the circle to the canvas
 
 ```
 
@@ -283,7 +283,7 @@ path->strokeCap(tvg::StrokeCap::Round);      //stroke cap style
 float pattern[2] = {10, 10};                 //stroke dash pattern (line, gap)
 path->strokeDash(pattern, 2);                //set the stroke pattern
 
-canvas->push(path);                          //push the path into the canvas
+canvas->add(path);                           //add the path to the canvas
 
 ```
 
@@ -329,7 +329,7 @@ The following code snippet shows how to draw SVG image using ThorVG:
 ```cpp
 auto picture = tvg::Picture::gen();         //generate a picture
 picture->load("tiger.svg");                 //load a SVG file
-canvas->push(picture);                      //push the picture into the canvas
+canvas->add(picture);                       //add the picture to the canvas
 ```
 
 The result is:
@@ -370,7 +370,7 @@ auto animation = tvg::Animation::gen();     //generate an animation
 auto picture = animation->picture()         //acquire a picture which associated with the animation.
 picture->load("lottie.json");               //load a Lottie file
 auto duration = animation->duration();      //figure out the animation duration time in seconds.
-canvas->push(picture);                      //push the picture into the canvas
+canvas->add(picture);                       //add the picture to the canvas
 ```
 First, an animation and a picture are generated. The Lottie file (lottie.json) is loaded into the picture, and then the picture is added to the canvas. The animation frames are controlled using the animation object to play the Lottie animation. Also you might want to know the animation duration time to run your animation loop.
 ```cpp

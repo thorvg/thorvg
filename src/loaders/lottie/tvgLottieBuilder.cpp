@@ -204,7 +204,7 @@ void LottieBuilder::updateGroup(LottieGroup* parent, LottieObject** child, float
     } else {
         group->scene = tvg::Scene::gen();
         group->scene->blend(group->blendMethod);
-        parent->scene->push(group->scene);
+        parent->scene->add(group->scene);
     }
 
     group->reqFragment |= ctx->reqFragment;
@@ -339,7 +339,7 @@ static bool _draw(LottieGroup* parent, LottieShape* shape, RenderContext* ctx)
         ctx->merging = static_cast<Shape*>(ctx->propagator->duplicate());
     }
 
-    parent->scene->push(ctx->merging);
+    parent->scene->add(ctx->merging);
 
     return true;
 }
@@ -385,13 +385,13 @@ static void _repeat(LottieGroup* parent, Shape* path, LottieRenderPooler<Shape>*
         //push repeat shapes in order.
         if (repeater->inorder) {
             ARRAY_FOREACH(p, shapes) {
-                parent->scene->push(*p);
+                parent->scene->add(*p);
                 (*p)->unref();
                 propagators.push(*p);
             }
         } else if (!shapes.empty()) {
             ARRAY_REVERSE_FOREACH(p, shapes) {
-                parent->scene->push(*p);
+                parent->scene->add(*p);
                 (*p)->unref();
                 propagators.push(*p);
             }
@@ -893,7 +893,7 @@ void LottieBuilder::updateSolid(LottieLayer* layer)
 {
     auto solidFill = layer->statical.pooling(true);
     solidFill->opacity(layer->cache.opacity);
-    layer->scene->push(solidFill);
+    layer->scene->add(solidFill);
 }
 
 
@@ -910,7 +910,7 @@ void LottieBuilder::updateImage(LottieGroup* layer)
     }
 
     //LottieImage can be shared among other layers
-    layer->scene->push(picture->refCnt() == 1 ? picture : picture->duplicate());
+    layer->scene->add(picture->refCnt() == 1 ? picture : picture->duplicate());
 }
 
 
@@ -949,7 +949,7 @@ void LottieBuilder::updateURLFont( LottieLayer* layer, float frameNo, LottieText
     paint->text(buf);
     paint->align(-doc.justify, 0.0f);
     paint->translate(0.0f, doc.size * -100.0f);
-    layer->scene->push(paint);
+    layer->scene->add(paint);
 
     //outline
     auto strkColor = doc.stroke.color;
@@ -1080,7 +1080,7 @@ bool LottieBuilder::updateTextRange(LottieText* text, float frameNo, Shape* shap
     tvg::scale(&matrix, scaling * ctx.capScale);
     shape->transform(matrix);
 
-    if (needGroup) ctx.lineScene->push(shape);
+    if (needGroup) ctx.lineScene->add(shape);
 
     return needGroup;
 }
@@ -1104,7 +1104,7 @@ static void _commit(LottieGlyph* glyph, Shape* shape, const RenderText& ctx)
         matrix.e23 = ctx.cursor.y;
     }
     shape->transform(matrix);
-    ctx.textScene->push(shape);
+    ctx.textScene->add(shape);
 }
 
 
@@ -1128,10 +1128,10 @@ void LottieBuilder::updateLocalFont(LottieLayer* layer, float frameNo, LottieTex
             layout.x += doc.justify * (-1.0f * doc.bbox.size.x + ctx.cursor.x * ctx.scale);
 
             //new text group, single scene based on text-grouping
-            ctx.textScene->push(ctx.lineScene);
+            ctx.textScene->add(ctx.lineScene);
             ctx.textScene->translate(layout.x, layout.y);
             ctx.textScene->scale(ctx.scale);
-            layer->scene->push(ctx.textScene);
+            layer->scene->add(ctx.textScene);
 
             ctx.lineScene = Scene::gen();
             ctx.lineScene->translate(ctx.cursor.x, ctx.cursor.y);
@@ -1155,7 +1155,7 @@ void LottieBuilder::updateLocalFont(LottieLayer* layer, float frameNo, LottieTex
             ++ctx.space;
             //new text group, single scene for each word
             if (text->alignOp.group == LottieText::AlignOption::Group::Word) {
-                ctx.textScene->push(ctx.lineScene);
+                ctx.textScene->add(ctx.lineScene);
                 ctx.lineScene = Scene::gen();
                 ctx.lineScene->translate(ctx.cursor.x, ctx.cursor.y);
             }
@@ -1180,7 +1180,7 @@ void LottieBuilder::updateLocalFont(LottieLayer* layer, float frameNo, LottieTex
             if (!strncmp(glyph->code, code, glyph->len)) {
                 //new text group, single scene for each characters
                 if (text->alignOp.group == LottieText::AlignOption::Group::Chars || text->alignOp.group == LottieText::AlignOption::Group::All) {
-                    ctx.textScene->push(ctx.lineScene);
+                    ctx.textScene->add(ctx.lineScene);
                     ctx.lineScene = Scene::gen();
                     ctx.lineScene->translate(ctx.cursor.x, ctx.cursor.y);
                 }
@@ -1221,7 +1221,7 @@ void LottieBuilder::updateMasks(LottieLayer* layer, float frameNo)
     //Introduce an intermediate scene for embracing matte + masking or precomp clipping + masking replaced by clipping
     if (layer->matteTarget || layer->type == LottieLayer::Precomp) {
         auto scene = Scene::gen();
-        scene->push(layer->scene);
+        scene->add(layer->scene);
         layer->scene = scene;
     }
 
@@ -1360,13 +1360,13 @@ void LottieBuilder::updateEffect(LottieLayer* layer, float frameNo, uint8_t qual
                 auto effect = static_cast<LottieFxTint*>(*p);
                 auto black = effect->black(frameNo);
                 auto white = effect->white(frameNo);
-                layer->scene->push(SceneEffect::Tint, black.r, black.g, black.b, white.r, white.g, white.b, (double)effect->intensity(frameNo));
+                layer->scene->add(SceneEffect::Tint, black.r, black.g, black.b, white.r, white.g, white.b, (double)effect->intensity(frameNo));
                 break;
             }
             case LottieEffect::Fill: {
                 auto effect = static_cast<LottieFxFill*>(*p);
                 auto color = effect->color(frameNo);
-                layer->scene->push(SceneEffect::Fill, color.r, color.g, color.b, (int)(255.0f * effect->opacity(frameNo)));
+                layer->scene->add(SceneEffect::Fill, color.r, color.g, color.b, (int)(255.0f * effect->opacity(frameNo)));
                 break;
             }
             case LottieEffect::Stroke: {
@@ -1379,19 +1379,19 @@ void LottieBuilder::updateEffect(LottieLayer* layer, float frameNo, uint8_t qual
                 auto dark = effect->dark(frameNo);
                 auto midtone = effect->midtone(frameNo);
                 auto bright = effect->bright(frameNo);
-                layer->scene->push(SceneEffect::Tritone, dark.r, dark.g, dark.b, midtone.r, midtone.g, midtone.b, bright.r, bright.g, bright.b, (int)effect->blend(frameNo));
+                layer->scene->add(SceneEffect::Tritone, dark.r, dark.g, dark.b, midtone.r, midtone.g, midtone.b, bright.r, bright.g, bright.b, (int)effect->blend(frameNo));
                 break;
             }
             case LottieEffect::DropShadow: {
                 auto effect = static_cast<LottieFxDropShadow*>(*p);
                 auto color = effect->color(frameNo);
                 //seems the opacity range in dropshadow is 0 ~ 256
-                layer->scene->push(SceneEffect::DropShadow, color.r, color.g, color.b, std::min(255, (int)effect->opacity(frameNo)), (double)effect->angle(frameNo), double(effect->distance(frameNo)), (double)(effect->blurness(frameNo) * BLUR_TO_SIGMA), quality);
+                layer->scene->add(SceneEffect::DropShadow, color.r, color.g, color.b, std::min(255, (int)effect->opacity(frameNo)), (double)effect->angle(frameNo), double(effect->distance(frameNo)), (double)(effect->blurness(frameNo) * BLUR_TO_SIGMA), quality);
                 break;
             }
             case LottieEffect::GaussianBlur: {
                 auto effect = static_cast<LottieFxGaussianBlur*>(*p);
-                layer->scene->push(SceneEffect::GaussianBlur, (double)(effect->blurness(frameNo) * BLUR_TO_SIGMA), effect->direction(frameNo) - 1, effect->wrap(frameNo), quality);
+                layer->scene->add(SceneEffect::GaussianBlur, (double)(effect->blurness(frameNo) * BLUR_TO_SIGMA), effect->direction(frameNo) - 1, effect->wrap(frameNo), quality);
                 break;
             }
             default: break;
@@ -1458,7 +1458,7 @@ void LottieBuilder::updateLayer(LottieComposition* comp, Scene* scene, LottieLay
 
     updateEffect(layer, frameNo, comp->quality);
 
-    if (!layer->matteSrc) scene->push(layer->scene);
+    if (!layer->matteSrc) scene->add(layer->scene);
 }
 
 

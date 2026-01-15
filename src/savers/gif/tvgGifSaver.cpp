@@ -40,8 +40,8 @@ void GifSaver::run(unsigned tid)
 
     buffer = tvg::realloc<uint32_t>(buffer, sizeof(uint32_t) * w * h);
     canvas->target(buffer, w, w, h, ColorSpace::ABGR8888S);
-    canvas->push(bg);
-    canvas->push(animation->picture());
+    canvas->add(bg);
+    canvas->add(animation->picture());
 
     //use the default fps
     if (fps > 60.0f) fps = 60.0f;   // just in case

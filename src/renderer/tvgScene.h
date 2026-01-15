@@ -406,9 +406,9 @@ struct SceneImpl : Scene
         return Result::Success;
     }
 
-    Result push(SceneEffect effect, va_list& args)
+    Result add(SceneEffect effect, va_list& args)
     {
-        if (effect == SceneEffect::ClearAll) return resetEffects();
+        if (effect == SceneEffect::Clear) return resetEffects();
 
         if (!this->effects) this->effects = new Array<RenderEffect*>;
 

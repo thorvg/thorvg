@@ -255,13 +255,13 @@ enum struct BlendMethod : uint8_t
  * This enum provides options to apply various post-processing effects to a scene.
  * Scene effects are typically applied to modify the final appearance of a rendered scene, such as blurring.
  *
- * @see Scene::push(SceneEffect effect, ...)
+ * @see Scene::add(SceneEffect effect, ...)
  *
  * @since 1.0
  */
 enum struct SceneEffect : uint8_t
 {
-    ClearAll = 0,      ///< Reset all previously applied scene effects, restoring the scene to its original state.
+    Clear = 0,         ///< Clear all previously applied scene effects, restoring the scene to its original state.
     GaussianBlur,      ///< Apply a blur effect with a Gaussian filter. Param(4) = {sigma(double)[> 0], direction(int)[both: 0 / horizontal: 1 / vertical: 2], border(int)[duplicate: 0 / wrap: 1], quality(int)[0 - 100]}
     DropShadow,        ///< Apply a drop shadow effect with a Gaussian Blur filter. Param(8) = {color_R(int)[0 - 255], color_G(int)[0 - 255], color_B(int)[0 - 255], opacity(int)[0 - 255], angle(double)[0 - 360], distance(double), blur_sigma(double)[> 0], quality(int)[0 - 100]}
     Fill,              ///< Override the scene content color with a given fill information. Param(4) = {color_R(int)[0 - 255], color_G(int)[0 - 255], color_B(int)[0 - 255], opacity(int)[0 - 255]}
@@ -359,8 +359,8 @@ struct TVG_API Paint
      *
      * @return A pointer to the parent object if available, otherwise @c nullptr.
      *
-     * @see Scene::push()
-     * @see Canvas::push()
+     * @see Scene::add()
+     * @see Canvas::add()
      *
      * @since 1.0
     */
@@ -820,7 +820,7 @@ struct TVG_API Canvas
      * This function provides a list of paint nodes, allowing users to access scene-graph information.
      *
      * @warning Please avoid accessing the paints during Canvas update/draw. You can access them after calling sync().
-     * @see Canvas::push()
+     * @see Canvas::add()
      * @see Canvas::remove()
      *
      * @warning This is read-only. Do not modify the list.
@@ -829,26 +829,34 @@ struct TVG_API Canvas
     const std::list<Paint*>& paints() const noexcept;
 
     /**
-     * @brief Adds a paint object to the root scene.
+     * @brief Adds a paint object to the canvas root scene.
      *
-     * This function appends a paint object to root scene of the canvas. If the optional @p at
-     * is provided, the new paint object will be inserted immediately before the specified
-     * paint object in the root scene. If @p at is @c nullptr, the paint object will be added
-     * to the end of the root scene.
+     * Appends a paint object to the root scene of the canvas. If the optional @p at
+     * parameter is provided, the paint object is inserted immediately before the
+     * specified paint in the root scene. If @p at is @c nullptr, the paint object
+     * is appended to the end of the root scene.
      *
-     * @param[in] target A pointer to the Paint object to be added into the root scene.
+     * @param[in] target A pointer to the Paint object to be added to the root scene.
      *                   This parameter must not be @c nullptr.
-     * @param[in] at A pointer to an existing Paint object in the root scene before which
-     *               the new paint object will be added. If @c nullptr, the new
-     *               paint object is added to the end of the root scene. The default is @c nullptr.
+     * @param[in] at     A pointer to an existing Paint object in the root scene
+     *                   before which @p target will be inserted. If @c nullptr,
+     *                   @p target is appended to the end of the root scene.
+     *                   The default value is @c nullptr.
      *
-     * @note The ownership of the @p paint object is transferred to the canvas upon addition.
-     * @note The rendering order of the paints is the same as the order as they were pushed. Consider sorting the paints before pushing them if you intend to use layering.
+     * @note Ownership of the @p target object is transferred to the canvas upon
+     *       successful addition. To retain ownership, call @ref Paint::ref()
+     *       before adding it to the canvas.
+     * @note The rendering order of paint objects follows their order in the root
+     *       scene. If layering is required, ensure the paints are added in the
+     *       desired order.
      *
      * @see Canvas::paints()
      * @see Canvas::remove()
+     * @see Paint::ref()
+     *
+     * @since 1.0
      */
-    Result push(Paint* target, Paint* at = nullptr) noexcept;
+    Result add(Paint* target, Paint* at = nullptr) noexcept;
 
     /**
      * @brief Removes a paint object or all paint objects from the root scene.
@@ -860,7 +868,7 @@ struct TVG_API Canvas
      * @param[in] paint A pointer to the Paint object to be removed from the root scene.
      *                  If @c nullptr, remove all the paints from the root scene.
      *
-     * @see Canvas::push()
+     * @see Canvas::add()
      * @see Canvas::paints()
      *
      * @since 1.0
@@ -924,7 +932,7 @@ struct TVG_API Canvas
      * @see GlCanvas::target()
      * @see WgCanvas::target()
      *
-     * @warning Changing the viewport is not allowed after calling Canvas::push(),
+     * @warning Changing the viewport is not allowed after calling Canvas::add(),
      *          Canvas::remove(), Canvas::update(), or Canvas::draw().
      *
      * @note When the target is reset, the viewport will also be reset to match the target size.
@@ -1720,33 +1728,40 @@ struct TVG_API Picture : Paint
 struct TVG_API Scene : Paint
 {
     /**
-     * @brief Inserts a paint object to the scene.
+     * @brief Adds a paint object to the scene.
      *
-     * This function appends a paint object to the scene. If the optional @p at
-     * is provided, the new paint object will be inserted immediately before the specified
-     * paint object in the scene. If @p at is @c nullptr, the paint object will be added
-     * to the end of the scene.
+     * Appends a paint object to the scene. If the optional @p at parameter is provided, 
+     * the paint object is inserted immediately before the specified paint in the scene. 
+     * If @p at is @c nullptr, the paint object is appended to the end of the scene.
      *
-     * @param[in] target A pointer to the Paint object to be added into the scene.
+     * @param[in] target A pointer to the Paint object to be added to the scene.
      *                   This parameter must not be @c nullptr.
-     * @param[in] at A pointer to an existing Paint object in the scene before which
-     *               the new paint object will be added. If @c nullptr, the new
-     *               paint object is added to the end of the scene. The default is @c nullptr.
+     * @param[in] at     A pointer to an existing Paint object in the scene before
+     *                   which @p target will be inserted. If @c nullptr,
+     *                   @p target is appended to the end of the scene.
+     *                   The default value is @c nullptr.
      *
-     * @note The ownership of the @p paint object is transferred to the scene upon addition.
-     * @note The rendering order of the paints is the same as the order as they were pushed. Consider sorting the paints before pushing them if you intend to use layering.
+     * @note Ownership of the @p target object is transferred to the scene upon
+     *       successful addition. To retain ownership, call @ref Paint::ref()
+     *       before adding it to the scene.
+     * @note The rendering order of paint objects follows their order in the scene.
+     *       If layering is required, ensure the paints are added in the desired order.
+     *
      * @see Scene::paints()
-     * @see Scene:remove()
+     * @see Scene::remove()
+     * @see Paint::ref()
+     *
+     * @since 1.0
      */
-    Result push(Paint* target, Paint* at = nullptr) noexcept;
+    Result add(Paint* target, Paint* at = nullptr) noexcept;
 
     /**
      * @brief Returns the list of paints currently held by the Scene.
      *
      * This function provides a list of paint nodes, allowing users to access scene-graph information.
      *
-     * @see Scene::push()
-     * @see Scene:remove()
+     * @see Scene::add()
+     * @see Scene::remove()
      *
      * @warning This is read-only. Do not modify the list.
      * @since 1.0
@@ -1763,7 +1778,7 @@ struct TVG_API Scene : Paint
      * @param[in] paint A pointer to the Paint object to be removed from the scene.
      *                  If @c nullptr, remove all the paints from the scene.
      *
-     * @see Scene::push()
+     * @see Scene::add()
      * @see Scene::paints()
      *
      * @since 1.0
@@ -1771,19 +1786,25 @@ struct TVG_API Scene : Paint
     Result remove(Paint* paint = nullptr) noexcept;
 
     /**
-     * @brief Apply a post-processing effect to the scene.
+     * @brief Add a post-processing effect to the scene.
      *
-     * This function adds a specified effect—such as clearing all effects, applying a Gaussian blur,
-     * or adding a drop shadow—to the scene after rendering. Multiple effects can be applied in sequence
-     * by calling this function multiple times.
+     * Adds a post-processing effect to the scene's effect pipeline, which is applied
+     * after the scene has been rendered. Effects are applied cumulatively and in the
+     * order they are added. Calling this function multiple times will chain multiple
+     * effects sequentially.
      *
-     * @param[in] effect The scene effect to apply. Options are defined in the SceneEffect enum.
-     *                   For example, use SceneEffect::GaussianBlur to apply a blur with specific parameters.
+     * Certain effects may be used to modify the pipeline behavior itself. For example,
+     * @c SceneEffect::Clear removes all previously added effects.
+     *
+     * @param[in] effect The scene effect to add. Available effects are defined in the @ref SceneEffect enum.
      * @param[in] ...    Additional variadic parameters required for certain effects (e.g., sigma and direction for GaussianBlur).
+     *
+     * @note The caller must provide the correct parameters for the selected effect.
+     *       Supplying incorrect or insufficient arguments results in undefined behavior.
      *
      * @since 1.0
      */
-    Result push(SceneEffect effect, ...) noexcept;
+    Result add(SceneEffect effect, ...) noexcept;
 
     /**
      * @brief Creates a new Scene object.
@@ -2127,7 +2148,7 @@ struct TVG_API SwCanvas final : Canvas
      * @retval Result::InsufficientCondition if the canvas is performing rendering. Please ensure the canvas is synced.
      * @retval Result::NonSupport In case the software engine is not supported.
      *
-     * @warning Do not access @p buffer during Canvas::push() - Canvas::sync(). It should not be accessed while the engine is writing on it.
+     * @warning Do not access @p buffer during Canvas::add() - Canvas::sync(). It should not be accessed while the engine is writing on it.
      *
      * @see Canvas::viewport()
      * @see Canvas::sync()
@@ -2340,7 +2361,7 @@ struct TVG_API Animation
      * @brief Retrieves a picture instance associated with this animation instance.
      *
      * This function provides access to the picture instance that can be used to load animation formats, such as lot.
-     * After setting up the picture, it can be pushed to the designated canvas, enabling control over animation frames
+     * After setting up the picture, it can be added to the designated canvas, enabling control over animation frames
      * with this Animation instance.
      *
      * @return A picture instance that is tied to this animation.
