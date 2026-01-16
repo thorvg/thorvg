@@ -1439,9 +1439,9 @@ jerry_value_t LottieExpressions::buildGlobal()
     //fromCompToSurface
     //createPath
 
-    auto posterizeTime = jerry_function_external(_posterizeTime);
+    posterizeTime = jerry_function_external(_posterizeTime);
     jerry_object_set_sz(global, "posterizeTime", posterizeTime);
-    jerry_value_free(posterizeTime);
+    // jerry_value_free(posterizeTime);
 
     //value
 
@@ -1515,6 +1515,7 @@ LottieExpressions::~LottieExpressions()
     jerry_value_free(thisComp);
     jerry_value_free(comp);
     jerry_value_free(global);
+    jerry_value_free(posterizeTime);
     jerry_cleanup();
 }
 
