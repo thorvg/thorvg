@@ -959,12 +959,15 @@ static jerry_value_t _wiggle(const jerry_call_info_t* info, const jerry_value_t 
     float curFreq = freq;
 
     for (int i = 0; i < octaves; ++i) {
+      auto repeat = int(time * freq);
+      for (int j = 0; j < repeat; ++j) {
         // Apply 1D Perlin noise: perlin1D(t * curFreq + seed) * curAmp
-        totalX += _perlin1D(time * curFreq, seedX + i) * curAmp;
-        totalY += _perlin1D(time * curFreq, seedY + i + 1) * curAmp;
+        totalX += _perlin1D(time * curFreq, (seedX + i) * j) * curAmp;
+        totalY += _perlin1D(time * curFreq, (seedY + i + 1) * j) * curAmp;
 
         curAmp *= ampm;
         curFreq *= 2.0f;
+      }
     }
 
     // Return base + total (following AE wiggle pattern)
