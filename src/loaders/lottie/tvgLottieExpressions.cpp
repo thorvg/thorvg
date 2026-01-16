@@ -651,6 +651,7 @@ static jerry_value_t _clamp(const jerry_call_info_t* info, const jerry_value_t a
 
 static jerry_value_t _posterizeTime(const jerry_call_info_t* info, const jerry_value_t args[], const jerry_length_t argsCnt)
 {
+    printf("[exp] posterizeTime\n");
     auto fps = jerry_value_as_number(args[0]);
 
     // Get current global context
@@ -667,10 +668,31 @@ static jerry_value_t _posterizeTime(const jerry_call_info_t* info, const jerry_v
     // Update time in global context
     auto new_time = jerry_number(posterized_time);
     jerry_object_set_sz(global, EXP_TIME, new_time);
-    jerry_value_free(new_time);
 
-    // Note: lottie-web also updates 'value' with valueAtTime(posterized_time)
-    // but for wiggle use case, updating time is sufficient
+    // Update 'value' with valueAtTime(posterized_time) - same as lottie-web
+    // Get expression context from thisProperty's native pointer
+    auto thisProperty = jerry_object_get_sz(global, "thisProperty");
+    auto property = static_cast<LottieProperty*>(jerry_object_get_native_ptr(thisProperty, nullptr));
+
+    if (property) {
+        // Get composition from native pointer to calculate frame number
+        auto valueAtTime_func = jerry_object_get_sz(thisProperty, "valueAtTime");
+        auto exp = static_cast<LottieExpression*>(jerry_object_get_native_ptr(valueAtTime_func, nullptr));
+        // jerry_value_free(valueAtTime_func);
+
+        if (exp && exp->comp) {
+            // Calculate frame number for posterized time
+            auto frameNo = exp->comp->frameAtTime(posterized_time);
+
+            // Build new value at posterized time
+            auto new_value = _buildValue(frameNo, property);
+            jerry_object_set_sz(global, EXP_VALUE, new_value);
+            // jerry_value_free(new_value);
+        }
+    }
+
+    // jerry_value_free(thisProperty);
+    // jerry_value_free(new_time);
 
     return jerry_undefined();
 }
@@ -968,7 +990,17 @@ static jerry_value_t _wiggle(const jerry_call_info_t* info, const jerry_value_t 
     auto amp = jerry_value_as_number(args[1]);
     auto octaves = (argsCnt > 2) ? jerry_value_as_int32(args[2]) : 1;
     auto ampm = (argsCnt > 3) ? jerry_value_as_number(args[3]) : 0.5f;
-    auto time = (argsCnt > 4) ? jerry_value_as_number(args[4]) : data->exp->comp->timeAtFrame(data->frameNo);
+
+    // Get time from global context (respects posterizeTime)
+    float time;
+    if (argsCnt > 4) {
+        time = jerry_value_as_number(args[4]);
+    } else {
+        auto global = jerry_current_realm();
+        auto time_val = jerry_object_get_sz(global, EXP_TIME);
+        time = jerry_value_as_number(time_val);
+        jerry_value_free(time_val);
+    }
 
     // Get base value from property
     Point base = {0.0f, 0.0f};
