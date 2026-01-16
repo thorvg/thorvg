@@ -136,7 +136,7 @@ static float _perlin1D(float x, int seed)
 
     // Interpolate between the two gradient influences
     auto value = tvg::lerp(d0, d1, u);
-    return value * 3.0;
+    return value * 2.0;
 }
 
 static jerry_value_t _point2d(const Point& pt)
@@ -939,38 +939,23 @@ static jerry_value_t _wiggle(const jerry_call_info_t* info, const jerry_value_t 
         base = (*static_cast<LottieScalar*>(property))(data->frameNo);
     }
 
-    // Generate unique seed based on layer and property IDs
-    // Use layer ID (or index if ID is 0) and property index to create unique base seed
-    auto layer = data->exp->layer;
-    unsigned long layerId = layer->id != 0 ? layer->id : (layer->ix >= 0 ? layer->ix + 1 : 1);
-    int baseSeed = static_cast<int>(layerId * 1000 + property->ix);
-
-    // Seed offsets to separate X/Y axes and prevent correlation
     constexpr int SEED_OFFSET_X = 1000000;
     constexpr int SEED_OFFSET_Y = 2000000;
 
-    int seedX = baseSeed + SEED_OFFSET_X;
-    int seedY = baseSeed + SEED_OFFSET_Y;
-
-    // Accumulated noise for X and Y axes (following AE wiggle pattern)
     float totalX = 0.0f;
     float totalY = 0.0f;
-    float curAmp = amp;
-    float curFreq = freq;
+    for (int o = 0; o < octaves; ++o) {
+        auto repeat = time * freq;
+        auto randX = _perlin1D(repeat, (SEED_OFFSET_X + o));
+        auto randY = _perlin1D(repeat, (SEED_OFFSET_Y + o + 1));
 
-    for (int i = 0; i < octaves; ++i) {
-      auto repeat = int(time * freq);
-      for (int j = 0; j < repeat; ++j) {
-        // Apply 1D Perlin noise: perlin1D(t * curFreq + seed) * curAmp
-        totalX += _perlin1D(time * curFreq, (seedX + i) * j) * curAmp;
-        totalY += _perlin1D(time * curFreq, (seedY + i + 1) * j) * curAmp;
+        totalX += randX * amp;
+        totalY += randY * amp;
 
-        curAmp *= ampm;
-        curFreq *= 2.0f;
-      }
+        amp *= ampm;
+        freq *= 2.0f;
     }
 
-    // Return base + total (following AE wiggle pattern)
     Point result = {base.x + totalX, base.y + totalY};
     return _point2d(result);
 }
