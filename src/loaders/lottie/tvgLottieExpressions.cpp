@@ -136,7 +136,7 @@ static float _perlin1D(float x, int seed)
 
     // Interpolate between the two gradient influences
     auto value = tvg::lerp(d0, d1, u);
-    return value * 1.8;
+    return value * 3.0;
 }
 
 static jerry_value_t _point2d(const Point& pt)
@@ -941,18 +941,16 @@ static jerry_value_t _wiggle(const jerry_call_info_t* info, const jerry_value_t 
 
     // Generate unique seed based on layer and property IDs
     // Use layer ID (or index if ID is 0) and property index to create unique base seed
-    // auto layer = data->exp->layer;
-    // unsigned long layerId = layer->id != 0 ? layer->id : (layer->ix >= 0 ? layer->ix + 1 : 1);
-    // int baseSeed = static_cast<int>(layerId * 1000 + property->ix);
+    auto layer = data->exp->layer;
+    unsigned long layerId = layer->id != 0 ? layer->id : (layer->ix >= 0 ? layer->ix + 1 : 1);
+    int baseSeed = static_cast<int>(layerId * 1000 + property->ix);
 
     // Seed offsets to separate X/Y axes and prevent correlation
     constexpr int SEED_OFFSET_X = 1000000;
     constexpr int SEED_OFFSET_Y = 2000000;
 
-    // int seedX = baseSeed + SEED_OFFSET_X;
-    // int seedY = baseSeed + SEED_OFFSET_Y;
-    int seedX = SEED_OFFSET_X;
-    int seedY = SEED_OFFSET_Y;
+    int seedX = baseSeed + SEED_OFFSET_X;
+    int seedY = baseSeed + SEED_OFFSET_Y;
 
     // Accumulated noise for X and Y axes (following AE wiggle pattern)
     float totalX = 0.0f;
