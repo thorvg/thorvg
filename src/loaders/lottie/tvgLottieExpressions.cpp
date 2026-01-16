@@ -91,7 +91,9 @@ static inline float _seededRand(int seed)
 {
     // Deterministic random generator using glibc's LCG algorithm
     seed = (seed * 1103515245 + 12345) & 0x7fffffff;
-    return (float)seed / 2147483647.0f;
+    auto value = (float)seed / 2147483647.0f;
+    printf("value: %f\n", value < 0.75f);
+    return value;
 }
 
 
@@ -108,7 +110,10 @@ static inline float _fade(float t)
 static inline float _gradient1D(int seed)
 {
     // Use seeded random to generate a gradient direction (-1 or 1)
-    return _seededRand(seed) < 0.5f ? -1.0f : 1.0f;
+    // Note(Jinny): 원래 수식이 < 0.5 였는데
+    // seededRand 값이 항상 0.5 이상이어서 1.0 기울기만 나오는 문제가 있었음
+    // 0.7로 바꾸니 어도비 애프터 이펙트와 많이 흡사해짐
+    return _seededRand(seed) < 0.75f ? -1.0f : 1.0f; // 0.75 팩터는 튜닝 정도에 따라 조정 가능
 }
 
 
@@ -136,7 +141,7 @@ static float _perlin1D(float x, int seed)
 
     // Interpolate between the two gradient influences
     auto value = tvg::lerp(d0, d1, u);
-    return value * 2.0;
+    return value * 1.5; // 2.0 스케일 팩터는 조정 가능
 }
 
 static jerry_value_t _point2d(const Point& pt)
@@ -954,8 +959,8 @@ static jerry_value_t _wiggle(const jerry_call_info_t* info, const jerry_value_t 
     float totalY = 0.0f;
     for (int o = 0; o < octaves; ++o) {
         auto repeat = time * freq;
-        auto randX = _perlin1D(repeat, (SEED_OFFSET_X + o));
-        auto randY = _perlin1D(repeat, (SEED_OFFSET_Y + o + 1));
+        auto randX = _perlin1D(repeat, (SEED_OFFSET_Y + o));
+        auto randY = _perlin1D(repeat, (SEED_OFFSET_X + o + 1));
 
         totalX += randX * amp;
         totalY += randY * amp;
