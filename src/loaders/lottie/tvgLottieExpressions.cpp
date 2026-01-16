@@ -652,6 +652,7 @@ static jerry_value_t _clamp(const jerry_call_info_t* info, const jerry_value_t a
 static jerry_value_t _posterizeTime(const jerry_call_info_t* info, const jerry_value_t args[], const jerry_length_t argsCnt)
 {
     printf("[exp] posterizeTime\n");
+    auto exp = static_cast<LottieExpression*>(jerry_object_get_native_ptr(info->function, nullptr));
     auto fps = jerry_value_as_number(args[0]);
 
     // Get current global context
@@ -674,25 +675,20 @@ static jerry_value_t _posterizeTime(const jerry_call_info_t* info, const jerry_v
     auto thisProperty = jerry_object_get_sz(global, "thisProperty");
     auto property = static_cast<LottieProperty*>(jerry_object_get_native_ptr(thisProperty, nullptr));
 
-    if (property) {
-        // Get composition from native pointer to calculate frame number
-        auto valueAtTime_func = jerry_object_get_sz(thisProperty, "valueAtTime");
-        auto exp = static_cast<LottieExpression*>(jerry_object_get_native_ptr(valueAtTime_func, nullptr));
-        // jerry_value_free(valueAtTime_func);
+    if (property && exp && exp->comp) {
+        // Calculate frame number for posterized time
+        auto frameNo = exp->comp->frameAtTime(posterized_time);
 
-        if (exp && exp->comp) {
-            // Calculate frame number for posterized time
-            auto frameNo = exp->comp->frameAtTime(posterized_time);
-
-            // Build new value at posterized time
-            auto new_value = _buildValue(frameNo, property);
-            jerry_object_set_sz(global, EXP_VALUE, new_value);
-            // jerry_value_free(new_value);
-        }
+        // Build new value at posterized time
+        auto new_value = _buildValue(frameNo, property);
+        jerry_object_set_sz(global, EXP_VALUE, new_value);
+        jerry_value_free(new_value);
     }
 
-    // jerry_value_free(thisProperty);
-    // jerry_value_free(new_time);
+    jerry_value_free(thisProperty);
+    jerry_value_free(new_time);
+    jerry_value_free(global);
+
 
     return jerry_undefined();
 }
@@ -1000,6 +996,7 @@ static jerry_value_t _wiggle(const jerry_call_info_t* info, const jerry_value_t 
         auto time_val = jerry_object_get_sz(global, EXP_TIME);
         time = jerry_value_as_number(time_val);
         jerry_value_free(time_val);
+        jerry_value_free(global);
     }
 
     // Get base value from property
