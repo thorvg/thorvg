@@ -29,14 +29,21 @@ GlRenderTarget::~GlRenderTarget()
     reset();
 }
 
-void GlRenderTarget::init(uint32_t width, uint32_t height, GLint resolveId)
+void GlRenderTarget::init(uint32_t width, uint32_t height, GLint resolveId, bool external)
 {
     if (width == 0 || height == 0) return;
 
     mWidth = width;
     mHeight = height;
+    mExternal = external;
+    mValid = true;
 
-    //TODO: fbo is used. maybe we can consider the direct rendering with resolveId as well.
+    if (mExternal) {
+        mFbo = static_cast<GLuint>(resolveId);
+        mColorBuffer = mDepthStencilBuffer = mResolveFbo = mColorTex = 0;
+        return;
+    }
+
     GL_CHECK(glGenFramebuffers(1, &mFbo));
 
     GL_CHECK(glBindFramebuffer(GL_FRAMEBUFFER, mFbo));
@@ -78,16 +85,22 @@ void GlRenderTarget::init(uint32_t width, uint32_t height, GLint resolveId)
 
 void GlRenderTarget::reset()
 {
-    if (mFbo == 0) return;
+    if (!mValid) return;
 
-    GL_CHECK(glBindFramebuffer(GL_FRAMEBUFFER, 0));
-    GL_CHECK(glDeleteFramebuffers(1, &mFbo));
-    GL_CHECK(glDeleteRenderbuffers(1, &mColorBuffer));
-    GL_CHECK(glDeleteRenderbuffers(1, &mDepthStencilBuffer));
-    GL_CHECK(glDeleteFramebuffers(1, &mResolveFbo));
-    GL_CHECK(glDeleteTextures(1, &mColorTex));
+    if (!mExternal) {
+        GL_CHECK(glBindFramebuffer(GL_FRAMEBUFFER, 0));
+        if (mFbo != 0) GL_CHECK(glDeleteFramebuffers(1, &mFbo));
+        if (mColorBuffer != 0) GL_CHECK(glDeleteRenderbuffers(1, &mColorBuffer));
+        if (mDepthStencilBuffer != 0) GL_CHECK(glDeleteRenderbuffers(1, &mDepthStencilBuffer));
+        if (mResolveFbo != 0) GL_CHECK(glDeleteFramebuffers(1, &mResolveFbo));
+        if (mColorTex != 0) GL_CHECK(glDeleteTextures(1, &mColorTex));
+    }
 
     mFbo = mColorBuffer = mDepthStencilBuffer = mResolveFbo = mColorTex = 0;
+    mWidth = mHeight = 0;
+    mViewport = {};
+    mValid = false;
+    mExternal = false;
 }
 
 GlRenderTargetPool::GlRenderTargetPool(uint32_t maxWidth, uint32_t maxHeight): mMaxWidth(maxWidth), mMaxHeight(maxHeight), mPool() {}

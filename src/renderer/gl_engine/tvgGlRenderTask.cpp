@@ -224,7 +224,7 @@ void GlComposeTask::run()
 #endif
     // reset scissor box
     GL_CHECK(glScissor(0, 0, mFbo->getWidth(), mFbo->getHeight()));
-    onResolve();
+    if (mFbo->internal()) onResolve();
 }
 
 
