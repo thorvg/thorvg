@@ -42,6 +42,11 @@ private:
     // stage buffers
     WgStageBufferGeometry stageBufferGeometry{};
     WgStageBufferUniform<WgShaderTypePaintSettings> stageBufferPaint;
+    // texture preprocess
+    WGPUTexture texStaging{};
+    WGPUTextureView texViewStaging{};
+    WGPUBindGroup bindGroupTexStaging{};
+    Array<WgImageData*> texPreprocess;
     // global stencil/depth buffer handles
     WGPUTexture texDepthStencil{};
     WGPUTextureView texViewDepthStencil{};
