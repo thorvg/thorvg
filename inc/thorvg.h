@@ -2212,13 +2212,22 @@ struct TVG_API GlCanvas final : Canvas
     Result target(void* display, void* surface, void* context, int32_t id, uint32_t w, uint32_t h, ColorSpace cs) noexcept;
 
     /**
-     * @brief Creates a new GlCanvas object.
+     * @brief Creates a new OpenGL/ES Canvas object with optional rendering engine settings.
+     *
+     * This method generates a OpenGL canvas instance that can be used for drawing vector graphics.
+     * It accepts an optional parameter @p op to choose between different rendering engine behaviors.
+     *
+     * @param[in] op The rendering engine option. Default is @c EngineOption::Default.
      *
      * @return A new GlCanvas object.
      *
-     * @since 0.14
+     * @note Currently, it does not support @c EngineOption::SmartRender. The request will be ignored.
+     *
+     * @see enum EngineOption
+     *
+     * @since 1.0
      */
-    static GlCanvas* gen() noexcept;
+    static GlCanvas* gen(EngineOption op = EngineOption::Default) noexcept;
 
     _TVG_DECLARE_PRIVATE(GlCanvas);
 };
@@ -2259,13 +2268,22 @@ struct TVG_API WgCanvas final : Canvas
     Result target(void* device, void* instance, void* target, uint32_t w, uint32_t h, ColorSpace cs, int type = 0) noexcept;
 
     /**
-     * @brief Creates a new WgCanvas object.
+     * @brief Creates a new WebGPU Canvas object with optional rendering engine settings.
+     *
+     * This method generates a WebGPU canvas instance that can be used for drawing vector graphics.
+     * It accepts an optional parameter @p op to choose between different rendering engine behaviors.
+     *
+     * @param[in] op The rendering engine option. Default is @c EngineOption::Default.
      *
      * @return A new WgCanvas object.
      *
-     * @since 0.15
+     * @note Currently, it does not support @c EngineOption::SmartRender. The request will be ignored.
+     *
+     * @see enum EngineOption
+     *
+     * @since 1.0
      */
-    static WgCanvas* gen() noexcept;
+    static WgCanvas* gen(EngineOption op = EngineOption::Default) noexcept;
 
     _TVG_DECLARE_PRIVATE(WgCanvas);
 };

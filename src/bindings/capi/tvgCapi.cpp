@@ -68,15 +68,15 @@ TVG_API Tvg_Canvas tvg_swcanvas_create(Tvg_Engine_Option op)
 }
 
 
-TVG_API Tvg_Canvas tvg_glcanvas_create()
+TVG_API Tvg_Canvas tvg_glcanvas_create(Tvg_Engine_Option op)
 {
-    return (Tvg_Canvas) GlCanvas::gen();
+    return (Tvg_Canvas) GlCanvas::gen(static_cast<EngineOption>(op));
 }
 
 
-TVG_API Tvg_Canvas tvg_wgcanvas_create()
+TVG_API Tvg_Canvas tvg_wgcanvas_create(Tvg_Engine_Option op)
 {
-    return (Tvg_Canvas) WgCanvas::gen();
+    return (Tvg_Canvas) WgCanvas::gen(static_cast<EngineOption>(op));
 }
 
 

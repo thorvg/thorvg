@@ -437,7 +437,7 @@ TVG_API Tvg_Result tvg_engine_version(uint32_t* major, uint32_t* minor, uint32_t
 /************************************************************************/
 
 /**
- * @brief Creates a new SwCanvas object with optional rendering engine settings.
+ * @brief Creates a new Software Canvas object with optional rendering engine settings.
  *
  * This method generates a software canvas instance that can be used for drawing vector graphics.
  * It accepts an optional parameter @p op to choose between different rendering engine behaviors.
@@ -492,13 +492,22 @@ TVG_API Tvg_Result tvg_swcanvas_set_target(Tvg_Canvas canvas, uint32_t* buffer, 
 /************************************************************************/
 
 /**
- * @brief Creates a OpenGL rasterizer Canvas object.
+ * @brief Creates a new OpenGL/ES Canvas object with optional rendering engine settings.
+ *
+ * This method generates a OpenGL/ES canvas instance that can be used for drawing vector graphics.
+ * It accepts an optional parameter @p op to choose between different rendering engine behaviors.
+ *
+ * @param[in] op The rendering engine option.
  *
  * @return A new Tvg_Canvas object.
  *
- * @since 1.0.0
+ * @note Currently, it does not support @c TVG_ENGINE_OPTION_SMART_RENDER. The request will be ignored.
+ *
+ * @see enum Tvg_Engine_Option
+ *
+ * @since 1.0
  */
-TVG_API Tvg_Canvas tvg_glcanvas_create(void);
+TVG_API Tvg_Canvas tvg_glcanvas_create(Tvg_Engine_Option op);
 
 
 /**
@@ -545,13 +554,22 @@ TVG_API Tvg_Result tvg_glcanvas_set_target(Tvg_Canvas canvas, void* display, voi
 /************************************************************************/
 
 /**
- * @brief Creates a WebGPU rasterizer Canvas object.
+ * @brief Creates a new WebGPU Canvas object with optional rendering engine settings.
+ *
+ * This method generates a WebGPU canvas instance that can be used for drawing vector graphics.
+ * It accepts an optional parameter @p op to choose between different rendering engine behaviors.
+ *
+ * @param[in] op The rendering engine option.
  *
  * @return A new Tvg_Canvas object.
  *
- * @since 1.0.0
+ * @note Currently, it does not support @c TVG_ENGINE_OPTION_SMART_RENDER. The request will be ignored.
+ *
+ * @see enum Tvg_Engine_Option
+ *
+ * @since 1.0
  */
-TVG_API Tvg_Canvas tvg_wgcanvas_create(void);
+TVG_API Tvg_Canvas tvg_wgcanvas_create(Tvg_Engine_Option op);
 
 /**
  * @brief Sets the drawing target for the rasterization.
@@ -582,7 +600,6 @@ TVG_API Tvg_Result tvg_wgcanvas_set_target(Tvg_Canvas canvas, void* device, void
  *
  * @param[in] canvas The Tvg_Canvas object to be destroyed.
  *
- * @retval TVG_RESULT_INVALID_ARGUMENT An invalid pointer to the Tvg_Canvas object is passed.
  */
 TVG_API Tvg_Result tvg_canvas_destroy(Tvg_Canvas canvas);
 
