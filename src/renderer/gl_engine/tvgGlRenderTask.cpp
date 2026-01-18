@@ -331,30 +331,24 @@ void GlSceneBlendTask::run()
     GlComposeTask::run();
 
     const auto& vp = getViewport();
+    const auto width = mSrcFbo->getWidth();
+    const auto height = mSrcFbo->getHeight();
+    if (width <= 0 || height <= 0) return;
 
-    // For EMSCRIPTEN: perform an intermediate blit from multisampled FBO to resolve FBO
-    // Then perform a final blit to destination framebuffer.
-    // For other platforms: direct blit from target FBO to destination resolve FBO.
-
-    // Platform-specific source framebuffer binding
-#ifdef __EMSCRIPTEN__
     GL_CHECK(glBindFramebuffer(GL_READ_FRAMEBUFFER, mSrcFbo->getFboId()));
-    GL_CHECK(glBindFramebuffer(GL_DRAW_FRAMEBUFFER, mSrcFbo->getResolveFboId()));
-    GL_CHECK(glViewport(vp.x(), vp.y(), vp.w(), vp.h()));
-    GL_CHECK(glScissor(vp.x(), vp.y(), vp.w(), vp.h()));
-    GL_CHECK(glBlitFramebuffer(vp.min.x, vp.min.y, vp.max.x, vp.max.y, vp.min.x, vp.min.y, vp.max.x, vp.max.y, GL_COLOR_BUFFER_BIT, GL_LINEAR));
-
-    // Prepare for second blit to destination framebuffer
-    GL_CHECK(glBindFramebuffer(GL_READ_FRAMEBUFFER, mSrcFbo->getResolveFboId()));
-#else
-    GL_CHECK(glBindFramebuffer(GL_READ_FRAMEBUFFER, getTargetFbo()));
-#endif
-
-    // Common: bind destination framebuffer and blit
     GL_CHECK(glBindFramebuffer(GL_DRAW_FRAMEBUFFER, mDstCopyFbo->getResolveFboId()));
-    GL_CHECK(glViewport(0, 0, mDstCopyFbo->getWidth(), mDstCopyFbo->getHeight()));
-    GL_CHECK(glScissor(0, 0, mDstCopyFbo->getWidth(), mDstCopyFbo->getHeight()));
+
+#if defined(THORVG_GL_TARGET_GL)
+    const auto& srcVp = mSrcFbo->getViewport();
+    // Copy current target into dstCopyFbo for blending.
+    GL_CHECK(glViewport(0, 0, srcVp.w(), srcVp.h()));
+    GL_CHECK(glScissor(0, 0, srcVp.w(), srcVp.h()));
     GL_CHECK(glBlitFramebuffer(vp.min.x, vp.min.y, vp.max.x, vp.max.y, 0, 0, vp.w(), vp.h(), GL_COLOR_BUFFER_BIT, GL_LINEAR));
+#else // TODO: create partial buffer when MSAA is disabled
+    GL_CHECK(glViewport(0, 0, width, height));
+    GL_CHECK(glScissor(vp.min.x, vp.min.y, vp.w(), vp.h()));
+    GL_CHECK(glBlitFramebuffer(vp.min.x, vp.min.y, vp.max.x, vp.max.y, vp.min.x, vp.min.y, vp.max.x, vp.max.y, GL_COLOR_BUFFER_BIT, GL_NEAREST));
+#endif
 
     GL_CHECK(glBindFramebuffer(GL_FRAMEBUFFER, getTargetFbo()));
     GL_CHECK(glViewport(0, 0, mParentWidth, mParentHeight));
@@ -433,12 +427,22 @@ void GlDirectBlendTask::run()
     if (width <= 0 || height <= 0) return;
     auto x = mCopyRegion.sx();
     auto y = mCopyRegion.sy();
+    const auto fboW = mDstFbo->getWidth();
+    const auto fboH = mDstFbo->getHeight();
+    if (fboW <= 0 || fboH <= 0) return;
 
     GL_CHECK(glBindFramebuffer(GL_READ_FRAMEBUFFER, mDstFbo->getFboId()));
     GL_CHECK(glBindFramebuffer(GL_DRAW_FRAMEBUFFER, mDstCopyFbo->getResolveFboId()));
+
+#if defined(THORVG_GL_TARGET_GL)
     GL_CHECK(glViewport(0, 0, width, height));
     GL_CHECK(glScissor(0, 0, width, height));
     GL_CHECK(glBlitFramebuffer(x, y, x + width, y + height, 0, 0, width, height, GL_COLOR_BUFFER_BIT, GL_LINEAR));
+#else // TODO: create partial buffer when MSAA is disabled
+    GL_CHECK(glViewport(0, 0, fboW, fboH));
+    GL_CHECK(glScissor(x, y, width, height));
+    GL_CHECK(glBlitFramebuffer(x, y, x + width, y + height, x, y, x + width, y + height, GL_COLOR_BUFFER_BIT, GL_NEAREST));
+#endif
     GL_CHECK(glBindFramebuffer(GL_FRAMEBUFFER, mDstFbo->getFboId()));
     const auto& dstVp = mDstFbo->getViewport();
     GL_CHECK(glViewport(0, 0, dstVp.w(), dstVp.h()));
@@ -471,15 +475,25 @@ void GlComplexBlendTask::run()
 {
     mComposeTask->run();
 
-    // copy the current fbo to the dstCopyFbo
+    const auto& vp = getViewport();
+    const auto width = mDstFbo->getWidth();
+    const auto height = mDstFbo->getHeight();
+    if (width <= 0 || height <= 0) return;
+
     GL_CHECK(glBindFramebuffer(GL_READ_FRAMEBUFFER, mDstFbo->getFboId()));
     GL_CHECK(glBindFramebuffer(GL_DRAW_FRAMEBUFFER, mDstCopyFbo->getResolveFboId()));
 
-    GL_CHECK(glViewport(0, 0, mDstFbo->getViewport().w(), mDstFbo->getViewport().h()));
-    GL_CHECK(glScissor(0, 0, mDstFbo->getViewport().w(), mDstFbo->getViewport().h()));
-    
-    const auto& vp = getViewport();
+#if defined(THORVG_GL_TARGET_GL)
+    const auto& dstVp = mDstFbo->getViewport();
+    // copy the current fbo to the dstCopyFbo
+    GL_CHECK(glViewport(0, 0, dstVp.w(), dstVp.h()));
+    GL_CHECK(glScissor(0, 0, dstVp.w(), dstVp.h()));
     GL_CHECK(glBlitFramebuffer(vp.min.x, vp.min.y, vp.max.x, vp.max.y, 0, 0, vp.w(), vp.h(), GL_COLOR_BUFFER_BIT, GL_LINEAR));
+#else // TODO: create partial buffer when MSAA is disabled
+    GL_CHECK(glViewport(0, 0, width, height));
+    GL_CHECK(glScissor(vp.min.x, vp.min.y, vp.w(), vp.h()));
+    GL_CHECK(glBlitFramebuffer(vp.min.x, vp.min.y, vp.max.x, vp.max.y, vp.min.x, vp.min.y, vp.max.x, vp.max.y, GL_COLOR_BUFFER_BIT, GL_NEAREST));
+#endif
 
     GL_CHECK(glBindFramebuffer(GL_FRAMEBUFFER, mDstFbo->getFboId()));
 
