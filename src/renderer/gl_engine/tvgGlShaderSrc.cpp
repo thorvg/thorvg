@@ -682,6 +682,10 @@ vec4 postProcess(vec4 R) { return mix(vec4(d.Dc, d.Da), R, d.Sa * d.So); }
 )";
 
 const char* BLEND_IMAGE_FRAG_HEADER = R"(
+layout(std140) uniform BlendRegion {
+    vec4 region;
+} uBlendRegion;
+
 uniform sampler2D uSrcTexture;
 uniform sampler2D uDstTexture;
 
@@ -695,7 +699,8 @@ FragData d;
 void getFragData() {
     // get source data
     vec4 colorSrc = texture(uSrcTexture, vUV);
-    vec4 colorDst = texture(uDstTexture, vUV);
+    vec2 uvDst = (gl_FragCoord.xy - uBlendRegion.region.xy) / uBlendRegion.region.zw;
+    vec4 colorDst = texture(uDstTexture, uvDst);
     // fill fragment data
     d.Sc = colorSrc.rgb;
     d.Sa = colorSrc.a;
@@ -715,6 +720,11 @@ layout(std140) uniform ColorInfo {
     int opacity;
     int dummy;
 } uColorInfo;
+
+layout(std140) uniform BlendRegion {
+    vec4 region;
+} uBlendRegion;
+
 uniform sampler2D uSrcTexture;
 uniform sampler2D uDstTexture;
 
@@ -728,7 +738,8 @@ FragData d;
 void getFragData() {
     // get source data
     vec4 colorSrc = texture(uSrcTexture, vUV);
-    vec4 colorDst = texture(uDstTexture, vUV);
+    vec2 uvDst = (gl_FragCoord.xy - uBlendRegion.region.xy) / uBlendRegion.region.zw;
+    vec4 colorDst = texture(uDstTexture, uvDst);
     // fill fragment data
     d.Sc = colorSrc.rgb;
     d.Sa = colorSrc.a;
