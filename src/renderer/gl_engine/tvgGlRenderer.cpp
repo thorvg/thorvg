@@ -70,7 +70,7 @@ void GlRenderer::flush()
 bool GlRenderer::currentContext()
 {
 #if defined(__EMSCRIPTEN__)
-    const auto targetContext = static_cast<EMSCRIPTEN_WEBGL_CONTEXT_HANDLE>(mContext);
+    const auto targetContext = reinterpret_cast<EMSCRIPTEN_WEBGL_CONTEXT_HANDLE>(mContext);
     if (emscripten_webgl_get_current_context() == targetContext) return true;
     return emscripten_webgl_make_context_current(targetContext) == 0;
 #elif defined(_WIN32) && !defined(__CYGWIN__) && defined(THORVG_GL_TARGET_GL)
