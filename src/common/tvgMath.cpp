@@ -21,6 +21,7 @@
  */
 
 #include "tvgMath.h"
+#include "tvgArray.h"
 
 #define BEZIER_EPSILON 1e-2f
 
@@ -477,13 +478,30 @@ bool Bezier::flatten() const
 }
 
 
-//TODO: Consider to use while() instead of recursive stack calls
 uint32_t Bezier::segments() const
 {
-    if (flatten()) return 1;
+    static constexpr uint32_t MaxSegments = 1u << 10; // 2^10 segments cap keeps runtime bounded
+    uint32_t count = 0;
+    Array<Bezier> stack;
+    stack.push(*this);
     Bezier left, right;
-    split(left, right);
-    return left.segments() + right.segments();
+
+    while (!stack.empty()) {
+        auto current = stack.last();
+        stack.pop();
+        if (current.flatten()) {
+            ++count;
+            continue;
+        }
+        if (count + stack.count + 2 >= MaxSegments) {
+            TVGERR("Common", "Bezier segments count exceeded the maximum limit.");
+            return MaxSegments;
+        }
+        current.split(left, right);
+        stack.push(left);
+        stack.push(right);
+    }
+    return count;
 }
 
 
