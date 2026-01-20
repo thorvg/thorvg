@@ -25,48 +25,35 @@
 
 #include "tvgGlCommon.h"
 
-class GlRenderTarget
+struct GlRenderTarget
 {
-public:
     GlRenderTarget();
     ~GlRenderTarget();
 
     void init(uint32_t width, uint32_t height, GLint resolveId);
     void reset();
 
-    GLuint getFboId() { return mFbo; }
-    GLuint getResolveFboId() { return mResolveFbo; }
-    GLuint getColorTexture() { return mColorTex; }
+    bool invalid() const { return fbo == 0; }
 
-    uint32_t getWidth() const { return mWidth; }
-    uint32_t getHeight() const { return mHeight; }
-
-    void setViewport(const RenderRegion& vp) { mViewport = vp; }
-    const RenderRegion& getViewport() const { return mViewport; }
-
-    bool invalid() const { return mFbo == 0; }
+    RenderRegion viewport{};
+    uint32_t width = 0, height = 0;
+    GLuint resolvedFbo = 0, fbo = 0, colorTex = 0;
 
 private:
-    uint32_t mWidth = 0;
-    uint32_t mHeight = 0;
-    RenderRegion mViewport{};
-    GLuint mFbo = 0;
-    GLuint mColorBuffer = 0;
-    GLuint mDepthStencilBuffer = 0;
-    GLuint mResolveFbo = 0;
-    GLuint mColorTex = 0;
+    GLuint colorBuffer = 0;
+    GLuint depthStencilBuffer = 0;
 };
 
-class GlRenderTargetPool {
-public:
+
+struct GlRenderTargetPool
+{
     GlRenderTargetPool(uint32_t maxWidth, uint32_t maxHeight);
     ~GlRenderTargetPool();
-
     GlRenderTarget* getRenderTarget(const RenderRegion& vp, GLuint resolveId = 0);
 private:
-    uint32_t mMaxWidth = 0;
-    uint32_t mMaxHeight = 0;
-    Array<GlRenderTarget*> mPool;
+    uint32_t maxWidth = 0;
+    uint32_t maxHeight = 0;
+    Array<GlRenderTarget*> pool;
 };
 
 #endif //_TVG_GL_RENDER_RENDER_TARGET_H_

@@ -33,34 +33,34 @@ void GlRenderTarget::init(uint32_t width, uint32_t height, GLint resolveId)
 {
     if (width == 0 || height == 0) return;
 
-    mWidth = width;
-    mHeight = height;
+    this->width = width;
+    this->height = height;
 
     //TODO: fbo is used. maybe we can consider the direct rendering with resolveId as well.
-    GL_CHECK(glGenFramebuffers(1, &mFbo));
+    GL_CHECK(glGenFramebuffers(1, &fbo));
 
-    GL_CHECK(glBindFramebuffer(GL_FRAMEBUFFER, mFbo));
+    GL_CHECK(glBindFramebuffer(GL_FRAMEBUFFER, fbo));
 
-    GL_CHECK(glGenRenderbuffers(1, &mColorBuffer));
-    GL_CHECK(glBindRenderbuffer(GL_RENDERBUFFER, mColorBuffer));
-    GL_CHECK(glRenderbufferStorageMultisample(GL_RENDERBUFFER, 4, GL_RGBA8, mWidth, mHeight));
+    GL_CHECK(glGenRenderbuffers(1, &colorBuffer));
+    GL_CHECK(glBindRenderbuffer(GL_RENDERBUFFER, colorBuffer));
+    GL_CHECK(glRenderbufferStorageMultisample(GL_RENDERBUFFER, 4, GL_RGBA8, width, height));
 
-    GL_CHECK(glGenRenderbuffers(1, &mDepthStencilBuffer));
+    GL_CHECK(glGenRenderbuffers(1, &depthStencilBuffer));
 
-    GL_CHECK(glBindRenderbuffer(GL_RENDERBUFFER, mDepthStencilBuffer));
+    GL_CHECK(glBindRenderbuffer(GL_RENDERBUFFER, depthStencilBuffer));
 
-    GL_CHECK(glRenderbufferStorageMultisample(GL_RENDERBUFFER, 4, GL_DEPTH24_STENCIL8, mWidth, mHeight));
+    GL_CHECK(glRenderbufferStorageMultisample(GL_RENDERBUFFER, 4, GL_DEPTH24_STENCIL8, width, height));
 
     GL_CHECK(glBindRenderbuffer(GL_RENDERBUFFER, 0));
 
-    GL_CHECK(glFramebufferRenderbuffer(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, GL_RENDERBUFFER, mColorBuffer));
-    GL_CHECK(glFramebufferRenderbuffer(GL_FRAMEBUFFER, GL_DEPTH_STENCIL_ATTACHMENT, GL_RENDERBUFFER, mDepthStencilBuffer));
+    GL_CHECK(glFramebufferRenderbuffer(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, GL_RENDERBUFFER, colorBuffer));
+    GL_CHECK(glFramebufferRenderbuffer(GL_FRAMEBUFFER, GL_DEPTH_STENCIL_ATTACHMENT, GL_RENDERBUFFER, depthStencilBuffer));
 
     // resolve target
-    GL_CHECK(glGenTextures(1, &mColorTex));
+    GL_CHECK(glGenTextures(1, &colorTex));
 
-    GL_CHECK(glBindTexture(GL_TEXTURE_2D, mColorTex));
-    GL_CHECK(glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA8, mWidth, mHeight, 0, GL_RGBA, GL_UNSIGNED_BYTE, nullptr));
+    GL_CHECK(glBindTexture(GL_TEXTURE_2D, colorTex));
+    GL_CHECK(glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA8, width, height, 0, GL_RGBA, GL_UNSIGNED_BYTE, nullptr));
 
     GL_CHECK(glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE));
     GL_CHECK(glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE));
@@ -69,33 +69,33 @@ void GlRenderTarget::init(uint32_t width, uint32_t height, GLint resolveId)
 
     GL_CHECK(glBindTexture(GL_TEXTURE_2D, 0));
 
-    GL_CHECK(glGenFramebuffers(1, &mResolveFbo));
-    GL_CHECK(glBindFramebuffer(GL_FRAMEBUFFER, mResolveFbo));
-    GL_CHECK(glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, GL_TEXTURE_2D, mColorTex, 0));
+    GL_CHECK(glGenFramebuffers(1, &resolvedFbo));
+    GL_CHECK(glBindFramebuffer(GL_FRAMEBUFFER, resolvedFbo));
+    GL_CHECK(glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, GL_TEXTURE_2D, colorTex, 0));
 
     GL_CHECK(glBindFramebuffer(GL_FRAMEBUFFER, resolveId));
 }
 
 void GlRenderTarget::reset()
 {
-    if (mFbo == 0) return;
+    if (fbo == 0) return;
 
     GL_CHECK(glBindFramebuffer(GL_FRAMEBUFFER, 0));
-    GL_CHECK(glDeleteFramebuffers(1, &mFbo));
-    GL_CHECK(glDeleteRenderbuffers(1, &mColorBuffer));
-    GL_CHECK(glDeleteRenderbuffers(1, &mDepthStencilBuffer));
-    GL_CHECK(glDeleteFramebuffers(1, &mResolveFbo));
-    GL_CHECK(glDeleteTextures(1, &mColorTex));
+    GL_CHECK(glDeleteFramebuffers(1, &fbo));
+    GL_CHECK(glDeleteRenderbuffers(1, &colorBuffer));
+    GL_CHECK(glDeleteRenderbuffers(1, &depthStencilBuffer));
+    GL_CHECK(glDeleteFramebuffers(1, &resolvedFbo));
+    GL_CHECK(glDeleteTextures(1, &colorTex));
 
-    mFbo = mColorBuffer = mDepthStencilBuffer = mResolveFbo = mColorTex = 0;
+    fbo = colorBuffer = depthStencilBuffer = resolvedFbo = colorTex = 0;
 }
 
-GlRenderTargetPool::GlRenderTargetPool(uint32_t maxWidth, uint32_t maxHeight): mMaxWidth(maxWidth), mMaxHeight(maxHeight), mPool() {}
+GlRenderTargetPool::GlRenderTargetPool(uint32_t maxWidth, uint32_t maxHeight): maxWidth(maxWidth), maxHeight(maxHeight), pool() {}
 
 GlRenderTargetPool::~GlRenderTargetPool()
 {
-    for (uint32_t i = 0; i < mPool.count; i++) {
-        delete mPool[i];
+    for (uint32_t i = 0; i < pool.count; i++) {
+        delete pool[i];
     }
 }
 
@@ -114,25 +114,25 @@ GlRenderTarget* GlRenderTargetPool::getRenderTarget(const RenderRegion& vp, GLui
     auto height = vp.h();
 
     // pow2 align width and height
-    if (width >= mMaxWidth) width = mMaxWidth;
+    if (width >= maxWidth) width = maxWidth;
     else width = alignPow2(width);
-    if (width >= mMaxWidth) width = mMaxWidth;
+    if (width >= maxWidth) width = maxWidth;
 
-    if (height >= mMaxHeight) height = mMaxHeight;
+    if (height >= maxHeight) height = maxHeight;
     else height = alignPow2(height);
-    if (height >= mMaxHeight) height = mMaxHeight;
+    if (height >= maxHeight) height = maxHeight;
 
-    for (uint32_t i = 0; i < mPool.count; i++) {
-        auto rt = mPool[i];
-        if (rt->getWidth() == width && rt->getHeight() == height) {
-            rt->setViewport(vp);
+    for (uint32_t i = 0; i < pool.count; i++) {
+        auto rt = pool[i];
+        if (rt->width == width && rt->height == height) {
+            rt->viewport = vp;
             return rt;
         }
     }
 
     auto rt = new GlRenderTarget();
     rt->init(width, height, resolveId);
-    rt->setViewport(vp);
-    mPool.push(rt);
+    rt->viewport = vp;
+    pool.push(rt);
     return rt;
 }
