@@ -266,7 +266,7 @@ SwRenderer::~SwRenderer()
 
     if (!sharedMpool) mpoolTerm(mpool);
 
-    --rendererCnt;
+    rendererCnt.fetch_sub(1);
 }
 
 
@@ -909,25 +909,33 @@ bool SwRenderer::term()
 {
     if (rendererCnt > 0) return false;
 
-    mpoolTerm(globalMpool);
-    globalMpool = nullptr;
-    rendererCnt = -1;
+    bool initialised = false;
 
-    return true;
+    int expected = rendererCnt.load();
+    while (expected <= 0) {
+        if (rendererCnt.compare_exchange_weak(expected, -1)) {
+            mpoolTerm(globalMpool);
+            globalMpool = nullptr;
+            initialised = true;
+            break; // Successfully set to -1
+        }
+    }
+    return initialised;
 }
 
 
 SwRenderer::SwRenderer(uint32_t threads, EngineOption op)
 {
     //initialize engine
-    if (rendererCnt == -1) {
+    int32_t rc = rendererCnt.fetch_add(1);
+    if (rc == -1) {
 #ifdef THORVG_OPENMP_SUPPORT
         omp_set_num_threads(threads);
 #endif
         //Share the memory pool among the renderer
         globalMpool = mpoolInit(threads);
         threadsCnt = threads;
-        rendererCnt = 0;
+        rendererCnt.fetch_add(1);
     }
 
     if (TaskScheduler::onthread()) {
@@ -940,6 +948,4 @@ SwRenderer::SwRenderer(uint32_t threads, EngineOption op)
     }
 
     if (op == EngineOption::None) dirtyRegion.support = false;
-
-    ++rendererCnt;
 }
