@@ -41,15 +41,15 @@ public:
 
     void addRenderTask(GlRenderTask* task);
 
-    GLuint getFboId() { return mFbo->getFboId(); }
+    GLuint getFboId() { return mFbo->fbo; }
 
-    GLuint getTextureId() { return mFbo->getColorTexture(); }
+    GLuint getTextureId() { return mFbo->colorTex; }
 
-    const RenderRegion& getViewport() const { return mFbo->getViewport(); }
+    const RenderRegion& getViewport() const { return mFbo->viewport; }
 
-    uint32_t getFboWidth() const { return mFbo->getWidth(); }
+    uint32_t getFboWidth() const { return mFbo->width; }
 
-    uint32_t getFboHeight() const { return mFbo->getHeight(); }
+    uint32_t getFboHeight() const { return mFbo->height; }
 
     void getMatrix(float dst[GL_MAT3_STD140_SIZE], const Matrix& matrix) const;
 
@@ -62,7 +62,7 @@ public:
         }
 
         auto task = new T(program, targetFbo, mFbo, std::move(mTasks));
-        task->setRenderSize(mFbo->getViewport().w(),  mFbo->getViewport().h());
+        task->setRenderSize(mFbo->viewport.w(),  mFbo->viewport.h());
 
         return task;
     }

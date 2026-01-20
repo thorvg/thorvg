@@ -257,19 +257,9 @@ void GlRenderer::drawPrimitive(GlShape& sdata, const RenderColor& c, RenderUpdat
 
     if (blendShape && dstCopyFbo) {
 #if defined(THORVG_GL_TARGET_GL)
-        float region[] = {
-            static_cast<float>(viewRegion.sx()),
-            static_cast<float>(viewRegion.sy()),
-            static_cast<float>(dstCopyFbo->getWidth()),
-            static_cast<float>(dstCopyFbo->getHeight())
-        };
+        float region[] = {float(viewRegion.sx()), float(viewRegion.sy()), float(dstCopyFbo->width), float(dstCopyFbo->height)};
 #else // TODO: create partial buffer when MSAA is disabled        
-        float region[] = {
-            0.0f,
-            0.0f,
-            static_cast<float>(dstCopyFbo->getWidth()),
-            static_cast<float>(dstCopyFbo->getHeight())
-        };
+        float region[] = {0.0f, 0.0f, float(dstCopyFbo->width), float(dstCopyFbo->height)};
 #endif
         task->addBindResource(GlBindingResource{
             2,
@@ -279,7 +269,7 @@ void GlRenderer::drawPrimitive(GlShape& sdata, const RenderColor& c, RenderUpdat
             4 * sizeof(float),
         });
 
-        task->addBindResource(GlBindingResource{0, dstCopyFbo->getColorTexture(), task->getProgram()->getUniformLocation("uDstTexture")});
+        task->addBindResource(GlBindingResource{0, dstCopyFbo->colorTex, task->getProgram()->getUniformLocation("uDstTexture")});
     }
 
     if (stencilTask) currentPass()->addRenderTask(new GlStencilCoverTask(stencilTask, task, stencilMode));
@@ -471,17 +461,9 @@ void GlRenderer::drawPrimitive(GlShape& sdata, const Fill* fill, RenderUpdateFla
 
     if (blendShape && dstCopyFbo) {
 #if defined(THORVG_GL_TARGET_GL)
-        float region[] = {
-            static_cast<float>(viewRegion.sx()),
-            static_cast<float>(viewRegion.sy()),
-            static_cast<float>(dstCopyFbo->getWidth()),
-            static_cast<float>(dstCopyFbo->getHeight())};
+        float region[] = {float(viewRegion.sx()), float(viewRegion.sy()), float(dstCopyFbo->width), float(dstCopyFbo->height)};
 #else // TODO: create partial buffer when MSAA is disabled        
-        float region[] = {
-            0.0f,
-            0.0f,
-            static_cast<float>(dstCopyFbo->getWidth()),
-            static_cast<float>(dstCopyFbo->getHeight())};
+        float region[] = {0.0f, 0.0f, float(dstCopyFbo->width), float(dstCopyFbo->height)};
 #endif
         task->addBindResource(GlBindingResource{
             3,
@@ -490,7 +472,7 @@ void GlRenderer::drawPrimitive(GlShape& sdata, const Fill* fill, RenderUpdateFla
             mGpuBuffer.push(region, 4 * sizeof(float), true),
             4 * sizeof(float),
         });
-        task->addBindResource(GlBindingResource{0, dstCopyFbo->getColorTexture(), task->getProgram()->getUniformLocation("uDstTexture")});
+        task->addBindResource(GlBindingResource{0, dstCopyFbo->colorTex, task->getProgram()->getUniformLocation("uDstTexture")});
     }
 
     if (stencilTask) {
@@ -644,19 +626,9 @@ void GlRenderer::endBlendingCompose(GlRenderTask* stencilTask, const Matrix& mat
 
 #if defined(THORVG_GL_TARGET_GL)
     const auto& taskVp = task->getViewport();
-    float region[] = {
-        static_cast<float>(taskVp.sx()),
-        static_cast<float>(taskVp.sy()),
-        static_cast<float>(dstCopyFbo->getWidth()),
-        static_cast<float>(dstCopyFbo->getHeight())
-    };
+    float region[] = {float(taskVp.sx()), float(taskVp.sy()), float(dstCopyFbo->width), float(dstCopyFbo->height)};
 #else // TODO: create partial buffer when MSAA is disabled
-    float region[] = {
-        0.0f,
-        0.0f,
-        static_cast<float>(dstCopyFbo->getWidth()),
-        static_cast<float>(dstCopyFbo->getHeight())
-    };
+    float region[] = {0.0f, 0.0f, float(dstCopyFbo->width), float(dstCopyFbo->height)};
 #endif
     task->addBindResource(GlBindingResource{
         0,
@@ -667,8 +639,8 @@ void GlRenderer::endBlendingCompose(GlRenderTask* stencilTask, const Matrix& mat
     });
 
     // src and dst texture
-    task->addBindResource(GlBindingResource{1, blendPass->getFbo()->getColorTexture(), task->getProgram()->getUniformLocation("uSrcTexture")});
-    task->addBindResource(GlBindingResource{2, dstCopyFbo->getColorTexture(), task->getProgram()->getUniformLocation("uDstTexture")});
+    task->addBindResource(GlBindingResource{1, blendPass->getFbo()->colorTex, task->getProgram()->getUniformLocation("uSrcTexture")});
+    task->addBindResource(GlBindingResource{2, dstCopyFbo->colorTex, task->getProgram()->getUniformLocation("uDstTexture")});
 
     currentPass()->addRenderTask(task);
 
@@ -900,15 +872,13 @@ void GlRenderer::endRenderPass(RenderCompositor* cmp)
         mRenderPassStack.pop();
 
         if (!renderPass->isEmpty()) {
-            const auto& vp = renderPass->getViewport();
             if (mBlendPool.count < 1) mBlendPool.push(new GlRenderTargetPool(surface.w, surface.h));
             if (mBlendPool.count < 2) mBlendPool.push(new GlRenderTargetPool(surface.w, surface.h));
 #if defined(THORVG_GL_TARGET_GL)
-            auto dstCopyFbo = mBlendPool[1]->getRenderTarget(vp);
+            auto dstCopyFbo = mBlendPool[1]->getRenderTarget(renderPass->getViewport());
 #else // TODO: create partial buffer when MSAA is disabled
             auto dstCopyFbo = mBlendPool[1]->getRenderTarget(currentPass()->getViewport());
 #endif
-
             // image info
             uint32_t info[4] = {(uint32_t)ColorSpace::ABGR8888, 0, cmp->opacity, 0};
 
@@ -921,19 +891,9 @@ void GlRenderer::endRenderPass(RenderCompositor* cmp)
             task->setDrawDepth(currentPass()->nextDrawDepth());
 #if defined(THORVG_GL_TARGET_GL)
             const auto& taskVp = task->getViewport();
-            float region[] = {
-                static_cast<float>(taskVp.sx()),
-                static_cast<float>(taskVp.sy()),
-                static_cast<float>(dstCopyFbo->getWidth()),
-                static_cast<float>(dstCopyFbo->getHeight())
-            };
+            float region[] = {float(taskVp.sx()), float(taskVp.sy()), float(dstCopyFbo->width), float(dstCopyFbo->height)};
 #else // TODO: create partial buffer when MSAA is disabled
-            float region[] = {
-                0.0f,
-                0.0f,
-                static_cast<float>(dstCopyFbo->getWidth()),
-                static_cast<float>(dstCopyFbo->getHeight())
-            };
+            float region[] = {0.0f, 0.0f, float(dstCopyFbo->width), float(dstCopyFbo->height)};
 #endif
             task->addBindResource(GlBindingResource{
                 1,
@@ -946,7 +906,7 @@ void GlRenderer::endRenderPass(RenderCompositor* cmp)
             task->addBindResource(GlBindingResource{0, task->getProgram()->getUniformBlockIndex("ColorInfo"), mGpuBuffer.getBufferId(), mGpuBuffer.push(info, sizeof(info), true), sizeof(info)});
             // textures
             task->addBindResource(GlBindingResource{0, renderPass->getTextureId(), task->getProgram()->getUniformLocation("uSrcTexture")});
-            task->addBindResource(GlBindingResource{1, dstCopyFbo->getColorTexture(), task->getProgram()->getUniformLocation("uDstTexture")});
+            task->addBindResource(GlBindingResource{1, dstCopyFbo->colorTex, task->getProgram()->getUniformLocation("uDstTexture")});
             task->setParentSize(currentPass()->getViewport().w(), currentPass()->getViewport().h());
             currentPass()->addRenderTask(std::move(task));
         }
@@ -1029,7 +989,7 @@ bool GlRenderer::target(void* display, void* surface, void* context, int32_t id,
 
     auto ret = currentContext();
 
-    mRootTarget.setViewport({{0, 0}, {int32_t(this->surface.w), int32_t(this->surface.h)}});
+    mRootTarget.viewport = {{0, 0}, {int32_t(this->surface.w), int32_t(this->surface.h)}};
     mRootTarget.init(this->surface.w, this->surface.h, mTargetFboId);
 
     return ret;
