@@ -282,7 +282,7 @@
         //typedef void (*PFNGLTEXIMAGE1DPROC)(GLenum target, GLint level, GLint internalformat, GLsizei width, GLint border, GLenum format, GLenum type, const void *pixels);
         //typedef void (*PFNGLSTENCILMASKPROC) (GLuint mask);
         //typedef void (*PFNGLFINISHPROC)(void);
-        //typedef void (*PFNGLFLUSHPROC)(void);
+        typedef void (*PFNGLFLUSHPROC)(void);
         //typedef void (*PFNGLLOGICOPPROC)(GLenum opcode);
         //typedef void (*PFNGLPIXELSTOREFPROC)(GLenum pname, GLfloat param);
         //typedef void (*PFNGLPIXELSTOREIPROC)(GLenum pname, GLint param);
@@ -347,7 +347,7 @@
         //typedef void (*PFNGLCOPYTEXSUBIMAGE1DPROC)(GLenum target, GLint level, GLint xoffset, GLint x, GLint y, GLsizei width);
         //typedef void (*PFNGLCOPYTEXSUBIMAGE2DPROC)(GLenum target, GLint level, GLint xoffset, GLint yoffset, GLint x, GLint y, GLsizei width, GLsizei height);
         //typedef void (*PFNGLTEXSUBIMAGE1DPROC)(GLenum target, GLint level, GLint xoffset, GLsizei width, GLenum format, GLenum type, const void *pixels);
-        //typedef void (*PFNGLTEXSUBIMAGE2DPROC)(GLenum target, GLint level, GLint xoffset, GLint yoffset, GLsizei width, GLsizei height, GLenum format, GLenum type, const void *pixels);
+        typedef void (*PFNGLTEXSUBIMAGE2DPROC)(GLenum target, GLint level, GLint xoffset, GLint yoffset, GLsizei width, GLsizei height, GLenum format, GLenum type, const void *pixels);
         //typedef GLboolean (*PFNGLISTEXTUREPROC)(GLuint texture);
     #endif /* GL_VERSION_1_1 */
 
@@ -1030,7 +1030,7 @@
         //typedef void (*PFNGLCLAMPCOLORPROC)(GLenum target, GLenum clamp);
         //typedef void (*PFNGLBEGINCONDITIONALRENDERPROC)(GLuint id, GLenum mode);
         //typedef void (*PFNGLENDCONDITIONALRENDERPROC)(void);
-        //typedef void (*PFNGLVERTEXATTRIBIPOINTERPROC)(GLuint index, GLint size, GLenum type, GLsizei stride, const void *pointer);
+        typedef void (*PFNGLVERTEXATTRIBIPOINTERPROC)(GLuint index, GLint size, GLenum type, GLsizei stride, const void *pointer);
         //typedef void (*PFNGLGETVERTEXATTRIBIIVPROC)(GLuint index, GLenum pname, GLint *params);
         //typedef void (*PFNGLGETVERTEXATTRIBIUIVPROC)(GLuint index, GLenum pname, GLuint *params);
         //typedef void (*PFNGLVERTEXATTRIBI1IPROC)(GLuint index, GLint x);
@@ -1213,7 +1213,7 @@
     //extern PFNGLTEXIMAGE1DPROC             glTexImage1D;
     //extern PFNGLSTENCILMASKPROC            glStencilMask;
     //extern PFNGLFINISHPROC                 glFinish;
-    //extern PFNGLFLUSHPROC                  glFlush;
+    extern PFNGLFLUSHPROC                  glFlush;
     //extern PFNGLLOGICOPPROC                glLogicOp;
     //extern PFNGLPIXELSTOREFPROC            glPixelStoref;
     //extern PFNGLPIXELSTOREIPROC            glPixelStorei;
@@ -1243,7 +1243,7 @@
     //extern PFNGLCOPYTEXSUBIMAGE1DPROC glCopyTexSubImage1D;
     //extern PFNGLCOPYTEXSUBIMAGE2DPROC glCopyTexSubImage2D;
     //extern PFNGLTEXSUBIMAGE1DPROC     glTexSubImage1D;
-    //extern PFNGLTEXSUBIMAGE2DPROC     glTexSubImage2D;
+    extern PFNGLTEXSUBIMAGE2DPROC     glTexSubImage2D;
     //extern PFNGLISTEXTUREPROC         glIsTexture;
 
     //GL_VERSION_1_2
@@ -1428,7 +1428,7 @@
     //extern PFNGLCLAMPCOLORPROC                          glClampColor;
     //extern PFNGLBEGINCONDITIONALRENDERPROC              glBeginConditionalRender;
     //extern PFNGLENDCONDITIONALRENDERPROC                glEndConditionalRender;
-    //extern PFNGLVERTEXATTRIBIPOINTERPROC                glVertexAttribIPointer;
+    extern PFNGLVERTEXATTRIBIPOINTERPROC                glVertexAttribIPointer;
     //extern PFNGLGETVERTEXATTRIBIIVPROC                  glGetVertexAttribIiv;
     //extern PFNGLGETVERTEXATTRIBIUIVPROC                 glGetVertexAttribIuiv;
     //extern PFNGLVERTEXATTRIBI1IPROC                     glVertexAttribI1i;

@@ -260,7 +260,7 @@ void GlGeometry::tesselateImage(const RenderSurface* image)
 }
 
 
-bool GlGeometry::draw(GlRenderTask* task, GlStageBuffer* gpuBuffer, RenderUpdateFlag flag)
+bool GlGeometry::draw(GlRenderTask* task, GlStageBuffer* gpuBuffer, RenderUpdateFlag flag, uint32_t drawId, bool useDrawId)
 {
     if (flag == RenderUpdateFlag::None) return false;
 
@@ -271,12 +271,24 @@ bool GlGeometry::draw(GlRenderTask* task, GlStageBuffer* gpuBuffer, RenderUpdate
     auto indexOffset = gpuBuffer->pushIndex(buffer->index.data, buffer->index.count * sizeof(uint32_t));
 
     // vertex layout
+    uint32_t vertexCount = 0;
+    if (flag & RenderUpdateFlag::Image) {
+        vertexCount = buffer->vertex.count / 4;
+    } else {
+        vertexCount = buffer->vertex.count / 2;
+    }
+
+    uint32_t drawIdOffset = 0;
+    if (useDrawId) drawIdOffset = gpuBuffer->pushRepeated(drawId, vertexCount);
+
     if (flag & RenderUpdateFlag::Image) {
         // image has two attribute: [pos, uv]
         task->addVertexLayout(GlVertexLayout{0, 2, 4 * sizeof(float), vertexOffset});
         task->addVertexLayout(GlVertexLayout{1, 2, 4 * sizeof(float), vertexOffset + 2 * sizeof(float)});
+        if (useDrawId) task->addVertexLayout(GlVertexLayout{2, 1, sizeof(uint32_t), drawIdOffset, true});
     } else {
         task->addVertexLayout(GlVertexLayout{0, 2, 2 * sizeof(float), vertexOffset});
+        if (useDrawId) task->addVertexLayout(GlVertexLayout{1, 1, sizeof(uint32_t), drawIdOffset, true});
     }
     task->setDrawRange(indexOffset, buffer->index.count);
     return true;

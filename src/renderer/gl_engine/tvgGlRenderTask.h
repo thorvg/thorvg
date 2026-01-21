@@ -33,6 +33,7 @@ struct GlVertexLayout
     uint32_t size;
     uint32_t stride;
     size_t   offset;
+    bool isInteger = false;
 };
 
 enum class GlBindingType

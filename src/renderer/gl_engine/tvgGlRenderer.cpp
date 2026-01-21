@@ -47,12 +47,15 @@ void GlRenderer::clearDisposes()
 
     ARRAY_FOREACH(p, mRenderPassStack) delete(*p);
     mRenderPassStack.clear();
+
+    mSolidColorBatch = {};
 }
 
 
 void GlRenderer::flush()
 {
     clearDisposes();
+
 
     mRootTarget.reset();
 
@@ -80,9 +83,10 @@ bool GlRenderer::currentContext()
     if (tvgEglGetCurrentContext() == static_cast<EGLContext>(mContext)) return true;
     if (mDisplay && mSurface) return (bool) tvgEglMakeCurrent((EGLDisplay)mDisplay, (EGLSurface)mSurface, (EGLSurface)mSurface, (EGLContext)mContext);
 #endif
-    TVGLOG("GL_ENGINE", "Maybe missing currentContext()?");
+    // TVGLOG("GL_ENGINE", "Maybe missing currentContext()?");
     return true;
 }
+
 
 
 GlRenderer::GlRenderer() : mEffect(GlEffect(&mGpuBuffer))
@@ -178,6 +182,88 @@ void GlRenderer::drawPrimitive(GlShape& sdata, const RenderColor& c, RenderUpdat
     auto yGl = vp.sh() - y - h;
     RenderRegion viewRegion = {{x, yGl}, {x + w, yGl + h}};
 
+    auto& geometryBuffer = (flag & RenderUpdateFlag::Stroke) ? sdata.geometry.stroke : sdata.geometry.fill;
+    GlStencilMode stencilMode = sdata.geometry.getStencilMode(flag);
+
+    if (!blendShape && stencilMode == GlStencilMode::None) {
+        struct GlSolidVertex {
+            float x;
+            float y;
+            uint32_t drawId;
+        };
+
+        uint32_t drawId = mPrepareDrawId;
+        bool appended = false;
+        auto appendSolidNoStencil = [&]() -> GlRenderTask* {
+            if (geometryBuffer.index.count == 0) return nullptr;
+
+            uint32_t vertexCount = geometryBuffer.vertex.count / 2;
+            if (vertexCount == 0) return nullptr;
+
+            Array<GlSolidVertex> vertices;
+            vertices.reserve(vertexCount);
+            for (uint32_t i = 0; i < vertexCount; ++i) {
+                vertices.push({geometryBuffer.vertex.data[i * 2], geometryBuffer.vertex.data[i * 2 + 1], drawId});
+            }
+
+            uint32_t vertexOffset = mGpuBuffer.push(vertices.data, vertices.count * sizeof(GlSolidVertex));
+
+            Array<uint32_t> indices;
+            indices.reserve(geometryBuffer.index.count);
+            for (uint32_t i = 0; i < geometryBuffer.index.count; ++i) {
+                indices.push(geometryBuffer.index.data[i]);
+            }
+
+            uint32_t indexOffset = mGpuBuffer.pushIndex(indices.data, indices.count * sizeof(uint32_t));
+
+            auto task = new GlRenderTask(mPrograms[RT_Color]);
+            task->setDrawDepth(depth);
+            task->addVertexLayout(GlVertexLayout{0, 2, sizeof(GlSolidVertex), vertexOffset});
+            task->addVertexLayout(GlVertexLayout{1, 1, sizeof(GlSolidVertex), vertexOffset + 2 * sizeof(float), true});
+            task->setDrawRange(indexOffset, indices.count);
+            task->setViewport(viewRegion);
+
+            appended = false;
+            return task;
+        };
+
+        auto solidTask = appendSolidNoStencil();
+        if (!solidTask) return;
+
+        auto a = MULTIPLY(c.a, sdata.opacity);
+
+        if (flag & RenderUpdateFlag::Stroke) {
+            float strokeWidth = sdata.rshape->strokeWidth() * scaling(sdata.geometry.matrix);
+            if (strokeWidth < MIN_GL_STROKE_WIDTH) {
+                float alpha = strokeWidth / MIN_GL_STROKE_WIDTH;
+                a = MULTIPLY(a, static_cast<uint8_t>(alpha * 255));
+            }
+        }
+
+        // matrix buffer
+        float matrix3STD140[GL_MAT3_STD140_SIZE];
+        currentPass()->getMatrix(matrix3STD140, sdata.geometry.matrix);
+        // color
+        float color[] = {c.r / 255.f, c.g / 255.f, c.b / 255.f, a / 255.f};
+
+        mUniformTexture.stageColorUniforms(
+            drawId,
+            matrix3STD140,
+            static_cast<float>(depth),
+            color[0], color[1], color[2], color[3]);
+
+        auto uniformTexLoc = solidTask->getProgram()->getUniformLocation("uUniformTex");
+        if (uniformTexLoc >= 0 && !appended) {
+            mUniformTexture.ensure();
+            solidTask->addBindResource(GlBindingResource{GL_UNIFORM_TEX_UNIT, mUniformTexture.getTextureId(), uniformTexLoc});
+        }
+
+        ++mPrepareDrawId;
+
+        if (!appended) currentPass()->addRenderTask(solidTask);
+        return;
+    }
+
     GlRenderTask* task = nullptr;
     GlRenderTarget* dstCopyFbo = nullptr;
     
@@ -196,16 +282,19 @@ void GlRenderer::drawPrimitive(GlShape& sdata, const RenderColor& c, RenderUpdat
 
     task->setDrawDepth(depth);
 
-    if (!sdata.geometry.draw(task, &mGpuBuffer, flag)) {
+    const bool useDrawId = (task->getProgram() == mPrograms[RT_Color]);
+    uint32_t drawId = useDrawId ? mPrepareDrawId : 0;
+
+    if (!sdata.geometry.draw(task, &mGpuBuffer, flag, drawId, useDrawId)) {
         delete task;
         return;
     }
+    if (useDrawId) ++mPrepareDrawId;
 
     task->setViewport(viewRegion);
 
     GlRenderTask* stencilTask = nullptr;
 
-    GlStencilMode stencilMode = sdata.geometry.getStencilMode(flag);
     if (stencilMode != GlStencilMode::None) {
         stencilTask = new GlRenderTask(mPrograms[RT_Stencil], task);
         stencilTask->setDrawDepth(depth);
@@ -224,17 +313,11 @@ void GlRenderer::drawPrimitive(GlShape& sdata, const RenderColor& c, RenderUpdat
     // matrix buffer
     float matrix3STD140[GL_MAT3_STD140_SIZE];
     currentPass()->getMatrix(matrix3STD140, sdata.geometry.matrix);
-    auto viewOffset = mGpuBuffer.push(matrix3STD140, GL_MAT3_STD140_BYTES, true);
-
-    task->addBindResource(GlBindingResource{
-        0,
-        task->getProgram()->getUniformBlockIndex("Matrix"),
-        mGpuBuffer.getBufferId(),
-        viewOffset,
-        GL_MAT3_STD140_BYTES,
-    });
+    // color
+    float color[] = {c.r / 255.f, c.g / 255.f, c.b / 255.f, a / 255.f};
 
     if (stencilTask) {
+        auto viewOffset = mGpuBuffer.push(matrix3STD140, GL_MAT3_STD140_BYTES, true);
         stencilTask->addBindResource(GlBindingResource{
             0,
             stencilTask->getProgram()->getUniformBlockIndex("Matrix"),
@@ -244,16 +327,18 @@ void GlRenderer::drawPrimitive(GlShape& sdata, const RenderColor& c, RenderUpdat
         });
     }
 
-    // color
-    float color[] = {c.r / 255.f, c.g / 255.f, c.b / 255.f, a / 255.f};
-
-    task->addBindResource(GlBindingResource{
-        1,
-        task->getProgram()->getUniformBlockIndex("ColorInfo"),
-        mGpuBuffer.getBufferId(),
-        mGpuBuffer.push(color, 4 * sizeof(float), true),
-         4 * sizeof(float),
-    });
+    if (useDrawId) {
+        mUniformTexture.stageColorUniforms(
+            drawId,
+            matrix3STD140,
+            static_cast<float>(depth),
+            color[0], color[1], color[2], color[3]);
+        auto uniformTexLoc = task->getProgram()->getUniformLocation("uUniformTex");
+        if (uniformTexLoc >= 0) {
+            mUniformTexture.ensure();
+            task->addBindResource(GlBindingResource{GL_UNIFORM_TEX_UNIT, mUniformTexture.getTextureId(), uniformTexLoc});
+        }
+    }
 
     if (blendShape && dstCopyFbo) {
 #if defined(THORVG_GL_TARGET_GL)
@@ -315,7 +400,7 @@ void GlRenderer::drawPrimitive(GlShape& sdata, const Fill* fill, RenderUpdateFla
 
     task->setDrawDepth(depth);
 
-    if (!sdata.geometry.draw(task, &mGpuBuffer, flag)) {
+    if (!sdata.geometry.draw(task, &mGpuBuffer, flag, 0, false)) {
         delete task;
         return;
     }
@@ -531,7 +616,7 @@ void GlRenderer::drawClip(Array<RenderData>& clips)
         clipTask->setDrawDepth(clipDepths[i]);
 
         auto flag = (sdata->geometry.stroke.vertex.count > 0) ? RenderUpdateFlag::Stroke : RenderUpdateFlag::Path;
-        sdata->geometry.draw(clipTask, &mGpuBuffer, flag);
+        sdata->geometry.draw(clipTask, &mGpuBuffer, flag, 0, false);
 
         auto bbox = sdata->geometry.viewport;
         bbox.intersect(vp);
@@ -1012,6 +1097,10 @@ bool GlRenderer::sync()
     GL_CHECK(glEnable(GL_DEPTH_TEST));
     GL_CHECK(glDepthFunc(GL_GREATER));
 
+    // mUniformTexture.debugDumpStagingBuffer();
+
+    mUniformTexture.upload();
+
     auto task = mRenderPassStack.first()->endRenderPass<GlBlitTask>(mPrograms[RT_Blit], mTargetFboId);
 
     prepareBlitTask(task);
@@ -1032,6 +1121,8 @@ bool GlRenderer::sync()
 
     // Reset clear buffer flag to default (false) after use.    
     mClearBuffer = false; 
+
+    mUniformTexture.reset();
 
     delete task;
 
@@ -1078,6 +1169,7 @@ bool GlRenderer::preRender()
     currentContext();
     if (mPrograms.empty()) initShaders();
     mRenderPassStack.push(new GlRenderPass(&mRootTarget));
+    mPrepareDrawId = 0;
 
     return true;
 }
@@ -1211,7 +1303,7 @@ bool GlRenderer::renderImage(void* data)
     auto task = new GlRenderTask(mPrograms[RT_Image]);
     task->setDrawDepth(drawDepth);
 
-    if (!sdata->geometry.draw(task, &mGpuBuffer, RenderUpdateFlag::Image)) {
+    if (!sdata->geometry.draw(task, &mGpuBuffer, RenderUpdateFlag::Image, 0, false)) {
         delete task;
         return true;
     }
@@ -1255,7 +1347,7 @@ bool GlRenderer::renderImage(void* data)
 
     if (complexBlend) {
         auto task = new GlRenderTask(mPrograms[RT_Stencil]);
-        sdata->geometry.draw(task, &mGpuBuffer, RenderUpdateFlag::Image);
+        sdata->geometry.draw(task, &mGpuBuffer, RenderUpdateFlag::Image, 0, false);
         endBlendingCompose(task, sdata->geometry.matrix);
     }
 
