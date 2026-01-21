@@ -72,6 +72,7 @@ struct GlUniformTexture
     void reset();
 
     void stageColorUniforms(uint32_t drawId, const float* matrix, float r, float g, float b, float a);
+    void stageImageUniforms(uint32_t drawId, const float* matrix, float format, float flipY, float opacity);
 
     void stageLinearGradientUniforms(uint32_t drawId, const float* matrix, float depth, const float* invMatrix,
                                           uint32_t nStops, float spread,

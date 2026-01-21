@@ -49,6 +49,7 @@ void GlRenderer::clearDisposes()
     mRenderPassStack.clear();
 
     mSolidColorBatch = {};
+    mImageBatch = {};
 }
 
 
@@ -83,7 +84,7 @@ bool GlRenderer::currentContext()
     if (tvgEglGetCurrentContext() == static_cast<EGLContext>(mContext)) return true;
     if (mDisplay && mSurface) return (bool) tvgEglMakeCurrent((EGLDisplay)mDisplay, (EGLSurface)mSurface, (EGLSurface)mSurface, (EGLContext)mContext);
 #endif
-    TVGLOG("GL_ENGINE", "Maybe missing currentContext()?");
+    // TVGLOG("GL_ENGINE", "Maybe missing currentContext()?");
     return true;
 }
 
@@ -163,6 +164,9 @@ void GlRenderer::initShaders()
 
     // blend programs: image (17) + scene (17) + shape solid (17) + shape linear (17) + shape radial (17)
     for (uint32_t i = 0; i < 85; ++i) mPrograms.push(nullptr);
+
+    // image uniform texture renderer
+    mPrograms.push(new GlProgram(IMAGE_UNIFORM_VERT_SHADER, IMAGE_UNIFORM_FRAG_SHADER));
 }
 
 
@@ -1333,11 +1337,138 @@ bool GlRenderer::renderImage(void* data)
     bbox.intersect(vp);
     if (bbox.invalid()) return true;
 
+    static auto drawImageNoStencil = [](
+        GlShape* sdata,
+        int32_t depth,
+        const RenderRegion& viewRegion,
+        uint32_t& prepareDrawId,
+        GlStageBuffer& gpuBuffer,
+        auto& imageBatch,
+        GlUniformTexture& uniformTexture,
+        Array<GlProgram*>& programs,
+        GlRenderPass* currentPass
+    ) -> void {
+        auto& geometryBuffer = sdata->geometry.fill;
+
+        struct GlImageVertex {
+            float x;
+            float y;
+            float u;
+            float v;
+            uint32_t drawId;
+        };
+
+        uint32_t drawId = prepareDrawId;
+        bool appended = false;
+        auto appendImageNoStencil = [&]() -> GlRenderTask* {
+            if (geometryBuffer.index.empty()) return nullptr;
+
+            uint32_t vertexCount = geometryBuffer.vertex.count / 4;
+            if (vertexCount == 0) return nullptr;
+
+            Array<GlImageVertex> vertices;
+            vertices.reserve(vertexCount);
+            for (uint32_t i = 0; i < vertexCount; ++i) {
+                uint32_t offset = i * 4;
+                vertices.push({geometryBuffer.vertex.data[offset],
+                               geometryBuffer.vertex.data[offset + 1],
+                               geometryBuffer.vertex.data[offset + 2],
+                               geometryBuffer.vertex.data[offset + 3],
+                               drawId});
+            }
+
+            uint32_t vertexOffset = gpuBuffer.push(vertices.data, vertices.count * sizeof(GlImageVertex));
+
+            auto prevTask = currentPass->lastTask();
+            bool canAppend = prevTask && prevTask == imageBatch.task && imageBatch.pass == currentPass &&
+                             prevTask->getProgram() == programs[GlRenderer::RT_Image_Uniform] &&
+                             imageBatch.texId == sdata->texId;
+
+            uint32_t baseVertex = canAppend ? imageBatch.vertexCount : 0;
+
+            Array<uint32_t> indices;
+            indices.reserve(geometryBuffer.index.count);
+            for (uint32_t i = 0; i < geometryBuffer.index.count; ++i) {
+                indices.push(geometryBuffer.index.data[i] + baseVertex);
+            }
+
+            uint32_t indexOffset = gpuBuffer.pushIndex(indices.data, indices.count * sizeof(uint32_t));
+
+            if (canAppend) {
+                imageBatch.vertexCount += vertexCount;
+                imageBatch.indexCount += indices.count;
+                prevTask->setDrawRange(imageBatch.indexOffset, imageBatch.indexCount);
+
+                auto merged = prevTask->getViewport();
+                merged.add(viewRegion);
+                prevTask->setViewport(merged);
+
+                appended = true;
+                return prevTask;
+            }
+
+            auto task = new GlRenderTask(programs[GlRenderer::RT_Image_Uniform]);
+            task->setDrawDepth(depth);
+            task->addVertexLayout(GlVertexLayout{0, 2, sizeof(GlImageVertex), vertexOffset});
+            task->addVertexLayout(GlVertexLayout{1, 2, sizeof(GlImageVertex), vertexOffset + 2 * sizeof(float)});
+            task->addVertexLayout(GlVertexLayout{2, 1, sizeof(GlImageVertex), vertexOffset + 4 * sizeof(float), true});
+            task->setDrawRange(indexOffset, indices.count);
+            task->setViewport(viewRegion);
+
+            imageBatch.pass = currentPass;
+            imageBatch.task = task;
+            imageBatch.vertexCount = vertexCount;
+            imageBatch.indexOffset = indexOffset;
+            imageBatch.indexCount = indices.count;
+            imageBatch.texId = sdata->texId;
+
+            appended = false;
+            return task;
+        };
+
+        auto imageTask = appendImageNoStencil();
+        if (!imageTask) return;
+
+        float matrix3STD140[GL_MAT3_STD140_SIZE];
+        currentPass->getMatrix(matrix3STD140, sdata->geometry.matrix);
+
+        uniformTexture.stageImageUniforms(
+            drawId,
+            matrix3STD140,
+            static_cast<float>(sdata->texColorSpace),
+            static_cast<float>(sdata->texFlipY),
+            static_cast<float>(sdata->opacity));
+
+        auto uniformTexLoc = imageTask->getProgram()->getUniformLocation("uUniformTex");
+        if (uniformTexLoc >= 0 && !appended) {
+            uniformTexture.ensure();
+            imageTask->addBindResource(GlBindingResource{GL_UNIFORM_TEX_UNIT, uniformTexture.getTextureId(), uniformTexLoc});
+        }
+
+        if (!appended) {
+            auto texLoc = imageTask->getProgram()->getUniformLocation("uTexture");
+            if (texLoc >= 0) {
+                imageTask->addBindResource(GlBindingResource{0, sdata->texId, texLoc});
+            }
+        }
+
+        ++prepareDrawId;
+
+        if (!appended) currentPass->addRenderTask(imageTask);
+    };
+
     auto x = bbox.sx() - vp.sx();
     auto y = bbox.sy() - vp.sy();
     auto drawDepth = currentPass()->nextDrawDepth();
 
     if (!sdata->clips.empty()) drawClip(sdata->clips);
+
+    if (mBlendMethod == BlendMethod::Normal) {
+      auto yGl = vp.sh() - y - bbox.sh();
+      RenderRegion viewRegion = {{x, yGl}, {x + bbox.sw(), yGl + bbox.sh()}};
+      drawImageNoStencil(sdata, drawDepth, viewRegion, mPrepareDrawId, mGpuBuffer, mImageBatch, mUniformTexture, mPrograms, currentPass());
+      return true;
+    }
 
     auto task = new GlRenderTask(mPrograms[RT_Image]);
     task->setDrawDepth(drawDepth);

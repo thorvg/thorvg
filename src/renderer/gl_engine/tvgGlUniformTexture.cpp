@@ -141,6 +141,11 @@ void GlUniformTexture::stageColorUniforms(uint32_t drawId, const float* matrix, 
     needsUpload = true;
 }
 
+void GlUniformTexture::stageImageUniforms(uint32_t drawId, const float* matrix, float format, float flipY, float opacity)
+{
+    stageColorUniforms(drawId, matrix, format, flipY, opacity, 0.0f);
+}
+
 #ifdef __ENABLE_FULL_UNIFORM_TEX__
 void GlUniformTexture::stageLinearGradientUniforms(uint32_t drawId, const float* matrix, float depth, const float* invMatrix,
                                                         uint32_t nStops, float spread,

@@ -141,6 +141,7 @@ struct GlRenderer : RenderMethod
         RT_ShapeBlend_Radial_Color,
         RT_ShapeBlend_Radial_Luminosity,
         RT_ShapeBlend_Radial_Add,
+        RT_Image_Uniform,
         RT_None
     };
 
@@ -231,6 +232,14 @@ private:
         uint32_t indexOffset = 0;
         uint32_t indexCount = 0;
     } mSolidColorBatch;
+    struct {
+        GlRenderPass* pass = nullptr;
+        GlRenderTask* task = nullptr;
+        uint32_t vertexCount = 0;
+        uint32_t indexOffset = 0;
+        uint32_t indexCount = 0;
+        GLuint texId = 0;
+    } mImageBatch;
 
     //Disposed resources. They should be released on synced call.
     struct {

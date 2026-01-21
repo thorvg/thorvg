@@ -380,6 +380,66 @@ const char* IMAGE_FRAG_SHADER = TVG_COMPOSE_SHADER(
    }                                                                                        \n
 );
 
+const char* IMAGE_UNIFORM_VERT_SHADER = TVG_COMPOSE_SHADER(
+    uniform float uDepth;                                                                   \n
+    uniform sampler2D uUniformTex;                                                          \n
+    layout(location = 0) in vec2 aLocation;                                                 \n
+    layout(location = 1) in vec2 aUV;                                                       \n
+    layout(location = 2) in uint aDrawId;                                                   \n
+    flat out uint vDrawId;                                                                  \n
+    out vec2 vUV;                                                                           \n
+                                                                                            \n
+    mat3 fetchMat3(int row, int colOffset) {                                                \n
+        vec4 c0 = texelFetch(uUniformTex, ivec2(colOffset, row), 0);                         \n
+        vec4 c1 = texelFetch(uUniformTex, ivec2(colOffset + 1, row), 0);                     \n
+        vec4 c2 = texelFetch(uUniformTex, ivec2(colOffset + 2, row), 0);                     \n
+        return mat3(c0.xyz, c1.xyz, c2.xyz);                                                 \n
+    }                                                                                       \n
+                                                                                            \n
+    void main()                                                                             \n
+    {                                                                                       \n
+        vDrawId = aDrawId;                                                                  \n
+        int row = int(aDrawId) >> 2;                                                        \n
+        int colOffset = (int(aDrawId) & 3) << 2;                                            \n
+        mat3 transform = fetchMat3(row, colOffset);                                         \n
+        vUV = aUV;                                                                          \n
+        vec3 pos = transform * vec3(aLocation, 1.0);                                        \n
+        gl_Position = vec4(pos.xy, uDepth, 1.0);                                            \n
+    }                                                                                       \n
+);
+
+const char* IMAGE_UNIFORM_FRAG_SHADER = TVG_COMPOSE_SHADER(
+    uniform sampler2D uUniformTex;                                                          \n
+    uniform sampler2D uTexture;                                                             \n
+    flat in uint vDrawId;                                                                   \n
+    in vec2 vUV;                                                                            \n
+    out vec4 FragColor;                                                                     \n
+                                                                                            \n
+    void main()                                                                             \n
+    {                                                                                       \n
+        int row = int(vDrawId) >> 2;                                                        \n
+        int colOffset = (int(vDrawId) & 3) << 2;                                            \n
+        vec4 info = texelFetch(uUniformTex, ivec2(colOffset + 3, row), 0);                   \n
+        int format = int(info.x + 0.5);                                                     \n
+        int flipY = int(info.y + 0.5);                                                      \n
+        float opacity = info.z;                                                             \n
+        vec2 uv = vUV;                                                                      \n
+        if (flipY == 1) { uv.y = 1.0 - uv.y; }                                               \n
+        vec4 color = texture(uTexture, uv);                                                 \n
+        vec4 result;                                                                        \n
+        if (format == 0) { /* FMT_ABGR8888 */                                                \n
+            result = color;                                                                 \n
+        } else if (format == 1) { /* FMT_ARGB8888 */                                         \n
+            result = color.bgra;                                                            \n
+        } else if (format == 2) { /* FMT_ABGR8888S */                                        \n
+            result = vec4(color.rgb * color.a, color.a);                                    \n
+        } else if (format == 3) { /* FMT_ARGB8888S */                                        \n
+            result = vec4(color.bgr * color.a, color.a);                                    \n
+        }                                                                                   \n
+        FragColor = result * (opacity / 255.0);                                             \n
+    }                                                                                       \n
+);
+
 const char* MASK_VERT_SHADER = TVG_COMPOSE_SHADER(
     uniform float uDepth;                                   \n
     layout(location = 0) in vec2 aLocation;                 \n

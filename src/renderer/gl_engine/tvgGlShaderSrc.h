@@ -36,6 +36,8 @@ extern const char* STR_RADIAL_GRADIENT_FUNCTIONS;
 extern const char* STR_RADIAL_GRADIENT_MAIN;
 extern const char* IMAGE_VERT_SHADER;
 extern const char* IMAGE_FRAG_SHADER;
+extern const char* IMAGE_UNIFORM_VERT_SHADER;
+extern const char* IMAGE_UNIFORM_FRAG_SHADER;
 extern const char* MASK_VERT_SHADER;
 extern const char* MASK_ALPHA_FRAG_SHADER;
 extern const char* MASK_INV_ALPHA_FRAG_SHADER;
