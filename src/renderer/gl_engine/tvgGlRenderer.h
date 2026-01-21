@@ -29,6 +29,7 @@
 #include "tvgGlGpuBuffer.h"
 #include "tvgGlRenderPass.h"
 #include "tvgGlEffect.h"
+#include "tvgGlUniformTexture.h"
 
 struct GlRenderer : RenderMethod
 {
@@ -217,6 +218,7 @@ private:
     GlRenderTarget mRootTarget;
     GlEffect mEffect;
     Array<GlProgram*> mPrograms;
+    GlUniformTexture mUniformTexture;
 
     Array<GlRenderTargetPool*> mComposePool;
     Array<GlRenderTargetPool*> mBlendPool;
@@ -231,6 +233,7 @@ private:
 
     BlendMethod mBlendMethod = BlendMethod::Normal;
     bool mClearBuffer = false;
+    uint32_t mPrepareDrawId = 0;
 };
 
 #endif /* _TVG_GL_RENDERER_H_ */
