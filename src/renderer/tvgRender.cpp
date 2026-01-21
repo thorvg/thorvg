@@ -112,6 +112,7 @@ void RenderPath::optimize(RenderPath& out, const Matrix& matrix) const
 
     out.cmds.clear();
     out.pts.clear();
+    out.convexHint = convexHint;
     out.cmds.reserve(cmds.count);
     out.pts.reserve(pts.count);
 
