@@ -224,6 +224,13 @@ private:
     Array<GlRenderTargetPool*> mBlendPool;
     Array<GlRenderPass*> mRenderPassStack;
     Array<GlCompositor*> mComposeStack;
+    struct {
+        GlRenderPass* pass = nullptr;
+        GlRenderTask* task = nullptr;
+        uint32_t vertexCount = 0;
+        uint32_t indexOffset = 0;
+        uint32_t indexCount = 0;
+    } mSolidColorBatch;
 
     //Disposed resources. They should be released on synced call.
     struct {

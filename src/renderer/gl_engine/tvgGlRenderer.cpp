@@ -47,6 +47,8 @@ void GlRenderer::clearDisposes()
 
     ARRAY_FOREACH(p, mRenderPassStack) delete(*p);
     mRenderPassStack.clear();
+
+    mSolidColorBatch = {};
 }
 
 
@@ -166,6 +168,121 @@ void GlRenderer::initShaders()
 
 void GlRenderer::drawPrimitive(GlShape& sdata, const RenderColor& c, RenderUpdateFlag flag, int32_t depth)
 {
+    static auto drawSolidNoStencil = [](
+        GlShape& sdata,
+        const RenderColor& c,
+        RenderUpdateFlag flag,
+        int32_t depth,
+        const RenderRegion& viewRegion,
+        uint32_t& prepareDrawId,
+        GlStageBuffer& gpuBuffer,
+        auto& solidColorBatch,
+        GlUniformTexture& uniformTexture,
+        Array<GlProgram*>& programs,
+        GlRenderPass* currentPass
+    ) {
+        auto& geometryBuffer = (flag & RenderUpdateFlag::Stroke) ? sdata.geometry.stroke : sdata.geometry.fill;
+
+        struct GlSolidVertex {
+            float x;
+            float y;
+            uint32_t drawId;
+        };
+
+        uint32_t drawId = prepareDrawId;
+        bool appended = false;
+        auto appendSolidNoStencil = [&]() -> GlRenderTask* {
+            if (flag == RenderUpdateFlag::None) return nullptr;
+            if (geometryBuffer.index.empty()) return nullptr;
+
+            uint32_t vertexCount = geometryBuffer.vertex.count / 2;
+            if (vertexCount == 0) return nullptr;
+
+            Array<GlSolidVertex> vertices;
+            vertices.reserve(vertexCount);
+            for (uint32_t i = 0; i < vertexCount; ++i) {
+                vertices.push({geometryBuffer.vertex.data[i * 2], geometryBuffer.vertex.data[i * 2 + 1], drawId});
+            }
+
+            uint32_t vertexOffset = gpuBuffer.push(vertices.data, vertices.count * sizeof(GlSolidVertex));
+
+            auto prevTask = currentPass->lastTask();
+            bool canAppend = prevTask && prevTask == solidColorBatch.task && solidColorBatch.pass == currentPass &&
+                             prevTask->getProgram() == programs[GlRenderer::RT_Color];
+
+            uint32_t baseVertex = canAppend ? solidColorBatch.vertexCount : 0;
+
+            Array<uint32_t> indices;
+            indices.reserve(geometryBuffer.index.count);
+            for (uint32_t i = 0; i < geometryBuffer.index.count; ++i) {
+                indices.push(geometryBuffer.index.data[i] + baseVertex);
+            }
+
+            uint32_t indexOffset = gpuBuffer.pushIndex(indices.data, indices.count * sizeof(uint32_t));
+
+            if (canAppend) {
+                solidColorBatch.vertexCount += vertexCount;
+                solidColorBatch.indexCount += indices.count;
+                prevTask->setDrawRange(solidColorBatch.indexOffset, solidColorBatch.indexCount);
+
+                auto merged = prevTask->getViewport();
+                merged.add(viewRegion);
+                prevTask->setViewport(merged);
+
+                appended = true;
+                return prevTask;
+            }
+
+            auto task = new GlRenderTask(programs[GlRenderer::RT_Color]);
+            task->setDrawDepth(depth);
+            task->addVertexLayout(GlVertexLayout{0, 2, sizeof(GlSolidVertex), vertexOffset});
+            task->addVertexLayout(GlVertexLayout{1, 1, sizeof(GlSolidVertex), vertexOffset + 2 * sizeof(float), true});
+            task->setDrawRange(indexOffset, indices.count);
+            task->setViewport(viewRegion);
+
+            solidColorBatch.pass = currentPass;
+            solidColorBatch.task = task;
+            solidColorBatch.vertexCount = vertexCount;
+            solidColorBatch.indexOffset = indexOffset;
+            solidColorBatch.indexCount = indices.count;
+
+            appended = false;
+            return task;
+        };
+
+        auto solidTask = appendSolidNoStencil();
+        if (!solidTask) return;
+
+        auto a = MULTIPLY(c.a, sdata.opacity);
+
+        if (flag & RenderUpdateFlag::Stroke) {
+            float strokeWidth = sdata.rshape->strokeWidth() * scaling(sdata.geometry.matrix);
+            if (strokeWidth < MIN_GL_STROKE_WIDTH) {
+                float alpha = strokeWidth / MIN_GL_STROKE_WIDTH;
+                a = MULTIPLY(a, static_cast<uint8_t>(alpha * 255));
+            }
+        }
+
+        float matrix3STD140[GL_MAT3_STD140_SIZE];
+        currentPass->getMatrix(matrix3STD140, sdata.geometry.matrix);
+        float color[] = {c.r / 255.f, c.g / 255.f, c.b / 255.f, a / 255.f};
+
+        uniformTexture.stageColorUniforms(
+            drawId,
+            matrix3STD140,
+            color[0], color[1], color[2], color[3]);
+
+        auto uniformTexLoc = solidTask->getProgram()->getUniformLocation("uUniformTex");
+        if (uniformTexLoc >= 0 && !appended) {
+            uniformTexture.ensure();
+            solidTask->addBindResource(GlBindingResource{GL_UNIFORM_TEX_UNIT, uniformTexture.getTextureId(), uniformTexLoc});
+        }
+
+        ++prepareDrawId;
+
+        if (!appended) currentPass->addRenderTask(solidTask);
+    };
+
     auto blendShape = (mBlendMethod != BlendMethod::Normal);
     auto vp = currentPass()->getViewport();
     auto bbox = blendShape? sdata.geometry.getBounds() : sdata.geometry.viewport;
@@ -181,6 +298,11 @@ void GlRenderer::drawPrimitive(GlShape& sdata, const RenderColor& c, RenderUpdat
     RenderRegion viewRegion = {{x, yGl}, {x + w, yGl + h}};
 
     GlStencilMode stencilMode = sdata.geometry.getStencilMode(flag);
+
+    if (!blendShape && stencilMode == GlStencilMode::None) {
+        drawSolidNoStencil(sdata, c, flag, depth, viewRegion, mPrepareDrawId, mGpuBuffer, mSolidColorBatch, mUniformTexture, mPrograms, currentPass());
+        return;
+    }
 
     GlRenderTask* task = nullptr;
     GlRenderTarget* dstCopyFbo = nullptr;
