@@ -907,20 +907,15 @@ RenderData SwRenderer::prepare(const RenderShape& rshape, RenderData data, const
 
 bool SwRenderer::term()
 {
-    if (rendererCnt > 0) return false;
-
-    bool initialised = false;
-
-    int expected = rendererCnt.load();
-    while (expected <= 0) {
-        if (rendererCnt.compare_exchange_weak(expected, -1)) {
-            mpoolTerm(globalMpool);
-            globalMpool = nullptr;
-            initialised = true;
-            break; // Successfully set to -1
-        }
+    int expected = 0;
+    
+    if (rendererCnt.compare_exchange_strong(expected, -1)) {
+        mpoolTerm(globalMpool);
+        globalMpool = nullptr;
+        return true;
     }
-    return initialised;
+    
+    return false;
 }
 
 
