@@ -909,38 +909,52 @@ bool SwRenderer::term()
 {
     int expected = 0;
     
-    if (rendererCnt.compare_exchange_strong(expected, -1)) {
-        mpoolTerm(globalMpool);
-        globalMpool = nullptr;
-        return true;
+    // Only terminate if count is exactly 0
+    if (!rendererCnt.compare_exchange_strong(expected, -1, 
+                                              std::memory_order_acq_rel)) {
+        return false;
     }
     
-    return false;
+    // We won - perform cleanup
+    mpoolTerm(globalMpool);
+    globalMpool = nullptr;
+    
+    return true;
 }
 
 
 SwRenderer::SwRenderer(uint32_t threads, EngineOption op)
 {
-    //initialize engine
-    int32_t rc = rendererCnt.fetch_add(1);
-    if (rc == -1) {
+    // Atomically claim initialization responsibility
+    int32_t expected = -1;
+    bool shouldInit = rendererCnt.compare_exchange_strong(expected, 0, 
+                                                           std::memory_order_acq_rel);
+    
+    if (shouldInit) {
+        // We won the race - do initialization
 #ifdef THORVG_OPENMP_SUPPORT
         omp_set_num_threads(threads);
 #endif
-        //Share the memory pool among the renderer
         globalMpool = mpoolInit(threads);
-        threadsCnt = threads;
-        rendererCnt.fetch_add(1);
+        threadsCnt = threads;        
+    } else {
+        // Spin-wait until initialization completes (counter transitions from -1 to 0)
+        while (rendererCnt.load(std::memory_order_acquire) == -1) {
+            std::this_thread::yield();
+        }
     }
-
+    
+    // NOW increment the counter (after initialization is guaranteed complete)
+    rendererCnt.fetch_add(1, std::memory_order_release);
+    
     if (TaskScheduler::onthread()) {
         TVGLOG("SW_RENDERER", "Running on a non-dominant thread!, Renderer(%p)", this);
         mpool = mpoolInit(threadsCnt);
         sharedMpool = false;
     } else {
-        mpool = globalMpool;
+        mpool = globalMpool;  // Safe - initialization complete
         sharedMpool = true;
     }
-
+    
     if (op == EngineOption::None) dirtyRegion.support = false;
 }
