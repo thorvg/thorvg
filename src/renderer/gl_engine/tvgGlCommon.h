@@ -83,7 +83,7 @@ struct GlGeometry
     bool tesselateStroke(const RenderShape& rshape);
     bool tesselateLine(const RenderPath& path);
     void tesselateImage(const RenderSurface* image);
-    bool draw(GlRenderTask* task, GlStageBuffer* gpuBuffer, RenderUpdateFlag flag);
+    bool draw(GlRenderTask* task, GlStageBuffer* gpuBuffer, RenderUpdateFlag flag, uint32_t drawId, bool useDrawId = false);
     GlStencilMode getStencilMode(RenderUpdateFlag flag);
     RenderRegion getBounds() const;
 
