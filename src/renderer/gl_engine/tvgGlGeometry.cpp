@@ -270,7 +270,6 @@ bool GlGeometry::draw(GlRenderTask* task, GlStageBuffer* gpuBuffer, RenderUpdate
     auto vertexOffset = gpuBuffer->push(buffer->vertex.data, buffer->vertex.count * sizeof(float));
     auto indexOffset = gpuBuffer->pushIndex(buffer->index.data, buffer->index.count * sizeof(uint32_t));
 
-    // vertex layout
     if (flag & RenderUpdateFlag::Image) {
         // image has two attribute: [pos, uv]
         task->addVertexLayout(GlVertexLayout{0, 2, 4 * sizeof(float), vertexOffset});

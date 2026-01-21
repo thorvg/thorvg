@@ -128,6 +128,27 @@ uint32_t GlStageBuffer::pushIndex(void *data, uint32_t size)
 }
 
 
+uint32_t GlStageBuffer::pushRepeated(uint32_t value, uint32_t count)
+{
+    uint32_t size = count * sizeof(uint32_t);
+    uint32_t offset = mStageBuffer.count;
+
+    if (this->mStageBuffer.reserved - this->mStageBuffer.count < size) {
+        this->mStageBuffer.grow(max(size, this->mStageBuffer.reserved));
+    }
+
+
+    uint32_t* dst = reinterpret_cast<uint32_t*>(this->mStageBuffer.data + offset);
+    for (uint32_t i = 0; i < count; i++) {
+        dst[i] = value;
+    }
+
+    this->mStageBuffer.count += size;
+
+    return offset;
+}
+
+
 bool GlStageBuffer::flushToGPU()
 {
     if (mStageBuffer.empty() || mIndexBuffer.empty()) {
