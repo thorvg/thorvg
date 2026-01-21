@@ -34,8 +34,8 @@
 #define GL_UNIFORM_TEX_MIN_HEIGHT 64           // Minimum texture height
 #define GL_UNIFORM_TEX_GROWTH_FACTOR 2         // Growth multiplier when resizing
 #define GL_UNIFORM_TEX_SHRINK_THRESHOLD 0.30f  // Shrink when usage below 30%
-#define GL_UNIFORM_TEX_WIDTH 80
-#define GL_UNIFORM_TEX_MAX_DRAWS 100
+#define GL_UNIFORM_TEX_WIDTH 16
+#define GL_UNIFORM_TEX_MAX_DRAWS 4096
 #define GL_UNIFORM_TEX_MAX_STOPS 16
 #define GL_UNIFORM_TEX_UNIT 7
 
@@ -43,16 +43,13 @@
 struct GlColorUniformData
 {
     float matrix[12];
-    float depth;
-    float reserved[3];
     float color[4];
 };
 
+#ifdef __ENABLE_FULL_UNIFORM_TEX__
 struct GlGradientUniformData
 {
     float matrix[12];
-    float depth;
-    float reserved[3];
     float invMatrix[12];
     float nStops;
     float noise;
@@ -63,6 +60,8 @@ struct GlGradientUniformData
     float stopPoints[GL_UNIFORM_TEX_MAX_STOPS];
     float stopColors[GL_UNIFORM_TEX_MAX_STOPS * 4];
 };
+#endif //__ENABLE_FULL_UNIFORM_TEX__
+
 struct GlUniformTexture
 {
     GlUniformTexture();
@@ -76,7 +75,7 @@ struct GlUniformTexture
 
     void reset();
 
-    void stageColorUniforms(uint32_t drawId, const float* matrix, float depth, float r, float g, float b, float a);
+    void stageColorUniforms(uint32_t drawId, const float* matrix, float r, float g, float b, float a);
 
     void stageLinearGradientUniforms(uint32_t drawId, const float* matrix, float depth, const float* invMatrix,
                                           uint32_t nStops, float spread,

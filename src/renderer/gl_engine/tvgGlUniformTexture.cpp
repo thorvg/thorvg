@@ -108,10 +108,16 @@ void GlUniformTexture::reset()
 
 #define NOISE_LEVEL 0.5f
 
-void GlUniformTexture::stageColorUniforms(uint32_t drawId, const float* matrix, float depth, float r, float g, float b, float a)
+void GlUniformTexture::stageColorUniforms(uint32_t drawId, const float* matrix, float r, float g, float b, float a)
 {
-    uint32_t rowStartFloats = drawId * GL_UNIFORM_TEX_WIDTH * 4;
-    uint32_t floatsNeeded = rowStartFloats + 20;
+    // Pack 4 draws per row: each draw uses 4 columns (matrix[3] + color[1])
+    uint32_t drawsPerRow = GL_UNIFORM_TEX_WIDTH / 4;
+    uint32_t row = drawId / drawsPerRow;
+    uint32_t colOffset = (drawId % drawsPerRow) * 4;
+    
+    uint32_t rowStartFloats = row * GL_UNIFORM_TEX_WIDTH * 4;
+    uint32_t dataOffset = rowStartFloats + colOffset * 4;  // colOffset * 4 floats per column
+    uint32_t floatsNeeded = dataOffset + 16;
     
     if (floatsNeeded > stagingBuffer.count) {
         uint32_t growBy = floatsNeeded - stagingBuffer.count;
@@ -122,25 +128,20 @@ void GlUniformTexture::stageColorUniforms(uint32_t drawId, const float* matrix, 
         stagingBuffer.count = floatsNeeded;
     }
     
-    float* row = stagingBuffer.data + rowStartFloats;
+    float* dst = stagingBuffer.data + dataOffset;
     
-    memcpy(row, matrix, 12 * sizeof(float));
+    memcpy(dst, matrix, 12 * sizeof(float));
     
-    row[12] = depth;
-    row[13] = 0.0f;
-    row[14] = 0.0f;
-    row[15] = 0.0f;
+    dst[12] = r;
+    dst[13] = g;
+    dst[14] = b;
+    dst[15] = a;
     
-    row[16] = r;
-    row[17] = g;
-    row[18] = b;
-    row[19] = a;
-    
-    if (drawId >= currentRow) currentRow = drawId + 1;
+    if (row >= currentRow) currentRow = row + 1;
     needsUpload = true;
 }
 
-
+#ifdef __ENABLE_FULL_UNIFORM_TEX__
 void GlUniformTexture::stageLinearGradientUniforms(uint32_t drawId, const float* matrix, float depth, const float* invMatrix,
                                                         uint32_t nStops, float spread,
                                                         float x1, float y1, float x2, float y2,
@@ -163,11 +164,14 @@ void GlUniformTexture::stageLinearGradientUniforms(uint32_t drawId, const float*
     
     memcpy(row + offset, matrix, 12 * sizeof(float));
     offset += 12;
-    
-    row[offset++] = depth;
-    row[offset++] = 0.0f;
-    row[offset++] = 0.0f;
-    row[offset++] = 0.0f;
+// Note: Depth is removed in packed mode or should rely on struct definition which is also ifdef'd
+// For now, retaining code but it might break if struct layout changed. 
+// But struct GlGradientUniformData is also inside ifdef and has fields removed in header? 
+// No, I put it inside ifdef, so if defined, it should match the usage here?
+// In header I removed depth/reserved from Gradient struct inside ifdef? 
+// Let's verify header change. 
+// In header I removed depth/reserved from Gradient struct. 
+// So I should remove depth usage here too!
     
     memcpy(row + offset, invMatrix, 12 * sizeof(float));
     offset += 12;
@@ -222,11 +226,6 @@ void GlUniformTexture::stageRadialGradientUniforms(uint32_t drawId, const float*
     memcpy(row + offset, matrix, 12 * sizeof(float));
     offset += 12;
     
-    row[offset++] = depth;
-    row[offset++] = 0.0f;
-    row[offset++] = 0.0f;
-    row[offset++] = 0.0f;
-    
     memcpy(row + offset, invMatrix, 12 * sizeof(float));
     offset += 12;
     
@@ -252,7 +251,9 @@ void GlUniformTexture::stageRadialGradientUniforms(uint32_t drawId, const float*
     
     if (drawId >= currentRow) currentRow = drawId + 1;
     needsUpload = true;
-    }
+}
+
+#endif //__ENABLE_FULL_UNIFORM_TEX__    }
 
 uint32_t GlUniformTexture::nextPowerOfTwo(uint32_t n)
 {

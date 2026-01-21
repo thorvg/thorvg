@@ -208,13 +208,32 @@ void GlRenderer::drawPrimitive(GlShape& sdata, const RenderColor& c, RenderUpdat
 
             uint32_t vertexOffset = mGpuBuffer.push(vertices.data, vertices.count * sizeof(GlSolidVertex));
 
+            auto prevTask = currentPass()->lastTask();
+            bool canAppend = prevTask && prevTask == mSolidColorBatch.task && mSolidColorBatch.pass == currentPass() &&
+                             prevTask->getProgram() == mPrograms[RT_Color];
+
+            uint32_t baseVertex = canAppend ? mSolidColorBatch.vertexCount : 0;
+
             Array<uint32_t> indices;
             indices.reserve(geometryBuffer.index.count);
             for (uint32_t i = 0; i < geometryBuffer.index.count; ++i) {
-                indices.push(geometryBuffer.index.data[i]);
+                indices.push(geometryBuffer.index.data[i] + baseVertex);
             }
 
             uint32_t indexOffset = mGpuBuffer.pushIndex(indices.data, indices.count * sizeof(uint32_t));
+
+            if (canAppend) {
+                mSolidColorBatch.vertexCount += vertexCount;
+                mSolidColorBatch.indexCount += indices.count;
+                prevTask->setDrawRange(mSolidColorBatch.indexOffset, mSolidColorBatch.indexCount);
+
+                auto merged = prevTask->getViewport();
+                merged.add(viewRegion);
+                prevTask->setViewport(merged);
+
+                appended = true;
+                return prevTask;
+            }
 
             auto task = new GlRenderTask(mPrograms[RT_Color]);
             task->setDrawDepth(depth);
@@ -222,6 +241,12 @@ void GlRenderer::drawPrimitive(GlShape& sdata, const RenderColor& c, RenderUpdat
             task->addVertexLayout(GlVertexLayout{1, 1, sizeof(GlSolidVertex), vertexOffset + 2 * sizeof(float), true});
             task->setDrawRange(indexOffset, indices.count);
             task->setViewport(viewRegion);
+
+            mSolidColorBatch.pass = currentPass();
+            mSolidColorBatch.task = task;
+            mSolidColorBatch.vertexCount = vertexCount;
+            mSolidColorBatch.indexOffset = indexOffset;
+            mSolidColorBatch.indexCount = indices.count;
 
             appended = false;
             return task;
@@ -249,7 +274,6 @@ void GlRenderer::drawPrimitive(GlShape& sdata, const RenderColor& c, RenderUpdat
         mUniformTexture.stageColorUniforms(
             drawId,
             matrix3STD140,
-            static_cast<float>(depth),
             color[0], color[1], color[2], color[3]);
 
         auto uniformTexLoc = solidTask->getProgram()->getUniformLocation("uUniformTex");
@@ -331,7 +355,6 @@ void GlRenderer::drawPrimitive(GlShape& sdata, const RenderColor& c, RenderUpdat
         mUniformTexture.stageColorUniforms(
             drawId,
             matrix3STD140,
-            static_cast<float>(depth),
             color[0], color[1], color[2], color[3]);
         auto uniformTexLoc = task->getProgram()->getUniformLocation("uUniformTex");
         if (uniformTexLoc >= 0) {
