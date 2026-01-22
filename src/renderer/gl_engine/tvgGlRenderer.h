@@ -142,6 +142,8 @@ struct GlRenderer : RenderMethod
         RT_ShapeBlend_Radial_Luminosity,
         RT_ShapeBlend_Radial_Add,
         RT_Image_Uniform,
+        RT_LinGradient_Uniform,
+        RT_RadGradient_Uniform,
         RT_None
     };
 
@@ -220,6 +222,7 @@ private:
     GlEffect mEffect;
     Array<GlProgram*> mPrograms;
     GlUniformTexture mUniformTexture;
+    GlUniformTexture mGradientUniformTexture;
 
     Array<GlRenderTargetPool*> mComposePool;
     Array<GlRenderTargetPool*> mBlendPool;
@@ -238,6 +241,20 @@ private:
         uint32_t vertexCount = 0;
         uint32_t indexOffset = 0;
         uint32_t indexCount = 0;
+    } mLinearGradientBatch;
+    struct {
+        GlRenderPass* pass = nullptr;
+        GlRenderTask* task = nullptr;
+        uint32_t vertexCount = 0;
+        uint32_t indexOffset = 0;
+        uint32_t indexCount = 0;
+    } mRadialGradientBatch;
+    struct {
+        GlRenderPass* pass = nullptr;
+        GlRenderTask* task = nullptr;
+        uint32_t vertexCount = 0;
+        uint32_t indexOffset = 0;
+        uint32_t indexCount = 0;
         GLuint texId = 0;
     } mImageBatch;
 
@@ -250,6 +267,7 @@ private:
     BlendMethod mBlendMethod = BlendMethod::Normal;
     bool mClearBuffer = false;
     uint32_t mPrepareDrawId = 0;
+    uint32_t mPrepareGradientDrawId = 0;
 };
 
 #endif /* _TVG_GL_RENDERER_H_ */

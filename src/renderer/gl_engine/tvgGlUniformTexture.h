@@ -25,17 +25,26 @@
 
 #include "tvgGlRenderTask.h"
 
-#define GL_UNIFORM_TEX_WIDTH 16
+#define GL_UNIFORM_TEX_WIDTH 32  // Initial width to fit full gradient rows; can be optimized later.
 #define GL_UNIFORM_TEX_MAX_STOPS 16
 #define GL_UNIFORM_TEX_UNIT 7
 #define GL_UNIFORM_TEX_SLOTS 1
 
-// Dynamic texture management constants
+// Dynamic texture management defaults (can be overridden per instance)
 #define GL_UNIFORM_TEX_DEFAULT_HEIGHT 256      // Initial texture height (power of two)
 #define GL_UNIFORM_TEX_MIN_HEIGHT 64           // Minimum texture height
 #define GL_UNIFORM_TEX_GROWTH_FACTOR 2         // Growth multiplier when resizing
 #define GL_UNIFORM_TEX_SHRINK_THRESHOLD 0.30f  // Shrink when usage below 30%
 #define GL_UNIFORM_TEX_SHRINK_FRAMES 60        // Sustained low usage frames before shrink
+
+struct GlUniformTextureConfig
+{
+    uint32_t defaultHeight = GL_UNIFORM_TEX_DEFAULT_HEIGHT;
+    uint32_t minHeight = GL_UNIFORM_TEX_MIN_HEIGHT;
+    uint32_t growthFactor = GL_UNIFORM_TEX_GROWTH_FACTOR;
+    float shrinkThreshold = GL_UNIFORM_TEX_SHRINK_THRESHOLD;
+    uint32_t shrinkFrames = GL_UNIFORM_TEX_SHRINK_FRAMES;
+};
 
 struct GlColorUniformData
 {
@@ -60,7 +69,7 @@ struct GlGradientUniformData
 #endif //__ENABLE_FULL_UNIFORM_TEX__
 struct GlUniformTexture
 {
-    GlUniformTexture();
+    explicit GlUniformTexture(const GlUniformTextureConfig& config = {});
     ~GlUniformTexture();
 
     uint32_t pushUniformData(const void* data, uint32_t sizeBytes);
@@ -114,6 +123,7 @@ struct GlUniformTexture
 
     uint32_t totalGrowthCount = 0;
     uint32_t totalShrinkCount = 0;
+    GlUniformTextureConfig config;
 };
 
 #endif

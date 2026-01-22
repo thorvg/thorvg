@@ -25,9 +25,10 @@
 #include <algorithm>
 
 
-GlUniformTexture::GlUniformTexture()
+GlUniformTexture::GlUniformTexture(const GlUniformTextureConfig& config)
+    : config(config)
 {
-    stagingBuffer.reserve(GL_UNIFORM_TEX_WIDTH * 4 * GL_UNIFORM_TEX_DEFAULT_HEIGHT);
+    stagingBuffer.reserve(GL_UNIFORM_TEX_WIDTH * 4 * config.defaultHeight);
 }
 
 GlUniformTexture::~GlUniformTexture()
@@ -146,14 +147,17 @@ void GlUniformTexture::stageImageUniforms(uint32_t drawId, const float* matrix, 
     stageColorUniforms(drawId, matrix, format, flipY, opacity, 0.0f);
 }
 
-#ifdef __ENABLE_FULL_UNIFORM_TEX__
 void GlUniformTexture::stageLinearGradientUniforms(uint32_t drawId, const float* matrix, float depth, const float* invMatrix,
                                                         uint32_t nStops, float spread,
                                                         float x1, float y1, float x2, float y2,
                                                         const float* stopPoints, const float* stopColors)
 {
-    uint32_t rowStartFloats = drawId * GL_UNIFORM_TEX_WIDTH * 4;
-    uint32_t floatsNeeded = rowStartFloats + 120;
+    (void)depth;
+    uint32_t drawsPerRow = GL_UNIFORM_TEX_WIDTH / 4;
+    uint32_t rowIndex = drawId / drawsPerRow;
+    uint32_t colOffset = (drawId % drawsPerRow) * 4;
+    uint32_t rowStartFloats = rowIndex * GL_UNIFORM_TEX_WIDTH * 4 + colOffset * 4;
+    uint32_t floatsNeeded = rowStartFloats + 116;
     
     if (floatsNeeded > stagingBuffer.count) {
         uint32_t growBy = floatsNeeded - stagingBuffer.count;
@@ -169,20 +173,15 @@ void GlUniformTexture::stageLinearGradientUniforms(uint32_t drawId, const float*
     
     memcpy(row + offset, matrix, 12 * sizeof(float));
     offset += 12;
-    
-    row[offset++] = depth;
-    row[offset++] = 0.0f;
-    row[offset++] = 0.0f;
-    row[offset++] = 0.0f;
-    
+
     memcpy(row + offset, invMatrix, 12 * sizeof(float));
     offset += 12;
-    
+
     row[offset++] = static_cast<float>(nStops);
     row[offset++] = NOISE_LEVEL;
     row[offset++] = spread;
     row[offset++] = 0.0f;
-    
+
     row[offset++] = x1;
     row[offset++] = y1;
     row[offset++] = 0.0f;
@@ -191,14 +190,14 @@ void GlUniformTexture::stageLinearGradientUniforms(uint32_t drawId, const float*
     row[offset++] = y2;
     row[offset++] = 0.0f;
     row[offset++] = 0.0f;
-    
+
     uint32_t stopsToCopy = (nStops < GL_UNIFORM_TEX_MAX_STOPS) ? nStops : GL_UNIFORM_TEX_MAX_STOPS;
     memcpy(row + offset, stopPoints, stopsToCopy * sizeof(float));
     offset += 16;
-    
+
     memcpy(row + offset, stopColors, stopsToCopy * 4 * sizeof(float));
     
-    if (drawId >= currentRow) currentRow = drawId + 1;
+    if (rowIndex >= currentRow) currentRow = rowIndex + 1;
     needsUpload = true;
 }
 
@@ -209,8 +208,12 @@ void GlUniformTexture::stageRadialGradientUniforms(uint32_t drawId, const float*
                                                         float fr, float r,
                                                         const float* stopPoints, const float* stopColors)
 {
-    uint32_t rowStartFloats = drawId * GL_UNIFORM_TEX_WIDTH * 4;
-    uint32_t floatsNeeded = rowStartFloats + 120;
+    (void)depth;
+    uint32_t drawsPerRow = GL_UNIFORM_TEX_WIDTH / 4;
+    uint32_t rowIndex = drawId / drawsPerRow;
+    uint32_t colOffset = (drawId % drawsPerRow) * 4;
+    uint32_t rowStartFloats = rowIndex * GL_UNIFORM_TEX_WIDTH * 4 + colOffset * 4;
+    uint32_t floatsNeeded = rowStartFloats + 116;
     
     if (floatsNeeded > stagingBuffer.count) {
         uint32_t growBy = floatsNeeded - stagingBuffer.count;
@@ -226,20 +229,15 @@ void GlUniformTexture::stageRadialGradientUniforms(uint32_t drawId, const float*
     
     memcpy(row + offset, matrix, 12 * sizeof(float));
     offset += 12;
-    
-    row[offset++] = depth;
-    row[offset++] = 0.0f;
-    row[offset++] = 0.0f;
-    row[offset++] = 0.0f;
-    
+
     memcpy(row + offset, invMatrix, 12 * sizeof(float));
     offset += 12;
-    
+
     row[offset++] = static_cast<float>(nStops);
     row[offset++] = NOISE_LEVEL;
     row[offset++] = spread;
     row[offset++] = 1.0f;
-    
+
     row[offset++] = fx;
     row[offset++] = fy;
     row[offset++] = cx;
@@ -248,18 +246,16 @@ void GlUniformTexture::stageRadialGradientUniforms(uint32_t drawId, const float*
     row[offset++] = r;
     row[offset++] = 0.0f;
     row[offset++] = 0.0f;
-    
+
     uint32_t stopsToCopy = (nStops < GL_UNIFORM_TEX_MAX_STOPS) ? nStops : GL_UNIFORM_TEX_MAX_STOPS;
     memcpy(row + offset, stopPoints, stopsToCopy * sizeof(float));
     offset += 16;
-    
+
     memcpy(row + offset, stopColors, stopsToCopy * 4 * sizeof(float));
     
-    if (drawId >= currentRow) currentRow = drawId + 1;
+    if (rowIndex >= currentRow) currentRow = rowIndex + 1;
     needsUpload = true;
 }
-
-#endif //__ENABLE_FULL_UNIFORM_TEX
 
 uint32_t GlUniformTexture::nextPowerOfTwo(uint32_t n)
 {
@@ -277,9 +273,9 @@ uint32_t GlUniformTexture::computeRequiredHeight(uint32_t rows)
 {
     uint32_t requiredHeight = nextPowerOfTwo(rows);
     if (textureHeight > 0) {
-        requiredHeight = std::max(requiredHeight, textureHeight * GL_UNIFORM_TEX_GROWTH_FACTOR);
+        requiredHeight = std::max(requiredHeight, textureHeight * config.growthFactor);
     }
-    return std::max(requiredHeight, (uint32_t)GL_UNIFORM_TEX_MIN_HEIGHT);
+    return std::max(requiredHeight, config.minHeight);
 }
 
 bool GlUniformTexture::resizeTexture(uint32_t newHeight)
@@ -351,12 +347,12 @@ void GlUniformTexture::updateShrinkHysteresis()
 
     float usage = static_cast<float>(peakRowsThisFrame) / textureHeight;
 
-    if (usage < GL_UNIFORM_TEX_SHRINK_THRESHOLD) {
+    if (usage < config.shrinkThreshold) {
         lowUsageFrameCount++;
 
-        if (lowUsageFrameCount >= GL_UNIFORM_TEX_SHRINK_FRAMES) {
+        if (lowUsageFrameCount >= config.shrinkFrames) {
             uint32_t targetHeight = nextPowerOfTwo(peakRowsThisFrame);
-            targetHeight = std::max(targetHeight, (uint32_t)GL_UNIFORM_TEX_MIN_HEIGHT);
+            targetHeight = std::max(targetHeight, config.minHeight);
 
             if (targetHeight < textureHeight / 2) {
                 resizeTexture(targetHeight);
@@ -378,7 +374,7 @@ void GlUniformTexture::ensure()
     }
 
     if (textureIds[0] == 0) {
-        textureHeight = GL_UNIFORM_TEX_DEFAULT_HEIGHT;
+        textureHeight = config.defaultHeight;
         resizeTexture(textureHeight);
     }
 }
