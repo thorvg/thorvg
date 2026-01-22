@@ -307,7 +307,7 @@ void GlRenderer::drawPrimitive(GlShape& sdata, const RenderColor& c, RenderUpdat
         auto uniformTexLoc = solidTask->getProgram()->getUniformLocation("uUniformTex");
         if (uniformTexLoc >= 0 && !appended) {
             uniformTexture.ensure();
-            solidTask->addBindResource(GlBindingResource{GL_UNIFORM_TEX_UNIT, uniformTexture.getTextureId(), uniformTexLoc});
+            solidTask->addBindResource(GlBindingResource{uniformTexture.config.unit, uniformTexture.getTextureId(), uniformTexLoc});
         }
 
         ++prepareDrawId;
@@ -354,14 +354,13 @@ void GlRenderer::drawPrimitive(GlShape& sdata, const RenderColor& c, RenderUpdat
 
     task->setDrawDepth(depth);
 
-    const bool useDrawId = (task->getProgram() == mPrograms[RT_Color]);
-    uint32_t drawId = useDrawId ? mPrepareDrawId : 0;
+    uint32_t drawId = mPrepareDrawId;
 
-    if (!sdata.geometry.draw(task, &mGpuBuffer, flag, drawId, useDrawId)) {
+    if (!sdata.geometry.draw(task, &mGpuBuffer, flag, drawId, true)) {
         delete task;
         return;
     }
-    if (useDrawId) ++mPrepareDrawId;
+    ++mPrepareDrawId;
 
     task->setViewport(viewRegion);
 
@@ -399,32 +398,35 @@ void GlRenderer::drawPrimitive(GlShape& sdata, const RenderColor& c, RenderUpdat
         });
     }
 
-    if (useDrawId) {
-        mUniformTexture.stageColorUniforms(
-            drawId,
-            matrix3STD140,
-            color[0], color[1], color[2], color[3]);
-        auto uniformTexLoc = task->getProgram()->getUniformLocation("uUniformTex");
-        if (uniformTexLoc >= 0) {
-            mUniformTexture.ensure();
-            task->addBindResource(GlBindingResource{GL_UNIFORM_TEX_UNIT, mUniformTexture.getTextureId(), uniformTexLoc});
-        }
+    float blendRegion[4];
+    const float* blendRegionPtr = nullptr;
+    if (blendShape && dstCopyFbo) {
+#if defined(THORVG_GL_TARGET_GL)
+        blendRegion[0] = float(viewRegion.sx());
+        blendRegion[1] = float(viewRegion.sy());
+        blendRegion[2] = float(dstCopyFbo->width);
+        blendRegion[3] = float(dstCopyFbo->height);
+#else // TODO: create partial buffer when MSAA is disabled        
+        blendRegion[0] = 0.0f;
+        blendRegion[1] = 0.0f;
+        blendRegion[2] = float(dstCopyFbo->width);
+        blendRegion[3] = float(dstCopyFbo->height);
+#endif
+        blendRegionPtr = blendRegion;
+    }
+
+    mUniformTexture.stageColorUniforms(
+        drawId,
+        matrix3STD140,
+        color[0], color[1], color[2], color[3],
+        blendRegionPtr);
+    auto uniformTexLoc = task->getProgram()->getUniformLocation("uUniformTex");
+    if (uniformTexLoc >= 0) {
+        mUniformTexture.ensure();
+        task->addBindResource(GlBindingResource{mUniformTexture.config.unit, mUniformTexture.getTextureId(), uniformTexLoc});
     }
 
     if (blendShape && dstCopyFbo) {
-#if defined(THORVG_GL_TARGET_GL)
-        float region[] = {float(viewRegion.sx()), float(viewRegion.sy()), float(dstCopyFbo->width), float(dstCopyFbo->height)};
-#else // TODO: create partial buffer when MSAA is disabled        
-        float region[] = {0.0f, 0.0f, float(dstCopyFbo->width), float(dstCopyFbo->height)};
-#endif
-        task->addBindResource(GlBindingResource{
-            2,
-            task->getProgram()->getUniformBlockIndex("BlendRegion"),
-            mGpuBuffer.getBufferId(),
-            mGpuBuffer.push(region, 4 * sizeof(float), true),
-            4 * sizeof(float),
-        });
-
         task->addBindResource(GlBindingResource{0, dstCopyFbo->colorTex, task->getProgram()->getUniformLocation("uDstTexture")});
     }
 
@@ -460,7 +462,7 @@ void GlRenderer::drawPrimitive(GlShape& sdata, const Fill* fill, RenderUpdateFla
             uint32_t drawId;
         };
 
-        uint32_t drawsPerRow = GL_UNIFORM_TEX_WIDTH / 4;
+        uint32_t drawsPerRow = uniformTexture.config.width / 4;
         uint32_t drawId = prepareDrawId;
 
         bool appended = false;
@@ -617,7 +619,7 @@ void GlRenderer::drawPrimitive(GlShape& sdata, const Fill* fill, RenderUpdateFla
         auto uniformTexLoc = gradientTask->getProgram()->getUniformLocation("uUniformTex");
         if (uniformTexLoc >= 0 && !appended) {
             uniformTexture.ensure();
-            gradientTask->addBindResource(GlBindingResource{GL_UNIFORM_TEX_UNIT, uniformTexture.getTextureId(), uniformTexLoc});
+            gradientTask->addBindResource(GlBindingResource{uniformTexture.config.unit, uniformTexture.getTextureId(), uniformTexLoc});
         }
 
         prepareDrawId = drawId + drawsPerRow;
@@ -1670,7 +1672,7 @@ bool GlRenderer::renderImage(void* data)
         auto uniformTexLoc = imageTask->getProgram()->getUniformLocation("uUniformTex");
         if (uniformTexLoc >= 0 && !appended) {
             uniformTexture.ensure();
-            imageTask->addBindResource(GlBindingResource{GL_UNIFORM_TEX_UNIT, uniformTexture.getTextureId(), uniformTexLoc});
+            imageTask->addBindResource(GlBindingResource{uniformTexture.config.unit, uniformTexture.getTextureId(), uniformTexLoc});
         }
 
         if (!appended) {

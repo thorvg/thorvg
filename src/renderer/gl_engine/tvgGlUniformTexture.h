@@ -25,20 +25,29 @@
 
 #include "tvgGlRenderTask.h"
 
-#define GL_UNIFORM_TEX_WIDTH 32  // Initial width to fit full gradient rows; can be optimized later.
-#define GL_UNIFORM_TEX_MAX_STOPS 16
-#define GL_UNIFORM_TEX_UNIT 7
-#define GL_UNIFORM_TEX_SLOTS 1
-
 // Dynamic texture management defaults (can be overridden per instance)
-#define GL_UNIFORM_TEX_DEFAULT_HEIGHT 256      // Initial texture height (power of two)
-#define GL_UNIFORM_TEX_MIN_HEIGHT 64           // Minimum texture height
-#define GL_UNIFORM_TEX_GROWTH_FACTOR 2         // Growth multiplier when resizing
-#define GL_UNIFORM_TEX_SHRINK_THRESHOLD 0.30f  // Shrink when usage below 30%
-#define GL_UNIFORM_TEX_SHRINK_FRAMES 60        // Sustained low usage frames before shrink
+constexpr uint32_t GL_UNIFORM_TEX_WIDTH = 32;
+constexpr uint32_t GL_UNIFORM_TEX_MAX_STOPS = 16;
+constexpr uint32_t GL_UNIFORM_TEX_UNIT = 7;
+constexpr uint32_t GL_UNIFORM_TEX_SLOTS = 1;
+constexpr uint32_t GL_UNIFORM_TEX_COLOR_STRIDE = 8;
+constexpr uint32_t GL_UNIFORM_TEX_COLOR_DRAWS_PER_ROW = GL_UNIFORM_TEX_WIDTH / GL_UNIFORM_TEX_COLOR_STRIDE;
+
+constexpr uint32_t GL_UNIFORM_TEX_DEFAULT_HEIGHT = 256;      // Initial texture height (power of two)
+constexpr uint32_t GL_UNIFORM_TEX_MIN_HEIGHT = 64;           // Minimum texture height
+constexpr uint32_t GL_UNIFORM_TEX_GROWTH_FACTOR = 2;         // Growth multiplier when resizing
+constexpr float GL_UNIFORM_TEX_SHRINK_THRESHOLD = 0.30f;  // Shrink when usage below 30%
+constexpr uint32_t GL_UNIFORM_TEX_SHRINK_FRAMES = 60;        // Sustained low usage frames before shrink
 
 struct GlUniformTextureConfig
 {
+    uint32_t width = GL_UNIFORM_TEX_WIDTH;
+    uint32_t maxStops = GL_UNIFORM_TEX_MAX_STOPS;
+    uint32_t unit = GL_UNIFORM_TEX_UNIT;
+    uint32_t slots = GL_UNIFORM_TEX_SLOTS;
+    uint32_t colorStride = GL_UNIFORM_TEX_COLOR_STRIDE;
+    uint32_t colorDrawsPerRow = GL_UNIFORM_TEX_COLOR_DRAWS_PER_ROW;
+
     uint32_t defaultHeight = GL_UNIFORM_TEX_DEFAULT_HEIGHT;
     uint32_t minHeight = GL_UNIFORM_TEX_MIN_HEIGHT;
     uint32_t growthFactor = GL_UNIFORM_TEX_GROWTH_FACTOR;
@@ -80,7 +89,7 @@ struct GlUniformTexture
 
     void reset();
 
-    void stageColorUniforms(uint32_t drawId, const float* matrix, float r, float g, float b, float a);
+    void stageColorUniforms(uint32_t drawId, const float* matrix, float r, float g, float b, float a, const float* blendRegion = nullptr);
     void stageImageUniforms(uint32_t drawId, const float* matrix, float format, float flipY, float opacity);
 
     void stageLinearGradientUniforms(uint32_t drawId, const float* matrix, float depth, const float* invMatrix,
