@@ -142,8 +142,6 @@ struct GlRenderer : RenderMethod
         RT_ShapeBlend_Radial_Luminosity,
         RT_ShapeBlend_Radial_Add,
         RT_Image_Uniform,
-        RT_LinGradient_Uniform,
-        RT_RadGradient_Uniform,
         RT_None
     };
 

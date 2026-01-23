@@ -65,26 +65,6 @@ const char* COLOR_FRAG_SHADER = TVG_COMPOSE_SHADER(
 
 const char* GRADIENT_VERT_SHADER = TVG_COMPOSE_SHADER(
     uniform float uDepth;                                                           \n
-    layout(location = 0) in vec2 aLocation;                                         \n
-    out vec2 vPos;                                                                  \n
-    layout(std140) uniform Matrix {                                                 \n
-        mat3 transform;                                                             \n
-    } uMatrix;                                                                      \n
-    layout(std140) uniform InvMatrix {                                              \n
-        mat3 transform;                                                             \n
-    } uInvMatrix;                                                                   \n
-                                                                                    \n
-    void main()                                                                     \n
-    {                                                                               \n
-        vec3 glPos = uMatrix.transform * vec3(aLocation, 1.0);                      \n
-        gl_Position = vec4(glPos.xy, uDepth, 1.0);                                  \n
-        vec3 pos =  uInvMatrix.transform * vec3(aLocation, 1.0);                    \n
-        vPos = pos.xy;                                                              \n
-    }                                                                               \n
-);
-
-const char* GRADIENT_UNIFORM_VERT_SHADER = TVG_COMPOSE_SHADER(
-    uniform float uDepth;                                                           \n
     uniform sampler2D uUniformTex;                                                   \n
     layout(location = 0) in vec2 aLocation;                                         \n
     layout(location = 1) in uint aDrawId;                                           \n
@@ -210,24 +190,13 @@ const char* STR_GRADIENT_FRAG_COMMON_FUNCTIONS = TVG_COMPOSE_SHADER(
 );
 
 //See: GlRenderer::initShaders()
-const char* STR_GRADIENT_UNIFORM_COMMON_VARIABLES = TVG_COMPOSE_SHADER(
+const char* STR_GRADIENT_COMMON_VARIABLES = TVG_COMPOSE_SHADER(
     uniform sampler2D uUniformTex;                                                                          \n
     flat in uint vDrawId;                                                                                   \n
 );
 
 //See: GlRenderer::initShaders()
 const char* STR_LINEAR_GRADIENT_VARIABLES = TVG_COMPOSE_SHADER(
-    layout(std140) uniform GradientInfo {                                                                   \n
-        vec4  nStops;                                                                                       \n
-        vec2  gradStartPos;                                                                                 \n
-        vec2  gradEndPos;                                                                                   \n
-        vec4  stopPoints[MAX_STOP_COUNT / 4];                                                               \n
-        vec4  stopColors[MAX_STOP_COUNT];                                                                   \n
-    } uGradientInfo;                                                                                        \n
-);
-
-//See: GlRenderer::initShaders()
-const char* STR_LINEAR_GRADIENT_UNIFORM_VARIABLES = TVG_COMPOSE_SHADER(
     struct GradientInfo {                                                                                   \n
         vec4  nStops;                                                                                       \n
         vec2  gradStartPos;                                                                                 \n
@@ -236,15 +205,6 @@ const char* STR_LINEAR_GRADIENT_UNIFORM_VARIABLES = TVG_COMPOSE_SHADER(
         vec4  stopColors[MAX_STOP_COUNT];                                                                   \n
     };                                                                                                      \n
     GradientInfo uGradientInfo;                                                                             \n
-);
-
-//See: GlRenderer::initShaders()
-const char* STR_LINEAR_GRADIENT_MAIN = TVG_COMPOSE_SHADER(
-    out vec4 FragColor;                                                                                     \n
-    void main()                                                                                             \n
-    {                                                                                                       \n
-        FragColor = linearGradientColor(vPos);                                                              \n
-    }                                                                                                       \n
 );
 
 //See: GlRenderer::initShaders()
@@ -262,7 +222,7 @@ const char* STR_LINEAR_GRADIENT_FUNCTIONS = TVG_COMPOSE_SHADER(
 );
 
 //See: GlRenderer::initShaders()
-const char* STR_LINEAR_GRADIENT_UNIFORM_FUNCTIONS = TVG_COMPOSE_SHADER(
+const char* STR_LINEAR_GRADIENT_LOAD_FUNCTIONS = TVG_COMPOSE_SHADER(
     void loadGradientInfo()                                                                                 \n
     {                                                                                                       \n
         int rowID = int(vDrawId) >> 3;                                                                      \n
@@ -281,7 +241,7 @@ const char* STR_LINEAR_GRADIENT_UNIFORM_FUNCTIONS = TVG_COMPOSE_SHADER(
 );
 
 //See: GlRenderer::initShaders()
-const char* STR_LINEAR_GRADIENT_UNIFORM_MAIN = TVG_COMPOSE_SHADER(
+const char* STR_LINEAR_GRADIENT_MAIN = TVG_COMPOSE_SHADER(
     out vec4 FragColor;                                                                                     \n
     void main()                                                                                             \n
     {                                                                                                       \n
@@ -292,17 +252,6 @@ const char* STR_LINEAR_GRADIENT_UNIFORM_MAIN = TVG_COMPOSE_SHADER(
 
 //See: GlRenderer::initShaders()
 const char* STR_RADIAL_GRADIENT_VARIABLES = TVG_COMPOSE_SHADER(
-    layout(std140) uniform GradientInfo {                                                                   \n
-        vec4  nStops;                                                                                       \n
-        vec4  centerPos;                                                                                    \n
-        vec2  radius;                                                                                       \n
-        vec4  stopPoints[MAX_STOP_COUNT / 4];                                                               \n
-        vec4  stopColors[MAX_STOP_COUNT];                                                                   \n
-    } uGradientInfo ;                                                                                       \n
-);
-
-//See: GlRenderer::initShaders()
-const char* STR_RADIAL_GRADIENT_UNIFORM_VARIABLES = TVG_COMPOSE_SHADER(
     struct GradientInfo {                                                                                   \n
         vec4  nStops;                                                                                       \n
         vec4  centerPos;                                                                                    \n
@@ -311,16 +260,6 @@ const char* STR_RADIAL_GRADIENT_UNIFORM_VARIABLES = TVG_COMPOSE_SHADER(
         vec4  stopColors[MAX_STOP_COUNT];                                                                   \n
     };                                                                                                      \n
     GradientInfo uGradientInfo;                                                                             \n
-);
-
-//See: GlRenderer::initShaders()
-const char* STR_RADIAL_GRADIENT_MAIN = TVG_COMPOSE_SHADER(
-    out vec4 FragColor;                                                                                     \n
-                                                                                                            \n
-    void main()                                                                                             \n
-    {                                                                                                       \n
-        FragColor = radialGradientColor(vPos);                                                              \n
-    }                                                                                                       \n
 );
 
 // TODO: Precompute radial_matrix, f, r1n, inv_r1, d_radius_sign, is_focal_on_circle, is_well_behaved, is_swapped in CPU as a uniform
@@ -421,7 +360,7 @@ const char* STR_RADIAL_GRADIENT_FUNCTIONS = TVG_COMPOSE_SHADER(
 );
 
 //See: GlRenderer::initShaders()
-const char* STR_RADIAL_GRADIENT_UNIFORM_FUNCTIONS = TVG_COMPOSE_SHADER(
+const char* STR_RADIAL_GRADIENT_LOAD_FUNCTIONS = TVG_COMPOSE_SHADER(
     void loadGradientInfo()                                                                                 \n
     {                                                                                                       \n
         int rowID = int(vDrawId) >> 3;                                                                      \n
@@ -440,7 +379,7 @@ const char* STR_RADIAL_GRADIENT_UNIFORM_FUNCTIONS = TVG_COMPOSE_SHADER(
 );
 
 //See: GlRenderer::initShaders()
-const char* STR_RADIAL_GRADIENT_UNIFORM_MAIN = TVG_COMPOSE_SHADER(
+const char* STR_RADIAL_GRADIENT_MAIN = TVG_COMPOSE_SHADER(
     out vec4 FragColor;                                                                                     \n
     void main()                                                                                             \n
     {                                                                                                       \n
@@ -822,6 +761,7 @@ struct FragData { vec3 Sc; float Sa; float So; vec3 Dc; float Da; };
 FragData d;
 
 void getFragData() {
+    loadGradientInfo();
     vec4 colorSrc = linearGradientColor(vPos);
     vec2 uv = (gl_FragCoord.xy - uBlendRegion.region.xy) / uBlendRegion.region.zw;
     vec4 colorDst = texture(uDstTexture, uv);
@@ -851,6 +791,7 @@ struct FragData { vec3 Sc; float Sa; float So; vec3 Dc; float Da; };
 FragData d;
 
 void getFragData() {
+    loadGradientInfo();
     vec4 colorSrc = radialGradientColor(vPos);
     vec2 uv = (gl_FragCoord.xy - uBlendRegion.region.xy) / uBlendRegion.region.zw;
     vec4 colorDst = texture(uDstTexture, uv);
