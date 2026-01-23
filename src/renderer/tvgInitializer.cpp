@@ -80,7 +80,7 @@ static bool _buildVersionInfo(uint32_t* major, uint32_t* minor, uint32_t* micro)
 /* External Class Implementation                                        */
 /************************************************************************/
 
-Result Initializer::init(uint32_t threads) noexcept
+Result Initializer::init(uint32_t threads, const HeapAllocator &allocator) noexcept
 {
     if (engineInit++ > 0) return Result::Success;
 
@@ -89,6 +89,8 @@ Result Initializer::init(uint32_t threads) noexcept
     if (!LoaderMgr::init()) return Result::Unknown;
 
     TaskScheduler::init(threads);
+
+    _heapAllocator = allocator;
 
     return Result::Success;
 }
