@@ -752,7 +752,6 @@ vec4 postProcess(vec4 R) { return mix(vec4(d.Dc, d.Da), R, d.Sa * d.So); }
 const char* BLEND_SHAPE_LINEAR_FRAG_HEADER = R"(
 uniform sampler2D uDstTexture;
 
-flat in uint vDrawId;
 out vec4 FragColor;
 
 vec3 One = vec3(1.0, 1.0, 1.0);
@@ -781,7 +780,6 @@ vec4 postProcess(vec4 R) { return mix(vec4(d.Dc, d.Da), R, d.Sa * d.So); }
 const char* BLEND_SHAPE_RADIAL_FRAG_HEADER = R"(
 uniform sampler2D uDstTexture;
 
-flat in uint vDrawId;
 out vec4 FragColor;
 
 vec3 One = vec3(1.0, 1.0, 1.0);

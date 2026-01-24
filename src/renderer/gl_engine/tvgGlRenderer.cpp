@@ -197,7 +197,6 @@ void GlRenderer::initShaders()
 
 void GlRenderer::drawPrimitive(GlShape& sdata, const RenderColor& c, RenderUpdateFlag flag, int32_t depth)
 {
-    // Helper to calculate alpha with stroke width adjustment
     static auto calculateSolidAlpha = [](const GlShape& sdata, const RenderColor& c, RenderUpdateFlag flag) -> uint8_t {
         auto a = MULTIPLY(c.a, sdata.opacity);
         if (flag & RenderUpdateFlag::Stroke) {
@@ -210,7 +209,6 @@ void GlRenderer::drawPrimitive(GlShape& sdata, const RenderColor& c, RenderUpdat
         return a;
     };
 
-    // Helper to append geometry for batched solid color rendering (no stencil/blend)
     static auto appendSolidNoStencil = [](
         RenderUpdateFlag flag,
         int32_t depth,
@@ -304,7 +302,6 @@ void GlRenderer::drawPrimitive(GlShape& sdata, const RenderColor& c, RenderUpdat
     GlStencilMode stencilMode = sdata.geometry.getStencilMode(flag);
     uint32_t drawId = mPrepareDrawId;
 
-    // Calculate alpha and prepare color (shared by all paths)
     auto a = calculateSolidAlpha(sdata, c, flag);
     float matrix3STD140[GL_MAT3_STD140_SIZE];
     currentPass()->getMatrix(matrix3STD140, sdata.geometry.matrix);
@@ -470,11 +467,7 @@ void GlRenderer::drawPrimitive(GlShape& sdata, const Fill* fill, RenderUpdateFla
         const RenderRegion& viewRegion,
         GlStageBuffer& gpuBuffer,
         GlRenderPass* currentPass,
-        GlRenderPass*& batchPass,
-        GlRenderTask*& batchTask,
-        uint32_t& batchVertexCount,
-        uint32_t& batchIndexOffset,
-        uint32_t& batchIndexCount,
+        auto& gradientBatch,
         GlProgram* program,
         bool& appended
     ) -> GlRenderTask* {
@@ -493,10 +486,10 @@ void GlRenderer::drawPrimitive(GlShape& sdata, const Fill* fill, RenderUpdateFla
         uint32_t vertexOffset = gpuBuffer.push(vertices.data, vertices.count * sizeof(GlGradientVertex));
 
         auto prevTask = currentPass->lastTask();
-        bool canAppend = prevTask && prevTask == batchTask && batchPass == currentPass &&
+        bool canAppend = prevTask && prevTask == gradientBatch.task && gradientBatch.pass == currentPass &&
                          prevTask->getProgram() == program;
 
-        uint32_t baseVertex = canAppend ? batchVertexCount : 0;
+        uint32_t baseVertex = canAppend ? gradientBatch.vertexCount : 0;
 
         Array<uint32_t> indices;
         indices.reserve(geometryBuffer.index.count);
@@ -507,9 +500,9 @@ void GlRenderer::drawPrimitive(GlShape& sdata, const Fill* fill, RenderUpdateFla
         uint32_t indexOffset = gpuBuffer.pushIndex(indices.data, indices.count * sizeof(uint32_t));
 
         if (canAppend) {
-            batchVertexCount += vertexCount;
-            batchIndexCount += indices.count;
-            prevTask->setDrawRange(batchIndexOffset, batchIndexCount);
+            gradientBatch.vertexCount += vertexCount;
+            gradientBatch.indexCount += indices.count;
+            prevTask->setDrawRange(gradientBatch.indexOffset, gradientBatch.indexCount);
 
             auto merged = prevTask->getViewport();
             merged.add(viewRegion);
@@ -526,131 +519,19 @@ void GlRenderer::drawPrimitive(GlShape& sdata, const Fill* fill, RenderUpdateFla
         task->setDrawRange(indexOffset, indices.count);
         task->setViewport(viewRegion);
 
-        batchPass = currentPass;
-        batchTask = task;
-        batchVertexCount = vertexCount;
-        batchIndexOffset = indexOffset;
-        batchIndexCount = indices.count;
+        gradientBatch.pass = currentPass;
+        gradientBatch.task = task;
+        gradientBatch.vertexCount = vertexCount;
+        gradientBatch.indexOffset = indexOffset;
+        gradientBatch.indexCount = indices.count;
 
         appended = false;
         return task;
     };
 
-    static auto drawLinearGradientNoStencil = [](
-        GlShape& sdata,
-        const Fill* fill,
-        const Fill::ColorStop* stops,
-        uint32_t stopCnt,
-        RenderUpdateFlag flag,
-        int32_t depth,
-        const RenderRegion& viewRegion,
-        uint32_t& prepareDrawId,
-        GlStageBuffer& gpuBuffer,
-        auto& linearGradientBatch,
-        GlUniformTexture& uniformTexture,
-        Array<GlProgram*>& programs,
-        GlRenderPass* currentPass
-    ) {
-        auto& geometryBuffer = (flag & RenderUpdateFlag::GradientStroke) ? sdata.geometry.stroke : sdata.geometry.fill;
-        uint32_t drawsPerRow = uniformTexture.config.width / 4;
-        uint32_t drawId = prepareDrawId;
-        bool appended = false;
-
-        GlRenderTask* gradientTask = appendGradientTask(
-            flag, geometryBuffer, drawId, depth, viewRegion, gpuBuffer, currentPass,
-            linearGradientBatch.pass, linearGradientBatch.task, linearGradientBatch.vertexCount,
-            linearGradientBatch.indexOffset, linearGradientBatch.indexCount,
-            programs[GlRenderer::RT_LinGradient], appended);
-        if (!gradientTask) return;
-
-        float alpha = calculateGradientAlpha(sdata, flag);
-
-        float matrix3STD140[GL_MAT3_STD140_SIZE];
-        float invMat3[GL_MAT3_STD140_SIZE];
-        prepareGradientMatrices(fill, sdata, currentPass, matrix3STD140, invMat3);
-
-        float stopPoints[MAX_GRADIENT_STOPS] = {};
-        float stopColors[4 * MAX_GRADIENT_STOPS] = {};
-        uint32_t nStops = processGradientStops(stops, stopCnt, alpha, stopPoints, stopColors);
-
-        float spread = static_cast<int32_t>(fill->spread()) * 1.f;
-
-        auto linearFill = static_cast<const LinearGradient*>(fill);
-        float x1, y1, x2, y2;
-        linearFill->linear(&x1, &y1, &x2, &y2);
-        uniformTexture.stageLinearGradientUniforms(
-            drawId, matrix3STD140, static_cast<float>(depth), invMat3,
-            nStops, spread, x1, y1, x2, y2, stopPoints, stopColors);
-
-        auto uniformTexLoc = gradientTask->getProgram()->getUniformLocation("uUniformTex");
-        if (uniformTexLoc >= 0 && !appended) {
-            uniformTexture.ensure();
-            gradientTask->addBindResource(GlBindingResource{uniformTexture.config.unit, uniformTexture.getTextureId(), uniformTexLoc});
-        }
-
-        prepareDrawId = drawId + drawsPerRow;
-        if (!appended) currentPass->addRenderTask(gradientTask);
-    };
-
-    static auto drawRadialGradientNoStencil = [](
-        GlShape& sdata,
-        const Fill* fill,
-        const Fill::ColorStop* stops,
-        uint32_t stopCnt,
-        RenderUpdateFlag flag,
-        int32_t depth,
-        const RenderRegion& viewRegion,
-        uint32_t& prepareDrawId,
-        GlStageBuffer& gpuBuffer,
-        auto& radialGradientBatch,
-        GlUniformTexture& uniformTexture,
-        Array<GlProgram*>& programs,
-        GlRenderPass* currentPass
-    ) {
-        auto& geometryBuffer = (flag & RenderUpdateFlag::GradientStroke) ? sdata.geometry.stroke : sdata.geometry.fill;
-        uint32_t drawsPerRow = uniformTexture.config.width / 4;
-        uint32_t drawId = prepareDrawId;
-        bool appended = false;
-
-        GlRenderTask* gradientTask = appendGradientTask(
-            flag, geometryBuffer, drawId, depth, viewRegion, gpuBuffer, currentPass,
-            radialGradientBatch.pass, radialGradientBatch.task, radialGradientBatch.vertexCount,
-            radialGradientBatch.indexOffset, radialGradientBatch.indexCount,
-            programs[GlRenderer::RT_RadGradient], appended);
-        if (!gradientTask) return;
-
-        float alpha = calculateGradientAlpha(sdata, flag);
-
-        float matrix3STD140[GL_MAT3_STD140_SIZE];
-        float invMat3[GL_MAT3_STD140_SIZE];
-        prepareGradientMatrices(fill, sdata, currentPass, matrix3STD140, invMat3);
-
-        float stopPoints[MAX_GRADIENT_STOPS] = {};
-        float stopColors[4 * MAX_GRADIENT_STOPS] = {};
-        uint32_t nStops = processGradientStops(stops, stopCnt, alpha, stopPoints, stopColors);
-
-        float spread = static_cast<int32_t>(fill->spread()) * 1.f;
-
-        auto radialFill = static_cast<const RadialGradient*>(fill);
-        float x, y, r, fx, fy, fr;
-        radialFill->radial(&x, &y, &r, &fx, &fy, &fr);
-        CONST_RADIAL(radialFill)->correct(fx, fy, fr);
-        uniformTexture.stageRadialGradientUniforms(
-            drawId, matrix3STD140, static_cast<float>(depth), invMat3,
-            nStops, spread, fx, fy, x, y, fr, r, stopPoints, stopColors);
-
-        auto uniformTexLoc = gradientTask->getProgram()->getUniformLocation("uUniformTex");
-        if (uniformTexLoc >= 0 && !appended) {
-            uniformTexture.ensure();
-            gradientTask->addBindResource(GlBindingResource{uniformTexture.config.unit, uniformTexture.getTextureId(), uniformTexLoc});
-        }
-
-        prepareDrawId = drawId + drawsPerRow;
-        if (!appended) currentPass->addRenderTask(gradientTask);
-    };
-
+    auto* pass = currentPass();
     auto blendShape = (mBlendMethod != BlendMethod::Normal);
-    auto vp = currentPass()->getViewport();
+    const auto& vp = pass->getViewport();
     auto bbox = blendShape ? sdata.geometry.getBounds() : sdata.geometry.viewport;
     bbox.intersect(vp);
     if (bbox.invalid()) return;
@@ -671,30 +552,84 @@ void GlRenderer::drawPrimitive(GlShape& sdata, const Fill* fill, RenderUpdateFla
     RenderRegion viewRegion = {{x, yGl}, {x + w, yGl + h}};
 
     GlStencilMode stencilMode = sdata.geometry.getStencilMode(flag);
+    uint32_t drawId = mPrepareGradientDrawId;
+    uint32_t drawsPerRow = mGradientUniformTexture.config.width / 4;
+
+    auto bindUniformTexture = [&](GlRenderTask* task) {
+        auto uniformTexLoc = task->getProgram()->getUniformLocation("uUniformTex");
+        if (uniformTexLoc >= 0) {
+            mGradientUniformTexture.ensure();
+            task->addBindResource(GlBindingResource{mGradientUniformTexture.config.unit, mGradientUniformTexture.getTextureId(), uniformTexLoc});
+        }
+    };
+
+    auto stageGradientUniforms = [&](uint32_t stageDrawId, const float* blendRegionPtr) {
+        float matrix3STD140[GL_MAT3_STD140_SIZE];
+        float invMat3[GL_MAT3_STD140_SIZE];
+        prepareGradientMatrices(fill, sdata, pass, matrix3STD140, invMat3);
+
+        float stopPoints[MAX_GRADIENT_STOPS] = {};
+        float stopColors[4 * MAX_GRADIENT_STOPS] = {};
+        float alpha = calculateGradientAlpha(sdata, flag);
+        uint32_t nStops = processGradientStops(stops, stopCnt, alpha, stopPoints, stopColors);
+        float spread = static_cast<int32_t>(fill->spread()) * 1.f;
+
+        if (radial) {
+            auto radialFill = static_cast<const RadialGradient*>(fill);
+            float x, y, r, fx, fy, fr;
+            radialFill->radial(&x, &y, &r, &fx, &fy, &fr);
+            CONST_RADIAL(radialFill)->correct(fx, fy, fr);
+            mGradientUniformTexture.stageRadialGradientUniforms(
+                stageDrawId, matrix3STD140, static_cast<float>(depth), invMat3,
+                nStops, spread, fx, fy, x, y, fr, r, stopPoints, stopColors, blendRegionPtr);
+        } else {
+            auto linearFill = static_cast<const LinearGradient*>(fill);
+            float x1, y1, x2, y2;
+            linearFill->linear(&x1, &y1, &x2, &y2);
+            mGradientUniformTexture.stageLinearGradientUniforms(
+                stageDrawId, matrix3STD140, static_cast<float>(depth), invMat3,
+                nStops, spread, x1, y1, x2, y2, stopPoints, stopColors, blendRegionPtr);
+        }
+    };
+
+    auto drawGradientNoStencil = [&](auto& gradientBatch, GlProgram* program) -> bool {
+        auto& geometryBuffer = (flag & RenderUpdateFlag::GradientStroke) ? sdata.geometry.stroke : sdata.geometry.fill;
+        bool appended = false;
+
+        GlRenderTask* gradientTask = appendGradientTask(
+            flag, geometryBuffer, drawId, depth, viewRegion, mGpuBuffer, pass,
+            gradientBatch, program, appended);
+        if (!gradientTask) return false;
+
+        stageGradientUniforms(drawId, nullptr);
+
+        if (!appended) {
+            bindUniformTexture(gradientTask);
+            pass->addRenderTask(gradientTask);
+        }
+
+        mPrepareGradientDrawId = drawId + drawsPerRow;
+        return true;
+    };
 
     if (!blendShape && stencilMode == GlStencilMode::None) {
         if (radial) {
-            drawRadialGradientNoStencil(sdata, fill, stops, stopCnt, flag, depth, viewRegion, mPrepareGradientDrawId, mGpuBuffer,
-                mRadialGradientBatch, mGradientUniformTexture, mPrograms, currentPass());
+            if (!drawGradientNoStencil(mRadialGradientBatch, mPrograms[RT_RadGradient])) return;
         } else {
-            drawLinearGradientNoStencil(sdata, fill, stops, stopCnt, flag, depth, viewRegion, mPrepareGradientDrawId, mGpuBuffer,
-                mLinearGradientBatch, mGradientUniformTexture, mPrograms, currentPass());
+            if (!drawGradientNoStencil(mLinearGradientBatch, mPrograms[RT_LinGradient])) return;
         }
         return;
     }
-
-    uint32_t drawId = mPrepareGradientDrawId;
-    uint32_t drawsPerRow = mGradientUniformTexture.config.width / 4;
 
     if (blendShape) {
         if (mBlendPool.empty()) mBlendPool.push(new GlRenderTargetPool(surface.w, surface.h));
 #if defined(THORVG_GL_TARGET_GL)
         dstCopyFbo = mBlendPool[0]->getRenderTarget(viewRegion);
 #else // TODO: create partial buffer when MSAA is disabled        
-        dstCopyFbo = mBlendPool[0]->getRenderTarget(currentPass()->getViewport());
+        dstCopyFbo = mBlendPool[0]->getRenderTarget(pass->getViewport());
 #endif
         auto program = getBlendProgram(mBlendMethod, radial ? BlendSource::RadialGradient : BlendSource::LinearGradient);
-        task = new GlDirectBlendTask(program, currentPass()->getFbo(), dstCopyFbo, viewRegion);
+        task = new GlDirectBlendTask(program, pass->getFbo(), dstCopyFbo, viewRegion);
     } else {
         task = new GlRenderTask(mPrograms[radial ? RT_RadGradient : RT_LinGradient]);
     }
@@ -714,16 +649,6 @@ void GlRenderer::drawPrimitive(GlShape& sdata, const Fill* fill, RenderUpdateFla
         stencilTask->setDrawDepth(depth);
     }
 
-    float matrix3STD140[GL_MAT3_STD140_SIZE];
-    float invMat3[GL_MAT3_STD140_SIZE];
-    prepareGradientMatrices(fill, sdata, currentPass(), matrix3STD140, invMat3);
-
-    float stopPoints[MAX_GRADIENT_STOPS] = {};
-    float stopColors[4 * MAX_GRADIENT_STOPS] = {};
-    float alpha = calculateGradientAlpha(sdata, flag);
-    uint32_t nStops = processGradientStops(stops, stopCnt, alpha, stopPoints, stopColors);
-    float spread = static_cast<int32_t>(fill->spread()) * 1.f;
-
     // Compute blendRegion before staging (if blending is enabled)
     float* blendRegionPtr = nullptr;
     float blendRegion[4] = {};
@@ -742,28 +667,9 @@ void GlRenderer::drawPrimitive(GlShape& sdata, const Fill* fill, RenderUpdateFla
         blendRegionPtr = blendRegion;
     }
 
-    if (radial) {
-        auto radialFill = static_cast<const RadialGradient*>(fill);
-        float x, y, r, fx, fy, fr;
-        radialFill->radial(&x, &y, &r, &fx, &fy, &fr);
-        CONST_RADIAL(radialFill)->correct(fx, fy, fr);
-        mGradientUniformTexture.stageRadialGradientUniforms(
-            drawId, matrix3STD140, static_cast<float>(depth), invMat3,
-            nStops, spread, fx, fy, x, y, fr, r, stopPoints, stopColors, blendRegionPtr);
-    } else {
-        auto linearFill = static_cast<const LinearGradient*>(fill);
-        float x1, y1, x2, y2;
-        linearFill->linear(&x1, &y1, &x2, &y2);
-        mGradientUniformTexture.stageLinearGradientUniforms(
-            drawId, matrix3STD140, static_cast<float>(depth), invMat3,
-            nStops, spread, x1, y1, x2, y2, stopPoints, stopColors, blendRegionPtr);
-    }
+    stageGradientUniforms(drawId, blendRegionPtr);
 
-    auto uniformTexLoc = task->getProgram()->getUniformLocation("uUniformTex");
-    if (uniformTexLoc >= 0) {
-        mGradientUniformTexture.ensure();
-        task->addBindResource(GlBindingResource{mGradientUniformTexture.config.unit, mGradientUniformTexture.getTextureId(), uniformTexLoc});
-    }
+    bindUniformTexture(task);
 
     mPrepareGradientDrawId = drawId + drawsPerRow;
 
@@ -772,7 +678,7 @@ void GlRenderer::drawPrimitive(GlShape& sdata, const Fill* fill, RenderUpdateFla
             stencilTask,
             mGradientUniformTexture,
             drawId,
-            mGradientUniformTexture.config.width / 4,
+            drawsPerRow,
             4);
     }
 
@@ -781,9 +687,9 @@ void GlRenderer::drawPrimitive(GlShape& sdata, const Fill* fill, RenderUpdateFla
     }
 
     if (stencilTask) {
-        currentPass()->addRenderTask(new GlStencilCoverTask(stencilTask, task, stencilMode));
+        pass->addRenderTask(new GlStencilCoverTask(stencilTask, task, stencilMode));
     } else {
-        currentPass()->addRenderTask(task);
+        pass->addRenderTask(task);
     }
 }
 
