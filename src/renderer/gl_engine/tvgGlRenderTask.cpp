@@ -47,6 +47,14 @@ void GlRenderTask::run()
         GL_CHECK(glUniform1f(dLoc, mDrawDepth));
     }
 
+    if (mImageOpacity >= 0) {
+        int32_t colorLoc = mProgram->getUniformLocation("uColorFormat");
+        if (colorLoc >= 0) mProgram->setUniform1Value(colorLoc, 1, &mImageColorFormat);
+
+        int32_t opacityLoc = mProgram->getUniformLocation("uOpacity");
+        if (opacityLoc >= 0) mProgram->setUniform1Value(opacityLoc, 1, &mImageOpacity);
+    }
+
     // setup scissor rect
     GL_CHECK(glScissor(mViewport.sx(), mViewport.sy(), mViewport.sw(), mViewport.sh()));
 
@@ -101,6 +109,12 @@ void GlRenderTask::addVertexLayout(const GlVertexLayout &layout)
 void GlRenderTask::addBindResource(const GlBindingResource &binding)
 {
     mBindingResources.push(binding);
+}
+
+void GlRenderTask::setImageInfo(int32_t colorFormat, int32_t opacity)
+{
+    mImageColorFormat = colorFormat;
+    mImageOpacity = opacity;
 }
 
 

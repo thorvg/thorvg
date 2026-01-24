@@ -1236,29 +1236,9 @@ void GlRenderer::endRenderPass(RenderCompositor* cmp)
             prepareCmpTask(task, glCmp->bbox, renderPass->getFboWidth(), renderPass->getFboHeight());
             task->setDrawDepth(currentPass()->nextDrawDepth());
 
-            // matrix buffer
-            float matrix[GL_MAT3_STD140_SIZE];
-            auto identityMatrix = tvg::identity();
-            getMatrix3Std140(identityMatrix, matrix);
-
-            task->addBindResource(GlBindingResource{
-                0,
-                task->getProgram()->getUniformBlockIndex("Matrix"),
-                mGpuBuffer.getBufferId(),
-                mGpuBuffer.push(matrix, GL_MAT3_STD140_BYTES, true),
-                GL_MAT3_STD140_BYTES,
-            });
-
             // image info
-            uint32_t info[4] = {(uint32_t)ColorSpace::ABGR8888, 0, cmp->opacity, 0};
-
-            task->addBindResource(GlBindingResource{
-                1,
-                task->getProgram()->getUniformBlockIndex("ColorInfo"),
-                mGpuBuffer.getBufferId(),
-                mGpuBuffer.push(info, 4 * sizeof(uint32_t), true),
-                4 * sizeof(uint32_t),
-            });
+            task->setImageInfo(static_cast<int32_t>(ColorSpace::ABGR8888),
+                               static_cast<int32_t>(cmp->opacity));
 
             // texture id
             task->addBindResource(GlBindingResource{0, renderPass->getTextureId(), task->getProgram()->getUniformLocation("uTexture")});
@@ -1660,13 +1640,15 @@ bool GlRenderer::renderImage(void* data)
       return true;
     }
 
-    auto task = new GlRenderTask(mPrograms[RT_Image]);
+    auto task = new GlRenderTask(mPrograms[RT_Image_Uniform]);
     task->setDrawDepth(drawDepth);
 
-    if (!sdata->geometry.draw(task, &mGpuBuffer, RenderUpdateFlag::Image, 0, false)) {
+    uint32_t drawId = mPrepareDrawId;
+    if (!sdata->geometry.draw(task, &mGpuBuffer, RenderUpdateFlag::Image, drawId, true)) {
         delete task;
         return true;
     }
+    ++mPrepareDrawId;
 
     bool complexBlend = beginComplexBlending(bbox, sdata->geometry.getBounds());
     if (complexBlend) vp = currentPass()->getViewport();
@@ -1675,27 +1657,23 @@ bool GlRenderer::renderImage(void* data)
     float matrix3STD140[GL_MAT3_STD140_SIZE];
     currentPass()->getMatrix(matrix3STD140, sdata->geometry.matrix);
 
-    task->addBindResource(GlBindingResource{
-        0,
-        task->getProgram()->getUniformBlockIndex("Matrix"),
-        mGpuBuffer.getBufferId(),
-        mGpuBuffer.push(matrix3STD140, GL_MAT3_STD140_BYTES, true),
-        GL_MAT3_STD140_BYTES,
-    });
+    mUniformTexture.stageImageUniforms(
+        drawId,
+        matrix3STD140,
+        static_cast<float>(sdata->texColorSpace),
+        static_cast<float>(sdata->texFlipY),
+        static_cast<float>(sdata->opacity));
 
-    // image info
-    uint32_t info[4] = {(uint32_t)sdata->texColorSpace, sdata->texFlipY, sdata->opacity, 0};
+    auto uniformTexLoc = task->getProgram()->getUniformLocation("uUniformTex");
+    if (uniformTexLoc >= 0) {
+        mUniformTexture.ensure();
+        task->addBindResource(GlBindingResource{mUniformTexture.config.unit, mUniformTexture.getTextureId(), uniformTexLoc});
+    }
 
-    task->addBindResource(GlBindingResource{
-        1,
-        task->getProgram()->getUniformBlockIndex("ColorInfo"),
-        mGpuBuffer.getBufferId(),
-        mGpuBuffer.push(info, 4 * sizeof(uint32_t), true),
-        4 * sizeof(uint32_t),
-    });
-
-    // texture id
-    task->addBindResource(GlBindingResource{0, sdata->texId, task->getProgram()->getUniformLocation("uTexture")});
+    auto texLoc = task->getProgram()->getUniformLocation("uTexture");
+    if (texLoc >= 0) {
+        task->addBindResource(GlBindingResource{0, sdata->texId, texLoc});
+    }
 
     y = vp.sh() - y - bbox.sh();
     auto x2 = x + bbox.sw();

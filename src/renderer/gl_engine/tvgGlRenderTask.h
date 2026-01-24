@@ -42,7 +42,6 @@ enum class GlBindingType
     kTexture,
 };
 
-
 struct GlBindingResource
 {
     GlBindingType type;
@@ -82,6 +81,7 @@ public:
 
     void addVertexLayout(const GlVertexLayout& layout);
     void addBindResource(const GlBindingResource& binding);
+    void setImageInfo(int32_t colorFormat, int32_t opacity);
     void setDrawRange(uint32_t offset, uint32_t count);
     void setViewport(const RenderRegion& viewport);
     void setDrawDepth(int32_t depth) { mDrawDepth = static_cast<float>(depth); }
@@ -97,6 +97,8 @@ private:
     uint32_t mIndexCount = {};
     Array<GlVertexLayout> mVertexLayout = {};
     Array<GlBindingResource> mBindingResources = {};
+    int32_t mImageColorFormat = 0;
+    int32_t mImageOpacity = -1;
     float mDrawDepth = 0.f;
 };
 
