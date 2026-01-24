@@ -667,14 +667,25 @@ const char* MASK_LIGHTEN_FRAG_SHADER = TVG_COMPOSE_SHADER(
 
 const char* STENCIL_VERT_SHADER = TVG_COMPOSE_SHADER(
     uniform float uDepth;                                           \n
+    uniform sampler2D uUniformTex;                                  \n
+    uniform int uDrawId;                                            \n
+    uniform int uDrawsPerRow;                                       \n
+    uniform int uColStride;                                         \n
     layout(location = 0) in vec2 aLocation;                         \n
-    layout(std140) uniform Matrix {                                 \n
-        mat3 transform;                                             \n
-    } uMatrix;                                                      \n
+                                                                    \n
+    mat3 fetchMat3(int row, int colOffset) {                        \n
+        vec4 c0 = texelFetch(uUniformTex, ivec2(colOffset, row), 0);     \n
+        vec4 c1 = texelFetch(uUniformTex, ivec2(colOffset + 1, row), 0); \n
+        vec4 c2 = texelFetch(uUniformTex, ivec2(colOffset + 2, row), 0); \n
+        return mat3(c0.xyz, c1.xyz, c2.xyz);                        \n
+    }                                                               \n
                                                                     \n
     void main()                                                     \n
     {                                                               \n
-        vec3 pos = uMatrix.transform * vec3(aLocation, 1.0);        \n
+        int row = uDrawId / uDrawsPerRow;                           \n
+        int colOffset = (uDrawId % uDrawsPerRow) * uColStride;      \n
+        mat3 transform = fetchMat3(row, colOffset);                 \n
+        vec3 pos = transform * vec3(aLocation, 1.0);                \n
         gl_Position = vec4(pos.xy, uDepth, 1.0);                    \n
     });
 
@@ -739,12 +750,9 @@ vec4 postProcess(vec4 R) { return mix(vec4(d.Dc, d.Da), R, d.Sa * d.So); }
 )";
 
 const char* BLEND_SHAPE_LINEAR_FRAG_HEADER = R"(
-layout(std140) uniform BlendRegion {
-    vec4 region;
-} uBlendRegion;
-
 uniform sampler2D uDstTexture;
 
+flat in uint vDrawId;
 out vec4 FragColor;
 
 vec3 One = vec3(1.0, 1.0, 1.0);
@@ -754,7 +762,9 @@ FragData d;
 void getFragData() {
     loadGradientInfo();
     vec4 colorSrc = linearGradientColor(vPos);
-    vec2 uv = (gl_FragCoord.xy - uBlendRegion.region.xy) / uBlendRegion.region.zw;
+    int rowID = int(vDrawId) >> 3;
+    vec4 region = texelFetch(uUniformTex, ivec2(29, rowID), 0);
+    vec2 uv = (gl_FragCoord.xy - region.xy) / region.zw;
     vec4 colorDst = texture(uDstTexture, uv);
 
     d.Sc = colorSrc.rgb;
@@ -769,12 +779,9 @@ vec4 postProcess(vec4 R) { return mix(vec4(d.Dc, d.Da), R, d.Sa * d.So); }
 )";
 
 const char* BLEND_SHAPE_RADIAL_FRAG_HEADER = R"(
-layout(std140) uniform BlendRegion {
-    vec4 region;
-} uBlendRegion;
-
 uniform sampler2D uDstTexture;
 
+flat in uint vDrawId;
 out vec4 FragColor;
 
 vec3 One = vec3(1.0, 1.0, 1.0);
@@ -784,7 +791,9 @@ FragData d;
 void getFragData() {
     loadGradientInfo();
     vec4 colorSrc = radialGradientColor(vPos);
-    vec2 uv = (gl_FragCoord.xy - uBlendRegion.region.xy) / uBlendRegion.region.zw;
+    int rowID = int(vDrawId) >> 3;
+    vec4 region = texelFetch(uUniformTex, ivec2(29, rowID), 0);
+    vec2 uv = (gl_FragCoord.xy - region.xy) / region.zw;
     vec4 colorDst = texture(uDstTexture, uv);
 
     d.Sc = colorSrc.rgb;

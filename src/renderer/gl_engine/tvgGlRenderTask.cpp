@@ -47,13 +47,7 @@ void GlRenderTask::run()
         GL_CHECK(glUniform1f(dLoc, mDrawDepth));
     }
 
-    if (mImageOpacity >= 0) {
-        int32_t colorLoc = mProgram->getUniformLocation("uColorFormat");
-        if (colorLoc >= 0) mProgram->setUniform1Value(colorLoc, 1, &mImageColorFormat);
-
-        int32_t opacityLoc = mProgram->getUniformLocation("uOpacity");
-        if (opacityLoc >= 0) mProgram->setUniform1Value(opacityLoc, 1, &mImageOpacity);
-    }
+    applyUniforms();
 
     // setup scissor rect
     GL_CHECK(glScissor(mViewport.sx(), mViewport.sy(), mViewport.sw(), mViewport.sh()));
@@ -111,10 +105,8 @@ void GlRenderTask::addBindResource(const GlBindingResource &binding)
     mBindingResources.push(binding);
 }
 
-void GlRenderTask::setImageInfo(int32_t colorFormat, int32_t opacity)
+void GlRenderTask::applyUniforms()
 {
-    mImageColorFormat = colorFormat;
-    mImageOpacity = opacity;
 }
 
 
@@ -130,6 +122,33 @@ void GlRenderTask::setViewport(const RenderRegion &viewport)
     mViewport = viewport;
     if (mViewport.max.x < mViewport.min.x) mViewport.max.x = mViewport.min.x;
     if (mViewport.max.y < mViewport.min.y) mViewport.max.y = mViewport.min.y;
+}
+
+
+/************************************************************************/
+/* GlStencilTask Class Implementation                                   */
+/************************************************************************/
+
+void GlStencilTask::setStencilUniforms(int32_t drawId, int32_t drawsPerRow, int32_t colStride)
+{
+    mDrawId = drawId;
+    mDrawsPerRow = drawsPerRow;
+    mColStride = colStride;
+    mHasStencilInfo = true;
+}
+
+
+void GlStencilTask::applyUniforms()
+{
+    if (!mHasStencilInfo) return;
+
+    auto program = getProgram();
+    int32_t drawIdLoc = program->getUniformLocation("uDrawId");
+    if (drawIdLoc >= 0) program->setUniform1Value(drawIdLoc, 1, &mDrawId);
+    int32_t drawsPerRowLoc = program->getUniformLocation("uDrawsPerRow");
+    if (drawsPerRowLoc >= 0) program->setUniform1Value(drawsPerRowLoc, 1, &mDrawsPerRow);
+    int32_t colStrideLoc = program->getUniformLocation("uColStride");
+    if (colStrideLoc >= 0) program->setUniform1Value(colStrideLoc, 1, &mColStride);
 }
 
 
@@ -327,6 +346,27 @@ void GlDrawBlitTask::run()
     GL_CHECK(glViewport(0, 0, mParentWidth, mParentHeight));
     GL_CHECK(glScissor(0, 0, mParentWidth, mParentHeight));
     GlRenderTask::run();
+}
+
+
+void GlDrawBlitTask::setImageInfo(int32_t colorFormat, int32_t opacity)
+{
+    mImageColorFormat = colorFormat;
+    mImageOpacity = opacity;
+    mHasImageInfo = true;
+}
+
+
+void GlDrawBlitTask::applyUniforms()
+{
+    if (!mHasImageInfo) return;
+
+    auto program = getProgram();
+    int32_t colorLoc = program->getUniformLocation("uColorFormat");
+    if (colorLoc >= 0) program->setUniform1Value(colorLoc, 1, &mImageColorFormat);
+
+    int32_t opacityLoc = program->getUniformLocation("uOpacity");
+    if (opacityLoc >= 0) program->setUniform1Value(opacityLoc, 1, &mImageOpacity);
 }
 
 

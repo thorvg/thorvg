@@ -36,6 +36,19 @@
 
 static atomic<int32_t> rendererCnt{-1};
 
+static void bindStencilUniforms(GlStencilTask* task, GlUniformTexture& uniformTexture, uint32_t drawId, uint32_t drawsPerRow, uint32_t colStride)
+{
+    if (!task) return;
+
+    auto uniformTexLoc = task->getProgram()->getUniformLocation("uUniformTex");
+    if (uniformTexLoc >= 0) {
+        uniformTexture.ensure();
+        task->addBindResource(GlBindingResource{uniformTexture.config.unit, uniformTexture.getTextureId(), uniformTexLoc});
+    }
+
+    task->setStencilUniforms(static_cast<int32_t>(drawId), static_cast<int32_t>(drawsPerRow), static_cast<int32_t>(colStride));
+}
+
 void GlRenderer::clearDisposes()
 {
     if (mDisposed.textures.count > 0) {
@@ -348,10 +361,10 @@ void GlRenderer::drawPrimitive(GlShape& sdata, const RenderColor& c, RenderUpdat
 
     task->setViewport(viewRegion);
 
-    GlRenderTask* stencilTask = nullptr;
+    GlStencilTask* stencilTask = nullptr;
 
     if (stencilMode != GlStencilMode::None) {
-        stencilTask = new GlRenderTask(mPrograms[RT_Stencil], task);
+        stencilTask = new GlStencilTask(mPrograms[RT_Stencil], task);
         stencilTask->setDrawDepth(depth);
     }
 
@@ -372,14 +385,12 @@ void GlRenderer::drawPrimitive(GlShape& sdata, const RenderColor& c, RenderUpdat
     float color[] = {c.r / 255.f, c.g / 255.f, c.b / 255.f, a / 255.f};
 
     if (stencilTask) {
-        auto viewOffset = mGpuBuffer.push(matrix3STD140, GL_MAT3_STD140_BYTES, true);
-        stencilTask->addBindResource(GlBindingResource{
-            0,
-            stencilTask->getProgram()->getUniformBlockIndex("Matrix"),
-            mGpuBuffer.getBufferId(),
-            viewOffset,
-            GL_MAT3_STD140_BYTES,
-        });
+        bindStencilUniforms(
+            stencilTask,
+            mUniformTexture,
+            drawId,
+            mUniformTexture.config.colorDrawsPerRow,
+            mUniformTexture.config.colorStride);
     }
 
     float blendRegion[4];
@@ -718,9 +729,9 @@ void GlRenderer::drawPrimitive(GlShape& sdata, const Fill* fill, RenderUpdateFla
 
     task->setViewport(viewRegion);
 
-    GlRenderTask* stencilTask = nullptr;
+    GlStencilTask* stencilTask = nullptr;
     if (stencilMode != GlStencilMode::None) {
-        stencilTask = new GlRenderTask(mPrograms[RT_Stencil], task);
+        stencilTask = new GlStencilTask(mPrograms[RT_Stencil], task);
         stencilTask->setDrawDepth(depth);
     }
 
@@ -734,6 +745,24 @@ void GlRenderer::drawPrimitive(GlShape& sdata, const Fill* fill, RenderUpdateFla
     uint32_t nStops = processGradientStops(stops, stopCnt, alpha, stopPoints, stopColors);
     float spread = static_cast<int32_t>(fill->spread()) * 1.f;
 
+    // Compute blendRegion before staging (if blending is enabled)
+    float* blendRegionPtr = nullptr;
+    float blendRegion[4] = {};
+    if (blendShape && dstCopyFbo) {
+#if defined(THORVG_GL_TARGET_GL)
+        blendRegion[0] = float(viewRegion.sx());
+        blendRegion[1] = float(viewRegion.sy());
+        blendRegion[2] = float(dstCopyFbo->width);
+        blendRegion[3] = float(dstCopyFbo->height);
+#else // TODO: create partial buffer when MSAA is disabled        
+        blendRegion[0] = 0.0f;
+        blendRegion[1] = 0.0f;
+        blendRegion[2] = float(dstCopyFbo->width);
+        blendRegion[3] = float(dstCopyFbo->height);
+#endif
+        blendRegionPtr = blendRegion;
+    }
+
     if (radial) {
         auto radialFill = static_cast<const RadialGradient*>(fill);
         float x, y, r, fx, fy, fr;
@@ -741,14 +770,14 @@ void GlRenderer::drawPrimitive(GlShape& sdata, const Fill* fill, RenderUpdateFla
         CONST_RADIAL(radialFill)->correct(fx, fy, fr);
         mGradientUniformTexture.stageRadialGradientUniforms(
             drawId, matrix3STD140, static_cast<float>(depth), invMat3,
-            nStops, spread, fx, fy, x, y, fr, r, stopPoints, stopColors);
+            nStops, spread, fx, fy, x, y, fr, r, stopPoints, stopColors, blendRegionPtr);
     } else {
         auto linearFill = static_cast<const LinearGradient*>(fill);
         float x1, y1, x2, y2;
         linearFill->linear(&x1, &y1, &x2, &y2);
         mGradientUniformTexture.stageLinearGradientUniforms(
             drawId, matrix3STD140, static_cast<float>(depth), invMat3,
-            nStops, spread, x1, y1, x2, y2, stopPoints, stopColors);
+            nStops, spread, x1, y1, x2, y2, stopPoints, stopColors, blendRegionPtr);
     }
 
     auto uniformTexLoc = task->getProgram()->getUniformLocation("uUniformTex");
@@ -760,29 +789,15 @@ void GlRenderer::drawPrimitive(GlShape& sdata, const Fill* fill, RenderUpdateFla
     mPrepareGradientDrawId = drawId + drawsPerRow;
 
     if (stencilTask) {
-        auto viewOffset = mGpuBuffer.push(matrix3STD140, GL_MAT3_STD140_BYTES, true);
-        stencilTask->addBindResource(GlBindingResource{
-            0,
-            stencilTask->getProgram()->getUniformBlockIndex("Matrix"),
-            mGpuBuffer.getBufferId(),
-            viewOffset,
-            GL_MAT3_STD140_BYTES,
-        });
+        bindStencilUniforms(
+            stencilTask,
+            mGradientUniformTexture,
+            drawId,
+            mGradientUniformTexture.config.width / 4,
+            4);
     }
 
     if (blendShape && dstCopyFbo) {
-#if defined(THORVG_GL_TARGET_GL)
-        float region[] = {float(viewRegion.sx()), float(viewRegion.sy()), float(dstCopyFbo->width), float(dstCopyFbo->height)};
-#else // TODO: create partial buffer when MSAA is disabled        
-        float region[] = {0.0f, 0.0f, float(dstCopyFbo->width), float(dstCopyFbo->height)};
-#endif
-        task->addBindResource(GlBindingResource{
-            3,
-            task->getProgram()->getUniformBlockIndex("BlendRegion"),
-            mGpuBuffer.getBufferId(),
-            mGpuBuffer.push(region, 4 * sizeof(float), true),
-            4 * sizeof(float),
-        });
         task->addBindResource(GlBindingResource{0, dstCopyFbo->colorTex, task->getProgram()->getUniformLocation("uDstTexture")});
     }
 
@@ -825,7 +840,9 @@ void GlRenderer::drawClip(Array<RenderData>& clips)
 
     auto identityVertexOffset = mGpuBuffer.push(identityVertex.data, 8 * sizeof(float));
     auto identityIndexOffset = mGpuBuffer.pushIndex(identityIndex.data, 6 * sizeof(uint32_t));
-    auto mat3Offset = mGpuBuffer.push(mat3Identity, GL_MAT3_STD140_BYTES, true);
+
+    uint32_t identityDrawId = mPrepareDrawId++;
+    mUniformTexture.stageColorUniforms(identityDrawId, mat3Identity, 0.f, 0.f, 0.f, 0.f);
 
     Array<int32_t> clipDepths(clips.count);
     clipDepths.count = clips.count;
@@ -838,7 +855,7 @@ void GlRenderer::drawClip(Array<RenderData>& clips)
 
     for (uint32_t i = 0; i < clips.count; ++i) {
         auto sdata = static_cast<GlShape*>(clips[i]);
-        auto clipTask = new GlRenderTask(mPrograms[RT_Stencil]);
+        auto clipTask = new GlStencilTask(mPrograms[RT_Stencil]);
         clipTask->setDrawDepth(clipDepths[i]);
 
         auto flag = (sdata->geometry.stroke.vertex.count > 0) ? RenderUpdateFlag::Stroke : RenderUpdateFlag::Path;
@@ -854,18 +871,27 @@ void GlRenderer::drawClip(Array<RenderData>& clips)
         float matrix3STD140[GL_MAT3_STD140_SIZE];
         currentPass()->getMatrix(matrix3STD140, sdata->geometry.matrix);
 
-        auto loc = clipTask->getProgram()->getUniformBlockIndex("Matrix");
-        auto viewOffset = mGpuBuffer.push(matrix3STD140, GL_MAT3_STD140_BYTES, true);
+        uint32_t clipDrawId = mPrepareDrawId++;
+        mUniformTexture.stageColorUniforms(clipDrawId, matrix3STD140, 0.f, 0.f, 0.f, 0.f);
+        bindStencilUniforms(
+            clipTask,
+            mUniformTexture,
+            clipDrawId,
+            mUniformTexture.config.colorDrawsPerRow,
+            mUniformTexture.config.colorStride);
 
-        clipTask->addBindResource(GlBindingResource{0, loc, mGpuBuffer.getBufferId(), viewOffset, GL_MAT3_STD140_BYTES, });
-
-        auto maskTask = new GlRenderTask(mPrograms[RT_Stencil]);
+        auto maskTask = new GlStencilTask(mPrograms[RT_Stencil]);
 
         maskTask->setDrawDepth(clipDepths[i]);
         maskTask->addVertexLayout(GlVertexLayout{0, 2, 2 * sizeof(float), identityVertexOffset});
-        maskTask->addBindResource(GlBindingResource{0, loc, mGpuBuffer.getBufferId(), mat3Offset, GL_MAT3_STD140_BYTES, });
         maskTask->setDrawRange(identityIndexOffset, 6);
         maskTask->setViewport({{0, 0}, {vp.sw(), vp.sh()}});
+        bindStencilUniforms(
+            maskTask,
+            mUniformTexture,
+            identityDrawId,
+            mUniformTexture.config.colorDrawsPerRow,
+            mUniformTexture.config.colorStride);
 
         currentPass()->addRenderTask(new GlClipTask(clipTask, maskTask));
     }
@@ -895,7 +921,7 @@ bool GlRenderer::beginComplexBlending(const RenderRegion& vp, RenderRegion bound
     return true;
 }
 
-void GlRenderer::endBlendingCompose(GlRenderTask* stencilTask, const Matrix& matrix)
+void GlRenderer::endBlendingCompose(GlStencilTask* stencilTask, const Matrix& matrix)
 {
     auto blendPass = mRenderPassStack.last();
     mRenderPassStack.pop();
@@ -921,14 +947,14 @@ void GlRenderer::endBlendingCompose(GlRenderTask* stencilTask, const Matrix& mat
     // set view matrix
     float matrix3STD140[GL_MAT3_STD140_SIZE];
     currentPass()->getMatrix(matrix3STD140, matrix);
-    uint32_t viewOffset = mGpuBuffer.push(matrix3STD140, GL_MAT3_STD140_BYTES, true);
-    stencilTask->addBindResource(GlBindingResource{
-        0,
-        stencilTask->getProgram()->getUniformBlockIndex("Matrix"),
-        mGpuBuffer.getBufferId(),
-        viewOffset,
-        GL_MAT3_STD140_BYTES,
-    });
+    uint32_t stencilDrawId = mPrepareDrawId++;
+    mUniformTexture.stageColorUniforms(stencilDrawId, matrix3STD140, 0.f, 0.f, 0.f, 0.f);
+    bindStencilUniforms(
+        stencilTask,
+        mUniformTexture,
+        stencilDrawId,
+        mUniformTexture.config.colorDrawsPerRow,
+        mUniformTexture.config.colorStride);
     
     auto program = getBlendProgram(mBlendMethod, BlendSource::Image);
     auto task = new GlComplexBlendTask(program, currentPass()->getFbo(), dstCopyFbo, stencilTask, composeTask);
@@ -1684,7 +1710,7 @@ bool GlRenderer::renderImage(void* data)
     currentPass()->addRenderTask(task);
 
     if (complexBlend) {
-        auto task = new GlRenderTask(mPrograms[RT_Stencil]);
+        auto task = new GlStencilTask(mPrograms[RT_Stencil]);
         sdata->geometry.draw(task, &mGpuBuffer, RenderUpdateFlag::Image, 0, false);
         endBlendingCompose(task, sdata->geometry.matrix);
     }

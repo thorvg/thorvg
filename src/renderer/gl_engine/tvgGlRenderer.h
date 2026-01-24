@@ -198,7 +198,7 @@ private:
     GlRenderPass* currentPass();
 
     bool beginComplexBlending(const RenderRegion& vp, RenderRegion bounds);
-    void endBlendingCompose(GlRenderTask* stencilTask, const Matrix& matrix);
+    void endBlendingCompose(GlStencilTask* stencilTask, const Matrix& matrix);
     GlProgram* getBlendProgram(BlendMethod method, BlendSource source);
 
     void prepareBlitTask(GlBlitTask* task);

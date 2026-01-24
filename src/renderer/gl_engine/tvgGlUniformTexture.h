@@ -95,13 +95,15 @@ struct GlUniformTexture
     void stageLinearGradientUniforms(uint32_t drawId, const float* matrix, float depth, const float* invMatrix,
                                           uint32_t nStops, float spread,
                                           float x1, float y1, float x2, float y2,
-                                          const float* stopPoints, const float* stopColors);
+                                          const float* stopPoints, const float* stopColors,
+                                          const float* blendRegion = nullptr);
 
     void stageRadialGradientUniforms(uint32_t drawId, const float* matrix, float depth, const float* invMatrix,
                                           uint32_t nStops, float spread,
                                           float fx, float fy, float cx, float cy,
                                           float fr, float r,
-                                          const float* stopPoints, const float* stopColors);
+                                          const float* stopPoints, const float* stopColors,
+                                          const float* blendRegion = nullptr);
 
     void debugDumpStagingBuffer() const;
 

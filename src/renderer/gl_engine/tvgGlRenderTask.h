@@ -81,7 +81,6 @@ public:
 
     void addVertexLayout(const GlVertexLayout& layout);
     void addBindResource(const GlBindingResource& binding);
-    void setImageInfo(int32_t colorFormat, int32_t opacity);
     void setDrawRange(uint32_t offset, uint32_t count);
     void setViewport(const RenderRegion& viewport);
     void setDrawDepth(int32_t depth) { mDrawDepth = static_cast<float>(depth); }
@@ -90,6 +89,8 @@ public:
     GlProgram* getProgram() { return mProgram; }
     const RenderRegion& getViewport() const { return mViewport; }
     float getDrawDepth() const { return mDrawDepth; }
+protected:
+    virtual void applyUniforms();
 private:
     GlProgram* mProgram;
     RenderRegion mViewport = {};
@@ -97,9 +98,23 @@ private:
     uint32_t mIndexCount = {};
     Array<GlVertexLayout> mVertexLayout = {};
     Array<GlBindingResource> mBindingResources = {};
-    int32_t mImageColorFormat = 0;
-    int32_t mImageOpacity = -1;
     float mDrawDepth = 0.f;
+};
+
+class GlStencilTask : public GlRenderTask
+{
+public:
+    GlStencilTask(GlProgram* program): GlRenderTask(program) {}
+    GlStencilTask(GlProgram* program, GlRenderTask* other): GlRenderTask(program, other) {}
+
+    void setStencilUniforms(int32_t drawId, int32_t drawsPerRow, int32_t colStride);
+protected:
+    void applyUniforms() override;
+private:
+    int32_t mDrawId = 0;
+    int32_t mDrawsPerRow = 0;
+    int32_t mColStride = 0;
+    bool mHasStencilInfo = false;
 };
 
 class GlStencilCoverTask : public GlRenderTask
@@ -172,11 +187,17 @@ public:
     void setParentSize(uint32_t width, uint32_t height) { mParentWidth = width; mParentHeight = height; }
 
     void run() override;
+    void setImageInfo(int32_t colorFormat, int32_t opacity);
 
 private:
+    void applyUniforms() override;
+
     GlRenderTask* mPrevTask = nullptr;
     uint32_t mParentWidth = 0;
     uint32_t mParentHeight = 0;
+    int32_t mImageColorFormat = 0;
+    int32_t mImageOpacity = 0;
+    bool mHasImageInfo = false;
 };
 
 class GlSceneBlendTask : public GlComposeTask

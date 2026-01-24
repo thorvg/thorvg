@@ -155,14 +155,15 @@ void GlUniformTexture::stageImageUniforms(uint32_t drawId, const float* matrix, 
 void GlUniformTexture::stageLinearGradientUniforms(uint32_t drawId, const float* matrix, float depth, const float* invMatrix,
                                                         uint32_t nStops, float spread,
                                                         float x1, float y1, float x2, float y2,
-                                                        const float* stopPoints, const float* stopColors)
+                                                        const float* stopPoints, const float* stopColors,
+                                                        const float* blendRegion)
 {
     (void)depth;
     uint32_t drawsPerRow = config.width / 4;
     uint32_t rowIndex = drawId / drawsPerRow;
     uint32_t colOffset = (drawId % drawsPerRow) * 4;
     uint32_t rowStartFloats = rowIndex * config.width * 4 + colOffset * 4;
-    uint32_t floatsNeeded = rowStartFloats + 116;
+    uint32_t floatsNeeded = rowStartFloats + 120;  // 116 + 4 for blendRegion
     
     if (floatsNeeded > stagingBuffer.count) {
         uint32_t growBy = floatsNeeded - stagingBuffer.count;
@@ -201,6 +202,14 @@ void GlUniformTexture::stageLinearGradientUniforms(uint32_t drawId, const float*
     offset += 16;
 
     memcpy(row + offset, stopColors, stopsToCopy * 4 * sizeof(float));
+    offset += 64;  // MAX_STOP_COUNT * 4
+
+    // BlendRegion at column 29 (offset 116)
+    if (blendRegion) {
+        memcpy(row + offset, blendRegion, 4 * sizeof(float));
+    } else {
+        memset(row + offset, 0, 4 * sizeof(float));
+    }
     
     if (rowIndex >= currentRow) currentRow = rowIndex + 1;
     needsUpload = true;
@@ -211,14 +220,15 @@ void GlUniformTexture::stageRadialGradientUniforms(uint32_t drawId, const float*
                                                         uint32_t nStops, float spread,
                                                         float fx, float fy, float cx, float cy,
                                                         float fr, float r,
-                                                        const float* stopPoints, const float* stopColors)
+                                                        const float* stopPoints, const float* stopColors,
+                                                        const float* blendRegion)
 {
     (void)depth;
     uint32_t drawsPerRow = config.width / 4;
     uint32_t rowIndex = drawId / drawsPerRow;
     uint32_t colOffset = (drawId % drawsPerRow) * 4;
     uint32_t rowStartFloats = rowIndex * config.width * 4 + colOffset * 4;
-    uint32_t floatsNeeded = rowStartFloats + 116;
+    uint32_t floatsNeeded = rowStartFloats + 120;  // 116 + 4 for blendRegion
     
     if (floatsNeeded > stagingBuffer.count) {
         uint32_t growBy = floatsNeeded - stagingBuffer.count;
@@ -257,6 +267,14 @@ void GlUniformTexture::stageRadialGradientUniforms(uint32_t drawId, const float*
     offset += 16;
 
     memcpy(row + offset, stopColors, stopsToCopy * 4 * sizeof(float));
+    offset += 64;  // MAX_STOP_COUNT * 4
+
+    // BlendRegion at column 29 (offset 116)
+    if (blendRegion) {
+        memcpy(row + offset, blendRegion, 4 * sizeof(float));
+    } else {
+        memset(row + offset, 0, 4 * sizeof(float));
+    }
     
     if (rowIndex >= currentRow) currentRow = rowIndex + 1;
     needsUpload = true;

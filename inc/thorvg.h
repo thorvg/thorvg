@@ -1187,7 +1187,7 @@ struct TVG_API Shape : Paint
      *
      * @note For @p rx and @p ry greater than or equal to the half of @p w and the half of @p h, respectively, the shape become an ellipse.
      */
-    Result appendRect(float x, float y, float w, float h, float rx = 0, float ry = 0, bool cw = true) noexcept;
+    Result appendRect(float x, float y, float w, float h, float rx = 0, float ry = 0, bool cw = false) noexcept;
 
     /**
      * @brief Appends an ellipse to the path.
@@ -1205,7 +1205,7 @@ struct TVG_API Shape : Paint
      * @param[in] cw Specifies the path direction: @c true for clockwise, @c false for counterclockwise.
      *
      */
-    Result appendCircle(float cx, float cy, float rx, float ry, bool cw = true) noexcept;
+    Result appendCircle(float cx, float cy, float rx, float ry, bool cw = false) noexcept;
 
     /**
      * @brief Appends a given sub-path to the path.
