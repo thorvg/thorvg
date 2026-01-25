@@ -53,7 +53,9 @@ public:
     ~GlStageBuffer();
 
     uint32_t push(void* data, uint32_t size, bool alignGpuOffset = false);
+    uint32_t pushUninitialized(uint32_t size, void** outPtr, bool alignGpuOffset = false);
     uint32_t pushIndex(void* data, uint32_t size);
+    uint32_t pushIndexUninitialized(uint32_t size, void** outPtr);
     uint32_t pushRepeated(uint32_t value, uint32_t count);
     bool flushToGPU();
     void bind();

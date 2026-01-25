@@ -233,13 +233,14 @@ void GlRenderer::drawPrimitive(GlShape& sdata, const RenderColor& c, RenderUpdat
         uint32_t vertexCount = geometryBuffer.vertex.count / 2;
         if (vertexCount == 0) return nullptr;
 
-        Array<GlSolidVertex> vertices;
-        vertices.reserve(vertexCount);
+        void* vertexPtr = nullptr;
+        uint32_t vertexOffset = gpuBuffer.pushUninitialized(vertexCount * sizeof(GlSolidVertex), &vertexPtr);
+        auto* vertices = static_cast<GlSolidVertex*>(vertexPtr);
         for (uint32_t i = 0; i < vertexCount; ++i) {
-            vertices.push({geometryBuffer.vertex.data[i * 2], geometryBuffer.vertex.data[i * 2 + 1], drawId});
+            vertices[i].x = geometryBuffer.vertex.data[i * 2];
+            vertices[i].y = geometryBuffer.vertex.data[i * 2 + 1];
+            vertices[i].drawId = drawId;
         }
-
-        uint32_t vertexOffset = gpuBuffer.push(vertices.data, vertices.count * sizeof(GlSolidVertex));
 
         auto prevTask = currentPass->lastTask();
         bool canAppend = prevTask && prevTask == solidColorBatch.task && solidColorBatch.pass == currentPass &&
@@ -247,17 +248,17 @@ void GlRenderer::drawPrimitive(GlShape& sdata, const RenderColor& c, RenderUpdat
 
         uint32_t baseVertex = canAppend ? solidColorBatch.vertexCount : 0;
 
-        Array<uint32_t> indices;
-        indices.reserve(geometryBuffer.index.count);
-        for (uint32_t i = 0; i < geometryBuffer.index.count; ++i) {
-            indices.push(geometryBuffer.index.data[i] + baseVertex);
+        const uint32_t indexCount = geometryBuffer.index.count;
+        void* indexPtr = nullptr;
+        uint32_t indexOffset = gpuBuffer.pushIndexUninitialized(indexCount * sizeof(uint32_t), &indexPtr);
+        auto* indices = static_cast<uint32_t*>(indexPtr);
+        for (uint32_t i = 0; i < indexCount; ++i) {
+            indices[i] = geometryBuffer.index.data[i] + baseVertex;
         }
-
-        uint32_t indexOffset = gpuBuffer.pushIndex(indices.data, indices.count * sizeof(uint32_t));
 
         if (canAppend) {
             solidColorBatch.vertexCount += vertexCount;
-            solidColorBatch.indexCount += indices.count;
+            solidColorBatch.indexCount += indexCount;
             prevTask->setDrawRange(solidColorBatch.indexOffset, solidColorBatch.indexCount);
 
             auto merged = prevTask->getViewport();
@@ -272,14 +273,14 @@ void GlRenderer::drawPrimitive(GlShape& sdata, const RenderColor& c, RenderUpdat
         task->setDrawDepth(depth);
         task->addVertexLayout(GlVertexLayout{0, 2, sizeof(GlSolidVertex), vertexOffset});
         task->addVertexLayout(GlVertexLayout{1, 1, sizeof(GlSolidVertex), vertexOffset + 2 * sizeof(float), true});
-        task->setDrawRange(indexOffset, indices.count);
+        task->setDrawRange(indexOffset, indexCount);
         task->setViewport(viewRegion);
 
         solidColorBatch.pass = currentPass;
         solidColorBatch.task = task;
         solidColorBatch.vertexCount = vertexCount;
         solidColorBatch.indexOffset = indexOffset;
-        solidColorBatch.indexCount = indices.count;
+        solidColorBatch.indexCount = indexCount;
 
         appended = false;
         return task;
@@ -477,13 +478,12 @@ void GlRenderer::drawPrimitive(GlShape& sdata, const Fill* fill, RenderUpdateFla
         uint32_t vertexCount = geometryBuffer.vertex.count / 2;
         if (vertexCount == 0) return nullptr;
 
-        Array<GlGradientVertex> vertices;
-        vertices.reserve(vertexCount);
+        void* vertexPtr = nullptr;
+        uint32_t vertexOffset = gpuBuffer.pushUninitialized(vertexCount * sizeof(GlGradientVertex), &vertexPtr);
+        auto* vertices = static_cast<GlGradientVertex*>(vertexPtr);
         for (uint32_t i = 0; i < vertexCount; ++i) {
-            vertices.push({geometryBuffer.vertex.data[i * 2], geometryBuffer.vertex.data[i * 2 + 1], drawId});
+            vertices[i] = {geometryBuffer.vertex.data[i * 2], geometryBuffer.vertex.data[i * 2 + 1], drawId};
         }
-
-        uint32_t vertexOffset = gpuBuffer.push(vertices.data, vertices.count * sizeof(GlGradientVertex));
 
         auto prevTask = currentPass->lastTask();
         bool canAppend = prevTask && prevTask == gradientBatch.task && gradientBatch.pass == currentPass &&
@@ -491,17 +491,17 @@ void GlRenderer::drawPrimitive(GlShape& sdata, const Fill* fill, RenderUpdateFla
 
         uint32_t baseVertex = canAppend ? gradientBatch.vertexCount : 0;
 
-        Array<uint32_t> indices;
-        indices.reserve(geometryBuffer.index.count);
-        for (uint32_t i = 0; i < geometryBuffer.index.count; ++i) {
-            indices.push(geometryBuffer.index.data[i] + baseVertex);
+        uint32_t indexCount = geometryBuffer.index.count;
+        void* indexPtr = nullptr;
+        uint32_t indexOffset = gpuBuffer.pushIndexUninitialized(indexCount * sizeof(uint32_t), &indexPtr);
+        auto* indices = static_cast<uint32_t*>(indexPtr);
+        for (uint32_t i = 0; i < indexCount; ++i) {
+            indices[i] = geometryBuffer.index.data[i] + baseVertex;
         }
-
-        uint32_t indexOffset = gpuBuffer.pushIndex(indices.data, indices.count * sizeof(uint32_t));
 
         if (canAppend) {
             gradientBatch.vertexCount += vertexCount;
-            gradientBatch.indexCount += indices.count;
+            gradientBatch.indexCount += indexCount;
             prevTask->setDrawRange(gradientBatch.indexOffset, gradientBatch.indexCount);
 
             auto merged = prevTask->getViewport();
@@ -516,14 +516,14 @@ void GlRenderer::drawPrimitive(GlShape& sdata, const Fill* fill, RenderUpdateFla
         task->setDrawDepth(depth);
         task->addVertexLayout(GlVertexLayout{0, 2, sizeof(GlGradientVertex), vertexOffset});
         task->addVertexLayout(GlVertexLayout{1, 1, sizeof(GlGradientVertex), vertexOffset + 2 * sizeof(float), true});
-        task->setDrawRange(indexOffset, indices.count);
+        task->setDrawRange(indexOffset, indexCount);
         task->setViewport(viewRegion);
 
         gradientBatch.pass = currentPass;
         gradientBatch.task = task;
         gradientBatch.vertexCount = vertexCount;
         gradientBatch.indexOffset = indexOffset;
-        gradientBatch.indexCount = indices.count;
+        gradientBatch.indexCount = indexCount;
 
         appended = false;
         return task;
@@ -1444,18 +1444,17 @@ bool GlRenderer::renderImage(void* data)
         uint32_t vertexCount = geometryBuffer.vertex.count / 4;
         if (vertexCount == 0) return nullptr;
 
-        Array<GlImageVertex> vertices;
-        vertices.reserve(vertexCount);
+        void* vertexPtr = nullptr;
+        uint32_t vertexOffset = gpuBuffer.pushUninitialized(vertexCount * sizeof(GlImageVertex), &vertexPtr);
+        auto* vertices = static_cast<GlImageVertex*>(vertexPtr);
         for (uint32_t i = 0; i < vertexCount; ++i) {
             uint32_t offset = i * 4;
-            vertices.push({geometryBuffer.vertex.data[offset],
+            vertices[i] = {geometryBuffer.vertex.data[offset],
                            geometryBuffer.vertex.data[offset + 1],
                            geometryBuffer.vertex.data[offset + 2],
                            geometryBuffer.vertex.data[offset + 3],
-                           drawId});
+                           drawId};
         }
-
-        uint32_t vertexOffset = gpuBuffer.push(vertices.data, vertices.count * sizeof(GlImageVertex));
 
         auto prevTask = currentPass->lastTask();
         bool canAppend = prevTask && prevTask == imageBatch.task && imageBatch.pass == currentPass &&
@@ -1464,17 +1463,17 @@ bool GlRenderer::renderImage(void* data)
 
         uint32_t baseVertex = canAppend ? imageBatch.vertexCount : 0;
 
-        Array<uint32_t> indices;
-        indices.reserve(geometryBuffer.index.count);
-        for (uint32_t i = 0; i < geometryBuffer.index.count; ++i) {
-            indices.push(geometryBuffer.index.data[i] + baseVertex);
+        uint32_t indexCount = geometryBuffer.index.count;
+        void* indexPtr = nullptr;
+        uint32_t indexOffset = gpuBuffer.pushIndexUninitialized(indexCount * sizeof(uint32_t), &indexPtr);
+        auto* indices = static_cast<uint32_t*>(indexPtr);
+        for (uint32_t i = 0; i < indexCount; ++i) {
+            indices[i] = geometryBuffer.index.data[i] + baseVertex;
         }
-
-        uint32_t indexOffset = gpuBuffer.pushIndex(indices.data, indices.count * sizeof(uint32_t));
 
         if (canAppend) {
             imageBatch.vertexCount += vertexCount;
-            imageBatch.indexCount += indices.count;
+            imageBatch.indexCount += indexCount;
             prevTask->setDrawRange(imageBatch.indexOffset, imageBatch.indexCount);
 
             auto merged = prevTask->getViewport();
@@ -1490,14 +1489,14 @@ bool GlRenderer::renderImage(void* data)
         task->addVertexLayout(GlVertexLayout{0, 2, sizeof(GlImageVertex), vertexOffset});
         task->addVertexLayout(GlVertexLayout{1, 2, sizeof(GlImageVertex), vertexOffset + 2 * sizeof(float)});
         task->addVertexLayout(GlVertexLayout{2, 1, sizeof(GlImageVertex), vertexOffset + 4 * sizeof(float), true});
-        task->setDrawRange(indexOffset, indices.count);
+        task->setDrawRange(indexOffset, indexCount);
         task->setViewport(viewRegion);
 
         imageBatch.pass = currentPass;
         imageBatch.task = task;
         imageBatch.vertexCount = vertexCount;
         imageBatch.indexOffset = indexOffset;
-        imageBatch.indexCount = indices.count;
+        imageBatch.indexCount = indexCount;
         imageBatch.texId = sdata->texId;
 
         appended = false;

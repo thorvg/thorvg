@@ -112,6 +112,24 @@ uint32_t GlStageBuffer::push(void *data, uint32_t size, bool alignGpuOffset)
 }
 
 
+uint32_t GlStageBuffer::pushUninitialized(uint32_t size, void** outPtr, bool alignGpuOffset)
+{
+    if (alignGpuOffset) alignOffset(size);
+
+    uint32_t offset = mStageBuffer.count;
+
+    if (this->mStageBuffer.reserved - this->mStageBuffer.count < size) {
+        this->mStageBuffer.grow(max(size, this->mStageBuffer.reserved));
+    }
+
+    if (outPtr) *outPtr = this->mStageBuffer.data + offset;
+
+    this->mStageBuffer.count += size;
+
+    return offset;
+}
+
+
 uint32_t GlStageBuffer::pushIndex(void *data, uint32_t size)
 {
     uint32_t offset = mIndexBuffer.count;
@@ -121,6 +139,22 @@ uint32_t GlStageBuffer::pushIndex(void *data, uint32_t size)
     }
 
     memcpy(this->mIndexBuffer.data + offset, data, size);
+
+    this->mIndexBuffer.count += size;
+
+    return offset;
+}
+
+
+uint32_t GlStageBuffer::pushIndexUninitialized(uint32_t size, void** outPtr)
+{
+    uint32_t offset = mIndexBuffer.count;
+
+    if (this->mIndexBuffer.reserved - this->mIndexBuffer.count < size) {
+        this->mIndexBuffer.grow(max(size, this->mIndexBuffer.reserved));
+    }
+
+    if (outPtr) *outPtr = this->mIndexBuffer.data + offset;
 
     this->mIndexBuffer.count += size;
 

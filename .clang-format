@@ -1,0 +1,69 @@
+# ThorVG-aligned clang-format
+# Based on the project coding convention page:
+# - 4 spaces, no tabs
+# - System/external includes first, then project headers
+# - Pointer/reference symbols bind to the type
+# - Allman-style for functions/classes/namespaces; K&R for control statements
+# - Allow up to two blank lines between definitions
+
+BasedOnStyle: LLVM
+Language: Cpp
+
+# Indentation
+IndentWidth: 4
+TabWidth: 4
+UseTab: Never
+ContinuationIndentWidth: 4
+NamespaceIndentation: All
+
+# Line wrapping
+# Not specified by ThorVG; disable hard column limit to avoid unwanted reflows.
+ColumnLimit: 0
+
+# Braces
+BreakBeforeBraces: Custom
+BraceWrapping:
+  AfterCaseLabel: false
+  AfterClass: true
+  AfterControlStatement: false
+  AfterEnum: true
+  AfterFunction: true
+  AfterNamespace: true
+  AfterStruct: true
+  BeforeElse: false
+  SplitEmptyFunction: false
+  SplitEmptyRecord: false
+  SplitEmptyNamespace: false
+
+AllowShortBlocksOnASingleLine: Always
+AllowShortFunctionsOnASingleLine: All
+AllowShortIfStatementsOnASingleLine: AllIfsAndElse
+AllowShortLoopsOnASingleLine: true
+
+# Switch / cases
+IndentCaseLabels: true
+
+# Pointers & references
+PointerAlignment: Left
+ReferenceAlignment: Left
+
+# Spacing
+SpaceBeforeParens: ControlStatements
+
+# Includes
+SortIncludes: true
+IncludeBlocks: Regroup
+IncludeCategories:
+  # 1) System/third-party (<...>)
+  - Regex: '^<.*>'
+    Priority: 1
+  # 2) ThorVG project headers in quotes (e.g., "tvgCommon.h", "thorvg/...").
+  - Regex: '^"(tvg[^"]*|thorvg[^"]*)"$'
+    Priority: 2
+  # 3) Other quoted includes
+  - Regex: '^".*"'
+    Priority: 3
+
+# Empty lines
+MaxEmptyLinesToKeep: 2
+KeepEmptyLinesAtTheStartOfBlocks: true
