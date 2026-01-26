@@ -158,7 +158,9 @@ ThorVG is designed to be portable across a wide range of devices, including smal
     - [TinyPiXOS](#tinypixos)
     - [Tizen](#tizen)
   - [Interactive App](#interactive-app)
-  - [Examples](#examples)    
+  - [Examples](#examples)
+    - [C++ Examples](#c-examples)
+    - [Playground](#playground)
   - [Tools](#tools)
     - [ThorVG Viewer](#thorvg-viewer)
     - [Lottie to GIF](#lottie-to-gif)
@@ -481,7 +483,12 @@ Check out [Thor Janitor](https://github.com/thorvg/thorvg.janitor), an interacti
 <br />
 <br />
 ## Examples
-There are plenty of sample code in [thorvg.example](https://github.com/thorvg/thorvg.example) to help you in understanding the ThorVG APIs.
+
+### C++ Examples
+A wide range of native sample codes is available in the [thorvg.example](https://github.com/thorvg/thorvg.example) repository to help you understand and work with the ThorVG C++ APIs.
+
+### Playground
+The [ThorVG Playground](https://www.thorvg.org/playground) is an interactive web-based environment where you can explore various graphic features and instantly see the results in real time.
 
 [Back to contents](#contents)
 <br />
