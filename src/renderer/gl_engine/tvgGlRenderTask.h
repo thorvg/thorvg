@@ -114,7 +114,7 @@ private:
     GlStencilMode mStencilMode;
 };
 
-class GlRenderTarget;
+struct GlRenderTarget;
 
 class GlComposeTask : public GlRenderTask 
 {
