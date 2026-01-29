@@ -150,6 +150,7 @@ void GlGeometry::prepare(const RenderShape& rshape)
 bool GlGeometry::tesselateShape(const RenderShape& rshape, float* opacityMultiplier)
 {
     fill.clear();
+    fillAa.clear();
     convex = false;
 
     // When the CTM scales a filled path so small that its device-space
@@ -176,8 +177,34 @@ bool GlGeometry::tesselateShape(const RenderShape& rshape, float* opacityMultipl
     convex = bwTess.convex;
     // Workaround: CW is treated non-convex for optimization; force rect/circle convex until stencil is replaced.
     if (optPath.convexHint) convex = true;
+    fillAaChecked = false;
+
     if (opacityMultiplier) *opacityMultiplier = 1.0f;
     return true;
+}
+
+bool GlGeometry::tesselateAa(float feather, bool convex)
+{
+    if (fillAaChecked) return !fillAa.index.empty();
+    fillAaChecked = true;
+
+    if (!convex) return false;
+
+    GlFeatherMesh aaMesh;
+    FeatherTessellator aaTess;
+    if (aaTess.tessellate(optPath, matrix, feather, aaMesh)) {
+        fillAa.vertex.reserve(aaMesh.vertex.count * 3);
+        fillAa.index.reserve(aaMesh.index.count);
+        for (uint32_t i = 0; i < aaMesh.vertex.count; ++i) {
+            const auto& pt = aaMesh.vertex.data[i];
+            fillAa.vertex.push(pt.x);
+            fillAa.vertex.push(pt.y);
+            fillAa.vertex.push((i < aaMesh.innerCount) ? 1.0f : 0.0f);
+        }
+        fillAa.index.push(aaMesh.index);
+        return true;
+    }
+    return false;
 }
 
 

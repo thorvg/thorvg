@@ -32,7 +32,6 @@ static uint32_t _pushVertex(Array<float>& array, float x, float y)
     return (array.count - 2) / 2;
 }
 
-
 Stroker::Stroker(GlGeometryBuffer* buffer, float width, StrokeCap cap, StrokeJoin join) : mBuffer(buffer), mWidth(width), mCap(cap), mJoin(join)
 {
 }
@@ -444,6 +443,10 @@ void BWTessellator::tessellate(const RenderPath& path, const Matrix& matrix)
     mBuffer->vertex.reserve(ptsCnt * 2);
     mBuffer->index.reserve((ptsCnt - 2) * 3);
 
+    winding = 0;
+    convex = true;
+    Point prevEdge = {};
+
     auto updateConvexity = [&](const Point& edge) {
         if (!convex) return;
         if (prevEdge.x == 0.0f && prevEdge.y == 0.0f) { prevEdge = edge; return; }
@@ -540,6 +543,131 @@ void BWTessellator::pushTriangle(uint32_t a, uint32_t b, uint32_t c)
     mBuffer->index.push(a);
     mBuffer->index.push(b);
     mBuffer->index.push(c);
+}
+
+bool FeatherTessellator::tessellate(const RenderPath& path, const Matrix& matrix, float feather, GlFeatherMesh& mesh)
+{
+    mesh.clear();
+    if (path.pts.count < 3) return false;
+    if (tvg::zero(feather)) return false;
+
+    Array<Point> poly;
+    poly.reserve(path.pts.count);
+
+    auto cmds = path.cmds.data;
+    auto cmdCnt = path.cmds.count;
+    auto pts = path.pts.data;
+    uint32_t moveCnt = 0;
+    uint32_t closeCnt = 0;
+
+    for (uint32_t i = 0; i < cmdCnt; i++) {
+        switch (cmds[i]) {
+            case PathCommand::MoveTo: {
+                if (moveCnt > 0) return false;
+                moveCnt++;
+                if (poly.count == 0 || poly.last() != *pts) poly.push(*pts);
+                pts++;
+            } break;
+            case PathCommand::LineTo: {
+                if (poly.count == 0 || poly.last() != *pts) poly.push(*pts);
+                pts++;
+            } break;
+            case PathCommand::CubicTo: {
+                Bezier curve{pts[-1], pts[0], pts[1], pts[2]};
+                auto stepCount = (curve * matrix).segments();
+                if (stepCount <= 1) stepCount = 2;
+                auto step = 1.f / stepCount;
+                for (uint32_t s = 1; s <= static_cast<uint32_t>(stepCount); s++) {
+                    auto pt = curve.at(step * s);
+                    if (poly.count == 0 || poly.last() != pt) poly.push(pt);
+                }
+                pts += 3;
+            } break;
+            case PathCommand::Close: {
+                closeCnt++;
+            } break;
+            default:
+                break;
+        }
+    }
+
+    if (moveCnt != 1 || closeCnt == 0) return false;
+    if (poly.count > 1 && poly.first() == poly.last()) poly.count--;
+    if (poly.count < 3) return false;
+
+    float area = 0.0f;
+    for (uint32_t i = 0; i < poly.count; ++i) {
+        const auto& p0 = poly[i];
+        const auto& p1 = poly[(i + 1) % poly.count];
+        area += (p0.x * p1.y - p1.x * p0.y);
+    }
+    if (tvg::zero(area)) return false;
+    auto ccw = (area > 0.0f);
+
+    mesh.vertex.reserve(poly.count * 2);
+    mesh.index.reserve((poly.count - 2) * 3 + poly.count * 6);
+    mesh.innerCount = poly.count;
+
+    for (uint32_t i = 0; i < poly.count; ++i) mesh.vertex.push(poly[i]);
+
+    constexpr float miterLimit = 4.0f;
+    for (uint32_t i = 0; i < poly.count; ++i) {
+        auto prev = poly[(i + poly.count - 1) % poly.count];
+        auto curr = poly[i];
+        auto next = poly[(i + 1) % poly.count];
+
+        auto e0 = curr - prev;
+        auto e1 = next - curr;
+        if (zero(e0) && zero(e1)) {
+            mesh.vertex.push(curr);
+            continue;
+        }
+        if (zero(e0)) e0 = e1;
+        if (zero(e1)) e1 = e0;
+        normalize(e0);
+        normalize(e1);
+
+        auto n0 = Point{e0.y, -e0.x};
+        auto n1 = Point{e1.y, -e1.x};
+        if (!ccw) {
+            n0 = {-n0.x, -n0.y};
+            n1 = {-n1.x, -n1.y};
+        }
+
+        auto miter = n0 + n1;
+        if (zero(miter)) miter = n0;
+        else normalize(miter);
+
+        auto denom = dot(miter, n0);
+        if (denom <= 0.0f) denom = 1.0f;
+
+        auto offset = miter * (feather / denom);
+        auto maxLen = feather * miterLimit;
+        auto len = length(offset);
+        if (len > maxLen) offset *= (maxLen / len);
+
+        mesh.vertex.push(curr + offset);
+    }
+
+    for (uint32_t i = 1; i + 1 < poly.count; ++i) {
+        mesh.index.push(0);
+        mesh.index.push(i);
+        mesh.index.push(i + 1);
+    }
+
+    auto outerBase = poly.count;
+    for (uint32_t i = 0; i < poly.count; ++i) {
+        auto j = (i + 1) % poly.count;
+        mesh.index.push(i);
+        mesh.index.push(j);
+        mesh.index.push(outerBase + j);
+
+        mesh.index.push(i);
+        mesh.index.push(outerBase + j);
+        mesh.index.push(outerBase + i);
+    }
+
+    return true;
 }
 
 }  // namespace tvg

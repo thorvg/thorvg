@@ -84,16 +84,18 @@ struct GlGeometry
     bool tesselateLine(const RenderPath& path);
     void tesselateImage(const RenderSurface* image);
     bool draw(GlRenderTask* task, GlStageBuffer* gpuBuffer, RenderUpdateFlag flag);
+    bool tesselateAa(float featherWidth, bool convex);
     GlStencilMode getStencilMode(RenderUpdateFlag flag);
     RenderRegion getBounds() const;
 
-    GlGeometryBuffer fill, stroke;
+    GlGeometryBuffer fill, fillAa, stroke;
     Matrix matrix = {};
     RenderRegion viewport = {};
     RenderRegion bounds = {};
     FillRule fillRule = FillRule::NonZero;
     RenderPath optPath;  //optimal path
     bool convex;
+    bool fillAaChecked;
 };
 
 

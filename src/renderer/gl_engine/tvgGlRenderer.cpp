@@ -170,6 +170,8 @@ void GlRenderer::initShaders()
 
     // solid color (uniform texture)
     mPrograms.push(new GlProgram(COLOR_TEX_VERT_SHADER, COLOR_TEX_FRAG_SHADER));
+    // solid color (uniform texture + aa)
+    mPrograms.push(new GlProgram(COLOR_TEX_AA_VERT_SHADER, COLOR_TEX_AA_FRAG_SHADER));
 }
 
 
@@ -280,8 +282,92 @@ void GlRenderer::drawSolidNoBlendNoStencil(GlShape& sdata, const RenderColor& c,
         uint32_t drawId;
     };
 
+    struct GlSolidAaVertex {
+        float x;
+        float y;
+        float coverage;
+        uint32_t drawId;
+    };
+
     auto drawId = mPrepareDrawId;
     bool appended = false;
+
+    auto appendSolidNoStencilAa = [&]() -> GlRenderTask* {
+        if (flag == RenderUpdateFlag::None) return nullptr;
+
+        if (!sdata.geometry.fillAaChecked) {
+            auto scale = scaling(sdata.geometry.matrix);
+            if (!tvg::zero(scale)) {
+                sdata.geometry.tesselateAa(MIN_GL_STROKE_WIDTH / scale, sdata.geometry.convex);
+            } else {
+                sdata.geometry.fillAaChecked = true;
+            }
+        }
+
+        auto& aaBuffer = sdata.geometry.fillAa;
+        if (aaBuffer.index.empty()) return nullptr;
+
+        uint32_t vertexCount = aaBuffer.vertex.count / 3;
+        if (vertexCount == 0) return nullptr;
+
+        Array<GlSolidAaVertex> vertices;
+        vertices.reserve(vertexCount);
+        for (uint32_t i = 0; i < vertexCount; ++i) {
+            vertices.push({
+                aaBuffer.vertex.data[i * 3],
+                aaBuffer.vertex.data[i * 3 + 1],
+                aaBuffer.vertex.data[i * 3 + 2],
+                drawId
+            });
+        }
+
+        uint32_t vertexOffset = mGpuBuffer.push(vertices.data, vertices.count * sizeof(GlSolidAaVertex));
+
+        auto prevTask = pass->lastTask();
+        auto program = mPrograms[GlRenderer::RT_ColorTexAa];
+        bool canAppend = prevTask && prevTask == mSolidColorBatch.task && mSolidColorBatch.pass == pass &&
+                         prevTask->getProgram() == program;
+
+        uint32_t baseVertex = canAppend ? mSolidColorBatch.vertexCount : 0;
+
+        Array<uint32_t> indices;
+        indices.reserve(aaBuffer.index.count);
+        for (uint32_t i = 0; i < aaBuffer.index.count; ++i) {
+            indices.push(aaBuffer.index.data[i] + baseVertex);
+        }
+
+        uint32_t indexOffset = mGpuBuffer.pushIndex(indices.data, indices.count * sizeof(uint32_t));
+
+        if (canAppend) {
+            mSolidColorBatch.vertexCount += vertexCount;
+            mSolidColorBatch.indexCount += indices.count;
+            prevTask->setDrawRange(mSolidColorBatch.indexOffset, mSolidColorBatch.indexCount);
+
+            auto merged = prevTask->getViewport();
+            merged.add(viewRegion);
+            prevTask->setViewport(merged);
+
+            appended = true;
+            return prevTask;
+        }
+
+        auto task = new GlRenderTask(program);
+        task->setDrawDepth(depth);
+        task->addVertexLayout(GlVertexLayout{0, 2, sizeof(GlSolidAaVertex), vertexOffset});
+        task->addVertexLayout(GlVertexLayout{1, 1, sizeof(GlSolidAaVertex), vertexOffset + 3 * sizeof(float), true});
+        task->addVertexLayout(GlVertexLayout{2, 1, sizeof(GlSolidAaVertex), vertexOffset + 2 * sizeof(float)});
+        task->setDrawRange(indexOffset, indices.count);
+        task->setViewport(viewRegion);
+
+        mSolidColorBatch.pass = pass;
+        mSolidColorBatch.task = task;
+        mSolidColorBatch.vertexCount = vertexCount;
+        mSolidColorBatch.indexOffset = indexOffset;
+        mSolidColorBatch.indexCount = indices.count;
+
+        appended = false;
+        return task;
+    };
 
     auto appendSolidNoStencil = [&]() -> GlRenderTask* {
         if (flag == RenderUpdateFlag::None) return nullptr;
@@ -342,7 +428,11 @@ void GlRenderer::drawSolidNoBlendNoStencil(GlShape& sdata, const RenderColor& c,
         return task;
     };
 
-    auto solidTask = appendSolidNoStencil();
+    auto solidTask = appendSolidNoStencilAa();
+    if (!solidTask) {
+        appended = false;
+        solidTask = appendSolidNoStencil();
+    }
     if (!solidTask) return;
 
     float matrix3STD140[GL_MAT3_STD140_SIZE];

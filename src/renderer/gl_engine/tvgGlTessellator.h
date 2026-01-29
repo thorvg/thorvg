@@ -82,6 +82,7 @@ public:
     RenderRegion bounds() const;
     bool convex = true;
 
+
 private:
     uint32_t pushVertex(float x, float y);
     void pushTriangle(uint32_t a, uint32_t b, uint32_t c);
@@ -92,6 +93,26 @@ private:
     Point prevPt = {};
     Point prevEdge = {};
     int8_t winding = -1;   //0: unknown, 1: CW, -1: CCW
+};
+
+struct GlFeatherMesh
+{
+    Array<Point> vertex;
+    Array<uint32_t> index;
+    uint32_t innerCount = 0;
+
+    void clear()
+    {
+        vertex.clear();
+        index.clear();
+        innerCount = 0;
+    }
+};
+
+class FeatherTessellator
+{
+public:
+    bool tessellate(const RenderPath& path, const Matrix& matrix, float feather, GlFeatherMesh& mesh);
 };
 
 }  // namespace tvg
