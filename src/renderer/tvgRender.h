@@ -226,6 +226,7 @@ struct RenderPath
 {
     Array<PathCommand> cmds;
     Array<Point> pts;
+    bool convexHint = false;
 
     bool empty() const
     {
@@ -236,6 +237,7 @@ struct RenderPath
     {
         pts.clear();
         cmds.clear();
+        convexHint = false;
     }
 
     void close()
@@ -243,18 +245,21 @@ struct RenderPath
         //Don't close multiple times.
         if (cmds.count > 0 && cmds.last() == PathCommand::Close) return;
         cmds.push(PathCommand::Close);
+        convexHint = false;
     }
 
     void moveTo(const Point& pt)
     {
         pts.push(pt);
         cmds.push(PathCommand::MoveTo);
+        convexHint = false;
     }
 
     void lineTo(const Point& pt)
     {
         pts.push(pt);
         cmds.push(PathCommand::LineTo);
+        convexHint = false;
     }
 
     void cubicTo(const Point& cnt1, const Point& cnt2, const Point& end)
@@ -263,6 +268,7 @@ struct RenderPath
         pts.push(cnt2);
         pts.push(end);
         cmds.push(PathCommand::CubicTo);
+        convexHint = false;
     }
 
     Point point(float progress)
