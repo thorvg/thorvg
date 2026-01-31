@@ -174,6 +174,8 @@ bool GlGeometry::tesselateShape(const RenderShape& rshape, float* opacityMultipl
     fillRule = rshape.rule;
     bounds = bwTess.bounds();
     convex = bwTess.convex;
+    // Workaround: CW is treated non-convex for optimization; force rect/circle convex until stencil is replaced.
+    if (optPath.convexHint) convex = true;
     if (opacityMultiplier) *opacityMultiplier = 1.0f;
     return true;
 }
@@ -270,7 +272,6 @@ bool GlGeometry::draw(GlRenderTask* task, GlStageBuffer* gpuBuffer, RenderUpdate
     auto vertexOffset = gpuBuffer->push(buffer->vertex.data, buffer->vertex.count * sizeof(float));
     auto indexOffset = gpuBuffer->pushIndex(buffer->index.data, buffer->index.count * sizeof(uint32_t));
 
-    // vertex layout
     if (flag & RenderUpdateFlag::Image) {
         // image has two attribute: [pos, uv]
         task->addVertexLayout(GlVertexLayout{0, 2, 4 * sizeof(float), vertexOffset});
