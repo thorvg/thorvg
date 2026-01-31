@@ -41,8 +41,8 @@ void GlRenderTask::run()
 {
     // bind shader
     mProgram->load();
-
     int32_t dLoc = mProgram->getUniformLocation("uDepth");
+
     if (dLoc >= 0) {
         // fixme: prevent compiler warning: macro expands to multiple statements [-Wmultistatement-macros]
         GL_CHECK(glUniform1f(dLoc, mDrawDepth));
@@ -55,9 +55,15 @@ void GlRenderTask::run()
     for (uint32_t i = 0; i < mVertexLayout.count; i++) {
         const auto &layout = mVertexLayout[i];
         GL_CHECK(glEnableVertexAttribArray(layout.index));
-        GL_CHECK(glVertexAttribPointer(layout.index, layout.size, GL_FLOAT,
-                                   GL_FALSE, layout.stride,
-                                   reinterpret_cast<void *>(layout.offset)));
+        if (layout.isInteger) {
+            GL_CHECK(glVertexAttribIPointer(layout.index, layout.size, GL_UNSIGNED_INT,
+                                       layout.stride,
+                                       reinterpret_cast<void *>(layout.offset)));
+        } else {
+            GL_CHECK(glVertexAttribPointer(layout.index, layout.size, GL_FLOAT,
+                                       GL_FALSE, layout.stride,
+                                       reinterpret_cast<void *>(layout.offset)));
+        }
     }
 
     // binding uniforms
@@ -78,7 +84,7 @@ void GlRenderTask::run()
 
     GL_CHECK(glDrawElements(GL_TRIANGLES, mIndexCount, GL_UNSIGNED_INT, reinterpret_cast<void*>(mIndexOffset)));
 
-    // setup attribute layout
+    // cleanup attribute layout
     for (uint32_t i = 0; i < mVertexLayout.count; i++) {
         const auto &layout = mVertexLayout[i];
         GL_CHECK(glDisableVertexAttribArray(layout.index));
