@@ -29,6 +29,7 @@
 #include "tvgGlGpuBuffer.h"
 #include "tvgGlRenderPass.h"
 #include "tvgGlEffect.h"
+#include "tvgGlUniformTexture.h"
 
 struct GlRenderer : RenderMethod
 {
@@ -140,6 +141,7 @@ struct GlRenderer : RenderMethod
         RT_ShapeBlend_Radial_Color,
         RT_ShapeBlend_Radial_Luminosity,
         RT_ShapeBlend_Radial_Add,
+        RT_ColorTex,
         RT_None
     };
 
@@ -192,6 +194,9 @@ private:
     void drawPrimitive(GlShape& sdata, const RenderColor& c, RenderUpdateFlag flag, int32_t depth);
     void drawPrimitive(GlShape& sdata, const Fill* fill, RenderUpdateFlag flag, int32_t depth);
     void drawClip(Array<RenderData>& clips);
+    void drawSolidBlend(GlShape& sdata, const RenderColor& c, RenderUpdateFlag flag, int32_t depth, const RenderRegion& viewRegion, GlStencilMode stencilMode);
+    void drawSolidNoBlendNoStencil(GlShape& sdata, const RenderColor& c, RenderUpdateFlag flag, int32_t depth, const RenderRegion& viewRegion);
+    void drawSolidNoBlendStencil(GlShape& sdata, const RenderColor& c, RenderUpdateFlag flag, int32_t depth, const RenderRegion& viewRegion, GlStencilMode stencilMode);
 
     GlRenderPass* currentPass();
 
@@ -217,11 +222,19 @@ private:
     GlRenderTarget mRootTarget;
     GlEffect mEffect;
     Array<GlProgram*> mPrograms;
+    GlUniformTexture mUniformTexture;
 
     Array<GlRenderTargetPool*> mComposePool;
     Array<GlRenderTargetPool*> mBlendPool;
     Array<GlRenderPass*> mRenderPassStack;
     Array<GlCompositor*> mComposeStack;
+    struct {
+        GlRenderPass* pass = nullptr;
+        GlRenderTask* task = nullptr;
+        uint32_t vertexCount = 0;
+        uint32_t indexOffset = 0;
+        uint32_t indexCount = 0;
+    } mSolidColorBatch;
 
     //Disposed resources. They should be released on synced call.
     struct {
@@ -231,6 +244,7 @@ private:
 
     BlendMethod mBlendMethod = BlendMethod::Normal;
     bool mClearBuffer = false;
+    uint32_t mPrepareDrawId = 0;
 };
 
 #endif /* _TVG_GL_RENDERER_H_ */

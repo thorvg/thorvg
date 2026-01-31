@@ -10,6 +10,7 @@ source_file = [
    'tvgGlRenderTask.h',
    'tvgGlShader.h',
    'tvgGlShaderSrc.h',
+   'tvgGlUniformTexture.h',
    'tvgGl.cpp',
    'tvgGlEffect.cpp',
    'tvgGlGeometry.cpp',
@@ -23,6 +24,7 @@ source_file = [
    'tvgGlShaderSrc.cpp',
    'tvgGlTessellator.cpp',
    'tvgGlTessellator.h',
+   'tvgGlUniformTexture.cpp',
 ]
 
 #force to use gles
