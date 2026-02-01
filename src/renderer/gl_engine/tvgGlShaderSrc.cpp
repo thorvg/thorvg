@@ -90,6 +90,414 @@ const char* COLOR_TEX_FRAG_SHADER = TVG_COMPOSE_SHADER(
     }                                                        \n
 );
 
+const char* LINEAR_GRADIENT_BATCH_VERT_SHADER = TVG_COMPOSE_SHADER(
+    const int MAX_STOP_COUNT = 16;                                              \n
+    const int TVG_GRADIENT_BATCH_MAX = 32;                                      \n
+    uniform float uDepth;                                                       \n
+    layout(location = 0) in vec2 aLocation;                                     \n
+    layout(location = 1) in float aDrawId;                                      \n
+    flat out int vDrawId;                                                       \n
+    out vec2 vPos;                                                              \n
+    struct GradientInfo {                                                      \n
+        vec4  nStops;                                                          \n
+        vec2  gradStartPos;                                                    \n
+        vec2  gradEndPos;                                                      \n
+        vec4  stopPoints[MAX_STOP_COUNT / 4];                                  \n
+        vec4  stopColors[MAX_STOP_COUNT];                                      \n
+    };                                                                         \n
+    struct GradientDraw {                                                      \n
+        mat3 transform;                                                        \n
+        mat3 invTransform;                                                     \n
+        GradientInfo gradient;                                                 \n
+    };                                                                         \n
+    layout(std140) uniform LinearGradientBatch {                               \n
+        GradientDraw draws[TVG_GRADIENT_BATCH_MAX];                            \n
+    } uGradientBatch;                                                          \n
+                                                                               \n
+    void main()                                                                \n
+    {                                                                          \n
+        int drawId = int(aDrawId);                                             \n
+        vDrawId = drawId;                                                      \n
+        vec3 glPos = uGradientBatch.draws[drawId].transform * vec3(aLocation, 1.0); \n
+        gl_Position = vec4(glPos.xy, uDepth, 1.0);                             \n
+        vec3 pos = uGradientBatch.draws[drawId].invTransform * vec3(aLocation, 1.0); \n
+        vPos = pos.xy;                                                         \n
+    }                                                                          \n
+);
+
+const char* LINEAR_GRADIENT_BATCH_FRAG_SHADER = TVG_COMPOSE_SHADER(
+    const int MAX_STOP_COUNT = 16;                                              \n
+    const int TVG_GRADIENT_BATCH_MAX = 32;                                      \n
+    in vec2 vPos;                                                              \n
+    flat in int vDrawId;                                                       \n
+    out vec4 FragColor;                                                        \n
+    struct GradientInfo {                                                      \n
+        vec4  nStops;                                                          \n
+        vec2  gradStartPos;                                                    \n
+        vec2  gradEndPos;                                                      \n
+        vec4  stopPoints[MAX_STOP_COUNT / 4];                                  \n
+        vec4  stopColors[MAX_STOP_COUNT];                                      \n
+    };                                                                         \n
+    struct GradientDraw {                                                      \n
+        mat3 transform;                                                        \n
+        mat3 invTransform;                                                     \n
+        GradientInfo gradient;                                                 \n
+    };                                                                         \n
+    layout(std140) uniform LinearGradientBatch {                               \n
+        GradientDraw draws[TVG_GRADIENT_BATCH_MAX];                            \n
+    } uGradientBatch;                                                          \n
+#define uGradientInfo uGradientBatch.draws[vDrawId].gradient                   \n
+                                                                               \n
+    float gradientStep(float edge0, float edge1, float x)                      \n
+    {                                                                          \n
+        // linear                                                              \n
+        x = clamp((x - edge0) / (edge1 - edge0), 0.0, 1.0);                    \n
+        return x;                                                              \n
+    }                                                                          \n
+                                                                               \n
+    float gradientStop(int index)                                              \n
+    {                                                                          \n
+        if (index >= MAX_STOP_COUNT) index = MAX_STOP_COUNT - 1;               \n
+        int i = index / 4;                                                     \n
+        int j = index % 4;                                                     \n
+        return uGradientInfo.stopPoints[i][j];                                 \n
+    }                                                                          \n
+                                                                               \n
+    float gradientWrap(float d)                                                \n
+    {                                                                          \n
+        int spread = int(uGradientInfo.nStops[2]);                             \n
+        if (spread == 0) return clamp(d, 0.0, 1.0);                            \n
+                                                                               \n
+        if (spread == 1) { /* Reflect */                                       \n
+            float n = mod(d, 2.0);                                             \n
+            if (n > 1.0) {                                                     \n
+                n = 2.0 - n;                                                   \n
+            }                                                                  \n
+            return n;                                                          \n
+        }                                                                      \n
+        if (spread == 2) {  /* Repeat */                                       \n
+            float n = mod(d, 1.0);                                             \n
+            if (n < 0.0) {                                                     \n
+                n += 1.0 + n;                                                  \n
+            }                                                                  \n
+            return n;                                                          \n
+        }                                                                      \n
+    }                                                                          \n
+                                                                               \n
+    vec4 gradient(float t, float d, float l)                                   \n
+    {                                                                          \n
+        float dist = d * 2.0 / l;                                              \n
+        vec4 col = vec4(0.0);                                                  \n
+        int i = 0;                                                             \n
+        int count = int(uGradientInfo.nStops[0]);                              \n
+        if (t <= gradientStop(0)) {                                            \n
+            col = uGradientInfo.stopColors[0];                                 \n
+        } else if (t >= gradientStop(count - 1)) {                             \n
+            col = uGradientInfo.stopColors[count - 1];                         \n
+            if (int(uGradientInfo.nStops[2]) == 2 && (1.0 - t) < dist) {       \n
+                float dd = (1.0 - t) / dist;                                   \n
+                float alpha =  dd;                                             \n
+                col *= alpha;                                                  \n
+                col += uGradientInfo.stopColors[0] * (1. - alpha);             \n
+            }                                                                  \n
+        } else {                                                               \n
+            for (i = 0; i < count - 1; ++i) {                                  \n
+                float stopi = gradientStop(i);                                 \n
+                float stopi1 = gradientStop(i + 1);                            \n
+                if (t >= stopi && t <= stopi1) {                               \n
+                    col = (uGradientInfo.stopColors[i] * (1. - gradientStep(stopi, stopi1, t))); \n
+                    col += (uGradientInfo.stopColors[i + 1] * gradientStep(stopi, stopi1, t)); \n
+                    if (int(uGradientInfo.nStops[2]) == 2 && abs(d) > dist) {  \n
+                        if (i == 0 && (t - stopi) < dist) {                    \n
+                            float dd = (t - stopi) / dist;                     \n
+                            float alpha = dd;                                  \n
+                            col *= alpha;                                      \n
+                            vec4 nc = uGradientInfo.stopColors[0] * (1.0 - (t - stopi)); \n
+                            nc += uGradientInfo.stopColors[count - 1] * (t - stopi); \n
+                            col += nc * (1.0 - alpha);                         \n
+                        } else if (i == count - 2 && (1.0 - t) < dist) {       \n
+                            float dd = (1.0 - t) / dist;                       \n
+                            float alpha =  dd;                                 \n
+                            col *= alpha;                                      \n
+                            col += (uGradientInfo.stopColors[0]) * (1.0 - alpha); \n
+                        }                                                      \n
+                    }                                                          \n
+                    break;                                                     \n
+                }                                                              \n
+            }                                                                  \n
+        }                                                                      \n
+        return col;                                                            \n
+    }                                                                          \n
+                                                                               \n
+    vec3 ScreenSpaceDither(vec2 vScreenPos)                                    \n
+    {                                                                          \n
+        vec3 vDither = vec3(dot(vec2(171.0, 231.0), vScreenPos.xy));           \n
+        vDither.rgb = fract(vDither.rgb / vec3(103.0, 71.0, 97.0));            \n
+        return vDither.rgb / 255.0;                                            \n
+    }                                                                          \n
+                                                                               \n
+    vec4 linearGradientColor(vec2 pos)                                         \n
+    {                                                                          \n
+        vec2 st = uGradientInfo.gradStartPos;                                  \n
+        vec2 ed = uGradientInfo.gradEndPos;                                    \n
+        vec2 ba = ed - st;                                                     \n
+        float d = dot(pos - st, ba) / dot(ba, ba);                             \n
+        float t = gradientWrap(d);                                             \n
+        vec4 color = gradient(t, d, length(pos - st));                         \n
+        return vec4(color.rgb * color.a, color.a);                             \n
+    }                                                                          \n
+                                                                               \n
+    void main()                                                                \n
+    {                                                                          \n
+        FragColor = linearGradientColor(vPos);                                 \n
+    }                                                                          \n
+);
+
+const char* RADIAL_GRADIENT_BATCH_VERT_SHADER = TVG_COMPOSE_SHADER(
+    const int MAX_STOP_COUNT = 16;                                              \n
+    const int TVG_GRADIENT_BATCH_MAX = 32;                                      \n
+    uniform float uDepth;                                                       \n
+    layout(location = 0) in vec2 aLocation;                                     \n
+    layout(location = 1) in float aDrawId;                                      \n
+    flat out int vDrawId;                                                       \n
+    out vec2 vPos;                                                              \n
+    struct GradientInfo {                                                      \n
+        vec4  nStops;                                                          \n
+        vec4  centerPos;                                                       \n
+        vec2  radius;                                                          \n
+        vec4  stopPoints[MAX_STOP_COUNT / 4];                                  \n
+        vec4  stopColors[MAX_STOP_COUNT];                                      \n
+    };                                                                         \n
+    struct GradientDraw {                                                      \n
+        mat3 transform;                                                        \n
+        mat3 invTransform;                                                     \n
+        GradientInfo gradient;                                                 \n
+    };                                                                         \n
+    layout(std140) uniform RadialGradientBatch {                               \n
+        GradientDraw draws[TVG_GRADIENT_BATCH_MAX];                            \n
+    } uGradientBatch;                                                          \n
+                                                                               \n
+    void main()                                                                \n
+    {                                                                          \n
+        int drawId = int(aDrawId);                                             \n
+        vDrawId = drawId;                                                      \n
+        vec3 glPos = uGradientBatch.draws[drawId].transform * vec3(aLocation, 1.0); \n
+        gl_Position = vec4(glPos.xy, uDepth, 1.0);                             \n
+        vec3 pos = uGradientBatch.draws[drawId].invTransform * vec3(aLocation, 1.0); \n
+        vPos = pos.xy;                                                         \n
+    }                                                                          \n
+);
+
+const char* RADIAL_GRADIENT_BATCH_FRAG_SHADER = TVG_COMPOSE_SHADER(
+    const int MAX_STOP_COUNT = 16;                                              \n
+    const int TVG_GRADIENT_BATCH_MAX = 32;                                      \n
+    in vec2 vPos;                                                              \n
+    flat in int vDrawId;                                                       \n
+    out vec4 FragColor;                                                        \n
+    struct GradientInfo {                                                      \n
+        vec4  nStops;                                                          \n
+        vec4  centerPos;                                                       \n
+        vec2  radius;                                                          \n
+        vec4  stopPoints[MAX_STOP_COUNT / 4];                                  \n
+        vec4  stopColors[MAX_STOP_COUNT];                                      \n
+    };                                                                         \n
+    struct GradientDraw {                                                      \n
+        mat3 transform;                                                        \n
+        mat3 invTransform;                                                     \n
+        GradientInfo gradient;                                                 \n
+    };                                                                         \n
+    layout(std140) uniform RadialGradientBatch {                               \n
+        GradientDraw draws[TVG_GRADIENT_BATCH_MAX];                            \n
+    } uGradientBatch;                                                          \n
+#define uGradientInfo uGradientBatch.draws[vDrawId].gradient                   \n
+                                                                               \n
+    float gradientStep(float edge0, float edge1, float x)                      \n
+    {                                                                          \n
+        // linear                                                              \n
+        x = clamp((x - edge0) / (edge1 - edge0), 0.0, 1.0);                    \n
+        return x;                                                              \n
+    }                                                                          \n
+                                                                               \n
+    float gradientStop(int index)                                              \n
+    {                                                                          \n
+        if (index >= MAX_STOP_COUNT) index = MAX_STOP_COUNT - 1;               \n
+        int i = index / 4;                                                     \n
+        int j = index % 4;                                                     \n
+        return uGradientInfo.stopPoints[i][j];                                 \n
+    }                                                                          \n
+                                                                               \n
+    float gradientWrap(float d)                                                \n
+    {                                                                          \n
+        int spread = int(uGradientInfo.nStops[2]);                             \n
+        if (spread == 0) return clamp(d, 0.0, 1.0);                            \n
+                                                                               \n
+        if (spread == 1) { /* Reflect */                                       \n
+            float n = mod(d, 2.0);                                             \n
+            if (n > 1.0) {                                                     \n
+                n = 2.0 - n;                                                   \n
+            }                                                                  \n
+            return n;                                                          \n
+        }                                                                      \n
+        if (spread == 2) {  /* Repeat */                                       \n
+            float n = mod(d, 1.0);                                             \n
+            if (n < 0.0) {                                                     \n
+                n += 1.0 + n;                                                  \n
+            }                                                                  \n
+            return n;                                                          \n
+        }                                                                      \n
+    }                                                                          \n
+                                                                               \n
+    vec4 gradient(float t, float d, float l)                                   \n
+    {                                                                          \n
+        float dist = d * 2.0 / l;                                              \n
+        vec4 col = vec4(0.0);                                                  \n
+        int i = 0;                                                             \n
+        int count = int(uGradientInfo.nStops[0]);                              \n
+        if (t <= gradientStop(0)) {                                            \n
+            col = uGradientInfo.stopColors[0];                                 \n
+        } else if (t >= gradientStop(count - 1)) {                             \n
+            col = uGradientInfo.stopColors[count - 1];                         \n
+            if (int(uGradientInfo.nStops[2]) == 2 && (1.0 - t) < dist) {       \n
+                float dd = (1.0 - t) / dist;                                   \n
+                float alpha =  dd;                                             \n
+                col *= alpha;                                                  \n
+                col += uGradientInfo.stopColors[0] * (1. - alpha);             \n
+            }                                                                  \n
+        } else {                                                               \n
+            for (i = 0; i < count - 1; ++i) {                                  \n
+                float stopi = gradientStop(i);                                 \n
+                float stopi1 = gradientStop(i + 1);                            \n
+                if (t >= stopi && t <= stopi1) {                               \n
+                    col = (uGradientInfo.stopColors[i] * (1. - gradientStep(stopi, stopi1, t))); \n
+                    col += (uGradientInfo.stopColors[i + 1] * gradientStep(stopi, stopi1, t)); \n
+                    if (int(uGradientInfo.nStops[2]) == 2 && abs(d) > dist) {  \n
+                        if (i == 0 && (t - stopi) < dist) {                    \n
+                            float dd = (t - stopi) / dist;                     \n
+                            float alpha = dd;                                  \n
+                            col *= alpha;                                      \n
+                            vec4 nc = uGradientInfo.stopColors[0] * (1.0 - (t - stopi)); \n
+                            nc += uGradientInfo.stopColors[count - 1] * (t - stopi); \n
+                            col += nc * (1.0 - alpha);                         \n
+                        } else if (i == count - 2 && (1.0 - t) < dist) {       \n
+                            float dd = (1.0 - t) / dist;                       \n
+                            float alpha =  dd;                                 \n
+                            col *= alpha;                                      \n
+                            col += (uGradientInfo.stopColors[0]) * (1.0 - alpha); \n
+                        }                                                      \n
+                    }                                                          \n
+                    break;                                                     \n
+                }                                                              \n
+            }                                                                  \n
+        }                                                                      \n
+        return col;                                                            \n
+    }                                                                          \n
+                                                                               \n
+    vec3 ScreenSpaceDither(vec2 vScreenPos)                                    \n
+    {                                                                          \n
+        vec3 vDither = vec3(dot(vec2(171.0, 231.0), vScreenPos.xy));           \n
+        vDither.rgb = fract(vDither.rgb / vec3(103.0, 71.0, 97.0));            \n
+        return vDither.rgb / 255.0;                                            \n
+    }                                                                          \n
+                                                                               \n
+    mat3 radial_matrix(vec2 p0, vec2 p1)                                       \n
+    {                                                                          \n
+        mat3 a = mat3(0.0, -1.0, 0.0, 1.0, 0.0, 0.0, 0.0, 0.0, 1.0);            \n
+        mat3 b = mat3(p1.y - p0.y, p0.x - p1.x, 0.0, p1.x - p0.x, p1.y - p0.y, 0.0, p0.x, p0.y, 1.0); \n
+        return a * inverse(b);                                                 \n
+    }                                                                          \n
+                                                                               \n
+    vec2 compute_radial_t(vec2 c0, float r0, vec2 c1, float r1, vec2 pos)      \n
+    {                                                                          \n
+        const float scalar_nearly_zero = 2.44140625e-4;                        \n
+        float d_center = distance(c0, c1);                                     \n
+        float d_radius = r1 - r0;                                              \n
+        bool radial = d_center < scalar_nearly_zero;                           \n
+        bool strip = abs(d_radius) < scalar_nearly_zero;                       \n
+                                                                               \n
+        if (radial) {                                                          \n
+            if (strip) return vec2(0.0, -1.0);                                 \n
+                                                                               \n
+            float scale = 1.0 / d_radius;                                      \n
+            float scale_sign = sign(d_radius);                                 \n
+            float bias = r0 / d_radius;                                        \n
+            vec2 pt = (pos - c0) * scale;                                      \n
+            float t = length(pt) * scale_sign - bias;                          \n
+            return vec2(t, 1.0);                                               \n
+        } else if (strip) {                                                    \n
+            mat3 transform = radial_matrix(c0, c1);                            \n
+            float r = r0 / d_center;                                           \n
+            float r_2 = r * r;                                                 \n
+            vec2 pt = (transform * vec3(pos.xy, 1.0)).xy;                      \n
+            float t = r_2 - pt.y * pt.y;                                       \n
+                                                                               \n
+            if (t < 0.0) return vec2(0.0, -1.0);                               \n
+                                                                               \n
+            t = pt.x + sqrt(t);                                                \n
+            return vec2(t, 1.0);                                               \n
+        } else {                                                               \n
+            float f = r0 / (r0 - r1);                                          \n
+            bool is_swapped = abs(f - 1.0) < scalar_nearly_zero;               \n
+            vec2 c0p = is_swapped ? c1 : c0;                                   \n
+            vec2 c1p = is_swapped ? c0 : c1;                                   \n
+            float fp = is_swapped ? 0.0 : f;                                   \n
+            vec2 cf = c0p * (1.0 - fp) + c1p * fp;                             \n
+            mat3 transform = radial_matrix(cf, c1p);                           \n
+                                                                               \n
+            float scale_x = abs(1.0 - fp);                                     \n
+            float scale_y = scale_x;                                           \n
+            float r1n = abs(r1 - r0) / d_center;                               \n
+            bool is_focal_on_circle = abs(r1n - 1.0) < scalar_nearly_zero;     \n
+            if (is_focal_on_circle) {                                          \n
+                scale_x *= 0.5;                                                \n
+                scale_y *= 0.5;                                                \n
+            } else {                                                           \n
+                float denom = r1n * r1n - 1.0;                                 \n
+                scale_x *= r1n / denom;                                        \n
+                scale_y /= sqrt(abs(denom));                                   \n
+            }                                                                  \n
+            transform = mat3(scale_x, 0.0, 0.0, 0.0, scale_y, 0.0, 0.0, 0.0, 1.0) * transform; \n
+                                                                               \n
+            vec2 pt = (transform * vec3(pos.xy, 1.0)).xy;                      \n
+                                                                               \n
+            float inv_r1 = 1.0 / r1n;                                          \n
+            float d_radius_sign = sign(1.0 - fp);                              \n
+                                                                               \n
+            float x_t = -1.0;                                                  \n
+            if (is_focal_on_circle) x_t = dot(pt, pt) / pt.x;                  \n
+            else if (r1n > 1.0) x_t = length(pt) - pt.x * inv_r1;              \n
+            else {                                                             \n
+                float discriminant = pt.x * pt.x - pt.y * pt.y;                \n
+                float root = sqrt(max(discriminant, 0.0));                     \n
+                float s = (is_swapped == (d_radius_sign > 0.0)) ? 1.0 : -1.0;  \n
+                x_t = s * root - pt.x * inv_r1;                                \n
+                if (discriminant < 0.0 || x_t < 0.0) return vec2(is_swapped ? 0.0 : 1.0, 1.0); \n
+            }                                                                  \n
+            float t = fp + d_radius_sign * x_t;                                \n
+            if (is_swapped) t = 1.0 - t;                                       \n
+            return vec2(t, 1.0);                                               \n
+        }                                                                      \n
+    }                                                                          \n
+                                                                               \n
+    vec4 radialGradientColor(vec2 pos)                                         \n
+    {                                                                          \n
+        vec2 res = compute_radial_t(uGradientInfo.centerPos.xy,                \n
+                                    uGradientInfo.radius.x,                    \n
+                                    uGradientInfo.centerPos.zw,                \n
+                                    uGradientInfo.radius.y,                    \n
+                                    pos);                                      \n
+        if (res.y < 0.0) return vec4(0.0, 0.0, 0.0, 0.0);                      \n
+                                                                               \n
+        float t = gradientWrap(res.x);                                         \n
+        vec4 color = gradient(t, res.x, length(pos - uGradientInfo.centerPos.xy)); \n
+        return vec4(color.rgb * color.a, color.a);                             \n
+    }                                                                          \n
+                                                                               \n
+    void main()                                                                \n
+    {                                                                          \n
+        FragColor = radialGradientColor(vPos);                                 \n
+    }                                                                          \n
+);
+
 const char* GRADIENT_VERT_SHADER = TVG_COMPOSE_SHADER(
     uniform float uDepth;                                                           \n
     layout(location = 0) in vec2 aLocation;                                         \n
