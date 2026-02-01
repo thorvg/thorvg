@@ -41,6 +41,9 @@ static atomic<int32_t> rendererCnt{-1};
 
 constexpr uint32_t SOLID_BATCH_MAX = 256;
 constexpr uint32_t SOLID_BATCH_PROGRAM_INDEX = static_cast<uint32_t>(GlRenderer::RT_None);
+constexpr uint32_t GRADIENT_BATCH_MAX = 32;
+constexpr uint32_t LINEAR_GRADIENT_BATCH_PROGRAM_INDEX = SOLID_BATCH_PROGRAM_INDEX + 1;
+constexpr uint32_t RADIAL_GRADIENT_BATCH_PROGRAM_INDEX = SOLID_BATCH_PROGRAM_INDEX + 2;
 
 struct GlSolidBatchEntry
 {
@@ -64,9 +67,60 @@ struct GlSolidBatchState
 
 static unordered_map<GlRenderer*, GlSolidBatchState> gSolidBatchStates;
 
+struct GlLinearGradientBatchEntry
+{
+    float transform[GL_MAT3_STD140_SIZE];
+    float invTransform[GL_MAT3_STD140_SIZE];
+    GlLinearGradientBlock gradient;
+};
+
+struct GlRadialGradientBatchEntry
+{
+    float transform[GL_MAT3_STD140_SIZE];
+    float invTransform[GL_MAT3_STD140_SIZE];
+    GlRadialGradientBlock gradient;
+};
+
+struct GlLinearGradientBatchState
+{
+    GlRenderPass* pass = nullptr;
+    GlRenderTask* task = nullptr;
+    uint32_t vertexCount = 0;
+    uint32_t indexOffset = 0;
+    uint32_t indexCount = 0;
+    uint32_t drawCount = 0;
+    uint32_t maxDraws = 0;
+    Array<GlLinearGradientBatchEntry> entries = {};
+};
+
+struct GlRadialGradientBatchState
+{
+    GlRenderPass* pass = nullptr;
+    GlRenderTask* task = nullptr;
+    uint32_t vertexCount = 0;
+    uint32_t indexOffset = 0;
+    uint32_t indexCount = 0;
+    uint32_t drawCount = 0;
+    uint32_t maxDraws = 0;
+    Array<GlRadialGradientBatchEntry> entries = {};
+};
+
+struct GlGradientBatchState
+{
+    GlLinearGradientBatchState linear = {};
+    GlRadialGradientBatchState radial = {};
+};
+
+static unordered_map<GlRenderer*, GlGradientBatchState> gGradientBatchStates;
+
 static GlSolidBatchState& _solidBatchState(GlRenderer* renderer)
 {
     return gSolidBatchStates[renderer];
+}
+
+static GlGradientBatchState& _gradientBatchState(GlRenderer* renderer)
+{
+    return gGradientBatchStates[renderer];
 }
 
 static void _resetSolidBatch(GlSolidBatchState& state)
@@ -101,6 +155,82 @@ static void _finalizeSolidBatch(GlStageBuffer& gpuBuffer, GlSolidBatchState& sta
     _resetSolidBatch(state);
 }
 
+static void _resetLinearGradientBatch(GlLinearGradientBatchState& state)
+{
+    state.pass = nullptr;
+    state.task = nullptr;
+    state.vertexCount = 0;
+    state.indexOffset = 0;
+    state.indexCount = 0;
+    state.drawCount = 0;
+    state.entries.clear();
+}
+
+static void _resetRadialGradientBatch(GlRadialGradientBatchState& state)
+{
+    state.pass = nullptr;
+    state.task = nullptr;
+    state.vertexCount = 0;
+    state.indexOffset = 0;
+    state.indexCount = 0;
+    state.drawCount = 0;
+    state.entries.clear();
+}
+
+static void _resetGradientBatches(GlGradientBatchState& state)
+{
+    _resetLinearGradientBatch(state.linear);
+    _resetRadialGradientBatch(state.radial);
+}
+
+static void _finalizeLinearGradientBatch(GlStageBuffer& gpuBuffer, GlLinearGradientBatchState& state)
+{
+    if (!state.task || state.drawCount == 0 || state.entries.empty()) {
+        _resetLinearGradientBatch(state);
+        return;
+    }
+
+    const auto bytes = state.entries.count * sizeof(GlLinearGradientBatchEntry);
+    const auto offset = gpuBuffer.push(state.entries.data, static_cast<uint32_t>(bytes), true);
+
+    state.task->addBindResource(GlBindingResource{
+        0,
+        state.task->getProgram()->getUniformBlockIndex("LinearGradientBatch"),
+        gpuBuffer.getBufferId(),
+        offset,
+        static_cast<uint32_t>(bytes),
+    });
+
+    _resetLinearGradientBatch(state);
+}
+
+static void _finalizeRadialGradientBatch(GlStageBuffer& gpuBuffer, GlRadialGradientBatchState& state)
+{
+    if (!state.task || state.drawCount == 0 || state.entries.empty()) {
+        _resetRadialGradientBatch(state);
+        return;
+    }
+
+    const auto bytes = state.entries.count * sizeof(GlRadialGradientBatchEntry);
+    const auto offset = gpuBuffer.push(state.entries.data, static_cast<uint32_t>(bytes), true);
+
+    state.task->addBindResource(GlBindingResource{
+        0,
+        state.task->getProgram()->getUniformBlockIndex("RadialGradientBatch"),
+        gpuBuffer.getBufferId(),
+        offset,
+        static_cast<uint32_t>(bytes),
+    });
+
+    _resetRadialGradientBatch(state);
+}
+
+static void _finalizeGradientBatches(GlStageBuffer& gpuBuffer, GlGradientBatchState& state)
+{
+    _finalizeLinearGradientBatch(gpuBuffer, state.linear);
+    _finalizeRadialGradientBatch(gpuBuffer, state.radial);
+}
+
 static void _solidUniforms(GlRenderPass* pass, GlShape& sdata, const RenderColor& c, RenderUpdateFlag flag, float* matrix3STD140, float* color)
 {
     auto a = MULTIPLY(c.a, sdata.opacity);
@@ -132,6 +262,7 @@ void GlRenderer::clearDisposes()
     mRenderPassStack.clear();
 
     _resetSolidBatch(_solidBatchState(this));
+    _resetGradientBatches(_gradientBatchState(this));
 }
 
 
@@ -185,6 +316,7 @@ GlRenderer::~GlRenderer()
     ARRAY_FOREACH(p, mPrograms) delete(*p);
 
     gSolidBatchStates.erase(this);
+    gGradientBatchStates.erase(this);
 }
 
 
@@ -249,6 +381,10 @@ void GlRenderer::initShaders()
 
     // solid batch (UBO)
     mPrograms.push(new GlProgram(COLOR_BATCH_VERT_SHADER, COLOR_BATCH_FRAG_SHADER));
+
+    // gradient batch (UBO)
+    mPrograms.push(new GlProgram(LINEAR_GRADIENT_BATCH_VERT_SHADER, LINEAR_GRADIENT_BATCH_FRAG_SHADER));
+    mPrograms.push(new GlProgram(RADIAL_GRADIENT_BATCH_VERT_SHADER, RADIAL_GRADIENT_BATCH_FRAG_SHADER));
 }
 
 
@@ -260,6 +396,9 @@ void GlRenderer::drawPrimitive(GlShape& sdata, const RenderColor& c, RenderUpdat
 
     bbox.intersect(vp);
     if (bbox.invalid()) return;
+
+    auto& gradientBatch = _gradientBatchState(this);
+    _finalizeGradientBatches(mGpuBuffer, gradientBatch);
 
     auto x = bbox.sx() - vp.sx();
     auto y = bbox.sy() - vp.sy();
@@ -476,9 +615,7 @@ void GlRenderer::drawPrimitive(GlShape& sdata, const Fill* fill, RenderUpdateFla
 
     auto& solidBatch = _solidBatchState(this);
     if (solidBatch.task) _finalizeSolidBatch(mGpuBuffer, solidBatch);
-
-    GlRenderTask* task = nullptr;
-    GlRenderTarget* dstCopyFbo = nullptr;
+    auto& gradientBatch = _gradientBatchState(this);
     auto radial = fill->type() == Type::RadialGradient;
 
     auto x = bbox.sx() - vp.sx();
@@ -487,6 +624,255 @@ void GlRenderer::drawPrimitive(GlShape& sdata, const Fill* fill, RenderUpdateFla
     auto h = bbox.sh();
     auto yGl = vp.sh() - y - h;
     RenderRegion viewRegion = {{x, yGl}, {x + w, yGl + h}};
+
+    GlStencilMode stencilMode = sdata.geometry.getStencilMode(flag);
+    const bool batchable = !blendShape && stencilMode == GlStencilMode::None && flag == RenderUpdateFlag::Gradient;
+
+    auto alpha = sdata.opacity / 255.f;
+    if (flag & RenderUpdateFlag::GradientStroke) {
+        auto strokeWidth = sdata.rshape->strokeWidth();
+        if (strokeWidth < MIN_GL_STROKE_WIDTH) {
+            alpha = strokeWidth / MIN_GL_STROKE_WIDTH;
+        }
+    }
+
+    auto fillLinearBlock = [&](GlLinearGradientBlock& gradientBlock) {
+        gradientBlock.nStops[1] = NOISE_LEVEL;
+        gradientBlock.nStops[2] = static_cast<int32_t>(fill->spread()) * 1.f;
+        uint32_t nStops = 0;
+        for (uint32_t i = 0; i < stopCnt; ++i) {
+            if (i > 0 && gradientBlock.stopPoints[nStops - 1] > stops[i].offset) continue;
+
+            gradientBlock.stopPoints[i] = stops[i].offset;
+            gradientBlock.stopColors[i * 4 + 0] = stops[i].r / 255.f;
+            gradientBlock.stopColors[i * 4 + 1] = stops[i].g / 255.f;
+            gradientBlock.stopColors[i * 4 + 2] = stops[i].b / 255.f;
+            gradientBlock.stopColors[i * 4 + 3] = stops[i].a / 255.f * alpha;
+            nStops++;
+        }
+        gradientBlock.nStops[0] = nStops * 1.f;
+
+        float x1, x2, y1, y2;
+        static_cast<const LinearGradient*>(fill)->linear(&x1, &y1, &x2, &y2);
+
+        gradientBlock.startPos[0] = x1;
+        gradientBlock.startPos[1] = y1;
+        gradientBlock.stopPos[0] = x2;
+        gradientBlock.stopPos[1] = y2;
+    };
+
+    auto fillRadialBlock = [&](GlRadialGradientBlock& gradientBlock) {
+        gradientBlock.nStops[1] = NOISE_LEVEL;
+        gradientBlock.nStops[2] = static_cast<int32_t>(fill->spread()) * 1.f;
+
+        uint32_t nStops = 0;
+        for (uint32_t i = 0; i < stopCnt; ++i) {
+            if (i > 0 && gradientBlock.stopPoints[nStops - 1] > stops[i].offset) continue;
+
+            gradientBlock.stopPoints[i] = stops[i].offset;
+            gradientBlock.stopColors[i * 4 + 0] = stops[i].r / 255.f;
+            gradientBlock.stopColors[i * 4 + 1] = stops[i].g / 255.f;
+            gradientBlock.stopColors[i * 4 + 2] = stops[i].b / 255.f;
+            gradientBlock.stopColors[i * 4 + 3] = stops[i].a / 255.f * alpha;
+            nStops++;
+        }
+        gradientBlock.nStops[0] = nStops * 1.f;
+
+        float x, y, r, fx, fy, fr;
+        auto radialFill = static_cast<const RadialGradient*>(fill);
+        radialFill->radial(&x, &y, &r, &fx, &fy, &fr);
+        CONST_RADIAL(radialFill)->correct(fx, fy, fr);
+
+        gradientBlock.centerPos[0] = fx;
+        gradientBlock.centerPos[1] = fy;
+        gradientBlock.centerPos[2] = x;
+        gradientBlock.centerPos[3] = y;
+        gradientBlock.radius[0] = fr;
+        gradientBlock.radius[1] = r;
+    };
+
+    if (batchable) {
+        auto& geometryBuffer = sdata.geometry.fill;
+        if (geometryBuffer.index.empty()) return;
+
+        const uint32_t vertexCount = geometryBuffer.vertex.count / 2;
+        if (vertexCount == 0) return;
+
+        auto pass = currentPass();
+
+        struct GlGradientVertex {
+            float x;
+            float y;
+            float drawId;
+        };
+
+        if (radial) {
+            if (gradientBatch.linear.task) _finalizeLinearGradientBatch(mGpuBuffer, gradientBatch.linear);
+
+            auto& batch = gradientBatch.radial;
+            if (batch.maxDraws == 0) {
+                GLint maxBlockSize = 0;
+                GL_CHECK(glGetIntegerv(GL_MAX_UNIFORM_BLOCK_SIZE, &maxBlockSize));
+                uint32_t maxDraws = (maxBlockSize > 0) ? static_cast<uint32_t>(maxBlockSize) / sizeof(GlRadialGradientBatchEntry) : 1;
+                batch.maxDraws = max(1u, min(GRADIENT_BATCH_MAX, maxDraws));
+            }
+
+            bool canAppend = batch.task && batch.pass == pass &&
+                             batch.task->getProgram() == mPrograms[RADIAL_GRADIENT_BATCH_PROGRAM_INDEX] &&
+                             batch.drawCount < batch.maxDraws;
+
+            if (!canAppend && batch.task) _finalizeRadialGradientBatch(mGpuBuffer, batch);
+
+            if (!canAppend) {
+                batch.pass = pass;
+                batch.task = new GlRenderTask(mPrograms[RADIAL_GRADIENT_BATCH_PROGRAM_INDEX]);
+                batch.task->setDrawDepth(depth);
+                batch.task->setViewport(viewRegion);
+                batch.vertexCount = 0;
+                batch.indexOffset = 0;
+                batch.indexCount = 0;
+                batch.drawCount = 0;
+                batch.entries.clear();
+            }
+
+            const float drawId = static_cast<float>(batch.drawCount);
+
+            Array<GlGradientVertex> vertices;
+            vertices.reserve(vertexCount);
+            for (uint32_t i = 0; i < vertexCount; ++i) {
+                vertices.push({geometryBuffer.vertex.data[i * 2], geometryBuffer.vertex.data[i * 2 + 1], drawId});
+            }
+
+            const uint32_t vertexOffset = mGpuBuffer.push(vertices.data, vertices.count * sizeof(GlGradientVertex));
+            const uint32_t baseVertex = canAppend ? batch.vertexCount : 0;
+
+            Array<uint32_t> indices;
+            indices.reserve(geometryBuffer.index.count);
+            for (uint32_t i = 0; i < geometryBuffer.index.count; ++i) {
+                indices.push(geometryBuffer.index.data[i] + baseVertex);
+            }
+
+            const uint32_t indexOffset = mGpuBuffer.pushIndex(indices.data, indices.count * sizeof(uint32_t));
+
+            if (canAppend) {
+                batch.vertexCount += vertexCount;
+                batch.indexCount += indices.count;
+                batch.task->setDrawRange(batch.indexOffset, batch.indexCount);
+
+                auto merged = batch.task->getViewport();
+                merged.add(viewRegion);
+                batch.task->setViewport(merged);
+            } else {
+                batch.task->addVertexLayout(GlVertexLayout{0, 2, sizeof(GlGradientVertex), vertexOffset});
+                batch.task->addVertexLayout(GlVertexLayout{1, 1, sizeof(GlGradientVertex), vertexOffset + 2 * sizeof(float)});
+                batch.task->setDrawRange(indexOffset, indices.count);
+                batch.task->setViewport(viewRegion);
+
+                batch.vertexCount = vertexCount;
+                batch.indexOffset = indexOffset;
+                batch.indexCount = indices.count;
+
+                pass->addRenderTask(batch.task);
+            }
+
+            GlRadialGradientBatchEntry entry = {};
+            pass->getMatrix(entry.transform, sdata.geometry.matrix);
+            Matrix inv;
+            inverse(&fill->transform(), &inv);
+            getMatrix3Std140(inv, entry.invTransform);
+            fillRadialBlock(entry.gradient);
+
+            batch.entries.push(entry);
+            batch.drawCount++;
+
+            return;
+        }
+
+        if (gradientBatch.radial.task) _finalizeRadialGradientBatch(mGpuBuffer, gradientBatch.radial);
+
+        auto& batch = gradientBatch.linear;
+        if (batch.maxDraws == 0) {
+            GLint maxBlockSize = 0;
+            GL_CHECK(glGetIntegerv(GL_MAX_UNIFORM_BLOCK_SIZE, &maxBlockSize));
+            uint32_t maxDraws = (maxBlockSize > 0) ? static_cast<uint32_t>(maxBlockSize) / sizeof(GlLinearGradientBatchEntry) : 1;
+            batch.maxDraws = max(1u, min(GRADIENT_BATCH_MAX, maxDraws));
+        }
+
+        bool canAppend = batch.task && batch.pass == pass &&
+                         batch.task->getProgram() == mPrograms[LINEAR_GRADIENT_BATCH_PROGRAM_INDEX] &&
+                         batch.drawCount < batch.maxDraws;
+
+        if (!canAppend && batch.task) _finalizeLinearGradientBatch(mGpuBuffer, batch);
+
+        if (!canAppend) {
+            batch.pass = pass;
+            batch.task = new GlRenderTask(mPrograms[LINEAR_GRADIENT_BATCH_PROGRAM_INDEX]);
+            batch.task->setDrawDepth(depth);
+            batch.task->setViewport(viewRegion);
+            batch.vertexCount = 0;
+            batch.indexOffset = 0;
+            batch.indexCount = 0;
+            batch.drawCount = 0;
+            batch.entries.clear();
+        }
+
+        const float drawId = static_cast<float>(batch.drawCount);
+
+        Array<GlGradientVertex> vertices;
+        vertices.reserve(vertexCount);
+        for (uint32_t i = 0; i < vertexCount; ++i) {
+            vertices.push({geometryBuffer.vertex.data[i * 2], geometryBuffer.vertex.data[i * 2 + 1], drawId});
+        }
+
+        const uint32_t vertexOffset = mGpuBuffer.push(vertices.data, vertices.count * sizeof(GlGradientVertex));
+        const uint32_t baseVertex = canAppend ? batch.vertexCount : 0;
+
+        Array<uint32_t> indices;
+        indices.reserve(geometryBuffer.index.count);
+        for (uint32_t i = 0; i < geometryBuffer.index.count; ++i) {
+            indices.push(geometryBuffer.index.data[i] + baseVertex);
+        }
+
+        const uint32_t indexOffset = mGpuBuffer.pushIndex(indices.data, indices.count * sizeof(uint32_t));
+
+        if (canAppend) {
+            batch.vertexCount += vertexCount;
+            batch.indexCount += indices.count;
+            batch.task->setDrawRange(batch.indexOffset, batch.indexCount);
+
+            auto merged = batch.task->getViewport();
+            merged.add(viewRegion);
+            batch.task->setViewport(merged);
+        } else {
+            batch.task->addVertexLayout(GlVertexLayout{0, 2, sizeof(GlGradientVertex), vertexOffset});
+            batch.task->addVertexLayout(GlVertexLayout{1, 1, sizeof(GlGradientVertex), vertexOffset + 2 * sizeof(float)});
+            batch.task->setDrawRange(indexOffset, indices.count);
+            batch.task->setViewport(viewRegion);
+
+            batch.vertexCount = vertexCount;
+            batch.indexOffset = indexOffset;
+            batch.indexCount = indices.count;
+
+            pass->addRenderTask(batch.task);
+        }
+
+        GlLinearGradientBatchEntry entry = {};
+        pass->getMatrix(entry.transform, sdata.geometry.matrix);
+        Matrix inv;
+        inverse(&fill->transform(), &inv);
+        getMatrix3Std140(inv, entry.invTransform);
+        fillLinearBlock(entry.gradient);
+
+        batch.entries.push(entry);
+        batch.drawCount++;
+
+        return;
+    }
+
+    if (gradientBatch.linear.task || gradientBatch.radial.task) _finalizeGradientBatches(mGpuBuffer, gradientBatch);
+
+    GlRenderTask* task = nullptr;
+    GlRenderTarget* dstCopyFbo = nullptr;
 
     if (blendShape) {
         if (mBlendPool.empty()) mBlendPool.push(new GlRenderTargetPool(surface.w, surface.h));
@@ -511,7 +897,6 @@ void GlRenderer::drawPrimitive(GlShape& sdata, const Fill* fill, RenderUpdateFla
     task->setViewport(viewRegion);
 
     GlRenderTask* stencilTask = nullptr;
-    GlStencilMode stencilMode = sdata.geometry.getStencilMode(flag);
     if (stencilMode != GlStencilMode::None) {
         stencilTask = new GlRenderTask(mPrograms[RT_Stencil], task);
         stencilTask->setDrawDepth(depth);
@@ -556,46 +941,13 @@ void GlRenderer::drawPrimitive(GlShape& sdata, const Fill* fill, RenderUpdateFla
         GL_MAT3_STD140_BYTES,
     });
 
-    auto alpha = sdata.opacity / 255.f;
-
-    if (flag & RenderUpdateFlag::GradientStroke) {
-        auto strokeWidth = sdata.rshape->strokeWidth();
-        if (strokeWidth < MIN_GL_STROKE_WIDTH) {
-            alpha = strokeWidth / MIN_GL_STROKE_WIDTH;
-        }
-    }
-
     // gradient block
     GlBindingResource gradientBinding{};
     auto loc = task->getProgram()->getUniformBlockIndex("GradientInfo");
 
     if (fill->type() == Type::LinearGradient) {
-        auto linearFill = static_cast<const LinearGradient*>(fill);
-
-        GlLinearGradientBlock gradientBlock;
-
-        gradientBlock.nStops[1] = NOISE_LEVEL;
-        gradientBlock.nStops[2] = static_cast<int32_t>(fill->spread()) * 1.f;
-        uint32_t nStops = 0;
-        for (uint32_t i = 0; i < stopCnt; ++i) {
-            if (i > 0 && gradientBlock.stopPoints[nStops - 1] > stops[i].offset) continue;
-
-            gradientBlock.stopPoints[i] = stops[i].offset;
-            gradientBlock.stopColors[i * 4 + 0] = stops[i].r / 255.f;
-            gradientBlock.stopColors[i * 4 + 1] = stops[i].g / 255.f;
-            gradientBlock.stopColors[i * 4 + 2] = stops[i].b / 255.f;
-            gradientBlock.stopColors[i * 4 + 3] = stops[i].a / 255.f * alpha;
-            nStops++;
-        }
-        gradientBlock.nStops[0] = nStops * 1.f;
-
-        float x1, x2, y1, y2;
-        linearFill->linear(&x1, &y1, &x2, &y2);
-
-        gradientBlock.startPos[0] = x1;
-        gradientBlock.startPos[1] = y1;
-        gradientBlock.stopPos[0] = x2;
-        gradientBlock.stopPos[1] = y2;
+        GlLinearGradientBlock gradientBlock = {};
+        fillLinearBlock(gradientBlock);
 
         gradientBinding = GlBindingResource{
             2,
@@ -605,36 +957,8 @@ void GlRenderer::drawPrimitive(GlShape& sdata, const Fill* fill, RenderUpdateFla
             sizeof(GlLinearGradientBlock),
         };
     } else {
-        auto radialFill = static_cast<const RadialGradient*>(fill);
-
-        GlRadialGradientBlock gradientBlock;
-
-        gradientBlock.nStops[1] = NOISE_LEVEL;
-        gradientBlock.nStops[2] = static_cast<int32_t>(fill->spread()) * 1.f;
-
-        uint32_t nStops = 0;
-        for (uint32_t i = 0; i < stopCnt; ++i) {
-            if (i > 0 && gradientBlock.stopPoints[nStops - 1] > stops[i].offset) continue;
-
-            gradientBlock.stopPoints[i] = stops[i].offset;
-            gradientBlock.stopColors[i * 4 + 0] = stops[i].r / 255.f;
-            gradientBlock.stopColors[i * 4 + 1] = stops[i].g / 255.f;
-            gradientBlock.stopColors[i * 4 + 2] = stops[i].b / 255.f;
-            gradientBlock.stopColors[i * 4 + 3] = stops[i].a / 255.f * alpha;
-            nStops++;
-        }
-        gradientBlock.nStops[0] = nStops * 1.f;
-
-        float x, y, r, fx, fy, fr;
-        radialFill->radial(&x, &y, &r, &fx, &fy, &fr);
-        CONST_RADIAL(radialFill)->correct(fx, fy, fr);
-
-        gradientBlock.centerPos[0] = fx;
-        gradientBlock.centerPos[1] = fy;
-        gradientBlock.centerPos[2] = x;
-        gradientBlock.centerPos[3] = y;
-        gradientBlock.radius[0] = fr;
-        gradientBlock.radius[1] = r;
+        GlRadialGradientBlock gradientBlock = {};
+        fillRadialBlock(gradientBlock);
 
         gradientBinding = GlBindingResource{
             2,
@@ -675,6 +999,9 @@ void GlRenderer::drawClip(Array<RenderData>& clips)
 {
     auto& solidBatch = _solidBatchState(this);
     if (solidBatch.task) _finalizeSolidBatch(mGpuBuffer, solidBatch);
+
+    auto& gradientBatch = _gradientBatchState(this);
+    if (gradientBatch.linear.task || gradientBatch.radial.task) _finalizeGradientBatches(mGpuBuffer, gradientBatch);
 
     Array<float> identityVertex(4 * 2);
     float left = -1.f;
@@ -1180,6 +1507,9 @@ bool GlRenderer::target(void* display, void* surface, void* context, int32_t id,
 
     auto ret = currentContext();
     _solidBatchState(this).maxDraws = 0;
+    auto& gradientBatch = _gradientBatchState(this);
+    gradientBatch.linear.maxDraws = 0;
+    gradientBatch.radial.maxDraws = 0;
 
     mRootTarget.viewport = {{0, 0}, {int32_t(this->surface.w), int32_t(this->surface.h)}};
     mRootTarget.init(this->surface.w, this->surface.h, mTargetFboId);
@@ -1195,6 +1525,8 @@ bool GlRenderer::sync()
 
     auto& solidBatch = _solidBatchState(this);
     if (solidBatch.task) _finalizeSolidBatch(mGpuBuffer, solidBatch);
+    auto& gradientBatch = _gradientBatchState(this);
+    if (gradientBatch.linear.task || gradientBatch.radial.task) _finalizeGradientBatches(mGpuBuffer, gradientBatch);
 
     currentContext();
 
@@ -1354,6 +1686,8 @@ bool GlRenderer::render(TVG_UNUSED RenderCompositor* cmp, const RenderEffect* ef
 {
     auto& solidBatch = _solidBatchState(this);
     if (solidBatch.task) _finalizeSolidBatch(mGpuBuffer, solidBatch);
+    auto& gradientBatch = _gradientBatchState(this);
+    if (gradientBatch.linear.task || gradientBatch.radial.task) _finalizeGradientBatches(mGpuBuffer, gradientBatch);
 
     return mEffect.render(const_cast<RenderEffect*>(effect), currentPass(), mBlendPool);
 }
