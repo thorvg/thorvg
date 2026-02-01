@@ -198,6 +198,8 @@ bool GlGeometry::tesselateShape(const RenderShape& rshape, float* opacityMultipl
     fillRule = rshape.rule;
     fillBounds = bwTess.bounds();
     convex = bwTess.convex;
+    // Workaround: CW is treated non-convex for optimization; force rect/circle convex until stencil is replaced.
+    if (optPath.convexHint) convex = true;
     if (opacityMultiplier) *opacityMultiplier = 1.0f;
     return true;
 }

@@ -205,6 +205,8 @@ void WgRenderDataShape::updateMeshes(const RenderShape &rshape, RenderUpdateFlag
             WgBWTessellator bwTess{&meshShape};
             bwTess.tessellate(optPath);
             convex = bwTess.convex;
+            // Workaround: CW is treated non-convex for optimization; force rect/circle convex until stencil is replaced.
+            if (optPath.convexHint) convex = true;
             bbox = bwTess.getBBox();
         }
         if (meshShape.ibuffer.empty()) {
