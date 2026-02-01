@@ -21,6 +21,7 @@
  */
 
 #include <atomic>
+#include <unordered_map>
 #include "tvgFill.h"
 #include "tvgGlCommon.h"
 #include "tvgGlRenderer.h"
@@ -38,6 +39,88 @@
 
 static atomic<int32_t> rendererCnt{-1};
 
+constexpr uint32_t SOLID_BATCH_MAX = 256;
+constexpr uint32_t SOLID_BATCH_PROGRAM_INDEX = static_cast<uint32_t>(GlRenderer::RT_None);
+
+struct GlSolidBatchEntry
+{
+    float transform[GL_MAT3_STD140_SIZE];
+    float color[4];
+};
+
+static_assert(sizeof(GlSolidBatchEntry) == sizeof(float) * (GL_MAT3_STD140_SIZE + 4), "Invalid solid batch entry size.");
+
+struct GlSolidBatchState
+{
+    GlRenderPass* pass = nullptr;
+    GlRenderTask* task = nullptr;
+    uint32_t vertexCount = 0;
+    uint32_t indexOffset = 0;
+    uint32_t indexCount = 0;
+    uint32_t drawCount = 0;
+    uint32_t maxDraws = 0;
+    Array<GlSolidBatchEntry> entries = {};
+};
+
+static unordered_map<GlRenderer*, GlSolidBatchState> gSolidBatchStates;
+
+static GlSolidBatchState& _solidBatchState(GlRenderer* renderer)
+{
+    return gSolidBatchStates[renderer];
+}
+
+static void _resetSolidBatch(GlSolidBatchState& state)
+{
+    state.pass = nullptr;
+    state.task = nullptr;
+    state.vertexCount = 0;
+    state.indexOffset = 0;
+    state.indexCount = 0;
+    state.drawCount = 0;
+    state.entries.clear();
+}
+
+static void _finalizeSolidBatch(GlStageBuffer& gpuBuffer, GlSolidBatchState& state)
+{
+    if (!state.task || state.drawCount == 0 || state.entries.empty()) {
+        _resetSolidBatch(state);
+        return;
+    }
+
+    const auto bytes = state.entries.count * sizeof(GlSolidBatchEntry);
+    const auto offset = gpuBuffer.push(state.entries.data, static_cast<uint32_t>(bytes), true);
+
+    state.task->addBindResource(GlBindingResource{
+        0,
+        state.task->getProgram()->getUniformBlockIndex("SolidBatch"),
+        gpuBuffer.getBufferId(),
+        offset,
+        static_cast<uint32_t>(bytes),
+    });
+
+    _resetSolidBatch(state);
+}
+
+static void _solidUniforms(GlRenderPass* pass, GlShape& sdata, const RenderColor& c, RenderUpdateFlag flag, float* matrix3STD140, float* color)
+{
+    auto a = MULTIPLY(c.a, sdata.opacity);
+
+    if (flag & RenderUpdateFlag::Stroke) {
+        float strokeWidth = sdata.rshape->strokeWidth() * scaling(sdata.geometry.matrix);
+        if (strokeWidth < MIN_GL_STROKE_WIDTH) {
+            float alpha = strokeWidth / MIN_GL_STROKE_WIDTH;
+            a = MULTIPLY(a, static_cast<uint8_t>(alpha * 255));
+        }
+    }
+
+    pass->getMatrix(matrix3STD140, sdata.geometry.matrix);
+
+    color[0] = c.r / 255.f;
+    color[1] = c.g / 255.f;
+    color[2] = c.b / 255.f;
+    color[3] = a / 255.f;
+}
+
 void GlRenderer::clearDisposes()
 {
     if (mDisposed.textures.count > 0) {
@@ -47,6 +130,8 @@ void GlRenderer::clearDisposes()
 
     ARRAY_FOREACH(p, mRenderPassStack) delete(*p);
     mRenderPassStack.clear();
+
+    _resetSolidBatch(_solidBatchState(this));
 }
 
 
@@ -98,6 +183,8 @@ GlRenderer::~GlRenderer()
     flush();
 
     ARRAY_FOREACH(p, mPrograms) delete(*p);
+
+    gSolidBatchStates.erase(this);
 }
 
 
@@ -159,6 +246,9 @@ void GlRenderer::initShaders()
 
     // blend programs: image (17) + scene (17) + shape solid (17) + shape linear (17) + shape radial (17)
     for (uint32_t i = 0; i < 85; ++i) mPrograms.push(nullptr);
+
+    // solid batch (UBO)
+    mPrograms.push(new GlProgram(COLOR_BATCH_VERT_SHADER, COLOR_BATCH_FRAG_SHADER));
 }
 
 
@@ -177,6 +267,103 @@ void GlRenderer::drawPrimitive(GlShape& sdata, const RenderColor& c, RenderUpdat
     auto h = bbox.sh();
     auto yGl = vp.sh() - y - h;
     RenderRegion viewRegion = {{x, yGl}, {x + w, yGl + h}};
+
+    auto& solidBatch = _solidBatchState(this);
+    GlStencilMode stencilMode = sdata.geometry.getStencilMode(flag);
+    const bool batchable = !blendShape && stencilMode == GlStencilMode::None &&
+                           !(flag & RenderUpdateFlag::Stroke) && !(flag & RenderUpdateFlag::GradientStroke);
+
+    if (batchable) {
+        auto& geometryBuffer = sdata.geometry.fill;
+        if (geometryBuffer.index.empty()) return;
+
+        const uint32_t vertexCount = geometryBuffer.vertex.count / 2;
+        if (vertexCount == 0) return;
+
+        if (solidBatch.maxDraws == 0) {
+            GLint maxBlockSize = 0;
+            GL_CHECK(glGetIntegerv(GL_MAX_UNIFORM_BLOCK_SIZE, &maxBlockSize));
+            uint32_t maxDraws = (maxBlockSize > 0) ? static_cast<uint32_t>(maxBlockSize) / sizeof(GlSolidBatchEntry) : 1;
+            solidBatch.maxDraws = max(1u, min(SOLID_BATCH_MAX, maxDraws));
+        }
+
+        auto pass = currentPass();
+        bool canAppend = solidBatch.task && solidBatch.pass == pass &&
+                         solidBatch.task->getProgram() == mPrograms[SOLID_BATCH_PROGRAM_INDEX] &&
+                         solidBatch.drawCount < solidBatch.maxDraws;
+
+        if (!canAppend && solidBatch.task) {
+            _finalizeSolidBatch(mGpuBuffer, solidBatch);
+        }
+
+        if (!canAppend) {
+            solidBatch.pass = pass;
+            solidBatch.task = new GlRenderTask(mPrograms[SOLID_BATCH_PROGRAM_INDEX]);
+            solidBatch.task->setDrawDepth(depth);
+            solidBatch.task->setViewport(viewRegion);
+            solidBatch.vertexCount = 0;
+            solidBatch.indexOffset = 0;
+            solidBatch.indexCount = 0;
+            solidBatch.drawCount = 0;
+            solidBatch.entries.clear();
+        }
+
+        const float drawId = static_cast<float>(solidBatch.drawCount);
+
+        struct GlSolidVertex {
+            float x;
+            float y;
+            float drawId;
+        };
+
+        Array<GlSolidVertex> vertices;
+        vertices.reserve(vertexCount);
+        for (uint32_t i = 0; i < vertexCount; ++i) {
+            vertices.push({geometryBuffer.vertex.data[i * 2], geometryBuffer.vertex.data[i * 2 + 1], drawId});
+        }
+
+        const uint32_t vertexOffset = mGpuBuffer.push(vertices.data, vertices.count * sizeof(GlSolidVertex));
+
+        const uint32_t baseVertex = canAppend ? solidBatch.vertexCount : 0;
+
+        Array<uint32_t> indices;
+        indices.reserve(geometryBuffer.index.count);
+        for (uint32_t i = 0; i < geometryBuffer.index.count; ++i) {
+            indices.push(geometryBuffer.index.data[i] + baseVertex);
+        }
+
+        const uint32_t indexOffset = mGpuBuffer.pushIndex(indices.data, indices.count * sizeof(uint32_t));
+
+        if (canAppend) {
+            solidBatch.vertexCount += vertexCount;
+            solidBatch.indexCount += indices.count;
+            solidBatch.task->setDrawRange(solidBatch.indexOffset, solidBatch.indexCount);
+
+            auto merged = solidBatch.task->getViewport();
+            merged.add(viewRegion);
+            solidBatch.task->setViewport(merged);
+        } else {
+            solidBatch.task->addVertexLayout(GlVertexLayout{0, 2, sizeof(GlSolidVertex), vertexOffset});
+            solidBatch.task->addVertexLayout(GlVertexLayout{1, 1, sizeof(GlSolidVertex), vertexOffset + 2 * sizeof(float)});
+            solidBatch.task->setDrawRange(indexOffset, indices.count);
+            solidBatch.task->setViewport(viewRegion);
+
+            solidBatch.vertexCount = vertexCount;
+            solidBatch.indexOffset = indexOffset;
+            solidBatch.indexCount = indices.count;
+
+            pass->addRenderTask(solidBatch.task);
+        }
+
+        GlSolidBatchEntry entry = {};
+        _solidUniforms(pass, sdata, c, flag, entry.transform, entry.color);
+        solidBatch.entries.push(entry);
+        solidBatch.drawCount++;
+
+        return;
+    }
+
+    if (solidBatch.task) _finalizeSolidBatch(mGpuBuffer, solidBatch);
 
     GlRenderTask* task = nullptr;
     GlRenderTarget* dstCopyFbo = nullptr;
@@ -204,8 +391,6 @@ void GlRenderer::drawPrimitive(GlShape& sdata, const RenderColor& c, RenderUpdat
     task->setViewport(viewRegion);
 
     GlRenderTask* stencilTask = nullptr;
-
-    GlStencilMode stencilMode = sdata.geometry.getStencilMode(flag);
     if (stencilMode != GlStencilMode::None) {
         stencilTask = new GlRenderTask(mPrograms[RT_Stencil], task);
         stencilTask->setDrawDepth(depth);
@@ -288,6 +473,9 @@ void GlRenderer::drawPrimitive(GlShape& sdata, const Fill* fill, RenderUpdateFla
     const Fill::ColorStop* stops = nullptr;
     auto stopCnt = min(fill->colorStops(&stops), static_cast<uint32_t>(MAX_GRADIENT_STOPS));
     if (stopCnt < 2) return;
+
+    auto& solidBatch = _solidBatchState(this);
+    if (solidBatch.task) _finalizeSolidBatch(mGpuBuffer, solidBatch);
 
     GlRenderTask* task = nullptr;
     GlRenderTarget* dstCopyFbo = nullptr;
@@ -485,6 +673,9 @@ void GlRenderer::drawPrimitive(GlShape& sdata, const Fill* fill, RenderUpdateFla
 
 void GlRenderer::drawClip(Array<RenderData>& clips)
 {
+    auto& solidBatch = _solidBatchState(this);
+    if (solidBatch.task) _finalizeSolidBatch(mGpuBuffer, solidBatch);
+
     Array<float> identityVertex(4 * 2);
     float left = -1.f;
     float top = 1.f;
@@ -988,6 +1179,7 @@ bool GlRenderer::target(void* display, void* surface, void* context, int32_t id,
     mTargetFboId = static_cast<GLint>(id);
 
     auto ret = currentContext();
+    _solidBatchState(this).maxDraws = 0;
 
     mRootTarget.viewport = {{0, 0}, {int32_t(this->surface.w), int32_t(this->surface.h)}};
     mRootTarget.init(this->surface.w, this->surface.h, mTargetFboId);
@@ -1000,6 +1192,9 @@ bool GlRenderer::sync()
 {
     //nothing to be done.
     if (mRenderPassStack.empty()) return true;
+
+    auto& solidBatch = _solidBatchState(this);
+    if (solidBatch.task) _finalizeSolidBatch(mGpuBuffer, solidBatch);
 
     currentContext();
 
@@ -1157,6 +1352,9 @@ bool GlRenderer::region(RenderEffect* effect)
 
 bool GlRenderer::render(TVG_UNUSED RenderCompositor* cmp, const RenderEffect* effect, TVG_UNUSED bool direct)
 {
+    auto& solidBatch = _solidBatchState(this);
+    if (solidBatch.task) _finalizeSolidBatch(mGpuBuffer, solidBatch);
+
     return mEffect.render(const_cast<RenderEffect*>(effect), currentPass(), mBlendPool);
 }
 
@@ -1196,6 +1394,9 @@ bool GlRenderer::renderImage(void* data)
     if (!sdata) return false;
 
     if (currentPass()->isEmpty() || !sdata->validFill) return true;
+
+    auto& solidBatch = _solidBatchState(this);
+    if (solidBatch.task) _finalizeSolidBatch(mGpuBuffer, solidBatch);
 
     auto vp = currentPass()->getViewport();
     auto bbox = sdata->geometry.viewport;

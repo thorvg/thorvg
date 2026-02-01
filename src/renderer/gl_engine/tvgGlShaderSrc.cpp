@@ -51,6 +51,39 @@ const char* COLOR_FRAG_SHADER = TVG_COMPOSE_SHADER(
     }                                                        \n
 );
 
+const char* COLOR_BATCH_VERT_SHADER = TVG_COMPOSE_SHADER(
+    const int TVG_SOLID_BATCH_MAX = 256;                      \n
+    uniform float uDepth;                                     \n
+    layout(location = 0) in vec2 aLocation;                   \n
+    layout(location = 1) in float aDrawId;                    \n
+    flat out vec4 vColor;                                     \n
+    struct SolidDraw {                                        \n
+        mat3 transform;                                       \n
+        vec4 color;                                           \n
+    };                                                        \n
+    layout(std140) uniform SolidBatch {                       \n
+        SolidDraw draws[TVG_SOLID_BATCH_MAX];                 \n
+    } uSolidBatch;                                            \n
+                                                             \n
+    void main()                                               \n
+    {                                                         \n
+        int drawId = int(aDrawId);                            \n
+        vec3 pos = uSolidBatch.draws[drawId].transform * vec3(aLocation, 1.0); \n
+        vColor = uSolidBatch.draws[drawId].color;             \n
+        gl_Position = vec4(pos.xy, uDepth, 1.0);              \n
+    }                                                         \n
+);
+
+const char* COLOR_BATCH_FRAG_SHADER = TVG_COMPOSE_SHADER(
+    flat in vec4 vColor;                                      \n
+    out vec4 FragColor;                                       \n
+                                                             \n
+    void main()                                               \n
+    {                                                         \n
+       FragColor =  vec4(vColor.rgb * vColor.a, vColor.a);    \n
+    }                                                         \n
+);
+
 const char* GRADIENT_VERT_SHADER = TVG_COMPOSE_SHADER(
     uniform float uDepth;                                                           \n
     layout(location = 0) in vec2 aLocation;                                         \n
