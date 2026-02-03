@@ -38,6 +38,9 @@
 
 static atomic<int32_t> rendererCnt{-1};
 
+static void _solidUniforms(GlShape& sdata, const RenderColor& c, RenderUpdateFlag flag, float* solidInfo);
+
+
 void GlRenderer::clearDisposes()
 {
     if (mDisposed.textures.count > 0) {
@@ -166,7 +169,7 @@ void GlRenderer::drawPrimitive(GlShape& sdata, const RenderColor& c, RenderUpdat
 {
     auto blendShape = (mBlendMethod != BlendMethod::Normal);
     auto vp = currentPass()->getViewport();
-    auto bbox = blendShape? sdata.geometry.getBounds() : sdata.geometry.viewport;
+    auto bbox = blendShape ? sdata.geometry.getBounds() : sdata.geometry.viewport;
 
     bbox.intersect(vp);
     if (bbox.invalid()) return;
@@ -180,7 +183,7 @@ void GlRenderer::drawPrimitive(GlShape& sdata, const RenderColor& c, RenderUpdat
 
     GlRenderTask* task = nullptr;
     GlRenderTarget* dstCopyFbo = nullptr;
-    
+
     if (blendShape) {
         if (mBlendPool.empty()) mBlendPool.push(new GlRenderTargetPool(surface.w, surface.h));
 #if defined(THORVG_GL_TARGET_GL)
@@ -194,6 +197,7 @@ void GlRenderer::drawPrimitive(GlShape& sdata, const RenderColor& c, RenderUpdat
         task = new GlRenderTask(mPrograms[RT_Color]);
     }
 
+    task->setViewMatrix(currentPass()->getViewMatrix());
     task->setDrawDepth(depth);
 
     if (!sdata.geometry.draw(task, &mGpuBuffer, flag)) {
@@ -204,61 +208,28 @@ void GlRenderer::drawPrimitive(GlShape& sdata, const RenderColor& c, RenderUpdat
     task->setViewport(viewRegion);
 
     GlRenderTask* stencilTask = nullptr;
-
-    GlStencilMode stencilMode = sdata.geometry.getStencilMode(flag);
+    auto stencilMode = sdata.geometry.getStencilMode(flag);
     if (stencilMode != GlStencilMode::None) {
         stencilTask = new GlRenderTask(mPrograms[RT_Stencil], task);
         stencilTask->setDrawDepth(depth);
     }
 
-    auto a = MULTIPLY(c.a, sdata.opacity);
-
-    if (flag & RenderUpdateFlag::Stroke) {
-        float strokeWidth = sdata.rshape->strokeWidth() * scaling(sdata.geometry.matrix);
-        if (strokeWidth < MIN_GL_STROKE_WIDTH) {
-            float alpha = strokeWidth / MIN_GL_STROKE_WIDTH;
-            a = MULTIPLY(a, static_cast<uint8_t>(alpha * 255));
-        }
-    }
-
-    // matrix buffer
-    float matrix3STD140[GL_MAT3_STD140_SIZE];
-    currentPass()->getMatrix(matrix3STD140, sdata.geometry.matrix);
-    auto viewOffset = mGpuBuffer.push(matrix3STD140, GL_MAT3_STD140_BYTES, true);
+    float solidInfo[4];
+    _solidUniforms(sdata, c, flag, solidInfo);
+    auto solidOffset = mGpuBuffer.push(solidInfo, sizeof(solidInfo), true);
 
     task->addBindResource(GlBindingResource{
         0,
-        task->getProgram()->getUniformBlockIndex("Matrix"),
+        task->getProgram()->getUniformBlockIndex("SolidInfo"),
         mGpuBuffer.getBufferId(),
-        viewOffset,
-        GL_MAT3_STD140_BYTES,
-    });
-
-    if (stencilTask) {
-        stencilTask->addBindResource(GlBindingResource{
-            0,
-            stencilTask->getProgram()->getUniformBlockIndex("Matrix"),
-            mGpuBuffer.getBufferId(),
-            viewOffset,
-            GL_MAT3_STD140_BYTES,
-        });
-    }
-
-    // color
-    float color[] = {c.r / 255.f, c.g / 255.f, c.b / 255.f, a / 255.f};
-
-    task->addBindResource(GlBindingResource{
-        1,
-        task->getProgram()->getUniformBlockIndex("ColorInfo"),
-        mGpuBuffer.getBufferId(),
-        mGpuBuffer.push(color, 4 * sizeof(float), true),
-         4 * sizeof(float),
+        solidOffset,
+        sizeof(solidInfo),
     });
 
     if (blendShape && dstCopyFbo) {
 #if defined(THORVG_GL_TARGET_GL)
         float region[] = {float(viewRegion.sx()), float(viewRegion.sy()), float(dstCopyFbo->width), float(dstCopyFbo->height)};
-#else // TODO: create partial buffer when MSAA is disabled        
+#else // TODO: create partial buffer when MSAA is disabled
         float region[] = {0.0f, 0.0f, float(dstCopyFbo->width), float(dstCopyFbo->height)};
 #endif
         task->addBindResource(GlBindingResource{
@@ -313,6 +284,7 @@ void GlRenderer::drawPrimitive(GlShape& sdata, const Fill* fill, RenderUpdateFla
     else if (fill->type() == Type::RadialGradient) task = new GlRenderTask(mPrograms[RT_RadGradient]);
     else return;
 
+    task->setViewMatrix(currentPass()->getViewMatrix());
     task->setDrawDepth(depth);
 
     if (!sdata.geometry.draw(task, &mGpuBuffer, flag)) {
@@ -329,49 +301,31 @@ void GlRenderer::drawPrimitive(GlShape& sdata, const Fill* fill, RenderUpdateFla
         stencilTask->setDrawDepth(depth);
     }
 
-    // matrix buffer
+    // transform buffer (inverse fill-space transform)
     float invMat3[GL_MAT3_STD140_SIZE];
     Matrix inv;
     inverse(&fill->transform(), &inv);
+    Matrix invShape;
+    inverse(&sdata.geometry.matrix, &invShape);
+    inv = inv * invShape;
     getMatrix3Std140(inv, invMat3);
 
-    float matrix3STD140[GL_MAT3_STD140_SIZE];
-    currentPass()->getMatrix(matrix3STD140, sdata.geometry.matrix);
-
-    auto viewOffset = mGpuBuffer.push(matrix3STD140, GL_MAT3_STD140_BYTES, true);
+    float transformInfo[GL_MAT3_STD140_SIZE];
+    memcpy(transformInfo, invMat3, GL_MAT3_STD140_BYTES);
+    auto transformOffset = mGpuBuffer.push(transformInfo, sizeof(transformInfo), true);
 
     task->addBindResource(GlBindingResource{
         0,
-        task->getProgram()->getUniformBlockIndex("Matrix"),
+        task->getProgram()->getUniformBlockIndex("TransformInfo"),
         mGpuBuffer.getBufferId(),
-        viewOffset,
-        GL_MAT3_STD140_BYTES,
-    });
-
-    if (stencilTask) {
-        stencilTask->addBindResource(GlBindingResource{
-            0,
-            stencilTask->getProgram()->getUniformBlockIndex("Matrix"),
-            mGpuBuffer.getBufferId(),
-            viewOffset,
-            GL_MAT3_STD140_BYTES,
-        });
-    }
-
-    viewOffset = mGpuBuffer.push(invMat3, GL_MAT3_STD140_BYTES, true);
-
-    task->addBindResource(GlBindingResource{
-        1,
-        task->getProgram()->getUniformBlockIndex("InvMatrix"),
-        mGpuBuffer.getBufferId(),
-        viewOffset,
-        GL_MAT3_STD140_BYTES,
+        transformOffset,
+        sizeof(transformInfo),
     });
 
     auto alpha = sdata.opacity / 255.f;
 
     if (flag & RenderUpdateFlag::GradientStroke) {
-        auto strokeWidth = sdata.rshape->strokeWidth();
+        auto strokeWidth = sdata.geometry.strokeRenderWidth;
         if (strokeWidth < MIN_GL_STROKE_WIDTH) {
             alpha = strokeWidth / MIN_GL_STROKE_WIDTH;
         }
@@ -508,13 +462,8 @@ void GlRenderer::drawClip(Array<RenderData>& clips)
     identityIndex.push(1);
     identityIndex.push(3);
 
-    float mat3Identity[GL_MAT3_STD140_SIZE];
-    auto identityMatrix = tvg::identity();
-    getMatrix3Std140(identityMatrix, mat3Identity);
-
     auto identityVertexOffset = mGpuBuffer.push(identityVertex.data, 8 * sizeof(float));
     auto identityIndexOffset = mGpuBuffer.pushIndex(identityIndex.data, 6 * sizeof(uint32_t));
-    auto mat3Offset = mGpuBuffer.push(mat3Identity, GL_MAT3_STD140_BYTES, true);
 
     Array<int32_t> clipDepths(clips.count);
     clipDepths.count = clips.count;
@@ -524,11 +473,13 @@ void GlRenderer::drawClip(Array<RenderData>& clips)
     }
 
     const auto& vp = currentPass()->getViewport();
+    const auto& viewMatrix = currentPass()->getViewMatrix();
 
     for (uint32_t i = 0; i < clips.count; ++i) {
         auto sdata = static_cast<GlShape*>(clips[i]);
         auto clipTask = new GlRenderTask(mPrograms[RT_Stencil]);
         clipTask->setDrawDepth(clipDepths[i]);
+        clipTask->setViewMatrix(viewMatrix);
 
         auto flag = (sdata->geometry.stroke.vertex.count > 0) ? RenderUpdateFlag::Stroke : RenderUpdateFlag::Path;
         sdata->geometry.draw(clipTask, &mGpuBuffer, flag);
@@ -540,19 +491,10 @@ void GlRenderer::drawClip(Array<RenderData>& clips)
         auto y = vp.sh() - (bbox.sy() - vp.sy()) - bbox.sh();
         clipTask->setViewport({{x, y}, {x + bbox.sw(), y + bbox.sh()}});
 
-        float matrix3STD140[GL_MAT3_STD140_SIZE];
-        currentPass()->getMatrix(matrix3STD140, sdata->geometry.matrix);
-
-        auto loc = clipTask->getProgram()->getUniformBlockIndex("Matrix");
-        auto viewOffset = mGpuBuffer.push(matrix3STD140, GL_MAT3_STD140_BYTES, true);
-
-        clipTask->addBindResource(GlBindingResource{0, loc, mGpuBuffer.getBufferId(), viewOffset, GL_MAT3_STD140_BYTES, });
-
         auto maskTask = new GlRenderTask(mPrograms[RT_Stencil]);
 
         maskTask->setDrawDepth(clipDepths[i]);
         maskTask->addVertexLayout(GlVertexLayout{0, 2, 2 * sizeof(float), identityVertexOffset});
-        maskTask->addBindResource(GlBindingResource{0, loc, mGpuBuffer.getBufferId(), mat3Offset, GL_MAT3_STD140_BYTES, });
         maskTask->setDrawRange(identityIndexOffset, 6);
         maskTask->setViewport({{0, 0}, {vp.sw(), vp.sh()}});
 
@@ -584,7 +526,7 @@ bool GlRenderer::beginComplexBlending(const RenderRegion& vp, RenderRegion bound
     return true;
 }
 
-void GlRenderer::endBlendingCompose(GlRenderTask* stencilTask, const Matrix& matrix)
+void GlRenderer::endBlendingCompose(GlRenderTask* stencilTask)
 {
     auto blendPass = mRenderPassStack.last();
     mRenderPassStack.pop();
@@ -606,18 +548,7 @@ void GlRenderer::endBlendingCompose(GlRenderTask* stencilTask, const Matrix& mat
     stencilTask->setViewport({{x, y}, {x + vp.sw(), y + vp.sh()}});
 
     stencilTask->setDrawDepth(currentPass()->nextDrawDepth());
-
-    // set view matrix
-    float matrix3STD140[GL_MAT3_STD140_SIZE];
-    currentPass()->getMatrix(matrix3STD140, matrix);
-    uint32_t viewOffset = mGpuBuffer.push(matrix3STD140, GL_MAT3_STD140_BYTES, true);
-    stencilTask->addBindResource(GlBindingResource{
-        0,
-        stencilTask->getProgram()->getUniformBlockIndex("Matrix"),
-        mGpuBuffer.getBufferId(),
-        viewOffset,
-        GL_MAT3_STD140_BYTES,
-    });
+    stencilTask->setViewMatrix(currentPass()->getViewMatrix());
     
     auto program = getBlendProgram(mBlendMethod, BlendSource::Image);
     auto task = new GlComplexBlendTask(program, currentPass()->getFbo(), dstCopyFbo, stencilTask, composeTask);
@@ -920,19 +851,7 @@ void GlRenderer::endRenderPass(RenderCompositor* cmp)
             task->setRenderSize(glCmp->bbox.w(), glCmp->bbox.h());
             prepareCmpTask(task, glCmp->bbox, renderPass->getFboWidth(), renderPass->getFboHeight());
             task->setDrawDepth(currentPass()->nextDrawDepth());
-
-            // matrix buffer
-            float matrix[GL_MAT3_STD140_SIZE];
-            auto identityMatrix = tvg::identity();
-            getMatrix3Std140(identityMatrix, matrix);
-
-            task->addBindResource(GlBindingResource{
-                0,
-                task->getProgram()->getUniformBlockIndex("Matrix"),
-                mGpuBuffer.getBufferId(),
-                mGpuBuffer.push(matrix, GL_MAT3_STD140_BYTES, true),
-                GL_MAT3_STD140_BYTES,
-            });
+            task->setViewMatrix(tvg::identity());
 
             // image info
             uint32_t info[4] = {(uint32_t)ColorSpace::ABGR8888, 0, cmp->opacity, 0};
@@ -1047,10 +966,23 @@ bool GlRenderer::bounds(RenderData data, Point* pt4, const Matrix& m)
             tvg::BBox bbox;
             bbox.init();
             auto& vertexes = sdata->geometry.stroke.vertex;
-            for (uint32_t i = 0; i < vertexes.count / 2; i++) {
-                Point vert = Point{vertexes[i*2+0], vertexes[i*2+1]} * m;
-                bbox.min = min(bbox.min, vert);
-                bbox.max = max(bbox.max, vert);
+            if (m == sdata->geometry.matrix) {
+                // Common AABB path: stroke vertices are already in world space.
+                for (uint32_t i = 0; i < vertexes.count / 2; i++) {
+                    Point vert = {vertexes[i * 2 + 0], vertexes[i * 2 + 1]};
+                    bbox = { min(bbox.min, vert), max(bbox.max, vert)};
+                }
+            } else {
+                // GL stroke vertices are generated in world space.
+                // Normalize to local space first, then remap to the caller-requested space.
+                // - OBB path passes m = identity -> result becomes local (caller applies model later).
+                const auto inverseModel = sdata->geometry.inverseMatrix();
+
+                for (uint32_t i = 0; i < vertexes.count / 2; i++) {
+                    Point vert = {vertexes[i * 2 + 0], vertexes[i * 2 + 1]};
+                    vert *= (*inverseModel) * m;
+                    bbox = { min(bbox.min, vert), max(bbox.max, vert)};
+                }
             }
             pt4[0] = bbox.min;
             pt4[1] = {bbox.max.x, bbox.min.y};
@@ -1218,18 +1150,7 @@ bool GlRenderer::renderImage(void* data)
 
     bool complexBlend = beginComplexBlending(bbox, sdata->geometry.getBounds());
     if (complexBlend) vp = currentPass()->getViewport();
-
-    // matrix buffer
-    float matrix3STD140[GL_MAT3_STD140_SIZE];
-    currentPass()->getMatrix(matrix3STD140, sdata->geometry.matrix);
-
-    task->addBindResource(GlBindingResource{
-        0,
-        task->getProgram()->getUniformBlockIndex("Matrix"),
-        mGpuBuffer.getBufferId(),
-        mGpuBuffer.push(matrix3STD140, GL_MAT3_STD140_BYTES, true),
-        GL_MAT3_STD140_BYTES,
-    });
+    task->setViewMatrix(currentPass()->getViewMatrix());
 
     // image info
     uint32_t info[4] = {(uint32_t)sdata->texColorSpace, sdata->texFlipY, sdata->opacity, 0};
@@ -1256,7 +1177,7 @@ bool GlRenderer::renderImage(void* data)
     if (complexBlend) {
         auto task = new GlRenderTask(mPrograms[RT_Stencil]);
         sdata->geometry.draw(task, &mGpuBuffer, RenderUpdateFlag::Image);
-        endBlendingCompose(task, sdata->geometry.matrix);
+        endBlendingCompose(task);
     }
 
     return true;
@@ -1363,7 +1284,7 @@ RenderData GlRenderer::prepare(RenderSurface* image, RenderData data, const Matr
     }
 
     sdata->opacity = opacity;
-    sdata->geometry.matrix = transform;
+    sdata->geometry.setMatrix(transform);
     sdata->geometry.viewport = vport;
     sdata->geometry.tesselateImage(image);
     sdata->validFill = true;
@@ -1394,7 +1315,7 @@ RenderData GlRenderer::prepare(const RenderShape& rshape, RenderData data, const
 
     if (flags & RenderUpdateFlag::Path) sdata->geometry = GlGeometry();
     
-    sdata->geometry.matrix = transform;
+    sdata->geometry.setMatrix(transform);
     sdata->geometry.viewport = vport;
     if (flags & (RenderUpdateFlag::Path | RenderUpdateFlag::Transform)) sdata->geometry.prepare(rshape);
     
@@ -1503,4 +1424,22 @@ GlRenderer* GlRenderer::gen(TVG_UNUSED uint32_t threads)
     }
 
     return new GlRenderer;
+}
+
+
+static void _solidUniforms(GlShape& sdata, const RenderColor& c, RenderUpdateFlag flag, float* solidInfo)
+{
+    auto a = MULTIPLY(c.a, sdata.opacity);
+
+    if (flag & RenderUpdateFlag::Stroke) {
+        auto strokeWidth = sdata.geometry.strokeRenderWidth;
+        if (strokeWidth < MIN_GL_STROKE_WIDTH) {
+            auto alpha = strokeWidth / MIN_GL_STROKE_WIDTH;
+            a = MULTIPLY(a, static_cast<uint8_t>(alpha * 255));
+        }
+    }
+    solidInfo[0] = c.r / 255.f;
+    solidInfo[1] = c.g / 255.f;
+    solidInfo[2] = c.b / 255.f;
+    solidInfo[3] = a / 255.f;
 }

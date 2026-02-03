@@ -314,7 +314,8 @@ struct RenderPath
 
     /* Optimize path in screen space with merging collinear lines,
        collapsing zero length lines, and removing unnecessary cubic beziers. */
-    void optimize(RenderPath& out, const Matrix& matrix) const;
+    void optimizeWG(RenderPath& out, const Matrix& matrix) const;
+    void optimizeGL(RenderPath& out, const Matrix& matrix) const;
     bool bounds(const Matrix* m, BBox& box);
 };
 
@@ -457,7 +458,7 @@ struct RenderShape
         return stroke ? stroke->miterlimit : 4.0f;
     }
 
-    bool strokeDash(RenderPath& out) const;
+    bool strokeDash(RenderPath& out, const Matrix* transform = nullptr) const;
 };
 
 struct RenderEffect

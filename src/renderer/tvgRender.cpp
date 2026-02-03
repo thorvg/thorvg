@@ -103,9 +103,159 @@ bool RenderPath::bounds(const Matrix* m, BBox& box)
 }
 
 
-void RenderPath::optimize(RenderPath& out, const Matrix& matrix) const
+void RenderPath::optimizeGL(RenderPath& out, const Matrix& matrix) const
 {
-#if defined(THORVG_GL_RASTER_SUPPORT) || defined(THORVG_WG_RASTER_SUPPORT)
+#if defined(THORVG_GL_RASTER_SUPPORT)
+    static constexpr auto PX_TOLERANCE = 0.25f;
+
+    if (empty()) return;
+
+    out.cmds.clear();
+    out.pts.clear();
+    out.cmds.reserve(cmds.count);
+    out.pts.reserve(pts.count);
+
+    auto cmds = this->cmds.data;
+    auto cmdCnt = this->cmds.count;
+    auto pts = this->pts.data;
+
+    Point lastOutT, prevOutT;   // The suffix "T" indicates that the point is transformed.
+    uint32_t prevIdx = 0;
+    uint32_t prevPrevIdx = 0;
+    auto hasPrevPrev = false;
+
+    //vecLen is guaranteed to be non-zero since closed points are already merged
+    auto point2Line = [](const Point& point, const Point& start, const Point& vec, float vecLen, float& maxDist, float& minT, float& maxT) {
+        Point offset = point - start;
+        auto dist = fabsf(tvg::cross(vec, offset)) / vecLen;
+        if (dist > maxDist) maxDist = dist;
+        auto t = tvg::dot(offset, vec) / (vecLen * vecLen);
+        if (t < minT) minT = t;
+        if (t > maxT) maxT = t;
+    };
+
+    auto validateCubic = [&point2Line](const Point& start, const Point& ctrl1, const Point& ctrl2, const Point& end, float& maxDist, float& minT, float& maxT, float& vecLen) {
+        auto vec = end - start;
+        vecLen = sqrtf(vec.x * vec.x + vec.y * vec.y);
+        maxDist = 0.0f;
+        minT = FLT_MAX;
+        maxT = FLT_MIN;
+        point2Line(ctrl1, start, vec, vecLen, maxDist, minT, maxT);
+        point2Line(ctrl2, start, vec, vecLen, maxDist, minT, maxT);
+    };
+
+    auto point2LineSimple = [](const Point& point, const Point& start, const Point& end, float& dist, float& t, float& vecLen) {
+        auto vec = end - start;
+        auto vecLenSq = vec.x * vec.x + vec.y * vec.y;
+        vecLen = sqrtf(vecLenSq);
+        Point offset = point - start;
+        dist = fabsf(tvg::cross(vec, offset)) / vecLen;
+        t = tvg::dot(offset, vec) / vecLenSq;
+    };
+
+    auto addLineCmd = [&](const Point& ptT) {
+        out.cmds.push(PathCommand::LineTo);
+        out.pts.push(ptT);
+        prevOutT = lastOutT;
+        lastOutT = ptT;
+        prevPrevIdx = prevIdx;
+        prevIdx = out.pts.count - 1;
+        hasPrevPrev = true;
+    };
+
+    auto processLineCollinear = [&](const Point& startT, const Point& ptT) {
+        if (!hasPrevPrev || out.pts.count <= 1) {
+            addLineCmd(ptT);
+            return;
+        }
+
+        float dist, t, vecLen;
+        point2LineSimple(ptT, prevOutT, startT, dist, t, vecLen);
+        if (dist > PX_TOLERANCE) {
+            addLineCmd(ptT);
+            return;
+        }
+
+        auto tEps = PX_TOLERANCE / vecLen;
+        if (t <= -tEps) {
+            out.pts[prevPrevIdx] = ptT;
+            lastOutT = ptT;
+        } else if (t >= 1.0f - tEps) {
+            out.pts[prevIdx] = ptT;
+            lastOutT = ptT;
+        }
+    };
+
+    auto processCubicTo = [&](const Point* cubicPts, const Point& startT) {
+        auto ctrl1T = cubicPts[0] * matrix;
+        auto ctrl2T = cubicPts[1] * matrix;
+        auto endT = cubicPts[2] * matrix;
+        if (tvg::closed(startT, endT, PX_TOLERANCE)) return;
+        float maxDist, minT, maxT, vecLen;
+        validateCubic(startT, ctrl1T, ctrl2T, endT, maxDist, minT, maxT, vecLen);
+        auto flat = (maxDist <= PX_TOLERANCE);
+        auto tEps = PX_TOLERANCE / vecLen;
+        auto inSpan = (minT >= -tEps) && (maxT <= 1.0f + tEps);
+        if (flat && inSpan) {
+            processLineCollinear(startT, endT);
+        } else {
+            out.cmds.push(PathCommand::CubicTo);
+            out.pts.push(ctrl1T);
+            out.pts.push(ctrl2T);
+            out.pts.push(endT);
+            prevOutT = lastOutT;
+            lastOutT = endT;
+            prevPrevIdx = prevIdx;
+            prevIdx = out.pts.count - 1;
+            hasPrevPrev = true;
+        }
+    };
+
+    for (uint32_t i = 0; i < cmdCnt; i++) {
+        switch (cmds[i]) {
+            case PathCommand::MoveTo: {
+                auto ptT = (*pts) * matrix;
+                out.cmds.push(PathCommand::MoveTo);
+                out.pts.push(ptT);
+                lastOutT = ptT;
+                prevIdx = out.pts.count - 1;
+                hasPrevPrev = false;
+                pts++;
+                break;
+            }
+            case PathCommand::LineTo: {
+                auto startT = lastOutT;
+                auto ptT = (*pts) * matrix;
+                if (tvg::closed(startT, ptT, PX_TOLERANCE)) {
+                    pts++;
+                    break;
+                }
+                processLineCollinear(startT, ptT);
+                pts++;
+                break;
+            }
+            case PathCommand::CubicTo: {
+                processCubicTo(pts, lastOutT);
+                pts += 3;
+                break;
+            }
+            case PathCommand::Close: {
+                out.cmds.push(PathCommand::Close);
+                hasPrevPrev = false;
+                break;
+            }
+            default: break;
+        }
+    }
+#else
+    TVGLOG("RENDERER", "RenderPath transformed optimization is disabled");
+#endif
+}
+
+
+void RenderPath::optimizeWG(RenderPath& out, const Matrix& matrix) const
+{
+#if defined(THORVG_WG_RASTER_SUPPORT)
     static constexpr auto PX_TOLERANCE = 0.25f;
 
     if (empty()) return;
@@ -723,13 +873,13 @@ struct StrokeDashPath
 {
 public:
     StrokeDashPath(RenderStroke::Dash dash) : dash(dash) {}
-    bool gen(const RenderPath& in, RenderPath& out, bool drawPoint);
+    bool gen(const RenderPath& in, RenderPath& out, bool drawPoint, const Matrix* transform = nullptr);
 
 private:
     void lineTo(RenderPath& out, const Point& pt, bool drawPoint);
     void cubicTo(RenderPath& out, const Point& pt1, const Point& pt2, const Point& pt3, bool drawPoint);
     void point(RenderPath& out, const Point& p);
-
+    Point map(const Point& pt) const { return applyTransform ? pt * (*transform) : pt; }
     template<typename Segment, typename LengthFn, typename SplitFn, typename DrawFn, typename PointFn>
     void segment(Segment seg, float len, RenderPath& out, bool allowDot, LengthFn lengthFn, SplitFn splitFn, DrawFn drawFn, PointFn getStartPt, const Point& endPos);
 
@@ -739,6 +889,8 @@ private:
     Point curPos{};
     bool opGap = false;
     bool move = true;
+    const Matrix* transform = nullptr;
+    bool applyTransform = false;
 };
 
 
@@ -748,12 +900,12 @@ void StrokeDashPath::segment(Segment seg, float len, RenderPath& out, bool allow
     #define MIN_CURR_LEN_THRESHOLD 0.1f
 
     if (tvg::zero(len)) {
-        out.moveTo(curPos);
+        out.moveTo(map(curPos));
     } else if (len <= curLen) {
         curLen -= len;
         if (!opGap) {
             if (move) {
-                out.moveTo(curPos);
+                out.moveTo(map(curPos));
                 move = false;
             }
             drawFn(seg);
@@ -766,7 +918,7 @@ void StrokeDashPath::segment(Segment seg, float len, RenderPath& out, bool allow
                 len -= curLen;
                 if (!opGap) {
                     if (move || dash.pattern[curIdx] - curLen < FLOAT_EPSILON) {
-                        out.moveTo(getStartPt(left));
+                        out.moveTo(map(getStartPt(left)));
                         move = false;
                     }
                     drawFn(left);
@@ -786,7 +938,7 @@ void StrokeDashPath::segment(Segment seg, float len, RenderPath& out, bool allow
         curLen -= len;
         if (!opGap) {
             if (move) {
-                out.moveTo(getStartPt(seg));
+                out.moveTo(map(getStartPt(seg)));
                 move = false;
             }
             drawFn(seg);
@@ -802,8 +954,11 @@ void StrokeDashPath::segment(Segment seg, float len, RenderPath& out, bool allow
 
 
 //allowDot: zero length segment with non-butt cap still should be rendered as a point - only the caps are visible
-bool StrokeDashPath::gen(const RenderPath& in, RenderPath& out, bool allowDot)
+bool StrokeDashPath::gen(const RenderPath& in, RenderPath& out, bool allowDot, const Matrix* transform)
 {
+    this->transform = transform;
+    this->applyTransform = (transform && !tvg::identity(transform));
+
     int32_t idx = 0;
     auto offset = dash.offset;
     auto gap = false;
@@ -860,10 +1015,10 @@ bool StrokeDashPath::gen(const RenderPath& in, RenderPath& out, bool allowDot)
 void StrokeDashPath::point(RenderPath& out, const Point& p)
 {
     if (move || dash.pattern[curIdx] < FLOAT_EPSILON) {
-        out.moveTo(p);
+        out.moveTo(map(p));
         move = false;
     }
-    out.lineTo(p);
+    out.lineTo(map(p));
 }
 
 
@@ -874,7 +1029,7 @@ void StrokeDashPath::lineTo(RenderPath& out, const Point& to, bool allowDot)
     segment<Line>(line, len, out, allowDot,
         [](const Line& l) { return length(l.pt2 - l.pt1); },
         [](const Line& l, float len, Line& left, Line& right) { l.split(len, left, right); },
-        [&](const Line& l) { out.lineTo(l.pt2); },
+        [&](const Line& l) { out.lineTo(map(l.pt2)); },
         [](const Line& l) { return l.pt1; },
         to
     );
@@ -888,14 +1043,14 @@ void StrokeDashPath::cubicTo(RenderPath& out, const Point& cnt1, const Point& cn
     segment<Bezier>(curve, len, out, allowDot,
         [](const Bezier& b) { return b.length(); },
         [](const Bezier& b, float len, Bezier& left, Bezier& right) { b.split(len, left, right); },
-        [&](const Bezier& b) { out.cubicTo(b.ctrl1, b.ctrl2, b.end); },
+        [&](const Bezier& b) { out.cubicTo(map(b.ctrl1), map(b.ctrl2), map(b.end)); },
         [](const Bezier& b) { return b.start; },
         end
     );
 }
 
 
-bool RenderShape::strokeDash(RenderPath& out) const
+bool RenderShape::strokeDash(RenderPath& out, const Matrix* transform) const
 {
     if (!stroke || stroke->dash.count == 0 || stroke->dash.length < DASH_PATTERN_THRESHOLD) return false;
 
@@ -907,13 +1062,13 @@ bool RenderShape::strokeDash(RenderPath& out) const
 
     if (trimpath()) {
         RenderPath tpath;
-        if (stroke->trim.trim(path, tpath)) return dash.gen(tpath, out, allowDot);
+        if (stroke->trim.trim(path, tpath)) return dash.gen(tpath, out, allowDot, transform);
         else return false;
     }
-    return dash.gen(path, out, allowDot);
+    return dash.gen(path, out, allowDot, transform);
 }
 #else
-bool RenderShape::strokeDash(RenderPath& out) const
+bool RenderShape::strokeDash(RenderPath& out, const Matrix* transform) const
 {
     return false;
 }

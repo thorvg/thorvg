@@ -34,23 +34,23 @@ constexpr float MIN_GL_STROKE_ALPHA = 0.25f;
 constexpr uint32_t GL_MAT3_STD140_SIZE = 12; // mat3 is 3 vec4 columns in std140
 constexpr uint32_t GL_MAT3_STD140_BYTES = GL_MAT3_STD140_SIZE * sizeof(float);
 
+// All GPU matrices use column major order.
+static inline void getMatrix3(const Matrix& mat3, float* matOut)
+{
+    matOut[0] = mat3.e11; matOut[3] = mat3.e12; matOut[6] = mat3.e13;
+    matOut[1] = mat3.e21; matOut[4] = mat3.e22; matOut[7] = mat3.e23;
+    matOut[2] = mat3.e31; matOut[5] = mat3.e32; matOut[8] = mat3.e33;
+}
+
+
 // All GPU matrices use column major order. std140 mat3 packs each column into a vec4 stride.
 static inline void getMatrix3Std140(const Matrix& mat3, float* matOut)
 {
-    matOut[0] = mat3.e11;
-    matOut[1] = mat3.e21;
-    matOut[2] = mat3.e31;
-    matOut[3] = 0.0f;
-    matOut[4] = mat3.e12;
-    matOut[5] = mat3.e22;
-    matOut[6] = mat3.e32;
-    matOut[7] = 0.0f;
-    matOut[8] = mat3.e13;
-    matOut[9] = mat3.e23;
-    matOut[10] = mat3.e33;
-    matOut[11] = 0.0f;
+    matOut[0] = mat3.e11; matOut[4] = mat3.e12; matOut[8] = mat3.e13;
+    matOut[1] = mat3.e21; matOut[5] = mat3.e22; matOut[9] = mat3.e23;
+    matOut[2] = mat3.e31; matOut[6] = mat3.e32; matOut[10] = mat3.e33;
+    matOut[3] = 0.0f;     matOut[7] = 0.0f;     matOut[11] = 0.0f;
 }
-
 
 
 enum class GlStencilMode {
@@ -78,6 +78,16 @@ struct GlGeometryBuffer {
 
 struct GlGeometry
 {
+    const Matrix* inverseMatrix()
+    {
+        if (!inverseMatrixDirty) return &cachedInverseMatrix;
+        inverse(&matrix, &cachedInverseMatrix);
+        inverseMatrixDirty = false;
+        return &cachedInverseMatrix;
+    }
+
+    void setMatrix(const Matrix& tr) { matrix = tr; inverseMatrixDirty = true;}
+
     void prepare(const RenderShape& rshape);
     bool tesselateShape(const RenderShape& rshape, float* opacityMultiplier = nullptr);
     bool tesselateStroke(const RenderShape& rshape);
@@ -90,10 +100,15 @@ struct GlGeometry
     GlGeometryBuffer fill, stroke;
     Matrix matrix = {};
     RenderRegion viewport = {};
-    RenderRegion bounds = {};
+    RenderRegion fillBounds = {};
+    RenderRegion strokeBounds = {};
     FillRule fillRule = FillRule::NonZero;
     RenderPath optPath;  //optimal path
+    float strokeRenderWidth = 0.0f;
+    bool fillWorld = false;
     bool convex;
+    Matrix cachedInverseMatrix = {};
+    bool inverseMatrixDirty = true;
 };
 
 

@@ -34,6 +34,8 @@ GlRenderTask::GlRenderTask(GlProgram* program, GlRenderTask* other): mProgram(pr
     mViewport = other->mViewport;
     mIndexOffset = other->mIndexOffset;
     mIndexCount = other->mIndexCount;
+    mViewMatrix = other->mViewMatrix;
+    mUseViewMatrix = other->mUseViewMatrix;
 }
 
 
@@ -46,6 +48,14 @@ void GlRenderTask::run()
     if (dLoc >= 0) {
         // fixme: prevent compiler warning: macro expands to multiple statements [-Wmultistatement-macros]
         GL_CHECK(glUniform1f(dLoc, mDrawDepth));
+    }
+
+    int32_t vLoc = mProgram->getUniformLocation("uViewMatrix");
+    if (vLoc >= 0) {
+        const auto& viewMatrix = mUseViewMatrix ? mViewMatrix : tvg::identity();
+        float viewMat3[9];
+        getMatrix3(viewMatrix, viewMat3);
+        GL_CHECK(glUniformMatrix3fv(vLoc, 1, GL_FALSE, viewMat3));
     }
 
     // setup scissor rect
