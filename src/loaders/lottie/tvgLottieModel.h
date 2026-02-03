@@ -271,16 +271,18 @@ struct LottieObject
         Text,
         Repeater,
         RoundedCorner,
-        OffsetPath
+        OffsetPath,
+        TextRange
     };
 
     virtual ~LottieObject()
     {
     }
 
-    virtual void override(LottieProperty* prop, bool release)
+    virtual LottieProperty* override(LottieProperty* prop, bool release)
     {
         TVGERR("LOTTIE", "Unsupported slot type");
+        return nullptr;
     }
 
     virtual bool mergeable() { return false; }
@@ -315,7 +317,7 @@ struct LottieGlyph
 };
 
 
-struct LottieTextRange
+struct LottieTextRange : LottieObject
 {
     enum Based : uint8_t { Chars = 1, CharsExcludingSpaces, Words, Lines };
     enum Shape : uint8_t { Square = 1, RampUp, RampDown, Triangle, Round, Smooth };
@@ -323,6 +325,7 @@ struct LottieTextRange
 
     LottieTextRange()
     {
+        LottieObject::type = LottieObject::TextRange;
         style.flags.fillColor = 0;
         style.flags.strokeColor = 0;
         style.flags.strokeWidth = 0;
@@ -382,6 +385,57 @@ struct LottieTextRange
             strokeColor.g = tvg::lerp<uint8_t>(strokeColor.g, color.g, factor);
             strokeColor.b = tvg::lerp<uint8_t>(strokeColor.b, color.b, factor);
         }
+    }
+
+    LottieProperty* override(LottieProperty* prop, bool release) override
+    {
+        LottieProperty* backup = nullptr;
+        if (style.fillColor.sid == prop->sid) {
+            if (release) style.fillColor.release();
+            else backup = new LottieColor(style.fillColor);
+            style.fillColor.copy(*static_cast<LottieColor*>(prop), false);
+        } else if (style.strokeColor.sid == prop->sid) {
+            if (release) style.strokeColor.release();
+            else backup = new LottieColor(style.strokeColor);
+            style.strokeColor.copy(*static_cast<LottieColor*>(prop), false);
+        } else if (style.position.sid == prop->sid) {
+            if (release) style.position.release();
+            else backup = new LottieVector(style.position);
+            style.position.copy(*static_cast<LottieVector*>(prop), false);
+        } else if (style.scale.sid == prop->sid) {
+            if (release) style.scale.release();
+            else backup = new LottieScalar(style.scale);
+            style.scale.copy(*static_cast<LottieScalar*>(prop), false);
+        } else if (style.rotation.sid == prop->sid) {
+            if (release) style.rotation.release();
+            else backup = new LottieFloat(style.rotation);
+            style.rotation.copy(*static_cast<LottieFloat*>(prop), false);
+        } else if (style.letterSpace.sid == prop->sid) {
+            if (release) style.letterSpace.release();
+            else backup = new LottieFloat(style.letterSpace);
+            style.letterSpace.copy(*static_cast<LottieFloat*>(prop), false);
+        } else if (style.lineSpace.sid == prop->sid) {
+            if (release) style.lineSpace.release();
+            else backup = new LottieFloat(style.lineSpace);
+            style.lineSpace.copy(*static_cast<LottieFloat*>(prop), false);
+        } else if (style.strokeWidth.sid == prop->sid) {
+            if (release) style.strokeWidth.release();
+            else backup = new LottieFloat(style.strokeWidth);
+            style.strokeWidth.copy(*static_cast<LottieFloat*>(prop), false);
+        } else if (style.fillOpacity.sid == prop->sid) {
+            if (release) style.fillOpacity.release();
+            else backup = new LottieOpacity(style.fillOpacity);
+            style.fillOpacity.copy(*static_cast<LottieOpacity*>(prop), false);
+        } else if (style.strokeOpacity.sid == prop->sid) {
+            if (release) style.strokeOpacity.release();
+            else backup = new LottieOpacity(style.strokeOpacity);
+            style.strokeOpacity.copy(*static_cast<LottieOpacity*>(prop), false);
+        } else if (style.opacity.sid == prop->sid) {
+            if (release) style.opacity.release();
+            else backup = new LottieOpacity(style.opacity);
+            style.opacity.copy(*static_cast<LottieOpacity*>(prop), false);
+        }
+        return backup;
     }
 };
 
@@ -464,10 +518,13 @@ struct LottieText : LottieObject, LottieRenderPooler<tvg::Shape>
         LottieObject::type = LottieObject::Text;
     }
 
-    void override(LottieProperty* prop, bool release = false) override
+    LottieProperty* override(LottieProperty* prop, bool release) override
     {
+        LottieProperty* backup = nullptr;
         if (release) doc.release();
+        else backup = new LottieTextDoc(doc);
         doc.copy(*static_cast<LottieTextDoc*>(prop), false);
+        return backup;
     }
 
     LottieProperty* property(uint16_t ix) override
@@ -685,31 +742,27 @@ struct LottieTransform : LottieObject
         return nullptr;
     }
 
-    void override(LottieProperty* prop, bool release) override
+    LottieProperty* override(LottieProperty* prop, bool release) override
     {
-        switch (prop->type) {
-            case LottieProperty::Type::Float: {
-                if (release) rotation.release();
-                rotation.copy(*static_cast<LottieFloat*>(prop), false);
-                break;
-            }
-            case LottieProperty::Type::Scalar: {
-                if (release) scale.release();
-                scale.copy(*static_cast<LottieScalar*>(prop), false);
-                break;
-            }
-            case LottieProperty::Type::Vector: {
-                if (release) position.release();
-                position.copy(*static_cast<LottieVector*>(prop), false);
-                break;
-            }
-            case LottieProperty::Type::Opacity: {
-                if (release) opacity.release();
-                opacity.copy(*static_cast<LottieOpacity*>(prop), false);
-                break;
-            }
-            default: break;
+        LottieProperty* backup = nullptr;
+        if (rotation.sid == prop->sid) {
+            if (release) rotation.release();
+            else backup = new LottieFloat(rotation);
+            rotation.copy(*static_cast<LottieFloat*>(prop), false);
+        } else if (scale.sid == prop->sid) {
+            if (release) scale.release();
+            else backup = new LottieScalar(scale);
+            scale.copy(*static_cast<LottieScalar*>(prop), false);
+        } else if (position.sid == prop->sid) {
+            if (release) position.release();
+            else backup = new LottieVector(position);
+            position.copy(*static_cast<LottieVector*>(prop), false);
+        } else if (opacity.sid == prop->sid) {
+            if (release) opacity.release();
+            else backup = new LottieOpacity(opacity);
+            opacity.copy(*static_cast<LottieOpacity*>(prop), false);
         }
+        return backup;
     }
 
     LottieVector position = Point{0.0f, 0.0f};
@@ -756,10 +809,13 @@ struct LottieSolidStroke : LottieSolid, LottieStroke
         return LottieSolid::property(ix);
     }
 
-    void override(LottieProperty* prop, bool release) override
+    LottieProperty* override(LottieProperty* prop, bool release) override
     {
+        LottieProperty* backup = nullptr;
         if (release) color.release();
+        else backup = new LottieColor(color);
         color.copy(*static_cast<LottieColor*>(prop), false);
+        return backup;
     }
 };
 
@@ -771,15 +827,19 @@ struct LottieSolidFill : LottieSolid
         LottieObject::type = LottieObject::SolidFill;
     }
 
-    void override(LottieProperty* prop, bool release) override
+    LottieProperty* override(LottieProperty* prop, bool release) override
     {
-        if (prop->type == LottieProperty::Type::Color) {
+        LottieProperty* backup = nullptr;
+        if (color.sid == prop->sid) {
             if (release) color.release();
+            else backup = new LottieColor(color);
             color.copy(*static_cast<LottieColor*>(prop), false);
-        } else if (prop->type == LottieProperty::Type::Opacity) {
+        } else if (opacity.sid == prop->sid) {
             if (release) opacity.release();
+            else backup = new LottieOpacity(opacity);
             opacity.copy(*static_cast<LottieOpacity*>(prop), false);
         }
+        return backup;
     }
 
     FillRule rule = FillRule::NonZero;
@@ -816,11 +876,14 @@ struct LottieGradient : LottieObject
         return nullptr;
     }
 
-    void override(LottieProperty* prop, bool release = false) override
+    LottieProperty* override(LottieProperty* prop, bool release) override
     {
+        LottieProperty* backup = nullptr;
         if (release) colorStops.release();
+        else backup = new LottieColorStop(colorStops);
         colorStops.copy(*static_cast<LottieColorStop*>(prop), false);
         prepare();
+        return backup;
     }
 
     uint32_t populate(ColorStop& color, size_t count);
@@ -872,10 +935,13 @@ struct LottieImage : LottieObject
     LottieBitmap bitmap;
     bool resolved = false;
 
-    void override(LottieProperty* prop, bool release = false) override
+    LottieProperty* override(LottieProperty* prop, bool release) override
     {
+        LottieProperty* backup = nullptr;
         if (release) bitmap.release();
+        else backup = new LottieBitmap(bitmap);
         bitmap.copy(*static_cast<LottieBitmap*>(prop), false);
+        return backup;
     }
 
     void prepare();

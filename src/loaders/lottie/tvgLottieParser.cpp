@@ -464,7 +464,7 @@ void LottieParser::parsePropertyInternal(T& prop)
 }
 
 
-void LottieParser::registerSlot(LottieObject* obj, const char* sid, LottieProperty::Type type)
+void LottieParser::registerSlot(LottieObject* obj, const char* sid, LottieProperty& prop)
 {
     auto val = djb2Encode(sid);
 
@@ -474,7 +474,8 @@ void LottieParser::registerSlot(LottieObject* obj, const char* sid, LottieProper
         (*p)->pairs.push({obj});
         return;
     }
-    comp->slots.push(new LottieSlot(context.layer, context.parent, val, obj, type));
+    comp->slots.push(new LottieSlot(context.layer, context.parent, val, obj, prop.type));
+    prop.sid = val;
 }
 
 
@@ -511,7 +512,7 @@ bool LottieParser::parseCommon(LottieObject* obj, LottieProperty& prop, const ch
         getExpression(getStringCopy(), comp, context.layer, context.parent, &prop);
         return true;
     } else if (KEY_AS("sid")) {
-        registerSlot(obj, getString(), prop.type);
+        registerSlot(obj, getString(), prop);
         return true;
     } else return false;
 }
@@ -1008,7 +1009,7 @@ LottieObject* LottieParser::parseAsset()
     if (data) {
         obj = new LottieImage;
         parseImage(static_cast<LottieImage*>(obj), data, subPath, embedded, width, height);
-        if (sid) registerSlot(obj, sid, LottieProperty::Type::Image);
+        if (sid) registerSlot(obj, sid, static_cast<LottieImage*>(obj)->bitmap);
     }
     if (obj) obj->id = id;
     return obj;
@@ -1182,6 +1183,7 @@ void LottieParser::parseTextRange(LottieText* text)
         enterObject();
 
         auto selector = new LottieTextRange;
+        context.parent = selector;
 
         while (auto key = nextObjectKey()) {
             if (KEY_AS("s")) { // text range selector
@@ -1208,29 +1210,29 @@ void LottieParser::parseTextRange(LottieText* text)
             } else if (KEY_AS("a")) { // text style
                 enterObject();
                 while (auto key = nextObjectKey()) {
-                    if (KEY_AS("t")) parseProperty(selector->style.letterSpace);
-                    else if (KEY_AS("ls")) parseProperty(selector->style.lineSpace);
+                    if (KEY_AS("t")) parseProperty(selector->style.letterSpace, selector);
+                    else if (KEY_AS("ls")) parseProperty(selector->style.lineSpace, selector);
                     else if (KEY_AS("fc"))
                     {
-                        parseProperty(selector->style.fillColor);
+                        parseProperty(selector->style.fillColor, selector);
                         selector->style.flags.fillColor = true;
                     }
-                    else if (KEY_AS("fo")) parseProperty(selector->style.fillOpacity);
+                    else if (KEY_AS("fo")) parseProperty(selector->style.fillOpacity, selector);
                     else if (KEY_AS("sw"))
                     {
-                        parseProperty(selector->style.strokeWidth);
+                        parseProperty(selector->style.strokeWidth, selector);
                         selector->style.flags.strokeWidth = true;
                     }
                     else if (KEY_AS("sc"))
                     {
-                        parseProperty(selector->style.strokeColor);
+                        parseProperty(selector->style.strokeColor, selector);
                         selector->style.flags.strokeColor = true;
                     }
-                    else if (KEY_AS("so")) parseProperty(selector->style.strokeOpacity);
-                    else if (KEY_AS("o")) parseProperty(selector->style.opacity);
-                    else if (KEY_AS("p")) parseProperty(selector->style.position);
-                    else if (KEY_AS("s")) parseProperty(selector->style.scale);
-                    else if (KEY_AS("r")) parseProperty(selector->style.rotation);
+                    else if (KEY_AS("so")) parseProperty(selector->style.strokeOpacity, selector);
+                    else if (KEY_AS("o")) parseProperty(selector->style.opacity, selector);
+                    else if (KEY_AS("p")) parseProperty(selector->style.position, selector);
+                    else if (KEY_AS("s")) parseProperty(selector->style.scale, selector);
+                    else if (KEY_AS("r")) parseProperty(selector->style.rotation, selector);
                     else skip();
                 }
             } else skip();
@@ -1658,6 +1660,7 @@ LottieProperty* LottieParser::parse(LottieSlot* slot)
         }
         default: break;
     }
+    prop->sid = slot->sid;
     return prop;
 }
 
