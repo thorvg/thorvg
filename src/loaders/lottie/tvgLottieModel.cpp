@@ -203,57 +203,11 @@ void LottieSlot::reset()
 
 void LottieSlot::apply(LottieProperty* prop, bool byDefault)
 {
-    auto copy = !overridden && !byDefault;
+    auto release = overridden || byDefault;
 
     //apply slot object to all targets
     ARRAY_FOREACH(pair, pairs) {
-        //backup the original properties before overwriting
-        switch (type) {
-            case LottieProperty::Type::Float: {
-                if (copy) pair->prop = new LottieFloat(static_cast<LottieTransform*>(pair->obj)->rotation);
-                pair->obj->override(prop, !copy);
-                break;
-            }
-            case LottieProperty::Type::Scalar: {
-                if (copy) pair->prop = new LottieScalar(static_cast<LottieTransform*>(pair->obj)->scale);
-                pair->obj->override(prop, !copy);
-                break;
-            }
-            case LottieProperty::Type::Vector: {
-                if (copy) pair->prop = new LottieVector(static_cast<LottieTransform*>(pair->obj)->position);
-                pair->obj->override(prop, !copy);
-                break;
-            }
-            case LottieProperty::Type::Color: {
-                if (copy) pair->prop = new LottieColor(static_cast<LottieSolid*>(pair->obj)->color);
-                pair->obj->override(prop, !copy);
-                break;
-            }
-            case LottieProperty::Type::Opacity: {
-                if (copy) {
-                    if (pair->obj->type == LottieObject::Type::Transform) pair->prop = new LottieOpacity(static_cast<LottieTransform*>(pair->obj)->opacity);
-                    else pair->prop = new LottieOpacity(static_cast<LottieSolid*>(pair->obj)->opacity);
-                }
-                pair->obj->override(prop, !copy);
-                break;
-            }
-            case LottieProperty::Type::ColorStop: {
-                if (copy) pair->prop = new LottieColorStop(static_cast<LottieGradient*>(pair->obj)->colorStops);
-                pair->obj->override(prop, !copy);
-                break;
-            }
-            case LottieProperty::Type::TextDoc: {
-                if (copy) pair->prop = new LottieTextDoc(static_cast<LottieText*>(pair->obj)->doc);
-                pair->obj->override(prop, !copy);
-                break;
-            }
-            case LottieProperty::Type::Image: {
-                if (copy) pair->prop = new LottieBitmap(static_cast<LottieImage*>(pair->obj)->bitmap);
-                pair->obj->override(prop, !copy);
-                break;
-            }
-            default: break;
-        }
+        pair->prop = pair->obj->override(prop, release);
     }
 
     if (!byDefault) overridden = true;
