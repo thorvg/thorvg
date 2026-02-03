@@ -49,11 +49,11 @@ TEST_CASE("Load TTF Data from a file", "[tvgText]")
         REQUIRE(text);
 
         REQUIRE(Text::unload(TEST_DIR"/invalid.ttf") == Result::InsufficientCondition);
-        REQUIRE(Text::load(TEST_DIR"/Arial.ttf") == Result::Success);
+        REQUIRE(Text::load(TEST_DIR"/PublicSans-Regular.ttf") == Result::Success);
         REQUIRE(Text::load(TEST_DIR"/invalid.ttf") == Result::InvalidArguments);
-        REQUIRE(Text::unload(TEST_DIR"/Arial.ttf") == Result::Success);
+        REQUIRE(Text::unload(TEST_DIR"/PublicSans-Regular.ttf") == Result::Success);
         REQUIRE(Text::load("") == Result::InvalidArguments);
-        REQUIRE(Text::load(TEST_DIR"/NanumGothicCoding.ttf") == Result::Success);
+        REQUIRE(Text::load(TEST_DIR"/PublicSans-Regular.ttf") == Result::Success);
 
         Paint::rel(text);
     }
@@ -64,7 +64,7 @@ TEST_CASE("Load TTF Data from a memory", "[tvgText]")
 {
     Initializer::init();
     {
-        ifstream file(TEST_DIR"/Arial.ttf", ios::binary);
+        ifstream file(TEST_DIR"/PublicSans-Regular.ttf", ios::binary);
         REQUIRE(file.is_open());
         file.seekg(0, std::ios::end);
         auto size = file.tellg();
@@ -81,19 +81,18 @@ TEST_CASE("Load TTF Data from a memory", "[tvgText]")
 
         //load
         REQUIRE(Text::load(nullptr, data, size) == Result::InvalidArguments);
-        REQUIRE(Text::load("Arial", data, 0) == Result::InvalidArguments);
-        REQUIRE(Text::load("Arial", data, 0) == Result::InvalidArguments);
-        REQUIRE(Text::load("ArialSvg", svg, strlen(svg), "unknown") == Result::NonSupport);
-        REQUIRE(Text::load("ArialUnknown", data, size, "unknown") == Result::Success);
-        REQUIRE(Text::load("ArialTtf", data, size, "ttf", true) == Result::Success);
-        REQUIRE(Text::load("Arial", data, size, "") == Result::Success);
+        REQUIRE(Text::load("PublicSans-Regular", data, 0) == Result::InvalidArguments);
+        REQUIRE(Text::load("PublicSans-RegularSvg", svg, strlen(svg), "unknown") == Result::NonSupport);
+        REQUIRE(Text::load("PublicSans-RegularUnknown", data, size, "unknown") == Result::Success);
+        REQUIRE(Text::load("PublicSans-RegularTtf", data, size, "ttf", true) == Result::Success);
+        REQUIRE(Text::load("PublicSans-Regular", data, size, "") == Result::Success);
 
         //unload
         REQUIRE(Text::load("invalid", nullptr, 0) == Result::InsufficientCondition);
-        REQUIRE(Text::load("ArialSvg", nullptr, 0) == Result::InsufficientCondition);
-        REQUIRE(Text::load("ArialUnknown", nullptr, 0) == Result::Success);
-        REQUIRE(Text::load("ArialTtf", nullptr, 0) == Result::Success);
-        REQUIRE(Text::load("Arial", nullptr, 111) == Result::Success);
+        REQUIRE(Text::load("PublicSans-RegularSvg", nullptr, 0) == Result::InsufficientCondition);
+        REQUIRE(Text::load("PublicSans-RegularUnknown", nullptr, 0) == Result::Success);
+        REQUIRE(Text::load("PublicSans-RegularTtf", nullptr, 0) == Result::Success);
+        REQUIRE(Text::load("PublicSans-Regular", nullptr, 111) == Result::Success);
 
         free(data);
 
@@ -109,10 +108,10 @@ TEST_CASE("Text Font", "[tvgText]")
         auto text = Text::gen();
         REQUIRE(text);
 
-        REQUIRE(Text::load(TEST_DIR"/Arial.ttf") == Result::Success);
-        REQUIRE(text->font("Arial") == Result::Success);
+        REQUIRE(Text::load(TEST_DIR"/PublicSans-Regular.ttf") == Result::Success);
+        REQUIRE(text->font("PublicSans-Regular") == Result::Success);
         REQUIRE(text->size(80) == Result::Success);
-        REQUIRE(text->font("Arial") == Result::Success);
+        REQUIRE(text->font("PublicSans-Regular") == Result::Success);
         REQUIRE(text->size(1) == Result::Success);
         REQUIRE(text->size(50) == Result::Success);
         REQUIRE(text->font(nullptr) == Result::Success);
@@ -134,8 +133,8 @@ TEST_CASE("Text Basic", "[tvgText]")
         auto text = Text::gen();
         REQUIRE(text);
 
-        REQUIRE(Text::load(TEST_DIR"/Arial.ttf") == Result::Success);
-        REQUIRE(text->font("Arial") == Result::Success);
+        REQUIRE(Text::load(TEST_DIR"/PublicSans-Regular.ttf") == Result::Success);
+        REQUIRE(text->font("PublicSans-Regular") == Result::Success);
         REQUIRE(text->size(80) == Result::Success);
         REQUIRE(text->text(nullptr) == Result::Success);
         REQUIRE(text->text("") == Result::Success);
@@ -160,8 +159,8 @@ TEST_CASE("Text with composite glyphs", "[tvgText]")
         auto text = Text::gen();
         REQUIRE(text);
 
-        REQUIRE(Text::load(TEST_DIR"/Arial.ttf") == Result::Success);
-        REQUIRE(text->font("Arial") == Result::Success);
+        REQUIRE(Text::load(TEST_DIR"/PublicSans-Regular.ttf") == Result::Success);
+        REQUIRE(text->font("PublicSans-Regular") == Result::Success);
         REQUIRE(text->size(80) == Result::Success);
         REQUIRE(text->text("\xc5\xbb\x6f\xc5\x82\xc4\x85\x64\xc5\xba \xc8\xab") == Result::Success);
         REQUIRE(text->fill(255, 255, 255) == Result::Success);
@@ -183,8 +182,8 @@ TEST_CASE("Text Styles", "[tvgText]")
         auto text = Text::gen();
         REQUIRE(text);
 
-        REQUIRE(Text::load(TEST_DIR"/Arial.ttf") == Result::Success);
-        REQUIRE(text->font("Arial") == Result::Success);
+        REQUIRE(Text::load(TEST_DIR"/PublicSans-Regular.ttf") == Result::Success);
+        REQUIRE(text->font("PublicSans-Regular") == Result::Success);
         REQUIRE(text->size(80) == Result::Success);
         REQUIRE(text->text("ThorVG Test\n Text!") == Result::Success);
         REQUIRE(text->fill(255, 255, 255) == Result::Success);
@@ -217,8 +216,8 @@ TEST_CASE("Text Layout", "[tvgText]")
         auto text = Text::gen();
         REQUIRE(text);
 
-        REQUIRE(Text::load(TEST_DIR"/Arial.ttf") == Result::Success);
-        REQUIRE(text->font("Arial") == Result::Success);
+        REQUIRE(Text::load(TEST_DIR"/PublicSans-Regular.ttf") == Result::Success);
+        REQUIRE(text->font("PublicSans-Regular") == Result::Success);
         REQUIRE(text->size(80) == Result::Success);
         REQUIRE(text->fill(255, 255, 255) == Result::Success);
         REQUIRE(text->text("ThorVG Test\n Text!") == Result::Success);
@@ -251,8 +250,8 @@ TEST_CASE("Text Wrap Mode", "[tvgText]")
         auto text = Text::gen();
         REQUIRE(text);
 
-        REQUIRE(Text::load(TEST_DIR"/Arial.ttf") == Result::Success);
-        REQUIRE(text->font("Arial") == Result::Success);
+        REQUIRE(Text::load(TEST_DIR"/PublicSans-Regular.ttf") == Result::Success);
+        REQUIRE(text->font("PublicSans-Regular") == Result::Success);
         REQUIRE(text->size(80) == Result::Success);
         REQUIRE(text->fill(255, 255, 255) == Result::Success);
         REQUIRE(text->align(0.5f, 0.5f) == Result::Success);
@@ -290,8 +289,8 @@ TEST_CASE("Text Spacing", "[tvgText]")
         auto text = Text::gen();
         REQUIRE(text);
 
-        REQUIRE(Text::load(TEST_DIR"/Arial.ttf") == Result::Success);
-        REQUIRE(text->font("Arial") == Result::Success);
+        REQUIRE(Text::load(TEST_DIR"/PublicSans-Regular.ttf") == Result::Success);
+        REQUIRE(text->font("PublicSans-Regular") == Result::Success);
         REQUIRE(text->size(80) == Result::Success);
         REQUIRE(text->text("\xc5\xbb\x6f\xc5\x82\xc4\x85\x64\xc5\xba \xc8\xab") == Result::Success);
         REQUIRE(text->spacing(-1.0f, -1.0f) == Result::InvalidArguments);
