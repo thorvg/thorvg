@@ -51,7 +51,7 @@ public:
 
     uint32_t getFboHeight() const { return mFbo->height; }
 
-    void getMatrix(float dst[GL_MAT3_STD140_SIZE], const Matrix& matrix) const;
+    const Matrix& getViewMatrix() const { return mViewMatrix; }
 
     template <class T>
     T* endRenderPass(GlProgram* program, GLuint targetFbo) {
@@ -76,6 +76,7 @@ private:
     GlRenderTarget* mFbo;
     Array<GlRenderTask*> mTasks = {};
     int32_t mDrawDepth = 0;
+    Matrix mViewMatrix = {};
 };
 
 

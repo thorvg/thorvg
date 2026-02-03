@@ -33,18 +33,8 @@ static uint32_t _pushVertex(Array<float>& array, float x, float y)
 }
 
 
-Stroker::Stroker(GlGeometryBuffer* buffer, float width, StrokeCap cap, StrokeJoin join) : mBuffer(buffer), mWidth(width), mCap(cap), mJoin(join)
+Stroker::Stroker(GlGeometryBuffer* buffer, float width, StrokeCap cap, StrokeJoin join, float miterLimit) : mBuffer(buffer), mWidth(width), mMiterLimit(miterLimit), mCap(cap), mJoin(join)
 {
-}
-
-
-void Stroker::run(const RenderShape& rshape, const RenderPath& path, const Matrix& m)
-{
-    mMiterLimit = rshape.strokeMiterlimit();
-
-    RenderPath dashed;
-    if (rshape.strokeDash(dashed)) run(dashed, m);
-    else run(path, m);
 }
 
 
@@ -54,11 +44,10 @@ RenderRegion Stroker::bounds() const
 }
 
 
-void Stroker::run(const RenderPath& path, const Matrix& m)
+void Stroker::run(const RenderPath& path)
 {
     mBuffer->vertex.reserve(path.pts.count * 4 + 16);
     mBuffer->index.reserve(path.pts.count * 3);
-    mScale = tvg::scaling(m);
 
     auto validStrokeCap = false;
     auto pts = path.pts.data;
@@ -84,7 +73,7 @@ void Stroker::run(const RenderPath& path, const Matrix& m)
             } break;
             case PathCommand::CubicTo: {
                 validStrokeCap = true;
-                cubicTo(pts[0], pts[1], pts[2], m);
+                cubicTo(pts[0], pts[1], pts[2]);
                 pts += 3;
             } break;
             case PathCommand::Close: {
@@ -175,11 +164,11 @@ void Stroker::lineTo(const Point& curr)
 }
 
 
-void Stroker::cubicTo(const Point& cnt1, const Point& cnt2, const Point& end, const Matrix& m)
+void Stroker::cubicTo(const Point& cnt1, const Point& cnt2, const Point& end)
 {
     Bezier curve{ mState.prevPt, cnt1, cnt2, end };
 
-    auto count = (curve * m).segments();
+    auto count = curve.segments();
     auto step = 1.f / count;
 
     for (uint32_t i = 0; i <= count; i++) {
@@ -255,7 +244,7 @@ void Stroker::round(const Point &prev, const Point& curr, const Point& center)
     }
 
     auto arcAngle = endAngle - startAngle;
-    auto count = arcSegmentsCnt(arcAngle, radius() * mScale);
+    auto count = arcSegmentsCnt(arcAngle, radius());
 
     auto c = _pushVertex(mBuffer->vertex, center.x, center.y);
     auto pi = _pushVertex(mBuffer->vertex, prev.x, prev.y);
@@ -282,7 +271,7 @@ void Stroker::round(const Point &prev, const Point& curr, const Point& center)
 
 void Stroker::roundPoint(const Point &p)
 {
-    auto count = arcSegmentsCnt(2.0f * MATH_PI, radius() * mScale);
+    auto count = arcSegmentsCnt(2.0f * MATH_PI, radius());
     auto c = _pushVertex(mBuffer->vertex, p.x, p.y);
     auto step = 2.0f * MATH_PI / (count - 1);
 
@@ -429,7 +418,7 @@ BWTessellator::BWTessellator(GlGeometryBuffer* buffer): mBuffer(buffer)
 }
 
 
-void BWTessellator::tessellate(const RenderPath& path, const Matrix& matrix)
+void BWTessellator::tessellate(const RenderPath& path)
 {
     auto cmds = path.cmds.data;
     auto cmdCnt = path.cmds.count;
@@ -489,7 +478,7 @@ void BWTessellator::tessellate(const RenderPath& path, const Matrix& matrix)
                     updateConvexity(e3);
                 }
 
-                auto stepCount = (curve * matrix).segments();
+                auto stepCount = curve.segments();
                 if (stepCount <= 1) stepCount = 2;
                 float step = 1.f / stepCount;
 

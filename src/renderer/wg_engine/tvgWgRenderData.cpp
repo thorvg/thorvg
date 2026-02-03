@@ -178,11 +178,11 @@ void WgRenderDataShape::updateMeshes(const RenderShape &rshape, RenderUpdateFlag
     if (rshape.trimpath()) {
         RenderPath trimmedPath;
         if (rshape.stroke->trim.trim(rshape.path, trimmedPath)) {
-            trimmedPath.optimize(optPath, matrix);
+            trimmedPath.optimizeWG(optPath, matrix);
         } else {
             optPath.clear();
         }
-    } else rshape.path.optimize(optPath, matrix);
+    } else rshape.path.optimizeWG(optPath, matrix);
 
     auto updatePath = flag & (RenderUpdateFlag::Transform | RenderUpdateFlag::Path);
 

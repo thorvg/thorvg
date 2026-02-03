@@ -45,7 +45,6 @@ public:
     void setUniform2Value(int32_t location, int count, const float* values);
     void setUniform3Value(int32_t location, int count, const float* values);
     void setUniform4Value(int32_t location, int count, const float* values);
-    void setUniform4x4Value(int32_t location, int count, const float* values);
 
 private:
     uint32_t mProgramObj;
