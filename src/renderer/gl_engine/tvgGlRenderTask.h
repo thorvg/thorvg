@@ -84,6 +84,7 @@ public:
     void setDrawRange(uint32_t offset, uint32_t count);
     void setViewport(const RenderRegion& viewport);
     void setDrawDepth(int32_t depth) { mDrawDepth = static_cast<float>(depth); }
+    void setViewMatrix(const Matrix& matrix) { mViewMatrix = matrix; mUseViewMatrix = true; }
     virtual void normalizeDrawDepth(int32_t maxDepth) { mDrawDepth /= static_cast<float>(maxDepth);  }
 
     GlProgram* getProgram() { return mProgram; }
@@ -97,6 +98,8 @@ private:
     Array<GlVertexLayout> mVertexLayout = {};
     Array<GlBindingResource> mBindingResources = {};
     float mDrawDepth = 0.f;
+    Matrix mViewMatrix = {};
+    bool mUseViewMatrix = false;
 };
 
 class GlStencilCoverTask : public GlRenderTask

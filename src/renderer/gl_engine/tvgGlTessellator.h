@@ -38,9 +38,8 @@ class Stroker
         Point prevPtDir;
     };
 public:
-    Stroker(GlGeometryBuffer* buffer, float strokeWidth, StrokeCap cap, StrokeJoin join);
-    void run(const RenderShape& rshape, const RenderPath& path, const Matrix& m);
-    void run(const RenderPath& path, const Matrix& m);
+    Stroker(GlGeometryBuffer* buffer, float strokeWidth, StrokeCap cap, StrokeJoin join, float miterLimit = 4.0f);
+    void run(const RenderPath& path);
     RenderRegion bounds() const;
 
 private:
@@ -52,7 +51,7 @@ private:
 
     void cap();
     void lineTo(const Point& curr);
-    void cubicTo(const Point& cnt1, const Point& cnt2, const Point& end, const Matrix& m);
+    void cubicTo(const Point& cnt1, const Point& cnt2, const Point& end);
     void close();
     void join(const Point& dir);
     void round(const Point& prev, const Point& curr, const Point& center);
@@ -71,14 +70,13 @@ private:
     State mState = {};
     Point mLeftTop = {0.0f, 0.0f};
     Point mRightBottom = {0.0f, 0.0f};
-    float mScale;
 };
 
 class BWTessellator
 {
 public:
     BWTessellator(GlGeometryBuffer* buffer);
-    void tessellate(const RenderPath& path, const Matrix& matrix);
+    void tessellate(const RenderPath& path);
     RenderRegion bounds() const;
     bool convex = true;
 
