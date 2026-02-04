@@ -342,6 +342,7 @@ struct ShapeImpl : Shape
     {
         rs.path.cmds.clear();
         rs.path.pts.clear();
+        rs.path.convexHint = false;
         impl.mark(RenderUpdateFlag::Path);
     }
 
@@ -349,6 +350,7 @@ struct ShapeImpl : Shape
     {
         if (cmdCnt == 0 || ptsCnt == 0 || !cmds || !pts) return Result::InvalidArguments;
 
+        rs.path.convexHint = false;
         grow(cmdCnt, ptsCnt);
         append(cmds, cmdCnt, pts, ptsCnt);
         impl.mark(RenderUpdateFlag::Path);
@@ -358,6 +360,8 @@ struct ShapeImpl : Shape
 
     void appendCircle(float cx, float cy, float rx, float ry, bool cw)
     {
+        rs.path.convexHint = rs.path.empty();
+
         auto rxKappa = rx * PATH_KAPPA;
         auto ryKappa = ry * PATH_KAPPA;
 
@@ -392,6 +396,8 @@ struct ShapeImpl : Shape
 
     void appendRect(float x, float y, float w, float h, float rx, float ry, bool cw)
     {
+        rs.path.convexHint = rs.path.empty();
+
         //sharp rect
         if (tvg::zero(rx) && tvg::zero(ry)) {
             rs.path.cmds.grow(5);
@@ -475,6 +481,7 @@ struct ShapeImpl : Shape
         dup->rs.path.clear();
         dup->rs.path.cmds.push(rs.path.cmds);
         dup->rs.path.pts.push(rs.path.pts);
+        dup->rs.path.convexHint = rs.path.convexHint;
 
         //Fill
         delete(dup->rs.fill);
@@ -501,6 +508,7 @@ struct ShapeImpl : Shape
         PAINT(this)->reset();
         rs.path.cmds.clear();
         rs.path.pts.clear();
+        rs.path.convexHint = false;
 
         rs.color.a = 0;
         rs.rule = FillRule::NonZero;
