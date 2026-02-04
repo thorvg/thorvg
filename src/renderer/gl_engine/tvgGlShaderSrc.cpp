@@ -28,26 +28,24 @@ const char* COLOR_VERT_SHADER = TVG_COMPOSE_SHADER(
     uniform float uDepth;                                           \n
     uniform mat3 uViewMatrix;                                       \n
     layout(location = 0) in vec2 aLocation;                         \n
-    layout(std140) uniform SolidInfo {                              \n
-        vec4 solidColor;                                            \n
-    } uSolidInfo;                                                   \n
+    layout(location = 1) in vec4 aColor;                            \n
+    out vec4 vColor;                                                \n
                                                                     \n
     void main()                                                     \n
     {                                                               \n
         vec3 pos = uViewMatrix * vec3(aLocation, 1.0);              \n
         gl_Position = vec4(pos.xy, uDepth, 1.0);                    \n
+        vColor = aColor;                                            \n
     }                                                               \n
 );
 
 const char* COLOR_FRAG_SHADER = TVG_COMPOSE_SHADER(
-    layout(std140) uniform SolidInfo {                       \n
-        vec4 solidColor;                                     \n
-    } uSolidInfo;                                            \n
+    in vec4 vColor;                                          \n
     out vec4 FragColor;                                      \n
                                                              \n
     void main()                                              \n
     {                                                        \n
-       vec4 uColor = uSolidInfo.solidColor;                  \n
+       vec4 uColor = vColor;                                 \n
        FragColor =  vec4(uColor.rgb * uColor.a, uColor.a);   \n
     }                                                        \n
 );
@@ -588,16 +586,13 @@ const char* BLIT_FRAG_SHADER = TVG_COMPOSE_SHADER(
 );
 
 const char* BLEND_SHAPE_SOLID_FRAG_HEADER = R"(
-layout(std140) uniform SolidInfo {
-    vec4 solidColor;
-} uSolidInfo;
-
 layout(std140) uniform BlendRegion {
     vec4 region;
 } uBlendRegion;
 
 uniform sampler2D uDstTexture;
 
+in vec4 vColor;
 out vec4 FragColor;
 
 vec3 One = vec3(1.0, 1.0, 1.0);
@@ -606,7 +601,7 @@ FragData d;
 
 void getFragData() {
     vec2 uv = (gl_FragCoord.xy - uBlendRegion.region.xy) / uBlendRegion.region.zw;
-    vec4 colorSrc = uSolidInfo.solidColor;
+    vec4 colorSrc = vColor;
     vec4 colorDst = texture(uDstTexture, uv);
     d.Sc = colorSrc.rgb;
     d.Sa = colorSrc.a;

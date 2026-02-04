@@ -54,6 +54,8 @@ public:
 
     uint32_t push(void* data, uint32_t size, bool alignGpuOffset = false);
     uint32_t pushIndex(void* data, uint32_t size);
+    uint32_t reserve(uint32_t size, void** dst, bool alignGpuOffset = false);
+    uint32_t reserveIndex(uint32_t size, void** dst);
     bool flushToGPU();
     void bind();
     void unbind();
