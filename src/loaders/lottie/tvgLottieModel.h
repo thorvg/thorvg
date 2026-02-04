@@ -761,6 +761,14 @@ struct LottieTransform : LottieObject
             if (release) opacity.release();
             else backup = new LottieOpacity(opacity);
             opacity.copy(*static_cast<LottieOpacity*>(prop), false);
+        } else if (skewAngle.sid == prop->sid) {
+            if (release) skewAngle.release();
+            else backup = new LottieFloat(skewAngle);
+            skewAngle.copy(*static_cast<LottieFloat*>(prop), false);
+        } else if (skewAxis.sid == prop->sid) {
+            if (release) skewAxis.release();
+            else backup = new LottieFloat(skewAxis);
+            skewAxis.copy(*static_cast<LottieFloat*>(prop), false);
         }
         return backup;
     }
