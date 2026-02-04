@@ -603,8 +603,8 @@ LottieTransform* LottieParser::parseTransform(bool ddd)
         else if (transform->rotationEx && KEY_AS("rx")) parseProperty(transform->rotationEx->x);
         else if (transform->rotationEx && KEY_AS("ry")) parseProperty(transform->rotationEx->y);
         else if (transform->rotationEx && KEY_AS("rz")) parseProperty(transform->rotation);
-        else if (KEY_AS("sk")) parseProperty(transform->skewAngle);
-        else if (KEY_AS("sa")) parseProperty(transform->skewAxis);
+        else if (KEY_AS("sk")) parseProperty(transform->skewAngle, transform);
+        else if (KEY_AS("sa")) parseProperty(transform->skewAxis, transform);
         else skip();
     }
     return transform;
