@@ -899,6 +899,8 @@ void LottieBuilder::updateSolid(LottieLayer* layer)
 
 void LottieBuilder::updateImage(LottieGroup* layer)
 {
+    if (layer->children.empty()) return;
+
     auto image = static_cast<LottieImage*>(layer->children.first());
     auto picture = image->bitmap.picture;
 
@@ -1204,6 +1206,8 @@ void LottieBuilder::updateLocalFont(LottieLayer* layer, float frameNo, LottieTex
 
 void LottieBuilder::updateText(LottieLayer* layer, float frameNo)
 {
+    if (layer->children.empty()) return;
+
     auto text = static_cast<LottieText*>(layer->children.first());
     auto& doc = text->doc(frameNo, exps);
     if (text->font && text->font->origin == LottieFont::Origin::Local && !text->font->chars.empty()) {
