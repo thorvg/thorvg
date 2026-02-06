@@ -36,7 +36,15 @@ else
     compiler_flags += ['-DTHORVG_GL_TARGET_GL=1']
 endif
 
+if (get_option('threads'))
+    omp_dep = dependency('openmp', required: false)
+    if (omp_dep.found())
+        gl_variant_profile += '-DTHORVG_GL_OPENMP_SUPPORT=1'
+    endif
+endif
+
 engine_dep += [declare_dependency(
     include_directories : include_directories('.'),
+    dependencies        : omp_dep,
     sources             : source_file,
 )]
