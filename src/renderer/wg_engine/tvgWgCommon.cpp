@@ -26,29 +26,17 @@
 
 void WgContext::initialize(WGPUInstance instance, WGPUDevice device)
 {
-    assert(instance);
-    assert(device);
-    
-    // store global instance and surface
     this->instance = instance;
     this->device = device;
-    this->preferredFormat = WGPUTextureFormat_BGRA8Unorm;
 
-    // get current queue
     queue = wgpuDeviceGetQueue(device);
-    assert(queue);
 
-    // create shared webgpu assets
+    samplerNearestClamp = createSampler(WGPUFilterMode_Nearest, WGPUMipmapFilterMode_Nearest, WGPUAddressMode_ClampToEdge, 1);
     samplerNearestRepeat = createSampler(WGPUFilterMode_Nearest, WGPUMipmapFilterMode_Nearest, WGPUAddressMode_Repeat);
     samplerLinearRepeat = createSampler(WGPUFilterMode_Linear, WGPUMipmapFilterMode_Linear, WGPUAddressMode_Repeat, 4);
     samplerLinearMirror = createSampler(WGPUFilterMode_Linear, WGPUMipmapFilterMode_Linear, WGPUAddressMode_MirrorRepeat, 4);
     samplerLinearClamp = createSampler(WGPUFilterMode_Linear, WGPUMipmapFilterMode_Linear, WGPUAddressMode_ClampToEdge, 4);
-    assert(samplerNearestRepeat);
-    assert(samplerLinearRepeat);
-    assert(samplerLinearMirror);
-    assert(samplerLinearClamp);
 
-    // initialize bind group layouts
     layouts.initialize(device);
 }
 
@@ -60,6 +48,7 @@ void WgContext::release()
     releaseSampler(samplerLinearMirror);
     releaseSampler(samplerLinearRepeat);
     releaseSampler(samplerNearestRepeat);
+    releaseSampler(samplerNearestClamp);
     releaseQueue(queue);
 }
 
