@@ -121,3 +121,9 @@ const Paint* Picture::paint(uint32_t id) noexcept
 
     return value.ret;
 }
+
+
+Result Picture::filter(FilterMethod method) noexcept
+{
+    return to<PictureImpl>(this)->filterMethod(method);
+}
