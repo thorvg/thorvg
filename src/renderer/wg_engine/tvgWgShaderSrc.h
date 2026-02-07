@@ -48,4 +48,7 @@ extern const char* cShaderSrc_Blit;
 extern const char* cShaderSrc_Shadow;
 extern const char* cShaderSrc_Effects;
 
+// compute shaders
+extern const char* cShaderSrc_Texture_Preprocess;
+
 #endif // _TVG_WG_SHEDER_SRC_H_
