@@ -242,7 +242,7 @@ auto circle = tvg::Shape::gen();             //generate a shape
 circle->appendCircle(400, 400, 100, 100);    //define it as a circle (cx, cy, rx, ry)
 
 auto fill = tvg::RadialGradient::gen();      //generate a radial gradient
-fill->radial(400, 400, 150);                 //set the radial gradient geometry info (cx, cy, radius)
+fill->radial(400, 400, 150, 400, 400, 0);    //set the radial gradient geometry info (cx, cy, radius, fx, fy, fr)
 
 tvg::Fill::ColorStop colorStops[2];          //gradient colors
 colorStops[0] = {0.0, 255, 255, 255, 255};   //1st color values (offset, r, g, b, a)
