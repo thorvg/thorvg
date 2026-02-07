@@ -21,6 +21,7 @@
  */
 
 #include "tvgGlProgram.h"
+#include "tvgGlShaderCache.h"
 
 /************************************************************************/
 /* Internal Class Implementation                                        */
@@ -33,12 +34,18 @@ uint32_t GlProgram::mCurrentProgram = 0;
 /* External Class Implementation                                        */
 /************************************************************************/
 
-GlProgram::GlProgram(const char* vertSrc, const char* fragSrc)
+GlProgram::GlProgram(const char* vertSrc, const char* fragSrc, uint8_t renderType)
 {
+
+#ifndef __EMSCRIPTEN__
+    mProgramObj = GlShaderCache::read(renderType);
+    if (mProgramObj) return;
+#endif
+
     auto shader = GlShader(vertSrc, fragSrc);
 
     // Create the program object
-    uint32_t progObj = glCreateProgram();
+    auto progObj = glCreateProgram();
     assert(progObj);
 
     glAttachShader(progObj, shader.getVertexShader());
@@ -60,13 +67,15 @@ GlProgram::GlProgram(const char* vertSrc, const char* fragSrc)
             glGetProgramInfoLog(progObj, infoLen, NULL, infoLog);
             TVGERR("GL_ENGINE", "Error linking shader: %s", infoLog);
             tvg::free(infoLog);
-
         }
         glDeleteProgram(progObj);
         progObj = 0;
         assert(0);
     }
     mProgramObj = progObj;
+#ifndef __EMSCRIPTEN__
+    GlShaderCache::write(progObj, renderType);
+#endif
 }
 
 
@@ -115,6 +124,7 @@ uint32_t GlProgram::getProgramId()
 {
     return mProgramObj;
 }
+
 
 void GlProgram::setUniform1Value(int32_t location, int count, const int* values)
 {
