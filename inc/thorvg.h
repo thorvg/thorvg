@@ -1661,10 +1661,12 @@ struct TVG_API Picture : Paint
      *
      * @retval Result::InsufficientCondition If the picture is already loaded.
      * 
-     * @note This function must be called before @ref Picture::load()
-     *       Setting the resolver after loading will have no effect on asset resolution for that asset.
+     * @warning This function must be called before @ref Picture::load()
+     *          Setting the resolver after loading will have no effect on asset resolution for that asset.
+     * @note @p src will be either a font path or a font name. In the case of a font name, @p src will begin with "name:", e.g., "name:FreeSans-Medium".
      * @note If @c false is returned by @p func, ThorVG will attempt to resolve the resource using its internal resolution mechanism as a fallback.
      * @note To unset the resolver, pass @c nullptr as the @p func parameter.
+     *
      * @note Experimental API
      */
     Result resolver(std::function<bool(Paint* paint, const char* src, void* data)> func, void* data) noexcept;
