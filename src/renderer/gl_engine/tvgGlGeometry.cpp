@@ -25,6 +25,22 @@
 #include "tvgGlRenderTask.h"
 #include "tvgGlTessellator.h"
 
+namespace {
+
+struct GlSolidVertex
+{
+    float x;
+    float y;
+    uint8_t r;
+    uint8_t g;
+    uint8_t b;
+    uint8_t a;
+};
+
+static_assert(sizeof(GlSolidVertex) == 12, "Solid vertex must stay tightly packed.");
+
+}
+
 static RenderRegion _transformBounds(const RenderRegion& bounds, const Matrix& matrix)
 {
     if (bounds.invalid()) return bounds;
@@ -197,6 +213,8 @@ bool GlGeometry::tesselateShape(const RenderShape& rshape, float* opacityMultipl
     fillRule = rshape.rule;
     fillBounds = bwTess.bounds();
     convex = bwTess.convex;
+    // Workaround: CW is treated non-convex for optimization; force rect/circle convex until stencil is replaced.
+    if (optPath.convexHint) convex = true;
     if (opacityMultiplier) *opacityMultiplier = 1.0f;
     return true;
 }
@@ -284,20 +302,35 @@ void GlGeometry::tesselateImage(const RenderSurface* image)
 }
 
 
-bool GlGeometry::draw(GlRenderTask* task, GlStageBuffer* gpuBuffer, RenderUpdateFlag flag)
+bool GlGeometry::draw(GlRenderTask* task, GlStageBuffer* gpuBuffer, RenderUpdateFlag flag, const RenderColor* color)
 {
     if (flag == RenderUpdateFlag::None) return false;
 
     auto buffer = ((flag & RenderUpdateFlag::Stroke) || (flag & RenderUpdateFlag::GradientStroke)) ? &stroke : &fill;
     if (buffer->index.empty()) return false;
 
-    auto vertexOffset = gpuBuffer->push(buffer->vertex.data, buffer->vertex.count * sizeof(float));
+    uint32_t vertexOffset = 0;
+    if (!(flag & RenderUpdateFlag::Image) && color) {
+        auto vertexCnt = buffer->vertex.count / 2;
+        Array<GlSolidVertex> solidVertex;
+        solidVertex.reserve(vertexCnt);
+        for (uint32_t i = 0; i < vertexCnt; ++i) {
+          solidVertex.push({buffer->vertex[i * 2 + 0], buffer->vertex[i * 2 + 1], color->r, color->g, color->b, color->a});
+        }
+        vertexOffset = gpuBuffer->push(solidVertex.data, solidVertex.count * sizeof(GlSolidVertex));
+    } else {
+        vertexOffset = gpuBuffer->push(buffer->vertex.data, buffer->vertex.count * sizeof(float));
+    }
+
     auto indexOffset = gpuBuffer->pushIndex(buffer->index.data, buffer->index.count * sizeof(uint32_t));
 
     if (flag & RenderUpdateFlag::Image) {
         // image has two attribute: [pos, uv]
         task->addVertexLayout(GlVertexLayout{0, 2, 4 * sizeof(float), vertexOffset});
         task->addVertexLayout(GlVertexLayout{1, 2, 4 * sizeof(float), vertexOffset + 2 * sizeof(float)});
+    } else if (color) {
+        task->addVertexLayout(GlVertexLayout{0, 2, sizeof(GlSolidVertex), vertexOffset});
+        task->addVertexLayout(GlVertexLayout{1, 4, sizeof(GlSolidVertex), vertexOffset + 2 * sizeof(float), GL_UNSIGNED_BYTE, GL_TRUE});
     } else {
         task->addVertexLayout(GlVertexLayout{0, 2, 2 * sizeof(float), vertexOffset});
     }

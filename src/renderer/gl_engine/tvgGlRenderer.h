@@ -191,6 +191,8 @@ private:
     void initShaders();
     void drawPrimitive(GlShape& sdata, const RenderColor& c, RenderUpdateFlag flag, int32_t depth);
     void drawPrimitive(GlShape& sdata, const Fill* fill, RenderUpdateFlag flag, int32_t depth);
+    void drawBatchedSolid(GlShape& sdata, const RenderColor& c, int32_t depth, const RenderRegion& viewRegion);
+    bool flushPendingSolid();
     void drawClip(Array<RenderData>& clips);
 
     GlRenderPass* currentPass();
@@ -222,6 +224,21 @@ private:
     Array<GlRenderTargetPool*> mBlendPool;
     Array<GlRenderPass*> mRenderPassStack;
     Array<GlCompositor*> mComposeStack;
+    struct {
+        GlRenderPass* pass = nullptr;
+        GlRenderTask* task = nullptr;
+        uint32_t vertexCount = 0;
+        uint32_t indexOffset = 0;
+        uint32_t indexCount = 0;
+    } mSolidColorBatch;
+    struct {
+        GlRenderPass* pass = nullptr;
+        GlShape* sdata = nullptr;
+        RenderColor color = {};
+        RenderUpdateFlag flag = RenderUpdateFlag::None;
+        int32_t depth = 0;
+        RenderRegion viewRegion = {};
+    } mPendingSolid;
 
     //Disposed resources. They should be released on synced call.
     struct {

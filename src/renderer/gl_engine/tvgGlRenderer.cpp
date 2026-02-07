@@ -28,6 +28,7 @@
 #include "tvgGlRenderTask.h"
 #include "tvgGlProgram.h"
 #include "tvgGlShaderSrc.h"
+#include "tvgRender.h"
 
 
 /************************************************************************/
@@ -38,7 +39,23 @@
 
 static atomic<int32_t> rendererCnt{-1};
 
-static void _solidUniforms(GlShape& sdata, const RenderColor& c, RenderUpdateFlag flag, float* solidInfo);
+namespace {
+
+struct GlSolidBatchVertex
+{
+    float x;
+    float y;
+    uint8_t r;
+    uint8_t g;
+    uint8_t b;
+    uint8_t a;
+};
+
+static_assert(sizeof(GlSolidBatchVertex) == 12, "Solid batch vertex must stay tightly packed.");
+
+}
+
+static RenderColor _solidColor(const GlShape& sdata, const RenderColor& c, RenderUpdateFlag flag);
 
 
 void GlRenderer::clearDisposes()
@@ -50,6 +67,8 @@ void GlRenderer::clearDisposes()
 
     ARRAY_FOREACH(p, mRenderPassStack) delete(*p);
     mRenderPassStack.clear();
+    mSolidColorBatch = {};
+    mPendingSolid = {};
 }
 
 
@@ -180,6 +199,14 @@ void GlRenderer::drawPrimitive(GlShape& sdata, const RenderColor& c, RenderUpdat
     auto h = bbox.sh();
     auto yGl = vp.sh() - y - h;
     RenderRegion viewRegion = {{x, yGl}, {x + w, yGl + h}};
+    auto stencilMode = sdata.geometry.getStencilMode(flag);
+
+    if (!blendShape && stencilMode == GlStencilMode::None) {
+        drawBatchedSolid(sdata, c, depth, viewRegion);
+        return;
+    }
+
+    flushPendingSolid();
 
     GlRenderTask* task = nullptr;
     GlRenderTarget* dstCopyFbo = nullptr;
@@ -200,31 +227,22 @@ void GlRenderer::drawPrimitive(GlShape& sdata, const RenderColor& c, RenderUpdat
     task->setViewMatrix(currentPass()->getViewMatrix());
     task->setDrawDepth(depth);
 
+    auto solidColor = _solidColor(sdata, c, flag);
+
     if (!sdata.geometry.draw(task, &mGpuBuffer, flag)) {
         delete task;
         return;
     }
 
+    task->setVertexColor(solidColor.r / 255.f, solidColor.g / 255.f, solidColor.b / 255.f, solidColor.a / 255.f);
+
     task->setViewport(viewRegion);
 
     GlRenderTask* stencilTask = nullptr;
-    auto stencilMode = sdata.geometry.getStencilMode(flag);
     if (stencilMode != GlStencilMode::None) {
         stencilTask = new GlRenderTask(mPrograms[RT_Stencil], task);
         stencilTask->setDrawDepth(depth);
     }
-
-    float solidInfo[4];
-    _solidUniforms(sdata, c, flag, solidInfo);
-    auto solidOffset = mGpuBuffer.push(solidInfo, sizeof(solidInfo), true);
-
-    task->addBindResource(GlBindingResource{
-        0,
-        task->getProgram()->getUniformBlockIndex("SolidInfo"),
-        mGpuBuffer.getBufferId(),
-        solidOffset,
-        sizeof(solidInfo),
-    });
 
     if (blendShape && dstCopyFbo) {
 #if defined(THORVG_GL_TARGET_GL)
@@ -248,8 +266,143 @@ void GlRenderer::drawPrimitive(GlShape& sdata, const RenderColor& c, RenderUpdat
 }
 
 
+bool GlRenderer::flushPendingSolid()
+{
+    if (!mPendingSolid.pass || !mPendingSolid.sdata) return false;
+    
+    auto task = new GlRenderTask(mPrograms[RT_Color]);
+    task->setViewMatrix(mPendingSolid.pass->getViewMatrix());
+    task->setDrawDepth(mPendingSolid.depth);
+
+    if (!mPendingSolid.sdata->geometry.draw(task, &mGpuBuffer, mPendingSolid.flag)) {
+        delete task;
+        mPendingSolid = {};
+        return false;
+    }
+    auto solidColor = _solidColor(*mPendingSolid.sdata, mPendingSolid.color, mPendingSolid.flag);
+    task->setVertexColor(solidColor.r / 255.f, solidColor.g / 255.f, solidColor.b / 255.f, solidColor.a / 255.f);
+    task->setViewport(mPendingSolid.viewRegion);
+    mPendingSolid.pass->addRenderTask(task);
+
+    mPendingSolid = {};
+    return true;
+}
+
+
+void GlRenderer::drawBatchedSolid(GlShape& sdata, const RenderColor& c, int32_t depth, const RenderRegion& viewRegion)
+{
+    auto pass = currentPass();
+
+    auto buffer = &sdata.geometry.fill;
+    if (buffer->index.empty()) return;
+
+    auto vertexCount = buffer->vertex.count / 2;
+    if (vertexCount == 0) return;
+
+    if (mPendingSolid.pass && mPendingSolid.pass != pass) flushPendingSolid();
+
+    auto canAppend = mSolidColorBatch.task &&
+                     mSolidColorBatch.pass == pass &&
+                     pass->lastTask() == mSolidColorBatch.task &&
+                     mSolidColorBatch.task->getProgram() == mPrograms[RT_Color];
+
+    auto setPending = [&]() {
+        // Defer the first solid only. If the next draw is another solid, we create a batch.
+        // If not, we'll flush this pending solid through the normal path (no regression).
+        mPendingSolid.pass = pass;
+        mPendingSolid.sdata = &sdata;
+        mPendingSolid.color = c;
+        mPendingSolid.flag = RenderUpdateFlag::Color;
+        mPendingSolid.depth = depth;
+        mPendingSolid.viewRegion = viewRegion;
+    };
+
+    auto buildVertices = [](Array<GlSolidBatchVertex>& out, const GlGeometryBuffer* src, uint32_t vcount, const RenderColor& solidColor) {
+        out.reserve(out.count + vcount);
+        for (uint32_t i = 0; i < vcount; ++i) {
+            out.push({
+                src->vertex[i * 2 + 0],
+                src->vertex[i * 2 + 1],
+                solidColor.r, solidColor.g, solidColor.b, solidColor.a
+            });
+        }
+    };
+
+    auto buildIndices = [](Array<uint32_t>& out, const GlGeometryBuffer* src, uint32_t baseVertex) {
+        out.reserve(out.count + src->index.count);
+        for (uint32_t i = 0; i < src->index.count; ++i) {
+            out.push(src->index[i] + baseVertex);
+        }
+    };
+
+    if (!mPendingSolid.pass && !canAppend){ // The first task in a new batch
+        setPending();
+        return;
+    } 
+
+    if (mPendingSolid.pass) { // Apply pending drawing task and create a new batch
+        auto pendingBuffer = &mPendingSolid.sdata->geometry.fill;
+        auto pendingVertexCount = pendingBuffer->vertex.count / 2;
+
+        auto pendingColor = _solidColor(*mPendingSolid.sdata, mPendingSolid.color, mPendingSolid.flag);
+        auto solidColor = _solidColor(sdata, c, RenderUpdateFlag::Color);
+
+        Array<GlSolidBatchVertex> vertices;
+        Array<uint32_t> indices;
+        buildVertices(vertices, pendingBuffer, pendingVertexCount, pendingColor);
+        buildVertices(vertices, buffer, vertexCount, solidColor);
+        buildIndices(indices, pendingBuffer, 0);
+        buildIndices(indices, buffer, pendingVertexCount);
+
+        auto vertexOffset = mGpuBuffer.push(vertices.data, vertices.count * sizeof(GlSolidBatchVertex));
+        auto indexOffset = mGpuBuffer.pushIndex(indices.data, indices.count * sizeof(uint32_t));
+
+        auto task = new GlRenderTask(mPrograms[RT_Color]);
+        task->setViewMatrix(pass->getViewMatrix());
+        task->setDrawDepth(depth);
+        task->addVertexLayout(GlVertexLayout{0, 2, sizeof(GlSolidBatchVertex), vertexOffset});
+        task->addVertexLayout(GlVertexLayout{1, 4, sizeof(GlSolidBatchVertex), vertexOffset + 2 * sizeof(float), GL_UNSIGNED_BYTE, GL_TRUE});
+        task->setDrawRange(indexOffset, indices.count);
+
+        auto merged = mPendingSolid.viewRegion;
+        merged.add(viewRegion);
+        task->setViewport(merged);
+        pass->addRenderTask(task);
+
+        // Batch is different from pending
+        mSolidColorBatch.pass = pass;
+        mSolidColorBatch.task = task;
+        mSolidColorBatch.vertexCount = vertices.count;
+        mSolidColorBatch.indexOffset = indexOffset;
+        mSolidColorBatch.indexCount = indices.count;
+
+        mPendingSolid = {};
+    } else { // Push into batch
+        auto solidColor = _solidColor(sdata, c, RenderUpdateFlag::Color);
+        Array<GlSolidBatchVertex> vertices;
+        Array<uint32_t> indices;
+        buildVertices(vertices, buffer, vertexCount, solidColor);
+        buildIndices(indices, buffer, mSolidColorBatch.vertexCount);
+
+        mGpuBuffer.push(vertices.data, vertices.count * sizeof(GlSolidBatchVertex));
+        mGpuBuffer.pushIndex(indices.data, indices.count * sizeof(uint32_t));
+
+        mSolidColorBatch.vertexCount += vertices.count;
+        mSolidColorBatch.indexCount += indices.count;
+        mSolidColorBatch.task->setDrawRange(mSolidColorBatch.indexOffset, mSolidColorBatch.indexCount);
+
+        auto merged = mSolidColorBatch.task->getViewport();
+        merged.add(viewRegion);
+        mSolidColorBatch.task->setViewport(merged);
+        return;
+    }
+}
+
+
 void GlRenderer::drawPrimitive(GlShape& sdata, const Fill* fill, RenderUpdateFlag flag, int32_t depth)
 {
+    flushPendingSolid();
+
     auto blendShape = (mBlendMethod != BlendMethod::Normal);
     auto vp = currentPass()->getViewport();
     auto bbox = blendShape ? sdata.geometry.getBounds() : sdata.geometry.viewport;
@@ -931,6 +1084,8 @@ bool GlRenderer::sync()
     GL_CHECK(glEnable(GL_DEPTH_TEST));
     GL_CHECK(glDepthFunc(GL_GREATER));
 
+    flushPendingSolid();
+
     auto task = mRenderPassStack.first()->endRenderPass<GlBlitTask>(mPrograms[RT_Blit], mTargetFboId);
 
     prepareBlitTask(task);
@@ -1037,6 +1192,8 @@ bool GlRenderer::beginComposite(RenderCompositor* cmp, MaskMethod method, uint8_
 {
     if (!cmp) return false;
 
+    flushPendingSolid();
+
     auto glCmp = static_cast<GlCompositor*>(cmp);
     glCmp->method = method;
     glCmp->opacity = opacity;
@@ -1056,6 +1213,8 @@ bool GlRenderer::endComposite(RenderCompositor* cmp)
 {
     if (mComposeStack.empty()) return false;
     if (mComposeStack.last() != cmp) return false;
+
+    flushPendingSolid();
 
     // end current render pass;
     auto curCmp  = mComposeStack.last();
@@ -1129,6 +1288,8 @@ bool GlRenderer::renderImage(void* data)
 
     if (currentPass()->isEmpty() || !sdata->validFill) return true;
 
+    flushPendingSolid();
+
     auto vp = currentPass()->getViewport();
     auto bbox = sdata->geometry.viewport;
     bbox.intersect(vp);
@@ -1197,7 +1358,10 @@ bool GlRenderer::renderShape(RenderData data)
     if (sdata->validFill) drawDepth1 = currentPass()->nextDrawDepth();
     if (sdata->validStroke) drawDepth2 = currentPass()->nextDrawDepth();
 
-    if (!sdata->clips.empty()) drawClip(sdata->clips);
+    if (!sdata->clips.empty()) {
+        flushPendingSolid();
+        drawClip(sdata->clips);
+    }
 
     auto processFill = [&]() {
         if (sdata->validFill) {
@@ -1427,8 +1591,9 @@ GlRenderer* GlRenderer::gen(TVG_UNUSED uint32_t threads)
 }
 
 
-static void _solidUniforms(GlShape& sdata, const RenderColor& c, RenderUpdateFlag flag, float* solidInfo)
+static RenderColor _solidColor(const GlShape& sdata, const RenderColor& c, RenderUpdateFlag flag)
 {
+    RenderColor solidColor = c;
     auto a = MULTIPLY(c.a, sdata.opacity);
 
     if (flag & RenderUpdateFlag::Stroke) {
@@ -1438,8 +1603,7 @@ static void _solidUniforms(GlShape& sdata, const RenderColor& c, RenderUpdateFla
             a = MULTIPLY(a, static_cast<uint8_t>(alpha * 255));
         }
     }
-    solidInfo[0] = c.r / 255.f;
-    solidInfo[1] = c.g / 255.f;
-    solidInfo[2] = c.b / 255.f;
-    solidInfo[3] = a / 255.f;
+
+    solidColor.a = a;
+    return solidColor;
 }
