@@ -26,19 +26,15 @@
 #include "tvgWgBindGroups.h"
 
 struct WgContext {
-    // external webgpu handles
     WGPUInstance instance{};
-    WGPUAdapter adapter{};
     WGPUDevice device{};
-    // common webgpu handles
     WGPUQueue queue{};
-    WGPUTextureFormat preferredFormat{};
-    // shared webgpu assets
-    WGPUSampler samplerNearestRepeat{};
-    WGPUSampler samplerLinearRepeat{};
-    WGPUSampler samplerLinearMirror{};
-    WGPUSampler samplerLinearClamp{};
-    // bind groups layouts
+    WGPUTextureFormat format = WGPUTextureFormat_BGRA8Unorm;
+    WGPUSampler samplerNearestClamp;
+    WGPUSampler samplerNearestRepeat;
+    WGPUSampler samplerLinearRepeat;
+    WGPUSampler samplerLinearMirror;
+    WGPUSampler samplerLinearClamp;
     WgBindGroupLayouts layouts;
 
     void initialize(WGPUInstance instance, WGPUDevice device);

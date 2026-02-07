@@ -123,20 +123,22 @@ static void _rasterBlendingPolygonImageSegment(SwSurface* surface, const SwImage
 
                 px = *(sbuf + (vv * image.stride) + uu);
 
-                // horizontal interpolate
-                if (iru < sw) {
-                    int px2 = *(sbuf + (vv * image.stride) + iru);
-                    px = INTERPOLATE(px, px2, ar);
-                }
-                // vertical interpolate
-                if (irv < sh) {
-                    int px2 = *(sbuf + (irv * image.stride) + uu);
+                if (image.filter == FilterMethod::Bilinear) {
                     // horizontal interpolate
                     if (iru < sw) {
-                        int px3 = *(sbuf + (irv * image.stride) + iru);
-                        px2 = INTERPOLATE(px2, px3, ar);
+                        int px2 = *(sbuf + (vv * image.stride) + iru);
+                        px = INTERPOLATE(px, px2, ar);
                     }
-                    px = INTERPOLATE(px, px2, ab);
+                    // vertical interpolate
+                    if (irv < sh) {
+                        int px2 = *(sbuf + (irv * image.stride) + uu);
+                        // horizontal interpolate
+                        if (iru < sw) {
+                            int px3 = *(sbuf + (irv * image.stride) + iru);
+                            px2 = INTERPOLATE(px2, px3, ar);
+                        }
+                        px = INTERPOLATE(px, px2, ab);
+                    }
                 }
 
                 // anti-aliasing
@@ -224,21 +226,24 @@ static void _rasterPolygonImageSegment32(SwSurface* surface, const SwImage& imag
 
                 px = *(sbuf + (vv * image.stride) + uu);
 
-                // horizontal interpolate
-                if (iru < sw) {
-                    int px2 = *(sbuf + (vv * image.stride) + iru);
-                    px = INTERPOLATE(px, px2, ar);
-                }
-                // vertical interpolate
-                if (irv < sh) {
-                    int px2 = *(sbuf + (irv * image.stride) + uu);
+                if (image.filter == FilterMethod::Bilinear) {
                     // horizontal interpolate
                     if (iru < sw) {
-                        int px3 = *(sbuf + (irv * image.stride) + iru);
-                        px2 = INTERPOLATE(px2, px3, ar);
+                        int px2 = *(sbuf + (vv * image.stride) + iru);
+                        px = INTERPOLATE(px, px2, ar);
                     }
-                    px = INTERPOLATE(px, px2, ab);
+                    // vertical interpolate
+                    if (irv < sh) {
+                        int px2 = *(sbuf + (irv * image.stride) + uu);
+                        // horizontal interpolate
+                        if (iru < sw) {
+                            int px3 = *(sbuf + (irv * image.stride) + iru);
+                            px2 = INTERPOLATE(px2, px3, ar);
+                        }
+                        px = INTERPOLATE(px, px2, ab);
+                    }
                 }
+
                 uint32_t src;
                 if (matting) {
                     auto a = alpha(cmp);
