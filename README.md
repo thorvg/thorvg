@@ -31,7 +31,7 @@
   <img width="800" height="auto" src="https://github.com/thorvg/thorvg.site/blob/main/readme/logo/512/thorvg-banner.png">
 </p>
 
-**Thor Vector Graphics** is an **production-ready** vector graphics engine designed for creating **interactive apps and creative tools**. It combines **high performance** with **lightweight efficiency**, as Thor embodies a dual meaning—_symbolizing both immense strength and lightning-fast agility_. Embracing the philosophy of _simplicity leads to reliability_, the ThorVG project provides **intuitive, user-friendly interfaces** while maintaining a **compact footprint** and **minimal overhead**. <br />
+**Thor Vector Graphics** is an **production-ready** vector graphics engine designed for creating **interactive apps** and **creative tools**. It combines **high performance** with **lightweight efficiency**, as Thor embodies a dual meaning—_symbolizing both immense strength and lightning-fast agility_. Embracing the philosophy of _simplicity leads to reliability_, the ThorVG project provides **intuitive, user-friendly interfaces** while maintaining a **compact footprint** and **minimal overhead**. <br />
 <br />
 The following primitives are supported by ThorVG: <br />
  
@@ -163,7 +163,7 @@ ThorVG is designed to be portable across a wide range of devices, including smal
     - [Playground](#playground)
   - [Tools](#tools)
     - [ThorVG Viewer](#thorvg-viewer)
-    - [ThorVG VS Code LiveView](#thorvg-vs-code-liveview)
+    - [VS Code LiveView](#vs-code-liveview)
     - [Lottie to GIF](#lottie-to-gif)
     - [SVG to PNG](#svg-to-png)
   - [Related Projects](#related-projects)
@@ -502,7 +502,7 @@ ThorVG provides a resource verification tool for the ThorVG engine. The [ThorVG 
   <img width="700" height="auto" src="https://github.com/thorvg/thorvg/assets/3711518/edadcc5e-3bbf-489d-a9a1-9570079c7d55"/>
 </p>
 
-### ThorVG VS Code LiveView
+### VS Code LiveView
 A [Visual Studio Code extension](https://marketplace.visualstudio.com/items?itemName=thorvg.thorvg-liveview) that integrates ThorVG Viewer for previewing Lottie animations and SVG files directly inside the editor.
 </br>
 
@@ -667,7 +667,7 @@ If you’re interested in partnering with ThorVG, we’d love to hear from you. 
 <br />
 <br />
 ## Sponsors
-We sincerely thank our financial sponsors for their generous support, which drives the growth and innovation of the ThorVG project. Your contributions help us make ThorVG more powerful, efficient, and accessible for everyone.
+We sincerely thank our sponsors and supporters who help drive the continuous evolution of ThorVG. Your support is more than a contribution — it is an investment in a high-performance, accessible graphics engine built for real-world production.
 <br/>
 <br/>
 <p align="center", href="https://www.lottiefiles.com">
@@ -676,10 +676,11 @@ We sincerely thank our financial sponsors for their generous support, which driv
   </a>
 </p>
 <br/>
-We are also seeking your support to ensure the continued development of the ThorVG project. Your generous donations will help cover operational costs and contribute to the growth of this open-source project. Even a small contribution can make a big difference in securing the future of ThorVG!
+ThorVG is designed to remain open, accessible, and community-driven. To help ensure long-term sustainability and faster technical iteration, we provide additional support channels for our corporate and professional sponsors.
 <br/>
 <br/>
 
+* [GitHub Sponsors](https://github.com/sponsors/thorvg)
 * [Open Collective](https://opencollective.com/thorvg)
 
 [Back to contents](#contents)
