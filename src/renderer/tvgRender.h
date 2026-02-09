@@ -314,8 +314,7 @@ struct RenderPath
 
     /* Optimize path in screen space with merging collinear lines,
        collapsing zero length lines, and removing unnecessary cubic beziers. */
-    void optimizeWG(RenderPath& out, const Matrix& matrix) const;
-    void optimizeGL(RenderPath& out, const Matrix& matrix) const;
+    void optimize(RenderPath& out, const Matrix& matrix) const;
     bool bounds(const Matrix* m, BBox& box);
 };
 

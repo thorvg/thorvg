@@ -41,6 +41,7 @@ private:
     WgPipelines pipelines{};
     // stage buffers
     WgStageBufferGeometry stageBufferGeometry{};
+    WgStageBufferSolidColor stageBufferSolidColor{};
     WgStageBufferUniform<WgShaderTypePaintSettings> stageBufferPaint;
     // global stencil/depth buffer handles
     WGPUTexture texDepthStencil{};
@@ -50,6 +51,8 @@ private:
     // global view matrix handles
     WGPUBuffer bufferViewMat{};
     WGPUBindGroup bindGroupViewMat{};
+    uint32_t viewMatWidth{};
+    uint32_t viewMatHeight{};
     // opacity value pool
     WGPUBuffer bufferOpacities[256]{};
     WGPUBindGroup bindGroupOpacities[256]{};
@@ -74,6 +77,7 @@ private:
 
     // base meshes draw
     void drawMesh(WgContext& context, WgMeshData* meshData);
+    void drawMeshSolid(WgContext& context, WgMeshData* meshData, uint32_t solidColorInd);
     void drawMeshImage(WgContext& context, WgMeshData* meshData);
 
     // shapes
@@ -99,6 +103,7 @@ private:
     void markupClipPath(WgContext& context, WgRenderDataShape* renderData);
     void renderClipPath(WgContext& context, WgRenderDataPaint* paint);
     void clearClipPath(WgContext& context, WgRenderDataPaint* paint);
+    void updateViewMat(WgContext& context, uint32_t width, uint32_t height);
 public:
     void initialize(WgContext& context, uint32_t width, uint32_t height);
     void initPools(WgContext& context);
