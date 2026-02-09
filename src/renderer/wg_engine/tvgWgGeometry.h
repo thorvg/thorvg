@@ -36,7 +36,7 @@ struct WgMeshData {
     size_t ioffset{};
 
     void bbox(const Point pmin, const Point pmax);
-    void imageBox(float w, float h);
+    void imageBox(float w, float h, const Matrix& transform);
     void blitBox();
     void clear();
 
