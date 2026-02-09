@@ -24,21 +24,9 @@
 #include "tvgMath.h"
 
 
-WgStroker::WgStroker(WgMeshData* buffer, float width, StrokeCap cap, StrokeJoin join) 
-    : mBuffer(buffer), mWidth(width), mCap(cap), mJoin(join)
+WgStroker::WgStroker(WgMeshData* buffer, float width, StrokeCap cap, StrokeJoin join, float miterLimit)
+    : mBuffer(buffer), mWidth(width), mMiterLimit(miterLimit), mCap(cap), mJoin(join)
 {
-}
-
-
-void WgStroker::run(const RenderShape& rshape, const RenderPath& path, const Matrix& m)
-{
-    mMiterLimit = rshape.strokeMiterlimit();
-    mCap = rshape.strokeCap();
-    mJoin = rshape.strokeJoin();
-
-    RenderPath dashed;
-    if (rshape.strokeDash(dashed)) run(dashed, m);
-    else run(path, m);
 }
 
 
@@ -53,11 +41,10 @@ BBox WgStroker::getBBox() const
     return {mLeftTop, mRightBottom};
 }
 
-void WgStroker::run(const RenderPath& path, const Matrix& m)
+void WgStroker::run(const RenderPath& path)
 {
     mBuffer->vbuffer.reserve(path.pts.count * 4 + 16);
     mBuffer->ibuffer.reserve(path.pts.count * 3);
-    mScale = tvg::scaling(m);
 
     auto validStrokeCap = false;
     auto pts = path.pts.data;
@@ -83,7 +70,7 @@ void WgStroker::run(const RenderPath& path, const Matrix& m)
             } break;
             case PathCommand::CubicTo: {
                 validStrokeCap = true;
-                cubicTo(pts[0], pts[1], pts[2], m);
+                cubicTo(pts[0], pts[1], pts[2]);
                 pts += 3;
             } break;
             case PathCommand::Close: {
@@ -174,17 +161,10 @@ void WgStroker::lineTo(const Point& curr)
 }
 
 
-void WgStroker::cubicTo(const Point& cnt1, const Point& cnt2, const Point& end, const Matrix& m)
+void WgStroker::cubicTo(const Point& cnt1, const Point& cnt2, const Point& end)
 {
     Bezier curve {mState.prevPt, cnt1, cnt2, end};
-
-    Bezier relCurve {curve.start, curve.ctrl1, curve.ctrl2, curve.end};
-    relCurve.start *= m;
-    relCurve.ctrl1 *= m;
-    relCurve.ctrl2 *= m;
-    relCurve.end *= m;
-
-    auto count = relCurve.segments();
+    auto count = curve.segments();
     auto step = 1.f / count;
 
     for (uint32_t i = 0; i <= count; i++) {
@@ -260,7 +240,7 @@ void WgStroker::round(const Point &prev, const Point& curr, const Point& center)
     }
 
     auto arcAngle = endAngle - startAngle;
-    auto count = tvg::arcSegmentsCnt(arcAngle, radius() * mScale);
+    auto count = tvg::arcSegmentsCnt(arcAngle, radius());
 
     auto c = mBuffer->vbuffer.count;  mBuffer->vbuffer.push(center);
     auto pi = mBuffer->vbuffer.count; mBuffer->vbuffer.push(prev);
@@ -287,7 +267,7 @@ void WgStroker::round(const Point &prev, const Point& curr, const Point& center)
 
 void WgStroker::roundPoint(const Point &p)
 {
-    auto count = tvg::arcSegmentsCnt(2.0f * MATH_PI, radius() * mScale);
+    auto count = tvg::arcSegmentsCnt(2.0f * MATH_PI, radius());
     auto c = mBuffer->vbuffer.count; mBuffer->vbuffer.push(p);
     auto step = 2.0f * MATH_PI / (count - 1);
 
@@ -434,7 +414,7 @@ WgBWTessellator::WgBWTessellator(WgMeshData* buffer): mBuffer(buffer)
 }
 
 
-void WgBWTessellator::tessellate(const RenderPath& path, const Matrix& matrix)
+void WgBWTessellator::tessellate(const RenderPath& path)
 {
     if (path.pts.count <= 2) return;
 
@@ -494,7 +474,7 @@ void WgBWTessellator::tessellate(const RenderPath& path, const Matrix& matrix)
                     updateConvexity(e3);
                 }
 
-                auto stepCount = (curve * matrix).segments();
+                auto stepCount = curve.segments();
                 if (stepCount <= 1) stepCount = 2;
                 float step = 1.f / stepCount;
 

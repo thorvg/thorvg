@@ -43,15 +43,20 @@ enum class WgRenderRasterType { Solid = 0, Gradient, Image };
 struct WgRenderSettings
 {
     uint32_t bindGroupInd{};
+    // Solid path: per-draw index into the instance-rate vec4 color stream.
+    uint32_t solidColorInd{};
     WgShaderTypePaintSettings settings;
+    WgShaderTypeVec4f solidColor;
     WgImageData gradientData;
     WgRenderSettingsType fillType{};
     WgRenderRasterType rasterType{};
     float opacityMultiplier = 1.0f;
+    float opacity = 1.0f;
     bool skip{};
 
-    void update(WgContext& context, const tvg::Matrix& transform, tvg::ColorSpace cs, uint8_t opacity);
-    void update(WgContext& context, const Fill* fill);
+    void bakeSolidColor();
+    void update(WgContext& context, tvg::ColorSpace cs, uint8_t opacity);
+    void update(WgContext& context, const Fill* fill, const Matrix* modelTransform, bool updateColorRamp);
     void update(WgContext& context, const RenderColor& c);
     void release(WgContext& context);
 };
@@ -85,7 +90,7 @@ struct WgRenderDataShape: public WgRenderDataPaint
     BBox bbox;
 
     void updateBBox(BBox bb);
-    void updateAABB(const Matrix& matrix);
+    void updateAABB() { aabb = bbox; }
     void updateVisibility(const RenderShape& rshape, uint8_t opacity);
     void updateMeshes(const RenderShape& rshape, RenderUpdateFlag flag, const Matrix& matrix);
     void releaseMeshes();
@@ -109,7 +114,7 @@ struct WgRenderDataPicture: public WgRenderDataPaint
     WgImageData imageData{};
     WgMeshData meshData{};
 
-    void updateSurface(WgContext& context, const RenderSurface* surface);
+    void updateSurface(WgContext& context, const RenderSurface* surface, const Matrix& transform, bool updateTexture);
     void release(WgContext& context) override;
     Type type() override { return Type::Picture; };
 };
@@ -173,6 +178,22 @@ public:
     void flush(WgContext& context);
 };
 
+class WgStageBufferSolidColor {
+private:
+    Array<WgShaderTypeVec4f> vbuffer;
+public:
+    WGPUBuffer vbuffer_gpu{};
+
+    uint32_t append(const WgShaderTypeVec4f& value) {
+        vbuffer.push(value);
+        return vbuffer.count - 1;
+    }
+
+    void release(WgContext& context);
+    void clear();
+    void flush(WgContext& context);
+};
+
 // typed uniform stage buffer with related bind groups handling
 template<typename T>
 class WgStageBufferUniform {
@@ -223,8 +244,8 @@ public:
 struct WgIntersector
 {
     bool isPointInTriangle(const Point& p, const Point& a, const Point& b, const Point& c);
-    bool isPointInTris(const Point& p, const WgMeshData& mesh, const Matrix& tr);
-    bool isPointInMesh(const Point& p, const WgMeshData& mesh, const Matrix& tr);
+    bool isPointInTris(const Point& p, const WgMeshData& mesh);
+    bool isPointInMesh(const Point& p, const WgMeshData& mesh);
     bool intersectClips(const Point& pt, const Array<WgRenderDataPaint*>& clips);
     bool intersectShape(const RenderRegion region, const WgRenderDataShape* shape);
     bool intersectImage(const RenderRegion region, const WgRenderDataPicture* image);
