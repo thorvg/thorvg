@@ -472,6 +472,7 @@ void LottieParser::registerSlot(LottieObject* obj, const char* sid, LottieProper
     ARRAY_FOREACH(p, comp->slots) {
         if ((*p)->sid != val) continue;
         (*p)->pairs.push({obj});
+        prop.sid = val;
         return;
     }
     comp->slots.push(new LottieSlot(context.layer, context.parent, val, obj, prop.type));
