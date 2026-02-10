@@ -313,6 +313,23 @@ bool LottieParser::getValue(Point& pt)
     return true;
 }
 
+bool LottieParser::getValue(Point3& pt)
+{
+    if (peekType() == kNullType) return false;
+    if (peekType() == kArrayType) {
+        enterArray();
+        if (!nextArrayValue()) return false;
+    }
+
+    pt.x = getFloat();
+    pt.y = getFloat();
+    pt.z = getFloat();
+
+    while (nextArrayValue())
+        getFloat();  // drop
+
+    return true;
+}
 
 bool LottieParser::getValue(RGB32& color)
 {
@@ -565,7 +582,6 @@ LottieEllipse* LottieParser::parseEllipse()
     return ellipse;
 }
 
-
 LottieTransform* LottieParser::parseTransform(bool ddd)
 {
     auto transform = new LottieTransform;
@@ -573,7 +589,7 @@ LottieTransform* LottieParser::parseTransform(bool ddd)
     context.parent = transform;
 
     if (ddd) {
-        transform->rotationEx = new LottieTransform::RotationEx;
+        transform->ddd = new LottieTransform::Dimension3;
         TVGLOG("LOTTIE", "3D transform(ddd) is not totally compatible.");
     }
 
@@ -601,9 +617,10 @@ LottieTransform* LottieParser::parseTransform(bool ddd)
         else if (KEY_AS("s")) parseProperty(transform->scale, transform);
         else if (KEY_AS("r")) parseProperty(transform->rotation, transform);
         else if (KEY_AS("o")) parseProperty(transform->opacity, transform);
-        else if (transform->rotationEx && KEY_AS("rx")) parseProperty(transform->rotationEx->x);
-        else if (transform->rotationEx && KEY_AS("ry")) parseProperty(transform->rotationEx->y);
-        else if (transform->rotationEx && KEY_AS("rz")) parseProperty(transform->rotation);
+        else if (transform->ddd && KEY_AS("rx")) parseProperty(transform->ddd->rx);
+        else if (transform->ddd && KEY_AS("ry")) parseProperty(transform->ddd->ry);
+        else if (transform->ddd && KEY_AS("rz")) parseProperty(transform->rotation);
+        else if (transform->ddd && KEY_AS("or")) parseProperty(transform->ddd->orient);
         else if (KEY_AS("sk")) parseProperty(transform->skewAngle, transform);
         else if (KEY_AS("sa")) parseProperty(transform->skewAxis, transform);
         else skip();

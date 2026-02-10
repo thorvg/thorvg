@@ -69,6 +69,13 @@ struct LottieExpressions
     }
 
     template<typename Property>
+    bool result(float frameNo, Point3& out, LottieExpression* exp)
+    {
+        // TODO:
+        return false;
+    }
+
+    template<typename Property>
     bool result(float frameNo, RGB32& out, LottieExpression* exp)
     {
         auto bm_rt = evaluate(frameNo, exp);

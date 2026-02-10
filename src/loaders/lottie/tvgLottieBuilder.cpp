@@ -37,23 +37,60 @@
 static bool _buildComposition(LottieComposition* comp, LottieLayer* parent);
 static bool _draw(LottieGroup* parent, LottieShape* shape, RenderContext* ctx);
 
+static void _dimension3d(LottieTransform* transform, float frameNo, Matrix& m, float angle, Tween& tween, LottieExpressions* exps)
+{
+    auto x = deg2rad(transform->ddd->rx(frameNo, tween, exps));
+    auto y = deg2rad(transform->ddd->ry(frameNo, tween, exps));
+    auto z = deg2rad(transform->rotation(frameNo, tween, exps)) + angle;
+
+    auto sx = sinf(x), sy = sinf(y), sz = sinf(z);
+    auto cx = cosf(x), cy = cosf(y), cz = cosf(z);
+
+    auto ri00 = cy * cz;
+    auto ri01 = -cy * sz;
+    auto ri10 = sx * sy * cz + cx * sz;
+    auto ri11 = -sx * sy * sz + cx * cz;
+
+    auto o = transform->ddd->orient(frameNo, tween, exps);
+
+    // fast-path
+    if (o.x == 0.0f && o.y == 0.0f && o.z == 0.0f) {
+        m.e11 = ri00;
+        m.e12 = ri01;
+        m.e21 = ri10;
+        m.e22 = ri11;
+        return;
+    }
+
+    auto ri02 = sy;
+    auto ri12 = -sx * cy;
+
+    auto ox = deg2rad(o.x);
+    auto oy = deg2rad(o.y);
+    auto oz = deg2rad(o.z);
+
+    auto sox = sinf(ox), soy = sinf(oy), soz = sinf(oz);
+    auto cox = cosf(ox), coy = cosf(oy), coz = cosf(oz);
+
+    auto ro00 = coy * coz;
+    auto ro01 = -coy * soz;
+    auto ro10 = sox * soy * coz + cox * soz;
+    auto ro11 = -sox * soy * soz + cox * coz;
+    auto ro20 = -cox * soy * coz + sox * soz;
+    auto ro21 = cox * soy * soz + sox * coz;
+
+    m.e11 = ri00 * ro00 + ri01 * ro10 + ri02 * ro20;
+    m.e12 = ri00 * ro01 + ri01 * ro11 + ri02 * ro21;
+    m.e21 = ri10 * ro00 + ri11 * ro10 + ri12 * ro20;
+    m.e22 = ri10 * ro01 + ri11 * ro11 + ri12 * ro21;
+}
 
 static void _rotate(LottieTransform* transform, float frameNo, Matrix& m, float angle, Tween& tween, LottieExpressions* exps)
 {
-    //rotation xyz
-    if (transform->rotationEx) {
-        auto radianX = deg2rad(transform->rotationEx->x(frameNo, tween, exps));
-        auto radianY = deg2rad(transform->rotationEx->y(frameNo, tween, exps));
-        auto radianZ = deg2rad(transform->rotation(frameNo, tween, exps)) + angle;
-        auto cx = cosf(radianX), sx = sinf(radianX);
-        auto cy = cosf(radianY), sy = sinf(radianY);;
-        auto cz = cosf(radianZ), sz = sinf(radianZ);;
-        m.e11 = cy * cz;
-        m.e12 = -cy * sz;
-        m.e21 = sx * sy * cz + cx * sz;
-        m.e22 = -sx * sy * sz + cx * cz;
-    //rotation z
+    if (transform->ddd) {
+        _dimension3d(transform, frameNo, m, angle, tween, exps);
     } else {
+        // rotation z
         auto degree = transform->rotation(frameNo, tween, exps) + angle;
         if (degree == 0.0f) return;
         auto radian = deg2rad(degree);
