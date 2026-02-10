@@ -960,8 +960,14 @@ void LottieBuilder::updateURLFont(LottieLayer* layer, float frameNo, LottieText*
     paint->fill(color.r, color.g, color.b);
     paint->size(doc.size * 75.0f); //1 pt = 1/72; 1 in = 96 px; -> 72/96 = 0.75
     paint->text(buf);
-    paint->align(doc.justify, 0.0f);
-    paint->translate(0.0f, doc.size * -100.0f);
+    paint->layout(doc.bbox.size.x, doc.bbox.size.y);
+    paint->translate(doc.bbox.pos.x, doc.bbox.pos.y);
+
+    //align the text to the base line
+    TextMetrics metrics;
+    paint->metrics(metrics);
+    paint->align(doc.justify, metrics.ascent / (metrics.ascent - metrics.descent));
+
     layer->scene->add(paint);
 
     //outline
@@ -1221,6 +1227,8 @@ void LottieBuilder::updateText(LottieLayer* layer, float frameNo)
 
     auto text = static_cast<LottieText*>(layer->children.first());
     auto& doc = text->doc(frameNo, exps);
+    if (!doc.text) return;
+
     if (text->font && text->font->origin == LottieFont::Origin::Local && !text->font->chars.empty()) {
         updateLocalFont(layer, frameNo, text, doc);
     } else {
