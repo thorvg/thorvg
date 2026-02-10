@@ -130,6 +130,23 @@ static inline RGB32 lerp(const RGB32& s, const RGB32& e, float t)
     };
 }
 
+struct Point3
+{
+    float x = 0.0f, y = 0.0f, z = 0.0f;
+};
+
+static inline Point3 operator+(const Point3& a, const Point3& b)
+{
+    return {a.x + b.x, a.y + b.y, a.z + b.z};
+}
+static inline Point3 operator-(const Point3& a, const Point3& b)
+{
+    return {a.x - b.x, a.y - b.y, a.z - b.z};
+}
+static inline Point3 operator*(const Point3& a, float t)
+{
+    return {a.x * t, a.y * t, a.z * t};
+}
 }
 
 #endif //_TVG_LOTTIE_COMMON_
