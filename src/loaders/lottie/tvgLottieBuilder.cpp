@@ -960,7 +960,7 @@ void LottieBuilder::updateURLFont(LottieLayer* layer, float frameNo, LottieText*
     paint->fill(color.r, color.g, color.b);
     paint->size(doc.size * 75.0f); //1 pt = 1/72; 1 in = 96 px; -> 72/96 = 0.75
     paint->text(buf);
-    paint->align(-doc.justify, 0.0f);
+    paint->align(doc.justify, 0.0f);
     paint->translate(0.0f, doc.size * -100.0f);
     layer->scene->add(paint);
 
@@ -1138,7 +1138,7 @@ void LottieBuilder::updateLocalFont(LottieLayer* layer, float frameNo, LottieTex
 
             //horizontal alignment
             Point layout = {doc.bbox.pos.x, doc.bbox.pos.y + ascent - doc.shift};
-            layout.x += doc.justify * (-1.0f * doc.bbox.size.x + ctx.cursor.x * ctx.scale);
+            layout.x += doc.justify * (doc.bbox.size.x - ctx.cursor.x * ctx.scale);
 
             //new text group, single scene based on text-grouping
             ctx.textScene->add(ctx.lineScene);
