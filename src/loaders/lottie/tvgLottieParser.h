@@ -82,6 +82,7 @@ private:
     LottieEllipse* parseEllipse();
     LottieSolidFill* parseSolidFill();
     LottieTransform* parseTransform(bool ddd = false);
+    LottieTransform::Orientation* parseOrientation();
     LottieSolidStroke* parseSolidStroke();
     LottieGradientStroke* parseGradientStroke();
     LottiePath* parsePath();

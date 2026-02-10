@@ -566,6 +566,87 @@ LottieEllipse* LottieParser::parseEllipse()
 }
 
 
+LottieTransform::Orientation* LottieParser::parseOrientation()
+{
+    auto orient = new LottieTransform::Orientation;
+
+    enterObject();
+    while (auto key = nextObjectKey()) {
+        if (KEY_AS("k")) {
+            if (peekType() == kArrayType) {
+                enterArray();
+                while (nextArrayValue()) {
+                    //keyframes
+                    if (peekType() == kObjectType) {
+                        Point inTangent, outTangent;
+                        const char* interpolatorKey = nullptr;
+                        auto& frameX = orient->x.newFrame();
+                        auto& frameY = orient->y.newFrame();
+                        auto& frameZ = orient->z.newFrame();
+                        auto interpolator = false;
+
+                        enterObject();
+                        while (auto key = nextObjectKey()) {
+                            if (KEY_AS("i")) {
+                                interpolator = true;
+                                getInterpolatorPoint(inTangent);
+                            } else if (KEY_AS("o")) {
+                                getInterpolatorPoint(outTangent);
+                            } else if (KEY_AS("n")) {
+                                if (peekType() == kStringType) {
+                                    interpolatorKey = getString();
+                                } else {
+                                    enterArray();
+                                    while (nextArrayValue()) {
+                                        if (!interpolatorKey) interpolatorKey = getString();
+                                        else skip();
+                                    }
+                                }
+                            } else if (KEY_AS("t")) {
+                                frameX.no = frameY.no = frameZ.no = getFloat();
+                            } else if (KEY_AS("s")) {
+                                enterArray();
+                                if (nextArrayValue()) frameX.value = getFloat();
+                                if (nextArrayValue()) frameY.value = getFloat();
+                                if (nextArrayValue()) frameZ.value = getFloat();
+                                while (nextArrayValue()) getFloat();
+                            } else if (KEY_AS("e")) {
+                                auto& frameX2 = orient->x.nextFrame();
+                                auto& frameY2 = orient->y.nextFrame();
+                                auto& frameZ2 = orient->z.nextFrame();
+                                enterArray();
+                                if (nextArrayValue()) frameX2.value = getFloat();
+                                if (nextArrayValue()) frameY2.value = getFloat();
+                                if (nextArrayValue()) frameZ2.value = getFloat();
+                                while (nextArrayValue()) getFloat();
+                            } else if (KEY_AS("h")) {
+                                frameX.hold = frameY.hold = frameZ.hold = getInt();
+                            } else skip();
+                        }
+
+                        if (interpolator) {
+                            auto interp = getInterpolator(interpolatorKey, inTangent, outTangent);
+                            frameX.interpolator = frameY.interpolator = frameZ.interpolator = interp;
+                        }
+                    //static value [x, y, z]
+                    } else {
+                        orient->x.value = getFloat();
+                        if (nextArrayValue()) orient->y.value = getFloat();
+                        if (nextArrayValue()) orient->z.value = getFloat();
+                        while (nextArrayValue()) getFloat();
+                        break;
+                    }
+                }
+                orient->x.prepare();
+                orient->y.prepare();
+                orient->z.prepare();
+            } else skip();
+        } else skip();
+    }
+    return orient;
+}
+
+
 LottieTransform* LottieParser::parseTransform(bool ddd)
 {
     auto transform = new LottieTransform;
@@ -604,6 +685,7 @@ LottieTransform* LottieParser::parseTransform(bool ddd)
         else if (transform->rotationEx && KEY_AS("rx")) parseProperty(transform->rotationEx->x);
         else if (transform->rotationEx && KEY_AS("ry")) parseProperty(transform->rotationEx->y);
         else if (transform->rotationEx && KEY_AS("rz")) parseProperty(transform->rotation);
+        else if (KEY_AS("or")) transform->orient = parseOrientation();
         else if (KEY_AS("sk")) parseProperty(transform->skewAngle, transform);
         else if (KEY_AS("sa")) parseProperty(transform->skewAxis, transform);
         else skip();

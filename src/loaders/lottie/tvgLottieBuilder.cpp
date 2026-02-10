@@ -46,12 +46,42 @@ static void _rotate(LottieTransform* transform, float frameNo, Matrix& m, float 
         auto radianY = deg2rad(transform->rotationEx->y(frameNo, tween, exps));
         auto radianZ = deg2rad(transform->rotation(frameNo, tween, exps)) + angle;
         auto cx = cosf(radianX), sx = sinf(radianX);
-        auto cy = cosf(radianY), sy = sinf(radianY);;
-        auto cz = cosf(radianZ), sz = sinf(radianZ);;
-        m.e11 = cy * cz;
-        m.e12 = -cy * sz;
-        m.e21 = sx * sy * cz + cx * sz;
-        m.e22 = -sx * sy * sz + cx * cz;
+        auto cy = cosf(radianY), sy = sinf(radianY);
+        auto cz = cosf(radianZ), sz = sinf(radianZ);
+
+        auto ri00 = cy * cz;
+        auto ri01 = -cy * sz;
+        auto ri10 = sx * sy * cz + cx * sz;
+        auto ri11 = -sx * sy * sz + cx * cz;
+
+        if (!transform->orient) {
+            m.e11 = ri00;
+            m.e12 = ri01;
+            m.e21 = ri10;
+            m.e22 = ri11;
+        } else {
+            auto ri02 = sy;
+            auto ri12 = -sx * cy;
+
+            auto ox = deg2rad(transform->orient->x(frameNo, tween, exps));
+            auto oy = deg2rad(transform->orient->y(frameNo, tween, exps));
+            auto oz = deg2rad(transform->orient->z(frameNo, tween, exps));
+            auto cox = cosf(ox), sox = sinf(ox);
+            auto coy = cosf(oy), soy = sinf(oy);
+            auto coz = cosf(oz), soz = sinf(oz);
+
+            auto ro00 = coy * coz;
+            auto ro01 = -coy * soz;
+            auto ro10 = sox * soy * coz + cox * soz;
+            auto ro11 = -sox * soy * soz + cox * coz;
+            auto ro20 = -cox * soy * coz + sox * soz;
+            auto ro21 = cox * soy * soz + sox * coz;
+
+            m.e11 = ri00 * ro00 + ri01 * ro10 + ri02 * ro20;
+            m.e12 = ri00 * ro01 + ri01 * ro11 + ri02 * ro21;
+            m.e21 = ri10 * ro00 + ri11 * ro10 + ri12 * ro20;
+            m.e22 = ri10 * ro01 + ri11 * ro11 + ri12 * ro21;
+        }
     //rotation z
     } else {
         auto degree = transform->rotation(frameNo, tween, exps) + angle;
