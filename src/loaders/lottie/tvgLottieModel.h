@@ -705,16 +705,10 @@ struct LottieTransform : LottieObject
         return coords;
     }
 
-    struct RotationEx
-    {
-        LottieFloat x = 0.0f;
-        LottieFloat y = 0.0f;
-    };
-
     ~LottieTransform()
     {
         delete(coords);
-        delete(rotationEx);
+        delete (ddd);
     }
 
     LottieTransform()
@@ -783,7 +777,12 @@ struct LottieTransform : LottieObject
     LottieFloat skewAxis = 0.0f;
 
     SeparateCoord* coords = nullptr;       //either a position or separate coordinates
-    RotationEx* rotationEx = nullptr;      //extension for 3d rotation
+
+    struct Dimension3
+    {
+        LottieFloat rx = 0.0f, ry = 0.0f;  // use the rotation for z rotation
+        LottieScalar3 orient = Point3{0.0f, 0.0f, 0.0f};
+    }* ddd = nullptr;
 };
 
 
