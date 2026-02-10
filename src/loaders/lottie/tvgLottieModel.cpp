@@ -207,7 +207,8 @@ void LottieSlot::apply(LottieProperty* prop, bool byDefault)
 
     //apply slot object to all targets
     ARRAY_FOREACH(pair, pairs) {
-        pair->prop = pair->obj->override(prop, release);
+        auto backup = pair->obj->override(prop, release);
+        if (!release) pair->prop = backup;
     }
 
     if (!byDefault) overridden = true;
