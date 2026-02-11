@@ -50,13 +50,7 @@ public:
 
     struct
     {
-        //horizontal header info
-        struct {
-            float ascent, descent;
-            float lineGap;
-            float advance;
-        } hhea;
-
+        TextMetrics hhea;      //horizontal header info
         uint16_t unitsPerEm;
         uint16_t numHmtx;      //the number of Horizontal metrics table
         uint8_t locaFormat;    //0 for short offsets, 1 for long

@@ -341,6 +341,24 @@ struct Matrix
 
 
 /**
+ * @brief Describes the font metrics of a text object.
+ *
+ * Provides the basic vertical layout metrics used for text rendering,
+ * such as ascent, descent, and line spacing (linegap).
+ *
+ * @see Text::metrics()
+ * @note Experimental API
+ */
+struct TextMetrics
+{
+    float ascent;   ///< Distance from the baseline to the top of the highest glyph (usually positive).
+    float descent;  ///< Distance from the baseline to the bottom of the lowest glyph (usually negative, as in TTF).
+    float linegap;  ///< Additional spacing recommended between lines (leading).
+    float advance;  ///< The total vertical advance between lines of text: ascent - descent + linegap (i.e., ascent + |descent| + linegap when descent is negative).
+};
+
+
+/**
  * @class Paint
  *
  * @brief An abstract class for managing graphical elements.
@@ -2035,6 +2053,24 @@ struct TVG_API Text : Paint
      * @since 1.0
      */
     Result spacing(float letter, float line) noexcept;
+
+    /**
+     * @brief Retrieves the layout metrics of the text object.
+     *
+     * Fills the provided `TextMetrics` structure with the font layout values of this text object,
+     * such as ascent, descent, linegap, and line advance.
+     *
+     * The returned values reflect the font size applied to the text object,
+     * but do not include any transformations (e.g., scale, rotation, or translation).
+     *
+     * @param[out] metrics A reference to a `TextMetrics` structure to be filled with the resulting values.
+     *
+     * @return Result::InsufficientCondition if no font or size has been set yet.
+     *
+     * @see TextMetrics
+     * @note Experimental API
+     */
+    Result metrics(TextMetrics& metrics) const noexcept;
 
     /**
      * @brief Loads a scalable font data (ttf) from a file.

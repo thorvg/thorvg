@@ -126,6 +126,13 @@ struct TextImpl : Text
         return true;
     }
 
+    Result metrics(TextMetrics& metrics)
+    {
+        if (!loader || fm.fontSize <= 0.0f) return Result::InsufficientCondition;
+        loader->metrics(fm, metrics);
+        return Result::Success;
+    }
+
     bool skip(RenderUpdateFlag flag)
     {
         if (flag == RenderUpdateFlag::None) return true;
