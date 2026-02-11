@@ -551,13 +551,11 @@ bool TtfLoader::open(const char* data, uint32_t size, TVG_UNUSED const char* rpa
 
 bool TtfLoader::get(FontMetrics& fm, char* text, RenderPath& out)
 {
-    constexpr const auto DPI = 96.0f / 72.0f;   //dpi base?
-
     out.clear();
 
     if (!text || fm.fontSize == 0.0f) return false;
 
-    fm.scale = reader.metrics.unitsPerEm / (fm.fontSize * DPI);
+    fm.scale = reader.metrics.unitsPerEm / (fm.fontSize * FontLoader::DPI);
     fm.size = {};
     if (!fm.engine) fm.engine = tvg::calloc<TtfMetrics>(1, sizeof(TtfMetrics));
 
@@ -587,4 +585,15 @@ void TtfLoader::copy(const FontMetrics& in, FontMetrics& out)
     out = in;
     if (in.engine) out.engine = tvg::calloc<TtfMetrics>(1, sizeof(TtfMetrics));
     *static_cast<TtfMetrics*>(out.engine) = *static_cast<TtfMetrics*>(in.engine);
+}
+
+
+void TtfLoader::metrics(const FontMetrics& fm, TextMetrics& out)
+{
+    auto scale = reader.metrics.unitsPerEm / (fm.fontSize * FontLoader::DPI);
+
+    out.advance = reader.metrics.hhea.advance * scale;
+    out.ascent = reader.metrics.hhea.ascent * scale;
+    out.descent = reader.metrics.hhea.descent * scale;
+    out.linegap = reader.metrics.hhea.linegap * scale;
 }

@@ -335,6 +335,23 @@ typedef struct {
 
 
 /**
+ * @brief Describes the font metrics of a text object.
+ *
+ * Provides the basic vertical layout metrics used for text rendering,
+ * such as ascent, descent, and line spacing (linegap).
+ *
+ * @see tvg_text_get_metrics()
+ * @note Experimental API
+ */
+typedef struct {
+    float ascent;   ///< Distance from the baseline to the top of the highest glyph (usually positive).
+    float descent;  ///< Distance from the baseline to the bottom of the lowest glyph (usually negative, as in TTF).
+    float linegap;  ///< Additional spacing recommended between lines (leading).
+    float advance;  ///< The total vertical advance between lines of text: ascent - descent + linegap (i.e., ascent + |descent| + linegap when descent is negative).
+} Tvg_Text_Metrics;
+
+
+/**
  * @brief Callback function type for resolving external assets.
  *
  * This callback is invoked when a Picture requires an external asset
@@ -2609,6 +2626,26 @@ TVG_API Tvg_Result tvg_text_set_color(Tvg_Paint text, uint8_t r, uint8_t g, uint
  * @since 0.15
  */
 TVG_API Tvg_Result tvg_text_set_gradient(Tvg_Paint text, Tvg_Gradient gradient);
+
+
+/**
+ * @brief Retrieves the layout metrics of the text object.
+ *
+ * Fills the provided `Tvg_Text_Metrics` structure with the font layout values of this text object,
+ * such as ascent, descent, linegap, and line advance.
+ *
+ * The returned values reflect the font size applied to the text object,
+ * but do not include any transformations (e.g., scale, rotation, or translation).
+ *
+ * @param[in] text A Tvg_Paint pointer to the text object.
+ * @param[out] metrics A reference to a `Tvg_Text_Metrics` structure to be filled with the resulting values.
+ *
+ * @return TVG_RESULT_INSUFFICIENT_CONDITION if no font or size has been set yet.
+ *
+ * @see Tvg_Text_Metrics
+ * @note Experimental API
+ */
+TVG_API Tvg_Result tvg_text_get_metrics(const Tvg_Paint text, Tvg_Text_Metrics* metrics);
 
 
 /**
