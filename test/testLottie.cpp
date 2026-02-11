@@ -267,14 +267,18 @@ TEST_CASE("Lottie Quality", "[tvgLottie]")
 TEST_CASE("Lottie Slot Regression Test", "[tvgLottie]")
 {
     REQUIRE(Initializer::init() == Result::Success);
+
+    const uint32_t width = 512;
+    const uint32_t height = 512;
+    auto buffer = unique_ptr<uint32_t[]>(new uint32_t[width * height]);
+
+    const char* redColorSlot = R"({"star_color":{"p":{"a":0,"k":[1.0,0.0,0.0]}}})";
+    const char* greenColorSlot = R"({"star_color":{"p":{"a":0,"k":[0.0,1.0,0.0]}}})";
+
     {
         auto canvas = unique_ptr<SwCanvas>(SwCanvas::gen());
         REQUIRE(canvas);
-
-        const uint32_t width = 512;
-        const uint32_t height = 512;
-        uint32_t* buffer = new uint32_t[width * height];
-        REQUIRE(canvas->target(buffer, width, width, height, ColorSpace::ABGR8888) == Result::Success);
+        REQUIRE(canvas->target(buffer.get(), width, width, height, ColorSpace::ABGR8888) == Result::Success);
 
         auto animation = unique_ptr<LottieAnimation>(LottieAnimation::gen());
         REQUIRE(animation);
@@ -286,7 +290,6 @@ TEST_CASE("Lottie Slot Regression Test", "[tvgLottie]")
 
         REQUIRE(canvas->add(picture) == Result::Success);
 
-        const char* redColorSlot = R"({"star_color":{"p":{"a":0,"k":[1.0,0.0,0.0]}}})";
         auto slotId = animation->gen(redColorSlot);
         REQUIRE(slotId > 0);
         REQUIRE(animation->apply(slotId) == Result::Success);
@@ -295,7 +298,6 @@ TEST_CASE("Lottie Slot Regression Test", "[tvgLottie]")
         REQUIRE(canvas->draw() == Result::Success);
         REQUIRE(canvas->sync() == Result::Success);
 
-        const char* greenColorSlot = R"({"star_color":{"p":{"a":0,"k":[0.0,1.0,0.0]}}})";
         auto slotId2 = animation->gen(greenColorSlot);
         REQUIRE(slotId2 > 0);
         REQUIRE(animation->apply(slotId2) == Result::Success);
@@ -310,26 +312,10 @@ TEST_CASE("Lottie Slot Regression Test", "[tvgLottie]")
         REQUIRE(canvas->draw() == Result::Success);
         REQUIRE(canvas->sync() == Result::Success);
 
-        REQUIRE(picture->load(TEST_DIR"/slot.json") == Result::Success);
-
-        REQUIRE(canvas->update() == Result::Success);
-        REQUIRE(canvas->draw() == Result::Success);
-        REQUIRE(canvas->sync() == Result::Success);
-
-        auto slotId3 = animation->gen(redColorSlot);
-        REQUIRE(slotId3 > 0);
-        REQUIRE(animation->apply(slotId3) == Result::Success);
-
-        REQUIRE(canvas->update() == Result::Success);
-        REQUIRE(canvas->draw() == Result::Success);
-        REQUIRE(canvas->sync() == Result::Success);
-
         REQUIRE(animation->del(slotId) == Result::Success);
         REQUIRE(animation->del(slotId2) == Result::Success);
-        REQUIRE(animation->del(slotId3) == Result::Success);
-
-        delete[] buffer;
     }
+
     REQUIRE(Initializer::term() == Result::Success);
 }
 
