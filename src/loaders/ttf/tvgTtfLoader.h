@@ -59,11 +59,12 @@ struct TtfLoader : public FontLoader
     bool get(FontMetrics& fm, char* text, RenderPath& out) override;
     void copy(const FontMetrics& in, FontMetrics& out) override;
     void release(FontMetrics& fm) override;
+    void metrics(const FontMetrics& fm, TextMetrics& out) override;
 
 private:
     float height(uint32_t loc, float spacing)
     {
-        return (reader.metrics.hhea.advance * loc - reader.metrics.hhea.lineGap) * spacing;
+        return (reader.metrics.hhea.advance * loc - reader.metrics.hhea.linegap) * spacing;
     }
 
     uint32_t feedLine(FontMetrics& fm, float box, float x, uint32_t begin, uint32_t end, Point& cursor, uint32_t& loc, RenderPath& out);

@@ -157,6 +157,8 @@ struct FontMetrics
 
 struct FontLoader : LoadModule
 {
+    static constexpr const float DPI = 96.0f / 72.0f;   //dpi base?
+
     char* name = nullptr;
 
     FontLoader(FileType type) : LoadModule(type) {}
@@ -166,6 +168,7 @@ struct FontLoader : LoadModule
     virtual bool get(FontMetrics& fm, char* text, RenderPath& out) = 0;
     virtual void transform(Paint* paint, FontMetrics& fm, float italicShear) = 0;
     virtual void release(FontMetrics& fm) = 0;
+    virtual void metrics(const FontMetrics& fm, TextMetrics& out) = 0;
     virtual void copy(const FontMetrics& in, FontMetrics& out) = 0;
 };
 

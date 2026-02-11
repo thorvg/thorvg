@@ -150,6 +150,12 @@ Result Text::wrap(TextWrap mode) noexcept
 }
 
 
+Result Text::metrics(TextMetrics& metrics) const noexcept
+{
+    return to<TextImpl>(this)->metrics(metrics);
+}
+
+
 Text* Text::gen() noexcept
 {
     return new TextImpl;
