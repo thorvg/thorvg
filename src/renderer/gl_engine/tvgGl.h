@@ -731,7 +731,7 @@
         //typedef void (*PFNGLVERTEXATTRIB4BVPROC)(GLuint index, const GLbyte *v);
         //typedef void (*PFNGLVERTEXATTRIB4DPROC)(GLuint index, GLdouble x, GLdouble y, GLdouble z, GLdouble w);
         //typedef void (*PFNGLVERTEXATTRIB4DVPROC)(GLuint index, const GLdouble *v);
-        typedef void (*PFNGLVERTEXATTRIB4FPROC)(GLuint index, GLfloat x, GLfloat y, GLfloat z, GLfloat w);
+        //typedef void (*PFNGLVERTEXATTRIB4FPROC)(GLuint index, GLfloat x, GLfloat y, GLfloat z, GLfloat w);
         //typedef void (*PFNGLVERTEXATTRIB4FVPROC)(GLuint index, const GLfloat *v);
         //typedef void (*PFNGLVERTEXATTRIB4IVPROC)(GLuint index, const GLint *v);
         //typedef void (*PFNGLVERTEXATTRIB4SPROC)(GLuint index, GLshort x, GLshort y, GLshort z, GLshort w);
@@ -1381,7 +1381,7 @@
     //extern PFNGLVERTEXATTRIB4BVPROC          glVertexAttrib4bv;
     //extern PFNGLVERTEXATTRIB4DPROC           glVertexAttrib4d;
     //extern PFNGLVERTEXATTRIB4DVPROC          glVertexAttrib4dv;
-    extern PFNGLVERTEXATTRIB4FPROC           glVertexAttrib4f;
+    //extern PFNGLVERTEXATTRIB4FPROC           glVertexAttrib4f;
     //extern PFNGLVERTEXATTRIB4FVPROC          glVertexAttrib4fv;
     //extern PFNGLVERTEXATTRIB4IVPROC          glVertexAttrib4iv;
     //extern PFNGLVERTEXATTRIB4SPROC           glVertexAttrib4s;

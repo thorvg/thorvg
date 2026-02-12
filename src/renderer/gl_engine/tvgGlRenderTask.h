@@ -33,8 +33,6 @@ struct GlVertexLayout
     uint32_t size;
     uint32_t stride;
     size_t   offset;
-    GLenum type = GL_FLOAT;
-    GLboolean normalized = GL_FALSE;
 };
 
 enum class GlBindingType
@@ -82,7 +80,6 @@ public:
     virtual void run();
 
     void addVertexLayout(const GlVertexLayout& layout);
-    void setVertexColor(float r, float g, float b, float a);
     void addBindResource(const GlBindingResource& binding);
     void setDrawRange(uint32_t offset, uint32_t count);
     void setViewport(const RenderRegion& viewport);
@@ -103,8 +100,6 @@ private:
     float mDrawDepth = 0.f;
     Matrix mViewMatrix = {};
     bool mUseViewMatrix = false;
-    bool mUseVertexColor = false;
-    float mVertexColor[4] = {0.f, 0.f, 0.f, 0.f};
 };
 
 class GlStencilCoverTask : public GlRenderTask

@@ -61,17 +61,12 @@ void GlRenderTask::run()
     // setup scissor rect
     GL_CHECK(glScissor(mViewport.sx(), mViewport.sy(), mViewport.sw(), mViewport.sh()));
 
-    if (mUseVertexColor) {
-        GL_CHECK(glDisableVertexAttribArray(1));
-        GL_CHECK(glVertexAttrib4f(1, mVertexColor[0], mVertexColor[1], mVertexColor[2], mVertexColor[3]));
-    }
-
     // setup attribute layout
     for (uint32_t i = 0; i < mVertexLayout.count; i++) {
         const auto &layout = mVertexLayout[i];
         GL_CHECK(glEnableVertexAttribArray(layout.index));
-        GL_CHECK(glVertexAttribPointer(layout.index, layout.size, layout.type,
-                                   layout.normalized, layout.stride,
+        GL_CHECK(glVertexAttribPointer(layout.index, layout.size, GL_FLOAT,
+                                   GL_FALSE, layout.stride,
                                    reinterpret_cast<void *>(layout.offset)));
     }
 
@@ -104,12 +99,6 @@ void GlRenderTask::run()
 void GlRenderTask::addVertexLayout(const GlVertexLayout &layout)
 {
     mVertexLayout.push(layout);
-}
-
-void GlRenderTask::setVertexColor(float r, float g, float b, float a)
-{
-    mUseVertexColor = true;
-    mVertexColor[0] = r; mVertexColor[1] = g; mVertexColor[2] = b; mVertexColor[3] = a;
 }
 
 

@@ -184,12 +184,6 @@ struct GlRenderer : RenderMethod
 
 private:
     enum class BlendSource { Image, Scene, Solid, LinearGradient, RadialGradient };
-    struct SolidBatchVertex
-    {
-        float x; float y;
-        uint8_t r; uint8_t g; uint8_t b; uint8_t a;
-    };
-    static_assert(sizeof(SolidBatchVertex) == 12, "Solid batch vertex must stay tightly packed.");
 
     GlRenderer(); 
     ~GlRenderer();
@@ -197,8 +191,6 @@ private:
     void initShaders();
     void drawPrimitive(GlShape& sdata, const RenderColor& c, RenderUpdateFlag flag, int32_t depth);
     void drawPrimitive(GlShape& sdata, const Fill* fill, RenderUpdateFlag flag, int32_t depth);
-    void drawBatchedSolid(GlShape& sdata, const RenderColor& c, int32_t depth, const RenderRegion& viewRegion);
-    void flushPendingSolid();
     void drawClip(Array<RenderData>& clips);
 
     GlRenderPass* currentPass();
@@ -230,24 +222,6 @@ private:
     Array<GlRenderTargetPool*> mBlendPool;
     Array<GlRenderPass*> mRenderPassStack;
     Array<GlCompositor*> mComposeStack;
-    struct {
-        struct {
-            GlRenderPass* pass = nullptr;
-            GlRenderTask* task = nullptr;
-            int32_t depth = 0;
-            uint32_t vertexCount = 0;
-            uint32_t indexOffset = 0;
-            uint32_t indexCount = 0;
-        } color;
-        struct {
-            GlRenderPass* pass = nullptr;
-            GlShape* sdata = nullptr;
-            RenderColor color = {};
-            RenderUpdateFlag flag = RenderUpdateFlag::None;
-            int32_t depth = 0;
-            RenderRegion viewRegion = {};
-        } pending;
-    } mSolidBatch;
 
     //Disposed resources. They should be released on synced call.
     struct {
