@@ -12,9 +12,9 @@ jobs:
           path: "thorvg"
       - name: Create source archive
         run: |
-          rm -rf ./thorvg/.git*
-          tar -I "gzip -9" -cf thorvg.tar.gz thorvg
+          meson setup builddir
+          meson dist -C builddir
       - name: Upload to release
         uses: softprops/action-gh-release@v2
         with:
-          files: thorvg.tar.gz
+          files: builddir/meson-dist/*.xz
