@@ -189,6 +189,16 @@ void LottieBuilder::updateTransform(LottieGroup* parent, LottieObject** child, f
         auto denominator = sqrtf(m.e11 * m.e11 + m.e12 * m.e12);
         if (denominator > 1.0f) ctx->propagator->strokeWidth(ctx->propagator->strokeWidth() / denominator);
     }
+
+    //FIXME: compensate gradient fills when the propagator enters a group scope.
+    if (ctx->fragment) {
+        Matrix im;
+        if (inverse(&m, &im)) {
+            auto& rs = to<ShapeImpl>(ctx->propagator)->rs;
+            if (rs.fill) rs.fill->transform(rs.fill->transform() * im);
+            if (rs.stroke && rs.stroke->fill) rs.stroke->fill->transform(rs.stroke->fill->transform() * im);
+        }
+    }
 }
 
 
