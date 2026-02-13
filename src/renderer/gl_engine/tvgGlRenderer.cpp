@@ -1244,6 +1244,14 @@ void GlRenderer::dispose(RenderData data)
     delete sdata;
 }
 
+
+static inline uint32_t _premultiply(uint32_t c)
+{
+    auto a = (c >> 24);
+    return (c & 0xff000000) + ((((c >> 8) & 0xff) * a) & 0xff00) + ((((c & 0x00ff00ff) * a) >> 8) & 0x00ff00ff);
+}
+
+
 static GLuint _genTexture(RenderSurface* image)
 {
     GLuint tex = 0;
@@ -1251,7 +1259,25 @@ static GLuint _genTexture(RenderSurface* image)
     GL_CHECK(glGenTextures(1, &tex));
 
     GL_CHECK(glBindTexture(GL_TEXTURE_2D, tex));
-    GL_CHECK(glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA8, image->w, image->h, 0, GL_RGBA, GL_UNSIGNED_BYTE, image->data));
+
+    if (!image->premultiplied && image->channelSize == sizeof(uint32_t)) {
+        auto buffer = (uint32_t*)malloc(image->w * image->h * sizeof(uint32_t));
+        auto h = static_cast<int32_t>(image->h);
+        #pragma omp parallel for
+        for (int32_t y = 0; y < h; ++y) {
+            auto src = image->buf32 + image->stride * y;
+            auto dst = buffer + image->w * y;
+            for (uint32_t x = 0; x < image->w; ++x) {
+                auto c = src[x];
+                if ((c >> 24) < 255) dst[x] = _premultiply(c);
+                else dst[x] = c;
+            }
+        }
+        GL_CHECK(glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA8, image->w, image->h, 0, GL_RGBA, GL_UNSIGNED_BYTE, buffer));
+        free(buffer);
+    } else {
+        GL_CHECK(glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA8, image->w, image->h, 0, GL_RGBA, GL_UNSIGNED_BYTE, image->data));
+    }
 
     GL_CHECK(glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE));
     GL_CHECK(glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE));
@@ -1278,7 +1304,13 @@ RenderData GlRenderer::prepare(RenderSurface* image, RenderData data, const Matr
 
     if (sdata->texId == 0) {
         sdata->texId = _genTexture(image);
-        sdata->texColorSpace = image->cs;
+        if (!image->premultiplied && image->channelSize == sizeof(uint32_t)) {
+            if (image->cs == ColorSpace::ABGR8888S) sdata->texColorSpace = ColorSpace::ABGR8888;
+            else if (image->cs == ColorSpace::ARGB8888S) sdata->texColorSpace = ColorSpace::ARGB8888;
+            else TVGERR("GL_ENGINE", "Unsupported Colorspace(%d) is expected for GL engine!", (int)image->cs);
+        } else {
+            sdata->texColorSpace = image->cs;
+        }
         sdata->texFlipY = 1;
         sdata->geometry = GlGeometry();
     }
