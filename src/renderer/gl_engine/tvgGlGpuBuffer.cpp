@@ -96,32 +96,49 @@ GlStageBuffer::~GlStageBuffer()
 
 uint32_t GlStageBuffer::push(void *data, uint32_t size, bool alignGpuOffset)
 {
-    if (alignGpuOffset) alignOffset(size);
-
-    uint32_t offset = mStageBuffer.count;
-
-    if (this->mStageBuffer.reserved - this->mStageBuffer.count < size) {
-        this->mStageBuffer.grow(max(size, this->mStageBuffer.reserved));
-    }
-
-    memcpy(this->mStageBuffer.data + offset, data, size);
-
-    this->mStageBuffer.count += size;
-
+    void* dst = nullptr;
+    auto offset = reserve(size, &dst, alignGpuOffset);
+    if (size > 0) memcpy(dst, data, size);
     return offset;
 }
 
 
 uint32_t GlStageBuffer::pushIndex(void *data, uint32_t size)
 {
-    uint32_t offset = mIndexBuffer.count;
+    void* dst = nullptr;
+    auto offset = reserveIndex(size, &dst);
+    if (size > 0) memcpy(dst, data, size);
+    return offset;
+}
 
+
+uint32_t GlStageBuffer::reserve(uint32_t size, void** dst, bool alignGpuOffset)
+{
+    assert(dst);
+    if (alignGpuOffset) alignOffset(size);
+
+    auto offset = mStageBuffer.count;
+    if (this->mStageBuffer.reserved - this->mStageBuffer.count < size) {
+        this->mStageBuffer.grow(max(size, this->mStageBuffer.reserved));
+    }
+
+    *dst = this->mStageBuffer.data + offset;
+    this->mStageBuffer.count += size;
+
+    return offset;
+}
+
+
+uint32_t GlStageBuffer::reserveIndex(uint32_t size, void** dst)
+{
+    assert(dst);
+
+    auto offset = mIndexBuffer.count;
     if (this->mIndexBuffer.reserved - this->mIndexBuffer.count < size) {
         this->mIndexBuffer.grow(max(size, this->mIndexBuffer.reserved));
     }
 
-    memcpy(this->mIndexBuffer.data + offset, data, size);
-
+    *dst = this->mIndexBuffer.data + offset;
     this->mIndexBuffer.count += size;
 
     return offset;

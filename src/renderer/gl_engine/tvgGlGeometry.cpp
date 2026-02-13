@@ -25,6 +25,88 @@
 #include "tvgGlRenderTask.h"
 #include "tvgGlTessellator.h"
 
+
+enum class PathKind : uint8_t { None, Rect, Circle, RoundRectCW, RoundRectCCW };
+
+template <size_t N>
+static inline bool _matchCommandPattern(const Array<PathCommand>& cmds, const PathCommand (&pattern)[N])
+{
+    constexpr auto count = static_cast<uint32_t>(N);
+
+    if (cmds.count != count) return false;
+    auto data = cmds.data;
+    // Compile-time known `count` lets the compiler optimize this tiny parser loop.
+    for (uint32_t i = 0; i < count; ++i) if (data[i] != pattern[i]) return false;
+    return true;
+}
+
+
+template <size_t N>
+static inline bool _matchPrimitivePattern(const RenderPath& path, const PathCommand (&pattern)[N], uint32_t pointCount)
+{
+    if (path.pts.count != pointCount) return false;
+    return _matchCommandPattern(path.cmds, pattern);
+}
+
+
+static PathKind _pathKind(const RenderPath& path)
+{
+    static constexpr uint32_t RECT_POINT_COUNT = 4;
+    static constexpr uint32_t RECT_CMD_COUNT = 5;
+    static constexpr uint32_t CIRCLE_POINT_COUNT = 13;
+    static constexpr uint32_t CIRCLE_CMD_COUNT = 6;
+    static constexpr uint32_t ROUND_RECT_POINT_COUNT = 17;
+    static constexpr uint32_t ROUND_RECT_CMD_COUNT = 10;
+
+    static constexpr PathCommand RECT_CMDS[] = { PathCommand::MoveTo, PathCommand::LineTo, PathCommand::LineTo, PathCommand::LineTo, PathCommand::Close};
+    static constexpr PathCommand CIRCLE_CMDS[] = { PathCommand::MoveTo, PathCommand::CubicTo, PathCommand::CubicTo, PathCommand::CubicTo, PathCommand::CubicTo, PathCommand::Close};
+    static constexpr PathCommand ROUND_RECT_CW_CMDS[] = { PathCommand::MoveTo, PathCommand::LineTo, PathCommand::CubicTo, PathCommand::LineTo, PathCommand::CubicTo, PathCommand::LineTo, PathCommand::CubicTo, PathCommand::LineTo, PathCommand::CubicTo, PathCommand::Close};
+    static constexpr PathCommand ROUND_RECT_CCW_CMDS[] = { PathCommand::MoveTo, PathCommand::CubicTo, PathCommand::LineTo, PathCommand::CubicTo, PathCommand::LineTo, PathCommand::CubicTo, PathCommand::LineTo, PathCommand::CubicTo, PathCommand::LineTo, PathCommand::Close};
+
+    switch (path.cmds.count) {
+        case RECT_CMD_COUNT:
+            return _matchPrimitivePattern(path, RECT_CMDS, RECT_POINT_COUNT) ? PathKind::Rect : PathKind::None;
+        case CIRCLE_CMD_COUNT:
+            return _matchPrimitivePattern(path, CIRCLE_CMDS, CIRCLE_POINT_COUNT) ? PathKind::Circle : PathKind::None;
+        case ROUND_RECT_CMD_COUNT: {
+            if (path.pts.count != ROUND_RECT_POINT_COUNT) return PathKind::None;
+            if (_matchCommandPattern(path.cmds, ROUND_RECT_CW_CMDS)) return PathKind::RoundRectCW;
+            if (_matchCommandPattern(path.cmds, ROUND_RECT_CCW_CMDS)) return PathKind::RoundRectCCW;
+            return PathKind::None; // Convexity check: it will be recognized CCW winding (-1).
+        }
+        default: break;
+    }
+    return PathKind::None; // Convexity check: it will be recognized CCW winding (-1).
+}
+
+
+static inline int8_t _orient(const Point& a, const Point& b, const Point& c)
+{
+    auto value = tvg::cross(b - a, c - a);
+    if (tvg::zero(value)) return 0;
+    return (value > 0.0f) ? 1 : -1;
+}
+
+
+// Ultra-fast heuristic: if control polygon edges P0-P1 and P2-P3 cross, the cubic can loop.
+static inline bool _edgesCross(const Point& p0, const Point& p1, const Point& p2, const Point& p3)
+{
+    auto straddlesLine = [](const Point& a, const Point& b, const Point& c, const Point& d) {
+        return _orient(a, b, c) * _orient(a, b, d) < 0;
+    };
+    return straddlesLine(p0, p1, p2, p3) && straddlesLine(p2, p3, p0, p1);
+}
+
+
+static bool _rrCubicLoop(const RenderPath& path, PathKind kind)
+{
+    if (kind != PathKind::RoundRectCW && kind != PathKind::RoundRectCCW) return false;
+    auto pts = path.pts.data;
+    if (kind == PathKind::RoundRectCW)  return _edgesCross(pts[1], pts[2], pts[3], pts[4]) || _edgesCross(pts[5], pts[6], pts[7], pts[8]) || _edgesCross(pts[9], pts[10], pts[11], pts[12]) || _edgesCross(pts[13], pts[14], pts[15], pts[16]);
+    return _edgesCross(pts[0], pts[1], pts[2], pts[3]) || _edgesCross(pts[4], pts[5], pts[6], pts[7]) || _edgesCross(pts[8], pts[9], pts[10], pts[11]) || _edgesCross(pts[12], pts[13], pts[14], pts[15]);
+}
+
+
 static RenderRegion _transformBounds(const RenderRegion& bounds, const Matrix& matrix)
 {
     if (bounds.invalid()) return bounds;
@@ -191,12 +273,15 @@ bool GlGeometry::tesselateShape(const RenderShape& rshape, float* opacityMultipl
         return false;
     }
 
+    auto kind = _pathKind(optPath);
+    auto defaultWinding = int8_t(kind != PathKind::None ? 0 : -1);
     // Handle normal shapes with more than 2 points
     BWTessellator bwTess{&fill};
-    bwTess.tessellate(optPath);
+    bwTess.tessellate(optPath, defaultWinding);
     fillRule = rshape.rule;
     fillBounds = bwTess.bounds();
     convex = bwTess.convex;
+    if (defaultWinding == 0 && convex && _rrCubicLoop(optPath, kind)) convex = false;
     if (opacityMultiplier) *opacityMultiplier = 1.0f;
     return true;
 }
@@ -292,6 +377,7 @@ bool GlGeometry::draw(GlRenderTask* task, GlStageBuffer* gpuBuffer, RenderUpdate
     if (buffer->index.empty()) return false;
 
     auto vertexOffset = gpuBuffer->push(buffer->vertex.data, buffer->vertex.count * sizeof(float));
+
     auto indexOffset = gpuBuffer->pushIndex(buffer->index.data, buffer->index.count * sizeof(uint32_t));
 
     if (flag & RenderUpdateFlag::Image) {
