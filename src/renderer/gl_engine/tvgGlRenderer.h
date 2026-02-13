@@ -184,17 +184,17 @@ struct GlRenderer : RenderMethod
 
 private:
     enum class BlendSource { Image, Scene, Solid, LinearGradient, RadialGradient };
-    struct SolidBatchVertex
+    struct SolidBatchColor
     {
-        float x; float y;
         uint8_t r; uint8_t g; uint8_t b; uint8_t a;
     };
-    static_assert(sizeof(SolidBatchVertex) == 12, "Solid batch vertex must stay tightly packed.");
+    static_assert(sizeof(SolidBatchColor) == 4, "Solid batch color must stay tightly packed.");
     struct SolidBatch
     {
         GlRenderPass* pass = nullptr;
         GlRenderTask* task = nullptr;
         GlShape* shape = nullptr;
+        const Paint* picture = nullptr;
         RenderColor color = {};
         RenderUpdateFlag flag = RenderUpdateFlag::None;
         int32_t depth = 0;
@@ -205,11 +205,13 @@ private:
 
         void clear() { *this = {}; }
         void draw(GlRenderer& renderer, GlShape& sdata, const RenderColor& color, int32_t depth, const RenderRegion& viewRegion);
-        bool appendable(const GlRenderer& renderer, const GlRenderPass* pass, int32_t depth) const;
+        bool appendable(const GlRenderer& renderer, const GlRenderPass* pass, const Paint* picture) const;
         void emitSingle(GlRenderer& renderer, GlRenderPass* pass, GlShape& sdata, const RenderColor& color, int32_t depth, const RenderRegion& viewRegion, uint32_t vertexCount, uint32_t indexCount);
         bool promote(GlRenderer& renderer, GlRenderPass* pass, const RenderColor& solidColor, int32_t depth, const RenderRegion& viewRegion, const GlGeometryBuffer* buffer, uint32_t vertexCount, uint32_t indexCount);
-        void append(GlRenderer& renderer, const RenderColor& solidColor, const RenderRegion& viewRegion, const GlGeometryBuffer* buffer, uint32_t vertexCount, uint32_t indexCount);
-        static void buildVertices(SolidBatchVertex* out, const GlGeometryBuffer* src, uint32_t count, const RenderColor& color);
+        void append(GlRenderer& renderer, const RenderColor& solidColor, const RenderRegion& viewRegion, const GlGeometryBuffer* buffer, uint32_t vertexCount, uint32_t indexCount, int32_t depth);
+        static RenderColor solidColor(const GlShape& sdata, const RenderColor& color, RenderUpdateFlag flag);
+        static void buildPositions(float* out, const GlGeometryBuffer* src, uint32_t count);
+        static void buildColors(SolidBatchColor* out, uint32_t count, const RenderColor& color);
         static void buildIndices(uint32_t* out, const GlGeometryBuffer* src, uint32_t baseVertex);
     };
 
@@ -219,7 +221,6 @@ private:
     void initShaders();
     void drawPrimitive(GlShape& sdata, const RenderColor& c, RenderUpdateFlag flag, int32_t depth);
     void drawPrimitive(GlShape& sdata, const Fill* fill, RenderUpdateFlag flag, int32_t depth);
-    void drawBatchedSolid(GlShape& sdata, const RenderColor& c, int32_t depth, const RenderRegion& viewRegion);
     void drawClip(Array<RenderData>& clips);
 
     GlRenderPass* currentPass();
@@ -227,8 +228,6 @@ private:
     bool beginComplexBlending(const RenderRegion& vp, RenderRegion bounds);
     void endBlendingCompose(GlRenderTask* stencilTask);
     GlProgram* getBlendProgram(BlendMethod method, BlendSource source);
-    static RenderColor solidColor(const GlShape& sdata, const RenderColor& c, RenderUpdateFlag flag);
-
     void prepareBlitTask(GlBlitTask* task);
     void prepareCmpTask(GlRenderTask* task, const RenderRegion& vp, uint32_t cmpWidth, uint32_t cmpHeight);
     void endRenderPass(RenderCompositor* cmp);

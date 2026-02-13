@@ -35,7 +35,7 @@ static inline bool _matchCommandPattern(const Array<PathCommand>& cmds, const Pa
 
     if (cmds.count != count) return false;
     auto data = cmds.data;
-    // Compile-time known `count` lets the compiler optimize this tiny parser loop.
+    // `count` is a compile-time constant.
     for (uint32_t i = 0; i < count; ++i) if (data[i] != pattern[i]) return false;
     return true;
 }
@@ -72,11 +72,11 @@ static PathKind _pathKind(const RenderPath& path)
             if (path.pts.count != ROUND_RECT_POINT_COUNT) return PathKind::None;
             if (_matchCommandPattern(path.cmds, ROUND_RECT_CW_CMDS)) return PathKind::RoundRectCW;
             if (_matchCommandPattern(path.cmds, ROUND_RECT_CCW_CMDS)) return PathKind::RoundRectCCW;
-            return PathKind::None; // Convexity check: it will be recognized CCW winding (-1).
+            return PathKind::None; // Unknown pattern: convexity check keeps fixed CCW winding (-1), no auto-detect.
         }
         default: break;
     }
-    return PathKind::None; // Convexity check: it will be recognized CCW winding (-1).
+    return PathKind::None; // Unknown pattern: convexity check keeps fixed CCW winding (-1), no auto-detect.
 }
 
 
@@ -88,7 +88,7 @@ static inline int8_t _orient(const Point& a, const Point& b, const Point& c)
 }
 
 
-// Ultra-fast heuristic: if control polygon edges P0-P1 and P2-P3 cross, the cubic can loop.
+// If control polygon edges P0-P1 and P2-P3 cross, the cubic can loop.
 static inline bool _edgesCross(const Point& p0, const Point& p1, const Point& p2, const Point& p3)
 {
     auto straddlesLine = [](const Point& a, const Point& b, const Point& c, const Point& d) {
@@ -98,6 +98,7 @@ static inline bool _edgesCross(const Point& p0, const Point& p1, const Point& p2
 }
 
 
+// Round-rect corners are cubic segments. A crossing control polygon can make a loop.
 static bool _rrCubicLoop(const RenderPath& path, PathKind kind)
 {
     if (kind != PathKind::RoundRectCW && kind != PathKind::RoundRectCCW) return false;

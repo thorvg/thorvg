@@ -79,7 +79,7 @@ GlGpuBuffer::~GlGpuBuffer()
 /* GlStageBuffer Implementation                                         */
 /************************************************************************/
 
-GlStageBuffer::GlStageBuffer() : mVao(0), mGpuBuffer(), mGpuIndexBuffer()
+GlStageBuffer::GlStageBuffer() : mVao(0), mGpuBuffer(), mGpuAuxBuffer(), mGpuIndexBuffer()
 {
     GL_CHECK(glGenVertexArrays(1, &mVao));
 }
@@ -98,6 +98,15 @@ uint32_t GlStageBuffer::push(void *data, uint32_t size, bool alignGpuOffset)
 {
     void* dst = nullptr;
     auto offset = reserve(size, &dst, alignGpuOffset);
+    if (size > 0) memcpy(dst, data, size);
+    return offset;
+}
+
+
+uint32_t GlStageBuffer::pushAux(void *data, uint32_t size)
+{
+    void* dst = nullptr;
+    auto offset = reserveAux(size, &dst);
     if (size > 0) memcpy(dst, data, size);
     return offset;
 }
@@ -129,6 +138,22 @@ uint32_t GlStageBuffer::reserve(uint32_t size, void** dst, bool alignGpuOffset)
 }
 
 
+uint32_t GlStageBuffer::reserveAux(uint32_t size, void** dst)
+{
+    assert(dst);
+
+    auto offset = mAuxBuffer.count;
+    if (this->mAuxBuffer.reserved - this->mAuxBuffer.count < size) {
+        this->mAuxBuffer.grow(max(size, this->mAuxBuffer.reserved));
+    }
+
+    *dst = this->mAuxBuffer.data + offset;
+    this->mAuxBuffer.count += size;
+
+    return offset;
+}
+
+
 uint32_t GlStageBuffer::reserveIndex(uint32_t size, void** dst)
 {
     assert(dst);
@@ -147,22 +172,32 @@ uint32_t GlStageBuffer::reserveIndex(uint32_t size, void** dst)
 
 bool GlStageBuffer::flushToGPU()
 {
-    if (mStageBuffer.empty() || mIndexBuffer.empty()) {
+    if ((mStageBuffer.empty() && mAuxBuffer.empty()) || mIndexBuffer.empty()) {
         mStageBuffer.clear();
+        mAuxBuffer.clear();
         mIndexBuffer.clear();
         return false;
     }
 
 
-    mGpuBuffer.bind(GlGpuBuffer::Target::ARRAY_BUFFER);
-    mGpuBuffer.updateBufferData(GlGpuBuffer::Target::ARRAY_BUFFER, mStageBuffer.count, mStageBuffer.data);
-    mGpuBuffer.unbind(GlGpuBuffer::Target::ARRAY_BUFFER);
+    if (!mStageBuffer.empty()) {
+        mGpuBuffer.bind(GlGpuBuffer::Target::ARRAY_BUFFER);
+        mGpuBuffer.updateBufferData(GlGpuBuffer::Target::ARRAY_BUFFER, mStageBuffer.count, mStageBuffer.data);
+        mGpuBuffer.unbind(GlGpuBuffer::Target::ARRAY_BUFFER);
+    }
+
+    if (!mAuxBuffer.empty()) {
+        mGpuAuxBuffer.bind(GlGpuBuffer::Target::ARRAY_BUFFER);
+        mGpuAuxBuffer.updateBufferData(GlGpuBuffer::Target::ARRAY_BUFFER, mAuxBuffer.count, mAuxBuffer.data);
+        mGpuAuxBuffer.unbind(GlGpuBuffer::Target::ARRAY_BUFFER);
+    }
 
     mGpuIndexBuffer.bind(GlGpuBuffer::Target::ELEMENT_ARRAY_BUFFER);
     mGpuIndexBuffer.updateBufferData(GlGpuBuffer::Target::ELEMENT_ARRAY_BUFFER, mIndexBuffer.count, mIndexBuffer.data);
     mGpuIndexBuffer.unbind(GlGpuBuffer::Target::ELEMENT_ARRAY_BUFFER);
 
     mStageBuffer.clear();
+    mAuxBuffer.clear();
     mIndexBuffer.clear();
 
     return true;
@@ -190,6 +225,12 @@ void GlStageBuffer::unbind()
 GLuint GlStageBuffer::getBufferId()
 {
     return mGpuBuffer.getBufferId();
+}
+
+
+GLuint GlStageBuffer::getAuxBufferId()
+{
+    return mGpuAuxBuffer.getBufferId();
 }
 
 
