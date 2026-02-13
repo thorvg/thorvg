@@ -39,9 +39,6 @@
 
 static atomic<int32_t> rendererCnt{-1};
 
-static RenderColor _solidColor(const GlShape& sdata, const RenderColor& c, RenderUpdateFlag flag);
-
-
 void GlRenderer::clearDisposes()
 {
     if (mDisposed.textures.count > 0) {
@@ -51,7 +48,7 @@ void GlRenderer::clearDisposes()
 
     ARRAY_FOREACH(p, mRenderPassStack) delete(*p);
     mRenderPassStack.clear();
-    mSolidBatch = {};
+    mSolidBatch.clear();
 }
 
 
@@ -213,8 +210,8 @@ void GlRenderer::drawPrimitive(GlShape& sdata, const RenderColor& c, RenderUpdat
         return;
     }
 
-    auto solidColor = _solidColor(sdata, c, flag);
-    task->setVertexColor(solidColor.r / 255.f, solidColor.g / 255.f, solidColor.b / 255.f, solidColor.a / 255.f);
+    auto colorValue = solidColor(sdata, c, flag);
+    task->setVertexColor(colorValue.r / 255.f, colorValue.g / 255.f, colorValue.b / 255.f, colorValue.a / 255.f);
 
     task->setViewport(viewRegion);
 
@@ -248,140 +245,7 @@ void GlRenderer::drawPrimitive(GlShape& sdata, const RenderColor& c, RenderUpdat
 
 void GlRenderer::drawBatchedSolid(GlShape& sdata, const RenderColor& c, int32_t depth, const RenderRegion& viewRegion)
 {
-    auto pass = currentPass();
-
-    auto buffer = &sdata.geometry.fill;
-    if (buffer->index.empty()) return;
-
-    auto vertexCount = buffer->vertex.count / 2;
-    auto indexCount = buffer->index.count;
-    if (vertexCount == 0 || indexCount == 0) return;
-
-    auto canAppend = mSolidBatch.task &&
-                     mSolidBatch.pass == pass &&
-                     mSolidBatch.depth == depth &&
-                     pass->lastTask() == mSolidBatch.task &&
-                     mSolidBatch.task->getProgram() == mPrograms[RT_Color];
-
-    auto buildVertices = [](SolidBatchVertex* out, const GlGeometryBuffer* src, uint32_t vcount, const RenderColor& solidColor) {
-        for (uint32_t i = 0; i < vcount; ++i) {
-            out[i] = {
-                src->vertex[i * 2 + 0],
-                src->vertex[i * 2 + 1],
-                solidColor.r, solidColor.g, solidColor.b, solidColor.a
-            };
-        }
-    };
-
-    auto buildIndices = [](uint32_t* out, const GlGeometryBuffer* src, uint32_t baseVertex) {
-        for (uint32_t i = 0; i < src->index.count; ++i) {
-            out[i] = src->index[i] + baseVertex;
-        }
-    };
-
-    // Lazy promotion: keep first solid as a cheap constant-color task.
-    // Promote to interleaved batch only when a compatible next solid arrives.
-    auto emitSingle = [&]() {
-        auto task = new GlRenderTask(mPrograms[RT_Color]);
-        task->setViewMatrix(pass->getViewMatrix());
-        task->setDrawDepth(depth);
-
-        if (!sdata.geometry.draw(task, &mGpuBuffer, RenderUpdateFlag::Color)) {
-            delete task;
-            mSolidBatch = {};
-            return;
-        }
-
-        auto solidColor = _solidColor(sdata, c, RenderUpdateFlag::Color);
-        task->setVertexColor(solidColor.r / 255.f, solidColor.g / 255.f, solidColor.b / 255.f, solidColor.a / 255.f);
-        task->setViewport(viewRegion);
-        pass->addRenderTask(task);
-
-        mSolidBatch.pass = pass;
-        mSolidBatch.task = task;
-        mSolidBatch.sdata = &sdata;
-        mSolidBatch.color = c;
-        mSolidBatch.flag = RenderUpdateFlag::Color;
-        mSolidBatch.depth = depth;
-        mSolidBatch.vertexCount = vertexCount;
-        mSolidBatch.indexOffset = 0;
-        mSolidBatch.indexCount = indexCount;
-        mSolidBatch.promoted = false;
-    };
-
-    if (!canAppend) {
-        emitSingle();
-        return;
-    }
-
-    auto solidColor = _solidColor(sdata, c, RenderUpdateFlag::Color);
-    if (!mSolidBatch.promoted) {
-        if (!mSolidBatch.sdata) {
-            emitSingle();
-            return;
-        }
-
-        auto firstBuffer = &mSolidBatch.sdata->geometry.fill;
-        auto firstVertexCount = firstBuffer->vertex.count / 2;
-        auto firstIndexCount = firstBuffer->index.count;
-        if (firstVertexCount == 0 || firstIndexCount == 0) {
-            emitSingle();
-            return;
-        }
-
-        auto firstColor = _solidColor(*mSolidBatch.sdata, mSolidBatch.color, mSolidBatch.flag);
-        auto totalVertexCount = firstVertexCount + vertexCount;
-        auto totalIndexCount = firstIndexCount + indexCount;
-
-        SolidBatchVertex* vertices = nullptr;
-        uint32_t* indices = nullptr;
-        auto vertexOffset = mGpuBuffer.reserve(totalVertexCount * sizeof(SolidBatchVertex), reinterpret_cast<void**>(&vertices));
-        auto indexOffset = mGpuBuffer.reserveIndex(totalIndexCount * sizeof(uint32_t), reinterpret_cast<void**>(&indices));
-
-        buildVertices(vertices, firstBuffer, firstVertexCount, firstColor);
-        buildVertices(vertices + firstVertexCount, buffer, vertexCount, solidColor);
-        buildIndices(indices, firstBuffer, 0);
-        buildIndices(indices + firstIndexCount, buffer, firstVertexCount);
-
-        auto task = new GlRenderTask(mPrograms[RT_Color]);
-        task->setViewMatrix(pass->getViewMatrix());
-        task->setDrawDepth(depth);
-        task->addVertexLayout(GlVertexLayout{0, 2, sizeof(SolidBatchVertex), vertexOffset});
-        task->addVertexLayout(GlVertexLayout{1, 4, sizeof(SolidBatchVertex), vertexOffset + 2 * sizeof(float), GL_UNSIGNED_BYTE, GL_TRUE});
-        task->setDrawRange(indexOffset, totalIndexCount);
-
-        auto merged = mSolidBatch.task->getViewport();
-        merged.add(viewRegion);
-        task->setViewport(merged);
-
-        auto oldTask = pass->takeLastTask();
-        if (oldTask) delete oldTask;
-        pass->addRenderTask(task);
-
-        mSolidBatch.task = task;
-        mSolidBatch.sdata = nullptr;
-        mSolidBatch.vertexCount = totalVertexCount;
-        mSolidBatch.indexOffset = indexOffset;
-        mSolidBatch.indexCount = totalIndexCount;
-        mSolidBatch.promoted = true;
-        return;
-    }
-
-    SolidBatchVertex* vertices = nullptr;
-    uint32_t* indices = nullptr;
-    mGpuBuffer.reserve(vertexCount * sizeof(SolidBatchVertex), reinterpret_cast<void**>(&vertices));
-    mGpuBuffer.reserveIndex(indexCount * sizeof(uint32_t), reinterpret_cast<void**>(&indices));
-
-    buildVertices(vertices, buffer, vertexCount, solidColor);
-    buildIndices(indices, buffer, mSolidBatch.vertexCount);
-
-    mSolidBatch.vertexCount += vertexCount;
-    mSolidBatch.indexCount += indexCount;
-    mSolidBatch.task->setDrawRange(mSolidBatch.indexOffset, mSolidBatch.indexCount);
-
-    auto merged = mSolidBatch.task->getViewport();
-    merged.add(viewRegion);
-    mSolidBatch.task->setViewport(merged);
+    mSolidBatch.draw(*this, sdata, c, depth, viewRegion);
 }
 
 
@@ -1558,7 +1422,7 @@ GlRenderer* GlRenderer::gen(TVG_UNUSED uint32_t threads)
 }
 
 
-static RenderColor _solidColor(const GlShape& sdata, const RenderColor& c, RenderUpdateFlag flag)
+RenderColor GlRenderer::solidColor(const GlShape& sdata, const RenderColor& c, RenderUpdateFlag flag)
 {
     RenderColor solidColor = c;
     auto a = MULTIPLY(c.a, sdata.opacity);

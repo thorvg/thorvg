@@ -190,6 +190,28 @@ private:
         uint8_t r; uint8_t g; uint8_t b; uint8_t a;
     };
     static_assert(sizeof(SolidBatchVertex) == 12, "Solid batch vertex must stay tightly packed.");
+    struct SolidBatch
+    {
+        GlRenderPass* pass = nullptr;
+        GlRenderTask* task = nullptr;
+        GlShape* shape = nullptr;
+        RenderColor color = {};
+        RenderUpdateFlag flag = RenderUpdateFlag::None;
+        int32_t depth = 0;
+        uint32_t vertexCount = 0;
+        uint32_t indexOffset = 0;
+        uint32_t indexCount = 0;
+        bool promoted = false;
+
+        void clear() { *this = {}; }
+        void draw(GlRenderer& renderer, GlShape& sdata, const RenderColor& color, int32_t depth, const RenderRegion& viewRegion);
+        bool appendable(const GlRenderer& renderer, const GlRenderPass* pass, int32_t depth) const;
+        void emitSingle(GlRenderer& renderer, GlRenderPass* pass, GlShape& sdata, const RenderColor& color, int32_t depth, const RenderRegion& viewRegion, uint32_t vertexCount, uint32_t indexCount);
+        bool promote(GlRenderer& renderer, GlRenderPass* pass, const RenderColor& solidColor, int32_t depth, const RenderRegion& viewRegion, const GlGeometryBuffer* buffer, uint32_t vertexCount, uint32_t indexCount);
+        void append(GlRenderer& renderer, const RenderColor& solidColor, const RenderRegion& viewRegion, const GlGeometryBuffer* buffer, uint32_t vertexCount, uint32_t indexCount);
+        static void buildVertices(SolidBatchVertex* out, const GlGeometryBuffer* src, uint32_t count, const RenderColor& color);
+        static void buildIndices(uint32_t* out, const GlGeometryBuffer* src, uint32_t baseVertex);
+    };
 
     GlRenderer(); 
     ~GlRenderer();
@@ -205,6 +227,7 @@ private:
     bool beginComplexBlending(const RenderRegion& vp, RenderRegion bounds);
     void endBlendingCompose(GlRenderTask* stencilTask);
     GlProgram* getBlendProgram(BlendMethod method, BlendSource source);
+    static RenderColor solidColor(const GlShape& sdata, const RenderColor& c, RenderUpdateFlag flag);
 
     void prepareBlitTask(GlBlitTask* task);
     void prepareCmpTask(GlRenderTask* task, const RenderRegion& vp, uint32_t cmpWidth, uint32_t cmpHeight);
@@ -229,18 +252,7 @@ private:
     Array<GlRenderTargetPool*> mBlendPool;
     Array<GlRenderPass*> mRenderPassStack;
     Array<GlCompositor*> mComposeStack;
-    struct {
-        GlRenderPass* pass = nullptr;
-        GlRenderTask* task = nullptr;
-        GlShape* sdata = nullptr;
-        RenderColor color = {};
-        RenderUpdateFlag flag = RenderUpdateFlag::None;
-        int32_t depth = 0;
-        uint32_t vertexCount = 0;
-        uint32_t indexOffset = 0;
-        uint32_t indexCount = 0;
-        bool promoted = false;
-    } mSolidBatch;
+    SolidBatch mSolidBatch;
 
     //Disposed resources. They should be released on synced call.
     struct {
