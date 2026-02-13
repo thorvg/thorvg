@@ -218,23 +218,23 @@ static void _buildTransform(jerry_value_t context, float frameNo, LottieTransfor
     auto obj = jerry_object();
     jerry_object_set_sz(context, "transform", obj);
 
-    auto anchorPoint = _buildValue(frameNo, &transform->anchor);
+    auto anchorPoint = _point(transform->anchor(frameNo));
     jerry_object_set_sz(obj, "anchorPoint", anchorPoint);
     jerry_value_free(anchorPoint);
 
-    auto position = _buildValue(frameNo, &transform->position);
+    auto position = _point(transform->position(frameNo));
     jerry_object_set_sz(obj, "position", position);
     jerry_value_free(position);
 
-    auto scale = _buildValue(frameNo, &transform->scale);
+    auto scale = _point(transform->scale(frameNo));
     jerry_object_set_sz(obj, "scale", scale);
     jerry_value_free(scale);
 
-    auto rotation = _buildValue(frameNo, &transform->rotation);
+    auto rotation = jerry_number(transform->rotation(frameNo));
     jerry_object_set_sz(obj, "rotation", rotation);
     jerry_value_free(rotation);
 
-    auto opacity = _buildValue(frameNo, &transform->opacity);
+    auto opacity = jerry_number(transform->opacity(frameNo));
     jerry_object_set_sz(obj, "opacity", opacity);
     jerry_value_free(opacity);
 
