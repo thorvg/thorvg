@@ -33,6 +33,11 @@ struct GlVertexLayout
     uint32_t size;
     uint32_t stride;
     size_t   offset;
+    GLenum type = GL_FLOAT;
+    GLboolean normalized = GL_FALSE;
+    // Optional VBO for this attribute. 0 means use the GL_ARRAY_BUFFER binding
+    // captured at the start of GlRenderTask::run().
+    GLuint arrayBufferId = 0;
 };
 
 enum class GlBindingType
@@ -52,19 +57,20 @@ struct GlBindingResource
      */
     uint32_t        bindPoint = 0;
     GLint           location = 0;
-    GLuint          gBufferId = 0;
+    // GL object id used by this binding: texture id for kTexture, UBO id for kUniformBuffer.
+    GLuint          resourceId = 0;
     uint32_t        bufferOffset = 0;
     uint32_t        bufferRange = 0;
 
     GlBindingResource() = default;
 
-    GlBindingResource(uint32_t index, GLint location, GLuint bufferId, uint32_t offset, uint32_t range)
-        : type(GlBindingType::kUniformBuffer), bindPoint(index), location(location), gBufferId(bufferId), bufferOffset(offset), bufferRange(range)
+    GlBindingResource(uint32_t index, GLint location, GLuint uniformBufferId, uint32_t offset, uint32_t range)
+        : type(GlBindingType::kUniformBuffer), bindPoint(index), location(location), resourceId(uniformBufferId), bufferOffset(offset), bufferRange(range)
     {
     }
 
-    GlBindingResource(uint32_t bindPoint, GLuint texId, GLint location)
-        : type(GlBindingType::kTexture), bindPoint(bindPoint), location(location), gBufferId(texId)
+    GlBindingResource(uint32_t bindPoint, GLuint textureId, GLint location)
+        : type(GlBindingType::kTexture), bindPoint(bindPoint), location(location), resourceId(textureId)
     {
     }
 };
@@ -80,6 +86,7 @@ public:
     virtual void run();
 
     void addVertexLayout(const GlVertexLayout& layout);
+    void setVertexColor(float r, float g, float b, float a);
     void addBindResource(const GlBindingResource& binding);
     void setDrawRange(uint32_t offset, uint32_t count);
     void setViewport(const RenderRegion& viewport);
@@ -90,6 +97,9 @@ public:
     GlProgram* getProgram() { return mProgram; }
     const RenderRegion& getViewport() const { return mViewport; }
     float getDrawDepth() const { return mDrawDepth; }
+    const Array<GlVertexLayout>& getVertexLayout() const { return mVertexLayout; }
+    uint32_t getIndexOffset() const { return mIndexOffset; }
+    uint32_t getIndexCount() const { return mIndexCount; }
 private:
     GlProgram* mProgram;
     RenderRegion mViewport = {};
@@ -100,6 +110,8 @@ private:
     float mDrawDepth = 0.f;
     Matrix mViewMatrix = {};
     bool mUseViewMatrix = false;
+    bool mUseVertexColor = false;
+    float mVertexColor[4] = {0.f, 0.f, 0.f, 0.f};
 };
 
 class GlStencilCoverTask : public GlRenderTask

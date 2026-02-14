@@ -16,6 +16,7 @@ source_file = [
    'tvgGlGpuBuffer.cpp',
    'tvgGlProgram.cpp',
    'tvgGlRenderer.cpp',
+   'tvgGlSolidBatch.cpp',
    'tvgGlRenderPass.cpp',
    'tvgGlRenderTarget.cpp',
    'tvgGlRenderTask.cpp',

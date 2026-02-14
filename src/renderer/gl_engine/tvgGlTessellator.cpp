@@ -418,7 +418,7 @@ BWTessellator::BWTessellator(GlGeometryBuffer* buffer): mBuffer(buffer)
 }
 
 
-void BWTessellator::tessellate(const RenderPath& path)
+void BWTessellator::tessellate(const RenderPath& path, int8_t defaultWinding)
 {
     auto cmds = path.cmds.data;
     auto cmdCnt = path.cmds.count;
@@ -426,6 +426,8 @@ void BWTessellator::tessellate(const RenderPath& path)
     auto ptsCnt = path.pts.count;
 
     if (ptsCnt <= 2) return;
+
+    winding = defaultWinding;
 
     uint32_t firstIndex = 0;
     uint32_t prevIndex = 0;
@@ -439,7 +441,7 @@ void BWTessellator::tessellate(const RenderPath& path)
         auto c = cross(prevEdge, edge);
         if (zero(c)) { prevEdge = edge; return; }
         auto sign = (c > 0) ? 1 : -1;
-        if (winding == 0) winding = sign; // The default winding is CCW, but it might be otherwise once we support unordered points.
+        if (winding == 0) winding = sign; // Unknown winding: lock to the first non-collinear turn.
         else if (sign != winding) convex = false;
         prevEdge = edge;
     };
