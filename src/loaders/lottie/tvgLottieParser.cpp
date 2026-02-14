@@ -1324,6 +1324,7 @@ bool LottieParser::parseEffect(LottieEffect* effect, void(LottieParser::*func)(L
     int idx = 0;
     while (nextArrayValue()) {
         enterObject();
+        const char* sid = nullptr;
         while (auto key = nextObjectKey()) {
             if (custom && KEY_AS("ty")) property = static_cast<LottieFxCustom*>(effect)->property(getInt());
             else if (KEY_AS("v"))
@@ -1332,6 +1333,7 @@ bool LottieParser::parseEffect(LottieEffect* effect, void(LottieParser::*func)(L
                     enterObject();
                     while (auto key = nextObjectKey()) {
                         if (KEY_AS("k")) (this->*func)(effect, idx++);
+                        else if (KEY_AS("sid")) sid = getString();
                         else skip();
                     }
                 } else (this->*func)(effect, idx++);
@@ -1340,6 +1342,7 @@ bool LottieParser::parseEffect(LottieEffect* effect, void(LottieParser::*func)(L
             else if (property && KEY_AS("mn")) property->mn = djb2Encode(getString());
             else skip();
         }
+        if (sid && property) registerSlot(effect, sid, *property->property);
     }
     return true;
 }
@@ -1478,10 +1481,10 @@ void LottieParser::parseEffects(LottieLayer* layer)
                 if (!effect) break;
                 else invalid = false;
             }
-            else if (effect && KEY_AS("nm")) effect->nm = djb2Encode(getString());
+            else if (effect && KEY_AS("nm")) effect->id = djb2Encode(getString());
             else if (effect && KEY_AS("mn")) effect->mn = djb2Encode(getString());
             else if (effect && KEY_AS("ix")) effect->ix = getInt();
-            else if (effect && KEY_AS("en")) effect->enable = getInt();
+            else if (effect && KEY_AS("en")) effect->hidden = getInt();
             else if (effect && KEY_AS("ef")) parseEffect(effect);
             else skip();
         }
