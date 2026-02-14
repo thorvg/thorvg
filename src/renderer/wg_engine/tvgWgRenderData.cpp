@@ -32,13 +32,11 @@
 
 void WgImageData::update(WgContext& context, const RenderSurface* surface)
 {
-    // get appropriate texture format from color space
-    WGPUTextureFormat texFormat = WGPUTextureFormat_BGRA8Unorm;
-    if (surface->cs == ColorSpace::ABGR8888S)
-        texFormat = WGPUTextureFormat_RGBA8Unorm;
-    if (surface->cs == ColorSpace::Grayscale8)
-        texFormat = WGPUTextureFormat_R8Unorm;
+    channelSize = surface->channelSize;
+    premultiplied = surface->premultiplied;
+    shuffled = ((surface->cs == ColorSpace::ARGB8888) || (surface->cs == ColorSpace::ARGB8888S));
     // allocate new texture handle
+    WGPUTextureFormat texFormat = surface->channelSize == 4 ? WGPUTextureFormat_RGBA8Unorm : WGPUTextureFormat_R8Unorm;
     bool texHandleChanged = context.allocateTexture(texture, surface->w, surface->h, texFormat, surface->data);
     // update texture view of texture handle was changed
     if (texHandleChanged) {
