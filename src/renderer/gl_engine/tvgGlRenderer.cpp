@@ -38,8 +38,6 @@
 
 static atomic<int32_t> rendererCnt{-1};
 
-static void _solidUniforms(GlShape& sdata, const RenderColor& c, RenderUpdateFlag flag, float* solidInfo);
-
 
 void GlRenderer::clearDisposes()
 {
@@ -214,8 +212,21 @@ void GlRenderer::drawPrimitive(GlShape& sdata, const RenderColor& c, RenderUpdat
         stencilTask->setDrawDepth(depth);
     }
 
+    //solid uniforms
     float solidInfo[4];
-    _solidUniforms(sdata, c, flag, solidInfo);
+    auto a = MULTIPLY(c.a, sdata.opacity);
+    if (flag & RenderUpdateFlag::Stroke) {
+        auto strokeWidth = sdata.geometry.strokeRenderWidth;
+        if (strokeWidth < MIN_GL_STROKE_WIDTH) {
+            auto alpha = strokeWidth / MIN_GL_STROKE_WIDTH;
+            a = MULTIPLY(a, static_cast<uint8_t>(alpha * 255));
+        }
+    }
+    solidInfo[0] = c.r / 255.f;
+    solidInfo[1] = c.g / 255.f;
+    solidInfo[2] = c.b / 255.f;
+    solidInfo[3] = a / 255.f;
+
     auto solidOffset = mGpuBuffer.push(solidInfo, sizeof(solidInfo), true);
 
     task->addBindResource(GlBindingResource{
@@ -502,11 +513,13 @@ void GlRenderer::drawClip(Array<RenderData>& clips)
     }
 }
 
+
 GlRenderPass* GlRenderer::currentPass()
 {
     if (mRenderPassStack.empty()) return nullptr;
     return mRenderPassStack.last();
 }
+
 
 bool GlRenderer::beginComplexBlending(const RenderRegion& vp, RenderRegion bounds)
 {
@@ -1244,25 +1257,6 @@ void GlRenderer::dispose(RenderData data)
     delete sdata;
 }
 
-static GLuint _genTexture(RenderSurface* image)
-{
-    GLuint tex = 0;
-
-    GL_CHECK(glGenTextures(1, &tex));
-
-    GL_CHECK(glBindTexture(GL_TEXTURE_2D, tex));
-    GL_CHECK(glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA8, image->w, image->h, 0, GL_RGBA, GL_UNSIGNED_BYTE, image->data));
-
-    GL_CHECK(glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE));
-    GL_CHECK(glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE));
-    GL_CHECK(glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR));
-    GL_CHECK(glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR));
-
-    GL_CHECK(glBindTexture(GL_TEXTURE_2D, 0));
-
-    return tex;
-}
-
 
 RenderData GlRenderer::prepare(RenderSurface* image, RenderData data, const Matrix& transform, Array<RenderData>& clips, uint8_t opacity, RenderUpdateFlag flags)
 {
@@ -1276,8 +1270,17 @@ RenderData GlRenderer::prepare(RenderSurface* image, RenderData data, const Matr
     sdata->viewWd = static_cast<float>(surface.w);
     sdata->viewHt = static_cast<float>(surface.h);
 
+    //generate a texture
     if (sdata->texId == 0) {
-        sdata->texId = _genTexture(image);
+        GL_CHECK(glGenTextures(1, &sdata->texId));
+        GL_CHECK(glBindTexture(GL_TEXTURE_2D, sdata->texId));
+        GL_CHECK(glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA8, image->w, image->h, 0, GL_RGBA, GL_UNSIGNED_BYTE, image->data));
+        GL_CHECK(glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE));
+        GL_CHECK(glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE));
+        GL_CHECK(glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR));
+        GL_CHECK(glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR));
+        GL_CHECK(glBindTexture(GL_TEXTURE_2D, 0));
+
         sdata->texColorSpace = image->cs;
         sdata->texFlipY = 1;
         sdata->geometry = GlGeometry();
@@ -1424,22 +1427,4 @@ GlRenderer* GlRenderer::gen(TVG_UNUSED uint32_t threads)
     }
 
     return new GlRenderer;
-}
-
-
-static void _solidUniforms(GlShape& sdata, const RenderColor& c, RenderUpdateFlag flag, float* solidInfo)
-{
-    auto a = MULTIPLY(c.a, sdata.opacity);
-
-    if (flag & RenderUpdateFlag::Stroke) {
-        auto strokeWidth = sdata.geometry.strokeRenderWidth;
-        if (strokeWidth < MIN_GL_STROKE_WIDTH) {
-            auto alpha = strokeWidth / MIN_GL_STROKE_WIDTH;
-            a = MULTIPLY(a, static_cast<uint8_t>(alpha * 255));
-        }
-    }
-    solidInfo[0] = c.r / 255.f;
-    solidInfo[1] = c.g / 255.f;
-    solidInfo[2] = c.b / 255.f;
-    solidInfo[3] = a / 255.f;
 }
