@@ -590,7 +590,7 @@ void TtfLoader::copy(const FontMetrics& in, FontMetrics& out)
 
 void TtfLoader::metrics(const FontMetrics& fm, TextMetrics& out)
 {
-    auto scale = reader.metrics.unitsPerEm / (fm.fontSize * FontLoader::DPI);
+    auto scale = (fm.fontSize * FontLoader::DPI) / reader.metrics.unitsPerEm;
 
     out.advance = reader.metrics.hhea.advance * scale;
     out.ascent = reader.metrics.hhea.ascent * scale;
