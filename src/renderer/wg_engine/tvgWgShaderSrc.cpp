@@ -30,15 +30,13 @@
 const char* cShaderSrc_Stencil = R"(
 struct VertexInput { @location(0) position: vec2f };
 struct VertexOutput { @builtin(position) position: vec4f };
-struct PaintSettings { transform: mat4x4f };
 
 @group(0) @binding(0) var<uniform> uViewMat  : mat4x4f;
-@group(1) @binding(0) var<uniform> uPaintSettings : PaintSettings;
 
 @vertex
 fn vs_main(in: VertexInput) -> VertexOutput {
     var out: VertexOutput;
-    out.position = uViewMat * uPaintSettings.transform * vec4f(in.position.xy, 0.0, 1.0);
+    out.position = uViewMat * vec4f(in.position.xy, 0.0, 1.0);
     return out;
 }
 
@@ -55,16 +53,14 @@ fn fs_main(in: VertexOutput) -> @location(0) vec4f {
 const char* cShaderSrc_Depth = R"(
 struct VertexInput { @location(0) position: vec2f };
 struct VertexOutput { @builtin(position) position: vec4f };
-struct PaintSettings { transform: mat4x4f };
 
 @group(0) @binding(0) var<uniform> uViewMat  : mat4x4f;
-@group(1) @binding(0) var<uniform> uPaintSettings : PaintSettings;
-@group(2) @binding(0) var<uniform> uDepth : f32;
+@group(1) @binding(0) var<uniform> uDepth : f32;
 
 @vertex
 fn vs_main(in: VertexInput) -> VertexOutput {
     var out: VertexOutput;
-    out.position = uViewMat * uPaintSettings.transform * vec4f(in.position.xy, 0.0, 1.0);
+    out.position = uViewMat * vec4f(in.position.xy, 0.0, 1.0);
     out.position.z = uDepth;
     return out;
 }
@@ -80,24 +76,23 @@ fn fs_main(in: VertexOutput) -> @location(0) vec4f {
 //************************************************************************
 
 const char* cShaderSrc_Solid = R"(
-struct VertexInput { @location(0) position: vec2f };
-struct VertexOutput { @builtin(position) position: vec4f };
-struct PaintSettings { transform: mat4x4f, options: vec4f, color: vec4f };
+struct VertexInput { @location(0) position: vec2f, @location(1) color: vec4f };
+struct VertexOutput { @builtin(position) position: vec4f, @location(0) color: vec4f };
 
 @group(0) @binding(0) var<uniform> uViewMat : mat4x4f;
-@group(1) @binding(0) var<uniform> uPaintSettings : PaintSettings;
 
 @vertex
 fn vs_main(in: VertexInput) -> VertexOutput {
     var out: VertexOutput;
-    out.position = uViewMat * uPaintSettings.transform * vec4f(in.position.xy, 0.0, 1.0);
+    out.position = uViewMat * vec4f(in.position.xy, 0.0, 1.0);
+    out.color = in.color;
     return out;
 }
 
 @fragment
 fn fs_main(in: VertexOutput) -> @location(0) vec4f {
-    let Sc = uPaintSettings.color;
-    let So = uPaintSettings.options.a;
+    let Sc = in.color;
+    let So = 1.0;
     return vec4f(Sc.rgb * Sc.a * So, Sc.a * So);
 }
 )";
@@ -110,7 +105,7 @@ const char* cShaderSrc_Linear = R"(
 struct VertexInput { @location(0) position: vec2f };
 struct VertexOutput { @builtin(position) position : vec4f, @location(0) vGradCoord : vec4f };
 struct GradSettings  { transform: mat4x4f, coords: vec4f, focal: vec4f };
-struct PaintSettings { transform: mat4x4f, options: vec4f, color: vec4f, gradient: GradSettings };
+struct PaintSettings { options: vec4f, color: vec4f, gradient: GradSettings };
 
 // uniforms
 @group(0) @binding(0) var<uniform> uViewMat : mat4x4f;
@@ -121,7 +116,7 @@ struct PaintSettings { transform: mat4x4f, options: vec4f, color: vec4f, gradien
 @vertex
 fn vs_main(in: VertexInput) -> VertexOutput {
     var out: VertexOutput;
-    out.position = uViewMat * uPaintSettings.transform * vec4f(in.position.xy, 0.0, 1.0);
+    out.position = uViewMat * vec4f(in.position.xy, 0.0, 1.0);
     out.vGradCoord = uPaintSettings.gradient.transform * vec4f(in.position.xy, 0.0, 1.0);
     return out;
 }
@@ -147,7 +142,7 @@ const char* cShaderSrc_Radial = R"(
 struct VertexInput { @location(0) position: vec2f };
 struct VertexOutput { @builtin(position) position : vec4f, @location(0) vGradCoord : vec4f };
 struct GradSettings  { transform: mat4x4f, coords: vec4f, focal: vec4f };
-struct PaintSettings { transform: mat4x4f, options: vec4f, color: vec4f, gradient: GradSettings };
+struct PaintSettings { options: vec4f, color: vec4f, gradient: GradSettings };
 
 @group(0) @binding(0) var<uniform> uViewMat : mat4x4f;
 @group(1) @binding(0) var<uniform> uPaintSettings : PaintSettings;
@@ -157,7 +152,7 @@ struct PaintSettings { transform: mat4x4f, options: vec4f, color: vec4f, gradien
 @vertex
 fn vs_main(in: VertexInput) -> VertexOutput {
     var out: VertexOutput;
-    out.position = uViewMat * uPaintSettings.transform * vec4f(in.position.xy, 0.0, 1.0);
+    out.position = uViewMat * vec4f(in.position.xy, 0.0, 1.0);
     out.vGradCoord = uPaintSettings.gradient.transform * vec4f(in.position.xy, 0.0, 1.0);
     return out;
 }
@@ -189,7 +184,7 @@ fn fs_main(in: VertexOutput) -> @location(0) vec4f {
 const char* cShaderSrc_Image = R"(
 struct VertexInput { @location(0) position: vec2f, @location(1) texCoord: vec2f };
 struct VertexOutput { @builtin(position) position: vec4f, @location(0) vTexCoord: vec2f };
-struct PaintSettings { transform: mat4x4f, options: vec4f };
+struct PaintSettings { options: vec4f };
 
 @group(0) @binding(0) var<uniform> uViewMat : mat4x4f;
 @group(1) @binding(0) var<uniform> uPaintSettings : PaintSettings;
@@ -199,7 +194,7 @@ struct PaintSettings { transform: mat4x4f, options: vec4f };
 @vertex
 fn vs_main(in: VertexInput) -> VertexOutput {
     var out: VertexOutput;
-    out.position = uViewMat * uPaintSettings.transform * vec4f(in.position.xy, 0.0, 1.0);
+    out.position = uViewMat * vec4f(in.position.xy, 0.0, 1.0);
     out.vTexCoord = in.texCoord;
     return out;
 }
@@ -244,21 +239,19 @@ fn fs_main(in: VertexOutput) -> @location(0) vec4f {
 //************************************************************************
 
 const char* cShaderSrc_Solid_Blend = R"(
-struct VertexInput { @location(0) position: vec2f };
-struct VertexOutput { @builtin(position) position: vec4f, @location(1) vScrCoord: vec2f };
-struct PaintSettings { transform: mat4x4f, options: vec4f, color: vec4f };
+struct VertexInput { @location(0) position: vec2f, @location(1) color: vec4f };
+struct VertexOutput { @builtin(position) position: vec4f, @location(0) vColor: vec4f, @location(1) vScrCoord: vec2f };
 
 @group(0) @binding(0) var<uniform> uViewMat : mat4x4f;
-@group(1) @binding(0) var<uniform> uPaintSettings : PaintSettings;
-// @group(2) - empty
-@group(3) @binding(0) var uSamplerDst : sampler;
-@group(3) @binding(1) var uTextureDst : texture_2d<f32>;
+@group(1) @binding(0) var uSamplerDst : sampler;
+@group(1) @binding(1) var uTextureDst : texture_2d<f32>;
 
 @vertex
 fn vs_main(in: VertexInput) -> VertexOutput {
     var out: VertexOutput;
-    let pos = uViewMat * uPaintSettings.transform * vec4f(in.position.xy, 0.0, 1.0);
+    let pos = uViewMat * vec4f(in.position.xy, 0.0, 1.0);
     out.position = pos;
+    out.vColor = in.color;
     out.vScrCoord = vec2f(0.5 + pos.x * 0.5, 0.5 - pos.y * 0.5);
     return out;
 }
@@ -266,13 +259,13 @@ fn vs_main(in: VertexInput) -> VertexOutput {
 struct FragData { Sc: vec3f, Sa: f32, So: f32, Dc: vec3f, Da: f32 };
 fn getFragData(in: VertexOutput) -> FragData {
     // get source data
-    let colorSrc = uPaintSettings.color;
+    let colorSrc = in.vColor;
     let colorDst = textureSample(uTextureDst, uSamplerDst, in.vScrCoord.xy);
     // fill fragment data
     var data: FragData;
     data.Sc = colorSrc.rgb;
     data.Sa = colorSrc.a;
-    data.So = uPaintSettings.options.a;
+    data.So = 1.0;
     data.Dc = colorDst.rgb;
     data.Da = colorDst.a;
     data.Sc = data.Sa * data.So * data.Sc;
@@ -287,7 +280,7 @@ const char* cShaderSrc_Linear_Blend = R"(
 struct VertexInput { @location(0) position: vec2f };
 struct VertexOutput { @builtin(position) position: vec4f, @location(0) vGradCoord : vec4f, @location(1) vScrCoord: vec2f };
 struct GradSettings  { transform: mat4x4f, coords: vec4f, focal: vec4f };
-struct PaintSettings { transform: mat4x4f, options: vec4f, color: vec4f, gradient: GradSettings };
+struct PaintSettings { options: vec4f, color: vec4f, gradient: GradSettings };
 
 @group(0) @binding(0) var<uniform> uViewMat : mat4x4f;
 @group(1) @binding(0) var<uniform> uPaintSettings : PaintSettings;
@@ -299,7 +292,7 @@ struct PaintSettings { transform: mat4x4f, options: vec4f, color: vec4f, gradien
 @vertex
 fn vs_main(in: VertexInput) -> VertexOutput {
     var out: VertexOutput;
-    let pos = uViewMat * uPaintSettings.transform * vec4f(in.position.xy, 0.0, 1.0);
+    let pos = uViewMat * vec4f(in.position.xy, 0.0, 1.0);
     out.position = pos;
     out.vGradCoord = uPaintSettings.gradient.transform * vec4f(in.position.xy, 0.0, 1.0);
     out.vScrCoord = vec2f(0.5 + pos.x * 0.5, 0.5 - pos.y * 0.5);
@@ -335,7 +328,7 @@ const char* cShaderSrc_Radial_Blend = R"(
 struct VertexInput { @location(0) position: vec2f };
 struct VertexOutput { @builtin(position) position: vec4f, @location(0) vGradCoord : vec4f, @location(1) vScrCoord: vec2f };
 struct GradSettings  { transform: mat4x4f, coords: vec4f, focal: vec4f };
-struct PaintSettings { transform: mat4x4f, options: vec4f, color: vec4f, gradient: GradSettings };
+struct PaintSettings { options: vec4f, color: vec4f, gradient: GradSettings };
 
 @group(0) @binding(0) var<uniform> uViewMat : mat4x4f;
 @group(1) @binding(0) var<uniform> uPaintSettings : PaintSettings;
@@ -347,7 +340,7 @@ struct PaintSettings { transform: mat4x4f, options: vec4f, color: vec4f, gradien
 @vertex
 fn vs_main(in: VertexInput) -> VertexOutput {
     var out: VertexOutput;
-    let pos = uViewMat * uPaintSettings.transform * vec4f(in.position.xy, 0.0, 1.0);
+    let pos = uViewMat * vec4f(in.position.xy, 0.0, 1.0);
     out.position = pos;
     out.vGradCoord = uPaintSettings.gradient.transform * vec4f(in.position.xy, 0.0, 1.0);
     out.vScrCoord = vec2f(0.5 + pos.x * 0.5, 0.5 - pos.y * 0.5);
@@ -387,7 +380,7 @@ fn postProcess(d: FragData, R: vec4f) -> vec4f { return R; };
 const char* cShaderSrc_Image_Blend = R"(
 struct VertexInput { @location(0) position: vec2f, @location(1) texCoord: vec2f };
 struct VertexOutput { @builtin(position) position: vec4f, @location(0) vTexCoord : vec2f, @location(1) vScrCoord: vec2f };
-struct PaintSettings { transform: mat4x4f, options: vec4f };
+struct PaintSettings { options: vec4f };
 
 @group(0) @binding(0) var<uniform> uViewMat : mat4x4f;
 @group(1) @binding(0) var<uniform> uPaintSettings : PaintSettings;
@@ -399,7 +392,7 @@ struct PaintSettings { transform: mat4x4f, options: vec4f };
 @vertex
 fn vs_main(in: VertexInput) -> VertexOutput {
     var out: VertexOutput;
-    let pos = uViewMat * uPaintSettings.transform * vec4f(in.position.xy, 0.0, 1.0);
+    let pos = uViewMat * vec4f(in.position.xy, 0.0, 1.0);
     out.position = pos;
     out.vTexCoord = in.texCoord;
     out.vScrCoord = vec2f(0.5 + pos.x * 0.5, 0.5 - pos.y * 0.5);

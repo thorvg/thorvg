@@ -152,11 +152,16 @@ void WgPipelines::initialize(WgContext& context)
 {
     // common pipeline settings
     const WGPUVertexAttribute vertexAttributePos { .format = WGPUVertexFormat_Float32x2, .offset = 0, .shaderLocation = 0 };
+    const WGPUVertexAttribute vertexAttributeColor { .format = WGPUVertexFormat_Float32x4, .offset = 0, .shaderLocation = 1 };
     const WGPUVertexAttribute vertexAttributeTex { .format = WGPUVertexFormat_Float32x2, .offset = 0, .shaderLocation = 1 };
     const WGPUVertexAttribute vertexAttributesPos[] { vertexAttributePos };
+    const WGPUVertexAttribute vertexAttributesColor[] { vertexAttributeColor };
     const WGPUVertexAttribute vertexAttributesTex[] { vertexAttributeTex };
     const WGPUVertexBufferLayout vertexBufferLayoutPos { .stepMode = WGPUVertexStepMode_Vertex, .arrayStride = 8, .attributeCount = 1, .attributes = vertexAttributesPos };
+    // Solid path: one vec4 color per draw from an instance-rate aux vertex slot.
+    const WGPUVertexBufferLayout vertexBufferLayoutColor { .stepMode = WGPUVertexStepMode_Instance, .arrayStride = 16, .attributeCount = 1, .attributes = vertexAttributesColor };
     const WGPUVertexBufferLayout vertexBufferLayoutTex { .stepMode = WGPUVertexStepMode_Vertex, .arrayStride = 8, .attributeCount = 1, .attributes = vertexAttributesTex };
+    const WGPUVertexBufferLayout vertexBufferLayoutsSolid[] { vertexBufferLayoutPos, vertexBufferLayoutColor };
     const WGPUVertexBufferLayout vertexBufferLayoutsShape[] { vertexBufferLayoutPos };
     const WGPUVertexBufferLayout vertexBufferLayoutsImage[] { vertexBufferLayoutPos, vertexBufferLayoutTex };
     const WGPUMultisampleState multisampleState   { .count = 4, .mask = 0xFFFFFFFF, .alphaToCoverageEnabled = false };
@@ -171,15 +176,15 @@ void WgPipelines::initialize(WgContext& context)
 
     const WgBindGroupLayouts& layouts = context.layouts;
     // bind group layouts helpers
-    const WGPUBindGroupLayout bindGroupLayoutsStencil[] { layouts.layoutBuffer1Un, layouts.layoutBuffer1Un };
-    const WGPUBindGroupLayout bindGroupLayoutsDepth[]   { layouts.layoutBuffer1Un, layouts.layoutBuffer1Un, layouts.layoutBuffer1Un };
+    const WGPUBindGroupLayout bindGroupLayoutsStencil[] { layouts.layoutBuffer1Un };
+    const WGPUBindGroupLayout bindGroupLayoutsDepth[]   { layouts.layoutBuffer1Un, layouts.layoutBuffer1Un };
     // bind group layouts normal blend
-    const WGPUBindGroupLayout bindGroupLayoutsSolid[]    { layouts.layoutBuffer1Un, layouts.layoutBuffer1Un };
+    const WGPUBindGroupLayout bindGroupLayoutsSolid[]    { layouts.layoutBuffer1Un };
     const WGPUBindGroupLayout bindGroupLayoutsGradient[] { layouts.layoutBuffer1Un, layouts.layoutBuffer1Un, layouts.layoutTexSampled };
     const WGPUBindGroupLayout bindGroupLayoutsImage[]    { layouts.layoutBuffer1Un, layouts.layoutBuffer1Un, layouts.layoutTexSampled };
     const WGPUBindGroupLayout bindGroupLayoutsScene[]    { layouts.layoutTexSampled, layouts.layoutBuffer1Un };
     // bind group layouts custom blend
-    const WGPUBindGroupLayout bindGroupLayoutsSolidBlend[]    { layouts.layoutBuffer1Un, layouts.layoutBuffer1Un, layouts.layoutBuffer1Un, layouts.layoutTexSampled };
+    const WGPUBindGroupLayout bindGroupLayoutsSolidBlend[]    { layouts.layoutBuffer1Un, layouts.layoutTexSampled };
     const WGPUBindGroupLayout bindGroupLayoutsGradientBlend[] { layouts.layoutBuffer1Un, layouts.layoutBuffer1Un, layouts.layoutTexSampled, layouts.layoutTexSampled };
     const WGPUBindGroupLayout bindGroupLayoutsImageBlend[]    { layouts.layoutBuffer1Un, layouts.layoutBuffer1Un, layouts.layoutTexSampled, layouts.layoutTexSampled };
     const WGPUBindGroupLayout bindGroupLayoutsSceneBlend[]    { layouts.layoutTexSampled, layouts.layoutTexSampled, layouts.layoutBuffer1Un };
@@ -229,15 +234,15 @@ void WgPipelines::initialize(WgContext& context)
     shader_effects = createShaderModule(context.device, "The shader effects", cShaderSrc_Effects);
 
     // layouts
-    layout_stencil = createPipelineLayout(context.device, bindGroupLayoutsStencil, 2);
-    layout_depth = createPipelineLayout(context.device, bindGroupLayoutsDepth, 3);
+    layout_stencil = createPipelineLayout(context.device, bindGroupLayoutsStencil, 1);
+    layout_depth = createPipelineLayout(context.device, bindGroupLayoutsDepth, 2);
     // layouts normal blend
-    layout_solid    = createPipelineLayout(context.device, bindGroupLayoutsSolid, 2);
+    layout_solid    = createPipelineLayout(context.device, bindGroupLayoutsSolid, 1);
     layout_gradient = createPipelineLayout(context.device, bindGroupLayoutsGradient, 3);
     layout_image    = createPipelineLayout(context.device, bindGroupLayoutsImage, 3);
     layout_scene    = createPipelineLayout(context.device, bindGroupLayoutsScene, 2);
     // layouts custom blend
-    layout_solid_blend    = createPipelineLayout(context.device, bindGroupLayoutsSolidBlend, 4);
+    layout_solid_blend    = createPipelineLayout(context.device, bindGroupLayoutsSolidBlend, 2);
     layout_gradient_blend = createPipelineLayout(context.device, bindGroupLayoutsGradientBlend, 4);
     layout_image_blend    = createPipelineLayout(context.device, bindGroupLayoutsImageBlend, 4);
     layout_scene_blend    = createPipelineLayout(context.device, bindGroupLayoutsSceneBlend, 3);
@@ -311,7 +316,7 @@ void WgPipelines::initialize(WgContext& context)
     solid = createRenderPipeline(
         context.device, "The render pipeline solid",
         shader_solid, "vs_main", "fs_main",
-        layout_solid, vertexBufferLayoutsShape, 1,
+        layout_solid, vertexBufferLayoutsSolid, 2,
         WGPUColorWriteMask_All, offscreenTargetFormat, blendStateNrm,
         depthStencilStateShape, multisampleState);
     // render pipeline radial
@@ -332,7 +337,7 @@ void WgPipelines::initialize(WgContext& context)
     solid_conv = createRenderPipeline(
         context.device, "The render pipeline solid",
         shader_solid, "vs_main", "fs_main",
-        layout_solid, vertexBufferLayoutsShape, 1,
+        layout_solid, vertexBufferLayoutsSolid, 2,
         WGPUColorWriteMask_All, offscreenTargetFormat, blendStateNrm,
         depthStencilStateScene, multisampleState);
     // render pipeline radial (no stencil)
@@ -392,7 +397,7 @@ void WgPipelines::initialize(WgContext& context)
         solid_blend[i] = createRenderPipeline(
             context.device, "The render pipeline solid blend",
             shader_solid_blend, "vs_main", shaderBlendNames[i],
-            layout_solid_blend, vertexBufferLayoutsShape, 1,
+            layout_solid_blend, vertexBufferLayoutsSolid, 2,
             WGPUColorWriteMask_All, offscreenTargetFormat, blendStateSrc,
             depthStencilStateShape, multisampleState);
         // blend radial

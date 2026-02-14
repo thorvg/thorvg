@@ -43,9 +43,13 @@ void WgMeshData::bbox(const Point pmin, const Point pmax)
 }
 
 
-void WgMeshData::imageBox(float w, float h)
+void WgMeshData::imageBox(float w, float h, const Matrix& transform)
 {
-    const float vdata[] = {0.0f, 0.0f, w, 0.0f, w, h, 0.0f, h};
+    const Point p0 = Point{0.0f, 0.0f} * transform;
+    const Point p1 = Point{w,    0.0f} * transform;
+    const Point p2 = Point{w,       h} * transform;
+    const Point p3 = Point{0.0f,    h} * transform;
+    const Point vdata[] = {p0, p1, p2, p3};
     const float tdata[] = {0.0f, 0.0f, 1.0f, 0.0f, 1.0f, 1.0f, 0.0f, 1.0f};
     const uint32_t idata[] = {0, 1, 2, 0, 2, 3};
     // setup vertex data

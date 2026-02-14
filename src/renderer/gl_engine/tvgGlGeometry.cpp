@@ -155,12 +155,12 @@ void GlGeometry::prepare(const RenderShape& rshape)
     if (rshape.trimpath()) {
         RenderPath trimmedPath;
         if (rshape.stroke->trim.trim(rshape.path, trimmedPath)) {
-            trimmedPath.optimizeGL(optPath, matrix);
+            trimmedPath.optimize(optPath, matrix);
         } else {
             optPath.clear();
         }
     } else {
-        rshape.path.optimizeGL(optPath, matrix);
+        rshape.path.optimize(optPath, matrix);
     }
 }
 
@@ -229,9 +229,10 @@ bool GlGeometry::tesselateStroke(const RenderShape& rshape)
     } else {
         strokeWidth = rshape.strokeWidth();
     }
-    //run stroking only if it's valid
     auto strokeWidthWorld = strokeWidth * scaling(matrix);
     if (!std::isfinite(strokeWidthWorld)) strokeWidthWorld = strokeWidth;
+
+    //run stroking only if it's valid
 
     if (!tvg::zero(strokeWidthWorld)) {
         Stroker stroker(&stroke, strokeWidthWorld, rshape.strokeCap(), rshape.strokeJoin(), rshape.strokeMiterlimit());

@@ -39,13 +39,11 @@ class WgStroker
         Point prevPtDir;
     };
 public:
-    WgStroker(WgMeshData* buffer, float width, StrokeCap cap, StrokeJoin join = StrokeJoin::Bevel);
-    void run(const RenderShape& rshape, const RenderPath& path, const Matrix& m);
+    WgStroker(WgMeshData* buffer, float width, StrokeCap cap, StrokeJoin join = StrokeJoin::Bevel, float miterLimit = 4.0f);
+    void run(const RenderPath& path);
     RenderRegion bounds() const;
     BBox getBBox() const;
 private:
-    void run(const RenderPath& path, const Matrix& m);
-
     float radius() const
     {
         return mWidth * 0.5f;
@@ -53,7 +51,7 @@ private:
 
     void cap();
     void lineTo(const Point& curr);
-    void cubicTo(const Point& cnt1, const Point& cnt2, const Point& end, const Matrix& m);
+    void cubicTo(const Point& cnt1, const Point& cnt2, const Point& end);
     void close();
     void join(const Point& dir);
     void round(const Point& prev, const Point& curr, const Point& center);
@@ -72,14 +70,13 @@ private:
     State mState = {};
     Point mLeftTop = {0.0f, 0.0f};
     Point mRightBottom = {0.0f, 0.0f};
-    float mScale;
 };
 
 class WgBWTessellator
 {
 public:
     WgBWTessellator(WgMeshData* buffer);
-    void tessellate(const RenderPath& path, const Matrix& matrix);
+    void tessellate(const RenderPath& path);
     RenderRegion bounds() const;
     BBox getBBox() const;
     bool convex = true;

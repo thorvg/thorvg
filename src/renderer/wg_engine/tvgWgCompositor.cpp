@@ -24,6 +24,23 @@
 #include "tvgWgShaderTypes.h"
 #include <iostream>
 
+void WgCompositor::updateViewMat(WgContext& context, uint32_t width, uint32_t height)
+{
+    if (bindGroupViewMat && viewMatWidth == width && viewMatHeight == height) return;
+
+    WgShaderTypeMat4x4f viewMat(width, height);
+    bool bufferChanged = context.allocateBufferUniform(bufferViewMat, &viewMat, sizeof(viewMat));
+
+    if (bufferChanged || !bindGroupViewMat) {
+        context.layouts.releaseBindGroup(bindGroupViewMat);
+        bindGroupViewMat = context.layouts.createBindGroupBuffer1Un(bufferViewMat);
+    }
+
+    viewMatWidth = width;
+    viewMatHeight = height;
+}
+
+
 void WgCompositor::initialize(WgContext& context, uint32_t width, uint32_t height)
 {
     // pipelines (external handle, do not release)
@@ -32,9 +49,7 @@ void WgCompositor::initialize(WgContext& context, uint32_t width, uint32_t heigh
     // initialize opacity pool
     initPools(context);
     // allocate global view matrix handles
-    WgShaderTypeMat4x4f viewMat(width, height);
-    context.allocateBufferUniform(bufferViewMat, &viewMat, sizeof(viewMat));
-    bindGroupViewMat = context.layouts.createBindGroupBuffer1Un(bufferViewMat);
+    updateViewMat(context, width, height);
     // create render targets handles
     resize(context, width, height);
     // composition and blend geometries
@@ -63,7 +78,10 @@ void WgCompositor::release(WgContext& context)
     // release global view matrix handles
     context.layouts.releaseBindGroup(bindGroupViewMat);
     context.releaseBuffer(bufferViewMat);
+    viewMatWidth = 0;
+    viewMatHeight = 0;
     // release stage buffer
+    stageBufferSolidColor.release(context);
     stageBufferPaint.release(context);
     stageBufferGeometry.release(context);
     // release pipelines
@@ -103,9 +121,8 @@ void WgCompositor::resize(WgContext& context, uint32_t width, uint32_t height) {
         // store render target dimensions
         this->width = width;
         this->height = height;
-        // reallocate global view matrix handles
-        WgShaderTypeMat4x4f viewMat(width, height);
-        context.allocateBufferUniform(bufferViewMat, &viewMat, sizeof(viewMat));
+        // update global view matrix handles
+        updateViewMat(context, width, height);
         // allocate global stencil buffer handles
         texDepthStencil = context.createTexAttachement(width, height, WGPUTextureFormat_Depth24PlusStencil8, 1);
         texViewDepthStencil = context.createTextureView(texDepthStencil);
@@ -217,6 +234,7 @@ void WgCompositor::endRenderPass()
 void WgCompositor::reset(WgContext& context)
 {
     stageBufferGeometry.clear();
+    stageBufferSolidColor.clear();
     stageBufferPaint.clear();
 }
 
@@ -225,6 +243,7 @@ void WgCompositor::flush(WgContext& context)
 {
     stageBufferGeometry.append(&meshDataBlit);
     stageBufferGeometry.flush(context);
+    stageBufferSolidColor.flush(context);
     stageBufferPaint.flush(context);
     context.submit();
 }
@@ -233,10 +252,18 @@ void WgCompositor::flush(WgContext& context)
 void WgCompositor::requestShape(WgRenderDataShape* renderData)
 {
     stageBufferGeometry.append(renderData);
-    renderData->renderSettingsShape.bindGroupInd = stageBufferPaint.append(renderData->renderSettingsShape.settings);
-    renderData->renderSettingsStroke.bindGroupInd = stageBufferPaint.append(renderData->renderSettingsStroke.settings);
+
+    auto& shapeSettings = renderData->renderSettingsShape;
+    if (shapeSettings.fillType == WgRenderSettingsType::Solid) shapeSettings.solidColorInd = stageBufferSolidColor.append(shapeSettings.settings.color);
+    else shapeSettings.bindGroupInd = stageBufferPaint.append(shapeSettings.settings);
+
+    if (!renderData->renderSettingsStroke.skip && renderData->meshStrokes.vbuffer.count > 0) {
+        auto& strokeSettings = renderData->renderSettingsStroke;
+        if (strokeSettings.fillType == WgRenderSettingsType::Solid) strokeSettings.solidColorInd = stageBufferSolidColor.append(strokeSettings.settings.color);
+        else strokeSettings.bindGroupInd = stageBufferPaint.append(strokeSettings.settings);
+    }
     ARRAY_FOREACH(p, renderData->clips)
-        requestShape((WgRenderDataShape* )(*p));
+        requestShape((WgRenderDataShape*)(*p));
 }
 
 
@@ -245,7 +272,7 @@ void WgCompositor::requestImage(WgRenderDataPicture* renderData)
     stageBufferGeometry.append(renderData);
     renderData->renderSettings.bindGroupInd = stageBufferPaint.append(renderData->renderSettings.settings);
     ARRAY_FOREACH(p, renderData->clips)
-        requestShape((WgRenderDataShape* )(*p));
+        requestShape((WgRenderDataShape*)(*p));
 }
 
 
@@ -372,6 +399,21 @@ void WgCompositor::drawMesh(WgContext& context, WgMeshData* meshData)
 };
 
 
+void WgCompositor::drawMeshSolid(WgContext& context, WgMeshData* meshData, uint32_t solidColorInd)
+{
+    const uint64_t icount = meshData->ibuffer.count;
+    const uint64_t vsize = meshData->vbuffer.count * sizeof(Point);
+    const uint64_t isize = icount * sizeof(uint32_t);
+    const uint64_t csize = sizeof(WgShaderTypeVec4f);
+    // One instance (instanceCount = 1): select this draw's single vec4 solid color by offset.
+    const uint64_t coffset = solidColorInd * csize;
+    wgpuRenderPassEncoderSetVertexBuffer(renderPassEncoder, 0, stageBufferGeometry.vbuffer_gpu, meshData->voffset, vsize);
+    wgpuRenderPassEncoderSetVertexBuffer(renderPassEncoder, 1, stageBufferSolidColor.vbuffer_gpu, coffset, csize);
+    wgpuRenderPassEncoderSetIndexBuffer(renderPassEncoder, stageBufferGeometry.ibuffer_gpu, WGPUIndexFormat_Uint32, meshData->ioffset, isize);
+    wgpuRenderPassEncoderDrawIndexed(renderPassEncoder, icount, 1, 0, 0, 0);
+}
+
+
 void WgCompositor::drawMeshImage(WgContext& context, WgMeshData* meshData)
 {
     assert(meshData);
@@ -392,33 +434,39 @@ void WgCompositor::drawShape(WgContext& context, WgRenderDataShape* renderData)
     assert(renderPassEncoder);
     if (renderData->renderSettingsShape.skip || renderData->meshShape.vbuffer.count == 0 || renderData->viewport.invalid()) return;
     WgRenderSettings& settings = renderData->renderSettingsShape;
+    const bool convex = renderData->convex;
+    WgMeshData* mesh = renderData->convex ? &renderData->meshShape : &renderData->meshBBox;
+
     wgpuRenderPassEncoderSetScissorRect(renderPassEncoder, renderData->viewport.x(), renderData->viewport.y(), renderData->viewport.w(), renderData->viewport.h());
+
     // setup stencil rules
-    if (!renderData->convex) {
+    if (!convex) {
         WGPURenderPipeline stencilPipeline = (renderData->fillRule == FillRule::NonZero) ? pipelines.nonzero : pipelines.evenodd;
         wgpuRenderPassEncoderSetStencilReference(renderPassEncoder, 0);
         wgpuRenderPassEncoderSetBindGroup(renderPassEncoder, 0, bindGroupViewMat, 0, nullptr);
-        wgpuRenderPassEncoderSetBindGroup(renderPassEncoder, 1, stageBufferPaint[settings.bindGroupInd], 0, nullptr);
         wgpuRenderPassEncoderSetPipeline(renderPassEncoder, stencilPipeline);
         // draw to stencil (first pass)
         drawMesh(context, &renderData->meshShape);
     }
+
     // setup fill rules
     wgpuRenderPassEncoderSetStencilReference(renderPassEncoder, 0);
     wgpuRenderPassEncoderSetBindGroup(renderPassEncoder, 0, bindGroupViewMat, 0, nullptr);
-    wgpuRenderPassEncoderSetBindGroup(renderPassEncoder, 1, stageBufferPaint[settings.bindGroupInd], 0, nullptr);
+
     if (settings.fillType == WgRenderSettingsType::Solid) {
-        wgpuRenderPassEncoderSetBindGroup(renderPassEncoder, 2, stageBufferPaint[settings.bindGroupInd], 0, nullptr);
-        wgpuRenderPassEncoderSetPipeline(renderPassEncoder, renderData->convex ? pipelines.solid_conv : pipelines.solid);
+        wgpuRenderPassEncoderSetPipeline(renderPassEncoder, convex ? pipelines.solid_conv : pipelines.solid);
+        drawMeshSolid(context, mesh, settings.solidColorInd);
     } else if (settings.fillType == WgRenderSettingsType::Linear) {
+        wgpuRenderPassEncoderSetBindGroup(renderPassEncoder, 1, stageBufferPaint[settings.bindGroupInd], 0, nullptr);
         wgpuRenderPassEncoderSetBindGroup(renderPassEncoder, 2, settings.gradientData.bindGroup, 0, nullptr);
-        wgpuRenderPassEncoderSetPipeline(renderPassEncoder, renderData->convex ? pipelines.linear_conv : pipelines.linear);
+        wgpuRenderPassEncoderSetPipeline(renderPassEncoder, convex ? pipelines.linear_conv : pipelines.linear);
+        drawMesh(context, mesh);
     } else if (settings.fillType == WgRenderSettingsType::Radial) {
+        wgpuRenderPassEncoderSetBindGroup(renderPassEncoder, 1, stageBufferPaint[settings.bindGroupInd], 0, nullptr);
         wgpuRenderPassEncoderSetBindGroup(renderPassEncoder, 2, settings.gradientData.bindGroup, 0, nullptr);
-        wgpuRenderPassEncoderSetPipeline(renderPassEncoder, renderData->convex ? pipelines.radial_conv : pipelines.radial);
+        wgpuRenderPassEncoderSetPipeline(renderPassEncoder, convex ? pipelines.radial_conv : pipelines.radial);
+        drawMesh(context, mesh);
     }
-    // draw to color (second pass)
-    drawMesh(context, renderData->convex ? &renderData->meshShape : &renderData->meshBBox);
 }
 
 
@@ -439,28 +487,30 @@ void WgCompositor::blendShape(WgContext& context, WgRenderDataShape* renderData,
     WGPURenderPipeline stencilPipeline = (renderData->fillRule == FillRule::NonZero) ? pipelines.nonzero : pipelines.evenodd;
     wgpuRenderPassEncoderSetStencilReference(renderPassEncoder, 0);
     wgpuRenderPassEncoderSetBindGroup(renderPassEncoder, 0, bindGroupViewMat, 0, nullptr);
-    wgpuRenderPassEncoderSetBindGroup(renderPassEncoder, 1, stageBufferPaint[settings.bindGroupInd], 0, nullptr);
     wgpuRenderPassEncoderSetPipeline(renderPassEncoder, stencilPipeline);
     // draw to stencil (first pass)
     drawMesh(context, &renderData->meshShape);
     // setup fill rules
     wgpuRenderPassEncoderSetStencilReference(renderPassEncoder, 0);
     wgpuRenderPassEncoderSetBindGroup(renderPassEncoder, 0, bindGroupViewMat, 0, nullptr);
-    wgpuRenderPassEncoderSetBindGroup(renderPassEncoder, 1, stageBufferPaint[settings.bindGroupInd], 0, nullptr);
-    wgpuRenderPassEncoderSetBindGroup(renderPassEncoder, 3, targetTemp0.bindGroupTexture, 0, nullptr);
     uint32_t blendMethodInd = (uint32_t)blendMethod;
     if (settings.fillType == WgRenderSettingsType::Solid) {
-        wgpuRenderPassEncoderSetBindGroup(renderPassEncoder, 2, stageBufferPaint[settings.bindGroupInd], 0, nullptr);
+        wgpuRenderPassEncoderSetBindGroup(renderPassEncoder, 1, targetTemp0.bindGroupTexture, 0, nullptr);
         wgpuRenderPassEncoderSetPipeline(renderPassEncoder, pipelines.solid_blend[blendMethodInd]);
+        drawMeshSolid(context, &renderData->meshBBox, settings.solidColorInd);
     } else if (settings.fillType == WgRenderSettingsType::Linear) {
+        wgpuRenderPassEncoderSetBindGroup(renderPassEncoder, 1, stageBufferPaint[settings.bindGroupInd], 0, nullptr);
         wgpuRenderPassEncoderSetBindGroup(renderPassEncoder, 2, settings.gradientData.bindGroup, 0, nullptr);
+        wgpuRenderPassEncoderSetBindGroup(renderPassEncoder, 3, targetTemp0.bindGroupTexture, 0, nullptr);
         wgpuRenderPassEncoderSetPipeline(renderPassEncoder, pipelines.linear_blend[blendMethodInd]);
+        drawMesh(context, &renderData->meshBBox);
     } else if (settings.fillType == WgRenderSettingsType::Radial) {
+        wgpuRenderPassEncoderSetBindGroup(renderPassEncoder, 1, stageBufferPaint[settings.bindGroupInd], 0, nullptr);
         wgpuRenderPassEncoderSetBindGroup(renderPassEncoder, 2, settings.gradientData.bindGroup, 0, nullptr);
+        wgpuRenderPassEncoderSetBindGroup(renderPassEncoder, 3, targetTemp0.bindGroupTexture, 0, nullptr);
         wgpuRenderPassEncoderSetPipeline(renderPassEncoder, pipelines.radial_blend[blendMethodInd]);
+        drawMesh(context, &renderData->meshBBox);
     }
-    // draw to color (second pass)
-    drawMesh(context, &renderData->meshBBox);
 }
 
 
@@ -475,31 +525,31 @@ void WgCompositor::clipShape(WgContext& context, WgRenderDataShape* renderData)
     WGPURenderPipeline stencilPipeline = (renderData->fillRule == FillRule::NonZero) ? pipelines.nonzero : pipelines.evenodd;
     wgpuRenderPassEncoderSetStencilReference(renderPassEncoder, 0);
     wgpuRenderPassEncoderSetBindGroup(renderPassEncoder, 0, bindGroupViewMat, 0, nullptr);
-    wgpuRenderPassEncoderSetBindGroup(renderPassEncoder, 1, stageBufferPaint[settings.bindGroupInd], 0, nullptr);
     wgpuRenderPassEncoderSetPipeline(renderPassEncoder, stencilPipeline);
     // draw to stencil (first pass)
     drawMesh(context, &renderData->meshShape);
     // merge depth and stencil buffer
     wgpuRenderPassEncoderSetStencilReference(renderPassEncoder, 0);
-    wgpuRenderPassEncoderSetBindGroup(renderPassEncoder, 2, bindGroupOpacities[128], 0, nullptr);
+    wgpuRenderPassEncoderSetBindGroup(renderPassEncoder, 1, bindGroupOpacities[128], 0, nullptr);
     wgpuRenderPassEncoderSetPipeline(renderPassEncoder, pipelines.merge_depth_stencil);
     drawMesh(context, &renderData->meshBBox);
     // setup fill rules
     wgpuRenderPassEncoderSetStencilReference(renderPassEncoder, 0);
     wgpuRenderPassEncoderSetBindGroup(renderPassEncoder, 0, bindGroupViewMat, 0, nullptr);
-    wgpuRenderPassEncoderSetBindGroup(renderPassEncoder, 1, stageBufferPaint[settings.bindGroupInd], 0, nullptr);
     if (settings.fillType == WgRenderSettingsType::Solid) {
-        wgpuRenderPassEncoderSetBindGroup(renderPassEncoder, 2, stageBufferPaint[settings.bindGroupInd], 0, nullptr);
         wgpuRenderPassEncoderSetPipeline(renderPassEncoder, pipelines.solid);
+        drawMeshSolid(context, &renderData->meshBBox, settings.solidColorInd);
     } else if (settings.fillType == WgRenderSettingsType::Linear) {
+        wgpuRenderPassEncoderSetBindGroup(renderPassEncoder, 1, stageBufferPaint[settings.bindGroupInd], 0, nullptr);
         wgpuRenderPassEncoderSetBindGroup(renderPassEncoder, 2, settings.gradientData.bindGroup, 0, nullptr);
         wgpuRenderPassEncoderSetPipeline(renderPassEncoder, pipelines.linear);
+        drawMesh(context, &renderData->meshBBox);
     } else if (settings.fillType == WgRenderSettingsType::Radial) {
+        wgpuRenderPassEncoderSetBindGroup(renderPassEncoder, 1, stageBufferPaint[settings.bindGroupInd], 0, nullptr);
         wgpuRenderPassEncoderSetBindGroup(renderPassEncoder, 2, settings.gradientData.bindGroup, 0, nullptr);
         wgpuRenderPassEncoderSetPipeline(renderPassEncoder, pipelines.radial);
+        drawMesh(context, &renderData->meshBBox);
     }
-    // draw to color (second pass)
-    drawMesh(context, &renderData->meshBBox);
 }
 
 
@@ -514,26 +564,26 @@ void WgCompositor::drawStrokes(WgContext& context, WgRenderDataShape* renderData
     // setup stencil rules
     wgpuRenderPassEncoderSetStencilReference(renderPassEncoder, 255);
     wgpuRenderPassEncoderSetBindGroup(renderPassEncoder, 0, bindGroupViewMat, 0, nullptr);
-    wgpuRenderPassEncoderSetBindGroup(renderPassEncoder, 1, stageBufferPaint[settings.bindGroupInd], 0, nullptr);
     wgpuRenderPassEncoderSetPipeline(renderPassEncoder, pipelines.direct);
     // draw to stencil (first pass)
     drawMesh(context, &renderData->meshStrokes);
     // setup fill rules
     wgpuRenderPassEncoderSetStencilReference(renderPassEncoder, 0);
     wgpuRenderPassEncoderSetBindGroup(renderPassEncoder, 0, bindGroupViewMat, 0, nullptr);
-    wgpuRenderPassEncoderSetBindGroup(renderPassEncoder, 1, stageBufferPaint[settings.bindGroupInd], 0, nullptr);
     if (settings.fillType == WgRenderSettingsType::Solid) {
-        wgpuRenderPassEncoderSetBindGroup(renderPassEncoder, 2, stageBufferPaint[settings.bindGroupInd], 0, nullptr);
         wgpuRenderPassEncoderSetPipeline(renderPassEncoder, pipelines.solid);
+        drawMeshSolid(context, &renderData->meshStrokesBBox, settings.solidColorInd);
     } else if (settings.fillType == WgRenderSettingsType::Linear) {
+        wgpuRenderPassEncoderSetBindGroup(renderPassEncoder, 1, stageBufferPaint[settings.bindGroupInd], 0, nullptr);
         wgpuRenderPassEncoderSetBindGroup(renderPassEncoder, 2, settings.gradientData.bindGroup, 0, nullptr);
         wgpuRenderPassEncoderSetPipeline(renderPassEncoder, pipelines.linear);
+        drawMesh(context, &renderData->meshStrokesBBox);
     } else if (settings.fillType == WgRenderSettingsType::Radial) {
+        wgpuRenderPassEncoderSetBindGroup(renderPassEncoder, 1, stageBufferPaint[settings.bindGroupInd], 0, nullptr);
         wgpuRenderPassEncoderSetBindGroup(renderPassEncoder, 2, settings.gradientData.bindGroup, 0, nullptr);
         wgpuRenderPassEncoderSetPipeline(renderPassEncoder, pipelines.radial);
+        drawMesh(context, &renderData->meshStrokesBBox);
     }
-    // draw to color (second pass)
-    drawMesh(context, &renderData->meshStrokesBBox);
 }
 
 
@@ -553,28 +603,30 @@ void WgCompositor::blendStrokes(WgContext& context, WgRenderDataShape* renderDat
     // setup stencil rules
     wgpuRenderPassEncoderSetStencilReference(renderPassEncoder, 255);
     wgpuRenderPassEncoderSetBindGroup(renderPassEncoder, 0, bindGroupViewMat, 0, nullptr);
-    wgpuRenderPassEncoderSetBindGroup(renderPassEncoder, 1, stageBufferPaint[settings.bindGroupInd], 0, nullptr);
     wgpuRenderPassEncoderSetPipeline(renderPassEncoder, pipelines.direct);
     // draw to stencil (first pass)
     drawMesh(context, &renderData->meshStrokes);
     // setup fill rules
     wgpuRenderPassEncoderSetStencilReference(renderPassEncoder, 0);
     wgpuRenderPassEncoderSetBindGroup(renderPassEncoder, 0, bindGroupViewMat, 0, nullptr);
-    wgpuRenderPassEncoderSetBindGroup(renderPassEncoder, 1, stageBufferPaint[settings.bindGroupInd], 0, nullptr);
-    wgpuRenderPassEncoderSetBindGroup(renderPassEncoder, 3, targetTemp0.bindGroupTexture, 0, nullptr);
     uint32_t blendMethodInd = (uint32_t)blendMethod;
     if (settings.fillType == WgRenderSettingsType::Solid) {
-        wgpuRenderPassEncoderSetBindGroup(renderPassEncoder, 2, stageBufferPaint[settings.bindGroupInd], 0, nullptr);
+        wgpuRenderPassEncoderSetBindGroup(renderPassEncoder, 1, targetTemp0.bindGroupTexture, 0, nullptr);
         wgpuRenderPassEncoderSetPipeline(renderPassEncoder, pipelines.solid_blend[blendMethodInd]);
+        drawMeshSolid(context, &renderData->meshStrokesBBox, settings.solidColorInd);
     } else if (settings.fillType == WgRenderSettingsType::Linear) {
+        wgpuRenderPassEncoderSetBindGroup(renderPassEncoder, 1, stageBufferPaint[settings.bindGroupInd], 0, nullptr);
         wgpuRenderPassEncoderSetBindGroup(renderPassEncoder, 2, settings.gradientData.bindGroup, 0, nullptr);
+        wgpuRenderPassEncoderSetBindGroup(renderPassEncoder, 3, targetTemp0.bindGroupTexture, 0, nullptr);
         wgpuRenderPassEncoderSetPipeline(renderPassEncoder, pipelines.linear_blend[blendMethodInd]);
+        drawMesh(context, &renderData->meshStrokesBBox);
     } else if (settings.fillType == WgRenderSettingsType::Radial) {
+        wgpuRenderPassEncoderSetBindGroup(renderPassEncoder, 1, stageBufferPaint[settings.bindGroupInd], 0, nullptr);
         wgpuRenderPassEncoderSetBindGroup(renderPassEncoder, 2, settings.gradientData.bindGroup, 0, nullptr);
+        wgpuRenderPassEncoderSetBindGroup(renderPassEncoder, 3, targetTemp0.bindGroupTexture, 0, nullptr);
         wgpuRenderPassEncoderSetPipeline(renderPassEncoder, pipelines.radial_blend[blendMethodInd]);
+        drawMesh(context, &renderData->meshStrokesBBox);
     }
-    // draw to color (second pass)
-    drawMesh(context, &renderData->meshStrokesBBox);
 };
 
 
@@ -589,31 +641,31 @@ void WgCompositor::clipStrokes(WgContext& context, WgRenderDataShape* renderData
     // setup stencil rules
     wgpuRenderPassEncoderSetStencilReference(renderPassEncoder, 255);
     wgpuRenderPassEncoderSetBindGroup(renderPassEncoder, 0, bindGroupViewMat, 0, nullptr);
-    wgpuRenderPassEncoderSetBindGroup(renderPassEncoder, 1, stageBufferPaint[settings.bindGroupInd], 0, nullptr);
     wgpuRenderPassEncoderSetPipeline(renderPassEncoder, pipelines.direct);
     // draw to stencil (first pass)
     drawMesh(context, &renderData->meshStrokes);
     // merge depth and stencil buffer
     wgpuRenderPassEncoderSetStencilReference(renderPassEncoder, 0);
-    wgpuRenderPassEncoderSetBindGroup(renderPassEncoder, 2, bindGroupOpacities[128], 0, nullptr);
+    wgpuRenderPassEncoderSetBindGroup(renderPassEncoder, 1, bindGroupOpacities[128], 0, nullptr);
     wgpuRenderPassEncoderSetPipeline(renderPassEncoder, pipelines.merge_depth_stencil);
     drawMesh(context, &renderData->meshBBox);
     // setup fill rules
     wgpuRenderPassEncoderSetStencilReference(renderPassEncoder, 0);
     wgpuRenderPassEncoderSetBindGroup(renderPassEncoder, 0, bindGroupViewMat, 0, nullptr);
-    wgpuRenderPassEncoderSetBindGroup(renderPassEncoder, 1, stageBufferPaint[settings.bindGroupInd], 0, nullptr);
     if (settings.fillType == WgRenderSettingsType::Solid) {
-        wgpuRenderPassEncoderSetBindGroup(renderPassEncoder, 2, stageBufferPaint[settings.bindGroupInd], 0, nullptr);
         wgpuRenderPassEncoderSetPipeline(renderPassEncoder, pipelines.solid);
+        drawMeshSolid(context, &renderData->meshStrokesBBox, settings.solidColorInd);
     } else if (settings.fillType == WgRenderSettingsType::Linear) {
+        wgpuRenderPassEncoderSetBindGroup(renderPassEncoder, 1, stageBufferPaint[settings.bindGroupInd], 0, nullptr);
         wgpuRenderPassEncoderSetBindGroup(renderPassEncoder, 2, settings.gradientData.bindGroup, 0, nullptr);
         wgpuRenderPassEncoderSetPipeline(renderPassEncoder, pipelines.linear);
+        drawMesh(context, &renderData->meshStrokesBBox);
     } else if (settings.fillType == WgRenderSettingsType::Radial) {
+        wgpuRenderPassEncoderSetBindGroup(renderPassEncoder, 1, stageBufferPaint[settings.bindGroupInd], 0, nullptr);
         wgpuRenderPassEncoderSetBindGroup(renderPassEncoder, 2, settings.gradientData.bindGroup, 0, nullptr);
         wgpuRenderPassEncoderSetPipeline(renderPassEncoder, pipelines.radial);
+        drawMesh(context, &renderData->meshStrokesBBox);
     }
-    // draw to color (second pass)
-    drawMesh(context, &renderData->meshStrokesBBox);
 }
 
 
@@ -627,7 +679,6 @@ void WgCompositor::drawImage(WgContext& context, WgRenderDataPicture* renderData
     // draw stencil
     wgpuRenderPassEncoderSetStencilReference(renderPassEncoder, 255);
     wgpuRenderPassEncoderSetBindGroup(renderPassEncoder, 0, bindGroupViewMat, 0, nullptr);
-    wgpuRenderPassEncoderSetBindGroup(renderPassEncoder, 1, stageBufferPaint[settings.bindGroupInd], 0, nullptr);
     wgpuRenderPassEncoderSetPipeline(renderPassEncoder, pipelines.direct);
     drawMeshImage(context, &renderData->meshData);
     // draw image
@@ -655,7 +706,6 @@ void WgCompositor::blendImage(WgContext& context, WgRenderDataPicture* renderDat
     // setup stencil rules
     wgpuRenderPassEncoderSetStencilReference(renderPassEncoder, 255);
     wgpuRenderPassEncoderSetBindGroup(renderPassEncoder, 0, bindGroupViewMat, 0, nullptr);
-    wgpuRenderPassEncoderSetBindGroup(renderPassEncoder, 1, stageBufferPaint[settings.bindGroupInd], 0, nullptr);
     wgpuRenderPassEncoderSetPipeline(renderPassEncoder, pipelines.direct);
     drawMeshImage(context, &renderData->meshData);
     // blend image
@@ -680,12 +730,11 @@ void WgCompositor::clipImage(WgContext& context, WgRenderDataPicture* renderData
     // setup stencil rules
     wgpuRenderPassEncoderSetStencilReference(renderPassEncoder, 255);
     wgpuRenderPassEncoderSetBindGroup(renderPassEncoder, 0, bindGroupViewMat, 0, nullptr);
-    wgpuRenderPassEncoderSetBindGroup(renderPassEncoder, 1, stageBufferPaint[settings.bindGroupInd], 0, nullptr);
     wgpuRenderPassEncoderSetPipeline(renderPassEncoder, pipelines.direct);
     drawMeshImage(context, &renderData->meshData);
     // merge depth and stencil buffer
     wgpuRenderPassEncoderSetStencilReference(renderPassEncoder, 0);
-    wgpuRenderPassEncoderSetBindGroup(renderPassEncoder, 2, bindGroupOpacities[128], 0, nullptr);
+    wgpuRenderPassEncoderSetBindGroup(renderPassEncoder, 1, bindGroupOpacities[128], 0, nullptr);
     wgpuRenderPassEncoderSetPipeline(renderPassEncoder, pipelines.merge_depth_stencil);
     drawMeshImage(context, &renderData->meshData);
     // draw image
@@ -743,16 +792,12 @@ void WgCompositor::markupClipPath(WgContext& context, WgRenderDataShape* renderD
     wgpuRenderPassEncoderSetBindGroup(renderPassEncoder, 0, bindGroupViewMat, 0, nullptr);
     // markup stencil
     if (renderData->meshStrokes.vbuffer.count > 0) {
-        WgRenderSettings& settings = renderData->renderSettingsStroke;
         wgpuRenderPassEncoderSetStencilReference(renderPassEncoder, 255);
-        wgpuRenderPassEncoderSetBindGroup(renderPassEncoder, 1, stageBufferPaint[settings.bindGroupInd], 0, nullptr);
         wgpuRenderPassEncoderSetPipeline(renderPassEncoder, pipelines.direct);
         drawMesh(context, &renderData->meshStrokes);
     } else if (renderData->meshShape.vbuffer.count > 0) {
         WGPURenderPipeline stencilPipeline = (renderData->fillRule == FillRule::NonZero) ? pipelines.nonzero : pipelines.evenodd;
-        WgRenderSettings& settings = renderData->renderSettingsShape;
         wgpuRenderPassEncoderSetStencilReference(renderPassEncoder, 0);
-        wgpuRenderPassEncoderSetBindGroup(renderPassEncoder, 1, stageBufferPaint[settings.bindGroupInd], 0, nullptr);
         wgpuRenderPassEncoderSetPipeline(renderPassEncoder, stencilPipeline);
         drawMesh(context, &renderData->meshShape);
     }
@@ -768,51 +813,43 @@ void WgCompositor::renderClipPath(WgContext& context, WgRenderDataPaint* paint)
     wgpuRenderPassEncoderSetScissorRect(renderPassEncoder, 0, 0, width, height);
     // get render data
     WgRenderDataShape* renderData0 = (WgRenderDataShape*)paint->clips[0];
-    WgRenderSettings& settings0 = renderData0->renderSettingsShape;
     // markup stencil
     markupClipPath(context, renderData0);
     // copy stencil to depth
     wgpuRenderPassEncoderSetStencilReference(renderPassEncoder, 0);
     wgpuRenderPassEncoderSetBindGroup(renderPassEncoder, 0, bindGroupViewMat, 0, nullptr);
-    wgpuRenderPassEncoderSetBindGroup(renderPassEncoder, 1, stageBufferPaint[settings0.bindGroupInd], 0, nullptr);
-    wgpuRenderPassEncoderSetBindGroup(renderPassEncoder, 2, bindGroupOpacities[128], 0, nullptr);
+    wgpuRenderPassEncoderSetBindGroup(renderPassEncoder, 1, bindGroupOpacities[128], 0, nullptr);
     wgpuRenderPassEncoderSetPipeline(renderPassEncoder, pipelines.copy_stencil_to_depth);
     drawMesh(context, &renderData0->meshBBox);
     // merge clip paths with AND logic
     for (auto p = paint->clips.begin() + 1; p < paint->clips.end(); ++p) {
         // get render data
         WgRenderDataShape* renderData = (WgRenderDataShape*)(*p);
-        WgRenderSettings& settings = renderData->renderSettingsShape;
         // markup stencil
         markupClipPath(context, renderData);
         // copy stencil to depth (clear stencil)
         wgpuRenderPassEncoderSetStencilReference(renderPassEncoder, 0);
-        wgpuRenderPassEncoderSetBindGroup(renderPassEncoder, 1, stageBufferPaint[settings.bindGroupInd], 0, nullptr);
-        wgpuRenderPassEncoderSetBindGroup(renderPassEncoder, 2, bindGroupOpacities[190], 0, nullptr);
+        wgpuRenderPassEncoderSetBindGroup(renderPassEncoder, 1, bindGroupOpacities[190], 0, nullptr);
         wgpuRenderPassEncoderSetPipeline(renderPassEncoder, pipelines.copy_stencil_to_depth_interm);
         drawMesh(context, &renderData->meshBBox);
         // copy depth to stencil
         wgpuRenderPassEncoderSetStencilReference(renderPassEncoder, 1);
-        wgpuRenderPassEncoderSetBindGroup(renderPassEncoder, 1, stageBufferPaint[settings.bindGroupInd], 0, nullptr);
-        wgpuRenderPassEncoderSetBindGroup(renderPassEncoder, 2, bindGroupOpacities[190], 0, nullptr);
+        wgpuRenderPassEncoderSetBindGroup(renderPassEncoder, 1, bindGroupOpacities[190], 0, nullptr);
         wgpuRenderPassEncoderSetPipeline(renderPassEncoder, pipelines.copy_depth_to_stencil);
         drawMesh(context, &renderData->meshBBox);
         // clear depth current (keep stencil)
         wgpuRenderPassEncoderSetStencilReference(renderPassEncoder, 0);
-        wgpuRenderPassEncoderSetBindGroup(renderPassEncoder, 1, stageBufferPaint[settings.bindGroupInd], 0, nullptr);
-        wgpuRenderPassEncoderSetBindGroup(renderPassEncoder, 2, bindGroupOpacities[255], 0, nullptr);
+        wgpuRenderPassEncoderSetBindGroup(renderPassEncoder, 1, bindGroupOpacities[255], 0, nullptr);
         wgpuRenderPassEncoderSetPipeline(renderPassEncoder, pipelines.clear_depth);
         drawMesh(context, &renderData->meshBBox);
         // clear depth original (keep stencil)
         wgpuRenderPassEncoderSetStencilReference(renderPassEncoder, 0);
-        wgpuRenderPassEncoderSetBindGroup(renderPassEncoder, 1, stageBufferPaint[settings0.bindGroupInd], 0, nullptr);
-        wgpuRenderPassEncoderSetBindGroup(renderPassEncoder, 2, bindGroupOpacities[255], 0, nullptr);
+        wgpuRenderPassEncoderSetBindGroup(renderPassEncoder, 1, bindGroupOpacities[255], 0, nullptr);
         wgpuRenderPassEncoderSetPipeline(renderPassEncoder, pipelines.clear_depth);
         drawMesh(context, &renderData0->meshBBox);
         // copy stencil to depth (clear stencil)
         wgpuRenderPassEncoderSetStencilReference(renderPassEncoder, 0);
-        wgpuRenderPassEncoderSetBindGroup(renderPassEncoder, 1, stageBufferPaint[settings.bindGroupInd], 0, nullptr);
-        wgpuRenderPassEncoderSetBindGroup(renderPassEncoder, 2, bindGroupOpacities[128], 0, nullptr);
+        wgpuRenderPassEncoderSetBindGroup(renderPassEncoder, 1, bindGroupOpacities[128], 0, nullptr);
         wgpuRenderPassEncoderSetPipeline(renderPassEncoder, pipelines.copy_stencil_to_depth);
         drawMesh(context, &renderData->meshBBox);
     }
@@ -829,12 +866,10 @@ void WgCompositor::clearClipPath(WgContext& context, WgRenderDataPaint* paint)
     // get render data
     ARRAY_FOREACH(p, paint->clips) {
         WgRenderDataShape* renderData = (WgRenderDataShape*)(*p);
-        WgRenderSettings& settings = renderData->renderSettingsShape;
         // set transformations
         wgpuRenderPassEncoderSetStencilReference(renderPassEncoder, 0);
         wgpuRenderPassEncoderSetBindGroup(renderPassEncoder, 0, bindGroupViewMat, 0, nullptr);
-        wgpuRenderPassEncoderSetBindGroup(renderPassEncoder, 1, stageBufferPaint[settings.bindGroupInd], 0, nullptr);
-        wgpuRenderPassEncoderSetBindGroup(renderPassEncoder, 2, bindGroupOpacities[255], 0, nullptr);
+        wgpuRenderPassEncoderSetBindGroup(renderPassEncoder, 1, bindGroupOpacities[255], 0, nullptr);
         wgpuRenderPassEncoderSetPipeline(renderPassEncoder, pipelines.clear_depth);
         drawMesh(context, &renderData->meshBBox);
     }

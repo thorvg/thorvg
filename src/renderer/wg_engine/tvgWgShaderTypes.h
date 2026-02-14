@@ -66,14 +66,12 @@ struct WgShaderTypeGradSettings
     // radial: [0] - fx, [1] - fy, [2] - fr
     WgShaderTypeVec4f focal;
     
-    void update(const Fill* fill);
+    void update(const Fill* fill, const Matrix* modelTransform);
 };
 
-// WGSL: struct PaintSettings { transform: mat4x4f, options: vec4f, color: vec4f, gradient: GradSettings };
+// WGSL: struct PaintSettings { options: vec4f, color: vec4f, gradient: GradSettings };
 struct WgShaderTypePaintSettings
 {
-    // paint transform matrix (must be at offset 0)
-    WgShaderTypeMat4x4f transform;
     // [0] - color space, [3] - opacity
     WgShaderTypeVec4f options;
     // solid color
@@ -81,7 +79,7 @@ struct WgShaderTypePaintSettings
     // gradient settings (linear/radial)
     WgShaderTypeGradSettings gradient;
     // align to 256 bytes (see webgpu spec: minUniformBufferOffsetAlignment)
-    uint8_t _padding[256 - sizeof(transform) - sizeof(options) - sizeof(color) - sizeof(gradient)];
+    uint8_t _padding[256 - sizeof(options) - sizeof(color) - sizeof(gradient)];
 };
 // see webgpu spec: 3.6.2. Limits - minUniformBufferOffsetAlignment (256)
 static_assert(sizeof(WgShaderTypePaintSettings) == 256, "Uniform shader data type size must be aligned to 256 bytes");

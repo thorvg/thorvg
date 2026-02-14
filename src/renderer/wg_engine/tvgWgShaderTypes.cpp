@@ -129,14 +129,16 @@ void WgShaderTypeVec4f::update(const RenderRegion& r)
 // WgShaderTypeGradSettings
 //************************************************************************
 
-void WgShaderTypeGradSettings::update(const Fill* fill)
+void WgShaderTypeGradSettings::update(const Fill* fill, const Matrix* modelTransform)
 {
     assert(fill);
     // update transform matrix
     Matrix invTransform;
-    if (inverse(&fill->transform(), &invTransform))
+    if (inverse(&fill->transform(), &invTransform)) {
+        Matrix invModel;
+        if (modelTransform && inverse(modelTransform, &invModel)) invTransform = invTransform * invModel;
         transform.update(invTransform);
-    else transform.identity();
+    } else transform.identity();
     // update gradient base points
     if (fill->type() == Type::LinearGradient)
         ((LinearGradient*)fill)->linear(&coords.vec[0], &coords.vec[1], &coords.vec[2], &coords.vec[3]);
