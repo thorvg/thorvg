@@ -44,10 +44,10 @@ struct LottieExpressions
         auto bm_rt = evaluate(frameNo, exp);
         if (jerry_value_is_undefined(bm_rt)) return false;
 
-        if (jerry_value_is_number(bm_rt)) {
-            out = (NumType) jerry_value_as_number(bm_rt);
-        } else if (auto prop = static_cast<Property*>(jerry_object_get_native_ptr(bm_rt, nullptr))) {
+        if (auto prop = static_cast<Property*>(jerry_object_get_native_ptr(bm_rt, nullptr))) {
             out = (*prop)(frameNo);
+        } else {
+            out = (NumType) toFloat(bm_rt);
         }
         jerry_value_free(bm_rt);
         return true;
@@ -144,6 +144,7 @@ private:
 
     Point toPoint2d(jerry_value_t obj);
     RGB32 toColor(jerry_value_t obj);
+    float toFloat(jerry_value_t obj);
 
     //global object, attributes, methods
     jerry_value_t global;
