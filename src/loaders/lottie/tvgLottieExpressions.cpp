@@ -90,6 +90,7 @@ static float _rand()
 
 static jerry_value_t _number(float value)
 {
+    //OPTIMIZE: used a typed buffer instead of a object hash
     auto obj = jerry_object();
     auto val = jerry_number(value);
     jerry_object_set_index(obj, 0, val);
@@ -102,6 +103,7 @@ static jerry_value_t _number(float value)
 
 static jerry_value_t _point2d(const Point& pt)
 {
+    //OPTIMIZE: used a typed buffer instead of a object hash
     auto obj = jerry_object();
     auto v1 = jerry_number(pt.x);
     auto v2 = jerry_number(pt.y);
@@ -115,6 +117,7 @@ static jerry_value_t _point2d(const Point& pt)
 
 static jerry_value_t _color(RGB32 rgb)
 {
+    //OPTIMIZE: used a typed buffer instead of a object hash
     auto value = jerry_object();
     auto r = jerry_number((float)rgb.r);
     auto g = jerry_number((float)rgb.g);
@@ -150,6 +153,7 @@ static Point _point2d(jerry_value_t obj)
     return pt;
 }
 
+
 static RGB32 _color(jerry_value_t obj)
 {
     RGB32 out;
@@ -170,6 +174,7 @@ static void contentFree(void *native_p, struct jerry_object_native_info_t *info_
         tvg::free(native_p);
     }
 }
+
 
 static jerry_object_native_info_t freeCb {contentFree, 0, 0};
 static uint32_t engineRefCnt = 0;  //Expressions Engine reference count
@@ -206,9 +211,7 @@ static jerry_value_t _toComp(const jerry_call_info_t* info, const jerry_value_t 
 static jerry_value_t _point(const Point& v)
 {
     auto obj = _point2d(v);
-    auto value = _point2d(v);
-    jerry_object_set_sz(obj, EXP_VALUE, value);
-    jerry_value_free(value);
+    jerry_object_set_sz(obj, EXP_VALUE, obj);
     return obj;
 }
 
