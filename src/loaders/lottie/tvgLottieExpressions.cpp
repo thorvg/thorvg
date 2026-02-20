@@ -87,6 +87,12 @@ static float _rand()
     return (float)(rand() % 10000001) * 0.0000001f;
 }
 
+static inline float _seededRand(int seed)
+{
+    // Deterministic random generator using glibc's LCG algorithm
+    seed = (seed * 1103515245 + 12345) & 0x7fffffff;
+    return (float)seed / 2147483647.0f;
+}
 
 static jerry_value_t _number(float value)
 {
@@ -912,12 +918,25 @@ static jerry_value_t _wiggle(const jerry_call_info_t* info, const jerry_value_t 
         result = (*static_cast<LottieScalar*>(property))(data->frameNo);
     }
 
+    // Factors to separate X/Y axes to prevent seed collisions across octaves.
+    constexpr int SEED_SCALE_X = 1000000;
+    constexpr int SEED_SCALE_Y = 2000000;
+
     for (int o = 0; o < octaves; ++o) {
-        auto repeat = (int)ceil(time * freq);
-        for (int i = 0; i < repeat; ++i) {
-            result.x += (_rand() * 2.0f - 1.0f) * amp;
-            result.y += (_rand() * 2.0f - 1.0f) * amp;
-        }
+        auto repeat = (int)floor(time * freq);
+        auto frac = time * freq - (float)repeat;
+
+        auto startX = _seededRand(repeat * SEED_SCALE_X + o);
+        auto startY = _seededRand(repeat * SEED_SCALE_Y + o);
+        auto endX = _seededRand((repeat + 1) * SEED_SCALE_X + o);
+        auto endY = _seededRand((repeat + 1) * SEED_SCALE_Y + o);
+
+        auto randX = tvg::lerp(startX, endX, frac);
+        auto randY = tvg::lerp(startY, endY, frac);
+
+        result.x += (randX * 2.0f - 1.0f) * amp;
+        result.y += (randY * 2.0f - 1.0f) * amp;
+
         freq *= 2.0f;
         amp *= ampm;
     }
