@@ -69,6 +69,19 @@ struct LottieExpressions
     }
 
     template<typename Property>
+    bool result(float frameNo, Point3D& out, LottieExpression* exp)
+    {
+        auto bm_rt = evaluate(frameNo, exp);
+        if (jerry_value_is_undefined(bm_rt)) return false;
+
+        if (auto prop = static_cast<Property*>(jerry_object_get_native_ptr(bm_rt, nullptr))) {
+            out = (*prop)(frameNo);
+        }
+        jerry_value_free(bm_rt);
+        return true;
+    }
+
+    template<typename Property>
     bool result(float frameNo, RGB32& out, LottieExpression* exp)
     {
         auto bm_rt = evaluate(frameNo, exp);
