@@ -314,6 +314,24 @@ bool LottieParser::getValue(Point& pt)
 }
 
 
+bool LottieParser::getValue(Point3D& pt)
+{
+    if (peekType() == kNullType) return false;
+    if (peekType() == kArrayType) {
+        enterArray();
+        if (!nextArrayValue()) return false;
+    }
+
+    pt.x = getFloat();
+    pt.y = getFloat();
+    pt.z = getFloat();
+
+    while (nextArrayValue()) getFloat();  //drop
+
+    return true;
+}
+
+
 bool LottieParser::getValue(RGB32& color)
 {
     if (peekType() == kArrayType) {
@@ -566,6 +584,7 @@ LottieEllipse* LottieParser::parseEllipse()
 }
 
 
+
 LottieTransform* LottieParser::parseTransform(bool ddd)
 {
     auto transform = new LottieTransform;
@@ -604,6 +623,10 @@ LottieTransform* LottieParser::parseTransform(bool ddd)
         else if (transform->rotationEx && KEY_AS("rx")) parseProperty(transform->rotationEx->x);
         else if (transform->rotationEx && KEY_AS("ry")) parseProperty(transform->rotationEx->y);
         else if (transform->rotationEx && KEY_AS("rz")) parseProperty(transform->rotation);
+        else if (transform->rotationEx && KEY_AS("or")) {
+            if (!transform->orient) transform->orient = new LottieVec3;
+            parseProperty(*transform->orient);
+        }
         else if (KEY_AS("sk")) parseProperty(transform->skewAngle, transform);
         else if (KEY_AS("sa")) parseProperty(transform->skewAxis, transform);
         else skip();
