@@ -40,6 +40,13 @@ public:
     bool isEmpty() const { return mFbo == nullptr; }
 
     void addRenderTask(GlRenderTask* task);
+    GlRenderTask* lastTask() const { return mTasks.empty() ? nullptr : mTasks.last(); }
+    GlRenderTask* takeLastTask() {
+        if (mTasks.empty()) return nullptr;
+        auto task = mTasks.last();
+        mTasks.pop();
+        return task;
+    }
 
     GLuint getFboId() { return mFbo->fbo; }
 

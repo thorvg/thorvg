@@ -115,6 +115,7 @@ struct GlGeometry
 struct GlShape
 {
   const RenderShape* rshape = nullptr;
+  const Paint* picture = nullptr;
   float viewWd;
   float viewHt;
   uint32_t opacity = 0;
