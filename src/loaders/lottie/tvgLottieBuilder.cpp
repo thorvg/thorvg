@@ -63,9 +63,10 @@ static void _rotate(LottieTransform* transform, float frameNo, Matrix& m, float 
             auto ri02 = sy;
             auto ri12 = -sx * cy;
 
-            auto ox = deg2rad(transform->orient->x(frameNo, tween, exps));
-            auto oy = deg2rad(transform->orient->y(frameNo, tween, exps));
-            auto oz = deg2rad(transform->orient->z(frameNo, tween, exps));
+            auto o = (*transform->orient)(frameNo, tween, exps);
+            auto ox = deg2rad(o.x);
+            auto oy = deg2rad(o.y);
+            auto oz = deg2rad(o.z);
             auto cox = cosf(ox), sox = sinf(ox);
             auto coy = cosf(oy), soy = sinf(oy);
             auto coz = cosf(oz), soz = sinf(oz);
