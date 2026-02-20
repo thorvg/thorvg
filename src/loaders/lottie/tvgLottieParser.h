@@ -65,6 +65,7 @@ private:
     bool getValue(int8_t& val);
     bool getValue(RGB32& color);
     bool getValue(Point& pt);
+    bool getValue(Point3D& pt);
 
     template<typename T> bool parseTangent(const char *key, LottieVectorFrame<T>& value);
     template<typename T> bool parseTangent(const char *key, LottieScalarFrame<T>& value);
@@ -82,7 +83,6 @@ private:
     LottieEllipse* parseEllipse();
     LottieSolidFill* parseSolidFill();
     LottieTransform* parseTransform(bool ddd = false);
-    LottieTransform::Orientation* parseOrientation();
     LottieSolidStroke* parseSolidStroke();
     LottieGradientStroke* parseGradientStroke();
     LottiePath* parsePath();
