@@ -3178,9 +3178,26 @@ TVG_API Tvg_Result tvg_lottie_animation_get_markers_cnt(Tvg_Animation animation,
  *
  * @retval TVG_RESULT_INVALID_ARGUMENT In case @c nullptr is passed as the argument or @c idx is out of range.
  *
+ * @deprecated Use tvg_lottie_animation_get_marker_info() instead.
  * @since 1.0
  */
-TVG_API Tvg_Result tvg_lottie_animation_get_marker(Tvg_Animation animation, uint32_t idx, const char** name);
+TVG_DEPRECATED TVG_API Tvg_Result tvg_lottie_animation_get_marker(Tvg_Animation animation, uint32_t idx, const char** name);
+
+
+/**
+ * @brief Gets the marker information by a given index.
+ *
+ * @param[in] animation The Tvg_Animation pointer to the Lottie animation object.
+ * @param[in] idx The index of the animation marker, starts from 0.
+ * @param[out] name The name of the marker. Pass @c NULL to not receive this value.
+ * @param[out] begin The start frame of the marker. Pass @c NULL to not receive this value.
+ * @param[out] end The end frame of the marker. Pass @c NULL to not receive this value.
+ *
+ * @retval TVG_RESULT_INVALID_ARGUMENT In case @c idx is out of range or @p animation is invalid.
+ *
+ * @since 1.0
+ */
+TVG_API Tvg_Result tvg_lottie_animation_get_marker_info(Tvg_Animation animation, uint32_t idx, const char** name, float* begin, float* end);
 
 
 /**

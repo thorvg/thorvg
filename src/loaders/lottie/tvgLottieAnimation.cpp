@@ -101,11 +101,11 @@ uint32_t LottieAnimation::markersCnt() noexcept
 }
 
 
-const char* LottieAnimation::marker(uint32_t idx) noexcept
+const char* LottieAnimation::marker(uint32_t idx, float* begin, float* end) noexcept
 {
     auto loader = to<PictureImpl>(pImpl->picture)->loader;
     if (!loader) return nullptr;
-    return static_cast<LottieLoader*>(loader)->markers(idx);
+    return static_cast<LottieLoader*>(loader)->markers(idx, begin, end);
 }
 
 
