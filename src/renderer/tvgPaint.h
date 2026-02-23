@@ -148,12 +148,12 @@ struct Paint::Impl
 
     bool marked(CompositionFlag flag)
     {
-        return (uint8_t(cmpFlag) & uint8_t(flag)) ? true : false;
+        return (uint8_t(cmpFlag) & uint8_t(flag));
     }
 
     bool marked(RenderUpdateFlag flag)
     {
-        return (renderFlag & flag) ? true : false;
+        return (renderFlag & flag);
     }
 
     void mark(RenderUpdateFlag flag)
@@ -311,7 +311,7 @@ struct Paint::Impl
     bool bounds(Point* pt4, const Matrix* pm, bool obb);
     Iterator* iterator();
     RenderData update(RenderMethod* renderer, const Matrix& pm, Array<RenderData>& clips, uint8_t opacity, RenderUpdateFlag pFlag, bool clipper = false);
-    bool render(RenderMethod* renderer);
+    bool render(RenderMethod* renderer, CompositionFlag flag = CompositionFlag::Invalid);
     Paint* duplicate(Paint* ret = nullptr);
 };
 

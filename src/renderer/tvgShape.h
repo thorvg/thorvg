@@ -40,7 +40,7 @@ struct ShapeImpl : Shape
     {
     }
 
-    bool render(RenderMethod* renderer)
+    bool render(RenderMethod* renderer, TVG_UNUSED CompositionFlag flag)
     {
         if (!impl.rd) return false;
 

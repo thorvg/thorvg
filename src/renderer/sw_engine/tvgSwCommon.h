@@ -417,6 +417,7 @@ static inline RenderColor BLEND_UPRE(uint32_t c)
 static inline uint32_t BLEND_PRE(uint32_t c1, uint32_t c2, uint8_t a)
 {
     if (a == 255) return c1;
+    else if (a == 0) return c2;
     return ALPHA_BLEND(c1, a) + ALPHA_BLEND(c2, 255 - a);
 }
 
@@ -487,7 +488,6 @@ static inline uint32_t opBlendMultiply(uint32_t s, uint32_t d)
 
     return BLEND_PRE(JOIN(255, f(C1(s), o.r), f(C2(s), o.g), f(C3(s), o.b)), s, o.a);
 }
-
 
 static inline uint32_t opBlendOverlay(uint32_t s, uint32_t d)
 {
