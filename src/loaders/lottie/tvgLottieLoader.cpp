@@ -427,7 +427,10 @@ void LottieLoader::sync()
 {
     done();
 
-    if (build) run(0);
+    if (build) {
+        if (comp) comp->clear();
+        run(0);
+    }
 }
 
 
