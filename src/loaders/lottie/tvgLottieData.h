@@ -23,9 +23,11 @@
 #ifndef _TVG_LOTTIE_COMMON_
 #define _TVG_LOTTIE_COMMON_
 
-#include <cmath>
-#include "tvgCommon.h"
 #include "tvgArray.h"
+#include "tvgMath.h"
+
+namespace tvg
+{
 
 struct PathSet
 {
@@ -118,5 +120,16 @@ static inline RGB32 operator*(const RGB32& lhs, float rhs)
     return {(int32_t)nearbyintf(lhs.r * rhs), (int32_t)nearbyintf(lhs.g * rhs), (int32_t)nearbyintf(lhs.b * rhs)};
 }
 
+
+static inline RGB32 lerp(const RGB32& s, const RGB32& e, float t)
+{
+    return {
+        tvg::clamp((int32_t)(s.r + (e.r - s.r) * t), 0, 255),
+        tvg::clamp((int32_t)(s.g + (e.g - s.g) * t), 0, 255),
+        tvg::clamp((int32_t)(s.b + (e.b - s.b) * t), 0, 255)
+    };
+}
+
+}
 
 #endif //_TVG_LOTTIE_COMMON_
