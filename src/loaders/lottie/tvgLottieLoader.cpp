@@ -62,8 +62,10 @@ bool LottieLoader::prepare()
 
 void LottieLoader::run(unsigned tid)
 {
-    if (comp) builder->update(comp, frameNo);      //update frame
-    else if (prepare()) builder->update(comp, 0);  //initial loading
+    if (comp) {
+        comp->clear();
+        builder->update(comp, frameNo);            //update frame
+    } else if (prepare()) builder->update(comp, 0);  //initial loading
     build = false;
 }
 
@@ -390,8 +392,6 @@ bool LottieLoader::frame(float no)
     this->frameNo = no;
 
     builder->offTween();
-
-    if (comp) comp->clear();     //clear synchronously
 
     TaskScheduler::request(this);
 
