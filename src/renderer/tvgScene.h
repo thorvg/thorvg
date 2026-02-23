@@ -156,22 +156,24 @@ struct SceneImpl : Scene
         return true;
     }
 
-    bool render(RenderMethod* renderer)
+    bool render(RenderMethod* renderer, CompositionFlag flag)
     {
         if (paints.empty()) return true;
 
         RenderCompositor* cmp = nullptr;
+        // its parent is already in composition mode, maybe parasitize its surface
+        auto incomposite = (uint8_t(CompositionFlag::PostProcessing) & uint8_t(flag)) && !effects;
         auto ret = true;
 
         renderer->blend(impl.blendMethod);
 
-        if (impl.cmpFlag) {
+        if (!incomposite && impl.cmpFlag) {
             cmp = renderer->target(bounds(), renderer->colorSpace(), impl.cmpFlag);
             renderer->beginComposite(cmp, MaskMethod::None, opacity);
         }
 
         for (auto paint : paints) {
-            ret &= paint->pImpl->render(renderer);
+            ret &= paint->pImpl->render(renderer, impl.cmpFlag);
         }
 
         if (cmp) {

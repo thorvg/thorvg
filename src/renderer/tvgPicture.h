@@ -279,7 +279,7 @@ struct PictureImpl : Picture
         impl.mark(CompositionFlag::Opacity);
     }
 
-    bool render(RenderMethod* renderer)
+    bool render(RenderMethod* renderer, TVG_UNUSED CompositionFlag flag)
     {
         auto ret = true;
 

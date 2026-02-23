@@ -107,7 +107,7 @@ struct TextImpl : Text
         return to<ShapeImpl>(shape)->bounds();
     }
 
-    bool render(RenderMethod* renderer)
+    bool render(RenderMethod* renderer, TVG_UNUSED CompositionFlag flag)
     {
         if (!loader || !fm.engine) return true;
         renderer->blend(impl.blendMethod);
