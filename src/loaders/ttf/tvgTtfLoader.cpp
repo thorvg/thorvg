@@ -164,7 +164,7 @@ static void _unmap(TtfLoader* loader)
 #endif //THORVG_FILE_IO_SUPPORT
 
 
-static size_t _codepoints(char** utf8)
+static size_t _codepoints(const char** utf8)
 {
     auto p = *utf8;
 
@@ -278,7 +278,7 @@ TtfGlyphMetrics* TtfLoader::request(uint32_t code)
 }
 
 
-void TtfLoader::wrapNone(FontMetrics& fm, const Point& box, char* utf8, RenderPath& out)
+void TtfLoader::wrapNone(FontMetrics& fm, const Point& box, const char* utf8, RenderPath& out)
 {
     TtfGlyphMetrics* ltgm = nullptr;  //left side glyph between the two adjacent glyphs
     Point cursor = {};
@@ -313,7 +313,7 @@ void TtfLoader::wrapNone(FontMetrics& fm, const Point& box, char* utf8, RenderPa
 }
 
 
-void TtfLoader::wrapChar(FontMetrics& fm, const Point& box, char* utf8, RenderPath& out)
+void TtfLoader::wrapChar(FontMetrics& fm, const Point& box, const char* utf8, RenderPath& out)
 {
     TtfGlyphMetrics* ltgm = nullptr;  //left side glyph between the two adjacent glyphs
     uint32_t line = 0;  //the begin pos of the last line among path
@@ -359,7 +359,7 @@ void TtfLoader::wrapChar(FontMetrics& fm, const Point& box, char* utf8, RenderPa
 }
 
 
-void TtfLoader::wrapWord(FontMetrics& fm, const Point& box, char* utf8, RenderPath& out, bool smart)
+void TtfLoader::wrapWord(FontMetrics& fm, const Point& box, const char* utf8, RenderPath& out, bool smart)
 {
     TtfGlyphMetrics* ltgm = nullptr;  //left side glyph between the two adjacent glyphs
     auto line = 0;  //the begin pos of the last line among path
@@ -424,7 +424,7 @@ void TtfLoader::wrapWord(FontMetrics& fm, const Point& box, char* utf8, RenderPa
 }
 
 
-void TtfLoader::wrapEllipsis(FontMetrics& fm, const Point& box, char* utf8, RenderPath& out)
+void TtfLoader::wrapEllipsis(FontMetrics& fm, const Point& box, const char* utf8, RenderPath& out)
 {
     TtfGlyphMetrics* ltgm = nullptr;  //left side glyph between the two adjacent glyphs
     auto line = 0;  //the begin pos of the last line among path
@@ -596,4 +596,21 @@ void TtfLoader::metrics(const FontMetrics& fm, TextMetrics& out)
     out.ascent = reader.metrics.hhea.ascent * scale;
     out.descent = reader.metrics.hhea.descent * scale;
     out.linegap = reader.metrics.hhea.linegap * scale;
+}
+
+
+bool TtfLoader::metrics(const FontMetrics& fm, const char *ch, GlyphMetrics& out)
+{
+    auto code = _codepoints(&ch);
+    auto glyph = request(code);
+    if (!glyph) return false;
+
+    auto scale = (fm.fontSize * FontLoader::DPI) / reader.metrics.unitsPerEm;
+
+    out.advance = glyph->advance * scale;
+    out.bearing = glyph->lsb * scale;
+    out.min = Point{glyph->x, glyph->y} * scale;
+    out.max = Point{glyph->w + glyph->x - 1, glyph->h + glyph->y - 1} * scale;
+
+    return true;
 }
