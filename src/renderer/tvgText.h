@@ -133,6 +133,13 @@ struct TextImpl : Text
         return Result::Success;
     }
 
+    Result metrics(const char* ch, GlyphMetrics& metrics)
+    {
+        if (!loader || fm.fontSize <= 0.0f) return Result::InsufficientCondition;
+        if (ch && loader->metrics(fm, ch, metrics)) return Result::Success;
+        return Result::InvalidArguments;
+    }
+
     bool skip(RenderUpdateFlag flag)
     {
         if (flag == RenderUpdateFlag::None) return true;
