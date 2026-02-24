@@ -266,7 +266,7 @@ SwRenderer::~SwRenderer()
 
     if (!sharedMpool) mpoolTerm(mpool);
 
-    --rendererCnt;
+    rendererCnt.fetch_sub(1);
 }
 
 
@@ -907,31 +907,79 @@ RenderData SwRenderer::prepare(const RenderShape& rshape, RenderData data, const
 
 bool SwRenderer::term()
 {
-    if (rendererCnt > 0) return false;
+    const int current = rendererCnt.load(std::memory_order_acquire);
 
-    mpoolTerm(globalMpool);
-    globalMpool = nullptr;
-    rendererCnt = -1;
+    // Only fail if there are active renderers (original: if > 0)
+    if (current > 0) {
+        return false;
+    }
 
-    return true;
+    // Try to transition to -1 from 0 or -1
+    int expected = current;
+    while (expected <= 0) {
+        if (rendererCnt.compare_exchange_weak(expected, -1,
+                                               std::memory_order_acq_rel,
+                                               std::memory_order_acquire)) {
+            // Successfully set to -1, perform cleanup
+            mpoolTerm(globalMpool);
+            globalMpool = nullptr;
+            return true;
+                                               }
+
+        // CAS failed, expected now contains current value
+        if (expected > 0) {
+            // A renderer was created between our check and CAS, abort termination
+            return false;
+        }
+        // Still <= 0, retry CAS
+    }
+
+    return false;
 }
 
 
 SwRenderer::SwRenderer(uint32_t threads, EngineOption op)
 {
-    //initialize engine
-    if (rendererCnt == -1) {
+    bool initialized = false;
+
+    while (!initialized) {
+        int32_t expected = -1;
+
+        if (rendererCnt.compare_exchange_strong(expected, 0,
+                                                 std::memory_order_acq_rel)) {
+            // We won initialization
 #ifdef THORVG_OPENMP_SUPPORT
-        omp_set_num_threads(threads);
+            omp_set_num_threads(threads);
 #endif
-        //Share the memory pool among the renderer
-        globalMpool = mpoolInit(threads);
-        threadsCnt = threads;
-        rendererCnt = 0;
+            globalMpool = mpoolInit(threads);
+            threadsCnt = threads;
+         } else {
+             // Another thread is initializing or already initialized
+             // Wait for initialization to complete
+             while (rendererCnt.load(std::memory_order_acquire) == -1) {
+                 std::this_thread::yield();
+             }
+         }
+
+        // this gap between the CAS and the fetch_add is the only critical window where term() can run
+        // and destroy our previously memory pool because rendererCnt is still at 0.
+
+        // Try to increment - if we get -1 back, term() just ran
+        int32_t count = rendererCnt.fetch_add(1, std::memory_order_acq_rel);
+
+        // one last check to see if we need to rerun init, because term() destroyed the pool
+        // before we could set the count to > 0
+        if (count >= 0) { // count is now the OLD value before the fetch_add
+            // we're done and the count is correct
+            initialized = true;
+        } else {
+            // We incremented from -1 (term() raced with us), rollback and retry
+            rendererCnt.fetch_sub(1, std::memory_order_release);
+        }
     }
 
+    // Rest of constructor...
     if (TaskScheduler::onthread()) {
-        TVGLOG("SW_RENDERER", "Running on a non-dominant thread!, Renderer(%p)", this);
         mpool = mpoolInit(threadsCnt);
         sharedMpool = false;
     } else {
@@ -940,6 +988,4 @@ SwRenderer::SwRenderer(uint32_t threads, EngineOption op)
     }
 
     if (op == EngineOption::None) dirtyRegion.support = false;
-
-    ++rendererCnt;
 }
