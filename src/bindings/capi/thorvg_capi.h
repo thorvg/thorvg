@@ -340,7 +340,7 @@ typedef struct {
  * Provides the basic vertical layout metrics used for text rendering,
  * such as ascent, descent, and line spacing (linegap).
  *
- * @see tvg_text_get_metrics()
+ * @see tvg_text_get_text_metrics()
  * @note Experimental API
  */
 typedef struct {
@@ -349,6 +349,31 @@ typedef struct {
     float linegap;  ///< Additional spacing recommended between lines (leading).
     float advance;  ///< The total vertical advance between lines of text: ascent - descent + linegap (i.e., ascent + |descent| + linegap when descent is negative).
 } Tvg_Text_Metrics;
+
+
+/**
+ * @brief Describes the layout metrics of a glyph.
+ *
+ * Provides the basic layout metrics used for positioning an individual glyph,
+ * including its advance along the baseline direction, bearing relative to the
+ * inline axis origin, and its bounding box in local glyph space.
+ *
+ * The advance value represents the distance the pen position moves along the
+ * baseline (inline direction), regardless of whether the text is laid out
+ * horizontally or vertically.
+ *
+ * The bounding box is defined in the glyph’s local coordinate space and is
+ * independent of any layout direction or transformation.
+ *
+ * @see tvg_text_get_glyph_metrics()
+ * @note Experimental API
+ */
+typedef struct {
+    float advance;    ///< The advance distance along the baseline (inline) direction.
+    float bearing;    ///< The bearing from the origin to the glyph’s visible bound along the inline-start direction.
+    Tvg_Point min;    ///< The minimum point of the glyph bounding box in local space.
+    Tvg_Point max;    ///< The maximum point of the glyph bounding box in local space.
+} Tvg_Glyph_Metrics;
 
 
 /**
@@ -2631,21 +2656,46 @@ TVG_API Tvg_Result tvg_text_set_gradient(Tvg_Paint text, Tvg_Gradient gradient);
 /**
  * @brief Retrieves the layout metrics of the text object.
  *
- * Fills the provided `Tvg_Text_Metrics` structure with the font layout values of this text object,
+ * Fills the provided @ref Tvg_Text_Metrics structure with the font layout values of this text object,
  * such as ascent, descent, linegap, and line advance.
  *
  * The returned values reflect the font size applied to the text object,
  * but do not include any transformations (e.g., scale, rotation, or translation).
  *
  * @param[in] text A Tvg_Paint pointer to the text object.
- * @param[out] metrics A reference to a `Tvg_Text_Metrics` structure to be filled with the resulting values.
+ * @param[out] metrics A pointer to a @ref Tvg_Text_Metrics structure to be filled with the resulting values.
  *
  * @return TVG_RESULT_INSUFFICIENT_CONDITION if no font or size has been set yet.
  *
  * @see Tvg_Text_Metrics
  * @note Experimental API
  */
-TVG_API Tvg_Result tvg_text_get_metrics(const Tvg_Paint text, Tvg_Text_Metrics* metrics);
+TVG_API Tvg_Result tvg_text_get_text_metrics(const Tvg_Paint text, Tvg_Text_Metrics* metrics);
+
+
+/**
+ * @brief Retrieves the layout metrics of a glyph in the text object.
+ *
+ * Fills the provided @ref Tvg_Glyph_Metrics structure with the horizontal layout values
+ * of the specified glyph, such as advance, left-side bearing, and bounding box.
+ *
+ * The returned values reflect the font size applied to the text object,
+ * but do not include any transformations (e.g., scale, rotation, or translation).
+ *
+ * The input character must be a single UTF-8 encoded character.
+ *
+ * @param[in] text A Tvg_Paint pointer to the text object.
+ * @param[in] ch A pointer to a UTF-8 encoded character.
+ * @param[out] metrics A pointer to a @ref Tvg_Glyph_Metrics structure to be filled with the resulting values.
+ *
+ * @return TVG_RESULT_INSUFFICIENT_CONDITION if no font or size has been set yet.
+ * @return TVG_RESULT_INVALID_ARGUMENT if the given character is invalid or not supported.
+ *
+ * @see Tvg_Glyph_Metrics
+ * @note Currently, ThorVG only supports horizontal text layout.
+ * @note Experimental API
+ */
+TVG_API Tvg_Result tvg_text_get_glyph_metrics(const Tvg_Paint text, const char* ch, Tvg_Glyph_Metrics* metrics);
 
 
 /**

@@ -951,9 +951,16 @@ TVG_API Tvg_Result tvg_text_spacing(Tvg_Paint text, float letter, float line)
 }
 
 
-TVG_API Tvg_Result tvg_text_get_metrics(const Tvg_Paint text, Tvg_Text_Metrics* metrics)
+TVG_API Tvg_Result tvg_text_get_text_metrics(const Tvg_Paint text, Tvg_Text_Metrics* metrics)
 {
     if (text && metrics) return (Tvg_Result) reinterpret_cast<Text*>(text)->metrics(*reinterpret_cast<TextMetrics*>(metrics));
+    return TVG_RESULT_INVALID_ARGUMENT;
+}
+
+
+TVG_API Tvg_Result tvg_text_get_glyph_metrics(const Tvg_Paint text, const char* ch, Tvg_Glyph_Metrics* metrics)
+{
+    if (text && metrics) return (Tvg_Result) reinterpret_cast<Text*>(text)->metrics(ch, *reinterpret_cast<GlyphMetrics*>(metrics));
     return TVG_RESULT_INVALID_ARGUMENT;
 }
 

@@ -359,6 +359,32 @@ struct TextMetrics
 
 
 /**
+ * @brief Describes the layout metrics of a glyph.
+ *
+ * Provides the basic layout metrics used for positioning an individual glyph,
+ * including its advance along the baseline direction, bearing relative to the
+ * inline axis origin, and its bounding box in local glyph space.
+ *
+ * The advance value represents the distance the pen position moves along the
+ * baseline (inline direction), regardless of whether the text is laid out
+ * horizontally or vertically.
+ *
+ * The bounding box is defined in the glyph’s local coordinate space and is
+ * independent of any layout direction or transformation.
+ *
+ * @see Text::metrics()
+ * @note Experimental API
+ */
+struct GlyphMetrics
+{
+    float advance;  ///< The advance distance along the baseline (inline) direction.
+    float bearing;  ///< The bearing from the origin to the glyph’s visible bound along the inline-start direction.
+    Point min;      ///< The minimum point of the glyph bounding box in local space.
+    Point max;      ///< The maximum point of the glyph bounding box in local space.
+};
+
+
+/**
  * @class Paint
  *
  * @brief An abstract class for managing graphical elements.
@@ -2071,6 +2097,29 @@ struct TVG_API Text : Paint
      * @note Experimental API
      */
     Result metrics(TextMetrics& metrics) const noexcept;
+
+    /**
+     * @brief Retrieves the layout metrics of a glyph in the text object.
+     *
+     * Fills the provided `GlyphMetrics` structure with the horizontal layout values
+     * of the specified glyph, such as advance, left-side bearing, and bounding box.
+     *
+     * The returned values reflect the font size applied to the text object,
+     * but do not include any transformations (e.g., scale, rotation, or translation).
+     *
+     * The input character must be a single UTF-8 encoded character.
+     *
+     * @param[in] ch A pointer to a UTF-8 encoded character.
+     * @param[out] metrics A reference to a @ref GlyphMetrics structure to be filled with the resulting values.
+     *
+     * @return Result::InsufficientCondition if no font or size has been set yet.
+     * @return Result::InvalidArguments if the given character is invalid or not supported.
+     *
+     * @see GlyphMetrics
+     * @note Currently, ThorVG only supports horizontal text layout.
+     * @note Experimental API
+     */
+    Result metrics(const char* ch, GlyphMetrics& metrics) const noexcept;
 
     /**
      * @brief Loads a scalable font data (ttf) from a file.

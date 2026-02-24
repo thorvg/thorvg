@@ -156,6 +156,12 @@ Result Text::metrics(TextMetrics& metrics) const noexcept
 }
 
 
+Result Text::metrics(const char* ch, GlyphMetrics& metrics) const noexcept
+{
+    return to<TextImpl>(this)->metrics(ch, metrics);
+}
+
+
 Text* Text::gen() noexcept
 {
     return new TextImpl;

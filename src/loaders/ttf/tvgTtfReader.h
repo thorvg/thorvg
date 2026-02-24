@@ -33,8 +33,7 @@ struct TtfGlyph
     uint32_t idx;        //glyph index
     float advance;       //advance width/height
     float lsb;           //left side bearing
-    float y;             //y-offset
-    float w, h;          //bounding box
+    float x, y, w, h;    //bounding box
 };
 
 struct TtfGlyphMetrics : TtfGlyph

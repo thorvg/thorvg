@@ -418,7 +418,7 @@ uint32_t TtfReader::glyphMetrics(TtfGlyph& glyph)
     auto glyphOffset = outlineOffset(glyph.idx);
     // glyph without outline
     if (glyphOffset == 0) {
-        glyph.y = glyph.w = glyph.h = 0.0f;
+        glyph.x = glyph.y = glyph.w = glyph.h = 0.0f;
         return 0;
     }
     if (!validate(glyphOffset, 10)) return 0;
@@ -430,9 +430,10 @@ uint32_t TtfReader::glyphMetrics(TtfGlyph& glyph)
     bbox[2] = static_cast<float>(_i16(data, glyphOffset + 6));
     bbox[3] = static_cast<float>(_i16(data, glyphOffset + 8));
 
+    glyph.x = bbox[0];
+    glyph.y = bbox[3];
     glyph.w = bbox[2] - bbox[0] + 1;
     glyph.h = bbox[3] - bbox[1] + 1;
-    glyph.y = bbox[3];
 
     return glyphOffset;
 }
