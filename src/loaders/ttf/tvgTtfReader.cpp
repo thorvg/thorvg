@@ -302,8 +302,11 @@ bool TtfReader::header()
 {
     if (!validate(0, 12)) return false;
 
-    //verify ttf(scalable font)
+    //verify scalable fonts
     auto type = _u32(data, 0);
+
+    // ttf: 0x00010000
+    // true(apple): 0x74727565
     if (type != 0x00010000 && type != 0x74727565) return false;
 
     //header
