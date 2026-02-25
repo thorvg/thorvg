@@ -312,9 +312,9 @@ struct RenderPath
         return curr;
     }
 
-    /* Optimize path in screen space with merging collinear lines,
-       collapsing zero length lines, and removing unnecessary cubic beziers. */
-    void optimize(RenderPath& out, const Matrix& matrix) const;
+    /* Optimize path in screen space by collapsing zero length lines
+       and removing unnecessary cubic beziers. */
+    void optimize(RenderPath& out, const Matrix& matrix, bool& thin) const;
     bool bounds(const Matrix* m, BBox& box);
 };
 

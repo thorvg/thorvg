@@ -103,11 +103,12 @@ bool RenderPath::bounds(const Matrix* m, BBox& box)
 }
 
 
-void RenderPath::optimize(RenderPath& out, const Matrix& matrix) const
+void RenderPath::optimize(RenderPath& out, const Matrix& matrix, bool& thin) const
 {
 #if defined(THORVG_GL_RASTER_SUPPORT) || defined (THORVG_WG_RASTER_SUPPORT)
     static constexpr auto PX_TOLERANCE = 0.25f;
 
+    thin = false;
     if (empty()) return;
 
     out.cmds.clear();
@@ -119,10 +120,23 @@ void RenderPath::optimize(RenderPath& out, const Matrix& matrix) const
     auto cmdCnt = this->cmds.count;
     auto pts = this->pts.data;
 
-    Point lastOutT, prevOutT;   // The suffix "T" indicates that the point is transformed.
-    uint32_t prevIdx = 0;
-    uint32_t prevPrevIdx = 0;
-    auto hasPrevPrev = false;
+    Point lastOutT{};   // The suffix "T" indicates that the point is transformed.
+    Point subpathStartT{};
+    Point thinLineStart{};
+    Point thinLineVec{};
+    auto drawableSubpathCnt = 0u;
+    auto thinLineVecLen = 0.0f;
+    auto thinCandidate = true;
+    auto thinLineReady = false;
+    auto subpathOpen = false;
+    auto subpathHasSegment = false;
+
+    auto finalizeSubpath = [&]() {
+        if (!subpathHasSegment) return;
+        ++drawableSubpathCnt;
+        if (drawableSubpathCnt > 1) thinCandidate = false;
+        subpathHasSegment = false;
+    };
 
     //vecLen is guaranteed to be non-zero since closed points are already merged
     auto point2Line = [](const Point& point, const Point& start, const Point& vec, float vecLen, float& maxDist, float& minT, float& maxT) {
@@ -144,46 +158,34 @@ void RenderPath::optimize(RenderPath& out, const Matrix& matrix) const
         point2Line(ctrl2, start, vec, vecLen, maxDist, minT, maxT);
     };
 
-    auto point2LineSimple = [](const Point& point, const Point& start, const Point& end, float& dist, float& t, float& vecLen) {
-        auto vec = end - start;
-        auto vecLenSq = vec.x * vec.x + vec.y * vec.y;
-        vecLen = sqrtf(vecLenSq);
-        Point offset = point - start;
-        dist = fabsf(tvg::cross(vec, offset)) / vecLen;
-        t = tvg::dot(offset, vec) / vecLenSq;
+    auto checkThinPoint = [&](const Point& ptT) {
+        if (!thinCandidate || !thinLineReady) return;
+        auto dist = fabsf(tvg::cross(thinLineVec, ptT - thinLineStart)) / thinLineVecLen;
+        if (dist > PX_TOLERANCE) thinCandidate = false;
     };
 
-    auto addLineCmd = [&](const Point& ptT) {
+    auto collectThinSegment = [&](const Point& startT, const Point& endT) {
+        subpathHasSegment = true;
+        if (!thinCandidate) return;
+
+        if (!thinLineReady) {
+            if (!tvg::closed(startT, endT, PX_TOLERANCE)) {
+                thinLineStart = startT;
+                thinLineVec = endT - startT;
+                thinLineVecLen = sqrtf(thinLineVec.x * thinLineVec.x + thinLineVec.y * thinLineVec.y);
+                if (!tvg::zero(thinLineVecLen)) thinLineReady = true;
+            }
+        } else {
+            checkThinPoint(startT);
+            checkThinPoint(endT);
+        }
+    };
+
+    auto addLineCmd = [&](const Point& startT, const Point& ptT) {
         out.cmds.push(PathCommand::LineTo);
         out.pts.push(ptT);
-        prevOutT = lastOutT;
         lastOutT = ptT;
-        prevPrevIdx = prevIdx;
-        prevIdx = out.pts.count - 1;
-        hasPrevPrev = true;
-    };
-
-    auto processLineCollinear = [&](const Point& startT, const Point& ptT) {
-        if (!hasPrevPrev || out.pts.count <= 1) {
-            addLineCmd(ptT);
-            return;
-        }
-
-        float dist, t, vecLen;
-        point2LineSimple(ptT, prevOutT, startT, dist, t, vecLen);
-        if (dist > PX_TOLERANCE) {
-            addLineCmd(ptT);
-            return;
-        }
-
-        auto tEps = PX_TOLERANCE / vecLen;
-        if (t <= -tEps) {
-            out.pts[prevPrevIdx] = ptT;
-            lastOutT = ptT;
-        } else if (t >= 1.0f - tEps) {
-            out.pts[prevIdx] = ptT;
-            lastOutT = ptT;
-        }
+        collectThinSegment(startT, ptT);
     };
 
     auto processCubicTo = [&](const Point* cubicPts, const Point& startT) {
@@ -197,29 +199,28 @@ void RenderPath::optimize(RenderPath& out, const Matrix& matrix) const
         auto tEps = PX_TOLERANCE / vecLen;
         auto inSpan = (minT >= -tEps) && (maxT <= 1.0f + tEps);
         if (flat && inSpan) {
-            processLineCollinear(startT, endT);
+            addLineCmd(startT, endT);
         } else {
             out.cmds.push(PathCommand::CubicTo);
             out.pts.push(ctrl1T);
             out.pts.push(ctrl2T);
             out.pts.push(endT);
-            prevOutT = lastOutT;
             lastOutT = endT;
-            prevPrevIdx = prevIdx;
-            prevIdx = out.pts.count - 1;
-            hasPrevPrev = true;
+            subpathHasSegment = true;
+            thinCandidate = false;
         }
     };
 
     for (uint32_t i = 0; i < cmdCnt; i++) {
         switch (cmds[i]) {
             case PathCommand::MoveTo: {
+                finalizeSubpath();
                 auto ptT = (*pts) * matrix;
                 out.cmds.push(PathCommand::MoveTo);
                 out.pts.push(ptT);
                 lastOutT = ptT;
-                prevIdx = out.pts.count - 1;
-                hasPrevPrev = false;
+                subpathStartT = ptT;
+                subpathOpen = true;
                 pts++;
                 break;
             }
@@ -230,7 +231,7 @@ void RenderPath::optimize(RenderPath& out, const Matrix& matrix) const
                     pts++;
                     break;
                 }
-                processLineCollinear(startT, ptT);
+                addLineCmd(startT, ptT);
                 pts++;
                 break;
             }
@@ -240,14 +241,18 @@ void RenderPath::optimize(RenderPath& out, const Matrix& matrix) const
                 break;
             }
             case PathCommand::Close: {
+                if (subpathOpen && !tvg::closed(lastOutT, subpathStartT, PX_TOLERANCE)) collectThinSegment(lastOutT, subpathStartT);
                 out.cmds.push(PathCommand::Close);
-                hasPrevPrev = false;
+                lastOutT = subpathStartT;
                 break;
             }
             default: break;
         }
     }
+    finalizeSubpath();
+    thin = thinCandidate && thinLineReady && (drawableSubpathCnt == 1);
 #else
+    thin = false;
     TVGLOG("RENDERER", "RenderPath transformed optimization is disabled");
 #endif
 }
