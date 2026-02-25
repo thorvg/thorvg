@@ -28,6 +28,8 @@
 #include "tvgGlRenderTask.h"
 #include "tvgGlProgram.h"
 #include "tvgGlShaderSrc.h"
+#include "tvgShape.h"
+#include "tvgRender.h"
 
 
 /************************************************************************/
@@ -37,6 +39,36 @@
 #define NOISE_LEVEL 0.5f
 
 static atomic<int32_t> rendererCnt{-1};
+
+// GL receives only RenderShape in prepare(). For shape draws this is ShapeImpl::rs,
+// so we recover the owning Paint by reversing that member offset.
+// If the common layer later exposes a direct owner accessor, prefer that
+// and drop this local helper.
+static const Paint* _shapePaint(const RenderShape* rshape)
+{
+    if (!rshape) return nullptr;
+
+    // RenderMethod::prepare(const RenderShape&) receives ShapeImpl::rs.
+    static const auto shapeOffset = []() 
+    {
+        ShapeImpl probe;
+        return reinterpret_cast<const uint8_t*>(&probe.rs) - reinterpret_cast<const uint8_t*>(&probe);
+    }();
+
+    auto shape = reinterpret_cast<const ShapeImpl*>(reinterpret_cast<const uint8_t*>(rshape) - shapeOffset);
+    return static_cast<const Paint*>(shape);
+}
+
+
+static const Paint* _pictureOwner(const RenderShape* rshape)
+{
+    auto paint = _shapePaint(rshape);
+    while (paint) {
+        if (paint->type() == Type::Picture) return paint;
+        paint = paint->parent();
+    }
+    return nullptr;
+}
 
 
 void GlRenderer::clearDisposes()
@@ -48,6 +80,7 @@ void GlRenderer::clearDisposes()
 
     ARRAY_FOREACH(p, mRenderPassStack) delete(*p);
     mRenderPassStack.clear();
+    mSolidBatch.clear();
 }
 
 
@@ -178,6 +211,12 @@ void GlRenderer::drawPrimitive(GlShape& sdata, const RenderColor& c, RenderUpdat
     auto h = bbox.sh();
     auto yGl = vp.sh() - y - h;
     RenderRegion viewRegion = {{x, yGl}, {x + w, yGl + h}};
+    auto stencilMode = sdata.geometry.getStencilMode(flag);
+
+    if (!blendShape && stencilMode == GlStencilMode::None) {
+        mSolidBatch.draw(*this, sdata, c, depth, viewRegion);
+        return;
+    }
 
     GlRenderTask* task = nullptr;
     GlRenderTarget* dstCopyFbo = nullptr;
@@ -203,17 +242,6 @@ void GlRenderer::drawPrimitive(GlShape& sdata, const RenderColor& c, RenderUpdat
         return;
     }
 
-    task->setViewport(viewRegion);
-
-    GlRenderTask* stencilTask = nullptr;
-    auto stencilMode = sdata.geometry.getStencilMode(flag);
-    if (stencilMode != GlStencilMode::None) {
-        stencilTask = new GlRenderTask(mPrograms[RT_Stencil], task);
-        stencilTask->setDrawDepth(depth);
-    }
-
-    //solid uniforms
-    float solidInfo[4];
     auto a = MULTIPLY(c.a, sdata.opacity);
     if (flag & RenderUpdateFlag::Stroke) {
         auto strokeWidth = sdata.geometry.strokeRenderWidth;
@@ -222,20 +250,15 @@ void GlRenderer::drawPrimitive(GlShape& sdata, const RenderColor& c, RenderUpdat
             a = MULTIPLY(a, static_cast<uint8_t>(alpha * 255));
         }
     }
-    solidInfo[0] = c.r / 255.f;
-    solidInfo[1] = c.g / 255.f;
-    solidInfo[2] = c.b / 255.f;
-    solidInfo[3] = a / 255.f;
+    task->setVertexColor(c.r / 255.f, c.g / 255.f, c.b / 255.f, a / 255.f);
 
-    auto solidOffset = mGpuBuffer.push(solidInfo, sizeof(solidInfo), true);
+    task->setViewport(viewRegion);
 
-    task->addBindResource(GlBindingResource{
-        0,
-        task->getProgram()->getUniformBlockIndex("SolidInfo"),
-        mGpuBuffer.getBufferId(),
-        solidOffset,
-        sizeof(solidInfo),
-    });
+    GlRenderTask* stencilTask = nullptr;
+    if (stencilMode != GlStencilMode::None) {
+        stencilTask = new GlRenderTask(mPrograms[RT_Stencil], task);
+        stencilTask->setDrawDepth(depth);
+    }
 
     if (blendShape && dstCopyFbo) {
 #if defined(THORVG_GL_TARGET_GL)
@@ -1263,6 +1286,7 @@ RenderData GlRenderer::prepare(RenderSurface* image, RenderData data, const Matr
     //TODO: redefine GlImage.
     auto sdata = static_cast<GlShape*>(data);
     if (!sdata) sdata = new GlShape;
+    sdata->picture = nullptr;
     sdata->validFill = false;
 
     if (opacity == 0 || flags == RenderUpdateFlag::None) return data;
@@ -1309,6 +1333,7 @@ RenderData GlRenderer::prepare(const RenderShape& rshape, RenderData data, const
         sdata->rshape = &rshape;
         flags = RenderUpdateFlag::All;
     }
+    sdata->picture = _pictureOwner(&rshape);
 
     if ((opacity == 0 && !clipper) || flags == RenderUpdateFlag::None) return sdata;
 
@@ -1428,3 +1453,4 @@ GlRenderer* GlRenderer::gen(TVG_UNUSED uint32_t threads)
 
     return new GlRenderer;
 }
+

@@ -61,12 +61,22 @@ void GlRenderTask::run()
     // setup scissor rect
     GL_CHECK(glScissor(mViewport.sx(), mViewport.sy(), mViewport.sw(), mViewport.sh()));
 
+    if (mUseVertexColor) {
+        GL_CHECK(glDisableVertexAttribArray(1));
+        GL_CHECK(glVertexAttrib4f(1, mVertexColor[0], mVertexColor[1], mVertexColor[2], mVertexColor[3]));
+    }
+
+    GLint defaultArrayBuffer = 0;
+    GL_CHECK(glGetIntegerv(GL_ARRAY_BUFFER_BINDING, &defaultArrayBuffer));
+
     // setup attribute layout
     for (uint32_t i = 0; i < mVertexLayout.count; i++) {
         const auto &layout = mVertexLayout[i];
+        auto sourceBuffer = layout.arrayBufferId ? layout.arrayBufferId : static_cast<GLuint>(defaultArrayBuffer);
+        GL_CHECK(glBindBuffer(GL_ARRAY_BUFFER, sourceBuffer));
         GL_CHECK(glEnableVertexAttribArray(layout.index));
-        GL_CHECK(glVertexAttribPointer(layout.index, layout.size, GL_FLOAT,
-                                   GL_FALSE, layout.stride,
+        GL_CHECK(glVertexAttribPointer(layout.index, layout.size, layout.type,
+                                   layout.normalized, layout.stride,
                                    reinterpret_cast<void *>(layout.offset)));
     }
 
@@ -75,13 +85,13 @@ void GlRenderTask::run()
         const auto& binding = mBindingResources[i];
         if (binding.type == GlBindingType::kTexture) {
             GL_CHECK(glActiveTexture(GL_TEXTURE0 + binding.bindPoint));
-            GL_CHECK(glBindTexture(GL_TEXTURE_2D, binding.gBufferId));
+            GL_CHECK(glBindTexture(GL_TEXTURE_2D, binding.resourceId));
 
             mProgram->setUniform1Value(binding.location, 1, (int32_t*)&binding.bindPoint);
         } else if (binding.type == GlBindingType::kUniformBuffer) {
 
             GL_CHECK(glUniformBlockBinding(mProgram->getProgramId(), binding.location, binding.bindPoint));
-            GL_CHECK(glBindBufferRange(GL_UNIFORM_BUFFER, binding.bindPoint, binding.gBufferId,
+            GL_CHECK(glBindBufferRange(GL_UNIFORM_BUFFER, binding.bindPoint, binding.resourceId,
                                        binding.bufferOffset, binding.bufferRange));
         }
     }
@@ -93,12 +103,20 @@ void GlRenderTask::run()
         const auto &layout = mVertexLayout[i];
         GL_CHECK(glDisableVertexAttribArray(layout.index));
     }
+
+    GL_CHECK(glBindBuffer(GL_ARRAY_BUFFER, static_cast<GLuint>(defaultArrayBuffer)));
 }
 
 
 void GlRenderTask::addVertexLayout(const GlVertexLayout &layout)
 {
     mVertexLayout.push(layout);
+}
+
+void GlRenderTask::setVertexColor(float r, float g, float b, float a)
+{
+    mUseVertexColor = true;
+    mVertexColor[0] = r; mVertexColor[1] = g; mVertexColor[2] = b; mVertexColor[3] = a;
 }
 
 
