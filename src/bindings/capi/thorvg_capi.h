@@ -113,7 +113,31 @@ typedef enum {
 
 
 /**
+ * @brief A data structure representing a point in two-dimensional space.
+ */
+typedef struct {
+    float x, y;
+} Tvg_Point;
+
+
+/**
+ * @brief A data structure representing a three-dimensional matrix.
+ *
+ * The elements e11, e12, e21 and e22 represent the rotation matrix, including the scaling factor.
+ * The elements e13 and e23 determine the translation of the object along the x and y-axis, respectively.
+ * The elements e31 and e32 are set to 0, e33 is set to 1.
+ */
+typedef struct {
+    float e11, e12, e13;
+    float e21, e22, e23;
+    float e31, e32, e33;
+} Tvg_Matrix;
+
+
+/**
  * @brief Enumeration specifying the methods of combining the 8-bit color channels into 32-bit color.
+ *
+ * @ingroup ThorVGCapi_Canvas
  */
 typedef enum {
     TVG_COLORSPACE_ABGR8888 = 0,  ///< The channels are joined in the order: alpha, blue, green, red. Colors are alpha-premultiplied.
@@ -135,6 +159,8 @@ typedef enum {
  *       or heavy object movements), the overhead of tracking changes and managing update regions may outweigh the benefits,
  *       resulting in decreased performance compared to the default rendering mode. Thus, it is recommended to benchmark
  *       both modes in your specific use case to determine the optimal setting.
+ *
+ * @ingroup ThorVGCapi_Initializer
  *
  * @since 1.0
  */
@@ -312,26 +338,21 @@ typedef enum {
 
 /** \} */  // end addtogroup ThorVGCapi_Text
 
+
 /**
- * @brief A data structure representing a point in two-dimensional space.
+ * @addtogroup ThorVGCapi_Picture
+ * \{
  */
-typedef struct {
-    float x, y;
-} Tvg_Point;
-
 
 /**
- * @brief A data structure representing a three-dimensional matrix.
+ * @brief Defines the image filtering method used during image scaling or transformation.
  *
- * The elements e11, e12, e21 and e22 represent the rotation matrix, including the scaling factor.
- * The elements e13 and e23 determine the translation of the object along the x and y-axis, respectively.
- * The elements e31 and e32 are set to 0, e33 is set to 1.
+ * @note Experimental API
  */
-typedef struct {
-    float e11, e12, e13;
-    float e21, e22, e23;
-    float e31, e32, e33;
-} Tvg_Matrix;
+typedef enum {
+    TVG_FILTER_METHOD_BILINEAR = 0,  ///< Smooth interpolation using surrounding pixels for higher quality.
+    TVG_FILTER_METHOD_NEAREST        ///< Fast filtering using nearest-neighbor sampling.
+} Tvg_Filter_Method;
 
 
 /**
@@ -394,6 +415,8 @@ typedef struct {
  * @note Experimental API
  */
 typedef bool (*Tvg_Picture_Asset_Resolver)(Tvg_Paint paint, const char* src, void* data);
+
+/** \} */   // end addtogroup ThorVGCapi_Picture
 
 
 /**
@@ -2107,6 +2130,20 @@ TVG_API Tvg_Result tvg_picture_get_origin(const Tvg_Paint picture, float* x, flo
  */
 TVG_API const Tvg_Paint tvg_picture_get_paint(Tvg_Paint picture, uint32_t id);
 
+
+/**
+ * @brief Sets the image filtering method for rendering this picture.
+ *
+ * Specifies how the image data should be filtered when it is scaled or transformed
+ * during rendering. This affects the visual quality and performance of the output.
+ *
+ * @param[in] picture A Tvg_Paint pointer to the picture object.
+ * @param[in] method The filtering method to apply. Default is @c TVG_FILTER_METHOD_BILINEAR.
+ *
+ * @see Tvg_Filter_Method
+ * @note Experimental API
+ */
+TVG_API Tvg_Result tvg_picture_set_filter(Tvg_Paint picture, Tvg_Filter_Method method);
 
 /** \} */   // end defgroup ThorVGCapi_Picture
 

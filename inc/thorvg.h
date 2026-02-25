@@ -195,6 +195,18 @@ enum struct FillRule : uint8_t
 
 
 /**
+ * @brief Defines the image filtering method used during image scaling or transformation.
+ *
+ * @note Experimental API
+ */
+enum struct FilterMethod : uint8_t
+{
+    Bilinear = 0,  ///< Smooth interpolation using surrounding pixels for higher quality.
+    Nearest        ///< Fast filtering using nearest-neighbor sampling.
+};
+
+
+/**
  * @brief Enumeration indicating the method used in the mask of two objects - the target and the source.
  *
  * Notation: S(Source), T(Target), SA(Source Alpha), TA(Target Alpha)
@@ -1714,6 +1726,21 @@ struct TVG_API Picture : Paint
      * @note Experimental API
      */
     Result resolver(std::function<bool(Paint* paint, const char* src, void* data)> func, void* data) noexcept;
+
+    /**
+     * @brief Sets the image filtering method for rendering this picture.
+     *
+     * Specifies how the image data should be filtered when it is scaled or transformed
+     * during rendering. This affects the visual quality and performance of the output.
+     *
+     * @param[in] method The filtering method to apply. Default is @c FilterMethod::Bilinear.
+     *
+     * @return Always returns @c Result::Success.
+     *
+     * @see FilterMethod
+     * @note Experimental API
+     */
+    Result filter(FilterMethod method) noexcept;
 
     /**
      * @brief Retrieve a paint object from the Picture scene by its Unique ID.

@@ -877,7 +877,7 @@ void* SwRenderer::prepareCommon(SwTask* task, const Matrix& transform, const Arr
 }
 
 
-RenderData SwRenderer::prepare(RenderSurface* surface, RenderData data, const Matrix& transform, Array<RenderData>& clips, uint8_t opacity, RenderUpdateFlag flags)
+RenderData SwRenderer::prepare(RenderSurface* surface, RenderData data, const Matrix& transform, Array<RenderData>& clips, uint8_t opacity, FilterMethod filter, RenderUpdateFlag flags)
 {
     auto task = static_cast<SwImageTask*>(data);
     if (task) task->done();
@@ -885,7 +885,7 @@ RenderData SwRenderer::prepare(RenderSurface* surface, RenderData data, const Ma
         task = new SwImageTask;
         task->source = surface;
     }
-
+    task->image.filter = filter;
     return prepareCommon(task, transform, clips, opacity, flags);
 }
 
