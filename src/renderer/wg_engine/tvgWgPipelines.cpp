@@ -475,7 +475,7 @@ void WgPipelines::initialize(WgContext& context)
         context.device, "The render pipeline blit",
         shader_blit, "vs_main", "fs_main", 
         layout_blit, vertexBufferLayoutsImage, 2,
-        WGPUColorWriteMask_All, context.preferredFormat, blendStateSrc, // must be preferred screen pixel format
+        WGPUColorWriteMask_All, context.format, blendStateSrc, // must be preferred screen pixel format
         depthStencilStateScene, multisampleStateX1);
 
     // effects

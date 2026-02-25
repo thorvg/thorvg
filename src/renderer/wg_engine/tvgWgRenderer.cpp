@@ -104,7 +104,7 @@ bool WgRenderer::surfaceConfigure(WGPUSurface surface, WgContext& context, uint3
     // setup surface configuration
     WGPUSurfaceConfiguration surfaceConfiguration {
         .device = context.device,
-        .format = context.preferredFormat,
+        .format = context.format,
         .usage = WGPUTextureUsage_RenderAttachment,
         .width = width,
         .height = height,
@@ -176,7 +176,7 @@ RenderData WgRenderer::prepare(const RenderShape& rshape, RenderData data, const
 }
 
 
-RenderData WgRenderer::prepare(RenderSurface* surface, RenderData data, const Matrix& transform, Array<RenderData>& clips, uint8_t opacity, RenderUpdateFlag flags)
+RenderData WgRenderer::prepare(RenderSurface* surface, RenderData data, const Matrix& transform, Array<RenderData>& clips, uint8_t opacity, FilterMethod filter, RenderUpdateFlag flags)
 {
     auto renderDataPicture = data ? (WgRenderDataPicture*)data : mRenderDataPicturePool.allocate(mContext);
 
@@ -189,8 +189,8 @@ RenderData WgRenderer::prepare(RenderSurface* surface, RenderData data, const Ma
 
     // update image data
     if (!data || (flags & (RenderUpdateFlag::Transform | RenderUpdateFlag::Path | RenderUpdateFlag::Image))) {
-        bool updateTexture = !data || ((flags & (RenderUpdateFlag::Path | RenderUpdateFlag::Image)) != RenderUpdateFlag::None);
-        renderDataPicture->updateSurface(mContext, surface, transform, updateTexture);
+        auto updateTexture = !data || ((flags & (RenderUpdateFlag::Path | RenderUpdateFlag::Image)) != RenderUpdateFlag::None);
+        renderDataPicture->updateSurface(mContext, surface, transform, filter, updateTexture);
     }
 
     if (flags & RenderUpdateFlag::Clip) renderDataPicture->updateClips(clips);

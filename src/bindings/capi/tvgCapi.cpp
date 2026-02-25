@@ -669,6 +669,12 @@ TVG_API Tvg_Result tvg_picture_get_origin(const Tvg_Paint picture, float* x, flo
 }
 
 
+TVG_API Tvg_Result tvg_picture_set_filter(Tvg_Paint picture, Tvg_Filter_Method method)
+{
+    if (picture) return (Tvg_Result) reinterpret_cast<Picture*>(picture)->filter(FilterMethod(method));
+    return TVG_RESULT_INVALID_ARGUMENT;
+}
+
 /************************************************************************/
 /* Gradient API                                                         */
 /************************************************************************/
