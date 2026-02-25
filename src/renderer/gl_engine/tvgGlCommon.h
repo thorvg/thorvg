@@ -91,7 +91,7 @@ struct GlGeometry
     void prepare(const RenderShape& rshape);
     bool tesselateShape(const RenderShape& rshape, float* opacityMultiplier = nullptr);
     bool tesselateStroke(const RenderShape& rshape);
-    bool tesselateLine(const RenderPath& path);
+    bool tesselateThinPath(const RenderPath& path);
     void tesselateImage(const RenderSurface* image);
     bool draw(GlRenderTask* task, GlStageBuffer* gpuBuffer, RenderUpdateFlag flag);
     GlStencilMode getStencilMode(RenderUpdateFlag flag);
@@ -105,10 +105,11 @@ struct GlGeometry
     FillRule fillRule = FillRule::NonZero;
     RenderPath optPath;  //optimal path
     float strokeRenderWidth = 0.0f;
-    bool fillWorld = false;
-    bool convex;
     Matrix cachedInverseMatrix = {};
     bool inverseMatrixDirty = true;
+    bool fillWorld = false;
+    bool optPathThin = false;
+    bool convex;
 };
 
 
