@@ -152,15 +152,16 @@ bool GlIntersector::intersectImage(const RenderRegion region, const GlShape* ima
 
 void GlGeometry::prepare(const RenderShape& rshape)
 {
+    optPathThin = false;
     if (rshape.trimpath()) {
         RenderPath trimmedPath;
         if (rshape.stroke->trim.trim(rshape.path, trimmedPath)) {
-            trimmedPath.optimize(optPath, matrix);
+            trimmedPath.optimize(optPath, matrix, optPathThin);
         } else {
             optPath.clear();
         }
     } else {
-        rshape.path.optimize(optPath, matrix);
+        rshape.path.optimize(optPath, matrix, optPathThin);
     }
 }
 
@@ -175,9 +176,9 @@ bool GlGeometry::tesselateShape(const RenderShape& rshape, float* opacityMultipl
     // When the CTM scales a filled path so small that its device-space
     // World:  [========]     // normal-sized filled path
     // After CTM:  [.]        // thinner than 1 px in device space
-    // Handling: two points   // collapse to a 2-point handle for stability
-    if (optPath.pts.count == 2 && tvg::zero(rshape.strokeWidth())) {
-        if (tesselateLine(optPath)) {
+    // Handling: stroke tess  // use thin-path stroke tessellation for stability
+    if (optPathThin && tvg::zero(rshape.strokeWidth())) {
+        if (tesselateThinPath(optPath)) {
             // The time spent is similar to substituting buffers in tessellation, so we just move the buffers to keep the code simple.
             stroke.index.move(fill.index);
             stroke.vertex.move(fill.vertex);
@@ -191,7 +192,7 @@ bool GlGeometry::tesselateShape(const RenderShape& rshape, float* opacityMultipl
         return false;
     }
 
-    // Handle normal shapes with more than 2 points
+    // Handle normal non-thin shapes.
     BWTessellator bwTess{&fill};
     bwTess.tessellate(optPath);
     fillRule = rshape.rule;
@@ -202,12 +203,12 @@ bool GlGeometry::tesselateShape(const RenderShape& rshape, float* opacityMultipl
 }
 
 
-bool GlGeometry::tesselateLine(const RenderPath& path)
+bool GlGeometry::tesselateThinPath(const RenderPath& path)
 {
     stroke.clear();
     strokeBounds = {};
     strokeRenderWidth = MIN_GL_STROKE_WIDTH;
-    if (path.pts.count != 2) return false;
+    if (path.pts.count < 2) return false;
     Stroker stroker(&stroke, MIN_GL_STROKE_WIDTH, StrokeCap::Butt, StrokeJoin::Bevel);
     stroker.run(path);
     strokeBounds = stroker.bounds();

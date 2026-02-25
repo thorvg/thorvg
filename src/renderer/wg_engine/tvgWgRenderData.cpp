@@ -179,22 +179,23 @@ void WgRenderDataShape::updateMeshes(const RenderShape &rshape, RenderUpdateFlag
 
     // optimize path
     RenderPath optPath;
+    bool optPathThin = false;
     if (rshape.trimpath()) {
         RenderPath trimmedPath;
         if (rshape.stroke->trim.trim(rshape.path, trimmedPath)) {
-            trimmedPath.optimize(optPath, matrix);
+            trimmedPath.optimize(optPath, matrix, optPathThin);
         } else {
             optPath.clear();
         }
-    } else rshape.path.optimize(optPath, matrix);
+    } else rshape.path.optimize(optPath, matrix, optPathThin);
 
     auto updatePath = flag & (RenderUpdateFlag::Transform | RenderUpdateFlag::Path);
 
     // update fill shapes
     if (updatePath || (flag & (RenderUpdateFlag::Color | RenderUpdateFlag::Gradient))) {
         BBox bbox;
-        // in a case of single line shape we must tesselate it as a single line stroke with minimal width
-        if (optPath.pts.count == 2 && tvg::zero(rshape.strokeWidth())) {
+        // in a case of thin shape we must tesselate it as a stroke with minimal width
+        if (optPathThin && tvg::zero(rshape.strokeWidth())) {
             WgStroker stroker(&meshShape, MIN_WG_STROKE_WIDTH, StrokeCap::Butt, StrokeJoin::Bevel);
             stroker.run(optPath);
             bbox = stroker.getBBox();
