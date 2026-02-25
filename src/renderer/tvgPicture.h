@@ -66,6 +66,7 @@ struct PictureImpl : Picture
     AssetResolver* resolver = nullptr;
     Point origin = {};
     float w = 0, h = 0;
+    FilterMethod filter = FilterMethod::Bilinear;
     bool resizing = false;
 
     PictureImpl() : impl(Paint::Impl(this))
@@ -97,7 +98,7 @@ struct PictureImpl : Picture
             auto sy = h / loader->h;
             auto scale = sx < sy ? sx : sy;
             auto m = transform * Matrix{scale, 0, pivot.x, 0, scale, pivot.y, 0, 0, 1};
-            impl.rd = renderer->prepare(bitmap, impl.rd, m, clips, opacity, flag);
+            impl.rd = renderer->prepare(bitmap, impl.rd, m, clips, opacity, filter, flag);
         } else if (vector) {
             if (resizing) {
                 loader->resize(vector, w, h);
@@ -116,6 +117,15 @@ struct PictureImpl : Picture
         this->w = w;
         this->h = h;
         resizing = true;
+    }
+
+    Result filterMethod(FilterMethod method)
+    {
+        if (method != filter) {
+            impl.mark(RenderUpdateFlag::Image);
+            filter = method;
+        }
+        return Result::Success;
     }
 
     Result size(float* w, float* h) const
@@ -216,6 +226,7 @@ struct PictureImpl : Picture
         dup->origin = origin;
         dup->w = w;
         dup->h = h;
+        dup->filter = filter;
         dup->resizing = resizing;
 
         return picture;

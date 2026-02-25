@@ -32,7 +32,7 @@
 // WgImageData
 //***********************************************************************
 
-void WgImageData::update(WgContext& context, const RenderSurface* surface)
+void WgImageData::update(WgContext& context, const RenderSurface* surface, FilterMethod filter)
 {
     // get appropriate texture format from color space
     WGPUTextureFormat texFormat = WGPUTextureFormat_BGRA8Unorm;
@@ -48,7 +48,8 @@ void WgImageData::update(WgContext& context, const RenderSurface* surface)
         textureView = context.createTextureView(texture);
         // update bind group
         context.layouts.releaseBindGroup(bindGroup);
-        bindGroup = context.layouts.createBindGroupTexSampled(context.samplerLinearClamp, textureView);
+        auto sampler = (filter == FilterMethod::Bilinear) ? context.samplerLinearClamp : context.samplerNearestClamp;
+        bindGroup = context.layouts.createBindGroupTexSampled(sampler, textureView);
     }
 };
 
@@ -302,10 +303,10 @@ void WgRenderDataShapePool::release(WgContext& context)
 // WgRenderDataPicture
 //***********************************************************************
 
-void WgRenderDataPicture::updateSurface(WgContext& context, const RenderSurface* surface, const Matrix& transform, bool updateTexture)
+void WgRenderDataPicture::updateSurface(WgContext& context, const RenderSurface* surface, const Matrix& transform, FilterMethod filter, bool updateTexture)
 {
     meshData.imageBox(surface->w, surface->h, transform);
-    if (updateTexture) imageData.update(context, surface);
+    if (updateTexture) imageData.update(context, surface, filter);
 }
 
 

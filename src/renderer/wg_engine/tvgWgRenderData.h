@@ -32,7 +32,7 @@ struct WgImageData {
     WGPUTextureView textureView{};
     WGPUBindGroup bindGroup{};
 
-    void update(WgContext& context, const RenderSurface* surface);
+    void update(WgContext& context, const RenderSurface* surface, FilterMethod filter);
     void update(WgContext& context, const Fill* fill);
     void release(WgContext& context);
 };
@@ -114,7 +114,7 @@ struct WgRenderDataPicture: public WgRenderDataPaint
     WgImageData imageData{};
     WgMeshData meshData{};
 
-    void updateSurface(WgContext& context, const RenderSurface* surface, const Matrix& transform, bool updateTexture);
+    void updateSurface(WgContext& context, const RenderSurface* surface, const Matrix& transform, FilterMethod filter, bool updateTexture);
     void release(WgContext& context) override;
     Type type() override { return Type::Picture; };
 };

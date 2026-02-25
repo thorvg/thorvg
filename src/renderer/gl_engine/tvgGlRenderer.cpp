@@ -1244,27 +1244,8 @@ void GlRenderer::dispose(RenderData data)
     delete sdata;
 }
 
-static GLuint _genTexture(RenderSurface* image)
-{
-    GLuint tex = 0;
 
-    GL_CHECK(glGenTextures(1, &tex));
-
-    GL_CHECK(glBindTexture(GL_TEXTURE_2D, tex));
-    GL_CHECK(glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA8, image->w, image->h, 0, GL_RGBA, GL_UNSIGNED_BYTE, image->data));
-
-    GL_CHECK(glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE));
-    GL_CHECK(glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE));
-    GL_CHECK(glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR));
-    GL_CHECK(glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR));
-
-    GL_CHECK(glBindTexture(GL_TEXTURE_2D, 0));
-
-    return tex;
-}
-
-
-RenderData GlRenderer::prepare(RenderSurface* image, RenderData data, const Matrix& transform, Array<RenderData>& clips, uint8_t opacity, RenderUpdateFlag flags)
+RenderData GlRenderer::prepare(RenderSurface* image, RenderData data, const Matrix& transform, Array<RenderData>& clips, uint8_t opacity, FilterMethod filter, RenderUpdateFlag flags)
 {
     //TODO: redefine GlImage.
     auto sdata = static_cast<GlShape*>(data);
@@ -1277,7 +1258,15 @@ RenderData GlRenderer::prepare(RenderSurface* image, RenderData data, const Matr
     sdata->viewHt = static_cast<float>(surface.h);
 
     if (sdata->texId == 0) {
-        sdata->texId = _genTexture(image);
+        GL_CHECK(glGenTextures(1, &sdata->texId));
+        GL_CHECK(glBindTexture(GL_TEXTURE_2D, sdata->texId));
+        GL_CHECK(glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA8, image->w, image->h, 0, GL_RGBA, GL_UNSIGNED_BYTE, image->data));
+        GL_CHECK(glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE));
+        GL_CHECK(glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE));
+        GL_CHECK(glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, (filter == FilterMethod::Bilinear) ? GL_LINEAR : GL_NEAREST));
+        GL_CHECK(glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, (filter == FilterMethod::Bilinear) ? GL_LINEAR : GL_NEAREST));
+        GL_CHECK(glBindTexture(GL_TEXTURE_2D, 0));
+
         sdata->texColorSpace = image->cs;
         sdata->texFlipY = 1;
         sdata->geometry = GlGeometry();
