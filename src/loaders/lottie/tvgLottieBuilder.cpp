@@ -969,6 +969,7 @@ void LottieBuilder::updateURLFont(LottieLayer* layer, float frameNo, LottieText*
     auto color = doc.color;
     paint->fill(color.r, color.g, color.b);
     paint->size(doc.size * 75.0f); //1 pt = 1/72; 1 in = 96 px; -> 72/96 = 0.75
+    if (text->font && text->font->style && strstr(text->font->style, "Italic")) paint->italic();
     paint->text(buf);
     paint->layout(doc.bbox.size.x, doc.bbox.size.y);
     paint->translate(doc.bbox.pos.x, doc.bbox.pos.y);
