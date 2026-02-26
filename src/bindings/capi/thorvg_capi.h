@@ -391,7 +391,7 @@ typedef struct {
  *
  * @see tvg_picture_set_asset_resolver()
  *
- * @since Experimental API
+ * @note Experimental API
  */
 typedef bool (*Tvg_Picture_Asset_Resolver)(Tvg_Paint paint, const char* src, void* data);
 
@@ -2488,9 +2488,28 @@ TVG_API Tvg_Result tvg_text_set_size(Tvg_Paint text, float size);
  * @param[in] text A Tvg_Paint pointer to the text object.
  * @param[in] utf8 The multi-byte text encoded with utf8 string to be rendered.
  *
+ * @see tvg_text_get_text()
+ *
  * @since 1.0
  */
 TVG_API Tvg_Result tvg_text_set_text(Tvg_Paint text, const char* utf8);
+
+
+ /**
+  * @brief Returns the currently assigned unicode text.
+  *
+  * This function retrieves the unicode string that is currently set
+  * for rendering. The returned text is encoded in UTF-8.
+  *
+  * @param[in] text A Tvg_Paint pointer to the text object.
+  *
+  * @return The UTF-8 encoded multi-byte text string.
+  *
+  * @see tvg_text_set_text()
+  *
+  * @note Experimental API
+  */
+ TVG_API const char* tvg_text_get_text(const Tvg_Paint text);
 
 
 /**
@@ -2530,6 +2549,7 @@ TVG_API Tvg_Result tvg_text_align(Tvg_Paint text, float x, float y);
  */
 TVG_API Tvg_Result tvg_text_layout(Tvg_Paint text, float w, float h);
 
+
 /**
  * @brief Sets the text wrapping mode for this text object.
  *
@@ -2541,10 +2561,27 @@ TVG_API Tvg_Result tvg_text_layout(Tvg_Paint text, float w, float h);
  * @param[in] mode The wrapping strategy to apply. Default is @c TVG_TEXT_WRAP_NONE.
  *
  * @see Tvg_Text_Wrap
+ * @see tvg_text_line_count()
  * @since 1.0
  */
 TVG_API Tvg_Result tvg_text_wrap_mode(Tvg_Paint text, Tvg_Text_Wrap mode);
 
+
+/**
+ * @brief Returns the number of text lines.
+ *
+ * This function retrieves the number of lines generated after applying text layout and wrapping.
+ * The returned value reflects the current wrapping configuration set by tvg_text_wrap_mode().
+ * The line count is also increased by explicit line feed characters ('\n') contained in the text.
+ *
+ * @param[in] text A Tvg_Paint pointer to the text object.
+ *
+ * @return The total number of lines.
+ *
+ * @see tvg_text_wrap_mode()
+ * @note Experimental API
+ */
+ TVG_API uint32_t tvg_text_line_count(Tvg_Paint text);
 
 /**
  * @brief Set the spacing scale factors for text layout.

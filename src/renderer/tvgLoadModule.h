@@ -144,6 +144,7 @@ struct FontMetrics
     float scale;
     Point align{}, box{}, spacing{1.0f, 1.0f};
     float fontSize = 0.0f;
+    uint32_t lines = 1;      //line count
     TextWrap wrap = TextWrap::None;
 
     void *engine = nullptr;  //engine extension

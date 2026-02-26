@@ -68,7 +68,7 @@ private:
         return (reader.metrics.hhea.advance * loc - reader.metrics.hhea.linegap) * spacing;
     }
 
-    uint32_t feedLine(FontMetrics& fm, float box, float x, uint32_t begin, uint32_t end, Point& cursor, uint32_t& loc, RenderPath& out);
+    uint32_t feedLine(FontMetrics& fm, float box, float x, uint32_t begin, uint32_t end, Point& cursor, RenderPath& out);
     void wrapNone(FontMetrics& fm, const Point& box, const char* utf8, RenderPath& out);
     void wrapChar(FontMetrics& fm, const Point& box, const char* utf8, RenderPath& out);
     void wrapWord(FontMetrics& fm, const Point& box, const char* utf8, RenderPath& out, bool smart);
