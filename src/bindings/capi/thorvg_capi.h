@@ -460,7 +460,7 @@ TVG_API Tvg_Result tvg_engine_version(uint32_t* major, uint32_t* minor, uint32_t
  * A canvas is an entity responsible for drawing the target. It sets up the drawing engine and the buffer, which can be drawn on the screen. It also manages given Paint objects.
  *
  * @note A Canvas behavior depends on the raster engine though the final content of the buffer is expected to be identical.
- * @warning The Paint objects belonging to one Canvas can't be shared among multiple Canvases.
+ * @warning The paint objects belonging to one Canvas can't be shared among multiple Canvases.
  * \{
  */
 
@@ -486,7 +486,7 @@ TVG_API Tvg_Result tvg_engine_version(uint32_t* major, uint32_t* minor, uint32_t
  *
  * @param[in] op The rendering engine option.
  *
- * @return A new Tvg_Canvas object.
+ * @return A new canvas object.
  *
  * @see enum Tvg_Engine_Option
  */
@@ -499,8 +499,8 @@ TVG_API Tvg_Canvas tvg_swcanvas_create(Tvg_Engine_Option op);
  * For optimisation reasons TVG does not allocate memory for the output buffer on its own.
  * The buffer of a desirable size should be allocated and owned by the caller.
  *
- * @param[in] canvas The Tvg_Canvas object managing the @p buffer.
- * @param[in] buffer A pointer to the allocated memory block of the size @p stride x @p h.
+ * @param[in] canvas The canvas object managing the @p buffer.
+ * @param[in] buffer The allocated memory block of the size @p stride x @p h.
  * @param[in] stride The stride of the raster image - in most cases same value as @p w.
  * @param[in] w The width of the raster image.
  * @param[in] h The height of the raster image.
@@ -541,7 +541,7 @@ TVG_API Tvg_Result tvg_swcanvas_set_target(Tvg_Canvas canvas, uint32_t* buffer, 
  *
  * @param[in] op The rendering engine option.
  *
- * @return A new Tvg_Canvas object.
+ * @return A new canvas object.
  *
  * @note Currently, it does not support @c TVG_ENGINE_OPTION_SMART_RENDER. The request will be ignored.
  *
@@ -603,7 +603,7 @@ TVG_API Tvg_Result tvg_glcanvas_set_target(Tvg_Canvas canvas, void* display, voi
  *
  * @param[in] op The rendering engine option.
  *
- * @return A new Tvg_Canvas object.
+ * @return A new canvas object.
  *
  * @note Currently, it does not support @c TVG_ENGINE_OPTION_SMART_RENDER. The request will be ignored.
  *
@@ -640,7 +640,7 @@ TVG_API Tvg_Result tvg_wgcanvas_set_target(Tvg_Canvas canvas, void* device, void
 /**
  * @brief Clears the canvas internal data, releases all paints stored by the canvas and destroys the canvas object itself.
  *
- * @param[in] canvas The Tvg_Canvas object to be destroyed.
+ * @param[in] canvas The canvas object to be destroyed.
  *
  */
 TVG_API Tvg_Result tvg_canvas_destroy(Tvg_Canvas canvas);
@@ -711,8 +711,8 @@ TVG_API Tvg_Result tvg_canvas_insert(Tvg_Canvas canvas, Tvg_Paint target, Tvg_Pa
  * object is specified (i.e., the default @c nullptr is used), the function
  * performs to clear all paints from the scene.
  *
- * @param[in] canvas A Tvg_Canvas object to remove the @p paint.
- * @param[in] paint A pointer to the Paint object to be removed from the root scene.
+ * @param[in] canvas A canvas object to remove the @p paint.
+ * @param[in] paint The paint object to be removed from the root scene.
  *                  If @c nullptr, remove all the paints from the root scene.
  *
  * @see tvg_canvas_add()
@@ -728,9 +728,8 @@ TVG_API Tvg_Result tvg_canvas_remove(Tvg_Canvas canvas, Tvg_Paint paint);
  * This function triggers an internal update for all paint instances that have been modified
  * since the last update. It ensures that the canvas state is ready for accurate rendering.
  *
- * @param[in] canvas The Tvg_Canvas object to be updated.
+ * @param[in] canvas The canvas object to be updated.
  *
- * @retval TVG_RESULT_INVALID_ARGUMENT An invalid Tvg_Canvas pointer.
  * @retval TVG_RESULT_INSUFFICIENT_CONDITION The canvas is not properly prepared.
  *         This may occur if the canvas target has not been set or if the update is called during drawing.
  *         Call tvg_canvas_sync() before trying.
@@ -746,10 +745,9 @@ TVG_API Tvg_Result tvg_canvas_update(Tvg_Canvas canvas);
 /**
  * @brief Requests the canvas to render the Paint objects.
  *
- * @param[in] canvas The Tvg_Canvas object containing elements to be drawn.
+ * @param[in] canvas The canvas object containing elements to be drawn.
  * @param[in] clear If @c true, clears the target buffer to zero before drawing.
  *
- * @retval TVG_RESULT_INVALID_ARGUMENT An invalid Tvg_Canvas pointer.
  * @retval TVG_RESULT_INSUFFICIENT_CONDITION The canvas is not properly prepared.
  *         This may occur if the canvas target has not been set or if the update is called during drawing.
  *         without calling tvg_canvas_sync() in between.
@@ -769,12 +767,11 @@ TVG_API Tvg_Result tvg_canvas_draw(Tvg_Canvas canvas, bool clear);
 /**
  * @brief Guarantees that drawing task is finished.
  *
- * @param[in] canvas The Tvg_Canvas object containing elements which were drawn.
+ * @param[in] canvas The canvas object containing elements which were drawn.
  *
  * The Canvas rendering can be performed asynchronously. To make sure that rendering is finished,
  * the tvg_canvas_sync() must be called after the tvg_canvas_draw() regardless of threading.
  *
- * @retval TVG_RESULT_INVALID_ARGUMENT An invalid Tvg_Canvas pointer.
  *
  * @see tvg_canvas_draw()
  */
@@ -789,13 +786,12 @@ TVG_API Tvg_Result tvg_canvas_sync(Tvg_Canvas canvas);
  *
  * Please note that changing the viewport is only allowed at the beginning of the rendering sequence—that is, after calling tvg_canvas_sync().
  *
- * @param[in] canvas The Tvg_Canvas object containing elements which were drawn.
+ * @param[in] canvas The canvas object containing elements which were drawn.
  * @param[in] x The x-coordinate of the upper-left corner of the rectangle.
  * @param[in] y The y-coordinate of the upper-left corner of the rectangle.
  * @param[in] w The width of the rectangle.
  * @param[in] h The height of the rectangle.
  *
- * @retval TVG_RESULT_INVALID_ARGUMENT An invalid Tvg_Canvas pointer.
  * @retval TVG_RESULT_INSUFFICIENT_CONDITION If the canvas is not in a synced state.
  *
  * @see tvg_canvas_sync()
@@ -830,7 +826,7 @@ TVG_API Tvg_Result tvg_canvas_set_viewport(Tvg_Canvas canvas, int32_t x, int32_t
  * This is the counterpart to the `new()` API, and releases the given Paint object safely, 
  * handling @c nullptr and managing ownership properly.
  *
- * @param[in] paint A Tvg_Paint object to release.
+ * @param[in] paint A paint object to release.
  */
 TVG_API Tvg_Result tvg_paint_rel(Tvg_Paint paint);
 
@@ -840,7 +836,7 @@ TVG_API Tvg_Result tvg_paint_rel(Tvg_Paint paint);
  *
  * This method increases the reference count of Tvg_Paint object, allowing shared ownership and control over its lifetime.
  *
- * @param[in] paint The Tvg_Paint object to increase the reference count.
+ * @param[in] paint The paint object to increase the reference count.
  *
  * @return The updated reference count after the increment by 1.
  *
@@ -860,7 +856,7 @@ TVG_API uint16_t tvg_paint_ref(Tvg_Paint paint);
  * This method decreases the reference count of the Tvg_Paint object by 1.
  * If the reference count reaches zero and the @p free flag is set to true, the instance is automatically deleted.
  *
- * @param[in] paint The Tvg_Paint object to decrease the reference count.
+ * @param[in] paint The paint object to decrease the reference count.
  * @param[in] free Flag indicating whether to delete the Paint instance when the reference count reaches zero.
  *
  * @return The updated reference count after the decrement.
@@ -878,7 +874,7 @@ TVG_API uint16_t tvg_paint_unref(Tvg_Paint paint, bool free);
  *
  * This method provides the current reference count, allowing the user to check the shared ownership state of the Tvg_Paint object.
  *
- * @param[in] paint The Tvg_Paint object to return the reference count.
+ * @param[in] paint The paint object to return the reference count.
  *
  * @return The current reference count of the Tvg_Paint object.
  *
@@ -895,7 +891,7 @@ TVG_API uint16_t tvg_paint_get_ref(const Tvg_Paint paint);
  *
  * This is useful for selectively excluding paint objects during rendering.
  *
- * @param[in] paint The Tvg_Paint object to set the visibility status.
+ * @param[in] paint The paint object to set the visibility status.
  * @param[in] on A boolean flag indicating visibility. The default is @c true.
  *               @c true, the object will be rendered by the engine.
  *               @c false, the object will be excluded from the drawing process.
@@ -916,7 +912,7 @@ TVG_API Tvg_Result tvg_paint_set_visible(Tvg_Paint paint, bool visible);
 /**
  * @brief Gets the current visibility status of the Paint object.
  *
- * @param[in] paint The Tvg_Paint object to return the visibility status.
+ * @param[in] paint The paint object to return the visibility status.
  *
  * @return true if the object is visible and will be rendered.
  *         false if the object is hidden and will not be rendered.
@@ -931,10 +927,9 @@ TVG_API bool tvg_paint_get_visible(const Tvg_Paint paint);
 /**
  * @brief Scales the given Tvg_Paint object by the given factor.
  *
- * @param[in] paint The Tvg_Paint object to be scaled.
+ * @param[in] paint The paint object to be scaled.
  * @param[in] factor The value of the scaling factor. The default value is 1.
  *
- * @retval TVG_RESULT_INVALID_ARGUMENT An invalid Tvg_Paint pointer.
  * @retval TVG_RESULT_INSUFFICIENT_CONDITION in case a custom transform is applied.
  *
  * @see tvg_paint_set_transform()
@@ -948,10 +943,9 @@ TVG_API Tvg_Result tvg_paint_scale(Tvg_Paint paint, float factor);
  * The angle in measured clockwise from the horizontal axis.
  * The rotational axis passes through the point on the object with zero coordinates.
  *
- * @param[in] paint The Tvg_Paint object to be rotated.
+ * @param[in] paint The paint object to be rotated.
  * @param[in] degree The value of the rotation angle in degrees.
  *
- * @retval TVG_RESULT_INVALID_ARGUMENT An invalid Tvg_Paint pointer.
  * @retval TVG_RESULT_INSUFFICIENT_CONDITION in case a custom transform is applied.
  *
  * @see tvg_paint_set_transform()
@@ -965,11 +959,10 @@ TVG_API Tvg_Result tvg_paint_rotate(Tvg_Paint paint, float degree);
  * The origin of the coordinate system is in the upper-left corner of the canvas.
  * The horizontal and vertical axes point to the right and down, respectively.
  *
- * @param[in] paint The Tvg_Paint object to be shifted.
+ * @param[in] paint The paint object to be shifted.
  * @param[in] x The value of the horizontal shift.
  * @param[in] y The value of the vertical shift.
  *
- * @retval TVG_RESULT_INVALID_ARGUMENT An invalid Tvg_Paint pointer.
  * @retval TVG_RESULT_INSUFFICIENT_CONDITION in case a custom transform is applied.
  *
  * @see tvg_paint_set_transform()
@@ -982,10 +975,9 @@ TVG_API Tvg_Result tvg_paint_translate(Tvg_Paint paint, float x, float y);
  *
  * The augmented matrix of the transformation is expected to be given.
  *
- * @param[in] paint The Tvg_Paint object to be transformed.
+ * @param[in] paint The paint object to be transformed.
  * @param[in] m The 3x3 augmented matrix.
- *
- * @retval TVG_RESULT_INVALID_ARGUMENT A @c nullptr is passed as the argument.
+ * 
  */
 TVG_API Tvg_Result tvg_paint_set_transform(Tvg_Paint paint, const Tvg_Matrix* m);
 
@@ -995,10 +987,9 @@ TVG_API Tvg_Result tvg_paint_set_transform(Tvg_Paint paint, const Tvg_Matrix* m)
  *
  * In case no transformation was applied, the identity matrix is returned.
  *
- * @param[in] paint The Tvg_Paint object of which to get the transformation matrix.
+ * @param[in] paint The paint object of which to get the transformation matrix.
  * @param[out] m The 3x3 augmented matrix.
  *
- * @retval TVG_RESULT_INVALID_ARGUMENT A @c nullptr is passed as the argument.
  */
 TVG_API Tvg_Result tvg_paint_get_transform(Tvg_Paint paint, Tvg_Matrix* m);
 
@@ -1006,10 +997,8 @@ TVG_API Tvg_Result tvg_paint_get_transform(Tvg_Paint paint, Tvg_Matrix* m);
 /**
  * @brief Sets the opacity of the given Tvg_Paint.
  *
- * @param[in] paint The Tvg_Paint object of which the opacity value is to be set.
+ * @param[in] paint The paint object of which the opacity value is to be set.
  * @param[in] opacity The opacity value in the range [0 ~ 255], where 0 is completely transparent and 255 is opaque.
- *
- * @retval TVG_RESULT_INVALID_ARGUMENT An invalid Tvg_Paint pointer.
  *
  * @note Setting the opacity with this API may require multiple renderings using a composition. It is recommended to avoid changing the opacity if possible.
  */
@@ -1019,10 +1008,9 @@ TVG_API Tvg_Result tvg_paint_set_opacity(Tvg_Paint paint, uint8_t opacity);
 /**
  * @brief Gets the opacity of the given Tvg_Paint.
  *
- * @param[in] paint The Tvg_Paint object of which to get the opacity value.
+ * @param[in] paint The paint object of which to get the opacity value.
  * @param[out] opacity The opacity value in the range [0 ~ 255], where 0 is completely transparent and 255 is opaque.
  *
- * @retval TVG_RESULT_INVALID_ARGUMENT In case a @c nullptr is passed as the argument.
  */
 TVG_API Tvg_Result tvg_paint_get_opacity(const Tvg_Paint paint, uint8_t* opacity);
 
@@ -1032,7 +1020,7 @@ TVG_API Tvg_Result tvg_paint_get_opacity(const Tvg_Paint paint, uint8_t* opacity
  *
  * Creates a new object and sets its all properties as in the original object.
  *
- * @param[in] paint The Tvg_Paint object to be copied.
+ * @param[in] paint The paint object to be copied.
  *
  * @return A copied Tvg_Paint object if succeed, @c nullptr otherwise.
  */
@@ -1051,7 +1039,7 @@ TVG_API Tvg_Paint tvg_paint_duplicate(Tvg_Paint paint);
  * The paint must be updated in a Canvas beforehand—typically after the Canvas has been
  * drawn and synchronized.
  *
- * @param[in] paint A Tvg_Paint pointer to the shape object to be tested.
+ * @param[in] paint The shape object to be tested.
  * @param[in] x The x-coordinate of the top-left corner of the test region.
  * @param[in] y The y-coordinate of the top-left corner of the test region.
  * @param[in] w The width of the region to test. Must be greater than 0; defaults to 1.
@@ -1077,13 +1065,12 @@ TVG_API bool tvg_paint_intersects(Tvg_Paint paint, int32_t x, int32_t y, int32_t
  * This bounding box can be used to determine the actual rendered area of the object on the canvas,
  * for purposes such as hit-testing, culling, or layout calculations.
  *
- * @param[in] paint The Tvg_Paint object of which to get the bounds.
+ * @param[in] paint The paint object of which to get the bounds.
  * @param[out] x The x-coordinate of the upper-left corner of the bounding box.
  * @param[out] y The y-coordinate of the upper-left corner of the bounding box.
  * @param[out] w The width of the bounding box.
  * @param[out] h The height of the bounding box.
  *
- * @retval TVG_RESULT_INVALID_ARGUMENT An invalid @p paint.
  * @retval TVG_RESULT_INSUFFICIENT_CONDITION If it failed to compute the bounding box (mostly due to invalid path information).
  *
  * @see tvg_paint_get_obb()
@@ -1102,10 +1089,9 @@ TVG_API Tvg_Result tvg_paint_get_aabb(Tvg_Paint paint, float* x, float* y, float
  * by taking the geometry's axis-aligned bounding box (AABB) in the object's local coordinate space
  * and applying the object's transformations.
  *
- * @param[in] paint The Tvg_Paint object of which to get the bounds.
+ * @param[in] paint The paint object of which to get the bounds.
  * @param[out] pt4 An array of four points representing the bounding box. The array size must be 4.
  *
- * @retval TVG_RESULT_INVALID_ARGUMENT @p paint or @p pt4 is invalid.
  * @retval TVG_RESULT_INSUFFICIENT_CONDITION If it failed to compute the bounding box (mostly due to invalid path information).
  *
  * @see tvg_paint_get_aabb()
@@ -1136,7 +1122,6 @@ TVG_API Tvg_Result tvg_paint_set_mask_method(Tvg_Paint paint, Tvg_Paint target, 
  * @param[out] target The target object of the masking.
  * @param[out] method The method used to mask the source object with the target.
  *
- * @retval TVG_RESULT_INVALID_ARGUMENT A @c nullptr is passed as the argument.
  */
 TVG_API Tvg_Result tvg_paint_get_mask_method(const Tvg_Paint paint, const Tvg_Paint target, Tvg_Mask_Method* method);
 
@@ -1149,7 +1134,6 @@ TVG_API Tvg_Result tvg_paint_get_mask_method(const Tvg_Paint paint, const Tvg_Pa
  * @param[in] paint The target object of the clipping.
  * @param[in] clipper The shape object as the clipper.
  *
- * @retval TVG_RESULT_INVALID_ARGUMENT In case a @c nullptr is passed as the argument.
  * @retval TVG_RESULT_INSUFFICIENT_CONDITION if the target has already belonged to another paint.
  * @retval TVG_RESULT_NOT_SUPPORTED If the @p clipper type is not Shape.
  *
@@ -1175,12 +1159,12 @@ TVG_API Tvg_Paint tvg_paint_get_clip(const Tvg_Paint paint);
 /**
  * @brief Retrieves the parent paint object.
  *
- * This function returns a pointer to the parent object if the current paint
+ * This function returns the parent object if the current paint
  * belongs to one. Otherwise, it returns @c nullptr.
  *
- * @param[in] paint The Tvg_Paint object of which to get the scene.
+ * @param[in] paint The paint object of which to get the scene.
  *
- * @return A pointer to the parent object if available, otherwise @c nullptr.
+ * @return The parent object if available, otherwise @c nullptr.
  *
  * @see tvg_scene_add()
  * @see tvg_canvas_add()
@@ -1193,10 +1177,8 @@ TVG_API Tvg_Paint tvg_paint_get_parent(const Tvg_Paint paint);
 /**
  * @brief Gets the unique value of the paint instance indicating the instance type.
  *
- * @param[in] paint The Tvg_Paint object of which to get the type value.
+ * @param[in] paint The paint object of which to get the type value.
  * @param[out] type The unique type of the paint instance type.
- *
- * @retval TVG_RESULT_INVALID_ARGUMENT In case a @c nullptr is passed as the argument.
  *
  * @since 1.0
  */
@@ -1210,10 +1192,8 @@ TVG_API Tvg_Result tvg_paint_get_type(const Tvg_Paint paint, Tvg_Type* type);
  * its process involves the combination of colors or images from the source paint object with the destination (the lower layer image) using blending operations.
  * The blending operation is determined by the chosen @p BlendMethod, which specifies how the colors or images are combined.
  *
- * @param[in] paint The Tvg_Paint object of which to set the blend method.
+ * @param[in] paint The paint object of which to set the blend method.
  * @param[in] method The blending method to be set.
- *
- * @retval TVG_RESULT_INVALID_ARGUMENT In case a @c nullptr is passed as the argument.
  *
  * @since 0.15
  */
@@ -1247,7 +1227,7 @@ TVG_API Tvg_Result tvg_paint_set_blend_method(Tvg_Paint paint, Tvg_Blend_Method 
  * This function allocates and returns a new Shape instance.
  * To properly destroy the Shape object, use @ref tvg_paint_rel().
  *
- * @return A pointer to the newly created Shape object.
+ * @return The newly created Shape object.
  *
  * @see tvg_paint_rel()
  */
@@ -1259,9 +1239,7 @@ TVG_API Tvg_Paint tvg_shape_new(void);
  *
  * The color, the fill and the stroke properties are retained.
  *
- * @param[in] paint A Tvg_Paint pointer to the shape object.
- *
- * @retval TVG_RESULT_INVALID_ARGUMENT An invalid Tvg_Paint pointer.
+ * @param[in] paint The shape object.
  *
  * @note The memory, where the path data is stored, is not deallocated at this stage for caching effect.
  */
@@ -1273,11 +1251,10 @@ TVG_API Tvg_Result tvg_shape_reset(Tvg_Paint paint);
  *
  * The value of the current point is set to the given point.
  *
- * @param[in] paint A Tvg_Paint pointer to the shape object.
+ * @param[in] paint The shape object.
  * @param[in] x The horizontal coordinate of the initial point of the sub-path.
  * @param[in] y The vertical coordinate of the initial point of the sub-path.
  *
- * @retval TVG_RESULT_INVALID_ARGUMENT An invalid Tvg_Paint pointer.
  */
 TVG_API Tvg_Result tvg_shape_move_to(Tvg_Paint paint, float x, float y);
 
@@ -1287,11 +1264,9 @@ TVG_API Tvg_Result tvg_shape_move_to(Tvg_Paint paint, float x, float y);
  *
  * The value of the current point is set to the given end-point.
  *
- * @param[in] paint A Tvg_Paint pointer to the shape object.
+ * @param[in] paint The shape object.
  * @param[in] x The horizontal coordinate of the end-point of the line.
  * @param[in] y The vertical coordinate of the end-point of the line.
- *
- * @retval TVG_RESULT_INVALID_ARGUMENT An invalid Tvg_Paint pointer.
  *
  * @note In case this is the first command in the path, it corresponds to the tvg_shape_move_to() call.
  */
@@ -1304,15 +1279,13 @@ TVG_API Tvg_Result tvg_shape_line_to(Tvg_Paint paint, float x, float y);
  * The Bezier curve starts at the current point and ends at the given end-point (@p x, @p y). Two control points (@p cx1, @p cy1) and (@p cx2, @p cy2) are used to determine the shape of the curve.
  * The value of the current point is set to the given end-point.
  *
- * @param[in] paint A Tvg_Paint pointer to the shape object.
+ * @param[in] paint The shape object.
  * @param[in] cx1 The horizontal coordinate of the 1st control point.
  * @param[in] cy1 The vertical coordinate of the 1st control point.
  * @param[in] cx2 The horizontal coordinate of the 2nd control point.
  * @param[in] cy2 The vertical coordinate of the 2nd control point.
  * @param[in] x The horizontal coordinate of the endpoint of the curve.
  * @param[in] y The vertical coordinate of the endpoint of the curve.
- *
- * @retval TVG_RESULT_INVALID_ARGUMENT An invalid Tvg_Paint pointer.
  *
  * @note In case this is the first command in the path, no data from the path are rendered.
  */
@@ -1324,9 +1297,7 @@ TVG_API Tvg_Result tvg_shape_cubic_to(Tvg_Paint paint, float cx1, float cy1, flo
  *
  * The value of the current point is set to the initial point of the closed sub-path.
  *
- * @param[in] paint A Tvg_Paint pointer to the shape object.
- *
- * @retval TVG_RESULT_INVALID_ARGUMENT An invalid Tvg_Paint pointer.
+ * @param[in] paint The shape object.
  *
  * @note In case the sub-path does not contain any points, this function has no effect.
  */
@@ -1346,7 +1317,7 @@ TVG_API Tvg_Result tvg_shape_close(Tvg_Paint paint);
  * The value of the current point is set to (@p x + @p rx, @p y) - in case @p rx is greater
  * than @p w/2 the current point is set to (@p x + @p w/2, @p y)
  *
- * @param[in] paint A Tvg_Paint pointer to the shape object.
+ * @param[in] paint The shape object.
  * @param[in] x The horizontal coordinate of the upper-left corner of the rectangle.
  * @param[in] y The vertical coordinate of the upper-left corner of the rectangle.
  * @param[in] w The width of the rectangle.
@@ -1354,8 +1325,6 @@ TVG_API Tvg_Result tvg_shape_close(Tvg_Paint paint);
  * @param[in] rx The x-axis radius of the ellipse defining the rounded corners of the rectangle.
  * @param[in] ry The y-axis radius of the ellipse defining the rounded corners of the rectangle.
  * @param[in] cw Specifies the path direction: @c true for clockwise, @c false for counterclockwise.
- *
- * @retval TVG_RESULT_INVALID_ARGUMENT An invalid Tvg_Paint pointer.
  *
  * @note For @p rx and @p ry greater than or equal to the half of @p w and the half of @p h, respectively, the shape become an ellipse.
  */
@@ -1371,14 +1340,13 @@ TVG_API Tvg_Result tvg_shape_append_rect(Tvg_Paint paint, float x, float y, floa
  *
  * The value of the current point is set to (@p cx, @p cy - @p ry).
  *
- * @param[in] paint A Tvg_Paint pointer to the shape object.
+ * @param[in] paint The shape object.
  * @param[in] cx The horizontal coordinate of the center of the ellipse.
  * @param[in] cy The vertical coordinate of the center of the ellipse.
  * @param[in] rx The x-axis radius of the ellipse.
  * @param[in] ry The y-axis radius of the ellipse.
  * @param[in] cw Specifies the path direction: @c true for clockwise, @c false for counterclockwise.
  *
- * @retval TVG_RESULT_INVALID_ARGUMENT An invalid Tvg_Paint pointer.
  */
 TVG_API Tvg_Result tvg_shape_append_circle(Tvg_Paint paint, float cx, float cy, float rx, float ry, bool cw);
 
@@ -1390,7 +1358,7 @@ TVG_API Tvg_Result tvg_shape_append_circle(Tvg_Paint paint, float cx, float cy, 
  * For each command from the @p cmds array, an appropriate number of points in @p pts array should be specified.
  * If the number of points in the @p pts array is different than the number required by the @p cmds array, the shape with this sub-path will not be displayed on the screen.
  *
- * @param[in] paint A Tvg_Paint pointer to the shape object.
+ * @param[in] paint The shape object.
  * @param[in] cmds The array of the commands in the sub-path.
  * @param[in] cmdCnt The length of the @p cmds array.
  * @param[in] pts The array of the two-dimensional points.
@@ -1416,8 +1384,6 @@ TVG_API Tvg_Result tvg_shape_append_path(Tvg_Paint paint, const Tvg_Path_Command
  * @param[out] ptsCnt Pointer to the variable that receives the number of points in the @p pts array.
  *                    Can be @c nullptr if this information is not needed.
  *
- * @retval TVG_RESULT_INVALID_ARGUMENT An invalid Tvg_Paint pointer.
- *
  * @note If any of the arguments are @c nullptr, that value will be ignored.
  */
 TVG_API Tvg_Result tvg_shape_get_path(const Tvg_Paint paint, const Tvg_Path_Command** cmds, uint32_t* cmdsCnt, const Tvg_Point** pts, uint32_t* ptsCnt);
@@ -1430,10 +1396,8 @@ TVG_API Tvg_Result tvg_shape_get_path(const Tvg_Paint paint, const Tvg_Path_Comm
  * in the path object. A stroke is the outline drawn along the edges of the
  * path's geometry.
  *
- * @param[in] paint A Tvg_Paint pointer to the shape object.
+ * @param[in] paint The shape object.
  * @param[in] width The width of the stroke in pixels. Must be positive value. (The default is 0)
- *
- * @retval TVG_RESULT_INVALID_ARGUMENT An invalid Tvg_Paint pointer.
  *
  * @note A value of @p width 0 disables the stroke.
  *
@@ -1445,10 +1409,9 @@ TVG_API Tvg_Result tvg_shape_set_stroke_width(Tvg_Paint paint, float width);
 /**
  * @brief Gets the shape's stroke width.
  *
- * @param[in] paint A Tvg_Paint pointer to the shape object.
+ * @param[in] paint The shape object.
  * @param[out] width The stroke width.
  *
- * @retval TVG_RESULT_INVALID_ARGUMENT An invalid pointer passed as an argument.
  */
 TVG_API Tvg_Result tvg_shape_get_stroke_width(const Tvg_Paint paint, float* width);
 
@@ -1456,13 +1419,11 @@ TVG_API Tvg_Result tvg_shape_get_stroke_width(const Tvg_Paint paint, float* widt
 /**
  * @brief Sets the shape's stroke color.
  *
- * @param[in] paint A Tvg_Paint pointer to the shape object.
+ * @param[in] paint The shape object.
  * @param[in] r The red color channel value in the range [0 ~ 255]. The default value is 0.
  * @param[in] g The green color channel value in the range [0 ~ 255]. The default value is 0.
  * @param[in] b The blue color channel value in the range [0 ~ 255]. The default value is 0.
  * @param[in] a The alpha channel value in the range [0 ~ 255], where 0 is completely transparent and 255 is opaque.
- *
- * @retval TVG_RESULT_INVALID_ARGUMENT An invalid Tvg_Paint pointer.
  *
  * @note If the stroke width is 0 (default), the stroke will not be visible regardless of the color.
  * @note Either a solid color or a gradient fill is applied, depending on what was set as last.
@@ -1476,13 +1437,12 @@ TVG_API Tvg_Result tvg_shape_set_stroke_color(Tvg_Paint paint, uint8_t r, uint8_
 /**
  * @brief Gets the shape's stroke color.
  *
- * @param[in] paint A Tvg_Paint pointer to the shape object.
+ * @param[in] paint The shape object.
  * @param[out] r The red color channel value in the range [0 ~ 255]. The default value is 0.
  * @param[out] g The green color channel value in the range [0 ~ 255]. The default value is 0.
  * @param[out] b The blue color channel value in the range [0 ~ 255]. The default value is 0.
  * @param[out] a The alpha channel value in the range [0 ~ 255], where 0 is completely transparent and 255 is opaque.
  *
- * @retval TVG_RESULT_INVALID_ARGUMENT An invalid Tvg_Paint pointer.
  * @retval TVG_RESULT_INSUFFICIENT_CONDITION No stroke was set.
  */
 TVG_API Tvg_Result tvg_shape_get_stroke_color(const Tvg_Paint paint, uint8_t* r, uint8_t* g, uint8_t* b, uint8_t* a);
@@ -1491,11 +1451,10 @@ TVG_API Tvg_Result tvg_shape_get_stroke_color(const Tvg_Paint paint, uint8_t* r,
 /**
  * @brief Sets the gradient fill of the stroke for all of the figures from the path.
  *
- * @param[in] paint A Tvg_Paint pointer to the shape object.
+ * @param[in] paint The shape object.
  * @param[in] grad The gradient fill.
  *
- * @retval TVG_RESULT_INVALID_ARGUMENT An invalid Tvg_Paint pointer.
- * @retval TVG_RESULT_MEMORY_CORRUPTION An invalid Tvg_Gradient pointer or an error with accessing it.
+ * @retval TVG_RESULT_MEMORY_CORRUPTION An invalid gradient object or an error with accessing it.
  *
  * @note Either a solid color or a gradient fill is applied, depending on what was set as last.
  *
@@ -1509,10 +1468,9 @@ TVG_API Tvg_Result tvg_shape_set_stroke_gradient(Tvg_Paint paint, Tvg_Gradient g
  *
  * The function does not allocate any memory.
  *
- * @param[in] paint A Tvg_Paint pointer to the shape object.
+ * @param[in] paint The shape object.
  * @param[out] grad The gradient fill.
  *
- * @retval TVG_RESULT_INVALID_ARGUMENT An invalid pointer passed as an argument.
  */
 TVG_API Tvg_Result tvg_shape_get_stroke_gradient(const Tvg_Paint paint, Tvg_Gradient* grad);
 
@@ -1520,7 +1478,7 @@ TVG_API Tvg_Result tvg_shape_get_stroke_gradient(const Tvg_Paint paint, Tvg_Grad
 /**
  * @brief Sets the shape's stroke dash pattern.
  *
- * @param[in] paint A Tvg_Paint pointer to the shape object.
+ * @param[in] paint The shape object.
  * @param[in] dashPattern An array of alternating dash and gap lengths.
  * @param[in] cnt The size of the @p dashPattern array.
  * @param[in] offset The shift of the starting point within the repeating dash pattern, from which the pattern begins to be applied.
@@ -1542,12 +1500,11 @@ TVG_API Tvg_Result tvg_shape_set_stroke_dash(Tvg_Paint paint, const float* dashP
  *
  * The function does not allocate any memory.
  *
- * @param[in] paint A Tvg_Paint pointer to the shape object.
+ * @param[in] paint The shape object.
  * @param[out] dashPattern The array of consecutive pair values of the dash length and the gap length.
  * @param[out] cnt The size of the @p dashPattern array.
  * @param[out] offset The shift of the starting point within the repeating dash pattern.
  *
- * @retval TVG_RESULT_INVALID_ARGUMENT An invalid pointer passed as an argument.
  * @since 1.0
  */
 TVG_API Tvg_Result tvg_shape_get_stroke_dash(const Tvg_Paint paint, const float** dashPattern, uint32_t* cnt, float* offset);
@@ -1558,10 +1515,9 @@ TVG_API Tvg_Result tvg_shape_get_stroke_dash(const Tvg_Paint paint, const float*
  *
  * The cap style specifies the shape to be used at the end of the open stroked sub-paths.
  *
- * @param[in] paint A Tvg_Paint pointer to the shape object.
+ * @param[in] paint The shape object.
  * @param[in] cap The cap style value. The default value is @c TVG_STROKE_CAP_SQUARE.
  *
- * @retval TVG_RESULT_INVALID_ARGUMENT An invalid Tvg_Paint pointer.
  */
 TVG_API Tvg_Result tvg_shape_set_stroke_cap(Tvg_Paint paint, Tvg_Stroke_Cap cap);
 
@@ -1569,10 +1525,9 @@ TVG_API Tvg_Result tvg_shape_set_stroke_cap(Tvg_Paint paint, Tvg_Stroke_Cap cap)
 /**
  * @brief Gets the stroke cap style used for stroking the path.
  *
- * @param[in] paint A Tvg_Paint pointer to the shape object.
+ * @param[in] paint The shape object.
  * @param[out] cap The cap style value.
  *
- * @retval TVG_RESULT_INVALID_ARGUMENT An invalid pointer passed as an argument.
  */
 TVG_API Tvg_Result tvg_shape_get_stroke_cap(const Tvg_Paint paint, Tvg_Stroke_Cap* cap);
 
@@ -1580,10 +1535,9 @@ TVG_API Tvg_Result tvg_shape_get_stroke_cap(const Tvg_Paint paint, Tvg_Stroke_Ca
 /**
  * @brief Sets the join style for stroked path segments.
  *
- * @param[in] paint A Tvg_Paint pointer to the shape object.
+ * @param[in] paint The shape object.
  * @param[in] join The join style value. The default value is @c TVG_STROKE_JOIN_BEVEL.
  *
- * @retval TVG_RESULT_INVALID_ARGUMENT An invalid Tvg_Paint pointer.
  */
 TVG_API Tvg_Result tvg_shape_set_stroke_join(Tvg_Paint paint, Tvg_Stroke_Join join);
 
@@ -1591,10 +1545,9 @@ TVG_API Tvg_Result tvg_shape_set_stroke_join(Tvg_Paint paint, Tvg_Stroke_Join jo
 /**
  * @brief The function gets the stroke join method
  *
- * @param[in] paint A Tvg_Paint pointer to the shape object.
+ * @param[in] paint The shape object.
  * @param[out] join The join style value.
  *
- * @retval TVG_RESULT_INVALID_ARGUMENT An invalid pointer passed as an argument.
  */
 TVG_API Tvg_Result tvg_shape_get_stroke_join(const Tvg_Paint paint, Tvg_Stroke_Join* join);
 
@@ -1602,10 +1555,10 @@ TVG_API Tvg_Result tvg_shape_get_stroke_join(const Tvg_Paint paint, Tvg_Stroke_J
 /**
  * @brief Sets the stroke miterlimit.
  *
- * @param[in] paint A Tvg_Paint pointer to the shape object.
+ * @param[in] paint The shape object.
  * @param[in] miterlimit The miterlimit imposes a limit on the extent of the stroke join when the @c TVG_STROKE_JOIN_MITER join style is set. The default value is 4.
  *
- * @retval TVG_RESULT_INVALID_ARGUMENT An invalid Tvg_Paint pointer or Unsupported @p miterlimit values (less than zero).
+ * @retval TVG_RESULT_INVALID_ARGUMENT Unsupported @p miterlimit values (less than zero).
  *
  * @since 0.11
  */
@@ -1615,10 +1568,9 @@ TVG_API Tvg_Result tvg_shape_set_stroke_miterlimit(Tvg_Paint paint, float miterl
 /**
  * @brief The function gets the stroke miterlimit.
  *
- * @param[in] paint A Tvg_Paint pointer to the shape object.
+ * @param[in] paint The shape object.
  * @param[out] miterlimit The stroke miterlimit.
  *
- * @retval TVG_RESULT_INVALID_ARGUMENT An invalid pointer passed as an argument.
  *
  * @since 0.11
  */
@@ -1630,13 +1582,11 @@ TVG_API Tvg_Result tvg_shape_get_stroke_miterlimit(const Tvg_Paint paint, float*
  *
  * If the values of the arguments @p begin and @p end exceed the 0-1 range, they are wrapped around in a manner similar to angle wrapping, effectively treating the range as circular.
  *
- * @param[in] paint A Tvg_Paint pointer to the shape object.
+ * @param[in] paint The shape object.
  * @param[in] begin Specifies the start of the segment to display along the path.
  * @param[in] end Specifies the end of the segment to display along the path.
  * @param[in] simultaneous Determines how to trim multiple paths within a single shape. If set to @c true (default), trimming is applied simultaneously to all paths;
  *                         Otherwise, all paths are treated as a single entity with a combined length equal to the sum of their individual lengths and are trimmed as such.
- *
- * @retval TVG_RESULT_INVALID_ARGUMENT An invalid Tvg_Paint pointer.
  *
  * @since 1.0
  */
@@ -1648,13 +1598,11 @@ TVG_API Tvg_Result tvg_shape_set_trimpath(Tvg_Paint paint, float begin, float en
  *
  * The parts of the shape defined as inner are colored.
  *
- * @param[in] paint A Tvg_Paint pointer to the shape object.
+ * @param[in] paint The shape object.
  * @param[in] r The red color channel value in the range [0 ~ 255]. The default value is 0.
  * @param[in] g The green color channel value in the range [0 ~ 255]. The default value is 0.
  * @param[in] b The blue color channel value in the range [0 ~ 255]. The default value is 0.
  * @param[in] a The alpha channel value in the range [0 ~ 255], where 0 is completely transparent and 255 is opaque. The default value is 0.
- *
- * @retval TVG_RESULT_INVALID_ARGUMENT An invalid Tvg_Paint pointer.
  *
  * @note Either a solid color or a gradient fill is applied, depending on what was set as last.
  * @see tvg_shape_set_fill_rule()
@@ -1665,13 +1613,12 @@ TVG_API Tvg_Result tvg_shape_set_fill_color(Tvg_Paint paint, uint8_t r, uint8_t 
 /**
  * @brief Gets the shape's solid color.
  *
- * @param[in] paint A Tvg_Paint pointer to the shape object.
+ * @param[in] paint The shape object.
  * @param[out] r The red color channel value in the range [0 ~ 255]. The default value is 0.
  * @param[out] g The green color channel value in the range [0 ~ 255]. The default value is 0.
  * @param[out] b The blue color channel value in the range [0 ~ 255]. The default value is 0.
  * @param[out] a The alpha channel value in the range [0 ~ 255], where 0 is completely transparent and 255 is opaque. The default value is 0.
  *
- * @retval TVG_RESULT_INVALID_ARGUMENT An invalid Tvg_Paint pointer.
  */
 TVG_API Tvg_Result tvg_shape_get_fill_color(const Tvg_Paint paint, uint8_t* r, uint8_t* g, uint8_t* b, uint8_t* a);
 
@@ -1682,10 +1629,9 @@ TVG_API Tvg_Result tvg_shape_get_fill_color(const Tvg_Paint paint, uint8_t* r, u
  * Specifies how the interior of the shape is determined when its path intersects itself.
  * The default fill rule is @c TVG_FILL_RULE_NON_ZERO.
  *
- * @param[in] paint A Tvg_Paint pointer to the shape object.
+ * @param[in] paint The shape object.
  * @param[in] rule The fill rule to apply to the shape.
  *
- * @retval TVG_RESULT_INVALID_ARGUMENT An invalid Tvg_Paint pointer.
  */
 TVG_API Tvg_Result tvg_shape_set_fill_rule(Tvg_Paint paint, Tvg_Fill_Rule rule);
 
@@ -1696,10 +1642,9 @@ TVG_API Tvg_Result tvg_shape_set_fill_rule(Tvg_Paint paint, Tvg_Fill_Rule rule);
  * This function returns the fill rule, which determines how the interior 
  * regions of the shape are calculated when it overlaps itself.
  *
- * @param[in] paint A Tvg_Paint pointer to the shape object.
+ * @param[in] paint The shape object.
  * @param[out] rule The current Tvg_Fill_Rule value of the shape.
  *
- * @retval TVG_RESULT_INVALID_ARGUMENT An invalid pointer passed as an argument.
  */
 TVG_API Tvg_Result tvg_shape_get_fill_rule(const Tvg_Paint paint, Tvg_Fill_Rule* rule);
 
@@ -1707,10 +1652,8 @@ TVG_API Tvg_Result tvg_shape_get_fill_rule(const Tvg_Paint paint, Tvg_Fill_Rule*
 /**
  * @brief Sets the rendering order of the stroke and the fill.
  *
- * @param[in] paint A Tvg_Paint pointer to the shape object.
+ * @param[in] paint The shape object.
  * @param[in] strokeFirst If @c true the stroke is rendered before the fill, otherwise the stroke is rendered as the second one (the default option).
- *
- * @retval TVG_RESULT_INVALID_ARGUMENT An invalid Tvg_Paint pointer.
  *
  * @since 0.10
  */
@@ -1722,11 +1665,8 @@ TVG_API Tvg_Result tvg_shape_set_paint_order(Tvg_Paint paint, bool strokeFirst);
  *
  * The parts of the shape defined as inner are filled.
  *
- * @param[in] paint A Tvg_Paint pointer to the shape object.
+ * @param[in] paint The shape object.
  * @param[in] grad The gradient fill.
- *
- * @retval TVG_RESULT_INVALID_ARGUMENT An invalid Tvg_Paint pointer.
- * @retval TVG_RESULT_MEMORY_CORRUPTION An invalid Tvg_Gradient pointer.
  *
  * @note Either a solid color or a gradient fill is applied, depending on what was set as last.
  * @see tvg_shape_set_fill_rule()
@@ -1739,10 +1679,9 @@ TVG_API Tvg_Result tvg_shape_set_gradient(Tvg_Paint paint, Tvg_Gradient grad);
  *
  * The function does not allocate any data.
  *
- * @param[in] paint A Tvg_Paint pointer to the shape object.
+ * @param[in] paint The shape object.
  * @param[out] grad The gradient fill.
  *
- * @retval TVG_RESULT_INVALID_ARGUMENT An invalid pointer passed as an argument.
  */
 TVG_API Tvg_Result tvg_shape_get_gradient(const Tvg_Paint paint, Tvg_Gradient* grad);
 
@@ -1793,8 +1732,6 @@ TVG_API Tvg_Gradient tvg_radial_gradient_new(void);
  * @param[in] x2 The horizontal coordinate of the second point used to determine the gradient bounds.
  * @param[in] y2 The vertical coordinate of the second point used to determine the gradient bounds.
  *
- * @retval TVG_RESULT_INVALID_ARGUMENT An invalid Tvg_Gradient pointer.
- *
  * @note In case the first and the second points are equal, an object is filled with a single color using the last color specified in the tvg_gradient_set_color_stops().
  * @see tvg_gradient_set_color_stops()
  */
@@ -1814,7 +1751,6 @@ TVG_API Tvg_Result tvg_linear_gradient_set(Tvg_Gradient grad, float x1, float y1
  * @param[out] x2 The horizontal coordinate of the second point used to determine the gradient bounds.
  * @param[out] y2 The vertical coordinate of the second point used to determine the gradient bounds.
  *
- * @retval TVG_RESULT_INVALID_ARGUMENT An invalid Tvg_Gradient pointer.
  */
 TVG_API Tvg_Result tvg_linear_gradient_get(Tvg_Gradient grad, float* x1, float* y1, float* x2, float* y2);
 
@@ -1835,7 +1771,7 @@ TVG_API Tvg_Result tvg_linear_gradient_get(Tvg_Gradient grad, float* x1, float* 
  * @param[in] fy The vertical coordinate of the center of the start circle.
  * @param[in] fr The radius of the start circle.
  *
- * @retval TVG_RESULT_INVALID_ARGUMENT An invalid Tvg_Gradient pointer or the radius @p r or @p fr value is negative.
+ * @retval TVG_RESULT_INVALID_ARGUMENT The radius @p r or @p fr value is negative.
  *
  * @note In case the radius @p r is zero, an object is filled with a single color using the last color specified in the specified in the tvg_gradient_set_color_stops().
  * @note In case the focal point (@p fx and @p fy) lies outside the end circle, it is projected onto the edge of the end circle.
@@ -1861,8 +1797,6 @@ TVG_API Tvg_Result tvg_radial_gradient_set(Tvg_Gradient grad, float cx, float cy
  * @param[out] fy The vertical coordinate of the center of the start circle.
  * @param[out] fr The radius of the start circle.
  *
- * @retval TVG_RESULT_INVALID_ARGUMENT An invalid Tvg_Gradient pointer.
- *
  * @see tvg_radial_gradient_set()
  */
 TVG_API Tvg_Result tvg_radial_gradient_get(Tvg_Gradient grad, float* cx, float* cy, float* r, float* fx, float* fy, float* fr);
@@ -1875,7 +1809,6 @@ TVG_API Tvg_Result tvg_radial_gradient_get(Tvg_Gradient grad, float* cx, float* 
  * @param[in] color_stop An array of Tvg_Color_Stop data structure.
  * @param[in] cnt The size of the @p color_stop array equal to the colors number used in the gradient.
  *
- * @retval TVG_RESULT_INVALID_ARGUMENT An invalid Tvg_Gradient pointer.
  */
 TVG_API Tvg_Result tvg_gradient_set_color_stops(Tvg_Gradient grad, const Tvg_Color_Stop* color_stop, uint32_t cnt);
 
@@ -1889,7 +1822,6 @@ TVG_API Tvg_Result tvg_gradient_set_color_stops(Tvg_Gradient grad, const Tvg_Col
  * @param[out] color_stop An array of Tvg_Color_Stop data structure.
  * @param[out] cnt The size of the @p color_stop array equal to the colors number used in the gradient.
  *
- * @retval TVG_RESULT_INVALID_ARGUMENT A @c nullptr passed as the argument.
  */
 TVG_API Tvg_Result tvg_gradient_get_color_stops(const Tvg_Gradient grad, const Tvg_Color_Stop** color_stop, uint32_t* cnt);
 
@@ -1900,7 +1832,6 @@ TVG_API Tvg_Result tvg_gradient_get_color_stops(const Tvg_Gradient grad, const T
  * @param[in] grad The Tvg_Gradient object.
  * @param[in] spread The FillSpread value.
  *
- * @retval TVG_RESULT_INVALID_ARGUMENT An invalid Tvg_Gradient pointer.
  */
 TVG_API Tvg_Result tvg_gradient_set_spread(Tvg_Gradient grad, const Tvg_Stroke_Fill spread);
 
@@ -1911,7 +1842,6 @@ TVG_API Tvg_Result tvg_gradient_set_spread(Tvg_Gradient grad, const Tvg_Stroke_F
  * @param[in] grad The Tvg_Gradient object.
  * @param[out] spread The FillSpread value.
  *
- * @retval TVG_RESULT_INVALID_ARGUMENT A @c nullptr passed as the argument.
  */
 TVG_API Tvg_Result tvg_gradient_get_spread(const Tvg_Gradient grad, Tvg_Stroke_Fill* spread);
 
@@ -1924,7 +1854,6 @@ TVG_API Tvg_Result tvg_gradient_get_spread(const Tvg_Gradient grad, Tvg_Stroke_F
  * @param[in] grad The Tvg_Gradient object to be transformed.
  * @param[in] m The 3x3 augmented matrix.
  *
- * @retval TVG_RESULT_INVALID_ARGUMENT A @c nullptr is passed as the argument.
  */
 TVG_API Tvg_Result tvg_gradient_set_transform(Tvg_Gradient grad, const Tvg_Matrix* m);
 
@@ -1937,7 +1866,6 @@ TVG_API Tvg_Result tvg_gradient_set_transform(Tvg_Gradient grad, const Tvg_Matri
  * @param[in] grad The Tvg_Gradient object of which to get the transformation matrix.
  * @param[out] m The 3x3 augmented matrix.
  *
- * @retval TVG_RESULT_INVALID_ARGUMENT A @c nullptr is passed as the argument.
  */
 TVG_API Tvg_Result tvg_gradient_get_transform(const Tvg_Gradient grad, Tvg_Matrix* m);
 
@@ -1947,8 +1875,6 @@ TVG_API Tvg_Result tvg_gradient_get_transform(const Tvg_Gradient grad, Tvg_Matri
  *
  * @param[in] grad The Tvg_Gradient object of which to get the type value.
  * @param[out] type The unique type of the gradient instance type.
- *
- * @retval TVG_RESULT_INVALID_ARGUMENT In case a @c nullptr is passed as the argument.
  *
  * @since 1.0
  */
@@ -1972,7 +1898,6 @@ TVG_API Tvg_Gradient tvg_gradient_duplicate(Tvg_Gradient grad);
  *
  * @param[in] grad The gradient object to be deleted.
  *
- * @retval TVG_RESULT_INVALID_ARGUMENT An invalid Tvg_Gradient pointer.
  */
 TVG_API Tvg_Result tvg_gradient_del(Tvg_Gradient grad);
 
@@ -1999,7 +1924,7 @@ TVG_API Tvg_Result tvg_gradient_del(Tvg_Gradient grad);
  * This function allocates and returns a new Picture instance.
  * To properly destroy the Picture object, use @ref tvg_paint_rel().
  *
- * @return A pointer to the newly created Picture object.
+ * @return The newly created Picture object.
  *
  * @see tvg_paint_rel()
  */
@@ -2013,10 +1938,10 @@ TVG_API Tvg_Paint tvg_picture_new(void);
  * This means that loading the same file again will not result in duplicate operations;
  * instead, ThorVG will reuse the previously loaded picture data.
  *
- * @param[in] picture A Tvg_Paint pointer to the picture object.
+ * @param[in] picture The picture object.
  * @param[in] path The absolute path to the image file.
  *
- * @retval TVG_RESULT_INVALID_ARGUMENT An invalid Tvg_Paint pointer or an empty @p path.
+ * @retval TVG_RESULT_INVALID_ARGUMENT An empty @p path.
  * @retval TVG_RESULT_NOT_SUPPORTED A file with an unknown extension.
  */
 TVG_API Tvg_Result tvg_picture_load(Tvg_Paint picture, const char* path);
@@ -2030,14 +1955,14 @@ TVG_API Tvg_Result tvg_picture_load(Tvg_Paint picture, const char* path);
  * by reusing the previously loaded picture data for the same sharable @p data,
  * rather than duplicating the load process.
  *
- * @param[in] picture A Tvg_Paint pointer to the picture object.
- * @param[in] data A pointer to the memory block where the raw image data is stored.
+ * @param[in] picture The picture object.
+ * @param[in] data The memory block where the raw image data is stored.
  * @param[in] w The width of the image in pixels.
  * @param[in] h The height of the image in pixels.
  * @param[in] cs Specifies how the 32-bit color values should be interpreted (read/write).
  * @param[in] copy If @c true, the data is copied into the engine's local buffer. If @c false, the data is not copied.
  *
- * @retval TVG_RESULT_INVALID_ARGUMENT An invalid Tvg_Paint pointer or no data are provided or the @p w or @p h value is zero or less.
+ * @retval TVG_RESULT_INVALID_ARGUMENT No data are provided or the @p w or @p h value is zero or less.
  *
  * @since 0.9
  */
@@ -2051,7 +1976,7 @@ TVG_API Tvg_Result tvg_picture_load_raw(Tvg_Paint picture, const uint32_t *data,
  * when the @p copy has @c false. This means that loading the same data again will not result in duplicate operations
  * for the sharable @p data. Instead, ThorVG will reuse the previously loaded picture data.
  *
- * @param[in] picture A Tvg_Paint pointer to the picture object.
+ * @param[in] picture The picture object.
  * @param[in] data A pointer to a memory location where the content of the picture file is stored. A null-terminated string is expected for non-binary data if @p copy is @c false
  * @param[in] size The size in bytes of the memory occupied by the @p data.
  * @param[in] mimetype Mimetype or extension of data such as "jpg", "jpeg", "svg", "svg+xml", "lot", "lottie+json", "png", etc. In case an empty string or an unknown type is provided, the loaders will be tried one by one.
@@ -2098,11 +2023,10 @@ TVG_API Tvg_Result tvg_picture_set_asset_resolver(Tvg_Paint picture, Tvg_Picture
  * The picture content is resized while keeping the default size aspect ratio.
  * The scaling factor is established for each of dimensions and the smaller value is applied to both of them.
  *
- * @param[in] picture A Tvg_Paint pointer to the picture object.
+ * @param[in] picture The picture object.
  * @param[in] w A new width of the image in pixels.
  * @param[in] h A new height of the image in pixels.
  *
- * @retval TVG_RESULT_INVALID_ARGUMENT An invalid Tvg_Paint pointer.
  */
 TVG_API Tvg_Result tvg_picture_set_size(Tvg_Paint picture, float w, float h);
 
@@ -2110,11 +2034,10 @@ TVG_API Tvg_Result tvg_picture_set_size(Tvg_Paint picture, float w, float h);
 /**
  * @brief Gets the size of the loaded picture.
  *
- * @param[in] picture A Tvg_Paint pointer to the picture object.
+ * @param[in] picture The picture object.
  * @param[out] w A width of the image in pixels.
  * @param[out] h A height of the image in pixels.
  *
- * @retval TVG_RESULT_INVALID_ARGUMENT An invalid Tvg_Paint pointer.
  */
 TVG_API Tvg_Result tvg_picture_get_size(const Tvg_Paint picture, float* w, float* h);
 
@@ -2135,11 +2058,9 @@ TVG_API Tvg_Result tvg_picture_get_size(const Tvg_Paint picture, float* w, float
  * - (0.5f, 0.5f): center
  * - (1.0f, 1.0f): bottom-right corner
  *
- * @param[in] picture A Tvg_Paint pointer to the picture object.
+ * @param[in] picture The picture object.
  * @param[in] x The normalized x-coordinate of the origin point (range: 0.0f to 1.0f).
  * @param[in] y The normalized y-coordinate of the origin point (range: 0.0f to 1.0f).
- *
- * @retval TVG_RESULT_INVALID_ARGUMENT An invalid Tvg_Paint pointer.
  *
  * @note This origin directly affects how the Picture is placed on the canvas when using
  *       transformations such as translate(), rotate(), or scale().
@@ -2161,11 +2082,9 @@ TVG_API Tvg_Result tvg_picture_set_origin(Tvg_Paint picture, float x, float y);
  * This method retrieves the current origin point of the Picture, expressed
  * in normalized coordinates relative to the picture’s bounds.
  *
- * @param[in] picture A Tvg_Paint pointer to the picture object.
+ * @param[in] picture The picture object.
  * @param[out] x The normalized x-coordinate of the origin (range: 0.0f to 1.0f).
  * @param[out] y The normalized y-coordinate of the origin (range: 0.0f to 1.0f).
- *
- * @retval TVG_RESULT_INVALID_ARGUMENT An invalid Tvg_Paint pointer.
  *
  * @see tvg_picture_set_origin()
  * @since 1.0
@@ -2178,10 +2097,10 @@ TVG_API Tvg_Result tvg_picture_get_origin(const Tvg_Paint picture, float* x, flo
  *
  * This function searches for a paint object within the Picture scene that matches the provided @p id.
  *
- * @param[in] picture A Tvg_Paint pointer to the picture object.
+ * @param[in] picture The picture object.
  * @param[in] id The Unique ID of the paint object.
  *
- * @return A pointer to the paint object that matches the given identifier, or @c nullptr if no matching paint object is found.
+ * @return The paint object that matches the given identifier, or @c nullptr if no matching paint object is found.
  *
  * @see tvg_accessor_generate_id()
  * @since 1.0
@@ -2212,7 +2131,7 @@ TVG_API const Tvg_Paint tvg_picture_get_paint(Tvg_Paint picture, uint32_t id);
  * This function allocates and returns a new Scene instance.
  * To properly destroy the Scene object, use @ref tvg_paint_rel().
  *
- * @return A pointer to the newly created Scene object.
+ * @return The newly created Scene object.
  *
  * @see tvg_paint_rel()
  */
@@ -2282,8 +2201,8 @@ TVG_API Tvg_Result tvg_scene_insert(Tvg_Paint scene, Tvg_Paint target, Tvg_Paint
  * object is specified (i.e., the default @c nullptr is used), the function
  * performs to clear all paints from the scene.
  *
- * @param[in] scene A Tvg_Paint pointer to the scene object.
- * @param[in] paint A pointer to the Paint object to be removed from the scene.
+ * @param[in] scene The scene object.
+ * @param[in] paint The paint object to be removed from the scene.
  *                  If @c nullptr, remove all the paints from the scene.
  *
  * @see tvg_scene_add()
@@ -2298,7 +2217,7 @@ TVG_API Tvg_Result tvg_scene_remove(Tvg_Paint scene, Tvg_Paint paint);
  * This function clears all effects that have been applied to the scene,
  * restoring it to its original state without any post-processing.
  *
- * @param[in] scene A pointer to the Tvg_Paint scene object.
+ * @param[in] scene The scene object.
  *
  * @since 1.0
  */
@@ -2311,7 +2230,7 @@ TVG_API Tvg_Result tvg_scene_clear_effects(Tvg_Paint scene);
  * This function adds a Gaussian blur filter to the scene as a post-processing effect.
  * The blur can be applied in different directions with configurable border handling and quality settings.
  *
- * @param[in] scene A pointer to the Tvg_Paint scene object.
+ * @param[in] scene The scene object.
  * @param[in] sigma The blur radius (sigma) value. Must be greater than 0.
  * @param[in] direction Blur direction: 0 = both directions, 1 = horizontal only, 2 = vertical only.
  * @param[in] border Border handling method: 0 = duplicate, 1 = wrap.
@@ -2329,7 +2248,7 @@ TVG_API Tvg_Result tvg_scene_add_effect_gaussian_blur(Tvg_Paint scene, double si
  * can be customized using color, opacity, angle, distance, blur radius (sigma), 
  * and quality parameters.
  *
- * @param[in] scene A pointer to the Tvg_Paint scene object.
+ * @param[in] scene The scene object.
  * @param[in] r Red channel value of the shadow color [0 - 255].
  * @param[in] g Green channel value of the shadow color [0 - 255].
  * @param[in] b Blue channel value of the shadow color [0 - 255].
@@ -2349,7 +2268,7 @@ TVG_API Tvg_Result tvg_scene_add_effect_drop_shadow(Tvg_Paint scene, int r, int 
  *
  * This function overrides the scene's content colors with the specified fill color.
  *
- * @param[in] scene A pointer to the Tvg_Paint scene object.
+ * @param[in] scene The scene object.
  * @param[in] r Red color channel value [0 - 255].
  * @param[in] g Green color channel value [0 - 255].
  * @param[in] b Blue color channel value [0 - 255].
@@ -2366,7 +2285,7 @@ TVG_API Tvg_Result tvg_scene_add_effect_fill(Tvg_Paint scene, int r, int g, int 
  * This function tints the current scene using specified black and white color values,
  * modulated by a given intensity.
  *
- * @param[in] scene A pointer to the Tvg_Paint scene object.
+ * @param[in] scene The scene object.
  * @param[in] black_r Red component of the black color [0 - 255].
  * @param[in] black_g Green component of the black color [0 - 255].
  * @param[in] black_b Blue component of the black color [0 - 255].
@@ -2386,7 +2305,7 @@ TVG_API Tvg_Result tvg_scene_add_effect_tint(Tvg_Paint scene, int black_r, int b
  * This function adds a tritone color effect to the given scene using three sets of RGB values 
  * representing shadow, midtone, and highlight colors.
  *
- * @param[in] scene A pointer to the Tvg_Paint scene object.
+ * @param[in] scene The scene object.
  * @param[in] shadow_r Red component of the shadow color [0 - 255].
  * @param[in] shadow_g Green component of the shadow color [0 - 255].
  * @param[in] shadow_b Blue component of the shadow color [0 - 255].
@@ -2424,7 +2343,7 @@ TVG_API Tvg_Result tvg_scene_add_effect_tritone(Tvg_Paint scene, int shadow_r, i
  * This function allocates and returns a new Text instance.
  * To properly destroy the Text object, use @ref tvg_paint_rel().
  *
- * @return A pointer to the newly created Text object.
+ * @return The newly created Text object.
  *
  * @see tvg_paint_rel()
  *
@@ -2438,11 +2357,10 @@ TVG_API Tvg_Paint tvg_text_new(void);
  *
  * This function specifies the name of the font to be used when rendering text.
  *
- * @param[in] text A Tvg_Paint pointer to the text object.
+ * @param[in] text The text object.
  * @param[in] name The name of the font. This should match a font available through the canvas backend.
  *                 If set to @c nullptr, ThorVG will attempt to select a fallback font available on the engine.
  *
- * @retval TVG_RESULT_INVALID_ARGUMENT A @c nullptr passed as the @p paint argument.
  * @retval TVG_RESULT_INSUFFICIENT_CONDITION  The specified @p name cannot be found.
  *
  * @note This function only sets the font family name. Use @ref size() to define the font size.
@@ -2463,11 +2381,10 @@ TVG_API Tvg_Result tvg_text_set_font(Tvg_Paint text, const char* name);
  * The size is specified in point units, and supports floating-point precision
  * for smooth scaling and animation effects.
  *
- * @param[in] text A Tvg_Paint pointer to the text object.
+ * @param[in] text The text object.
  * @param[in] size The font size in points. Must be greater than 0.0.
  *
- * @retval TVG_RESULT_INVALID_ARGUMENT A @c nullptr passed as the @p paint argument.
- * @retval TVG_RESULT_INVALID_ARGUMENT if the @p size is less than or equal to 0.
+  * @retval TVG_RESULT_INVALID_ARGUMENT if the @p size is less than or equal to 0.
  *
  * @note Use this function in combination with @ref font() to fully define text appearance.
  * @note Fractional sizes (e.g., 12.5) are supported for sub-pixel rendering and animations.
@@ -2485,7 +2402,7 @@ TVG_API Tvg_Result tvg_text_set_size(Tvg_Paint text, float size);
  * This function sets the unicode text that will be displayed by the rendering system.
  * The text is set according to the specified UTF encoding method, which defaults to UTF-8.
  *
- * @param[in] text A Tvg_Paint pointer to the text object.
+ * @param[in] text The text object.
  * @param[in] utf8 The multi-byte text encoded with utf8 string to be rendered.
  *
  * @see tvg_text_get_text()
@@ -2501,7 +2418,7 @@ TVG_API Tvg_Result tvg_text_set_text(Tvg_Paint text, const char* utf8);
   * This function retrieves the unicode string that is currently set
   * for rendering. The returned text is encoded in UTF-8.
   *
-  * @param[in] text A Tvg_Paint pointer to the text object.
+  * @param[in] text The text object.
   *
   * @return The UTF-8 encoded multi-byte text string.
   *
@@ -2519,7 +2436,7 @@ TVG_API Tvg_Result tvg_text_set_text(Tvg_Paint text, const char* utf8);
  * Otherwise, treat it as an anchor within the text bounds which point of
  * the text box is pinned to the paint position.
  *
- * @param[in] text A Tvg_Paint pointer to the text object.
+ * @param[in] text The text object.
  * @param[in] x Horizontal alignment/anchor in [0..1]: 0=left/start, 0.5=center, 1=right/end. (Default is 0)
  * @param[in] y Vertical alignment/anchor in [0..1]: 0=top, 0.5=middle, 1=bottom. (Default is 0)
  *
@@ -2537,7 +2454,7 @@ TVG_API Tvg_Result tvg_text_align(Tvg_Paint text, float x, float y);
  * the text may wrap/align inside it. If width/height == 0, the axis is
  * unconstrained and @ref tvg_text_align() acts as an anchor on that axis.
  *
- * @param[in] text A Tvg_Paint pointer to the text object.
+ * @param[in] text The text object.
  * @param[in] w Layout width in user space. Use 0 for no horizontal constraint. (Default is 0)
  * @param[in] h Layout height in user space. Use 0 for no vertical constraint. (Default is 0)
  *
@@ -2557,7 +2474,7 @@ TVG_API Tvg_Result tvg_text_layout(Tvg_Paint text, float w, float h);
  * The wrapping mode determines whether text is truncated, wrapped by character or word,
  * or adjusted automatically. An ellipsis mode is also available for truncation with "...".
  *
- * @param[in] text A Tvg_Paint pointer to the text object.
+ * @param[in] text The text object.
  * @param[in] mode The wrapping strategy to apply. Default is @c TVG_TEXT_WRAP_NONE.
  *
  * @see Tvg_Text_Wrap
@@ -2574,7 +2491,7 @@ TVG_API Tvg_Result tvg_text_wrap_mode(Tvg_Paint text, Tvg_Text_Wrap mode);
  * The returned value reflects the current wrapping configuration set by tvg_text_wrap_mode().
  * The line count is also increased by explicit line feed characters ('\n') contained in the text.
  *
- * @param[in] text A Tvg_Paint pointer to the text object.
+ * @param[in] text The text object.
  *
  * @return The total number of lines.
  *
@@ -2593,7 +2510,7 @@ TVG_API Tvg_Result tvg_text_wrap_mode(Tvg_Paint text, Tvg_Text_Wrap mode);
  * - The letter spacing is applied as a scale factor to the glyph's advance width.
  * - The line spacing is applied as a scale factor to the glyph's advance height.
  *
- * @param[in] text A Tvg_Paint pointer to the text object.
+ * @param[in] text The text object.
  * @param[in] letter The scale factor for letter spacing.
  *                   Values > 1.0 increase spacing, values < 1.0 decrease it.
  *                   Must be greater than or equal to 0.0. (default: 1.0)
@@ -2614,7 +2531,7 @@ TVG_API Tvg_Result tvg_text_spacing(Tvg_Paint text, float letter, float line);
  * for the current text object. The shear factor determines the degree of slant
  * applied along the X-axis.
  *
- * @param[in] text A Tvg_Paint pointer to the text object.
+ * @param[in] text The text object.
  * @param[in] shear The shear factor to apply. A value of 0.0 applies no slant, while values around 0.5 result in a strong slant.
  *                  Must be in the range [0.0, 0.5]. Recommended value is 0.18.
  *
@@ -2625,8 +2542,6 @@ TVG_API Tvg_Result tvg_text_spacing(Tvg_Paint text, float letter, float line);
  * @warning Excessive slanting may cause visual distortion depending on the font and size.
  *
  * @see tvg_text_set_font()
- *
- * @retval TVG_RESULT_INVALID_ARGUMENT A @c nullptr passed as the @p paint argument.
  *
  * @since 1.0
  */
@@ -2639,7 +2554,7 @@ TVG_API Tvg_Result tvg_text_set_italic(Tvg_Paint text, float shear);
  * This function adds an outline to the text with the specified width and RGB color.
  * The outline enhances the visibility of the text by rendering a stroke around its glyphs.
  *
- * @param[in] text A Tvg_Paint pointer to the text object.
+ * @param[in] text The text object.
  * @param width The width of the outline. Must be positive value. (The default is 0)
  * @param r     Red component of the outline color (0–255).
  * @param g     Green component of the outline color (0–255).
@@ -2656,12 +2571,10 @@ TVG_API Tvg_Result tvg_text_set_outline(Tvg_Paint text, float width, uint8_t r, 
 /**
  * @brief Sets the text solid color.
  *
- * @param[in] paint A Tvg_Paint pointer to the text object.
+ * @param[in] paint The text object.
  * @param[in] r The red color channel value in the range [0 ~ 255]. The default value is 0.
  * @param[in] g The green color channel value in the range [0 ~ 255]. The default value is 0.
  * @param[in] b The blue color channel value in the range [0 ~ 255]. The default value is 0.
- *
- * @retval TVG_RESULT_INVALID_ARGUMENT A @c nullptr passed as the @p paint argument.
  *
  * @note Either a solid color or a gradient fill is applied, depending on what was set as last.
  *
@@ -2676,11 +2589,10 @@ TVG_API Tvg_Result tvg_text_set_color(Tvg_Paint text, uint8_t r, uint8_t g, uint
 /**
  * @brief Sets the gradient fill for the text.
  *
- * @param[in] text A Tvg_Paint pointer to the text object.
+ * @param[in] text The text object.
  * @param[in] grad The linear or radial gradient fill
  *
- * @retval TVG_RESULT_INVALID_ARGUMENT A @c nullptr passed as the @p paint argument.
- * @retval TVG_RESULT_MEMORY_CORRUPTION An invalid Tvg_Gradient pointer.
+ * @retval TVG_RESULT_MEMORY_CORRUPTION An invalid gradient object.
  *
  * @note Either a solid color or a gradient fill is applied, depending on what was set as last.
  * @see tvg_text_set_font()
@@ -2699,7 +2611,7 @@ TVG_API Tvg_Result tvg_text_set_gradient(Tvg_Paint text, Tvg_Gradient gradient);
  * The returned values reflect the font size applied to the text object,
  * but do not include any transformations (e.g., scale, rotation, or translation).
  *
- * @param[in] text A Tvg_Paint pointer to the text object.
+ * @param[in] text The text object.
  * @param[out] metrics A pointer to a @ref Tvg_Text_Metrics structure to be filled with the resulting values.
  *
  * @return TVG_RESULT_INSUFFICIENT_CONDITION if no font or size has been set yet.
@@ -2721,7 +2633,7 @@ TVG_API Tvg_Result tvg_text_get_text_metrics(const Tvg_Paint text, Tvg_Text_Metr
  *
  * The input character must be a single UTF-8 encoded character.
  *
- * @param[in] text A Tvg_Paint pointer to the text object.
+ * @param[in] text The text object.
  * @param[in] ch A pointer to a UTF-8 encoded character.
  * @param[out] metrics A pointer to a @ref Tvg_Glyph_Metrics structure to be filled with the resulting values.
  *
@@ -2833,7 +2745,6 @@ TVG_API Tvg_Saver tvg_saver_new(void);
  * @param[in] path A path to the file, in which the paint data is to be saved.
  * @param[in] quality The encoded quality level. @c 0 is the minimum, @c 100 is the maximum value(recommended).
  *
- * @retval TVG_RESULT_INVALID_ARGUMENT A @c nullptr passed as the argument.
  * @retval TVG_RESULT_INSUFFICIENT_CONDITION Currently saving other resources.
  * @retval TVG_RESULT_NOT_SUPPORTED Trying to save a file with an unknown extension or in an unsupported format.
  * @retval TVG_RESULT_UNKNOWN An empty paint is to be saved.
@@ -2857,7 +2768,6 @@ TVG_API Tvg_Result tvg_saver_save_paint(Tvg_Saver saver, Tvg_Paint paint, const 
  * @param[in] quality The encoded quality level. @c 0 is the minimum, @c 100 is the maximum value(recommended).
  * @param[in] fps The frames per second for the animation. If @c 0, the default fps is used.
  *
- * @retval TVG_RESULT_INVALID_ARGUMENT A @c nullptr passed as the argument.
  * @retval TVG_RESULT_INSUFFICIENT_CONDITION Currently saving other resources or animation has no frames.
  * @retval TVG_RESULT_NOT_SUPPORTED Trying to save a file with an unknown extension or in an unsupported format.
  * @retval TVG_RESULT_UNKNOWN Unknown if attempting to save an empty paint.
@@ -2881,7 +2791,6 @@ TVG_API Tvg_Result tvg_saver_save_animation(Tvg_Saver saver, Tvg_Animation anima
  *
  * @param[in] saver The Tvg_Saver object connected with the saving task.
  *
- * @retval TVG_RESULT_INVALID_ARGUMENT A @c nullptr passed as the argument.
  * @retval TVG_RESULT_INSUFFICIENT_CONDITION No saving task is running.
  *
  * @note The asynchronous tasking is dependent on the Saver module implementation.
@@ -2895,7 +2804,6 @@ TVG_API Tvg_Result tvg_saver_sync(Tvg_Saver saver);
  *
  * @param[in] saver The Tvg_Saver object to be deleted.
  *
- * @retval TVG_RESULT_INVALID_ARGUMENT An invalid Tvg_Saver pointer.
  */
 TVG_API Tvg_Result tvg_saver_del(Tvg_Saver saver);
 
@@ -2929,10 +2837,9 @@ TVG_API Tvg_Animation tvg_animation_new(void);
 /**
  * @brief Specifies the current frame in the animation.
  *
- * @param[in] animation A Tvg_Animation pointer to the animation object.
+ * @param[in] animation An animation object.
  * @param[in] no The index of the animation frame to be displayed. The index should be less than the tvg_animation_get_total_frame().
  *
- * @retval TVG_RESULT_INVALID_ARGUMENT An invalid Tvg_Animation pointer.
  * @retval TVG_RESULT_INSUFFICIENT_CONDITION if the given @p no is the same as the current frame value.
  * @retval TVG_RESULT_NOT_SUPPORTED The picture data does not support animations.
  *
@@ -2953,7 +2860,7 @@ TVG_API Tvg_Result tvg_animation_set_frame(Tvg_Animation animation, float no);
  * After setting up the picture, it can be added to the designated canvas, enabling control over animation frames
  * with this Animation instance.
  *
- * @param[in] animation A Tvg_Animation pointer to the animation object.
+ * @param[in] animation A animation object to the animation object.
  *
  * @return A picture instance that is tied to this animation.
  *
@@ -2967,10 +2874,10 @@ TVG_API Tvg_Paint tvg_animation_get_picture(Tvg_Animation animation);
 /**
  * @brief Retrieves the current frame number of the animation.
  *
- * @param[in] animation A Tvg_Animation pointer to the animation object.
+ * @param[in] animation An animation object.
  * @param[in] no The current frame number of the animation, between 0 and totalFrame() - 1.
  *
- * @retval TVG_RESULT_INVALID_ARGUMENT An invalid Tvg_Animation pointer or @p no
+ * @retval TVG_RESULT_INVALID_ARGUMENT An invalid @p no pointer.
  *
  * @see tvg_animation_get_total_frame()
  * @see tvg_animation_set_frame()
@@ -2983,10 +2890,10 @@ TVG_API Tvg_Result tvg_animation_get_frame(Tvg_Animation animation, float* no);
 /**
  * @brief Retrieves the total number of frames in the animation.
  *
- * @param[in] animation A Tvg_Animation pointer to the animation object.
+ * @param[in] animation An animation object.
  * @param[in] cnt The total number of frames in the animation.
  *
- * @retval TVG_RESULT_INVALID_ARGUMENT An invalid Tvg_Animation pointer or @p cnt.
+ * @retval TVG_RESULT_INVALID_ARGUMENT An invalid @p cnt pointer.
  *
  * @note Frame numbering starts from 0.
  * @note If the Picture is not properly configured, this function will return 0.
@@ -2999,10 +2906,10 @@ TVG_API Tvg_Result tvg_animation_get_total_frame(Tvg_Animation animation, float*
 /**
  * @brief Retrieves the duration of the animation in seconds.
  *
- * @param[in] animation A Tvg_Animation pointer to the animation object.
+ * @param[in] animation An animation object.
  * @param[in] duration The duration of the animation in seconds.
  *
- * @retval TVG_RESULT_INVALID_ARGUMENT An invalid Tvg_Animation pointer or @p duration.
+ * @retval TVG_RESULT_INVALID_ARGUMENT An invalid @p duration pointer.
  *
  * @note If the Picture is not properly configured, this function will return 0.
  *
@@ -3019,7 +2926,7 @@ TVG_API Tvg_Result tvg_animation_get_duration(Tvg_Animation animation, float* du
  * After setting, the number of animation frames and the playback time are calculated
  * by mapping the playback segment as the entire range.
  *
- * @param[in] animation The Tvg_Animation pointer to the animation object.
+ * @param[in] animation The animation object.
  * @param[in] begin segment begin frame.
  * @param[in] end segment end frame.
  *
@@ -3040,12 +2947,11 @@ TVG_API Tvg_Result tvg_animation_set_segment(Tvg_Animation animation, float begi
 /**
  * @brief Gets the current segment range information.
  *
- * @param[in] animation The Tvg_Animation pointer to the animation object.
+ * @param[in] animation The animation object.
  * @param[out] begin segment begin frame.
  * @param[out] end segment end frame.
  *
  * @retval TVG_RESULT_INSUFFICIENT_CONDITION In case the animation is not loaded.
- * @retval TVG_RESULT_INVALID_ARGUMENT An invalid Tvg_Animation pointer.
  *
  * @since 1.0
  */
@@ -3056,8 +2962,6 @@ TVG_API Tvg_Result tvg_animation_get_segment(Tvg_Animation animation, float* beg
  * @brief Deletes the given Tvg_Animation object.
  *
  * @param[in] animation The Tvg_Animation object to be deleted.
- *
- * @retval TVG_RESULT_INVALID_ARGUMENT An invalid Tvg_Animation pointer.
  *
  * @since 0.13
  */
@@ -3093,8 +2997,6 @@ TVG_API Tvg_Accessor tvg_accessor_new(void);
  *
  * @param[in] accessor The accessor object to be deleted.
  *
- * @retval TVG_RESULT_INVALID_ARGUMENT An invalid Tvg_Accessor pointer.
- *
  * @since 1.0
  */
 TVG_API Tvg_Result tvg_accessor_del(Tvg_Accessor accessor);
@@ -3107,12 +3009,10 @@ TVG_API Tvg_Result tvg_accessor_del(Tvg_Accessor accessor);
  * while calling func on each and passing the data pointer to this function. When
  * func returns false iteration stops and the function returns.
  *
- * @param[in] accessor A Tvg_Accessor pointer to the accessor object.
- * @param[in] paint A Tvg_Paint pointer to the scene object.
+ * @param[in] accessor An accessor object.
+ * @param[in] paint The scene object.
  * @param[in] func A function pointer to the function that will be execute for each child.
  * @param[in] data A void pointer to data that will be passed to the func.
- *
- * @retval TVG_RESULT_INVALID_ARGUMENT An invalid Tvg_Accessor, Tvg_Paint, or function pointer.
  *
  * @since 1.0
  */
@@ -3162,7 +3062,7 @@ TVG_API Tvg_Animation tvg_lottie_animation_new(void);
 /**
  * @brief Generates a new slot from the given slot data.
  *
- * @param[in] animation The Tvg_Animation pointer to the Lottie animation object.
+ * @param[in] animation The Lottie animation object.
  * @param[in] slot The Lottie slot data in JSON format.
  *
  * @return The generated slot ID when successful, 0 otherwise.
@@ -3175,7 +3075,7 @@ TVG_API uint32_t tvg_lottie_animation_gen_slot(Tvg_Animation animation, const ch
 /**
  * @brief Applies a previously generated slot to the animation.
  *
- * @param[in] animation The Tvg_Animation pointer to the Lottie animation object.
+ * @param[in] animation The Lottie animation object.
  * @param[in] id The ID of the slot to apply, or 0 to reset all slots.
  *
  * @retval TVG_RESULT_INSUFFICIENT_CONDITION In case the animation is not loaded.
@@ -3190,7 +3090,7 @@ TVG_API Tvg_Result tvg_lottie_animation_apply_slot(Tvg_Animation animation, uint
 /**
  * @brief Deletes a previously generated slot.
  *
- * @param[in] animation The Tvg_Animation pointer to the Lottie animation object.
+ * @param[in] animation The Lottie animation object.
  * @param[in] id The ID of the slot to delete.
  *
  * @return Tvg_Result enumeration.
@@ -3207,7 +3107,7 @@ TVG_API Tvg_Result tvg_lottie_animation_del_slot(Tvg_Animation animation, uint32
 /**
  * @brief Specifies a segment by marker.
  *
- * @param[in] animation The Tvg_Animation pointer to the Lottie animation object.
+ * @param[in] animation The Lottie animation object.
  * @param[in] marker The name of the segment marker.
  *
  * @retval TVG_RESULT_INSUFFICIENT_CONDITION In case the animation is not loaded.
@@ -3222,7 +3122,7 @@ TVG_API Tvg_Result tvg_lottie_animation_set_marker(Tvg_Animation animation, cons
 /**
  * @brief Gets the marker count of the animation.
  *
- * @param[in] animation The Tvg_Animation pointer to the Lottie animation object.
+ * @param[in] animation The Lottie animation object.
  * @param[out] cnt The count value of the markers.
  *
  * @retval TVG_RESULT_INVALID_ARGUMENT In case a @c nullptr is passed as the argument.
@@ -3235,7 +3135,7 @@ TVG_API Tvg_Result tvg_lottie_animation_get_markers_cnt(Tvg_Animation animation,
 /**
  * @brief Gets the marker name by a given index.
  *
- * @param[in] animation The Tvg_Animation pointer to the Lottie animation object.
+ * @param[in] animation The Lottie animation object.
  * @param[in] idx The index of the animation marker, starts from 0.
  * @param[out] name The name of marker when succeed.
  *
@@ -3252,7 +3152,7 @@ TVG_API Tvg_Result tvg_lottie_animation_get_marker(Tvg_Animation animation, uint
  * This method performs tweening, a process of generating intermediate frame
  * between @p from and @p to based on the given @p progress.
  *
- * @param[in] animation The Tvg_Animation pointer to the Lottie animation object.
+ * @param[in] animation The Lottie animation object.
  * @param[in] from The start frame number of the interpolation.
  * @param[in] to The end frame number of the interpolation.
  * @param[in] progress The current progress of the interpolation (range: 0.0 to 1.0).
@@ -3267,7 +3167,7 @@ TVG_API Tvg_Result tvg_lottie_animation_tween(Tvg_Animation animation, float fro
 /**
  * @brief Updates the value of an expression variable for a specific layer.
  *
- * @param[in] animation The Tvg_Animation pointer to the Lottie animation object.
+ * @param[in] animation The Lottie animation object.
  * @param[in] layer The name of the layer containing the variable to be updated.
  * @param[in] ix The property index of the variable within the layer.
  * @param[in] var The name of the variable to be updated.
@@ -3288,12 +3188,11 @@ TVG_API Tvg_Result tvg_lottie_animation_assign(Tvg_Animation animation, const ch
  * This function controls the rendering quality of effects like blur, shadows, etc.
  * Lower values prioritize performance while higher values prioritize quality.
  *
- * @param[in] animation The Tvg_Animation pointer to the Lottie animation object.
+ * @param[in] animation The Lottie animation object.
  * @param[in] value The quality level (0-100). 0 represents lowest quality/best performance,
  *                  100 represents highest quality/lowest performance, default is 50.
  *
  * @retval TVG_RESULT_INSUFFICIENT_CONDITION If the animation is not loaded.
- * @retval TVG_RESULT_INVALID_ARGUMENT An invalid Tvg_Animation pointer.
  *
  * @note This option is used as a hint; its behavior heavily depends on the render backend.
  *
