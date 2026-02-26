@@ -154,6 +154,12 @@ struct TextImpl : Text
         impl.mark(RenderUpdateFlag::Path);
     }
 
+    uint32_t lines()
+    {
+        if (load()) return fm.lines;
+        return 0;
+    }
+
     void layout(float w, float h)
     {
         fm.box = {w, h};

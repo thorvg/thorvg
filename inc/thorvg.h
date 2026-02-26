@@ -1938,9 +1938,23 @@ struct TVG_API Text : Paint
      *
      * @param[in] text The multi-byte text encoded with utf8 string to be rendered.
      *
+     * @see Text::text()
      * @since 1.0
      */
     Result text(const char* text) noexcept;
+
+    /**
+     * @brief Returns the currently assigned unicode text.
+     *
+     * This function retrieves the unicode string that is currently set
+     * for rendering. The returned text is encoded in UTF-8.
+     *
+     * @return The UTF-8 encoded multi-byte text string.
+     *
+     * @see Text::text(const char* text)
+     * @note Experimental API
+     */
+    const char* text() const noexcept;
 
     /**
      * @brief Sets text alignment or anchor per axis.
@@ -1986,9 +2000,24 @@ struct TVG_API Text : Paint
      * @param[in] mode The wrapping strategy to apply. Default is @c TextWrap::None
      *
      * @see TextWrap
+     * @see Text::lines()
      * @since 1.0
      */
     Result wrap(TextWrap mode) noexcept;
+
+    /**
+     * @brief Returns the number of text lines.
+     *
+     * This function retrieves the number of lines generated after applying text layout and wrapping.
+     * The returned value reflects the current wrapping configuration set by Text::wrap().
+     * The line count is also increased by explicit line feed characters ('\n') contained in the text.
+     *
+     * @return The total number of lines.
+     *
+     * @see Text::wrap()
+     * @since Experimental API
+     */
+    uint32_t lines() noexcept;
 
     /**
      * @brief Apply an italic (slant) transformation to the text.

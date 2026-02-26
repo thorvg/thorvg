@@ -230,12 +230,12 @@ static void _alignY(float align, float box, float y, uint32_t begin, uint32_t en
 }
 
 
-uint32_t TtfLoader::feedLine(FontMetrics& fm, float box, float x, uint32_t begin, uint32_t end, Point& cursor, uint32_t& loc, RenderPath& out)
+uint32_t TtfLoader::feedLine(FontMetrics& fm, float box, float x, uint32_t begin, uint32_t end, Point& cursor, RenderPath& out)
 {
     _alignX(fm.align.x, box, x, begin, end, out); //align the given line
     cursor.x = 0.0f;
     cursor.y += reader.metrics.hhea.advance * fm.spacing.y;
-    ++loc;
+    ++fm.lines;
     return out.pts.count;
 }
 
@@ -283,12 +283,11 @@ void TtfLoader::wrapNone(FontMetrics& fm, const Point& box, const char* utf8, Re
     TtfGlyphMetrics* ltgm = nullptr;  //left side glyph between the two adjacent glyphs
     Point cursor = {};
     uint32_t line = 0;  //the begin pos of the last line among path
-    uint32_t loc = 1;  //line counter
 
     while (*utf8) {
         auto code = _codepoints(&utf8);
         if (code == LINE_FEED_GLYPH_IDX) {
-            line = feedLine(fm, box.x, cursor.x, line, out.pts.count, cursor, loc, out);
+            line = feedLine(fm, box.x, cursor.x, line, out.pts.count, cursor, out);
             continue;
         }
         auto rtgm = request(code);  //right side glyph between the two adjacent glyphs
@@ -307,7 +306,7 @@ void TtfLoader::wrapNone(FontMetrics& fm, const Point& box, const char* utf8, Re
         ltgm = rtgm;
 
     }
-    fm.size.y = height(loc, fm.spacing.y);
+    fm.size.y = height(fm.lines, fm.spacing.y);
     _alignY(fm.align.y, box.y, fm.size.y, 0, line, out); //before the last line
     _align(fm.align, box, {cursor.x, fm.size.y}, line, out.pts.count, out);  //last line
 }
@@ -317,13 +316,12 @@ void TtfLoader::wrapChar(FontMetrics& fm, const Point& box, const char* utf8, Re
 {
     TtfGlyphMetrics* ltgm = nullptr;  //left side glyph between the two adjacent glyphs
     uint32_t line = 0;  //the begin pos of the last line among path
-    uint32_t loc = 1;   //line counter
     Point cursor = {};
 
     while (*utf8) {
         auto code = _codepoints(&utf8);
         if (code == LINE_FEED_GLYPH_IDX) {
-            line = feedLine(fm, box.x, cursor.x, line, out.pts.count, cursor, loc, out);
+            line = feedLine(fm, box.x, cursor.x, line, out.pts.count, cursor, out);
             continue;
         }
         auto rtgm = request(code); //right side glyph between the two adjacent glyphs
@@ -337,14 +335,14 @@ void TtfLoader::wrapChar(FontMetrics& fm, const Point& box, const char* utf8, Re
         //normal scenario
         if (xadv < box.x) {
             if (cursor.x + xadv > box.x) {
-                line = feedLine(fm, box.x, cursor.x, line, out.pts.count, cursor, loc, out);
+                line = feedLine(fm, box.x, cursor.x, line, out.pts.count, cursor, out);
             }
             _build(rtgm->path, cursor, kerning, out);
             cursor.x += xadv;
         //not enough layout space, force pushing
         } else {
             _build(rtgm->path, cursor, kerning, out);
-            line = feedLine(fm, box.x, cursor.x, line, out.pts.count, cursor, loc, out);
+            line = feedLine(fm, box.x, cursor.x, line, out.pts.count, cursor, out);
         }
 
         if (cursor.x > fm.size.x) fm.size.x = cursor.x;  //text horizontal size
@@ -353,7 +351,7 @@ void TtfLoader::wrapChar(FontMetrics& fm, const Point& box, const char* utf8, Re
         if (!ltgm && rtgm->w > 0.0f) static_cast<TtfMetrics*>(fm.engine)->baseWidth = rtgm->w;
         ltgm = rtgm;
     }
-    fm.size.y = height(loc, fm.spacing.y);
+    fm.size.y = height(fm.lines, fm.spacing.y);
     _alignY(fm.align.y, box.y, fm.size.y, 0, line, out); //before the last line
     _align(fm.align, box, {cursor.x, fm.size.y}, line, out.pts.count, out);  //last line
 }
@@ -366,13 +364,12 @@ void TtfLoader::wrapWord(FontMetrics& fm, const Point& box, const char* utf8, Re
     auto word = 0;  //the begin pos of the last word among path
     auto wadv = 0.0f;  //word advance size
     auto hadv = reader.metrics.hhea.advance * fm.spacing.y;  //line advance size
-    uint32_t loc = 1;  //line counter
     Point cursor = {};
 
     while (*utf8) {
         auto code = _codepoints(&utf8);
         if (code == LINE_FEED_GLYPH_IDX) {
-            line = feedLine(fm, box.x, cursor.x, line, out.pts.count, cursor, loc, out);
+            line = feedLine(fm, box.x, cursor.x, line, out.pts.count, cursor, out);
             continue;
         }
         auto rtgm = request(code); //right side glyph between the two adjacent glyphs
@@ -397,10 +394,10 @@ void TtfLoader::wrapWord(FontMetrics& fm, const Point& box, const char* utf8, Re
                 cursor.y += hadv;
                 line = word;
                 wadv = 0;
-                ++loc;
+                ++fm.lines;
             //not enough space, line wrap by character
             } else if (smart) {
-                line = feedLine(fm, box.x, cursor.x, line, out.pts.count, cursor, loc, out);
+                line = feedLine(fm, box.x, cursor.x, line, out.pts.count, cursor, out);
             }
         }
         _build(rtgm->path, cursor, kerning, out);
@@ -418,7 +415,7 @@ void TtfLoader::wrapWord(FontMetrics& fm, const Point& box, const char* utf8, Re
         if (!ltgm && rtgm->w > 0.0f) static_cast<TtfMetrics*>(fm.engine)->baseWidth = rtgm->w;
         ltgm = rtgm;
     }
-    fm.size.y = height(loc, fm.spacing.y);
+    fm.size.y = height(fm.lines, fm.spacing.y);
     _alignY(fm.align.y, box.y, fm.size.y, 0, line, out); //before the last line
     _align(fm.align, box, {cursor.x, fm.size.y}, line, out.pts.count, out);  //last line
 }
@@ -434,13 +431,12 @@ void TtfLoader::wrapEllipsis(FontMetrics& fm, const Point& box, const char* utf8
         uint32_t cmds = 0;
         float xadv = 0.0f;
     } capture;   //the last path for reverting the last character if the ... space is not enough
-    uint32_t loc = 1;  //line counter
     auto stop = false;
 
     while (*utf8) {
         auto code = _codepoints(&utf8);
         if (code == LINE_FEED_GLYPH_IDX) {
-            line = feedLine(fm, box.x, cursor.x, line, out.pts.count, cursor, loc, out);
+            line = feedLine(fm, box.x, cursor.x, line, out.pts.count, cursor, out);
             continue;
         }
         auto rtgm = request(code); //right side glyph between the two adjacent glyphs
@@ -489,7 +485,7 @@ void TtfLoader::wrapEllipsis(FontMetrics& fm, const Point& box, const char* utf8
 
         ltgm = rtgm;
     }
-    fm.size.y = height(loc, fm.spacing.y);
+    fm.size.y = height(fm.lines, fm.spacing.y);
     _alignY(fm.align.y, box.y, fm.size.y, 0, line, out); //before the last line
     _align(fm.align, box, {cursor.x, fm.size.y}, line, out.pts.count, out);  //last line
 }
@@ -552,6 +548,8 @@ bool TtfLoader::open(const char* data, uint32_t size, TVG_UNUSED const char* rpa
 bool TtfLoader::get(FontMetrics& fm, char* text, RenderPath& out)
 {
     out.clear();
+
+    fm.lines = 1;
 
     if (!text || fm.fontSize == 0.0f) return false;
 
