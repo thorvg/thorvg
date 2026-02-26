@@ -69,7 +69,7 @@ public:
     uint32_t markersCnt() noexcept;
     
     /**
-     * @brief Gets the marker name and segment boundaries by a given index.
+     * @brief Gets the marker name and segment range by a given index.
      *
      * @param[in] idx The index of the animation marker, starts from 0.
      * @param[out] begin The start frame of the marker. Pass @c nullptr to not receive this value.
