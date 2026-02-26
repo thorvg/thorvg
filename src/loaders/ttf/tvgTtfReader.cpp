@@ -431,7 +431,7 @@ uint32_t TtfReader::glyphMetrics(TtfGlyph& glyph)
     bbox[3] = static_cast<float>(_i16(data, glyphOffset + 8));
 
     glyph.x = bbox[0];
-    glyph.y = bbox[3];
+    glyph.y = bbox[1];
     glyph.w = bbox[2] - bbox[0] + 1;
     glyph.h = bbox[3] - bbox[1] + 1;
 

@@ -895,6 +895,13 @@ TVG_API Tvg_Result tvg_text_set_text(Tvg_Paint text, const char* utf8)
 }
 
 
+ TVG_API const char* tvg_text_get_text(const Tvg_Paint text)
+ {
+    return text ? reinterpret_cast<Text*>(text)->text() : nullptr;
+ }
+
+
+
 TVG_API Tvg_Result tvg_text_align(Tvg_Paint text, float x, float y)
 {
     if (text) return (Tvg_Result) reinterpret_cast<Text*>(text)->align(x, y);
@@ -941,6 +948,13 @@ TVG_API Tvg_Result tvg_text_wrap_mode(Tvg_Paint text, Tvg_Text_Wrap mode)
 {
     if (text) return (Tvg_Result) reinterpret_cast<Text*>(text)->wrap(TextWrap(mode));
     return TVG_RESULT_INVALID_ARGUMENT;
+}
+
+
+TVG_API uint32_t tvg_text_line_count(Tvg_Paint text)
+{
+    if (text) return reinterpret_cast<Text*>(text)->lines();
+    return 0;
 }
 
 
