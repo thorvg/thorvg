@@ -3193,7 +3193,7 @@ TVG_DEPRECATED TVG_API Tvg_Result tvg_lottie_animation_get_marker(Tvg_Animation 
  * @param[out] begin The start frame of the marker. Pass @c NULL to not receive this value.
  * @param[out] end The end frame of the marker. Pass @c NULL to not receive this value.
  *
- * @retval TVG_RESULT_INVALID_ARGUMENT In case @c idx is out of range or @p animation is invalid.
+ * @retval TVG_RESULT_INVALID_ARGUMENT In case @p animation is invalid, @c idx is out of range, or all output parameters are @c NULL.
  *
  * @since 1.0
  */

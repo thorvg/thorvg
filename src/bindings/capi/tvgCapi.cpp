@@ -1238,7 +1238,7 @@ TVG_API Tvg_Result tvg_lottie_animation_get_marker(Tvg_Animation animation, uint
 TVG_API Tvg_Result tvg_lottie_animation_get_marker_info(Tvg_Animation animation, uint32_t idx, const char** name, float* begin, float* end)
 {
 #ifdef THORVG_LOTTIE_LOADER_SUPPORT
-    if (!animation) return TVG_RESULT_INVALID_ARGUMENT;
+    if (!animation || (!name && !begin && !end)) return TVG_RESULT_INVALID_ARGUMENT;
     auto n = reinterpret_cast<LottieAnimation*>(animation)->marker(idx, begin, end);
     if (!n) return TVG_RESULT_INVALID_ARGUMENT;
     if (name) *name = n;

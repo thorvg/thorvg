@@ -101,6 +101,12 @@ uint32_t LottieAnimation::markersCnt() noexcept
 }
 
 
+const char* LottieAnimation::marker(uint32_t idx) noexcept
+{
+    return marker(idx, nullptr, nullptr);
+}
+
+
 const char* LottieAnimation::marker(uint32_t idx, float* begin, float* end) noexcept
 {
     auto loader = to<PictureImpl>(pImpl->picture)->loader;
