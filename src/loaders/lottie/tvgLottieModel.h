@@ -714,6 +714,7 @@ struct LottieTransform : LottieObject
     {
         delete(coords);
         delete(rotationEx);
+        delete(orient);
     }
 
     LottieTransform()
@@ -783,6 +784,7 @@ struct LottieTransform : LottieObject
 
     SeparateCoord* coords = nullptr;       //either a position or separate coordinates
     RotationEx* rotationEx = nullptr;      //extension for 3d rotation
+    LottieVec3* orient = nullptr;          //3d orientation
 };
 
 
