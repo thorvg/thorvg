@@ -74,11 +74,25 @@ public:
      * @param[in] idx The index of the animation marker, starts from 0.
      *
      * @retval The name of marker when succeed, @c nullptr otherwise.
-     * 
+     *
      * @see LottieAnimation::markersCnt()
      * @since 1.0
      */
     const char* marker(uint32_t idx) noexcept;
+
+    /**
+     * @brief Gets the marker name and segment range by a given index.
+     *
+     * @param[in] idx The index of the animation marker, starts from 0.
+     * @param[out] begin The start frame of the marker. Pass @c nullptr to not receive this value.
+     * @param[out] end The end frame of the marker. Pass @c nullptr to not receive this value.
+     *
+     * @retval The name of marker when succeed, @c nullptr otherwise.
+     *
+     * @see LottieAnimation::markersCnt()
+     * @since 1.0
+     */
+    const char* marker(uint32_t idx, float* begin, float* end) noexcept;
 
     /**
      * @brief Updates the value of an expression variable for a specific layer.

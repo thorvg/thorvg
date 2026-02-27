@@ -94,7 +94,7 @@ public:
 
     //Marker Supports
     uint32_t markersCnt();
-    const char* markers(uint32_t index);
+    const char* markers(uint32_t index, float* begin = nullptr, float* end = nullptr);
     bool segment(const char* marker, float& begin, float& end);
     Result segment(float begin, float end) override;
 
