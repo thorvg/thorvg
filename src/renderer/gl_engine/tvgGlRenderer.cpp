@@ -56,6 +56,7 @@ void GlRenderer::flush()
     clearDisposes();
 
     mRootTarget.reset();
+    mDirectTarget = false;
 
     ARRAY_FOREACH(p, mComposePool) delete(*p);
     mComposePool.clear();
@@ -921,8 +922,37 @@ bool GlRenderer::target(void* display, void* surface, void* context, int32_t id,
 
     auto ret = currentContext();
 
+#ifndef __APPLE__ // TODO: direct rendering is slower than offscreen rendering. May need further investigation.
+    mDirectTarget = (mTargetFboId == 0);
+#endif
+    if (mDirectTarget) {
+
+        GLint stencilSize = 0;
+        GLint depthSize = 0;
+        GL_CHECK(glBindFramebuffer(GL_FRAMEBUFFER, 0));
+        GL_CHECK(glGetFramebufferAttachmentParameteriv(GL_FRAMEBUFFER, GL_STENCIL, GL_FRAMEBUFFER_ATTACHMENT_STENCIL_SIZE, &stencilSize));
+        GL_CHECK(glGetFramebufferAttachmentParameteriv(GL_FRAMEBUFFER, GL_DEPTH, GL_FRAMEBUFFER_ATTACHMENT_DEPTH_SIZE, &depthSize));
+        TVGLOG("GL_ENGINE", "Default framebuffer stencil/depth size: %d/%d", stencilSize, depthSize);
+        if (stencilSize == 0 || depthSize == 0) {
+            TVGERR("GL_ENGINE", "Default framebuffer lacks stencil/depth buffers. Falling back to offscreen rendering.");
+            mDirectTarget = false;
+        }
+        if (mDirectTarget) {
+            GLint maxSamples = 0, sampleBuffers = 0;
+            GL_CHECK(glGetIntegerv(GL_MAX_SAMPLES, &maxSamples));
+            GL_CHECK(glGetIntegerv(GL_SAMPLE_BUFFERS, &sampleBuffers));
+            if (maxSamples < MIN_GL_MSAA_SAMPLES || sampleBuffers == 0) {
+                TVGERR("GL_ENGINE", "Default framebuffer does not support required MSAA. Falling back to offscreen rendering.");
+                mDirectTarget = false;
+            } else {
+#ifdef GL_MULTISAMPLE
+                GL_CHECK(glEnable(GL_MULTISAMPLE));
+#endif
+            }
+        }
+    }
     mRootTarget.viewport = {{0, 0}, {int32_t(this->surface.w), int32_t(this->surface.h)}};
-    mRootTarget.init(this->surface.w, this->surface.h, mTargetFboId);
+    mRootTarget.init(this->surface.w, this->surface.h, mTargetFboId, mDirectTarget);
 
     return ret;
 }
@@ -944,12 +974,16 @@ bool GlRenderer::sync()
     GL_CHECK(glEnable(GL_DEPTH_TEST));
     GL_CHECK(glDepthFunc(GL_GREATER));
 
-    auto task = mRenderPassStack.first()->endRenderPass<GlBlitTask>(mPrograms[RT_Blit], mTargetFboId);
-
-    prepareBlitTask(task);
-
-    task->mClearBuffer = mClearBuffer;
-    task->setTargetViewport({{0, 0}, {int32_t(surface.w), int32_t(surface.h)}});
+    GlRenderTask* task = nullptr;
+    if (mDirectTarget) {
+        task = mRenderPassStack.first()->endRenderPass<GlComposeTask>(nullptr, mTargetFboId);
+    } else {
+        auto blitTask = mRenderPassStack.first()->endRenderPass<GlBlitTask>(mPrograms[RT_Blit], mTargetFboId);
+        prepareBlitTask(blitTask);
+        blitTask->mClearBuffer = mClearBuffer;
+        blitTask->setTargetViewport({{0, 0}, {int32_t(surface.w), int32_t(surface.h)}});
+        task = blitTask;
+    }
 
     if (mGpuBuffer.flushToGPU()) {
         mGpuBuffer.bind();
