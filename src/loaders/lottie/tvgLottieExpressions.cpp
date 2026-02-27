@@ -87,6 +87,12 @@ static float _rand()
     return (float)(rand() % 10000001) * 0.0000001f;
 }
 
+static inline float _seededRand(int seed)
+{
+    // Deterministic random generator using glibc's LCG algorithm
+    seed = (seed * 1103515245 + 12345) & 0x7fffffff;
+    return (float)seed / 2147483647.0f;
+}
 
 static jerry_value_t _number(float value)
 {
@@ -98,6 +104,47 @@ static jerry_value_t _number(float value)
     jerry_value_free(val);
 
     return obj;
+}
+
+
+// Quintic fade curve for smooth interpolation (6t^5 - 15t^4 + 10t^3)
+// Used in Perlin noise for smoother transitions than linear interpolation
+static inline float _fade(float t)
+{
+    return t * t * t * (t * (t * 6.0f - 15.0f) + 10.0f);
+}
+
+
+// Simplified gradient function for 1D Perlin noise
+static inline float _gradient1D(int seed)
+{
+    return _seededRand(seed) < 0.5f ? -1.0f : 1.0f;
+}
+
+
+static float _perlin1D(float x, int seed)
+{
+    int x0 = (int)floorf(x);
+    int x1 = x0 + 1;
+    float fx = x - (float)x0;
+
+    // Apply quintic fade curve for smooth interpolation
+    float u = _fade(fx);
+
+    // Generate gradients for both integer positions
+    float g0 = _gradient1D(x0 * 100000 + seed);
+    float g1 = _gradient1D(x1 * 100000 + seed);
+
+    // Calculate dot products (in 1D, this is just multiplication with distance)
+    float d0 = g0 * fx;
+    float d1 = g1 * (fx - 1.0f);
+
+    // Scale the gradient values to control the influence of the gradient
+    constexpr float SCALE = 3.0f;
+
+    // Interpolate between the two gradient influences
+    auto value = tvg::lerp(d0, d1, u);
+    return value * SCALE;
 }
 
 
@@ -918,15 +965,22 @@ static jerry_value_t _wiggle(const jerry_call_info_t* info, const jerry_value_t 
         result = (*static_cast<LottieScalar*>(property))(data->frameNo);
     }
 
+    // Factors to separate X/Y axes to prevent seed collisions across octaves.
+    constexpr int SEED_OFFSET_X = 1000000;
+    constexpr int SEED_OFFSET_Y = 2000000;
+
     for (int o = 0; o < octaves; ++o) {
-        auto repeat = (int)ceil(time * freq);
-        for (int i = 0; i < repeat; ++i) {
-            result.x += (_rand() * 2.0f - 1.0f) * amp;
-            result.y += (_rand() * 2.0f - 1.0f) * amp;
-        }
+        auto repeat = time * freq;
+        auto randX = _perlin1D(repeat, (SEED_OFFSET_X + o));
+        auto randY = _perlin1D(repeat, (SEED_OFFSET_Y + o));
+
+        result.x += randX * amp;
+        result.y += randY * amp;
+
         freq *= 2.0f;
         amp *= ampm;
     }
+
     return _point2d(result);
 }
 
