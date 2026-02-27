@@ -491,6 +491,72 @@ void LottieBuilder::updateEllipse(LottieGroup* parent, LottieObject** child, flo
 }
 
 
+static void _reverse(RenderPath& path)
+{
+    Array<PathCommand> outCmds;
+    Array<Point> outPts;
+
+    auto cmds = path.cmds.data;
+    auto pts = path.pts.data;
+    auto cmdsCnt = path.cmds.count;
+
+    //find subpaths and reverse each one
+    for (uint32_t i = 0; i < cmdsCnt;) {
+        //find the end of this subpath
+        auto subStart = i;
+        auto subPtsStart = pts - path.pts.data;
+        bool hasClosed = false;
+
+        //skip MoveTo
+        if (cmds[i] == PathCommand::MoveTo) {
+            ++i;
+            ++pts;
+        }
+
+        //find end of subpath (next MoveTo or end of path)
+        while (i < cmdsCnt && cmds[i] != PathCommand::MoveTo) {
+            if (cmds[i] == PathCommand::Close) hasClosed = true;
+            else if (cmds[i] == PathCommand::LineTo) ++pts;
+            else if (cmds[i] == PathCommand::CubicTo) pts += 3;
+            ++i;
+        }
+
+        auto subEnd = i;
+        auto subPtsEnd = pts - path.pts.data;
+
+        //reverse this subpath
+        //start with MoveTo to the last point before Close (or last point of path)
+        auto lastPtIdx = subPtsEnd - 1;
+        outCmds.push(PathCommand::MoveTo);
+        outPts.push(path.pts[lastPtIdx]);
+
+        //walk backwards through commands (skip Close and initial MoveTo)
+        auto ptIdx = lastPtIdx;
+        for (auto j = subEnd - 1; j > subStart; --j) {
+            if (cmds[j] == PathCommand::Close) continue;
+            if (cmds[j] == PathCommand::LineTo) {
+                outCmds.push(PathCommand::LineTo);
+                outPts.push(path.pts[ptIdx - 1]);
+                --ptIdx;
+            } else if (cmds[j] == PathCommand::CubicTo) {
+                outCmds.push(PathCommand::CubicTo);
+                //swap control points: original is (cp1, cp2, end), reversed is (cp2, cp1, prevEnd)
+                outPts.push(path.pts[ptIdx - 1]);  //cp2 becomes cp1
+                outPts.push(path.pts[ptIdx - 2]);  //cp1 becomes cp2
+                auto prevEnd = (ptIdx - 3) < subPtsStart ? subPtsStart : (ptIdx - 3);
+                outPts.push(path.pts[prevEnd]);  //previous endpoint
+                ptIdx -= 3;
+            }
+        }
+
+        if (hasClosed) outCmds.push(PathCommand::Close);
+    }
+
+    path.cmds = std::move(outCmds);
+    path.pts = std::move(outPts);
+}
+
+
 void LottieBuilder::updatePath(LottieGroup* parent, LottieObject** child, float frameNo, TVG_UNUSED Inlist<RenderContext>& contexts, RenderContext* ctx)
 {
     auto path = static_cast<LottiePath*>(*child);
@@ -498,12 +564,14 @@ void LottieBuilder::updatePath(LottieGroup* parent, LottieObject** child, float 
     if (ctx->repeaters.empty()) {
         _draw(parent, path, ctx);
         if (path->pathset(frameNo, to<ShapeImpl>(ctx->merging)->rs.path, ctx->transform, tween, exps, ctx->modifier)) {
+            if (!path->clockwise) _reverse(to<ShapeImpl>(ctx->merging)->rs.path);
             PAINT(ctx->merging)->mark(RenderUpdateFlag::Path);
         }
     } else {
         auto shape = path->pooling();
         shape->reset();
         path->pathset(frameNo, to<ShapeImpl>(shape)->rs.path, ctx->transform, tween, exps, ctx->modifier);
+        if (!path->clockwise) _reverse(to<ShapeImpl>(shape)->rs.path);
         _repeat(parent, shape, path, ctx);
     }
 }
