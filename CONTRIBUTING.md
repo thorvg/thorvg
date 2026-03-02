@@ -1,46 +1,62 @@
-We always appreciate your contribution. ThorVG doesn't expect patches to be perfect; instead, we value contributions that make ThorVG better than before. This page outlines the ThorVG contribution format.<br />
+We truly appreciate your contributions. While ThorVG does not expect patches to be perfect, we value changes that move the project forward. This document outlines our contribution guidelines and formatting requirements.<br />
 <br />
 
 ## Coding Convention
 Please read the [ThorVG Coding Convention Guidance](https://github.com/thorvg/thorvg/wiki/Coding-Convention) before writing your code.
+
+## Code Formatting
+ThorVG uses `.clang-format` (version 18) at the repository root to enforce a consistent C/C++ coding style. All contributions must be properly formatted before submitting a Pull Request.
+
+### Install clang-format
+**Ubuntu**
+```
+sudo apt install clang-format
+```
+**macOS**
+```
+brew install clang-format
+```
+**Windows**
+```
+Download and install LLVM from: https://llvm.org/builds/
+Make sure clang-format is added to your system PATH
+```
+
+### Recommended Workflow
+To keep the Git history clean, we recommend formatting your code after creating a commit and then amending it. You can use the ThorVG helper script (`tvg-format.sh`):
+```
+$ ./tvg-format.sh <git-sha>    # Run in the ThorVG root directory
+$ git commit --amend           # Amend the formatting changes after self-review
+```
 
 ## Reviewers
 ThorVG uses GitHub infrastructure to automatically assign code reviewers for your changes. To see the full list of reviewers, please refer to the [CODEOWNERS](https://github.com/thorvg/thorvg/blob/main/CODEOWNERS) file.
 <br />
 
 ## Self Test & Verification
-After updating the ThorVG code, please ensure your changes don't break the library. We recommend conducting unit tests. You can easily run them using the following build commands:
-<br/>
-`
-$meson setup build -Dtests=true -Dloaders="all" -Dsavers="all" -Dbindings="capi" -Dtools="all" -Dlog=true
-`
-<br />
-`
-$ninja -C build test
-`
-<br/>
-<br/>
-Please make it sure running all tests and no any fail case.<br/>
-<br/>
-Expected Fail:      0<br/>
-Fail:               0<br/>
-Unexpected Pass:    0<br/>
-Skipped:            0<br/>
-Timeout:            0<br/>
+After updating the ThorVG codebase, please ensure that your changes do not break the library. We recommend running unit tests using the following commands:
+```
+$ meson setup build -Dtests=true -Dloaders="all" -Dsavers="all" -Dbindings="capi" -Dtools="all" -Dlog=true -Db_sanitize="address,undefined"
+$ ninja -C build test
+```
+Please make sure that all tests pass without failures:
+```
+Expected Fail:      0
+Fail:               0
+Unexpected Pass:    0
+Skipped:            0
+Timeout:            0
+```
 
 ## Commit Message
 [Module][Feature]: [Title]
 
 [Description]
 
-- [Module] refers to the sub-module primarily affected by your change. Most of the time, this indicates the name of a sub-folder.
-This also suggests who might need to review your patch.
-If your change doesn't belong to any sub-modules, you can either replace this with a suitable name or skip it.
-The name should be written entirely in lowercase letters.
+- [Module] refers to the sub-module primarily affected by your change. Most of the time, this indicates the name of a sub-folder. This helps identify the appropriate reviewers for your change. If your change doesn't belong to any sub-modules, you can either replace this with a suitable name or skip it. The name should be written entirely in lowercase letters.
   - e.g., build, doc, infra, common, sw_engine, gl_engine, svg_loader, wasm, svg2png...
 
-- [Feature] indicates the primary function or feature you modified. Typically, this represents a class or file name.
-This is an optional.
+- [Feature] indicates the primary function or feature you modified. This field is optional.
   - e.g., canvas, shape, paint, scene, picture, task-scheduler, loader, builder, ...
 
 - [Title] provides a brief description of your change and should be encapsulated in a single sentence.
@@ -89,9 +105,9 @@ Here's a sample commit message for clarity:
 
 ## Pull Request
 
-Once you've submitted a pull request (PR), please ensure the following checklist is completed:
-- Reviewers: Check the Reviewers List.
-- Assignees: You should be assigned.
-- Labels: Mark the appropriate Patch Purpose.
-- Automated Integration Test: All must pass.
+Once you submit a Pull Request, please ensure the following:
+- Reviewers are automatically assigned.
+- You are listed as an assignee.
+- Appropriate labels are applied.
+- All automated integration tests pass.
 <p align="center"><img width="1000" height="auto" src="https://github.com/thorvg/thorvg.site/blob/main/readme/contribution.png"></p>
