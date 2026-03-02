@@ -45,7 +45,8 @@
 #endif
 
 #ifdef __cplusplus
-extern "C" {
+extern "C"
+{
 #endif
 
 /**
@@ -101,7 +102,8 @@ typedef struct _Tvg_Accessor* Tvg_Accessor;
  * Please note that some APIs may additionally specify the reasons that trigger their return values.
  *
  */
-typedef enum {
+typedef enum
+{
     TVG_RESULT_SUCCESS = 0,            ///< The value returned in case of a correct request execution.
     TVG_RESULT_INVALID_ARGUMENT,       ///< The value returned in the event of a problem with the arguments given to the API - e.g. empty paths or null pointers.
     TVG_RESULT_INSUFFICIENT_CONDITION, ///< The value returned in case the request cannot be processed - e.g. asking for properties of an object, which does not exist.
@@ -115,7 +117,8 @@ typedef enum {
 /**
  * @brief A data structure representing a point in two-dimensional space.
  */
-typedef struct {
+typedef struct
+{
     float x, y;
 } Tvg_Point;
 
@@ -127,7 +130,8 @@ typedef struct {
  * The elements e13 and e23 determine the translation of the object along the x and y-axis, respectively.
  * The elements e31 and e32 are set to 0, e33 is set to 1.
  */
-typedef struct {
+typedef struct
+{
     float e11, e12, e13;
     float e21, e22, e23;
     float e31, e32, e33;
@@ -139,7 +143,8 @@ typedef struct {
  *
  * @ingroup ThorVGCapi_Canvas
  */
-typedef enum {
+typedef enum
+{
     TVG_COLORSPACE_ABGR8888 = 0,  ///< The channels are joined in the order: alpha, blue, green, red. Colors are alpha-premultiplied.
     TVG_COLORSPACE_ARGB8888,      ///< The channels are joined in the order: alpha, red, green, blue. Colors are alpha-premultiplied.
     TVG_COLORSPACE_ABGR8888S,     ///< The channels are joined in the order: alpha, blue, green, red. Colors are un-alpha-premultiplied. (since 0.13)
@@ -164,7 +169,8 @@ typedef enum {
  *
  * @since 1.0
  */
-typedef enum {
+typedef enum
+{
     TVG_ENGINE_OPTION_NONE = 0,                   /**< No engine options are enabled. This may be used to explicitly disable all optional behaviors. */
     TVG_ENGINE_OPTION_DEFAULT = 1 << 0,           /**< Uses the default rendering mode. */
     TVG_ENGINE_OPTION_SMART_RENDER = 1 << 1       /**< Enables automatic partial (smart) rendering optimizations. */
@@ -176,7 +182,8 @@ typedef enum {
  *
  * @ingroup ThorVGCapi_Paint
  */
-typedef enum {
+typedef enum
+{
     TVG_MASK_METHOD_NONE = 0,      ///< No Masking is applied.
     TVG_MASK_METHOD_ALPHA,         ///< Alpha Masking using the masking target's pixels as an alpha value.
     TVG_MASK_METHOD_INVERSE_ALPHA, ///< Alpha Masking using the complement to the masking target's pixels as an alpha value.
@@ -197,7 +204,8 @@ typedef enum {
  *
  * @since 0.15
  */
-typedef enum {
+typedef enum
+{
     TVG_BLEND_METHOD_NORMAL = 0,        ///< Perform the alpha blending(default). S if (Sa == 255), otherwise (Sa * S) + (255 - Sa) * D
     TVG_BLEND_METHOD_MULTIPLY,          ///< Takes the RGB channel values from 0 to 255 of each pixel in the top layer and multiples them with the values for the corresponding pixel from the bottom layer. (S * D)
     TVG_BLEND_METHOD_SCREEN,            ///< The values of the pixels in the two layers are inverted, multiplied, and then inverted again. (S + D) - (S * D)
@@ -231,7 +239,8 @@ typedef enum {
  *
  * @since 1.0
  */
-typedef enum {
+typedef enum
+{
     TVG_TYPE_UNDEF = 0,        ///< Undefined type.
     TVG_TYPE_SHAPE,            ///< A shape type paint.
     TVG_TYPE_SCENE,            ///< A scene type paint.
@@ -252,7 +261,8 @@ typedef enum {
  */
 typedef uint8_t Tvg_Path_Command;
 
-enum {
+enum
+{
     TVG_PATH_COMMAND_CLOSE = 0,    ///< Ends the current sub-path and connects it with its initial point - corresponds to Z command in the svg path commands.
     TVG_PATH_COMMAND_MOVE_TO,      ///< Sets a new initial point of the sub-path and a new current point - corresponds to M command in the svg path commands.
     TVG_PATH_COMMAND_LINE_TO,      ///< Draws a line from the current point to the given point and sets a new value of the current point - corresponds to L command in the svg path commands.
@@ -272,7 +282,8 @@ typedef enum {
 /**
  * @brief Enumeration specifying how to fill the area outside the gradient bounds.
  */
-typedef enum {
+typedef enum
+{
     TVG_STROKE_JOIN_MITER = 0, ///< The outer corner of the joined path segments is spiked. The spike is created by extension beyond the join point of the outer edges of the stroke until they intersect. In case the extension goes beyond the limit, the join style is converted to the Bevel style.
     TVG_STROKE_JOIN_ROUND,     ///< The outer corner of the joined path segments is rounded. The circular region is centered at the join point.
     TVG_STROKE_JOIN_BEVEL      ///< The outer corner of the joined path segments is bevelled at the join point. The triangular region of the corner is enclosed by a straight line between the outer corners of each stroke.
@@ -282,7 +293,8 @@ typedef enum {
 /**
  * @brief Enumeration specifying how to fill the area outside the gradient bounds.
  */
-typedef enum {
+typedef enum
+{
     TVG_STROKE_FILL_PAD = 0, ///< The remaining area is filled with the closest stop color.
     TVG_STROKE_FILL_REFLECT, ///< The gradient pattern is reflected outside the gradient area until the expected region is filled.
     TVG_STROKE_FILL_REPEAT   ///< The gradient pattern is repeated continuously beyond the gradient area until the expected region is filled.
@@ -292,7 +304,8 @@ typedef enum {
 /**
  * @brief Enumeration specifying the algorithm used to establish which parts of the shape are treated as the inside of the shape.
  */
-typedef enum {
+typedef enum
+{
     TVG_FILL_RULE_NON_ZERO = 0, ///< A line from the point to a location outside the shape is drawn. The intersections of the line with the path segment of the shape are counted. Starting from zero, if the path segment of the shape crosses the line clockwise, one is added, otherwise one is subtracted. If the resulting sum is non zero, the point is inside the shape.
     TVG_FILL_RULE_EVEN_ODD     ///< A line from the point to a location outside the shape is drawn and its intersections with the path segments of the shape are counted. If the number of intersections is an odd number, the point is inside the shape.
 } Tvg_Fill_Rule;
@@ -308,7 +321,8 @@ typedef enum {
 /**
  * @brief A data structure storing the information about the color and its relative position inside the gradient bounds.
  */
-typedef struct {
+typedef struct
+{
     float offset; /**< The relative position of the color. */
     uint8_t r;    /**< The red color channel value in the range [0 ~ 255]. */
     uint8_t g;    /**< The green color channel value in the range [0 ~ 255]. */
@@ -327,7 +341,8 @@ typedef struct {
 /**
  * @brief A data structure storing the information about the color and its relative position inside the gradient bounds.
  */
-typedef enum {
+typedef enum
+{
     TVG_TEXT_WRAP_NONE = 0,      ///< Do not wrap text. Text is rendered on a single line and may overflow the bounding area.
     TVG_TEXT_WRAP_CHARACTER,     ///< Wrap at the character level. If a word cannot fit, it is broken into individual characters to fit the line.
     TVG_TEXT_WRAP_WORD,          ///< Wrap at the word level. Words that do not fit are moved to the next line.
@@ -349,7 +364,8 @@ typedef enum {
  *
  * @note Experimental API
  */
-typedef enum {
+typedef enum
+{
     TVG_FILTER_METHOD_BILINEAR = 0,  ///< Smooth interpolation using surrounding pixels for higher quality.
     TVG_FILTER_METHOD_NEAREST        ///< Fast filtering using nearest-neighbor sampling.
 } Tvg_Filter_Method;
@@ -364,7 +380,8 @@ typedef enum {
  * @see tvg_text_get_text_metrics()
  * @note Experimental API
  */
-typedef struct {
+typedef struct
+{
     float ascent;   ///< Distance from the baseline to the top of the highest glyph (usually positive).
     float descent;  ///< Distance from the baseline to the bottom of the lowest glyph (usually negative, as in TTF).
     float linegap;  ///< Additional spacing recommended between lines (leading).
@@ -389,7 +406,8 @@ typedef struct {
  * @see tvg_text_get_glyph_metrics()
  * @note Experimental API
  */
-typedef struct {
+typedef struct
+{
     float advance;    ///< The advance distance along the baseline (inline) direction.
     float bearing;    ///< The bearing from the origin to the glyph’s visible bound along the inline-start direction.
     Tvg_Point min;    ///< The minimum point of the glyph bounding box in local space.
