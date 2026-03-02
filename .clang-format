@@ -85,7 +85,7 @@ ReflowComments: true
 SpacesBeforeTrailingComments: 2
 
 # Empty lines
-MaxEmptyLinesToKeep: 2
+MaxEmptyLinesToKeep: 1
 KeepEmptyLinesAtTheStartOfBlocks: false
 
 # Penalties (to discourage certain formatting)
