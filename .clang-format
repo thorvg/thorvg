@@ -1,0 +1,103 @@
+# ThorVG Clang-Format Configuration
+# Based on ThorVG coding style conventions
+# Requires clang-format == 18
+
+---
+Language: Cpp
+Standard: c++14
+
+# Base style
+BasedOnStyle: LLVM
+
+# Indentation
+IndentWidth: 4
+TabWidth: 4
+UseTab: Never
+ContinuationIndentWidth: 4
+ConstructorInitializerIndentWidth: 4
+AccessModifierOffset: -4
+NamespaceIndentation: None
+IndentCaseLabels: true
+IndentPPDirectives: None
+
+# Line length
+ColumnLimit: 0
+
+# Braces - same line style (Mix K&R and Allman styles)
+BreakBeforeBraces: Custom
+BraceWrapping:
+  AfterFunction: true
+  AfterControlStatement: false
+  AfterClass: true
+  AfterStruct: true
+  AfterEnum: true
+  AfterNamespace: true
+  BeforeCatch: false
+  BeforeElse: false
+
+# Pointer/Reference alignment - left (type-attached)
+PointerAlignment: Left
+ReferenceAlignment: Left
+DerivePointerAlignment: false
+
+# Spacing
+SpaceBeforeParens: ControlStatements
+SpaceInEmptyParentheses: false
+SpacesInParentheses: false
+SpaceAfterCStyleCast: false
+SpaceBeforeAssignmentOperators: true
+SpaceAfterTemplateKeyword: false
+SpacesInAngles: false
+SpaceBeforeSquareBrackets: false
+SpacesInSquareBrackets: false
+
+# Include sorting
+SortIncludes: false
+IncludeBlocks: Preserve
+
+# Function/class formatting
+AllowShortCaseLabelsOnASingleLine: true
+AllowShortFunctionsOnASingleLine: Inline
+AllowShortIfStatementsOnASingleLine: AllIfsAndElse
+AllowShortLoopsOnASingleLine: false
+AllowShortBlocksOnASingleLine: Empty
+AllowShortLambdasOnASingleLine: Inline
+AlwaysBreakAfterReturnType: None
+AlwaysBreakTemplateDeclarations: Yes
+BreakConstructorInitializers: AfterColon
+PackConstructorInitializers: BinPack
+
+# Alignment
+AlignAfterOpenBracket: Align
+AlignConsecutiveAssignments: false
+AlignConsecutiveDeclarations: false
+AlignEscapedNewlines: Left
+AlignOperands: false
+AlignTrailingComments: true
+
+# Breaking
+BreakBeforeBinaryOperators: All
+BreakBeforeTernaryOperators: true
+BreakStringLiterals: true
+
+# Comments
+ReflowComments: true
+SpacesBeforeTrailingComments: 2
+
+# Empty lines
+MaxEmptyLinesToKeep: 2
+KeepEmptyLinesAtTheStartOfBlocks: false
+
+# Penalties (to discourage certain formatting)
+PenaltyBreakAssignment: 2
+PenaltyBreakBeforeFirstCallParameter: 19
+PenaltyBreakComment: 300
+PenaltyBreakFirstLessLess: 120
+PenaltyBreakString: 1000
+PenaltyExcessCharacter: 1000000
+PenaltyReturnTypeOnItsOwnLine: 60
+
+# Other
+Cpp11BracedListStyle: true
+FixNamespaceComments: true
+SortUsingDeclarations: true

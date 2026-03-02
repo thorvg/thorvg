@@ -1,0 +1,37 @@
+name: Clang Format
+
+on:
+  pull_request:
+
+permissions:
+  contents: read
+  pull-requests: write
+
+jobs:
+  format:
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Install clang-format 18
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y clang-format-18
+          sudo ln -sf /usr/bin/clang-format-18 /usr/local/bin/clang-format
+
+      - name: Install reviewdog
+        uses: reviewdog/action-setup@v1
+
+      - name: Run clang-format check
+        env:
+          REVIEWDOG_GITHUB_API_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          git diff -U0 ${{ github.event.pull_request.base.sha }} \
+          | clang-format-diff -p1 \
+          | reviewdog -f=diff \
+                      -reporter=github-pr-check \
+                      -filter-mode=added \
+                      -fail-on-error
