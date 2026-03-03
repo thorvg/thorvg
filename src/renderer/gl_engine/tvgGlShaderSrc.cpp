@@ -587,6 +587,13 @@ const char* BLIT_FRAG_SHADER = TVG_COMPOSE_SHADER(
     }
 );
 
+// SW parity map for blend sources:
+// - Solid shape: SW calls blender(srcPremul, dst) directly.
+//   Keep premultiplied source and bypass postProcess.
+// - Gradient shape: SW first does src-over (opBlendPreNormal), then blender(tmp, dst).
+//   Build equivalent tmp in getFragData() by pre-mixing with dst, then bypass postProcess.
+// - Image/Scene: SW uses blender(unpremul(src), dst), then interpolates by src alpha/opacity.
+//   Keep unpremultiplied source + postProcess mix for these headers.
 const char* BLEND_SHAPE_SOLID_FRAG_HEADER = R"(
 layout(std140) uniform SolidInfo {
     vec4 solidColor;
@@ -608,14 +615,14 @@ void getFragData() {
     vec2 uv = (gl_FragCoord.xy - uBlendRegion.region.xy) / uBlendRegion.region.zw;
     vec4 colorSrc = uSolidInfo.solidColor;
     vec4 colorDst = texture(uDstTexture, uv);
-    d.Sc = colorSrc.rgb;
+    d.Sc = colorSrc.rgb * colorSrc.a;
     d.Sa = colorSrc.a;
     d.So = 1.0;
     d.Dc = colorDst.rgb;
     d.Da = colorDst.a;
 }
 
-vec4 postProcess(vec4 R) { return mix(vec4(d.Dc, d.Da), R, d.Sa * d.So); }
+vec4 postProcess(vec4 R) { return R; }
 )";
 
 const char* BLEND_SHAPE_LINEAR_FRAG_HEADER = R"(
@@ -642,9 +649,12 @@ void getFragData() {
     d.Dc = colorDst.rgb;
     d.Da = colorDst.a;
     if (d.Sa > 0.0) { d.Sc = d.Sc / d.Sa; }
+    float srcOpacity = d.Sa * d.So;
+    d.Sc = mix(d.Dc, d.Sc, srcOpacity);
+    d.Sa = mix(d.Da, 1.0, srcOpacity);
 }
 
-vec4 postProcess(vec4 R) { return mix(vec4(d.Dc, d.Da), R, d.Sa * d.So); }
+vec4 postProcess(vec4 R) { return R; }
 )";
 
 const char* BLEND_SHAPE_RADIAL_FRAG_HEADER = R"(
@@ -671,9 +681,12 @@ void getFragData() {
     d.Dc = colorDst.rgb;
     d.Da = colorDst.a;
     if (d.Sa > 0.0) { d.Sc = d.Sc / d.Sa; }
+    float srcOpacity = d.Sa * d.So;
+    d.Sc = mix(d.Dc, d.Sc, srcOpacity);
+    d.Sa = mix(d.Da, 1.0, srcOpacity);
 }
 
-vec4 postProcess(vec4 R) { return mix(vec4(d.Dc, d.Da), R, d.Sa * d.So); }
+vec4 postProcess(vec4 R) { return R; }
 )";
 
 const char* BLEND_IMAGE_FRAG_HEADER = R"(
