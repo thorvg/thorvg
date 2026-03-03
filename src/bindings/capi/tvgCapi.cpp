@@ -190,6 +190,20 @@ TVG_API bool tvg_paint_get_visible(const Tvg_Paint paint)
     return false;
 }
 
+TVG_API uint32_t tvg_paint_get_id(const Tvg_Paint paint)
+{
+    if (paint) return reinterpret_cast<const Paint*>(paint)->id;
+    return 0;
+}
+
+TVG_API Tvg_Result tvg_paint_set_id(Tvg_Paint paint, uint32_t id)
+{
+    if (paint) {
+        reinterpret_cast<Paint*>(paint)->id = id;
+        return TVG_RESULT_SUCCESS;
+    }
+    return TVG_RESULT_INVALID_ARGUMENT;
+}
 
 TVG_API uint16_t tvg_paint_ref(Tvg_Paint paint)
 {
