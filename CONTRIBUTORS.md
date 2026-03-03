@@ -56,3 +56,4 @@
 - Andreas Deininger @deining
 - Jonathan Liu @net147
 - Shiny Chang @ShinyChang
+- Mattia Basaglia @mbasaglia
