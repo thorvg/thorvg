@@ -3202,6 +3202,22 @@ TVG_API Tvg_Result tvg_lottie_animation_get_marker(Tvg_Animation animation, uint
 
 
 /**
+ * @brief Gets the marker information by a given index.
+ *
+ * @param[in] animation The Lottie animation object.
+ * @param[in] idx The index of the animation marker, starts from 0.
+ * @param[out] name The name of the marker. Pass @c NULL to not receive this value.
+ * @param[out] begin The start frame of the marker. Pass @c NULL to not receive this value.
+ * @param[out] end The end frame of the marker. Pass @c NULL to not receive this value.
+ *
+ * @retval TVG_RESULT_INVALID_ARGUMENT In case @p animation is invalid, @c idx is out of range, or all output parameters are @c NULL.
+ *
+ * @note Experimental API
+ */
+TVG_API Tvg_Result tvg_lottie_animation_get_marker_info(Tvg_Animation animation, uint32_t idx, const char** name, float* begin, float* end);
+
+
+/**
  * @brief Interpolates between two frames over a specified duration.
  *
  * This method performs tweening, a process of generating intermediate frame

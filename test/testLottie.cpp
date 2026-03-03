@@ -176,6 +176,10 @@ TEST_CASE("Lottie Marker", "[tvgLottie]")
         //Set marker name before loaded
         REQUIRE(animation->segment("sectionC") == Result::InsufficientCondition);
 
+        //Get marker info before loaded
+        float markerBegin, markerEnd;
+        REQUIRE(animation->marker(0, &markerBegin, &markerEnd) == nullptr);
+
         //Animation load
         REQUIRE(picture->load(TEST_DIR"/segment.lot") == Result::Success);
 
@@ -191,8 +195,30 @@ TEST_CASE("Lottie Marker", "[tvgLottie]")
         //Get marker name by index
         REQUIRE(!strcmp(animation->marker(1), "sectionB"));
 
-        //Get marker name by invalid index
+        //Get marker name and segment by index
+        REQUIRE(!strcmp(animation->marker(0, &markerBegin, &markerEnd), "sectionA"));
+        REQUIRE(markerBegin == 0.0f);
+        REQUIRE(markerEnd == 22.0f);
+
+        REQUIRE(!strcmp(animation->marker(1, &markerBegin, &markerEnd), "sectionB"));
+        REQUIRE(markerBegin == 22.0f);
+        REQUIRE(markerEnd == 33.0f);
+
+        REQUIRE(!strcmp(animation->marker(2, &markerBegin, &markerEnd), "sectionC"));
+        REQUIRE(markerBegin == 33.0f);
+        REQUIRE(markerEnd == 63.0f);
+
+        //Get marker with only begin
+        REQUIRE(!strcmp(animation->marker(0, &markerBegin, nullptr), "sectionA"));
+        REQUIRE(markerBegin == 0.0f);
+
+        //Get marker with only end
+        REQUIRE(!strcmp(animation->marker(0, nullptr, &markerEnd), "sectionA"));
+        REQUIRE(markerEnd == 22.0f);
+
+        //Get marker by invalid index
         REQUIRE(animation->marker(-1) == nullptr);
+        REQUIRE(animation->marker(-1, &markerBegin, &markerEnd) == nullptr);
 
         REQUIRE(animation->segment(nullptr) == Result::Success);
     }
