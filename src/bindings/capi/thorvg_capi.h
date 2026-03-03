@@ -952,6 +952,37 @@ TVG_API bool tvg_paint_get_visible(const Tvg_Paint paint);
 
 
 /**
+ * @brief Gets the ID of the Paint object.
+ *
+ * @param[in] paint The paint object whose ID will be returned.
+ *
+ * @return The ID of the paint object, or 0 if the ID is not set.
+ *
+ * @see tvg_picture_get_paint()
+ * @see tvg_accessor_generate_id()
+ * @see tvg_paint_set_id()
+ *
+ * @note Experimental API
+ */
+TVG_API uint32_t tvg_paint_get_id(const Tvg_Paint paint);
+
+/**
+ * @brief Sets the ID of the Paint object.
+ *
+ * The ID is used to specify a paint instance in a scene.
+ *
+ * @param[in] paint The paint object whose ID will be set.
+ * @param[in] id The ID to assign to the paint object.
+ *
+ * @see tvg_picture_get_paint()
+ * @see tvg_accessor_generate_id()
+ * @see tvg_paint_get_id()
+ *
+ * @note Experimental API
+ */
+TVG_API Tvg_Result tvg_paint_set_id(Tvg_Paint paint, uint32_t id);
+
+/**
  * @brief Scales the given Tvg_Paint object by the given factor.
  *
  * @param[in] paint The Tvg_Paint object to be scaled.
