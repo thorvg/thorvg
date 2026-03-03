@@ -20,7 +20,6 @@
  * SOFTWARE.
  */
 
-#include <fstream>
 #include "tvgStr.h"
 #include "tvgMath.h"
 #include "tvgColor.h"
