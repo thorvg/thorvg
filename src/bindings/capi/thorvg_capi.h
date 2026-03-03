@@ -3200,6 +3200,25 @@ TVG_API Tvg_Result tvg_lottie_animation_get_markers_cnt(Tvg_Animation animation,
  */
 TVG_API Tvg_Result tvg_lottie_animation_get_marker(Tvg_Animation animation, uint32_t idx, const char** name);
 
+/**
+ * @brief Retrieves marker information by index.
+ *
+ * @param[in] animation The Lottie animation object.
+ * @param[in] idx The zero-based index of the animation marker.
+ * @param[out] name Pointer to receive the marker name.
+ *                  Pass @c nullptr if the value is not required.
+ * @param[out] begin Pointer to receive the marker's starting frame.
+ *                   Pass @c nullptr if the value is not required.
+ * @param[out] end Pointer to receive the marker's ending frame.
+ *                 Pass @c nullptr if the value is not required.
+ *
+ * @retval TVG_RESULT_INVALID_ARGUMENT if @p idx is out of range.
+ * @retval TVG_RESULT_INSUFFICIENT_CONDITION In case the animation is not loaded.
+ *
+ * @see tvg_lottie_animation_get_markers_cnt()
+ * @note Experimental API
+ */
+TVG_API Tvg_Result tvg_lottie_animation_get_marker_info(Tvg_Animation animation, uint32_t idx, const char** name, float* begin, float* end);
 
 /**
  * @brief Interpolates between two frames over a specified duration.
