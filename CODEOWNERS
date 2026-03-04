@@ -2,6 +2,7 @@
 # Being listed as a code owner does not necessarily indicate copyright ownership of the code.
 
 * @hermet
-/src/renderer/gl_engine @wenjieshen @SergeyLebedkin
-/src/renderer/wg_engine @SergeyLebedkin
+/src/renderer/gl_engine @wenjieshen
+/src/renderer/wg_engine @wenjieshen
+/src/loaders/lottie @tinyjin
 /src/loaders/svg @JSUYA
