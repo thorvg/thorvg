@@ -568,12 +568,8 @@ void GlRenderer::endBlendingCompose(GlRenderTask* stencilTask)
     prepareCmpTask(task, vp, blendPass->getFboWidth(), blendPass->getFboHeight());
     task->setDrawDepth(currentPass()->nextDrawDepth());
 
-#if defined(THORVG_GL_TARGET_GL)
-    const auto& taskVp = task->getViewport();
-    float region[] = {float(taskVp.sx()), float(taskVp.sy()), float(dstCopyFbo->width), float(dstCopyFbo->height)};
-#else // TODO: create partial buffer when MSAA is disabled
+#if defined(THORVG_GL_TARGET_GLES)
     float region[] = {0.0f, 0.0f, float(dstCopyFbo->width), float(dstCopyFbo->height)};
-#endif
     task->addBindResource(GlBindingResource{
         0,
         task->getProgram()->getUniformBlockIndex("BlendRegion"),
@@ -581,6 +577,7 @@ void GlRenderer::endBlendingCompose(GlRenderTask* stencilTask)
         mGpuBuffer.push(region, 4 * sizeof(float), true),
         4 * sizeof(float),
     });
+#endif
 
     // src and dst texture
     task->addBindResource(GlBindingResource{1, blendPass->getFbo()->colorTex, task->getProgram()->getUniformLocation("uSrcTexture")});
@@ -833,12 +830,8 @@ void GlRenderer::endRenderPass(RenderCompositor* cmp)
             task->setRenderSize(glCmp->bbox.w(), glCmp->bbox.h());
             prepareCmpTask(task, glCmp->bbox, renderPass->getFboWidth(), renderPass->getFboHeight());
             task->setDrawDepth(currentPass()->nextDrawDepth());
-#if defined(THORVG_GL_TARGET_GL)
-            const auto& taskVp = task->getViewport();
-            float region[] = {float(taskVp.sx()), float(taskVp.sy()), float(dstCopyFbo->width), float(dstCopyFbo->height)};
-#else // TODO: create partial buffer when MSAA is disabled
+#if defined(THORVG_GL_TARGET_GLES)
             float region[] = {0.0f, 0.0f, float(dstCopyFbo->width), float(dstCopyFbo->height)};
-#endif
             task->addBindResource(GlBindingResource{
                 1,
                 task->getProgram()->getUniformBlockIndex("BlendRegion"),
@@ -846,6 +839,7 @@ void GlRenderer::endRenderPass(RenderCompositor* cmp)
                 mGpuBuffer.push(region, 4 * sizeof(float), true),
                 4 * sizeof(float),
             });
+#endif
             // info
             task->addBindResource(GlBindingResource{0, task->getProgram()->getUniformBlockIndex("ColorInfo"), mGpuBuffer.getBufferId(), mGpuBuffer.push(info, sizeof(info), true), sizeof(info)});
             // textures

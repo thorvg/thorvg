@@ -24,6 +24,15 @@
 #include "tvgGlProgram.h"
 #include "tvgGlRenderPass.h"
 
+#if !defined(THORVG_GL_TARGET_GL)
+static void clearColorTarget(uint32_t width, uint32_t height)
+{
+    GL_CHECK(glScissor(0, 0, width, height));
+    GL_CHECK(glClearColor(0, 0, 0, 0));
+    GL_CHECK(glClear(GL_COLOR_BUFFER_BIT));
+}
+#endif
+
 /************************************************************************/
 /* GlRenderTask Class Implementation                                    */
 /************************************************************************/
@@ -345,16 +354,17 @@ void GlSceneBlendTask::run()
     const auto height = mSrcFbo->height;
     if (width <= 0 || height <= 0) return;
 
-    GL_CHECK(glBindFramebuffer(GL_READ_FRAMEBUFFER, mSrcFbo->fbo));
-    GL_CHECK(glBindFramebuffer(GL_DRAW_FRAMEBUFFER, mDstCopyFbo->resolvedFbo));
 
 #if defined(THORVG_GL_TARGET_GL)
-    const auto& srcVp = mSrcFbo->viewport;
-    // Copy current target into dstCopyFbo for blending.
-    GL_CHECK(glViewport(0, 0, srcVp.w(), srcVp.h()));
-    GL_CHECK(glScissor(0, 0, srcVp.w(), srcVp.h()));
+    GL_CHECK(glBindFramebuffer(GL_READ_FRAMEBUFFER, getTargetFbo()));
+    GL_CHECK(glBindFramebuffer(GL_DRAW_FRAMEBUFFER, mDstCopyFbo->resolvedFbo));
+    GL_CHECK(glViewport(0, 0, mDstCopyFbo->width, mDstCopyFbo->height));
+    GL_CHECK(glScissor(0, 0, mDstCopyFbo->width, mDstCopyFbo->height));
     GL_CHECK(glBlitFramebuffer(vp.min.x, vp.min.y, vp.max.x, vp.max.y, 0, 0, vp.w(), vp.h(), GL_COLOR_BUFFER_BIT, GL_LINEAR));
 #else // TODO: create partial buffer when MSAA is disabled
+    GL_CHECK(glBindFramebuffer(GL_DRAW_FRAMEBUFFER, mDstCopyFbo->resolvedFbo));
+    if (vp.min.x != 0 || vp.min.y != 0 || mDstCopyFbo->width != static_cast<uint32_t>(vp.w()) || mDstCopyFbo->height != static_cast<uint32_t>(vp.h())) clearColorTarget(mDstCopyFbo->width, mDstCopyFbo->height);
+    GL_CHECK(glBindFramebuffer(GL_READ_FRAMEBUFFER, mSrcFbo->fbo));
     GL_CHECK(glViewport(0, 0, width, height));
     GL_CHECK(glScissor(vp.min.x, vp.min.y, vp.w(), vp.h()));
     GL_CHECK(glBlitFramebuffer(vp.min.x, vp.min.y, vp.max.x, vp.max.y, vp.min.x, vp.min.y, vp.max.x, vp.max.y, GL_COLOR_BUFFER_BIT, GL_NEAREST));
@@ -449,6 +459,7 @@ void GlDirectBlendTask::run()
     GL_CHECK(glScissor(0, 0, width, height));
     GL_CHECK(glBlitFramebuffer(x, y, x + width, y + height, 0, 0, width, height, GL_COLOR_BUFFER_BIT, GL_LINEAR));
 #else // TODO: create partial buffer when MSAA is disabled
+    if (x != 0 || y != 0 || mDstCopyFbo->width != static_cast<uint32_t>(width) || mDstCopyFbo->height != static_cast<uint32_t>(height)) clearColorTarget(mDstCopyFbo->width, mDstCopyFbo->height);
     GL_CHECK(glViewport(0, 0, fboW, fboH));
     GL_CHECK(glScissor(x, y, width, height));
     GL_CHECK(glBlitFramebuffer(x, y, x + width, y + height, x, y, x + width, y + height, GL_COLOR_BUFFER_BIT, GL_NEAREST));
@@ -500,6 +511,7 @@ void GlComplexBlendTask::run()
     GL_CHECK(glScissor(0, 0, dstVp.w(), dstVp.h()));
     GL_CHECK(glBlitFramebuffer(vp.min.x, vp.min.y, vp.max.x, vp.max.y, 0, 0, vp.w(), vp.h(), GL_COLOR_BUFFER_BIT, GL_LINEAR));
 #else // TODO: create partial buffer when MSAA is disabled
+    if (vp.min.x != 0 || vp.min.y != 0 || mDstCopyFbo->width != static_cast<uint32_t>(vp.w()) || mDstCopyFbo->height != static_cast<uint32_t>(vp.h())) clearColorTarget(mDstCopyFbo->width, mDstCopyFbo->height);
     GL_CHECK(glViewport(0, 0, width, height));
     GL_CHECK(glScissor(vp.min.x, vp.min.y, vp.w(), vp.h()));
     GL_CHECK(glBlitFramebuffer(vp.min.x, vp.min.y, vp.max.x, vp.max.y, vp.min.x, vp.min.y, vp.max.x, vp.max.y, GL_COLOR_BUFFER_BIT, GL_NEAREST));
