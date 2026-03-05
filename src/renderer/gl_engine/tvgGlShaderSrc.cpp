@@ -689,6 +689,71 @@ void getFragData() {
 vec4 postProcess(vec4 R) { return R; }
 )";
 
+// GL keeps a viewport-sized dst copy, so src/dst can share vUV.
+// GLES/WebGL must keep a full resolved dst copy because MSAA resolve/blit is only valid for the
+// full buffer there; down-blitting into a smaller FBO would add another full copy pass. Rebuild
+// dst UV from gl_FragCoord + BlendRegion instead of reusing vUV.
+#if defined(THORVG_GL_TARGET_GL)
+const char* BLEND_IMAGE_FRAG_HEADER = R"(
+uniform sampler2D uSrcTexture;
+uniform sampler2D uDstTexture;
+
+in vec2 vUV;
+out vec4 FragColor;
+
+vec3 One = vec3(1.0, 1.0, 1.0);
+struct FragData { vec3 Sc; float Sa; float So; vec3 Dc; float Da; };
+FragData d;
+
+void getFragData() {
+    // get source data
+    vec4 colorSrc = texture(uSrcTexture, vUV);
+    vec4 colorDst = texture(uDstTexture, vUV);
+    // fill fragment data
+    d.Sc = colorSrc.rgb;
+    d.Sa = colorSrc.a;
+    d.So = 1.0;
+    d.Dc = colorDst.rgb;
+    d.Da = colorDst.a;
+    if (d.Sa > 0.0) { d.Sc = d.Sc / d.Sa; }
+}
+
+vec4 postProcess(vec4 R) { return mix(vec4(d.Dc, d.Da), R, d.Sa * d.So); }
+)";
+
+const char* BLEND_SCENE_FRAG_HEADER = R"(
+layout(std140) uniform ColorInfo {
+    int format;
+    int flipY;
+    int opacity;
+    int dummy;
+} uColorInfo;
+uniform sampler2D uSrcTexture;
+uniform sampler2D uDstTexture;
+
+in vec2 vUV;
+out vec4 FragColor;
+
+vec3 One = vec3(1.0, 1.0, 1.0);
+struct FragData { vec3 Sc; float Sa; float So; vec3 Dc; float Da; };
+FragData d;
+
+void getFragData() {
+    // get source data
+    vec4 colorSrc = texture(uSrcTexture, vUV);
+    vec4 colorDst = texture(uDstTexture, vUV);
+    // fill fragment data
+    d.Sc = colorSrc.rgb;
+    d.Sa = colorSrc.a;
+    d.So = float(uColorInfo.opacity) / 255.0;
+    d.Dc = colorDst.rgb;
+    d.Da = colorDst.a;
+    if (d.Sa > 0.0) {d.Sc = d.Sc / d.Sa; }
+}
+
+vec4 postProcess(vec4 R) { return mix(vec4(d.Dc, d.Da), R, d.Sa * d.So); }
+)";
+#else
 const char* BLEND_IMAGE_FRAG_HEADER = R"(
 layout(std140) uniform BlendRegion {
     vec4 region;
@@ -759,6 +824,7 @@ void getFragData() {
 
 vec4 postProcess(vec4 R) { return mix(vec4(d.Dc, d.Da), R, d.Sa * d.So); }
 )";
+#endif
 
 const char* BLEND_FRAG_HSL = R"(
 // RGB to HSL conversion
