@@ -20,7 +20,6 @@
  * SOFTWARE.
  */
 
-#include <fstream>
 #include "tvgLoader.h"
 #include "tvgRawLoader.h"
 

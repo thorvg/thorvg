@@ -1234,6 +1234,19 @@ TVG_API Tvg_Result tvg_lottie_animation_get_marker(Tvg_Animation animation, uint
     return TVG_RESULT_NOT_SUPPORTED;
 }
 
+TVG_API Tvg_Result tvg_lottie_animation_get_marker_info(Tvg_Animation animation, uint32_t idx, const char** name, float* begin, float* end)
+{
+#ifdef THORVG_LOTTIE_LOADER_SUPPORT
+    const char* n = nullptr;
+    if (animation) n = reinterpret_cast<LottieAnimation*>(animation)->marker(idx, begin, end);
+    if (name) *name = n;
+    if (n) return TVG_RESULT_SUCCESS;
+    auto markerCnt = reinterpret_cast<LottieAnimation*>(animation)->markersCnt();
+    if (markerCnt > 0 && idx >= markerCnt) return TVG_RESULT_INVALID_ARGUMENT;
+    return TVG_RESULT_INSUFFICIENT_CONDITION;
+#endif
+    return TVG_RESULT_NOT_SUPPORTED;
+}
 
 TVG_API Tvg_Result tvg_lottie_animation_tween(Tvg_Animation animation, float from, float to, float progress)
 {

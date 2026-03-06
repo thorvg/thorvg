@@ -56,14 +56,12 @@ extern "C"
  * \{
  */
 
-
 /**
  * @brief A structure responsible for managing and drawing graphical elements.
  *
  * It sets up the target buffer, which can be drawn on the screen. It stores the Tvg_Paint objects (Shape, Scene, Picture).
  */
 typedef struct _Tvg_Canvas* Tvg_Canvas;
-
 
 /**
  * @brief A structure representing a graphical element.
@@ -72,12 +70,10 @@ typedef struct _Tvg_Canvas* Tvg_Canvas;
  */
 typedef struct _Tvg_Paint* Tvg_Paint;
 
-
 /**
  * @brief A structure representing a gradient fill of a Tvg_Paint object.
  */
 typedef struct _Tvg_Gradient* Tvg_Gradient;
-
 
 /**
  * @brief A structure representing an object that enables to save a Tvg_Paint object into a file.
@@ -93,7 +89,6 @@ typedef struct _Tvg_Animation* Tvg_Animation;
  * @brief A structure representing an object that enables iterating through a scene's descendents.
  */
 typedef struct _Tvg_Accessor* Tvg_Accessor;
-
 
 /**
  * @brief Enumeration specifying the result from the APIs.
@@ -113,7 +108,6 @@ typedef enum
     TVG_RESULT_UNKNOWN = 255           ///< The value returned in all other cases.
 } Tvg_Result;
 
-
 /**
  * @brief A data structure representing a point in two-dimensional space.
  */
@@ -121,7 +115,6 @@ typedef struct
 {
     float x, y;
 } Tvg_Point;
-
 
 /**
  * @brief A data structure representing a three-dimensional matrix.
@@ -137,7 +130,6 @@ typedef struct
     float e31, e32, e33;
 } Tvg_Matrix;
 
-
 /**
  * @brief Enumeration specifying the methods of combining the 8-bit color channels into 32-bit color.
  *
@@ -151,7 +143,6 @@ typedef enum
     TVG_COLORSPACE_ARGB8888S,     ///< The channels are joined in the order: alpha, red, green, blue. Colors are un-alpha-premultiplied. (since 0.13)
     TVG_COLORSPACE_UNKNOWN = 255, ///< Unknown channel data. This is reserved for an initial ColorSpace value. (since 1.0)
 } Tvg_Colorspace;
-
 
 /**
  * @brief Enumeration to specify rendering engine behavior.
@@ -175,7 +166,6 @@ typedef enum
     TVG_ENGINE_OPTION_DEFAULT = 1 << 0,           /**< Uses the default rendering mode. */
     TVG_ENGINE_OPTION_SMART_RENDER = 1 << 1       /**< Enables automatic partial (smart) rendering optimizations. */
 } Tvg_Engine_Option;
-
 
 /**
  * @brief Enumeration indicating the method used in the masking of two objects - the target and the source.
@@ -226,7 +216,6 @@ typedef enum
     TVG_BLEND_METHOD_COMPOSITION = 255  ///< Used for intermediate composition. @since 1.0
 } Tvg_Blend_Method;
 
-
 /**
  * @brief Enumeration indicating the ThorVG object type value.
  *
@@ -249,7 +238,6 @@ typedef enum
     TVG_TYPE_LINEAR_GRAD = 10, ///< A linear gradient type.
     TVG_TYPE_RADIAL_GRAD       ///< A radial gradient type.
 } Tvg_Type;
-
 
 /**
  * @addtogroup ThorVGCapi_Shape
@@ -278,7 +266,6 @@ typedef enum {
     TVG_STROKE_CAP_SQUARE    ///< The stroke is extended in both endpoints of a sub-path by a rectangle, with the width equal to the stroke width and the length equal to the half of the stroke width. For zero length sub-paths the square is rendered with the size of the stroke width.
 } Tvg_Stroke_Cap;
 
-
 /**
  * @brief Enumeration specifying how to fill the area outside the gradient bounds.
  */
@@ -288,7 +275,6 @@ typedef enum
     TVG_STROKE_JOIN_ROUND,     ///< The outer corner of the joined path segments is rounded. The circular region is centered at the join point.
     TVG_STROKE_JOIN_BEVEL      ///< The outer corner of the joined path segments is bevelled at the join point. The triangular region of the corner is enclosed by a straight line between the outer corners of each stroke.
 } Tvg_Stroke_Join;
-
 
 /**
  * @brief Enumeration specifying how to fill the area outside the gradient bounds.
@@ -300,7 +286,6 @@ typedef enum
     TVG_STROKE_FILL_REPEAT   ///< The gradient pattern is repeated continuously beyond the gradient area until the expected region is filled.
 } Tvg_Stroke_Fill;
 
-
 /**
  * @brief Enumeration specifying the algorithm used to establish which parts of the shape are treated as the inside of the shape.
  */
@@ -311,7 +296,6 @@ typedef enum
 } Tvg_Fill_Rule;
 
 /** \} */   // end addtogroup ThorVGCapi_Shape
-
 
 /**
  * @addtogroup ThorVGCapi_Gradient
@@ -331,7 +315,6 @@ typedef struct
 } Tvg_Color_Stop;
 
 /** \} */   // end addtogroup ThorVGCapi_Gradient
-
 
 /**
  * @addtogroup ThorVGCapi_Text
@@ -353,7 +336,6 @@ typedef enum
 
 /** \} */  // end addtogroup ThorVGCapi_Text
 
-
 /**
  * @addtogroup ThorVGCapi_Picture
  * \{
@@ -369,7 +351,6 @@ typedef enum
     TVG_FILTER_METHOD_BILINEAR = 0,  ///< Smooth interpolation using surrounding pixels for higher quality.
     TVG_FILTER_METHOD_NEAREST        ///< Fast filtering using nearest-neighbor sampling.
 } Tvg_Filter_Method;
-
 
 /**
  * @brief Describes the font metrics of a text object.
@@ -387,7 +368,6 @@ typedef struct
     float linegap;  ///< Additional spacing recommended between lines (leading).
     float advance;  ///< The total vertical advance between lines of text: ascent - descent + linegap (i.e., ascent + |descent| + linegap when descent is negative).
 } Tvg_Text_Metrics;
-
 
 /**
  * @brief Describes the layout metrics of a glyph.
@@ -414,7 +394,6 @@ typedef struct
     Tvg_Point max;    ///< The maximum point of the glyph bounding box in local space.
 } Tvg_Glyph_Metrics;
 
-
 /**
  * @brief Callback function type for resolving external assets.
  *
@@ -435,7 +414,6 @@ typedef struct
 typedef bool (*Tvg_Picture_Asset_Resolver)(Tvg_Paint paint, const char* src, void* data);
 
 /** \} */   // end addtogroup ThorVGCapi_Picture
-
 
 /**
  * @defgroup ThorVGCapi_Initializer Initializer
@@ -463,7 +441,6 @@ typedef bool (*Tvg_Picture_Asset_Resolver)(Tvg_Paint paint, const char* src, voi
  */
 TVG_API Tvg_Result tvg_engine_init(unsigned threads);
 
-
 /**
  * @brief Terminates the ThorVG engine.
  *
@@ -475,7 +452,6 @@ TVG_API Tvg_Result tvg_engine_init(unsigned threads);
  * @see tvg_engine_init()
  */
 TVG_API Tvg_Result tvg_engine_term(void);
-
 
 /**
  * @brief Retrieves the version of the TVG engine.
@@ -493,7 +469,6 @@ TVG_API Tvg_Result tvg_engine_version(uint32_t* major, uint32_t* minor, uint32_t
 
 /** \} */   // end defgroup ThorVGCapi_Initializer
 
-
 /**
  * @defgroup ThorVGCapi_Canvas Canvas
  * @brief A module for managing and drawing graphical elements.
@@ -504,7 +479,6 @@ TVG_API Tvg_Result tvg_engine_version(uint32_t* major, uint32_t* minor, uint32_t
  * @warning The paint objects belonging to one Canvas can't be shared among multiple Canvases.
  * \{
  */
-
 
 /**
  * @defgroup ThorVGCapi_SwCanvas SwCanvas
@@ -533,7 +507,6 @@ TVG_API Tvg_Result tvg_engine_version(uint32_t* major, uint32_t* minor, uint32_t
  */
 TVG_API Tvg_Canvas tvg_swcanvas_create(Tvg_Engine_Option op);
 
-
 /**
  * @brief Sets the buffer used in the rasterization process and defines the used colorspace.
  *
@@ -557,9 +530,7 @@ TVG_API Tvg_Canvas tvg_swcanvas_create(Tvg_Engine_Option op);
  */
 TVG_API Tvg_Result tvg_swcanvas_set_target(Tvg_Canvas canvas, uint32_t* buffer, uint32_t stride, uint32_t w, uint32_t h, Tvg_Colorspace cs);
 
-
 /** \} */   // end defgroup ThorVGCapi_SwCanvas
-
 
 /**
  * @defgroup ThorVGCapi_GlCanvas SwCanvas
@@ -592,7 +563,6 @@ TVG_API Tvg_Result tvg_swcanvas_set_target(Tvg_Canvas canvas, uint32_t* buffer, 
  */
 TVG_API Tvg_Canvas tvg_glcanvas_create(Tvg_Engine_Option op);
 
-
 /**
  * @brief Sets the drawing target for rasterization.
  *
@@ -621,7 +591,6 @@ TVG_API Tvg_Canvas tvg_glcanvas_create(Tvg_Engine_Option op);
 TVG_API Tvg_Result tvg_glcanvas_set_target(Tvg_Canvas canvas, void* display, void* surface, void* context, int32_t id, uint32_t w, uint32_t h, Tvg_Colorspace cs);
 
 /** \} */   // end defgroup ThorVGCapi_GlCanvas
-
 
 /**
  * @defgroup ThorVGCapi_WgCanvas WgCanvas
@@ -674,7 +643,6 @@ TVG_API Tvg_Result tvg_wgcanvas_set_target(Tvg_Canvas canvas, void* device, void
 
 /** \} */   // end defgroup ThorVGCapi_WgCanvas
 
-
 /************************************************************************/
 /* Common Canvas API                                                    */
 /************************************************************************/
@@ -685,7 +653,6 @@ TVG_API Tvg_Result tvg_wgcanvas_set_target(Tvg_Canvas canvas, void* device, void
  *
  */
 TVG_API Tvg_Result tvg_canvas_destroy(Tvg_Canvas canvas);
-
 
 /**
  * @brief Adds a paint object to the canvas for rendering.
@@ -712,7 +679,6 @@ TVG_API Tvg_Result tvg_canvas_destroy(Tvg_Canvas canvas);
  * @since 1.0
  */
 TVG_API Tvg_Result tvg_canvas_add(Tvg_Canvas canvas, Tvg_Paint paint);
-
 
 /**
  * @brief Inserts a paint object into the canvas root scene.
@@ -744,7 +710,6 @@ TVG_API Tvg_Result tvg_canvas_add(Tvg_Canvas canvas, Tvg_Paint paint);
  */
 TVG_API Tvg_Result tvg_canvas_insert(Tvg_Canvas canvas, Tvg_Paint target, Tvg_Paint at);
 
-
 /**
  * @brief Removes a paint object from the root scene.
  *
@@ -761,7 +726,6 @@ TVG_API Tvg_Result tvg_canvas_insert(Tvg_Canvas canvas, Tvg_Paint target, Tvg_Pa
  * @since 1.0
  */
 TVG_API Tvg_Result tvg_canvas_remove(Tvg_Canvas canvas, Tvg_Paint paint);
-
 
 /**
  * @brief Requests the canvas to update modified paint objects in preparation for rendering.
@@ -781,7 +745,6 @@ TVG_API Tvg_Result tvg_canvas_remove(Tvg_Canvas canvas, Tvg_Paint paint);
  * @see tvg_canvas_sync()
  */
 TVG_API Tvg_Result tvg_canvas_update(Tvg_Canvas canvas);
-
 
 /**
  * @brief Requests the canvas to render the Paint objects.
@@ -804,7 +767,6 @@ TVG_API Tvg_Result tvg_canvas_update(Tvg_Canvas canvas);
  */
 TVG_API Tvg_Result tvg_canvas_draw(Tvg_Canvas canvas, bool clear);
 
-
 /**
  * @brief Guarantees that drawing task is finished.
  *
@@ -817,7 +779,6 @@ TVG_API Tvg_Result tvg_canvas_draw(Tvg_Canvas canvas, bool clear);
  * @see tvg_canvas_draw()
  */
 TVG_API Tvg_Result tvg_canvas_sync(Tvg_Canvas canvas);
-
 
 /**
  * @brief Sets the drawing region of the canvas.
@@ -871,7 +832,6 @@ TVG_API Tvg_Result tvg_canvas_set_viewport(Tvg_Canvas canvas, int32_t x, int32_t
  */
 TVG_API Tvg_Result tvg_paint_rel(Tvg_Paint paint);
 
-
 /**
  * @brief Increment the reference count for the Tvg_Paint object.
  *
@@ -889,7 +849,6 @@ TVG_API Tvg_Result tvg_paint_rel(Tvg_Paint paint);
  * @since 1.0
  */
 TVG_API uint16_t tvg_paint_ref(Tvg_Paint paint);
-
 
 /**
  * @brief Decrement the reference count for the Tvg_Paint object.
@@ -909,7 +868,6 @@ TVG_API uint16_t tvg_paint_ref(Tvg_Paint paint);
  */
 TVG_API uint16_t tvg_paint_unref(Tvg_Paint paint, bool free);
 
-
 /**
  * @brief Retrieve the current reference count of the Tvg_Paint object.
  *
@@ -925,7 +883,6 @@ TVG_API uint16_t tvg_paint_unref(Tvg_Paint paint, bool free);
  * @since 1.0
  */
 TVG_API uint16_t tvg_paint_get_ref(const Tvg_Paint paint);
-
 
 /**
  * @brief Sets the visibility of the Paint object.
@@ -949,7 +906,6 @@ TVG_API uint16_t tvg_paint_get_ref(const Tvg_Paint paint);
  */
 TVG_API Tvg_Result tvg_paint_set_visible(Tvg_Paint paint, bool visible);
 
-
 /**
  * @brief Gets the current visibility status of the Paint object.
  *
@@ -964,7 +920,6 @@ TVG_API Tvg_Result tvg_paint_set_visible(Tvg_Paint paint, bool visible);
  */
 TVG_API bool tvg_paint_get_visible(const Tvg_Paint paint);
 
-
 /**
  * @brief Scales the given Tvg_Paint object by the given factor.
  *
@@ -976,7 +931,6 @@ TVG_API bool tvg_paint_get_visible(const Tvg_Paint paint);
  * @see tvg_paint_set_transform()
  */
 TVG_API Tvg_Result tvg_paint_scale(Tvg_Paint paint, float factor);
-
 
 /**
  * @brief Rotates the given Tvg_Paint by the given angle.
@@ -992,7 +946,6 @@ TVG_API Tvg_Result tvg_paint_scale(Tvg_Paint paint, float factor);
  * @see tvg_paint_set_transform()
  */
 TVG_API Tvg_Result tvg_paint_rotate(Tvg_Paint paint, float degree);
-
 
 /**
  * @brief Moves the given Tvg_Paint in a two-dimensional space.
@@ -1010,7 +963,6 @@ TVG_API Tvg_Result tvg_paint_rotate(Tvg_Paint paint, float degree);
  */
 TVG_API Tvg_Result tvg_paint_translate(Tvg_Paint paint, float x, float y);
 
-
 /**
  * @brief Transforms the given Tvg_Paint using the augmented transformation matrix.
  *
@@ -1021,7 +973,6 @@ TVG_API Tvg_Result tvg_paint_translate(Tvg_Paint paint, float x, float y);
  * 
  */
 TVG_API Tvg_Result tvg_paint_set_transform(Tvg_Paint paint, const Tvg_Matrix* m);
-
 
 /**
  * @brief Gets the matrix of the affine transformation of the given Tvg_Paint object.
@@ -1034,7 +985,6 @@ TVG_API Tvg_Result tvg_paint_set_transform(Tvg_Paint paint, const Tvg_Matrix* m)
  */
 TVG_API Tvg_Result tvg_paint_get_transform(Tvg_Paint paint, Tvg_Matrix* m);
 
-
 /**
  * @brief Sets the opacity of the given Tvg_Paint.
  *
@@ -1045,7 +995,6 @@ TVG_API Tvg_Result tvg_paint_get_transform(Tvg_Paint paint, Tvg_Matrix* m);
  */
 TVG_API Tvg_Result tvg_paint_set_opacity(Tvg_Paint paint, uint8_t opacity);
 
-
 /**
  * @brief Gets the opacity of the given Tvg_Paint.
  *
@@ -1054,7 +1003,6 @@ TVG_API Tvg_Result tvg_paint_set_opacity(Tvg_Paint paint, uint8_t opacity);
  *
  */
 TVG_API Tvg_Result tvg_paint_get_opacity(const Tvg_Paint paint, uint8_t* opacity);
-
 
 /**
  * @brief Duplicates the given Tvg_Paint object.
@@ -1066,7 +1014,6 @@ TVG_API Tvg_Result tvg_paint_get_opacity(const Tvg_Paint paint, uint8_t* opacity
  * @return A copied Tvg_Paint object if succeed, @c nullptr otherwise.
  */
 TVG_API Tvg_Paint tvg_paint_duplicate(Tvg_Paint paint);
-
 
 /**
  * @brief Checks whether a given region intersects the filled area of the paint.
@@ -1096,7 +1043,6 @@ TVG_API Tvg_Paint tvg_paint_duplicate(Tvg_Paint paint);
  */
 TVG_API bool tvg_paint_intersects(Tvg_Paint paint, int32_t x, int32_t y, int32_t w, int32_t h);
 
-
 /**
  * @brief Retrieves the axis-aligned bounding box (AABB) of the paint object in canvas space.
  *
@@ -1118,7 +1064,6 @@ TVG_API bool tvg_paint_intersects(Tvg_Paint paint, int32_t x, int32_t y, int32_t
  * @see tvg_canvas_update()
  */
 TVG_API Tvg_Result tvg_paint_get_aabb(Tvg_Paint paint, float* x, float* y, float* w, float* h);
-
 
 /**
  * @brief Retrieves the object-oriented bounding box (OBB) of the paint object in canvas space.
@@ -1142,7 +1087,6 @@ TVG_API Tvg_Result tvg_paint_get_aabb(Tvg_Paint paint, float* x, float* y, float
  */
 TVG_API Tvg_Result tvg_paint_get_obb(Tvg_Paint paint, Tvg_Point* pt4);
 
-
 /**
  * @brief Sets the masking target object and the masking method.
  *
@@ -1155,7 +1099,6 @@ TVG_API Tvg_Result tvg_paint_get_obb(Tvg_Paint paint, Tvg_Point* pt4);
  */
 TVG_API Tvg_Result tvg_paint_set_mask_method(Tvg_Paint paint, Tvg_Paint target, Tvg_Mask_Method method);
 
-
 /**
  * @brief Gets the masking target object and the masking method.
  *
@@ -1165,7 +1108,6 @@ TVG_API Tvg_Result tvg_paint_set_mask_method(Tvg_Paint paint, Tvg_Paint target, 
  *
  */
 TVG_API Tvg_Result tvg_paint_get_mask_method(const Tvg_Paint paint, const Tvg_Paint target, Tvg_Mask_Method* method);
-
 
 /**
  * @brief Clip the drawing region of the paint object.
@@ -1214,7 +1156,6 @@ TVG_API Tvg_Paint tvg_paint_get_clip(const Tvg_Paint paint);
 */
 TVG_API Tvg_Paint tvg_paint_get_parent(const Tvg_Paint paint);
 
-
 /**
  * @brief Gets the unique value of the paint instance indicating the instance type.
  *
@@ -1224,7 +1165,6 @@ TVG_API Tvg_Paint tvg_paint_get_parent(const Tvg_Paint paint);
  * @since 1.0
  */
 TVG_API Tvg_Result tvg_paint_get_type(const Tvg_Paint paint, Tvg_Type* type);
-
 
 /**
  * @brief Sets the blending method for the paint object.
@@ -1239,7 +1179,6 @@ TVG_API Tvg_Result tvg_paint_get_type(const Tvg_Paint paint, Tvg_Type* type);
  * @since 0.15
  */
 TVG_API Tvg_Result tvg_paint_set_blend_method(Tvg_Paint paint, Tvg_Blend_Method method);
-
 
 /** \} */   // end defgroup ThorVGCapi_Paint
 
@@ -1274,7 +1213,6 @@ TVG_API Tvg_Result tvg_paint_set_blend_method(Tvg_Paint paint, Tvg_Blend_Method 
  */
 TVG_API Tvg_Paint tvg_shape_new(void);
 
-
 /**
  * @brief Resets the shape path properties.
  *
@@ -1285,7 +1223,6 @@ TVG_API Tvg_Paint tvg_shape_new(void);
  * @note The memory, where the path data is stored, is not deallocated at this stage for caching effect.
  */
 TVG_API Tvg_Result tvg_shape_reset(Tvg_Paint paint);
-
 
 /**
  * @brief Sets the initial point of the sub-path.
@@ -1299,7 +1236,6 @@ TVG_API Tvg_Result tvg_shape_reset(Tvg_Paint paint);
  */
 TVG_API Tvg_Result tvg_shape_move_to(Tvg_Paint paint, float x, float y);
 
-
 /**
  * @brief Adds a new point to the sub-path, which results in drawing a line from the current point to the given end-point.
  *
@@ -1312,7 +1248,6 @@ TVG_API Tvg_Result tvg_shape_move_to(Tvg_Paint paint, float x, float y);
  * @note In case this is the first command in the path, it corresponds to the tvg_shape_move_to() call.
  */
 TVG_API Tvg_Result tvg_shape_line_to(Tvg_Paint paint, float x, float y);
-
 
 /**
  * @brief Adds new points to the sub-path, which results in drawing a cubic Bezier curve.
@@ -1332,7 +1267,6 @@ TVG_API Tvg_Result tvg_shape_line_to(Tvg_Paint paint, float x, float y);
  */
 TVG_API Tvg_Result tvg_shape_cubic_to(Tvg_Paint paint, float cx1, float cy1, float cx2, float cy2, float x, float y);
 
-
 /**
  * @brief Closes the current sub-path by drawing a line from the current point to the initial point of the sub-path.
  *
@@ -1343,7 +1277,6 @@ TVG_API Tvg_Result tvg_shape_cubic_to(Tvg_Paint paint, float cx1, float cy1, flo
  * @note In case the sub-path does not contain any points, this function has no effect.
  */
 TVG_API Tvg_Result tvg_shape_close(Tvg_Paint paint);
-
 
 /**
  * @brief Appends a rectangle to the path.
@@ -1371,7 +1304,6 @@ TVG_API Tvg_Result tvg_shape_close(Tvg_Paint paint);
  */
 TVG_API Tvg_Result tvg_shape_append_rect(Tvg_Paint paint, float x, float y, float w, float h, float rx, float ry, bool cw);
 
-
 /**
  * @brief Appends an ellipse to the path.
  *
@@ -1391,7 +1323,6 @@ TVG_API Tvg_Result tvg_shape_append_rect(Tvg_Paint paint, float x, float y, floa
  */
 TVG_API Tvg_Result tvg_shape_append_circle(Tvg_Paint paint, float cx, float cy, float rx, float ry, bool cw);
 
-
 /**
  * @brief Appends a given sub-path to the path.
  *
@@ -1408,7 +1339,6 @@ TVG_API Tvg_Result tvg_shape_append_circle(Tvg_Paint paint, float cx, float cy, 
  * @retval TVG_RESULT_INVALID_ARGUMENT A @c nullptr passed as the argument or @p cmdCnt or @p ptsCnt equal to zero.
  */
 TVG_API Tvg_Result tvg_shape_append_path(Tvg_Paint paint, const Tvg_Path_Command* cmds, uint32_t cmdCnt, const Tvg_Point* pts, uint32_t ptsCnt);
-
 
 /**
  * @brief Retrieves the current path data of the shape.
@@ -1429,7 +1359,6 @@ TVG_API Tvg_Result tvg_shape_append_path(Tvg_Paint paint, const Tvg_Path_Command
  */
 TVG_API Tvg_Result tvg_shape_get_path(const Tvg_Paint paint, const Tvg_Path_Command** cmds, uint32_t* cmdsCnt, const Tvg_Point** pts, uint32_t* ptsCnt);
 
-
 /**
  * @brief Sets the stroke width for the path.
  *
@@ -1446,7 +1375,6 @@ TVG_API Tvg_Result tvg_shape_get_path(const Tvg_Paint paint, const Tvg_Path_Comm
  */
 TVG_API Tvg_Result tvg_shape_set_stroke_width(Tvg_Paint paint, float width);
 
-
 /**
  * @brief Gets the shape's stroke width.
  *
@@ -1455,7 +1383,6 @@ TVG_API Tvg_Result tvg_shape_set_stroke_width(Tvg_Paint paint, float width);
  *
  */
 TVG_API Tvg_Result tvg_shape_get_stroke_width(const Tvg_Paint paint, float* width);
-
 
 /**
  * @brief Sets the shape's stroke color.
@@ -1474,7 +1401,6 @@ TVG_API Tvg_Result tvg_shape_get_stroke_width(const Tvg_Paint paint, float* widt
  */
 TVG_API Tvg_Result tvg_shape_set_stroke_color(Tvg_Paint paint, uint8_t r, uint8_t g, uint8_t b, uint8_t a);
 
-
 /**
  * @brief Gets the shape's stroke color.
  *
@@ -1487,7 +1413,6 @@ TVG_API Tvg_Result tvg_shape_set_stroke_color(Tvg_Paint paint, uint8_t r, uint8_
  * @retval TVG_RESULT_INSUFFICIENT_CONDITION No stroke was set.
  */
 TVG_API Tvg_Result tvg_shape_get_stroke_color(const Tvg_Paint paint, uint8_t* r, uint8_t* g, uint8_t* b, uint8_t* a);
-
 
 /**
  * @brief Sets the gradient fill of the stroke for all of the figures from the path.
@@ -1503,7 +1428,6 @@ TVG_API Tvg_Result tvg_shape_get_stroke_color(const Tvg_Paint paint, uint8_t* r,
  */
 TVG_API Tvg_Result tvg_shape_set_stroke_gradient(Tvg_Paint paint, Tvg_Gradient grad);
 
-
 /**
  * @brief Gets the gradient fill of the shape's stroke.
  *
@@ -1514,7 +1438,6 @@ TVG_API Tvg_Result tvg_shape_set_stroke_gradient(Tvg_Paint paint, Tvg_Gradient g
  *
  */
 TVG_API Tvg_Result tvg_shape_get_stroke_gradient(const Tvg_Paint paint, Tvg_Gradient* grad);
-
 
 /**
  * @brief Sets the shape's stroke dash pattern.
@@ -1535,7 +1458,6 @@ TVG_API Tvg_Result tvg_shape_get_stroke_gradient(const Tvg_Paint paint, Tvg_Grad
  */
 TVG_API Tvg_Result tvg_shape_set_stroke_dash(Tvg_Paint paint, const float* dashPattern, uint32_t cnt, float offset);
 
-
 /**
  * @brief Gets the dash pattern of the stroke.
  *
@@ -1550,7 +1472,6 @@ TVG_API Tvg_Result tvg_shape_set_stroke_dash(Tvg_Paint paint, const float* dashP
  */
 TVG_API Tvg_Result tvg_shape_get_stroke_dash(const Tvg_Paint paint, const float** dashPattern, uint32_t* cnt, float* offset);
 
-
 /**
  * @brief Sets the cap style used for stroking the path.
  *
@@ -1562,7 +1483,6 @@ TVG_API Tvg_Result tvg_shape_get_stroke_dash(const Tvg_Paint paint, const float*
  */
 TVG_API Tvg_Result tvg_shape_set_stroke_cap(Tvg_Paint paint, Tvg_Stroke_Cap cap);
 
-
 /**
  * @brief Gets the stroke cap style used for stroking the path.
  *
@@ -1571,7 +1491,6 @@ TVG_API Tvg_Result tvg_shape_set_stroke_cap(Tvg_Paint paint, Tvg_Stroke_Cap cap)
  *
  */
 TVG_API Tvg_Result tvg_shape_get_stroke_cap(const Tvg_Paint paint, Tvg_Stroke_Cap* cap);
-
 
 /**
  * @brief Sets the join style for stroked path segments.
@@ -1582,7 +1501,6 @@ TVG_API Tvg_Result tvg_shape_get_stroke_cap(const Tvg_Paint paint, Tvg_Stroke_Ca
  */
 TVG_API Tvg_Result tvg_shape_set_stroke_join(Tvg_Paint paint, Tvg_Stroke_Join join);
 
-
 /**
  * @brief The function gets the stroke join method
  *
@@ -1591,7 +1509,6 @@ TVG_API Tvg_Result tvg_shape_set_stroke_join(Tvg_Paint paint, Tvg_Stroke_Join jo
  *
  */
 TVG_API Tvg_Result tvg_shape_get_stroke_join(const Tvg_Paint paint, Tvg_Stroke_Join* join);
-
 
 /**
  * @brief Sets the stroke miterlimit.
@@ -1605,7 +1522,6 @@ TVG_API Tvg_Result tvg_shape_get_stroke_join(const Tvg_Paint paint, Tvg_Stroke_J
  */
 TVG_API Tvg_Result tvg_shape_set_stroke_miterlimit(Tvg_Paint paint, float miterlimit);
 
-
 /**
  * @brief The function gets the stroke miterlimit.
  *
@@ -1616,7 +1532,6 @@ TVG_API Tvg_Result tvg_shape_set_stroke_miterlimit(Tvg_Paint paint, float miterl
  * @since 0.11
  */
 TVG_API Tvg_Result tvg_shape_get_stroke_miterlimit(const Tvg_Paint paint, float* miterlimit);
-
 
 /**
  * @brief Sets the trim of the shape along the defined path segment, allowing control over which part of the shape is visible.
@@ -1632,7 +1547,6 @@ TVG_API Tvg_Result tvg_shape_get_stroke_miterlimit(const Tvg_Paint paint, float*
  * @since 1.0
  */
 TVG_API Tvg_Result tvg_shape_set_trimpath(Tvg_Paint paint, float begin, float end, bool simultaneous);
-
 
 /**
  * @brief Sets the shape's solid color.
@@ -1650,7 +1564,6 @@ TVG_API Tvg_Result tvg_shape_set_trimpath(Tvg_Paint paint, float begin, float en
  */
 TVG_API Tvg_Result tvg_shape_set_fill_color(Tvg_Paint paint, uint8_t r, uint8_t g, uint8_t b, uint8_t a);
 
-
 /**
  * @brief Gets the shape's solid color.
  *
@@ -1662,7 +1575,6 @@ TVG_API Tvg_Result tvg_shape_set_fill_color(Tvg_Paint paint, uint8_t r, uint8_t 
  *
  */
 TVG_API Tvg_Result tvg_shape_get_fill_color(const Tvg_Paint paint, uint8_t* r, uint8_t* g, uint8_t* b, uint8_t* a);
-
 
 /**
  * @brief Sets the fill rule for the shape.
@@ -1676,7 +1588,6 @@ TVG_API Tvg_Result tvg_shape_get_fill_color(const Tvg_Paint paint, uint8_t* r, u
  */
 TVG_API Tvg_Result tvg_shape_set_fill_rule(Tvg_Paint paint, Tvg_Fill_Rule rule);
 
-
 /**
  * @brief Retrieves the current fill rule used by the shape.
  *
@@ -1689,7 +1600,6 @@ TVG_API Tvg_Result tvg_shape_set_fill_rule(Tvg_Paint paint, Tvg_Fill_Rule rule);
  */
 TVG_API Tvg_Result tvg_shape_get_fill_rule(const Tvg_Paint paint, Tvg_Fill_Rule* rule);
 
-
 /**
  * @brief Sets the rendering order of the stroke and the fill.
  *
@@ -1699,7 +1609,6 @@ TVG_API Tvg_Result tvg_shape_get_fill_rule(const Tvg_Paint paint, Tvg_Fill_Rule*
  * @since 0.10
  */
 TVG_API Tvg_Result tvg_shape_set_paint_order(Tvg_Paint paint, bool strokeFirst);
-
 
 /**
  * @brief Sets the gradient fill for all of the figures from the path.
@@ -1714,7 +1623,6 @@ TVG_API Tvg_Result tvg_shape_set_paint_order(Tvg_Paint paint, bool strokeFirst);
  */
 TVG_API Tvg_Result tvg_shape_set_gradient(Tvg_Paint paint, Tvg_Gradient grad);
 
-
 /**
  * @brief Gets the gradient fill of the shape.
  *
@@ -1726,9 +1634,7 @@ TVG_API Tvg_Result tvg_shape_set_gradient(Tvg_Paint paint, Tvg_Gradient grad);
  */
 TVG_API Tvg_Result tvg_shape_get_gradient(const Tvg_Paint paint, Tvg_Gradient* grad);
 
-
 /** \} */   // end defgroup ThorVGCapi_Shape
-
 
 /**
  * @defgroup ThorVGCapi_Gradient Gradient
@@ -1751,14 +1657,12 @@ TVG_API Tvg_Result tvg_shape_get_gradient(const Tvg_Paint paint, Tvg_Gradient* g
  */
 TVG_API Tvg_Gradient tvg_linear_gradient_new(void);
 
-
 /**
  * @brief Creates a new radial gradient object.
  *
  * @return A new radial gradient object.
  */
 TVG_API Tvg_Gradient tvg_radial_gradient_new(void);
-
 
 /**
  * @brief Sets the linear gradient bounds.
@@ -1778,7 +1682,6 @@ TVG_API Tvg_Gradient tvg_radial_gradient_new(void);
  */
 TVG_API Tvg_Result tvg_linear_gradient_set(Tvg_Gradient grad, float x1, float y1, float x2, float y2);
 
-
 /**
  * @brief Gets the linear gradient bounds.
  *
@@ -1794,7 +1697,6 @@ TVG_API Tvg_Result tvg_linear_gradient_set(Tvg_Gradient grad, float x1, float y1
  *
  */
 TVG_API Tvg_Result tvg_linear_gradient_get(Tvg_Gradient grad, float* x1, float* y1, float* x2, float* y2);
-
 
 /**
  * @brief Sets the radial gradient attributes.
@@ -1826,7 +1728,6 @@ TVG_API Tvg_Result tvg_linear_gradient_get(Tvg_Gradient grad, float* x1, float* 
  */
 TVG_API Tvg_Result tvg_radial_gradient_set(Tvg_Gradient grad, float cx, float cy, float r, float fx, float fy, float fr);
 
-
 /**
  * @brief The function gets radial gradient attributes.
  *
@@ -1842,7 +1743,6 @@ TVG_API Tvg_Result tvg_radial_gradient_set(Tvg_Gradient grad, float cx, float cy
  */
 TVG_API Tvg_Result tvg_radial_gradient_get(Tvg_Gradient grad, float* cx, float* cy, float* r, float* fx, float* fy, float* fr);
 
-
 /**
  * @brief Sets the parameters of the colors of the gradient and their position.
  *
@@ -1852,7 +1752,6 @@ TVG_API Tvg_Result tvg_radial_gradient_get(Tvg_Gradient grad, float* cx, float* 
  *
  */
 TVG_API Tvg_Result tvg_gradient_set_color_stops(Tvg_Gradient grad, const Tvg_Color_Stop* color_stop, uint32_t cnt);
-
 
 /**
  * @brief Gets the parameters of the colors of the gradient, their position and number
@@ -1866,7 +1765,6 @@ TVG_API Tvg_Result tvg_gradient_set_color_stops(Tvg_Gradient grad, const Tvg_Col
  */
 TVG_API Tvg_Result tvg_gradient_get_color_stops(const Tvg_Gradient grad, const Tvg_Color_Stop** color_stop, uint32_t* cnt);
 
-
 /**
  * @brief Sets the Tvg_Stroke_Fill value, which specifies how to fill the area outside the gradient bounds.
  *
@@ -1876,7 +1774,6 @@ TVG_API Tvg_Result tvg_gradient_get_color_stops(const Tvg_Gradient grad, const T
  */
 TVG_API Tvg_Result tvg_gradient_set_spread(Tvg_Gradient grad, const Tvg_Stroke_Fill spread);
 
-
 /**
  * @brief Gets the FillSpread value of the gradient object.
  *
@@ -1885,7 +1782,6 @@ TVG_API Tvg_Result tvg_gradient_set_spread(Tvg_Gradient grad, const Tvg_Stroke_F
  *
  */
 TVG_API Tvg_Result tvg_gradient_get_spread(const Tvg_Gradient grad, Tvg_Stroke_Fill* spread);
-
 
 /**
  * @brief Sets the matrix of the affine transformation for the gradient object.
@@ -1898,7 +1794,6 @@ TVG_API Tvg_Result tvg_gradient_get_spread(const Tvg_Gradient grad, Tvg_Stroke_F
  */
 TVG_API Tvg_Result tvg_gradient_set_transform(Tvg_Gradient grad, const Tvg_Matrix* m);
 
-
 /**
  * @brief Gets the matrix of the affine transformation of the gradient object.
  *
@@ -1910,7 +1805,6 @@ TVG_API Tvg_Result tvg_gradient_set_transform(Tvg_Gradient grad, const Tvg_Matri
  */
 TVG_API Tvg_Result tvg_gradient_get_transform(const Tvg_Gradient grad, Tvg_Matrix* m);
 
-
 /**
  * @brief Gets the unique value of the gradient instance indicating the instance type.
  *
@@ -1920,7 +1814,6 @@ TVG_API Tvg_Result tvg_gradient_get_transform(const Tvg_Gradient grad, Tvg_Matri
  * @since 1.0
  */
 TVG_API Tvg_Result tvg_gradient_get_type(const Tvg_Gradient grad, Tvg_Type* type);
-
 
 /**
  * @brief Duplicates the given Tvg_Gradient object.
@@ -1933,7 +1826,6 @@ TVG_API Tvg_Result tvg_gradient_get_type(const Tvg_Gradient grad, Tvg_Type* type
  */
 TVG_API Tvg_Gradient tvg_gradient_duplicate(Tvg_Gradient grad);
 
-
 /**
  * @brief Deletes the given gradient object.
  *
@@ -1942,9 +1834,7 @@ TVG_API Tvg_Gradient tvg_gradient_duplicate(Tvg_Gradient grad);
  */
 TVG_API Tvg_Result tvg_gradient_del(Tvg_Gradient grad);
 
-
 /** \} */   // end defgroup ThorVGCapi_Gradient
-
 
 /**
  * @defgroup ThorVGCapi_Picture Picture
@@ -1971,7 +1861,6 @@ TVG_API Tvg_Result tvg_gradient_del(Tvg_Gradient grad);
  */
 TVG_API Tvg_Paint tvg_picture_new(void);
 
-
 /**
  * @brief Loads a picture data directly from a file.
  *
@@ -1986,7 +1875,6 @@ TVG_API Tvg_Paint tvg_picture_new(void);
  * @retval TVG_RESULT_NOT_SUPPORTED A file with an unknown extension.
  */
 TVG_API Tvg_Result tvg_picture_load(Tvg_Paint picture, const char* path);
-
 
 /**
  * @brief Loads raw image data in a specific format from a memory block of the given size.
@@ -2009,7 +1897,6 @@ TVG_API Tvg_Result tvg_picture_load(Tvg_Paint picture, const char* path);
  */
 TVG_API Tvg_Result tvg_picture_load_raw(Tvg_Paint picture, const uint32_t *data, uint32_t w, uint32_t h, Tvg_Colorspace cs, bool copy);
 
-
 /**
  * @brief Loads a picture data from a memory block of a given size.
  *
@@ -2030,7 +1917,6 @@ TVG_API Tvg_Result tvg_picture_load_raw(Tvg_Paint picture, const uint32_t *data,
  * @warning: It's the user responsibility to release the @p data memory if the @p copy is @c true.
  */
 TVG_API Tvg_Result tvg_picture_load_data(Tvg_Paint picture, const char *data, uint32_t size, const char *mimetype, const char* rpath, bool copy);
-
 
 /**
  * @brief Sets the asset resolver callback for handling external resources (e.g., images and fonts).
@@ -2057,7 +1943,6 @@ TVG_API Tvg_Result tvg_picture_load_data(Tvg_Paint picture, const char *data, ui
  */
 TVG_API Tvg_Result tvg_picture_set_asset_resolver(Tvg_Paint picture, Tvg_Picture_Asset_Resolver resolver, void* data);
 
-
 /**
  * @brief Resizes the picture content to the given width and height.
  *
@@ -2071,7 +1956,6 @@ TVG_API Tvg_Result tvg_picture_set_asset_resolver(Tvg_Paint picture, Tvg_Picture
  */
 TVG_API Tvg_Result tvg_picture_set_size(Tvg_Paint picture, float w, float h);
 
-
 /**
  * @brief Gets the size of the loaded picture.
  *
@@ -2081,7 +1965,6 @@ TVG_API Tvg_Result tvg_picture_set_size(Tvg_Paint picture, float w, float h);
  *
  */
 TVG_API Tvg_Result tvg_picture_get_size(const Tvg_Paint picture, float* w, float* h);
-
 
 /**
  * @brief Sets the normalized origin point of the Picture object.
@@ -2116,7 +1999,6 @@ TVG_API Tvg_Result tvg_picture_get_size(const Tvg_Paint picture, float* w, float
  */
 TVG_API Tvg_Result tvg_picture_set_origin(Tvg_Paint picture, float x, float y);
 
-
 /**
  * @brief Gets the normalized origin point of the Picture object.
  *
@@ -2131,7 +2013,6 @@ TVG_API Tvg_Result tvg_picture_set_origin(Tvg_Paint picture, float x, float y);
  * @since 1.0
  */
 TVG_API Tvg_Result tvg_picture_get_origin(const Tvg_Paint picture, float* x, float* y);
-
 
 /**
  * @brief Retrieve a paint object from the Picture scene by its Unique ID.
@@ -2148,7 +2029,6 @@ TVG_API Tvg_Result tvg_picture_get_origin(const Tvg_Paint picture, float* x, flo
  */
 TVG_API const Tvg_Paint tvg_picture_get_paint(Tvg_Paint picture, uint32_t id);
 
-
 /**
  * @brief Sets the image filtering method for rendering this picture.
  *
@@ -2164,7 +2044,6 @@ TVG_API const Tvg_Paint tvg_picture_get_paint(Tvg_Paint picture, uint32_t id);
 TVG_API Tvg_Result tvg_picture_set_filter(Tvg_Paint picture, Tvg_Filter_Method method);
 
 /** \} */   // end defgroup ThorVGCapi_Picture
-
 
 /**
  * @defgroup ThorVGCapi_Scene Scene
@@ -2192,7 +2071,6 @@ TVG_API Tvg_Result tvg_picture_set_filter(Tvg_Paint picture, Tvg_Filter_Method m
  */
 TVG_API Tvg_Paint tvg_scene_new(void);
 
-
 /**
  * @brief Adds a paint object to the scene.
  *
@@ -2217,7 +2095,6 @@ TVG_API Tvg_Paint tvg_scene_new(void);
  * @since 1.0
  */
 TVG_API Tvg_Result tvg_scene_add(Tvg_Paint scene, Tvg_Paint paint);
-
 
 /**
  * @brief Inserts a paint object into the scene.
@@ -2248,7 +2125,6 @@ TVG_API Tvg_Result tvg_scene_add(Tvg_Paint scene, Tvg_Paint paint);
  */
 TVG_API Tvg_Result tvg_scene_insert(Tvg_Paint scene, Tvg_Paint target, Tvg_Paint at);
 
-
 /**
  * @brief Removes a paint object from the scene.
  *
@@ -2265,7 +2141,6 @@ TVG_API Tvg_Result tvg_scene_insert(Tvg_Paint scene, Tvg_Paint target, Tvg_Paint
  */
 TVG_API Tvg_Result tvg_scene_remove(Tvg_Paint scene, Tvg_Paint paint);
 
-
 /**
  * @brief Clears all previously applied scene effects.
  *
@@ -2277,7 +2152,6 @@ TVG_API Tvg_Result tvg_scene_remove(Tvg_Paint scene, Tvg_Paint paint);
  * @since 1.0
  */
 TVG_API Tvg_Result tvg_scene_clear_effects(Tvg_Paint scene);
-
 
 /**
  * @brief Adds a Gaussian blur effect to the scene.
@@ -2294,7 +2168,6 @@ TVG_API Tvg_Result tvg_scene_clear_effects(Tvg_Paint scene);
  * @since 1.0
  */
 TVG_API Tvg_Result tvg_scene_add_effect_gaussian_blur(Tvg_Paint scene, double sigma, int direction, int border, int quality);
-
 
 /**
  * @brief Adds a drop shadow effect to the scene.
@@ -2317,7 +2190,6 @@ TVG_API Tvg_Result tvg_scene_add_effect_gaussian_blur(Tvg_Paint scene, double si
  */
 TVG_API Tvg_Result tvg_scene_add_effect_drop_shadow(Tvg_Paint scene, int r, int g, int b, int a, double angle, double distance, double sigma, int quality);
 
-
 /**
  * @brief Adds a fill color effect to the scene.
  *
@@ -2332,7 +2204,6 @@ TVG_API Tvg_Result tvg_scene_add_effect_drop_shadow(Tvg_Paint scene, int r, int 
  * @since 1.0
  */
 TVG_API Tvg_Result tvg_scene_add_effect_fill(Tvg_Paint scene, int r, int g, int b, int a);
-
 
 /**
  * @brief Adds a tint effect to the scene.
@@ -2352,7 +2223,6 @@ TVG_API Tvg_Result tvg_scene_add_effect_fill(Tvg_Paint scene, int r, int g, int 
  * @since 1.0
  */
 TVG_API Tvg_Result tvg_scene_add_effect_tint(Tvg_Paint scene, int black_r, int black_g, int black_b, int white_r, int white_g, int white_b, double intensity);
-
 
 /**
  * @brief Adds a tritone color effect to the scene.
@@ -2377,7 +2247,6 @@ TVG_API Tvg_Result tvg_scene_add_effect_tint(Tvg_Paint scene, int black_r, int b
 TVG_API Tvg_Result tvg_scene_add_effect_tritone(Tvg_Paint scene, int shadow_r, int shadow_g, int shadow_b, int midtone_r, int midtone_g, int midtone_b, int highlight_r, int highlight_g, int highlight_b, int blend);
 
 /** \} */   // end defgroup ThorVGCapi_Scene
-
 
 /**
  * @defgroup ThorVGCapi_Text Text
@@ -2406,7 +2275,6 @@ TVG_API Tvg_Result tvg_scene_add_effect_tritone(Tvg_Paint scene, int shadow_r, i
  */
 TVG_API Tvg_Paint tvg_text_new(void);
 
-
 /**
  * @brief Sets the font family for the text.
  *
@@ -2427,7 +2295,6 @@ TVG_API Tvg_Paint tvg_text_new(void);
  * @since 1.0
  */
 TVG_API Tvg_Result tvg_text_set_font(Tvg_Paint text, const char* name);
-
 
 /**
  * @brief Sets the font size for the text.
@@ -2450,7 +2317,6 @@ TVG_API Tvg_Result tvg_text_set_font(Tvg_Paint text, const char* name);
  */
 TVG_API Tvg_Result tvg_text_set_size(Tvg_Paint text, float size);
 
-
 /**
  * @brief Assigns the given unicode text to be rendered.
  *
@@ -2465,7 +2331,6 @@ TVG_API Tvg_Result tvg_text_set_size(Tvg_Paint text, float size);
  * @since 1.0
  */
 TVG_API Tvg_Result tvg_text_set_text(Tvg_Paint text, const char* utf8);
-
 
  /**
   * @brief Returns the currently assigned unicode text.
@@ -2483,7 +2348,6 @@ TVG_API Tvg_Result tvg_text_set_text(Tvg_Paint text, const char* utf8);
   */
  TVG_API const char* tvg_text_get_text(const Tvg_Paint text);
 
-
 /**
  * @brief Sets text alignment or anchor per axis.
  *
@@ -2500,7 +2364,6 @@ TVG_API Tvg_Result tvg_text_set_text(Tvg_Paint text, const char* utf8);
  * @see tvg_text_layout()
  */
 TVG_API Tvg_Result tvg_text_align(Tvg_Paint text, float x, float y);
-
 
 /**
  * @brief Sets the virtual layout box (constraints) for the text.
@@ -2521,7 +2384,6 @@ TVG_API Tvg_Result tvg_text_align(Tvg_Paint text, float x, float y);
  */
 TVG_API Tvg_Result tvg_text_layout(Tvg_Paint text, float w, float h);
 
-
 /**
  * @brief Sets the text wrapping mode for this text object.
  *
@@ -2537,7 +2399,6 @@ TVG_API Tvg_Result tvg_text_layout(Tvg_Paint text, float w, float h);
  * @since 1.0
  */
 TVG_API Tvg_Result tvg_text_wrap_mode(Tvg_Paint text, Tvg_Text_Wrap mode);
-
 
 /**
  * @brief Returns the number of text lines.
@@ -2578,7 +2439,6 @@ TVG_API Tvg_Result tvg_text_wrap_mode(Tvg_Paint text, Tvg_Text_Wrap mode);
  */
 TVG_API Tvg_Result tvg_text_spacing(Tvg_Paint text, float letter, float line);
 
-
 /**
  * @brief Apply an italic (slant) transformation to the text.
  *
@@ -2602,7 +2462,6 @@ TVG_API Tvg_Result tvg_text_spacing(Tvg_Paint text, float letter, float line);
  */
 TVG_API Tvg_Result tvg_text_set_italic(Tvg_Paint text, float shear);
 
-
 /**
  * @brief Sets an outline (stroke) around the text object.
  *
@@ -2622,7 +2481,6 @@ TVG_API Tvg_Result tvg_text_set_italic(Tvg_Paint text, float shear);
  */
 TVG_API Tvg_Result tvg_text_set_outline(Tvg_Paint text, float width, uint8_t r, uint8_t g, uint8_t b);
 
-
 /**
  * @brief Sets the text solid color.
  *
@@ -2640,7 +2498,6 @@ TVG_API Tvg_Result tvg_text_set_outline(Tvg_Paint text, float width, uint8_t r, 
  */
 TVG_API Tvg_Result tvg_text_set_color(Tvg_Paint text, uint8_t r, uint8_t g, uint8_t b);
 
-
 /**
  * @brief Sets the gradient fill for the text.
  *
@@ -2655,7 +2512,6 @@ TVG_API Tvg_Result tvg_text_set_color(Tvg_Paint text, uint8_t r, uint8_t g, uint
  * @since 0.15
  */
 TVG_API Tvg_Result tvg_text_set_gradient(Tvg_Paint text, Tvg_Gradient gradient);
-
 
 /**
  * @brief Retrieves the layout metrics of the text object.
@@ -2675,7 +2531,6 @@ TVG_API Tvg_Result tvg_text_set_gradient(Tvg_Paint text, Tvg_Gradient gradient);
  * @note Experimental API
  */
 TVG_API Tvg_Result tvg_text_get_text_metrics(const Tvg_Paint text, Tvg_Text_Metrics* metrics);
-
 
 /**
  * @brief Retrieves the layout metrics of a glyph in the text object.
@@ -2701,7 +2556,6 @@ TVG_API Tvg_Result tvg_text_get_text_metrics(const Tvg_Paint text, Tvg_Text_Metr
  */
 TVG_API Tvg_Result tvg_text_get_glyph_metrics(const Tvg_Paint text, const char* ch, Tvg_Glyph_Metrics* metrics);
 
-
 /**
  * @brief Loads a scalable font data from a file.
  *
@@ -2719,7 +2573,6 @@ TVG_API Tvg_Result tvg_text_get_glyph_metrics(const Tvg_Paint text, const char* 
  * @since 0.15
  */
 TVG_API Tvg_Result tvg_font_load(const char* path);
-
 
 /**
  * @brief Loads a scalable font data from a memory block of a given size.
@@ -2746,7 +2599,6 @@ TVG_API Tvg_Result tvg_font_load(const char* path);
  */
 TVG_API Tvg_Result tvg_font_load_data(const char* name, const char* data, uint32_t size, const char *mimetype, bool copy);
 
-
 /**
  * @brief Unloads the specified scalable font data that was previously loaded.
  *
@@ -2763,9 +2615,7 @@ TVG_API Tvg_Result tvg_font_load_data(const char* name, const char* data, uint32
  */
 TVG_API Tvg_Result tvg_font_unload(const char* path);
 
-
 /** \} */   // end defgroup ThorVGCapi_Text
-
 
 /**
  * @defgroup ThorVGCapi_Saver Saver
@@ -2787,7 +2637,6 @@ TVG_API Tvg_Result tvg_font_unload(const char* path);
  */
 TVG_API Tvg_Saver tvg_saver_new(void);
 
-
 /**
  * @brief Exports the given @p paint data to the given @p path
  *
@@ -2808,7 +2657,6 @@ TVG_API Tvg_Saver tvg_saver_new(void);
  * @see tvg_saver_sync()
  */
 TVG_API Tvg_Result tvg_saver_save_paint(Tvg_Saver saver, Tvg_Paint paint, const char* path, uint32_t quality);
-
 
 /**
  * @brief Exports the given @p animation data to the given @p path
@@ -2836,7 +2684,6 @@ TVG_API Tvg_Result tvg_saver_save_paint(Tvg_Saver saver, Tvg_Paint paint, const 
 */
 TVG_API Tvg_Result tvg_saver_save_animation(Tvg_Saver saver, Tvg_Animation animation, const char* path, uint32_t quality, uint32_t fps);
 
-
 /**
  * @brief Guarantees that the saving task is finished.
  *
@@ -2853,7 +2700,6 @@ TVG_API Tvg_Result tvg_saver_save_animation(Tvg_Saver saver, Tvg_Animation anima
  */
 TVG_API Tvg_Result tvg_saver_sync(Tvg_Saver saver);
 
-
 /**
  * @brief Deletes the given Tvg_Saver object.
  *
@@ -2862,9 +2708,7 @@ TVG_API Tvg_Result tvg_saver_sync(Tvg_Saver saver);
  */
 TVG_API Tvg_Result tvg_saver_del(Tvg_Saver saver);
 
-
 /** \} */   // end defgroup ThorVGCapi_Saver
-
 
 /**
  * @defgroup ThorVGCapi_Animation Animation
@@ -2888,7 +2732,6 @@ TVG_API Tvg_Result tvg_saver_del(Tvg_Saver saver);
  */
 TVG_API Tvg_Animation tvg_animation_new(void);
 
-
 /**
  * @brief Specifies the current frame in the animation.
  *
@@ -2907,7 +2750,6 @@ TVG_API Tvg_Animation tvg_animation_new(void);
 */
 TVG_API Tvg_Result tvg_animation_set_frame(Tvg_Animation animation, float no);
 
-
 /**
  * @brief Retrieves a picture instance associated with this animation instance.
  *
@@ -2925,7 +2767,6 @@ TVG_API Tvg_Result tvg_animation_set_frame(Tvg_Animation animation, float no);
  */
 TVG_API Tvg_Paint tvg_animation_get_picture(Tvg_Animation animation);
 
-
 /**
  * @brief Retrieves the current frame number of the animation.
  *
@@ -2940,7 +2781,6 @@ TVG_API Tvg_Paint tvg_animation_get_picture(Tvg_Animation animation);
  * @since 0.13
  */
 TVG_API Tvg_Result tvg_animation_get_frame(Tvg_Animation animation, float* no);
-
 
 /**
  * @brief Retrieves the total number of frames in the animation.
@@ -2957,7 +2797,6 @@ TVG_API Tvg_Result tvg_animation_get_frame(Tvg_Animation animation, float* no);
  */
 TVG_API Tvg_Result tvg_animation_get_total_frame(Tvg_Animation animation, float* cnt);
 
-
 /**
  * @brief Retrieves the duration of the animation in seconds.
  *
@@ -2971,7 +2810,6 @@ TVG_API Tvg_Result tvg_animation_get_total_frame(Tvg_Animation animation, float*
  * @since 0.13
  */
 TVG_API Tvg_Result tvg_animation_get_duration(Tvg_Animation animation, float* duration);
-
 
 /**
  * @brief Specifies the playback segment of the animation.
@@ -2998,7 +2836,6 @@ TVG_API Tvg_Result tvg_animation_get_duration(Tvg_Animation animation, float* du
  */
 TVG_API Tvg_Result tvg_animation_set_segment(Tvg_Animation animation, float begin, float end);
 
-
 /**
  * @brief Gets the current segment range information.
  *
@@ -3012,7 +2849,6 @@ TVG_API Tvg_Result tvg_animation_set_segment(Tvg_Animation animation, float begi
  */
 TVG_API Tvg_Result tvg_animation_get_segment(Tvg_Animation animation, float* begin, float* end);
 
-
 /**
  * @brief Deletes the given Tvg_Animation object.
  *
@@ -3022,9 +2858,7 @@ TVG_API Tvg_Result tvg_animation_get_segment(Tvg_Animation animation, float* beg
  */
 TVG_API Tvg_Result tvg_animation_del(Tvg_Animation animation);
 
-
 /** \} */   // end defgroup ThorVGCapi_Animation
-
 
 /**
  * @defgroup ThorVGCapi_Accesssor Accessor
@@ -3046,7 +2880,6 @@ TVG_API Tvg_Result tvg_animation_del(Tvg_Animation animation);
  */
 TVG_API Tvg_Accessor tvg_accessor_new(void);
 
-
 /**
  * @brief Deletes the given accessor object.
  *
@@ -3055,7 +2888,6 @@ TVG_API Tvg_Accessor tvg_accessor_new(void);
  * @since 1.0
  */
 TVG_API Tvg_Result tvg_accessor_del(Tvg_Accessor accessor);
-
 
 /**
  * @brief Sets the paint of the accessor then iterates through its descendents.
@@ -3073,7 +2905,6 @@ TVG_API Tvg_Result tvg_accessor_del(Tvg_Accessor accessor);
  */
 TVG_API Tvg_Result tvg_accessor_set(Tvg_Accessor accessor, Tvg_Paint paint, bool (*func)(Tvg_Paint paint, void* data), void* data);
 
-
 /**
  * @brief Generate a unique ID (hash key) from a given name.
  *
@@ -3088,9 +2919,7 @@ TVG_API Tvg_Result tvg_accessor_set(Tvg_Accessor accessor, Tvg_Paint paint, bool
  */
 TVG_API uint32_t tvg_accessor_generate_id(const char* name);
 
-
 /** \} */   // end defgroup ThorVGCapi_Accessor
-
 
 /**
  * @defgroup ThorVGCapi_LottieAnimation LottieAnimation
@@ -3113,7 +2942,6 @@ TVG_API uint32_t tvg_accessor_generate_id(const char* name);
  */
 TVG_API Tvg_Animation tvg_lottie_animation_new(void);
 
-
 /**
  * @brief Generates a new slot from the given slot data.
  *
@@ -3125,7 +2953,6 @@ TVG_API Tvg_Animation tvg_lottie_animation_new(void);
  * @since 1.0
  */
 TVG_API uint32_t tvg_lottie_animation_gen_slot(Tvg_Animation animation, const char* slot);
-
 
 /**
  * @brief Applies a previously generated slot to the animation.
@@ -3140,7 +2967,6 @@ TVG_API uint32_t tvg_lottie_animation_gen_slot(Tvg_Animation animation, const ch
  * @since 1.0
  */
 TVG_API Tvg_Result tvg_lottie_animation_apply_slot(Tvg_Animation animation, uint32_t id);
-
 
 /**
  * @brief Deletes a previously generated slot.
@@ -3158,7 +2984,6 @@ TVG_API Tvg_Result tvg_lottie_animation_apply_slot(Tvg_Animation animation, uint
  */
 TVG_API Tvg_Result tvg_lottie_animation_del_slot(Tvg_Animation animation, uint32_t id);
 
-
 /**
  * @brief Specifies a segment by marker.
  *
@@ -3173,7 +2998,6 @@ TVG_API Tvg_Result tvg_lottie_animation_del_slot(Tvg_Animation animation, uint32
  */
 TVG_API Tvg_Result tvg_lottie_animation_set_marker(Tvg_Animation animation, const char* marker);
 
-
 /**
  * @brief Gets the marker count of the animation.
  *
@@ -3185,7 +3009,6 @@ TVG_API Tvg_Result tvg_lottie_animation_set_marker(Tvg_Animation animation, cons
  * @since 1.0
  */
 TVG_API Tvg_Result tvg_lottie_animation_get_markers_cnt(Tvg_Animation animation, uint32_t* cnt);
-
 
 /**
  * @brief Gets the marker name by a given index.
@@ -3200,6 +3023,25 @@ TVG_API Tvg_Result tvg_lottie_animation_get_markers_cnt(Tvg_Animation animation,
  */
 TVG_API Tvg_Result tvg_lottie_animation_get_marker(Tvg_Animation animation, uint32_t idx, const char** name);
 
+/**
+ * @brief Retrieves marker information by index.
+ *
+ * @param[in] animation The Lottie animation object.
+ * @param[in] idx The zero-based index of the animation marker.
+ * @param[out] name Pointer to receive the marker name.
+ *                  Pass @c nullptr if the value is not required.
+ * @param[out] begin Pointer to receive the marker's starting frame.
+ *                   Pass @c nullptr if the value is not required.
+ * @param[out] end Pointer to receive the marker's ending frame.
+ *                 Pass @c nullptr if the value is not required.
+ *
+ * @retval TVG_RESULT_INVALID_ARGUMENT if @p idx is out of range.
+ * @retval TVG_RESULT_INSUFFICIENT_CONDITION In case the animation is not loaded.
+ *
+ * @see tvg_lottie_animation_get_markers_cnt()
+ * @note Experimental API
+ */
+TVG_API Tvg_Result tvg_lottie_animation_get_marker_info(Tvg_Animation animation, uint32_t idx, const char** name, float* begin, float* end);
 
 /**
  * @brief Interpolates between two frames over a specified duration.
@@ -3218,7 +3060,6 @@ TVG_API Tvg_Result tvg_lottie_animation_get_marker(Tvg_Animation animation, uint
  */
 TVG_API Tvg_Result tvg_lottie_animation_tween(Tvg_Animation animation, float from, float to, float progress);
 
-
 /**
  * @brief Updates the value of an expression variable for a specific layer.
  *
@@ -3235,7 +3076,6 @@ TVG_API Tvg_Result tvg_lottie_animation_tween(Tvg_Animation animation, float fro
  * @note Experimental API
  */
 TVG_API Tvg_Result tvg_lottie_animation_assign(Tvg_Animation animation, const char* layer, uint32_t ix, const char* var, float val);
-
 
 /**
  * @brief Sets the quality level for Lottie effects.
@@ -3257,9 +3097,7 @@ TVG_API Tvg_Result tvg_lottie_animation_set_quality(Tvg_Animation animation, uin
 
 /** \} */   // end addtogroup ThorVGCapi_LottieAnimation
 
-
 /** \} */   // end defgroup ThorVGCapi
-
 
 #ifdef __cplusplus
 }

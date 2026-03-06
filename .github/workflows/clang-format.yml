@@ -21,6 +21,8 @@ jobs:
           sudo apt-get update
           sudo apt-get install -y clang-format-18
           sudo ln -sf /usr/bin/clang-format-18 /usr/local/bin/clang-format
+          curl -L https://raw.githubusercontent.com/llvm/llvm-project/release/18.x/clang/tools/clang-format/clang-format-diff.py -o /usr/local/bin/clang-format-diff
+          chmod +x /usr/local/bin/clang-format-diff
 
       - name: Install reviewdog
         uses: reviewdog/action-setup@v1
@@ -34,4 +36,4 @@ jobs:
           | reviewdog -f=diff \
                       -reporter=github-pr-check \
                       -filter-mode=added \
-                      -fail-on-error
+                      -fail-level=error
