@@ -1,6 +1,8 @@
-MIT License
-
-Copyright (c) 2020 - 2026 ThorVG Project
+# RapidJSON
+# Included with the ThorVG build options -Dloaders="lottie" (default).
+# This component is enabled when THORVG_LOTTIE_LOADER_SUPPORT is set to 1.
+ 
+Copyright (C) 2015 THL A29 Limited, a Tencent company, and Milo Yip. All rights reserved.
 
 Permission is hereby granted, free of charge, to any person obtaining a copy
 of this software and associated documentation files (the "Software"), to deal
