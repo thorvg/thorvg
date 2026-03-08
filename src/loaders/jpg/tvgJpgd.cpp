@@ -19,6 +19,15 @@
  * OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
  * SOFTWARE.
  */
+
+/*
+ * C++ class for JPEG decompression. Written by Richard Geldreich <richgel99@gmail.com> between 1994-2020.
+
+ * This software is provided 'as-is', without any express or implied warranty.
+ * Permission is granted to anyone to use this software for any purpose,
+ * including commercial applications, and to alter it and redistribute it freely.
+*/
+
 #include <stdlib.h>
 #include <stdio.h>
 #include <stdint.h>
