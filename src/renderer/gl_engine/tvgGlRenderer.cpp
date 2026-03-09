@@ -243,7 +243,7 @@ static void _solidUniforms(GlRenderPass* pass, GlShape& sdata, const RenderColor
         }
     }
 
-    pass->getMatrix(matrix3STD140, sdata.geometry.matrix);
+    getMatrix3Std140(pass->getViewMatrix(), matrix3STD140);
 
     color[0] = c.r / 255.f;
     color[1] = c.g / 255.f;
@@ -758,9 +758,12 @@ void GlRenderer::drawPrimitive(GlShape& sdata, const Fill* fill, RenderUpdateFla
             }
 
             GlRadialGradientBatchEntry entry = {};
-            pass->getMatrix(entry.transform, sdata.geometry.matrix);
+            getMatrix3Std140(pass->getViewMatrix(), entry.transform);
             Matrix inv;
             inverse(&fill->transform(), &inv);
+            Matrix invShape;
+            inverse(&sdata.geometry.matrix, &invShape);
+            inv = inv * invShape;
             getMatrix3Std140(inv, entry.invTransform);
             fillRadialBlock(entry.gradient);
 
@@ -839,9 +842,12 @@ void GlRenderer::drawPrimitive(GlShape& sdata, const Fill* fill, RenderUpdateFla
         }
 
         GlLinearGradientBatchEntry entry = {};
-        pass->getMatrix(entry.transform, sdata.geometry.matrix);
+        getMatrix3Std140(pass->getViewMatrix(), entry.transform);
         Matrix inv;
         inverse(&fill->transform(), &inv);
+        Matrix invShape;
+        inverse(&sdata.geometry.matrix, &invShape);
+        inv = inv * invShape;
         getMatrix3Std140(inv, entry.invTransform);
         fillLinearBlock(entry.gradient);
 
