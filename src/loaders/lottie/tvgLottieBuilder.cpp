@@ -913,6 +913,7 @@ void LottieBuilder::updateImage(LottieGroup* layer)
 
     auto image = static_cast<LottieImage*>(layer->children.first());
     auto picture = image->bitmap.picture;
+    if (!picture) return;
 
     //resolve an image asset if need
     if (resolver && !image->resolved) {

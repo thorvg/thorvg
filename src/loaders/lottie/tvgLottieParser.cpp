@@ -950,6 +950,9 @@ void LottieParser::parseObject(Array<LottieObject*>& parent)
 
 void LottieParser::parseImage(LottieImage* image, const char* data, const char* subPath, bool embedded, float width, float height)
 {
+    auto dlen = strlen(data);
+    if (dlen == 0) return;
+
     //embedded image resource. should start with "data:"
     //header look like "data:image/png;base64," so need to skip till ','.
     if (embedded && !strncmp(data, "data:", 5)) {
@@ -959,15 +962,14 @@ void LottieParser::parseImage(LottieImage* image, const char* data, const char* 
         image->bitmap.mimeType = duplicate(mimeType, needle - mimeType);
         //b64 data
         auto b64Data = strstr(data, ",") + 1;
-        size_t length = strlen(data) - (b64Data - data);
+        size_t length = dlen - (b64Data - data);
         image->bitmap.size = b64Decode(b64Data, length, &image->bitmap.data);
     //external image resource
     } else {
-        auto len = strlen(dirName) + strlen(subPath) + strlen(data) + 2;
+        auto len = strlen(dirName) + strlen(subPath) + dlen + 2;
         image->bitmap.path = tvg::malloc<char>(len);
         snprintf(image->bitmap.path, len, "%s/%s%s", dirName, subPath, data);
     }
-
     image->bitmap.width = width;
     image->bitmap.height = height;
     image->prepare();
