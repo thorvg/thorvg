@@ -735,10 +735,12 @@ void LottieBuilder::updateRoundedCorner(TVG_UNUSED LottieGroup* parent, LottieOb
     auto r = roundedCorner->radius(frameNo, tween, exps);
     if (r < LottieRoundnessModifier::ROUNDNESS_EPSILON) return;
 
-    if (!ctx->roundness) ctx->roundness = new LottieRoundnessModifier(&buffer, r);
-    else if (ctx->roundness->r < r) ctx->roundness->r = r;
-
-    ctx->update(ctx->roundness);
+    if (ctx->roundness) {
+        if (ctx->roundness->r < r) ctx->roundness->r = r;
+    } else {
+        ctx->roundness = new LottieRoundnessModifier(&buffer, r);
+        ctx->update(ctx->roundness);
+    }
 }
 
 
