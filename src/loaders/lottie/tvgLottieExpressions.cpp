@@ -704,10 +704,28 @@ static jerry_value_t _pointOnPath(const jerry_call_info_t* info, const jerry_val
     return _point2d(out.point(progress));
 }
 
+static jerry_value_t _tangentOnPath(const jerry_call_info_t* info, const jerry_value_t args[], const jerry_length_t argsCnt)
+{
+    auto data = static_cast<ExpContent*>(jerry_object_get_native_ptr(info->function, &freeCb));
+    auto pathset = static_cast<LottiePathSet*>(data->property);
+    auto progress = _number(args[0]);
+    RenderPath out;
+    (*pathset)(data->frameNo, out, nullptr, nullptr);
+
+    auto a = out.point(std::max(0.0f, progress - 0.001f));
+    auto b = out.point(std::min(1.0f, progress + 0.001f));
+    Point t = {b.x - a.x, b.y - a.y};
+    auto len = tvg::length(t);
+    if (len > 0.0f) {
+        t.x /= len;
+        t.y /= len;
+    }
+    return _point2d(t);
+}
 
 static void _buildPath(jerry_value_t context, float frameNo, LottieProperty* pathset)
 {
-    auto data = _expcontent(nullptr, frameNo, pathset, 2);
+    auto data = _expcontent(nullptr, frameNo, pathset, 3);
 
     //Trick for fast building path.
     auto points = jerry_function_external(_points);
@@ -719,6 +737,11 @@ static void _buildPath(jerry_value_t context, float frameNo, LottieProperty* pat
     jerry_object_set_native_ptr(pointOnPath, &freeCb, data);
     jerry_object_set_sz(context, "pointOnPath", pointOnPath);
     jerry_value_free(pointOnPath);
+
+    auto tangentOnPath = jerry_function_external(_tangentOnPath);
+    jerry_object_set_native_ptr(tangentOnPath, &freeCb, data);
+    jerry_object_set_sz(context, "tangentOnPath", tangentOnPath);
+    jerry_value_free(tangentOnPath);
 
     //inTangents
     //outTangents
