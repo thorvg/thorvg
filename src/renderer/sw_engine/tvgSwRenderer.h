@@ -81,8 +81,7 @@ private:
     Array<SwTask*>       tasks;                       //async task list
     Array<SwSurface*>    compositors;                 //render targets cache list
     RenderDirtyRegion    dirtyRegion;                 //partial rendering support
-    SwMpool*             mpool;                       //private memory pool
-    bool                 sharedMpool;                 //memory-pool behavior policy
+    SwMpool*             mpool;                       //designated memory pool
     bool                 fulldraw = true;             //buffer is cleared (need to redraw full screen)
 
     ~SwRenderer();
