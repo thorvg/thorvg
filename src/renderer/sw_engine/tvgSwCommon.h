@@ -340,7 +340,23 @@ struct SwMpool
     SwStrokeBorder* leftBorder;
     SwStrokeBorder* rightBorder;
     SwCellPool* cellPool;
-    unsigned allocSize;
+
+    SwMpool(uint32_t threads)
+    {
+        auto allocSize = threads + 1;
+        outline = new SwOutline[allocSize];
+        leftBorder = new SwStrokeBorder[allocSize];
+        rightBorder = new SwStrokeBorder[allocSize];
+        cellPool = new SwCellPool[allocSize];
+    }
+
+    ~SwMpool()
+    {
+        delete[](outline);
+        delete[](leftBorder);
+        delete[](rightBorder);
+        delete[](cellPool);
+    }
 };
 
 static inline int32_t TO_SWCOORD(float val)
@@ -693,8 +709,9 @@ bool rleClip(SwRle* rle, const SwRle* clip);
 bool rleClip(SwRle* rle, const RenderRegion* clip);
 bool rleIntersect(const SwRle* rle, const RenderRegion& region);
 
-SwMpool* mpoolInit(uint32_t threads);
-void mpoolTerm(SwMpool* mpool);
+void mpoolInit(uint32_t threads);
+void mpoolTerm();
+SwMpool* mpoolReq();
 SwOutline* mpoolReqOutline(SwMpool* mpool, unsigned idx);
 SwOutline* mpoolReqDashOutline(SwMpool* mpool, unsigned idx);
 SwStrokeBorder* mpoolReqStrokeLBorder(SwMpool* mpool, unsigned idx);

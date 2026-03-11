@@ -22,6 +22,14 @@
 
 #include "tvgSwCommon.h"
 
+/************************************************************************/
+/* Internal Class Implementation                                        */
+/************************************************************************/
+
+static thread_local SwMpool* _pool = nullptr;
+static Array<SwMpool*> _pools;
+static uint32_t _threads = 0;
+static Key _key;
 
 /************************************************************************/
 /* External Class Implementation                                        */
@@ -60,30 +68,26 @@ SwCellPool* mpoolReqCellPool(SwMpool* mpool, unsigned idx)
 }
 
 
-SwMpool* mpoolInit(uint32_t threads)
+SwMpool* mpoolReq()
 {
-    auto allocSize = threads + 1;
-
-    auto mpool = tvg::malloc<SwMpool>(sizeof(SwMpool));
-    mpool->outline = new SwOutline[allocSize];
-    mpool->leftBorder = new SwStrokeBorder[allocSize];
-    mpool->rightBorder = new SwStrokeBorder[allocSize];
-    mpool->cellPool = new SwCellPool[allocSize];
-
-    mpool->allocSize = allocSize;
-
-    return mpool;
+    if (!_pool) {
+        _pool = new SwMpool(_threads);
+        ScopedLock lock(_key);
+        _pools.push(_pool);
+    }
+    return _pool;
 }
 
-
-void mpoolTerm(SwMpool* mpool)
+void mpoolInit(uint32_t threads)
 {
-    if (!mpool) return;
+    _threads = threads;
+}
 
-    delete[](mpool->outline);
-    delete[](mpool->leftBorder);
-    delete[](mpool->rightBorder);
-    delete[](mpool->cellPool);
-
-    tvg::free(mpool);
+void mpoolTerm()
+{
+    for (auto p : _pools) {
+        delete p;
+        _pool = nullptr;
+    }
+    _pools.reset();
 }
