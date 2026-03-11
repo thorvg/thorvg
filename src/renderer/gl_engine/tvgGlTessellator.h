@@ -76,7 +76,7 @@ class BWTessellator
 {
 public:
     BWTessellator(GlGeometryBuffer* buffer);
-    void tessellate(const RenderPath& path);
+    void tessellate(const RenderPath& path, int8_t defaultWinding = -1);
     RenderRegion bounds() const;
     bool convex = true;
 
