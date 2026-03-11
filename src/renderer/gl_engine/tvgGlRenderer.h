@@ -29,6 +29,7 @@
 #include "tvgGlGpuBuffer.h"
 #include "tvgGlRenderPass.h"
 #include "tvgGlEffect.h"
+#include "tvgGlSolidBatch.h"
 
 struct GlRenderer : RenderMethod
 {
@@ -184,11 +185,16 @@ struct GlRenderer : RenderMethod
 
 private:
     enum class BlendSource { Image, Scene, Solid, LinearGradient, RadialGradient };
+    friend class GlSolidBatch;
 
     GlRenderer(); 
     ~GlRenderer();
 
     void initShaders();
+    static RenderRegion viewportRegion(const RenderRegion& vp, const RenderRegion& bbox);
+    GlRenderTask* createPrimitiveTask(RenderTypes type, BlendSource source, const RenderRegion& viewRegion, GlRenderTarget*& dstCopyFbo);
+    GlRenderTask* createStencilTask(GlRenderTask* task, GlStencilMode stencilMode, int32_t depth);
+    void bindBlendTarget(GlRenderTask* task, const GlRenderTarget* dstCopyFbo, const RenderRegion& viewRegion, uint32_t binding);
     void drawPrimitive(GlShape& sdata, const RenderColor& c, RenderUpdateFlag flag, int32_t depth);
     void drawPrimitive(GlShape& sdata, const Fill* fill, RenderUpdateFlag flag, int32_t depth);
     void drawClip(Array<RenderData>& clips);
@@ -198,7 +204,6 @@ private:
     bool beginComplexBlending(const RenderRegion& vp, RenderRegion bounds);
     void endBlendingCompose(GlRenderTask* stencilTask);
     GlProgram* getBlendProgram(BlendMethod method, BlendSource source);
-
     void prepareBlitTask(GlBlitTask* task);
     void prepareCmpTask(GlRenderTask* task, const RenderRegion& vp, uint32_t cmpWidth, uint32_t cmpHeight);
     void endRenderPass(RenderCompositor* cmp);
@@ -222,6 +227,7 @@ private:
     Array<GlRenderTargetPool*> mBlendPool;
     Array<GlRenderPass*> mRenderPassStack;
     Array<GlCompositor*> mComposeStack;
+    GlSolidBatch mSolidBatch;
 
     //Disposed resources. They should be released on synced call.
     struct {

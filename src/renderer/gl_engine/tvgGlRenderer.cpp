@@ -28,7 +28,8 @@
 #include "tvgGlRenderTask.h"
 #include "tvgGlProgram.h"
 #include "tvgGlShaderSrc.h"
-
+#include "tvgShape.h"
+#include "tvgRender.h"
 
 /************************************************************************/
 /* Internal Class Implementation                                        */
@@ -37,8 +38,6 @@
 #define NOISE_LEVEL 0.5f
 
 static atomic<int32_t> rendererCnt{-1};
-
-
 void GlRenderer::clearDisposes()
 {
     if (mDisposed.textures.count > 0) {
@@ -48,6 +47,7 @@ void GlRenderer::clearDisposes()
 
     ARRAY_FOREACH(p, mRenderPassStack) delete(*p);
     mRenderPassStack.clear();
+    mSolidBatch.clear();
 }
 
 
@@ -162,6 +162,62 @@ void GlRenderer::initShaders()
     for (uint32_t i = 0; i < 85; ++i) mPrograms.push(nullptr);
 }
 
+RenderRegion GlRenderer::viewportRegion(const RenderRegion& vp, const RenderRegion& bbox)
+{
+    auto x = bbox.sx() - vp.sx();
+    auto y = bbox.sy() - vp.sy();
+    auto w = bbox.sw();
+    auto h = bbox.sh();
+    auto yGl = vp.sh() - y - h;
+
+    return {{x, yGl}, {x + w, yGl + h}};
+}
+
+GlRenderTask* GlRenderer::createPrimitiveTask(RenderTypes type, BlendSource source, const RenderRegion& viewRegion, GlRenderTarget*& dstCopyFbo)
+{
+    dstCopyFbo = nullptr;
+
+    if (mBlendMethod == BlendMethod::Normal) return new GlRenderTask(mPrograms[type]);
+
+    if (mBlendPool.empty()) mBlendPool.push(new GlRenderTargetPool(surface.w, surface.h));
+#if defined(THORVG_GL_TARGET_GL)
+    dstCopyFbo = mBlendPool[0]->getRenderTarget(viewRegion);
+#else  // TODO: create partial buffer when MSAA is disabled
+    dstCopyFbo = mBlendPool[0]->getRenderTarget(currentPass()->getViewport());
+#endif
+
+    auto program = getBlendProgram(mBlendMethod, source);
+    return new GlDirectBlendTask(program, currentPass()->getFbo(), dstCopyFbo, viewRegion);
+}
+
+GlRenderTask* GlRenderer::createStencilTask(GlRenderTask* task, GlStencilMode stencilMode, int32_t depth)
+{
+    if (stencilMode == GlStencilMode::None) return nullptr;
+
+    auto stencilTask = new GlRenderTask(mPrograms[RT_Stencil], task);
+    stencilTask->setDrawDepth(depth);
+
+    return stencilTask;
+}
+
+void GlRenderer::bindBlendTarget(GlRenderTask* task, const GlRenderTarget* dstCopyFbo, const RenderRegion& viewRegion, uint32_t binding)
+{
+    if (!dstCopyFbo) return;
+
+#if defined(THORVG_GL_TARGET_GL)
+    float region[] = {float(viewRegion.sx()), float(viewRegion.sy()), float(dstCopyFbo->width), float(dstCopyFbo->height)};
+#else  // TODO: create partial buffer when MSAA is disabled
+    float region[] = {0.0f, 0.0f, float(dstCopyFbo->width), float(dstCopyFbo->height)};
+#endif
+    task->addBindResource(GlBindingResource{
+        binding,
+        task->getProgram()->getUniformBlockIndex("BlendRegion"),
+        mGpuBuffer.getBufferId(),
+        mGpuBuffer.push(region, 4 * sizeof(float), true),
+        4 * sizeof(float),
+    });
+    task->addBindResource(GlBindingResource{0, dstCopyFbo->colorTex, task->getProgram()->getUniformLocation("uDstTexture")});
+}
 
 void GlRenderer::drawPrimitive(GlShape& sdata, const RenderColor& c, RenderUpdateFlag flag, int32_t depth)
 {
@@ -172,28 +228,18 @@ void GlRenderer::drawPrimitive(GlShape& sdata, const RenderColor& c, RenderUpdat
     bbox.intersect(vp);
     if (bbox.invalid()) return;
 
-    auto x = bbox.sx() - vp.sx();
-    auto y = bbox.sy() - vp.sy();
-    auto w = bbox.sw();
-    auto h = bbox.sh();
-    auto yGl = vp.sh() - y - h;
-    RenderRegion viewRegion = {{x, yGl}, {x + w, yGl + h}};
+    auto viewRegion = viewportRegion(vp, bbox);
+    auto stencilMode = sdata.geometry.getStencilMode(flag);
 
-    GlRenderTask* task = nullptr;
-    GlRenderTarget* dstCopyFbo = nullptr;
-
-    if (blendShape) {
-        if (mBlendPool.empty()) mBlendPool.push(new GlRenderTargetPool(surface.w, surface.h));
-#if defined(THORVG_GL_TARGET_GL)
-        dstCopyFbo = mBlendPool[0]->getRenderTarget(viewRegion);
-#else // TODO: create partial buffer when MSAA is disabled
-        dstCopyFbo = mBlendPool[0]->getRenderTarget(currentPass()->getViewport());
-#endif
-        auto program = getBlendProgram(mBlendMethod, BlendSource::Solid);
-        task = new GlDirectBlendTask(program, currentPass()->getFbo(), dstCopyFbo, viewRegion);
-    } else {
-        task = new GlRenderTask(mPrograms[RT_Color]);
+    if (!blendShape && stencilMode == GlStencilMode::None && sdata.clips.empty()) {
+        mSolidBatch.draw(*this, sdata, c, depth, viewRegion);
+        return;
     }
+
+    if (!sdata.clips.empty()) mSolidBatch.clear();
+
+    GlRenderTarget* dstCopyFbo = nullptr;
+    auto task = createPrimitiveTask(RT_Color, BlendSource::Solid, viewRegion, dstCopyFbo);
 
     task->setViewMatrix(currentPass()->getViewMatrix());
     task->setDrawDepth(depth);
@@ -203,17 +249,6 @@ void GlRenderer::drawPrimitive(GlShape& sdata, const RenderColor& c, RenderUpdat
         return;
     }
 
-    task->setViewport(viewRegion);
-
-    GlRenderTask* stencilTask = nullptr;
-    auto stencilMode = sdata.geometry.getStencilMode(flag);
-    if (stencilMode != GlStencilMode::None) {
-        stencilTask = new GlRenderTask(mPrograms[RT_Stencil], task);
-        stencilTask->setDrawDepth(depth);
-    }
-
-    //solid uniforms
-    float solidInfo[4];
     auto a = MULTIPLY(c.a, sdata.opacity);
     if (flag & RenderUpdateFlag::Stroke) {
         auto strokeWidth = sdata.geometry.strokeRenderWidth;
@@ -222,42 +257,16 @@ void GlRenderer::drawPrimitive(GlShape& sdata, const RenderColor& c, RenderUpdat
             a = MULTIPLY(a, static_cast<uint8_t>(alpha * 255));
         }
     }
-    solidInfo[0] = c.r / 255.f;
-    solidInfo[1] = c.g / 255.f;
-    solidInfo[2] = c.b / 255.f;
-    solidInfo[3] = a / 255.f;
+    task->setVertexColor(c.r / 255.f, c.g / 255.f, c.b / 255.f, a / 255.f);
+    task->setViewport(viewRegion);
 
-    auto solidOffset = mGpuBuffer.push(solidInfo, sizeof(solidInfo), true);
-
-    task->addBindResource(GlBindingResource{
-        0,
-        task->getProgram()->getUniformBlockIndex("SolidInfo"),
-        mGpuBuffer.getBufferId(),
-        solidOffset,
-        sizeof(solidInfo),
-    });
-
-    if (blendShape && dstCopyFbo) {
-#if defined(THORVG_GL_TARGET_GL)
-        float region[] = {float(viewRegion.sx()), float(viewRegion.sy()), float(dstCopyFbo->width), float(dstCopyFbo->height)};
-#else // TODO: create partial buffer when MSAA is disabled
-        float region[] = {0.0f, 0.0f, float(dstCopyFbo->width), float(dstCopyFbo->height)};
-#endif
-        task->addBindResource(GlBindingResource{
-            2,
-            task->getProgram()->getUniformBlockIndex("BlendRegion"),
-            mGpuBuffer.getBufferId(),
-            mGpuBuffer.push(region, 4 * sizeof(float), true),
-            4 * sizeof(float),
-        });
-
-        task->addBindResource(GlBindingResource{0, dstCopyFbo->colorTex, task->getProgram()->getUniformLocation("uDstTexture")});
-    }
+    auto stencilTask = createStencilTask(task, stencilMode, depth);
+    // Keep BlendRegion on the existing solid-shape blend UBO slot.
+    bindBlendTarget(task, dstCopyFbo, viewRegion, 2);
 
     if (stencilTask) currentPass()->addRenderTask(new GlStencilCoverTask(stencilTask, task, stencilMode));
     else currentPass()->addRenderTask(task);
 }
-
 
 void GlRenderer::drawPrimitive(GlShape& sdata, const Fill* fill, RenderUpdateFlag flag, int32_t depth)
 {
@@ -271,29 +280,21 @@ void GlRenderer::drawPrimitive(GlShape& sdata, const Fill* fill, RenderUpdateFla
     auto stopCnt = min(fill->colorStops(&stops), static_cast<uint32_t>(MAX_GRADIENT_STOPS));
     if (stopCnt < 2) return;
 
-    GlRenderTask* task = nullptr;
     GlRenderTarget* dstCopyFbo = nullptr;
     auto radial = fill->type() == Type::RadialGradient;
+    auto viewRegion = viewportRegion(vp, bbox);
 
-    auto x = bbox.sx() - vp.sx();
-    auto y = bbox.sy() - vp.sy();
-    auto w = bbox.sw();
-    auto h = bbox.sh();
-    auto yGl = vp.sh() - y - h;
-    RenderRegion viewRegion = {{x, yGl}, {x + w, yGl + h}};
+    RenderTypes taskType = RT_None;
+    auto blendSource = BlendSource::LinearGradient;
 
-    if (blendShape) {
-        if (mBlendPool.empty()) mBlendPool.push(new GlRenderTargetPool(surface.w, surface.h));
-#if defined(THORVG_GL_TARGET_GL)
-        dstCopyFbo = mBlendPool[0]->getRenderTarget(viewRegion);
-#else // TODO: create partial buffer when MSAA is disabled        
-        dstCopyFbo = mBlendPool[0]->getRenderTarget(currentPass()->getViewport());
-#endif
-        auto program = getBlendProgram(mBlendMethod, radial ? BlendSource::RadialGradient : BlendSource::LinearGradient);
-        task = new GlDirectBlendTask(program, currentPass()->getFbo(), dstCopyFbo, viewRegion);
-    } else if (fill->type() == Type::LinearGradient) task = new GlRenderTask(mPrograms[RT_LinGradient]);
-    else if (fill->type() == Type::RadialGradient) task = new GlRenderTask(mPrograms[RT_RadGradient]);
-    else return;
+    if (fill->type() == Type::LinearGradient) {
+        taskType = RT_LinGradient;
+    } else if (radial) {
+        taskType = RT_RadGradient;
+        blendSource = BlendSource::RadialGradient;
+    } else return;
+
+    auto task = createPrimitiveTask(taskType, blendSource, viewRegion, dstCopyFbo);
 
     task->setViewMatrix(currentPass()->getViewMatrix());
     task->setDrawDepth(depth);
@@ -305,12 +306,8 @@ void GlRenderer::drawPrimitive(GlShape& sdata, const Fill* fill, RenderUpdateFla
 
     task->setViewport(viewRegion);
 
-    GlRenderTask* stencilTask = nullptr;
     GlStencilMode stencilMode = sdata.geometry.getStencilMode(flag);
-    if (stencilMode != GlStencilMode::None) {
-        stencilTask = new GlRenderTask(mPrograms[RT_Stencil], task);
-        stencilTask->setDrawDepth(depth);
-    }
+    auto stencilTask = createStencilTask(task, stencilMode, depth);
 
     // transform buffer (inverse fill-space transform)
     float invMat3[GL_MAT3_STD140_SIZE];
@@ -424,21 +421,8 @@ void GlRenderer::drawPrimitive(GlShape& sdata, const Fill* fill, RenderUpdateFla
 
     task->addBindResource(gradientBinding);
 
-    if (blendShape && dstCopyFbo) {
-#if defined(THORVG_GL_TARGET_GL)
-        float region[] = {float(viewRegion.sx()), float(viewRegion.sy()), float(dstCopyFbo->width), float(dstCopyFbo->height)};
-#else // TODO: create partial buffer when MSAA is disabled        
-        float region[] = {0.0f, 0.0f, float(dstCopyFbo->width), float(dstCopyFbo->height)};
-#endif
-        task->addBindResource(GlBindingResource{
-            3,
-            task->getProgram()->getUniformBlockIndex("BlendRegion"),
-            mGpuBuffer.getBufferId(),
-            mGpuBuffer.push(region, 4 * sizeof(float), true),
-            4 * sizeof(float),
-        });
-        task->addBindResource(GlBindingResource{0, dstCopyFbo->colorTex, task->getProgram()->getUniformLocation("uDstTexture")});
-    }
+    // TransformInfo uses slot 0 and GradientInfo uses slot 2, so BlendRegion moves to 3.
+    bindBlendTarget(task, dstCopyFbo, viewRegion, 3);
 
     if (stencilTask) {
         currentPass()->addRenderTask(new GlStencilCoverTask(stencilTask, task, stencilMode));
@@ -1311,7 +1295,7 @@ RenderData GlRenderer::prepare(const RenderShape& rshape, RenderData data, const
     sdata->opacity = opacity;
 
     if (flags & RenderUpdateFlag::Path) sdata->geometry = GlGeometry();
-    
+
     sdata->geometry.setMatrix(transform);
     sdata->geometry.viewport = vport;
     if (flags & (RenderUpdateFlag::Path | RenderUpdateFlag::Transform)) sdata->geometry.prepare(rshape);
