@@ -120,8 +120,6 @@ struct SwShapeTask : SwTask
 
     void run(unsigned tid) override
     {
-        if (ready(opacity == 0 && !clipper)) return;
-
         auto strokeWidth = validStrokeWidth(clipper);
         auto updateShape = flags[0] & (RenderUpdateFlag::Path | RenderUpdateFlag::Transform | RenderUpdateFlag::Clip);
         auto updateFill = (flags[0] & (RenderUpdateFlag::Color | RenderUpdateFlag::Gradient));
@@ -203,8 +201,6 @@ struct SwImageTask : SwTask
 
     void run(unsigned tid) override
     {
-        if (ready(opacity == 0)) return;
-
         //Convert colorspace if it's not aligned.
         rasterConvertCS(source, surface->cs);
         rasterPremultiply(source);
@@ -885,6 +881,9 @@ RenderData SwRenderer::prepare(RenderSurface* surface, RenderData data, const Ma
         task = new SwImageTask;
         task->source = surface;
     }
+
+    if (task->ready(opacity == 0)) return task;
+
     task->image.filter = filter;
     return prepareCommon(task, transform, clips, opacity, flags);
 }
@@ -898,6 +897,8 @@ RenderData SwRenderer::prepare(const RenderShape& rshape, RenderData data, const
         task = new SwShapeTask;
         task->rshape = &rshape;
     }
+
+    if (task->ready(opacity == 0 && !clipper)) return task;
 
     task->clipper = clipper;
 
