@@ -1,3 +1,4 @@
+[![LFX Health Score](https://insights.linuxfoundation.org/api/badge/health-score?project=thorvg)](https://insights.linuxfoundation.org/project/thorvg)
 [![CodeFactor](https://www.codefactor.io/repository/github/thorvg/thorvg/badge)](https://www.codefactor.io/repository/github/thorvg/thorvg)
 ![BinarySize](https://img.shields.io/badge/Size->150kb-black)
 [![License](https://img.shields.io/badge/licence-MIT-green.svg?style=flat)](LICENSE)
