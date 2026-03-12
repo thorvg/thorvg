@@ -20,7 +20,6 @@
  * SOFTWARE.
  */
 
-#include <atomic>
 #include "tvgFill.h"
 #include "tvgGlCommon.h"
 #include "tvgGlRenderer.h"
@@ -37,7 +36,8 @@
 
 #define NOISE_LEVEL 0.5f
 
-static atomic<int32_t> rendererCnt{-1};
+static int32_t _rendererCnt = -1;
+static mutex _rendererMtx;
 
 void GlRenderer::clearDisposes()
 {
@@ -89,17 +89,18 @@ bool GlRenderer::currentContext()
 
 GlRenderer::GlRenderer() : mEffect(GlEffect(&mGpuBuffer))
 {
-    ++rendererCnt;
 }
 
 
 GlRenderer::~GlRenderer()
 {
-    --rendererCnt;
-
     flush();
 
     ARRAY_FOREACH(p, mPrograms) delete(*p);
+
+    _rendererMtx.lock();
+    --_rendererCnt;
+    _rendererMtx.unlock();
 }
 
 
@@ -1381,26 +1382,36 @@ bool GlRenderer::intersectsImage(RenderData data, TVG_UNUSED const RenderRegion&
 
 bool GlRenderer::term()
 {
-    if (rendererCnt > 0) return false;
+    _rendererMtx.lock();
+
+    if (_rendererCnt > 0) {
+        _rendererMtx.unlock();
+        return false;
+    }
 
     glTerm();
 
-    rendererCnt = -1;
+    _rendererCnt = -1;
+    _rendererMtx.unlock();
 
     return true;
 }
 
 
-GlRenderer* GlRenderer::gen(TVG_UNUSED uint32_t threads)
+GlRenderer* GlRenderer::gen(TVG_UNUSED uint32_t threads, TVG_UNUSED EngineOption op)
 {
     //initialize engine
-    if (rendererCnt == -1) {
+    _rendererMtx.lock();
+    if (_rendererCnt == -1) {
         if (!glInit()) {
             TVGERR("GL_ENGINE", "Failed GL initialization!");
+            _rendererMtx.unlock();
             return nullptr;
         }    
-        rendererCnt = 0;
+        _rendererCnt = 0;
     }
+    ++_rendererCnt;
+    _rendererMtx.unlock();
 
     return new GlRenderer;
 }
