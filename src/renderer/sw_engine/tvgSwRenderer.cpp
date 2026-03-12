@@ -836,7 +836,7 @@ void SwRenderer::dispose(RenderData data)
 }
 
 
-void* SwRenderer::prepareCommon(SwTask* task, const Matrix& transform, const Array<RenderData>& clips, uint8_t opacity, RenderUpdateFlag flags)
+SwTask* SwRenderer::prepareCommon(SwTask* task, const Matrix& transform, const Array<RenderData>& clips, uint8_t opacity, RenderUpdateFlag flags, bool ready)
 {
     if (task->disposed) return task;
 
@@ -863,6 +863,8 @@ void* SwRenderer::prepareCommon(SwTask* task, const Matrix& transform, const Arr
         static_cast<SwTask*>(*p)->done();
     }
 
+    if (task->ready(ready)) return task;
+
     if (flags) TaskScheduler::request(task);
 
     return task;
@@ -878,10 +880,8 @@ RenderData SwRenderer::prepare(RenderSurface* surface, RenderData data, const Ma
         task->source = surface;
     }
 
-    if (task->ready(opacity == 0)) return task;
-
     task->image.filter = filter;
-    return prepareCommon(task, transform, clips, opacity, flags);
+    return prepareCommon(task, transform, clips, opacity, flags, (opacity == 0));
 }
 
 RenderData SwRenderer::prepare(const RenderShape& rshape, RenderData data, const Matrix& transform, Array<RenderData>& clips, uint8_t opacity, RenderUpdateFlag flags, bool clipper)
@@ -893,11 +893,9 @@ RenderData SwRenderer::prepare(const RenderShape& rshape, RenderData data, const
         task->rshape = &rshape;
     }
 
-    if (task->ready(opacity == 0 && !clipper)) return task;
-
     task->clipper = clipper;
 
-    return prepareCommon(task, transform, clips, opacity, flags);
+    return prepareCommon(task, transform, clips, opacity, flags, (opacity == 0 && !clipper));
 }
 
 bool SwRenderer::term()
