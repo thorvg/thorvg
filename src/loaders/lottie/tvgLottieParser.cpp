@@ -964,6 +964,9 @@ void LottieParser::parseImage(LottieImage* image, const char* data, const char* 
         auto b64Data = strstr(data, ",") + 1;
         size_t length = dlen - (b64Data - data);
         image->bitmap.size = b64Decode(b64Data, length, &image->bitmap.data);
+    //remote image resource (https:// or http://)
+    } else if (!strncmp(data, "https://", 8) || !strncmp(data, "http://", 7)) {
+        image->bitmap.path = duplicate(data);
     //external image resource
     } else {
         auto subPathLen = subPath ? strlen(subPath) : 0;
