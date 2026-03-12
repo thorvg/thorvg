@@ -952,9 +952,9 @@ static jerry_value_t _wiggle(const jerry_call_info_t* info, const jerry_value_t 
 
         // Simplified gradient function for 1D Perlin noise
         // Deterministic random generator using glibc's LCG algorithm
-        auto gradient1D = [](int seed) {
+        auto gradient1D = [](int64_t seed) -> float {
             seed = (seed * 1103515245 + 12345) & 0x7fffffff;
-            return ((float)seed / 2147483647.0f) < 0.5f ? -1.0f : 1.0f;
+            return float(static_cast<double>(seed) / 2147483647) < 0.5f ? -1.0f : 1.0f;
         };
 
         // Calculate dot products (in 1D, this is just multiplication with distance)
