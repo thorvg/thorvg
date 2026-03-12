@@ -738,8 +738,8 @@ void strokeReset(SwStroke* stroke, const RenderShape* rshape, const Matrix& tran
     //Save line join: it can be temporarily changed when stroking curves...
     stroke->joinSaved = stroke->join = rshape->strokeJoin();
 
-    stroke->borders[0] = mpoolReqStrokeLBorder(mpool, tid);
-    stroke->borders[1] = mpoolReqStrokeRBorder(mpool, tid);
+    stroke->borders[0] = mpool->strokeLBorder(tid);
+    stroke->borders[1] = mpool->strokeRBorder(tid);
 }
 
 
@@ -798,7 +798,7 @@ bool strokeParseOutline(SwStroke* stroke, const SwOutline& outline, SwMpool* mpo
 SwOutline* strokeExportOutline(SwStroke* stroke, SwMpool* mpool, unsigned tid)
 {
     auto reserve = stroke->borders[0]->pts.count + stroke->borders[1]->pts.count;
-    auto outline = mpoolReqOutline(mpool, tid);
+    auto outline = mpool->outline(tid);
     outline->pts.reserve(reserve);
     outline->types.reserve(reserve);
     outline->fillRule = FillRule::NonZero;

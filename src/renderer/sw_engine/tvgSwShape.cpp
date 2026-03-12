@@ -294,7 +294,7 @@ static SwOutline* _genDashOutline(const RenderShape* rshape, const Matrix& trans
         }
     }
 
-    dash.outline = mpoolReqOutline(mpool, tid);
+    dash.outline = mpool->outline(tid);
 
     //must begin with moveTo
     if (cmds[0] == PathCommand::MoveTo) {
@@ -387,7 +387,7 @@ static SwOutline* _genOutline(SwShape& shape, const RenderShape* rshape, const M
     //No actual shape data
     if (cmdCnt == 0 || ptsCnt == 0) return nullptr;
 
-    auto outline = mpoolReqOutline(mpool, tid);
+    auto outline = mpool->outline(tid);
     auto closed = false;
 
     //Generate Outlines

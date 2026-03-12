@@ -36,7 +36,7 @@ static inline bool _onlyShifted(const Matrix& m)
 
 static bool _genOutline(SwImage& image, const Matrix& transform, SwMpool* mpool, unsigned tid)
 {
-    image.outline = mpoolReqOutline(mpool, tid);
+    image.outline = mpool->outline(tid);
     auto outline = image.outline;
 
     outline->pts.reserve(5);

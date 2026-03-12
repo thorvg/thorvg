@@ -728,7 +728,7 @@ SwRle* rleRender(SwRle* rle, const SwOutline* outline, const RenderRegion& bbox,
     if (!outline) return nullptr;
   
     RleWorker rw;
-    auto cellPool = mpoolReqCellPool(mpool, tid);
+    auto cellPool = mpool->cell(tid);
     auto reqSize = uint32_t(std::max(bbox.w(), bbox.h()) * 0.75f) * sizeof(SwCell);  //experimental decision
 
     // grow by 1.25x and align to multiple of sizeof(SwCell)

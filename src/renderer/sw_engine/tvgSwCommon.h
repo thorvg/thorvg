@@ -336,26 +336,55 @@ struct SwCellPool
 
 struct SwMpool
 {
-    SwOutline* outline;
-    SwStrokeBorder* leftBorder;
-    SwStrokeBorder* rightBorder;
-    SwCellPool* cellPool;
+    SwOutline* outlines;
+    SwStrokeBorder* lBorders;
+    SwStrokeBorder* rBorders;
+    SwCellPool* cellPools;
 
     SwMpool(uint32_t threads)
     {
         auto allocSize = threads + 1;
-        outline = new SwOutline[allocSize];
-        leftBorder = new SwStrokeBorder[allocSize];
-        rightBorder = new SwStrokeBorder[allocSize];
-        cellPool = new SwCellPool[allocSize];
+        outlines = new SwOutline[allocSize];
+        lBorders = new SwStrokeBorder[allocSize];
+        rBorders = new SwStrokeBorder[allocSize];
+        cellPools = new SwCellPool[allocSize];
     }
 
     ~SwMpool()
     {
-        delete[](outline);
-        delete[](leftBorder);
-        delete[](rightBorder);
-        delete[](cellPool);
+        delete[] (outlines);
+        delete[] (lBorders);
+        delete[] (rBorders);
+        delete[] (cellPools);
+    }
+
+    SwCellPool* cell(unsigned idx)
+    {
+        return &cellPools[idx];
+    }
+
+    SwOutline* outline(unsigned idx)
+    {
+        outlines[idx].pts.clear();
+        outlines[idx].cntrs.clear();
+        outlines[idx].types.clear();
+        outlines[idx].closed.clear();
+
+        return &outlines[idx];
+    }
+
+    SwStrokeBorder* strokeLBorder(unsigned idx)
+    {
+        lBorders[idx].pts.clear();
+        lBorders[idx].start = -1;
+        return &lBorders[idx];
+    }
+
+    SwStrokeBorder* strokeRBorder(unsigned idx)
+    {
+        rBorders[idx].pts.clear();
+        rBorders[idx].start = -1;
+        return &rBorders[idx];
     }
 };
 
@@ -712,11 +741,6 @@ bool rleIntersect(const SwRle* rle, const RenderRegion& region);
 void mpoolInit(uint32_t threads);
 void mpoolTerm();
 SwMpool* mpoolReq();
-SwOutline* mpoolReqOutline(SwMpool* mpool, unsigned idx);
-SwOutline* mpoolReqDashOutline(SwMpool* mpool, unsigned idx);
-SwStrokeBorder* mpoolReqStrokeLBorder(SwMpool* mpool, unsigned idx);
-SwStrokeBorder* mpoolReqStrokeRBorder(SwMpool* mpool, unsigned idx);
-SwCellPool* mpoolReqCellPool(SwMpool* mpool, unsigned idx);
 
 bool rasterCompositor(SwSurface* surface);
 bool rasterShape(SwSurface* surface, SwShape* shape, const RenderRegion& bbox, RenderColor& c);
