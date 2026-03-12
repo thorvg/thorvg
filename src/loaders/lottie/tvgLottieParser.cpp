@@ -966,9 +966,10 @@ void LottieParser::parseImage(LottieImage* image, const char* data, const char* 
         image->bitmap.size = b64Decode(b64Data, length, &image->bitmap.data);
     //external image resource
     } else {
-        auto len = strlen(dirName) + strlen(subPath) + dlen + 2;
+        auto subPathLen = subPath ? strlen(subPath) : 0;
+        auto len = strlen(dirName) + subPathLen + dlen + 2;
         image->bitmap.path = tvg::malloc<char>(len);
-        snprintf(image->bitmap.path, len, "%s/%s%s", dirName, subPath, data);
+        snprintf(image->bitmap.path, len, "%s/%s%s", dirName, subPath ? subPath : "", data);
     }
     image->bitmap.width = width;
     image->bitmap.height = height;
