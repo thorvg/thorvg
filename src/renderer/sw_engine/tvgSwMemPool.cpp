@@ -35,39 +35,6 @@ static Key _key;
 /* External Class Implementation                                        */
 /************************************************************************/
 
-SwOutline* mpoolReqOutline(SwMpool* mpool, unsigned idx)
-{
-    mpool->outline[idx].pts.clear();
-    mpool->outline[idx].cntrs.clear();
-    mpool->outline[idx].types.clear();
-    mpool->outline[idx].closed.clear();
-
-    return &mpool->outline[idx];
-}
-
-
-SwStrokeBorder* mpoolReqStrokeLBorder(SwMpool* mpool, unsigned idx)
-{
-    mpool->leftBorder[idx].pts.clear();
-    mpool->leftBorder[idx].start = -1;
-    return &mpool->leftBorder[idx];
-}
-
-
-SwStrokeBorder* mpoolReqStrokeRBorder(SwMpool* mpool, unsigned idx)
-{
-    mpool->rightBorder[idx].pts.clear();
-    mpool->rightBorder[idx].start = -1;
-    return &mpool->rightBorder[idx];
-}
-
-
-SwCellPool* mpoolReqCellPool(SwMpool* mpool, unsigned idx)
-{
-    return &mpool->cellPool[idx];
-}
-
-
 SwMpool* mpoolReq()
 {
     if (!_pool) {
