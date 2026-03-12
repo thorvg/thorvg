@@ -21,11 +21,19 @@
  */
 
 #include "tvgStr.h"
- #include "tvgLottieLoader.h"
+#include "tvgLottieLoader.h"
 #include "tvgLottieModel.h"
+
+#ifndef ZAN_BUILD_TYPE_ZFB
 #include "tvgLottieParser.h"
+#endif
+
 #include "tvgLottieBuilder.h"
 #include "tvgCompressor.h"
+
+#ifdef ZAN_HAS_FLATBUFFERS
+#include "tvgLottieFlatBufferParser.h"
+#endif
 
 /************************************************************************/
 /* Internal Class Implementation                                        */
@@ -41,6 +49,25 @@ LottieCustomSlot::~LottieCustomSlot()
 
 bool LottieLoader::prepare()
 {
+#ifdef ZAN_HAS_FLATBUFFERS
+    // Try ZFB first
+    if (size > 4) {
+        LottieFlatBufferParser fbParser(content, size, dirName);
+        if (fbParser.parse()) {
+            {
+                ScopedLock lock(key);
+                comp = fbParser.comp;
+                fbParser.comp = nullptr;
+            }
+            if (!comp) return false;
+            builder->build(comp);
+            release();
+            return true;
+        }
+    }
+#endif
+
+#ifndef ZAN_BUILD_TYPE_ZFB
     LottieParser parser(content, dirName, builder->expressions());
     if (!parser.parse()) return false;
     {
@@ -57,6 +84,9 @@ bool LottieLoader::prepare()
     builder->build(comp);
     release();
     return true;
+#else
+    return false;
+#endif
 }
 
 
@@ -333,6 +363,7 @@ bool LottieLoader::del(uint32_t slotcode, bool byDefault)
 
 uint32_t LottieLoader::gen(const char* slots, bool byDefault)
 {
+#ifndef ZAN_BUILD_TYPE_ZFB
     if (!slots || !ready() || comp->slots.empty()) return 0;
 
     //parsing slot json
@@ -367,6 +398,7 @@ uint32_t LottieLoader::gen(const char* slots, bool byDefault)
     }
 
     delete(custom);
+#endif
     return 0;
 }
 
