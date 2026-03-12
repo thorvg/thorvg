@@ -180,7 +180,7 @@ struct GlRenderer : RenderMethod
     void damage(RenderData rd, const RenderRegion& region) override;
     bool partial(bool disable) override;
 
-    static GlRenderer* gen(uint32_t threads);
+    static GlRenderer* gen(uint32_t threads, EngineOption op);
     static bool term();
 
 private:

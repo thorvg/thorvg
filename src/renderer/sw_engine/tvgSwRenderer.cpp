@@ -21,7 +21,6 @@
  */
 
 #include <algorithm>
-#include <atomic>
 #include "tvgSwCommon.h"
 #include "tvgTaskScheduler.h"
 #include "tvgSwRenderer.h"
@@ -33,7 +32,9 @@
 /************************************************************************/
 /* Internal Class Implementation                                        */
 /************************************************************************/
-static atomic<int32_t> rendererCnt{-1};
+
+static int32_t _rendererCnt = -1;
+static mutex _rendererMtx;
 
 struct SwTask : Task
 {
@@ -258,7 +259,9 @@ SwRenderer::~SwRenderer()
 
     delete(surface);
 
-    --rendererCnt;
+    _rendererMtx.lock();
+    --_rendererCnt;
+    _rendererMtx.unlock();
 }
 
 
@@ -900,10 +903,16 @@ RenderData SwRenderer::prepare(const RenderShape& rshape, RenderData data, const
 
 bool SwRenderer::term()
 {
-    if (rendererCnt > 0) return false;
+    _rendererMtx.lock();
+    if (_rendererCnt > 0) {
+        _rendererMtx.unlock();
+        return false;
+    }
 
     mpoolTerm();
-    rendererCnt = -1;
+
+    _rendererCnt = -1;
+    _rendererMtx.unlock();
 
     return true;
 }
@@ -912,17 +921,18 @@ bool SwRenderer::term()
 SwRenderer::SwRenderer(uint32_t threads, EngineOption op)
 {
     //initialize engine
-    if (rendererCnt == -1) {
+    _rendererMtx.lock();
+    if (_rendererCnt == -1) {
 #ifdef THORVG_OPENMP_SUPPORT
         omp_set_num_threads(threads);
 #endif
         mpoolInit(threads);
-        rendererCnt = 0;
+        _rendererCnt = 0;
     }
+    ++_rendererCnt;
+    _rendererMtx.unlock();
 
     mpool = mpoolReq();
 
     if (op == EngineOption::None) dirtyRegion.support = false;
-
-    ++rendererCnt;
 }

@@ -207,7 +207,7 @@ GlCanvas* GlCanvas::gen(EngineOption op) noexcept
 #ifdef THORVG_GL_RASTER_SUPPORT
     if (engineInit > 0) {
         if (op == EngineOption::SmartRender) TVGLOG("RENDERER", "GlCanvas doesn't support Smart Rendering");
-        auto renderer = GlRenderer::gen(TaskScheduler::threads());
+        auto renderer = GlRenderer::gen(TaskScheduler::threads(), op);
         if (!renderer) return nullptr;
         renderer->ref();
         auto ret = new GlCanvas;
@@ -267,7 +267,7 @@ WgCanvas* WgCanvas::gen(EngineOption op) noexcept
 #ifdef THORVG_WG_RASTER_SUPPORT
     if (engineInit > 0) {
         if (op == EngineOption::SmartRender) TVGLOG("RENDERER", "WgCanvas doesn't support Smart Rendering");
-        auto renderer = WgRenderer::gen(TaskScheduler::threads());
+        auto renderer = new WgRenderer(TaskScheduler::threads(), op);
         renderer->ref();
         auto ret = new WgCanvas;
         ret->pImpl->renderer = renderer;

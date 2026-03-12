@@ -20,7 +20,6 @@
  * SOFTWARE.
  */
 
-#include <atomic>
 #include "tvgTaskScheduler.h"
 #include "tvgWgRenderer.h"
 
@@ -29,7 +28,8 @@
 /* Internal Class Implementation                                        */
 /************************************************************************/
 
-static atomic<int32_t> rendererCnt{-1};
+static int32_t _rendererCnt = -1;
+static mutex _rendererMtx;
 
 
 void WgRenderer::release()
@@ -439,22 +439,13 @@ bool WgRenderer::target(WGPUDevice device, WGPUInstance instance, void* target, 
     return true;
 }
 
-
-WgRenderer::WgRenderer()
-{
-    if (TaskScheduler::onthread()) {
-        TVGLOG("WG_RENDERER", "Running on a non-dominant thread!, Renderer(%p)", this);
-    }
-
-    ++rendererCnt;
-}
-
-
 WgRenderer::~WgRenderer()
 {
     release();
 
-    --rendererCnt;
+    _rendererMtx.lock();
+    --_rendererCnt;
+    _rendererMtx.unlock();
 }
 
 
@@ -659,22 +650,26 @@ bool WgRenderer::intersectsImage(RenderData data, TVG_UNUSED const RenderRegion&
 
 bool WgRenderer::term()
 {
-    if (rendererCnt > 0) return false;
+    _rendererMtx.lock();
+    if (_rendererCnt > 0) {
+        _rendererMtx.unlock();
+        return false;
+    }
+    _rendererCnt = -1;
+    _rendererMtx.unlock();
 
     //TODO: clean up global resources
-
-    rendererCnt = -1;
 
     return true;
 }
 
-
-WgRenderer* WgRenderer::gen(TVG_UNUSED uint32_t threads)
+WgRenderer::WgRenderer(TVG_UNUSED uint32_t threads, TVG_UNUSED EngineOption op)
 {
-    //initialize engine
-    if (rendererCnt == -1) {
-        //TODO:
+    _rendererMtx.lock();
+    if (_rendererCnt == -1) {
+        //TODO: initialize the global engine
+        _rendererCnt = 0;
     }
-
-    return new WgRenderer;
+    ++_rendererCnt;
+    _rendererMtx.unlock();
 }
