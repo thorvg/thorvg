@@ -884,19 +884,13 @@ static LottieLayer* parseLayer(LottieComposition* comp, LottieLayer* parent, con
             if (zLayer->ref_id()) {
                 auto refIdHash = djb2(zLayer->ref_id()->c_str());
                 layer->rid = refIdHash;
-                
-                // Look up asset and parse its layers as children
+
+                // Only set dimensions from asset; children are populated via _buildReference
                 auto it = assetMap.find(refIdHash);
                 if (it != assetMap.end()) {
                     const Asset* asset = it->second;
                     if (layer->w <= 0) layer->w = asset->width();
                     if (layer->h <= 0) layer->h = asset->height();
-                    if (asset->layers()) {
-                        for (auto zChild : *asset->layers()) {
-                            auto child = parseLayer(comp, layer, zChild, assetMap);
-                            layer->children.push(child);
-                        }
-                    }
                 }
             }
             break;
@@ -1007,6 +1001,28 @@ bool LottieFlatBufferParser::parse()
             if (zAsset->id()) {
                 assetMap[djb2(zAsset->id()->c_str())] = zAsset;
             }
+        }
+    }
+
+    // Build comp->assets: for each precomp asset, create a LottieLayer with its children.
+    // This mirrors how tvgLottieParser.cpp populates comp->assets so that _buildReference
+    // and _buildComposition can correctly process matte/hierarchy relationships inside precomps.
+    if (movie->assets()) {
+        for (auto zAsset : *movie->assets()) {
+            if (!zAsset->id() || !zAsset->layers()) continue;
+            auto assetLayer = new LottieLayer;
+            static_cast<LottieObject*>(assetLayer)->type = LottieObject::Layer;
+            assetLayer->type = LottieLayer::Precomp;
+            assetLayer->id = djb2(zAsset->id()->c_str());
+            assetLayer->comp = comp->root;
+            assetLayer->w = (float)zAsset->width();
+            assetLayer->h = (float)zAsset->height();
+            for (auto zChild : *zAsset->layers()) {
+                auto child = parseLayer(comp, assetLayer, zChild, assetMap);
+                assetLayer->children.push(child);
+            }
+            assetLayer->prepare();
+            comp->assets.push(assetLayer);
         }
     }
 
