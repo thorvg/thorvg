@@ -414,7 +414,7 @@ static void _repeat(LottieGroup* parent, Shape* path, LottieRenderPooler<Shape>*
 
 void LottieBuilder::appendRect(Shape* shape, Point& pos, Point& size, float r, bool clockwise, RenderContext* ctx)
 {
-    auto temp = (ctx->offset) ? Shape::gen() : shape;
+    auto temp = (ctx->offset || ctx->puckerBloat) ? Shape::gen() : shape;
     auto cnt = to<ShapeImpl>(temp)->rs.path.pts.count;
 
     temp->appendRect(pos.x, pos.y, size.x, size.y, r, r, clockwise);
@@ -425,7 +425,12 @@ void LottieBuilder::appendRect(Shape* shape, Point& pos, Point& size, float r, b
         }
     }
 
-    if (ctx->offset) {
+    if (ctx->puckerBloat) {
+        //apply full modifier chain starting from puckerBloat
+        auto& path = to<ShapeImpl>(temp)->rs.path;
+        ctx->modifier->modifyPath(path.cmds.data, path.cmds.count, path.pts.data, path.pts.count, nullptr, to<ShapeImpl>(shape)->rs.path);
+        Paint::rel(temp);
+    } else if (ctx->offset) {
         ctx->offset->modifyRect(to<ShapeImpl>(temp)->rs.path, to<ShapeImpl>(shape)->rs.path);
         Paint::rel(temp);
     }
@@ -459,6 +464,21 @@ void LottieBuilder::updateRect(LottieGroup* parent, LottieObject** child, float 
 
 static void _appendCircle(Shape* shape, Point& center, Point& radius, bool clockwise, RenderContext* ctx)
 {
+    //puckerBloat requires path-level processing: generate into a temp then apply full modifier chain
+    if (ctx->puckerBloat) {
+        auto temp = Shape::gen();
+        temp->appendCircle(center.x, center.y, radius.x, radius.y, clockwise);
+        auto& tempPath = to<ShapeImpl>(temp)->rs.path;
+        if (ctx->transform) {
+            for (uint32_t i = 0; i < tempPath.pts.count; ++i) {
+                tempPath.pts[i] *= *ctx->transform;
+            }
+        }
+        ctx->modifier->modifyPath(tempPath.cmds.data, tempPath.cmds.count, tempPath.pts.data, tempPath.pts.count, nullptr, to<ShapeImpl>(shape)->rs.path);
+        Paint::rel(temp);
+        return;
+    }
+
     if (ctx->offset) ctx->offset->modifyEllipse(radius);
 
     auto cnt = to<ShapeImpl>(shape)->rs.path.pts.count;
@@ -753,6 +773,15 @@ void LottieBuilder::updateOffsetPath(TVG_UNUSED LottieGroup* parent, LottieObjec
 }
 
 
+void LottieBuilder::updatePuckerBloat(TVG_UNUSED LottieGroup* parent, LottieObject** child, float frameNo, TVG_UNUSED Inlist<RenderContext>& contexts, RenderContext* ctx)
+{
+    auto puckerBloat = static_cast<LottiePuckerBloat*>(*child);
+    if (!ctx->puckerBloat) ctx->puckerBloat = new LottiePuckerBloatModifier(&buffer, puckerBloat->amount(frameNo, tween, exps));
+
+    ctx->update(ctx->puckerBloat);
+}
+
+
 void LottieBuilder::updateRepeater(TVG_UNUSED LottieGroup* parent, LottieObject** child, float frameNo, TVG_UNUSED Inlist<RenderContext>& contexts, RenderContext* ctx)
 {
     auto repeater = static_cast<LottieRepeater*>(*child);
@@ -858,6 +887,10 @@ void LottieBuilder::updateChildren(LottieGroup* parent, float frameNo, Inlist<Re
                 }
                 case LottieObject::OffsetPath: {
                     updateOffsetPath(parent, child, frameNo, contexts, ctx);
+                    break;
+                }
+                case LottieObject::PuckerBloat: {
+                    updatePuckerBloat(parent, child, frameNo, contexts, ctx);
                     break;
                 }
                 default: break;

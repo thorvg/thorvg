@@ -272,6 +272,7 @@ struct LottieObject
         Repeater,
         RoundedCorner,
         OffsetPath,
+        PuckerBloat,
         TextRange
     };
 
@@ -1000,6 +1001,23 @@ struct LottieOffsetPath : LottieObject
     LottieFloat offset = 0.0f;
     LottieFloat miterLimit = 4.0f;
     StrokeJoin join = StrokeJoin::Miter;
+};
+
+
+struct LottiePuckerBloat : LottieObject
+{
+    LottiePuckerBloat()
+    {
+        LottieObject::type = LottieObject::PuckerBloat;
+    }
+
+    LottieProperty* property(uint16_t ix) override
+    {
+        if (amount.ix == ix) return &amount;
+        return nullptr;
+    }
+
+    LottieFloat amount = 0.0f;
 };
 
 
