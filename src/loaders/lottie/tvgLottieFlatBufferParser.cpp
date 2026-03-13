@@ -2,9 +2,7 @@
 #include "tvgStr.h"
 #include "thorvg.h"
 #include "../../../../src/schema/zan_generated.h"
-#include <iostream>
 #include <unordered_map>
-#include <string>
 #include <cstdlib>
 
 using namespace Zan::Data;
@@ -43,11 +41,6 @@ static char* dupString(const flatbuffers::String* str)
     return tvg::duplicate(str->c_str());
 }
 
-static char* dupStringOrEmpty(const flatbuffers::String* str)
-{
-    if (str) return tvg::duplicate(str->c_str());
-    return nullptr;
-}
 
 static Point toPoint(const Vec2* v)
 {
@@ -264,7 +257,6 @@ static void parsePathData(PathSet& out, const PathData* zPath)
     bool closed = zPath->closed();
     
     int totalSegments = pointCount - 1 + (closed ? 1 : 0);
-    if (totalSegments < 0) totalSegments = 0;
 
     int totalPts = 1 + (totalSegments * 3);
     
@@ -448,7 +440,7 @@ static LottieGlyph* parseGlyph(LottieComposition* comp, const Glyph* zGlyph)
 {
     if (!zGlyph) return nullptr;
     auto glyph = new LottieGlyph;
-    glyph->code = dupStringOrEmpty(zGlyph->code());
+    glyph->code = dupString(zGlyph->code());
     glyph->family = dupString(zGlyph->family());
     glyph->style = dupString(zGlyph->style());
     glyph->size = zGlyph->size();
