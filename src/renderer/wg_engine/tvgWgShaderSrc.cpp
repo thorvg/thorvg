@@ -500,6 +500,25 @@ fn hslToRgb(color: vec3f) -> vec3f {
     return rgb + vec3f(m);
 };
 
+fn lum(color: vec3f) -> f32 {
+    return dot(color, vec3f(0.3, 0.59, 0.11));
+}
+
+fn setLum(colorIn: vec3f, l: f32) -> vec3f {
+    var color = colorIn + vec3f(l - lum(colorIn));
+    let ll = lum(color);
+    let n = min(color.r, min(color.g, color.b));
+    let x = max(color.r, max(color.g, color.b));
+
+    if (n < 0.0) {
+        color = vec3f(ll) + ((color - vec3f(ll)) * ll) / (ll - n);
+    }
+    if (x > 1.0) {
+        color = vec3f(ll) + ((color - vec3f(ll)) * (1.0 - ll)) / (x - ll);
+    }
+    return color;
+};
+
 @fragment
 fn fs_main_Normal(in: VertexOutput) -> @location(0) vec4f {
     // used as debug blend method
@@ -605,7 +624,13 @@ fn fs_main_SoftLight(in: VertexOutput) -> @location(0) vec4f {
     var Rc = d.Sc;
     if (d.Da > 0.0) {
         let Dc = min(One, d.Dc / d.Da);
-        Rc = min(One, (One - 2 * d.Sc) * Dc * Dc + 2.0 * d.Sc * Dc);
+        let Dr = select(sqrt(Dc.r), ((16.0 * Dc.r - 12.0) * Dc.r + 4.0) * Dc.r, Dc.r <= 0.25);
+        let Dg = select(sqrt(Dc.g), ((16.0 * Dc.g - 12.0) * Dc.g + 4.0) * Dc.g, Dc.g <= 0.25);
+        let Db = select(sqrt(Dc.b), ((16.0 * Dc.b - 12.0) * Dc.b + 4.0) * Dc.b, Dc.b <= 0.25);
+        Rc.r = select(Dc.r + (2.0 * d.Sc.r - 1.0) * (Dr - Dc.r), Dc.r - (1.0 - 2.0 * d.Sc.r) * Dc.r * (1.0 - Dc.r), d.Sc.r <= 0.5);
+        Rc.g = select(Dc.g + (2.0 * d.Sc.g - 1.0) * (Dg - Dc.g), Dc.g - (1.0 - 2.0 * d.Sc.g) * Dc.g * (1.0 - Dc.g), d.Sc.g <= 0.5);
+        Rc.b = select(Dc.b + (2.0 * d.Sc.b - 1.0) * (Db - Dc.b), Dc.b - (1.0 - 2.0 * d.Sc.b) * Dc.b * (1.0 - Dc.b), d.Sc.b <= 0.5);
+        Rc = clamp(Rc, vec3f(0.0), One);
         Rc = mix(d.Sc, Rc, d.Da);
     };
     return postProcess(d, vec4f(Rc, 1.0));
@@ -648,11 +673,11 @@ fn fs_main_Saturation(in: VertexOutput) -> @location(0) vec4f {
     var Rc = d.Sc;
     if (d.Da > 0.0) {
         let Dc = min(One, d.Dc / d.Da);
-        let Sc = d.Sc;
-
-        let Shsl = rgbToHsl(Sc);
-        let Dhsl = rgbToHsl(Dc);
-        Rc = hslToRgb(vec3(Dhsl.r, Shsl.g, Dhsl.b)); // dh, ss, dl
+        let s = max(d.Sc.r, max(d.Sc.g, d.Sc.b)) - min(d.Sc.r, min(d.Sc.g, d.Sc.b));
+        let n = min(Dc.r, min(Dc.g, Dc.b));
+        let x = max(Dc.r, max(Dc.g, Dc.b));
+        Rc = select(vec3f(0.0), (Dc - vec3f(n)) * (s / (x - n)), x > n);
+        Rc = setLum(Rc, lum(Dc));
 
         Rc = mix(d.Sc, Rc, d.Da);
     };
@@ -665,11 +690,7 @@ fn fs_main_Color(in: VertexOutput) -> @location(0) vec4f {
     var Rc = d.Sc;
     if (d.Da > 0.0) {
         let Dc = min(One, d.Dc / d.Da);
-        let Sc = d.Sc;
-
-        let Shsl = rgbToHsl(Sc);
-        let Dhsl = rgbToHsl(Dc);
-        Rc = hslToRgb(vec3(Shsl.r, Shsl.g, Dhsl.b)); // sh, ss, dl
+        Rc = setLum(d.Sc, lum(Dc));
 
         Rc = mix(d.Sc, Rc, d.Da);
     };
@@ -682,11 +703,7 @@ fn fs_main_Luminosity(in: VertexOutput) -> @location(0) vec4f {
     var Rc = d.Sc;
     if (d.Da > 0.0) {
         let Dc = min(One, d.Dc / d.Da);
-        let Sc = d.Sc;
-
-        let Shsl = rgbToHsl(Sc);
-        let Dhsl = rgbToHsl(Dc);
-        Rc = hslToRgb(vec3(Dhsl.r, Dhsl.g, Shsl.b)); // dh, ds, sl
+        Rc = setLum(Dc, lum(d.Sc));
 
         Rc = mix(d.Sc, Rc, d.Da);
     };
