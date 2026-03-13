@@ -953,6 +953,7 @@ static Scene* _sceneBuildHelper(SvgLoaderData& loaderData, const SvgNode* node, 
 
     ARRAY_FOREACH(p, node->child) {
         auto child = *p;
+        if (child->type == SvgNodeType::ClipPath || child->type == SvgNodeType::Filter) continue;
         if (_isGroupType(child->type)) {
             if (child->type == SvgNodeType::Use)
                 scene->add(_useBuildHelper(loaderData, child, vBox, svgPath, depth + 1));
