@@ -311,12 +311,6 @@ static void _horizLine(RleWorker& rw, int32_t x, int32_t y, int32_t area, int32_
 
     if (coverage == 0) return;
 
-    //span has ushort coordinates. check limit overflow
-    if (x >= SHRT_MAX || y >= SHRT_MAX) {
-        TVGERR("SW_ENGINE", "XY-coordinate overflow!");
-        return;
-    }
-
     auto rle = rw.rle;
 
     if (!rw.antiAlias) coverage = 255;
@@ -346,7 +340,7 @@ static void _horizLine(RleWorker& rw, int32_t x, int32_t y, int32_t area, int32_
     if (aCount + xOver <= 0) return;
 
     //add a span to the current list
-    rle->spans.next() = {(uint16_t)x, (uint16_t)y, uint16_t(aCount + xOver), (uint8_t)coverage};
+    rle->spans.next() = {(uint32_t)x, (uint32_t)y, uint32_t(aCount + xOver), (uint8_t)coverage};
 }
 
 
@@ -852,9 +846,9 @@ SwRle* rleRender(const RenderRegion* bbox)
     rle->spans.count = bbox->h();
 
     //cheaper without push()
-    auto x = uint16_t(bbox->min.x);
-    auto y = uint16_t(bbox->min.y);
-    auto len = uint16_t(bbox->w());
+    auto x = uint32_t(bbox->min.x);
+    auto y = uint32_t(bbox->min.y);
+    auto len = uint32_t(bbox->w());
 
     ARRAY_FOREACH(p, rle->spans) {
         *p = {x, y++, len, 255};
@@ -915,7 +909,7 @@ bool rleClip(SwRle* rle, const SwRle *clip)
             //clip span region
             auto x = std::max(spans->x, temp->x);
             auto len = std::min((spans->x + spans->len), (temp->x + temp->len)) - x;
-            if (len > 0) out.next() = {uint16_t(x), temp->y, uint16_t(len), (uint8_t)(((spans->coverage * temp->coverage) + 0xff) >> 8)};
+            if (len > 0) out.next() = {uint32_t(x), temp->y, uint32_t(len), (uint8_t)(((spans->coverage * temp->coverage) + 0xff) >> 8)};
             ++temp;
         }
         ++spans;
@@ -937,17 +931,17 @@ bool rleClip(SwRle *rle, const RenderRegion* clip)
     out.reserve(rle->spans.count);
     auto data = out.data;
     const SwSpan* end;
-    uint16_t x, len;
+    uint32_t x, len;
 
     for (auto p = rle->fetch(*clip, &end); p < end; ++p) {
-        if (p->y >= max.y) break;
-        if (p->y < min.y || p->x >= max.x || (p->x + p->len) <= min.x) continue;
-        if (p->x < min.x) {
+        if (p->y >= (uint32_t)max.y) break;
+        if (p->y < (uint32_t)min.y || p->x >= (uint32_t)max.x || (p->x + p->len) <= (uint32_t)min.x) continue;
+        if (p->x < (uint32_t)min.x) {
             x = min.x;
-            len = std::min(uint16_t(p->len - (x - p->x)), uint16_t(max.x - x));
+            len = std::min(uint32_t(p->len - (x - p->x)), uint32_t(max.x - x));
         } else {
             x = p->x;
-            len = std::min(p->len, uint16_t(max.x - x));
+            len = std::min<uint32_t>(p->len, uint32_t(max.x - x));
         }
         if (len > 0) {
             *data = {x, p->y, len, p->coverage};
