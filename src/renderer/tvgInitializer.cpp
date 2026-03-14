@@ -43,6 +43,7 @@
 
 namespace tvg {
     int engineInit = 0;
+    Initializer::HeapAllocator _heapAllocator = {};
 }
 
 static uint16_t _version = 0;
@@ -80,9 +81,11 @@ static bool _buildVersionInfo(uint32_t* major, uint32_t* minor, uint32_t* micro)
 /* External Class Implementation                                        */
 /************************************************************************/
 
-Result Initializer::init(uint32_t threads) noexcept
+Result Initializer::init(uint32_t threads, const HeapAllocator &allocator) noexcept
 {
     if (engineInit++ > 0) return Result::Success;
+
+    _heapAllocator = allocator;
 
     if (!_buildVersionInfo(nullptr, nullptr, nullptr)) return Result::Unknown;
 
