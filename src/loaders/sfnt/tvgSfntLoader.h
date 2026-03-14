@@ -25,30 +25,30 @@
 #include <unordered_map>
 #include "tvgLoader.h"
 #include "tvgTaskScheduler.h"
-#include "tvgTtfReader.h"
+#include "tvgSfntReader.h"
 
 using namespace std;
 
 
-struct TtfMetrics : FontMetrics
+struct SfntMetrics : FontMetrics
 {
     float baseWidth;  //Use as the reference glyph width for italic transform
 };
 
 
-struct TtfLoader : public FontLoader
+struct SfntLoader : public FontLoader
 {
 #if defined(_WIN32) && (WINAPI_FAMILY == WINAPI_FAMILY_DESKTOP_APP)
     void* mapping = nullptr;
 #endif
-    TtfReader reader;
-    unordered_map<uint32_t, TtfGlyphMetrics> glyphs;  //glypha cache. key: codepoint
+    SfntReader reader;
+    unordered_map<uint32_t, SfntGlyphMetrics> glyphs;  //glypha cache. key: codepoint
     char* text = nullptr;
     bool nomap = false;
     bool freeData = false;
 
-    TtfLoader();
-    ~TtfLoader();
+    SfntLoader();
+    ~SfntLoader();
 
     using FontLoader::open;
     using FontLoader::read;
@@ -73,8 +73,8 @@ private:
     void wrapChar(FontMetrics& fm, const Point& box, const char* utf8, RenderPath& out);
     void wrapWord(FontMetrics& fm, const Point& box, const char* utf8, RenderPath& out, bool smart);
     void wrapEllipsis(FontMetrics& fm, const Point& box, const char* utf8, RenderPath& out);
-    TtfGlyphMetrics* request(uint32_t code);
+    SfntGlyphMetrics* request(uint32_t code);
     void clear();
 };
 
-#endif //_TVG_PNG_LOADER_H_
+#endif //_TVG_SFNT_LOADER_H_

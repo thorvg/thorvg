@@ -20,7 +20,7 @@
  * SOFTWARE.
  */
 
-#ifndef _TVG_TTF_READER_H
+#ifndef _TVG_SFNT_READER_H
 #define _TVG_TTF_READER_H
 
 #include <atomic>
@@ -28,7 +28,7 @@
 
 #define INVALID_GLYPH ((uint32_t)-1)
 
-struct TtfGlyph
+struct SfntGlyph
 {
     uint32_t idx;        //glyph index
     float advance;       //advance width/height
@@ -36,12 +36,12 @@ struct TtfGlyph
     float x, y, w, h;    //bounding box
 };
 
-struct TtfGlyphMetrics : TtfGlyph
+struct SfntGlyphMetrics : SfntGlyph
 {
     RenderPath path;     //outline path
 };
 
-struct TtfReader
+struct SfntReader
 {
 public:
     uint8_t* data = nullptr;
@@ -56,9 +56,9 @@ public:
     } metrics;
 
     bool header();
-    uint32_t glyph(uint32_t codepoint, TtfGlyphMetrics* tgm);
+    uint32_t glyph(uint32_t codepoint, SfntGlyphMetrics* tgm);
     bool kerning(uint32_t lglyph, uint32_t rglyph, Point& out);
-    bool convert(RenderPath& path, TtfGlyph& glyph, uint32_t glyphOffset, const Point& offset, uint16_t depth);
+    bool convert(RenderPath& path, SfntGlyph& glyph, uint32_t glyphOffset, const Point& offset, uint16_t depth);
 
 private:
     //table offsets
@@ -76,11 +76,11 @@ private:
     uint32_t table(const char* tag);
     uint32_t outlineOffset(uint32_t glyph);
     uint32_t glyph(uint32_t codepoint);
-    uint32_t glyphMetrics(TtfGlyph& glyph);
-    bool convertComposite(RenderPath& path, TtfGlyph& glyph, uint32_t glyphOffset, const Point& offset, uint16_t depth);
+    uint32_t glyphMetrics(SfntGlyph& glyph);
+    bool convertComposite(RenderPath& path, SfntGlyph& glyph, uint32_t glyphOffset, const Point& offset, uint16_t depth);
     bool genPath(uint8_t* flags, uint16_t basePoint, uint16_t count);
     bool points(uint32_t outline, uint8_t* flags, Point* pts, uint32_t ptsCnt, const Point& offset);
     bool flags(uint32_t *outline, uint8_t* flags, uint32_t flagsCnt);
 };
 
-#endif //_TVG_TTF_READER_H
+#endif //_TVG_SFNT_READER_H

@@ -20,7 +20,7 @@
  * SOFTWARE.
  */
 
-#include "tvgTtfReader.h"
+#include "tvgSfntReader.h"
 
 /************************************************************************/
 /* Internal Class Implementation                                        */
@@ -65,24 +65,24 @@ static int _cmpu32(const void *a, const void *b)
 }
 
 
-bool TtfReader::validate(uint32_t offset, uint32_t margin) const
+bool SfntReader::validate(uint32_t offset, uint32_t margin) const
 {
     if ((offset > size) || (size - offset < margin)) {
-        TVGERR("TTF", "Invalidate data");
+        TVGERR("SFNT", "Invalidate data");
         return false;
     }
     return true;
 }
 
 
-uint32_t TtfReader::table(const char* tag)
+uint32_t SfntReader::table(const char* tag)
 {
     auto tableCnt = _u16(data, 4);
     if (!validate(12, (uint32_t) tableCnt * 16)) return 0;
 
     auto match = bsearch(tag, data + 12, tableCnt, 16, _cmpu32);
     if (!match) {
-        TVGLOG("TTF", "No searching table = %s", tag);
+        TVGLOG("SFNT", "No searching table = %s", tag);
         return 0;
     }
 
@@ -90,7 +90,7 @@ uint32_t TtfReader::table(const char* tag)
 }
 
 
-uint32_t TtfReader::cmap_12_13(uint32_t table, uint32_t codepoint, int fmt) const
+uint32_t SfntReader::cmap_12_13(uint32_t table, uint32_t codepoint, int fmt) const
 {
     //A minimal header is 16 bytes
     auto len = _u32(data, table + 4);
@@ -112,7 +112,7 @@ uint32_t TtfReader::cmap_12_13(uint32_t table, uint32_t codepoint, int fmt) cons
 }
 
 
-uint32_t TtfReader::cmap_4(uint32_t table, uint32_t codepoint) const
+uint32_t SfntReader::cmap_4(uint32_t table, uint32_t codepoint) const
 {
     //cmap format 4 only supports the Unicode BMP.
     if (codepoint > 0xffff) return -1;
@@ -176,7 +176,7 @@ uint32_t TtfReader::cmap_4(uint32_t table, uint32_t codepoint) const
 }
 
 
-uint32_t TtfReader::cmap_6(uint32_t table, uint32_t codepoint) const
+uint32_t SfntReader::cmap_6(uint32_t table, uint32_t codepoint) const
 {
     //cmap format 6 only supports the Unicode BMP.
     if (codepoint > 0xFFFF) return 0;
@@ -193,7 +193,7 @@ uint32_t TtfReader::cmap_6(uint32_t table, uint32_t codepoint) const
 
 
 //Returns the offset into the font that the glyph's outline is stored at
-uint32_t TtfReader::outlineOffset(uint32_t glyph)
+uint32_t SfntReader::outlineOffset(uint32_t glyph)
 {
     uint32_t cur, next;
 
@@ -206,7 +206,7 @@ uint32_t TtfReader::outlineOffset(uint32_t glyph)
     if (metrics.locaFormat == 0) {
         auto base = loca + 2 * glyph;
         if (!validate(base, 4)) {
-            TVGERR("TTF", "invalid outline offset");
+            TVGERR("SFNT", "invalid outline offset");
             return 0;
         }
         cur = 2U * (uint32_t) _u16(data, base);
@@ -222,7 +222,7 @@ uint32_t TtfReader::outlineOffset(uint32_t glyph)
 }
 
 
-bool TtfReader::points(uint32_t outline, uint8_t* flags, Point* pts, uint32_t ptsCnt, const Point& offset)
+bool SfntReader::points(uint32_t outline, uint8_t* flags, Point* pts, uint32_t ptsCnt, const Point& offset)
 {
     #define X_CHANGE_IS_SMALL 0x02
     #define X_CHANGE_IS_POSITIVE 0x10
@@ -268,7 +268,7 @@ bool TtfReader::points(uint32_t outline, uint8_t* flags, Point* pts, uint32_t pt
 }
 
 
-bool TtfReader::flags(uint32_t *outline, uint8_t* flags, uint32_t flagsCnt)
+bool SfntReader::flags(uint32_t *outline, uint8_t* flags, uint32_t flagsCnt)
 {
     #define REPEAT_FLAG 0x08
 
@@ -298,7 +298,7 @@ bool TtfReader::flags(uint32_t *outline, uint8_t* flags, uint32_t flagsCnt)
 /* External Class Implementation                                        */
 /************************************************************************/
 
-bool TtfReader::header()
+bool SfntReader::header()
 {
     if (!validate(0, 12)) return false;
 
@@ -334,7 +334,7 @@ bool TtfReader::header()
 }
 
 
-uint32_t TtfReader::glyph(uint32_t codepoint)
+uint32_t SfntReader::glyph(uint32_t codepoint)
 {
     auto cmap = this->cmap.load();
     if (cmap == 0) {
@@ -382,7 +382,7 @@ uint32_t TtfReader::glyph(uint32_t codepoint)
 }
 
 
-uint32_t TtfReader::glyph(uint32_t codepoint, TtfGlyphMetrics* tgm)
+uint32_t SfntReader::glyph(uint32_t codepoint, SfntGlyphMetrics* tgm)
 {
     tgm->idx = glyph(codepoint);
     if (tgm->idx == INVALID_GLYPH) return 0;
@@ -390,7 +390,7 @@ uint32_t TtfReader::glyph(uint32_t codepoint, TtfGlyphMetrics* tgm)
 }
 
 
-uint32_t TtfReader::glyphMetrics(TtfGlyph& glyph)
+uint32_t SfntReader::glyphMetrics(SfntGlyph& glyph)
 {
     //horizontal metrics
     auto hmtx = this->hmtx.load();
@@ -439,7 +439,7 @@ uint32_t TtfReader::glyphMetrics(TtfGlyph& glyph)
 }
 
 
-bool TtfReader::convert(RenderPath& path, TtfGlyph& glyph, uint32_t glyphOffset, const Point& offset, uint16_t depth)
+bool SfntReader::convert(RenderPath& path, SfntGlyph& glyph, uint32_t glyphOffset, const Point& offset, uint16_t depth)
 {
     #define ON_CURVE 0x01
 
@@ -519,7 +519,7 @@ bool TtfReader::convert(RenderPath& path, TtfGlyph& glyph, uint32_t glyphOffset,
 }
 
 
-bool TtfReader::convertComposite(RenderPath& path, TtfGlyph& glyph, uint32_t glyphOffset, const Point& offset, uint16_t depth)
+bool SfntReader::convertComposite(RenderPath& path, SfntGlyph& glyph, uint32_t glyphOffset, const Point& offset, uint16_t depth)
 {
     #define ARG_1_AND_2_ARE_WORDS 0x0001
     #define ARGS_ARE_XY_VALUES 0x0002
@@ -528,7 +528,7 @@ bool TtfReader::convertComposite(RenderPath& path, TtfGlyph& glyph, uint32_t gly
     #define WE_HAVE_AN_X_AND_Y_SCALE 0x0040
     #define WE_HAVE_A_TWO_BY_TWO 0x0080
 
-    TtfGlyph compGlyph;
+    SfntGlyph compGlyph;
     Point compOffset;
     uint16_t flags;
     auto pointer = glyphOffset + 10;
@@ -575,7 +575,7 @@ bool TtfReader::convertComposite(RenderPath& path, TtfGlyph& glyph, uint32_t gly
 }
 
 
-bool TtfReader::kerning(uint32_t lglyph, uint32_t rglyph, Point& out)
+bool SfntReader::kerning(uint32_t lglyph, uint32_t rglyph, Point& out)
 {
     #define HORIZONTAL_KERNING 0x01
     #define MINIMUM_KERNING 0x02

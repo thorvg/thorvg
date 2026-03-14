@@ -22,7 +22,7 @@
 
 
 #include "tvgStr.h"
-#include "tvgTtfLoader.h"
+#include "tvgSfntLoader.h"
 
 #if defined(__linux__)
     #include <fcntl.h>
@@ -44,7 +44,7 @@
 
 #if defined(_WIN32) && (WINAPI_FAMILY == WINAPI_FAMILY_DESKTOP_APP)
 
-static bool _map(TtfLoader* loader, const string& path)
+static bool _map(SfntLoader* loader, const string& path)
 {
     auto& reader = loader->reader;
 
@@ -75,7 +75,7 @@ static bool _map(TtfLoader* loader, const string& path)
 	return true;
 }
 
-static void _unmap(TtfLoader* loader)
+static void _unmap(SfntLoader* loader)
 {
     auto& reader = loader->reader;
 
@@ -91,7 +91,7 @@ static void _unmap(TtfLoader* loader)
 
 #elif defined(__linux__)
 
-static bool _map(TtfLoader* loader, const char* path)
+static bool _map(SfntLoader* loader, const char* path)
 {
     auto& reader = loader->reader;
 
@@ -113,7 +113,7 @@ static bool _map(TtfLoader* loader, const char* path)
 }
 
 
-static void _unmap(TtfLoader* loader)
+static void _unmap(SfntLoader* loader)
 {
     auto& reader = loader->reader;
     if (reader.data == (uint8_t*) -1) return;
@@ -122,7 +122,7 @@ static void _unmap(TtfLoader* loader)
     reader.size = 0;
 }
 #else
-static bool _map(TtfLoader* loader, const char* path)
+static bool _map(SfntLoader* loader, const char* path)
 {
     auto& reader = loader->reader;
 
@@ -152,7 +152,7 @@ static bool _map(TtfLoader* loader, const char* path)
 }
 
 
-static void _unmap(TtfLoader* loader)
+static void _unmap(SfntLoader* loader)
 {
     auto& reader = loader->reader;
     tvg::free(reader.data);
@@ -230,7 +230,7 @@ static void _alignY(float align, float box, float y, uint32_t begin, uint32_t en
 }
 
 
-uint32_t TtfLoader::feedLine(FontMetrics& fm, float box, float x, uint32_t begin, uint32_t end, Point& cursor, RenderPath& out)
+uint32_t SfntLoader::feedLine(FontMetrics& fm, float box, float x, uint32_t begin, uint32_t end, Point& cursor, RenderPath& out)
 {
     _alignX(fm.align.x, box, x, begin, end, out); //align the given line
     cursor.x = 0.0f;
@@ -240,7 +240,7 @@ uint32_t TtfLoader::feedLine(FontMetrics& fm, float box, float x, uint32_t begin
 }
 
 
-void TtfLoader::clear()
+void SfntLoader::clear()
 {
     if (nomap) {
         if (freeData) tvg::free(reader.data);
@@ -259,16 +259,16 @@ void TtfLoader::clear()
 }
 
 
-TtfGlyphMetrics* TtfLoader::request(uint32_t code)
+SfntGlyphMetrics* SfntLoader::request(uint32_t code)
 {
     if (code == 0) return nullptr;
 
     auto it = glyphs.find(code);
     if (it == glyphs.end()) {
-        auto it = glyphs.emplace(code, TtfGlyphMetrics{}).first;
+        auto it = glyphs.emplace(code, SfntGlyphMetrics{}).first;
         auto rtgm = &it->second;
         if (!reader.convert(rtgm->path, *rtgm, reader.glyph(code, rtgm), {0.0f, 0.0f}, 1U)) {
-            TVGERR("TTF", "invalid glyph id, codepoint(0x%x)", code);
+            TVGERR("SFNT", "invalid glyph id, codepoint(0x%x)", code);
             glyphs.erase(it);
             return nullptr;
         }
@@ -278,9 +278,9 @@ TtfGlyphMetrics* TtfLoader::request(uint32_t code)
 }
 
 
-void TtfLoader::wrapNone(FontMetrics& fm, const Point& box, const char* utf8, RenderPath& out)
+void SfntLoader::wrapNone(FontMetrics& fm, const Point& box, const char* utf8, RenderPath& out)
 {
-    TtfGlyphMetrics* ltgm = nullptr;  //left side glyph between the two adjacent glyphs
+    SfntGlyphMetrics* ltgm = nullptr;  //left side glyph between the two adjacent glyphs
     Point cursor = {};
     uint32_t line = 0;  //the begin pos of the last line among path
 
@@ -302,7 +302,7 @@ void TtfLoader::wrapNone(FontMetrics& fm, const Point& box, const char* utf8, Re
         if (cursor.x > fm.size.x) fm.size.x = cursor.x;  //text horizontal size
 
         //store the base glyph width for italic transform
-        if (!ltgm && rtgm->w > 0.0f) static_cast<TtfMetrics*>(fm.engine)->baseWidth = rtgm->w;
+        if (!ltgm && rtgm->w > 0.0f) static_cast<SfntMetrics*>(fm.engine)->baseWidth = rtgm->w;
         ltgm = rtgm;
 
     }
@@ -312,9 +312,9 @@ void TtfLoader::wrapNone(FontMetrics& fm, const Point& box, const char* utf8, Re
 }
 
 
-void TtfLoader::wrapChar(FontMetrics& fm, const Point& box, const char* utf8, RenderPath& out)
+void SfntLoader::wrapChar(FontMetrics& fm, const Point& box, const char* utf8, RenderPath& out)
 {
-    TtfGlyphMetrics* ltgm = nullptr;  //left side glyph between the two adjacent glyphs
+    SfntGlyphMetrics* ltgm = nullptr;  //left side glyph between the two adjacent glyphs
     uint32_t line = 0;  //the begin pos of the last line among path
     Point cursor = {};
 
@@ -348,7 +348,7 @@ void TtfLoader::wrapChar(FontMetrics& fm, const Point& box, const char* utf8, Re
         if (cursor.x > fm.size.x) fm.size.x = cursor.x;  //text horizontal size
 
         //store the base glyph width for italic transform
-        if (!ltgm && rtgm->w > 0.0f) static_cast<TtfMetrics*>(fm.engine)->baseWidth = rtgm->w;
+        if (!ltgm && rtgm->w > 0.0f) static_cast<SfntMetrics*>(fm.engine)->baseWidth = rtgm->w;
         ltgm = rtgm;
     }
     fm.size.y = height(fm.lines, fm.spacing.y);
@@ -357,9 +357,9 @@ void TtfLoader::wrapChar(FontMetrics& fm, const Point& box, const char* utf8, Re
 }
 
 
-void TtfLoader::wrapWord(FontMetrics& fm, const Point& box, const char* utf8, RenderPath& out, bool smart)
+void SfntLoader::wrapWord(FontMetrics& fm, const Point& box, const char* utf8, RenderPath& out, bool smart)
 {
-    TtfGlyphMetrics* ltgm = nullptr;  //left side glyph between the two adjacent glyphs
+    SfntGlyphMetrics* ltgm = nullptr;  //left side glyph between the two adjacent glyphs
     auto line = 0;  //the begin pos of the last line among path
     auto word = 0;  //the begin pos of the last word among path
     auto wadv = 0.0f;  //word advance size
@@ -412,7 +412,7 @@ void TtfLoader::wrapWord(FontMetrics& fm, const Point& box, const char* utf8, Re
         if (cursor.x > fm.size.x) fm.size.x = cursor.x;  //text horizontal size
 
         //store the base glyph width for italic transform
-        if (!ltgm && rtgm->w > 0.0f) static_cast<TtfMetrics*>(fm.engine)->baseWidth = rtgm->w;
+        if (!ltgm && rtgm->w > 0.0f) static_cast<SfntMetrics*>(fm.engine)->baseWidth = rtgm->w;
         ltgm = rtgm;
     }
     fm.size.y = height(fm.lines, fm.spacing.y);
@@ -421,9 +421,9 @@ void TtfLoader::wrapWord(FontMetrics& fm, const Point& box, const char* utf8, Re
 }
 
 
-void TtfLoader::wrapEllipsis(FontMetrics& fm, const Point& box, const char* utf8, RenderPath& out)
+void SfntLoader::wrapEllipsis(FontMetrics& fm, const Point& box, const char* utf8, RenderPath& out)
 {
-    TtfGlyphMetrics* ltgm = nullptr;  //left side glyph between the two adjacent glyphs
+    SfntGlyphMetrics* ltgm = nullptr;  //left side glyph between the two adjacent glyphs
     auto line = 0;  //the begin pos of the last line among path
     Point cursor = {};
     struct {
@@ -456,7 +456,7 @@ void TtfLoader::wrapEllipsis(FontMetrics& fm, const Point& box, const char* utf8
         } else {
             rtgm = request(DOT_GLYPH_IDX); //right side glyph between the two adjacent glyphs
             if (!rtgm) {
-                TVGERR("TTF", "Cannot support ... since no glyph data");
+                TVGERR("SFNT", "Cannot support ... since no glyph data");
                 return;
             }
             kerning = {};
@@ -479,7 +479,7 @@ void TtfLoader::wrapEllipsis(FontMetrics& fm, const Point& box, const char* utf8
         if (cursor.x > fm.size.x) fm.size.x = cursor.x;  //text horizontal size
 
         //store the base glyph width for italic transform
-        if (!ltgm && rtgm->w > 0.0f) static_cast<TtfMetrics*>(fm.engine)->baseWidth = rtgm->w;
+        if (!ltgm && rtgm->w > 0.0f) static_cast<SfntMetrics*>(fm.engine)->baseWidth = rtgm->w;
 
         if (stop) break;  //stop the process if the ellipsis is applied
 
@@ -495,26 +495,26 @@ void TtfLoader::wrapEllipsis(FontMetrics& fm, const Point& box, const char* utf8
 /************************************************************************/
 
 
-void TtfLoader::transform(Paint* paint, FontMetrics& fm, float italicShear)
+void SfntLoader::transform(Paint* paint, FontMetrics& fm, float italicShear)
 {
     auto scale = 1.0f / fm.scale;
-    Matrix m = {scale, -italicShear * scale, italicShear * static_cast<TtfMetrics*>(fm.engine)->baseWidth * scale, 0, scale, reader.metrics.hhea.ascent * scale, 0, 0, 1};
+    Matrix m = {scale, -italicShear * scale, italicShear * static_cast<SfntMetrics*>(fm.engine)->baseWidth * scale, 0, scale, reader.metrics.hhea.ascent * scale, 0, 0, 1};
     paint->transform(m);
 }
 
 
-TtfLoader::TtfLoader() : FontLoader(FileType::Ttf)
+SfntLoader::SfntLoader() : FontLoader(FileType::Sfnt)
 {
 }
 
 
-TtfLoader::~TtfLoader()
+SfntLoader::~SfntLoader()
 {
     clear();
 }
 
 
-bool TtfLoader::open(const char* path)
+bool SfntLoader::open(const char* path)
 {
 #ifdef THORVG_FILE_IO_SUPPORT
     clear();
@@ -529,7 +529,7 @@ bool TtfLoader::open(const char* path)
 }
 
 
-bool TtfLoader::open(const char* data, uint32_t size, TVG_UNUSED const char* rpath, bool copy)
+bool SfntLoader::open(const char* data, uint32_t size, TVG_UNUSED const char* rpath, bool copy)
 {
     reader.size = size;
     nomap = true;
@@ -545,7 +545,7 @@ bool TtfLoader::open(const char* data, uint32_t size, TVG_UNUSED const char* rpa
 }
 
 
-bool TtfLoader::get(FontMetrics& fm, char* text, RenderPath& out)
+bool SfntLoader::get(FontMetrics& fm, char* text, RenderPath& out)
 {
     out.clear();
 
@@ -555,7 +555,7 @@ bool TtfLoader::get(FontMetrics& fm, char* text, RenderPath& out)
 
     fm.scale = reader.metrics.unitsPerEm / (fm.fontSize * FontLoader::DPI);
     fm.size = {};
-    if (!fm.engine) fm.engine = tvg::calloc<TtfMetrics>(1, sizeof(TtfMetrics));
+    if (!fm.engine) fm.engine = tvg::calloc<SfntMetrics>(1, sizeof(SfntMetrics));
 
     auto box = fm.box * fm.scale;
 
@@ -570,23 +570,23 @@ bool TtfLoader::get(FontMetrics& fm, char* text, RenderPath& out)
 }
 
 
-void TtfLoader::release(FontMetrics& fm)
+void SfntLoader::release(FontMetrics& fm)
 {
     tvg::free(fm.engine);
     fm.engine = nullptr;
 }
 
 
-void TtfLoader::copy(const FontMetrics& in, FontMetrics& out)
+void SfntLoader::copy(const FontMetrics& in, FontMetrics& out)
 {
     release(out);
     out = in;
-    if (in.engine) out.engine = tvg::calloc<TtfMetrics>(1, sizeof(TtfMetrics));
-    *static_cast<TtfMetrics*>(out.engine) = *static_cast<TtfMetrics*>(in.engine);
+    if (in.engine) out.engine = tvg::calloc<SfntMetrics>(1, sizeof(SfntMetrics));
+    *static_cast<SfntMetrics*>(out.engine) = *static_cast<SfntMetrics*>(in.engine);
 }
 
 
-void TtfLoader::metrics(const FontMetrics& fm, TextMetrics& out)
+void SfntLoader::metrics(const FontMetrics& fm, TextMetrics& out)
 {
     auto scale = (fm.fontSize * FontLoader::DPI) / reader.metrics.unitsPerEm;
 
@@ -597,7 +597,7 @@ void TtfLoader::metrics(const FontMetrics& fm, TextMetrics& out)
 }
 
 
-bool TtfLoader::metrics(const FontMetrics& fm, const char *ch, GlyphMetrics& out)
+bool SfntLoader::metrics(const FontMetrics& fm, const char *ch, GlyphMetrics& out)
 {
     auto code = _codepoints(&ch);
     auto glyph = request(code);

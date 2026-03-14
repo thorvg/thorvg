@@ -42,8 +42,8 @@
     #include "tvgWebpLoader.h"
 #endif
 
-#ifdef THORVG_TTF_LOADER_SUPPORT
-    #include "tvgTtfLoader.h"
+#if defined(THORVG_TTF_LOADER_SUPPORT)
+    #include "tvgSfntLoader.h"
 #endif
 
 #ifdef THORVG_LOTTIE_LOADER_SUPPORT
@@ -96,9 +96,9 @@ static tvg::LoadModule* _find(FileType type)
 #endif
             break;
         }
-        case FileType::Ttf: {
+        case FileType::Sfnt: {
 #ifdef THORVG_TTF_LOADER_SUPPORT
-            return new TtfLoader;
+            return new SfntLoader;
 #endif
             break;
         }
@@ -124,7 +124,7 @@ static tvg::LoadModule* _find(FileType type)
             format = "SVG";
             break;
         }
-        case FileType::Ttf: {
+        case FileType::Sfnt: {
             format = "TTF";
             break;
         }
@@ -170,8 +170,8 @@ static tvg::LoadModule* _findByPath(const char* filename)
     if (!strcmp(ext, "png")) return _find(FileType::Png);
     if (!strcmp(ext, "jpg")) return _find(FileType::Jpg);
     if (!strcmp(ext, "webp")) return _find(FileType::Webp);
-    if (!strcmp(ext, "ttf") || !strcmp(ext, "ttc")) return _find(FileType::Ttf);
-    if (!strcmp(ext, "otf") || !strcmp(ext, "otc")) return _find(FileType::Ttf);
+    if (!strcmp(ext, "ttf") || !strcmp(ext, "ttc")) return _find(FileType::Sfnt);
+    if (!strcmp(ext, "otf") || !strcmp(ext, "otc")) return _find(FileType::Sfnt);
     return nullptr;
 }
 #endif
@@ -184,7 +184,7 @@ static FileType _convert(const char* mimeType)
     auto type = FileType::Unknown;
 
     if (!strcmp(mimeType, "svg") || !strcmp(mimeType, "svg+xml")) type = FileType::Svg;
-    else if (!strcmp(mimeType, "ttf") || !strcmp(mimeType, "otf")) type = FileType::Ttf;
+    else if (!strcmp(mimeType, "ttf") || !strcmp(mimeType, "otf")) type = FileType::Sfnt;
     else if (!strcmp(mimeType, "lot") || !strcmp(mimeType, "lottie+json")) type = FileType::Lot;
     else if (!strcmp(mimeType, "raw")) type = FileType::Raw;
     else if (!strcmp(mimeType, "png")) type = FileType::Png;
@@ -249,7 +249,7 @@ bool LoaderMgr::term()
 {
     //clean up the remained font loaders which is globally used.
     INLIST_SAFE_FOREACH(_activeLoaders, loader) {
-        if (loader->type != FileType::Ttf) continue;
+        if (loader->type != FileType::Sfnt) continue;
         auto ret = loader->close();
         _activeLoaders.remove(loader);
         if (ret) delete(loader);
@@ -410,7 +410,7 @@ tvg::LoadModule* LoaderMgr::loader(const char* name, const char* data, uint32_t 
     if (auto loader = font(name)) return loader;
 
     //function is dedicated for ttf loader (the only supported font loader)
-    auto loader = new TtfLoader;
+    auto loader = new SfntLoader;
     if (loader->open(data, size, "", copy)) {
         loader->name = duplicate(name);
         loader->cached = true;  //force it.
@@ -430,7 +430,7 @@ tvg::LoadModule* LoaderMgr::font(const char* name)
 {
     ScopedLock lock(_key);
     INLIST_FOREACH(_activeLoaders, loader) {
-        if (loader->type != FileType::Ttf) continue;
+        if (loader->type != FileType::Sfnt) continue;
         if (loader->cached && tvg::equal(name, static_cast<FontLoader*>(loader)->name)) {
             ++loader->sharing;
             return loader;
@@ -444,7 +444,7 @@ tvg::LoadModule* LoaderMgr::anyfont()
 {
     ScopedLock lock(_key);
     INLIST_FOREACH(_activeLoaders, loader) {
-        if (loader->cached && loader->type == FileType::Ttf) {
+        if (loader->cached && loader->type == FileType::Sfnt) {
             ++loader->sharing;
             return loader;
         }
