@@ -63,11 +63,10 @@ struct WgRenderer : RenderMethod
     void damage(RenderData rd, const RenderRegion& region) override;
     bool partial(bool disable) override;
 
-    static WgRenderer* gen(uint32_t threads);
+    WgRenderer(uint32_t threads, EngineOption op);
     static bool term();
 
 private:
-    WgRenderer();
     ~WgRenderer();
     void release();
     void disposeObjects();
