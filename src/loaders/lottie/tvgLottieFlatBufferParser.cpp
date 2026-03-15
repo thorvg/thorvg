@@ -375,7 +375,7 @@ static void parseGradientStops(LottieGradient* grad, const flatbuffers::Vector<f
     }
 }
 
-static void parseTextDocument(::TextDocument& doc, const Zan::Data::TextDocument* zDoc)
+static void parseTextDocument(tvg::TextDocument& doc, const Zan::Data::TextDocument* zDoc)
 {
     if (!zDoc) return;
     doc.text = dupString(zDoc->text());
@@ -402,11 +402,11 @@ static void parseTextProperty(LottieComposition* comp, LottieTextDoc& prop, cons
     if (zProp->static_value()) parseTextDocument(prop.value, zProp->static_value());
     if (zProp->keyframes() && zProp->keyframes()->size() > 0) {
         auto count = zProp->keyframes()->size();
-        prop.frames = new Array<LottieScalarFrame<::TextDocument>>;
+        prop.frames = new Array<LottieScalarFrame<tvg::TextDocument>>;
         prop.frames->reserve(count);
         for (uint32_t i = 0; i < count; ++i) {
             auto zKf = zProp->keyframes()->Get(i);
-            LottieScalarFrame<::TextDocument> tKf{};
+            LottieScalarFrame<tvg::TextDocument> tKf{};
             tKf.no = zKf->start_frame();
             if (zKf->value()) parseTextDocument(tKf.value, zKf->value());
             auto in = toPoint(zKf->in_tangent());
