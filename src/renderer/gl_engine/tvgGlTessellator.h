@@ -76,7 +76,7 @@ class BWTessellator
 {
 public:
     BWTessellator(GlGeometryBuffer* buffer);
-    void tessellate(const RenderPath& path, int8_t defaultWinding = -1);
+    void tessellate(const RenderPath& path);
     RenderRegion bounds() const;
     bool convex = true;
 
@@ -86,10 +86,6 @@ private:
 
     GlGeometryBuffer* mBuffer;
     BBox bbox = {};
-    Point firstPt = {};
-    Point prevPt = {};
-    Point prevEdge = {};
-    int8_t winding = -1;   //0: unknown, 1: CW, -1: CCW
 };
 
 }  // namespace tvg
