@@ -101,7 +101,6 @@ float _bezAt(const Bezier& bz, float at, float length, LengthFunc lineLengthFunc
 
 namespace tvg {
 
-
 uint8_t lerp(const uint8_t &start, const uint8_t &end, float t)
 {
     return static_cast<uint8_t>(tvg::clamp(static_cast<int>(start + (end - start) * t), 0, 255));
@@ -510,4 +509,4 @@ Bezier Bezier::operator*(const Matrix& m)
     return Bezier{start * m, ctrl1* m, ctrl2 * m, end * m};
 }
 
-}
+}  // namespace tvg

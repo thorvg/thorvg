@@ -86,10 +86,6 @@ private:
 
     WgMeshData* mBuffer;
     BBox bbox = {};
-    Point firstPt = {};
-    Point prevPt = {};
-    Point prevEdge = {};
-    int8_t winding = -1;   //0: unknown, 1: CW, -1: CCW
 };
 
 #endif /* _TVG_WG_TESSELLATOR_H_ */
