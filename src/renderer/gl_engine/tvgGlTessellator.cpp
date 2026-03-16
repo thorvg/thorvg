@@ -32,7 +32,6 @@ static uint32_t _pushVertex(Array<float>& array, float x, float y)
     return (array.count - 2) / 2;
 }
 
-
 Stroker::Stroker(GlGeometryBuffer* buffer, float width, StrokeCap cap, StrokeJoin join, float miterLimit) : mBuffer(buffer), mWidth(width), mMiterLimit(miterLimit), mCap(cap), mJoin(join)
 {
 }
@@ -417,7 +416,7 @@ BWTessellator::BWTessellator(GlGeometryBuffer* buffer): mBuffer(buffer)
 {
 }
 
-void BWTessellator::tessellate(const RenderPath& path, int8_t defaultWinding)
+void BWTessellator::tessellate(const RenderPath& path)
 {
     auto cmds = path.cmds.data;
     auto cmdCnt = path.cmds.count;
@@ -426,41 +425,41 @@ void BWTessellator::tessellate(const RenderPath& path, int8_t defaultWinding)
 
     if (ptsCnt <= 2) return;
 
-    winding = defaultWinding;
-
     uint32_t firstIndex = 0;
     uint32_t prevIndex = 0;
+    Point firstPt = {};
+    Point prevPt = {};
+    tvg::ConvexProbe probe;
+    bool contourClosed = false;
 
     mBuffer->vertex.reserve(ptsCnt * 2);
     mBuffer->index.reserve((ptsCnt - 2) * 3);
 
-    auto updateConvexity = [&](const Point& edge) {
-        if (!convex) return;
-        if (prevEdge.x == 0.0f && prevEdge.y == 0.0f) { prevEdge = edge; return; }
-        auto c = cross(prevEdge, edge);
-        if (zero(c)) { prevEdge = edge; return; }
-        auto sign = (c > 0) ? 1 : -1;
-        if (winding == 0) winding = sign;  // Unknown winding: lock to the first non-collinear turn.
-        else if (sign != winding) convex = false;
-        prevEdge = edge;
+    auto finishContour = [&]() {
+        if (prevIndex == 0 || contourClosed) return;
+        probe.addContourClose(firstPt - prevPt);
+        contourClosed = true;
     };
 
     for (uint32_t i = 0; i < cmdCnt; i++) {
         switch(cmds[i]) {
             case PathCommand::MoveTo: {
+                finishContour();
+                probe.nextContour();
                 firstIndex = pushVertex(pts->x, pts->y);
                 firstPt = prevPt = *pts;
-                prevEdge = {};
                 prevIndex = 0;
+                contourClosed = false;
                 pts++;
             } break;
             case PathCommand::LineTo: {
+                auto edge = *pts - prevPt;
                 if (prevIndex == 0) {
                     prevIndex = pushVertex(pts->x, pts->y);
-                    prevEdge = *pts - prevPt;
+                    probe.addEdge(edge);
                     prevPt = *pts++;
                 } else {
-                    updateConvexity(*pts - prevPt);
+                    probe.addEdge(edge);
                     auto currIndex = pushVertex(pts->x, pts->y);
                     pushTriangle(firstIndex, prevIndex, currIndex);
                     prevIndex = currIndex;
@@ -469,23 +468,18 @@ void BWTessellator::tessellate(const RenderPath& path, int8_t defaultWinding)
             } break;
             case PathCommand::CubicTo: {
                 Bezier curve{pts[-1], pts[0], pts[1], pts[2]};
-                if (convex) {
-                    auto e1 = curve.ctrl1 - curve.start;
-                    auto e2 = curve.ctrl2 - curve.ctrl1;
-                    auto e3 = curve.end - curve.ctrl2;
-                    if (prevIndex != 0) updateConvexity(e1);
-                    else prevEdge = e1;
-                    updateConvexity(e2);
-                    updateConvexity(e3);
-                }
+                if (probe.convex && tvg::edgesCross(curve.start, curve.ctrl1, curve.ctrl2, curve.end)) probe.convex = false;
 
                 auto stepCount = curve.segments();
                 if (stepCount <= 1) stepCount = 2;
                 float step = 1.f / stepCount;
+                auto curvePrevPt = prevPt;
 
                 for (uint32_t s = 1; s <= static_cast<uint32_t>(stepCount); s++) {
                     auto pt = curve.at(step * s);
+                    probe.addEdge(pt - curvePrevPt);
                     auto currIndex = pushVertex(pt.x, pt.y);
+                    curvePrevPt = pt;
                     if (prevIndex == 0) { prevIndex = currIndex; continue; }
                     pushTriangle(firstIndex, prevIndex, currIndex);
                     prevIndex = currIndex;
@@ -494,19 +488,15 @@ void BWTessellator::tessellate(const RenderPath& path, int8_t defaultWinding)
                 pts += 3;
             } break;
             case PathCommand::Close: {
-                if (convex && prevIndex != 0) {
-                    updateConvexity(firstPt - prevPt);
-                    if (convex && winding != 0) {
-                        auto& v = mBuffer->vertex;
-                        auto secondPt = Point{v[firstIndex * 2 + 2], v[firstIndex * 2 + 3]};
-                        updateConvexity(secondPt - firstPt);
-                    }
-                }
+                finishContour();
             } break;
             default:
                 break;
         }
     }
+
+    finishContour();
+    convex = probe.convex;
 }
 
 
