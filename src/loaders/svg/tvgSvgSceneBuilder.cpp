@@ -955,11 +955,15 @@ static Scene* _sceneBuildHelper(SvgLoaderData& loaderData, const SvgNode* node, 
         auto child = *p;
         if (child->type == SvgNodeType::ClipPath || child->type == SvgNodeType::Filter) continue;
         if (_isGroupType(child->type)) {
+            Paint* paint = nullptr;
             if (child->type == SvgNodeType::Use)
-                scene->add(_useBuildHelper(loaderData, child, vBox, svgPath, depth + 1));
+                paint = _useBuildHelper(loaderData, child, vBox, svgPath, depth + 1);
             else if (!(child->type == SvgNodeType::Symbol && node->type != SvgNodeType::Use))
-                scene->add(_sceneBuildHelper(loaderData, child, vBox, svgPath, false, depth + 1));
-            if (child->id) scene->id = djb2Encode(child->id);
+                paint = _sceneBuildHelper(loaderData, child, vBox, svgPath, false, depth + 1);
+            if (paint) {
+                if (child->id) paint->id = djb2Encode(child->id);
+                scene->add(paint);
+            }
         } else {
             Paint* paint = nullptr;
             if (child->type == SvgNodeType::Image) paint = _imageBuildHelper(loaderData, child, vBox, svgPath);
