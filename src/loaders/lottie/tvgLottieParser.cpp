@@ -148,7 +148,12 @@ bool LottieParser::getValue(TextDocument& doc)
         else if (KEY_AS("ls")) doc.shift = getFloat();
         else if (KEY_AS("fc")) getValue(doc.color);
         else if (KEY_AS("ps")) getValue(doc.bbox.pos);
-        else if (KEY_AS("sz")) getValue(doc.bbox.size);
+        else if (KEY_AS("sz")) {
+            getValue(doc.bbox.size);
+            //bbox size is positive
+            doc.bbox.size.x = tvg::clamp(doc.bbox.size.x, 0.0f, FLT_MAX);
+            doc.bbox.size.y = tvg::clamp(doc.bbox.size.y, 0.0f, FLT_MAX);
+        }
         else if (KEY_AS("sc")) getValue(doc.stroke.color);
         else if (KEY_AS("sw")) doc.stroke.width = getFloat();
         else if (KEY_AS("of")) doc.stroke.below = !getBool();
