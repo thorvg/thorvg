@@ -952,7 +952,7 @@ struct LottieImage : LottieObject
         return backup;
     }
 
-    void prepare();
+    void prepare(bool external);
 };
 
 
