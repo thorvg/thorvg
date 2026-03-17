@@ -20,6 +20,8 @@
  * SOFTWARE.
  */
 
+#include <thread>
+#include <vector>
 #include <thorvg.h>
 #include "config.h"
 #include "catch.hpp"
@@ -242,4 +244,27 @@ TEST_CASE("Viewport", "[tvgSwCanvas]")
     }
     REQUIRE(Initializer::term() == Result::Success);
 }
+
+
+TEST_CASE("Multi-Threading", "[tvgSwCanvas]")
+{
+    REQUIRE(Initializer::init() == Result::Success);
+    {
+        std::vector<thread> workers;
+
+        auto worker = []() {
+            auto canvas = unique_ptr<SwCanvas>(SwCanvas::gen());
+        };
+
+        for (unsigned int i = 0; i < thread::hardware_concurrency(); ++i) {
+            workers.emplace_back(worker);
+        }
+
+        for (auto& t : workers) {
+            t.join();
+        }
+    }
+    REQUIRE(Initializer::term() == Result::Success);
+}
+
 #endif
