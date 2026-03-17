@@ -111,12 +111,12 @@ void GlRenderer::initShaders()
 #if 1  //for optimization
     #define LINEAR_TOTAL_LENGTH 2831
     #define RADIAL_TOTAL_LENGTH 5315
-    #define BLEND_TOTAL_LENGTH 5500
+    #define BLEND_TOTAL_LENGTH 5369
 #else
     #define COMMON_TOTAL_LENGTH strlen(STR_GRADIENT_FRAG_COMMON_VARIABLES) + strlen(STR_GRADIENT_FRAG_COMMON_FUNCTIONS) + 1
     #define LINEAR_TOTAL_LENGTH strlen(STR_LINEAR_GRADIENT_VARIABLES) + strlen(STR_LINEAR_GRADIENT_FUNCTIONS) + strlen(STR_LINEAR_GRADIENT_MAIN) + COMMON_TOTAL_LENGTH
     #define RADIAL_TOTAL_LENGTH strlen(STR_RADIAL_GRADIENT_VARIABLES) + strlen(STR_RADIAL_GRADIENT_FUNCTIONS) + strlen(STR_RADIAL_GRADIENT_MAIN) + COMMON_TOTAL_LENGTH
-    #define BLEND_TOTAL_LENGTH strlen(BLEND_SCENE_FRAG_HEADER) + strlen(BLEND_FRAG_HSL) + strlen(COLOR_BURN_BLEND_FRAG) + 1
+    #define BLEND_TOTAL_LENGTH strlen(BLEND_SCENE_FRAG_HEADER) + (strlen(BLEND_FRAG_HUE) > strlen(BLEND_FRAG_LUM) ? strlen(BLEND_FRAG_HUE) : strlen(BLEND_FRAG_LUM)) + strlen(COLOR_BURN_BLEND_FRAG) + 1
 #endif
 
     char linearGradientFragShader[LINEAR_TOTAL_LENGTH];
@@ -610,11 +610,11 @@ GlProgram* GlRenderer::getBlendProgram(BlendMethod method, BlendSource source)
     if (mPrograms[shaderInd]) return mPrograms[shaderInd];
 
     const char* helpers = "";
-    if ((method == BlendMethod::Hue) ||
-        (method == BlendMethod::Saturation) ||
-        (method == BlendMethod::Color) ||
-        (method == BlendMethod::Luminosity))
-        helpers = BLEND_FRAG_HSL;
+    if (method == BlendMethod::Hue) {
+        helpers = BLEND_FRAG_HUE;
+    } else if ((method == BlendMethod::Saturation) || (method == BlendMethod::Color) || (method == BlendMethod::Luminosity)) {
+        helpers = BLEND_FRAG_LUM;
+    }
 
     const char* vertShader;
     char fragShader[BLEND_TOTAL_LENGTH];
