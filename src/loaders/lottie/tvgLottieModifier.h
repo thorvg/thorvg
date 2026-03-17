@@ -97,9 +97,9 @@ private:
     {
         Line line{};
         Line firstLine{};
-        bool moveto = false;
         uint32_t movetoOutIndex = 0;
         uint32_t movetoInIndex = 0;
+        bool moveto = false;
     };
 
     void line(RenderPath& out, PathCommand* inCmds, uint32_t inCmdsCnt, Point* inPts, uint32_t& curPt, uint32_t curCmd, State& state, float offset, bool degenerated);
