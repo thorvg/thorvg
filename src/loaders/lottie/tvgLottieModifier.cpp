@@ -41,7 +41,7 @@ Point LottieRoundnessModifier::rounding(RenderPath& out, Point& prev, Point& cur
     return ret;
 }
 
-void LottieRoundnessModifier::path(PathCommand* inCmds, uint32_t inCmdsCnt, Point* inPts, uint32_t inPtsCnt, Matrix* transform, RenderPath& out)
+RenderPath& LottieRoundnessModifier::modify(PathCommand* inCmds, uint32_t inCmdsCnt, Point* inPts, uint32_t inPtsCnt, Matrix* transform, RenderPath& out)
 {
     auto colinear = [](const Point* p) {
         return tvg::zero(*p - *(p + 1)) && tvg::zero(*(p + 2) - *(p + 3));
@@ -99,7 +99,13 @@ void LottieRoundnessModifier::path(PathCommand* inCmds, uint32_t inCmdsCnt, Poin
         }
     }
 
-    if (next) next->path(path.cmds.data, path.cmds.count, path.pts.data, path.pts.count, transform, out);
+    return path;
+}
+
+void LottieRoundnessModifier::path(PathCommand* inCmds, uint32_t inCmdsCnt, Point* inPts, uint32_t inPtsCnt, Matrix* transform, RenderPath& out)
+{
+    auto& result = modify(inCmds, inCmdsCnt, inPts, inPtsCnt, transform, out);
+    if (next) return next->path(result.cmds.data, result.cmds.count, result.pts.data, result.pts.count, nullptr, out);
 }
 
 void LottieRoundnessModifier::polystar(RenderPath& in, RenderPath& out, float outerRoundness, bool hasRoundness)
@@ -163,12 +169,31 @@ void LottieRoundnessModifier::polystar(RenderPath& in, RenderPath& out, float ou
     }
     path.cmds.push(PathCommand::Close);
 
-    if (next) next->polystar(path, out, outerRoundness, hasRoundness);
+    if (next) return next->polystar(path, out, outerRoundness, hasRoundness);
 }
 
-void LottieRoundnessModifier::rect(Point& size, float& r)
+void LottieRoundnessModifier::rect(RenderPath& in, RenderPath& out, const Point& pos, const Point& size, float r, bool clockwise)
 {
-    r = std::min(this->r, std::max(size.x, size.y) * 0.5f);
+    buffer->clear();
+
+    auto& path = (next) ? *buffer : out;
+
+    if (r == 0.0f) r = std::min(this->r, std::max(size.x, size.y) * 0.5f);
+
+    // we know this is the first request in the chain because other modifers would not trigger rect() call
+    path.addRect(pos.x, pos.y, size.x, size.y, r, r, clockwise);
+
+    if (next) return next->path(path.cmds.data, path.cmds.count, path.pts.data, path.pts.count, nullptr, out);
+}
+
+void LottieRoundnessModifier::ellipse(RenderPath& in, RenderPath& out, const Point& center, const Point& radius, bool clockwise)
+{
+    // bypass because it's already a circle.
+    if (next) return next->ellipse(in, out, center, radius, clockwise);
+    else {
+        out.cmds.push(in.cmds);
+        out.pts.push(in.pts);
+    }
 }
 
 /************************************************************************/
@@ -266,7 +291,7 @@ void LottieOffsetModifier::line(RenderPath& out, PathCommand* inCmds, uint32_t i
     ++curPt;
 }
 
-void LottieOffsetModifier::path(PathCommand* inCmds, uint32_t inCmdsCnt, Point* inPts, uint32_t inPtsCnt, TVG_UNUSED Matrix* transform, RenderPath& out)
+RenderPath& LottieOffsetModifier::modify(PathCommand* inCmds, uint32_t inCmdsCnt, Point* inPts, uint32_t inPtsCnt, TVG_UNUSED Matrix* transform, RenderPath& out)
 {
     auto clockwise = [](Point* pts, uint32_t n) {
         auto area = 0.0f;
@@ -277,10 +302,10 @@ void LottieOffsetModifier::path(PathCommand* inCmds, uint32_t inCmdsCnt, Point* 
         return area < 0.0f;
     };
 
-    if (next) TVGERR("LOTTIE", "Offset has a next modifier?");
+    auto& path = (next) ? *buffer : out;
 
-    out.cmds.reserve(inCmdsCnt * 2);
-    out.pts.reserve(inPtsCnt * (join == StrokeJoin::Round ? 4 : 2));
+    path.cmds.reserve(inCmdsCnt * 2);
+    path.pts.reserve(inPtsCnt * (join == StrokeJoin::Round ? 4 : 2));
 
     Array<Bezier> stack{5};
     State state;
@@ -320,8 +345,8 @@ void LottieOffsetModifier::path(PathCommand* inCmds, uint32_t inCmdsCnt, Point* 
                 auto line3 = shift(bezier.ctrl2, bezier.end, offset);
 
                 if (state.moveto) {
-                    state.movetoOutIndex = out.pts.count;
-                    out.moveTo(line1.pt1);
+                    state.movetoOutIndex = path.pts.count;
+                    path.moveTo(line1.pt1);
                     state.firstLine = line1;
                     state.moveto = false;
                 }
@@ -329,37 +354,48 @@ void LottieOffsetModifier::path(PathCommand* inCmds, uint32_t inCmdsCnt, Point* 
                 bool inside{};
                 Point intersect{};
                 intersected(line1, line2, intersect, inside);
-                out.pts.push(intersect);
+                path.pts.push(intersect);
                 intersected(line2, line3, intersect, inside);
-                out.pts.push(intersect);
-                out.pts.push(line3.pt2);
-                out.cmds.push(PathCommand::CubicTo);
+                path.pts.push(intersect);
+                path.pts.push(line3.pt2);
+                path.cmds.push(PathCommand::CubicTo);
             }
 
             iPt += 3;
         }
         else {
             if (!tvg::zero(inPts[iPt - 1] - inPts[state.movetoInIndex])) {
-                out.cmds.push(PathCommand::LineTo);
+                path.cmds.push(PathCommand::LineTo);
                 corner(out, state.line, state.firstLine, state.movetoOutIndex, true);
             }
-            out.cmds.push(PathCommand::Close);
+            path.cmds.push(PathCommand::Close);
         }
     }
+    return path;
 }
 
-void LottieOffsetModifier::polystar(RenderPath& in, RenderPath& out, TVG_UNUSED float, TVG_UNUSED bool)
+void LottieOffsetModifier::path(PathCommand* inCmds, uint32_t inCmdsCnt, Point* inPts, uint32_t inPtsCnt, Matrix* transform, RenderPath& out)
+{
+    auto& result = modify(inCmds, inCmdsCnt, inPts, inPtsCnt, transform, out);
+    if (next) next->path(result.cmds.data, result.cmds.count, result.pts.data, result.pts.count, nullptr, out);
+}
+
+void LottieOffsetModifier::polystar(RenderPath& in, RenderPath& out, float outerRoundness, bool hasRoundness)
+{
+    auto& result = modify(in.cmds.data, in.cmds.count, in.pts.data, in.pts.count, nullptr, out);
+    if (next) next->polystar(result, out, outerRoundness, hasRoundness);
+}
+
+void LottieOffsetModifier::rect(RenderPath& in, RenderPath& out, const Point& pos, const Point& size, float r, bool clockwise)
 {
     path(in.cmds.data, in.cmds.count, in.pts.data, in.pts.count, nullptr, out);
 }
 
-void LottieOffsetModifier::rect(RenderPath& in, RenderPath& out)
+void LottieOffsetModifier::ellipse(RenderPath& in, RenderPath& out, const Point& center, const Point& radius, bool clockwise)
 {
-    path(in.cmds.data, in.cmds.count, in.pts.data, in.pts.count, nullptr, out);
-}
-
-void LottieOffsetModifier::ellipse(Point& radius)
-{
-    radius.x += offset;
-    radius.y += offset;
+    buffer->clear();
+    auto& path = (next) ? *buffer : out;
+    // we know this is the first request in the chain because other modifers would not trigger ellipse() call
+    path.addCircle(center.x, center.y, radius.x + offset, radius.y + offset, clockwise);
+    if (next) return next->ellipse(path, out, center, radius, clockwise);
 }
