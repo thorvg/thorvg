@@ -738,6 +738,11 @@ void LottieBuilder::updateOffsetPath(TVG_UNUSED LottieGroup* parent, LottieObjec
     ctx->update(new LottieOffsetModifier(&buffer, offset->offset(frameNo, tween, exps), offset->miterLimit(frameNo, tween, exps), offset->join));
 }
 
+void LottieBuilder::updatePuckerBloat(TVG_UNUSED LottieGroup* parent, LottieObject** child, float frameNo, TVG_UNUSED Inlist<RenderContext>& contexts, RenderContext* ctx)
+{
+    auto puckerBloat = static_cast<LottiePuckerBloat*>(*child);
+    ctx->update(new LottiePuckerBloatModifier(&buffer, puckerBloat->amount(frameNo, tween, exps)));
+}
 
 void LottieBuilder::updateRepeater(TVG_UNUSED LottieGroup* parent, LottieObject** child, float frameNo, TVG_UNUSED Inlist<RenderContext>& contexts, RenderContext* ctx)
 {
@@ -844,6 +849,10 @@ void LottieBuilder::updateChildren(LottieGroup* parent, float frameNo, Inlist<Re
                 }
                 case LottieObject::OffsetPath: {
                     updateOffsetPath(parent, child, frameNo, contexts, ctx);
+                    break;
+                }
+                case LottieObject::PuckerBloat: {
+                    updatePuckerBloat(parent, child, frameNo, contexts, ctx);
                     break;
                 }
                 default: break;
