@@ -23,6 +23,29 @@
 #include "tvgLottieModifier.h"
 
 /************************************************************************/
+/* LottieModifier                                                       */
+/************************************************************************/
+
+LottieModifier* LottieModifier::decorate(LottieModifier* next)
+{
+    // let the offset modifer to the end in this chain
+    // roundness don't handle lines so far, so roundenss should handled earilier
+    // remove this trick once roundess has full coverage.
+    // see LottieRoundnessModifier::modify()
+    auto p = this;
+    while (p) {
+        if (!p->next && next->type == Offset) {
+            p->next = next;
+            return this;
+        }
+        p = p->next;
+    }
+
+    next->next = this;
+    return next;
+}
+
+/************************************************************************/
 /* LottieRoundnessModifier                                              */
 /************************************************************************/
 
@@ -56,6 +79,8 @@ RenderPath& LottieRoundnessModifier::modify(PathCommand* inCmds, uint32_t inCmds
     uint32_t startIndex = 0;
     auto rounded = false;
     Point roundTo;
+
+    // TODO: the line case is omitted.
 
     for (uint32_t iCmds = 0, iPts = 0; iCmds < inCmdsCnt; ++iCmds) {
         switch (inCmds[iCmds]) {
@@ -302,6 +327,8 @@ RenderPath& LottieOffsetModifier::modify(PathCommand* inCmds, uint32_t inCmdsCnt
         return area < 0.0f;
     };
 
+    buffer->clear();
+
     auto& path = (next) ? *buffer : out;
 
     path.cmds.reserve(inCmdsCnt * 2);
@@ -362,8 +389,7 @@ RenderPath& LottieOffsetModifier::modify(PathCommand* inCmds, uint32_t inCmdsCnt
             }
 
             iPt += 3;
-        }
-        else {
+        } else {
             if (!tvg::zero(inPts[iPt - 1] - inPts[state.movetoInIndex])) {
                 path.cmds.push(PathCommand::LineTo);
                 corner(out, state.line, state.firstLine, state.movetoOutIndex, true);
@@ -398,4 +424,127 @@ void LottieOffsetModifier::ellipse(RenderPath& in, RenderPath& out, const Point&
     // we know this is the first request in the chain because other modifers would not trigger ellipse() call
     path.addCircle(center.x, center.y, radius.x + offset, radius.y + offset, clockwise);
     if (next) return next->ellipse(path, out, center, radius, clockwise);
+}
+
+/************************************************************************/
+/* LottiePuckerBloatModifier                                            */
+/************************************************************************/
+
+Point LottiePuckerBloatModifier::center(const PathCommand* cmds, uint32_t cmdsCnt, const Point* pts)
+{
+    Point center{};
+    auto count = 0;
+    auto p = pts;
+    auto start = p;
+
+    for (uint32_t i = 0; i < cmdsCnt; ++i) {
+        switch (cmds[i]) {
+            case PathCommand::MoveTo: {
+                start = p;
+                ++p;
+                break;
+            }
+            case PathCommand::CubicTo: {
+                center = center + *(p - 1) + *p + *(p + 1) + *(p + 2);
+                p += 3;
+                count += 4;
+                break;
+            }
+            case PathCommand::LineTo: {
+                center = center + *(p - 1) + *p;
+                ++p;
+                count += 2;
+                break;
+            }
+            case PathCommand::Close: {
+                if (!tvg::zero(*(p - 1) - *start)) {
+                    center = center + *(p - 1) + *start;
+                    count += 2;
+                }
+                break;
+            }
+        }
+    }
+    return count > 0 ? center / (float)count : Point{0, 0};
+}
+
+void LottiePuckerBloatModifier::path(PathCommand* inCmds, uint32_t inCmdsCnt, Point* inPts, uint32_t inPtsCnt, Matrix* transform, RenderPath& out)
+{
+    buffer->clear();
+
+    auto& path = next ? *buffer : out;
+
+    // LineTo segments are expanded to CubicTo, so pts capacity can grow up to 3x
+    path.cmds.reserve(inCmdsCnt);
+    path.pts.reserve(inPtsCnt * 3);
+
+    auto center = this->center(inCmds, inCmdsCnt, inPts);
+    auto a = amount * 0.01f;
+    auto pts = inPts;
+    auto startPts = pts;
+
+    for (uint32_t i = 0; i < inCmdsCnt; ++i) {
+        switch (inCmds[i]) {
+            case PathCommand::MoveTo: {
+                startPts = pts;
+                // anchor points move toward center
+                path.pts.push(*pts + (center - *pts) * a);
+                path.cmds.push(PathCommand::MoveTo);
+                ++pts;
+                break;
+            }
+            case PathCommand::CubicTo: {
+                // control points move away from center, end (anchor) moves toward center
+                path.pts.push(*pts - (center - *pts) * a);
+                path.pts.push(*(pts + 1) - (center - *(pts + 1)) * a);
+                path.pts.push(*(pts + 2) + (center - *(pts + 2)) * a);
+                path.cmds.push(PathCommand::CubicTo);
+                pts += 3;
+                break;
+            }
+            case PathCommand::LineTo: {
+                // convert to CubicTo: prev and curr as control points (away), curr as end (toward)
+                path.pts.push(*(pts - 1) - (center - *(pts - 1)) * a);
+                path.pts.push(*pts - (center - *pts) * a);
+                path.pts.push(*pts + (center - *pts) * a);
+                path.cmds.push(PathCommand::CubicTo);
+                ++pts;
+                break;
+            }
+            case PathCommand::Close: {
+                // if last pt != start pt, add implicit closing segment as CubicTo
+                if (!tvg::zero(*(pts - 1) - *startPts)) {
+                    path.pts.push(*(pts - 1) - (center - *(pts - 1)) * a);
+                    path.pts.push(*startPts - (center - *startPts) * a);
+                    path.pts.push(*startPts + (center - *startPts) * a);
+                    path.cmds.push(PathCommand::CubicTo);
+                }
+                path.cmds.push(PathCommand::Close);
+                break;
+            }
+        }
+    }
+
+    if (transform) {
+        for (uint32_t i = 0; i < path.pts.count; ++i) {
+            path.pts[i] *= *transform;
+        }
+    }
+
+    if (next) return next->path(path.cmds.data, path.cmds.count, path.pts.data, path.pts.count, transform, out);
+}
+
+void LottiePuckerBloatModifier::polystar(RenderPath& in, RenderPath& out, TVG_UNUSED float, TVG_UNUSED bool)
+{
+    path(in.cmds.data, in.cmds.count, in.pts.data, in.pts.count, nullptr, out);
+}
+
+void LottiePuckerBloatModifier::rect(RenderPath& in, RenderPath& out, TVG_UNUSED const Point&, TVG_UNUSED const Point&, TVG_UNUSED float, TVG_UNUSED bool)
+{
+    path(in.cmds.data, in.cmds.count, in.pts.data, in.pts.count, nullptr, out);
+}
+
+void LottiePuckerBloatModifier::ellipse(RenderPath& in, RenderPath& out, TVG_UNUSED const Point&, TVG_UNUSED const Point&, TVG_UNUSED bool)
+{
+    path(in.cmds.data, in.cmds.count, in.pts.data, in.pts.count, nullptr, out);
 }

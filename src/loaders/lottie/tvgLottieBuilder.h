@@ -109,14 +109,22 @@ struct RenderContext
         // copy modifiers
         auto m = rhs.modifiers;
         while (m) {
-            if (m->type == LottieModifier::Type::Roundness) {
-                auto roundness = static_cast<LottieRoundnessModifier*>(m);
-                update(new LottieRoundnessModifier(roundness->buffer, roundness->r));
-            } else if (m->type == LottieModifier::Type::Offset) {
-                auto offset = static_cast<LottieOffsetModifier*>(m);
-                update(new LottieOffsetModifier(offset->buffer, offset->offset, offset->miterLimit, offset->join));
-            } else {
-                TVGERR("LOTTIE", "Corrupted modifier context!");
+            switch (m->type) {
+                case LottieModifier::Type::Roundness: {
+                    auto roundness = static_cast<LottieRoundnessModifier*>(m);
+                    update(new LottieRoundnessModifier(roundness->buffer, roundness->r));
+                    break;
+                }
+                case LottieModifier::Type::Offset: {
+                    auto offset = static_cast<LottieOffsetModifier*>(m);
+                    update(new LottieOffsetModifier(offset->buffer, offset->offset, offset->miterLimit, offset->join));
+                    break;
+                }
+                case LottieModifier::Type::PuckerBloat: {
+                    auto pucker = static_cast<LottiePuckerBloatModifier*>(m);
+                    update(new LottiePuckerBloatModifier(pucker->buffer, pucker->amount));
+                    break;
+                }
             }
             m = m->next;
         }
@@ -210,6 +218,7 @@ private:
     void updateRepeater(LottieGroup* parent, LottieObject** child, float frameNo, Inlist<RenderContext>& contexts, RenderContext* ctx);
     void updateRoundedCorner(LottieGroup* parent, LottieObject** child, float frameNo, Inlist<RenderContext>& contexts, RenderContext* ctx);
     void updateOffsetPath(LottieGroup* parent, LottieObject** child, float frameNo, Inlist<RenderContext>& contexts, RenderContext* ctx);
+    void updatePuckerBloat(LottieGroup* parent, LottieObject** child, float frameNo, Inlist<RenderContext>& contexts, RenderContext* ctx);
 
     RenderPath buffer;   //reusable path
     LottieExpressions* exps;
