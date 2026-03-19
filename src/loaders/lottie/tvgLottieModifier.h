@@ -28,7 +28,6 @@
 #include "tvgMath.h"
 #include "tvgRender.h"
 
-
 struct LottieModifier
 {
     enum Type : uint8_t {Roundness = 0, Offset};
@@ -38,8 +37,8 @@ struct LottieModifier
 
     virtual ~LottieModifier() {}
 
-    virtual bool modifyPath(PathCommand* inCmds, uint32_t inCmdsCnt, Point* inPts, uint32_t inPtsCnt, Matrix* transform, RenderPath& out) = 0;
-    virtual bool modifyPolystar(RenderPath& in, RenderPath& out, float outerRoundness, bool hasRoundness) = 0;
+    virtual bool path(PathCommand* inCmds, uint32_t inCmdsCnt, Point* inPts, uint32_t inPtsCnt, Matrix* transform, RenderPath& out) = 0;
+    virtual bool polystar(RenderPath& in, RenderPath& out, float outerRoundness, bool hasRoundness) = 0;
 
     LottieModifier* decorate(LottieModifier* next)
     {
@@ -70,9 +69,9 @@ struct LottieRoundnessModifier : LottieModifier
         type = Roundness;
     }
 
-    bool modifyPath(PathCommand* inCmds, uint32_t inCmdsCnt, Point* inPts, uint32_t inPtsCnt, Matrix* transform, RenderPath& out) override;
-    bool modifyPolystar(RenderPath& in, RenderPath& out, float outerRoundness, bool hasRoundness) override;
-    bool modifyRect(Point& size, float& r);
+    bool path(PathCommand* inCmds, uint32_t inCmdsCnt, Point* inPts, uint32_t inPtsCnt, Matrix* transform, RenderPath& out) override;
+    bool polystar(RenderPath& in, RenderPath& out, float outerRoundness, bool hasRoundness) override;
+    bool rect(Point& size, float& r);
 };
 
 
@@ -87,10 +86,10 @@ struct LottieOffsetModifier : LottieModifier
         type = Offset;
     }
 
-    bool modifyPath(PathCommand* inCmds, uint32_t inCmdsCnt, Point* inPts, uint32_t inPtsCnt, Matrix* transform, RenderPath& out) override;
-    bool modifyPolystar(RenderPath& in, RenderPath& out, float outerRoundness, bool hasRoundness) override;
-    bool modifyRect(RenderPath& in, RenderPath& out);
-    bool modifyEllipse(Point& radius);
+    bool path(PathCommand* inCmds, uint32_t inCmdsCnt, Point* inPts, uint32_t inPtsCnt, Matrix* transform, RenderPath& out) override;
+    bool polystar(RenderPath& in, RenderPath& out, float outerRoundness, bool hasRoundness) override;
+    bool rect(RenderPath& in, RenderPath& out);
+    bool ellipse(Point& radius);
 
 private:
     struct State
