@@ -426,7 +426,7 @@ void LottieBuilder::appendRect(Shape* shape, Point& pos, Point& size, float r, b
     }
 
     if (ctx->offset) {
-        ctx->offset->modifyRect(to<ShapeImpl>(temp)->rs.path, to<ShapeImpl>(shape)->rs.path);
+        ctx->offset->rect(to<ShapeImpl>(temp)->rs.path, to<ShapeImpl>(shape)->rs.path);
         Paint::rel(temp);
     }
 }
@@ -440,7 +440,7 @@ void LottieBuilder::updateRect(LottieGroup* parent, LottieObject** child, float 
     auto r = rect->radius(frameNo, tween, exps);
 
     if (r == 0.0f)  {
-        if (ctx->roundness) ctx->roundness->modifyRect(size, r);
+        if (ctx->roundness) ctx->roundness->rect(size, r);
     } else {
         r = std::min({r, size.x * 0.5f, size.y * 0.5f});
     }
@@ -459,7 +459,7 @@ void LottieBuilder::updateRect(LottieGroup* parent, LottieObject** child, float 
 
 static void _appendCircle(Shape* shape, Point& center, Point& radius, bool clockwise, RenderContext* ctx)
 {
-    if (ctx->offset) ctx->offset->modifyEllipse(radius);
+    if (ctx->offset) ctx->offset->ellipse(radius);
 
     auto cnt = to<ShapeImpl>(shape)->rs.path.pts.count;
 
@@ -627,7 +627,7 @@ void LottieBuilder::updateStar(LottiePolyStar* star, float frameNo, Matrix* tran
     _close(to<ShapeImpl>(shape)->rs.path.pts, in, hasRoundness);
     shape->close();
 
-    if (ctx->modifier) ctx->modifier->modifyPolystar(to<ShapeImpl>(shape)->rs.path, to<ShapeImpl>(merging)->rs.path, outerRoundness, hasRoundness);
+    if (ctx->modifier) ctx->modifier->polystar(to<ShapeImpl>(shape)->rs.path, to<ShapeImpl>(merging)->rs.path, outerRoundness, hasRoundness);
 }
 
 
@@ -697,7 +697,7 @@ void LottieBuilder::updatePolygon(LottieGroup* parent, LottiePolyStar* star, flo
     _close(to<ShapeImpl>(shape)->rs.path.pts, in, hasRoundness);
     shape->close();
 
-    if (ctx->modifier) ctx->modifier->modifyPolystar(to<ShapeImpl>(shape)->rs.path, to<ShapeImpl>(merging)->rs.path, 0.0f, false);
+    if (ctx->modifier) ctx->modifier->polystar(to<ShapeImpl>(shape)->rs.path, to<ShapeImpl>(merging)->rs.path, 0.0f, false);
 }
 
 
