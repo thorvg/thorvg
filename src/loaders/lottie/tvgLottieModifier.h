@@ -28,7 +28,6 @@
 #include "tvgMath.h"
 #include "tvgRender.h"
 
-
 struct LottieModifier
 {
     enum Type : uint8_t {Roundness = 0, Offset};
@@ -38,8 +37,8 @@ struct LottieModifier
 
     virtual ~LottieModifier() {}
 
-    virtual bool modifyPath(PathCommand* inCmds, uint32_t inCmdsCnt, Point* inPts, uint32_t inPtsCnt, Matrix* transform, RenderPath& out) = 0;
-    virtual bool modifyPolystar(RenderPath& in, RenderPath& out, float outerRoundness, bool hasRoundness) = 0;
+    virtual void path(PathCommand* inCmds, uint32_t inCmdsCnt, Point* inPts, uint32_t inPtsCnt, Matrix* transform, RenderPath& out) = 0;
+    virtual void polystar(RenderPath& in, RenderPath& out, float outerRoundness, bool hasRoundness) = 0;
 
     LottieModifier* decorate(LottieModifier* next)
     {
@@ -70,9 +69,12 @@ struct LottieRoundnessModifier : LottieModifier
         type = Roundness;
     }
 
-    bool modifyPath(PathCommand* inCmds, uint32_t inCmdsCnt, Point* inPts, uint32_t inPtsCnt, Matrix* transform, RenderPath& out) override;
-    bool modifyPolystar(RenderPath& in, RenderPath& out, float outerRoundness, bool hasRoundness) override;
-    bool modifyRect(Point& size, float& r);
+    void path(PathCommand* inCmds, uint32_t inCmdsCnt, Point* inPts, uint32_t inPtsCnt, Matrix* transform, RenderPath& out) override;
+    void polystar(RenderPath& in, RenderPath& out, float outerRoundness, bool hasRoundness) override;
+    void rect(Point& size, float& r);
+
+private:
+    Point rounding(RenderPath& out, Point& prev, Point& curr, Point& next, float r);
 };
 
 
@@ -87,10 +89,10 @@ struct LottieOffsetModifier : LottieModifier
         type = Offset;
     }
 
-    bool modifyPath(PathCommand* inCmds, uint32_t inCmdsCnt, Point* inPts, uint32_t inPtsCnt, Matrix* transform, RenderPath& out) override;
-    bool modifyPolystar(RenderPath& in, RenderPath& out, float outerRoundness, bool hasRoundness) override;
-    bool modifyRect(RenderPath& in, RenderPath& out);
-    bool modifyEllipse(Point& radius);
+    void path(PathCommand* inCmds, uint32_t inCmdsCnt, Point* inPts, uint32_t inPtsCnt, Matrix* transform, RenderPath& out) override;
+    void polystar(RenderPath& in, RenderPath& out, float outerRoundness, bool hasRoundness) override;
+    void rect(RenderPath& in, RenderPath& out);
+    void ellipse(Point& radius);
 
 private:
     struct State
@@ -102,6 +104,8 @@ private:
         bool moveto = false;
     };
 
+    bool intersected(Line& line1, Line& line2, Point& intersection, bool& inside);
+    Line shift(Point& p1, Point& p2, float offset);
     void line(RenderPath& out, PathCommand* inCmds, uint32_t inCmdsCnt, Point* inPts, uint32_t& curPt, uint32_t curCmd, State& state, float offset, bool degenerated);
     void corner(RenderPath& out, Line& line, Line& nextLine, uint32_t movetoIndex, bool nextClose);
 };
