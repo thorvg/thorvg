@@ -647,6 +647,17 @@ RenderCompositor* SwRenderer::target(const RenderRegion& region, ColorSpace cs, 
     if (bbox.invalid()) return nullptr;
 
     auto cmp = request(CHANNEL_SIZE(cs), (flags & CompositionFlag::PostProcessing));
+
+    //sync compositor blend state (handles cached surfaces that may
+    //retain stale blend state from a prior composition)
+    if (flags & CompositionFlag::Blending) {
+        cmp->blender = surface->blender;
+        cmp->blendMethod = surface->blendMethod;
+    } else {
+        cmp->blender = nullptr;
+        cmp->blendMethod = BlendMethod::Normal;
+    }
+
     cmp->compositor->recoverSfc = surface;
     cmp->compositor->recoverCmp = surface->compositor;
     cmp->compositor->valid = false;
@@ -655,6 +666,12 @@ RenderCompositor* SwRenderer::target(const RenderRegion& region, ColorSpace cs, 
     /* TODO: Currently, only blending might work.
        Blending and composition must be handled together. */
     rasterClear(cmp, bbox.x(), bbox.y(), bbox.w(), bbox.h());
+
+    //prevent blend mode from leaking into the compositor scope
+    if ((flags & CompositionFlag::Blending) && surface->compositor) {
+        surface->blender = nullptr;
+        surface->blendMethod = BlendMethod::Normal;
+    }
 
     //Switch render target
     surface = cmp;
@@ -786,7 +803,7 @@ bool SwRenderer::render(RenderCompositor* cmp, const RenderEffect* effect, bool 
 
     //TODO: Support grayscale effects.
     if (p->recoverSfc->channelSize != sizeof(uint32_t)) direct = false;
-    
+
     switch (effect->type) {
         case SceneEffect::GaussianBlur: {
             return effectGaussianBlur(p, request(surface->channelSize, true), static_cast<const RenderEffectGaussianBlur*>(effect));
@@ -814,7 +831,7 @@ bool SwRenderer::render(RenderCompositor* cmp, const RenderEffect* effect, bool 
 }
 
 
-void SwRenderer::dispose(RenderEffect* effect) 
+void SwRenderer::dispose(RenderEffect* effect)
 {
     tvg::free(effect->rd);
     effect->rd = nullptr;
