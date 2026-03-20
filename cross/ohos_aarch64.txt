@@ -16,7 +16,7 @@ sys_root = 'OHOS_NDK/sysroot'
 [built-in options]
 c_args = ['-D__OHOS__=1','-D__HARMONYOS__=1','--sysroot=OHOS_NDK/sysroot', '-IOHOS_NDK/sysroot/usr/include/', '-IOHOS_NDK/sysroot/usr/include/aarch64-linux-ohos', '-fdata-sections', '-ffunction-sections', '-funwind-tables', '-fstack-protector-strong', '-no-canonical-prefixes', '-fno-addrsig', '-Wa,--noexecstack']
 cpp_args = ['-D__OHOS__=1','-D__HARMONYOS__=1','--sysroot=OHOS_NDK/sysroot', '-IOHOS_NDK/sysroot/usr/include/', '-IOHOS_NDK/sysroot/usr/include/aarch64-linux-ohos', '-fdata-sections', '-ffunction-sections', '-funwind-tables', '-fstack-protector-strong', '-no-canonical-prefixes', '-fno-addrsig', '-Wa,--noexecstack']
-cpp_link_args = []
+cpp_link_args = ['-lGLESv3']
 
 [host_machine]
 system = 'linux'
