@@ -38,6 +38,7 @@
 
 static int32_t _rendererCnt = -1;
 static mutex _rendererMtx;
+static thread_local Array<GlProgram*> mPrograms;
 
 void GlRenderer::clearDisposes()
 {
@@ -113,6 +114,9 @@ GlRenderer::~GlRenderer()
 
 void GlRenderer::initShaders()
 {
+    if (!mPrograms.empty()) {
+        return; // already inited
+    }
     mPrograms.reserve((int)RT_None);
 
 #if 1  //for optimization
@@ -1401,6 +1405,9 @@ bool GlRenderer::term()
         return false;
     }
 
+    ARRAY_FOREACH(p, mPrograms) delete(*p);
+    mPrograms.clear();
+
     glTerm();
 
     _rendererCnt = -1;
@@ -1426,4 +1433,8 @@ GlRenderer* GlRenderer::gen(TVG_UNUSED uint32_t threads, TVG_UNUSED EngineOption
     _rendererMtx.unlock();
 
     return new GlRenderer;
+}
+
+GlProgram *GlRenderer::program(RenderTypes type) {
+    return mPrograms[type];
 }
