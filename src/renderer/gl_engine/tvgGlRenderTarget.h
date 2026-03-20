@@ -30,7 +30,7 @@ struct GlRenderTarget
     GlRenderTarget();
     ~GlRenderTarget();
 
-    void init(uint32_t width, uint32_t height, GLint resolveId);
+    void init(uint32_t width, uint32_t height, GLint resolveId, int msaaSamples);
     void reset();
 
     bool invalid() const { return fbo == 0; }
@@ -49,7 +49,7 @@ struct GlRenderTargetPool
 {
     GlRenderTargetPool(uint32_t maxWidth, uint32_t maxHeight);
     ~GlRenderTargetPool();
-    GlRenderTarget* getRenderTarget(const RenderRegion& vp, GLuint resolveId = 0);
+    GlRenderTarget* getRenderTarget(const RenderRegion& vp, GLuint resolveId = 0, int msaaSamples = 0);
 private:
     uint32_t maxWidth = 0;
     uint32_t maxHeight = 0;
