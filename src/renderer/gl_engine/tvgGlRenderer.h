@@ -181,6 +181,7 @@ struct GlRenderer : RenderMethod
     bool partial(bool disable) override;
 
     static GlRenderer* gen(uint32_t threads, EngineOption op);
+    static GlProgram* program(RenderTypes type);
     static bool term();
 
 private:
@@ -190,7 +191,7 @@ private:
     GlRenderer(); 
     ~GlRenderer();
 
-    void initShaders();
+    static void initShaders();
     static RenderRegion viewportRegion(const RenderRegion& vp, const RenderRegion& bbox);
     GlRenderTask* createPrimitiveTask(RenderTypes type, BlendSource source, const RenderRegion& viewRegion, GlRenderTarget*& dstCopyFbo);
     GlRenderTask* createStencilTask(GlRenderTask* task, GlStencilMode stencilMode, int32_t depth);
@@ -221,7 +222,6 @@ private:
     GlStageBuffer mGpuBuffer;
     GlRenderTarget mRootTarget;
     GlEffect mEffect;
-    Array<GlProgram*> mPrograms;
 
     Array<GlRenderTargetPool*> mComposePool;
     Array<GlRenderTargetPool*> mBlendPool;
