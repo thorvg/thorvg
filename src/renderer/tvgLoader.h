@@ -35,6 +35,7 @@ struct LoaderMgr
     static LoadModule* loader(const char* filename, bool* invalid);
     static LoadModule* loader(const char* data, uint32_t size, const char* mimeType, const char* rpath, bool copy);
     static LoadModule* loader(const uint32_t* data, uint32_t w, uint32_t h, ColorSpace cs, bool copy);
+    static LoadModule* loader(uint32_t textureId, uint32_t w, uint32_t h, ColorSpace cs = ColorSpace::TextureRGBA);
     static LoadModule* loader(const char* name, const char* data, uint32_t size, const char* mimeType, bool copy);
     static LoadModule* font(const char* name);
     static LoadModule* anyfont();

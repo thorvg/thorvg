@@ -190,6 +190,7 @@ static FileType _convert(const char* mimeType)
     else if (!strcmp(mimeType, "png")) type = FileType::Png;
     else if (!strcmp(mimeType, "jpg") || !strcmp(mimeType, "jpeg")) type = FileType::Jpg;
     else if (!strcmp(mimeType, "webp")) type = FileType::Webp;
+    else if (!strcmp(mimeType, "texture")) type = FileType::Texture;
     else TVGLOG("RENDERER", "Given mimetype is unknown = \"%s\".", mimeType);
 
     return type;
@@ -232,6 +233,24 @@ static tvg::LoadModule* _findFromCache(const char* data, uint32_t size, const ch
     }
     return nullptr;
 }
+
+static tvg::LoadModule* _findFromCache(const uint32_t textureId)
+{
+    auto type = FileType::Texture;
+
+    auto key = textureId;
+
+    ScopedLock lock(_key);
+
+    INLIST_FOREACH(_activeLoaders, loader) {
+        if (loader->type == type && loader->hashkey == key) {
+            ++loader->sharing;
+            return loader;
+        }
+    }
+    return nullptr;
+}
+
 
 
 /************************************************************************/
@@ -395,6 +414,22 @@ tvg::LoadModule* LoaderMgr::loader(const uint32_t *data, uint32_t w, uint32_t h,
             ScopedLock lock(_key);
             _activeLoaders.back(loader);
         }
+        return loader;
+    }
+    delete(loader);
+    return nullptr;
+}
+
+tvg::LoadModule* LoaderMgr::loader(uint32_t textureId, uint32_t w, uint32_t h, ColorSpace cs)
+{
+    if (auto loader = _findFromCache(textureId)) return loader;
+
+    //function is dedicated for raw images only
+    auto loader = new RawLoader;
+    if (loader->open(textureId, w, h, cs)) {
+        loader->cache(textureId);
+        ScopedLock lock(_key);
+        _activeLoaders.back(loader);
         return loader;
     }
     delete(loader);
