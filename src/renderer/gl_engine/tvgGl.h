@@ -23,7 +23,37 @@
  #ifndef _TVG_GL_H_
  #define _TVG_GL_H_
 
-#ifdef __EMSCRIPTEN__
+#if defined(TARGET_OS_IPHONE) && TARGET_OS_IPHONE
+
+#include <OpenGLES/ES3/gl.h>
+#include <OpenGLES/ES3/glext.h>
+
+#define GL_CHECK(stmt) stmt
+
+#define TVG_REQUIRE_GL_MAJOR_VER 3
+#define TVG_REQUIRE_GL_MINOR_VER 0
+
+#elif defined(__APPLE__)
+#define GL_DO_NOT_WARN_IF_MULTI_GL_VERSION_HEADERS_INCLUDED
+#include <OpenGL/gl.h>
+#include <OpenGL/gl3.h>
+
+#define GL_CHECK(stmt) stmt
+
+#define TVG_REQUIRE_GL_MAJOR_VER 3
+#define TVG_REQUIRE_GL_MINOR_VER 0
+
+#elif defined(__ANDROID__) || defined(__OHOS__)
+#include <EGL/egl.h>
+#include <EGL/eglext.h>
+#include <GLES3/gl3.h>
+
+#define GL_CHECK(stmt) stmt
+
+#define TVG_REQUIRE_GL_MAJOR_VER 3
+#define TVG_REQUIRE_GL_MINOR_VER 0
+
+#elif defined(__EMSCRIPTEN__)
     #include <GLES3/gl3.h>
     #include <emscripten/html5_webgl.h>
     #define GL_CHECK(stmt) stmt

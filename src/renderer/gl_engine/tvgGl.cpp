@@ -36,6 +36,19 @@ bool glTerm()
     return true;
 }
 
+#elif defined(__APPLE__) || defined(__ANDROID__) || defined(__OHOS__)
+
+bool glInit()
+{
+    return true;
+}
+
+
+bool glTerm()
+{
+    return true;
+}
+
 #else //__EMSCRIPTEN__
 
 #if defined(_WIN32) && !defined(__CYGWIN__)
@@ -82,7 +95,7 @@ static PROC _getProcAddress(const char* procName)
     return procHandle;
 }
 
-#elif defined(__linux__)
+#elif defined(__linux__) || defined(__ANDROID__) || defined(__OHOS__) || defined(__HARMONYOS__)
 
 #include <dlfcn.h>
 

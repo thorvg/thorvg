@@ -78,9 +78,16 @@ bool GlRenderer::currentContext()
 #elif defined(_WIN32) && !defined(__CYGWIN__) && defined(THORVG_GL_TARGET_GL)
     if (tvgWglGetCurrentContext() == static_cast<HGLRC>(mContext)) return true;
     return (bool) tvgWglMakeCurrent((HDC)mSurface, static_cast<HGLRC>(mContext));
+#elif defined(__APPLE__) || defined(__ANDROID__) || defined(__OHOS__)
+    // ios
+    return true;
 #elif defined(THORVG_GL_TARGET_GLES)
-    if (tvgEglGetCurrentContext() == static_cast<EGLContext>(mContext)) return true;
-    if (mDisplay && mSurface) return (bool) tvgEglMakeCurrent((EGLDisplay)mDisplay, (EGLSurface)mSurface, (EGLSurface)mSurface, (EGLContext)mContext);
+    if (tvgEglGetCurrentContext && tvgEglMakeCurrent) {
+        if (tvgEglGetCurrentContext() == static_cast<EGLContext>(mContext)) return true;
+        if (mDisplay && mSurface) return (bool) tvgEglMakeCurrent((EGLDisplay)mDisplay, (EGLSurface)mSurface, (EGLSurface)mSurface, (EGLContext)mContext);
+    }
+    // ignore context, maybe user manage context (iOS EAGL)
+    return true;
 #endif
     TVGLOG("GL_ENGINE", "Maybe missing currentContext()?");
     return true;
@@ -882,8 +889,7 @@ bool GlRenderer::clear()
 
 bool GlRenderer::target(void* display, void* surface, void* context, int32_t id, uint32_t w, uint32_t h, ColorSpace cs)
 {
-    //assume the context zero is invalid
-    if (!context || w == 0 || h == 0) return false;
+    if (w == 0 || h == 0) return false;
 
     if (mContext) currentContext();
 

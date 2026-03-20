@@ -20,3 +20,10 @@ kernel = 'xnu'
 cpu_family = 'aarch64'
 cpu = 'aarch64'
 endian = 'little'
+
+[target_machine]
+system = 'ios'
+kernel = 'xnu'
+cpu_family = 'aarch64'
+cpu = 'aarch64'
+endian = 'little'
