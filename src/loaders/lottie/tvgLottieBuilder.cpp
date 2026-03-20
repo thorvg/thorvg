@@ -949,13 +949,14 @@ void LottieBuilder::updateURLFont(LottieLayer* layer, float frameNo, LottieText*
     auto len = strlen(doc.text);
     auto buf = tvg::malloc<char>(len + 1);
 
-    // preprocessing text for modern systems: handle carriage return ('\r') and end-of-text ('\3')
-    // as line feed ('\n') only when they appear independently.
+    // preprocess text: convert '\r' and '\3' to '\n' only when they appear within the string
+    // this is for the modern-system compatibility
     auto p = buf;
     auto feed = false;
     for (size_t i = 0; i < len; ++i) {
-        //replace the carriage return and end of text with line feed.
+        // replace the carriage return and end of text with line feed.
         if (doc.text[i] == '\r' || doc.text[i] == '\3') {
+            if (i == len - 1) break;  // ignore trailing occurrences
             if (!feed) *p = '\n';
             else continue;
         } else *p = doc.text[i];
