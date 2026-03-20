@@ -2,7 +2,7 @@
 # https://developer.android.com/ndk/guides/other_build_systems
 
 [binaries]
-cpp     = 'NDK/toolchains/llvm/prebuilt/HOST_TAG/bin/x86_64-linux-androidAPI-clang++'
+cpp     = 'NDK/toolchains/llvm/prebuilt/HOST_TAG/bin/armv7a-linux-androideabiAPI-clang++'
 ar      = 'NDK/toolchains/llvm/prebuilt/HOST_TAG/bin/llvm-ar'
 as      = 'NDK/toolchains/llvm/prebuilt/HOST_TAG/bin/llvm-as'
 ranlib  = 'NDK/toolchains/llvm/prebuilt/HOST_TAG/bin/llvm-ranlib'
@@ -19,12 +19,12 @@ cpp_link_args = ['-Wl,-z,max-page-size=16384', '-Wl,-z,common-page-size=16384']
 
 [host_machine]
 system = 'android'
-cpu_family = 'x86_64'
-cpu = 'x86_64'
+cpu_family = 'arm'
+cpu = 'armv7a'
 endian = 'little'
 
 [target_machine]
 system = 'android'
-cpu_family = 'x86_64'
-cpu = 'x86_64'
+cpu_family = 'arm'
+cpu = 'armv7a'
 endian = 'little'
