@@ -60,6 +60,7 @@ struct RenderSurface
         pixel_t* data = nullptr;    //system based data pointer
         uint32_t* buf32;            //for explicit 32bits channels
         uint8_t*  buf8;             //for explicit 8bits grayscale
+        uint32_t textureId;         //for explicit texture id
     };
     Key key;                        //a reserved lock for the thread safety
     uint32_t stride = 0;
