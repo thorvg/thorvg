@@ -29,49 +29,70 @@ GlRenderTarget::~GlRenderTarget()
     reset();
 }
 
-void GlRenderTarget::init(uint32_t width, uint32_t height, GLint resolveId)
+void GlRenderTarget::init(uint32_t width, uint32_t height, GLint resolveId, int msaaSamples)
 {
     if (width == 0 || height == 0) return;
 
     this->width = width;
     this->height = height;
 
-    //TODO: fbo is used. maybe we can consider the direct rendering with resolveId as well.
-    GL_CHECK(glGenFramebuffers(1, &fbo));
-
-    GL_CHECK(glBindFramebuffer(GL_FRAMEBUFFER, fbo));
-
-    GL_CHECK(glGenRenderbuffers(1, &colorBuffer));
-    GL_CHECK(glBindRenderbuffer(GL_RENDERBUFFER, colorBuffer));
-    GL_CHECK(glRenderbufferStorageMultisample(GL_RENDERBUFFER, 4, GL_RGBA8, width, height));
-
-    GL_CHECK(glGenRenderbuffers(1, &depthStencilBuffer));
-
-    GL_CHECK(glBindRenderbuffer(GL_RENDERBUFFER, depthStencilBuffer));
-
-    GL_CHECK(glRenderbufferStorageMultisample(GL_RENDERBUFFER, 4, GL_DEPTH24_STENCIL8, width, height));
-
-    GL_CHECK(glBindRenderbuffer(GL_RENDERBUFFER, 0));
-
-    GL_CHECK(glFramebufferRenderbuffer(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, GL_RENDERBUFFER, colorBuffer));
-    GL_CHECK(glFramebufferRenderbuffer(GL_FRAMEBUFFER, GL_DEPTH_STENCIL_ATTACHMENT, GL_RENDERBUFFER, depthStencilBuffer));
-
-    // resolve target
+    // Create the color texture (used as render target when MSAA is disabled, or as resolve target when enabled)
     GL_CHECK(glGenTextures(1, &colorTex));
-
     GL_CHECK(glBindTexture(GL_TEXTURE_2D, colorTex));
     GL_CHECK(glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA8, width, height, 0, GL_RGBA, GL_UNSIGNED_BYTE, nullptr));
-
     GL_CHECK(glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE));
     GL_CHECK(glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE));
     GL_CHECK(glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR));
     GL_CHECK(glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR));
-
     GL_CHECK(glBindTexture(GL_TEXTURE_2D, 0));
 
-    GL_CHECK(glGenFramebuffers(1, &resolvedFbo));
-    GL_CHECK(glBindFramebuffer(GL_FRAMEBUFFER, resolvedFbo));
-    GL_CHECK(glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, GL_TEXTURE_2D, colorTex, 0));
+    if (msaaSamples > 0) {
+        // MSAA enabled: create separate MSAA FBO and resolve FBO
+        GL_CHECK(glGenFramebuffers(1, &fbo));
+        GL_CHECK(glBindFramebuffer(GL_FRAMEBUFFER, fbo));
+
+        GL_CHECK(glGenRenderbuffers(1, &colorBuffer));
+        GL_CHECK(glBindRenderbuffer(GL_RENDERBUFFER, colorBuffer));
+        GL_CHECK(glRenderbufferStorageMultisample(GL_RENDERBUFFER, msaaSamples, GL_RGBA8, width, height));
+
+        GL_CHECK(glGenRenderbuffers(1, &depthStencilBuffer));
+        GL_CHECK(glBindRenderbuffer(GL_RENDERBUFFER, depthStencilBuffer));
+        GL_CHECK(glRenderbufferStorageMultisample(GL_RENDERBUFFER, msaaSamples, GL_DEPTH24_STENCIL8, width, height));
+        GL_CHECK(glBindRenderbuffer(GL_RENDERBUFFER, 0));
+
+        GL_CHECK(glFramebufferRenderbuffer(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, GL_RENDERBUFFER, colorBuffer));
+        GL_CHECK(glFramebufferRenderbuffer(GL_FRAMEBUFFER, GL_DEPTH_STENCIL_ATTACHMENT, GL_RENDERBUFFER, depthStencilBuffer));
+
+        // Create resolve FBO with texture attachment
+        GL_CHECK(glGenFramebuffers(1, &resolvedFbo));
+        GL_CHECK(glBindFramebuffer(GL_FRAMEBUFFER, resolvedFbo));
+        GL_CHECK(glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, GL_TEXTURE_2D, colorTex, 0));
+
+        // Warm-up: force GPU driver to allocate memory
+        GL_CHECK(glBindFramebuffer(GL_FRAMEBUFFER, fbo));
+        GL_CHECK(glClearColor(0, 0, 0, 0));
+        GL_CHECK(glClear(GL_COLOR_BUFFER_BIT));
+        GL_CHECK(glBindFramebuffer(GL_READ_FRAMEBUFFER, fbo));
+        GL_CHECK(glBindFramebuffer(GL_DRAW_FRAMEBUFFER, resolvedFbo));
+        GL_CHECK(glBlitFramebuffer(0, 0, 1, 1, 0, 0, 1, 1, GL_COLOR_BUFFER_BIT, GL_NEAREST));
+        GL_CHECK(glFlush());
+    } else {
+        // MSAA disabled: render directly to texture, no resolve needed
+        GL_CHECK(glGenFramebuffers(1, &fbo));
+        GL_CHECK(glBindFramebuffer(GL_FRAMEBUFFER, fbo));
+        GL_CHECK(glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, GL_TEXTURE_2D, colorTex, 0));
+
+        // Create depth-stencil renderbuffer (non-MSAA)
+        GL_CHECK(glGenRenderbuffers(1, &depthStencilBuffer));
+        GL_CHECK(glBindRenderbuffer(GL_RENDERBUFFER, depthStencilBuffer));
+        GL_CHECK(glRenderbufferStorage(GL_RENDERBUFFER, GL_DEPTH24_STENCIL8, width, height));
+        GL_CHECK(glBindRenderbuffer(GL_RENDERBUFFER, 0));
+        GL_CHECK(glFramebufferRenderbuffer(GL_FRAMEBUFFER, GL_DEPTH_STENCIL_ATTACHMENT, GL_RENDERBUFFER, depthStencilBuffer));
+
+        // fbo and resolvedFbo point to the same FBO (no resolve needed)
+        resolvedFbo = fbo;
+        colorBuffer = 0;
+    }
 
     GL_CHECK(glBindFramebuffer(GL_FRAMEBUFFER, resolveId));
 }
@@ -82,9 +103,10 @@ void GlRenderTarget::reset()
 
     GL_CHECK(glBindFramebuffer(GL_FRAMEBUFFER, 0));
     GL_CHECK(glDeleteFramebuffers(1, &fbo));
-    GL_CHECK(glDeleteRenderbuffers(1, &colorBuffer));
+    if (colorBuffer) GL_CHECK(glDeleteRenderbuffers(1, &colorBuffer));
     GL_CHECK(glDeleteRenderbuffers(1, &depthStencilBuffer));
-    GL_CHECK(glDeleteFramebuffers(1, &resolvedFbo));
+    // Only delete resolvedFbo if it's different from fbo (MSAA enabled)
+    if (resolvedFbo != fbo) GL_CHECK(glDeleteFramebuffers(1, &resolvedFbo));
     GL_CHECK(glDeleteTextures(1, &colorTex));
 
     fbo = colorBuffer = depthStencilBuffer = resolvedFbo = colorTex = 0;
@@ -108,7 +130,7 @@ uint32_t alignPow2(uint32_t value)
     return ret;
 }
 
-GlRenderTarget* GlRenderTargetPool::getRenderTarget(const RenderRegion& vp, GLuint resolveId)
+GlRenderTarget* GlRenderTargetPool::getRenderTarget(const RenderRegion& vp, GLuint resolveId, int msaaSamples)
 {
     auto width = vp.w();
     auto height = vp.h();
@@ -131,7 +153,7 @@ GlRenderTarget* GlRenderTargetPool::getRenderTarget(const RenderRegion& vp, GLui
     }
 
     auto rt = new GlRenderTarget();
-    rt->init(width, height, resolveId);
+    rt->init(width, height, resolveId, msaaSamples);
     rt->viewport = vp;
     pool.push(rt);
     return rt;

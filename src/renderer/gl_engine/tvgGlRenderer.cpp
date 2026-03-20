@@ -891,7 +891,7 @@ bool GlRenderer::clear()
 }
 
 
-bool GlRenderer::target(void* display, void* surface, void* context, int32_t id, uint32_t w, uint32_t h, ColorSpace cs)
+bool GlRenderer::target(void* display, void* surface, void* context, int32_t id, uint32_t w, uint32_t h, ColorSpace cs, int msaaSamples)
 {
     if (w == 0 || h == 0) return false;
 
@@ -912,7 +912,7 @@ bool GlRenderer::target(void* display, void* surface, void* context, int32_t id,
     auto ret = currentContext();
 
     mRootTarget.viewport = {{0, 0}, {int32_t(this->surface.w), int32_t(this->surface.h)}};
-    mRootTarget.init(this->surface.w, this->surface.h, mTargetFboId);
+    mRootTarget.init(this->surface.w, this->surface.h, mTargetFboId, msaaSamples);
 
     return ret;
 }
