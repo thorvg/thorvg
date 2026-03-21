@@ -208,13 +208,19 @@ void LottieBuilder::updateGroup(LottieGroup* parent, LottieObject** child, float
 
     if (!group->visible) return;
 
-    //Prepare render data
-    if (group->blendMethod == parent->blendMethod) {
+    // prepare render data
+
+    // special tune: sharing the context if the blending is compatible
+    // propagate the blending to its parent(layer) if possible. this potentially helps performance if the layer has mattes/maskings.
+    if (group->blendMethod == BlendMethod::Normal || group->blendMethod == parent->blendMethod) {
         group->scene = parent->scene;
+    } else if (parent->blendMethod == BlendMethod::Normal && parent->children.count == 1) {
+        group->scene = parent->scene;
+        group->scene->blend(group->blendMethod);
     } else {
         group->scene = tvg::Scene::gen();
-        group->scene->blend(group->blendMethod);
         parent->scene->add(group->scene);
+        group->scene->blend(group->blendMethod);
     }
 
     group->reqFragment |= ctx->reqFragment;
@@ -1456,6 +1462,8 @@ void LottieBuilder::updateLayer(LottieComposition* comp, Scene* scene, LottieLay
 
     if (!layer->matteSrc && !updateMatte(comp, frameNo, scene, layer)) return;
 
+    layer->scene->blend(layer->blendMethod);
+
     switch (layer->type) {
         case LottieLayer::Precomp: {
             if (!tweening()) updatePrecomp(comp, layer, frameNo);
@@ -1486,8 +1494,6 @@ void LottieBuilder::updateLayer(LottieComposition* comp, Scene* scene, LottieLay
     }
 
     updateMasks(layer, frameNo);
-
-    layer->scene->blend(layer->blendMethod);
 
     updateEffect(layer, frameNo, comp->quality);
 
