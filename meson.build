@@ -133,6 +133,9 @@ lottie_exp = lottie_loader and get_option('extra').contains('lottie_exp')
 
 if lottie_exp
     config_h.set10('THORVG_LOTTIE_EXPRESSIONS_SUPPORT', true)
+    if get_option('threads')
+        add_project_arguments('-DJERRY_EXTERNAL_CONTEXT=1', language : 'cpp')
+    endif
 endif
 
 openmp = get_option('extra').contains('openmp')

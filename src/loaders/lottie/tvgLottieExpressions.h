@@ -34,6 +34,7 @@ struct LottieModifier;
 #ifdef THORVG_LOTTIE_EXPRESSIONS_SUPPORT
 
 #include "jerryscript.h"
+#include "jerryscript-port.h"
 
 
 struct LottieExpressions
@@ -126,7 +127,7 @@ struct LottieExpressions
 
     void update(float curTime);
 
-    //singleton (no thread safety)
+    //per-instance, thread-safe via JERRY_EXTERNAL_CONTEXT + TLS activation
     static LottieExpressions* instance();
     static void retrieve(LottieExpressions* instance);
 
@@ -145,6 +146,9 @@ private:
     Point toPoint2d(jerry_value_t obj);
     RGB32 toColor(jerry_value_t obj);
     float toFloat(jerry_value_t obj);
+
+    //JS engine context (per-instance, activated on current thread before use)
+    jerry_context_t* ctx;
 
     //global object, attributes, methods
     jerry_value_t global;

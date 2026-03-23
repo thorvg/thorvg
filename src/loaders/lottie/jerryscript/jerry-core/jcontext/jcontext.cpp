@@ -127,7 +127,54 @@ jcontext_take_exception (void)
   return JERRY_CONTEXT (error_value);
 } /* jcontext_take_exception */
 
-#if !JERRY_EXTERNAL_CONTEXT
+#if JERRY_EXTERNAL_CONTEXT
+
+#include <cstdlib>
+
+/**
+ * Thread-local context pointer for multi-threaded Lottie expression evaluation.
+ * Each thread gets an independent jerry_context_t + heap via TLS.
+ */
+static thread_local jerry_context_t *tls_context_p = nullptr;
+
+size_t
+jerry_port_context_alloc (size_t context_size)
+{
+  size_t total_size = context_size + JERRY_GLOBAL_HEAP_SIZE * 1024;
+  tls_context_p = (jerry_context_t *) malloc (total_size);
+
+  if (tls_context_p == nullptr)
+  {
+    abort ();
+  }
+
+  return total_size;
+} /* jerry_port_context_alloc */
+
+jerry_context_t *
+jerry_port_context_get (void)
+{
+  return tls_context_p;
+} /* jerry_port_context_get */
+
+void
+jerry_port_context_free (void)
+{
+  free (tls_context_p);
+  tls_context_p = nullptr;
+} /* jerry_port_context_free */
+
+/**
+ * Set the active context for the current thread.
+ * Used to activate a context on a different thread than where jerry_init() was called.
+ */
+void
+jerry_port_context_set (jerry_context_t *ctx_p)
+{
+  tls_context_p = ctx_p;
+} /* jerry_port_context_set */
+
+#else /* !JERRY_EXTERNAL_CONTEXT */
 
 /**
  * Global context.

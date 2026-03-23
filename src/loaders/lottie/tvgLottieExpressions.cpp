@@ -61,7 +61,6 @@ static const char* EXP_VALUE = "value";
 static const char* EXP_INDEX = "index";
 static const char* EXP_EFFECT= "effect";
 
-static LottieExpressions* exps = nullptr;   //singleton instance engine
 
 
 static ExpContent* _expcontent(LottieExpression* exp, float frameNo, void* data, size_t refCnt = 1)
@@ -177,8 +176,6 @@ static void contentFree(void *native_p, struct jerry_object_native_info_t *info_
 
 
 static jerry_object_native_info_t freeCb {contentFree, 0, 0};
-static uint32_t engineRefCnt = 0;  //Expressions Engine reference count
-
 
 static char* _name(jerry_value_t args)
 {
@@ -1434,6 +1431,8 @@ void LottieExpressions::buildWritables(LottieExpression* exp)
 
 jerry_value_t LottieExpressions::evaluate(float frameNo, LottieExpression* exp)
 {
+    jerry_port_context_set(ctx);
+
     if (exp->disabled && exp->writables.empty()) return jerry_undefined();
 
     buildGlobal(frameNo, exp);
@@ -1482,24 +1481,29 @@ jerry_value_t LottieExpressions::evaluate(float frameNo, LottieExpression* exp)
 
 LottieExpressions::~LottieExpressions()
 {
+    jerry_port_context_set(ctx);
     jerry_value_free(thisProperty);
     jerry_value_free(thisLayer);
     jerry_value_free(thisComp);
     jerry_value_free(comp);
     jerry_value_free(global);
     jerry_cleanup();
+    ctx = nullptr;
 }
 
 
 LottieExpressions::LottieExpressions()
 {
     jerry_init(JERRY_INIT_EMPTY);
+    ctx = jerry_port_context_get();
     _buildMath(buildGlobal());
 }
 
 
 void LottieExpressions::update(float curTime)
 {
+    jerry_port_context_set(ctx);
+
     //time, #current time in seconds
     auto time = jerry_number(curTime);
     jerry_object_set_sz(global, EXP_TIME, time);
@@ -1507,29 +1511,15 @@ void LottieExpressions::update(float curTime)
 }
 
 
-//FIXME: Threads support
-#include "tvgTaskScheduler.h"
-
 LottieExpressions* LottieExpressions::instance()
 {
-    //FIXME: Threads support
-    if (TaskScheduler::threads() > 0) {
-        TVGLOG("LOTTIE", "Lottie Expressions are not supported with tvg threads");
-        return nullptr;
-    }
-
-    if (!exps) exps = new LottieExpressions;
-    ++engineRefCnt;
-    return exps;
+    return new LottieExpressions;
 }
 
 
 void LottieExpressions::retrieve(LottieExpressions* instance)
 {
-    if (--engineRefCnt == 0) {
-        delete(instance);
-        exps = nullptr;
-    }
+    delete(instance);
 }
 
 

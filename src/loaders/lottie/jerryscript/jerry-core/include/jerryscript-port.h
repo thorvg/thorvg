@@ -118,6 +118,16 @@ struct jerry_context_t *jerry_port_context_get (void);
 void jerry_port_context_free (void);
 
 /**
+ * Set the active context for the current thread.
+ *
+ * Used to activate a pre-allocated context on a different thread
+ * than the one where jerry_init() was called.
+ *
+ * @param ctx_p: pointer to the context to activate
+ */
+void jerry_port_context_set (struct jerry_context_t *ctx_p);
+
+/**
  * jerry-port-context @}
  */
 
