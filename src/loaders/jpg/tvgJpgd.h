@@ -20,8 +20,6 @@
  * SOFTWARE.
  */
 
-// jpgd.h - C++ class for JPEG decompression.
-// Public domain, Rich Geldreich <richgel99@gmail.com>
 #ifndef _TVG_JPGD_H_
 #define _TVG_JPGD_H_
 
