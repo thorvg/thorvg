@@ -184,10 +184,10 @@ static unsigned ucvector_resize(ucvector* p, size_t size)
 {
     if (size > p->allocsize) {
         size_t newsize = size + (p->allocsize >> 1u);
-        auto data = tvg::realloc(p->data, newsize);
+        auto data = tvg::realloc<unsigned char>(p->data, newsize);
         if(data) {
             p->allocsize = newsize;
-            p->data = (unsigned char*)data;
+            p->data = data;
         }
         else return 0; /*error: not enough memory*/
     }
@@ -1483,7 +1483,7 @@ static unsigned getTreeInflateDynamic(HuffmanTree* tree_ll, HuffmanTree* tree_d,
     /*number of code length codes. Unlike the spec, the value 4 is added to it here already*/
     HCLEN = readBits(reader, 4) + 4;
 
-    bitlen_cl = tvg::malloc<unsigned*>(NUM_CODE_LENGTH_CODES * sizeof(unsigned));
+    bitlen_cl = tvg::malloc<unsigned>(NUM_CODE_LENGTH_CODES * sizeof(unsigned));
     if(!bitlen_cl) return 83 /*alloc fail*/;
 
     HuffmanTree_init(&tree_cl);
@@ -1505,8 +1505,8 @@ static unsigned getTreeInflateDynamic(HuffmanTree* tree_ll, HuffmanTree* tree_d,
         if(error) break;
 
         /*now we can use this tree to read the lengths for the tree that this function will return*/
-        bitlen_ll = tvg::malloc<unsigned*>(NUM_DEFLATE_CODE_SYMBOLS * sizeof(unsigned));
-        bitlen_d = tvg::malloc<unsigned*>(NUM_DISTANCE_SYMBOLS * sizeof(unsigned));
+        bitlen_ll = tvg::malloc<unsigned>(NUM_DEFLATE_CODE_SYMBOLS * sizeof(unsigned));
+        bitlen_d = tvg::malloc<unsigned>(NUM_DISTANCE_SYMBOLS * sizeof(unsigned));
         if (!bitlen_ll || !bitlen_d) ERROR_BREAK(83 /*alloc fail*/);
         lodepng_memset(bitlen_ll, 0, NUM_DEFLATE_CODE_SYMBOLS * sizeof(*bitlen_ll));
         lodepng_memset(bitlen_d, 0, NUM_DISTANCE_SYMBOLS * sizeof(*bitlen_d));
@@ -3008,7 +3008,7 @@ static BPMNode* bpmnode_create(BPMLists* lists, int weight, unsigned index, BPMN
 /*sort the leaves with stable mergesort*/
 static void bpmnode_sort(BPMNode* leaves, size_t num)
 {
-    BPMNode* mem = tvg::malloc<BPMNode*>(sizeof(*leaves) * num);
+    BPMNode* mem = tvg::malloc<BPMNode>(sizeof(*leaves) * num);
     size_t width, counter = 0;
     for (width = 1; width < num; width *= 2) {
         BPMNode* a = (counter & 1) ? mem : leaves;
@@ -3072,7 +3072,7 @@ unsigned lodepng_huffman_code_lengths(unsigned* lengths, const unsigned* frequen
     if ((1u << maxbitlen) < (unsigned)numcodes)
         return 80; /*error: represent all symbols*/
 
-    leaves = tvg::malloc<BPMNode*>(numcodes * sizeof(*leaves));
+    leaves = tvg::malloc<BPMNode>(numcodes * sizeof(*leaves));
     if (!leaves)
         return 83; /*alloc fail*/
 
@@ -3106,10 +3106,10 @@ unsigned lodepng_huffman_code_lengths(unsigned* lengths, const unsigned* frequen
         lists.memsize = 2 * maxbitlen * (maxbitlen + 1);
         lists.nextfree = 0;
         lists.numfree = lists.memsize;
-        lists.memory = tvg::malloc<BPMNode*>(lists.memsize * sizeof(*lists.memory));
-        lists.freelist = tvg::malloc<BPMNode**>(lists.memsize * sizeof(BPMNode*));
-        lists.chains0 = tvg::malloc<BPMNode**>(lists.listsize * sizeof(BPMNode*));
-        lists.chains1 = tvg::malloc<BPMNode**>(lists.listsize * sizeof(BPMNode*));
+        lists.memory = tvg::malloc<BPMNode>(lists.memsize * sizeof(*lists.memory));
+        lists.freelist = tvg::malloc<BPMNode*>(lists.memsize * sizeof(BPMNode*));
+        lists.chains0 = tvg::malloc<BPMNode*>(lists.listsize * sizeof(BPMNode*));
+        lists.chains1 = tvg::malloc<BPMNode*>(lists.listsize * sizeof(BPMNode*));
         if (!lists.memory || !lists.freelist || !lists.chains0 || !lists.chains1)
             error = 83; /*alloc fail*/
 
@@ -3151,7 +3151,7 @@ static unsigned HuffmanTree_makeFromFrequencies(HuffmanTree* tree, const unsigne
     unsigned error = 0;
     while (!frequencies[numcodes - 1] && numcodes > mincodes)
         --numcodes; /*trim zeroes*/
-    tree->lengths = tvg::malloc<unsigned*>(numcodes * sizeof(unsigned));
+    tree->lengths = tvg::malloc<unsigned>(numcodes * sizeof(unsigned));
     if (!tree->lengths)
         return 83; /*alloc fail*/
     tree->maxbitlen = maxbitlen;
@@ -3239,10 +3239,10 @@ static unsigned uivector_resize(uivector* p, size_t size)
     size_t allocsize = size * sizeof(unsigned);
     if (allocsize > p->allocsize) {
         size_t newsize = allocsize + (p->allocsize >> 1u);
-        void* data = tvg::realloc(p->data, newsize);
+        auto data = tvg::realloc<unsigned>(p->data, newsize);
         if (data) {
             p->allocsize = newsize;
-            p->data = (unsigned*)data;
+            p->data = data;
         } else
             return 0; /*error: not enough memory*/
     }
@@ -3337,13 +3337,13 @@ typedef struct Hash
 static unsigned hash_init(Hash* hash, unsigned windowsize)
 {
     unsigned i;
-    hash->head = tvg::malloc<int*>(sizeof(int) * HASH_NUM_VALUES);
-    hash->val = tvg::malloc<int*>(sizeof(int) * windowsize);
-    hash->chain = tvg::malloc<unsigned short*>(sizeof(unsigned short) * windowsize);
+    hash->head = tvg::malloc<int>(sizeof(int) * HASH_NUM_VALUES);
+    hash->val = tvg::malloc<int>(sizeof(int) * windowsize);
+    hash->chain = tvg::malloc<unsigned short>(sizeof(unsigned short) * windowsize);
 
-    hash->zeros = tvg::malloc<unsigned short*>(sizeof(unsigned short) * windowsize);
-    hash->headz = tvg::malloc<int*>(sizeof(int) * (MAX_SUPPORTED_DEFLATE_LENGTH + 1));
-    hash->chainz = tvg::malloc<unsigned short*>(sizeof(unsigned short) * windowsize);
+    hash->zeros = tvg::malloc<unsigned short>(sizeof(unsigned short) * windowsize);
+    hash->headz = tvg::malloc<int>(sizeof(int) * (MAX_SUPPORTED_DEFLATE_LENGTH + 1));
+    hash->chainz = tvg::malloc<unsigned short>(sizeof(unsigned short) * windowsize);
 
     if (!hash->head || !hash->chain || !hash->val || !hash->headz || !hash->chainz || !hash->zeros) {
         return 83; /*alloc fail*/
@@ -3765,9 +3765,9 @@ static unsigned deflateDynamic(LodePNGBitWriter* writer, Hash* hash, const unsig
     HuffmanTree_init(&tree_d);
     HuffmanTree_init(&tree_cl);
     /* could fit on stack, but >1KB is on the larger side so allocate instead */
-    frequencies_ll = tvg::malloc<unsigned*>(286 * sizeof(*frequencies_ll));
-    frequencies_d = tvg::malloc<unsigned*>(30 * sizeof(*frequencies_d));
-    frequencies_cl = tvg::malloc<unsigned*>(NUM_CODE_LENGTH_CODES * sizeof(*frequencies_cl));
+    frequencies_ll = tvg::malloc<unsigned>(286 * sizeof(*frequencies_ll));
+    frequencies_d = tvg::malloc<unsigned>(30 * sizeof(*frequencies_d));
+    frequencies_cl = tvg::malloc<unsigned>(NUM_CODE_LENGTH_CODES * sizeof(*frequencies_cl));
 
     if (!frequencies_ll || !frequencies_d || !frequencies_cl)
         error = 83; /*alloc fail*/
@@ -3815,9 +3815,9 @@ static unsigned deflateDynamic(LodePNGBitWriter* writer, Hash* hash, const unsig
         numcodes_d = LODEPNG_MIN(tree_d.numcodes, 30);
         /*store the code lengths of both generated trees in bitlen_lld*/
         numcodes_lld = numcodes_ll + numcodes_d;
-        bitlen_lld = tvg::malloc<unsigned*>(numcodes_lld * sizeof(*bitlen_lld));
+        bitlen_lld = tvg::malloc<unsigned>(numcodes_lld * sizeof(*bitlen_lld));
         /*numcodes_lld_e never needs more size than bitlen_lld*/
-        bitlen_lld_e = tvg::malloc<unsigned*>(numcodes_lld * sizeof(*bitlen_lld_e));
+        bitlen_lld_e = tvg::malloc<unsigned>(numcodes_lld * sizeof(*bitlen_lld_e));
         if (!bitlen_lld || !bitlen_lld_e)
             ERROR_BREAK(83); /*alloc fail*/
         numcodes_lld_e = 0;
@@ -4090,7 +4090,7 @@ unsigned lodepng_zlib_compress(unsigned char** out, size_t* outsize, const unsig
     *outsize = 0;
     if (!error) {
         *outsize = deflatesize + 6;
-        *out = tvg::malloc<unsigned char*>(*outsize);
+        *out = tvg::malloc<unsigned char>(*outsize);
         if (!*out)
             error = 83; /*alloc fail*/
     }
@@ -4390,7 +4390,7 @@ static unsigned filter(unsigned char* out, const unsigned char* in, unsigned w, 
         unsigned char type, bestType = 0;
 
         for (type = 0; type != 5; ++type) {
-            attempt[type] = tvg::malloc<unsigned char*>(linebytes);
+            attempt[type] = tvg::malloc<unsigned char>(linebytes);
             if (!attempt[type])
                 error = 83; /*alloc fail*/
         }
@@ -4441,7 +4441,7 @@ static unsigned filter(unsigned char* out, const unsigned char* in, unsigned w, 
         unsigned count[256];
 
         for (type = 0; type != 5; ++type) {
-            attempt[type] = tvg::malloc<unsigned char*>(linebytes);
+            attempt[type] = tvg::malloc<unsigned char>(linebytes);
             if (!attempt[type])
                 error = 83; /*alloc fail*/
         }
@@ -4507,7 +4507,7 @@ static unsigned filter(unsigned char* out, const unsigned char* in, unsigned w, 
         zlibsettings.custom_zlib = 0;
         zlibsettings.custom_deflate = 0;
         for (type = 0; type != 5; ++type) {
-            attempt[type] = tvg::malloc<unsigned char*>(linebytes);
+            attempt[type] = tvg::malloc<unsigned char>(linebytes);
             if (!attempt[type])
                 error = 83; /*alloc fail*/
         }
@@ -4629,14 +4629,14 @@ static unsigned preProcessScanlines(unsigned char** out, size_t* outsize, const 
 
     if (info_png->interlace_method == 0) {
         *outsize = h + (h * ((w * bpp + 7u) / 8u)); /*image size plus an extra byte per scanline + possible padding bits*/
-        *out = tvg::malloc<unsigned char*>(*outsize);
+        *out = tvg::malloc<unsigned char>(*outsize);
         if (!(*out) && (*outsize))
             error = 83; /*alloc fail*/
 
         if (!error) {
             /*non multiple of 8 bits per scanline, padding bits needed per scanline*/
             if (bpp < 8 && w * bpp != ((w * bpp + 7u) / 8u) * 8u) {
-                unsigned char* padded = tvg::malloc<unsigned char*>(h * ((w * bpp + 7u) / 8u));
+                unsigned char* padded = tvg::malloc<unsigned char>(h * ((w * bpp + 7u) / 8u));
                 if (!padded)
                     error = 83; /*alloc fail*/
                 if (!error) {
@@ -4658,11 +4658,11 @@ static unsigned preProcessScanlines(unsigned char** out, size_t* outsize, const 
         Adam7_getpassvalues(passw, passh, filter_passstart, padded_passstart, passstart, w, h, bpp);
 
         *outsize = filter_passstart[7]; /*image size plus an extra byte per scanline + possible padding bits*/
-        *out = tvg::malloc<unsigned char*>(*outsize);
+        *out = tvg::malloc<unsigned char>(*outsize);
         if (!(*out))
             error = 83; /*alloc fail*/
 
-        adam7 = tvg::malloc<unsigned char*>(passstart[7]);
+        adam7 = tvg::malloc<unsigned char>(passstart[7]);
         if (!adam7 && passstart[7])
             error = 83; /*alloc fail*/
 
@@ -4672,7 +4672,7 @@ static unsigned preProcessScanlines(unsigned char** out, size_t* outsize, const 
             Adam7_interlace(adam7, in, w, h, bpp);
             for (i = 0; i != 7; ++i) {
                 if (bpp < 8) {
-                    unsigned char* padded = tvg::malloc<unsigned char*>(padded_passstart[i + 1] - padded_passstart[i]);
+                    unsigned char* padded = tvg::malloc<unsigned char>(padded_passstart[i + 1] - padded_passstart[i]);
                     if (!padded)
                         ERROR_BREAK(83); /*alloc fail*/
                     addPaddingBits(padded, &adam7[passstart[i]], ((passw[i] * bpp + 7u) / 8u) * 8u, passw[i] * bpp, passh[i]);
@@ -4747,7 +4747,7 @@ unsigned lodepng_encode(unsigned char** out, size_t* outsize, const unsigned cha
         unsigned char* converted;
         size_t size = ((size_t)w * (size_t)h * (size_t)lodepng_get_bpp(&info.color) + 7u) / 8u;
 
-        converted = tvg::malloc<unsigned char*>(size);
+        converted = tvg::malloc<unsigned char>(size);
         if (!converted && size)
             state->error = 83; /*alloc fail*/
         if (!state->error) {

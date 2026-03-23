@@ -66,12 +66,12 @@ void PngSaver::run(unsigned tid)
 	auto w = static_cast<uint32_t>(vsize[0]);
 	auto h = static_cast<uint32_t>(vsize[1]);
 
-	buffer = tvg::realloc<uint32_t*>(buffer, sizeof(uint32_t) * w * h);
+	buffer = tvg::realloc<uint32_t>(buffer, sizeof(uint32_t) * w * h);
 	canvas->target(buffer, w, w, h, ColorSpace::ABGR8888S);
 	if (bg) {
-		canvas->push(bg);
+		canvas->add(bg);
 	}
-	canvas->push(target);
+	canvas->add(target);
 
 	canvas->update();
 	if (canvas->draw(true) == tvg::Result::Success) {
@@ -147,8 +147,8 @@ bool PngSaver::save(Paint* paint, Paint* bg, const char* filename, TVG_UNUSED ui
 			w, h);
 		static_cast<tvg::Picture*>(paint)->size(static_cast<float>(w), static_cast<float>(h));
 	}
-	vsize[0] = w;
-	vsize[1] = h;
+	vsize[0] = static_cast<float>(w);
+	vsize[1] = static_cast<float>(h);
 
 	if (!filename) return false;
 	this->path = duplicate(filename);

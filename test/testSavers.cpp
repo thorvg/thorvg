@@ -63,9 +63,6 @@ TEST_CASE("Save a lottie into gif", "[tvgSavers]") {
         REQUIRE(bg->fill(255, 255, 255) == Result::Success);
         REQUIRE(bg->appendRect(0, 0, 100, 100) == Result::Success);
 
-        auto saver =  unique_ptr<Saver>(Saver::gen());
-        REQUIRE(saver);
-
         REQUIRE(saver->background(bg) == Result::Success);
         REQUIRE(saver->save(animation2, TEST_DIR"/saver_test_with_bg.gif") == Result::Success);
         REQUIRE(saver->sync() == Result::Success);
