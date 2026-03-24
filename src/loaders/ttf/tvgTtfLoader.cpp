@@ -171,13 +171,13 @@ static size_t _codepoints(const char** utf8)
     if (!(*p & 0x80U)) {
         (*utf8) += 1;
         return *p;
-    } else if ((*p & 0xe0U) == 0xc0U) {
+    } else if ((*p & 0xe0U) == 0xc0U && *(p + 1)) {
         (*utf8) += 2;
         return ((*p & 0x1fU) << 6) + (*(p + 1) & 0x3fU);
-    } else if ((*p & 0xf0U) == 0xe0U) {
+    } else if ((*p & 0xf0U) == 0xe0U && *(p + 1) && *(p + 2)) {
         (*utf8) += 3;
         return ((*p & 0x0fU) << 12) + ((*(p + 1) & 0x3fU) << 6) + (*(p + 2) & 0x3fU);
-    } else if ((*p & 0xf8U) == 0xf0U) {
+    } else if ((*p & 0xf8U) == 0xf0U && *(p + 1) && *(p + 2) && *(p + 3)) {
         (*utf8) += 4;
         return ((*p & 0x07U) << 18) + ((*(p + 1) & 0x3fU) << 12) + ((*(p + 2) & 0x3fU) << 6) + (*(p + 3) & 0x3fU);
     }
