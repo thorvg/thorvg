@@ -1229,7 +1229,7 @@ void GlRenderer::dispose(RenderData data)
     auto sdata = static_cast<GlShape*>(data);
 
     //dispose the non thread-safety resources on clearDisposes() call
-    if (sdata->texId) {
+    if (sdata->texId && sdata->texColorSpace != ColorSpace::TextureRGBA) {
         ScopedLock lock(mDisposed.key);
         mDisposed.textures.push(sdata->texId);
     }
@@ -1264,7 +1264,7 @@ RenderData GlRenderer::prepare(RenderSurface* image, RenderData data, const Matr
             GL_CHECK(glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, (filter == FilterMethod::Bilinear) ? GL_LINEAR : GL_NEAREST));
             GL_CHECK(glBindTexture(GL_TEXTURE_2D, 0));
         }
-        sdata->texColorSpace = ColorSpace::ABGR8888;
+        sdata->texColorSpace = image->cs;
         sdata->texFlipY = 1;
         sdata->geometry = GlGeometry();
     }
