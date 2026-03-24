@@ -25,6 +25,7 @@
 
 #include "tvgCommon.h"
 
+void svgUtilReplace(char** dst, const char* src);
 const char* svgUtilSkipWhiteSpace(const char* itr, const char* itrEnd);
 const char* svgUtilUnskipWhiteSpace(const char* itr, const char* itrStart);
 const char* svgUtilSkipWhiteSpaceAndComma(const char* content);
