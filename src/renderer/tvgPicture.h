@@ -178,6 +178,7 @@ struct PictureImpl : Picture
 
     Result load(uint32_t textureId, uint32_t width, uint32_t height)
     {
+#if defined(THORVG_GL_TARGET_GL) || defined(THORVG_GL_TARGET_GLES)
         if (!textureId || width <= 0 || height <= 0) return Result::InvalidArguments;
         if (vector || bitmap) return Result::InsufficientCondition;
 
@@ -185,6 +186,9 @@ struct PictureImpl : Picture
         if (!loader) return Result::FailedAllocation;
 
         return load(loader);
+#else
+        return Result::NonSupport;
+#endif
     }
 
     Result load(const uint32_t* data, uint32_t w, uint32_t h, ColorSpace cs, bool copy)
