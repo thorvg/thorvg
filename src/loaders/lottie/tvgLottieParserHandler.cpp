@@ -94,9 +94,7 @@ const char* LookaheadParserHandler::getString()
 
 char* LookaheadParserHandler::getStringCopy()
 {
-    auto str = getString();
-    if (str) return duplicate(str);
-    return nullptr;
+    return tvg::duplicate(getString());
 }
 
 

@@ -206,18 +206,24 @@ error:
     return 0.0f;
 }
 
-
-char* duplicate(const char *str, size_t n)
+// max: maximum number of characters to copy, size: length of the copied string
+char* duplicate(const char* str, size_t max, uint32_t* size)
 {
+    if (!str) {
+        if (size) *size = 0;
+        return nullptr;
+    }
+
     auto len = strlen(str);
-    if (len < n) n = len;
+    if (len < max) max = len;
 
-    auto ret = tvg::malloc<char>(n + 1);
-    ret[n] = '\0';
+    auto ret = tvg::malloc<char>(max + 1);
+    ret[max] = '\0';
 
-    return (char*)memcpy(ret, str, n);
+    if (size) *size = max;
+
+    return (char*)memcpy(ret, str, max);
 }
-
 
 char* append(char* lhs, const char* rhs, size_t n)
 {

@@ -39,6 +39,7 @@ struct TextImpl : Text
     FontLoader* loader = nullptr;
     FontMetrics fm;
     char* utf8 = nullptr;
+    uint32_t utf8len = 0;
     float outlineWidth = 0.0f;
     float italicShear = 0.0f;
     bool updated = false;
@@ -62,8 +63,7 @@ struct TextImpl : Text
     Result text(const char* utf8)
     {
         tvg::free(this->utf8);
-        if (utf8) this->utf8 = tvg::duplicate(utf8);
-        else this->utf8 = nullptr;
+        this->utf8 = tvg::duplicate(utf8, SIZE_MAX, &utf8len);
         updated = true;
         impl.mark(RenderUpdateFlag::Path);
 
@@ -118,7 +118,7 @@ struct TextImpl : Text
     {
         if (!loader) return false;
         if (updated) {
-            if (loader->get(fm, utf8, to<ShapeImpl>(shape)->rs.path)) {
+            if (loader->get(fm, utf8, utf8len, to<ShapeImpl>(shape)->rs.path)) {
                 loader->transform(shape, fm, italicShear);
             }
             updated = false;
@@ -232,6 +232,7 @@ struct TextImpl : Text
         }
 
         dup->utf8 = tvg::duplicate(utf8);
+        dup->utf8len = utf8len;
         dup->italicShear = italicShear;
         dup->outlineWidth = outlineWidth;
         dup->updated = true;
