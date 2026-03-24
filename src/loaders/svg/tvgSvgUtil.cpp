@@ -20,6 +20,7 @@
  * SOFTWARE.
  */
 
+#include "tvgStr.h"
 #include "tvgSvgUtil.h"
 
 /************************************************************************/
@@ -38,6 +39,12 @@ static uint8_t _hexCharToDec(const char c)
 /* External Class Implementation                                        */
 /************************************************************************/
 
+void svgUtilReplace(char** dst, const char* src)
+{
+    if (!src) return;
+    tvg::free(*dst);
+    *dst = tvg::duplicate(src);
+}
 
 const char* svgUtilSkipWhiteSpace(const char* itr, const char* itrEnd)
 {
