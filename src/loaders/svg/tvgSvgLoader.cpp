@@ -3003,8 +3003,18 @@ static void _cloneNode(SvgNode* from, SvgNode* parent, int depth)
 
 static void _clonePostponedNodes(Inlist<SvgNodeIdPair>* cloneNodes, SvgNode* doc)
 {
+    uint32_t cloneNodesCount = cloneNodes->count;
+    uint32_t postponeCount = 0;
     auto nodeIdPair = cloneNodes->front();
     while (nodeIdPair) {
+        if (postponeCount >= cloneNodesCount) {
+            do {
+                TVGERR("SVG", "Circular use reference detected, discarding '%s'.", nodeIdPair->id ? nodeIdPair->id : "");
+                tvg::free(nodeIdPair->id);
+                tvg::free(nodeIdPair);
+            } while ((nodeIdPair = cloneNodes->front()));
+            break;
+        }
         if (!_findParentById(nodeIdPair->node, nodeIdPair->id, doc)) {
             //Check if none of nodeFrom's children are in the cloneNodes list
             auto postpone = false;
@@ -3027,11 +3037,17 @@ static void _clonePostponedNodes(Inlist<SvgNodeIdPair>* cloneNodes, SvgNode* doc
                 }
                 tvg::free(nodeIdPair->id);
                 tvg::free(nodeIdPair);
+                postponeCount = 0;
+                --cloneNodesCount;
+            } else {
+                ++postponeCount;
             }
         } else {
             TVGLOG("SVG", "%s is ancestor element. This reference is invalid.", nodeIdPair->id);
             tvg::free(nodeIdPair->id);
             tvg::free(nodeIdPair);
+            postponeCount = 0;
+            --cloneNodesCount;
         }
         nodeIdPair = cloneNodes->front();
     }
