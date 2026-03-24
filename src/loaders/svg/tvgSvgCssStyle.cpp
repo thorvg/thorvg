@@ -20,7 +20,7 @@
  * SOFTWARE.
  */
 
-#include "tvgStr.h"
+#include "tvgSvgUtil.h"
 #include "tvgSvgCssStyle.h"
 
 /************************************************************************/
@@ -63,10 +63,7 @@ static void _copyStyle(SvgStyleProperty* to, const SvgStyleProperty* from, bool 
         to->fill.paint.color = from->fill.paint.color;
         to->fill.paint.none = from->fill.paint.none;
         to->fill.paint.curColor = from->fill.paint.curColor;
-        if (from->fill.paint.url) {
-            if (to->fill.paint.url) tvg::free(to->fill.paint.url);
-            to->fill.paint.url = duplicate(from->fill.paint.url);
-        }
+        if (from->fill.paint.url) svgUtilReplace(&to->fill.paint.url, from->fill.paint.url);
         to->fill.flags |= SvgFillFlags::Paint;
         to->flags |= SvgStyleFlags::Fill;
         if (from->flagsImportance & SvgStyleFlags::Fill) to->flagsImportance |= SvgStyleFlags::Fill;
@@ -91,10 +88,7 @@ static void _copyStyle(SvgStyleProperty* to, const SvgStyleProperty* from, bool 
         to->stroke.paint.color = from->stroke.paint.color;
         to->stroke.paint.none = from->stroke.paint.none;
         to->stroke.paint.curColor = from->stroke.paint.curColor;
-        if (from->stroke.paint.url) {
-            if (to->stroke.paint.url) tvg::free(to->stroke.paint.url);
-            to->stroke.paint.url = duplicate(from->stroke.paint.url);
-        }
+        if (from->stroke.paint.url) svgUtilReplace(&to->stroke.paint.url, from->stroke.paint.url);
         to->stroke.flags |= SvgStrokeFlags::Paint;
         to->flags |= SvgStyleFlags::Stroke;
         if (from->flagsImportance & SvgStyleFlags::Stroke) to->flagsImportance |= SvgStyleFlags::Stroke;
@@ -164,14 +158,8 @@ void cssCopyStyleAttr(SvgNode* to, const SvgNode* from, bool overwrite)
     //Copy style attribute
     _copyStyle(to->style, from->style, overwrite);
 
-    if (from->style->clipPath.url) {
-        if (to->style->clipPath.url) tvg::free(to->style->clipPath.url);
-        to->style->clipPath.url = duplicate(from->style->clipPath.url);
-    }
-    if (from->style->mask.url) {
-        if (to->style->mask.url) tvg::free(to->style->mask.url);
-        to->style->mask.url = duplicate(from->style->mask.url);
-    }
+    if (from->style->clipPath.url) svgUtilReplace(&to->style->clipPath.url, from->style->clipPath.url);
+    if (from->style->mask.url) svgUtilReplace(&to->style->mask.url, from->style->mask.url);
 }
 
 
