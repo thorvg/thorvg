@@ -35,11 +35,11 @@ static inline bool equal(const char* a, const char* b)
 
 char* concat(const char* a, const char* b);
 float toFloat(const char *str, char **end);                    //convert to float
-char* duplicate(const char *str, size_t n = SIZE_MAX);         //copy the string
+char* duplicate(const char* str, size_t max = SIZE_MAX, uint32_t* size = nullptr);  // copy the string
 char* append(char* lhs, const char* rhs, size_t n);            //append the rhs to the lhs
 char* dirname(const char* path);                               //return the full directory name
 char* filename(const char* path);                              //return the file name without extension
 const char* fileext(const char* path);                         //return the file extension name
 
 }
-#endif //_TVG_STR_H_
+#endif  //_TVG_STR_H_

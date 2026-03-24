@@ -166,7 +166,7 @@ struct FontLoader : LoadModule
 
     using LoadModule::read;
 
-    virtual bool get(FontMetrics& fm, char* text, RenderPath& out) = 0;
+    virtual bool get(FontMetrics& fm, char* text, uint32_t len, RenderPath& out) = 0;
     virtual void transform(Paint* paint, FontMetrics& fm, float italicShear) = 0;
     virtual void release(FontMetrics& fm) = 0;
     virtual void metrics(const FontMetrics& fm, TextMetrics& out) = 0;
