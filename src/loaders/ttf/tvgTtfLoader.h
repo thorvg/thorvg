@@ -56,7 +56,7 @@ struct TtfLoader : public FontLoader
     bool open(const char* path) override;
     bool open(const char *data, uint32_t size, const char* rpath, bool copy) override;
     void transform(Paint* paint, FontMetrics& fm, float italicShear) override;
-    bool get(FontMetrics& fm, char* text, RenderPath& out) override;
+    bool get(FontMetrics& fm, char* text, uint32_t len, RenderPath& out) override;
     void copy(const FontMetrics& in, FontMetrics& out) override;
     void release(FontMetrics& fm) override;
     void metrics(const FontMetrics& fm, TextMetrics& out) override;
@@ -69,10 +69,10 @@ private:
     }
 
     uint32_t feedLine(FontMetrics& fm, float box, float x, uint32_t begin, uint32_t end, Point& cursor, RenderPath& out);
-    void wrapNone(FontMetrics& fm, const Point& box, const char* utf8, RenderPath& out);
-    void wrapChar(FontMetrics& fm, const Point& box, const char* utf8, RenderPath& out);
-    void wrapWord(FontMetrics& fm, const Point& box, const char* utf8, RenderPath& out, bool smart);
-    void wrapEllipsis(FontMetrics& fm, const Point& box, const char* utf8, RenderPath& out);
+    void wrapNone(FontMetrics& fm, const Point& box, const char* utf8, const char* end, RenderPath& out);
+    void wrapChar(FontMetrics& fm, const Point& box, const char* utf8, const char* end, RenderPath& out);
+    void wrapWord(FontMetrics& fm, const Point& box, const char* utf8, const char* end, RenderPath& out, bool smart);
+    void wrapEllipsis(FontMetrics& fm, const Point& box, const char* utf8, const char* end, RenderPath& out);
     TtfGlyphMetrics* request(uint32_t code);
     void clear();
 };

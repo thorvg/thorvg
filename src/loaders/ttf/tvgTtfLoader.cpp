@@ -163,25 +163,24 @@ static void _unmap(TtfLoader* loader)
 
 #endif //THORVG_FILE_IO_SUPPORT
 
-
-static size_t _codepoints(const char** utf8)
+static size_t _codepoints(const char** utf8, const char* end)
 {
     auto p = *utf8;
 
     if (!(*p & 0x80U)) {
         (*utf8) += 1;
         return *p;
-    } else if ((*p & 0xe0U) == 0xc0U) {
+    } else if ((*p & 0xe0U) == 0xc0U && (p + 1 < end)) {
         (*utf8) += 2;
         return ((*p & 0x1fU) << 6) + (*(p + 1) & 0x3fU);
-    } else if ((*p & 0xf0U) == 0xe0U) {
+    } else if ((*p & 0xf0U) == 0xe0U && (p + 2 < end)) {
         (*utf8) += 3;
         return ((*p & 0x0fU) << 12) + ((*(p + 1) & 0x3fU) << 6) + (*(p + 2) & 0x3fU);
-    } else if ((*p & 0xf8U) == 0xf0U) {
+    } else if ((*p & 0xf8U) == 0xf0U && (p + 3 < end)) {
         (*utf8) += 4;
         return ((*p & 0x07U) << 18) + ((*(p + 1) & 0x3fU) << 12) + ((*(p + 2) & 0x3fU) << 6) + (*(p + 3) & 0x3fU);
     }
-    //error case
+    TVGERR("TTF", "Corrupted UTF8??");
     (*utf8) += 1;
     return 0;
 }
@@ -277,15 +276,14 @@ TtfGlyphMetrics* TtfLoader::request(uint32_t code)
     return &it->second;
 }
 
-
-void TtfLoader::wrapNone(FontMetrics& fm, const Point& box, const char* utf8, RenderPath& out)
+void TtfLoader::wrapNone(FontMetrics& fm, const Point& box, const char* utf8, const char* end, RenderPath& out)
 {
     TtfGlyphMetrics* ltgm = nullptr;  //left side glyph between the two adjacent glyphs
     Point cursor = {};
     uint32_t line = 0;  //the begin pos of the last line among path
 
-    while (*utf8) {
-        auto code = _codepoints(&utf8);
+    while (utf8 < end) {
+        auto code = _codepoints(&utf8, end);
         if (code == LINE_FEED_GLYPH_IDX) {
             line = feedLine(fm, box.x, cursor.x, line, out.pts.count, cursor, out);
             continue;
@@ -304,22 +302,20 @@ void TtfLoader::wrapNone(FontMetrics& fm, const Point& box, const char* utf8, Re
         //store the base glyph width for italic transform
         if (!ltgm && rtgm->w > 0.0f) static_cast<TtfMetrics*>(fm.engine)->baseWidth = rtgm->w;
         ltgm = rtgm;
-
     }
     fm.size.y = height(fm.lines, fm.spacing.y);
     _alignY(fm.align.y, box.y, fm.size.y, 0, line, out); //before the last line
     _align(fm.align, box, {cursor.x, fm.size.y}, line, out.pts.count, out);  //last line
 }
 
-
-void TtfLoader::wrapChar(FontMetrics& fm, const Point& box, const char* utf8, RenderPath& out)
+void TtfLoader::wrapChar(FontMetrics& fm, const Point& box, const char* utf8, const char* end, RenderPath& out)
 {
     TtfGlyphMetrics* ltgm = nullptr;  //left side glyph between the two adjacent glyphs
     uint32_t line = 0;  //the begin pos of the last line among path
     Point cursor = {};
 
-    while (*utf8) {
-        auto code = _codepoints(&utf8);
+    while (utf8 < end) {
+        auto code = _codepoints(&utf8, end);
         if (code == LINE_FEED_GLYPH_IDX) {
             line = feedLine(fm, box.x, cursor.x, line, out.pts.count, cursor, out);
             continue;
@@ -356,8 +352,7 @@ void TtfLoader::wrapChar(FontMetrics& fm, const Point& box, const char* utf8, Re
     _align(fm.align, box, {cursor.x, fm.size.y}, line, out.pts.count, out);  //last line
 }
 
-
-void TtfLoader::wrapWord(FontMetrics& fm, const Point& box, const char* utf8, RenderPath& out, bool smart)
+void TtfLoader::wrapWord(FontMetrics& fm, const Point& box, const char* utf8, const char* end, RenderPath& out, bool smart)
 {
     TtfGlyphMetrics* ltgm = nullptr;  //left side glyph between the two adjacent glyphs
     auto line = 0;  //the begin pos of the last line among path
@@ -366,8 +361,8 @@ void TtfLoader::wrapWord(FontMetrics& fm, const Point& box, const char* utf8, Re
     auto hadv = reader.metrics.hhea.advance * fm.spacing.y;  //line advance size
     Point cursor = {};
 
-    while (*utf8) {
-        auto code = _codepoints(&utf8);
+    while (utf8 < end) {
+        auto code = _codepoints(&utf8, end);
         if (code == LINE_FEED_GLYPH_IDX) {
             line = feedLine(fm, box.x, cursor.x, line, out.pts.count, cursor, out);
             continue;
@@ -420,8 +415,7 @@ void TtfLoader::wrapWord(FontMetrics& fm, const Point& box, const char* utf8, Re
     _align(fm.align, box, {cursor.x, fm.size.y}, line, out.pts.count, out);  //last line
 }
 
-
-void TtfLoader::wrapEllipsis(FontMetrics& fm, const Point& box, const char* utf8, RenderPath& out)
+void TtfLoader::wrapEllipsis(FontMetrics& fm, const Point& box, const char* utf8, const char* end, RenderPath& out)
 {
     TtfGlyphMetrics* ltgm = nullptr;  //left side glyph between the two adjacent glyphs
     auto line = 0;  //the begin pos of the last line among path
@@ -433,8 +427,8 @@ void TtfLoader::wrapEllipsis(FontMetrics& fm, const Point& box, const char* utf8
     } capture;   //the last path for reverting the last character if the ... space is not enough
     auto stop = false;
 
-    while (*utf8) {
-        auto code = _codepoints(&utf8);
+    while (utf8 < end) {
+        auto code = _codepoints(&utf8, end);
         if (code == LINE_FEED_GLYPH_IDX) {
             line = feedLine(fm, box.x, cursor.x, line, out.pts.count, cursor, out);
             continue;
@@ -544,8 +538,7 @@ bool TtfLoader::open(const char* data, uint32_t size, TVG_UNUSED const char* rpa
     return reader.header();
 }
 
-
-bool TtfLoader::get(FontMetrics& fm, char* text, RenderPath& out)
+bool TtfLoader::get(FontMetrics& fm, char* text, uint32_t len, RenderPath& out)
 {
     out.clear();
 
@@ -558,12 +551,13 @@ bool TtfLoader::get(FontMetrics& fm, char* text, RenderPath& out)
     if (!fm.engine) fm.engine = tvg::calloc<TtfMetrics>(1, sizeof(TtfMetrics));
 
     auto box = fm.box * fm.scale;
+    auto end = text + len;
 
-    if (fm.wrap == TextWrap::None || fm.box.x == 0.0f) wrapNone(fm, box, text, out);
-    else if (fm.wrap == TextWrap::Character) wrapChar(fm, box, text, out);
-    else if (fm.wrap == TextWrap::Word) wrapWord(fm, box, text, out, false);
-    else if (fm.wrap == TextWrap::Smart) wrapWord(fm, box, text, out, true);
-    else if (fm.wrap == TextWrap::Ellipsis) wrapEllipsis(fm, box, text, out);
+    if (fm.wrap == TextWrap::None || fm.box.x == 0.0f) wrapNone(fm, box, text, end, out);
+    else if (fm.wrap == TextWrap::Character) wrapChar(fm, box, text, end, out);
+    else if (fm.wrap == TextWrap::Word) wrapWord(fm, box, text, end, out, false);
+    else if (fm.wrap == TextWrap::Smart) wrapWord(fm, box, text, end, out, true);
+    else if (fm.wrap == TextWrap::Ellipsis) wrapEllipsis(fm, box, text, end, out);
     else return false;
 
     return true;
@@ -599,7 +593,7 @@ void TtfLoader::metrics(const FontMetrics& fm, TextMetrics& out)
 
 bool TtfLoader::metrics(const FontMetrics& fm, const char *ch, GlyphMetrics& out)
 {
-    auto code = _codepoints(&ch);
+    auto code = _codepoints(&ch, ch + strlen(ch));
     auto glyph = request(code);
     if (!glyph) return false;
 

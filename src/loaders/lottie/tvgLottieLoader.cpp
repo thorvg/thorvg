@@ -220,8 +220,8 @@ bool LottieLoader::open(const char* data, uint32_t size, const char* rpath, bool
     this->size = size;
     this->copy = copy;
 
-    if (!rpath) this->dirName = duplicate(".");
-    else this->dirName = duplicate(rpath);
+    if (rpath) this->dirName = duplicate(rpath);
+    else this->dirName = duplicate(".");
 
     return header();
 }
