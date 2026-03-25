@@ -68,7 +68,7 @@ bool RawLoader::open(uint32_t textureId, uint32_t w, uint32_t h, ColorSpace cs)
 {
     if (!LoadModule::read()) return true;
 
-    if (!textureId || w == 0 || h == 0) return false;
+    if (!textureId || w == 0 || h == 0 || cs != ColorSpace::TextureRGBA) return false;
 
     this->w = (float)w;
     this->h = (float)h;
