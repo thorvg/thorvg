@@ -120,10 +120,13 @@ struct GlShape
   float viewHt;
   uint32_t opacity = 0;
   GLuint texId = 0;
+  const RenderSurface* texSource = nullptr;
+  FilterMethod texFilter = FilterMethod::Bilinear;
   uint32_t texFlipY = 0;
   ColorSpace texColorSpace = ColorSpace::ABGR8888;
   GlGeometry geometry;
   Array<RenderData> clips;
+  uint16_t texStamp = 0;  // Tracks TextureMgr::stamp ownership of texId.
   bool validFill = false;
   bool validStroke = false;
 };
@@ -167,6 +170,5 @@ struct GlCompositor : RenderCompositor
 
     GlCompositor(const RenderRegion& box, CompositionFlag flags) : bbox(box), flags(flags) {}
 };
-
 
 #endif /* _TVG_GL_COMMON_H_ */
