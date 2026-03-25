@@ -4,7 +4,7 @@
 # Usage: ./build.sh [ohos|ios|local|android|all] [static|shared] [debug|release] [extra-build-options]
 
 FILE_NAME="$0"
-LOCAL_DIR=$(cd `dirname $0`; pwd)
+LOCAL_DIR=$(cd "$(dirname "$0")" && pwd)
 
 PLATFORM="${1:-}"
 [[ $# -gt 0 ]] && shift
