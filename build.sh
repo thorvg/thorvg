@@ -77,8 +77,26 @@ build_for_android() {
   if [[ -z "$ndk" ]] || [[ ! -d "$ndk" ]]; then
     myexit 1 "NDK version $ndk_version is not set or not a directory"
   fi
-  # host_tag
-  local host_tag=$(ls $ndk/toolchains/llvm/prebuilt/ | head -n 1)
+  # host_tag: derive deterministically from current host OS/arch
+  local host_os="$(uname -s)"
+  local host_arch="$(uname -m)"
+  local host_os_tag
+  local host_arch_tag
+  case "$host_os" in
+    Linux)  host_os_tag="linux" ;;
+    Darwin) host_os_tag="darwin" ;;
+    MINGW*|MSYS*|CYGWIN*) host_os_tag="windows" ;;
+    *) myexit 1 "Unsupported host OS: $host_os" ;;
+  esac
+  case "$host_arch" in
+    x86_64|amd64)     host_arch_tag="x86_64" ;;
+    arm64|aarch64)    host_arch_tag="arm64" ;;
+    *) myexit 1 "Unsupported host architecture: $host_arch" ;;
+  esac
+  local host_tag="${host_os_tag}-${host_arch_tag}"
+  if [[ ! -d "$ndk/toolchains/llvm/prebuilt/$host_tag" ]]; then
+    myexit 1 "NDK host toolchain for '$host_tag' not found under $ndk/toolchains/llvm/prebuilt/"
+  fi
 
   local cross_file="/tmp/.thorvg_android_cross_aarch64.txt"
   sed -e "s|NDK|$ndk|g" -e "s|HOST_TAG|$host_tag|g" -e "s|API|$api|g" $LOCAL_DIR/cross/android_aarch64.txt > $cross_file
