@@ -129,7 +129,7 @@ struct RadialGradientImpl : RadialGradient
     //clamp focal point and shrink start circle if needed to avoid invalid gradient setup
     bool correct(float& fx, float& fy, float& fr) const
     {
-        constexpr float PRECISION = 0.01f;
+        constexpr float PRECISION = 0.02f;
         if (r < PRECISION) return false;  // too small, treated as solid fill
 
         auto dist = tvg::length(center, focal);
