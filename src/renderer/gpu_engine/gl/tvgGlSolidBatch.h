@@ -33,27 +33,35 @@ struct GlSolidBatch
 {
     void clear() { *this = {}; }
     void draw(GlRenderer& renderer, GlShape& sdata, const RenderColor& color, int32_t depth, const RenderRegion& viewRegion, const RenderRegion& viewBounds);
+    void draw(GlRenderer& renderer, GlImage& image, int32_t depth, const RenderRegion& viewRegion, const RenderRegion& viewBounds);
 
-    bool appendable(const GlRenderer& renderer, const GlRenderPass* pass, const RenderRegion& viewBounds) const;
-    void emitSingle(GlRenderer& renderer, GlRenderPass* pass, GlShape& sdata, const RenderColor& color, int32_t depth, const RenderRegion& viewRegion, const RenderRegion& viewBounds, uint32_t vertexCount, uint32_t indexCount);
-    bool promote(GlRenderer& renderer, GlRenderPass* pass, const RenderColor& solidColor, int32_t depth, const RenderRegion& viewRegion, const GlGeometryBuffer* buffer, uint32_t vertexCount, uint32_t indexCount);
-    void append(GlRenderer& renderer, const RenderColor& solidColor, const RenderRegion& viewRegion, const GlGeometryBuffer* buffer, uint32_t vertexCount, uint32_t indexCount, int32_t depth);
-    static RenderColor solidColor(const GlShape& sdata, const RenderColor& color, RenderUpdateFlag flag);
-    static void buildPositions(float* out, const GlGeometryBuffer* src, uint32_t count);
+    struct DrawData
+    {
+        const GlGeometry* geometry;
+        GlProgram* program;
+        RenderUpdateFlag flag;
+        RenderColor color;
+        GLuint texId;
+        uint32_t opacity;
+        uint32_t vertexSize;
+    };
+
+    void draw(GlRenderer& renderer, const DrawData& data, int32_t depth, const RenderRegion& viewRegion, const RenderRegion& viewBounds);
+    bool appendable(const GlRenderPass* pass, const DrawData& data, const RenderRegion& viewBounds) const;
+    void emit(GlRenderer& renderer, GlRenderPass* pass, const DrawData& data, int32_t depth, const RenderRegion& viewRegion, const RenderRegion& viewBounds, uint32_t vertexCount, uint32_t indexCount);
+    void promote(GlRenderer& renderer, const DrawData& data, int32_t depth, const RenderRegion& viewRegion, uint32_t vertexCount, uint32_t indexCount);
+    void append(GlRenderer& renderer, const DrawData& data, int32_t depth, const RenderRegion& viewRegion, uint32_t vertexCount, uint32_t indexCount);
+    void appendGeometry(GlRenderer& renderer, const DrawData& data);
+    void commit(int32_t depth, const RenderRegion& viewRegion, uint32_t vertexCount, uint32_t indexCount);
     static void buildColors(tvg::RGBA* out, uint32_t count, const RenderColor& color);
     static void buildIndices(uint32_t* out, const GlGeometryBuffer* src, uint32_t baseVertex);
 
-    GlRenderPass* pass = nullptr;
     GlRenderTask* task = nullptr;
-    GlShape* shape = nullptr;
     RenderRegion viewBounds = {};
     RenderColor color = {};
-    RenderUpdateFlag flag = RenderUpdateFlag::None;
-    int32_t depth = 0;
     uint32_t vertexCount = 0;
-    uint32_t indexOffset = 0;
-    uint32_t indexCount = 0;
-    bool promoted = false;
+    GLuint texId = 0;
+    uint32_t opacity = 0;
 };
 
 #endif /* _TVG_GL_SOLID_BATCH_H_ */

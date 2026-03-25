@@ -1204,6 +1204,12 @@ bool GlRenderer::renderImage(void* data)
 
     auto drawDepth = currentPass()->nextDrawDepth();
 
+    if (currentPass()->fbo == &mRootTarget && mBlendMethod == BlendMethod::Normal && image->clips.empty() && image->geometry.viewport == vp) {
+        auto viewRegion = viewportRegion(vp, bbox);
+        mSolidBatch.draw(*this, *image, drawDepth, viewRegion, viewRegion);
+        return true;
+    }
+
     if (!image->clips.empty()) drawClip(image->clips, bbox);
 
     auto task = new GlRenderTask(mPrograms[RT_Image]);
