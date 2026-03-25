@@ -30,6 +30,7 @@
 #include "tvgGlImageTextures.h"
 #include "tvgGlRenderPass.h"
 #include "tvgGlEffect.h"
+#include "tvgGlImageBatch.h"
 #include "tvgGlSolidBatch.h"
 
 struct GlRenderer : RenderMethod
@@ -52,6 +53,7 @@ struct GlRenderer : RenderMethod
         RT_MaskDarken,
         RT_Stencil,
         RT_Blit,
+        RT_ImageBatch,
         // blends (image)
         RT_Blend_Image_Normal,
         RT_Blend_Image_Multiply,
@@ -186,6 +188,7 @@ struct GlRenderer : RenderMethod
 
 private:
     enum class BlendSource { Image, Scene, Solid, LinearGradient, RadialGradient };
+    friend class GlImageBatch;
     friend class GlSolidBatch;
 
     GlRenderer(); 
@@ -230,6 +233,7 @@ private:
     Array<GlRenderPass*> mRenderPassStack;
     Array<GlCompositor*> mComposeStack;
     GlImageTextures mTextures;
+    GlImageBatch mImageBatch;
     GlSolidBatch mSolidBatch;
 
     //Disposed resources. They should be released on synced call.
