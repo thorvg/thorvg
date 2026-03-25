@@ -120,7 +120,11 @@ build_for_ohos() {
   fi
 
   local cross_file="/tmp/.thorvg_ohos_cross.txt"
-  sed -e "s|OHOS_NDK|$ndk|g" $LOCAL_DIR/cross/ohos_aarch64.txt > $cross_file
+  local cross_template="$LOCAL_DIR/cross/ohos_aarch64.txt"
+  if [[ ! -f "$cross_template" ]]; then
+    myexit 1 "OHOS cross file template not found: $cross_template. OHOS build is not available. Please add the template or disable OHOS builds."
+  fi
+  sed -e "s|OHOS_NDK|$ndk|g" "$cross_template" > "$cross_file"
 
   export PATH=$ndk/build-tools/cmake/bin/:$PATH
   meson_build ohos arm64-v8a "$cross_file" $@ "-Dthreads=false"
