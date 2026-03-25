@@ -311,14 +311,14 @@ _PARSE_TAG(FillRule, fillRule, FillRule, fillRuleTags, FillRule::NonZero)
  */
 static constexpr struct
 {
-    SvgBlendMode blendMode;
+    BlendMethod blendMode;
     const char* tag;
 } blendModeTags[] = {
-    { SvgBlendMode::Multiply, "multiply" }
+    { BlendMethod::Multiply, "multiply" }
 };
 
 
-_PARSE_TAG(SvgBlendMode, blendMode, BlendMode, blendModeTags, SvgBlendMode::Normal)
+_PARSE_TAG(BlendMethod, blendMode, BlendMode, blendModeTags, BlendMethod::Normal)
 
 
 /* parse the dash pattern used during stroking a path.
