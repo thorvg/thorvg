@@ -248,7 +248,10 @@ bool _prepareRadial(SwFill* fill, const RadialGradient* radial, const Matrix& pT
     fill->radial.fx = fx;
     fill->radial.fy = fy;
     fill->radial.a = fill->radial.dr * fill->radial.dr - fill->radial.dx * fill->radial.dx - fill->radial.dy * fill->radial.dy;
-    constexpr float precision = 0.01f;
+
+    // relative epsilon
+    auto precision = std::max(1e-5f, std::max(fill->radial.dr * fill->radial.dr, 1.0f) * 1e-4f);
+
     if (fill->radial.a < precision) fill->radial.a = precision;
     fill->radial.invA = 1.0f / fill->radial.a;
 
