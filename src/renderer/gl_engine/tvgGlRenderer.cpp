@@ -63,6 +63,7 @@ void GlRenderer::clearDisposes()
 
     ARRAY_FOREACH(p, mRenderPassStack) delete (*p);
     mRenderPassStack.clear();
+    if (mImageBatch.task) mImageBatch.clear();
     mSolidBatch.clear();
 }
 
@@ -176,6 +177,9 @@ void GlRenderer::initShaders()
 
     // blit Renderer
     mPrograms.push(new GlProgram(BLIT_VERT_SHADER, BLIT_FRAG_SHADER));
+
+    // image batch Renderer
+    mPrograms.push(new GlProgram(IMAGE_BATCH_VERT_SHADER, IMAGE_BATCH_FRAG_SHADER));
 
     // blend programs: image (17) + scene (17) + shape solid (17) + shape linear (17) + shape radial (17)
     for (uint32_t i = 0; i < 85; ++i) mPrograms.push(nullptr);
@@ -741,7 +745,7 @@ void GlRenderer::prepareCmpTask(GlRenderTask* task, const RenderRegion& vp, uint
 void GlRenderer::endRenderPass(RenderCompositor* cmp)
 {
     auto glCmp = static_cast<GlCompositor*>(cmp);
-    
+    if (mImageBatch.task) mImageBatch.finalize(mGpuBuffer);
     // setup masking and blending render pass configurations
     if ((glCmp->flags & (tvg::Blending | tvg::Masking)) == (tvg::Blending | tvg::Masking)) {
         // rearrange render tree
@@ -934,6 +938,7 @@ bool GlRenderer::sync()
     if (mRenderPassStack.empty()) return true;
 
     currentContext();
+    if (mImageBatch.task) mImageBatch.finalize(mGpuBuffer);
 
     // Blend function for straight alpha
     GL_CHECK(glBlendFunc(GL_ONE, GL_ONE_MINUS_SRC_ALPHA));
@@ -1150,6 +1155,14 @@ bool GlRenderer::renderImage(void* data)
     auto x = bbox.sx() - vp.sx();
     auto y = bbox.sy() - vp.sy();
     auto drawDepth = currentPass()->nextDrawDepth();
+
+    if (mBlendMethod == BlendMethod::Normal && sdata->clips.empty()) {
+        y = vp.sh() - y - bbox.sh();
+        auto x2 = x + bbox.sw();
+        auto y2 = y + bbox.sh();
+        mImageBatch.draw(*this, *sdata, drawDepth, {{x, y}, {x2, y2}});
+        return true;
+    }
 
     if (!sdata->clips.empty()) drawClip(sdata->clips);
 
