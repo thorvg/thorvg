@@ -56,6 +56,7 @@ void GlRenderer::clearDisposes()
     ARRAY_FOREACH(p, mRenderPassStack)
     delete (*p);
     mRenderPassStack.clear();
+    if (mImageBatch.task) mImageBatch.clear();
     mSolidBatch.clear();
 }
 
@@ -734,7 +735,7 @@ void GlRenderer::prepareCmpTask(GlRenderTask* task, const RenderRegion& vp, uint
 void GlRenderer::endRenderPass(RenderCompositor* cmp)
 {
     auto glCmp = static_cast<GlCompositor*>(cmp);
-    
+    if (mImageBatch.task) mImageBatch.clear();
     // setup masking and blending render pass configurations
     if ((glCmp->flags & (tvg::Blending | tvg::Masking)) == (tvg::Blending | tvg::Masking)) {
         // rearrange render tree
@@ -927,6 +928,7 @@ bool GlRenderer::sync()
     if (mRenderPassStack.empty()) return true;
 
     currentContext();
+    if (mImageBatch.task) mImageBatch.clear();
 
     // Blend function for straight alpha
     GL_CHECK(glBlendFunc(GL_ONE, GL_ONE_MINUS_SRC_ALPHA));
@@ -1144,6 +1146,11 @@ bool GlRenderer::renderImage(void* data)
     auto y = bbox.sy() - vp.sy();
     auto drawDepth = currentPass()->nextDrawDepth();
 
+    if (mBlendMethod == BlendMethod::Normal && sdata->clips.empty()) {
+        mImageBatch.draw(*this, *sdata, drawDepth, viewportRegion(vp, bbox));
+        return true;
+    }
+
     if (!sdata->clips.empty()) drawClip(sdata->clips);
 
     auto task = new GlRenderTask(mPrograms[RT_Image]);
@@ -1252,13 +1259,13 @@ RenderData GlRenderer::prepare(RenderSurface* image, RenderData data, const Matr
     if (opacity == 0) return data;
 
     auto sdata = static_cast<GlShape*>(data);
-    if (!sdata) sdata = new GlShape;
+    auto cacheStale = sdata && sdata->texId && (sdata->texStamp != mTextures.stamp);
 
-    auto cacheStale = sdata->texId && (sdata->texStamp != mTextures.stamp);
     if (flags == RenderUpdateFlag::None && !cacheStale) return data;
 
-    sdata->validFill = false;
+    if (!sdata) sdata = new GlShape;
 
+    sdata->validFill = false;
     sdata->viewWd = static_cast<float>(surface.w);
     sdata->viewHt = static_cast<float>(surface.h);
 

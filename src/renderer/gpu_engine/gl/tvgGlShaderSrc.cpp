@@ -21,8 +21,11 @@
  */
 
 #include "tvgGlShaderSrc.h"
+#include "tvgGlCommon.h"
 
 #define TVG_COMPOSE_SHADER(shader) #shader
+#define TVG_STRINGIFY_IMPL(v) #v
+#define TVG_STRINGIFY(v) TVG_STRINGIFY_IMPL(v)
 
 const char* COLOR_VERT_SHADER = TVG_COMPOSE_SHADER(
     uniform float uDepth;                                           \n
@@ -1277,3 +1280,5 @@ void main()
 )";
 
 #undef TVG_COMPOSE_SHADER
+#undef TVG_STRINGIFY
+#undef TVG_STRINGIFY_IMPL

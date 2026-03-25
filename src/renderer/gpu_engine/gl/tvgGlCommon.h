@@ -35,6 +35,11 @@ constexpr float MIN_GL_STROKE_ALPHA = 0.25f;
 constexpr uint32_t GL_MAT3_STD140_SIZE = 12; // mat3 is 3 vec4 columns in std140
 constexpr uint32_t GL_MAT3_STD140_BYTES = GL_MAT3_STD140_SIZE * sizeof(float);
 
+// In practice, too many images in a batch can cause performance issues,
+// so cap image batches at 32 draws.
+#define TVG_GL_IMAGE_BATCH_MAX_DRAWS 32
+constexpr uint32_t GL_IMAGE_BATCH_MAX_DRAWS = TVG_GL_IMAGE_BATCH_MAX_DRAWS;
+
 // All GPU matrices use column major order.
 static inline void getMatrix3(const Matrix& mat3, float* matOut)
 {

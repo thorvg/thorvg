@@ -30,6 +30,7 @@
 #include "tvgGlTextureMgr.h"
 #include "tvgGlRenderPass.h"
 #include "tvgGlEffect.h"
+#include "tvgGlImageBatch.h"
 #include "tvgGlSolidBatch.h"
 
 struct GlRenderer : RenderMethod
@@ -186,6 +187,7 @@ struct GlRenderer : RenderMethod
 
 private:
     enum class BlendSource { Image, Scene, Solid, LinearGradient, RadialGradient };
+    friend class GlImageBatch;
     friend class GlSolidBatch;
 
     GlRenderer(); 
@@ -230,6 +232,7 @@ private:
     Array<GlRenderPass*> mRenderPassStack;
     Array<GlCompositor*> mComposeStack;
     TextureMgr mTextures;
+    GlImageBatch mImageBatch;
     GlSolidBatch mSolidBatch;
 
     //Disposed resources. They should be released on synced call.
