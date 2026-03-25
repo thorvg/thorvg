@@ -431,8 +431,7 @@ tvg::LoadModule* LoaderMgr::loader(uint32_t textureId, uint32_t w, uint32_t h, C
 {
     if (auto loader = _findFromCache(textureId)) return loader;
 
-    //function is dedicated for raw images only
-    auto loader = new RawLoader;
+    auto loader = new RawLoader(FileType::Texture);
     if (loader->open(textureId, w, h, cs)) {
         loader->cache(textureId);
         ScopedLock lock(_key);

@@ -28,7 +28,7 @@ class RawLoader : public ImageLoader
 public:
     bool copy = false;
 
-    RawLoader();
+    RawLoader(FileType type=FileType::Raw);
     ~RawLoader();
 
     using LoadModule::open;
