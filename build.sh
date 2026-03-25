@@ -6,9 +6,12 @@
 FILE_NAME="$0"
 LOCAL_DIR=$(cd `dirname $0`; pwd)
 
-PLATFORM="${1}"; shift
-STATIC="${1:-static}"; shift
-BUILD_TYPE="${1:-release}"; shift
+PLATFORM="${1:-}"
+[[ $# -gt 0 ]] && shift
+STATIC="${1:-static}"
+[[ $# -gt 0 ]] && shift
+BUILD_TYPE="${1:-release}"
+[[ $# -gt 0 ]] && shift
 
 USAGE="$FILE_NAME [android|ohos|ios|local|all] [static|shared] [debug|release] [extra-build-options]"
 myexit() {
