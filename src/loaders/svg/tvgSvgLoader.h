@@ -26,16 +26,13 @@
 #include "tvgTaskScheduler.h"
 #include "tvgSvgLoaderCommon.h"
 
-class SvgLoader : public ImageLoader, public Task
+struct SvgLoader : ImageLoader, Task
 {
-public:
+    SvgParserContext ctx;
     string svgPath = "";
     char* content = nullptr;
     uint32_t size = 0;
-
-    SvgLoaderData loaderData;
     Scene* root = nullptr;
-
     bool copy = false;
 
     SvgLoader();
