@@ -55,9 +55,9 @@ Result Picture::load(const char* data, uint32_t size, const char* mimeType, cons
     return to<PictureImpl>(this)->load(data, size, mimeType, rpath, copy);
 }
 
-Result Picture::load(uint32_t texture_id, uint32_t width, uint32_t height) noexcept
+Result Picture::load(uint32_t textureId, uint32_t width, uint32_t height) noexcept
 {
-    return to<PictureImpl>(this)->load(texture_id, width, height);
+    return to<PictureImpl>(this)->load(textureId, width, height);
 }
 
 
