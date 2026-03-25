@@ -56,10 +56,15 @@ meson_build() {
 
   local cross_params=""
   [[ -z "$cross_file" ]] || cross_params="--cross-file=$cross_file"
-  meson setup $BUILD_OPTIONS $extras --prefix="$install_dir" $cross_params $build_dir
-  ninja -C $build_dir install
-
-  [[ $? -eq 0 ]] && echo ">>>> build [$platform-$arch] finish！install dir: $install_dir"
+  if meson setup $BUILD_OPTIONS $extras --prefix="$install_dir" $cross_params $build_dir; then
+    if ninja -C $build_dir install; then
+      echo ">>>> build [$platform-$arch] finish！install dir: $install_dir"
+    else
+      myexit -1 ">>>> build [$platform-$arch] failed"
+    fi
+  else
+      myexit -1 ">>>> setup [$platform-$arch] failed"
+  fi
 }
 
 ## Build for Android
