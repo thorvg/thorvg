@@ -1,7 +1,9 @@
 source_file = [
-   'tvgTtfLoader.h',
+   'tvgSfntLoader.h',
+   'tvgSfntReader.h',
    'tvgTtfReader.h',
-   'tvgTtfLoader.cpp',
+   'tvgSfntLoader.cpp',
+   'tvgSfntReader.cpp',
    'tvgTtfReader.cpp'
 ]
 

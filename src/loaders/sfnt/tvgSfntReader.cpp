@@ -20,77 +20,36 @@
  * SOFTWARE.
  */
 
-#include "tvgTtfReader.h"
+#include "tvgSfntReader.h"
 
 /************************************************************************/
 /* Internal Class Implementation                                        */
 /************************************************************************/
 
-
-static inline uint32_t _u32(uint8_t* data, uint32_t offset)
-{
-    auto base = data + offset;
-    return (base[0] << 24 | base[1] << 16 | base[2] << 8 | base[3]);
-}
-
-
-static inline uint16_t _u16(uint8_t* data, uint32_t offset)
-{
-    auto base = data + offset;
-    return (base[0] << 8 | base[1]);
-}
-
-
-static inline int16_t _i16(uint8_t* data, uint32_t offset)
-{
-    return (int16_t) _u16(data, offset);
-}
-
-
-static inline uint8_t _u8(uint8_t* data, uint32_t offset)
-{
-    return *(data + offset);
-}
-
-
-static inline int8_t _i8(uint8_t* data, uint32_t offset)
-{
-    return (int8_t) _u8(data, offset);
-}
-
-
-static int _cmpu32(const void *a, const void *b)
-{
-    return memcmp(a, b, 4);
-}
-
-
-bool TtfReader::validate(uint32_t offset, uint32_t margin) const
+bool SfntReader::validate(uint32_t offset, uint32_t margin) const
 {
     if ((offset > size) || (size - offset < margin)) {
-        TVGERR("TTF", "Invalidate data");
+        TVGERR("SFNT", "Invalidate data");
         return false;
     }
     return true;
 }
 
-
-uint32_t TtfReader::table(const char* tag)
+uint32_t SfntReader::table(const char* tag)
 {
     auto tableCnt = _u16(data, 4);
     if (!validate(12, (uint32_t) tableCnt * 16)) return 0;
 
     auto match = bsearch(tag, data + 12, tableCnt, 16, _cmpu32);
     if (!match) {
-        TVGLOG("TTF", "No searching table = %s", tag);
+        TVGLOG("SFNT", "No searching table = %s", tag);
         return 0;
     }
 
     return _u32(data, (uint32_t) ((uint8_t*) match - data + 8));
 }
 
-
-uint32_t TtfReader::cmap_12_13(uint32_t table, uint32_t codepoint, int fmt) const
+uint32_t SfntReader::cmap_12_13(uint32_t table, uint32_t codepoint, int fmt) const
 {
     //A minimal header is 16 bytes
     auto len = _u32(data, table + 4);
@@ -111,8 +70,7 @@ uint32_t TtfReader::cmap_12_13(uint32_t table, uint32_t codepoint, int fmt) cons
     return -1;
 }
 
-
-uint32_t TtfReader::cmap_4(uint32_t table, uint32_t codepoint) const
+uint32_t SfntReader::cmap_4(uint32_t table, uint32_t codepoint) const
 {
     //cmap format 4 only supports the Unicode BMP.
     if (codepoint > 0xffff) return -1;
@@ -175,8 +133,7 @@ uint32_t TtfReader::cmap_4(uint32_t table, uint32_t codepoint) const
     return 0;
 }
 
-
-uint32_t TtfReader::cmap_6(uint32_t table, uint32_t codepoint) const
+uint32_t SfntReader::cmap_6(uint32_t table, uint32_t codepoint) const
 {
     //cmap format 6 only supports the Unicode BMP.
     if (codepoint > 0xFFFF) return 0;
@@ -191,38 +148,7 @@ uint32_t TtfReader::cmap_6(uint32_t table, uint32_t codepoint) const
     return _u16(data, table + 4 + 2 * codepoint);
 }
 
-
-//Returns the offset into the font that the glyph's outline is stored at
-uint32_t TtfReader::outlineOffset(uint32_t glyph)
-{
-    uint32_t cur, next;
-
-    auto loca = this->loca.load();
-    if (loca == 0) this->loca = loca = table("loca");
-
-    auto glyf = this->glyf.load();
-    if (glyf == 0) this->glyf = glyf = table("glyf");
-
-    if (metrics.locaFormat == 0) {
-        auto base = loca + 2 * glyph;
-        if (!validate(base, 4)) {
-            TVGERR("TTF", "invalid outline offset");
-            return 0;
-        }
-        cur = 2U * (uint32_t) _u16(data, base);
-        next = 2U * (uint32_t) _u16(data, base + 2);
-    } else {
-        auto base = loca + 4 * glyph;
-        if (!validate(base, 8)) return 0;
-        cur = _u32(data, base);
-        next = _u32(data, base + 4);
-    }
-    if (cur == next) return 0;
-    return glyf + cur;
-}
-
-
-bool TtfReader::points(uint32_t outline, uint8_t* flags, Point* pts, uint32_t ptsCnt, const Point& offset)
+bool SfntReader::points(uint32_t outline, uint8_t* flags, Point* pts, uint32_t ptsCnt, const Point& offset)
 {
     #define X_CHANGE_IS_SMALL 0x02
     #define X_CHANGE_IS_POSITIVE 0x10
@@ -267,8 +193,7 @@ bool TtfReader::points(uint32_t outline, uint8_t* flags, Point* pts, uint32_t pt
     return true;
 }
 
-
-bool TtfReader::flags(uint32_t *outline, uint8_t* flags, uint32_t flagsCnt)
+bool SfntReader::flags(uint32_t* outline, uint8_t* flags, uint32_t flagsCnt)
 {
     #define REPEAT_FLAG 0x08
 
@@ -293,18 +218,36 @@ bool TtfReader::flags(uint32_t *outline, uint8_t* flags, uint32_t flagsCnt)
     return true;
 }
 
+bool SfntReader::glyphMetrics(SfntGlyph& glyph)
+{
+    //glyph is inside long metrics segment.
+    if (glyph.idx < metrics.numHmtx) {
+        auto offset = hmtx + 4 * glyph.idx;
+        if (!validate(offset, 4)) return false;
+        glyph.advance = _u16(data, offset);
+        glyph.lsb = _i16(data, offset + 2);
+    /* glyph is inside short metrics segment. */
+    } else {
+        auto boundary = hmtx + 4U * (uint32_t) metrics.numHmtx;
+        if (boundary < 4) return false;
+
+        auto offset = boundary - 4;
+        if (!validate(offset, 4)) return false;
+        glyph.advance = _u16(data, offset);
+        offset = boundary + 2 * (glyph.idx - metrics.numHmtx);
+        if (!validate(offset, 2)) return false;
+        glyph.lsb = _i16(data, offset);
+    }
+    return true;
+}
 
 /************************************************************************/
 /* External Class Implementation                                        */
 /************************************************************************/
 
-bool TtfReader::header()
+bool SfntReader::header()
 {
     if (!validate(0, 12)) return false;
-
-    //verify ttf(scalable font)
-    auto type = _u32(data, 0);
-    if (type != 0x00010000 && type != 0x74727565) return false;
 
     //header
     auto head = table("head");
@@ -321,125 +264,21 @@ bool TtfReader::header()
     metrics.hhea.descent = _i16(data, hhea + 6);
     metrics.hhea.linegap = _i16(data, hhea + 8);
     metrics.hhea.advance = metrics.hhea.ascent - metrics.hhea.descent + metrics.hhea.linegap;
+
     metrics.numHmtx = _u16(data, hhea + 34);
 
-    //kerning
-    auto kern = this->kern = table("kern");
-    if (kern) {
-        if (!validate(kern, 4)) return false;
-        if (_u16(data, kern) != 0) return false;
-    }
+    // horizontal metrics
+    hmtx = table("hmtx");
+    if (!validate(cmap, metrics.numHmtx * 4)) return false;
+
+    // character map
+    cmap = table("cmap");
+    if (!validate(cmap, 4)) return false;
 
     return true;
 }
 
-
-uint32_t TtfReader::glyph(uint32_t codepoint)
-{
-    auto cmap = this->cmap.load();
-    if (cmap == 0) {
-        this->cmap = cmap = table("cmap");
-        if (!validate(cmap, 4)) return -1;
-    }
-
-    auto entryCnt = _u16(data, cmap + 2);
-    if (!validate(cmap, 4 + entryCnt * 8)) return -1;
-
-    //full repertory (non-BMP map).
-    for (auto idx = 0; idx < entryCnt; ++idx) {
-        auto entry = cmap + 4 + idx * 8;
-        auto type = _u16(data, entry) * 0100 + _u16(data, entry + 2);
-        //unicode map
-        if (type == 0004 || type == 0312) {
-            auto table = cmap + _u32(data, entry + 4);
-            if (!validate(table, 8)) return -1;
-            //dispatch based on cmap format.
-            auto format = _u16(data, table);
-            switch (format) {
-                case 12: return cmap_12_13(table, codepoint, 12);
-                default: return -1;
-            }
-        }
-    }
-
-    //Try looking for a BMP map.
-    for (auto idx = 0; idx < entryCnt; ++idx) {
-        auto entry = cmap + 4 + idx * 8;
-        auto type = _u16(data, entry) * 0100 + _u16(data, entry + 2);
-        //Unicode BMP
-        if (type == 0003 || type == 0301) {
-            auto table = cmap + _u32(data, entry + 4);
-            if (!validate(table, 6)) return -1;
-            //Dispatch based on cmap format.
-            switch (_u16(data, table)) {
-                case 4: return cmap_4(table + 6, codepoint);
-                case 6: return cmap_6(table + 6, codepoint);
-                default: return -1;
-            }
-        }
-    }
-    return -1;
-}
-
-
-uint32_t TtfReader::glyph(uint32_t codepoint, TtfGlyphMetrics* tgm)
-{
-    tgm->idx = glyph(codepoint);
-    if (tgm->idx == INVALID_GLYPH) return 0;
-    return glyphMetrics(*tgm);
-}
-
-
-uint32_t TtfReader::glyphMetrics(TtfGlyph& glyph)
-{
-    //horizontal metrics
-    auto hmtx = this->hmtx.load();
-    if (hmtx == 0) this->hmtx = hmtx = table("hmtx");
-
-    //glyph is inside long metrics segment.
-    if (glyph.idx < metrics.numHmtx) {
-        auto offset = hmtx + 4 * glyph.idx;
-        if (!validate(offset, 4)) return 0;
-        glyph.advance = _u16(data, offset);
-        glyph.lsb = _i16(data, offset + 2);
-    /* glyph is inside short metrics segment. */
-    } else {
-        auto boundary = hmtx + 4U * (uint32_t) metrics.numHmtx;
-        if (boundary < 4) return 0;
-
-        auto offset = boundary - 4;
-        if (!validate(offset, 4)) return 0;
-        glyph.advance = _u16(data, offset);
-        offset = boundary + 2 * (glyph.idx - metrics.numHmtx);
-        if (!validate(offset, 2)) return 0;
-        glyph.lsb = _i16(data, offset);
-    }
-
-    auto glyphOffset = outlineOffset(glyph.idx);
-    // glyph without outline
-    if (glyphOffset == 0) {
-        glyph.x = glyph.y = glyph.w = glyph.h = 0.0f;
-        return 0;
-    }
-    if (!validate(glyphOffset, 10)) return 0;
-
-    //read the bounding box from the font file verbatim.
-    float bbox[4];
-    bbox[0] = static_cast<float>(_i16(data, glyphOffset + 2));
-    bbox[1] = static_cast<float>(_i16(data, glyphOffset + 4));
-    bbox[2] = static_cast<float>(_i16(data, glyphOffset + 6));
-    bbox[3] = static_cast<float>(_i16(data, glyphOffset + 8));
-
-    glyph.x = bbox[0];
-    glyph.y = bbox[1];
-    glyph.w = bbox[2] - bbox[0] + 1;
-    glyph.h = bbox[3] - bbox[1] + 1;
-
-    return glyphOffset;
-}
-
-
-bool TtfReader::convert(RenderPath& path, TtfGlyph& glyph, uint32_t glyphOffset, const Point& offset, uint16_t depth)
+bool SfntReader::convert(RenderPath& path, SfntGlyph& glyph, uint32_t glyphOffset, const Point& offset, uint16_t depth)
 {
     #define ON_CURVE 0x01
 
@@ -518,8 +357,7 @@ bool TtfReader::convert(RenderPath& path, TtfGlyph& glyph, uint32_t glyphOffset,
     return ret;
 }
 
-
-bool TtfReader::convertComposite(RenderPath& path, TtfGlyph& glyph, uint32_t glyphOffset, const Point& offset, uint16_t depth)
+bool SfntReader::convertComposite(RenderPath& path, SfntGlyph& glyph, uint32_t glyphOffset, const Point& offset, uint16_t depth)
 {
     #define ARG_1_AND_2_ARE_WORDS 0x0001
     #define ARGS_ARE_XY_VALUES 0x0002
@@ -528,7 +366,7 @@ bool TtfReader::convertComposite(RenderPath& path, TtfGlyph& glyph, uint32_t gly
     #define WE_HAVE_AN_X_AND_Y_SCALE 0x0040
     #define WE_HAVE_A_TWO_BY_TWO 0x0080
 
-    TtfGlyph compGlyph;
+    SfntGlyph compGlyph;
     Point compOffset;
     uint16_t flags;
     auto pointer = glyphOffset + 10;
@@ -571,56 +409,5 @@ bool TtfReader::convertComposite(RenderPath& path, TtfGlyph& glyph, uint32_t gly
         }
         if (!convert(path, compGlyph, glyphMetrics(compGlyph), offset + compOffset, depth)) return false;
     } while (flags & MORE_COMPONENTS);
-    return true;
-}
-
-
-bool TtfReader::kerning(uint32_t lglyph, uint32_t rglyph, Point& out)
-{
-    #define HORIZONTAL_KERNING 0x01
-    #define MINIMUM_KERNING 0x02
-    #define CROSS_STREAM_KERNING 0x04
-
-    if (!kern) return false;
-
-    auto kern = this->kern.load();
-
-    //kern tables
-    auto tableCnt = _u16(data, kern + 2);
-    kern += 4;
-
-    while (tableCnt > 0) {
-        //read subtable header.
-        if (!validate(kern, 6)) return false;
-        auto length = _u16(data, kern + 2);
-        auto format = _u8(data, kern + 4);
-        auto flags = _u8(data, kern + 5);
-        kern += 6;
-
-        if (format == 0 && (flags & HORIZONTAL_KERNING) && !(flags & MINIMUM_KERNING)) {
-            //read format 0 header.
-            if (!validate(kern, 8)) return false;
-            auto pairCnt = _u16(data, kern);
-            kern += 8;
-
-            //look up character code pair via binary search.
-            uint8_t key[4];
-            key[0] = (lglyph >> 8) & 0xff;
-            key[1] = lglyph & 0xff;
-            key[2] = (rglyph >> 8) & 0xff;
-            key[3] = rglyph & 0xff;
-
-            auto match = bsearch(key, data + kern, pairCnt, 6, _cmpu32);
-
-            if (match) {
-                auto value = _i16(data, (uint32_t)((uint8_t *) match - data + 4));
-                if (flags & CROSS_STREAM_KERNING) out.y += value;
-                else out.x += value;
-            }
-        }
-        kern += length;
-        --tableCnt;
-    }
-
     return true;
 }
