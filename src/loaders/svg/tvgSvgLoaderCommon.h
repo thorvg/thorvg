@@ -139,6 +139,26 @@ constexpr void operator|=(SvgStrokeFlags& a, const SvgStrokeFlags b)
     a = SvgStrokeFlags(int(a) | int(b));
 }
 
+enum struct SvgBlendMode : uint8_t
+{
+    Normal = 0,
+    Multiply,
+    Screen,
+    Overlay,
+    Darken,
+    Lighten,
+    ColorDodge,
+    ColorBurn,
+    HardLight,
+    SoftLight,
+    Difference,
+    Exclusion,
+    Hue,
+    Saturation,
+    Color,
+    Luminosity
+};
+
 enum struct SvgGradientType : uint8_t
 {
     Linear,
@@ -166,7 +186,8 @@ enum struct SvgStyleFlags
     PaintOrder = 0x10000,
     StrokeMiterlimit = 0x20000,
     StrokeDashOffset = 0x40000,
-    Filter = 0x80000
+    Filter = 0x80000,
+    BlendMode = 0x100000
 };
 
 constexpr bool operator&(SvgStyleFlags a, SvgStyleFlags b)
@@ -522,6 +543,7 @@ struct SvgStyleProperty
     bool curColorSet;
     bool paintOrder; //true if default (fill, stroke), false otherwise
     bool display;
+    SvgBlendMode blendMode;
 };
 
 struct SvgNode
