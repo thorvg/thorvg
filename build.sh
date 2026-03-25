@@ -84,9 +84,13 @@ build_for_android() {
   sed -e "s|NDK|$ndk|g" -e "s|HOST_TAG|$host_tag|g" -e "s|API|$api|g" $LOCAL_DIR/cross/android_aarch64.txt > $cross_file
   meson_build android arm64-v8a "$cross_file" $@
 
-  cross_file="/tmp/.thorvg_android_cross_armv7a.txt"
-  sed -e "s|NDK|$ndk|g" -e "s|HOST_TAG|$host_tag|g" -e "s|API|$api|g" $LOCAL_DIR/cross/android_armv7a.txt > $cross_file
-  meson_build android armeabi-v7a "$cross_file" $@
+  if [[ -f "$LOCAL_DIR/cross/android_armv7a.txt" ]]; then
+    cross_file="/tmp/.thorvg_android_cross_armv7a.txt"
+    sed -e "s|NDK|$ndk|g" -e "s|HOST_TAG|$host_tag|g" -e "s|API|$api|g" "$LOCAL_DIR/cross/android_armv7a.txt" > "$cross_file"
+    meson_build android armeabi-v7a "$cross_file" $@
+  else
+    echo "Skipping Android armeabi-v7a build: missing cross file '$LOCAL_DIR/cross/android_armv7a.txt'."
+  fi
 }
 
 ## Build for OpenHarmony
