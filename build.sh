@@ -105,7 +105,7 @@ build_for_ohos() {
   sed -e "s|OHOS_NDK|$ndk|g" $LOCAL_DIR/cross/ohos_aarch64.txt > $cross_file
 
   export PATH=$ndk/build-tools/cmake/bin/:$PATH
-  meson_build harmony arm64-v8a "$cross_file" $@ "-Dthreads=false"
+  meson_build ohos arm64-v8a "$cross_file" $@ "-Dthreads=false"
 }
 
 build_for_ios() {
