@@ -1,7 +1,7 @@
 project('thorvg',
         'cpp',
         default_options : ['buildtype=debugoptimized', 'b_sanitize=none', 'werror=false', 'optimization=3', 'cpp_std=c++14', 'strip=true'],
-        version : '1.0.2',
+        version : '1.0.3',
         license : 'MIT')
 
 v_array = meson.project_version().split('.')

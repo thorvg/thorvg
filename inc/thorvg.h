@@ -8,7 +8,7 @@
 
 #define TVG_VERSION_MAJOR 1  // for compile-time checks
 #define TVG_VERSION_MINOR 0  // for compile-time checks
-#define TVG_VERSION_MICRO 2  // for compile-time checks
+#define TVG_VERSION_MICRO 3  // for compile-time checks
 
 #ifdef TVG_API
     #undef TVG_API
