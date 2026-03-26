@@ -126,7 +126,6 @@ struct LottieExpressions
 
     void update(float curTime);
 
-    //singleton (no thread safety)
     static LottieExpressions* instance();
     static void retrieve(LottieExpressions* instance);
 

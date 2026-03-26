@@ -144,19 +144,17 @@ struct RenderContext
 
 struct LottieBuilder
 {
-    LottieBuilder()
+    LottieBuilder() : exps(nullptr)
     {
-        exps = LottieExpressions::instance();
     }
 
     ~LottieBuilder()
     {
-        LottieExpressions::retrieve(exps);
     }
 
     bool expressions()
     {
-        return exps ? true : false;
+        return LottieExpressions::instance() ? true : false;
     }
 
     void offTween()

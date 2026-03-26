@@ -1616,6 +1616,11 @@ bool LottieBuilder::update(LottieComposition* comp, float frameNo)
         //tweening is not necessary.
         if (equal(frameNo, tween.frameNo)) offTween();
     }
+    auto temp = LottieExpressions::instance();
+
+    if(temp != exps) {
+        exps = temp;
+    }
 
     if (exps && comp->expressions) exps->update(comp->timeAtFrame(frameNo));
 
