@@ -2353,7 +2353,7 @@ struct TVG_API GlCanvas final : Canvas
      *
      * @since 1.0
     */
-    Result target(void* display, void* surface, void* context, int32_t id, uint32_t w, uint32_t h, ColorSpace cs, int msaaSamples) noexcept;
+    Result target(void* display, void* surface, void* context, int32_t id, uint32_t w, uint32_t h, ColorSpace cs, int msaaSamples = 4) noexcept;
 
     /**
      * @brief Sets the drawing target for rasterization.

@@ -282,8 +282,8 @@ GLuint GlComposeTask::getResolveFboId()
 void GlComposeTask::onResolve()
 {
     // Skip blit if MSAA is disabled (fbo == resolvedFbo)
-    int selfFbo = getSelfFbo();
-    int resolveFbo = getResolveFboId();
+    GLuint selfFbo = getSelfFbo();
+    GLuint resolveFbo = getResolveFboId();
     if (selfFbo == resolveFbo) return;
 
     GL_CHECK(glBindFramebuffer(GL_READ_FRAMEBUFFER, selfFbo));

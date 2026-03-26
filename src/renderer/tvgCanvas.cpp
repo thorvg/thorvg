@@ -201,8 +201,9 @@ Result GlCanvas::target(void* display, void* surface, void* context, int32_t id,
     return Result::NonSupport;
 }
 
-Result GlCanvas::target(int32_t fboId, uint32_t w, uint32_t h, int msaaSamples) noexcept {
-    return target(nullptr, nullptr, nullptr, fboId, w, h, ColorSpace::ABGR8888S, msaaSamples);
+Result GlCanvas::target(void* context, int32_t fboId, uint32_t w, uint32_t h, int msaaSamples) noexcept
+{
+    return target(nullptr, nullptr, context, fboId, w, h, ColorSpace::ABGR8888S, msaaSamples);
 }
 
 
