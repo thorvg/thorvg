@@ -27,6 +27,7 @@
 #include "tvgGlRenderTarget.h"
 #include "tvgGlRenderTask.h"
 #include "tvgGlGpuBuffer.h"
+#include "tvgGlImageCache.h"
 #include "tvgGlRenderPass.h"
 #include "tvgGlEffect.h"
 #include "tvgGlSolidBatch.h"
@@ -207,6 +208,8 @@ private:
     void prepareBlitTask(GlBlitTask* task);
     void prepareCmpTask(GlRenderTask* task, const RenderRegion& vp, uint32_t cmpWidth, uint32_t cmpHeight);
     void endRenderPass(RenderCompositor* cmp);
+    void disposeTexture(GLuint texId);
+    void clearImageTextureCache();
 
     void flush();
     void clearDisposes();
@@ -227,6 +230,7 @@ private:
     Array<GlRenderTargetPool*> mBlendPool;
     Array<GlRenderPass*> mRenderPassStack;
     Array<GlCompositor*> mComposeStack;
+    GlImageCache mImageTextureCache;
     GlSolidBatch mSolidBatch;
 
     //Disposed resources. They should be released on synced call.
