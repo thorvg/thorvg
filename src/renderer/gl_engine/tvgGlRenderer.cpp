@@ -38,6 +38,7 @@
 
 static int32_t _rendererCnt = -1;
 static mutex _rendererMtx;
+static thread_local Array<GlProgram*> _programs;
 
 void GlRenderer::clearDisposes()
 {
@@ -96,8 +97,6 @@ GlRenderer::~GlRenderer()
 {
     flush();
 
-    ARRAY_FOREACH(p, mPrograms) delete(*p);
-
     _rendererMtx.lock();
     --_rendererCnt;
     _rendererMtx.unlock();
@@ -106,7 +105,9 @@ GlRenderer::~GlRenderer()
 
 void GlRenderer::initShaders()
 {
-    mPrograms.reserve((int)RT_None);
+    if (!_programs.empty()) return; // already inited
+
+    _programs.reserve((int)RT_None);
 
 #if 1  //for optimization
     #define LINEAR_TOTAL_LENGTH 2831
@@ -137,31 +138,31 @@ void GlRenderer::initShaders()
         STR_RADIAL_GRADIENT_MAIN
     );
 
-    mPrograms.push(new GlProgram(COLOR_VERT_SHADER, COLOR_FRAG_SHADER));
-    mPrograms.push(new GlProgram(GRADIENT_VERT_SHADER, linearGradientFragShader));
-    mPrograms.push(new GlProgram(GRADIENT_VERT_SHADER, radialGradientFragShader));
-    mPrograms.push(new GlProgram(IMAGE_VERT_SHADER, IMAGE_FRAG_SHADER));
+    _programs.push(new GlProgram(COLOR_VERT_SHADER, COLOR_FRAG_SHADER));
+    _programs.push(new GlProgram(GRADIENT_VERT_SHADER, linearGradientFragShader));
+    _programs.push(new GlProgram(GRADIENT_VERT_SHADER, radialGradientFragShader));
+    _programs.push(new GlProgram(IMAGE_VERT_SHADER, IMAGE_FRAG_SHADER));
 
     // compose Renderer
-    mPrograms.push(new GlProgram(MASK_VERT_SHADER, MASK_ALPHA_FRAG_SHADER));
-    mPrograms.push(new GlProgram(MASK_VERT_SHADER, MASK_INV_ALPHA_FRAG_SHADER));
-    mPrograms.push(new GlProgram(MASK_VERT_SHADER, MASK_LUMA_FRAG_SHADER));
-    mPrograms.push(new GlProgram(MASK_VERT_SHADER, MASK_INV_LUMA_FRAG_SHADER));
-    mPrograms.push(new GlProgram(MASK_VERT_SHADER, MASK_ADD_FRAG_SHADER));
-    mPrograms.push(new GlProgram(MASK_VERT_SHADER, MASK_SUB_FRAG_SHADER));
-    mPrograms.push(new GlProgram(MASK_VERT_SHADER, MASK_INTERSECT_FRAG_SHADER));
-    mPrograms.push(new GlProgram(MASK_VERT_SHADER, MASK_DIFF_FRAG_SHADER));
-    mPrograms.push(new GlProgram(MASK_VERT_SHADER, MASK_LIGHTEN_FRAG_SHADER));
-    mPrograms.push(new GlProgram(MASK_VERT_SHADER, MASK_DARKEN_FRAG_SHADER));
+    _programs.push(new GlProgram(MASK_VERT_SHADER, MASK_ALPHA_FRAG_SHADER));
+    _programs.push(new GlProgram(MASK_VERT_SHADER, MASK_INV_ALPHA_FRAG_SHADER));
+    _programs.push(new GlProgram(MASK_VERT_SHADER, MASK_LUMA_FRAG_SHADER));
+    _programs.push(new GlProgram(MASK_VERT_SHADER, MASK_INV_LUMA_FRAG_SHADER));
+    _programs.push(new GlProgram(MASK_VERT_SHADER, MASK_ADD_FRAG_SHADER));
+    _programs.push(new GlProgram(MASK_VERT_SHADER, MASK_SUB_FRAG_SHADER));
+    _programs.push(new GlProgram(MASK_VERT_SHADER, MASK_INTERSECT_FRAG_SHADER));
+    _programs.push(new GlProgram(MASK_VERT_SHADER, MASK_DIFF_FRAG_SHADER));
+    _programs.push(new GlProgram(MASK_VERT_SHADER, MASK_LIGHTEN_FRAG_SHADER));
+    _programs.push(new GlProgram(MASK_VERT_SHADER, MASK_DARKEN_FRAG_SHADER));
 
     // stencil Renderer
-    mPrograms.push(new GlProgram(STENCIL_VERT_SHADER, STENCIL_FRAG_SHADER));
+    _programs.push(new GlProgram(STENCIL_VERT_SHADER, STENCIL_FRAG_SHADER));
 
     // blit Renderer
-    mPrograms.push(new GlProgram(BLIT_VERT_SHADER, BLIT_FRAG_SHADER));
+    _programs.push(new GlProgram(BLIT_VERT_SHADER, BLIT_FRAG_SHADER));
 
     // blend programs: image (17) + scene (17) + shape solid (17) + shape linear (17) + shape radial (17)
-    for (uint32_t i = 0; i < 85; ++i) mPrograms.push(nullptr);
+    for (uint32_t i = 0; i < 85; ++i) _programs.push(nullptr);
 }
 
 RenderRegion GlRenderer::viewportRegion(const RenderRegion& vp, const RenderRegion& bbox)
@@ -179,7 +180,7 @@ GlRenderTask* GlRenderer::createPrimitiveTask(RenderTypes type, BlendSource sour
 {
     dstCopyFbo = nullptr;
 
-    if (mBlendMethod == BlendMethod::Normal) return new GlRenderTask(mPrograms[type]);
+    if (mBlendMethod == BlendMethod::Normal) return new GlRenderTask(_programs[type]);
 
     if (mBlendPool.empty()) mBlendPool.push(new GlRenderTargetPool(surface.w, surface.h));
 #if defined(THORVG_GL_TARGET_GL)
@@ -196,7 +197,7 @@ GlRenderTask* GlRenderer::createStencilTask(GlRenderTask* task, GlStencilMode st
 {
     if (stencilMode == GlStencilMode::None) return nullptr;
 
-    auto stencilTask = new GlRenderTask(mPrograms[RT_Stencil], task);
+    auto stencilTask = new GlRenderTask(_programs[RT_Stencil], task);
     stencilTask->setDrawDepth(depth);
 
     return stencilTask;
@@ -474,7 +475,7 @@ void GlRenderer::drawClip(Array<RenderData>& clips)
 
     for (uint32_t i = 0; i < clips.count; ++i) {
         auto sdata = static_cast<GlShape*>(clips[i]);
-        auto clipTask = new GlRenderTask(mPrograms[RT_Stencil]);
+        auto clipTask = new GlRenderTask(_programs[RT_Stencil]);
         clipTask->setDrawDepth(clipDepths[i]);
         clipTask->setViewMatrix(viewMatrix);
 
@@ -488,7 +489,7 @@ void GlRenderer::drawClip(Array<RenderData>& clips)
         auto y = vp.sh() - (bbox.sy() - vp.sy()) - bbox.sh();
         clipTask->setViewport({{x, y}, {x + bbox.sw(), y + bbox.sh()}});
 
-        auto maskTask = new GlRenderTask(mPrograms[RT_Stencil]);
+        auto maskTask = new GlRenderTask(_programs[RT_Stencil]);
 
         maskTask->setDrawDepth(clipDepths[i]);
         maskTask->addVertexLayout(GlVertexLayout{0, 2, 2 * sizeof(float), identityVertexOffset});
@@ -609,7 +610,7 @@ GlProgram* GlRenderer::getBlendProgram(BlendMethod method, BlendSource source)
         case BlendSource::RadialGradient: shaderInd += (uint32_t)RT_ShapeBlend_Radial_Normal; break;
     }
 
-    if (mPrograms[shaderInd]) return mPrograms[shaderInd];
+    if (_programs[shaderInd]) return _programs[shaderInd];
 
     const char* helpers = "";
     if (method == BlendMethod::Hue) {
@@ -625,8 +626,8 @@ GlProgram* GlRenderer::getBlendProgram(BlendMethod method, BlendSource source)
         vertShader = BLIT_VERT_SHADER;
         const char* header = (source == BlendSource::Scene) ? BLEND_SCENE_FRAG_HEADER : BLEND_IMAGE_FRAG_HEADER;
         snprintf(fragShader, BLEND_TOTAL_LENGTH, "%s%s%s", header, helpers, shaderFunc[methodInd]);
-        mPrograms[shaderInd] = new GlProgram(vertShader, fragShader);
-        return mPrograms[shaderInd];
+        _programs[shaderInd] = new GlProgram(vertShader, fragShader);
+        return _programs[shaderInd];
     }
 
     vertShader = (source == BlendSource::Solid) ? COLOR_VERT_SHADER : GRADIENT_VERT_SHADER;
@@ -662,8 +663,8 @@ GlProgram* GlRenderer::getBlendProgram(BlendMethod method, BlendSource source)
             break;
     }
 
-    mPrograms[shaderInd] = new GlProgram(vertShader, fragShader);
-    return mPrograms[shaderInd];
+    _programs[shaderInd] = new GlProgram(vertShader, fragShader);
+    return _programs[shaderInd];
 }
 
 
@@ -761,16 +762,16 @@ void GlRenderer::endRenderPass(RenderCompositor* cmp)
 
         GlProgram* program = nullptr;
         switch(cmp->method) {
-            case MaskMethod::Alpha: program = mPrograms[RT_MaskAlpha]; break;
-            case MaskMethod::InvAlpha: program = mPrograms[RT_MaskAlphaInv]; break;
-            case MaskMethod::Luma: program = mPrograms[RT_MaskLuma]; break;
-            case MaskMethod::InvLuma: program = mPrograms[RT_MaskLumaInv]; break;
-            case MaskMethod::Add: program = mPrograms[RT_MaskAdd]; break;
-            case MaskMethod::Subtract: program = mPrograms[RT_MaskSub]; break;
-            case MaskMethod::Intersect: program = mPrograms[RT_MaskIntersect]; break;
-            case MaskMethod::Difference: program = mPrograms[RT_MaskDifference]; break;
-            case MaskMethod::Lighten: program = mPrograms[RT_MaskLighten]; break;
-            case MaskMethod::Darken: program = mPrograms[RT_MaskDarken]; break;
+            case MaskMethod::Alpha: program = _programs[RT_MaskAlpha]; break;
+            case MaskMethod::InvAlpha: program = _programs[RT_MaskAlphaInv]; break;
+            case MaskMethod::Luma: program = _programs[RT_MaskLuma]; break;
+            case MaskMethod::InvLuma: program = _programs[RT_MaskLumaInv]; break;
+            case MaskMethod::Add: program = _programs[RT_MaskAdd]; break;
+            case MaskMethod::Subtract: program = _programs[RT_MaskSub]; break;
+            case MaskMethod::Intersect: program = _programs[RT_MaskIntersect]; break;
+            case MaskMethod::Difference: program = _programs[RT_MaskDifference]; break;
+            case MaskMethod::Lighten: program = _programs[RT_MaskLighten]; break;
+            case MaskMethod::Darken: program = _programs[RT_MaskDarken]; break;
             default: break;
         }
         if (program && !selfPass->isEmpty() && !maskPass->isEmpty()) {
@@ -840,7 +841,7 @@ void GlRenderer::endRenderPass(RenderCompositor* cmp)
         mRenderPassStack.pop();
 
         if (!renderPass->isEmpty()) {
-            auto task = renderPass->endRenderPass<GlDrawBlitTask>(mPrograms[RT_Image], currentPass()->getFboId());
+            auto task = renderPass->endRenderPass<GlDrawBlitTask>(_programs[RT_Image], currentPass()->getFboId());
             task->setRenderSize(glCmp->bbox.w(), glCmp->bbox.h());
             prepareCmpTask(task, glCmp->bbox, renderPass->getFboWidth(), renderPass->getFboHeight());
             task->setDrawDepth(currentPass()->nextDrawDepth());
@@ -924,7 +925,7 @@ bool GlRenderer::sync()
     GL_CHECK(glEnable(GL_DEPTH_TEST));
     GL_CHECK(glDepthFunc(GL_GREATER));
 
-    auto task = mRenderPassStack.first()->endRenderPass<GlBlitTask>(mPrograms[RT_Blit], mTargetFboId);
+    auto task = mRenderPassStack.first()->endRenderPass<GlBlitTask>(_programs[RT_Blit], mTargetFboId);
 
     prepareBlitTask(task);
 
@@ -1001,7 +1002,7 @@ bool GlRenderer::preRender()
     if (mRootTarget.invalid()) return false;
 
     currentContext();
-    if (mPrograms.empty()) initShaders();
+    if (_programs.empty()) initShaders();
     mRenderPassStack.push(new GlRenderPass(&mRootTarget));
 
     return true;
@@ -1133,7 +1134,7 @@ bool GlRenderer::renderImage(void* data)
 
     if (!sdata->clips.empty()) drawClip(sdata->clips);
 
-    auto task = new GlRenderTask(mPrograms[RT_Image]);
+    auto task = new GlRenderTask(_programs[RT_Image]);
     task->setDrawDepth(drawDepth);
 
     if (!sdata->geometry.draw(task, &mGpuBuffer, RenderUpdateFlag::Image)) {
@@ -1168,7 +1169,7 @@ bool GlRenderer::renderImage(void* data)
     currentPass()->addRenderTask(task);
 
     if (complexBlend) {
-        auto task = new GlRenderTask(mPrograms[RT_Stencil]);
+        auto task = new GlRenderTask(_programs[RT_Stencil]);
         sdata->geometry.draw(task, &mGpuBuffer, RenderUpdateFlag::Image);
         endBlendingCompose(task);
     }
@@ -1392,6 +1393,9 @@ bool GlRenderer::term()
         return false;
     }
 
+    ARRAY_FOREACH(p, _programs) delete(*p);
+    _programs.clear();
+
     glTerm();
 
     _rendererCnt = -1;
@@ -1417,4 +1421,9 @@ GlRenderer* GlRenderer::gen(TVG_UNUSED uint32_t threads, TVG_UNUSED EngineOption
     _rendererMtx.unlock();
 
     return new GlRenderer;
+}
+
+GlProgram *GlRenderer::program(RenderTypes type)
+{
+    return _programs[type];
 }
