@@ -1076,8 +1076,12 @@ static jerry_value_t _key(const jerry_call_info_t* info, const jerry_value_t arg
     if (exp->property->type == LottieProperty::Type::Float) {
         jerry_object_set_index(obj, 0, value);
     } else if (exp->property->type == LottieProperty::Type::Scalar || exp->property->type == LottieProperty::Type::Vector) {
-        jerry_object_set_index(obj, 0, jerry_object_get_index(value, 0));
-        jerry_object_set_index(obj, 1, jerry_object_get_index(value, 1));
+        auto v0 = jerry_object_get_index(value, 0);
+        auto v1 = jerry_object_get_index(value, 1);
+        jerry_object_set_index(obj, 0, v0);
+        jerry_object_set_index(obj, 1, v1);
+        jerry_value_free(v0);
+        jerry_value_free(v1);
     }
 
     jerry_value_free(time);
