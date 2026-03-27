@@ -97,8 +97,6 @@ GlRenderer::~GlRenderer()
 {
     flush();
 
-    ARRAY_FOREACH(p, _programs) delete(*p);
-
     _rendererMtx.lock();
     --_rendererCnt;
     _rendererMtx.unlock();
