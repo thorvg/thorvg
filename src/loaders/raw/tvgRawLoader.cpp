@@ -24,7 +24,7 @@
 #include "tvgRawLoader.h"
 
 
-RawLoader::RawLoader() : ImageLoader(FileType::Raw)
+RawLoader::RawLoader(FileType type) : ImageLoader(type)
 {
 }
 
@@ -62,6 +62,30 @@ bool RawLoader::open(const uint32_t* data, uint32_t w, uint32_t h, ColorSpace cs
 
     return true;
 }
+
+#if defined(THORVG_GL_TARGET_GL) || defined(THORVG_GL_TARGET_GLES)
+bool RawLoader::open(uint32_t textureId, uint32_t w, uint32_t h, ColorSpace cs)
+{
+    if (!LoadModule::read()) return true;
+
+    if (!textureId || w == 0 || h == 0 || cs != ColorSpace::TextureRGBA) return false;
+
+    this->w = (float)w;
+    this->h = (float)h;
+
+    surface.textureId = textureId;
+
+    //setup the surface
+    surface.stride = w;
+    surface.w = w;
+    surface.h = h;
+    surface.cs = cs;
+    surface.channelSize = sizeof(uint32_t);
+    surface.premultiplied = true;
+
+    return true;
+}
+#endif
 
 
 bool RawLoader::read()

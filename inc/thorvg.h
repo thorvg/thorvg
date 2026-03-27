@@ -113,6 +113,7 @@ enum struct ColorSpace : uint8_t
     ABGR8888S,         ///< The channels are joined in the order: alpha, blue, green, red. Colors are un-alpha-premultiplied. @since 0.12
     ARGB8888S,         ///< The channels are joined in the order: alpha, red, green, blue. Colors are un-alpha-premultiplied. @since 0.12
     Grayscale8,        ///< One single channel data.
+    TextureRGBA,       ///< Opengl texture data
     Unknown = 255      ///< Unknown channel data. This is reserved for an initial ColorSpace value. @since 1.0
 };
 
@@ -1619,6 +1620,15 @@ struct TVG_API Picture : Paint
      * @since 0.5
      */
     Result load(const char* data, uint32_t size, const char* mimeType, const char* rpath = nullptr, bool copy = false) noexcept;
+
+    /**
+     * @brief Loads a picture data from a texture id.
+     *
+     * @param textureId The texture id of the picture.
+     * @param width The width of the picture in pixels.
+     * @param height The height of the picture in pixels.
+     */
+    Result load(uint32_t textureId, uint32_t width, uint32_t height) noexcept;
 
     /**
      * @brief Resizes the picture content to the given width and height.

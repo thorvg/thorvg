@@ -28,11 +28,14 @@ class RawLoader : public ImageLoader
 public:
     bool copy = false;
 
-    RawLoader();
+    RawLoader(FileType type=FileType::Raw);
     ~RawLoader();
 
     using LoadModule::open;
     bool open(const uint32_t* data, uint32_t w, uint32_t h, ColorSpace cs, bool copy);
+#if defined(THORVG_GL_TARGET_GL) || defined(THORVG_GL_TARGET_GLES)
+    bool open(uint32_t textureId, uint32_t w, uint32_t h, ColorSpace cs = ColorSpace::TextureRGBA);
+#endif
     bool read() override;
 };
 
