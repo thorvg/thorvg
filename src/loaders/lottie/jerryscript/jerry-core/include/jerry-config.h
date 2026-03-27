@@ -87,7 +87,7 @@
  * Default value: 0
  */
 #ifndef JERRY_EXTERNAL_CONTEXT
-#define JERRY_EXTERNAL_CONTEXT 0
+#define JERRY_EXTERNAL_CONTEXT 1
 #endif /* !defined (JERRY_EXTERNAL_CONTEXT) */
 
 /**
