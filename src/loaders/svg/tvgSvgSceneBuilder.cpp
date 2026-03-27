@@ -405,6 +405,7 @@ static Paint* _applyProperty(SvgParserContext& ctx, SvgNode* node, Shape* vg, co
     vg->fillRule(style->fill.fillRule);
     vg->order(!style->paintOrder);
     vg->opacity(style->opacity);
+    if (style->flags & SvgStyleFlags::BlendMode) vg->blend(style->blendMode);
 
     if (node->type == SvgNodeType::G || node->type == SvgNodeType::Use) return vg;
 
@@ -674,6 +675,8 @@ static Paint* _imageBuildHelper(SvgParserContext& ctx, SvgNode* node, const Box&
     if (node->transform) m = *node->transform * m;
     picture->transform(m);
 
+    if (node->style->flags & SvgStyleFlags::BlendMode) picture->blend(node->style->blendMode);
+
     auto p = _applyFilter(ctx, picture, node, vBox, svgPath);
     return _applyComposition(ctx, p, node, vBox, svgPath);
 }
@@ -919,6 +922,8 @@ static Paint* _textBuildHelper(SvgParserContext& ctx, const SvgNode* node, const
 
     _applyTextFill(node->style, text, vBox);
 
+    if (node->style->flags & SvgStyleFlags::BlendMode) text->blend(node->style->blendMode);
+
     auto p = _applyFilter(ctx, text, node, vBox, svgPath);
     return _applyComposition(ctx, p, node, vBox, svgPath);
 }
@@ -967,6 +972,7 @@ static Scene* _sceneBuildHelper(SvgParserContext& ctx, const SvgNode* node, cons
         }
     }
     scene->opacity(node->style->opacity);
+    if (node->style->flags & SvgStyleFlags::BlendMode) scene->blend(node->style->blendMode);
 
     auto p = _applyFilter(ctx, scene, node, vBox, svgPath);
     return static_cast<Scene*>(_applyComposition(ctx, p, node, vBox, svgPath));
