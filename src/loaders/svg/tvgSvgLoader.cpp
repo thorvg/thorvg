@@ -305,7 +305,8 @@ _PARSE_TAG(FillRule, fillRule, FillRule, fillRuleTags, FillRule::NonZero)
 
 
 /* parse the blend mode applied to an element.
- * Value:   normal | multiply
+ * Value:   normal | multiply | screen | overlay | darken | lighten | color-dodge | color-burn |
+ *          hard-light | soft-light | difference | exclusion | hue | saturation | color | luminosity
  * Initial:    normal
  * https://www.w3.org/TR/compositing-1/#mix-blend-mode
  */
@@ -314,7 +315,21 @@ static constexpr struct
     BlendMethod blendMode;
     const char* tag;
 } blendModeTags[] = {
-    { BlendMethod::Multiply, "multiply" }
+    { BlendMethod::Multiply,   "multiply" },
+    { BlendMethod::Screen,     "screen" },
+    { BlendMethod::Overlay,    "overlay" },
+    { BlendMethod::Darken,     "darken" },
+    { BlendMethod::Lighten,    "lighten" },
+    { BlendMethod::ColorDodge, "color-dodge" },
+    { BlendMethod::ColorBurn,  "color-burn" },
+    { BlendMethod::HardLight,  "hard-light" },
+    { BlendMethod::SoftLight,  "soft-light" },
+    { BlendMethod::Difference, "difference" },
+    { BlendMethod::Exclusion,  "exclusion" },
+    { BlendMethod::Hue,        "hue" },
+    { BlendMethod::Saturation, "saturation" },
+    { BlendMethod::Color,      "color" },
+    { BlendMethod::Luminosity, "luminosity" }
 };
 
 
