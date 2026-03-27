@@ -34,6 +34,14 @@ constexpr float MIN_GL_STROKE_ALPHA = 0.25f;
 constexpr uint32_t GL_MAT3_STD140_SIZE = 12; // mat3 is 3 vec4 columns in std140
 constexpr uint32_t GL_MAT3_STD140_BYTES = GL_MAT3_STD140_SIZE * sizeof(float);
 
+// In practice, too many images in a batch can cause performance issues,
+// so we set a lower limit of 32 draws per batch.
+#define TVG_GL_IMAGE_BATCH_MAX_DRAWS 32
+constexpr uint32_t GL_MIN_UNIFORM_BLOCK_BYTES = 16u * 1024u;
+constexpr uint32_t GL_IMAGE_BATCH_ENTRY_STD140_BYTES = 16u;
+constexpr uint32_t GL_IMAGE_BATCH_MAX_DRAWS = TVG_GL_IMAGE_BATCH_MAX_DRAWS;
+constexpr uint32_t GL_IMAGE_BATCH_MAX_DRAWS_BY_SPEC = GL_MIN_UNIFORM_BLOCK_BYTES / GL_IMAGE_BATCH_ENTRY_STD140_BYTES;
+
 // All GPU matrices use column major order.
 static inline void getMatrix3(const Matrix& mat3, float* matOut)
 {
@@ -120,6 +128,8 @@ struct GlShape
   float viewHt;
   uint32_t opacity = 0;
   GLuint texId = 0;
+  const RenderSurface* texSource = nullptr;
+  FilterMethod texFilter = FilterMethod::Bilinear;
   uint32_t texFlipY = 0;
   ColorSpace texColorSpace = ColorSpace::ABGR8888;
   GlGeometry geometry;
@@ -167,6 +177,5 @@ struct GlCompositor : RenderCompositor
 
     GlCompositor(const RenderRegion& box, CompositionFlag flags) : bbox(box), flags(flags) {}
 };
-
 
 #endif /* _TVG_GL_COMMON_H_ */

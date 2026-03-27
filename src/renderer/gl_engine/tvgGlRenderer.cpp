@@ -21,6 +21,7 @@
  */
 
 #include "tvgFill.h"
+#include "tvgGl.h"
 #include "tvgGlCommon.h"
 #include "tvgGlRenderer.h"
 #include "tvgGlGpuBuffer.h"
@@ -39,15 +40,30 @@
 static int32_t _rendererCnt = -1;
 static mutex _rendererMtx;
 
+void GlRenderer::disposeTexture(GLuint texId)
+{
+    if (!texId) return;
+    ScopedLock lock(mDisposed.key);
+    mDisposed.textures.push(texId);
+}
+
+void GlRenderer::clearImageTextureCache()
+{
+    Array<GLuint> textures;
+    mImageTextureCache.drain(textures);
+    if (!textures.empty()) GL_CHECK(glDeleteTextures(textures.count, textures.data));
+}
+
 void GlRenderer::clearDisposes()
 {
     if (mDisposed.textures.count > 0) {
-        glDeleteTextures(mDisposed.textures.count, mDisposed.textures.data);
+        GL_CHECK(glDeleteTextures(mDisposed.textures.count, mDisposed.textures.data));
         mDisposed.textures.clear();
     }
 
-    ARRAY_FOREACH(p, mRenderPassStack) delete(*p);
+    ARRAY_FOREACH(p, mRenderPassStack) delete (*p);
     mRenderPassStack.clear();
+    if (mImageBatch.task) mImageBatch.clear();
     mSolidBatch.clear();
 }
 
@@ -94,7 +110,9 @@ GlRenderer::GlRenderer() : mEffect(GlEffect(&mGpuBuffer))
 
 GlRenderer::~GlRenderer()
 {
+    if (mContext) currentContext();
     flush();
+    clearImageTextureCache();
 
     ARRAY_FOREACH(p, mPrograms) delete(*p);
 
@@ -159,6 +177,9 @@ void GlRenderer::initShaders()
 
     // blit Renderer
     mPrograms.push(new GlProgram(BLIT_VERT_SHADER, BLIT_FRAG_SHADER));
+
+    // image batch Renderer
+    mPrograms.push(new GlProgram(IMAGE_BATCH_VERT_SHADER, IMAGE_BATCH_FRAG_SHADER));
 
     // blend programs: image (17) + scene (17) + shape solid (17) + shape linear (17) + shape radial (17)
     for (uint32_t i = 0; i < 85; ++i) mPrograms.push(nullptr);
@@ -724,7 +745,7 @@ void GlRenderer::prepareCmpTask(GlRenderTask* task, const RenderRegion& vp, uint
 void GlRenderer::endRenderPass(RenderCompositor* cmp)
 {
     auto glCmp = static_cast<GlCompositor*>(cmp);
-    
+    if (mImageBatch.task) mImageBatch.finalize(mGpuBuffer);
     // setup masking and blending render pass configurations
     if ((glCmp->flags & (tvg::Blending | tvg::Masking)) == (tvg::Blending | tvg::Masking)) {
         // rearrange render tree
@@ -885,7 +906,10 @@ bool GlRenderer::target(void* display, void* surface, void* context, int32_t id,
     //assume the context zero is invalid
     if (!context || w == 0 || h == 0) return false;
 
-    if (mContext) currentContext();
+    if (mContext) {
+        currentContext();
+        if (mContext != context) clearImageTextureCache();
+    }
 
     flush();
 
@@ -914,6 +938,7 @@ bool GlRenderer::sync()
     if (mRenderPassStack.empty()) return true;
 
     currentContext();
+    if (mImageBatch.task) mImageBatch.finalize(mGpuBuffer);
 
     // Blend function for straight alpha
     GL_CHECK(glBlendFunc(GL_ONE, GL_ONE_MINUS_SRC_ALPHA));
@@ -1131,6 +1156,14 @@ bool GlRenderer::renderImage(void* data)
     auto y = bbox.sy() - vp.sy();
     auto drawDepth = currentPass()->nextDrawDepth();
 
+    if (mBlendMethod == BlendMethod::Normal && sdata->clips.empty()) {
+        y = vp.sh() - y - bbox.sh();
+        auto x2 = x + bbox.sw();
+        auto y2 = y + bbox.sh();
+        mImageBatch.draw(*this, *sdata, drawDepth, {{x, y}, {x2, y2}});
+        return true;
+    }
+
     if (!sdata->clips.empty()) drawClip(sdata->clips);
 
     auto task = new GlRenderTask(mPrograms[RT_Image]);
@@ -1227,11 +1260,10 @@ bool GlRenderer::renderShape(RenderData data)
 void GlRenderer::dispose(RenderData data)
 {
     auto sdata = static_cast<GlShape*>(data);
-
-    //dispose the non thread-safety resources on clearDisposes() call
-    if (sdata->texId) {
-        ScopedLock lock(mDisposed.key);
-        mDisposed.textures.push(sdata->texId);
+    if (sdata && sdata->texId) {
+        disposeTexture(mImageTextureCache.release(sdata->texSource, sdata->texFilter, sdata->texId));
+        sdata->texId = 0;
+        sdata->texSource = nullptr;
     }
 
     delete sdata;
@@ -1250,22 +1282,22 @@ RenderData GlRenderer::prepare(RenderSurface* image, RenderData data, const Matr
     sdata->viewWd = static_cast<float>(surface.w);
     sdata->viewHt = static_cast<float>(surface.h);
 
-    //generate a texture
-    if (sdata->texId == 0) {
-        GL_CHECK(glGenTextures(1, &sdata->texId));
-        GL_CHECK(glBindTexture(GL_TEXTURE_2D, sdata->texId));
-        GL_CHECK(glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA8, image->w, image->h, 0, GL_RGBA, GL_UNSIGNED_BYTE, image->data));
-        GL_CHECK(glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE));
-        GL_CHECK(glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE));
-        GL_CHECK(glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, (filter == FilterMethod::Bilinear) ? GL_LINEAR : GL_NEAREST));
-        GL_CHECK(glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, (filter == FilterMethod::Bilinear) ? GL_LINEAR : GL_NEAREST));
-        GL_CHECK(glBindTexture(GL_TEXTURE_2D, 0));
-
-        sdata->texColorSpace = image->cs;
-        sdata->texFlipY = 1;
+    auto sourceChanged = (sdata->texSource != image) || (sdata->texFilter != filter);
+    auto cacheMiss = !mImageTextureCache.contains(image, filter, sdata->texId);
+    if (sdata->texId == 0 || sourceChanged || cacheMiss) {
+        if (sdata->texId) {
+            disposeTexture(mImageTextureCache.release(sdata->texSource, sdata->texFilter, sdata->texId));
+            sdata->texId = 0;
+            sdata->texSource = nullptr;
+        }
+        sdata->texId = mImageTextureCache.retain(image, filter);
+        sdata->texSource = image;
+        sdata->texFilter = filter;
         sdata->geometry = GlGeometry();
     }
 
+    sdata->texColorSpace = image->cs;
+    sdata->texFlipY = 1;
     sdata->opacity = opacity;
     sdata->geometry.setMatrix(transform);
     sdata->geometry.viewport = vport;
