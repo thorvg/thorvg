@@ -208,7 +208,7 @@ private:
     void prepareBlitTask(GlBlitTask* task);
     void prepareCmpTask(GlRenderTask* task, const RenderRegion& vp, uint32_t cmpWidth, uint32_t cmpHeight);
     void endRenderPass(RenderCompositor* cmp);
-    void disposeTexture(GLuint texId);
+    void disposeTexture(GLuint textureId);
     void clearImageTextureCache();
 
     void flush();
@@ -232,6 +232,7 @@ private:
     Array<GlCompositor*> mComposeStack;
     GlImageCache mImageTextureCache;
     GlSolidBatch mSolidBatch;
+    GlGradientAtlas mGradientAtlas;
 
     //Disposed resources. They should be released on synced call.
     struct {

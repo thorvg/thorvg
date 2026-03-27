@@ -25,6 +25,7 @@
 
 #include <cassert>
 #include "tvgGl.h"
+#include "tvgGlGradient.h"
 #include "tvgRender.h"
 #include "tvgMath.h"
 
@@ -33,6 +34,10 @@ constexpr float MIN_GL_STROKE_ALPHA = 0.25f;
 
 constexpr uint32_t GL_MAT3_STD140_SIZE = 12; // mat3 is 3 vec4 columns in std140
 constexpr uint32_t GL_MAT3_STD140_BYTES = GL_MAT3_STD140_SIZE * sizeof(float);
+// GradientInfo.settings layout shared with the gradient fragment shaders.
+constexpr uint32_t GL_GRADIENT_SETTINGS_SPREAD = 0;
+constexpr uint32_t GL_GRADIENT_SETTINGS_OPACITY = 1;
+constexpr uint32_t GL_GRADIENT_SETTINGS_ROW_CENTER = 2;
 
 // All GPU matrices use column major order.
 static inline void getMatrix3(const Matrix& mat3, float* matOut)
@@ -122,6 +127,8 @@ struct GlShape
   GLuint texId = 0;
   const RenderSurface* texSource = nullptr;
   FilterMethod texFilter = FilterMethod::Bilinear;
+  uint32_t fillGradient = UINT32_MAX;
+  uint32_t strokeGradient = UINT32_MAX;
   uint32_t texFlipY = 0;
   ColorSpace texColorSpace = ColorSpace::ABGR8888;
   GlGeometry geometry;
@@ -141,24 +148,18 @@ struct GlIntersector
     bool intersectImage(const RenderRegion region, const GlShape* image);
 };
 
-#define MAX_GRADIENT_STOPS 16
-
 struct GlLinearGradientBlock
 {
-    alignas(16) float nStops[4] = {};
+    alignas(16) float settings[4] = {};   // spread mode, opacity, atlas row center, unused
     alignas(16) float startPos[2] = {};
     alignas(8) float stopPos[2] = {};
-    alignas(8) float stopPoints[MAX_GRADIENT_STOPS] = {};
-    alignas(16) float stopColors[4 * MAX_GRADIENT_STOPS] = {};
 };
 
 struct GlRadialGradientBlock
 {
-    alignas(16) float nStops[4] = {};
+    alignas(16) float settings[4] = {};   // spread mode, opacity, atlas row center, unused
     alignas(16) float centerPos[4] = {};
     alignas(16) float radius[2] = {};
-    alignas(16) float stopPoints[MAX_GRADIENT_STOPS] = {};
-    alignas(16) float stopColors[4 * MAX_GRADIENT_STOPS] = {};
 };
 
 struct GlCompositor : RenderCompositor
@@ -169,5 +170,4 @@ struct GlCompositor : RenderCompositor
 
     GlCompositor(const RenderRegion& box, CompositionFlag flags) : bbox(box), flags(flags) {}
 };
-
 #endif /* _TVG_GL_COMMON_H_ */

@@ -35,16 +35,22 @@
 /* Internal Class Implementation                                        */
 /************************************************************************/
 
-#define NOISE_LEVEL 0.5f
-
 static int32_t _rendererCnt = -1;
 static mutex _rendererMtx;
 
-void GlRenderer::disposeTexture(GLuint texId)
+static void gradientBlockSetCommon(float* settings, const Fill* fill, float alpha, float rowCenter)
 {
-    if (!texId) return;
+    settings[GL_GRADIENT_SETTINGS_SPREAD] = static_cast<int32_t>(fill->spread()) * 1.f;
+    settings[GL_GRADIENT_SETTINGS_OPACITY] = alpha;
+    settings[GL_GRADIENT_SETTINGS_ROW_CENTER] = rowCenter;
+}
+
+void GlRenderer::disposeTexture(GLuint textureId)
+{
+    if (!textureId) return;
+
     ScopedLock lock(mDisposed.key);
-    mDisposed.textures.push(texId);
+    mDisposed.textures.push(textureId);
 }
 
 void GlRenderer::clearImageTextureCache()
@@ -110,6 +116,7 @@ GlRenderer::GlRenderer() : mEffect(GlEffect(&mGpuBuffer))
 GlRenderer::~GlRenderer()
 {
     if (mContext) currentContext();
+    mGradientAtlas.clear();
     flush();
     clearImageTextureCache();
 
@@ -295,9 +302,8 @@ void GlRenderer::drawPrimitive(GlShape& sdata, const Fill* fill, RenderUpdateFla
     bbox.intersect(vp);
     if (bbox.invalid()) return;
 
-    const Fill::ColorStop* stops = nullptr;
-    auto stopCnt = min(fill->colorStops(&stops), static_cast<uint32_t>(MAX_GRADIENT_STOPS));
-    if (stopCnt < 2) return;
+    auto& gradientSlot = (flag & RenderUpdateFlag::GradientStroke) ? sdata.strokeGradient : sdata.fillGradient;
+    if (gradientSlot == UINT32_MAX || !mGradientAtlas.texId) return;
 
     GlRenderTarget* dstCopyFbo = nullptr;
     auto radial = fill->type() == Type::RadialGradient;
@@ -367,20 +373,7 @@ void GlRenderer::drawPrimitive(GlShape& sdata, const Fill* fill, RenderUpdateFla
 
         GlLinearGradientBlock gradientBlock;
 
-        gradientBlock.nStops[1] = NOISE_LEVEL;
-        gradientBlock.nStops[2] = static_cast<int32_t>(fill->spread()) * 1.f;
-        uint32_t nStops = 0;
-        for (uint32_t i = 0; i < stopCnt; ++i) {
-            if (i > 0 && gradientBlock.stopPoints[nStops - 1] > stops[i].offset) continue;
-
-            gradientBlock.stopPoints[i] = stops[i].offset;
-            gradientBlock.stopColors[i * 4 + 0] = stops[i].r / 255.f;
-            gradientBlock.stopColors[i * 4 + 1] = stops[i].g / 255.f;
-            gradientBlock.stopColors[i * 4 + 2] = stops[i].b / 255.f;
-            gradientBlock.stopColors[i * 4 + 3] = stops[i].a / 255.f * alpha;
-            nStops++;
-        }
-        gradientBlock.nStops[0] = nStops * 1.f;
+        gradientBlockSetCommon(gradientBlock.settings, fill, alpha, mGradientAtlas.rowCenter(gradientSlot));
 
         float x1, x2, y1, y2;
         linearFill->linear(&x1, &y1, &x2, &y2);
@@ -402,21 +395,7 @@ void GlRenderer::drawPrimitive(GlShape& sdata, const Fill* fill, RenderUpdateFla
 
         GlRadialGradientBlock gradientBlock;
 
-        gradientBlock.nStops[1] = NOISE_LEVEL;
-        gradientBlock.nStops[2] = static_cast<int32_t>(fill->spread()) * 1.f;
-
-        uint32_t nStops = 0;
-        for (uint32_t i = 0; i < stopCnt; ++i) {
-            if (i > 0 && gradientBlock.stopPoints[nStops - 1] > stops[i].offset) continue;
-
-            gradientBlock.stopPoints[i] = stops[i].offset;
-            gradientBlock.stopColors[i * 4 + 0] = stops[i].r / 255.f;
-            gradientBlock.stopColors[i * 4 + 1] = stops[i].g / 255.f;
-            gradientBlock.stopColors[i * 4 + 2] = stops[i].b / 255.f;
-            gradientBlock.stopColors[i * 4 + 3] = stops[i].a / 255.f * alpha;
-            nStops++;
-        }
-        gradientBlock.nStops[0] = nStops * 1.f;
+        gradientBlockSetCommon(gradientBlock.settings, fill, alpha, mGradientAtlas.rowCenter(gradientSlot));
 
         float x, y, r, fx, fy, fr;
         radialFill->radial(&x, &y, &r, &fx, &fy, &fr);
@@ -439,6 +418,7 @@ void GlRenderer::drawPrimitive(GlShape& sdata, const Fill* fill, RenderUpdateFla
     }
 
     task->addBindResource(gradientBinding);
+    task->addBindResource(GlBindingResource{1, mGradientAtlas.texId, task->getProgram()->getUniformLocation("uGradientRamp")});
 
     // TransformInfo uses slot 0 and GradientInfo uses slot 2, so BlendRegion moves to 3.
     bindBlendTarget(task, dstCopyFbo, viewRegion, 3);
@@ -904,7 +884,10 @@ bool GlRenderer::target(void* display, void* surface, void* context, int32_t id,
 
     if (mContext) {
         currentContext();
-        if (mContext != context) clearImageTextureCache();
+        if (mContext != context) {
+            clearImageTextureCache();
+            mGradientAtlas.invalidate();
+        }
     }
 
     flush();
@@ -1022,6 +1005,7 @@ bool GlRenderer::preRender()
 
     currentContext();
     if (mPrograms.empty()) initShaders();
+    mGradientAtlas.flush();
     mRenderPassStack.push(new GlRenderPass(&mRootTarget));
 
     return true;
@@ -1252,6 +1236,8 @@ void GlRenderer::dispose(RenderData data)
         sdata->texId = 0;
         sdata->texSource = nullptr;
     }
+    mGradientAtlas.release(sdata->fillGradient);
+    mGradientAtlas.release(sdata->strokeGradient);
 
     delete sdata;
 }
@@ -1314,6 +1300,11 @@ RenderData GlRenderer::prepare(const RenderShape& rshape, RenderData data, const
     sdata->viewWd = static_cast<float>(surface.w);
     sdata->viewHt = static_cast<float>(surface.h);
     sdata->opacity = opacity;
+
+    if (!data || (flags & RenderUpdateFlag::Gradient)) mGradientAtlas.update(sdata->fillGradient, rshape.fill);
+    if (!data || (flags & RenderUpdateFlag::GradientStroke)) {
+        mGradientAtlas.update(sdata->strokeGradient, rshape.stroke ? rshape.stroke->fill : nullptr);
+    }
 
     if (flags & RenderUpdateFlag::Path) sdata->geometry = GlGeometry();
 
