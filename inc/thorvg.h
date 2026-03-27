@@ -2340,6 +2340,7 @@ struct TVG_API GlCanvas final : Canvas
      * @param[in] w The width (in pixels) of the raster image.
      * @param[in] h The height (in pixels) of the raster image.
      * @param[in] cs Specifies how the pixel values should be interpreted. Currently, it only allows @c ColorSpace::ABGR8888S as @c GL_RGBA8.
+     * @param[in] msaaSamples MSAA Samples
      *
      * @retval Result::InsufficientCondition If the canvas is currently rendering.
      *         Ensure that @ref Canvas::sync() has been called before setting a new target.
@@ -2352,7 +2353,28 @@ struct TVG_API GlCanvas final : Canvas
      *
      * @since 1.0
     */
-    Result target(void* display, void* surface, void* context, int32_t id, uint32_t w, uint32_t h, ColorSpace cs) noexcept;
+    Result target(void* display, void* surface, void* context, int32_t id, uint32_t w, uint32_t h, ColorSpace cs, int msaaSamples = 4) noexcept;
+
+    /**
+     * @brief Sets the drawing target for rasterization.
+     *
+     * This function specifies the drawing target where the rasterization will occur. It can target
+     * a specific framebuffer object (FBO)
+     *
+     * This function must be executed in a thread with a GL context.
+     *
+     * @param[in] fboId The GL target ID (Fbo)
+     * @param[in] w The width (in pixels) of the raster image.
+     * @param[in] h The height (in pixels) of the raster image.
+     * @param[in] msaaSamples MSAA Samples 0/2/4
+     *
+     * @retval Result::InsufficientCondition If the canvas is currently rendering.
+     *         Ensure that @ref Canvas::sync() has been called before setting a new target.
+     * @retval Result::NonSupport In case the gl engine is not supported.
+     *
+     * @since 1.0.3
+     */
+    Result target(int32_t fboId, uint32_t w, uint32_t h, int msaaSamples) noexcept;
 
     /**
      * @brief Creates a new OpenGL/ES Canvas object with optional rendering engine settings.
