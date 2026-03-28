@@ -35,6 +35,7 @@ struct Inlist
 {
     T* head = nullptr;
     T* tail = nullptr;
+    uint32_t cnt = 0;
 
     ~Inlist()
     {
@@ -49,6 +50,7 @@ struct Inlist
             delete(t);
         }
         head = tail = nullptr;
+        cnt = 0;
     }
 
     void back(T* element)
@@ -63,6 +65,7 @@ struct Inlist
             element->prev = nullptr;
             element->next = nullptr;
         }
+        ++cnt;
     }
 
     void front(T* element)
@@ -77,11 +80,13 @@ struct Inlist
             element->prev = nullptr;
             element->next = nullptr;
         }
+        ++cnt;
     }
 
     T* back()
     {
         if (!tail) return nullptr;
+        --cnt;
         auto t = tail;
         tail = t->prev;
         if (!tail) head = nullptr;
@@ -91,6 +96,7 @@ struct Inlist
     T* front()
     {
         if (!head) return nullptr;
+        --cnt;
         auto t = head;
         head = t->next;
         if (!head) tail = nullptr;
@@ -103,6 +109,7 @@ struct Inlist
         if (element->next) element->next->prev = element->prev;
         if (element == head) head = element->next;
         if (element == tail) tail = element->prev;
+        --cnt;
     }
 
     bool empty() const
