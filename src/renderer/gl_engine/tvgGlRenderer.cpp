@@ -1229,7 +1229,7 @@ void GlRenderer::dispose(RenderData data)
     auto sdata = static_cast<GlShape*>(data);
 
     //dispose the non thread-safety resources on clearDisposes() call
-    if (sdata->texId) {
+    if (sdata->texId && sdata->texColorSpace != ColorSpace::TextureRGBA) {
         ScopedLock lock(mDisposed.key);
         mDisposed.textures.push(sdata->texId);
     }
@@ -1252,15 +1252,18 @@ RenderData GlRenderer::prepare(RenderSurface* image, RenderData data, const Matr
 
     //generate a texture
     if (sdata->texId == 0) {
-        GL_CHECK(glGenTextures(1, &sdata->texId));
-        GL_CHECK(glBindTexture(GL_TEXTURE_2D, sdata->texId));
-        GL_CHECK(glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA8, image->w, image->h, 0, GL_RGBA, GL_UNSIGNED_BYTE, image->data));
-        GL_CHECK(glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE));
-        GL_CHECK(glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE));
-        GL_CHECK(glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, (filter == FilterMethod::Bilinear) ? GL_LINEAR : GL_NEAREST));
-        GL_CHECK(glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, (filter == FilterMethod::Bilinear) ? GL_LINEAR : GL_NEAREST));
-        GL_CHECK(glBindTexture(GL_TEXTURE_2D, 0));
-
+        if (image->cs == ColorSpace::TextureRGBA) {
+            sdata->texId = image->textureId;
+        } else {
+            GL_CHECK(glGenTextures(1, &sdata->texId));
+            GL_CHECK(glBindTexture(GL_TEXTURE_2D, sdata->texId));
+            GL_CHECK(glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA8, image->w, image->h, 0, GL_RGBA, GL_UNSIGNED_BYTE, image->data));
+            GL_CHECK(glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE));
+            GL_CHECK(glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE));
+            GL_CHECK(glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, (filter == FilterMethod::Bilinear) ? GL_LINEAR : GL_NEAREST));
+            GL_CHECK(glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, (filter == FilterMethod::Bilinear) ? GL_LINEAR : GL_NEAREST));
+            GL_CHECK(glBindTexture(GL_TEXTURE_2D, 0));
+        }
         sdata->texColorSpace = image->cs;
         sdata->texFlipY = 1;
         sdata->geometry = GlGeometry();

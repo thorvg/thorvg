@@ -60,6 +60,9 @@ struct RenderSurface
         pixel_t* data = nullptr;    //system based data pointer
         uint32_t* buf32;            //for explicit 32bits channels
         uint8_t*  buf8;             //for explicit 8bits grayscale
+#if defined(THORVG_GL_TARGET_GL) || defined(THORVG_GL_TARGET_GLES)
+        uint32_t textureId;         //for explicit texture id
+#endif
     };
     Key key;                        //a reserved lock for the thread safety
     uint32_t stride = 0;

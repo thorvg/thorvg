@@ -72,7 +72,11 @@ void operator delete(void* ptr) noexcept;
 
 namespace tvg {
 
-    enum class FileType { Png = 0, Jpg, Webp, Svg, Lot, Ttf, Raw, Gif, Unknown };
+    enum class FileType { Png = 0, Jpg, Webp, Svg, Lot, Ttf, Raw, Gif,
+#if defined(THORVG_GL_TARGET_GL) || defined(THORVG_GL_TARGET_GLES)
+        Texture,
+#endif
+        Unknown };
 
     #ifdef THORVG_LOG_ENABLED
         constexpr auto ErrorColor = "\033[31m";  //red
