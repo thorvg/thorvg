@@ -3109,6 +3109,11 @@ static void _svgLoaderParserXmlClose(SvgParserContext* ctx, const char* content,
     }
     else return;
 
+    if (ctx->gradientStack.count > 0 && !ctx->gradientStack.last()) {
+        ctx->gradientStack.pop();
+        return;
+    }
+
     for (unsigned int i = 0; i < sizeof(groupTags) / sizeof(groupTags[0]); i++) {
         if (!strncmp(tagName, groupTags[i].tag, sz)) {
             ctx->stack.pop();
@@ -3159,6 +3164,30 @@ static void _svgLoaderParserXmlOpen(SvgParserContext* ctx, const char* content, 
         strncpy(tagName, content, sz);
         tagName[sz] = '\0';
         attrsLength = length - sz;
+    }
+
+    if (ctx->gradientStack.count > 0 && !ctx->gradientStack.last()) {
+        if (!empty) ctx->gradientStack.push(nullptr);
+        return;
+    }
+
+    if (STR_AS(tagName, "stop")) {
+        if (ctx->gradientStack.count == 0) {
+            TVGLOG("SVG", "Ignoring <%s> declared outside of a gradient element", tagName);
+            if (!empty) ctx->gradientStack.push(nullptr);
+            return;
+        }
+        ctx->parser->gradStop = {0.0f, 0, 0, 0, 255};
+        ctx->parser->flags = SvgStopStyleFlags::StopDefault;
+        xmlParseAttributes(attrs, attrsLength, _attrParseStops, ctx);
+        ctx->gradientStack.last()->stops.push(ctx->parser->gradStop);
+        return;
+    }
+
+    if (ctx->gradientStack.count > 0) {
+        TVGLOG("SVG", "Ignoring <%s> declared inside a gradient element", tagName);
+        if (!empty) ctx->gradientStack.push(nullptr);
+        return;
     }
 
     if ((method = _findGroupFactory(tagName))) {
@@ -3218,16 +3247,6 @@ static void _svgLoaderParserXmlOpen(SvgParserContext* ctx, const char* content, 
             }
         }
         if (!empty) ctx->gradientStack.push(gradient);
-    } else if (STR_AS(tagName, "stop")) {
-        if (ctx->gradientStack.count == 0) {
-            TVGLOG("SVG", "Stop element is used outside of the Gradient element");
-            return;
-        }
-        /* default value for opacity */
-        ctx->parser->gradStop = {0.0f, 0, 0, 0, 255};
-        ctx->parser->flags = SvgStopStyleFlags::StopDefault;
-        xmlParseAttributes(attrs, attrsLength, _attrParseStops, ctx);
-        ctx->gradientStack.last()->stops.push(ctx->parser->gradStop);
     } else {
         if (!isIgnoreUnsupportedLogElements(tagName)) TVGLOG("SVG", "Unsupported elements used [Elements: %s]", tagName);
     }
