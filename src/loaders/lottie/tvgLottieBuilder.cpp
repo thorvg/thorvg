@@ -1148,6 +1148,36 @@ static void _commit(LottieGlyph* glyph, Shape* shape, const RenderText& ctx)
 }
 
 
+static float _nextWordWidth(const LottieText* text, const TextDocument& doc, const char* p)
+{
+    float w = 0.0f;
+    while (*p && *p != ' ' && (unsigned char)*p != 13 && (unsigned char)*p != 3) {
+        char capCode;
+        const char* code = p;
+        float capScale = 1.0f;
+        if ((unsigned char)*p < 0x80 && doc.caps) {
+            if (*p >= 'a' && *p <= 'z') {
+                capCode = *p + 'A' - 'a';
+                code = &capCode;
+                if (doc.caps == 2) capScale = 0.7f;
+            }
+        }
+        auto found = false;
+        ARRAY_FOREACH(g, text->font->chars) {
+            auto glyph = *g;
+            if (!strncmp(glyph->code, code, glyph->len)) {
+                w += (glyph->width + doc.tracking) * capScale;
+                p += glyph->len;
+                found = true;
+                break;
+            }
+        }
+        if (!found) ++p;
+    }
+    return w;
+}
+
+
 void LottieBuilder::updateLocalFont(LottieLayer* layer, float frameNo, LottieText* text, const TextDocument& doc)
 {
     RenderText ctx(text, doc);
@@ -1192,6 +1222,12 @@ void LottieBuilder::updateLocalFont(LottieLayer* layer, float frameNo, LottieTex
             continue;
         }
         if (*ctx.p == ' ') {
+            //if next word overflows the box, break at this space
+            if (doc.bbox.size.x > 0.0f && (ctx.cursor.x + _nextWordWidth(text, doc, ctx.p + 1)) * ctx.scale >= doc.bbox.size.x) {
+                ++ctx.p;
+                lineWrapped = true;
+                continue;
+            }
             ++ctx.space;
             //new text group, single scene for each word
             if (text->alignOp.group == LottieText::AlignOption::Group::Word) {
