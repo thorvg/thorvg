@@ -271,6 +271,15 @@ static bool _applyClip(SvgParserContext& ctx, Paint* paint, const SvgNode* node,
     return valid;
 }
 
+static Paint* _applyBlend(Paint* paint, const SvgNode* node)
+{
+    if (paint && (node->style->flags & SvgStyleFlags::BlendMode)) {
+        paint->blend(node->style->blendMode);
+    }
+    return paint;
+}
+
+
 static Paint* _applyComposition(SvgParserContext& ctx, Paint* paint, const SvgNode* node, const Box& vBox, const string& svgPath)
 {
     if (node->style->clipPath.applying || node->style->mask.applying) {
@@ -405,9 +414,11 @@ static Paint* _applyProperty(SvgParserContext& ctx, SvgNode* node, Shape* vg, co
     vg->fillRule(style->fill.fillRule);
     vg->order(!style->paintOrder);
     vg->opacity(style->opacity);
-    if (style->flags & SvgStyleFlags::BlendMode) vg->blend(style->blendMode);
 
-    if (node->type == SvgNodeType::G || node->type == SvgNodeType::Use) return vg;
+    if (node->type == SvgNodeType::G || node->type == SvgNodeType::Use) {
+        if (style->flags & SvgStyleFlags::BlendMode) vg->blend(style->blendMode);
+        return vg;
+    }
 
     //Apply the stroke style property
     vg->strokeWidth(style->stroke.width);
@@ -441,7 +452,8 @@ static Paint* _applyProperty(SvgParserContext& ctx, SvgNode* node, Shape* vg, co
     if (node->transform && !clip) vg->transform(*node->transform);
 
     auto p = _applyFilter(ctx, vg, node, vBox, svgPath);
-    return _applyComposition(ctx, p, node, vBox, svgPath);
+    p = _applyComposition(ctx, p, node, vBox, svgPath);
+    return _applyBlend(p, node);
 }
 
 
@@ -675,10 +687,9 @@ static Paint* _imageBuildHelper(SvgParserContext& ctx, SvgNode* node, const Box&
     if (node->transform) m = *node->transform * m;
     picture->transform(m);
 
-    if (node->style->flags & SvgStyleFlags::BlendMode) picture->blend(node->style->blendMode);
-
     auto p = _applyFilter(ctx, picture, node, vBox, svgPath);
-    return _applyComposition(ctx, p, node, vBox, svgPath);
+    p = _applyComposition(ctx, p, node, vBox, svgPath);
+    return _applyBlend(p, node);
 }
 
 
@@ -922,10 +933,9 @@ static Paint* _textBuildHelper(SvgParserContext& ctx, const SvgNode* node, const
 
     _applyTextFill(node->style, text, vBox);
 
-    if (node->style->flags & SvgStyleFlags::BlendMode) text->blend(node->style->blendMode);
-
     auto p = _applyFilter(ctx, text, node, vBox, svgPath);
-    return _applyComposition(ctx, p, node, vBox, svgPath);
+    p = _applyComposition(ctx, p, node, vBox, svgPath);
+    return _applyBlend(p, node);
 }
 
 static Scene* _sceneBuildHelper(SvgParserContext& ctx, const SvgNode* node, const Box& vBox, const string& svgPath, bool mask, int depth)
@@ -972,10 +982,10 @@ static Scene* _sceneBuildHelper(SvgParserContext& ctx, const SvgNode* node, cons
         }
     }
     scene->opacity(node->style->opacity);
-    if (node->style->flags & SvgStyleFlags::BlendMode) scene->blend(node->style->blendMode);
 
     auto p = _applyFilter(ctx, scene, node, vBox, svgPath);
-    return static_cast<Scene*>(_applyComposition(ctx, p, node, vBox, svgPath));
+    p = _applyComposition(ctx, p, node, vBox, svgPath);
+    return static_cast<Scene*>(_applyBlend(p, node));
 }
 
 
