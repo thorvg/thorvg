@@ -26,7 +26,6 @@
 #include <algorithm>
 #include "tvgCommon.h"
 #include "tvgMath.h"
-#include "tvgColor.h"
 #include "tvgRender.h"
 
 #define SW_CURVE_TYPE_POINT 0
@@ -278,17 +277,20 @@ struct SwImage
     bool         scaled = false;  //draw scaled image
 };
 
-typedef uint8_t(*SwMask)(uint8_t s, uint8_t d, uint8_t a);                  //src, dst, alpha
-typedef uint32_t(*SwBlender)(uint32_t s, uint32_t d);                       //src, dst
-typedef uint32_t(*SwBlenderA)(uint32_t s, uint32_t d, uint8_t a);           //src, dst, alpha
-typedef uint32_t(*SwJoin)(uint8_t r, uint8_t g, uint8_t b, uint8_t a);      //color channel join
-typedef uint8_t(*SwAlpha)(uint8_t*);                                        //blending alpha
-
+struct SwSurface;
 struct SwCompositor;
+
+typedef uint8_t(*SwMask)(uint8_t s, uint8_t d, uint8_t a);                            //src, dst, alpha
+typedef uint32_t (*SwBlender)(const SwSurface* surface, uint32_t s, uint32_t d);      // surface, src, dst
+typedef uint32_t(*SwBlenderA)(uint32_t s, uint32_t d, uint8_t a);                     //src, dst, alpha
+typedef uint32_t(*SwJoin)(uint8_t r, uint8_t g, uint8_t b, uint8_t a);                //color channel join
+typedef void (*SwSplit)(uint32_t c, uint8_t& r, uint8_t& g, uint8_t& b, uint8_t& a);  // color channel split
+typedef uint8_t(*SwAlpha)(uint8_t*);                                                  //blending alpha
 
 struct SwSurface : RenderSurface
 {
     SwJoin  join;
+    SwSplit split;
     SwAlpha alphas[4];                    //Alpha:2, InvAlpha:3, Luma:4, InvLuma:5
     SwBlender blender = nullptr;          //blender (optional)
     SwCompositor* compositor = nullptr;   //compositor (optional)
@@ -307,6 +309,7 @@ struct SwSurface : RenderSurface
     SwSurface(const SwSurface* rhs) : RenderSurface(rhs)
     {
         join = rhs->join;
+        split = rhs->split;
         memcpy(alphas, rhs->alphas, sizeof(alphas));
         blender = rhs->blender;
         compositor = rhs->compositor;
@@ -467,6 +470,87 @@ static inline uint32_t BLEND_PRE(uint32_t c1, uint32_t c2, uint8_t a)
     return ALPHA_BLEND(c1, a) + ALPHA_BLEND(c2, 255 - a);
 }
 
+static inline int32_t LUM(int32_t r, int32_t g, int32_t b)
+{
+    return ((77 * r) + (151 * g) + (28 * b)) / 256;
+}
+
+static inline int32_t SAT(int32_t r, int32_t g, int32_t b)
+{
+    return (std::max(r, std::max(g, b)) - std::min(r, std::min(g, b)));
+}
+
+static inline uint8_t CLAMP8(int32_t c)
+{
+    return static_cast<uint8_t>(tvg::clamp(c, 0, 255));
+}
+
+static inline void UNPREMULTIPLY(int32_t& r, int32_t& g, int32_t& b, uint8_t a)
+{
+    if (a > 0 && a < 255) {
+        auto ia = ((255u << 16) + a - 1) / a;
+        auto rb = (((uint64_t)b << 32) | uint32_t(r)) * ia;
+        r = std::min<uint32_t>(uint32_t((rb >> 16) & 0xffff), 255u);
+        g = std::min<uint32_t>((uint32_t(g) * ia) >> 16, 255u);
+        b = std::min<uint32_t>(uint32_t(rb >> 48), 255u);
+    }
+}
+
+static inline void CLIP_COLOR(int32_t& r, int32_t& g, int32_t& b)
+{
+    auto n = std::min(r, std::min(g, b));
+    auto x = std::max(r, std::max(g, b));
+
+    if (n >= 0 && x <= 255) return;
+
+    auto l = LUM(r, g, b);
+
+    if (n < 0) {
+        auto denom = l - n;
+        r = l + (((r - l) * l) / denom);
+        g = l + (((g - l) * l) / denom);
+        b = l + (((b - l) * l) / denom);
+    }
+
+    if (x > 255) {
+        auto scale = 255 - l;
+        auto denom = x - l;
+        r = l + (((r - l) * scale) / denom);
+        g = l + (((g - l) * scale) / denom);
+        b = l + (((b - l) * scale) / denom);
+    }
+}
+
+static inline void SET_LUM(int32_t& r, int32_t& g, int32_t& b, int32_t l)
+{
+    auto d = l - LUM(r, g, b);
+    r += d;
+    g += d;
+    b += d;
+    CLIP_COLOR(r, g, b);
+}
+
+static inline void SET_SAT(int32_t& r, int32_t& g, int32_t& b, int32_t s)
+{
+    int32_t *min, *mid, *max;
+
+    if (r <= g) {
+        if (g <= b) min = &r, mid = &g, max = &b;
+        else if (r <= b) min = &r, mid = &b, max = &g;
+        else min = &b, mid = &r, max = &g;
+    } else {
+        if (r <= b) min = &g, mid = &r, max = &b;
+        else if (g <= b) min = &g, mid = &b, max = &r;
+        else min = &b, mid = &g, max = &r;
+    }
+
+    if (*max > *min) {
+        *mid = ((*mid - *min) * s) / (*max - *min);
+        *max = s;
+    } else *mid = *max = 0;
+    *min = 0;
+}
+
 static inline uint32_t opBlendInterp(uint32_t s, uint32_t d, uint8_t a)
 {
     return INTERPOLATE(s, d, a);
@@ -488,7 +572,7 @@ static inline uint32_t opBlendSrcOver(uint32_t s, TVG_UNUSED uint32_t d, TVG_UNU
     return s;
 }
 
-static inline uint32_t opBlendDifference(uint32_t s, uint32_t d)
+static inline uint32_t opBlendDifference(TVG_UNUSED const SwSurface* surface, uint32_t s, uint32_t d)
 {
     auto f = [](uint8_t s, uint8_t d) {
         return (s > d) ? (s - d) : (d - s);
@@ -497,7 +581,7 @@ static inline uint32_t opBlendDifference(uint32_t s, uint32_t d)
     return JOIN(255, f(C1(s), C1(d)), f(C2(s), C2(d)), f(C3(s), C3(d)));
 }
 
-static inline uint32_t opBlendExclusion(uint32_t s, uint32_t d)
+static inline uint32_t opBlendExclusion(TVG_UNUSED const SwSurface* surface, uint32_t s, uint32_t d)
 {
     auto f = [](uint8_t s, uint8_t d) {
         return tvg::clamp(s + d - 2 * MULTIPLY(s, d), 0, 255);
@@ -506,7 +590,7 @@ static inline uint32_t opBlendExclusion(uint32_t s, uint32_t d)
     return JOIN(255, f(C1(s), C1(d)), f(C2(s), C2(d)), f(C3(s), C3(d)));
 }
 
-static inline uint32_t opBlendAdd(uint32_t s, uint32_t d)
+static inline uint32_t opBlendAdd(TVG_UNUSED const SwSurface* surface, uint32_t s, uint32_t d)
 {
     auto f = [](uint8_t s, uint8_t d) {
         return std::min(s + d, 255);
@@ -515,7 +599,7 @@ static inline uint32_t opBlendAdd(uint32_t s, uint32_t d)
     return JOIN(255, f(C1(s), C1(d)), f(C2(s), C2(d)), f(C3(s), C3(d)));
 }
 
-static inline uint32_t opBlendScreen(uint32_t s, uint32_t d)
+static inline uint32_t opBlendScreen(TVG_UNUSED const SwSurface* surface, uint32_t s, uint32_t d)
 {
     auto f = [](uint8_t s, uint8_t d) {
         return s + d - MULTIPLY(s, d);
@@ -524,7 +608,7 @@ static inline uint32_t opBlendScreen(uint32_t s, uint32_t d)
     return JOIN(255, f(C1(s), C1(d)), f(C2(s), C2(d)), f(C3(s), C3(d)));
 }
 
-static inline uint32_t opBlendMultiply(uint32_t s, uint32_t d)
+static inline uint32_t opBlendMultiply(TVG_UNUSED const SwSurface* surface, uint32_t s, uint32_t d)
 {
     auto o = BLEND_UPRE(d);
 
@@ -535,7 +619,7 @@ static inline uint32_t opBlendMultiply(uint32_t s, uint32_t d)
     return BLEND_PRE(JOIN(255, f(C1(s), o.r), f(C2(s), o.g), f(C3(s), o.b)), s, o.a);
 }
 
-static inline uint32_t opBlendOverlay(uint32_t s, uint32_t d)
+static inline uint32_t opBlendOverlay(TVG_UNUSED const SwSurface* surface, uint32_t s, uint32_t d)
 {
     auto o = BLEND_UPRE(d);
 
@@ -546,7 +630,7 @@ static inline uint32_t opBlendOverlay(uint32_t s, uint32_t d)
     return BLEND_PRE(JOIN(255, f(C1(s), o.r), f(C2(s), o.g), f(C3(s), o.b)), s, o.a);
 }
 
-static inline uint32_t opBlendDarken(uint32_t s, uint32_t d)
+static inline uint32_t opBlendDarken(TVG_UNUSED const SwSurface* surface, uint32_t s, uint32_t d)
 {
     auto o = BLEND_UPRE(d);
 
@@ -557,7 +641,7 @@ static inline uint32_t opBlendDarken(uint32_t s, uint32_t d)
     return BLEND_PRE(JOIN(255, f(C1(s), o.r), f(C2(s), o.g), f(C3(s), o.b)), s, o.a);
 }
 
-static inline uint32_t opBlendLighten(uint32_t s, uint32_t d)
+static inline uint32_t opBlendLighten(TVG_UNUSED const SwSurface* surface, uint32_t s, uint32_t d)
 {
     auto f = [](uint8_t s, uint8_t d) {
         return std::max(s, d);
@@ -566,7 +650,7 @@ static inline uint32_t opBlendLighten(uint32_t s, uint32_t d)
     return JOIN(255, f(C1(s), C1(d)), f(C2(s), C2(d)), f(C3(s), C3(d)));
 }
 
-static inline uint32_t opBlendColorDodge(uint32_t s, uint32_t d)
+static inline uint32_t opBlendColorDodge(TVG_UNUSED const SwSurface* surface, uint32_t s, uint32_t d)
 {
     auto o = BLEND_UPRE(d);
 
@@ -577,7 +661,7 @@ static inline uint32_t opBlendColorDodge(uint32_t s, uint32_t d)
     return BLEND_PRE(JOIN(255, f(C1(s), o.r), f(C2(s), o.g), f(C3(s), o.b)), s, o.a);
 }
 
-static inline uint32_t opBlendColorBurn(uint32_t s, uint32_t d)
+static inline uint32_t opBlendColorBurn(TVG_UNUSED const SwSurface* surface, uint32_t s, uint32_t d)
 {
     auto o = BLEND_UPRE(d);
 
@@ -588,7 +672,7 @@ static inline uint32_t opBlendColorBurn(uint32_t s, uint32_t d)
     return BLEND_PRE(JOIN(255, f(C1(s), o.r), f(C2(s), o.g), f(C3(s), o.b)), s, o.a);
 }
 
-static inline uint32_t opBlendHardLight(uint32_t s, uint32_t d)
+static inline uint32_t opBlendHardLight(TVG_UNUSED const SwSurface* surface, uint32_t s, uint32_t d)
 {
     auto o = BLEND_UPRE(d);
 
@@ -599,73 +683,93 @@ static inline uint32_t opBlendHardLight(uint32_t s, uint32_t d)
     return BLEND_PRE(JOIN(255, f(C1(s), o.r), f(C2(s), o.g), f(C3(s), o.b)), s, o.a);
 }
 
-static inline uint32_t opBlendSoftLight(uint32_t s, uint32_t d)
+static inline uint32_t opBlendSoftLight(TVG_UNUSED const SwSurface* surface, uint32_t s, uint32_t d)
 {
     auto o = BLEND_UPRE(d);
+    // LUT optimization for soft-light blend is also used by jQuery Canvas Effects:
+    // https://0.s3.envato.com/files/26317668/index.html
+    static constexpr uint16_t dc[256] = {
+        0, 1012, 2000, 2965, 3907, 4827, 5724, 6599, 7453, 8286, 9098, 9890, 10662, 11414, 12148, 12862,
+        13558, 14236, 14896, 15539, 16165, 16775, 17368, 17946, 18508, 19055, 19587, 20106, 20610, 21101, 21578, 22043,
+        22496, 22936, 23365, 23783, 24190, 24586, 24972, 25349, 25716, 26074, 26424, 26765, 27099, 27425, 27744, 28056,
+        28362, 28662, 28956, 29245, 29530, 29810, 30086, 30358, 30627, 30893, 31156, 31417, 31677, 31935, 32192, 32448,
+        32704, 32958, 33211, 33462, 33710, 33957, 34203, 34446, 34688, 34928, 35166, 35403, 35638, 35872, 36104, 36335,
+        36564, 36792, 37018, 37243, 37467, 37689, 37910, 38130, 38349, 38566, 38782, 38997, 39211, 39423, 39635, 39845,
+        40054, 40262, 40469, 40675, 40880, 41084, 41287, 41489, 41690, 41889, 42088, 42287, 42484, 42680, 42875, 43070,
+        43263, 43456, 43648, 43839, 44029, 44218, 44407, 44595, 44782, 44968, 45153, 45338, 45522, 45705, 45888, 46069,
+        46250, 46431, 46610, 46789, 46967, 47145, 47322, 47498, 47674, 47849, 48023, 48197, 48370, 48542, 48714, 48885,
+        49056, 49226, 49395, 49564, 49733, 49900, 50067, 50234, 50400, 50566, 50731, 50895, 51059, 51222, 51385, 51548,
+        51709, 51871, 52032, 52192, 52352, 52511, 52670, 52829, 52986, 53144, 53301, 53457, 53614, 53769, 53924, 54079,
+        54233, 54387, 54541, 54694, 54846, 54998, 55150, 55301, 55452, 55603, 55753, 55902, 56052, 56201, 56349, 56497,
+        56645, 56792, 56939, 57086, 57232, 57378, 57523, 57668, 57813, 57957, 58101, 58245, 58388, 58531, 58674, 58816,
+        58958, 59099, 59241, 59382, 59522, 59662, 59802, 59942, 60081, 60220, 60358, 60497, 60635, 60772, 60910, 61047,
+        61183, 61320, 61456, 61592, 61727, 61863, 61997, 62132, 62266, 62400, 62534, 62668, 62801, 62934, 63066, 63199,
+        63331, 63463, 63594, 63725, 63856, 63987, 64118, 64248, 64378, 64507, 64637, 64766, 64895, 65023, 65152, 65280
+    };
 
-    auto f = [](uint8_t s, uint8_t d) {
-        return MULTIPLY(255 - std::min(255, 2 * s), MULTIPLY(d, d)) + std::min(255, 2 * MULTIPLY(s, d));
+    auto f = [&](uint8_t s, uint8_t d) {
+        if (s < 128) return d - (((255 - 2 * s) * d * (255 - d) + 32512) / 65025);
+        return d + (((2 * s - 255) * (dc[d] - d * 256) + 32640) / 65280);
     };
 
     return BLEND_PRE(JOIN(255, f(C1(s), o.r), f(C2(s), o.g), f(C3(s), o.b)), s, o.a);
 }
 
-void rasterRGB2HSL(uint8_t r, uint8_t g, uint8_t b, float* h, float* s, float* l);
-
-static inline uint32_t opBlendHue(uint32_t s, uint32_t d)
+static inline uint32_t opBlendHue(const SwSurface* surface, uint32_t s, uint32_t d)
 {
-    auto o = BLEND_UPRE(d);
+    uint8_t sr, sg, sb, dr, dg, db, a;
+    surface->split(s, sr, sg, sb, a);
+    surface->split(d, dr, dg, db, a);
 
-    float sh, ds, dl;
-    rasterRGB2HSL(C1(s), C2(s), C3(s), &sh, 0, 0);
-    rasterRGB2HSL(o.r, o.g, o.b, 0, &ds, &dl);
+    int32_t r = sr, g = sg, b = sb;
+    int32_t lr = dr, lg = dg, lb = db;
+    UNPREMULTIPLY(lr, lg, lb, a);
+    SET_SAT(r, g, b, SAT(lr, lg, lb));
+    SET_LUM(r, g, b, LUM(lr, lg, lb));
 
-    uint8_t r, g, b;
-    hsl2rgb(sh, ds, dl, r, g, b);
-
-    return BLEND_PRE(JOIN(255, r, g, b), s, o.a);
+    return BLEND_PRE(surface->join(CLAMP8(r), CLAMP8(g), CLAMP8(b), 255), s, a);
 }
 
-static inline uint32_t opBlendSaturation(uint32_t s, uint32_t d)
+static inline uint32_t opBlendSaturation(const SwSurface* surface, uint32_t s, uint32_t d)
 {
-    auto o = BLEND_UPRE(d);
+    uint8_t sr, sg, sb, dr, dg, db, a;
+    surface->split(s, sr, sg, sb, a);
+    surface->split(d, dr, dg, db, a);
 
-    float dh, ss, dl;
-    rasterRGB2HSL(C1(s), C2(s), C3(s), 0, &ss, 0);
-    rasterRGB2HSL(o.r, o.g, o.b, &dh, 0, &dl);
+    int32_t r = dr, g = dg, b = db;
+    UNPREMULTIPLY(r, g, b, a);
+    auto l = LUM(r, g, b);
+    SET_SAT(r, g, b, SAT(sr, sg, sb));
+    SET_LUM(r, g, b, l);
 
-    uint8_t r, g, b;
-    hsl2rgb(dh, ss, dl, r, g, b);
-
-    return BLEND_PRE(JOIN(255, r, g, b), s, o.a);
+    return BLEND_PRE(surface->join(CLAMP8(r), CLAMP8(g), CLAMP8(b), 255), s, a);
 }
 
-static inline uint32_t opBlendColor(uint32_t s, uint32_t d)
+static inline uint32_t opBlendColor(const SwSurface* surface, uint32_t s, uint32_t d)
 {
-    auto o = BLEND_UPRE(d);
+    uint8_t sr, sg, sb, dr, dg, db, a;
+    surface->split(s, sr, sg, sb, a);
+    surface->split(d, dr, dg, db, a);
 
-    float sh, ss, dl;
-    rasterRGB2HSL(C1(s), C2(s), C3(s), &sh, &ss, 0);
-    rasterRGB2HSL(o.r, o.g, o.b, 0, 0, &dl);
+    int32_t r = sr, g = sg, b = sb;
+    int32_t lr = dr, lg = dg, lb = db;
+    UNPREMULTIPLY(lr, lg, lb, a);
+    SET_LUM(r, g, b, LUM(lr, lg, lb));
 
-    uint8_t r, g, b;
-    hsl2rgb(sh, ss, dl, r, g, b);
-
-    return BLEND_PRE(JOIN(255, r, g, b), s, o.a);
+    return BLEND_PRE(surface->join(CLAMP8(r), CLAMP8(g), CLAMP8(b), 255), s, a);
 }
 
-static inline uint32_t opBlendLuminosity(uint32_t s, uint32_t d)
+static inline uint32_t opBlendLuminosity(const SwSurface* surface, uint32_t s, uint32_t d)
 {
-    auto o = BLEND_UPRE(d);
+    uint8_t sr, sg, sb, dr, dg, db, a;
+    surface->split(s, sr, sg, sb, a);
+    surface->split(d, dr, dg, db, a);
 
-    float dh, ds, sl;
-    rasterRGB2HSL(C1(s), C2(s), C3(s), 0, 0, &sl);
-    rasterRGB2HSL(o.r, o.g, o.b, &dh, &ds, 0);
+    int32_t r = dr, g = dg, b = db;
+    UNPREMULTIPLY(r, g, b, a);
+    SET_LUM(r, g, b, LUM(sr, sg, sb));
 
-    uint8_t r, g, b;
-    hsl2rgb(dh, ds, sl, r, g, b);
-
-    return BLEND_PRE(JOIN(255, r, g, b), s, o.a);
+    return BLEND_PRE(surface->join(CLAMP8(r), CLAMP8(g), CLAMP8(b), 255), s, a);
 }
 
 int64_t mathMultiply(int64_t a, int64_t b);
@@ -720,13 +824,13 @@ void fillFree(SwFill* fill);
 void fillLinear(const SwFill* fill, uint8_t* dst, uint32_t y, uint32_t x, uint32_t len, SwMask maskOp, uint8_t opacity);                                   //composite masking ver.
 void fillLinear(const SwFill* fill, uint8_t* dst, uint32_t y, uint32_t x, uint32_t len, uint8_t* cmp, SwMask maskOp, uint8_t opacity);                     //direct masking ver.
 void fillLinear(const SwFill* fill, uint32_t* dst, uint32_t y, uint32_t x, uint32_t len, SwBlenderA op, uint8_t a);                                        //blending ver.
-void fillLinear(const SwFill* fill, uint32_t* dst, uint32_t y, uint32_t x, uint32_t len, SwBlenderA op, SwBlender op2, uint8_t a);                         //blending + BlendingMethod(op2) ver.
+void fillLinear(const SwFill* fill, uint32_t* dst, uint32_t y, uint32_t x, uint32_t len, SwBlenderA op, SwBlender op2, const SwSurface* surface, uint8_t a);  // blending + BlendingMethod(op2) ver.
 void fillLinear(const SwFill* fill, uint32_t* dst, uint32_t y, uint32_t x, uint32_t len, uint8_t* cmp, SwAlpha alpha, uint8_t csize, uint8_t opacity);     //matting ver.
 
 void fillRadial(const SwFill* fill, uint8_t* dst, uint32_t y, uint32_t x, uint32_t len, SwMask op, uint8_t a);                                             //composite masking ver.
 void fillRadial(const SwFill* fill, uint8_t* dst, uint32_t y, uint32_t x, uint32_t len, uint8_t* cmp, SwMask op, uint8_t a) ;                              //direct masking ver.
 void fillRadial(const SwFill* fill, uint32_t* dst, uint32_t y, uint32_t x, uint32_t len, SwBlenderA op, uint8_t a);                                        //blending ver.
-void fillRadial(const SwFill* fill, uint32_t* dst, uint32_t y, uint32_t x, uint32_t len, SwBlenderA op, SwBlender op2, uint8_t a);                         //blending + BlendingMethod(op2) ver.
+void fillRadial(const SwFill* fill, uint32_t* dst, uint32_t y, uint32_t x, uint32_t len, SwBlenderA op, SwBlender op2, const SwSurface* surface, uint8_t a);  // blending + BlendingMethod(op2) ver.
 void fillRadial(const SwFill* fill, uint32_t* dst, uint32_t y, uint32_t x, uint32_t len, uint8_t* cmp, SwAlpha alpha, uint8_t csize, uint8_t opacity);     //matting ver.
 
 SwRle* rleRender(SwRle* rle, const SwOutline* outline, const RenderRegion& bbox, SwMpool* mpool, unsigned tid, bool antiAlias);

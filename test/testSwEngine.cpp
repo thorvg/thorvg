@@ -370,4 +370,97 @@ TEST_CASE("Image Rotation", "[tvgSwEngine]")
     REQUIRE(Initializer::term() == Result::Success);
 }
 
+struct Pixel
+{
+    uint8_t r, g, b, a;
+};
+
+static Pixel _decode(uint32_t pixel, ColorSpace cs)
+{
+    if (cs == ColorSpace::ABGR8888 || cs == ColorSpace::ABGR8888S) {
+        return {static_cast<uint8_t>(pixel), static_cast<uint8_t>(pixel >> 8), static_cast<uint8_t>(pixel >> 16), static_cast<uint8_t>(pixel >> 24)};
+    }
+    return {static_cast<uint8_t>(pixel >> 16), static_cast<uint8_t>(pixel >> 8), static_cast<uint8_t>(pixel), static_cast<uint8_t>(pixel >> 24)};
+}
+
+static int _diff(uint8_t a, uint8_t b)
+{
+    return a > b ? a - b : b - a;
+}
+
+static Pixel _renderBlendedPixel(BlendMethod method, ColorSpace cs)
+{
+    constexpr uint32_t Size = 8;
+    uint32_t buffer[Size * Size] = {};
+
+    auto canvas = unique_ptr<SwCanvas>(SwCanvas::gen());
+    REQUIRE(canvas);
+    REQUIRE(canvas->target(buffer, Size, Size, Size, cs) == Result::Success);
+
+    auto dst = Shape::gen();
+    REQUIRE(dst);
+    REQUIRE(dst->appendRect(0, 0, Size, Size) == Result::Success);
+    REQUIRE(dst->fill(20, 80, 210, 255) == Result::Success);
+    REQUIRE(canvas->add(dst) == Result::Success);
+
+    auto src = Shape::gen();
+    REQUIRE(src);
+    REQUIRE(src->appendRect(0, 0, Size, Size) == Result::Success);
+    REQUIRE(src->fill(230, 40, 20, 255) == Result::Success);
+    REQUIRE(src->blend(method) == Result::Success);
+    REQUIRE(canvas->add(src) == Result::Success);
+
+    REQUIRE(canvas->draw(true) == Result::Success);
+    REQUIRE(canvas->sync() == Result::Success);
+
+    return _decode(buffer[(Size / 2) * Size + (Size / 2)], cs);
+}
+
+static void _requirePixelNear(const Pixel& lhs, const Pixel& rhs)
+{
+    REQUIRE(_diff(lhs.r, rhs.r) <= 1);
+    REQUIRE(_diff(lhs.g, rhs.g) <= 1);
+    REQUIRE(_diff(lhs.b, rhs.b) <= 1);
+    REQUIRE(_diff(lhs.a, rhs.a) <= 1);
+}
+
+TEST_CASE("Non-separable blend colorspace parity", "[tvgSwEngine]")
+{
+    REQUIRE(Initializer::init() == Result::Success);
+    {
+        const BlendMethod methods[] = {
+            BlendMethod::Hue,
+            BlendMethod::Saturation,
+            BlendMethod::Color,
+            BlendMethod::Luminosity};
+
+        for (auto method : methods) {
+            INFO("BlendMethod: " << static_cast<int>(method));
+            auto native = _renderBlendedPixel(method, ColorSpace::ABGR8888);
+            auto web = _renderBlendedPixel(method, ColorSpace::ARGB8888S);
+            INFO("ABGR8888 rgba: " << static_cast<int>(native.r) << ", " << static_cast<int>(native.g) << ", " << static_cast<int>(native.b) << ", " << static_cast<int>(native.a));
+            INFO("ARGB8888S rgba: " << static_cast<int>(web.r) << ", " << static_cast<int>(web.g) << ", " << static_cast<int>(web.b) << ", " << static_cast<int>(web.a));
+            _requirePixelNear(native, web);
+        }
+    }
+    REQUIRE(Initializer::term() == Result::Success);
+}
+
+TEST_CASE("Soft-light blend matches compositing spec", "[tvgSwEngine]")
+{
+    REQUIRE(Initializer::init() == Result::Success);
+    {
+        const ColorSpace colorspaces[] = {
+            ColorSpace::ABGR8888,
+            ColorSpace::ARGB8888S};
+
+        for (auto cs : colorspaces) {
+            INFO("ColorSpace: " << static_cast<int>(cs));
+            auto pixel = _renderBlendedPixel(BlendMethod::SoftLight, cs);
+            _requirePixelNear(pixel, {55, 42, 179, 255});
+        }
+    }
+    REQUIRE(Initializer::term() == Result::Success);
+}
+
 #endif

@@ -52,9 +52,9 @@ struct FillLinear
         fillLinear(fill, dst, y, x, len, cmp, alpha, csize, opacity);
     }
 
-    void operator()(const SwFill* fill, uint32_t* dst, uint32_t y, uint32_t x, uint32_t len, SwBlenderA op, SwBlender op2, uint8_t a)
+    void operator()(const SwFill* fill, uint32_t* dst, uint32_t y, uint32_t x, uint32_t len, SwBlenderA op, SwBlender op2, const SwSurface* surface, uint8_t a)
     {
-        fillLinear(fill, dst, y, x, len, op, op2, a);
+        fillLinear(fill, dst, y, x, len, op, op2, surface, a);
     }
 
 };
@@ -81,9 +81,9 @@ struct FillRadial
         fillRadial(fill, dst, y, x, len, cmp, alpha, csize, opacity);
     }
 
-    void operator()(const SwFill* fill, uint32_t* dst, uint32_t y, uint32_t x, uint32_t len, SwBlenderA op, SwBlender op2, uint8_t a)
+    void operator()(const SwFill* fill, uint32_t* dst, uint32_t y, uint32_t x, uint32_t len, SwBlenderA op, SwBlender op2, const SwSurface* surface, uint8_t a)
     {
-        fillRadial(fill, dst, y, x, len, op, op2, a);
+        fillRadial(fill, dst, y, x, len, op, op2, surface, a);
     }
 };
 
@@ -135,6 +135,22 @@ static inline uint32_t _abgrJoin(uint8_t r, uint8_t g, uint8_t b, uint8_t a)
 static inline uint32_t _argbJoin(uint8_t r, uint8_t g, uint8_t b, uint8_t a)
 {
     return (a << 24 | r << 16 | g << 8 | b);
+}
+
+static inline void _abgrSplit(uint32_t c, uint8_t& r, uint8_t& g, uint8_t& b, uint8_t& a)
+{
+    r = C3(c);
+    g = C2(c);
+    b = C1(c);
+    a = A(c);
+}
+
+static inline void _argbSplit(uint32_t c, uint8_t& r, uint8_t& g, uint8_t& b, uint8_t& a)
+{
+    r = C1(c);
+    g = C2(c);
+    b = C3(c);
+    a = A(c);
 }
 
 static inline bool _blending(const SwSurface* surface)
@@ -429,7 +445,7 @@ static bool _rasterBlendingRect(SwSurface* surface, const RenderRegion& bbox, co
     for (uint32_t y = 0; y < bbox.h(); ++y) {
         auto dst = &buffer[y * surface->stride];
         for (uint32_t x = 0; x < bbox.w(); ++x, ++dst) {
-            *dst = surface->blender(color, *dst);
+            *dst = surface->blender(surface, color, *dst);
         }
     }
     return true;
@@ -604,11 +620,11 @@ static bool _rasterBlendingRle(SwSurface* surface, const SwRle* rle, const Rende
         auto dst = &surface->buf32[span->y * surface->stride + x];
         if (span->coverage == 255) {
             for (auto x = 0; x < len; ++x, ++dst) {
-                *dst = surface->blender(color, *dst);
+                *dst = surface->blender(surface, color, *dst);
             }
         } else {
             for (auto x = 0; x < len; ++x, ++dst) {
-                *dst = INTERPOLATE(surface->blender(color, *dst), *dst, span->coverage);
+                *dst = INTERPOLATE(surface->blender(surface, color, *dst), *dst, span->coverage);
             }
         }
     }
@@ -749,13 +765,13 @@ static bool _rasterScaledBlendingRleImage(SwSurface* surface, const SwImage& ima
             for (uint32_t x = static_cast<uint32_t>(span->x); x < static_cast<uint32_t>(span->x) + span->len; ++x, ++dst) {
                 SCALED_IMAGE_RANGE_X
                 auto src = scaleMethod(image.buf32, image.stride, image.w, image.h, sx, sy, miny, maxy, sampleSize);
-                *dst = INTERPOLATE(surface->blender(rasterUnpremultiply(src), *dst), *dst, A(src));
+                *dst = INTERPOLATE(surface->blender(surface, rasterUnpremultiply(src), *dst), *dst, A(src));
             }
         } else {
             for (uint32_t x = static_cast<uint32_t>(span->x); x < static_cast<uint32_t>(span->x) + span->len; ++x, ++dst) {
                 SCALED_IMAGE_RANGE_X
                 auto src = scaleMethod(image.buf32, image.stride, image.w, image.h, sx, sy, miny, maxy, sampleSize);
-                *dst = INTERPOLATE(surface->blender(rasterUnpremultiply(src), *dst), *dst, MULTIPLY(alpha, A(src)));
+                *dst = INTERPOLATE(surface->blender(surface, rasterUnpremultiply(src), *dst), *dst, MULTIPLY(alpha, A(src)));
             }
         }
     }
@@ -832,11 +848,11 @@ static bool _rasterDirectBlendingRleImage(SwSurface* surface, const SwImage& ima
         auto alpha = MULTIPLY(span->coverage, opacity);
         if (alpha == 255) {
             for (auto x = 0; x < len; ++x, ++dst, ++src) {
-                *dst = surface->blender(rasterUnpremultiply(*src), *dst);
+                *dst = surface->blender(surface, rasterUnpremultiply(*src), *dst);
             }
         } else {
             for (auto x = 0; x < len; ++x, ++dst, ++src) {
-                *dst = INTERPOLATE(surface->blender(rasterUnpremultiply(*src), *dst), *dst, MULTIPLY(alpha, A(*src)));
+                *dst = INTERPOLATE(surface->blender(surface, rasterUnpremultiply(*src), *dst), *dst, MULTIPLY(alpha, A(*src)));
             }
         }
     }
@@ -931,7 +947,7 @@ static bool _rasterScaledBlendingImage(SwSurface* surface, const SwImage& image,
         for (auto x = bbox.min.x; x < bbox.max.x; ++x, ++dst) {
             SCALED_IMAGE_RANGE_X
             auto src = scaleMethod(image.buf32, image.stride, image.w, image.h, sx, sy, miny, maxy, sampleSize);
-            *dst = INTERPOLATE(surface->blender(rasterUnpremultiply(src), *dst), *dst, MULTIPLY(opacity, A(src)));
+            *dst = INTERPOLATE(surface->blender(surface, rasterUnpremultiply(src), *dst), *dst, MULTIPLY(opacity, A(src)));
         }
     }
     return true;
@@ -1082,11 +1098,11 @@ static bool _rasterDirectMattedBlendingImage(SwSurface* surface, const SwImage& 
         auto src = sbuffer;
         if (opacity == 255) {
             for (auto dst = dbuffer; dst < dbuffer + w; ++dst, ++src, cmp += csize) {
-                *dst = INTERPOLATE(surface->blender(*src, *dst), *dst, MULTIPLY(A(*src), alpha(cmp)));
+                *dst = INTERPOLATE(surface->blender(surface, *src, *dst), *dst, MULTIPLY(A(*src), alpha(cmp)));
             }
         } else {
             for (auto dst = dbuffer; dst < dbuffer + w; ++dst, ++src, cmp += csize) {
-                *dst = INTERPOLATE(surface->blender(*src, *dst), *dst, MULTIPLY(MULTIPLY(A(*src), alpha(cmp)), opacity));
+                *dst = INTERPOLATE(surface->blender(surface, *src, *dst), *dst, MULTIPLY(MULTIPLY(A(*src), alpha(cmp)), opacity));
             }
         }
         cbuffer += compositor->image.stride * csize;
@@ -1115,11 +1131,11 @@ static bool _rasterDirectBlendingImage(SwSurface* surface, const SwImage& image,
         auto src = sbuffer;
         if (opacity == 255) {
             for (auto dst = dbuffer; dst < dbuffer + w; dst++, src++) {
-                *dst = INTERPOLATE(surface->blender(rasterUnpremultiply(*src), *dst), *dst, A(*src));
+                *dst = INTERPOLATE(surface->blender(surface, rasterUnpremultiply(*src), *dst), *dst, A(*src));
             }
         } else {
             for (auto dst = dbuffer; dst < dbuffer + w; dst++, src++) {
-                *dst = INTERPOLATE(surface->blender(rasterUnpremultiply(*src), *dst), *dst, MULTIPLY(opacity, A(*src)));
+                *dst = INTERPOLATE(surface->blender(surface, rasterUnpremultiply(*src), *dst), *dst, MULTIPLY(opacity, A(*src)));
             }
         }
     }
@@ -1203,11 +1219,11 @@ static bool _rasterBlendingGradientRect(SwSurface* surface, const RenderRegion& 
 
     if (fill->translucent) {
         for (uint32_t y = 0; y < bbox.h(); ++y) {
-            fillMethod()(fill, buffer + y * surface->stride, bbox.min.y + y, bbox.min.x, bbox.w(), opBlendPreNormal, surface->blender, 255);
+            fillMethod()(fill, buffer + y * surface->stride, bbox.min.y + y, bbox.min.x, bbox.w(), opBlendPreNormal, surface->blender, surface, 255);
         }
     } else {
         for (uint32_t y = 0; y < bbox.h(); ++y) {
-            fillMethod()(fill, buffer + y * surface->stride, bbox.min.y + y, bbox.min.x, bbox.w(), opBlendSrcOver, surface->blender, 255);
+            fillMethod()(fill, buffer + y * surface->stride, bbox.min.y + y, bbox.min.x, bbox.w(), opBlendSrcOver, surface->blender, surface, 255);
         }
     }
     return true;
@@ -1364,7 +1380,7 @@ static bool _rasterBlendingGradientRle(SwSurface* surface, const SwRle* rle, con
 
     for (uint32_t i = 0; i < rle->size(); ++i, ++span) {
         auto dst = &surface->buf32[span->y * surface->stride + span->x];
-        fillMethod()(fill, dst, span->y, span->x, span->len, opBlendPreNormal, surface->blender, span->coverage);
+        fillMethod()(fill, dst, span->y, span->x, span->len, opBlendPreNormal, surface->blender, surface, span->coverage);
     }
     return true;
 }
@@ -1498,10 +1514,12 @@ bool rasterCompositor(SwSurface* surface)
 
     if (surface->cs == ColorSpace::ABGR8888 || surface->cs == ColorSpace::ABGR8888S) {
         surface->join = _abgrJoin;
+        surface->split = _abgrSplit;
         surface->alphas[2] = _abgrLuma;
         surface->alphas[3] = _abgrInvLuma;
     } else if (surface->cs == ColorSpace::ARGB8888 || surface->cs == ColorSpace::ARGB8888S) {
         surface->join = _argbJoin;
+        surface->split = _argbSplit;
         surface->alphas[2] = _argbLuma;
         surface->alphas[3] = _argbInvLuma;
     } else {
@@ -1788,42 +1806,6 @@ void rasterXYFlip(uint32_t* src, uint32_t* dst, int32_t stride, int32_t w, int32
                 p += 1 - by * stride;
                 q += stride - by;
             }
-        }
-    }
-}
-
-
-//TODO: can be moved in tvgColor
-void rasterRGB2HSL(uint8_t r, uint8_t g, uint8_t b, float* h, float* s, float* l)
-{
-    auto rf = r / 255.0f;
-    auto gf = g / 255.0f;
-    auto bf = b / 255.0f;
-    auto maxVal = std::max(std::max(rf, gf), bf);
-    auto minVal = std::min(std::min(rf, gf), bf);
-    auto delta = maxVal - minVal;
-
-    //lightness
-    float t = 0.0f;
-    if (l || s) {
-        t = (maxVal + minVal) * 0.5f;
-        if (l) *l = t;
-    }
-
-    if (tvg::zero(delta)) {
-        if (h) *h = 0.0f;
-        if (s) *s = 0.0f;
-    } else {
-        //saturation
-        if (s) {
-            *s = (t < 0.5f) ? (delta / (maxVal + minVal)) : (delta / (2.0f - maxVal - minVal));
-        }
-        //hue
-        if (h) {
-            if (maxVal == rf) *h = (gf - bf) / delta + (gf < bf ? 6.0f : 0.0f);
-            else if (maxVal == gf) *h = (bf - rf) / delta + 2.0f;
-            else *h = (rf - gf) / delta + 4.0f;
-            *h *= 60.0f; //directly convert to degrees
         }
     }
 }
