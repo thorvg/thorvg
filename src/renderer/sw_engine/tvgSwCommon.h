@@ -26,7 +26,6 @@
 #include <algorithm>
 #include "tvgCommon.h"
 #include "tvgMath.h"
-#include "tvgColor.h"
 #include "tvgRender.h"
 
 #define SW_CURVE_TYPE_POINT 0
@@ -599,73 +598,130 @@ static inline uint32_t opBlendHardLight(uint32_t s, uint32_t d)
     return BLEND_PRE(JOIN(255, f(C1(s), o.r), f(C2(s), o.g), f(C3(s), o.b)), s, o.a);
 }
 
+static inline float rasterLum(float r, float g, float b)
+{
+    return ((54.0f * r) + (182.0f * g) + (19.0f * b)) / 255.0f;
+}
+
+static inline void rasterClipColor(float& r, float& g, float& b)
+{
+    auto l = rasterLum(r, g, b);
+    auto n = std::min(r, std::min(g, b));
+    auto x = std::max(r, std::max(g, b));
+
+    if (n < 0.0f) {
+        r = l + (((r - l) * l) / (l - n));
+        g = l + (((g - l) * l) / (l - n));
+        b = l + (((b - l) * l) / (l - n));
+    }
+
+    if (x > 1.0f) {
+        r = l + (((r - l) * (1.0f - l)) / (x - l));
+        g = l + (((g - l) * (1.0f - l)) / (x - l));
+        b = l + (((b - l) * (1.0f - l)) / (x - l));
+    }
+}
+
+static inline void rasterSetLum(float& r, float& g, float& b, float l)
+{
+    auto d = l - rasterLum(r, g, b);
+    r += d;
+    g += d;
+    b += d;
+    rasterClipColor(r, g, b);
+}
+
+static inline float rasterSat(float r, float g, float b)
+{
+    return (std::max(r, std::max(g, b)) - std::min(r, std::min(g, b)));
+}
+
+static inline void rasterSetSat(float& r, float& g, float& b, float s)
+{
+    float *min, *mid, *max;
+
+    if (r <= g) {
+        if (g <= b) min = &r, mid = &g, max = &b;
+        else if (r <= b) min = &r, mid = &b, max = &g;
+        else min = &b, mid = &r, max = &g;
+    } else {
+        if (r <= b) min = &g, mid = &r, max = &b;
+        else if (g <= b) min = &g, mid = &b, max = &r;
+        else min = &b, mid = &g, max = &r;
+    }
+
+    if (*max > *min) {
+        *mid = ((*mid - *min) * s) / (*max - *min);
+        *max = s;
+    } else *mid = *max = 0.0f;
+    *min = 0.0f;
+}
+
+static inline uint8_t rasterToByte(float c)
+{
+    return static_cast<uint8_t>(nearbyint(tvg::clamp(c, 0.0f, 1.0f) * 255.0f));
+}
+
 static inline uint32_t opBlendSoftLight(uint32_t s, uint32_t d)
 {
     auto o = BLEND_UPRE(d);
 
     auto f = [](uint8_t s, uint8_t d) {
-        return MULTIPLY(255 - std::min(255, 2 * s), MULTIPLY(d, d)) + std::min(255, 2 * MULTIPLY(s, d));
+        auto src = s / 255.0f;
+        auto dst = d / 255.0f;
+
+        if (src <= 0.5f) return rasterToByte(dst - (1.0f - 2.0f * src) * dst * (1.0f - dst));
+
+        auto base = (dst <= 0.25f) ? (((16.0f * dst - 12.0f) * dst + 4.0f) * dst) : sqrtf(dst);
+        return rasterToByte(dst + (2.0f * src - 1.0f) * (base - dst));
     };
 
     return BLEND_PRE(JOIN(255, f(C1(s), o.r), f(C2(s), o.g), f(C3(s), o.b)), s, o.a);
 }
 
-void rasterRGB2HSL(uint8_t r, uint8_t g, uint8_t b, float* h, float* s, float* l);
-
 static inline uint32_t opBlendHue(uint32_t s, uint32_t d)
 {
     auto o = BLEND_UPRE(d);
 
-    float sh, ds, dl;
-    rasterRGB2HSL(C1(s), C2(s), C3(s), &sh, 0, 0);
-    rasterRGB2HSL(o.r, o.g, o.b, 0, &ds, &dl);
+    auto r = C1(s) / 255.0f, g = C2(s) / 255.0f, b = C3(s) / 255.0f;
+    auto dr = o.r / 255.0f, dg = o.g / 255.0f, db = o.b / 255.0f;
+    rasterSetSat(r, g, b, rasterSat(dr, dg, db));
+    rasterSetLum(r, g, b, rasterLum(dr, dg, db));
 
-    uint8_t r, g, b;
-    hsl2rgb(sh, ds, dl, r, g, b);
-
-    return BLEND_PRE(JOIN(255, r, g, b), s, o.a);
+    return BLEND_PRE(JOIN(255, rasterToByte(r), rasterToByte(g), rasterToByte(b)), s, o.a);
 }
 
 static inline uint32_t opBlendSaturation(uint32_t s, uint32_t d)
 {
     auto o = BLEND_UPRE(d);
 
-    float dh, ss, dl;
-    rasterRGB2HSL(C1(s), C2(s), C3(s), 0, &ss, 0);
-    rasterRGB2HSL(o.r, o.g, o.b, &dh, 0, &dl);
+    auto r = o.r / 255.0f, g = o.g / 255.0f, b = o.b / 255.0f;
+    auto l = rasterLum(r, g, b);
+    rasterSetSat(r, g, b, rasterSat(C1(s) / 255.0f, C2(s) / 255.0f, C3(s) / 255.0f));
+    rasterSetLum(r, g, b, l);
 
-    uint8_t r, g, b;
-    hsl2rgb(dh, ss, dl, r, g, b);
-
-    return BLEND_PRE(JOIN(255, r, g, b), s, o.a);
+    return BLEND_PRE(JOIN(255, rasterToByte(r), rasterToByte(g), rasterToByte(b)), s, o.a);
 }
 
 static inline uint32_t opBlendColor(uint32_t s, uint32_t d)
 {
     auto o = BLEND_UPRE(d);
 
-    float sh, ss, dl;
-    rasterRGB2HSL(C1(s), C2(s), C3(s), &sh, &ss, 0);
-    rasterRGB2HSL(o.r, o.g, o.b, 0, 0, &dl);
+    auto r = C1(s) / 255.0f, g = C2(s) / 255.0f, b = C3(s) / 255.0f;
+    auto dr = o.r / 255.0f, dg = o.g / 255.0f, db = o.b / 255.0f;
+    rasterSetLum(r, g, b, rasterLum(dr, dg, db));
 
-    uint8_t r, g, b;
-    hsl2rgb(sh, ss, dl, r, g, b);
-
-    return BLEND_PRE(JOIN(255, r, g, b), s, o.a);
+    return BLEND_PRE(JOIN(255, rasterToByte(r), rasterToByte(g), rasterToByte(b)), s, o.a);
 }
 
 static inline uint32_t opBlendLuminosity(uint32_t s, uint32_t d)
 {
     auto o = BLEND_UPRE(d);
 
-    float dh, ds, sl;
-    rasterRGB2HSL(C1(s), C2(s), C3(s), 0, 0, &sl);
-    rasterRGB2HSL(o.r, o.g, o.b, &dh, &ds, 0);
+    auto r = o.r / 255.0f, g = o.g / 255.0f, b = o.b / 255.0f;
+    rasterSetLum(r, g, b, rasterLum(C1(s) / 255.0f, C2(s) / 255.0f, C3(s) / 255.0f));
 
-    uint8_t r, g, b;
-    hsl2rgb(dh, ds, sl, r, g, b);
-
-    return BLEND_PRE(JOIN(255, r, g, b), s, o.a);
+    return BLEND_PRE(JOIN(255, rasterToByte(r), rasterToByte(g), rasterToByte(b)), s, o.a);
 }
 
 int64_t mathMultiply(int64_t a, int64_t b);
