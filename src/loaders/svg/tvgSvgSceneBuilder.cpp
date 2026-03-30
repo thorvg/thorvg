@@ -76,17 +76,13 @@ static LinearGradient* _applyLinearGradientProperty(SvgStyleGradient* g, const B
     if (isTransform) finalTransform = *g->transform;
 
     if (g->userSpace) {
-        g->linear.x1 = g->linear.x1 * vBox.w;
-        g->linear.y1 = g->linear.y1 * vBox.h;
-        g->linear.x2 = g->linear.x2 * vBox.w;
-        g->linear.y2 = g->linear.y2 * vBox.h;
+        fillGrad->linear(g->linear.x1 * vBox.w, g->linear.y1 * vBox.h, g->linear.x2 * vBox.w, g->linear.y2 * vBox.h);
     } else {
         Matrix m = {vBox.w, 0, vBox.x, 0, vBox.h, vBox.y, 0, 0, 1};
         if (isTransform) _transformMultiply(&m, &finalTransform);
         else finalTransform = m;
+        fillGrad->linear(g->linear.x1, g->linear.y1, g->linear.x2, g->linear.y2);
     }
-
-    fillGrad->linear(g->linear.x1, g->linear.y1, g->linear.x2, g->linear.y2);
     fillGrad->spread(g->spread);
 
     //Update the stops
@@ -124,19 +120,14 @@ static RadialGradient* _applyRadialGradientProperty(SvgStyleGradient* g, const B
     if (g->userSpace) {
         //The radius scaling is done according to the Units section:
         //https://www.w3.org/TR/2015/WD-SVG2-20150915/coords.html
-        g->radial.cx = g->radial.cx * vBox.w;
-        g->radial.cy = g->radial.cy * vBox.h;
-        g->radial.r = g->radial.r * sqrtf(powf(vBox.w, 2.0f) + powf(vBox.h, 2.0f)) / sqrtf(2.0f);
-        g->radial.fx = g->radial.fx * vBox.w;
-        g->radial.fy = g->radial.fy * vBox.h;
-        g->radial.fr = g->radial.fr * sqrtf(powf(vBox.w, 2.0f) + powf(vBox.h, 2.0f)) / sqrtf(2.0f);
+        auto diag = sqrtf(powf(vBox.w, 2.0f) + powf(vBox.h, 2.0f)) / sqrtf(2.0f);
+        fillGrad->radial(g->radial.cx * vBox.w, g->radial.cy * vBox.h, g->radial.r * diag, g->radial.fx * vBox.w, g->radial.fy * vBox.h, g->radial.fr * diag);
     } else {
         Matrix m = {vBox.w, 0, vBox.x, 0, vBox.h, vBox.y, 0, 0, 1};
         if (isTransform) _transformMultiply(&m, &finalTransform);
         else finalTransform = m;
+        fillGrad->radial(g->radial.cx, g->radial.cy, g->radial.r, g->radial.fx, g->radial.fy, g->radial.fr);
     }
-
-    fillGrad->radial(g->radial.cx, g->radial.cy, g->radial.r, g->radial.fx, g->radial.fy, g->radial.fr);
     fillGrad->spread(g->spread);
 
     //Update the stops
@@ -1042,6 +1033,20 @@ static void _loadFonts(Array<FontFace>& fonts)
     }
 }
 
+static bool _hasUserSpaceGradients(SvgParserContext& ctx)
+{
+    ARRAY_FOREACH(p, ctx.gradients) {
+        if ((*p)->userSpace) return true;
+    }
+    if (ctx.def) {
+        ARRAY_FOREACH(p, ctx.def->node.defs.gradients) {
+            if ((*p)->userSpace) return true;
+        }
+    }
+    return false;
+}
+
+
 /************************************************************************/
 /* External Class Implementation                                        */
 /************************************************************************/
@@ -1056,7 +1061,16 @@ Scene* svgSceneBuild(SvgParserContext& ctx, Box vBox, float w, float h, AspectRa
 
     auto docNode = _sceneBuildHelper(ctx, ctx.doc, vBox, svgPath, false, 0);
 
-    if (!(viewFlag & SvgViewFlag::Viewbox)) _updateInvalidViewSize(docNode, vBox, w, h, viewFlag);
+    if (!(viewFlag & SvgViewFlag::Viewbox)) {
+        auto prevW = vBox.w, prevH = vBox.h;
+        _updateInvalidViewSize(docNode, vBox, w, h, viewFlag);
+        if ((!tvg::equal(vBox.w, prevW) || !tvg::equal(vBox.h, prevH)) && _hasUserSpaceGradients(ctx)) {
+            Paint::rel(docNode);
+            ARRAY_FOREACH(p, ctx.images) tvg::free(*p);
+            ctx.images.clear();
+            docNode = _sceneBuildHelper(ctx, ctx.doc, vBox, svgPath, false, 0);
+        }
+    }
 
     if (!tvg::equal(w, vBox.w) || !tvg::equal(h, vBox.h)) {
         Matrix m = _calculateAspectRatioMatrix(align, meetOrSlice, w, h, vBox);
