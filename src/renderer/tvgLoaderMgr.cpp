@@ -392,7 +392,7 @@ tvg::Loader* LoaderMgr::loader(const char* name, const char* data, uint32_t size
     // TODO: add check for mimetype ?
     if (auto loader = font(name)) return loader;
 
-    // function is dedicated for ttf loader (the only supported font loader)
+    // function is dedicated for SFNT-based font loading
     auto loader = new SfntLoader;
     if (loader->open(data, size, ops, copy)) {
         loader->name = duplicate(name);
