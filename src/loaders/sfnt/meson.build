@@ -12,6 +12,13 @@ if ttf_loader
     ]
 endif
 
+if otf_loader
+    source_file += [
+        'tvgOtfReader.h',
+        'tvgOtfReader.cpp'
+    ]
+endif
+
 subloader_dep += [declare_dependency(
     include_directories : include_directories('.'),
     sources : source_file
