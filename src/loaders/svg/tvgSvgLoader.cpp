@@ -304,6 +304,35 @@ static constexpr struct
 _PARSE_TAG(FillRule, fillRule, FillRule, fillRuleTags, FillRule::NonZero)
 
 
+/* parse the blend mode applied to an element.
+ * https://www.w3.org/TR/compositing-1/#mix-blend-mode
+ */
+static constexpr struct
+{
+    BlendMethod blendMode;
+    const char* tag;
+} blendModeTags[] = {
+    { BlendMethod::Multiply,   "multiply" },
+    { BlendMethod::Screen,     "screen" },
+    { BlendMethod::Overlay,    "overlay" },
+    { BlendMethod::Darken,     "darken" },
+    { BlendMethod::Lighten,    "lighten" },
+    { BlendMethod::ColorDodge, "color-dodge" },
+    { BlendMethod::ColorBurn,  "color-burn" },
+    { BlendMethod::HardLight,  "hard-light" },
+    { BlendMethod::SoftLight,  "soft-light" },
+    { BlendMethod::Difference, "difference" },
+    { BlendMethod::Exclusion,  "exclusion" },
+    { BlendMethod::Hue,        "hue" },
+    { BlendMethod::Saturation, "saturation" },
+    { BlendMethod::Color,      "color" },
+    { BlendMethod::Luminosity, "luminosity" }
+};
+
+
+_PARSE_TAG(BlendMethod, blendMode, BlendMode, blendModeTags, BlendMethod::Normal)
+
+
 /* parse the dash pattern used during stroking a path.
  * Value:   none | <dasharray> | inherit
  * Initial:    none
@@ -1022,6 +1051,12 @@ static void _handlePaintOrderAttr(TVG_UNUSED SvgParserContext* ctx, SvgNode* nod
     node->style->paintOrder = _toPaintOrder(value);
 }
 
+static void _handleMixBlendModeAttr(TVG_UNUSED SvgParserContext* ctx, SvgNode* node, const char* value)
+{
+    node->style->blendMode = _toBlendMode(value);
+    node->style->flags |= SvgStyleFlags::BlendMode;
+}
+
 static void _handleCssClassAttr(SvgParserContext* ctx, SvgNode* node, const char* value)
 {
     auto cssClass = &node->style->cssClass;
@@ -1064,7 +1099,8 @@ static constexpr struct
     STYLE_DEF(mask-type, MaskType, SvgStyleFlags::MaskType),
     STYLE_DEF(display, Display, SvgStyleFlags::Display),
     STYLE_DEF(paint-order, PaintOrder, SvgStyleFlags::PaintOrder),
-    STYLE_DEF(filter, Filter, SvgStyleFlags::Filter)
+    STYLE_DEF(filter, Filter, SvgStyleFlags::Filter),
+    STYLE_DEF(mix-blend-mode, MixBlendMode, SvgStyleFlags::BlendMode)
 };
 
 
@@ -2864,6 +2900,7 @@ static void _styleCopy(SvgStyleProperty* to, const SvgStyleProperty* from)
     if (from->flags & SvgStyleFlags::Opacity) to->opacity = from->opacity;
     if (from->flags & SvgStyleFlags::PaintOrder) to->paintOrder = from->paintOrder;
     if (from->flags & SvgStyleFlags::Display) to->display = from->display;
+    if (from->flags & SvgStyleFlags::BlendMode) to->blendMode = from->blendMode;
 
     //Fill
     to->fill.flags = (to->fill.flags | from->fill.flags);
