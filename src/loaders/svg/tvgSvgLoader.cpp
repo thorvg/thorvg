@@ -305,9 +305,6 @@ _PARSE_TAG(FillRule, fillRule, FillRule, fillRuleTags, FillRule::NonZero)
 
 
 /* parse the blend mode applied to an element.
- * Value:   normal | multiply | screen | overlay | darken | lighten | color-dodge | color-burn |
- *          hard-light | soft-light | difference | exclusion | hue | saturation | color | luminosity
- * Initial:    normal
  * https://www.w3.org/TR/compositing-1/#mix-blend-mode
  */
 static constexpr struct
