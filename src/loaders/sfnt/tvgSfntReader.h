@@ -86,6 +86,11 @@ protected:
         return (base[0] << 24 | base[1] << 16 | base[2] << 8 | base[3]);
     }
 
+    uint32_t i32(uint32_t offset) const
+    {
+        return (int32_t)u32(offset);
+    }
+
     uint16_t u16(uint32_t offset) const
     {
         auto base = data + offset;

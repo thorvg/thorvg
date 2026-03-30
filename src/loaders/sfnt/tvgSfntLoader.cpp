@@ -28,6 +28,10 @@
     #include "tvgTtfReader.h"
 #endif
 
+#ifdef THORVG_OTF_LOADER_SUPPORT
+    #include "tvgOtfReader.h"
+#endif
+
 #if defined(__linux__)
     #include <fcntl.h>
     #include <unistd.h>
@@ -492,7 +496,11 @@ SfntReader* SfntLoader::gen(uint8_t* data, uint32_t size)
         TVGLOG("SFNT", "TrueType (TTF) is not supported");
 #endif
     } else if (type == 0x4F54544F) {  // otf (OTTO)
+#ifdef THORVG_OTF_LOADER_SUPPORT
+        return new OtfReader(data, size);
+#else
         TVGLOG("SFNT", "OpenType (OTF) is not supported");
+#endif
     } else {
         TVGERR("SFNT", "Invalid SFNT format!");
     }
