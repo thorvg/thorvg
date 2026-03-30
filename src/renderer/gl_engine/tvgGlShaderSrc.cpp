@@ -21,8 +21,11 @@
  */
 
 #include "tvgGlShaderSrc.h"
+#include "tvgGlCommon.h"
 
 #define TVG_COMPOSE_SHADER(shader) #shader
+#define TVG_STRINGIFY_IMPL(v) #v
+#define TVG_STRINGIFY(v) TVG_STRINGIFY_IMPL(v)
 
 const char* COLOR_VERT_SHADER = TVG_COMPOSE_SHADER(
     uniform float uDepth;                                           \n
@@ -359,6 +362,66 @@ const char* IMAGE_FRAG_SHADER = TVG_COMPOSE_SHADER(
         }                                                                                   \n
         FragColor = result * float(uColorInfo.opacity) / 255.0;                             \n
    }                                                                                        \n
+);
+
+const char* IMAGE_BATCH_VERT_SHADER =
+    "const int TVG_IMAGE_BATCH_MAX = " TVG_STRINGIFY(TVG_GL_IMAGE_BATCH_MAX_DRAWS) ";        \n"
+    TVG_COMPOSE_SHADER(
+    uniform float uDepth;                                                                    \n
+    uniform mat3 uViewMatrix;                                                                \n
+    layout(location = 0) in vec2 aLocation;                                                  \n
+    layout(location = 1) in vec2 aUV;                                                        \n
+    layout(location = 2) in float aDrawId;                                                   \n
+    flat out int vDrawId;                                                                    \n
+    out vec2 vUV;                                                                            \n
+    struct ImageDraw {                                                                       \n
+        ivec4 colorInfo;                                                                     \n
+    };                                                                                       \n
+    layout(std140) uniform ImageBatch {                                                      \n
+        ImageDraw draws[TVG_IMAGE_BATCH_MAX];                                                \n
+    } uImageBatch;                                                                           \n
+                                                                                             \n
+    void main()                                                                              \n
+    {                                                                                        \n
+        vDrawId = int(aDrawId);                                                              \n
+        vUV = aUV;                                                                           \n
+        vec3 pos = uViewMatrix * vec3(aLocation, 1.0);                                       \n
+        gl_Position = vec4(pos.xy, uDepth, 1.0);                                             \n
+    }                                                                                        \n
+);
+
+const char* IMAGE_BATCH_FRAG_SHADER =
+    "const int TVG_IMAGE_BATCH_MAX = " TVG_STRINGIFY(TVG_GL_IMAGE_BATCH_MAX_DRAWS) ";        \n"
+    TVG_COMPOSE_SHADER(
+    struct ImageDraw {                                                                       \n
+        ivec4 colorInfo;                                                                     \n
+    };                                                                                       \n
+    layout(std140) uniform ImageBatch {                                                      \n
+        ImageDraw draws[TVG_IMAGE_BATCH_MAX];                                                \n
+    } uImageBatch;                                                                           \n
+    uniform sampler2D uTexture;                                                              \n
+    flat in int vDrawId;                                                                     \n
+    in vec2 vUV;                                                                             \n
+    out vec4 FragColor;                                                                      \n
+                                                                                             \n
+    void main()                                                                              \n
+    {                                                                                        \n
+        ivec4 info = uImageBatch.draws[vDrawId].colorInfo;                                   \n
+        vec2 uv = vUV;                                                                       \n
+        if (info.y == 1) { uv.y = 1.0 - uv.y; }                                              \n
+        vec4 color = texture(uTexture, uv);                                                  \n
+        vec4 result;                                                                         \n
+        if (info.x == 0) { /* FMT_ABGR8888 */                                                \n
+            result = color;                                                                  \n
+        } else if (info.x == 1) { /* FMT_ARGB8888 */                                         \n
+            result = color.bgra;                                                             \n
+        } else if (info.x == 2) { /* FMT_ABGR8888S */                                        \n
+            result = vec4(color.rgb * color.a, color.a);                                     \n
+        } else if (info.x == 3) { /* FMT_ARGB8888S */                                        \n
+            result = vec4(color.bgr * color.a, color.a);                                     \n
+        }                                                                                    \n
+        FragColor = result * float(info.z) / 255.0;                                          \n
+    }                                                                                         \n
 );
 
 const char* MASK_VERT_SHADER = TVG_COMPOSE_SHADER(
@@ -1277,3 +1340,5 @@ void main()
 )";
 
 #undef TVG_COMPOSE_SHADER
+#undef TVG_STRINGIFY
+#undef TVG_STRINGIFY_IMPL
