@@ -28,6 +28,10 @@
     #include "tvgTtfReader.h"
 #endif
 
+#ifdef THORVG_OTF_LOADER_SUPPORT
+    #include "tvgOtfReader.h"
+#endif
+
 #if defined(__linux__)
     #include <fcntl.h>
     #include <unistd.h>
@@ -492,7 +496,11 @@ SfntReader* SfntLoader::gen(uint8_t* data, uint32_t size)
         TVGLOG("SFNT", "TrueType (TTF) is not supported");
 #endif
     } else if (type == 0x4F54544F) {  // otf (OTTO)
+#ifdef THORVG_OTF_LOADER_SUPPORT
+        return new OtfReader(data, size);
+#else
         TVGLOG("SFNT", "OpenType (OTF) is not supported");
+#endif
     } else {
         TVGERR("SFNT", "Invalid SFNT format!");
     }
@@ -606,11 +614,22 @@ bool SfntLoader::metrics(const FontMetrics& fm, const char* ch, GlyphMetrics& ou
     if (!glyph) return false;
 
     auto scale = (fm.fontSize * FontLoader::DPI) / reader->metrics.unitsPerEm;
-
     out.advance = glyph->advance * scale;
     out.bearing = glyph->lsb * scale;
-    out.min = Point{glyph->x, glyph->y} * scale;
-    out.max = Point{glyph->w + glyph->x - 1, glyph->h + glyph->y - 1} * scale;
 
+    // the designated glyph metrics
+    if (glyph->w > 0.0f || glyph->h > 0.0f) {
+        out.min = Point{glyph->x, glyph->y} * scale;
+        out.max = Point{glyph->w + glyph->x - 1, glyph->h + glyph->y - 1} * scale;
+    // if no info, calculate it manually (for OTF)
+    } else {
+        BBox bbox;
+        glyph->path.bounds(nullptr, bbox);
+        auto temp = bbox.min.y;
+        bbox.min.y = -bbox.max.y;
+        bbox.max.y = -temp;
+        out.min = bbox.min * scale;
+        out.max = bbox.max * scale;
+    }
     return true;
 }
