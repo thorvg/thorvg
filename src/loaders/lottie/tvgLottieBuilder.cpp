@@ -1184,6 +1184,43 @@ static void _commit(LottieGlyph* glyph, Shape* shape, const RenderText& ctx)
     ctx.textScene->add(shape);
 }
 
+static LottieGlyph* _searchGlyph(const LottieFont* font, const char* p, const TextDocument& doc, float& capScale)
+{
+    capScale = 1.0f;
+    auto outCode = p;
+
+    // SmallCaps: lowercase letters are converted to uppercase with 70% scale
+    if ((unsigned char)*p < 0x80 && doc.caps) {
+        if (*p >= 'a' && *p <= 'z') {
+            char capCode = *p + 'A' - 'a';
+            outCode = &capCode;
+            if (doc.caps == 2) capScale = 0.7f;
+        }
+    }
+
+    // search for matching glyph in font
+    ARRAY_FOREACH(g, font->chars)
+    {
+        auto glyph = *g;
+        if (!strncmp(glyph->code, outCode, glyph->len)) return glyph;
+    }
+    return nullptr;
+}
+
+static float _nextWordWidth(const LottieText* text, const TextDocument& doc, const char* p)
+{
+    float w = 0.0f;
+    // accumulate width until space, carriage return (13), or end-of-text (3)
+    while (*p && *p != ' ' && (unsigned char)*p != 13 && (unsigned char)*p != 3) {
+        float capScale;
+        auto glyph = _searchGlyph(text->font, p, doc, capScale);
+        if (glyph) {
+            w += (glyph->width + doc.tracking) * capScale;
+            p += glyph->len;
+        } else ++p;
+    }
+    return w;
+}
 
 void LottieBuilder::updateLocalFont(LottieLayer* layer, float frameNo, LottieText* text, const TextDocument& doc)
 {
@@ -1229,8 +1266,14 @@ void LottieBuilder::updateLocalFont(LottieLayer* layer, float frameNo, LottieTex
             continue;
         }
         if (*ctx.p == ' ') {
+            // if next word overflows the box, break at this space
+            if (doc.bbox.size.x > 0.0f && (ctx.cursor.x + _nextWordWidth(text, doc, ctx.p + 1)) * ctx.scale >= doc.bbox.size.x) {
+                ++ctx.p;
+                lineWrapped = true;
+                continue;
+            }
             ++ctx.space;
-            //new text group, single scene for each word
+            // new text group, single scene for each word
             if (text->alignOp.group == LottieText::AlignOption::Group::Word) {
                 ctx.textScene->add(ctx.lineScene);
                 ctx.lineScene = Scene::gen();
@@ -1239,45 +1282,27 @@ void LottieBuilder::updateLocalFont(LottieLayer* layer, float frameNo, LottieTex
         }
         /* all lowercase letters are converted to uppercase in the "t" text field, making the "ca" value irrelevant, thus AllCaps is nothing to do.
            So only convert lowercase letters to uppercase (for 'SmallCaps' an extra scaling factor applied) */
-        ctx.capScale = 1.0f;
-        auto code = ctx.p;
-        char capCode;
-        if ((unsigned char)(ctx.p[0]) < 0x80 && doc.caps) {
-            if (*ctx.p >= 'a' && *ctx.p <= 'z') {
-                capCode = *ctx.p + 'A' - 'a';
-                code = &capCode;
-                if (doc.caps == 2) ctx.capScale = 0.7f;
+        auto glyph = _searchGlyph(text->font, ctx.p, doc, ctx.capScale);
+
+        // draw matched glyphs
+        if (glyph) {
+            if (text->alignOp.group == LottieText::AlignOption::Group::Chars || text->alignOp.group == LottieText::AlignOption::Group::All) {
+                ctx.textScene->add(ctx.lineScene);
+                ctx.lineScene = Scene::gen();
+                ctx.lineScene->translate(ctx.cursor.x, ctx.cursor.y);
             }
-        }
-        // text building
-        auto found = false;
-        ARRAY_FOREACH(g, text->font->chars) {
-            auto glyph = *g;
-            //draw matched glyphs
-            if (!strncmp(glyph->code, code, glyph->len)) {
-                //new text group, single scene for each characters
-                if (text->alignOp.group == LottieText::AlignOption::Group::Chars || text->alignOp.group == LottieText::AlignOption::Group::All) {
-                    ctx.textScene->add(ctx.lineScene);
-                    ctx.lineScene = Scene::gen();
-                    ctx.lineScene->translate(ctx.cursor.x, ctx.cursor.y);
-                }
-                auto shape = textShape(text, frameNo, doc, glyph, ctx);
-                if (!updateTextRange(text, frameNo, shape, doc, ctx)) _commit(glyph, shape, ctx);
-                if (doc.bbox.size.x > 0.0f && ctx.cursor.x * ctx.scale >= doc.bbox.size.x) lineWrapped = true;
-                else ctx.cursor.x += (glyph->width + doc.tracking) * ctx.capScale;
-                ctx.p += glyph->len;
-                ctx.idx += glyph->len;
-                found = true;
-                break;
-            }
-        }
-        if (!found) {
+            auto shape = textShape(text, frameNo, doc, glyph, ctx);
+            if (!updateTextRange(text, frameNo, shape, doc, ctx)) _commit(glyph, shape, ctx);
+            if (doc.bbox.size.x > 0.0f && ctx.cursor.x * ctx.scale >= doc.bbox.size.x) lineWrapped = true;
+            else ctx.cursor.x += (glyph->width + doc.tracking) * ctx.capScale;
+            ctx.p += glyph->len;
+            ctx.idx += glyph->len;
+        } else {
             ++ctx.p;
             ++ctx.idx;
         }
     }
 }
-
 
 void LottieBuilder::updateText(LottieLayer* layer, float frameNo)
 {
