@@ -1107,6 +1107,11 @@ bool LottieBuilder::updateTextRange(LottieText* text, float frameNo, Shape* shap
         auto pivot = align * -1;
         transform.e13 += (pivot.x * transform.e11 + pivot.x * transform.e12);
         transform.e23 += (pivot.y * transform.e21 + pivot.y * transform.e22);
+
+        //world space translation
+        transform.e13 += translation.x / ctx.scale;
+        transform.e23 += translation.y / ctx.scale;
+
         ctx.lineScene->transform(transform);
     }
     auto& matrix = shape->transform();
