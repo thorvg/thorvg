@@ -360,9 +360,9 @@ struct LottieTextRange : LottieObject
     LottieFloat maxEase = 0.0f;
     LottieFloat minEase = 0.0f;
     LottieFloat maxAmount = 0.0f;
-    LottieFloat smoothness = 0.0f;
+    LottieFloat smoothness = 100.0f;
     LottieFloat start = 0.0f;
-    LottieFloat end = FLT_MAX;
+    LottieFloat end = 100.0f;
     LottieInterpolator* interpolator = nullptr;
     Based based = Chars;
     Shape shape = Square;
