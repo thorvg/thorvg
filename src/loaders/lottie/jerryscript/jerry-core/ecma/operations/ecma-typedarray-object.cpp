@@ -152,6 +152,7 @@ ecma_typedarray_get_float_element (lit_utf8_byte_t *src) /**< the location in th
   return ecma_make_number_value ((ecma_value_t)num);
 } /* ecma_typedarray_get_float_element */
 
+#if JERRY_NUMBER_TYPE_FLOAT64
 /**
  * Read a double value from the given arraybuffer
  */
@@ -162,6 +163,7 @@ ecma_typedarray_get_double_element (lit_utf8_byte_t *src) /**< the location in t
   ECMA_TYPEDARRAY_GET_ELEMENT (src, num, double);
   return ecma_make_number_value (num);
 } /* ecma_typedarray_get_double_element */
+#endif /* JERRY_NUMBER_TYPE_FLOAT64 */
 
 #if JERRY_BUILTIN_BIGINT
 /**
@@ -306,7 +308,7 @@ ecma_typedarray_set_uint8_clamped_element (lit_utf8_byte_t *dst_p, /**< the loca
   {
     clamped = (uint8_t) result_num;
 
-    if (clamped + 0.5 < result_num || (clamped + 0.5 == result_num && (clamped % 2) == 1))
+    if (clamped + (ecma_number_t) 0.5f < result_num || (clamped + (ecma_number_t) 0.5f == result_num && (clamped % 2) == 1))
     {
       clamped++;
     }
@@ -1646,7 +1648,7 @@ ecma_op_create_typedarray (const ecma_value_t *arguments_list_p, /**< the arg li
 
     JERRY_ASSERT (num >= 0 && num <= ECMA_NUMBER_MAX_SAFE_INTEGER);
 
-    if (num > UINT32_MAX)
+    if (num > (ecma_number_t)UINT32_MAX)
     {
 #if JERRY_ERROR_MESSAGES
       return ecma_raise_standard_error_with_format (JERRY_ERROR_RANGE,
@@ -1713,7 +1715,7 @@ ecma_op_create_typedarray (const ecma_value_t *arguments_list_p, /**< the arg li
     return ecma_raise_type_error (ECMA_ERR_ARRAYBUFFER_IS_DETACHED);
   }
 
-  if (offset > UINT32_MAX)
+  if (offset > (ecma_number_t) UINT32_MAX)
   {
     return ecma_raise_range_error (ECMA_ERR_INVALID_LENGTH);
   }

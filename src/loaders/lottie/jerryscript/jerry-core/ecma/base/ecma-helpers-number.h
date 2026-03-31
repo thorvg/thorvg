@@ -103,7 +103,7 @@ ecma_number_t ecma_number_create (bool sign, uint32_t biased_exp, uint64_t fract
 #if JERRY_NUMBER_TYPE_FLOAT64
 #define ECMA_NUMBER_SIGN_BIT 0x8000000000000000ull
 #else /* !JERRY_NUMBER_TYPE_FLOAT64 */
-#define ECMA_NUMBER_SIGN_BIT 0x7f800000u
+#define ECMA_NUMBER_SIGN_BIT 0x80000000u
 #endif /* !JERRY_NUMBER_TYPE_FLOAT64 */
 
 /**

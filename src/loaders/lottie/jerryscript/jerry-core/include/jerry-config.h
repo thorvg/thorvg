@@ -151,10 +151,10 @@
  *  1: use 64-bit floating point number mode
  *  0: use 32-bit floating point number mode
  *
- * Default value: 1
+ * Default value: 0
  */
 #ifndef JERRY_NUMBER_TYPE_FLOAT64
-#define JERRY_NUMBER_TYPE_FLOAT64 1
+#define JERRY_NUMBER_TYPE_FLOAT64 0
 #endif /* !defined (JERRY_NUMBER_TYPE_FLOAT64 */
 
 /**
