@@ -428,7 +428,7 @@ ecma_builtin_array_prototype_object_push (const ecma_value_t *argument_list_p, /
 {
   if (ecma_op_object_is_fast_array (obj_p))
   {
-    if ((ecma_number_t) (length + arguments_number) > UINT32_MAX)
+    if (length  > (ecma_length_t)(UINT32_MAX - arguments_number))
     {
       return ecma_raise_range_error (ECMA_ERR_INVALID_ARRAY_LENGTH);
     }

@@ -200,10 +200,10 @@ ecma_builtin_number_prototype_object_to_string (ecma_number_t this_arg_number, /
   uint8_t *integer_cursor_p = integer_digits + NUMBER_TO_STRING_MAX_DIGIT_COUNT;
   uint8_t *fraction_cursor_p = fraction_digits;
 
-  if (fraction_part > 0.0)
+  if (fraction_part > (ecma_number_t) 0.0f)
   {
     uint8_t digit;
-    ecma_number_t precision = (ecma_number_get_next (this_arg_number) - this_arg_number) * 0.5;
+    ecma_number_t precision = (ecma_number_get_next (this_arg_number) - this_arg_number) * (ecma_number_t) 0.5f;
     precision = JERRY_MAX (precision, ECMA_NUMBER_MIN_VALUE);
 
     do
@@ -225,7 +225,7 @@ ecma_builtin_number_prototype_object_to_string (ecma_number_t this_arg_number, /
     } while (fraction_part >= precision);
 
     /* Round to even */
-    if (fraction_part > 0.5 || (fraction_part == 0.5 && (digit & 1) != 0))
+    if (fraction_part > (ecma_number_t) 0.5f || (fraction_part == (ecma_number_t) 0.5f && (digit & 1) != 0))
     {
       /* Add carry and remove overflowing trailing digits */
       while (true)

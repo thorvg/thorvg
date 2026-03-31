@@ -236,7 +236,11 @@ ecma_builtin_math_object_trunc (ecma_number_t arg)
     return (ecma_number_t) -0.0;
   }
 
-  return (ecma_number_t) arg - fmod (arg, 1);
+#if JERRY_NUMBER_TYPE_FLOAT64
+  return arg - (ecma_number_t) fmod (arg, 1.0);
+#else /* !JERRY_NUMBER_TYPE_FLOAT64 */
+  return arg - (ecma_number_t) fmodf (arg, 1.0f);
+#endif /* JERRY_NUMBER_TYPE_FLOAT64 */
 } /* ecma_builtin_math_object_trunc */
 
 /**
