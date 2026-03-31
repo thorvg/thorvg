@@ -28,13 +28,9 @@
 #ifdef _WIN32
     #define WIN32_LEAN_AND_MEAN
     #include <windows.h>
-    #ifndef PATH_MAX
-        #define PATH_MAX MAX_PATH
-    #endif
 #else
     #include <dirent.h>
     #include <unistd.h>
-    #include <limits.h>
     #include <sys/stat.h>
 #endif
 
@@ -44,8 +40,11 @@ using namespace tvg;
 
 struct App
 {
+public:
+   ~App() { free(full); }  // free realpath() or _fullpath()
+
 private:
-   char full[PATH_MAX];    //full path
+   char* full = nullptr;  // full path
    uint32_t fps = 30;
    uint32_t width = 600;
    uint32_t height = 600;
@@ -111,11 +110,13 @@ private:
 
    const char* realPath(const char* path)
    {
+      free(full);  // free previous if exist
 #ifdef _WIN32
-      return _fullpath(full, path, PATH_MAX);
+      full = _fullpath(NULL, path, 0);  // malloc() inside; free() in destructor
 #else
-      return realpath(path, full);
+      full = realpath(path, NULL);  // malloc() inside; free() in destructor
 #endif
+      return full;
    }
 
    bool isDirectory(const char* path)
