@@ -197,12 +197,6 @@ uint32_t TtfReader::outlineOffset(uint32_t glyph)
 {
     uint32_t cur, next;
 
-    auto loca = this->loca.load();
-    if (loca == 0) this->loca = loca = table("loca");
-
-    auto glyf = this->glyf.load();
-    if (glyf == 0) this->glyf = glyf = table("glyf");
-
     if (metrics.locaFormat == 0) {
         auto base = loca + 2 * glyph;
         if (!validate(base, 4)) {
@@ -308,14 +302,14 @@ bool TtfReader::header()
 
     //header
     auto head = table("head");
-    if (!validate(head, 54)) return false;
+    if (!head || !validate(head, 54)) return false;
 
     metrics.unitsPerEm = _u16(data, head + 18);
     metrics.locaFormat = _u16(data, head + 50);
 
-    //horizontal metrics
+    //horizontal header
     auto hhea = table("hhea");
-    if (!validate(hhea, 36)) return false;
+    if (!hhea || !validate(hhea, 36)) return false;
 
     metrics.hhea.ascent = _i16(data, hhea + 4);
     metrics.hhea.descent = _i16(data, hhea + 6);
@@ -323,12 +317,31 @@ bool TtfReader::header()
     metrics.hhea.advance = metrics.hhea.ascent - metrics.hhea.descent + metrics.hhea.linegap;
     metrics.numHmtx = _u16(data, hhea + 34);
 
-    //kerning
-    auto kern = this->kern = table("kern");
+    maxp = table("maxp");
+    if (!maxp || !validate(maxp, 6)) return false;
+
+    // glyph outlines count
+    auto glyphs = _u16(data, maxp + 4);
+    if (glyphs == 0) return false;
+
+    // horizontal metrics count
+    auto hmtxs = _u16(data, hhea + 34);
+    if (hmtxs == 0 || hmtxs > glyphs) return false;
+
+    cmap = table("cmap");
+    if (!cmap || !validate(cmap, 4)) return false;
+
+    kern = table("kern");
     if (kern) {
         if (!validate(kern, 4)) return false;
         if (_u16(data, kern) != 0) return false;
     }
+
+    hmtx = table("hmtx");
+    loca = table("loca");
+    glyf = table("glyf");
+
+    if (!hmtx || !loca || !glyf) return false;
 
     return true;
 }
@@ -336,12 +349,6 @@ bool TtfReader::header()
 
 uint32_t TtfReader::glyph(uint32_t codepoint)
 {
-    auto cmap = this->cmap.load();
-    if (cmap == 0) {
-        this->cmap = cmap = table("cmap");
-        if (!validate(cmap, 4)) return -1;
-    }
-
     auto entryCnt = _u16(data, cmap + 2);
     if (!validate(cmap, 4 + entryCnt * 8)) return -1;
 
@@ -393,8 +400,6 @@ uint32_t TtfReader::glyph(uint32_t codepoint, TtfGlyphMetrics* tgm)
 uint32_t TtfReader::glyphMetrics(TtfGlyph& glyph)
 {
     //horizontal metrics
-    auto hmtx = this->hmtx.load();
-    if (hmtx == 0) this->hmtx = hmtx = table("hmtx");
 
     //glyph is inside long metrics segment.
     if (glyph.idx < metrics.numHmtx) {
@@ -449,8 +454,6 @@ bool TtfReader::convert(RenderPath& path, TtfGlyph& glyph, uint32_t glyphOffset,
     if (outlineCnt == 0) return false;
     if (outlineCnt < 0) {
         uint16_t maxComponentDepth = 1U;
-        auto maxp = this->maxp.load();
-        if (maxp == 0) this->maxp = maxp = table("maxp");
         if (validate(maxp, 32) && _u32(data, maxp) >= 0x00010000U) { // >= version 1.0
             maxComponentDepth = _u16(data, maxp + 30);
         }
@@ -582,8 +585,6 @@ bool TtfReader::kerning(uint32_t lglyph, uint32_t rglyph, Point& out)
     #define CROSS_STREAM_KERNING 0x04
 
     if (!kern) return false;
-
-    auto kern = this->kern.load();
 
     //kern tables
     auto tableCnt = _u16(data, kern + 2);
