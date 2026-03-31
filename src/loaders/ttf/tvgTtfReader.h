@@ -23,7 +23,6 @@
 #ifndef _TVG_TTF_READER_H
 #define _TVG_TTF_READER_H
 
-#include <atomic>
 #include "tvgRender.h"
 
 #define INVALID_GLYPH ((uint32_t)-1)
@@ -61,13 +60,12 @@ public:
     bool convert(RenderPath& path, TtfGlyph& glyph, uint32_t glyphOffset, const Point& offset, uint16_t depth);
 
 private:
-    //table offsets
-    atomic<uint32_t> cmap{};
-    atomic<uint32_t> hmtx{};
-    atomic<uint32_t> loca{};
-    atomic<uint32_t> glyf{};
-    atomic<uint32_t> kern{};
-    atomic<uint32_t> maxp{};
+    uint32_t cmap = 0;  // character map
+    uint32_t hmtx = 0;  // horizontal metrics
+    uint32_t loca = 0;  // index to location
+    uint32_t glyf = 0;  // glyph outlines
+    uint32_t kern = 0;  // kerning
+    uint32_t maxp = 0;  // maximum profile
 
     uint32_t cmap_12_13(uint32_t table, uint32_t codepoint, int which) const;
     uint32_t cmap_4(uint32_t table, uint32_t codepoint) const;
