@@ -627,7 +627,9 @@ ecma_utf8_string_to_number (const lit_utf8_byte_t *str_p, /**< utf-8 string */
   return ecma_number_create (sign, (uint32_t) binary_exponent, significand);
 #elif !JERRY_NUMBER_TYPE_FLOAT64
   /* Less precise conversion */
-  ecma_number_t num = (ecma_number_t) (uint32_t) fraction_uint64;
+  ecma_number_t num = (ecma_number_t) (uint32_t) significand;
+  bool e_sign = (decimal_exponent < 0);
+  int32_t e = e_sign ? -decimal_exponent : decimal_exponent;
 
   ecma_number_t m = e_sign ? (ecma_number_t) 0.1 : (ecma_number_t) 10.0;
 
