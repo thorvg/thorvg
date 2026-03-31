@@ -85,6 +85,7 @@ if lottie_loader
 endif
 
 if ttf_loader
+    config_h.set10('THORVG_SFNT_LOADER_SUPPORT', true)
     config_h.set10('THORVG_TTF_LOADER_SUPPORT', true)
 endif
 
