@@ -3090,24 +3090,27 @@ static void _clonePostponedNodes(Inlist<SvgNodeIdPair>* cloneNodes, SvgNode* doc
     }
 }
 
+static int _svgLoaderParserXmlTagName(const char* content, char* tagName, unsigned int tagNameSize)
+{
+    content = svgUtilSkipWhiteSpace(content, nullptr);
+    auto itr = content;
+    while (itr && *itr != '>') itr++;
+    if (!itr) return -1;
+
+    int sz = itr - content;
+    while ((sz > 0) && (isspace(content[sz - 1]))) sz--;
+    if ((unsigned int)sz >= tagNameSize) sz = tagNameSize - 1;
+    strncpy(tagName, content, sz);
+    tagName[sz] = '\0';
+    return sz;
+}
+
+
 static void _svgLoaderParserXmlClose(SvgParserContext* ctx, const char* content, unsigned int length)
 {
-    const char* itr = nullptr;
-    int sz = length;
     char tagName[20] = "";
-
-    content = svgUtilSkipWhiteSpace(content, nullptr);
-    itr = content;
-    while ((itr != nullptr) && *itr != '>') itr++;
-
-    if (itr) {
-        sz = itr - content;
-        while ((sz > 0) && (isspace(content[sz - 1]))) sz--;
-        if ((unsigned int)sz >= sizeof(tagName)) sz = sizeof(tagName) - 1;
-        strncpy(tagName, content, sz);
-        tagName[sz] = '\0';
-    }
-    else return;
+    auto sz = _svgLoaderParserXmlTagName(content, tagName, sizeof(tagName));
+    if (sz < 0) return;
 
     if (ctx->gradientStack.count > 0 && !ctx->gradientStack.last()) {
         ctx->gradientStack.pop();
