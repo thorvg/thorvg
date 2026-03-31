@@ -231,6 +231,7 @@ private:
     Array<GlCompositor*> mComposeStack;
     TextureMgr mTextures;
     GlSolidBatch mSolidBatch;
+    GlGradientAtlas mGradientAtlas;
 
     //Disposed resources. They should be released on synced call.
     struct {

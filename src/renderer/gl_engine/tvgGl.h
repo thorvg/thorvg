@@ -347,7 +347,7 @@
         //typedef void (*PFNGLCOPYTEXSUBIMAGE1DPROC)(GLenum target, GLint level, GLint xoffset, GLint x, GLint y, GLsizei width);
         //typedef void (*PFNGLCOPYTEXSUBIMAGE2DPROC)(GLenum target, GLint level, GLint xoffset, GLint yoffset, GLint x, GLint y, GLsizei width, GLsizei height);
         //typedef void (*PFNGLTEXSUBIMAGE1DPROC)(GLenum target, GLint level, GLint xoffset, GLsizei width, GLenum format, GLenum type, const void *pixels);
-        //typedef void (*PFNGLTEXSUBIMAGE2DPROC)(GLenum target, GLint level, GLint xoffset, GLint yoffset, GLsizei width, GLsizei height, GLenum format, GLenum type, const void *pixels);
+        typedef void (*PFNGLTEXSUBIMAGE2DPROC)(GLenum target, GLint level, GLint xoffset, GLint yoffset, GLsizei width, GLsizei height, GLenum format, GLenum type, const void *pixels);
         //typedef GLboolean (*PFNGLISTEXTUREPROC)(GLuint texture);
     #endif /* GL_VERSION_1_1 */
 
@@ -1243,7 +1243,7 @@
     //extern PFNGLCOPYTEXSUBIMAGE1DPROC glCopyTexSubImage1D;
     //extern PFNGLCOPYTEXSUBIMAGE2DPROC glCopyTexSubImage2D;
     //extern PFNGLTEXSUBIMAGE1DPROC     glTexSubImage1D;
-    //extern PFNGLTEXSUBIMAGE2DPROC     glTexSubImage2D;
+    extern PFNGLTEXSUBIMAGE2DPROC     glTexSubImage2D;
     //extern PFNGLISTEXTUREPROC         glIsTexture;
 
     //GL_VERSION_1_2
