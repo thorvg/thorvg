@@ -2,6 +2,7 @@
 # https://developer.android.com/ndk/guides/other_build_systems
 
 [binaries]
+c       = 'NDK/toolchains/llvm/prebuilt/HOST_TAG/bin/aarch64-linux-androidAPI-clang'
 cpp     = 'NDK/toolchains/llvm/prebuilt/HOST_TAG/bin/aarch64-linux-androidAPI-clang++'
 ar      = 'NDK/toolchains/llvm/prebuilt/HOST_TAG/bin/llvm-ar'
 as      = 'NDK/toolchains/llvm/prebuilt/HOST_TAG/bin/llvm-as'
@@ -12,8 +13,19 @@ strip   = 'NDK/toolchains/llvm/prebuilt/HOST_TAG/bin/llvm-strip'
 [properties]
 sys_root = 'NDK/toolchains/llvm/prebuilt/HOST_TAG/sysroot'
 
+[built-in options]
+c_args = ['-DANDROID=1', '-D__ANDROID__=1']
+cpp_args = ['-DANDROID=1', '-D__ANDROID__=1']
+cpp_link_args = ['-lGLESv3', '-Wl,-z,max-page-size=16384', '-Wl,-z,common-page-size=16384']
+
 [host_machine]
 system = 'android'
-cpu_family = 'arm'
+cpu_family = 'aarch64'
+cpu = 'aarch64'
+endian = 'little'
+
+[target_machine]
+system = 'android'
+cpu_family = 'aarch64'
 cpu = 'aarch64'
 endian = 'little'

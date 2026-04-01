@@ -1,6 +1,7 @@
 # build for the ios devices (Apple Silicon)
 
 [binaries]
+c   = ['clang', '-arch', 'arm64', '-isysroot', '/Applications/Xcode.app/Contents/Developer/Platforms/iPhoneOS.platform/Developer/SDKs/iPhoneOS.sdk']
 cpp = ['clang++', '-arch', 'arm64', '-isysroot', '/Applications/Xcode.app/Contents/Developer/Platforms/iPhoneOS.platform/Developer/SDKs/iPhoneOS.sdk']
 ar = 'ar'
 strip = 'strip'
@@ -16,6 +17,13 @@ cpp_link_args = ['-miphoneos-version-min=11.0']
 [host_machine]
 system = 'darwin'
 subsystem = 'ios'
+kernel = 'xnu'
+cpu_family = 'aarch64'
+cpu = 'aarch64'
+endian = 'little'
+
+[target_machine]
+system = 'ios'
 kernel = 'xnu'
 cpu_family = 'aarch64'
 cpu = 'aarch64'
