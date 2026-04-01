@@ -21,19 +21,16 @@
  */
 
 #include <iostream>
+#include <stdlib.h>
 #include <thread>
 #include <thorvg.h>
 #include <vector>
 #ifdef _WIN32
     #define WIN32_LEAN_AND_MEAN
     #include <windows.h>
-    #ifndef PATH_MAX
-        #define PATH_MAX MAX_PATH
-    #endif
 #else
     #include <dirent.h>
     #include <unistd.h>
-    #include <limits.h>
     #include <sys/stat.h>
 #endif
 #include "lodepng.h"
@@ -200,6 +197,8 @@ private:
 struct App
 {
 public:
+    ~App() { free(full); }  // free realpath() or _fullpath()
+
     int setup(int argc, char** argv)
     {
         vector<const char*> paths;
@@ -283,7 +282,7 @@ private:
     uint32_t bgColor = 0xffffffff;
     uint32_t width = 0;
     uint32_t height = 0;
-    char full[PATH_MAX];
+    char* full = nullptr;  // full path
 
 private:
     int help()
@@ -301,12 +300,13 @@ private:
     const char* realFile(const char* path)
     {
         //real path
+        free(full);  // free previous if exist
 #ifdef _WIN32
-        path = _fullpath(full, path, PATH_MAX);
+        full = _fullpath(NULL, path, 0);  // malloc() inside; free() in destructor
 #else
-        path = realpath(path, full);
+        full = realpath(path, NULL);  // malloc() inside; free() in destructor
 #endif
-        return path;
+        return full;
     }
 
     bool isDirectory(const char* path)
