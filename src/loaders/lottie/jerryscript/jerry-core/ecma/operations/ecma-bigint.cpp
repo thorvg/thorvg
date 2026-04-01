@@ -313,18 +313,10 @@ ecma_bigint_number_to_digits (ecma_number_t number, /**< ecma number */
     fraction >>= ECMA_NUMBER_FRACTION_WIDTH - biased_exp;
     digits_p[0] = (ecma_bigint_digit_t) fraction;
 
-#if JERRY_NUMBER_TYPE_FLOAT64
-    digits_p[1] = (ecma_bigint_digit_t) (fraction >> (8 * sizeof (ecma_bigint_digit_t)));
-    return ECMA_BIGINT_NUMBER_TO_DIGITS_SET_DIGITS (digits_p[1] == 0 ? 1 : 2) | has_fraction;
-#else /* !JERRY_NUMBER_TYPE_FLOAT64 */
     return ECMA_BIGINT_NUMBER_TO_DIGITS_SET_DIGITS (1) | has_fraction;
-#endif /* JERRY_NUMBER_TYPE_FLOAT64 */
   }
 
   digits_p[0] = (ecma_bigint_digit_t) fraction;
-#if JERRY_NUMBER_TYPE_FLOAT64
-  digits_p[1] = (ecma_bigint_digit_t) (fraction >> (8 * sizeof (ecma_bigint_digit_t)));
-#endif /* JERRY_NUMBER_TYPE_FLOAT64 */
 
   biased_exp -= ECMA_NUMBER_FRACTION_WIDTH;
 
@@ -333,27 +325,15 @@ ecma_bigint_number_to_digits (ecma_number_t number, /**< ecma number */
 
   if (shift_left == 0)
   {
-#if JERRY_NUMBER_TYPE_FLOAT64
-    return biased_exp | ECMA_BIGINT_NUMBER_TO_DIGITS_SET_DIGITS (2);
-#else /* !JERRY_NUMBER_TYPE_FLOAT64 */
     return biased_exp | ECMA_BIGINT_NUMBER_TO_DIGITS_SET_DIGITS (1);
-#endif /* JERRY_NUMBER_TYPE_FLOAT64 */
   }
 
   uint32_t shift_right = (1 << ECMA_BIGINT_DIGIT_SHIFT) - shift_left;
 
-#if JERRY_NUMBER_TYPE_FLOAT64
-  digits_p[2] = digits_p[1] >> shift_right;
-  digits_p[1] = (digits_p[1] << shift_left) | (digits_p[0] >> shift_right);
-  digits_p[0] <<= shift_left;
-
-  return biased_exp | ECMA_BIGINT_NUMBER_TO_DIGITS_SET_DIGITS (digits_p[2] == 0 ? 2 : 3);
-#else /* !JERRY_NUMBER_TYPE_FLOAT64 */
   digits_p[1] = digits_p[0] >> shift_right;
   digits_p[0] <<= shift_left;
 
   return biased_exp | ECMA_BIGINT_NUMBER_TO_DIGITS_SET_DIGITS (digits_p[1] == 0 ? 1 : 2);
-#endif /* JERRY_NUMBER_TYPE_FLOAT64 */
 } /* ecma_bigint_number_to_digits */
 
 /**
