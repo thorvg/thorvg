@@ -144,20 +144,6 @@
 #endif /* !defined (JERRY_LCACHE) */
 
 /**
- * Use 32-bit/64-bit float for ecma-numbers
- * This option is for expert use only!
- *
- * Allowed values:
- *  1: use 64-bit floating point number mode
- *  0: use 32-bit floating point number mode
- *
- * Default value: 0
- */
-#ifndef JERRY_NUMBER_TYPE_FLOAT64
-#define JERRY_NUMBER_TYPE_FLOAT64 0
-#endif /* !defined (JERRY_NUMBER_TYPE_FLOAT64 */
-
-/**
  * Enable/Disable the JavaScript parser.
  *
  * Allowed values:
