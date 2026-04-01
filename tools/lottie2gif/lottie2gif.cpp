@@ -21,6 +21,7 @@
  */
 
 #include <iostream>
+#include <stdlib.h>
 #include <string.h>
 #include <vector>
 #include <memory>

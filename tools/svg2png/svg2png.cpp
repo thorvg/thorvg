@@ -21,6 +21,7 @@
  */
 
 #include <iostream>
+#include <stdlib.h>
 #include <thread>
 #include <thorvg.h>
 #include <vector>
