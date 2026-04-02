@@ -29,12 +29,166 @@
 namespace tvg
 {
 
-// Optimize path in screen space by collapsing zero length lines  and removing unnecessary cubic beziers.
-void gpuOptimize(const RenderPath& in, RenderPath& out, const Matrix& matrix, bool& thin)
-{
-    static constexpr auto PX_TOLERANCE = 0.25f;
+constexpr auto PATH_OPT_PX_TOLERANCE = 0.25f;
+// Keep this aligned with the SW rasterizer's AA coverage precision.
+// tvgRender.h::MULTIPLY() and the SW coverage paths use an 8-bit coverage model.
+constexpr uint32_t SW_AA_COVERAGE_BITS = 8;
+constexpr auto AA_COVERAGE_QUANTUM = 1.0f / static_cast<float>(1u << SW_AA_COVERAGE_BITS);
+constexpr auto MAX_PIXEL_SPAN = 1.41421356237f;
 
+struct ThinPathTracker
+{
+    enum
+    {
+        INLINE_PENDING_CAP = 8
+    };
+
+    Point preAxisPoints[INLINE_PENDING_CAP];
+    Array<Point> preAxisOverflow;
+    uint32_t preAxisCount = 0;
+    Point axisStart{};
+    Point axisVec{};
+    float axisLen = 0.0f;
+    float axisLenInv = 0.0f;
+    float axisLenSqInv = 0.0f;
+    float minT = 0.0f;
+    float maxT = 0.0f;
+    float minDist = 0.0f;
+    float maxDist = 0.0f;
+    bool ready = false;
+    bool candidate = true;
+
+    void disable()
+    {
+        candidate = false;
+        ready = false;
+        clearPreAxisPoints();
+    }
+
+    void remember(const Point& pt)
+    {
+        if (!candidate || ready) return;
+        if (preAxisCount < INLINE_PENDING_CAP) preAxisPoints[preAxisCount++] = pt;
+        else preAxisOverflow.push(pt);
+    }
+
+    void trackLine(const Point& start, const Point& end, bool closed)
+    {
+        if (!candidate) return;
+        if (!ready) {
+            if (closed) remember(start);
+            else initAxis(start, end);
+            return;
+        }
+        update(end);
+    }
+
+    void trackClosedCubic(const Point& start, const Point& ctrl1, const Point& ctrl2, const Point& end)
+    {
+        if (!candidate) return;
+        if (!ready) {
+            remember(start);
+            remember(ctrl1);
+            remember(ctrl2);
+            return;
+        }
+        update(ctrl1);
+        update(ctrl2);
+        update(end);
+    }
+
+    void trackFlatCubic(const Point& start, const Point& ctrl1, const Point& ctrl2, const Point& end)
+    {
+        if (!candidate) return;
+        if (!ready) initAxis(start, end);
+        else update(end);
+        update(ctrl1);
+        update(ctrl2);
+    }
+
+    void trackClose(const Point& start, const Point& end, bool closed)
+    {
+        if (!candidate) return;
+        if (!ready) {
+            if (closed) remember(start);
+            else initAxis(start, end);
+            return;
+        }
+        update(end);
+    }
+
+    // Even a thin candidate should be skipped if its strongest local SW AA coverage stays sub-quantum.
+    bool tooThin() const
+    {
+        auto thinSpan = (maxT - minT) * axisLen;
+        auto thinThickness = maxDist - minDist;
+        auto localVisibleArea = thinThickness * ((thinSpan < MAX_PIXEL_SPAN) ? thinSpan : MAX_PIXEL_SPAN);
+        return localVisibleArea < AA_COVERAGE_QUANTUM;
+    }
+
+    void clearPreAxisPoints()
+    {
+        preAxisCount = 0;
+        preAxisOverflow.clear();
+    }
+
+    void initAxis(const Point& start, const Point& end)
+    {
+        auto vec = end - start;
+        auto vecLenSq = dot(vec, vec);
+
+        axisStart = start;
+        axisVec = vec;
+        axisLen = sqrtf(vecLenSq);
+        axisLenInv = 1.0f / axisLen;
+        axisLenSqInv = 1.0f / vecLenSq;
+        minT = 0.0f;
+        maxT = 1.0f;
+        minDist = 0.0f;
+        maxDist = 0.0f;
+        ready = true;
+        flushPreAxisPoints();
+    }
+
+    void flushPreAxisPoints()
+    {
+        for (uint32_t i = 0; i < preAxisCount; ++i) {
+            update(preAxisPoints[i]);
+            if (!candidate) {
+                clearPreAxisPoints();
+                return;
+            }
+        }
+        ARRAY_FOREACH(pt, preAxisOverflow)
+        {
+            update(*pt);
+            if (!candidate) break;
+        }
+        clearPreAxisPoints();
+    }
+
+    void update(const Point& pt)
+    {
+        auto offset = pt - axisStart;
+        auto signedDist = cross(axisVec, offset) * axisLenInv;
+        if (fabsf(signedDist) > PATH_OPT_PX_TOLERANCE) {
+            disable();
+            return;
+        }
+
+        auto t = dot(offset, axisVec) * axisLenSqInv;
+        if (t < minT) minT = t;
+        if (t > maxT) maxT = t;
+        if (signedDist < minDist) minDist = signedDist;
+        if (signedDist > maxDist) maxDist = signedDist;
+    }
+};
+
+// Simplify the transformed path and classify thin-fill fallback / skip-fill cases.
+void gpuOptimize(const RenderPath& in, RenderPath& out, const Matrix& matrix, bool& thin, bool& skipFill)
+{
     thin = false;
+    skipFill = false;
     if (in.empty()) return;
 
     out.cmds.clear();
@@ -46,21 +200,18 @@ void gpuOptimize(const RenderPath& in, RenderPath& out, const Matrix& matrix, bo
     auto cmdCnt = in.cmds.count;
     auto pts = in.pts.data;
 
-    Point lastOutT{};  // The suffix "T" indicates that the point is transformed.
+    Point lastOutT{};
+    Point lastInT{};
     Point subpathStartT{};
-    Point thinLineStart{};
-    Point thinLineVec{};
     auto drawableSubpathCnt = 0u;
-    auto thinLineVecLen = 0.0f;
-    auto thinCandidate = true;
-    auto thinLineReady = false;
     auto subpathOpen = false;
     auto subpathHasSegment = false;
+    ThinPathTracker thinTracker;
 
     auto finalizeSubpath = [&]() {
         if (!subpathHasSegment) return;
         ++drawableSubpathCnt;
-        if (drawableSubpathCnt > 1) thinCandidate = false;
+        if (drawableSubpathCnt > 1) thinTracker.disable();
         subpathHasSegment = false;
     };
 
@@ -84,48 +235,45 @@ void gpuOptimize(const RenderPath& in, RenderPath& out, const Matrix& matrix, bo
         point2Line(ctrl2, start, vec, vecLen, maxDist, minT, maxT);
     };
 
-    auto checkThinPoint = [&](const Point& ptT) {
-        if (!thinCandidate || !thinLineReady) return;
-        auto dist = fabsf(tvg::cross(thinLineVec, ptT - thinLineStart)) / thinLineVecLen;
-        if (dist > PX_TOLERANCE) thinCandidate = false;
-    };
-
-    auto collectThinSegment = [&](const Point& startT, const Point& endT) {
-        subpathHasSegment = true;
-        if (!thinCandidate) return;
-
-        if (!thinLineReady) {
-            if (!tvg::closed(startT, endT, PX_TOLERANCE)) {
-                thinLineStart = startT;
-                thinLineVec = endT - startT;
-                thinLineVecLen = sqrtf(thinLineVec.x * thinLineVec.x + thinLineVec.y * thinLineVec.y);
-                if (!tvg::zero(thinLineVecLen)) thinLineReady = true;
-            }
-        } else {
-            checkThinPoint(startT);
-            checkThinPoint(endT);
-        }
-    };
-
-    auto addLineCmd = [&](const Point& startT, const Point& ptT) {
+    auto addLineCmd = [&](const Point& ptT) {
         out.cmds.push(PathCommand::LineTo);
         out.pts.push(ptT);
         lastOutT = ptT;
-        collectThinSegment(startT, ptT);
     };
 
-    auto processCubicTo = [&](const Point* cubicPts, const Point& startT) {
+    auto processCubicTo = [&](const Point* cubicPts, const Point& startOutT, const Point& startInT, Point& endT) {
         auto ctrl1T = cubicPts[0] * matrix;
         auto ctrl2T = cubicPts[1] * matrix;
-        auto endT = cubicPts[2] * matrix;
-        if (tvg::closed(startT, endT, PX_TOLERANCE)) return;
+        endT = cubicPts[2] * matrix;
+
+        auto trackThinCubic = [&](const Point& startT) {
+            auto closed = tvg::closed(startT, endT, PATH_OPT_PX_TOLERANCE);
+            if (closed) {
+                thinTracker.trackClosedCubic(startT, ctrl1T, ctrl2T, endT);
+                return;
+            }
+
+            float maxDist, minT, maxT, vecLen;
+            validateCubic(startT, ctrl1T, ctrl2T, endT, maxDist, minT, maxT, vecLen);
+            auto flat = (maxDist <= PATH_OPT_PX_TOLERANCE);
+            auto tEps = PATH_OPT_PX_TOLERANCE / vecLen;
+            auto inSpan = (minT >= -tEps) && (maxT <= 1.0f + tEps);
+            if (flat && inSpan) thinTracker.trackFlatCubic(startT, ctrl1T, ctrl2T, endT);
+            else thinTracker.disable();
+        };
+        trackThinCubic(startInT);
+
+        auto closed = tvg::closed(startOutT, endT, PATH_OPT_PX_TOLERANCE);
+        if (closed) return;
+
         float maxDist, minT, maxT, vecLen;
-        validateCubic(startT, ctrl1T, ctrl2T, endT, maxDist, minT, maxT, vecLen);
-        auto flat = (maxDist <= PX_TOLERANCE);
-        auto tEps = PX_TOLERANCE / vecLen;
+        validateCubic(startOutT, ctrl1T, ctrl2T, endT, maxDist, minT, maxT, vecLen);
+        auto flat = (maxDist <= PATH_OPT_PX_TOLERANCE);
+        auto tEps = PATH_OPT_PX_TOLERANCE / vecLen;
         auto inSpan = (minT >= -tEps) && (maxT <= 1.0f + tEps);
         if (flat && inSpan) {
-            addLineCmd(startT, endT);
+            subpathHasSegment = true;
+            addLineCmd(endT);
         } else {
             out.cmds.push(PathCommand::CubicTo);
             out.pts.push(ctrl1T);
@@ -133,7 +281,7 @@ void gpuOptimize(const RenderPath& in, RenderPath& out, const Matrix& matrix, bo
             out.pts.push(endT);
             lastOutT = endT;
             subpathHasSegment = true;
-            thinCandidate = false;
+            thinTracker.disable();
         }
     };
 
@@ -145,38 +293,56 @@ void gpuOptimize(const RenderPath& in, RenderPath& out, const Matrix& matrix, bo
                 out.cmds.push(PathCommand::MoveTo);
                 out.pts.push(ptT);
                 lastOutT = ptT;
+                lastInT = ptT;
                 subpathStartT = ptT;
                 subpathOpen = true;
                 pts++;
                 break;
             }
             case PathCommand::LineTo: {
-                auto startT = lastOutT;
+                auto startInT = lastInT;
                 auto ptT = (*pts) * matrix;
-                if (tvg::closed(startT, ptT, PX_TOLERANCE)) {
+                auto closedIn = tvg::closed(startInT, ptT, PATH_OPT_PX_TOLERANCE);
+                if (!closedIn) subpathHasSegment = true;
+                thinTracker.trackLine(startInT, ptT, closedIn);
+                lastInT = ptT;
+                if (tvg::closed(lastOutT, ptT, PATH_OPT_PX_TOLERANCE)) {
                     pts++;
                     break;
                 }
-                addLineCmd(startT, ptT);
+                addLineCmd(ptT);
                 pts++;
                 break;
             }
             case PathCommand::CubicTo: {
-                processCubicTo(pts, lastOutT);
+                Point endT{};
+                processCubicTo(pts, lastOutT, lastInT, endT);
+                lastInT = endT;
                 pts += 3;
                 break;
             }
             case PathCommand::Close: {
-                if (subpathOpen && !tvg::closed(lastOutT, subpathStartT, PX_TOLERANCE)) collectThinSegment(lastOutT, subpathStartT);
+                if (subpathOpen) {
+                    auto closedIn = tvg::closed(lastInT, subpathStartT, PATH_OPT_PX_TOLERANCE);
+                    if (!closedIn) subpathHasSegment = true;
+                    thinTracker.trackClose(lastInT, subpathStartT, closedIn);
+                }
                 out.cmds.push(PathCommand::Close);
                 lastOutT = subpathStartT;
+                lastInT = subpathStartT;
                 break;
             }
             default: break;
         }
     }
     finalizeSubpath();
-    thin = thinCandidate && thinLineReady && (drawableSubpathCnt == 1);
+    // thin means "use thin fill fallback", not just "the geometry is narrow".
+    thin = thinTracker.candidate && thinTracker.ready && (drawableSubpathCnt == 1);
+    if (thin && thinTracker.tooThin()) {
+        // Too thin for fallback: keep the path for strokes, but skip the fill.
+        thin = false;
+        skipFill = true;
+    }
 }
 
 bool gpuEdgesCross(const Point& p0, const Point& p1, const Point& p2, const Point& p3)

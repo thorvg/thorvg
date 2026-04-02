@@ -29,7 +29,7 @@
 namespace tvg
 {
 
-void gpuOptimize(const RenderPath& in, RenderPath& out, const Matrix& matrix, bool& thin);
+void gpuOptimize(const RenderPath& in, RenderPath& out, const Matrix& matrix, bool& thin, bool& skipFill);
 bool gpuEdgesCross(const Point& p0, const Point& p1, const Point& p2, const Point& p3);
 bool gpuStrokeDash(const RenderShape& rs, RenderPath& out, const Matrix* transform);
 
