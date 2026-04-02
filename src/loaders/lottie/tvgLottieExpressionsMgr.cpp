@@ -35,8 +35,6 @@ static uint32_t _refCnt = 0;
 
 #include <thread>
 
-/* defined in jerry-port-context.cpp */
-extern void tvg_jerry_context_set(jerry_context_t *context_p);
 
 /************************************************************************/
 /* Internal Class Implementation                                        */
@@ -85,7 +83,7 @@ void LottieExpressionsMgr::unref()
     ScopedLock lock(_key);
     if (--_refCnt == 0) {
         for (auto& inst : _instances) {
-            tvg_jerry_context_set(inst.ctx);
+            jerry_port_context_set(inst.ctx);
             delete(inst.exps);
         }
         _instances.clear();
