@@ -118,6 +118,14 @@ struct jerry_context_t *jerry_port_context_get (void);
 void jerry_port_context_free (void);
 
 /**
+ * Set the currently active context of the engine.
+ *
+ * @param context_p: the pointer to the context to be set as active.
+
+ */
+void jerry_port_context_set(jerry_context_t* context_p);
+
+/**
  * jerry-port-context @}
  */
 
