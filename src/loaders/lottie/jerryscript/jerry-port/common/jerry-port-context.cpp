@@ -26,7 +26,7 @@
  */
 static thread_local jerry_context_t* tls_context_p = nullptr;
 
-size_t JERRY_ATTR_WEAK
+size_t
 jerry_port_context_alloc(size_t context_size)
 {
     size_t total_size = context_size + JERRY_GLOBAL_HEAP_SIZE * 1024;
@@ -34,13 +34,13 @@ jerry_port_context_alloc(size_t context_size)
     return total_size;
 } /* jerry_port_context_alloc */
 
-jerry_context_t* JERRY_ATTR_WEAK
+jerry_context_t*
 jerry_port_context_get(void)
 {
     return tls_context_p;
 } /* jerry_port_context_get */
 
-void JERRY_ATTR_WEAK
+void
 jerry_port_context_free(void)
 {
     free(tls_context_p);
@@ -48,7 +48,7 @@ jerry_port_context_free(void)
 } /* jerry_port_context_free */
 
 /* ThorVG-specific: set the active context on the current thread for cross-thread cleanup */
-void tvg_jerry_context_set(jerry_context_t *context_p)
+void jerry_port_context_set(jerry_context_t *context_p)
 {
     tls_context_p = context_p;
 }
