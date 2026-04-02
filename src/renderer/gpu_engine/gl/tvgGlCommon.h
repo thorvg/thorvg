@@ -110,6 +110,7 @@ struct GlGeometry
     bool inverseMatrixDirty = true;
     bool fillWorld = false;
     bool optPathThin = false;
+    bool optPathSkipFill = false;
     bool convex;
 };
 

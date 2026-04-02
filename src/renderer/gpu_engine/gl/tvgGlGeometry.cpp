@@ -153,15 +153,16 @@ bool GlIntersector::intersectImage(const RenderRegion region, const GlShape* ima
 void GlGeometry::prepare(const RenderShape& rshape)
 {
     optPathThin = false;
+    optPathSkipFill = false;
     if (rshape.trimpath()) {
         RenderPath trimmedPath;
         if (rshape.stroke->trim.trim(rshape.path, trimmedPath)) {
-            gpuOptimize(trimmedPath, optPath, matrix, optPathThin);
+            gpuOptimize(trimmedPath, optPath, matrix, optPathThin, optPathSkipFill);
         } else {
             optPath.clear();
         }
     } else {
-        gpuOptimize(rshape.path, optPath, matrix, optPathThin);
+        gpuOptimize(rshape.path, optPath, matrix, optPathThin, optPathSkipFill);
     }
 }
 
@@ -173,10 +174,13 @@ bool GlGeometry::tesselateShape(const RenderShape& rshape, float* opacityMultipl
     fillWorld = true;
     convex = false;
 
+    // `skipFill` means the path stayed thin enough that even thin fallback should not draw a fill.
+    if (optPathSkipFill) return false;
+
     // When the CTM scales a filled path so small that its device-space
     // World:  [========]     // normal-sized filled path
     // After CTM:  [.]        // thinner than 1 px in device space
-    // Handling: stroke tess  // use thin-path stroke tessellation for stability
+    // Visible thin fills use stroke tessellation; sub-quantum fills are skipped earlier.
     if (optPathThin && tvg::zero(rshape.strokeWidth())) {
         if (tesselateThinPath(optPath)) {
             // The time spent is similar to substituting buffers in tessellation, so we just move the buffers to keep the code simple.

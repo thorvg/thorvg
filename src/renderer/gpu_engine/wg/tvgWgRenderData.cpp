@@ -181,36 +181,42 @@ void WgRenderDataShape::updateMeshes(const RenderShape &rshape, RenderUpdateFlag
     // optimize path
     RenderPath optPath;
     bool optPathThin = false;
+    bool optPathSkipFill = false;
     if (rshape.trimpath()) {
         RenderPath trimmedPath;
-        if (rshape.stroke->trim.trim(rshape.path, trimmedPath)) gpuOptimize(trimmedPath, optPath, matrix, optPathThin);
+        if (rshape.stroke->trim.trim(rshape.path, trimmedPath)) gpuOptimize(trimmedPath, optPath, matrix, optPathThin, optPathSkipFill);
         else optPath.clear();
     } else {
-        gpuOptimize(rshape.path, optPath, matrix, optPathThin);
+        gpuOptimize(rshape.path, optPath, matrix, optPathThin, optPathSkipFill);
     }
 
     auto updatePath = flag & (RenderUpdateFlag::Transform | RenderUpdateFlag::Path);
 
     // update fill shapes
     if (updatePath || (flag & (RenderUpdateFlag::Color | RenderUpdateFlag::Gradient))) {
-        BBox bbox;
-        // in a case of thin shape we must tesselate it as a stroke with minimal width
-        if (optPathThin && tvg::zero(rshape.strokeWidth())) {
-            WgStroker stroker(&meshShape, MIN_WG_STROKE_WIDTH, StrokeCap::Butt, StrokeJoin::Bevel);
-            stroker.run(optPath);
-            bbox = stroker.getBBox();
-            renderSettingsShape.opacityMultiplier = MIN_WG_STROKE_ALPHA;
-        } else {
-            WgBWTessellator bwTess{&meshShape};
-            bwTess.tessellate(optPath);
-            convex = bwTess.convex;
-            bbox = bwTess.getBBox();
-        }
-        if (meshShape.ibuffer.empty()) {
+        if (optPathSkipFill) {
+            // Too-thin fills are suppressed instead of going through thin fallback.
             meshShape.clear();
         } else {
-            meshShapeBBox.bbox(bbox.min, bbox.max);
-            updateBBox(bbox);
+            BBox bbox;
+            // Drawable thin fills are tessellated as a minimal-width stroke.
+            if (optPathThin && tvg::zero(rshape.strokeWidth())) {
+                WgStroker stroker(&meshShape, MIN_WG_STROKE_WIDTH, StrokeCap::Butt, StrokeJoin::Bevel);
+                stroker.run(optPath);
+                bbox = stroker.getBBox();
+                renderSettingsShape.opacityMultiplier = MIN_WG_STROKE_ALPHA;
+            } else {
+                WgBWTessellator bwTess{&meshShape};
+                bwTess.tessellate(optPath);
+                convex = bwTess.convex;
+                bbox = bwTess.getBBox();
+            }
+            if (meshShape.ibuffer.empty()) {
+                meshShape.clear();
+            } else {
+                meshShapeBBox.bbox(bbox.min, bbox.max);
+                updateBBox(bbox);
+            }
         }
     }
     // update strokes shapes
@@ -246,7 +252,10 @@ void WgRenderDataShape::updateMeshes(const RenderShape &rshape, RenderUpdateFlag
 void WgRenderDataShape::releaseMeshes()
 {
     meshStrokes.clear();
+    meshStrokesBBox.clear();
     meshShape.clear();
+    meshShapeBBox.clear();
+    meshBBox.clear();
     bbox.min = {FLT_MAX, FLT_MAX};
     bbox.max = {0.0f, 0.0f};
     aabb = {{0, 0}, {0, 0}};
