@@ -24,7 +24,7 @@
 #define _TVG_SVG_LOADER_H_
 
 #include "tvgTaskScheduler.h"
-#include "tvgSvgLoaderCommon.h"
+#include "tvgSvgCommon.h"
 
 struct SvgLoader : ImageLoader, Task
 {
