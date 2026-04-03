@@ -236,7 +236,7 @@ ecma_builtin_math_object_trunc (ecma_number_t arg)
     return (ecma_number_t) -0.0;
   }
 
-  return (ecma_number_t) arg - fmod (arg, 1);
+  return arg - (ecma_number_t) fmodf (arg, 1.0f);
 } /* ecma_builtin_math_object_trunc */
 
 /**

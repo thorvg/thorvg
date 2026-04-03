@@ -595,7 +595,7 @@ ecma_op_typedarray_set_with_typedarray (ecma_value_t this_arg, /**< this argumen
     return ECMA_VALUE_ERROR;
   }
 
-  if (target_offset_num <= -1.0 || target_offset_num >= (ecma_number_t) UINT32_MAX + 0.5)
+  if (target_offset_num <= (ecma_number_t) -1.0f || target_offset_num >= (ecma_number_t) UINT32_MAX + (ecma_number_t) 0.5f)
   {
     return ecma_raise_range_error (ECMA_ERR_INVALID_OFFSET);
   }
@@ -707,7 +707,7 @@ ecma_builtin_typedarray_prototype_set (ecma_value_t this_arg, /**< this argument
     return ECMA_VALUE_ERROR;
   }
 
-  if (target_offset_num <= -1.0 || target_offset_num >= (ecma_number_t) UINT32_MAX + 0.5)
+  if (target_offset_num <= (ecma_number_t) -1.0f || target_offset_num >= (ecma_number_t) UINT32_MAX + (ecma_number_t) 0.5f)
   {
     return ecma_raise_range_error (ECMA_ERR_INVALID_OFFSET);
   }

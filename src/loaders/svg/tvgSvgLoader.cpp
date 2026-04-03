@@ -26,7 +26,7 @@
 #include "tvgLoader.h"
 #include "tvgXmlParser.h"
 #include "tvgSvgLoader.h"
-#include "tvgSvgSceneBuilder.h"
+#include "tvgSvgBuilder.h"
 #include "tvgSvgCssStyle.h"
 #include "tvgSvgUtil.h"
 

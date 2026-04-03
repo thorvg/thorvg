@@ -26,8 +26,8 @@
 #include "tvgFill.h"
 #include "tvgStr.h"
 #include "tvgShape.h"
-#include "tvgSvgLoaderCommon.h"
-#include "tvgSvgSceneBuilder.h"
+#include "tvgSvgCommon.h"
+#include "tvgSvgBuilder.h"
 #include "tvgSvgPath.h"
 #include "tvgSvgUtil.h"
 

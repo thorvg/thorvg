@@ -152,16 +152,6 @@ ecma_typedarray_get_float_element (lit_utf8_byte_t *src) /**< the location in th
   return ecma_make_number_value ((ecma_value_t)num);
 } /* ecma_typedarray_get_float_element */
 
-/**
- * Read a double value from the given arraybuffer
- */
-static ecma_value_t
-ecma_typedarray_get_double_element (lit_utf8_byte_t *src) /**< the location in the internal arraybuffer */
-{
-  double num;
-  ECMA_TYPEDARRAY_GET_ELEMENT (src, num, double);
-  return ecma_make_number_value (num);
-} /* ecma_typedarray_get_double_element */
 
 #if JERRY_BUILTIN_BIGINT
 /**
@@ -306,7 +296,7 @@ ecma_typedarray_set_uint8_clamped_element (lit_utf8_byte_t *dst_p, /**< the loca
   {
     clamped = (uint8_t) result_num;
 
-    if (clamped + 0.5 < result_num || (clamped + 0.5 == result_num && (clamped % 2) == 1))
+    if (clamped + (ecma_number_t) 0.5f < result_num || (clamped + (ecma_number_t) 0.5f == result_num && (clamped % 2) == 1))
     {
       clamped++;
     }
@@ -431,30 +421,6 @@ ecma_typedarray_set_float_element (lit_utf8_byte_t *dst_p, /**< the location in 
   return ECMA_VALUE_TRUE;
 } /* ecma_typedarray_set_float_element */
 
-#if JERRY_NUMBER_TYPE_FLOAT64
-/**
- * Write a double value into the given arraybuffer
- *
- * @return ECMA_VALUE_ERROR - if the ToNumber operation fails
- *         ECMA_VALUE_TRUE - otherwise
- */
-static ecma_value_t
-ecma_typedarray_set_double_element (lit_utf8_byte_t *dst_p, /**< the location in the internal arraybuffer */
-                                    ecma_value_t value) /**< the number value to set */
-{
-  ecma_number_t result_num;
-  ecma_value_t to_num = ecma_op_to_numeric (value, &result_num, ECMA_TO_NUMERIC_NO_OPTS);
-
-  if (ECMA_IS_VALUE_ERROR (to_num))
-  {
-    return to_num;
-  }
-
-  double num = (double) result_num;
-  ECMA_TYPEDARRAY_SET_ELEMENT (dst_p, num, double);
-  return ECMA_VALUE_TRUE;
-} /* ecma_typedarray_set_double_element */
-#endif /* JERRY_NUMBER_TYPE_FLOAT64 */
 
 #if JERRY_BUILTIN_BIGINT
 /**
@@ -501,17 +467,12 @@ ecma_typedarray_set_bigint_element (lit_utf8_byte_t *dst_p, /**< the location in
  * Builtin id of the last %TypedArray% builtin routine intrinsic object
  */
 #define ECMA_LAST_TYPEDARRAY_BUILTIN_ROUTINE_ID ECMA_BUILTIN_ID_BIGUINT64ARRAY
-#elif !JERRY_BUILTIN_BIGINT && JERRY_NUMBER_TYPE_FLOAT64
-/**
- * Builtin id of the last %TypedArray% builtin routine intrinsic object
- */
-#define ECMA_LAST_TYPEDARRAY_BUILTIN_ROUTINE_ID ECMA_BUILTIN_ID_FLOAT64ARRAY
-#else /* !JERRY_NUMBER_TYPE_FLOAT64 */
+#else /* !JERRY_BUILTIN_BIGINT */
 /**
  * Builtin id of the last %TypedArray% builtin routine intrinsic object
  */
 #define ECMA_LAST_TYPEDARRAY_BUILTIN_ROUTINE_ID ECMA_BUILTIN_ID_FLOAT32ARRAY
-#endif /* JERRY_NUMBER_TYPE_FLOAT64 */
+#endif /* JERRY_BUILTIN_BIGINT */
 
 /**
  * Builtin id of the first %TypedArray% builtin prototype intrinsic object
@@ -530,9 +491,6 @@ static const ecma_typedarray_getter_fn_t ecma_typedarray_getters[] = {
   ecma_typedarray_get_int32_element, /**< Uint32Array */
   ecma_typedarray_get_uint32_element, /**< Uint32Array */
   ecma_typedarray_get_float_element, /**< Float32Array */
-#if JERRY_NUMBER_TYPE_FLOAT64
-  ecma_typedarray_get_double_element, /**< Float64Array */
-#endif /* JERRY_NUMBER_TYPE_FLOAT64 */
 #if JERRY_BUILTIN_BIGINT
   ecma_typedarray_get_bigint64_element, /**< BigInt64Array*/
   ecma_typedarray_get_biguint64_element, /**< BigUint64Array */
@@ -551,9 +509,6 @@ static const ecma_typedarray_setter_fn_t ecma_typedarray_setters[] = {
   ecma_typedarray_set_int32_element, /**< Uint32Array */
   ecma_typedarray_set_uint32_element, /**< Uint32Array */
   ecma_typedarray_set_float_element, /**< Float32Array */
-#if JERRY_NUMBER_TYPE_FLOAT64
-  ecma_typedarray_set_double_element, /**< Float64Array */
-#endif /* JERRY_NUMBER_TYPE_FLOAT64 */
 #if JERRY_BUILTIN_BIGINT
   ecma_typedarray_set_bigint_element, /**< BigInt64Array */
   ecma_typedarray_set_bigint_element, /**< BigUInt64Array */
@@ -572,9 +527,6 @@ static const uint8_t ecma_typedarray_element_shift_sizes[] = {
   2, /**< Int32Array */
   2, /**< Uint32Array */
   2, /**< Float32Array */
-#if JERRY_NUMBER_TYPE_FLOAT64
-  3, /**< Float64Array */
-#endif /* JERRY_NUMBER_TYPE_FLOAT64 */
 #if JERRY_BUILTIN_BIGINT
   3, /**< BigInt64Array */
   3, /**< BigUInt64Array */
@@ -593,9 +545,6 @@ static const uint16_t ecma_typedarray_magic_string_list[] = {
   (uint16_t) LIT_MAGIC_STRING_INT32_ARRAY_UL, /**< Int32Array */
   (uint16_t) LIT_MAGIC_STRING_UINT32_ARRAY_UL, /**< Uint32Array */
   (uint16_t) LIT_MAGIC_STRING_FLOAT32_ARRAY_UL, /**< Float32Array */
-#if JERRY_NUMBER_TYPE_FLOAT64
-  (uint16_t) LIT_MAGIC_STRING_FLOAT64_ARRAY_UL, /**< Float64Array */
-#endif /* JERRY_NUMBER_TYPE_FLOAT64 */
 #if JERRY_BUILTIN_BIGINT
   (uint16_t) LIT_MAGIC_STRING_BIGINT64_ARRAY_UL, /**< BigInt64Array */
   (uint16_t) LIT_MAGIC_STRING_BIGUINT64_ARRAY_UL, /**< BigUInt64Array */
@@ -1646,17 +1595,6 @@ ecma_op_create_typedarray (const ecma_value_t *arguments_list_p, /**< the arg li
 
     JERRY_ASSERT (num >= 0 && num <= ECMA_NUMBER_MAX_SAFE_INTEGER);
 
-    if (num > UINT32_MAX)
-    {
-#if JERRY_ERROR_MESSAGES
-      return ecma_raise_standard_error_with_format (JERRY_ERROR_RANGE,
-                                                    "Invalid typed array length: %",
-                                                    arguments_list_p[0]);
-#else /* !JERRY_ERROR_MESSAGES */
-      return ecma_raise_range_error (ECMA_ERR_EMPTY);
-#endif /* JERRY_ERROR_MESSAGES */
-    }
-
     return ecma_typedarray_create_object_with_length ((uint32_t) num, NULL, proto_p, element_size_shift, typedarray_id);
   }
 
@@ -1711,11 +1649,6 @@ ecma_op_create_typedarray (const ecma_value_t *arguments_list_p, /**< the arg li
   if (ecma_arraybuffer_is_detached (arraybuffer_p))
   {
     return ecma_raise_type_error (ECMA_ERR_ARRAYBUFFER_IS_DETACHED);
-  }
-
-  if (offset > UINT32_MAX)
-  {
-    return ecma_raise_range_error (ECMA_ERR_INVALID_LENGTH);
   }
 
   uint32_t byte_offset = (uint32_t) offset;
