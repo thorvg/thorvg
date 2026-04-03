@@ -1465,16 +1465,36 @@ jerry_value_t LottieExpressions::evaluate(float frameNo, LottieExpression* exp)
     //update writable values
     buildWritables(exp);
 
-    //evaluate the code
-    auto eval = jerry_eval((jerry_char_t *) exp->code, strlen(exp->code), JERRY_PARSE_NO_OPTS);
+    //find or create compiled code for this expression
+    jerry_value_t code = jerry_undefined();
+    for (auto& p : compiledCodes) {
+        if (p.exp == exp) {
+            code = p.code;
+            break;
+        }
+    }
 
-    if (jerry_value_is_exception(eval)) {
+    if (jerry_value_is_undefined(code)) {
+        code = jerry_parse((jerry_char_t *) exp->code, strlen(exp->code), JERRY_PARSE_NO_OPTS);
+        if (jerry_value_is_exception(code)) {
+            TVGERR("LOTTIE", "Failed to parse the expressions!");
+            jerry_value_free(code);
+            exp->disabled = true;
+            return jerry_undefined();
+        }
+        compiledCodes.push({exp, code});
+    }
+
+    //run the compiled code
+    auto result = jerry_run(code);
+
+    if (jerry_value_is_exception(result)) {
         TVGERR("LOTTIE", "Failed to dispatch the expressions!");
         exp->disabled = true;
         return jerry_undefined();
     }
 
-    jerry_value_free(eval);
+    jerry_value_free(result);
 
     return jerry_object_get_sz(global, "$bm_rt");
 }
@@ -1530,6 +1550,13 @@ LottieExpressions* LottieExpressions::instance()
 
 void LottieExpressions::retrieve(LottieExpressions* instance)
 {
+    if (!instance) return;
+
+    for (auto& p : instance->compiledCodes) {
+        jerry_value_free(p.code);
+    }
+    instance->compiledCodes.clear();
+
     if (--engineRefCnt == 0) {
         delete(instance);
         exps = nullptr;
