@@ -3760,6 +3760,11 @@ void SvgParserContext::clear(bool all)
         tvg::free(p->name);
     }
     fonts.reset();
+
+    for (auto& kv : access) {
+        tvg::free((void*)kv.second);
+    }
+    access.clear();
 }
 
 SvgLoader::SvgLoader() : ImageLoader(FileType::Svg)
@@ -3843,8 +3848,10 @@ bool SvgLoader::header()
     return true;
 }
 
-bool SvgLoader::open(const char* data, uint32_t size, TVG_UNUSED const LoaderOps* ops, bool copy)
+bool SvgLoader::open(const char* data, uint32_t size, const LoaderOps* ops, bool copy)
 {
+    if (ops->caller != tvg::Type::Picture) return false;
+
     if (copy) {
         content = tvg::malloc<char>(size + 1);
         memcpy((char*)content, data, size);
@@ -3854,13 +3861,18 @@ bool SvgLoader::open(const char* data, uint32_t size, TVG_UNUSED const LoaderOps
     this->size = size;
     this->copy = copy;
 
+    ctx.accessible = static_cast<const PictureOps*>(ops)->accessible;
+
     return header();
 }
 
 bool SvgLoader::open(const char* path, TVG_UNUSED const LoaderOps* ops)
 {
 #ifdef THORVG_FILE_IO_SUPPORT
+    if (ops->caller != tvg::Type::Picture) return false;
+
     if ((content = Loader::open(path, size, true))) {
+        ctx.accessible = static_cast<const PictureOps*>(ops)->accessible;
         copy = true;
         return header();
     }

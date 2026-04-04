@@ -46,9 +46,10 @@ struct PictureOps : LoaderOps
 {
     AssetResolver* resolver;
     const char* rpath;  // decide the relative path file if the file is loaded from memory
+    bool accessible;    // allow the accessor
 
-    PictureOps(AssetResolver* resolver, const char* rpath) :
-        LoaderOps{Type::Picture}, resolver(resolver), rpath(rpath) {}
+    PictureOps(AssetResolver* resolver, const char* rpath, bool accessible) :
+        LoaderOps{Type::Picture}, resolver(resolver), rpath(rpath), accessible(accessible) {}
 };
 
 struct Loader

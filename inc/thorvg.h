@@ -1780,6 +1780,8 @@ struct TVG_API Picture : Paint
      */
     Type type() const noexcept override;
 
+    bool accessible = false;
+
     _TVG_DECLARE_ACCESSOR(Animation);
     _TVG_DECLARE_PRIVATE_DERIVE(Picture);
 };

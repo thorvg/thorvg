@@ -942,41 +942,32 @@ static Scene* _sceneBuildHelper(SvgParserContext& ctx, const SvgNode* node, cons
 
     auto scene = Scene::gen();
     // For a Symbol node, the viewBox transformation has to be applied first - see _useBuildHelper()
-    if (!mask && node->transform && node->type != SvgNodeType::Symbol && node->type != SvgNodeType::Use) {
-        scene->transform(*node->transform);
-    }
-
+    if (!mask && node->transform && node->type != SvgNodeType::Symbol && node->type != SvgNodeType::Use) scene->transform(*node->transform);
     if (!node->style->display || node->style->opacity == 0) return scene;
 
     ARRAY_FOREACH(p, node->child) {
         auto child = *p;
+        Paint* paint = nullptr;
         if (child->type == SvgNodeType::ClipPath || child->type == SvgNodeType::Filter) continue;
         if (_isGroupType(child->type)) {
-            Paint* paint = nullptr;
-            if (child->type == SvgNodeType::Use)
-                paint = _useBuildHelper(ctx, child, vBox, svgPath, depth + 1);
-            else if (!(child->type == SvgNodeType::Symbol && node->type != SvgNodeType::Use))
-                paint = _sceneBuildHelper(ctx, child, vBox, svgPath, false, depth + 1);
-            if (paint) {
-                if (child->id) paint->id = djb2Encode(child->id);
-                scene->add(paint);
-            }
+            if (child->type == SvgNodeType::Use) paint = _useBuildHelper(ctx, child, vBox, svgPath, depth + 1);
+            else if (!(child->type == SvgNodeType::Symbol && node->type != SvgNodeType::Use)) paint = _sceneBuildHelper(ctx, child, vBox, svgPath, false, depth + 1);
         } else {
-            Paint* paint = nullptr;
             if (child->type == SvgNodeType::Image) paint = _imageBuildHelper(ctx, child, vBox, svgPath);
             else if (child->type == SvgNodeType::Text) paint = _textBuildHelper(ctx, child, vBox, svgPath);
             else if (child->type != SvgNodeType::Mask) paint = _shapeBuildHelper(ctx, child, vBox, svgPath);
-            if (paint) {
-                if (child->id) paint->id = djb2Encode(child->id);
-                scene->add(paint);
+        }
+        if (paint) {
+            if (child->id) {
+                paint->id = djb2Encode(child->id);
+                if (ctx.accessible) ctx.access.emplace(paint->id, tvg::duplicate(child->id));
             }
+            scene->add(paint);
         }
     }
     scene->opacity(node->style->opacity);
 
-    auto p = _applyFilter(ctx, scene, node, vBox, svgPath);
-    p = _applyComposition(ctx, p, node, vBox, svgPath);
-    return static_cast<Scene*>(_applyBlend(p, node));
+    return (Scene*)_applyBlend(_applyComposition(ctx, _applyFilter(ctx, scene, node, vBox, svgPath), node, vBox, svgPath), node);
 }
 
 

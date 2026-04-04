@@ -23,6 +23,7 @@
 #ifndef _TVG_SVG_LOADER_COMMON_H_
 #define _TVG_SVG_LOADER_COMMON_H_
 
+#include <map>
 #include "tvgCommon.h"
 #include "tvgArray.h"
 #include "tvgInlist.h"
@@ -610,7 +611,12 @@ struct SvgParserContext
     Array<SvgNodeIdPair> nodesToStyle;
     Array<char*> images;        //embedded images
     Array<FontFace> fonts;
+
+    // TODO: We can remove map and directly use the name instead of id in ThorVG v2
+    map<uint32_t, const char*> access;  // paint id & name
+
     OpenedTagType openedTag = OpenedTagType::Other;
+    bool accessible;  // allow the Accessor to retain the SVG node names
 
     void clear(bool all);
 };
