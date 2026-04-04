@@ -17,13 +17,14 @@
 
 #include <math.h>
 
-#include "ecma-eval.h"
+#include "ecma-builtins.h"
 #include "ecma-function-object.h"
 #include "ecma-gc.h"
 #include "ecma-init-finalize.h"
 #include "ecma-objects-general.h"
 #include "ecma-objects.h"
 #include "jcontext.h"
+#include "js-parser.h"
 
 /** \addtogroup jerry Jerry engine interface
  * @{
@@ -145,24 +146,60 @@ jerry_cleanup (void)
 } /* jerry_cleanup */
 
 /**
- * Perform eval
+ * Parse a script, module, or function and create a compiled code using a character string
  *
- * Note:
- *      returned value must be freed with jerry_value_free, when it is no longer needed.
- *
- * @return result of eval, may be error value.
+ * @return function object value - if script was parsed successfully,
+ *         thrown error - otherwise
  */
 jerry_value_t
-jerry_eval (const jerry_char_t *source_p, /**< source code */
-            size_t source_size, /**< length of source code */
-            uint32_t flags) /**< jerry_parse_opts_t flags */
+jerry_parse (const jerry_char_t *source_p, /**< source code */
+             size_t source_size, /**< length of source code */
+             uint32_t flags) /**< jerry_parse_opts_t flags */
 {
   parser_source_char_t source_char;
   source_char.source_p = source_p;
   source_char.source_size = source_size;
 
-  return jerry_return (ecma_op_eval_chars_buffer ((void *) &source_char, flags));
-} /* jerry_eval */
+  /* Originally jerry_parse called jerry_parse_common, which handled parsing options.
+   * Since ThorVG does not use parsing options, the essential logic is inlined here directly. */
+  ecma_compiled_code_t *bytecode_data_p = parser_parse_script ((void *) &source_char, flags, NULL);
+
+  if (JERRY_UNLIKELY (bytecode_data_p == NULL))
+  {
+    return ecma_create_exception_from_context ();
+  }
+
+  ecma_object_t *object_p = ecma_create_object (NULL, sizeof (ecma_extended_object_t), ECMA_OBJECT_TYPE_CLASS);
+
+  ecma_extended_object_t *ext_object_p = (ecma_extended_object_t *) object_p;
+  ext_object_p->u.cls.type = ECMA_OBJECT_CLASS_SCRIPT;
+  ECMA_SET_INTERNAL_VALUE_POINTER (ext_object_p->u.cls.u3.value, bytecode_data_p);
+
+  return ecma_make_object_value (object_p);
+} /* jerry_parse */
+
+/**
+ * Run a Script or Module created by jerry_parse.
+ *
+ * Note:
+ *      returned value must be freed with jerry_value_free, when it is no longer needed.
+ *
+ * @return result of bytecode - if run was successful
+ *         thrown error - otherwise
+ */
+jerry_value_t
+jerry_run (const jerry_value_t script) /**< script or module to run */
+{
+  ecma_object_t *object_p = ecma_get_object_from_value (script);
+  ecma_extended_object_t *ext_object_p = (ecma_extended_object_t *) object_p;
+
+  const ecma_compiled_code_t *bytecode_data_p;
+  bytecode_data_p = ECMA_GET_INTERNAL_VALUE_POINTER (ecma_compiled_code_t, ext_object_p->u.cls.u3.value);
+
+  JERRY_ASSERT (CBC_FUNCTION_GET_TYPE (bytecode_data_p->status_flags) == CBC_FUNCTION_SCRIPT);
+
+  return jerry_return (vm_run_global (bytecode_data_p, object_p));
+} /* jerry_run */
 
 /**
  * Get global object
