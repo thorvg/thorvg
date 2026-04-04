@@ -38,8 +38,8 @@ struct SvgLoader : ImageLoader, Task
     SvgLoader();
     ~SvgLoader();
 
-    bool open(const char* path) override;
-    bool open(const char* data, uint32_t size, const char* rpath, bool copy) override;
+    bool open(const char* path, const LoaderOps* ops) override;
+    bool open(const char* data, uint32_t size, const LoaderOps* ops, bool copy) override;
     bool resize(Paint* paint, float w, float h) override;
     bool read() override;
     bool close() override;

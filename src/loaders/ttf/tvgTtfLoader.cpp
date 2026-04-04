@@ -507,8 +507,7 @@ TtfLoader::~TtfLoader()
     clear();
 }
 
-
-bool TtfLoader::open(const char* path)
+bool TtfLoader::open(const char* path, TVG_UNUSED const LoaderOps* ops)
 {
 #ifdef THORVG_FILE_IO_SUPPORT
     clear();
@@ -522,8 +521,7 @@ bool TtfLoader::open(const char* path)
 #endif
 }
 
-
-bool TtfLoader::open(const char* data, uint32_t size, TVG_UNUSED const char* rpath, bool copy)
+bool TtfLoader::open(const char* data, uint32_t size, const LoaderOps* ops, bool copy)
 {
     reader.size = size;
     nomap = true;

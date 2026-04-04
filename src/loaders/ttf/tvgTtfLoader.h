@@ -53,8 +53,8 @@ struct TtfLoader : public FontLoader
     using FontLoader::open;
     using FontLoader::read;
 
-    bool open(const char* path) override;
-    bool open(const char *data, uint32_t size, const char* rpath, bool copy) override;
+    bool open(const char* path, const LoaderOps* ops) override;
+    bool open(const char* data, uint32_t size, const LoaderOps* ops, bool copy) override;
     void transform(Paint* paint, FontMetrics& fm, float italicShear) override;
     bool get(FontMetrics& fm, char* text, uint32_t len, RenderPath& out) override;
     void copy(const FontMetrics& in, FontMetrics& out) override;

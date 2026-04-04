@@ -73,8 +73,8 @@ public:
     LottieLoader();
     ~LottieLoader();
 
-    bool open(const char* path) override;
-    bool open(const char* data, uint32_t size, const char* rpath, bool copy) override;
+    bool open(const char* path, const LoaderOps* ops) override;
+    bool open(const char* data, uint32_t size, const LoaderOps* ops, bool copy) override;
     bool resize(Paint* paint, float w, float h) override;
     bool read() override;
     Paint* paint() override;
@@ -101,7 +101,6 @@ public:
     bool tween(float from, float to, float progress);
     bool assign(const char* layer, uint32_t ix, const char* var, float val);
     bool quality(uint8_t value);
-    void set(const AssetResolver* resolver) override;
 
 private:
     bool ready();
