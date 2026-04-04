@@ -220,13 +220,14 @@ struct jerry_context_t
 /*
  * This part is for JerryScript which uses external context.
  */
+extern thread_local jerry_context_t* tls_context_p;
 
-#define JERRY_CONTEXT_STRUCT (*jerry_port_context_get ())
-#define JERRY_CONTEXT(field) (jerry_port_context_get ()->field)
+#define JERRY_CONTEXT_STRUCT (*tls_context_p)
+#define JERRY_CONTEXT(field) (tls_context_p->field)
 
 #if !JERRY_SYSTEM_ALLOCATOR
 
-#define JMEM_HEAP_SIZE (JERRY_CONTEXT (heap_size))
+#define JMEM_HEAP_SIZE (tls_context_p->heap_size)
 
 #define JMEM_HEAP_AREA_SIZE (JMEM_HEAP_SIZE - JMEM_ALIGNMENT)
 
@@ -236,7 +237,7 @@ struct jmem_heap_t
   uint8_t area[]; /**< heap area */
 };
 
-#define JERRY_HEAP_CONTEXT(field) (JERRY_CONTEXT (heap_p)->field)
+#define JERRY_HEAP_CONTEXT(field) (tls_context_p->heap_p->field)
 
 #endif /* !JERRY_SYSTEM_ALLOCATOR */
 
