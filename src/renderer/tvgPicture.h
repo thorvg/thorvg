@@ -159,11 +159,9 @@ struct PictureImpl : Picture
         if (vector || bitmap) return Result::InsufficientCondition;
 
         bool invalid;  //Invalid Path
-        auto loader = static_cast<ImageLoader*>(LoaderMgr::loader(filename, &invalid));
-        if (!loader) {
-            if (invalid) return Result::InvalidArguments;
-            return Result::NonSupport;
-        }
+        PictureOps ops = {resolver, nullptr};
+        auto loader = LoaderMgr::loader(filename, &ops, &invalid);
+        if (invalid) return Result::InvalidArguments;
         return load(loader);
     }
 
@@ -171,20 +169,16 @@ struct PictureImpl : Picture
     {
         if (!data || size <= 0) return Result::InvalidArguments;
         if (vector || bitmap) return Result::InsufficientCondition;
-        auto loader = static_cast<ImageLoader*>(LoaderMgr::loader(data, size, mimeType, rpath, copy));
-        if (!loader) return Result::NonSupport;
-        return load(loader);
+
+        PictureOps ops = {resolver, rpath};
+        return load(LoaderMgr::loader(data, size, mimeType, &ops, copy));
     }
 
     Result load(const uint32_t* data, uint32_t w, uint32_t h, ColorSpace cs, bool copy)
     {
         if (!data || w <= 0 || h <= 0 || cs == ColorSpace::Unknown)  return Result::InvalidArguments;
         if (vector || bitmap) return Result::InsufficientCondition;
-
-        auto loader = static_cast<ImageLoader*>(LoaderMgr::loader(data, w, h, cs, copy));
-        if (!loader) return Result::FailedAllocation;
-
-        return load(loader);
+        return load(LoaderMgr::loader(data, w, h, cs, copy));
     }
 
     Result set(std::function<bool(Paint* paint, const char* src, void* data)> resolver, void* data)
@@ -315,8 +309,16 @@ struct PictureImpl : Picture
         return impl.renderer->region(impl.rd);
     }
 
-    Result load(ImageLoader* loader)
+    Result load(Loader* loader)
     {
+        if (!loader) return Result::NonSupport;
+
+        // fonts are not expected in the picture
+        if (loader->type == FileType::Ttf) {
+            LoaderMgr::retrieve(loader);
+            return Result::InvalidArguments;
+        }
+
         //Same resource has been loaded.
         if (this->loader == loader) {
             this->loader->sharing--;  //make it sure the reference counting.
@@ -325,12 +327,11 @@ struct PictureImpl : Picture
             LoaderMgr::retrieve(this->loader);
         }
 
-        this->loader = loader;
-        loader->set(resolver);
+        this->loader = static_cast<ImageLoader*>(loader);
         if (!loader->read()) return Result::Unknown;
 
-        this->w = loader->w;
-        this->h = loader->h;
+        this->w = this->loader->w;
+        this->h = this->loader->h;
 
         impl.mark(RenderUpdateFlag::All);
 

@@ -37,6 +37,20 @@ struct AssetResolver
     void* data;
 };
 
+struct LoaderOps
+{
+    Type caller;  // which requests this?
+};
+
+struct PictureOps : LoaderOps
+{
+    AssetResolver* resolver;
+    const char* rpath;  // decide the relative path file if the file is loaded from memory
+
+    PictureOps(AssetResolver* resolver, const char* rpath) :
+        LoaderOps{Type::Picture}, resolver(resolver), rpath(rpath) {}
+};
+
 struct Loader
 {
     INLIST_ITEM(Loader);
@@ -69,8 +83,8 @@ struct Loader
         cached = true;
     }
 
-    virtual bool open(const char* path) { return false; }
-    virtual bool open(const char* data, uint32_t size, const char* rpath, bool copy) { return false; }
+    virtual bool open(const char* path, const LoaderOps* ops) { return false; }
+    virtual bool open(const char* data, uint32_t size, const LoaderOps* ops, bool copy) { return false; }
     virtual bool resize(Paint* paint, float w, float h) { return false; }
     virtual void sync() {};  // finish immediately if any async update jobs.
 
@@ -126,7 +140,6 @@ struct ImageLoader : Loader
 
     virtual bool animatable() { return false; }  // true if this loader supports animation.
     virtual Paint* paint() { return nullptr; }
-    virtual void set(const AssetResolver* resolver) {}
 
     virtual RenderSurface* bitmap()
     {

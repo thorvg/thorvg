@@ -34,7 +34,6 @@ RawLoader::~RawLoader()
     if (copy) tvg::free(surface.buf32);
 }
 
-
 bool RawLoader::open(const uint32_t* data, uint32_t w, uint32_t h, ColorSpace cs, bool copy)
 {
     if (!Loader::read()) return true;
