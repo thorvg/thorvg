@@ -3862,7 +3862,7 @@ bool SvgLoader::open(const char* data, uint32_t size, TVG_UNUSED const char* rpa
 bool SvgLoader::open(const char* path)
 {
 #ifdef THORVG_FILE_IO_SUPPORT
-    if ((content = LoadModule::open(path, size, true))) {
+    if ((content = Loader::open(path, size, true))) {
         copy = true;
         return header();
     }
@@ -3888,7 +3888,7 @@ bool SvgLoader::read()
 {
     if (!content || size == 0) return false;
 
-    if (!LoadModule::read() || root) return true;
+    if (!Loader::read() || root) return true;
 
     TaskScheduler::request(this);
 
@@ -3898,7 +3898,7 @@ bool SvgLoader::read()
 
 bool SvgLoader::close()
 {
-    if (!LoadModule::close()) return false;
+    if (!Loader::close()) return false;
     this->done();
     clear();
     return true;

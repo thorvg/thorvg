@@ -73,7 +73,7 @@ WebpLoader::~WebpLoader()
 bool WebpLoader::open(const char* path)
 {
 #ifdef THORVG_FILE_IO_SUPPORT
-    if (!(data = (uint8_t*)LoadModule::open(path, size))) return false;
+    if (!(data = (uint8_t*)Loader::open(path, size))) return false;
 
     int width, height;
     if (!WebPGetInfo(data, size, &width, &height)) return false;
@@ -112,7 +112,7 @@ bool WebpLoader::open(const char* data, uint32_t size, TVG_UNUSED const char* rp
 
 bool WebpLoader::read()
 {
-    if (!LoadModule::read()) return true;
+    if (!Loader::read()) return true;
 
     if (!data || w == 0 || h == 0) return false;
 
@@ -126,7 +126,7 @@ bool WebpLoader::read()
 
 bool WebpLoader::close()
 {
-    if (!LoadModule::close()) return false;
+    if (!Loader::close()) return false;
     this->done();
     return true;
 }

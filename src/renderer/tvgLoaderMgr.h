@@ -20,21 +20,28 @@
  * SOFTWARE.
  */
 
-#ifndef _TVG_RAW_LOADER_H_
-#define _TVG_RAW_LOADER_H_
+#ifndef _TVG_LOADER_MGR_H_
+#define _TVG_LOADER_MGR_H_
 
-class RawLoader : public ImageLoader
+#include "tvgLoader.h"
+
+namespace tvg
 {
-public:
-    bool copy = false;
 
-    RawLoader();
-    ~RawLoader();
-
-    using Loader::open;
-    bool open(const uint32_t* data, uint32_t w, uint32_t h, ColorSpace cs, bool copy);
-    bool read() override;
+struct LoaderMgr
+{
+    static bool init();
+    static bool term();
+    static Loader* loader(const char* filename, bool* invalid);
+    static Loader* loader(const char* data, uint32_t size, const char* mimeType, const char* rpath, bool copy);
+    static Loader* loader(const uint32_t* data, uint32_t w, uint32_t h, ColorSpace cs, bool copy);
+    static Loader* loader(const char* name, const char* data, uint32_t size, const char* mimeType, bool copy);
+    static Loader* font(const char* name);
+    static Loader* anyfont();
+    static bool retrieve(const char* filename);
+    static bool retrieve(Loader* loader);
 };
 
+}
 
-#endif //_TVG_RAW_LOADER_H_
+#endif //_TVG_LOADER_MGR_H_

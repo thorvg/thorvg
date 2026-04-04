@@ -20,22 +20,21 @@
  * SOFTWARE.
  */
 
-#ifndef _TVG_FRAME_MODULE_H_
-#define _TVG_FRAME_MODULE_H_
+#ifndef _TVG_ANIM_LOADER_H_
+#define _TVG_ANIM_LOADER_H_
 
-#include "tvgLoadModule.h"
+#include "tvgLoader.h"
 
 namespace tvg
 {
 
-class FrameModule: public ImageLoader
+struct AnimLoader: ImageLoader
 {
-public:
     float segmentBegin = 0.0f;
     float segmentEnd;             //Initialize the value with the total frame number
 
-    FrameModule(FileType type) : ImageLoader(type) {}
-    virtual ~FrameModule() {}
+    AnimLoader(FileType type) : ImageLoader(type) {}
+    virtual ~AnimLoader() {}
 
     virtual bool frame(float no) = 0;       //set the current frame number
     virtual float totalFrame() = 0;         //return the total frame count
@@ -49,9 +48,9 @@ public:
         if (end) *end = segmentEnd;
     }
 
-    virtual bool animatable() override { return true; }
+    bool animatable() override { return true; }
 };
 
 }
 
-#endif //_TVG_FRAME_MODULE_H_
+#endif //_TVG_ANIM_LOADER_H_

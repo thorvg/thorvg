@@ -81,7 +81,7 @@ void LottieLoader::release()
 /* External Class Implementation                                        */
 /************************************************************************/
 
-LottieLoader::LottieLoader() : FrameModule(FileType::Lot), builder(new LottieBuilder)
+LottieLoader::LottieLoader() : AnimLoader(FileType::Lot), builder(new LottieBuilder)
 {
 
 }
@@ -105,7 +105,7 @@ bool LottieLoader::header()
 {
     //A single thread doesn't need to perform intensive tasks.
     if (TaskScheduler::threads() == 0) {
-        LoadModule::read();
+        Loader::read();
         if (prepare()) {
             w = static_cast<float>(comp->w);
             h = static_cast<float>(comp->h);
@@ -230,7 +230,7 @@ bool LottieLoader::open(const char* data, uint32_t size, const char* rpath, bool
 bool LottieLoader::open(const char* path)
 {
 #ifdef THORVG_FILE_IO_SUPPORT
-    if ((content = LoadModule::open(path, size, true))) {
+    if ((content = Loader::open(path, size, true))) {
         dirName = tvg::dirname(path);
         copy = true;
         return header();
@@ -260,7 +260,7 @@ bool LottieLoader::resize(Paint* paint, float w, float h)
 bool LottieLoader::read()
 {
     //the loading has been already completed
-    if (!LoadModule::read()) return true;
+    if (!Loader::read()) return true;
 
     if (!content || size == 0) return false;
 
