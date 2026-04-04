@@ -53,10 +53,9 @@ Result Text::load(const char* filename) noexcept
     if (loader) {
         if (loader->sharing > 0) --loader->sharing;   //font loading doesn't mean sharing.
         return Result::Success;
-    } else {
-        if (invalid) return Result::InvalidArguments;
-        else return Result::NonSupport;
     }
+    if (invalid) return Result::InvalidArguments;
+    else return Result::NonSupport;
 #else
     TVGLOG("RENDERER", "FILE IO is disabled!");
     return Result::NonSupport;

@@ -30,7 +30,6 @@
 #include "tvgLottieModifier.h"
 
 struct LottieComposition;
-struct AssetResolver;
 
 struct RenderRepeater
 {

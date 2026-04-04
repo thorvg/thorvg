@@ -25,7 +25,7 @@
 
 #include "tvgPaint.h"
 #include "tvgScene.h"
-#include "tvgLoader.h"
+#include "tvgLoaderMgr.h"
 
 namespace tvg
 {
