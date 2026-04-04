@@ -25,7 +25,7 @@
 
 #include "tvgCommon.h"
 #include "tvgInlist.h"
-#include "tvgFrameModule.h"
+#include "tvgLoader.h"
 #include "tvgTaskScheduler.h"
 
 struct LottieComposition;
@@ -50,8 +50,7 @@ struct LottieCustomSlot
     ~LottieCustomSlot();
 };
 
-
-class LottieLoader : public FrameModule, public Task
+class LottieLoader : public AnimLoader, public Task
 {
 public:
     const char* content = nullptr;      //lottie file data
@@ -113,6 +112,5 @@ private:
     void release();
     bool prepare();
 };
-
 
 #endif //_TVG_LOTTIELOADER_H_

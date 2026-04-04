@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2023 - 2026 ThorVG project. All rights reserved.
+ * Copyright (c) 2020 - 2026 ThorVG project. All rights reserved.
 
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to deal
@@ -20,38 +20,28 @@
  * SOFTWARE.
  */
 
-#ifndef _TVG_FRAME_MODULE_H_
-#define _TVG_FRAME_MODULE_H_
+#ifndef _TVG_LOADER_MGR_H_
+#define _TVG_LOADER_MGR_H_
 
-#include "tvgLoadModule.h"
+#include "tvgLoader.h"
 
 namespace tvg
 {
 
-class FrameModule: public ImageLoader
+struct LoaderMgr
 {
-public:
-    float segmentBegin = 0.0f;
-    float segmentEnd;             //Initialize the value with the total frame number
-
-    FrameModule(FileType type) : ImageLoader(type) {}
-    virtual ~FrameModule() {}
-
-    virtual bool frame(float no) = 0;       //set the current frame number
-    virtual float totalFrame() = 0;         //return the total frame count
-    virtual float curFrame() = 0;           //return the current frame number
-    virtual float duration() = 0;           //return the animation duration in seconds
-    virtual Result segment(float begin, float end) = 0;
-
-    void segment(float* begin, float* end)
-    {
-        if (begin) *begin = segmentBegin;
-        if (end) *end = segmentEnd;
-    }
-
-    virtual bool animatable() override { return true; }
+    static bool init();
+    static bool term();
+    static Loader* loader(const char* filename, bool* invalid);
+    static Loader* loader(const char* data, uint32_t size, const char* mimeType, const char* rpath, bool copy);
+    static Loader* loader(const uint32_t* data, uint32_t w, uint32_t h, ColorSpace cs, bool copy);
+    static Loader* loader(const char* name, const char* data, uint32_t size, const char* mimeType, bool copy);
+    static Loader* font(const char* name);
+    static Loader* anyfont();
+    static bool retrieve(const char* filename);
+    static bool retrieve(Loader* loader);
 };
 
-}
+}  // namespace tvg
 
-#endif //_TVG_FRAME_MODULE_H_
+#endif  //_TVG_LOADER_MGR_H_

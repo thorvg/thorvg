@@ -22,7 +22,7 @@
 
 #include "tvgCanvas.h"
 #include "tvgTaskScheduler.h"
-#include "tvgLoadModule.h"
+#include "tvgLoader.h"
 
 #ifdef THORVG_SW_RASTER_SUPPORT
     #include "tvgSwRenderer.h"
