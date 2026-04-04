@@ -29,14 +29,21 @@ GlRenderTarget::~GlRenderTarget()
     reset();
 }
 
-void GlRenderTarget::init(uint32_t width, uint32_t height, GLint resolveId)
+void GlRenderTarget::init(uint32_t width, uint32_t height, GLint resolveId, bool external)
 {
     if (width == 0 || height == 0) return;
 
     this->width = width;
     this->height = height;
+    this->external = external;
+    this->valid = true;
 
-    //TODO: fbo is used. maybe we can consider the direct rendering with resolveId as well.
+    if (external) {
+        fbo = static_cast<GLuint>(resolveId);
+        colorBuffer = depthStencilBuffer = resolvedFbo = colorTex = 0;
+        return;
+    }
+
     GL_CHECK(glGenFramebuffers(1, &fbo));
 
     GL_CHECK(glBindFramebuffer(GL_FRAMEBUFFER, fbo));
@@ -78,16 +85,22 @@ void GlRenderTarget::init(uint32_t width, uint32_t height, GLint resolveId)
 
 void GlRenderTarget::reset()
 {
-    if (fbo == 0) return;
+    if (!valid) return;
 
-    GL_CHECK(glBindFramebuffer(GL_FRAMEBUFFER, 0));
-    GL_CHECK(glDeleteFramebuffers(1, &fbo));
-    GL_CHECK(glDeleteRenderbuffers(1, &colorBuffer));
-    GL_CHECK(glDeleteRenderbuffers(1, &depthStencilBuffer));
-    GL_CHECK(glDeleteFramebuffers(1, &resolvedFbo));
-    GL_CHECK(glDeleteTextures(1, &colorTex));
+    if (!external) {
+        GL_CHECK(glBindFramebuffer(GL_FRAMEBUFFER, 0));
+        if (fbo != 0) GL_CHECK(glDeleteFramebuffers(1, &fbo));
+        if (colorBuffer != 0) GL_CHECK(glDeleteRenderbuffers(1, &colorBuffer));
+        if (depthStencilBuffer != 0) GL_CHECK(glDeleteRenderbuffers(1, &depthStencilBuffer));
+        if (resolvedFbo != 0) GL_CHECK(glDeleteFramebuffers(1, &resolvedFbo));
+        if (colorTex != 0) GL_CHECK(glDeleteTextures(1, &colorTex));
+    }
 
     fbo = colorBuffer = depthStencilBuffer = resolvedFbo = colorTex = 0;
+    width = height = 0;
+    viewport = {};
+    valid = false;
+    external = false;
 }
 
 GlRenderTargetPool::GlRenderTargetPool(uint32_t maxWidth, uint32_t maxHeight): maxWidth(maxWidth), maxHeight(maxHeight), pool() {}
