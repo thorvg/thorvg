@@ -65,6 +65,7 @@ private:
     bool getValue(int8_t& val);
     bool getValue(RGB32& color);
     bool getValue(Point& pt);
+    bool getValue(Point3D& pt);
 
     template<typename T> bool parseTangent(const char *key, LottieVectorFrame<T>& value);
     template<typename T> bool parseTangent(const char *key, LottieScalarFrame<T>& value);
