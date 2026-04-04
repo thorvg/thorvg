@@ -14,11 +14,11 @@ endif
 
 source_file = [
    'tvgAnimation.h',
+   'tvgAnimLoader.h',
    'tvgCanvas.h',
    'tvgFill.h',
-   'tvgFrameModule.h',
    'tvgLoader.h',
-   'tvgLoadModule.h',
+   'tvgLoaderMgr.h',
    'tvgPicture.h',
    'tvgRender.h',
    'tvgIteratorAccessor.h',
@@ -32,7 +32,7 @@ source_file = [
    'tvgCanvas.cpp',
    'tvgFill.cpp',
    'tvgInitializer.cpp',
-   'tvgLoader.cpp',
+   'tvgLoaderMgr.cpp',
    'tvgPaint.cpp',
    'tvgPicture.cpp',
    'tvgRender.cpp',

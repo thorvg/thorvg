@@ -110,7 +110,7 @@ bool JpgLoader::open(const char* data, uint32_t size, TVG_UNUSED const char* rpa
 
 bool JpgLoader::read()
 {
-    if (!LoadModule::read()) return true;
+    if (!Loader::read()) return true;
 
     if (!decoder || w == 0 || h == 0) return false;
 
@@ -122,7 +122,7 @@ bool JpgLoader::read()
 
 bool JpgLoader::close()
 {
-    if (!LoadModule::close()) return false;
+    if (!Loader::close()) return false;
     this->done();
     return true;
 }

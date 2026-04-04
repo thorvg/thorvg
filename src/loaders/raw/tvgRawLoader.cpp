@@ -37,7 +37,7 @@ RawLoader::~RawLoader()
 
 bool RawLoader::open(const uint32_t* data, uint32_t w, uint32_t h, ColorSpace cs, bool copy)
 {
-    if (!LoadModule::read()) return true;
+    if (!Loader::read()) return true;
 
     if (!data || w == 0 || h == 0) return false;
 
@@ -66,7 +66,7 @@ bool RawLoader::open(const uint32_t* data, uint32_t w, uint32_t h, ColorSpace cs
 
 bool RawLoader::read()
 {
-    LoadModule::read();
+    Loader::read();
 
     return true;
 }

@@ -83,7 +83,7 @@ bool PngLoader::open(const char* data, uint32_t size, TVG_UNUSED const char* rpa
 
 bool PngLoader::read()
 {
-    if (!LoadModule::read()) return true;
+    if (!Loader::read()) return true;
 
     if (w == 0 || h == 0) return false;
 
