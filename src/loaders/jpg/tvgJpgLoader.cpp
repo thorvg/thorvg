@@ -67,8 +67,7 @@ JpgLoader::~JpgLoader()
     tvg::free(surface.buf8);
 }
 
-
-bool JpgLoader::open(const char* path)
+bool JpgLoader::open(const char* path, TVG_UNUSED const LoaderOps* ops)
 {
 #ifdef THORVG_FILE_IO_SUPPORT
     int width, height;
@@ -83,8 +82,7 @@ bool JpgLoader::open(const char* path)
 #endif
 }
 
-
-bool JpgLoader::open(const char* data, uint32_t size, TVG_UNUSED const char* rpath, bool copy)
+bool JpgLoader::open(const char* data, uint32_t size, TVG_UNUSED const LoaderOps* ops, bool copy)
 {
     if (copy) {
         this->data = tvg::malloc<char>(size);

@@ -260,7 +260,7 @@ bool LoaderMgr::retrieve(Loader* loader)
     return true;
 }
 
-tvg::Loader* LoaderMgr::loader(const char* filename, bool* invalid)
+tvg::Loader* LoaderMgr::loader(const char* filename, const LoaderOps* ops, bool* invalid)
 {
 #ifdef THORVG_FILE_IO_SUPPORT
     *invalid = false;
@@ -275,7 +275,7 @@ tvg::Loader* LoaderMgr::loader(const char* filename, bool* invalid)
     }
 
     if (auto loader = _findByPath(filename)) {
-        if (loader->open(filename)) {
+        if (loader->open(filename, ops)) {
             if (allowCache) {
                 loader->cache(duplicate(filename));
                 {
@@ -290,7 +290,7 @@ tvg::Loader* LoaderMgr::loader(const char* filename, bool* invalid)
     // Unknown MimeType. Try with the candidates in the order
     for (int i = 0; i < static_cast<int>(FileType::Raw); i++) {
         if (auto loader = _find(static_cast<FileType>(i))) {
-            if (loader->open(filename)) {
+            if (loader->open(filename, ops)) {
                 if (allowCache) {
                     loader->cache(duplicate(filename));
                     {
@@ -313,7 +313,7 @@ bool LoaderMgr::retrieve(const char* filename)
     return retrieve(_findFromCache(filename));
 }
 
-tvg::Loader* LoaderMgr::loader(const char* data, uint32_t size, const char* mimeType, const char* rpath, bool copy)
+tvg::Loader* LoaderMgr::loader(const char* data, uint32_t size, const char* mimeType, const LoaderOps* ops, bool copy)
 {
     // Note that users could use the same data pointer with the different content.
     // Thus caching is only valid for shareable.
@@ -332,7 +332,7 @@ tvg::Loader* LoaderMgr::loader(const char* data, uint32_t size, const char* mime
     // Try with the given MimeType
     if (mimeType) {
         if (auto loader = _findByType(mimeType)) {
-            if (loader->open(data, size, rpath, copy)) {
+            if (loader->open(data, size, ops, copy)) {
                 if (allowCache) {
                     loader->cache(HASH_KEY(data));
                     ScopedLock lock(_key);
@@ -349,7 +349,7 @@ tvg::Loader* LoaderMgr::loader(const char* data, uint32_t size, const char* mime
     for (int i = 0; i < static_cast<int>(FileType::Raw); i++) {
         auto loader = _find(static_cast<FileType>(i));
         if (loader) {
-            if (loader->open(data, size, rpath, copy)) {
+            if (loader->open(data, size, ops, copy)) {
                 if (allowCache) {
                     loader->cache(HASH_KEY(data));
                     ScopedLock lock(_key);
@@ -387,7 +387,7 @@ tvg::Loader* LoaderMgr::loader(const uint32_t* data, uint32_t w, uint32_t h, Col
 }
 
 // loads fonts from memory - loader is cached (regardless of copy value) in order to access it while setting font
-tvg::Loader* LoaderMgr::loader(const char* name, const char* data, uint32_t size, TVG_UNUSED const char* mimeType, bool copy)
+tvg::Loader* LoaderMgr::loader(const char* name, const char* data, uint32_t size, TVG_UNUSED const char* mimeType, const LoaderOps* ops, bool copy)
 {
 #ifdef THORVG_TTF_LOADER_SUPPORT
     // TODO: add check for mimetype ?
@@ -395,7 +395,7 @@ tvg::Loader* LoaderMgr::loader(const char* name, const char* data, uint32_t size
 
     // function is dedicated for ttf loader (the only supported font loader)
     auto loader = new TtfLoader;
-    if (loader->open(data, size, "", copy)) {
+    if (loader->open(data, size, ops, copy)) {
         loader->name = duplicate(name);
         loader->cached = true;  // force it.
         ScopedLock lock(_key);
