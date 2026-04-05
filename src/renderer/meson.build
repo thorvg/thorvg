@@ -20,7 +20,7 @@ source_file = [
    'tvgLoaderMgr.h',
    'tvgPicture.h',
    'tvgRender.h',
-   'tvgIteratorAccessor.h',
+   'tvgAccessor.h',
    'tvgSaveModule.h',
    'tvgScene.h',
    'tvgShape.h',
