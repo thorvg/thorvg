@@ -23,6 +23,7 @@
 #include <cstring>
 #include <memory>
 #include "tvgStr.h"
+#include "tvgMath.h"
 #include "tvgGifEncoder.h"
 #include "tvgGifSaver.h"
 

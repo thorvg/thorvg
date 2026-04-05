@@ -20,18 +20,16 @@
  * SOFTWARE.
  */
 
-#ifndef _TVG_ITERATOR_ACCESSOR_H_
-#define _TVG_ITERATOR_ACCESSOR_H_
+#ifndef _TVG_ACCESSOR_H_
+#define _TVG_ACCESSOR_H_
 
 #include "tvgPaint.h"
 
 namespace tvg
 {
 
-class IteratorAccessor
+struct AccessorIterator
 {
-public:
-    //Utility Method: Iterator Accessor
     static Iterator* iterator(const Paint* paint)
     {
         return PAINT(paint)->iterator();
@@ -40,4 +38,4 @@ public:
 
 }
 
-#endif //_TVG_ITERATOR_ACCESSOR_H_
+#endif //_TVG_ACCESSOR_H_

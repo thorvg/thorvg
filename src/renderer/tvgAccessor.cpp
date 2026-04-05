@@ -20,7 +20,7 @@
  * SOFTWARE.
  */
 
-#include "tvgIteratorAccessor.h"
+#include "tvgAccessor.h"
 #include "tvgCompressor.h"
 
 /************************************************************************/
@@ -34,7 +34,7 @@ static bool accessChildren(Iterator* it, function<bool(const Paint* paint, void*
         if (!func(child, data)) return false;
 
         //Access the children of the child
-        if (auto it2 = IteratorAccessor::iterator(child)) {
+        if (auto it2 = AccessorIterator::iterator(child)) {
             if (!accessChildren(it2, func, data)) {
                 delete(it2);
                 return false;
@@ -65,7 +65,7 @@ Result Accessor::set(Paint* paint, function<bool(const Paint* paint, void* data)
     }
 
     //Children
-    if (auto it = IteratorAccessor::iterator(paint)) {
+    if (auto it = AccessorIterator::iterator(paint)) {
         accessChildren(it, func, data);
         delete(it);
     }
