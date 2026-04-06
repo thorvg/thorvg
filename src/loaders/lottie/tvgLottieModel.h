@@ -84,7 +84,17 @@ struct LottieStroke
 
 struct LottieEffect
 {
-    enum Type : uint8_t {Custom = 5, Tint = 20, Fill, Stroke, Tritone, DropShadow = 25, GaussianBlur = 29};
+    enum Type : uint8_t
+    {
+        Custom = 5,
+        Tint = 20,
+        Fill,
+        Stroke,
+        Tritone,
+        DropShadow = 25,
+        SetMatte = 28,
+        GaussianBlur = 29
+    };
 
     virtual ~LottieEffect() {}
 
@@ -239,6 +249,20 @@ struct LottieFxGaussianBlur : LottieEffect
     }
 };
 
+struct LottieFxSetMatte : LottieEffect
+{
+    int8_t matteLayer = -1;
+    int8_t useForMatte = 1;
+    int8_t invert = 0;
+    //int8_t layerSizeDiff;
+    int8_t composite = 1;
+    //int8_t premultiply;
+
+    LottieFxSetMatte()
+    {
+        type = LottieEffect::SetMatte;
+    }
+};
 
 struct LottieMask
 {
