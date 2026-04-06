@@ -221,8 +221,10 @@ struct jerry_context_t
  * This part is for JerryScript which uses external context.
  */
 
-#define JERRY_CONTEXT_STRUCT (*jerry_port_context_get ())
-#define JERRY_CONTEXT(field) (jerry_port_context_get ()->field)
+extern __thread jerry_context_t* tls_context_p;
+
+#define JERRY_CONTEXT_STRUCT (*tls_context_p)
+#define JERRY_CONTEXT(field) (tls_context_p->field)
 
 #if !JERRY_SYSTEM_ALLOCATOR
 
