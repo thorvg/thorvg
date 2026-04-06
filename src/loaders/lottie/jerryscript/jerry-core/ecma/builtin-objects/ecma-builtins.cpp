@@ -250,6 +250,7 @@ ecma_builtin_is_global (ecma_object_t *object_p) /**< pointer to an object */
 ecma_object_t *
 ecma_builtin_get_global (void)
 {
+  JERRY_DEFINE_CURRENT_CONTEXT ();
   JERRY_ASSERT (JERRY_CONTEXT (global_object_p) != NULL);
 
   return (ecma_object_t *) JERRY_CONTEXT (global_object_p);
