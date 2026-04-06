@@ -116,6 +116,7 @@ ecma_arraybuffer_create_object_with_buffer (uint8_t type, /**< type of the array
 ecma_object_t *
 ecma_arraybuffer_new_object (uint32_t length) /**< length of the arraybuffer */
 {
+  JERRY_DEFINE_CURRENT_CONTEXT ();
   if (length > JERRY_CONTEXT (arraybuffer_compact_allocation_limit))
   {
     return ecma_arraybuffer_create_object_with_buffer (ECMA_OBJECT_CLASS_ARRAY_BUFFER, length);
@@ -133,6 +134,7 @@ ecma_arraybuffer_new_object (uint32_t length) /**< length of the arraybuffer */
 ecma_value_t
 ecma_arraybuffer_allocate_buffer (ecma_object_t *arraybuffer_p) /**< ArrayBuffer object */
 {
+  JERRY_DEFINE_CURRENT_CONTEXT ();
   JERRY_ASSERT (!(ECMA_ARRAYBUFFER_GET_FLAGS (arraybuffer_p) & ECMA_ARRAYBUFFER_ALLOCATED));
 
   ecma_extended_object_t *extended_object_p = (ecma_extended_object_t *) arraybuffer_p;
@@ -201,6 +203,7 @@ ecma_arraybuffer_allocate_buffer_throw (ecma_object_t *arraybuffer_p)
 void
 ecma_arraybuffer_release_buffer (ecma_object_t *arraybuffer_p) /**< ArrayBuffer object */
 {
+  JERRY_DEFINE_CURRENT_CONTEXT ();
   JERRY_ASSERT (ecma_object_class_is (arraybuffer_p, ECMA_OBJECT_CLASS_ARRAY_BUFFER)
                 || ecma_object_is_shared_arraybuffer (arraybuffer_p));
 
@@ -249,6 +252,7 @@ ecma_op_create_arraybuffer_object (const ecma_value_t *arguments_list_p, /**< li
                                                                           *   are passed to String constructor */
                                    uint32_t arguments_list_len) /**< length of the arguments' list */
 {
+  JERRY_DEFINE_CURRENT_CONTEXT ();
   JERRY_ASSERT (arguments_list_len == 0 || arguments_list_p != NULL);
 
   ecma_object_t *proto_p = ecma_op_get_prototype_from_constructor (JERRY_CONTEXT (current_new_target_p),
