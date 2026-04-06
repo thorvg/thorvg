@@ -358,9 +358,9 @@ jmem_heap_alloc_block_null_on_error (const size_t size) /**< required memory siz
  * @return pointer to the preceding block
  */
 static jmem_heap_free_t *
-jmem_heap_find_prev (const jmem_heap_free_t *const block_p) /**< which memory block's predecessor we're looking for */
+jmem_heap_find_prev (jerry_context_t *jerry_current_context_p,
+                     const jmem_heap_free_t *const block_p) /**< which memory block's predecessor we're looking for */
 {
-  JERRY_DEFINE_CURRENT_CONTEXT ();
   const jmem_heap_free_t *prev_p;
 
   if (block_p > JERRY_CONTEXT (jmem_heap_list_skip_p))
@@ -398,11 +398,11 @@ jmem_heap_find_prev (const jmem_heap_free_t *const block_p) /**< which memory bl
  *     'jmem_heap_find_prev' can and should be used to find the previous free block
  */
 static void
-jmem_heap_insert_block (jmem_heap_free_t *block_p, /**< block to insert */
+jmem_heap_insert_block (jerry_context_t *jerry_current_context_p,
+                        jmem_heap_free_t *block_p, /**< block to insert */
                         jmem_heap_free_t *prev_p, /**< the free block after which to insert 'block_p' */
                         const size_t size) /**< size of the inserted block */
 {
-  JERRY_DEFINE_CURRENT_CONTEXT ();
   JERRY_ASSERT ((uintptr_t) block_p % JMEM_ALIGNMENT == 0);
   JERRY_ASSERT (size % JMEM_ALIGNMENT == 0);
 
@@ -455,10 +455,10 @@ jmem_heap_insert_block (jmem_heap_free_t *block_p, /**< block to insert */
  * @return void
  */
 void JERRY_ATTR_HOT
-jmem_heap_free_block_internal (void *ptr, /**< pointer to beginning of data space of the block */
-                               const size_t size /**< size of allocated region */)
+jmem_heap_free_block_internal_with_context (jerry_context_t *jerry_current_context_p,
+                                            void *ptr, /**< pointer to beginning of data space of the block */
+                                            const size_t size /**< size of allocated region */)
 {
-  JERRY_DEFINE_CURRENT_CONTEXT ();
   JERRY_ASSERT (size > 0);
   JERRY_ASSERT (JERRY_CONTEXT (jmem_heap_limit) >= JERRY_CONTEXT (jmem_heap_allocated_size));
   JERRY_ASSERT (JERRY_CONTEXT (jmem_heap_allocated_size) > 0);
@@ -471,8 +471,8 @@ jmem_heap_free_block_internal (void *ptr, /**< pointer to beginning of data spac
   const size_t aligned_size = (size + JMEM_ALIGNMENT - 1) / JMEM_ALIGNMENT * JMEM_ALIGNMENT;
 
   jmem_heap_free_t *const block_p = (jmem_heap_free_t *) ptr;
-  jmem_heap_free_t *const prev_p = jmem_heap_find_prev (block_p);
-  jmem_heap_insert_block (block_p, prev_p, aligned_size);
+  jmem_heap_free_t *const prev_p = jmem_heap_find_prev (jerry_current_context_p, block_p);
+  jmem_heap_insert_block (jerry_current_context_p, block_p, prev_p, aligned_size);
 
   JERRY_CONTEXT (jmem_heap_allocated_size) -= aligned_size;
 
@@ -487,6 +487,14 @@ jmem_heap_free_block_internal (void *ptr, /**< pointer to beginning of data spac
   }
 
   JERRY_ASSERT (JERRY_CONTEXT (jmem_heap_limit) >= JERRY_CONTEXT (jmem_heap_allocated_size));
+} /* jmem_heap_free_block_internal_with_context */
+
+void JERRY_ATTR_HOT
+jmem_heap_free_block_internal (void *ptr, /**< pointer to beginning of data space of the block */
+                               const size_t size /**< size of allocated region */)
+{
+  JERRY_DEFINE_CURRENT_CONTEXT ();
+  jmem_heap_free_block_internal_with_context (jerry_current_context_p, ptr, size);
 } /* jmem_heap_free_block_internal */
 
 /**
@@ -523,8 +531,9 @@ jmem_heap_realloc_block (void *ptr, /**< memory region to reallocate */
     JMEM_VALGRIND_RESIZE_SPACE (block_p, old_size, new_size);
     JMEM_HEAP_STAT_FREE (old_size);
     JMEM_HEAP_STAT_ALLOC (new_size);
-    jmem_heap_insert_block ((jmem_heap_free_t *) ((uint8_t *) block_p + aligned_new_size),
-                            jmem_heap_find_prev (block_p),
+    jmem_heap_insert_block (jerry_current_context_p,
+                            (jmem_heap_free_t *) ((uint8_t *) block_p + aligned_new_size),
+                            jmem_heap_find_prev (jerry_current_context_p, block_p),
                             aligned_old_size - aligned_new_size);
 
     JERRY_CONTEXT (jmem_heap_allocated_size) -= (aligned_old_size - aligned_new_size);
@@ -544,7 +553,7 @@ jmem_heap_realloc_block (void *ptr, /**< memory region to reallocate */
     ecma_free_unused_memory (JMEM_PRESSURE_LOW);
   }
 
-  jmem_heap_free_t *prev_p = jmem_heap_find_prev (block_p);
+  jmem_heap_free_t *prev_p = jmem_heap_find_prev (jerry_current_context_p, block_p);
   JMEM_VALGRIND_DEFINED_SPACE (prev_p, sizeof (jmem_heap_free_t));
   jmem_heap_free_t *const next_p = JMEM_HEAP_GET_ADDR_FROM_OFFSET (prev_p->next_offset);
 
@@ -592,7 +601,7 @@ jmem_heap_realloc_block (void *ptr, /**< memory region to reallocate */
       if (required_size == prev_p->size)
       {
         JMEM_VALGRIND_NOACCESS_SPACE (prev_p, sizeof (jmem_heap_free_t));
-        prev_p = jmem_heap_find_prev (prev_p);
+        prev_p = jmem_heap_find_prev (jerry_current_context_p, prev_p);
         JMEM_VALGRIND_DEFINED_SPACE (prev_p, sizeof (jmem_heap_free_t));
         prev_p->next_offset = JMEM_HEAP_GET_OFFSET_FROM_ADDR (next_p);
       }
@@ -642,10 +651,10 @@ jmem_heap_realloc_block (void *ptr, /**< memory region to reallocate */
 
     /* jmem_heap_alloc_block_internal may trigger garbage collection, which can create new free blocks
      * in the heap structure, so we need to look up the previous block again. */
-    prev_p = jmem_heap_find_prev (block_p);
+    prev_p = jmem_heap_find_prev (jerry_current_context_p, block_p);
 
     memcpy (ret_block_p, block_p, old_size);
-    jmem_heap_insert_block (block_p, prev_p, aligned_old_size);
+    jmem_heap_insert_block (jerry_current_context_p, block_p, prev_p, aligned_old_size);
     /* jmem_heap_alloc_block_internal will call JMEM_VALGRIND_MALLOCLIKE_SPACE */
     JMEM_VALGRIND_FREELIKE_SPACE (block_p);
   }
@@ -688,7 +697,8 @@ void JERRY_ATTR_HOT
 jmem_heap_free_block (void *ptr, /**< pointer to beginning of data space of the block */
                       const size_t size) /**< size of allocated region */
 {
-  jmem_heap_free_block_internal (ptr, size);
+  JERRY_DEFINE_CURRENT_CONTEXT ();
+  jmem_heap_free_block_internal_with_context (jerry_current_context_p, ptr, size);
   JMEM_HEAP_STAT_FREE (size);
   return;
 } /* jmem_heap_free_block */
