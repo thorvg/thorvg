@@ -114,8 +114,8 @@ struct SwOutline
 
 struct SwSpan
 {
-    uint16_t x, y;
-    uint16_t len;
+    uint32_t x, y;
+    uint32_t len;
     uint8_t coverage;
 
     bool fetch(const RenderRegion& bbox, int32_t& x, int32_t& len) const
