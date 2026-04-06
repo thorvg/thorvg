@@ -41,13 +41,13 @@
   - src/loaders/lottie/**/*
 
 "cpu":
-  - src/renderer/sw_engine/**/*
+  - src/renderer/cpu_engine/**/*
 
 "webgpu":
-  - src/renderer/wg_engine/**/*
+  - src/renderer/gpu_engine/wg/**/*
 
 "gl":
-  - src/renderer/gl_engine/**/*
+  - src/renderer/gpu_engine/gl/**/*
 
 "renderer":
   - src/renderer/*

@@ -1,7 +1,7 @@
 option('engines',
    type: 'array',
-   choices: ['sw', 'gl', 'wg', 'all'],
-   value: ['sw'],
+   choices: ['cpu', 'gl', 'wg', 'all'],
+   value: ['cpu'],
    description: 'Enable Rasterizer Engine in thorvg')
 
 option('partial',

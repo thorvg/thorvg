@@ -20,6 +20,7 @@
  * SOFTWARE.
  */
 
+#include "tvgWgCommon.h"
 #include "tvgWgTessellator.h"
 #include "tvgMath.h"
 
@@ -426,7 +427,7 @@ void WgBWTessellator::tessellate(const RenderPath& path)
     uint32_t prevIndex = 0;
     Point firstPt = {};
     Point prevPt = {};
-    tvg::ConvexProbe probe;
+    GpuConvexProbe probe;
     bool contourClosed = false;
 
     mBuffer->vbuffer.reserve(ptsCnt * 2);
@@ -465,7 +466,7 @@ void WgBWTessellator::tessellate(const RenderPath& path)
             } break;
             case PathCommand::CubicTo: {
                 Bezier curve{pts[-1], pts[0], pts[1], pts[2]};
-                if (probe.convex && tvg::edgesCross(curve.start, curve.ctrl1, curve.ctrl2, curve.end)) probe.convex = false;
+                if (probe.convex && gpuEdgesCross(curve.start, curve.ctrl1, curve.ctrl2, curve.end)) probe.convex = false;
 
                 auto stepCount = curve.segments();
                 if (stepCount <= 1) stepCount = 2;
