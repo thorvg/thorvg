@@ -47,19 +47,132 @@ struct ExpContent
 
 static jerry_value_t _content(const jerry_call_info_t* info, const jerry_value_t args[], const jerry_length_t argsCnt);
 
-//reserved expressions specifiers
-static const char* EXP_NAME = "name";
-static const char* EXP_CONTENT = "content";
-static const char* EXP_WIDTH = "width";
-static const char* EXP_HEIGHT = "height";
+//reserved expressions specifiers (kept for string comparisons in _loopCommon)
 static const char* EXP_CYCLE = "cycle";
 static const char* EXP_PINGPONG = "pingpong";
-static const char* EXP_OFFSET = "offset";
+static const char* EXP_OFFSET_STR = "offset";
 static const char* EXP_CONTINUE = "continue";
-static const char* EXP_TIME = "time";
-static const char* EXP_VALUE = "value";
-static const char* EXP_INDEX = "index";
-static const char* EXP_EFFECT= "effect";
+
+/*
+ * Cached jerry string keys to avoid repeated ecma_new_ecma_string_from_utf8 allocations.
+ * Each jerry_object_set_sz internally creates/hashes/frees a string every call.
+ * By caching keys as jerry_value_t, we eliminate ~14% overhead from the hot path.
+ */
+#define FOREACH_EXP_KEY(X) \
+    /* common property names */ \
+    X(name,             "name") \
+    X(content,          "content") \
+    X(width,            "width") \
+    X(height,           "height") \
+    X(offset,           "offset") \
+    X(time,             "time") \
+    X(value,            "value") \
+    X(index,            "index") \
+    X(effect,           "effect") \
+    /* transform */ \
+    X(transform,        "transform") \
+    X(anchorPoint,      "anchorPoint") \
+    X(position,         "position") \
+    X(scale,            "scale") \
+    X(rotation,         "rotation") \
+    X(opacity,          "opacity") \
+    /* polystar */ \
+    X(innerRadius,      "innerRadius") \
+    X(outerRadius,      "outerRadius") \
+    X(innerRoundness,   "innerRoundness") \
+    X(outerRoundness,   "outerRoundness") \
+    X(points,           "points") \
+    /* trimpath */ \
+    X(start,            "start") \
+    X(end,              "end") \
+    /* layer */ \
+    X(parent,           "parent") \
+    X(hasParent,        "hasParent") \
+    X(inPoint,          "inPoint") \
+    X(outPoint,         "outPoint") \
+    X(startTime,        "startTime") \
+    X(hasVideo,         "hasVideo") \
+    X(hasAudio,         "hasAudio") \
+    X(enabled,          "enabled") \
+    X(audioActive,      "audioActive") \
+    X(timeRemap,        "timeRemap") \
+    X(toComp,           "toComp") \
+    /* property */ \
+    X(valueAtTime,      "valueAtTime") \
+    X(velocity,         "velocity") \
+    X(velocityAtTime,   "velocityAtTime") \
+    X(speed,            "speed") \
+    X(speedAtTime,      "speedAtTime") \
+    X(propertyIndex,    "propertyIndex") \
+    X(wiggle,           "wiggle") \
+    X(temporalWiggle,   "temporalWiggle") \
+    X(propertyGroup,    "propertyGroup") \
+    X(loopIn,           "loopIn") \
+    X(loopOut,          "loopOut") \
+    X(loopInDuration,   "loopInDuration") \
+    X(loopOutDuration,  "loopOutDuration") \
+    X(key,              "key") \
+    X(nearestKey,       "nearestKey") \
+    X(numKeys,          "numKeys") \
+    /* path */ \
+    X(path,             "path") \
+    X(pointOnPath,      "pointOnPath") \
+    X(tangentOnPath,    "tangentOnPath") \
+    /* comp */ \
+    X(layer,            "layer") \
+    X(numLayers,        "numLayers") \
+    X(duration,         "duration") \
+    X(frameDuration,    "frameDuration") \
+    /* global */ \
+    X(comp,             "comp") \
+    X(thisComp,         "thisComp") \
+    X(thisLayer,        "thisLayer") \
+    X(thisProperty,     "thisProperty") \
+    /* math */ \
+    X(bm_mul,           "$bm_mul") \
+    X(bm_sum,           "$bm_sum") \
+    X(bm_add,           "$bm_add") \
+    X(bm_sub,           "$bm_sub") \
+    X(bm_div,           "$bm_div") \
+    X(bm_mod,           "$bm_mod") \
+    X(mul,              "mul") \
+    X(sum,              "sum") \
+    X(add,              "add") \
+    X(sub,              "sub") \
+    X(div,              "div") \
+    X(mod,              "mod") \
+    X(clamp,            "clamp") \
+    X(dot,              "dot") \
+    X(cross,            "cross") \
+    X(normalize,        "normalize") \
+    X(length,           "length") \
+    X(random,           "random") \
+    X(degreesToRadians, "degreesToRadians") \
+    X(radiansToDegrees, "radiansToDegrees") \
+    X(linear,           "linear") \
+    X(ease,             "ease") \
+    X(easeIn,           "easeIn") \
+    X(easeOut,          "easeOut") \
+    /* result */ \
+    X(bm_rt,            "$bm_rt")
+
+static struct ExpKeyCache {
+    #define DECLARE_FIELD(field, str) jerry_value_t field;
+    FOREACH_EXP_KEY(DECLARE_FIELD)
+    #undef DECLARE_FIELD
+
+    void init() {
+        #define INIT_FIELD(field, str) field = jerry_string_sz(str);
+        FOREACH_EXP_KEY(INIT_FIELD)
+        #undef INIT_FIELD
+    }
+
+    void release() {
+        #define FREE_FIELD(field, str) jerry_value_free(field);
+        FOREACH_EXP_KEY(FREE_FIELD)
+        #undef FREE_FIELD
+    }
+} _k;
 
 
 static ExpContent* _expcontent(LottieExpression* exp, float frameNo, void* data, size_t refCnt = 1)
@@ -92,7 +205,7 @@ static jerry_value_t _number(float value)
     auto obj = jerry_object();
     auto val = jerry_number(value);
     jerry_object_set_index(obj, 0, val);
-    jerry_object_set_sz(obj, EXP_VALUE, val);
+    jerry_object_set(obj, _k.value, val);
     jerry_value_free(val);
 
     return obj;
@@ -208,7 +321,7 @@ static jerry_value_t _toComp(const jerry_call_info_t* info, const jerry_value_t 
 static jerry_value_t _point(const Point& v)
 {
     auto obj = _point2d(v);
-    jerry_object_set_sz(obj, EXP_VALUE, obj);
+    jerry_object_set(obj, _k.value, obj);
     return obj;
 }
 
@@ -239,26 +352,26 @@ static void _buildTransform(jerry_value_t context, float frameNo, LottieTransfor
     if (!transform) return;
 
     auto obj = jerry_object();
-    jerry_object_set_sz(context, "transform", obj);
+    jerry_object_set(context, _k.transform, obj);
 
     auto anchorPoint = _point(transform->anchor(frameNo));
-    jerry_object_set_sz(obj, "anchorPoint", anchorPoint);
+    jerry_object_set(obj, _k.anchorPoint, anchorPoint);
     jerry_value_free(anchorPoint);
 
     auto position = _point(transform->position(frameNo));
-    jerry_object_set_sz(obj, "position", position);
+    jerry_object_set(obj, _k.position, position);
     jerry_value_free(position);
 
     auto scale = _point(transform->scale(frameNo));
-    jerry_object_set_sz(obj, "scale", scale);
+    jerry_object_set(obj, _k.scale, scale);
     jerry_value_free(scale);
 
     auto rotation = jerry_number(transform->rotation(frameNo));
-    jerry_object_set_sz(obj, "rotation", rotation);
+    jerry_object_set(obj, _k.rotation, rotation);
     jerry_value_free(rotation);
 
     auto opacity = jerry_number(transform->opacity(frameNo));
-    jerry_object_set_sz(obj, "opacity", opacity);
+    jerry_object_set(obj, _k.opacity, opacity);
     jerry_value_free(opacity);
 
     jerry_value_free(obj);
@@ -277,7 +390,7 @@ static jerry_value_t _buildGroup(LottieGroup* group, float frameNo)
         }
     }
     jerry_object_set_native_ptr(obj, &freeCb, _expcontent(nullptr, frameNo, group));
-    jerry_object_set_sz(obj, EXP_CONTENT, obj);
+    jerry_object_set(obj, _k.content, obj);
     return obj;
 }
 
@@ -287,25 +400,25 @@ static jerry_value_t _buildPolystar(LottiePolyStar* polystar, float frameNo)
     auto obj = jerry_object();
     auto position = jerry_object();
     jerry_object_set_native_ptr(position, nullptr, &polystar->position);
-    jerry_object_set_sz(obj, "position", position);
+    jerry_object_set(obj, _k.position, position);
     jerry_value_free(position);
     auto innerRadius = jerry_number(polystar->innerRadius(frameNo));
-    jerry_object_set_sz(obj, "innerRadius", innerRadius);
+    jerry_object_set(obj, _k.innerRadius, innerRadius);
     jerry_value_free(innerRadius);
     auto outerRadius = jerry_number(polystar->outerRadius(frameNo));
-    jerry_object_set_sz(obj, "outerRadius", outerRadius);
+    jerry_object_set(obj, _k.outerRadius, outerRadius);
     jerry_value_free(outerRadius);
     auto innerRoundness = jerry_number(polystar->innerRoundness(frameNo));
-    jerry_object_set_sz(obj, "innerRoundness", innerRoundness);
+    jerry_object_set(obj, _k.innerRoundness, innerRoundness);
     jerry_value_free(innerRoundness);
     auto outerRoundness = jerry_number(polystar->outerRoundness(frameNo));
-    jerry_object_set_sz(obj, "outerRoundness", outerRoundness);
+    jerry_object_set(obj, _k.outerRoundness, outerRoundness);
     jerry_value_free(outerRoundness);
     auto rotation = jerry_number(polystar->rotation(frameNo));
-    jerry_object_set_sz(obj, "rotation", rotation);
+    jerry_object_set(obj, _k.rotation, rotation);
     jerry_value_free(rotation);
     auto ptsCnt = jerry_number(polystar->ptsCnt(frameNo));
-    jerry_object_set_sz(obj, "points", ptsCnt);
+    jerry_object_set(obj, _k.points, ptsCnt);
     jerry_value_free(ptsCnt);
 
     return obj;
@@ -316,13 +429,13 @@ static jerry_value_t _buildTrimpath(LottieTrimpath* trimpath, float frameNo)
 {
     jerry_value_t obj = jerry_object();
     auto start = jerry_number(trimpath->start(frameNo));
-    jerry_object_set_sz(obj, "start", start);
+    jerry_object_set(obj, _k.start, start);
     jerry_value_free(start);
     auto end = jerry_number(trimpath->end(frameNo));
-    jerry_object_set_sz(obj, "end", end);
+    jerry_object_set(obj, _k.end, end);
     jerry_value_free(end);
     auto offset = jerry_number(trimpath->offset(frameNo));
-    jerry_object_set_sz(obj, EXP_OFFSET, offset);
+    jerry_object_set(obj, _k.offset, offset);
     jerry_value_free(offset);
 
     return obj;
@@ -368,55 +481,55 @@ static jerry_value_t _effect(const jerry_call_info_t* info, const jerry_value_t 
 static void _buildLayer(jerry_value_t context, float frameNo, LottieLayer* layer, LottieLayer* comp, LottieExpression* exp)
 {
     auto width = jerry_number(layer->w);
-    jerry_object_set_sz(context, EXP_WIDTH, width);
+    jerry_object_set(context, _k.width, width);
     jerry_value_free(width);
 
     auto height = jerry_number(layer->h);
-    jerry_object_set_sz(context, EXP_HEIGHT, height);
+    jerry_object_set(context, _k.height, height);
     jerry_value_free(height);
 
     auto index = jerry_number(layer->ix);
-    jerry_object_set_sz(context, EXP_INDEX, index);
+    jerry_object_set(context, _k.index, index);
     jerry_value_free(index);
 
     auto parent = jerry_object();
     jerry_object_set_native_ptr(parent, nullptr, layer->parent);
-    jerry_object_set_sz(context, "parent", parent);
+    jerry_object_set(context, _k.parent, parent);
     jerry_value_free(parent);
 
     auto hasParent = jerry_boolean(layer->parent ? true : false);
-    jerry_object_set_sz(context, "hasParent", hasParent);
+    jerry_object_set(context, _k.hasParent, hasParent);
     jerry_value_free(hasParent);
 
     auto inPoint = jerry_number(layer->inFrame);
-    jerry_object_set_sz(context, "inPoint", inPoint);
+    jerry_object_set(context, _k.inPoint, inPoint);
     jerry_value_free(inPoint);
 
     auto outPoint = jerry_number(layer->outFrame);
-    jerry_object_set_sz(context, "outPoint", outPoint);
+    jerry_object_set(context, _k.outPoint, outPoint);
     jerry_value_free(outPoint);
 
     //TODO: Confirm exp->layer->comp->timeAtFrame() ?
     auto startTime = jerry_number(exp->comp->timeAtFrame(layer->startFrame));
-    jerry_object_set_sz(context, "startTime", startTime);
+    jerry_object_set(context, _k.startTime, startTime);
     jerry_value_free(startTime);
 
     auto hasVideo = jerry_boolean(false);
-    jerry_object_set_sz(context, "hasVideo", hasVideo);
+    jerry_object_set(context, _k.hasVideo, hasVideo);
     jerry_value_free(hasVideo);
 
     auto hasAudio = jerry_boolean(false);
-    jerry_object_set_sz(context, "hasAudio", hasAudio);
+    jerry_object_set(context, _k.hasAudio, hasAudio);
     jerry_value_free(hasAudio);
 
     //active, #current in the animation range?
 
     auto enabled = jerry_boolean(!layer->hidden);
-    jerry_object_set_sz(context, "enabled", enabled);
+    jerry_object_set(context, _k.enabled, enabled);
     jerry_value_free(enabled);
 
     auto audioActive = jerry_boolean(false);
-    jerry_object_set_sz(context, "audioActive", audioActive);
+    jerry_object_set(context, _k.audioActive, audioActive);
     jerry_value_free(audioActive);
 
     //sampleImage(point, radius = [.5, .5], postEffect=true, t=time)
@@ -427,7 +540,7 @@ static void _buildLayer(jerry_value_t context, float frameNo, LottieLayer* layer
 
     auto timeRemap = jerry_object();
     jerry_object_set_native_ptr(timeRemap, nullptr, &layer->timeRemap);
-    jerry_object_set_sz(context, "timeRemap", timeRemap);
+    jerry_object_set(context, _k.timeRemap, timeRemap);
     jerry_value_free(timeRemap);
 
     //marker.key(index)
@@ -439,13 +552,13 @@ static void _buildLayer(jerry_value_t context, float frameNo, LottieLayer* layer
 #if 0
     if (layer->name) {
         auto name = jerry_string_sz(layer->name);
-        jerry_object_set_sz(context, EXP_NAME, name);
+        jerry_object_set(context, _k.name, name);
         jerry_value_free(name);
     }
 #endif
 
     auto toComp = jerry_function_external(_toComp);
-    jerry_object_set_sz(context, "toComp", toComp);
+    jerry_object_set(context, _k.toComp, toComp);
     jerry_object_set_native_ptr(toComp, nullptr, layer);
     jerry_value_free(toComp);
 
@@ -453,12 +566,12 @@ static void _buildLayer(jerry_value_t context, float frameNo, LottieLayer* layer
     auto data = _expcontent(exp, frameNo, layer, 2);
 
     auto content = jerry_function_external(_content);
-    jerry_object_set_sz(context, EXP_CONTENT, content);
+    jerry_object_set(context, _k.content, content);
     jerry_object_set_native_ptr(content, &freeCb, data);
     jerry_value_free(content);
 
     auto effect = jerry_function_external(_effect);
-    jerry_object_set_sz(context, EXP_EFFECT, effect);
+    jerry_object_set(context, _k.effect, effect);
     jerry_object_set_native_ptr(effect, &freeCb, data);
     jerry_value_free(effect);
 }
@@ -668,7 +781,7 @@ static jerry_value_t _content(const jerry_call_info_t* info, const jerry_value_t
         case LottieObject::Path: {
             auto obj = jerry_object();
             jerry_object_set_native_ptr(obj, nullptr, &static_cast<LottiePath*>(target)->pathset);
-            jerry_object_set_sz(obj, "path", obj);
+            jerry_object_set(obj, _k.path, obj);
             return obj;
         }
         case LottieObject::Polystar: return _buildPolystar(static_cast<LottiePolyStar*>(target), data->frameNo);
@@ -727,17 +840,17 @@ static void _buildPath(jerry_value_t context, float frameNo, LottieProperty* pat
     //Trick for fast building path.
     auto points = jerry_function_external(_points);
     jerry_object_set_native_ptr(points, &freeCb, data);
-    jerry_object_set_sz(context, "points", points);
+    jerry_object_set(context, _k.points, points);
     jerry_value_free(points);
 
     auto pointOnPath = jerry_function_external(_pointOnPath);
     jerry_object_set_native_ptr(pointOnPath, &freeCb, data);
-    jerry_object_set_sz(context, "pointOnPath", pointOnPath);
+    jerry_object_set(context, _k.pointOnPath, pointOnPath);
     jerry_value_free(pointOnPath);
 
     auto tangentOnPath = jerry_function_external(_tangentOnPath);
     jerry_object_set_native_ptr(tangentOnPath, &freeCb, data);
-    jerry_object_set_sz(context, "tangentOnPath", tangentOnPath);
+    jerry_object_set(context, _k.tangentOnPath, tangentOnPath);
     jerry_value_free(tangentOnPath);
 
     //inTangents
@@ -806,7 +919,7 @@ static jerry_value_t _nearestKey(const jerry_call_info_t* info, const jerry_valu
     auto index = jerry_number((float)exp->property->nearest(frameNo));
 
     auto obj = jerry_object();
-    jerry_object_set_sz(obj, EXP_INDEX, index);
+    jerry_object_set(obj, _k.index, index);
     jerry_value_free(index);
 
     return obj;
@@ -1007,7 +1120,7 @@ static LottieProperty::Loop _loopCommon(const jerry_value_t args[], const jerry_
         auto name = _name(args[0]);
         if (!strcmp(name, EXP_CYCLE)) mode = LottieProperty::Loop::InCycle;
         else if (!strcmp(name, EXP_PINGPONG)) mode = LottieProperty::Loop::InPingPong;
-        else if (!strcmp(name, EXP_OFFSET)) mode = LottieProperty::Loop::InOffset;
+        else if (!strcmp(name, EXP_OFFSET_STR)) mode = LottieProperty::Loop::InOffset;
         else if (!strcmp(name, EXP_CONTINUE)) mode = LottieProperty::Loop::InContinue;
         tvg::free(name);
     }
@@ -1065,9 +1178,9 @@ static jerry_value_t _key(const jerry_call_info_t* info, const jerry_value_t arg
     auto value = _buildValue(frameNo, exp->property);
 
     auto obj = jerry_object();
-    jerry_object_set_sz(obj, EXP_TIME, time);
-    jerry_object_set_sz(obj, EXP_INDEX, args[0]);
-    jerry_object_set_sz(obj, EXP_VALUE, value);
+    jerry_object_set(obj, _k.time, time);
+    jerry_object_set(obj, _k.index, args[0]);
+    jerry_object_set(obj, _k.value, value);
 
     //direct access, key[0], key[1]
     if (exp->property->type == LottieProperty::Type::Float) {
@@ -1091,71 +1204,71 @@ static jerry_value_t _key(const jerry_call_info_t* info, const jerry_value_t arg
 static void _buildProperty(float frameNo, jerry_value_t context, LottieExpression* exp)
 {
     auto value = _buildValue(frameNo, exp->property);
-    jerry_object_set_sz(context, EXP_VALUE, value);
+    jerry_object_set(context, _k.value, value);
     jerry_value_free(value);
 
     auto valueAtTime = jerry_function_external(_valueAtTime);
-    jerry_object_set_sz(context, "valueAtTime", valueAtTime);
+    jerry_object_set(context, _k.valueAtTime, valueAtTime);
     jerry_object_set_native_ptr(valueAtTime, nullptr, exp);
     jerry_value_free(valueAtTime);
 
     auto velocity = jerry_number(0.0f);
-    jerry_object_set_sz(context, "velocity", velocity);
+    jerry_object_set(context, _k.velocity, velocity);
     jerry_value_free(velocity);
 
     auto velocityAtTime = jerry_function_external(_velocityAtTime);
-    jerry_object_set_sz(context, "velocityAtTime", velocityAtTime);
+    jerry_object_set(context, _k.velocityAtTime, velocityAtTime);
     jerry_object_set_native_ptr(velocityAtTime, nullptr, exp);
     jerry_value_free(velocityAtTime);
 
     auto speed = jerry_number(0.0f);
-    jerry_object_set_sz(context, "speed", speed);
+    jerry_object_set(context, _k.speed, speed);
     jerry_value_free(speed);
 
     auto speedAtTime = jerry_function_external(_speedAtTime);
-    jerry_object_set_sz(context, "speedAtTime", speedAtTime);
+    jerry_object_set(context, _k.speedAtTime, speedAtTime);
     jerry_object_set_native_ptr(speedAtTime, nullptr, exp);
     jerry_value_free(speedAtTime);
 
     auto propertyIndex = jerry_number(exp->property->ix);
-    jerry_object_set_sz(context, "propertyIndex", propertyIndex);
+    jerry_object_set(context, _k.propertyIndex, propertyIndex);
     jerry_value_free(propertyIndex);
 
     {
         auto data =  _expcontent(exp, frameNo, exp->object, 7);
 
         auto wiggle = jerry_function_external(_wiggle);
-        jerry_object_set_sz(context, "wiggle", wiggle);
+        jerry_object_set(context, _k.wiggle, wiggle);
         jerry_object_set_native_ptr(wiggle, &freeCb, data);
         jerry_value_free(wiggle);
 
         auto temporalWiggle = jerry_function_external(_temporalWiggle);
-        jerry_object_set_sz(context, "temporalWiggle", temporalWiggle);
+        jerry_object_set(context, _k.temporalWiggle, temporalWiggle);
         jerry_object_set_native_ptr(temporalWiggle, &freeCb, data);
         jerry_value_free(temporalWiggle);
 
         auto propertyGroup = jerry_function_external(_propertyGroup);
         jerry_object_set_native_ptr(propertyGroup, &freeCb, data);
-        jerry_object_set_sz(context, "propertyGroup", propertyGroup);
+        jerry_object_set(context, _k.propertyGroup, propertyGroup);
         jerry_value_free(propertyGroup);
 
         auto loopIn = jerry_function_external(_loopIn);
-        jerry_object_set_sz(context, "loopIn", loopIn);
+        jerry_object_set(context, _k.loopIn, loopIn);
         jerry_object_set_native_ptr(loopIn, &freeCb, data);
         jerry_value_free(loopIn);
 
         auto loopOut = jerry_function_external(_loopOut);
-        jerry_object_set_sz(context, "loopOut", loopOut);
+        jerry_object_set(context, _k.loopOut, loopOut);
         jerry_object_set_native_ptr(loopOut, &freeCb, data);
         jerry_value_free(loopOut);
 
         auto loopInDuration = jerry_function_external(_loopInDuration);
-        jerry_object_set_sz(context, "loopInDuration", loopInDuration);
+        jerry_object_set(context, _k.loopInDuration, loopInDuration);
         jerry_object_set_native_ptr(loopInDuration, &freeCb, data);
         jerry_value_free(loopInDuration);
 
         auto loopOutDuration = jerry_function_external(_loopOutDuration);
-        jerry_object_set_sz(context, "loopOutDuration", loopOutDuration);
+        jerry_object_set(context, _k.loopOutDuration, loopOutDuration);
         jerry_object_set_native_ptr(loopOutDuration, &freeCb, data);
         jerry_value_free(loopOutDuration);
 
@@ -1164,7 +1277,7 @@ static void _buildProperty(float frameNo, jerry_value_t context, LottieExpressio
     //smooth(width=.2, samples=5, t=time)
 
     auto key = jerry_function_external(_key);
-    jerry_object_set_sz(context, "key", key);
+    jerry_object_set(context, _k.key, key);
     jerry_object_set_native_ptr(key, nullptr, exp);
     jerry_value_free(key);
 
@@ -1172,11 +1285,11 @@ static void _buildProperty(float frameNo, jerry_value_t context, LottieExpressio
 
     auto nearestKey = jerry_function_external(_nearestKey);
     jerry_object_set_native_ptr(nearestKey, nullptr, exp);
-    jerry_object_set_sz(context, "nearestKey", nearestKey);
+    jerry_object_set(context, _k.nearestKey, nearestKey);
     jerry_value_free(nearestKey);
 
     auto numKeys = jerry_number((float)exp->property->frameCnt());
-    jerry_object_set_sz(context, "numKeys", numKeys);
+    jerry_object_set(context, _k.numKeys, numKeys);
     jerry_value_free(numKeys);
 
     //name
@@ -1186,18 +1299,18 @@ static void _buildProperty(float frameNo, jerry_value_t context, LottieExpressio
 
         //content("name"), #look for the named property from a layer
         auto content = jerry_function_external(_content);
-        jerry_object_set_sz(context, EXP_CONTENT, content);
+        jerry_object_set(context, _k.content, content);
         jerry_object_set_native_ptr(content, &freeCb, data);
         jerry_value_free(content);
 
         auto effect = jerry_function_external(_effect);
-        jerry_object_set_sz(context, EXP_EFFECT, effect);
+        jerry_object_set(context, _k.effect, effect);
         jerry_object_set_native_ptr(effect, &freeCb, data);
         jerry_value_free(effect);
     }
 
     auto effect = jerry_function_external(_effect);
-    jerry_object_set_sz(context, EXP_EFFECT, effect);
+    jerry_object_set(context, _k.effect, effect);
     jerry_object_set_native_ptr(effect, &freeCb, _expcontent(exp, frameNo, exp->layer));
     jerry_value_free(effect);
 
@@ -1225,99 +1338,99 @@ static jerry_value_t _comp(const jerry_call_info_t* info, const jerry_value_t ar
 static void _buildMath(jerry_value_t context)
 {
     auto bm_mul = jerry_function_external(_mul);
-    jerry_object_set_sz(context, "$bm_mul", bm_mul);
+    jerry_object_set(context, _k.bm_mul, bm_mul);
     jerry_value_free(bm_mul);
 
     auto bm_sum = jerry_function_external(_add);
-    jerry_object_set_sz(context, "$bm_sum", bm_sum);
+    jerry_object_set(context, _k.bm_sum, bm_sum);
     jerry_value_free(bm_sum);
 
     auto bm_add = jerry_function_external(_add);
-    jerry_object_set_sz(context, "$bm_add", bm_add);
+    jerry_object_set(context, _k.bm_add, bm_add);
     jerry_value_free(bm_add);
 
     auto bm_sub = jerry_function_external(_sub);
-    jerry_object_set_sz(context, "$bm_sub", bm_sub);
+    jerry_object_set(context, _k.bm_sub, bm_sub);
     jerry_value_free(bm_sub);
 
     auto bm_div = jerry_function_external(_div);
-    jerry_object_set_sz(context, "$bm_div", bm_div);
+    jerry_object_set(context, _k.bm_div, bm_div);
     jerry_value_free(bm_div);
 
     auto bm_mod = jerry_function_external(_mod);
-    jerry_object_set_sz(context, "$bm_mod", bm_mod);
+    jerry_object_set(context, _k.bm_mod, bm_mod);
     jerry_value_free(bm_mod);
 
     auto mul = jerry_function_external(_mul);
-    jerry_object_set_sz(context, "mul", mul);
+    jerry_object_set(context, _k.mul, mul);
     jerry_value_free(mul);
 
     auto sum = jerry_function_external(_add);
-    jerry_object_set_sz(context, "sum", sum);
+    jerry_object_set(context, _k.sum, sum);
     jerry_value_free(sum);
 
     auto add = jerry_function_external(_add);
-    jerry_object_set_sz(context, "add", add);
+    jerry_object_set(context, _k.add, add);
     jerry_value_free(add);
 
     auto sub = jerry_function_external(_sub);
-    jerry_object_set_sz(context, "sub", sub);
+    jerry_object_set(context, _k.sub, sub);
     jerry_value_free(sub);
 
     auto div = jerry_function_external(_div);
-    jerry_object_set_sz(context, "div", div);
+    jerry_object_set(context, _k.div, div);
     jerry_value_free(div);
 
     auto mod = jerry_function_external(_mod);
-    jerry_object_set_sz(context, "mod", mod);
+    jerry_object_set(context, _k.mod, mod);
     jerry_value_free(mod);
 
     auto clamp = jerry_function_external(_clamp);
-    jerry_object_set_sz(context, "clamp", clamp);
+    jerry_object_set(context, _k.clamp, clamp);
     jerry_value_free(clamp);
 
     auto dot = jerry_function_external(_dot);
-    jerry_object_set_sz(context, "dot", dot);
+    jerry_object_set(context, _k.dot, dot);
     jerry_value_free(dot);
 
     auto cross = jerry_function_external(_cross);
-    jerry_object_set_sz(context, "cross", cross);
+    jerry_object_set(context, _k.cross, cross);
     jerry_value_free(cross);
 
     auto normalize = jerry_function_external(_normalize);
-    jerry_object_set_sz(context, "normalize", normalize);
+    jerry_object_set(context, _k.normalize, normalize);
     jerry_value_free(normalize);
 
     auto length = jerry_function_external(_length);
-    jerry_object_set_sz(context, "length", length);
+    jerry_object_set(context, _k.length, length);
     jerry_value_free(length);
 
     auto random = jerry_function_external(_random);
-    jerry_object_set_sz(context, "random", random);
+    jerry_object_set(context, _k.random, random);
     jerry_value_free(random);
 
     auto deg2rad = jerry_function_external(_deg2rad);
-    jerry_object_set_sz(context, "degreesToRadians", deg2rad);
+    jerry_object_set(context, _k.degreesToRadians, deg2rad);
     jerry_value_free(deg2rad);
 
     auto rad2deg = jerry_function_external(_rad2deg);
-    jerry_object_set_sz(context, "radiansToDegrees", rad2deg);
+    jerry_object_set(context, _k.radiansToDegrees, rad2deg);
     jerry_value_free(rad2deg);
 
     auto linear = jerry_function_external(_linear);
-    jerry_object_set_sz(context, "linear", linear);
+    jerry_object_set(context, _k.linear, linear);
     jerry_value_free(linear);
 
     auto ease = jerry_function_external(_ease);
-    jerry_object_set_sz(context, "ease", ease);
+    jerry_object_set(context, _k.ease, ease);
     jerry_value_free(ease);
 
     auto easeIn = jerry_function_external(_easeIn);
-    jerry_object_set_sz(context, "easeIn", easeIn);
+    jerry_object_set(context, _k.easeIn, easeIn);
     jerry_value_free(easeIn);
 
     auto easeOut = jerry_function_external(_easeOut);
-    jerry_object_set_sz(context, "easeOut", easeOut);
+    jerry_object_set(context, _k.easeOut, easeOut);
     jerry_value_free(easeOut);
 
     //lookAt
@@ -1330,7 +1443,7 @@ void LottieExpressions::buildGlobal(float frameNo, LottieExpression* exp)
     jerry_object_set_native_ptr(comp, &freeCb, _expcontent(exp, frameNo, exp->layer));
 
     auto index = jerry_number(exp->layer->ix);
-    jerry_object_set_sz(global, EXP_INDEX, index);
+    jerry_object_set(global, _k.index, index);
     jerry_value_free(index);
 }
 
@@ -1339,13 +1452,13 @@ void LottieExpressions::buildComp(jerry_value_t context, float frameNo, LottieLa
 {
     //layer(index) / layer(name) / layer(otherLayer, reIndex)
     auto layer = jerry_function_external(_layer);
-    jerry_object_set_sz(context, "layer", layer);
+    jerry_object_set(context, _k.layer, layer);
 
     jerry_object_set_native_ptr(layer, &freeCb, _expcontent(exp, frameNo, comp));
     jerry_value_free(layer);
 
     auto numLayers = jerry_number((float)comp->children.count);
-    jerry_object_set_sz(context, "numLayers", numLayers);
+    jerry_object_set(context, _k.numLayers, numLayers);
     jerry_value_free(numLayers);
 }
 
@@ -1363,22 +1476,22 @@ void LottieExpressions::buildComp(LottieComposition* comp, float frameNo, Lottie
     //activeCamera
 
     auto width = jerry_number(comp->w);
-    jerry_object_set_sz(thisComp, EXP_WIDTH, width);
+    jerry_object_set(thisComp, _k.width, width);
     jerry_value_free(width);
 
     auto height = jerry_number(comp->h);
-    jerry_object_set_sz(thisComp, EXP_HEIGHT, height);
+    jerry_object_set(thisComp, _k.height, height);
     jerry_value_free(height);
 
     auto duration = jerry_number(comp->duration());
-    jerry_object_set_sz(thisComp, "duration", duration);
+    jerry_object_set(thisComp, _k.duration, duration);
     jerry_value_free(duration);
 
     //ntscDropFrame
     //displayStartTime
 
     auto frameDuration = jerry_number(1.0f / comp->frameRate);
-    jerry_object_set_sz(thisComp, "frameDuration", frameDuration);
+    jerry_object_set(thisComp, _k.frameDuration, frameDuration);
     jerry_value_free(frameDuration);
 
     //shutterAngle
@@ -1388,7 +1501,7 @@ void LottieExpressions::buildComp(LottieComposition* comp, float frameNo, Lottie
 
     if (comp->name) {
         auto name = jerry_string_sz(comp->name);
-        jerry_object_set_sz(thisComp, EXP_NAME, name);
+        jerry_object_set(thisComp, _k.name, name);
         jerry_value_free(name);
     }
 }
@@ -1400,18 +1513,18 @@ jerry_value_t LottieExpressions::buildGlobal()
 
     //comp(name)
     comp = jerry_function_external(_comp);
-    jerry_object_set_sz(global, "comp", comp);
+    jerry_object_set(global, _k.comp, comp);
 
     //footage(name)
 
     thisComp = jerry_object();
-    jerry_object_set_sz(global, "thisComp", thisComp);
+    jerry_object_set(global, _k.thisComp, thisComp);
 
     thisLayer = jerry_object();
-    jerry_object_set_sz(global, "thisLayer", thisLayer);
+    jerry_object_set(global, _k.thisLayer, thisLayer);
 
     thisProperty = jerry_object();
-    jerry_object_set_sz(global, "thisProperty", thisProperty);
+    jerry_object_set(global, _k.thisProperty, thisProperty);
 
     //fromCompToSurface
     //createPath
@@ -1473,7 +1586,7 @@ jerry_value_t LottieExpressions::evaluate(float frameNo, LottieExpression* exp)
 
     jerry_value_free(eval);
 
-    return jerry_object_get_sz(global, "$bm_rt");
+    return jerry_object_get(global, _k.bm_rt);
 }
 
 
@@ -1483,6 +1596,7 @@ jerry_value_t LottieExpressions::evaluate(float frameNo, LottieExpression* exp)
 
 LottieExpressions::~LottieExpressions()
 {
+    _k.release();
     jerry_value_free(thisProperty);
     jerry_value_free(thisLayer);
     jerry_value_free(thisComp);
@@ -1495,6 +1609,7 @@ LottieExpressions::~LottieExpressions()
 LottieExpressions::LottieExpressions()
 {
     jerry_init(JERRY_INIT_EMPTY);
+    _k.init();
     _buildMath(buildGlobal());
 }
 
@@ -1503,7 +1618,7 @@ void LottieExpressions::update(float curTime)
 {
     //time, #current time in seconds
     auto time = jerry_number(curTime);
-    jerry_object_set_sz(global, EXP_TIME, time);
+    jerry_object_set(global, _k.time, time);
     jerry_value_free(time);
 }
 
