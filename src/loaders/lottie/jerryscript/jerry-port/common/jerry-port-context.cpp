@@ -24,31 +24,63 @@
  * Thread-local context pointer for multi-threaded Lottie expression evaluation.
  * Each thread gets an independent jerry_context_t + heap via TLS.
  */
-__thread jerry_context_t* tls_context_p = nullptr;
+#if defined(__MINGW32__) || defined(__MINGW64__)
 
-size_t
-jerry_port_context_alloc(size_t context_size)
+#include <windows.h>
+
+DWORD tls_context_index = TLS_OUT_OF_INDEXES;
+
+#elif defined(_MSC_VER)
+
+__declspec(thread) jerry_context_t* tls_context_p = nullptr;
+
+#else
+
+__thread jerry_context_t* tls_context_p = nullptr;
+#endif
+
+#if defined(__MINGW32__) || defined(__MINGW64__)
+
+static void jerry_port_tls_set(jerry_context_t* p)
+{
+    if (tls_context_index == TLS_OUT_OF_INDEXES)
+    {
+        tls_context_index = TlsAlloc();
+    }
+    TlsSetValue(tls_context_index, p);
+}
+#else 
+static inline void jerry_port_tls_set(jerry_context_t* p) { tls_context_p = p; }
+#endif
+
+size_t jerry_port_context_alloc(size_t context_size)
 {
     size_t total_size = context_size + JERRY_GLOBAL_HEAP_SIZE * 1024;
-    tls_context_p = (jerry_context_t*)calloc(1, total_size);
+    jerry_port_tls_set((jerry_context_t*)malloc(total_size));
     return total_size;
 } /* jerry_port_context_alloc */
 
-jerry_context_t*
-jerry_port_context_get(void)
+jerry_context_t* jerry_port_context_get(void)
 {
+#if defined(__MINGW32__) || defined(__MINGW64__)
+    return (jerry_context_t*)TlsGetValue(tls_context_index);
+#else
     return tls_context_p;
+#endif
 } /* jerry_port_context_get */
 
-void
-jerry_port_context_free(void)
+void jerry_port_context_free(void)
 {
+#if defined(__MINGW32__) || defined(__MINGW64__)
+    free(TlsGetValue(tls_context_index));
+#else
     free(tls_context_p);
-    tls_context_p = nullptr;
+#endif
+    jerry_port_tls_set(nullptr);
 } /* jerry_port_context_free */
 
 /* ThorVG-specific: set the active context on the current thread for cross-thread cleanup */
 void jerry_port_context_set(jerry_context_t *context_p)
 {
-    tls_context_p = context_p;
+    jerry_port_tls_set(context_p);
 }
