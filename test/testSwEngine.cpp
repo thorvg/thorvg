@@ -28,7 +28,7 @@
 using namespace tvg;
 using namespace std;
 
-#ifdef THORVG_SW_RASTER_SUPPORT
+#ifdef THORVG_CPU_ENGINE_SUPPORT
 
 TEST_CASE("Basic draw", "[tvgSwEngine]")
 {

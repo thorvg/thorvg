@@ -23,6 +23,7 @@
 #ifndef _TVG_WG_COMMON_H_
 #define _TVG_WG_COMMON_H_
 
+#include "tvgGpuCommon.h"
 #include "tvgWgBindGroups.h"
 
 struct WgContext {

@@ -183,12 +183,11 @@ void WgRenderDataShape::updateMeshes(const RenderShape &rshape, RenderUpdateFlag
     bool optPathThin = false;
     if (rshape.trimpath()) {
         RenderPath trimmedPath;
-        if (rshape.stroke->trim.trim(rshape.path, trimmedPath)) {
-            trimmedPath.optimize(optPath, matrix, optPathThin);
-        } else {
-            optPath.clear();
-        }
-    } else rshape.path.optimize(optPath, matrix, optPathThin);
+        if (rshape.stroke->trim.trim(rshape.path, trimmedPath)) gpuOptimize(trimmedPath, optPath, matrix, optPathThin);
+        else optPath.clear();
+    } else {
+        gpuOptimize(rshape.path, optPath, matrix, optPathThin);
+    }
 
     auto updatePath = flag & (RenderUpdateFlag::Transform | RenderUpdateFlag::Path);
 
@@ -225,7 +224,7 @@ void WgRenderDataShape::updateMeshes(const RenderShape &rshape, RenderUpdateFlag
         if (!tvg::zero(strokeWidthWorld)) {
             WgStroker stroker(&meshStrokes, strokeWidthWorld, rshape.strokeCap(), rshape.strokeJoin(), rshape.strokeMiterlimit());
             RenderPath dashedPathWorld;
-            if (rshape.strokeDash(dashedPathWorld, &matrix)) stroker.run(dashedPathWorld);
+            if (gpuStrokeDash(rshape, dashedPathWorld, &matrix)) stroker.run(dashedPathWorld);
             else stroker.run(optPath);
             renderSettingsStroke.opacityMultiplier = 1.0f;
             if (meshStrokes.ibuffer.empty()) {
