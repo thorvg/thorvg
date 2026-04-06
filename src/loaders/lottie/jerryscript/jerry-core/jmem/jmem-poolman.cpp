@@ -115,7 +115,7 @@ jmem_pools_collect_empty (void)
     jmem_pools_chunk_t *const next_p = chunk_p->next_p;
     JMEM_VALGRIND_NOACCESS_SPACE (chunk_p, sizeof (jmem_pools_chunk_t));
 
-    jmem_heap_free_block_internal (chunk_p, 8);
+    jmem_heap_free_block_internal_with_context (jerry_current_context_p, chunk_p, 8);
     chunk_p = next_p;
   }
 } /* jmem_pools_collect_empty */

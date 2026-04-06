@@ -53,22 +53,7 @@ jmem_cpointer_t JERRY_ATTR_PURE
 jmem_compress_pointer (const void *pointer_p) /**< pointer to compress */
 {
   JERRY_DEFINE_CURRENT_CONTEXT ();
-  JERRY_ASSERT (pointer_p != NULL);
-  JERRY_ASSERT (jmem_is_heap_pointer (pointer_p));
-
-  uintptr_t uint_ptr = (uintptr_t) pointer_p;
-
-  JERRY_ASSERT (uint_ptr % JMEM_ALIGNMENT == 0);
-
-  const uintptr_t heap_start = (uintptr_t) &JERRY_HEAP_CONTEXT (first);
-
-  uint_ptr -= heap_start;
-  uint_ptr >>= JMEM_ALIGNMENT_LOG;
-
-  JERRY_ASSERT (uint_ptr <= UINT16_MAX);
-  JERRY_ASSERT (uint_ptr != JMEM_CP_NULL);
-
-  return (jmem_cpointer_t) uint_ptr;
+  return jmem_compress_pointer_from_context (jerry_current_context_p, pointer_p);
 } /* jmem_compress_pointer */
 
 /**
@@ -80,18 +65,5 @@ void *JERRY_ATTR_PURE
 jmem_decompress_pointer (uintptr_t compressed_pointer) /**< pointer to decompress */
 {
   JERRY_DEFINE_CURRENT_CONTEXT ();
-  JERRY_ASSERT (compressed_pointer != JMEM_CP_NULL);
-
-  uintptr_t uint_ptr = compressed_pointer;
-
-  JERRY_ASSERT (((jmem_cpointer_t) uint_ptr) == uint_ptr);
-
-  const uintptr_t heap_start = (uintptr_t) &JERRY_HEAP_CONTEXT (first);
-
-  uint_ptr <<= JMEM_ALIGNMENT_LOG;
-  uint_ptr += heap_start;
-
-  JERRY_ASSERT (jmem_is_heap_pointer ((void *) uint_ptr));
-
-  return (void *) uint_ptr;
+  return jmem_decompress_pointer_from_context (jerry_current_context_p, compressed_pointer);
 } /* jmem_decompress_pointer */
