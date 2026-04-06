@@ -1340,16 +1340,14 @@ bool LottieParser::parseEffect(LottieEffect* effect, void(LottieParser::*func)(L
 {
     //custom effect expects dynamic property allocations
     auto custom = (effect->type == LottieEffect::Custom) ? true : false;
-    LottieFxCustom::Property* property = nullptr;
-
     enterArray();
     int idx = 0;
     while (nextArrayValue()) {
         enterObject();
+        LottieFxCustom::Property* property = nullptr;
         while (auto key = nextObjectKey()) {
             if (custom && KEY_AS("ty")) property = static_cast<LottieFxCustom*>(effect)->property(getInt());
-            else if (KEY_AS("v"))
-            {
+            else if (KEY_AS("v") && (!custom || property)) {
                 if (peekType() == kObjectType) {
                     enterObject();
                     while (auto key = nextObjectKey()) {
