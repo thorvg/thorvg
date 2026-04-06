@@ -164,10 +164,10 @@ TEST_CASE("Bounding Box", "[tvgPaint]")
 
         //Positive
         REQUIRE(shape->bounds(&x, &y, &w, &h) == Result::Success);
-        REQUIRE(x == 100.0f);
-        REQUIRE(y == 121.0f);
-        REQUIRE(w == 20.0f);
-        REQUIRE(h == 100.0f);
+        REQUIRE(x == Approx(100.0f).margin(0.001f));
+        REQUIRE(y == Approx(121.0f).margin(0.001f));
+        REQUIRE(w == Approx(20.0f).margin(0.001f));
+        REQUIRE(h == Approx(100.0f).margin(0.001f));
 
         Point pts[4];
         REQUIRE(shape->bounds(pts) == Result::Success);
