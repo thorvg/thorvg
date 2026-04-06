@@ -144,6 +144,7 @@ ecma_free_bigint_list (jmem_cpointer_t bigint_list_cp) /**< bigint list */
 void
 ecma_finalize_lit_storage (void)
 {
+  JERRY_DEFINE_CURRENT_CONTEXT ();
   ecma_free_symbol_list (JERRY_CONTEXT (symbol_list_first_cp));
   ecma_free_string_list (JERRY_CONTEXT (string_list_first_cp));
   ecma_free_number_list (JERRY_CONTEXT (number_list_first_cp));
@@ -162,6 +163,7 @@ ecma_find_or_create_literal_string (const lit_utf8_byte_t *chars_p, /**< string 
                                     lit_utf8_size_t size, /**< size of the string */
                                     bool is_ascii) /**< encode of the string */
 {
+  JERRY_DEFINE_CURRENT_CONTEXT ();
   ecma_string_t *string_p =
     (is_ascii ? ecma_new_ecma_string_from_ascii (chars_p, size) : ecma_new_ecma_string_from_utf8 (chars_p, size));
 
@@ -235,6 +237,7 @@ ecma_find_or_create_literal_string (const lit_utf8_byte_t *chars_p, /**< string 
 ecma_value_t
 ecma_find_or_create_literal_number (ecma_number_t number_arg) /**< number to be searched */
 {
+  JERRY_DEFINE_CURRENT_CONTEXT ();
   ecma_value_t num = ecma_make_number_value (number_arg);
 
   if (ecma_is_value_integer_number (num))
@@ -309,6 +312,7 @@ ecma_find_or_create_literal_number (ecma_number_t number_arg) /**< number to be 
 ecma_value_t
 ecma_find_or_create_literal_bigint (ecma_value_t bigint) /**< bigint to be searched */
 {
+  JERRY_DEFINE_CURRENT_CONTEXT ();
   JERRY_ASSERT (ecma_is_value_bigint (bigint));
 
   if (bigint == ECMA_BIGINT_ZERO)

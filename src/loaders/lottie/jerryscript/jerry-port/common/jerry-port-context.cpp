@@ -37,6 +37,7 @@ __declspec(thread) jerry_context_t* tls_context_p = nullptr;
 #else
 
 __thread jerry_context_t* tls_context_p = nullptr;
+
 #endif
 
 #if defined(__MINGW32__) || defined(__MINGW64__)
