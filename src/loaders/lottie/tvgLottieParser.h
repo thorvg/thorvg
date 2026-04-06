@@ -107,6 +107,7 @@ private:
     void parseFill(LottieEffect* effect, int idx);
     void parseGaussianBlur(LottieEffect* effect, int idx);
     void parseDropShadow(LottieEffect* effect, int idx);
+    void parseSetMatte(LottieEffect* effect, int idx);
 
     bool parseDirection(LottieShape* shape, const char* key);
     bool parseCommon(LottieObject* obj, const char* key);
