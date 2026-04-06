@@ -538,6 +538,7 @@ vm_executable_object_t *
 opfunc_create_executable_object (vm_frame_ctx_t *frame_ctx_p, /**< frame context */
                                  vm_create_executable_object_type_t type) /**< executable object type */
 {
+  JERRY_DEFINE_CURRENT_CONTEXT ();
   const ecma_compiled_code_t *bytecode_header_p = frame_ctx_p->shared_p->bytecode_header_p;
   size_t size, register_end;
 
@@ -666,6 +667,7 @@ ecma_value_t
 opfunc_resume_executable_object (vm_executable_object_t *executable_object_p, /**< executable object */
                                  ecma_value_t value) /**< value pushed onto the stack (takes the reference) */
 {
+  JERRY_DEFINE_CURRENT_CONTEXT ();
   const ecma_compiled_code_t *bytecode_header_p = executable_object_p->shared.bytecode_header_p;
   ecma_value_t *register_p = VM_GET_REGISTERS (&executable_object_p->frame_ctx);
   ecma_value_t *register_end_p;
@@ -1255,6 +1257,7 @@ opfunc_find_private_element (ecma_object_t *obj_p, /**< object */
                              ecma_string_t **private_key_p, /**< [out] private key */
                              bool allow_heritage) /**< heritage flag */
 {
+  JERRY_DEFINE_CURRENT_CONTEXT ();
   JERRY_ASSERT (private_key_p != NULL);
   JERRY_ASSERT (*private_key_p == NULL);
   ecma_object_t *lex_env_p = JERRY_CONTEXT (vm_top_context_p)->lex_env_p;
@@ -2214,6 +2217,7 @@ ecma_value_t
 opfunc_lexical_scope_has_restricted_binding (vm_frame_ctx_t *frame_ctx_p, /**< frame context */
                                              ecma_string_t *name_p) /**< binding name */
 {
+  JERRY_DEFINE_CURRENT_CONTEXT ();
   JERRY_ASSERT (ecma_get_lex_env_type (frame_ctx_p->lex_env_p) == ECMA_LEXICAL_ENVIRONMENT_DECLARATIVE);
 
   ecma_object_t *lex_env_p = frame_ctx_p->lex_env_p;

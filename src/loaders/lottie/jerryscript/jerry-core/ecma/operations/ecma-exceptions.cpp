@@ -54,6 +54,7 @@ ecma_object_t *
 ecma_new_standard_error (jerry_error_t error_type, /**< native error type */
                          ecma_string_t *message_string_p) /**< message string */
 {
+  JERRY_DEFINE_CURRENT_CONTEXT ();
 #if JERRY_BUILTIN_ERRORS
   ecma_builtin_id_t prototype_id = ECMA_BUILTIN_ID__COUNT;
 
