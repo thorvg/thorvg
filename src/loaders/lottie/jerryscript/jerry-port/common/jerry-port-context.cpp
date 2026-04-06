@@ -24,7 +24,7 @@
  * Thread-local context pointer for multi-threaded Lottie expression evaluation.
  * Each thread gets an independent jerry_context_t + heap via TLS.
  */
-static thread_local jerry_context_t* tls_context_p = nullptr;
+__thread jerry_context_t* tls_context_p = nullptr;
 
 size_t
 jerry_port_context_alloc(size_t context_size)
