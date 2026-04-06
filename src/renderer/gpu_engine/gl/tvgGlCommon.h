@@ -27,6 +27,7 @@
 #include "tvgGl.h"
 #include "tvgRender.h"
 #include "tvgMath.h"
+#include "tvgGpuCommon.h"
 
 constexpr float MIN_GL_STROKE_WIDTH = 1.0f;
 constexpr float MIN_GL_STROKE_ALPHA = 0.25f;
