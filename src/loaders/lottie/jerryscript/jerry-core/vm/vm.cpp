@@ -256,6 +256,7 @@ ecma_value_t
 vm_run_global (const ecma_compiled_code_t *bytecode_p, /**< pointer to bytecode to run */
                ecma_object_t *function_object_p) /**< function object if available */
 {
+  JERRY_DEFINE_CURRENT_CONTEXT ();
 #if JERRY_BUILTIN_REALMS
   ecma_object_t *global_obj_p = (ecma_object_t *) ecma_op_function_get_realm (bytecode_p);
 #else /* !JERRY_BUILTIN_REALMS */
@@ -301,6 +302,7 @@ ecma_value_t
 vm_run_eval (ecma_compiled_code_t *bytecode_data_p, /**< byte-code data */
              uint32_t parse_opts) /**< ecma_parse_opts_t option bits */
 {
+  JERRY_DEFINE_CURRENT_CONTEXT ();
   ecma_value_t this_binding;
   ecma_object_t *lex_env_p;
 
@@ -509,6 +511,7 @@ vm_get_class_function (vm_frame_ctx_t *frame_ctx_p) /**< frame context */
 static void
 vm_super_call (vm_frame_ctx_t *frame_ctx_p) /**< frame context */
 {
+  JERRY_DEFINE_CURRENT_CONTEXT ();
   JERRY_ASSERT (frame_ctx_p->call_operation == VM_EXEC_SUPER_CALL);
   JERRY_ASSERT (frame_ctx_p->byte_code_p[0] == CBC_EXT_OPCODE);
 
@@ -706,6 +709,7 @@ vm_spread_operation (vm_frame_ctx_t *frame_ctx_p) /**< frame context */
 static void
 opfunc_call (vm_frame_ctx_t *frame_ctx_p) /**< frame context */
 {
+  JERRY_DEFINE_CURRENT_CONTEXT ();
   const uint8_t *byte_code_p = frame_ctx_p->byte_code_p + 1;
   uint8_t opcode = byte_code_p[-1];
   uint32_t arguments_list_len;
@@ -933,6 +937,7 @@ opfunc_construct (vm_frame_ctx_t *frame_ctx_p) /**< frame context */
 static ecma_value_t JERRY_ATTR_NOINLINE
 vm_loop (vm_frame_ctx_t *frame_ctx_p) /**< frame context */
 {
+  JERRY_DEFINE_CURRENT_CONTEXT ();
   const ecma_compiled_code_t *bytecode_header_p = frame_ctx_p->shared_p->bytecode_header_p;
   const uint8_t *byte_code_p = frame_ctx_p->byte_code_p;
   ecma_value_t *literal_start_p = frame_ctx_p->literal_start_p;
@@ -4969,6 +4974,7 @@ JERRY_STATIC_ASSERT (((int)CBC_CODE_FLAGS_STRICT_MODE == (int)VM_FRAME_CTX_IS_ST
 static void JERRY_ATTR_NOINLINE
 vm_init_exec (vm_frame_ctx_t *frame_ctx_p) /**< frame context */
 {
+  JERRY_DEFINE_CURRENT_CONTEXT ();
   vm_frame_ctx_shared_t *shared_p = frame_ctx_p->shared_p;
   const ecma_compiled_code_t *bytecode_header_p = shared_p->bytecode_header_p;
 
@@ -5053,6 +5059,7 @@ vm_init_exec (vm_frame_ctx_t *frame_ctx_p) /**< frame context */
 ecma_value_t JERRY_ATTR_NOINLINE
 vm_execute (vm_frame_ctx_t *frame_ctx_p) /**< frame context */
 {
+  JERRY_DEFINE_CURRENT_CONTEXT ();
   while (true)
   {
     ecma_value_t completion_value = vm_loop (frame_ctx_p);
