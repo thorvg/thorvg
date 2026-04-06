@@ -1090,160 +1090,116 @@ static jerry_value_t _key(const jerry_call_info_t* info, const jerry_value_t arg
 
 static void _buildProperty(float frameNo, jerry_value_t context, LottieExpression* exp)
 {
-    //value: always rebuild (depends on frameNo and property)
     auto value = _buildValue(frameNo, exp->property);
     jerry_object_set_sz(context, EXP_VALUE, value);
     jerry_value_free(value);
+
+    auto valueAtTime = jerry_function_external(_valueAtTime);
+    jerry_object_set_sz(context, "valueAtTime", valueAtTime);
+    jerry_object_set_native_ptr(valueAtTime, nullptr, exp);
+    jerry_value_free(valueAtTime);
+
+    auto velocity = jerry_number(0.0f);
+    jerry_object_set_sz(context, "velocity", velocity);
+    jerry_value_free(velocity);
+
+    auto velocityAtTime = jerry_function_external(_velocityAtTime);
+    jerry_object_set_sz(context, "velocityAtTime", velocityAtTime);
+    jerry_object_set_native_ptr(velocityAtTime, nullptr, exp);
+    jerry_value_free(velocityAtTime);
+
+    auto speed = jerry_number(0.0f);
+    jerry_object_set_sz(context, "speed", speed);
+    jerry_value_free(speed);
+
+    auto speedAtTime = jerry_function_external(_speedAtTime);
+    jerry_object_set_sz(context, "speedAtTime", speedAtTime);
+    jerry_object_set_native_ptr(speedAtTime, nullptr, exp);
+    jerry_value_free(speedAtTime);
 
     auto propertyIndex = jerry_number(exp->property->ix);
     jerry_object_set_sz(context, "propertyIndex", propertyIndex);
     jerry_value_free(propertyIndex);
 
+    {
+        auto data =  _expcontent(exp, frameNo, exp->object, 7);
+
+        auto wiggle = jerry_function_external(_wiggle);
+        jerry_object_set_sz(context, "wiggle", wiggle);
+        jerry_object_set_native_ptr(wiggle, &freeCb, data);
+        jerry_value_free(wiggle);
+
+        auto temporalWiggle = jerry_function_external(_temporalWiggle);
+        jerry_object_set_sz(context, "temporalWiggle", temporalWiggle);
+        jerry_object_set_native_ptr(temporalWiggle, &freeCb, data);
+        jerry_value_free(temporalWiggle);
+
+        auto propertyGroup = jerry_function_external(_propertyGroup);
+        jerry_object_set_native_ptr(propertyGroup, &freeCb, data);
+        jerry_object_set_sz(context, "propertyGroup", propertyGroup);
+        jerry_value_free(propertyGroup);
+
+        auto loopIn = jerry_function_external(_loopIn);
+        jerry_object_set_sz(context, "loopIn", loopIn);
+        jerry_object_set_native_ptr(loopIn, &freeCb, data);
+        jerry_value_free(loopIn);
+
+        auto loopOut = jerry_function_external(_loopOut);
+        jerry_object_set_sz(context, "loopOut", loopOut);
+        jerry_object_set_native_ptr(loopOut, &freeCb, data);
+        jerry_value_free(loopOut);
+
+        auto loopInDuration = jerry_function_external(_loopInDuration);
+        jerry_object_set_sz(context, "loopInDuration", loopInDuration);
+        jerry_object_set_native_ptr(loopInDuration, &freeCb, data);
+        jerry_value_free(loopInDuration);
+
+        auto loopOutDuration = jerry_function_external(_loopOutDuration);
+        jerry_object_set_sz(context, "loopOutDuration", loopOutDuration);
+        jerry_object_set_native_ptr(loopOutDuration, &freeCb, data);
+        jerry_value_free(loopOutDuration);
+
+    }
+
+    //smooth(width=.2, samples=5, t=time)
+
+    auto key = jerry_function_external(_key);
+    jerry_object_set_sz(context, "key", key);
+    jerry_object_set_native_ptr(key, nullptr, exp);
+    jerry_value_free(key);
+
+    //key(markerName)
+
+    auto nearestKey = jerry_function_external(_nearestKey);
+    jerry_object_set_native_ptr(nearestKey, nullptr, exp);
+    jerry_object_set_sz(context, "nearestKey", nearestKey);
+    jerry_value_free(nearestKey);
+
     auto numKeys = jerry_number((float)exp->property->frameCnt());
     jerry_object_set_sz(context, "numKeys", numKeys);
     jerry_value_free(numKeys);
 
-    //check if function objects are already created on this context
-    auto fn = jerry_object_get_sz(context, "valueAtTime");
+    //name
 
-    if (jerry_value_is_undefined(fn)) {
-        jerry_value_free(fn);
-
-        /* INIT: create function objects (first time only for this context) */
-
-        fn = jerry_function_external(_valueAtTime);
-        jerry_object_set_sz(context, "valueAtTime", fn);
-        jerry_object_set_native_ptr(fn, nullptr, exp);
-        jerry_value_free(fn);
-
-        auto velocity = jerry_number(0.0f);
-        jerry_object_set_sz(context, "velocity", velocity);
-        jerry_value_free(velocity);
-
-        fn = jerry_function_external(_velocityAtTime);
-        jerry_object_set_sz(context, "velocityAtTime", fn);
-        jerry_object_set_native_ptr(fn, nullptr, exp);
-        jerry_value_free(fn);
-
-        auto speed = jerry_number(0.0f);
-        jerry_object_set_sz(context, "speed", speed);
-        jerry_value_free(speed);
-
-        fn = jerry_function_external(_speedAtTime);
-        jerry_object_set_sz(context, "speedAtTime", fn);
-        jerry_object_set_native_ptr(fn, nullptr, exp);
-        jerry_value_free(fn);
-
-        fn = jerry_function_external(_key);
-        jerry_object_set_sz(context, "key", fn);
-        jerry_object_set_native_ptr(fn, nullptr, exp);
-        jerry_value_free(fn);
-
-        //key(markerName)
-
-        fn = jerry_function_external(_nearestKey);
-        jerry_object_set_sz(context, "nearestKey", fn);
-        jerry_object_set_native_ptr(fn, nullptr, exp);
-        jerry_value_free(fn);
-
-        //smooth(width=.2, samples=5, t=time)
-
-        {
-            auto data = _expcontent(exp, frameNo, exp->object, 7);
-
-            fn = jerry_function_external(_wiggle);
-            jerry_object_set_sz(context, "wiggle", fn);
-            jerry_object_set_native_ptr(fn, &freeCb, data);
-            jerry_value_free(fn);
-
-            fn = jerry_function_external(_temporalWiggle);
-            jerry_object_set_sz(context, "temporalWiggle", fn);
-            jerry_object_set_native_ptr(fn, &freeCb, data);
-            jerry_value_free(fn);
-
-            fn = jerry_function_external(_propertyGroup);
-            jerry_object_set_sz(context, "propertyGroup", fn);
-            jerry_object_set_native_ptr(fn, &freeCb, data);
-            jerry_value_free(fn);
-
-            fn = jerry_function_external(_loopIn);
-            jerry_object_set_sz(context, "loopIn", fn);
-            jerry_object_set_native_ptr(fn, &freeCb, data);
-            jerry_value_free(fn);
-
-            fn = jerry_function_external(_loopOut);
-            jerry_object_set_sz(context, "loopOut", fn);
-            jerry_object_set_native_ptr(fn, &freeCb, data);
-            jerry_value_free(fn);
-
-            fn = jerry_function_external(_loopInDuration);
-            jerry_object_set_sz(context, "loopInDuration", fn);
-            jerry_object_set_native_ptr(fn, &freeCb, data);
-            jerry_value_free(fn);
-
-            fn = jerry_function_external(_loopOutDuration);
-            jerry_object_set_sz(context, "loopOutDuration", fn);
-            jerry_object_set_native_ptr(fn, &freeCb, data);
-            jerry_value_free(fn);
-        }
+    {
+        auto data = _expcontent(exp, frameNo, exp->layer, 2);
 
         //content("name"), #look for the named property from a layer
-        fn = jerry_function_external(_content);
-        jerry_object_set_sz(context, EXP_CONTENT, fn);
-        jerry_object_set_native_ptr(fn, &freeCb, _expcontent(exp, frameNo, exp->layer));
-        jerry_value_free(fn);
+        auto content = jerry_function_external(_content);
+        jerry_object_set_sz(context, EXP_CONTENT, content);
+        jerry_object_set_native_ptr(content, &freeCb, data);
+        jerry_value_free(content);
 
-        fn = jerry_function_external(_effect);
-        jerry_object_set_sz(context, EXP_EFFECT, fn);
-        jerry_object_set_native_ptr(fn, &freeCb, _expcontent(exp, frameNo, exp->layer));
-        jerry_value_free(fn);
-    } else {
-        /* UPDATE: reuse existing function objects, only update native pointers/data */
-
-        //update nullptr native_info functions (in-place pointer swap)
-        jerry_object_set_native_ptr(fn, nullptr, exp);
-        jerry_value_free(fn);
-
-        fn = jerry_object_get_sz(context, "velocityAtTime");
-        jerry_object_set_native_ptr(fn, nullptr, exp);
-        jerry_value_free(fn);
-
-        fn = jerry_object_get_sz(context, "speedAtTime");
-        jerry_object_set_native_ptr(fn, nullptr, exp);
-        jerry_value_free(fn);
-
-        fn = jerry_object_get_sz(context, "key");
-        jerry_object_set_native_ptr(fn, nullptr, exp);
-        jerry_value_free(fn);
-
-        fn = jerry_object_get_sz(context, "nearestKey");
-        jerry_object_set_native_ptr(fn, nullptr, exp);
-        jerry_value_free(fn);
-
-        //update shared ExpContent for wiggle group in-place (7 functions share one)
-        fn = jerry_object_get_sz(context, "wiggle");
-        auto data = static_cast<ExpContent*>(jerry_object_get_native_ptr(fn, &freeCb));
-        data->exp = exp;
-        data->frameNo = frameNo;
-        data->data = exp->object;
-        jerry_value_free(fn);
-
-        //update content's ExpContent in-place
-        fn = jerry_object_get_sz(context, EXP_CONTENT);
-        data = static_cast<ExpContent*>(jerry_object_get_native_ptr(fn, &freeCb));
-        data->exp = exp;
-        data->frameNo = frameNo;
-        data->data = exp->layer;
-        jerry_value_free(fn);
-
-        //update effect's ExpContent in-place
-        fn = jerry_object_get_sz(context, EXP_EFFECT);
-        data = static_cast<ExpContent*>(jerry_object_get_native_ptr(fn, &freeCb));
-        data->exp = exp;
-        data->frameNo = frameNo;
-        data->data = exp->layer;
-        jerry_value_free(fn);
+        auto effect = jerry_function_external(_effect);
+        jerry_object_set_sz(context, EXP_EFFECT, effect);
+        jerry_object_set_native_ptr(effect, &freeCb, data);
+        jerry_value_free(effect);
     }
+
+    auto effect = jerry_function_external(_effect);
+    jerry_object_set_sz(context, EXP_EFFECT, effect);
+    jerry_object_set_native_ptr(effect, &freeCb, _expcontent(exp, frameNo, exp->layer));
+    jerry_value_free(effect);
 
     //expansions per types
     if (exp->property->type == LottieProperty::Type::PathSet) _buildPath(context, frameNo, exp->property);
