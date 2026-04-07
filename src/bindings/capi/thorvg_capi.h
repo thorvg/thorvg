@@ -2237,6 +2237,8 @@ TVG_API Tvg_Result tvg_picture_get_origin(const Tvg_Paint picture, float* x, flo
  *
  * @return A pointer to the paint object that matches the given identifier, or @c nullptr if no matching paint object is found.
  *
+ * @note Setting @ref tvg_picture_set_accessible() to @c true enables more efficient access.
+ *
  * @see tvg_accessor_generate_id()
  * @since 1.0
  */
@@ -2256,6 +2258,27 @@ TVG_API const Tvg_Paint tvg_picture_get_paint(Tvg_Paint picture, uint32_t id);
  * @note Experimental API
  */
 TVG_API Tvg_Result tvg_picture_set_filter(Tvg_Paint picture, Tvg_Filter_Method method);
+
+/**
+ * @brief Enable or disable accessible mode for a Picture.
+ *
+ * When accessible mode is enabled, the Picture maintains an internal mapping
+ * of ID-accessible vector assets nodes (such as SVG), allowing efficient access to Paint objects
+ * and their associated identifier information via Accessor APIs.
+ *
+ * When disabled, no additional mapping is maintained and all nodes are treated
+ * as general traversal targets.
+ *
+ * @param[in] picture The target Picture object.
+ * @param[in] accessible Set to @c true to enable accessible mode, or @c false to disable it.
+ *
+ * @see tvg_accessor_generate_id()
+ * @see tvg_accessor_get_name()
+ * @see tvg_picture_get_paint()
+ *
+ * @since 1.0
+ */
+TVG_API Tvg_Result tvg_picture_set_accessible(Tvg_Paint picture, bool accessible);
 
 /** \} */   // end defgroup ThorVGCapi_Picture
 
@@ -3201,6 +3224,28 @@ TVG_API Tvg_Result tvg_accessor_set(Tvg_Accessor accessor, Tvg_Paint paint, bool
  */
 TVG_API uint32_t tvg_accessor_generate_id(const char* name);
 
+/**
+ * @brief Retrieve the original name string from a given unique ID.
+ *
+ * Returns the name associated with the specified identifier.
+ *
+ * This method is only valid when @ref tvg_picture_set_accessible() is set to @c true
+ * for the Picture associated with the given @p paint in @ref tvg_accessor_set() Otherwise, the name
+ * information may not be available.
+ *
+ * @param[in] accessor An accessor object.
+ * @param[in] id The unique identifier.
+ *
+ * @return The corresponding name string, or @c nullptr if not found or unavailable.
+ *
+ * @see tvg_accessor_generate_id()
+ * @see tvg_accessor_set()
+ * @see tvg_picture_set_accessible()
+ *
+ * @note This function is only available within Accessor callbacks registered via @ref tvg_accessor_set().
+ * @note Experimental API
+ */
+TVG_API const char* tvg_accessor_get_name(Tvg_Accessor accessor, uint32_t id);
 
 /** \} */   // end defgroup ThorVGCapi_Accessor
 

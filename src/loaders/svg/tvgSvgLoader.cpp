@@ -3779,14 +3779,14 @@ void SvgParserContext::clear(bool all)
     ARRAY_FOREACH(p, images) {
         tvg::free(*p);
     }
-    images.reset();
-
     ARRAY_FOREACH(p, fonts) {
         Text::unload(p->name);
         tvg::free(p->decoded);
         tvg::free(p->name);
     }
-    fonts.reset();
+    ARRAY_FOREACH(a, access) {
+        tvg::free(a->name);
+    }
 }
 
 SvgLoader::SvgLoader() : ImageLoader(FileType::Svg)
@@ -3870,8 +3870,10 @@ bool SvgLoader::header()
     return true;
 }
 
-bool SvgLoader::open(const char* data, uint32_t size, TVG_UNUSED const LoaderOps* ops, bool copy)
+bool SvgLoader::open(const char* data, uint32_t size, const LoaderOps* ops, bool copy)
 {
+    if (ops->caller != tvg::Type::Picture) return false;
+
     if (copy) {
         content = tvg::malloc<char>(size + 1);
         memcpy((char*)content, data, size);
@@ -3881,13 +3883,18 @@ bool SvgLoader::open(const char* data, uint32_t size, TVG_UNUSED const LoaderOps
     this->size = size;
     this->copy = copy;
 
+    ctx.accessible = static_cast<const PictureOps*>(ops)->accessible;
+
     return header();
 }
 
 bool SvgLoader::open(const char* path, TVG_UNUSED const LoaderOps* ops)
 {
 #ifdef THORVG_FILE_IO_SUPPORT
+    if (ops->caller != tvg::Type::Picture) return false;
+
     if ((content = Loader::open(path, size, true))) {
+        ctx.accessible = static_cast<const PictureOps*>(ops)->accessible;
         copy = true;
         return header();
     }
@@ -3925,7 +3932,6 @@ bool SvgLoader::close()
 {
     if (!Loader::close()) return false;
     this->done();
-    clear();
     return true;
 }
 
@@ -3939,4 +3945,21 @@ Paint* SvgLoader::paint()
         return root->duplicate();
     }
     return nullptr;
+}
+
+const AccessorEntity* SvgLoader::access(uint32_t id)
+{
+    this->done();
+    ARRAY_FOREACH(a, ctx.access) {
+        if (a->id == id) return a;
+    }
+    return nullptr;
+}
+
+void SvgLoader::access(AccessorCallback& cb)
+{
+    this->done();
+    ARRAY_FOREACH(a, ctx.access) {
+        if (!cb.func(a->paint, cb.data)) return;
+    }
 }

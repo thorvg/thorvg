@@ -27,6 +27,7 @@
 #include "tvgArray.h"
 #include "tvgInlist.h"
 #include "tvgColor.h"
+#include "tvgAccessor.h"
 
 using SvgColor = tvg::RGB;
 
@@ -610,7 +611,13 @@ struct SvgParserContext
     Array<SvgNodeIdPair> nodesToStyle;
     Array<char*> images;        //embedded images
     Array<FontFace> fonts;
+
+    // TODO: We can remove map and directly use the name instead of id in ThorVG v2
+    // TODO: Maybe we can replace this with std::map. Currently, ArrayList seems fast enough.
+    Array<AccessorEntity> access;
+
     OpenedTagType openedTag = OpenedTagType::Other;
+    bool accessible;  // allow the Accessor to retain the SVG node names
 
     void clear(bool all);
 };

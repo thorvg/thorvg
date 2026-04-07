@@ -133,7 +133,7 @@ struct PictureImpl : Picture
         if (vector || bitmap) return Result::InsufficientCondition;
 
         bool invalid;  //Invalid Path
-        PictureOps ops = {resolver, nullptr};
+        PictureOps ops = {resolver, nullptr, accessible};
         auto loader = LoaderMgr::loader(filename, &ops, &invalid);
         if (invalid) return Result::InvalidArguments;
         return load(loader);
@@ -144,7 +144,7 @@ struct PictureImpl : Picture
         if (!data || size <= 0) return Result::InvalidArguments;
         if (vector || bitmap) return Result::InsufficientCondition;
 
-        PictureOps ops = {resolver, rpath};
+        PictureOps ops = {resolver, rpath, accessible};
         return load(LoaderMgr::loader(data, size, mimeType, &ops, copy));
     }
 
@@ -325,6 +325,17 @@ struct PictureImpl : Picture
         impl.mark(RenderUpdateFlag::All);
 
         return Result::Success;
+    }
+
+    const AccessorEntity* access(uint32_t id)
+    {
+        if (loader) return loader->access(id);
+        return nullptr;
+    }
+
+    void access(AccessorCallback& cb)
+    {
+        if (loader) loader->access(cb);
     }
 };
 
