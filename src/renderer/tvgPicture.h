@@ -25,37 +25,11 @@
 
 #include "tvgPaint.h"
 #include "tvgScene.h"
+#include "tvgAccessor.h"
 #include "tvgLoaderMgr.h"
 
 namespace tvg
 {
-
-struct PictureIterator : Iterator
-{
-    Paint* paint = nullptr;
-    Paint* ptr = nullptr;
-
-    PictureIterator(Paint* p) : paint(p) {}
-
-    const Paint* next() override
-    {
-        if (!ptr) ptr = paint;
-        else ptr = nullptr;
-        return ptr;
-    }
-
-    uint32_t count() override
-    {
-        if (paint) return 1;
-        else return 0;
-    }
-
-    void begin() override
-    {
-        ptr = nullptr;
-    }
-};
-
 
 struct PictureImpl : Picture
 {
@@ -226,9 +200,24 @@ struct PictureImpl : Picture
         return picture;
     }
 
-    Iterator* iterator()
+    AccessorIterator* iterator()
     {
         load();
+
+        struct PictureIterator : AccessorIterator
+        {
+            Paint* ptr = nullptr;
+
+            PictureIterator(Paint* p) : ptr(p) {}
+
+            const Paint* next() override
+            {
+                auto ret = ptr;
+                ptr = nullptr;
+                return ret;
+            }
+        };
+
         return new PictureIterator(vector);
     }
 
