@@ -3229,7 +3229,10 @@ static void _svgLoaderParserXmlOpen(SvgParserContext* ctx, const char* content, 
             node = method(ctx, nullptr, attrs, attrsLength, xmlParseAttributes);
             ctx->doc = node;
         } else {
-            if (STR_AS(tagName, "svg")) return; //Already loaded <svg>(SvgNodeType::Doc) tag
+            if (STR_AS(tagName, "svg")) {
+                TVGLOG("SVG", "Nested <svg> element is not supported.");
+                method = _createGNode;
+            }
             if (ctx->stack.count > 0) parent = ctx->stack.last();
             else parent = ctx->doc;
             if (STR_AS(tagName, "style")) {
