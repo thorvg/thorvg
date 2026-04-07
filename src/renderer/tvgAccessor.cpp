@@ -27,7 +27,7 @@
 /* Internal Class Implementation                                        */
 /************************************************************************/
 
-static bool accessChildren(Iterator* it, function<bool(const Paint* paint, void* data)> func, void* data)
+static bool accessChildren(AccessorIterator* it, function<bool(const Paint* paint, void* data)> func, void* data)
 {
     while (auto child = it->next()) {
         //Access the child
