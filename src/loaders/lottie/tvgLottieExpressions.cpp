@@ -231,6 +231,10 @@ static jerry_value_t _buildValue(float frameNo, LottieProperty* property)
         }
         case LottieProperty::Type::Color: return _color((*static_cast<LottieColor*>(property))(frameNo));
         case LottieProperty::Type::Opacity: return jerry_number((*static_cast<LottieOpacity*>(property))(frameNo));
+        case LottieProperty::Type::TextDoc: {
+            const auto& doc = (*static_cast<LottieTextDoc*>(property))(frameNo);
+            return doc.text ? jerry_string_sz(doc.text) : jerry_string_sz("");
+        }
         default: TVGERR("LOTTIE", "Non supported type for value? = %d", (int) property->type);
     }
     return jerry_undefined();
