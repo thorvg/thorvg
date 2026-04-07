@@ -42,6 +42,27 @@ static unsigned long _int2str(int num)
 }
 
 
+// Full path for on-disk image: dirName + optional asset subpath "u" + file name in data. Leading slashes in "u" are stripped (package-root relative).
+static char* _composeImagePath(const char* dirName, const char* subPath, const char* data, size_t dlen)
+{
+    while (subPath && (*subPath == '/' || *subPath == '\\')) ++subPath;
+
+    const auto dn = strlen(dirName);
+    const auto sn = subPath ? strlen(subPath) : 0u;
+    const auto sepAfterDir = dn > 0 && dirName[dn - 1] != '/' && dirName[dn - 1] != '\\';
+    const auto sepBeforeFile = sn > 0 && subPath[sn - 1] != '/' && subPath[sn - 1] != '\\';
+
+    const auto len = dn + (sepAfterDir ? 1u : 0u) + sn + (sepBeforeFile ? 1u : 0u) + dlen + 1u;
+    auto path = tvg::malloc<char>(len);
+    if (sn == 0) {
+        snprintf(path, len, "%s%s%s", dirName, sepAfterDir ? "/" : "", data);
+    } else {
+        snprintf(path, len, "%s%s%s%s%s", dirName, sepAfterDir ? "/" : "", subPath, sepBeforeFile ? "/" : "", data);
+    }
+    return path;
+}
+
+
 void LottieParser::getExpression(char* code, LottieComposition* comp, LottieLayer* layer, LottieObject* object, LottieProperty* property)
 {
     if (!comp->expressions) comp->expressions = true;
@@ -984,10 +1005,7 @@ void LottieParser::parseImage(LottieImage* image, const char* data, const char* 
         image->bitmap.path = duplicate(data);
     //external image resource
     } else {
-        auto subPathLen = subPath ? strlen(subPath) : 0;
-        auto len = strlen(dirName) + subPathLen + dlen + 2;
-        image->bitmap.path = tvg::malloc<char>(len);
-        snprintf(image->bitmap.path, len, "%s/%s%s", dirName, subPath ? subPath : "", data);
+        image->bitmap.path = _composeImagePath(dirName, subPath, data, dlen);
         external = true;
     }
     image->bitmap.width = width;

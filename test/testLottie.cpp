@@ -327,4 +327,22 @@ TEST_CASE("Lottie Asset Resolver", "[tvgLottie]")
     REQUIRE(Initializer::term() == Result::Success);
 }
 
+#if defined(THORVG_PNG_LOADER_SUPPORT) && defined(THORVG_FILE_IO_SUPPORT)
+TEST_CASE("Lottie package-root asset path", "[tvgLottie]")
+{
+    REQUIRE(Initializer::init() == Result::Success);
+    {
+        auto animation = unique_ptr<Animation>(Animation::gen());
+        REQUIRE(animation);
+
+        auto picture = animation->picture();
+
+        // JSON under .../animations/ with asset u:"/images/..." (dotLottie-style); image is sibling folder.
+        REQUIRE(picture->load(TEST_DIR"/lottie_pkg/animations/pkg_root_u.json") == Result::Success);
+        REQUIRE(animation->frame(5.0f) == Result::Success);
+    }
+    REQUIRE(Initializer::term() == Result::Success);
+}
+#endif
+
 #endif

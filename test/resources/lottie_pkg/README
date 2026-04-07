@@ -1,0 +1,9 @@
+Test fixture for Lottie file layout similar to dotLottie extract layout:
+  animations/<file>.json   — main animation
+  images/<file>            — bitmap assets
+
+Asset entries use "u": "/images/..." (leading slash = package root), which must
+resolve to this directory (sibling of animations/), not to the filesystem root.
+
+PNG and JSON are minimal data authored for ThorVG unit tests; same license as
+ThorVG (MIT).

@@ -21,7 +21,7 @@
  */
 
 #include "tvgStr.h"
- #include "tvgLottieLoader.h"
+#include "tvgLottieLoader.h"
 #include "tvgLottieModel.h"
 #include "tvgLottieParser.h"
 #include "tvgLottieBuilder.h"
@@ -30,6 +30,30 @@
 /************************************************************************/
 /* Internal Class Implementation                                        */
 /************************************************************************/
+
+#ifdef THORVG_FILE_IO_SUPPORT
+/* JSON in .../animations/ : asset u:"/images/..." is relative to package root (sibling of animations). */
+static char* lottieResourceDirFromPath(const char* path)
+{
+    auto d = tvg::dirname(path);
+    auto n = strlen(d);
+    while (n > 0 && (d[n - 1] == '/' || d[n - 1] == '\\')) {
+        d[n - 1] = '\0';
+        --n;
+    }
+    const char* base = d;
+    for (const char* p = d; *p; ++p) {
+        if (*p == '/' || *p == '\\') base = p + 1;
+    }
+    if (!strcmp(base, "animations") && base > d + 1) {
+        auto parent = tvg::duplicate(d, static_cast<size_t>(base - d - 1));
+        tvg::free(d);
+        return parent;
+    }
+    return d;
+}
+#endif
+
 
 LottieCustomSlot::~LottieCustomSlot()
 {
@@ -232,7 +256,7 @@ bool LottieLoader::open(const char* path, const LoaderOps* ops)
     if (ops->caller != tvg::Type::Picture) return false;
 
     if ((content = Loader::open(path, size, true))) {
-        dirName = tvg::dirname(path);
+        dirName = lottieResourceDirFromPath(path);
         copy = true;
         builder->resolver = static_cast<const PictureOps*>(ops)->resolver;
         return header();
