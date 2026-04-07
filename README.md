@@ -154,6 +154,7 @@ ThorVG is designed to be portable across a wide range of devices, including smal
     - [Godot](#godot)
     - [Lottie Creator](#lottie-creator)
     - [LVGL](#lvgl)
+    - [MetaModule](#metamodule)
     - [Segger](#segger)
     - [TinyPiXOS](#tinypixos)
     - [Tizen](#tizen)
@@ -410,7 +411,7 @@ Please check out the [ThorVG Test App](https://thorvg-perf-test.vercel.app/) to 
 [Espressif Systems](https://www.espressif.com/en) provides [ThorVG as an official component](https://docs.espressif.com/projects/esp-iot-solution/en/latest/display/lcd/gui_solution.html#thorvg-component) within its ESP-IDF (IoT Development Framework), simplifying integration into ESP-IDF projects. This allows developers to easily incorporate ThorVG's rendering capabilities into their applications, particularly on IoT devices powered by Espressif’s ESP32 and ESP32-P4 microcontrollers.
 
 <p align="center">
-  <img width="700" height="auto" src="https://github.com/thorvg/thorvg.site/blob/main/readme/example_espressif.png">
+  <img width="600" height="auto" src="https://github.com/thorvg/thorvg.site/blob/main/readme/example_espressif.png">
 </p>
 
 ### Flux Audio
@@ -442,11 +443,19 @@ ThorVG is integrated into the Godot game engine to support sleek, high-quality 
   <img width="700" height="auto" src="https://github.com/thorvg/thorvg.site/blob/main/readme/example_lvgl.png">
 </p>
 
+### MetaModule
+ThorVG is used as a lightweight vector rasterization backend in [MetaModule](https://4mscompany.com/metamodule) firmware, an embedded modular synthesizer environment, enabling efficient UI rendering under real-time constraints.
+
+<p align="center">
+  <img width="400" height="auto" src="https://github.com/thorvg/thorvg.site/blob/main/readme/example_metamodule.png">
+</p>
+
+
 ### Segger
 [SEGGER](https://www.segger.com/) Microcontroller provides products for developing and manufacturing embedded systems, including real-time operating systems (RTOS), middleware libraries, debugging and trace probes, and programming tools. [It has adopted ThorVG](https://doc.segger.com/UM03001_emWin.html#GUI_GPU_ThorVG_ThorVG_driver) as a GPU driver to enable high-performance vector rendering for its GUI apps.
 
 <p align="center">
-  <img width="700" height="auto" src="https://github.com/thorvg/thorvg.site/blob/main/readme/example_segger.png">
+  <img width="650" height="auto" src="https://github.com/thorvg/thorvg.site/blob/main/readme/example_segger.png">
 </p>
 
 ### TinyPiXOS
