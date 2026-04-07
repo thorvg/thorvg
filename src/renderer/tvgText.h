@@ -240,7 +240,7 @@ struct TextImpl : Text
         return text;
     }
 
-    Iterator* iterator()
+    AccessorIterator* iterator()
     {
         return nullptr;
     }

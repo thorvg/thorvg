@@ -30,7 +30,10 @@ namespace tvg
 
 struct AccessorIterator
 {
-    static Iterator* iterator(const Paint* paint)
+    virtual ~AccessorIterator() {}
+    virtual const Paint* next() = 0;
+
+    static AccessorIterator* iterator(const Paint* paint)
     {
         return PAINT(paint)->iterator();
     }
