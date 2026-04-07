@@ -43,6 +43,8 @@
 #define PX_PER_PT 1.333333f //1 pt = 1/72 in -> PX_PER_IN/72
 #define PX_PER_MM 3.779528f //1 in = 25.4 mm -> PX_PER_IN/25.4
 #define PX_PER_CM 37.79528f //1 in = 2.54 cm -> PX_PER_IN/2.54
+// TODO: support the def font and size as used in a system?
+#define DEFAULT_FONT_SIZE 10.0f
 
 typedef bool (*parseAttributes)(const char* buf, unsigned bufLength, xmlAttributeCb func, const void* data);
 typedef SvgNode* (*FactoryMethod)(SvgParserContext* ctx, SvgNode* parent, const char* buf, unsigned bufLength, parseAttributes func);
@@ -120,52 +122,71 @@ static void _parseAspectRatio(const char** content, AspectRatioAlign* align, Asp
     }
 }
 
+static float _findEmBaseFontSize(const SvgNode* from)
+{
+    for (auto n = from; n; n = n->parent) {
+        if (n->type == SvgNodeType::Text && n->node.text.fontSize > 0.0f) return n->node.text.fontSize;
+    }
+    return DEFAULT_FONT_SIZE;
+}
+
+static float _unitScale(const char* str, float emBase)
+{
+    if (strstr(str, "em")) return emBase;
+    if (strstr(str, "ex")) return emBase * 0.5f;
+    if (strstr(str, "cm")) return PX_PER_CM;
+    if (strstr(str, "mm")) return PX_PER_MM;
+    if (strstr(str, "pt")) return PX_PER_PT;
+    if (strstr(str, "pc")) return PX_PER_PC;
+    if (strstr(str, "in")) return PX_PER_IN;
+    return 1.0f;
+}
+
+static bool _isPercentage(const char* end)
+{
+    end = svgUtilSkipWhiteSpace(end, nullptr);
+    return *end == '%';
+}
 
 // According to https://www.w3.org/TR/SVG/coords.html#Units
 static float _toFloat(const SvgParser* parser, const char* str, SvgParserLengthType type)
 {
-    float parsedValue = toFloat(str, nullptr);
+    char* end = nullptr;
+    auto parsedValue = toFloat(str, &end);
 
-    if (strstr(str, "cm")) parsedValue *= PX_PER_CM;
-    else if (strstr(str, "mm")) parsedValue *= PX_PER_MM;
-    else if (strstr(str, "pt")) parsedValue *= PX_PER_PT;
-    else if (strstr(str, "pc")) parsedValue *= PX_PER_PC;
-    else if (strstr(str, "in")) parsedValue *= PX_PER_IN;
-    else if (strstr(str, "%")) {
-        if (type == SvgParserLengthType::Vertical) parsedValue = (parsedValue / 100.0f) * parser->global.h;
-        else if (type == SvgParserLengthType::Horizontal) parsedValue = (parsedValue / 100.0f) * parser->global.w;
-        else if (type == SvgParserLengthType::Diagonal) parsedValue = (sqrtf(powf(parser->global.w, 2) + powf(parser->global.h, 2)) / sqrtf(2.0f)) * (parsedValue / 100.0f);
-        else {
-            //if other than it's radius
-            auto max = parser->global.w;
-            if (max < parser->global.h) max = parser->global.h;
-            parsedValue = (parsedValue / 100.0f) * max;
-        }
+    if (_isPercentage(end)) {
+        if (type == SvgParserLengthType::Vertical) return (parsedValue / 100.0f) * parser->global.h;
+        if (type == SvgParserLengthType::Horizontal) return (parsedValue / 100.0f) * parser->global.w;
+        if (type == SvgParserLengthType::Diagonal) return (sqrtf(powf(parser->global.w, 2) + powf(parser->global.h, 2)) / sqrtf(2.0f)) * (parsedValue / 100.0f);
+        auto max = parser->global.w;
+        if (max < parser->global.h) max = parser->global.h;
+        return (parsedValue / 100.0f) * max;
     }
-    //TODO: Implement 'em', 'ex' attributes
+    return parsedValue * _unitScale(str, _findEmBaseFontSize(parser ? parser->node : nullptr));
+}
 
-    return parsedValue;
+static float _toFontSize(const SvgParser* parser, const char* str)
+{
+    char* end = nullptr;
+    auto parsedValue = toFloat(str, &end);
+    if (parsedValue < 0.0f) parsedValue = 0.0f;
+
+    auto base = _findEmBaseFontSize(parser && parser->node ? parser->node->parent : nullptr);
+    if (_isPercentage(end)) return (parsedValue / 100.0f) * base;
+    return parsedValue * _unitScale(str, base);
 }
 
 static float _gradientToFloat(const SvgParser* parser, const char* str, bool& isPercentage)
 {
     char* end = nullptr;
-
     auto parsedValue = toFloat(str, &end);
-    isPercentage = false;
 
-    if (strstr(str, "%")) {
-        parsedValue = parsedValue / 100.0f;
+    if (_isPercentage(end)) {
         isPercentage = true;
+        return parsedValue / 100.0f;
     }
-    else if (strstr(str, "cm")) parsedValue *= PX_PER_CM;
-    else if (strstr(str, "mm")) parsedValue *= PX_PER_MM;
-    else if (strstr(str, "pt")) parsedValue *= PX_PER_PT;
-    else if (strstr(str, "pc")) parsedValue *= PX_PER_PC;
-    else if (strstr(str, "in")) parsedValue *= PX_PER_IN;
-    //TODO: Implement 'em', 'ex' attributes
-
-    return parsedValue;
+    isPercentage = false;
+    return parsedValue * _unitScale(str, _findEmBaseFontSize(parser ? parser->node : nullptr));
 }
 
 
@@ -2080,11 +2101,16 @@ static constexpr struct
     int sz;
     size_t offset;
 } textTags[] = {
-        {"x", SvgParserLengthType::Horizontal, sizeof("x"), offsetof(SvgTextNode, x)},
-        {"y", SvgParserLengthType::Vertical, sizeof("y"), offsetof(SvgTextNode, y)},
-        {"font-size", SvgParserLengthType::Vertical, sizeof("font-size"), offsetof(SvgTextNode, fontSize)}
-};
+    {"x", SvgParserLengthType::Horizontal, sizeof("x"), offsetof(SvgTextNode, x)},
+    {"y", SvgParserLengthType::Vertical, sizeof("y"), offsetof(SvgTextNode, y)}};
 
+static bool _attrPrescanTextFontSize(void* data, const char* key, const char* value)
+{
+    if (!STR_AS(key, "font-size")) return true;
+    auto ctx = (SvgParserContext*)data;
+    ctx->parser->node->node.text.fontSize = _toFontSize(ctx->parser, value);
+    return true;
+}
 
 static bool _attrParseTextNode(void* data, const char* key, const char* value)
 {
@@ -2103,7 +2129,8 @@ static bool _attrParseTextNode(void* data, const char* key, const char* value)
         }
     }
 
-    if (STR_AS(key, "font-family")) svgUtilReplace(&text->fontFamily, value);
+    if (STR_AS(key, "font-size")) text->fontSize = _toFontSize(ctx->parser, value);
+    else if (STR_AS(key, "font-family")) svgUtilReplace(&text->fontFamily, value);
     else if (STR_AS(key, "style")) return xmlParseW3CAttribute(value, strlen(value), _parseStyleAttr, ctx);
     else if (STR_AS(key, "clip-path")) _handleClipPathAttr(ctx, node, value);
     else if (STR_AS(key, "mask")) _handleMaskAttr(ctx, node, value);
@@ -2120,9 +2147,9 @@ static SvgNode* _createTextNode(SvgParserContext* ctx, SvgNode* parent, const ch
     ctx->parser->node = _createNode(parent, SvgNodeType::Text);
     if (!ctx->parser->node) return nullptr;
 
-    //TODO: support the def font and size as used in a system?
-    ctx->parser->node->node.text.fontSize = 10.0f;
+    ctx->parser->node->node.text.fontSize = DEFAULT_FONT_SIZE;
 
+    func(buf, bufLength, _attrPrescanTextFontSize, ctx);
     func(buf, bufLength, _attrParseTextNode, ctx);
 
     return ctx->parser->node;
