@@ -1203,11 +1203,6 @@ static void _buildProperty(float frameNo, jerry_value_t context, LottieExpressio
         jerry_value_free(effect);
     }
 
-    auto effect = jerry_function_external(_effect);
-    jerry_object_set_sz(context, EXP_EFFECT, effect);
-    jerry_object_set_native_ptr(effect, &freeCb, _expcontent(exp, frameNo, exp->layer));
-    jerry_value_free(effect);
-
     //expansions per types
     if (exp->property->type == LottieProperty::Type::PathSet) _buildPath(context, frameNo, exp->property);
 }
