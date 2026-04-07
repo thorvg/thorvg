@@ -28,6 +28,19 @@
 namespace tvg
 {
 
+struct AccessorEntity
+{
+    uint32_t id;  // for fast access (equal to paint->id)
+    Paint* paint;
+    char* name;
+};
+
+struct AccessorCallback
+{
+    function<bool(const Paint* paint, void* data)> func;
+    void* data;
+};
+
 struct AccessorIterator
 {
     virtual ~AccessorIterator() {}

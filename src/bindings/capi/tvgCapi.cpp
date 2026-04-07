@@ -668,6 +668,14 @@ TVG_API const Tvg_Paint tvg_picture_get_paint(Tvg_Paint picture, uint32_t id)
     return nullptr;
 }
 
+TVG_API Tvg_Result tvg_picture_set_accessible(Tvg_Paint picture, bool accessible)
+{
+    if (picture) {
+        reinterpret_cast<Picture*>(picture)->accessible = accessible;
+        return TVG_RESULT_SUCCESS;
+    }
+    return TVG_RESULT_INVALID_ARGUMENT;
+}
 
 TVG_API Tvg_Result tvg_picture_set_origin(Tvg_Paint picture, float x, float y)
 {
@@ -1169,6 +1177,11 @@ TVG_API uint32_t tvg_accessor_generate_id(const char* name)
     return Accessor::id(name);
 }
 
+TVG_API const char* tvg_accessor_get_name(Tvg_Accessor accessor, uint32_t id)
+{
+    if (accessor) return reinterpret_cast<Accessor*>(accessor)->name(id);
+    return nullptr;
+}
 
 /************************************************************************/
 /* Lottie Animation API                                                 */
