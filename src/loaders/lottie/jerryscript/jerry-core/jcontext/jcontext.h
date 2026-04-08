@@ -23,6 +23,7 @@
 #include "ecma-helpers.h"
 #include "ecma-jobqueue.h"
 
+#include "jerryscript-types.h"
 #include "jmem.h"
 #include "js-parser-internal.h"
 #include "re-bytecode.h"
@@ -240,12 +241,15 @@ extern __declspec(thread) jerry_context_t* tls_context_p;
 
 #else
 
-extern __thread jerry_context_t* tls_context_p;
+extern jerry_context_t* g_context_p;
+extern bool jerry_use_tls;
+extern __thread jerry_context_t* tls_context_p
+    __attribute__((visibility("hidden")));
 
 #define JERRY_DEFINE_CURRENT_CONTEXT() \
-  jerry_context_t *jerry_current_context_p = tls_context_p; \
+  jerry_context_t *jerry_current_context_p = \
+    JERRY_LIKELY (!jerry_use_tls) ? g_context_p : tls_context_p; \
   JERRY_UNUSED (jerry_current_context_p)
-
 #endif
 
 /**
