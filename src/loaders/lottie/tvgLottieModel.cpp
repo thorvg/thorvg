@@ -351,80 +351,85 @@ uint32_t LottieGradient::populate(ColorStop& color, size_t count)
 {
     if (!color.input) return 0;
 
-    uint32_t alphaCnt = (color.input->count - (count * 4)) / 2;
-    Array<Fill::ColorStop> output(count + alphaCnt);
-    uint32_t cidx = 0;               //color count
     uint32_t clast = count * 4;
     if (clast > color.input->count) clast = color.input->count;
-    uint32_t aidx = clast;           //alpha count
+
+    auto* ptr            = color.input->data;
+    auto* opacityPtr     = ptr + clast;
+    auto  opacityArraySize = color.input->count - clast;
+
+    Array<Fill::ColorStop> output(count + opacityArraySize / 2);
     Fill::ColorStop cs;
 
-    //merge color stops.
-    for (uint32_t i = 0; i < color.input->count; ++i) {
-        if (cidx == clast || aidx == color.input->count) break;
-        if ((*color.input)[cidx] == (*color.input)[aidx]) {
-            cs.offset = (*color.input)[cidx];
-            cs.r = (uint8_t)nearbyint((*color.input)[cidx + 1] * 255.0f);
-            cs.g = (uint8_t)nearbyint((*color.input)[cidx + 2] * 255.0f);
-            cs.b = (uint8_t)nearbyint((*color.input)[cidx + 3] * 255.0f);
-            cs.a = (uint8_t)nearbyint((*color.input)[aidx + 1] * 255.0f);
-            cidx += 4;
-            aidx += 2;
-        } else if ((*color.input)[cidx] < (*color.input)[aidx]) {
-            cs.offset = (*color.input)[cidx];
-            cs.r = (uint8_t)nearbyint((*color.input)[cidx + 1] * 255.0f);
-            cs.g = (uint8_t)nearbyint((*color.input)[cidx + 2] * 255.0f);
-            cs.b = (uint8_t)nearbyint((*color.input)[cidx + 3] * 255.0f);
-            //generate alpha value
-            if (output.count > 0) {
-                auto p = ((*color.input)[cidx] - output.last().offset) / ((*color.input)[aidx] - output.last().offset);
-                cs.a = tvg::lerp<uint8_t>(output.last().a, (uint8_t)nearbyint((*color.input)[aidx + 1] * 255.0f), p);
-            } else cs.a = (uint8_t)nearbyint((*color.input)[aidx + 1] * 255.0f);
-            cidx += 4;
-        } else {
-            cs.offset = (*color.input)[aidx];
-            cs.a = (uint8_t)nearbyint((*color.input)[aidx + 1] * 255.0f);
-            //generate color value
-            if (output.count > 0) {
-                auto p = ((*color.input)[aidx] - output.last().offset) / ((*color.input)[cidx] - output.last().offset);
-                cs.r = tvg::lerp<uint8_t>(output.last().r, (uint8_t)nearbyint((*color.input)[cidx + 1] * 255.0f), p);
-                cs.g = tvg::lerp<uint8_t>(output.last().g, (uint8_t)nearbyint((*color.input)[cidx + 2] * 255.0f), p);
-                cs.b = tvg::lerp<uint8_t>(output.last().b, (uint8_t)nearbyint((*color.input)[cidx + 3] * 255.0f), p);
-            } else {
-                cs.r = (uint8_t)nearbyint((*color.input)[cidx + 1] * 255.0f);
-                cs.g = (uint8_t)nearbyint((*color.input)[cidx + 2] * 255.0f);
-                cs.b = (uint8_t)nearbyint((*color.input)[cidx + 3] * 255.0f);
-            }
-            aidx += 2;
+    uint32_t j = 0;
+    for (uint32_t i = 0; i < clast; i += 4) {
+        float colorStop = ptr[i];
+        float r = ptr[i + 1], g = ptr[i + 2], b = ptr[i + 3];
+
+        if (opacityArraySize == 0) {
+            cs.offset = colorStop;
+            cs.r = (uint8_t)nearbyint(r * 255.0f);
+            cs.g = (uint8_t)nearbyint(g * 255.0f);
+            cs.b = (uint8_t)nearbyint(b * 255.0f);
+            cs.a = 255;
+            output.push(cs);
+            continue;
         }
-        if (cs.a < 255) opaque = false;
-        output.push(cs);
-    }
 
-    //color remains
-    while (cidx + 3 < clast) {
-        cs.offset = (*color.input)[cidx];
-        cs.r = (uint8_t)nearbyint((*color.input)[cidx + 1] * 255.0f);
-        cs.g = (uint8_t)nearbyint((*color.input)[cidx + 2] * 255.0f);
-        cs.b = (uint8_t)nearbyint((*color.input)[cidx + 3] * 255.0f);
-        cs.a = (output.count > 0) ? output.last().a : 255;
-        if (cs.a < 255) opaque = false;
-        output.push(cs);
-        cidx += 4;
-    }
+        if (j == opacityArraySize) {
+            // already past the end of opacity array - interpolate from last two opacity stops
+            float stop1 = opacityPtr[j - 4];
+            float op1   = opacityPtr[j - 3];
+            float stop2 = opacityPtr[j - 2];
+            float op2   = opacityPtr[j - 1];
+            float opacity;
+            if (colorStop > stop2) {
+                opacity = op2;
+            } else {
+                float progress = (colorStop - stop1) / (stop2 - stop1);
+                opacity = op1 + progress * (op2 - op1);
+            }
+            cs.offset = colorStop;
+            cs.r = (uint8_t)nearbyint(r * 255.0f);
+            cs.g = (uint8_t)nearbyint(g * 255.0f);
+            cs.b = (uint8_t)nearbyint(b * 255.0f);
+            cs.a = (uint8_t)nearbyint(opacity * 255.0f);
+            if (cs.a < 255) opaque = false;
+            output.push(cs);
+            continue;
+        }
 
-    //alpha remains
-    while (aidx < color.input->count) {
-        cs.offset = (*color.input)[aidx];
-        cs.a = (uint8_t)nearbyint((*color.input)[aidx + 1] * 255.0f);
-        if (cs.a < 255) opaque = false;
-        if (output.count > 0) {
-            cs.r = output.last().r;
-            cs.g = output.last().g;
-            cs.b = output.last().b;
-        } else cs.r = cs.g = cs.b = 255;
-        output.push(cs);
-        aidx += 2;
+        for (; j < opacityArraySize; j += 2) {
+            float opacityStop = opacityPtr[j];
+            if (opacityStop < colorStop) {
+                // opacity stop comes before this color stop - insert it with current color
+                cs.offset = opacityStop;
+                cs.r = (uint8_t)nearbyint(r * 255.0f);
+                cs.g = (uint8_t)nearbyint(g * 255.0f);
+                cs.b = (uint8_t)nearbyint(b * 255.0f);
+                cs.a = (uint8_t)nearbyint(opacityPtr[j + 1] * 255.0f);
+                if (cs.a < 255) opaque = false;
+                output.push(cs);
+                continue;
+            }
+            // opacity stop is at or after color stop - emit color stop with interpolated opacity
+            float opacity;
+            if (j == 0) {
+                opacity = opacityPtr[j + 1];
+            } else {
+                float progress = (colorStop - opacityPtr[j - 2]) / (opacityPtr[j] - opacityPtr[j - 2]);
+                opacity = opacityPtr[j - 1] + progress * (opacityPtr[j + 1] - opacityPtr[j - 1]);
+            }
+            cs.offset = colorStop;
+            cs.r = (uint8_t)nearbyint(r * 255.0f);
+            cs.g = (uint8_t)nearbyint(g * 255.0f);
+            cs.b = (uint8_t)nearbyint(b * 255.0f);
+            cs.a = (uint8_t)nearbyint(opacity * 255.0f);
+            if (cs.a < 255) opaque = false;
+            output.push(cs);
+            j += 2;
+            break;
+        }
     }
 
     color.data = output.data;
