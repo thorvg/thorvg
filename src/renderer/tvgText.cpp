@@ -122,6 +122,12 @@ Result Text::outline(float width, uint8_t r, uint8_t g, uint8_t b) noexcept
 }
 
 
+Result Text::order(bool strokeFirst) noexcept
+{
+    return to<TextImpl>(this)->shape->order(strokeFirst);
+}
+
+
 Result Text::fill(Fill* f) noexcept
 {
     return to<TextImpl>(this)->shape->fill(f);

@@ -2536,6 +2536,18 @@ TVG_API Tvg_Result tvg_text_set_italic(Tvg_Paint text, float shear);
 TVG_API Tvg_Result tvg_text_set_outline(Tvg_Paint text, float width, uint8_t r, uint8_t g, uint8_t b);
 
 /**
+ * @brief Sets the rendering order of the outline stroke and the text fill.
+ *
+ * @param[in] text The text object.
+ * @param[in] strokeFirst If @c true, the stroke is rendered before the fill (stroke below); otherwise the stroke is on top.
+ *
+ * @see tvg_text_set_outline()
+ *
+ * @note Experimental API
+ */
+TVG_API Tvg_Result tvg_text_set_paint_order(Tvg_Paint text, bool strokeFirst);
+
+/**
  * @brief Sets the text solid color.
  *
  * @param[in] paint The text object.

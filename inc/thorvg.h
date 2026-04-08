@@ -2092,6 +2092,17 @@ struct TVG_API Text : Paint
     Result outline(float width, uint8_t r, uint8_t g, uint8_t b) noexcept;
 
     /**
+     * @brief Sets the rendering order of the outline stroke and the text fill.
+     *
+     * @param[in] strokeFirst If @c true, the stroke is rendered before the fill (stroke below); otherwise the stroke is on top.
+     *
+     * @see Text::outline()
+     *
+     * @note Experimental API
+     */
+    Result order(bool strokeFirst) noexcept;
+
+    /**
      * @brief Sets the text color.
      *
      * @param[in] r The red color channel value in the range [0 ~ 255]. The default value is 0.

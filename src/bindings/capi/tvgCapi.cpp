@@ -951,6 +951,13 @@ TVG_API Tvg_Result tvg_text_set_outline(Tvg_Paint text, float width, uint8_t r, 
 }
 
 
+TVG_API Tvg_Result tvg_text_set_paint_order(Tvg_Paint text, bool strokeFirst)
+{
+    if (text) return (Tvg_Result) reinterpret_cast<Text*>(text)->order(strokeFirst);
+    return TVG_RESULT_INVALID_ARGUMENT;
+}
+
+
 TVG_API Tvg_Result tvg_text_set_color(Tvg_Paint text, uint8_t r, uint8_t g, uint8_t b)
 {
     if (text) return (Tvg_Result) reinterpret_cast<Text*>(text)->fill(r, g, b);
