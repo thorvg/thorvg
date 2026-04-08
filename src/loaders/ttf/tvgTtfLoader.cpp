@@ -35,7 +35,7 @@
 /* Internal Class Implementation                                        */
 /************************************************************************/
 
-#define SPACE_GLYPH_IDX 1
+#define SPACE_GLYPH_IDX 32
 #define LINE_FEED_GLYPH_IDX 10
 #define DOT_GLYPH_IDX 46
 
@@ -399,7 +399,7 @@ void TtfLoader::wrapWord(FontMetrics& fm, const Point& box, const char* utf8, co
         cursor.x += xadv;
 
         //capture the word start
-        if (rtgm->idx == SPACE_GLYPH_IDX) {
+        if (code == SPACE_GLYPH_IDX) {
             word = out.pts.count;
             wadv = cursor.x;
         }
