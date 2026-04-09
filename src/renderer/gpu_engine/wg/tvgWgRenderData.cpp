@@ -143,12 +143,11 @@ void WgRenderDataPaint::release(WgContext& context)
     clips.clear();
 };
 
-
-void WgRenderDataPaint::updateClips(tvg::Array<tvg::RenderData> &clips) {
+void WgRenderDataPaint::updateClips(const Array<RenderData>& clips)
+{
     this->clips.clear();
-    ARRAY_FOREACH(p, clips) {
-        this->clips.push((WgRenderDataPaint*)(*p));
-    }
+    // RenderData == WgRenderDataPaint*, just copy it.
+    this->clips = *((Array<WgRenderDataPaint*>*)&clips);
 }
 
 //***********************************************************************
