@@ -216,42 +216,13 @@ struct jerry_context_t
 
 #if JERRY_EXTERNAL_CONTEXT
 
+extern bool jerry_use_tls;
 /*
  * This part is for JerryScript which uses external context.
  */
-extern jerry_context_t* g_context_p;
-extern bool jerry_use_tls;
-
-#if defined(__MINGW32__) || defined(__MINGW64__)
-
-#include <windows.h>
-
-extern DWORD tls_context_index;
-
 #define JERRY_DEFINE_CURRENT_CONTEXT() \
-  jerry_context_t *jerry_current_context_p = \
-    JERRY_LIKELY (!jerry_use_tls) ? g_context_p : (jerry_context_t*)TlsGetValue(tls_context_index); \
+  jerry_context_t *jerry_current_context_p = jerry_port_context_get (); \
   JERRY_UNUSED (jerry_current_context_p)
-
-#elif defined(_MSC_VER)
-
-extern __declspec(thread) jerry_context_t* tls_context_p;
-
-#define JERRY_DEFINE_CURRENT_CONTEXT() \
-  jerry_context_t *jerry_current_context_p = \
-    JERRY_LIKELY (!jerry_use_tls) ? g_context_p : tls_context_p; \
-  JERRY_UNUSED (jerry_current_context_p)
-
-#else
-
-extern __thread jerry_context_t* tls_context_p
-    __attribute__((visibility("hidden")));
-
-#define JERRY_DEFINE_CURRENT_CONTEXT() \
-  jerry_context_t *jerry_current_context_p = \
-    JERRY_LIKELY (!jerry_use_tls) ? g_context_p : tls_context_p; \
-  JERRY_UNUSED (jerry_current_context_p)
-#endif
 
 /**
  * Provides a reference to the current context structure.
