@@ -22,8 +22,6 @@
 #include "ecma-builtins.h"
 #include "ecma-helpers.h"
 #include "ecma-jobqueue.h"
-
-#include "jerryscript-types.h"
 #include "jmem.h"
 #include "js-parser-internal.h"
 #include "re-bytecode.h"
