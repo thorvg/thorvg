@@ -14,15 +14,20 @@
  */
 
 #include <stdlib.h>
-
-#include "jerry-config.h"
-#include "jerryscript-port.h"
-
 #include <cstdlib>
+
+#include "jcontext.h"
 
 
 jerry_context_t* g_context_p = nullptr;
 bool jerry_use_tls = false;
+
+/**
+ * Static buffer for the first context — BSS allocation.
+ * Same cache/page characteristics as non-EXTERNAL_CONTEXT global context.
+ */
+alignas (JMEM_ALIGNMENT) char jerry_static_context_buffer[
+    sizeof (jerry_context_t) + JERRY_GLOBAL_HEAP_SIZE * 1024];
 
 /**
  * Thread-local context pointer for multi-threaded Lottie expression evaluation.
@@ -55,7 +60,7 @@ static void jerry_port_tls_set(jerry_context_t* p)
     }
     TlsSetValue(tls_context_index, p);
 }
-#else 
+#else
 static inline void jerry_port_tls_set(jerry_context_t* p) { tls_context_p = p; }
 #endif
 
@@ -64,10 +69,12 @@ size_t jerry_port_context_alloc(size_t context_size)
     size_t total_size = context_size + JERRY_GLOBAL_HEAP_SIZE * 1024;
     if (g_context_p == nullptr)
     {
-        g_context_p = (jerry_context_t*)malloc(total_size);
+        /* First context: use static BSS buffer (link-time constant address) */
+        g_context_p = (jerry_context_t*) jerry_static_context_buffer;
         jerry_port_tls_set(g_context_p);
         return total_size;
     }
+    /* Subsequent contexts: heap-allocate for multi-thread */
     jerry_use_tls = true;
     jerry_port_tls_set((jerry_context_t*)malloc(total_size));
     return total_size;
@@ -86,7 +93,7 @@ void jerry_port_context_free(void)
 {
     if (g_context_p != nullptr)
     {
-        free(g_context_p);
+        /* Static buffer: just reset pointer, don't free */
         g_context_p = nullptr;
         jerry_port_tls_set(nullptr);
         return;
