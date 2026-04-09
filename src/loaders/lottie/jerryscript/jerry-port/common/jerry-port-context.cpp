@@ -82,6 +82,11 @@ size_t jerry_port_context_alloc(size_t context_size)
 
 jerry_context_t* jerry_port_context_get(void)
 {
+    if (JERRY_LIKELY (!jerry_use_tls))
+    {
+        return g_context_p;
+    }
+
 #if defined(__MINGW32__) || defined(__MINGW64__)
     return (jerry_context_t*)TlsGetValue(tls_context_index);
 #else
