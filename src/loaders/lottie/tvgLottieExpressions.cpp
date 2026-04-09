@@ -48,46 +48,34 @@ struct ExpContent
 static jerry_value_t _content(const jerry_call_info_t* info, const jerry_value_t args[], const jerry_length_t argsCnt);
 
 //reserved expressions specifiers
-static const char* EXP_NAME = "name";
-static const char* EXP_CONTENT = "content";
-static const char* EXP_WIDTH = "width";
-static const char* EXP_HEIGHT = "height";
-static const char* EXP_CYCLE = "cycle";
-static const char* EXP_PINGPONG = "pingpong";
-static const char* EXP_OFFSET = "offset";
-static const char* EXP_CONTINUE = "continue";
-static const char* EXP_TIME = "time";
-static const char* EXP_VALUE = "value";
-static const char* EXP_INDEX = "index";
-static const char* EXP_EFFECT= "effect";
+static constexpr const char* EXP_NAME = "name";
+static constexpr const char* EXP_CONTENT = "content";
+static constexpr const char* EXP_WIDTH = "width";
+static constexpr const char* EXP_HEIGHT = "height";
+static constexpr const char* EXP_CYCLE = "cycle";
+static constexpr const char* EXP_PINGPONG = "pingpong";
+static constexpr const char* EXP_OFFSET = "offset";
+static constexpr const char* EXP_CONTINUE = "continue";
+static constexpr const char* EXP_TIME = "time";
+static constexpr const char* EXP_VALUE = "value";
+static constexpr const char* EXP_INDEX = "index";
+static constexpr const char* EXP_EFFECT= "effect";
 
-// external magic strings — sorted by length, then lexicographically.
-// registered once at init to avoid heap allocation for these property names.
+// external magic strings for the per-frame hot path (buildProperty, buildLayer, buildTransform, bm_rt).
+// sorted by length, then lexicographically. registered once at init to avoid heap allocation.
 #define LOTTIE_MAGIC_STRINGS(X)                                                           \
-    /* 3 */ X("add") X("div") X("dot") X("end") X("key") X("mod") X("mul") X("sub")     \
-            X("sum")                                                                      \
-    /* 4 */ X("comp") X("ease") X("name") X("path") X("time")                            \
-    /* 5 */ X("clamp") X("cross") X("cycle") X("index") X("layer") X("scale") X("speed") \
-            X("start") X("value") X("width")                                             \
-    /* 6 */ X("$bm_rt") X("easeIn") X("effect") X("height") X("length") X("linear")     \
-            X("loopIn") X("offset") X("parent") X("points") X("random") X("toComp")     \
-            X("wiggle")                                                                   \
-    /* 7 */ X("$bm_add") X("$bm_div") X("$bm_mod") X("$bm_mul") X("$bm_sub")            \
-            X("$bm_sum") X("content") X("easeOut") X("enabled") X("inPoint")             \
-            X("loopOut") X("numKeys") X("opacity")                                       \
-    /* 8 */ X("continue") X("duration") X("hasAudio") X("hasVideo") X("outPoint")        \
-            X("pingpong") X("position") X("rotation") X("thisComp") X("velocity")        \
-    /* 9 */ X("hasParent") X("normalize") X("numLayers") X("startTime") X("thisLayer")   \
-            X("timeRemap") X("transform")                                                \
+    /* 3 */ X("key")                                                                      \
+    /* 4 */ X("time")                                                                     \
+    /* 5 */ X("index") X("layer") X("scale") X("speed") X("value") X("width")            \
+    /* 6 */ X("$bm_rt") X("effect") X("height") X("parent") X("toComp") X("wiggle")     \
+    /* 7 */ X("content") X("enabled") X("inPoint") X("numKeys") X("opacity")             \
+    /* 8 */ X("hasAudio") X("hasVideo") X("outPoint") X("position") X("rotation")        \
+            X("timeRemap") X("velocity")                                                 \
+    /* 9 */ X("hasParent") X("numLayers") X("startTime") X("transform")                  \
     /*10 */ X("nearestKey")                                                               \
-    /*11 */ X("anchorPoint") X("audioActive") X("innerRadius") X("outerRadius")           \
-            X("pointOnPath") X("speedAtTime") X("valueAtTime")                           \
-    /*12 */ X("thisProperty")                                                             \
-    /*13 */ X("frameDuration") X("propertyGroup") X("propertyIndex") X("tangentOnPath")   \
-    /*14 */ X("innerRoundness") X("loopInDuration") X("outerRoundness")                   \
-            X("temporalWiggle") X("velocityAtTime")                                      \
-    /*15 */ X("loopOutDuration")                                                          \
-    /*16 */ X("degreesToRadians") X("radiansToDegrees")
+    /*11 */ X("anchorPoint") X("audioActive") X("speedAtTime") X("valueAtTime")           \
+    /*13 */ X("propertyIndex")                                                            \
+    /*14 */ X("velocityAtTime")
 
 static const jerry_char_t* const _magicStrings[] = {
     #define _MS_PTR(s) (const jerry_char_t*)(s),
