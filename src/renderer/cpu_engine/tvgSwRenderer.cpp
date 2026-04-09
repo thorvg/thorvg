@@ -682,8 +682,7 @@ bool SwRenderer::endComposite(RenderCompositor* cmp)
     return true;
 }
 
-
-void SwRenderer::prepare(RenderEffect* effect, const Matrix& transform)
+void SwRenderer::prepare(RenderEffect* effect, const Matrix& transform, TVG_UNUSED const Array<RenderData>& clips)
 {
     switch (effect->type) {
         case SceneEffect::GaussianBlur: effectGaussianBlurUpdate(static_cast<RenderEffectGaussianBlur*>(effect), transform); break;
@@ -867,8 +866,7 @@ SwTask* SwRenderer::prepareCommon(SwTask* task, const Matrix& transform, const A
     return task;
 }
 
-
-RenderData SwRenderer::prepare(RenderSurface* surface, RenderData data, const Matrix& transform, Array<RenderData>& clips, uint8_t opacity, FilterMethod filter, RenderUpdateFlag flags)
+RenderData SwRenderer::prepare(RenderSurface* surface, RenderData data, const Matrix& transform, const Array<RenderData>& clips, uint8_t opacity, FilterMethod filter, RenderUpdateFlag flags)
 {
     auto task = static_cast<SwImageTask*>(data);
     if (task) task->done();
@@ -881,7 +879,7 @@ RenderData SwRenderer::prepare(RenderSurface* surface, RenderData data, const Ma
     return prepareCommon(task, transform, clips, opacity, flags, (opacity == 0));
 }
 
-RenderData SwRenderer::prepare(const RenderShape& rshape, RenderData data, const Matrix& transform, Array<RenderData>& clips, uint8_t opacity, RenderUpdateFlag flags, bool clipper)
+RenderData SwRenderer::prepare(const RenderShape& rshape, RenderData data, const Matrix& transform, const Array<RenderData>& clips, uint8_t opacity, RenderUpdateFlag flags, bool clipper)
 {
     auto task = static_cast<SwShapeTask*>(data);
     if (task) task->done();

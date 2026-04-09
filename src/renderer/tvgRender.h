@@ -587,8 +587,8 @@ public:
     //main features
     virtual ~RenderMethod() {}
     virtual bool preUpdate() = 0;
-    virtual RenderData prepare(const RenderShape& rshape, RenderData data, const Matrix& transform, Array<RenderData>& clips, uint8_t opacity, RenderUpdateFlag flags, bool clipper) = 0;
-    virtual RenderData prepare(RenderSurface* surface, RenderData data, const Matrix& transform, Array<RenderData>& clips, uint8_t opacity, FilterMethod filter, RenderUpdateFlag flags) = 0;
+    virtual RenderData prepare(const RenderShape& rshape, RenderData data, const Matrix& transform, const Array<RenderData>& clips, uint8_t opacity, RenderUpdateFlag flags, bool clipper) = 0;
+    virtual RenderData prepare(RenderSurface* surface, RenderData data, const Matrix& transform, const Array<RenderData>& clips, uint8_t opacity, FilterMethod filter, RenderUpdateFlag flags) = 0;
     virtual bool postUpdate() = 0;
     virtual bool preRender() = 0;
     virtual bool renderShape(RenderData data) = 0;
@@ -611,7 +611,7 @@ public:
     virtual bool endComposite(RenderCompositor* cmp) = 0;
 
     //post effects
-    virtual void prepare(RenderEffect* effect, const Matrix& transform) = 0;
+    virtual void prepare(RenderEffect* effect, const Matrix& transform, const Array<RenderData>& clips) = 0;
     virtual bool region(RenderEffect* effect) = 0;
     virtual bool render(RenderCompositor* cmp, const RenderEffect* effect, bool direct) = 0;
     virtual void dispose(RenderEffect* effect) = 0;

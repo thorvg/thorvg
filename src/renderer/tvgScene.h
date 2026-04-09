@@ -106,7 +106,7 @@ struct SceneImpl : Scene
 
         if (effects) {
             ARRAY_FOREACH(p, *effects) {
-                renderer->prepare(*p, transform);
+                renderer->prepare(*p, transform, clips);
             }
         }
 

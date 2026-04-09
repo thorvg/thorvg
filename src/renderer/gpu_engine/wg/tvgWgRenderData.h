@@ -72,7 +72,7 @@ struct WgRenderDataPaint
     virtual void release(WgContext& context);
     virtual Type type() { return Type::Undefined; };
 
-    void updateClips(tvg::Array<tvg::RenderData> &clips);
+    void updateClips(const Array<RenderData>& clips);
 };
 
 struct WgRenderDataShape: public WgRenderDataPaint

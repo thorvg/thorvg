@@ -1076,8 +1076,7 @@ bool GlRenderer::endComposite(RenderCompositor* cmp)
     return true;
 }
 
-
-void GlRenderer::prepare(RenderEffect* effect, const Matrix& transform)
+void GlRenderer::prepare(RenderEffect* effect, const Matrix& transform, TVG_UNUSED const Array<RenderData>& clips)
 {
     // we must be sure, that we have intermediate FBOs
     if (mBlendPool.count < 1) mBlendPool.push(new GlRenderTargetPool(surface.w, surface.h));
@@ -1246,8 +1245,7 @@ void GlRenderer::dispose(RenderData data)
     delete sdata;
 }
 
-
-RenderData GlRenderer::prepare(RenderSurface* image, RenderData data, const Matrix& transform, Array<RenderData>& clips, uint8_t opacity, FilterMethod filter, RenderUpdateFlag flags)
+RenderData GlRenderer::prepare(RenderSurface* image, RenderData data, const Matrix& transform, const Array<RenderData>& clips, uint8_t opacity, FilterMethod filter, RenderUpdateFlag flags)
 {
     //TODO: redefine GlImage.
     if (opacity == 0) return data;
@@ -1290,8 +1288,7 @@ RenderData GlRenderer::prepare(RenderSurface* image, RenderData data, const Matr
     return sdata;
 }
 
-
-RenderData GlRenderer::prepare(const RenderShape& rshape, RenderData data, const Matrix& transform, Array<RenderData>& clips, uint8_t opacity, RenderUpdateFlag flags, bool clipper)
+RenderData GlRenderer::prepare(const RenderShape& rshape, RenderData data, const Matrix& transform, const Array<RenderData>& clips, uint8_t opacity, RenderUpdateFlag flags, bool clipper)
 {
     auto sdata = static_cast<GlShape*>(data);
     if (!sdata) {
