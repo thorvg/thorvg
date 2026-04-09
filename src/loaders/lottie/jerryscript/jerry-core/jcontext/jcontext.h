@@ -264,7 +264,7 @@ extern __thread jerry_context_t* tls_context_p
 
 #if !JERRY_SYSTEM_ALLOCATOR
 
-#define JMEM_HEAP_SIZE (JERRY_CONTEXT (heap_size))
+#define JMEM_HEAP_SIZE ((size_t) CONFIG_MEM_HEAP_SIZE)
 
 #define JMEM_HEAP_AREA_SIZE (JMEM_HEAP_SIZE - JMEM_ALIGNMENT)
 
@@ -275,6 +275,8 @@ struct jmem_heap_t
 };
 
 #define JERRY_HEAP_CONTEXT(field) (JERRY_CONTEXT (heap_p)->field)
+
+extern char jerry_static_context_buffer[];
 
 #endif /* !JERRY_SYSTEM_ALLOCATOR */
 
