@@ -887,10 +887,16 @@ struct LottieGradient : LottieObject
     LottieProperty* override(LottieProperty* prop, bool release) override
     {
         LottieProperty* backup = nullptr;
-        if (release) colorStops.release();
-        else backup = new LottieColorStop(colorStops);
-        colorStops.copy(*static_cast<LottieColorStop*>(prop), false);
-        prepare();
+        if (colorStops.sid == prop->sid) {
+            if (release) colorStops.release();
+            else backup = new LottieColorStop(colorStops);
+            colorStops.copy(*static_cast<LottieColorStop*>(prop), false);
+            prepare();
+        } else if (opacity.sid == prop->sid) {
+            if (release) opacity.release();
+            else backup = new LottieOpacity(opacity);
+            opacity.copy(*static_cast<LottieOpacity*>(prop), false);
+        }
         return backup;
     }
 
