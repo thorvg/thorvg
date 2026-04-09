@@ -1349,7 +1349,7 @@ void LottieBuilder::updateMasks(LottieLayer* layer, float frameNo)
             to<ShapeImpl>(pShape)->reset();
             auto compMethod = (method == MaskMethod::Subtract || method == MaskMethod::InvAlpha) ? MaskMethod::InvAlpha : MaskMethod::Alpha;
             //Cheaper. Replace the masking with a clipper
-            if (layer->effects.empty() && layer->masks.count == 1 && compMethod == MaskMethod::Alpha) {
+            if (!layer->effect && layer->masks.count == 1 && compMethod == MaskMethod::Alpha) {
                 layer->scene->opacity(MULTIPLY(layer->scene->opacity(), opacity));
                 layer->scene->clip(pShape);
             } else {
@@ -1573,10 +1573,11 @@ static void _buildReference(LottieComposition* comp, LottieLayer* layer)
     ARRAY_FOREACH(p, comp->assets) {
         if (layer->rid != (*p)->id) continue;
         if (layer->type == LottieLayer::Precomp) {
-            auto assetLayer = static_cast<LottieLayer*>(*p);
-            if (_buildComposition(comp, assetLayer)) {
-                layer->children = assetLayer->children;
-                layer->reqFragment = assetLayer->reqFragment;
+            auto asset = static_cast<LottieLayer*>(*p);
+            if (_buildComposition(comp, asset)) {
+                layer->children = asset->children;
+                layer->reqFragment = asset->reqFragment;
+                layer->effect |= asset->effect;
             }
         } else if (layer->type == LottieLayer::Image) {
             layer->children.push(*p);

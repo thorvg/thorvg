@@ -1582,6 +1582,9 @@ LottieLayer* LottieParser::parseLayer(LottieLayer* precomp)
 
     layer->prepare(&color);
 
+    layer->effect = !layer->effects.empty();
+    precomp->effect |= layer->effect;
+
     return layer;
 }
 
