@@ -1055,6 +1055,7 @@ struct LottieLayer : LottieGroup
 {
     enum Type : uint8_t {Precomp = 0, Solid, Image, Null, Shape, Text};
 
+    LottieLayer();
     ~LottieLayer();
 
     bool mergeable() override { return false; }
@@ -1092,8 +1093,9 @@ struct LottieLayer : LottieGroup
 
     MaskMethod matteType = MaskMethod::None;
     Type type = Null;
-    bool autoOrient = false;
-    bool matteSrc = false;
+    bool effect : 1;        // true if any effect is activated in its tree
+    bool autoOrient : 1;
+    bool matteSrc : 1;
 
     LottieEffect* effectById(unsigned long id)
     {
@@ -1110,7 +1112,6 @@ struct LottieLayer : LottieGroup
         }
         return nullptr;
     }
-
 
     LottieLayer* layerById(unsigned long id)
     {
