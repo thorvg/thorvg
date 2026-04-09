@@ -24,6 +24,7 @@
 #include "tvgCommon.h"
 #include "tvgMath.h"
 #include "tvgScene.h"
+#include "tvgText.h"
 #include "tvgLoader.h"
 #include "tvgLottieModel.h"
 #include "tvgLottieBuilder.h"
@@ -1015,17 +1016,26 @@ void LottieBuilder::updateURLFont(LottieLayer* layer, float frameNo, LottieText*
     paint->text(buf);
     paint->layout(doc.bbox.size.x, doc.bbox.size.y);
     paint->translate(doc.bbox.pos.x, doc.bbox.pos.y);
+    if (doc.bbox.size.x > 0.0f) paint->wrap(TextWrap::Word);
 
     //align the text to the base line
     TextMetrics metrics;
     paint->metrics(metrics);
     paint->align(doc.justify, metrics.ascent / (metrics.ascent - metrics.descent));
 
+    //apply spacing
+    auto hspacing = (doc.tracking > 0.0f) ? (1.0f + doc.tracking * doc.size / metrics.ascent) : 1.0f;
+    auto vspacing = (doc.height > 0.0f && doc.bbox.size.y > 0.0f) ? (doc.height / metrics.advance) : 1.0f;
+    paint->spacing(hspacing, vspacing);
+
     layer->scene->add(paint);
 
     //outline
     auto strkColor = doc.stroke.color;
-    if (doc.stroke.width > 0.0f) paint->outline(doc.stroke.width, strkColor.r, strkColor.g, strkColor.b);
+    if (doc.stroke.width > 0.0f) {
+        paint->outline(doc.stroke.width, strkColor.r, strkColor.g, strkColor.b);
+        to<TextImpl>(paint)->shape->order(doc.stroke.below);
+    }
 
     tvg::free(buf);
 
