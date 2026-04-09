@@ -578,6 +578,12 @@ void LottieGroup::prepare(LottieObject::Type type)
     }
 }
 
+LottieLayer::LottieLayer()
+{
+    autoOrient = false;
+    matteSrc = false;
+    effect = false;
+}
 
 LottieLayer::~LottieLayer()
 {
