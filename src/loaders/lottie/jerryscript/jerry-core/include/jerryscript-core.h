@@ -61,6 +61,8 @@ void *jerry_object_get_native_ptr (const jerry_value_t object, const jerry_objec
 jerry_value_t jerry_function_external (jerry_external_handler_t handler);
 void jerry_value_free (jerry_value_t value);
 
+void jerry_register_magic_strings (const jerry_char_t *const *ext_strings_p, uint32_t count, const jerry_length_t *str_lengths_p);
+
 JERRY_C_API_END
 
 #endif /* !JERRYSCRIPT_CORE_H */

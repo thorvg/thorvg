@@ -61,6 +61,46 @@ static const char* EXP_VALUE = "value";
 static const char* EXP_INDEX = "index";
 static const char* EXP_EFFECT= "effect";
 
+// external magic strings — sorted by length, then lexicographically.
+// registered once at init to avoid heap allocation for these property names.
+#define LOTTIE_MAGIC_STRINGS(X)                                                           \
+    /* 3 */ X("add") X("div") X("dot") X("end") X("key") X("mod") X("mul") X("sub")     \
+            X("sum")                                                                      \
+    /* 4 */ X("comp") X("ease") X("name") X("path") X("time")                            \
+    /* 5 */ X("clamp") X("cross") X("cycle") X("index") X("layer") X("scale") X("speed") \
+            X("start") X("value") X("width")                                             \
+    /* 6 */ X("$bm_rt") X("easeIn") X("effect") X("height") X("length") X("linear")     \
+            X("loopIn") X("offset") X("parent") X("points") X("random") X("toComp")     \
+            X("wiggle")                                                                   \
+    /* 7 */ X("$bm_add") X("$bm_div") X("$bm_mod") X("$bm_mul") X("$bm_sub")            \
+            X("$bm_sum") X("content") X("easeOut") X("enabled") X("inPoint")             \
+            X("loopOut") X("numKeys") X("opacity")                                       \
+    /* 8 */ X("continue") X("duration") X("hasAudio") X("hasVideo") X("outPoint")        \
+            X("pingpong") X("position") X("rotation") X("thisComp") X("velocity")        \
+    /* 9 */ X("hasParent") X("normalize") X("numLayers") X("startTime") X("thisLayer")   \
+            X("timeRemap") X("transform")                                                \
+    /*10 */ X("nearestKey")                                                               \
+    /*11 */ X("anchorPoint") X("audioActive") X("innerRadius") X("outerRadius")           \
+            X("pointOnPath") X("speedAtTime") X("valueAtTime")                           \
+    /*12 */ X("thisProperty")                                                             \
+    /*13 */ X("frameDuration") X("propertyGroup") X("propertyIndex") X("tangentOnPath")   \
+    /*14 */ X("innerRoundness") X("loopInDuration") X("outerRoundness")                   \
+            X("temporalWiggle") X("velocityAtTime")                                      \
+    /*15 */ X("loopOutDuration")                                                          \
+    /*16 */ X("degreesToRadians") X("radiansToDegrees")
+
+static const jerry_char_t* const _magicStrings[] = {
+    #define _MS_PTR(s) (const jerry_char_t*)(s),
+    LOTTIE_MAGIC_STRINGS(_MS_PTR)
+    #undef _MS_PTR
+};
+
+static const jerry_length_t _magicLengths[] = {
+    #define _MS_LEN(s) sizeof(s) - 1,
+    LOTTIE_MAGIC_STRINGS(_MS_LEN)
+    #undef _MS_LEN
+};
+
 static LottieExpressions* exps = nullptr;   //singleton instance engine
 
 
@@ -1486,6 +1526,7 @@ LottieExpressions::~LottieExpressions()
 LottieExpressions::LottieExpressions()
 {
     jerry_init(JERRY_INIT_EMPTY);
+    jerry_register_magic_strings(_magicStrings, sizeof(_magicStrings) / sizeof(_magicStrings[0]), _magicLengths);
     _buildMath(buildGlobal());
 }
 
