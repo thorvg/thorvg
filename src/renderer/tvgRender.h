@@ -591,8 +591,8 @@ public:
     //main features
     virtual ~RenderMethod() {}
     virtual bool preUpdate() = 0;
-    virtual RenderData prepare(const RenderShape& rshape, RenderData data, const Matrix& transform, Array<RenderData>& clips, uint8_t opacity, RenderUpdateFlag flags, bool clipper) = 0;
-    virtual RenderData prepare(RenderSurface* surface, RenderData data, const Matrix& transform, Array<RenderData>& clips, uint8_t opacity, FilterMethod filter, RenderUpdateFlag flags) = 0;
+    virtual RenderData prepare(const RenderShape& rshape, RenderData data, const Matrix& transform, const Array<RenderData>& clips, uint8_t opacity, RenderUpdateFlag flags, bool clipper) = 0;
+    virtual RenderData prepare(RenderSurface* surface, RenderData data, const Matrix& transform, const Array<RenderData>& clips, uint8_t opacity, FilterMethod filter, RenderUpdateFlag flags) = 0;
     virtual bool postUpdate() = 0;
     virtual bool preRender() = 0;
     virtual bool renderShape(RenderData data) = 0;

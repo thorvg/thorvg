@@ -125,8 +125,7 @@ bool WgRenderer::surfaceConfigure(WGPUSurface surface, WgContext& context, uint3
 /* External Class Implementation                                        */
 /************************************************************************/
 
-
-RenderData WgRenderer::prepare(const RenderShape& rshape, RenderData data, const Matrix& transform, Array<RenderData>& clips, uint8_t opacity, RenderUpdateFlag flags, bool clipper)
+RenderData WgRenderer::prepare(const RenderShape& rshape, RenderData data, const Matrix& transform, const Array<RenderData>& clips, uint8_t opacity, RenderUpdateFlag flags, bool clipper)
 {
     auto renderDataShape = data ? (WgRenderDataShape*)data : mRenderDataShapePool.allocate(mContext);
 
@@ -175,8 +174,7 @@ RenderData WgRenderer::prepare(const RenderShape& rshape, RenderData data, const
     return renderDataShape;
 }
 
-
-RenderData WgRenderer::prepare(RenderSurface* surface, RenderData data, const Matrix& transform, Array<RenderData>& clips, uint8_t opacity, FilterMethod filter, RenderUpdateFlag flags)
+RenderData WgRenderer::prepare(RenderSurface* surface, RenderData data, const Matrix& transform, const Array<RenderData>& clips, uint8_t opacity, FilterMethod filter, RenderUpdateFlag flags)
 {
     auto renderDataPicture = data ? (WgRenderDataPicture*)data : mRenderDataPicturePool.allocate(mContext);
 
