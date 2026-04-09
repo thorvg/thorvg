@@ -62,32 +62,24 @@ static constexpr const char* EXP_INDEX = "index";
 static constexpr const char* EXP_EFFECT= "effect";
 
 // external magic strings for the per-frame hot path (buildProperty, buildLayer, buildTransform, bm_rt).
-// sorted by length, then lexicographically. registered once at init to avoid heap allocation.
-#define LOTTIE_MAGIC_STRINGS(X)                                                           \
-    /* 3 */ X("key")                                                                      \
-    /* 4 */ X("time")                                                                     \
-    /* 5 */ X("index") X("layer") X("scale") X("speed") X("value") X("width")            \
-    /* 6 */ X("$bm_rt") X("effect") X("height") X("parent") X("toComp") X("wiggle")     \
-    /* 7 */ X("content") X("enabled") X("inPoint") X("numKeys") X("opacity")             \
-    /* 8 */ X("hasAudio") X("hasVideo") X("outPoint") X("position") X("rotation")        \
-            X("timeRemap") X("velocity")                                                 \
-    /* 9 */ X("hasParent") X("numLayers") X("startTime") X("transform")                  \
-    /*10 */ X("nearestKey")                                                               \
-    /*11 */ X("anchorPoint") X("audioActive") X("speedAtTime") X("valueAtTime")           \
-    /*13 */ X("propertyIndex")                                                            \
-    /*14 */ X("velocityAtTime")
+// packed pool: sorted by length, then lexicographically. null-separated.
+// pointers/lengths are computed once at init and stored in .bss (zero binary cost).
+static const char _magicPool[] =
+    "key\0"
+    "time\0"
+    "index\0" "layer\0" "scale\0" "speed\0" "value\0" "width\0"
+    "$bm_rt\0" "effect\0" "height\0" "parent\0" "toComp\0" "wiggle\0"
+    "content\0" "enabled\0" "inPoint\0" "numKeys\0" "opacity\0"
+    "hasAudio\0" "hasVideo\0" "outPoint\0" "position\0" "rotation\0" "timeRemap\0" "velocity\0"
+    "hasParent\0" "numLayers\0" "startTime\0" "transform\0"
+    "nearestKey\0"
+    "anchorPoint\0" "audioActive\0" "speedAtTime\0" "valueAtTime\0"
+    "propertyIndex\0"
+    "velocityAtTime";
 
-static const jerry_char_t* const _magicStrings[] = {
-    #define _MS_PTR(s) (const jerry_char_t*)(s),
-    LOTTIE_MAGIC_STRINGS(_MS_PTR)
-    #undef _MS_PTR
-};
-
-static const jerry_length_t _magicLengths[] = {
-    #define _MS_LEN(s) sizeof(s) - 1,
-    LOTTIE_MAGIC_STRINGS(_MS_LEN)
-    #undef _MS_LEN
-};
+static constexpr uint32_t _magicCount = 37;
+static const jerry_char_t* _magicStrings[_magicCount];
+static jerry_length_t _magicLengths[_magicCount];
 
 static LottieExpressions* exps = nullptr;   //singleton instance engine
 
@@ -1514,7 +1506,17 @@ LottieExpressions::~LottieExpressions()
 LottieExpressions::LottieExpressions()
 {
     jerry_init(JERRY_INIT_EMPTY);
-    jerry_register_magic_strings(_magicStrings, sizeof(_magicStrings) / sizeof(_magicStrings[0]), _magicLengths);
+
+    //build pointer/length arrays from the packed pool
+    auto p = _magicPool;
+    for (uint32_t i = 0; i < _magicCount; ++i) {
+        _magicStrings[i] = (const jerry_char_t*)p;
+        auto len = strlen(p);
+        _magicLengths[i] = (jerry_length_t)len;
+        p += len + 1;
+    }
+    jerry_register_magic_strings(_magicStrings, _magicCount, _magicLengths);
+
     _buildMath(buildGlobal());
 }
 
