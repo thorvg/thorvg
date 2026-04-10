@@ -52,18 +52,6 @@ jmem_finalize (void)
 jmem_cpointer_t JERRY_ATTR_PURE
 jmem_compress_pointer (const void *pointer_p) /**< pointer to compress */
 {
-  uintptr_t uint_ptr = (uintptr_t) pointer_p;
-
-#if JERRY_EXTERNAL_CONTEXT
-  if (JERRY_LIKELY (!jerry_use_tls))
-  {
-    uint_ptr -= (uintptr_t) jerry_static_context_buffer
-                + JERRY_ALIGNUP (sizeof (jerry_context_t), JMEM_ALIGNMENT);
-    uint_ptr >>= JMEM_ALIGNMENT_LOG;
-    return (jmem_cpointer_t) uint_ptr;
-  }
-#endif /* JERRY_EXTERNAL_CONTEXT */
-
   JERRY_DEFINE_CURRENT_CONTEXT ();
   return jmem_compress_pointer_from_context (jerry_current_context_p, pointer_p);
 } /* jmem_compress_pointer */
@@ -76,16 +64,6 @@ jmem_compress_pointer (const void *pointer_p) /**< pointer to compress */
 void *JERRY_ATTR_PURE
 jmem_decompress_pointer (uintptr_t compressed_pointer) /**< pointer to decompress */
 {
-#if JERRY_EXTERNAL_CONTEXT
-  if (JERRY_LIKELY (!jerry_use_tls))
-  {
-    /* jerry_static_context_buffer address is a link-time constant */
-    return (void *) ((uintptr_t) jerry_static_context_buffer
-                     + JERRY_ALIGNUP (sizeof (jerry_context_t), JMEM_ALIGNMENT)
-                     + (compressed_pointer << JMEM_ALIGNMENT_LOG));
-  }
-#endif /* JERRY_EXTERNAL_CONTEXT */
-
   JERRY_DEFINE_CURRENT_CONTEXT ();
   return jmem_decompress_pointer_from_context (jerry_current_context_p, compressed_pointer);
 } /* jmem_decompress_pointer */

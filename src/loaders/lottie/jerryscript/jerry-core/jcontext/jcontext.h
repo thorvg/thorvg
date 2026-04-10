@@ -216,13 +216,36 @@ struct jerry_context_t
 
 #if JERRY_EXTERNAL_CONTEXT
 
-extern bool jerry_use_tls;
 /*
  * This part is for JerryScript which uses external context.
  */
+#if defined(__MINGW32__) || defined(__MINGW64__)
+
+#include <windows.h>
+
+extern DWORD tls_context_index;
+
 #define JERRY_DEFINE_CURRENT_CONTEXT() \
-  jerry_context_t *jerry_current_context_p = jerry_port_context_get (); \
+  jerry_context_t *jerry_current_context_p = (jerry_context_t*)TlsGetValue(tls_context_index); \
   JERRY_UNUSED (jerry_current_context_p)
+
+#elif defined(_MSC_VER)
+
+extern __declspec(thread) jerry_context_t* tls_context_p;
+
+#define JERRY_DEFINE_CURRENT_CONTEXT() \
+  jerry_context_t *jerry_current_context_p = tls_context_p; \
+  JERRY_UNUSED (jerry_current_context_p)
+
+#else
+
+extern __thread jerry_context_t* tls_context_p;
+
+#define JERRY_DEFINE_CURRENT_CONTEXT() \
+  jerry_context_t *jerry_current_context_p = tls_context_p; \
+  JERRY_UNUSED (jerry_current_context_p)
+
+#endif
 
 /**
  * Provides a reference to the current context structure.
@@ -236,7 +259,7 @@ extern bool jerry_use_tls;
 
 #if !JERRY_SYSTEM_ALLOCATOR
 
-#define JMEM_HEAP_SIZE ((size_t) CONFIG_MEM_HEAP_SIZE)
+#define JMEM_HEAP_SIZE (JERRY_CONTEXT (heap_size))
 
 #define JMEM_HEAP_AREA_SIZE (JMEM_HEAP_SIZE - JMEM_ALIGNMENT)
 
@@ -247,8 +270,6 @@ struct jmem_heap_t
 };
 
 #define JERRY_HEAP_CONTEXT(field) (JERRY_CONTEXT (heap_p)->field)
-
-extern char jerry_static_context_buffer[];
 
 #endif /* !JERRY_SYSTEM_ALLOCATOR */
 
