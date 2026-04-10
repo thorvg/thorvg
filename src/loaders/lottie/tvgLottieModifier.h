@@ -38,21 +38,21 @@ struct LottieModifier
     };
 
     LottieModifier* next = nullptr;
-    RenderPath* buffer;
+    RenderPath buffer;
     Type type;
 
-    LottieModifier(RenderPath* buffer, Type type) :
-        buffer(buffer), type(type) {}
+    LottieModifier(Type type) :
+        type(type) {}
 
     virtual ~LottieModifier()
     {
         delete (next);
     }
 
-    virtual void path(PathCommand* inCmds, uint32_t inCmdsCnt, Point* inPts, uint32_t inPtsCnt, Matrix* transform, RenderPath& out) = 0;
-    virtual void polystar(RenderPath& in, RenderPath& out, float outerRoundness, bool hasRoundness) = 0;
-    virtual void rect(RenderPath& in, RenderPath& out, const Point& pos, const Point& size, float r, bool clockwise) = 0;
-    virtual void ellipse(RenderPath& in, RenderPath& out, const Point& center, const Point& radius, bool clockwise) = 0;
+    virtual void path(const RenderPath& in, RenderPath& out, Matrix* transform) = 0;
+    virtual void polystar(const RenderPath& in, RenderPath& out, float outerRoundness, bool hasRoundness) = 0;
+    virtual void rect(const RenderPath& in, RenderPath& out, const Point& pos, const Point& size, float r, bool clockwise) = 0;
+    virtual void ellipse(const RenderPath& in, RenderPath& out, const Point& center, const Point& radius, bool clockwise) = 0;
 
     LottieModifier* decorate(LottieModifier* next);
 };
@@ -62,17 +62,17 @@ struct LottieRoundnessModifier : LottieModifier
     static constexpr float ROUNDNESS_EPSILON = 1.0f;
     float r;
 
-    LottieRoundnessModifier(RenderPath* buffer, float r) :
-        LottieModifier(buffer, Roundness), r(r) {}
+    LottieRoundnessModifier(float r) :
+        LottieModifier(Roundness), r(r) {}
 
-    void path(PathCommand* inCmds, uint32_t inCmdsCnt, Point* inPts, uint32_t inPtsCnt, Matrix* transform, RenderPath& out) override;
-    void polystar(RenderPath& in, RenderPath& out, float outerRoundness, bool hasRoundness) override;
-    void rect(RenderPath& in, RenderPath& out, const Point& pos, const Point& size, float r, bool clockwise) override;
-    void ellipse(RenderPath& in, RenderPath& out, const Point& center, const Point& radius, bool clockwise) override;
+    void path(const RenderPath& in, RenderPath& out, Matrix* transform) override;
+    void polystar(const RenderPath& in, RenderPath& out, float outerRoundness, bool hasRoundness) override;
+    void rect(const RenderPath& in, RenderPath& out, const Point& pos, const Point& size, float r, bool clockwise) override;
+    void ellipse(const RenderPath& in, RenderPath& out, const Point& center, const Point& radius, bool clockwise) override;
 
 private:
-    RenderPath& modify(PathCommand* inCmds, uint32_t inCmdsCnt, Point* inPts, uint32_t inPtsCnt, Matrix* transform, RenderPath& out);
-    Point rounding(RenderPath& out, Point& prev, Point& curr, Point& next, float r);
+    RenderPath& modify(const RenderPath& in, RenderPath& out, Matrix* transform);
+    Point rounding(RenderPath& out, const Point& prev, const Point& curr, const Point& next, float r);
 };
 
 struct LottieOffsetModifier : LottieModifier
@@ -81,13 +81,13 @@ struct LottieOffsetModifier : LottieModifier
     float miterLimit;
     StrokeJoin join;
 
-    LottieOffsetModifier(RenderPath* buffer, float offset, float miter = 4.0f, StrokeJoin join = StrokeJoin::Round) :
-        LottieModifier(buffer, Offset), offset(offset), miterLimit(miter), join(join) {}
+    LottieOffsetModifier(float offset, float miter = 4.0f, StrokeJoin join = StrokeJoin::Round) :
+        LottieModifier(Offset), offset(offset), miterLimit(miter), join(join) {}
 
-    void path(PathCommand* inCmds, uint32_t inCmdsCnt, Point* inPts, uint32_t inPtsCnt, Matrix* transform, RenderPath& out) override;
-    void polystar(RenderPath& in, RenderPath& out, float outerRoundness, bool hasRoundness) override;
-    void rect(RenderPath& in, RenderPath& out, const Point& pos, const Point& size, float r, bool clockwise) override;
-    void ellipse(RenderPath& in, RenderPath& out, const Point& center, const Point& radius, bool clockwise) override;
+    void path(const RenderPath& in, RenderPath& out, Matrix* transform) override;
+    void polystar(const RenderPath& in, RenderPath& out, float outerRoundness, bool hasRoundness) override;
+    void rect(const RenderPath& in, RenderPath& out, const Point& pos, const Point& size, float r, bool clockwise) override;
+    void ellipse(const RenderPath& in, RenderPath& out, const Point& center, const Point& radius, bool clockwise) override;
 
 private:
     struct State
@@ -99,7 +99,7 @@ private:
         bool moveto = false;
     };
 
-    RenderPath& modify(PathCommand* inCmds, uint32_t inCmdsCnt, Point* inPts, uint32_t inPtsCnt, Matrix* transform, RenderPath& out);
+    RenderPath& modify(const RenderPath& in, RenderPath& out, Matrix* transform);
     void cubic(RenderPath& path, Point* pts, State& state, float offset, float threshold, bool& degeneratedLine3);
     bool intersected(Line& line1, Line& line2, Point& intersection, bool& inside);
     Line shift(Point& p1, Point& p2, float offset);
@@ -111,13 +111,13 @@ struct LottiePuckerBloatModifier : LottieModifier
 {
     float amount;
 
-    LottiePuckerBloatModifier(RenderPath* buffer, float amount) :
-        LottieModifier(buffer, PuckerBloat), amount(amount) {}
+    LottiePuckerBloatModifier(float amount) :
+        LottieModifier(PuckerBloat), amount(amount) {}
 
-    void path(PathCommand* inCmds, uint32_t inCmdsCnt, Point* inPts, uint32_t inPtsCnt, Matrix* transform, RenderPath& out) override;
-    void polystar(RenderPath& in, RenderPath& out, float outerRoundness, bool hasRoundness) override;
-    void rect(RenderPath& in, RenderPath& out, const Point& pos, const Point& size, float r, bool clockwise) override;
-    void ellipse(RenderPath& in, RenderPath& out, const Point& center, const Point& radius, bool clockwise) override;
+    void path(const RenderPath& in, RenderPath& out, Matrix* transform) override;
+    void polystar(const RenderPath& in, RenderPath& out, float outerRoundness, bool hasRoundness) override;
+    void rect(const RenderPath& in, RenderPath& out, const Point& pos, const Point& size, float r, bool clockwise) override;
+    void ellipse(const RenderPath& in, RenderPath& out, const Point& center, const Point& radius, bool clockwise) override;
 
 private:
     Point center(const PathCommand* cmds, uint32_t cmdsCnt, const Point* pts);
