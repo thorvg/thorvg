@@ -61,6 +61,37 @@ static const char* EXP_VALUE = "value";
 static const char* EXP_INDEX = "index";
 static const char* EXP_EFFECT= "effect";
 
+/**
+ * external magic strings for the per-frame hot path (buildProperty, buildLayer, buildTransform, bm_rt).
+ * magic pool: sorted by length, then lexicographically. null-separated,
+ *             must be static, because 'jerry_register_magic_strings' does not copy
+ * pointers/lengths are computed once at init and stored in .bss (zero binary cost).
+ */
+static constexpr const char _magicPool[] =
+    "key\0" /* length: 3 */
+    "comp\0" "name\0" "time\0" /* length: 4 */
+    "index\0" "layer\0" "scale\0" "speed\0" "value\0" "width\0" /* length: 5 */
+    "$bm_rt\0" "effect\0" "height\0" "parent\0" "toComp\0" "wiggle\0" /* length: 6 */
+    "content\0" "enabled\0" "inPoint\0" "numKeys\0" "opacity\0" /* length: 7 */
+    "duration\0" "hasAudio\0" "hasVideo\0" "outPoint\0" "position\0" "rotation\0" "thisComp\0" "velocity\0" /* length: 8 */
+    "hasParent\0" "numLayers\0" "startTime\0" "thisLayer\0" "timeRemap\0" "transform\0" /* length: 9 */
+    "nearestKey\0" /* length: 10 */
+    "anchorPoint\0" "audioActive\0" "speedAtTime\0" "valueAtTime\0" /* length: 11 */
+    "thisProperty\0" /* length: 12 */
+    "frameDuration\0" "propertyIndex\0" /* length: 13 */
+    "velocityAtTime"; /* length: 14 */
+
+static constexpr uint32_t _countNulls() {
+    uint32_t c = 0;
+    const size_t n = sizeof(_magicPool);
+    for (size_t i = 0; i < n; i++) if (!_magicPool[i]) c++;
+    return c;
+}
+
+static constexpr uint32_t _magicCount = _countNulls();
+static const jerry_char_t* _magicStrings[_magicCount];
+static jerry_length_t _magicLengths[_magicCount];
+
 static LottieExpressions* exps = nullptr;   //singleton instance engine
 
 
@@ -1486,6 +1517,17 @@ LottieExpressions::~LottieExpressions()
 LottieExpressions::LottieExpressions()
 {
     jerry_init(JERRY_INIT_EMPTY);
+
+    //build pointer/length arrays from the magic pool
+    auto p = _magicPool;
+    for (uint32_t i = 0; i < _magicCount; ++i) {
+        _magicStrings[i] = (const jerry_char_t*)p;
+        auto len = strlen(p);
+        _magicLengths[i] = (jerry_length_t)len;
+        p += len + 1;
+    }
+    jerry_register_magic_strings(_magicStrings, _magicCount, _magicLengths);
+
     _buildMath(buildGlobal());
 }
 
