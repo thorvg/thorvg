@@ -70,9 +70,20 @@ using namespace tvg;
 void* operator new(std::size_t size);
 void operator delete(void* ptr) noexcept;
 
-namespace tvg {
-
-    enum class FileType { Png = 0, Jpg, Webp, Svg, Lot, Ttf, Raw, Gif, Unknown };
+namespace tvg
+{
+    enum class FileType
+    {
+        Png = 0,
+        Jpg,
+        Webp,
+        Svg,
+        Lot,
+        Sfnt,
+        Raw,
+        Gif,
+        Unknown
+    };
 
     #ifdef THORVG_LOG_ENABLED
         constexpr auto ErrorColor = "\033[31m";  //red

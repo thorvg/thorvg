@@ -303,7 +303,7 @@ struct PictureImpl : Picture
         if (!loader) return Result::NonSupport;
 
         // fonts are not expected in the picture
-        if (loader->type == FileType::Ttf) {
+        if (loader->type == FileType::Sfnt) {
             LoaderMgr::retrieve(loader);
             return Result::InvalidArguments;
         }
