@@ -61,6 +61,29 @@ static const char* EXP_VALUE = "value";
 static const char* EXP_INDEX = "index";
 static const char* EXP_EFFECT= "effect";
 
+/**
+ * external magic strings for the per-frame hot path 
+ * sorted by length, then lexicographically. 
+ */
+static const char* _magicString[] = {
+    "key",
+    "comp", "name", "time",
+    "index", "layer", "scale", "speed", "value", "width",
+    "$bm_rt", "effect", "height", "parent", "toComp", "wiggle",
+    "content", "enabled", "inPoint", "numKeys", "opacity",
+    "duration", "hasAudio", "hasVideo", "outPoint", "position", "rotation", "thisComp", "velocity",
+    "hasParent", "numLayers", "startTime", "thisLayer", "timeRemap", "transform",
+    "nearestKey",
+    "anchorPoint", "audioActive", "speedAtTime", "valueAtTime",
+    "thisProperty",
+    "frameDuration", "propertyIndex",
+    "velocityAtTime",
+};
+#define MAGIC_STRING_COUNT (sizeof(_magicString) / sizeof(_magicString[0]))
+
+static jerry_length_t _magicLengths[MAGIC_STRING_COUNT];
+
+
 static LottieExpressions* exps = nullptr;   //singleton instance engine
 
 
@@ -1486,6 +1509,13 @@ LottieExpressions::~LottieExpressions()
 LottieExpressions::LottieExpressions()
 {
     jerry_init(JERRY_INIT_EMPTY);
+
+    //compute lengths once for the magic pool
+    for (uint32_t i = 0; i < MAGIC_STRING_COUNT; ++i) {
+        _magicLengths[i] = (jerry_length_t)strlen(_magicString[i]);
+    }
+    jerry_register_magic_strings((const jerry_char_t**)_magicString, MAGIC_STRING_COUNT, _magicLengths);
+
     _buildMath(buildGlobal());
 }
 

@@ -628,6 +628,20 @@ jerry_object_set_native_ptr (jerry_value_t object, /**< object to set native poi
   }
 } /* jerry_object_set_native_ptr */
 
+/**
+ * Register external magic string array
+ */
+void
+jerry_register_magic_strings (const jerry_char_t *const *ext_strings_p, /**< character arrays, representing
+                                                                         *   external magic strings' contents */
+                              uint32_t count, /**< number of the strings */
+                              const jerry_length_t *str_lengths_p) /**< lengths of all strings */
+{
+  lit_magic_strings_ex_set ((const lit_utf8_byte_t *const *) ext_strings_p,
+                            count,
+                            (const lit_utf8_size_t *) str_lengths_p);
+} /* jerry_register_magic_strings */
+
 
 /**
  * @}
