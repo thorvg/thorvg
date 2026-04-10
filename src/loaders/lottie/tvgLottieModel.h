@@ -797,6 +797,21 @@ struct LottieSolid : LottieObject
         if (opacity.ix == ix) return &opacity;
         return nullptr;
     }
+
+    LottieProperty* override(LottieProperty* prop, bool release) override
+    {
+        LottieProperty* backup = nullptr;
+        if (color.sid == prop->sid) {
+            if (release) color.release();
+            else backup = new LottieColor(color);
+            color.copy(*static_cast<LottieColor*>(prop), false);
+        } else if (opacity.sid == prop->sid) {
+            if (release) opacity.release();
+            else backup = new LottieOpacity(opacity);
+            opacity.copy(*static_cast<LottieOpacity*>(prop), false);
+        }
+        return backup;
+    }
 };
 
 
@@ -816,15 +831,6 @@ struct LottieSolidStroke : LottieSolid, LottieStroke
         }
         return LottieSolid::property(ix);
     }
-
-    LottieProperty* override(LottieProperty* prop, bool release) override
-    {
-        LottieProperty* backup = nullptr;
-        if (release) color.release();
-        else backup = new LottieColor(color);
-        color.copy(*static_cast<LottieColor*>(prop), false);
-        return backup;
-    }
 };
 
 
@@ -833,21 +839,6 @@ struct LottieSolidFill : LottieSolid
     LottieSolidFill()
     {
         LottieObject::type = LottieObject::SolidFill;
-    }
-
-    LottieProperty* override(LottieProperty* prop, bool release) override
-    {
-        LottieProperty* backup = nullptr;
-        if (color.sid == prop->sid) {
-            if (release) color.release();
-            else backup = new LottieColor(color);
-            color.copy(*static_cast<LottieColor*>(prop), false);
-        } else if (opacity.sid == prop->sid) {
-            if (release) opacity.release();
-            else backup = new LottieOpacity(opacity);
-            opacity.copy(*static_cast<LottieOpacity*>(prop), false);
-        }
-        return backup;
     }
 
     FillRule rule = FillRule::NonZero;
