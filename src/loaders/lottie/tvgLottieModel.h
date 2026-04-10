@@ -314,6 +314,8 @@ struct LottieGlyph
     {
         ARRAY_FOREACH(p, children) delete(*p);
         tvg::free(code);
+        tvg::free(family);
+        tvg::free(style);
     }
 };
 
