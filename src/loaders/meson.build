@@ -5,7 +5,7 @@ if svg_loader
 endif
 
 if ttf_loader
-    subdir('ttf')
+    subdir('sfnt')
 endif
 
 if lottie_loader
