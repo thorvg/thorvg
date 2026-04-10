@@ -584,6 +584,7 @@ bool TtfReader::kerning(uint32_t lglyph, uint32_t rglyph, Point& out)
     #define MINIMUM_KERNING 0x02
     #define CROSS_STREAM_KERNING 0x04
 
+    auto kern = this->kern;
     if (!kern) return false;
 
     //kern tables
