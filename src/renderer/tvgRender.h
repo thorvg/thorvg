@@ -223,6 +223,12 @@ struct RenderPath
     Array<PathCommand> cmds;
     Array<Point> pts;
 
+    void dismiss()
+    {
+        cmds.data = nullptr;
+        pts.data = nullptr;
+    }
+
     bool empty() const
     {
         return pts.empty();

@@ -772,20 +772,20 @@ void LottieBuilder::updateRoundedCorner(TVG_UNUSED LottieGroup* parent, LottieOb
     auto roundedCorner = static_cast<LottieRoundedCorner*>(*child);
     auto r = roundedCorner->radius(frameNo, tween, exps);
     if (r < LottieRoundnessModifier::ROUNDNESS_EPSILON) return;
-    ctx->update(new LottieRoundnessModifier(&buffer, r));
+    ctx->update(new LottieRoundnessModifier(r));
 }
 
 
 void LottieBuilder::updateOffsetPath(TVG_UNUSED LottieGroup* parent, LottieObject** child, float frameNo, TVG_UNUSED Inlist<RenderContext>& contexts, RenderContext* ctx)
 {
     auto offset = static_cast<LottieOffsetPath*>(*child);
-    ctx->update(new LottieOffsetModifier(&buffer, offset->offset(frameNo, tween, exps), offset->miterLimit(frameNo, tween, exps), offset->join));
+    ctx->update(new LottieOffsetModifier(offset->offset(frameNo, tween, exps), offset->miterLimit(frameNo, tween, exps), offset->join));
 }
 
 void LottieBuilder::updatePuckerBloat(TVG_UNUSED LottieGroup* parent, LottieObject** child, float frameNo, TVG_UNUSED Inlist<RenderContext>& contexts, RenderContext* ctx)
 {
     auto puckerBloat = static_cast<LottiePuckerBloat*>(*child);
-    ctx->update(new LottiePuckerBloatModifier(&buffer, puckerBloat->amount(frameNo, tween, exps)));
+    ctx->update(new LottiePuckerBloatModifier(puckerBloat->amount(frameNo, tween, exps)));
 }
 
 void LottieBuilder::updateRepeater(TVG_UNUSED LottieGroup* parent, LottieObject** child, float frameNo, TVG_UNUSED Inlist<RenderContext>& contexts, RenderContext* ctx)
@@ -1382,7 +1382,7 @@ void LottieBuilder::updateMasks(LottieLayer* layer, float frameNo)
         //Masking with Expansion (Offset)
         } else {
             //TODO: Once path direction support is implemented, ensure that the direction is ignored here
-            auto offset = LottieOffsetModifier(&buffer, expand);
+            auto offset = LottieOffsetModifier(expand);
             mask->pathset(frameNo, to<ShapeImpl>(pShape)->rs.path, nullptr, tween, exps, &offset);
         }
         pOpacity = opacity;

@@ -35,6 +35,14 @@ struct PathSet
     PathCommand* cmds = nullptr;
     uint16_t ptsCnt = 0;
     uint16_t cmdsCnt = 0;
+
+    void convert(RenderPath& to)
+    {
+        to.cmds.data = cmds;
+        to.cmds.count = cmdsCnt;
+        to.pts.data = pts;
+        to.pts.count = ptsCnt;
+    }
 };
 
 
