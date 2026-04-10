@@ -568,28 +568,38 @@ struct LottiePathSet : LottieProperty
 
         if (dispatch(frameNo, path, frame, t)) {
             if (modifier) {
-                modifier->path(path->cmds, path->cmdsCnt, path->pts, path->ptsCnt, transform, out);
-                return true;
+                RenderPath in;
+                path->convert(in);
+                modifier->path(in, out, transform);
+                in.dismiss();
+            } else {
+                _copy(path, out.cmds);
+                _copy(path, out.pts, transform);
             }
-            _copy(path, out.cmds);
-            _copy(path, out.pts, transform);
             return true;
         }
 
-        //interpolate 2 frames
+        // interpolation
         auto s = frame->value.pts;
         auto e = (frame + 1)->value.pts;
-        auto interpPts = tvg::malloc<Point>(frame->value.ptsCnt * sizeof(Point));
-        auto p = interpPts;
+        auto backup = frame->value.pts;
+        frame->value.pts = tvg::malloc<Point>(frame->value.ptsCnt * sizeof(Point));
+        auto p = frame->value.pts;
 
         for (auto i = 0; i < frame->value.ptsCnt; ++i, ++s, ++e, ++p) {
             *p = tvg::lerp(*s, *e, t);
             if (transform) *p *= *transform;
         }
 
-        if (modifier) modifier->path(frame->value.cmds, frame->value.cmdsCnt, interpPts, frame->value.ptsCnt, nullptr, out);
+        if (modifier) {
+            RenderPath in;
+            frame->value.convert(in);
+            modifier->path(in, out, nullptr);
+            in.dismiss();
+        }
 
-        tvg::free(interpPts);
+        std::swap(frame->value.pts, backup);
+        tvg::free(backup);
 
         return true;
     }
@@ -621,22 +631,25 @@ struct LottiePathSet : LottieProperty
 
     bool tweening(float frameNo, RenderPath& out, Matrix* transform, LottieModifier* modifier, Tween& tween, LottieExpressions* exps)
     {
-        auto& to = RenderPath::scratch();
+        auto& tmp = RenderPath::scratch();
         auto pivot = out.pts.count;
         if (!operator()(frameNo, out, transform, exps)) return false;
-        if (!operator()(tween.frameNo, to, transform, exps)) return false;
+        if (!operator()(tween.frameNo, tmp, transform, exps)) return false;
 
+        if (tmp.pts.count != out.pts.count - pivot) TVGLOG("LOTTIE", "Tweening has different numbers of points in consecutive frames.");
+
+        // tweening interpolation
         auto from = out.pts.data + pivot;
-        if (to.pts.count != out.pts.count - pivot) TVGLOG("LOTTIE", "Tweening has different numbers of points in consecutive frames.");
+        auto interp = modifier ? tmp.pts.data : from;  // the result must be resued as the input of the modifier
+        auto count = std::min(tmp.pts.count, (out.pts.count - pivot));
 
-        for (uint32_t i = 0; i < std::min(to.pts.count, (out.pts.count - pivot)); ++i) {
-            from[i] = tvg::lerp(from[i], to.pts[i], tween.progress);
+        for (uint32_t i = 0; i < count; ++i) {
+            interp[i] = tvg::lerp(from[i], tmp.pts[i], tween.progress);
         }
 
-        if (!modifier) return true;
+        // apply modifiers
+        if (modifier) modifier->path(tmp, out, transform);
 
-        //Apply modifiers
-        modifier->path(to.cmds.data, to.cmds.count, to.pts.data, to.pts.count, transform, out);
         return true;
     }
 

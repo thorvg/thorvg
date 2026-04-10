@@ -23,8 +23,8 @@
 #ifndef _TVG_LOTTIE_COMMON_
 #define _TVG_LOTTIE_COMMON_
 
-#include "tvgArray.h"
-#include "tvgMath.h"
+#include "tvgRender.h"
+#include "tvgStr.h"
 
 namespace tvg
 {
@@ -35,6 +35,14 @@ struct PathSet
     PathCommand* cmds = nullptr;
     uint16_t ptsCnt = 0;
     uint16_t cmdsCnt = 0;
+
+    void convert(RenderPath& to)
+    {
+        to.cmds.data = cmds;
+        to.cmds.count = cmdsCnt;
+        to.pts.data = pts;
+        to.pts.count = ptsCnt;
+    }
 };
 
 
@@ -83,8 +91,8 @@ struct TextDocument
 
     void copy(const TextDocument& rhs)
     {
-        text = duplicate(rhs.text);
-        name = duplicate(rhs.name);
+        text = tvg::duplicate(rhs.text);
+        name = tvg::duplicate(rhs.name);
     }
 };
 
@@ -147,6 +155,7 @@ static inline Point3 operator*(const Point3& a, float t)
 {
     return {a.x * t, a.y * t, a.z * t};
 }
+
 }
 
 #endif //_TVG_LOTTIE_COMMON_
