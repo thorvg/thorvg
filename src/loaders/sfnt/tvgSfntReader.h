@@ -20,14 +20,19 @@
  * SOFTWARE.
  */
 
-#ifndef _TVG_TTF_READER_H
-#define _TVG_TTF_READER_H
+#ifndef _TVG_SFNT_READER_H
+#define _TVG_SFNT_READER_H
 
 #include "tvgRender.h"
 
 #define INVALID_GLYPH ((uint32_t)-1)
 
-struct TtfGlyph
+static inline int cmpu32(const void* a, const void* b)
+{
+    return memcmp(a, b, 4);
+}
+
+struct SfntGlyph
 {
     uint32_t idx;        //glyph index
     float advance;       //advance width/height
@@ -35,14 +40,13 @@ struct TtfGlyph
     float x, y, w, h;    //bounding box
 };
 
-struct TtfGlyphMetrics : TtfGlyph
+struct SfntGlyphMetrics : SfntGlyph
 {
     RenderPath path;     //outline path
 };
 
-struct TtfReader
+struct SfntReader
 {
-public:
     uint8_t* data = nullptr;
     uint32_t size = 0;
 
@@ -54,31 +58,54 @@ public:
         uint8_t locaFormat;    //0 for short offsets, 1 for long
     } metrics;
 
-    bool header();
-    uint32_t glyph(uint32_t codepoint, TtfGlyphMetrics* tgm);
-    bool kerning(uint32_t lglyph, uint32_t rglyph, Point& out);
-    bool convert(RenderPath& path, TtfGlyph& glyph, uint32_t glyphOffset, const Point& offset, uint16_t depth);
+    SfntReader(uint8_t* data, uint32_t size) :
+        data(data), size(size) {}
+    virtual ~SfntReader() {}
 
-private:
+    virtual bool header();
+    virtual bool positioning(uint32_t lglyph, uint32_t rglyph, Point& out) = 0;
+    virtual bool convert(SfntGlyph& glyph, uint32_t codepoint, RenderPath& path) = 0;
+
+protected:
     uint32_t cmap = 0;  // character map
     uint32_t hmtx = 0;  // horizontal metrics
-    uint32_t loca = 0;  // index to location
-    uint32_t glyf = 0;  // glyph outlines
-    uint32_t kern = 0;  // kerning
     uint32_t maxp = 0;  // maximum profile
 
+    uint32_t table(const char* tag);
+    bool validate(uint32_t offset, uint32_t margin) const;
     uint32_t cmap_12_13(uint32_t table, uint32_t codepoint, int which) const;
     uint32_t cmap_4(uint32_t table, uint32_t codepoint) const;
     uint32_t cmap_6(uint32_t table, uint32_t codepoint) const;
-    bool validate(uint32_t offset, uint32_t margin) const;
-    uint32_t table(const char* tag);
-    uint32_t outlineOffset(uint32_t glyph);
     uint32_t glyph(uint32_t codepoint);
-    uint32_t glyphMetrics(TtfGlyph& glyph);
-    bool convertComposite(RenderPath& path, TtfGlyph& glyph, uint32_t glyphOffset, const Point& offset, uint16_t depth);
-    bool genPath(uint8_t* flags, uint16_t basePoint, uint16_t count);
-    bool points(uint32_t outline, uint8_t* flags, Point* pts, uint32_t ptsCnt, const Point& offset);
-    bool flags(uint32_t *outline, uint8_t* flags, uint32_t flagsCnt);
+    bool glyphMetrics(SfntGlyph& glyph);
+
+    // convenient macros
+    uint32_t u32(uint32_t offset) const
+    {
+        auto base = data + offset;
+        return (base[0] << 24 | base[1] << 16 | base[2] << 8 | base[3]);
+    }
+
+    uint16_t u16(uint32_t offset) const
+    {
+        auto base = data + offset;
+        return (base[0] << 8 | base[1]);
+    }
+
+    int16_t i16(uint32_t offset) const
+    {
+        return (int16_t)u16(offset);
+    }
+
+    int8_t i8(uint32_t offset) const
+    {
+        return (int8_t)u8(offset);
+    }
+
+    uint8_t u8(uint32_t offset) const
+    {
+        return *(data + offset);
+    }
 };
 
-#endif //_TVG_TTF_READER_H
+#endif  //_TVG_SFNT_READER_H
