@@ -19,36 +19,34 @@
  * OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
  * SOFTWARE.
  */
-#ifndef _TVG_TTF_LOADER_H_
-#define _TVG_TTF_LOADER_H_
+#ifndef _TVG_SFNT_LOADER_H_
+#define _TVG_SFNT_LOADER_H_
 
 #include <unordered_map>
 #include "tvgLoader.h"
 #include "tvgTaskScheduler.h"
-#include "tvgTtfReader.h"
+#include "tvgSfntReader.h"
 
 using namespace std;
 
-
-struct TtfMetrics : FontMetrics
+struct SfntMetrics : FontMetrics
 {
     float baseWidth;  //Use as the reference glyph width for italic transform
 };
 
-
-struct TtfLoader : public FontLoader
+struct SfntLoader : public FontLoader
 {
 #if defined(_WIN32) && (WINAPI_FAMILY == WINAPI_FAMILY_DESKTOP_APP)
     void* mapping = nullptr;
 #endif
-    TtfReader reader;
-    unordered_map<uint32_t, TtfGlyphMetrics> glyphs;  //glypha cache. key: codepoint
+    unordered_map<uint32_t, SfntGlyphMetrics> glyphs;  // glyph cache. key: codepoint
+    SfntReader* reader = nullptr;
     char* text = nullptr;
     bool nomap = false;
     bool freeData = false;
 
-    TtfLoader();
-    ~TtfLoader();
+    SfntLoader();
+    ~SfntLoader();
 
     using FontLoader::open;
     using FontLoader::read;
@@ -62,10 +60,12 @@ struct TtfLoader : public FontLoader
     void metrics(const FontMetrics& fm, TextMetrics& out) override;
     bool metrics(const FontMetrics& fm, const char* ch, GlyphMetrics& out) override;
 
+    static SfntReader* gen(uint8_t* data, uint32_t size);
+
 private:
     float height(uint32_t loc, float spacing)
     {
-        return (reader.metrics.hhea.advance * loc - reader.metrics.hhea.linegap) * spacing;
+        return (reader->metrics.hhea.advance * loc - reader->metrics.hhea.linegap) * spacing;
     }
 
     uint32_t feedLine(FontMetrics& fm, float box, float x, uint32_t begin, uint32_t end, Point& cursor, RenderPath& out);
@@ -73,8 +73,8 @@ private:
     void wrapChar(FontMetrics& fm, const Point& box, const char* utf8, const char* end, RenderPath& out);
     void wrapWord(FontMetrics& fm, const Point& box, const char* utf8, const char* end, RenderPath& out, bool smart);
     void wrapEllipsis(FontMetrics& fm, const Point& box, const char* utf8, const char* end, RenderPath& out);
-    TtfGlyphMetrics* request(uint32_t code);
+    SfntGlyphMetrics* request(uint32_t code);
     void clear();
 };
 
-#endif //_TVG_PNG_LOADER_H_
+#endif  //_TVG_SFNT_LOADER_H_
