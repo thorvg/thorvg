@@ -1609,17 +1609,20 @@ LottieLayer* LottieParser::parseLayers(LottieLayer* root)
 void LottieParser::postProcess(Array<LottieGlyph*>& glyphs)
 {
     //aggregate font characters
-    for (uint32_t g = 0; g < glyphs.count; ++g) {
-        auto glyph = glyphs[g];
-        for (uint32_t i = 0; i < comp->fonts.count; ++i) {
-            auto& font = comp->fonts[i];
+    ARRAY_FOREACH(g, glyphs) {
+        auto glyph = *g;
+        ARRAY_FOREACH(f, comp->fonts) {
+            auto font = *f;
             if (!strcmp(font->family, glyph->family) && !strcmp(font->style, glyph->style)) {
                 font->chars.push(glyph);
-                tvg::free(glyph->family);
-                tvg::free(glyph->style);
+                free(glyph->family);
+                free(glyph->style);
+                glyph->family = glyph->style = nullptr;
+                glyph = nullptr;
                 break;
             }
         }
+        delete(glyph);
     }
 }
 
