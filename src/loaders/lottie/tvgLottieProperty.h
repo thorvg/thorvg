@@ -144,7 +144,7 @@ struct LottieExpression
 
     LottieExpression(const LottieExpression* rhs)
     {
-        code = strdup(rhs->code);
+        code = tvg::duplicate(rhs->code);
         comp = rhs->comp;
         layer = rhs->layer;
         object = rhs->object;
