@@ -66,6 +66,7 @@ LottieEffect* LottieParser::getEffect(int type)
         case LottieEffect::Stroke: return new LottieFxStroke;
         case LottieEffect::Tritone: return new LottieFxTritone;
         case LottieEffect::DropShadow: return new LottieFxDropShadow;
+        case LottieEffect::SetMatte: return new LottieFxSetMatte;
         case LottieEffect::GaussianBlur: return new LottieFxGaussianBlur;
         default: return nullptr;
     }
@@ -1484,6 +1485,17 @@ void LottieParser::parseStroke(LottieEffect* effect, int idx)
     else skip();
 }
 
+void LottieParser::parseSetMatte(LottieEffect* effect, int idx)
+{
+    auto matte = static_cast<LottieFxSetMatte*>(effect);
+
+    LottieInteger prop;
+    parsePropertyInternal(prop);
+    if (idx == 0) matte->matteLayer = prop.value;
+    else if (idx == 1) matte->useForMatte = prop.value;
+    else if (idx == 2) matte->invert = prop.value;
+    else if (idx == 4) matte->composite = prop.value;
+}
 
 bool LottieParser::parseEffect(LottieEffect* effect)
 {
@@ -1494,6 +1506,7 @@ bool LottieParser::parseEffect(LottieEffect* effect)
         case LottieEffect::Stroke: return parseEffect(effect, &LottieParser::parseStroke);
         case LottieEffect::Tritone: return parseEffect(effect, &LottieParser::parseTritone);
         case LottieEffect::DropShadow: return parseEffect(effect, &LottieParser::parseDropShadow);
+        case LottieEffect::SetMatte: return parseEffect(effect, &LottieParser::parseSetMatte);
         case LottieEffect::GaussianBlur: return parseEffect(effect, &LottieParser::parseGaussianBlur);
         default: return false;
     }
