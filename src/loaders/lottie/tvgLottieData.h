@@ -124,9 +124,9 @@ static inline RGB32 operator*(const RGB32& lhs, float rhs)
 static inline RGB32 lerp(const RGB32& s, const RGB32& e, float t)
 {
     return {
-        tvg::clamp((int32_t)(s.r + (e.r - s.r) * t), 0, 255),
-        tvg::clamp((int32_t)(s.g + (e.g - s.g) * t), 0, 255),
-        tvg::clamp((int32_t)(s.b + (e.b - s.b) * t), 0, 255)
+        tvg::clamp((int32_t)(s.r + (e.r - s.r) * t), (int32_t)0, (int32_t)255),
+        tvg::clamp((int32_t)(s.g + (e.g - s.g) * t), (int32_t)0, (int32_t)255),
+        tvg::clamp((int32_t)(s.b + (e.b - s.b) * t), (int32_t)0, (int32_t)255)
     };
 }
 
