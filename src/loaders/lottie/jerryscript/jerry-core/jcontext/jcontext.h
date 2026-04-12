@@ -221,8 +221,30 @@ struct jerry_context_t
  * This part is for JerryScript which uses external context.
  */
 
-#define JERRY_CONTEXT_STRUCT (*jerry_port_context_get ())
-#define JERRY_CONTEXT(field) (jerry_port_context_get ()->field)
+#if defined(__MINGW32__) || defined(__MINGW64__)
+
+#include <windows.h>
+
+extern DWORD tls_context_index;
+
+#define JERRY_CONTEXT_STRUCT (*(jerry_context_t*)TlsGetValue(tls_context_index))
+#define JERRY_CONTEXT(field) (((jerry_context_t*)TlsGetValue(tls_context_index))->field)
+
+#elif defined(_MSC_VER)
+
+extern __declspec(thread) jerry_context_t* tls_context_p;
+
+#define JERRY_CONTEXT_STRUCT (*tls_context_p)
+#define JERRY_CONTEXT(field) (tls_context_p->field)
+
+#else
+
+extern __thread jerry_context_t* tls_context_p;
+
+#define JERRY_CONTEXT_STRUCT (*tls_context_p)
+#define JERRY_CONTEXT(field) (tls_context_p->field)
+
+#endif
 
 #if !JERRY_SYSTEM_ALLOCATOR
 
