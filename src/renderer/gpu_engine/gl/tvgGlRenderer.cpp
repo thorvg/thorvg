@@ -27,7 +27,6 @@
 #include "tvgGlRenderTask.h"
 #include "tvgGlProgram.h"
 #include "tvgGlShaderSrc.h"
-#include "tvgShape.h"
 #include "tvgRender.h"
 
 /************************************************************************/
@@ -121,12 +120,12 @@ void GlRenderer::initShaders()
 #if 1  //for optimization
     #define LINEAR_TOTAL_LENGTH 2831
     #define RADIAL_TOTAL_LENGTH 5315
-    #define BLEND_TOTAL_LENGTH 5369
+    #define BLEND_TOTAL_LENGTH 5096
 #else
     #define COMMON_TOTAL_LENGTH strlen(STR_GRADIENT_FRAG_COMMON_VARIABLES) + strlen(STR_GRADIENT_FRAG_COMMON_FUNCTIONS) + 1
     #define LINEAR_TOTAL_LENGTH strlen(STR_LINEAR_GRADIENT_VARIABLES) + strlen(STR_LINEAR_GRADIENT_FUNCTIONS) + strlen(STR_LINEAR_GRADIENT_MAIN) + COMMON_TOTAL_LENGTH
     #define RADIAL_TOTAL_LENGTH strlen(STR_RADIAL_GRADIENT_VARIABLES) + strlen(STR_RADIAL_GRADIENT_FUNCTIONS) + strlen(STR_RADIAL_GRADIENT_MAIN) + COMMON_TOTAL_LENGTH
-    #define BLEND_TOTAL_LENGTH strlen(BLEND_SCENE_FRAG_HEADER) + (strlen(BLEND_FRAG_HUE) > strlen(BLEND_FRAG_LUM) ? strlen(BLEND_FRAG_HUE) : strlen(BLEND_FRAG_LUM)) + strlen(COLOR_BURN_BLEND_FRAG) + 1
+    #define BLEND_TOTAL_LENGTH strlen(BLEND_SCENE_FRAG_HEADER) + strlen(BLEND_FRAG_LUM_HELPER) + strlen(BLEND_FRAG_SAT_HELPER) + strlen(COLOR_BURN_BLEND_FRAG) + 1
 #endif
 
     char linearGradientFragShader[LINEAR_TOTAL_LENGTH];
@@ -619,11 +618,13 @@ GlProgram* GlRenderer::getBlendProgram(BlendMethod method, BlendSource source)
 
     if (mPrograms[shaderInd]) return mPrograms[shaderInd];
 
-    const char* helpers = "";
+    const char* lumHelper = "";
+    const char* satHelper = "";
     if (method == BlendMethod::Hue) {
-        helpers = BLEND_FRAG_HUE;
+        lumHelper = BLEND_FRAG_LUM_HELPER;
+        satHelper = BLEND_FRAG_SAT_HELPER;
     } else if ((method == BlendMethod::Saturation) || (method == BlendMethod::Color) || (method == BlendMethod::Luminosity)) {
-        helpers = BLEND_FRAG_LUM;
+        lumHelper = BLEND_FRAG_LUM_HELPER;
     }
 
     const char* vertShader;
@@ -632,7 +633,7 @@ GlProgram* GlRenderer::getBlendProgram(BlendMethod method, BlendSource source)
     if (source == BlendSource::Scene || source == BlendSource::Image) {
         vertShader = BLIT_VERT_SHADER;
         const char* header = (source == BlendSource::Scene) ? BLEND_SCENE_FRAG_HEADER : BLEND_IMAGE_FRAG_HEADER;
-        snprintf(fragShader, BLEND_TOTAL_LENGTH, "%s%s%s", header, helpers, shaderFunc[methodInd]);
+        snprintf(fragShader, BLEND_TOTAL_LENGTH, "%s%s%s%s", header, lumHelper, satHelper, shaderFunc[methodInd]);
         mPrograms[shaderInd] = new GlProgram(vertShader, fragShader);
         return mPrograms[shaderInd];
     }
@@ -640,29 +641,32 @@ GlProgram* GlRenderer::getBlendProgram(BlendMethod method, BlendSource source)
     vertShader = (source == BlendSource::Solid) ? COLOR_VERT_SHADER : GRADIENT_VERT_SHADER;
     switch (source) {
         case BlendSource::Solid:
-            snprintf(fragShader, BLEND_TOTAL_LENGTH, "%s%s%s",
+            snprintf(fragShader, BLEND_TOTAL_LENGTH, "%s%s%s%s",
                      BLEND_SHAPE_SOLID_FRAG_HEADER,
-                     helpers,
+                     lumHelper,
+                     satHelper,
                      shaderFunc[methodInd]);
             break;
         case BlendSource::LinearGradient:
-            snprintf(fragShader, BLEND_TOTAL_LENGTH, "%s%s%s%s%s%s%s",
+            snprintf(fragShader, BLEND_TOTAL_LENGTH, "%s%s%s%s%s%s%s%s",
                      STR_GRADIENT_FRAG_COMMON_VARIABLES,
                      STR_LINEAR_GRADIENT_VARIABLES,
                      STR_GRADIENT_FRAG_COMMON_FUNCTIONS,
                      STR_LINEAR_GRADIENT_FUNCTIONS,
                      BLEND_SHAPE_LINEAR_FRAG_HEADER,
-                     helpers,
+                     lumHelper,
+                     satHelper,
                      shaderFunc[methodInd]);
             break;
         case BlendSource::RadialGradient:
-            snprintf(fragShader, BLEND_TOTAL_LENGTH, "%s%s%s%s%s%s%s",
+            snprintf(fragShader, BLEND_TOTAL_LENGTH, "%s%s%s%s%s%s%s%s",
                      STR_GRADIENT_FRAG_COMMON_VARIABLES,
                      STR_RADIAL_GRADIENT_VARIABLES,
                      STR_GRADIENT_FRAG_COMMON_FUNCTIONS,
                      STR_RADIAL_GRADIENT_FUNCTIONS,
                      BLEND_SHAPE_RADIAL_FRAG_HEADER,
-                     helpers,
+                     lumHelper,
+                     satHelper,
                      shaderFunc[methodInd]);
             break;
         default:
