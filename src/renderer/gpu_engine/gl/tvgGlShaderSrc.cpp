@@ -819,53 +819,7 @@ vec4 postProcess(vec4 R) { return mix(vec4(d.Dc, d.Da), R, d.Sa * d.So); }
 )";
 #endif
 
-const char* BLEND_FRAG_HUE = R"(
-// RGB to HSL conversion
-vec3 rgbToHsl(vec3 color) {
-    float minVal = min(color.r, min(color.g, color.b));
-    float maxVal = max(color.r, max(color.g, color.b));
-    float delta = maxVal - minVal;
-
-    float h = 0.0;
-    if (delta > 0.0) {
-             if (maxVal == color.r) { h = (color.g - color.b) / delta - trunc(h / 6.0) * 6.0; }
-        else if (maxVal == color.g) { h = (color.b - color.r) / delta + 2.0;
-        } else                      { h = (color.r - color.g) / delta + 4.0; }
-        h = h * 60.0;
-        if (h < 0.0) { h += 360.0; }
-    }
-
-    float l = (maxVal + minVal) * 0.5;
-    float s = delta > 0.0 ? delta / (1.0 - abs(2.0 * l - 1.0)) : 0.0;
-    
-    return vec3(h, s, l);
-}
-
-// HSL to RGB conversion
-vec3 hslToRgb(vec3 color) {
-    float h = color.x;
-    float s = color.y;
-    float l = color.z;
-
-    float C = (1.0 - abs(2.0 * l - 1.0)) * s;
-    float h_prime = h / 60.0;
-    float X = C * (1.0 - abs(h_prime - 2.0 * trunc(h_prime / 2.0) - 1.0));
-    float m = l - C / 2.0;
-
-    vec3 rgb = vec3(0.0);
-         if (h_prime >= 0.0 && h_prime < 1.0) { rgb = vec3(C, X, 0.0); }
-    else if (h_prime >= 1.0 && h_prime < 2.0) { rgb = vec3(X, C, 0.0); }
-    else if (h_prime >= 2.0 && h_prime < 3.0) { rgb = vec3(0.0, C, X); }
-    else if (h_prime >= 3.0 && h_prime < 4.0) { rgb = vec3(0.0, X, C); }
-    else if (h_prime >= 4.0 && h_prime < 5.0) { rgb = vec3(X, 0.0, C); }
-    else                                      { rgb = vec3(C, 0.0, X); }
-
-    return rgb + vec3(m);
-}
-)";
-
-//  helpers related to luminance adjustment
-const char* BLEND_FRAG_LUM = R"(
+const char* BLEND_FRAG_LUM_HELPER = R"(
 const vec3 LUM_W = vec3(0.3, 0.59, 0.11);
 
 vec3 setLum(vec3 color, float l) {
@@ -877,6 +831,32 @@ vec3 setLum(vec3 color, float l) {
     if (n < 0.0) color = ll + (color - ll) * (ll / (ll - n));
     if (x > 1.0) color = ll + (color - ll) * ((1.0 - ll) / (x - ll));
     return color;
+}
+)";
+
+const char* BLEND_FRAG_SAT_HELPER = R"(
+float sat(vec3 color) {
+    return max(color.r, max(color.g, color.b)) - min(color.r, min(color.g, color.b));
+}
+
+vec3 setSat(vec3 color, float s) {
+    float rMin = step(color.r, color.g) * step(color.r, color.b);
+    float gMin = (1.0 - rMin) * step(color.g, color.r) * step(color.g, color.b);
+    vec3 minMask = vec3(rMin, gMin, 1.0 - rMin - gMin);
+
+    float bMax = step(color.r, color.b) * step(color.g, color.b);
+    float gMax = (1.0 - bMax) * step(color.r, color.g) * step(color.b, color.g);
+    vec3 maxMask = vec3(1.0 - bMax - gMax, gMax, bMax);
+    vec3 midMask = vec3(1.0) - minMask - maxMask;
+
+    float cMin = dot(color, minMask);
+    float cMid = dot(color, midMask);
+    float cMax = dot(color, maxMask);
+    float delta = cMax - cMin;
+    float deltaMask = sign(delta);
+    float scale = deltaMask * s / max(delta, 1e-6);
+
+    return maxMask * (s * deltaMask) + midMask * ((cMid - cMin) * scale);
 }
 )";
 
@@ -1034,11 +1014,8 @@ void main()
     vec3 Rc = d.Sc;
     if (d.Da > 0.0) {
         vec3 Dc = min(One, d.Dc / d.Da);
-
-        vec3 Shsl = rgbToHsl(d.Sc);
-        vec3 Dhsl = rgbToHsl(Dc);
-        Rc = hslToRgb(vec3(Shsl.r, Dhsl.g, Dhsl.b)); // sh, ds, dl
-        
+        Rc = setSat(d.Sc, sat(Dc));
+        Rc = setLum(Rc, dot(Dc, LUM_W));
         Rc = mix(d.Sc, Rc, d.Da);
     }
     FragColor = postProcess(vec4(Rc, 1.0));
