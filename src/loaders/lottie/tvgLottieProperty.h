@@ -26,7 +26,7 @@
 #include <algorithm>
 #include "tvgMath.h"
 #include "tvgStr.h"
-#include "tvgLottieData.h"
+#include "tvgLottieCommon.h"
 #include "tvgLottieInterpolator.h"
 #include "tvgLottieExpressions.h"
 #include "tvgLottieModifier.h"
