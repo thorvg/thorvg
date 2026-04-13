@@ -86,6 +86,7 @@ static void ecma_gc_mark (ecma_object_t *object_p);
 static void
 ecma_gc_set_object_visited (ecma_object_t *object_p) /**< object */
 {
+  JERRY_DEFINE_CURRENT_CONTEXT ();
   if (object_p->type_flags_refs >= ECMA_OBJECT_NON_VISITED)
   {
 #if (JERRY_GC_MARK_LIMIT != 0)
@@ -116,6 +117,7 @@ ecma_gc_set_object_visited (ecma_object_t *object_p) /**< object */
 void
 ecma_init_gc_info (ecma_object_t *object_p) /**< object */
 {
+  JERRY_DEFINE_CURRENT_CONTEXT ();
   JERRY_CONTEXT (ecma_gc_objects_number)++;
   JERRY_CONTEXT (ecma_gc_new_objects)++;
 
@@ -1663,6 +1665,7 @@ ecma_gc_free_properties (ecma_object_t *object_p, /**< object */
 static void
 ecma_gc_free_object (ecma_object_t *object_p) /**< object to free */
 {
+  JERRY_DEFINE_CURRENT_CONTEXT ();
   JERRY_ASSERT (object_p != NULL && !ecma_gc_is_object_visited (object_p));
 
   JERRY_ASSERT (JERRY_CONTEXT (ecma_gc_objects_number) > 0);
@@ -2082,6 +2085,7 @@ ecma_gc_free_object (ecma_object_t *object_p) /**< object to free */
 void
 ecma_gc_run (void)
 {
+  JERRY_DEFINE_CURRENT_CONTEXT ();
 #if (JERRY_GC_MARK_LIMIT != 0)
   JERRY_ASSERT (JERRY_CONTEXT (ecma_gc_mark_recursion_limit) == JERRY_GC_MARK_LIMIT);
 #endif /* (JERRY_GC_MARK_LIMIT != 0) */
@@ -2218,6 +2222,7 @@ ecma_gc_run (void)
 void
 ecma_free_unused_memory (jmem_pressure_t pressure) /**< current pressure */
 {
+  JERRY_DEFINE_CURRENT_CONTEXT ();
   if (JERRY_LIKELY (pressure == JMEM_PRESSURE_LOW))
   {
 #if JERRY_PROPERTY_HASHMAP

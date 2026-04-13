@@ -437,6 +437,7 @@ ecma_op_create_dynamic_function (const ecma_value_t *arguments_list_p, /**< argu
                                  uint32_t arguments_list_len, /**< number of arguments */
                                  ecma_parse_opts_t parse_opts) /**< parse options */
 {
+  JERRY_DEFINE_CURRENT_CONTEXT ();
   JERRY_ASSERT (arguments_list_len == 0 || arguments_list_p != NULL);
 
   ecma_string_t *arguments_str_p =
@@ -599,6 +600,7 @@ ecma_op_create_arrow_function_object (ecma_object_t *scope_p, /**< function's sc
                                       const ecma_compiled_code_t *bytecode_data_p, /**< byte-code array */
                                       ecma_value_t this_binding) /**< value of 'this' binding */
 {
+  JERRY_DEFINE_CURRENT_CONTEXT ();
   ecma_object_t *prototype_obj_p;
 
   if (CBC_FUNCTION_GET_TYPE (bytecode_data_p->status_flags) == CBC_FUNCTION_ARROW)
@@ -1010,6 +1012,7 @@ ecma_op_function_call_constructor (vm_frame_ctx_shared_args_t *shared_args_p, /*
                                    ecma_object_t *scope_p, /**< lexical environment to use */
                                    ecma_value_t this_binding) /**< value of 'ThisBinding' */
 {
+  JERRY_DEFINE_CURRENT_CONTEXT ();
   shared_args_p->header.status_flags |= VM_FRAME_CTX_SHARED_NON_ARROW_FUNC;
 
   ecma_value_t ret_value;
@@ -1079,6 +1082,7 @@ ecma_op_function_call_simple (ecma_object_t *func_obj_p, /**< Function object */
                               const ecma_value_t *arguments_list_p, /**< arguments list */
                               uint32_t arguments_list_len) /**< length of arguments list */
 {
+  JERRY_DEFINE_CURRENT_CONTEXT ();
   JERRY_ASSERT (ecma_get_object_type (func_obj_p) == ECMA_OBJECT_TYPE_FUNCTION);
 
   vm_frame_ctx_shared_args_t shared_args;
@@ -1204,6 +1208,7 @@ ecma_op_function_call_native_built_in (ecma_object_t *func_obj_p, /**< Function 
                                        const ecma_value_t *arguments_list_p, /**< arguments list */
                                        uint32_t arguments_list_len) /**< length of arguments list */
 {
+  JERRY_DEFINE_CURRENT_CONTEXT ();
   JERRY_ASSERT (ecma_get_object_type (func_obj_p) == ECMA_OBJECT_TYPE_BUILT_IN_FUNCTION);
 
 #if JERRY_BUILTIN_REALMS
@@ -1234,6 +1239,7 @@ ecma_op_function_call_native (ecma_object_t *func_obj_p, /**< Function object */
                               const ecma_value_t *arguments_list_p, /**< arguments list */
                               uint32_t arguments_list_len) /**< length of arguments list */
 {
+  JERRY_DEFINE_CURRENT_CONTEXT ();
   JERRY_ASSERT (ecma_get_object_type (func_obj_p) == ECMA_OBJECT_TYPE_NATIVE_FUNCTION);
 
   ecma_native_function_t *native_function_p = (ecma_native_function_t *) func_obj_p;
@@ -1326,6 +1332,7 @@ ecma_op_function_call_bound (ecma_object_t *func_obj_p, /**< Function object */
                              const ecma_value_t *arguments_list_p, /**< arguments list */
                              uint32_t arguments_list_len) /**< length of arguments list */
 {
+  JERRY_DEFINE_CURRENT_CONTEXT ();
   JERRY_ASSERT (ecma_get_object_type (func_obj_p) == ECMA_OBJECT_TYPE_BOUND_FUNCTION);
 
   JERRY_CONTEXT (status_flags) &= (uint32_t) ~ECMA_STATUS_DIRECT_EVAL;
@@ -1384,6 +1391,7 @@ ecma_op_function_call (ecma_object_t *func_obj_p, /**< Function object */
                        const ecma_value_t *arguments_list_p, /**< arguments list */
                        uint32_t arguments_list_len) /**< length of arguments list */
 {
+  JERRY_DEFINE_CURRENT_CONTEXT ();
   JERRY_ASSERT (func_obj_p != NULL && !ecma_is_lexical_environment (func_obj_p));
 
   ECMA_CHECK_STACK_USAGE ();
@@ -1455,6 +1463,7 @@ ecma_op_function_construct_simple (ecma_object_t *func_obj_p, /**< Function obje
                                    const ecma_value_t *arguments_list_p, /**< arguments list */
                                    uint32_t arguments_list_len) /**< length of arguments list */
 {
+  JERRY_DEFINE_CURRENT_CONTEXT ();
   JERRY_ASSERT (ecma_get_object_type (func_obj_p) == ECMA_OBJECT_TYPE_FUNCTION);
 
   ecma_object_t *new_this_obj_p = NULL;
@@ -1519,6 +1528,7 @@ ecma_op_function_construct_built_in (ecma_object_t *func_obj_p, /**< Function ob
                                      const ecma_value_t *arguments_list_p, /**< arguments list */
                                      uint32_t arguments_list_len) /**< length of arguments list */
 {
+  JERRY_DEFINE_CURRENT_CONTEXT ();
   JERRY_UNUSED (new_target_p);
 
   JERRY_ASSERT (ecma_get_object_type (func_obj_p) == ECMA_OBJECT_TYPE_BUILT_IN_FUNCTION);
@@ -1655,6 +1665,7 @@ ecma_op_function_construct_native (ecma_object_t *func_obj_p, /**< Function obje
                                    const ecma_value_t *arguments_list_p, /**< arguments list */
                                    uint32_t arguments_list_len) /**< length of arguments list */
 {
+  JERRY_DEFINE_CURRENT_CONTEXT ();
   JERRY_ASSERT (ecma_get_object_type (func_obj_p) == ECMA_OBJECT_TYPE_NATIVE_FUNCTION);
 
   ecma_object_t *proto_p = ecma_op_get_prototype_from_constructor (new_target_p, ECMA_BUILTIN_ID_OBJECT_PROTOTYPE);

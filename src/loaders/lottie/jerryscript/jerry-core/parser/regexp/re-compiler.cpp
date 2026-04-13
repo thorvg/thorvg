@@ -49,6 +49,7 @@ static re_compiled_code_t *
 re_cache_lookup (ecma_string_t *pattern_str_p, /**< pattern string */
                  uint16_t flags) /**< flags */
 {
+  JERRY_DEFINE_CURRENT_CONTEXT ();
   re_compiled_code_t **cache_p = JERRY_CONTEXT (re_cache);
 
   for (uint8_t idx = 0u; idx < RE_CACHE_SIZE; idx++)
@@ -78,6 +79,7 @@ re_cache_lookup (ecma_string_t *pattern_str_p, /**< pattern string */
 void
 re_cache_gc (void)
 {
+  JERRY_DEFINE_CURRENT_CONTEXT ();
   re_compiled_code_t **cache_p = JERRY_CONTEXT (re_cache);
 
   for (uint32_t i = 0u; i < RE_CACHE_SIZE; i++)
@@ -106,6 +108,7 @@ re_compiled_code_t *
 re_compile_bytecode (ecma_string_t *pattern_str_p, /**< pattern */
                      uint16_t flags) /**< flags */
 {
+  JERRY_DEFINE_CURRENT_CONTEXT ();
   re_compiled_code_t *cached_bytecode_p = re_cache_lookup (pattern_str_p, flags);
 
   if (cached_bytecode_p != NULL)

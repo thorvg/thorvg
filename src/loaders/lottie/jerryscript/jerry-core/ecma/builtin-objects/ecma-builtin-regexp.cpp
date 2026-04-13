@@ -47,6 +47,7 @@ static ecma_value_t
 ecma_builtin_regexp_dispatch_helper (const ecma_value_t *arguments_list_p, /**< arguments list */
                                      uint32_t arguments_list_len) /**< number of arguments */
 {
+  JERRY_DEFINE_CURRENT_CONTEXT ();
   ecma_value_t pattern_value = ECMA_VALUE_UNDEFINED;
   ecma_value_t flags_value = ECMA_VALUE_UNDEFINED;
   bool create_regexp_from_bc = false;

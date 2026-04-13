@@ -937,6 +937,7 @@ JERRY_STATIC_ASSERT ((sizeof (ecma_global_symbol_descriptions) / sizeof (uint16_
 ecma_string_t *
 ecma_op_get_global_symbol (lit_magic_string_id_t property_id) /**< property symbol id */
 {
+  JERRY_DEFINE_CURRENT_CONTEXT ();
   JERRY_ASSERT (LIT_IS_GLOBAL_SYMBOL (property_id));
 
   uint32_t symbol_index = (uint32_t) property_id - (uint32_t) LIT_GLOBAL_SYMBOL__FIRST;
@@ -973,6 +974,7 @@ bool
 ecma_op_compare_string_to_global_symbol (ecma_string_t *string_p, /**< string to compare */
                                          lit_magic_string_id_t property_id) /**< property symbol id */
 {
+  JERRY_DEFINE_CURRENT_CONTEXT ();
   JERRY_ASSERT (LIT_IS_GLOBAL_SYMBOL (property_id));
 
   uint32_t symbol_index = (uint32_t) property_id - (uint32_t) LIT_GLOBAL_SYMBOL__FIRST;

@@ -2316,6 +2316,7 @@ parser_parse_import_statement (parser_context_t *context_p) /**< parser context 
 static bool
 parser_parse_export_statement (parser_context_t *context_p) /**< context */
 {
+  JERRY_DEFINE_CURRENT_CONTEXT ();
   JERRY_ASSERT (context_p->token.type == LEXER_KEYW_EXPORT);
   JERRY_ASSERT (context_p->module_names_p == NULL);
 
