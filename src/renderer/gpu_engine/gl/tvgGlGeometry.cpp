@@ -238,11 +238,10 @@ bool GlGeometry::tesselateStroke(const RenderShape& rshape)
     if (!std::isfinite(strokeWidthWorld)) strokeWidthWorld = strokeWidth;
 
     //run stroking only if it's valid
-
     if (!tvg::zero(strokeWidthWorld)) {
         Stroker stroker(&stroke, strokeWidthWorld, rshape.strokeCap(), rshape.strokeJoin(), rshape.strokeMiterlimit());
-        RenderPath dashedPathWorld;
-        if (gpuStrokeDash(rshape, dashedPathWorld, &matrix)) stroker.run(dashedPathWorld);
+        auto& dashed = RenderPath::scratch();
+        if (gpuStrokeDash(rshape, dashed, &matrix)) stroker.run(dashed);
         else stroker.run(optPath);
         strokeBounds = stroker.bounds();
         strokeRenderWidth = strokeWidthWorld;

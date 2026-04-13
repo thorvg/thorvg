@@ -58,6 +58,16 @@ bool RenderMethod::viewport(const RenderRegion& vp)
 /* RenderPath Class Implementation                                      */
 /************************************************************************/
 
+// used as a temporary buffer
+RenderPath& RenderPath::scratch()
+{
+    static thread_local RenderPath dbuffers[3];  // tripple-buffering
+    static thread_local int idx = 0;
+    if (++idx > 2) idx = 0;
+    dbuffers[(idx)].clear();
+    return dbuffers[(int)idx];
+}
+
 void RenderPath::addCircle(float cx, float cy, float rx, float ry, bool cw)
 {
     auto rxKappa = rx * PATH_KAPPA;
