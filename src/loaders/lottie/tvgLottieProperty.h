@@ -564,7 +564,6 @@ struct LottiePathSet : LottieProperty
     {
         PathSet* path;
         LottieScalarFrame<PathSet>* frame;
-        RenderPath temp;
         float t;
 
         if (dispatch(frameNo, path, frame, t)) {
@@ -622,7 +621,7 @@ struct LottiePathSet : LottieProperty
 
     bool tweening(float frameNo, RenderPath& out, Matrix* transform, LottieModifier* modifier, Tween& tween, LottieExpressions* exps)
     {
-        RenderPath to;  //used as temp as well.
+        auto& to = RenderPath::scratch();
         auto pivot = out.pts.count;
         if (!operator()(frameNo, out, transform, exps)) return false;
         if (!operator()(tween.frameNo, to, transform, exps)) return false;
@@ -637,7 +636,6 @@ struct LottiePathSet : LottieProperty
         if (!modifier) return true;
 
         //Apply modifiers
-        to.clear();
         modifier->path(to.cmds.data, to.cmds.count, to.pts.data, to.pts.count, transform, out);
         return true;
     }

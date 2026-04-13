@@ -178,12 +178,12 @@ void WgRenderDataShape::updateMeshes(const RenderShape &rshape, RenderUpdateFlag
     renderSettingsStroke.opacityMultiplier = 1.0f;
 
     // optimize path
-    RenderPath optPath;
+    auto& optPath = RenderPath::scratch();
     bool optPathThin = false;
     bool optPathSkipFill = false;
     if (rshape.trimpath()) {
-        RenderPath trimmedPath;
-        if (rshape.stroke->trim.trim(rshape.path, trimmedPath)) gpuOptimize(trimmedPath, optPath, matrix, optPathThin, optPathSkipFill);
+        auto& trimmed = RenderPath::scratch();
+        if (rshape.stroke->trim.trim(rshape.path, trimmed)) gpuOptimize(trimmed, optPath, matrix, optPathThin, optPathSkipFill);
         else optPath.clear();
     } else {
         gpuOptimize(rshape.path, optPath, matrix, optPathThin, optPathSkipFill);
@@ -228,8 +228,8 @@ void WgRenderDataShape::updateMeshes(const RenderShape &rshape, RenderUpdateFlag
         //run stroking only if it's valid
         if (!tvg::zero(strokeWidthWorld)) {
             WgStroker stroker(&meshStrokes, strokeWidthWorld, rshape.strokeCap(), rshape.strokeJoin(), rshape.strokeMiterlimit());
-            RenderPath dashedPathWorld;
-            if (gpuStrokeDash(rshape, dashedPathWorld, &matrix)) stroker.run(dashedPathWorld);
+            auto& dashed = RenderPath::scratch();
+            if (gpuStrokeDash(rshape, dashed, &matrix)) stroker.run(dashed);
             else stroker.run(optPath);
             renderSettingsStroke.opacityMultiplier = 1.0f;
             if (meshStrokes.ibuffer.empty()) {

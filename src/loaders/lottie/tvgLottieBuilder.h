@@ -111,17 +111,17 @@ struct RenderContext
             switch (m->type) {
                 case LottieModifier::Type::Roundness: {
                     auto roundness = static_cast<LottieRoundnessModifier*>(m);
-                    update(new LottieRoundnessModifier(roundness->buffer, roundness->r));
+                    update(new LottieRoundnessModifier(roundness->r));
                     break;
                 }
                 case LottieModifier::Type::Offset: {
                     auto offset = static_cast<LottieOffsetModifier*>(m);
-                    update(new LottieOffsetModifier(offset->buffer, offset->offset, offset->miterLimit, offset->join));
+                    update(new LottieOffsetModifier(offset->offset, offset->miterLimit, offset->join));
                     break;
                 }
                 case LottieModifier::Type::PuckerBloat: {
                     auto pucker = static_cast<LottiePuckerBloatModifier*>(m);
-                    update(new LottiePuckerBloatModifier(pucker->buffer, pucker->amount));
+                    update(new LottiePuckerBloatModifier(pucker->amount));
                     break;
                 }
             }
@@ -219,7 +219,6 @@ private:
     void updateOffsetPath(LottieGroup* parent, LottieObject** child, float frameNo, Inlist<RenderContext>& contexts, RenderContext* ctx);
     void updatePuckerBloat(LottieGroup* parent, LottieObject** child, float frameNo, Inlist<RenderContext>& contexts, RenderContext* ctx);
 
-    RenderPath buffer;   //reusable path
     LottieExpressions* exps;
     Tween tween;
 };
