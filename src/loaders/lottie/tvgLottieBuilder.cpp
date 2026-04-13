@@ -1025,7 +1025,7 @@ void LottieBuilder::updateURLFont(LottieLayer* layer, float frameNo, LottieText*
 
     //apply spacing
     auto hspacing = (doc.tracking > 0.0f) ? (1.0f + doc.tracking * doc.size / metrics.ascent) : 1.0f;
-    auto vspacing = (doc.height > 0.0f && doc.bbox.size.y > 0.0f) ? (doc.height / metrics.advance) : 1.0f;
+    auto vspacing = (doc.height > 0.0f && paint->lines() > 1) ? (doc.height / metrics.advance) : 1.0f;
     paint->spacing(hspacing, vspacing);
 
     layer->scene->add(paint);
