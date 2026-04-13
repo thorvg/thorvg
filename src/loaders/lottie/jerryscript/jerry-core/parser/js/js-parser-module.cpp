@@ -43,6 +43,7 @@ bool
 parser_module_check_duplicate_import (parser_context_t *context_p, /**< parser context */
                                       ecma_string_t *local_name_p) /**< newly imported name */
 {
+  JERRY_DEFINE_CURRENT_CONTEXT ();
   ecma_module_names_t *module_names_p = context_p->module_names_p;
 
   while (module_names_p != NULL)
@@ -110,6 +111,7 @@ bool
 parser_module_check_duplicate_export (parser_context_t *context_p, /**< parser context */
                                       ecma_string_t *export_name_p) /**< exported identifier */
 {
+  JERRY_DEFINE_CURRENT_CONTEXT ();
   /* We have to check in the currently constructed node, as well as all of the already added nodes. */
   ecma_module_names_t *current_names_p = context_p->module_names_p;
 
@@ -428,6 +430,7 @@ void
 parser_module_handle_module_specifier (parser_context_t *context_p, /**< parser context */
                                        ecma_module_node_t **node_list_p) /**< target node list */
 {
+  JERRY_DEFINE_CURRENT_CONTEXT ();
   if (context_p->token.type != LEXER_LITERAL || context_p->token.lit_location.type != LEXER_STRING_LITERAL
       || context_p->token.lit_location.length == 0)
   {
