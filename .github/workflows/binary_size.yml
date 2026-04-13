@@ -1,0 +1,185 @@
+name: Binary Size
+
+on:
+  pull_request:
+    branches:
+      - main
+
+permissions:
+  contents: read
+
+jobs:
+  build:
+    name: ${{ matrix.label }}
+    runs-on: ${{ matrix.runs_on }}
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          # x86_64
+          - label: x86_64 gcc
+            key: x86_64-gcc
+            runs_on: ubuntu-24.04
+            extra_packages: 'libturbojpeg0-dev libpng-dev libwebp-dev libgles-dev'
+            cc: gcc
+            cxx: g++
+            c_args: ''
+            cpp_args: ''
+            c_link_args: ''
+            cpp_link_args: ''
+
+          - label: x86_64 clang
+            key: x86_64-clang
+            runs_on: ubuntu-24.04
+            extra_packages: 'clang lld libomp-dev libturbojpeg0-dev libpng-dev libwebp-dev libgles-dev'
+            cc: clang
+            cxx: clang++
+            c_args: ''
+            cpp_args: ''
+            c_link_args: ''
+            cpp_link_args: ''
+
+          # x86 32-bit 
+          - label: x86 gcc (32-bit)
+            key: x86-gcc
+            runs_on: ubuntu-24.04
+            extra_packages: 'gcc-multilib g++-multilib'
+            cc: gcc
+            cxx: g++
+            c_args: '-m32'
+            cpp_args: '-m32'
+            c_link_args: '-m32'
+            cpp_link_args: '-m32'
+
+          # arm64 (GitHub ARM runner)
+          - label: arm64 gcc
+            key: arm64-gcc
+            runs_on: ubuntu-24.04-arm
+            extra_packages: 'libturbojpeg0-dev libpng-dev libwebp-dev libgles-dev'
+            cc: gcc
+            cxx: g++
+            c_args: ''
+            cpp_args: ''
+            c_link_args: ''
+            cpp_link_args: ''
+
+          - label: arm64 clang
+            key: arm64-clang
+            runs_on: ubuntu-24.04-arm
+            extra_packages: 'clang lld libomp-dev libturbojpeg0-dev libpng-dev libwebp-dev libgles-dev'
+            cc: clang
+            cxx: clang++
+            c_args: ''
+            cpp_args: ''
+            c_link_args: ''
+            cpp_link_args: ''
+
+    steps:
+    - uses: actions/checkout@v4
+      with:
+        submodules: true
+        fetch-depth: 0
+
+    - name: Cache apt archives
+      uses: actions/cache@v4
+      with:
+        path: .apt-cache/${{ matrix.key }}/archives
+        key: apt-${{ runner.os }}-${{ runner.arch }}-${{ matrix.key }}-${{ hashFiles('.github/workflows/binary_size.yml') }}
+        restore-keys: |
+          apt-${{ runner.os }}-${{ runner.arch }}-${{ matrix.key }}-
+
+    - name: Install Packages
+      env:
+        EXTRA_PACKAGES: ${{ matrix.extra_packages }}
+        APT_CACHE_DIR: ${{ github.workspace }}/.apt-cache/${{ matrix.key }}
+      run: |
+        packages=(meson ninja-build)
+        if [ -n "$EXTRA_PACKAGES" ]; then
+          for pkg in $EXTRA_PACKAGES; do
+            packages+=("$pkg")
+          done
+        fi
+
+        missing_packages=()
+        for pkg in "${packages[@]}"; do
+          if ! dpkg-query -W -f='${Status}' "$pkg" 2>/dev/null | grep -q "install ok installed"; then
+            missing_packages+=("$pkg")
+          fi
+        done
+
+        if [ "${#missing_packages[@]}" -eq 0 ]; then
+          echo "All requested packages are already installed."
+          exit 0
+        fi
+
+        mkdir -p "$APT_CACHE_DIR/archives/partial"
+        echo "Installing missing packages: ${missing_packages[*]}"
+
+        sudo apt-get update -o Acquire::Retries=3
+        sudo apt-get install -y --no-install-recommends \
+          -o Acquire::Retries=3 \
+          -o Dir::Cache::archives="$APT_CACHE_DIR/archives" \
+          "${missing_packages[@]}"
+
+        sudo chown -R "$USER:$USER" "$APT_CACHE_DIR"
+
+    # Build both revisions, strip, and collect report files per matrix entry.
+    - name: Build and collect sizes
+      env:
+        CC: ${{ matrix.cc }}
+        CXX: ${{ matrix.cxx }}
+        C_ARGS: ${{ matrix.c_args }}
+        CPP_ARGS: ${{ matrix.cpp_args }}
+        C_LINK_ARGS: ${{ matrix.c_link_args }}
+        CPP_LINK_ARGS: ${{ matrix.cpp_link_args }}
+        MATRIX_KEY: ${{ matrix.key }}
+        MATRIX_LABEL: ${{ matrix.label }}
+      run: |
+        LIB_NAME="libthorvg-1.so.1.0.0"
+
+        build_thorvg() {
+          local src_dir="$1" build_dir="$2"
+          local meson_args=(
+            -Dloaders="all"
+            -Dengines="cpu, gl"
+            -Dsavers="all"
+            -Dbindings="capi"
+            -Dstatic=true
+            -Doptimization=s
+            -Derrorlogs=true
+          )
+          [ -n "$C_ARGS" ]        && meson_args+=("-Dc_args=$C_ARGS")
+          [ -n "$CPP_ARGS" ]      && meson_args+=("-Dcpp_args=$CPP_ARGS")
+          [ -n "$C_LINK_ARGS" ]   && meson_args+=("-Dc_link_args=$C_LINK_ARGS")
+          [ -n "$CPP_LINK_ARGS" ] && meson_args+=("-Dcpp_link_args=$CPP_LINK_ARGS")
+          echo "Compiler: $($CXX --version | head -1)"
+          echo "meson setup $build_dir $src_dir ${meson_args[*]}"
+          meson setup "$build_dir" "$src_dir" "${meson_args[@]}"
+          meson compile -C "$build_dir" -j $(nproc)
+        }
+
+        mkdir -p ci-report
+
+        PR_REF=$(git rev-parse HEAD)
+        BASE_REF=$(git merge-base HEAD origin/main)
+        echo "PR:   $PR_REF"
+        echo "BASE: $BASE_REF (baseline resolved from latest origin/main)"
+        git checkout "$BASE_REF"
+        build_thorvg . build-main
+
+        git checkout "$PR_REF"
+        build_thorvg . build-pr
+
+        # dump raw size output for debugging + report parsing
+        for tag_dir in pr:build-pr main:build-main; do
+          tag="${tag_dir%%:*}"
+          dir="${tag_dir##*:}"
+          lib="$dir/src/$LIB_NAME"
+          strip "$lib"
+          size "$lib" > "ci-report/${MATRIX_KEY}.${tag}.size"
+        done
+    - uses: actions/upload-artifact@v4
+      if: always()
+      with:
+        name: size-${{ matrix.key }}
+        path: ci-report/

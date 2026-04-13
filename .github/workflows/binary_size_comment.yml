@@ -1,0 +1,158 @@
+name: Binary Size Comment
+
+on:
+  workflow_run:
+    workflows: ["Binary Size"]
+    types: [completed]
+
+permissions:
+  pull-requests: write
+  actions: read
+
+jobs:
+  comment:
+    if: github.event.workflow_run.event == 'pull_request' 
+    runs-on: ubuntu-24.04
+    steps:
+    - name: Download size artifacts
+      uses: actions/download-artifact@v4
+      with:
+        path: ci-report
+        pattern: size-*
+        merge-multiple: true
+        run-id: ${{ github.event.workflow_run.id }}
+        github-token: ${{ secrets.GITHUB_TOKEN }}
+
+    - name: Render report
+      run: |
+        python3 -u - <<'PY'
+        import pathlib, re
+
+        root = pathlib.Path("ci-report")
+
+        SAFE_RE = re.compile(r"[^A-Za-z0-9 ._/+\-=(),:]")
+        def sanitize(s, limit=200):
+            s = s.replace("`", "'").replace("\n", " ")
+            s = SAFE_RE.sub("", s)
+            return s[:limit]
+
+        def parse_size_file(path):
+            try:
+                lines = path.read_text().splitlines()
+                cols = lines[1].split()
+                text, data = int(cols[0]), int(cols[1])
+                if text < 0 or data < 0:
+                    return None
+                return {"text": text, "data": data, "total": text + data}
+            except Exception:
+                return None
+
+        results = {}
+        for f in sorted(root.glob("*.size")):
+            key, tag = f.stem.rsplit(".", 1)
+            results.setdefault(sanitize(key, 64), {})[tag] = parse_size_file(f)
+
+        if not results:
+            pathlib.Path("report.md").write_text("## Binary Size Report\n\nNo data collected.\n")
+            raise SystemExit(0)
+
+        def delta(base, pr):
+            diff = pr - base
+            pct = (diff / base * 100) if base else 0
+            sign = "+" if diff > 0 else ""
+            return f"{sign}{diff} ({sign}{pct:.2f}%)"
+
+        lines = ["## Binary Size Report", ""]
+
+        lines += [
+            "| Config | main | PR | Delta |",
+            "|--------|-----:|---:|------:|",
+        ]
+        for key, sizes in sorted(results.items()):
+            m, p = sizes.get("main"), sizes.get("pr")
+            if not m or not p:
+                lines.append(f"| {key} | n/a | n/a | n/a |")
+                continue
+            lines.append(f"| {key} | {m['total']:,} | {p['total']:,} | {delta(m['total'], p['total'])} |")
+
+        lines += [
+            "", "<details><summary>Details</summary>", "",
+            "| Config | main text | main data | PR text | PR data | Delta |",
+            "|--------|----------:|----------:|--------:|--------:|------:|",
+        ]
+        for key, sizes in sorted(results.items()):
+            m, p = sizes.get("main"), sizes.get("pr")
+            if not m or not p:
+                lines.append(f"| {key} | n/a | n/a | n/a | n/a | n/a |")
+                continue
+            lines.append(
+                f"| {key} | {m['text']:,} | {m['data']:,} "
+                f"| {p['text']:,} | {p['data']:,} | {delta(m['total'], p['total'])} |"
+            )
+
+        lines += ["", "</details>"]
+
+        pathlib.Path("report.md").write_text("\n".join(lines) + "\n")
+        PY
+
+    - name: Post comment
+      uses: actions/github-script@v7
+      with:
+        script: |
+          const fs = require('fs');
+          const body = fs.readFileSync('report.md', 'utf8');
+
+          // Resolve the PR number from workflow metadata, with a head
+          // owner/branch lookup fallback so fork PRs are handled too.
+          const workflowRun = context.payload.workflow_run;
+
+          // Return the PR number from workflow_run.pull_requests when it is uniquely present.
+          function extractPayloadPrNumber() {
+            const prs = Array.isArray(workflowRun.pull_requests) ? workflowRun.pull_requests : [];
+            const numbers = prs
+              .map(pr => Number(pr.number))
+              .filter(n => Number.isInteger(n) && n > 0);
+            return numbers.length === 1 ? numbers[0] : null;
+          }
+
+          // Look up the open PR number by matching the workflow run's head owner and branch.
+          async function lookupPrNumberByHeadBranch() {
+            const headOwner = workflowRun.head_repository?.owner?.login;
+            const headBranch = workflowRun.head_branch;
+
+            if (!headOwner || !headBranch) {
+              return null;
+            }
+
+            const response = await github.rest.pulls.list({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              state: 'open',
+              head: `${headOwner}:${headBranch}`,
+              per_page: 10,
+            });
+
+            const prs = response.data;
+            if (prs.length === 1) return prs[0].number;
+            return null;
+          }
+
+          let prNumber = extractPayloadPrNumber();
+          if (!prNumber) {
+            prNumber = await lookupPrNumberByHeadBranch();
+          }
+
+          if (!Number.isInteger(prNumber) || prNumber <= 0) {
+            core.setFailed(
+              `Could not resolve a unique PR number for workflow run ${workflowRun.id} ` +
+              `(head=${workflowRun.head_repository?.full_name || 'unknown'}:${workflowRun.head_branch || 'unknown'})`
+            );
+            return;
+          }
+
+          await github.rest.issues.createComment({
+            issue_number: prNumber,
+            owner: context.repo.owner,
+            repo: context.repo.repo,
+            body
+          });
