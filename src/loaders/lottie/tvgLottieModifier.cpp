@@ -72,9 +72,7 @@ Point LottieRoundnessModifier::rounding(RenderPath& out, Point& prev, Point& cur
 
 RenderPath& LottieRoundnessModifier::modify(PathCommand* inCmds, uint32_t inCmdsCnt, Point* inPts, uint32_t inPtsCnt, Matrix* transform, RenderPath& out)
 {
-    buffer->clear();
-
-    auto& path = (next) ? *buffer : out;
+    auto& path = (next) ? RenderPath::scratch() : out;
     path.cmds.reserve(inCmdsCnt * 2);
     path.pts.reserve((uint32_t)(inPtsCnt * 1.5));
     auto pivot = path.pts.count;
@@ -139,9 +137,7 @@ void LottieRoundnessModifier::polystar(RenderPath& in, RenderPath& out, float ou
 {
     constexpr auto ROUNDED_POLYSTAR_MAGIC_NUMBER = 0.47829f;
 
-    buffer->clear();
-
-    auto& path = (next) ? *buffer : out;
+    auto& path = (next) ? RenderPath::scratch(): out;
 
     auto len = length(in.pts[1] - in.pts[2]);
     auto r = len > 0.0f ? ROUNDED_POLYSTAR_MAGIC_NUMBER * std::min(len * 0.5f, this->r) / len : 0.0f;
@@ -201,9 +197,7 @@ void LottieRoundnessModifier::polystar(RenderPath& in, RenderPath& out, float ou
 
 void LottieRoundnessModifier::rect(RenderPath& in, RenderPath& out, const Point& pos, const Point& size, float r, bool clockwise)
 {
-    buffer->clear();
-
-    auto& path = (next) ? *buffer : out;
+    auto& path = (next) ? RenderPath::scratch() : out;
 
     if (r == 0.0f) r = std::min(this->r, std::max(size.x, size.y) * 0.5f);
 
@@ -386,9 +380,7 @@ RenderPath& LottieOffsetModifier::modify(PathCommand* inCmds, uint32_t inCmdsCnt
         return area < 0.0f;
     };
 
-    buffer->clear();
-
-    auto& path = (next) ? *buffer : out;
+    auto& path = (next) ? RenderPath::scratch() : out;
     path.cmds.reserve(inCmdsCnt * 2);
     path.pts.reserve(inPtsCnt * (join == StrokeJoin::Round ? 4 : 2));
 
@@ -451,8 +443,7 @@ void LottieOffsetModifier::rect(RenderPath& in, RenderPath& out, const Point& po
 
 void LottieOffsetModifier::ellipse(RenderPath& in, RenderPath& out, const Point& center, const Point& radius, bool clockwise)
 {
-    buffer->clear();
-    auto& path = (next) ? *buffer : out;
+    auto& path = (next) ? RenderPath::scratch() : out;
     // we know this is the first request in the chain because other modifers would not trigger ellipse() call
     path.addCircle(center.x, center.y, radius.x + offset, radius.y + offset, clockwise);
     if (next) return next->ellipse(path, out, center, radius, clockwise);
@@ -502,9 +493,7 @@ Point LottiePuckerBloatModifier::center(const PathCommand* cmds, uint32_t cmdsCn
 
 void LottiePuckerBloatModifier::path(PathCommand* inCmds, uint32_t inCmdsCnt, Point* inPts, uint32_t inPtsCnt, Matrix* transform, RenderPath& out)
 {
-    buffer->clear();
-
-    auto& path = next ? *buffer : out;
+    auto& path = next ? RenderPath::scratch() : out;
 
     // LineTo segments are expanded to CubicTo, so pts capacity can grow up to 3x
     path.cmds.reserve(inCmdsCnt);

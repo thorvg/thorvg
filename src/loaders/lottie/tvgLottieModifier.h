@@ -38,11 +38,10 @@ struct LottieModifier
     };
 
     LottieModifier* next = nullptr;
-    RenderPath* buffer;
     Type type;
 
-    LottieModifier(RenderPath* buffer, Type type) :
-        buffer(buffer), type(type) {}
+    LottieModifier(Type type) :
+        type(type) {}
 
     virtual ~LottieModifier()
     {
@@ -62,8 +61,8 @@ struct LottieRoundnessModifier : LottieModifier
     static constexpr float ROUNDNESS_EPSILON = 1.0f;
     float r;
 
-    LottieRoundnessModifier(RenderPath* buffer, float r) :
-        LottieModifier(buffer, Roundness), r(r) {}
+    LottieRoundnessModifier(float r) :
+        LottieModifier(Roundness), r(r) {}
 
     void path(PathCommand* inCmds, uint32_t inCmdsCnt, Point* inPts, uint32_t inPtsCnt, Matrix* transform, RenderPath& out) override;
     void polystar(RenderPath& in, RenderPath& out, float outerRoundness, bool hasRoundness) override;
@@ -81,8 +80,8 @@ struct LottieOffsetModifier : LottieModifier
     float miterLimit;
     StrokeJoin join;
 
-    LottieOffsetModifier(RenderPath* buffer, float offset, float miter = 4.0f, StrokeJoin join = StrokeJoin::Round) :
-        LottieModifier(buffer, Offset), offset(offset), miterLimit(miter), join(join) {}
+    LottieOffsetModifier(float offset, float miter = 4.0f, StrokeJoin join = StrokeJoin::Round) :
+        LottieModifier(Offset), offset(offset), miterLimit(miter), join(join) {}
 
     void path(PathCommand* inCmds, uint32_t inCmdsCnt, Point* inPts, uint32_t inPtsCnt, Matrix* transform, RenderPath& out) override;
     void polystar(RenderPath& in, RenderPath& out, float outerRoundness, bool hasRoundness) override;
@@ -111,8 +110,8 @@ struct LottiePuckerBloatModifier : LottieModifier
 {
     float amount;
 
-    LottiePuckerBloatModifier(RenderPath* buffer, float amount) :
-        LottieModifier(buffer, PuckerBloat), amount(amount) {}
+    LottiePuckerBloatModifier(float amount) :
+        LottieModifier(PuckerBloat), amount(amount) {}
 
     void path(PathCommand* inCmds, uint32_t inCmdsCnt, Point* inPts, uint32_t inPtsCnt, Matrix* transform, RenderPath& out) override;
     void polystar(RenderPath& in, RenderPath& out, float outerRoundness, bool hasRoundness) override;

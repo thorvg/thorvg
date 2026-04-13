@@ -223,6 +223,12 @@ struct RenderPath
     Array<PathCommand> cmds;
     Array<Point> pts;
 
+    void dismiss()
+    {
+        cmds.data = nullptr;
+        pts.data = nullptr;
+    }
+
     bool empty() const
     {
         return pts.empty();
@@ -311,6 +317,8 @@ struct RenderPath
     bool bounds(const Matrix* m, BBox& box);
     void addCircle(float cx, float cy, float rx, float ry, bool cw);
     void addRect(float x, float y, float w, float h, float rx, float ry, bool cw);
+
+    static RenderPath& scratch();
 };
 
 struct RenderTrimPath

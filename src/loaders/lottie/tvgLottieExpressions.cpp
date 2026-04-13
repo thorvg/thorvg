@@ -703,7 +703,7 @@ static jerry_value_t _pointOnPath(const jerry_call_info_t* info, const jerry_val
     auto data = static_cast<ExpContent*>(jerry_object_get_native_ptr(info->function, &freeCb));
     auto pathset = static_cast<LottiePathSet*>(data->property);
     auto progress = _number(args[0]);
-    RenderPath out;
+    auto& out = RenderPath::scratch();
     (*pathset)(data->frameNo, out, nullptr, nullptr);
     return _point2d(out.point(progress));
 }
@@ -713,7 +713,7 @@ static jerry_value_t _tangentOnPath(const jerry_call_info_t* info, const jerry_v
     auto data = static_cast<ExpContent*>(jerry_object_get_native_ptr(info->function, &freeCb));
     auto pathset = static_cast<LottiePathSet*>(data->property);
     auto progress = _number(args[0]);
-    RenderPath out;
+    auto& out = RenderPath::scratch();
     (*pathset)(data->frameNo, out, nullptr, nullptr);
 
     auto a = out.point(std::max(0.0f, progress - 0.001f));
