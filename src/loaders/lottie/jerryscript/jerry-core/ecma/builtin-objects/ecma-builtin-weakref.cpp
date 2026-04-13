@@ -62,6 +62,7 @@ ecma_value_t
 ecma_builtin_weakref_dispatch_construct (const ecma_value_t *arguments_list_p, /**< arguments list */
                                          uint32_t arguments_list_len) /**< number of arguments */
 {
+  JERRY_DEFINE_CURRENT_CONTEXT ();
   if (arguments_list_len == 0 || !ecma_is_value_object (arguments_list_p[0]))
   {
     return ecma_raise_type_error (ECMA_ERR_WEAKREF_TARGET_MUST_BE_AN_OBJECT);
