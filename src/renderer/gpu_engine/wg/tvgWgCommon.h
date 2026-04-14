@@ -47,7 +47,7 @@ struct WgContext {
     WGPUTexture createTexStorage(uint32_t width, uint32_t height, WGPUTextureFormat format);
     WGPUTexture createTexAttachement(uint32_t width, uint32_t height, WGPUTextureFormat format, uint32_t sc);
     WGPUTextureView createTextureView(WGPUTexture texture);
-    bool allocateTexture(WGPUTexture& texture, uint32_t width, uint32_t height, WGPUTextureFormat format, void* data);
+    bool allocateTexture(WGPUTexture& texture, uint32_t width, uint32_t height, WGPUTextureFormat format, const void* data, uint32_t bytesPerRow, uint64_t dataSize);
 
     // release common objects
     void releaseTextureView(WGPUTextureView& textureView);

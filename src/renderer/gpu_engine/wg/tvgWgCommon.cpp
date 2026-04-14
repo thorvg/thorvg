@@ -63,23 +63,22 @@ WGPUSampler WgContext::createSampler(WGPUFilterMode filter, WGPUMipmapFilterMode
     return wgpuDeviceCreateSampler(device, &samplerDesc);
 }
 
-
-bool WgContext::allocateTexture(WGPUTexture& texture, uint32_t width, uint32_t height, WGPUTextureFormat format, void* data)
+bool WgContext::allocateTexture(WGPUTexture& texture, uint32_t width, uint32_t height, WGPUTextureFormat format, const void* data, uint32_t bytesPerRow, uint64_t dataSize)
 {
-    if ((texture) && (wgpuTextureGetWidth(texture) == width) && (wgpuTextureGetHeight(texture) == height)) {
+    if ((texture) && (wgpuTextureGetWidth(texture) == width) && (wgpuTextureGetHeight(texture) == height) && (wgpuTextureGetFormat(texture) == format)) {
         // update texture data
         const WGPUTexelCopyTextureInfo copyTextureInfo{ .texture = texture };
-        const WGPUTexelCopyBufferLayout copyBufferLayout{ .bytesPerRow = 4 * width, .rowsPerImage = height };
+        const WGPUTexelCopyBufferLayout copyBufferLayout{.bytesPerRow = bytesPerRow, .rowsPerImage = height};
         const WGPUExtent3D writeSize{ .width = width, .height = height, .depthOrArrayLayers = 1 };
-        wgpuQueueWriteTexture(queue, &copyTextureInfo, data, 4 * width * height, &copyBufferLayout, &writeSize);
+        wgpuQueueWriteTexture(queue, &copyTextureInfo, data, dataSize, &copyBufferLayout, &writeSize);
     } else {
         releaseTexture(texture);
         texture = createTexture(width, height, format);
         // update texture data
         const WGPUTexelCopyTextureInfo copyTextureInfo{ .texture = texture };
-        const WGPUTexelCopyBufferLayout copyBufferLayout{ .bytesPerRow = 4 * width, .rowsPerImage = height };
+        const WGPUTexelCopyBufferLayout copyBufferLayout{.bytesPerRow = bytesPerRow, .rowsPerImage = height};
         const WGPUExtent3D writeSize{ .width = width, .height = height, .depthOrArrayLayers = 1 };
-        wgpuQueueWriteTexture(queue, &copyTextureInfo, data, 4 * width * height, &copyBufferLayout, &writeSize);
+        wgpuQueueWriteTexture(queue, &copyTextureInfo, data, dataSize, &copyBufferLayout, &writeSize);
         return true;
     }
     return false;
