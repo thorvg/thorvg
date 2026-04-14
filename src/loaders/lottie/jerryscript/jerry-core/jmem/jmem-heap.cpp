@@ -81,6 +81,10 @@ void
 jmem_heap_init (void)
 {
 #if !JERRY_SYSTEM_ALLOCATOR
+#if !JERRY_CPOINTER_32_BIT
+  /* the maximum heap size for 16bit compressed pointers should be 512K */
+  JERRY_ASSERT (((UINT16_MAX + 1) << JMEM_ALIGNMENT_LOG) >= JMEM_HEAP_SIZE);
+#endif /* !JERRY_CPOINTER_32_BIT */
   JERRY_ASSERT ((uintptr_t) JERRY_HEAP_CONTEXT (area) % JMEM_ALIGNMENT == 0);
 
   JERRY_CONTEXT (jmem_heap_limit) = CONFIG_GC_LIMIT;

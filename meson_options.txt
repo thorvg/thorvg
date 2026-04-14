@@ -68,3 +68,9 @@ option('extra',
    choices: ['', 'opengl_es', 'lottie_exp', 'openmp'],
    value: ['lottie_exp', 'openmp'],
    description: 'Enable support for extra options')
+
+option('lottie_jerry_allocator',
+   type: 'combo',
+   choices: ['auto', 'internal', 'system'],
+   value: 'auto',
+   description: 'JerryScript allocator for Lottie expressions: auto enables system allocator only on supported 32-bit targets')

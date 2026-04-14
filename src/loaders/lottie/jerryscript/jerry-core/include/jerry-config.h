@@ -65,6 +65,20 @@
  */
 
 /**
+ * Specifies the compressed pointer representation
+ *
+ * Allowed values:
+ *  0: use 16 bit representation
+ *  1: use 32 bit representation
+ *
+ * Default value: 0
+ * For more details see: jmem/jmem.h
+ */
+#ifndef JERRY_CPOINTER_32_BIT
+#define JERRY_CPOINTER_32_BIT 0
+#endif /* !defined (JERRY_CPOINTER_32_BIT) */
+
+/**
  * Enable/Disable built-in error messages for error objects.
  *
  * Allowed values:

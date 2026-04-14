@@ -492,9 +492,16 @@ typedef uint8_t ecma_property_t; /**< ecma_property_types_t (3 bit) and ecma_pro
  */
 typedef struct
 {
+#if JERRY_CPOINTER_32_BIT
+  jmem_cpointer_t next_property_cp; /**< next cpointer */
+#endif /* JERRY_CPOINTER_32_BIT */
   ecma_property_t types[ECMA_PROPERTY_PAIR_ITEM_COUNT]; /**< two property type slot. The first represent
                                                          *   the type of this property (e.g. property pair) */
+#if JERRY_CPOINTER_32_BIT
+  uint16_t padding; /**< an unused value */
+#else /* !JERRY_CPOINTER_32_BIT */
   jmem_cpointer_t next_property_cp; /**< next cpointer */
+#endif /* JERRY_CPOINTER_32_BIT */
 } ecma_property_header_t;
 
 /**
@@ -512,7 +519,11 @@ typedef struct
 typedef union
 {
   ecma_value_t value; /**< value of a property */
+#if JERRY_CPOINTER_32_BIT
+  jmem_cpointer_t getter_setter_pair_cp; /**< cpointer to getter setter pair */
+#else /* !JERRY_CPOINTER_32_BIT */
   ecma_getter_setter_pointers_t getter_setter_pair; /**< getter setter pair */
+#endif /* JERRY_CPOINTER_32_BIT */
 } ecma_property_value_t;
 
 /**
@@ -826,7 +837,11 @@ typedef enum
 /**
  * Type of the descriptor field of an object
  */
+#if JERRY_CPOINTER_32_BIT
+typedef uint32_t ecma_object_descriptor_t;
+#else /* !JERRY_CPOINTER_32_BIT */
 typedef uint16_t ecma_object_descriptor_t;
+#endif /* JERRY_CPOINTER_32_BIT */
 
 /**
  * Bitmask for an ecma-object reference count field
@@ -1384,7 +1399,11 @@ typedef enum
  * Maximum value of the immediate part of a direct magic string.
  * Must be compatible with the immediate property name.
  */
+#if JERRY_CPOINTER_32_BIT
+#define ECMA_DIRECT_STRING_MAX_IMM 0x07ffffff
+#else /* !JERRY_CPOINTER_32_BIT */
 #define ECMA_DIRECT_STRING_MAX_IMM 0x0000ffff
+#endif /* JERRY_CPOINTER_32_BIT */
 
 /**
  * Shift for direct string value part in ecma_value_t.
@@ -1711,7 +1730,11 @@ typedef struct
 /**
  * Container of an LCache entry identifier
  */
+#if JERRY_CPOINTER_32_BIT
+typedef uint64_t ecma_lcache_hash_entry_id_t;
+#else /* !JERRY_CPOINTER_32_BIT */
 typedef uint32_t ecma_lcache_hash_entry_id_t;
+#endif /* JERRY_CPOINTER_32_BIT */
 
 /**
  * Entry of LCache hash table

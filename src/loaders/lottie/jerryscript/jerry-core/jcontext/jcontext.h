@@ -118,6 +118,9 @@ struct jerry_context_t
   ecma_global_object_t *global_object_p; /**< current global object */
   jmem_heap_free_t *jmem_heap_list_skip_p; /**< improves deallocation performance */
   jmem_pools_chunk_t *jmem_free_8_byte_chunk_p; /**< list of free eight byte pool chunks */
+#if JERRY_CPOINTER_32_BIT
+  jmem_pools_chunk_t *jmem_free_16_byte_chunk_p; /**< list of free sixteen byte pool chunks */
+#endif /* JERRY_CPOINTER_32_BIT */
 #if JERRY_BUILTIN_REGEXP
   re_compiled_code_t *re_cache[RE_CACHE_SIZE]; /**< regex cache */
 #endif /* JERRY_BUILTIN_REGEXP */

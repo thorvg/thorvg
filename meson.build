@@ -8,6 +8,7 @@ v_array = meson.project_version().split('.')
 vmaj = v_array[0]
 
 config_h = configuration_data()
+cpp_compiler = meson.get_compiler('cpp')
 
 src_dir = '/'.join(meson.current_source_dir().split('\\'))
 add_project_arguments('-DTEST_DIR="@0@/test/resources"'.format(src_dir),
@@ -130,10 +131,26 @@ endif
 
 # Extra
 lottie_exp = lottie_loader and get_option('extra').contains('lottie_exp')
+lottie_jerry_allocator = 'internal'
 
 if lottie_exp
     config_h.set10('THORVG_LOTTIE_EXPRESSIONS_SUPPORT', true)
+
+    lottie_jerry_allocator_opt = get_option('lottie_jerry_allocator')
+    lottie_jerry_supports_system_allocator = cpp_compiler.sizeof('void *') == 4
+
+    if lottie_jerry_allocator_opt == 'system'
+        if lottie_jerry_supports_system_allocator
+            lottie_jerry_allocator = 'system'
+        else
+            warning('Disabling the Lottie JerryScript system allocator on non-32-bit targets; JerryScript only supports this mode on 32-bit architectures.')
+        endif
+    elif lottie_jerry_allocator_opt == 'auto' and lottie_jerry_supports_system_allocator
+        lottie_jerry_allocator = 'system'
+    endif
 endif
+
+lottie_jerry_system_allocator = lottie_jerry_allocator == 'system'
 
 openmp = get_option('extra').contains('openmp')
 
@@ -241,4 +258,11 @@ summary(
   },
   section: 'Extra',
   bool_yn: true,
+)
+
+summary(
+  {
+    'Lottie Jerry Allocator': lottie_exp ? lottie_jerry_allocator : 'disabled',
+  },
+  section: 'Extra',
 )

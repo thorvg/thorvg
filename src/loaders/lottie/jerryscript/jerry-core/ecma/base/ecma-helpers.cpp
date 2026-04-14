@@ -554,8 +554,16 @@ ecma_create_named_accessor_property (ecma_object_t *object_p, /**< object */
   uint8_t type_and_flags = prop_attributes;
 
   ecma_property_value_t value;
+#if JERRY_CPOINTER_32_BIT
+  ecma_getter_setter_pointers_t *getter_setter_pair_p;
+  getter_setter_pair_p = (ecma_getter_setter_pointers_t *) jmem_pools_alloc (sizeof (ecma_getter_setter_pointers_t));
+  ECMA_SET_POINTER (getter_setter_pair_p->getter_cp, get_p);
+  ECMA_SET_POINTER (getter_setter_pair_p->setter_cp, set_p);
+  ECMA_SET_NON_NULL_POINTER (value.getter_setter_pair_cp, getter_setter_pair_p);
+#else /* !JERRY_CPOINTER_32_BIT */
   ECMA_SET_POINTER (value.getter_setter_pair.getter_cp, get_p);
   ECMA_SET_POINTER (value.getter_setter_pair.setter_cp, set_p);
+#endif /* JERRY_CPOINTER_32_BIT */
 
   return ecma_create_property (object_p, name_p, type_and_flags, value, out_prop_p);
 } /* ecma_create_named_accessor_property */
@@ -926,7 +934,11 @@ ecma_named_data_property_assign_value (ecma_object_t *obj_p, /**< object */
 ecma_getter_setter_pointers_t *
 ecma_get_named_accessor_property (const ecma_property_value_t *prop_value_p) /**< property value reference */
 {
+#if JERRY_CPOINTER_32_BIT
+  return ECMA_GET_NON_NULL_POINTER (ecma_getter_setter_pointers_t, prop_value_p->getter_setter_pair_cp);
+#else /* !JERRY_CPOINTER_32_BIT */
   return (ecma_getter_setter_pointers_t *) &prop_value_p->getter_setter_pair;
+#endif /* JERRY_CPOINTER_32_BIT */
 } /* ecma_get_named_accessor_property */
 
 /**
@@ -939,7 +951,13 @@ ecma_set_named_accessor_property_getter (ecma_object_t *object_p, /**< the prope
 {
   ecma_assert_object_contains_the_property (object_p, prop_value_p, false);
 
+#if JERRY_CPOINTER_32_BIT
+  ecma_getter_setter_pointers_t *getter_setter_pair_p;
+  getter_setter_pair_p = ECMA_GET_NON_NULL_POINTER (ecma_getter_setter_pointers_t, prop_value_p->getter_setter_pair_cp);
+  ECMA_SET_POINTER (getter_setter_pair_p->getter_cp, getter_p);
+#else /* !JERRY_CPOINTER_32_BIT */
   ECMA_SET_POINTER (prop_value_p->getter_setter_pair.getter_cp, getter_p);
+#endif /* JERRY_CPOINTER_32_BIT */
 } /* ecma_set_named_accessor_property_getter */
 
 /**
@@ -952,7 +970,13 @@ ecma_set_named_accessor_property_setter (ecma_object_t *object_p, /**< the prope
 {
   ecma_assert_object_contains_the_property (object_p, prop_value_p, false);
 
+#if JERRY_CPOINTER_32_BIT
+  ecma_getter_setter_pointers_t *getter_setter_pair_p;
+  getter_setter_pair_p = ECMA_GET_NON_NULL_POINTER (ecma_getter_setter_pointers_t, prop_value_p->getter_setter_pair_cp);
+  ECMA_SET_POINTER (getter_setter_pair_p->setter_cp, setter_p);
+#else /* !JERRY_CPOINTER_32_BIT */
   ECMA_SET_POINTER (prop_value_p->getter_setter_pair.setter_cp, setter_p);
+#endif /* JERRY_CPOINTER_32_BIT */
 } /* ecma_set_named_accessor_property_setter */
 
 #if JERRY_MODULE_SYSTEM
@@ -974,10 +998,17 @@ ecma_property_to_reference (ecma_property_t *property_p) /**< data or reference 
 
   jmem_cpointer_tag_t offset = (jmem_cpointer_tag_t) (((uintptr_t) property_p) & 0x1);
 
+#if JERRY_CPOINTER_32_BIT
+  if (offset != 0)
+  {
+    --referenced_value_p;
+  }
+#else /* !JERRY_CPOINTER_32_BIT */
   if (offset == 0)
   {
     ++referenced_value_p;
   }
+#endif /* JERRY_CPOINTER_32_BIT */
 
   JERRY_ASSERT ((((uintptr_t) referenced_value_p) & (((uintptr_t) 1 << JMEM_ALIGNMENT_LOG) - 1)) == 0);
 
@@ -997,10 +1028,17 @@ ecma_get_property_value_from_named_reference (ecma_property_value_t *reference_p
   ecma_value_t value = reference_p->value;
   reference_p = ECMA_GET_NON_NULL_POINTER_FROM_POINTER_TAG (ecma_property_value_t, value);
 
+#if JERRY_CPOINTER_32_BIT
+  if (ECMA_GET_FIRST_BIT_FROM_POINTER_TAG (value))
+  {
+    ++reference_p;
+  }
+#else /* !JERRY_CPOINTER_32_BIT */
   if (!ECMA_GET_FIRST_BIT_FROM_POINTER_TAG (value))
   {
     --reference_p;
   }
+#endif /* JERRY_CPOINTER_32_BIT */
 
   return reference_p;
 } /* ecma_get_property_value_from_named_reference */
