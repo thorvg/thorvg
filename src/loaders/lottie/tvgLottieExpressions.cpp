@@ -63,29 +63,39 @@ static const char* EXP_EFFECT= "effect";
 
 /**
  * external magic strings for the per-frame hot path (buildProperty, buildLayer, buildTransform, bm_rt).
- * magic pool: sorted by length, then lexicographically. null-separated,
- *             must be static, because 'jerry_register_magic_strings' does not copy
- *             update MAGIC_POOL_COUNT if this pool changes
- * pointers/lengths are computed once at init and stored in .bss (zero binary cost).
+ * magic pool: sorted by length, then lexicographically. packed in a single static blob,
+ *             because 'jerry_register_magic_strings' does not copy the string data.
+ * lengths/count are generated from a single list at compile time; pointers are built once at init.
  */
+#define TVG_LOTTIE_MAGIC_STRING_LIST(X) \
+    X("key") \
+    X("comp") X("name") X("time") \
+    X("index") X("layer") X("scale") X("speed") X("value") X("width") \
+    X("$bm_rt") X("effect") X("height") X("parent") X("toComp") X("wiggle") \
+    X("content") X("enabled") X("inPoint") X("numKeys") X("opacity") \
+    X("duration") X("hasAudio") X("hasVideo") X("outPoint") X("position") X("rotation") X("thisComp") X("velocity") \
+    X("hasParent") X("numLayers") X("startTime") X("thisLayer") X("timeRemap") X("transform") \
+    X("nearestKey") \
+    X("anchorPoint") X("audioActive") X("speedAtTime") X("valueAtTime") \
+    X("thisProperty") \
+    X("frameDuration") X("propertyIndex") \
+    X("velocityAtTime")
+
+#define TVG_LOTTIE_MAGIC_POOL_ENTRY(str) str
 static constexpr const char _magicPool[] =
-    "key\0" /* length: 3 */
-    "comp\0" "name\0" "time\0" /* length: 4 */
-    "index\0" "layer\0" "scale\0" "speed\0" "value\0" "width\0" /* length: 5 */
-    "$bm_rt\0" "effect\0" "height\0" "parent\0" "toComp\0" "wiggle\0" /* length: 6 */
-    "content\0" "enabled\0" "inPoint\0" "numKeys\0" "opacity\0" /* length: 7 */
-    "duration\0" "hasAudio\0" "hasVideo\0" "outPoint\0" "position\0" "rotation\0" "thisComp\0" "velocity\0" /* length: 8 */
-    "hasParent\0" "numLayers\0" "startTime\0" "thisLayer\0" "timeRemap\0" "transform\0" /* length: 9 */
-    "nearestKey\0" /* length: 10 */
-    "anchorPoint\0" "audioActive\0" "speedAtTime\0" "valueAtTime\0" /* length: 11 */
-    "thisProperty\0" /* length: 12 */
-    "frameDuration\0" "propertyIndex\0" /* length: 13 */
-    "velocityAtTime"; /* length: 14 */
+    TVG_LOTTIE_MAGIC_STRING_LIST(TVG_LOTTIE_MAGIC_POOL_ENTRY);
+#undef TVG_LOTTIE_MAGIC_POOL_ENTRY
 
-#define MAGIC_POOL_COUNT 44
+#define TVG_LOTTIE_MAGIC_LENGTH_ENTRY(str) (jerry_length_t)(sizeof(str) - 1),
+static constexpr jerry_length_t _magicLengths[] = {
+    TVG_LOTTIE_MAGIC_STRING_LIST(TVG_LOTTIE_MAGIC_LENGTH_ENTRY)
+};
+#undef TVG_LOTTIE_MAGIC_LENGTH_ENTRY
 
-static const jerry_char_t* _magicStrings[MAGIC_POOL_COUNT];
-static jerry_length_t _magicLengths[MAGIC_POOL_COUNT];
+#define MAGIC_STRING_COUNT (sizeof(_magicLengths) / sizeof(_magicLengths[0]))
+static const jerry_char_t* _magicStrings[MAGIC_STRING_COUNT];
+
+#undef TVG_LOTTIE_MAGIC_STRING_LIST
 
 static LottieExpressions* exps = nullptr;   //singleton instance engine
 
@@ -1513,15 +1523,13 @@ LottieExpressions::LottieExpressions()
 {
     jerry_init(JERRY_INIT_EMPTY);
 
-    //build pointer/length arrays from the magic pool
+    //build magic string arrays from the magic pool
     auto p = _magicPool;
-    for (uint32_t i = 0; i < MAGIC_POOL_COUNT; ++i) {
+    for (uint32_t i = 0; i < MAGIC_STRING_COUNT; ++i) {
         _magicStrings[i] = (const jerry_char_t*)p;
-        auto len = strlen(p);
-        _magicLengths[i] = (jerry_length_t)len;
-        p += len + 1;
+        p += _magicLengths[i];
     }
-    jerry_register_magic_strings(_magicStrings, MAGIC_POOL_COUNT, _magicLengths);
+    jerry_register_magic_strings(_magicStrings, MAGIC_STRING_COUNT, _magicLengths);
 
     _buildMath(buildGlobal());
 }
