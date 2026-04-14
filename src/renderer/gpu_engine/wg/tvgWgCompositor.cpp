@@ -673,7 +673,7 @@ void WgCompositor::drawImage(WgContext& context, WgRenderDataPicture* renderData
 {
     assert(renderData);
     assert(renderPassEncoder);
-    if (renderData->viewport.invalid()) return;
+    if (renderData->viewport.invalid() || !renderData->imageBindGroup) return;
     WgRenderSettings& settings = renderData->renderSettings;
     wgpuRenderPassEncoderSetScissorRect(renderPassEncoder, renderData->viewport.x(), renderData->viewport.y(), renderData->viewport.w(), renderData->viewport.h());
     // draw stencil
@@ -685,7 +685,7 @@ void WgCompositor::drawImage(WgContext& context, WgRenderDataPicture* renderData
     wgpuRenderPassEncoderSetStencilReference(renderPassEncoder, 0);
     wgpuRenderPassEncoderSetBindGroup(renderPassEncoder, 0, bindGroupViewMat, 0, nullptr);
     wgpuRenderPassEncoderSetBindGroup(renderPassEncoder, 1, stageBufferPaint[settings.bindGroupInd], 0, nullptr);
-    wgpuRenderPassEncoderSetBindGroup(renderPassEncoder, 2, renderData->imageData.bindGroup, 0, nullptr);
+    wgpuRenderPassEncoderSetBindGroup(renderPassEncoder, 2, renderData->imageBindGroup, 0, nullptr);
     wgpuRenderPassEncoderSetPipeline(renderPassEncoder, pipelines.image);
     drawMeshImage(context, &renderData->meshData);
 }
@@ -695,7 +695,7 @@ void WgCompositor::blendImage(WgContext& context, WgRenderDataPicture* renderDat
 {
     assert(renderData);
     assert(renderPassEncoder);
-    if (renderData->viewport.invalid()) return;
+    if (renderData->viewport.invalid() || !renderData->imageBindGroup) return;
     WgRenderSettings& settings = renderData->renderSettings;
     wgpuRenderPassEncoderSetScissorRect(renderPassEncoder, renderData->viewport.x(), renderData->viewport.y(), renderData->viewport.w(), renderData->viewport.h());
     // copy current render target data to dst target
@@ -713,7 +713,7 @@ void WgCompositor::blendImage(WgContext& context, WgRenderDataPicture* renderDat
     wgpuRenderPassEncoderSetStencilReference(renderPassEncoder, 0);
     wgpuRenderPassEncoderSetBindGroup(renderPassEncoder, 0, bindGroupViewMat, 0, nullptr);
     wgpuRenderPassEncoderSetBindGroup(renderPassEncoder, 1, stageBufferPaint[settings.bindGroupInd], 0, nullptr);
-    wgpuRenderPassEncoderSetBindGroup(renderPassEncoder, 2, renderData->imageData.bindGroup, 0, nullptr);
+    wgpuRenderPassEncoderSetBindGroup(renderPassEncoder, 2, renderData->imageBindGroup, 0, nullptr);
     wgpuRenderPassEncoderSetBindGroup(renderPassEncoder, 3, targetTemp0.bindGroupTexture, 0, nullptr);
     wgpuRenderPassEncoderSetPipeline(renderPassEncoder, pipelines.image_blend[blendMethodInd]);
     drawMeshImage(context, &renderData->meshData);
@@ -724,7 +724,7 @@ void WgCompositor::clipImage(WgContext& context, WgRenderDataPicture* renderData
 {
     assert(renderData);
     assert(renderPassEncoder);
-    if (renderData->viewport.invalid()) return;
+    if (renderData->viewport.invalid() || !renderData->imageBindGroup) return;
     WgRenderSettings& settings = renderData->renderSettings;
     wgpuRenderPassEncoderSetScissorRect(renderPassEncoder, renderData->viewport.x(), renderData->viewport.y(), renderData->viewport.w(), renderData->viewport.h());
     // setup stencil rules
@@ -741,7 +741,7 @@ void WgCompositor::clipImage(WgContext& context, WgRenderDataPicture* renderData
     wgpuRenderPassEncoderSetStencilReference(renderPassEncoder, 0);
     wgpuRenderPassEncoderSetBindGroup(renderPassEncoder, 0, bindGroupViewMat, 0, nullptr);
     wgpuRenderPassEncoderSetBindGroup(renderPassEncoder, 1, stageBufferPaint[settings.bindGroupInd], 0, nullptr);
-    wgpuRenderPassEncoderSetBindGroup(renderPassEncoder, 2, renderData->imageData.bindGroup, 0, nullptr);
+    wgpuRenderPassEncoderSetBindGroup(renderPassEncoder, 2, renderData->imageBindGroup, 0, nullptr);
     wgpuRenderPassEncoderSetPipeline(renderPassEncoder, pipelines.image);
     drawMeshImage(context, &renderData->meshData);
 }

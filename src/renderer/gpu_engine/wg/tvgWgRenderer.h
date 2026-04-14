@@ -24,6 +24,7 @@
 #define _TVG_WG_RENDERER_H_
 
 #include "tvgWgRenderTask.h"
+#include "tvgWgTextureMgr.h"
 
 struct WgRenderer : RenderMethod
 {
@@ -89,6 +90,7 @@ private:
     WgRenderDataShapePool mRenderDataShapePool;
     WgRenderDataPicturePool mRenderDataPicturePool;
     WgRenderDataEffectParamsPool mRenderDataEffectParamsPool;
+    WgTextureMgr mTextures;
 
     // rendering context
     WgContext mContext;
