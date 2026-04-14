@@ -26,6 +26,7 @@
 #include "tvgCommon.h"
 #include "tvgWgTessellator.h"
 #include "tvgWgRenderData.h"
+#include "tvgWgTextureMgr.h"
 #include "tvgWgShaderTypes.h"
 
 //***********************************************************************
@@ -40,8 +41,10 @@ void WgImageData::update(WgContext& context, const RenderSurface* surface, Filte
         texFormat = WGPUTextureFormat_RGBA8Unorm;
     if (surface->cs == ColorSpace::Grayscale8)
         texFormat = WGPUTextureFormat_R8Unorm;
+    auto bytesPerRow = surface->stride * CHANNEL_SIZE(surface->cs);
+    auto dataSize = static_cast<uint64_t>(bytesPerRow) * surface->h;
     // allocate new texture handle
-    bool texHandleChanged = context.allocateTexture(texture, surface->w, surface->h, texFormat, surface->data);
+    bool texHandleChanged = context.allocateTexture(texture, surface->w, surface->h, texFormat, surface->data, bytesPerRow, dataSize);
     // update texture view of texture handle was changed
     if (texHandleChanged) {
         context.releaseTextureView(textureView);
@@ -60,7 +63,8 @@ void WgImageData::update(WgContext& context, const Fill* fill)
     WgShaderTypeGradientData gradientData;
     gradientData.update(fill);
     // allocate new texture handle
-    bool texHandleChanged = context.allocateTexture(texture, WG_TEXTURE_GRADIENT_SIZE, 1, WGPUTextureFormat_RGBA8Unorm, gradientData.data);
+    auto bytesPerRow = WG_TEXTURE_GRADIENT_SIZE * sizeof(uint32_t);
+    bool texHandleChanged = context.allocateTexture(texture, WG_TEXTURE_GRADIENT_SIZE, 1, WGPUTextureFormat_RGBA8Unorm, gradientData.data, bytesPerRow, bytesPerRow);
     // update texture view of texture handle was changed
     if (texHandleChanged) {
         context.releaseTextureView(textureView);
@@ -310,17 +314,39 @@ void WgRenderDataShapePool::release(WgContext& context)
 // WgRenderDataPicture
 //***********************************************************************
 
-void WgRenderDataPicture::updateSurface(WgContext& context, const RenderSurface* surface, const Matrix& transform, FilterMethod filter, bool updateTexture)
+void WgRenderDataPicture::updateSurface(const RenderSurface* surface, const Matrix& transform)
 {
     meshData.imageBox(surface->w, surface->h, transform);
-    if (updateTexture) imageData.update(context, surface, filter);
 }
 
+void WgRenderDataPicture::setImage(WGPUTexture texture, WGPUBindGroup bindGroup, const RenderSurface* surface, FilterMethod filter, uint16_t stamp)
+{
+    imageTexture = texture;
+    imageBindGroup = bindGroup;
+    imageSource = texture ? surface : nullptr;
+    imageFilter = filter;
+    imageStamp = texture ? stamp : 0;
+}
+
+void WgRenderDataPicture::releaseTexture(WgTextureMgr& textures, WgContext& context)
+{
+    if (imageTexture && imageStamp == textures.stamp) textures.release(context, imageSource, imageFilter, imageTexture);
+    clearImage();
+}
+
+void WgRenderDataPicture::clearImage()
+{
+    imageTexture = nullptr;
+    imageBindGroup = nullptr;
+    imageSource = nullptr;
+    imageFilter = FilterMethod::Bilinear;
+    imageStamp = 0;
+}
 
 void WgRenderDataPicture::release(WgContext& context)
 {
     renderSettings.release(context);
-    imageData.release(context);
+    clearImage();
     WgRenderDataPaint::release(context);
 }
 

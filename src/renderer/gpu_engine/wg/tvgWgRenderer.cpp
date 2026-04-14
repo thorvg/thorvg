@@ -37,6 +37,7 @@ void WgRenderer::release()
     if (!mContext.queue) return;
 
     disposeObjects();
+    mTextures.clear(mContext);
 
     // clear render data paint pools
     mRenderDataShapePool.release(mContext);
@@ -67,7 +68,9 @@ void WgRenderer::disposeObjects()
         if (renderData->type() == Type::Shape) {
             mRenderDataShapePool.free(mContext, (WgRenderDataShape*)renderData);
         } else {
-            mRenderDataPicturePool.free(mContext, (WgRenderDataPicture*)renderData);
+            auto* renderDataPicture = (WgRenderDataPicture*)renderData;
+            renderDataPicture->releaseTexture(mTextures, mContext);
+            mRenderDataPicturePool.free(mContext, renderDataPicture);
         }
     }
     mDisposeRenderDatas.clear();
@@ -177,6 +180,12 @@ RenderData WgRenderer::prepare(const RenderShape& rshape, RenderData data, const
 RenderData WgRenderer::prepare(RenderSurface* surface, RenderData data, const Matrix& transform, const Array<RenderData>& clips, uint8_t opacity, FilterMethod filter, RenderUpdateFlag flags)
 {
     auto renderDataPicture = data ? (WgRenderDataPicture*)data : mRenderDataPicturePool.allocate(mContext);
+    auto cacheStale = renderDataPicture->imageTexture && (renderDataPicture->imageStamp != mTextures.stamp);
+    auto updateGeometry = !data || (flags & (RenderUpdateFlag::Transform | RenderUpdateFlag::Path | RenderUpdateFlag::Image));
+    auto refreshTexture = ((flags & (RenderUpdateFlag::Path | RenderUpdateFlag::Image)) != RenderUpdateFlag::None);
+    auto sourceChanged = (renderDataPicture->imageSource != surface);
+    auto filterChanged = (renderDataPicture->imageFilter != filter);
+    auto needsImage = !renderDataPicture->imageTexture || sourceChanged || filterChanged || refreshTexture || cacheStale;
 
     // update paint settings
     renderDataPicture->viewport = vport;
@@ -186,9 +195,13 @@ RenderData WgRenderer::prepare(RenderSurface* surface, RenderData data, const Ma
     }
 
     // update image data
-    if (!data || (flags & (RenderUpdateFlag::Transform | RenderUpdateFlag::Path | RenderUpdateFlag::Image))) {
-        auto updateTexture = !data || ((flags & (RenderUpdateFlag::Path | RenderUpdateFlag::Image)) != RenderUpdateFlag::None);
-        renderDataPicture->updateSurface(mContext, surface, transform, filter, updateTexture);
+    if (updateGeometry) {
+        renderDataPicture->updateSurface(surface, transform);
+    }
+    if (needsImage) {
+        renderDataPicture->releaseTexture(mTextures, mContext);
+        auto* entry = mTextures.retain(mContext, surface, filter, refreshTexture);
+        renderDataPicture->setImage(entry->texture, entry->bindGroup, surface, filter, mTextures.stamp);
     }
 
     if (flags & RenderUpdateFlag::Clip) renderDataPicture->updateClips(clips);
