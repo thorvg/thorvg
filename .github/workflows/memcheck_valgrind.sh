@@ -7,10 +7,10 @@ fi
 
 if [[ "$GITHUB_EVENT_NAME" == "pull_request" ]]; then
     echo "Run Valgrind"
-    echo "valgrind --leak-check=yes ./tvgUnitTests"
+    echo "env LIBGL_ALWAYS_SOFTWARE=1 valgrind --leak-check=yes ./tvgUnitTests"
     cd ./build/test
 
-    valgrind --leak-check=yes ./tvgUnitTests > memcheck_valgrind.txt 2>&1
+    env LIBGL_ALWAYS_SOFTWARE=1 valgrind --leak-check=yes ./tvgUnitTests > memcheck_valgrind.txt 2>&1
 
 
     PAYLOAD_MEMCHECK=`cat memcheck_valgrind.txt`
@@ -24,7 +24,7 @@ if [[ "$GITHUB_EVENT_NAME" == "pull_request" ]]; then
     ERROR_NUMBER=$(echo "$PAYLOAD_MEMCHECK" | grep -oP 'ERROR SUMMARY:\s*\K[0-9]+(?=\s*errors)')
     if [[ $ERROR_NUMBER != 0 || $DEFINITELY_LOST_NUMBER != 0 || $PAYLOAD_MEMCHECK == *"Invalid read "* || $PAYLOAD_MEMCHECK == *"Invalid write "* ]]; then
         OUTPUT+=$'\n**MEMCHECK(VALGRIND) RESULT**:\n'
-        OUTPUT+=$'\n`valgrind --leak-check=yes ./tvgUnitTests`\n'
+        OUTPUT+=$'\n`env LIBGL_ALWAYS_SOFTWARE=1 valgrind --leak-check=yes ./tvgUnitTests`\n'
         OUTPUT+=$'\n```\n'
         OUTPUT+="$PAYLOAD_MEMCHECK"
         OUTPUT+=$'\n```\n' 
@@ -42,4 +42,3 @@ if [[ "$GITHUB_EVENT_NAME" == "pull_request" ]]; then
         curl -s -S -H "Authorization: token $GITHUB_TOKEN" --header "Content-Type: application/vnd.github.VERSION.text+json" --data "$PAYLOAD" "$COMMENTS_URL"
     fi
 fi
-
