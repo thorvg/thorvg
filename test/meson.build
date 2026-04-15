@@ -9,6 +9,25 @@ if host_machine.system() == 'darwin'
     test_dep += declare_dependency(link_args: ['-framework', 'Cocoa', '-framework', 'IOKit'])
 endif
 
+if gl_engine and not get_option('extra').contains('opengl_es') and ['linux', 'darwin'].contains(host_machine.system())
+    sdl2_dep = dependency('sdl2', required: false)
+    if sdl2_dep.found()
+        gl_test_dep = disabler()
+
+        if host_machine.system() == 'darwin'
+            gl_test_dep = declare_dependency(link_args: ['-framework', 'OpenGL'])
+        else
+            gl_test_dep = dependency('gl', required: false)
+        endif
+
+        if gl_test_dep.found()
+            test_dep += gl_test_dep
+            test_compiler_flags += ['-DTHORVG_GL_TEST_SUPPORT']
+        endif
+        test_dep += sdl2_dep
+    endif
+endif
+
 test_file = [
     'testAccessor.cpp',
     'testAnimation.cpp',
@@ -25,6 +44,10 @@ test_file = [
     'testSwEngine.cpp',
     'testText.cpp'
 ]
+
+if gl_engine and test_compiler_flags.contains('-DTHORVG_GL_TEST_SUPPORT')
+    test_file += ['testGlWindow.cpp', 'testGlCanvas.cpp', 'testGlEngine.cpp']
+endif
 
 tests = executable('tvgUnitTests',
     test_file,
