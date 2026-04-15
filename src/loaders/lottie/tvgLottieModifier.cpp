@@ -31,6 +31,10 @@ static bool _colinear(const Point* p)
     return tvg::zero(*p - *(p + 1)) && tvg::zero(*(p + 2) - *(p + 3));
 }
 
+static bool _sharpCorner(const Point* p)
+{
+    return tvg::zero(*p - *(p + 1)) && tvg::zero(*(p + 1) - *(p + 2));
+}
 
 LottieModifier* LottieModifier::decorate(LottieModifier* next)
 {
@@ -55,7 +59,7 @@ LottieModifier* LottieModifier::decorate(LottieModifier* next)
 /* LottieRoundnessModifier                                              */
 /************************************************************************/
 
-Point LottieRoundnessModifier::rounding(RenderPath& out, const Point& prev, const Point& curr, const Point& next, float r)
+Point LottieRoundnessModifier::roundLineCorner(RenderPath& out, const Point& prev, const Point& curr, const Point& next, float r)
 {
     auto lenPrev = length(prev - curr);
     auto rPrev = lenPrev > 0.0f ? 0.5f * std::min(lenPrev * 0.5f, r) / lenPrev : 0.0f;
@@ -68,6 +72,21 @@ Point LottieRoundnessModifier::rounding(RenderPath& out, const Point& prev, cons
     auto ret = curr - 2.0f * dNext;
     out.cubicTo(curr - dPrev, curr - dNext, ret);
     return ret;
+}
+
+Point LottieRoundnessModifier::roundCurveCorner(RenderPath& path, const Point& prev, const Point& ctrl1, const Point& curr, const Point& next, bool rounded, Point roundTo)
+{
+    auto lenPrev = length(prev - curr);
+    auto tPrev = lenPrev > 0.0f ? std::min(lenPrev * 0.5f, r) / lenPrev : 0.0f;
+    auto arcStart = tvg::lerp(curr, prev, tPrev);
+    path.cubicTo(rounded ? roundTo : ctrl1, arcStart, arcStart);
+
+    auto lenNext = length(next - curr);
+    auto tNext = lenNext > 0.0f ? std::min(lenNext * 0.5f, r) / lenNext : 0.0f;
+    auto arcEnd = tvg::lerp(curr, next, tNext);
+    path.cubicTo(tvg::lerp(arcStart, curr, 0.5f), tvg::lerp(arcEnd, curr, 0.5f), arcEnd);
+
+    return arcEnd;
 }
 
 RenderPath& LottieRoundnessModifier::modify(const RenderPath& in, RenderPath& out, Matrix* transform)
@@ -90,17 +109,26 @@ RenderPath& LottieRoundnessModifier::modify(const RenderPath& in, RenderPath& ou
                 break;
             }
             case PathCommand::CubicTo: {
-                if (iCmds < in.cmds.count - 1 && _colinear(&in.pts[iPts - 1])) {
-                    auto& prev = in.pts[iPts - 1];
-                    auto& curr = in.pts[iPts + 2];
-                    if (in.cmds[iCmds + 1] == PathCommand::CubicTo && _colinear(&in.pts[iPts + 2])) {
-                        roundTo = rounding(path, prev, curr, in.pts[iPts + 5], r);
-                        iPts += 3;
-                        rounded = true;
-                        continue;
-                    } else if (in.cmds[iCmds + 1] == PathCommand::Close) {
-                        roundTo = rounding(path, prev, curr, in.pts[2], r);
-                        path.pts[startIndex] = path.pts.last();
+                auto hasNext = iCmds < in.cmds.count - 1;
+                auto nextCmd = hasNext ? in.cmds[iCmds + 1] : PathCommand::MoveTo;
+                if (hasNext) {
+                    if (_colinear(&in.pts[iPts - 1])) {
+                        auto& prev = in.pts[iPts - 1];
+                        auto& curr = in.pts[iPts + 2];
+                        if (nextCmd == PathCommand::CubicTo && tvg::zero(in.pts[iPts + 2] - in.pts[iPts + 3])) {
+                            roundTo = roundLineCorner(path, prev, curr, in.pts[iPts + 5], r);
+                            iPts += 3;
+                            rounded = true;
+                            continue;
+                        } else if (nextCmd == PathCommand::Close) {
+                            roundTo = roundLineCorner(path, prev, curr, in.pts[2], r);
+                            path.pts[startIndex] = path.pts.last();
+                            iPts += 3;
+                            rounded = true;
+                            continue;
+                        }
+                    } else if (nextCmd == PathCommand::CubicTo && _sharpCorner(&in.pts[iPts + 1])) {
+                        roundTo = roundCurveCorner(path, in.pts[iPts - 1], in.pts[iPts], in.pts[iPts + 2], in.pts[iPts + 5], rounded, roundTo);
                         iPts += 3;
                         rounded = true;
                         continue;
