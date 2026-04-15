@@ -132,12 +132,19 @@ static jerry_value_t _color(RGB32 rgb)
 }
 
 
+static float _asNumber(jerry_value_t value, float fallback = 0.0f)
+{
+    return jerry_value_is_number(value) ? jerry_value_as_number(value) : fallback;
+}
+
+
 static float _number(jerry_value_t obj)
 {
     if (jerry_value_is_number(obj)) return jerry_value_as_number(obj);
+    if (!jerry_value_is_object(obj)) return 0.0f;
 
     auto val = jerry_object_get_index(obj, 0);
-    auto ret = jerry_value_as_number(val);
+    auto ret = _asNumber(val);
     jerry_value_free(val);
     return ret;
 }
@@ -145,9 +152,12 @@ static float _number(jerry_value_t obj)
 
 static Point _point2d(jerry_value_t obj)
 {
+    if (jerry_value_is_number(obj)) return {jerry_value_as_number(obj), 0.0f};
+    if (!jerry_value_is_object(obj)) return {0.0f, 0.0f};
+
     auto v1 = jerry_object_get_index(obj, 0);
     auto v2 = jerry_object_get_index(obj, 1);
-    Point pt = {jerry_value_as_number(v1), jerry_value_as_number(v2)};
+    Point pt = {_asNumber(v1), _asNumber(v2)};
     jerry_value_free(v1);
     jerry_value_free(v2);
     return pt;
@@ -576,7 +586,7 @@ static jerry_value_t _interp(float t, const jerry_value_t args[], int argsCnt)
 static jerry_value_t _linear(const jerry_call_info_t* info, const jerry_value_t args[], const jerry_length_t argsCnt)
 {
     auto t = _number(args[0]);
-    return _interp(t, args, jerry_value_as_uint32(argsCnt));
+    return _interp(t, args, (int) argsCnt);
 }
 
 
@@ -584,7 +594,7 @@ static jerry_value_t _ease(const jerry_call_info_t* info, const jerry_value_t ar
 {
     auto t = _number(args[0]);
     t = (t < 0.5f) ? (4 * t * t * t) : (1.0f - powf(-2.0f * t + 2.0f, 3) * 0.5f);
-    return _interp(t, args, jerry_value_as_uint32(argsCnt));
+    return _interp(t, args, (int) argsCnt);
 }
 
 
@@ -593,7 +603,7 @@ static jerry_value_t _easeIn(const jerry_call_info_t* info, const jerry_value_t 
 {
     auto t = _number(args[0]);
     t = t * t * t;
-    return _interp(t, args, jerry_value_as_uint32(argsCnt));
+    return _interp(t, args, (int) argsCnt);
 }
 
 
@@ -601,7 +611,7 @@ static jerry_value_t _easeOut(const jerry_call_info_t* info, const jerry_value_t
 {
     auto t = _number(args[0]);
     t = 1.0f - powf(1.0f - t, 3);
-    return _interp(t, args, jerry_value_as_uint32(argsCnt));
+    return _interp(t, args, (int) argsCnt);
 }
 
 
