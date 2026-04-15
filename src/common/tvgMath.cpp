@@ -412,20 +412,7 @@ Point Bezier::at(float t) const
 float Bezier::angle(float t) const
 {
     if (t < 0 || t > 1) return 0;
-
-    //derivate
-    // p'(t) = 3 * (-(1-2t+t^2) * p0 + (1 - 4 * t + 3 * t^2) * p1 + (2 * t - 3 *
-    // t^2) * p2 + t^2 * p3)
-    float mt = 1.0f - t;
-    float d = t * t;
-    float a = -mt * mt;
-    float b = 1 - 4 * t + 3 * d;
-    float c = 2 * t - 3 * d;
-
-    Point pt ={a * start.x + b * ctrl1.x + c * ctrl2.x + d * end.x, a * start.y + b * ctrl1.y + c * ctrl2.y + d * end.y};
-    pt.x *= 3;
-    pt.y *= 3;
-
+    Point pt = derivative(t);
     return rad2deg(tvg::atan2(pt.y, pt.x));
 }
 
@@ -474,6 +461,24 @@ bool Bezier::flatten() const
     if (diff1_x < diff2_x) diff1_x = diff2_x;
     if (diff1_y < diff2_y) diff1_y = diff2_y;
     return (diff1_x + diff1_y <= 0.5f);
+}
+
+
+Point Bezier::derivative(float t) const {
+    //derivate
+    // p'(t) = 3 * (-(1-2t+t^2) * p0 + (1 - 4 * t + 3 * t^2) * p1 + (2 * t - 3 *
+    // t^2) * p2 + t^2 * p3)
+    float mt = 1.0f - t;
+    float d = t * t;
+    float a = -mt * mt;
+    float b = 1 - 4 * t + 3 * d;
+    float c = 2 * t - 3 * d;
+
+    Point pt ={a * start.x + b * ctrl1.x + c * ctrl2.x + d * end.x, a * start.y + b * ctrl1.y + c * ctrl2.y + d * end.y};
+    pt.x *= 3;
+    pt.y *= 3;
+
+    return pt;
 }
 
 

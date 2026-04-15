@@ -72,6 +72,7 @@ struct LottieRoundnessModifier : LottieModifier
 private:
     RenderPath& modify(const RenderPath& in, RenderPath& out, Matrix* transform);
     Point rounding(RenderPath& out, const Point& prev, const Point& curr, const Point& next, float r);
+    Point roundCorner(RenderPath& path, const Point& prev, const Point& ctrl1, const Point& ctrl2, const Point& curr, const Point& next, bool rounded, Point roundTo);
 };
 
 struct LottieOffsetModifier : LottieModifier

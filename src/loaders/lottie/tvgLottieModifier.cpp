@@ -32,6 +32,12 @@ static bool _colinear(const Point* p)
 }
 
 
+static bool _sharpCorner(const Point* p)
+{
+    return tvg::zero(*p - *(p + 1)) && tvg::zero(*(p + 1) - *(p + 2));
+}
+
+
 LottieModifier* LottieModifier::decorate(LottieModifier* next)
 {
     // let the offset modifer to the end in this chain
@@ -58,9 +64,9 @@ LottieModifier* LottieModifier::decorate(LottieModifier* next)
 Point LottieRoundnessModifier::rounding(RenderPath& out, const Point& prev, const Point& curr, const Point& next, float r)
 {
     auto lenPrev = length(prev - curr);
-    auto rPrev = lenPrev > 0.0f ? 0.5f * std::min(lenPrev * 0.5f, r) / lenPrev : 0.0f;
+    auto rPrev = lenPrev > 0.0f ? 0.5519f * std::min(lenPrev * 0.5f, r) / lenPrev : 0.0f;
     auto lenNext = length(next - curr);
-    auto rNext = lenNext > 0.0f ? 0.5f * std::min(lenNext * 0.5f, r) / lenNext : 0.0f;
+    auto rNext = lenNext > 0.0f ? 0.5519f * std::min(lenNext * 0.5f, r) / lenNext : 0.0f;
     auto dPrev = rPrev * (curr - prev);
     auto dNext = rNext * (curr - next);
 
@@ -68,6 +74,50 @@ Point LottieRoundnessModifier::rounding(RenderPath& out, const Point& prev, cons
     auto ret = curr - 2.0f * dNext;
     out.cubicTo(curr - dPrev, curr - dNext, ret);
     return ret;
+}
+
+
+Point LottieRoundnessModifier::roundCorner(RenderPath& path, const Point& prev, const Point& ctrl1, const Point& ctrl2, const Point& curr, const Point& next, bool rounded, Point roundTo)
+{
+    auto lenPrev = length(prev - curr);
+    auto arcDist = std::min(lenPrev * 0.5f, r);
+
+    Bezier bez{prev, ctrl1, ctrl2, curr};
+
+    float t = 0.5f;
+    auto solveTNewton = [&t](const Bezier& bez, const Point& corner, float arcDist) -> float {
+        constexpr float NEWTON_EPSILON = 1e-6f;
+
+        for (int i = 0; i < 5; ++i) {
+            Point b_t = bez.at(t);
+            Point b_prime = bez.derivative(t);
+
+            float dist = length(b_t - corner);
+            float f = dist - arcDist;
+
+            // f'(t) = (B(t) - C) · B'(t) / |B(t) - C|
+            float f_prime = dot(b_t - corner, b_prime) / (dist + NEWTON_EPSILON);
+            float t_new = t - f / (f_prime + NEWTON_EPSILON);
+
+            if (abs(t_new - t) < NEWTON_EPSILON) break;
+            t = tvg::clamp(t_new, 0.0f, 1.0f);
+        }
+        return t;
+    };
+
+    if (arcDist > 0.0f) t = solveTNewton(bez, curr, arcDist);
+
+    Bezier left;
+    bez.split(t, left);
+    path.cubicTo(rounded ? roundTo : left.ctrl1, left.ctrl2, left.end);
+
+    auto lenNext = length(next - curr);
+    auto rNext = lenNext > 0.0f ? 0.5519f * std::min(lenNext * 0.5f, r) / lenNext : 0.0f;
+    auto dNext = rNext * (curr - next);
+    auto arcEnd = curr - 2.0f * dNext;
+    path.cubicTo(left.end + (curr - left.end) * 0.5519f, curr - dNext, arcEnd);
+
+    return arcEnd;
 }
 
 RenderPath& LottieRoundnessModifier::modify(const RenderPath& in, RenderPath& out, Matrix* transform)
@@ -93,7 +143,7 @@ RenderPath& LottieRoundnessModifier::modify(const RenderPath& in, RenderPath& ou
                 if (iCmds < in.cmds.count - 1 && _colinear(&in.pts[iPts - 1])) {
                     auto& prev = in.pts[iPts - 1];
                     auto& curr = in.pts[iPts + 2];
-                    if (in.cmds[iCmds + 1] == PathCommand::CubicTo && _colinear(&in.pts[iPts + 2])) {
+                    if (in.cmds[iCmds + 1] == PathCommand::CubicTo && tvg::zero(in.pts[iPts + 2] - in.pts[iPts + 3])) {
                         roundTo = rounding(path, prev, curr, in.pts[iPts + 5], r);
                         iPts += 3;
                         rounded = true;
@@ -105,6 +155,17 @@ RenderPath& LottieRoundnessModifier::modify(const RenderPath& in, RenderPath& ou
                         rounded = true;
                         continue;
                     }
+                } else if (iCmds < in.cmds.count - 1 &&
+                        _sharpCorner(&in.pts[iPts + 1]) &&
+                        in.cmds[iCmds + 1] == PathCommand::CubicTo) {
+                    auto& prev = in.pts[iPts - 1];
+                    auto& curr = in.pts[iPts + 2];
+                    auto& next = in.pts[iPts + 5];
+
+                    roundTo = roundCorner(path, prev, in.pts[iPts], in.pts[iPts + 1], curr, next, rounded, roundTo);
+                    iPts += 3;
+                    rounded = true;
+                    continue;
                 }
                 path.cubicTo(rounded ? roundTo : in.pts[iPts], in.pts[iPts + 1], in.pts[iPts + 2]);
                 iPts += 3;

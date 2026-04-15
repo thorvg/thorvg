@@ -461,6 +461,7 @@ struct Bezier
     Point at(float t) const;
     float angle(float t) const;
     bool flatten() const;
+    Point derivative(float t) const;
     uint32_t segments() const;
 
     Bezier operator*(const Matrix& m);
