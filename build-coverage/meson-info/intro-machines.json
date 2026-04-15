@@ -1,0 +1,35 @@
+{
+  "host": {
+    "system": "darwin",
+    "cpu_family": "aarch64",
+    "cpu": "aarch64",
+    "endian": "little",
+    "kernel": "xnu",
+    "subsystem": "macos",
+    "is_64_bit": true,
+    "exe_suffix": "",
+    "object_suffix": "o"
+  },
+  "build": {
+    "system": "darwin",
+    "cpu_family": "aarch64",
+    "cpu": "aarch64",
+    "endian": "little",
+    "kernel": "xnu",
+    "subsystem": "macos",
+    "is_64_bit": true,
+    "exe_suffix": "",
+    "object_suffix": "o"
+  },
+  "target": {
+    "system": "darwin",
+    "cpu_family": "aarch64",
+    "cpu": "aarch64",
+    "endian": "little",
+    "kernel": "xnu",
+    "subsystem": "macos",
+    "is_64_bit": true,
+    "exe_suffix": "",
+    "object_suffix": "o"
+  }
+}

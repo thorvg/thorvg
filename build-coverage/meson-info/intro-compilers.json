@@ -1,0 +1,72 @@
+{
+  "host": {
+    "cpp": {
+      "id": "clang",
+      "exelist": [
+        "c++"
+      ],
+      "linker_exelist": [
+        "c++"
+      ],
+      "file_suffixes": [
+        "cpp",
+        "cppm",
+        "cc",
+        "cp",
+        "cxx",
+        "c++",
+        "hh",
+        "hp",
+        "hpp",
+        "ipp",
+        "hxx",
+        "h++",
+        "ino",
+        "ixx",
+        "CPP",
+        "C",
+        "HPP",
+        "H"
+      ],
+      "default_suffix": "cpp",
+      "version": "21.0.0",
+      "full_version": "Apple clang version 21.0.0 (clang-2100.0.123.102)",
+      "linker_id": "ld64"
+    }
+  },
+  "build": {
+    "cpp": {
+      "id": "clang",
+      "exelist": [
+        "c++"
+      ],
+      "linker_exelist": [
+        "c++"
+      ],
+      "file_suffixes": [
+        "cpp",
+        "cppm",
+        "cc",
+        "cp",
+        "cxx",
+        "c++",
+        "hh",
+        "hp",
+        "hpp",
+        "ipp",
+        "hxx",
+        "h++",
+        "ino",
+        "ixx",
+        "CPP",
+        "C",
+        "HPP",
+        "H"
+      ],
+      "default_suffix": "cpp",
+      "version": "21.0.0",
+      "full_version": "Apple clang version 21.0.0 (clang-2100.0.123.102)",
+      "linker_id": "ld64"
+    }
+  }
+}

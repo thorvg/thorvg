@@ -1,0 +1,25 @@
+[
+  {
+    "cmd": [
+      "/Users/noh/Desktop/Repo/THORVG/thorvg/build-coverage/test/tvgUnitTests",
+      "--success"
+    ],
+    "env": {
+      "LD_LIBRARY_PATH": "/Users/noh/Desktop/Repo/THORVG/thorvg/build-coverage/src",
+      "DYLD_LIBRARY_PATH": "/Users/noh/Desktop/Repo/THORVG/thorvg/build-coverage/src"
+    },
+    "name": "Unit Tests",
+    "workdir": null,
+    "timeout": 30,
+    "suite": [
+      "thorvg"
+    ],
+    "is_parallel": true,
+    "priority": 0,
+    "protocol": "exitcode",
+    "depends": [
+      "9f86d08@@tvgUnitTests@exe"
+    ],
+    "extra_paths": []
+  }
+]

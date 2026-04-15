@@ -1,0 +1,7 @@
+{
+  "/Users/noh/Desktop/Repo/THORVG/thorvg/build-coverage/src/libthorvg-1.1.dylib": "/opt/homebrew/lib/libthorvg-1.1.dylib",
+  "/Users/noh/Desktop/Repo/THORVG/thorvg/build-coverage/meson-private/thorvg-1.pc": "/opt/homebrew/lib/pkgconfig/thorvg-1.pc",
+  "/Users/noh/Desktop/Repo/THORVG/thorvg/inc/thorvg.h": "/opt/homebrew/include/thorvg-1/thorvg.h",
+  "/Users/noh/Desktop/Repo/THORVG/thorvg/src/loaders/lottie/thorvg_lottie.h": "/opt/homebrew/include/thorvg-1/thorvg_lottie.h",
+  "libthorvg-1.dylib": "/opt/homebrew/lib/libthorvg-1.dylib"
+}

@@ -1,0 +1,65 @@
+[
+  {
+    "name": "openmp",
+    "type": "system",
+    "version": "5.1",
+    "compile_args": [
+      "-Xpreprocessor",
+      "-fopenmp",
+      "-I/opt/homebrew/opt/libomp/include"
+    ],
+    "link_args": [
+      "-Xpreprocessor",
+      "-fopenmp",
+      "/opt/homebrew/opt/libomp/lib/libomp.dylib"
+    ],
+    "include_directories": [],
+    "sources": [],
+    "extra_files": [],
+    "dependencies": [],
+    "depends": [],
+    "meson_variables": [
+      "omp_dep"
+    ]
+  },
+  {
+    "name": "wgpu_native",
+    "type": "pkgconfig",
+    "version": "0",
+    "compile_args": [
+      "-I/opt/homebrew/include"
+    ],
+    "link_args": [
+      "/opt/homebrew/lib/libwgpu_native.dylib"
+    ],
+    "include_directories": [],
+    "sources": [],
+    "extra_files": [],
+    "dependencies": [],
+    "depends": [],
+    "meson_variables": [
+      "wgpu_dep"
+    ]
+  },
+  {
+    "name": "sdl2",
+    "type": "pkgconfig",
+    "version": "2.32.10",
+    "compile_args": [
+      "-I/opt/homebrew/include",
+      "-I/opt/homebrew/include/SDL2",
+      "-D_THREAD_SAFE"
+    ],
+    "link_args": [
+      "/opt/homebrew/lib/libSDL2.dylib"
+    ],
+    "include_directories": [],
+    "sources": [],
+    "extra_files": [],
+    "dependencies": [],
+    "depends": [],
+    "meson_variables": [
+      "sdl2_dep"
+    ]
+  }
+]

@@ -1,0 +1,11 @@
+prefix=/opt/homebrew
+includedir=${prefix}/include
+libdir=${prefix}/lib
+
+Name: libthorvg
+Description: A Thor library for rendering vector graphics
+Version: 1.0.0
+Requires.private: wgpu_native
+Libs: -L${libdir} -lthorvg-1
+Libs.private: -Xpreprocessor -fopenmp /opt/homebrew/opt/libomp/lib/libomp.dylib -lpthread
+Cflags: -I${includedir}/thorvg-1

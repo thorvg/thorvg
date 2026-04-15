@@ -1,0 +1,32 @@
+{
+  "targets": {
+    "/Users/noh/Desktop/Repo/THORVG/thorvg/build-coverage/src/libthorvg-1.1.dylib": {
+      "destination": "{libdir_shared}/libthorvg-1.1.dylib",
+      "tag": "runtime",
+      "subproject": null,
+      "install_rpath": null,
+      "build_rpaths": [
+        "/opt/homebrew/lib"
+      ]
+    }
+  },
+  "data": {
+    "/Users/noh/Desktop/Repo/THORVG/thorvg/build-coverage/meson-private/thorvg-1.pc": {
+      "destination": "{libdir}/pkgconfig/thorvg-1.pc",
+      "tag": "devel",
+      "subproject": null
+    }
+  },
+  "headers": {
+    "/Users/noh/Desktop/Repo/THORVG/thorvg/inc/thorvg.h": {
+      "destination": "{includedir}/thorvg-1/thorvg.h",
+      "tag": "devel",
+      "subproject": null
+    },
+    "/Users/noh/Desktop/Repo/THORVG/thorvg/src/loaders/lottie/thorvg_lottie.h": {
+      "destination": "{includedir}/thorvg-1/thorvg_lottie.h",
+      "tag": "devel",
+      "subproject": null
+    }
+  }
+}

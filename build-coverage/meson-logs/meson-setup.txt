@@ -1,0 +1,74 @@
+The Meson build system
+Version: 1.10.2
+Source dir: /Users/noh/Desktop/Repo/THORVG/thorvg
+Build dir: /Users/noh/Desktop/Repo/THORVG/thorvg/build-coverage
+Build type: native build
+Project name: thorvg
+Project version: 1.0.0
+C++ compiler for the host machine: c++ (clang 21.0.0 "Apple clang version 21.0.0 (clang-2100.0.123.102)")
+C++ linker for the host machine: c++ ld64 1266.8
+Host machine cpu family: aarch64
+Host machine cpu: aarch64
+Configuring config.h using configuration
+Dependency openmp found: YES 5.1 (cached)
+Dependency wgpu_native found: YES 0 (cached)
+Library pthread found: YES
+Found pkg-config: YES (/opt/homebrew/bin/pkg-config) 2.5.1
+Dependency sdl2 found: YES 2.32.10 (cached)
+Build targets in project: 2
+../meson.build:236: WARNING: Trying to use ['none'] sanitizer on Clang with b_lundef.
+This will probably not work.
+Try setting b_lundef to false instead.
+
+thorvg 1.0.0
+
+    Build Type        : debug
+    Prefix            : /opt/homebrew
+    File I/O          : YES
+    Multi-Tasking     : YES
+    Partial Rendering : YES
+    SIMD Instruction  : none
+    Log Message       : YES
+    Tests             : YES
+
+  Raster Engine
+    CPU               : YES
+    GL                : YES
+    WebGPU            : YES
+
+  Loader
+    SVG               : YES
+    TTF               : YES
+    LOTTIE            : YES
+    PNG               : YES
+    JPG               : YES
+    WEBP              : YES
+
+  Saver
+    GIF               : YES
+
+  Binding
+    CAPI              : NO
+
+  Tool
+    Svg2Png           : NO
+    Lottie2Gif        : NO
+
+  Extra
+    Lottie Expressions: YES
+    OpenMP            : YES
+    OpenGL Variant    : OpenGL
+
+  User defined options
+    b_coverage        : false
+    buildtype         : debug
+    engines           : cpu,gl,wg
+    errorlogs         : True
+    loaders           : all
+    log               : true
+    optimization      : 0
+    savers            : all
+    static            : true
+    tests             : true
+
+Found ninja-1.13.2 at /opt/homebrew/bin/ninja

@@ -1,0 +1,14 @@
+[options]
+b_coverage = false
+buildtype = debug
+optimization = 0
+log = true
+loaders = all
+savers = all
+engines = cpu,gl,wg
+tests = true
+static = true
+errorlogs = True
+
+[properties]
+

@@ -1,0 +1,10 @@
+{
+  "version": "1.0.0",
+  "descriptive_name": "thorvg",
+  "license": [
+    "MIT"
+  ],
+  "license_files": [],
+  "subproject_dir": "subprojects",
+  "subprojects": []
+}
