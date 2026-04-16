@@ -168,7 +168,8 @@ enum struct SvgStyleFlags
     StrokeMiterlimit = 0x20000,
     StrokeDashOffset = 0x40000,
     Filter = 0x80000,
-    BlendMode = 0x100000
+    BlendMode = 0x100000,
+    TextAnchor = 0x200000
 };
 
 constexpr bool operator&(SvgStyleFlags a, SvgStyleFlags b)
@@ -519,6 +520,7 @@ struct SvgStyleProperty
     int opacity;
     SvgColor color;
     char* cssClass;
+    float textAnchor;  // 0=start, 0.5=middle, 1=end
     SvgStyleFlags flags;
     SvgStyleFlags flagsImportance; //indicates the importance of the flag - if set, higher priority is applied (https://drafts.csswg.org/css-cascade-4/#importance)
     bool curColorSet;

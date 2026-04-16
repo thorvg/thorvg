@@ -919,6 +919,7 @@ static Paint* _textBuildHelper(SvgParserContext& ctx, const SvgNode* node, const
     }
     if (xmlSpace == SvgXmlSpace::None) xmlSpace = SvgXmlSpace::Default;
     auto processedText = _processText(textNode->text, xmlSpace);
+    text->align(node->style->textAnchor, 0.0f);
     text->text(processedText);
     tvg::free(processedText);
 
