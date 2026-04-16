@@ -1078,6 +1078,14 @@ static void _handleMixBlendModeAttr(TVG_UNUSED SvgParserContext* ctx, SvgNode* n
     node->style->flags |= SvgStyleFlags::BlendMode;
 }
 
+static void _handleTextAnchorAttr(TVG_UNUSED SvgParserContext* ctx, SvgNode* node, const char* value)
+{
+    node->style->flags |= SvgStyleFlags::TextAnchor;
+    if (STR_AS(value, "middle")) node->style->textAnchor = 0.5f;
+    else if (STR_AS(value, "end")) node->style->textAnchor = 1.0f;
+    else node->style->textAnchor = 0.0f;
+}
+
 static void _handleCssClassAttr(SvgParserContext* ctx, SvgNode* node, const char* value)
 {
     auto cssClass = &node->style->cssClass;
@@ -1121,9 +1129,8 @@ static constexpr struct
     STYLE_DEF(display, Display, SvgStyleFlags::Display),
     STYLE_DEF(paint-order, PaintOrder, SvgStyleFlags::PaintOrder),
     STYLE_DEF(filter, Filter, SvgStyleFlags::Filter),
-    STYLE_DEF(mix-blend-mode, MixBlendMode, SvgStyleFlags::BlendMode)
-};
-
+    STYLE_DEF(mix-blend-mode, MixBlendMode, SvgStyleFlags::BlendMode),
+    STYLE_DEF(text-anchor, TextAnchor, SvgStyleFlags::TextAnchor)};
 
 static SvgXmlSpace _toXmlSpace(const char* str)
 {
@@ -2912,6 +2919,7 @@ static void _styleInherit(SvgStyleProperty* child, const SvgStyleProperty* paren
     if (!(child->stroke.flags & SvgStrokeFlags::Cap)) child->stroke.cap = parent->stroke.cap;
     if (!(child->stroke.flags & SvgStrokeFlags::Join)) child->stroke.join = parent->stroke.join;
     if (!(child->stroke.flags & SvgStrokeFlags::Miterlimit)) child->stroke.miterlimit = parent->stroke.miterlimit;
+    if (!(child->flags & SvgStyleFlags::TextAnchor)) child->textAnchor = parent->textAnchor;
 }
 
 
@@ -2928,6 +2936,7 @@ static void _styleCopy(SvgStyleProperty* to, const SvgStyleProperty* from)
     if (from->flags & SvgStyleFlags::PaintOrder) to->paintOrder = from->paintOrder;
     if (from->flags & SvgStyleFlags::Display) to->display = from->display;
     if (from->flags & SvgStyleFlags::BlendMode) to->blendMode = from->blendMode;
+    if (from->flags & SvgStyleFlags::TextAnchor) to->textAnchor = from->textAnchor;
 
     //Fill
     to->fill.flags = (to->fill.flags | from->fill.flags);
