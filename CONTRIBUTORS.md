@@ -9,6 +9,7 @@
 - Sergii Liebodkin @SergeyLebedkin
 - Jinny You @tinyjin
 - Jay WenJie @wenjieshen
+- SoonGeon Noh @Nor-s
 
 ## Contributors
 - Prudhvi Raj Vasireddi @prudhvirajv
@@ -47,7 +48,6 @@
 - Benjamin Halko @BenjaminHalko
 - Benson Muite @bkmgit
 - kkocdko @kkocdko
-- SoonGeon Noh @Nor-s
 - Giseong Ji @jiggyjiggy
 - KunYoung Park @kunyoungparkk
 - Wang SiMiao 王思淼 @wangsimiao1
