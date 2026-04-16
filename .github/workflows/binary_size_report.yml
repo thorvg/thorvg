@@ -65,21 +65,10 @@ jobs:
         lines = ["## Binary Size Report", ""]
 
         lines += [
-            "| Config | main | PR | Delta |",
-            "|--------|-----:|---:|------:|",
-        ]
-        for key, sizes in sorted(results.items()):
-            m, p = sizes.get("main"), sizes.get("pr")
-            if not m or not p:
-                lines.append(f"| {key} | n/a | n/a | n/a |")
-                continue
-            lines.append(f"| {key} | {m['total']:,} | {p['total']:,} | {delta(m['total'], p['total'])} |")
-
-        lines += [
-            "", "<details><summary>Details</summary>", "",
             "| Config | main text | main data | PR text | PR data | Delta |",
             "|--------|----------:|----------:|--------:|--------:|------:|",
         ]
+
         for key, sizes in sorted(results.items()):
             m, p = sizes.get("main"), sizes.get("pr")
             if not m or not p:
@@ -89,8 +78,6 @@ jobs:
                 f"| {key} | {m['text']:,} | {m['data']:,} "
                 f"| {p['text']:,} | {p['data']:,} | {delta(m['total'], p['total'])} |"
             )
-
-        lines += ["", "</details>"]
 
         pathlib.Path("report.md").write_text("\n".join(lines) + "\n")
         PY
