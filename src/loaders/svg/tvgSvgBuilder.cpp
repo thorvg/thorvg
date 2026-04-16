@@ -889,18 +889,17 @@ static char* _processText(const char* text, SvgXmlSpace space)
     return processed;
 }
 
-static Paint* _textBuildHelper(SvgParserContext& ctx, const SvgNode* node, const Box& vBox, const string& svgPath)
+static Text* _buildText(const SvgTextNode* textNode, SvgXmlSpace xmlSpace, const Matrix* transform)
 {
-    auto textNode = &node->node.text;
     if (!textNode->text) return nullptr;
 
     auto text = Text::gen();
 
     Matrix textTransform;
-    if (node->transform) textTransform = *node->transform;
+    if (transform) textTransform = *transform;
     else textTransform = tvg::identity();
 
-    translateR(&textTransform, {node->node.text.x, node->node.text.y - textNode->fontSize});
+    translateR(&textTransform, {textNode->x, textNode->y - textNode->fontSize});
     text->transform(textTransform);
 
     //TODO: handle def values of font and size as used in a system?
@@ -910,22 +909,99 @@ static Paint* _textBuildHelper(SvgParserContext& ctx, const SvgNode* node, const
     }
     text->size(size);
 
-    // Handle xml:space
-    auto xmlSpace = node->xmlSpace;
-    auto parent = node->parent;
-    while (xmlSpace == SvgXmlSpace::None && parent) {
-        xmlSpace = parent->xmlSpace;
-        parent = parent->parent;
-    }
-    if (xmlSpace == SvgXmlSpace::None) xmlSpace = SvgXmlSpace::Default;
     auto processedText = _processText(textNode->text, xmlSpace);
-    text->align(node->style->textAnchor, 0.0f);
     text->text(processedText);
     tvg::free(processedText);
 
-    _applyTextFill(node->style, text, vBox);
+    return text;
+}
 
-    auto p = _applyFilter(ctx, text, node, vBox, svgPath);
+static bool _hasPositionedTspan(const SvgNode* node, int depth)
+{
+    if (depth > 2192) {
+        TVGERR("SVG", "Infinite recursive call - stopped after %d calls! Svg file may be incorrectly formatted.", depth);
+        return true;
+    }
+    ARRAY_FOREACH(p, node->child)
+    {
+        if ((*p)->type != SvgNodeType::Tspan) continue;
+        auto& textNode = (*p)->node.text;
+        if (textNode.text) return true;
+        if (_hasPositionedTspan(*p, depth + 1)) return true;
+    }
+    return false;
+}
+
+static void _buildTspanScene(SvgParserContext& ctx, const SvgNode* node, Scene* scene, const Box& vBox, const string& svgPath, int depth)
+{
+    if (depth > 2192) {
+        TVGERR("SVG", "Infinite recursive call - stopped after %d calls! Svg file may be incorrectly formatted.", depth);
+        return;
+    }
+    ARRAY_FOREACH(p, node->child)
+    {
+        auto child = *p;
+        if (child->type != SvgNodeType::Tspan) continue;
+
+        auto textNode = child->node.text;
+        if (textNode.text) {
+            auto xmlSpace = child->xmlSpace;
+            for (auto n = child->parent; n; n = n->parent) {
+                if (textNode.x == FLT_MAX) textNode.x = n->node.text.x;
+                if (textNode.y == FLT_MAX) textNode.y = n->node.text.y;
+                if (textNode.fontSize <= 0.0f) textNode.fontSize = n->node.text.fontSize;
+                if (!textNode.fontFamily) textNode.fontFamily = n->node.text.fontFamily;
+                if (xmlSpace == SvgXmlSpace::None) xmlSpace = n->xmlSpace;
+                if (n->type == SvgNodeType::Text) break;
+            }
+            if (xmlSpace == SvgXmlSpace::None) xmlSpace = SvgXmlSpace::Default;
+
+            auto text = _buildText(&textNode, xmlSpace, nullptr);
+            if (text) {
+                text->align(child->style->textAnchor, 0.0f);
+                _applyTextFill(child->style, text, vBox);
+                auto paint = _applyFilter(ctx, text, child, vBox, svgPath);
+                paint = _applyComposition(ctx, paint, child, vBox, svgPath);
+                paint = _applyBlend(paint, child);
+                scene->add(paint);
+            }
+        }
+        _buildTspanScene(ctx, child, scene, vBox, svgPath, depth + 1);
+    }
+}
+
+static Paint* _textBuildHelper(SvgParserContext& ctx, const SvgNode* node, const Box& vBox, const string& svgPath)
+{
+    auto textNode = &node->node.text;
+
+    // Handle xml:space
+    auto xmlSpace = node->xmlSpace;
+    for (auto n = node->parent; xmlSpace == SvgXmlSpace::None && n; n = n->parent)
+        xmlSpace = n->xmlSpace;
+    if (xmlSpace == SvgXmlSpace::None) xmlSpace = SvgXmlSpace::Default;
+
+    if (!_hasPositionedTspan(node, 0)) {
+        auto text = _buildText(textNode, xmlSpace, node->transform);
+        if (!text) return nullptr;
+        text->align(node->style->textAnchor, 0.0f);
+        _applyTextFill(node->style, text, vBox);
+        auto p = _applyFilter(ctx, text, node, vBox, svgPath);
+        p = _applyComposition(ctx, p, node, vBox, svgPath);
+        return _applyBlend(p, node);
+    }
+
+    auto scene = Scene::gen();
+    if (node->transform) scene->transform(*node->transform);
+
+    if (auto text = _buildText(textNode, xmlSpace, nullptr)) {
+        text->align(node->style->textAnchor, 0.0f);
+        _applyTextFill(node->style, text, vBox);
+        scene->add(text);
+    }
+
+    _buildTspanScene(ctx, node, scene, vBox, svgPath, 0);
+
+    auto p = _applyFilter(ctx, scene, node, vBox, svgPath);
     p = _applyComposition(ctx, p, node, vBox, svgPath);
     return _applyBlend(p, node);
 }
