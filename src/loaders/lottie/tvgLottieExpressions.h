@@ -159,6 +159,13 @@ private:
     jerry_value_t thisComp;
     jerry_value_t thisLayer;
     jerry_value_t thisProperty;
+
+    //compiled cache: avoids re-parsing the same expression every frame
+    struct CompiledCode {
+        LottieExpression* exp;
+        jerry_value_t code;
+    };
+    Array<CompiledCode> compiledCodes;
 };
 
 #else
