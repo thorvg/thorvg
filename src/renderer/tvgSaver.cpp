@@ -30,6 +30,10 @@
     #include "tvgGifSaver.h"
 #endif
 
+#ifdef THORVG_PNG_SAVER_SUPPORT
+    #include "tvgPngSaver.h"
+#endif
+
 /************************************************************************/
 /* Internal Class Implementation                                        */
 /************************************************************************/
@@ -56,6 +60,12 @@ static SaveModule* _find(FileType type)
 #endif
             break;
         }
+        case FileType::Png: {
+#ifdef THORVG_PNG_SAVER_SUPPORT
+            return new PngSaver;
+#endif
+            break;
+        }
         default: {
             break;
         }
@@ -66,6 +76,10 @@ static SaveModule* _find(FileType type)
     switch(type) {
         case FileType::Gif: {
             format = "GIF";
+            break;
+        }
+        case FileType::Png: {
+            format = "PNG";
             break;
         }
         default: {
@@ -83,6 +97,7 @@ static SaveModule* _find(const char* filename)
 {
     auto ext = fileext(filename);
     if (ext && !strcmp(ext, "gif")) return _find(FileType::Gif);
+    if (ext && !strcmp(ext, "png")) return _find(FileType::Png);
     return nullptr;
 }
 
