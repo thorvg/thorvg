@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2021 - 2026 ThorVG project. All rights reserved.
+ * Copyright (c) 2026 ThorVG project. All rights reserved.
 
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to deal
@@ -21,73 +21,71 @@
  */
 
 #include <thorvg.h>
-#include "config.h"
+#include <memory>
 #include "catch.hpp"
+#include "testGlWindow.h"
 #include "testRenderer.h"
 
 using namespace tvg;
-using namespace std;
 
-#ifdef THORVG_CPU_ENGINE_SUPPORT
+#if defined(THORVG_GL_ENGINE_SUPPORT) && defined(THORVG_GL_TEST_SUPPORT)
 
-TEST_CASE("Basic draw", "[tvgSwEngine]")
+TEST_CASE("GL Basic draw", "[tvgGlEngine]")
 {
     REQUIRE(Initializer::init() == Result::Success);
     {
-        auto canvas = unique_ptr<SwCanvas>(SwCanvas::gen());
+        auto window = genWindow(100, 100);
+        auto canvas = std::unique_ptr<GlCanvas>(GlCanvas::gen());
         REQUIRE(canvas);
-
-        uint32_t buffer[100 * 100];
-        REQUIRE(canvas->target(buffer, 100, 100, 100, ColorSpace::ARGB8888S) == Result::Success);
+        REQUIRE(window->target(canvas.get()) == Result::Success);
 
         TestRenderer::basic(*canvas);
+        REQUIRE(window->hasRenderedContent());
     }
     REQUIRE(Initializer::term() == Result::Success);
 }
 
-TEST_CASE("Image Draw", "[tvgSwEngine]")
+TEST_CASE("GL Image Draw", "[tvgGlEngine]")
 {
     REQUIRE(Initializer::init() == Result::Success);
     {
-        auto canvas = unique_ptr<SwCanvas>(SwCanvas::gen());
+        auto window = genWindow(100, 100);
+        auto canvas = std::unique_ptr<GlCanvas>(GlCanvas::gen());
         REQUIRE(canvas);
-
-        uint32_t buffer[100 * 100];
-        REQUIRE(canvas->target(buffer, 100, 100, 100, ColorSpace::ARGB8888) == Result::Success);
+        REQUIRE(window->target(canvas.get()) == Result::Success);
 
         REQUIRE(TestRenderer::image(*canvas));
+        REQUIRE(window->hasRenderedContent());
     }
     REQUIRE(Initializer::term() == Result::Success);
 }
 
-TEST_CASE("Filling Draw", "[tvgSwEngine]")
+TEST_CASE("GL Filling Draw", "[tvgGlEngine]")
 {
     REQUIRE(Initializer::init() == Result::Success);
     {
-        auto canvas = unique_ptr<SwCanvas>(SwCanvas::gen());
+        auto window = genWindow(100, 100);
+        auto canvas = std::unique_ptr<GlCanvas>(GlCanvas::gen());
         REQUIRE(canvas);
+        REQUIRE(window->target(canvas.get()) == Result::Success);
 
-        uint32_t buffer[100 * 100];
-        REQUIRE(canvas->target(buffer, 100, 100, 100, ColorSpace::ARGB8888) == Result::Success);
-
-        TestRenderer::filling(*canvas);
+        TestRenderer::filling(*canvas, {BlendMethod::Normal}, maskMethods());
+        REQUIRE(window->hasRenderedContent());
     }
     REQUIRE(Initializer::term() == Result::Success);
 }
 
-TEST_CASE("Image Rotation", "[tvgSwEngine]")
+TEST_CASE("GL Image Rotation", "[tvgGlEngine]")
 {
     REQUIRE(Initializer::init() == Result::Success);
     {
-        auto canvas = unique_ptr<SwCanvas>(SwCanvas::gen());
+        auto window = genWindow(960, 960);
+        auto canvas = std::unique_ptr<GlCanvas>(GlCanvas::gen());
         REQUIRE(canvas);
-
-        const uint32_t cw = 960;
-        const uint32_t ch = 960;
-        vector<uint32_t> buffer(static_cast<size_t>(cw) * ch);
-        REQUIRE(canvas->target(buffer.data(), cw, ch, cw, ColorSpace::ARGB8888) == Result::Success);
+        REQUIRE(window->target(canvas.get()) == Result::Success);
 
         REQUIRE(TestRenderer::imageRotation(*canvas));
+        REQUIRE(window->hasRenderedContent());
     }
     REQUIRE(Initializer::term() == Result::Success);
 }
