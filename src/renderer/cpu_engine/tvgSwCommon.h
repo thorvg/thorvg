@@ -26,7 +26,6 @@
 #include <algorithm>
 #include "tvgCommon.h"
 #include "tvgMath.h"
-#include "tvgColor.h"
 #include "tvgRender.h"
 
 #define SW_CURVE_TYPE_POINT 0
@@ -599,73 +598,130 @@ static inline uint32_t opBlendHardLight(uint32_t s, uint32_t d)
     return BLEND_PRE(JOIN(255, f(C1(s), o.r), f(C2(s), o.g), f(C3(s), o.b)), s, o.a);
 }
 
+static inline float LUM(float r, float g, float b)
+{
+    return ((0.3f * r) + (0.59f * g) + (0.11f * b));
+}
+
+static inline void CLIP_COLOR(float& r, float& g, float& b)
+{
+    auto l = LUM(r, g, b);
+    auto n = std::min(r, std::min(g, b));
+    auto x = std::max(r, std::max(g, b));
+
+    if (n < 0.0f) {
+        r = l + (((r - l) * l) / (l - n));
+        g = l + (((g - l) * l) / (l - n));
+        b = l + (((b - l) * l) / (l - n));
+    }
+
+    if (x > 1.0f) {
+        r = l + (((r - l) * (1.0f - l)) / (x - l));
+        g = l + (((g - l) * (1.0f - l)) / (x - l));
+        b = l + (((b - l) * (1.0f - l)) / (x - l));
+    }
+}
+
+static inline void SET_LUM(float& r, float& g, float& b, float l)
+{
+    auto d = l - LUM(r, g, b);
+    r += d;
+    g += d;
+    b += d;
+    CLIP_COLOR(r, g, b);
+}
+
+static inline float SAT(float r, float g, float b)
+{
+    return (std::max(r, std::max(g, b)) - std::min(r, std::min(g, b)));
+}
+
+static inline float NORM8(uint8_t c)
+{
+    return c * (1.0f / 255.0f);  //mul reciprocal: cheaper than scalar fdiv in blend hot path
+}
+
+static inline void SET_SAT(float& r, float& g, float& b, float s)
+{
+    float *min, *mid, *max;
+
+    if (r <= g) {
+        if (g <= b) min = &r, mid = &g, max = &b;
+        else if (r <= b) min = &r, mid = &b, max = &g;
+        else min = &b, mid = &r, max = &g;
+    } else {
+        if (r <= b) min = &g, mid = &r, max = &b;
+        else if (g <= b) min = &g, mid = &b, max = &r;
+        else min = &b, mid = &g, max = &r;
+    }
+
+    if (*max > *min) {
+        *mid = ((*mid - *min) * s) / (*max - *min);
+        *max = s;
+    } else *mid = *max = 0.0f;
+    *min = 0.0f;
+}
+
 static inline uint32_t opBlendSoftLight(uint32_t s, uint32_t d)
 {
     auto o = BLEND_UPRE(d);
 
     auto f = [](uint8_t s, uint8_t d) {
-        return MULTIPLY(255 - std::min(255, 2 * s), MULTIPLY(d, d)) + std::min(255, 2 * MULTIPLY(s, d));
+        auto src = NORM8(s);
+        auto dst = NORM8(d);
+
+        if (src <= 0.5f) return (uint8_t)nearbyint((dst - (1.0f - 2.0f * src) * dst * (1.0f - dst)) * 255.0f);
+
+        auto base = (dst <= 0.25f) ? (((16.0f * dst - 12.0f) * dst + 4.0f) * dst) : sqrtf(dst);
+        return (uint8_t)nearbyint((dst + (2.0f * src - 1.0f) * (base - dst)) * 255.0f);
     };
 
     return BLEND_PRE(JOIN(255, f(C1(s), o.r), f(C2(s), o.g), f(C3(s), o.b)), s, o.a);
 }
 
-void rasterRGB2HSL(uint8_t r, uint8_t g, uint8_t b, float* h, float* s, float* l);
-
 static inline uint32_t opBlendHue(uint32_t s, uint32_t d)
 {
     auto o = BLEND_UPRE(d);
 
-    float sh, ds, dl;
-    rasterRGB2HSL(C1(s), C2(s), C3(s), &sh, 0, 0);
-    rasterRGB2HSL(o.r, o.g, o.b, 0, &ds, &dl);
+    auto r = NORM8(C1(s)), g = NORM8(C2(s)), b = NORM8(C3(s));
+    auto dr = NORM8(o.r), dg = NORM8(o.g), db = NORM8(o.b);
+    SET_SAT(r, g, b, SAT(dr, dg, db));
+    SET_LUM(r, g, b, LUM(dr, dg, db));
 
-    uint8_t r, g, b;
-    hsl2rgb(sh, ds, dl, r, g, b);
-
-    return BLEND_PRE(JOIN(255, r, g, b), s, o.a);
+    return BLEND_PRE(JOIN(255, (uint8_t)nearbyint(r * 255.0f), (uint8_t)nearbyint(g * 255.0f), (uint8_t)nearbyint(b * 255.0f)), s, o.a);
 }
 
 static inline uint32_t opBlendSaturation(uint32_t s, uint32_t d)
 {
     auto o = BLEND_UPRE(d);
 
-    float dh, ss, dl;
-    rasterRGB2HSL(C1(s), C2(s), C3(s), 0, &ss, 0);
-    rasterRGB2HSL(o.r, o.g, o.b, &dh, 0, &dl);
+    auto r = NORM8(o.r), g = NORM8(o.g), b = NORM8(o.b);
+    auto l = LUM(r, g, b);
+    SET_SAT(r, g, b, SAT(NORM8(C1(s)), NORM8(C2(s)), NORM8(C3(s))));
+    SET_LUM(r, g, b, l);
 
-    uint8_t r, g, b;
-    hsl2rgb(dh, ss, dl, r, g, b);
-
-    return BLEND_PRE(JOIN(255, r, g, b), s, o.a);
+    return BLEND_PRE(JOIN(255, (uint8_t)nearbyint(r * 255.0f), (uint8_t)nearbyint(g * 255.0f), (uint8_t)nearbyint(b * 255.0f)), s, o.a);
 }
 
 static inline uint32_t opBlendColor(uint32_t s, uint32_t d)
 {
     auto o = BLEND_UPRE(d);
 
-    float sh, ss, dl;
-    rasterRGB2HSL(C1(s), C2(s), C3(s), &sh, &ss, 0);
-    rasterRGB2HSL(o.r, o.g, o.b, 0, 0, &dl);
+    auto r = NORM8(C1(s)), g = NORM8(C2(s)), b = NORM8(C3(s));
+    auto dr = NORM8(o.r), dg = NORM8(o.g), db = NORM8(o.b);
+    SET_LUM(r, g, b, LUM(dr, dg, db));
 
-    uint8_t r, g, b;
-    hsl2rgb(sh, ss, dl, r, g, b);
-
-    return BLEND_PRE(JOIN(255, r, g, b), s, o.a);
+    return BLEND_PRE(JOIN(255, (uint8_t)nearbyint(r * 255.0f), (uint8_t)nearbyint(g * 255.0f), (uint8_t)nearbyint(b * 255.0f)), s, o.a);
 }
 
 static inline uint32_t opBlendLuminosity(uint32_t s, uint32_t d)
 {
     auto o = BLEND_UPRE(d);
 
-    float dh, ds, sl;
-    rasterRGB2HSL(C1(s), C2(s), C3(s), 0, 0, &sl);
-    rasterRGB2HSL(o.r, o.g, o.b, &dh, &ds, 0);
+    auto r = NORM8(o.r), g = NORM8(o.g), b = NORM8(o.b);
+    SET_LUM(r, g, b, LUM(NORM8(C1(s)), NORM8(C2(s)), NORM8(C3(s))));
 
-    uint8_t r, g, b;
-    hsl2rgb(dh, ds, sl, r, g, b);
-
-    return BLEND_PRE(JOIN(255, r, g, b), s, o.a);
+    return BLEND_PRE(JOIN(255, (uint8_t)nearbyint(r * 255.0f), (uint8_t)nearbyint(g * 255.0f), (uint8_t)nearbyint(b * 255.0f)), s, o.a);
 }
 
 int64_t mathMultiply(int64_t a, int64_t b);
