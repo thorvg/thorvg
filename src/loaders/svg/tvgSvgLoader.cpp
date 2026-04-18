@@ -2156,6 +2156,21 @@ static SvgNode* _createTextNode(SvgParserContext* ctx, SvgNode* parent, const ch
 }
 
 
+static SvgNode* _createTspanNode(SvgParserContext* ctx, SvgNode* parent, const char* buf, unsigned bufLength, parseAttributes func)
+{
+    ctx->parser->node = _createNode(parent, SvgNodeType::Tspan);
+    if (!ctx->parser->node) return nullptr;
+
+    ctx->parser->node->node.text.x = FLT_MAX;
+    ctx->parser->node->node.text.y = FLT_MAX;
+
+    func(buf, bufLength, _attrPrescanTextFontSize, ctx);
+    func(buf, bufLength, _attrParseTextNode, ctx);
+
+    return ctx->parser->node;
+}
+
+
 static constexpr struct
 {
     const char* tag;
@@ -3026,6 +3041,7 @@ static void _copyAttr(SvgNode* to, const SvgNode* from)
             to->node.use = from->node.use;
             break;
         }
+        case SvgNodeType::Tspan:
         case SvgNodeType::Text: {
             to->node.text.x = from->node.text.x;
             to->node.text.y = from->node.text.y;
@@ -3133,6 +3149,22 @@ static int _svgLoaderParserXmlTagName(const char* content, char* tagName, unsign
 }
 
 
+static void _spliceTspanClose(SvgParserContext* ctx)
+{
+    auto cur = ctx->parser->node;
+    if (!cur || cur->type != SvgNodeType::Tspan) return;
+
+    auto& t = cur->node.text;
+    if (t.text && t.x == FLT_MAX && t.y == FLT_MAX && cur->parent) {
+        auto& parentText = cur->parent->node.text;
+        parentText.text = append(parentText.text, t.text, strlen(t.text));
+        tvg::free(t.text);
+        t.text = nullptr;
+    }
+    ctx->parser->node = cur->parent;
+}
+
+
 static void _svgLoaderParserXmlClose(SvgParserContext* ctx, const char* content, unsigned int length)
 {
     char tagName[20] = "";
@@ -3156,6 +3188,11 @@ static void _svgLoaderParserXmlClose(SvgParserContext* ctx, const char* content,
             ctx->gradientStack.pop();
             break;
         }
+    }
+
+    if (ctx->openedTag == OpenedTagType::Text && STR_AS(tagName, "tspan")) {
+        _spliceTspanClose(ctx);
+        return;
     }
 
     for (unsigned int i = 0; i < sizeof(graphicsTags) / sizeof(graphicsTags[0]); i++) {
@@ -3253,6 +3290,10 @@ static void _svgLoaderParserXmlOpen(SvgParserContext* ctx, const char* content, 
         if (node->type != SvgNodeType::Defs || !empty) {
             ctx->stack.push(node);
         }
+    } else if (ctx->openedTag == OpenedTagType::Text && STR_AS(tagName, "tspan")) {
+        parent = ctx->parser->node;
+        node = _createTspanNode(ctx, parent, attrs, attrsLength, xmlParseAttributes);
+        if (empty) ctx->parser->node = parent;
     } else if ((method = _findGraphicsFactory(tagName))) {
         if (ctx->stack.count > 0) parent = ctx->stack.last();
         else parent = ctx->doc;
@@ -3384,6 +3425,7 @@ static void _free(SvgNode* node)
              tvg::free(node->node.image.href);
              break;
          }
+         case SvgNodeType::Tspan:
          case SvgNodeType::Text: {
              tvg::free(node->node.text.text);
              tvg::free(node->node.text.fontFamily);
