@@ -1494,6 +1494,7 @@ jerry_value_t LottieExpressions::evaluate(float frameNo, LottieExpression* exp)
 
     if (jerry_value_is_exception(eval)) {
         TVGERR("LOTTIE", "Failed to dispatch the expressions!");
+        jerry_value_free(eval);
         exp->disabled = true;
         return jerry_undefined();
     }
