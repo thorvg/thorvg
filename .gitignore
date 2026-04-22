@@ -8,3 +8,5 @@ doc
 *.tmp
 *.code-workspace
 .DS_Store
+.cache
+build*
