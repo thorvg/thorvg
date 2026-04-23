@@ -3160,7 +3160,7 @@ static void _spliceTspanClose(SvgParserContext* ctx)
 
     auto& t = cur->node.text;
     bool unpositioned = (t.x == FLT_MAX && t.y == FLT_MAX);
-    bool noOverride = (t.fontSize <= 0.0f && !t.fontFamily && cur->xmlSpace == SvgXmlSpace::None);
+    bool noOverride = (t.fontSize <= 0.0f && !t.fontFamily && cur->xmlSpace == SvgXmlSpace::None && !(cur->style->flags & SvgStyleFlags::TextAnchor));
 
     if (t.text && unpositioned && noOverride && cur->parent) {
         auto& parentText = cur->parent->node.text;
