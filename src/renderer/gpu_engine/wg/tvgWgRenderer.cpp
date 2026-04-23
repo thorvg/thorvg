@@ -275,9 +275,7 @@ bool WgRenderer::postRender()
 
     // clear the render tasks tree
     mSceneTaskStack.pop();
-    assert(mSceneTaskStack.count == 0);
     mRenderTargetStack.pop();
-    assert(mRenderTargetStack.count == 0);
     ARRAY_FOREACH(p, mRenderTaskList) { delete (*p); };
     mRenderTaskList.clear();
     ARRAY_FOREACH(p, mCompositorList) { delete (*p); };
