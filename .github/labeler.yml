@@ -45,9 +45,11 @@
 
 "webgpu":
   - src/renderer/gpu_engine/wg/**/*
+  - src/renderer/gpu_engine/*
 
 "gl":
   - src/renderer/gpu_engine/gl/**/*
+  - src/renderer/gpu_engine/*
 
 "renderer":
   - src/renderer/*
