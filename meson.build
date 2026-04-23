@@ -63,6 +63,7 @@ webp_loader = all_loaders or get_option('loaders').contains('webp')
 # Savers
 all_savers = get_option('savers').contains('all')
 gif_saver = all_savers or get_option('savers').contains('gif') or lottie2gif
+png_saver = all_savers or get_option('savers').contains('png')
 
 # Logging
 logging = get_option('log')
@@ -96,7 +97,11 @@ if gif_saver
     config_h.set10('THORVG_GIF_SAVER_SUPPORT', true)
 endif
 
-# Vectorization
+if png_saver
+    config_h.set10('THORVG_PNG_SAVER_SUPPORT', true)
+endif
+
+#Vectorization
 simd_type = 'none'
 
 if get_option('simd')
@@ -211,6 +216,7 @@ summary(
 summary(
   {
     'GIF': gif_saver,
+    'PNG': png_saver,
   },
   section: 'Saver',
   bool_yn: true,
