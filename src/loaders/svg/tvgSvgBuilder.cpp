@@ -899,7 +899,7 @@ static Text* _buildText(const SvgTextNode* textNode, SvgXmlSpace xmlSpace, const
     if (transform) textTransform = *transform;
     else textTransform = tvg::identity();
 
-    translateR(&textTransform, {textNode->x, textNode->y - textNode->fontSize});
+    translateR(&textTransform, {textNode->x + textNode->dx, textNode->y + textNode->dy - textNode->fontSize});
     text->transform(textTransform);
 
     //TODO: handle def values of font and size as used in a system?
