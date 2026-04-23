@@ -536,9 +536,7 @@ bool GlRenderer::beginComplexBlending(const RenderRegion& vp, RenderRegion bound
 
 void GlRenderer::endBlendingCompose(GlRenderTask* stencilTask)
 {
-    auto blendPass = mRenderPassStack.last();
-    mRenderPassStack.pop();
-    
+    auto blendPass = mRenderPassStack.pick();
     blendPass->setDrawDepth(currentPass()->nextDrawDepth());
 
     auto composeTask = blendPass->endRenderPass<GlComposeTask>(nullptr, currentPass()->getFboId());
@@ -742,12 +740,9 @@ void GlRenderer::endRenderPass(RenderCompositor* cmp)
     // setup masking and blending render pass configurations
     if ((glCmp->flags & (tvg::Blending | tvg::Masking)) == (tvg::Blending | tvg::Masking)) {
         // rearrange render tree
-        auto selfPass = mRenderPassStack.last();
-        mRenderPassStack.pop();
-        auto prevPass = mRenderPassStack.last();
-        mRenderPassStack.pop();
-        auto maskPass = mRenderPassStack.last();
-        mRenderPassStack.pop();
+        auto selfPass = mRenderPassStack.pick();
+        auto prevPass = mRenderPassStack.pick();
+        auto maskPass = mRenderPassStack.pick();
         mRenderPassStack.push(prevPass);
         mRenderPassStack.push(maskPass);
         mRenderPassStack.push(selfPass);
@@ -766,12 +761,9 @@ void GlRenderer::endRenderPass(RenderCompositor* cmp)
     };
 
     if (cmp->method != MaskMethod::None) {
-        auto selfPass = mRenderPassStack.last();
-        mRenderPassStack.pop();
-
+        auto selfPass = mRenderPassStack.pick();
         // mask is pushed first
-        auto maskPass = mRenderPassStack.last();
-        mRenderPassStack.pop();
+        auto maskPass = mRenderPassStack.pick();
 
         GlProgram* program = nullptr;
         switch(cmp->method) {
@@ -809,9 +801,7 @@ void GlRenderer::endRenderPass(RenderCompositor* cmp)
         delete(selfPass);
         delete(maskPass);
     } else if (glCmp->blendMethod != BlendMethod::Normal) {
-        auto renderPass = mRenderPassStack.last();
-        mRenderPassStack.pop();
-
+        auto renderPass = mRenderPassStack.pick();
         if (!renderPass->isEmpty()) {
             if (mBlendPool.count < 1) mBlendPool.push(new GlRenderTargetPool(surface.w, surface.h));
             if (mBlendPool.count < 2) mBlendPool.push(new GlRenderTargetPool(surface.w, surface.h));
@@ -850,9 +840,7 @@ void GlRenderer::endRenderPass(RenderCompositor* cmp)
         }
         delete(renderPass);
     } else {
-        auto renderPass = mRenderPassStack.last();
-        mRenderPassStack.pop();
-
+        auto renderPass = mRenderPassStack.pick();
         if (!renderPass->isEmpty()) {
             auto task = renderPass->endRenderPass<GlDrawBlitTask>(mPrograms[RT_Image], currentPass()->getFboId());
             task->setRenderSize(glCmp->bbox.w(), glCmp->bbox.h());
@@ -1068,13 +1056,8 @@ bool GlRenderer::endComposite(RenderCompositor* cmp)
     if (mComposeStack.last() != cmp) return false;
 
     // end current render pass;
-    auto curCmp  = mComposeStack.last();
-    mComposeStack.pop();
-
-    assert(cmp == curCmp);
-
+    auto curCmp = mComposeStack.pick();
     endRenderPass(curCmp);
-
     delete(curCmp);
 
     return true;
