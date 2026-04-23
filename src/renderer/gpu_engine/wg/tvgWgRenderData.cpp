@@ -282,8 +282,7 @@ WgRenderDataShape* WgRenderDataShapePool::allocate(WgContext& context)
 {
     WgRenderDataShape* renderData{};
     if (mPool.count > 0) {
-        renderData = mPool.last();
-        mPool.pop();
+        renderData = mPool.pick();
     } else {
         renderData = new WgRenderDataShape();
         mList.push(renderData);
@@ -358,8 +357,7 @@ WgRenderDataPicture* WgRenderDataPicturePool::allocate(WgContext& context)
 {
     WgRenderDataPicture* renderData{};
     if (mPool.count > 0) {
-        renderData = mPool.last();
-        mPool.pop();
+        renderData = mPool.pick();
     } else {
         renderData = new WgRenderDataPicture();
         mList.push(renderData);
@@ -460,8 +458,7 @@ WgRenderDataEffectParams* WgRenderDataEffectParamsPool::allocate(WgContext& cont
 {
     WgRenderDataEffectParams* renderData{};
     if (mPool.count > 0) {
-        renderData = mPool.last();
-        mPool.pop();
+        renderData = mPool.pick();
     } else {
         renderData = new WgRenderDataEffectParams();
         mList.push(renderData);

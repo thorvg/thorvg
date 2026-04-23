@@ -486,8 +486,7 @@ uint32_t Bezier::segments() const
     Bezier left, right;
 
     while (!stack.empty()) {
-        auto current = stack.last();
-        stack.pop();
+        auto current = stack.pick();
         if (current.flatten()) {
             ++count;
             continue;
