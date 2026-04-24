@@ -101,7 +101,7 @@ TEST_CASE("Scene Clear And Reuse Shape", "[tvgScene]")
     REQUIRE(Initializer::init() == Result::Success);
     {
         auto canvas = unique_ptr<SwCanvas>(SwCanvas::gen());
-        uint32_t buffer[100*100];
+        uint32_t buffer[100*100] = {};
         canvas->target(buffer, 100, 100, 100, ColorSpace::ARGB8888);
 
         auto scene = Scene::gen();
@@ -132,7 +132,7 @@ TEST_CASE("Scene Effects", "[tvgScene]")
         auto canvas = unique_ptr<SwCanvas>(SwCanvas::gen());
         REQUIRE(canvas);
 
-        uint32_t buffer[100*100];
+        uint32_t buffer[100*100] = {};
         REQUIRE(canvas->target(buffer, 100, 100, 100, ColorSpace::ARGB8888) == Result::Success);
 
         auto shape = Shape::gen();

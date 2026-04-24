@@ -18,7 +18,7 @@ if [[ "$GITHUB_EVENT_NAME" == "pull_request" ]]; then
 
     echo $COMMENTS_URL
     echo "MEMCHECK errors:"
-    echo $PAYLOAD_MEMCHECK
+    echo "$PAYLOAD_MEMCHECK"
 
     DEFINITELY_LOST_NUMBER=$(echo "$PAYLOAD_MEMCHECK" | grep -oP 'definitely lost:\s*\K[0-9]+(?=\s*bytes in)')
     ERROR_NUMBER=$(echo "$PAYLOAD_MEMCHECK" | grep -oP 'ERROR SUMMARY:\s*\K[0-9]+(?=\s*errors)')
@@ -30,7 +30,7 @@ if [[ "$GITHUB_EVENT_NAME" == "pull_request" ]]; then
         OUTPUT+=$'\n```\n' 
 
         (
-            echo '<details><summary>Valgrind output</sumary>'
+            echo '<details><summary>Valgrind output</summary>'
             echo
             echo "$OUTPUT"
             echo

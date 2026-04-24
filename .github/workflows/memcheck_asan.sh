@@ -29,7 +29,7 @@ if [[ "$GITHUB_EVENT_NAME" == "pull_request" ]]; then
         OUTPUT+=$'\n```\n' 
 
         (
-            echo '<details><summary>ASAN output</sumary>'
+            echo '<details><summary>ASAN output</summary>'
             echo
             echo "$OUTPUT"
             echo
