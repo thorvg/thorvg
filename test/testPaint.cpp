@@ -301,7 +301,7 @@ TEST_CASE("Intersection", "[tvgPaint]")
     {
         auto canvas = unique_ptr<SwCanvas>(SwCanvas::gen());
 
-        uint32_t buffer[200 * 200];
+        uint32_t buffer[200 * 200] = {};
         canvas->target(buffer, 200, 200, 200, ColorSpace::ARGB8888);
 
         auto shape = Shape::gen();
