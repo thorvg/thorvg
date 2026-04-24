@@ -37,7 +37,7 @@ TEST_CASE("Basic draw", "[tvgSwEngine]")
         auto canvas = unique_ptr<SwCanvas>(SwCanvas::gen());
         REQUIRE(canvas);
 
-        uint32_t buffer[100*100];
+        uint32_t buffer[100*100] = {};
         REQUIRE(canvas->target(buffer, 100, 100, 100, ColorSpace::ARGB8888S) == Result::Success);
 
         std::vector<MaskMethod> masks;
@@ -143,7 +143,7 @@ TEST_CASE("Image Draw", "[tvgSwEngine]")
         auto canvas = unique_ptr<SwCanvas>(SwCanvas::gen());
         REQUIRE(canvas);
 
-        uint32_t buffer[100*100];
+        uint32_t buffer[100*100] = {};
         REQUIRE(canvas->target(buffer, 100, 100, 100, ColorSpace::ARGB8888) == Result::Success);
 
         //raw image
@@ -249,7 +249,7 @@ TEST_CASE("Filling Draw", "[tvgSwEngine]")
         auto canvas = unique_ptr<SwCanvas>(SwCanvas::gen());
         REQUIRE(canvas);
 
-        uint32_t buffer[100*100];
+        uint32_t buffer[100*100] = {};
         REQUIRE(canvas->target(buffer, 100, 100, 100, ColorSpace::ARGB8888) == Result::Success);
 
         std::vector<MaskMethod> masks;

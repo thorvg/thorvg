@@ -197,8 +197,8 @@ struct LottieProperty
 
     LottieExpression* exp = nullptr;
     Type type;
-    uint8_t ix;  //property index
-    unsigned long sid; //property sid for slot
+    uint8_t ix = 0;  //property index
+    unsigned long sid = 0; //property sid for slot
 
     LottieProperty(Type type = Type::Invalid) : type(type) {}
     virtual ~LottieProperty() {}
