@@ -1359,6 +1359,14 @@ void LottieExpressions::buildGlobal(float frameNo, LottieExpression* exp)
     auto index = jerry_number(exp->layer->ix);
     jerry_object_set_sz(global, EXP_INDEX, index);
     jerry_value_free(index);
+
+    auto inPoint = jerry_number(exp->layer->inFrame / exp->comp->frameRate);
+    jerry_object_set_sz(global, "inPoint", inPoint);
+    jerry_value_free(inPoint);
+
+    auto outPoint = jerry_number(exp->layer->outFrame / exp->comp->frameRate);
+    jerry_object_set_sz(global, "outPoint", outPoint);
+    jerry_value_free(outPoint);
 }
 
 
