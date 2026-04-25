@@ -7,10 +7,12 @@ fi
 
 if [[ "$GITHUB_EVENT_NAME" == "pull_request" ]]; then
     echo "Run Valgrind"
-    echo "env LIBGL_ALWAYS_SOFTWARE=1 valgrind --leak-check=yes ./tvgUnitTests"
+    VALGRIND_SUPPRESSIONS="${GITHUB_WORKSPACE}/.github/workflows/valgrind.supp"
+    VALGRIND_CMD="env LIBGL_ALWAYS_SOFTWARE=1 valgrind --suppressions=${VALGRIND_SUPPRESSIONS} --leak-check=yes ./tvgUnitTests"
+    echo "$VALGRIND_CMD"
     cd ./build/test
 
-    env LIBGL_ALWAYS_SOFTWARE=1 valgrind --leak-check=yes ./tvgUnitTests > memcheck_valgrind.txt 2>&1
+    env LIBGL_ALWAYS_SOFTWARE=1 valgrind --suppressions="$VALGRIND_SUPPRESSIONS" --leak-check=yes ./tvgUnitTests > memcheck_valgrind.txt 2>&1
 
 
     PAYLOAD_MEMCHECK=`cat memcheck_valgrind.txt`
@@ -24,7 +26,7 @@ if [[ "$GITHUB_EVENT_NAME" == "pull_request" ]]; then
     ERROR_NUMBER=$(echo "$PAYLOAD_MEMCHECK" | grep -oP 'ERROR SUMMARY:\s*\K[0-9]+(?=\s*errors)')
     if [[ $ERROR_NUMBER != 0 || $DEFINITELY_LOST_NUMBER != 0 || $PAYLOAD_MEMCHECK == *"Invalid read "* || $PAYLOAD_MEMCHECK == *"Invalid write "* ]]; then
         OUTPUT+=$'\n**MEMCHECK(VALGRIND) RESULT**:\n'
-        OUTPUT+=$'\n`env LIBGL_ALWAYS_SOFTWARE=1 valgrind --leak-check=yes ./tvgUnitTests`\n'
+        OUTPUT+=$'\n`'"$VALGRIND_CMD"$'`\n'
         OUTPUT+=$'\n```\n'
         OUTPUT+="$PAYLOAD_MEMCHECK"
         OUTPUT+=$'\n```\n' 

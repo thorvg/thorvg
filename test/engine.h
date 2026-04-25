@@ -34,6 +34,10 @@
     #include <EGL/eglext.h>
 #endif
 
+#ifdef THORVG_WG_TEST_SUPPORT
+    #include <webgpu/webgpu.h>
+#endif
+
 using namespace tvg;
 
 struct TvgTestEngine
@@ -127,6 +131,37 @@ private:
     bool initContext();
     bool makeCurrent();
     void release();
+    void clear();
+};
+
+#endif
+
+#if defined(THORVG_WG_ENGINE_SUPPORT) && defined(THORVG_WG_TEST_SUPPORT)
+
+struct TvgWgTestEngine : TvgTestEngine
+{
+    WGPUInstance instance = nullptr;
+    WGPUDevice device = nullptr;
+    WGPUTexture texture = nullptr;
+    WGPUTextureFormat format = WGPUTextureFormat_BGRA8Unorm;
+    uint32_t width = 0;
+    uint32_t height = 0;
+    ColorSpace colorSpace = ColorSpace::ABGR8888S;
+
+    TvgWgTestEngine() {}
+    ~TvgWgTestEngine();
+
+    bool init(uint32_t w, uint32_t h) override;
+    bool init(uint32_t w, uint32_t h, ColorSpace cs) override;
+    std::unique_ptr<Canvas> canvas() override;
+    Result target(Canvas* canvas) override;
+    bool rendered() override;
+
+private:
+    bool setup();
+    bool recreateTarget();
+    void release();
+    void releaseTexture();
     void clear();
 };
 

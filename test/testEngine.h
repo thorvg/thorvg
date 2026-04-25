@@ -123,7 +123,7 @@ struct TestEngine
     static constexpr uint32_t RenderSize = 100;
     static constexpr uint32_t RotationSize = 960;
 
-    static void basic(TvgTestEngine& engine, std::vector<BlendMethod> methods = {}, std::vector<MaskMethod> masks = {})
+    static void basic(TvgTestEngine& engine, std::vector<BlendMethod> methods = {}, std::vector<MaskMethod> masks = {}, bool syncPerCombination = false)
     {
         REQUIRE(engine.init(RenderSize, RenderSize));
         REQUIRE(Initializer::init() == Result::Success);
@@ -190,17 +190,27 @@ struct TestEngine
                     REQUIRE(shape4->blend(method) == Result::Success);
                     if (maskOp != MaskMethod::None) REQUIRE(shape4->mask(mask(), maskOp) == Result::Success);
                     REQUIRE(canvas->add(shape4) == Result::Success);
+
+                    if (syncPerCombination) {
+                        REQUIRE(canvas->update() == Result::Success);
+                        REQUIRE(canvas->draw(true) == Result::Success);
+                        REQUIRE(canvas->sync() == Result::Success);
+                        REQUIRE(engine.rendered());
+                        REQUIRE(canvas->remove() == Result::Success);
+                    }
                 }
             }
 
-            REQUIRE(canvas->draw(true) == Result::Success);
-            REQUIRE(canvas->sync() == Result::Success);
-            REQUIRE(engine.rendered());
+            if (!syncPerCombination) {
+                REQUIRE(canvas->draw(true) == Result::Success);
+                REQUIRE(canvas->sync() == Result::Success);
+                REQUIRE(engine.rendered());
+            }
         }
         REQUIRE(Initializer::term() == Result::Success);
     }
 
-    static bool image(TvgTestEngine& engine, std::vector<BlendMethod> methods = {}, std::vector<MaskMethod> masks = {})
+    static bool image(TvgTestEngine& engine, std::vector<BlendMethod> methods = {}, std::vector<MaskMethod> masks = {}, bool syncPerCombination = false)
     {
         REQUIRE(engine.init(RenderSize, RenderSize));
         REQUIRE(Initializer::init() == Result::Success);
@@ -264,12 +274,22 @@ struct TestEngine
                     auto picture7 = picture6->duplicate();
                     REQUIRE(picture7->scale(2.0f) == Result::Success);
                     REQUIRE(canvas->add(picture7) == Result::Success);
+
+                    if (syncPerCombination) {
+                        REQUIRE(canvas->update() == Result::Success);
+                        REQUIRE(canvas->draw() == Result::Success);
+                        REQUIRE(canvas->sync() == Result::Success);
+                        REQUIRE(engine.rendered());
+                        REQUIRE(canvas->remove() == Result::Success);
+                    }
                 }
             }
 
-            REQUIRE(canvas->draw() == Result::Success);
-            REQUIRE(canvas->sync() == Result::Success);
-            REQUIRE(engine.rendered());
+            if (!syncPerCombination) {
+                REQUIRE(canvas->draw() == Result::Success);
+                REQUIRE(canvas->sync() == Result::Success);
+                REQUIRE(engine.rendered());
+            }
         }
         REQUIRE(Initializer::term() == Result::Success);
         return true;
