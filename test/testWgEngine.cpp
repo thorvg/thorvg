@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2021 - 2026 ThorVG project. All rights reserved.
+ * Copyright (c) 2026 ThorVG project. All rights reserved.
 
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to deal
@@ -21,48 +21,46 @@
  */
 
 #include <thorvg.h>
-#include "config.h"
 #include "catch.hpp"
 #include "testEngine.h"
 
 using namespace tvg;
-using namespace std;
 
-#ifdef THORVG_CPU_ENGINE_SUPPORT
+#if defined(THORVG_WG_ENGINE_SUPPORT) && defined(THORVG_WG_TEST_SUPPORT)
 
-TEST_CASE("Basic draw", "[tvgSwEngine]")
+TEST_CASE("WG Basic draw", "[tvgWgEngine]")
 {
-    TvgSwTestEngine engine;
-    TestEngine::basic(engine);
+    TvgWgTestEngine engine;
+    TestEngine::basic(engine, {}, {}, true);
 }
 
-TEST_CASE("Image Draw", "[tvgSwEngine]")
+TEST_CASE("WG Image Draw", "[tvgWgEngine]")
 {
-    TvgSwTestEngine engine;
-    REQUIRE(TestEngine::image(engine));
+    TvgWgTestEngine engine;
+    REQUIRE(TestEngine::image(engine, {}, {}, true));
 }
 
-TEST_CASE("Filling Draw", "[tvgSwEngine]")
+TEST_CASE("WG Filling Draw", "[tvgWgEngine]")
 {
-    TvgSwTestEngine engine;
+    TvgWgTestEngine engine;
     TestEngine::filling(engine);
 }
 
-TEST_CASE("Image Rotation", "[tvgSwEngine]")
+TEST_CASE("WG Image Rotation", "[tvgWgEngine]")
 {
-    TvgSwTestEngine engine;
+    TvgWgTestEngine engine;
     REQUIRE(TestEngine::imageRotation(engine));
 }
 
-TEST_CASE("SW Scene Effects", "[tvgSwEngine]")
+TEST_CASE("WG Scene Effects", "[tvgWgEngine]")
 {
-    TvgSwTestEngine engine;
+    TvgWgTestEngine engine;
     TestEngine::sceneEffects(engine);
 }
 
-TEST_CASE("SW Solid Batch", "[tvgSwEngine]")
+TEST_CASE("WG Solid Batch", "[tvgWgEngine]")
 {
-    TvgSwTestEngine engine;
+    TvgWgTestEngine engine;
     TestEngine::solidBatch(engine);
 }
 
