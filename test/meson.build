@@ -19,6 +19,15 @@ if gl_engine and not get_option('extra').contains('opengl_es') and host_machine.
     endif
 endif
 
+if wg_engine
+    wgpu_test_dep = dependency('wgpu_native', required: false)
+
+    if wgpu_test_dep.found()
+        test_dep += wgpu_test_dep
+        test_compiler_flags += ['-DTHORVG_WG_TEST_SUPPORT']
+    endif
+endif
+
 test_file = [
     'engine.cpp',
     'testAccessor.cpp',
@@ -39,6 +48,10 @@ test_file = [
 
 if gl_engine and test_compiler_flags.contains('-DTHORVG_GL_TEST_SUPPORT')
     test_file += ['testGlCanvas.cpp', 'testGlEngine.cpp']
+endif
+
+if wg_engine and test_compiler_flags.contains('-DTHORVG_WG_TEST_SUPPORT')
+    test_file += ['testWgCanvas.cpp', 'testWgEngine.cpp']
 endif
 
 tests = executable('tvgUnitTests',

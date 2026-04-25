@@ -20,6 +20,8 @@
  * SOFTWARE.
  */
 
+#include <chrono>
+#include <thread>
 #include "engine.h"
 #include "testGlHelpers.h"
 
@@ -190,6 +192,268 @@ void TvgGlTestEngine::clear()
     REQUIRE_GL(glViewport(0, 0, static_cast<GLsizei>(width), static_cast<GLsizei>(height)));
     REQUIRE_GL(glClearColor(0.0f, 0.0f, 0.0f, 0.0f));
     REQUIRE_GL(glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT | GL_STENCIL_BUFFER_BIT));
+}
+
+#endif
+
+#if defined(THORVG_WG_ENGINE_SUPPORT) && defined(THORVG_WG_TEST_SUPPORT)
+
+namespace
+{
+
+class WgTextureReadback
+{
+public:
+    WgTextureReadback(WGPUDevice device, WGPUTexture texture, uint32_t width, uint32_t height)
+    {
+        // WebGPU requires texture-to-buffer rows to be aligned to 256 bytes.
+        uint32_t stride = (width * 4 + 255) & ~255u;
+        size = static_cast<size_t>(stride) * height;
+        buffer = copyTextureToBuffer(device, texture, width, height, stride);
+    }
+
+    ~WgTextureReadback()
+    {
+        if (data) wgpuBufferUnmap(buffer);
+        releaseBuffer(buffer);
+    }
+
+    WgTextureReadback(const WgTextureReadback&) = delete;
+    WgTextureReadback& operator=(const WgTextureReadback&) = delete;
+
+    const uint8_t* map(WGPUInstance instance)
+    {
+        if (!buffer) return nullptr;
+        if (!data) data = mapBuffer(instance);
+        return data;
+    }
+
+    size_t mappedSize() const
+    {
+        return size;
+    }
+
+private:
+    WGPUBuffer copyTextureToBuffer(WGPUDevice device, WGPUTexture texture, uint32_t width, uint32_t height, uint32_t stride)
+    {
+        WGPUBufferDescriptor bufferDesc = { .usage = WGPUBufferUsage_CopyDst | WGPUBufferUsage_MapRead, .size = static_cast<uint64_t>(stride) * height };
+
+        auto readback = wgpuDeviceCreateBuffer(device, &bufferDesc);
+        if (!readback) return nullptr;
+
+        WGPUCommandEncoderDescriptor encoderDesc = {};
+        auto encoder = wgpuDeviceCreateCommandEncoder(device, &encoderDesc);
+        if (!encoder) {
+            releaseBuffer(readback);
+            return nullptr;
+        }
+
+        WGPUTexelCopyTextureInfo src = { .texture = texture, .aspect = WGPUTextureAspect_All };
+        WGPUTexelCopyBufferInfo dst = { .layout = { .bytesPerRow = stride, .rowsPerImage = height }, .buffer = readback };
+        WGPUExtent3D copySize = { .width = width, .height = height, .depthOrArrayLayers = 1 };
+
+        wgpuCommandEncoderCopyTextureToBuffer(encoder, &src, &dst, &copySize);
+
+        WGPUCommandBufferDescriptor commandBufferDesc = {};
+        auto commands = wgpuCommandEncoderFinish(encoder, &commandBufferDesc);
+        wgpuCommandEncoderRelease(encoder);
+        if (!commands) {
+            releaseBuffer(readback);
+            return nullptr;
+        }
+
+        auto queue = wgpuDeviceGetQueue(device);
+        if (!queue) {
+            wgpuCommandBufferRelease(commands);
+            releaseBuffer(readback);
+            return nullptr;
+        }
+
+        wgpuQueueSubmit(queue, 1, &commands);
+        wgpuQueueRelease(queue);
+        wgpuCommandBufferRelease(commands);
+
+        return readback;
+    }
+
+    static void releaseBuffer(WGPUBuffer buffer)
+    {
+        if (!buffer) return;
+
+        wgpuBufferDestroy(buffer);
+        wgpuBufferRelease(buffer);
+    }
+
+    const uint8_t* mapBuffer(WGPUInstance instance)
+    {
+        WGPUMapAsyncStatus mapStatus = WGPUMapAsyncStatus_Unknown;
+
+        WGPUBufferMapCallbackInfo callback = {};
+        callback.mode = WGPUCallbackMode_AllowProcessEvents;
+        callback.callback = [](WGPUMapAsyncStatus status, WGPUStringView, void* userdata1, void*) {
+            *((WGPUMapAsyncStatus*)userdata1) = status;
+        };
+        callback.userdata1 = &mapStatus;
+
+        wgpuBufferMapAsync(buffer, WGPUMapMode_Read, 0, size, callback);
+
+        using clock = std::chrono::steady_clock;
+        auto timeout = clock::now() + std::chrono::seconds(5);
+        while (mapStatus == WGPUMapAsyncStatus_Unknown && clock::now() < timeout) {
+            wgpuInstanceProcessEvents(instance);
+            std::this_thread::yield();
+        }
+
+        if (mapStatus != WGPUMapAsyncStatus_Success) return nullptr;
+        return static_cast<const uint8_t*>(wgpuBufferGetConstMappedRange(buffer, 0, size));
+    }
+
+    size_t size = 0;
+    WGPUBuffer buffer = nullptr;
+    const uint8_t* data = nullptr;
+};
+
+}
+
+TvgWgTestEngine::~TvgWgTestEngine()
+{
+    release();
+}
+
+bool TvgWgTestEngine::init(uint32_t w, uint32_t h)
+{
+    return init(w, h, ColorSpace::ABGR8888S);
+}
+
+bool TvgWgTestEngine::init(uint32_t w, uint32_t h, ColorSpace cs)
+{
+    release();
+    width = w;
+    height = h;
+    colorSpace = cs;
+    if (setup()) return true;
+
+    release();
+    return false;
+}
+
+std::unique_ptr<Canvas> TvgWgTestEngine::canvas()
+{
+    return std::unique_ptr<Canvas>(WgCanvas::gen());
+}
+
+Result TvgWgTestEngine::target(Canvas* canvas)
+{
+    if (!canvas) return Result::InvalidArguments;
+    if (!instance || !device || !texture) return Result::Unknown;
+
+    clear();
+    return static_cast<WgCanvas*>(canvas)->target(device, instance, texture, width, height, colorSpace, 1);
+}
+
+bool TvgWgTestEngine::rendered()
+{
+    if (!instance || !device || !texture) return false;
+
+    WgTextureReadback readback(device, texture, width, height);
+    auto data = readback.map(instance);
+    return data && std::any_of(data, data + readback.mappedSize(), [](uint8_t value) { return value != 0; });
+}
+
+bool TvgWgTestEngine::setup()
+{
+    instance = wgpuCreateInstance(nullptr);
+    if (!instance) return false;
+
+    // request adapter
+    WGPUAdapter adapter = nullptr;
+    auto onAdapterRequestEnded = [](WGPURequestAdapterStatus, WGPUAdapter adapter, WGPUStringView, void* userdata1, void*) { *((WGPUAdapter*)userdata1) = adapter; };
+    const WGPURequestAdapterOptions requestAdapterOptions { .featureLevel = WGPUFeatureLevel_Compatibility, .powerPreference = WGPUPowerPreference_HighPerformance, .compatibleSurface = nullptr };
+    const WGPURequestAdapterCallbackInfo requestAdapterCallback { .mode = WGPUCallbackMode_WaitAnyOnly, .callback = onAdapterRequestEnded, .userdata1 = &adapter };
+    wgpuInstanceRequestAdapter(instance, &requestAdapterOptions, requestAdapterCallback);
+    if (!adapter) return false;
+
+    // request device
+    auto onDeviceError = [](WGPUDevice const*, WGPUErrorType, WGPUStringView, void*, void*) {};
+    auto onDeviceRequestEnded = [](WGPURequestDeviceStatus, WGPUDevice device, WGPUStringView, void* userdata1, void*) { *((WGPUDevice*)userdata1) = device; };
+    const WGPUDeviceDescriptor deviceDesc { .label = { "ThorVG Test Device", WGPU_STRLEN }, .uncapturedErrorCallbackInfo = { .callback = onDeviceError } };
+    const WGPURequestDeviceCallbackInfo requestDeviceCallback { .mode = WGPUCallbackMode_WaitAnyOnly, .callback = onDeviceRequestEnded, .userdata1 = &device };
+    wgpuAdapterRequestDevice(adapter, &deviceDesc, requestDeviceCallback);
+
+    wgpuAdapterRelease(adapter);
+    if (!device) return false;
+
+    if (!recreateTarget()) return false;
+
+    clear();
+    return true;
+}
+
+bool TvgWgTestEngine::recreateTarget()
+{
+    releaseTexture();
+
+    WGPUTextureDescriptor textureDesc = {};
+    textureDesc.usage = WGPUTextureUsage_CopySrc | WGPUTextureUsage_CopyDst | WGPUTextureUsage_RenderAttachment;
+    textureDesc.dimension = WGPUTextureDimension_2D;
+    textureDesc.size.width = width;
+    textureDesc.size.height = height;
+    textureDesc.size.depthOrArrayLayers = 1;
+    textureDesc.format = format;
+    textureDesc.mipLevelCount = 1;
+    textureDesc.sampleCount = 1;
+
+    texture = wgpuDeviceCreateTexture(device, &textureDesc);
+    return texture;
+}
+
+void TvgWgTestEngine::release()
+{
+    releaseTexture();
+
+    if (device) {
+        wgpuDeviceDestroy(device);
+        wgpuDeviceRelease(device);
+        device = nullptr;
+    }
+    if (instance) {
+        wgpuInstanceRelease(instance);
+        instance = nullptr;
+    }
+}
+
+void TvgWgTestEngine::releaseTexture()
+{
+    if (!texture) return;
+
+    wgpuTextureDestroy(texture);
+    wgpuTextureRelease(texture);
+    texture = nullptr;
+}
+
+void TvgWgTestEngine::clear()
+{
+    if (!device || !texture) return;
+
+    auto queue = wgpuDeviceGetQueue(device);
+    if (!queue) return;
+
+    std::vector<uint8_t> zeros(static_cast<size_t>(width) * height * 4, 0);
+
+    WGPUTexelCopyTextureInfo copyTextureInfo = {};
+    copyTextureInfo.texture = texture;
+
+    WGPUTexelCopyBufferLayout copyBufferLayout = {};
+    copyBufferLayout.bytesPerRow = width * 4;
+    copyBufferLayout.rowsPerImage = height;
+
+    WGPUExtent3D writeSize = {};
+    writeSize.width = width;
+    writeSize.height = height;
+    writeSize.depthOrArrayLayers = 1;
+
+    wgpuQueueWriteTexture(queue, &copyTextureInfo, zeros.data(), zeros.size(), &copyBufferLayout, &writeSize);
+    wgpuQueueRelease(queue);
 }
 
 #endif
