@@ -97,8 +97,6 @@ static const jerry_char_t* _magicStrings[MAGIC_STRING_COUNT];
 
 #undef TVG_LOTTIE_MAGIC_STRING_LIST
 
-static LottieExpressions* exps = nullptr;   //singleton instance engine
-
 
 static ExpContent* _expcontent(LottieExpression* exp, float frameNo, void* data, size_t refCnt = 1)
 {
@@ -213,7 +211,6 @@ static void contentFree(void *native_p, struct jerry_object_native_info_t *info_
 
 
 static jerry_object_native_info_t freeCb {contentFree, 0, 0};
-static uint32_t engineRefCnt = 0;  //Expressions Engine reference count
 
 
 static char* _name(jerry_value_t args)
@@ -1525,10 +1522,12 @@ LottieExpressions::LottieExpressions()
     jerry_init(JERRY_INIT_EMPTY);
 
     //build magic string arrays from the magic pool
-    auto p = _magicPool;
-    for (uint32_t i = 0; i < MAGIC_STRING_COUNT; ++i) {
-        _magicStrings[i] = (const jerry_char_t*)p;
-        p += _magicLengths[i];
+    if (_magicStrings[0] == nullptr) {
+        auto p = _magicPool;
+        for (uint32_t i = 0; i < MAGIC_STRING_COUNT; ++i) {
+            _magicStrings[i] = (const jerry_char_t*)p;
+            p += _magicLengths[i];
+        }
     }
     jerry_register_magic_strings(_magicStrings, MAGIC_STRING_COUNT, _magicLengths);
 
@@ -1543,33 +1542,6 @@ void LottieExpressions::update(float curTime)
     jerry_object_set_sz(global, EXP_TIME, time);
     jerry_value_free(time);
 }
-
-
-//FIXME: Threads support
-#include "tvgTaskScheduler.h"
-
-LottieExpressions* LottieExpressions::instance()
-{
-    //FIXME: Threads support
-    if (TaskScheduler::threads() > 0) {
-        TVGLOG("LOTTIE", "Lottie Expressions are not supported with tvg threads");
-        return nullptr;
-    }
-
-    if (!exps) exps = new LottieExpressions;
-    ++engineRefCnt;
-    return exps;
-}
-
-
-void LottieExpressions::retrieve(LottieExpressions* instance)
-{
-    if (--engineRefCnt == 0) {
-        delete(instance);
-        exps = nullptr;
-    }
-}
-
 
 Point LottieExpressions::toPoint2d(jerry_value_t obj)
 {

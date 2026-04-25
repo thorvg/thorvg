@@ -220,9 +220,43 @@ struct jerry_context_t
 /*
  * This part is for JerryScript which uses external context.
  */
+#if defined(__MINGW32__) || defined(__MINGW64__)
 
-#define JERRY_CONTEXT_STRUCT (*jerry_port_context_get ())
-#define JERRY_CONTEXT(field) (jerry_port_context_get ()->field)
+#include <windows.h>
+
+extern DWORD tls_context_index;
+
+#define JERRY_DEFINE_CURRENT_CONTEXT() \
+  jerry_context_t *jerry_current_context_p = (jerry_context_t*)TlsGetValue(tls_context_index); \
+  JERRY_UNUSED (jerry_current_context_p)
+
+#elif defined(_MSC_VER)
+
+extern __declspec(thread) jerry_context_t* tls_context_p;
+
+#define JERRY_DEFINE_CURRENT_CONTEXT() \
+  jerry_context_t *jerry_current_context_p = tls_context_p; \
+  JERRY_UNUSED (jerry_current_context_p)
+
+#else
+
+extern __thread jerry_context_t* tls_context_p;
+
+#define JERRY_DEFINE_CURRENT_CONTEXT() \
+  jerry_context_t *jerry_current_context_p = tls_context_p; \
+  JERRY_UNUSED (jerry_current_context_p)
+
+#endif
+
+/**
+ * Provides a reference to the current context structure.
+ */
+#define JERRY_CONTEXT_STRUCT (*jerry_current_context_p)
+
+/**
+ * Provides a reference to a field in the current context.
+ */
+#define JERRY_CONTEXT(field) (jerry_current_context_p->field)
 
 #if !JERRY_SYSTEM_ALLOCATOR
 
@@ -250,6 +284,11 @@ struct jmem_heap_t
  * Global context.
  */
 extern jerry_context_t jerry_global_context;
+
+/**
+ * If EXTERNAL_CONTEXT is not enabled then JERRY_DEFINE_CURRENT_CONTEXT is an empty macro to avoid errors.
+ */
+#define JERRY_DEFINE_CURRENT_CONTEXT()
 
 /**
  * Config-independent name for context.

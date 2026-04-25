@@ -85,6 +85,7 @@ enum
 static ecma_value_t
 ecma_builtin_global_object_eval (ecma_value_t x) /**< routine's first argument */
 {
+  JERRY_DEFINE_CURRENT_CONTEXT ();
   if (JERRY_UNLIKELY (!ecma_is_value_string (x)))
   {
     /* step 1 */
