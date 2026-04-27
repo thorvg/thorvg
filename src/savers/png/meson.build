@@ -1,9 +1,9 @@
 source_file = [
-   'tvgPngLoader.h',
-   'tvgPngLoader.cpp',
+  'tvgPngSaver.cpp', 
+  'tvgPngSaver.h',
 ]
 
-subloader_dep += [declare_dependency(
+subsaver_dep += [declare_dependency(
     include_directories : include_directories('.'),
     sources : source_file
 )]
