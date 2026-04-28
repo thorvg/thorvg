@@ -147,6 +147,7 @@ ThorVG is designed to be portable across a wide range of devices, including smal
   - [SVG](#svg)
   - [Lottie](#lottie)
   - [In Practice](#in-practice)
+    - [ArcBrush](#arcbrush)
     - [Canva iOS](#canva-ios)
     - [dotLottie](#dotlottie)
     - [Espressif](#espressif)
@@ -393,36 +394,43 @@ Please check out the [ThorVG Test App](https://thorvg-perf-test.vercel.app/) to 
 <br />
 <br />
 ## In Practice
+### ArcBrush
+[ArcBrush](https://arcbrush.com/) is a free, node-based image editor built for creators who value speed, flexibility, and full creative control. It leverages ThorVG for high-performance SVG rasterization in production.
+
+<p align="center">
+  <img width="700" height="auto" src="https://github.com/thorvg/thorvg.site/blob/main/readme/example_arcbrush.jpg">
+</p>
+
 ### Canva iOS
-[Canva](https://www.canva.com), is a popular visual communication platform used by millions worldwide. Known for its intuitive interface and rich design resources, Canva empowers users to create high-quality visual content easily. The iOS app switched from its previous Lottie engine to ThorVG, achieving around 80% faster rendering and 70% lower peak memory usage.
+[Canva](https://www.canva.com) is a popular visual communication platform known for its intuitive interface and rich design resources. Its iOS app switched from a previous Lottie engine to ThorVG, achieving about 80% faster rendering and 70% lower peak memory usage.
 
 <p align="center">
   <img width="700" height="auto" src="https://github.com/thorvg/thorvg.site/blob/main/readme/example_canvaios.png">
 </p>
 
 ### dotLottie
-[dotLottie](https://dotlottie.io/) is an open-source format that combines multiple Lottie animations, assets like images and fonts, and supports features such as state machines and interactivity. It uses ZIP compression (.lottie extension) for easy and efficient distribution. As a superset of Lottie, the [dotLottie player](https://github.com/LottieFiles/dotlottie-rs) now runs on ThorVG for rendering.
+[dotLottie](https://dotlottie.io/) is an open-source format that bundles multiple Lottie animations with assets like images and fonts, supporting interactivity and state machines. Using ZIP compression (.lottie), it enables efficient distribution, and its player runs on ThorVG for rendering.
 
 <p align="center">
   <img width="700" height="auto" src="https://github.com/thorvg/thorvg.site/blob/main/readme/example_dotlottie.png">
 </p>
 
 ### Espressif
-[Espressif Systems](https://www.espressif.com/en) provides [ThorVG as an official component](https://docs.espressif.com/projects/esp-iot-solution/en/latest/display/lcd/gui_solution.html#thorvg-component) within its ESP-IDF (IoT Development Framework), simplifying integration into ESP-IDF projects. This allows developers to easily incorporate ThorVG's rendering capabilities into their applications, particularly on IoT devices powered by Espressif’s ESP32 and ESP32-P4 microcontrollers.
+[Espressif Systems](https://www.espressif.com/en) provides ThorVG as an official component in its ESP-IDF, simplifying integration into projects. This enables developers to easily use ThorVG’s rendering on IoT devices powered by ESP32 and ESP32-P4.
 
 <p align="center">
   <img width="600" height="auto" src="https://github.com/thorvg/thorvg.site/blob/main/readme/example_espressif.png">
 </p>
 
 ### Flux Audio
-[Flux Audio](https://www.flux.audio/) is a high-performance audio company focused on premium sound and immersive experiences. They use advanced software for consistent audio processing across devices. ThorVG powers their UI with fast, scalable vector rendering, highlighting its flexibility in modern audio platforms.
+[Flux Audio](https://www.flux.audio/) is a high-performance audio company focused on premium sound. ThorVG powers its UI with fast, scalable vector rendering, demonstrating its flexibility in modern audio platforms.
 
 <p align="center">
   <img width="700" height="auto" src="https://github.com/thorvg/thorvg.site/blob/main/readme/example_flux.jpg">
 </p>
 
 ### Godot
-ThorVG is integrated into the Godot game engine to support sleek, high-quality vector-based user interfaces and assets. [Godot](https://www.godotengine.org) is a modern, open-source game engine with a full suite of tools, allowing developers to focus on creating games without reinventing core functionality.
+ThorVG is integrated into the [Godot](https://www.godotengine.org) game engine to enable high-quality vector-based UI and assets. Godot is a modern open-source engine that provides a full toolset for efficient game development.
 
 <p align="center">
   <img width="700" height="auto" src="https://github.com/thorvg/thorvg.site/blob/main/readme/example_godot.png">
@@ -430,14 +438,14 @@ ThorVG is integrated into the Godot game engine to support sleek, high-quality 
 
 ### Lottie Creator
 
-[Lottie Creator](https://creator.lottiefiles.com/) is designed to create ultra-lightweight, highly customizable and interactive animations for web, apps and social. Supercharged with AI-based Motion Copilot. ThorVG is powering the Canvas engine behind Lottie Creator — enabling fast and scalable vector graphics rendering across platforms.
+[Lottie Creator](https://creator.lottiefiles.com/) enables lightweight, customizable, and interactive animations for web, apps, and social, enhanced by AI-based Motion Copilot. ThorVG powers its Canvas engine, delivering fast and scalable vector rendering across platforms.
 
 <p align="center">
   <img width="700" height="auto" src="https://github.com/thorvg/thorvg.site/blob/main/readme/example_creator.png">
 </p>
 
 ### LVGL
-[LVGL](https://lvgl.io/) is an open-source graphics library specifically designed for embedded systems with limited resources. It is lightweight and highly customizable, providing support for graphical user interfaces (GUIs) on microcontrollers, IoT devices, and other embedded platforms. ThorVG serves as the vector drawing primitives library in the LVGL framework.
+[LVGL](https://lvgl.io/) is an open-source graphics library for embedded systems with limited resources, offering lightweight and customizable GUI support for microcontrollers and IoT devices. ThorVG serves as its vector drawing primitives library.
 
 <p align="center">
   <img width="700" height="auto" src="https://github.com/thorvg/thorvg.site/blob/main/readme/example_lvgl.png">
@@ -452,21 +460,21 @@ ThorVG is used as a lightweight vector rasterization backend in [MetaModule](htt
 
 
 ### Segger
-[SEGGER](https://www.segger.com/) Microcontroller provides products for developing and manufacturing embedded systems, including real-time operating systems (RTOS), middleware libraries, debugging and trace probes, and programming tools. [It has adopted ThorVG](https://doc.segger.com/UM03001_emWin.html#GUI_GPU_ThorVG_ThorVG_driver) as a GPU driver to enable high-performance vector rendering for its GUI apps.
+[SEGGER](https://www.segger.com/) Microcontroller provides tools for embedded system development, including RTOS, middleware, and debugging solutions. It adopts ThorVG as a GPU driver to enable high-performance vector rendering for GUI applications.
 
 <p align="center">
   <img width="650" height="auto" src="https://github.com/thorvg/thorvg.site/blob/main/readme/example_segger.png">
 </p>
 
 ### TinyPiXOS
-[TinyPiXOS](https://www.tinypixos.com/en/) is a lightweight, open-source Linux OS that replaces X11/Wayland with a custom C/C++ graphics stack. It includes minimal window management and GUI tools, all optimized for low resource use. ThorVG handles core GUI rendering, delivering efficient performance and high visual quality in constrained environments.
+[TinyPiXOS](https://www.tinypixos.com/en/) is a lightweight, open-source Linux OS with a custom C/C++ graphics stack replacing X11/Wayland. ThorVG handles core GUI rendering, delivering efficient performance and high visual quality in constrained environments.
 
 <p align="center">
   <img width="700" height="auto" src="https://github.com/thorvg/thorvg.site/blob/main/readme/example_tinypixos.png">
 </p>
 
 ### Tizen
-ThorVG has been integrated into the [Tizen](https://www.tizen.org) platform as the vector graphics engine. [NUI](https://docs.tizen.org/application/dotnet/guides/user-interface/nui/overview/) is the name of Tizen UI framework which is written in C#. ThorVG is the backend engine of the [NUI Vector Graphics](https://docs.tizen.org/application/dotnet/guides/user-interface/nui/vectorgraphics/Overview/) which is used for vector primitive drawings and scalable image contents such as SVG and Lottie Animation among the Tizen applications.
+ThorVG is integrated into the [Tizen](https://www.tizen.org) platform as its vector graphics engine, powering NUI’s vector graphics backend for rendering primitives and scalable content like SVG and Lottie animations.
 
 <p align="center">
   <img width="700" height="auto" src="https://github.com/thorvg/thorvg.site/blob/main/readme/example_tizen.png">
