@@ -576,14 +576,14 @@ static constexpr struct
 
 
 static bool _isValidImageMimeTypeAndEncoding(const char** href, const char** mimetype, imageMimeTypeEncoding* encoding) {
-    if (strncmp(*href, "image/", sizeof("image/") - 1)) return false; //not allowed mime type
+    if (strncasecmp(*href, "image/", sizeof("image/") - 1)) return false;  // not allowed mime type
     *href += sizeof("image/") - 1;
 
     //RFC2397 data:[<mediatype>][;base64],<data>
     //mediatype  := [ type "/" subtype ] *( ";" parameter )
     //parameter  := attribute "=" value
     for (unsigned int i = 0; i < sizeof(imageMimeTypes) / sizeof(imageMimeTypes[0]); i++) {
-        if (strncmp(*href, imageMimeTypes[i].name, imageMimeTypes[i].sz - 1)) continue;
+        if (strncasecmp(*href, imageMimeTypes[i].name, imageMimeTypes[i].sz - 1)) continue;
         *href += imageMimeTypes[i].sz  - 1;
         *mimetype = imageMimeTypes[i].name;
 
@@ -593,14 +593,14 @@ static bool _isValidImageMimeTypeAndEncoding(const char** href, const char** mim
             ++(*href);
 
             if (imageMimeTypes[i].encoding & imageMimeTypeEncoding::base64) {
-                if (!strncmp(*href, "base64,", sizeof("base64,") - 1)) {
+                if (!strncasecmp(*href, "base64,", sizeof("base64,") - 1)) {
                     *href += sizeof("base64,") - 1;
                     *encoding = imageMimeTypeEncoding::base64;
                     return true; //valid base64
                 }
             }
             if (imageMimeTypes[i].encoding & imageMimeTypeEncoding::utf8) {
-                if (!strncmp(*href, "utf8,", sizeof("utf8,") - 1)) {
+                if (!strncasecmp(*href, "utf8,", sizeof("utf8,") - 1)) {
                     *href += sizeof("utf8,") - 1;
                     *encoding = imageMimeTypeEncoding::utf8;
                     return true; //valid utf8
