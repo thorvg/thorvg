@@ -226,23 +226,26 @@ bool GlGeometry::tesselateStroke(const RenderShape& rshape)
     strokeBounds = {};
     strokeRenderWidth = 0.0f;
 
-    auto strokeWidth = 0.0f;
-    if (isinf(matrix.e11)) {
-        strokeWidth = rshape.strokeWidth() * scaling(matrix);
-        if (strokeWidth <= MIN_GL_STROKE_WIDTH) strokeWidth = MIN_GL_STROKE_WIDTH;
-        strokeWidth = strokeWidth / matrix.e11;
-    } else {
-        strokeWidth = rshape.strokeWidth();
-    }
-    auto strokeWidthWorld = strokeWidth * scaling(matrix);
+    auto strokeWidth = rshape.strokeWidth();
+    auto strokeWidthWorld = strokeWidth * gpuMaxScale(matrix);
     if (!std::isfinite(strokeWidthWorld)) strokeWidthWorld = strokeWidth;
+    if (!std::isfinite(strokeWidthWorld)) strokeWidthWorld = 0.0f;
 
     //run stroking only if it's valid
     if (!tvg::zero(strokeWidthWorld)) {
-        Stroker stroker(&stroke, strokeWidthWorld, rshape.strokeCap(), rshape.strokeJoin(), rshape.strokeMiterlimit());
+        Stroker stroker(&stroke, strokeWidth, rshape.strokeCap(), rshape.strokeJoin(), rshape.strokeMiterlimit(), &matrix);
         auto& dashed = RenderPath::scratch();
-        if (gpuStrokeDash(rshape, dashed, &matrix)) stroker.run(dashed);
-        else stroker.run(optPath);
+        if (gpuStrokeDash(rshape, dashed, nullptr)) {
+            stroker.run(dashed);
+        } else {
+            auto strokePath = &rshape.path;
+            if (rshape.trimpath()) {
+                auto& trimmed = RenderPath::scratch();
+                if (!rshape.stroke->trim.trim(rshape.path, trimmed)) return false;
+                strokePath = &trimmed;
+            }
+            stroker.run(*strokePath);
+        }
         strokeBounds = stroker.bounds();
         strokeRenderWidth = strokeWidthWorld;
         return true;

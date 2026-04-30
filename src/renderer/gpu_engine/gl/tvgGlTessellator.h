@@ -38,7 +38,7 @@ class Stroker
         Point prevPtDir;
     };
 public:
-    Stroker(GlGeometryBuffer* buffer, float strokeWidth, StrokeCap cap, StrokeJoin join, float miterLimit = 4.0f);
+    Stroker(GlGeometryBuffer* buffer, float strokeWidth, StrokeCap cap, StrokeJoin join, float miterLimit = 4.0f, const Matrix* transform = nullptr);
     void run(const RenderPath& path);
     RenderRegion bounds() const;
 
@@ -61,9 +61,12 @@ private:
     void squarePoint(const Point& p);
     void round(const Point& p, const Point& outDir);
     void roundPoint(const Point& p);
+    uint32_t pushVertex(const Point& p);
 
     GlGeometryBuffer* mBuffer;
+    const Matrix* mTransform = nullptr;
     float mWidth = 0.0f;
+    float mScale = 1.0f;
     float mMiterLimit = 4.f;
     StrokeCap mCap = StrokeCap::Square;
     StrokeJoin mJoin = StrokeJoin::Bevel;

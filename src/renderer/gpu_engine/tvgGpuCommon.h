@@ -32,6 +32,7 @@ namespace tvg
 void gpuOptimize(const RenderPath& in, RenderPath& out, const Matrix& matrix, bool& thin, bool& skipFill);
 bool gpuEdgesCross(const Point& p0, const Point& p1, const Point& p2, const Point& p3);
 bool gpuStrokeDash(const RenderShape& rs, RenderPath& out, const Matrix* transform);
+float gpuMaxScale(const Matrix& matrix);
 
 // Conservative triangle-fan safety check
 // The fill is emitted as (v0,v1,v2), (v0,v2,v3), (v0,v3,v4), ...

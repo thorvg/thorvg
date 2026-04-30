@@ -36,6 +36,18 @@ constexpr uint32_t SW_AA_COVERAGE_BITS = 8;
 constexpr auto AA_COVERAGE_QUANTUM = 1.0f / static_cast<float>(1u << SW_AA_COVERAGE_BITS);
 constexpr auto MAX_PIXEL_SPAN = 1.41421356237f;
 
+float gpuMaxScale(const Matrix& matrix)
+{
+    const auto s1 = matrix.e11 * matrix.e11 + matrix.e21 * matrix.e21;
+    const auto s2 = matrix.e12 * matrix.e12 + matrix.e22 * matrix.e22;
+    const auto p = matrix.e11 * matrix.e12 + matrix.e21 * matrix.e22;
+    const auto trace = s1 + s2;
+    const auto det = s1 * s2 - p * p;
+    const auto disc = std::max(trace * trace - 4.0f * det, 0.0f);
+    const auto scale = sqrtf(0.5f * (trace + sqrtf(disc)));
+    return std::isfinite(scale) ? scale : 1.0f;
+}
+
 struct ThinPathTracker
 {
     enum

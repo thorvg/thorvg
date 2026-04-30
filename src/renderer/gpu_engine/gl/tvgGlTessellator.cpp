@@ -32,7 +32,7 @@ static uint32_t _pushVertex(Array<float>& array, float x, float y)
     return (array.count - 2) / 2;
 }
 
-Stroker::Stroker(GlGeometryBuffer* buffer, float width, StrokeCap cap, StrokeJoin join, float miterLimit) : mBuffer(buffer), mWidth(width), mMiterLimit(miterLimit), mCap(cap), mJoin(join)
+Stroker::Stroker(GlGeometryBuffer* buffer, float width, StrokeCap cap, StrokeJoin join, float miterLimit, const Matrix* transform) : mBuffer(buffer), mTransform(transform), mWidth(width), mScale(transform ? gpuMaxScale(*transform) : 1.0f), mMiterLimit(miterLimit), mCap(cap), mJoin(join)
 {
 }
 
@@ -40,6 +40,21 @@ Stroker::Stroker(GlGeometryBuffer* buffer, float width, StrokeCap cap, StrokeJoi
 RenderRegion Stroker::bounds() const
 {
     return {{int32_t(floor(mLeftTop.x)), int32_t(floor(mLeftTop.y))}, {int32_t(ceil(mRightBottom.x)), int32_t(ceil(mRightBottom.y))}};
+}
+
+
+uint32_t Stroker::pushVertex(const Point& p)
+{
+    auto pt = mTransform ? p * (*mTransform) : p;
+    auto index = _pushVertex(mBuffer->vertex, pt.x, pt.y);
+    if (index == 0) mLeftTop = mRightBottom = pt;
+    else {
+        mLeftTop.x = std::min(mLeftTop.x, pt.x);
+        mLeftTop.y = std::min(mLeftTop.y, pt.y);
+        mRightBottom.x = std::max(mRightBottom.x, pt.x);
+        mRightBottom.y = std::max(mRightBottom.y, pt.y);
+    }
+    return index;
 }
 
 
@@ -120,10 +135,10 @@ void Stroker::lineTo(const Point& curr)
     auto c = curr + normal * radius();
     auto d = curr - normal * radius();
 
-    auto ia = _pushVertex(mBuffer->vertex, a.x, a.y);
-    auto ib = _pushVertex(mBuffer->vertex, b.x, b.y);
-    auto ic = _pushVertex(mBuffer->vertex, c.x, c.y);
-    auto id = _pushVertex(mBuffer->vertex, d.x, d.y);
+    auto ia = pushVertex(a);
+    auto ib = pushVertex(b);
+    auto ic = pushVertex(c);
+    auto id = pushVertex(d);
 
     /**
      *   a --------- c
@@ -151,15 +166,6 @@ void Stroker::lineTo(const Point& curr)
         mState.prevPt = curr;
     }
 
-    if (ia == 0) {
-        mRightBottom.x = mLeftTop.x = curr.x;
-        mRightBottom.y = mLeftTop.y = curr.y;
-    }
-
-    mLeftTop.x = std::min(mLeftTop.x, std::min(std::min(a.x, b.x), std::min(c.x, d.x)));
-    mLeftTop.y = std::min(mLeftTop.y, std::min(std::min(a.y, b.y), std::min(c.y, d.y)));
-    mRightBottom.x = std::max(mRightBottom.x, std::max(std::max(a.x, b.x), std::max(c.x, d.x)));
-    mRightBottom.y = std::max(mRightBottom.y, std::max(std::max(a.y, b.y), std::max(c.y, d.y)));
 }
 
 
@@ -167,7 +173,7 @@ void Stroker::cubicTo(const Point& cnt1, const Point& cnt2, const Point& end)
 {
     Bezier curve{ mState.prevPt, cnt1, cnt2, end };
 
-    auto count = curve.segments();
+    auto count = mTransform ? (curve * (*mTransform)).segments() : curve.segments();
     auto step = 1.f / count;
 
     for (uint32_t i = 0; i <= count; i++) {
@@ -228,11 +234,6 @@ void Stroker::round(const Point &prev, const Point& curr, const Point& center)
     auto orient = orientation(prev, center, curr);
     if (orient == Orientation::Linear) return;
 
-    mLeftTop.x = std::min(mLeftTop.x, std::min(center.x, std::min(prev.x, curr.x)));
-    mLeftTop.y = std::min(mLeftTop.y, std::min(center.y, std::min(prev.y, curr.y)));
-    mRightBottom.x = std::max(mRightBottom.x, std::max(center.x, std::max(prev.x, curr.x)));
-    mRightBottom.y = std::max(mRightBottom.y, std::max(center.y, std::max(prev.y, curr.y)));
-
     auto startAngle = tvg::atan2(prev.y - center.y, prev.x - center.x);
     auto endAngle = tvg::atan2(curr.y - center.y, curr.x - center.x);
 
@@ -243,42 +244,37 @@ void Stroker::round(const Point &prev, const Point& curr, const Point& center)
     }
 
     auto arcAngle = endAngle - startAngle;
-    auto count = arcSegmentsCnt(arcAngle, radius());
+    auto count = arcSegmentsCnt(arcAngle, radius() * mScale);
 
-    auto c = _pushVertex(mBuffer->vertex, center.x, center.y);
-    auto pi = _pushVertex(mBuffer->vertex, prev.x, prev.y);
+    auto c = pushVertex(center);
+    auto pi = pushVertex(prev);
     auto step = (endAngle - startAngle) / (count - 1);
 
     for (uint32_t i = 1; i < static_cast<uint32_t>(count); i++) {
         auto angle = startAngle + step * i;
         Point out = {center.x + cos(angle) * radius(), center.y + sin(angle) * radius()};
-        auto oi = _pushVertex(mBuffer->vertex, out.x, out.y);
+        auto oi = pushVertex(out);
 
         mBuffer->index.push(c);
         mBuffer->index.push(pi);
         mBuffer->index.push(oi);
 
         pi = oi;
-
-        mLeftTop.x = std::min(mLeftTop.x, out.x);
-        mLeftTop.y = std::min(mLeftTop.y, out.y);
-        mRightBottom.x = std::max(mRightBottom.x, out.x);
-        mRightBottom.y = std::max(mRightBottom.y, out.y);
     }
 }
 
 
 void Stroker::roundPoint(const Point &p)
 {
-    auto count = arcSegmentsCnt(2.0f * MATH_PI, radius());
-    auto c = _pushVertex(mBuffer->vertex, p.x, p.y);
+    auto count = arcSegmentsCnt(2.0f * MATH_PI, radius() * mScale);
+    auto c = pushVertex(p);
     auto step = 2.0f * MATH_PI / (count - 1);
 
     for (uint32_t i = 1; i <= static_cast<uint32_t>(count); i++) {
         float angle = i * step;
         Point dir = {cos(angle), sin(angle)};
         Point out = p + dir * radius();
-        auto oi = _pushVertex(mBuffer->vertex, out.x, out.y);
+        auto oi = pushVertex(out);
 
         if (oi > 1) {
             mBuffer->index.push(c);
@@ -286,11 +282,6 @@ void Stroker::roundPoint(const Point &p)
             mBuffer->index.push(oi - 1);
         }
     }
-
-    mLeftTop.x = std::min(mLeftTop.x, p.x - radius());
-    mLeftTop.y = std::min(mLeftTop.y, p.y - radius());
-    mRightBottom.x = std::max(mRightBottom.x, p.x + radius());
-    mRightBottom.y = std::max(mRightBottom.y, p.y + radius());
 }
 
 
@@ -308,10 +299,10 @@ void Stroker::miter(const Point& prev, const Point& curr, const Point& center)
     }
 
     auto join = center + pe;
-    auto c = _pushVertex(mBuffer->vertex, center.x, center.y);
-    auto cp1 = _pushVertex(mBuffer->vertex, prev.x, prev.y);
-    auto cp2 = _pushVertex(mBuffer->vertex, curr.x, curr.y);
-    auto e = _pushVertex(mBuffer->vertex, join.x, join.y);
+    auto c = pushVertex(center);
+    auto cp1 = pushVertex(prev);
+    auto cp2 = pushVertex(curr);
+    auto e = pushVertex(join);
 
     mBuffer->index.push(c);
     mBuffer->index.push(cp1);
@@ -320,20 +311,14 @@ void Stroker::miter(const Point& prev, const Point& curr, const Point& center)
     mBuffer->index.push(e);
     mBuffer->index.push(cp2);
     mBuffer->index.push(c);
-
-    mLeftTop.x = std::min(mLeftTop.x, join.x);
-    mLeftTop.y = std::min(mLeftTop.y, join.y);
-
-    mRightBottom.x = std::max(mRightBottom.x, join.x);
-    mRightBottom.y = std::max(mRightBottom.y, join.y);
 }
 
 
 void Stroker::bevel(const Point& prev, const Point& curr, const Point& center)
 {
-    auto a = _pushVertex(mBuffer->vertex, prev.x, prev.y);
-    auto b = _pushVertex(mBuffer->vertex, curr.x, curr.y);
-    auto c = _pushVertex(mBuffer->vertex, center.x, center.y);
+    auto a = pushVertex(prev);
+    auto b = pushVertex(curr);
+    auto c = pushVertex(center);
 
     mBuffer->index.push(a);
     mBuffer->index.push(b);
@@ -350,10 +335,10 @@ void Stroker::square(const Point& p, const Point& outDir)
     auto c = a + outDir * radius();
     auto d = b + outDir * radius();
 
-    auto ai = _pushVertex(mBuffer->vertex, a.x, a.y);
-    auto bi = _pushVertex(mBuffer->vertex, b.x, b.y);
-    auto ci = _pushVertex(mBuffer->vertex, c.x, c.y);
-    auto di = _pushVertex(mBuffer->vertex, d.x, d.y);
+    auto ai = pushVertex(a);
+    auto bi = pushVertex(b);
+    auto ci = pushVertex(c);
+    auto di = pushVertex(d);
 
     mBuffer->index.push(ai);
     mBuffer->index.push(bi);
@@ -363,10 +348,6 @@ void Stroker::square(const Point& p, const Point& outDir)
     mBuffer->index.push(bi);
     mBuffer->index.push(di);
 
-    mLeftTop.x = std::min(mLeftTop.x, std::min(std::min(a.x, b.x), std::min(c.x, d.x)));
-    mLeftTop.y = std::min(mLeftTop.y, std::min(std::min(a.y, b.y), std::min(c.y, d.y)));
-    mRightBottom.x = std::max(mRightBottom.x, std::max(std::max(a.x, b.x), std::max(c.x, d.x)));
-    mRightBottom.y = std::max(mRightBottom.y, std::max(std::max(a.y, b.y), std::max(c.y, d.y)));
 }
 
 
@@ -380,10 +361,10 @@ void Stroker::squarePoint(const Point& p)
     auto c = p - offsetX - offsetY;
     auto d = p + offsetX - offsetY;
 
-    auto ai = _pushVertex(mBuffer->vertex, a.x, a.y);
-    auto bi = _pushVertex(mBuffer->vertex, b.x, b.y);
-    auto ci = _pushVertex(mBuffer->vertex, c.x, c.y);
-    auto di = _pushVertex(mBuffer->vertex, d.x, d.y);
+    auto ai = pushVertex(a);
+    auto bi = pushVertex(b);
+    auto ci = pushVertex(c);
+    auto di = pushVertex(d);
 
     mBuffer->index.push(ai);
     mBuffer->index.push(bi);
@@ -393,10 +374,6 @@ void Stroker::squarePoint(const Point& p)
     mBuffer->index.push(di);
     mBuffer->index.push(ai);
 
-    mLeftTop.x = std::min(mLeftTop.x, std::min(std::min(a.x, b.x), std::min(c.x, d.x)));
-    mLeftTop.y = std::min(mLeftTop.y, std::min(std::min(a.y, b.y), std::min(c.y, d.y)));
-    mRightBottom.x = std::max(mRightBottom.x, std::max(std::max(a.x, b.x), std::max(c.x, d.x)));
-    mRightBottom.y = std::max(mRightBottom.y, std::max(std::max(a.y, b.y), std::max(c.y, d.y)));
 }
 
 
