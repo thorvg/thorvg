@@ -1062,7 +1062,7 @@ void LottieParser::parseFontData(LottieFont* font, const char* data)
     //handle base64 font data
     if (!strncmp(data, "data:font/", sizeof("data:font/") - 1)) {
         data += sizeof("data:font/") - 1;
-        if (!strncmp(data, "ttf", 3)) {
+        if (!strncasecmp(data, "ttf", 3)) {
             data += 3;
         } else {
             TVGLOG("LOTTIE", "TODO: Support a new font type!");
