@@ -23,6 +23,7 @@
 #ifndef _TVG_LOTTIE_EXPRESSIONS_H_
 #define _TVG_LOTTIE_EXPRESSIONS_H_
 
+#include "tvgArray.h"
 #include "tvgCommon.h"
 #include "tvgLottieCommon.h"
 
@@ -35,9 +36,16 @@ struct LottieModifier;
 
 #include "jerryscript.h"
 
+#ifdef THORVG_THREAD_SUPPORT
+    #include <thread>
+#endif
+
 
 struct LottieExpressions
 {
+    static LottieExpressions* instance();
+    static void retrieve(LottieExpressions* instance);
+
     template<typename Property, typename NumType>
     bool result(float frameNo, NumType& out, LottieExpression* exp)
     {
@@ -147,38 +155,50 @@ struct LottieExpressions
 
     void update(float curTime);
 
-    //singleton (no thread safety)
-    static LottieExpressions* instance();
-    static void retrieve(LottieExpressions* instance);
-
 private:
     LottieExpressions();
     ~LottieExpressions();
 
-    jerry_value_t evaluate(float frameNo, LottieExpression* exp);
-    jerry_value_t buildGlobal();
+    struct LocalInstance
+    {
+        //global objects, attributes, and methods per local thread instance
+        jerry_value_t global;
+        jerry_value_t comp;
+        jerry_value_t thisComp;
+        jerry_value_t thisLayer;
+        jerry_value_t thisProperty;
+#ifdef THORVG_THREAD_SUPPORT
+        jerry_context_t* ctx;
+        thread::id tid;
+#endif
+    };
 
-    void buildComp(LottieComposition* comp, float frameNo, LottieExpression* exp);
+    LocalInstance& local();
+    void init(LocalInstance& inst);
+    void clear(LocalInstance& inst);
+
+    jerry_value_t evaluate(float frameNo, LottieExpression* exp);
+    jerry_value_t buildGlobal(LocalInstance& inst);
+
+    void buildComp(LocalInstance& inst, LottieComposition* comp, float frameNo, LottieExpression* exp);
     void buildComp(jerry_value_t context, float frameNo, LottieLayer* comp, LottieExpression* exp);
-    void buildGlobal(float frameNo, LottieExpression* exp);
-    void buildWritables(LottieExpression* exp);
+    void buildGlobal(LocalInstance& inst, float frameNo, LottieExpression* exp);
+    void buildWritables(LocalInstance& inst, LottieExpression* exp);
 
     Point toPoint2d(jerry_value_t obj);
     RGB32 toColor(jerry_value_t obj);
     float toFloat(jerry_value_t obj);
 
-    //global object, attributes, methods
-    jerry_value_t global;
-    jerry_value_t comp;
-    jerry_value_t thisComp;
-    jerry_value_t thisLayer;
-    jerry_value_t thisProperty;
+    Array<LocalInstance*> instances;
 };
 
 #else
 
 struct LottieExpressions
 {
+    static LottieExpressions* instance() { return nullptr; }
+    static void retrieve(TVG_UNUSED LottieExpressions*) {}
+
     template<typename Property, typename NumType> bool result(TVG_UNUSED float, TVG_UNUSED NumType&, TVG_UNUSED LottieExpression*) { return false; }
     template<typename Property> bool result(TVG_UNUSED float, TVG_UNUSED Point&, LottieExpression*) { return false; }
     template<typename Property> bool result(TVG_UNUSED float, TVG_UNUSED RGB32&, TVG_UNUSED LottieExpression*) { return false; }
@@ -186,8 +206,6 @@ struct LottieExpressions
     template<typename Property> bool result(TVG_UNUSED float, TVG_UNUSED RenderPath&, TVG_UNUSED Matrix*, TVG_UNUSED LottieModifier*, TVG_UNUSED LottieExpression*) { return false; }
     bool result(TVG_UNUSED float, TVG_UNUSED TextDocument& doc, TVG_UNUSED LottieExpression*) { return false; }
     void update(TVG_UNUSED float) {}
-    static LottieExpressions* instance() { return nullptr; }
-    static void retrieve(TVG_UNUSED LottieExpressions* instance) {}
 };
 
 #endif //THORVG_LOTTIE_EXPRESSIONS_SUPPORT
