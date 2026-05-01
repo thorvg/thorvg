@@ -1695,8 +1695,6 @@ bool LottieBuilder::update(LottieComposition* comp, float frameNo)
         if (equal(frameNo, tween.frameNo)) offTween();
     }
 
-    exps = LottieExpressionsMgr::expressions();
-
     if (exps && comp->expressions) exps->update(comp->timeAtFrame(frameNo));
 
     //update children layers

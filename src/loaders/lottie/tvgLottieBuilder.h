@@ -26,7 +26,7 @@
 #include "tvgCommon.h"
 #include "tvgInlist.h"
 #include "tvgShape.h"
-#include "tvgLottieExpressionsMgr.h"
+#include "tvgLottieExpressions.h"
 #include "tvgLottieModifier.h"
 
 struct LottieComposition;
@@ -143,19 +143,19 @@ struct RenderContext
 
 struct LottieBuilder
 {
-    LottieBuilder() : exps(nullptr)
+    LottieBuilder()
     {
-        LottieExpressionsMgr::ref();
+        exps = LottieExpressions::instance();
     }
 
     ~LottieBuilder()
     {
-        LottieExpressionsMgr::unref();
+        LottieExpressions::retrieve(exps);
     }
 
     bool expressions()
     {
-        return LottieExpressionsMgr::enabled();
+        return exps ? true : false;
     }
 
     void offTween()

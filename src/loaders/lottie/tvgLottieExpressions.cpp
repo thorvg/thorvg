@@ -25,8 +25,13 @@
 #include "tvgCompressor.h"
 #include "tvgLottieModel.h"
 #include "tvgLottieExpressions.h"
+#include "tvgLock.h"
 
 #ifdef THORVG_LOTTIE_EXPRESSIONS_SUPPORT
+
+#ifdef THORVG_THREAD_SUPPORT
+    #include "jerryscript-port.h"
+#endif
 
 /************************************************************************/
 /* Internal Class Implementation                                        */
@@ -60,6 +65,10 @@ static const char* EXP_TIME = "time";
 static const char* EXP_VALUE = "value";
 static const char* EXP_INDEX = "index";
 static const char* EXP_EFFECT= "effect";
+
+static LottieExpressions* _exps = nullptr;
+static uint32_t _refCnt = 0;
+static Key _lockKey;
 
 /**
  * external magic strings for the per-frame hot path (buildProperty, buildLayer, buildTransform, bm_rt).
@@ -1348,13 +1357,13 @@ static void _buildMath(jerry_value_t context)
 }
 
 
-void LottieExpressions::buildGlobal(float frameNo, LottieExpression* exp)
+void LottieExpressions::buildGlobal(LocalInstance& inst, float frameNo, LottieExpression* exp)
 {
-    tvg::free(static_cast<ExpContent*>(jerry_object_get_native_ptr(comp, &freeCb)));
-    jerry_object_set_native_ptr(comp, &freeCb, _expcontent(exp, frameNo, exp->layer));
+    tvg::free(static_cast<ExpContent*>(jerry_object_get_native_ptr(inst.comp, &freeCb)));
+    jerry_object_set_native_ptr(inst.comp, &freeCb, _expcontent(exp, frameNo, exp->layer));
 
     auto index = jerry_number(exp->layer->ix);
-    jerry_object_set_sz(global, EXP_INDEX, index);
+    jerry_object_set_sz(inst.global, EXP_INDEX, index);
     jerry_value_free(index);
 }
 
@@ -1374,9 +1383,9 @@ void LottieExpressions::buildComp(jerry_value_t context, float frameNo, LottieLa
 }
 
 
-void LottieExpressions::buildComp(LottieComposition* comp, float frameNo, LottieExpression* exp)
+void LottieExpressions::buildComp(LocalInstance& inst, LottieComposition* comp, float frameNo, LottieExpression* exp)
 {
-    buildComp(this->comp, frameNo, comp->root, exp);
+    buildComp(inst.comp, frameNo, comp->root, exp);
 
     //marker
     //marker.key(index)
@@ -1387,22 +1396,22 @@ void LottieExpressions::buildComp(LottieComposition* comp, float frameNo, Lottie
     //activeCamera
 
     auto width = jerry_number(comp->w);
-    jerry_object_set_sz(thisComp, EXP_WIDTH, width);
+    jerry_object_set_sz(inst.thisComp, EXP_WIDTH, width);
     jerry_value_free(width);
 
     auto height = jerry_number(comp->h);
-    jerry_object_set_sz(thisComp, EXP_HEIGHT, height);
+    jerry_object_set_sz(inst.thisComp, EXP_HEIGHT, height);
     jerry_value_free(height);
 
     auto duration = jerry_number(comp->duration());
-    jerry_object_set_sz(thisComp, "duration", duration);
+    jerry_object_set_sz(inst.thisComp, "duration", duration);
     jerry_value_free(duration);
 
     //ntscDropFrame
     //displayStartTime
 
     auto frameDuration = jerry_number(1.0f / comp->frameRate);
-    jerry_object_set_sz(thisComp, "frameDuration", frameDuration);
+    jerry_object_set_sz(inst.thisComp, "frameDuration", frameDuration);
     jerry_value_free(frameDuration);
 
     //shutterAngle
@@ -1412,46 +1421,46 @@ void LottieExpressions::buildComp(LottieComposition* comp, float frameNo, Lottie
 
     if (comp->name) {
         auto name = jerry_string_sz(comp->name);
-        jerry_object_set_sz(thisComp, EXP_NAME, name);
+        jerry_object_set_sz(inst.thisComp, EXP_NAME, name);
         jerry_value_free(name);
     }
 }
 
 
-jerry_value_t LottieExpressions::buildGlobal()
+jerry_value_t LottieExpressions::buildGlobal(LocalInstance& inst)
 {
-    global = jerry_current_realm();
+    inst.global = jerry_current_realm();
 
     //comp(name)
-    comp = jerry_function_external(_comp);
-    jerry_object_set_sz(global, "comp", comp);
+    inst.comp = jerry_function_external(_comp);
+    jerry_object_set_sz(inst.global, "comp", inst.comp);
 
     //footage(name)
 
-    thisComp = jerry_object();
-    jerry_object_set_sz(global, "thisComp", thisComp);
+    inst.thisComp = jerry_object();
+    jerry_object_set_sz(inst.global, "thisComp", inst.thisComp);
 
-    thisLayer = jerry_object();
-    jerry_object_set_sz(global, "thisLayer", thisLayer);
+    inst.thisLayer = jerry_object();
+    jerry_object_set_sz(inst.global, "thisLayer", inst.thisLayer);
 
-    thisProperty = jerry_object();
-    jerry_object_set_sz(global, "thisProperty", thisProperty);
+    inst.thisProperty = jerry_object();
+    jerry_object_set_sz(inst.global, "thisProperty", inst.thisProperty);
 
     //fromCompToSurface
     //createPath
     //posterizeTime(framesPerSecond)
     //value
 
-    return global;
+    return inst.global;
 }
 
 
-void LottieExpressions::buildWritables(LottieExpression* exp)
+void LottieExpressions::buildWritables(LocalInstance& inst, LottieExpression* exp)
 {
     if (exp->writables.empty()) return;
     ARRAY_FOREACH(p, exp->writables) {
         auto writable = jerry_number(p->val);
-        jerry_object_set_sz(global, p->var, writable);
+        jerry_object_set_sz(inst.global, p->var, writable);
         jerry_value_free(writable);
     }
 }
@@ -1461,30 +1470,32 @@ jerry_value_t LottieExpressions::evaluate(float frameNo, LottieExpression* exp)
 {
     if (exp->disabled && exp->writables.empty()) return jerry_undefined();
 
-    buildGlobal(frameNo, exp);
+    auto& inst = local();
+
+    buildGlobal(inst, frameNo, exp);
 
     //main composition
-    buildComp(exp->comp, frameNo, exp);
+    buildComp(inst, exp->comp, frameNo, exp);
 
     //this composition
-    buildComp(thisComp, frameNo, exp->layer->comp, exp);
+    buildComp(inst.thisComp, frameNo, exp->layer->comp, exp);
 
     //update global context values
-    _buildProperty(frameNo, global, exp);
+    _buildProperty(frameNo, inst.global, exp);
 
     //this layer
-    jerry_object_set_native_ptr(thisLayer, nullptr, exp->layer);
-    _buildLayer(thisLayer, frameNo, exp->layer, exp->comp->root, exp);
+    jerry_object_set_native_ptr(inst.thisLayer, nullptr, exp->layer);
+    _buildLayer(inst.thisLayer, frameNo, exp->layer, exp->comp->root, exp);
 
     //this property
-    jerry_object_set_native_ptr(thisProperty, nullptr, exp->property);
-    _buildProperty(frameNo, thisProperty, exp);
+    jerry_object_set_native_ptr(inst.thisProperty, nullptr, exp->property);
+    _buildProperty(frameNo, inst.thisProperty, exp);
 
     //expansions per object type
-    if (exp->object->type == LottieObject::Transform) _buildTransform(global, frameNo, static_cast<LottieTransform*>(exp->object));
+    if (exp->object->type == LottieObject::Transform) _buildTransform(inst.global, frameNo, static_cast<LottieTransform*>(exp->object));
 
     //update writable values
-    buildWritables(exp);
+    buildWritables(inst, exp);
 
     //evaluate the code
     auto eval = jerry_eval((jerry_char_t *) exp->code, strlen(exp->code), JERRY_PARSE_NO_OPTS);
@@ -1498,7 +1509,7 @@ jerry_value_t LottieExpressions::evaluate(float frameNo, LottieExpression* exp)
 
     jerry_value_free(eval);
 
-    return jerry_object_get_sz(global, "$bm_rt");
+    return jerry_object_get_sz(inst.global, "$bm_rt");
 }
 
 
@@ -1506,40 +1517,108 @@ jerry_value_t LottieExpressions::evaluate(float frameNo, LottieExpression* exp)
 /* External Class Implementation                                        */
 /************************************************************************/
 
+LottieExpressions* LottieExpressions::instance()
+{
+    ScopedLock lock(_lockKey);
+    if (!_exps) _exps = new LottieExpressions;
+    ++_refCnt;
+    return _exps;
+}
+
+
+void LottieExpressions::retrieve(LottieExpressions* instance)
+{
+    if (!instance) return;
+
+    ScopedLock lock(_lockKey);
+    if (--_refCnt == 0) {
+        delete(instance);
+        _exps = nullptr;
+    }
+}
+
+
+LottieExpressions::LocalInstance& LottieExpressions::local()
+{
+#ifdef THORVG_THREAD_SUPPORT
+    auto tid = this_thread::get_id();
+    ScopedLock lock(_lockKey);
+
+    for (auto inst : instances) {
+        if (inst->tid == tid) return *inst;
+    }
+
+    auto inst = new LocalInstance;
+    inst->tid = tid;
+    init(*inst);
+    instances.push(inst);
+    return *inst;
+#else
+    if (instances.empty()) {
+        auto inst = new LocalInstance;
+        init(*inst);
+        instances.push(inst);
+    }
+    return *instances.first();
+#endif
+}
+
+
+void LottieExpressions::init(LocalInstance& inst)
+{
+    jerry_init(JERRY_INIT_EMPTY);
+#ifdef THORVG_THREAD_SUPPORT
+    inst.ctx = jerry_port_context_get();
+#endif
+    jerry_register_magic_strings(_magicStrings, MAGIC_STRING_COUNT, _magicLengths);
+    _buildMath(buildGlobal(inst));
+}
+
+
+void LottieExpressions::clear(LocalInstance& inst)
+{
+#ifdef THORVG_THREAD_SUPPORT
+    jerry_port_context_set(inst.ctx);
+#endif
+    jerry_value_free(inst.thisProperty);
+    jerry_value_free(inst.thisLayer);
+    jerry_value_free(inst.thisComp);
+    jerry_value_free(inst.comp);
+    jerry_value_free(inst.global);
+    jerry_cleanup();
+}
+
+
 LottieExpressions::~LottieExpressions()
 {
-    jerry_value_free(thisProperty);
-    jerry_value_free(thisLayer);
-    jerry_value_free(thisComp);
-    jerry_value_free(comp);
-    jerry_value_free(global);
-    jerry_cleanup();
+    for (auto inst : instances) {
+        clear(*inst);
+        delete(inst);
+    }
+    instances.clear();
 }
 
 
 LottieExpressions::LottieExpressions()
 {
-    jerry_init(JERRY_INIT_EMPTY);
-
     //build magic string arrays from the magic pool
-    if (_magicStrings[0] == nullptr) {
+    if (!_magicStrings[0]) {
         auto p = _magicPool;
         for (uint32_t i = 0; i < MAGIC_STRING_COUNT; ++i) {
             _magicStrings[i] = (const jerry_char_t*)p;
             p += _magicLengths[i];
         }
     }
-    jerry_register_magic_strings(_magicStrings, MAGIC_STRING_COUNT, _magicLengths);
-
-    _buildMath(buildGlobal());
 }
 
 
 void LottieExpressions::update(float curTime)
 {
+    auto& inst = local();
+
     //time, #current time in seconds
     auto time = jerry_number(curTime);
-    jerry_object_set_sz(global, EXP_TIME, time);
+    jerry_object_set_sz(inst.global, EXP_TIME, time);
     jerry_value_free(time);
 }
 
