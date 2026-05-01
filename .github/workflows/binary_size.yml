@@ -52,17 +52,6 @@ jobs:
             cpp_link_args: '-m32'
 
           # arm64 (GitHub ARM runner)
-          - label: arm64 gcc
-            key: arm64-gcc
-            runs_on: ubuntu-24.04-arm
-            extra_packages: 'gcc-15 g++-15 libturbojpeg0-dev libpng-dev libwebp-dev libgles-dev'
-            cc: gcc-15
-            cxx: g++-15
-            c_args: ''
-            cpp_args: ''
-            c_link_args: ''
-            cpp_link_args: ''
-
           - label: arm64 clang
             key: arm64-clang
             runs_on: ubuntu-24.04-arm
@@ -114,10 +103,6 @@ jobs:
 
         mkdir -p "$APT_CACHE_DIR/archives/partial"
         echo "Installing missing packages: ${missing_packages[*]}"
-
-        if echo " ${missing_packages[*]} " | grep -Eq ' (gcc-15|g\+\+-15) '; then
-          sudo add-apt-repository -y ppa:ubuntu-toolchain-r/test
-        fi
 
         sudo apt-get update -o Acquire::Retries=3
         sudo apt-get install -y --no-install-recommends \
