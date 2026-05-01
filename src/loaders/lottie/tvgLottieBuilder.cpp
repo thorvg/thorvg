@@ -1396,16 +1396,19 @@ bool LottieBuilder::updateMatte(LottieComposition* comp, float frameNo, Scene* s
     auto target = layer->matteTarget;
     if (!target || target->type == LottieLayer::Null) return true;
 
-    updateLayer(comp, scene, target, frameNo);
+    if (target->matteSrc) updateLayer(comp, scene, target, frameNo);
 
-    if (target->scene) {
-        layer->scene->mask(target->scene, layer->matteType);
-    } else if (layer->matteType == MaskMethod::Alpha || layer->matteType == MaskMethod::Luma) {
-        //matte target is not exist. alpha blending definitely bring an invisible result
-        Paint::rel(layer->scene);
-        layer->scene = nullptr;
-        return false;
+    if (!target->scene) {
+        if (layer->matteType == MaskMethod::Alpha || layer->matteType == MaskMethod::Luma) {
+            Paint::rel(layer->scene);
+            layer->scene = nullptr;
+            return false;
+        }
+        return true;
     }
+
+    auto mask = !target->matteSrc ? target->scene->duplicate() : target->scene;
+    if (mask) layer->scene->mask(mask, layer->matteType);
     return true;
 }
 
@@ -1670,6 +1673,40 @@ static bool _buildComposition(LottieComposition* comp, LottieLayer* parent)
             //precomp referencing
             if (child->matteTarget->rid) _buildReference(comp, child->matteTarget);
         }
+
+        // Handle Set Matte effect
+        if (child->matteType == MaskMethod::None) {
+            ARRAY_FOREACH(ep, child->effects)
+            {
+                auto effect = *ep;
+                if (effect->type != LottieEffect::SetMatte || !effect->enable) continue;
+                auto matteEffect = static_cast<LottieFxSetMatte*>(effect);
+
+                int matteLayerId = matteEffect->matteLayer;
+                if (matteLayerId < 0) break;  // Only process first enabled Set Matte effect
+
+                LottieLayer* target = nullptr;
+                ARRAY_FOREACH(lp, parent->children)
+                {
+                    auto layer = static_cast<LottieLayer*>(*lp);
+                    if (layer->ix == matteLayerId) {
+                        target = layer;
+                        break;
+                    }
+                }
+
+                if (target && target != child) {
+                    child->matteTarget = target;
+
+                    target->matteSrc = matteEffect->composite == 0;
+                    child->matteType = MaskMethod::Alpha; // Set Matte always to Alpha
+
+                    _buildHierarchy(parent, target);
+                    if (target->rid) _buildReference(comp, target);
+                }
+            }
+        }
+
         _buildHierarchy(parent, child);
 
         //attach the necessary font data
