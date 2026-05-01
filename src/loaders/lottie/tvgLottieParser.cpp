@@ -987,12 +987,16 @@ void LottieParser::parseImage(LottieImage* image, const char* data, const char* 
     //embedded image resource. should start with "data:"
     //header look like "data:image/png;base64," so need to skip till ','.
     if (embedded && !strncmp(data, "data:", 5)) {
+        if (strncasecmp(data + 5, "image/", sizeof("image/") - 1)) return;
         //figure out the mimetype
         auto mimeType = data + 11;
         auto needle = strstr(mimeType, ";");
+        if (!needle) return;
         image->bitmap.mimeType = duplicate(mimeType, needle - mimeType);
         //b64 data
-        auto b64Data = strstr(data, ",") + 1;
+        auto b64Data = strstr(needle, ",");
+        if (!b64Data) return;
+        ++b64Data;
         size_t length = dlen - (b64Data - data);
         image->bitmap.size = b64Decode(b64Data, length, &image->bitmap.data);
     //remote image resource (https:// or http://)
@@ -1062,13 +1066,15 @@ void LottieParser::parseFontData(LottieFont* font, const char* data)
     //handle base64 font data
     if (!strncmp(data, "data:font/", sizeof("data:font/") - 1)) {
         data += sizeof("data:font/") - 1;
-        if (!strncmp(data, "ttf", 3)) {
+        if (!strncasecmp(data, "ttf", 3)) {
             data += 3;
         } else {
             TVGLOG("LOTTIE", "TODO: Support a new font type!");
             return;
         }
-        data += sizeof(";base64,") - 1;
+        auto b64Data = strstr(data, ",");
+        if (!b64Data) return;
+        data = b64Data + 1;
         font->size = b64Decode(data, strlen(data), &font->b64src);
     //external font resource
     } else {
