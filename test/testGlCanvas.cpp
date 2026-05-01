@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2021 - 2026 ThorVG project. All rights reserved.
+ * Copyright (c) 2026 ThorVG project. All rights reserved.
 
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to deal
@@ -20,50 +20,49 @@
  * SOFTWARE.
  */
 
+#include <memory>
 #include <thorvg.h>
-#include "config.h"
 #include "catch.hpp"
-#include "testEngine.h"
+#include "testCanvas.h"
 
 using namespace tvg;
-using namespace std;
 
-#ifdef THORVG_CPU_ENGINE_SUPPORT
+#if defined(THORVG_GL_ENGINE_SUPPORT) && defined(THORVG_GL_TEST_SUPPORT)
 
-TEST_CASE("Basic draw", "[tvgSwEngine]")
+TEST_CASE("GL Missing Initialization", "[tvgGlCanvas]")
 {
-    TvgSwTestEngine engine;
-    TestEngine::basic(engine);
+    TvgGlTestEngine engine;
+    TestCanvas::missingInitialization(engine);
 }
 
-TEST_CASE("Image Draw", "[tvgSwEngine]")
+TEST_CASE("GL Basic Creation", "[tvgGlCanvas]")
 {
-    TvgSwTestEngine engine;
-    REQUIRE(TestEngine::image(engine));
+    TvgGlTestEngine engine;
+    TestCanvas::basicCreation(engine);
 }
 
-TEST_CASE("Filling Draw", "[tvgSwEngine]")
+TEST_CASE("GL Pushing Paints", "[tvgGlCanvas]")
 {
-    TvgSwTestEngine engine;
-    TestEngine::filling(engine);
+    TvgGlTestEngine engine;
+    TestCanvas::pushingPaints(engine);
 }
 
-TEST_CASE("Image Rotation", "[tvgSwEngine]")
+TEST_CASE("GL Update", "[tvgGlCanvas]")
 {
-    TvgSwTestEngine engine;
-    REQUIRE(TestEngine::imageRotation(engine));
+    TvgGlTestEngine engine;
+    TestCanvas::update(engine);
 }
 
-TEST_CASE("SW Scene Effects", "[tvgSwEngine]")
+TEST_CASE("GL Synchronized Drawing", "[tvgGlCanvas]")
 {
-    TvgSwTestEngine engine;
-    TestEngine::sceneEffects(engine);
+    TvgGlTestEngine engine;
+    TestCanvas::synchronizedDrawing(engine);
 }
 
-TEST_CASE("SW Solid Batch", "[tvgSwEngine]")
+TEST_CASE("GL Viewport", "[tvgGlCanvas]")
 {
-    TvgSwTestEngine engine;
-    TestEngine::solidBatch(engine);
+    TvgGlTestEngine engine;
+    TestCanvas::viewport(engine);
 }
 
 #endif

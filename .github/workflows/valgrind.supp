@@ -1,0 +1,31 @@
+# wgpu_native's GL/GLES backend keeps small internal instance/device caches alive at process shutdown.
+# Valgrind reports them as possible leaks, but they are not
+# ThorVG-owned GPU resources and are suppressed only for that known internal path.
+{
+   wgpu-native-gles-egl-instance-cache
+   Memcheck:Leak
+   match-leak-kinds: possible
+   fun:malloc
+   fun:*hashbrown*RawTableInner*fallible_with_capacity*
+   fun:*hashbrown*RawTable*reserve_rehash*
+   fun:*wgpu_hal*gles*egl*Inner*create*
+   fun:*wgpu_hal*gles*egl*Instance*init*
+   fun:*wgpu_core*instance*Instance*new*
+   fun:*wgpu_core*global*Global*new*
+   fun:wgpuCreateInstance
+}
+
+# Same wgpu_native-side device/pipeline cache path, reached while creating the
+# internal indirect-validation compute pipeline. Suppress only possible leaks.
+{
+   wgpu-native-gles-glsl-writer-cache
+   Memcheck:Leak
+   match-leak-kinds: possible
+   fun:malloc
+   fun:*hashbrown*RawTableInner*fallible_with_capacity*
+   fun:*hashbrown*RawTable*reserve_rehash*
+   fun:*core*ops*function*FnOnce*call_once*
+   fun:*once_cell*race*once_box*OnceBox*init*
+   fun:*naga*back*glsl*Writer*new*
+   fun:*wgpu_hal*gles*device*create_pipeline*
+}

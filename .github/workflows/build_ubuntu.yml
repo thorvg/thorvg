@@ -11,6 +11,9 @@ on:
 permissions:
   contents: read
 
+env:
+  WGPU_NATIVE_VERSION: v27.0.4.0
+
 jobs:
   build:
     runs-on: ubuntu-latest
@@ -22,11 +25,15 @@ jobs:
     - name: Install Packages
       run: |
         sudo apt-get update
-        sudo apt-get install meson ninja-build libturbojpeg0-dev libpng-dev libwebp-dev libgles-dev libsdl2-dev
+        sudo apt-get install -y meson ninja-build pkg-config curl unzip libturbojpeg0-dev libpng-dev libwebp-dev libsdl2-dev
+
+    - name: Install wgpu_native
+      run: |
+        bash .github/workflows/install_wgpu_native.sh
 
     - name: Build
       run: |
-        meson setup build -Dlog=true -Dengines="cpu, gl" -Dloaders=all -Dsavers=all -Dbindings=capi -Dtools=all
+        meson setup build -Dlog=true -Dengines="cpu, gl, wg" -Dloaders=all -Dsavers=all -Dbindings=capi -Dtools=all
         sudo ninja -C build install
 
   compact_test:
@@ -60,12 +67,17 @@ jobs:
     - name: Install Packages
       run: |
         sudo apt-get update
-        sudo apt-get install meson ninja-build libgtest-dev libasan5 valgrind curl jq software-properties-common libturbojpeg0-dev libpng-dev libwebp-dev libgles-dev
+        sudo apt-get install -y meson ninja-build pkg-config valgrind curl jq unzip libturbojpeg0-dev libpng-dev libwebp-dev libegl-dev libgl1-mesa-dev libgles2
+
+    - name: Install wgpu_native
+      run: |
+        bash .github/workflows/install_wgpu_native.sh
 
     - name: Build
       run: |
-        meson setup build -Dloaders="all" -Dengines="cpu, gl" -Dsavers="all" -Dbindings="capi" -Dtests=true --errorlogs
-        sudo ninja -C build install test
+        meson setup build -Dloaders="all" -Dengines="cpu, gl, wg" -Dsavers="all" -Dbindings="capi" -Dtests=true --errorlogs
+        sudo ninja -C build install
+        env LIBGL_ALWAYS_SOFTWARE=1 meson test -C build --print-errorlogs
 
     - uses: actions/upload-artifact@v4
       with:

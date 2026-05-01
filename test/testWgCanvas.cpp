@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2021 - 2026 ThorVG project. All rights reserved.
+ * Copyright (c) 2026 ThorVG project. All rights reserved.
 
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to deal
@@ -21,49 +21,47 @@
  */
 
 #include <thorvg.h>
-#include "config.h"
 #include "catch.hpp"
-#include "testEngine.h"
+#include "testCanvas.h"
 
 using namespace tvg;
-using namespace std;
 
-#ifdef THORVG_CPU_ENGINE_SUPPORT
+#if defined(THORVG_WG_ENGINE_SUPPORT) && defined(THORVG_WG_TEST_SUPPORT)
 
-TEST_CASE("Basic draw", "[tvgSwEngine]")
+TEST_CASE("WG Missing Initialization", "[tvgWgCanvas]")
 {
-    TvgSwTestEngine engine;
-    TestEngine::basic(engine);
+    TvgWgTestEngine engine;
+    TestCanvas::missingInitialization(engine);
 }
 
-TEST_CASE("Image Draw", "[tvgSwEngine]")
+TEST_CASE("WG Basic Creation", "[tvgWgCanvas]")
 {
-    TvgSwTestEngine engine;
-    REQUIRE(TestEngine::image(engine));
+    TvgWgTestEngine engine;
+    TestCanvas::basicCreation(engine);
 }
 
-TEST_CASE("Filling Draw", "[tvgSwEngine]")
+TEST_CASE("WG Pushing Paints", "[tvgWgCanvas]")
 {
-    TvgSwTestEngine engine;
-    TestEngine::filling(engine);
+    TvgWgTestEngine engine;
+    TestCanvas::pushingPaints(engine);
 }
 
-TEST_CASE("Image Rotation", "[tvgSwEngine]")
+TEST_CASE("WG Update", "[tvgWgCanvas]")
 {
-    TvgSwTestEngine engine;
-    REQUIRE(TestEngine::imageRotation(engine));
+    TvgWgTestEngine engine;
+    TestCanvas::update(engine);
 }
 
-TEST_CASE("SW Scene Effects", "[tvgSwEngine]")
+TEST_CASE("WG Synchronized Drawing", "[tvgWgCanvas]")
 {
-    TvgSwTestEngine engine;
-    TestEngine::sceneEffects(engine);
+    TvgWgTestEngine engine;
+    TestCanvas::synchronizedDrawing(engine);
 }
 
-TEST_CASE("SW Solid Batch", "[tvgSwEngine]")
+TEST_CASE("WG Viewport", "[tvgWgCanvas]")
 {
-    TvgSwTestEngine engine;
-    TestEngine::solidBatch(engine);
+    TvgWgTestEngine engine;
+    TestCanvas::viewport(engine);
 }
 
 #endif
