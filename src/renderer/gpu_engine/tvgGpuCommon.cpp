@@ -198,7 +198,7 @@ void gpuOptimize(const RenderPath& in, RenderPath& out, const Matrix& matrix, bo
 
     auto cmds = in.cmds.data;
     auto cmdCnt = in.cmds.count;
-    auto pts = in.pts.data;
+    const auto* pts = in.pts.data;
 
     Point lastOutT{};
     Point lastInT{};
@@ -411,6 +411,182 @@ void GpuConvexProbe::updateDir(float value, int8_t& prevDir, uint8_t& changes)
 /* StrokeDashPath Class Implementation                                  */
 /************************************************************************/
 
+struct DashPatternState
+{
+    int32_t idx = 0;
+    float offset = 0.0f;
+    bool gap = false;
+};
+
+struct DashSubpathState
+{
+    bool closed = false;
+    bool closeEndsAtStart = false;
+
+    void reset()
+    {
+        closed = false;
+        closeEndsAtStart = false;
+    }
+};
+
+struct PieceRange
+{
+    uint32_t cmdBegin;
+    uint32_t cmdEnd;
+    uint32_t ptBegin;
+    uint32_t ptEnd;
+};
+
+static inline DashPatternState dashPatternState(const RenderStroke::Dash& dash)
+{
+    DashPatternState state;
+    state.offset = dash.offset;
+    if (tvg::zero(dash.offset)) return state;
+
+    auto length = (dash.count % 2) ? dash.length * 2 : dash.length;
+    state.offset = fmodf(state.offset, length);
+    if (state.offset < 0) state.offset += length;
+
+    for (uint32_t i = 0; i < dash.count * (dash.count % 2 + 1); ++i, ++state.idx) {
+        auto curPattern = dash.pattern[i % dash.count];
+        if (state.offset < curPattern) break;
+        state.offset -= curPattern;
+        state.gap = !state.gap;
+    }
+    state.idx = state.idx % dash.count;
+    return state;
+}
+
+static inline void appendDashedCommand(RenderPath& dst, const RenderPath& src, PathCommand cmd, uint32_t& ptIdx, bool skipMoveTo)
+{
+    switch (cmd) {
+        case PathCommand::MoveTo: {
+            auto pt = src.pts[ptIdx++];
+            if (!skipMoveTo) dst.moveTo(pt);
+            break;
+        }
+        case PathCommand::LineTo: {
+            dst.lineTo(src.pts[ptIdx++]);
+            break;
+        }
+        case PathCommand::CubicTo: {
+            dst.cubicTo(src.pts[ptIdx], src.pts[ptIdx + 1], src.pts[ptIdx + 2]);
+            ptIdx += 3;
+            break;
+        }
+        default: break;
+    }
+}
+
+static inline void appendDashedPiece(RenderPath& dst, const RenderPath& src, const PieceRange& piece, bool skipMoveTo)
+{
+    auto ptIdx = piece.ptBegin;
+    for (uint32_t i = piece.cmdBegin; i < piece.cmdEnd; ++i) {
+        appendDashedCommand(dst, src, src.cmds[i], ptIdx, skipMoveTo && (i == piece.cmdBegin));
+    }
+}
+
+static inline void collectDashedPieces(const RenderPath& subOut, Array<PieceRange>& pieces)
+{
+    auto ptIdx = 0u;
+    auto pieceCmdBegin = UINT32_MAX;
+    auto piecePtBegin = 0u;
+    auto pieceHasDraw = false;
+
+    for (uint32_t i = 0; i < subOut.cmds.count; ++i) {
+        if (subOut.cmds[i] == PathCommand::MoveTo) {
+            if (pieceCmdBegin != UINT32_MAX && pieceHasDraw) {
+                pieces.push(PieceRange{pieceCmdBegin, i, piecePtBegin, ptIdx});
+            }
+            pieceCmdBegin = i;
+            piecePtBegin = ptIdx;
+            pieceHasDraw = false;
+        } else {
+            pieceHasDraw = true;
+        }
+
+        if (subOut.cmds[i] == PathCommand::CubicTo) ptIdx += 3;
+        else if (subOut.cmds[i] != PathCommand::Close) ptIdx += 1;
+    }
+
+    if (pieceCmdBegin != UINT32_MAX && pieceHasDraw) {
+        pieces.push(PieceRange{pieceCmdBegin, subOut.cmds.count, piecePtBegin, ptIdx});
+    }
+}
+
+static inline void resetDashedSubpath(RenderPath& subOut, DashSubpathState& state)
+{
+    subOut.clear();
+    state.reset();
+}
+
+static inline void appendDashedCommands(RenderPath& out, const RenderPath& subOut)
+{
+    auto ptIdx = 0u;
+    for (uint32_t i = 0; i < subOut.cmds.count; ++i) {
+        appendDashedCommand(out, subOut, subOut.cmds[i], ptIdx, false);
+    }
+}
+
+static inline bool prepareDashedPieces(RenderPath& subOut, DashSubpathState& state, Array<PieceRange>& pieces)
+{
+    pieces.clear();
+    if (subOut.cmds.empty()) {
+        resetDashedSubpath(subOut, state);
+        return false;
+    }
+
+    pieces.reserve(subOut.cmds.count);
+    collectDashedPieces(subOut, pieces);
+    if (!pieces.empty()) return true;
+
+    resetDashedSubpath(subOut, state);
+    return false;
+}
+
+static inline bool closedDashedContour(const RenderPath& subOut, const Array<PieceRange>& pieces, const Point& mappedStart)
+{
+    auto firstStartsAtClose = tvg::closed(subOut.pts[pieces[0].ptBegin], mappedStart, FLOAT_EPSILON);
+    auto lastEndsAtClose = tvg::closed(subOut.pts[pieces.last().ptEnd - 1], mappedStart, FLOAT_EPSILON);
+    return firstStartsAtClose && lastEndsAtClose;
+}
+
+static inline bool appendClosedDashedSubpath(RenderPath& out, const RenderPath& subOut, const Array<PieceRange>& pieces, const Point& mappedStart, const DashSubpathState& state)
+{
+    if (!state.closed) return false;
+
+    auto wrapsStart = closedDashedContour(subOut, pieces, mappedStart);
+    if (!wrapsStart) return false;
+
+    if (pieces.count == 1) {
+        appendDashedPiece(out, subOut, pieces[0], false);
+        out.close();
+        return true;
+    }
+
+    if (!state.closeEndsAtStart) return false;
+
+    // Closed dash wraps across the original start point. Emit it as one contour so the stroker can join there.
+    appendDashedPiece(out, subOut, pieces.last(), false);
+    appendDashedPiece(out, subOut, pieces[0], true);
+    for (uint32_t i = 1; i + 1 < pieces.count; ++i) {
+        appendDashedPiece(out, subOut, pieces[i], false);
+    }
+    return true;
+}
+
+static inline void appendDashedSubpath(RenderPath& out, RenderPath& subOut, const Point& mappedStart, DashSubpathState& state, Array<PieceRange>& pieces)
+{
+    if (!prepareDashedPieces(subOut, state, pieces)) return;
+
+    if (!appendClosedDashedSubpath(out, subOut, pieces, mappedStart, state)) {
+        appendDashedCommands(out, subOut);
+    }
+
+    resetDashedSubpath(subOut, state);
+}
+
 struct StrokeDashPath
 {
     StrokeDashPath(RenderStroke::Dash dash) :
@@ -418,6 +594,11 @@ struct StrokeDashPath
     bool gen(const RenderPath& in, RenderPath& out, bool drawPoint, const Matrix* transform = nullptr);
 
 private:
+    void beginSubpath(const Point& start, const DashPatternState& state);
+    void closeSubpath(RenderPath& subOut, const Point& start, bool allowDot, DashSubpathState& state);
+    void processCommand(PathCommand cmd, const Point*& pts, const DashPatternState& initialState, Point& start,
+                        RenderPath& subOut, RenderPath& out, DashSubpathState& state,
+                        Array<PieceRange>& pieces, bool allowDot);
     void lineTo(RenderPath& out, const Point& pt, bool drawPoint);
     void cubicTo(RenderPath& out, const Point& pt1, const Point& pt2, const Point& pt3, bool drawPoint);
     void point(RenderPath& out, const Point& p);
@@ -499,57 +680,66 @@ bool StrokeDashPath::gen(const RenderPath& in, RenderPath& out, bool allowDot, c
     this->transform = transform;
     this->applyTransform = (transform && !tvg::identity(transform));
 
-    int32_t idx = 0;
-    auto offset = dash.offset;
-    auto gap = false;
-    if (!tvg::zero(dash.offset)) {
-        auto length = (dash.count % 2) ? dash.length * 2 : dash.length;
-        offset = fmodf(offset, length);
-        if (offset < 0) offset += length;
+    auto initialState = dashPatternState(dash);
 
-        for (uint32_t i = 0; i < dash.count * (dash.count % 2 + 1); ++i, ++idx) {
-            auto curPattern = dash.pattern[i % dash.count];
-            if (offset < curPattern) break;
-            offset -= curPattern;
-            gap = !gap;
-        }
-        idx = idx % dash.count;
-    }
-
-    auto pts = in.pts.data;
+    const auto* pts = in.pts.data;
     Point start{};
+    RenderPath subOut;
+    DashSubpathState subpathState;
+    Array<PieceRange> pieces;
 
     ARRAY_FOREACH(cmd, in.cmds)
     {
-        switch (*cmd) {
-            case PathCommand::Close: {
-                lineTo(out, start, allowDot);
-                break;
-            }
-            case PathCommand::MoveTo: {
-                // reset the dash state
-                curIdx = idx;
-                curLen = dash.pattern[idx] - offset;
-                opGap = gap;
-                move = true;
-                start = curPos = *pts;
-                pts++;
-                break;
-            }
-            case PathCommand::LineTo: {
-                lineTo(out, *pts, allowDot);
-                pts++;
-                break;
-            }
-            case PathCommand::CubicTo: {
-                cubicTo(out, pts[0], pts[1], pts[2], allowDot);
-                pts += 3;
-                break;
-            }
-            default: break;
-        }
+        processCommand(*cmd, pts, initialState, start, subOut, out, subpathState, pieces, allowDot);
     }
+    appendDashedSubpath(out, subOut, map(start), subpathState, pieces);
     return true;
+}
+
+void StrokeDashPath::beginSubpath(const Point& start, const DashPatternState& state)
+{
+    curIdx = state.idx;
+    curLen = dash.pattern[state.idx] - state.offset;
+    opGap = state.gap;
+    move = true;
+    curPos = start;
+}
+
+void StrokeDashPath::closeSubpath(RenderPath& subOut, const Point& start, bool allowDot, DashSubpathState& state)
+{
+    auto prevPtCount = subOut.pts.count;
+    lineTo(subOut, start, allowDot);
+    state.closed = true;
+    // Rejoin decisions use emitted piece endpoints; this only tracks whether Close reached start.
+    state.closeEndsAtStart = (subOut.pts.count > prevPtCount) && tvg::closed(subOut.pts.last(), map(start), FLOAT_EPSILON);
+}
+
+void StrokeDashPath::processCommand(PathCommand cmd, const Point*& pts, const DashPatternState& initialState, Point& start,
+                                    RenderPath& subOut, RenderPath& out, DashSubpathState& state,
+                                    Array<PieceRange>& pieces, bool allowDot)
+{
+    switch (cmd) {
+        case PathCommand::Close: {
+            closeSubpath(subOut, start, allowDot, state);
+            break;
+        }
+        case PathCommand::MoveTo: {
+            appendDashedSubpath(out, subOut, map(start), state, pieces);
+            start = *pts++;
+            beginSubpath(start, initialState);
+            break;
+        }
+        case PathCommand::LineTo: {
+            lineTo(subOut, *pts++, allowDot);
+            break;
+        }
+        case PathCommand::CubicTo: {
+            cubicTo(subOut, pts[0], pts[1], pts[2], allowDot);
+            pts += 3;
+            break;
+        }
+        default: break;
+    }
 }
 
 void StrokeDashPath::point(RenderPath& out, const Point& p)
