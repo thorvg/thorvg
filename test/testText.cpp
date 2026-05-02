@@ -29,7 +29,7 @@
 using namespace tvg;
 using namespace std;
 
-#ifdef THORVG_TTF_LOADER_SUPPORT
+#ifdef THORVG_SFNT_LOADER_SUPPORT
 
 TEST_CASE("Text Creation", "[tvgText]")
 {
@@ -40,6 +40,10 @@ TEST_CASE("Text Creation", "[tvgText]")
 
     Paint::rel(text);
 }
+
+#endif
+
+#ifdef THORVG_TTF_LOADER_SUPPORT
 
 TEST_CASE("Load TTF Data from a file", "[tvgText]")
 {

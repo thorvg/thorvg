@@ -1057,15 +1057,22 @@ LottieObject* LottieParser::parseAsset()
 
 void LottieParser::parseFontData(LottieFont* font, const char* data)
 {
+    static const char* TTF = "ttf";
+    static const char* OTF = "otf";
+
     if (!data) return;
 
     //handle base64 font data
     if (!strncmp(data, "data:font/", sizeof("data:font/") - 1)) {
         data += sizeof("data:font/") - 1;
-        if (!strncmp(data, "ttf", 3)) {
+        if (!strncmp(data, TTF, 3)) {
+            font->mime = strdup(TTF);
+            data += 3;
+        } else if (!strncmp(data, OTF, 3)) {
+            font->mime = strdup(OTF);
             data += 3;
         } else {
-            TVGLOG("LOTTIE", "TODO: Support a new font type!");
+            TVGLOG("LOTTIE", "Not support the current font type!");
             return;
         }
         data += sizeof(";base64,") - 1;

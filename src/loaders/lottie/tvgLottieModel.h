@@ -454,6 +454,7 @@ struct LottieFont
         tvg::free(family);
         tvg::free(name);
         tvg::free(b64src);
+        tvg::free(mime);
     }
 
     union {
@@ -465,6 +466,7 @@ struct LottieFont
     char* name = nullptr;
     char* family = nullptr;
     char* style = nullptr;
+    char* mime = nullptr;
     uint32_t size = 0;
     float ascent = 0.0f;
     Origin origin = Local;
