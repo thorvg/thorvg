@@ -1558,7 +1558,10 @@ LottieLayer* LottieParser::parseLayer(LottieLayer* precomp)
             layer->transform = parseTransform(ddd);
         }
         else if (KEY_AS("ao")) layer->autoOrient = getInt();
-        else if (KEY_AS("shapes")) parseShapes(layer->children);
+        else if (KEY_AS("shapes")) {
+            if (layer->type == LottieLayer::Shape)
+                parseShapes(layer->children);
+        }
         else if (KEY_AS("ip")) layer->inFrame = getFloat();
         else if (KEY_AS("op")) layer->outFrame = getFloat();
         else if (KEY_AS("st")) layer->startFrame = getFloat();
