@@ -922,9 +922,8 @@ void LottieBuilder::updatePrecomp(LottieComposition* comp, LottieLayer* precomp,
     }
 
     //clip the layer viewport
-    auto clipper = precomp->statical.pooling(true);
-    clipper->transform(precomp->cache.matrix);
-    precomp->scene->clip(clipper);
+    precomp->statical->transform(precomp->cache.matrix);
+    precomp->scene->clip(precomp->statical);
 }
 
 
@@ -942,9 +941,8 @@ void LottieBuilder::updatePrecomp(LottieComposition* comp, LottieLayer* precomp,
 
 void LottieBuilder::updateSolid(LottieLayer* layer)
 {
-    auto solidFill = layer->statical.pooling(true);
-    solidFill->opacity(layer->cache.opacity);
-    layer->scene->add(solidFill);
+    layer->statical->opacity(layer->cache.opacity);
+    layer->scene->add(layer->statical);
 }
 
 
