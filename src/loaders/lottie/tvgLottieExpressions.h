@@ -28,7 +28,7 @@
 
 struct LottieExpression;
 struct LottieComposition;
-struct LottieLayer;
+struct LottieRootLayer;
 struct LottieModifier;
 
 #ifdef THORVG_LOTTIE_EXPRESSIONS_SUPPORT
@@ -159,7 +159,7 @@ private:
     jerry_value_t buildGlobal();
 
     void buildComp(LottieComposition* comp, float frameNo, LottieExpression* exp);
-    void buildComp(jerry_value_t context, float frameNo, LottieLayer* comp, LottieExpression* exp);
+    void buildComp(jerry_value_t context, float frameNo, LottieRootLayer* comp, LottieExpression* exp);
     void buildGlobal(float frameNo, LottieExpression* exp);
     void buildWritables(LottieExpression* exp);
 

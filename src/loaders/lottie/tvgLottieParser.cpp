@@ -1036,7 +1036,7 @@ LottieObject* LottieParser::parseAsset()
                 id = _int2str(getInt());
             }
         }
-        else if (KEY_AS("layers")) obj = parseLayers(comp->root);
+        else if (KEY_AS("layers")) obj = parseLayers();
         else if (KEY_AS("u")) subPath = getString();
         else if (KEY_AS("p")) data = getString();
         else if (KEY_AS("w")) width = getFloat();
@@ -1529,12 +1529,11 @@ void LottieParser::parseEffects(LottieLayer* layer)
     }
 }
 
-
-LottieLayer* LottieParser::parseLayer(LottieLayer* precomp)
+LottieLayer* LottieParser::parseLayer(LottieRootLayer* precomp)
 {
     auto layer = new LottieLayer;
 
-    layer->comp = precomp;
+    layer->precomp = precomp;
     context.layer = layer;
 
     auto ddd = false;
@@ -1587,13 +1586,9 @@ LottieLayer* LottieParser::parseLayer(LottieLayer* precomp)
     return layer;
 }
 
-
-LottieLayer* LottieParser::parseLayers(LottieLayer* root)
+LottieRootLayer* LottieParser::parseLayers()
 {
-    auto precomp = new LottieLayer;
-
-    precomp->type = LottieLayer::Precomp;
-    precomp->comp = root;
+    auto precomp = new LottieRootLayer;
 
     enterArray();
     while (nextArrayValue()) {
@@ -1603,7 +1598,6 @@ LottieLayer* LottieParser::parseLayers(LottieLayer* root)
     precomp->prepare();
     return precomp;
 }
-
 
 void LottieParser::postProcess(Array<LottieGlyph*>& glyphs)
 {
@@ -1773,7 +1767,7 @@ bool LottieParser::parse()
         else if (KEY_AS("h")) comp->h = getFloat();
         else if (KEY_AS("nm")) comp->name = getStringCopy();
         else if (KEY_AS("assets")) parseAssets();
-        else if (KEY_AS("layers")) comp->root = parseLayers(comp->root);
+        else if (KEY_AS("layers")) comp->root = parseLayers();
         else if (KEY_AS("fonts")) parseFonts();
         else if (KEY_AS("chars")) parseChars(glyphs);
         else if (KEY_AS("markers")) parseMarkers();

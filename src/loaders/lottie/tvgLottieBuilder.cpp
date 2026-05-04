@@ -35,7 +35,7 @@
 /* Internal Class Implementation                                        */
 /************************************************************************/
 
-static bool _buildComposition(LottieComposition* comp, LottieLayer* parent);
+static bool _buildComposition(LottieComposition* comp, LottieRootLayer* parent);
 static bool _draw(LottieGroup* parent, LottieShape* shape, RenderContext* ctx);
 
 static void _dimension3d(LottieTransform* transform, float frameNo, Matrix& m, float angle, Tween& tween, LottieExpressions* exps)
@@ -1586,7 +1586,7 @@ static void _buildReference(LottieComposition* comp, LottieLayer* layer)
     ARRAY_FOREACH(p, comp->assets) {
         if (layer->rid != (*p)->id) continue;
         if (layer->type == LottieLayer::Precomp) {
-            auto asset = static_cast<LottieLayer*>(*p);
+            auto asset = static_cast<LottieRootLayer*>(*p);
             if (_buildComposition(comp, asset)) {
                 layer->children = asset->children;
                 layer->reqFragment = asset->reqFragment;
@@ -1643,8 +1643,7 @@ static void _attachFont(LottieComposition* comp, LottieLayer* parent)
     }
 }
 
-
-static bool _buildComposition(LottieComposition* comp, LottieLayer* parent)
+static bool _buildComposition(LottieComposition* comp, LottieRootLayer* parent)
 {
     if (parent->children.count == 0) return false;
     if (parent->buildDone) return true;

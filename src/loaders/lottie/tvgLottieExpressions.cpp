@@ -407,8 +407,7 @@ static jerry_value_t _effect(const jerry_call_info_t* info, const jerry_value_t 
     return obj;
 }
 
-
-static void _buildLayer(jerry_value_t context, float frameNo, LottieLayer* layer, LottieLayer* comp, LottieExpression* exp)
+static void _buildLayer(jerry_value_t context, float frameNo, LottieLayer* layer, LottieRootLayer* comp, LottieExpression* exp)
 {
     auto width = jerry_number(layer->w);
     jerry_object_set_sz(context, EXP_WIDTH, width);
@@ -1361,8 +1360,7 @@ void LottieExpressions::buildGlobal(float frameNo, LottieExpression* exp)
     jerry_value_free(index);
 }
 
-
-void LottieExpressions::buildComp(jerry_value_t context, float frameNo, LottieLayer* comp, LottieExpression* exp)
+void LottieExpressions::buildComp(jerry_value_t context, float frameNo, LottieRootLayer* comp, LottieExpression* exp)
 {
     //layer(index) / layer(name) / layer(otherLayer, reIndex)
     auto layer = jerry_function_external(_layer);
@@ -1470,7 +1468,7 @@ jerry_value_t LottieExpressions::evaluate(float frameNo, LottieExpression* exp)
     buildComp(exp->comp, frameNo, exp);
 
     //this composition
-    buildComp(thisComp, frameNo, exp->layer->comp, exp);
+    buildComp(thisComp, frameNo, exp->layer->precomp, exp);
 
     //update global context values
     _buildProperty(frameNo, global, exp);
