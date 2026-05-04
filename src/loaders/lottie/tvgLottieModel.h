@@ -1049,7 +1049,6 @@ struct LottieGroup : LottieObject, LottieRenderPooler<tvg::Shape>
     bool allowMerge : 1;    //if this group is consisted of simple (transformed) shapes.
 };
 
-
 struct LottieLayer : LottieGroup
 {
     enum Type : uint8_t {Precomp = 0, Solid, Image, Null, Shape, Text};
@@ -1071,8 +1070,7 @@ struct LottieLayer : LottieGroup
     Array<LottieMask*> masks;
     Array<LottieEffect*> effects;
     LottieLayer* matteTarget = nullptr;
-
-    LottieRenderPooler<tvg::Shape> statical;  //static pooler for solid fill and clipper
+    tvg::Shape* statical = nullptr;  // a static solid fill (used by SolidLayer) or a static clipper (used by precomp)
 
     float timeStretch = 1.0f;
     float w = 0.0f, h = 0.0f;
