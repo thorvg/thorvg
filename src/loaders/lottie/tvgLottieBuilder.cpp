@@ -953,6 +953,11 @@ void LottieBuilder::updateImage(LottieGroup* layer)
     if (layer->children.empty()) return;
 
     auto image = static_cast<LottieImage*>(layer->children.first());
+    if (image->type != LottieObject::Type::Image) {
+        TVGERR("LOTTIE", "Expected image data.");
+        return;
+    }
+
     auto picture = image->bitmap.picture;
     if (!picture) return;
 
