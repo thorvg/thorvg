@@ -134,6 +134,10 @@ RenderData WgRenderer::prepare(const RenderShape& rshape, RenderData data, const
 
     // update geometry
     if (!data || (flags & (RenderUpdateFlag::Transform | RenderUpdateFlag::Path | RenderUpdateFlag::Stroke))) {
+        if (!data) {
+            renderDataShape->strokePath.clear();
+            renderDataShape->strokePathPrepared = false;
+        }
         renderDataShape->updateMeshes(rshape, flags, transform);
     }
 

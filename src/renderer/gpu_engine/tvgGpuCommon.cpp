@@ -575,22 +575,333 @@ void StrokeDashPath::cubicTo(RenderPath& out, const Point& cnt1, const Point& cn
     segment<Bezier>(curve, len, out, allowDot, [](const Bezier& b) { return b.length(); }, [](const Bezier& b, float len, Bezier& left, Bezier& right) { b.split(len, left, right); }, [&](const Bezier& b) { out.cubicTo(map(b.ctrl1), map(b.ctrl2), map(b.end)); }, [](const Bezier& b) { return b.start; }, end);
 }
 
-bool gpuStrokeDash(const RenderShape& rs, RenderPath& out, const Matrix* transform)
+struct StrokeOutlinePath
+{
+    struct State
+    {
+        Point firstPt;
+        Point firstPtDir;
+        Point prevPt;
+        Point prevPtDir;
+    };
+
+    StrokeOutlinePath(RenderPath& out, const Matrix& transform, float width, StrokeCap cap, StrokeJoin join, float miterLimit) :
+        out(out), transform(transform), width(width), capStyle(cap), joinStyle(join), miterLimit(miterLimit)
+    {
+    }
+
+    float radius() const
+    {
+        return width * 0.5f;
+    }
+
+    Point map(const Point& pt) const
+    {
+        return pt * transform;
+    }
+
+    void polygon(const Point* pts, uint32_t cnt)
+    {
+        if (cnt < 3) return;
+        out.moveTo(map(pts[0]));
+        for (uint32_t i = 1; i < cnt; ++i) out.lineTo(map(pts[i]));
+        out.close();
+    }
+
+    void triangle(const Point& a, const Point& b, const Point& c)
+    {
+        const Point pts[] = {a, b, c};
+        polygon(pts, 3);
+    }
+
+    void quad(const Point& a, const Point& b, const Point& c, const Point& d)
+    {
+        const Point pts[] = {a, b, c, d};
+        polygon(pts, 4);
+    }
+
+    void run(const RenderPath& path)
+    {
+        out.cmds.reserve(path.cmds.count * 3 + 16);
+        out.pts.reserve(path.pts.count * 4 + 16);
+
+        auto validStrokeCap = false;
+        auto pts = path.pts.data;
+
+        ARRAY_FOREACH(cmd, path.cmds) {
+            switch (*cmd) {
+                case PathCommand::MoveTo: {
+                    if (validStrokeCap) {
+                        cap();
+                        validStrokeCap = false;
+                    }
+                    state.firstPt = *pts;
+                    state.firstPtDir = {0.0f, 0.0f};
+                    state.prevPt = *pts;
+                    state.prevPtDir = {0.0f, 0.0f};
+                    pts++;
+                    validStrokeCap = false;
+                } break;
+                case PathCommand::LineTo: {
+                    validStrokeCap = true;
+                    lineTo(*pts);
+                    pts++;
+                } break;
+                case PathCommand::CubicTo: {
+                    validStrokeCap = true;
+                    cubicTo(pts[0], pts[1], pts[2]);
+                    pts += 3;
+                } break;
+                case PathCommand::Close: {
+                    close();
+                    validStrokeCap = false;
+                } break;
+                default:
+                    break;
+            }
+        }
+        if (validStrokeCap) cap();
+    }
+
+    void cap()
+    {
+        if (capStyle == StrokeCap::Butt) return;
+
+        if (capStyle == StrokeCap::Square) {
+            if (state.firstPt == state.prevPt) squarePoint(state.firstPt);
+            else {
+                square(state.firstPt, {-state.firstPtDir.x, -state.firstPtDir.y});
+                square(state.prevPt, state.prevPtDir);
+            }
+        } else if (capStyle == StrokeCap::Round) {
+            if (state.firstPt == state.prevPt) roundPoint(state.firstPt);
+            else {
+                round(state.firstPt, {-state.firstPtDir.x, -state.firstPtDir.y});
+                round(state.prevPt, state.prevPtDir);
+            }
+        }
+    }
+
+    void lineTo(const Point& curr)
+    {
+        auto dir = curr - state.prevPt;
+        normalize(dir);
+        if (dir.x == 0.0f && dir.y == 0.0f) return;
+
+        auto normal = Point{-dir.y, dir.x};
+        auto a = state.prevPt + normal * radius();
+        auto b = state.prevPt - normal * radius();
+        auto c = curr + normal * radius();
+        auto d = curr - normal * radius();
+
+        quad(a, b, d, c);
+
+        if (state.prevPt == state.firstPt) {
+            state.prevPt = curr;
+            state.prevPtDir = dir;
+            state.firstPtDir = dir;
+        } else {
+            join(dir);
+            state.prevPtDir = dir;
+            state.prevPt = curr;
+        }
+    }
+
+    void cubicTo(const Point& cnt1, const Point& cnt2, const Point& end)
+    {
+        Bezier curve{state.prevPt, cnt1, cnt2, end};
+        auto count = curve.segments();
+        auto step = 1.0f / count;
+
+        for (uint32_t i = 0; i <= count; i++) lineTo(curve.at(step * i));
+    }
+
+    void close()
+    {
+        if (length(state.prevPt - state.firstPt) > 0.015625f) lineTo(state.firstPt);
+        join(state.firstPtDir);
+    }
+
+    void join(const Point& dir)
+    {
+        auto orient = orientation(state.prevPt - state.prevPtDir, state.prevPt, state.prevPt + dir);
+
+        if (orient == Orientation::Linear) {
+            if (state.prevPtDir == dir) return;
+            if (joinStyle != StrokeJoin::Round) return;
+
+            auto normal = Point{-dir.y, dir.x};
+            auto p1 = state.prevPt + normal * radius();
+            auto p2 = state.prevPt - normal * radius();
+            auto oc = state.prevPt + dir * radius();
+
+            round(p1, oc, state.prevPt);
+            round(oc, p2, state.prevPt);
+        } else {
+            auto normal = Point{-dir.y, dir.x};
+            auto prevNormal = Point{-state.prevPtDir.y, state.prevPtDir.x};
+            Point prevJoin, currJoin;
+
+            if (orient == Orientation::CounterClockwise) {
+                prevJoin = state.prevPt + prevNormal * radius();
+                currJoin = state.prevPt + normal * radius();
+            } else {
+                prevJoin = state.prevPt - prevNormal * radius();
+                currJoin = state.prevPt - normal * radius();
+            }
+
+            if (joinStyle == StrokeJoin::Miter) miter(prevJoin, currJoin, state.prevPt);
+            else if (joinStyle == StrokeJoin::Bevel) bevel(prevJoin, currJoin, state.prevPt);
+            else round(prevJoin, currJoin, state.prevPt);
+        }
+    }
+
+    void round(const Point& prev, const Point& curr, const Point& center)
+    {
+        auto orient = orientation(prev, center, curr);
+        if (orient == Orientation::Linear) return;
+
+        auto startAngle = tvg::atan2(prev.y - center.y, prev.x - center.x);
+        auto endAngle = tvg::atan2(curr.y - center.y, curr.x - center.x);
+
+        if (orient == Orientation::Clockwise) {
+            if (endAngle > startAngle) endAngle -= 2 * MATH_PI;
+        } else {
+            if (endAngle < startAngle) endAngle += 2 * MATH_PI;
+        }
+
+        auto count = tvg::arcSegmentsCnt(endAngle - startAngle, radius());
+        auto step = (endAngle - startAngle) / (count - 1);
+
+        out.moveTo(map(center));
+        out.lineTo(map(prev));
+        for (uint32_t i = 1; i < count; i++) {
+            auto angle = startAngle + step * i;
+            out.lineTo(map({center.x + cos(angle) * radius(), center.y + sin(angle) * radius()}));
+        }
+        out.close();
+    }
+
+    void roundPoint(const Point& p)
+    {
+        auto count = tvg::arcSegmentsCnt(2.0f * MATH_PI, radius());
+        if (count < 3) count = 3;
+        auto step = 2.0f * MATH_PI / count;
+
+        out.moveTo(map({p.x + radius(), p.y}));
+        for (uint32_t i = 1; i < count; i++) {
+            auto angle = step * i;
+            out.lineTo(map({p.x + cos(angle) * radius(), p.y + sin(angle) * radius()}));
+        }
+        out.close();
+    }
+
+    void miter(const Point& prev, const Point& curr, const Point& center)
+    {
+        auto pp1 = prev - center;
+        auto pp2 = curr - center;
+        auto miterDir = pp1 + pp2;
+        auto len2 = miterDir.x * miterDir.x + miterDir.y * miterDir.y;
+        if (tvg::zero(len2)) {
+            bevel(prev, curr, center);
+            return;
+        }
+
+        auto k = 2.0f * radius() * radius() / len2;
+        auto pe = miterDir * k;
+
+        if (length(pe) >= miterLimit * radius()) {
+            bevel(prev, curr, center);
+            return;
+        }
+
+        quad(center, prev, center + pe, curr);
+    }
+
+    void bevel(const Point& prev, const Point& curr, const Point& center)
+    {
+        triangle(prev, curr, center);
+    }
+
+    void square(const Point& p, const Point& outDir)
+    {
+        auto normal = Point{-outDir.y, outDir.x};
+        auto a = p + normal * radius();
+        auto b = p - normal * radius();
+        auto c = a + outDir * radius();
+        auto d = b + outDir * radius();
+        quad(a, b, d, c);
+    }
+
+    void squarePoint(const Point& p)
+    {
+        auto offsetX = Point{radius(), 0.0f};
+        auto offsetY = Point{0.0f, radius()};
+        auto a = p + offsetX + offsetY;
+        auto b = p - offsetX + offsetY;
+        auto c = p - offsetX - offsetY;
+        auto d = p + offsetX - offsetY;
+        quad(a, b, c, d);
+    }
+
+    void round(const Point& p, const Point& outDir)
+    {
+        auto normal = Point{-outDir.y, outDir.x};
+        auto a = p + normal * radius();
+        auto b = p - normal * radius();
+        auto c = p + outDir * radius();
+
+        round(a, c, p);
+        round(c, b, p);
+    }
+
+    RenderPath& out;
+    const Matrix& transform;
+    float width = 0.0f;
+    StrokeCap capStyle = StrokeCap::Square;
+    StrokeJoin joinStyle = StrokeJoin::Bevel;
+    float miterLimit = 4.0f;
+    State state = {};
+};
+
+bool gpuStrokeDash(const RenderShape& rs, const RenderPath& in, RenderPath& out, const Matrix* transform)
 {
     if (!rs.stroke || rs.stroke->dash.count == 0 || rs.stroke->dash.length < DASH_PATTERN_THRESHOLD) return false;
 
-    out.cmds.reserve(20 * rs.path.cmds.count);
-    out.pts.reserve(20 * rs.path.pts.count);
+    out.clear();
+    out.cmds.reserve(20 * in.cmds.count);
+    out.pts.reserve(20 * in.pts.count);
 
     StrokeDashPath dash(rs.stroke->dash);
     auto allowDot = rs.stroke->cap != StrokeCap::Butt;
 
+    return dash.gen(in, out, allowDot, transform);
+}
+
+bool gpuStrokeDash(const RenderShape& rs, RenderPath& out, const Matrix* transform)
+{
+    if (!rs.stroke || rs.stroke->dash.count == 0 || rs.stroke->dash.length < DASH_PATTERN_THRESHOLD) return false;
+
     if (rs.trimpath()) {
-        RenderPath tpath;
-        if (rs.stroke->trim.trim(rs.path, tpath)) return dash.gen(tpath, out, allowDot, transform);
-        else return false;
+        auto& tpath = RenderPath::scratch();
+        if (rs.stroke->trim.trim(rs.path, tpath)) return gpuStrokeDash(rs, tpath, out, transform);
+        return false;
     }
-    return dash.gen(rs.path, out, allowDot, transform);
+    return gpuStrokeDash(rs, rs.path, out, transform);
+}
+
+bool gpuStrokeOutline(const RenderShape& rs, const RenderPath& in, RenderPath& out, const Matrix& transform, float strokeWidth)
+{
+    out.clear();
+    if (!rs.stroke || in.empty() || tvg::zero(strokeWidth)) return false;
+
+    const RenderPath* path = &in;
+    auto& dashed = RenderPath::scratch();
+    if (gpuStrokeDash(rs, in, dashed, nullptr)) path = &dashed;
+
+    StrokeOutlinePath outline(out, transform, strokeWidth, rs.strokeCap(), rs.strokeJoin(), rs.strokeMiterlimit());
+    outline.run(*path);
+    return !out.empty();
 }
 
 }  // namespace tvg

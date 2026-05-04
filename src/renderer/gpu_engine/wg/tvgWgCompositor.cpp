@@ -559,30 +559,31 @@ void WgCompositor::drawStrokes(WgContext& context, WgRenderDataShape* renderData
     assert(renderPassEncoder);
     if (renderData->renderSettingsStroke.skip || renderData->meshStrokes.vbuffer.count == 0 || renderData->viewport.invalid()) return;
     WgRenderSettings& settings = renderData->renderSettingsStroke;
+    const bool convex = renderData->strokeConvex;
+    WgMeshData* mesh = convex ? &renderData->meshStrokes : &renderData->meshStrokesBBox;
     wgpuRenderPassEncoderSetScissorRect(renderPassEncoder, renderData->viewport.x(), renderData->viewport.y(), renderData->viewport.w(), renderData->viewport.h());
-    // draw strokes to stencil (first pass)
-    // setup stencil rules
-    wgpuRenderPassEncoderSetStencilReference(renderPassEncoder, 255);
-    wgpuRenderPassEncoderSetBindGroup(renderPassEncoder, 0, bindGroupViewMat, 0, nullptr);
-    wgpuRenderPassEncoderSetPipeline(renderPassEncoder, pipelines.direct);
-    // draw to stencil (first pass)
-    drawMesh(context, &renderData->meshStrokes);
+    if (!convex) {
+        wgpuRenderPassEncoderSetStencilReference(renderPassEncoder, 0);
+        wgpuRenderPassEncoderSetBindGroup(renderPassEncoder, 0, bindGroupViewMat, 0, nullptr);
+        wgpuRenderPassEncoderSetPipeline(renderPassEncoder, pipelines.nonzero);
+        drawMesh(context, &renderData->meshStrokes);
+    }
     // setup fill rules
     wgpuRenderPassEncoderSetStencilReference(renderPassEncoder, 0);
     wgpuRenderPassEncoderSetBindGroup(renderPassEncoder, 0, bindGroupViewMat, 0, nullptr);
     if (settings.fillType == WgRenderSettingsType::Solid) {
-        wgpuRenderPassEncoderSetPipeline(renderPassEncoder, pipelines.solid);
-        drawMeshSolid(context, &renderData->meshStrokesBBox, settings.solidColorInd);
+        wgpuRenderPassEncoderSetPipeline(renderPassEncoder, convex ? pipelines.solid_conv : pipelines.solid);
+        drawMeshSolid(context, mesh, settings.solidColorInd);
     } else if (settings.fillType == WgRenderSettingsType::Linear) {
         wgpuRenderPassEncoderSetBindGroup(renderPassEncoder, 1, stageBufferPaint[settings.bindGroupInd], 0, nullptr);
         wgpuRenderPassEncoderSetBindGroup(renderPassEncoder, 2, settings.gradientData.bindGroup, 0, nullptr);
-        wgpuRenderPassEncoderSetPipeline(renderPassEncoder, pipelines.linear);
-        drawMesh(context, &renderData->meshStrokesBBox);
+        wgpuRenderPassEncoderSetPipeline(renderPassEncoder, convex ? pipelines.linear_conv : pipelines.linear);
+        drawMesh(context, mesh);
     } else if (settings.fillType == WgRenderSettingsType::Radial) {
         wgpuRenderPassEncoderSetBindGroup(renderPassEncoder, 1, stageBufferPaint[settings.bindGroupInd], 0, nullptr);
         wgpuRenderPassEncoderSetBindGroup(renderPassEncoder, 2, settings.gradientData.bindGroup, 0, nullptr);
-        wgpuRenderPassEncoderSetPipeline(renderPassEncoder, pipelines.radial);
-        drawMesh(context, &renderData->meshStrokesBBox);
+        wgpuRenderPassEncoderSetPipeline(renderPassEncoder, convex ? pipelines.radial_conv : pipelines.radial);
+        drawMesh(context, mesh);
     }
 }
 
@@ -601,9 +602,9 @@ void WgCompositor::blendStrokes(WgContext& context, WgRenderDataShape* renderDat
     wgpuRenderPassEncoderSetScissorRect(renderPassEncoder, renderData->viewport.x(), renderData->viewport.y(), renderData->viewport.w(), renderData->viewport.h());
     // draw strokes to stencil (first pass)
     // setup stencil rules
-    wgpuRenderPassEncoderSetStencilReference(renderPassEncoder, 255);
+    wgpuRenderPassEncoderSetStencilReference(renderPassEncoder, renderData->strokeConvex ? 255 : 0);
     wgpuRenderPassEncoderSetBindGroup(renderPassEncoder, 0, bindGroupViewMat, 0, nullptr);
-    wgpuRenderPassEncoderSetPipeline(renderPassEncoder, pipelines.direct);
+    wgpuRenderPassEncoderSetPipeline(renderPassEncoder, renderData->strokeConvex ? pipelines.direct : pipelines.nonzero);
     // draw to stencil (first pass)
     drawMesh(context, &renderData->meshStrokes);
     // setup fill rules
@@ -639,9 +640,9 @@ void WgCompositor::clipStrokes(WgContext& context, WgRenderDataShape* renderData
     wgpuRenderPassEncoderSetScissorRect(renderPassEncoder, renderData->viewport.x(), renderData->viewport.y(), renderData->viewport.w(), renderData->viewport.h());
     // draw strokes to stencil (first pass)
     // setup stencil rules
-    wgpuRenderPassEncoderSetStencilReference(renderPassEncoder, 255);
+    wgpuRenderPassEncoderSetStencilReference(renderPassEncoder, renderData->strokeConvex ? 255 : 0);
     wgpuRenderPassEncoderSetBindGroup(renderPassEncoder, 0, bindGroupViewMat, 0, nullptr);
-    wgpuRenderPassEncoderSetPipeline(renderPassEncoder, pipelines.direct);
+    wgpuRenderPassEncoderSetPipeline(renderPassEncoder, renderData->strokeConvex ? pipelines.direct : pipelines.nonzero);
     // draw to stencil (first pass)
     drawMesh(context, &renderData->meshStrokes);
     // merge depth and stencil buffer
@@ -792,8 +793,8 @@ void WgCompositor::markupClipPath(WgContext& context, WgRenderDataShape* renderD
     wgpuRenderPassEncoderSetBindGroup(renderPassEncoder, 0, bindGroupViewMat, 0, nullptr);
     // markup stencil
     if (renderData->meshStrokes.vbuffer.count > 0) {
-        wgpuRenderPassEncoderSetStencilReference(renderPassEncoder, 255);
-        wgpuRenderPassEncoderSetPipeline(renderPassEncoder, pipelines.direct);
+        wgpuRenderPassEncoderSetStencilReference(renderPassEncoder, renderData->strokeConvex ? 255 : 0);
+        wgpuRenderPassEncoderSetPipeline(renderPassEncoder, renderData->strokeConvex ? pipelines.direct : pipelines.nonzero);
         drawMesh(context, &renderData->meshStrokes);
     } else if (renderData->meshShape.vbuffer.count > 0) {
         WGPURenderPipeline stencilPipeline = (renderData->fillRule == FillRule::NonZero) ? pipelines.nonzero : pipelines.evenodd;

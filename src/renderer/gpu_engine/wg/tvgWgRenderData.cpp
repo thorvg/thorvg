@@ -172,14 +172,36 @@ void WgRenderDataShape::updateVisibility(const RenderShape& rshape, uint8_t opac
 }
 
 
+void WgRenderDataShape::prepareStrokePath(const RenderShape& rshape)
+{
+    if (strokePathPrepared) return;
+
+    bool thin = false;
+    bool skipFill = false;
+    if (rshape.trimpath()) {
+        auto& trimmed = RenderPath::scratch();
+        if (rshape.stroke->trim.trim(rshape.path, trimmed)) gpuOptimize(trimmed, strokePath, tvg::identity(), thin, skipFill);
+        else strokePath.clear();
+    } else {
+        gpuOptimize(rshape.path, strokePath, tvg::identity(), thin, skipFill);
+    }
+    strokePathPrepared = true;
+}
+
+
 void WgRenderDataShape::updateMeshes(const RenderShape &rshape, RenderUpdateFlag flag, const Matrix& matrix)
 {
     releaseMeshes();  //Optimize: bad idea to reset meshes always. it could re-use the meshes if there haven't been any path changes.
 
     convex = false;
+    strokeConvex = false;
     strokeFirst = rshape.strokeFirst();
     renderSettingsShape.opacityMultiplier = 1.0f;
     renderSettingsStroke.opacityMultiplier = 1.0f;
+    if (flag & RenderUpdateFlag::Path) {
+        strokePath.clear();
+        strokePathPrepared = false;
+    }
 
     // optimize path
     auto& optPath = RenderPath::scratch();
@@ -231,17 +253,20 @@ void WgRenderDataShape::updateMeshes(const RenderShape &rshape, RenderUpdateFlag
 
         //run stroking only if it's valid
         if (!tvg::zero(strokeWidthWorld)) {
-            WgStroker stroker(&meshStrokes, strokeWidthWorld, rshape.strokeCap(), rshape.strokeJoin(), rshape.strokeMiterlimit());
-            auto& dashed = RenderPath::scratch();
-            if (gpuStrokeDash(rshape, dashed, &matrix)) stroker.run(dashed);
-            else stroker.run(optPath);
-            renderSettingsStroke.opacityMultiplier = 1.0f;
-            if (meshStrokes.ibuffer.empty()) {
-                meshStrokes.clear();
-            } else {
-                auto bbox = stroker.getBBox();
-                meshStrokesBBox.bbox(bbox.min, bbox.max);
-                updateBBox(bbox);
+            prepareStrokePath(rshape);
+            auto& strokeOutline = RenderPath::scratch();
+            if (gpuStrokeOutline(rshape, strokePath, strokeOutline, matrix, strokeWidth)) {
+                WgBWTessellator bwTess{&meshStrokes};
+                bwTess.tessellate(strokeOutline);
+                strokeConvex = bwTess.convex;
+                renderSettingsStroke.opacityMultiplier = 1.0f;
+                if (meshStrokes.ibuffer.empty()) {
+                    meshStrokes.clear();
+                } else {
+                    auto bbox = bwTess.getBBox();
+                    meshStrokesBBox.bbox(bbox.min, bbox.max);
+                    updateBBox(bbox);
+                }
             }
         }
     }
@@ -262,6 +287,7 @@ void WgRenderDataShape::releaseMeshes()
     bbox.min = {FLT_MAX, FLT_MAX};
     bbox.max = {0.0f, 0.0f};
     aabb = {{0, 0}, {0, 0}};
+    strokeConvex = false;
     clips.clear();
 }
 
@@ -652,7 +678,10 @@ bool WgIntersector::intersectShape(const RenderRegion region, const WgRenderData
             if (y % 2 == 1) pt.y = (float) sizeY - y - sizeY % 2 + region.min.y;
             if (intersectClips(pt, shape->clips)) {
                 if (!shape->renderSettingsShape.skip && isPointInMesh(pt, shape->meshShape)) return true;
-                if (!shape->renderSettingsStroke.skip && isPointInTris(pt, shape->meshStrokes)) return true;
+                if (!shape->renderSettingsStroke.skip) {
+                    if (shape->strokeConvex && isPointInTris(pt, shape->meshStrokes)) return true;
+                    if (!shape->strokeConvex && isPointInMesh(pt, shape->meshStrokes)) return true;
+                }
             }
         }
     }

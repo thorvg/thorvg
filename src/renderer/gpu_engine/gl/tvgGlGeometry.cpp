@@ -125,7 +125,10 @@ bool GlIntersector::intersectShape(const RenderRegion region, const GlShape* sha
             if (y % 2 == 1) pt.y = (float)sizeY - y - sizeY % 2 + region.min.y;
             if (intersectClips(pt, shape->clips)) {
                 if (shape->validFill && isPointInMesh(pt, shape->geometry.fill, shape->geometry.fillWorld ? tvg::identity() : shape->geometry.matrix)) return true;
-                if (shape->validStroke && isPointInTris(pt, shape->geometry.stroke, tvg::identity())) return true;
+                if (shape->validStroke) {
+                    if (shape->geometry.strokeConvex && isPointInTris(pt, shape->geometry.stroke, tvg::identity())) return true;
+                    if (!shape->geometry.strokeConvex && isPointInMesh(pt, shape->geometry.stroke, tvg::identity())) return true;
+                }
             }
         }
     }
@@ -164,6 +167,26 @@ void GlGeometry::prepare(const RenderShape& rshape)
     } else {
         gpuOptimize(rshape.path, optPath, matrix, optPathThin, optPathSkipFill);
     }
+}
+
+
+void GlGeometry::prepareStrokePath(const RenderShape& rshape)
+{
+    if (strokePathPrepared) return;
+
+    bool thin = false;
+    bool skipFill = false;
+    if (rshape.trimpath()) {
+        auto& trimmedPath = RenderPath::scratch();
+        if (rshape.stroke->trim.trim(rshape.path, trimmedPath)) {
+            gpuOptimize(trimmedPath, strokePath, tvg::identity(), thin, skipFill);
+        } else {
+            strokePath.clear();
+        }
+    } else {
+        gpuOptimize(rshape.path, strokePath, tvg::identity(), thin, skipFill);
+    }
+    strokePathPrepared = true;
 }
 
 
@@ -225,6 +248,7 @@ bool GlGeometry::tesselateStroke(const RenderShape& rshape)
     stroke.clear();
     strokeBounds = {};
     strokeRenderWidth = 0.0f;
+    strokeConvex = false;
 
     auto strokeWidth = 0.0f;
     if (isinf(matrix.e11)) {
@@ -239,13 +263,15 @@ bool GlGeometry::tesselateStroke(const RenderShape& rshape)
 
     //run stroking only if it's valid
     if (!tvg::zero(strokeWidthWorld)) {
-        Stroker stroker(&stroke, strokeWidthWorld, rshape.strokeCap(), rshape.strokeJoin(), rshape.strokeMiterlimit());
-        auto& dashed = RenderPath::scratch();
-        if (gpuStrokeDash(rshape, dashed, &matrix)) stroker.run(dashed);
-        else stroker.run(optPath);
-        strokeBounds = stroker.bounds();
+        prepareStrokePath(rshape);
+        auto& strokeOutline = RenderPath::scratch();
+        if (!gpuStrokeOutline(rshape, strokePath, strokeOutline, matrix, strokeWidth)) return false;
+        BWTessellator bwTess{&stroke};
+        bwTess.tessellate(strokeOutline);
+        strokeConvex = bwTess.convex;
+        strokeBounds = bwTess.bounds();
         strokeRenderWidth = strokeWidthWorld;
-        return true;
+        return !stroke.index.empty();
     }
     return false;
 }
@@ -313,8 +339,9 @@ bool GlGeometry::draw(GlRenderTask* task, GlStageBuffer* gpuBuffer, RenderUpdate
 
 GlStencilMode GlGeometry::getStencilMode(RenderUpdateFlag flag)
 {
-    if (flag & RenderUpdateFlag::Stroke) return GlStencilMode::Stroke;
-    if (flag & RenderUpdateFlag::GradientStroke) return GlStencilMode::Stroke;
+    if ((flag & RenderUpdateFlag::Stroke) || (flag & RenderUpdateFlag::GradientStroke)) {
+        return strokeConvex ? GlStencilMode::None : GlStencilMode::FillNonZero;
+    }
     if (flag & RenderUpdateFlag::Image) return GlStencilMode::None;
 
     if (convex) return GlStencilMode::None;

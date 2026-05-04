@@ -90,6 +90,7 @@ struct GlGeometry
     void setMatrix(const Matrix& tr) { matrix = tr; inverseMatrixDirty = true;}
 
     void prepare(const RenderShape& rshape);
+    void prepareStrokePath(const RenderShape& rshape);
     bool tesselateShape(const RenderShape& rshape, float* opacityMultiplier = nullptr);
     bool tesselateStroke(const RenderShape& rshape);
     bool tesselateThinPath(const RenderPath& path);
@@ -105,6 +106,7 @@ struct GlGeometry
     RenderRegion strokeBounds = {};
     FillRule fillRule = FillRule::NonZero;
     RenderPath optPath;  //optimal path
+    RenderPath strokePath;  //local optimal path for stroke expansion
     float strokeRenderWidth = 0.0f;
     Matrix cachedInverseMatrix = {};
     bool inverseMatrixDirty = true;
@@ -112,6 +114,8 @@ struct GlGeometry
     bool optPathThin = false;
     bool optPathSkipFill = false;
     bool convex;
+    bool strokeConvex = false;
+    bool strokePathPrepared = false;
 };
 
 

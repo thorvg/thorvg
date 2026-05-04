@@ -86,14 +86,18 @@ struct WgRenderDataShape: public WgRenderDataPaint
     WgMeshData meshShapeBBox{};
     WgMeshData meshStrokes{};
     WgMeshData meshStrokesBBox{};
+    RenderPath strokePath;
     bool strokeFirst{};
     FillRule fillRule{};
     bool convex{};
+    bool strokeConvex{};
+    bool strokePathPrepared{};
     BBox bbox;
 
     void updateBBox(BBox bb);
     void updateAABB() { aabb = bbox; }
     void updateVisibility(const RenderShape& rshape, uint8_t opacity);
+    void prepareStrokePath(const RenderShape& rshape);
     void updateMeshes(const RenderShape& rshape, RenderUpdateFlag flag, const Matrix& matrix);
     void releaseMeshes();
     void release(WgContext& context) override;
