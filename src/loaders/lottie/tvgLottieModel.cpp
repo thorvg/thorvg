@@ -301,7 +301,7 @@ void LottieFont::prepare()
 {
     if (!b64src) return;
 
-    Text::load(name, b64src, size, "ttf", false);
+    Text::load(name, b64src, size, mime, false);
 }
 
 
