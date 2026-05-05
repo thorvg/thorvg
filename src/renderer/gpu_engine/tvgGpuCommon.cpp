@@ -20,6 +20,7 @@
  * SOFTWARE.
  */
 
+#include <algorithm>
 #include "tvgGpuCommon.h"
 
 /************************************************************************/
@@ -902,6 +903,18 @@ bool gpuStrokeOutline(const RenderShape& rs, const RenderPath& in, RenderPath& o
     StrokeOutlinePath outline(out, transform, strokeWidth, rs.strokeCap(), rs.strokeJoin(), rs.strokeMiterlimit());
     outline.run(*path);
     return !out.empty();
+}
+
+bool gpuStrokeTransformedFastPath(const Matrix& transform)
+{
+    auto sx2 = transform.e11 * transform.e11 + transform.e21 * transform.e21;
+    auto sy2 = transform.e12 * transform.e12 + transform.e22 * transform.e22;
+    auto dot = transform.e11 * transform.e12 + transform.e21 * transform.e22;
+    auto scale2 = std::max(sx2, sy2);
+    if (!std::isfinite(scale2) || scale2 <= FLOAT_EPSILON) return false;
+
+    auto tolerance = scale2 * 1.0e-4f;
+    return fabsf(sx2 - sy2) <= tolerance && fabsf(dot) <= tolerance;
 }
 
 }  // namespace tvg

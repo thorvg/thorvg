@@ -91,6 +91,7 @@ struct WgRenderDataShape: public WgRenderDataPaint
     FillRule fillRule{};
     bool convex{};
     bool strokeConvex{};
+    bool strokeDirect{};
     bool strokePathPrepared{};
     BBox bbox;
 

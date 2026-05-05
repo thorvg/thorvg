@@ -34,6 +34,7 @@ bool gpuEdgesCross(const Point& p0, const Point& p1, const Point& p2, const Poin
 bool gpuStrokeDash(const RenderShape& rs, RenderPath& out, const Matrix* transform);
 bool gpuStrokeDash(const RenderShape& rs, const RenderPath& in, RenderPath& out, const Matrix* transform);
 bool gpuStrokeOutline(const RenderShape& rs, const RenderPath& in, RenderPath& out, const Matrix& transform, float strokeWidth);
+bool gpuStrokeTransformedFastPath(const Matrix& transform);
 
 // Conservative triangle-fan safety check
 // The fill is emitted as (v0,v1,v2), (v0,v2,v3), (v0,v3,v4), ...

@@ -115,6 +115,7 @@ struct GlGeometry
     bool optPathSkipFill = false;
     bool convex;
     bool strokeConvex = false;
+    bool strokeDirect = false;
     bool strokePathPrepared = false;
 };
 

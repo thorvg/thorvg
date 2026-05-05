@@ -126,8 +126,8 @@ bool GlIntersector::intersectShape(const RenderRegion region, const GlShape* sha
             if (intersectClips(pt, shape->clips)) {
                 if (shape->validFill && isPointInMesh(pt, shape->geometry.fill, shape->geometry.fillWorld ? tvg::identity() : shape->geometry.matrix)) return true;
                 if (shape->validStroke) {
-                    if (shape->geometry.strokeConvex && isPointInTris(pt, shape->geometry.stroke, tvg::identity())) return true;
-                    if (!shape->geometry.strokeConvex && isPointInMesh(pt, shape->geometry.stroke, tvg::identity())) return true;
+                    if ((shape->geometry.strokeDirect || shape->geometry.strokeConvex) && isPointInTris(pt, shape->geometry.stroke, tvg::identity())) return true;
+                    if (!shape->geometry.strokeDirect && !shape->geometry.strokeConvex && isPointInMesh(pt, shape->geometry.stroke, tvg::identity())) return true;
                 }
             }
         }
@@ -249,6 +249,7 @@ bool GlGeometry::tesselateStroke(const RenderShape& rshape)
     strokeBounds = {};
     strokeRenderWidth = 0.0f;
     strokeConvex = false;
+    strokeDirect = false;
 
     auto strokeWidth = 0.0f;
     if (isinf(matrix.e11)) {
@@ -263,6 +264,17 @@ bool GlGeometry::tesselateStroke(const RenderShape& rshape)
 
     //run stroking only if it's valid
     if (!tvg::zero(strokeWidthWorld)) {
+        if (gpuStrokeTransformedFastPath(matrix)) {
+            Stroker stroker(&stroke, strokeWidthWorld, rshape.strokeCap(), rshape.strokeJoin(), rshape.strokeMiterlimit());
+            auto& dashed = RenderPath::scratch();
+            if (gpuStrokeDash(rshape, dashed, &matrix)) stroker.run(dashed);
+            else stroker.run(optPath);
+            strokeBounds = stroker.bounds();
+            strokeRenderWidth = strokeWidthWorld;
+            strokeDirect = true;
+            return true;
+        }
+
         prepareStrokePath(rshape);
         auto& strokeOutline = RenderPath::scratch();
         if (!gpuStrokeOutline(rshape, strokePath, strokeOutline, matrix, strokeWidth)) return false;
@@ -340,6 +352,7 @@ bool GlGeometry::draw(GlRenderTask* task, GlStageBuffer* gpuBuffer, RenderUpdate
 GlStencilMode GlGeometry::getStencilMode(RenderUpdateFlag flag)
 {
     if ((flag & RenderUpdateFlag::Stroke) || (flag & RenderUpdateFlag::GradientStroke)) {
+        if (strokeDirect) return GlStencilMode::Stroke;
         return strokeConvex ? GlStencilMode::None : GlStencilMode::FillNonZero;
     }
     if (flag & RenderUpdateFlag::Image) return GlStencilMode::None;
