@@ -1072,33 +1072,32 @@ static void _loadFonts(Array<FontFace>& fonts)
 {
     if (fonts.empty()) return;
 
-    static constexpr struct {
-        const char* prefix;
-        size_t len;
-    } prefixes[] = {
-        {"data:font/ttf;base64,", sizeof("data:font/ttf;base64,") - 1},
-        {"data:application/font-ttf;base64,", sizeof("data:application/font-ttf;base64,") - 1}
-    };
-
+    constexpr size_t MAX_SCAN = 40;
+    constexpr size_t KEY_LEN = 10;  // "ttf;base64" / "otf;base64"
 
     ARRAY_FOREACH(p, fonts) {
         if (!p->name) continue;
 
         size_t shift = 0;
-        for (const auto& prefix : prefixes) {
-            if (p->srcLen > prefix.len && !memcmp(p->src, prefix.prefix, prefix.len)) {
-                shift = prefix.len;
+        const char* type = nullptr;
+        auto limit = (p->srcLen < MAX_SCAN) ? p->srcLen : MAX_SCAN;
+
+        for (size_t i = 0; i + KEY_LEN <= limit; ++i) {
+            if (!memcmp(p->src + i, "ttf;base64", KEY_LEN)) {
+                shift = i + KEY_LEN + 1;  // skip ","
+                type = "ttf";
+                break;
+            }
+            if (!memcmp(p->src + i, "otf;base64", KEY_LEN)) {
+                shift = i + KEY_LEN + 1;
+                type = "otf";
                 break;
             }
         }
-        if (shift == 0) {
-            TVGLOG("SVG", "The embedded font \"%s\" data not loaded properly.", p->name);
-            continue;
+        if (type) {
+            auto size = b64Decode(p->src + shift, p->srcLen - shift, &p->decoded);
+            Text::load(p->name, p->decoded, size, type);
         }
-
-        auto size = b64Decode(p->src + shift, p->srcLen - shift, &p->decoded);
-
-        if (Text::load(p->name, p->decoded, size) != Result::Success) TVGERR("SVG", "Error while loading the ttf font named \"%s\".", p->name);
     }
 }
 
