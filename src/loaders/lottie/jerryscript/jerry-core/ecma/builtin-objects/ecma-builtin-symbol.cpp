@@ -87,6 +87,7 @@ ecma_builtin_symbol_dispatch_construct (const ecma_value_t *arguments_list_p, /*
 static ecma_value_t
 ecma_builtin_symbol_for_helper (ecma_value_t value_to_find) /**< symbol or ecma-string */
 {
+  JERRY_DEFINE_CURRENT_CONTEXT ();
   ecma_string_t *string_p;
 
   bool is_for = ecma_is_value_string (value_to_find);

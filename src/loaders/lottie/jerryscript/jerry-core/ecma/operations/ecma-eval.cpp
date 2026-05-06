@@ -69,6 +69,7 @@ ecma_value_t
 ecma_op_eval_chars_buffer (void *source_p, /**< source code */
                            uint32_t parse_opts) /**< ecma_parse_opts_t option bits */
 {
+  JERRY_DEFINE_CURRENT_CONTEXT ();
 #if JERRY_PARSER
   JERRY_ASSERT (source_p != NULL);
 

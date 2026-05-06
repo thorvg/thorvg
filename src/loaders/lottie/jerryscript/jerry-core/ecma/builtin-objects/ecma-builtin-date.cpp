@@ -706,6 +706,7 @@ ecma_builtin_date_now_helper (void)
 static ecma_value_t
 ecma_builtin_date_create (ecma_number_t tv)
 {
+  JERRY_DEFINE_CURRENT_CONTEXT ();
   JERRY_ASSERT (JERRY_CONTEXT (current_new_target_p) != NULL);
 
   ecma_object_t *prototype_obj_p =

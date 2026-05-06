@@ -39,6 +39,7 @@ ecma_typedarray_helper_dispatch_construct (const ecma_value_t *arguments_list_p,
                                            uint32_t arguments_list_len, /**< number of arguments */
                                            ecma_typedarray_type_t typedarray_id) /**< id of the typedarray */
 {
+  JERRY_DEFINE_CURRENT_CONTEXT ();
   JERRY_ASSERT (arguments_list_len == 0 || arguments_list_p != NULL);
   ecma_builtin_id_t proto_id = ecma_typedarray_helper_get_prototype_id (typedarray_id);
   ecma_object_t *prototype_obj_p = NULL;

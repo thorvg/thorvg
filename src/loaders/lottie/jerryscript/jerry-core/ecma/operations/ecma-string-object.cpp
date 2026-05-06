@@ -47,6 +47,7 @@ ecma_op_create_string_object (const ecma_value_t *arguments_list_p, /**< list of
                                                                          are passed to String constructor */
                               uint32_t arguments_list_len) /**< length of the arguments' list */
 {
+  JERRY_DEFINE_CURRENT_CONTEXT ();
   JERRY_ASSERT (arguments_list_len == 0 || arguments_list_p != NULL);
 
   ecma_value_t prim_value = ecma_make_magic_string_value (LIT_MAGIC_STRING__EMPTY);

@@ -85,6 +85,7 @@ typedef struct
 void
 ecma_job_queue_init (void)
 {
+  JERRY_DEFINE_CURRENT_CONTEXT ();
   JERRY_CONTEXT (job_queue_head_p) = NULL;
   JERRY_CONTEXT (job_queue_tail_p) = NULL;
 } /* ecma_job_queue_init */
@@ -392,6 +393,7 @@ ecma_process_promise_resolve_thenable_job (ecma_job_promise_resolve_thenable_t *
 static void
 ecma_enqueue_job (ecma_job_queue_item_t *job_p) /**< the job */
 {
+  JERRY_DEFINE_CURRENT_CONTEXT ();
   JERRY_ASSERT (job_p->next_and_type <= ECMA_JOB_QUEUE_TYPE_MASK);
 
   if (JERRY_CONTEXT (job_queue_head_p) == NULL)
@@ -490,6 +492,7 @@ ecma_enqueue_promise_resolve_thenable_job (ecma_value_t promise, /**< promise to
 ecma_value_t
 ecma_process_all_enqueued_jobs (void)
 {
+  JERRY_DEFINE_CURRENT_CONTEXT ();
   ecma_value_t ret = ECMA_VALUE_UNDEFINED;
 
   while (JERRY_CONTEXT (job_queue_head_p) != NULL)
@@ -542,6 +545,7 @@ ecma_process_all_enqueued_jobs (void)
 void
 ecma_free_all_enqueued_jobs (void)
 {
+  JERRY_DEFINE_CURRENT_CONTEXT ();
   while (JERRY_CONTEXT (job_queue_head_p) != NULL)
   {
     ecma_job_queue_item_t *job_p = JERRY_CONTEXT (job_queue_head_p);

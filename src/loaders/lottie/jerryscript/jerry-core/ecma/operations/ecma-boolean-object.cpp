@@ -45,6 +45,7 @@
 ecma_value_t
 ecma_op_create_boolean_object (ecma_value_t arg) /**< argument passed to the Boolean constructor */
 {
+  JERRY_DEFINE_CURRENT_CONTEXT ();
   bool boolean_value = ecma_op_to_boolean (arg);
   ecma_builtin_id_t proto_id;
 
