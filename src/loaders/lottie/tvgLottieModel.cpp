@@ -27,7 +27,7 @@
 
 
 /************************************************************************/
-/* Internal Class Implementation                                        */
+/* LottieTextFollowPath                                                 */
 /************************************************************************/
 
 Point LottieTextFollowPath::split(float dLen, float lenSearched, float& angle)
@@ -56,10 +56,6 @@ Point LottieTextFollowPath::split(float dLen, float lenSearched, float& angle)
     }
     return {};
 }
-
-/************************************************************************/
-/* External Class Implementation                                        */
-/************************************************************************/
 
 float LottieTextFollowPath::prepare(LottieMask* mask, float frameNo, float scale, Tween& tween, LottieExpressions* exps)
 {
@@ -187,6 +183,9 @@ Point LottieTextFollowPath::position(float lenSearched, float& angle)
     return {};
 }
 
+/************************************************************************/
+/* LottieSlot                                                           */
+/************************************************************************/
 
 void LottieSlot::reset()
 {
@@ -214,6 +213,9 @@ void LottieSlot::apply(LottieProperty* prop, bool byDefault)
     if (!byDefault) overridden = true;
 }
 
+/************************************************************************/
+/* LottieTextRange                                                      */
+/************************************************************************/
 
 float LottieTextRange::factor(float frameNo, float totalLen, float idx)
 {
@@ -296,14 +298,9 @@ float LottieTextRange::factor(float frameNo, float totalLen, float idx)
     return f * this->maxAmount(frameNo) * 0.01f;
 }
 
-
-void LottieFont::prepare()
-{
-    if (!b64src) return;
-
-    Text::load(name, b64src, size, "ttf", false);
-}
-
+/************************************************************************/
+/* LottieImage                                                          */
+/************************************************************************/
 
 void LottieImage::prepare(bool external)
 {
@@ -320,6 +317,9 @@ void LottieImage::prepare(bool external)
     picture->ref();
 }
 
+/************************************************************************/
+/* LottieTrimpath                                                       */
+/************************************************************************/
 
 void LottieTrimpath::segment(float frameNo, float& start, float& end, Tween& tween, LottieExpressions* exps)
 {
@@ -346,6 +346,9 @@ void LottieTrimpath::segment(float frameNo, float& start, float& end, Tween& twe
     end += o;
 }
 
+/************************************************************************/
+/* LottieGradient                                                       */
+/************************************************************************/
 
 uint32_t LottieGradient::populate(ColorStop& color, size_t count)
 {
@@ -484,6 +487,9 @@ Fill* LottieGradient::fill(float frameNo, uint8_t opacity, Tween& tween, LottieE
     return fill;
 }
 
+/************************************************************************/
+/* LottieGroup                                                          */
+/************************************************************************/
 
 LottieGroup::LottieGroup()
 {
@@ -578,6 +584,55 @@ void LottieGroup::prepare(LottieObject::Type type)
     }
 }
 
+/************************************************************************/
+/* LottieRootLayer                                                      */
+/************************************************************************/
+
+float LottieRootLayer::remap(LottieComposition* comp, float frameNo, LottieExpressions* exp)
+{
+    if (timeRemap.frames || timeRemap.value >= 0.0f) {
+        return comp->frameAtTime(timeRemap(frameNo, exp));
+    }
+    return (frameNo - startFrame) / timeStretch;
+}
+
+bool LottieRootLayer::assign(const char* layer, uint32_t ix, const char* var, float val)
+{
+    // find the target layer by name
+    auto target = layerById(djb2Encode(layer));
+    if (!target) return false;
+
+    // find the target property by ix
+    auto property = target->property(ix);
+    if (property && property->exp) return property->exp->assign(var, val);
+
+    return false;
+}
+
+LottieLayer* LottieRootLayer::layerById(unsigned long id)
+{
+    ARRAY_FOREACH(p, children) {
+        if ((*p)->type != LottieObject::Type::Layer) continue;
+        auto layer = static_cast<LottieLayer*>(*p);
+        if (layer->id == id) return layer;
+    }
+    return nullptr;
+}
+
+LottieLayer* LottieRootLayer::layerByIdx(int16_t ix)
+{
+    ARRAY_FOREACH(p, children) {
+        if ((*p)->type != LottieObject::Type::Layer) continue;
+        auto layer = static_cast<LottieLayer*>(*p);
+        if (layer->ix == ix) return layer;
+    }
+    return nullptr;
+}
+
+/************************************************************************/
+/* LottieLayer                                                          */
+/************************************************************************/
+
 LottieLayer::LottieLayer()
 {
     autoOrient = false;
@@ -630,47 +685,4 @@ void LottieLayer::prepare(RGB32* color)
     }
 
     LottieGroup::prepare(LottieObject::Layer);
-}
-
-
-float LottieLayer::remap(LottieComposition* comp, float frameNo, LottieExpressions* exp)
-{
-    if (timeRemap.frames || timeRemap.value >= 0.0f) {
-        return comp->frameAtTime(timeRemap(frameNo, exp));
-    }
-    return (frameNo - startFrame) / timeStretch;
-}
-
-
-bool LottieLayer::assign(const char* layer, uint32_t ix, const char* var, float val)
-{
-    //find the target layer by name
-    auto target = layerById(djb2Encode(layer));
-    if (!target) return false;
-
-    //find the target property by ix
-    auto property = target->property(ix);
-    if (property && property->exp) return property->exp->assign(var, val);
-
-    return false;
-}
-
-
-LottieComposition::~LottieComposition()
-{
-    if (!initiated && root) Paint::rel(root->scene);
-
-    delete(root);
-    tvg::free(version);
-    tvg::free(name);
-
-    ARRAY_FOREACH(p, interpolators) {
-        tvg::free((*p)->key);
-        tvg::free(*p);
-    }
-
-    ARRAY_FOREACH(p, assets) delete(*p);
-    ARRAY_FOREACH(p, fonts) delete(*p);
-    ARRAY_FOREACH(p, slots) delete(*p);
-    ARRAY_FOREACH(p, markers) delete(*p);
 }
