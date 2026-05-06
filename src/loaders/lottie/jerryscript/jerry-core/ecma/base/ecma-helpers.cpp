@@ -1274,6 +1274,7 @@ ecma_create_exception (ecma_value_t value, /**< referenced value */
 ecma_value_t
 ecma_create_exception_from_context (void)
 {
+  JERRY_DEFINE_CURRENT_CONTEXT ();
   uint32_t options = 0;
   uint32_t status_flags = JERRY_CONTEXT (status_flags);
 
@@ -1314,6 +1315,7 @@ ecma_create_exception_from_object (ecma_object_t *object_p) /**< referenced obje
 void
 ecma_throw_exception (ecma_value_t value) /**< error reference */
 {
+  JERRY_DEFINE_CURRENT_CONTEXT ();
   JERRY_ASSERT (!jcontext_has_pending_exception () && !jcontext_has_pending_abort ());
   ecma_extended_primitive_t *error_ref_p = ecma_get_extended_primitive_from_value (value);
 
@@ -1425,6 +1427,7 @@ ecma_bytecode_ref (ecma_compiled_code_t *bytecode_p) /**< byte code pointer */
 void
 ecma_bytecode_deref (ecma_compiled_code_t *bytecode_p) /**< byte code pointer */
 {
+  JERRY_DEFINE_CURRENT_CONTEXT ();
   JERRY_ASSERT (bytecode_p->refs > 0);
   JERRY_ASSERT (!CBC_IS_FUNCTION (bytecode_p->status_flags)
                 || !(bytecode_p->status_flags & CBC_CODE_FLAGS_STATIC_FUNCTION));
@@ -1664,6 +1667,7 @@ ecma_get_source_name (const ecma_compiled_code_t *bytecode_p) /**< compiled code
 uintptr_t JERRY_ATTR_NOINLINE
 ecma_get_current_stack_usage (void)
 {
+  JERRY_DEFINE_CURRENT_CONTEXT ();
   volatile int __sp;
   return (uintptr_t) (JERRY_CONTEXT (stack_base) - (uintptr_t) &__sp);
 } /* ecma_get_current_stack_usage */

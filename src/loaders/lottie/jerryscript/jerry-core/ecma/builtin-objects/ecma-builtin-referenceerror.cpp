@@ -67,6 +67,7 @@ ecma_value_t
 ecma_builtin_reference_error_dispatch_construct (const ecma_value_t *arguments_list_p, /**< arguments list */
                                                  uint32_t arguments_list_len) /**< number of arguments */
 {
+  JERRY_DEFINE_CURRENT_CONTEXT ();
   ecma_object_t *proto_p = ecma_op_get_prototype_from_constructor (JERRY_CONTEXT (current_new_target_p),
                                                                    ECMA_BUILTIN_ID_REFERENCE_ERROR_PROTOTYPE);
 
