@@ -153,6 +153,7 @@ ThorVG is designed to be portable across a wide range of devices, including smal
     - [Espressif](#espressif)
     - [Flux Audio](#flux-audio)
     - [Godot](#godot)
+    - [LibreScoot](#librescoot)
     - [Lottie Creator](#lottie-creator)
     - [LVGL](#lvgl)
     - [MetaModule](#metamodule)
@@ -434,6 +435,13 @@ ThorVG is integrated into the [Godot](https://www.godotengine.org) game engine t
 
 <p align="center">
   <img width="700" height="auto" src="https://github.com/thorvg/thorvg.site/blob/main/readme/example_godot.png">
+</p>
+
+### LibreScoot
+[LibreScoot](https://librescoot.org/en/) is an open-source embedded mobility platform for the unu Scooter Pro electric scooter. ThorVG powers GPU-free Lottie boot animation rendering on its embedded Linux dashboard system running on i.MX6 hardware.
+
+<p align="center">
+  <img width="700" height="auto" src="https://github.com/thorvg/thorvg.site/blob/main/readme/example_librescoot.png">
 </p>
 
 ### Lottie Creator
