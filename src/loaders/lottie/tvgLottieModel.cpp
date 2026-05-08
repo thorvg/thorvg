@@ -590,8 +590,6 @@ LottieLayer::~LottieLayer()
     //No need to free assets children because the Composition owns them.
     if (rid) children.clear();
 
-    if (statical) statical->unref();
-
     ARRAY_FOREACH(p, masks) delete(*p);
     ARRAY_FOREACH(p, effects) delete(*p);
 
@@ -623,10 +621,11 @@ void LottieLayer::prepare(RGB32* color)
 
     // prepare the viewport clipper or a solid fill in advance if it is a layer type.
     if (type == LottieLayer::Precomp || (color && type == LottieLayer::Solid)) {
-        statical = Shape::gen();
-        statical->appendRect(0.0f, 0.0f, w, h);
-        statical->ref();
-        if (color && type == LottieLayer::Solid) statical->fill(color->r, color->g, color->b);
+        auto obj = Shape::gen();
+        obj->appendRect(0.0f, 0.0f, w, h);
+        obj->ref();
+        if (color && type == LottieLayer::Solid) obj->fill(color->r, color->g, color->b);
+        statical.pooler.push(obj);
     }
 
     LottieGroup::prepare(LottieObject::Layer);
