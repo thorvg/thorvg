@@ -335,24 +335,24 @@ void OtfReader::operand(Array<float>& v, uint8_t b, uint32_t& p)
     }
 }
 
-bool OtfReader::charStrings(RenderPath& path, SfntGlyph& glyph)
+bool OtfReader::charStrings(RenderPath& path, uint32_t glyph)
 {
     // get the glyph data offset
     auto count = u16(toCharStrings);
-    if (glyph.idx >= count) return false;
+    if (glyph >= count) return false;
 
     auto size = u8(toCharStrings + 2);
     auto base = toCharStrings + 3;
     auto data = base + (count + 1) * size;
-    auto offset1 = offset(base + glyph.idx * size, size);
-    auto offset2 = offset(base + (glyph.idx + 1) * size, size);
+    auto offset1 = offset(base + glyph * size, size);
+    auto offset2 = offset(base + (glyph + 1) * size, size);
 
     auto len = offset2 - offset1;
     if (len <= 0) return false;
     auto p = data + (offset1 - 1);
     auto end = (p + len);
 
-    Point pos = {0.0f, glyph.h};  // current point (absolute)
+    Point pos = {};  // current point (absolute)
 
     SubRoutine subRoutines[SUBROUTINE_MAX];   // subroutine stack
     auto srp = 0;  // subroutine stack pointer
@@ -484,6 +484,6 @@ bool OtfReader::convert(SfntGlyph& glyph, uint32_t codepoint, RenderPath& path)
 {
     glyph.idx = SfntReader::glyph(codepoint);
     if (glyph.idx == INVALID_GLYPH) return false;
-    if (glyphMetrics(glyph)) return charStrings(path, glyph);
+    if (glyphMetrics(glyph)) return charStrings(path, glyph.idx);
     return false;
 }
