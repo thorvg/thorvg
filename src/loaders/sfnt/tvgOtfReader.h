@@ -55,7 +55,7 @@ private:
     bool name(uint32_t idx);
     bool DICT(Array<int32_t>& args, uint8_t b, uint32_t& ptr);
     uint32_t localSubrs(Array<int32_t>& args, uint32_t offset, uint32_t size);
-    bool charStrings(RenderPath& path, SfntGlyph& glyph);
+    bool charStrings(RenderPath& path, uint32_t glyph);
 
     // CharStrings decoding sub-routines
     bool subRoutine(float operand, uint32_t subrs, uint32_t& p, uint32_t& end, SubRoutine* stack, int& ssp);

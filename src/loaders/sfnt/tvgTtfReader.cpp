@@ -181,22 +181,16 @@ uint32_t TtfReader::glyphMetrics(SfntGlyph& glyph)
     auto glyphOffset = outlineOffset(glyph.idx);
     // glyph without outline
     if (glyphOffset == 0) {
-        glyph.x = glyph.y = glyph.w = glyph.h = 0.0f;
+        glyph.bbox = {};
         return 0;
     }
     if (!validate(glyphOffset, 10)) return 0;
 
     //read the bounding box from the font file verbatim.
-    float bbox[4];
-    bbox[0] = static_cast<float>(i16(glyphOffset + 2));
-    bbox[1] = static_cast<float>(i16(glyphOffset + 4));
-    bbox[2] = static_cast<float>(i16(glyphOffset + 6));
-    bbox[3] = static_cast<float>(i16(glyphOffset + 8));
-
-    glyph.x = bbox[0];
-    glyph.y = bbox[1];
-    glyph.w = bbox[2] - bbox[0] + 1;
-    glyph.h = bbox[3] - bbox[1] + 1;
+    glyph.bbox.min.x = static_cast<float>(i16(glyphOffset + 2));
+    glyph.bbox.min.y = static_cast<float>(i16(glyphOffset + 4));
+    glyph.bbox.max.x = static_cast<float>(i16(glyphOffset + 6));
+    glyph.bbox.max.y = static_cast<float>(i16(glyphOffset + 8));
 
     return glyphOffset;
 }
