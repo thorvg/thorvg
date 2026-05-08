@@ -31,7 +31,7 @@ using namespace std;
 
 struct SfntMetrics : FontMetrics
 {
-    float baseWidth;  //Use as the reference glyph width for italic transform
+    SfntGlyphMetrics* baseGlyph;  // Use as the reference glyph width for italic transform
 };
 
 struct SfntLoader : public FontLoader

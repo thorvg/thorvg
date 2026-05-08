@@ -420,6 +420,21 @@ struct BBox
         min = {FLT_MAX, FLT_MAX};
         max = {-FLT_MAX, -FLT_MAX};
     }
+
+    bool zero()
+    {
+        return (max.x == 0.0f && max.y == 0.0f);
+    }
+
+    float w()
+    {
+        return max.x - min.x;
+    }
+
+    float h()
+    {
+        return max.y - min.y;
+    }
 };
 
 

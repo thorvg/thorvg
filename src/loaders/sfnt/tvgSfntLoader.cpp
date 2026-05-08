@@ -300,7 +300,7 @@ void SfntLoader::wrapNone(FontMetrics& fm, const Point& box, const char* utf8, c
         if (cursor.x > fm.size.x) fm.size.x = cursor.x;  //text horizontal size
 
         //store the base glyph width for italic transform
-        if (!ltgm && rtgm->w > 0.0f) static_cast<SfntMetrics*>(fm.engine)->baseWidth = rtgm->w;
+        if (!ltgm) static_cast<SfntMetrics*>(fm.engine)->baseGlyph = rtgm;
         ltgm = rtgm;
     }
     fm.size.y = height(fm.lines, fm.spacing.y);
@@ -344,7 +344,7 @@ void SfntLoader::wrapChar(FontMetrics& fm, const Point& box, const char* utf8, c
         if (cursor.x > fm.size.x) fm.size.x = cursor.x;  //text horizontal size
 
         //store the base glyph width for italic transform
-        if (!ltgm && rtgm->w > 0.0f) static_cast<SfntMetrics*>(fm.engine)->baseWidth = rtgm->w;
+        if (!ltgm) static_cast<SfntMetrics*>(fm.engine)->baseGlyph = rtgm;
         ltgm = rtgm;
     }
     fm.size.y = height(fm.lines, fm.spacing.y);
@@ -407,7 +407,7 @@ void SfntLoader::wrapWord(FontMetrics& fm, const Point& box, const char* utf8, c
         if (cursor.x > fm.size.x) fm.size.x = cursor.x;  //text horizontal size
 
         //store the base glyph width for italic transform
-        if (!ltgm && rtgm->w > 0.0f) static_cast<SfntMetrics*>(fm.engine)->baseWidth = rtgm->w;
+        if (!ltgm) static_cast<SfntMetrics*>(fm.engine)->baseGlyph = rtgm;
         ltgm = rtgm;
     }
     fm.size.y = height(fm.lines, fm.spacing.y);
@@ -473,7 +473,7 @@ void SfntLoader::wrapEllipsis(FontMetrics& fm, const Point& box, const char* utf
         if (cursor.x > fm.size.x) fm.size.x = cursor.x;  //text horizontal size
 
         //store the base glyph width for italic transform
-        if (!ltgm && rtgm->w > 0.0f) static_cast<SfntMetrics*>(fm.engine)->baseWidth = rtgm->w;
+        if (!ltgm) static_cast<SfntMetrics*>(fm.engine)->baseGlyph = rtgm;
 
         if (stop) break;  //stop the process if the ellipsis is applied
 
@@ -513,8 +513,10 @@ SfntReader* SfntLoader::gen(uint8_t* data, uint32_t size)
 
 void SfntLoader::transform(Paint* paint, FontMetrics& fm, float italicShear)
 {
+    auto engine = static_cast<SfntMetrics*>(fm.engine);
     auto scale = 1.0f / fm.scale;
-    Matrix m = {scale, -italicShear * scale, italicShear * static_cast<SfntMetrics*>(fm.engine)->baseWidth * scale, 0, scale, reader->metrics.hhea.ascent * scale, 0, 0, 1};
+    auto baseWidth = (engine->baseGlyph) ? engine->baseGlyph->bbox.w() : 0.0f;
+    Matrix m = {scale, -italicShear * scale, italicShear * baseWidth * scale, 0, scale, reader->metrics.hhea.ascent * scale, 0, 0, 1};
     paint->transform(m);
 }
 
@@ -617,19 +619,16 @@ bool SfntLoader::metrics(const FontMetrics& fm, const char* ch, GlyphMetrics& ou
     out.advance = glyph->advance * scale;
     out.bearing = glyph->lsb * scale;
 
-    // the designated glyph metrics
-    if (glyph->w > 0.0f || glyph->h > 0.0f) {
-        out.min = Point{glyph->x, glyph->y} * scale;
-        out.max = Point{glyph->w + glyph->x - 1, glyph->h + glyph->y - 1} * scale;
-    // if no info, calculate it manually (for OTF)
-    } else {
-        BBox bbox;
-        glyph->path.bounds(nullptr, bbox);
-        auto temp = bbox.min.y;
-        bbox.min.y = -bbox.max.y;
-        bbox.max.y = -temp;
-        out.min = bbox.min * scale;
-        out.max = bbox.max * scale;
+    // if no info, calculate it manually
+    if (glyph->bbox.zero()) {
+        glyph->bbox.init();
+        glyph->path.bounds(nullptr, glyph->bbox);
+        // convert y since sfnt y coordinates origin is reverted
+        auto temp = glyph->bbox.min.y;
+        glyph->bbox.min.y = -glyph->bbox.max.y;
+        glyph->bbox.max.y = -temp;
     }
+    out.min = glyph->bbox.min * scale;
+    out.max = glyph->bbox.max * scale;
     return true;
 }

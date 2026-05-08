@@ -37,7 +37,7 @@ struct SfntGlyph
     uint32_t idx;        //glyph index
     float advance;       //advance width/height
     float lsb;           //left side bearing
-    float x, y, w, h;    //bounding box
+    BBox bbox{};
 };
 
 struct SfntGlyphMetrics : SfntGlyph
