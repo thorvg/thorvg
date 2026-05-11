@@ -327,6 +327,7 @@ bool LottieLoader::del(uint32_t slotcode, bool byDefault)
         }
         this->slots.remove(slot);
         delete(slot);
+        if (curSlot == slotcode) curSlot = 0;
         break;
     }
     return true;
