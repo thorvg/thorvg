@@ -46,8 +46,7 @@ static bool _outlineEnd(SwOutline& outline)
     return false;
 }
 
-
-static bool _outlineMoveTo(SwOutline& outline, const Point* to, const Matrix& transform, bool closed = false)
+static bool _outlineMoveTo(SwOutline& outline, const Point& to, const Matrix& transform, bool closed = false)
 {
     //make it a contour, if the last contour is not closed yet.
     if (!closed) _outlineEnd(outline);
@@ -57,15 +56,13 @@ static bool _outlineMoveTo(SwOutline& outline, const Point* to, const Matrix& tr
     return false;
 }
 
-
-static void _outlineLineTo(SwOutline& outline, const Point* to, const Matrix& transform)
+static void _outlineLineTo(SwOutline& outline, const Point& to, const Matrix& transform)
 {
     outline.pts.push(mathTransform(to, transform));
     outline.types.push(SW_CURVE_TYPE_POINT);
 }
 
-
-static void _outlineCubicTo(SwOutline& outline, const Point* ctrl1, const Point* ctrl2, const Point* to, const Matrix& transform)
+static void _outlineCubicTo(SwOutline& outline, const Point& ctrl1, const Point& ctrl2, const Point& to, const Matrix& transform)
 {
     outline.pts.push(mathTransform(ctrl1, transform));
     outline.types.push(SW_CURVE_TYPE_CUBIC);
@@ -96,8 +93,7 @@ static bool _outlineClose(SwOutline& outline)
     return true;
 }
 
-
-static void _drawPoint(SwDashStroke& dash, const Point* start, const Matrix& transform)
+static void _drawPoint(SwDashStroke& dash, const Point& start, const Matrix& transform)
 {
     if (dash.move || dash.pattern[dash.curIdx] < FLOAT_EPSILON) {
         _outlineMoveTo(*dash.outline, start, transform);
@@ -106,19 +102,18 @@ static void _drawPoint(SwDashStroke& dash, const Point* start, const Matrix& tra
     _outlineLineTo(*dash.outline, start, transform);
 }
 
-
-static void _dashLineTo(SwDashStroke& dash, const Point* to, const Matrix& transform, bool validPoint)
+static void _dashLineTo(SwDashStroke& dash, const Point& to, const Matrix& transform, bool validPoint)
 {
-    Line cur = {dash.ptCur, *to};
+    Line cur = {dash.ptCur, to};
     auto len = cur.length();
     if (tvg::zero(len)) {
-        _outlineMoveTo(*dash.outline, &dash.ptCur, transform);
-    //draw the current line fully
+        _outlineMoveTo(*dash.outline, dash.ptCur, transform);
+    // draw the current line fully
     } else if (len <= dash.curLen) {
         dash.curLen -= len;
         if (!dash.curOpGap) {
             if (dash.move) {
-                _outlineMoveTo(*dash.outline, &dash.ptCur, transform);
+                _outlineMoveTo(*dash.outline, dash.ptCur, transform);
                 dash.move = false;
             }
             _outlineLineTo(*dash.outline, to, transform);
@@ -132,13 +127,13 @@ static void _dashLineTo(SwDashStroke& dash, const Point* to, const Matrix& trans
                 cur.split(dash.curLen, left, right);
                 if (!dash.curOpGap) {
                     if (dash.move || dash.pattern[dash.curIdx] - dash.curLen < FLOAT_EPSILON) {
-                        _outlineMoveTo(*dash.outline, &left.pt1, transform);
+                        _outlineMoveTo(*dash.outline, left.pt1, transform);
                         dash.move = false;
                     }
-                    _outlineLineTo(*dash.outline, &left.pt2, transform);
+                    _outlineLineTo(*dash.outline, left.pt2, transform);
                 }
             } else {
-                if (validPoint && !dash.curOpGap) _drawPoint(dash, &cur.pt1, transform);
+                if (validPoint && !dash.curOpGap) _drawPoint(dash, cur.pt1, transform);
                 right = cur;
             }
             dash.curIdx = (dash.curIdx + 1) % dash.cnt;
@@ -152,10 +147,10 @@ static void _dashLineTo(SwDashStroke& dash, const Point* to, const Matrix& trans
         dash.curLen -= len;
         if (!dash.curOpGap) {
             if (dash.move) {
-                _outlineMoveTo(*dash.outline, &cur.pt1, transform);
+                _outlineMoveTo(*dash.outline, cur.pt1, transform);
                 dash.move = false;
             }
-            _outlineLineTo(*dash.outline, &cur.pt2, transform);
+            _outlineLineTo(*dash.outline, cur.pt2, transform);
         }
         if (dash.curLen < 1 && TO_SWCOORD(len) > 1) {
             //move to next dash
@@ -164,23 +159,22 @@ static void _dashLineTo(SwDashStroke& dash, const Point* to, const Matrix& trans
             dash.curOpGap = !dash.curOpGap;
         }
     }
-    dash.ptCur = *to;
+    dash.ptCur = to;
 }
 
-
-static void _dashCubicTo(SwDashStroke& dash, const Point* ctrl1, const Point* ctrl2, const Point* to, const Matrix& transform, bool validPoint)
+static void _dashCubicTo(SwDashStroke& dash, const Point& ctrl1, const Point& ctrl2, const Point& to, const Matrix& transform, bool validPoint)
 {
-    Bezier cur = {dash.ptCur, *ctrl1, *ctrl2, *to};
+    Bezier cur = {dash.ptCur, ctrl1, ctrl2, to};
     auto len = cur.length();
 
     //draw the current line fully
     if (tvg::zero(len)) {
-        _outlineMoveTo(*dash.outline, &dash.ptCur, transform);
+        _outlineMoveTo(*dash.outline, dash.ptCur, transform);
     } else if (len <= dash.curLen) {
         dash.curLen -= len;
         if (!dash.curOpGap) {
             if (dash.move) {
-                _outlineMoveTo(*dash.outline, &dash.ptCur, transform);
+                _outlineMoveTo(*dash.outline, dash.ptCur, transform);
                 dash.move = false;
             }
             _outlineCubicTo(*dash.outline, ctrl1, ctrl2, to, transform);
@@ -194,13 +188,13 @@ static void _dashCubicTo(SwDashStroke& dash, const Point* ctrl1, const Point* ct
                 cur.split(dash.curLen, left, right);
                 if (!dash.curOpGap) {
                     if (dash.move || dash.pattern[dash.curIdx] - dash.curLen < FLOAT_EPSILON) {
-                        _outlineMoveTo(*dash.outline, &left.start, transform);
+                        _outlineMoveTo(*dash.outline, left.start, transform);
                         dash.move = false;
                     }
-                    _outlineCubicTo(*dash.outline, &left.ctrl1, &left.ctrl2, &left.end, transform);
+                    _outlineCubicTo(*dash.outline, left.ctrl1, left.ctrl2, left.end, transform);
                 }
             } else {
-                if (validPoint && !dash.curOpGap) _drawPoint(dash, &cur.start, transform);
+                if (validPoint && !dash.curOpGap) _drawPoint(dash, cur.start, transform);
                 right = cur;
             }
             dash.curIdx = (dash.curIdx + 1) % dash.cnt;
@@ -214,10 +208,10 @@ static void _dashCubicTo(SwDashStroke& dash, const Point* ctrl1, const Point* ct
         dash.curLen -= len;
         if (!dash.curOpGap) {
             if (dash.move) {
-                _outlineMoveTo(*dash.outline, &cur.start, transform);
+                _outlineMoveTo(*dash.outline, cur.start, transform);
                 dash.move = false;
             }
-            _outlineCubicTo(*dash.outline, &cur.ctrl1, &cur.ctrl2, &cur.end, transform);
+            _outlineCubicTo(*dash.outline, cur.ctrl1, cur.ctrl2, cur.end, transform);
         }
         if (dash.curLen < 0.1f && TO_SWCOORD(len) > 1) {
             //move to next dash
@@ -226,22 +220,21 @@ static void _dashCubicTo(SwDashStroke& dash, const Point* ctrl1, const Point* ct
             dash.curOpGap = !dash.curOpGap;
         }
     }
-    dash.ptCur = *to;
+    dash.ptCur = to;
 }
 
 
 static void _dashClose(SwDashStroke& dash, const Matrix& transform, bool validPoint)
 {
-    _dashLineTo(dash, &dash.ptStart, transform, validPoint);
+    _dashLineTo(dash, dash.ptStart, transform, validPoint);
 }
 
-
-static void _dashMoveTo(SwDashStroke& dash, uint32_t offIdx, float offset, const Point* pts)
+static void _dashMoveTo(SwDashStroke& dash, uint32_t offIdx, float offset, const Point& pts)
 {
     dash.curIdx = offIdx % dash.cnt;
     dash.curLen = dash.pattern[dash.curIdx] - offset;
     dash.curOpGap = offIdx % 2;
-    dash.ptStart = dash.ptCur = *pts;
+    dash.ptStart = dash.ptCur = pts;
     dash.move = true;
 }
 
@@ -298,7 +291,7 @@ static SwOutline* _genDashOutline(const RenderShape* rshape, const Matrix& trans
 
     //must begin with moveTo
     if (cmds[0] == PathCommand::MoveTo) {
-        _dashMoveTo(dash, offIdx, offset, pts);
+        _dashMoveTo(dash, offIdx, offset, *pts);
         cmds++;
         pts++;
     }
@@ -312,17 +305,17 @@ static SwOutline* _genDashOutline(const RenderShape* rshape, const Matrix& trans
                 break;
             }
             case PathCommand::MoveTo: {
-                _dashMoveTo(dash, offIdx, offset, pts);
+                _dashMoveTo(dash, offIdx, offset, *pts);
                 ++pts;
                 break;
             }
             case PathCommand::LineTo: {
-                _dashLineTo(dash, pts, transform, validPoint);
+                _dashLineTo(dash, *pts, transform, validPoint);
                 ++pts;
                 break;
             }
             case PathCommand::CubicTo: {
-                _dashCubicTo(dash, pts, pts + 1, pts + 2, transform, validPoint);
+                _dashCubicTo(dash, *pts, pts[1], pts[2], transform, validPoint);
                 pts += 3;
                 break;
             }
@@ -398,19 +391,19 @@ static SwOutline* _genOutline(SwShape& shape, const RenderShape* rshape, const M
                 break;
             }
             case PathCommand::MoveTo: {
-                closed = _outlineMoveTo(*outline, pts, transform, closed);
+                closed = _outlineMoveTo(*outline, *pts, transform, closed);
                 ++pts;
                 break;
             }
             case PathCommand::LineTo: {
                 if (closed) closed = _outlineBegin(*outline);
-                _outlineLineTo(*outline, pts, transform);
+                _outlineLineTo(*outline, *pts, transform);
                 ++pts;
                 break;
             }
             case PathCommand::CubicTo: {
                 if (closed) closed = _outlineBegin(*outline);
-                _outlineCubicTo(*outline, pts, pts + 1, pts + 2, transform);
+                _outlineCubicTo(*outline, *pts, pts[1], pts[2], transform);
                 pts += 3;
                 break;
             }
