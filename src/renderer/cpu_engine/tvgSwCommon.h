@@ -682,7 +682,7 @@ int64_t mathDiff(int64_t angle1, int64_t angle2);
 int64_t mathLength(const SwPoint& pt);
 int mathCubicAngle(const SwPoint* base, int64_t& angleIn, int64_t& angleMid, int64_t& angleOut);
 int64_t mathMean(int64_t angle1, int64_t angle2);
-SwPoint mathTransform(const Point* to, const Matrix& transform);
+SwPoint mathTransform(const Point& to, const Matrix& transform);
 bool mathUpdateOutlineBBox(const SwOutline* outline, const RenderRegion& clipBox, RenderRegion& renderBox, bool fastTrack);
 
 void shapeReset(SwShape& shape);
