@@ -59,3 +59,4 @@
 - Mattia Basaglia @mbasaglia
 - Jongmin Kim @jmkim
 - Andrew X @LizzaM1net
+- Geordie Jay @ephemer
