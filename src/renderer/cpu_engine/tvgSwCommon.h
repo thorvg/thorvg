@@ -114,8 +114,8 @@ struct SwOutline
 
 struct SwSpan
 {
-    uint16_t x, y;
-    uint16_t len;
+    int32_t x, y;
+    int32_t len;
     uint8_t coverage;
 
     bool fetch(const RenderRegion& bbox, int32_t& x, int32_t& len) const
@@ -135,7 +135,7 @@ struct SwRle
         return fetch(bbox.min.y, bbox.max.y - 1, end);
     }
 
-    const SwSpan* fetch(int32_t min, uint32_t max, const SwSpan** end) const
+    const SwSpan* fetch(int32_t min, int32_t max, const SwSpan** end) const
     {
         const SwSpan* begin;
 
