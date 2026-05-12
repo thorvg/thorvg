@@ -260,11 +260,10 @@ int64_t mathDiff(int64_t angle1, int64_t angle2)
     return delta;
 }
 
-
-SwPoint mathTransform(const Point* to, const Matrix& transform)
+SwPoint mathTransform(const Point& to, const Matrix& transform)
 {
-    auto tx = to->x * transform.e11 + to->y * transform.e12 + transform.e13;
-    auto ty = to->x * transform.e21 + to->y * transform.e22 + transform.e23;
+    auto tx = to.x * transform.e11 + to.y * transform.e12 + transform.e13;
+    auto ty = to.x * transform.e21 + to.y * transform.e22 + transform.e23;
 
     return {TO_SWCOORD(tx), TO_SWCOORD(ty)};
 }
@@ -272,7 +271,7 @@ SwPoint mathTransform(const Point* to, const Matrix& transform)
 
 bool mathUpdateOutlineBBox(const SwOutline* outline, const RenderRegion& clipBox, RenderRegion& renderBox, bool fastTrack)
 {
-    if (!outline || outline->pts.empty() || outline->cntrs.empty()) {
+    if (!outline || outline->pts.empty()) {
         renderBox.reset();
         return false;
     }
