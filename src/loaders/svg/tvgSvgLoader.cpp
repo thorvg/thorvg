@@ -3765,6 +3765,8 @@ void SvgLoader::clear(bool all)
 
 void SvgLoader::run(unsigned tid)
 {
+    if (!ctx.parser) return;
+
     //According to the SVG standard the value of the width/height of the viewbox set to 0 disables rendering
     if ((viewFlag & SvgViewFlag::Viewbox) && (fabsf(vbox.w) <= FLOAT_EPSILON || fabsf(vbox.h) <= FLOAT_EPSILON)) {
         TVGLOG("SVG", "The <viewBox> width and/or height set to 0 - rendering disabled.");
@@ -3804,7 +3806,7 @@ void SvgLoader::run(unsigned tid)
             }
         }
     }
-    root->ref();
+    if (root) root->ref();
     clear(false);
 }
 
