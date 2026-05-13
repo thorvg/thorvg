@@ -133,9 +133,10 @@ enum struct ColorSpace : uint8_t
  */
 enum struct EngineOption : uint8_t
 {
-    None = 0,                   /**< No engine options are enabled. This may be used to explicitly disable all optional behaviors. */
-    Default = 1 << 0,           /**< Uses the default rendering mode. */
-    SmartRender = 1 << 1        /**< Enables automatic partial (smart) rendering optimizations. */
+    None = 0,                    /**< No engine options are enabled. This may be used to explicitly disable all optional behaviors. */
+    Default = 1 << 0,            /**< Uses the default rendering mode. */
+    SmartRender = 1 << 1,        /**< Enables automatic partial (smart) rendering optimizations. */
+    Aliased = 1 << 2             /**< Disables anti-aliased rendering. @note Experimental API */
 };
 
 

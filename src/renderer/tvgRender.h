@@ -54,6 +54,11 @@ static inline RenderUpdateFlag operator|(const RenderUpdateFlag a, const RenderU
     return RenderUpdateFlag(uint16_t(a) | uint16_t(b));
 }
 
+static inline bool operator&(const EngineOption a, const EngineOption b)
+{
+    return (uint8_t(a) & uint8_t(b));
+}
+
 struct RenderSurface
 {
     union {

@@ -77,13 +77,14 @@ struct SwRenderer : RenderMethod
     static bool term();
 
     SwSurface*           surface = nullptr;           // active surface
-    SwMpool* mpool;                                   // designated memory pool
+    SwMpool*             mpool;                       // designated memory pool
+    bool                 antiAlias;                   // anti-aliasing support
 
 private:
+    bool                 fulldraw = true;             //buffer is cleared (need to redraw full screen)
     Array<SwTask*>       tasks;                       //async task list
     Array<SwSurface*>    compositors;                 //render targets cache list
     RenderDirtyRegion    dirtyRegion;                 //partial rendering support
-    bool                 fulldraw = true;             //buffer is cleared (need to redraw full screen)
 
     ~SwRenderer();
 
