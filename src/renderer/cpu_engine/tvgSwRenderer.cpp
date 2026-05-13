@@ -101,7 +101,7 @@ struct SwShapeTask : SwTask
        Additionally, the stroke style should not be dashed. */
     bool antialiasing(float strokeWidth)
     {
-        return strokeWidth < 2.0f || rshape->stroke->dash.count > 0 || rshape->stroke->first || rshape->trimpath() || rshape->stroke->color.a < 255;
+        return renderer->antiAlias && (strokeWidth < 2.0f || rshape->stroke->dash.count > 0 || rshape->stroke->first || rshape->trimpath() || rshape->stroke->color.a < 255);
     }
 
     float validStrokeWidth(bool clipper)
@@ -150,7 +150,7 @@ struct SwShapeTask : SwTask
         if (updateShape || flags[0] & RenderUpdateFlag::Stroke) {
             if (strokeWidth > 0.0f) {
                 shapeResetStroke(shape, rshape, transform, renderer->mpool, tid);
-                if (!shapeGenStrokeRle(shape, rshape, transform, clipBox, curBox, renderer->mpool, tid)) goto err;
+                if (!shapeGenStrokeRle(shape, rshape, transform, clipBox, curBox, renderer->mpool, tid, renderer->antiAlias)) goto err;
                 if (auto fill = rshape->strokeFill()) {
                     auto ctable = (flags[0] & RenderUpdateFlag::GradientStroke) ? true : false;
                     if (ctable) shapeResetStrokeFill(shape);
@@ -925,5 +925,7 @@ SwRenderer::SwRenderer(uint32_t threads, EngineOption op)
 
     mpool = mpoolReq();
 
-    if (op == EngineOption::None) dirtyRegion.support = false;
+    auto byDefault = (op == EngineOption::Default);
+    dirtyRegion.support = (byDefault || (op & EngineOption::SmartRender));
+    antiAlias = (byDefault || !(op & EngineOption::Aliased));
 }
