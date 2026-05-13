@@ -566,10 +566,10 @@ void shapeDelFill(SwShape& shape)
 
 bool shapeStrokeBBox(SwShape& shape, const RenderShape* rshape, Point* pt4, const Matrix& m, SwMpool* mpool)
 {
-    auto outline = _genOutline(shape, rshape, m, mpool, 0, false, rshape->trimpath());
-    if (!outline) return false;
-
     if (rshape->strokeWidth() > 0.0f) {
+        auto outline = _genOutline(shape, rshape, m, mpool, 0, false, rshape->trimpath());
+        if (!outline) return false;
+
         strokeReset(shape.stroke, rshape, m, mpool, 0);
         strokeParseOutline(shape.stroke, *outline, mpool, 0);
 
@@ -591,9 +591,10 @@ bool shapeStrokeBBox(SwShape& shape, const RenderShape* rshape, Point* pt4, cons
         pt4[1] = SwPoint{max.x, min.y}.toPoint();
         pt4[2] = max.toPoint();
         pt4[3] = SwPoint{min.x, max.y}.toPoint();
+
+        shapeDelOutline(shape, mpool, 0);
+
+        return true;
     }
-
-    shapeDelOutline(shape, mpool, 0);
-
-    return true;
+    return false;
 }
