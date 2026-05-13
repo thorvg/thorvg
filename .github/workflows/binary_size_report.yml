@@ -82,11 +82,12 @@ jobs:
         pathlib.Path("report.md").write_text("\n".join(lines) + "\n")
         PY
 
-    - name: Post comment
+    - name: Create or update comment
       uses: actions/github-script@v7
       with:
         script: |
           const fs = require('fs');
+          const reportHeader = '## Binary Size Report';
           const body = fs.readFileSync('report.md', 'utf8');
 
           // Resolve the PR number from workflow metadata, with a head
@@ -137,9 +138,39 @@ jobs:
             return;
           }
 
-          await github.rest.issues.createComment({
+          core.info(`Resolved PR number: #${prNumber}`);
+
+          const comments = await github.paginate(github.rest.issues.listComments, {
             issue_number: prNumber,
             owner: context.repo.owner,
             repo: context.repo.repo,
-            body
+            per_page: 100,
           });
+
+          const existingComments = comments.filter(comment =>
+            comment.user?.login === 'github-actions[bot]' &&
+            comment.user?.type === 'Bot' &&
+            comment.body?.includes(reportHeader)
+          );
+
+          const existingComment = existingComments.at(-1);
+          core.info(`Found ${existingComments.length} matching binary size comment(s).`);
+          core.info(`Selected comment id: ${existingComment?.id ?? 'none'}`);
+
+          if (existingComment) {
+            await github.rest.issues.updateComment({
+              comment_id: existingComment.id,
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              body,
+            });
+            core.info(`Updated binary size comment: ${existingComment.html_url}`);
+          } else {
+            const response = await github.rest.issues.createComment({
+              issue_number: prNumber,
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              body,
+            });
+            core.info(`Created binary size comment: ${response.data.html_url}`);
+          }
