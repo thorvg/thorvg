@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2023 - 2026 ThorVG project. All rights reserved.
+ * Copyright (c) 2026 ThorVG project. All rights reserved.
 
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to deal
@@ -20,39 +20,50 @@
  * SOFTWARE.
  */
 
-#ifndef _TVG_GL_RENDER_RENDER_TARGET_H_
-#define _TVG_GL_RENDER_RENDER_TARGET_H_
+#ifndef _TVG_GL_STENCIL_COVER_H_
+#define _TVG_GL_STENCIL_COVER_H_
 
-#include "tvgGlCommon.h"
+#include "tvgArray.h"
+#include "tvgGl.h"
+#include "tvgRender.h"
 
-struct GlRenderTarget
+struct GlShape;
+
+struct GlStencilCoverSlot
 {
-    GlRenderTarget();
-    ~GlRenderTarget();
+    RenderRegion bounds = {};
+    RenderRegion atlas = {};
+    bool packed = false;
 
-    void init(uint32_t width, uint32_t height, GLuint restoreId);
+    void reset()
+    {
+        bounds.reset();
+        atlas.reset();
+        packed = false;
+    }
+};
+
+struct GlStencilCover
+{
+    GLuint fbo = 0;
+    GLuint texture = 0;
+    uint32_t width = 0;
+    uint32_t height = 0;
+    Array<GlStencilCoverSlot*> slots;
+
+    void update(GlShape& sdata);
+    void remove(GlStencilCoverSlot* slot);
+    bool pack();
     void reset();
 
-    bool invalid() const { return fbo == 0; }
+    GLuint getFbo() const { return fbo; }
+    GLuint getTexture() const { return texture; }
 
-    RenderRegion viewport{};
-    uint32_t width = 0, height = 0;
-    GLuint fbo = 0, colorTex = 0;
+    static const GlStencilCoverSlot* slot(const GlShape& sdata, RenderUpdateFlag flag);
 
 private:
-    GLuint depthStencilBuffer = 0;
+    void add(GlStencilCoverSlot* slot);
+    bool ensure(uint32_t width, uint32_t height);
 };
 
-
-struct GlRenderTargetPool
-{
-    GlRenderTargetPool(uint32_t maxWidth, uint32_t maxHeight);
-    ~GlRenderTargetPool();
-    GlRenderTarget* getRenderTarget(const RenderRegion& vp, GLuint restoreId = 0);
-private:
-    uint32_t maxWidth = 0;
-    uint32_t maxHeight = 0;
-    Array<GlRenderTarget*> pool;
-};
-
-#endif //_TVG_GL_RENDER_RENDER_TARGET_H_
+#endif /* _TVG_GL_STENCIL_COVER_H_ */

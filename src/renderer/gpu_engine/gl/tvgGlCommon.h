@@ -28,6 +28,7 @@
 #include "tvgRender.h"
 #include "tvgMath.h"
 #include "tvgGpuCommon.h"
+#include "tvgGlStencilCover.h"
 
 constexpr float MIN_GL_STROKE_WIDTH = 1.0f;
 constexpr float MIN_GL_STROKE_ALPHA = 0.25f;
@@ -96,6 +97,7 @@ struct GlGeometry
     void tesselateImage(const RenderSurface* image);
     bool draw(GlRenderTask* task, GlStageBuffer* gpuBuffer, RenderUpdateFlag flag);
     GlStencilMode getStencilMode(RenderUpdateFlag flag);
+    RenderRegion stencilBounds(RenderUpdateFlag flag) const;
     RenderRegion getBounds() const;
 
     GlGeometryBuffer fill, stroke;
@@ -114,7 +116,6 @@ struct GlGeometry
     bool convex;
 };
 
-
 struct GlShape
 {
   const RenderShape* rshape = nullptr;
@@ -128,6 +129,8 @@ struct GlShape
   ColorSpace texColorSpace = ColorSpace::ABGR8888;
   GlGeometry geometry;
   Array<RenderData> clips;
+  GlStencilCoverSlot fillStencilCoverSlot;
+  GlStencilCoverSlot strokeStencilCoverSlot;
   uint16_t texStamp = 0;  // Tracks TextureMgr::stamp ownership of texId.
   bool validFill = false;
   bool validStroke = false;

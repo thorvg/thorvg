@@ -324,6 +324,13 @@ GlStencilMode GlGeometry::getStencilMode(RenderUpdateFlag flag)
     return GlStencilMode::None;
 }
 
+RenderRegion GlGeometry::stencilBounds(RenderUpdateFlag flag) const
+{
+    if ((flag & RenderUpdateFlag::Stroke) || (flag & RenderUpdateFlag::GradientStroke)) return strokeBounds;
+    if (fill.index.empty()) return {};
+    return fillWorld ? fillBounds : _transformBounds(fillBounds, matrix);
+}
+
 
 RenderRegion GlGeometry::getBounds() const
 {

@@ -113,22 +113,53 @@ private:
     float mVertexColor[4] = {0.f, 0.f, 0.f, 0.f};
 };
 
+struct GlRenderTarget;
+
+class GlStencilTask : public GlRenderTask
+{
+public:
+    GlStencilTask(GlProgram* program, GlRenderTask* other);
+};
+
+class GlCoverDrawTask : public GlRenderTask
+{
+public:
+    GlCoverDrawTask(GlProgram* program, GlRenderTarget* target, GLuint atlasTexture, const GlStencilCoverSlot* slot);
+    void run() override;
+private:
+    GlRenderTarget* mTarget;
+    GLuint mAtlasTexture;
+    const GlStencilCoverSlot* mSlot;
+};
+
 class GlStencilCoverTask : public GlRenderTask
 {
 public:
-    GlStencilCoverTask(GlRenderTask* stencil, GlRenderTask* cover, GlStencilMode mode);
+    GlStencilCoverTask(const GlStencilCoverSlot* slot, GlRenderTask* stencil);
     ~GlStencilCoverTask() override;
 
     void run() override;
 
     void normalizeDrawDepth(int32_t maxDepth) override;
 private:
+    const GlStencilCoverSlot* mSlot;
     GlRenderTask* mStencilTask;
-    GlRenderTask* mCoverTask;
-    GlStencilMode mStencilMode;
 };
 
-struct GlRenderTarget;
+class GlStencilCoverBatchTask : public GlRenderTask
+{
+public:
+    GlStencilCoverBatchTask(GlRenderTarget* target, GLuint atlasFbo, Array<GlRenderTask*>&& tasks);
+    ~GlStencilCoverBatchTask() override;
+
+    void run() override;
+
+    void normalizeDrawDepth(int32_t maxDepth) override;
+private:
+    GlRenderTarget* mTarget;
+    GLuint mAtlasFbo;
+    Array<GlRenderTask*> mTasks;
+};
 
 class GlComposeTask : public GlRenderTask 
 {
@@ -144,9 +175,6 @@ public:
 
 protected:
     GLuint getTargetFbo() { return mTargetFbo; }
-    GLuint getSelfFbo();
-    GLuint getResolveFboId();
-    void onResolve();
 
 private:
     GLuint mTargetFbo;
@@ -234,6 +262,17 @@ private:
     GlRenderTarget* mDstFbo = nullptr;
     GlRenderTarget* mDstCopyFbo = nullptr;
     RenderRegion mCopyRegion{};
+};
+
+class GlCoverDirectBlendTask : public GlDirectBlendTask
+{
+public:
+    GlCoverDirectBlendTask(GlProgram* program, GlRenderTarget* target, GLuint atlasTexture, const GlStencilCoverSlot* slot, GlRenderTarget* dstFbo, GlRenderTarget* dstCopyFbo, const RenderRegion& copyRegion);
+    void run() override;
+private:
+    GlRenderTarget* mTarget;
+    GLuint mAtlasTexture;
+    const GlStencilCoverSlot* mSlot;
 };
 
 class GlComplexBlendTask: public GlRenderTask

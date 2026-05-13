@@ -24,15 +24,6 @@
 #include "tvgGlProgram.h"
 #include "tvgGlRenderPass.h"
 
-#if !defined(THORVG_GL_TARGET_GL)
-static void clearColorTarget(uint32_t width, uint32_t height)
-{
-    GL_CHECK(glScissor(0, 0, width, height));
-    GL_CHECK(glClearColor(0, 0, 0, 0));
-    GL_CHECK(glClear(GL_COLOR_BUFFER_BIT));
-}
-#endif
-
 /************************************************************************/
 /* GlRenderTask Class Implementation                                    */
 /************************************************************************/
@@ -153,11 +144,87 @@ void GlRenderTask::setViewport(const RenderRegion &viewport)
 
 
 /************************************************************************/
-/* GlStencilCoverTask Class Implementation                              */
+/* GlStencilTask Class Implementation                                   */
 /************************************************************************/
 
-GlStencilCoverTask::GlStencilCoverTask(GlRenderTask* stencil, GlRenderTask* cover, GlStencilMode mode)
- :GlRenderTask(nullptr), mStencilTask(stencil), mCoverTask(cover), mStencilMode(mode)
+GlStencilTask::GlStencilTask(GlProgram* program, GlRenderTask* other)
+ : GlRenderTask(program, other)
+{
+}
+
+
+/************************************************************************/
+/* GlCoverDrawTask Class Implementation                                  */
+/************************************************************************/
+
+static Matrix _stencilCoverViewMatrix(const RenderRegion& bounds)
+{
+    Matrix postMatrix = tvg::identity();
+    translate(&postMatrix, {(float)-bounds.sx(), (float)-bounds.sy()});
+
+    Matrix mvp = tvg::identity();
+    mvp.e11 = 2.f / bounds.w();
+    mvp.e22 = -2.f / bounds.h();
+    mvp.e13 = -1.f;
+    mvp.e23 = 1.f;
+    return mvp * postMatrix;
+}
+
+static void _bindStencilCover(GlProgram* program, GlRenderTarget* target, GLuint atlasTexture, const GlStencilCoverSlot* slot)
+{
+    if (!program || !target || !atlasTexture || !slot || !slot->packed) return;
+
+    program->load();
+
+    auto textureLoc = program->getUniformLocation("uStencilCoverTexture");
+    if (textureLoc >= 0) {
+        int32_t unit = 3;
+        GL_CHECK(glActiveTexture(GL_TEXTURE0 + unit));
+        GL_CHECK(glBindTexture(GL_TEXTURE_2D, atlasTexture));
+        program->setUniform1Value(textureLoc, 1, &unit);
+    }
+
+    auto offsetLoc = program->getUniformLocation("uStencilCoverOffset");
+    if (offsetLoc >= 0) {
+        int32_t offset[2] = {
+            slot->atlas.min.x + target->viewport.min.x - slot->bounds.min.x,
+            slot->atlas.min.y + slot->bounds.max.y - target->viewport.max.y
+        };
+        program->setUniform2Value(offsetLoc, 1, offset);
+    }
+}
+
+
+GlCoverDrawTask::GlCoverDrawTask(GlProgram* program, GlRenderTarget* target, GLuint atlasTexture, const GlStencilCoverSlot* slot)
+ : GlRenderTask(program), mTarget(target), mAtlasTexture(atlasTexture), mSlot(slot)
+{
+}
+
+
+void GlCoverDrawTask::run()
+{
+    if (!mTarget || !mAtlasTexture || !mSlot || !mSlot->packed) return;
+
+    const auto& targetVp = mTarget->viewport;
+    GL_CHECK(glBindFramebuffer(GL_FRAMEBUFFER, mTarget->fbo));
+    GL_CHECK(glViewport(0, 0, targetVp.w(), targetVp.h()));
+    GL_CHECK(glBlendEquation(GL_FUNC_ADD));
+    GL_CHECK(glBlendFunc(GL_ONE, GL_ONE_MINUS_SRC_ALPHA));
+
+    _bindStencilCover(getProgram(), mTarget, mAtlasTexture, mSlot);
+    GL_CHECK(glEnable(GL_DEPTH_TEST));
+    GL_CHECK(glDepthMask(1));
+    GlRenderTask::run();
+    GL_CHECK(glDepthMask(0));
+}
+
+
+/************************************************************************/
+/* GlStencilCoverTask Class Implementation                               */
+/************************************************************************/
+
+GlStencilCoverTask::GlStencilCoverTask(const GlStencilCoverSlot* slot, GlRenderTask* stencil)
+ :GlRenderTask(nullptr), mSlot(slot), mStencilTask(stencil)
  {
 
  }
@@ -166,48 +233,82 @@ GlStencilCoverTask::GlStencilCoverTask(GlRenderTask* stencil, GlRenderTask* cove
 GlStencilCoverTask::~GlStencilCoverTask()
 {
     delete mStencilTask;
-    delete mCoverTask;
 }
 
 
 void GlStencilCoverTask::run()
 {
-    GL_CHECK(glEnable(GL_STENCIL_TEST));
+    if (!mSlot || !mSlot->packed || !mStencilTask) return;
 
-    if (mStencilMode == GlStencilMode::Stroke) {
-        GL_CHECK(glStencilFunc(GL_NOTEQUAL, 0x1, 0xFF));
-        GL_CHECK(glStencilOp(GL_KEEP, GL_KEEP, GL_REPLACE));
-    } else {
-        GL_CHECK(glStencilFuncSeparate(GL_FRONT, GL_ALWAYS, 0x0, 0xFF));
-        GL_CHECK(glStencilOpSeparate(GL_FRONT, GL_KEEP, GL_KEEP, GL_INCR_WRAP));
+    const auto& atlas = mSlot->atlas;
 
-        GL_CHECK(glStencilFuncSeparate(GL_BACK, GL_ALWAYS, 0x0, 0xFF));
-        GL_CHECK(glStencilOpSeparate(GL_BACK, GL_KEEP, GL_KEEP, GL_DECR_WRAP));
-    }
-    GL_CHECK(glColorMask(0, 0, 0, 0));
-
+    GL_CHECK(glViewport(atlas.sx(), atlas.sy(), atlas.sw(), atlas.sh()));
+    GL_CHECK(glScissor(atlas.sx(), atlas.sy(), atlas.sw(), atlas.sh()));
+    GL_CHECK(glClear(GL_COLOR_BUFFER_BIT));
+    mStencilTask->setViewMatrix(_stencilCoverViewMatrix(mSlot->bounds));
+    mStencilTask->setViewport(atlas);
     mStencilTask->run();
-
-    if (mStencilMode == GlStencilMode::FillEvenOdd) {
-        GL_CHECK(glStencilFunc(GL_NOTEQUAL, 0x00, 0x01));
-        GL_CHECK(glStencilOp(GL_REPLACE, GL_KEEP, GL_REPLACE));
-    } else {
-        GL_CHECK(glStencilFunc(GL_NOTEQUAL, 0x0, 0xFF));
-        GL_CHECK(glStencilOp(GL_KEEP, GL_KEEP, GL_REPLACE));
-    }
-
-    GL_CHECK(glColorMask(1, 1, 1, 1));
-
-    mCoverTask->run();
-
-    GL_CHECK(glDisable(GL_STENCIL_TEST));
 }
 
 
 void GlStencilCoverTask::normalizeDrawDepth(int32_t maxDepth)
 {
-    mCoverTask->normalizeDrawDepth(maxDepth);
     mStencilTask->normalizeDrawDepth(maxDepth);
+}
+
+
+/************************************************************************/
+/* GlStencilCoverBatchTask Class Implementation                          */
+/************************************************************************/
+
+GlStencilCoverBatchTask::GlStencilCoverBatchTask(GlRenderTarget* target, GLuint atlasFbo, Array<GlRenderTask*>&& tasks)
+ :GlRenderTask(nullptr), mTarget(target), mAtlasFbo(atlasFbo), mTasks()
+{
+    mTasks.push(tasks);
+    tasks.clear();
+}
+
+
+GlStencilCoverBatchTask::~GlStencilCoverBatchTask()
+{
+    ARRAY_FOREACH(p, mTasks) delete(*p);
+    mTasks.clear();
+}
+
+
+void GlStencilCoverBatchTask::run()
+{
+    if (!mTarget || !mAtlasFbo || mTasks.empty()) return;
+
+    const auto& targetVp = mTarget->viewport;
+
+    GL_CHECK(glDisable(GL_STENCIL_TEST));
+    GL_CHECK(glDisable(GL_DEPTH_TEST));
+    GL_CHECK(glBindFramebuffer(GL_FRAMEBUFFER, mAtlasFbo));
+    GL_CHECK(glColorMask(1, 1, 1, 1));
+    GL_CHECK(glClearColor(0, 0, 0, 0));
+    GL_CHECK(glDepthMask(0));
+    GL_CHECK(glEnable(GL_BLEND));
+    GL_CHECK(glBlendEquation(GL_FUNC_ADD));
+    GL_CHECK(glBlendFunc(GL_ONE, GL_ONE));
+
+    ARRAY_FOREACH(p, mTasks) {
+        (*p)->run();
+    }
+
+    GL_CHECK(glBindFramebuffer(GL_FRAMEBUFFER, mTarget->fbo));
+    GL_CHECK(glViewport(0, 0, targetVp.w(), targetVp.h()));
+    GL_CHECK(glBlendEquation(GL_FUNC_ADD));
+    GL_CHECK(glBlendFunc(GL_ONE, GL_ONE_MINUS_SRC_ALPHA));
+    GL_CHECK(glEnable(GL_DEPTH_TEST));
+}
+
+
+void GlStencilCoverBatchTask::normalizeDrawDepth(int32_t maxDepth)
+{
+    ARRAY_FOREACH(p, mTasks) {
+        (*p)->normalizeDrawDepth(maxDepth);
+    }
 }
 
 
@@ -232,7 +333,7 @@ GlComposeTask::~GlComposeTask()
 
 void GlComposeTask::run()
 {
-    GL_CHECK(glBindFramebuffer(GL_FRAMEBUFFER, getSelfFbo()));
+    GL_CHECK(glBindFramebuffer(GL_FRAMEBUFFER, mFbo->fbo));
 
     // we must clear all area of fbo
     GL_CHECK(glViewport(0, 0, mFbo->width, mFbo->height));
@@ -263,27 +364,6 @@ void GlComposeTask::run()
 #endif
     // reset scissor box
     GL_CHECK(glScissor(0, 0, mFbo->width, mFbo->height));
-    onResolve();
-}
-
-
-GLuint GlComposeTask::getSelfFbo()
-{
-    return mFbo->fbo;
-}
-
-
-GLuint GlComposeTask::getResolveFboId()
-{
-    return mFbo->resolvedFbo;
-}
-
-
-void GlComposeTask::onResolve()
-{
-    GL_CHECK(glBindFramebuffer(GL_READ_FRAMEBUFFER, getSelfFbo()));
-    GL_CHECK(glBindFramebuffer(GL_DRAW_FRAMEBUFFER, getResolveFboId()));
-    GL_CHECK(glBlitFramebuffer(0, 0, mRenderWidth, mRenderHeight, 0, 0, mRenderWidth, mRenderHeight, GL_COLOR_BUFFER_BIT, GL_NEAREST));
 }
 
 
@@ -375,20 +455,11 @@ void GlSceneBlendTask::run()
     if (width <= 0 || height <= 0) return;
 
 
-#if defined(THORVG_GL_TARGET_GL)
     GL_CHECK(glBindFramebuffer(GL_READ_FRAMEBUFFER, getTargetFbo()));
-    GL_CHECK(glBindFramebuffer(GL_DRAW_FRAMEBUFFER, mDstCopyFbo->resolvedFbo));
+    GL_CHECK(glBindFramebuffer(GL_DRAW_FRAMEBUFFER, mDstCopyFbo->fbo));
     GL_CHECK(glViewport(0, 0, mDstCopyFbo->width, mDstCopyFbo->height));
     GL_CHECK(glScissor(0, 0, mDstCopyFbo->width, mDstCopyFbo->height));
-    GL_CHECK(glBlitFramebuffer(vp.min.x, vp.min.y, vp.max.x, vp.max.y, 0, 0, vp.w(), vp.h(), GL_COLOR_BUFFER_BIT, GL_LINEAR));
-#else // TODO: create partial buffer when MSAA is disabled
-    GL_CHECK(glBindFramebuffer(GL_DRAW_FRAMEBUFFER, mDstCopyFbo->resolvedFbo));
-    if (vp.min.x != 0 || vp.min.y != 0 || mDstCopyFbo->width != static_cast<uint32_t>(vp.w()) || mDstCopyFbo->height != static_cast<uint32_t>(vp.h())) clearColorTarget(mDstCopyFbo->width, mDstCopyFbo->height);
-    GL_CHECK(glBindFramebuffer(GL_READ_FRAMEBUFFER, mSrcFbo->fbo));
-    GL_CHECK(glViewport(0, 0, width, height));
-    GL_CHECK(glScissor(vp.min.x, vp.min.y, vp.w(), vp.h()));
-    GL_CHECK(glBlitFramebuffer(vp.min.x, vp.min.y, vp.max.x, vp.max.y, vp.min.x, vp.min.y, vp.max.x, vp.max.y, GL_COLOR_BUFFER_BIT, GL_NEAREST));
-#endif
+    GL_CHECK(glBlitFramebuffer(vp.min.x, vp.min.y, vp.max.x, vp.max.y, 0, 0, vp.w(), vp.h(), GL_COLOR_BUFFER_BIT, GL_NEAREST));
 
     GL_CHECK(glBindFramebuffer(GL_FRAMEBUFFER, getTargetFbo()));
     GL_CHECK(glViewport(0, 0, mParentWidth, mParentHeight));
@@ -472,18 +543,11 @@ void GlDirectBlendTask::run()
     if (fboW <= 0 || fboH <= 0) return;
 
     GL_CHECK(glBindFramebuffer(GL_READ_FRAMEBUFFER, mDstFbo->fbo));
-    GL_CHECK(glBindFramebuffer(GL_DRAW_FRAMEBUFFER, mDstCopyFbo->resolvedFbo));
+    GL_CHECK(glBindFramebuffer(GL_DRAW_FRAMEBUFFER, mDstCopyFbo->fbo));
 
-#if defined(THORVG_GL_TARGET_GL)
     GL_CHECK(glViewport(0, 0, width, height));
     GL_CHECK(glScissor(0, 0, width, height));
-    GL_CHECK(glBlitFramebuffer(x, y, x + width, y + height, 0, 0, width, height, GL_COLOR_BUFFER_BIT, GL_LINEAR));
-#else // TODO: create partial buffer when MSAA is disabled
-    if (x != 0 || y != 0 || mDstCopyFbo->width != static_cast<uint32_t>(width) || mDstCopyFbo->height != static_cast<uint32_t>(height)) clearColorTarget(mDstCopyFbo->width, mDstCopyFbo->height);
-    GL_CHECK(glViewport(0, 0, fboW, fboH));
-    GL_CHECK(glScissor(x, y, width, height));
-    GL_CHECK(glBlitFramebuffer(x, y, x + width, y + height, x, y, x + width, y + height, GL_COLOR_BUFFER_BIT, GL_NEAREST));
-#endif
+    GL_CHECK(glBlitFramebuffer(x, y, x + width, y + height, 0, 0, width, height, GL_COLOR_BUFFER_BIT, GL_NEAREST));
     GL_CHECK(glBindFramebuffer(GL_FRAMEBUFFER, mDstFbo->fbo));
     const auto& dstVp = mDstFbo->viewport;
     GL_CHECK(glViewport(0, 0, dstVp.w(), dstVp.h()));
@@ -491,6 +555,28 @@ void GlDirectBlendTask::run()
     GL_CHECK(glBlendFunc(GL_ONE, GL_ZERO));
     GlRenderTask::run();
     GL_CHECK(glBlendFunc(GL_ONE, GL_ONE_MINUS_SRC_ALPHA));
+}
+
+
+/************************************************************************/
+/* GlCoverDirectBlendTask Class Implementation                            */
+/************************************************************************/
+
+GlCoverDirectBlendTask::GlCoverDirectBlendTask(GlProgram* program, GlRenderTarget* target, GLuint atlasTexture, const GlStencilCoverSlot* slot, GlRenderTarget* dstFbo, GlRenderTarget* dstCopyFbo, const RenderRegion& copyRegion)
+    : GlDirectBlendTask(program, dstFbo, dstCopyFbo, copyRegion), mTarget(target), mAtlasTexture(atlasTexture), mSlot(slot)
+{
+}
+
+
+void GlCoverDirectBlendTask::run()
+{
+    if (!mTarget || !mAtlasTexture || !mSlot || !mSlot->packed) return;
+
+    _bindStencilCover(getProgram(), mTarget, mAtlasTexture, mSlot);
+    GL_CHECK(glEnable(GL_DEPTH_TEST));
+    GL_CHECK(glDepthMask(1));
+    GlDirectBlendTask::run();
+    GL_CHECK(glDepthMask(0));
 }
 
 
@@ -522,20 +608,12 @@ void GlComplexBlendTask::run()
     if (width <= 0 || height <= 0) return;
 
     GL_CHECK(glBindFramebuffer(GL_READ_FRAMEBUFFER, mDstFbo->fbo));
-    GL_CHECK(glBindFramebuffer(GL_DRAW_FRAMEBUFFER, mDstCopyFbo->resolvedFbo));
+    GL_CHECK(glBindFramebuffer(GL_DRAW_FRAMEBUFFER, mDstCopyFbo->fbo));
 
-#if defined(THORVG_GL_TARGET_GL)
-    const auto& dstVp = mDstFbo->viewport;
     // copy the current fbo to the dstCopyFbo
-    GL_CHECK(glViewport(0, 0, dstVp.w(), dstVp.h()));
-    GL_CHECK(glScissor(0, 0, dstVp.w(), dstVp.h()));
-    GL_CHECK(glBlitFramebuffer(vp.min.x, vp.min.y, vp.max.x, vp.max.y, 0, 0, vp.w(), vp.h(), GL_COLOR_BUFFER_BIT, GL_LINEAR));
-#else // TODO: create partial buffer when MSAA is disabled
-    if (vp.min.x != 0 || vp.min.y != 0 || mDstCopyFbo->width != static_cast<uint32_t>(vp.w()) || mDstCopyFbo->height != static_cast<uint32_t>(vp.h())) clearColorTarget(mDstCopyFbo->width, mDstCopyFbo->height);
-    GL_CHECK(glViewport(0, 0, width, height));
-    GL_CHECK(glScissor(vp.min.x, vp.min.y, vp.w(), vp.h()));
-    GL_CHECK(glBlitFramebuffer(vp.min.x, vp.min.y, vp.max.x, vp.max.y, vp.min.x, vp.min.y, vp.max.x, vp.max.y, GL_COLOR_BUFFER_BIT, GL_NEAREST));
-#endif
+    GL_CHECK(glViewport(0, 0, mDstCopyFbo->width, mDstCopyFbo->height));
+    GL_CHECK(glScissor(0, 0, mDstCopyFbo->width, mDstCopyFbo->height));
+    GL_CHECK(glBlitFramebuffer(vp.min.x, vp.min.y, vp.max.x, vp.max.y, 0, 0, vp.w(), vp.h(), GL_COLOR_BUFFER_BIT, GL_NEAREST));
 
     GL_CHECK(glBindFramebuffer(GL_FRAMEBUFFER, mDstFbo->fbo));
 
@@ -592,17 +670,17 @@ void GlGaussianBlurTask::run()
     GL_CHECK(glScissor(0, 0, width, height));
     // we need to make a full copy of dst to intermediate buffers to be sure that they don’t contain prev data.
     GL_CHECK(glBindFramebuffer(GL_READ_FRAMEBUFFER, mDstFbo->fbo));
-    GL_CHECK(glBindFramebuffer(GL_DRAW_FRAMEBUFFER, mDstCopyFbo0->resolvedFbo));
+    GL_CHECK(glBindFramebuffer(GL_DRAW_FRAMEBUFFER, mDstCopyFbo0->fbo));
     GL_CHECK(glBlitFramebuffer(0, 0, width, height, 0, 0, width, height, GL_COLOR_BUFFER_BIT, GL_NEAREST));
     GL_CHECK(glBindFramebuffer(GL_FRAMEBUFFER, mDstFbo->fbo));
 
     GL_CHECK(glDisable(GL_BLEND));
     if (effect->direction == 0) {
         GL_CHECK(glBindFramebuffer(GL_READ_FRAMEBUFFER, mDstFbo->fbo));
-        GL_CHECK(glBindFramebuffer(GL_DRAW_FRAMEBUFFER, mDstCopyFbo1->resolvedFbo));
+        GL_CHECK(glBindFramebuffer(GL_DRAW_FRAMEBUFFER, mDstCopyFbo1->fbo));
         GL_CHECK(glBlitFramebuffer(0, 0, width, height, 0, 0, width, height, GL_COLOR_BUFFER_BIT, GL_NEAREST));
         // horizontal blur
-        GL_CHECK(glBindFramebuffer(GL_FRAMEBUFFER, mDstCopyFbo1->resolvedFbo));
+        GL_CHECK(glBindFramebuffer(GL_FRAMEBUFFER, mDstCopyFbo1->fbo));
         horzTask->setViewport(vp);
         horzTask->addBindResource({ 0, dstCopyTexId0, horzSrcTextureLoc });
         horzTask->run();
@@ -654,28 +732,28 @@ void GlEffectDropShadowTask::run()
 
     // we need to make a full copy of dst to intermediate buffers to be sure that they don’t contain prev data.
     GL_CHECK(glBindFramebuffer(GL_READ_FRAMEBUFFER, mDstFbo->fbo));
-    GL_CHECK(glBindFramebuffer(GL_DRAW_FRAMEBUFFER, mDstCopyFbo0->resolvedFbo));
+    GL_CHECK(glBindFramebuffer(GL_DRAW_FRAMEBUFFER, mDstCopyFbo0->fbo));
     GL_CHECK(glBlitFramebuffer(0, 0, width, height, 0, 0, width, height, GL_COLOR_BUFFER_BIT, GL_NEAREST));
     GL_CHECK(glBindFramebuffer(GL_READ_FRAMEBUFFER, mDstFbo->fbo));
-    GL_CHECK(glBindFramebuffer(GL_DRAW_FRAMEBUFFER, mDstCopyFbo1->resolvedFbo));
+    GL_CHECK(glBindFramebuffer(GL_DRAW_FRAMEBUFFER, mDstCopyFbo1->fbo));
     GL_CHECK(glBlitFramebuffer(0, 0, width, height, 0, 0, width, height, GL_COLOR_BUFFER_BIT, GL_NEAREST));
     
     GL_CHECK(glDisable(GL_BLEND));
     // when sigma is 0, no blur is applied, and the original image is used directly as the shadow.
     if (!tvg::zero(effect->sigma)) {
         // horizontal blur
-        GL_CHECK(glBindFramebuffer(GL_FRAMEBUFFER, mDstCopyFbo0->resolvedFbo));
+        GL_CHECK(glBindFramebuffer(GL_FRAMEBUFFER, mDstCopyFbo0->fbo));
         horzTask->setViewport(vp);
         horzTask->addBindResource({ 0, dstCopyTexId1, horzSrcTextureLoc });
         horzTask->run();
         // vertical blur
-        GL_CHECK(glBindFramebuffer(GL_FRAMEBUFFER, mDstCopyFbo1->resolvedFbo));
+        GL_CHECK(glBindFramebuffer(GL_FRAMEBUFFER, mDstCopyFbo1->fbo));
         vertTask->setViewport(vp);
         vertTask->addBindResource({ 0, dstCopyTexId0, vertSrcTextureLoc });
         vertTask->run();
         // copy original image to intermediate buffer
         GL_CHECK(glBindFramebuffer(GL_READ_FRAMEBUFFER, mDstFbo->fbo));
-        GL_CHECK(glBindFramebuffer(GL_DRAW_FRAMEBUFFER, mDstCopyFbo0->resolvedFbo));
+        GL_CHECK(glBindFramebuffer(GL_DRAW_FRAMEBUFFER, mDstCopyFbo0->fbo));
         GL_CHECK(glBlitFramebuffer(0, 0, width, height, 0, 0, width, height, GL_COLOR_BUFFER_BIT, GL_NEAREST));
     }
     // run drop shadow effect
@@ -701,7 +779,7 @@ void GlEffectColorTransformTask::run()
     GL_CHECK(glScissor(0, 0, width, height));
     // we need to make a full copy of dst to intermediate buffers to be sure that they don’t contain prev data.
     GL_CHECK(glBindFramebuffer(GL_READ_FRAMEBUFFER, mDstFbo->fbo));
-    GL_CHECK(glBindFramebuffer(GL_DRAW_FRAMEBUFFER, mDstCopyFbo->resolvedFbo));
+    GL_CHECK(glBindFramebuffer(GL_DRAW_FRAMEBUFFER, mDstCopyFbo->fbo));
     GL_CHECK(glBlitFramebuffer(0, 0, width, height, 0, 0, width, height, GL_COLOR_BUFFER_BIT, GL_NEAREST));
     GL_CHECK(glBindFramebuffer(GL_FRAMEBUFFER, mDstFbo->fbo));
 

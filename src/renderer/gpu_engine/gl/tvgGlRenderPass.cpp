@@ -43,25 +43,36 @@ GlRenderPass::GlRenderPass(GlRenderTarget* fbo): mFbo(fbo), mTasks(), mDrawDepth
     if (mFbo) mViewMatrix = _viewMatrix(mFbo->viewport);
 }
 
-GlRenderPass::GlRenderPass(GlRenderPass&& other): mFbo(other.mFbo), mTasks(), mDrawDepth(0), mViewMatrix(other.mViewMatrix)
+GlRenderPass::GlRenderPass(GlRenderPass&& other): mFbo(other.mFbo), mTasks(), mStencilCoverTasks(), mStencilCoverAtlasFbo(other.mStencilCoverAtlasFbo), mDrawDepth(0), mViewMatrix(other.mViewMatrix)
 {
     mTasks.push(other.mTasks);
+    mStencilCoverTasks.push(other.mStencilCoverTasks);
 
     other.mTasks.clear();
+    other.mStencilCoverTasks.clear();
+    other.mStencilCoverAtlasFbo = 0;
 
     mDrawDepth = other.mDrawDepth;
 }
 
 GlRenderPass::~GlRenderPass()
 {
-    if (mTasks.empty()) return;
-
     ARRAY_FOREACH(p, mTasks) delete(*p);
-
     mTasks.clear();
+
+    ARRAY_FOREACH(p, mStencilCoverTasks) delete(*p);
+    mStencilCoverTasks.clear();
 }
 
 void GlRenderPass::addRenderTask(GlRenderTask* task)
 {
     mTasks.push(task);
+}
+
+void GlRenderPass::addStencilCoverTask(GLuint atlasFbo, GlRenderTask* task)
+{
+    if (!task) return;
+    if (!mStencilCoverAtlasFbo) mStencilCoverAtlasFbo = atlasFbo;
+    assert(mStencilCoverAtlasFbo == atlasFbo);
+    mStencilCoverTasks.push(task);
 }

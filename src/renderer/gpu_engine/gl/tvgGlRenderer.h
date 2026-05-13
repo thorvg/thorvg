@@ -31,6 +31,7 @@
 #include "tvgGlRenderPass.h"
 #include "tvgGlEffect.h"
 #include "tvgGlSolidBatch.h"
+#include "tvgGlStencilCover.h"
 
 struct GlRenderer : RenderMethod
 {
@@ -193,8 +194,9 @@ private:
 
     void initShaders();
     static RenderRegion viewportRegion(const RenderRegion& vp, const RenderRegion& bbox);
-    GlRenderTask* createPrimitiveTask(RenderTypes type, BlendSource source, const RenderRegion& viewRegion, GlRenderTarget*& dstCopyFbo);
-    GlRenderTask* createStencilTask(GlRenderTask* task, GlStencilMode stencilMode, int32_t depth);
+    GlRenderTask* createPrimitiveTask(RenderTypes type, BlendSource source, const RenderRegion& viewRegion, GlRenderTarget*& dstCopyFbo, GlStencilMode stencilMode = GlStencilMode::None, const GlStencilCoverSlot* stencilSlot = nullptr);
+    GlRenderTask* createStencilTask(GlShape& sdata, RenderUpdateFlag flag, GlStencilMode stencilMode, int32_t depth, const RenderRegion& viewRegion);
+    void setupCoverBounds(GlRenderTask* task, const RenderRegion& bounds);
     void bindBlendTarget(GlRenderTask* task, const GlRenderTarget* dstCopyFbo, const RenderRegion& viewRegion, uint32_t binding);
     void drawPrimitive(GlShape& sdata, const RenderColor& c, RenderUpdateFlag flag, int32_t depth);
     void drawPrimitive(GlShape& sdata, const Fill* fill, RenderUpdateFlag flag, int32_t depth);
@@ -204,7 +206,9 @@ private:
 
     bool beginComplexBlending(const RenderRegion& vp, RenderRegion bounds);
     void endBlendingCompose(GlRenderTask* stencilTask);
-    GlProgram* getBlendProgram(BlendMethod method, BlendSource source);
+    GlProgram* getStencilProgram(GlStencilMode mode);
+    GlProgram* getStencilCoverProgram(RenderTypes type, GlStencilMode mode);
+    GlProgram* getBlendProgram(BlendMethod method, BlendSource source, GlStencilMode stencilMode = GlStencilMode::None);
     void prepareBlitTask(GlBlitTask* task);
     void prepareCmpTask(GlRenderTask* task, const RenderRegion& vp, uint32_t cmpWidth, uint32_t cmpHeight);
     void endRenderPass(RenderCompositor* cmp);
@@ -224,6 +228,9 @@ private:
     GlRenderTarget mRootTarget;
     GlEffect mEffect;
     Array<GlProgram*> mPrograms;
+    GlProgram* mStencilPrograms[3]{};
+    GlProgram* mStencilCoverPrograms[3][3]{};
+    GlProgram* mStencilBlendPrograms[3][17][3]{};
 
     Array<GlRenderTargetPool*> mComposePool;
     Array<GlRenderTargetPool*> mBlendPool;
@@ -231,6 +238,7 @@ private:
     Array<GlCompositor*> mComposeStack;
     TextureMgr mTextures;
     GlSolidBatch mSolidBatch;
+    GlStencilCover mStencilCover;
 
     //Disposed resources. They should be released on synced call.
     struct {

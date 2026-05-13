@@ -40,6 +40,7 @@ public:
     bool isEmpty() const { return mFbo == nullptr; }
 
     void addRenderTask(GlRenderTask* task);
+    void addStencilCoverTask(GLuint atlasFbo, GlRenderTask* task);
     GlRenderTask* lastTask() const { return mTasks.empty() ? nullptr : mTasks.last(); }
     GlRenderTask* takeLastTask()
     {
@@ -62,12 +63,22 @@ public:
     template <class T>
     T* endRenderPass(GlProgram* program, GLuint targetFbo) {
         int32_t maxDepth = mDrawDepth + 1;
+        Array<GlRenderTask*> tasks;
 
-        for (uint32_t i = 0; i < mTasks.count; i++) {
-            mTasks[i]->normalizeDrawDepth(maxDepth);
+        if (!mStencilCoverTasks.empty()) {
+            tasks.push(new GlStencilCoverBatchTask(mFbo, mStencilCoverAtlasFbo, std::move(mStencilCoverTasks)));
+            mStencilCoverTasks.clear();
+            mStencilCoverAtlasFbo = 0;
         }
 
-        auto task = new T(program, targetFbo, mFbo, std::move(mTasks));
+        tasks.push(mTasks);
+        mTasks.clear();
+
+        for (uint32_t i = 0; i < tasks.count; i++) {
+            tasks[i]->normalizeDrawDepth(maxDepth);
+        }
+
+        auto task = new T(program, targetFbo, mFbo, std::move(tasks));
         task->setRenderSize(mFbo->viewport.w(),  mFbo->viewport.h());
 
         return task;
@@ -81,6 +92,8 @@ public:
 private:
     GlRenderTarget* mFbo;
     Array<GlRenderTask*> mTasks = {};
+    Array<GlRenderTask*> mStencilCoverTasks = {};
+    GLuint mStencilCoverAtlasFbo = 0;
     int32_t mDrawDepth = 0;
     Matrix mViewMatrix = {};
 };

@@ -63,6 +63,8 @@ void GlRenderer::flush()
 {
     clearDisposes();
 
+    mStencilCover.reset();
+
     mRootTarget.reset();
 
     ARRAY_FOREACH(p, mComposePool) delete(*p);
@@ -106,6 +108,15 @@ GlRenderer::~GlRenderer()
     mTextures.clear();
 
     ARRAY_FOREACH(p, mPrograms) delete(*p);
+    for (auto& program : mStencilPrograms) delete(program);
+    for (auto& programs : mStencilCoverPrograms) {
+        for (auto& program : programs) delete(program);
+    }
+    for (auto& sourcePrograms : mStencilBlendPrograms) {
+        for (auto& blendPrograms : sourcePrograms) {
+            for (auto& program : blendPrograms) delete(program);
+        }
+    }
 
     _rendererMtx.lock();
     --_rendererCnt;
@@ -118,9 +129,9 @@ void GlRenderer::initShaders()
     mPrograms.reserve((int)RT_None);
 
 #if 1  //for optimization
-    #define LINEAR_TOTAL_LENGTH 2831
-    #define RADIAL_TOTAL_LENGTH 5315
-    #define BLEND_TOTAL_LENGTH 5096
+    #define LINEAR_TOTAL_LENGTH 4096
+    #define RADIAL_TOTAL_LENGTH 6144
+    #define BLEND_TOTAL_LENGTH 8192
 #else
     #define COMMON_TOTAL_LENGTH strlen(STR_GRADIENT_FRAG_COMMON_VARIABLES) + strlen(STR_GRADIENT_FRAG_COMMON_FUNCTIONS) + 1
     #define LINEAR_TOTAL_LENGTH strlen(STR_LINEAR_GRADIENT_VARIABLES) + strlen(STR_LINEAR_GRADIENT_FUNCTIONS) + strlen(STR_LINEAR_GRADIENT_MAIN) + COMMON_TOTAL_LENGTH
@@ -170,7 +181,7 @@ void GlRenderer::initShaders()
     mPrograms.push(new GlProgram(BLIT_VERT_SHADER, BLIT_FRAG_SHADER));
 
     // blend programs: image (17) + scene (17) + shape solid (17) + shape linear (17) + shape radial (17)
-    for (uint32_t i = 0; i < 85; ++i) mPrograms.push(nullptr);
+    for (uint32_t i = mPrograms.count; i < (uint32_t)RT_None; ++i) mPrograms.push(nullptr);
 }
 
 RenderRegion GlRenderer::viewportRegion(const RenderRegion& vp, const RenderRegion& bbox)
@@ -184,42 +195,164 @@ RenderRegion GlRenderer::viewportRegion(const RenderRegion& vp, const RenderRegi
     return {{x, yGl}, {x + w, yGl + h}};
 }
 
-GlRenderTask* GlRenderer::createPrimitiveTask(RenderTypes type, BlendSource source, const RenderRegion& viewRegion, GlRenderTarget*& dstCopyFbo)
+static uint32_t _stencilModeIndex(GlStencilMode mode)
+{
+    switch (mode) {
+        case GlStencilMode::FillNonZero: return 0;
+        case GlStencilMode::FillEvenOdd: return 1;
+        case GlStencilMode::Stroke: return 2;
+        default: break;
+    }
+    assert(false);
+    return 0;
+}
+
+static const char* _stencilCoverFrag(GlStencilMode mode)
+{
+    switch (mode) {
+        case GlStencilMode::FillNonZero: return STENCIL_COVER_NONZERO_FRAG;
+        case GlStencilMode::FillEvenOdd: return STENCIL_COVER_EVENODD_FRAG;
+        case GlStencilMode::Stroke: return STENCIL_COVER_STROKE_FRAG;
+        default: break;
+    }
+    assert(false);
+    return STENCIL_COVER_NONZERO_FRAG;
+}
+
+GlProgram* GlRenderer::getStencilProgram(GlStencilMode mode)
+{
+    auto modeInd = _stencilModeIndex(mode);
+    if (mStencilPrograms[modeInd]) return mStencilPrograms[modeInd];
+
+    const char* fragShader = nullptr;
+    switch (mode) {
+        case GlStencilMode::FillNonZero: fragShader = STENCIL_NONZERO_FRAG_SHADER; break;
+        case GlStencilMode::FillEvenOdd: fragShader = STENCIL_EVENODD_FRAG_SHADER; break;
+        case GlStencilMode::Stroke: fragShader = STENCIL_STROKE_FRAG_SHADER; break;
+        default: assert(false); fragShader = STENCIL_NONZERO_FRAG_SHADER; break;
+    }
+
+    mStencilPrograms[modeInd] = new GlProgram(STENCIL_VERT_SHADER, fragShader);
+    return mStencilPrograms[modeInd];
+}
+
+GlProgram* GlRenderer::getStencilCoverProgram(RenderTypes type, GlStencilMode mode)
+{
+    auto modeInd = _stencilModeIndex(mode);
+    uint32_t sourceInd = 0;
+    const char* vertShader = COLOR_VERT_SHADER;
+    char fragShader[BLEND_TOTAL_LENGTH];
+
+    switch (type) {
+        case RT_Color:
+            sourceInd = 0;
+            snprintf(fragShader, BLEND_TOTAL_LENGTH, "%s%s%s",
+                     STENCIL_COVER_FRAG_HEADER,
+                     _stencilCoverFrag(mode),
+                     COLOR_STENCIL_FRAG_SHADER);
+            break;
+        case RT_LinGradient:
+            sourceInd = 1;
+            vertShader = GRADIENT_VERT_SHADER;
+            snprintf(fragShader, BLEND_TOTAL_LENGTH, "%s%s%s%s%s%s%s",
+                     STENCIL_COVER_FRAG_HEADER,
+                     _stencilCoverFrag(mode),
+                     STR_GRADIENT_FRAG_COMMON_VARIABLES,
+                     STR_LINEAR_GRADIENT_VARIABLES,
+                     STR_GRADIENT_FRAG_COMMON_FUNCTIONS,
+                     STR_LINEAR_GRADIENT_FUNCTIONS,
+                     STR_LINEAR_GRADIENT_STENCIL_MAIN);
+            break;
+        case RT_RadGradient:
+            sourceInd = 2;
+            vertShader = GRADIENT_VERT_SHADER;
+            snprintf(fragShader, BLEND_TOTAL_LENGTH, "%s%s%s%s%s%s%s",
+                     STENCIL_COVER_FRAG_HEADER,
+                     _stencilCoverFrag(mode),
+                     STR_GRADIENT_FRAG_COMMON_VARIABLES,
+                     STR_RADIAL_GRADIENT_VARIABLES,
+                     STR_GRADIENT_FRAG_COMMON_FUNCTIONS,
+                     STR_RADIAL_GRADIENT_FUNCTIONS,
+                     STR_RADIAL_GRADIENT_STENCIL_MAIN);
+            break;
+        default:
+            assert(false);
+            return nullptr;
+    }
+
+    if (mStencilCoverPrograms[sourceInd][modeInd]) return mStencilCoverPrograms[sourceInd][modeInd];
+
+    mStencilCoverPrograms[sourceInd][modeInd] = new GlProgram(vertShader, fragShader);
+    return mStencilCoverPrograms[sourceInd][modeInd];
+}
+
+GlRenderTask* GlRenderer::createPrimitiveTask(RenderTypes type, BlendSource source, const RenderRegion& viewRegion, GlRenderTarget*& dstCopyFbo, GlStencilMode stencilMode, const GlStencilCoverSlot* stencilSlot)
 {
     dstCopyFbo = nullptr;
+    bool stencilCover = stencilMode != GlStencilMode::None;
 
-    if (mBlendMethod == BlendMethod::Normal) return new GlRenderTask(mPrograms[type]);
+    if (mBlendMethod == BlendMethod::Normal) {
+        if (stencilCover) {
+            return new GlCoverDrawTask(getStencilCoverProgram(type, stencilMode), currentPass()->getFbo(), mStencilCover.getTexture(), stencilSlot);
+        }
+        return new GlRenderTask(mPrograms[type]);
+    }
 
     if (mBlendPool.empty()) mBlendPool.push(new GlRenderTargetPool(surface.w, surface.h));
-#if defined(THORVG_GL_TARGET_GL)
     dstCopyFbo = mBlendPool[0]->getRenderTarget(viewRegion);
-#else  // TODO: create partial buffer when MSAA is disabled
-    dstCopyFbo = mBlendPool[0]->getRenderTarget(currentPass()->getViewport());
-#endif
 
-    auto program = getBlendProgram(mBlendMethod, source);
+    auto program = getBlendProgram(mBlendMethod, source, stencilMode);
+    if (stencilCover) return new GlCoverDirectBlendTask(program, currentPass()->getFbo(), mStencilCover.getTexture(), stencilSlot, currentPass()->getFbo(), dstCopyFbo, viewRegion);
     return new GlDirectBlendTask(program, currentPass()->getFbo(), dstCopyFbo, viewRegion);
 }
 
-GlRenderTask* GlRenderer::createStencilTask(GlRenderTask* task, GlStencilMode stencilMode, int32_t depth)
+GlRenderTask* GlRenderer::createStencilTask(GlShape& sdata, RenderUpdateFlag flag, GlStencilMode stencilMode, int32_t depth, const RenderRegion& viewRegion)
 {
     if (stencilMode == GlStencilMode::None) return nullptr;
 
-    auto stencilTask = new GlRenderTask(mPrograms[RT_Stencil], task);
+    auto pathTask = new GlRenderTask(mPrograms[RT_Stencil]);
+    pathTask->setViewMatrix(currentPass()->getViewMatrix());
+    pathTask->setDrawDepth(depth);
+
+    if (!sdata.geometry.draw(pathTask, &mGpuBuffer, flag)) {
+        delete pathTask;
+        return nullptr;
+    }
+
+    pathTask->setViewport(viewRegion);
+
+    auto stencilTask = new GlStencilTask(getStencilProgram(stencilMode), pathTask);
     stencilTask->setDrawDepth(depth);
 
+    delete pathTask;
     return stencilTask;
+}
+
+void GlRenderer::setupCoverBounds(GlRenderTask* task, const RenderRegion& bounds)
+{
+    assert(task);
+    assert(bounds.valid());
+
+    float vertices[8] = {
+        float(bounds.min.x), float(bounds.min.y),
+        float(bounds.min.x), float(bounds.max.y),
+        float(bounds.max.x), float(bounds.min.y),
+        float(bounds.max.x), float(bounds.max.y)
+    };
+
+    uint32_t indices[6] = {0, 1, 2, 2, 1, 3};
+    auto vertexOffset = mGpuBuffer.push(vertices, sizeof(vertices));
+    auto indexOffset = mGpuBuffer.pushIndex(indices, sizeof(indices));
+
+    task->addVertexLayout(GlVertexLayout{0, 2, 2 * sizeof(float), vertexOffset});
+    task->setDrawRange(indexOffset, 6);
 }
 
 void GlRenderer::bindBlendTarget(GlRenderTask* task, const GlRenderTarget* dstCopyFbo, const RenderRegion& viewRegion, uint32_t binding)
 {
     if (!dstCopyFbo) return;
 
-#if defined(THORVG_GL_TARGET_GL)
     float region[] = {float(viewRegion.sx()), float(viewRegion.sy()), float(dstCopyFbo->width), float(dstCopyFbo->height)};
-#else  // TODO: create partial buffer when MSAA is disabled
-    float region[] = {0.0f, 0.0f, float(dstCopyFbo->width), float(dstCopyFbo->height)};
-#endif
     task->addBindResource(GlBindingResource{
         binding,
         task->getProgram()->getUniformBlockIndex("BlendRegion"),
@@ -234,13 +367,16 @@ void GlRenderer::drawPrimitive(GlShape& sdata, const RenderColor& c, RenderUpdat
 {
     auto blendShape = (mBlendMethod != BlendMethod::Normal);
     auto vp = currentPass()->getViewport();
-    auto bbox = blendShape ? sdata.geometry.getBounds() : sdata.geometry.viewport;
+    auto stencilMode = sdata.geometry.getStencilMode(flag);
+    auto stencilSlot = GlStencilCover::slot(sdata, flag);
+    auto bbox = (stencilMode != GlStencilMode::None) ? stencilSlot->bounds : (blendShape ? sdata.geometry.getBounds() : sdata.geometry.viewport);
+
+    if (stencilMode != GlStencilMode::None && !stencilSlot->packed) return;
 
     bbox.intersect(vp);
     if (bbox.invalid()) return;
 
     auto viewRegion = viewportRegion(vp, bbox);
-    auto stencilMode = sdata.geometry.getStencilMode(flag);
 
     if (!blendShape && stencilMode == GlStencilMode::None && sdata.clips.empty()) {
         mSolidBatch.draw(*this, sdata, c, depth, viewRegion);
@@ -250,12 +386,20 @@ void GlRenderer::drawPrimitive(GlShape& sdata, const RenderColor& c, RenderUpdat
     if (!sdata.clips.empty()) mSolidBatch.clear();
 
     GlRenderTarget* dstCopyFbo = nullptr;
-    auto task = createPrimitiveTask(RT_Color, BlendSource::Solid, viewRegion, dstCopyFbo);
+    auto task = createPrimitiveTask(RT_Color, BlendSource::Solid, viewRegion, dstCopyFbo, stencilMode, stencilSlot);
 
     task->setViewMatrix(currentPass()->getViewMatrix());
     task->setDrawDepth(depth);
 
-    if (!sdata.geometry.draw(task, &mGpuBuffer, flag)) {
+    GlRenderTask* stencilTask = nullptr;
+    if (stencilMode != GlStencilMode::None) {
+        stencilTask = createStencilTask(sdata, flag, stencilMode, depth, viewRegion);
+        if (!stencilTask) {
+            delete task;
+            return;
+        }
+        setupCoverBounds(task, bbox);
+    } else if (!sdata.geometry.draw(task, &mGpuBuffer, flag)) {
         delete task;
         return;
     }
@@ -271,19 +415,24 @@ void GlRenderer::drawPrimitive(GlShape& sdata, const RenderColor& c, RenderUpdat
     task->setVertexColor(c.r / 255.f, c.g / 255.f, c.b / 255.f, a / 255.f);
     task->setViewport(viewRegion);
 
-    auto stencilTask = createStencilTask(task, stencilMode, depth);
     // Keep BlendRegion on the existing solid-shape blend UBO slot.
     bindBlendTarget(task, dstCopyFbo, viewRegion, 2);
 
-    if (stencilTask) currentPass()->addRenderTask(new GlStencilCoverTask(stencilTask, task, stencilMode));
-    else currentPass()->addRenderTask(task);
+    if (stencilTask) {
+        currentPass()->addStencilCoverTask(mStencilCover.getFbo(), new GlStencilCoverTask(stencilSlot, stencilTask));
+        currentPass()->addRenderTask(task);
+    } else currentPass()->addRenderTask(task);
 }
 
 void GlRenderer::drawPrimitive(GlShape& sdata, const Fill* fill, RenderUpdateFlag flag, int32_t depth)
 {
     auto blendShape = (mBlendMethod != BlendMethod::Normal);
     auto vp = currentPass()->getViewport();
-    auto bbox = blendShape ? sdata.geometry.getBounds() : sdata.geometry.viewport;
+    auto stencilMode = sdata.geometry.getStencilMode(flag);
+    auto stencilSlot = GlStencilCover::slot(sdata, flag);
+    auto bbox = (stencilMode != GlStencilMode::None) ? stencilSlot->bounds : (blendShape ? sdata.geometry.getBounds() : sdata.geometry.viewport);
+    if (stencilMode != GlStencilMode::None && !stencilSlot->packed) return;
+
     bbox.intersect(vp);
     if (bbox.invalid()) return;
 
@@ -305,20 +454,25 @@ void GlRenderer::drawPrimitive(GlShape& sdata, const Fill* fill, RenderUpdateFla
         blendSource = BlendSource::RadialGradient;
     } else return;
 
-    auto task = createPrimitiveTask(taskType, blendSource, viewRegion, dstCopyFbo);
+    auto task = createPrimitiveTask(taskType, blendSource, viewRegion, dstCopyFbo, stencilMode, stencilSlot);
 
     task->setViewMatrix(currentPass()->getViewMatrix());
     task->setDrawDepth(depth);
 
-    if (!sdata.geometry.draw(task, &mGpuBuffer, flag)) {
+    GlRenderTask* stencilTask = nullptr;
+    if (stencilMode != GlStencilMode::None) {
+        stencilTask = createStencilTask(sdata, flag, stencilMode, depth, viewRegion);
+        if (!stencilTask) {
+            delete task;
+            return;
+        }
+        setupCoverBounds(task, bbox);
+    } else if (!sdata.geometry.draw(task, &mGpuBuffer, flag)) {
         delete task;
         return;
     }
 
     task->setViewport(viewRegion);
-
-    GlStencilMode stencilMode = sdata.geometry.getStencilMode(flag);
-    auto stencilTask = createStencilTask(task, stencilMode, depth);
 
     // transform buffer (inverse fill-space transform)
     float invMat3[GL_MAT3_STD140_SIZE];
@@ -436,7 +590,8 @@ void GlRenderer::drawPrimitive(GlShape& sdata, const Fill* fill, RenderUpdateFla
     bindBlendTarget(task, dstCopyFbo, viewRegion, 3);
 
     if (stencilTask) {
-        currentPass()->addRenderTask(new GlStencilCoverTask(stencilTask, task, stencilMode));
+        currentPass()->addStencilCoverTask(mStencilCover.getFbo(), new GlStencilCoverTask(stencilSlot, stencilTask));
+        currentPass()->addRenderTask(task);
     } else {
         currentPass()->addRenderTask(task);
     }
@@ -543,11 +698,7 @@ void GlRenderer::endBlendingCompose(GlRenderTask* stencilTask)
 
     const auto& vp = blendPass->getViewport();
     if (mBlendPool.count < 2) mBlendPool.push(new GlRenderTargetPool(surface.w, surface.h));
-#if defined(THORVG_GL_TARGET_GL)
     auto dstCopyFbo = mBlendPool[1]->getRenderTarget(vp);
-#else // TODO: create partial buffer when MSAA is disabled        
-    auto dstCopyFbo = mBlendPool[1]->getRenderTarget(currentPass()->getViewport());
-#endif
 
     auto x = vp.sx();
     auto y = currentPass()->getViewport().sh() - vp.sy() - vp.sh();
@@ -561,17 +712,6 @@ void GlRenderer::endBlendingCompose(GlRenderTask* stencilTask)
     prepareCmpTask(task, vp, blendPass->getFboWidth(), blendPass->getFboHeight());
     task->setDrawDepth(currentPass()->nextDrawDepth());
 
-#if defined(THORVG_GL_TARGET_GLES)
-    float region[] = {0.0f, 0.0f, float(dstCopyFbo->width), float(dstCopyFbo->height)};
-    task->addBindResource(GlBindingResource{
-        0,
-        task->getProgram()->getUniformBlockIndex("BlendRegion"),
-        mGpuBuffer.getBufferId(),
-        mGpuBuffer.push(region, 4 * sizeof(float), true),
-        4 * sizeof(float),
-    });
-#endif
-
     // src and dst texture
     task->addBindResource(GlBindingResource{1, blendPass->getFbo()->colorTex, task->getProgram()->getUniformLocation("uSrcTexture")});
     task->addBindResource(GlBindingResource{2, dstCopyFbo->colorTex, task->getProgram()->getUniformLocation("uDstTexture")});
@@ -582,7 +722,7 @@ void GlRenderer::endBlendingCompose(GlRenderTask* stencilTask)
 }
 
 
-GlProgram* GlRenderer::getBlendProgram(BlendMethod method, BlendSource source)
+GlProgram* GlRenderer::getBlendProgram(BlendMethod method, BlendSource source, GlStencilMode stencilMode)
 {
     // custom blend shaders
     static const char* shaderFunc[17] {
@@ -607,6 +747,69 @@ GlProgram* GlRenderer::getBlendProgram(BlendMethod method, BlendSource source)
 
     uint32_t methodInd = (uint32_t)method;
     uint32_t shaderInd = methodInd;
+    bool stencilCover = stencilMode != GlStencilMode::None;
+
+    if (stencilCover && (source == BlendSource::Solid || source == BlendSource::LinearGradient || source == BlendSource::RadialGradient)) {
+        uint32_t sourceInd = (source == BlendSource::Solid) ? 0 : (source == BlendSource::LinearGradient) ? 1 : 2;
+        uint32_t modeInd = _stencilModeIndex(stencilMode);
+        if (mStencilBlendPrograms[sourceInd][methodInd][modeInd]) return mStencilBlendPrograms[sourceInd][methodInd][modeInd];
+
+        const char* lumHelper = "";
+        const char* satHelper = "";
+        if (method == BlendMethod::Hue) {
+            lumHelper = BLEND_FRAG_LUM_HELPER;
+            satHelper = BLEND_FRAG_SAT_HELPER;
+        } else if ((method == BlendMethod::Saturation) || (method == BlendMethod::Color) || (method == BlendMethod::Luminosity)) {
+            lumHelper = BLEND_FRAG_LUM_HELPER;
+        }
+
+        const char* vertShader = (source == BlendSource::Solid) ? COLOR_VERT_SHADER : GRADIENT_VERT_SHADER;
+        char fragShader[BLEND_TOTAL_LENGTH];
+
+        switch (source) {
+            case BlendSource::Solid:
+                snprintf(fragShader, BLEND_TOTAL_LENGTH, "%s%s%s%s%s%s",
+                         STENCIL_COVER_FRAG_HEADER,
+                         _stencilCoverFrag(stencilMode),
+                         BLEND_SHAPE_SOLID_STENCIL_FRAG_HEADER,
+                         lumHelper,
+                         satHelper,
+                         shaderFunc[methodInd]);
+                break;
+            case BlendSource::LinearGradient:
+                snprintf(fragShader, BLEND_TOTAL_LENGTH, "%s%s%s%s%s%s%s%s%s%s",
+                         STENCIL_COVER_FRAG_HEADER,
+                         _stencilCoverFrag(stencilMode),
+                         STR_GRADIENT_FRAG_COMMON_VARIABLES,
+                         STR_LINEAR_GRADIENT_VARIABLES,
+                         STR_GRADIENT_FRAG_COMMON_FUNCTIONS,
+                         STR_LINEAR_GRADIENT_FUNCTIONS,
+                         BLEND_SHAPE_LINEAR_STENCIL_FRAG_HEADER,
+                         lumHelper,
+                         satHelper,
+                         shaderFunc[methodInd]);
+                break;
+            case BlendSource::RadialGradient:
+                snprintf(fragShader, BLEND_TOTAL_LENGTH, "%s%s%s%s%s%s%s%s%s%s",
+                         STENCIL_COVER_FRAG_HEADER,
+                         _stencilCoverFrag(stencilMode),
+                         STR_GRADIENT_FRAG_COMMON_VARIABLES,
+                         STR_RADIAL_GRADIENT_VARIABLES,
+                         STR_GRADIENT_FRAG_COMMON_FUNCTIONS,
+                         STR_RADIAL_GRADIENT_FUNCTIONS,
+                         BLEND_SHAPE_RADIAL_STENCIL_FRAG_HEADER,
+                         lumHelper,
+                         satHelper,
+                         shaderFunc[methodInd]);
+                break;
+            default:
+                TVGERR("RENDERER", "Unsupported stencil blend source! = %d", (int)source);
+                break;
+        }
+
+        mStencilBlendPrograms[sourceInd][methodInd][modeInd] = new GlProgram(vertShader, fragShader);
+        return mStencilBlendPrograms[sourceInd][methodInd][modeInd];
+    }
 
     switch (source) {
         case BlendSource::Scene: shaderInd += (uint32_t)RT_Blend_Scene_Normal; break;
@@ -805,11 +1008,7 @@ void GlRenderer::endRenderPass(RenderCompositor* cmp)
         if (!renderPass->isEmpty()) {
             if (mBlendPool.count < 1) mBlendPool.push(new GlRenderTargetPool(surface.w, surface.h));
             if (mBlendPool.count < 2) mBlendPool.push(new GlRenderTargetPool(surface.w, surface.h));
-#if defined(THORVG_GL_TARGET_GL)
             auto dstCopyFbo = mBlendPool[1]->getRenderTarget(renderPass->getViewport());
-#else // TODO: create partial buffer when MSAA is disabled
-            auto dstCopyFbo = mBlendPool[1]->getRenderTarget(currentPass()->getViewport());
-#endif
             // image info
             uint32_t info[4] = {(uint32_t)ColorSpace::ABGR8888, 0, cmp->opacity, 0};
 
@@ -820,16 +1019,6 @@ void GlRenderer::endRenderPass(RenderCompositor* cmp)
             task->setRenderSize(glCmp->bbox.w(), glCmp->bbox.h());
             prepareCmpTask(task, glCmp->bbox, renderPass->getFboWidth(), renderPass->getFboHeight());
             task->setDrawDepth(currentPass()->nextDrawDepth());
-#if defined(THORVG_GL_TARGET_GLES)
-            float region[] = {0.0f, 0.0f, float(dstCopyFbo->width), float(dstCopyFbo->height)};
-            task->addBindResource(GlBindingResource{
-                1,
-                task->getProgram()->getUniformBlockIndex("BlendRegion"),
-                mGpuBuffer.getBufferId(),
-                mGpuBuffer.push(region, 4 * sizeof(float), true),
-                4 * sizeof(float),
-            });
-#endif
             // info
             task->addBindResource(GlBindingResource{0, task->getProgram()->getUniformBlockIndex("ColorInfo"), mGpuBuffer.getBufferId(), mGpuBuffer.push(info, sizeof(info), true), sizeof(info)});
             // textures
@@ -1228,6 +1417,8 @@ void GlRenderer::dispose(RenderData data)
 {
     auto sdata = static_cast<GlShape*>(data);
     if (!sdata) return;
+    mStencilCover.remove(&sdata->fillStencilCoverSlot);
+    mStencilCover.remove(&sdata->strokeStencilCoverSlot);
     auto ownsTexture = sdata->texId && (sdata->texStamp == mTextures.stamp);
     if (ownsTexture) disposeTexture(mTextures.release(sdata->texSource, sdata->texFilter, sdata->texId));
     delete sdata;
@@ -1318,6 +1509,8 @@ RenderData GlRenderer::prepare(const RenderShape& rshape, RenderData data, const
         sdata->clips.push(clips);
     }
 
+    mStencilCover.update(*sdata);
+
     return sdata;
 }
 
@@ -1333,7 +1526,7 @@ bool GlRenderer::preUpdate()
 
 bool GlRenderer::postUpdate()
 {
-    return true;
+    return mStencilCover.pack();
 }
 
 

@@ -1074,7 +1074,7 @@
         //typedef void (*PFNGLCLEARBUFFERFIPROC)(GLenum buffer, GLint drawbuffer, GLfloat depth, GLint stencil);
         //typedef const GLubyte *(*PFNGLGETSTRINGIPROC)(GLenum name, GLuint index);
         //typedef GLboolean (*PFNGLISRENDERBUFFERPROC)(GLuint renderbuffer);
-        //typedef void (*PFNGLRENDERBUFFERSTORAGEPROC)(GLenum target, GLenum internalformat, GLsizei width, GLsizei height);
+        typedef void (*PFNGLRENDERBUFFERSTORAGEPROC)(GLenum target, GLenum internalformat, GLsizei width, GLsizei height);
         //typedef void (*PFNGLGETRENDERBUFFERPARAMETERIVPROC)(GLenum target, GLenum pname, GLint *params);
         //typedef GLboolean (*PFNGLISFRAMEBUFFERPROC)(GLuint framebuffer);
         //typedef GLenum (*PFNGLCHECKFRAMEBUFFERSTATUSPROC)(GLenum target);
@@ -1472,7 +1472,7 @@
     //extern PFNGLCLEARBUFFERFIPROC                       glClearBufferfi;
     //extern PFNGLGETSTRINGIPROC                          glGetStringi;
     //extern PFNGLISRENDERBUFFERPROC                      glIsRenderbuffer;
-    //extern PFNGLRENDERBUFFERSTORAGEPROC                 glRenderbufferStorage;
+    extern PFNGLRENDERBUFFERSTORAGEPROC                 glRenderbufferStorage;
     //extern PFNGLGETRENDERBUFFERPARAMETERIVPROC          glGetRenderbufferParameteriv;
     //extern PFNGLISFRAMEBUFFERPROC                       glIsFramebuffer;
     //extern PFNGLCHECKFRAMEBUFFERSTATUSPROC              glCheckFramebufferStatus;

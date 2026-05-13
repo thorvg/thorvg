@@ -48,6 +48,18 @@ const char* COLOR_FRAG_SHADER = TVG_COMPOSE_SHADER(
         FragColor = vec4(uColor.rgb * uColor.a, uColor.a);   \n
     }                                                        \n);
 
+const char* COLOR_STENCIL_FRAG_SHADER = TVG_COMPOSE_SHADER(
+    in vec4 vColor;                                          \n
+    out vec4 FragColor;                                      \n
+                                                             \n
+    void main()                                              \n
+    {                                                        \n
+        if (!stencilCoverPass()) discard;                    \n
+        vec4 uColor = vColor;                                \n
+        FragColor = vec4(uColor.rgb * uColor.a, uColor.a);   \n
+    }                                                        \n
+);
+
 const char* GRADIENT_VERT_SHADER = TVG_COMPOSE_SHADER(
     uniform float uDepth;                                                           \n
     uniform mat3 uViewMatrix;                                                       \n
@@ -71,6 +83,39 @@ const char* GRADIENT_VERT_SHADER = TVG_COMPOSE_SHADER(
 const char* STR_GRADIENT_FRAG_COMMON_VARIABLES = TVG_COMPOSE_SHADER(
     const int MAX_STOP_COUNT = 16;                                                                          \n
     in vec2 vPos;                                                                                           \n
+);
+
+const char* STENCIL_COVER_FRAG_HEADER = TVG_COMPOSE_SHADER(
+    uniform sampler2D uStencilCoverTexture;                  \n
+    uniform ivec2 uStencilCoverOffset;                       \n
+);
+
+const char* STENCIL_COVER_NONZERO_FRAG = TVG_COMPOSE_SHADER(
+    bool stencilCoverPass()                                                         \n
+    {                                                                               \n
+        vec2 mask = texelFetch(uStencilCoverTexture, ivec2(gl_FragCoord.xy) + uStencilCoverOffset, 0).rg; \n
+        int r = int(mask.r * 255.0 + 0.5);                   \n
+        int g = int(mask.g * 255.0 + 0.5);                   \n
+        return r != g;                                       \n
+    }                                                        \n
+);
+
+const char* STENCIL_COVER_EVENODD_FRAG = TVG_COMPOSE_SHADER(
+    bool stencilCoverPass()                                  \n
+    {                                                        \n
+        vec2 mask = texelFetch(uStencilCoverTexture, ivec2(gl_FragCoord.xy) + uStencilCoverOffset, 0).rg; \n
+        int r = int(mask.r * 255.0 + 0.5);                   \n
+        return (r % 2) != 0;                                 \n
+    }                                                        \n
+);
+
+const char* STENCIL_COVER_STROKE_FRAG = TVG_COMPOSE_SHADER(
+    bool stencilCoverPass()                                  \n
+    {                                                        \n
+        vec2 mask = texelFetch(uStencilCoverTexture, ivec2(gl_FragCoord.xy) + uStencilCoverOffset, 0).rg; \n
+        int r = int(mask.r * 255.0 + 0.5);                   \n
+        return r != 0;                                       \n
+    }                                                        \n
 );
 
 //See: GlRenderer::initShaders()
@@ -184,6 +229,15 @@ const char* STR_LINEAR_GRADIENT_MAIN = TVG_COMPOSE_SHADER(
     }                                                                                                       \n
 );
 
+const char* STR_LINEAR_GRADIENT_STENCIL_MAIN = TVG_COMPOSE_SHADER(
+    out vec4 FragColor;                                                                                     \n
+    void main()                                                                                             \n
+    {                                                                                                       \n
+        if (!stencilCoverPass()) discard;                                                                   \n
+        FragColor = linearGradientColor(vPos);                                                              \n
+    }                                                                                                       \n
+);
+
 //See: GlRenderer::initShaders()
 const char* STR_LINEAR_GRADIENT_FUNCTIONS = TVG_COMPOSE_SHADER(
     vec4 linearGradientColor(vec2 pos)                                                                      \n
@@ -215,6 +269,16 @@ const char* STR_RADIAL_GRADIENT_MAIN = TVG_COMPOSE_SHADER(
                                                                                                             \n
     void main()                                                                                             \n
     {                                                                                                       \n
+        FragColor = radialGradientColor(vPos);                                                              \n
+    }                                                                                                       \n
+);
+
+const char* STR_RADIAL_GRADIENT_STENCIL_MAIN = TVG_COMPOSE_SHADER(
+    out vec4 FragColor;                                                                                     \n
+                                                                                                            \n
+    void main()                                                                                             \n
+    {                                                                                                       \n
+        if (!stencilCoverPass()) discard;                                                                   \n
         FragColor = radialGradientColor(vPos);                                                              \n
     }                                                                                                       \n
 );
@@ -560,6 +624,34 @@ const char* STENCIL_FRAG_SHADER = TVG_COMPOSE_SHADER(
     }                                                               \n
 );
 
+const char* STENCIL_NONZERO_FRAG_SHADER = TVG_COMPOSE_SHADER(
+    out vec4 FragColor;                                             \n
+                                                                    \n
+    void main()                                                     \n
+    {                                                               \n
+        float maskStep = 1.0 / 255.0;                               \n
+        FragColor = gl_FrontFacing ? vec4(maskStep, 0.0, 0.0, 0.0) : vec4(0.0, maskStep, 0.0, 0.0); \n
+    }                                                               \n
+);
+
+const char* STENCIL_EVENODD_FRAG_SHADER = TVG_COMPOSE_SHADER(
+    out vec4 FragColor;                                             \n
+                                                                    \n
+    void main()                                                     \n
+    {                                                               \n
+        FragColor = vec4(1.0 / 255.0, 0.0, 0.0, 0.0);               \n
+    }                                                               \n
+);
+
+const char* STENCIL_STROKE_FRAG_SHADER = TVG_COMPOSE_SHADER(
+    out vec4 FragColor;                                             \n
+                                                                    \n
+    void main()                                                     \n
+    {                                                               \n
+        FragColor = vec4(1.0, 0.0, 0.0, 0.0);                       \n
+    }                                                               \n
+);
+
 const char* BLIT_VERT_SHADER = TVG_COMPOSE_SHADER(
     layout(location = 0) in vec2 aLocation;                         \n
     layout(location = 1) in vec2 aUV;                               \n
@@ -682,11 +774,101 @@ void getFragData() {
 vec4 postProcess(vec4 R) { return R; }
 )";
 
-// GL keeps a viewport-sized dst copy, so src/dst can share vUV.
-// GLES/WebGL must keep a full resolved dst copy because MSAA resolve/blit is only valid for the
-// full buffer there; down-blitting into a smaller FBO would add another full copy pass. Rebuild
-// dst UV from gl_FragCoord + BlendRegion instead of reusing vUV.
-#if defined(THORVG_GL_TARGET_GL)
+const char* BLEND_SHAPE_SOLID_STENCIL_FRAG_HEADER = R"(
+layout(std140) uniform BlendRegion {
+    vec4 region;
+} uBlendRegion;
+
+uniform sampler2D uDstTexture;
+
+in vec4 vColor;
+out vec4 FragColor;
+
+vec3 One = vec3(1.0, 1.0, 1.0);
+struct FragData { vec3 Sc; float Sa; float So; vec3 Dc; float Da; };
+FragData d;
+
+void getFragData() {
+    if (!stencilCoverPass()) discard;
+    vec2 uv = (gl_FragCoord.xy - uBlendRegion.region.xy) / uBlendRegion.region.zw;
+    vec4 colorSrc = vColor;
+    vec4 colorDst = texture(uDstTexture, uv);
+    d.Sc = colorSrc.rgb * colorSrc.a;
+    d.Sa = colorSrc.a;
+    d.So = 1.0;
+    d.Dc = colorDst.rgb;
+    d.Da = colorDst.a;
+}
+
+vec4 postProcess(vec4 R) { return R; }
+)";
+
+const char* BLEND_SHAPE_LINEAR_STENCIL_FRAG_HEADER = R"(
+layout(std140) uniform BlendRegion {
+    vec4 region;
+} uBlendRegion;
+
+uniform sampler2D uDstTexture;
+
+out vec4 FragColor;
+
+vec3 One = vec3(1.0, 1.0, 1.0);
+struct FragData { vec3 Sc; float Sa; float So; vec3 Dc; float Da; };
+FragData d;
+
+void getFragData() {
+    if (!stencilCoverPass()) discard;
+    vec4 colorSrc = linearGradientColor(vPos);
+    vec2 uv = (gl_FragCoord.xy - uBlendRegion.region.xy) / uBlendRegion.region.zw;
+    vec4 colorDst = texture(uDstTexture, uv);
+
+    d.Sc = colorSrc.rgb;
+    d.Sa = colorSrc.a;
+    d.So = 1.0;
+    d.Dc = colorDst.rgb;
+    d.Da = colorDst.a;
+    if (d.Sa > 0.0) { d.Sc = d.Sc / d.Sa; }
+    float srcOpacity = d.Sa * d.So;
+    d.Sc = mix(d.Dc, d.Sc, srcOpacity);
+    d.Sa = mix(d.Da, 1.0, srcOpacity);
+}
+
+vec4 postProcess(vec4 R) { return R; }
+)";
+
+const char* BLEND_SHAPE_RADIAL_STENCIL_FRAG_HEADER = R"(
+layout(std140) uniform BlendRegion {
+    vec4 region;
+} uBlendRegion;
+
+uniform sampler2D uDstTexture;
+
+out vec4 FragColor;
+
+vec3 One = vec3(1.0, 1.0, 1.0);
+struct FragData { vec3 Sc; float Sa; float So; vec3 Dc; float Da; };
+FragData d;
+
+void getFragData() {
+    if (!stencilCoverPass()) discard;
+    vec4 colorSrc = radialGradientColor(vPos);
+    vec2 uv = (gl_FragCoord.xy - uBlendRegion.region.xy) / uBlendRegion.region.zw;
+    vec4 colorDst = texture(uDstTexture, uv);
+
+    d.Sc = colorSrc.rgb;
+    d.Sa = colorSrc.a;
+    d.So = 1.0;
+    d.Dc = colorDst.rgb;
+    d.Da = colorDst.a;
+    if (d.Sa > 0.0) { d.Sc = d.Sc / d.Sa; }
+    float srcOpacity = d.Sa * d.So;
+    d.Sc = mix(d.Dc, d.Sc, srcOpacity);
+    d.Sa = mix(d.Da, 1.0, srcOpacity);
+}
+
+vec4 postProcess(vec4 R) { return R; }
+)";
+
 const char* BLEND_IMAGE_FRAG_HEADER = R"(
 uniform sampler2D uSrcTexture;
 uniform sampler2D uDstTexture;
@@ -746,78 +928,6 @@ void getFragData() {
 
 vec4 postProcess(vec4 R) { return mix(vec4(d.Dc, d.Da), R, d.Sa * d.So); }
 )";
-#else
-const char* BLEND_IMAGE_FRAG_HEADER = R"(
-layout(std140) uniform BlendRegion {
-    vec4 region;
-} uBlendRegion;
-
-uniform sampler2D uSrcTexture;
-uniform sampler2D uDstTexture;
-
-in vec2 vUV;
-out vec4 FragColor;
-
-vec3 One = vec3(1.0, 1.0, 1.0);
-struct FragData { vec3 Sc; float Sa; float So; vec3 Dc; float Da; };
-FragData d;
-
-void getFragData() {
-    // get source data
-    vec4 colorSrc = texture(uSrcTexture, vUV);
-    vec2 uvDst = (gl_FragCoord.xy - uBlendRegion.region.xy) / uBlendRegion.region.zw;
-    vec4 colorDst = texture(uDstTexture, uvDst);
-    // fill fragment data
-    d.Sc = colorSrc.rgb;
-    d.Sa = colorSrc.a;
-    d.So = 1.0;
-    d.Dc = colorDst.rgb;
-    d.Da = colorDst.a;
-    if (d.Sa > 0.0) { d.Sc = d.Sc / d.Sa; }
-}
-
-vec4 postProcess(vec4 R) { return mix(vec4(d.Dc, d.Da), R, d.Sa * d.So); }
-)";
-
-const char* BLEND_SCENE_FRAG_HEADER = R"(
-layout(std140) uniform ColorInfo {
-    int format;
-    int flipY;
-    int opacity;
-    int dummy;
-} uColorInfo;
-
-layout(std140) uniform BlendRegion {
-    vec4 region;
-} uBlendRegion;
-
-uniform sampler2D uSrcTexture;
-uniform sampler2D uDstTexture;
-
-in vec2 vUV;
-out vec4 FragColor;
-
-vec3 One = vec3(1.0, 1.0, 1.0);
-struct FragData { vec3 Sc; float Sa; float So; vec3 Dc; float Da; };
-FragData d;
-
-void getFragData() {
-    // get source data
-    vec4 colorSrc = texture(uSrcTexture, vUV);
-    vec2 uvDst = (gl_FragCoord.xy - uBlendRegion.region.xy) / uBlendRegion.region.zw;
-    vec4 colorDst = texture(uDstTexture, uvDst);
-    // fill fragment data
-    d.Sc = colorSrc.rgb;
-    d.Sa = colorSrc.a;
-    d.So = float(uColorInfo.opacity) / 255.0;
-    d.Dc = colorDst.rgb;
-    d.Da = colorDst.a;
-    if (d.Sa > 0.0) {d.Sc = d.Sc / d.Sa; }
-}
-
-vec4 postProcess(vec4 R) { return mix(vec4(d.Dc, d.Da), R, d.Sa * d.So); }
-)";
-#endif
 
 const char* BLEND_FRAG_LUM_HELPER = R"(
 const vec3 LUM_W = vec3(0.3, 0.59, 0.11);

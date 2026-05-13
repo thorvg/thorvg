@@ -25,15 +25,22 @@
 
 extern const char* COLOR_VERT_SHADER;
 extern const char* COLOR_FRAG_SHADER;
+extern const char* COLOR_STENCIL_FRAG_SHADER;
 extern const char* GRADIENT_VERT_SHADER;
+extern const char* STENCIL_COVER_FRAG_HEADER;
+extern const char* STENCIL_COVER_NONZERO_FRAG;
+extern const char* STENCIL_COVER_EVENODD_FRAG;
+extern const char* STENCIL_COVER_STROKE_FRAG;
 extern const char* STR_GRADIENT_FRAG_COMMON_VARIABLES;
 extern const char* STR_GRADIENT_FRAG_COMMON_FUNCTIONS;
 extern const char* STR_LINEAR_GRADIENT_VARIABLES;
 extern const char* STR_LINEAR_GRADIENT_FUNCTIONS;
 extern const char* STR_LINEAR_GRADIENT_MAIN;
+extern const char* STR_LINEAR_GRADIENT_STENCIL_MAIN;
 extern const char* STR_RADIAL_GRADIENT_VARIABLES;
 extern const char* STR_RADIAL_GRADIENT_FUNCTIONS;
 extern const char* STR_RADIAL_GRADIENT_MAIN;
+extern const char* STR_RADIAL_GRADIENT_STENCIL_MAIN;
 extern const char* IMAGE_VERT_SHADER;
 extern const char* IMAGE_FRAG_SHADER;
 extern const char* MASK_VERT_SHADER;
@@ -49,6 +56,9 @@ extern const char* MASK_DARKEN_FRAG_SHADER;
 extern const char* MASK_LIGHTEN_FRAG_SHADER;
 extern const char* STENCIL_VERT_SHADER;
 extern const char* STENCIL_FRAG_SHADER;
+extern const char* STENCIL_NONZERO_FRAG_SHADER;
+extern const char* STENCIL_EVENODD_FRAG_SHADER;
+extern const char* STENCIL_STROKE_FRAG_SHADER;
 extern const char* BLIT_VERT_SHADER;
 extern const char* BLIT_FRAG_SHADER;
 
@@ -57,6 +67,9 @@ extern const char* BLEND_SCENE_FRAG_HEADER;
 extern const char* BLEND_SHAPE_SOLID_FRAG_HEADER;
 extern const char* BLEND_SHAPE_LINEAR_FRAG_HEADER;
 extern const char* BLEND_SHAPE_RADIAL_FRAG_HEADER;
+extern const char* BLEND_SHAPE_SOLID_STENCIL_FRAG_HEADER;
+extern const char* BLEND_SHAPE_LINEAR_STENCIL_FRAG_HEADER;
+extern const char* BLEND_SHAPE_RADIAL_STENCIL_FRAG_HEADER;
 
 extern const char* BLEND_FRAG_LUM_HELPER;
 extern const char* BLEND_FRAG_SAT_HELPER;

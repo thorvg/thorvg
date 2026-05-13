@@ -29,34 +29,17 @@ GlRenderTarget::~GlRenderTarget()
     reset();
 }
 
-void GlRenderTarget::init(uint32_t width, uint32_t height, GLint resolveId)
+void GlRenderTarget::init(uint32_t width, uint32_t height, GLuint restoreId)
 {
     if (width == 0 || height == 0) return;
 
     this->width = width;
     this->height = height;
 
-    //TODO: fbo is used. maybe we can consider the direct rendering with resolveId as well.
     GL_CHECK(glGenFramebuffers(1, &fbo));
 
     GL_CHECK(glBindFramebuffer(GL_FRAMEBUFFER, fbo));
 
-    GL_CHECK(glGenRenderbuffers(1, &colorBuffer));
-    GL_CHECK(glBindRenderbuffer(GL_RENDERBUFFER, colorBuffer));
-    GL_CHECK(glRenderbufferStorageMultisample(GL_RENDERBUFFER, 4, GL_RGBA8, width, height));
-
-    GL_CHECK(glGenRenderbuffers(1, &depthStencilBuffer));
-
-    GL_CHECK(glBindRenderbuffer(GL_RENDERBUFFER, depthStencilBuffer));
-
-    GL_CHECK(glRenderbufferStorageMultisample(GL_RENDERBUFFER, 4, GL_DEPTH24_STENCIL8, width, height));
-
-    GL_CHECK(glBindRenderbuffer(GL_RENDERBUFFER, 0));
-
-    GL_CHECK(glFramebufferRenderbuffer(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, GL_RENDERBUFFER, colorBuffer));
-    GL_CHECK(glFramebufferRenderbuffer(GL_FRAMEBUFFER, GL_DEPTH_STENCIL_ATTACHMENT, GL_RENDERBUFFER, depthStencilBuffer));
-
-    // resolve target
     GL_CHECK(glGenTextures(1, &colorTex));
 
     GL_CHECK(glBindTexture(GL_TEXTURE_2D, colorTex));
@@ -69,11 +52,15 @@ void GlRenderTarget::init(uint32_t width, uint32_t height, GLint resolveId)
 
     GL_CHECK(glBindTexture(GL_TEXTURE_2D, 0));
 
-    GL_CHECK(glGenFramebuffers(1, &resolvedFbo));
-    GL_CHECK(glBindFramebuffer(GL_FRAMEBUFFER, resolvedFbo));
     GL_CHECK(glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, GL_TEXTURE_2D, colorTex, 0));
 
-    GL_CHECK(glBindFramebuffer(GL_FRAMEBUFFER, resolveId));
+    GL_CHECK(glGenRenderbuffers(1, &depthStencilBuffer));
+    GL_CHECK(glBindRenderbuffer(GL_RENDERBUFFER, depthStencilBuffer));
+    GL_CHECK(glRenderbufferStorage(GL_RENDERBUFFER, GL_DEPTH24_STENCIL8, width, height));
+    GL_CHECK(glBindRenderbuffer(GL_RENDERBUFFER, 0));
+    GL_CHECK(glFramebufferRenderbuffer(GL_FRAMEBUFFER, GL_DEPTH_STENCIL_ATTACHMENT, GL_RENDERBUFFER, depthStencilBuffer));
+
+    GL_CHECK(glBindFramebuffer(GL_FRAMEBUFFER, restoreId));
 }
 
 void GlRenderTarget::reset()
@@ -82,12 +69,10 @@ void GlRenderTarget::reset()
 
     GL_CHECK(glBindFramebuffer(GL_FRAMEBUFFER, 0));
     GL_CHECK(glDeleteFramebuffers(1, &fbo));
-    GL_CHECK(glDeleteRenderbuffers(1, &colorBuffer));
     GL_CHECK(glDeleteRenderbuffers(1, &depthStencilBuffer));
-    GL_CHECK(glDeleteFramebuffers(1, &resolvedFbo));
     GL_CHECK(glDeleteTextures(1, &colorTex));
 
-    fbo = colorBuffer = depthStencilBuffer = resolvedFbo = colorTex = 0;
+    fbo = depthStencilBuffer = colorTex = 0;
 }
 
 GlRenderTargetPool::GlRenderTargetPool(uint32_t maxWidth, uint32_t maxHeight): maxWidth(maxWidth), maxHeight(maxHeight), pool() {}
@@ -108,7 +93,7 @@ uint32_t alignPow2(uint32_t value)
     return ret;
 }
 
-GlRenderTarget* GlRenderTargetPool::getRenderTarget(const RenderRegion& vp, GLuint resolveId)
+GlRenderTarget* GlRenderTargetPool::getRenderTarget(const RenderRegion& vp, GLuint restoreId)
 {
     auto width = vp.w();
     auto height = vp.h();
@@ -131,7 +116,7 @@ GlRenderTarget* GlRenderTargetPool::getRenderTarget(const RenderRegion& vp, GLui
     }
 
     auto rt = new GlRenderTarget();
-    rt->init(width, height, resolveId);
+    rt->init(width, height, restoreId);
     rt->viewport = vp;
     pool.push(rt);
     return rt;
