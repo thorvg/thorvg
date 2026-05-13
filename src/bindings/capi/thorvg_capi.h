@@ -162,9 +162,10 @@ typedef enum
  */
 typedef enum
 {
-    TVG_ENGINE_OPTION_NONE = 0,                   /**< No engine options are enabled. This may be used to explicitly disable all optional behaviors. */
-    TVG_ENGINE_OPTION_DEFAULT = 1 << 0,           /**< Uses the default rendering mode. */
-    TVG_ENGINE_OPTION_SMART_RENDER = 1 << 1       /**< Enables automatic partial (smart) rendering optimizations. */
+    TVG_ENGINE_OPTION_NONE = 0,                      /**< No engine options are enabled. This may be used to explicitly disable all optional behaviors. */
+    TVG_ENGINE_OPTION_DEFAULT = 1 << 0,              /**< Uses the default rendering mode. */
+    TVG_ENGINE_OPTION_SMART_RENDER = 1 << 1,         /**< Enables automatic partial (smart) rendering optimizations. */
+    TVG_ENGINE_OPTION_ALIASED = 1 << 2               /**< Disables anti-aliased rendering from the default rendering mode. @note Experimental API */
 } Tvg_Engine_Option;
 
 /**

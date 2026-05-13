@@ -507,7 +507,7 @@ void shapeResetStroke(SwShape& shape, const RenderShape* rshape, const Matrix& t
 }
 
 
-bool shapeGenStrokeRle(SwShape& shape, const RenderShape* rshape, const Matrix& transform, const RenderRegion& clipBox, RenderRegion& renderBox, SwMpool* mpool, unsigned tid)
+bool shapeGenStrokeRle(SwShape& shape, const RenderShape* rshape, const Matrix& transform, const RenderRegion& clipBox, RenderRegion& renderBox, SwMpool* mpool, unsigned tid, bool antiAlias)
 {
     SwOutline* shapeOutline = nullptr;
 
@@ -525,7 +525,7 @@ bool shapeGenStrokeRle(SwShape& shape, const RenderShape* rshape, const Matrix& 
 
     auto strokeOutline = strokeExportOutline(shape.stroke, mpool, tid);
     auto ret = mathUpdateOutlineBBox(strokeOutline, clipBox, renderBox, false);
-    if (ret) shape.strokeRle = rleRender(shape.strokeRle, strokeOutline, renderBox, mpool, tid, true);
+    if (ret) shape.strokeRle = rleRender(shape.strokeRle, strokeOutline, renderBox, mpool, tid, antiAlias);
 
     return ret;
 }
