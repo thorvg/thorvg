@@ -489,7 +489,7 @@ ecma_builtin_helper_string_find_last_index (ecma_string_t *original_str_p, /**< 
     const lit_utf8_byte_t *end_p = original_str_utf8_p + original_str_size;
     const lit_utf8_byte_t *current_p = end_p;
 
-    for (ecma_number_t i = original_length; i > position; i--)
+    for (auto i = original_length; i > position; i--)
     {
       lit_utf8_decr (&current_p);
     }

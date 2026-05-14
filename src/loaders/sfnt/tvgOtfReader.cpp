@@ -314,23 +314,23 @@ void OtfReader::operand(Array<float>& v, uint8_t b, uint32_t& p)
 {
     if (b >= 32) {
         if (b <= 246) {
-            v.push(b - 139);
+            v.push(float(b - 139));
             p += 1;
         } else if (b <= 250) {
-            v.push((b - 247) * 256 + u8(p + 1) + 108);
+            v.push(float((b - 247) * 256 + u8(p + 1) + 108));
             p += 2;
         } else if (b <= 254) {
-            v.push(-((b - 251) * 256) - u8(p + 1) - 108);
+            v.push(float(-((b - 251) * 256) - u8(p + 1) - 108));
             p += 2;
         } else {
             v.push(i32(p + 1) / 65536.0f);  // 16.16 fixed-point
             p += 5;
         }
     } else if (b == 28) {
-        v.push(i16(p + 1));
+        v.push(float(i16(p + 1)));
         p += 3;
     } else if (b == 29) {
-        v.push(i32(p + 1));
+        v.push(float(i32(p + 1)));
         p += 5;
     }
 }
