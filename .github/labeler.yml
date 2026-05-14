@@ -8,7 +8,7 @@
   - README.md
 
 "font":
-  - src/loaders/ttf/**/*
+  - src/loaders/sfnt/**/*
 
 "image":
   - src/loaders/jpg/**/*
