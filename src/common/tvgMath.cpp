@@ -458,7 +458,7 @@ void Bezier::bounds(BBox& box, const Point& start, const Point& ctrl1, const Poi
 }
 
 
-bool Bezier::flatten() const
+bool Bezier::flatten(float tolerance) const
 {
     float diff1_x = fabsf((ctrl1.x * 3.f) - (start.x * 2.f) - end.x);
     float diff1_y = fabsf((ctrl1.y * 3.f) - (start.y * 2.f) - end.y);
@@ -466,13 +466,14 @@ bool Bezier::flatten() const
     float diff2_y = fabsf((ctrl2.y * 3.f) - (end.y * 2.f) - start.y);
     if (diff1_x < diff2_x) diff1_x = diff2_x;
     if (diff1_y < diff2_y) diff1_y = diff2_y;
-    return (diff1_x + diff1_y <= 0.5f);
+    return (diff1_x + diff1_y <= tolerance);
 }
 
 
-uint32_t Bezier::segments() const
+uint32_t Bezier::segments(float scale) const
 {
     static constexpr uint32_t MaxSegments = 1u << 10; // 2^10 segments cap keeps runtime bounded
+    auto tolerance = 0.5f / scale;
     uint32_t count = 0;
     Array<Bezier> stack;
     stack.push(*this);
@@ -480,7 +481,7 @@ uint32_t Bezier::segments() const
 
     while (!stack.empty()) {
         auto current = stack.pick();
-        if (current.flatten()) {
+        if (current.flatten(tolerance)) {
             ++count;
             continue;
         }

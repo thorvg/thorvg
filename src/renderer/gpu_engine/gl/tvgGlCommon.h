@@ -78,7 +78,7 @@ struct GlGeometryBuffer {
 
 struct GlGeometry
 {
-    const Matrix* inverseMatrix()
+    const Matrix* inverseMatrix() const
     {
         if (!inverseMatrixDirty) return &cachedInverseMatrix;
         inverse(&matrix, &cachedInverseMatrix);
@@ -91,7 +91,7 @@ struct GlGeometry
     void prepare(const RenderShape& rshape);
     bool tesselateShape(const RenderShape& rshape, float* opacityMultiplier = nullptr);
     bool tesselateStroke(const RenderShape& rshape);
-    bool tesselateThinPath(const RenderPath& path);
+    bool tesselateThinFill(const RenderPath& path);
     void tesselateImage(const RenderSurface* image);
     bool drawable(RenderUpdateFlag flag) const
     {
@@ -109,10 +109,11 @@ struct GlGeometry
     RenderRegion fillBounds = {};
     RenderRegion strokeBounds = {};
     FillRule fillRule = FillRule::NonZero;
-    RenderPath optPath;  //optimal path
+    RenderPath optPath;        // optimal transformed path
+    RenderPath optStrokePath;  // matching local path using transformed-space tolerance
     float strokeRenderWidth = 0.0f;
-    Matrix cachedInverseMatrix = {};
-    bool inverseMatrixDirty = true;
+    mutable Matrix cachedInverseMatrix = {};
+    mutable bool inverseMatrixDirty = true;
     bool fillWorld = false;
     bool optPathThin = false;
     bool optPathSkipFill = false;
@@ -140,9 +141,8 @@ struct GlShape
 
 struct GlIntersector
 {
-    bool isPointInTriangle(const Point& p, const Point& a, const Point& b, const Point& c);
     bool isPointInImage(const Point& p, const GlGeometryBuffer& mesh, const Matrix& tr);
-    bool isPointInTris(const Point& p, const GlGeometryBuffer& mesh, const Matrix& tr);
+    bool isPointInTris(const Point& p, const GlGeometryBuffer& mesh);
     bool isPointInMesh(const Point& p, const GlGeometryBuffer& mesh, const Matrix& tr);
     bool intersectClips(const Point& pt, const tvg::Array<tvg::RenderData>& clips);
     bool intersectShape(const RenderRegion region, const GlShape* shape);
