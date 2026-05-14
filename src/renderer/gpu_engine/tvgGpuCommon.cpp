@@ -37,6 +37,33 @@ constexpr uint32_t SW_AA_COVERAGE_BITS = 8;
 constexpr auto AA_COVERAGE_QUANTUM = 1.0f / static_cast<float>(1u << SW_AA_COVERAGE_BITS);
 constexpr auto MAX_PIXEL_SPAN = 1.41421356237f;
 
+bool gpuPointInTriangle(const Point& p, const Point& a, const Point& b, const Point& c)
+{
+    auto d1 = tvg::cross(p - a, p - b);
+    auto d2 = tvg::cross(p - b, p - c);
+    auto d3 = tvg::cross(p - c, p - a);
+    auto hasNeg = (d1 < 0) || (d2 < 0) || (d3 < 0);
+    auto hasPos = (d1 > 0) || (d2 > 0) || (d3 > 0);
+    return !(hasNeg && hasPos);
+}
+
+RenderRegion gpuTransformBounds(const RenderRegion& bounds, const Matrix& matrix)
+{
+    if (bounds.invalid()) return bounds;
+
+    auto lt = Point{float(bounds.min.x), float(bounds.min.y)} * matrix;
+    auto lb = Point{float(bounds.min.x), float(bounds.max.y)} * matrix;
+    auto rt = Point{float(bounds.max.x), float(bounds.min.y)} * matrix;
+    auto rb = Point{float(bounds.max.x), float(bounds.max.y)} * matrix;
+
+    auto left = std::min(std::min(lt.x, lb.x), std::min(rt.x, rb.x));
+    auto top = std::min(std::min(lt.y, lb.y), std::min(rt.y, rb.y));
+    auto right = std::max(std::max(lt.x, lb.x), std::max(rt.x, rb.x));
+    auto bottom = std::max(std::max(lt.y, lb.y), std::max(rt.y, rb.y));
+
+    return RenderRegion{{int32_t(floor(left)), int32_t(floor(top))}, {int32_t(ceil(right)), int32_t(ceil(bottom))}};
+}
+
 struct ThinPathTracker
 {
     enum
@@ -185,17 +212,31 @@ struct ThinPathTracker
     }
 };
 
-// Simplify the transformed path and classify thin-fill fallback / skip-fill cases.
-void gpuOptimize(const RenderPath& in, RenderPath& out, const Matrix& matrix, bool& thin, bool& skipFill)
+// Simplify in transformed space and optionally mirror the same decisions into a
+// local-coordinate path for stroke tessellation.
+void gpuOptimize(const RenderPath& in, GpuOptimizeResult& result, const Matrix& matrix)
 {
-    thin = false;
-    skipFill = false;
-    if (in.empty()) return;
+    result.thin = false;
+    result.skipFill = false;
+    if (!result.transformed) return;
+
+    auto& out = *result.transformed;
+    auto localOut = result.local;
 
     out.cmds.clear();
     out.pts.clear();
+    if (localOut) {
+        localOut->cmds.clear();
+        localOut->pts.clear();
+    }
+    if (in.empty()) return;
+
     out.cmds.reserve(in.cmds.count);
     out.pts.reserve(in.pts.count);
+    if (localOut) {
+        localOut->cmds.reserve(in.cmds.count);
+        localOut->pts.reserve(in.pts.count);
+    }
 
     auto cmds = in.cmds.data;
     auto cmdCnt = in.cmds.count;
@@ -236,10 +277,14 @@ void gpuOptimize(const RenderPath& in, RenderPath& out, const Matrix& matrix, bo
         point2Line(ctrl2, start, vec, vecLen, maxDist, minT, maxT);
     };
 
-    auto addLineCmd = [&](const Point& ptT) {
+    auto addLineCmd = [&](const Point& local, const Point& transformed) {
         out.cmds.push(PathCommand::LineTo);
-        out.pts.push(ptT);
-        lastOutT = ptT;
+        out.pts.push(transformed);
+        if (localOut) {
+            localOut->cmds.push(PathCommand::LineTo);
+            localOut->pts.push(local);
+        }
+        lastOutT = transformed;
     };
 
     auto processCubicTo = [&](const Point* cubicPts, const Point& startOutT, const Point& startInT, Point& endT) {
@@ -274,12 +319,18 @@ void gpuOptimize(const RenderPath& in, RenderPath& out, const Matrix& matrix, bo
         auto inSpan = (minT >= -tEps) && (maxT <= 1.0f + tEps);
         if (flat && inSpan) {
             subpathHasSegment = true;
-            addLineCmd(endT);
+            addLineCmd(cubicPts[2], endT);
         } else {
             out.cmds.push(PathCommand::CubicTo);
             out.pts.push(ctrl1T);
             out.pts.push(ctrl2T);
             out.pts.push(endT);
+            if (localOut) {
+                localOut->cmds.push(PathCommand::CubicTo);
+                localOut->pts.push(cubicPts[0]);
+                localOut->pts.push(cubicPts[1]);
+                localOut->pts.push(cubicPts[2]);
+            }
             lastOutT = endT;
             subpathHasSegment = true;
             thinTracker.disable();
@@ -290,9 +341,14 @@ void gpuOptimize(const RenderPath& in, RenderPath& out, const Matrix& matrix, bo
         switch (cmds[i]) {
             case PathCommand::MoveTo: {
                 finalizeSubpath();
-                auto ptT = (*pts) * matrix;
+                auto pt = *pts;
+                auto ptT = pt * matrix;
                 out.cmds.push(PathCommand::MoveTo);
                 out.pts.push(ptT);
+                if (localOut) {
+                    localOut->cmds.push(PathCommand::MoveTo);
+                    localOut->pts.push(pt);
+                }
                 lastOutT = ptT;
                 lastInT = ptT;
                 subpathStartT = ptT;
@@ -302,7 +358,8 @@ void gpuOptimize(const RenderPath& in, RenderPath& out, const Matrix& matrix, bo
             }
             case PathCommand::LineTo: {
                 auto startInT = lastInT;
-                auto ptT = (*pts) * matrix;
+                auto pt = *pts;
+                auto ptT = pt * matrix;
                 auto closedIn = tvg::closed(startInT, ptT, PATH_OPT_PX_TOLERANCE);
                 if (!closedIn) subpathHasSegment = true;
                 thinTracker.trackLine(startInT, ptT, closedIn);
@@ -311,7 +368,7 @@ void gpuOptimize(const RenderPath& in, RenderPath& out, const Matrix& matrix, bo
                     pts++;
                     break;
                 }
-                addLineCmd(ptT);
+                addLineCmd(pt, ptT);
                 pts++;
                 break;
             }
@@ -329,6 +386,7 @@ void gpuOptimize(const RenderPath& in, RenderPath& out, const Matrix& matrix, bo
                     thinTracker.trackClose(lastInT, subpathStartT, closedIn);
                 }
                 out.cmds.push(PathCommand::Close);
+                if (localOut) localOut->cmds.push(PathCommand::Close);
                 lastOutT = subpathStartT;
                 lastInT = subpathStartT;
                 break;
@@ -338,11 +396,11 @@ void gpuOptimize(const RenderPath& in, RenderPath& out, const Matrix& matrix, bo
     }
     finalizeSubpath();
     // thin means "use thin fill fallback", not just "the geometry is narrow".
-    thin = thinTracker.candidate && thinTracker.ready && (drawableSubpathCnt == 1);
-    if (thin && thinTracker.tooThin()) {
+    result.thin = thinTracker.candidate && thinTracker.ready && (drawableSubpathCnt == 1);
+    if (result.thin && thinTracker.tooThin()) {
         // Too thin for fallback: keep the path for strokes, but skip the fill.
-        thin = false;
-        skipFill = true;
+        result.thin = false;
+        result.skipFill = true;
     }
 }
 

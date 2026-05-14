@@ -187,10 +187,18 @@ void WgRenderDataShape::updateMeshes(const RenderShape &rshape, RenderUpdateFlag
     bool optPathSkipFill = false;
     if (rshape.trimpath()) {
         auto& trimmed = RenderPath::scratch();
-        if (rshape.stroke->trim.trim(rshape.path, trimmed)) gpuOptimize(trimmed, optPath, matrix, optPathThin, optPathSkipFill);
+        if (rshape.stroke->trim.trim(rshape.path, trimmed)) {
+            GpuOptimizeResult result{&optPath};
+            gpuOptimize(trimmed, result, matrix);
+            optPathThin = result.thin;
+            optPathSkipFill = result.skipFill;
+        }
         else optPath.clear();
     } else {
-        gpuOptimize(rshape.path, optPath, matrix, optPathThin, optPathSkipFill);
+        GpuOptimizeResult result{&optPath};
+        gpuOptimize(rshape.path, result, matrix);
+        optPathThin = result.thin;
+        optPathSkipFill = result.skipFill;
     }
 
     auto updatePath = flag & (RenderUpdateFlag::Transform | RenderUpdateFlag::Path);

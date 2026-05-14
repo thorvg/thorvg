@@ -228,6 +228,14 @@ static void addPrimitiveTask(GlRenderPass* pass, GlRenderTask* task, GlRenderTas
     else pass->addRenderTask(task);
 }
 
+static Matrix _viewMatrix(const GlGeometry& geometry, const Matrix& viewMatrix, RenderUpdateFlag flag)
+{
+    // Most GL meshes are already in world space; local strokes fold model into
+    // the shader's view matrix so the draw path can stay shared.
+    if ((flag & RenderUpdateFlag::Stroke) || (flag & RenderUpdateFlag::GradientStroke)) return viewMatrix * geometry.matrix;
+    return viewMatrix;
+}
+
 GlRenderTask* GlRenderer::createPrimitiveTask(RenderTypes type, BlendSource source, const RenderRegion& viewRegion, GlRenderTarget*& dstCopyFbo)
 {
     dstCopyFbo = nullptr;
@@ -288,7 +296,7 @@ void GlRenderer::drawPrimitive(GlShape& sdata, const RenderColor& c, RenderUpdat
     GlRenderTarget* dstCopyFbo = nullptr;
     auto task = createPrimitiveTask(RT_Color, BlendSource::Solid, viewRegion, dstCopyFbo);
 
-    task->setViewMatrix(currentPass()->getViewMatrix());
+    task->setViewMatrix(_viewMatrix(sdata.geometry, currentPass()->getViewMatrix(), flag));
     task->setDrawDepth(depth);
 
     auto a = MULTIPLY(c.a, sdata.opacity);
@@ -339,7 +347,7 @@ void GlRenderer::drawPrimitive(GlShape& sdata, const Fill* fill, RenderUpdateFla
 
     auto task = createPrimitiveTask(taskType, blendSource, viewRegion, dstCopyFbo);
 
-    task->setViewMatrix(currentPass()->getViewMatrix());
+    task->setViewMatrix(_viewMatrix(sdata.geometry, currentPass()->getViewMatrix(), flag));
     task->setDrawDepth(depth);
 
     task->setViewport(viewRegion);
@@ -351,9 +359,13 @@ void GlRenderer::drawPrimitive(GlShape& sdata, const Fill* fill, RenderUpdateFla
     float invMat3[GL_MAT3_STD140_SIZE];
     Matrix inv;
     inverse(&fill->transform(), &inv);
-    Matrix invShape;
-    inverse(&sdata.geometry.matrix, &invShape);
-    inv = inv * invShape;
+    if (!(flag & RenderUpdateFlag::GradientStroke)) {
+        // World-space meshes need inverse model before gradient lookup. Local
+        // gradient strokes already pass local positions to TransformInfo.
+        Matrix invShape;
+        inverse(&sdata.geometry.matrix, &invShape);
+        inv = inv * invShape;
+    }
     getMatrix3Std140(inv, invMat3);
 
     float transformInfo[GL_MAT3_STD140_SIZE];
@@ -963,38 +975,25 @@ bool GlRenderer::sync()
 
 bool GlRenderer::bounds(RenderData data, Point* pt4, const Matrix& m)
 {
-    if (data) {
-        auto sdata = static_cast<GlShape*>(data);
-        if (sdata->validStroke) {
-            tvg::BBox bbox;
-            bbox.init();
-            auto& vertexes = sdata->geometry.stroke.vertex;
-            if (m == sdata->geometry.matrix) {
-                // Common AABB path: stroke vertices are already in world space.
-                for (uint32_t i = 0; i < vertexes.count / 2; i++) {
-                    Point vert = {vertexes[i * 2 + 0], vertexes[i * 2 + 1]};
-                    bbox = { min(bbox.min, vert), max(bbox.max, vert)};
-                }
-            } else {
-                // GL stroke vertices are generated in world space.
-                // Normalize to local space first, then remap to the caller-requested space.
-                // - OBB path passes m = identity -> result becomes local (caller applies model later).
-                const auto inverseModel = sdata->geometry.inverseMatrix();
+    if (!data) return false;
 
-                for (uint32_t i = 0; i < vertexes.count / 2; i++) {
-                    Point vert = {vertexes[i * 2 + 0], vertexes[i * 2 + 1]};
-                    vert *= (*inverseModel) * m;
-                    bbox = { min(bbox.min, vert), max(bbox.max, vert)};
-                }
-            }
-            pt4[0] = bbox.min;
-            pt4[1] = {bbox.max.x, bbox.min.y};
-            pt4[2] = bbox.max;
-            pt4[3] = {bbox.min.x, bbox.max.y};
-            return true;
-        }
+    auto sdata = static_cast<GlShape*>(data);
+    if (!sdata->validStroke) return false;
+
+    tvg::BBox bbox;
+    bbox.init();
+    auto& vertexes = sdata->geometry.stroke.vertex;
+    for (uint32_t i = 0; i < vertexes.count / 2; i++) {
+        Point vert = {vertexes[i * 2 + 0], vertexes[i * 2 + 1]};
+        vert *= m;
+        bbox = {min(bbox.min, vert), max(bbox.max, vert)};
     }
-    return false;
+
+    pt4[0] = bbox.min;
+    pt4[1] = {bbox.max.x, bbox.min.y};
+    pt4[2] = bbox.max;
+    pt4[3] = {bbox.min.x, bbox.max.y};
+    return true;
 }
 
 
@@ -1297,8 +1296,9 @@ RenderData GlRenderer::prepare(const RenderShape& rshape, RenderData data, const
 
     sdata->geometry.setMatrix(transform);
     sdata->geometry.viewport = vport;
-    if (flags & (RenderUpdateFlag::Path | RenderUpdateFlag::Transform)) sdata->geometry.prepare(rshape);
-    
+    auto strokePathMissing = (flags & RenderUpdateFlag::Stroke) && rshape.stroke && std::isfinite(rshape.strokeWidth()) && !tvg::zero(rshape.strokeWidth()) && sdata->geometry.optStrokePath.empty();
+    if ((flags & (RenderUpdateFlag::Path | RenderUpdateFlag::Transform)) || strokePathMissing) sdata->geometry.prepare(rshape);
+
     //TODO: Please precisely update tessellation not to update only if the color is changed.
     if (flags & (RenderUpdateFlag::Color | RenderUpdateFlag::Gradient | RenderUpdateFlag::Transform | RenderUpdateFlag::Path)) {
         sdata->validFill = false;

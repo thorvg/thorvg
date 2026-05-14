@@ -135,7 +135,9 @@ static inline constexpr const Matrix identity()
 
 static inline float scaling(const Matrix& m)
 {
-    return sqrtf(m.e11 * m.e11 + m.e21 * m.e21);
+    auto sx = m.e11 * m.e11 + m.e21 * m.e21;
+    auto sy = m.e12 * m.e12 + m.e22 * m.e22;
+    return sqrtf((sx > sy) ? sx : sy);
 }
 
 
@@ -488,8 +490,8 @@ struct Bezier
     float atApprox(float at, float length) const;
     Point at(float t) const;
     float angle(float t) const;
-    bool flatten() const;
-    uint32_t segments() const;
+    bool flatten(float tolerance) const;
+    uint32_t segments(float scale = 1.0f) const;
 
     Bezier operator*(const Matrix& m);
 
