@@ -28,38 +28,38 @@
 /* Internal Class Implementation                                        */
 /************************************************************************/
 
-static float TO_RADIAN(int64_t angle)
+static inline bool _tiny(const Point& pt)
 {
-    return (float(angle) / 65536.0f) * (MATH_PI / 180.0f);
-}
+    constexpr float EPSILON = 2.0f / 64.0f;
 
+    return fabsf(pt.x) < EPSILON && fabsf(pt.y) < EPSILON;
+}
 
 /************************************************************************/
 /* External Class Implementation                                        */
 /************************************************************************/
 
-int64_t mathMean(int64_t angle1, int64_t angle2)
+float mathMean(float angle1, float angle2)
 {
-    return angle1 + mathDiff(angle1, angle2) / 2;
+    return angle1 + mathDiff(angle1, angle2) * 0.5f;
 }
 
-
-int mathCubicAngle(const SwPoint* base, int64_t& angleIn, int64_t& angleMid, int64_t& angleOut)
+int mathCubicAngle(const Point* pts, float& angleIn, float& angleMid, float& angleOut)
 {
-    auto d1 = base[2] - base[3];
-    auto d2 = base[1] - base[2];
-    auto d3 = base[0] - base[1];
+    auto d1 = pts[2] - pts[3];
+    auto d2 = pts[1] - pts[2];
+    auto d3 = pts[0] - pts[1];
 
-    if (d1.tiny()) {
-        if (d2.tiny()) {
-            if (d3.tiny()) {
-                angleIn = angleMid = angleOut = 0;
-                return -1;  //ignoreable
+    if (_tiny(d1)) {
+        if (_tiny(d2)) {
+            if (_tiny(d3)) {
+                angleIn = angleMid = angleOut = 0.0f;
+                return -1;   // ignorable
             } else {
                 angleIn = angleMid = angleOut = mathAtan(d3);
             }
         } else {
-            if (d3.tiny()) {
+            if (_tiny(d3)) {
                 angleIn = angleMid = angleOut = mathAtan(d2);
             } else {
                 angleIn = angleMid = mathAtan(d2);
@@ -67,8 +67,8 @@ int mathCubicAngle(const SwPoint* base, int64_t& angleIn, int64_t& angleMid, int
             }
         }
     } else {
-        if (d2.tiny()) {
-            if (d3.tiny()) {
+        if (_tiny(d2)) {
+            if (_tiny(d3)) {
                 angleIn = angleMid = angleOut = mathAtan(d1);
             } else {
                 angleIn = mathAtan(d1);
@@ -76,7 +76,7 @@ int mathCubicAngle(const SwPoint* base, int64_t& angleIn, int64_t& angleMid, int
                 angleMid = mathMean(angleIn, angleOut);
             }
         } else {
-            if (d3.tiny()) {
+            if (_tiny(d3)) {
                 angleIn = mathAtan(d1);
                 angleMid = angleOut = mathAtan(d2);
             } else {
@@ -87,187 +87,83 @@ int mathCubicAngle(const SwPoint* base, int64_t& angleIn, int64_t& angleMid, int
         }
     }
 
-    auto theta1 = abs(mathDiff(angleIn, angleMid));
-    auto theta2 = abs(mathDiff(angleMid, angleOut));
+    auto theta1 = fabsf(mathDiff(angleIn, angleMid));
+    auto theta2 = fabsf(mathDiff(angleMid, angleOut));
 
-    if ((theta1 < (SW_ANGLE_PI / 8)) && (theta2 < (SW_ANGLE_PI / 8))) return 0; //small size
+    if ((theta1 < (SW_PI / 8.0f)) && (theta2 < (SW_PI / 8.0f))) return 0;   // small curvature
+
     return 1;
 }
 
-
-int64_t mathMultiply(int64_t a, int64_t b)
+void mathRotate(Point& pt, float degree)
 {
-    int32_t s = 1;
+    if (tvg::zero(degree) || tvg::zero(pt)) return;
 
-    //move sign
-    if (a < 0) {
-        a = -a;
-        s = -s;
-    }
-    if (b < 0) {
-        b = -b;
-        s = -s;
-    }
-    int64_t c = (a * b + 0x8000L) >> 16;
-    return (s > 0) ? c : -c;
-}
-
-
-int64_t mathDivide(int64_t a, int64_t b)
-{
-    int32_t s = 1;
-
-    //move sign
-    if (a < 0) {
-        a = -a;
-        s = -s;
-    }
-    if (b < 0) {
-        b = -b;
-        s = -s;
-    }
-    int64_t q = b > 0 ? ((a << 16) + (b >> 1)) / b : 0x7FFFFFFFL;
-    return (s < 0 ? -q : q);
-}
-
-
-int64_t mathMulDiv(int64_t a, int64_t b, int64_t c)
-{
-    int32_t s = 1;
-
-    //move sign
-    if (a < 0) {
-        a = -a;
-        s = -s;
-    }
-    if (b < 0) {
-        b = -b;
-        s = -s;
-    }
-    if (c < 0) {
-        c = -c;
-        s = -s;
-    }
-    int64_t d = c > 0 ? (a * b + (c >> 1)) / c : 0x7FFFFFFFL;
-
-    return (s > 0 ? d : -d);
-}
-
-
-void mathRotate(SwPoint& pt, int64_t angle)
-{
-    if (angle == 0 || pt.zero()) return;
-
-    Point v = pt.toPoint();
-
-    auto radian = TO_RADIAN(angle);
+    auto radian = deg2rad(degree);
     auto cosv = cosf(radian);
     auto sinv = sinf(radian);
 
-    pt.x = int32_t(nearbyint((v.x * cosv - v.y * sinv) * 64.0f));
-    pt.y = int32_t(nearbyint((v.x * sinv + v.y * cosv) * 64.0f));
+    auto x = pt.x;
+    auto y = pt.y;
+
+    pt.x = x * cosv - y * sinv;
+    pt.y = x * sinv + y * cosv;
 }
 
-
-int64_t mathTan(int64_t angle)
+float mathTan(float degree)
 {
-    if (angle == 0) return 0;
-    return int64_t(tanf(TO_RADIAN(angle)) * 65536.0f);
+    if (tvg::zero(degree)) return 0.0f;
+    return tanf(deg2rad(degree));
 }
 
-
-int64_t mathAtan(const SwPoint& pt)
+float mathAtan(const Point& pt)
 {
-    if (pt.zero()) return 0;
-    return int64_t(tvg::atan2(TO_FLOAT(pt.y), TO_FLOAT(pt.x)) * (180.0f / MATH_PI) * 65536.0f);
+    if (tvg::zero(pt)) return 0.0f;
+    return rad2deg(tvg::atan2(pt.y, pt.x));
 }
 
-
-int64_t mathSin(int64_t angle)
+float mathSin(float degree)
 {
-    if (angle == 0) return 0;
-    return mathCos(SW_ANGLE_PI2 - angle);
+    if (tvg::zero(degree)) return 0.0f;
+    return mathCos(SW_PI2 - degree);
 }
 
-
-int64_t mathCos(int64_t angle)
+float mathCos(float degree)
 {
-    return int64_t(cosf(TO_RADIAN(angle)) * 65536.0f);
+    return cosf(deg2rad(degree));
 }
 
-
-int64_t mathLength(const SwPoint& pt)
+void mathSplitCubic(Point* pts)
 {
-    if (pt.zero()) return 0;
+    auto p01 = (pts[0] + pts[1]) * 0.5f;
+    auto p12 = (pts[1] + pts[2]) * 0.5f;
+    auto p23 = (pts[2] + pts[3]) * 0.5f;
 
-    //trivial case
-    if (pt.x == 0) return abs(pt.y);
-    if (pt.y == 0) return abs(pt.x);
+    auto p012 = (p01 + p12) * 0.5f;
+    auto p123 = (p12 + p23) * 0.5f;
 
-    auto v = pt.toPoint();
-    //return static_cast<int64_t>(sqrtf(v.x * v.x + v.y * v.y) * 65536.0f);
+    auto p0123 = (p012 + p123) * 0.5f;
 
-    /* approximate sqrt(x*x + y*y) using alpha max plus beta min algorithm.
-       With alpha = 1, beta = 3/8, giving results with the largest error less
-       than 7% compared to the exact value. */
-    if (v.x < 0) v.x = -v.x;
-    if (v.y < 0) v.y = -v.y;
-    return static_cast<int64_t>((v.x > v.y) ? (v.x + v.y * 0.375f) : (v.y + v.x * 0.375f));
+    // left curve
+    pts[1] = p01;
+    pts[2] = p012;
+    pts[3] = p0123;
+
+    // right curve
+    pts[4] = p123;
+    pts[5] = p23;
+    pts[6] = pts[3];
 }
 
-
-void mathSplitCubic(SwPoint* base)
+float mathDiff(float angle1, float angle2)
 {
-    int32_t a, b, c, d;
+    auto delta = fmodf(angle2 - angle1, 360.0f);
 
-    base[6].x = base[3].x;
-    c = base[1].x;
-    d = base[2].x;
-    base[1].x = a = (base[0].x + c) >> 1;
-    base[5].x = b = (base[3].x + d) >> 1;
-    c = (c + d) >> 1;
-    base[2].x = a = (a + c) >> 1;
-    base[4].x = b = (b + c) >> 1;
-    base[3].x = (a + b) >> 1;
-
-    base[6].y = base[3].y;
-    c = base[1].y;
-    d = base[2].y;
-    base[1].y = a = (base[0].y + c) >> 1;
-    base[5].y = b = (base[3].y + d) >> 1;
-    c = (c + d) >> 1;
-    base[2].y = a = (a + c) >> 1;
-    base[4].y = b = (b + c) >> 1;
-    base[3].y = (a + b) >> 1;
-}
-
-
-void mathSplitLine(SwPoint* base)
-{
-    base[2] = base[1];
-    base[1] = {(base[0].x >> 1) + (base[1].x >> 1), (base[0].y >> 1) + (base[1].y >> 1)};
-}
-
-
-int64_t mathDiff(int64_t angle1, int64_t angle2)
-{
-    auto delta = angle2 - angle1;
-
-    delta %= SW_ANGLE_2PI;
-    if (delta < 0) delta += SW_ANGLE_2PI;
-    if (delta > SW_ANGLE_PI) delta -= SW_ANGLE_2PI;
+    if (delta < 0.0f) delta += 360.0f;
+    if (delta > 180.0f) delta -= 360.0f;
 
     return delta;
 }
-
-SwPoint mathTransform(const Point& to, const Matrix& transform)
-{
-    auto tx = to.x * transform.e11 + to.y * transform.e12 + transform.e13;
-    auto ty = to.x * transform.e21 + to.y * transform.e22 + transform.e23;
-
-    return {TO_SWCOORD(tx), TO_SWCOORD(ty)};
-}
-
 
 bool mathUpdateOutlineBBox(const SwOutline* outline, const RenderRegion& clipBox, RenderRegion& renderBox, bool fastTrack)
 {
@@ -291,11 +187,11 @@ bool mathUpdateOutlineBBox(const SwOutline* outline, const RenderRegion& clipBox
     }
 
     if (fastTrack) {
-        renderBox.min = {int32_t(round(xMin / 64.0f)), int32_t(round(yMin / 64.0f))};
-        renderBox.max = {int32_t(round(xMax / 64.0f)), int32_t(round(yMax / 64.0f))};
+        renderBox.min = {int32_t(roundf(xMin)), int32_t(roundf(yMin))};
+        renderBox.max = {int32_t(roundf(xMax)), int32_t(roundf(yMax))};
     } else {
-        renderBox.min = {xMin >> 6, yMin >> 6};
-        renderBox.max = {(xMax + 63) >> 6, (yMax + 63) >> 6};
+        renderBox.min = {int32_t(floorf(xMin)), int32_t(floorf(yMin))};
+        renderBox.max = {int32_t(ceilf(xMax)), int32_t(ceilf(yMax))};
     }
 
     renderBox.intersect(clipBox);

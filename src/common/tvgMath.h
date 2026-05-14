@@ -313,6 +313,11 @@ static inline void operator+=(Point& lhs, const Point& rhs)
     lhs.y += rhs.y;
 }
 
+static inline void operator-=(Point& lhs, const Point& rhs)
+{
+    lhs.x -= rhs.x;
+    lhs.y -= rhs.y;
+}
 
 static inline Point operator*(const Point& lhs, const Point& rhs)
 {
@@ -361,6 +366,14 @@ static inline Point operator/(const Point& lhs, const float rhs)
 static inline Point operator-(const Point& a)
 {
     return {-a.x, -a.y};
+}
+
+// Approximate sqrt(x*x+y*y) using the `alpha max plus beta min' algorithm.
+// We use alpha = 1, beta = 3/8, giving us results with a largest error
+// less than 7% compared to the exact value.
+static inline float fsqrt(const Point& pt)
+{
+    return std::max(fabsf(pt.x), fabsf(pt.y)) + std::min(fabsf(pt.x), fabsf(pt.y)) * 0.375f;
 }
 
 enum class Orientation

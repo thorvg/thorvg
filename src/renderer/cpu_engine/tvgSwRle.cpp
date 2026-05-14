@@ -207,9 +207,9 @@ struct RleWorker
 {
     SwRle* rle;
 
-    SwPoint cellPos;
-    SwPoint cellMin;
-    SwPoint cellMax;
+    Point cellPos;
+    Point cellMin;
+    Point cellMax;
     int32_t cellXCnt;
     int32_t cellYCnt;
 
@@ -220,13 +220,13 @@ struct RleWorker
     ptrdiff_t maxCells;
     ptrdiff_t cellsCnt;
 
-    SwPoint pos;
+    Point pos;
 
 #define BEZ_STACK_SIZE (32 * 3 + 1)
-    SwPoint bezStack[BEZ_STACK_SIZE];
+    Point bezStack[BEZ_STACK_SIZE];
 
 #define LINE_STACK_SIZE (32 + 1)
-    SwPoint lineStack[LINE_STACK_SIZE];
+    Point lineStack[LINE_STACK_SIZE];
     int levStack[32];
 
     SwOutline* outline;
@@ -244,40 +244,14 @@ struct RleWorker
     bool antiAlias;
 };
 
-
-static inline SwPoint UPSCALE(const SwPoint& pt)
+static inline Point TRUNC(const Point& pt)
 {
-    return {int32_t(((unsigned long) pt.x) << (PIXEL_BITS - 6)), int32_t(((unsigned long) pt.y) << (PIXEL_BITS - 6))};
+    return {floorf(pt.x), floorf(pt.y)};
 }
 
-
-static inline int32_t TRUNC(const int32_t x)
+static inline Point FRACT(const Point& pt)
 {
-    return  x >> PIXEL_BITS;
-}
-
-
-static inline SwPoint TRUNC(const SwPoint& pt)
-{
-    return  {TRUNC(pt.x), TRUNC(pt.y)};
-}
-
-
-static inline SwPoint FRACT(const SwPoint& pt)
-{
-
-    return {pt.x & (ONE_PIXEL - 1), pt.y & (ONE_PIXEL - 1)};
-}
-
-
-// Approximate sqrt(x*x+y*y) using the `alpha max plus beta min' algorithm.
-// We use alpha = 1, beta = 3/8, giving us results with a largest error
-// less than 7% compared to the exact value.
-static inline int32_t HYPOT(SwPoint pt)
-{
-    if (pt.x < 0) pt.x = -pt.x;
-    if (pt.y < 0) pt.y = -pt.y;
-    return ((pt.x > pt.y) ? (pt.x + (3 * pt.y >> 3)) : (pt.y + (3 * pt.x >> 3)));
+    return {pt.x - floorf(pt.x), pt.y - floorf(pt.y)};
 }
 
 static void _horizLine(RleWorker& rw, int32_t x, int32_t y, int32_t area, int32_t aCount)
@@ -364,7 +338,7 @@ static SwCell* _findCell(RleWorker& rw)
     auto x = rw.cellPos.x;
     if (x > rw.cellXCnt) x = rw.cellXCnt;
 
-    auto pcell = &rw.yCells[rw.cellPos.y];
+    auto pcell = &rw.yCells[(int)rw.cellPos.y];
 
     while(true) {
         auto cell = *pcell;
@@ -398,8 +372,7 @@ static bool _recordCell(RleWorker& rw)
     return true;
 }
 
-
-static bool _setCell(RleWorker& rw, SwPoint pos)
+static bool _setCell(RleWorker& rw, Point pos)
 {
     /* Move the cell pointer to a new position.  We set the `invalid'      */
     /* flag to indicate that the cell isn't part of those we're interested */
@@ -431,8 +404,7 @@ static bool _setCell(RleWorker& rw, SwPoint pos)
     return true;
 }
 
-
-static bool _startCell(RleWorker& rw, SwPoint pos)
+static bool _startCell(RleWorker& rw, Point pos)
 {
     if (pos.x > rw.cellMax.x) pos.x = rw.cellMax.x;
     if (pos.x < rw.cellMin.x) pos.x = rw.cellMin.x - 1;
@@ -445,8 +417,7 @@ static bool _startCell(RleWorker& rw, SwPoint pos)
     return _setCell(rw, pos);
 }
 
-
-static bool _moveTo(RleWorker& rw, const SwPoint& to)
+static bool _moveTo(RleWorker& rw, const Point& to)
 {
     //record current cell, if any */
     if (!rw.invalid && !_recordCell(rw)) return false;
@@ -459,14 +430,14 @@ static bool _moveTo(RleWorker& rw, const SwPoint& to)
     return true;
 }
 
-
-static bool _lineTo(RleWorker& rw, const SwPoint& to)
+static bool _lineTo(RleWorker& rw, const Point& to)
 {
     auto e1 = TRUNC(rw.pos);
     auto e2 = TRUNC(to);
 
-    //vertical clipping
-    if ((e1.y >= rw.cellMax.y && e2.y >= rw.cellMax.y) || (e1.y < rw.cellMin.y && e2.y < rw.cellMin.y)) {
+    // vertical clipping
+    if ((e1.y >= rw.cellMax.y && e2.y >= rw.cellMax.y) ||
+        (e1.y < rw.cellMin.y  && e2.y < rw.cellMin.y)) {
         rw.pos = to;
         return true;
     }
@@ -477,119 +448,97 @@ static bool _lineTo(RleWorker& rw, const SwPoint& to)
     line[1] = rw.pos;
 
     while (line < end) {
-        auto diff = line[0] - line[1];
 
-        // avoid possible arithmetic overflow below by splitting
-        if (HYPOT(diff) > SHRT_MAX) {
-            mathSplitLine(line);
-            ++line;
-            continue;
-        }
+        auto diff = line[0] - line[1];
 
         e1 = TRUNC(line[1]);
         e2 = TRUNC(line[0]);
 
         auto f1 = FRACT(line[1]);
-        SwPoint f2;
+        Point f2;
 
-        //inside one cell
+        // inside one cell
         if (e1 == e2) {
             ;
-        //any horizontal line
-        } else if (diff.y == 0) {
+        // horizontal line
+        } else if (tvg::zero(diff.y)) {
             e1.x = e2.x;
             if (!_setCell(rw, e1)) return false;
-        } else if (diff.x == 0) {
-            //vertical line up
-            if (diff.y > 0) {
+        // vertical line
+        } else if (tvg::zero(diff.x)) {
+            if (diff.y > 0.0f) {
                 do {
-                    f2.y = ONE_PIXEL;
+                    f2.y = float(ONE_PIXEL);
                     rw.cover += (f2.y - f1.y);
-                    rw.area += (f2.y - f1.y) * f1.x * 2;
-                    f1.y = 0;
+                    rw.area += (f2.y - f1.y) * f1.x * 2.0f;
+                    f1.y = 0.0f;
                     ++e1.y;
                     if (!_setCell(rw, e1)) return false;
-                } while(e1.y != e2.y);
-            //vertical line down
+                } while (e1.y != e2.y);
             } else {
                 do {
-                    f2.y = 0;
+                    f2.y = 0.0f;
                     rw.cover += (f2.y - f1.y);
-                    rw.area += (f2.y - f1.y) * f1.x * 2;
-                    f1.y = ONE_PIXEL;
+                    rw.area += (f2.y - f1.y) * f1.x * 2.0f;
+                    f1.y = float(ONE_PIXEL);
                     --e1.y;
                     if (!_setCell(rw, e1)) return false;
-                } while(e1.y != e2.y);
+                } while (e1.y != e2.y);
             }
-        //any other line
+        // generic line
         } else {
-            #define SW_UDIV(a, b) (int32_t)((uint64_t(a) * uint64_t(b)) >> 32)
-
-            Area prod = diff.x * f1.y - diff.y * f1.x;
-
-            /* These macros speed up repetitive divisions by replacing them
-               with multiplications and right shifts. */
-            auto dxr = (e1.x != e2.x) ? (int64_t)0xffffffff / diff.x : 0;
-            auto dyr = (e1.y != e2.y) ? (int64_t)0xffffffff / diff.y : 0;
+            auto prod = diff.x * f1.y - diff.y * f1.x;
             auto px = diff.x * ONE_PIXEL;
             auto py = diff.y * ONE_PIXEL;
-
-            /* The fundamental value `prod' determines which side and the  */
-            /* exact coordinate where the line exits current cell.  It is  */
-            /* also easily updated when moving from one cell to the next.  */
-
             do {
-                //left
-                if (prod <= 0 && prod - px > 0) {
-                    f2 = {0, SW_UDIV(-prod, -dxr)};
+                // left
+                if (prod <= 0.0f && prod - px > 0.0f) {
+                    f2 = {0.0f,  -prod / diff.x};
                     prod -= py;
                     rw.cover += (f2.y - f1.y);
                     rw.area += (f2.y - f1.y) * (f1.x + f2.x);
-                    f1 = {ONE_PIXEL, f2.y};
+                    f1 = {float(ONE_PIXEL), f2.y};
                     --e1.x;
-                //up
-                } else if (prod - px <= 0 && prod - px + py > 0) {
+                // up
+                } else if (prod - px <= 0.0f &&  prod - px + py > 0.0f) {
                     prod -= px;
-                    f2 = {SW_UDIV(-prod, dyr), ONE_PIXEL};
+                    f2 = {-prod / diff.y, float(ONE_PIXEL)};
                     rw.cover += (f2.y - f1.y);
                     rw.area += (f2.y - f1.y) * (f1.x + f2.x);
-                    f1 = {f2.x, 0};
+                    f1 = {f2.x, 0.0f};
                     ++e1.y;
-                //right
-                } else if (prod - px + py <= 0 && prod + py >= 0) {
+                // right
+                } else if (prod - px + py <= 0.0f && prod + py >= 0.0f) {
                     prod += py;
-                    f2 = {ONE_PIXEL, SW_UDIV(prod, dxr)};
+                    f2 = {float(ONE_PIXEL), prod / diff.x};
                     rw.cover += (f2.y - f1.y);
                     rw.area += (f2.y - f1.y) * (f1.x + f2.x);
-                    f1 = {0, f2.y};
+                    f1 = {0.0f, f2.y};
                     ++e1.x;
-                //down
+                // down
                 } else {
-                    f2 = {SW_UDIV(prod, -dyr), 0};
+                    f2 = {prod / -diff.y, 0.0f};
                     prod += px;
                     rw.cover += (f2.y - f1.y);
                     rw.area += (f2.y - f1.y) * (f1.x + f2.x);
-                    f1 = {f2.x, ONE_PIXEL};
+                    f1 = {f2.x, float(ONE_PIXEL)};
                     --e1.y;
                 }
-
                 if (!_setCell(rw, e1)) return false;
-
-            } while(e1 != e2);
+            } while (e1 != e2);
         }
 
         f2 = FRACT(line[0]);
         rw.cover += (f2.y - f1.y);
         rw.area += (f2.y - f1.y) * (f1.x + f2.x);
         rw.pos = line[0];
-
         if (line-- == rw.lineStack) return true;
     }
+
     return false;
 }
 
-
-static bool _cubicTo(RleWorker& rw, const SwPoint& ctrl1, const SwPoint& ctrl2, const SwPoint& to)
+static bool _cubicTo(RleWorker& rw, const Point& ctrl1, const Point& ctrl2, const Point& to)
 {
     auto arc = rw.bezStack;
     auto end = rw.bezStack + BEZ_STACK_SIZE;
@@ -609,7 +558,7 @@ static bool _cubicTo(RleWorker& rw, const SwPoint& ctrl1, const SwPoint& ctrl2, 
         if (y > max) max = y;
     }
 
-    if (TRUNC(min) >= rw.cellMax.y || TRUNC(max) < rw.cellMin.y) goto draw;
+    if (floorf(min) >= rw.cellMax.y || floorf(max) < rw.cellMin.y) goto draw;
 
     /* Decide whether to split or draw. See `Rapid Termination          */
     /* Evaluation for Recursive Subdivision of Bezier Curves' by Thomas */
@@ -619,7 +568,7 @@ static bool _cubicTo(RleWorker& rw, const SwPoint& ctrl1, const SwPoint& ctrl2, 
         {
             //diff is the P0 - P3 chord vector
             auto diff = arc[3] - arc[0];
-            auto L = HYPOT(diff);
+            auto L = fsqrt(diff);
 
             //avoid possible arithmetic overflow below by splitting
             if (L > SHRT_MAX) goto split;
@@ -666,27 +615,27 @@ static bool _decomposeOutline(RleWorker& rw)
     ARRAY_FOREACH(p, outline->cntrs) {
         auto last = *p;
         auto limit = outline->pts.data + last;
-        auto start = UPSCALE(outline->pts[first]);
+        auto& start = outline->pts[first];
         auto pt = outline->pts.data + first;
         auto types = outline->types.data + first;
         ++types;
 
-        if (!_moveTo(rw, UPSCALE(outline->pts[first]))) return false;
+        if (!_moveTo(rw, outline->pts[first])) return false;
 
         while (pt < limit) {
             //emit a single line_to
             if (types[0] == SW_CURVE_TYPE_POINT) {
                 ++pt;
                 ++types;
-                if (!_lineTo(rw, UPSCALE(*pt))) return false;
+                if (!_lineTo(rw, *pt)) return false;
             //types cubic
             } else {
                 pt += 3;
                 types += 3;
                 if (pt <= limit) {
-                    if (!_cubicTo(rw, UPSCALE(pt[-2]), UPSCALE(pt[-1]), UPSCALE(pt[0]))) return false;
+                    if (!_cubicTo(rw, pt[-2], pt[-1], pt[0])) return false;
                 } else if (pt - 1 == limit) {
-                    if (!_cubicTo(rw, UPSCALE(pt[-2]), UPSCALE(pt[-1]), start)) return false;
+                    if (!_cubicTo(rw, pt[-2], pt[-1], start)) return false;
                 }
                 else goto close;
             }
@@ -737,10 +686,10 @@ SwRle* rleRender(SwRle* rle, const SwOutline* outline, const RenderRegion& bbox,
     rw.area = 0;
     rw.cover = 0;
     rw.invalid = true;
-    rw.cellMin = {bbox.min.x, bbox.min.y};
-    rw.cellMax = {bbox.max.x, bbox.max.y};
-    rw.cellXCnt = rw.cellMax.x - rw.cellMin.x;
-    rw.cellYCnt = rw.cellMax.y - rw.cellMin.y;
+    rw.cellMin = {(float)bbox.min.x, (float)bbox.min.y};
+    rw.cellMax = {(float)bbox.max.x, (float)bbox.max.y};
+    rw.cellXCnt = bbox.max.x - bbox.min.x;
+    rw.cellYCnt = bbox.max.y - bbox.min.y;
     rw.outline = const_cast<SwOutline*>(outline);
     rw.bandSize = rw.bufferSize / (sizeof(SwCell) * 2);
     rw.bandShoot = 0;

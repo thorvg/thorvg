@@ -31,10 +31,10 @@
 
 #define SW_CURVE_TYPE_POINT 0
 #define SW_CURVE_TYPE_CUBIC 1
-#define SW_ANGLE_PI (180L << 16)
-#define SW_ANGLE_2PI (SW_ANGLE_PI << 1)
-#define SW_ANGLE_PI2 (SW_ANGLE_PI >> 1)
 #define SW_COLOR_TABLE 1024
+#define SW_PI 180.0f
+#define SW_2PI (SW_PI * 2.0f)
+#define SW_PI2 (SW_PI * 0.5f)
 
 static inline float TO_FLOAT(int32_t val)
 {
@@ -85,13 +85,6 @@ struct SwPoint
         else return false;
     }
 
-    bool tiny() const
-    {
-        //2 is epsilon...
-        if (abs(x) < 2 && abs(y) < 2) return true;
-        else return false;
-    }
-
     Point toPoint() const
     {
         return {TO_FLOAT(x),  TO_FLOAT(y)};
@@ -105,7 +98,7 @@ struct SwSize
 
 struct SwOutline
 {
-    Array<SwPoint> pts;             //the outline's points
+    Array<Point> pts;               //the outline's points
     Array<uint32_t> cntrs;          //the contour end points
     Array<uint8_t> types;           //curve type
     Array<bool> closed;             //opened or closed path?
@@ -201,9 +194,9 @@ struct SwFill
 
 struct SwStrokeBorder
 {
-    Array<SwPoint> pts;
+    Array<Point> pts;
     uint8_t* tags = nullptr;
-    int32_t start = 0;        //index of current sub-path start point
+    int32_t start = 0;         //index of current sub-path start point
     bool movable = false;      //true: for ends of lineto borders
 
     ~SwStrokeBorder()
@@ -214,15 +207,14 @@ struct SwStrokeBorder
 
 struct SwStroke
 {
-    int64_t angleIn;
-    int64_t angleOut;
-    SwPoint center;
-    int64_t lineLength;
-    int64_t subPathAngle;
-    SwPoint ptStartSubPath;
-    int64_t subPathLineLength;
-    int64_t width;
-    int64_t miterlimit;
+    float angleIn, angleOut;
+    Point center;
+    float lineLength;
+    float subPathAngle;
+    Point ptStartSubPath;
+    float subPathLineLength;
+    float width;
+    float miterlimit;
     SwFill* fill = nullptr;
     SwStrokeBorder* borders[2];
     float sx, sy;
@@ -668,21 +660,15 @@ static inline uint32_t opBlendLuminosity(uint32_t s, uint32_t d)
     return BLEND_PRE(JOIN(255, r, g, b), s, o.a);
 }
 
-int64_t mathMultiply(int64_t a, int64_t b);
-int64_t mathDivide(int64_t a, int64_t b);
-int64_t mathMulDiv(int64_t a, int64_t b, int64_t c);
-void mathRotate(SwPoint& pt, int64_t angle);
-int64_t mathTan(int64_t angle);
-int64_t mathAtan(const SwPoint& pt);
-int64_t mathCos(int64_t angle);
-int64_t mathSin(int64_t angle);
-void mathSplitCubic(SwPoint* base);
-void mathSplitLine(SwPoint* base);
-int64_t mathDiff(int64_t angle1, int64_t angle2);
-int64_t mathLength(const SwPoint& pt);
-int mathCubicAngle(const SwPoint* base, int64_t& angleIn, int64_t& angleMid, int64_t& angleOut);
-int64_t mathMean(int64_t angle1, int64_t angle2);
-SwPoint mathTransform(const Point& to, const Matrix& transform);
+void mathRotate(Point& pt, float degree);
+float mathTan(float degree);
+float mathAtan(const Point& pt);
+float mathCos(float degree);
+float mathSin(float degree);
+void mathSplitCubic(Point* base);
+float mathDiff(float angle1, float angle2);
+int mathCubicAngle(const Point* pts, float& angleIn, float& angleMid, float& angleOut);
+float mathMean(float angle1, float angle2);
 bool mathUpdateOutlineBBox(const SwOutline* outline, const RenderRegion& clipBox, RenderRegion& renderBox, bool fastTrack);
 
 void shapeReset(SwShape& shape);
