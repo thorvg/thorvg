@@ -234,7 +234,7 @@ ecma_builtin_typedarray_prototype_map (ecma_value_t this_arg, /**< this object *
   }
 
   // TODO: 22.2.3.18, 7-8.
-  ecma_value_t len = ecma_make_number_value (src_info_p->length);
+  ecma_value_t len = ecma_make_number_value ((ecma_number_t)src_info_p->length);
   ecma_value_t new_typedarray = ecma_typedarray_species_create (this_arg, &len, 1);
   ecma_free_value (len);
 
@@ -501,7 +501,7 @@ ecma_builtin_typedarray_prototype_filter (ecma_value_t this_arg, /**< this objec
     ecma_fast_free_value (call_value);
   }
 
-  collected = ecma_make_number_value (collected_p->item_count);
+  collected = ecma_make_number_value ((ecma_number_t)collected_p->item_count);
   ret_value = ecma_typedarray_species_create (this_arg, &collected, 1);
   ecma_free_value (collected);
 
@@ -1484,7 +1484,7 @@ ecma_builtin_typedarray_prototype_index_of (ecma_typedarray_info_t *info_p, /**<
     if (ecma_op_same_value_zero (args[0], element, true))
     {
       ecma_free_value (element);
-      return ecma_make_number_value (from_index);
+      return ecma_make_number_value ((ecma_number_t)from_index);
     }
 
     ecma_free_value (element);
@@ -1692,7 +1692,7 @@ ecma_builtin_typedarray_prototype_slice (ecma_value_t this_arg, /**< this argume
   int32_t distance = (int32_t) (relative_end - relative_start);
   uint32_t count = distance > 0 ? (uint32_t) distance : 0;
 
-  ecma_value_t len = ecma_make_number_value (count);
+  ecma_value_t len = ecma_make_number_value ((ecma_number_t)count);
   // TODO: 22.2.3.23, 12-13.
   ecma_value_t new_typedarray = ecma_typedarray_species_create (this_arg, &len, 1);
   ecma_free_value (len);

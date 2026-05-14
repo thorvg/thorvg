@@ -507,7 +507,7 @@ ecma_builtin_math_dispatch_routine (uint8_t builtin_routine_id, /**< built-in wi
         x = n ? __builtin_clz (n) : 32;
 #elif defined(_WIN32)
         unsigned long ret;
-        x = _BitScanReverse (&ret, n) ? 31 - ret : 32;
+        x = (ecma_number_t)(_BitScanReverse (&ret, n) ? 31 - ret : 32);
 #else /* !(defined(__GNUC__) || defined(__clang__) || defined(_WIN32)) */
         x = 32;
         for (int i = 31; i >= 0; i--)
@@ -527,7 +527,7 @@ ecma_builtin_math_dispatch_routine (uint8_t builtin_routine_id, /**< built-in wi
       }
       case ECMA_MATH_OBJECT_IMUL:
       {
-        x = (int32_t) (ecma_number_to_uint32 (x) * ecma_number_to_uint32 (y));
+        x = (ecma_number_t) (ecma_number_to_uint32 (x) * ecma_number_to_uint32 (y));
         break;
       }
     }
