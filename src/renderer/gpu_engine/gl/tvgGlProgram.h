@@ -28,7 +28,7 @@
 class GlProgram
 {
 public:
-    GlProgram(const char* vertSrc, const char* fragSrc);
+    GlProgram(const char* vertSrc, const char* fragSrc, uint8_t renderType);
     ~GlProgram();
 
     void load();
