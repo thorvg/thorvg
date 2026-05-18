@@ -288,14 +288,9 @@ void GlGeometry::tesselateImage(const RenderSurface* image)
     fillBounds = _transformBounds(RenderRegion{{0, 0}, {int32_t(image->w), int32_t(image->h)}}, matrix);
 }
 
-
-bool GlGeometry::draw(GlRenderTask* task, GlStageBuffer* gpuBuffer, RenderUpdateFlag flag)
+void GlGeometry::draw(GlRenderTask* task, GlStageBuffer* gpuBuffer, RenderUpdateFlag flag) const
 {
-    if (flag == RenderUpdateFlag::None) return false;
-
     auto buffer = ((flag & RenderUpdateFlag::Stroke) || (flag & RenderUpdateFlag::GradientStroke)) ? &stroke : &fill;
-    if (buffer->index.empty()) return false;
-
     auto vertexOffset = gpuBuffer->push(buffer->vertex.data, buffer->vertex.count * sizeof(float));
     auto indexOffset = gpuBuffer->pushIndex(buffer->index.data, buffer->index.count * sizeof(uint32_t));
 
@@ -307,9 +302,7 @@ bool GlGeometry::draw(GlRenderTask* task, GlStageBuffer* gpuBuffer, RenderUpdate
         task->addVertexLayout(GlVertexLayout{0, 2, 2 * sizeof(float), vertexOffset});
     }
     task->setDrawRange(indexOffset, buffer->index.count);
-    return true;
 }
-
 
 GlStencilMode GlGeometry::getStencilMode(RenderUpdateFlag flag)
 {

@@ -37,17 +37,6 @@ static void clearColorTarget(uint32_t width, uint32_t height)
 /* GlRenderTask Class Implementation                                    */
 /************************************************************************/
 
-GlRenderTask::GlRenderTask(GlProgram* program, GlRenderTask* other): mProgram(program)
-{
-    mVertexLayout.push(other->mVertexLayout);
-    mViewport = other->mViewport;
-    mIndexOffset = other->mIndexOffset;
-    mIndexCount = other->mIndexCount;
-    mViewMatrix = other->mViewMatrix;
-    mUseViewMatrix = other->mUseViewMatrix;
-}
-
-
 void GlRenderTask::run()
 {
     // bind shader
