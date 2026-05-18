@@ -45,6 +45,16 @@ if gl_engine
     endif
 endif
 
+if wg_engine
+    test_wgpu_dep = dependency('wgpu_native', required: false)
+
+    if test_wgpu_dep.found()
+        test_dep += test_wgpu_dep
+        test_compiler_flags += ['-DTHORVG_WG_TEST_SUPPORT']
+        test_file += ['testWgCanvas.cpp', 'testWgEngine.cpp']
+    endif
+endif
+
 tests = executable('tvgUnitTests',
     test_file,
     include_directories : headers,
