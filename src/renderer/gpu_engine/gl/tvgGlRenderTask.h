@@ -77,7 +77,6 @@ class GlRenderTask
 {
 public:
     GlRenderTask(GlProgram* program): mProgram(program) {}
-    GlRenderTask(GlProgram* program, GlRenderTask* other);
 
     virtual ~GlRenderTask() = default;
 
