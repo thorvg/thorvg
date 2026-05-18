@@ -81,12 +81,7 @@ void GlSolidBatch::emitSingle(GlRenderer& renderer, GlRenderPass* pass, GlShape&
     auto drawTask = new GlRenderTask(renderer.mPrograms[GlRenderer::RT_Color]);
     drawTask->setViewMatrix(pass->getViewMatrix());
     drawTask->setDrawDepth(depth);
-
-    if (!sdata.geometry.draw(drawTask, &renderer.mGpuBuffer, RenderUpdateFlag::Color)) {
-        delete drawTask;
-        clear();
-        return;
-    }
+    sdata.geometry.draw(drawTask, &renderer.mGpuBuffer, RenderUpdateFlag::Color);
 
     auto taskColor = GlSolidBatch::solidColor(sdata, color, RenderUpdateFlag::Color);
     drawTask->setVertexColor(taskColor.r / 255.f, taskColor.g / 255.f, taskColor.b / 255.f, taskColor.a / 255.f);

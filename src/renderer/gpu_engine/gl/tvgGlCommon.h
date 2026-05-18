@@ -74,7 +74,6 @@ struct GlGeometryBuffer {
         vertex.clear();
         index.clear();
     }
-
 };
 
 struct GlGeometry
@@ -94,7 +93,13 @@ struct GlGeometry
     bool tesselateStroke(const RenderShape& rshape);
     bool tesselateThinPath(const RenderPath& path);
     void tesselateImage(const RenderSurface* image);
-    bool draw(GlRenderTask* task, GlStageBuffer* gpuBuffer, RenderUpdateFlag flag);
+    bool drawable(RenderUpdateFlag flag) const
+    {
+        if (flag == RenderUpdateFlag::None) return false;
+        auto buffer = ((flag & RenderUpdateFlag::Stroke) || (flag & RenderUpdateFlag::GradientStroke)) ? &stroke : &fill;
+        return !buffer->index.empty();
+    }
+    void draw(GlRenderTask* task, GlStageBuffer* gpuBuffer, RenderUpdateFlag flag) const;
     GlStencilMode getStencilMode(RenderUpdateFlag flag);
     RenderRegion getBounds() const;
 
