@@ -280,6 +280,37 @@ static inline int32_t HYPOT(SwPoint pt)
     return ((pt.x > pt.y) ? (pt.x + (3 * pt.y >> 3)) : (pt.y + (3 * pt.x >> 3)));
 }
 
+static void _splitCubic(SwPoint* base)
+{
+    int32_t a, b, c, d;
+
+    base[6].x = base[3].x;
+    c = base[1].x;
+    d = base[2].x;
+    base[1].x = a = (base[0].x + c) >> 1;
+    base[5].x = b = (base[3].x + d) >> 1;
+    c = (c + d) >> 1;
+    base[2].x = a = (a + c) >> 1;
+    base[4].x = b = (b + c) >> 1;
+    base[3].x = (a + b) >> 1;
+
+    base[6].y = base[3].y;
+    c = base[1].y;
+    d = base[2].y;
+    base[1].y = a = (base[0].y + c) >> 1;
+    base[5].y = b = (base[3].y + d) >> 1;
+    c = (c + d) >> 1;
+    base[2].y = a = (a + c) >> 1;
+    base[4].y = b = (b + c) >> 1;
+    base[3].y = (a + b) >> 1;
+}
+
+static void _splitLine(SwPoint* base)
+{
+    base[2] = base[1];
+    base[1] = {(base[0].x >> 1) + (base[1].x >> 1), (base[0].y >> 1) + (base[1].y >> 1)};
+}
+
 static void _horizLine(RleWorker& rw, int32_t x, int32_t y, int32_t area, int32_t aCount)
 {
     x += rw.cellMin.x;
@@ -481,7 +512,7 @@ static bool _lineTo(RleWorker& rw, const SwPoint& to)
 
         // avoid possible arithmetic overflow below by splitting
         if (HYPOT(diff) > SHRT_MAX) {
-            mathSplitLine(line);
+            _splitLine(line);
             ++line;
             continue;
         }
@@ -645,7 +676,7 @@ static bool _cubicTo(RleWorker& rw, const SwPoint& ctrl1, const SwPoint& ctrl2, 
             goto draw;
         }
     split:
-        mathSplitCubic(arc);
+        _splitCubic(arc);
         arc += 3;
         continue;
 
@@ -665,13 +696,13 @@ static bool _decomposeOutline(RleWorker& rw)
 
     ARRAY_FOREACH(p, outline->cntrs) {
         auto last = *p;
-        auto limit = outline->pts.data + last;
-        auto start = UPSCALE(outline->pts[first]);
-        auto pt = outline->pts.data + first;
+        auto limit = outline->out.data + last;
+        auto start = UPSCALE(outline->out[first]);
+        auto pt = outline->out.data + first;
         auto types = outline->types.data + first;
         ++types;
 
-        if (!_moveTo(rw, UPSCALE(outline->pts[first]))) return false;
+        if (!_moveTo(rw, UPSCALE(outline->out[first]))) return false;
 
         while (pt < limit) {
             //emit a single line_to
