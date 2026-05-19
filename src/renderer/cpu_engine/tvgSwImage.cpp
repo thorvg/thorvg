@@ -39,7 +39,7 @@ static bool _genOutline(SwImage& image, const Matrix& transform, SwMpool* mpool,
     image.outline = mpool->outline(tid);
     auto outline = image.outline;
 
-    outline->pts.reserve(5);
+    outline->out.reserve(5);
     outline->types.reserve(5);
     outline->cntrs.reserve(1);
     outline->closed.reserve(1);
@@ -53,13 +53,13 @@ static bool _genOutline(SwImage& image, const Matrix& transform, SwMpool* mpool,
     to[3] = {0, h};
 
     for (int i = 0; i < 4; i++) {
-        outline->pts.push(mathTransform(to[i], transform));
+        outline->out.push(mathTransform(to[i], transform));
         outline->types.push(SW_CURVE_TYPE_POINT);
     }
 
-    outline->pts.push(outline->pts[0]);
+    outline->out.push(outline->out[0]);
     outline->types.push(SW_CURVE_TYPE_POINT);
-    outline->cntrs.push(outline->pts.count - 1);
+    outline->cntrs.push(outline->out.count - 1);
     outline->closed.push(true);
 
     image.outline = outline;

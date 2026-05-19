@@ -665,13 +665,13 @@ static bool _decomposeOutline(RleWorker& rw)
 
     ARRAY_FOREACH(p, outline->cntrs) {
         auto last = *p;
-        auto limit = outline->pts.data + last;
-        auto start = UPSCALE(outline->pts[first]);
-        auto pt = outline->pts.data + first;
+        auto limit = outline->out.data + last;
+        auto start = UPSCALE(outline->out[first]);
+        auto pt = outline->out.data + first;
         auto types = outline->types.data + first;
         ++types;
 
-        if (!_moveTo(rw, UPSCALE(outline->pts[first]))) return false;
+        if (!_moveTo(rw, UPSCALE(outline->out[first]))) return false;
 
         while (pt < limit) {
             //emit a single line_to

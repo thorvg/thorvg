@@ -105,10 +105,11 @@ struct SwSize
 
 struct SwOutline
 {
-    Array<SwPoint> pts;             //the outline's points
-    Array<uint32_t> cntrs;          //the contour end points
-    Array<uint8_t> types;           //curve type
-    Array<bool> closed;             //opened or closed path?
+    Array<Point> in;        // the outlines' points in float-point form
+    Array<SwPoint> out;     // the outline's points in fixed-point form
+    Array<uint32_t> cntrs;  // the contour end points
+    Array<uint8_t> types;   // curve type
+    Array<bool> closed;     // opened or closed path?
     FillRule fillRule;
 };
 
@@ -223,7 +224,7 @@ struct SwStroke
     int64_t subPathLineLength;
     int64_t width;
     int64_t miterlimit;
-    SwFill* fill = nullptr;
+    SwFill* fill;
     SwStrokeBorder* borders[2];
     float sx, sy;
     StrokeCap cap;
@@ -249,7 +250,6 @@ struct SwDashStroke
 
 struct SwShape
 {
-    SwOutline* outline = nullptr;
     SwStroke* stroke = nullptr;
     SwFill* fill = nullptr;
     SwRle* rle = nullptr;
@@ -365,7 +365,8 @@ struct SwMpool
 
     SwOutline* outline(unsigned idx)
     {
-        outlines[idx].pts.clear();
+        outlines[idx].in.clear();
+        outlines[idx].out.clear();
         outlines[idx].cntrs.clear();
         outlines[idx].types.clear();
         outlines[idx].closed.clear();
@@ -391,6 +392,11 @@ struct SwMpool
 static inline int32_t TO_SWCOORD(float val)
 {
     return int32_t(val * 64.0f);
+}
+
+static inline SwPoint TO_SWPOINT(const Point& val)
+{
+    return {TO_SWCOORD(val.x), TO_SWCOORD(val.y)};
 }
 
 static inline uint32_t JOIN(uint8_t c0, uint8_t c1, uint8_t c2, uint8_t c3)
@@ -686,9 +692,7 @@ SwPoint mathTransform(const Point& to, const Matrix& transform);
 bool mathUpdateOutlineBBox(const SwOutline* outline, const RenderRegion& clipBox, RenderRegion& renderBox, bool fastTrack);
 
 void shapeReset(SwShape& shape);
-bool shapePrepare(SwShape& shape, const RenderShape* rshape, const Matrix& transform, const RenderRegion& clipBox, RenderRegion& renderBox, SwMpool* mpool, unsigned tid, bool hasComposite);
-bool shapeGenRle(SwShape& shape, const RenderRegion& bbox, SwMpool* mpool, unsigned tid, bool antiAlias);
-void shapeDelOutline(SwShape& shape, SwMpool* mpool, uint32_t tid);
+bool shapeGenRle(SwShape& shape, const RenderShape* rshape, const Matrix& transform, const RenderRegion& clipBox, RenderRegion& renderBox, SwMpool* mpool, unsigned tid, bool composite, bool antiAlias);
 void shapeResetStroke(SwShape& shape, const RenderShape* rshape, const Matrix& transform, SwMpool* mpool, unsigned tid);
 bool shapeGenStrokeRle(SwShape& shape, const RenderShape* rshape, const Matrix& transform, const RenderRegion& clipBox, RenderRegion& renderBox, SwMpool* mpool, unsigned tid, bool antiAlias);
 void shapeFree(SwShape& shape);

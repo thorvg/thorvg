@@ -699,7 +699,7 @@ static void _exportBorderOutline(const SwStroke& stroke, SwOutline* outline, uin
     if (border->pts.empty()) return;
 
     auto src = border->tags;
-    auto idx = outline->pts.count;
+    auto idx = outline->out.count;
 
     ARRAY_FOREACH(pts, border->pts) {
         if (*src & SW_STROKE_TAG_POINT) outline->types.push(SW_CURVE_TYPE_POINT);
@@ -708,7 +708,7 @@ static void _exportBorderOutline(const SwStroke& stroke, SwOutline* outline, uin
         ++src;
         ++idx;
     }
-    outline->pts.push(border->pts);
+    outline->out.push(border->pts);
 }
 
 
@@ -750,7 +750,7 @@ bool strokeParseOutline(SwStroke* stroke, const SwOutline& outline, SwMpool* mpo
 
     ARRAY_FOREACH(p, outline.cntrs) {
         auto last = *p;           //index of last point in contour
-        auto limit = outline.pts.data + last;
+        auto limit = outline.out.data + last;
         ++i;
 
         //Skip empty points
@@ -759,8 +759,8 @@ bool strokeParseOutline(SwStroke* stroke, const SwOutline& outline, SwMpool* mpo
             continue;
         }
 
-        auto start = outline.pts[first];
-        auto pt = outline.pts.data + first;
+        auto start = outline.out[first];
+        auto pt = outline.out.data + first;
         auto types = outline.types.data + first;
         auto type = types[0];
 
@@ -799,7 +799,7 @@ SwOutline* strokeExportOutline(SwStroke* stroke, SwMpool* mpool, unsigned tid)
 {
     auto reserve = stroke->borders[0]->pts.count + stroke->borders[1]->pts.count;
     auto outline = mpool->outline(tid);
-    outline->pts.reserve(reserve);
+    outline->out.reserve(reserve);
     outline->types.reserve(reserve);
     outline->fillRule = FillRule::NonZero;
 

@@ -271,19 +271,19 @@ SwPoint mathTransform(const Point& to, const Matrix& transform)
 
 bool mathUpdateOutlineBBox(const SwOutline* outline, const RenderRegion& clipBox, RenderRegion& renderBox, bool fastTrack)
 {
-    if (!outline || outline->pts.empty()) {
+    if (!outline || outline->out.empty()) {
         renderBox.reset();
         return false;
     }
 
-    auto pt = outline->pts.begin();
+    auto pt = outline->out.begin();
 
     auto xMin = pt->x;
     auto xMax = pt->x;
     auto yMin = pt->y;
     auto yMax = pt->y;
 
-    for (++pt; pt < outline->pts.end(); ++pt) {
+    for (++pt; pt < outline->out.end(); ++pt) {
         if (xMin > pt->x) xMin = pt->x;
         if (xMax < pt->x) xMax = pt->x;
         if (yMin > pt->y) yMin = pt->y;

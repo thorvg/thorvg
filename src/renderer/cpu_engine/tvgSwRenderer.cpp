@@ -130,9 +130,8 @@ struct SwShapeTask : SwTask
         if (updateShape) {
             shapeReset(shape);
             if (rshape->fill || rshape->color.a > 0 || clipper) {
-                if (shapePrepare(shape, rshape, transform, clipBox, curBox, renderer->mpool, tid, clips.count > 0 ? true : false)) {
-                    if (!shapeGenRle(shape, curBox, renderer->mpool, tid, antialiasing(strokeWidth))) goto err;
-                } else {
+                auto composite = clips.count > 0 ? true : false;
+                if (!shapeGenRle(shape, rshape, transform, clipBox, curBox, renderer->mpool, tid, composite, antialiasing(strokeWidth))) {
                     updateFill = false;
                     curBox.reset();
                 }
@@ -142,27 +141,21 @@ struct SwShapeTask : SwTask
         if (updateFill) {
             if (auto fill = rshape->fill) {
                 auto ctable = (flags[0] & RenderUpdateFlag::Gradient) ? true : false;
-                if (ctable) shapeResetFill(shape);
                 if (!shapeGenFillColors(shape, fill, transform, renderer->surface, opacity, ctable)) goto err;
             }
         }
         //Stroke
         if (updateShape || flags[0] & RenderUpdateFlag::Stroke) {
             if (strokeWidth > 0.0f) {
-                shapeResetStroke(shape, rshape, transform, renderer->mpool, tid);
                 if (!shapeGenStrokeRle(shape, rshape, transform, clipBox, curBox, renderer->mpool, tid, renderer->antiAlias)) goto err;
                 if (auto fill = rshape->strokeFill()) {
                     auto ctable = (flags[0] & RenderUpdateFlag::GradientStroke) ? true : false;
-                    if (ctable) shapeResetStrokeFill(shape);
                     if (!shapeGenStrokeFillColors(shape, fill, transform, renderer->surface, opacity, ctable)) goto err;
                 }
             } else {
                 shapeDelStroke(shape);
             }
         }
-
-        //Clear current task memorypool here if the clippers would use the same memory pool
-        shapeDelOutline(shape, renderer->mpool, tid);
 
         //Clip Path
         ARRAY_FOREACH(p, clips) {
@@ -179,7 +172,6 @@ struct SwShapeTask : SwTask
     err:
         shapeReset(shape);
         rleReset(shape.strokeRle);
-        shapeDelOutline(shape, renderer->mpool, tid);
         invisible();
     }
 };
