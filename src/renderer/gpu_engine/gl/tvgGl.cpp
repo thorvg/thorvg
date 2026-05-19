@@ -884,15 +884,31 @@ bool glInit()
 bool glTerm()
 {
 #if defined(_WIN32) && !defined(__CYGWIN__)
-    if (_libGL) FreeLibrary(_libGL);
+    if (_libGL) { 
+        FreeLibrary(_libGL);
+        _libGL = nullptr;
+    }
     #if defined(THORVG_GL_TARGET_GLES)
-        if (_libEGL) FreeLibrary(_libEGL);
+        if (_libEGL) { 
+            FreeLibrary(_libEGL);
+            _libEGL = nullptr;
+        }
     #endif
 #else
-    if (_libGL) dlclose(_libGL);
+    if (_libGL) { 
+        dlclose(_libGL);
+        _libGL = nullptr;
+    }
     #if defined(THORVG_GL_TARGET_GLES)
-        if (_libEGL) dlclose(_libEGL);
+        if (_libEGL) { 
+            dlclose(_libEGL);
+            _libEGL = nullptr;
+        }
     #endif
+#endif
+
+#if defined(THORVG_GL_TARGET_GL) && ((defined(_WIN32) && !defined(__CYGWIN__)) || defined(__linux__))
+    if (glGetProcAddress) glGetProcAddress = nullptr;
 #endif
 
     return true;
