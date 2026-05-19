@@ -6,7 +6,6 @@ source_file = [
    'tvgSwRasterTexmap.h',
    'tvgSwFill.cpp',
    'tvgSwImage.cpp',
-   'tvgSwMath.cpp',
    'tvgSwMemPool.cpp',
    'tvgSwPostEffect.cpp',
    'tvgSwRenderer.h',
@@ -15,6 +14,7 @@ source_file = [
    'tvgSwRle.cpp',
    'tvgSwShape.cpp',
    'tvgSwStroke.cpp',
+   'tvgSwUtil.cpp'
 ]
 
 omp_dep = []
