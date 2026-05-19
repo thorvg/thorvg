@@ -33,7 +33,8 @@ namespace tvg
 {
 
 #define MATH_PI  3.14159265358979323846f
-#define MATH_PI2 1.57079632679489661923f
+#define MATH_PI2 (MATH_PI * 0.5f)
+#define MATH_2PI (MATH_PI * 2.0f)
 #define FLOAT_EPSILON 1.0e-06f  //1.192092896e-07f
 #define PATH_KAPPA 0.552284f
 
@@ -333,6 +334,11 @@ static inline void operator*=(Point& lhs, const Point& rhs)
     lhs.y *= rhs.y;
 }
 
+static inline void operator/=(Point& lhs, const Point& rhs)
+{
+    lhs.x /= rhs.x;
+    lhs.y /= rhs.y;
+}
 
 static inline Point operator*(const Point& lhs, const float rhs)
 {

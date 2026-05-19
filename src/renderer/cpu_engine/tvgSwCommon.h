@@ -31,9 +31,6 @@
 
 #define SW_CURVE_TYPE_POINT 0
 #define SW_CURVE_TYPE_CUBIC 1
-#define SW_ANGLE_PI (180L << 16)
-#define SW_ANGLE_2PI (SW_ANGLE_PI << 1)
-#define SW_ANGLE_PI2 (SW_ANGLE_PI >> 1)
 #define SW_COLOR_TABLE 1024
 
 static inline float TO_FLOAT(int32_t val)
@@ -105,10 +102,11 @@ struct SwSize
 
 struct SwOutline
 {
-    Array<SwPoint> pts;             //the outline's points
-    Array<uint32_t> cntrs;          //the contour end points
-    Array<uint8_t> types;           //curve type
-    Array<bool> closed;             //opened or closed path?
+    Array<Point> in;        // the outlines' points in float-point form
+    Array<SwPoint> out;     // the outline's points in fixed-point form
+    Array<uint32_t> cntrs;  // the contour end points
+    Array<uint8_t> types;   // curve type
+    Array<bool> closed;     // opened or closed path?
     FillRule fillRule;
 };
 
@@ -201,7 +199,7 @@ struct SwFill
 
 struct SwStrokeBorder
 {
-    Array<SwPoint> pts;
+    Array<Point> pts;
     uint8_t* tags = nullptr;
     int32_t start = 0;        //index of current sub-path start point
     bool movable = false;      //true: for ends of lineto borders
@@ -214,21 +212,18 @@ struct SwStrokeBorder
 
 struct SwStroke
 {
-    int64_t angleIn;
-    int64_t angleOut;
-    SwPoint center;
-    int64_t lineLength;
-    int64_t subPathAngle;
-    SwPoint ptStartSubPath;
-    int64_t subPathLineLength;
-    int64_t width;
-    int64_t miterlimit;
-    SwFill* fill = nullptr;
+    float angleIn, angleOut;
+    Point center;
+    float length;
+    float subPathAngle;
+    Point subPathStart;
+    float subPathLength;
+    float width;
+    float miterlimit;
+    SwFill* fill;
     SwStrokeBorder* borders[2];
-    float sx, sy;
     StrokeCap cap;
     StrokeJoin join;
-    StrokeJoin joinSaved;
     bool firstPt;
     bool closedSubPath;
     bool handleWideStrokes;
@@ -365,7 +360,8 @@ struct SwMpool
 
     SwOutline* outline(unsigned idx)
     {
-        outlines[idx].pts.clear();
+        outlines[idx].in.clear();
+        outlines[idx].out.clear();
         outlines[idx].cntrs.clear();
         outlines[idx].types.clear();
         outlines[idx].closed.clear();
@@ -393,6 +389,11 @@ static inline int32_t TO_SWCOORD(float val)
     return int32_t(val * 64.0f);
 }
 
+static inline SwPoint TO_SWPOINT(const Point& val)
+{
+    return {TO_SWCOORD(val.x), TO_SWCOORD(val.y)};
+}
+
 static inline uint32_t JOIN(uint8_t c0, uint8_t c1, uint8_t c2, uint8_t c3)
 {
     return (c0 << 24 | c1 << 16 | c2 << 8 | c3);
@@ -412,11 +413,6 @@ static inline uint32_t INTERPOLATE(uint32_t s, uint32_t d, uint8_t a)
 static inline uint8_t INTERPOLATE8(uint8_t s, uint8_t d, uint8_t a)
 {
     return (((s) * (a) + 0xff) >> 8) + (((d) * ~(a) + 0xff) >> 8);
-}
-
-static inline int32_t HALF_STROKE(float width)
-{
-    return TO_SWCOORD(width * 0.5f);
 }
 
 static inline uint8_t A(uint32_t c)
@@ -668,27 +664,12 @@ static inline uint32_t opBlendLuminosity(uint32_t s, uint32_t d)
     return BLEND_PRE(JOIN(255, r, g, b), s, o.a);
 }
 
-int64_t mathMultiply(int64_t a, int64_t b);
-int64_t mathDivide(int64_t a, int64_t b);
-int64_t mathMulDiv(int64_t a, int64_t b, int64_t c);
-void mathRotate(SwPoint& pt, int64_t angle);
-int64_t mathTan(int64_t angle);
-int64_t mathAtan(const SwPoint& pt);
-int64_t mathCos(int64_t angle);
-int64_t mathSin(int64_t angle);
-void mathSplitCubic(SwPoint* base);
-void mathSplitLine(SwPoint* base);
-int64_t mathDiff(int64_t angle1, int64_t angle2);
-int64_t mathLength(const SwPoint& pt);
-int mathCubicAngle(const SwPoint* base, int64_t& angleIn, int64_t& angleMid, int64_t& angleOut);
-int64_t mathMean(int64_t angle1, int64_t angle2);
-SwPoint mathTransform(const Point& to, const Matrix& transform);
-bool mathUpdateOutlineBBox(const SwOutline* outline, const RenderRegion& clipBox, RenderRegion& renderBox, bool fastTrack);
+void utilExport(SwOutline* outline, const Matrix& transform, BBox& bbox);
+bool utilBBox(const BBox& bbox, const RenderRegion& clipBox, RenderRegion& renderBox, bool fastTrack);
 
 void shapeReset(SwShape& shape);
-bool shapePrepare(SwShape& shape, const RenderShape* rshape, const Matrix& transform, const RenderRegion& clipBox, RenderRegion& renderBox, SwMpool* mpool, unsigned tid, bool hasComposite);
-bool shapeGenRle(SwShape& shape, const RenderRegion& bbox, SwMpool* mpool, unsigned tid, bool antiAlias);
-void shapeDelOutline(SwShape& shape, SwMpool* mpool, uint32_t tid);
+void shapeDelOutline(SwShape& shape);
+bool shapeGenRle(SwShape& shape, const RenderShape* rshape, const Matrix& transform, const RenderRegion& clipBox, RenderRegion& renderBox, SwMpool* mpool, unsigned tid, bool composite, bool antiAlias);
 void shapeResetStroke(SwShape& shape, const RenderShape* rshape, const Matrix& transform, SwMpool* mpool, unsigned tid);
 bool shapeGenStrokeRle(SwShape& shape, const RenderShape* rshape, const Matrix& transform, const RenderRegion& clipBox, RenderRegion& renderBox, SwMpool* mpool, unsigned tid, bool antiAlias);
 void shapeFree(SwShape& shape);
@@ -707,7 +688,6 @@ void strokeFree(SwStroke* stroke);
 
 bool imagePrepare(SwImage& image, const Matrix& transform, const RenderRegion& clipBox, RenderRegion& renderBox, SwMpool* mpool, unsigned tid);
 bool imageGenRle(SwImage& image, const RenderRegion& bbox, SwMpool* mpool, unsigned tid, bool antiAlias);
-void imageDelOutline(SwImage& image, SwMpool* mpool, uint32_t tid);
 void imageReset(SwImage& image);
 void imageFree(SwImage& image);
 
