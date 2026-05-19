@@ -31,9 +31,6 @@
 
 #define SW_CURVE_TYPE_POINT 0
 #define SW_CURVE_TYPE_CUBIC 1
-#define SW_ANGLE_PI (180L << 16)
-#define SW_ANGLE_2PI (SW_ANGLE_PI << 1)
-#define SW_ANGLE_PI2 (SW_ANGLE_PI >> 1)
 #define SW_COLOR_TABLE 1024
 
 static inline float TO_FLOAT(int32_t val)
@@ -202,7 +199,7 @@ struct SwFill
 
 struct SwStrokeBorder
 {
-    Array<SwPoint> pts;
+    Array<Point> pts;
     uint8_t* tags = nullptr;
     int32_t start = 0;        //index of current sub-path start point
     bool movable = false;      //true: for ends of lineto borders
@@ -215,18 +212,17 @@ struct SwStrokeBorder
 
 struct SwStroke
 {
-    int64_t angleIn;
-    int64_t angleOut;
-    SwPoint center;
-    int64_t lineLength;
+    float angleIn, angleOut;
+    Point center;
+    int64_t length;
     int64_t subPathAngle;
-    SwPoint ptStartSubPath;
+    Point ptStartSubPath;
     int64_t subPathLineLength;
-    int64_t width;
-    int64_t miterlimit;
+    float width;
+    float miterlimit;
     SwFill* fill;
     SwStrokeBorder* borders[2];
-    float sx, sy;
+    Point scale;
     StrokeCap cap;
     StrokeJoin join;
     StrokeJoin joinSaved;
@@ -674,20 +670,11 @@ static inline uint32_t opBlendLuminosity(uint32_t s, uint32_t d)
     return BLEND_PRE(JOIN(255, r, g, b), s, o.a);
 }
 
-int64_t mathMultiply(int64_t a, int64_t b);
-int64_t mathDivide(int64_t a, int64_t b);
-int64_t mathMulDiv(int64_t a, int64_t b, int64_t c);
-void mathRotate(SwPoint& pt, int64_t angle);
-int64_t mathTan(int64_t angle);
-int64_t mathAtan(const SwPoint& pt);
-int64_t mathCos(int64_t angle);
-int64_t mathSin(int64_t angle);
+void mathRotate(Point& pt, float radian);
 void mathSplitCubic(SwPoint* base);
 void mathSplitLine(SwPoint* base);
-int64_t mathDiff(int64_t angle1, int64_t angle2);
-int64_t mathLength(const SwPoint& pt);
-int mathCubicAngle(const SwPoint* base, int64_t& angleIn, int64_t& angleMid, int64_t& angleOut);
-int64_t mathMean(int64_t angle1, int64_t angle2);
+float mathDiff(float angle1, float angle2);
+float mathMean(float angle1, float angle2);
 SwPoint mathTransform(const Point& to, const Matrix& transform);
 bool mathUpdateOutlineBBox(const SwOutline* outline, const RenderRegion& clipBox, RenderRegion& renderBox, bool fastTrack);
 
