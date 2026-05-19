@@ -249,6 +249,9 @@ static inline bool zero(const Point& p)
 
 static inline float length(const Point& a, const Point& b)
 {
+    /* approximate sqrt(x*x + y*y) using alpha max plus beta min algorithm.
+       With alpha = 1, beta = 3/8, giving results with the largest error less
+       than 7% compared to the exact value. */
     auto x = b.x - a.x;
     auto y = b.y - a.y;
 
