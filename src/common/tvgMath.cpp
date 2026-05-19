@@ -30,19 +30,12 @@
 /* Internal Class Implementation                                        */
 /************************************************************************/
 
-static float _lineLengthApprox(const Point& pt1, const Point& pt2)
+static float _lengthApprox(const Point& pt1, const Point& pt2)
 {
-    /* approximate sqrt(x*x + y*y) using alpha max plus beta min algorithm.
-       With alpha = 1, beta = 3/8, giving results with the largest error less
-       than 7% compared to the exact value. */
-    Point diff = {pt2.x - pt1.x, pt2.y - pt1.y};
-    if (diff.x < 0) diff.x = -diff.x;
-    if (diff.y < 0) diff.y = -diff.y;
-    return (diff.x > diff.y) ? (diff.x + diff.y * 0.375f) : (diff.y + diff.x * 0.375f);
+    return tvg::length(pt1, pt2);
 }
 
-
-static float _lineLength(const Point& pt1, const Point& pt2)
+static float _length(const Point& pt1, const Point& pt2)
 {
     Point diff = {pt2.x - pt1.x, pt2.y - pt1.y};
     return sqrtf(diff.x * diff.x + diff.y * diff.y);
@@ -276,7 +269,7 @@ void normalize(Point& pt)
 
 float Line::length() const
 {
-    return _lineLength(pt1, pt2);
+    return _length(pt1, pt2);
 }
 
 
@@ -340,13 +333,13 @@ void Bezier::split(float at, Bezier& left, Bezier& right) const
 
 float Bezier::length() const
 {
-    return _bezLength(*this, _lineLength);
+    return _bezLength(*this, _length);
 }
 
 
 float Bezier::lengthApprox() const
 {
-    return _bezLength(*this, _lineLengthApprox);
+    return _bezLength(*this, _lengthApprox);
 }
 
 
@@ -376,13 +369,13 @@ void Bezier::split(float t, Bezier& left)
 
 float Bezier::at(float at, float length) const
 {
-    return _bezAt(*this, at, length, _lineLength);
+    return _bezAt(*this, at, length, _length);
 }
 
 
 float Bezier::atApprox(float at, float length) const
 {
-    return _bezAt(*this, at, length, _lineLengthApprox);
+    return _bezAt(*this, at, length, _lengthApprox);
 }
 
 
