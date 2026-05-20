@@ -166,7 +166,7 @@ RenderData WgRenderer::prepare(const RenderShape& rshape, RenderData data, const
     if (rshape.stroke && !renderDataShape->renderSettingsStroke.skip) {
         if (rshape.stroke->fill && (!data || (flags & (RenderUpdateFlag::GradientStroke | RenderUpdateFlag::Transform)))) {
             bool updateColorRamp = !data || ((flags & RenderUpdateFlag::GradientStroke) != RenderUpdateFlag::None);
-            renderDataShape->renderSettingsStroke.update(mContext, rshape.stroke->fill, &transform, updateColorRamp);
+            renderDataShape->renderSettingsStroke.update(mContext, rshape.stroke->fill, nullptr, updateColorRamp);
         } else if (!data || (flags & RenderUpdateFlag::Stroke)) {
             renderDataShape->renderSettingsStroke.update(mContext, rshape.stroke->color);
         }
@@ -302,22 +302,10 @@ bool WgRenderer::bounds(RenderData data, Point* pt4, const Matrix& m)
                 bbox.init();
                 auto& vertexes = renderData->meshStrokes.vbuffer;
 
-                if (m == renderData->transform) {
-                    for (uint32_t i = 0; i < vertexes.count; i++) {
-                        Point vert = vertexes[i];
-                        bbox.min = min(bbox.min, vert);
-                        bbox.max = max(bbox.max, vert);
-                    }
-                } else {
-                    Matrix inverseModel;
-                    inverse(&renderData->transform, &inverseModel);
-                    inverseModel *= m;
-                    for (uint32_t i = 0; i < vertexes.count; i++) {
-                        Point vert = vertexes[i];
-                        vert *= inverseModel;
-                        bbox.min = min(bbox.min, vert);
-                        bbox.max = max(bbox.max, vert);
-                    }
+                for (uint32_t i = 0; i < vertexes.count; i++) {
+                    Point vert = vertexes[i] * m;
+                    bbox.min = min(bbox.min, vert);
+                    bbox.max = max(bbox.max, vert);
                 }
 
                 pt4[0] = bbox.min;

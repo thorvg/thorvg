@@ -43,6 +43,7 @@ private:
     WgStageBufferGeometry stageBufferGeometry{};
     WgStageBufferSolidColor stageBufferSolidColor{};
     WgStageBufferUniform<WgShaderTypePaintSettings> stageBufferPaint;
+    WgStageBufferUniform<WgShaderTypeMat4x4fBlock> stageBufferViewMat;
     // global stencil/depth buffer handles
     WGPUTexture texDepthStencil{};
     WGPUTextureView texViewDepthStencil{};

@@ -90,6 +90,7 @@ struct WgRenderDataShape: public WgRenderDataPaint
     FillRule fillRule{};
     bool convex{};
     BBox bbox;
+    uint32_t strokeViewMatInd{};
 
     void updateBBox(BBox bb);
     void updateAABB() { aabb = bbox; }
