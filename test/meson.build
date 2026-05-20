@@ -26,12 +26,20 @@ test_file = [
     'testText.cpp'
 ]
 
-if gl_engine and not get_option('extra').contains('opengl_es')
+if gl_engine
     egl_dep = dependency('egl', required: false)
-    gl_dep = dependency('gl', required: false)
 
     if not egl_dep.found()
         egl_dep = dependency('angleproject', required: false)
+    endif
+
+    if gl_variant == 'OpenGL ES'
+        gl_dep = dependency('glesv2', required: false)
+        if not gl_dep.found()
+            gl_dep = cc.find_library('GLESv2', required: false)
+        endif
+    else
+        gl_dep = dependency('gl', required: false)
     endif
 
     if egl_dep.found() and gl_dep.found()

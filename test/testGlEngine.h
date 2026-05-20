@@ -31,7 +31,20 @@
 
 #include <EGL/egl.h>
 #include <EGL/eglext.h>
-#include <GL/gl.h>
+
+#if defined(THORVG_GL_TARGET_GLES)
+    #include <GLES3/gl3.h>
+#else
+    #include <GL/gl.h>
+#endif
+
+#if defined(THORVG_GL_TARGET_GLES) && !defined(EGL_OPENGL_ES3_BIT)
+    #ifdef EGL_OPENGL_ES3_BIT_KHR
+        #define EGL_OPENGL_ES3_BIT EGL_OPENGL_ES3_BIT_KHR
+    #else
+        #define EGL_OPENGL_ES3_BIT 0x00000040
+    #endif
+#endif
 
 using namespace tvg;
 
@@ -49,7 +62,11 @@ struct TestGLEngine
     {
         bool success = true;
         success &= initDisplay();
+#if defined(THORVG_GL_TARGET_GLES)
+        success &= (eglBindAPI(EGL_OPENGL_ES_API) == EGL_TRUE);
+#else
         success &= (eglBindAPI(EGL_OPENGL_API) == EGL_TRUE);
+#endif
         success &= initConfig();
         success &= initSurface();
         success &= initContext();
@@ -111,7 +128,11 @@ private:
     bool initConfig()
     {
         const EGLint attrs[] = {
+#if defined(THORVG_GL_TARGET_GLES)
+            EGL_RENDERABLE_TYPE, EGL_OPENGL_ES3_BIT,
+#else
             EGL_RENDERABLE_TYPE, EGL_OPENGL_BIT,
+#endif
             EGL_SURFACE_TYPE, EGL_PBUFFER_BIT,
             EGL_RED_SIZE, 8,
             EGL_GREEN_SIZE, 8,
@@ -128,9 +149,13 @@ private:
     bool initContext()
     {
         const EGLint attrs[] = {
+#if defined(THORVG_GL_TARGET_GLES)
+            EGL_CONTEXT_CLIENT_VERSION, 3,
+#else
             EGL_CONTEXT_MAJOR_VERSION, 3,
             EGL_CONTEXT_MINOR_VERSION, 3,
             EGL_CONTEXT_OPENGL_PROFILE_MASK, EGL_CONTEXT_OPENGL_CORE_PROFILE_BIT,
+#endif
             EGL_NONE};
 
         context = eglCreateContext(display, config, EGL_NO_CONTEXT, attrs);
