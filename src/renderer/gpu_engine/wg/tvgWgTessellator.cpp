@@ -25,8 +25,8 @@
 #include "tvgMath.h"
 
 
-WgStroker::WgStroker(WgMeshData* buffer, float width, StrokeCap cap, StrokeJoin join, float miterLimit)
-    : mBuffer(buffer), mWidth(width), mMiterLimit(miterLimit), mCap(cap), mJoin(join)
+WgStroker::WgStroker(WgMeshData* buffer, float width, StrokeCap cap, StrokeJoin join, float miterLimit, float qualityScale)
+    : mBuffer(buffer), mWidth(width), mMiterLimit(miterLimit), mQualityScale(qualityScale), mCap(cap), mJoin(join)
 {
 }
 
@@ -165,7 +165,7 @@ void WgStroker::lineTo(const Point& curr)
 void WgStroker::cubicTo(const Point& cnt1, const Point& cnt2, const Point& end)
 {
     Bezier curve {mState.prevPt, cnt1, cnt2, end};
-    auto count = curve.segments();
+    auto count = curve.segments(mQualityScale);
     auto step = 1.f / count;
 
     for (uint32_t i = 0; i <= count; i++) {
@@ -241,7 +241,7 @@ void WgStroker::round(const Point &prev, const Point& curr, const Point& center)
     }
 
     auto arcAngle = endAngle - startAngle;
-    auto count = tvg::arcSegmentsCnt(arcAngle, radius());
+    auto count = tvg::arcSegmentsCnt(arcAngle, radius() * mQualityScale);
 
     auto c = mBuffer->vbuffer.count;  mBuffer->vbuffer.push(center);
     auto pi = mBuffer->vbuffer.count; mBuffer->vbuffer.push(prev);
@@ -268,7 +268,7 @@ void WgStroker::round(const Point &prev, const Point& curr, const Point& center)
 
 void WgStroker::roundPoint(const Point &p)
 {
-    auto count = tvg::arcSegmentsCnt(2.0f * MATH_PI, radius());
+    auto count = tvg::arcSegmentsCnt(2.0f * MATH_PI, radius() * mQualityScale);
     auto c = mBuffer->vbuffer.count; mBuffer->vbuffer.push(p);
     auto step = 2.0f * MATH_PI / (count - 1);
 
