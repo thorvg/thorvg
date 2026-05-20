@@ -289,7 +289,7 @@ void Line::split(float at, Line& left, Line& right) const
 Bezier::Bezier(const Point& st, const Point& ed, float radius)
 {
     // Calculate the angle between the start and end points
-    auto angle = tvg::atan2(ed.y - st.y, ed.x - st.x);
+    auto angle = tvg::atan(ed - st);
 
     // Calculate the control points of the cubic bezier curve
     auto c = radius * PATH_KAPPA;  // c = radius * (4/3) * tan(pi/8)
@@ -419,7 +419,7 @@ float Bezier::angle(float t) const
     pt.x *= 3;
     pt.y *= 3;
 
-    return rad2deg(tvg::atan2(pt.y, pt.x));
+    return rad2deg(tvg::atan(pt));
 }
 
 

@@ -106,7 +106,7 @@ struct LottieVectorFrame
     {
         if (!hasTangent) {
             Point dp = next->value - value;
-            return rad2deg(tvg::atan2(dp.y, dp.x));
+            return rad2deg(tvg::atan(dp));
         }
 
         auto t = (frameNo - no) / (next->no - no);
