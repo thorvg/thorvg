@@ -520,3 +520,9 @@ bool LottieLoader::quality(uint8_t value)
     }
     return true;
 }
+
+
+void LottieLoader::resolver(std::function<void(const tvg::LottieAudioResolver&, void*)> func, void* data)
+{
+    builder->audioResolver = {std::move(func), data};
+}

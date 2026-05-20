@@ -123,6 +123,15 @@ Result LottieAnimation::quality(uint8_t value) noexcept
 }
 
 
+Result LottieAnimation::resolver(std::function<void(const LottieAudioResolver&, void*)> func, void* data) noexcept
+{
+    auto loader = to<PictureImpl>(pImpl->picture)->loader;
+    if (!loader) return Result::InsufficientCondition;
+    static_cast<LottieLoader*>(loader)->resolver(std::move(func), data);
+    return Result::Success;
+}
+
+
 LottieAnimation* LottieAnimation::gen() noexcept
 {
     return new LottieAnimation;

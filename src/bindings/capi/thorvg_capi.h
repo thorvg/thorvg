@@ -3417,6 +3417,73 @@ TVG_API Tvg_Result tvg_lottie_animation_tween(Tvg_Animation animation, float fro
  */
 TVG_API Tvg_Result tvg_lottie_animation_set_quality(Tvg_Animation animation, uint8_t value);
 
+/**
+ * @brief Describes the current state of a Lottie audio layer.
+ *
+ * This structure is provided to the audio resolver callback and contains
+ * the information required to synchronize audio playback with the animation
+ * timeline. Applications are responsible for managing audio playback using
+ * their own audio engine.
+ *
+ * Example:
+ * @code
+ * void on_audio(const Tvg_Audio_Info* info, void* data)
+ * {
+ *     if (info->active) {
+ *         // Start or seek playback of info->src.
+ *     } else {
+ *         // Stop playback of info->src.
+ *     }
+ * }
+ * @endcode
+ *
+ * @see tvg_lottie_animation_set_audio_resolver()
+ *
+ * @note Experimental API
+ */
+typedef struct {
+    const char* src;      ///< Audio source: a file path/URL or embedded raw bytes.
+    const char* mimeType; ///< MIME type string; valid when @c embedded; may be @c NULL.
+    uint32_t    size;     ///< Embedded data size in bytes; valid when @c embedded.
+    float       offset;   ///< Position within the audio file in seconds; valid when @c active.
+    float       volume;   ///< Volume [0, 100]; valid when @c active.
+    bool        active;   ///< @c true while the layer is within its playback range.
+    bool        embedded; ///< @c true if @p src points to embedded audio data; @c false if it is a file path or URL.
+} Tvg_Audio_Info;
+
+/**
+ * @brief Callback invoked to provide audio playback information for a Lottie animation.
+ *
+ * Applications can use this callback to synchronize external audio
+ * playback with the animation timeline.
+ *
+ * @param[in] info Audio information for the current timeline state.
+ * @param[in] data User data specified when registering the callback.
+ *
+ * @see tvg_lottie_animation_set_audio_resolver()
+ * @note Experimental API.
+ */
+typedef void (*Tvg_Audio_Resolver)(const Tvg_Audio_Info* info, void* data);
+
+/**
+ * @brief Sets the audio resolver callback for Lottie audio layers.
+ *
+ * The resolver is invoked whenever the playback state of an audio layer changes.
+ * It allows applications to synchronize audio playback with the animation timeline.
+ *
+ * @param[in] animation A Lottie animation object.
+ * @param[in] resolver A user-defined callback that receives audio playback state updates.
+ * @param[in] data User data passed to @p resolver.
+ *
+ * @retval TVG_RESULT_INSUFFICIENT_CONDITION The animation has not been loaded.
+ *
+ * @note To disable audio notifications, pass @c nullptr as @p resolver.
+ * @note Experimental API.
+ *
+ * @see Tvg_Audio_Resolver
+ */
+TVG_API Tvg_Result tvg_lottie_animation_set_audio_resolver(Tvg_Animation animation, Tvg_Audio_Resolver resolver, void* data);
+
 /** \} */   // end addtogroup ThorVGCapi_LottieAnimation
 
 

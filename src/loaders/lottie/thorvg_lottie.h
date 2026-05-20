@@ -7,6 +7,40 @@ namespace tvg
 {
 
 /**
+ * @brief Describes the current state of a Lottie audio layer.
+ *
+ * This structure is provided to the audio resolver callback and contains
+ * the information required to synchronize audio playback with the animation
+ * timeline. Applications are responsible for managing audio playback using
+ * their own audio engine.
+ *
+ * Example:
+ * @code
+ * animation->resolver([](const LottieAudioResolver& info, void*) {
+ *     if (info.active) {
+ *         // Start or seek playback of info.src.
+ *     } else {
+ *         // Stop playback of info.src.
+ *     }
+ * }, nullptr);
+ * @endcode
+ *
+ * @see LottieAnimation::resolver()
+ *
+ * @note Experimental API
+ */
+struct LottieAudioResolver
+{
+    const char* src;         ///< Audio source: a file path/URL or embedded raw bytes.
+    const char* mimeType;    ///< MIME type string; valid when @c embedded; may be @c nullptr.
+    uint32_t    size;        ///< Embedded data size in bytes; valid when @c embedded.
+    float       offset;      ///< Position within the audio file in seconds; valid when @c active.
+    float       volume;      ///< Volume [0, 100]; valid when @c active.
+    bool        active;      ///< @c true while the layer is within its playback range.
+    bool        embedded;    ///< @c true if @p src points to embedded audio data; @c false if it is a file path or URL.
+};
+
+/**
  * @class LottieAnimation
  *
  * @brief The LottieAnimation class enables control of advanced Lottie features.
@@ -160,6 +194,24 @@ public:
      * @since 1.0
      */
     Result quality(uint8_t value) noexcept;
+
+    /**
+     * @brief Sets the audio resolver callback for Lottie audio layers.
+     *
+     * The resolver is invoked whenever the playback state of an audio layer changes.
+     * It allows applications to synchronize audio playback with the animation timeline.
+     *
+     * @param[in] func A user-defined callback that receives audio playback state updates.
+     * @param[in] data User data passed to @p func.
+     *
+     * @retval Result::InsufficientCondition The animation has not been loaded.
+     *
+     * @note To disable audio notifications, pass @c nullptr as @p func.
+     * @note Experimental API.
+     *
+     * @see LottieAudioResolver
+     */
+    Result resolver(std::function<void(const LottieAudioResolver& info, void* data)> func, void* data) noexcept;
 
     /**
      * @brief Creates a new LottieAnimation object.
