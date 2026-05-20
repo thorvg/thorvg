@@ -9,25 +9,6 @@ if host_machine.system() == 'darwin'
     test_dep += declare_dependency(link_args: ['-framework', 'Cocoa', '-framework', 'IOKit'])
 endif
 
-if gl_engine and not get_option('extra').contains('opengl_es') and host_machine.system() == 'linux'
-    egl_dep = dependency('egl', required: false)
-    gl_test_dep = dependency('gl', required: false)
-
-    if egl_dep.found() and gl_test_dep.found()
-        test_dep += [egl_dep, gl_test_dep]
-        test_compiler_flags += ['-DTHORVG_GL_TEST_SUPPORT']
-    endif
-endif
-
-if wg_engine
-    wgpu_test_dep = dependency('wgpu_native', required: false)
-
-    if wgpu_test_dep.found()
-        test_dep += wgpu_test_dep
-        test_compiler_flags += ['-DTHORVG_WG_TEST_SUPPORT']
-    endif
-endif
-
 test_file = [
     'testAccessor.cpp',
     'testAnimation.cpp',
@@ -45,12 +26,30 @@ test_file = [
     'testText.cpp'
 ]
 
-if gl_engine and test_compiler_flags.contains('-DTHORVG_GL_TEST_SUPPORT')
-    test_file += ['testGlCanvas.cpp', 'testGlEngine.cpp']
+if gl_engine and not get_option('extra').contains('opengl_es')
+    egl_dep = dependency('egl', required: false)
+    gl_dep = dependency('gl', required: false)
+
+    if not egl_dep.found()
+        cpp = meson.get_compiler('cpp')
+        egl_dep = cpp.find_library('EGL', required: false)
+    endif
+
+    if egl_dep.found() and gl_dep.found()
+        test_dep += [egl_dep, gl_dep]
+        test_compiler_flags += ['-DTHORVG_GL_TEST_SUPPORT']
+        test_file += ['testGlCanvas.cpp', 'testGlEngine.cpp']
+    endif
 endif
 
-if wg_engine and test_compiler_flags.contains('-DTHORVG_WG_TEST_SUPPORT')
-    test_file += ['testWgCanvas.cpp', 'testWgEngine.cpp']
+if wg_engine
+    wgpu_dep = dependency('wgpu_native', required: false)
+
+    if wgpu_dep.found()
+        test_dep += wgpu_dep
+        test_compiler_flags += ['-DTHORVG_WG_TEST_SUPPORT']
+        test_file += ['testWgCanvas.cpp', 'testWgEngine.cpp']
+    endif
 endif
 
 tests = executable('tvgUnitTests',

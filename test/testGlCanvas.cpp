@@ -33,7 +33,7 @@ using namespace std;
 TEST_CASE("GL Missing Initialization", "[tvgGlCanvas]")
 {
     auto canvas = unique_ptr<GlCanvas>(GlCanvas::gen());
-    REQUIRE(canvas == nullptr);
+    REQUIRE(!canvas);
 }
 
 TEST_CASE("GL Basic Creation", "[tvgGlCanvas]")

@@ -33,7 +33,7 @@ using namespace std;
 TEST_CASE("WG Missing Initialization", "[tvgWgCanvas]")
 {
     auto canvas = unique_ptr<WgCanvas>(WgCanvas::gen());
-    REQUIRE(canvas == nullptr);
+    REQUIRE(!canvas);
 }
 
 TEST_CASE("WG Basic Creation", "[tvgWgCanvas]")
