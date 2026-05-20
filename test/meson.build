@@ -27,33 +27,27 @@ test_file = [
 ]
 
 if gl_engine
-    egl_dep = dependency('egl', required: false)
-
-    if not egl_dep.found()
-        egl_dep = dependency('angleproject', required: false)
-    endif
+    test_egl_dep = dependency('egl', required: false)
 
     if gl_variant == 'OpenGL ES'
-        gl_dep = dependency('glesv2', required: false)
-        if not gl_dep.found()
-            gl_dep = cc.find_library('GLESv2', required: false)
+        test_gl_dep = dependency('glesv2', required: false)
+        if not test_gl_dep.found()
+            test_gl_dep = cc.find_library('GLESv2', required: false)
         endif
-    else
-        gl_dep = dependency('gl', required: false)
     endif
 
-    if egl_dep.found() and gl_dep.found()
-        test_dep += [egl_dep, gl_dep]
+    if test_egl_dep.found() and test_gl_dep.found()
+        test_dep += [test_egl_dep, test_gl_dep]
         test_compiler_flags += ['-DTHORVG_GL_TEST_SUPPORT']
         test_file += ['testGlCanvas.cpp', 'testGlEngine.cpp']
     endif
 endif
 
 if wg_engine
-    wgpu_dep = dependency('wgpu_native', required: false)
+    test_wgpu_dep = dependency('wgpu_native', required: false)
 
-    if wgpu_dep.found()
-        test_dep += wgpu_dep
+    if test_wgpu_dep.found()
+        test_dep += test_wgpu_dep
         test_compiler_flags += ['-DTHORVG_WG_TEST_SUPPORT']
         test_file += ['testWgCanvas.cpp', 'testWgEngine.cpp']
     endif
