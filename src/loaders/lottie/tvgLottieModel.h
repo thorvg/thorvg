@@ -273,7 +273,8 @@ struct LottieObject
         RoundedCorner,
         OffsetPath,
         PuckerBloat,
-        TextRange
+        TextRange,
+        Audio
     };
 
     virtual ~LottieObject()
@@ -958,6 +959,25 @@ struct LottieImage : LottieObject
 };
 
 
+struct LottieAudio : LottieObject
+{
+    union {
+        char* data = nullptr;
+        char* path;
+    };
+    char* mimeType = nullptr;
+    uint32_t size = 0;
+
+    LottieAudio() { LottieObject::type = LottieObject::Audio; }
+
+    ~LottieAudio()
+    {
+        tvg::free(data);
+        tvg::free(mimeType);
+    }
+};
+
+
 struct LottieRepeater : LottieObject
 {
     LottieRepeater()
@@ -1055,7 +1075,7 @@ struct LottieGroup : LottieObject, LottieRenderPooler<tvg::Shape>
 
 struct LottieLayer : LottieGroup
 {
-    enum Type : uint8_t {Precomp = 0, Solid, Image, Null, Shape, Text};
+    enum Type : uint8_t {Precomp = 0, Solid, Image, Null, Shape, Text, Audio};
 
     LottieLayer();
     ~LottieLayer();
@@ -1081,6 +1101,13 @@ struct LottieLayer : LottieGroup
     float inFrame = 0.0f;
     float outFrame = 0.0f;
     float startFrame = 0.0f;
+
+    struct AudioControl {
+        LottieFloat volume = 100.0f;
+        float prevVolume = -1.0f;
+        bool prevActive = false;
+    } *audioCtrl = nullptr;
+
     unsigned long rid = 0;      //pre-composition reference id.
     int16_t mix = -1;           //index of the matte layer.
     int16_t pix = -1;           //index of the parent layer.
@@ -1097,6 +1124,12 @@ struct LottieLayer : LottieGroup
     bool effect : 1;        // true if any effect is activated in its tree
     bool autoOrient : 1;
     bool matteSrc : 1;
+
+    AudioControl* audio()
+    {
+        if (!audioCtrl) audioCtrl = new AudioControl;
+        return audioCtrl;
+    }
 
     LottieEffect* effectById(unsigned long id)
     {
@@ -1206,8 +1239,8 @@ struct LottieComposition
     LottieLayer* asset(unsigned long id)
     {
         ARRAY_FOREACH(p, assets) {
-            auto layer = static_cast<LottieLayer*>(*p);
-            if (layer->id == id) return layer;
+            auto obj = *p;
+            if (obj->id == id && obj->type == LottieObject::Layer) return static_cast<LottieLayer*>(obj);
         }
         return nullptr;
     }

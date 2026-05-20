@@ -977,6 +977,41 @@ void LottieParser::parseObject(Array<LottieObject*>& parent)
 }
 
 
+void LottieParser::parseVolume(LottieLayer* layer)
+{
+    enterObject();
+    while (auto key = nextObjectKey()) {
+        if (KEY_AS("lv")) parseProperty(layer->audio()->volume);
+        else skip();
+    }
+}
+
+
+void LottieParser::parseAudio(LottieAudio* audio, const char* data, const char* subPath, bool embedded)
+{
+    auto dlen = strlen(data);
+    if (dlen == 0) return;
+
+    if (embedded && !strncmp(data, "data:audio/", 11)) {
+        auto mime = data + 11;
+        auto semi = strstr(mime, ";");
+        if (!semi) return;
+        audio->mimeType = duplicate(mime, semi - mime);
+        auto b64 = strstr(semi, ",");
+        if (!b64) return;
+        ++b64;
+        audio->size = b64Decode(b64, dlen - (b64 - data), &audio->data);
+    } else if (!strncmp(data, "https://", 8) || !strncmp(data, "http://", 7)) {
+        audio->path = duplicate(data);
+    } else {
+        auto subPathLen = subPath ? strlen(subPath) : 0;
+        auto len = strlen(dirName) + subPathLen + dlen + 2;
+        audio->path = tvg::malloc<char>(len);
+        snprintf(audio->path, len, "%s/%s%s", dirName, subPath ? subPath : "", data);
+    }
+}
+
+
 void LottieParser::parseImage(LottieImage* image, const char* data, const char* subPath, bool embedded, float width, float height)
 {
     auto dlen = strlen(data);
@@ -1049,9 +1084,16 @@ LottieObject* LottieParser::parseAsset()
         else skip();
     }
     if (data) {
-        obj = new LottieImage;
-        parseImage(static_cast<LottieImage*>(obj), data, subPath, embedded, width, height);
-        if (sid) registerSlot(obj, sid, static_cast<LottieImage*>(obj)->bitmap);
+        if (!strncmp(data, "data:image/", 11) || width != 0.0f || height != 0.0f) {
+            auto asset = new LottieImage;
+            parseImage(asset, data, subPath, embedded, width, height);
+            if (sid) registerSlot(asset, sid, asset->bitmap);
+            obj = asset;
+        } else if (!strncmp(data, "data:audio/", 11) || !embedded) {
+            auto asset = new LottieAudio;
+            parseAudio(asset, data, subPath, embedded);
+            obj = asset;
+        } else TVGLOG("LOTTIE", "Unexpected data type");
     }
     if (obj) obj->id = id;
     return obj;
@@ -1588,6 +1630,7 @@ LottieLayer* LottieParser::parseLayer(LottieLayer* precomp)
         else if (KEY_AS("td")) layer->matteSrc = getInt();      //used for matte layer
         else if (KEY_AS("t")) parseText(layer->children);
         else if (KEY_AS("ef")) parseEffects(layer);
+        else if (KEY_AS("au")) parseVolume(layer);
         else skip();
     }
 
