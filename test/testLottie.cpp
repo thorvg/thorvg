@@ -327,4 +327,67 @@ TEST_CASE("Lottie Asset Resolver", "[tvgLottie]")
     REQUIRE(Initializer::term() == Result::Success);
 }
 
+
+TEST_CASE("Lottie Audio Layer", "[tvgLottie]")
+{
+    REQUIRE(Initializer::init() == Result::Success);
+    {
+        auto animation = unique_ptr<LottieAnimation>(LottieAnimation::gen());
+        REQUIRE(animation);
+
+        auto picture = animation->picture();
+
+        int callCount = 0;
+        LottieAudioResolver received{};
+
+        auto resolver = [&](const LottieAudioResolver& info, void*) {
+            ++callCount;
+            received = info;
+        };
+
+        //Negative: register resolver before loaded
+        REQUIRE(animation->resolver(resolver, nullptr) == Result::InsufficientCondition);
+
+        REQUIRE(picture->load(TEST_DIR"/audio_layer.json") == Result::Success);
+
+        //Frame updates without a registered resolver
+        REQUIRE(animation->frame(15) == Result::Success);
+
+        //Test Audio Resolver
+        REQUIRE(animation->resolver(resolver, nullptr) == Result::Success);
+        REQUIRE(animation->frame(1) == Result::Success);
+        REQUIRE(callCount == 1);
+        REQUIRE(received.active == true);
+        REQUIRE(received.offset >= 0.0f);
+        REQUIRE(received.volume == Approx(100.0f).margin(0.1f));
+        REQUIRE(received.embedded == false);
+        REQUIRE(received.src != nullptr);
+        REQUIRE(received.size == 0);
+        REQUIRE(received.mimeType == nullptr);
+
+        //Resolver should not be invoked (no state change)
+        callCount = 0;
+        REQUIRE(animation->frame(5) == Result::Success);
+        REQUIRE(callCount == 0);
+
+        //Test Audio Resolver firing
+        REQUIRE(animation->frame(20) == Result::Success);
+        REQUIRE(callCount == 1);
+        REQUIRE(received.active == false);
+        REQUIRE(received.src != nullptr);   //source must remain identifiable on deactivation
+
+        //Test Audio Resolver seeks again
+        REQUIRE(animation->frame(6) == Result::Success);
+        REQUIRE(received.active == true);
+        REQUIRE(received.offset == Approx(6.0f / 60.0f).margin(0.01f));
+
+        //Test Audio Resolver unregistration
+        REQUIRE(animation->resolver(nullptr, nullptr) == Result::Success);
+        callCount = 0;
+        REQUIRE(animation->frame(25) == Result::Success);
+        REQUIRE(callCount == 0);
+    }
+    REQUIRE(Initializer::term() == Result::Success);
+}
+
 #endif
