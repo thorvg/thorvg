@@ -54,8 +54,6 @@ GlRenderPass::GlRenderPass(GlRenderPass&& other): mFbo(other.mFbo), mTasks(), mD
 
 GlRenderPass::~GlRenderPass()
 {
-    if (mTasks.empty()) return;
-
     ARRAY_FOREACH(p, mTasks) delete(*p);
 
     mTasks.clear();
@@ -64,4 +62,14 @@ GlRenderPass::~GlRenderPass()
 void GlRenderPass::addRenderTask(GlRenderTask* task)
 {
     mTasks.push(task);
+}
+
+void GlRenderPass::prependRenderTask(GlRenderTask* task)
+{
+    mTasks.grow(1);
+    for (uint32_t i = mTasks.count; i > 0; --i) {
+        mTasks.data[i] = mTasks.data[i - 1];
+    }
+    mTasks.data[0] = task;
+    ++mTasks.count;
 }

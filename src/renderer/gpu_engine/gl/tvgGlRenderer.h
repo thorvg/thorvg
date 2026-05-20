@@ -32,6 +32,8 @@
 #include "tvgGlEffect.h"
 #include "tvgGlSolidBatch.h"
 
+struct GlStencilPassManager;
+
 struct GlRenderer : RenderMethod
 {
     enum RenderTypes
@@ -51,6 +53,7 @@ struct GlRenderer : RenderMethod
         RT_MaskLighten,
         RT_MaskDarken,
         RT_Stencil,
+        RT_StencilAtlasCover,
         RT_Blit,
         // blends (image)
         RT_Blend_Image_Normal,
@@ -206,6 +209,7 @@ private:
     GlProgram* getBlendProgram(BlendMethod method, BlendSource source);
     void prepareBlitTask(GlBlitTask* task);
     void prepareCmpTask(GlRenderTask* task, const RenderRegion& vp, uint32_t cmpWidth, uint32_t cmpHeight);
+    void prepareStencilPass(GlRenderPass* pass);
     void endRenderPass(RenderCompositor* cmp);
     void disposeTexture(GLuint texId);
 
@@ -230,6 +234,7 @@ private:
     Array<GlCompositor*> mComposeStack;
     TextureMgr mTextures;
     GlSolidBatch mSolidBatch;
+    GlStencilPassManager* mStencilPassManager = nullptr;
 
     //Disposed resources. They should be released on synced call.
     struct {

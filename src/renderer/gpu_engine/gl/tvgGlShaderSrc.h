@@ -47,6 +47,7 @@ extern const char* MASK_INTERSECT_FRAG_SHADER;
 extern const char* MASK_DIFF_FRAG_SHADER;
 extern const char* MASK_DARKEN_FRAG_SHADER;
 extern const char* MASK_LIGHTEN_FRAG_SHADER;
+extern const char* STENCIL_ATLAS_COVER_FRAG_SHADER;
 extern const char* STENCIL_VERT_SHADER;
 extern const char* STENCIL_FRAG_SHADER;
 extern const char* BLIT_VERT_SHADER;

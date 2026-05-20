@@ -48,6 +48,16 @@ const char* COLOR_FRAG_SHADER = TVG_COMPOSE_SHADER(
         FragColor = vec4(uColor.rgb * uColor.a, uColor.a);   \n
     }                                                        \n);
 
+const char* STENCIL_ATLAS_COVER_FRAG_SHADER = TVG_COMPOSE_SHADER(
+    in vec4 vColor;                                          \n
+    out vec4 FragColor;                                      \n
+                                                             \n
+    void main()                                              \n
+    {                                                        \n
+        FragColor = vec4(vColor.a, 0.0, 0.0, 1.0);           \n
+    }                                                        \n
+);
+
 const char* GRADIENT_VERT_SHADER = TVG_COMPOSE_SHADER(
     uniform float uDepth;                                                           \n
     uniform mat3 uViewMatrix;                                                       \n

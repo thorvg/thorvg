@@ -27,6 +27,7 @@
 #include "tvgGlRenderTask.h"
 #include "tvgGlProgram.h"
 #include "tvgGlShaderSrc.h"
+#include "tvgGlStencilPass.h"
 #include "tvgRender.h"
 
 /************************************************************************/
@@ -60,6 +61,7 @@ void GlRenderer::clearDisposes()
     delete (*p);
     mRenderPassStack.clear();
     mSolidBatch.clear();
+    if (mStencilPassManager) mStencilPassManager->clearRecords();
 }
 
 
@@ -68,6 +70,9 @@ void GlRenderer::flush()
     clearDisposes();
 
     mRootTarget.reset();
+
+    delete(mStencilPassManager);
+    mStencilPassManager = nullptr;
 
     ARRAY_FOREACH(p, mComposePool) delete(*p);
     mComposePool.clear();
@@ -169,6 +174,7 @@ void GlRenderer::initShaders()
 
     // stencil Renderer
     mPrograms.push(new GlProgram(STENCIL_VERT_SHADER, STENCIL_FRAG_SHADER));
+    mPrograms.push(new GlProgram(COLOR_VERT_SHADER, STENCIL_ATLAS_COVER_FRAG_SHADER));
 
     // blit Renderer
     mPrograms.push(new GlProgram(BLIT_VERT_SHADER, BLIT_FRAG_SHADER));
@@ -222,10 +228,19 @@ static GlRenderTask* drawPrimitiveGeometry(GlProgram* stencilProgram, GlRenderTa
     return drawStencilCover(stencilProgram, task, geometry, gpuBuffer, flag, depth, viewMatrix, viewRegion);
 }
 
-static void addPrimitiveTask(GlRenderPass* pass, GlRenderTask* task, GlRenderTask* stencilTask, GlStencilMode stencilMode)
+static void addPrimitiveTask(GlRenderPass* pass, GlStencilPassManager* stencilPassManager, GlRenderTask* task,
+                             GlRenderTask* stencilTask, const GlGeometryBuffer* stencilBuffer,
+                             const RenderRegion& stencilBounds, const RenderRegion& viewRegion,
+                             const Matrix& viewMatrix, GlStencilMode stencilMode)
 {
-    if (stencilTask) pass->addRenderTask(new GlStencilCoverTask(stencilTask, task, stencilMode));
-    else pass->addRenderTask(task);
+    if (stencilTask) {
+        if (stencilMode != GlStencilMode::Stroke) {
+            stencilPassManager->record(pass, stencilTask, stencilBuffer, stencilBounds, viewRegion, viewMatrix, stencilMode);
+        }
+        pass->addRenderTask(new GlStencilCoverTask(stencilTask, task, stencilMode));
+    } else {
+        pass->addRenderTask(task);
+    }
 }
 
 static Matrix _viewMatrix(const GlGeometry& geometry, const Matrix& viewMatrix, RenderUpdateFlag flag)
@@ -315,7 +330,10 @@ void GlRenderer::drawPrimitive(GlShape& sdata, const RenderColor& c, RenderUpdat
     // Keep BlendRegion on the existing solid-shape blend UBO slot.
     bindBlendTarget(task, dstCopyFbo, viewRegion, 2);
 
-    addPrimitiveTask(currentPass(), task, stencilTask, stencilMode);
+    auto stroke = (flag & RenderUpdateFlag::Stroke) || (flag & RenderUpdateFlag::GradientStroke);
+    auto stencilBuffer = stroke ? &sdata.geometry.stroke : &sdata.geometry.fill;
+    auto stencilBounds = stroke ? sdata.geometry.strokeBounds : sdata.geometry.fillBounds;
+    addPrimitiveTask(currentPass(), mStencilPassManager, task, stencilTask, stencilBuffer, stencilBounds, viewRegion, viewMatrix, stencilMode);
 }
 
 void GlRenderer::drawPrimitive(GlShape& sdata, const Fill* fill, RenderUpdateFlag flag, int32_t depth)
@@ -484,7 +502,10 @@ void GlRenderer::drawPrimitive(GlShape& sdata, const Fill* fill, RenderUpdateFla
     // TransformInfo uses slot 0 and GradientInfo uses slot 2, so BlendRegion moves to 3.
     bindBlendTarget(task, dstCopyFbo, viewRegion, 3);
 
-    addPrimitiveTask(currentPass(), task, stencilTask, stencilMode);
+    auto stroke = (flag & RenderUpdateFlag::Stroke) || (flag & RenderUpdateFlag::GradientStroke);
+    auto stencilBuffer = stroke ? &sdata.geometry.stroke : &sdata.geometry.fill;
+    auto stencilBounds = stroke ? sdata.geometry.strokeBounds : sdata.geometry.fillBounds;
+    addPrimitiveTask(currentPass(), mStencilPassManager, task, stencilTask, stencilBuffer, stencilBounds, viewRegion, viewMatrix, stencilMode);
 }
 
 
@@ -568,6 +589,7 @@ void GlRenderer::endBlendingCompose(GlRenderTask* stencilTask)
 {
     auto blendPass = mRenderPassStack.pick();
     blendPass->setDrawDepth(currentPass()->nextDrawDepth());
+    prepareStencilPass(blendPass);
 
     auto composeTask = blendPass->endRenderPass<GlComposeTask>(nullptr, currentPass()->getFboId());
 
@@ -762,6 +784,14 @@ void GlRenderer::prepareCmpTask(GlRenderTask* task, const RenderRegion& vp, uint
 }
 
 
+void GlRenderer::prepareStencilPass(GlRenderPass* pass)
+{
+    if (!pass || pass->isEmpty() || !mStencilPassManager) return;
+
+    if (mStencilPassManager->prepare(pass, mGpuBuffer, mPrograms[RT_StencilAtlasCover], mTargetFboId)) mSolidBatch.clear();
+}
+
+
 void GlRenderer::endRenderPass(RenderCompositor* cmp)
 {
     auto glCmp = static_cast<GlCompositor*>(cmp);
@@ -809,6 +839,8 @@ void GlRenderer::endRenderPass(RenderCompositor* cmp)
             default: break;
         }
         if (program && !selfPass->isEmpty() && !maskPass->isEmpty()) {
+            prepareStencilPass(maskPass);
+            prepareStencilPass(selfPass);
             auto prev_task = maskPass->endRenderPass<GlComposeTask>(nullptr, currentPass()->getFboId());
             prev_task->setDrawDepth(currentPass()->nextDrawDepth());
             prev_task->setRenderSize(glCmp->bbox.w(), glCmp->bbox.h());
@@ -832,6 +864,7 @@ void GlRenderer::endRenderPass(RenderCompositor* cmp)
     } else if (glCmp->blendMethod != BlendMethod::Normal) {
         auto renderPass = mRenderPassStack.pick();
         if (!renderPass->isEmpty()) {
+            prepareStencilPass(renderPass);
             if (mBlendPool.count < 1) mBlendPool.push(new GlRenderTargetPool(surface.w, surface.h));
             if (mBlendPool.count < 2) mBlendPool.push(new GlRenderTargetPool(surface.w, surface.h));
 #if defined(THORVG_GL_TARGET_GL)
@@ -871,6 +904,7 @@ void GlRenderer::endRenderPass(RenderCompositor* cmp)
     } else {
         auto renderPass = mRenderPassStack.pick();
         if (!renderPass->isEmpty()) {
+            prepareStencilPass(renderPass);
             auto task = renderPass->endRenderPass<GlDrawBlitTask>(mPrograms[RT_Image], currentPass()->getFboId());
             task->setRenderSize(glCmp->bbox.w(), glCmp->bbox.h());
             prepareCmpTask(task, glCmp->bbox, renderPass->getFboWidth(), renderPass->getFboHeight());
@@ -937,6 +971,8 @@ bool GlRenderer::target(void* display, void* surface, void* context, int32_t id,
 
     mRootTarget.viewport = {{0, 0}, {int32_t(this->surface.w), int32_t(this->surface.h)}};
     mRootTarget.init(this->surface.w, this->surface.h, mTargetFboId);
+    mStencilPassManager = new GlStencilPassManager(this->surface.w, this->surface.h);
+    mStencilPassManager->init(mTargetFboId);
 
     return ret;
 }
@@ -958,7 +994,8 @@ bool GlRenderer::sync()
     GL_CHECK(glEnable(GL_DEPTH_TEST));
     GL_CHECK(glDepthFunc(GL_GREATER));
 
-    auto task = mRenderPassStack.first()->endRenderPass<GlBlitTask>(mPrograms[RT_Blit], mTargetFboId);
+    auto pass = mRenderPassStack.first();
+    auto task = pass->endRenderPass<GlBlitTask>(mPrograms[RT_Blit], mTargetFboId);
 
     prepareBlitTask(task);
 
@@ -1023,6 +1060,7 @@ bool GlRenderer::preRender()
 
     currentContext();
     if (mPrograms.empty()) initShaders();
+    if (mStencilPassManager) mStencilPassManager->clearRecords();
     mRenderPassStack.push(new GlRenderPass(&mRootTarget));
 
     return true;
@@ -1031,6 +1069,7 @@ bool GlRenderer::preRender()
 
 bool GlRenderer::postRender()
 {
+    prepareStencilPass(currentPass());
     return true;
 }
 

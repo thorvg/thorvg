@@ -40,6 +40,7 @@ public:
     bool isEmpty() const { return mFbo == nullptr; }
 
     void addRenderTask(GlRenderTask* task);
+    void prependRenderTask(GlRenderTask* task);
     GlRenderTask* lastTask() const { return mTasks.empty() ? nullptr : mTasks.last(); }
     GlRenderTask* takeLastTask()
     {
