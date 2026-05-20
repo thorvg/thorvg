@@ -27,6 +27,7 @@
 #include "tvgInlist.h"
 #include "tvgLoader.h"
 #include "tvgTaskScheduler.h"
+#include "thorvg_lottie.h"
 
 struct LottieComposition;
 struct LottieBuilder;
@@ -100,6 +101,7 @@ public:
     float shorten(float frameNo);  //Reduce the accuracy for performance
     bool tween(float from, float to, float progress);
     bool quality(uint8_t value);
+    void resolver(std::function<void(const tvg::LottieAudioResolver&, void*)> func, void* data);
 
 private:
     bool ready();

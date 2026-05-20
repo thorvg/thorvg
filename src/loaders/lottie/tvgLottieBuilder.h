@@ -28,6 +28,7 @@
 #include "tvgShape.h"
 #include "tvgLottieExpressions.h"
 #include "tvgLottieModifier.h"
+#include "thorvg_lottie.h"
 
 struct LottieComposition;
 
@@ -141,6 +142,13 @@ struct RenderContext
     }
 };
 
+struct AudioResolver
+{
+    std::function<void(const tvg::LottieAudioResolver& info, void* data)> func;
+    void* data = nullptr;
+};
+
+
 struct LottieBuilder
 {
     LottieBuilder()
@@ -179,8 +187,10 @@ struct LottieBuilder
     void build(LottieComposition* comp);
 
     const AssetResolver* resolver = nullptr;  //do not free this
+    AudioResolver audioResolver;
 
 private:
+    void updateAudio(LottieComposition* comp, LottieLayer* layer, float frameNo);
     void appendRect(LottieRect* rect, Shape* shape, Point& pos, Point& size, float r, bool clockwise, RenderContext* ctx);
     void appendCircle(LottieEllipse* ellipse, Shape* shape, Point& center, Point& radius, bool clockwise, RenderContext* ctx);
     bool fragmented(LottieGroup* parent, LottieObject** child, Inlist<RenderContext>& contexts, RenderContext* ctx, RenderFragment fragment);

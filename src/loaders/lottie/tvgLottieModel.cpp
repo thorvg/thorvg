@@ -592,6 +592,7 @@ LottieLayer::~LottieLayer()
     ARRAY_FOREACH(p, effects) delete(*p);
 
     delete(transform);
+    delete(audioCtrl);
     tvg::free(name);
 }
 

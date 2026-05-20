@@ -1293,6 +1293,21 @@ TVG_API Tvg_Result tvg_lottie_animation_set_quality(Tvg_Animation animation, uin
     return TVG_RESULT_NOT_SUPPORTED;
 }
 
+
+TVG_API Tvg_Result tvg_lottie_animation_set_audio_resolver(Tvg_Animation animation, Tvg_Audio_Resolver resolver, void* data)
+{
+#ifdef THORVG_LOTTIE_LOADER_SUPPORT
+    if (!animation) return TVG_RESULT_INVALID_ARGUMENT;
+    auto anim = reinterpret_cast<tvg::LottieAnimation*>(animation);
+    if (!resolver) return (Tvg_Result) anim->resolver(nullptr, nullptr);
+    return (Tvg_Result) anim->resolver([resolver](const tvg::LottieAudioResolver& in, void* data) {
+        Tvg_Audio_Info info{in.src, in.mimeType, in.size, in.offset, in.volume, in.active, in.embedded};
+        resolver(&info, data);
+    }, data);
+#endif
+    return TVG_RESULT_NOT_SUPPORTED;
+}
+
 #ifdef __cplusplus
 }
 #endif
