@@ -31,8 +31,7 @@ if gl_engine and not get_option('extra').contains('opengl_es')
     gl_dep = dependency('gl', required: false)
 
     if not egl_dep.found()
-        cpp = meson.get_compiler('cpp')
-        egl_dep = cpp.find_library('EGL', required: false)
+        egl_dep = dependency('angleproject', required: false)
     endif
 
     if egl_dep.found() and gl_dep.found()
