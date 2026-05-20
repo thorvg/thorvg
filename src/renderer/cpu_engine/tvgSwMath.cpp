@@ -179,7 +179,7 @@ int64_t mathTan(int64_t angle)
 int64_t mathAtan(const SwPoint& pt)
 {
     if (pt.zero()) return 0;
-    return int64_t(tvg::atan2(TO_FLOAT(pt.y), TO_FLOAT(pt.x)) * (180.0f / MATH_PI) * 65536.0f);
+    return int64_t(tvg::atan(pt.toPoint()) * (180.0f / MATH_PI) * 65536.0f);
 }
 
 

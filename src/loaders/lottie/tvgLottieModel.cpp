@@ -39,7 +39,7 @@ Point LottieTextFollowPath::split(float dLen, float lenSearched, float& angle)
         }
         case PathCommand::LineTo: {
             auto dp = *pts - *(pts - 1);
-            angle = tvg::atan2(dp.y, dp.x);
+            angle = tvg::atan(dp);
             break;
         }
         case PathCommand::CubicTo: {
@@ -50,7 +50,7 @@ Point LottieTextFollowPath::split(float dLen, float lenSearched, float& angle)
         }
         case PathCommand::Close: {
             auto dp = *start - *(pts - 1);
-            angle = tvg::atan2(dp.y, dp.x);
+            angle = tvg::atan(dp);
             break;
         }
     }
@@ -95,7 +95,7 @@ Point LottieTextFollowPath::position(float lenSearched, float& angle)
             switch (*(cmds + 1)) {
                 case PathCommand::LineTo: {
                     auto dp = *(pts + 1) - *pts;
-                    angle = tvg::atan2(dp.y, dp.x);
+                    angle = tvg::atan(dp);
                     return {pts->x + lenSearched * cos(angle), pts->y + lenSearched * sin(angle)};
                 }
                 case PathCommand::CubicTo: {
@@ -139,7 +139,7 @@ Point LottieTextFollowPath::position(float lenSearched, float& angle)
                 case PathCommand::LineTo: {
                     auto len = lenSearched - totalLen;
                     auto dp = *pts - *(pts - 1);
-                    angle = tvg::atan2(dp.y, dp.x);
+                    angle = tvg::atan(dp);
                     return {pts->x + len * cos(angle), pts->y + len * sin(angle)};
                 }
                 case PathCommand::CubicTo: {
@@ -150,7 +150,7 @@ Point LottieTextFollowPath::position(float lenSearched, float& angle)
                 case PathCommand::Close: {
                     auto len = lenSearched - totalLen;
                     auto dp = *start - *(pts - 1);
-                    angle = tvg::atan2(dp.y, dp.x);
+                    angle = tvg::atan(dp);
                     return {(pts - 1)->x + len * cos(angle), (pts - 1)->y + len * sin(angle)};
                 }
             }
@@ -461,7 +461,7 @@ Fill* LottieGradient::fill(float frameNo, uint8_t opacity, Tween& tween, LottieE
         if (tvg::zero(progress)) {
             static_cast<RadialGradient*>(fill)->radial(s.x, s.y, r, s.x, s.y, 0.0f);
         } else {
-            auto startAngle = rad2deg(tvg::atan2(e.y - s.y, e.x - s.x));
+            auto startAngle = rad2deg(tvg::atan(e - s));
             auto angle = deg2rad((startAngle + this->angle(frameNo, tween, exps)));
             auto fx = s.x + cos(angle) * progress * r;
             auto fy = s.y + sin(angle) * progress * r;

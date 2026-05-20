@@ -233,8 +233,8 @@ void Stroker::round(const Point &prev, const Point& curr, const Point& center)
     mRightBottom.x = std::max(mRightBottom.x, std::max(center.x, std::max(prev.x, curr.x)));
     mRightBottom.y = std::max(mRightBottom.y, std::max(center.y, std::max(prev.y, curr.y)));
 
-    auto startAngle = tvg::atan2(prev.y - center.y, prev.x - center.x);
-    auto endAngle = tvg::atan2(curr.y - center.y, curr.x - center.x);
+    auto startAngle = tvg::atan(prev - center);
+    auto endAngle = tvg::atan(curr - center);
 
     if (orient == Orientation::Clockwise) {
         if (endAngle > startAngle) endAngle -= 2 * MATH_PI;
