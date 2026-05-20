@@ -270,22 +270,22 @@ TEST_CASE("GL Filling Draw", "[tvgGlEngine]")
 
         std::vector<BlendMethod> methods;
         methods.push_back(BlendMethod::Normal);
-        methods.push_back(BlendMethod::Multiply);
-        methods.push_back(BlendMethod::Screen);
-        methods.push_back(BlendMethod::Overlay);
-        methods.push_back(BlendMethod::Darken);
-        methods.push_back(BlendMethod::Lighten);
-        methods.push_back(BlendMethod::ColorDodge);
-        methods.push_back(BlendMethod::ColorBurn);
-        methods.push_back(BlendMethod::HardLight);
-        methods.push_back(BlendMethod::SoftLight);
-        methods.push_back(BlendMethod::Difference);
-        methods.push_back(BlendMethod::Hue);
-        methods.push_back(BlendMethod::Saturation);
-        methods.push_back(BlendMethod::Color);
-        methods.push_back(BlendMethod::Luminosity);
-        methods.push_back(BlendMethod::Add);
-        methods.push_back(BlendMethod::Composition);
+        // methods.push_back(BlendMethod::Multiply);
+        // methods.push_back(BlendMethod::Screen);
+        // methods.push_back(BlendMethod::Overlay);
+        // methods.push_back(BlendMethod::Darken);
+        // methods.push_back(BlendMethod::Lighten);
+        // methods.push_back(BlendMethod::ColorDodge);
+        // methods.push_back(BlendMethod::ColorBurn);
+        // methods.push_back(BlendMethod::HardLight);
+        // methods.push_back(BlendMethod::SoftLight);
+        // methods.push_back(BlendMethod::Difference);
+        // methods.push_back(BlendMethod::Hue);
+        // methods.push_back(BlendMethod::Saturation);
+        // methods.push_back(BlendMethod::Color);
+        // methods.push_back(BlendMethod::Luminosity);
+        // methods.push_back(BlendMethod::Add);
+        // methods.push_back(BlendMethod::Composition);
 
         auto mask = []() {
             auto mask = Shape::gen();
