@@ -295,8 +295,9 @@ void GlRenderer::drawPrimitive(GlShape& sdata, const RenderColor& c, RenderUpdat
 
     GlRenderTarget* dstCopyFbo = nullptr;
     auto task = createPrimitiveTask(RT_Color, BlendSource::Solid, viewRegion, dstCopyFbo);
+    auto viewMatrix = _viewMatrix(sdata.geometry, currentPass()->getViewMatrix(), flag);
 
-    task->setViewMatrix(_viewMatrix(sdata.geometry, currentPass()->getViewMatrix(), flag));
+    task->setViewMatrix(viewMatrix);
     task->setDrawDepth(depth);
 
     auto a = MULTIPLY(c.a, sdata.opacity);
@@ -310,7 +311,7 @@ void GlRenderer::drawPrimitive(GlShape& sdata, const RenderColor& c, RenderUpdat
     task->setVertexColor(c.r / 255.f, c.g / 255.f, c.b / 255.f, a / 255.f);
     task->setViewport(viewRegion);
 
-    auto stencilTask = drawPrimitiveGeometry(mPrograms[RT_Stencil], task, sdata.geometry, &mGpuBuffer, flag, stencilMode, depth, currentPass()->getViewMatrix(), viewRegion);
+    auto stencilTask = drawPrimitiveGeometry(mPrograms[RT_Stencil], task, sdata.geometry, &mGpuBuffer, flag, stencilMode, depth, viewMatrix, viewRegion);
     // Keep BlendRegion on the existing solid-shape blend UBO slot.
     bindBlendTarget(task, dstCopyFbo, viewRegion, 2);
 
@@ -346,14 +347,15 @@ void GlRenderer::drawPrimitive(GlShape& sdata, const Fill* fill, RenderUpdateFla
     } else return;
 
     auto task = createPrimitiveTask(taskType, blendSource, viewRegion, dstCopyFbo);
+    auto viewMatrix = _viewMatrix(sdata.geometry, currentPass()->getViewMatrix(), flag);
 
-    task->setViewMatrix(_viewMatrix(sdata.geometry, currentPass()->getViewMatrix(), flag));
+    task->setViewMatrix(viewMatrix);
     task->setDrawDepth(depth);
 
     task->setViewport(viewRegion);
 
     GlStencilMode stencilMode = sdata.geometry.getStencilMode(flag);
-    auto stencilTask = drawPrimitiveGeometry(mPrograms[RT_Stencil], task, sdata.geometry, &mGpuBuffer, flag, stencilMode, depth, currentPass()->getViewMatrix(), viewRegion);
+    auto stencilTask = drawPrimitiveGeometry(mPrograms[RT_Stencil], task, sdata.geometry, &mGpuBuffer, flag, stencilMode, depth, viewMatrix, viewRegion);
 
     // transform buffer (inverse fill-space transform)
     float invMat3[GL_MAT3_STD140_SIZE];
@@ -507,7 +509,7 @@ void GlRenderer::drawClip(Array<RenderData>& clips)
 
         auto clipTask = new GlRenderTask(mPrograms[RT_Stencil]);
         clipTask->setDrawDepth(clipDepths[i]);
-        clipTask->setViewMatrix(viewMatrix);
+        clipTask->setViewMatrix(_viewMatrix(sdata->geometry, viewMatrix, flag));
         sdata->geometry.draw(clipTask, &mGpuBuffer, flag);
 
         auto bbox = sdata->geometry.viewport;
