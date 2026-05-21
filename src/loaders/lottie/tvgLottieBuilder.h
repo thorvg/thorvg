@@ -124,6 +124,11 @@ struct RenderContext
                     update(new LottiePuckerBloatModifier(pucker->amount));
                     break;
                 }
+                case LottieModifier::Type::ZigZag: {
+                    auto zigzag = static_cast<LottieZigZagModifier*>(m);
+                    update(new LottieZigZagModifier(zigzag->amp, zigzag->freq, zigzag->point));
+                    break;
+                }
             }
             m = m->next;
         }
@@ -218,6 +223,7 @@ private:
     void updateRoundedCorner(LottieGroup* parent, LottieObject** child, float frameNo, Inlist<RenderContext>& contexts, RenderContext* ctx);
     void updateOffsetPath(LottieGroup* parent, LottieObject** child, float frameNo, Inlist<RenderContext>& contexts, RenderContext* ctx);
     void updatePuckerBloat(LottieGroup* parent, LottieObject** child, float frameNo, Inlist<RenderContext>& contexts, RenderContext* ctx);
+    void updateZigZag(LottieGroup* parent, LottieObject** child, float frameNo, Inlist<RenderContext>& contexts, RenderContext* ctx);
 
     LottieExpressions* exps;
     Tween tween;
