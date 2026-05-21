@@ -79,7 +79,7 @@ jobs:
 
     - name: Build
       run: |
-        meson setup build -Dloaders=all -Dsavers=all -Dbindings=capi -Dtests=true -Dextra="lottie_exp" --errorlogs
+        meson setup build -Dloaders=all -Dsavers=all -Dbindings=capi -Dtests=unit -Dextra="lottie_exp" --errorlogs
         ninja -C build install test
 
     - uses: actions/upload-artifact@v4

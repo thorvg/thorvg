@@ -10,7 +10,7 @@ if [[ "$GITHUB_EVENT_NAME" == "pull_request" ]]; then
     VALGRIND_SUPPRESSIONS="${GITHUB_WORKSPACE}/.github/workflows/valgrind.supp"
     VALGRIND_CMD="env LIBGL_ALWAYS_SOFTWARE=1 valgrind --suppressions=${VALGRIND_SUPPRESSIONS} --leak-check=yes ./tvgUnitTests"
     echo "$VALGRIND_CMD"
-    cd ./build/test
+    cd ./build/test/unit
 
     env LIBGL_ALWAYS_SOFTWARE=1 valgrind --suppressions="$VALGRIND_SUPPRESSIONS" --leak-check=yes ./tvgUnitTests > memcheck_valgrind.txt 2>&1
 

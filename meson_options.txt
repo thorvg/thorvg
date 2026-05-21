@@ -44,9 +44,10 @@ option('tools',
    description: 'Enable building thorvg tools')
 
 option('tests',
-   type: 'boolean',
-   value: false,
-   description: 'Enable building Unit Tests')
+   type: 'array',
+   choices: ['', 'unit', 'all'],
+   value: [''],
+   description: 'Enable building tests: unit (unit tests)')
 
 option('log',
    type: 'boolean',

@@ -174,7 +174,7 @@ subdir('inc')
 subdir('src')
 subdir('tools')
 
-if get_option('tests')
+if get_option('tests') != ['']
    subdir('test')
 endif
 
