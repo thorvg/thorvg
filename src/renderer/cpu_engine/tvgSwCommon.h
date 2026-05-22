@@ -269,8 +269,8 @@ struct SwImage
 
     uint8_t      channelSize;
     FilterMethod filter;
-    bool         direct = false;  //draw image directly (with offset)
-    bool         scaled = false;  //draw scaled image
+    bool direct = false;  // draw image directly (with offset)
+    bool scaled = false;  // draw uniform scaled image
 };
 
 typedef uint8_t(*SwMask)(uint8_t s, uint8_t d, uint8_t a);                  //src, dst, alpha
