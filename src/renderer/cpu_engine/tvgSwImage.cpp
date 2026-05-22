@@ -72,11 +72,8 @@ bool imagePrepare(SwImage& image, const Matrix& transform, const RenderRegion& c
         image.oy = -static_cast<int32_t>(nearbyint(transform.e23));
     // figure out the scale factor by transform matrix
     } else {
-        auto scaleX = sqrtf((transform.e11 * transform.e11) + (transform.e21 * transform.e21));
-        auto scaleY = sqrtf((transform.e22 * transform.e22) + (transform.e12 * transform.e12));
-        image.scale = (fabsf(scaleX - scaleY) > 0.01f) ? 1.0f : scaleX;
-        if (tvg::zero(transform.e12) && tvg::zero(transform.e21)) image.scaled = true;
-        else image.scaled = false;
+        image.scale = scaling(transform);
+        image.scaled = (tvg::zero(transform.e12) && tvg::zero(transform.e21)) ? true : false;
     }
     image.outline = _genOutline(image, mpool, tid);
     if (!image.outline) return false;

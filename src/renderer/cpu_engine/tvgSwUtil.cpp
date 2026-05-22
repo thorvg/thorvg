@@ -45,9 +45,13 @@ void utilExport(SwOutline* outline, const Matrix& transform, BBox& bbox)
 
 bool utilBBox(const BBox& bbox, const RenderRegion& clipBox, RenderRegion& renderBox, bool fastTrack)
 {
-    if (fastTrack) renderBox.min = {(int32_t)nearbyint(bbox.min.x), (int32_t)nearbyint(bbox.min.y)};
-    else renderBox.min = {(int32_t)floorf(bbox.min.x), (int32_t)floorf(bbox.min.y)};
-    renderBox.max = {(int32_t)nearbyint(bbox.max.x), (int32_t)nearbyint(bbox.max.y)};
+    if (fastTrack) {
+        renderBox.min = {(int32_t)nearbyint(bbox.min.x), (int32_t)nearbyint(bbox.min.y)};
+        renderBox.max = {(int32_t)nearbyint(bbox.max.x), (int32_t)nearbyint(bbox.max.y)};
+    } else {
+        renderBox.min = {(int32_t)floorf(bbox.min.x), (int32_t)floorf(bbox.min.y)};
+        renderBox.max = {(int32_t)ceilf(bbox.max.x), (int32_t)ceilf(bbox.max.y)};
+    }
     renderBox.intersect(clipBox);
     return renderBox.valid();
 }
