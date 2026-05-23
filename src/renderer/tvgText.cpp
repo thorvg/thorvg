@@ -75,7 +75,9 @@ Result Text::load(const char* name, const char* data, uint32_t size, const char*
     }
 
     LoaderOps ops = {Type::Text};
-    if (!LoaderMgr::loader(name, data, size, mimeType, &ops, copy)) return Result::NonSupport;
+    auto loader = LoaderMgr::loader(name, data, size, mimeType, &ops, copy);
+    if (!loader) return Result::NonSupport;
+    if (loader->sharing > 0) --loader->sharing;
     return Result::Success;
 }
 

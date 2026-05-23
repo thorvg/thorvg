@@ -301,7 +301,10 @@ void LottieFont::prepare()
 {
     if (!b64src) return;
 
-    Text::load(name, b64src, size, mime, false);
+    if (Text::load(name, b64src, size, mime, true) == Result::Success) {
+        tvg::free(b64src);
+        b64src = nullptr;
+    }
 }
 
 
