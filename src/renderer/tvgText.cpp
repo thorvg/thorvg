@@ -82,6 +82,7 @@ Result Text::load(const char* name, const char* data, uint32_t size, const char*
 
 Result Text::unload(const char* filename) noexcept
 {
+    if (!filename) return Result::InvalidArguments;
 #ifdef THORVG_FILE_IO_SUPPORT
     if (LoaderMgr::retrieve(filename)) return Result::Success;
     return Result::InsufficientCondition;
