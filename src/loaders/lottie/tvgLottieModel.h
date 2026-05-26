@@ -449,6 +449,7 @@ struct LottieFont
 
     ~LottieFont()
     {
+        if (b64src) Text::unload(name);
         ARRAY_FOREACH(p, chars) delete(*p);
         tvg::free(style);
         tvg::free(family);
