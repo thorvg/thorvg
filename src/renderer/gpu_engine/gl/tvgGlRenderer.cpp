@@ -329,7 +329,8 @@ void GlRenderer::drawPrimitive(GlShape& sdata, const Fill* fill, RenderUpdateFla
     if (bbox.invalid()) return;
 
     const Fill::ColorStop* stops = nullptr;
-    auto stopCnt = min(fill->colorStops(&stops), static_cast<uint32_t>(MAX_GRADIENT_STOPS));
+    auto colorStopCnt = fill->colorStops(&stops);
+    auto stopCnt = min(colorStopCnt, static_cast<uint32_t>(MAX_GRADIENT_STOPS));
     if (stopCnt < 1) return;
 
     GlRenderTarget* dstCopyFbo = nullptr;
@@ -339,9 +340,22 @@ void GlRenderer::drawPrimitive(GlShape& sdata, const Fill* fill, RenderUpdateFla
     RenderTypes taskType = RT_None;
     auto blendSource = BlendSource::LinearGradient;
 
+    float x, y, r, fx, fy, fr;
+
     if (fill->type() == Type::LinearGradient) {
         taskType = RT_LinGradient;
     } else if (radial) {
+        auto radialFill = static_cast<const RadialGradient*>(fill);
+        radialFill->radial(&x, &y, &r, &fx, &fy, &fr);
+        // Uncorrectable radial gradients use the last stop as a solid color.
+        if (!CONST_RADIAL(radialFill)->correct(fx, fy, fr)) {
+            auto& stop = stops[colorStopCnt - 1];
+            RenderColor color = {stop.r, stop.g, stop.b, stop.a};
+            auto solidFlag = (flag & RenderUpdateFlag::GradientStroke) ? RenderUpdateFlag::Stroke : RenderUpdateFlag::Color;
+            drawPrimitive(sdata, color, solidFlag, depth);
+            return;
+        }
+
         taskType = RT_RadGradient;
         blendSource = BlendSource::RadialGradient;
     } else return;
@@ -431,8 +445,6 @@ void GlRenderer::drawPrimitive(GlShape& sdata, const Fill* fill, RenderUpdateFla
             sizeof(GlLinearGradientBlock),
         };
     } else {
-        auto radialFill = static_cast<const RadialGradient*>(fill);
-
         GlRadialGradientBlock gradientBlock;
 
         gradientBlock.nStops[1] = NOISE_LEVEL;
@@ -450,10 +462,6 @@ void GlRenderer::drawPrimitive(GlShape& sdata, const Fill* fill, RenderUpdateFla
             nStops++;
         }
         gradientBlock.nStops[0] = nStops * 1.f;
-
-        float x, y, r, fx, fy, fr;
-        radialFill->radial(&x, &y, &r, &fx, &fy, &fr);
-        CONST_RADIAL(radialFill)->correct(fx, fy, fr);
 
         gradientBlock.centerPos[0] = fx;
         gradientBlock.centerPos[1] = fy;
