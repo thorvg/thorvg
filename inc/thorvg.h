@@ -1138,7 +1138,7 @@ struct TVG_API RadialGradient : Fill
      *
      * This method can be used to check the current concrete instance type.
      *
-     * @return The class type ID of the LinearGradient instance.
+     * @return The class type ID of the RadialGradient instance.
      *
      * @since 1.0
      */
