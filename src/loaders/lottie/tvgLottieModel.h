@@ -1064,7 +1064,6 @@ struct LottieLayer : LottieGroup
     void prepare(RGB32* color = nullptr);
     float remap(LottieComposition* comp, float frameNo, LottieExpressions* exp);
     LottieProperty* property(uint16_t ix) override;
-    bool assign(const char* layer, uint32_t ix, const char* var, float val);
 
     char* name = nullptr;
     LottieLayer* parent = nullptr;

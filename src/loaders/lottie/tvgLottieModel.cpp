@@ -638,21 +638,6 @@ float LottieLayer::remap(LottieComposition* comp, float frameNo, LottieExpressio
     return (frameNo - startFrame) / timeStretch;
 }
 
-
-bool LottieLayer::assign(const char* layer, uint32_t ix, const char* var, float val)
-{
-    //find the target layer by name
-    auto target = layerById(djb2Encode(layer));
-    if (!target) return false;
-
-    //find the target property by ix
-    auto property = target->property(ix);
-    if (property && property->exp) return property->exp->assign(var, val);
-
-    return false;
-}
-
-
 LottieComposition::~LottieComposition()
 {
     if (!initiated && root) Paint::rel(root->scene);

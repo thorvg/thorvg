@@ -126,18 +126,11 @@ struct LottieVectorFrame
 
 struct LottieExpression
 {
-    //writable expressions variable name and value.
-    struct Writable {
-        char* var;
-        float val;
-    };
-
     char* code;
     LottieComposition* comp;
     LottieLayer* layer;
     LottieObject* object;
     LottieProperty* property;
-    Array<Writable> writables;
     bool disabled = false;
 
     LottieExpression() {}
@@ -154,23 +147,7 @@ struct LottieExpression
 
     ~LottieExpression()
     {
-        ARRAY_FOREACH(p, writables) {
-            tvg::free(p->var);
-        }
         tvg::free(code);
-    }
-
-    bool assign(const char* var, float val)
-    {
-        //overwrite the existing value
-        ARRAY_FOREACH(p, writables) {
-            if (tvg::equal(var, p->var)) {
-                p->val = val;
-                return true;
-            }
-        }
-        writables.push({tvg::duplicate(var), val});
-        return true;
     }
 };
 
