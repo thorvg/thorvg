@@ -3399,24 +3399,6 @@ TVG_API Tvg_Result tvg_lottie_animation_tween(Tvg_Animation animation, float fro
 
 
 /**
- * @brief Updates the value of an expression variable for a specific layer.
- *
- * @param[in] animation The Tvg_Animation pointer to the Lottie animation object.
- * @param[in] layer The name of the layer containing the variable to be updated.
- * @param[in] ix The property index of the variable within the layer.
- * @param[in] var The name of the variable to be updated.
- * @param[in] val The new value to assign to the variable.
- *
- * @retval TVG_RESULT_INSUFFICIENT_CONDITION If the animation is not loaded.
- * @retval TVG_RESULT_INVALID_ARGUMENT When the given parameter is invalid.
- * @retval TVG_RESULT_NOT_SUPPORTED When neither the layer nor the property is found in the current animation.
- *
- * @note Experimental API
- */
-TVG_API Tvg_Result tvg_lottie_animation_assign(Tvg_Animation animation, const char* layer, uint32_t ix, const char* var, float val);
-
-
-/**
  * @brief Sets the quality level for Lottie effects.
  *
  * This function controls the rendering quality of effects like blur, shadows, etc.

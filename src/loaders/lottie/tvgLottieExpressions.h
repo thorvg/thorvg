@@ -183,7 +183,6 @@ private:
     void buildComp(Context& context, LottieComposition* comp, float frameNo, LottieExpression* exp);
     void buildComp(jerry_value_t context, float frameNo, LottieLayer* comp, LottieExpression* exp);
     void buildGlobal(Context& context, float frameNo, LottieExpression* exp);
-    void buildWritables(Context& context, LottieExpression* exp);
 
     Point toPoint2d(jerry_value_t obj);
     RGB32 toColor(jerry_value_t obj);

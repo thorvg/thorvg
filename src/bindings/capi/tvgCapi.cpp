@@ -1284,17 +1284,6 @@ TVG_API Tvg_Result tvg_lottie_animation_tween(Tvg_Animation animation, float fro
     return TVG_RESULT_NOT_SUPPORTED;
 }
 
-
-TVG_API Tvg_Result tvg_lottie_animation_assign(Tvg_Animation animation, const char* layer, uint32_t ix, const char* var, float val)
-{
-#ifdef THORVG_LOTTIE_LOADER_SUPPORT
-    if (animation) return (Tvg_Result) reinterpret_cast<LottieAnimation*>(animation)->assign(layer, ix, var, val);
-    return TVG_RESULT_INVALID_ARGUMENT;
-#endif
-    return TVG_RESULT_NOT_SUPPORTED;
-}
-
-
 TVG_API Tvg_Result tvg_lottie_animation_set_quality(Tvg_Animation animation, uint8_t value)
 {
 #ifdef THORVG_LOTTIE_LOADER_SUPPORT
