@@ -66,8 +66,7 @@ static void _transformMultiply(const Matrix* mBBox, Matrix* gradTransf)
     gradTransf->e21 *= mBBox->e22;
 }
 
-
-static LinearGradient* _applyLinearGradientProperty(SvgStyleGradient* g, const Box& vBox, int opacity)
+static LinearGradient* _applyLinearGradientProperty(SvgStyleGradient* g, const Box& vBox, const Box& viewport, int opacity)
 {
     Fill::ColorStop* stops;
     auto fillGrad = LinearGradient::gen();
@@ -76,7 +75,10 @@ static LinearGradient* _applyLinearGradientProperty(SvgStyleGradient* g, const B
     if (isTransform) finalTransform = *g->transform;
 
     if (g->userSpace) {
-        fillGrad->linear(g->linear.x1 * vBox.w, g->linear.y1 * vBox.h, g->linear.x2 * vBox.w, g->linear.y2 * vBox.h);
+        fillGrad->linear(g->linear.x1 * (g->linear.isX1Percentage ? vBox.w : viewport.w),
+                         g->linear.y1 * (g->linear.isY1Percentage ? vBox.h : viewport.h),
+                         g->linear.x2 * (g->linear.isX2Percentage ? vBox.w : viewport.w),
+                         g->linear.y2 * (g->linear.isY2Percentage ? vBox.h : viewport.h));
     } else {
         Matrix m = {vBox.w, 0, vBox.x, 0, vBox.h, vBox.y, 0, 0, 1};
         if (isTransform) _transformMultiply(&m, &finalTransform);
@@ -108,8 +110,7 @@ static LinearGradient* _applyLinearGradientProperty(SvgStyleGradient* g, const B
     return fillGrad;
 }
 
-
-static RadialGradient* _applyRadialGradientProperty(SvgStyleGradient* g, const Box& vBox, int opacity)
+static RadialGradient* _applyRadialGradientProperty(SvgStyleGradient* g, const Box& vBox, const Box& viewport, int opacity)
 {
     Fill::ColorStop *stops;
     auto fillGrad = RadialGradient::gen();
@@ -121,7 +122,13 @@ static RadialGradient* _applyRadialGradientProperty(SvgStyleGradient* g, const B
         //The radius scaling is done according to the Units section:
         //https://www.w3.org/TR/2015/WD-SVG2-20150915/coords.html
         auto diag = sqrtf(powf(vBox.w, 2.0f) + powf(vBox.h, 2.0f)) / sqrtf(2.0f);
-        fillGrad->radial(g->radial.cx * vBox.w, g->radial.cy * vBox.h, g->radial.r * diag, g->radial.fx * vBox.w, g->radial.fy * vBox.h, g->radial.fr * diag);
+        auto viewportDiag = sqrtf(powf(viewport.w, 2.0f) + powf(viewport.h, 2.0f)) / sqrtf(2.0f);
+        fillGrad->radial(g->radial.cx * (g->radial.isCxPercentage ? vBox.w : viewport.w),
+                         g->radial.cy * (g->radial.isCyPercentage ? vBox.h : viewport.h),
+                         g->radial.r * (g->radial.isRPercentage ? diag : viewportDiag),
+                         g->radial.fx * (g->radial.isFxPercentage ? vBox.w : viewport.w),
+                         g->radial.fy * (g->radial.isFyPercentage ? vBox.h : viewport.h),
+                         g->radial.fr * (g->radial.isFrPercentage ? diag : viewportDiag));
     } else {
         Matrix m = {vBox.w, 0, vBox.x, 0, vBox.h, vBox.y, 0, 0, 1};
         if (isTransform) _transformMultiply(&m, &finalTransform);
@@ -388,9 +395,9 @@ static Paint* _applyProperty(SvgParserContext& ctx, SvgNode* node, Shape* vg, co
     } else if (style->fill.paint.gradient) {
         auto bBox = style->fill.paint.gradient->userSpace ? vBox : _bounds(vg);
         if (style->fill.paint.gradient->type == SvgGradientType::Linear) {
-            vg->fill(_applyLinearGradientProperty(style->fill.paint.gradient, bBox, style->fill.opacity));
+            vg->fill(_applyLinearGradientProperty(style->fill.paint.gradient, bBox, ctx.parser->global, style->fill.opacity));
         } else if (style->fill.paint.gradient->type == SvgGradientType::Radial) {
-            vg->fill(_applyRadialGradientProperty(style->fill.paint.gradient, bBox, style->fill.opacity));
+            vg->fill(_applyRadialGradientProperty(style->fill.paint.gradient, bBox, ctx.parser->global, style->fill.opacity));
         }
     } else if (style->fill.paint.url) {
         TVGLOG("SVG", "The fill's url not supported.");
@@ -424,9 +431,9 @@ static Paint* _applyProperty(SvgParserContext& ctx, SvgNode* node, Shape* vg, co
     } else if (style->stroke.paint.gradient) {
         auto bBox = style->stroke.paint.gradient->userSpace ? vBox : _bounds(vg);
         if (style->stroke.paint.gradient->type == SvgGradientType::Linear) {
-             vg->strokeFill(_applyLinearGradientProperty(style->stroke.paint.gradient, bBox, style->stroke.opacity));
+            vg->strokeFill(_applyLinearGradientProperty(style->stroke.paint.gradient, bBox, ctx.parser->global, style->stroke.opacity));
         } else if (style->stroke.paint.gradient->type == SvgGradientType::Radial) {
-             vg->strokeFill(_applyRadialGradientProperty(style->stroke.paint.gradient, bBox, style->stroke.opacity));
+            vg->strokeFill(_applyRadialGradientProperty(style->stroke.paint.gradient, bBox, ctx.parser->global, style->stroke.opacity));
         }
     } else if (style->stroke.paint.url) {
         //TODO: Apply the color pointed by url
@@ -823,8 +830,7 @@ static Scene* _useBuildHelper(SvgParserContext& ctx, const SvgNode* node, const 
     return scene;
 }
 
-
-static void _applyTextFill(SvgStyleProperty* style, Text* text, const Box& vBox)
+static void _applyTextFill(SvgStyleProperty* style, Text* text, const Box& vBox, const Box& viewport)
 {
     //If fill property is nullptr then do nothing
     if (style->fill.paint.none) {
@@ -832,9 +838,9 @@ static void _applyTextFill(SvgStyleProperty* style, Text* text, const Box& vBox)
     } else if (style->fill.paint.gradient) {
         auto bBox = style->fill.paint.gradient->userSpace ? vBox : _bounds(text);
         if (style->fill.paint.gradient->type == SvgGradientType::Linear) {
-            text->fill(_applyLinearGradientProperty(style->fill.paint.gradient, bBox, style->fill.opacity));
+            text->fill(_applyLinearGradientProperty(style->fill.paint.gradient, bBox, viewport, style->fill.opacity));
         } else if (style->fill.paint.gradient->type == SvgGradientType::Radial) {
-            text->fill(_applyRadialGradientProperty(style->fill.paint.gradient, bBox, style->fill.opacity));
+            text->fill(_applyRadialGradientProperty(style->fill.paint.gradient, bBox, viewport, style->fill.opacity));
         }
     } else if (style->fill.paint.url) {
         //TODO: Apply the color pointed by url
@@ -959,7 +965,7 @@ static void _buildTspanScene(SvgParserContext& ctx, const SvgNode* node, Scene* 
             auto text = _buildText(&textNode, xmlSpace, nullptr);
             if (text) {
                 text->align(child->style->textAnchor, 0.0f);
-                _applyTextFill(child->style, text, vBox);
+                _applyTextFill(child->style, text, vBox, ctx.parser->global);
                 auto paint = _applyFilter(ctx, text, child, vBox, svgPath);
                 paint = _applyComposition(ctx, paint, child, vBox, svgPath);
                 paint = _applyBlend(paint, child);
@@ -984,7 +990,7 @@ static Paint* _textBuildHelper(SvgParserContext& ctx, const SvgNode* node, const
         auto text = _buildText(textNode, xmlSpace, node->transform);
         if (!text) return nullptr;
         text->align(node->style->textAnchor, 0.0f);
-        _applyTextFill(node->style, text, vBox);
+        _applyTextFill(node->style, text, vBox, ctx.parser->global);
         auto p = _applyFilter(ctx, text, node, vBox, svgPath);
         p = _applyComposition(ctx, p, node, vBox, svgPath);
         return _applyBlend(p, node);
@@ -995,7 +1001,7 @@ static Paint* _textBuildHelper(SvgParserContext& ctx, const SvgNode* node, const
 
     if (auto text = _buildText(textNode, xmlSpace, nullptr)) {
         text->align(node->style->textAnchor, 0.0f);
-        _applyTextFill(node->style, text, vBox);
+        _applyTextFill(node->style, text, vBox, ctx.parser->global);
         scene->add(text);
     }
 
