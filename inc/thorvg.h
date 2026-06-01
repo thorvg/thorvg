@@ -250,13 +250,13 @@ enum struct BlendMethod : uint8_t
     ColorDodge,        ///< Divides the bottom layer by the inverted top layer. D / (255 - S)
     ColorBurn,         ///< Divides the inverted bottom layer by the top layer, and then inverts the result. 255 - (255 - D) / S
     HardLight,         ///< The same as Overlay but with the color roles reversed. (2 * S * D) if (S < 128), otherwise 255 - 2 * (255 - S) * (255 - D)
-    SoftLight,         ///< The same as Overlay but with applying pure black or white does not result in pure black or white. (255 - 2 * S) * (D * D) + (2 * S * D)
+    SoftLight,         ///< Darkens or lightens the colors, depending on the source color value. If S <= 0.5: D - (1 - 2 * S) * D * (1 - D), otherwise: D + (2 * S - 1) * (G(D) - D), where G(D) = ((16 * D - 12) * D + 4) * D if D <= 0.25, otherwise sqrt(D).
     Difference,        ///< Subtracts the bottom layer from the top layer or the other way around, to always get a non-negative value. (S - D) if (S > D), otherwise (D - S)
     Exclusion,         ///< The result is twice the product of the top and bottom layers, subtracted from their sum. S + D - (2 * S * D)
-    Hue,               ///< Combine with HSL(Sh + Ds + Dl) then convert it to RGB. @since 1.0
-    Saturation,        ///< Combine with HSL(Dh + Ss + Dl) then convert it to RGB. @since 1.0
-    Color,             ///< Combine with HSL(Sh + Ss + Dl) then convert it to RGB. @since 1.0
-    Luminosity,        ///< Combine with HSL(Dh + Ds + Sl) then convert it to RGB. @since 1.0
+    Hue,               ///< Uses the hue of the source and the saturation and luminosity of the destination. @since 1.0
+    Saturation,        ///< Uses the saturation of the source and the hue and luminosity of the destination. @since 1.0
+    Color,             ///< Uses the hue and saturation of the source and the luminosity of the destination. @since 1.0
+    Luminosity,        ///< Uses the luminosity of the source and the hue and saturation of the destination. @since 1.0
     Add,               ///< Simply adds pixel values of one layer with the other. (S + D)
     Composition = 255  ///< For intermediate composition layers; suitable for use with Scene or Picture. @since 1.0
 };

@@ -213,7 +213,7 @@ struct RleWorker
     int32_t cellXCnt;
     int32_t cellYCnt;
 
-    Area area;
+    long area;
     int32_t cover;
 
     SwCell* cells;
@@ -556,7 +556,7 @@ static bool _lineTo(RleWorker& rw, const SwPoint& to)
         } else {
             #define SW_UDIV(a, b) (int32_t)((uint64_t(a) * uint64_t(b)) >> 32)
 
-            Area prod = diff.x * f1.y - diff.y * f1.x;
+            long prod = diff.x * f1.y - diff.y * f1.x;
 
             /* These macros speed up repetitive divisions by replacing them
                with multiplications and right shifts. */

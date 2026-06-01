@@ -7,7 +7,6 @@ source_file = [
    'tvgLock.h',
    'tvgMath.h',
    'tvgStr.h',
-   'tvgColor.cpp',
    'tvgCompressor.cpp',
    'tvgMath.cpp',
    'tvgStr.cpp'
