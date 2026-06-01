@@ -3157,6 +3157,16 @@ static int _svgLoaderParserXmlTagName(const char* content, char* tagName, unsign
     return sz;
 }
 
+static bool _hasTspanChild(const SvgNode* node, const SvgNode* exclude = nullptr)
+{
+    ARRAY_FOREACH(p, node->child) {
+        if (*p == exclude) continue;
+        if ((*p)->type == SvgNodeType::Tspan && ((*p)->node.text.text || !(*p)->child.empty())) return true;
+    }
+    return false;
+}
+
+
 static void _spliceTspanClose(SvgParserContext* ctx)
 {
     auto cur = ctx->parser->node;
@@ -3164,9 +3174,11 @@ static void _spliceTspanClose(SvgParserContext* ctx)
 
     auto& t = cur->node.text;
     bool unpositioned = (t.x == FLT_MAX && t.y == FLT_MAX && t.dx == 0.0f && t.dy == 0.0f);
-    bool noOverride = (t.fontSize <= 0.0f && !t.fontFamily && cur->xmlSpace == SvgXmlSpace::None && !(cur->style->flags & SvgStyleFlags::TextAnchor));
+    bool noOverride = (t.fontSize <= 0.0f && !t.fontFamily && cur->xmlSpace == SvgXmlSpace::None && cur->style->flags == SvgStyleFlags::None && cur->style->fill.flags == SvgFillFlags::None);
 
-    if (t.text && unpositioned && noOverride && cur->parent) {
+    auto splice = t.text && unpositioned && noOverride && cur->parent && cur->child.empty() && !_hasTspanChild(cur->parent, cur);
+
+    if (splice) {
         auto& parentText = cur->parent->node.text;
         parentText.text = append(parentText.text, t.text, strlen(t.text));
         tvg::free(t.text);
@@ -3339,7 +3351,17 @@ static void _svgLoaderParserXmlOpen(SvgParserContext* ctx, const char* content, 
 
 static void _svgLoaderParserText(SvgParserContext* ctx, const char* content, unsigned int length)
 {
-    auto& text = ctx->parser->node->node.text;
+    auto node = ctx->parser->node;
+
+    if (_hasTspanChild(node)) {
+        auto run = _createNode(node, SvgNodeType::Tspan);
+        run->node.text.x = FLT_MAX;
+        run->node.text.y = FLT_MAX;
+        run->node.text.text = append(run->node.text.text, content, length);
+        return;
+    }
+
+    auto& text = node->node.text;
     text.text = append(text.text, content, length);
 }
 
