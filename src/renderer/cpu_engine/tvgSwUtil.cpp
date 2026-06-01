@@ -39,7 +39,7 @@ void utilExport(SwOutline* outline, const Matrix& transform, BBox& bbox)
         if (bbox.max.x < t.x) bbox.max.x = t.x;
         if (bbox.min.y > t.y) bbox.min.y = t.y;
         if (bbox.max.y < t.y) bbox.max.y = t.y;
-        outline->out.push(TO_SWPOINT(t));
+        outline->out.push({int32_t(t.x * 64.0f), int32_t(t.y * 64.0f)});
     }
 }
 
