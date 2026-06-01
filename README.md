@@ -24,6 +24,7 @@
 [![Homebrew](https://img.shields.io/badge/homebrew-latest-orange)](https://formulae.brew.sh/formula/thorvg)
 [![npm](https://img.shields.io/npm/v/@thorvg/webcanvas?color=orange)](https://www.npmjs.com/package/@thorvg/webcanvas)
 [![PyPI version](https://img.shields.io/pypi/v/thorvg-python?color=orange)](https://pypi.org/project/thorvg-python/)
+[![Crates.io](https://img.shields.io/crates/v/thorvg?color=orange)](https://crates.io/crates/thorvg)
 <br>
 
 # ThorVG
