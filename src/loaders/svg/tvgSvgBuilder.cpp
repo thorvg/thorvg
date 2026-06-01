@@ -922,6 +922,21 @@ static Text* _buildText(const SvgTextNode* textNode, SvgXmlSpace xmlSpace, const
     return text;
 }
 
+static void _updatePos(Text* text, const SvgTextNode& textNode, float anchor, Point& textPos)
+{
+    auto advance = _bounds(text).w;
+    if (auto utf8 = text->text()) {
+        GlyphMetrics gm;
+        if (text->metrics(utf8, gm) == Result::Success) advance += gm.min.x;
+        while (utf8) {
+            if (text->metrics(utf8, gm, &utf8) == Result::Success) advance += gm.advance - gm.max.x;
+            else break;
+        }
+    }
+    textPos.x = textNode.x + textNode.dx + (1.0f - anchor) * advance;
+    textPos.y = textNode.y + textNode.dy;
+}
+
 static bool _hasPositionedTspan(const SvgNode* node, int depth)
 {
     if (depth > 2192) {
@@ -938,7 +953,7 @@ static bool _hasPositionedTspan(const SvgNode* node, int depth)
     return false;
 }
 
-static void _buildTspanScene(SvgParserContext& ctx, const SvgNode* node, Scene* scene, const Box& vBox, const string& svgPath, int depth)
+static void _buildTspanScene(SvgParserContext& ctx, const SvgNode* node, Scene* scene, const Box& vBox, const string& svgPath, int depth, Point& textPos)
 {
     if (depth > 2192) {
         TVGERR("SVG", "Infinite recursive call - stopped after %d calls! Svg file may be incorrectly formatted.", depth);
@@ -953,8 +968,6 @@ static void _buildTspanScene(SvgParserContext& ctx, const SvgNode* node, Scene* 
         if (textNode.text) {
             auto xmlSpace = child->xmlSpace;
             for (auto n = child->parent; n; n = n->parent) {
-                if (textNode.x == FLT_MAX) textNode.x = n->node.text.x;
-                if (textNode.y == FLT_MAX) textNode.y = n->node.text.y;
                 if (textNode.fontSize <= 0.0f) textNode.fontSize = n->node.text.fontSize;
                 if (!textNode.fontFamily) textNode.fontFamily = n->node.text.fontFamily;
                 if (xmlSpace == SvgXmlSpace::None) xmlSpace = n->xmlSpace;
@@ -962,9 +975,13 @@ static void _buildTspanScene(SvgParserContext& ctx, const SvgNode* node, Scene* 
             }
             if (xmlSpace == SvgXmlSpace::None) xmlSpace = SvgXmlSpace::Default;
 
+            if (textNode.x == FLT_MAX) textNode.x = textPos.x;
+            if (textNode.y == FLT_MAX) textNode.y = textPos.y;
+
             auto text = _buildText(&textNode, xmlSpace, nullptr);
             if (text) {
                 text->align(child->style->textAnchor, 0.0f);
+                _updatePos(text, textNode, child->style->textAnchor, textPos);
                 _applyTextFill(child->style, text, vBox, ctx.parser->global);
                 auto paint = _applyFilter(ctx, text, child, vBox, svgPath);
                 paint = _applyComposition(ctx, paint, child, vBox, svgPath);
@@ -972,7 +989,7 @@ static void _buildTspanScene(SvgParserContext& ctx, const SvgNode* node, Scene* 
                 scene->add(paint);
             }
         }
-        _buildTspanScene(ctx, child, scene, vBox, svgPath, depth + 1);
+        _buildTspanScene(ctx, child, scene, vBox, svgPath, depth + 1, textPos);
     }
 }
 
@@ -999,13 +1016,16 @@ static Paint* _textBuildHelper(SvgParserContext& ctx, const SvgNode* node, const
     auto scene = Scene::gen();
     if (node->transform) scene->transform(*node->transform);
 
+    Point textPos = {textNode->x, textNode->y};
+
     if (auto text = _buildText(textNode, xmlSpace, nullptr)) {
         text->align(node->style->textAnchor, 0.0f);
+        _updatePos(text, *textNode, node->style->textAnchor, textPos);
         _applyTextFill(node->style, text, vBox, ctx.parser->global);
         scene->add(text);
     }
 
-    _buildTspanScene(ctx, node, scene, vBox, svgPath, 0);
+    _buildTspanScene(ctx, node, scene, vBox, svgPath, 0, textPos);
 
     auto p = _applyFilter(ctx, scene, node, vBox, svgPath);
     p = _applyComposition(ctx, p, node, vBox, svgPath);

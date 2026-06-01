@@ -89,6 +89,7 @@ enum struct SvgNodeType : uint16_t
 
 enum struct SvgFillFlags : uint8_t
 {
+    None = 0x0,
     Paint = 0x01,
     Opacity = 0x02,
     Gradient = 0x04,
@@ -148,6 +149,7 @@ enum struct SvgGradientType : uint8_t
 
 enum struct SvgStyleFlags
 {
+    None = 0x0,
     Color = 0x01,
     Fill = 0x02,
     FillRule = 0x04,
