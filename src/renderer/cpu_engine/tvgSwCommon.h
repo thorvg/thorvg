@@ -33,10 +33,8 @@
 #define SW_CURVE_TYPE_CUBIC 1
 #define SW_COLOR_TABLE 1024
 
-static inline float TO_FLOAT(int32_t val)
-{
-    return static_cast<float>(val) / 64.0f;
-}
+struct SwCompositor;
+struct SwSurface;
 
 struct SwPoint
 {
@@ -91,7 +89,7 @@ struct SwPoint
 
     Point toPoint() const
     {
-        return {TO_FLOAT(x),  TO_FLOAT(y)};
+        return {static_cast<float>(x) / 64.0f, static_cast<float>(y) / 64.0f};
     }
 };
 
@@ -160,13 +158,11 @@ struct SwRle
     SwSpan* data() const { return spans.data; }
 };
 
-using Area = long;
-
 struct SwCell
 {
     int32_t x;
     int32_t cover;
-    Area area;
+    long area;
     SwCell *next;
 };
 
@@ -273,18 +269,16 @@ struct SwImage
     bool scaled = false;  // draw uniform scaled image
 };
 
-typedef uint8_t(*SwMask)(uint8_t s, uint8_t d, uint8_t a);                  //src, dst, alpha
-typedef uint32_t(*SwBlender)(uint32_t s, uint32_t d);                       //src, dst
-typedef uint32_t(*SwBlenderA)(uint32_t s, uint32_t d, uint8_t a);           //src, dst, alpha
-typedef uint32_t(*SwJoin)(uint8_t r, uint8_t g, uint8_t b, uint8_t a);      //color channel join
-typedef uint8_t(*SwAlpha)(uint8_t*);                                        //blending alpha
-
-struct SwCompositor;
+typedef uint8_t (*SwMask)(uint8_t s, uint8_t d, uint8_t a);                       // src, dst, alpha
+typedef uint32_t (*SwBlender)(const SwSurface* surface, uint32_t s, uint32_t d);  // src, dst
+typedef uint32_t (*SwBlenderA)(uint32_t s, uint32_t d, uint8_t a);                // src, dst, alpha
+typedef uint32_t (*SwJoin)(uint8_t r, uint8_t g, uint8_t b, uint8_t a);           // color channel join
+typedef uint8_t (*SwAlpha)(uint8_t*);                                             // blending alpha
 
 struct SwSurface : RenderSurface
 {
     SwJoin  join;
-    SwAlpha alphas[4];                    //Alpha:2, InvAlpha:3, Luma:4, InvLuma:5
+    SwAlpha alphas[4];                    // Alpha:0, InvAlpha:1, Luma:2, InvLuma:3
     SwBlender blender = nullptr;          //blender (optional)
     SwCompositor* compositor = nullptr;   //compositor (optional)
     BlendMethod blendMethod = BlendMethod::Normal;
@@ -295,9 +289,12 @@ struct SwSurface : RenderSurface
         return alphas[idx > 3 ? 0 : idx];   //CompositeMethod has only four Matting methods.
     }
 
-    SwSurface()
+    uint8_t luma(const uint32_t& c) const
     {
+        return alphas[2]((uint8_t*)&c);
     }
+
+    SwSurface() = default;
 
     SwSurface(const SwSurface* rhs) : RenderSurface(rhs)
     {
@@ -384,16 +381,6 @@ struct SwMpool
     }
 };
 
-static inline int32_t TO_SWCOORD(float val)
-{
-    return int32_t(val * 64.0f);
-}
-
-static inline SwPoint TO_SWPOINT(const Point& val)
-{
-    return {TO_SWCOORD(val.x), TO_SWCOORD(val.y)};
-}
-
 static inline uint32_t JOIN(uint8_t c0, uint8_t c1, uint8_t c2, uint8_t c3)
 {
     return (c0 << 24 | c1 << 16 | c2 << 8 | c3);
@@ -445,24 +432,6 @@ static inline uint32_t PREMULTIPLY(uint32_t c, uint8_t a)
     return (c & 0xff000000) + ((((c >> 8) & 0xff) * a) & 0xff00) + ((((c & 0x00ff00ff) * a) >> 8) & 0x00ff00ff);
 }
 
-static inline RenderColor BLEND_UPRE(uint32_t c)
-{
-    RenderColor o = {C1(c), C2(c), C3(c), A(c)};
-    if (o.a > 0 && o.a < 255) {
-        o.r = std::min(o.r * 255u / o.a, 255u);
-        o.g = std::min(o.g * 255u / o.a, 255u);
-        o.b = std::min(o.b * 255u / o.a, 255u);
-    }
-    return o;
-}
-
-static inline uint32_t BLEND_PRE(uint32_t c1, uint32_t c2, uint8_t a)
-{
-    if (a == 255) return c1;
-    else if (a == 0) return c2;
-    return ALPHA_BLEND(c1, a) + ALPHA_BLEND(c2, 255 - a);
-}
-
 static inline uint32_t opBlendInterp(uint32_t s, uint32_t d, uint8_t a)
 {
     return INTERPOLATE(s, d, a);
@@ -482,186 +451,6 @@ static inline uint32_t opBlendPreNormal(uint32_t s, uint32_t d, TVG_UNUSED uint8
 static inline uint32_t opBlendSrcOver(uint32_t s, TVG_UNUSED uint32_t d, TVG_UNUSED uint8_t a)
 {
     return s;
-}
-
-static inline uint32_t opBlendDifference(uint32_t s, uint32_t d)
-{
-    auto f = [](uint8_t s, uint8_t d) {
-        return (s > d) ? (s - d) : (d - s);
-    };
-
-    return JOIN(255, f(C1(s), C1(d)), f(C2(s), C2(d)), f(C3(s), C3(d)));
-}
-
-static inline uint32_t opBlendExclusion(uint32_t s, uint32_t d)
-{
-    auto f = [](uint8_t s, uint8_t d) {
-        return tvg::clamp(s + d - 2 * MULTIPLY(s, d), 0, 255);
-    };
-
-    return JOIN(255, f(C1(s), C1(d)), f(C2(s), C2(d)), f(C3(s), C3(d)));
-}
-
-static inline uint32_t opBlendAdd(uint32_t s, uint32_t d)
-{
-    auto f = [](uint8_t s, uint8_t d) {
-        return std::min(s + d, 255);
-    };
-
-    return JOIN(255, f(C1(s), C1(d)), f(C2(s), C2(d)), f(C3(s), C3(d)));
-}
-
-static inline uint32_t opBlendScreen(uint32_t s, uint32_t d)
-{
-    auto f = [](uint8_t s, uint8_t d) {
-        return s + d - MULTIPLY(s, d);
-    };
-
-    return JOIN(255, f(C1(s), C1(d)), f(C2(s), C2(d)), f(C3(s), C3(d)));
-}
-
-static inline uint32_t opBlendMultiply(uint32_t s, uint32_t d)
-{
-    auto o = BLEND_UPRE(d);
-
-    auto f = [](uint8_t s, uint8_t d) {
-        return MULTIPLY(s, d);
-    };
-
-    return BLEND_PRE(JOIN(255, f(C1(s), o.r), f(C2(s), o.g), f(C3(s), o.b)), s, o.a);
-}
-
-static inline uint32_t opBlendOverlay(uint32_t s, uint32_t d)
-{
-    auto o = BLEND_UPRE(d);
-
-    auto f = [](uint8_t s, uint8_t d) {
-        return (d < 128) ? std::min(255, 2 * MULTIPLY(s, d)) : (255 - std::min(255, 2 * MULTIPLY(255 - s, 255 - d)));
-    };
-
-    return BLEND_PRE(JOIN(255, f(C1(s), o.r), f(C2(s), o.g), f(C3(s), o.b)), s, o.a);
-}
-
-static inline uint32_t opBlendDarken(uint32_t s, uint32_t d)
-{
-    auto o = BLEND_UPRE(d);
-
-    auto f = [](uint8_t s, uint8_t d) {
-        return std::min(s, d);
-    };
-
-    return BLEND_PRE(JOIN(255, f(C1(s), o.r), f(C2(s), o.g), f(C3(s), o.b)), s, o.a);
-}
-
-static inline uint32_t opBlendLighten(uint32_t s, uint32_t d)
-{
-    auto f = [](uint8_t s, uint8_t d) {
-        return std::max(s, d);
-    };
-
-    return JOIN(255, f(C1(s), C1(d)), f(C2(s), C2(d)), f(C3(s), C3(d)));
-}
-
-static inline uint32_t opBlendColorDodge(uint32_t s, uint32_t d)
-{
-    auto o = BLEND_UPRE(d);
-
-    auto f = [](uint8_t s, uint8_t d) {
-        return d == 0 ? 0 : (s == 255 ? 255 : std::min(d * 255 / (255 - s), 255));
-    };
-
-    return BLEND_PRE(JOIN(255, f(C1(s), o.r), f(C2(s), o.g), f(C3(s), o.b)), s, o.a);
-}
-
-static inline uint32_t opBlendColorBurn(uint32_t s, uint32_t d)
-{
-    auto o = BLEND_UPRE(d);
-
-    auto f = [](uint8_t s, uint8_t d) {
-        return d == 255 ? 255 : (s == 0 ? 0 : 255 - std::min((255 - d) * 255 / s, 255));
-    };
-
-    return BLEND_PRE(JOIN(255, f(C1(s), o.r), f(C2(s), o.g), f(C3(s), o.b)), s, o.a);
-}
-
-static inline uint32_t opBlendHardLight(uint32_t s, uint32_t d)
-{
-    auto o = BLEND_UPRE(d);
-
-    auto f = [](uint8_t s, uint8_t d) {
-        return (s < 128) ? std::min(255, 2 * MULTIPLY(s, d)) : (255 - std::min(255, 2 * MULTIPLY(255 - s, 255 - d)));
-    };
-
-    return BLEND_PRE(JOIN(255, f(C1(s), o.r), f(C2(s), o.g), f(C3(s), o.b)), s, o.a);
-}
-
-static inline uint32_t opBlendSoftLight(uint32_t s, uint32_t d)
-{
-    auto o = BLEND_UPRE(d);
-
-    auto f = [](uint8_t s, uint8_t d) {
-        return MULTIPLY(255 - std::min(255, 2 * s), MULTIPLY(d, d)) + std::min(255, 2 * MULTIPLY(s, d));
-    };
-
-    return BLEND_PRE(JOIN(255, f(C1(s), o.r), f(C2(s), o.g), f(C3(s), o.b)), s, o.a);
-}
-
-void rasterRGB2HSL(uint8_t r, uint8_t g, uint8_t b, float* h, float* s, float* l);
-
-static inline uint32_t opBlendHue(uint32_t s, uint32_t d)
-{
-    auto o = BLEND_UPRE(d);
-
-    float sh, ds, dl;
-    rasterRGB2HSL(C1(s), C2(s), C3(s), &sh, 0, 0);
-    rasterRGB2HSL(o.r, o.g, o.b, 0, &ds, &dl);
-
-    uint8_t r, g, b;
-    hsl2rgb(sh, ds, dl, r, g, b);
-
-    return BLEND_PRE(JOIN(255, r, g, b), s, o.a);
-}
-
-static inline uint32_t opBlendSaturation(uint32_t s, uint32_t d)
-{
-    auto o = BLEND_UPRE(d);
-
-    float dh, ss, dl;
-    rasterRGB2HSL(C1(s), C2(s), C3(s), 0, &ss, 0);
-    rasterRGB2HSL(o.r, o.g, o.b, &dh, 0, &dl);
-
-    uint8_t r, g, b;
-    hsl2rgb(dh, ss, dl, r, g, b);
-
-    return BLEND_PRE(JOIN(255, r, g, b), s, o.a);
-}
-
-static inline uint32_t opBlendColor(uint32_t s, uint32_t d)
-{
-    auto o = BLEND_UPRE(d);
-
-    float sh, ss, dl;
-    rasterRGB2HSL(C1(s), C2(s), C3(s), &sh, &ss, 0);
-    rasterRGB2HSL(o.r, o.g, o.b, 0, 0, &dl);
-
-    uint8_t r, g, b;
-    hsl2rgb(sh, ss, dl, r, g, b);
-
-    return BLEND_PRE(JOIN(255, r, g, b), s, o.a);
-}
-
-static inline uint32_t opBlendLuminosity(uint32_t s, uint32_t d)
-{
-    auto o = BLEND_UPRE(d);
-
-    float dh, ds, sl;
-    rasterRGB2HSL(C1(s), C2(s), C3(s), 0, 0, &sl);
-    rasterRGB2HSL(o.r, o.g, o.b, &dh, &ds, 0);
-
-    uint8_t r, g, b;
-    hsl2rgb(dh, ds, sl, r, g, b);
-
-    return BLEND_PRE(JOIN(255, r, g, b), s, o.a);
 }
 
 void utilExport(SwOutline* outline, const Matrix& transform, BBox& bbox);
@@ -696,18 +485,18 @@ const Fill::ColorStop* fillFetchSolid(const SwFill* fill, const Fill* fdata);
 void fillReset(SwFill* fill);
 void fillFree(SwFill* fill);
 
-//OPTIMIZE_ME: Skip the function pointer access
-void fillLinear(const SwFill* fill, uint8_t* dst, uint32_t y, uint32_t x, uint32_t len, SwMask maskOp, uint8_t opacity);                                   //composite masking ver.
-void fillLinear(const SwFill* fill, uint8_t* dst, uint32_t y, uint32_t x, uint32_t len, uint8_t* cmp, SwMask maskOp, uint8_t opacity);                     //direct masking ver.
-void fillLinear(const SwFill* fill, uint32_t* dst, uint32_t y, uint32_t x, uint32_t len, SwBlenderA op, uint8_t a);                                        //blending ver.
-void fillLinear(const SwFill* fill, uint32_t* dst, uint32_t y, uint32_t x, uint32_t len, SwBlenderA op, SwBlender op2, uint8_t a);                         //blending + BlendingMethod(op2) ver.
-void fillLinear(const SwFill* fill, uint32_t* dst, uint32_t y, uint32_t x, uint32_t len, uint8_t* cmp, SwAlpha alpha, uint8_t csize, uint8_t opacity);     //matting ver.
+// OPTIMIZE_ME: Skip the function pointer access
+void fillLinear(const SwFill* fill, uint8_t* dst, uint32_t y, uint32_t x, uint32_t len, SwMask maskOp, uint8_t opacity);                                      // composite masking ver.
+void fillLinear(const SwFill* fill, uint8_t* dst, uint32_t y, uint32_t x, uint32_t len, uint8_t* cmp, SwMask maskOp, uint8_t opacity);                        // direct masking ver.
+void fillLinear(const SwFill* fill, uint32_t* dst, uint32_t y, uint32_t x, uint32_t len, SwBlenderA op, uint8_t a);                                           // blending ver.
+void fillLinear(const SwSurface* surface, const SwFill* fill, uint32_t* dst, uint32_t y, uint32_t x, uint32_t len, SwBlenderA op, SwBlender op2, uint8_t a);  // blending + BlendingMethod(op2) ver.
+void fillLinear(const SwFill* fill, uint32_t* dst, uint32_t y, uint32_t x, uint32_t len, uint8_t* cmp, SwAlpha alpha, uint8_t csize, uint8_t opacity);        // matting ver.
 
-void fillRadial(const SwFill* fill, uint8_t* dst, uint32_t y, uint32_t x, uint32_t len, SwMask op, uint8_t a);                                             //composite masking ver.
-void fillRadial(const SwFill* fill, uint8_t* dst, uint32_t y, uint32_t x, uint32_t len, uint8_t* cmp, SwMask op, uint8_t a) ;                              //direct masking ver.
-void fillRadial(const SwFill* fill, uint32_t* dst, uint32_t y, uint32_t x, uint32_t len, SwBlenderA op, uint8_t a);                                        //blending ver.
-void fillRadial(const SwFill* fill, uint32_t* dst, uint32_t y, uint32_t x, uint32_t len, SwBlenderA op, SwBlender op2, uint8_t a);                         //blending + BlendingMethod(op2) ver.
-void fillRadial(const SwFill* fill, uint32_t* dst, uint32_t y, uint32_t x, uint32_t len, uint8_t* cmp, SwAlpha alpha, uint8_t csize, uint8_t opacity);     //matting ver.
+void fillRadial(const SwFill* fill, uint8_t* dst, uint32_t y, uint32_t x, uint32_t len, SwMask op, uint8_t a);                                                // composite masking ver.
+void fillRadial(const SwFill* fill, uint8_t* dst, uint32_t y, uint32_t x, uint32_t len, uint8_t* cmp, SwMask op, uint8_t a);                                  // direct masking ver.
+void fillRadial(const SwFill* fill, uint32_t* dst, uint32_t y, uint32_t x, uint32_t len, SwBlenderA op, uint8_t a);                                           // blending ver.
+void fillRadial(const SwSurface* surface, const SwFill* fill, uint32_t* dst, uint32_t y, uint32_t x, uint32_t len, SwBlenderA op, SwBlender op2, uint8_t a);  // blending + BlendingMethod(op2) ver.
+void fillRadial(const SwFill* fill, uint32_t* dst, uint32_t y, uint32_t x, uint32_t len, uint8_t* cmp, SwAlpha alpha, uint8_t csize, uint8_t opacity);        // matting ver.
 
 SwRle* rleRender(SwRle* rle, const SwOutline* outline, const RenderRegion& bbox, SwMpool* mpool, unsigned tid, bool antiAlias);
 SwRle* rleRender(const RenderRegion* bbox);
@@ -733,10 +522,10 @@ bool rasterStroke(SwSurface* surface, SwShape* shape, const RenderRegion& bbox, 
 bool rasterGradientShape(SwSurface* surface, SwShape* shape, const RenderRegion& bbox, const Fill* fdata, uint8_t opacity);
 bool rasterGradientStroke(SwSurface* surface, SwShape* shape, const RenderRegion& bbox, const Fill* fdata, uint8_t opacity);
 bool rasterClear(SwSurface* surface, uint32_t x, uint32_t y, uint32_t w, uint32_t h);
-void rasterPixel32(uint32_t *dst, uint32_t val, uint32_t offset, int32_t len);
+void rasterPixel32(uint32_t* dst, uint32_t val, uint32_t offset, int32_t len);
 void rasterTranslucentPixel32(uint32_t* dst, uint32_t* src, uint32_t len, uint8_t opacity);
 void rasterPixel32(uint32_t* dst, uint32_t* src, uint32_t len, uint8_t opacity);
-void rasterGrayscale8(uint8_t *dst, uint8_t val, uint32_t offset, int32_t len);
+void rasterGrayscale8(uint8_t* dst, uint8_t val, uint32_t offset, int32_t len);
 void rasterXYFlip(uint32_t* src, uint32_t* dst, int32_t stride, int32_t w, int32_t h, const RenderRegion& bbox, bool flipped);
 void rasterUnpremultiply(RenderSurface* surface);
 void rasterPremultiply(RenderSurface* surface);
@@ -755,5 +544,22 @@ void effectTintUpdate(RenderEffectTint* effect);
 bool effectTint(SwCompositor* cmp, const RenderEffectTint* params, bool direct);
 void effectTritoneUpdate(RenderEffectTritone* effect);
 bool effectTritone(SwCompositor* cmp, const RenderEffectTritone* params, bool direct);
+
+uint32_t blendDifference(TVG_UNUSED const SwSurface* surface, uint32_t s, uint32_t d);
+uint32_t blendExclusion(TVG_UNUSED const SwSurface* surface, uint32_t s, uint32_t d);
+uint32_t blendAdd(TVG_UNUSED const SwSurface* surface, uint32_t s, uint32_t d);
+uint32_t blendScreen(TVG_UNUSED const SwSurface* surface, uint32_t s, uint32_t d);
+uint32_t blendMultiply(TVG_UNUSED const SwSurface* surface, uint32_t s, uint32_t d);
+uint32_t blendOverlay(TVG_UNUSED const SwSurface* surface, uint32_t s, uint32_t d);
+uint32_t blendDarken(TVG_UNUSED const SwSurface* surface, uint32_t s, uint32_t d);
+uint32_t blendLighten(TVG_UNUSED const SwSurface* surface, uint32_t s, uint32_t d);
+uint32_t blendColorDodge(TVG_UNUSED const SwSurface* surface, uint32_t s, uint32_t d);
+uint32_t blendColorBurn(TVG_UNUSED const SwSurface* surface, uint32_t s, uint32_t d);
+uint32_t blendHardLight(TVG_UNUSED const SwSurface* surface, uint32_t s, uint32_t d);
+uint32_t blendSoftLight(TVG_UNUSED const SwSurface* surface, uint32_t s, uint32_t d);
+uint32_t blendHue(const SwSurface* surface, uint32_t s, uint32_t d);
+uint32_t blendSaturation(const SwSurface* surface, uint32_t s, uint32_t d);
+uint32_t blendColor(const SwSurface* surface, uint32_t s, uint32_t d);
+uint32_t blendLuminosity(const SwSurface* surface, uint32_t s, uint32_t d);
 
 #endif /* _TVG_SW_COMMON_H_ */

@@ -495,52 +495,52 @@ bool SwRenderer::blend(BlendMethod method)
 
     switch (method) {
         case BlendMethod::Multiply:
-            surface->blender = opBlendMultiply;
+            surface->blender = blendMultiply;
             break;
         case BlendMethod::Screen:
-            surface->blender = opBlendScreen;
+            surface->blender = blendScreen;
             break;
         case BlendMethod::Overlay:
-            surface->blender = opBlendOverlay;
+            surface->blender = blendOverlay;
             break;
         case BlendMethod::Darken:
-            surface->blender = opBlendDarken;
+            surface->blender = blendDarken;
             break;
         case BlendMethod::Lighten:
-            surface->blender = opBlendLighten;
+            surface->blender = blendLighten;
             break;
         case BlendMethod::ColorDodge:
-            surface->blender = opBlendColorDodge;
+            surface->blender = blendColorDodge;
             break;
         case BlendMethod::ColorBurn:
-            surface->blender = opBlendColorBurn;
+            surface->blender = blendColorBurn;
             break;
         case BlendMethod::HardLight:
-            surface->blender = opBlendHardLight;
+            surface->blender = blendHardLight;
             break;
         case BlendMethod::SoftLight:
-            surface->blender = opBlendSoftLight;
+            surface->blender = blendSoftLight;
             break;
         case BlendMethod::Difference:
-            surface->blender = opBlendDifference;
+            surface->blender = blendDifference;
             break;
         case BlendMethod::Exclusion:
-            surface->blender = opBlendExclusion;
+            surface->blender = blendExclusion;
             break;
         case BlendMethod::Hue:
-            surface->blender = opBlendHue;
+            surface->blender = blendHue;
             break;
         case BlendMethod::Saturation:
-            surface->blender = opBlendSaturation;
+            surface->blender = blendSaturation;
             break;
         case BlendMethod::Color:
-            surface->blender = opBlendColor;
+            surface->blender = blendColor;
             break;
         case BlendMethod::Luminosity:
-            surface->blender = opBlendLuminosity;
+            surface->blender = blendLuminosity;
             break;
         case BlendMethod::Add:
-            surface->blender = opBlendAdd;
+            surface->blender = blendAdd;
             break;
         default:
             surface->blender = nullptr;
