@@ -148,19 +148,6 @@ ThorVG is designed to be portable across a wide range of devices, including smal
   - [SVG](#svg)
   - [Lottie](#lottie)
   - [In Practice](#in-practice)
-    - [ArcBrush](#arcbrush)
-    - [Canva iOS](#canva-ios)
-    - [dotLottie](#dotlottie)
-    - [Espressif](#espressif)
-    - [Flux Audio](#flux-audio)
-    - [Godot](#godot)
-    - [LibreScoot](#librescoot)
-    - [Lottie Creator](#lottie-creator)
-    - [LVGL](#lvgl)
-    - [MetaModule](#metamodule)
-    - [Segger](#segger)
-    - [TinyPiXOS](#tinypixos)
-    - [Tizen](#tizen)
   - [Interactive App](#interactive-app)
   - [Examples](#examples)
     - [C++ Examples](#c-examples)
@@ -467,6 +454,12 @@ ThorVG is used as a lightweight vector rasterization backend in [MetaModule](htt
   <img width="400" height="auto" src="https://github.com/thorvg/thorvg.site/blob/main/readme/example_metamodule.png">
 </p>
 
+### MorphOS
+[MorphOS](https://www.morphos-team.net/), an Amiga-inspired operating system integrating ThorVG for modern vector graphics rendering.
+
+<p align="center">
+  <img width="700" height="auto" src="https://github.com/thorvg/thorvg.site/blob/main/readme/example_morphos.jpg">
+</p>
 
 ### Segger
 [SEGGER](https://www.segger.com/) Microcontroller provides tools for embedded system development, including RTOS, middleware, and debugging solutions. It adopts ThorVG as a GPU driver to enable high-performance vector rendering for GUI applications.
