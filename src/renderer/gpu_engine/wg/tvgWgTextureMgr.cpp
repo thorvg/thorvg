@@ -52,17 +52,16 @@ WgTextureMgr::SurfaceEntry* WgTextureMgr::find(const RenderSurface* surface)
 
 WGPUTextureFormat WgTextureMgr::textureFormat(const RenderSurface* surface)
 {
-    if (surface->cs == ColorSpace::ABGR8888S) return WGPUTextureFormat_RGBA8Unorm;
-    if (surface->cs == ColorSpace::Grayscale8) return WGPUTextureFormat_R8Unorm;
-    return WGPUTextureFormat_BGRA8Unorm;
+    if (surface->cs == ColorSpace::ABGR8888 || surface->cs == ColorSpace::ABGR8888S) return WGPUTextureFormat_RGBA8Unorm;
+    if (surface->cs == ColorSpace::ARGB8888 || surface->cs == ColorSpace::ARGB8888S) return WGPUTextureFormat_BGRA8Unorm;
+    return WGPUTextureFormat_R8Unorm;  // must be
 }
 
 void WgTextureMgr::upload(WgContext& context, WgTextureEntry& entry, const RenderSurface* surface, FilterMethod filter)
 {
     auto bytesPerRow = surface->stride * CHANNEL_SIZE(surface->cs);
     auto dataSize = static_cast<uint64_t>(bytesPerRow) * surface->h;
-    auto texHandleChanged = context.allocateTexture(entry.texture, surface->w, surface->h, textureFormat(surface), surface->data, bytesPerRow, dataSize);
-    if (!texHandleChanged) return;
+    if (!context.allocateTexture(entry.texture, surface->w, surface->h, textureFormat(surface), surface->data, bytesPerRow, dataSize)) return;
 
     context.releaseTextureView(entry.textureView);
     entry.textureView = context.createTextureView(entry.texture);
