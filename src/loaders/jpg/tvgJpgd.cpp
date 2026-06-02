@@ -2482,12 +2482,10 @@ void jpgdDelete(jpeg_decoder* decoder)
     delete(decoder);
 }
 
-
-unsigned char* jpgdDecompress(jpeg_decoder* decoder, ColorSpace cs)
+unsigned char* jpgdDecompress(jpeg_decoder* decoder)
 {
     if (!decoder || decoder->begin_decoding() != JPGD_SUCCESS) return nullptr;
 
-    auto bgra = (cs == ColorSpace::ABGR8888S || cs == ColorSpace::ABGR8888);
     auto channel = 4; //OPTIMIZE: jpg is 3 channel format, not really need 4 channel components.
     auto width = decoder->get_width();
     auto height = decoder->get_height();
@@ -2503,17 +2501,8 @@ unsigned char* jpgdDecompress(jpeg_decoder* decoder, ColorSpace cs)
             return nullptr;
         }
         if (decoder->get_num_components() == 3) {
-            if (bgra) {
-                memcpy(dst, src, stride);
-                dst += stride;
-            } else {
-                for (int x = 0; x < width; x++, src += 4, dst += 4) {
-                    dst[0] = src[2];
-                    dst[1] = src[1];
-                    dst[2] = src[0];
-                    dst[3] = 255;
-                }
-            }
+            memcpy(dst, src, stride);
+            dst += stride;
         } else if (decoder->get_num_components() == 1) {
             for (int x = 0; x < width; x++, src++, dst += 4) {
                 dst[0] = *src;

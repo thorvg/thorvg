@@ -67,6 +67,10 @@ struct PictureImpl : Picture
         auto pivot = Point{-origin.x * float(w), -origin.y * float(h)};
 
         if (bitmap) {
+            if (bitmap->cs == ColorSpace::Unknown) {
+                TVGERR("RENDERER", "Unknown colorspace picture data");
+                return false;
+            }
             //Overriding Transformation by the desired image size
             auto sx = w / loader->w;
             auto sy = h / loader->h;

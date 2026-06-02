@@ -215,6 +215,13 @@ struct WebPBitstreamFeatures {
   uint32_t pad[2];              // padding for later use
 };
 
+// Retrieve features from the bitstream. The *features structure is filled
+// with information gathered from the bitstream.
+// Returns VP8_STATUS_OK when the features are successfully retrieved. Returns
+// VP8_STATUS_NOT_ENOUGH_DATA when more data is needed to retrieve the
+// features from headers. Returns error in other cases.
+WEBP_EXTERN(VP8StatusCode) WebPGetFeatures(const uint8_t*, size_t, WebPBitstreamFeatures*);
+
 // Decoding options
 struct WebPDecoderOptions {
   int bypass_filtering;               // if true, skip the in-loop filtering
@@ -235,8 +242,6 @@ struct WebPDecoderOptions {
   int no_enhancement;                 // if true, discard enhancement layer
   uint32_t pad[3];                    // padding for later use
 };
-
-
 
 #ifdef __cplusplus
 }    // extern "C"

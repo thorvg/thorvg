@@ -35,18 +35,10 @@
 
 void WgImageData::update(WgContext& context, const RenderSurface* surface, FilterMethod filter)
 {
-    // get appropriate texture format from color space
-    WGPUTextureFormat texFormat = WGPUTextureFormat_BGRA8Unorm;
-    if (surface->cs == ColorSpace::ABGR8888S)
-        texFormat = WGPUTextureFormat_RGBA8Unorm;
-    if (surface->cs == ColorSpace::Grayscale8)
-        texFormat = WGPUTextureFormat_R8Unorm;
     auto bytesPerRow = surface->stride * CHANNEL_SIZE(surface->cs);
     auto dataSize = static_cast<uint64_t>(bytesPerRow) * surface->h;
     // allocate new texture handle
-    bool texHandleChanged = context.allocateTexture(texture, surface->w, surface->h, texFormat, surface->data, bytesPerRow, dataSize);
-    // update texture view of texture handle was changed
-    if (texHandleChanged) {
+    if (context.allocateTexture(texture, surface->w, surface->h, WgTextureMgr::textureFormat(surface), surface->data, bytesPerRow, dataSize)) {
         context.releaseTextureView(textureView);
         textureView = context.createTextureView(texture);
         // update bind group
