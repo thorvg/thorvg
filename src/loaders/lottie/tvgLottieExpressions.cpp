@@ -272,7 +272,7 @@ static jerry_value_t _buildValue(float frameNo, LottieProperty* property)
             return obj;
         }
         case LottieProperty::Type::Color: return _color((*static_cast<LottieColor*>(property))(frameNo));
-        case LottieProperty::Type::Opacity: return jerry_number((*static_cast<LottieOpacity*>(property))(frameNo));
+        case LottieProperty::Type::Opacity: return jerry_number((*static_cast<LottieOpacity*>(property))(frameNo) / 2.55f);
         case LottieProperty::Type::TextDoc: {
             const auto& doc = (*static_cast<LottieTextDoc*>(property))(frameNo);
             return doc.text ? jerry_string_sz(doc.text) : jerry_string_sz("");
@@ -306,7 +306,7 @@ static void _buildTransform(jerry_value_t context, float frameNo, LottieTransfor
     jerry_object_set_sz(obj, "rotation", rotation);
     jerry_value_free(rotation);
 
-    auto opacity = jerry_number(transform->opacity(frameNo));
+    auto opacity = jerry_number(transform->opacity(frameNo) / 2.55f);
     jerry_object_set_sz(obj, "opacity", opacity);
     jerry_value_free(opacity);
 
