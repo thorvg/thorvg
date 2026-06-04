@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2024 the ThorVG project. All rights reserved.
+ * Copyright (c) 2024 - 2026 the ThorVG project. All rights reserved.
 
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to deal
@@ -23,6 +23,10 @@
 #ifndef _TVG_LOTTIE_EXPRESSIONS_H_
 #define _TVG_LOTTIE_EXPRESSIONS_H_
 
+#ifdef THORVG_THREAD_SUPPORT
+    #include <thread>
+#endif
+
 #include "tvgArray.h"
 #include "tvgCommon.h"
 #include "tvgLottieCommon.h"
@@ -35,11 +39,6 @@ struct LottieModifier;
 #ifdef THORVG_LOTTIE_EXPRESSIONS_SUPPORT
 
 #include "jerryscript.h"
-
-#ifdef THORVG_THREAD_SUPPORT
-    #include <thread>
-#endif
-
 
 struct LottieExpressions
 {
