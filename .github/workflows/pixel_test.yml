@@ -1,0 +1,172 @@
+name: Pixel Test
+
+on: pull_request
+
+permissions:
+  contents: read
+
+env:
+  THORVG_PIXEL_REFERENCE_REF: v1.0.6
+  WGPU_NATIVE_VERSION: v27.0.4.0
+
+jobs:
+  pixel_test:
+    name: reference vs PR merge
+    runs-on: ubuntu-latest
+    timeout-minutes: 60
+
+    env:
+      PKG_CONFIG_PATH: /usr/local/lib/pkgconfig:/usr/local/lib/x86_64-linux-gnu/pkgconfig
+      LD_LIBRARY_PATH: /usr/local/lib:/usr/local/lib/x86_64-linux-gnu
+      LIBGL_ALWAYS_SOFTWARE: 1
+
+    steps:
+      - name: Checkout ThorVG PR merge
+        uses: actions/checkout@v4
+        with:
+          ref: ${{ github.ref }}
+          path: thorvg
+          fetch-depth: 0
+
+      - name: Checkout pixel inspector
+        uses: actions/checkout@v4
+        with:
+          repository: thorvg/thorvg.pixel-inspector
+          path: tvg-pixel-inspector
+
+      - name: Install packages
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y meson ninja-build pkg-config valgrind curl jq unzip libturbojpeg0-dev libpng-dev libwebp-dev libegl-dev libgl1-mesa-dev
+
+      - name: Install Chrome if missing
+        run: |
+          if ! command -v google-chrome >/dev/null 2>&1; then
+            curl -fsSL -o /tmp/google-chrome.deb https://dl.google.com/linux/direct/google-chrome-stable_current_amd64.deb
+            sudo apt-get install -y /tmp/google-chrome.deb
+          fi
+
+      - name: Install wgpu_native
+        run: bash thorvg/.github/workflows/install_wgpu_native.sh
+
+      - name: Run pixel comparison
+        continue-on-error: true
+        run: |
+          set -euo pipefail
+
+          install_thorvg_source() {
+            local src_dir="$1"
+            local build_dir="$2"
+
+            meson setup "$build_dir" "$src_dir" --wipe -Dengines=all -Dloaders=all -Dsavers=all -Dextra=lottie_exp,openmp
+            ninja -C "$build_dir"
+            sudo ninja -C "$build_dir" install
+            sudo ldconfig
+          }
+
+          cd "$GITHUB_WORKSPACE/thorvg"
+          PR_REF="$(git rev-parse HEAD)"
+          echo "test_ref=PR merge ($PR_REF)"
+
+          # Update reference pngs
+          git checkout "$THORVG_PIXEL_REFERENCE_REF"
+          install_thorvg_source "$GITHUB_WORKSPACE/thorvg" "$GITHUB_WORKSPACE/build-reference"
+          cd "$GITHUB_WORKSPACE/tvg-pixel-inspector"
+          bash ./build_and_run.sh --update-reference
+
+          # Run tests against PR merge
+          cd "$GITHUB_WORKSPACE/thorvg"
+          git checkout "$PR_REF"
+          install_thorvg_source "$GITHUB_WORKSPACE/thorvg" "$GITHUB_WORKSPACE/build-pr"
+          cd "$GITHUB_WORKSPACE/tvg-pixel-inspector"
+          bash ./build_and_run.sh
+
+      - name: Export report tabs to PDFs
+        if: always()
+        run: |
+          set -euo pipefail
+
+          REPORT_HTML="$GITHUB_WORKSPACE/tvg-pixel-inspector/artifacts/reporter.html"
+          if [ -f "$REPORT_HTML" ]; then
+            BACKENDS="$(grep -oE 'data-tab="[a-z]+"' "$REPORT_HTML" | sed -E 's/.*"(.*)".*/\1/' | grep -vx 'all' || true)"
+            if [ -z "$BACKENDS" ]; then
+              echo "No backend tabs found in $REPORT_HTML; skipping PDF export."
+            fi
+
+            for BACKEND in $BACKENDS; do
+              REPORT_PDF="$GITHUB_WORKSPACE/tvg-pixel-inspector/artifacts/reporter.$BACKEND.pdf"
+              google-chrome \
+                --headless \
+                --disable-gpu \
+                --no-sandbox \
+                --print-to-pdf="$REPORT_PDF" \
+                "file://$REPORT_HTML#$BACKEND" \
+                && echo "Wrote $REPORT_PDF" || echo "Failed to print $REPORT_PDF"
+            done
+          else
+            echo "Report HTML not found: $REPORT_HTML"
+          fi
+
+      - name: Upload report PDFs
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: thorvg-pixel-report
+          path: tvg-pixel-inspector/artifacts/reporter.*.pdf
+          if-no-files-found: warn
+
+      - name: Write pixel report summary
+        if: always()
+        run: |
+          python3 -u - <<'PY'
+          import html
+          import pathlib
+          import re
+
+          report_html = pathlib.Path("tvg-pixel-inspector/artifacts/reporter.html")
+          report_txt = pathlib.Path("pixel-report.txt")
+
+          if not report_html.exists():
+              report_txt.write_text("status=missing\n")
+              raise SystemExit(0)
+
+          text = report_html.read_text(errors="replace")
+
+          def first(pattern, default="0"):
+              match = re.search(pattern, text, re.S)
+              return html.unescape(match.group(1)).strip() if match else default
+
+          compared = first(r'<span>compared</span><b[^>]*>([^<]+)</b>')
+          different = first(r'<span>different</span><b[^>]*>([^<]+)</b>')
+          failed = first(r'<span>failed</span><b[^>]*>([^<]+)</b>')
+
+          backends = []
+          for match in re.finditer(
+              r'<section class="panel backend" data-backend="([^"]+)">.*?'
+              r'<p class="muted">compared ([0-9]+), stored ([0-9]+), different ([0-9]+), failed ([0-9]+)</p>',
+              text,
+              re.S,
+          ):
+              backends.append(tuple(html.unescape(value) for value in match.groups()))
+
+          lines = [
+              "status=ok",
+              "pr=${{ github.event.pull_request.number }}",
+              f"compared={compared}",
+              f"different={different}",
+              f"failed={failed}",
+          ]
+
+          for backend, backend_compared, _stored, backend_different, backend_failed in backends:
+              lines.append(f"backend={backend},{backend_compared},{backend_different},{backend_failed}")
+
+          report_txt.write_text("\n".join(lines) + "\n")
+          PY
+
+      - name: Upload pixel report summary
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: thorvg-pixel-summary
+          path: pixel-report.txt
+          if-no-files-found: warn
