@@ -25,6 +25,7 @@
 [![npm](https://img.shields.io/npm/v/@thorvg/webcanvas?color=orange)](https://www.npmjs.com/package/@thorvg/webcanvas)
 [![PyPI version](https://img.shields.io/pypi/v/thorvg-python?color=orange)](https://pypi.org/project/thorvg-python/)
 [![Crates.io](https://img.shields.io/crates/v/thorvg?color=orange)](https://crates.io/crates/thorvg)
+[![Debian](https://img.shields.io/debian/v/libthorvg-dev/forky?color=orange)](https://packages.debian.org/forky/libthorvg-dev)
 <br>
 
 # ThorVG
