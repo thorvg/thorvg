@@ -25,12 +25,23 @@
 
 #include "tvgGlCommon.h"
 
+struct GlRenderTargetDesc
+{
+    GLenum colorInternalFormat = GL_RGBA8;
+    GLenum colorFormat = GL_RGBA;
+    GLenum colorType = GL_UNSIGNED_BYTE;
+    GLenum minFilter = GL_LINEAR;
+    GLenum magFilter = GL_LINEAR;
+    GLenum depthStencilFormat = GL_DEPTH24_STENCIL8;
+    uint32_t samples = 4;
+};
+
 struct GlRenderTarget
 {
     GlRenderTarget();
     ~GlRenderTarget();
 
-    void init(uint32_t width, uint32_t height, GLint resolveId);
+    void init(uint32_t width, uint32_t height, GLint resolveId, const GlRenderTargetDesc& desc = GlRenderTargetDesc{});
     void reset();
 
     bool invalid() const { return fbo == 0; }

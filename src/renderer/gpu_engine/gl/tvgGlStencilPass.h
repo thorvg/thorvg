@@ -29,6 +29,7 @@
 class GlProgram;
 class GlStageBuffer;
 class GlRenderPass;
+struct GlStencilAtlasTarget;
 
 struct GlStencilRecord
 {
@@ -49,18 +50,17 @@ public:
     GlStencilPass(uint32_t screenWidth, uint32_t screenHeight);
     ~GlStencilPass();
 
-    void init(GLint restoreId = 0);
     void reset();
-    GlRenderTask* prepare(Array<GlStencilRecord>& records, GlStageBuffer& gpuBuffer, GlProgram* coverProgram);
+    GlRenderTask* prepare(Array<GlStencilRecord>& records, GlStageBuffer& gpuBuffer, GlProgram* coverProgram, GLint restoreId = 0);
 
-    RenderRegion viewport{};
-    uint32_t width = 0, height = 0;
-    GLuint resolvedFbo = 0, fbo = 0, colorTex = 0;
+    uint32_t maxAtlasWidth = 0, maxAtlasHeight = 0;
 
 private:
-    GlRenderTask* buildTask(Array<GlStencilRecord>& records, const RenderRegion& coverBounds, GlStageBuffer& gpuBuffer, GlProgram* coverProgram) const;
+    GlStencilAtlasTarget* acquireTarget(uint32_t width, uint32_t height, GLint restoreId);
+    GlRenderTask* buildTask(Array<GlStencilRecord>& records, const RenderRegion& coverBounds, GlStageBuffer& gpuBuffer, GlProgram* coverProgram,
+                            GlStencilAtlasTarget* atlasTarget) const;
 
-    GLuint colorBuffer = 0, stencilBuffer = 0;
+    Array<GlStencilAtlasTarget*> targets = {};
 };
 
 struct GlStencilPassManager
@@ -75,7 +75,6 @@ struct GlStencilPassManager
     GlStencilPassManager(uint32_t screenWidth, uint32_t screenHeight);
     ~GlStencilPassManager();
 
-    void init(GLint restoreId = 0);
     void reset();
     void record(GlRenderPass* pass, GlRenderTask* task, const GlGeometryBuffer* buffer, const RenderRegion& meshBounds,
                 const RenderRegion& viewRegion, const Matrix& viewMatrix, GlStencilMode mode);

@@ -972,7 +972,6 @@ bool GlRenderer::target(void* display, void* surface, void* context, int32_t id,
     mRootTarget.viewport = {{0, 0}, {int32_t(this->surface.w), int32_t(this->surface.h)}};
     mRootTarget.init(this->surface.w, this->surface.h, mTargetFboId);
     mStencilPassManager = new GlStencilPassManager(this->surface.w, this->surface.h);
-    mStencilPassManager->init(mTargetFboId);
 
     return ret;
 }

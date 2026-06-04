@@ -29,7 +29,7 @@ GlRenderTarget::~GlRenderTarget()
     reset();
 }
 
-void GlRenderTarget::init(uint32_t width, uint32_t height, GLint resolveId)
+void GlRenderTarget::init(uint32_t width, uint32_t height, GLint resolveId, const GlRenderTargetDesc& desc)
 {
     if (width == 0 || height == 0) return;
 
@@ -43,13 +43,13 @@ void GlRenderTarget::init(uint32_t width, uint32_t height, GLint resolveId)
 
     GL_CHECK(glGenRenderbuffers(1, &colorBuffer));
     GL_CHECK(glBindRenderbuffer(GL_RENDERBUFFER, colorBuffer));
-    GL_CHECK(glRenderbufferStorageMultisample(GL_RENDERBUFFER, 4, GL_RGBA8, width, height));
+    GL_CHECK(glRenderbufferStorageMultisample(GL_RENDERBUFFER, desc.samples, desc.colorInternalFormat, width, height));
 
     GL_CHECK(glGenRenderbuffers(1, &depthStencilBuffer));
 
     GL_CHECK(glBindRenderbuffer(GL_RENDERBUFFER, depthStencilBuffer));
 
-    GL_CHECK(glRenderbufferStorageMultisample(GL_RENDERBUFFER, 4, GL_DEPTH24_STENCIL8, width, height));
+    GL_CHECK(glRenderbufferStorageMultisample(GL_RENDERBUFFER, desc.samples, desc.depthStencilFormat, width, height));
 
     GL_CHECK(glBindRenderbuffer(GL_RENDERBUFFER, 0));
 
@@ -60,12 +60,12 @@ void GlRenderTarget::init(uint32_t width, uint32_t height, GLint resolveId)
     GL_CHECK(glGenTextures(1, &colorTex));
 
     GL_CHECK(glBindTexture(GL_TEXTURE_2D, colorTex));
-    GL_CHECK(glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA8, width, height, 0, GL_RGBA, GL_UNSIGNED_BYTE, nullptr));
+    GL_CHECK(glTexImage2D(GL_TEXTURE_2D, 0, desc.colorInternalFormat, width, height, 0, desc.colorFormat, desc.colorType, nullptr));
 
     GL_CHECK(glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE));
     GL_CHECK(glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE));
-    GL_CHECK(glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR));
-    GL_CHECK(glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR));
+    GL_CHECK(glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, desc.minFilter));
+    GL_CHECK(glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, desc.magFilter));
 
     GL_CHECK(glBindTexture(GL_TEXTURE_2D, 0));
 
