@@ -1,0 +1,205 @@
+name: Pixel Test Comment
+
+on:
+  workflow_run:
+    workflows: ["Pixel Test"]
+    types: [completed]
+
+permissions:
+  actions: read
+  issues: write
+  pull-requests: write
+
+jobs:
+  comment:
+    if: github.event.workflow_run.event == 'pull_request'
+    runs-on: ubuntu-24.04
+    steps:
+      - name: Download pixel summary
+        uses: actions/download-artifact@v4
+        with:
+          path: ci-report
+          pattern: thorvg-pixel-summary
+          merge-multiple: true
+          run-id: ${{ github.event.workflow_run.id }}
+          github-token: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Create or update comment
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const fs = require('fs');
+            const path = require('path');
+            const reportHeader = '## Pixel Test Report';
+            const workflowRun = context.payload.workflow_run;
+            const summaryPath = path.join('ci-report', 'pixel-report.txt');
+
+            function parseSummary(filename) {
+              const summary = {
+                exists: fs.existsSync(filename),
+                status: 'missing-artifact',
+                prNumber: null,
+                compared: '0',
+                different: '0',
+                failed: '0',
+                backends: [],
+              };
+
+              if (!summary.exists) return summary;
+
+              for (const line of fs.readFileSync(filename, 'utf8').split(/\r?\n/)) {
+                if (!line) continue;
+                const index = line.indexOf('=');
+                if (index < 0) continue;
+
+                const key = line.slice(0, index);
+                const value = line.slice(index + 1);
+
+                if (key === 'status') summary.status = value;
+                else if (key === 'pr') {
+                  const prNumber = Number(value);
+                  if (Number.isInteger(prNumber) && prNumber > 0) summary.prNumber = prNumber;
+                }
+                else if (key === 'compared') summary.compared = value;
+                else if (key === 'different') summary.different = value;
+                else if (key === 'failed') summary.failed = value;
+                else if (key === 'backend') {
+                  const [name, compared, different, failed] = value.split(',');
+                  if (name && compared && different && failed) {
+                    summary.backends.push({name, compared, different, failed});
+                  }
+                }
+              }
+
+              return summary;
+            }
+
+            function renderSummary(summary) {
+              if (!summary.exists) {
+                return `${reportHeader}\n\nPixel report summary artifact was not generated.\n\n`;
+              }
+
+              if (summary.status !== 'ok') {
+                return `${reportHeader}\n\nPixel report HTML was not generated.\n\n`;
+              }
+
+              let body = `${reportHeader}\n\n`;
+              body += '| Backend | Compared | Diff | Failed |\n';
+              body += '| --- | ---: | ---: | ---: |\n';
+
+              if (summary.backends.length > 0) {
+                for (const backend of summary.backends) {
+                  body += `| \`${backend.name}\` | ${backend.compared} | ${backend.different} | ${backend.failed} |\n`;
+                }
+              } else {
+                body += `| \`all\` | ${summary.compared} | ${summary.different} | ${summary.failed} |\n`;
+              }
+
+              body += '\n';
+              return body;
+            }
+
+            const summary = parseSummary(summaryPath);
+            let body = renderSummary(summary);
+
+            // Return the PR number from workflow_run.pull_requests when it is uniquely present.
+            function extractPayloadPrNumber() {
+              const prs = Array.isArray(workflowRun.pull_requests) ? workflowRun.pull_requests : [];
+              const numbers = prs
+                .map(pr => Number(pr.number))
+                .filter(n => Number.isInteger(n) && n > 0);
+              return numbers.length === 1 ? numbers[0] : null;
+            }
+
+            // Look up the open PR number by matching the workflow run's head owner and branch.
+            async function lookupPrNumberByHeadBranch() {
+              const headOwner = workflowRun.head_repository?.owner?.login;
+              const headBranch = workflowRun.head_branch;
+
+              if (!headOwner || !headBranch) {
+                return null;
+              }
+
+              const response = await github.rest.pulls.list({
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                state: 'open',
+                head: `${headOwner}:${headBranch}`,
+                per_page: 10,
+              });
+
+              const prs = response.data;
+              if (prs.length === 1) return prs[0].number;
+              return null;
+            }
+
+            let prNumber = summary.prNumber;
+            if (!prNumber) {
+              prNumber = extractPayloadPrNumber();
+            }
+            if (!prNumber) {
+              prNumber = await lookupPrNumberByHeadBranch();
+            }
+
+            if (!Number.isInteger(prNumber) || prNumber <= 0) {
+              core.setFailed(
+                `Could not resolve a unique PR number for workflow run ${workflowRun.id} ` +
+                `(head=${workflowRun.head_repository?.full_name || 'unknown'}:${workflowRun.head_branch || 'unknown'})`
+              );
+              return;
+            }
+
+            const artifacts = await github.paginate(github.rest.actions.listWorkflowRunArtifacts, {
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              run_id: workflowRun.id,
+              per_page: 100,
+            });
+
+            const pdfArtifact = artifacts.find(artifact =>
+              artifact.name === 'thorvg-pixel-report' && !artifact.expired
+            );
+
+            if (pdfArtifact) {
+              const url = `https://github.com/${context.repo.owner}/${context.repo.repo}/actions/runs/${workflowRun.id}/artifacts/${pdfArtifact.id}`;
+              body += `- [Download PDF report](${url})\n`;
+            } else {
+              body += '- PDF report was not generated.\n';
+            }
+
+            core.info(`Resolved PR number: #${prNumber}`);
+
+            const comments = await github.paginate(github.rest.issues.listComments, {
+              issue_number: prNumber,
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              per_page: 100,
+            });
+
+            const existingComments = comments.filter(comment =>
+              comment.user?.login === 'github-actions[bot]' &&
+              comment.user?.type === 'Bot' &&
+              comment.body?.includes(reportHeader)
+            );
+
+            const existingComment = existingComments.at(-1);
+            core.info(`Found ${existingComments.length} matching pixel report comment(s).`);
+            core.info(`Selected comment id: ${existingComment?.id ?? 'none'}`);
+
+            if (existingComment) {
+              await github.rest.issues.updateComment({
+                comment_id: existingComment.id,
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                body,
+              });
+              core.info(`Updated pixel report comment: ${existingComment.html_url}`);
+            } else {
+              const response = await github.rest.issues.createComment({
+                issue_number: prNumber,
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                body,
+              });
+              core.info(`Created pixel report comment: ${response.data.html_url}`);
+            }
