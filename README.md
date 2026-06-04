@@ -393,14 +393,21 @@ Please check out the [ThorVG Test App](https://thorvg-perf-test.vercel.app/) to 
 </p>
 
 ### Canva iOS
-[Canva](https://www.canva.com) is a popular visual communication platform known for its intuitive interface and rich design resources. Its iOS app switched from a previous Lottie engine to ThorVG, achieving about 80% faster rendering and 70% lower peak memory usage.
+[Canva](https://www.canva.com) adopted ThorVG for Lottie rendering on iOS, delivering up to 80% faster rendering and 70% lower peak memory usage.
 
 <p align="center">
   <img width="700" height="auto" src="https://github.com/thorvg/thorvg.site/blob/main/readme/example_canvaios.png">
 </p>
 
+### Crank Storyboard
+[Crank Software](https://www.cranksoftware.com/) Storyboard Engine integrates ThorVG for SVG rendering in embedded and industrial HMI applications.
+
+<p align="center">
+  <img width="700" height="auto" src="https://github.com/thorvg/thorvg.site/blob/main/readme/example_crank.png">
+</p>
+
 ### dotLottie
-[dotLottie](https://dotlottie.io/) is an open-source format that bundles multiple Lottie animations with assets like images and fonts, supporting interactivity and state machines. Using ZIP compression (.lottie), it enables efficient distribution, and its player runs on ThorVG for rendering.
+[dotLottie](https://dotlottie.io/) is an open-source format for packaging Lottie animations and assets. Its player uses ThorVG for efficient rendering.
 
 <p align="center">
   <img width="700" height="auto" src="https://github.com/thorvg/thorvg.site/blob/main/readme/example_dotlottie.png">
@@ -464,7 +471,7 @@ ThorVG is used as a lightweight vector rasterization backend in [MetaModule](htt
 </p>
 
 ### Segger
-[SEGGER](https://www.segger.com/) Microcontroller provides tools for embedded system development, including RTOS, middleware, and debugging solutions. It adopts ThorVG as a GPU driver to enable high-performance vector rendering for GUI applications.
+[SEGGER](https://www.segger.com/) adopts ThorVG as a GPU driver to enable high-performance vector rendering for embedded GUI applications.
 
 <p align="center">
   <img width="650" height="auto" src="https://github.com/thorvg/thorvg.site/blob/main/readme/example_segger.png">
