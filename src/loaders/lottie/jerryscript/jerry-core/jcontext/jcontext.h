@@ -264,11 +264,18 @@ extern __thread jerry_context_t* tls_context_p;
 
 #define JMEM_HEAP_AREA_SIZE (JMEM_HEAP_SIZE - JMEM_ALIGNMENT)
 
+#if defined(_MSC_VER)
+  #pragma warning(push)
+  #pragma warning(disable:4200)
+#endif
 struct jmem_heap_t
 {
   jmem_heap_free_t first; /**< first node in free region list */
   uint8_t area[]; /**< heap area */
 };
+#if defined(_MSC_VER)
+  #pragma warning(pop)
+#endif
 
 #define JERRY_HEAP_CONTEXT(field) (JERRY_CONTEXT (heap_p)->field)
 
