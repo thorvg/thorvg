@@ -34,7 +34,8 @@ struct LottieModifier
     {
         Roundness = 0,
         Offset,
-        PuckerBloat
+        PuckerBloat,
+        ZigZag
     };
 
     LottieModifier* next = nullptr;
@@ -121,6 +122,37 @@ struct LottiePuckerBloatModifier : LottieModifier
 
 private:
     Point center(const PathCommand* cmds, uint32_t cmdsCnt, const Point* pts);
+};
+
+struct LottieZigZagModifier : LottieModifier
+{
+    enum PointType : uint8_t { Corner = 1, Smooth = 2 };
+
+    struct Vertex
+    {
+        Point v;
+        Point in;
+        Point out;
+    };
+
+    float amp;
+    int freq;
+    PointType point;
+
+    LottieZigZagModifier(float amp, int freq, PointType point) :
+        LottieModifier(ZigZag), amp(amp), freq(freq), point(point) {}
+
+    void path(const RenderPath& in, RenderPath& out, Matrix* transform) override;
+    void polystar(const RenderPath& in, RenderPath& out, float outerRoundness, bool hasRoundness) override;
+    void rect(const RenderPath& in, RenderPath& out, const Point& pos, const Point& size, float r, bool clockwise) override;
+    void ellipse(const RenderPath& in, RenderPath& out, const Point& center, const Point& radius, bool clockwise) override;
+
+private:
+    RenderPath& modify(const RenderPath& in, RenderPath& out, Matrix* transform);
+    Vertex ridge(const Point& at, const Point& dir, float sign, float inAmp, float outAmp) const;
+    void corner(uint32_t cur, float sign, const Array<Point>& verts, Array<Vertex>& ridges) const;
+    float segment(uint32_t idx, float sign, const Array<Point>& verts, const Array<Point>& ins, const Array<Point>& outs, Array<Vertex>& ridges) const;
+    void flush(bool closed, Array<Point>& verts, Array<Point>& ins, Array<Point>& outs, Array<Vertex>& ridges, RenderPath& out) const;
 };
 
 #endif
