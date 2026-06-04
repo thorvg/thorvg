@@ -72,6 +72,7 @@ struct RenderSurface
     ColorSpace cs = ColorSpace::Unknown;
     uint8_t channelSize = 0;
     bool premultiplied = false;         //Alpha-premultiplied
+    bool opaque = false;                //no alpha channel (fully opaque source, e.g. JPEG)
 
     RenderSurface()
     {
@@ -86,6 +87,7 @@ struct RenderSurface
         cs = rhs->cs;
         channelSize = rhs->channelSize;
         premultiplied = rhs->premultiplied;
+        opaque = rhs->opaque;
     }
 };
 

@@ -127,6 +127,7 @@ bool JpgLoader::read()
     surface.h = h;
     surface.channelSize = sizeof(uint32_t);
     surface.premultiplied = true;
+    surface.opaque = true;    //JPEG has no alpha channel
 
     clear();
     return true;

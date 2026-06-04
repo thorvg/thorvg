@@ -243,6 +243,9 @@ static bool _compositeMaskImage(SwSurface* surface, const SwImage& image, const 
 #include "tvgSwRasterAvx.h"
 #include "tvgSwRasterNeon.h"
 
+//POC: runtime toggle for the opaque-image fast path. Declared in thorvg.h.
+bool tvg::OPAQUE_OPT = true;
+
 
 static inline uint32_t _sampleSize(float scale)
 {
@@ -953,8 +956,12 @@ static bool _rasterScaledImage(SwSurface* surface, const SwImage& image, const M
             for (auto x = bbox.min.x; x < bbox.max.x; ++x, ++dst) {
                 SCALED_IMAGE_RANGE_X
                 auto src = scaleMethod(image.buf32, image.stride, image.w, image.h, sx, sy, miny, maxy, sampleSize);
-                if (opacity < 255) src = ALPHA_BLEND(src, opacity);
-                *dst = src + ALPHA_BLEND(*dst, IA(src));
+                //opaque image: overwrite with the sampled value, skipping alpha blending
+                if (image.opaque && opacity == 255 && OPAQUE_OPT) *dst = src;
+                else {
+                    if (opacity < 255) src = ALPHA_BLEND(src, opacity);
+                    *dst = src + ALPHA_BLEND(*dst, IA(src));
+                }
             }
         }
     } else if (surface->channelSize == sizeof(uint8_t)) {
@@ -1041,8 +1048,15 @@ static bool _rasterDirectImage(SwSurface* surface, const SwImage& image, const R
     //32bits channels
     if (surface->channelSize == sizeof(uint32_t)) {
         auto dbuffer = &surface->buf32[bbox.min.y * surface->stride + bbox.min.x];
-        for (auto y = 0; y < h; ++y, dbuffer += surface->stride, sbuffer += image.stride) {
-            rasterTranslucentPixel32(dbuffer, sbuffer, w, opacity);
+        //opaque image fully covers the region: overwrite directly, skipping alpha blending
+        if (image.opaque && opacity == 255 && OPAQUE_OPT) {
+            for (auto y = 0; y < h; ++y, dbuffer += surface->stride, sbuffer += image.stride) {
+                memcpy(dbuffer, sbuffer, w * sizeof(uint32_t));
+            }
+        } else {
+            for (auto y = 0; y < h; ++y, dbuffer += surface->stride, sbuffer += image.stride) {
+                rasterTranslucentPixel32(dbuffer, sbuffer, w, opacity);
+            }
         }
     //8bits grayscale
     //32 -> 8 direct converting seems an avoidable stage. maybe draw to a masking image after an intermediate scene. Can get rid of this?

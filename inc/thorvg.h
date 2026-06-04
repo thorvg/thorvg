@@ -77,6 +77,9 @@ struct RenderMethod;
 struct Animation;
 struct Shape;
 
+//POC: runtime toggle for the opaque-image fast path (direct/scaled). Default on. Remove after benchmarking.
+TVG_API extern bool OPAQUE_OPT;
+
 /**
  * @defgroup ThorVG ThorVG
  * @brief ThorVG classes and enumerations providing C++ APIs.

@@ -271,6 +271,7 @@ struct SwImage
     FilterMethod filter;
     bool direct = false;  // draw image directly (with offset)
     bool scaled = false;  // draw uniform scaled image
+    bool opaque = false;  // source has no alpha channel (fully opaque)
 };
 
 typedef uint8_t(*SwMask)(uint8_t s, uint8_t d, uint8_t a);                  //src, dst, alpha

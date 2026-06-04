@@ -206,6 +206,7 @@ struct SwImageTask : SwTask
         image.h = source->h;
         image.stride = source->stride;
         image.channelSize = source->channelSize;
+        image.opaque = source->opaque;
 
         auto updateImage = flags[0] & (RenderUpdateFlag::Image | RenderUpdateFlag::Clip | RenderUpdateFlag::Transform);
         auto updateColor = flags[0] & (RenderUpdateFlag::Color);
