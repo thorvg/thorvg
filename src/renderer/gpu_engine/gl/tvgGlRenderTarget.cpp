@@ -22,18 +22,6 @@
 
 #include "tvgGlRenderTarget.h"
 
-static inline void _initColorTexture(GLuint& colorTex, uint32_t width, uint32_t height, const GlRenderTargetDesc& desc)
-{
-    GL_CHECK(glGenTextures(1, &colorTex));
-    GL_CHECK(glBindTexture(GL_TEXTURE_2D, colorTex));
-    GL_CHECK(glTexImage2D(GL_TEXTURE_2D, 0, desc.colorInternalFormat, width, height, 0, desc.colorFormat, desc.colorType, nullptr));
-    GL_CHECK(glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE));
-    GL_CHECK(glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE));
-    GL_CHECK(glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, desc.minFilter));
-    GL_CHECK(glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, desc.magFilter));
-    GL_CHECK(glBindTexture(GL_TEXTURE_2D, 0));
-}
-
 static inline GLuint _initRenderbuffer(GLenum internalFormat, uint32_t samples, uint32_t width, uint32_t height)
 {
     GLuint buffer = 0;
@@ -62,7 +50,14 @@ void GlRenderTarget::init(uint32_t width, uint32_t height, GLint resolveId, cons
 
     GL_CHECK(glBindFramebuffer(GL_FRAMEBUFFER, fbo));
 
-    _initColorTexture(colorTex, width, height, desc);
+    GL_CHECK(glGenTextures(1, &colorTex));
+    GL_CHECK(glBindTexture(GL_TEXTURE_2D, colorTex));
+    GL_CHECK(glTexImage2D(GL_TEXTURE_2D, 0, desc.colorInternalFormat, width, height, 0, desc.colorFormat, desc.colorType, nullptr));
+    GL_CHECK(glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE));
+    GL_CHECK(glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE));
+    GL_CHECK(glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, desc.minFilter));
+    GL_CHECK(glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, desc.magFilter));
+    GL_CHECK(glBindTexture(GL_TEXTURE_2D, 0));
 
     if (desc.samples == 0) {
         GL_CHECK(glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, GL_TEXTURE_2D, colorTex, 0));

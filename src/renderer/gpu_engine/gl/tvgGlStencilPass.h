@@ -69,13 +69,11 @@ struct GlStencilPassManager
     {
         GlRenderPass* pass = nullptr;
         Array<GlStencilRecord> records = {};
-        bool prepared = false;
     };
 
     GlStencilPassManager(uint32_t screenWidth, uint32_t screenHeight);
     ~GlStencilPassManager();
 
-    void reset();
     void record(GlRenderPass* pass, GlRenderTask* task, const GlGeometryBuffer* buffer, const RenderRegion& meshBounds,
                 const RenderRegion& viewRegion, const Matrix& viewMatrix, GlStencilMode mode);
     bool prepare(GlRenderPass* pass, GlStageBuffer& gpuBuffer, GlProgram* coverProgram, GLint restoreId = 0);

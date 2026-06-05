@@ -24,6 +24,7 @@
 #include "tvgGlCommon.h"
 #include "tvgGlRenderPass.h"
 #include "tvgGlRenderTask.h"
+#include <string.h>
 
 static Matrix _viewMatrix(const RenderRegion& vp)
 {
@@ -67,9 +68,7 @@ void GlRenderPass::addRenderTask(GlRenderTask* task)
 void GlRenderPass::prependRenderTask(GlRenderTask* task)
 {
     mTasks.grow(1);
-    for (uint32_t i = mTasks.count; i > 0; --i) {
-        mTasks.data[i] = mTasks.data[i - 1];
-    }
+    memmove(mTasks.data + 1, mTasks.data, sizeof(GlRenderTask*) * mTasks.count);
     mTasks.data[0] = task;
     ++mTasks.count;
 }

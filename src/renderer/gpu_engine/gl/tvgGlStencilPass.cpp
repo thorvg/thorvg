@@ -83,42 +83,9 @@ static GlRenderTargetDesc _stencilAtlasDesc()
     return desc;
 }
 
-static bool _targetFits(const GlStencilAtlasTarget* target, uint32_t width, uint32_t height)
-{
-    return !target->leased && target->target.width >= width && target->target.height >= height;
-}
-
-static bool _targetSmaller(const GlStencilAtlasTarget* lhs, const GlStencilAtlasTarget* rhs)
-{
-    auto lhsArea = static_cast<uint64_t>(lhs->target.width) * lhs->target.height;
-    auto rhsArea = static_cast<uint64_t>(rhs->target.width) * rhs->target.height;
-    if (lhsArea != rhsArea) return lhsArea < rhsArea;
-    if (lhs->target.width != rhs->target.width) return lhs->target.width < rhs->target.width;
-    return lhs->target.height < rhs->target.height;
-}
-
-static GlStencilAtlasTarget* _smallestReusableTarget(const Array<GlStencilAtlasTarget*>& targets, uint32_t width, uint32_t height)
-{
-    GlStencilAtlasTarget* best = nullptr;
-
-    for (uint32_t i = 0; i < targets.count; ++i) {
-        auto target = targets[i];
-        if (!_targetFits(target, width, height)) continue;
-        if (!best || _targetSmaller(target, best)) best = target;
-    }
-
-    return best;
-}
-
 static GlStencilBatchBuffer& _batchBuffer(GlStencilBatchBuffer* buffers, GlStencilMode mode)
 {
     return buffers[static_cast<uint32_t>(mode) - static_cast<uint32_t>(GlStencilMode::FillNonZero)];
-}
-
-static void _reserveBatch(GlStencilBatchBuffer& batch, const GlGeometryBuffer& buffer)
-{
-    batch.vertices.reserve(batch.vertices.count + buffer.vertex.count);
-    batch.indices.reserve(batch.indices.count + buffer.index.count);
 }
 
 static Point _targetPoint(const GlStencilRecord& record, float x, float y)
@@ -329,7 +296,20 @@ GlStencilAtlasTarget* GlStencilPass::acquireTarget(uint32_t width, uint32_t heig
 {
     if (width == 0 || height == 0) return nullptr;
 
-    auto best = _smallestReusableTarget(targets, width, height);
+    GlStencilAtlasTarget* best = nullptr;
+    for (uint32_t i = 0; i < targets.count; ++i) {
+        auto target = targets[i];
+        if (target->leased || target->target.width < width || target->target.height < height) continue;
+
+        if (!best) {
+            best = target;
+            continue;
+        }
+
+        auto targetArea = static_cast<uint64_t>(target->target.width) * target->target.height;
+        auto bestArea = static_cast<uint64_t>(best->target.width) * best->target.height;
+        if (targetArea < bestArea) best = target;
+    }
 
     if (!best) {
         best = new GlStencilAtlasTarget;
@@ -362,14 +342,8 @@ GlRenderTask* GlStencilPass::buildTask(Array<GlStencilRecord>& records, const Re
 
         auto& batch = _batchBuffer(batchBuffers, record.mode);
         if (!batch.program) batch.program = record.task->getProgram();
-        _reserveBatch(batch, *record.buffer);
-    }
-
-    for (uint32_t i = 0; i < records.count; ++i) {
-        auto& record = records[i];
-        if (record.atlasX < 0) continue;
-
-        auto& batch = _batchBuffer(batchBuffers, record.mode);
+        batch.vertices.reserve(batch.vertices.count + record.buffer->vertex.count);
+        batch.indices.reserve(batch.indices.count + record.buffer->index.count);
         auto recordViewport = _atlasViewport(record, atlasHeight);
         _appendBatch(batch, record, recordViewport, atlasWidth, atlasHeight);
     }
@@ -413,12 +387,6 @@ GlStencilPassManager::~GlStencilPassManager()
     clearRecords();
 }
 
-void GlStencilPassManager::reset()
-{
-    clearRecords();
-    mPass.reset();
-}
-
 static RenderRegion _stencilTargetBounds(const RenderRegion& meshBounds, const Matrix& viewMatrix,
                                          const RenderRegion& viewRegion, uint32_t targetWidth, uint32_t targetHeight)
 {
@@ -451,7 +419,6 @@ void GlStencilPassManager::record(GlRenderPass* pass, GlRenderTask* task, const 
         mRecordSets.push(set);
     }
 
-    if (set->prepared) return;
     auto target = pass->getViewport();
     auto screenBounds = _stencilTargetBounds(meshBounds, viewMatrix, viewRegion, target.w(), target.h());
     set->records.push({task, buffer, screenBounds, viewMatrix,
@@ -464,17 +431,23 @@ bool GlStencilPassManager::prepare(GlRenderPass* pass, GlStageBuffer& gpuBuffer,
     for (uint32_t i = 0; i < mRecordSets.count; ++i) {
         if (mRecordSets[i]->pass == pass) {
             set = mRecordSets[i];
+            mRecordSets[i] = mRecordSets.last();
+            mRecordSets.pop();
             break;
         }
     }
 
-    if (!set || set->prepared || set->records.empty()) return false;
+    if (!set) return false;
+    if (set->records.empty()) {
+        delete set;
+        return false;
+    }
 
     auto task = mPass.prepare(set->records, gpuBuffer, coverProgram, restoreId);
-    set->records.clear();
-    set->prepared = true;
+    delete set;
 
-    if (task) pass->prependRenderTask(task);
+    if (!task) return false;
+    pass->prependRenderTask(task);
     return true;
 }
 
