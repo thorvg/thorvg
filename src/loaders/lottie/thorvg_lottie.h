@@ -51,9 +51,8 @@ struct LottieAudioResolver
  * 
  * @since 0.15
  */
-class TVG_API LottieAnimation final : public Animation
+struct TVG_API LottieAnimation final : Animation
 {
-public:
     ~LottieAnimation() override;
 
     /**
