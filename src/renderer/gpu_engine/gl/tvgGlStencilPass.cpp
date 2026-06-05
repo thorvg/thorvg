@@ -79,6 +79,7 @@ static GlRenderTargetDesc _stencilAtlasDesc()
     desc.colorFormat = GL_RED;
     desc.minFilter = GL_NEAREST;
     desc.magFilter = GL_NEAREST;
+    desc.samples = 0;
     return desc;
 }
 
@@ -172,7 +173,7 @@ struct GlStencilPassTask : GlRenderTask
 {
     GlStencilPassTask(GlStencilAtlasTarget* atlasTarget, Array<GlStencilBatch>& batches, GlRenderTask* coverTask):
         GlRenderTask(nullptr), atlasTarget(atlasTarget),
-        targetFbo(atlasTarget->target.fbo), resolveFbo(atlasTarget->target.resolvedFbo),
+        targetFbo(atlasTarget->target.fbo),
         width(atlasTarget->target.width), height(atlasTarget->target.height)
     {
         batches.move(this->batches);
@@ -205,6 +206,9 @@ struct GlStencilPassTask : GlRenderTask
         GL_CHECK(glViewport(0, 0, width, height));
         GL_CHECK(glEnable(GL_SCISSOR_TEST));
         GL_CHECK(glScissor(0, 0, width, height));
+#if defined(THORVG_GL_TARGET_GL)
+        GL_CHECK(glDisable(GL_MULTISAMPLE));
+#endif
         GL_CHECK(glDisable(GL_DEPTH_TEST));
         GL_CHECK(glDisable(GL_BLEND));
         GL_CHECK(glColorMask(1, 1, 1, 1));
@@ -243,10 +247,6 @@ struct GlStencilPassTask : GlRenderTask
         GL_CHECK(glColorMask(1, 1, 1, 1));
         coverTask->run();
 
-        GL_CHECK(glBindFramebuffer(GL_READ_FRAMEBUFFER, targetFbo));
-        GL_CHECK(glBindFramebuffer(GL_DRAW_FRAMEBUFFER, resolveFbo));
-        GL_CHECK(glBlitFramebuffer(0, 0, width, height, 0, 0, width, height, GL_COLOR_BUFFER_BIT, GL_NEAREST));
-
         GL_CHECK(glBindFramebuffer(GL_FRAMEBUFFER, restoreFbo));
         GL_CHECK(glViewport(restoreViewport[0], restoreViewport[1], restoreViewport[2], restoreViewport[3]));
         GL_CHECK(glScissor(restoreScissor[0], restoreScissor[1], restoreScissor[2], restoreScissor[3]));
@@ -254,12 +254,14 @@ struct GlStencilPassTask : GlRenderTask
         GL_CHECK(glEnable(GL_BLEND));
         GL_CHECK(glBlendFunc(GL_ONE, GL_ONE_MINUS_SRC_ALPHA));
         GL_CHECK(glDisable(GL_STENCIL_TEST));
+#if defined(THORVG_GL_TARGET_GL)
+        GL_CHECK(glEnable(GL_MULTISAMPLE));
+#endif
         GL_CHECK(glColorMask(1, 1, 1, 1));
     }
 
     GlStencilAtlasTarget* atlasTarget = nullptr;
     GLuint targetFbo = 0;
-    GLuint resolveFbo = 0;
     uint32_t width = 0;
     uint32_t height = 0;
     Array<GlStencilBatch> batches = {};
