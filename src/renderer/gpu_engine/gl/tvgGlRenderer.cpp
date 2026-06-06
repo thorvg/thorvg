@@ -42,6 +42,7 @@ static mutex _rendererMtx;
 static constexpr float IDENTITY_VERTEX[] = {-1.f, 1.f, -1.f, -1.f, 1.f, 1.f, 1.f, -1.f};
 static constexpr uint32_t RECT_INDEX[] = {0, 1, 2, 2, 1, 3};
 static constexpr uint32_t RECT_INDEX_COUNT = sizeof(RECT_INDEX) / sizeof(RECT_INDEX[0]);
+static constexpr uint32_t STENCIL_ATLAS_UV_ATTRIB = 2;
 
 void GlRenderer::disposeTexture(GLuint texId)
 {
@@ -181,6 +182,11 @@ void GlRenderer::initShaders()
 
     // blend programs: image (17) + scene (17) + shape solid (17) + shape linear (17) + shape radial (17)
     for (uint32_t i = 0; i < 85; ++i) mPrograms.push(nullptr);
+
+    // Keep regular covers unmasked; atlas covers override this with packed
+    // mask UVs for direct nearest sampling.
+    GL_CHECK(glDisableVertexAttribArray(STENCIL_ATLAS_UV_ATTRIB));
+    GL_CHECK(glVertexAttrib4f(STENCIL_ATLAS_UV_ATTRIB, -1.0f, -1.0f, 0.0f, 1.0f));
 }
 
 RenderRegion GlRenderer::viewportRegion(const RenderRegion& vp, const RenderRegion& bbox)

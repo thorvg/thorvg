@@ -36,6 +36,7 @@ struct GlStencilRecord
     GlRenderTask* task = nullptr;
     GlStencilAtlasCoverTask* coverTask = nullptr;
     const GlGeometryBuffer* buffer = nullptr;
+    RenderRegion meshBounds{};
     RenderRegion screenBounds{};
     Matrix viewMatrix = {};
     uint32_t targetWidth = 0;

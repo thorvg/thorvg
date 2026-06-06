@@ -26,7 +26,6 @@
 #include "tvgGlCommon.h"
 #include "tvgGlProgram.h"
 
-
 struct GlVertexLayout
 {
     uint32_t index;
@@ -89,8 +88,6 @@ public:
     void setViewport(const RenderRegion& viewport);
     void setDrawDepth(int32_t depth) { mDrawDepth = static_cast<float>(depth); }
     void setViewMatrix(const Matrix& matrix) { mViewMatrix = matrix; mUseViewMatrix = true; }
-    void setStencilAtlas(GLuint textureId, const float* transform, const float* bounds);
-    void clearStencilAtlas() { mStencilAtlasTex = 0; }
     virtual void normalizeDrawDepth(int32_t maxDepth) { mDrawDepth /= static_cast<float>(maxDepth);  }
 
     GlProgram* getProgram() { return mProgram; }
@@ -112,9 +109,6 @@ private:
     bool mUseViewMatrix = false;
     bool mUseVertexColor = false;
     float mVertexColor[4] = {0.f, 0.f, 0.f, 0.f};
-    GLuint mStencilAtlasTex = 0;
-    float mStencilAtlasTransform[4] = {};
-    float mStencilAtlasBounds[4] = {};
 };
 
 class GlStencilCoverTask : public GlRenderTask
@@ -140,7 +134,7 @@ public:
 
     void run() override;
     void normalizeDrawDepth(int32_t maxDepth) override;
-    void setStencilAtlas(GLuint textureId, const float* transform, const float* bounds);
+    void setStencilAtlas(GLuint textureId, uint32_t uvOffset);
     bool atlasConfigured() const { return mAtlasConfigured; }
 
 private:

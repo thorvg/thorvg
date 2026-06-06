@@ -144,28 +144,34 @@ static void _pushBatchTask(Array<GlStencilBatch>& batches, GlStencilMode mode, G
 }
 
 static void _configureCoverTask(GlStencilRecord& record, GLuint textureId, const RenderRegion& atlasViewport,
-                                uint32_t atlasWidth, uint32_t atlasHeight)
+                                uint32_t atlasWidth, uint32_t atlasHeight, GlStageBuffer& gpuBuffer)
 {
     if (!record.coverTask || textureId == 0 || atlasWidth == 0 || atlasHeight == 0) return;
 
     auto invAtlasW = 1.0f / static_cast<float>(atlasWidth);
     auto invAtlasH = 1.0f / static_cast<float>(atlasHeight);
+    auto atlasMinX = static_cast<float>(atlasViewport.min.x);
+    auto atlasMinY = static_cast<float>(atlasViewport.min.y);
+    auto screenMinX = static_cast<float>(record.screenBounds.min.x);
+    auto screenMinY = static_cast<float>(record.screenBounds.min.y);
 
-    float transform[4] = {
-        invAtlasW,
-        invAtlasH,
-        (static_cast<float>(atlasViewport.min.x) - static_cast<float>(record.screenBounds.min.x)) * invAtlasW,
-        (static_cast<float>(atlasViewport.min.y) - static_cast<float>(record.screenBounds.min.y)) * invAtlasH
+    // Bake atlas UVs into the cover quad once instead of updating per-cover
+    // transform/bounds uniforms; the atlas mask is nearest-filtered and maps 1:1.
+    const float coverVertex[] = {
+        static_cast<float>(record.meshBounds.min.x), static_cast<float>(record.meshBounds.min.y),
+        static_cast<float>(record.meshBounds.min.x), static_cast<float>(record.meshBounds.max.y),
+        static_cast<float>(record.meshBounds.max.x), static_cast<float>(record.meshBounds.min.y),
+        static_cast<float>(record.meshBounds.max.x), static_cast<float>(record.meshBounds.max.y)
     };
+    float atlasUv[8];
 
-    float bounds[4] = {
-        static_cast<float>(atlasViewport.min.x) * invAtlasW,
-        static_cast<float>(atlasViewport.min.y) * invAtlasH,
-        static_cast<float>(atlasViewport.max.x) * invAtlasW,
-        static_cast<float>(atlasViewport.max.y) * invAtlasH
-    };
+    for (uint32_t i = 0; i < 4; ++i) {
+        auto target = _targetPoint(record, coverVertex[i * 2], coverVertex[i * 2 + 1]);
+        atlasUv[i * 2] = (atlasMinX + target.x - screenMinX) * invAtlasW;
+        atlasUv[i * 2 + 1] = (atlasMinY + target.y - screenMinY) * invAtlasH;
+    }
 
-    record.coverTask->setStencilAtlas(textureId, transform, bounds);
+    record.coverTask->setStencilAtlas(textureId, gpuBuffer.push(atlasUv, sizeof(atlasUv)));
 }
 
 struct GlStencilPassTask : GlRenderTask
@@ -392,7 +398,7 @@ GlRenderTask* GlStencilPass::buildTask(Array<GlStencilRecord>& records, const Re
     for (uint32_t i = 0; i < records.count; ++i) {
         auto& record = records[i];
         if (record.atlasX < 0) continue;
-        _configureCoverTask(record, atlasTarget->target.colorTex, _atlasViewport(record, atlasHeight), atlasWidth, atlasHeight);
+        _configureCoverTask(record, atlasTarget->target.colorTex, _atlasViewport(record, atlasHeight), atlasWidth, atlasHeight, gpuBuffer);
     }
 
     auto coverTask = new GlRenderTask(coverProgram);
@@ -464,7 +470,7 @@ void GlStencilPassManager::record(GlRenderPass* pass, GlStencilAtlasCoverTask* c
         mRecordSets.push(set);
     }
 
-    set->records.push({task, coverTask, buffer, screenBounds, viewMatrix,
+    set->records.push({task, coverTask, buffer, meshBounds, screenBounds, viewMatrix,
                        static_cast<uint32_t>(target.w()), static_cast<uint32_t>(target.h()), mode});
 }
 

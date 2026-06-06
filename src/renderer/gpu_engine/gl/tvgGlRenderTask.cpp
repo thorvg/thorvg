@@ -25,6 +25,7 @@
 #include "tvgGlRenderPass.h"
 
 static constexpr uint32_t STENCIL_ATLAS_TEXTURE_UNIT = 3;
+static constexpr uint32_t STENCIL_ATLAS_UV_ATTRIB = 2;
 
 #if !defined(THORVG_GL_TARGET_GL)
 static void clearColorTarget(uint32_t width, uint32_t height)
@@ -56,23 +57,6 @@ void GlRenderTask::run()
         float viewMat3[9];
         getMatrix3(viewMatrix, viewMat3);
         GL_CHECK(glUniformMatrix3fv(vLoc, 1, GL_FALSE, viewMat3));
-    }
-
-    if (mStencilAtlasTex) {
-        int32_t enabled = 1;
-        int32_t textureUnit = STENCIL_ATLAS_TEXTURE_UNIT;
-        int32_t loc = mProgram->getUniformLocation("uStencilAtlasEnabled");
-        if (loc >= 0) mProgram->setUniform1Value(loc, 1, &enabled);
-        loc = mProgram->getUniformLocation("uStencilAtlasTransform");
-        if (loc >= 0) mProgram->setUniform4Value(loc, 1, mStencilAtlasTransform);
-        loc = mProgram->getUniformLocation("uStencilAtlasBounds");
-        if (loc >= 0) mProgram->setUniform4Value(loc, 1, mStencilAtlasBounds);
-        loc = mProgram->getUniformLocation("uStencilAtlasTexture");
-        if (loc >= 0) {
-            GL_CHECK(glActiveTexture(GL_TEXTURE0 + STENCIL_ATLAS_TEXTURE_UNIT));
-            GL_CHECK(glBindTexture(GL_TEXTURE_2D, mStencilAtlasTex));
-            mProgram->setUniform1Value(loc, 1, &textureUnit);
-        }
     }
 
     // setup scissor rect
@@ -157,16 +141,6 @@ void GlRenderTask::setViewport(const RenderRegion &viewport)
     mViewport = viewport;
     if (mViewport.max.x < mViewport.min.x) mViewport.max.x = mViewport.min.x;
     if (mViewport.max.y < mViewport.min.y) mViewport.max.y = mViewport.min.y;
-}
-
-
-void GlRenderTask::setStencilAtlas(GLuint textureId, const float* transform, const float* bounds)
-{
-    mStencilAtlasTex = textureId;
-    for (uint32_t i = 0; i < 4; ++i) {
-        mStencilAtlasTransform[i] = transform[i];
-        mStencilAtlasBounds[i] = bounds[i];
-    }
 }
 
 
@@ -261,14 +235,8 @@ void GlStencilAtlasCoverTask::run()
 
     GL_CHECK(glDisable(GL_STENCIL_TEST));
     mCoverTask->run();
-
-    auto program = mCoverTask->getProgram();
-    if (program) {
-        program->load();
-        int32_t disabled = 0;
-        auto loc = program->getUniformLocation("uStencilAtlasEnabled");
-        if (loc >= 0) program->setUniform1Value(loc, 1, &disabled);
-    }
+    GL_CHECK(glDisableVertexAttribArray(STENCIL_ATLAS_UV_ATTRIB));
+    GL_CHECK(glVertexAttrib4f(STENCIL_ATLAS_UV_ATTRIB, -1.0f, -1.0f, 0.0f, 1.0f));
 }
 
 
@@ -279,11 +247,15 @@ void GlStencilAtlasCoverTask::normalizeDrawDepth(int32_t maxDepth)
 }
 
 
-void GlStencilAtlasCoverTask::setStencilAtlas(GLuint textureId, const float* transform, const float* bounds)
+void GlStencilAtlasCoverTask::setStencilAtlas(GLuint textureId, uint32_t uvOffset)
 {
-    mAtlasConfigured = (textureId != 0);
-    if (mAtlasConfigured) mCoverTask->setStencilAtlas(textureId, transform, bounds);
-    else mCoverTask->clearStencilAtlas();
+    mAtlasConfigured = true;
+    mCoverTask->addBindResource(GlBindingResource{
+        STENCIL_ATLAS_TEXTURE_UNIT,
+        textureId,
+        mCoverTask->getProgram()->getUniformLocation("uStencilAtlasTexture")
+    });
+    mCoverTask->addVertexLayout(GlVertexLayout{STENCIL_ATLAS_UV_ATTRIB, 2, 2 * sizeof(float), uvOffset});
 }
 
 
