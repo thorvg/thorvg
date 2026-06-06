@@ -398,9 +398,7 @@ static jerry_value_t _effect(const jerry_call_info_t* info, const jerry_value_t 
 
     //either name or index
     if (jerry_value_is_string(args[0])) {
-        auto name = _name(args[0]);
-        effect = layer->effectById(djb2Encode(name));
-        tvg::free(name);
+        effect = layer->effectById(_idByName(args[0]));
     } else {
         effect = layer->effectByIdx((int16_t)jerry_value_as_int32(args[0]));
     }
