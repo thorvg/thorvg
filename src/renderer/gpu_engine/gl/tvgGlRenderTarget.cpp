@@ -22,15 +22,6 @@
 
 #include "tvgGlRenderTarget.h"
 
-static inline GLuint _initRenderbuffer(GLenum internalFormat, uint32_t samples, uint32_t width, uint32_t height)
-{
-    GLuint buffer = 0;
-    GL_CHECK(glGenRenderbuffers(1, &buffer));
-    GL_CHECK(glBindRenderbuffer(GL_RENDERBUFFER, buffer));
-    GL_CHECK(glRenderbufferStorageMultisample(GL_RENDERBUFFER, samples, internalFormat, width, height));
-    return buffer;
-}
-
 GlRenderTarget::GlRenderTarget() {}
 
 GlRenderTarget::~GlRenderTarget()
@@ -50,32 +41,37 @@ void GlRenderTarget::init(uint32_t width, uint32_t height, GLint resolveId, cons
 
     GL_CHECK(glBindFramebuffer(GL_FRAMEBUFFER, fbo));
 
+    GL_CHECK(glGenRenderbuffers(1, &colorBuffer));
+    GL_CHECK(glBindRenderbuffer(GL_RENDERBUFFER, colorBuffer));
+    GL_CHECK(glRenderbufferStorageMultisample(GL_RENDERBUFFER, desc.samples, desc.colorInternalFormat, width, height));
+
+    GL_CHECK(glGenRenderbuffers(1, &depthStencilBuffer));
+
+    GL_CHECK(glBindRenderbuffer(GL_RENDERBUFFER, depthStencilBuffer));
+
+    GL_CHECK(glRenderbufferStorageMultisample(GL_RENDERBUFFER, desc.samples, desc.depthStencilFormat, width, height));
+
+    GL_CHECK(glBindRenderbuffer(GL_RENDERBUFFER, 0));
+
+    GL_CHECK(glFramebufferRenderbuffer(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, GL_RENDERBUFFER, colorBuffer));
+    GL_CHECK(glFramebufferRenderbuffer(GL_FRAMEBUFFER, GL_DEPTH_STENCIL_ATTACHMENT, GL_RENDERBUFFER, depthStencilBuffer));
+
+    // resolve target
     GL_CHECK(glGenTextures(1, &colorTex));
+
     GL_CHECK(glBindTexture(GL_TEXTURE_2D, colorTex));
     GL_CHECK(glTexImage2D(GL_TEXTURE_2D, 0, desc.colorInternalFormat, width, height, 0, desc.colorFormat, desc.colorType, nullptr));
+
     GL_CHECK(glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE));
     GL_CHECK(glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE));
     GL_CHECK(glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, desc.minFilter));
     GL_CHECK(glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, desc.magFilter));
+
     GL_CHECK(glBindTexture(GL_TEXTURE_2D, 0));
 
-    if (desc.samples == 0) {
-        GL_CHECK(glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, GL_TEXTURE_2D, colorTex, 0));
-        resolvedFbo = fbo;
-    } else {
-        colorBuffer = _initRenderbuffer(desc.colorInternalFormat, desc.samples, width, height);
-        GL_CHECK(glFramebufferRenderbuffer(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, GL_RENDERBUFFER, colorBuffer));
-    }
-
-    depthStencilBuffer = _initRenderbuffer(desc.depthStencilFormat, desc.samples, width, height);
-    GL_CHECK(glBindRenderbuffer(GL_RENDERBUFFER, 0));
-    GL_CHECK(glFramebufferRenderbuffer(GL_FRAMEBUFFER, GL_DEPTH_STENCIL_ATTACHMENT, GL_RENDERBUFFER, depthStencilBuffer));
-
-    if (desc.samples > 0) {
-        GL_CHECK(glGenFramebuffers(1, &resolvedFbo));
-        GL_CHECK(glBindFramebuffer(GL_FRAMEBUFFER, resolvedFbo));
-        GL_CHECK(glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, GL_TEXTURE_2D, colorTex, 0));
-    }
+    GL_CHECK(glGenFramebuffers(1, &resolvedFbo));
+    GL_CHECK(glBindFramebuffer(GL_FRAMEBUFFER, resolvedFbo));
+    GL_CHECK(glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, GL_TEXTURE_2D, colorTex, 0));
 
     GL_CHECK(glBindFramebuffer(GL_FRAMEBUFFER, resolveId));
 }
@@ -86,9 +82,9 @@ void GlRenderTarget::reset()
 
     GL_CHECK(glBindFramebuffer(GL_FRAMEBUFFER, 0));
     GL_CHECK(glDeleteFramebuffers(1, &fbo));
-    if (colorBuffer) GL_CHECK(glDeleteRenderbuffers(1, &colorBuffer));
+    GL_CHECK(glDeleteRenderbuffers(1, &colorBuffer));
     GL_CHECK(glDeleteRenderbuffers(1, &depthStencilBuffer));
-    if (resolvedFbo != fbo) GL_CHECK(glDeleteFramebuffers(1, &resolvedFbo));
+    GL_CHECK(glDeleteFramebuffers(1, &resolvedFbo));
     GL_CHECK(glDeleteTextures(1, &colorTex));
 
     fbo = colorBuffer = depthStencilBuffer = resolvedFbo = colorTex = 0;
