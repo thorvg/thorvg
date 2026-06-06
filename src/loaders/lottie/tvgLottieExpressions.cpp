@@ -65,6 +65,8 @@ static const char* EXP_TIME = "time";
 static const char* EXP_VALUE = "value";
 static const char* EXP_INDEX = "index";
 static const char* EXP_EFFECT= "effect";
+static const char* EXP_SIZE = "size";
+static const char* EXP_POSITION = "position";
 
 static LottieExpressions* _exps = nullptr;
 static uint32_t _refCnt = 0;
@@ -356,6 +358,37 @@ static jerry_value_t _buildPolystar(LottiePolyStar* polystar, float frameNo)
     auto ptsCnt = jerry_number(polystar->ptsCnt(frameNo));
     jerry_object_set_sz(obj, "points", ptsCnt);
     jerry_value_free(ptsCnt);
+
+    return obj;
+}
+
+
+static jerry_value_t _buildRect(LottieRect* rect, float frameNo)
+{
+    auto obj = jerry_object();
+    auto size = _buildValue(frameNo, &rect->size);
+    jerry_object_set_sz(obj, EXP_SIZE, size);
+    jerry_value_free(size);
+    auto position = _buildValue(frameNo, &rect->position);
+    jerry_object_set_sz(obj, EXP_POSITION, position);
+    jerry_value_free(position);
+    auto roundness = jerry_number(rect->radius(frameNo));
+    jerry_object_set_sz(obj, "roundness", roundness);
+    jerry_value_free(roundness);
+
+    return obj;
+}
+
+
+static jerry_value_t _buildEllipse(LottieEllipse* ellipse, float frameNo)
+{
+    auto obj = jerry_object();
+    auto size = _buildValue(frameNo, &ellipse->size);
+    jerry_object_set_sz(obj, EXP_SIZE, size);
+    jerry_value_free(size);
+    auto position = _buildValue(frameNo, &ellipse->position);
+    jerry_object_set_sz(obj, EXP_POSITION, position);
+    jerry_value_free(position);
 
     return obj;
 }
@@ -718,6 +751,8 @@ static jerry_value_t _content(const jerry_call_info_t* info, const jerry_value_t
             jerry_object_set_sz(obj, "path", obj);
             return obj;
         }
+        case LottieObject::Rect: return _buildRect(static_cast<LottieRect*>(target), data->frameNo);
+        case LottieObject::Ellipse: return _buildEllipse(static_cast<LottieEllipse*>(target), data->frameNo);
         case LottieObject::Polystar: return _buildPolystar(static_cast<LottiePolyStar*>(target), data->frameNo);
         case LottieObject::Trimpath: return _buildTrimpath(static_cast<LottieTrimpath*>(target), data->frameNo);
         default: break;
