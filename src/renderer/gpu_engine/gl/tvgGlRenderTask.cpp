@@ -24,6 +24,8 @@
 #include "tvgGlProgram.h"
 #include "tvgGlRenderPass.h"
 
+static constexpr uint32_t STENCIL_ATLAS_TEXTURE_UNIT = 3;
+
 #if !defined(THORVG_GL_TARGET_GL)
 static void clearColorTarget(uint32_t width, uint32_t height)
 {
@@ -54,6 +56,23 @@ void GlRenderTask::run()
         float viewMat3[9];
         getMatrix3(viewMatrix, viewMat3);
         GL_CHECK(glUniformMatrix3fv(vLoc, 1, GL_FALSE, viewMat3));
+    }
+
+    if (mStencilAtlasTex) {
+        int32_t enabled = 1;
+        int32_t textureUnit = STENCIL_ATLAS_TEXTURE_UNIT;
+        int32_t loc = mProgram->getUniformLocation("uStencilAtlasEnabled");
+        if (loc >= 0) mProgram->setUniform1Value(loc, 1, &enabled);
+        loc = mProgram->getUniformLocation("uStencilAtlasTransform");
+        if (loc >= 0) mProgram->setUniform4Value(loc, 1, mStencilAtlasTransform);
+        loc = mProgram->getUniformLocation("uStencilAtlasBounds");
+        if (loc >= 0) mProgram->setUniform4Value(loc, 1, mStencilAtlasBounds);
+        loc = mProgram->getUniformLocation("uStencilAtlasTexture");
+        if (loc >= 0) {
+            GL_CHECK(glActiveTexture(GL_TEXTURE0 + STENCIL_ATLAS_TEXTURE_UNIT));
+            GL_CHECK(glBindTexture(GL_TEXTURE_2D, mStencilAtlasTex));
+            mProgram->setUniform1Value(loc, 1, &textureUnit);
+        }
     }
 
     // setup scissor rect
@@ -141,9 +160,53 @@ void GlRenderTask::setViewport(const RenderRegion &viewport)
 }
 
 
+void GlRenderTask::setStencilAtlas(GLuint textureId, const float* transform, const float* bounds)
+{
+    mStencilAtlasTex = textureId;
+    for (uint32_t i = 0; i < 4; ++i) {
+        mStencilAtlasTransform[i] = transform[i];
+        mStencilAtlasBounds[i] = bounds[i];
+    }
+}
+
+
 /************************************************************************/
 /* GlStencilCoverTask Class Implementation                              */
 /************************************************************************/
+
+static void _runStencilCoverTask(GlRenderTask* stencilTask, GlRenderTask* coverTask, GlStencilMode stencilMode)
+{
+    GL_CHECK(glEnable(GL_STENCIL_TEST));
+
+    if (stencilMode == GlStencilMode::Stroke) {
+        GL_CHECK(glStencilFunc(GL_NOTEQUAL, 0x1, 0xFF));
+        GL_CHECK(glStencilOp(GL_KEEP, GL_KEEP, GL_REPLACE));
+    } else {
+        GL_CHECK(glStencilFuncSeparate(GL_FRONT, GL_ALWAYS, 0x0, 0xFF));
+        GL_CHECK(glStencilOpSeparate(GL_FRONT, GL_KEEP, GL_KEEP, GL_INCR_WRAP));
+
+        GL_CHECK(glStencilFuncSeparate(GL_BACK, GL_ALWAYS, 0x0, 0xFF));
+        GL_CHECK(glStencilOpSeparate(GL_BACK, GL_KEEP, GL_KEEP, GL_DECR_WRAP));
+    }
+    GL_CHECK(glColorMask(0, 0, 0, 0));
+
+    stencilTask->run();
+
+    if (stencilMode == GlStencilMode::FillEvenOdd) {
+        GL_CHECK(glStencilFunc(GL_NOTEQUAL, 0x00, 0x01));
+        GL_CHECK(glStencilOp(GL_REPLACE, GL_KEEP, GL_REPLACE));
+    } else {
+        GL_CHECK(glStencilFunc(GL_NOTEQUAL, 0x0, 0xFF));
+        GL_CHECK(glStencilOp(GL_KEEP, GL_KEEP, GL_REPLACE));
+    }
+
+    GL_CHECK(glColorMask(1, 1, 1, 1));
+
+    coverTask->run();
+
+    GL_CHECK(glDisable(GL_STENCIL_TEST));
+}
+
 
 GlStencilCoverTask::GlStencilCoverTask(GlRenderTask* stencil, GlRenderTask* cover, GlStencilMode mode)
  :GlRenderTask(nullptr), mStencilTask(stencil), mCoverTask(cover), mStencilMode(mode)
@@ -161,35 +224,7 @@ GlStencilCoverTask::~GlStencilCoverTask()
 
 void GlStencilCoverTask::run()
 {
-    GL_CHECK(glEnable(GL_STENCIL_TEST));
-
-    if (mStencilMode == GlStencilMode::Stroke) {
-        GL_CHECK(glStencilFunc(GL_NOTEQUAL, 0x1, 0xFF));
-        GL_CHECK(glStencilOp(GL_KEEP, GL_KEEP, GL_REPLACE));
-    } else {
-        GL_CHECK(glStencilFuncSeparate(GL_FRONT, GL_ALWAYS, 0x0, 0xFF));
-        GL_CHECK(glStencilOpSeparate(GL_FRONT, GL_KEEP, GL_KEEP, GL_INCR_WRAP));
-
-        GL_CHECK(glStencilFuncSeparate(GL_BACK, GL_ALWAYS, 0x0, 0xFF));
-        GL_CHECK(glStencilOpSeparate(GL_BACK, GL_KEEP, GL_KEEP, GL_DECR_WRAP));
-    }
-    GL_CHECK(glColorMask(0, 0, 0, 0));
-
-    mStencilTask->run();
-
-    if (mStencilMode == GlStencilMode::FillEvenOdd) {
-        GL_CHECK(glStencilFunc(GL_NOTEQUAL, 0x00, 0x01));
-        GL_CHECK(glStencilOp(GL_REPLACE, GL_KEEP, GL_REPLACE));
-    } else {
-        GL_CHECK(glStencilFunc(GL_NOTEQUAL, 0x0, 0xFF));
-        GL_CHECK(glStencilOp(GL_KEEP, GL_KEEP, GL_REPLACE));
-    }
-
-    GL_CHECK(glColorMask(1, 1, 1, 1));
-
-    mCoverTask->run();
-
-    GL_CHECK(glDisable(GL_STENCIL_TEST));
+    _runStencilCoverTask(mStencilTask, mCoverTask, mStencilMode);
 }
 
 
@@ -197,6 +232,58 @@ void GlStencilCoverTask::normalizeDrawDepth(int32_t maxDepth)
 {
     mCoverTask->normalizeDrawDepth(maxDepth);
     mStencilTask->normalizeDrawDepth(maxDepth);
+}
+
+
+/************************************************************************/
+/* GlStencilAtlasCoverTask Class Implementation                         */
+/************************************************************************/
+
+GlStencilAtlasCoverTask::GlStencilAtlasCoverTask(GlRenderTask* stencil, GlRenderTask* cover, GlStencilMode mode)
+ :GlRenderTask(nullptr), mStencilTask(stencil), mCoverTask(cover), mStencilMode(mode)
+{
+}
+
+
+GlStencilAtlasCoverTask::~GlStencilAtlasCoverTask()
+{
+    delete mStencilTask;
+    delete mCoverTask;
+}
+
+
+void GlStencilAtlasCoverTask::run()
+{
+    if (!mAtlasConfigured) {
+        _runStencilCoverTask(mStencilTask, mCoverTask, mStencilMode);
+        return;
+    }
+
+    GL_CHECK(glDisable(GL_STENCIL_TEST));
+    mCoverTask->run();
+
+    auto program = mCoverTask->getProgram();
+    if (program) {
+        program->load();
+        int32_t disabled = 0;
+        auto loc = program->getUniformLocation("uStencilAtlasEnabled");
+        if (loc >= 0) program->setUniform1Value(loc, 1, &disabled);
+    }
+}
+
+
+void GlStencilAtlasCoverTask::normalizeDrawDepth(int32_t maxDepth)
+{
+    mCoverTask->normalizeDrawDepth(maxDepth);
+    mStencilTask->normalizeDrawDepth(maxDepth);
+}
+
+
+void GlStencilAtlasCoverTask::setStencilAtlas(GLuint textureId, const float* transform, const float* bounds)
+{
+    mAtlasConfigured = (textureId != 0);
+    if (mAtlasConfigured) mCoverTask->setStencilAtlas(textureId, transform, bounds);
+    else mCoverTask->clearStencilAtlas();
 }
 
 

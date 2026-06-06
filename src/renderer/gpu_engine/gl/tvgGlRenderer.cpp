@@ -127,9 +127,9 @@ void GlRenderer::initShaders()
     mPrograms.reserve((int)RT_None);
 
 #if 1  //for optimization
-    #define LINEAR_TOTAL_LENGTH 2831
-    #define RADIAL_TOTAL_LENGTH 5315
-    #define BLEND_TOTAL_LENGTH 5096
+    #define LINEAR_TOTAL_LENGTH 4096
+    #define RADIAL_TOTAL_LENGTH 6144
+    #define BLEND_TOTAL_LENGTH 8704
 #else
     #define COMMON_TOTAL_LENGTH strlen(STR_GRADIENT_FRAG_COMMON_VARIABLES) + strlen(STR_GRADIENT_FRAG_COMMON_FUNCTIONS) + 1
     #define LINEAR_TOTAL_LENGTH strlen(STR_LINEAR_GRADIENT_VARIABLES) + strlen(STR_LINEAR_GRADIENT_FUNCTIONS) + strlen(STR_LINEAR_GRADIENT_MAIN) + COMMON_TOTAL_LENGTH
@@ -234,10 +234,13 @@ static void addPrimitiveTask(GlRenderPass* pass, GlStencilPassManager* stencilPa
                              const Matrix& viewMatrix, GlStencilMode stencilMode)
 {
     if (stencilTask) {
-        if (stencilMode != GlStencilMode::Stroke) {
-            stencilPassManager->record(pass, stencilTask, stencilBuffer, stencilBounds, viewRegion, viewMatrix, stencilMode);
+        if (stencilMode != GlStencilMode::Stroke && stencilPassManager) {
+            auto atlasTask = new GlStencilAtlasCoverTask(stencilTask, task, stencilMode);
+            stencilPassManager->record(pass, atlasTask, stencilTask, stencilBuffer, stencilBounds, viewRegion, viewMatrix, stencilMode);
+            pass->addRenderTask(atlasTask);
+        } else {
+            pass->addRenderTask(new GlStencilCoverTask(stencilTask, task, stencilMode));
         }
-        pass->addRenderTask(new GlStencilCoverTask(stencilTask, task, stencilMode));
     } else {
         pass->addRenderTask(task);
     }

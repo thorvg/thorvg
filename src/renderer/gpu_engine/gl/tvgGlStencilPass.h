@@ -34,6 +34,7 @@ struct GlStencilAtlasTarget;
 struct GlStencilRecord
 {
     GlRenderTask* task = nullptr;
+    GlStencilAtlasCoverTask* coverTask = nullptr;
     const GlGeometryBuffer* buffer = nullptr;
     RenderRegion screenBounds{};
     Matrix viewMatrix = {};
@@ -74,13 +75,14 @@ struct GlStencilPassManager
     GlStencilPassManager(uint32_t screenWidth, uint32_t screenHeight);
     ~GlStencilPassManager();
 
-    void record(GlRenderPass* pass, GlRenderTask* task, const GlGeometryBuffer* buffer, const RenderRegion& meshBounds,
-                const RenderRegion& viewRegion, const Matrix& viewMatrix, GlStencilMode mode);
+    void record(GlRenderPass* pass, GlStencilAtlasCoverTask* coverTask, GlRenderTask* task, const GlGeometryBuffer* buffer,
+                const RenderRegion& meshBounds, const RenderRegion& viewRegion, const Matrix& viewMatrix, GlStencilMode mode);
     bool prepare(GlRenderPass* pass, GlStageBuffer& gpuBuffer, GlProgram* coverProgram, GLint restoreId = 0);
     void clearRecords();
 
     GlStencilPass mPass;
     Array<RecordSet*> mRecordSets = {};
+    uint32_t mScreenWidth = 0, mScreenHeight = 0;
 };
 
 #endif //_TVG_GL_STENCIL_PASS_H_

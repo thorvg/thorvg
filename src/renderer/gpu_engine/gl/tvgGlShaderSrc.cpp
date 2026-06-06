@@ -39,14 +39,26 @@ const char* COLOR_VERT_SHADER = TVG_COMPOSE_SHADER(
     }                                                               \n);
 
 const char* COLOR_FRAG_SHADER = TVG_COMPOSE_SHADER(
-    in vec4 vColor;                                          \n
-    out vec4 FragColor;                                      \n
-                                                             \n 
-    void main()                                              \n 
-    {                                                        \n
-        vec4 uColor = vColor;                                \n
-        FragColor = vec4(uColor.rgb * uColor.a, uColor.a);   \n
-    }                                                        \n);
+    uniform int uStencilAtlasEnabled;                                                                                  \n
+    uniform sampler2D uStencilAtlasTexture;                                                                             \n
+    uniform vec4 uStencilAtlasTransform;                                                                                \n
+    uniform vec4 uStencilAtlasBounds;                                                                                   \n
+    in vec4 vColor;                                                                                                     \n
+    out vec4 FragColor;                                                                                                 \n
+                                                                                                                        \n
+    float stencilAtlasMask()                                                                                            \n
+    {                                                                                                                   \n
+        if (uStencilAtlasEnabled == 0) return 1.0;                                                                       \n
+        vec2 uv = gl_FragCoord.xy * uStencilAtlasTransform.xy + uStencilAtlasTransform.zw;                              \n
+        vec2 inside = step(uStencilAtlasBounds.xy, uv) * step(uv, uStencilAtlasBounds.zw);                              \n
+        return inside.x * inside.y * texture(uStencilAtlasTexture, clamp(uv, uStencilAtlasBounds.xy, uStencilAtlasBounds.zw)).r; \n
+    }                                                                                                                   \n
+                                                                                                                        \n
+    void main()                                                                                                         \n
+    {                                                                                                                   \n
+        vec4 uColor = vColor;                                                                                           \n
+        FragColor = vec4(uColor.rgb * uColor.a, uColor.a) * stencilAtlasMask();                                         \n
+    }                                                                                                                   \n);
 
 const char* STENCIL_ATLAS_COVER_FRAG_SHADER = TVG_COMPOSE_SHADER(
     in vec4 vColor;                                          \n
@@ -187,10 +199,23 @@ const char* STR_LINEAR_GRADIENT_VARIABLES = TVG_COMPOSE_SHADER(
 
 //See: GlRenderer::initShaders()
 const char* STR_LINEAR_GRADIENT_MAIN = TVG_COMPOSE_SHADER(
+    uniform int uStencilAtlasEnabled;                                                                       \n
+    uniform sampler2D uStencilAtlasTexture;                                                                 \n
+    uniform vec4 uStencilAtlasTransform;                                                                    \n
+    uniform vec4 uStencilAtlasBounds;                                                                       \n
     out vec4 FragColor;                                                                                     \n
+                                                                                                            \n
+    float stencilAtlasMask()                                                                                \n
+    {                                                                                                       \n
+        if (uStencilAtlasEnabled == 0) return 1.0;                                                           \n
+        vec2 uv = gl_FragCoord.xy * uStencilAtlasTransform.xy + uStencilAtlasTransform.zw;                  \n
+        vec2 inside = step(uStencilAtlasBounds.xy, uv) * step(uv, uStencilAtlasBounds.zw);                  \n
+        return inside.x * inside.y * texture(uStencilAtlasTexture, clamp(uv, uStencilAtlasBounds.xy, uStencilAtlasBounds.zw)).r; \n
+    }                                                                                                       \n
+                                                                                                            \n
     void main()                                                                                             \n
     {                                                                                                       \n
-        FragColor = linearGradientColor(vPos);                                                              \n
+        FragColor = linearGradientColor(vPos) * stencilAtlasMask();                                         \n
     }                                                                                                       \n
 );
 
@@ -221,11 +246,23 @@ const char* STR_RADIAL_GRADIENT_VARIABLES = TVG_COMPOSE_SHADER(
 
 //See: GlRenderer::initShaders()
 const char* STR_RADIAL_GRADIENT_MAIN = TVG_COMPOSE_SHADER(
+    uniform int uStencilAtlasEnabled;                                                                       \n
+    uniform sampler2D uStencilAtlasTexture;                                                                 \n
+    uniform vec4 uStencilAtlasTransform;                                                                    \n
+    uniform vec4 uStencilAtlasBounds;                                                                       \n
     out vec4 FragColor;                                                                                     \n
+                                                                                                            \n
+    float stencilAtlasMask()                                                                                \n
+    {                                                                                                       \n
+        if (uStencilAtlasEnabled == 0) return 1.0;                                                           \n
+        vec2 uv = gl_FragCoord.xy * uStencilAtlasTransform.xy + uStencilAtlasTransform.zw;                  \n
+        vec2 inside = step(uStencilAtlasBounds.xy, uv) * step(uv, uStencilAtlasBounds.zw);                  \n
+        return inside.x * inside.y * texture(uStencilAtlasTexture, clamp(uv, uStencilAtlasBounds.xy, uStencilAtlasBounds.zw)).r; \n
+    }                                                                                                       \n
                                                                                                             \n
     void main()                                                                                             \n
     {                                                                                                       \n
-        FragColor = radialGradientColor(vPos);                                                              \n
+        FragColor = radialGradientColor(vPos) * stencilAtlasMask();                                         \n
     }                                                                                                       \n
 );
 
@@ -606,6 +643,10 @@ layout(std140) uniform BlendRegion {
 } uBlendRegion;
 
 uniform sampler2D uDstTexture;
+uniform int uStencilAtlasEnabled;
+uniform sampler2D uStencilAtlasTexture;
+uniform vec4 uStencilAtlasTransform;
+uniform vec4 uStencilAtlasBounds;
 
 in vec4 vColor;
 out vec4 FragColor;
@@ -613,6 +654,13 @@ out vec4 FragColor;
 vec3 One = vec3(1.0, 1.0, 1.0);
 struct FragData { vec3 Sc; float Sa; float So; vec3 Dc; float Da; };
 FragData d;
+
+float stencilAtlasMask() {
+    if (uStencilAtlasEnabled == 0) return 1.0;
+    vec2 uv = gl_FragCoord.xy * uStencilAtlasTransform.xy + uStencilAtlasTransform.zw;
+    vec2 inside = step(uStencilAtlasBounds.xy, uv) * step(uv, uStencilAtlasBounds.zw);
+    return inside.x * inside.y * texture(uStencilAtlasTexture, clamp(uv, uStencilAtlasBounds.xy, uStencilAtlasBounds.zw)).r;
+}
 
 void getFragData() {
     vec2 uv = (gl_FragCoord.xy - uBlendRegion.region.xy) / uBlendRegion.region.zw;
@@ -625,7 +673,7 @@ void getFragData() {
     d.Da = colorDst.a;
 }
 
-vec4 postProcess(vec4 R) { return R; }
+vec4 postProcess(vec4 R) { return mix(vec4(d.Dc, d.Da), R, stencilAtlasMask()); }
 )";
 
 const char* BLEND_SHAPE_LINEAR_FRAG_HEADER = R"(
@@ -634,12 +682,23 @@ layout(std140) uniform BlendRegion {
 } uBlendRegion;
 
 uniform sampler2D uDstTexture;
+uniform int uStencilAtlasEnabled;
+uniform sampler2D uStencilAtlasTexture;
+uniform vec4 uStencilAtlasTransform;
+uniform vec4 uStencilAtlasBounds;
 
 out vec4 FragColor;
 
 vec3 One = vec3(1.0, 1.0, 1.0);
 struct FragData { vec3 Sc; float Sa; float So; vec3 Dc; float Da; };
 FragData d;
+
+float stencilAtlasMask() {
+    if (uStencilAtlasEnabled == 0) return 1.0;
+    vec2 uv = gl_FragCoord.xy * uStencilAtlasTransform.xy + uStencilAtlasTransform.zw;
+    vec2 inside = step(uStencilAtlasBounds.xy, uv) * step(uv, uStencilAtlasBounds.zw);
+    return inside.x * inside.y * texture(uStencilAtlasTexture, clamp(uv, uStencilAtlasBounds.xy, uStencilAtlasBounds.zw)).r;
+}
 
 void getFragData() {
     vec4 colorSrc = linearGradientColor(vPos);
@@ -657,7 +716,7 @@ void getFragData() {
     d.Sa = mix(d.Da, 1.0, srcOpacity);
 }
 
-vec4 postProcess(vec4 R) { return R; }
+vec4 postProcess(vec4 R) { return mix(vec4(d.Dc, d.Da), R, stencilAtlasMask()); }
 )";
 
 const char* BLEND_SHAPE_RADIAL_FRAG_HEADER = R"(
@@ -666,12 +725,23 @@ layout(std140) uniform BlendRegion {
 } uBlendRegion;
 
 uniform sampler2D uDstTexture;
+uniform int uStencilAtlasEnabled;
+uniform sampler2D uStencilAtlasTexture;
+uniform vec4 uStencilAtlasTransform;
+uniform vec4 uStencilAtlasBounds;
 
 out vec4 FragColor;
 
 vec3 One = vec3(1.0, 1.0, 1.0);
 struct FragData { vec3 Sc; float Sa; float So; vec3 Dc; float Da; };
 FragData d;
+
+float stencilAtlasMask() {
+    if (uStencilAtlasEnabled == 0) return 1.0;
+    vec2 uv = gl_FragCoord.xy * uStencilAtlasTransform.xy + uStencilAtlasTransform.zw;
+    vec2 inside = step(uStencilAtlasBounds.xy, uv) * step(uv, uStencilAtlasBounds.zw);
+    return inside.x * inside.y * texture(uStencilAtlasTexture, clamp(uv, uStencilAtlasBounds.xy, uStencilAtlasBounds.zw)).r;
+}
 
 void getFragData() {
     vec4 colorSrc = radialGradientColor(vPos);
@@ -689,7 +759,7 @@ void getFragData() {
     d.Sa = mix(d.Da, 1.0, srcOpacity);
 }
 
-vec4 postProcess(vec4 R) { return R; }
+vec4 postProcess(vec4 R) { return mix(vec4(d.Dc, d.Da), R, stencilAtlasMask()); }
 )";
 
 // GL keeps a viewport-sized dst copy, so src/dst can share vUV.
