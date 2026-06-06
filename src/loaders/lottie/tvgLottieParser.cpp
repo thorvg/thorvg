@@ -513,6 +513,9 @@ bool LottieParser::parseCommon(LottieObject* obj, const char* key)
     if (KEY_AS("nm")) {
         obj->id = djb2Encode(getString());
         return true;
+    } else if (KEY_AS("ix")) {
+        obj->ix = getInt();
+        return true;
     } else if (KEY_AS("hd")) {
         obj->hidden = getBool();
         return true;
@@ -967,7 +970,10 @@ void LottieParser::parseObject(Array<LottieObject*>& parent)
     if (type) {
         if (auto child = parseObject(type)) {
             if (child->hidden) delete(child);
-            else parent.push(child);
+            else {
+                if (child->ix == 0) child->ix = parent.count + 1;
+                parent.push(child);
+            }
         }
     }
 
