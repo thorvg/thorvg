@@ -1580,6 +1580,9 @@ void LottieBuilder::updateLayer(LottieComposition* comp, Scene* scene, LottieLay
         }
     }
 
+    //cache the source bounding box
+    if (exps && comp->expressions) exps->bounds(layer);
+
     updateMasks(layer, frameNo);
 
     updateEffect(layer, frameNo, comp->quality);
