@@ -80,7 +80,7 @@ static Key _lockKey;
     X("key") \
     X("comp") X("name") X("time") \
     X("index") X("layer") X("scale") X("speed") X("value") X("width") \
-    X("$bm_rt") X("effect") X("height") X("parent") X("toComp") X("wiggle") \
+    X("$bm_rt") X("effect") X("height") X("marker") X("parent") X("toComp") X("wiggle") \
     X("content") X("enabled") X("inPoint") X("numKeys") X("opacity") \
     X("duration") X("hasAudio") X("hasVideo") X("outPoint") X("position") X("rotation") X("thisComp") X("velocity") \
     X("hasParent") X("numLayers") X("startTime") X("thisLayer") X("timeRemap") X("transform") \
@@ -1357,6 +1357,97 @@ static void _buildMath(jerry_value_t context)
 }
 
 
+static jerry_value_t _buildMarker(LottieComposition* comp, uint32_t idx)
+{
+    auto marker = comp->markers[idx];
+    auto obj = jerry_object();
+
+    auto time = jerry_number(comp->timeAtFrame(marker->time));
+    jerry_object_set_sz(obj, EXP_TIME, time);
+    jerry_value_free(time);
+
+    auto duration = jerry_number(marker->duration / comp->frameRate);
+    jerry_object_set_sz(obj, "duration", duration);
+    jerry_value_free(duration);
+
+    if (marker->name) {
+        auto comment = jerry_string_sz(marker->name);
+        jerry_object_set_sz(obj, "comment", comment);
+        jerry_value_free(comment);
+    }
+
+    auto index = jerry_number((float)(idx + 1));
+    jerry_object_set_sz(obj, EXP_INDEX, index);
+    jerry_value_free(index);
+
+    return obj;
+}
+
+
+static jerry_value_t _markerKey(const jerry_call_info_t* info, const jerry_value_t args[], const jerry_length_t argsCnt)
+{
+    auto data = static_cast<ExpContent*>(jerry_object_get_native_ptr(info->function, &freeCb));
+    auto comp = data->exp->comp;
+
+    //either index or name(comment)
+    if (jerry_value_is_number(args[0])) {
+        auto idx = jerry_value_as_int32(args[0]);
+        if (idx < 1 || idx > (int32_t)comp->markers.count) return jerry_undefined();
+        return _buildMarker(comp, (uint32_t)(idx - 1));
+    }
+
+    auto id = _idByName(args[0]);
+    for (uint32_t i = 0; i < comp->markers.count; ++i) {
+        auto name = comp->markers[i]->name;
+        if (name && djb2Encode(name) == id) return _buildMarker(comp, i);
+    }
+    return jerry_undefined();
+}
+
+
+static jerry_value_t _markerNearestKey(const jerry_call_info_t* info, const jerry_value_t args[], const jerry_length_t argsCnt)
+{
+    auto data = static_cast<ExpContent*>(jerry_object_get_native_ptr(info->function, &freeCb));
+    auto comp = data->exp->comp;
+    if (comp->markers.count == 0) return jerry_undefined();
+
+    auto t = _number(args[0]);
+
+    uint32_t nearest = 0;
+    auto min = fabsf(comp->timeAtFrame(comp->markers[0]->time) - t);
+    for (uint32_t i = 1; i < comp->markers.count; ++i) {
+        auto diff = fabsf(comp->timeAtFrame(comp->markers[i]->time) - t);
+        if (diff < min) {
+            min = diff;
+            nearest = i;
+        }
+    }
+    return _buildMarker(comp, nearest);
+}
+
+
+static jerry_value_t _marker(float frameNo, LottieComposition* comp, LottieExpression* exp)
+{
+    auto marker = jerry_object();
+
+    auto numKeys = jerry_number((float)comp->markers.count);
+    jerry_object_set_sz(marker, "numKeys", numKeys);
+    jerry_value_free(numKeys);
+
+    auto key = jerry_function_external(_markerKey);
+    jerry_object_set_sz(marker, "key", key);
+    jerry_object_set_native_ptr(key, &freeCb, _expcontent(exp, frameNo, comp));
+    jerry_value_free(key);
+
+    auto nearestKey = jerry_function_external(_markerNearestKey);
+    jerry_object_set_sz(marker, "nearestKey", nearestKey);
+    jerry_object_set_native_ptr(nearestKey, &freeCb, _expcontent(exp, frameNo, comp));
+    jerry_value_free(nearestKey);
+
+    return marker;
+}
+
+
 void LottieExpressions::buildGlobal(Context& context, float frameNo, LottieExpression* exp)
 {
     tvg::free(static_cast<ExpContent*>(jerry_object_get_native_ptr(context.comp, &freeCb)));
@@ -1395,11 +1486,10 @@ void LottieExpressions::buildComp(Context& context, LottieComposition* comp, flo
 {
     buildComp(context.comp, frameNo, comp->root, exp);
 
-    //marker
-    //marker.key(index)
-    //marker.key(name)
-    //marker.nearestKey(t)
-    //marker.numKeys
+    //marker.key(index) / marker.key(name) / marker.nearestKey(t) / marker.numKeys
+    auto marker = _marker(frameNo, comp, exp);
+    jerry_object_set_sz(context.thisComp, "marker", marker);
+    jerry_value_free(marker);
 
     //activeCamera
 
