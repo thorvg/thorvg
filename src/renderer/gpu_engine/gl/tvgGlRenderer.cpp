@@ -236,7 +236,7 @@ static void addPrimitiveTask(GlRenderPass* pass, GlStencilPassManager* stencilPa
     if (stencilTask) {
         if (stencilMode != GlStencilMode::Stroke && stencilPassManager) {
             auto atlasTask = new GlStencilAtlasCoverTask(stencilTask, task, stencilMode);
-            stencilPassManager->record(pass, atlasTask, stencilTask, stencilBuffer, stencilBounds, viewRegion, viewMatrix, stencilMode);
+            stencilPassManager->record(pass, atlasTask, stencilTask, stencilBuffer, stencilBounds, viewMatrix, stencilMode);
             pass->addRenderTask(atlasTask);
         } else {
             pass->addRenderTask(new GlStencilCoverTask(stencilTask, task, stencilMode));

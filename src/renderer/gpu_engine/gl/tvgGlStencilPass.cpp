@@ -427,7 +427,7 @@ GlStencilPassManager::~GlStencilPassManager()
 }
 
 static RenderRegion _stencilTargetBounds(const RenderRegion& meshBounds, const Matrix& viewMatrix,
-                                         const RenderRegion& viewRegion, uint32_t targetWidth, uint32_t targetHeight)
+                                         uint32_t targetWidth, uint32_t targetHeight)
 {
     auto w = static_cast<float>(targetWidth);
     auto h = static_cast<float>(targetHeight);
@@ -435,19 +435,19 @@ static RenderRegion _stencilTargetBounds(const RenderRegion& meshBounds, const M
                           0.0f, h * 0.5f, h * 0.5f,
                           0.0f, 0.0f, 1.0f};
 
-    auto bounds = gpuTransformBounds(meshBounds, ndcToTarget * viewMatrix);
-    bounds.intersect(viewRegion);
-    return bounds;
+    return gpuTransformBounds(meshBounds, ndcToTarget * viewMatrix);
 }
 
 void GlStencilPassManager::record(GlRenderPass* pass, GlStencilAtlasCoverTask* coverTask, GlRenderTask* task,
                                   const GlGeometryBuffer* buffer, const RenderRegion& meshBounds,
-                                  const RenderRegion& viewRegion, const Matrix& viewMatrix, GlStencilMode mode)
+                                  const Matrix& viewMatrix, GlStencilMode mode)
 {
     if (!pass || !coverTask) return;
 
     auto target = pass->getViewport();
-    auto screenBounds = _stencilTargetBounds(meshBounds, viewMatrix, viewRegion, target.w(), target.h());
+    // Batch draws use one atlas-wide scissor, so each packed rect must cover
+    // the full stencil geometry rather than the final clipped cover region.
+    auto screenBounds = _stencilTargetBounds(meshBounds, viewMatrix, target.w(), target.h());
     if (!_atlasEligible(screenBounds, mScreenWidth, mScreenHeight, mode)) return;
 
     RecordSet* set = nullptr;

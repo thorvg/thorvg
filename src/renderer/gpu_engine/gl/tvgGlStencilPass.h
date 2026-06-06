@@ -76,7 +76,7 @@ struct GlStencilPassManager
     ~GlStencilPassManager();
 
     void record(GlRenderPass* pass, GlStencilAtlasCoverTask* coverTask, GlRenderTask* task, const GlGeometryBuffer* buffer,
-                const RenderRegion& meshBounds, const RenderRegion& viewRegion, const Matrix& viewMatrix, GlStencilMode mode);
+                const RenderRegion& meshBounds, const Matrix& viewMatrix, GlStencilMode mode);
     bool prepare(GlRenderPass* pass, GlStageBuffer& gpuBuffer, GlProgram* coverProgram, GLint restoreId = 0);
     void clearRecords();
 
