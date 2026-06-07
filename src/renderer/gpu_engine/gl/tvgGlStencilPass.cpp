@@ -30,6 +30,52 @@ static constexpr uint32_t RECT_INDEX_COUNT = 6;
 static constexpr uint32_t RECT_INDEX[] = {0, 1, 2, 2, 1, 3};
 static constexpr float COVER_VERTEX[] = {-1.f, 1.f, -1.f, -1.f, 1.f, 1.f, 1.f, -1.f};
 
+GlStencilAtlasPolicy::GlStencilAtlasPolicy(uint32_t gpuMaxRenderableSidePx, uint32_t sampleCount)
+{
+    if (gpuMaxRenderableSidePx == 0) gpuMaxRenderableSidePx = MaxPortableSide;
+    if (sampleCount == 0) sampleCount = 4;
+
+    this->sampleCount = sampleCount;
+    maxPageSide = (gpuMaxRenderableSidePx < MaxPortableSide) ? gpuMaxRenderableSidePx : MaxPortableSide;
+
+    auto bytesPerPixel = static_cast<uint64_t>(4) * sampleCount;
+    auto budgetPixels = BudgetBytes / bytesPerPixel;
+    auto sidePixels = static_cast<uint64_t>(maxPageSide) * maxPageSide;
+    maxPagePixels = (budgetPixels < sidePixels) ? budgetPixels : sidePixels;
+    veryLargeMaskPixels = maxPagePixels / 4;
+}
+
+bool GlStencilAtlasPolicy::maskFits(uint32_t width, uint32_t height) const
+{
+    if (width == 0 || height == 0 || width > maxPageSide || height > maxPageSide) return false;
+
+    auto area = static_cast<uint64_t>(width) * height;
+    if (area > maxPagePixels) return false;
+    return area < veryLargeMaskPixels;
+}
+
+bool GlStencilAtlasPolicy::allocationFits(uint32_t width, uint32_t height) const
+{
+    if (width == 0 || height == 0 || width > maxPageSide || height > maxPageSide) return false;
+    return static_cast<uint64_t>(width) * height <= maxPagePixels;
+}
+
+bool GlStencilAtlasPolicy::shouldUseSharedAtlas(uint32_t directPathDrawCalls, uint32_t atlasMaskBuildDrawCalls,
+                                               uint32_t atlasBatchedContentDrawCalls) const
+{
+    auto atlasDrawCalls = static_cast<uint64_t>(atlasMaskBuildDrawCalls) + atlasBatchedContentDrawCalls;
+    if (directPathDrawCalls < atlasDrawCalls) return false;
+    return static_cast<uint64_t>(directPathDrawCalls) - atlasDrawCalls >= MinSavedDrawCalls;
+}
+
+bool GlStencilAtlasPolicy::shouldUseSharedAtlasForRecords(uint32_t recordCount, bool hasNonZero, bool hasEvenOdd) const
+{
+    auto atlasMaskBuildDrawCalls = 1u;
+    if (hasNonZero) ++atlasMaskBuildDrawCalls;
+    if (hasEvenOdd) ++atlasMaskBuildDrawCalls;
+    return shouldUseSharedAtlas(recordCount * 2, atlasMaskBuildDrawCalls, recordCount);
+}
+
 static uint32_t _atlasSize(uint32_t value)
 {
     if (value == 0) return 0;
@@ -53,11 +99,10 @@ static RenderRegion _atlasViewport(const RenderRegion& bounds, uint32_t atlasHei
     return {{bounds.min.x, y - bounds.max.y}, {bounds.max.x, y - bounds.min.y}};
 }
 
-static bool _atlasEligible(const RenderRegion& bounds, uint32_t screenWidth, uint32_t screenHeight, GlStencilMode mode)
+static bool _atlasEligible(const RenderRegion& bounds, const GlStencilAtlasPolicy& policy, GlStencilMode mode)
 {
-    if (mode == GlStencilMode::Stroke || bounds.invalid() || screenWidth == 0 || screenHeight == 0) return false;
-    return (static_cast<uint64_t>(bounds.w()) * 4 < static_cast<uint64_t>(screenWidth) * 3) &&
-           (static_cast<uint64_t>(bounds.h()) * 4 < static_cast<uint64_t>(screenHeight) * 3);
+    if (mode == GlStencilMode::Stroke || bounds.invalid()) return false;
+    return policy.maskFits(bounds.w(), bounds.h());
 }
 
 struct GlStencilBatchBuffer
@@ -252,6 +297,11 @@ struct GlStencilPassTask : GlRenderTask
         GL_CHECK(glBindFramebuffer(GL_DRAW_FRAMEBUFFER, resolveFbo));
         GL_CHECK(glBlitFramebuffer(0, 0, width, height, 0, 0, width, height, GL_COLOR_BUFFER_BIT, GL_NEAREST));
 
+#if defined(THORVG_GL_TARGET_GLES)
+        GLenum attachments[2] = {GL_STENCIL_ATTACHMENT, GL_DEPTH_ATTACHMENT};
+        GL_CHECK(glInvalidateFramebuffer(GL_READ_FRAMEBUFFER, 2, attachments));
+#endif
+
         GL_CHECK(glBindFramebuffer(GL_FRAMEBUFFER, restoreFbo));
         GL_CHECK(glViewport(restoreViewport[0], restoreViewport[1], restoreViewport[2], restoreViewport[3]));
         GL_CHECK(glScissor(restoreScissor[0], restoreScissor[1], restoreScissor[2], restoreScissor[3]));
@@ -271,12 +321,27 @@ struct GlStencilPassTask : GlRenderTask
     GlRenderTask* coverTask = nullptr;
 };
 
-static RenderRegion _packStencilRecords(Array<GlStencilRecord>& records, uint32_t maxAtlasWidth, uint32_t maxAtlasHeight)
+struct GlStencilAtlasLayout
 {
-    auto atlasW = static_cast<int32_t>(maxAtlasWidth);
-    auto atlasH = static_cast<int32_t>(maxAtlasHeight);
+    RenderRegion bounds{};
+    uint32_t recordCount = 0;
+};
+
+struct GlStencilAtlasCandidate
+{
+    bool valid = false;
+    uint32_t packWidth = 0;
+    uint32_t width = 0;
+    uint32_t height = 0;
+    uint64_t area = 0;
+};
+
+static GlStencilAtlasLayout _placeRecordsInRows(Array<GlStencilRecord>& records, uint32_t atlasWidth, uint32_t atlasHeight)
+{
+    auto atlasW = static_cast<int32_t>(atlasWidth);
+    auto atlasH = static_cast<int32_t>(atlasHeight);
     int32_t x = 0, y = 0, rowH = 0;
-    RenderRegion packedBounds{};
+    GlStencilAtlasLayout layout;
     bool packed = false;
 
     for (uint32_t i = 0; i < records.count; ++i) {
@@ -285,7 +350,7 @@ static RenderRegion _packStencilRecords(Array<GlStencilRecord>& records, uint32_
 
         auto w = static_cast<int32_t>(record.screenBounds.w());
         auto h = static_cast<int32_t>(record.screenBounds.h());
-        if (w <= 0 || h <= 0 || w > atlasW || h > atlasH) continue;
+        if (w <= 0 || h <= 0 || w > atlasW || h > atlasH) return {};
 
         if (x + w > atlasW) {
             x = 0;
@@ -293,27 +358,88 @@ static RenderRegion _packStencilRecords(Array<GlStencilRecord>& records, uint32_
             rowH = 0;
         }
 
-        if (y + h > atlasH) continue;
+        if (y + h > atlasH) return {};
 
         record.atlasX = x;
         record.atlasY = y;
 
         RenderRegion bounds = {{x, y}, {x + w, y + h}};
-        if (packed) packedBounds.add(bounds);
+        if (packed) layout.bounds.add(bounds);
         else {
-            packedBounds = bounds;
+            layout.bounds = bounds;
             packed = true;
         }
 
         x += w;
         if (rowH < h) rowH = h;
+        ++layout.recordCount;
     }
 
-    return packedBounds;
+    return layout;
 }
 
-GlStencilPass::GlStencilPass(uint32_t screenWidth, uint32_t screenHeight):
-    maxAtlasWidth(_atlasSize(screenWidth)), maxAtlasHeight(_atlasSize(screenHeight))
+static void _considerAtlasPackWidth(Array<GlStencilRecord>& records, const GlStencilAtlasPolicy& policy,
+                                    uint32_t packWidth, GlStencilAtlasCandidate& best)
+{
+    if (packWidth == 0 || packWidth > policy.maxPageSide) return;
+
+    auto layout = _placeRecordsInRows(records, packWidth, policy.maxPageSide);
+    if (layout.bounds.invalid() || layout.recordCount != records.count) return;
+
+    auto allocatedWidth = _atlasSize(layout.bounds.w());
+    auto allocatedHeight = _atlasSize(layout.bounds.h());
+    if (!policy.allocationFits(allocatedWidth, allocatedHeight)) return;
+
+    auto allocatedArea = static_cast<uint64_t>(allocatedWidth) * allocatedHeight;
+    if (!best.valid || allocatedArea < best.area ||
+        (allocatedArea == best.area && allocatedWidth < best.width)) {
+        best.valid = true;
+        best.packWidth = packWidth;
+        best.width = allocatedWidth;
+        best.height = allocatedHeight;
+        best.area = allocatedArea;
+    }
+}
+
+static GlStencilAtlasLayout _findSmallestAtlasAllocation(Array<GlStencilRecord>& records, const GlStencilAtlasPolicy& policy,
+                                                        uint32_t& atlasWidth, uint32_t& atlasHeight)
+{
+    atlasWidth = atlasHeight = 0;
+    if (records.empty()) return {};
+
+    uint32_t maxRecordWidth = 0;
+    uint32_t maxRecordHeight = 0;
+    for (uint32_t i = 0; i < records.count; ++i) {
+        auto& bounds = records[i].screenBounds;
+        if (bounds.invalid() || !policy.maskFits(bounds.w(), bounds.h())) return {};
+        if (maxRecordWidth < bounds.w()) maxRecordWidth = bounds.w();
+        if (maxRecordHeight < bounds.h()) maxRecordHeight = bounds.h();
+    }
+
+    auto minPackWidth = _atlasSize(maxRecordWidth);
+    if (minPackWidth == 0 || minPackWidth > policy.maxPageSide || maxRecordHeight > policy.maxPageSide) return {};
+
+    GlStencilAtlasCandidate best;
+
+    for (auto packWidth = minPackWidth; packWidth <= policy.maxPageSide;) {
+        _considerAtlasPackWidth(records, policy, packWidth, best);
+        if (packWidth > policy.maxPageSide / 2) break;
+        packWidth <<= 1;
+    }
+    _considerAtlasPackWidth(records, policy, policy.maxPageSide, best);
+
+    if (!best.valid) return {};
+
+    auto layout = _placeRecordsInRows(records, best.packWidth, policy.maxPageSide);
+    atlasWidth = best.width;
+    atlasHeight = best.height;
+    return layout;
+}
+
+GlStencilPass::GlStencilPass(TVG_UNUSED uint32_t screenWidth, TVG_UNUSED uint32_t screenHeight,
+                             uint32_t gpuMaxRenderableSidePx):
+    policy(gpuMaxRenderableSidePx, _stencilAtlasDesc().samples),
+    maxAtlasWidth(policy.maxPageSide), maxAtlasHeight(policy.maxPageSide)
 {
 }
 
@@ -331,6 +457,7 @@ void GlStencilPass::reset()
 GlStencilAtlasTarget* GlStencilPass::acquireTarget(uint32_t width, uint32_t height, GLint restoreId)
 {
     if (width == 0 || height == 0) return nullptr;
+    if (!policy.allocationFits(width, height)) return nullptr;
 
     GlStencilAtlasTarget* best = nullptr;
     for (uint32_t i = 0; i < targets.count; ++i) {
@@ -409,19 +536,24 @@ GlRenderTask* GlStencilPass::buildTask(Array<GlStencilRecord>& records, const Re
     return new GlStencilPassTask(atlasTarget, batches, coverTask);
 }
 
-GlRenderTask* GlStencilPass::prepare(Array<GlStencilRecord>& records, GlStageBuffer& gpuBuffer, GlProgram* coverProgram, GLint restoreId)
+GlRenderTask* GlStencilPass::prepare(Array<GlStencilRecord>& records, uint32_t recordCount, bool hasNonZero, bool hasEvenOdd,
+                                     GlStageBuffer& gpuBuffer, GlProgram* coverProgram, GLint restoreId)
 {
     if (!coverProgram) return nullptr;
 
-    auto coverBounds = _packStencilRecords(records, maxAtlasWidth, maxAtlasHeight);
-    if (coverBounds.invalid()) return nullptr;
+    if (!policy.shouldUseSharedAtlasForRecords(recordCount, hasNonZero, hasEvenOdd)) return nullptr;
 
-    auto atlasTarget = acquireTarget(_atlasSize(coverBounds.w()), _atlasSize(coverBounds.h()), restoreId);
-    return buildTask(records, coverBounds, gpuBuffer, coverProgram, atlasTarget);
+    uint32_t atlasWidth = 0;
+    uint32_t atlasHeight = 0;
+    auto layout = _findSmallestAtlasAllocation(records, policy, atlasWidth, atlasHeight);
+    if (layout.bounds.invalid()) return nullptr;
+
+    auto atlasTarget = acquireTarget(atlasWidth, atlasHeight, restoreId);
+    return buildTask(records, layout.bounds, gpuBuffer, coverProgram, atlasTarget);
 }
 
-GlStencilPassManager::GlStencilPassManager(uint32_t screenWidth, uint32_t screenHeight):
-    mPass(screenWidth, screenHeight), mScreenWidth(screenWidth), mScreenHeight(screenHeight)
+GlStencilPassManager::GlStencilPassManager(uint32_t screenWidth, uint32_t screenHeight, uint32_t gpuMaxRenderableSidePx):
+    mPass(screenWidth, screenHeight, gpuMaxRenderableSidePx)
 {
 }
 
@@ -452,7 +584,7 @@ void GlStencilPassManager::record(GlRenderPass* pass, GlStencilAtlasCoverTask* c
     // Batch draws use one atlas-wide scissor, so each packed rect must cover
     // the full stencil geometry rather than the final clipped cover region.
     auto screenBounds = _stencilTargetBounds(meshBounds, viewMatrix, target.w(), target.h());
-    if (!_atlasEligible(screenBounds, mScreenWidth, mScreenHeight, mode)) return;
+    if (!_atlasEligible(screenBounds, mPass.policy, mode)) return;
 
     RecordSet* set = nullptr;
     for (uint32_t i = 0; i < mRecordSets.count; ++i) {
@@ -470,6 +602,9 @@ void GlStencilPassManager::record(GlRenderPass* pass, GlStencilAtlasCoverTask* c
 
     set->records.push({task, coverTask, buffer, meshBounds, screenBounds, viewMatrix,
                        static_cast<uint32_t>(target.w()), static_cast<uint32_t>(target.h()), mode});
+    ++set->recordCount;
+    if (mode == GlStencilMode::FillEvenOdd) set->hasEvenOdd = true;
+    else if (mode == GlStencilMode::FillNonZero) set->hasNonZero = true;
 }
 
 bool GlStencilPassManager::prepare(GlRenderPass* pass, GlStageBuffer& gpuBuffer, GlProgram* coverProgram, GLint restoreId)
@@ -490,7 +625,8 @@ bool GlStencilPassManager::prepare(GlRenderPass* pass, GlStageBuffer& gpuBuffer,
         return false;
     }
 
-    auto task = mPass.prepare(set->records, gpuBuffer, coverProgram, restoreId);
+    auto task = mPass.prepare(set->records, set->recordCount, set->hasNonZero, set->hasEvenOdd,
+                              gpuBuffer, coverProgram, restoreId);
     delete set;
 
     if (!task) return false;

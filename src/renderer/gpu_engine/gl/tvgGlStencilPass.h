@@ -31,6 +31,26 @@ class GlStageBuffer;
 class GlRenderPass;
 struct GlStencilAtlasTarget;
 
+struct GlStencilAtlasPolicy
+{
+    static constexpr uint32_t MaxPortableSide = 4096;
+    static constexpr uint64_t BudgetBytes = 32ull * 1024ull * 1024ull;
+    static constexpr uint32_t MinSavedDrawCalls = 64;
+
+    GlStencilAtlasPolicy(uint32_t gpuMaxRenderableSidePx = MaxPortableSide, uint32_t sampleCount = 4);
+
+    bool maskFits(uint32_t width, uint32_t height) const;
+    bool allocationFits(uint32_t width, uint32_t height) const;
+    bool shouldUseSharedAtlas(uint32_t directPathDrawCalls, uint32_t atlasMaskBuildDrawCalls,
+                              uint32_t atlasBatchedContentDrawCalls) const;
+    bool shouldUseSharedAtlasForRecords(uint32_t recordCount, bool hasNonZero, bool hasEvenOdd) const;
+
+    uint32_t sampleCount = 4;
+    uint32_t maxPageSide = MaxPortableSide;
+    uint64_t maxPagePixels = 0;
+    uint64_t veryLargeMaskPixels = 0;
+};
+
 struct GlStencilRecord
 {
     GlRenderTask* task = nullptr;
@@ -49,12 +69,15 @@ struct GlStencilRecord
 class GlStencilPass
 {
 public:
-    GlStencilPass(uint32_t screenWidth, uint32_t screenHeight);
+    GlStencilPass(uint32_t screenWidth, uint32_t screenHeight,
+                  uint32_t gpuMaxRenderableSidePx = GlStencilAtlasPolicy::MaxPortableSide);
     ~GlStencilPass();
 
     void reset();
-    GlRenderTask* prepare(Array<GlStencilRecord>& records, GlStageBuffer& gpuBuffer, GlProgram* coverProgram, GLint restoreId = 0);
+    GlRenderTask* prepare(Array<GlStencilRecord>& records, uint32_t recordCount, bool hasNonZero, bool hasEvenOdd,
+                          GlStageBuffer& gpuBuffer, GlProgram* coverProgram, GLint restoreId = 0);
 
+    GlStencilAtlasPolicy policy;
     uint32_t maxAtlasWidth = 0, maxAtlasHeight = 0;
 
 private:
@@ -71,9 +94,13 @@ struct GlStencilPassManager
     {
         GlRenderPass* pass = nullptr;
         Array<GlStencilRecord> records = {};
+        uint32_t recordCount = 0;
+        bool hasNonZero = false;
+        bool hasEvenOdd = false;
     };
 
-    GlStencilPassManager(uint32_t screenWidth, uint32_t screenHeight);
+    GlStencilPassManager(uint32_t screenWidth, uint32_t screenHeight,
+                         uint32_t gpuMaxRenderableSidePx = GlStencilAtlasPolicy::MaxPortableSide);
     ~GlStencilPassManager();
 
     void record(GlRenderPass* pass, GlStencilAtlasCoverTask* coverTask, GlRenderTask* task, const GlGeometryBuffer* buffer,
@@ -83,7 +110,6 @@ struct GlStencilPassManager
 
     GlStencilPass mPass;
     Array<RecordSet*> mRecordSets = {};
-    uint32_t mScreenWidth = 0, mScreenHeight = 0;
 };
 
 #endif //_TVG_GL_STENCIL_PASS_H_

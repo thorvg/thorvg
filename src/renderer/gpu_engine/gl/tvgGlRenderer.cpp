@@ -44,6 +44,21 @@ static constexpr uint32_t RECT_INDEX[] = {0, 1, 2, 2, 1, 3};
 static constexpr uint32_t RECT_INDEX_COUNT = sizeof(RECT_INDEX) / sizeof(RECT_INDEX[0]);
 static constexpr uint32_t STENCIL_ATLAS_UV_ATTRIB = 2;
 
+static uint32_t _maxRenderableSide()
+{
+    GLint maxRenderbufferSide = 0;
+    GLint maxTextureSide = 0;
+    GL_CHECK(glGetIntegerv(GL_MAX_RENDERBUFFER_SIZE, &maxRenderbufferSide));
+    GL_CHECK(glGetIntegerv(GL_MAX_TEXTURE_SIZE, &maxTextureSide));
+
+    auto maxSide = GlStencilAtlasPolicy::MaxPortableSide;
+    if (maxRenderbufferSide > 0) maxSide = static_cast<uint32_t>(maxRenderbufferSide);
+    if (maxTextureSide > 0 && static_cast<uint32_t>(maxTextureSide) < maxSide) {
+        maxSide = static_cast<uint32_t>(maxTextureSide);
+    }
+    return maxSide;
+}
+
 void GlRenderer::disposeTexture(GLuint texId)
 {
     if (!texId) return;
@@ -980,7 +995,7 @@ bool GlRenderer::target(void* display, void* surface, void* context, int32_t id,
 
     mRootTarget.viewport = {{0, 0}, {int32_t(this->surface.w), int32_t(this->surface.h)}};
     mRootTarget.init(this->surface.w, this->surface.h, mTargetFboId);
-    mStencilPassManager = new GlStencilPassManager(this->surface.w, this->surface.h);
+    mStencilPassManager = new GlStencilPassManager(this->surface.w, this->surface.h, _maxRenderableSide());
 
     return ret;
 }
