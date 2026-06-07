@@ -176,7 +176,29 @@ static jerry_value_t _color(RGB32 rgb)
     return value;
 }
 
+// return true if the number is 1d otherwise 2d, return false
+static bool _number(jerry_value_t obj, Point& out)
+{
+    if (jerry_value_is_number(obj)) {
+        out.x = jerry_value_as_number(obj);
+        return true;
+    }
 
+    // 1d or 2d object
+    auto v1 = jerry_object_get_index(obj, 0);
+    auto v2 = jerry_object_get_index(obj, 1);
+
+    out.x = jerry_value_as_number(v1);
+    jerry_value_free(v1);
+
+    if (jerry_value_is_undefined(v2)) return true;
+    out.y = jerry_value_as_number(v2);
+    jerry_value_free(v2);
+
+    return false;
+}
+
+// TODO: may need to replace with _number(jerry_value_t obj, Point& out)
 static float _number(jerry_value_t obj)
 {
     if (jerry_value_is_number(obj)) return jerry_value_as_number(obj);
@@ -558,37 +580,35 @@ static jerry_value_t _addsub(const jerry_value_t args[], float addsub)
         return val;
     }
 
-    //number + number
-    auto n1 = jerry_value_is_number(args[0]);
-    auto n2 = jerry_value_is_number(args[1]);
+    Point v1{}, v2{};
+    auto n1 = _number(args[0], v1);
+    auto n2 = _number(args[1], v2);
 
     //1d + 1d
-    if (n1 && n2) return jerry_number(_number(args[0]) + addsub * _number(args[1]));
+    if (n1 && n2) return jerry_number(v1.x + (addsub * v2.x));
 
-    auto pt = _point2d(args[n1 ? 1 : 0]);
-
-    //2d + 1d
-    if (n1 || n2) {
-        auto secondary = n1 ? 0 : 1;
-        auto val3 = _number(args[secondary]);
-        if (secondary == 0) pt.x = (pt.x * addsub) + val3;
-        else pt.x += (addsub * val3);
     //2d + 2d
+    if (!n1 && !n2) return _point2d(v1 + (addsub * v2));
+
+    // 2d + 1d?
+    if (n1) {
+        v2.x = v1.x + (addsub * v2.x);
+        return _point2d(v2);
     } else {
-        pt += _point2d(args[1]) * addsub;
+        v1.x = v1.x + (addsub * v2.x);
+        return _point2d(v1);
     }
-
-    return _point2d(pt);
 }
-
 
 static jerry_value_t _muldiv(const jerry_value_t arg1, float arg2)
 {
     //1d
-    if (jerry_value_is_number(arg1)) return jerry_number(_number(arg1) * arg2);
+    Point v1;
+    auto n1 = _number(arg1, v1);
+    if (n1) return jerry_number(v1.x * arg2);
 
     //2d
-    return _point2d(_point2d(arg1) * arg2);
+    return _point2d(v1 * arg2);
 }
 
 
