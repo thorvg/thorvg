@@ -22,6 +22,7 @@
 
 #include "tvgGlStencilPass.h"
 #include "tvgGlGpuBuffer.h"
+#include "tvgGlProfiler.h"
 #include "tvgGlRenderPass.h"
 #include "tvgGlRenderTarget.h"
 #include "tvgGlRenderTask.h"
@@ -124,6 +125,109 @@ struct GlStencilAtlasTarget
     bool leased = false;
 };
 
+struct GlStencilGpuTimer
+{
+    GLuint query = 0;
+    const char* section = nullptr;
+    uint64_t runId = 0;
+    uint32_t atlasWidth = 0;
+    uint32_t atlasHeight = 0;
+    uint32_t samples = 0;
+    uint32_t batches = 0;
+    uint64_t clearSamples = 0;
+    uint64_t blitPixels = 0;
+    uint64_t coverPixels = 0;
+};
+
+static Array<GlStencilGpuTimer> _gpuTimerPending;
+
+static bool _gpuTimerSupported()
+{
+#if defined(THORVG_GL_TARGET_GL)
+    static int supported = -1;
+    if (supported >= 0) return supported == 1;
+
+    supported = (glGenQueries && glDeleteQueries && glBeginQuery && glEndQuery &&
+                 glGetQueryObjectiv && glGetQueryObjectui64v) ? 1 : 0;
+    if (!supported && tvgGlStencilAtlasProfileEnabled()) {
+        tvgGlStencilAtlasProfileLog("atlas-gpu unavailable reason=timer-query-functions");
+    }
+    return supported == 1;
+#else
+    static bool reported = false;
+    if (!reported && tvgGlStencilAtlasProfileEnabled()) {
+        tvgGlStencilAtlasProfileLog("atlas-gpu unavailable reason=timer-query-target-not-core-gl");
+        reported = true;
+    }
+    return false;
+#endif
+}
+
+static void _drainGpuTimers()
+{
+    if (!_gpuTimerSupported()) return;
+
+    for (uint32_t i = 0; i < _gpuTimerPending.count;) {
+        auto& timer = _gpuTimerPending[i];
+        GLint available = 0;
+        GL_CHECK(glGetQueryObjectiv(timer.query, GL_QUERY_RESULT_AVAILABLE, &available));
+
+        if (!available) {
+            ++i;
+            continue;
+        }
+
+        GLuint64 gpuNs = 0;
+        GL_CHECK(glGetQueryObjectui64v(timer.query, GL_QUERY_RESULT, &gpuNs));
+        GL_CHECK(glDeleteQueries(1, &timer.query));
+
+        tvgGlStencilAtlasProfileLog("atlas-gpu section=%s run=%llu gpuNs=%llu gpuUs=%.3f atlas=%ux%u samples=%u clearSamples=%llu blitPixels=%llu coverPixels=%llu batches=%u",
+                                   timer.section,
+                                   static_cast<unsigned long long>(timer.runId),
+                                   static_cast<unsigned long long>(gpuNs),
+                                   static_cast<double>(gpuNs) / 1000.0,
+                                   timer.atlasWidth, timer.atlasHeight, timer.samples,
+                                   static_cast<unsigned long long>(timer.clearSamples),
+                                   static_cast<unsigned long long>(timer.blitPixels),
+                                   static_cast<unsigned long long>(timer.coverPixels),
+                                   timer.batches);
+
+        _gpuTimerPending[i] = _gpuTimerPending.last();
+        _gpuTimerPending.pop();
+    }
+}
+
+static GlStencilGpuTimer _beginGpuTimer(const char* section, uint64_t runId, uint32_t atlasWidth, uint32_t atlasHeight,
+                                        uint32_t samples, uint32_t batches, uint64_t clearSamples,
+                                        uint64_t blitPixels, uint64_t coverPixels)
+{
+    GlStencilGpuTimer timer;
+    if (!tvgGlStencilAtlasProfileEnabled() || !_gpuTimerSupported()) return timer;
+
+    timer.section = section;
+    timer.runId = runId;
+    timer.atlasWidth = atlasWidth;
+    timer.atlasHeight = atlasHeight;
+    timer.samples = samples;
+    timer.batches = batches;
+    timer.clearSamples = clearSamples;
+    timer.blitPixels = blitPixels;
+    timer.coverPixels = coverPixels;
+
+    GL_CHECK(glGenQueries(1, &timer.query));
+    if (timer.query == 0) return {};
+    GL_CHECK(glBeginQuery(GL_TIME_ELAPSED, timer.query));
+    return timer;
+}
+
+static void _endGpuTimer(GlStencilGpuTimer& timer)
+{
+    if (timer.query == 0) return;
+    GL_CHECK(glEndQuery(GL_TIME_ELAPSED));
+    _gpuTimerPending.push(timer);
+    timer.query = 0;
+}
+
 static GlRenderTargetDesc _stencilAtlasDesc()
 {
     GlRenderTargetDesc desc;
@@ -223,7 +327,8 @@ struct GlStencilPassTask : GlRenderTask
     GlStencilPassTask(GlStencilAtlasTarget* atlasTarget, Array<GlStencilBatch>& batches, GlRenderTask* coverTask):
         GlRenderTask(nullptr), atlasTarget(atlasTarget),
         targetFbo(atlasTarget->target.fbo), resolveFbo(atlasTarget->target.resolvedFbo),
-        width(atlasTarget->target.width), height(atlasTarget->target.height)
+        width(atlasTarget->target.width), height(atlasTarget->target.height),
+        samples(_stencilAtlasDesc().samples)
     {
         batches.move(this->batches);
         this->coverTask = coverTask;
@@ -244,6 +349,27 @@ struct GlStencilPassTask : GlRenderTask
 
     void run() override
     {
+        static uint64_t nextRunId = 0;
+        auto profiling = tvgGlStencilAtlasProfileEnabled();
+        auto profileStart = profiling ? tvgGlStencilAtlasProfileNowUs() : 0;
+        auto runId = profiling ? ++nextRunId : 0;
+        auto atlasPixels = static_cast<uint64_t>(width) * height;
+        auto clearSamples = atlasPixels * samples;
+        auto coverViewport = coverTask->getViewport();
+        auto coverPixels = static_cast<uint64_t>(coverViewport.sw()) * coverViewport.sh();
+
+        if (profileStart) {
+            _drainGpuTimers();
+            tvgGlStencilAtlasProfileLog("atlas-run begin run=%llu atlas=%ux%u samples=%u clearSamples=%llu blitPixels=%llu coverViewport=%dx%d coverPixels=%llu batches=%u",
+                                       static_cast<unsigned long long>(runId),
+                                       width, height, samples,
+                                       static_cast<unsigned long long>(clearSamples),
+                                       static_cast<unsigned long long>(atlasPixels),
+                                       coverViewport.sw(), coverViewport.sh(),
+                                       static_cast<unsigned long long>(coverPixels),
+                                       batches.count);
+        }
+
         GLint restoreFbo = 0;
         GLint restoreViewport[4] = {};
         GLint restoreScissor[4] = {};
@@ -260,10 +386,13 @@ struct GlStencilPassTask : GlRenderTask
         GL_CHECK(glColorMask(1, 1, 1, 1));
         GL_CHECK(glClearColor(0, 0, 0, 0));
         GL_CHECK(glClearStencil(0));
+        auto clearTimer = _beginGpuTimer("clear", runId, width, height, samples, batches.count, clearSamples, atlasPixels, coverPixels);
         GL_CHECK(glClear(GL_COLOR_BUFFER_BIT | GL_STENCIL_BUFFER_BIT));
+        _endGpuTimer(clearTimer);
 
         GL_CHECK(glEnable(GL_STENCIL_TEST));
 
+        auto stencilTimer = _beginGpuTimer("stencil-batches", runId, width, height, samples, batches.count, clearSamples, atlasPixels, coverPixels);
         ARRAY_FOREACH(p, batches) {
             auto& batch = *p;
 
@@ -284,18 +413,22 @@ struct GlStencilPassTask : GlRenderTask
             GL_CHECK(glColorMask(0, 0, 0, 0));
             batch.task->run();
         }
+        _endGpuTimer(stencilTimer);
 
-        auto coverViewport = coverTask->getViewport();
         GL_CHECK(glViewport(coverViewport.sx(), coverViewport.sy(), coverViewport.sw(), coverViewport.sh()));
         GL_CHECK(glScissor(coverViewport.sx(), coverViewport.sy(), coverViewport.sw(), coverViewport.sh()));
         GL_CHECK(glStencilFunc(GL_NOTEQUAL, 0x0, 0xFF));
         GL_CHECK(glStencilOp(GL_KEEP, GL_KEEP, GL_KEEP));
         GL_CHECK(glColorMask(1, 1, 1, 1));
+        auto coverTimer = _beginGpuTimer("cover", runId, width, height, samples, batches.count, clearSamples, atlasPixels, coverPixels);
         coverTask->run();
+        _endGpuTimer(coverTimer);
 
         GL_CHECK(glBindFramebuffer(GL_READ_FRAMEBUFFER, targetFbo));
         GL_CHECK(glBindFramebuffer(GL_DRAW_FRAMEBUFFER, resolveFbo));
+        auto blitTimer = _beginGpuTimer("blit", runId, width, height, samples, batches.count, clearSamples, atlasPixels, coverPixels);
         GL_CHECK(glBlitFramebuffer(0, 0, width, height, 0, 0, width, height, GL_COLOR_BUFFER_BIT, GL_NEAREST));
+        _endGpuTimer(blitTimer);
 
 #if defined(THORVG_GL_TARGET_GLES)
         GLenum attachments[2] = {GL_STENCIL_ATTACHMENT, GL_DEPTH_ATTACHMENT};
@@ -310,6 +443,16 @@ struct GlStencilPassTask : GlRenderTask
         GL_CHECK(glBlendFunc(GL_ONE, GL_ONE_MINUS_SRC_ALPHA));
         GL_CHECK(glDisable(GL_STENCIL_TEST));
         GL_CHECK(glColorMask(1, 1, 1, 1));
+
+        if (profileStart) {
+            tvgGlStencilAtlasProfileLog("atlas-run end run=%llu submitUs=%llu atlas=%ux%u clearSamples=%llu blitPixels=%llu",
+                                       static_cast<unsigned long long>(runId),
+                                       static_cast<unsigned long long>(tvgGlStencilAtlasProfileNowUs() - profileStart),
+                                       width, height,
+                                       static_cast<unsigned long long>(clearSamples),
+                                       static_cast<unsigned long long>(atlasPixels));
+            _drainGpuTimers();
+        }
     }
 
     GlStencilAtlasTarget* atlasTarget = nullptr;
@@ -317,6 +460,7 @@ struct GlStencilPassTask : GlRenderTask
     GLuint resolveFbo = 0;
     uint32_t width = 0;
     uint32_t height = 0;
+    uint32_t samples = 0;
     Array<GlStencilBatch> batches = {};
     GlRenderTask* coverTask = nullptr;
 };

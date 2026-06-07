@@ -21,6 +21,7 @@
  */
 
 #include "tvgGlRenderTask.h"
+#include "tvgGlProfiler.h"
 #include "tvgGlProgram.h"
 #include "tvgGlRenderPass.h"
 
@@ -61,6 +62,55 @@ void GlRenderTask::run()
 
     // setup scissor rect
     GL_CHECK(glScissor(mViewport.sx(), mViewport.sy(), mViewport.sw(), mViewport.sh()));
+
+    if (tvgGlStencilAtlasProfileEnabled() && mProgram) {
+        auto stencilAtlasUniform = mProgram->getUniformLocation("uStencilAtlasTexture");
+        if (stencilAtlasUniform >= 0) {
+            static uint64_t maskShaderDraws = 0;
+            static uint64_t atlasFetchDraws = 0;
+            static uint64_t branchOnlyDraws = 0;
+            static uint64_t atlasFetchViewportPixels = 0;
+            static uint64_t branchOnlyViewportPixels = 0;
+
+            bool hasAtlasUv = false;
+            for (uint32_t i = 0; i < mVertexLayout.count; ++i) {
+                if (mVertexLayout[i].index == STENCIL_ATLAS_UV_ATTRIB) {
+                    hasAtlasUv = true;
+                    break;
+                }
+            }
+
+            bool hasAtlasTexture = false;
+            for (uint32_t i = 0; i < mBindingResources.count; ++i) {
+                const auto& binding = mBindingResources[i];
+                if (binding.type == GlBindingType::kTexture && binding.bindPoint == STENCIL_ATLAS_TEXTURE_UNIT) {
+                    hasAtlasTexture = true;
+                    break;
+                }
+            }
+
+            auto viewportPixels = static_cast<uint64_t>(mViewport.sw()) * mViewport.sh();
+            ++maskShaderDraws;
+            if (hasAtlasUv && hasAtlasTexture) {
+                ++atlasFetchDraws;
+                atlasFetchViewportPixels += viewportPixels;
+            } else {
+                ++branchOnlyDraws;
+                branchOnlyViewportPixels += viewportPixels;
+            }
+
+            if (maskShaderDraws <= 16 || tvgGlStencilAtlasProfileVerbose() || (maskShaderDraws % 256) == 0) {
+                tvgGlStencilAtlasProfileLog("shader-mask-summary draws=%llu branchOnlyDraws=%llu atlasFetchDraws=%llu branchOnlyViewportPx=%llu atlasFetchViewportPx=%llu lastViewport=%dx%d lastAtlasFetch=%u",
+                                           static_cast<unsigned long long>(maskShaderDraws),
+                                           static_cast<unsigned long long>(branchOnlyDraws),
+                                           static_cast<unsigned long long>(atlasFetchDraws),
+                                           static_cast<unsigned long long>(branchOnlyViewportPixels),
+                                           static_cast<unsigned long long>(atlasFetchViewportPixels),
+                                           mViewport.sw(), mViewport.sh(),
+                                           (hasAtlasUv && hasAtlasTexture) ? 1u : 0u);
+            }
+        }
+    }
 
     if (mUseVertexColor) {
         GL_CHECK(glDisableVertexAttribArray(1));

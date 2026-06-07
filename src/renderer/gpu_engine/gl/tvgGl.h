@@ -74,6 +74,7 @@
         typedef unsigned int GLbitfield;
         typedef double GLdouble;
         typedef unsigned int GLuint;
+        typedef unsigned long long GLuint64;
         typedef unsigned char GLboolean;
         typedef khronos_uint8_t GLubyte;
         #define GL_DEPTH_BUFFER_BIT               0x00000100
@@ -517,6 +518,7 @@
         #define GL_CURRENT_QUERY                  0x8865
         #define GL_QUERY_RESULT                   0x8866
         #define GL_QUERY_RESULT_AVAILABLE         0x8867
+        #define GL_TIME_ELAPSED                   0x88BF
         #define GL_ARRAY_BUFFER                   0x8892
         #define GL_ELEMENT_ARRAY_BUFFER           0x8893
         #define GL_ARRAY_BUFFER_BINDING           0x8894
@@ -543,13 +545,13 @@
         typedef void (*PFNGLDELETEBUFFERSPROC)(GLsizei n, const GLuint *buffers);
         typedef void (*PFNGLGENBUFFERSPROC)(GLsizei n, GLuint *buffers);
         typedef void (*PFNGLBUFFERDATAPROC)(GLenum target, GLsizeiptr size, const void *data, GLenum usage);
-        //typedef void (*PFNGLGENQUERIESPROC)(GLsizei n, GLuint *ids);
-        //typedef void (*PFNGLDELETEQUERIESPROC)(GLsizei n, const GLuint *ids);
+        typedef void (*PFNGLGENQUERIESPROC)(GLsizei n, GLuint *ids);
+        typedef void (*PFNGLDELETEQUERIESPROC)(GLsizei n, const GLuint *ids);
         //typedef GLboolean (*PFNGLISQUERYPROC)(GLuint id);
-        //typedef void (*PFNGLBEGINQUERYPROC)(GLenum target, GLuint id);
-        //typedef void (*PFNGLENDQUERYPROC)(GLenum target);
+        typedef void (*PFNGLBEGINQUERYPROC)(GLenum target, GLuint id);
+        typedef void (*PFNGLENDQUERYPROC)(GLenum target);
         //typedef void (*PFNGLGETQUERYIVPROC)(GLenum target, GLenum pname, GLint *params);
-        //typedef void (*PFNGLGETQUERYOBJECTIVPROC)(GLuint id, GLenum pname, GLint *params);
+        typedef void (*PFNGLGETQUERYOBJECTIVPROC)(GLuint id, GLenum pname, GLint *params);
         //typedef void (*PFNGLGETQUERYOBJECTUIVPROC)(GLuint id, GLenum pname, GLuint *params);
         //typedef GLboolean (*PFNGLISBUFFERPROC)(GLuint buffer);
         //typedef void (*PFNGLBUFFERSUBDATAPROC)(GLenum target, GLintptr offset, GLsizeiptr size, const void *data);
@@ -1279,13 +1281,13 @@
     extern PFNGLDELETEBUFFERSPROC        glDeleteBuffers;
     extern PFNGLGENBUFFERSPROC           glGenBuffers;
     extern PFNGLBUFFERDATAPROC           glBufferData;
-    //extern PFNGLGENQUERIESPROC           glGenQueries;
-    //extern PFNGLDELETEQUERIESPROC        glDeleteQueries;
+    extern PFNGLGENQUERIESPROC           glGenQueries;
+    extern PFNGLDELETEQUERIESPROC        glDeleteQueries;
     //extern PFNGLISQUERYPROC              glIsQuery;
-    //extern PFNGLBEGINQUERYPROC           glBeginQuery;
-    //extern PFNGLENDQUERYPROC             glEndQuery;
+    extern PFNGLBEGINQUERYPROC           glBeginQuery;
+    extern PFNGLENDQUERYPROC             glEndQuery;
     //extern PFNGLGETQUERYIVPROC           glGetQueryiv;
-    //extern PFNGLGETQUERYOBJECTIVPROC     glGetQueryObjectiv;
+    extern PFNGLGETQUERYOBJECTIVPROC     glGetQueryObjectiv;
     //extern PFNGLGETQUERYOBJECTUIVPROC    glGetQueryObjectuiv;
     //extern PFNGLISBUFFERPROC             glIsBuffer;
     //extern PFNGLBUFFERSUBDATAPROC        glBufferSubData;
@@ -1488,6 +1490,8 @@
     //GL_VERSION_3_1
     extern PFNGLGETUNIFORMBLOCKINDEXPROC      glGetUniformBlockIndex;
     extern PFNGLUNIFORMBLOCKBINDINGPROC       glUniformBlockBinding;
+    typedef void (*PFNGLGETQUERYOBJECTUI64VPROC)(GLuint id, GLenum pname, GLuint64 *params);
+    extern PFNGLGETQUERYOBJECTUI64VPROC       glGetQueryObjectui64v;
     //extern PFNGLDRAWARRAYSINSTANCEDPROC       glDrawArraysInstanced;
     //extern PFNGLDRAWELEMENTSINSTANCEDPROC     glDrawElementsInstanced;
     //extern PFNGLTEXBUFFERPROC                 glTexBuffer;

@@ -22,6 +22,7 @@
  */
 
 #include "tvgGlCommon.h"
+#include "tvgGlProfiler.h"
 #include "tvgGlRenderPass.h"
 #include "tvgGlRenderTask.h"
 #include <string.h>
@@ -67,8 +68,15 @@ void GlRenderPass::addRenderTask(GlRenderTask* task)
 
 void GlRenderPass::prependRenderTask(GlRenderTask* task)
 {
+    auto tasksBefore = mTasks.count;
     mTasks.grow(1);
     memmove(mTasks.data + 1, mTasks.data, sizeof(GlRenderTask*) * mTasks.count);
     mTasks.data[0] = task;
     ++mTasks.count;
+
+    if (tvgGlStencilAtlasProfileEnabled()) {
+        tvgGlStencilAtlasProfileLog("prepend-task tasksBefore=%u memmoveBytes=%llu",
+                                   tasksBefore,
+                                   static_cast<unsigned long long>(sizeof(GlRenderTask*) * tasksBefore));
+    }
 }

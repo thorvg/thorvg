@@ -22,6 +22,7 @@
 
 #include "tvgGlCommon.h"
 #include "tvgGlGpuBuffer.h"
+#include "tvgGlProfiler.h"
 #include "tvgGlRenderTask.h"
 #include "tvgGlTessellator.h"
 
@@ -270,6 +271,8 @@ void GlGeometry::tesselateImage(const RenderSurface* image)
 void GlGeometry::draw(GlRenderTask* task, GlStageBuffer* gpuBuffer, RenderUpdateFlag flag) const
 {
     auto buffer = ((flag & RenderUpdateFlag::Stroke) || (flag & RenderUpdateFlag::GradientStroke)) ? &stroke : &fill;
+    auto profiling = tvgGlStencilAtlasProfileEnabled();
+    auto profileStart = profiling ? tvgGlStencilAtlasProfileNowUs() : 0;
     auto vertexOffset = gpuBuffer->push(buffer->vertex.data, buffer->vertex.count * sizeof(float));
     auto indexOffset = gpuBuffer->pushIndex(buffer->index.data, buffer->index.count * sizeof(uint32_t));
 
@@ -281,6 +284,44 @@ void GlGeometry::draw(GlRenderTask* task, GlStageBuffer* gpuBuffer, RenderUpdate
         task->addVertexLayout(GlVertexLayout{0, 2, 2 * sizeof(float), vertexOffset});
     }
     task->setDrawRange(indexOffset, buffer->index.count);
+
+    if (profiling) {
+        static uint64_t drawCalls = 0;
+        static uint64_t stencilDrawCalls = 0;
+        static uint64_t vertexFloats = 0;
+        static uint64_t indices = 0;
+        static uint64_t vertexBytes = 0;
+        static uint64_t indexBytes = 0;
+        static uint64_t uploadUs = 0;
+
+        auto stencilMode = GlStencilMode::None;
+        if ((flag & RenderUpdateFlag::Stroke) || (flag & RenderUpdateFlag::GradientStroke)) {
+            stencilMode = GlStencilMode::Stroke;
+        } else if (!(flag & RenderUpdateFlag::Image) && !convex) {
+            stencilMode = (fillRule == FillRule::EvenOdd) ? GlStencilMode::FillEvenOdd : GlStencilMode::FillNonZero;
+        }
+
+        ++drawCalls;
+        if (stencilMode != GlStencilMode::None) ++stencilDrawCalls;
+        vertexFloats += buffer->vertex.count;
+        indices += buffer->index.count;
+        vertexBytes += buffer->vertex.count * sizeof(float);
+        indexBytes += buffer->index.count * sizeof(uint32_t);
+        uploadUs += tvgGlStencilAtlasProfileNowUs() - profileStart;
+
+        if (drawCalls <= 16 || tvgGlStencilAtlasProfileVerbose() || (drawCalls % 256) == 0) {
+            tvgGlStencilAtlasProfileLog("geometry-upload-summary draws=%llu stencilDraws=%llu vertexFloats=%llu indices=%llu vertexBytes=%llu indexBytes=%llu uploadUs=%llu lastMode=%u lastVertexFloats=%u lastIndices=%u",
+                                       static_cast<unsigned long long>(drawCalls),
+                                       static_cast<unsigned long long>(stencilDrawCalls),
+                                       static_cast<unsigned long long>(vertexFloats),
+                                       static_cast<unsigned long long>(indices),
+                                       static_cast<unsigned long long>(vertexBytes),
+                                       static_cast<unsigned long long>(indexBytes),
+                                       static_cast<unsigned long long>(uploadUs),
+                                       static_cast<uint32_t>(stencilMode),
+                                       buffer->vertex.count, buffer->index.count);
+        }
+    }
 }
 
 GlStencilMode GlGeometry::getStencilMode(RenderUpdateFlag flag)

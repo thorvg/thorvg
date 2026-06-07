@@ -164,6 +164,9 @@ static void* _getProcAddress(const char* procName)
         return false;                                           \
     }
 
+#define GL_FUNCTION_FETCH_OPTIONAL(procName, procType)          \
+    procName = (procType)_getProcAddress(#procName)
+
 /************************************************************************/
 /* External Class Implementation                                        */
 /************************************************************************/
@@ -268,13 +271,13 @@ PFNGLBINDBUFFERPROC           glBindBuffer;
 PFNGLDELETEBUFFERSPROC        glDeleteBuffers;
 PFNGLGENBUFFERSPROC           glGenBuffers;
 PFNGLBUFFERDATAPROC           glBufferData;
-//PFNGLGENQUERIESPROC           glGenQueries;
-//PFNGLDELETEQUERIESPROC        glDeleteQueries;
+PFNGLGENQUERIESPROC           glGenQueries;
+PFNGLDELETEQUERIESPROC        glDeleteQueries;
 //PFNGLISQUERYPROC              glIsQuery;
-//PFNGLBEGINQUERYPROC           glBeginQuery;
-//PFNGLENDQUERYPROC             glEndQuery;
+PFNGLBEGINQUERYPROC           glBeginQuery;
+PFNGLENDQUERYPROC             glEndQuery;
 //PFNGLGETQUERYIVPROC           glGetQueryiv;
-//PFNGLGETQUERYOBJECTIVPROC     glGetQueryObjectiv;
+PFNGLGETQUERYOBJECTIVPROC     glGetQueryObjectiv;
 //PFNGLGETQUERYOBJECTUIVPROC    glGetQueryObjectuiv;
 //PFNGLISBUFFERPROC             glIsBuffer;
 //PFNGLBUFFERSUBDATAPROC        glBufferSubData;
@@ -477,6 +480,7 @@ PFNGLGENVERTEXARRAYSPROC                     glGenVertexArrays;
 //GL_VERSION_3_1
 PFNGLGETUNIFORMBLOCKINDEXPROC      glGetUniformBlockIndex;
 PFNGLUNIFORMBLOCKBINDINGPROC       glUniformBlockBinding;
+PFNGLGETQUERYOBJECTUI64VPROC       glGetQueryObjectui64v;
 //PFNGLDRAWARRAYSINSTANCEDPROC       glDrawArraysInstanced;
 //PFNGLDRAWELEMENTSINSTANCEDPROC     glDrawElementsInstanced;
 //PFNGLTEXBUFFERPROC                 glTexBuffer;
@@ -603,14 +607,16 @@ bool glInit()
     GL_FUNCTION_FETCH(glBlendEquation, PFNGLBLENDEQUATIONPROC);
 
     // GL_VERSION_1_5
-    // GL_FUNCTION_FETCH(glGenQueries, PFNGLGENQUERIESPROC);
-    // GL_FUNCTION_FETCH(glDeleteQueries, PFNGLDELETEQUERIESPROC);
+    GL_FUNCTION_FETCH_OPTIONAL(glGenQueries, PFNGLGENQUERIESPROC);
+    GL_FUNCTION_FETCH_OPTIONAL(glDeleteQueries, PFNGLDELETEQUERIESPROC);
     // GL_FUNCTION_FETCH(glIsQuery, PFNGLISQUERYPROC);
-    // GL_FUNCTION_FETCH(glBeginQuery, PFNGLBEGINQUERYPROC);
-    // GL_FUNCTION_FETCH(glEndQuery, PFNGLENDQUERYPROC);
+    GL_FUNCTION_FETCH_OPTIONAL(glBeginQuery, PFNGLBEGINQUERYPROC);
+    GL_FUNCTION_FETCH_OPTIONAL(glEndQuery, PFNGLENDQUERYPROC);
     // GL_FUNCTION_FETCH(glGetQueryiv, PFNGLGETQUERYIVPROC);
-    // GL_FUNCTION_FETCH(glGetQueryObjectiv, PFNGLGETQUERYOBJECTIVPROC);
+    GL_FUNCTION_FETCH_OPTIONAL(glGetQueryObjectiv, PFNGLGETQUERYOBJECTIVPROC);
     // GL_FUNCTION_FETCH(glGetQueryObjectuiv, PFNGLGETQUERYOBJECTUIVPROC);
+    GL_FUNCTION_FETCH_OPTIONAL(glGetQueryObjectui64v, PFNGLGETQUERYOBJECTUI64VPROC);
+    if (!glGetQueryObjectui64v) glGetQueryObjectui64v = (PFNGLGETQUERYOBJECTUI64VPROC)_getProcAddress("glGetQueryObjectui64vEXT");
     GL_FUNCTION_FETCH(glBindBuffer, PFNGLBINDBUFFERPROC);
     GL_FUNCTION_FETCH(glDeleteBuffers, PFNGLDELETEBUFFERSPROC);
     GL_FUNCTION_FETCH(glGenBuffers, PFNGLGENBUFFERSPROC);
