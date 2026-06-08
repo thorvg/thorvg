@@ -1207,8 +1207,7 @@ void LottieParser::parseChars(Array<LottieGlyph*>& glyphs)
                 }
             } else skip();
         }
-        glyph->prepare();
-        glyphs.push(glyph);
+        if (glyph->prepare()) glyphs.push(glyph);
     }
 }
 

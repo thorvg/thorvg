@@ -300,15 +300,16 @@ struct LottieGlyph
 {
     Array<LottieObject*> children;   //glyph shapes.
     float width;
-    char* code;
+    char* code = nullptr;
     char* family = nullptr;
     char* style = nullptr;
     uint16_t size;
     uint8_t len;
 
-    void prepare()
+    bool prepare()
     {
-        len = strlen(code);
+        len = code ? strlen(code) : 0;
+        return len > 0;
     }
 
     ~LottieGlyph()
