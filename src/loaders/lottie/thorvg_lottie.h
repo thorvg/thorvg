@@ -87,9 +87,25 @@ struct TVG_API LottieAnimation final : Animation
      *
      * @retval Result::InsufficientCondition In case the animation is not loaded.
      *
+     * @deprecated see tween(bool enable)
+     *
      * @since 1.0
      */
     Result tween(float from, float to, float progress) noexcept;
+
+    /**
+     * ...
+     * @see tweenTo()
+     * @note Experimental API
+     */
+    Result tween(bool enable) noexcept;
+
+    /**
+     * ...
+     * @see tween()
+     * @note Experimental API
+     */
+    Result tweenTo(float to, float progress) noexcept;
 
     /**
      * @brief Gets the marker count of the animation.

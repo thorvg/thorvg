@@ -100,6 +100,8 @@ public:
 
     float shorten(float frameNo);  //Reduce the accuracy for performance
     bool tween(float from, float to, float progress);
+    Result tweenTo(float to, float progress);
+    void tween(bool enable);
     bool quality(uint8_t value);
     void resolver(std::function<void(const tvg::LottieAudioResolver&, void*)> func, void* data);
 

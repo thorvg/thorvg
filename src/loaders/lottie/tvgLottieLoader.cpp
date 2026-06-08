@@ -386,13 +386,13 @@ bool LottieLoader::frame(float no)
     no = shorten(no);
 
     //Skip update if frame diff is too small.
-    if (!builder->tweening() && fabsf(this->frameNo - no) <= 0.0009f) return false;
+    if (!builder->tween.active && fabsf(this->frameNo - no) <= 0.0009f) return false;
 
     this->done();
 
     this->frameNo = no;
 
-    builder->offTween();
+    builder->tween.off();
 
     if (comp) comp->clear();     //clear synchronously
 
@@ -491,6 +491,17 @@ bool LottieLoader::ready()
     return false;
 }
 
+void LottieLoader::tween(bool enable)
+{
+    if (enable) builder->tween.on();
+    else builder->tween.off();
+}
+
+Result LottieLoader::tweenTo(float to, float progress)
+{
+    // TODO:
+    return Result::Success;
+}
 
 bool LottieLoader::tween(float from, float to, float progress)
 {
@@ -502,7 +513,7 @@ bool LottieLoader::tween(float from, float to, float progress)
 
     frameNo = shorten(from);
 
-    builder->onTween(shorten(to), progress);
+    builder->tween.on(shorten(to), progress);
 
     if (comp) comp->clear();     //clear synchronously
 
