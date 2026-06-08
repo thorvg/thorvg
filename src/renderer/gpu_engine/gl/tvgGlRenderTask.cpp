@@ -263,8 +263,8 @@ void GlStencilCoverTask::normalizeDrawDepth(int32_t maxDepth)
 /* GlStencilAtlasCoverTask Class Implementation                         */
 /************************************************************************/
 
-GlStencilAtlasCoverTask::GlStencilAtlasCoverTask(GlRenderTask* stencil, GlRenderTask* cover, GlStencilMode mode)
- :GlRenderTask(nullptr), mStencilTask(stencil), mCoverTask(cover), mStencilMode(mode)
+GlStencilAtlasCoverTask::GlStencilAtlasCoverTask(GlRenderTask* stencil, GlRenderTask* cover, GlStencilMode mode, GlProgram* atlasProgram)
+ :GlRenderTask(nullptr), mStencilTask(stencil), mCoverTask(cover), mAtlasProgram(atlasProgram), mStencilMode(mode)
 {
 }
 
@@ -300,6 +300,7 @@ void GlStencilAtlasCoverTask::normalizeDrawDepth(int32_t maxDepth)
 void GlStencilAtlasCoverTask::setStencilAtlas(GLuint textureId, uint32_t uvOffset)
 {
     mAtlasConfigured = true;
+    if (mAtlasProgram) mCoverTask->setProgram(mAtlasProgram);
     mCoverTask->addBindResource(GlBindingResource{
         STENCIL_ATLAS_TEXTURE_UNIT,
         textureId,

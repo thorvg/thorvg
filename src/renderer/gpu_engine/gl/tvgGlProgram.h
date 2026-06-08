@@ -47,7 +47,17 @@ public:
     void setUniform4Value(int32_t location, int count, const float* values);
 
 private:
+    struct LocationCache
+    {
+        const char* name = nullptr;
+        int32_t location = -1;
+    };
+
+    int32_t cachedLocation(Array<LocationCache>& cache, const char* name, bool uniformBlock);
+
     uint32_t mProgramObj;
+    Array<LocationCache> mUniformLocations = {};
+    Array<LocationCache> mUniformBlockLocations = {};
     static uint32_t mCurrentProgram;
 };
 

@@ -101,14 +101,25 @@ int32_t GlProgram::getAttributeLocation(const char* name)
 
 int32_t GlProgram::getUniformLocation(const char* name)
 {
-    GL_CHECK(int32_t location = glGetUniformLocation(mProgramObj, name));
-    return location;
+    return cachedLocation(mUniformLocations, name, false);
 }
 
 int32_t GlProgram::getUniformBlockIndex(const char* name)
 {
-    GL_CHECK(int32_t index = glGetUniformBlockIndex(mProgramObj, name));
-    return index;
+    return cachedLocation(mUniformBlockLocations, name, true);
+}
+
+int32_t GlProgram::cachedLocation(Array<LocationCache>& cache, const char* name, bool uniformBlock)
+{
+    for (uint32_t i = 0; i < cache.count; ++i) {
+        if (strcmp(cache[i].name, name) == 0) return cache[i].location;
+    }
+
+    int32_t location;
+    if (uniformBlock) GL_CHECK(location = glGetUniformBlockIndex(mProgramObj, name));
+    else GL_CHECK(location = glGetUniformLocation(mProgramObj, name));
+    cache.push({name, location});
+    return location;
 }
 
 uint32_t GlProgram::getProgramId()

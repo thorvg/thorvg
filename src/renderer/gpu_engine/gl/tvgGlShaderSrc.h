@@ -25,15 +25,21 @@
 
 extern const char* COLOR_VERT_SHADER;
 extern const char* COLOR_FRAG_SHADER;
+extern const char* COLOR_ATLAS_VERT_SHADER;
+extern const char* COLOR_ATLAS_FRAG_SHADER;
 extern const char* GRADIENT_VERT_SHADER;
+extern const char* GRADIENT_ATLAS_VERT_SHADER;
 extern const char* STR_GRADIENT_FRAG_COMMON_VARIABLES;
+extern const char* STR_GRADIENT_ATLAS_FRAG_COMMON_VARIABLES;
 extern const char* STR_GRADIENT_FRAG_COMMON_FUNCTIONS;
 extern const char* STR_LINEAR_GRADIENT_VARIABLES;
 extern const char* STR_LINEAR_GRADIENT_FUNCTIONS;
 extern const char* STR_LINEAR_GRADIENT_MAIN;
+extern const char* STR_LINEAR_GRADIENT_ATLAS_MAIN;
 extern const char* STR_RADIAL_GRADIENT_VARIABLES;
 extern const char* STR_RADIAL_GRADIENT_FUNCTIONS;
 extern const char* STR_RADIAL_GRADIENT_MAIN;
+extern const char* STR_RADIAL_GRADIENT_ATLAS_MAIN;
 extern const char* IMAGE_VERT_SHADER;
 extern const char* IMAGE_FRAG_SHADER;
 extern const char* MASK_VERT_SHADER;
@@ -56,8 +62,11 @@ extern const char* BLIT_FRAG_SHADER;
 extern const char* BLEND_IMAGE_FRAG_HEADER;
 extern const char* BLEND_SCENE_FRAG_HEADER;
 extern const char* BLEND_SHAPE_SOLID_FRAG_HEADER;
+extern const char* BLEND_SHAPE_SOLID_ATLAS_FRAG_HEADER;
 extern const char* BLEND_SHAPE_LINEAR_FRAG_HEADER;
+extern const char* BLEND_SHAPE_LINEAR_ATLAS_FRAG_HEADER;
 extern const char* BLEND_SHAPE_RADIAL_FRAG_HEADER;
+extern const char* BLEND_SHAPE_RADIAL_ATLAS_FRAG_HEADER;
 
 extern const char* BLEND_FRAG_LUM_HELPER;
 extern const char* BLEND_FRAG_SAT_HELPER;

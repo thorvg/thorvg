@@ -91,6 +91,7 @@ public:
     virtual void normalizeDrawDepth(int32_t maxDepth) { mDrawDepth /= static_cast<float>(maxDepth);  }
 
     GlProgram* getProgram() { return mProgram; }
+    void setProgram(GlProgram* program) { mProgram = program; }
     const RenderRegion& getViewport() const { return mViewport; }
     float getDrawDepth() const { return mDrawDepth; }
     const Array<GlVertexLayout>& getVertexLayout() const { return mVertexLayout; }
@@ -129,7 +130,7 @@ private:
 class GlStencilAtlasCoverTask : public GlRenderTask
 {
 public:
-    GlStencilAtlasCoverTask(GlRenderTask* stencil, GlRenderTask* cover, GlStencilMode mode);
+    GlStencilAtlasCoverTask(GlRenderTask* stencil, GlRenderTask* cover, GlStencilMode mode, GlProgram* atlasProgram);
     ~GlStencilAtlasCoverTask() override;
 
     void run() override;
@@ -140,6 +141,7 @@ public:
 private:
     GlRenderTask* mStencilTask;
     GlRenderTask* mCoverTask;
+    GlProgram* mAtlasProgram;
     GlStencilMode mStencilMode;
     bool mAtlasConfigured = false;
 };

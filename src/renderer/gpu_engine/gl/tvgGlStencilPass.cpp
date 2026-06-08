@@ -43,6 +43,8 @@ GlStencilAtlasPolicy::GlStencilAtlasPolicy(uint32_t gpuMaxRenderableSidePx, uint
     auto budgetPixels = BudgetBytes / bytesPerPixel;
     auto sidePixels = static_cast<uint64_t>(maxPageSide) * maxPageSide;
     maxPagePixels = (budgetPixels < sidePixels) ? budgetPixels : sidePixels;
+    auto maxSamplePixels = MaxSharedAtlasSamples / sampleCount;
+    maxAllocationPixels = (maxSamplePixels < maxPagePixels) ? maxSamplePixels : maxPagePixels;
     veryLargeMaskPixels = maxPagePixels / 4;
 }
 
@@ -58,7 +60,7 @@ bool GlStencilAtlasPolicy::maskFits(uint32_t width, uint32_t height) const
 bool GlStencilAtlasPolicy::allocationFits(uint32_t width, uint32_t height) const
 {
     if (width == 0 || height == 0 || width > maxPageSide || height > maxPageSide) return false;
-    return static_cast<uint64_t>(width) * height <= maxPagePixels;
+    return static_cast<uint64_t>(width) * height <= maxAllocationPixels;
 }
 
 bool GlStencilAtlasPolicy::shouldUseSharedAtlas(uint32_t directPathDrawCalls, uint32_t atlasMaskBuildDrawCalls,
@@ -71,10 +73,7 @@ bool GlStencilAtlasPolicy::shouldUseSharedAtlas(uint32_t directPathDrawCalls, ui
 
 bool GlStencilAtlasPolicy::shouldUseSharedAtlasForRecords(uint32_t recordCount, bool hasNonZero, bool hasEvenOdd) const
 {
-    auto atlasMaskBuildDrawCalls = 1u;
-    if (hasNonZero) ++atlasMaskBuildDrawCalls;
-    if (hasEvenOdd) ++atlasMaskBuildDrawCalls;
-    return shouldUseSharedAtlas(recordCount * 2, atlasMaskBuildDrawCalls, recordCount);
+    return shouldUseSharedAtlas(recordCount * 2, glStencilAtlasMaskBuildDrawCalls(hasNonZero, hasEvenOdd), recordCount);
 }
 
 static uint32_t _atlasSize(uint32_t value)
@@ -235,6 +234,7 @@ static GlRenderTargetDesc _stencilAtlasDesc()
     desc.colorFormat = GL_RED;
     desc.minFilter = GL_NEAREST;
     desc.magFilter = GL_NEAREST;
+    desc.samples = 0;
     return desc;
 }
 
@@ -324,11 +324,12 @@ static void _configureCoverTask(GlStencilRecord& record, GLuint textureId, const
 
 struct GlStencilPassTask : GlRenderTask
 {
-    GlStencilPassTask(GlStencilAtlasTarget* atlasTarget, Array<GlStencilBatch>& batches, GlRenderTask* coverTask):
+    GlStencilPassTask(GlStencilAtlasTarget* atlasTarget, Array<GlStencilBatch>& batches, GlRenderTask* coverTask,
+                      GLuint restoreFbo, const RenderRegion& restoreViewport):
         GlRenderTask(nullptr), atlasTarget(atlasTarget),
         targetFbo(atlasTarget->target.fbo), resolveFbo(atlasTarget->target.resolvedFbo),
         width(atlasTarget->target.width), height(atlasTarget->target.height),
-        samples(_stencilAtlasDesc().samples)
+        samples(_stencilAtlasDesc().samples), restoreFbo(restoreFbo), restoreViewport(restoreViewport)
     {
         batches.move(this->batches);
         this->coverTask = coverTask;
@@ -353,10 +354,10 @@ struct GlStencilPassTask : GlRenderTask
         auto profiling = tvgGlStencilAtlasProfileEnabled();
         auto profileStart = profiling ? tvgGlStencilAtlasProfileNowUs() : 0;
         auto runId = profiling ? ++nextRunId : 0;
-        auto atlasPixels = static_cast<uint64_t>(width) * height;
-        auto clearSamples = atlasPixels * samples;
-        auto coverViewport = coverTask->getViewport();
-        auto coverPixels = static_cast<uint64_t>(coverViewport.sw()) * coverViewport.sh();
+        auto activeViewport = coverTask->getViewport();
+        auto activePixels = glStencilAtlasActivePixels(activeViewport);
+        auto clearSamples = glStencilAtlasActiveSamples(activeViewport, samples);
+        auto blitPixels = samples == 0 ? 0 : activePixels;
 
         if (profileStart) {
             _drainGpuTimers();
@@ -364,40 +365,33 @@ struct GlStencilPassTask : GlRenderTask
                                        static_cast<unsigned long long>(runId),
                                        width, height, samples,
                                        static_cast<unsigned long long>(clearSamples),
-                                       static_cast<unsigned long long>(atlasPixels),
-                                       coverViewport.sw(), coverViewport.sh(),
-                                       static_cast<unsigned long long>(coverPixels),
+                                       static_cast<unsigned long long>(blitPixels),
+                                       activeViewport.sw(), activeViewport.sh(),
+                                       static_cast<unsigned long long>(activePixels),
                                        batches.count);
         }
-
-        GLint restoreFbo = 0;
-        GLint restoreViewport[4] = {};
-        GLint restoreScissor[4] = {};
-        GL_CHECK(glGetIntegerv(GL_FRAMEBUFFER_BINDING, &restoreFbo));
-        GL_CHECK(glGetIntegerv(GL_VIEWPORT, restoreViewport));
-        GL_CHECK(glGetIntegerv(GL_SCISSOR_BOX, restoreScissor));
 
         GL_CHECK(glBindFramebuffer(GL_FRAMEBUFFER, targetFbo));
         GL_CHECK(glViewport(0, 0, width, height));
         GL_CHECK(glEnable(GL_SCISSOR_TEST));
-        GL_CHECK(glScissor(0, 0, width, height));
+        GL_CHECK(glScissor(activeViewport.sx(), activeViewport.sy(), activeViewport.sw(), activeViewport.sh()));
         GL_CHECK(glDisable(GL_DEPTH_TEST));
         GL_CHECK(glDisable(GL_BLEND));
         GL_CHECK(glColorMask(1, 1, 1, 1));
         GL_CHECK(glClearColor(0, 0, 0, 0));
         GL_CHECK(glClearStencil(0));
-        auto clearTimer = _beginGpuTimer("clear", runId, width, height, samples, batches.count, clearSamples, atlasPixels, coverPixels);
+        auto clearTimer = _beginGpuTimer("clear", runId, width, height, samples, batches.count, clearSamples, blitPixels, activePixels);
         GL_CHECK(glClear(GL_COLOR_BUFFER_BIT | GL_STENCIL_BUFFER_BIT));
         _endGpuTimer(clearTimer);
 
         GL_CHECK(glEnable(GL_STENCIL_TEST));
 
-        auto stencilTimer = _beginGpuTimer("stencil-batches", runId, width, height, samples, batches.count, clearSamples, atlasPixels, coverPixels);
+        auto stencilTimer = _beginGpuTimer("stencil-batches", runId, width, height, samples, batches.count, clearSamples, blitPixels, activePixels);
         ARRAY_FOREACH(p, batches) {
             auto& batch = *p;
 
             GL_CHECK(glViewport(0, 0, width, height));
-            GL_CHECK(glScissor(0, 0, width, height));
+            GL_CHECK(glScissor(activeViewport.sx(), activeViewport.sy(), activeViewport.sw(), activeViewport.sh()));
 
             if (batch.mode == GlStencilMode::FillEvenOdd) {
                 GL_CHECK(glStencilFunc(GL_ALWAYS, 0x0, 0xFF));
@@ -415,20 +409,24 @@ struct GlStencilPassTask : GlRenderTask
         }
         _endGpuTimer(stencilTimer);
 
-        GL_CHECK(glViewport(coverViewport.sx(), coverViewport.sy(), coverViewport.sw(), coverViewport.sh()));
-        GL_CHECK(glScissor(coverViewport.sx(), coverViewport.sy(), coverViewport.sw(), coverViewport.sh()));
+        GL_CHECK(glViewport(activeViewport.sx(), activeViewport.sy(), activeViewport.sw(), activeViewport.sh()));
+        GL_CHECK(glScissor(activeViewport.sx(), activeViewport.sy(), activeViewport.sw(), activeViewport.sh()));
         GL_CHECK(glStencilFunc(GL_NOTEQUAL, 0x0, 0xFF));
         GL_CHECK(glStencilOp(GL_KEEP, GL_KEEP, GL_KEEP));
         GL_CHECK(glColorMask(1, 1, 1, 1));
-        auto coverTimer = _beginGpuTimer("cover", runId, width, height, samples, batches.count, clearSamples, atlasPixels, coverPixels);
+        auto coverTimer = _beginGpuTimer("cover", runId, width, height, samples, batches.count, clearSamples, blitPixels, activePixels);
         coverTask->run();
         _endGpuTimer(coverTimer);
 
-        GL_CHECK(glBindFramebuffer(GL_READ_FRAMEBUFFER, targetFbo));
-        GL_CHECK(glBindFramebuffer(GL_DRAW_FRAMEBUFFER, resolveFbo));
-        auto blitTimer = _beginGpuTimer("blit", runId, width, height, samples, batches.count, clearSamples, atlasPixels, coverPixels);
-        GL_CHECK(glBlitFramebuffer(0, 0, width, height, 0, 0, width, height, GL_COLOR_BUFFER_BIT, GL_NEAREST));
-        _endGpuTimer(blitTimer);
+        if (samples > 0) {
+            GL_CHECK(glBindFramebuffer(GL_READ_FRAMEBUFFER, targetFbo));
+            GL_CHECK(glBindFramebuffer(GL_DRAW_FRAMEBUFFER, resolveFbo));
+            auto blitTimer = _beginGpuTimer("blit", runId, width, height, samples, batches.count, clearSamples, blitPixels, activePixels);
+            GL_CHECK(glBlitFramebuffer(activeViewport.sx(), activeViewport.sy(), activeViewport.sx() + activeViewport.sw(), activeViewport.sy() + activeViewport.sh(),
+                                       activeViewport.sx(), activeViewport.sy(), activeViewport.sx() + activeViewport.sw(), activeViewport.sy() + activeViewport.sh(),
+                                       GL_COLOR_BUFFER_BIT, GL_NEAREST));
+            _endGpuTimer(blitTimer);
+        }
 
 #if defined(THORVG_GL_TARGET_GLES)
         GLenum attachments[2] = {GL_STENCIL_ATTACHMENT, GL_DEPTH_ATTACHMENT};
@@ -436,8 +434,8 @@ struct GlStencilPassTask : GlRenderTask
 #endif
 
         GL_CHECK(glBindFramebuffer(GL_FRAMEBUFFER, restoreFbo));
-        GL_CHECK(glViewport(restoreViewport[0], restoreViewport[1], restoreViewport[2], restoreViewport[3]));
-        GL_CHECK(glScissor(restoreScissor[0], restoreScissor[1], restoreScissor[2], restoreScissor[3]));
+        GL_CHECK(glViewport(restoreViewport.sx(), restoreViewport.sy(), restoreViewport.sw(), restoreViewport.sh()));
+        GL_CHECK(glScissor(restoreViewport.sx(), restoreViewport.sy(), restoreViewport.sw(), restoreViewport.sh()));
         GL_CHECK(glEnable(GL_DEPTH_TEST));
         GL_CHECK(glEnable(GL_BLEND));
         GL_CHECK(glBlendFunc(GL_ONE, GL_ONE_MINUS_SRC_ALPHA));
@@ -450,7 +448,7 @@ struct GlStencilPassTask : GlRenderTask
                                        static_cast<unsigned long long>(tvgGlStencilAtlasProfileNowUs() - profileStart),
                                        width, height,
                                        static_cast<unsigned long long>(clearSamples),
-                                       static_cast<unsigned long long>(atlasPixels));
+                                       static_cast<unsigned long long>(blitPixels));
             _drainGpuTimers();
         }
     }
@@ -461,6 +459,8 @@ struct GlStencilPassTask : GlRenderTask
     uint32_t width = 0;
     uint32_t height = 0;
     uint32_t samples = 0;
+    GLuint restoreFbo = 0;
+    RenderRegion restoreViewport{};
     Array<GlStencilBatch> batches = {};
     GlRenderTask* coverTask = nullptr;
 };
@@ -633,7 +633,8 @@ GlStencilAtlasTarget* GlStencilPass::acquireTarget(uint32_t width, uint32_t heig
 }
 
 GlRenderTask* GlStencilPass::buildTask(Array<GlStencilRecord>& records, const RenderRegion& coverBounds,
-                                       GlStageBuffer& gpuBuffer, GlProgram* coverProgram, GlStencilAtlasTarget* atlasTarget) const
+                                       GlStageBuffer& gpuBuffer, GlProgram* coverProgram, GlStencilAtlasTarget* atlasTarget,
+                                       GLuint restoreFbo, const RenderRegion& restoreViewport) const
 {
     if (!atlasTarget || !coverProgram || coverBounds.invalid()) return nullptr;
 
@@ -677,11 +678,12 @@ GlRenderTask* GlStencilPass::buildTask(Array<GlStencilRecord>& records, const Re
     coverTask->setDrawDepth(0);
     coverTask->setVertexColor(1.0f, 1.0f, 1.0f, 1.0f);
 
-    return new GlStencilPassTask(atlasTarget, batches, coverTask);
+    return new GlStencilPassTask(atlasTarget, batches, coverTask, restoreFbo, restoreViewport);
 }
 
 GlRenderTask* GlStencilPass::prepare(Array<GlStencilRecord>& records, uint32_t recordCount, bool hasNonZero, bool hasEvenOdd,
-                                     GlStageBuffer& gpuBuffer, GlProgram* coverProgram, GLint restoreId)
+                                     GlStageBuffer& gpuBuffer, GlProgram* coverProgram, GLuint restoreFbo,
+                                     const RenderRegion& restoreViewport, GLint targetRestoreId)
 {
     if (!coverProgram) return nullptr;
 
@@ -692,8 +694,8 @@ GlRenderTask* GlStencilPass::prepare(Array<GlStencilRecord>& records, uint32_t r
     auto layout = _findSmallestAtlasAllocation(records, policy, atlasWidth, atlasHeight);
     if (layout.bounds.invalid()) return nullptr;
 
-    auto atlasTarget = acquireTarget(atlasWidth, atlasHeight, restoreId);
-    return buildTask(records, layout.bounds, gpuBuffer, coverProgram, atlasTarget);
+    auto atlasTarget = acquireTarget(atlasWidth, atlasHeight, targetRestoreId);
+    return buildTask(records, layout.bounds, gpuBuffer, coverProgram, atlasTarget, restoreFbo, restoreViewport);
 }
 
 GlStencilPassManager::GlStencilPassManager(uint32_t screenWidth, uint32_t screenHeight, uint32_t gpuMaxRenderableSidePx):
@@ -770,7 +772,8 @@ bool GlStencilPassManager::prepare(GlRenderPass* pass, GlStageBuffer& gpuBuffer,
     }
 
     auto task = mPass.prepare(set->records, set->recordCount, set->hasNonZero, set->hasEvenOdd,
-                              gpuBuffer, coverProgram, restoreId);
+                              gpuBuffer, coverProgram, pass->getFboId(),
+                              glStencilAtlasRestoreViewport(pass->getViewport()), restoreId);
     delete set;
 
     if (!task) return false;

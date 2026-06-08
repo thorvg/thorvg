@@ -197,6 +197,7 @@ private:
     void initShaders();
     static RenderRegion viewportRegion(const RenderRegion& vp, const RenderRegion& bbox);
     GlRenderTask* createPrimitiveTask(RenderTypes type, BlendSource source, const RenderRegion& viewRegion, GlRenderTarget*& dstCopyFbo);
+    GlProgram* getPrimitiveAtlasProgram(RenderTypes type, BlendSource source);
     void bindBlendTarget(GlRenderTask* task, const GlRenderTarget* dstCopyFbo, const RenderRegion& viewRegion, uint32_t binding);
     void drawPrimitive(GlShape& sdata, const RenderColor& c, RenderUpdateFlag flag, int32_t depth);
     void drawPrimitive(GlShape& sdata, const Fill* fill, RenderUpdateFlag flag, int32_t depth);
@@ -206,7 +207,7 @@ private:
 
     bool beginComplexBlending(const RenderRegion& vp, RenderRegion bounds);
     void endBlendingCompose(GlRenderTask* stencilTask);
-    GlProgram* getBlendProgram(BlendMethod method, BlendSource source);
+    GlProgram* getBlendProgram(BlendMethod method, BlendSource source, bool atlas = false);
     void prepareBlitTask(GlBlitTask* task);
     void prepareCmpTask(GlRenderTask* task, const RenderRegion& vp, uint32_t cmpWidth, uint32_t cmpHeight);
     void prepareStencilPass(GlRenderPass* pass);
@@ -227,6 +228,7 @@ private:
     GlRenderTarget mRootTarget;
     GlEffect mEffect;
     Array<GlProgram*> mPrograms;
+    Array<GlProgram*> mAtlasPrograms;
 
     Array<GlRenderTargetPool*> mComposePool;
     Array<GlRenderTargetPool*> mBlendPool;

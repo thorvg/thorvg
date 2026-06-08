@@ -131,6 +131,7 @@ GlRenderer::~GlRenderer()
     mTextures.clear();
 
     ARRAY_FOREACH(p, mPrograms) delete(*p);
+    ARRAY_FOREACH(p, mAtlasPrograms) delete(*p);
 
     _rendererMtx.lock();
     --_rendererCnt;
@@ -141,6 +142,7 @@ GlRenderer::~GlRenderer()
 void GlRenderer::initShaders()
 {
     mPrograms.reserve((int)RT_None);
+    mAtlasPrograms.reserve((int)RT_None);
 
 #if 1  //for optimization
     #define LINEAR_TOTAL_LENGTH 4096
@@ -162,6 +164,15 @@ void GlRenderer::initShaders()
         STR_LINEAR_GRADIENT_MAIN
     );
 
+    char linearGradientAtlasFragShader[LINEAR_TOTAL_LENGTH];
+    snprintf(linearGradientAtlasFragShader, LINEAR_TOTAL_LENGTH, "%s%s%s%s%s",
+        STR_GRADIENT_ATLAS_FRAG_COMMON_VARIABLES,
+        STR_LINEAR_GRADIENT_VARIABLES,
+        STR_GRADIENT_FRAG_COMMON_FUNCTIONS,
+        STR_LINEAR_GRADIENT_FUNCTIONS,
+        STR_LINEAR_GRADIENT_ATLAS_MAIN
+    );
+
     char radialGradientFragShader[RADIAL_TOTAL_LENGTH];
     snprintf(radialGradientFragShader, RADIAL_TOTAL_LENGTH, "%s%s%s%s%s",
         STR_GRADIENT_FRAG_COMMON_VARIABLES,
@@ -169,6 +180,15 @@ void GlRenderer::initShaders()
         STR_GRADIENT_FRAG_COMMON_FUNCTIONS,
         STR_RADIAL_GRADIENT_FUNCTIONS,
         STR_RADIAL_GRADIENT_MAIN
+    );
+
+    char radialGradientAtlasFragShader[RADIAL_TOTAL_LENGTH];
+    snprintf(radialGradientAtlasFragShader, RADIAL_TOTAL_LENGTH, "%s%s%s%s%s",
+        STR_GRADIENT_ATLAS_FRAG_COMMON_VARIABLES,
+        STR_RADIAL_GRADIENT_VARIABLES,
+        STR_GRADIENT_FRAG_COMMON_FUNCTIONS,
+        STR_RADIAL_GRADIENT_FUNCTIONS,
+        STR_RADIAL_GRADIENT_ATLAS_MAIN
     );
 
     mPrograms.push(new GlProgram(COLOR_VERT_SHADER, COLOR_FRAG_SHADER));
@@ -197,6 +217,11 @@ void GlRenderer::initShaders()
 
     // blend programs: image (17) + scene (17) + shape solid (17) + shape linear (17) + shape radial (17)
     for (uint32_t i = 0; i < 85; ++i) mPrograms.push(nullptr);
+    for (uint32_t i = 0; i < (uint32_t)RT_None; ++i) mAtlasPrograms.push(nullptr);
+
+    mAtlasPrograms[RT_Color] = new GlProgram(COLOR_ATLAS_VERT_SHADER, COLOR_ATLAS_FRAG_SHADER);
+    mAtlasPrograms[RT_LinGradient] = new GlProgram(GRADIENT_ATLAS_VERT_SHADER, linearGradientAtlasFragShader);
+    mAtlasPrograms[RT_RadGradient] = new GlProgram(GRADIENT_ATLAS_VERT_SHADER, radialGradientAtlasFragShader);
 
     // Keep regular covers unmasked; atlas covers override this with packed
     // mask UVs for direct nearest sampling.
@@ -252,11 +277,11 @@ static GlRenderTask* drawPrimitiveGeometry(GlProgram* stencilProgram, GlRenderTa
 static void addPrimitiveTask(GlRenderPass* pass, GlStencilPassManager* stencilPassManager, GlRenderTask* task,
                              GlRenderTask* stencilTask, const GlGeometryBuffer* stencilBuffer,
                              const RenderRegion& stencilBounds, const RenderRegion& viewRegion,
-                             const Matrix& viewMatrix, GlStencilMode stencilMode)
+                             const Matrix& viewMatrix, GlStencilMode stencilMode, GlProgram* atlasProgram)
 {
     if (stencilTask) {
-        if (stencilMode != GlStencilMode::Stroke && stencilPassManager) {
-            auto atlasTask = new GlStencilAtlasCoverTask(stencilTask, task, stencilMode);
+        if (stencilMode != GlStencilMode::Stroke && stencilPassManager && atlasProgram) {
+            auto atlasTask = new GlStencilAtlasCoverTask(stencilTask, task, stencilMode, atlasProgram);
             stencilPassManager->record(pass, atlasTask, stencilTask, stencilBuffer, stencilBounds, viewMatrix, stencilMode);
             pass->addRenderTask(atlasTask);
         } else {
@@ -290,6 +315,12 @@ GlRenderTask* GlRenderer::createPrimitiveTask(RenderTypes type, BlendSource sour
 
     auto program = getBlendProgram(mBlendMethod, source);
     return new GlDirectBlendTask(program, currentPass()->getFbo(), dstCopyFbo, viewRegion);
+}
+
+GlProgram* GlRenderer::getPrimitiveAtlasProgram(RenderTypes type, BlendSource source)
+{
+    if (mBlendMethod == BlendMethod::Normal) return mAtlasPrograms[type];
+    return getBlendProgram(mBlendMethod, source, true);
 }
 
 void GlRenderer::bindBlendTarget(GlRenderTask* task, const GlRenderTarget* dstCopyFbo, const RenderRegion& viewRegion, uint32_t binding)
@@ -357,7 +388,8 @@ void GlRenderer::drawPrimitive(GlShape& sdata, const RenderColor& c, RenderUpdat
     auto stroke = (flag & RenderUpdateFlag::Stroke) || (flag & RenderUpdateFlag::GradientStroke);
     auto stencilBuffer = stroke ? &sdata.geometry.stroke : &sdata.geometry.fill;
     auto stencilBounds = stroke ? sdata.geometry.strokeBounds : sdata.geometry.fillBounds;
-    addPrimitiveTask(currentPass(), mStencilPassManager, task, stencilTask, stencilBuffer, stencilBounds, viewRegion, viewMatrix, stencilMode);
+    auto atlasProgram = getPrimitiveAtlasProgram(RT_Color, BlendSource::Solid);
+    addPrimitiveTask(currentPass(), mStencilPassManager, task, stencilTask, stencilBuffer, stencilBounds, viewRegion, viewMatrix, stencilMode, atlasProgram);
 }
 
 void GlRenderer::drawPrimitive(GlShape& sdata, const Fill* fill, RenderUpdateFlag flag, int32_t depth)
@@ -529,7 +561,8 @@ void GlRenderer::drawPrimitive(GlShape& sdata, const Fill* fill, RenderUpdateFla
     auto stroke = (flag & RenderUpdateFlag::Stroke) || (flag & RenderUpdateFlag::GradientStroke);
     auto stencilBuffer = stroke ? &sdata.geometry.stroke : &sdata.geometry.fill;
     auto stencilBounds = stroke ? sdata.geometry.strokeBounds : sdata.geometry.fillBounds;
-    addPrimitiveTask(currentPass(), mStencilPassManager, task, stencilTask, stencilBuffer, stencilBounds, viewRegion, viewMatrix, stencilMode);
+    auto atlasProgram = getPrimitiveAtlasProgram(taskType, blendSource);
+    addPrimitiveTask(currentPass(), mStencilPassManager, task, stencilTask, stencilBuffer, stencilBounds, viewRegion, viewMatrix, stencilMode, atlasProgram);
 }
 
 
@@ -658,7 +691,7 @@ void GlRenderer::endBlendingCompose(GlRenderTask* stencilTask)
 }
 
 
-GlProgram* GlRenderer::getBlendProgram(BlendMethod method, BlendSource source)
+GlProgram* GlRenderer::getBlendProgram(BlendMethod method, BlendSource source, bool atlas)
 {
     // custom blend shaders
     static const char* shaderFunc[17] {
@@ -692,7 +725,8 @@ GlProgram* GlRenderer::getBlendProgram(BlendMethod method, BlendSource source)
         case BlendSource::RadialGradient: shaderInd += (uint32_t)RT_ShapeBlend_Radial_Normal; break;
     }
 
-    if (mPrograms[shaderInd]) return mPrograms[shaderInd];
+    auto& programs = atlas ? mAtlasPrograms : mPrograms;
+    if (programs[shaderInd]) return programs[shaderInd];
 
     const char* lumHelper = "";
     const char* satHelper = "";
@@ -710,37 +744,38 @@ GlProgram* GlRenderer::getBlendProgram(BlendMethod method, BlendSource source)
         vertShader = BLIT_VERT_SHADER;
         const char* header = (source == BlendSource::Scene) ? BLEND_SCENE_FRAG_HEADER : BLEND_IMAGE_FRAG_HEADER;
         snprintf(fragShader, BLEND_TOTAL_LENGTH, "%s%s%s%s", header, lumHelper, satHelper, shaderFunc[methodInd]);
-        mPrograms[shaderInd] = new GlProgram(vertShader, fragShader);
-        return mPrograms[shaderInd];
+        programs[shaderInd] = new GlProgram(vertShader, fragShader);
+        return programs[shaderInd];
     }
 
-    vertShader = (source == BlendSource::Solid) ? COLOR_VERT_SHADER : GRADIENT_VERT_SHADER;
+    vertShader = (source == BlendSource::Solid) ? (atlas ? COLOR_ATLAS_VERT_SHADER : COLOR_VERT_SHADER)
+                                                : (atlas ? GRADIENT_ATLAS_VERT_SHADER : GRADIENT_VERT_SHADER);
     switch (source) {
         case BlendSource::Solid:
             snprintf(fragShader, BLEND_TOTAL_LENGTH, "%s%s%s%s",
-                     BLEND_SHAPE_SOLID_FRAG_HEADER,
+                     atlas ? BLEND_SHAPE_SOLID_ATLAS_FRAG_HEADER : BLEND_SHAPE_SOLID_FRAG_HEADER,
                      lumHelper,
                      satHelper,
                      shaderFunc[methodInd]);
             break;
         case BlendSource::LinearGradient:
             snprintf(fragShader, BLEND_TOTAL_LENGTH, "%s%s%s%s%s%s%s%s",
-                     STR_GRADIENT_FRAG_COMMON_VARIABLES,
+                     atlas ? STR_GRADIENT_ATLAS_FRAG_COMMON_VARIABLES : STR_GRADIENT_FRAG_COMMON_VARIABLES,
                      STR_LINEAR_GRADIENT_VARIABLES,
                      STR_GRADIENT_FRAG_COMMON_FUNCTIONS,
                      STR_LINEAR_GRADIENT_FUNCTIONS,
-                     BLEND_SHAPE_LINEAR_FRAG_HEADER,
+                     atlas ? BLEND_SHAPE_LINEAR_ATLAS_FRAG_HEADER : BLEND_SHAPE_LINEAR_FRAG_HEADER,
                      lumHelper,
                      satHelper,
                      shaderFunc[methodInd]);
             break;
         case BlendSource::RadialGradient:
             snprintf(fragShader, BLEND_TOTAL_LENGTH, "%s%s%s%s%s%s%s%s",
-                     STR_GRADIENT_FRAG_COMMON_VARIABLES,
+                     atlas ? STR_GRADIENT_ATLAS_FRAG_COMMON_VARIABLES : STR_GRADIENT_FRAG_COMMON_VARIABLES,
                      STR_RADIAL_GRADIENT_VARIABLES,
                      STR_GRADIENT_FRAG_COMMON_FUNCTIONS,
                      STR_RADIAL_GRADIENT_FUNCTIONS,
-                     BLEND_SHAPE_RADIAL_FRAG_HEADER,
+                     atlas ? BLEND_SHAPE_RADIAL_ATLAS_FRAG_HEADER : BLEND_SHAPE_RADIAL_FRAG_HEADER,
                      lumHelper,
                      satHelper,
                      shaderFunc[methodInd]);
@@ -750,8 +785,8 @@ GlProgram* GlRenderer::getBlendProgram(BlendMethod method, BlendSource source)
             break;
     }
 
-    mPrograms[shaderInd] = new GlProgram(vertShader, fragShader);
-    return mPrograms[shaderInd];
+    programs[shaderInd] = new GlProgram(vertShader, fragShader);
+    return programs[shaderInd];
 }
 
 
