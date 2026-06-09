@@ -1546,6 +1546,47 @@ static SvgNode* _createFilterNode(SvgParserContext* ctx, SvgNode* parent, const 
 }
 
 
+static bool _attrParsePatternNode(void* data, const char* key, const char* value)
+{
+    auto ctx = (SvgParserContext*)data;
+    auto node = ctx->parser->node;
+    auto pattern = &node->node.pattern;
+
+    if (_parseBox(key, value, &pattern->box, pattern->isPercentage)) return true;
+
+    if (STR_AS(key, "id")) _copyId(&node->id, value);
+    else if (STR_AS(key, "patternUnits")) {
+        if (STR_AS(value, "userSpaceOnUse")) pattern->patternUserSpace = true;
+    } else if (STR_AS(key, "patternContentUnits")) {
+        if (STR_AS(value, "objectBoundingBox")) pattern->contentUserSpace = false;
+    } else if (STR_AS(key, "viewBox")) {
+        if (!_parseNumber(&value, nullptr, &pattern->vbox.x) || !_parseNumber(&value, nullptr, &pattern->vbox.y)) return false;
+        if (!_parseNumber(&value, nullptr, &pattern->vbox.w) || !_parseNumber(&value, nullptr, &pattern->vbox.h)) return false;
+        if (pattern->vbox.w > 0.0f && pattern->vbox.h > 0.0f) pattern->hasViewBox = true;
+    } else if (STR_AS(key, "patternTransform")) {
+        pattern->transform = _parseTransformationMatrix(value);
+    }
+    return true;
+}
+
+static SvgNode* _createPatternNode(SvgParserContext* ctx, SvgNode* parent, const char* buf, unsigned bufLength, parseAttributes func)
+{
+    ctx->parser->node = _createNode(parent, SvgNodeType::Pattern);
+    if (!ctx->parser->node) return nullptr;
+    SvgPatternNode& pattern = ctx->parser->node->node.pattern;
+
+    ctx->parser->node->style->display = false;
+    pattern.patternUserSpace = false;
+    pattern.contentUserSpace = true;
+
+    func(buf, bufLength, _attrParsePatternNode, ctx);
+
+    if (pattern.patternUserSpace) _recalcBox(ctx, &pattern.box, pattern.isPercentage);
+
+    return ctx->parser->node;
+}
+
+
 static bool _attrParsePathNode(void* data, const char* key, const char* value)
 {
     auto ctx = (SvgParserContext*)data;
@@ -2209,7 +2250,8 @@ static constexpr struct
     {"clipPath", sizeof("clipPath"), _createClipPathNode},
     {"style", sizeof("style"), _createCssStyleNode},
     {"symbol", sizeof("symbol"), _createSymbolNode},
-    {"filter", sizeof("filter"), _createFilterNode}
+    {"filter", sizeof("filter"), _createFilterNode},
+    {"pattern", sizeof("pattern"), _createPatternNode}
 };
 
 
@@ -3048,6 +3090,15 @@ static void _copyAttr(SvgNode* to, const SvgNode* from)
             to->node.use = from->node.use;
             break;
         }
+        case SvgNodeType::Pattern: {
+            to->node.pattern = from->node.pattern;
+            to->node.pattern.applying = false;
+            if (from->node.pattern.transform) {
+                to->node.pattern.transform = tvg::malloc<Matrix>(sizeof(Matrix));
+                *to->node.pattern.transform = *from->node.pattern.transform;
+            }
+            break;
+        }
         case SvgNodeType::Tspan:
         case SvgNodeType::Text: {
             to->node.text.x = from->node.text.x;
@@ -3441,6 +3492,10 @@ static void _free(SvgNode* node)
              tvg::free(node->node.text.fontFamily);
              break;
          }
+         case SvgNodeType::Pattern: {
+             tvg::free(node->node.pattern.transform);
+             break;
+         }
          default: {
              break;
          }
@@ -3665,6 +3720,24 @@ static void _updateGradient(SvgParserContext* ctx, SvgNode* node, Array<SvgStyle
 }
 
 
+static void _updatePattern(SvgNode* node, SvgNode* root, SvgNode* defs)
+{
+    auto lookup = [&](const char* url) -> SvgNode* {
+        SvgNode* p = nullptr;
+        if (defs) p = _findNodeById(defs, url);
+        if (!p) p = _findNodeById(root, url);
+        if (p && p->type != SvgNodeType::Pattern) return nullptr;
+        return p;
+    };
+
+    if (node->style) {
+        auto& fill = node->style->fill.paint;
+        if (fill.url && !fill.gradient && !fill.pattern) fill.pattern = lookup(fill.url);
+    }
+    ARRAY_FOREACH(c, node->child) _updatePattern(*c, root, defs);
+}
+
+
 static void _updateComposite(SvgNode* node, SvgNode* root)
 {
     if (node->style->clipPath.url && !node->style->clipPath.node) {
@@ -3783,15 +3856,22 @@ void SvgLoader::run(unsigned tid)
 
                 _updateComposite(ctx.doc, ctx.doc);
                 if (defs) _updateComposite(ctx.doc, defs);
+                if (defs) _updateComposite(defs, defs);
 
                 _updateFilter(ctx.doc, ctx.doc);
                 if (defs) _updateFilter(ctx.doc, defs);
+                if (defs) _updateFilter(defs, defs);
 
                 _updateStyle(ctx.doc, nullptr);
                 if (defs) _updateStyle(defs, nullptr);
 
                 if (ctx.gradients.count > 0) _updateGradient(&ctx, ctx.doc, &ctx.gradients);
                 if (defs) _updateGradient(&ctx, ctx.doc, &defs->node.defs.gradients);
+                if (defs && ctx.gradients.count > 0) _updateGradient(&ctx, defs, &ctx.gradients);
+                if (defs) _updateGradient(&ctx, defs, &defs->node.defs.gradients);
+
+                _updatePattern(ctx.doc, ctx.doc, defs);
+                if (defs) _updatePattern(defs, ctx.doc, defs);
 
                 root = svgSceneBuild(ctx, vbox, w, h, align, meetOrSlice, svgPath, viewFlag);
 
