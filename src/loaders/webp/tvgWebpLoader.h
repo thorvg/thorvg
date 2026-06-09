@@ -29,6 +29,7 @@ private:
     uint8_t* data = nullptr;
     uint32_t size = 0;
     bool freeData = false;
+    bool hasAlpha;
 
     void clear();
     void run(unsigned tid) override;

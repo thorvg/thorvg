@@ -37,21 +37,21 @@ void WebpLoader::run(unsigned tid)
 
     // request premultiplied image data
     if (ImageLoader::cs == ColorSpace::ARGB8888 || ImageLoader::cs == ColorSpace::ARGB8888S) {
-        config.output.colorspace = MODE_bgrA;
+        config.output.colorspace = hasAlpha ? MODE_bgrA : MODE_BGR;
         if (WebPDecode(data, size, &config) != VP8_STATUS_OK) return;
         surface.buf8 = config.output.u.RGBA.rgba;
-        surface.cs = ColorSpace::ARGB8888;
+        surface.cs = hasAlpha ? ColorSpace::ARGB8888 : ColorSpace::RGB888;
     } else {
-        config.output.colorspace = MODE_rgbA;
+        config.output.colorspace = hasAlpha ? MODE_rgbA : MODE_RGB;
         if (WebPDecode(data, size, &config) != VP8_STATUS_OK) return;
         surface.buf8 = config.output.u.RGBA.rgba;
-        surface.cs = ColorSpace::ABGR8888;
+        surface.cs = hasAlpha ? ColorSpace::ABGR8888 : ColorSpace::BGR888;
     }
 
     surface.stride = (uint32_t)w;
     surface.w = (uint32_t)w;
     surface.h = (uint32_t)h;
-    surface.channelSize = sizeof(uint32_t);
+    surface.channelSize = hasAlpha ? 32 : 24;
     surface.premultiplied = true;
 }
 
@@ -85,6 +85,7 @@ bool WebpLoader::open(const char* path, TVG_UNUSED const LoaderOps* ops)
     if (WebPGetFeatures(data, size, &features)) return false;
     w = static_cast<float>(features.width);
     h = static_cast<float>(features.height);
+    hasAlpha = features.has_alpha;
     freeData = true;
     return true;
 #else
@@ -108,6 +109,7 @@ bool WebpLoader::open(const char* data, uint32_t size, TVG_UNUSED const LoaderOp
     if (WebPGetFeatures(this->data, size, &features)) return false;
     w = static_cast<float>(features.width);
     h = static_cast<float>(features.height);
+    hasAlpha = features.has_alpha;
     this->size = size;
     return true;
 }

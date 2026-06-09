@@ -35,6 +35,8 @@ void WebpLoader::clear()
 
 void WebpLoader::run(unsigned tid)
 {
+    // TODO: support non-alpha channel colorspaces (RGB/BGR)
+
     // static loader WebPDecodeRGBA/WebPDecodeBGRA returns a premultiplied version.
     if (surface.cs == ColorSpace::ARGB8888 || surface.cs == ColorSpace::ARGB8888S) {
         surface.buf8 = WebPDecodeBGRA(data, size, nullptr, nullptr);
@@ -79,6 +81,7 @@ bool WebpLoader::open(const char* path, TVG_UNUSED const LoaderOps* ops)
     if (WebPGetFeatures(data, size, &features)) return false;
     w = static_cast<float>(features.width);
     h = static_cast<float>(features.height);
+    hasAlpha = features.has_alpha;
     freeData = true;
     return true;
 #else
@@ -102,6 +105,7 @@ bool WebpLoader::open(const char* data, uint32_t size, TVG_UNUSED const LoaderOp
     if (WebPGetFeatures(this->data, size, &features)) return false;
     w = static_cast<float>(features.width);
     h = static_cast<float>(features.height);
+    hasAlpha = features.has_alpha;
     this->size = size;
 
     return true;

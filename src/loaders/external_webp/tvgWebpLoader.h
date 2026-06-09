@@ -44,6 +44,7 @@ private:
     unsigned char* data = nullptr;
     uint32_t size = 0;
     bool freeData = false;
+    bool hasAlpha;
 };
 
 #endif //_TVG_WEBP_LOADER_H_
