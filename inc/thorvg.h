@@ -108,14 +108,13 @@ enum struct Result
  */
 enum struct ColorSpace : uint8_t
 {
-    ABGR8888 = 0,      ///< The channels are joined in the order: alpha, blue, green, red. Colors are alpha-premultiplied.
-    ARGB8888,          ///< The channels are joined in the order: alpha, red, green, blue. Colors are alpha-premultiplied.
-    ABGR8888S,         ///< The channels are joined in the order: alpha, blue, green, red. Colors are un-alpha-premultiplied. @since 0.12
-    ARGB8888S,         ///< The channels are joined in the order: alpha, red, green, blue. Colors are un-alpha-premultiplied. @since 0.12
-    Grayscale8,        ///< One single channel data.
-    Unknown = 255      ///< Unknown channel data. This is reserved for an initial ColorSpace value. @since 1.0
+    ABGR8888 = 0,  ///< The channels are joined in the order: alpha, blue, green, red. Colors are alpha-premultiplied.
+    ARGB8888,      ///< The channels are joined in the order: alpha, red, green, blue. Colors are alpha-premultiplied.
+    ABGR8888S,     ///< The channels are joined in the order: alpha, blue, green, red. Colors are un-alpha-premultiplied. @since 0.12
+    ARGB8888S,     ///< The channels are joined in the order: alpha, red, green, blue. Colors are un-alpha-premultiplied. @since 0.12
+    Grayscale8,    ///< Single channel, 1 byte per pixel 8-bit grayscale.
+    Unknown = 255  ///< Unknown channel data. This is reserved for an initial ColorSpace value. @since 1.0
 };
-
 
 /**
  * @brief Enumeration to specify rendering engine behavior.
@@ -2299,9 +2298,11 @@ struct TVG_API SwCanvas final : Canvas
      *
      * @warning Do not access @p buffer during Canvas::add() - Canvas::sync(). It should not be accessed while the engine is writing on it.
      *
+     * @note Currently, only @c ColorSpace::ABGR8888S, @c ColorSpace::ABGR8888, @c ColorSpace::ARGB8888S, and @c ColorSpace::ARGB8888 are supported for @p cs.
+     *
      * @see Canvas::viewport()
      * @see Canvas::sync()
-    */
+     */
     Result target(uint32_t* buffer, uint32_t stride, uint32_t w, uint32_t h, ColorSpace cs) noexcept;
 
     /**
