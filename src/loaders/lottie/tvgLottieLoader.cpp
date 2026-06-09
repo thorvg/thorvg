@@ -307,7 +307,9 @@ bool LottieLoader::apply(uint32_t slotcode, bool byDefault)
         }
     }
     curSlot = slotcode;
-    if (applied) build = true;
+    if (applied) {
+        build = true;
+    }
     return applied;
 }
 

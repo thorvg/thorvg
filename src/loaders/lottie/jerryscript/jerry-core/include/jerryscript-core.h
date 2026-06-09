@@ -24,7 +24,7 @@ void jerry_init (jerry_init_flag_t flags);
 void jerry_cleanup (void);
 jerry_value_t jerry_current_realm (void);
 jerry_value_t jerry_set_realm (jerry_value_t realm);
-jerry_value_t jerry_eval (const jerry_char_t *source_p, size_t source_size, uint32_t flags);
+jerry_value_t jerry_parse (const jerry_char_t *source_p, size_t source_size, uint32_t flags);
 jerry_value_t jerry_run (const jerry_value_t script);
 bool jerry_value_is_undefined (const jerry_value_t value);
 bool jerry_value_is_number (const jerry_value_t value);

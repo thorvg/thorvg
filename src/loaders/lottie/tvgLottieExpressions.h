@@ -166,6 +166,15 @@ private:
         jerry_value_t thisComp;
         jerry_value_t thisLayer;
         jerry_value_t thisProperty;
+
+        //compiled cache: avoids re-parsing the same expression in this context
+        struct CompiledCode
+        {
+            const LottieExpression* exp;
+            jerry_value_t code;
+        };
+        Array<CompiledCode> compiledCodes;
+        bool clearCache = false;
 #ifdef THORVG_THREAD_SUPPORT
         jerry_context_t* ctx;
         thread::id tid;
@@ -197,13 +206,14 @@ struct LottieExpressions
     static LottieExpressions* instance() { return nullptr; }
     static void retrieve(TVG_UNUSED LottieExpressions*) {}
 
+    void update(TVG_UNUSED float) {}
+
     template<typename Property, typename NumType> bool result(TVG_UNUSED float, TVG_UNUSED NumType&, TVG_UNUSED LottieExpression*) { return false; }
     template<typename Property> bool result(TVG_UNUSED float, TVG_UNUSED Point&, LottieExpression*) { return false; }
     template<typename Property> bool result(TVG_UNUSED float, TVG_UNUSED RGB32&, TVG_UNUSED LottieExpression*) { return false; }
     template<typename Property> bool result(TVG_UNUSED float, TVG_UNUSED Fill*, TVG_UNUSED LottieExpression*) { return false; }
     template<typename Property> bool result(TVG_UNUSED float, TVG_UNUSED RenderPath&, TVG_UNUSED Matrix*, TVG_UNUSED LottieModifier*, TVG_UNUSED LottieExpression*) { return false; }
     bool result(TVG_UNUSED float, TVG_UNUSED TextDocument& doc, TVG_UNUSED LottieExpression*) { return false; }
-    void update(TVG_UNUSED float) {}
 };
 
 #endif //THORVG_LOTTIE_EXPRESSIONS_SUPPORT

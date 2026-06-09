@@ -1500,6 +1500,17 @@ jerry_value_t LottieExpressions::evaluate(float frameNo, LottieExpression* exp)
     if (exp->disabled) return jerry_undefined();
 
     auto& context = this->context();
+    //clear caches if needed
+    bool clear = false;
+    {
+        ScopedLock lock(_lockKey);
+        clear = context.clearCache;
+        context.clearCache = false;
+    }
+    if (clear) {
+        for (auto& code : context.compiledCodes) jerry_value_free(code.code);
+        context.compiledCodes.clear();
+    }
 
     buildGlobal(context, frameNo, exp);
 
@@ -1523,17 +1534,42 @@ jerry_value_t LottieExpressions::evaluate(float frameNo, LottieExpression* exp)
     //expansions per object type
     if (exp->object->type == LottieObject::Transform) _buildTransform(context.global, frameNo, static_cast<LottieTransform*>(exp->object));
 
-    //evaluate the code
-    auto eval = jerry_eval((jerry_char_t *) exp->code, strlen(exp->code), JERRY_PARSE_NO_OPTS);
+    //reuse cached code, or parse and cache the expression before running it
+    //skip caching expressions for slot properties
+    auto cacheable = exp->property->sid == 0;
+    jerry_value_t code = jerry_undefined();
+    if (cacheable) {
+        for (auto& p : context.compiledCodes) {
+            if (p.exp == exp) {
+                code = p.code;
+                break;
+            }
+        }
+    }
 
-    if (jerry_value_is_exception(eval)) {
+    if (jerry_value_is_undefined(code)) {
+        code = jerry_parse((jerry_char_t *) exp->code, strlen(exp->code), JERRY_PARSE_NO_OPTS);
+        if (jerry_value_is_exception(code)) {
+            TVGERR("LOTTIE", "Failed to parse the expressions!");
+            jerry_value_free(code);
+            exp->disabled = true;
+            return jerry_undefined();
+        }
+        if (cacheable) context.compiledCodes.push({exp, code});
+    }
+
+    auto result = jerry_run(code);
+
+    if (jerry_value_is_exception(result)) {
         TVGERR("LOTTIE", "Failed to dispatch the expressions!");
-        jerry_value_free(eval);
         exp->disabled = true;
+        jerry_value_free(result);
+        if (!cacheable) jerry_value_free(code);
         return jerry_undefined();
     }
 
-    jerry_value_free(eval);
+    jerry_value_free(result);
+    if (!cacheable) jerry_value_free(code);
 
     return jerry_object_get_sz(context.global, "$bm_rt");
 }
@@ -1557,6 +1593,9 @@ void LottieExpressions::retrieve(LottieExpressions* instance)
     if (!instance) return;
 
     ScopedLock lock(_lockKey);
+    ARRAY_FOREACH(context, instance->contexts) {
+        (*context)->clearCache = true;
+    }
     if (--_refCnt == 0) {
         delete(instance);
         _exps = nullptr;
@@ -1606,6 +1645,11 @@ void LottieExpressions::clear(Context& context)
 #ifdef THORVG_THREAD_SUPPORT
     jerry_port_context_set(context.ctx);
 #endif
+    for (auto& code : context.compiledCodes) {
+        jerry_value_free(code.code);
+    }
+    context.compiledCodes.clear();
+
     jerry_value_free(context.thisProperty);
     jerry_value_free(context.thisLayer);
     jerry_value_free(context.thisComp);
