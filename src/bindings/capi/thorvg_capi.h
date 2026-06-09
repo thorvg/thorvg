@@ -137,11 +137,12 @@ typedef struct
  */
 typedef enum
 {
-    TVG_COLORSPACE_ABGR8888 = 0,  ///< The channels are joined in the order: alpha, blue, green, red. Colors are alpha-premultiplied.
-    TVG_COLORSPACE_ARGB8888,      ///< The channels are joined in the order: alpha, red, green, blue. Colors are alpha-premultiplied.
-    TVG_COLORSPACE_ABGR8888S,     ///< The channels are joined in the order: alpha, blue, green, red. Colors are un-alpha-premultiplied. (since 0.13)
-    TVG_COLORSPACE_ARGB8888S,     ///< The channels are joined in the order: alpha, red, green, blue. Colors are un-alpha-premultiplied. (since 0.13)
-    TVG_COLORSPACE_UNKNOWN = 255, ///< Unknown channel data. This is reserved for an initial ColorSpace value. (since 1.0)
+    TVG_COLORSPACE_ABGR8888 = 0,   ///< The channels are joined in the order: alpha, blue, green, red. Colors are alpha-premultiplied.
+    TVG_COLORSPACE_ARGB8888,       ///< The channels are joined in the order: alpha, red, green, blue. Colors are alpha-premultiplied.
+    TVG_COLORSPACE_ABGR8888S,      ///< The channels are joined in the order: alpha, blue, green, red. Colors are un-alpha-premultiplied. (since 0.13)
+    TVG_COLORSPACE_ARGB8888S,      ///< The channels are joined in the order: alpha, red, green, blue. Colors are un-alpha-premultiplied. (since 0.13)
+    TVG_COLORSPACE_GRAYSCALE8,     ///< Single channel, 1 byte per pixel 8-bit grayscale. (since 1.1)
+    TVG_COLORSPACE_UNKNOWN = 255,  ///< Unknown channel data. This is reserved for an initial ColorSpace value. (since 1.0)
 } Tvg_Colorspace;
 
 /**
@@ -527,6 +528,7 @@ TVG_API Tvg_Canvas tvg_swcanvas_create(Tvg_Engine_Option op);
  *
  * @warning Do not access @p buffer during tvg_canvas_draw() - tvg_canvas_sync(). It should not be accessed while the engine is writing on it.
  *
+ * @note Currently, only @c TVG_COLORSPACE_ABGR8888, @c TVG_COLORSPACE_ARGB8888, @c TVG_COLORSPACE_ABGR8888S, and @c TVG_COLORSPACE_ARGB8888S are supported for @p cs.
  * @see Tvg_Colorspace
  */
 TVG_API Tvg_Result tvg_swcanvas_set_target(Tvg_Canvas canvas, uint32_t* buffer, uint32_t stride, uint32_t w, uint32_t h, Tvg_Colorspace cs);
